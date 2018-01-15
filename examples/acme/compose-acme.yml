@@ -78,6 +78,7 @@ services :
         - "80:80"
         - "443:443"
         - "5001:443" # Needed for SNI challenge
+        - "5002:80" # Needed for HTTP challenge
       expose:
         - "8080"
       labels:

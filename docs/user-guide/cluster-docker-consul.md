@@ -56,14 +56,17 @@ $ traefik \
     --acme \
     --acme.storage=/etc/traefik/acme/acme.json \
     --acme.entryPoint=https \
+    --acme.httpChallenge.entryPoint=http \
     --acme.email=contact@mydomain.ca
 ```
 
-Let's Encrypt needs 3 parameters: an entry point to listen to, a storage for certificates, and an email for the registration.
+Let's Encrypt needs 4 parameters: an TLS entry point to listen to, a non-TLS entry point to allow HTTP challenges, a storage for certificates, and an email for the registration.
 
 To enable Let's Encrypt support, you need to add `--acme` flag.
 
 Now, Træfik needs to know where to store the certificates, we can choose between a key in a Key-Value store, or a file path: `--acme.storage=my/key` or `--acme.storage=/path/to/acme.json`.
+
+The `acme.httpChallenge.entryPoint` flag enables the `HTTP-01` challenge and specifies the entryPoint to use during the challenges.
 
 For your email and the entry point, it's `--acme.entryPoint` and `--acme.email` flags.
 
@@ -97,6 +100,7 @@ services:
       - "--acme"
       - "--acme.storage=/etc/traefik/acme/acme.json"
       - "--acme.entryPoint=https"
+      - "--acme.httpChallenge.entryPoint=http"
       - "--acme.OnHostRule=true"
       - "--acme.onDemand=false"
       - "--acme.email=contact@mydomain.ca"
@@ -206,12 +210,13 @@ services:
       - "--acme"
       - "--acme.storage=traefik/acme/account"
       - "--acme.entryPoint=https"
+      - "--acme.httpChallenge.entryPoint=http"
       - "--acme.OnHostRule=true"
       - "--acme.onDemand=false"
-      - "--acme.email=contact@jmaitrehenry.ca"
+      - "--acme.email=foobar@example.com"
       - "--docker"
       - "--docker.swarmmode"
-      - "--docker.domain=jmaitrehenry.ca"
+      - "--docker.domain=example.com"
       - "--docker.watch"
       - "--consul"
       - "--consul.endpoint=consul:8500"

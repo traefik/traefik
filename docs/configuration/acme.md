@@ -7,10 +7,14 @@ See also [Let's Encrypt examples](/user-guide/examples/#lets-encrypt-support) an
 ```toml
 # Sample entrypoint configuration when using ACME.
 [entryPoints]
+  [entryPoints.http]
+  address = ":80"
   [entryPoints.https]
   address = ":443"
     [entryPoints.https.tls]
+```
 
+```toml
 # Enable ACME (Let's Encrypt): automatic SSL.
 [acme]
 
@@ -33,17 +37,16 @@ email = "test@traefik.io"
 storage = "acme.json"
 # or `storage = "traefik/acme/account"` if using KV store.
 
-# Entrypoint to proxy acme challenge/apply certificates to.
-# WARNING, must point to an entrypoint on port 443
+# Entrypoint to proxy acme apply certificates to.
+# WARNING, if the TLS-SNI-01 challenge is used, it must point to an entrypoint on port 443
 #
 # Required
 #
 entryPoint = "https"
 
-# Use a DNS based acme challenge rather than external HTTPS access
+# Use a DNS-01 acme challenge rather than TLS-SNI-01 challenge
 #
-#
-# Optional
+# Optional (Deprecated, replaced by [acme.dnsChallenge])
 #
 # dnsProvider = "digitalocean"
 
@@ -51,25 +54,29 @@ entryPoint = "https"
 # If delayDontCheckDNS is greater than zero, avoid this & instead just wait so many seconds.
 # Useful if internal networks block external DNS queries.
 #
-# Optional
+# Optional (Deprecated, replaced by [acme.dnsChallenge])
+# Default: 0
 #
 # delayDontCheckDNS = 0
 
 # If true, display debug log messages from the acme client library.
 #
 # Optional
+# Default: false
 #
 # acmeLogging = true
 
-# Enable on demand certificate. (Deprecated)
+# Enable on demand certificate generation.
 #
-# Optional
+# Optional (Deprecated)
+# Default: false
 #
 # onDemand = true
 
 # Enable certificate generation on frontends Host rules.
 #
 # Optional
+# Default: false
 #
 # onHostRule = true
 
@@ -78,26 +85,64 @@ entryPoint = "https"
 # - Leave comment to go to prod.
 #
 # Optional
+# Default: "https://acme-v01.api.letsencrypt.org/directory"
 #
 # caServer = "https://acme-staging.api.letsencrypt.org/directory"
 
 # Domains list.
 #
 # [[acme.domains]]
-# main = "local1.com"
-# sans = ["test1.local1.com", "test2.local1.com"]
+#   main = "local1.com"
+#   sans = ["test1.local1.com", "test2.local1.com"]
 # [[acme.domains]]
-# main = "local2.com"
-# sans = ["test1.local2.com", "test2.local2.com"]
+#   main = "local2.com"
+#   sans = ["test1.local2.com", "test2.local2.com"]
 # [[acme.domains]]
-# main = "local3.com"
+#   main = "local3.com"
 # [[acme.domains]]
-# main = "local4.com"
+#   main = "local4.com"
+
+# Use a HTTP-01 acme challenge rather than TLS-SNI-01 challenge
+#
+# Optional but recommend
+#
+[acme.httpChallenge]
+
+  # EntryPoint to use for the challenges.
+  #
+  # Required
+  #
+  entryPoint = "http"
+  
+# Use a DNS-01 acme challenge rather than TLS-SNI-01 challenge
+#
+# Optional
+#
+# [acme.dnsChallenge]
+
+  # Provider used.
+  #
+  # Required
+  #
+  # provider = "digitalocean"
+
+  # By default, the provider will verify the TXT DNS challenge record before letting ACME verify.
+  # If delayBeforeCheck is greater than zero, avoid this & instead just wait so many seconds.
+  # Useful if internal networks block external DNS queries.
+  #
+  # Optional
+  # Default: 0
+  #
+  # delayBeforeCheck = 0
 ```
+!!! note
+    Even if `TLS-SNI-01` challenge is [disabled](https://community.letsencrypt.org/t/2018-01-11-update-regarding-acme-tls-sni-and-shared-hosting-infrastructure/50188) for the moment, it stays the _by default_ ACME Challenge in Træfik.
+    If `TLS-SNI-01` challenge is not re-enabled in the future, it we will be removed from Træfik.
 
 !!! note
-    ACME entryPoint has to be relied to the port 443, otherwise ACME Challenges can not be done.
-    It's a Let's Encrypt limitation as described on the [community forum](https://community.letsencrypt.org/t/support-for-ports-other-than-80-and-443/3419/72).
+    If `TLS-SNI-01` challenge is used, `acme.entryPoint` has to be reachable by Let's Encrypt through the port 443.
+    If `HTTP-01` challenge is used, `acme.httpChallenge.entryPoint` has to be defined and reachable by Let's Encrypt through the port 80.
+    These are Let's Encrypt limitations as described on the [community forum](https://community.letsencrypt.org/t/support-for-ports-other-than-80-and-443/3419/72).
 
 ### `storage`
 
@@ -110,7 +155,7 @@ storage = "acme.json"
 
 File or key used for certificates storage.
 
-**WARNING** If you use Træfik in Docker, you have 2 options:
+**WARNING:** If you use Træfik in Docker, you have 2 options:
 
 - create a file on your host and mount it as a volume:
 ```toml
@@ -133,19 +178,60 @@ docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 
 !!! note
     During Træfik configuration migration from a configuration file to a KV store (thanks to `storeconfig` subcommand as described [here](/user-guide/kv-config/#store-configuration-in-key-value-store)), if ACME certificates have to be migrated too, use both `storageFile` and `storage`.
-    `storageFile` will contain the path to the `acme.json` file to migrate.
-    `storage` will contain the key where the certificates will be stored.
 
-### `dnsProvider`
+    - `storageFile` will contain the path to the `acme.json` file to migrate.
+    - `storage` will contain the key where the certificates will be stored.
+
+### `acme.httpChallenge`
+
+Use `HTTP-01` challenge to generate/renew ACME certificates.
 
 ```toml
 [acme]
 # ...
-dnsProvider = "digitalocean"
+entryPoint = "https"
+[acme.httpChallenge]
+  entryPoint = "http"
+```
+
+#### `entryPoint`
+
+Specify the entryPoint to use during the challenges.
+
+```toml
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+# ...
+
+[acme]
+  # ...
+  entryPoint = "https"
+  [acme.httpChallenge]
+    entryPoint = "http"
+```
+
+!!! note
+    `acme.httpChallenge.entryPoint` has to be reachable by Let's Encrypt through the port 80.
+    It's a Let's Encrypt limitation as described on the [community forum](https://community.letsencrypt.org/t/support-for-ports-other-than-80-and-443/3419/72).
+
+### `acme.dnsChallenge`
+
+Use `DNS-01` challenge to generate/renew ACME certificates.
+
+```toml
+[acme]
+# ...
+[acme.dnsChallenge]
+  provider = "digitalocean"
+  delayBeforeCheck = 0
 # ...
 ```
 
-Use a DNS based acme challenge rather than external HTTPS access, e.g. for a firewalled server.
+#### `provider` 
 
 Select the provider that matches the DNS domain that will host the challenge TXT record, and provide environment variables to enable setting it:
 
@@ -164,7 +250,7 @@ Select the provider that matches the DNS domain that will host the challenge TXT
 | [GoDaddy](https://godaddy.com/domains)                 | `godaddy`      | `GODADDY_API_KEY`, `GODADDY_API_SECRET`                                                                                   |
 | [Google Cloud DNS](https://cloud.google.com/dns/docs/) | `gcloud`       | `GCE_PROJECT`, `GCE_SERVICE_ACCOUNT_FILE`                                                                                 |
 | [Linode](https://www.linode.com)                       | `linode`       | `LINODE_API_KEY`                                                                                                          |
-| manual                                                 | -              | none, but run Træfik interactively & turn on `acmeLogging` to see instructions & press <kbd>Enter</kbd>.                 |
+| manual                                                 | -              | none, but run Træfik interactively & turn on `acmeLogging` to see instructions & press <kbd>Enter</kbd>.                  |
 | [Namecheap](https://www.namecheap.com)                 | `namecheap`    | `NAMECHEAP_API_USER`, `NAMECHEAP_API_KEY`                                                                                 |
 | [Ns1](https://ns1.com/)                                | `ns1`          | `NS1_API_KEY`                                                                                                             |
 | [Open Telekom Cloud](https://cloud.telekom.de/en/)     | `otc`          | `OTC_DOMAIN_NAME`, `OTC_USER_NAME`, `OTC_PASSWORD`, `OTC_PROJECT_NAME`, `OTC_IDENTITY_ENDPOINT`                           |
@@ -175,21 +261,20 @@ Select the provider that matches the DNS domain that will host the challenge TXT
 | [Route 53](https://aws.amazon.com/route53/)            | `route53`      | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_HOSTED_ZONE_ID` or configured user/instance IAM profile. |
 | [VULTR](https://www.vultr.com)                         | `vultr`        | `VULTR_API_KEY`                                                                                                           |
 
-### `delayDontCheckDNS`
+#### `delayBeforeCheck`
 
-```toml
-[acme]
-# ...
-delayDontCheckDNS = 0
-# ...
-```
-
-By default, the dnsProvider will verify the TXT DNS challenge record before letting ACME verify.  
-If `delayDontCheckDNS` is greater than zero, avoid this & instead just wait so many seconds.
+By default, the `provider` will verify the TXT DNS challenge record before letting ACME verify.  
+If `delayBeforeCheck` is greater than zero, avoid this & instead just wait so many seconds.
 
 Useful if internal networks block external DNS queries.
 
+!!! note
+    This field has no sense if a `provider` is not defined.
+
 ### `onDemand` (Deprecated)
+
+!!! warning
+    This option is deprecated.
 
 ```toml
 [acme]
@@ -207,9 +292,6 @@ This will request a certificate from Let's Encrypt during the first TLS handshak
     
 !!! warning
     Take note that Let's Encrypt have [rate limiting](https://letsencrypt.org/docs/rate-limits).
-
-!!! warning
-    This option is deprecated.
 
 ### `onHostRule`
 
@@ -240,21 +322,21 @@ CA server to use.
 - Uncomment the line to run on the staging Let's Encrypt server.
 - Leave comment to go to prod.
 
-### `domains`
+### `acme.domains`
 
 ```toml
 [acme]
 # ...
 [[acme.domains]]
-main = "local1.com"
-sans = ["test1.local1.com", "test2.local1.com"]
+  main = "local1.com"
+  sans = ["test1.local1.com", "test2.local1.com"]
 [[acme.domains]]
-main = "local2.com"
-sans = ["test1.local2.com", "test2.local2.com"]
+  main = "local2.com"
+  sans = ["test1.local2.com", "test2.local2.com"]
 [[acme.domains]]
-main = "local3.com"
+  main = "local3.com"
 [[acme.domains]]
-main = "local4.com"
+  main = "local4.com"
 # ...
 ```
 
@@ -265,3 +347,15 @@ All domains must have A/AAAA records pointing to Træfik.
     Take note that Let's Encrypt have [rate limiting](https://letsencrypt.org/docs/rate-limits).
 
 Each domain & SANs will lead to a certificate request.
+
+### `dnsProvider` (Deprecated)
+
+!!! warning
+    This option is deprecated.
+    Please refer to [DNS challenge provider section](/configuration/acme/#provider)
+
+### `delayDontCheckDNS` (Deprecated)
+
+!!! warning
+    This option is deprecated.
+    Please refer to [DNS challenge delayBeforeCheck section](/configuration/acme/#delaybeforecheck)

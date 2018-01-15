@@ -168,7 +168,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 		OnHostRule:        true,
 		CAServer:          "CAServer",
 		EntryPoint:        "EntryPoint",
-		DNSProvider:       "DNSProvider",
+		DNSChallenge:      &acme.DNSChallenge{Provider: "DNSProvider"},
 		DelayDontCheckDNS: 666,
 		ACMELogging:       true,
 		TLSConfig: &tls.Config{

@@ -19,6 +19,8 @@ entryPoint = "https"
 onDemand = false
 OnHostRule = true
 caServer = "http://traefik.localhost.com:4000/directory"
+[acme.httpChallenge]
+entryPoint="http"
 
 
 [web]

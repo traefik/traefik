@@ -240,6 +240,23 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 			log.Errorln("Error using file configuration backend, no filename defined")
 		}
 	}
+
+	if gc.ACME != nil {
+		// TODO: to remove in the futurs
+		if len(gc.ACME.StorageFile) > 0 && len(gc.ACME.Storage) == 0 {
+			log.Warn("ACME.StorageFile is deprecated, use ACME.Storage instead")
+			gc.ACME.Storage = gc.ACME.StorageFile
+		}
+
+		if len(gc.ACME.DNSProvider) > 0 {
+			log.Warn("ACME.DNSProvider is deprecated, use ACME.DNSChallenge instead")
+			gc.ACME.DNSChallenge = &acme.DNSChallenge{Provider: gc.ACME.DNSProvider, DelayBeforeCheck: gc.ACME.DelayDontCheckDNS}
+		}
+
+		if gc.ACME.OnDemand {
+			log.Warn("ACME.OnDemand is deprecated")
+		}
+	}
 }
 
 // DefaultEntryPoints holds default entry points
