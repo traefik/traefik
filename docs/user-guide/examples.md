@@ -56,7 +56,7 @@ defaultEntryPoints = ["http", "https"]
 ## Let's Encrypt support
 
 !!! note
-    Even if `TLS-SNI-01` challenge is [disabled](https://community.letsencrypt.org/t/2018-01-11-update-regarding-acme-tls-sni-and-shared-hosting-infrastructure/50188), for the moment, it stays the _by default_ ACME Challenge in Træfik but all the examples use the `HTTP-01` challenge (except DNSChallenge examples).
+    Even if `TLS-SNI-01` challenge is [disabled](https://community.letsencrypt.org/t/2018-01-11-update-regarding-acme-tls-sni-and-shared-hosting-infrastructure/50188), for the moment, it stays the _by default_ ACME Challenge in Træfik but all the examples use the `HTTP-01` challenge (except DNS challenge examples).
     If `TLS-SNI-01` challenge is not re-enabled in the future, it we will be removed from Træfik.
 
 ### Basic example with HTTP challenge

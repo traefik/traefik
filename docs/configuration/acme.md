@@ -352,10 +352,10 @@ Each domain & SANs will lead to a certificate request.
 
 !!! warning
     This option is deprecated.
-    Please refer to [DNSChallenge.Provider section](/configuration/acme/#provider)
+    Please refer to [DNS challenge provider section](/configuration/acme/#provider)
 
 ### `delayDontCheckDNS` (Deprecated)
 
 !!! warning
     This option is deprecated.
-    Please refer to [DNSChallenge.delayBeforeCheck section](/configuration/acme/#delaybeforecheck)
+    Please refer to [DNS challenge delayBeforeCheck section](/configuration/acme/#delaybeforecheck)
