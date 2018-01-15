@@ -143,7 +143,7 @@ func (a *ACME) AddRoutes(router *mux.Router) {
 			if token, ok := vars["token"]; ok {
 				domain, _, err := net.SplitHostPort(req.Host)
 				if err != nil {
-					log.Warnf("Error while ACME challenge: %v. Fallback to request host.", err)
+					log.Debugf("Unable to split host and port: %v. Fallback to request host.", err)
 					domain = req.Host
 				}
 				tokenValue := a.challengeHTTPProvider.getTokenValue(token, domain)
@@ -212,69 +212,72 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 		}
 	})
 
-	leadership.AddListener(func(elected bool) error {
-		if elected {
-			_, err := a.store.Load()
+	leadership.AddListener(a.leadershipListener)
+	return nil
+}
+
+func (a *ACME) leadershipListener(elected bool) error {
+	if elected {
+		_, err := a.store.Load()
+		if err != nil {
+			return err
+		}
+		transaction, object, err := a.store.Begin()
+		if err != nil {
+			return err
+		}
+		account := object.(*Account)
+		account.Init()
+		var needRegister bool
+		if account == nil || len(account.Email) == 0 {
+			account, err = NewAccount(a.Email)
 			if err != nil {
 				return err
 			}
-			transaction, object, err := a.store.Begin()
+			needRegister = true
+		}
+		if err != nil {
+			return err
+		}
+		a.client, err = a.buildACMEClient(account)
+		if err != nil {
+			return err
+		}
+		if needRegister {
+			// New users will need to register; be sure to save it
+			log.Debug("Register...")
+			reg, err := a.client.Register()
 			if err != nil {
 				return err
 			}
-			account := object.(*Account)
-			account.Init()
-			var needRegister bool
-			if account == nil || len(account.Email) == 0 {
-				account, err = NewAccount(a.Email)
-				if err != nil {
-					return err
-				}
-				needRegister = true
-			}
+			account.Registration = reg
+		}
+		// The client has a URL to the current Let's Encrypt Subscriber
+		// Agreement. The user will need to agree to it.
+		log.Debug("AgreeToTOS...")
+		err = a.client.AgreeToTOS()
+		if err != nil {
+			log.Debug(err)
+			// Let's Encrypt Subscriber Agreement renew ?
+			reg, err := a.client.QueryRegistration()
 			if err != nil {
 				return err
 			}
-			a.client, err = a.buildACMEClient(account)
-			if err != nil {
-				return err
-			}
-			if needRegister {
-				// New users will need to register; be sure to save it
-				log.Debug("Register...")
-				reg, err := a.client.Register()
-				if err != nil {
-					return err
-				}
-				account.Registration = reg
-			}
-			// The client has a URL to the current Let's Encrypt Subscriber
-			// Agreement. The user will need to agree to it.
-			log.Debug("AgreeToTOS...")
+			account.Registration = reg
 			err = a.client.AgreeToTOS()
 			if err != nil {
-				// Let's Encrypt Subscriber Agreement renew ?
-				reg, err := a.client.QueryRegistration()
-				if err != nil {
-					return err
-				}
-				account.Registration = reg
-				err = a.client.AgreeToTOS()
-				if err != nil {
-					log.Errorf("Error sending ACME agreement to TOS: %+v: %s", account, err.Error())
-				}
+				log.Errorf("Error sending ACME agreement to TOS: %+v: %s", account, err.Error())
 			}
-			err = transaction.Commit(account)
-			if err != nil {
-				return err
-			}
-
-			a.retrieveCertificates()
-			a.renewCertificates()
-			a.runJobs()
 		}
-		return nil
-	})
+		err = transaction.Commit(account)
+		if err != nil {
+			return err
+		}
+
+		a.retrieveCertificates()
+		a.renewCertificates()
+		a.runJobs()
+	}
 	return nil
 }
 
