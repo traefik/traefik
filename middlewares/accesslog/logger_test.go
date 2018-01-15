@@ -320,6 +320,7 @@ func doLogging(t *testing.T, config *types.AccessLog) {
 		Method:     testMethod,
 		RemoteAddr: fmt.Sprintf("%s:%d", testHostname, testPort),
 		URL: &url.URL{
+			User: url.UserPassword(testUsername, ""),
 			Path: testPath,
 		},
 	}
@@ -353,7 +354,6 @@ func logWriterTestHandlerFunc(rw http.ResponseWriter, r *http.Request) {
 	rw.Write([]byte(testContent))
 	rw.WriteHeader(testStatus)
 
-	r.URL.User = url.User(testUsername)
 	logDataTable := GetLogDataTable(r)
 	logDataTable.Core[FrontendName] = testFrontendName
 	logDataTable.Core[BackendURL] = testBackendName

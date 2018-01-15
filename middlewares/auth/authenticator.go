@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 
 	goauth "github.com/abbot/go-http-auth"
@@ -76,6 +77,7 @@ func createAuthDigestHandler(digestAuth *goauth.DigestAuth, authConfig *types.Au
 			digestAuth.RequireAuth(w, r)
 		} else {
 			log.Debugf("Digest auth succeeded")
+			r.URL.User = url.User(username)
 			if authConfig.HeaderField != "" {
 				r.Header[authConfig.HeaderField] = []string{username}
 			}
@@ -89,10 +91,11 @@ func createAuthBasicHandler(basicAuth *goauth.BasicAuth, authConfig *types.Auth)
 			log.Debugf("Basic auth failed")
 			basicAuth.RequireAuth(w, r)
 		} else {
+			log.Debugf("Basic auth succeeded")
+			r.URL.User = url.User(username)
 			if authConfig.HeaderField != "" {
 				r.Header[authConfig.HeaderField] = []string{username}
 			}
-			log.Debugf("Basic auth succeeded")
 			next.ServeHTTP(w, r)
 		}
 	})

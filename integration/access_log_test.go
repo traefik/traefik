@@ -25,6 +25,7 @@ type AccessLogSuite struct{ BaseSuite }
 type accessLogValue struct {
 	formatOnly  bool
 	code        string
+	user        string
 	value       string
 	backendName string
 }
@@ -94,6 +95,7 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontend(c *check.C) {
 		{
 			formatOnly:  false,
 			code:        "401",
+			user:        "-",
 			value:       "Auth for frontend-Host-frontend-auth-docker-local",
 			backendName: "-",
 		},
@@ -143,6 +145,7 @@ func (s *AccessLogSuite) TestAccessLogAuthEntrypoint(c *check.C) {
 		{
 			formatOnly:  false,
 			code:        "401",
+			user:        "-",
 			value:       "Auth for entrypoint",
 			backendName: "-",
 		},
@@ -184,6 +187,57 @@ func (s *AccessLogSuite) TestAccessLogAuthEntrypoint(c *check.C) {
 	checkNoOtherTraefikProblems(traefikLog, err, c)
 }
 
+func (s *AccessLogSuite) TestAccessLogAuthEntrypointSuccess(c *check.C) {
+	// Ensure working directory is clean
+	ensureWorkingDirectoryIsClean()
+
+	expected := []accessLogValue{
+		{
+			formatOnly:  false,
+			code:        "200",
+			user:        "test",
+			value:       "Host-entrypoint-auth-docker",
+			backendName: "http://172.17.0",
+		},
+	}
+
+	// Start Traefik
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	defer os.Remove(traefikTestAccessLogFile)
+	defer os.Remove(traefikTestLogFile)
+
+	checkStatsForLogFile(c)
+
+	s.composeProject.Container(c, "authEntrypoint")
+
+	waitForTraefik(c, "authEntrypoint")
+
+	// Verify Traefik started OK
+	traefikLog := checkTraefikStarted(c)
+
+	// Test auth entrypoint
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8004/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "entrypoint.auth.docker.local"
+	req.SetBasicAuth("test", "test")
+
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	// Verify access.log output as expected
+	count := checkAccessLogExactValuesOutput(err, c, expected)
+
+	c.Assert(count, checker.GreaterOrEqualThan, len(expected))
+
+	// Verify no other Traefik problems
+	checkNoOtherTraefikProblems(traefikLog, err, c)
+}
+
 func (s *AccessLogSuite) TestAccessLogEntrypointRedirect(c *check.C) {
 	// Ensure working directory is clean
 	ensureWorkingDirectoryIsClean()
@@ -192,6 +246,7 @@ func (s *AccessLogSuite) TestAccessLogEntrypointRedirect(c *check.C) {
 		{
 			formatOnly:  false,
 			code:        "302",
+			user:        "-",
 			value:       "entrypoint redirect for frontend-",
 			backendName: "-",
 		},
@@ -244,6 +299,7 @@ func (s *AccessLogSuite) TestAccessLogFrontendRedirect(c *check.C) {
 		{
 			formatOnly:  false,
 			code:        "302",
+			user:        "-",
 			value:       "frontend redirect for frontend-Path-",
 			backendName: "-",
 		},
@@ -302,6 +358,7 @@ func (s *AccessLogSuite) TestAccessLogRateLimit(c *check.C) {
 		{
 			formatOnly:  false,
 			code:        "429",
+			user:        "-",
 			value:       "rate limit for frontend-Host-ratelimit",
 			backendName: "/",
 		},
@@ -355,6 +412,7 @@ func (s *AccessLogSuite) TestAccessLogBackendNotFound(c *check.C) {
 		{
 			formatOnly:  false,
 			code:        "404",
+			user:        "-",
 			value:       "backend not found",
 			backendName: "/",
 		},
@@ -402,6 +460,7 @@ func (s *AccessLogSuite) TestAccessLogEntrypointWhitelist(c *check.C) {
 		{
 			formatOnly:  false,
 			code:        "403",
+			user:        "-",
 			value:       "ipwhitelister for entrypoint httpWhitelistReject",
 			backendName: "-",
 		},
@@ -451,6 +510,7 @@ func (s *AccessLogSuite) TestAccessLogFrontendWhitelist(c *check.C) {
 		{
 			formatOnly:  false,
 			code:        "403",
+			user:        "-",
 			value:       "ipwhitelister for frontend-Host-frontend-whitelist",
 			backendName: "-",
 		},
@@ -578,10 +638,13 @@ func checkAccessLogExactValues(c *check.C, line string, i int, v accessLogValue)
 	tokens, err := shellwords.Parse(line)
 	c.Assert(err, checker.IsNil)
 	c.Assert(tokens, checker.HasLen, 14)
+	if len(v.user) > 0 {
+		c.Assert(tokens[2], checker.Equals, v.user)
+	}
 	c.Assert(tokens[6], checker.Equals, v.code)
 	c.Assert(tokens[10], checker.Equals, fmt.Sprintf("%d", i+1))
 	c.Assert(tokens[11], checker.HasPrefix, v.value)
-	c.Assert(tokens[12], checker.Equals, v.backendName)
+	c.Assert(tokens[12], checker.HasPrefix, v.backendName)
 	c.Assert(tokens[13], checker.Matches, `^\d+ms$`)
 }
 
