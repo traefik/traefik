@@ -24,8 +24,9 @@ func (ev *APIAuditEvent) AppendResponse(responseHeaders http.Header, respInfo ty
 }
 
 // EnforceConstraints ensures the audit event satisfies constraints
-func (ev *APIAuditEvent) EnforceConstraints(constraints AuditConstraints) {
+func (ev *APIAuditEvent) EnforceConstraints(constraints AuditConstraints) bool {
 	enforcePrecedentConstraints(&ev.AuditEvent, constraints)
+	return true
 }
 
 // ToEncoded transforms the event into an Encoded

@@ -70,6 +70,8 @@ func TestRateAuditEvent(t *testing.T) {
 	assert.Equal(t, types.DataMap{"AGT1_ID1": "XXYY1111", "AGT1_ID2": "XXYY2222"}, event.Enrolments.Get("SERV_AGT1"))
 	assert.Equal(t, types.DataMap{"AGT2_ID1": "TTYY1111", "AGT2_ID2": "TTYY2222"}, event.Enrolments.Get("SERV_AGT2"))
 
+	shouldAudit := event.EnforceConstraints(AuditConstraints{MaxAuditLength: 100000, MaxRequestContentsLength: 100000})
+	assert.False(t, shouldAudit)
 }
 
 func TestChrisRateAuditEvent(t *testing.T) {
@@ -127,6 +129,9 @@ func TestChrisRateAuditEvent(t *testing.T) {
 	assert.Equal(t, "123PQ7654321X", event.Identifiers.Get("AORef"))
 
 	assert.Equal(t, types.DataMap{}, event.Enrolments)
+
+	shouldAudit := event.EnforceConstraints(AuditConstraints{MaxAuditLength: 100000, MaxRequestContentsLength: 100000})
+	assert.True(t, shouldAudit)
 }
 
 func TestWillHandleUnknownXml(t *testing.T) {

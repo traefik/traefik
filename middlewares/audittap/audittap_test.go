@@ -1,9 +1,11 @@
 package audittap
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -182,6 +184,22 @@ func TestOversizedAuditDropped(t *testing.T) {
 	err = tap.submitAudit(audit)
 
 	assert.NoError(t, err)
+	assert.Equal(t, 0, len(capture.events))
+}
+
+func TestEnforceConstraintsFailDropsAudit(t *testing.T) {
+	capture := &noopAuditStream{}
+	conf := types.AuditSink{ProxyingFor: "Rate", MaxAuditLength: "3M", MaxPayloadContentsLength: "1M"}
+	tap, err := NewAuditTap(&conf, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
+	assert.NoError(t, err)
+
+	vatDecl, err := ioutil.ReadFile("audittypes/testdata/HMRC-VAT-DEC-TIL.xml") // Test In Live event
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest("", "/pathsegment?d=1&e=2", bytes.NewReader([]byte(vatDecl)))
+	tap.ServeHTTP(httptest.NewRecorder(), req)
+
 	assert.Equal(t, 0, len(capture.events))
 }
 

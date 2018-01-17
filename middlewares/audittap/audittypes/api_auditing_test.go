@@ -32,6 +32,7 @@ func TestApiAuditEvent(t *testing.T) {
 
 	assert.Equal(t, "404", ev.ResponseStatus)
 
+	assert.True(t, ev.EnforceConstraints(AuditConstraints{}))
 }
 
 func TestNewApiAudit(t *testing.T) {

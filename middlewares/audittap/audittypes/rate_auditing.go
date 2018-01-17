@@ -19,6 +19,11 @@ import (
 	"github.com/containous/traefik/middlewares/audittap/xmlutils"
 )
 
+const (
+	// TestInLive signify test messages for the RATE systems
+	TestInLive = "-TIL"
+)
+
 // RATEAuditDetail is the detail section of the event
 type RATEAuditDetail struct {
 	CorrelationID   string `json:"correlationID,omitempty"`
@@ -100,8 +105,12 @@ func (ev *RATEAuditEvent) AppendResponse(responseHeaders http.Header, respInfo t
 }
 
 // EnforceConstraints ensures the audit event satisfies constraints
-func (ev *RATEAuditEvent) EnforceConstraints(constraints AuditConstraints) {
+func (ev *RATEAuditEvent) EnforceConstraints(constraints AuditConstraints) bool {
+	if strings.HasSuffix(ev.AuditType, TestInLive) {
+		return false
+	}
 	enforcePrecedentConstraints(&ev.AuditEvent, constraints)
+	return true
 }
 
 // ToEncoded transforms the event into an Encoded

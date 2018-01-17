@@ -127,8 +127,9 @@ func (tap *AuditTap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	if !excludeAudit {
 		auditer.AppendResponse(ww.Header(), ww.GetResponseInfo())
-		auditer.EnforceConstraints(tap.AuditConstraints)
-		tap.submitAudit(auditer)
+		if auditer.EnforceConstraints(tap.AuditConstraints) {
+			tap.submitAudit(auditer)
+		}
 	}
 }
 

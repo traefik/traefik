@@ -50,7 +50,9 @@ type AuditStream interface {
 type Auditer interface {
 	AppendRequest(req *http.Request)
 	AppendResponse(responseHeaders http.Header, resp types.ResponseInfo)
-	EnforceConstraints(constraints AuditConstraints)
+	// EnforceConstraints ensures the audit event complies with rules for the audit type
+	// returns true if audit event is valid for auditing
+	EnforceConstraints(constraints AuditConstraints) bool
 	types.Encodeable
 }
 
