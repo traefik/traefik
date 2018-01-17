@@ -758,7 +758,9 @@ func (s *Server) addInternalPublicRoutes(entryPointName string, router *mux.Rout
 	if s.globalConfiguration.Ping != nil && s.globalConfiguration.Ping.EntryPoint != "" && s.globalConfiguration.Ping.EntryPoint == entryPointName {
 		s.globalConfiguration.Ping.AddRoutes(router)
 	}
+}
 
+func (s *Server) addACMERoutes(entryPointName string, router *mux.Router) {
 	if s.globalConfiguration.ACME != nil && s.globalConfiguration.ACME.HTTPChallenge != nil && s.globalConfiguration.ACME.HTTPChallenge.EntryPoint == entryPointName {
 		s.globalConfiguration.ACME.AddRoutes(router)
 	}
@@ -839,6 +841,9 @@ func (s *Server) buildInternalRouter(entryPointName, path string, internalMiddle
 	internalMuxRouter.Walk(wrapRoute(internalMiddlewares))
 
 	s.addInternalPublicRoutes(entryPointName, internalMuxSubrouter)
+
+	s.addACMERoutes(entryPointName, internalMuxRouter)
+
 	return internalMuxRouter
 }
 
