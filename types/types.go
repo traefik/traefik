@@ -53,11 +53,12 @@ type CircuitBreaker struct {
 
 // Buffering holds request/response buffering configuration/
 type Buffering struct {
-	MaxRequestBodyBytes  int64  `json:"maxRequestBodyBytes"`
-	MemRequestBodyBytes  int64  `json:"memRequestBodyBytes"`
-	MaxResponseBodyBytes int64  `json:"maxResponseBodyBytes"`
-	MemResponseBodyBytes int64  `json:"memResponseBodyBytes"`
-	RetryExpression      string `json:"retryExpression"`
+	Enabled              bool   `json:"enabled"`
+	MaxRequestBodyBytes  int64  `json:"maxRequestBodyBytes,omitempty"`
+	MemRequestBodyBytes  int64  `json:"memRequestBodyBytes,omitempty"`
+	MaxResponseBodyBytes int64  `json:"maxResponseBodyBytes,omitempty"`
+	MemResponseBodyBytes int64  `json:"memResponseBodyBytes,omitempty"`
+	RetryExpression      string `json:"retryExpression,omitempty"`
 }
 
 // HealthCheck holds HealthCheck configuration

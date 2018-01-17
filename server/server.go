@@ -1151,7 +1151,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						n.UseFunc(secureMiddleware.HandlerFuncWithNext)
 					}
 
-					if config.Backends[frontend.Backend].Buffering != nil {
+					if config.Backends[frontend.Backend].Buffering != nil && config.Backends[frontend.Backend].Buffering.Enabled {
 						bufferedLb, err := s.buildBufferingMiddleware(lb, config.Backends[frontend.Backend].Buffering)
 
 						if err != nil {

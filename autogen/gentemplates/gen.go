@@ -90,6 +90,27 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
     interval = "{{ $healthCheck.Interval }}"
   {{end}}
 
+  {{ $buffering := getBuffering $service.Attributes }}
+  {{if $buffering }}
+  [backends.backend-{{ $backendName }}.buffering]
+    enabled = "{{ $buffering.enabled }}"
+    {{if $buffering.maxRequestBodyBytes }}
+    maxRequestBodyBytes = {{ $buffering.maxRequestBodyBytes }}
+    {{end}}
+    {{if $buffering.memRequestBodyBytes }}
+    memRequestBodyBytes = {{ $buffering.memRequestBodyBytes }}
+    {{end}}
+    {{if $buffering.maxResponseBodyBytes }}
+    maxResponseBodyBytes = {{ $buffering.maxResponseBodyBytes }}
+    {{end}}
+    {{if $buffering.memResponseBodyBytes }}
+    memResponseBodyBytes = {{ $buffering.memResponseBodyBytes }}
+    {{end}}
+    {{if $buffering.retryExpression }}
+    retryExpression = "{{ $buffering.retryExpression }}"
+    {{end}}
+  {{end}}
+
 {{end}}
 {{range $index, $node := .Nodes}}
 
