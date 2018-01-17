@@ -45,6 +45,12 @@ Træfik supports two backends: Jaeger and Zipkin.
     # Default: 1.0
     #
     SamplingParam = 1.0
+
+    # LocalAgentHostPort instructs reporter to send spans to jaeger-agent at this address
+    #
+    # Default: "127.0.0.1:6832"
+    #
+    LocalAgentHostPort = "127.0.0.1:6832"
 ```
 
 ## Zipkin
