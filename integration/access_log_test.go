@@ -1,7 +1,10 @@
 package integration
 
 import (
+	"crypto/md5"
+	"crypto/rand"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -236,6 +239,115 @@ func (s *AccessLogSuite) TestAccessLogAuthEntrypointSuccess(c *check.C) {
 
 	// Verify no other Traefik problems
 	checkNoOtherTraefikProblems(traefikLog, err, c)
+}
+
+func (s *AccessLogSuite) TestAccessLogDigestAuthEntrypoint(c *check.C) {
+	// Ensure working directory is clean
+	ensureWorkingDirectoryIsClean()
+
+	expected := []accessLogValue{
+		{
+			formatOnly:  false,
+			code:        "401",
+			user:        "-",
+			value:       "Auth for entrypoint",
+			backendName: "-",
+		},
+		{
+			formatOnly:  false,
+			code:        "200",
+			user:        "test",
+			value:       "Host-entrypoint-digest-auth-docker",
+			backendName: "http://172.17.0",
+		},
+	}
+
+	// Start Traefik
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	defer os.Remove(traefikTestAccessLogFile)
+	defer os.Remove(traefikTestLogFile)
+
+	checkStatsForLogFile(c)
+
+	s.composeProject.Container(c, "digestAuthEntrypoint")
+
+	waitForTraefik(c, "digestAuthEntrypoint")
+
+	// Verify Traefik started OK
+	traefikLog := checkTraefikStarted(c)
+
+	// Test auth entrypoint
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8008/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "entrypoint.digest.auth.docker.local"
+
+	resp, err := try.ResponseUntilStatusCode(req, 500*time.Millisecond, http.StatusUnauthorized)
+	c.Assert(err, checker.IsNil)
+
+	digestParts := digestParts(resp)
+	digestParts["uri"] = "/"
+	digestParts["method"] = http.MethodGet
+	digestParts["username"] = "test"
+	digestParts["password"] = "test"
+
+	req.Header.Set("Authorization", getDigestAuthrization(digestParts))
+	req.Header.Set("Content-Type", "application/json")
+
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	// Verify access.log output as expected
+	count := checkAccessLogExactValuesOutput(err, c, expected)
+
+	c.Assert(count, checker.GreaterOrEqualThan, len(expected))
+
+	// Verify no other Traefik problems
+	checkNoOtherTraefikProblems(traefikLog, err, c)
+}
+
+func digestParts(resp *http.Response) map[string]string {
+	result := map[string]string{}
+	if len(resp.Header["Www-Authenticate"]) > 0 {
+		wantedHeaders := []string{"nonce", "realm", "qop", "opaque"}
+		responseHeaders := strings.Split(resp.Header["Www-Authenticate"][0], ",")
+		for _, r := range responseHeaders {
+			for _, w := range wantedHeaders {
+				if strings.Contains(r, w) {
+					result[w] = strings.Split(r, `"`)[1]
+				}
+			}
+		}
+	}
+	return result
+}
+
+func getMD5(data string) string {
+	digest := md5.New()
+	digest.Write([]byte(data))
+	return fmt.Sprintf("%x", digest.Sum(nil))
+}
+
+func getCnonce() string {
+	b := make([]byte, 8)
+	io.ReadFull(rand.Reader, b)
+	return fmt.Sprintf("%x", b)[:16]
+}
+
+func getDigestAuthrization(digestParts map[string]string) string {
+	d := digestParts
+	ha1 := getMD5(d["username"] + ":" + d["realm"] + ":" + d["password"])
+	ha2 := getMD5(d["method"] + ":" + d["uri"])
+	nonceCount := "00000001"
+	cnonce := getCnonce()
+	response := getMD5(fmt.Sprintf("%s:%s:%s:%s:%s:%s", ha1, d["nonce"], nonceCount, cnonce, d["qop"], ha2))
+	authorization := fmt.Sprintf(`Digest username="%s", realm="%s", nonce="%s", uri="%s", cnonce="%s", nc=%s, qop=%s, response="%s", opaque="%s", algorithm="MD5"`,
+		d["username"], d["realm"], d["nonce"], d["uri"], cnonce, nonceCount, d["qop"], response, d["opaque"])
+	return authorization
 }
 
 func (s *AccessLogSuite) TestAccessLogEntrypointRedirect(c *check.C) {
