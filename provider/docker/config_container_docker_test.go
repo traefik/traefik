@@ -108,6 +108,12 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						label.TraefikBackendLoadBalancerStickinessCookieName: "chocolate",
 						label.TraefikBackendMaxConnAmount:                    "666",
 						label.TraefikBackendMaxConnExtractorFunc:             "client.ip",
+						label.TraefikBackendBufferingEnabled:                 "true",
+						label.TraefikBackendBufferingMaxResponseBodyBytes:    "10485760",
+						label.TraefikBackendBufferingMemResponseBodyBytes:    "2097152",
+						label.TraefikBackendBufferingMaxRequestBodyBytes:     "10485760",
+						label.TraefikBackendBufferingMemRequestBodyBytes:     "2097152",
+						label.TraefikBackendBufferingRetryExpression:         "IsNetworkError() && Attempts() <= 2",
 
 						label.TraefikFrontendAuthBasic:            "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.TraefikFrontendEntryPoints:          "http,https",
@@ -283,6 +289,14 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						Path:     "/health",
 						Port:     880,
 						Interval: "6",
+					},
+					Buffering: &types.Buffering{
+						Enabled:              true,
+						MaxResponseBodyBytes: 10485760,
+						MemResponseBodyBytes: 2097152,
+						MaxRequestBodyBytes:  10485760,
+						MemRequestBodyBytes:  2097152,
+						RetryExpression:      "IsNetworkError() && Attempts() <= 2",
 					},
 				},
 			},
@@ -1415,6 +1429,70 @@ func TestDockerGetHealthCheck(t *testing.T) {
 			dData := parseContainer(test.container)
 
 			actual := getHealthCheck(dData)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestDockerGetBuffering(t *testing.T) {
+	testCases := []struct {
+		desc      string
+		container docker.ContainerJSON
+		expected  *types.Buffering
+	}{
+		{
+			desc: "should return nil when no health check labels",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{})),
+			expected: nil,
+		},
+		{
+			desc: "should return nil when buffering is disabled",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{
+					label.TraefikBackendBufferingEnabled:              "false",
+					label.TraefikBackendBufferingMaxResponseBodyBytes: "10485760",
+					label.TraefikBackendBufferingMemResponseBodyBytes: "2097152",
+					label.TraefikBackendBufferingMaxRequestBodyBytes:  "10485760",
+					label.TraefikBackendBufferingMemRequestBodyBytes:  "2097152",
+					label.TraefikBackendBufferingRetryExpression:      "IsNetworkError() && Attempts() <= 2",
+				})),
+			expected: nil,
+		},
+		{
+			desc: "should return a struct when buffering labels are set",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{
+					label.TraefikBackendBufferingEnabled:              "true",
+					label.TraefikBackendBufferingMaxResponseBodyBytes: "10485760",
+					label.TraefikBackendBufferingMemResponseBodyBytes: "2097152",
+					label.TraefikBackendBufferingMaxRequestBodyBytes:  "10485760",
+					label.TraefikBackendBufferingMemRequestBodyBytes:  "2097152",
+					label.TraefikBackendBufferingRetryExpression:      "IsNetworkError() && Attempts() <= 2",
+				})),
+			expected: &types.Buffering{
+				Enabled:              true,
+				MaxResponseBodyBytes: 10485760,
+				MemResponseBodyBytes: 2097152,
+				MaxRequestBodyBytes:  10485760,
+				MemRequestBodyBytes:  2097152,
+				RetryExpression:      "IsNetworkError() && Attempts() <= 2",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			dData := parseContainer(test.container)
+
+			actual := getBuffering(dData)
 
 			assert.Equal(t, test.expected, actual)
 		})

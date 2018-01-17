@@ -24,6 +24,7 @@ func (p *Provider) buildConfiguration(containersInspected []dockerData) *types.C
 		"getProtocol":       getFuncStringLabel(label.TraefikProtocol, label.DefaultProtocol),
 		"getMaxConn":        getMaxConn,
 		"getHealthCheck":    getHealthCheck,
+		"getBuffering":      getBuffering,
 		"getCircuitBreaker": getCircuitBreaker,
 		"getLoadBalancer":   getLoadBalancer,
 

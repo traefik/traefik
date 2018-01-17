@@ -93,21 +93,21 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
   {{ $buffering := getBuffering $service.Attributes }}
   {{if $buffering }}
   [backends.backend-{{ $backendName }}.buffering]
-    enabled = "{{ $buffering.enabled }}"
-    {{if $buffering.maxRequestBodyBytes }}
-    maxRequestBodyBytes = {{ $buffering.maxRequestBodyBytes }}
+    enabled = "{{ $buffering.Enabled }}"
+    {{if $buffering.MaxRequestBodyBytes }}
+    maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
     {{end}}
-    {{if $buffering.memRequestBodyBytes }}
-    memRequestBodyBytes = {{ $buffering.memRequestBodyBytes }}
+    {{if $buffering.MemRequestBodyBytes }}
+    memRequestBodyBytes = {{ $buffering.MemRequestBodyBytes }}
     {{end}}
-    {{if $buffering.maxResponseBodyBytes }}
-    maxResponseBodyBytes = {{ $buffering.maxResponseBodyBytes }}
+    {{if $buffering.MaxResponseBodyBytes }}
+    maxResponseBodyBytes = {{ $buffering.MaxResponseBodyBytes }}
     {{end}}
-    {{if $buffering.memResponseBodyBytes }}
-    memResponseBodyBytes = {{ $buffering.memResponseBodyBytes }}
+    {{if $buffering.MemResponseBodyBytes }}
+    memResponseBodyBytes = {{ $buffering.MemResponseBodyBytes }}
     {{end}}
-    {{if $buffering.retryExpression }}
-    retryExpression = "{{ $buffering.retryExpression }}"
+    {{if $buffering.RetryExpression }}
+    retryExpression = "{{ $buffering.R setryExpression }}"
     {{end}}
   {{end}}
 
@@ -287,6 +287,27 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+  {{end}}
+
+  {{ $buffering := getBuffering $backend }}
+  {{if $buffering }}
+  [backends.backend-{{ $backendName }}.buffering]
+    enabled = {{ $buffering.Enabled }}
+    {{if $buffering.MaxRequestBodyBytes }}
+    maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
+    {{end}}
+    {{if $buffering.MemRequestBodyBytes }}
+    memRequestBodyBytes = {{ $buffering.MemRequestBodyBytes }}
+    {{end}}
+    {{if $buffering.MaxResponseBodyBytes }}
+    maxResponseBodyBytes = {{ $buffering.MaxResponseBodyBytes }}
+    {{end}}
+    {{if $buffering.MemResponseBodyBytes }}
+    memResponseBodyBytes = {{ $buffering.MemResponseBodyBytes }}
+    {{end}}
+    {{if $buffering.RetryExpression }}
+    retryExpression = "{{ $buffering.RetryExpression }}"
+    {{end}}
   {{end}}
 
   {{ $servers := index $backendServers $backendName }}
