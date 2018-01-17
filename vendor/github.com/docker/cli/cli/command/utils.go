@@ -11,6 +11,7 @@ import (
 
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/pkg/system"
+	"github.com/spf13/pflag"
 )
 
 // CopyToFile writes the content of the reader to the specified file
@@ -116,4 +117,11 @@ func PruneFilters(dockerCli Cli, pruneFilters filters.Args) filters.Args {
 	}
 
 	return pruneFilters
+}
+
+// AddPlatformFlag adds `platform` to a set of flags for API version 1.32 and later.
+func AddPlatformFlag(flags *pflag.FlagSet, target *string) {
+	flags.StringVar(target, "platform", os.Getenv("DOCKER_DEFAULT_PLATFORM"), "Set platform if server is multi-platform capable")
+	flags.SetAnnotation("platform", "version", []string{"1.32"})
+	flags.SetAnnotation("platform", "experimental", nil)
 }

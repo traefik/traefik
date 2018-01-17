@@ -2,6 +2,7 @@ package project
 
 import (
 	"fmt"
+	"sync"
 
 	"golang.org/x/net/context"
 
@@ -12,6 +13,8 @@ import (
 // the Filter struct.
 func (p *Project) Containers(ctx context.Context, filter Filter, services ...string) ([]string, error) {
 	containers := []string{}
+	var lock sync.Mutex
+
 	err := p.forEach(services, wrapperAction(func(wrapper *serviceWrapper, wrappers map[string]*serviceWrapper) {
 		wrapper.Do(nil, events.NoEvent, events.NoEvent, func(service Service) error {
 			serviceContainers, innerErr := service.Containers(ctx)
@@ -37,7 +40,9 @@ func (p *Project) Containers(ctx context.Context, filter Filter, services ...str
 					return fmt.Errorf("Invalid container filter: %s", filter.State)
 				}
 				containerID := container.ID()
+				lock.Lock()
 				containers = append(containers, containerID)
+				lock.Unlock()
 			}
 			return nil
 		})

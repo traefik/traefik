@@ -7,9 +7,9 @@ import (
 	"path"
 	"strconv"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/docker/distribution/context"
 	storagedriver "github.com/docker/distribution/registry/storage/driver"
+	"github.com/sirupsen/logrus"
 	"github.com/stevvooe/resumable"
 
 	// register resumable hashes with import

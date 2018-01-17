@@ -70,7 +70,7 @@ func ResolveAuthConfig(ctx context.Context, cli Cli, index *registrytypes.IndexI
 		configKey = ElectAuthServer(ctx, cli)
 	}
 
-	a, _ := cli.CredentialsStore(configKey).Get(configKey)
+	a, _ := cli.ConfigFile().GetAuthConfig(configKey)
 	return a
 }
 
@@ -85,7 +85,7 @@ func ConfigureAuth(cli Cli, flUser, flPassword, serverAddress string, isDefaultR
 		serverAddress = registry.ConvertToHostname(serverAddress)
 	}
 
-	authconfig, err := cli.CredentialsStore(serverAddress).Get(serverAddress)
+	authconfig, err := cli.ConfigFile().GetAuthConfig(serverAddress)
 	if err != nil {
 		return authconfig, err
 	}

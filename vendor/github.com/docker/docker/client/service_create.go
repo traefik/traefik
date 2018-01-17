@@ -3,12 +3,13 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
-	registrytypes "github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/api/types/swarm"
-	"github.com/opencontainers/go-digest"
+	digest "github.com/opencontainers/go-digest"
+	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
 
@@ -24,24 +25,51 @@ func (cli *Client) ServiceCreate(ctx context.Context, service swarm.ServiceSpec,
 		headers["X-Registry-Auth"] = []string{options.EncodedRegistryAuth}
 	}
 
-	// ensure that the image is tagged
-	if taggedImg := imageWithTagString(service.TaskTemplate.ContainerSpec.Image); taggedImg != "" {
-		service.TaskTemplate.ContainerSpec.Image = taggedImg
+	// Make sure containerSpec is not nil when no runtime is set or the runtime is set to container
+	if service.TaskTemplate.ContainerSpec == nil && (service.TaskTemplate.Runtime == "" || service.TaskTemplate.Runtime == swarm.RuntimeContainer) {
+		service.TaskTemplate.ContainerSpec = &swarm.ContainerSpec{}
 	}
 
-	// Contact the registry to retrieve digest and platform information
-	if options.QueryRegistry {
-		distributionInspect, err := cli.DistributionInspect(ctx, service.TaskTemplate.ContainerSpec.Image, options.EncodedRegistryAuth)
-		distErr = err
-		if err == nil {
-			// now pin by digest if the image doesn't already contain a digest
-			if img := imageWithDigestString(service.TaskTemplate.ContainerSpec.Image, distributionInspect.Descriptor.Digest); img != "" {
+	if err := validateServiceSpec(service); err != nil {
+		return types.ServiceCreateResponse{}, err
+	}
+
+	// ensure that the image is tagged
+	var imgPlatforms []swarm.Platform
+	if service.TaskTemplate.ContainerSpec != nil {
+		if taggedImg := imageWithTagString(service.TaskTemplate.ContainerSpec.Image); taggedImg != "" {
+			service.TaskTemplate.ContainerSpec.Image = taggedImg
+		}
+		if options.QueryRegistry {
+			var img string
+			img, imgPlatforms, distErr = imageDigestAndPlatforms(ctx, cli, service.TaskTemplate.ContainerSpec.Image, options.EncodedRegistryAuth)
+			if img != "" {
 				service.TaskTemplate.ContainerSpec.Image = img
 			}
-			// add platforms that are compatible with the service
-			service.TaskTemplate.Placement = updateServicePlatforms(service.TaskTemplate.Placement, distributionInspect)
 		}
 	}
+
+	// ensure that the image is tagged
+	if service.TaskTemplate.PluginSpec != nil {
+		if taggedImg := imageWithTagString(service.TaskTemplate.PluginSpec.Remote); taggedImg != "" {
+			service.TaskTemplate.PluginSpec.Remote = taggedImg
+		}
+		if options.QueryRegistry {
+			var img string
+			img, imgPlatforms, distErr = imageDigestAndPlatforms(ctx, cli, service.TaskTemplate.PluginSpec.Remote, options.EncodedRegistryAuth)
+			if img != "" {
+				service.TaskTemplate.PluginSpec.Remote = img
+			}
+		}
+	}
+
+	if service.TaskTemplate.Placement == nil && len(imgPlatforms) > 0 {
+		service.TaskTemplate.Placement = &swarm.Placement{}
+	}
+	if len(imgPlatforms) > 0 {
+		service.TaskTemplate.Placement.Platforms = imgPlatforms
+	}
+
 	var response types.ServiceCreateResponse
 	resp, err := cli.post(ctx, "/services/create", nil, service, headers)
 	if err != nil {
@@ -56,6 +84,37 @@ func (cli *Client) ServiceCreate(ctx context.Context, service swarm.ServiceSpec,
 
 	ensureReaderClosed(resp)
 	return response, err
+}
+
+func imageDigestAndPlatforms(ctx context.Context, cli DistributionAPIClient, image, encodedAuth string) (string, []swarm.Platform, error) {
+	distributionInspect, err := cli.DistributionInspect(ctx, image, encodedAuth)
+	var platforms []swarm.Platform
+	if err != nil {
+		return "", nil, err
+	}
+
+	imageWithDigest := imageWithDigestString(image, distributionInspect.Descriptor.Digest)
+
+	if len(distributionInspect.Platforms) > 0 {
+		platforms = make([]swarm.Platform, 0, len(distributionInspect.Platforms))
+		for _, p := range distributionInspect.Platforms {
+			// clear architecture field for arm. This is a temporary patch to address
+			// https://github.com/docker/swarmkit/issues/2294. The issue is that while
+			// image manifests report "arm" as the architecture, the node reports
+			// something like "armv7l" (includes the variant), which causes arm images
+			// to stop working with swarm mode. This patch removes the architecture
+			// constraint for arm images to ensure tasks get scheduled.
+			arch := p.Architecture
+			if strings.ToLower(arch) == "arm" {
+				arch = ""
+			}
+			platforms = append(platforms, swarm.Platform{
+				Architecture: arch,
+				OS:           p.OS,
+			})
+		}
+	}
+	return imageWithDigest, platforms, err
 }
 
 // imageWithDigestString takes an image string and a digest, and updates
@@ -86,25 +145,22 @@ func imageWithTagString(image string) string {
 	return ""
 }
 
-// updateServicePlatforms updates the Platforms in swarm.Placement to list
-// all compatible platforms for the service, as found in distributionInspect
-// and returns a pointer to the new or updated swarm.Placement struct
-func updateServicePlatforms(placement *swarm.Placement, distributionInspect registrytypes.DistributionInspect) *swarm.Placement {
-	if placement == nil {
-		placement = &swarm.Placement{}
-	}
-	for _, p := range distributionInspect.Platforms {
-		placement.Platforms = append(placement.Platforms, swarm.Platform{
-			Architecture: p.Architecture,
-			OS:           p.OS,
-		})
-	}
-	return placement
-}
-
 // digestWarning constructs a formatted warning string using the
 // image name that could not be pinned by digest. The formatting
 // is hardcoded, but could me made smarter in the future
 func digestWarning(image string) string {
 	return fmt.Sprintf("image %s could not be accessed on a registry to record\nits digest. Each node will access %s independently,\npossibly leading to different nodes running different\nversions of the image.\n", image, image)
+}
+
+func validateServiceSpec(s swarm.ServiceSpec) error {
+	if s.TaskTemplate.ContainerSpec != nil && s.TaskTemplate.PluginSpec != nil {
+		return errors.New("must not specify both a container spec and a plugin spec in the task template")
+	}
+	if s.TaskTemplate.PluginSpec != nil && s.TaskTemplate.Runtime != swarm.RuntimePlugin {
+		return errors.New("mismatched runtime with plugin spec")
+	}
+	if s.TaskTemplate.ContainerSpec != nil && (s.TaskTemplate.Runtime != "" && s.TaskTemplate.Runtime != swarm.RuntimeContainer) {
+		return errors.New("mismatched runtime with container spec")
+	}
+	return nil
 }

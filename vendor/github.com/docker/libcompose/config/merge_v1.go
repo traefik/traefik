@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/docker/libcompose/utils"
+	"github.com/sirupsen/logrus"
 )
 
 // MergeServicesV1 merges a v1 compose file into an existing set of service configs

@@ -1,9 +1,8 @@
 package docker
 
 import (
-	"github.com/go-check/check"
-
 	"github.com/docker/docker/api/types"
+	"github.com/go-check/check"
 	"github.com/libkermit/docker"
 )
 

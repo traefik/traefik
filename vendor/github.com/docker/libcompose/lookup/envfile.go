@@ -3,7 +3,7 @@ package lookup
 import (
 	"strings"
 
-	"github.com/docker/docker/runconfig/opts"
+	"github.com/docker/cli/opts"
 	"github.com/docker/libcompose/config"
 )
 

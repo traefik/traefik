@@ -7,6 +7,8 @@ package docker
 
 import (
 	"fmt"
+
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 )
 
@@ -53,12 +55,13 @@ type APIClient interface {
 
 // NewProjectFromEnv creates a project with a client that is build from environment variables.
 func NewProjectFromEnv() (*Project, error) {
-	client, err := client.NewEnvClient()
+	cli, err := client.NewEnvClient()
 	if err != nil {
 		return nil, err
 	}
-	client.UpdateClientVersion(CurrentAPIVersion)
-	return NewProject(client), nil
+	ping := types.Ping{APIVersion: CurrentAPIVersion}
+	cli.NegotiateAPIVersionPing(ping)
+	return NewProject(cli), nil
 }
 
 // NewProject creates a project with the given client and the default attributes.

@@ -3,8 +3,9 @@ package auroradnsclient
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Sirupsen/logrus"
+
 	"github.com/edeckers/auroradnsclient/records"
+	"github.com/sirupsen/logrus"
 )
 
 // GetRecords returns a list of all records in given zone

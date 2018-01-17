@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 
 	"gopkg.in/yaml.v2"
 )

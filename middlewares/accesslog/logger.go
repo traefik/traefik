@@ -12,8 +12,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/containous/traefik/types"
+	"github.com/sirupsen/logrus"
 )
 
 type key string

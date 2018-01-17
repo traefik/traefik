@@ -48,7 +48,7 @@ func runPush(dockerCli command.Cli, remote string) error {
 	requestPrivilege := command.RegistryAuthenticationPrivilegedFunc(dockerCli, repoInfo.Index, "push")
 
 	if command.IsTrusted() {
-		return trustedPush(ctx, dockerCli, repoInfo, ref, authConfig, requestPrivilege)
+		return TrustedPush(ctx, dockerCli, repoInfo, ref, authConfig, requestPrivilege)
 	}
 
 	responseBody, err := imagePushPrivileged(ctx, dockerCli, authConfig, ref, requestPrivilege)

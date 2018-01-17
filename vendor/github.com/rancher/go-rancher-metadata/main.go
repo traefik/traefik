@@ -3,7 +3,7 @@ package main
 import (
 	"time"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/rancher/go-rancher-metadata/metadata"
 )
 
