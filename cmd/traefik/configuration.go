@@ -211,9 +211,10 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		Backend:     "jaeger",
 		ServiceName: "traefik",
 		Jaeger: &jaeger.Config{
-			SamplingServerURL: "http://localhost:5778/sampling",
-			SamplingType:      "const",
-			SamplingParam:     1.0,
+			SamplingServerURL:  "http://localhost:5778/sampling",
+			SamplingType:       "const",
+			SamplingParam:      1.0,
+			LocalAgentHostPort: "127.0.0.1:6832",
 		},
 		Zipkin: &zipkin.Config{
 			HTTPEndpoint: "http://localhost:9411/api/v1/spans",

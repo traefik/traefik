@@ -15,9 +15,10 @@ const Name = "jaeger"
 
 // Config provides configuration settings for a jaeger tracer
 type Config struct {
-	SamplingServerURL string  `description:"set the sampling server url." export:"false"`
-	SamplingType      string  `description:"set the sampling type." export:"true"`
-	SamplingParam     float64 `description:"set the sampling parameter." export:"true"`
+	SamplingServerURL  string  `description:"set the sampling server url." export:"false"`
+	SamplingType       string  `description:"set the sampling type." export:"true"`
+	SamplingParam      float64 `description:"set the sampling parameter." export:"true"`
+	LocalAgentHostPort string  `description:"set jaeger-agent's host:port that the reporter will used." export:"false"`
 }
 
 // Setup sets up the tracer
@@ -29,7 +30,8 @@ func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, err
 			Param:             c.SamplingParam,
 		},
 		Reporter: &jaegercfg.ReporterConfig{
-			LogSpans: true,
+			LogSpans:           true,
+			LocalAgentHostPort: c.LocalAgentHostPort,
 		},
 	}
 
