@@ -17,7 +17,7 @@ import (
 	"github.com/mesosphere/mesos-dns/records/state"
 )
 
-func (p *Provider) buildConfiguration() *types.Configuration {
+func (p *Provider) buildConfiguration() (*types.Configuration, []state.Task) {
 	var mesosFuncMap = template.FuncMap{
 		"getBackend":         getBackend,
 		"getPort":            p.getPort,
@@ -38,7 +38,7 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 	st, err := rg.FindMaster(p.Masters...)
 	if err != nil {
 		log.Errorf("Failed to create a client for Mesos, error: %v", err)
-		return nil
+		return nil, nil
 	}
 	tasks := taskRecords(st)
 
@@ -72,7 +72,7 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 	if err != nil {
 		log.Error(err)
 	}
-	return configuration
+	return configuration, templateObjects.Tasks
 }
 
 func taskRecords(st state.State) []state.Task {
