@@ -109,7 +109,7 @@ func TestStickyBackendHandler(t *testing.T) {
 					}
 					w.WriteHeader(http.StatusOK)
 				})
-				h := NewStickyBackendHandler(lb, nextHandler, NewStickinessParsed(test.stickiness, "/test/backend", cookieName))
+				h := NewStickyBackendHandler(lb, nextHandler, NewStickinessConfig(test.stickiness, "/test/backend", cookieName))
 
 				var stickyHost string
 				var stickyCookie string
@@ -156,8 +156,8 @@ func TestStickyBackendHandler(t *testing.T) {
 						// did the midleware return a set-cookie header?
 						if i == 0 {
 							setCookie, setCookieIndex := h.findSetCookie(recorder.Result().Header)
-							if h.sp.UseCookie {
-								if !h.sp.UseRules && !h.sp.UseIP && setCookieIndex < 0 {
+							if h.config.UseCookie {
+								if !h.config.UseRules && !h.config.UseIP && setCookieIndex < 0 {
 									t.Errorf("Sticky cookie does not exist, should exist on sticky session response")
 									return
 								}

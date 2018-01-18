@@ -25,8 +25,8 @@ import (
 	"github.com/vulcand/oxy/forward"
 )
 
-// StickinessParsed holds the parsed representation of a Stickiness object
-type StickinessParsed struct {
+// StickinessConfig holds the parsed representation of a Stickiness object
+type StickinessConfig struct {
 	BackendName      string
 	CookieEncryptKey string
 	CookieName       string
@@ -36,8 +36,8 @@ type StickinessParsed struct {
 	UseRules         bool
 }
 
-// NewStickinessParsed creates a new StickinessParsed instance
-func NewStickinessParsed(s *types.Stickiness, backendName string, cookieName string) *StickinessParsed {
+// NewStickinessConfig creates a new StickinessConfig instance
+func NewStickinessConfig(s *types.Stickiness, backendName string, cookieName string) *StickinessConfig {
 	var useCookie, useIP, useRules bool
 	rules := make([]*template.Template, 0)
 	useDefault := true
@@ -61,7 +61,7 @@ func NewStickinessParsed(s *types.Stickiness, backendName string, cookieName str
 		useCookie = true
 	}
 
-	return &StickinessParsed{
+	return &StickinessConfig{
 		BackendName:      backendName,
 		CookieEncryptKey: s.CookieEncryptKey,
 		CookieName:       cookieName,
@@ -75,14 +75,14 @@ func NewStickinessParsed(s *types.Stickiness, backendName string, cookieName str
 // StickyBackendHandler inspects criteria such as Client IP address and uses
 // consistent hashing to route a request to a specific backend server
 type StickyBackendHandler struct {
-	lb   healthcheck.LoadBalancer
-	next http.Handler
-	sp   *StickinessParsed
+	config *StickinessConfig
+	lb     healthcheck.LoadBalancer
+	next   http.Handler
 }
 
 // NewStickyBackendHandler creates a new StickyBackendHandler instance
-func NewStickyBackendHandler(lb healthcheck.LoadBalancer, next http.Handler, sp *StickinessParsed) *StickyBackendHandler {
-	return &StickyBackendHandler{lb: lb, next: next, sp: sp}
+func NewStickyBackendHandler(lb healthcheck.LoadBalancer, next http.Handler, config *StickinessConfig) *StickyBackendHandler {
+	return &StickyBackendHandler{lb: lb, next: next, config: config}
 }
 
 // ServeHTTP inspects the request for a sticky criteria and inserts the
@@ -92,17 +92,17 @@ func (h *StickyBackendHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request
 
 	var server string
 	var key string
-	requestCookie, requestCookieErr := r.Cookie(h.sp.CookieName)
+	requestCookie, requestCookieErr := r.Cookie(h.config.CookieName)
 	stripSetCookie := true
 
-	if h.sp.UseRules {
-		for i, rule := range h.sp.Rules {
+	if h.config.UseRules {
+		for i, rule := range h.config.Rules {
 			if rule != nil {
 				var b bytes.Buffer
 				var w = bufio.NewWriter(&b)
 				err := rule.Execute(w, r)
 				if err != nil {
-					log.Errorf("Backend %s: failed to execute sticky rule with index %d, error: %s", h.sp.BackendName, i, err)
+					log.Errorf("Backend %s: failed to execute sticky rule with index %d, error: %s", h.config.BackendName, i, err)
 				}
 				w.Flush()
 				key = strings.TrimSpace(b.String())
@@ -113,7 +113,7 @@ func (h *StickyBackendHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request
 		}
 	}
 
-	if key == "" && h.sp.UseIP {
+	if key == "" && h.config.UseIP {
 		var clientIP string
 		if xForwardedFor := r.Header.Get(forward.XForwardedFor); xForwardedFor != "" {
 			clientIP = strings.TrimSpace(strings.Split(xForwardedFor, ",")[0])
@@ -138,10 +138,10 @@ func (h *StickyBackendHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request
 		}
 	}
 
-	if server == "" && h.sp.UseCookie {
+	if server == "" && h.config.UseCookie {
 		stripSetCookie = false
-		if h.sp.CookieEncryptKey != "" && requestCookieErr == nil {
-			server = aesDecryptString(h.sp.CookieEncryptKey, requestCookie.Value)
+		if h.config.CookieEncryptKey != "" && requestCookieErr == nil {
+			server = aesDecryptString(h.config.CookieEncryptKey, requestCookie.Value)
 		}
 	}
 
@@ -156,7 +156,7 @@ func (h *StickyBackendHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request
 				}
 			}
 		} else {
-			r.AddCookie(&http.Cookie{Name: h.sp.CookieName, Value: server})
+			r.AddCookie(&http.Cookie{Name: h.config.CookieName, Value: server})
 		}
 	}
 
@@ -172,7 +172,7 @@ func (h *StickyBackendHandler) findSetCookie(header http.Header) (*http.Cookie, 
 		}
 		for i, setCookieHeader := range setCookieHeaders {
 			setCookieRequest.Header.Set("Cookie", setCookieHeader)
-			setCookie, err := setCookieRequest.Cookie(h.sp.CookieName)
+			setCookie, err := setCookieRequest.Cookie(h.config.CookieName)
 			if err == nil {
 				return setCookie, i
 			}
@@ -204,7 +204,7 @@ func (s *stickyResponseWriter) Write(bytes []byte) (int, error) {
 func (s *stickyResponseWriter) WriteHeader(status int) {
 	setCookie, setCookieIndex := s.h.findSetCookie(s.rw.Header())
 	if setCookieIndex >= 0 {
-		requestCookie, requestCookieErr := s.r.Cookie(s.h.sp.CookieName)
+		requestCookie, requestCookieErr := s.r.Cookie(s.h.config.CookieName)
 		if requestCookieErr == nil {
 			log.Debugf("Sticky backend requested was %s, actual backend %s", requestCookie.Value, setCookie.Value)
 		}
@@ -212,10 +212,10 @@ func (s *stickyResponseWriter) WriteHeader(status int) {
 		if s.stripSetCookie {
 			// remove the set-cookie header as it does not need to be passed to the user agent
 			s.rw.Header()["Set-Cookie"] = append(s.rw.Header()["Set-Cookie"][:setCookieIndex], s.rw.Header()["Set-Cookie"][setCookieIndex+1:]...)
-		} else if s.h.sp.CookieEncryptKey != "" {
+		} else if s.h.config.CookieEncryptKey != "" {
 			// encrypt the set-cookie value
 			setCookiePlainText := setCookie.String()
-			setCookie.Value = aesEncryptString(s.h.sp.CookieEncryptKey, setCookie.Value)
+			setCookie.Value = aesEncryptString(s.h.config.CookieEncryptKey, setCookie.Value)
 			setCookieEncrypted := setCookie.String()
 			s.rw.Header()["Set-Cookie"][setCookieIndex] = strings.Replace(s.rw.Header()["Set-Cookie"][setCookieIndex], setCookiePlainText, setCookieEncrypted, -1)
 		}
