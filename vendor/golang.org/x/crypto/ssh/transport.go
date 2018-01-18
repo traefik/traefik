@@ -6,12 +6,20 @@ package ssh
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"io"
+	"log"
 )
 
+// debugTransport if set, will print packet types as they go over the
+// wire. No message decoding is done, to minimize the impact on timing.
+const debugTransport = false
+
 const (
-	gcmCipherID = "aes128-gcm@openssh.com"
+	gcmCipherID    = "aes128-gcm@openssh.com"
+	aes128cbcID    = "aes128-cbc"
+	tripledescbcID = "3des-cbc"
 )
 
 // packetConn represents a transport that implements packet based
@@ -20,7 +28,9 @@ type packetConn interface {
 	// Encrypt and send a packet of data to the remote peer.
 	writePacket(packet []byte) error
 
-	// Read a packet from the connection
+	// Read a packet from the connection. The read is blocking,
+	// i.e. if error is nil, then the returned byte slice is
+	// always non-empty.
 	readPacket() ([]byte, error)
 
 	// Close closes the write-side of the connection.
@@ -36,21 +46,8 @@ type transport struct {
 	bufReader *bufio.Reader
 	bufWriter *bufio.Writer
 	rand      io.Reader
-
+	isClient  bool
 	io.Closer
-
-	// Initial H used for the session ID. Once assigned this does
-	// not change, even during subsequent key exchanges.
-	sessionID []byte
-}
-
-func (t *transport) getSessionID() []byte {
-	if t.sessionID == nil {
-		panic("session ID not set yet")
-	}
-	s := make([]byte, len(t.sessionID))
-	copy(s, t.sessionID)
-	return s
 }
 
 // packetCipher represents a combination of SSH encryption/MAC
@@ -80,30 +77,53 @@ type connectionState struct {
 // both directions are triggered by reading and writing a msgNewKey packet
 // respectively.
 func (t *transport) prepareKeyChange(algs *algorithms, kexResult *kexResult) error {
-	if t.sessionID == nil {
-		t.sessionID = kexResult.H
-	}
-
-	kexResult.SessionID = t.sessionID
-
-	if ciph, err := newPacketCipher(t.reader.dir, algs.r, kexResult); err != nil {
+	ciph, err := newPacketCipher(t.reader.dir, algs.r, kexResult)
+	if err != nil {
 		return err
-	} else {
-		t.reader.pendingKeyChange <- ciph
 	}
+	t.reader.pendingKeyChange <- ciph
 
-	if ciph, err := newPacketCipher(t.writer.dir, algs.w, kexResult); err != nil {
+	ciph, err = newPacketCipher(t.writer.dir, algs.w, kexResult)
+	if err != nil {
 		return err
-	} else {
-		t.writer.pendingKeyChange <- ciph
 	}
+	t.writer.pendingKeyChange <- ciph
 
 	return nil
 }
 
+func (t *transport) printPacket(p []byte, write bool) {
+	if len(p) == 0 {
+		return
+	}
+	who := "server"
+	if t.isClient {
+		who = "client"
+	}
+	what := "read"
+	if write {
+		what = "write"
+	}
+
+	log.Println(what, who, p[0])
+}
+
 // Read and decrypt next packet.
-func (t *transport) readPacket() ([]byte, error) {
-	return t.reader.readPacket(t.bufReader)
+func (t *transport) readPacket() (p []byte, err error) {
+	for {
+		p, err = t.reader.readPacket(t.bufReader)
+		if err != nil {
+			break
+		}
+		if len(p) == 0 || (p[0] != msgIgnore && p[0] != msgDebug) {
+			break
+		}
+	}
+	if debugTransport {
+		t.printPacket(p, false)
+	}
+
+	return p, err
 }
 
 func (s *connectionState) readPacket(r *bufio.Reader) ([]byte, error) {
@@ -113,12 +133,27 @@ func (s *connectionState) readPacket(r *bufio.Reader) ([]byte, error) {
 		err = errors.New("ssh: zero length packet")
 	}
 
-	if len(packet) > 0 && packet[0] == msgNewKeys {
-		select {
-		case cipher := <-s.pendingKeyChange:
-			s.packetCipher = cipher
-		default:
-			return nil, errors.New("ssh: got bogus newkeys message.")
+	if len(packet) > 0 {
+		switch packet[0] {
+		case msgNewKeys:
+			select {
+			case cipher := <-s.pendingKeyChange:
+				s.packetCipher = cipher
+			default:
+				return nil, errors.New("ssh: got bogus newkeys message")
+			}
+
+		case msgDisconnect:
+			// Transform a disconnect message into an
+			// error. Since this is lowest level at which
+			// we interpret message types, doing it here
+			// ensures that we don't have to handle it
+			// elsewhere.
+			var msg disconnectMsg
+			if err := Unmarshal(packet, &msg); err != nil {
+				return nil, err
+			}
+			return nil, &msg
 		}
 	}
 
@@ -131,6 +166,9 @@ func (s *connectionState) readPacket(r *bufio.Reader) ([]byte, error) {
 }
 
 func (t *transport) writePacket(packet []byte) error {
+	if debugTransport {
+		t.printPacket(packet, true)
+	}
 	return t.writer.writePacket(t.bufWriter, t.rand, packet)
 }
 
@@ -171,6 +209,8 @@ func newTransport(rwc io.ReadWriteCloser, rand io.Reader, isClient bool) *transp
 		},
 		Closer: rwc,
 	}
+	t.isClient = isClient
+
 	if isClient {
 		t.reader.dir = serverKeys
 		t.writer.dir = clientKeys
@@ -215,11 +255,20 @@ func newPacketCipher(d direction, algs directionAlgorithms, kex *kexResult) (pac
 	iv, key, macKey := generateKeys(d, algs, kex)
 
 	if algs.Cipher == gcmCipherID {
-		return newGCMCipher(iv, key, macKey)
+		return newGCMCipher(iv, key)
+	}
+
+	if algs.Cipher == aes128cbcID {
+		return newAESCBCCipher(iv, key, macKey, algs)
+	}
+
+	if algs.Cipher == tripledescbcID {
+		return newTripleDESCBCCipher(iv, key, macKey, algs)
 	}
 
 	c := &streamPacketCipher{
 		mac: macModes[algs.MAC].new(macKey),
+		etm: macModes[algs.MAC].etm,
 	}
 	c.macResult = make([]byte, c.mac.Size())
 
@@ -294,7 +343,7 @@ func readVersion(r io.Reader) ([]byte, error) {
 	var ok bool
 	var buf [1]byte
 
-	for len(versionString) < maxVersionStringBytes {
+	for length := 0; length < maxVersionStringBytes; length++ {
 		_, err := io.ReadFull(r, buf[:])
 		if err != nil {
 			return nil, err
@@ -302,6 +351,13 @@ func readVersion(r io.Reader) ([]byte, error) {
 		// The RFC says that the version should be terminated with \r\n
 		// but several SSH servers actually only send a \n.
 		if buf[0] == '\n' {
+			if !bytes.HasPrefix(versionString, []byte("SSH-")) {
+				// RFC 4253 says we need to ignore all version string lines
+				// except the one containing the SSH version (provided that
+				// all the lines do not exceed 255 bytes in total).
+				versionString = versionString[:0]
+				continue
+			}
 			ok = true
 			break
 		}

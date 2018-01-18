@@ -190,6 +190,10 @@
 
 [[constraint]]
   branch = "master"
+  name = "github.com/vulcand/vulcand"
+
+[[constraint]]
+  branch = "master"
   name = "github.com/libkermit/docker"
 
 [[constraint]]

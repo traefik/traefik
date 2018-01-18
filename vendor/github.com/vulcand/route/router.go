@@ -1,5 +1,5 @@
 /*
-package route provides http package-compatible routing library. It can route http requests by by hostname, method, path and headers.
+package route provides http package-compatible routing library. It can route http requests by hostname, method, path and headers.
 
 Route defines simple language for matching requests based on Go syntax. Route provides series of matchers that follow the syntax:
 
