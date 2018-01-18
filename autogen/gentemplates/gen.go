@@ -93,7 +93,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
   {{ $buffering := getBuffering $service.Attributes }}
   {{if $buffering }}
   [backends.backend-{{ $backendName }}.buffering]
-    enabled = "{{ $buffering.Enabled }}"
+    enabled = {{ $buffering.Enabled }}
     {{if $buffering.MaxRequestBodyBytes }}
     maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
     {{end}}
@@ -107,7 +107,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
     memResponseBodyBytes = {{ $buffering.MemResponseBodyBytes }}
     {{end}}
     {{if $buffering.RetryExpression }}
-    retryExpression = "{{ $buffering.R setryExpression }}"
+    retryExpression = "{{ $buffering.RetryExpression }}"
     {{end}}
   {{end}}
 
@@ -618,6 +618,27 @@ var _templatesEcsTmpl = []byte(`[backends]
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+  {{end}}
+
+  {{ $buffering := getBuffering $firstInstance }}
+  {{if $buffering }}
+  [backends.backend-{{ $serviceName }}.buffering]
+    enabled = {{ $buffering.Enabled }}
+    {{if $buffering.MaxRequestBodyBytes }}
+    maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
+    {{end}}
+    {{if $buffering.MemRequestBodyBytes }}
+    memRequestBodyBytes = {{ $buffering.MemRequestBodyBytes }}
+    {{end}}
+    {{if $buffering.MaxResponseBodyBytes }}
+    maxResponseBodyBytes = {{ $buffering.MaxResponseBodyBytes }}
+    {{end}}
+    {{if $buffering.MemResponseBodyBytes }}
+    memResponseBodyBytes = {{ $buffering.MemResponseBodyBytes }}
+    {{end}}
+    {{if $buffering.RetryExpression }}
+    retryExpression = "{{ $buffering.RetryExpression }}"
+    {{end}}
   {{end}}
 
   {{range $serverName, $server := getServers $instances }}

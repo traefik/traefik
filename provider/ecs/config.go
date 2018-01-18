@@ -25,6 +25,7 @@ func (p *Provider) buildConfiguration(services map[string][]ecsInstance) (*types
 		"getLoadBalancer":   getLoadBalancer,
 		"getMaxConn":        getMaxConn,
 		"getHealthCheck":    getHealthCheck,
+		"getBuffering":      getBuffering,
 		"getServers":        getServers,
 
 		// TODO Deprecated [breaking]
@@ -171,6 +172,23 @@ func getHealthCheck(instance ecsInstance) *types.HealthCheck {
 		Path:     path,
 		Port:     port,
 		Interval: interval,
+	}
+}
+
+func getBuffering(instance ecsInstance) *types.Buffering {
+	enabled := getBoolValue(instance, label.TraefikBackendBufferingEnabled, false)
+
+	if !enabled {
+		return nil
+	}
+
+	return &types.Buffering{
+		Enabled:              enabled,
+		MaxRequestBodyBytes:  getInt64Value(instance, label.TraefikBackendBufferingMaxRequestBodyBytes, 0),
+		MaxResponseBodyBytes: getInt64Value(instance, label.TraefikBackendBufferingMaxResponseBodyBytes, 0),
+		MemRequestBodyBytes:  getInt64Value(instance, label.TraefikBackendBufferingMemRequestBodyBytes, 0),
+		MemResponseBodyBytes: getInt64Value(instance, label.TraefikBackendBufferingMemResponseBodyBytes, 0),
+		RetryExpression:      getStringValue(instance, label.TraefikBackendBufferingRetryExpression, ""),
 	}
 }
 
