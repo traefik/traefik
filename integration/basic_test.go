@@ -68,7 +68,7 @@ func (s *SimpleSuite) TestDefaultEntryPoints(c *check.C) {
 	defer cmd.Process.Kill()
 
 	err = try.Do(500*time.Millisecond, func() error {
-		expected := "\"DefaultEntryPoints\":[\"http\"]"
+		expected := `\"DefaultEntryPoints\":[\"http\"]`
 		actual := output.String()
 
 		if !strings.Contains(actual, expected) {
