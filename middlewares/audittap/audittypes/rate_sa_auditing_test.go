@@ -64,7 +64,7 @@ func TestRateSA100AuditEventIsRepayment(t *testing.T) {
 
 	types.TheClock = T0
 
-	sa100Decl, err := ioutil.ReadFile("testdata/HMRC-SA-SA100-TIL.xml")
+	sa100Decl, err := ioutil.ReadFile("testdata/HMRC-SA-SA100-TMSG.xml")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,7 +77,7 @@ func TestRateSA100AuditEventIsRepayment(t *testing.T) {
 	event.AppendRequest(req)
 	event.AppendResponse(respHdrs, respInfo)
 
-	assert.Equal(t, "HMRC-SA-SA100-TIL", event.AuditType)
+	assert.Equal(t, "HMRC-SA-SA100-TMSG", event.AuditType)
 	assert.Equal(t, "true", event.Detail.IsRepayment)
 }
 
@@ -145,7 +145,7 @@ func TestRateSA800AuditEvent(t *testing.T) {
 
 	types.TheClock = T0
 
-	sa800Decl, err := ioutil.ReadFile("testdata/HMRC-SA-SA800-ATT-TIL.xml")
+	sa800Decl, err := ioutil.ReadFile("testdata/HMRC-SA-SA800-ATT-TMSG.xml")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -158,7 +158,7 @@ func TestRateSA800AuditEvent(t *testing.T) {
 	event.AppendRequest(req)
 	event.AppendResponse(respHdrs, respInfo)
 
-	assert.Equal(t, "HMRC-SA-SA800-ATT-TIL", event.AuditType)
+	assert.Equal(t, "HMRC-SA-SA800-ATT-TMSG", event.AuditType)
 	assert.NotEmpty(t, event.RequestPayload)
 	saData := event.RequestPayload.GetDataMap("contents").GetDataMap("IRenvelope").GetDataMap("SApartnership")
 	assert.NotEmpty(t, saData)
@@ -171,7 +171,7 @@ func TestRateSA900AuditEvent(t *testing.T) {
 
 	types.TheClock = T0
 
-	sa900Decl, err := ioutil.ReadFile("testdata/HMRC-SA-SA900-ATT-TIL.xml")
+	sa900Decl, err := ioutil.ReadFile("testdata/HMRC-SA-SA900-ATT-TMSG.xml")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -184,7 +184,7 @@ func TestRateSA900AuditEvent(t *testing.T) {
 	event.AppendRequest(req)
 	event.AppendResponse(respHdrs, respInfo)
 
-	assert.Equal(t, "HMRC-SA-SA900-ATT-TIL", event.AuditType)
+	assert.Equal(t, "HMRC-SA-SA900-ATT-TMSG", event.AuditType)
 	assert.NotEmpty(t, event.RequestPayload)
 	saData := event.RequestPayload.GetDataMap("contents").GetDataMap("IRenvelope").GetDataMap("SAtrust")
 	assert.NotEmpty(t, saData)

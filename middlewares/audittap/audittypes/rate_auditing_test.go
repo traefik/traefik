@@ -16,7 +16,7 @@ import (
 func TestRateAuditEvent(t *testing.T) {
 
 	types.TheClock = T0
-	vatDecl, err := ioutil.ReadFile("testdata/HMRC-VAT-DEC-TIL.xml")
+	vatDecl, err := ioutil.ReadFile("testdata/HMRC-VAT-DEC-TMSG.xml")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -36,7 +36,7 @@ func TestRateAuditEvent(t *testing.T) {
 	event.AppendRequest(req)
 	event.AppendResponse(respHdrs, respInfo)
 
-	assert.Equal(t, "HMRC-VAT-DEC-TIL", event.AuditType)
+	assert.Equal(t, "HMRC-VAT-DEC-TMSG", event.AuditType)
 	assert.Equal(t, "1", event.Version)
 	assert.Equal(t, "POST", event.Method)
 	assert.Equal(t, "/some/rate/url", event.Path)
@@ -71,7 +71,7 @@ func TestRateAuditEvent(t *testing.T) {
 	assert.Equal(t, types.DataMap{"AGT2_ID1": "TTYY1111", "AGT2_ID2": "TTYY2222"}, event.Enrolments.Get("SERV_AGT2"))
 
 	shouldAudit := event.EnforceConstraints(AuditConstraints{MaxAuditLength: 100000, MaxRequestContentsLength: 100000})
-	assert.False(t, shouldAudit)
+	assert.True(t, shouldAudit)
 }
 
 func TestChrisRateAuditEvent(t *testing.T) {
@@ -231,6 +231,31 @@ func TestXmlMissingDetails(t *testing.T) {
 	decoder := xml.NewDecoder(bytes.NewReader([]byte(x)))
 	_, err := gtmGetMessageParts(decoder, "")
 	assert.Error(t, err)
+}
+
+func TestProcessingSkippedForTestInLive(t *testing.T) {
+	types.TheClock = T0
+
+	sa100Decl, err := ioutil.ReadFile("testdata/HMRC-SA-SA100-TIL.xml")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest("POST", "/submission?qq=zz", bytes.NewReader([]byte(sa100Decl)))
+	respHdrs := http.Header{}
+	respInfo := types.ResponseInfo{}
+
+	event := &RATEAuditEvent{}
+	event.AppendRequest(req)
+	event.AppendResponse(respHdrs, respInfo)
+
+	assert.Equal(t, "HMRC-SA-SA100-TIL", event.AuditType)
+	assert.Equal(t, types.DataMap{}, event.RequestPayload.GetDataMap("contents"))
+	assert.Nil(t, event.Identifiers)
+	assert.Nil(t, event.Enrolments)
+	assert.Equal(t, "", event.Detail.IsRepayment)
+	assert.False(t, event.EnforceConstraints(AuditConstraints{MaxAuditLength: 1000000, MaxRequestContentsLength: 100000}))
+
 }
 
 func TestNewRateAudit(t *testing.T) {

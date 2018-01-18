@@ -2,7 +2,7 @@
 	<EnvelopeVersion>2.0</EnvelopeVersion>
 	<Header>
 		<MessageDetails>
-			<Class>HMRC-SA-SA800-ATT-TIL</Class>
+			<Class>HMRC-SA-SA800-ATT-TMSG</Class>
 			<Qualifier>request</Qualifier>
 			<Function>submit</Function>
 			<TransactionID>1A035090115</TransactionID>

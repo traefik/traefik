@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	// TestInLive signify test messages for the RATE systems
+	// TestInLive signify test messages for the RATE systems, these will not be audited
 	TestInLive = "-TIL"
 )
 
@@ -83,10 +83,13 @@ func appendMessageContent(ev *RATEAuditEvent, req *http.Request) {
 
 		if err == nil {
 			extractor.populateAuditEvent(&ev.AuditEvent)
-			extractor.populateDetail(&ev.Detail)
-			extractor.populateIdentifiers(ev)
-			extractor.populateEnrolments(ev)
-			extractor.populateMessageSpecificInfo(ev)
+			// It will not get audited anyway so avoid the additional work
+			if !strings.HasSuffix(ev.AuditType, TestInLive) {
+				extractor.populateDetail(&ev.Detail)
+				extractor.populateIdentifiers(ev)
+				extractor.populateEnrolments(ev)
+				extractor.populateMessageSpecificInfo(ev)
+			}
 		} else {
 			log.Debugf("Error processing RATE message: %v", err)
 		}
@@ -101,7 +104,10 @@ func appendMessageContent(ev *RATEAuditEvent, req *http.Request) {
 
 // AppendResponse appends information about the response to the audit event
 func (ev *RATEAuditEvent) AppendResponse(responseHeaders http.Header, respInfo types.ResponseInfo) {
-	appendCommonResponseFields(&ev.AuditEvent, responseHeaders, respInfo)
+	// Avoid the processing for test messages
+	if !strings.HasSuffix(ev.AuditType, TestInLive) {
+		appendCommonResponseFields(&ev.AuditEvent, responseHeaders, respInfo)
+	}
 }
 
 // EnforceConstraints ensures the audit event satisfies constraints

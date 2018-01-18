@@ -193,7 +193,7 @@ func TestEnforceConstraintsFailDropsAudit(t *testing.T) {
 	tap, err := NewAuditTap(&conf, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
 	assert.NoError(t, err)
 
-	vatDecl, err := ioutil.ReadFile("audittypes/testdata/HMRC-VAT-DEC-TIL.xml") // Test In Live event
+	vatDecl, err := ioutil.ReadFile("audittypes/testdata/HMRC-SA-SA100-TIL.xml") // Test In Live event
 	if err != nil {
 		t.Fatal(err)
 	}
