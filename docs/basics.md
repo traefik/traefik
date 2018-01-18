@@ -367,21 +367,69 @@ For example:
 
 ### Sticky sessions
 
-Sticky sessions are supported with both load balancers.  
-When sticky sessions are enabled, a cookie is set on the initial request.
-The default cookie name is an abbreviation of a sha1 (ex: `_1d52e`).
-On subsequent requests, the client will be directed to the backend stored in the cookie if it is still healthy.
-If not, a new backend will be assigned.
+Sticky sessions are supported with both load balancers.
+Sticky session options are evaluated in order:
 
+- Rules templates
+- Client IP address
+- Cookie (default)
+
+#### Sticky rules templates
 
 ```toml
 [backends]
   [backends.backend1]
     # Enable sticky session
     [backends.backend1.loadbalancer.stickiness]
+      rules = [
+        '{{regexFind "^/authors/\\d+" .URL.Path}}',
+        '{{regexFind "^/posts/\\d+" .URL.Path}}',
+        '{{index .Header "X-Backend" | join ""}}'
+      ]
+
+    # Consistent Hash the /authors/{id} path, if it exists
+    # Consistent Hash the /posts/{id} path, if it exists
+    # Consistent Hash the value of the X-Backend header, if it exists
+```
+
+Templates are evaluated against the current `*http.Request` and trimmed for whitespace.
+The first non-blank result is used as the key to consistently hash to a backend.
+Each time the list of backends updates, sessions may be assigned to a new backend.
+
+#### Sticky client IP address
+
+```toml
+[backends]
+  [backends.backend1]
+    # Enable sticky session
+    [backends.backend1.loadbalancer.stickiness]
+      ip = true
+```
+
+Uses the client IP address as the key to consistently hash to a backend.
+Each time the list of backends updates, sessions may be assigned to a new backend.
+Will use the `X-Forwarded-For` HTTP Header to determine client IP address if available.
+
+#### Sticky cookie
+
+The default cookie name is an abbreviation of a sha1 (ex: `_1d52e`).
+On subsequent requests, the client will be directed to the backend stored in the cookie if it is still healthy.
+If not, a new backend will be assigned.
+The cookie will be encrypted if an encryption key is supplied.
+
+```toml
+[backends]
+  [backends.backend1]
+    # Enable sticky session
+    [backends.backend1.loadbalancer.stickiness]
+      cookie = true
+
+    # Encrypt the cookie
+    # Optional
+    #
+    #  cookieEncryptKey = "my_secret_key"
 
     # Customize the cookie name
-    #
     # Optional
     # Default: a sha1 (6 chars)
     #
