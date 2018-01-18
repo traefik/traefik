@@ -115,7 +115,9 @@ func (h *StickyBackendHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request
 
 	if key == "" && h.config.UseIP {
 		var clientIP string
-		if xForwardedFor := r.Header.Get(forward.XForwardedFor); xForwardedFor != "" {
+		if xRealIP := r.Header.Get(forward.XRealIp); xRealIP != "" {
+			clientIP = strings.TrimSpace(xRealIP)
+		} else if xForwardedFor := r.Header.Get(forward.XForwardedFor); xForwardedFor != "" {
 			clientIP = strings.TrimSpace(strings.Split(xForwardedFor, ",")[0])
 		} else {
 			clientIP, _, _ = net.SplitHostPort(r.RemoteAddr)

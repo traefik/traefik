@@ -41,6 +41,15 @@ func TestStickyBackendHandler(t *testing.T) {
 		{
 			amountServer: 5,
 			headers: map[string]string{
+				"X-Real-IP": "172.17.0.1",
+			},
+			stickiness: &types.Stickiness{
+				IP: true,
+			},
+		},
+		{
+			amountServer: 5,
+			headers: map[string]string{
 				"X-Forwarded-For": "172.17.0.1,192.168.1.1",
 			},
 			stickiness: &types.Stickiness{

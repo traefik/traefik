@@ -408,7 +408,7 @@ Each time the list of backends updates, sessions may be assigned to a new backen
 
 Uses the client IP address as the key to consistently hash to a backend.
 Each time the list of backends updates, sessions may be assigned to a new backend.
-Will use the `X-Forwarded-For` HTTP Header to determine client IP address if available.
+Will use the `X-Real-IP` and `X-Forwarded-For` HTTP headers to determine client IP address if available.
 
 #### Sticky cookie
 
