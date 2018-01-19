@@ -5,7 +5,7 @@ package forward
 
 import (
 	"crypto/tls"
-	"io"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
@@ -214,7 +214,7 @@ func (f *Forwarder) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if f.log.Level >= log.DebugLevel {
 		logEntry := f.log.WithField("Request", utils.DumpHttpRequest(req))
 		logEntry.Debug("vulcand/oxy/forward: begin ServeHttp on request")
-		defer logEntry.Debug("vulcand/oxy/forward: competed ServeHttp on request")
+		defer logEntry.Debug("vulcand/oxy/forward: completed ServeHttp on request")
 	}
 
 	if f.stateListener != nil {
@@ -282,6 +282,7 @@ func (f *httpForwarder) serveWebSocket(w http.ResponseWriter, req *http.Request,
 	outReq := f.copyWebSocketRequest(req)
 
 	dialer := websocket.DefaultDialer
+
 	if outReq.URL.Scheme == "wss" && f.tlsClientConfig != nil {
 		dialer.TLSClientConfig = f.tlsClientConfig.Clone()
 		// WebSocket is only in http/1.1
@@ -300,10 +301,10 @@ func (f *httpForwarder) serveWebSocket(w http.ResponseWriter, req *http.Request,
 				return
 			}
 
-			conn, _, errHij := hijacker.Hijack()
-			if errHij != nil {
+			conn, _, errHijack := hijacker.Hijack()
+			if errHijack != nil {
 				log.Errorf("vulcand/oxy/forward/websocket: Failed to hijack responseWriter")
-				ctx.errHandler.ServeHTTP(w, req, errHij)
+				ctx.errHandler.ServeHTTP(w, req, errHijack)
 				return
 			}
 			defer conn.Close()
@@ -324,6 +325,7 @@ func (f *httpForwarder) serveWebSocket(w http.ResponseWriter, req *http.Request,
 	}}
 
 	utils.RemoveHeaders(resp.Header, WebsocketUpgradeHeaders...)
+
 	underlyingConn, err := upgrader.Upgrade(w, req, resp.Header)
 	if err != nil {
 		log.Errorf("vulcand/oxy/forward/websocket: Error while upgrading connection : %v", err)
@@ -332,29 +334,45 @@ func (f *httpForwarder) serveWebSocket(w http.ResponseWriter, req *http.Request,
 	defer underlyingConn.Close()
 	defer targetConn.Close()
 
-	errc := make(chan error, 2)
-	replicate := func(dst io.Writer, src io.Reader, dstName string, srcName string) {
-		_, errCopy := io.Copy(dst, src)
-		if errCopy != nil {
-			f.log.Errorf("vulcand/oxy/forward/websocket: Error when copying from %s to %s using io.Copy: %v", srcName, dstName, errCopy)
-		} else {
-			f.log.Infof("vulcand/oxy/forward/websocket: Copying from %s to %s using io.Copy completed without error.", srcName, dstName)
+	errClient := make(chan error)
+	errBackend := make(chan error)
+	replicateWebsocketConn := func(dst, src *websocket.Conn, errc chan error) {
+		for {
+			msgType, msg, err := src.ReadMessage()
+
+			if err != nil {
+				m := websocket.FormatCloseMessage(websocket.CloseNormalClosure, fmt.Sprintf("%v", err))
+				if e, ok := err.(*websocket.CloseError); ok {
+					if e.Code != websocket.CloseNoStatusReceived {
+						m = websocket.FormatCloseMessage(e.Code, e.Text)
+					}
+				}
+				errc <- err
+				dst.WriteMessage(websocket.CloseMessage, m)
+				break
+			}
+			err = dst.WriteMessage(msgType, msg)
+			if err != nil {
+				errc <- err
+				break
+			}
 		}
-		errc <- errCopy
 	}
 
-	go replicate(targetConn.UnderlyingConn(), underlyingConn.UnderlyingConn(), "backend", "client")
+	go replicateWebsocketConn(underlyingConn, targetConn, errClient)
+	go replicateWebsocketConn(targetConn, underlyingConn, errBackend)
 
-	// Try to read the first message
-	msgType, msg, err := targetConn.ReadMessage()
-	if err != nil {
-		log.Errorf("vulcand/oxy/forward/websocket: Couldn't read first message : %v", err)
-	} else {
-		underlyingConn.WriteMessage(msgType, msg)
+	var message string
+	select {
+	case err = <-errClient:
+		message = "vulcand/oxy/forward/websocket: Error when copying from backend to client: %v"
+	case err = <-errBackend:
+		message = "vulcand/oxy/forward/websocket: Error when copying from client to backend: %v"
+
 	}
-
-	go replicate(underlyingConn.UnderlyingConn(), targetConn.UnderlyingConn(), "client", "backend")
-	<-errc
+	if e, ok := err.(*websocket.CloseError); !ok || e.Code == websocket.CloseAbnormalClosure {
+		f.log.Errorf(message, err)
+	}
 }
 
 // copyWebsocketRequest makes a copy of the specified request.
