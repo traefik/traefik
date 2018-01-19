@@ -176,3 +176,30 @@ func TestScrollToNextElement(t *testing.T) {
 	assert.Equal(t, "ElemB", el2.Name.Local)
 	assert.Equal(t, "ElemC", el3.Name.Local)
 }
+
+func TestEmptiesContentOfSpecifiedElements(t *testing.T) {
+
+	x := `
+    <ElemA>
+      <ATextElem>AndTheText</ATextElem>
+			<ElType1>OtherText</ElType1>
+      <ElemAChildren>
+				<Child1 AnAttr="anattr" OtherAttr="otherattr">IAmChild1</Child1>
+				<ElType2 AnAttr="anattr" OtherAttr="otherattr">IAmChild2</ElType2>
+      </ElemAChildren>
+    </ElemA>
+  `
+
+	doc := etree.NewDocument()
+	if err := doc.ReadFromString(x); err != nil {
+		t.Fatal(err)
+	}
+
+	EmptyAllElementOccurences(doc.Root(), []string{"ElType1", "ElType2"})
+
+	s, _ := doc.WriteToString()
+	assert.Contains(t, s, "ATextElem")
+	assert.Contains(t, s, "Child1")
+	assert.Contains(t, s, "<ElType1></ElType1>")
+	assert.Contains(t, s, "<ElType2 AnAttr=\"anattr\" OtherAttr=\"otherattr\"></ElType2>")
+}

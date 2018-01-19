@@ -55,8 +55,12 @@ func attributesToDataMap(el *etree.Element) types.DataMap {
 
 // isExcluded checks if the value s is in slice (must be supplied sorted)
 func isExcluded(s string, exclusions []string) bool {
-	i := sort.SearchStrings(exclusions, s)
-	return i < len(exclusions) && exclusions[i] == s
+	return contains(s, exclusions)
+}
+
+func contains(s string, items []string) bool {
+	i := sort.SearchStrings(items, s)
+	return i < len(items) && items[i] == s
 }
 
 // ElementInnerToDocument transforms xml.StartElement contents to etree.Document. It ignores any attributes in src.
@@ -93,4 +97,17 @@ func ScrollToNextElement(decoder *xml.Decoder) (*xml.StartElement, error) {
 	}
 	return &xml.StartElement{}, errors.New("No root XML element found")
 
+}
+
+// EmptyAllElementOccurences removes elements whose names match any excludeTags
+func EmptyAllElementOccurences(el *etree.Element, tags []string) {
+	sort.Strings(tags)
+	for _, c := range el.ChildElements() {
+		if contains(c.Tag, tags) {
+			c.SetText("")
+		}
+		if len(c.ChildElements()) > 0 {
+			EmptyAllElementOccurences(c, tags)
+		}
+	}
 }

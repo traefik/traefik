@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/beevik/etree"
@@ -53,10 +54,11 @@ func TestRateSA100AuditEvent(t *testing.T) {
 
 	assert.Equal(t, "HMRC-SA-SA100-ATT", event.AuditType)
 	assert.NotEmpty(t, event.RequestPayload)
-	saData := event.RequestPayload.GetDataMap("contents").GetDataMap("IRenvelope").GetDataMap("MTR").GetDataMap("SA100")
-	assert.NotEmpty(t, saData)
-	assert.Equal(t, "GY001093A", saData.GetDataMap("YourPersonalDetails").GetString("NationalInsuranceNumber"))
-	assert.Nil(t, saData.Get("AttachedFiles"))
+	saData := event.RequestPayload.GetString("contents")
+	assert.True(t, strings.HasPrefix(saData, "<?xml version=\"1.0\"?>\n<GovTalkMessage"))
+	assert.Contains(t, saData, "<NationalInsuranceNumber>GY001093A")
+	assert.Contains(t, saData, "AttachedFiles")
+	assert.Contains(t, saData, "<Attachment FileFormat=\"pdf\" Filename=\"tubemap.pdf\" Description=\"TubeMap\" Size=\"315001\"></Attachment>")
 	assert.Equal(t, "false", event.Detail.IsRepayment)
 }
 
@@ -85,6 +87,7 @@ func TestRateSA100AuditEventIsRepaymentWhenEmpty(t *testing.T) {
 
 	types.TheClock = T0
 	x := `	
+	<GovTalkMessage>
 	<Body>
 	<IRenvelope xmlns="http://www.govtalk.gov.uk/taxation/SA/SA100/15-16/1">
 		<MTR>
@@ -100,6 +103,7 @@ func TestRateSA100AuditEventIsRepaymentWhenEmpty(t *testing.T) {
 		</MTR>
 	</IRenvelope>
 	</Body>	
+	</GovTalkMessage>
 	`
 	gtm, err := makePartialGtmWithBody(x)
 	if err != nil {
@@ -116,6 +120,7 @@ func TestRateSA100AuditEventIsRepaymentOmitted(t *testing.T) {
 
 	types.TheClock = T0
 	x := `	
+	<GovTalkMessage>
 	<Body>
 	<IRenvelope xmlns="http://www.govtalk.gov.uk/taxation/SA/SA100/15-16/1">
 		<MTR>
@@ -129,6 +134,7 @@ func TestRateSA100AuditEventIsRepaymentOmitted(t *testing.T) {
 		</MTR>
 	</IRenvelope>
 	</Body>	
+	</GovTalkMessage>
 	`
 	gtm, err := makePartialGtmWithBody(x)
 	if err != nil {
@@ -150,7 +156,7 @@ func TestRateSA800AuditEvent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req := httptest.NewRequest("POST", "/submission?qq=zz", bytes.NewReader([]byte(sa800Decl)))
+	req := httptest.NewRequest("POST", "/submission?qq=zz", bytes.NewBuffer([]byte(sa800Decl)))
 	respHdrs := http.Header{}
 	respInfo := types.ResponseInfo{}
 
@@ -160,10 +166,11 @@ func TestRateSA800AuditEvent(t *testing.T) {
 
 	assert.Equal(t, "HMRC-SA-SA800-ATT-TMSG", event.AuditType)
 	assert.NotEmpty(t, event.RequestPayload)
-	saData := event.RequestPayload.GetDataMap("contents").GetDataMap("IRenvelope").GetDataMap("SApartnership")
-	assert.NotEmpty(t, saData)
-	assert.Equal(t, "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456", saData.GetString("PartnershipName"))
-	assert.Nil(t, saData.Get("AttachedFiles"))
+	saData := event.RequestPayload.GetString("contents")
+	assert.True(t, strings.HasPrefix(saData, "<GovTalkMessage"))
+	assert.Contains(t, saData, "PartnershipName>ABCDEFGHIJKLMNOPQRSTUVWXYZ123456")
+	assert.Contains(t, saData, "<Attachment FileFormat=\"pdf\" Filename=\"POSATT035small1.pdf\" Size=\"12345\" Description=\"small attachment 1\"></Attachment>")
+	assert.Contains(t, saData, "<Attachment FileFormat=\"pdf\" Filename=\"POSATT035small2.pdf\" Size=\"100\" Description=\"small attachment 2\"></Attachment>")
 	assert.Equal(t, "", event.Detail.IsRepayment)
 }
 
@@ -176,7 +183,7 @@ func TestRateSA900AuditEvent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req := httptest.NewRequest("POST", "/submission?qq=zz", bytes.NewReader([]byte(sa900Decl)))
+	req := httptest.NewRequest("POST", "/submission?qq=zz", bytes.NewBuffer([]byte(sa900Decl)))
 	respHdrs := http.Header{}
 	respInfo := types.ResponseInfo{}
 
@@ -186,11 +193,10 @@ func TestRateSA900AuditEvent(t *testing.T) {
 
 	assert.Equal(t, "HMRC-SA-SA900-ATT-TMSG", event.AuditType)
 	assert.NotEmpty(t, event.RequestPayload)
-	saData := event.RequestPayload.GetDataMap("contents").GetDataMap("IRenvelope").GetDataMap("SAtrust")
-	assert.NotEmpty(t, saData)
-	assert.Equal(t, "Cap Trust", saData.GetString("TrustName"))
-	assert.Equal(t, "yes", saData.GetDataMap("TrustEstate").GetDataMap("NotLiableAtTrustRate").GetString("NotLiable"))
-	assert.Nil(t, saData.Get("AttachedFiles"))
+	saData := event.RequestPayload.GetString("contents")
+	assert.True(t, strings.HasPrefix(saData, "<GovTalkMessage"))
+	assert.Contains(t, saData, "TrustName>Cap Trust")
+	assert.Contains(t, saData, "Attachment")
 	assert.Equal(t, "false", event.Detail.IsRepayment)
 }
 
@@ -203,7 +209,7 @@ func TestRateSA900AuditEventIsRepayment(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req := httptest.NewRequest("POST", "/submission?qq=zz", bytes.NewReader([]byte(sa900Decl)))
+	req := httptest.NewRequest("POST", "/submission?qq=zz", bytes.NewBuffer([]byte(sa900Decl)))
 	respHdrs := http.Header{}
 	respInfo := types.ResponseInfo{}
 
@@ -221,6 +227,7 @@ func TestRateSA900AuditEventIsRepaymentWhenEmpty(t *testing.T) {
 
 	types.TheClock = T0
 	x := `	
+	<GovTalkMessage>
 	<Body>
 	<IRenvelope>
 		<SAtrust>
@@ -233,6 +240,7 @@ func TestRateSA900AuditEventIsRepaymentWhenEmpty(t *testing.T) {
 		</SAtrust>
 	</IRenvelope>
 	</Body>	
+	</GovTalkMessage>
 	`
 	gtm, err := makePartialGtmWithBody(x)
 	if err != nil {
@@ -272,6 +280,39 @@ func TestRateSA900AuditEventIsRepaymentOmitted(t *testing.T) {
 	assert.Equal(t, "", event.Detail.IsRepayment)
 }
 
+func TestRateSARemovesAttachmentContent(t *testing.T) {
+
+	types.TheClock = T0
+	x := `	
+	<Body>
+	<IRenvelope>
+		<AttachedFiles>
+			<Attachment att="1" size="999">wdokawdoakwdokw</Attachment>
+			<Attachment att="2" size="123">wdefafiejfiajefd</Attachment>
+		</AttachedFiles>
+		<AttachedFiles>
+		<Attachments>
+			<Attachment att="3" size="888">wdwadaevaefaefaewf</Attachment>
+			<Attachment att="4" size="101001">4trgrgsefsedawwadawd</Attachment>
+		</Attachments>
+	</IRenvelope>
+	</Body>	
+	`
+	gtm, err := makePartialGtmWithBody(x)
+	if err != nil {
+		t.Fatal(err)
+	}
+	event := &RATEAuditEvent{}
+	event.AuditType = "HMRC-SA-SA900"
+	gtm.populateSelfAssessmentData(event)
+	contents := event.RequestPayload.GetString("contents")
+	assert.Contains(t, contents, "AttachedFiles")
+	assert.Contains(t, contents, "<Attachment att=\"1\" size=\"999\"></Attachment>")
+	assert.Contains(t, contents, "<Attachment att=\"2\" size=\"123\"></Attachment>")
+	assert.NotContains(t, contents, "wdokawdoakwdokw")
+	assert.NotContains(t, contents, "4trgrgsefsedawwadawd")
+}
+
 // debugEvent debug utility function to output event JSON structure
 func debugEvent(t *testing.T, ev *RATEAuditEvent) {
 	s := string(ev.ToEncoded().Bytes)
@@ -287,6 +328,6 @@ func makePartialGtmWithBody(s string) (*partialGovTalkMessage, error) {
 	}
 
 	gtm := &partialGovTalkMessage{}
-	gtm.Body = doc
+	gtm.Message = doc
 	return gtm, nil
 }

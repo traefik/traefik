@@ -110,6 +110,13 @@ func appendCommonResponseFields(ev *AuditEvent, responseHeaders http.Header, inf
 	return flatHeaders
 }
 
+func (ev *AuditEvent) addRequestPayloadContents(s string) {
+	if ev.RequestPayload == nil {
+		ev.RequestPayload = types.DataMap{}
+	}
+	ev.RequestPayload["contents"] = s
+}
+
 func enforcePrecedentConstraints(ev *AuditEvent, constraints AuditConstraints) {
 	payloadLen, _ := ev.RequestPayload["length"].(int) // Zero if not int or missing
 	contents := ev.RequestPayload["contents"]

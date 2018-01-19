@@ -200,7 +200,7 @@ func TestGetMessageParts(t *testing.T) {
 	`
 
 	decoder := xml.NewDecoder(bytes.NewReader([]byte(x)))
-	parts, _ := gtmGetMessageParts(decoder, "")
+	parts, _ := gtmGetMessageParts(decoder, "", bytes.NewBuffer([]byte{}))
 	assert.NotEmpty(t, parts.Header)
 	assert.NotEmpty(t, parts.Details)
 }
@@ -215,7 +215,7 @@ func TestXmlMissingHeader(t *testing.T) {
 	`
 
 	decoder := xml.NewDecoder(bytes.NewReader([]byte(x)))
-	_, err := gtmGetMessageParts(decoder, "")
+	_, err := gtmGetMessageParts(decoder, "", bytes.NewBuffer([]byte{}))
 	assert.Error(t, err)
 }
 
@@ -229,7 +229,7 @@ func TestXmlMissingDetails(t *testing.T) {
 	`
 
 	decoder := xml.NewDecoder(bytes.NewReader([]byte(x)))
-	_, err := gtmGetMessageParts(decoder, "")
+	_, err := gtmGetMessageParts(decoder, "", bytes.NewBuffer([]byte{}))
 	assert.Error(t, err)
 }
 
