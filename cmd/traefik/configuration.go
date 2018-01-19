@@ -61,7 +61,8 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	// TODO: Deprecated - default Metrics
 	defaultWeb.Metrics = &types.Metrics{
 		Prometheus: &types.Prometheus{
-			Buckets: types.Buckets{0.1, 0.3, 1.2, 5},
+			Buckets:    types.Buckets{0.1, 0.3, 1.2, 5},
+			EntryPoint: configuration.DefaultInternalEntryPointName,
 		},
 		Datadog: &types.Datadog{
 			Address:      "localhost:8125",
@@ -220,7 +221,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultMetrics := types.Metrics{
 		Prometheus: &types.Prometheus{
 			Buckets:    types.Buckets{0.1, 0.3, 1.2, 5},
-			EntryPoint: "traefik",
+			EntryPoint: configuration.DefaultInternalEntryPointName,
 		},
 		Datadog: &types.Datadog{
 			Address:      "localhost:8125",
