@@ -30,7 +30,7 @@ import (
 // TraefikConfiguration holds GlobalConfiguration and other stuff
 type TraefikConfiguration struct {
 	configuration.GlobalConfiguration `mapstructure:",squash" export:"true"`
-	ConfigFile                        string `short:"c" description:"Configuration file to use (TOML)." export:"true"`
+	ConfigFile string                 `short:"c" description:"Configuration file to use (TOML)." export:"true"`
 }
 
 // NewTraefikDefaultPointersConfiguration creates a TraefikConfiguration with pointers default values
@@ -61,7 +61,8 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	// TODO: Deprecated - default Metrics
 	defaultWeb.Metrics = &types.Metrics{
 		Prometheus: &types.Prometheus{
-			Buckets: types.Buckets{0.1, 0.3, 1.2, 5},
+			Buckets:    types.Buckets{0.1, 0.3, 1.2, 5},
+			EntryPoint: configuration.DefaultInternalEntryPointName,
 		},
 		Datadog: &types.Datadog{
 			Address:      "localhost:8125",
@@ -220,7 +221,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultMetrics := types.Metrics{
 		Prometheus: &types.Prometheus{
 			Buckets:    types.Buckets{0.1, 0.3, 1.2, 5},
-			EntryPoint: "traefik",
+			EntryPoint: configuration.DefaultInternalEntryPointName,
 		},
 		Datadog: &types.Datadog{
 			Address:      "localhost:8125",
