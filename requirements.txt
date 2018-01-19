@@ -1,1 +1,2 @@
-mkdocs>=0.9.0
+mkdocs==0.16.0
+mkdocs-bootswatch==0.4.0
