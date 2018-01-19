@@ -30,7 +30,7 @@ import (
 // TraefikConfiguration holds GlobalConfiguration and other stuff
 type TraefikConfiguration struct {
 	configuration.GlobalConfiguration `mapstructure:",squash" export:"true"`
-	ConfigFile string                 `short:"c" description:"Configuration file to use (TOML)." export:"true"`
+	ConfigFile                        string `short:"c" description:"Configuration file to use (TOML)." export:"true"`
 }
 
 // NewTraefikDefaultPointersConfiguration creates a TraefikConfiguration with pointers default values
