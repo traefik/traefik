@@ -185,6 +185,7 @@ func gtmGetMessageParts(decoder *xml.Decoder, path string, message io.Reader) (*
 	if isSaSubmission {
 		partial.Message = etree.NewDocument()
 		partial.Message.ReadFrom(message)
+		partial.Message.Indent(etree.NoIndent)
 	}
 
 	if partial.Header != nil && partial.Details != nil {

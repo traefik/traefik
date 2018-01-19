@@ -55,7 +55,7 @@ func TestRateSA100AuditEvent(t *testing.T) {
 	assert.Equal(t, "HMRC-SA-SA100-ATT", event.AuditType)
 	assert.NotEmpty(t, event.RequestPayload)
 	saData := event.RequestPayload.GetString("contents")
-	assert.True(t, strings.HasPrefix(saData, "<?xml version=\"1.0\"?>\n<GovTalkMessage"))
+	assert.True(t, strings.HasPrefix(saData, "<?xml version=\"1.0\"?><GovTalkMessage"))
 	assert.Contains(t, saData, "<NationalInsuranceNumber>GY001093A")
 	assert.Contains(t, saData, "AttachedFiles")
 	assert.Contains(t, saData, "<Attachment FileFormat=\"pdf\" Filename=\"tubemap.pdf\" Description=\"TubeMap\" Size=\"315001\"></Attachment>")
