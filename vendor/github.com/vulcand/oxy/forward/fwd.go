@@ -283,8 +283,6 @@ func (f *httpForwarder) serveWebSocket(w http.ResponseWriter, req *http.Request,
 
 	dialer := websocket.DefaultDialer
 
-	dialer.EnableCompression = strings.Contains(req.Header.Get("Sec-Websocket-Extensions"), "permessage-deflate")
-
 	if outReq.URL.Scheme == "wss" && f.tlsClientConfig != nil {
 		dialer.TLSClientConfig = f.tlsClientConfig.Clone()
 		// WebSocket is only in http/1.1
@@ -325,8 +323,6 @@ func (f *httpForwarder) serveWebSocket(w http.ResponseWriter, req *http.Request,
 	upgrader := websocket.Upgrader{CheckOrigin: func(r *http.Request) bool {
 		return true
 	}}
-
-	upgrader.EnableCompression = strings.Contains(resp.Header.Get("Sec-Websocket-Extensions"), "permessage-deflate")
 
 	utils.RemoveHeaders(resp.Header, WebsocketUpgradeHeaders...)
 
