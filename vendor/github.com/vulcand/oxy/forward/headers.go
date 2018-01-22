@@ -49,6 +49,7 @@ var WebsocketUpgradeHeaders = []string{
 	Upgrade,
 	Connection,
 	SecWebsocketAccept,
+	SecWebsocketExtensions,
 }
 
 var XHeaders = []string{

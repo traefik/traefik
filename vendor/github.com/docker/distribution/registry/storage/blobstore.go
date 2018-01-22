@@ -27,7 +27,7 @@ func (bs *blobStore) Get(ctx context.Context, dgst digest.Digest) ([]byte, error
 		return nil, err
 	}
 
-	p, err := bs.driver.GetContent(ctx, bp)
+	p, err := getContent(ctx, bs.driver, bp)
 	if err != nil {
 		switch err.(type) {
 		case driver.PathNotFoundError:
@@ -37,7 +37,7 @@ func (bs *blobStore) Get(ctx context.Context, dgst digest.Digest) ([]byte, error
 		return nil, err
 	}
 
-	return p, err
+	return p, nil
 }
 
 func (bs *blobStore) Open(ctx context.Context, dgst digest.Digest) (distribution.ReadSeekCloser, error) {

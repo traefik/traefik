@@ -1,11 +1,13 @@
 package config
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 
 	"github.com/docker/cli/cli/config/configfile"
+	"github.com/docker/cli/cli/config/credentials"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/homedir"
 	"github.com/pkg/errors"
@@ -38,15 +40,6 @@ func SetDir(dir string) {
 	configDir = dir
 }
 
-// NewConfigFile initializes an empty configuration file for the given filename 'fn'
-func NewConfigFile(fn string) *configfile.ConfigFile {
-	return &configfile.ConfigFile{
-		AuthConfigs: make(map[string]types.AuthConfig),
-		HTTPHeaders: make(map[string]string),
-		Filename:    fn,
-	}
-}
-
 // LegacyLoadFromReader is a convenience function that creates a ConfigFile object from
 // a non-nested reader
 func LegacyLoadFromReader(configData io.Reader) (*configfile.ConfigFile, error) {
@@ -75,46 +68,53 @@ func Load(configDir string) (*configfile.ConfigFile, error) {
 		configDir = Dir()
 	}
 
-	configFile := configfile.ConfigFile{
-		AuthConfigs: make(map[string]types.AuthConfig),
-		Filename:    filepath.Join(configDir, ConfigFileName),
-	}
+	filename := filepath.Join(configDir, ConfigFileName)
+	configFile := configfile.New(filename)
 
 	// Try happy path first - latest config file
-	if _, err := os.Stat(configFile.Filename); err == nil {
-		file, err := os.Open(configFile.Filename)
+	if _, err := os.Stat(filename); err == nil {
+		file, err := os.Open(filename)
 		if err != nil {
-			return &configFile, errors.Errorf("%s - %v", configFile.Filename, err)
+			return configFile, errors.Errorf("%s - %v", filename, err)
 		}
 		defer file.Close()
 		err = configFile.LoadFromReader(file)
 		if err != nil {
-			err = errors.Errorf("%s - %v", configFile.Filename, err)
+			err = errors.Errorf("%s - %v", filename, err)
 		}
-		return &configFile, err
+		return configFile, err
 	} else if !os.IsNotExist(err) {
 		// if file is there but we can't stat it for any reason other
 		// than it doesn't exist then stop
-		return &configFile, errors.Errorf("%s - %v", configFile.Filename, err)
+		return configFile, errors.Errorf("%s - %v", filename, err)
 	}
 
 	// Can't find latest config file so check for the old one
 	confFile := filepath.Join(homedir.Get(), oldConfigfile)
 	if _, err := os.Stat(confFile); err != nil {
-		return &configFile, nil //missing file is not an error
+		return configFile, nil //missing file is not an error
 	}
 	file, err := os.Open(confFile)
 	if err != nil {
-		return &configFile, errors.Errorf("%s - %v", confFile, err)
+		return configFile, errors.Errorf("%s - %v", confFile, err)
 	}
 	defer file.Close()
 	err = configFile.LegacyLoadFromReader(file)
 	if err != nil {
-		return &configFile, errors.Errorf("%s - %v", confFile, err)
+		return configFile, errors.Errorf("%s - %v", confFile, err)
 	}
+	return configFile, nil
+}
 
-	if configFile.HTTPHeaders == nil {
-		configFile.HTTPHeaders = map[string]string{}
+// LoadDefaultConfigFile attempts to load the default config file and returns
+// an initialized ConfigFile struct if none is found.
+func LoadDefaultConfigFile(stderr io.Writer) *configfile.ConfigFile {
+	configFile, err := Load(Dir())
+	if err != nil {
+		fmt.Fprintf(stderr, "WARNING: Error loading config file: %v\n", err)
 	}
-	return &configFile, nil
+	if !configFile.ContainsAuth() {
+		configFile.CredentialsStore = credentials.DetectDefaultStore(configFile.CredentialsStore)
+	}
+	return configFile
 }

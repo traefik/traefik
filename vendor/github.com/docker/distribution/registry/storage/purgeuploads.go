@@ -5,10 +5,10 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/docker/distribution/context"
 	storageDriver "github.com/docker/distribution/registry/storage/driver"
 	"github.com/docker/distribution/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 // uploadData stored the location of temporary files created during a layer upload

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/containous/traefik/log"
+	"github.com/sirupsen/logrus"
 )
 
 const (

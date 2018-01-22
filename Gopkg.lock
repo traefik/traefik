@@ -94,7 +94,7 @@
 [[projects]]
   name = "github.com/Nvveen/Gotty"
   packages = ["."]
-  revision = "6018b68f96b839edfbe3fb48668853f5dbad88a3"
+  revision = "a8b993ba6abdb0e0c12b0125c603323a71c7790c"
   source = "github.com/ijc25/Gotty"
 
 [[projects]]
@@ -112,11 +112,6 @@
   name = "github.com/Shopify/sarama"
   packages = ["."]
   revision = "70f6a705d4a17af059acbc6946fb2bd30762acd7"
-
-[[projects]]
-  name = "github.com/Sirupsen/logrus"
-  packages = ["."]
-  revision = "10f801ebc38b33738c9d17d50860f484a0988ff5"
 
 [[projects]]
   name = "github.com/VividCortex/gohistogram"
@@ -216,8 +211,14 @@
 [[projects]]
   name = "github.com/codegangsta/cli"
   packages = ["."]
-  revision = "bf4a526f48af7badd25d2cb02d587e1b01be3b50"
-  version = "v1.4.1"
+  revision = "cfb38830724cc34fedffe9a2a29fb54fa9169cd1"
+  version = "v1.20.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/containerd/continuity"
+  packages = ["pathdriver"]
+  revision = "b2b946a77f5973f420514090d6f6dd58b08303f0"
 
 [[projects]]
   name = "github.com/containous/flaeg"
@@ -325,9 +326,11 @@
   packages = [
     "cli/command/image/build",
     "cli/config",
-    "cli/config/configfile"
+    "cli/config/configfile",
+    "cli/config/credentials",
+    "opts"
   ]
-  revision = "d95fd2f38cfc23e077530c6181330727d561b6a0"
+  revision = "6b63d7b96a41055baddc3fa71f381c7f60bd5d8e"
 
 [[projects]]
   name = "github.com/docker/distribution"
@@ -346,7 +349,7 @@
     "registry/storage/cache/memory",
     "uuid"
   ]
-  revision = "b38e5838b7b2f2ad48e06ec4b500011976080621"
+  revision = "edc3ab29cdff8694dd6feb85cfeb4b5f1b38ed9c"
 
 [[projects]]
   name = "github.com/docker/docker"
@@ -363,28 +366,24 @@
     "api/types/registry",
     "api/types/strslice",
     "api/types/swarm",
+    "api/types/swarm/runtime",
     "api/types/time",
     "api/types/versions",
     "api/types/volume",
     "builder/dockerignore",
+    "builder/remotecontext/git",
     "client",
-    "opts",
     "pkg/archive",
     "pkg/fileutils",
-    "pkg/gitutils",
     "pkg/homedir",
-    "pkg/httputils",
     "pkg/idtools",
     "pkg/ioutils",
-    "pkg/jsonlog",
     "pkg/jsonmessage",
     "pkg/longpath",
     "pkg/mount",
     "pkg/namesgenerator",
     "pkg/pools",
     "pkg/progress",
-    "pkg/promise",
-    "pkg/random",
     "pkg/stdcopy",
     "pkg/streamformatter",
     "pkg/stringid",
@@ -393,12 +392,21 @@
     "pkg/tarsum",
     "pkg/term",
     "pkg/term/windows",
-    "pkg/tlsconfig",
     "pkg/urlutil",
     "registry",
-    "runconfig/opts"
+    "registry/resumable"
   ]
-  revision = "75c7536d2e2e328b644bf69153de879d1d197988"
+  revision = "7848b8beb9d38a98a78b75f78e05f8d2255f9dfe"
+
+[[projects]]
+  name = "github.com/docker/docker-credential-helpers"
+  packages = [
+    "client",
+    "credentials",
+    "pass"
+  ]
+  revision = "d68f9aeca33f5fd3f08eeae5e9d175edf4e731d1"
+  version = "v0.6.0"
 
 [[projects]]
   name = "github.com/docker/go-connections"
@@ -407,7 +415,8 @@
     "sockets",
     "tlsconfig"
   ]
-  revision = "e15c02316c12de00874640cd76311849de2aeed5"
+  revision = "3ede32e2033de7505e6500d6c868c2b9ed9f169d"
+  version = "v0.3.0"
 
 [[projects]]
   name = "github.com/docker/go-units"
@@ -422,6 +431,7 @@
   source = "github.com/containous/leadership"
 
 [[projects]]
+  branch = "master"
   name = "github.com/docker/libcompose"
   packages = [
     "config",
@@ -445,7 +455,7 @@
     "version",
     "yaml"
   ]
-  revision = "1b708aac26a4fc6f9bff31728a8e3a252ef57dbd"
+  revision = "57bd716502dcbe1799f026148016022b0f3b989c"
 
 [[projects]]
   branch = "master"
@@ -461,11 +471,6 @@
   ]
   revision = "5e4bb288a9a74320bb03f5c18d6bdbab0d8049de"
   source = "github.com/abronan/libkv"
-
-[[projects]]
-  name = "github.com/docker/libtrust"
-  packages = ["."]
-  revision = "9cbd2a1374f46905c68a4eb3694a130610adc62a"
 
 [[projects]]
   name = "github.com/donovanhide/eventsource"
@@ -505,7 +510,8 @@
     "tokens",
     "zones"
   ]
-  revision = "398f53855ba258191157e20fabfaccca5e13cea9"
+  revision = "1563e622aaca0a8bb895a448f31d4a430ab97586"
+  version = "v1.0.3"
 
 [[projects]]
   branch = "master"
@@ -675,6 +681,12 @@
   revision = "a69d9f6de432e2c6b296a947d8a5ee88f68522cf"
 
 [[projects]]
+  name = "github.com/gravitational/trace"
+  packages = ["."]
+  revision = "0bd13642feb8f57acc0d8e3a568edc34e05a74b9"
+  version = "1.1.3"
+
+[[projects]]
   name = "github.com/hashicorp/consul"
   packages = ["api"]
   revision = "3f92cc70e8163df866873c16c6d89889b5c95fc4"
@@ -743,22 +755,25 @@
   revision = "b84e30acd515aadc4b783ad4ff83aff3299bdfe0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/libkermit/compose"
   packages = [
     ".",
     "check"
   ]
-  revision = "4a33a16f1446ba205c4da7b09105d5bdc293b432"
+  revision = "c04e39c026ad1c76c027d6780150c8f7dec0a610"
 
 [[projects]]
+  branch = "master"
   name = "github.com/libkermit/docker"
   packages = ["."]
-  revision = "ddede409294e8c5ae66d68ac09edb6b27e8f3e4a"
+  revision = "e6674d32b80712b563ed8a0187af2bc93448b82f"
 
 [[projects]]
+  branch = "master"
   name = "github.com/libkermit/docker-check"
   packages = ["."]
-  revision = "e0695005d6819191cf8969b479c94c40c8d22aa4"
+  revision = "1113af38e5916529ad7317b0fe12e273e6e92af5"
 
 [[projects]]
   name = "github.com/mailgun/minheap"
@@ -991,10 +1006,11 @@
   revision = "52e2f489534007ae843065468c5a1920d542afa4"
 
 [[projects]]
-  branch = "master"
+  branch = "containous-fork"
   name = "github.com/rancher/go-rancher-metadata"
   packages = ["metadata"]
-  revision = "d2103caca5873119ff423d29cba09b4d03cd69b8"
+  revision = "e937e8308985dfd3bc157cc8a284454f0cbf4fef"
+  source = "github.com/containous/go-rancher-metadata"
 
 [[projects]]
   name = "github.com/rcrowley/go-metrics"
@@ -1017,6 +1033,12 @@
   packages = ["."]
   revision = "879c5887cd475cd7864858769793b2ceb0d44feb"
   version = "v1.1.0"
+
+[[projects]]
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  revision = "d682213848ed68c0a260ca37d6dd5ace8423f5ba"
+  version = "v1.0.4"
 
 [[projects]]
   name = "github.com/spf13/pflag"
@@ -1112,7 +1134,7 @@
   version = "v0.1.0"
 
 [[projects]]
-  branch = "containous-fork"
+  branch = "master"
   name = "github.com/vulcand/oxy"
   packages = [
     "cbreaker",
@@ -1123,28 +1145,31 @@
     "roundrobin",
     "utils"
   ]
-  revision = "812cebb8c764f2a78cb806267648b8728b4599ad"
-  source = "https://github.com/containous/oxy.git"
+  revision = "092a2d70bb8859a9def2b1bb9a61cdc193ee55cc"
 
 [[projects]]
   name = "github.com/vulcand/predicate"
   packages = ["."]
-  revision = "19b9dde14240d94c804ae5736ad0e1de10bf8fe6"
+  revision = "939c094524d124c55fa8afe0e077701db4a865e2"
+  version = "v1.0.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/vulcand/route"
   packages = ["."]
-  revision = "cb89d787ddbb1c5849a7ac9f79004c1fd12a4a32"
+  revision = "61904570391bdf22252f8e376b49a57593d9124c"
 
 [[projects]]
+  branch = "master"
   name = "github.com/vulcand/vulcand"
   packages = [
     "conntracker",
     "plugin",
+    "plugin/cacheprovider",
     "plugin/rewrite",
     "router"
   ]
-  revision = "42492a3a85e294bdbdd1bcabb8c12769a81ea284"
+  revision = "3ab68471860269ba2afdd1a97e2d058087631975"
 
 [[projects]]
   branch = "master"
@@ -1195,17 +1220,22 @@
   revision = "b929aa5aab5ad2e197bb3d74ef99fac61bfa47bc"
 
 [[projects]]
+  branch = "master"
   name = "golang.org/x/crypto"
   packages = [
+    "acme",
+    "acme/autocert",
     "bcrypt",
     "blowfish",
     "ocsp",
     "pbkdf2",
-    "scrypt"
+    "scrypt",
+    "ssh/terminal"
   ]
-  revision = "4ed45ec682102c643324fae5dff8dab085b6c300"
+  revision = "13931e22f9e72ea58bb73048bc752b48c6d4d4ac"
 
 [[projects]]
+  branch = "master"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -1219,7 +1249,7 @@
     "trace",
     "websocket"
   ]
-  revision = "c8c74377599bd978aee1cf3b9b63a8634051cec2"
+  revision = "5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec"
 
 [[projects]]
   name = "golang.org/x/oauth2"
@@ -1233,12 +1263,13 @@
   revision = "7fdf09982454086d5570c7db3e11f360194830ca"
 
 [[projects]]
+  branch = "master"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows"
   ]
-  revision = "8f0908ab3b2457e2e15403d3697c9ef5cb4b57a9"
+  revision = "fff93fa7cd278d84afc205751523809c464168ab"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -1482,6 +1513,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "aa1aa76d15a49bbeee747782a71809fcfbaccf4586e924e70a6d93c51c173a30"
+  inputs-digest = "abd30ec16123cf6de5a869dcaba3e3247907785b4802f0eebaa0cf4d16ef444b"
   solver-name = "gps-cdcl"
   solver-version = 1

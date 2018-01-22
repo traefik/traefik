@@ -45,8 +45,10 @@ func CreateProject(name string, composeFiles ...string) (*Project, error) {
 	if err != nil {
 		return nil, err
 	}
-	// FIXME(vdemeester) fix this
-	apiClient.UpdateClientVersion(d.CurrentAPIVersion)
+
+	ping := types.Ping{APIVersion: d.CurrentAPIVersion}
+	apiClient.NegotiateAPIVersionPing(ping)
+
 	composeProject, err := docker.NewProject(&ctx.Context{
 		Context: project.Context{
 			ComposeFiles: composeFiles,
@@ -86,7 +88,7 @@ func (p *Project) Start(services ...string) error {
 		*p = *newProject
 	}
 	ctx := context.Background()
-	err := p.composeProject.Create(ctx, options.Create{})
+	err := p.composeProject.Create(ctx, options.Create{}, services...)
 	if err != nil {
 		return err
 	}

@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
+	log "github.com/sirupsen/logrus"
 	"github.com/vulcand/oxy/utils"
 	"github.com/vulcand/vulcand/plugin"
 )
@@ -109,8 +109,7 @@ func (rw *rewriteHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	rw.next.ServeHTTP(bw, req)
 
 	if err := Apply(bw.buffer, newBody, req); err != nil {
-		log.Errorf("Failed to rewrite response body: %v", err)
-		return
+		log.Errorf("While rewriting response body for '%s': %v", req.RequestURI, err)
 	}
 
 	utils.CopyHeaders(w.Header(), bw.Header())

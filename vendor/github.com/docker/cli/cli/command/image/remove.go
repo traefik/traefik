@@ -9,6 +9,7 @@ import (
 	"github.com/docker/cli/cli"
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/docker/api/types"
+	apiclient "github.com/docker/docker/client"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -56,9 +57,13 @@ func runRemove(dockerCli command.Cli, opts removeOptions, images []string) error
 	}
 
 	var errs []string
-	for _, image := range images {
-		dels, err := client.ImageRemove(ctx, image, options)
+	var fatalErr = false
+	for _, img := range images {
+		dels, err := client.ImageRemove(ctx, img, options)
 		if err != nil {
+			if !apiclient.IsErrNotFound(err) {
+				fatalErr = true
+			}
 			errs = append(errs, err.Error())
 		} else {
 			for _, del := range dels {
@@ -72,7 +77,11 @@ func runRemove(dockerCli command.Cli, opts removeOptions, images []string) error
 	}
 
 	if len(errs) > 0 {
-		return errors.Errorf("%s", strings.Join(errs, "\n"))
+		msg := strings.Join(errs, "\n")
+		if !opts.force || fatalErr {
+			return errors.New(msg)
+		}
+		fmt.Fprintf(dockerCli.Err(), msg)
 	}
 	return nil
 }

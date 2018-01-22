@@ -32,7 +32,7 @@ func ListByFilter(ctx context.Context, clientInstance client.ContainerAPIClient,
 func Get(ctx context.Context, clientInstance client.ContainerAPIClient, id string) (*types.ContainerJSON, error) {
 	container, err := clientInstance.ContainerInspect(ctx, id)
 	if err != nil {
-		if client.IsErrContainerNotFound(err) {
+		if client.IsErrNotFound(err) {
 			return nil, nil
 		}
 		return nil, err

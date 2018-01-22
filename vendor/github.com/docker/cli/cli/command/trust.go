@@ -12,6 +12,10 @@ var (
 	untrusted bool
 )
 
+func init() {
+	untrusted = !getDefaultTrustState()
+}
+
 // AddTrustVerificationFlags adds content trust flags to the provided flagset
 func AddTrustVerificationFlags(fs *pflag.FlagSet) {
 	trusted := getDefaultTrustState()

@@ -18,7 +18,7 @@ func NoArgs(cmd *cobra.Command, args []string) error {
 	}
 
 	return errors.Errorf(
-		"\"%s\" accepts no argument(s).\nSee '%s --help'.\n\nUsage:  %s\n\n%s",
+		"%q accepts no arguments.\nSee '%s --help'.\n\nUsage:  %s\n\n%s",
 		cmd.CommandPath(),
 		cmd.CommandPath(),
 		cmd.UseLine(),
@@ -33,9 +33,10 @@ func RequiresMinArgs(min int) cobra.PositionalArgs {
 			return nil
 		}
 		return errors.Errorf(
-			"\"%s\" requires at least %d argument(s).\nSee '%s --help'.\n\nUsage:  %s\n\n%s",
+			"%q requires at least %d %s.\nSee '%s --help'.\n\nUsage:  %s\n\n%s",
 			cmd.CommandPath(),
 			min,
+			pluralize("argument", min),
 			cmd.CommandPath(),
 			cmd.UseLine(),
 			cmd.Short,
@@ -50,9 +51,10 @@ func RequiresMaxArgs(max int) cobra.PositionalArgs {
 			return nil
 		}
 		return errors.Errorf(
-			"\"%s\" requires at most %d argument(s).\nSee '%s --help'.\n\nUsage:  %s\n\n%s",
+			"%q requires at most %d %s.\nSee '%s --help'.\n\nUsage:  %s\n\n%s",
 			cmd.CommandPath(),
 			max,
+			pluralize("argument", max),
 			cmd.CommandPath(),
 			cmd.UseLine(),
 			cmd.Short,
@@ -67,10 +69,11 @@ func RequiresRangeArgs(min int, max int) cobra.PositionalArgs {
 			return nil
 		}
 		return errors.Errorf(
-			"\"%s\" requires at least %d and at most %d argument(s).\nSee '%s --help'.\n\nUsage:  %s\n\n%s",
+			"%q requires at least %d and at most %d %s.\nSee '%s --help'.\n\nUsage:  %s\n\n%s",
 			cmd.CommandPath(),
 			min,
 			max,
+			pluralize("argument", max),
 			cmd.CommandPath(),
 			cmd.UseLine(),
 			cmd.Short,
@@ -85,12 +88,20 @@ func ExactArgs(number int) cobra.PositionalArgs {
 			return nil
 		}
 		return errors.Errorf(
-			"\"%s\" requires exactly %d argument(s).\nSee '%s --help'.\n\nUsage:  %s\n\n%s",
+			"%q requires exactly %d %s.\nSee '%s --help'.\n\nUsage:  %s\n\n%s",
 			cmd.CommandPath(),
 			number,
+			pluralize("argument", number),
 			cmd.CommandPath(),
 			cmd.UseLine(),
 			cmd.Short,
 		)
 	}
+}
+
+func pluralize(word string, number int) string {
+	if number == 1 {
+		return word
+	}
+	return word + "s"
 }
