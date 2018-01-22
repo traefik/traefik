@@ -36,7 +36,7 @@
     interval = "{{ $healthCheck.Interval }}"
   {{end}}
 
-  {{ $buffering := getBuffering $app }}
+  {{ $buffering := getBuffering $backend }}
   {{if $buffering }}
   [backends."backend-{{ $backendName }}".buffering]
     enabled = {{ $buffering.Enabled }}

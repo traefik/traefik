@@ -15,6 +15,12 @@ const (
 	pathBackendServers                          = "/servers/"
 	pathBackendServerURL                        = "/url"
 	pathBackendServerWeight                     = "/weight"
+	pathBackendBufferingEnabled                 = "/buffering/enabled"
+	pathBackendBufferingMaxResponseBodyBytes    = "/buffering/maxresponsebodybytes"
+	pathBackendBufferingMemResponseBodyBytes    = "/buffering/memresponsebodybytes"
+	pathBackendBufferingMaxRequestBodyBytes     = "/buffering/maxrequestbodybytes"
+	pathBackendBufferingMemRequestBodyBytes     = "/buffering/memrequestbodybytes"
+	pathBackendBufferingRetryExpression         = "/buffering/retryexpression"
 
 	pathFrontends                      = "/frontends/"
 	pathFrontendBackend                = "/backend"

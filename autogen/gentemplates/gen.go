@@ -973,6 +973,27 @@ var _templatesKvTmpl = []byte(`[backends]
     interval = "{{ $healthCheck.Interval }}"
   {{end}}
 
+  {{ $buffering := getBuffering $backend }}
+  {{if $buffering }}
+  [backends.{{ $backendName }}.buffering]
+    enabled = {{ $buffering.Enabled }}
+    {{if $buffering.MaxRequestBodyBytes }}
+    maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
+    {{end}}
+    {{if $buffering.MemRequestBodyBytes }}
+    memRequestBodyBytes = {{ $buffering.MemRequestBodyBytes }}
+    {{end}}
+    {{if $buffering.MaxResponseBodyBytes }}
+    maxResponseBodyBytes = {{ $buffering.MaxResponseBodyBytes }}
+    {{end}}
+    {{if $buffering.MemResponseBodyBytes }}
+    memResponseBodyBytes = {{ $buffering.MemResponseBodyBytes }}
+    {{end}}
+    {{if $buffering.RetryExpression }}
+    retryExpression = "{{ $buffering.RetryExpression }}"
+    {{end}}
+  {{end}}
+
   {{range $serverName, $server := getServers $backend}}
   [backends."{{ $backendName }}".servers."{{ $serverName }}"]
     url = "{{ $server.URL }}"
@@ -1577,7 +1598,7 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
     interval = "{{ $healthCheck.Interval }}"
   {{end}}
 
-  {{ $buffering := getBuffering $app }}
+  {{ $buffering := getBuffering $backend }}
   {{if $buffering }}
   [backends."backend-{{ $backendName }}".buffering]
     enabled = {{ $buffering.Enabled }}

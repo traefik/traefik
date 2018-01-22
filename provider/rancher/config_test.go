@@ -902,7 +902,7 @@ func TestGetBuffering(t *testing.T) {
 			expected: nil,
 		},
 		{
-			desc: "should return a struct when health check labels are set",
+			desc: "should return a struct when buffering labels are set",
 			service: rancherData{
 				Labels: map[string]string{
 					label.TraefikBackendBufferingEnabled:              "true",
@@ -931,7 +931,7 @@ func TestGetBuffering(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actual := getHealthCheck(test.service)
+			actual := getBuffering(test.service)
 
 			assert.Equal(t, test.expected, actual)
 		})

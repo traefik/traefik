@@ -60,6 +60,7 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getLoadBalancer":         p.getLoadBalancer,
 		"getMaxConn":              p.getMaxConn,
 		"getHealthCheck":          p.getHealthCheck,
+		"getBuffering":            p.getBuffering,
 		"getSticky":               p.getSticky,               // Deprecated [breaking]
 		"hasStickinessLabel":      p.hasStickinessLabel,      // Deprecated [breaking]
 		"getStickinessCookieName": p.getStickinessCookieName, // Deprecated [breaking]
@@ -270,6 +271,23 @@ func (p *Provider) getHealthCheck(rootPath string) *types.HealthCheck {
 		Path:     path,
 		Port:     port,
 		Interval: interval,
+	}
+}
+
+func (p *Provider) getBuffering(rootPath string) *types.Buffering {
+	enabled := p.getBool(false, rootPath, pathBackendBufferingEnabled)
+
+	if !enabled {
+		return nil
+	}
+
+	return &types.Buffering{
+		Enabled:              enabled,
+		MaxRequestBodyBytes:  p.getInt64(0, rootPath, pathBackendBufferingMaxRequestBodyBytes),
+		MaxResponseBodyBytes: p.getInt64(0, rootPath, pathBackendBufferingMaxResponseBodyBytes),
+		MemRequestBodyBytes:  p.getInt64(0, rootPath, pathBackendBufferingMemRequestBodyBytes),
+		MemResponseBodyBytes: p.getInt64(0, rootPath, pathBackendBufferingMemResponseBodyBytes),
+		RetryExpression:      p.get("", rootPath, pathBackendBufferingRetryExpression),
 	}
 }
 
