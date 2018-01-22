@@ -85,10 +85,16 @@ defaultEntryPoints = ["http", "https"]
 
 # HTTPS certificate
 [[tlsConfiguration]]
-entryPoints = ["https"]
+  entryPoints = ["https"]
   [tlsConfiguration.certificate]
-    certFile = "integration/fixtures/https/snitest.com.cert"
-    keyFile = "integration/fixtures/https/snitest.com.key"
+    certFile = "path/to/my.cert"
+    keyFile = "path/to/my.key"
+    
+[[tlsConfiguration]]
+  entryPoints = ["https"]
+  [tlsConfiguration.certificate]
+    certFile = "path/to/my/other.cert"
+    keyFile = "path/to/my/other.key"
 ```
 
 !!! note
@@ -160,15 +166,14 @@ filename = "rules.toml"
 [[tlsConfiguration]]
   entryPoints = ["https"]
   [tlsConfiguration.certificate]
-    certFile = "integration/fixtures/https/snitest.com.cert"
-    keyFile = "integration/fixtures/https/snitest.com.key"
-
+    certFile = "path/to/my.cert"
+    keyFile = "path/to/my.key"
+    
 [[tlsConfiguration]]
   entryPoints = ["https"]
-  [[tlsConfiguration.certificates]]
-  certFile = "integration/fixtures/https/snitest.org.cert"
-  keyFile = "integration/fixtures/https/snitest.org.key"
-```
+  [tlsConfiguration.certificate]
+    certFile = "path/to/my/other.cert"
+    keyFile = "path/to/my/other.key"
 
 ## Multiple `.toml` Files
 
