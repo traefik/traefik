@@ -242,7 +242,6 @@ func (s *AccessLogSuite) TestAccessLogAuthEntrypointSuccess(c *check.C) {
 }
 
 func (s *AccessLogSuite) TestAccessLogDigestAuthEntrypoint(c *check.C) {
-	// Ensure working directory is clean
 	ensureWorkingDirectoryIsClean()
 
 	expected := []accessLogValue{
@@ -295,7 +294,7 @@ func (s *AccessLogSuite) TestAccessLogDigestAuthEntrypoint(c *check.C) {
 	digestParts["username"] = "test"
 	digestParts["password"] = "test"
 
-	req.Header.Set("Authorization", getDigestAuthrization(digestParts))
+	req.Header.Set("Authorization", getDigestAuthorization(digestParts))
 	req.Header.Set("Content-Type", "application/json")
 
 	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
@@ -310,6 +309,8 @@ func (s *AccessLogSuite) TestAccessLogDigestAuthEntrypoint(c *check.C) {
 	checkNoOtherTraefikProblems(traefikLog, err, c)
 }
 
+// Thanks to mvndaai for digest authentication
+// https://stackoverflow.com/questions/39474284/how-do-you-do-a-http-post-with-digest-authentication-in-golang/39481441#39481441
 func digestParts(resp *http.Response) map[string]string {
 	result := map[string]string{}
 	if len(resp.Header["Www-Authenticate"]) > 0 {
@@ -338,7 +339,7 @@ func getCnonce() string {
 	return fmt.Sprintf("%x", b)[:16]
 }
 
-func getDigestAuthrization(digestParts map[string]string) string {
+func getDigestAuthorization(digestParts map[string]string) string {
 	d := digestParts
 	ha1 := getMD5(d["username"] + ":" + d["realm"] + ":" + d["password"])
 	ha2 := getMD5(d["method"] + ":" + d["uri"])
@@ -351,7 +352,6 @@ func getDigestAuthrization(digestParts map[string]string) string {
 }
 
 func (s *AccessLogSuite) TestAccessLogEntrypointRedirect(c *check.C) {
-	// Ensure working directory is clean
 	ensureWorkingDirectoryIsClean()
 
 	expected := []accessLogValue{
@@ -404,7 +404,6 @@ func (s *AccessLogSuite) TestAccessLogEntrypointRedirect(c *check.C) {
 }
 
 func (s *AccessLogSuite) TestAccessLogFrontendRedirect(c *check.C) {
-	// Ensure working directory is clean
 	ensureWorkingDirectoryIsClean()
 
 	expected := []accessLogValue{
@@ -457,7 +456,6 @@ func (s *AccessLogSuite) TestAccessLogFrontendRedirect(c *check.C) {
 }
 
 func (s *AccessLogSuite) TestAccessLogRateLimit(c *check.C) {
-	// Ensure working directory is clean
 	ensureWorkingDirectoryIsClean()
 
 	expected := []accessLogValue{
@@ -517,7 +515,6 @@ func (s *AccessLogSuite) TestAccessLogRateLimit(c *check.C) {
 }
 
 func (s *AccessLogSuite) TestAccessLogBackendNotFound(c *check.C) {
-	// Ensure working directory is clean
 	ensureWorkingDirectoryIsClean()
 
 	expected := []accessLogValue{
@@ -565,7 +562,6 @@ func (s *AccessLogSuite) TestAccessLogBackendNotFound(c *check.C) {
 }
 
 func (s *AccessLogSuite) TestAccessLogEntrypointWhitelist(c *check.C) {
-	// Ensure working directory is clean
 	ensureWorkingDirectoryIsClean()
 
 	expected := []accessLogValue{
@@ -615,7 +611,6 @@ func (s *AccessLogSuite) TestAccessLogEntrypointWhitelist(c *check.C) {
 }
 
 func (s *AccessLogSuite) TestAccessLogFrontendWhitelist(c *check.C) {
-	// Ensure working directory is clean
 	ensureWorkingDirectoryIsClean()
 
 	expected := []accessLogValue{
