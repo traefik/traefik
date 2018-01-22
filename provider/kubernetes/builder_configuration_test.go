@@ -90,6 +90,48 @@ func circuitBreaker(exp string) func(*types.Backend) {
 	}
 }
 
+func maxRequestBodyBytes(value int64) func(*types.Backend) {
+	return func(b *types.Backend) {
+		if b.Buffering == nil {
+			b.Buffering = &types.Buffering{Enabled: true}
+		}
+		b.Buffering.MaxRequestBodyBytes = value
+	}
+}
+
+func memRequestBodyBytes(value int64) func(*types.Backend) {
+	return func(b *types.Backend) {
+		if b.Buffering == nil {
+			b.Buffering = &types.Buffering{Enabled: true}
+		}
+		b.Buffering.MemRequestBodyBytes = value
+	}
+}
+
+func maxResponseBodyBytes(value int64) func(*types.Backend) {
+	return func(b *types.Backend) {
+		if b.Buffering == nil {
+			b.Buffering = &types.Buffering{Enabled: true}
+		}
+		b.Buffering.MaxResponseBodyBytes = value
+	}
+}
+
+func memResponseBodyBytes(value int64) func(*types.Backend) {
+	return func(b *types.Backend) {
+		b.Buffering.MemResponseBodyBytes = value
+	}
+}
+
+func retrying(exp string) func(*types.Backend) {
+	return func(b *types.Backend) {
+		if b.Buffering == nil {
+			b.Buffering = &types.Buffering{Enabled: true}
+		}
+		b.Buffering.RetryExpression = exp
+	}
+}
+
 // Frontend
 
 func buildFrontends(opts ...func(*types.Frontend) string) map[string]*types.Frontend {

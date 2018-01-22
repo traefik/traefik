@@ -295,6 +295,42 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					}
 				}
 
+				if service.Annotations[label.TraefikBackendBufferingEnabled] == "true" {
+					templateObjects.Backends[r.Host+pa.Path].Buffering = &types.Buffering{Enabled: true}
+
+					annotationValue, err := strconv.ParseInt(service.Annotations[label.TraefikBackendBufferingMaxRequestBodyBytes], 10, 64)
+					if err != nil {
+						log.Warnf("Error parsing %s in %s/%s: %v", label.TraefikBackendBufferingMaxRequestBodyBytes, service.ObjectMeta.Namespace, service.ObjectMeta.Name, err)
+					} else {
+						templateObjects.Backends[r.Host+pa.Path].Buffering.MaxRequestBodyBytes = annotationValue
+					}
+
+					annotationValue, err = strconv.ParseInt(service.Annotations[label.TraefikBackendBufferingMemRequestBodyBytes], 10, 64)
+					if err != nil {
+						log.Warnf("Error parsing %s in %s/%s: %v", label.TraefikBackendBufferingMemRequestBodyBytes, service.ObjectMeta.Namespace, service.ObjectMeta.Name, err)
+					} else {
+						templateObjects.Backends[r.Host+pa.Path].Buffering.MemRequestBodyBytes = annotationValue
+					}
+
+					annotationValue, err = strconv.ParseInt(service.Annotations[label.TraefikBackendBufferingMaxResponseBodyBytes], 10, 64)
+					if err != nil {
+						log.Warnf("Error parsing %s in %s/%s: %v", label.TraefikBackendBufferingMaxResponseBodyBytes, service.ObjectMeta.Namespace, service.ObjectMeta.Name, err)
+					} else {
+						templateObjects.Backends[r.Host+pa.Path].Buffering.MaxResponseBodyBytes = annotationValue
+					}
+
+					annotationValue, err = strconv.ParseInt(service.Annotations[label.TraefikBackendBufferingMemResponseBodyBytes], 10, 64)
+					if err != nil {
+						log.Warnf("Error parsing %s in %s/%s: %v", label.TraefikBackendBufferingMemResponseBodyBytes, service.ObjectMeta.Namespace, service.ObjectMeta.Name, err)
+					} else {
+						templateObjects.Backends[r.Host+pa.Path].Buffering.MemResponseBodyBytes = annotationValue
+					}
+
+					if retryExpression := service.Annotations[label.TraefikBackendBufferingRetryExpression]; len(retryExpression) > 0 {
+						templateObjects.Backends[r.Host+pa.Path].Buffering.RetryExpression = retryExpression
+					}
+				}
+
 				if service.Annotations[label.TraefikBackendLoadBalancerMethod] == "drr" {
 					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Method = "drr"
 				}
