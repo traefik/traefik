@@ -1577,6 +1577,27 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
     interval = "{{ $healthCheck.Interval }}"
   {{end}}
 
+  {{ $buffering := getBuffering $app }}
+  {{if $buffering }}
+  [backends."backend-{{ $backendName }}".buffering]
+    enabled = {{ $buffering.Enabled }}
+    {{if $buffering.MaxRequestBodyBytes }}
+    maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
+    {{end}}
+    {{if $buffering.MemRequestBodyBytes }}
+    memRequestBodyBytes = {{ $buffering.MemRequestBodyBytes }}
+    {{end}}
+    {{if $buffering.MaxResponseBodyBytes }}
+    maxResponseBodyBytes = {{ $buffering.MaxResponseBodyBytes }}
+    {{end}}
+    {{if $buffering.MemResponseBodyBytes }}
+    memResponseBodyBytes = {{ $buffering.MemResponseBodyBytes }}
+    {{end}}
+    {{if $buffering.RetryExpression }}
+    retryExpression = "{{ $buffering.RetryExpression }}"
+    {{end}}
+  {{end}}
+
   {{range $serverName, $server := getServers $backend}}
   [backends.backend-{{ $backendName }}.servers.{{ $serverName }}]
     url = "{{ $server.URL }}"
