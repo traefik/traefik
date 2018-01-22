@@ -28,16 +28,6 @@ type Backend interface {
 	Setup(serviceName string) (opentracing.Tracer, io.Closer, error)
 }
 
-type statusCodeTracker struct {
-	http.ResponseWriter
-	status int
-}
-
-func (s *statusCodeTracker) WriteHeader(status int) {
-	s.status = status
-	s.ResponseWriter.WriteHeader(status)
-}
-
 // Setup Tracing middleware
 func (t *Tracing) Setup() {
 	var err error
