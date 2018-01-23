@@ -357,7 +357,7 @@ func (s *Server) preLoadConfiguration(configMsg types.ConfigMessage) {
 	currentConfigurations := s.currentConfigurations.Get().(types.Configurations)
 	jsonConf, _ := json.Marshal(configMsg.Configuration)
 	log.Debugf("Configuration received from provider %s: %s", configMsg.ProviderName, string(jsonConf))
-	if configMsg.Configuration == nil || configMsg.Configuration.Backends == nil && configMsg.Configuration.Frontends == nil && configMsg.Configuration.TLSConfiguration == nil {
+	if configMsg.Configuration == nil || configMsg.Configuration.Backends == nil && configMsg.Configuration.Frontends == nil && configMsg.Configuration.TLS == nil {
 		log.Infof("Skipping empty Configuration for provider %s", configMsg.ProviderName)
 	} else if reflect.DeepEqual(currentConfigurations[configMsg.ProviderName], configMsg.Configuration) {
 		log.Infof("Skipping same configuration for provider %s", configMsg.ProviderName)
@@ -462,8 +462,8 @@ func (s *Server) loadHTTPSConfiguration(configurations types.Configurations) (ma
 	newEPCertificates := make(map[string]*traefikTls.DomainsCertificates)
 	// Get all certificates
 	for _, configuration := range configurations {
-		if configuration.TLSConfiguration != nil && len(configuration.TLSConfiguration) > 0 {
-			if err := traefikTls.SortTLSConfigurationPerEntryPoints(configuration.TLSConfiguration, newEPCertificates); err != nil {
+		if configuration.TLS != nil && len(configuration.TLS) > 0 {
+			if err := traefikTls.SortTLSPerEntryPoints(configuration.TLS, newEPCertificates); err != nil {
 				return nil, err
 			}
 		}

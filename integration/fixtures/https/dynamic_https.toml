@@ -16,9 +16,9 @@
     [frontends.frontend2.routes.test_2]
     rule = "Host:snitest.org"
 
-[[tlsConfiguration]]
+[[tls]]
 entryPoints = ["https"]
-  [tlsConfiguration.certificate]
+  [tls.certificate]
     certFile = """-----BEGIN CERTIFICATE-----
 MIIC/zCCAeegAwIBAgIJALAYHG/vGqWEMA0GCSqGSIb3DQEBBQUAMBYxFDASBgNV
 BAMMC3NuaXRlc3Qub3JnMB4XDTE1MTEyMzIyMDU0NFoXDTI1MTEyMDIyMDU0NFow
