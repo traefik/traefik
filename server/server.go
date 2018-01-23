@@ -38,7 +38,6 @@ import (
 	traefikTls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/whitelist"
-	"github.com/eapache/channels"
 	thoas_stats "github.com/thoas/stats"
 	"github.com/urfave/negroni"
 	"github.com/vulcand/oxy/connlimit"
@@ -72,6 +71,7 @@ type Server struct {
 	leadership                    *cluster.Leadership
 	defaultForwardingRoundTripper http.RoundTripper
 	metricsRegistry               metrics.Registry
+	throttler                     *providerUpdateThrottler
 }
 
 type serverEntryPoints map[string]*serverEntryPoint
@@ -102,6 +102,7 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration) *Server {
 	server.signals = make(chan os.Signal, 1)
 	server.stopChan = make(chan bool, 1)
 	server.providers = []provider.Provider{}
+	server.throttler = newProviderUpdateThrottler(server, time.Duration(globalConfiguration.ProvidersThrottleDuration))
 	server.configureSignals()
 	currentConfigurations := make(types.Configurations)
 	server.currentConfigurations.Set(currentConfigurations)
@@ -344,62 +345,13 @@ func (s *Server) listenProviders(stop chan bool) {
 			if !ok || configMsg.Configuration == nil {
 				return
 			}
-			s.preLoadConfiguration(configMsg)
+			s.preLoadConfiguration(stop, configMsg)
 		}
 	}
 }
 
-func (s *Server) preLoadConfiguration(configMsg types.ConfigMessage) {
-	providerConfigUpdateMap := map[string]chan types.ConfigMessage{}
-	providersThrottleDuration := time.Duration(s.globalConfiguration.ProvidersThrottleDuration)
-	s.defaultConfigurationValues(configMsg.Configuration)
-	currentConfigurations := s.currentConfigurations.Get().(types.Configurations)
-	jsonConf, _ := json.Marshal(configMsg.Configuration)
-	log.Debugf("Configuration received from provider %s: %s", configMsg.ProviderName, string(jsonConf))
-	if configMsg.Configuration == nil || configMsg.Configuration.Backends == nil && configMsg.Configuration.Frontends == nil && configMsg.Configuration.TLSConfiguration == nil {
-		log.Infof("Skipping empty Configuration for provider %s", configMsg.ProviderName)
-	} else if reflect.DeepEqual(currentConfigurations[configMsg.ProviderName], configMsg.Configuration) {
-		log.Infof("Skipping same configuration for provider %s", configMsg.ProviderName)
-	} else {
-		if _, ok := providerConfigUpdateMap[configMsg.ProviderName]; !ok {
-			providerConfigUpdate := make(chan types.ConfigMessage)
-			providerConfigUpdateMap[configMsg.ProviderName] = providerConfigUpdate
-			s.routinesPool.Go(func(stop chan bool) {
-				throttleProviderConfigReload(providersThrottleDuration, s.configurationValidatedChan, providerConfigUpdate, stop)
-			})
-		}
-		providerConfigUpdateMap[configMsg.ProviderName] <- configMsg
-	}
-}
-
-// throttleProviderConfigReload throttles the configuration reload speed for a single provider.
-// It will immediately publish a new configuration and then only publish the next configuration after the throttle duration.
-// Note that in the case it receives N new configs in the timeframe of the throttle duration after publishing,
-// it will publish the last of the newly received configurations.
-func throttleProviderConfigReload(throttle time.Duration, publish chan<- types.ConfigMessage, in <-chan types.ConfigMessage, stop chan bool) {
-	ring := channels.NewRingChannel(1)
-	defer ring.Close()
-
-	safe.Go(func() {
-		for {
-			select {
-			case <-stop:
-				return
-			case nextConfig := <-ring.Out():
-				publish <- nextConfig.(types.ConfigMessage)
-				time.Sleep(throttle)
-			}
-		}
-	})
-
-	for {
-		select {
-		case <-stop:
-			return
-		case nextConfig := <-in:
-			ring.In() <- nextConfig
-		}
-	}
+func (s *Server) preLoadConfiguration(stop chan bool, configMsg types.ConfigMessage) {
+	s.throttler.process(stop, configMsg)
 }
 
 func (s *Server) defaultConfigurationValues(configuration *types.Configuration) {
