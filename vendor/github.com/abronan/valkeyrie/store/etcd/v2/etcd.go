@@ -12,9 +12,9 @@ import (
 
 	"golang.org/x/net/context"
 
+	"github.com/abronan/valkeyrie"
+	"github.com/abronan/valkeyrie/store"
 	etcd "github.com/coreos/etcd/client"
-	"github.com/docker/libkv"
-	"github.com/docker/libkv/store"
 )
 
 const (
@@ -53,9 +53,9 @@ const (
 	defaultUpdateTime = 5 * time.Second
 )
 
-// Register registers etcd to libkv
+// Register registers etcd to valkeyrie
 func Register() {
-	libkv.AddStore(store.ETCD, New)
+	valkeyrie.AddStore(store.ETCD, New)
 }
 
 // New creates a new Etcd client given a list

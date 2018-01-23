@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/docker/libkv/store"
+	"github.com/abronan/valkeyrie/store"
 )
 
 func newProviderMock(kvPairs []*store.KVPair) *Provider {

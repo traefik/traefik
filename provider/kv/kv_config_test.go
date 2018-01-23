@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/abronan/valkeyrie/store"
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
-	"github.com/docker/libkv/store"
 	"github.com/stretchr/testify/assert"
 )
 

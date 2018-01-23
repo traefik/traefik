@@ -5,11 +5,11 @@ import (
 	"fmt"
 	stdlog "log"
 
+	"github.com/abronan/valkeyrie/store"
 	"github.com/containous/flaeg"
 	"github.com/containous/staert"
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/cluster"
-	"github.com/docker/libkv/store"
 )
 
 func newStoreConfigCmd(traefikConfiguration *TraefikConfiguration, traefikPointersConfiguration *TraefikConfiguration) *flaeg.Command {

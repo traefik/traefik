@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/abronan/valkeyrie/store"
 	"github.com/containous/traefik/types"
-	"github.com/docker/libkv/store"
 )
 
 func TestKvWatchTree(t *testing.T) {

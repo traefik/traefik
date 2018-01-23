@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/docker/libkv/store"
+	"github.com/abronan/valkeyrie/store"
 	"github.com/stretchr/testify/assert"
 )
 

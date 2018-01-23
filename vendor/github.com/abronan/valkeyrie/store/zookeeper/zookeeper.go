@@ -4,8 +4,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/docker/libkv"
-	"github.com/docker/libkv/store"
+	"github.com/abronan/valkeyrie"
+	"github.com/abronan/valkeyrie/store"
 	zk "github.com/samuel/go-zookeeper/zk"
 )
 
@@ -32,9 +32,9 @@ type zookeeperLock struct {
 	value  []byte
 }
 
-// Register registers zookeeper to libkv
+// Register registers zookeeper to valkeyrie
 func Register() {
-	libkv.AddStore(store.ZK, New)
+	valkeyrie.AddStore(store.ZK, New)
 }
 
 // New creates a new Zookeeper client given a
@@ -485,7 +485,7 @@ func (s *Zookeeper) get(key string) ([]byte, *zk.Stat, error) {
 	var meta *zk.Stat
 	var err error
 
-	// To guard against older versions of libkv
+	// To guard against older versions of valkeyrie
 	// creating and writing to znodes non-atomically,
 	// We try to resync few times if we read SOH or
 	// an empty string
@@ -518,7 +518,7 @@ func (s *Zookeeper) getW(key string) ([]byte, *zk.Stat, <-chan zk.Event, error) 
 	var ech <-chan zk.Event
 	var err error
 
-	// To guard against older versions of libkv
+	// To guard against older versions of valkeyrie
 	// creating and writing to znodes non-atomically,
 	// We try to resync few times if we read SOH or
 	// an empty string
