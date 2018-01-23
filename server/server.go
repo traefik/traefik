@@ -66,6 +66,7 @@ type Server struct {
 	stopChan                      chan bool
 	providers                     []provider.Provider
 	currentConfigurations         safe.Safe
+	providerConfigUpdateMap       map[string]chan types.ConfigMessage
 	globalConfiguration           configuration.GlobalConfiguration
 	accessLoggerMiddleware        *accesslog.LogHandler
 	routinesPool                  *safe.Pool
@@ -105,6 +106,7 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration) *Server {
 	server.configureSignals()
 	currentConfigurations := make(types.Configurations)
 	server.currentConfigurations.Set(currentConfigurations)
+	server.providerConfigUpdateMap = make(map[string]chan types.ConfigMessage)
 	server.globalConfiguration = globalConfiguration
 	if server.globalConfiguration.API != nil {
 		server.globalConfiguration.API.CurrentConfigurations = &server.currentConfigurations
@@ -350,7 +352,6 @@ func (s *Server) listenProviders(stop chan bool) {
 }
 
 func (s *Server) preLoadConfiguration(configMsg types.ConfigMessage) {
-	providerConfigUpdateMap := map[string]chan types.ConfigMessage{}
 	providersThrottleDuration := time.Duration(s.globalConfiguration.ProvidersThrottleDuration)
 	s.defaultConfigurationValues(configMsg.Configuration)
 	currentConfigurations := s.currentConfigurations.Get().(types.Configurations)
@@ -361,14 +362,15 @@ func (s *Server) preLoadConfiguration(configMsg types.ConfigMessage) {
 	} else if reflect.DeepEqual(currentConfigurations[configMsg.ProviderName], configMsg.Configuration) {
 		log.Infof("Skipping same configuration for provider %s", configMsg.ProviderName)
 	} else {
-		if _, ok := providerConfigUpdateMap[configMsg.ProviderName]; !ok {
-			providerConfigUpdate := make(chan types.ConfigMessage)
-			providerConfigUpdateMap[configMsg.ProviderName] = providerConfigUpdate
+		providerConfigUpdateCh, ok := s.providerConfigUpdateMap[configMsg.ProviderName]
+		if !ok {
+			providerConfigUpdateCh = make(chan types.ConfigMessage)
+			s.providerConfigUpdateMap[configMsg.ProviderName] = providerConfigUpdateCh
 			s.routinesPool.Go(func(stop chan bool) {
-				throttleProviderConfigReload(providersThrottleDuration, s.configurationValidatedChan, providerConfigUpdate, stop)
+				throttleProviderConfigReload(providersThrottleDuration, s.configurationValidatedChan, providerConfigUpdateCh, stop)
 			})
 		}
-		providerConfigUpdateMap[configMsg.ProviderName] <- configMsg
+		providerConfigUpdateCh <- configMsg
 	}
 }
 
