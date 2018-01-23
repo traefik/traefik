@@ -114,6 +114,20 @@ type Domain struct {
 }
 
 func (a *ACME) init() error {
+	// FIXME temporary fix, waiting for https://github.com/xenolf/lego/pull/478
+	acme.HTTPClient = http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			Dial: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).Dial,
+			TLSHandshakeTimeout:   15 * time.Second,
+			ResponseHeaderTimeout: 15 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+		},
+	}
+
 	if a.ACMELogging {
 		acme.Logger = fmtlog.New(os.Stderr, "legolog: ", fmtlog.LstdFlags)
 	} else {
