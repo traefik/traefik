@@ -55,3 +55,5 @@ deploy:
     skip_cleanup: true
     on:
       repo: containous/traefik
+      all_branches: true
+
