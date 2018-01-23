@@ -9,8 +9,8 @@
     [frontends.frontend.routes.test]
     rule = "Host:traefik.acme.wtf"
 
-[[tlsConfiguration]]
+[[tls]]
 entryPoints = ["https"]
-    [tlsConfiguration.certificate]
+    [tls.certificate]
      certFile = "fixtures/acme/ssl/wildcard.crt"
      keyFile = "fixtures/acme/ssl/wildcard.key"

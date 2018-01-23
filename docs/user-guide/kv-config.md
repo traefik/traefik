@@ -274,14 +274,14 @@ Here is the toml configuration we would like to store in the store :
   backend = "backend2"
   rule = "Path:/test"
 
-[[tlsConfiguration]]
+[[tls]]
 entryPoints = ["https"]
-  [tlsConfiguration.certificate]
+  [tls.certificate]
     certFile = "path/to/your.cert"
     keyFile = "path/to/your.key"
-[[tlsConfiguration]]
+[[tls]]
 entryPoints = ["https","other-https"]
-  [tlsConfiguration.certificate]
+  [tls.certificate]
     certFile = """-----BEGIN CERTIFICATE-----
                       <cert file content>
                       -----END CERTIFICATE-----"""
@@ -335,19 +335,19 @@ And there, the same dynamic configuration in a KV Store (using `prefix = "traefi
 
 - certificate 1
 
-| Key                                                | Value              |
-|----------------------------------------------------|--------------------|
-| `/traefik/tlsconfiguration/1/entrypoints`          | `https`            |
-| `/traefik/tlsconfiguration/1/certificate/certfile` | `path/to/your.cert`|
-| `/traefik/tlsconfiguration/1/certificate/keyfile`  | `path/to/your.key` |
+| Key                                   | Value              |
+|---------------------------------------|--------------------|
+| `/traefik/tls/1/entrypoints`          | `https`            |
+| `/traefik/tls/1/certificate/certfile` | `path/to/your.cert`|
+| `/traefik/tls/1/certificate/keyfile`  | `path/to/your.key` |
 
 - certificate 2
 
-| Key                                                | Value                 |
-|----------------------------------------------------|-----------------------|
-| `/traefik/tlsconfiguration/2/entrypoints`          | `https,other-https`   |
-| `/traefik/tlsconfiguration/2/certificate/certfile` | `<cert file content>` |
-| `/traefik/tlsconfiguration/2/certificate/certfile` | `<key file content>`  |
+| Key                                   | Value                 |
+|---------------------------------------|-----------------------|
+| `/traefik/tls/2/entrypoints`          | `https,other-https`   |
+| `/traefik/tls/2/certificate/certfile` | `<cert file content>` |
+| `/traefik/tls/2/certificate/certfile` | `<key file content>`  |
 
 ### Atomic configuration changes
 

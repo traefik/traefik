@@ -86,8 +86,8 @@ func (r *RootCAs) Type() string {
 	return "rootcas"
 }
 
-// SortTLSConfigurationPerEntryPoints converts TLS configuration sorted by Certificates into TLS configuration sorted by EntryPoints
-func SortTLSConfigurationPerEntryPoints(configurations []*Configuration, epConfiguration map[string]*DomainsCertificates) error {
+// SortTLSPerEntryPoints converts TLS configuration sorted by Certificates into TLS configuration sorted by EntryPoints
+func SortTLSPerEntryPoints(configurations []*Configuration, epConfiguration map[string]*DomainsCertificates) error {
 	if epConfiguration == nil {
 		epConfiguration = make(map[string]*DomainsCertificates)
 	}

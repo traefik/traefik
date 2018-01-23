@@ -624,7 +624,7 @@ func modifyCertificateConfFileContent(c *check.C, certFileName, confFileName, en
 	// If certificate file is not provided, just truncate the configuration file
 	if len(certFileName) > 0 {
 		tlsConf := types.Configuration{
-			TLSConfiguration: []*traefikTls.Configuration{
+			TLS: []*traefikTls.Configuration{
 				{
 					Certificate: &traefikTls.Certificate{
 						CertFile: traefikTls.FileOrContent("fixtures/https/" + certFileName + ".cert"),

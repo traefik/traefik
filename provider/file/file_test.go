@@ -26,7 +26,7 @@ func TestProvideSingleFileAndWatch(t *testing.T) {
 		tempDir, "simple.toml",
 		createFrontendConfiguration(expectedNumFrontends),
 		createBackendConfiguration(expectedNumBackends),
-		createTLSConfiguration(expectedNumTLSConf))
+		createTLS(expectedNumTLSConf))
 
 	configurationChan, signal := createConfigurationRoutine(t, &expectedNumFrontends, &expectedNumBackends, &expectedNumTLSConf)
 
@@ -45,7 +45,7 @@ func TestProvideSingleFileAndWatch(t *testing.T) {
 		tempDir, "simple.toml",
 		createFrontendConfiguration(expectedNumFrontends),
 		createBackendConfiguration(expectedNumBackends),
-		createTLSConfiguration(expectedNumTLSConf))
+		createTLS(expectedNumTLSConf))
 
 	err = waitForSignal(signal, 2*time.Second, "single frontend, backend, TLS configuration")
 	assert.NoError(t, err)
@@ -63,7 +63,7 @@ func TestProvideSingleFileAndNotWatch(t *testing.T) {
 		tempDir, "simple.toml",
 		createFrontendConfiguration(expectedNumFrontends),
 		createBackendConfiguration(expectedNumBackends),
-		createTLSConfiguration(expectedNumTLSConf))
+		createTLS(expectedNumTLSConf))
 
 	configurationChan, signal := createConfigurationRoutine(t, &expectedNumFrontends, &expectedNumBackends, &expectedNumTLSConf)
 
@@ -82,7 +82,7 @@ func TestProvideSingleFileAndNotWatch(t *testing.T) {
 		tempDir, "simple.toml",
 		createFrontendConfiguration(expectedNumFrontends),
 		createBackendConfiguration(expectedNumBackends),
-		createTLSConfiguration(expectedNumTLSConf))
+		createTLS(expectedNumTLSConf))
 
 	// Must fail because we don't watch the changes
 	err = waitForSignal(signal, 2*time.Second, "single frontend, backend and TLS configuration")
@@ -99,7 +99,7 @@ func TestProvideDirectoryAndWatch(t *testing.T) {
 
 	tempFile1 := createRandomFile(t, tempDir, createFrontendConfiguration(expectedNumFrontends))
 	tempFile2 := createRandomFile(t, tempDir, createBackendConfiguration(expectedNumBackends))
-	tempFile3 := createRandomFile(t, tempDir, createTLSConfiguration(expectedNumTLSConf))
+	tempFile3 := createRandomFile(t, tempDir, createTLS(expectedNumTLSConf))
 
 	configurationChan, signal := createConfigurationRoutine(t, &expectedNumFrontends, &expectedNumBackends, &expectedNumTLSConf)
 
@@ -145,7 +145,7 @@ func TestProvideDirectoryAndNotWatch(t *testing.T) {
 
 	createRandomFile(t, tempDir, createFrontendConfiguration(expectedNumFrontends))
 	tempFile2 := createRandomFile(t, tempDir, createBackendConfiguration(expectedNumBackends))
-	createRandomFile(t, tempTLSDir, createTLSConfiguration(expectedNumTLSConf))
+	createRandomFile(t, tempTLSDir, createTLS(expectedNumTLSConf))
 
 	configurationChan, signal := createConfigurationRoutine(t, &expectedNumFrontends, &expectedNumBackends, &expectedNumTLSConf)
 
@@ -167,7 +167,7 @@ func TestProvideDirectoryAndNotWatch(t *testing.T) {
 
 }
 
-func createConfigurationRoutine(t *testing.T, expectedNumFrontends *int, expectedNumBackends *int, expectedNumTLSConfigurations *int) (chan types.ConfigMessage, chan interface{}) {
+func createConfigurationRoutine(t *testing.T, expectedNumFrontends *int, expectedNumBackends *int, expectedNumTLSes *int) (chan types.ConfigMessage, chan interface{}) {
 	configurationChan := make(chan types.ConfigMessage)
 	signal := make(chan interface{})
 
@@ -177,7 +177,7 @@ func createConfigurationRoutine(t *testing.T, expectedNumFrontends *int, expecte
 			assert.Equal(t, "file", data.ProviderName)
 			assert.Len(t, data.Configuration.Frontends, *expectedNumFrontends)
 			assert.Len(t, data.Configuration.Backends, *expectedNumBackends)
-			assert.Len(t, data.Configuration.TLSConfiguration, *expectedNumTLSConfigurations)
+			assert.Len(t, data.Configuration.TLS, *expectedNumTLSes)
 			signal <- nil
 		}
 	})
@@ -297,13 +297,13 @@ func createBackendConfiguration(n int) string {
 	return conf
 }
 
-// createTLSConfiguration Helper
-func createTLSConfiguration(n int) string {
+// createTLS Helper
+func createTLS(n int) string {
 	var conf string
 	for i := 1; i <= n; i++ {
-		conf += fmt.Sprintf(`[[TLSConfiguration]]
+		conf += fmt.Sprintf(`[[TLS]]
 	EntryPoints = ["https"]
-	[TLSConfiguration.Certificate]
+	[TLS.Certificate]
 	CertFile = "integration/fixtures/https/snitest%[1]d.com.cert"
 	KeyFile = "integration/fixtures/https/snitest%[1]d.com.key"
 `, i)

@@ -84,15 +84,15 @@ defaultEntryPoints = ["http", "https"]
   rule = "Path:/test"
 
 # HTTPS certificate
-[[tlsConfiguration]]
+[[tls]]
   entryPoints = ["https"]
-  [tlsConfiguration.certificate]
+  [tls.certificate]
     certFile = "path/to/my.cert"
     keyFile = "path/to/my.key"
     
-[[tlsConfiguration]]
+[[tls]]
   entryPoints = ["https"]
-  [tlsConfiguration.certificate]
+  [tls.certificate]
     certFile = "path/to/my/other.cert"
     keyFile = "path/to/my/other.key"
 ```
@@ -163,15 +163,15 @@ filename = "rules.toml"
   rule = "Path:/test"
   
 # HTTPS certificate
-[[tlsConfiguration]]
+[[tls]]
   entryPoints = ["https"]
-  [tlsConfiguration.certificate]
+  [tls.certificate]
     certFile = "path/to/my.cert"
     keyFile = "path/to/my.key"
     
-[[tlsConfiguration]]
+[[tls]]
   entryPoints = ["https"]
-  [tlsConfiguration.certificate]
+  [tls.certificate]
     certFile = "path/to/my/other.cert"
     keyFile = "path/to/my/other.key"
 
