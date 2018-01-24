@@ -151,7 +151,7 @@
 				<VATDueOnECAcquisitions>13.12</VATDueOnECAcquisitions>
 				<TotalVAT>26.24</TotalVAT>
 				<VATReclaimedOnInputs>10.01</VATReclaimedOnInputs>
-				<NetVAT>16.23</NetVAT>
+				<NetVAT>-99.99</NetVAT>
 				<NetSalesAndOutputs>13</NetSalesAndOutputs>
 				<NetPurchasesAndInputs>13</NetPurchasesAndInputs>
 				<NetECSupplies>0</NetECSupplies>

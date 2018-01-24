@@ -167,7 +167,7 @@ func gtmGetMessageParts(decoder *xml.Decoder, path string, message io.Reader) (*
 				if doc, err := xmlutils.ElementInnerToDocument(&se, decoder); err == nil {
 					partial.Header = doc
 					if el := doc.FindElementPath(gtmClass); el != nil {
-						isSaSubmission = strings.HasPrefix(el.Text(), "HMRC-SA-") && path == "/submission"
+						isSaSubmission = auditsRequestPayloadContents(el.Text()) && path == "/submission"
 					}
 				}
 			} else if se.Name.Local == "GovTalkDetails" {
@@ -218,6 +218,7 @@ var gtmUserType = etree.MustCompilePath("./GovTalkDetails/GatewayAdditions/Submi
 var gtmSa110Repayment = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/MTR/SA110/SelfAssessment/TotalTaxEtcDue")
 var gtmSa900Claim = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/SAtrust/TrustEstate/TaxCalculation/ClaimRepaymentForNextYear")
 var gtmSa900Repayment = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/SAtrust/TrustEstate/TaxCalculation/RepaymentForNextYear")
+var gtmVatRepayment = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/VATDeclarationRequest/NetVAT")
 
 func (partial *partialGovTalkMessage) populateAuditEvent(ae *AuditEvent) {
 	extractIfPresent(partial.Header, gtmClass, &ae.AuditType)
@@ -281,7 +282,7 @@ func (partial *partialGovTalkMessage) populateMessageSpecificInfo(ev *RATEAuditE
 }
 
 func (partial *partialGovTalkMessage) populateSelfAssessmentData(ev *RATEAuditEvent) {
-	if strings.HasPrefix(ev.AuditType, "HMRC-SA-") && partial.Message != nil {
+	if auditsRequestPayloadContents(ev.AuditType) && partial.Message != nil {
 		if ev.RequestPayload == nil {
 			ev.RequestPayload = types.DataMap{}
 		}
@@ -315,7 +316,21 @@ func (partial *partialGovTalkMessage) populateSelfAssessmentData(ev *RATEAuditEv
 
 			}
 		}
+		if strings.HasPrefix(ev.AuditType, "HMRC-VAT") {
+			if el := partial.Message.FindElementPath(gtmVatRepayment); el != nil {
+				if amount, err := strconv.ParseFloat(el.Text(), 64); err == nil {
+					ev.Detail.IsRepayment = strconv.FormatBool(amount < 0.00)
+				} else {
+					ev.Detail.IsRepayment = "false"
+				}
+
+			}
+		}
 	}
+}
+
+func auditsRequestPayloadContents(auditType string) bool {
+	return strings.HasPrefix(auditType, "HMRC-SA-") || strings.HasPrefix(auditType, "HMRC-VAT-")
 }
 
 // ChRISEnvelope Processing

@@ -8,8 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/beevik/etree"
-
 	"github.com/containous/traefik/middlewares/audittap/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -311,23 +309,4 @@ func TestRateSARemovesAttachmentContent(t *testing.T) {
 	assert.Contains(t, contents, "<Attachment att=\"2\" size=\"123\"></Attachment>")
 	assert.NotContains(t, contents, "wdokawdoakwdokw")
 	assert.NotContains(t, contents, "4trgrgsefsedawwadawd")
-}
-
-// debugEvent debug utility function to output event JSON structure
-func debugEvent(t *testing.T, ev *RATEAuditEvent) {
-	s := string(ev.ToEncoded().Bytes)
-	t.Log(s)
-	t.Fatal("Stop the test")
-}
-
-func makePartialGtmWithBody(s string) (*partialGovTalkMessage, error) {
-	doc := etree.NewDocument()
-	err := doc.ReadFromString(s)
-	if err != nil {
-		return nil, err
-	}
-
-	gtm := &partialGovTalkMessage{}
-	gtm.Message = doc
-	return gtm, nil
 }
