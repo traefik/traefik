@@ -38,7 +38,7 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"Last":        p.last,
 		"Has":         p.has,
 
-		"getTLSConfigurations": p.getTLSConfigurations,
+		"getTLSSection": p.getTLSSection,
 
 		// Frontend functions
 		"getBackendName":          p.getFuncString(pathFrontendBackend, ""),
@@ -273,19 +273,19 @@ func (p *Provider) getHealthCheck(rootPath string) *types.HealthCheck {
 	}
 }
 
-func (p *Provider) getTLSConfigurations(prefix string) []*tls.Configuration {
-	var tlsConfiguration []*tls.Configuration
+func (p *Provider) getTLSSection(prefix string) []*tls.Configuration {
+	var tlsSection []*tls.Configuration
 
-	for _, tlsConfPath := range p.list(prefix, pathTLSConfiguration) {
-		certFile := p.get("", tlsConfPath, pathTLSConfigurationCertFile)
-		keyFile := p.get("", tlsConfPath, pathTLSConfigurationKeyFile)
+	for _, tlsConfPath := range p.list(prefix, pathTLS) {
+		certFile := p.get("", tlsConfPath, pathTLSCertFile)
+		keyFile := p.get("", tlsConfPath, pathTLSKeyFile)
 
 		if len(certFile) == 0 && len(keyFile) == 0 {
 			log.Warnf("Invalid TLS configuration (no cert and no key): %s", tlsConfPath)
 			continue
 		}
 
-		entryPoints := p.getList(tlsConfPath, pathTLSConfigurationEntryPoints)
+		entryPoints := p.getList(tlsConfPath, pathTLSEntryPoints)
 		if len(entryPoints) == 0 {
 			log.Warnf("Invalid TLS configuration (no entry points): %s", tlsConfPath)
 			continue
@@ -299,10 +299,10 @@ func (p *Provider) getTLSConfigurations(prefix string) []*tls.Configuration {
 			},
 		}
 
-		tlsConfiguration = append(tlsConfiguration, tlsConf)
+		tlsSection = append(tlsSection, tlsConf)
 	}
 
-	return tlsConfiguration
+	return tlsSection
 }
 
 func (p *Provider) getRoutes(rootPath string) map[string]types.Route {

@@ -62,10 +62,10 @@ const (
 	pathFrontendRoutes = "/routes/"
 	pathFrontendRule   = "/rule"
 
-	pathTLSConfiguration            = "/tlsconfiguration/"
-	pathTLSConfigurationEntryPoints = "/entrypoints"
-	pathTLSConfigurationCertFile    = "/certificate/certfile"
-	pathTLSConfigurationKeyFile     = "/certificate/keyfile"
+	pathTLS            = "/tls/"
+	pathTLSEntryPoints = "/entrypoints"
+	pathTLSCertFile    = "/certificate/certfile"
+	pathTLSKeyFile     = "/certificate/keyfile"
 
 	pathTags      = "/tags"
 	pathAlias     = "/alias"

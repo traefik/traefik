@@ -186,7 +186,7 @@ func loadFileConfigFromDirectory(directory string, configuration *types.Configur
 			}
 		}
 
-		for _, conf := range c.TLSConfiguration {
+		for _, conf := range c.TLS {
 			if _, exists := configTLSMaps[conf]; exists {
 				log.Warnf("TLS Configuration %v already configured, skipping", conf)
 			} else {
@@ -196,7 +196,7 @@ func loadFileConfigFromDirectory(directory string, configuration *types.Configur
 
 	}
 	for conf := range configTLSMaps {
-		configuration.TLSConfiguration = append(configuration.TLSConfiguration, conf)
+		configuration.TLS = append(configuration.TLS, conf)
 	}
 	return configuration, nil
 }

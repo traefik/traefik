@@ -525,7 +525,7 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithChange(c *check.C) {
 	c.Assert(resp.StatusCode, checker.Equals, http.StatusNotFound)
 }
 
-// TestWithSNIDynamicConfigRouteWithChangeForEmptyTlsConfiguration involves a client sending HTTPS requests with
+// TestWithSNIDynamicConfigRouteWithTlsConfigurationDeletion involves a client sending HTTPS requests with
 // SNI hostnames of "snitest.org" and "snitest.com". The test verifies
 // that traefik updates its configuration when the HTTPS configuration is modified, even if it totally deleted, and
 // it routes the requests to the expected backends thanks to given certificate if possible
@@ -624,7 +624,7 @@ func modifyCertificateConfFileContent(c *check.C, certFileName, confFileName, en
 	// If certificate file is not provided, just truncate the configuration file
 	if len(certFileName) > 0 {
 		tlsConf := types.Configuration{
-			TLSConfiguration: []*traefikTls.Configuration{
+			TLS: []*traefikTls.Configuration{
 				{
 					Certificate: &traefikTls.Certificate{
 						CertFile: traefikTls.FileOrContent("fixtures/https/" + certFileName + ".cert"),

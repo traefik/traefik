@@ -125,11 +125,11 @@ func TestProviderBuildConfiguration(t *testing.T) {
 
 					withPair("routes/route1/rule", "Host:test.localhost"),
 					withPair("routes/route2/rule", "Path:/foo")),
-				entry("tlsconfiguration/foo",
+				entry("tls/foo",
 					withPair("entrypoints", "http,https"),
 					withPair("certificate/certfile", "certfile1"),
 					withPair("certificate/keyfile", "keyfile1")),
-				entry("tlsconfiguration/bar",
+				entry("tls/bar",
 					withPair("entrypoints", "http,https"),
 					withPair("certificate/certfile", "certfile2"),
 					withPair("certificate/keyfile", "keyfile2")),
@@ -246,7 +246,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						},
 					},
 				},
-				TLSConfiguration: []*tls.Configuration{
+				TLS: []*tls.Configuration{
 					{
 						EntryPoints: []string{"http", "https"},
 						Certificate: &tls.Certificate{
@@ -1700,7 +1700,7 @@ func TestProviderGetHealthCheck(t *testing.T) {
 	}
 }
 
-func TestProviderGetTLSConfigurations(t *testing.T) {
+func TestProviderGetTLSes(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		kvPairs  []*store.KVPair
@@ -1709,11 +1709,11 @@ func TestProviderGetTLSConfigurations(t *testing.T) {
 		{
 			desc: "when several TLS configuration defined",
 			kvPairs: filler("traefik",
-				entry("tlsconfiguration/foo",
+				entry("tls/foo",
 					withPair("entrypoints", "http,https"),
 					withPair("certificate/certfile", "certfile1"),
 					withPair("certificate/keyfile", "keyfile1")),
-				entry("tlsconfiguration/bar",
+				entry("tls/bar",
 					withPair("entrypoints", "http,https"),
 					withPair("certificate/certfile", "certfile2"),
 					withPair("certificate/keyfile", "keyfile2"))),
@@ -1736,13 +1736,13 @@ func TestProviderGetTLSConfigurations(t *testing.T) {
 		},
 		{
 			desc:     "should return nil when no TLS configuration",
-			kvPairs:  filler("traefik", entry("tlsconfiguration/foo")),
+			kvPairs:  filler("traefik", entry("tls/foo")),
 			expected: nil,
 		},
 		{
 			desc: "should return nil when no entry points",
 			kvPairs: filler("traefik",
-				entry("tlsconfiguration/foo",
+				entry("tls/foo",
 					withPair("certificate/certfile", "certfile2"),
 					withPair("certificate/keyfile", "keyfile2"))),
 			expected: nil,
@@ -1750,7 +1750,7 @@ func TestProviderGetTLSConfigurations(t *testing.T) {
 		{
 			desc: "should return nil when no cert file and no key file",
 			kvPairs: filler("traefik",
-				entry("tlsconfiguration/foo",
+				entry("tls/foo",
 					withPair("entrypoints", "http,https"))),
 			expected: nil,
 		},
@@ -1764,7 +1764,7 @@ func TestProviderGetTLSConfigurations(t *testing.T) {
 
 			p := newProviderMock(test.kvPairs)
 
-			result := p.getTLSConfigurations(prefix)
+			result := p.getTLSSection(prefix)
 
 			assert.Equal(t, test.expected, result)
 		})

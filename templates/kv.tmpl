@@ -161,15 +161,15 @@
 
 {{end}}
 
-{{range $tlsConfiguration := getTLSConfigurations .Prefix }}
-[[tlsConfiguration]]
+{{range $tls := getTLSSection .Prefix }}
+[[tls]]
 
-  entryPoints = [{{range $tlsConfiguration.EntryPoints }}
+  entryPoints = [{{range $tls.EntryPoints }}
     "{{.}}",
     {{end}}]
 
-  [tlsConfiguration.certificate]
-    certFile = """{{ $tlsConfiguration.Certificate.CertFile }}"""
-    keyFile = """{{ $tlsConfiguration.Certificate.KeyFile }}"""
+  [tls.certificate]
+    certFile = """{{ $tls.Certificate.CertFile }}"""
+    keyFile = """{{ $tls.Certificate.KeyFile }}"""
 
 {{end}}

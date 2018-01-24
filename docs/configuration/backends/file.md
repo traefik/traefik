@@ -84,15 +84,21 @@ defaultEntryPoints = ["http", "https"]
   rule = "Path:/test"
 
 # HTTPS certificate
-[[tlsConfiguration]]
-entryPoints = ["https"]
-  [tlsConfiguration.certificate]
-    certFile = "integration/fixtures/https/snitest.com.cert"
-    keyFile = "integration/fixtures/https/snitest.com.key"
+[[tls]]
+  entryPoints = ["https"]
+  [tls.certificate]
+    certFile = "path/to/my.cert"
+    keyFile = "path/to/my.key"
+    
+[[tls]]
+  entryPoints = ["https"]
+  [tls.certificate]
+    certFile = "path/to/my/other.cert"
+    keyFile = "path/to/my/other.key"
 ```
 
 !!! note
-    If `tlsConfiguration.entryPoints` is not defined, the certificate is attached to all the `defaultEntryPoints` with a TLS configuration.
+    If `tls.entryPoints` is not defined, the certificate is attached to all the `defaultEntryPoints` with a TLS configuration.
 
 !!! note
     Adding certificates directly to the entryPoint is still maintained but certificates declared in this way cannot be managed dynamically.
@@ -160,18 +166,17 @@ filename = "rules.toml"
   rule = "Path:/test"
   
 # HTTPS certificate
-[[tlsConfiguration]]
+[[tls]]
   entryPoints = ["https"]
-  [tlsConfiguration.certificate]
-    certFile = "integration/fixtures/https/snitest.com.cert"
-    keyFile = "integration/fixtures/https/snitest.com.key"
-
-[[tlsConfiguration]]
+  [tls.certificate]
+    certFile = "path/to/my.cert"
+    keyFile = "path/to/my.key"
+    
+[[tls]]
   entryPoints = ["https"]
-  [[tlsConfiguration.certificates]]
-  certFile = "integration/fixtures/https/snitest.org.cert"
-  keyFile = "integration/fixtures/https/snitest.org.key"
-```
+  [tls.certificate]
+    certFile = "path/to/my/other.cert"
+    keyFile = "path/to/my/other.key"
 
 ## Multiple `.toml` Files
 

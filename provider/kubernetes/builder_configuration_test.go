@@ -202,17 +202,17 @@ func route(name string, rule string) func(*types.Route) string {
 	}
 }
 
-func tlsConfigurations(opts ...func(*tls.Configuration)) func(*types.Configuration) {
+func tlsesSection(opts ...func(*tls.Configuration)) func(*types.Configuration) {
 	return func(c *types.Configuration) {
 		for _, opt := range opts {
 			tlsConf := &tls.Configuration{}
 			opt(tlsConf)
-			c.TLSConfiguration = append(c.TLSConfiguration, tlsConf)
+			c.TLS = append(c.TLS, tlsConf)
 		}
 	}
 }
 
-func tlsConfiguration(opts ...func(*tls.Configuration)) func(*tls.Configuration) {
+func tlsSection(opts ...func(*tls.Configuration)) func(*tls.Configuration) {
 	return func(c *tls.Configuration) {
 		for _, opt := range opts {
 			opt(c)
@@ -281,8 +281,8 @@ func TestBuildConfiguration(t *testing.T) {
 				),
 			),
 		),
-		tlsConfigurations(
-			tlsConfiguration(
+		tlsesSection(
+			tlsSection(
 				tlsEntryPoints("https"),
 				certificate("certificate", "key"),
 			),
@@ -375,7 +375,7 @@ func sampleConfiguration() *types.Configuration {
 				},
 			},
 		},
-		TLSConfiguration: []*tls.Configuration{
+		TLS: []*tls.Configuration{
 			{
 				EntryPoints: []string{"https"},
 				Certificate: &tls.Certificate{

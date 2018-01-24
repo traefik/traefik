@@ -1323,8 +1323,8 @@ func TestTLSSecretLoad(t *testing.T) {
 				),
 			),
 		),
-		tlsConfigurations(
-			tlsConfiguration(
+		tlsesSection(
+			tlsSection(
 				tlsEntryPoints("ep1", "ep2"),
 				certificate(
 					"-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
@@ -1336,7 +1336,7 @@ func TestTLSSecretLoad(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-func TestGetTLSConfigurations(t *testing.T) {
+func TestGetTLS(t *testing.T) {
 	testIngressWithoutHostname := buildIngress(
 		iNamespace("testing"),
 		iRules(
@@ -1503,7 +1503,7 @@ func TestGetTLSConfigurations(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			tlsConfigs, err := getTLSConfigurations(test.ingress, test.client)
+			tlsConfigs, err := getTLS(test.ingress, test.client)
 
 			if test.errResult != "" {
 				assert.EqualError(t, err, test.errResult)

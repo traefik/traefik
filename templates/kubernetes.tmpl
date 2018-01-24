@@ -37,9 +37,9 @@
 
   {{if $frontend.Redirect}}
   [frontends."{{$frontendName}}".redirect]
-  entryPoint = "{{$frontend.RedirectEntryPoint}}"
-  regex = "{{$frontend.RedirectRegex}}"
-  replacement = "{{$frontend.RedirectReplacement}}"
+  entryPoint = "{{$frontend.Redirect.EntryPoint}}"
+  regex = "{{$frontend.Redirect.Regex}}"
+  replacement = "{{$frontend.Redirect.Replacement}}"
   {{end}}
 
   {{if $frontend.Headers }}
@@ -94,12 +94,12 @@
     {{end}}
 {{end}}
 
-{{range $tlsConfiguration := .TLSConfiguration}}
-[[tlsConfiguration]]
-  entryPoints = [{{range $tlsConfiguration.EntryPoints}}
+{{range $tls := .TLS}}
+[[tls]]
+  entryPoints = [{{range $tls.EntryPoints}}
     "{{.}}",
    {{end}}]
-  [tlsConfiguration.certificate]
-    certFile = """{{$tlsConfiguration.Certificate.CertFile}}"""
-    keyFile = """{{$tlsConfiguration.Certificate.KeyFile}}"""
+  [tls.certificate]
+    certFile = """{{$tls.Certificate.CertFile}}"""
+    keyFile = """{{$tls.Certificate.KeyFile}}"""
 {{end}}

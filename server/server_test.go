@@ -463,7 +463,7 @@ func TestServerLoadConfigHealthCheckOptions(t *testing.T) {
 								HealthCheck: healthCheck,
 							},
 						},
-						TLSConfiguration: []*tls.Configuration{
+						TLS: []*tls.Configuration{
 							{
 								Certificate: &tls.Certificate{
 									CertFile: localhostCert,
@@ -664,7 +664,7 @@ func TestServerLoadCertificateWithDefaultEntryPoint(t *testing.T) {
 
 	dynamicConfigs := types.Configurations{
 		"config": &types.Configuration{
-			TLSConfiguration: []*tls.Configuration{
+			TLS: []*tls.Configuration{
 				{
 					Certificate: &tls.Certificate{
 						CertFile: localhostCert,

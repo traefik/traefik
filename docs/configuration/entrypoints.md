@@ -55,6 +55,8 @@ To redirect an entrypoint rewriting the URL.
 
 ## TLS
 
+### Static Certificates
+
 Define an entrypoint with SNI support.
 
 ```toml
@@ -69,6 +71,12 @@ Define an entrypoint with SNI support.
 
 !!! note
     If an empty TLS configuration is done, default self-signed certificates are generated.
+    
+
+### Dynamic Certificates
+
+If you need to add or remove TLS certificates while Traefik is started, Dynamic TLS certificates are supported using the [file provider](/configuration/backends/file).
+
 
 ## TLS Mutual Authentication
 

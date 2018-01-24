@@ -490,15 +490,15 @@ func (s *EtcdSuite) TestSNIDynamicTlsConfig(c *check.C) {
 	}
 
 	tlsconfigure1 := map[string]string{
-		"/traefik/tlsconfiguration/snitestcom/entrypoints":          "https",
-		"/traefik/tlsconfiguration/snitestcom/certificate/keyfile":  string(snitestComKey),
-		"/traefik/tlsconfiguration/snitestcom/certificate/certfile": string(snitestComCert),
+		"/traefik/tls/snitestcom/entrypoints":          "https",
+		"/traefik/tls/snitestcom/certificate/keyfile":  string(snitestComKey),
+		"/traefik/tls/snitestcom/certificate/certfile": string(snitestComCert),
 	}
 
 	tlsconfigure2 := map[string]string{
-		"/traefik/tlsconfiguration/snitestorg/entrypoints":          "https",
-		"/traefik/tlsconfiguration/snitestorg/certificate/keyfile":  string(snitestOrgKey),
-		"/traefik/tlsconfiguration/snitestorg/certificate/certfile": string(snitestOrgCert),
+		"/traefik/tls/snitestorg/entrypoints":          "https",
+		"/traefik/tls/snitestorg/certificate/keyfile":  string(snitestOrgKey),
+		"/traefik/tls/snitestorg/certificate/certfile": string(snitestOrgCert),
 	}
 
 	// config backends,frontends and first tls keypair
@@ -539,7 +539,7 @@ func (s *EtcdSuite) TestSNIDynamicTlsConfig(c *check.C) {
 
 	// wait for etcd
 	err = try.Do(60*time.Second, func() error {
-		_, err := s.kv.Get("/traefik/tlsconfiguration/snitestcom/certificate/keyfile", nil)
+		_, err := s.kv.Get("/traefik/tls/snitestcom/certificate/keyfile", nil)
 		return err
 	})
 	c.Assert(err, checker.IsNil)
@@ -573,7 +573,7 @@ func (s *EtcdSuite) TestSNIDynamicTlsConfig(c *check.C) {
 
 	// wait for etcd
 	err = try.Do(60*time.Second, func() error {
-		_, err := s.kv.Get("/traefik/tlsconfiguration/snitestorg/certificate/keyfile", nil)
+		_, err := s.kv.Get("/traefik/tls/snitestorg/certificate/keyfile", nil)
 		return err
 	})
 	c.Assert(err, checker.IsNil)

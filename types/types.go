@@ -197,9 +197,9 @@ type Configurations map[string]*Configuration
 
 // Configuration of a provider.
 type Configuration struct {
-	Backends         map[string]*Backend         `json:"backends,omitempty"`
-	Frontends        map[string]*Frontend        `json:"frontends,omitempty"`
-	TLSConfiguration []*traefikTls.Configuration `json:"tlsConfiguration,omitempty"`
+	Backends  map[string]*Backend         `json:"backends,omitempty"`
+	Frontends map[string]*Frontend        `json:"frontends,omitempty"`
+	TLS       []*traefikTls.Configuration `json:"tls,omitempty"`
 }
 
 // ConfigMessage hold configuration information exchanged between parts of traefik.

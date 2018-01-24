@@ -3,7 +3,7 @@ defaultEntryPoints = ["http"]
 logLevel = "DEBUG"
 debug = true
 
-[web]
+[api]
 
 [entryPoints]
     [entryPoints.http]

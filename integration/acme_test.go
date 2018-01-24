@@ -92,6 +92,16 @@ func (s *AcmeSuite) TestOnHostRuleRetrieveAcmeCertificateHTTP01(c *check.C) {
 	s.retrieveAcmeCertificate(c, testCase)
 }
 
+// Test OnHostRule option with none provided certificate and challenge HTTP-01 and web path
+func (s *AcmeSuite) TestOnHostRuleRetrieveAcmeCertificateHTTP01WithPath(c *check.C) {
+	testCase := AcmeTestCase{
+		traefikConfFilePath: "fixtures/acme/acme_http01_web.toml",
+		onDemand:            false,
+		domainToCheck:       acmeDomain}
+
+	s.retrieveAcmeCertificate(c, testCase)
+}
+
 // Test OnDemand option with a wildcard provided certificate
 func (s *AcmeSuite) TestOnDemandRetrieveAcmeCertificateWithWildcard(c *check.C) {
 	testCase := AcmeTestCase{
