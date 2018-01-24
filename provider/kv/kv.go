@@ -6,14 +6,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/abronan/valkeyrie"
+	"github.com/abronan/valkeyrie/store"
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
-	"github.com/docker/libkv"
-	"github.com/docker/libkv/store"
 )
 
 // Provider holds common configurations of key-value providers.
@@ -44,7 +44,7 @@ func (p *Provider) CreateStore() (store.Store, error) {
 			return nil, err
 		}
 	}
-	return libkv.NewStore(
+	return valkeyrie.NewStore(
 		p.storeType,
 		strings.Split(p.Endpoint, ","),
 		storeConfig,

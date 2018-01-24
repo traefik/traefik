@@ -62,7 +62,7 @@
 
 [[constraint]]
   name = "github.com/containous/staert"
-  version = "2.0.0"
+  version = "3.0.0"
 
 [[constraint]]
   name = "github.com/containous/traefik-extra-service-fabric"
@@ -76,10 +76,6 @@
   branch = "master"
   name = "github.com/docker/leadership"
   source = "github.com/containous/leadership"
-
-[[constraint]]
-  name = "github.com/docker/libkv"
-  source = "github.com/abronan/libkv"
 
 [[constraint]]
   name = "github.com/eapache/channels"
@@ -114,6 +110,10 @@
 [[constraint]]
   branch = "master"
   name = "github.com/jjcollinge/servicefabric"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/abronan/valkeyrie"
 
 [[constraint]]
   name = "github.com/mattn/go-shellwords"

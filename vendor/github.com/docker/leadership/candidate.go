@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/docker/libkv/store"
+	"github.com/abronan/valkeyrie/store"
 )
 
 const (

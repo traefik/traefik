@@ -127,6 +127,20 @@
   source = "github.com/containous/go-http-auth"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/abronan/valkeyrie"
+  packages = [
+    ".",
+    "store",
+    "store/boltdb",
+    "store/consul",
+    "store/etcd/v2",
+    "store/etcd/v3",
+    "store/zookeeper"
+  ]
+  revision = "063d875e3c5fd734fa2aa12fac83829f62acfc70"
+
+[[projects]]
   name = "github.com/aokoli/goutils"
   packages = ["."]
   revision = "3391d3790d23d03408670993e957e8f408993c34"
@@ -235,8 +249,8 @@
 [[projects]]
   name = "github.com/containous/staert"
   packages = ["."]
-  revision = "af517d5b70db9c4b0505e0144fcc62b054057d2a"
-  version = "v2.0.0"
+  revision = "dbb7c840f31daec0d863ada6829d075a8dbb7469"
+  version = "v3.0.0"
 
 [[projects]]
   name = "github.com/containous/traefik-extra-service-fabric"
@@ -427,7 +441,7 @@
   branch = "master"
   name = "github.com/docker/leadership"
   packages = ["."]
-  revision = "af20da7d3e62be9259835e93261acf931b5adecf"
+  revision = "a2e096d9fe0af5b4c37dd37aea719bc9c2e5eec6"
   source = "github.com/containous/leadership"
 
 [[projects]]
@@ -456,21 +470,6 @@
     "yaml"
   ]
   revision = "57bd716502dcbe1799f026148016022b0f3b989c"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/docker/libkv"
-  packages = [
-    ".",
-    "store",
-    "store/boltdb",
-    "store/consul",
-    "store/etcd/v2",
-    "store/etcd/v3",
-    "store/zookeeper"
-  ]
-  revision = "5e4bb288a9a74320bb03f5c18d6bdbab0d8049de"
-  source = "github.com/abronan/libkv"
 
 [[projects]]
   name = "github.com/donovanhide/eventsource"
@@ -1513,6 +1512,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "abd30ec16123cf6de5a869dcaba3e3247907785b4802f0eebaa0cf4d16ef444b"
+  inputs-digest = "0d3d2cd01e06cfcc86cbd261395d59187d4d27d88398bd7aeb1298676becd3e7"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/docker/libkv"
-	"github.com/docker/libkv/store"
+	"github.com/abronan/valkeyrie"
+	"github.com/abronan/valkeyrie/store"
 	api "github.com/hashicorp/consul/api"
 )
 
@@ -55,9 +55,9 @@ type consulLock struct {
 	renewCh chan struct{}
 }
 
-// Register registers consul to libkv
+// Register registers consul to valkeyrie
 func Register() {
-	libkv.AddStore(store.CONSUL, New)
+	valkeyrie.AddStore(store.CONSUL, New)
 }
 
 // New creates a new Consul client given a list

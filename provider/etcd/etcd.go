@@ -3,14 +3,14 @@ package etcd
 import (
 	"fmt"
 
+	"github.com/abronan/valkeyrie/store"
+	"github.com/abronan/valkeyrie/store/etcd/v2"
+	"github.com/abronan/valkeyrie/store/etcd/v3"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/provider/kv"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
-	"github.com/docker/libkv/store"
-	"github.com/docker/libkv/store/etcd/v2"
-	"github.com/docker/libkv/store/etcd/v3"
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -26,7 +26,7 @@ type Provider struct {
 func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
 	store, err := p.CreateStore()
 	if err != nil {
-		return fmt.Errorf("Failed to Connect to KV store: %v", err)
+		return fmt.Errorf("failed to Connect to KV store: %v", err)
 	}
 	p.SetKVClient(store)
 	return p.Provider.Provide(configurationChan, pool, constraints)

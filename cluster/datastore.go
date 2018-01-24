@@ -7,12 +7,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/abronan/valkeyrie/store"
 	"github.com/cenk/backoff"
 	"github.com/containous/staert"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
-	"github.com/docker/libkv/store"
 	"github.com/satori/go.uuid"
 )
 

@@ -1,11 +1,11 @@
-package libkv
+package valkeyrie
 
 import (
 	"fmt"
 	"sort"
 	"strings"
 
-	"github.com/docker/libkv/store"
+	"github.com/abronan/valkeyrie/store"
 )
 
 // Initialize creates a new Store object, initializing the client
@@ -34,7 +34,7 @@ func NewStore(backend store.Backend, addrs []string, options *store.Config) (sto
 	return nil, fmt.Errorf("%s %s", store.ErrBackendNotSupported.Error(), supportedBackend)
 }
 
-// AddStore adds a new store backend to libkv
+// AddStore adds a new store backend to valkeyrie
 func AddStore(store store.Backend, init Initialize) {
 	initializers[store] = init
 }

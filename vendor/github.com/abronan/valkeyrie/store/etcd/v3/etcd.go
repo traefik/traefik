@@ -7,10 +7,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/abronan/valkeyrie"
+	"github.com/abronan/valkeyrie/store"
 	etcd "github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/clientv3/concurrency"
-	"github.com/docker/libkv"
-	"github.com/docker/libkv/store"
 )
 
 const (
@@ -38,9 +38,9 @@ type etcdLock struct {
 	ttl      time.Duration
 }
 
-// Register registers etcd to libkv
+// Register registers etcd to valkeyrie
 func Register() {
-	libkv.AddStore(store.ETCDV3, New)
+	valkeyrie.AddStore(store.ETCDV3, New)
 }
 
 // New creates a new Etcd client given a list

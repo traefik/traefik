@@ -10,12 +10,12 @@ import (
 	"text/template"
 
 	"github.com/BurntSushi/ty/fun"
+	"github.com/abronan/valkeyrie/store"
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
-	"github.com/docker/libkv/store"
 )
 
 func (p *Provider) buildConfiguration() *types.Configuration {

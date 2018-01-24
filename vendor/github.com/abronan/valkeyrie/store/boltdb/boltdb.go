@@ -10,9 +10,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/abronan/valkeyrie"
+	"github.com/abronan/valkeyrie/store"
 	"github.com/coreos/bbolt"
-	"github.com/docker/libkv"
-	"github.com/docker/libkv/store"
 )
 
 var (
@@ -34,7 +34,7 @@ type BoltDB struct {
 	dbIndex    uint64
 	path       string
 	timeout    time.Duration
-	// By default libkv opens and closes the bolt DB connection  for every
+	// By default valkeyrie opens and closes the bolt DB connection  for every
 	// get/put operation. This allows multiple apps to use a Bolt DB at the
 	// same time.
 	// PersistConnection flag provides an option to override ths behavior.
@@ -44,13 +44,13 @@ type BoltDB struct {
 }
 
 const (
-	libkvmetadatalen = 8
+	metadatalen      = 8
 	transientTimeout = time.Duration(10) * time.Second
 )
 
-// Register registers boltdb to libkv
+// Register registers boltdb to valkeyrie
 func Register() {
-	libkv.AddStore(store.BOLTDB, New)
+	valkeyrie.AddStore(store.BOLTDB, New)
 }
 
 // New opens a new BoltDB connection to the specified path and bucket
@@ -126,7 +126,7 @@ func (b *BoltDB) releaseDBhandle() {
 }
 
 // Get the value at "key". BoltDB doesn't provide an inbuilt last modified index with every kv pair. Its implemented by
-// by a atomic counter maintained by the libkv and appened to the value passed by the client.
+// by a atomic counter maintained by the valkeyrie and appened to the value passed by the client.
 func (b *BoltDB) Get(key string, opts *store.ReadOptions) (*store.KVPair, error) {
 	var (
 		val []byte
@@ -161,8 +161,8 @@ func (b *BoltDB) Get(key string, opts *store.ReadOptions) (*store.KVPair, error)
 		return nil, err
 	}
 
-	dbIndex := binary.LittleEndian.Uint64(val[:libkvmetadatalen])
-	val = val[libkvmetadatalen:]
+	dbIndex := binary.LittleEndian.Uint64(val[:metadatalen])
+	val = val[metadatalen:]
 
 	return &store.KVPair{Key: key, Value: val, LastIndex: (dbIndex)}, nil
 }
@@ -177,7 +177,7 @@ func (b *BoltDB) Put(key string, value []byte, opts *store.WriteOptions) error {
 	b.Lock()
 	defer b.Unlock()
 
-	dbval := make([]byte, libkvmetadatalen)
+	dbval := make([]byte, metadatalen)
 
 	if db, err = b.getDBhandle(); err != nil {
 		return err
@@ -287,8 +287,8 @@ func (b *BoltDB) List(keyPrefix string, opts *store.ReadOptions) ([]*store.KVPai
 
 		for key, v := cursor.Seek(prefix); bytes.HasPrefix(key, prefix); key, v = cursor.Next() {
 			hasResult = true
-			dbIndex := binary.LittleEndian.Uint64(v[:libkvmetadatalen])
-			v = v[libkvmetadatalen:]
+			dbIndex := binary.LittleEndian.Uint64(v[:metadatalen])
+			v = v[metadatalen:]
 			val := make([]byte, len(v))
 			copy(val, v)
 
@@ -338,7 +338,7 @@ func (b *BoltDB) AtomicDelete(key string, previous *store.KVPair) (bool, error) 
 		if val == nil {
 			return store.ErrKeyNotFound
 		}
-		dbIndex := binary.LittleEndian.Uint64(val[:libkvmetadatalen])
+		dbIndex := binary.LittleEndian.Uint64(val[:metadatalen])
 		if dbIndex != previous.LastIndex {
 			return store.ErrKeyModified
 		}
@@ -363,7 +363,7 @@ func (b *BoltDB) AtomicPut(key string, value []byte, previous *store.KVPair, opt
 	b.Lock()
 	defer b.Unlock()
 
-	dbval := make([]byte, libkvmetadatalen)
+	dbval := make([]byte, metadatalen)
 
 	if db, err = b.getDBhandle(); err != nil {
 		return false, nil, err
@@ -392,7 +392,7 @@ func (b *BoltDB) AtomicPut(key string, value []byte, previous *store.KVPair, opt
 			if len(val) == 0 {
 				return store.ErrKeyNotFound
 			}
-			dbIndex = binary.LittleEndian.Uint64(val[:libkvmetadatalen])
+			dbIndex = binary.LittleEndian.Uint64(val[:metadatalen])
 			if dbIndex != previous.LastIndex {
 				return store.ErrKeyModified
 			}

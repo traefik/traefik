@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/abronan/valkeyrie"
+	"github.com/abronan/valkeyrie/store"
+	"github.com/abronan/valkeyrie/store/etcd/v2"
 	"github.com/containous/traefik/integration/try"
-	"github.com/docker/libkv"
-	"github.com/docker/libkv/store"
-	"github.com/docker/libkv/store/etcd/v2"
 	"github.com/go-check/check"
 
 	checker "github.com/vdemeester/shakers"
@@ -29,7 +29,7 @@ func (s *EtcdSuite) SetUpTest(c *check.C) {
 
 	etcd.Register()
 	url := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress + ":2379"
-	kv, err := libkv.NewStore(
+	kv, err := valkeyrie.NewStore(
 		store.ETCD,
 		[]string{url},
 		&store.Config{

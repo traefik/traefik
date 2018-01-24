@@ -10,13 +10,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/abronan/valkeyrie"
+	"github.com/abronan/valkeyrie/store"
+	"github.com/abronan/valkeyrie/store/consul"
 	"github.com/containous/staert"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/integration/try"
 	"github.com/containous/traefik/types"
-	"github.com/docker/libkv"
-	"github.com/docker/libkv/store"
-	"github.com/docker/libkv/store/consul"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
 )
@@ -32,7 +32,7 @@ func (s *ConsulSuite) setupConsul(c *check.C) {
 	s.composeProject.Start(c)
 
 	consul.Register()
-	kv, err := libkv.NewStore(
+	kv, err := valkeyrie.NewStore(
 		store.CONSUL,
 		[]string{s.composeProject.Container(c, "consul").NetworkSettings.IPAddress + ":8500"},
 		&store.Config{
@@ -63,7 +63,7 @@ func (s *ConsulSuite) setupConsulTLS(c *check.C) {
 	TLSConfig, err := clientTLS.CreateTLSConfig()
 	c.Assert(err, checker.IsNil)
 
-	kv, err := libkv.NewStore(
+	kv, err := valkeyrie.NewStore(
 		store.CONSUL,
 		[]string{s.composeProject.Container(c, "consul").NetworkSettings.IPAddress + ":8585"},
 		&store.Config{

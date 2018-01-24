@@ -25,7 +25,7 @@ const (
 )
 
 var (
-	// ErrBackendNotSupported is thrown when the backend k/v store is not supported by libkv
+	// ErrBackendNotSupported is thrown when the backend k/v store is not supported by valkeyrie
 	ErrBackendNotSupported = errors.New("Backend storage not supported yet, please choose one of")
 	// ErrCallNotSupported is thrown when a method is not implemented/supported by the current backend
 	ErrCallNotSupported = errors.New("The current call is not supported with this backend")
@@ -66,7 +66,7 @@ type ClientTLSConfig struct {
 // Store represents the backend K/V storage
 // Each store should support every call listed
 // here. Or it couldn't be implemented as a K/V
-// backend for libkv
+// backend for valkeyrie
 type Store interface {
 	// Put a value at the specified key
 	Put(key string, value []byte, options *WriteOptions) error
