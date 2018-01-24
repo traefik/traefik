@@ -56,7 +56,6 @@ func init() {
 		check.Suite(&RateLimitSuite{})
 		check.Suite(&SimpleSuite{})
 		check.Suite(&TimeoutSuite{})
-		check.Suite(&TracingSuite{})
 		check.Suite(&WebsocketSuite{})
 	}
 	if *host {
