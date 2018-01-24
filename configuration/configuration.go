@@ -259,6 +259,19 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 	}
 }
 
+// ValidateConfiguration validate that configuration is coherent
+func (gc *GlobalConfiguration) ValidateConfiguration() {
+	if gc.ACME != nil {
+		if _, ok := gc.EntryPoints[gc.ACME.EntryPoint]; !ok {
+			log.Fatalf("Unknown entrypoint %q for ACME configuration", gc.ACME.EntryPoint)
+		} else {
+			if gc.EntryPoints[gc.ACME.EntryPoint].TLS == nil {
+				log.Fatalf("Entrypoint without TLS %q for ACME configuration", gc.ACME.EntryPoint)
+			}
+		}
+	}
+}
+
 // DefaultEntryPoints holds default entry points
 type DefaultEntryPoints []string
 
