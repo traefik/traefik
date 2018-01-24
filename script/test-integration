@@ -4,7 +4,7 @@ set -e
 export SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export DEST=.
 
-TESTFLAGS="${TESTFLAGS} -test.timeout=9m -check.v"
+TESTFLAGS="${TESTFLAGS} -test.timeout=20m -check.v"
 
 if [ -n "$VERBOSE" ]; then
     TESTFLAGS="${TESTFLAGS} -v"
