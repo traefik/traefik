@@ -51,6 +51,14 @@ authEntrypoint:
     - traefik.backend=backend3
     - traefik.frontend.entryPoints=httpAuth
     - traefik.frontend.rule=Host:entrypoint.auth.docker.local
+digestAuthEntrypoint:
+  image: emilevauge/whoami
+  labels:
+    - traefik.enable=true
+    - traefik.port=80
+    - traefik.backend=backend3
+    - traefik.frontend.entryPoints=digestAuth
+    - traefik.frontend.rule=Host:entrypoint.digest.auth.docker.local
 entrypointRedirect:
   image: emilevauge/whoami
   labels:

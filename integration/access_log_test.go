@@ -1,7 +1,10 @@
 package integration
 
 import (
+	"crypto/md5"
+	"crypto/rand"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -25,6 +28,7 @@ type AccessLogSuite struct{ BaseSuite }
 type accessLogValue struct {
 	formatOnly  bool
 	code        string
+	user        string
 	value       string
 	backendName string
 }
@@ -94,6 +98,7 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontend(c *check.C) {
 		{
 			formatOnly:  false,
 			code:        "401",
+			user:        "-",
 			value:       "Auth for frontend-Host-frontend-auth-docker-local",
 			backendName: "-",
 		},
@@ -143,6 +148,7 @@ func (s *AccessLogSuite) TestAccessLogAuthEntrypoint(c *check.C) {
 		{
 			formatOnly:  false,
 			code:        "401",
+			user:        "-",
 			value:       "Auth for entrypoint",
 			backendName: "-",
 		},
@@ -184,14 +190,175 @@ func (s *AccessLogSuite) TestAccessLogAuthEntrypoint(c *check.C) {
 	checkNoOtherTraefikProblems(traefikLog, err, c)
 }
 
-func (s *AccessLogSuite) TestAccessLogEntrypointRedirect(c *check.C) {
+func (s *AccessLogSuite) TestAccessLogAuthEntrypointSuccess(c *check.C) {
 	// Ensure working directory is clean
 	ensureWorkingDirectoryIsClean()
 
 	expected := []accessLogValue{
 		{
 			formatOnly:  false,
+			code:        "200",
+			user:        "test",
+			value:       "Host-entrypoint-auth-docker",
+			backendName: "http://172.17.0",
+		},
+	}
+
+	// Start Traefik
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	defer os.Remove(traefikTestAccessLogFile)
+	defer os.Remove(traefikTestLogFile)
+
+	checkStatsForLogFile(c)
+
+	s.composeProject.Container(c, "authEntrypoint")
+
+	waitForTraefik(c, "authEntrypoint")
+
+	// Verify Traefik started OK
+	traefikLog := checkTraefikStarted(c)
+
+	// Test auth entrypoint
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8004/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "entrypoint.auth.docker.local"
+	req.SetBasicAuth("test", "test")
+
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	// Verify access.log output as expected
+	count := checkAccessLogExactValuesOutput(err, c, expected)
+
+	c.Assert(count, checker.GreaterOrEqualThan, len(expected))
+
+	// Verify no other Traefik problems
+	checkNoOtherTraefikProblems(traefikLog, err, c)
+}
+
+func (s *AccessLogSuite) TestAccessLogDigestAuthEntrypoint(c *check.C) {
+	ensureWorkingDirectoryIsClean()
+
+	expected := []accessLogValue{
+		{
+			formatOnly:  false,
+			code:        "401",
+			user:        "-",
+			value:       "Auth for entrypoint",
+			backendName: "-",
+		},
+		{
+			formatOnly:  false,
+			code:        "200",
+			user:        "test",
+			value:       "Host-entrypoint-digest-auth-docker",
+			backendName: "http://172.17.0",
+		},
+	}
+
+	// Start Traefik
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	defer os.Remove(traefikTestAccessLogFile)
+	defer os.Remove(traefikTestLogFile)
+
+	checkStatsForLogFile(c)
+
+	s.composeProject.Container(c, "digestAuthEntrypoint")
+
+	waitForTraefik(c, "digestAuthEntrypoint")
+
+	// Verify Traefik started OK
+	traefikLog := checkTraefikStarted(c)
+
+	// Test auth entrypoint
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8008/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "entrypoint.digest.auth.docker.local"
+
+	resp, err := try.ResponseUntilStatusCode(req, 500*time.Millisecond, http.StatusUnauthorized)
+	c.Assert(err, checker.IsNil)
+
+	digestParts := digestParts(resp)
+	digestParts["uri"] = "/"
+	digestParts["method"] = http.MethodGet
+	digestParts["username"] = "test"
+	digestParts["password"] = "test"
+
+	req.Header.Set("Authorization", getDigestAuthorization(digestParts))
+	req.Header.Set("Content-Type", "application/json")
+
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	// Verify access.log output as expected
+	count := checkAccessLogExactValuesOutput(err, c, expected)
+
+	c.Assert(count, checker.GreaterOrEqualThan, len(expected))
+
+	// Verify no other Traefik problems
+	checkNoOtherTraefikProblems(traefikLog, err, c)
+}
+
+// Thanks to mvndaai for digest authentication
+// https://stackoverflow.com/questions/39474284/how-do-you-do-a-http-post-with-digest-authentication-in-golang/39481441#39481441
+func digestParts(resp *http.Response) map[string]string {
+	result := map[string]string{}
+	if len(resp.Header["Www-Authenticate"]) > 0 {
+		wantedHeaders := []string{"nonce", "realm", "qop", "opaque"}
+		responseHeaders := strings.Split(resp.Header["Www-Authenticate"][0], ",")
+		for _, r := range responseHeaders {
+			for _, w := range wantedHeaders {
+				if strings.Contains(r, w) {
+					result[w] = strings.Split(r, `"`)[1]
+				}
+			}
+		}
+	}
+	return result
+}
+
+func getMD5(data string) string {
+	digest := md5.New()
+	digest.Write([]byte(data))
+	return fmt.Sprintf("%x", digest.Sum(nil))
+}
+
+func getCnonce() string {
+	b := make([]byte, 8)
+	io.ReadFull(rand.Reader, b)
+	return fmt.Sprintf("%x", b)[:16]
+}
+
+func getDigestAuthorization(digestParts map[string]string) string {
+	d := digestParts
+	ha1 := getMD5(d["username"] + ":" + d["realm"] + ":" + d["password"])
+	ha2 := getMD5(d["method"] + ":" + d["uri"])
+	nonceCount := "00000001"
+	cnonce := getCnonce()
+	response := getMD5(fmt.Sprintf("%s:%s:%s:%s:%s:%s", ha1, d["nonce"], nonceCount, cnonce, d["qop"], ha2))
+	authorization := fmt.Sprintf(`Digest username="%s", realm="%s", nonce="%s", uri="%s", cnonce="%s", nc=%s, qop=%s, response="%s", opaque="%s", algorithm="MD5"`,
+		d["username"], d["realm"], d["nonce"], d["uri"], cnonce, nonceCount, d["qop"], response, d["opaque"])
+	return authorization
+}
+
+func (s *AccessLogSuite) TestAccessLogEntrypointRedirect(c *check.C) {
+	ensureWorkingDirectoryIsClean()
+
+	expected := []accessLogValue{
+		{
+			formatOnly:  false,
 			code:        "302",
+			user:        "-",
 			value:       "entrypoint redirect for frontend-",
 			backendName: "-",
 		},
@@ -237,13 +404,13 @@ func (s *AccessLogSuite) TestAccessLogEntrypointRedirect(c *check.C) {
 }
 
 func (s *AccessLogSuite) TestAccessLogFrontendRedirect(c *check.C) {
-	// Ensure working directory is clean
 	ensureWorkingDirectoryIsClean()
 
 	expected := []accessLogValue{
 		{
 			formatOnly:  false,
 			code:        "302",
+			user:        "-",
 			value:       "frontend redirect for frontend-Path-",
 			backendName: "-",
 		},
@@ -289,7 +456,6 @@ func (s *AccessLogSuite) TestAccessLogFrontendRedirect(c *check.C) {
 }
 
 func (s *AccessLogSuite) TestAccessLogRateLimit(c *check.C) {
-	// Ensure working directory is clean
 	ensureWorkingDirectoryIsClean()
 
 	expected := []accessLogValue{
@@ -302,6 +468,7 @@ func (s *AccessLogSuite) TestAccessLogRateLimit(c *check.C) {
 		{
 			formatOnly:  false,
 			code:        "429",
+			user:        "-",
 			value:       "rate limit for frontend-Host-ratelimit",
 			backendName: "/",
 		},
@@ -348,13 +515,13 @@ func (s *AccessLogSuite) TestAccessLogRateLimit(c *check.C) {
 }
 
 func (s *AccessLogSuite) TestAccessLogBackendNotFound(c *check.C) {
-	// Ensure working directory is clean
 	ensureWorkingDirectoryIsClean()
 
 	expected := []accessLogValue{
 		{
 			formatOnly:  false,
 			code:        "404",
+			user:        "-",
 			value:       "backend not found",
 			backendName: "/",
 		},
@@ -395,13 +562,13 @@ func (s *AccessLogSuite) TestAccessLogBackendNotFound(c *check.C) {
 }
 
 func (s *AccessLogSuite) TestAccessLogEntrypointWhitelist(c *check.C) {
-	// Ensure working directory is clean
 	ensureWorkingDirectoryIsClean()
 
 	expected := []accessLogValue{
 		{
 			formatOnly:  false,
 			code:        "403",
+			user:        "-",
 			value:       "ipwhitelister for entrypoint httpWhitelistReject",
 			backendName: "-",
 		},
@@ -444,13 +611,13 @@ func (s *AccessLogSuite) TestAccessLogEntrypointWhitelist(c *check.C) {
 }
 
 func (s *AccessLogSuite) TestAccessLogFrontendWhitelist(c *check.C) {
-	// Ensure working directory is clean
 	ensureWorkingDirectoryIsClean()
 
 	expected := []accessLogValue{
 		{
 			formatOnly:  false,
 			code:        "403",
+			user:        "-",
 			value:       "ipwhitelister for frontend-Host-frontend-whitelist",
 			backendName: "-",
 		},
@@ -578,10 +745,13 @@ func checkAccessLogExactValues(c *check.C, line string, i int, v accessLogValue)
 	tokens, err := shellwords.Parse(line)
 	c.Assert(err, checker.IsNil)
 	c.Assert(tokens, checker.HasLen, 14)
+	if len(v.user) > 0 {
+		c.Assert(tokens[2], checker.Equals, v.user)
+	}
 	c.Assert(tokens[6], checker.Equals, v.code)
 	c.Assert(tokens[10], checker.Equals, fmt.Sprintf("%d", i+1))
 	c.Assert(tokens[11], checker.HasPrefix, v.value)
-	c.Assert(tokens[12], checker.Equals, v.backendName)
+	c.Assert(tokens[12], checker.HasPrefix, v.backendName)
 	c.Assert(tokens[13], checker.Matches, `^\d+ms$`)
 }
 
