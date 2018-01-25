@@ -202,7 +202,7 @@ func TestRuleType(t *testing.T) {
 			)))
 
 			if test.ingressRuleType != "" {
-				ingress.ObjectMeta.Annotations = map[string]string{
+				ingress.Annotations = map[string]string{
 					label.TraefikFrontendRuleType: test.ingressRuleType,
 				}
 			}
