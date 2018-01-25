@@ -42,5 +42,5 @@ func (f *forwarderMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, 
 
 	next(recorder, r)
 
-	LogResponseCode(span, recorder.GetStatus())
+	LogResponseCode(span, recorder.Status())
 }

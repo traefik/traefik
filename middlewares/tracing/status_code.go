@@ -8,7 +8,7 @@ import (
 
 type statusCodeRecoder interface {
 	http.ResponseWriter
-	GetStatus() int
+	Status() int
 }
 
 type statusCodeWithoutCloseNotify struct {
@@ -22,8 +22,8 @@ func (s *statusCodeWithoutCloseNotify) WriteHeader(status int) {
 	s.ResponseWriter.WriteHeader(status)
 }
 
-// GetStatus get response status
-func (s *statusCodeWithoutCloseNotify) GetStatus() int {
+// Status get response status
+func (s *statusCodeWithoutCloseNotify) Status() int {
 	return s.status
 }
 
@@ -34,7 +34,9 @@ func (s *statusCodeWithoutCloseNotify) Hijack() (net.Conn, *bufio.ReadWriter, er
 
 // Flush sends any buffered data to the client.
 func (s *statusCodeWithoutCloseNotify) Flush() {
-	s.ResponseWriter.(http.Flusher).Flush()
+	if flusher, ok := s.ResponseWriter.(http.Flusher); ok {
+		flusher.Flush()
+	}
 }
 
 type statusCodeWithCloseNotify struct {

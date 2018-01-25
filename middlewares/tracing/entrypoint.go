@@ -37,6 +37,6 @@ func (e *entryPointMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request,
 	recorder := newStatusCodeRecoder(w, 200)
 	next(recorder, r)
 
-	LogResponseCode(span, recorder.GetStatus())
+	LogResponseCode(span, recorder.Status())
 	span.Finish()
 }
