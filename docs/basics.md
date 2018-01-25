@@ -464,8 +464,8 @@ Here is an example of backends and servers definition:
 
 ### Buffering
 
-In some cases request/buffering can be enabled for a specific backend. By enabling this Træfik will read entire request into memory (possibly buffering large requests into disk) and will
-reject requests that are over a specified limit. This may help with services that deal with a large data (multipart/form-data for example) more efficiently and should minimise time spent
+In some cases request/buffering can be enabled for a specific backend. By enabling this, Træfik will read the entire request into memory (possibly buffering large requests into disk) and will reject requests that are over a specified limit. 
+This may help services deal with large data (multipart/form-data for example) more efficiently and should minimise time spent
 when sending data to a backend server. For more information please check [oxy/buffer](http://godoc.org/github.com/vulcand/oxy/buffer) documentation.
 
 Example configuration:
