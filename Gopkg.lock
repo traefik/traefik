@@ -89,7 +89,7 @@
   branch = "master"
   name = "github.com/NYTimes/gziphandler"
   packages = ["."]
-  revision = "47ca22a0aeea4c9ceddfb935d818d636d934c312"
+  revision = "289a3b81f5aedc99f8d6eb0f67827c142f1310d8"
 
 [[projects]]
   name = "github.com/Nvveen/Gotty"
