@@ -168,6 +168,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 		Backends:  map[string]*types.Backend{},
 		Frontends: map[string]*types.Frontend{},
 	}
+
 	for _, i := range ingresses {
 		ingressClass := i.Annotations[annotationKubernetesIngressClass]
 
@@ -189,8 +190,9 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 			}
 
 			for _, pa := range r.HTTP.Paths {
-				if _, exists := templateObjects.Backends[r.Host+pa.Path]; !exists {
-					templateObjects.Backends[r.Host+pa.Path] = &types.Backend{
+				baseName := r.Host + pa.Path
+				if _, exists := templateObjects.Backends[baseName]; !exists {
+					templateObjects.Backends[baseName] = &types.Backend{
 						Servers: make(map[string]types.Server),
 						LoadBalancer: &types.LoadBalancer{
 							Method: "wrr",
@@ -199,31 +201,27 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				}
 
 				if realm := i.Annotations[annotationKubernetesAuthRealm]; realm != "" && realm != traefikDefaultRealm {
-					log.Errorf("Value for annotation %q on ingress %s/%s invalid: no realm customization supported", annotationKubernetesAuthRealm, i.ObjectMeta.Namespace, i.ObjectMeta.Name)
-					delete(templateObjects.Backends, r.Host+pa.Path)
+					log.Errorf("Value for annotation %q on ingress %s/%s invalid: no realm customization supported", annotationKubernetesAuthRealm, i.Namespace, i.Name)
+					delete(templateObjects.Backends, baseName)
 					continue
 				}
 
-				if _, exists := templateObjects.Frontends[r.Host+pa.Path]; !exists {
+				if _, exists := templateObjects.Frontends[baseName]; !exists {
 					basicAuthCreds, err := handleBasicAuthConfig(i, k8sClient)
 					if err != nil {
-						log.Errorf("Failed to retrieve basic auth configuration for ingress %s/%s: %s", i.ObjectMeta.Namespace, i.ObjectMeta.Name, err)
+						log.Errorf("Failed to retrieve basic auth configuration for ingress %s/%s: %s", i.Namespace, i.Name, err)
 						continue
 					}
 
 					passHostHeader := label.GetBoolValue(i.Annotations, label.TraefikFrontendPassHostHeader, !p.DisablePassHostHeaders)
 					passTLSCert := label.GetBoolValue(i.Annotations, label.TraefikFrontendPassTLSCert, p.EnablePassTLSCert)
-
 					priority := label.GetIntValue(i.Annotations, label.TraefikFrontendPriority, 0)
-
 					entryPoints := label.GetSliceStringValue(i.Annotations, label.TraefikFrontendEntryPoints)
-
 					whitelistSourceRange := label.GetSliceStringValue(i.Annotations, annotationKubernetesWhitelistSourceRange)
-
 					errorPages := label.ParseErrorPages(i.Annotations, label.Prefix+label.BaseFrontendErrorPage, label.RegexpFrontendErrorPage)
 
-					templateObjects.Frontends[r.Host+pa.Path] = &types.Frontend{
-						Backend:              r.Host + pa.Path,
+					templateObjects.Frontends[baseName] = &types.Frontend{
+						Backend:              baseName,
 						PassHostHeader:       passHostHeader,
 						PassTLSCert:          passTLSCert,
 						Routes:               make(map[string]types.Route),
@@ -239,42 +237,42 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				}
 
 				if len(r.Host) > 0 {
-					if _, exists := templateObjects.Frontends[r.Host+pa.Path].Routes[r.Host]; !exists {
-						templateObjects.Frontends[r.Host+pa.Path].Routes[r.Host] = types.Route{
+					if _, exists := templateObjects.Frontends[baseName].Routes[r.Host]; !exists {
+						templateObjects.Frontends[baseName].Routes[r.Host] = types.Route{
 							Rule: getRuleForHost(r.Host),
 						}
 					}
 				}
 
 				if rule := getRuleForPath(pa, i); rule != "" {
-					templateObjects.Frontends[r.Host+pa.Path].Routes[pa.Path] = types.Route{
+					templateObjects.Frontends[baseName].Routes[pa.Path] = types.Route{
 						Rule: rule,
 					}
 				}
 
-				service, exists, err := k8sClient.GetService(i.ObjectMeta.Namespace, pa.Backend.ServiceName)
+				service, exists, err := k8sClient.GetService(i.Namespace, pa.Backend.ServiceName)
 				if err != nil {
-					log.Errorf("Error while retrieving service information from k8s API %s/%s: %v", i.ObjectMeta.Namespace, pa.Backend.ServiceName, err)
+					log.Errorf("Error while retrieving service information from k8s API %s/%s: %v", i.Namespace, pa.Backend.ServiceName, err)
 					return nil, err
 				}
 
 				if !exists {
-					log.Errorf("Service not found for %s/%s", i.ObjectMeta.Namespace, pa.Backend.ServiceName)
-					delete(templateObjects.Frontends, r.Host+pa.Path)
+					log.Errorf("Service not found for %s/%s", i.Namespace, pa.Backend.ServiceName)
+					delete(templateObjects.Frontends, baseName)
 					continue
 				}
 
 				if expression := service.Annotations[label.TraefikBackendCircuitBreaker]; expression != "" {
-					templateObjects.Backends[r.Host+pa.Path].CircuitBreaker = &types.CircuitBreaker{
+					templateObjects.Backends[baseName].CircuitBreaker = &types.CircuitBreaker{
 						Expression: expression,
 					}
 				}
 
-				templateObjects.Backends[r.Host+pa.Path].LoadBalancer = getLoadBalancer(service)
-				templateObjects.Backends[r.Host+pa.Path].Buffering = getBuffering(service)
+				templateObjects.Backends[baseName].LoadBalancer = getLoadBalancer(service)
+				templateObjects.Backends[baseName].Buffering = getBuffering(service)
 
 				if maxConn := getMaxConn(service); maxConn != nil {
-					templateObjects.Backends[r.Host+pa.Path].MaxConn = maxConn
+					templateObjects.Backends[baseName].MaxConn = maxConn
 				}
 
 				protocol := label.DefaultProtocol
@@ -288,24 +286,24 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 							url := protocol + "://" + service.Spec.ExternalName
 							name := url
 
-							templateObjects.Backends[r.Host+pa.Path].Servers[name] = types.Server{
+							templateObjects.Backends[baseName].Servers[name] = types.Server{
 								URL:    url,
 								Weight: 1,
 							}
 						} else {
-							endpoints, exists, err := k8sClient.GetEndpoints(service.ObjectMeta.Namespace, service.ObjectMeta.Name)
+							endpoints, exists, err := k8sClient.GetEndpoints(service.Namespace, service.Name)
 							if err != nil {
-								log.Errorf("Error retrieving endpoints %s/%s: %v", service.ObjectMeta.Namespace, service.ObjectMeta.Name, err)
+								log.Errorf("Error retrieving endpoints %s/%s: %v", service.Namespace, service.Name, err)
 								return nil, err
 							}
 
 							if !exists {
-								log.Warnf("Endpoints not found for %s/%s", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
+								log.Warnf("Endpoints not found for %s/%s", service.Namespace, service.Name)
 								break
 							}
 
 							if len(endpoints.Subsets) == 0 {
-								log.Warnf("Endpoints not available for %s/%s", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
+								log.Warnf("Endpoints not available for %s/%s", service.Namespace, service.Name)
 								break
 							}
 
@@ -316,7 +314,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 									if address.TargetRef != nil && address.TargetRef.Name != "" {
 										name = address.TargetRef.Name
 									}
-									templateObjects.Backends[r.Host+pa.Path].Servers[name] = types.Server{
+									templateObjects.Backends[baseName].Servers[name] = types.Server{
 										URL:    url,
 										Weight: 1,
 									}
