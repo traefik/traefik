@@ -142,6 +142,7 @@ func run(globalConfiguration *configuration.GlobalConfiguration, configFile stri
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 
 	globalConfiguration.SetEffectiveConfiguration(configFile)
+	globalConfiguration.ValidateConfiguration()
 
 	jsonConf, _ := json.Marshal(globalConfiguration)
 	log.Infof("Traefik version %s built on %s", version.Version, version.BuildDate)
