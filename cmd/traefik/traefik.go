@@ -153,7 +153,7 @@ func run(globalConfiguration *configuration.GlobalConfiguration, configFile stri
 	stats(globalConfiguration)
 
 	log.Debugf("Global configuration loaded %s", string(jsonConf))
-	svr := server.NewServer(*globalConfiguration)
+	svr := server.NewServer(*globalConfiguration, configuration.NewProviderAggregator(globalConfiguration))
 	svr.Start()
 	defer svr.Close()
 
