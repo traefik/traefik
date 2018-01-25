@@ -32,11 +32,11 @@ func (e *entryPointMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request,
 	LogRequest(span, r)
 	ext.SpanKindRPCServer.Set(span)
 
-	w = &statusCodeTracker{w, 200}
 	r = r.WithContext(opentracing.ContextWithSpan(r.Context(), span))
 
-	next(w, r)
+	recorder := newStatusCodeRecoder(w, 200)
+	next(recorder, r)
 
-	LogResponseCode(span, w.(*statusCodeTracker).status)
+	LogResponseCode(span, recorder.Status())
 	span.Finish()
 }

@@ -38,9 +38,9 @@ func (f *forwarderMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, 
 
 	InjectRequestHeaders(r)
 
-	w = &statusCodeTracker{w, 200}
+	recorder := newStatusCodeRecoder(w, 200)
 
-	next(w, r)
+	next(recorder, r)
 
-	LogResponseCode(span, w.(*statusCodeTracker).status)
+	LogResponseCode(span, recorder.Status())
 }
