@@ -122,7 +122,7 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration) *Server {
 		server.tracingMiddleware.Setup()
 	}
 
-	server.metricsRegistry = server.registerMetricClients(globalConfiguration.Metrics)
+	server.metricsRegistry = registerMetricClients(globalConfiguration.Metrics)
 
 	if globalConfiguration.Cluster != nil {
 		// leadership creation if cluster mode
@@ -1481,7 +1481,7 @@ func configureBackends(backends map[string]*types.Backend) {
 	}
 }
 
-func (*Server) registerMetricClients(metricsConfig *types.Metrics) metrics.Registry {
+func registerMetricClients(metricsConfig *types.Metrics) metrics.Registry {
 	if metricsConfig == nil {
 		return metrics.NewVoidRegistry()
 	}
