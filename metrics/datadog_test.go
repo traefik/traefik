@@ -31,10 +31,10 @@ func TestDatadog(t *testing.T) {
 	}
 
 	udp.ShouldReceiveAll(t, expected, func() {
-		datadogRegistry.ReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
-		datadogRegistry.ReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
-		datadogRegistry.ReqDurationHistogram().With("service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
-		datadogRegistry.RetriesCounter().With("service", "test").Add(1)
-		datadogRegistry.RetriesCounter().With("service", "test").Add(1)
+		datadogRegistry.BackendReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+		datadogRegistry.BackendReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
+		datadogRegistry.BackendReqDurationHistogram().With("service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
+		datadogRegistry.BackendRetriesCounter().With("service", "test").Add(1)
+		datadogRegistry.BackendRetriesCounter().With("service", "test").Add(1)
 	})
 }

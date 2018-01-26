@@ -29,10 +29,10 @@ func TestStatsD(t *testing.T) {
 	}
 
 	udp.ShouldReceiveAll(t, expected, func() {
-		statsdRegistry.ReqsCounter().With("service", "test", "code", string(http.StatusOK), "method", http.MethodGet).Add(1)
-		statsdRegistry.ReqsCounter().With("service", "test", "code", string(http.StatusNotFound), "method", http.MethodGet).Add(1)
-		statsdRegistry.RetriesCounter().With("service", "test").Add(1)
-		statsdRegistry.RetriesCounter().With("service", "test").Add(1)
-		statsdRegistry.ReqDurationHistogram().With("service", "test", "code", string(http.StatusOK)).Observe(10000)
+		statsdRegistry.BackendReqsCounter().With("service", "test", "code", string(http.StatusOK), "method", http.MethodGet).Add(1)
+		statsdRegistry.BackendReqsCounter().With("service", "test", "code", string(http.StatusNotFound), "method", http.MethodGet).Add(1)
+		statsdRegistry.BackendRetriesCounter().With("service", "test").Add(1)
+		statsdRegistry.BackendRetriesCounter().With("service", "test").Add(1)
+		statsdRegistry.BackendReqDurationHistogram().With("service", "test", "code", string(http.StatusOK)).Observe(10000)
 	})
 }

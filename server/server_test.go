@@ -484,7 +484,7 @@ func TestServerLoadConfigHealthCheckOptions(t *testing.T) {
 				if healthCheck != nil {
 					wantNumHealthCheckBackends = 1
 				}
-				gotNumHealthCheckBackends := len(healthcheck.GetHealthCheck().Backends)
+				gotNumHealthCheckBackends := len(healthcheck.GetHealthCheck(testhelpers.NewCollectingHealthCheckMetrics()).Backends)
 				if gotNumHealthCheckBackends != wantNumHealthCheckBackends {
 					t.Errorf("got %d health check backends, want %d", gotNumHealthCheckBackends, wantNumHealthCheckBackends)
 				}

@@ -30,10 +30,10 @@ func RegisterStatsd(config *types.Statsd) Registry {
 	}
 
 	return &standardRegistry{
-		enabled:              true,
-		reqsCounter:          statsdClient.NewCounter(statsdMetricsReqsName, 1.0),
-		reqDurationHistogram: statsdClient.NewTiming(statsdMetricsLatencyName, 1.0),
-		retriesCounter:       statsdClient.NewCounter(statsdRetriesTotalName, 1.0),
+		enabled:                     true,
+		backendReqsCounter:          statsdClient.NewCounter(statsdMetricsReqsName, 1.0),
+		backendReqDurationHistogram: statsdClient.NewTiming(statsdMetricsLatencyName, 1.0),
+		backendRetriesCounter:       statsdClient.NewCounter(statsdRetriesTotalName, 1.0),
 	}
 }
 

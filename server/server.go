@@ -122,10 +122,7 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration) *Server {
 		server.tracingMiddleware.Setup()
 	}
 
-	server.metricsRegistry = metrics.NewVoidRegistry()
-	if globalConfiguration.Metrics != nil {
-		server.registerMetricClients(globalConfiguration.Metrics)
-	}
+	server.metricsRegistry = registerMetricClients(globalConfiguration.Metrics)
 
 	if globalConfiguration.Cluster != nil {
 		// leadership creation if cluster mode
@@ -304,7 +301,7 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 		serverMiddlewares = append(serverMiddlewares, s.accessLoggerMiddleware)
 	}
 	if s.metricsRegistry.IsEnabled() {
-		serverMiddlewares = append(serverMiddlewares, middlewares.NewMetricsWrapper(s.metricsRegistry, newServerEntryPointName))
+		serverMiddlewares = append(serverMiddlewares, middlewares.NewEntryPointMetricsMiddleware(s.metricsRegistry, newServerEntryPointName))
 	}
 	if s.globalConfiguration.API != nil {
 		if s.globalConfiguration.API.Stats == nil {
@@ -449,8 +446,10 @@ func (s *Server) loadConfiguration(configMsg types.ConfigMessage) {
 	}
 	newConfigurations[configMsg.ProviderName] = configMsg.Configuration
 
+	s.metricsRegistry.ConfigReloadsCounter().Add(1)
 	newServerEntryPoints, err := s.loadConfig(newConfigurations, s.globalConfiguration)
 	if err == nil {
+		s.metricsRegistry.LastConfigReloadSuccessGauge().Set(float64(time.Now().Unix()))
 		for newServerEntryPointName, newServerEntryPoint := range newServerEntryPoints {
 			s.serverEntryPoints[newServerEntryPointName].httpRouter.UpdateHandler(newServerEntryPoint.httpRouter.GetHandler())
 			if s.globalConfiguration.EntryPoints[newServerEntryPointName].TLS == nil {
@@ -465,6 +464,8 @@ func (s *Server) loadConfiguration(configMsg types.ConfigMessage) {
 		s.currentConfigurations.Set(newConfigurations)
 		s.postLoadConfiguration()
 	} else {
+		s.metricsRegistry.ConfigReloadsFailureCounter().Add(1)
+		s.metricsRegistry.LastConfigReloadFailureGauge().Set(float64(time.Now().Unix()))
 		log.Error("Error loading new configuration, aborted ", err)
 	}
 }
@@ -501,6 +502,8 @@ func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tl
 }
 
 func (s *Server) postLoadConfiguration() {
+	metrics.OnConfigurationUpdate()
+
 	if s.globalConfiguration.ACME == nil {
 		return
 	}
@@ -1070,7 +1073,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 							rebalancer, _ = roundrobin.NewRebalancer(rr, roundrobin.RebalancerStickySession(sticky))
 						}
 						lb = rebalancer
-						if err := configureLBServers(rebalancer, config, frontend); err != nil {
+						if err := s.configureLBServers(rebalancer, config, frontend); err != nil {
 							log.Errorf("Skipping frontend %s...", frontendName)
 							continue frontend
 						}
@@ -1092,7 +1095,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 							}
 						}
 						lb = rr
-						if err := configureLBServers(rr, config, frontend); err != nil {
+						if err := s.configureLBServers(rr, config, frontend); err != nil {
 							log.Errorf("Skipping frontend %s...", frontendName)
 							continue frontend
 						}
@@ -1154,7 +1157,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 					}
 
 					if s.metricsRegistry.IsEnabled() {
-						n.Use(middlewares.NewMetricsWrapper(s.metricsRegistry, frontend.Backend))
+						n.Use(middlewares.NewBackendMetricsMiddleware(s.metricsRegistry, frontend.Backend))
 					}
 
 					ipWhitelistMiddleware, err := configureIPWhitelistMiddleware(frontend.WhitelistSourceRange)
@@ -1233,7 +1236,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 			}
 		}
 	}
-	healthcheck.GetHealthCheck().SetBackendsConfiguration(s.routinesPool.Ctx(), backendsHealthCheck)
+	healthcheck.GetHealthCheck(s.metricsRegistry).SetBackendsConfiguration(s.routinesPool.Ctx(), backendsHealthCheck)
 	// Get new certificates list sorted per entrypoints
 	// Update certificates
 	entryPointsCertificates, err := s.loadHTTPSConfiguration(configurations, globalConfiguration.DefaultEntryPoints)
@@ -1249,18 +1252,19 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 	return serverEntryPoints, err
 }
 
-func configureLBServers(lb healthcheck.LoadBalancer, config *types.Configuration, frontend *types.Frontend) error {
-	for serverName, server := range config.Backends[frontend.Backend].Servers {
-		u, err := url.Parse(server.URL)
+func (s *Server) configureLBServers(lb healthcheck.LoadBalancer, config *types.Configuration, frontend *types.Frontend) error {
+	for name, srv := range config.Backends[frontend.Backend].Servers {
+		u, err := url.Parse(srv.URL)
 		if err != nil {
-			log.Errorf("Error parsing server URL %s: %v", server.URL, err)
+			log.Errorf("Error parsing server URL %s: %v", srv.URL, err)
 			return err
 		}
-		log.Debugf("Creating server %s at %s with weight %d", serverName, u, server.Weight)
-		if err := lb.UpsertServer(u, roundrobin.Weight(server.Weight)); err != nil {
-			log.Errorf("Error adding server %s to load balancer: %v", server.URL, err)
+		log.Debugf("Creating server %s at %s with weight %d", name, u, srv.Weight)
+		if err := lb.UpsertServer(u, roundrobin.Weight(srv.Weight)); err != nil {
+			log.Errorf("Error adding server %s to load balancer: %v", srv.URL, err)
 			return err
 		}
+		s.metricsRegistry.BackendServerUpGauge().With("backend", frontend.Backend, "url", srv.URL).Set(1)
 	}
 	return nil
 }
@@ -1477,9 +1481,12 @@ func configureBackends(backends map[string]*types.Backend) {
 	}
 }
 
-func (s *Server) registerMetricClients(metricsConfig *types.Metrics) {
-	var registries []metrics.Registry
+func registerMetricClients(metricsConfig *types.Metrics) metrics.Registry {
+	if metricsConfig == nil {
+		return metrics.NewVoidRegistry()
+	}
 
+	registries := []metrics.Registry{}
 	if metricsConfig.Prometheus != nil {
 		registries = append(registries, metrics.RegisterPrometheus(metricsConfig.Prometheus))
 		log.Debug("Configured Prometheus metrics")
@@ -1497,9 +1504,7 @@ func (s *Server) registerMetricClients(metricsConfig *types.Metrics) {
 		log.Debugf("Configured InfluxDB metrics pushing to %s once every %s", metricsConfig.InfluxDB.Address, metricsConfig.InfluxDB.PushInterval)
 	}
 
-	if len(registries) > 0 {
-		s.metricsRegistry = metrics.NewMultiRegistry(registries)
-	}
+	return metrics.NewMultiRegistry(registries)
 }
 
 func stopMetricsClients() {

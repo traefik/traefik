@@ -7,29 +7,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewVoidRegistry(t *testing.T) {
-	registry := NewVoidRegistry()
-
-	if registry.IsEnabled() {
-		t.Errorf("VoidRegistry should not return true for IsEnabled()")
-	}
-	registry.ReqsCounter().With("some", "value").Add(1)
-	registry.ReqDurationHistogram().With("some", "value").Observe(1)
-	registry.RetriesCounter().With("some", "value").Add(1)
-}
-
 func TestNewMultiRegistry(t *testing.T) {
 	registries := []Registry{newCollectingRetryMetrics(), newCollectingRetryMetrics()}
 	registry := NewMultiRegistry(registries)
 
-	registry.ReqsCounter().With("key", "requests").Add(1)
-	registry.ReqDurationHistogram().With("key", "durations").Observe(2)
-	registry.RetriesCounter().With("key", "retries").Add(3)
+	registry.BackendReqsCounter().With("key", "requests").Add(1)
+	registry.BackendReqDurationHistogram().With("key", "durations").Observe(2)
+	registry.BackendRetriesCounter().With("key", "retries").Add(3)
 
 	for _, collectingRegistry := range registries {
-		cReqsCounter := collectingRegistry.ReqsCounter().(*counterMock)
-		cReqDurationHistogram := collectingRegistry.ReqDurationHistogram().(*histogramMock)
-		cRetriesCounter := collectingRegistry.RetriesCounter().(*counterMock)
+		cReqsCounter := collectingRegistry.BackendReqsCounter().(*counterMock)
+		cReqDurationHistogram := collectingRegistry.BackendReqDurationHistogram().(*histogramMock)
+		cRetriesCounter := collectingRegistry.BackendRetriesCounter().(*counterMock)
 
 		wantCounterValue := float64(1)
 		if cReqsCounter.counterValue != wantCounterValue {
@@ -52,9 +41,9 @@ func TestNewMultiRegistry(t *testing.T) {
 
 func newCollectingRetryMetrics() Registry {
 	return &standardRegistry{
-		reqsCounter:          &counterMock{},
-		reqDurationHistogram: &histogramMock{},
-		retriesCounter:       &counterMock{},
+		backendReqsCounter:          &counterMock{},
+		backendReqDurationHistogram: &histogramMock{},
+		backendRetriesCounter:       &counterMock{},
 	}
 }
 
