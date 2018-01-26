@@ -203,7 +203,7 @@ func TestRuleType(t *testing.T) {
 
 			if test.ingressRuleType != "" {
 				ingress.Annotations = map[string]string{
-					label.TraefikFrontendRuleType: test.ingressRuleType,
+					annotationKubernetesRuleType: test.ingressRuleType,
 				}
 			}
 
@@ -440,8 +440,8 @@ func TestServiceAnnotations(t *testing.T) {
 			sName("service1"),
 			sNamespace("testing"),
 			sUID("1"),
-			sAnnotation(label.TraefikBackendCircuitBreaker, "NetworkErrorRatio() > 0.5"),
-			sAnnotation(label.TraefikBackendLoadBalancerMethod, "drr"),
+			sAnnotation(annotationKubernetesCircuitBreakerExpression, "NetworkErrorRatio() > 0.5"),
+			sAnnotation(annotationKubernetesLoadBalancerMethod, "drr"),
 			sSpec(
 				clusterIP("10.0.0.1"),
 				sPorts(sPort(80, ""))),
@@ -450,7 +450,7 @@ func TestServiceAnnotations(t *testing.T) {
 			sName("service2"),
 			sNamespace("testing"),
 			sUID("2"),
-			sAnnotation(label.TraefikBackendCircuitBreaker, ""),
+			sAnnotation(annotationKubernetesCircuitBreakerExpression, ""),
 			sAnnotation(label.TraefikBackendLoadBalancerSticky, "true"),
 			sSpec(
 				clusterIP("10.0.0.2"),
@@ -460,11 +460,13 @@ func TestServiceAnnotations(t *testing.T) {
 			sName("service3"),
 			sNamespace("testing"),
 			sUID("3"),
-			sAnnotation(label.TraefikBackendBufferingMaxRequestBodyBytes, "10485760"),
-			sAnnotation(label.TraefikBackendBufferingMemRequestBodyBytes, "2097152"),
-			sAnnotation(label.TraefikBackendBufferingMaxResponseBodyBytes, "10485760"),
-			sAnnotation(label.TraefikBackendBufferingMemResponseBodyBytes, "2097152"),
-			sAnnotation(label.TraefikBackendBufferingRetryExpression, "IsNetworkError() && Attempts() <= 2"),
+			sAnnotation(annotationKubernetesBuffering, `
+maxrequestbodybytes: 10485760
+memrequestbodybytes: 2097153
+maxresponsebodybytes: 10485761
+memresponsebodybytes: 2097152
+retryexpression: IsNetworkError() && Attempts() <= 2
+`),
 			sSpec(
 				clusterIP("10.0.0.3"),
 				sPorts(sPort(803, ""))),
@@ -473,8 +475,8 @@ func TestServiceAnnotations(t *testing.T) {
 			sName("service4"),
 			sNamespace("testing"),
 			sUID("4"),
-			sAnnotation(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
-			sAnnotation(label.TraefikBackendMaxConnAmount, "6"),
+			sAnnotation(annotationKubernetesMaxConnExtractorFunc, "client.ip"),
+			sAnnotation(annotationKubernetesMaxConnAmount, "6"),
 			sSpec(
 				clusterIP("10.0.0.4"),
 				sPorts(sPort(804, ""))),
@@ -562,8 +564,8 @@ func TestServiceAnnotations(t *testing.T) {
 				lbMethod("wrr"),
 				buffering(
 					maxRequestBodyBytes(10485760),
-					memRequestBodyBytes(2097152),
-					maxResponseBodyBytes(10485760),
+					memRequestBodyBytes(2097153),
+					maxResponseBodyBytes(10485761),
 					memResponseBodyBytes(2097152),
 					retrying("IsNetworkError() && Attempts() <= 2"),
 				),
@@ -588,7 +590,6 @@ func TestServiceAnnotations(t *testing.T) {
 				passHostHeader(),
 				routes(route("bar", "Host:bar"))),
 			frontend("baz",
-				headers(),
 				passHostHeader(),
 				routes(route("baz", "Host:baz"))),
 			frontend("max-conn",
@@ -605,7 +606,7 @@ func TestIngressAnnotations(t *testing.T) {
 	ingresses := []*v1beta1.Ingress{
 		buildIngress(
 			iNamespace("testing"),
-			iAnnotation(label.TraefikFrontendPassHostHeader, "false"),
+			iAnnotation(annotationKubernetesPreserveHost, "false"),
 			iRules(
 				iRule(
 					iHost("foo"),
@@ -614,7 +615,7 @@ func TestIngressAnnotations(t *testing.T) {
 		),
 		buildIngress(
 			iNamespace("testing"),
-			iAnnotation(label.TraefikFrontendPassHostHeader, "true"),
+			iAnnotation(annotationKubernetesPreserveHost, "true"),
 			iAnnotation(annotationKubernetesIngressClass, "traefik"),
 			iRules(
 				iRule(
@@ -624,7 +625,7 @@ func TestIngressAnnotations(t *testing.T) {
 		),
 		buildIngress(
 			iNamespace("testing"),
-			iAnnotation(label.TraefikFrontendPassTLSCert, "true"),
+			iAnnotation(annotationKubernetesPassTLSCert, "true"),
 			iAnnotation(annotationKubernetesIngressClass, "traefik"),
 			iRules(
 				iRule(
@@ -634,7 +635,7 @@ func TestIngressAnnotations(t *testing.T) {
 		),
 		buildIngress(
 			iNamespace("testing"),
-			iAnnotation(label.TraefikFrontendEntryPoints, "http,https"),
+			iAnnotation(annotationKubernetesFrontendEntryPoints, "http,https"),
 			iAnnotation(annotationKubernetesIngressClass, "traefik"),
 			iRules(
 				iRule(
@@ -692,7 +693,7 @@ func TestIngressAnnotations(t *testing.T) {
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesIngressClass, "traefik"),
-			iAnnotation(label.TraefikFrontendRedirectEntryPoint, "https"),
+			iAnnotation(annotationKubernetesRedirectEntryPoint, "https"),
 			iRules(
 				iRule(
 					iHost("redirect"),
@@ -702,9 +703,14 @@ func TestIngressAnnotations(t *testing.T) {
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesIngressClass, "traefik"),
-			iAnnotation(label.Prefix+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageQuery, "/bar"),
-			iAnnotation(label.Prefix+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageStatus, "123,456"),
-			iAnnotation(label.Prefix+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageBackend, "bar"),
+			iAnnotation(annotationKubernetesErrorPages, `
+foo:
+  status:
+  - "123"
+  - "456"
+  backend: bar
+  query: /bar
+`),
 			iRules(
 				iRule(
 					iHost("error-pages"),
@@ -714,13 +720,18 @@ func TestIngressAnnotations(t *testing.T) {
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesIngressClass, "traefik"),
-			iAnnotation(label.TraefikFrontendRateLimitExtractorFunc, "client.ip"),
-			iAnnotation(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitPeriod, "6"),
-			iAnnotation(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitAverage, "12"),
-			iAnnotation(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitBurst, "18"),
-			iAnnotation(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitPeriod, "3"),
-			iAnnotation(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitAverage, "6"),
-			iAnnotation(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitBurst, "9"),
+			iAnnotation(annotationKubernetesRateLimit, `
+extractorfunc: client.ip
+rateset:
+  bar:
+    period: 3s
+    average: 6
+    burst: 9
+  foo:
+    period: 6s
+    average: 12
+    burst: 18
+`),
 			iRules(
 				iRule(
 					iHost("rate-limit"),
@@ -992,7 +1003,7 @@ func TestPriorityHeaderValue(t *testing.T) {
 	ingresses := []*v1beta1.Ingress{
 		buildIngress(
 			iNamespace("testing"),
-			iAnnotation(label.TraefikFrontendPriority, "1337"),
+			iAnnotation(annotationKubernetesPriority, "1337"),
 			iRules(
 				iRule(
 					iHost("foo"),
@@ -1052,7 +1063,7 @@ func TestInvalidPassTLSCertValue(t *testing.T) {
 	ingresses := []*v1beta1.Ingress{
 		buildIngress(
 			iNamespace("testing"),
-			iAnnotation(label.TraefikFrontendPassTLSCert, "herpderp"),
+			iAnnotation(annotationKubernetesPassTLSCert, "herpderp"),
 			iRules(
 				iRule(
 					iHost("foo"),
@@ -1109,7 +1120,7 @@ func TestInvalidPassHostHeaderValue(t *testing.T) {
 	ingresses := []*v1beta1.Ingress{
 		buildIngress(
 			iNamespace("testing"),
-			iAnnotation(label.TraefikFrontendPassHostHeader, "herpderp"),
+			iAnnotation(annotationKubernetesPreserveHost, "herpderp"),
 			iRules(
 				iRule(
 					iHost("foo"),
@@ -1405,7 +1416,7 @@ func TestTLSSecretLoad(t *testing.T) {
 	ingresses := []*v1beta1.Ingress{
 		buildIngress(
 			iNamespace("testing"),
-			iAnnotation(label.TraefikFrontendEntryPoints, "ep1,ep2"),
+			iAnnotation(annotationKubernetesFrontendEntryPoints, "ep1,ep2"),
 			iRules(
 				iRule(iHost("example.com"), iPaths(
 					onePath(iBackend("example-com", intstr.FromInt(80))),
@@ -1420,7 +1431,7 @@ func TestTLSSecretLoad(t *testing.T) {
 		),
 		buildIngress(
 			iNamespace("testing"),
-			iAnnotation(label.TraefikFrontendEntryPoints, "ep3"),
+			iAnnotation(annotationKubernetesFrontendEntryPoints, "ep3"),
 			iRules(
 				iRule(iHost("example.fail"), iPaths(
 					onePath(iBackend("example-fail", intstr.FromInt(80))),
@@ -1651,7 +1662,7 @@ func TestGetTLS(t *testing.T) {
 			desc: "pass the endpoints defined in the annotation to the certificate",
 			ingress: buildIngress(
 				iNamespace("testing"),
-				iAnnotation(label.TraefikFrontendEntryPoints, "https,api-secure"),
+				iAnnotation(annotationKubernetesFrontendEntryPoints, "https,api-secure"),
 				iRules(iRule(iHost("example.com"))),
 				iTLSes(iTLS("test-secret")),
 			),
