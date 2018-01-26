@@ -152,3 +152,51 @@ func TestErrorPageSingleCode(t *testing.T) {
 	assert.Contains(t, recorder.Body.String(), "503 Test Server")
 	assert.NotContains(t, recorder.Body.String(), "oops", "Should not return the oops page")
 }
+
+func TestNewErrorPagesResponseRecorder(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		rw       http.ResponseWriter
+		expected http.ResponseWriter
+	}{
+		{
+			desc:     "Without Close Notify",
+			rw:       httptest.NewRecorder(),
+			expected: &errorPagesResponseRecorderWithoutCloseNotify{},
+		},
+		{
+			desc:     "With Close Notify",
+			rw:       &mockRWCloseNotify{},
+			expected: &errorPagesResponseRecorderWithCloseNotify{},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			rec := newErrorPagesResponseRecorder(test.rw)
+
+			assert.IsType(t, rec, test.expected)
+		})
+	}
+}
+
+type mockRWCloseNotify struct{}
+
+func (m *mockRWCloseNotify) CloseNotify() <-chan bool {
+	panic("implement me")
+}
+
+func (m *mockRWCloseNotify) Header() http.Header {
+	panic("implement me")
+}
+
+func (m *mockRWCloseNotify) Write([]byte) (int, error) {
+	panic("implement me")
+}
+
+func (m *mockRWCloseNotify) WriteHeader(int) {
+	panic("implement me")
+}
