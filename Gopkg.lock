@@ -109,6 +109,12 @@
   revision = "5bd2802263f21d8788851d5305584c82a5c75d7e"
 
 [[projects]]
+  name = "github.com/Shopify/sarama"
+  packages = ["."]
+  revision = "3b1b38866a79f06deddf0487d5c27ba0697ccd65"
+  version = "v1.15.0"
+
+[[projects]]
   name = "github.com/Sirupsen/logrus"
   packages = ["."]
   revision = "10f801ebc38b33738c9d17d50860f484a0988ff5"
@@ -137,6 +143,12 @@
   name = "github.com/armon/go-proxyproto"
   packages = ["."]
   revision = "48572f11356f1843b694f21a290d4f1006bc5e47"
+
+[[projects]]
+  name = "github.com/assembla/cony"
+  packages = ["."]
+  revision = "dd62697b0adb9adfda8589520cb85f4cbc2361f1"
+  version = "v0.3.2"
 
 [[projects]]
   name = "github.com/aws/aws-sdk-go"
@@ -177,6 +189,18 @@
   ]
   revision = "3f8f870ec9939e32b3372abf74d24e468bcd285d"
   version = "v1.6.18"
+
+[[projects]]
+  name = "github.com/beeker1121/goque"
+  packages = ["."]
+  revision = "e1e63ca63c14b41209e160f54c8e7669564eacc4"
+  version = "v2.0.1"
+
+[[projects]]
+  name = "github.com/beevik/etree"
+  packages = ["."]
+  revision = "15a30b44cfd6c5a16a7ddfe271bf146aaf2d3195"
+  version = "v1.0.0"
 
 [[projects]]
   branch = "master"
@@ -468,6 +492,18 @@
   version = "v1.1.0"
 
 [[projects]]
+  name = "github.com/eapache/go-resiliency"
+  packages = ["breaker"]
+  revision = "6800482f2c813e689c88b7ed3282262385011890"
+  version = "v1.0.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/eapache/go-xerial-snappy"
+  packages = ["."]
+  revision = "bb955e01b9346ac19dc29eb16586c90ded99a98c"
+
+[[projects]]
   name = "github.com/eapache/queue"
   packages = ["."]
   revision = "44cc805cf13205b55f69e14bcb69867d1ae92f98"
@@ -611,6 +647,12 @@
   revision = "4bd1920723d7b7c925de087aa32e2187708897f7"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/golang/snappy"
+  packages = ["."]
+  revision = "553a641470496b2327abcac10b36396bd98e45c9"
+
+[[projects]]
   name = "github.com/google/go-github"
   packages = ["github"]
   revision = "fe7d11f8add400587b6718d9f39a62e42cb04c28"
@@ -733,9 +775,10 @@
   revision = "e0695005d6819191cf8969b479c94c40c8d22aa4"
 
 [[projects]]
+  branch = "master"
   name = "github.com/mailgun/minheap"
   packages = ["."]
-  revision = "7c28d80e2ada649fc8ab1a37b86d30a2633bd47c"
+  revision = "3dbe6c6bf55f94c5efcf460dc7f86830c21a90b2"
 
 [[projects]]
   name = "github.com/mailgun/timetools"
@@ -878,6 +921,18 @@
   revision = "ca53cad383cad2479bbba7f7a1a05797ec1386e4"
 
 [[projects]]
+  name = "github.com/pierrec/lz4"
+  packages = ["."]
+  revision = "2fcda4cb7018ce05a25959d2fe08c83e3329f169"
+  version = "v1.1"
+
+[[projects]]
+  name = "github.com/pierrec/xxHash"
+  packages = ["xxHash32"]
+  revision = "f051bb7f1d1aaf1b5a665d74fb6b0217712c69f7"
+  version = "v0.1.1"
+
+[[projects]]
   name = "github.com/pkg/errors"
   packages = ["."]
   revision = "c605e284fe17294bda444b34710735b29d1a9d90"
@@ -930,6 +985,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/rcrowley/go-metrics"
+  packages = ["."]
+  revision = "8732c616f52954686704c8645fe1a9d59e9df7c1"
+
+[[projects]]
+  branch = "master"
   name = "github.com/ryanuber/go-glob"
   packages = ["."]
   revision = "256dc444b735e061061cf46c809487313d5b0065"
@@ -951,6 +1012,12 @@
   revision = "cb88ea77998c3f024757528e3305022ab50b43be"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/streadway/amqp"
+  packages = ["."]
+  revision = "54ded0531dfd699a7893861d39a7a949c5749bc9"
+
+[[projects]]
   name = "github.com/stretchr/objx"
   packages = ["."]
   revision = "cbeaeb16a013161a98496fad62933b1d21786672"
@@ -969,6 +1036,25 @@
   name = "github.com/stvp/go-udp-testing"
   packages = ["."]
   revision = "c4434f09ec131ecf30f986d5dcb1636508bfa49a"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/syndtr/goleveldb"
+  packages = [
+    "leveldb",
+    "leveldb/cache",
+    "leveldb/comparer",
+    "leveldb/errors",
+    "leveldb/filter",
+    "leveldb/iterator",
+    "leveldb/journal",
+    "leveldb/memdb",
+    "leveldb/opt",
+    "leveldb/storage",
+    "leveldb/table",
+    "leveldb/util"
+  ]
+  revision = "34011bf325bce385408353a30b101fe5e923eb6e"
 
 [[projects]]
   name = "github.com/thoas/stats"
@@ -1386,6 +1472,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "bd1e7a1b07d95ff85c675468bbfc4bc7a91c39cf1feceeb58dfcdba9592180a5"
+  inputs-digest = "1705ed9af51f3a6f6070505350afc2c8dff9aab4a9726750becff92ebaa7bf82"
   solver-name = "gps-cdcl"
   solver-version = 1

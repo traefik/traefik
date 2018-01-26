@@ -8,6 +8,8 @@ logLevel = "DEBUG"
 
 [api]
 
+[web.statistics]
+
 [file]
 [backends]
   [backends.backend1]

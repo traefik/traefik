@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-
-	"github.com/containous/traefik/middlewares"
 )
 
-var (
-	_ middlewares.Stateful = &captureResponseWriter{}
-)
+//Fix cyclic dependency
+//var (
+//	_ Stateful = &captureResponseWriter{}
+//)
 
 // captureResponseWriter is a wrapper of type http.ResponseWriter
 // that tracks request status and size

@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GovTalkMessage xmlns="http://www.govtalk.gov.uk/CM/envelope">
+	<EnvelopeVersion>2.0</EnvelopeVersion>
+	<Header>
+		<MessageDetails>
+			<Class>HMRC-VAT-DEC-TMSG</Class>
+			<Qualifier>request</Qualifier>
+			<Function>submit</Function>
+			<TransactionID>1A002180711</TransactionID>
+			<AuditID>A1002180711</AuditID>
+			<CorrelationID>998C7D7DF2134835A332FAB2EB1914F3</CorrelationID>
+			<ResponseEndPoint>HMCE-SERVICE-ENDPOINT-EXTRA-1</ResponseEndPoint>
+			<GatewayTest>0</GatewayTest>
+			<GatewayTimestamp>2015-11-18T08:53:23.970</GatewayTimestamp>
+		</MessageDetails>
+		<SenderDetails>
+			<IDAuthentication>
+				<SenderID>0000001663017753</SenderID>
+				<Authentication>
+					<Method>clear</Method>
+					<Role>principal</Role>
+					<Value>**********</Value>
+				</Authentication>
+			</IDAuthentication>
+			<X509Certificate/>
+			<EmailAddress>aa@aa.com</EmailAddress>
+		</SenderDetails>
+	</Header>
+	<GovTalkDetails>
+		<Keys>
+			<Key Type='SA'>SA554433</Key>
+			<Key Type='VATRegNo'>VAT443322</Key>
+		</Keys>
+		<TargetDetails>
+			<Organisation>DecisionSoft Ltd.</Organisation>
+		</TargetDetails>
+		<GatewayValidation>
+			<Processed>yes</Processed>
+			<Result>pass</Result>
+		</GatewayValidation>
+		<ChannelRouting>
+			<Channel>
+				<URI>http://www.decisionsoft.com/9876</URI>
+				<Product>X-Meta</Product>
+				<Version>2.02</Version>
+			</Channel>
+			<ID Type='main'>Channel 1</ID>
+			<Timestamp>2009-03-17T02:58:41</Timestamp>
+		</ChannelRouting>
+		<GatewayAdditions>
+			<Submitter xmlns="http://www.govtalk.gov.uk/gateway/submitterdetails">
+				<AgentDetails>
+					<AuthenticationType>1</AuthenticationType>
+					<AgentGroupCode>AGT334455</AgentGroupCode>
+					<AgentEnrolments>
+						<Enrolment>
+							<ServiceName>SERV_AGT1</ServiceName>
+							<Identifiers>
+								<Identifier IdentifierType="AGT1_ID1">XXYY1111</Identifier>
+								<Identifier IdentifierType="AGT1_ID2">XXYY2222</Identifier>
+							</Identifiers>
+						</Enrolment>
+						<Enrolment>
+							<ServiceName>SERV_AGT2</ServiceName>
+							<Identifiers>
+								<Identifier IdentifierType="AGT2_ID1">TTYY1111</Identifier>
+								<Identifier IdentifierType="AGT2_ID2">TTYY2222</Identifier>
+							</Identifiers>
+						</Enrolment>
+					</AgentEnrolments>
+				</AgentDetails>
+				<SubmitterDetails>
+					<RegistrationCategory>Individual</RegistrationCategory>
+					<UserType>Principal</UserType>
+					<CredentialRole>User</CredentialRole>
+					<CredentialIdentifier>0000001663017753</CredentialIdentifier>
+				</SubmitterDetails>
+			</Submitter>
+		</GatewayAdditions>
+	</GovTalkDetails>
+	<Body>
+		<IRenvelope xmlns="http://www.govtalk.gov.uk/taxation/vat/vatdeclaration/2">
+			<IRheader>
+				<Keys>
+					<Key Type='VATRegNo'>999947314</Key>
+				</Keys>
+				<PeriodID>2009-12</PeriodID>
+				<PeriodStart>2009-12-01</PeriodStart>
+				<PeriodEnd>2009-12-31</PeriodEnd>
+				<Principal>
+					<Contact>
+						<Name>
+							<Ttl>Dr</Ttl>
+							<Fore>James</Fore>
+							<Sur>Bacon</Sur>
+						</Name>
+						<Email Preferred='yes' Type='work'>sample@EmailStructure.com
+						</Email>
+						<Telephone Mobile='yes' Preferred='yes' Type='work'>
+							<Number>01865 203192</Number>
+							<Extension>6969</Extension>
+						</Telephone>
+						<Fax Mobile='yes' Preferred='yes' Type='work'>
+							<Number>01865 203192</Number>
+							<Extension>6969</Extension>
+						</Fax>
+					</Contact>
+				</Principal>
+				<Agent>
+					<AgentID>SM1</AgentID>
+					<Company>DecisionSoft Ltd.</Company>
+					<Address>
+						<Line>Rectory Stable Cottage</Line>
+						<PostCode>AA1 1AA</PostCode>
+						<Country>UK</Country>
+					</Address>
+					<Contact>
+						<Name>
+							<Ttl>Dr</Ttl>
+							<Fore>James</Fore>
+							<Sur>Bacon</Sur>
+						</Name>
+						<Email Preferred='yes' Type='work'>sample@EmailStructure.com
+						</Email>
+						<Telephone Mobile='yes' Preferred='yes' Type='work'>
+							<Number>01865 203192</Number>
+							<Extension>6969</Extension>
+						</Telephone>
+						<Fax Mobile='yes' Preferred='yes' Type='work'>
+							<Number>01865 203192</Number>
+							<Extension>6969</Extension>
+						</Fax>
+					</Contact>
+				</Agent>
+				<DefaultCurrency>GBP</DefaultCurrency>
+				<Manifest>
+					<Contains>
+						<Reference>
+							<Namespace>http://www.govtalk.gov.uk/taxation/vat/vatdeclaration/2
+							</Namespace>
+							<SchemaVersion>2009-v1.00</SchemaVersion>
+							<TopElementName>A</TopElementName>
+						</Reference>
+					</Contains>
+				</Manifest>
+				<IRmark Type='generic'>ju9VSFvIRsMYd7RAYWJf4jRTMiY=</IRmark>
+				<Sender>Individual</Sender>
+			</IRheader>
+			<VATDeclarationRequest>
+				<VATDueOnOutputs>13.12</VATDueOnOutputs>
+				<VATDueOnECAcquisitions>13.12</VATDueOnECAcquisitions>
+				<TotalVAT>26.24</TotalVAT>
+				<VATReclaimedOnInputs>10.01</VATReclaimedOnInputs>
+				<NetVAT>-99.99</NetVAT>
+				<NetSalesAndOutputs>13</NetSalesAndOutputs>
+				<NetPurchasesAndInputs>13</NetPurchasesAndInputs>
+				<NetECSupplies>0</NetECSupplies>
+				<NetECAcquisitions>13</NetECAcquisitions>
+				<AASBalancingPayment>0.00</AASBalancingPayment>
+			</VATDeclarationRequest>
+		</IRenvelope>
+	</Body>
+</GovTalkMessage>

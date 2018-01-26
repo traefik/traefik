@@ -1,7 +1,7 @@
 /dist
-/autogen/genstatic/gen.go
-.idea/
-.intellij/
+/autogen/gen.go
+.idea
+.intellij
 *.iml
 /traefik
 /traefik.toml
@@ -11,4 +11,5 @@
 *.log
 *.exe
 .DS_Store
-/examples/acme/acme.json
+/example/acme/acme.json
+debug.test

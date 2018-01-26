@@ -57,6 +57,7 @@ func init() {
 		check.Suite(&SimpleSuite{})
 		check.Suite(&TimeoutSuite{})
 		check.Suite(&WebsocketSuite{})
+		check.Suite(&RabbitMQSuite{})
 	}
 	if *host {
 		// tests launched from the host

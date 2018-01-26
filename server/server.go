@@ -31,7 +31,12 @@ import (
 	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/middlewares/accesslog"
+	"github.com/containous/traefik/middlewares/audittap"
+	"github.com/containous/traefik/middlewares/audittap/audittypes"
+	"github.com/containous/traefik/middlewares/audittap/streams"
+	at "github.com/containous/traefik/middlewares/audittap/types"
 	mauth "github.com/containous/traefik/middlewares/auth"
+	"github.com/containous/traefik/middlewares/headers"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/server/cookie"
@@ -73,6 +78,7 @@ type Server struct {
 	leadership                    *cluster.Leadership
 	defaultForwardingRoundTripper http.RoundTripper
 	metricsRegistry               metrics.Registry
+	auditStreams                  []audittypes.AuditStream
 }
 
 type serverEntryPoints map[string]*serverEntryPoint
@@ -195,6 +201,7 @@ func createRootCACertPool(rootCAs traefikTls.RootCAs) *x509.CertPool {
 
 // Start starts the server.
 func (s *Server) Start() {
+	s.initialiseAuditStreams()
 	s.startHTTPServers()
 	s.startLeadership()
 	s.routinesPool.Go(func(stop chan bool) {
@@ -286,7 +293,7 @@ func (s *Server) startHTTPServers() {
 }
 
 func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServerEntryPoint *serverEntryPoint) *serverEntryPoint {
-	serverMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler()}
+	serverMiddlewares := []negroni.Handler{headers.NewHeaders(), middlewares.NegroniRecoverHandler()}
 	serverInternalMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler()}
 	if s.accessLoggerMiddleware != nil {
 		serverMiddlewares = append(serverMiddlewares, s.accessLoggerMiddleware)
@@ -817,6 +824,12 @@ func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.
 		}
 	}
 
+	var connStateListener func(net.Conn, http.ConnState)
+
+	if (s.globalConfiguration.Web) != nil {
+		connStateListener = newConnChangeListener(s.globalConfiguration.API.StatsRecorder)
+	}
+
 	return &http.Server{
 			Addr:         entryPoint.Address,
 			Handler:      internalMuxRouter,
@@ -825,6 +838,7 @@ func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.
 			WriteTimeout: writeTimeout,
 			IdleTimeout:  idleTimeout,
 			ErrorLog:     httpServerLogger,
+			ConnState:    connStateListener,
 		},
 		listener,
 		nil
@@ -1016,10 +1030,26 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 					var saveFrontend http.Handler
 					if s.accessLoggerMiddleware != nil {
 						saveBackend := accesslog.NewSaveBackend(fwd, frontend.Backend)
-						saveFrontend = accesslog.NewSaveFrontend(saveBackend, frontendName)
+						if s.globalConfiguration.AuditSink != nil {
+							auditTap, err := audittap.NewAuditTap(s.globalConfiguration.AuditSink, s.auditStreams, frontend.Backend, saveBackend)
+							if err != nil {
+								log.Fatal("Error starting server: ", err)
+							}
+							saveFrontend = accesslog.NewSaveFrontend(auditTap, frontendName)
+						} else {
+							saveFrontend = accesslog.NewSaveFrontend(saveBackend, frontendName)
+						}
 						rr, _ = roundrobin.New(saveFrontend)
 					} else {
-						rr, _ = roundrobin.New(fwd)
+						if s.globalConfiguration.AuditSink != nil {
+							auditTap, err := audittap.NewAuditTap(s.globalConfiguration.AuditSink, s.auditStreams, frontend.Backend, fwd)
+							if err != nil {
+								log.Fatal("Error starting server: ", err)
+							}
+							rr, _ = roundrobin.New(auditTap)
+						} else {
+							rr, _ = roundrobin.New(fwd)
+						}
 					}
 
 					if config.Backends[frontend.Backend] == nil {
@@ -1389,6 +1419,34 @@ func parseHealthCheckOptions(lb healthcheck.LoadBalancer, backend string, hc *ty
 	}
 }
 
+func (s *Server) initialiseAuditStreams() {
+	var as streams.AuditSink
+	if s.globalConfiguration.AuditSink != nil {
+		var err error
+
+		switch s.globalConfiguration.AuditSink.Type {
+		case "AMQP":
+			messages := make(chan at.Encoded, s.globalConfiguration.AuditSink.ChannelLength)
+			as, err = streams.NewAmqpSink(s.globalConfiguration.AuditSink, messages)
+			if err != nil {
+				log.Fatal("Error creating new AMQP Sink: ", err)
+			}
+			log.Info("Created AMQP Sink")
+		case "Blackhole":
+			as = streams.NewBlackholeSink()
+			log.Info("Created Blackhole Sink")
+		default:
+			log.Warn("AuditSink.Type <%v> not currently supported", s.globalConfiguration.AuditSink)
+			return
+		}
+
+		astr := streams.NewAuditStream(as)
+		s.auditStreams = append(s.auditStreams, astr)
+	} else {
+		log.Warn("No audit sink info")
+	}
+}
+
 func getRoute(serverRoute *serverRoute, route *types.Route) error {
 	rules := Rules{route: serverRoute}
 	newRoute, err := rules.Parse(route.Rule)
@@ -1407,6 +1465,14 @@ func sortedFrontendNamesForConfig(configuration *types.Configuration) []string {
 	}
 	sort.Strings(keys)
 	return keys
+}
+
+func newConnChangeListener(sr *middlewares.StatsRecorder) func(net.Conn, http.ConnState) {
+	return func(conn net.Conn, newState http.ConnState) {
+		if sr != nil {
+			sr.ConnStateChange(conn, newState)
+		}
+	}
 }
 
 func (s *Server) configureFrontends(frontends map[string]*types.Frontend) {

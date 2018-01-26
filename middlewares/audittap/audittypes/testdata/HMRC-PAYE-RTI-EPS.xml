@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ChRISEnvelope xmlns="http://www.hmrc.gov.uk/ChRIS/Envelope/2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<EnvelopeVersion>2.0</EnvelopeVersion>
+	<Header>
+		<MessageClass>HMRC-PAYE-RTI-EPS</MessageClass>
+		<Qualifier>request</Qualifier>
+		<Function>submit</Function>
+		<Sender>
+			<System>EDI-TP</System>
+			<CorrelatingID>AAAAZZZZCORRID</CorrelatingID>
+			<ReceiptDate>2016-03-11T08:51:22</ReceiptDate>
+			<Additions>
+				<EDI xmlns="http://www.hmrc.gov.uk/ChRIS/Envelope/Additions/EDI/1" xmlns:EDIAdditions="http://www.hmrc.gov.uk/ChRIS/Envelope/Additions/ED/1">
+					<Ref>EPS17|Worksoft 98|999|AZ12345678|123PQ7654321X|15935</Ref>
+					<TradingPartnerID>bzc0qd</TradingPartnerID>
+				</EDI>
+			</Additions>
+		</Sender>
+	</Header>
+	<Body>
+		<IRenvelope xmlns="http://www.govtalk.gov.uk/taxation/PAYE/RTI/EmployerPaymentSummary/16-17/1">
+			<IRheader>
+				<Keys>
+					<Key Type="TaxOfficeNumber">999</Key>
+					<Key Type="TaxOfficeReference">AZ12345678</Key>
+					<Key Type="AORef">123PQ7654321X</Key>
+				</Keys>
+				<PeriodEnd>2017-04-05</PeriodEnd>
+				<DefaultCurrency>GBP</DefaultCurrency>
+				<IRmark Type="generic"></IRmark>
+				<Sender>Company</Sender>
+			</IRheader>
+			<EmployerPaymentSummary>
+				<EmpRefs>
+					<OfficeNo>999</OfficeNo>
+					<PayeRef>AZ12345678</PayeRef>
+					<AORef>123PQ7654321X</AORef>
+				</EmpRefs>
+				<EmpAllceInd>yes</EmpAllceInd>
+				<RecoverableAmountsYTD>
+					<TaxMonth>1</TaxMonth>
+					<ShPPRecovered>132.40</ShPPRecovered>
+					<NICCompensationOnShPP>52.40</NICCompensationOnShPP>
+				</RecoverableAmountsYTD>
+				<RelatedTaxYear>16-17</RelatedTaxYear>
+			</EmployerPaymentSummary>
+		</IRenvelope>
+	</Body>
+</ChRISEnvelope>

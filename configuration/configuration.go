@@ -94,6 +94,7 @@ type GlobalConfiguration struct {
 	API                       *api.Handler            `description:"Enable api/dashboard" export:"true"`
 	Metrics                   *types.Metrics          `description:"Enable a metrics exporter" export:"true"`
 	Ping                      *ping.Handler           `description:"Enable ping" export:"true"`
+	AuditSink                 *types.AuditSink        `description:"Audit Sink settings"`
 }
 
 // WebCompatibility is a configuration to handle compatibility with deprecated web provider options
