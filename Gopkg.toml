@@ -190,3 +190,8 @@ ignored = ["github.com/sirupsen/logrus"]
   # remove override on master
   name = "github.com/coreos/bbolt"
   revision = "32c383e75ce054674c53b5a07e55de85332aee14"
+
+[prune]
+  non-go = true
+  go-tests = true
+  unused-packages = true
