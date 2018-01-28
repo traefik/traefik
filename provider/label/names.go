@@ -25,7 +25,6 @@ const (
 	SuffixBackendMaxConnAmount                     = "backend.maxconn.amount"
 	SuffixBackendMaxConnExtractorFunc              = "backend.maxconn.extractorfunc"
 	SuffixBackendBuffering                         = "backend.buffering"
-	SuffixBackendBufferingEnabled                  = SuffixBackendBuffering + ".enabled"
 	SuffixBackendBufferingMaxRequestBodyBytes      = SuffixBackendBuffering + ".maxRequestBodyBytes"
 	SuffixBackendBufferingMemRequestBodyBytes      = SuffixBackendBuffering + ".memRequestBodyBytes"
 	SuffixBackendBufferingMaxResponseBodyBytes     = SuffixBackendBuffering + ".maxResponseBodyBytes"
@@ -87,7 +86,7 @@ const (
 	TraefikBackendLoadBalancerStickinessCookieName = Prefix + SuffixBackendLoadBalancerStickinessCookieName
 	TraefikBackendMaxConnAmount                    = Prefix + SuffixBackendMaxConnAmount
 	TraefikBackendMaxConnExtractorFunc             = Prefix + SuffixBackendMaxConnExtractorFunc
-	TraefikBackendBufferingEnabled                 = Prefix + SuffixBackendBufferingEnabled
+	TraefikBackendBuffering                        = Prefix + SuffixBackendBuffering
 	TraefikBackendBufferingMaxRequestBodyBytes     = Prefix + SuffixBackendBufferingMaxRequestBodyBytes
 	TraefikBackendBufferingMemRequestBodyBytes     = Prefix + SuffixBackendBufferingMemRequestBodyBytes
 	TraefikBackendBufferingMaxResponseBodyBytes    = Prefix + SuffixBackendBufferingMaxResponseBodyBytes

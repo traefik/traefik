@@ -457,14 +457,11 @@ func getHealthCheck(application marathon.Application) *types.HealthCheck {
 }
 
 func getBuffering(application marathon.Application) *types.Buffering {
-	enabled := label.GetBoolValueP(application.Labels, label.TraefikBackendBufferingEnabled, false)
-
-	if !enabled {
+	if !label.HasPrefixP(application.Labels, label.TraefikBackendBuffering) {
 		return nil
 	}
 
 	return &types.Buffering{
-		Enabled:              enabled,
 		MaxRequestBodyBytes:  label.GetInt64ValueP(application.Labels, label.TraefikBackendBufferingMaxRequestBodyBytes, 0),
 		MaxResponseBodyBytes: label.GetInt64ValueP(application.Labels, label.TraefikBackendBufferingMaxResponseBodyBytes, 0),
 		MemRequestBodyBytes:  label.GetInt64ValueP(application.Labels, label.TraefikBackendBufferingMemRequestBodyBytes, 0),

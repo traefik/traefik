@@ -215,14 +215,11 @@ func getHealthCheck(container dockerData) *types.HealthCheck {
 }
 
 func getBuffering(container dockerData) *types.Buffering {
-	enabled := label.GetBoolValue(container.Labels, label.TraefikBackendBufferingEnabled, false)
-
-	if !enabled {
+	if !label.HasPrefix(container.Labels, label.TraefikBackendBuffering) {
 		return nil
 	}
 
 	return &types.Buffering{
-		Enabled:              enabled,
 		MaxRequestBodyBytes:  label.GetInt64Value(container.Labels, label.TraefikBackendBufferingMaxRequestBodyBytes, 0),
 		MaxResponseBodyBytes: label.GetInt64Value(container.Labels, label.TraefikBackendBufferingMaxResponseBodyBytes, 0),
 		MemRequestBodyBytes:  label.GetInt64Value(container.Labels, label.TraefikBackendBufferingMemRequestBodyBytes, 0),

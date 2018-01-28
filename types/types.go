@@ -53,7 +53,6 @@ type CircuitBreaker struct {
 
 // Buffering holds request/response buffering configuration/
 type Buffering struct {
-	Enabled              bool   `json:"enabled"`
 	MaxRequestBodyBytes  int64  `json:"maxRequestBodyBytes,omitempty"`
 	MemRequestBodyBytes  int64  `json:"memRequestBodyBytes,omitempty"`
 	MaxResponseBodyBytes int64  `json:"maxResponseBodyBytes,omitempty"`

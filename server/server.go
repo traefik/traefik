@@ -1151,7 +1151,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						n.UseFunc(secureMiddleware.HandlerFuncWithNext)
 					}
 
-					if config.Backends[frontend.Backend].Buffering != nil && config.Backends[frontend.Backend].Buffering.Enabled {
+					if config.Backends[frontend.Backend].Buffering != nil {
 						bufferedLb, err := s.buildBufferingMiddleware(lb, config.Backends[frontend.Backend].Buffering)
 
 						if err != nil {
@@ -1521,29 +1521,26 @@ func (s *Server) wrapHTTPHandlerWithAccessLog(handler http.Handler, frontendName
 }
 
 func (s *Server) buildBufferingMiddleware(handler http.Handler, config *types.Buffering) (http.Handler, error) {
-	var lb *buffer.Buffer
-	var err error
+	log.Debugf("Setting up buffering: request limits: %d (mem), %d (max), response limits: %d (mem), %d (max) with retry: '%s'",
+		config.MemRequestBodyBytes, config.MaxRequestBodyBytes, config.MemResponseBodyBytes,
+		config.MaxResponseBodyBytes, config.RetryExpression)
 
 	if len(config.RetryExpression) > 0 {
-		lb, err = buffer.New(handler,
+		return buffer.New(
+			handler,
 			buffer.MemRequestBodyBytes(config.MemRequestBodyBytes),
 			buffer.MaxRequestBodyBytes(config.MaxRequestBodyBytes),
 			buffer.MemResponseBodyBytes(config.MemResponseBodyBytes),
 			buffer.MaxResponseBodyBytes(config.MaxResponseBodyBytes),
 			buffer.Retry(config.RetryExpression),
 		)
-	} else {
-		lb, err = buffer.New(handler,
-			buffer.MemRequestBodyBytes(config.MemRequestBodyBytes),
-			buffer.MaxRequestBodyBytes(config.MaxRequestBodyBytes),
-			buffer.MemResponseBodyBytes(config.MemResponseBodyBytes),
-			buffer.MaxResponseBodyBytes(config.MaxResponseBodyBytes),
-		)
 	}
 
-	log.Debugf("Setting up buffering: request limits: %d (mem), %d (max), response limits: %d (mem), %d (max) with retry: '%s'",
-		config.MemRequestBodyBytes, config.MaxRequestBodyBytes, config.MemResponseBodyBytes,
-		config.MaxResponseBodyBytes, config.RetryExpression)
-
-	return lb, err
+	return buffer.New(
+		handler,
+		buffer.MemRequestBodyBytes(config.MemRequestBodyBytes),
+		buffer.MaxRequestBodyBytes(config.MaxRequestBodyBytes),
+		buffer.MemResponseBodyBytes(config.MemResponseBodyBytes),
+		buffer.MaxResponseBodyBytes(config.MaxResponseBodyBytes),
+	)
 }

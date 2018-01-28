@@ -237,14 +237,11 @@ func getHealthCheck(service rancherData) *types.HealthCheck {
 }
 
 func getBuffering(service rancherData) *types.Buffering {
-	enabled := label.GetBoolValue(service.Labels, label.TraefikBackendBufferingEnabled, false)
-
-	if !enabled {
+	if !label.HasPrefix(service.Labels, label.TraefikBackendBuffering) {
 		return nil
 	}
 
 	return &types.Buffering{
-		Enabled:              enabled,
 		MaxRequestBodyBytes:  label.GetInt64Value(service.Labels, label.TraefikBackendBufferingMaxRequestBodyBytes, 0),
 		MaxResponseBodyBytes: label.GetInt64Value(service.Labels, label.TraefikBackendBufferingMaxResponseBodyBytes, 0),
 		MemRequestBodyBytes:  label.GetInt64Value(service.Labels, label.TraefikBackendBufferingMemRequestBodyBytes, 0),

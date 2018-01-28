@@ -136,7 +136,6 @@ func TestBuildConfiguration(t *testing.T) {
 							label.TraefikBackendLoadBalancerStickinessCookieName: aws.String("chocolate"),
 							label.TraefikBackendMaxConnAmount:                    aws.String("666"),
 							label.TraefikBackendMaxConnExtractorFunc:             aws.String("client.ip"),
-							label.TraefikBackendBufferingEnabled:                 aws.String("true"),
 							label.TraefikBackendBufferingMaxResponseBodyBytes:    aws.String("10485760"),
 							label.TraefikBackendBufferingMemResponseBodyBytes:    aws.String("2097152"),
 							label.TraefikBackendBufferingMaxRequestBodyBytes:     aws.String("10485760"),
@@ -229,7 +228,6 @@ func TestBuildConfiguration(t *testing.T) {
 							Interval: "6",
 						},
 						Buffering: &types.Buffering{
-							Enabled:              true,
 							MaxResponseBodyBytes: 10485760,
 							MemResponseBodyBytes: 2097152,
 							MaxRequestBodyBytes:  10485760,
@@ -977,25 +975,10 @@ func TestGetBuffering(t *testing.T) {
 			expected: nil,
 		},
 		{
-			desc: "should return nil when buffering disabled",
-			instance: ecsInstance{
-				containerDefinition: &ecs.ContainerDefinition{
-					DockerLabels: map[string]*string{
-						label.TraefikBackendBufferingEnabled:              aws.String("false"),
-						label.TraefikBackendBufferingMaxResponseBodyBytes: aws.String("10485760"),
-						label.TraefikBackendBufferingMemResponseBodyBytes: aws.String("2097152"),
-						label.TraefikBackendBufferingMaxRequestBodyBytes:  aws.String("10485760"),
-						label.TraefikBackendBufferingMemRequestBodyBytes:  aws.String("2097152"),
-						label.TraefikBackendBufferingRetryExpression:      aws.String("IsNetworkError() && Attempts() <= 2"),
-					}}},
-			expected: nil,
-		},
-		{
 			desc: "should return a struct when health check labels are set",
 			instance: ecsInstance{
 				containerDefinition: &ecs.ContainerDefinition{
 					DockerLabels: map[string]*string{
-						label.TraefikBackendBufferingEnabled:              aws.String("true"),
 						label.TraefikBackendBufferingMaxResponseBodyBytes: aws.String("10485760"),
 						label.TraefikBackendBufferingMemResponseBodyBytes: aws.String("2097152"),
 						label.TraefikBackendBufferingMaxRequestBodyBytes:  aws.String("10485760"),
@@ -1003,7 +986,6 @@ func TestGetBuffering(t *testing.T) {
 						label.TraefikBackendBufferingRetryExpression:      aws.String("IsNetworkError() && Attempts() <= 2"),
 					}}},
 			expected: &types.Buffering{
-				Enabled:              true,
 				MaxResponseBodyBytes: 10485760,
 				MemResponseBodyBytes: 2097152,
 				MaxRequestBodyBytes:  10485760,

@@ -176,14 +176,11 @@ func getHealthCheck(instance ecsInstance) *types.HealthCheck {
 }
 
 func getBuffering(instance ecsInstance) *types.Buffering {
-	enabled := getBoolValue(instance, label.TraefikBackendBufferingEnabled, false)
-
-	if !enabled {
+	if !hasPrefix(instance, label.TraefikBackendBuffering) {
 		return nil
 	}
 
 	return &types.Buffering{
-		Enabled:              enabled,
 		MaxRequestBodyBytes:  getInt64Value(instance, label.TraefikBackendBufferingMaxRequestBodyBytes, 0),
 		MaxResponseBodyBytes: getInt64Value(instance, label.TraefikBackendBufferingMaxResponseBodyBytes, 0),
 		MemRequestBodyBytes:  getInt64Value(instance, label.TraefikBackendBufferingMemRequestBodyBytes, 0),

@@ -302,14 +302,11 @@ func getHealthCheck(task state.Task) *types.HealthCheck {
 }
 
 func getBuffering(task state.Task) *types.Buffering {
-	enabled := getBoolValue(task, label.TraefikBackendBufferingEnabled, false)
-
-	if !enabled {
+	if !hasPrefix(task, label.TraefikBackendBuffering) {
 		return nil
 	}
 
 	return &types.Buffering{
-		Enabled:              enabled,
 		MaxRequestBodyBytes:  getInt64Value(task, label.TraefikBackendBufferingMaxRequestBodyBytes, 0),
 		MaxResponseBodyBytes: getInt64Value(task, label.TraefikBackendBufferingMaxResponseBodyBytes, 0),
 		MemRequestBodyBytes:  getInt64Value(task, label.TraefikBackendBufferingMemRequestBodyBytes, 0),

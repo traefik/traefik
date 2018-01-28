@@ -76,7 +76,6 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					withPair(pathBackendHealthCheckInterval, "30s"),
 					withPair(pathBackendMaxConnAmount, "5"),
 					withPair(pathBackendMaxConnExtractorFunc, "client.ip"),
-					withPair(pathBackendBufferingEnabled, "true"),
 					withPair(pathBackendBufferingMaxResponseBodyBytes, "10485760"),
 					withPair(pathBackendBufferingMemResponseBodyBytes, "2097152"),
 					withPair(pathBackendBufferingMaxRequestBodyBytes, "10485760"),
@@ -169,7 +168,6 @@ func TestProviderBuildConfiguration(t *testing.T) {
 							Interval: "30s",
 						},
 						Buffering: &types.Buffering{
-							Enabled:              true,
 							MaxResponseBodyBytes: 10485760,
 							MemResponseBodyBytes: 2097152,
 							MaxRequestBodyBytes:  10485760,
@@ -1714,7 +1712,7 @@ func TestProviderGetHealthCheck(t *testing.T) {
 	}
 }
 
-func TestProviderGetBuffering(t *testing.T) {
+func TestProviderGetBufferingReal(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		rootPath string
@@ -1726,43 +1724,18 @@ func TestProviderGetBuffering(t *testing.T) {
 			rootPath: "traefik/backends/foo",
 			kvPairs: filler("traefik",
 				backend("foo",
-					withPair(pathBackendBufferingEnabled, "true"),
 					withPair(pathBackendBufferingMaxResponseBodyBytes, "10485760"),
 					withPair(pathBackendBufferingMemResponseBodyBytes, "2097152"),
 					withPair(pathBackendBufferingMaxRequestBodyBytes, "10485760"),
 					withPair(pathBackendBufferingMemRequestBodyBytes, "2097152"),
 					withPair(pathBackendBufferingRetryExpression, "IsNetworkError() && Attempts() <= 2"))),
 			expected: &types.Buffering{
-				Enabled:              true,
 				MaxResponseBodyBytes: 10485760,
 				MemResponseBodyBytes: 2097152,
 				MaxRequestBodyBytes:  10485760,
 				MemRequestBodyBytes:  2097152,
 				RetryExpression:      "IsNetworkError() && Attempts() <= 2",
 			},
-		},
-		{
-			desc:     "when only enabled flag is defined",
-			rootPath: "traefik/backends/foo",
-			kvPairs: filler("traefik",
-				backend("foo",
-					withPair(pathBackendBufferingEnabled, "true"))),
-			expected: &types.Buffering{
-				Enabled:              true,
-				MaxResponseBodyBytes: 0,
-				MemResponseBodyBytes: 0,
-				MaxRequestBodyBytes:  0,
-				MemRequestBodyBytes:  0,
-				RetryExpression:      "",
-			},
-		},
-		{
-			desc:     "should return nil when disabled",
-			rootPath: "traefik/backends/foo",
-			kvPairs: filler("traefik",
-				backend("foo",
-					withPair(pathBackendBufferingEnabled, "false"))),
-			expected: nil,
 		},
 	}
 

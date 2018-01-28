@@ -1018,21 +1018,8 @@ func TestProviderGetBuffering(t *testing.T) {
 			expected: nil,
 		},
 		{
-			desc: "should return nil when enabled is set to false",
-			tags: []string{
-				label.TraefikBackendBufferingEnabled + "=false",
-				label.TraefikBackendBufferingMaxResponseBodyBytes + "=10485760",
-				label.TraefikBackendBufferingMemResponseBodyBytes + "=2097152",
-				label.TraefikBackendBufferingMaxRequestBodyBytes + "=10485760",
-				label.TraefikBackendBufferingMemRequestBodyBytes + "=2097152",
-				label.TraefikBackendBufferingRetryExpression + "=IsNetworkError() && Attempts() <= 2",
-			},
-			expected: nil,
-		},
-		{
 			desc: "should return a struct when has proper tags",
 			tags: []string{
-				label.TraefikBackendBufferingEnabled + "=true",
 				label.TraefikBackendBufferingMaxResponseBodyBytes + "=10485760",
 				label.TraefikBackendBufferingMemResponseBodyBytes + "=2097152",
 				label.TraefikBackendBufferingMaxRequestBodyBytes + "=10485760",
@@ -1040,7 +1027,6 @@ func TestProviderGetBuffering(t *testing.T) {
 				label.TraefikBackendBufferingRetryExpression + "=IsNetworkError() && Attempts() <= 2",
 			},
 			expected: &types.Buffering{
-				Enabled:              true,
 				MaxResponseBodyBytes: 10485760,
 				MemResponseBodyBytes: 2097152,
 				MaxRequestBodyBytes:  10485760,

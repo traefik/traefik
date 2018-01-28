@@ -108,7 +108,6 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						label.TraefikBackendLoadBalancerStickinessCookieName: "chocolate",
 						label.TraefikBackendMaxConnAmount:                    "666",
 						label.TraefikBackendMaxConnExtractorFunc:             "client.ip",
-						label.TraefikBackendBufferingEnabled:                 "true",
 						label.TraefikBackendBufferingMaxResponseBodyBytes:    "10485760",
 						label.TraefikBackendBufferingMemResponseBodyBytes:    "2097152",
 						label.TraefikBackendBufferingMaxRequestBodyBytes:     "10485760",
@@ -291,7 +290,6 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						Interval: "6",
 					},
 					Buffering: &types.Buffering{
-						Enabled:              true,
 						MaxResponseBodyBytes: 10485760,
 						MemResponseBodyBytes: 2097152,
 						MaxRequestBodyBytes:  10485760,
@@ -1449,25 +1447,10 @@ func TestDockerGetBuffering(t *testing.T) {
 			expected: nil,
 		},
 		{
-			desc: "should return nil when buffering is disabled",
-			container: containerJSON(
-				name("test1"),
-				labels(map[string]string{
-					label.TraefikBackendBufferingEnabled:              "false",
-					label.TraefikBackendBufferingMaxResponseBodyBytes: "10485760",
-					label.TraefikBackendBufferingMemResponseBodyBytes: "2097152",
-					label.TraefikBackendBufferingMaxRequestBodyBytes:  "10485760",
-					label.TraefikBackendBufferingMemRequestBodyBytes:  "2097152",
-					label.TraefikBackendBufferingRetryExpression:      "IsNetworkError() && Attempts() <= 2",
-				})),
-			expected: nil,
-		},
-		{
 			desc: "should return a struct when buffering labels are set",
 			container: containerJSON(
 				name("test1"),
 				labels(map[string]string{
-					label.TraefikBackendBufferingEnabled:              "true",
 					label.TraefikBackendBufferingMaxResponseBodyBytes: "10485760",
 					label.TraefikBackendBufferingMemResponseBodyBytes: "2097152",
 					label.TraefikBackendBufferingMaxRequestBodyBytes:  "10485760",
@@ -1475,7 +1458,6 @@ func TestDockerGetBuffering(t *testing.T) {
 					label.TraefikBackendBufferingRetryExpression:      "IsNetworkError() && Attempts() <= 2",
 				})),
 			expected: &types.Buffering{
-				Enabled:              true,
 				MaxResponseBodyBytes: 10485760,
 				MemResponseBodyBytes: 2097152,
 				MaxRequestBodyBytes:  10485760,

@@ -90,45 +90,44 @@ func circuitBreaker(exp string) func(*types.Backend) {
 	}
 }
 
-func maxRequestBodyBytes(value int64) func(*types.Backend) {
+func buffering(opts ...func(*types.Buffering)) func(*types.Backend) {
 	return func(b *types.Backend) {
 		if b.Buffering == nil {
-			b.Buffering = &types.Buffering{Enabled: true}
+			b.Buffering = &types.Buffering{}
 		}
-		b.Buffering.MaxRequestBodyBytes = value
+		for _, opt := range opts {
+			opt(b.Buffering)
+		}
 	}
 }
 
-func memRequestBodyBytes(value int64) func(*types.Backend) {
-	return func(b *types.Backend) {
-		if b.Buffering == nil {
-			b.Buffering = &types.Buffering{Enabled: true}
-		}
-		b.Buffering.MemRequestBodyBytes = value
+func maxRequestBodyBytes(value int64) func(*types.Buffering) {
+	return func(b *types.Buffering) {
+		b.MaxRequestBodyBytes = value
 	}
 }
 
-func maxResponseBodyBytes(value int64) func(*types.Backend) {
-	return func(b *types.Backend) {
-		if b.Buffering == nil {
-			b.Buffering = &types.Buffering{Enabled: true}
-		}
-		b.Buffering.MaxResponseBodyBytes = value
+func memRequestBodyBytes(value int64) func(*types.Buffering) {
+	return func(b *types.Buffering) {
+		b.MemRequestBodyBytes = value
 	}
 }
 
-func memResponseBodyBytes(value int64) func(*types.Backend) {
-	return func(b *types.Backend) {
-		b.Buffering.MemResponseBodyBytes = value
+func maxResponseBodyBytes(value int64) func(*types.Buffering) {
+	return func(b *types.Buffering) {
+		b.MaxResponseBodyBytes = value
 	}
 }
 
-func retrying(exp string) func(*types.Backend) {
-	return func(b *types.Backend) {
-		if b.Buffering == nil {
-			b.Buffering = &types.Buffering{Enabled: true}
-		}
-		b.Buffering.RetryExpression = exp
+func memResponseBodyBytes(value int64) func(*types.Buffering) {
+	return func(b *types.Buffering) {
+		b.MemResponseBodyBytes = value
+	}
+}
+
+func retrying(exp string) func(*types.Buffering) {
+	return func(b *types.Buffering) {
+		b.RetryExpression = exp
 	}
 }
 

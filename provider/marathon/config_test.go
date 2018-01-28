@@ -190,7 +190,6 @@ func TestBuildConfigurationNonAPIErrors(t *testing.T) {
 				withLabel(label.TraefikBackendLoadBalancerStickinessCookieName, "chocolate"),
 				withLabel(label.TraefikBackendMaxConnAmount, "666"),
 				withLabel(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
-				withLabel(label.TraefikBackendBufferingEnabled, "true"),
 				withLabel(label.TraefikBackendBufferingMaxResponseBodyBytes, "10485760"),
 				withLabel(label.TraefikBackendBufferingMemResponseBodyBytes, "2097152"),
 				withLabel(label.TraefikBackendBufferingMaxRequestBodyBytes, "10485760"),
@@ -374,7 +373,6 @@ func TestBuildConfigurationNonAPIErrors(t *testing.T) {
 						Interval: "6",
 					},
 					Buffering: &types.Buffering{
-						Enabled:              true,
 						MaxResponseBodyBytes: 10485760,
 						MemResponseBodyBytes: 2097152,
 						MaxRequestBodyBytes:  10485760,
@@ -508,7 +506,6 @@ func TestBuildConfigurationServicesNonAPIErrors(t *testing.T) {
 				withLabel(label.TraefikBackendLoadBalancerStickinessCookieName, "chocolate"),
 				withLabel(label.TraefikBackendMaxConnAmount, "666"),
 				withLabel(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
-				withLabel(label.TraefikBackendBufferingEnabled, "true"),
 				withLabel(label.TraefikBackendBufferingMaxResponseBodyBytes, "10485760"),
 				withLabel(label.TraefikBackendBufferingMemResponseBodyBytes, "2097152"),
 				withLabel(label.TraefikBackendBufferingMaxRequestBodyBytes, "10485760"),
@@ -695,7 +692,6 @@ func TestBuildConfigurationServicesNonAPIErrors(t *testing.T) {
 						Interval: "6",
 					},
 					Buffering: &types.Buffering{
-						Enabled:              true,
 						MaxResponseBodyBytes: 10485760,
 						MemResponseBodyBytes: 2097152,
 						MaxRequestBodyBytes:  10485760,
@@ -1575,22 +1571,9 @@ func TestGetBuffering(t *testing.T) {
 			expected:    nil,
 		},
 		{
-			desc: "should return nil when buffering is disabled",
-			application: application(
-				withLabel(label.TraefikBackendBufferingEnabled, "false"),
-				withLabel(label.TraefikBackendBufferingMaxResponseBodyBytes, "10485760"),
-				withLabel(label.TraefikBackendBufferingMemResponseBodyBytes, "2097152"),
-				withLabel(label.TraefikBackendBufferingMaxRequestBodyBytes, "10485760"),
-				withLabel(label.TraefikBackendBufferingMemRequestBodyBytes, "2097152"),
-				withLabel(label.TraefikBackendBufferingRetryExpression, "IsNetworkError() && Attempts() <= 2"),
-			),
-			expected: nil,
-		},
-		{
 			desc: "should return a struct when buffering labels are set",
 
 			application: application(
-				withLabel(label.TraefikBackendBufferingEnabled, "true"),
 				withLabel(label.TraefikBackendBufferingMaxResponseBodyBytes, "10485760"),
 				withLabel(label.TraefikBackendBufferingMemResponseBodyBytes, "2097152"),
 				withLabel(label.TraefikBackendBufferingMaxRequestBodyBytes, "10485760"),
@@ -1598,7 +1581,6 @@ func TestGetBuffering(t *testing.T) {
 				withLabel(label.TraefikBackendBufferingRetryExpression, "IsNetworkError() && Attempts() <= 2"),
 			),
 			expected: &types.Buffering{
-				Enabled:              true,
 				MaxResponseBodyBytes: 10485760,
 				MemResponseBodyBytes: 2097152,
 				MaxRequestBodyBytes:  10485760,
