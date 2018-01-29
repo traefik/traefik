@@ -65,7 +65,6 @@ type Server struct {
 	configurationValidatedChan    chan types.ConfigMessage
 	signals                       chan os.Signal
 	stopChan                      chan bool
-	providers                     []provider.Provider
 	currentConfigurations         safe.Safe
 	providerConfigUpdateMap       map[string]chan types.ConfigMessage
 	globalConfiguration           configuration.GlobalConfiguration
@@ -75,6 +74,7 @@ type Server struct {
 	leadership                    *cluster.Leadership
 	defaultForwardingRoundTripper http.RoundTripper
 	metricsRegistry               metrics.Registry
+	provider                      provider.Provider
 }
 
 type serverEntryPoints map[string]*serverEntryPoint
@@ -96,15 +96,15 @@ type serverRoute struct {
 }
 
 // NewServer returns an initialized Server.
-func NewServer(globalConfiguration configuration.GlobalConfiguration) *Server {
+func NewServer(globalConfiguration configuration.GlobalConfiguration, provider provider.Provider) *Server {
 	server := new(Server)
 
+	server.provider = provider
 	server.serverEntryPoints = make(map[string]*serverEntryPoint)
 	server.configurationChan = make(chan types.ConfigMessage, 100)
 	server.configurationValidatedChan = make(chan types.ConfigMessage, 100)
 	server.signals = make(chan os.Signal, 1)
 	server.stopChan = make(chan bool, 1)
-	server.providers = []provider.Provider{}
 	server.configureSignals()
 	currentConfigurations := make(types.Configurations)
 	server.currentConfigurations.Set(currentConfigurations)
@@ -207,8 +207,7 @@ func (s *Server) Start() {
 	s.routinesPool.Go(func(stop chan bool) {
 		s.listenConfigurations(stop)
 	})
-	s.configureProviders()
-	s.startProviders()
+	s.startProvider()
 	go s.listenSignals()
 }
 
@@ -541,73 +540,21 @@ func (s *Server) postLoadConfiguration() {
 	}
 }
 
-func (s *Server) configureProviders() {
-	// configure providers
-	if s.globalConfiguration.Docker != nil {
-		s.providers = append(s.providers, s.globalConfiguration.Docker)
-	}
-	if s.globalConfiguration.Marathon != nil {
-		s.providers = append(s.providers, s.globalConfiguration.Marathon)
-	}
-	if s.globalConfiguration.File != nil {
-		s.providers = append(s.providers, s.globalConfiguration.File)
-	}
-	if s.globalConfiguration.Rest != nil {
-		s.providers = append(s.providers, s.globalConfiguration.Rest)
-		s.globalConfiguration.Rest.CurrentConfigurations = &s.currentConfigurations
-	}
-	if s.globalConfiguration.Consul != nil {
-		s.providers = append(s.providers, s.globalConfiguration.Consul)
-	}
-	if s.globalConfiguration.ConsulCatalog != nil {
-		s.providers = append(s.providers, s.globalConfiguration.ConsulCatalog)
-	}
-	if s.globalConfiguration.Etcd != nil {
-		s.providers = append(s.providers, s.globalConfiguration.Etcd)
-	}
-	if s.globalConfiguration.Zookeeper != nil {
-		s.providers = append(s.providers, s.globalConfiguration.Zookeeper)
-	}
-	if s.globalConfiguration.Boltdb != nil {
-		s.providers = append(s.providers, s.globalConfiguration.Boltdb)
-	}
-	if s.globalConfiguration.Kubernetes != nil {
-		s.providers = append(s.providers, s.globalConfiguration.Kubernetes)
-	}
-	if s.globalConfiguration.Mesos != nil {
-		s.providers = append(s.providers, s.globalConfiguration.Mesos)
-	}
-	if s.globalConfiguration.Eureka != nil {
-		s.providers = append(s.providers, s.globalConfiguration.Eureka)
-	}
-	if s.globalConfiguration.ECS != nil {
-		s.providers = append(s.providers, s.globalConfiguration.ECS)
-	}
-	if s.globalConfiguration.Rancher != nil {
-		s.providers = append(s.providers, s.globalConfiguration.Rancher)
-	}
-	if s.globalConfiguration.DynamoDB != nil {
-		s.providers = append(s.providers, s.globalConfiguration.DynamoDB)
-	}
-	if s.globalConfiguration.ServiceFabric != nil {
-		s.providers = append(s.providers, s.globalConfiguration.ServiceFabric)
-	}
-}
-
-func (s *Server) startProviders() {
+func (s *Server) startProvider() {
 	// start providers
-	for _, p := range s.providers {
-		providerType := reflect.TypeOf(p)
-		jsonConf, _ := json.Marshal(p)
-		log.Infof("Starting provider %v %s", providerType, jsonConf)
-		currentProvider := p
-		safe.Go(func() {
-			err := currentProvider.Provide(s.configurationChan, s.routinesPool, s.globalConfiguration.Constraints)
-			if err != nil {
-				log.Errorf("Error starting provider %v: %s", providerType, err)
-			}
-		})
+	providerType := reflect.TypeOf(s.provider)
+	jsonConf, err := json.Marshal(s.provider)
+	if err != nil {
+		log.Debugf("Unable to marshal provider conf %v with error: %v", providerType, err)
 	}
+	log.Infof("Starting provider %v %s", providerType, jsonConf)
+	currentProvider := s.provider
+	safe.Go(func() {
+		err := currentProvider.Provide(s.configurationChan, s.routinesPool, s.globalConfiguration.Constraints)
+		if err != nil {
+			log.Errorf("Error starting provider %v: %s", providerType, err)
+		}
+	})
 }
 
 func createClientTLSConfig(entryPointName string, tlsOption *traefikTls.TLS) (*tls.Config, error) {

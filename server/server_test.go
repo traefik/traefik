@@ -141,7 +141,7 @@ func TestPrepareServerTimeouts(t *testing.T) {
 			}
 			router := middlewares.NewHandlerSwitcher(mux.NewRouter())
 
-			srv := NewServer(test.globalConfig)
+			srv := NewServer(test.globalConfig, nil)
 			httpServer, _, err := srv.prepareServer(entryPointName, entryPoint, router, nil, nil)
 			if err != nil {
 				t.Fatalf("Unexpected error when preparing srv: %s", err)
@@ -282,7 +282,7 @@ func setupListenProvider(throttleDuration time.Duration) (server *Server, stop c
 		ProvidersThrottleDuration: flaeg.Duration(throttleDuration),
 	}
 
-	server = NewServer(globalConfig)
+	server = NewServer(globalConfig, nil)
 	go server.listenProviders(stop)
 
 	return server, stop, invokeStopChan
@@ -475,7 +475,7 @@ func TestServerLoadConfigHealthCheckOptions(t *testing.T) {
 					},
 				}
 
-				srv := NewServer(globalConfig)
+				srv := NewServer(globalConfig, nil)
 				if _, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
 					t.Fatalf("got error: %s", err)
 				}
@@ -647,7 +647,7 @@ func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
 		},
 	}
 
-	srv := NewServer(globalConfig)
+	srv := NewServer(globalConfig, nil)
 	if _, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
 		t.Fatalf("got error: %s", err)
 	}
@@ -675,7 +675,7 @@ func TestServerLoadCertificateWithDefaultEntryPoint(t *testing.T) {
 		},
 	}
 
-	srv := NewServer(globalConfig)
+	srv := NewServer(globalConfig, nil)
 	if mapEntryPoints, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
 		t.Fatalf("got error: %s", err)
 	} else if mapEntryPoints["https"].certs.Get() == nil {
@@ -905,7 +905,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			}
 			dynamicConfigs := types.Configurations{"config": test.dynamicConfig(testServer.URL)}
 
-			srv := NewServer(globalConfig)
+			srv := NewServer(globalConfig, nil)
 			entryPoints, err := srv.loadConfig(dynamicConfigs, globalConfig)
 			if err != nil {
 				t.Fatalf("error loading config: %s", err)
