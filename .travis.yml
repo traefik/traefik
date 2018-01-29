@@ -24,9 +24,9 @@ before_deploy:
       sudo -E apt-get -yq update;
       sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install docker-ce=${DOCKER_VERSION}*;
       docker version;
+      make image;
       if [ "$TRAVIS_TAG" ]; then
         make -j${N_MAKE_JOBS} crossbinary-parallel;
-        make image-dirty;
         tar cfz dist/traefik-${VERSION}.src.tar.gz --exclude-vcs --exclude dist .;
       fi;
       curl -sI https://github.com/containous/structor/releases/latest | grep -Fi Location  | tr -d '\r' | sed "s/tag/download/g" | awk -F " " '{ print $2 "/structor_linux-amd64"}' | wget --output-document=$GOPATH/bin/structor -i -;
