@@ -142,7 +142,6 @@ entryPoint = "https"
 !!! note
     If `TLS-SNI-01` challenge is used, `acme.entryPoint` has to be reachable by Let's Encrypt through the port 443.
     If `HTTP-01` challenge is used, `acme.httpChallenge.entryPoint` has to be defined and reachable by Let's Encrypt through the port 80.
-    The redirection is fully compatible with the HTTP-01 challenge. You can use redirection with HTTP-01 challenge without problem.
     These are Let's Encrypt limitations as described on the [community forum](https://community.letsencrypt.org/t/support-for-ports-other-than-80-and-443/3419/72).
 
 ### `storage`
@@ -186,6 +185,9 @@ docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 ### `acme.httpChallenge`
 
 Use `HTTP-01` challenge to generate/renew ACME certificates.
+
+The redirection is fully compatible with the HTTP-01 challenge.
+You can use redirection with HTTP-01 challenge without problem.
 
 ```toml
 [acme]
