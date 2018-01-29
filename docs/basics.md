@@ -612,6 +612,7 @@ Those data help us prioritize our developments and focus on what's more importan
 ### What ?
 
 Once a day (the first call begins 10 minutes after the start of Træfik), we collect:
+
 - the Træfik version
 - a hash of the configuration
 - an **anonymous version** of the static configuration:
