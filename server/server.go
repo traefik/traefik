@@ -635,31 +635,27 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefikTls.TL
 	}
 
 	if s.globalConfiguration.ACME != nil {
-		if _, ok := s.serverEntryPoints[s.globalConfiguration.ACME.EntryPoint]; ok {
-			if entryPointName == s.globalConfiguration.ACME.EntryPoint {
-				checkOnDemandDomain := func(domain string) bool {
-					routeMatch := &mux.RouteMatch{}
-					router := router.GetHandler()
-					match := router.Match(&http.Request{URL: &url.URL{}, Host: domain}, routeMatch)
-					if match && routeMatch.Route != nil {
-						return true
-					}
-					return false
+		if entryPointName == s.globalConfiguration.ACME.EntryPoint {
+			checkOnDemandDomain := func(domain string) bool {
+				routeMatch := &mux.RouteMatch{}
+				router := router.GetHandler()
+				match := router.Match(&http.Request{URL: &url.URL{}, Host: domain}, routeMatch)
+				if match && routeMatch.Route != nil {
+					return true
 				}
-				if s.leadership == nil {
-					err := s.globalConfiguration.ACME.CreateLocalConfig(config, &s.serverEntryPoints[entryPointName].certs, checkOnDemandDomain)
-					if err != nil {
-						return nil, err
-					}
-				} else {
-					err := s.globalConfiguration.ACME.CreateClusterConfig(s.leadership, config, &s.serverEntryPoints[entryPointName].certs, checkOnDemandDomain)
-					if err != nil {
-						return nil, err
-					}
+				return false
+			}
+			if s.leadership == nil {
+				err := s.globalConfiguration.ACME.CreateLocalConfig(config, &s.serverEntryPoints[entryPointName].certs, checkOnDemandDomain)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				err := s.globalConfiguration.ACME.CreateClusterConfig(s.leadership, config, &s.serverEntryPoints[entryPointName].certs, checkOnDemandDomain)
+				if err != nil {
+					return nil, err
 				}
 			}
-		} else {
-			return nil, errors.New("Unknown entrypoint " + s.globalConfiguration.ACME.EntryPoint + " for ACME configuration")
 		}
 	} else {
 		config.GetCertificate = s.serverEntryPoints[entryPointName].getCertificate
@@ -887,23 +883,23 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 
 			log.Debugf("Creating frontend %s", frontendName)
 
+			var frontendEntryPoints []string
+			for _, entryPointName := range frontend.EntryPoints {
+				if _, ok := serverEntryPoints[entryPointName]; !ok {
+					log.Errorf("Undefined entrypoint '%s' for frontend %s", entryPointName, frontendName)
+				} else {
+					frontendEntryPoints = append(frontendEntryPoints, entryPointName)
+				}
+			}
+			frontend.EntryPoints = frontendEntryPoints
+
 			if len(frontend.EntryPoints) == 0 {
-				log.Errorf("No entrypoint defined for frontend %s, defaultEntryPoints:%s", frontendName, globalConfiguration.DefaultEntryPoints)
+				log.Errorf("No entrypoint defined for frontend %s", frontendName)
 				log.Errorf("Skipping frontend %s...", frontendName)
 				continue frontend
 			}
-			var failedEntrypoints int
 			for _, entryPointName := range frontend.EntryPoints {
 				log.Debugf("Wiring frontend %s to entryPoint %s", frontendName, entryPointName)
-				if _, ok := serverEntryPoints[entryPointName]; !ok {
-					log.Errorf("Undefined entrypoint '%s' for frontend %s", entryPointName, frontendName)
-					failedEntrypoints++
-					if failedEntrypoints == len(frontend.EntryPoints) {
-						log.Errorf("Skipping frontend %s...", frontendName)
-						continue frontend
-					}
-					continue
-				}
 
 				newServerRoute := &serverRoute{route: serverEntryPoints[entryPointName].httpRouter.GetHandler().NewRoute().Name(frontendName)}
 				for routeName, route := range frontend.Routes {

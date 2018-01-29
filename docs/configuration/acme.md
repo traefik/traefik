@@ -186,6 +186,9 @@ docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 
 Use `HTTP-01` challenge to generate/renew ACME certificates.
 
+The redirection is fully compatible with the HTTP-01 challenge.
+You can use redirection with HTTP-01 challenge without problem.
+
 ```toml
 [acme]
 # ...

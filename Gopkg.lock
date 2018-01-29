@@ -89,7 +89,7 @@
   branch = "master"
   name = "github.com/NYTimes/gziphandler"
   packages = ["."]
-  revision = "47ca22a0aeea4c9ceddfb935d818d636d934c312"
+  revision = "289a3b81f5aedc99f8d6eb0f67827c142f1310d8"
 
 [[projects]]
   name = "github.com/Nvveen/Gotty"
@@ -576,7 +576,6 @@
     "metrics/internal/lv",
     "metrics/internal/ratemap",
     "metrics/multi",
-    "metrics/prometheus",
     "metrics/statsd",
     "util/conn"
   ]
@@ -1512,6 +1511,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0d3d2cd01e06cfcc86cbd261395d59187d4d27d88398bd7aeb1298676becd3e7"
+  inputs-digest = "b9fee5807e09b19baf3763abc285ea122d64d60dba42aaf47eaf9e96774b46bf"
   solver-name = "gps-cdcl"
   solver-version = 1

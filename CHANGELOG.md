@@ -1,5 +1,18 @@
 # Change Log
 
+## [v1.5.1](https://github.com/containous/traefik/tree/v1.5.1) (2018-01-29)
+[All Commits](https://github.com/containous/traefik/compare/v1.5.0...v1.5.1)
+
+**Bug fixes:**
+- **[acme]** Handle undefined entrypoint on ACME config and frontend config ([#2756](https://github.com/containous/traefik/pull/2756) by [Juliens](https://github.com/Juliens))
+- **[k8s]** Fix the k8s redirection template. ([#2748](https://github.com/containous/traefik/pull/2748) by [ldez](https://github.com/ldez))
+- **[middleware]** Change gzipwriter receiver to implement CloseNotifier ([#2766](https://github.com/containous/traefik/pull/2766) by [Juliens](https://github.com/Juliens))
+- **[tls]** Fix domain names in dynamic TLS configuration ([#2768](https://github.com/containous/traefik/pull/2768) by [nmengin](https://github.com/nmengin))
+
+**Documentation:**
+- **[acme]** Add note on redirect for ACME http challenge ([#2767](https://github.com/containous/traefik/pull/2767) by [Juliens](https://github.com/Juliens))
+- **[file]** Enhance file provider documentation. ([#2777](https://github.com/containous/traefik/pull/2777) by [ldez](https://github.com/ldez))
+
 ## [v1.5.0](https://github.com/containous/traefik/tree/v1.5.0) (2018-01-23)
 [All Commits](https://github.com/containous/traefik/compare/v1.4.0-rc1...v1.5.0)
 

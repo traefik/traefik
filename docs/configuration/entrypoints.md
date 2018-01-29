@@ -1,5 +1,72 @@
 # Entry Points Definition
 
+## Reference
+
+```toml
+[entryPoints]
+  [entryPoints.http]
+    address = ":80"
+    whitelistSourceRange = ["10.42.0.0/16", "152.89.1.33/32", "afed:be44::/16"]
+    compress = true
+
+    [entryPoints.http.tls]
+      minVersion = "VersionTLS12"
+      cipherSuites = ["TLS_RSA_WITH_AES_256_GCM_SHA384"]
+      [[entryPoints.http.tls.certificates]]
+        certFile = "path/to/my.cert"
+        keyFile = "path/to/my.key"
+      [[entryPoints.http.tls.certificates]]
+        certFile = "path/to/other.cert"
+        keyFile = "path/to/other.key"
+      # ...
+      [entryPoints.http.tls.clientCA]
+        files = ["path/to/ca1.crt", "path/to/ca2.crt"]
+        optional = false
+
+    [entryPoints.http.redirect]
+      entryPoint = "https"
+      regex = "^http://localhost/(.*)"
+      replacement = "http://mydomain/$1"
+      permanent = true
+
+    [entryPoints.http.auth]
+      headerField = "X-WebAuth-User"
+      [entryPoints.http.auth.basic]
+        users = [
+          "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+          "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+        ]
+        usersFile = "/path/to/.htpasswd"
+      [entryPoints.http.auth.digest]
+        users = [
+          "test:traefik:a2688e031edb4be6a3797f3882655c05",
+          "test2:traefik:518845800f9e2bfb1f1f740ec24f074e",
+        ]
+        usersFile = "/path/to/.htdigest"
+      [entryPoints.http.auth.forward]
+        address = "https://authserver.com/auth"
+        trustForwardHeader = true
+        [entryPoints.http.auth.forward.tls]
+          ca =  [ "path/to/local.crt"]
+          caOptional = true
+          cert = "path/to/foo.cert"
+          key = "path/to/foo.key"
+          insecureSkipVerify = true
+
+    [entryPoints.http.proxyProtocol]
+      insecure = true
+      trustedIPs = ["10.10.10.1", "10.10.10.2"]
+
+    [entryPoints.http.forwardedHeaders]
+      trustedIPs = ["10.10.10.1", "10.10.10.2"]
+
+  [entryPoints.https]
+    # ...
+```
+
+
+## Basic
+
 ```toml
 # Entrypoints definition
 #
@@ -71,7 +138,7 @@ Define an entrypoint with SNI support.
 
 !!! note
     If an empty TLS configuration is done, default self-signed certificates are generated.
-    
+
 
 ### Dynamic Certificates
 
@@ -162,7 +229,7 @@ Otherwise, the response from the auth server is returned.
     # To enable forward auth on an entrypoint
     [entryPoints.http.auth.forward]
     address = "https://authserver.com/auth"
-    
+
     # Trust existing X-Forwarded-* headers.
     # Useful with another reverse proxy in front of Traefik.
     #
@@ -170,7 +237,7 @@ Otherwise, the response from the auth server is returned.
     # Default: false
     #
     trustForwardHeader = true
-    
+
     # Enable forward auth TLS connection.
     #
     # Optional
@@ -234,7 +301,7 @@ Only IPs in `trustedIPs` will lead to remote client address replacement: you sho
 
 !!! danger
     When queuing Træfik behind another load-balancer, be sure to carefully configure Proxy Protocol on both sides.
-    Otherwise, it could introduce a security risk in your system by forging requests. 
+    Otherwise, it could introduce a security risk in your system by forging requests.
 
 ```toml
 [entryPoints]

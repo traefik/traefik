@@ -150,7 +150,12 @@ func (c *Certificate) AppendCertificates(certs map[string]*DomainsCertificates, 
 	certKey := parsedCert.Subject.CommonName
 	if parsedCert.DNSNames != nil {
 		sort.Strings(parsedCert.DNSNames)
-		certKey += fmt.Sprintf("%s,%s", parsedCert.Subject.CommonName, strings.Join(parsedCert.DNSNames, ","))
+		for _, dnsName := range parsedCert.DNSNames {
+			if dnsName != parsedCert.Subject.CommonName {
+				certKey += fmt.Sprintf(",%s", dnsName)
+			}
+		}
+
 	}
 
 	certExists := false
