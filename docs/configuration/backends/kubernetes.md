@@ -53,7 +53,7 @@ See also [Kubernetes user guide](/user-guide/kubernetes).
 # Value of `kubernetes.io/ingress.class` annotation that identifies Ingress objects to be processed.
 # Note that Ingress objects with an empty or nonexistent `kubernetes.io/ingress.class` value
 # will also be processed.
-# Note that only annotations with the prefix `traefik` will be processed.
+# Note that if `kubernetes.io/ingress.class` annotation  is not empty, only annotations with the prefix `traefik` will be processed.
 #
 # Optional
 # Default: empty (process all Ingresses)

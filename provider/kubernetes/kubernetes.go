@@ -142,10 +142,6 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	return nil
 }
 
-func (p *Provider) shouldProcessIngress(ingressClass string) bool {
-	return ingressClass == "" || ingressClass == p.IngressClass
-}
-
 func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error) {
 	ingresses := k8sClient.GetIngresses()
 
@@ -460,6 +456,10 @@ func equalPorts(servicePort v1.ServicePort, ingressPort intstr.IntOrString) bool
 		return true
 	}
 	return false
+}
+
+func (p *Provider) shouldProcessIngress(ingressClass string) bool {
+	return ingressClass == "" || ingressClass == p.IngressClass
 }
 
 func getFrontendRedirect(i *v1beta1.Ingress) *types.Redirect {
