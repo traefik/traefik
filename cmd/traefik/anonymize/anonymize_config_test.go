@@ -384,7 +384,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 		DisablePassHostHeaders: true,
 		Namespaces:             kubernetes.Namespaces{"k8s Namespaces 1", "k8s Namespaces 2", "k8s Namespaces 3"},
 		LabelSelector:          "k8s LabelSelector",
-		IngressClass:           "traefik",
+		IngressClass:           "",
 	}
 	config.Mesos = &mesos.Provider{
 		BaseProvider: provider.BaseProvider{
