@@ -139,6 +139,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
       entryPoint = "{{ $redirect.EntryPoint }}"
       regex = "{{ $redirect.Regex }}"
       replacement = "{{ $redirect.Replacement }}"
+      permanent = {{ $redirect.Permanent }}
     {{end}}
 
     {{if hasErrorPages $service.Attributes }}
@@ -343,6 +344,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
       entryPoint = "{{ $redirect.EntryPoint }}"
       regex = "{{ $redirect.Regex }}"
       replacement = "{{ $redirect.Replacement }}"
+      permanent = {{ $redirect.Permanent }}
     {{end}}
 
     {{ $errorPages := getServiceErrorPages $container $serviceName }}
@@ -458,6 +460,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
       entryPoint = "{{ $redirect.EntryPoint }}"
       regex = "{{ $redirect.Regex }}"
       replacement = "{{ $redirect.Replacement }}"
+      permanent = {{ $redirect.Permanent }}
     {{end}}
 
     {{ $errorPages := getErrorPages $container }}
@@ -648,6 +651,7 @@ var _templatesEcsTmpl = []byte(`[backends]
       entryPoint = "{{ $redirect.EntryPoint }}"
       regex = "{{ $redirect.Regex }}"
       replacement = "{{ $redirect.Replacement }}"
+      permanent = {{ $redirect.Permanent }}
     {{end}}
 
     {{ $errorPages := getErrorPages $instance }}
@@ -1040,6 +1044,7 @@ var _templatesKvTmpl = []byte(`[backends]
       entryPoint = "{{ $redirect.EntryPoint }}"
       regex = "{{ $redirect.Regex }}"
       replacement = "{{ $redirect.Replacement }}"
+      permanent = {{ $redirect.Permanent }}
     {{end}}
 
     {{ $errorPages := getErrorPages $frontend }}
@@ -1249,6 +1254,7 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
       entryPoint = "{{ $redirect.EntryPoint }}"
       regex = "{{ $redirect.Regex }}"
       replacement = "{{ $redirect.Replacement }}"
+      permanent = {{ $redirect.Permanent }}
     {{end}}
 
     {{ $errorPages := getErrorPages $app $serviceName }}
@@ -1440,6 +1446,7 @@ var _templatesMesosTmpl = []byte(`[backends]
       entryPoint = "{{ $redirect.EntryPoint }}"
       regex = "{{ $redirect.Regex }}"
       replacement = "{{ $redirect.Replacement }}"
+      permanent = {{ $redirect.Permanent }}
     {{end}}
 
     {{ $errorPages := getErrorPages $app }}
@@ -1652,6 +1659,7 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
       entryPoint = "{{ $redirect.EntryPoint }}"
       regex = "{{ $redirect.Regex }}"
       replacement = "{{ $redirect.Replacement }}"
+      permanent = {{ $redirect.Permanent }}
     {{end}}
 
     {{ $errorPages := getErrorPages $service }}

@@ -21,6 +21,7 @@ const (
 	annotationKubernetesSessionCookieName        = "ingress.kubernetes.io/session-cookie-name"
 	annotationKubernetesRuleType                 = "ingress.kubernetes.io/rule-type"
 	annotationKubernetesRedirectEntryPoint       = "ingress.kubernetes.io/redirect-entry-point"
+	annotationKubernetesRedirectPermanent        = "ingress.kubernetes.io/redirect-permanent"
 	annotationKubernetesRedirectRegex            = "ingress.kubernetes.io/redirect-regex"
 	annotationKubernetesRedirectReplacement      = "ingress.kubernetes.io/redirect-replacement"
 	annotationKubernetesMaxConnAmount            = "ingress.kubernetes.io/max-conn-amount"

@@ -86,6 +86,7 @@ func TestDockerServiceBuildConfiguration(t *testing.T) {
 						label.Prefix + "service." + label.SuffixFrontendRedirectEntryPoint:   "https",
 						label.Prefix + "service." + label.SuffixFrontendRedirectRegex:        "nope",
 						label.Prefix + "service." + label.SuffixFrontendRedirectReplacement:  "nope",
+						label.Prefix + "service." + label.SuffixFrontendRedirectPermanent:    "true",
 						label.Prefix + "service." + label.SuffixFrontendWhitelistSourceRange: "10.10.10.10",
 
 						label.Prefix + "service." + label.SuffixFrontendRequestHeaders:                 "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
@@ -218,6 +219,7 @@ func TestDockerServiceBuildConfiguration(t *testing.T) {
 						EntryPoint:  "https",
 						Regex:       "",
 						Replacement: "",
+						Permanent:   true,
 					},
 
 					Routes: map[string]types.Route{

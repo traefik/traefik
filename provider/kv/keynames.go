@@ -33,6 +33,7 @@ const (
 	pathFrontendRedirectEntryPoint     = "/redirect/entrypoint"
 	pathFrontendRedirectRegex          = "/redirect/regex"
 	pathFrontendRedirectReplacement    = "/redirect/replacement"
+	pathFrontendRedirectPermanent      = "/redirect/permanent"
 	pathFrontendErrorPages             = "/errors/"
 	pathFrontendErrorPagesBackend      = "/backend"
 	pathFrontendErrorPagesQuery        = "/query"

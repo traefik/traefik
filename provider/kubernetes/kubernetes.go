@@ -456,10 +456,13 @@ func shouldProcessIngress(ingressClass string) bool {
 }
 
 func getFrontendRedirect(i *v1beta1.Ingress) *types.Redirect {
+	permanent := getBoolValue(i.Annotations, annotationKubernetesRedirectPermanent, false)
+
 	redirectEntryPoint := getStringValue(i.Annotations, annotationKubernetesRedirectEntryPoint, "")
 	if len(redirectEntryPoint) > 0 {
 		return &types.Redirect{
 			EntryPoint: redirectEntryPoint,
+			Permanent:  permanent,
 		}
 	}
 
@@ -469,6 +472,7 @@ func getFrontendRedirect(i *v1beta1.Ingress) *types.Redirect {
 		return &types.Redirect{
 			Regex:       redirectRegex,
 			Replacement: redirectReplacement,
+			Permanent:   permanent,
 		}
 	}
 

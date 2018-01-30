@@ -99,6 +99,7 @@
       entryPoint = "{{ $redirect.EntryPoint }}"
       regex = "{{ $redirect.Regex }}"
       replacement = "{{ $redirect.Replacement }}"
+      permanent = {{ $redirect.Permanent }}
     {{end}}
 
     {{ $errorPages := getServiceErrorPages $container $serviceName }}
@@ -214,6 +215,7 @@
       entryPoint = "{{ $redirect.EntryPoint }}"
       regex = "{{ $redirect.Regex }}"
       replacement = "{{ $redirect.Replacement }}"
+      permanent = {{ $redirect.Permanent }}
     {{end}}
 
     {{ $errorPages := getErrorPages $container }}

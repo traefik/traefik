@@ -119,6 +119,7 @@ Træfik can be configured with a file.
       entryPoint = "https"
       regex = "^http://localhost/(.*)"
       replacement = "http://mydomain/$1"
+      permanent = true
 
   [frontends.frontend2]
     # ...

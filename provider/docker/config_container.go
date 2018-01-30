@@ -229,9 +229,12 @@ func getBuffering(container dockerData) *types.Buffering {
 }
 
 func getRedirect(container dockerData) *types.Redirect {
+	permanent := label.GetBoolValue(container.Labels, label.TraefikFrontendRedirectPermanent, false)
+
 	if label.Has(container.Labels, label.TraefikFrontendRedirectEntryPoint) {
 		return &types.Redirect{
 			EntryPoint: label.GetStringValue(container.Labels, label.TraefikFrontendRedirectEntryPoint, ""),
+			Permanent:  permanent,
 		}
 	}
 
@@ -240,6 +243,7 @@ func getRedirect(container dockerData) *types.Redirect {
 		return &types.Redirect{
 			Regex:       label.GetStringValue(container.Labels, label.TraefikFrontendRedirectRegex, ""),
 			Replacement: label.GetStringValue(container.Labels, label.TraefikFrontendRedirectReplacement, ""),
+			Permanent:   permanent,
 		}
 	}
 

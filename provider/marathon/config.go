@@ -501,16 +501,21 @@ func (p *Provider) getServers(application marathon.Application, serviceName stri
 func getRedirect(application marathon.Application, serviceName string) *types.Redirect {
 	labels := getLabels(application, serviceName)
 
+	permanent := label.GetBoolValue(labels, getLabelName(serviceName, label.SuffixFrontendRedirectPermanent), false)
+
 	if label.Has(labels, getLabelName(serviceName, label.SuffixFrontendRedirectEntryPoint)) {
 		return &types.Redirect{
 			EntryPoint: label.GetStringValue(labels, getLabelName(serviceName, label.SuffixFrontendRedirectEntryPoint), ""),
+			Permanent:  permanent,
 		}
 	}
+
 	if label.Has(labels, getLabelName(serviceName, label.SuffixFrontendRedirectRegex)) &&
 		label.Has(labels, getLabelName(serviceName, label.SuffixFrontendRedirectReplacement)) {
 		return &types.Redirect{
 			Regex:       label.GetStringValue(labels, getLabelName(serviceName, label.SuffixFrontendRedirectRegex), ""),
 			Replacement: label.GetStringValue(labels, getLabelName(serviceName, label.SuffixFrontendRedirectReplacement), ""),
+			Permanent:   permanent,
 		}
 	}
 

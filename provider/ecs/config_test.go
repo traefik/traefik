@@ -150,6 +150,7 @@ func TestBuildConfiguration(t *testing.T) {
 							label.TraefikFrontendRedirectEntryPoint:   aws.String("https"),
 							label.TraefikFrontendRedirectRegex:        aws.String("nope"),
 							label.TraefikFrontendRedirectReplacement:  aws.String("nope"),
+							label.TraefikFrontendRedirectPermanent:    aws.String("true"),
 							label.TraefikFrontendRule:                 aws.String("Host:traefik.io"),
 							label.TraefikFrontendWhitelistSourceRange: aws.String("10.10.10.10"),
 
@@ -333,6 +334,7 @@ func TestBuildConfiguration(t *testing.T) {
 							EntryPoint:  "https",
 							Regex:       "",
 							Replacement: "",
+							Permanent:   true,
 						},
 					},
 				},
@@ -1153,6 +1155,20 @@ func TestGetRedirect(t *testing.T) {
 			},
 		},
 		{
+			desc: "should return a struct when entry point redirect label (permanent)",
+			instance: ecsInstance{
+				containerDefinition: &ecs.ContainerDefinition{
+					DockerLabels: map[string]*string{
+						label.TraefikFrontendRedirectEntryPoint: aws.String("https"),
+						label.TraefikFrontendRedirectPermanent:  aws.String("true"),
+					}},
+			},
+			expected: &types.Redirect{
+				EntryPoint: "https",
+				Permanent:  true,
+			},
+		},
+		{
 			desc: "should return a struct when regex redirect labels",
 			instance: ecsInstance{
 				containerDefinition: &ecs.ContainerDefinition{
@@ -1164,6 +1180,22 @@ func TestGetRedirect(t *testing.T) {
 			expected: &types.Redirect{
 				Regex:       "(.*)",
 				Replacement: "$1",
+			},
+		},
+		{
+			desc: "should return a struct when regex redirect tags (permanent)",
+			instance: ecsInstance{
+				containerDefinition: &ecs.ContainerDefinition{
+					DockerLabels: map[string]*string{
+						label.TraefikFrontendRedirectRegex:       aws.String("(.*)"),
+						label.TraefikFrontendRedirectReplacement: aws.String("$1"),
+						label.TraefikFrontendRedirectPermanent:   aws.String("true"),
+					}},
+			},
+			expected: &types.Redirect{
+				Regex:       "(.*)",
+				Replacement: "$1",
+				Permanent:   true,
 			},
 		},
 	}

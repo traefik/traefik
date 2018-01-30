@@ -31,6 +31,7 @@ import (
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/middlewares/accesslog"
 	mauth "github.com/containous/traefik/middlewares/auth"
+	"github.com/containous/traefik/middlewares/redirect"
 	"github.com/containous/traefik/middlewares/tracing"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
@@ -49,10 +50,6 @@ import (
 	"github.com/vulcand/oxy/roundrobin"
 	"github.com/vulcand/oxy/utils"
 	"golang.org/x/net/http2"
-)
-
-const (
-	defaultRedirectRegex = `^(?:https?:\/\/)?([\w\._-]+)(?::\d+)?(.*)$`
 )
 
 var (
@@ -1117,9 +1114,10 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						rewrite, err := s.buildRedirectHandler(entryPointName, frontend.Redirect)
 						if err != nil {
 							log.Errorf("Error creating Frontend Redirect: %v", err)
+						} else {
+							n.Use(s.wrapNegroniHandlerWithAccessLog(rewrite, fmt.Sprintf("frontend redirect for %s", frontendName)))
+							log.Debugf("Frontend %s redirect created", frontendName)
 						}
-						n.Use(s.wrapNegroniHandlerWithAccessLog(rewrite, fmt.Sprintf("frontend redirect for %s", frontendName)))
-						log.Debugf("Frontend %s redirect created", frontendName)
 					}
 
 					if len(frontend.BasicAuth) > 0 {
@@ -1282,57 +1280,25 @@ func (s *Server) wireFrontendBackend(serverRoute *serverRoute, handler http.Hand
 	serverRoute.route.Handler(handler)
 }
 
-func (s *Server) buildRedirectHandler(srcEntryPointName string, redirect *types.Redirect) (*middlewares.Rewrite, error) {
+func (s *Server) buildRedirectHandler(srcEntryPointName string, opt *types.Redirect) (negroni.Handler, error) {
 	// entry point redirect
-	if len(redirect.EntryPoint) > 0 {
-		return s.buildEntryPointRedirect(srcEntryPointName, redirect.EntryPoint)
+	if len(opt.EntryPoint) > 0 {
+		entryPoint := s.globalConfiguration.EntryPoints[opt.EntryPoint]
+		if entryPoint == nil {
+			return nil, fmt.Errorf("unknown target entrypoint %q", srcEntryPointName)
+		}
+		log.Debugf("Creating entry point redirect %s -> %s", srcEntryPointName, opt.EntryPoint)
+		return redirect.NewEntryPointHandler(entryPoint, opt.Permanent)
 	}
 
 	// regex redirect
-	rewrite, err := middlewares.NewRewrite(redirect.Regex, redirect.Replacement, true)
+	redirection, err := redirect.NewRegexHandler(opt.Regex, opt.Replacement, opt.Permanent)
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf("Creating entryPoint redirect %s -> %s -> %s", srcEntryPointName, redirect.Regex, redirect.Replacement)
+	log.Debugf("Creating regex redirect %s -> %s -> %s", srcEntryPointName, opt.Regex, opt.Replacement)
 
-	return rewrite, nil
-}
-
-func (s *Server) buildEntryPointRedirect(srcEntryPointName string, redirectEntryPoint string) (*middlewares.Rewrite, error) {
-	regex, replacement, err := s.buildRedirect(redirectEntryPoint)
-	if err != nil {
-		return nil, err
-	}
-
-	rewrite, err := middlewares.NewRewrite(regex, replacement, true)
-	if err != nil {
-		// Impossible case because error is always nil
-		return nil, err
-	}
-	log.Debugf("Creating entryPoint redirect %s -> %s : %s -> %s", srcEntryPointName, redirectEntryPoint, regex, replacement)
-
-	return rewrite, nil
-}
-
-func (s *Server) buildRedirect(entryPointName string) (string, string, error) {
-	entryPoint := s.globalConfiguration.EntryPoints[entryPointName]
-	if entryPoint == nil {
-		return "", "", fmt.Errorf("unknown target entrypoint %q", entryPointName)
-	}
-
-	exp := regexp.MustCompile(`(:\d+)`)
-	match := exp.FindStringSubmatch(entryPoint.Address)
-	if len(match) == 0 {
-		return "", "", fmt.Errorf("bad Address format %q", entryPoint.Address)
-	}
-
-	var protocol = "http"
-	if s.globalConfiguration.EntryPoints[entryPointName].TLS != nil {
-		protocol = "https"
-	}
-
-	replacement := protocol + "://$1" + match[0] + "$2"
-	return defaultRedirectRegex, replacement, nil
+	return redirection, nil
 }
 
 func (s *Server) buildDefaultHTTPRouter() *mux.Router {
@@ -1440,7 +1406,7 @@ func registerMetricClients(metricsConfig *types.Metrics) metrics.Registry {
 		return metrics.NewVoidRegistry()
 	}
 
-	registries := []metrics.Registry{}
+	var registries []metrics.Registry
 	if metricsConfig.Prometheus != nil {
 		registries = append(registries, metrics.RegisterPrometheus(metricsConfig.Prometheus))
 		log.Debug("Configured Prometheus metrics")
