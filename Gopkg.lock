@@ -223,12 +223,6 @@
   revision = "3a0bb77429bd3a61596f5e8a3172445844342120"
 
 [[projects]]
-  name = "github.com/codegangsta/cli"
-  packages = ["."]
-  revision = "cfb38830724cc34fedffe9a2a29fb54fa9169cd1"
-  version = "v1.20.0"
-
-[[projects]]
   branch = "master"
   name = "github.com/containerd/continuity"
   packages = ["pathdriver"]
@@ -1160,24 +1154,6 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/vulcand/route"
-  packages = ["."]
-  revision = "61904570391bdf22252f8e376b49a57593d9124c"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/vulcand/vulcand"
-  packages = [
-    "conntracker",
-    "plugin",
-    "plugin/cacheprovider",
-    "plugin/rewrite",
-    "router"
-  ]
-  revision = "3ab68471860269ba2afdd1a97e2d058087631975"
-
-[[projects]]
-  branch = "master"
   name = "github.com/xeipuuv/gojsonpointer"
   packages = ["."]
   revision = "6fe8760cad3569743d51ddbb243b26f8456742dc"
@@ -1228,8 +1204,6 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = [
-    "acme",
-    "acme/autocert",
     "bcrypt",
     "blowfish",
     "ocsp",
@@ -1518,6 +1492,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b2cb3354504a6350e3022513b39206a3ece7c2f1a509bcef907c45422a8afb31"
+  inputs-digest = "daede4415dbd8614087d38fc4d8cba45d679bbb7185bfca805091ef7b295341f"
   solver-name = "gps-cdcl"
   solver-version = 1
