@@ -27,7 +27,6 @@
       entryPoint = "https"
       regex = "^http://localhost/(.*)"
       replacement = "http://mydomain/$1"
-      permanent = true
 
     [entryPoints.http.auth]
       headerField = "X-WebAuth-User"
