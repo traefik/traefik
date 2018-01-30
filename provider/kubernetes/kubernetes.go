@@ -226,8 +226,14 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					}
 				}
 
-				if rule := getRuleForPath(pa, i); rule != "" {
-					templateObjects.Frontends[baseName].Routes[pa.Path] = types.Route{
+				rule, err := getRuleForPath(pa, i)
+				if err != nil {
+					log.Errorf("fail to get rule from ingress path: %s", err)
+					delete(templateObjects.Frontends, r.Host+pa.Path)
+					continue
+				}
+				if rule != "" {
+					templateObjects.Frontends[r.Host+pa.Path].Routes[pa.Path] = types.Route{
 						Rule: rule,
 					}
 				}
@@ -313,19 +319,31 @@ func (p *Provider) loadConfig(templateObjects types.Configuration) *types.Config
 	return configuration
 }
 
-func getRuleForPath(pa extensionsv1beta1.HTTPIngressPath, i *extensionsv1beta1.Ingress) string {
+func getRuleForPath(pa extensionsv1beta1.HTTPIngressPath, i *extensionsv1beta1.Ingress) (string, error) {
 	if len(pa.Path) == 0 {
-		return ""
+		return "", nil
 	}
 
 	ruleType := getStringValue(i.Annotations, annotationKubernetesRuleType, ruleTypePathPrefix)
 	rules := []string{ruleType + ":" + pa.Path}
 
+	var pathReplaceAnnotation string
+
 	if rewriteTarget := getStringValue(i.Annotations, annotationKubernetesRewriteTarget, ""); rewriteTarget != "" {
+		if pathReplaceAnnotation != "" {
+			return "", fmt.Errorf("rewrite-target must not be used together with annotation %q", pathReplaceAnnotation)
+		}
 		rules = append(rules, ruleTypeReplacePath+":"+rewriteTarget)
+		pathReplaceAnnotation = annotationKubernetesRewriteTarget
 	}
 
-	return strings.Join(rules, ";")
+	if rootPath := label.GetStringValue(i.Annotations, annotationKubernetesAppRoot, ""); rootPath != "" && pa.Path == "/" {
+		if pathReplaceAnnotation != "" {
+			return "", fmt.Errorf("app-root must not be used together with annotation %q", pathReplaceAnnotation)
+		}
+		rules = append(rules, ruleTypeReplacePath+":"+rootPath)
+	}
+	return strings.Join(rules, ";"), nil
 }
 
 func getRuleForHost(host string) string {

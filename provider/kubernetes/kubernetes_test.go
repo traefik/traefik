@@ -739,6 +739,19 @@ rateset:
 		),
 		buildIngress(
 			iNamespace("testing"),
+			iAnnotation(annotationKubernetesAppRoot, "/root"),
+			iRules(
+				iRule(
+					iHost("root"),
+					iPaths(
+						onePath(iPath("/"), iBackend("service1", intstr.FromInt(80))),
+						onePath(iPath("/root1"), iBackend("service1", intstr.FromInt(80))),
+					),
+				),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
 			iAnnotation(annotationKubernetesIngressClass, "traefik"),
 			iAnnotation(annotationKubernetesCustomRequestHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
 			iAnnotation(annotationKubernetesCustomResponseHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
@@ -880,6 +893,16 @@ rateset:
 					server("http://example.com", weight(1))),
 				lbMethod("wrr"),
 			),
+			backend("root/",
+				servers(
+					server("http://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
+			backend("root/root1",
+				servers(
+					server("http://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
 		),
 		frontends(
 			frontend("foo/bar",
@@ -993,6 +1016,20 @@ rateset:
 				routes(
 					route("/customheaders", "PathPrefix:/customheaders"),
 					route("custom-headers", "Host:custom-headers")),
+			),
+			frontend("root/",
+				passHostHeader(),
+				routes(
+					route("/", "PathPrefix:/;ReplacePath:/root"),
+					route("root", "Host:root"),
+				),
+			),
+			frontend("root/root1",
+				passHostHeader(),
+				routes(
+					route("/root1", "PathPrefix:/root1"),
+					route("root", "Host:root"),
+				),
 			),
 		),
 	)
