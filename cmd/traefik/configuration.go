@@ -132,7 +132,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultKubernetes.Watch = true
 	defaultKubernetes.Endpoint = ""
 	defaultKubernetes.LabelSelector = ""
-	defaultKubernetes.IngressClass = "traefik"
+	defaultKubernetes.IngressClass = ""
 	defaultKubernetes.Constraints = types.Constraints{}
 
 	// default Mesos
