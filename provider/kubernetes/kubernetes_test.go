@@ -806,7 +806,7 @@ rateset:
 		secrets:   secrets,
 		watchChan: watchChan,
 	}
-	provider := Provider{}
+	provider := Provider{IngressClass: "traefik"}
 
 	actual, err := provider.loadIngresses(client)
 	require.NoError(t, err, "error loading ingresses")
