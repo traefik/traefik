@@ -67,6 +67,11 @@ Additional settings can be defined using Consul Catalog tags.
 | `<prefix>.port=80`                                          | Register this port. Useful when the container exposes multiples ports.                                                                                                                                                 |
 | `<prefix>.protocol=https`                                   | Override the default `http` protocol.                                                                                                                                                                                  |
 | `<prefix>.weight=10`                                        | Assign this weight to the container.                                                                                                                                                                                   |
+| `traefik.backend.buffering.maxRequestBodyBytes=0`           | See [buffering](/configuration/commons/#buffering) section.                                                                                                                                                            |
+| `traefik.backend.buffering.maxResponseBodyBytes=0`          | See [buffering](/configuration/commons/#buffering) section.                                                                                                                                                            |
+| `traefik.backend.buffering.memRequestBodyBytes=0`           | See [buffering](/configuration/commons/#buffering) section.                                                                                                                                                            |
+| `traefik.backend.buffering.memResponseBodyBytes=0`          | See [buffering](/configuration/commons/#buffering) section.                                                                                                                                                            |
+| `traefik.backend.buffering.retryExpression=EXPR`            | See [buffering](/configuration/commons/#buffering) section.                                                                                                                                                            |
 | `<prefix>.backend.circuitbreaker.expression=EXPR`           | Create a [circuit breaker](/basics/#backends) to be used against the backend. ex: `NetworkErrorRatio() > 0.`                                                                                                           |
 | `<prefix>.backend.healthcheck.path=/health`                 | Enable health check for the backend, hitting the container at `path`.                                                                                                                                                  |
 | `<prefix>.backend.healthcheck.port=8080`                    | Allow to use a different port for the health check.                                                                                                                                                                    |
@@ -128,7 +133,7 @@ Additional settings can be defined using Consul Catalog tags.
 
 If you want that Træfik uses Consul tags correctly you need to defined them like that:
 
-```json
+```js
 traefik.enable=true
 traefik.tags=api
 traefik.tags=external
@@ -136,7 +141,7 @@ traefik.tags=external
 
 If the prefix defined in Træfik configuration is `bla`, tags need to be defined like that:
 
-```json
+```js
 bla.enable=true
 bla.tags=api
 bla.tags=external

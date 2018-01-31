@@ -76,6 +76,11 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					withPair(pathBackendHealthCheckInterval, "30s"),
 					withPair(pathBackendMaxConnAmount, "5"),
 					withPair(pathBackendMaxConnExtractorFunc, "client.ip"),
+					withPair(pathBackendBufferingMaxResponseBodyBytes, "10485760"),
+					withPair(pathBackendBufferingMemResponseBodyBytes, "2097152"),
+					withPair(pathBackendBufferingMaxRequestBodyBytes, "10485760"),
+					withPair(pathBackendBufferingMemRequestBodyBytes, "2097152"),
+					withPair(pathBackendBufferingRetryExpression, "IsNetworkError() && Attempts() <= 2"),
 					withPair("servers/server1/url", "http://172.17.0.2:80"),
 					withPair("servers/server1/weight", "0"),
 					withPair("servers/server2/weight", "0")),
@@ -161,6 +166,13 @@ func TestProviderBuildConfiguration(t *testing.T) {
 							Path:     "/health",
 							Port:     80,
 							Interval: "30s",
+						},
+						Buffering: &types.Buffering{
+							MaxResponseBodyBytes: 10485760,
+							MemResponseBodyBytes: 2097152,
+							MaxRequestBodyBytes:  10485760,
+							MemRequestBodyBytes:  2097152,
+							RetryExpression:      "IsNetworkError() && Attempts() <= 2",
 						},
 					},
 				},
@@ -1694,6 +1706,47 @@ func TestProviderGetHealthCheck(t *testing.T) {
 			p := newProviderMock(test.kvPairs)
 
 			result := p.getHealthCheck(test.rootPath)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestProviderGetBufferingReal(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		rootPath string
+		kvPairs  []*store.KVPair
+		expected *types.Buffering
+	}{
+		{
+			desc:     "when all configuration keys defined",
+			rootPath: "traefik/backends/foo",
+			kvPairs: filler("traefik",
+				backend("foo",
+					withPair(pathBackendBufferingMaxResponseBodyBytes, "10485760"),
+					withPair(pathBackendBufferingMemResponseBodyBytes, "2097152"),
+					withPair(pathBackendBufferingMaxRequestBodyBytes, "10485760"),
+					withPair(pathBackendBufferingMemRequestBodyBytes, "2097152"),
+					withPair(pathBackendBufferingRetryExpression, "IsNetworkError() && Attempts() <= 2"))),
+			expected: &types.Buffering{
+				MaxResponseBodyBytes: 10485760,
+				MemResponseBodyBytes: 2097152,
+				MaxRequestBodyBytes:  10485760,
+				MemRequestBodyBytes:  2097152,
+				RetryExpression:      "IsNetworkError() && Attempts() <= 2",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := newProviderMock(test.kvPairs)
+
+			result := p.getBuffering(test.rootPath)
 
 			assert.Equal(t, test.expected, result)
 		})

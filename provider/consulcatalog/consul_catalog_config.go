@@ -40,6 +40,7 @@ func (p *Provider) buildConfiguration(catalog []catalogUpdate) *types.Configurat
 		"getLoadBalancer":         p.getLoadBalancer,
 		"getMaxConn":              p.getMaxConn,
 		"getHealthCheck":          p.getHealthCheck,
+		"getBuffering":            p.getBuffering,
 
 		// Frontend functions
 		"getFrontendRule":         p.getFrontendRule,
@@ -293,6 +294,20 @@ func (p *Provider) getHealthCheck(tags []string) *types.HealthCheck {
 		Path:     path,
 		Port:     port,
 		Interval: interval,
+	}
+}
+
+func (p *Provider) getBuffering(tags []string) *types.Buffering {
+	if !p.hasAttributePrefix(label.SuffixBackendBuffering, tags) {
+		return nil
+	}
+
+	return &types.Buffering{
+		MaxRequestBodyBytes:  p.getInt64Attribute(label.SuffixBackendBufferingMaxRequestBodyBytes, tags, 0),
+		MaxResponseBodyBytes: p.getInt64Attribute(label.SuffixBackendBufferingMaxResponseBodyBytes, tags, 0),
+		MemRequestBodyBytes:  p.getInt64Attribute(label.SuffixBackendBufferingMemRequestBodyBytes, tags, 0),
+		MemResponseBodyBytes: p.getInt64Attribute(label.SuffixBackendBufferingMemResponseBodyBytes, tags, 0),
+		RetryExpression:      p.getAttribute(label.SuffixBackendBufferingRetryExpression, tags, ""),
 	}
 }
 

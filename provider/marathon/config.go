@@ -32,6 +32,7 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getLoadBalancer":   getLoadBalancer,
 		"getMaxConn":        getMaxConn,
 		"getHealthCheck":    getHealthCheck,
+		"getBuffering":      getBuffering,
 		"getServers":        p.getServers,
 
 		// TODO Deprecated [breaking]
@@ -452,6 +453,20 @@ func getHealthCheck(application marathon.Application) *types.HealthCheck {
 		Path:     path,
 		Port:     port,
 		Interval: interval,
+	}
+}
+
+func getBuffering(application marathon.Application) *types.Buffering {
+	if !label.HasPrefixP(application.Labels, label.TraefikBackendBuffering) {
+		return nil
+	}
+
+	return &types.Buffering{
+		MaxRequestBodyBytes:  label.GetInt64ValueP(application.Labels, label.TraefikBackendBufferingMaxRequestBodyBytes, 0),
+		MaxResponseBodyBytes: label.GetInt64ValueP(application.Labels, label.TraefikBackendBufferingMaxResponseBodyBytes, 0),
+		MemRequestBodyBytes:  label.GetInt64ValueP(application.Labels, label.TraefikBackendBufferingMemRequestBodyBytes, 0),
+		MemResponseBodyBytes: label.GetInt64ValueP(application.Labels, label.TraefikBackendBufferingMemResponseBodyBytes, 0),
+		RetryExpression:      label.GetStringValueP(application.Labels, label.TraefikBackendBufferingRetryExpression, ""),
 	}
 }
 

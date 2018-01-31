@@ -13,6 +13,16 @@
       [backends."{{$backendName}}".loadbalancer.stickiness]
         cookieName = "{{$backend.LoadBalancer.Stickiness.CookieName}}"
       {{end}}
+
+    {{if $backend.Buffering }}
+    [backends."{{ $backendName }}".buffering]
+      maxRequestBodyBytes = {{ $backend.Buffering.MaxRequestBodyBytes }}
+      memRequestBodyBytes = {{ $backend.Buffering.MemRequestBodyBytes }}
+      maxResponseBodyBytes = {{ $backend.Buffering.MaxResponseBodyBytes }}
+      memResponseBodyBytes = {{ $backend.Buffering.MemResponseBodyBytes }}
+      retryExpression = "{{ $backend.Buffering.RetryExpression }}"
+    {{end}}
+
     {{range $serverName, $server := $backend.Servers}}
     [backends."{{$backendName}}".servers."{{$serverName}}"]
     url = "{{$server.URL}}"

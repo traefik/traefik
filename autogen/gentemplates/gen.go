@@ -90,6 +90,16 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
     interval = "{{ $healthCheck.Interval }}"
   {{end}}
 
+  {{ $buffering := getBuffering $service.Attributes }}
+  {{if $buffering }}
+  [backends.backend-{{ $backendName }}.buffering]
+    maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
+    memRequestBodyBytes = {{ $buffering.MemRequestBodyBytes }}
+    maxResponseBodyBytes = {{ $buffering.MaxResponseBodyBytes }}
+    memResponseBodyBytes = {{ $buffering.MemResponseBodyBytes }}
+    retryExpression = "{{ $buffering.RetryExpression }}"
+  {{end}}
+
 {{end}}
 {{range $index, $node := .Nodes}}
 
@@ -266,6 +276,16 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+  {{end}}
+
+  {{ $buffering := getBuffering $backend }}
+  {{if $buffering }}
+  [backends.backend-{{ $backendName }}.buffering]
+    maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
+    memRequestBodyBytes = {{ $buffering.MemRequestBodyBytes }}
+    maxResponseBodyBytes = {{ $buffering.MaxResponseBodyBytes }}
+    memResponseBodyBytes = {{ $buffering.MemResponseBodyBytes }}
+    retryExpression = "{{ $buffering.RetryExpression }}"
   {{end}}
 
   {{ $servers := index $backendServers $backendName }}
@@ -578,6 +598,16 @@ var _templatesEcsTmpl = []byte(`[backends]
     interval = "{{ $healthCheck.Interval }}"
   {{end}}
 
+  {{ $buffering := getBuffering $firstInstance }}
+  {{if $buffering }}
+  [backends.backend-{{ $serviceName }}.buffering]
+    maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
+    memRequestBodyBytes = {{ $buffering.MemRequestBodyBytes }}
+    maxResponseBodyBytes = {{ $buffering.MaxResponseBodyBytes }}
+    memResponseBodyBytes = {{ $buffering.MemResponseBodyBytes }}
+    retryExpression = "{{ $buffering.RetryExpression }}"
+  {{end}}
+
   {{range $serverName, $server := getServers $instances }}
   [backends.backend-{{ $serviceName }}.servers.{{ $serverName }}]
     url = "{{ $server.URL }}"
@@ -767,6 +797,16 @@ var _templatesKubernetesTmpl = []byte(`[backends]{{range $backendName, $backend 
       [backends."{{$backendName}}".loadbalancer.stickiness]
         cookieName = "{{$backend.LoadBalancer.Stickiness.CookieName}}"
       {{end}}
+
+    {{if $backend.Buffering }}
+    [backends."{{ $backendName }}".buffering]
+      maxRequestBodyBytes = {{ $backend.Buffering.MaxRequestBodyBytes }}
+      memRequestBodyBytes = {{ $backend.Buffering.MemRequestBodyBytes }}
+      maxResponseBodyBytes = {{ $backend.Buffering.MaxResponseBodyBytes }}
+      memResponseBodyBytes = {{ $backend.Buffering.MemResponseBodyBytes }}
+      retryExpression = "{{ $backend.Buffering.RetryExpression }}"
+    {{end}}
+
     {{range $serverName, $server := $backend.Servers}}
     [backends."{{$backendName}}".servers."{{$serverName}}"]
     url = "{{$server.URL}}"
@@ -908,6 +948,16 @@ var _templatesKvTmpl = []byte(`[backends]
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+  {{end}}
+
+  {{ $buffering := getBuffering $backend }}
+  {{if $buffering }}
+  [backends.{{ $backendName }}.buffering]
+    maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
+    memRequestBodyBytes = {{ $buffering.MemRequestBodyBytes }}
+    maxResponseBodyBytes = {{ $buffering.MaxResponseBodyBytes }}
+    memResponseBodyBytes = {{ $buffering.MemResponseBodyBytes }}
+    retryExpression = "{{ $buffering.RetryExpression }}"
   {{end}}
 
   {{range $serverName, $server := getServers $backend}}
@@ -1107,6 +1157,16 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
       interval = "{{ $healthCheck.Interval }}"
     {{end}}
 
+    {{ $buffering := getBuffering $app }}
+    {{if $buffering }}
+    [backends."{{ $backendName }}".buffering]
+      maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
+      memRequestBodyBytes = {{ $buffering.MemRequestBodyBytes }}
+      maxResponseBodyBytes = {{ $buffering.MaxResponseBodyBytes }}
+      memResponseBodyBytes = {{ $buffering.MemResponseBodyBytes }}
+      retryExpression = "{{ $buffering.RetryExpression }}"
+    {{end}}
+
     {{range $serverName, $server := getServers $app $serviceName }}
     [backends."{{ $backendName }}".servers."{{ $serverName }}"]
       url = "{{ $server.URL }}"
@@ -1288,6 +1348,16 @@ var _templatesMesosTmpl = []byte(`[backends]
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+  {{end}}
+
+  {{ $buffering := getBuffering $app }}
+  {{if $buffering }}
+  [backends.backend-{{ $backendName }}.buffering]
+    maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
+    memRequestBodyBytes = {{ $buffering.MemRequestBodyBytes }}
+    maxResponseBodyBytes = {{ $buffering.MaxResponseBodyBytes }}
+    memResponseBodyBytes = {{ $buffering.MemResponseBodyBytes }}
+    retryExpression = "{{ $buffering.RetryExpression }}"
   {{end}}
 
   {{range $serverName, $server := getServers $tasks }}
@@ -1491,6 +1561,16 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+  {{end}}
+
+  {{ $buffering := getBuffering $backend }}
+  {{if $buffering }}
+  [backends."backend-{{ $backendName }}".buffering]
+    maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
+    memRequestBodyBytes = {{ $buffering.MemRequestBodyBytes }}
+    maxResponseBodyBytes = {{ $buffering.MaxResponseBodyBytes }}
+    memResponseBodyBytes = {{ $buffering.MemResponseBodyBytes }}
+    retryExpression = "{{ $buffering.RetryExpression }}"
   {{end}}
 
   {{range $serverName, $server := getServers $backend}}

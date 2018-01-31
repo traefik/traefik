@@ -42,6 +42,7 @@ import (
 	"github.com/sirupsen/logrus"
 	thoas_stats "github.com/thoas/stats"
 	"github.com/urfave/negroni"
+	"github.com/vulcand/oxy/buffer"
 	"github.com/vulcand/oxy/connlimit"
 	"github.com/vulcand/oxy/forward"
 	"github.com/vulcand/oxy/ratelimit"
@@ -1150,6 +1151,16 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						n.UseFunc(secureMiddleware.HandlerFuncWithNext)
 					}
 
+					if config.Backends[frontend.Backend].Buffering != nil {
+						bufferedLb, err := s.buildBufferingMiddleware(lb, config.Backends[frontend.Backend].Buffering)
+
+						if err != nil {
+							log.Errorf("Error setting up buffering middleware: %s", err)
+						} else {
+							lb = bufferedLb
+						}
+					}
+
 					if config.Backends[frontend.Backend].CircuitBreaker != nil {
 						log.Debugf("Creating circuit breaker %s", config.Backends[frontend.Backend].CircuitBreaker.Expression)
 						expression := config.Backends[frontend.Backend].CircuitBreaker.Expression
@@ -1507,4 +1518,29 @@ func (s *Server) wrapHTTPHandlerWithAccessLog(handler http.Handler, frontendName
 		return saveFrontend
 	}
 	return handler
+}
+
+func (s *Server) buildBufferingMiddleware(handler http.Handler, config *types.Buffering) (http.Handler, error) {
+	log.Debugf("Setting up buffering: request limits: %d (mem), %d (max), response limits: %d (mem), %d (max) with retry: '%s'",
+		config.MemRequestBodyBytes, config.MaxRequestBodyBytes, config.MemResponseBodyBytes,
+		config.MaxResponseBodyBytes, config.RetryExpression)
+
+	if len(config.RetryExpression) > 0 {
+		return buffer.New(
+			handler,
+			buffer.MemRequestBodyBytes(config.MemRequestBodyBytes),
+			buffer.MaxRequestBodyBytes(config.MaxRequestBodyBytes),
+			buffer.MemResponseBodyBytes(config.MemResponseBodyBytes),
+			buffer.MaxResponseBodyBytes(config.MaxResponseBodyBytes),
+			buffer.Retry(config.RetryExpression),
+		)
+	}
+
+	return buffer.New(
+		handler,
+		buffer.MemRequestBodyBytes(config.MemRequestBodyBytes),
+		buffer.MaxRequestBodyBytes(config.MaxRequestBodyBytes),
+		buffer.MemResponseBodyBytes(config.MemResponseBodyBytes),
+		buffer.MaxResponseBodyBytes(config.MaxResponseBodyBytes),
+	)
 }

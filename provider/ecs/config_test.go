@@ -136,6 +136,11 @@ func TestBuildConfiguration(t *testing.T) {
 							label.TraefikBackendLoadBalancerStickinessCookieName: aws.String("chocolate"),
 							label.TraefikBackendMaxConnAmount:                    aws.String("666"),
 							label.TraefikBackendMaxConnExtractorFunc:             aws.String("client.ip"),
+							label.TraefikBackendBufferingMaxResponseBodyBytes:    aws.String("10485760"),
+							label.TraefikBackendBufferingMemResponseBodyBytes:    aws.String("2097152"),
+							label.TraefikBackendBufferingMaxRequestBodyBytes:     aws.String("10485760"),
+							label.TraefikBackendBufferingMemRequestBodyBytes:     aws.String("2097152"),
+							label.TraefikBackendBufferingRetryExpression:         aws.String("IsNetworkError() && Attempts() <= 2"),
 
 							label.TraefikFrontendAuthBasic:            aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 							label.TraefikFrontendEntryPoints:          aws.String("http,https"),
@@ -221,6 +226,13 @@ func TestBuildConfiguration(t *testing.T) {
 							Path:     "/health",
 							Port:     880,
 							Interval: "6",
+						},
+						Buffering: &types.Buffering{
+							MaxResponseBodyBytes: 10485760,
+							MemResponseBodyBytes: 2097152,
+							MaxRequestBodyBytes:  10485760,
+							MemRequestBodyBytes:  2097152,
+							RetryExpression:      "IsNetworkError() && Attempts() <= 2",
 						},
 					},
 				},
@@ -942,6 +954,53 @@ func TestGetHealthCheck(t *testing.T) {
 			t.Parallel()
 
 			actual := getHealthCheck(test.instance)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestGetBuffering(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		instance ecsInstance
+		expected *types.Buffering
+	}{
+		{
+			desc: "should return nil when no buffering labels",
+			instance: ecsInstance{
+				containerDefinition: &ecs.ContainerDefinition{
+					DockerLabels: map[string]*string{},
+				}},
+			expected: nil,
+		},
+		{
+			desc: "should return a struct when health check labels are set",
+			instance: ecsInstance{
+				containerDefinition: &ecs.ContainerDefinition{
+					DockerLabels: map[string]*string{
+						label.TraefikBackendBufferingMaxResponseBodyBytes: aws.String("10485760"),
+						label.TraefikBackendBufferingMemResponseBodyBytes: aws.String("2097152"),
+						label.TraefikBackendBufferingMaxRequestBodyBytes:  aws.String("10485760"),
+						label.TraefikBackendBufferingMemRequestBodyBytes:  aws.String("2097152"),
+						label.TraefikBackendBufferingRetryExpression:      aws.String("IsNetworkError() && Attempts() <= 2"),
+					}}},
+			expected: &types.Buffering{
+				MaxResponseBodyBytes: 10485760,
+				MemResponseBodyBytes: 2097152,
+				MaxRequestBodyBytes:  10485760,
+				MemRequestBodyBytes:  2097152,
+				RetryExpression:      "IsNetworkError() && Attempts() <= 2",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := getBuffering(test.instance)
 
 			assert.Equal(t, test.expected, actual)
 		})

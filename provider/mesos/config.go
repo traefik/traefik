@@ -26,6 +26,7 @@ func (p *Provider) buildConfiguration(tasks []state.Task) *types.Configuration {
 		"getLoadBalancer":   getLoadBalancer,
 		"getMaxConn":        getMaxConn,
 		"getHealthCheck":    getHealthCheck,
+		"getBuffering":      getBuffering,
 		"getServers":        p.getServers,
 		"getHost":           p.getHost,
 		"getServerPort":     p.getServerPort,
@@ -297,6 +298,20 @@ func getHealthCheck(task state.Task) *types.HealthCheck {
 		Path:     path,
 		Port:     port,
 		Interval: interval,
+	}
+}
+
+func getBuffering(task state.Task) *types.Buffering {
+	if !hasPrefix(task, label.TraefikBackendBuffering) {
+		return nil
+	}
+
+	return &types.Buffering{
+		MaxRequestBodyBytes:  getInt64Value(task, label.TraefikBackendBufferingMaxRequestBodyBytes, 0),
+		MaxResponseBodyBytes: getInt64Value(task, label.TraefikBackendBufferingMaxResponseBodyBytes, 0),
+		MemRequestBodyBytes:  getInt64Value(task, label.TraefikBackendBufferingMemRequestBodyBytes, 0),
+		MemResponseBodyBytes: getInt64Value(task, label.TraefikBackendBufferingMemResponseBodyBytes, 0),
+		RetryExpression:      getStringValue(task, label.TraefikBackendBufferingRetryExpression, ""),
 	}
 }
 

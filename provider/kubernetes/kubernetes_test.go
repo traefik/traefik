@@ -431,6 +431,9 @@ func TestServiceAnnotations(t *testing.T) {
 				iRule(
 					iHost("bar"),
 					iPaths(onePath(iBackend("service2", intstr.FromInt(802))))),
+				iRule(
+					iHost("baz"),
+					iPaths(onePath(iBackend("service3", intstr.FromInt(803))))),
 			),
 		),
 	}
@@ -456,6 +459,19 @@ func TestServiceAnnotations(t *testing.T) {
 				clusterIP("10.0.0.2"),
 				sPorts(sPort(802, ""))),
 		),
+		buildService(
+			sName("service3"),
+			sNamespace("testing"),
+			sUID("3"),
+			sAnnotation(label.TraefikBackendBufferingMaxRequestBodyBytes, "10485760"),
+			sAnnotation(label.TraefikBackendBufferingMemRequestBodyBytes, "2097152"),
+			sAnnotation(label.TraefikBackendBufferingMaxResponseBodyBytes, "10485760"),
+			sAnnotation(label.TraefikBackendBufferingMemResponseBodyBytes, "2097152"),
+			sAnnotation(label.TraefikBackendBufferingRetryExpression, "IsNetworkError() && Attempts() <= 2"),
+			sSpec(
+				clusterIP("10.0.0.3"),
+				sPorts(sPort(803, ""))),
+		),
 	}
 
 	endpoints := []*v1.Endpoints{
@@ -479,6 +495,17 @@ func TestServiceAnnotations(t *testing.T) {
 				ePorts(ePort(8080, "http"))),
 			subset(
 				eAddresses(eAddress("10.15.0.2")),
+				ePorts(ePort(8080, "http"))),
+		),
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service3"),
+			eUID("3"),
+			subset(
+				eAddresses(eAddress("10.14.0.1")),
+				ePorts(ePort(8080, "http"))),
+			subset(
+				eAddresses(eAddress("10.12.0.1")),
 				ePorts(ePort(8080, "http"))),
 		),
 	}
@@ -510,6 +537,19 @@ func TestServiceAnnotations(t *testing.T) {
 					server("http://10.15.0.2:8080", weight(1))),
 				lbMethod("wrr"), lbSticky(),
 			),
+			backend("baz",
+				servers(
+					server("http://10.14.0.1:8080", weight(1)),
+					server("http://10.12.0.1:8080", weight(1))),
+				lbMethod("wrr"),
+				buffering(
+					maxRequestBodyBytes(10485760),
+					memRequestBodyBytes(2097152),
+					maxResponseBodyBytes(10485760),
+					memResponseBodyBytes(2097152),
+					retrying("IsNetworkError() && Attempts() <= 2"),
+				),
+			),
 		),
 		frontends(
 			frontend("foo/bar",
@@ -522,7 +562,13 @@ func TestServiceAnnotations(t *testing.T) {
 			frontend("bar",
 				headers(),
 				passHostHeader(),
-				routes(route("bar", "Host:bar"))),
+				routes(route("bar", "Host:bar")),
+			),
+			frontend("baz",
+				headers(),
+				passHostHeader(),
+				routes(route("baz", "Host:baz")),
+			),
 		),
 	)
 

@@ -60,6 +60,7 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getLoadBalancer":         p.getLoadBalancer,
 		"getMaxConn":              p.getMaxConn,
 		"getHealthCheck":          p.getHealthCheck,
+		"getBuffering":            p.getBuffering,
 		"getSticky":               p.getSticky,               // Deprecated [breaking]
 		"hasStickinessLabel":      p.hasStickinessLabel,      // Deprecated [breaking]
 		"getStickinessCookieName": p.getStickinessCookieName, // Deprecated [breaking]
@@ -271,6 +272,25 @@ func (p *Provider) getHealthCheck(rootPath string) *types.HealthCheck {
 		Port:     port,
 		Interval: interval,
 	}
+}
+
+func (p *Provider) getBuffering(rootPath string) *types.Buffering {
+	pathsBuffering := p.list(rootPath, pathBackendBuffering)
+
+	var buffering *types.Buffering
+	if len(pathsBuffering) > 0 {
+		if buffering == nil {
+			buffering = &types.Buffering{}
+		}
+
+		buffering.MaxRequestBodyBytes = p.getInt64(0, rootPath, pathBackendBufferingMaxRequestBodyBytes)
+		buffering.MaxResponseBodyBytes = p.getInt64(0, rootPath, pathBackendBufferingMaxResponseBodyBytes)
+		buffering.MemRequestBodyBytes = p.getInt64(0, rootPath, pathBackendBufferingMemRequestBodyBytes)
+		buffering.MemResponseBodyBytes = p.getInt64(0, rootPath, pathBackendBufferingMemResponseBodyBytes)
+		buffering.RetryExpression = p.get("", rootPath, pathBackendBufferingRetryExpression)
+	}
+
+	return buffering
 }
 
 func (p *Provider) getTLSSection(prefix string) []*tls.Configuration {

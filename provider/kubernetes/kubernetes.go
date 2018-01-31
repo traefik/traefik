@@ -295,6 +295,8 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					}
 				}
 
+				templateObjects.Backends[r.Host+pa.Path].Buffering = getBuffering(service)
+
 				if service.Annotations[label.TraefikBackendLoadBalancerMethod] == "drr" {
 					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Method = "drr"
 				}
@@ -534,6 +536,19 @@ func getFrontendRedirect(i *v1beta1.Ingress) *types.Redirect {
 			EntryPoint:  frontendRedirectEntryPoint,
 			Regex:       frontendRedirectRegex,
 			Replacement: frontendRedirectReplacement,
+		}
+	}
+	return nil
+}
+
+func getBuffering(service *v1.Service) *types.Buffering {
+	if label.HasPrefix(service.Annotations, label.TraefikBackendBuffering) {
+		return &types.Buffering{
+			MaxRequestBodyBytes:  label.GetInt64Value(service.Annotations, label.TraefikBackendBufferingMaxRequestBodyBytes, 0),
+			MemRequestBodyBytes:  label.GetInt64Value(service.Annotations, label.TraefikBackendBufferingMemRequestBodyBytes, 0),
+			MaxResponseBodyBytes: label.GetInt64Value(service.Annotations, label.TraefikBackendBufferingMaxResponseBodyBytes, 0),
+			MemResponseBodyBytes: label.GetInt64Value(service.Annotations, label.TraefikBackendBufferingMemResponseBodyBytes, 0),
+			RetryExpression:      label.GetStringValue(service.Annotations, label.TraefikBackendBufferingRetryExpression, ""),
 		}
 	}
 	return nil

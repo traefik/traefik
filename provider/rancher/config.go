@@ -24,6 +24,7 @@ func (p *Provider) buildConfiguration(services []rancherData) *types.Configurati
 		"getLoadBalancer":   getLoadBalancer,
 		"getMaxConn":        getMaxConn,
 		"getHealthCheck":    getHealthCheck,
+		"getBuffering":      getBuffering,
 		"getServers":        getServers,
 
 		// TODO Deprecated [breaking]
@@ -232,6 +233,20 @@ func getHealthCheck(service rancherData) *types.HealthCheck {
 		Path:     path,
 		Port:     port,
 		Interval: interval,
+	}
+}
+
+func getBuffering(service rancherData) *types.Buffering {
+	if !label.HasPrefix(service.Labels, label.TraefikBackendBuffering) {
+		return nil
+	}
+
+	return &types.Buffering{
+		MaxRequestBodyBytes:  label.GetInt64Value(service.Labels, label.TraefikBackendBufferingMaxRequestBodyBytes, 0),
+		MaxResponseBodyBytes: label.GetInt64Value(service.Labels, label.TraefikBackendBufferingMaxResponseBodyBytes, 0),
+		MemRequestBodyBytes:  label.GetInt64Value(service.Labels, label.TraefikBackendBufferingMemRequestBodyBytes, 0),
+		MemResponseBodyBytes: label.GetInt64Value(service.Labels, label.TraefikBackendBufferingMemResponseBodyBytes, 0),
+		RetryExpression:      label.GetStringValue(service.Labels, label.TraefikBackendBufferingRetryExpression, ""),
 	}
 }
 

@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestBuildConfigurationNew(t *testing.T) {
+func TestBuildConfiguration(t *testing.T) {
 	p := &Provider{
 		Domain:           "docker.localhost",
 		ExposedByDefault: true,
@@ -132,6 +132,11 @@ func TestBuildConfigurationNew(t *testing.T) {
 					withLabel(label.TraefikBackendLoadBalancerStickinessCookieName, "chocolate"),
 					withLabel(label.TraefikBackendMaxConnAmount, "666"),
 					withLabel(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
+					withLabel(label.TraefikBackendBufferingMaxResponseBodyBytes, "10485760"),
+					withLabel(label.TraefikBackendBufferingMemResponseBodyBytes, "2097152"),
+					withLabel(label.TraefikBackendBufferingMaxRequestBodyBytes, "10485760"),
+					withLabel(label.TraefikBackendBufferingMemRequestBodyBytes, "2097152"),
+					withLabel(label.TraefikBackendBufferingRetryExpression, "IsNetworkError() && Attempts() <= 2"),
 
 					withLabel(label.TraefikFrontendAuthBasic, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 					withLabel(label.TraefikFrontendEntryPoints, "http,https"),
@@ -306,6 +311,13 @@ func TestBuildConfigurationNew(t *testing.T) {
 						Path:     "/health",
 						Port:     880,
 						Interval: "6",
+					},
+					Buffering: &types.Buffering{
+						MaxResponseBodyBytes: 10485760,
+						MemResponseBodyBytes: 2097152,
+						MaxRequestBodyBytes:  10485760,
+						MemRequestBodyBytes:  2097152,
+						RetryExpression:      "IsNetworkError() && Attempts() <= 2",
 					},
 				},
 			},
@@ -804,6 +816,55 @@ func TestGetHealthCheck(t *testing.T) {
 			t.Parallel()
 
 			actual := getHealthCheck(test.task)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestGetBuffering(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		task     state.Task
+		expected *types.Buffering
+	}{
+		{
+			desc: "should return nil when no buffering labels",
+			task: aTask("ID1",
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: nil,
+		},
+		{
+			desc: "should return a struct when health check labels are set",
+			task: aTask("ID1",
+				withLabel(label.TraefikBackendBufferingMaxResponseBodyBytes, "10485760"),
+				withLabel(label.TraefikBackendBufferingMemResponseBodyBytes, "2097152"),
+				withLabel(label.TraefikBackendBufferingMaxRequestBodyBytes, "10485760"),
+				withLabel(label.TraefikBackendBufferingMemRequestBodyBytes, "2097152"),
+				withLabel(label.TraefikBackendBufferingRetryExpression, "IsNetworkError() && Attempts() <= 2"),
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: &types.Buffering{
+				MaxResponseBodyBytes: 10485760,
+				MemResponseBodyBytes: 2097152,
+				MaxRequestBodyBytes:  10485760,
+				MemRequestBodyBytes:  2097152,
+				RetryExpression:      "IsNetworkError() && Attempts() <= 2",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := getBuffering(test.task)
 
 			assert.Equal(t, test.expected, actual)
 		})

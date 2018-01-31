@@ -34,6 +34,16 @@
     interval = "{{ $healthCheck.Interval }}"
   {{end}}
 
+  {{ $buffering := getBuffering $firstInstance }}
+  {{if $buffering }}
+  [backends.backend-{{ $serviceName }}.buffering]
+    maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
+    memRequestBodyBytes = {{ $buffering.MemRequestBodyBytes }}
+    maxResponseBodyBytes = {{ $buffering.MaxResponseBodyBytes }}
+    memResponseBodyBytes = {{ $buffering.MemResponseBodyBytes }}
+    retryExpression = "{{ $buffering.RetryExpression }}"
+  {{end}}
+
   {{range $serverName, $server := getServers $instances }}
   [backends.backend-{{ $serviceName }}.servers.{{ $serverName }}]
     url = "{{ $server.URL }}"

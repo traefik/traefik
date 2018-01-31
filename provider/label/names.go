@@ -24,6 +24,12 @@ const (
 	SuffixBackendLoadBalancerStickinessCookieName  = SuffixBackendLoadBalancer + ".stickiness.cookieName"
 	SuffixBackendMaxConnAmount                     = "backend.maxconn.amount"
 	SuffixBackendMaxConnExtractorFunc              = "backend.maxconn.extractorfunc"
+	SuffixBackendBuffering                         = "backend.buffering"
+	SuffixBackendBufferingMaxRequestBodyBytes      = SuffixBackendBuffering + ".maxRequestBodyBytes"
+	SuffixBackendBufferingMemRequestBodyBytes      = SuffixBackendBuffering + ".memRequestBodyBytes"
+	SuffixBackendBufferingMaxResponseBodyBytes     = SuffixBackendBuffering + ".maxResponseBodyBytes"
+	SuffixBackendBufferingMemResponseBodyBytes     = SuffixBackendBuffering + ".memResponseBodyBytes"
+	SuffixBackendBufferingRetryExpression          = SuffixBackendBuffering + ".retryExpression"
 	SuffixFrontend                                 = "frontend"
 	SuffixFrontendAuthBasic                        = "frontend.auth.basic"
 	SuffixFrontendBackend                          = "frontend.backend"
@@ -80,6 +86,12 @@ const (
 	TraefikBackendLoadBalancerStickinessCookieName = Prefix + SuffixBackendLoadBalancerStickinessCookieName
 	TraefikBackendMaxConnAmount                    = Prefix + SuffixBackendMaxConnAmount
 	TraefikBackendMaxConnExtractorFunc             = Prefix + SuffixBackendMaxConnExtractorFunc
+	TraefikBackendBuffering                        = Prefix + SuffixBackendBuffering
+	TraefikBackendBufferingMaxRequestBodyBytes     = Prefix + SuffixBackendBufferingMaxRequestBodyBytes
+	TraefikBackendBufferingMemRequestBodyBytes     = Prefix + SuffixBackendBufferingMemRequestBodyBytes
+	TraefikBackendBufferingMaxResponseBodyBytes    = Prefix + SuffixBackendBufferingMaxResponseBodyBytes
+	TraefikBackendBufferingMemResponseBodyBytes    = Prefix + SuffixBackendBufferingMemResponseBodyBytes
+	TraefikBackendBufferingRetryExpression         = Prefix + SuffixBackendBufferingRetryExpression
 	TraefikFrontend                                = Prefix + SuffixFrontend
 	TraefikFrontendAuthBasic                       = Prefix + SuffixFrontendAuthBasic
 	TraefikFrontendEntryPoints                     = Prefix + SuffixFrontendEntryPoints

@@ -190,6 +190,11 @@ func TestBuildConfigurationNonAPIErrors(t *testing.T) {
 				withLabel(label.TraefikBackendLoadBalancerStickinessCookieName, "chocolate"),
 				withLabel(label.TraefikBackendMaxConnAmount, "666"),
 				withLabel(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
+				withLabel(label.TraefikBackendBufferingMaxResponseBodyBytes, "10485760"),
+				withLabel(label.TraefikBackendBufferingMemResponseBodyBytes, "2097152"),
+				withLabel(label.TraefikBackendBufferingMaxRequestBodyBytes, "10485760"),
+				withLabel(label.TraefikBackendBufferingMemRequestBodyBytes, "2097152"),
+				withLabel(label.TraefikBackendBufferingRetryExpression, "IsNetworkError() && Attempts() <= 2"),
 
 				withLabel(label.TraefikFrontendAuthBasic, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 				withLabel(label.TraefikFrontendEntryPoints, "http,https"),
@@ -367,6 +372,13 @@ func TestBuildConfigurationNonAPIErrors(t *testing.T) {
 						Port:     880,
 						Interval: "6",
 					},
+					Buffering: &types.Buffering{
+						MaxResponseBodyBytes: 10485760,
+						MemResponseBodyBytes: 2097152,
+						MaxRequestBodyBytes:  10485760,
+						MemRequestBodyBytes:  2097152,
+						RetryExpression:      "IsNetworkError() && Attempts() <= 2",
+					},
 				},
 			},
 		},
@@ -494,6 +506,11 @@ func TestBuildConfigurationServicesNonAPIErrors(t *testing.T) {
 				withLabel(label.TraefikBackendLoadBalancerStickinessCookieName, "chocolate"),
 				withLabel(label.TraefikBackendMaxConnAmount, "666"),
 				withLabel(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
+				withLabel(label.TraefikBackendBufferingMaxResponseBodyBytes, "10485760"),
+				withLabel(label.TraefikBackendBufferingMemResponseBodyBytes, "2097152"),
+				withLabel(label.TraefikBackendBufferingMaxRequestBodyBytes, "10485760"),
+				withLabel(label.TraefikBackendBufferingMemRequestBodyBytes, "2097152"),
+				withLabel(label.TraefikBackendBufferingRetryExpression, "IsNetworkError() && Attempts() <= 2"),
 
 				withServiceLabel(label.TraefikPort, "80", "containous"),
 				withServiceLabel(label.TraefikProtocol, "https", "containous"),
@@ -673,6 +690,13 @@ func TestBuildConfigurationServicesNonAPIErrors(t *testing.T) {
 						Path:     "/health",
 						Port:     880,
 						Interval: "6",
+					},
+					Buffering: &types.Buffering{
+						MaxResponseBodyBytes: 10485760,
+						MemResponseBodyBytes: 2097152,
+						MaxRequestBodyBytes:  10485760,
+						MemRequestBodyBytes:  2097152,
+						RetryExpression:      "IsNetworkError() && Attempts() <= 2",
 					},
 				},
 			},
@@ -1529,6 +1553,49 @@ func TestGetHealthCheck(t *testing.T) {
 			t.Parallel()
 
 			actual := getHealthCheck(test.application)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestGetBuffering(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		application marathon.Application
+		expected    *types.Buffering
+	}{
+		{
+			desc:        "should return nil when no buffering labels",
+			application: application(appPorts(80)),
+			expected:    nil,
+		},
+		{
+			desc: "should return a struct when buffering labels are set",
+
+			application: application(
+				withLabel(label.TraefikBackendBufferingMaxResponseBodyBytes, "10485760"),
+				withLabel(label.TraefikBackendBufferingMemResponseBodyBytes, "2097152"),
+				withLabel(label.TraefikBackendBufferingMaxRequestBodyBytes, "10485760"),
+				withLabel(label.TraefikBackendBufferingMemRequestBodyBytes, "2097152"),
+				withLabel(label.TraefikBackendBufferingRetryExpression, "IsNetworkError() && Attempts() <= 2"),
+			),
+			expected: &types.Buffering{
+				MaxResponseBodyBytes: 10485760,
+				MemResponseBodyBytes: 2097152,
+				MaxRequestBodyBytes:  10485760,
+				MemRequestBodyBytes:  2097152,
+				RetryExpression:      "IsNetworkError() && Attempts() <= 2",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := getBuffering(test.application)
 
 			assert.Equal(t, test.expected, actual)
 		})
