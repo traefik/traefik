@@ -616,7 +616,7 @@ func TestIngressAnnotations(t *testing.T) {
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesPreserveHost, "true"),
-			iAnnotation(annotationKubernetesIngressClass, traefikDefaulAnnotationValue),
+			iAnnotation(annotationKubernetesIngressClass, traefikDefaultAnnotationValue),
 			iRules(
 				iRule(
 					iHost("other"),
@@ -626,7 +626,7 @@ func TestIngressAnnotations(t *testing.T) {
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesPassTLSCert, "true"),
-			iAnnotation(annotationKubernetesIngressClass, traefikDefaulAnnotationValue),
+			iAnnotation(annotationKubernetesIngressClass, traefikDefaultAnnotationValue),
 			iRules(
 				iRule(
 					iHost("other"),
@@ -636,7 +636,7 @@ func TestIngressAnnotations(t *testing.T) {
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesFrontendEntryPoints, "http,https"),
-			iAnnotation(annotationKubernetesIngressClass, traefikDefaulAnnotationValue),
+			iAnnotation(annotationKubernetesIngressClass, traefikDefaultAnnotationValue),
 			iRules(
 				iRule(
 					iHost("other"),
@@ -655,7 +655,7 @@ func TestIngressAnnotations(t *testing.T) {
 		),
 		buildIngress(
 			iNamespace("testing"),
-			iAnnotation(annotationKubernetesIngressClass, "somethingOtherThanTraefik"),
+			iAnnotation(annotationKubernetesIngressClass, traefikDefaultAnnotationValue+"-other"),
 			iRules(
 				iRule(
 					iHost("herp"),
@@ -664,7 +664,6 @@ func TestIngressAnnotations(t *testing.T) {
 		),
 		buildIngress(
 			iNamespace("testing"),
-			iAnnotation(annotationKubernetesIngressClass, traefikDefaulAnnotationValue),
 			iAnnotation(annotationKubernetesWhitelistSourceRange, "1.1.1.1/24, 1234:abcd::42/32"),
 			iRules(
 				iRule(
@@ -692,7 +691,6 @@ func TestIngressAnnotations(t *testing.T) {
 		),
 		buildIngress(
 			iNamespace("testing"),
-			iAnnotation(annotationKubernetesIngressClass, traefikDefaulAnnotationValue),
 			iAnnotation(annotationKubernetesRedirectEntryPoint, "https"),
 			iRules(
 				iRule(
@@ -806,7 +804,7 @@ rateset:
 		secrets:   secrets,
 		watchChan: watchChan,
 	}
-	provider := Provider{IngressClass: traefikDefaulAnnotationValue}
+	provider := Provider{}
 
 	actual, err := provider.loadIngresses(client)
 	require.NoError(t, err, "error loading ingresses")
@@ -992,6 +990,31 @@ rateset:
 				routes(
 					route("/customheaders", "PathPrefix:/customheaders"),
 					route("custom-headers", "Host:custom-headers")),
+			),
+		),
+	)
+
+	assert.Equal(t, expected, actual)
+
+	provider = Provider{IngressClass: traefikDefaultAnnotationValue + "-other"}
+
+	actual, err = provider.loadIngresses(client)
+	require.NoError(t, err, "error reloading ingresses")
+
+	expected = buildConfiguration(
+		backends(
+			backend("herp/derp",
+				servers(),
+				lbMethod("wrr"),
+			),
+		),
+		frontends(
+			frontend("herp/derp",
+				headers(),
+				passHostHeader(),
+				routes(
+					route("/derp", "PathPrefix:/derp"),
+					route("herp", "Host:herp")),
 			),
 		),
 	)
