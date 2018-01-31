@@ -779,6 +779,12 @@
   revision = "7c28d80e2ada649fc8ab1a37b86d30a2633bd47c"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/mailgun/multibuf"
+  packages = ["."]
+  revision = "565402cd71fbd9c12aa7e295324ea357e970a61e"
+
+[[projects]]
   name = "github.com/mailgun/timetools"
   packages = ["."]
   revision = "7e6055773c5137efbeb3bd2410d705fe10ab6bfd"
@@ -1135,6 +1141,7 @@
   branch = "master"
   name = "github.com/vulcand/oxy"
   packages = [
+    "buffer",
     "cbreaker",
     "connlimit",
     "forward",
@@ -1511,6 +1518,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b9fee5807e09b19baf3763abc285ea122d64d60dba42aaf47eaf9e96774b46bf"
+  inputs-digest = "b2cb3354504a6350e3022513b39206a3ece7c2f1a509bcef907c45422a8afb31"
   solver-name = "gps-cdcl"
   solver-version = 1
