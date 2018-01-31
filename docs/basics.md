@@ -462,24 +462,6 @@ Here is an example of backends and servers definition:
 - `backend2` will forward the traffic to two servers: `http://172.17.0.4:80"` with weight `1` and `http://172.17.0.5:80` with weight `2` using `drr` load-balancing strategy.
 - a circuit breaker is added on `backend1` using the expression `NetworkErrorRatio() > 0.5`: watch error ratio over 10 second sliding window
 
-### Buffering
-
-In some cases request/buffering can be enabled for a specific backend. By enabling this, Træfik will read the entire request into memory (possibly buffering large requests into disk) and will reject requests that are over a specified limit. 
-This may help services deal with large data (multipart/form-data for example) more efficiently and should minimise time spent
-when sending data to a backend server. For more information please check [oxy/buffer](http://godoc.org/github.com/vulcand/oxy/buffer) documentation.
-
-Example configuration:
-```toml
-[backends]
-  [backends.backend1]
-    [backends.backend1.buffering]
-        enabled = true
-        maxRequestBodyBytes = 10485760  
-        memRequestBodyBytes = 2097152  
-        maxResponseBodyBytes = 10485760 
-        memResponseBodyBytes = 2097152 
-        retryExpression = "IsNetworkError() && Attempts() <= 2"
-```
 
 ## Configuration
 
