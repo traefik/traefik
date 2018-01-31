@@ -51,14 +51,15 @@ See also [Kubernetes user guide](/user-guide/kubernetes).
 # labelselector = "A and not B"
 
 # Value of `kubernetes.io/ingress.class` annotation that identifies Ingress objects to be processed.
-# Note that Ingress objects with an empty or nonexistent `kubernetes.io/ingress.class` value
-# will also be processed.
-# Note that if `kubernetes.io/ingress.class` annotation  is not empty, only annotations with the prefix `traefik` will be processed.
+# If the parameter is non-empty, only Ingresses containing an annotation with the same value are processed.
+# Otherwise, Ingresses missing the annotation, having an empty value, or the value `traefik` are processed.
+#
+# Note : `ingressClass` option must begin with the "traefik" prefix.
 #
 # Optional
-# Default: empty (process all Ingresses)
+# Default: empty
 #
-# ingressClass = "traefik-custom-proxy"
+# ingressClass = "traefik-internal"
 
 # Disable PassHost Headers.
 #

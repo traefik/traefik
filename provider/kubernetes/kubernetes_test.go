@@ -616,7 +616,7 @@ func TestIngressAnnotations(t *testing.T) {
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesPreserveHost, "true"),
-			iAnnotation(annotationKubernetesIngressClass, "traefik"),
+			iAnnotation(annotationKubernetesIngressClass, traefikDefaulAnnotationValue),
 			iRules(
 				iRule(
 					iHost("other"),
@@ -626,7 +626,7 @@ func TestIngressAnnotations(t *testing.T) {
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesPassTLSCert, "true"),
-			iAnnotation(annotationKubernetesIngressClass, "traefik"),
+			iAnnotation(annotationKubernetesIngressClass, traefikDefaulAnnotationValue),
 			iRules(
 				iRule(
 					iHost("other"),
@@ -636,7 +636,7 @@ func TestIngressAnnotations(t *testing.T) {
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesFrontendEntryPoints, "http,https"),
-			iAnnotation(annotationKubernetesIngressClass, "traefik"),
+			iAnnotation(annotationKubernetesIngressClass, traefikDefaulAnnotationValue),
 			iRules(
 				iRule(
 					iHost("other"),
@@ -664,7 +664,7 @@ func TestIngressAnnotations(t *testing.T) {
 		),
 		buildIngress(
 			iNamespace("testing"),
-			iAnnotation(annotationKubernetesIngressClass, "traefik"),
+			iAnnotation(annotationKubernetesIngressClass, traefikDefaulAnnotationValue),
 			iAnnotation(annotationKubernetesWhitelistSourceRange, "1.1.1.1/24, 1234:abcd::42/32"),
 			iRules(
 				iRule(
@@ -692,7 +692,7 @@ func TestIngressAnnotations(t *testing.T) {
 		),
 		buildIngress(
 			iNamespace("testing"),
-			iAnnotation(annotationKubernetesIngressClass, "traefik"),
+			iAnnotation(annotationKubernetesIngressClass, traefikDefaulAnnotationValue),
 			iAnnotation(annotationKubernetesRedirectEntryPoint, "https"),
 			iRules(
 				iRule(
@@ -806,7 +806,7 @@ rateset:
 		secrets:   secrets,
 		watchChan: watchChan,
 	}
-	provider := Provider{IngressClass: "traefik"}
+	provider := Provider{IngressClass: traefikDefaulAnnotationValue}
 
 	actual, err := provider.loadIngresses(client)
 	require.NoError(t, err, "error loading ingresses")

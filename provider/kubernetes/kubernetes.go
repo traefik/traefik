@@ -32,9 +32,9 @@ var _ provider.Provider = (*Provider)(nil)
 const (
 	ruleTypePathPrefix  = "PathPrefix"
 	ruleTypeReplacePath = "ReplacePath"
-
-	traefikDefaultRealm = "traefik"
 )
+
+const traefikDefaulAnnotationValue = "traefik"
 
 // Provider holds configurations of the provider.
 type Provider struct {
@@ -79,8 +79,8 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 	// We require that IngressClasses start with `traefik` to reduce chances of
 	// conflict with other Ingress Providers
-	if len(p.IngressClass) > 0 && !strings.HasPrefix(p.IngressClass, "traefik") {
-		return fmt.Errorf("kubernetes.io/ingress.class must start with traefik, instead found %s", p.IngressClass)
+	if len(p.IngressClass) > 0 && !strings.HasPrefix(p.IngressClass, traefikDefaulAnnotationValue) {
+		return fmt.Errorf("kubernetes.io/ingress.class value has to be empty or start with the prefix %s, instead found %q", traefikDefaulAnnotationValue, p.IngressClass)
 	}
 
 	k8sClient, err := p.newK8sClient()
@@ -183,7 +183,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				}
 
 				annotationAuthRealm := getAnnotationName(i.Annotations, annotationKubernetesAuthRealm)
-				if realm := i.Annotations[annotationAuthRealm]; realm != "" && realm != traefikDefaultRealm {
+				if realm := i.Annotations[annotationAuthRealm]; realm != "" && realm != traefikDefaulAnnotationValue {
 					log.Errorf("Value for annotation %q on ingress %s/%s invalid: no realm customization supported", annotationAuthRealm, i.Namespace, i.Name)
 					delete(templateObjects.Backends, baseName)
 					continue
@@ -459,7 +459,7 @@ func equalPorts(servicePort v1.ServicePort, ingressPort intstr.IntOrString) bool
 }
 
 func (p *Provider) shouldProcessIngress(ingressClass string) bool {
-	return ingressClass == "" || ingressClass == p.IngressClass
+	return ingressClass == "" || (len(p.IngressClass) == 0 && ingressClass == traefikDefaulAnnotationValue) || (len(p.IngressClass) > 0 && ingressClass == p.IngressClass)
 }
 
 func getFrontendRedirect(i *v1beta1.Ingress) *types.Redirect {
