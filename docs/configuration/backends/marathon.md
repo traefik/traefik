@@ -247,14 +247,14 @@ For applications that expose multiple ports, specific labels can be used to extr
 | `traefik.<service-name>.frontend.passHostHeader=true`                     | Overrides `traefik.frontend.passHostHeader`.                                                         |
 | `traefik.<service-name>.frontend.passTLSCert=true`                        | Overrides `traefik.frontend.passTLSCert`.                                                            |
 | `traefik.<service-name>.frontend.priority=10`                             | Overrides `traefik.frontend.priority`.                                                               |
-| `traefik.<service-name>.frontend.rateLimit.extractorFunc=EXP`             | See [rate limiting](/configuration/commons/#rate-limiting) section.                             |
-| `traefik.<service-name>.frontend.rateLimit.rateSet.<name>.period=6`       | See [rate limiting](/configuration/commons/#rate-limiting) section.                             |
-| `traefik.<service-name>.frontend.rateLimit.rateSet.<name>.average=6`      | See [rate limiting](/configuration/commons/#rate-limiting) section.                             |
-| `traefik.<service-name>.frontend.rateLimit.rateSet.<name>.burst=6`        | See [rate limiting](/configuration/commons/#rate-limiting) section.                             |
+| `traefik.<service-name>.frontend.rateLimit.extractorFunc=EXP`             | See [rate limiting](/configuration/commons/#rate-limiting) section.                                  |
+| `traefik.<service-name>.frontend.rateLimit.rateSet.<name>.period=6`       | See [rate limiting](/configuration/commons/#rate-limiting) section.                                  |
+| `traefik.<service-name>.frontend.rateLimit.rateSet.<name>.average=6`      | See [rate limiting](/configuration/commons/#rate-limiting) section.                                  |
+| `traefik.<service-name>.frontend.rateLimit.rateSet.<name>.burst=6`        | See [rate limiting](/configuration/commons/#rate-limiting) section.                                  |
 | `traefik.<service-name>.frontend.redirect.entryPoint=https`               | Overrides `traefik.frontend.redirect.entryPoint`.                                                    |
 | `traefik.<service-name>.frontend.redirect.regex=^http://localhost/(.*)`   | Overrides `traefik.frontend.redirect.regex`.                                                         |
 | `traefik.<service-name>.frontend.redirect.replacement=http://mydomain/$1` | Overrides `traefik.frontend.redirect.replacement`.                                                   |
-| `traefik.<service-name>.frontend.redirect.permanent=true`                 | Return 301 instead of 302.                                                                         |
+| `traefik.<service-name>.frontend.redirect.permanent=true`                 | Return 301 instead of 302.                                                                           |
 | `traefik.<service-name>.frontend.rule=EXP`                                | Overrides `traefik.frontend.rule`. Default: `{service_name}.{sub_domain}.{domain}`                   |
 | `traefik.<service-name>.frontend.whitelistSourceRange=RANGE`              | Overrides `traefik.frontend.whitelistSourceRange`.                                                   |
 
