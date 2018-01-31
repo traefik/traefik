@@ -995,31 +995,149 @@ rateset:
 	)
 
 	assert.Equal(t, expected, actual)
+}
 
-	provider = Provider{IngressClass: traefikDefaultAnnotationValue + "-other"}
+func TestIngressClassAnnotation(t *testing.T) {
+	ingresses := []*v1beta1.Ingress{
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(label.TraefikFrontendPassHostHeader, "true"),
+			iAnnotation(annotationKubernetesIngressClass, traefikDefaultAnnotationValue),
+			iRules(
+				iRule(
+					iHost("other"),
+					iPaths(onePath(iPath("/stuff"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(label.TraefikFrontendPassTLSCert, "true"),
+			iAnnotation(annotationKubernetesIngressClass, ""),
+			iRules(
+				iRule(
+					iHost("other"),
+					iPaths(onePath(iPath("/sslstuff"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iRules(
+				iRule(
+					iHost("other"),
+					iPaths(onePath(iPath("/"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesIngressClass, traefikDefaultAnnotationValue+"-other"),
+			iRules(
+				iRule(
+					iHost("herp"),
+					iPaths(onePath(iPath("/derp"), iBackend("service2", intstr.FromInt(80))))),
+			),
+		),
+	}
 
-	actual, err = provider.loadIngresses(client)
-	require.NoError(t, err, "error reloading ingresses")
+	services := []*v1.Service{
+		buildService(
+			sName("service1"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sType("ExternalName"),
+				sExternalName("example.com"),
+				sPorts(sPort(80, "http"))),
+		),
+		buildService(
+			sName("service2"),
+			sNamespace("testing"),
+			sUID("2"),
+			sSpec(
+				clusterIP("10.0.0.2"),
+				sPorts(sPort(802, ""))),
+		),
+	}
 
-	expected = buildConfiguration(
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		watchChan: watchChan,
+	}
+
+	expected := []*types.Configuration{buildConfiguration(
 		backends(
-			backend("herp/derp",
-				servers(),
+			backend("other/stuff",
+				servers(
+					server("http://example.com", weight(1)),
+					server("http://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
+			backend("other/",
+				servers(
+					server("http://example.com", weight(1)),
+					server("http://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
+			backend("other/sslstuff",
+				servers(
+					server("http://example.com", weight(1)),
+					server("http://example.com", weight(1))),
 				lbMethod("wrr"),
 			),
 		),
 		frontends(
-			frontend("herp/derp",
+			frontend("other/stuff",
 				headers(),
 				passHostHeader(),
 				routes(
-					route("/derp", "PathPrefix:/derp"),
-					route("herp", "Host:herp")),
+					route("/stuff", "PathPrefix:/stuff"),
+					route("other", "Host:other")),
+			),
+			frontend("other/",
+				headers(),
+				passHostHeader(),
+				routes(
+					route("/", "PathPrefix:/"),
+					route("other", "Host:other")),
+			),
+			frontend("other/sslstuff",
+				headers(),
+				passHostHeader(),
+				passTLSCert(),
+				routes(
+					route("/sslstuff", "PathPrefix:/sslstuff"),
+					route("other", "Host:other")),
 			),
 		),
-	)
+	),
+		buildConfiguration(
+			backends(
+				backend("herp/derp",
+					servers(),
+					lbMethod("wrr"),
+				),
+			),
+			frontends(
+				frontend("herp/derp",
+					headers(),
+					passHostHeader(),
+					routes(
+						route("/derp", "PathPrefix:/derp"),
+						route("herp", "Host:herp")),
+				),
+			),
+		)}
 
-	assert.Equal(t, expected, actual)
+	providers := []Provider{Provider{}, Provider{IngressClass: traefikDefaultAnnotationValue + "-other"}}
+
+	for idx, provider := range providers {
+		actual, err := provider.loadIngresses(client)
+		require.NoError(t, err, "error loading ingresses")
+
+		assert.Equal(t, expected[idx], actual)
+	}
 }
 
 func TestPriorityHeaderValue(t *testing.T) {
