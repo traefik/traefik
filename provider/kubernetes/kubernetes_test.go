@@ -788,14 +788,16 @@ rateset:
 		),
 	}
 
-	secrets := []*v1.Secret{{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      "mySecret",
-			UID:       "1",
-			Namespace: "testing",
+	secrets := []*v1.Secret{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "mySecret",
+				UID:       "1",
+				Namespace: "testing",
+			},
+			Data: map[string][]byte{"auth": []byte("myUser:myEncodedPW")},
 		},
-		Data: map[string][]byte{"auth": []byte("myUser:myEncodedPW")},
-	}}
+	}
 
 	watchChan := make(chan interface{})
 	client := clientMock{
@@ -1066,77 +1068,89 @@ func TestIngressClassAnnotation(t *testing.T) {
 		watchChan: watchChan,
 	}
 
-	expected := []*types.Configuration{buildConfiguration(
-		backends(
-			backend("other/stuff",
-				servers(
-					server("http://example.com", weight(1)),
-					server("http://example.com", weight(1))),
-				lbMethod("wrr"),
-			),
-			backend("other/",
-				servers(
-					server("http://example.com", weight(1)),
-					server("http://example.com", weight(1))),
-				lbMethod("wrr"),
-			),
-			backend("other/sslstuff",
-				servers(
-					server("http://example.com", weight(1)),
-					server("http://example.com", weight(1))),
-				lbMethod("wrr"),
-			),
-		),
-		frontends(
-			frontend("other/stuff",
-				headers(),
-				passHostHeader(),
-				routes(
-					route("/stuff", "PathPrefix:/stuff"),
-					route("other", "Host:other")),
-			),
-			frontend("other/",
-				headers(),
-				passHostHeader(),
-				routes(
-					route("/", "PathPrefix:/"),
-					route("other", "Host:other")),
-			),
-			frontend("other/sslstuff",
-				headers(),
-				passHostHeader(),
-				passTLSCert(),
-				routes(
-					route("/sslstuff", "PathPrefix:/sslstuff"),
-					route("other", "Host:other")),
-			),
-		),
-	),
-		buildConfiguration(
-			backends(
-				backend("herp/derp",
-					servers(),
-					lbMethod("wrr"),
+	testCases := []struct {
+		desc     string
+		provider Provider
+		expected *types.Configuration
+	}{
+		{
+			desc:     "Empty IngressClass annotation",
+			provider: Provider{},
+			expected: buildConfiguration(
+				backends(
+					backend("other/stuff",
+						servers(
+							server("http://example.com", weight(1)),
+							server("http://example.com", weight(1))),
+						lbMethod("wrr"),
+					),
+					backend("other/",
+						servers(
+							server("http://example.com", weight(1)),
+							server("http://example.com", weight(1))),
+						lbMethod("wrr"),
+					),
+					backend("other/sslstuff",
+						servers(
+							server("http://example.com", weight(1)),
+							server("http://example.com", weight(1))),
+						lbMethod("wrr"),
+					),
+				),
+				frontends(
+					frontend("other/stuff",
+						headers(),
+						passHostHeader(),
+						routes(
+							route("/stuff", "PathPrefix:/stuff"),
+							route("other", "Host:other")),
+					),
+					frontend("other/",
+						headers(),
+						passHostHeader(),
+						routes(
+							route("/", "PathPrefix:/"),
+							route("other", "Host:other")),
+					),
+					frontend("other/sslstuff",
+						headers(),
+						passHostHeader(),
+						passTLSCert(),
+						routes(
+							route("/sslstuff", "PathPrefix:/sslstuff"),
+							route("other", "Host:other")),
+					),
 				),
 			),
-			frontends(
-				frontend("herp/derp",
-					headers(),
-					passHostHeader(),
-					routes(
-						route("/derp", "PathPrefix:/derp"),
-						route("herp", "Host:herp")),
+		},
+		{
+			desc:     "Provided IngressClass annotation",
+			provider: Provider{IngressClass: traefikDefaultAnnotationValue + "-other"},
+			expected: buildConfiguration(
+				backends(
+					backend("herp/derp",
+						servers(),
+						lbMethod("wrr"),
+					),
+				),
+				frontends(
+					frontend("herp/derp",
+						headers(),
+						passHostHeader(),
+						routes(
+							route("/derp", "PathPrefix:/derp"),
+							route("herp", "Host:herp")),
+					),
 				),
 			),
-		)}
+		},
+	}
 
-	providers := []Provider{Provider{}, Provider{IngressClass: traefikDefaultAnnotationValue + "-other"}}
-
-	for idx, provider := range providers {
-		actual, err := provider.loadIngresses(client)
+	for _, testCase := range testCases {
+		actual, err := testCase.provider.loadIngresses(client)
 		require.NoError(t, err, "error loading ingresses")
 
-		assert.Equal(t, expected[idx], actual)
+		assert.Equal(t, testCase.expected, actual)
 	}
 }
 
