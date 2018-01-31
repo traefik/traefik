@@ -1146,11 +1146,16 @@ func TestIngressClassAnnotation(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range testCases {
-		actual, err := testCase.provider.loadIngresses(client)
-		require.NoError(t, err, "error loading ingresses")
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 
-		assert.Equal(t, testCase.expected, actual)
+			actual, err := test.provider.loadIngresses(client)
+			require.NoError(t, err, "error loading ingresses")
+
+			assert.Equal(t, test.expected, actual)
+		})
 	}
 }
 
