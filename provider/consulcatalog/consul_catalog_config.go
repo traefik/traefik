@@ -312,9 +312,12 @@ func (p *Provider) getBuffering(tags []string) *types.Buffering {
 }
 
 func (p *Provider) getRedirect(tags []string) *types.Redirect {
+	permanent := p.getBoolAttribute(label.SuffixFrontendRedirectPermanent, tags, false)
+
 	if p.hasAttribute(label.SuffixFrontendRedirectEntryPoint, tags) {
 		return &types.Redirect{
 			EntryPoint: p.getAttribute(label.SuffixFrontendRedirectEntryPoint, tags, ""),
+			Permanent:  permanent,
 		}
 	}
 
@@ -322,6 +325,7 @@ func (p *Provider) getRedirect(tags []string) *types.Redirect {
 		return &types.Redirect{
 			Regex:       p.getAttribute(label.SuffixFrontendRedirectRegex, tags, ""),
 			Replacement: p.getAttribute(label.SuffixFrontendRedirectReplacement, tags, ""),
+			Permanent:   permanent,
 		}
 	}
 

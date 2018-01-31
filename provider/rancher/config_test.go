@@ -64,6 +64,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendRedirectEntryPoint:   "https",
 						label.TraefikFrontendRedirectRegex:        "nope",
 						label.TraefikFrontendRedirectReplacement:  "nope",
+						label.TraefikFrontendRedirectPermanent:    "true",
 						label.TraefikFrontendRule:                 "Host:traefik.io",
 						label.TraefikFrontendWhitelistSourceRange: "10.10.10.10",
 
@@ -199,6 +200,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						EntryPoint:  "https",
 						Regex:       "",
 						Replacement: "",
+						Permanent:   true,
 					},
 				},
 			},
@@ -1042,6 +1044,21 @@ func TestGetRedirect(t *testing.T) {
 			},
 		},
 		{
+			desc: "should return a struct when entry point redirect label (permanent)",
+			service: rancherData{
+				Labels: map[string]string{
+					label.TraefikFrontendRedirectEntryPoint: "https",
+					label.TraefikFrontendRedirectPermanent:  "true",
+				},
+				Health: "healthy",
+				State:  "active",
+			},
+			expected: &types.Redirect{
+				EntryPoint: "https",
+				Permanent:  true,
+			},
+		},
+		{
 			desc: "should return a struct when regex redirect labels",
 			service: rancherData{
 				Labels: map[string]string{
@@ -1054,6 +1071,23 @@ func TestGetRedirect(t *testing.T) {
 			expected: &types.Redirect{
 				Regex:       "(.*)",
 				Replacement: "$1",
+			},
+		},
+		{
+			desc: "should return a struct when regex redirect labels (permanent)",
+			service: rancherData{
+				Labels: map[string]string{
+					label.TraefikFrontendRedirectRegex:       "(.*)",
+					label.TraefikFrontendRedirectReplacement: "$1",
+					label.TraefikFrontendRedirectPermanent:   "true",
+				},
+				Health: "healthy",
+				State:  "active",
+			},
+			expected: &types.Redirect{
+				Regex:       "(.*)",
+				Replacement: "$1",
+				Permanent:   true,
 			},
 		},
 	}

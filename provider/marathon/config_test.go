@@ -204,6 +204,7 @@ func TestBuildConfigurationNonAPIErrors(t *testing.T) {
 				withLabel(label.TraefikFrontendRedirectEntryPoint, "https"),
 				withLabel(label.TraefikFrontendRedirectRegex, "nope"),
 				withLabel(label.TraefikFrontendRedirectReplacement, "nope"),
+				withLabel(label.TraefikFrontendRedirectPermanent, "true"),
 				withLabel(label.TraefikFrontendRule, "Host:traefik.io"),
 				withLabel(label.TraefikFrontendWhitelistSourceRange, "10.10.10.10"),
 
@@ -342,6 +343,7 @@ func TestBuildConfigurationNonAPIErrors(t *testing.T) {
 					},
 					Redirect: &types.Redirect{
 						EntryPoint: "https",
+						Permanent:  true,
 					},
 				},
 			},
@@ -524,6 +526,7 @@ func TestBuildConfigurationServicesNonAPIErrors(t *testing.T) {
 				withServiceLabel(label.TraefikFrontendRedirectEntryPoint, "https", "containous"),
 				withServiceLabel(label.TraefikFrontendRedirectRegex, "nope", "containous"),
 				withServiceLabel(label.TraefikFrontendRedirectReplacement, "nope", "containous"),
+				withServiceLabel(label.TraefikFrontendRedirectPermanent, "true", "containous"),
 				withServiceLabel(label.TraefikFrontendRule, "Host:traefik.io", "containous"),
 				withServiceLabel(label.TraefikFrontendWhitelistSourceRange, "10.10.10.10", "containous"),
 
@@ -661,6 +664,7 @@ func TestBuildConfigurationServicesNonAPIErrors(t *testing.T) {
 					},
 					Redirect: &types.Redirect{
 						EntryPoint: "https",
+						Permanent:  true,
 					},
 				},
 			},
@@ -1699,6 +1703,18 @@ func TestGetRedirect(t *testing.T) {
 			},
 		},
 		{
+			desc: "should return a struct when entry point redirect label (permanent)",
+			application: application(
+				appPorts(80),
+				withLabel(label.TraefikFrontendRedirectEntryPoint, "https"),
+				withLabel(label.TraefikFrontendRedirectPermanent, "true"),
+			),
+			expected: &types.Redirect{
+				EntryPoint: "https",
+				Permanent:  true,
+			},
+		},
+		{
 			desc: "should return a struct when regex redirect labels",
 			application: application(
 				appPorts(80),
@@ -1746,6 +1762,21 @@ func TestGetRedirect(t *testing.T) {
 			expected: &types.Redirect{
 				Regex:       "(.*)",
 				Replacement: "$1",
+			},
+		},
+		{
+			desc: "should return a struct when regex redirect labels on service (permanent)",
+			application: application(
+				appPorts(80),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendRedirectRegex, "(.*)"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendRedirectReplacement, "$1"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendRedirectPermanent, "true"),
+			),
+			serviceName: "containous",
+			expected: &types.Redirect{
+				Regex:       "(.*)",
+				Replacement: "$1",
+				Permanent:   true,
 			},
 		},
 	}

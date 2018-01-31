@@ -146,6 +146,7 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel(label.TraefikFrontendRedirectEntryPoint, "https"),
 					withLabel(label.TraefikFrontendRedirectRegex, "nope"),
 					withLabel(label.TraefikFrontendRedirectReplacement, "nope"),
+					withLabel(label.TraefikFrontendRedirectPermanent, "true"),
 					withLabel(label.TraefikFrontendRule, "Host:traefik.io"),
 					withLabel(label.TraefikFrontendWhitelistSourceRange, "10.10.10.10"),
 
@@ -283,6 +284,7 @@ func TestBuildConfiguration(t *testing.T) {
 						EntryPoint:  "https",
 						Regex:       "",
 						Replacement: "",
+						Permanent:   true,
 					},
 				},
 			},
@@ -992,6 +994,20 @@ func TestGetRedirect(t *testing.T) {
 			},
 		},
 		{
+			desc: "should return a struct when entry point redirect label (permanent)",
+			task: aTask("ID1",
+				withLabel(label.TraefikFrontendRedirectEntryPoint, "https"),
+				withLabel(label.TraefikFrontendRedirectPermanent, "true"),
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: &types.Redirect{
+				EntryPoint: "https",
+				Permanent:  true,
+			},
+		},
+		{
 			desc: "should return a struct when regex redirect labels",
 			task: aTask("ID1",
 				withLabel(label.TraefikFrontendRedirectRegex, "(.*)"),
@@ -1003,6 +1019,22 @@ func TestGetRedirect(t *testing.T) {
 			expected: &types.Redirect{
 				Regex:       "(.*)",
 				Replacement: "$1",
+			},
+		},
+		{
+			desc: "should return a struct when regex redirect labels (permanent)",
+			task: aTask("ID1",
+				withLabel(label.TraefikFrontendRedirectRegex, "(.*)"),
+				withLabel(label.TraefikFrontendRedirectReplacement, "$1"),
+				withLabel(label.TraefikFrontendRedirectPermanent, "true"),
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: &types.Redirect{
+				Regex:       "(.*)",
+				Replacement: "$1",
+				Permanent:   true,
 			},
 		},
 	}

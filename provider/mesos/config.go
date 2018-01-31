@@ -338,9 +338,12 @@ func (p *Provider) getServers(tasks []state.Task) map[string]types.Server {
 }
 
 func getRedirect(task state.Task) *types.Redirect {
+	permanent := getBoolValue(task, label.TraefikFrontendRedirectPermanent, false)
+
 	if hasLabel(task, label.TraefikFrontendRedirectEntryPoint) {
 		return &types.Redirect{
 			EntryPoint: getStringValue(task, label.TraefikFrontendRedirectEntryPoint, ""),
+			Permanent:  permanent,
 		}
 	}
 
@@ -349,6 +352,7 @@ func getRedirect(task state.Task) *types.Redirect {
 		return &types.Redirect{
 			Regex:       getStringValue(task, label.TraefikFrontendRedirectRegex, ""),
 			Replacement: getStringValue(task, label.TraefikFrontendRedirectReplacement, ""),
+			Permanent:   permanent,
 		}
 	}
 

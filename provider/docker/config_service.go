@@ -100,9 +100,12 @@ func getServicePort(container dockerData, serviceName string) string {
 func getServiceRedirect(container dockerData, serviceName string) *types.Redirect {
 	serviceLabels := getServiceLabels(container, serviceName)
 
+	permanent := getServiceBoolValue(container, serviceLabels, label.SuffixFrontendRedirectPermanent, false)
+
 	if hasStrictServiceLabel(serviceLabels, label.SuffixFrontendRedirectEntryPoint) {
 		return &types.Redirect{
 			EntryPoint: getStrictServiceStringValue(serviceLabels, label.SuffixFrontendRedirectEntryPoint, label.DefaultFrontendRedirectEntryPoint),
+			Permanent:  permanent,
 		}
 	}
 
@@ -111,6 +114,7 @@ func getServiceRedirect(container dockerData, serviceName string) *types.Redirec
 		return &types.Redirect{
 			Regex:       getStrictServiceStringValue(serviceLabels, label.SuffixFrontendRedirectRegex, ""),
 			Replacement: getStrictServiceStringValue(serviceLabels, label.SuffixFrontendRedirectReplacement, ""),
+			Permanent:   permanent,
 		}
 	}
 

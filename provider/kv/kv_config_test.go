@@ -95,6 +95,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					withPair(pathFrontendRedirectEntryPoint, "https"),
 					withPair(pathFrontendRedirectRegex, "nope"),
 					withPair(pathFrontendRedirectReplacement, "nope"),
+					withPair(pathFrontendRedirectPermanent, "true"),
 					withErrorPage("foo", "error", "/test1", "500-501, 503-599"),
 					withErrorPage("bar", "error", "/test2", "400-405"),
 					withRateLimit("client.ip",
@@ -186,6 +187,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						BasicAuth:            []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 						Redirect: &types.Redirect{
 							EntryPoint: "https",
+							Permanent:  true,
 						},
 						Errors: map[string]*types.ErrorPage{
 							"foo": {
@@ -1045,6 +1047,18 @@ func TestProviderGetRedirect(t *testing.T) {
 			},
 		},
 		{
+			desc:     "should use entry point when entry point key is valued in the store (permanent)",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendRedirectEntryPoint, "https"),
+					withPair(pathFrontendRedirectPermanent, "true"))),
+			expected: &types.Redirect{
+				EntryPoint: "https",
+				Permanent:  true,
+			},
+		},
+		{
 			desc:     "should use regex when regex keys are valued in the store",
 			rootPath: "traefik/frontends/foo",
 			kvPairs: filler("traefik",
@@ -1054,6 +1068,20 @@ func TestProviderGetRedirect(t *testing.T) {
 			expected: &types.Redirect{
 				Regex:       "(.*)",
 				Replacement: "$1",
+			},
+		},
+		{
+			desc:     "should use regex when regex keys are valued in the store (permanent)",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendRedirectRegex, "(.*)"),
+					withPair(pathFrontendRedirectReplacement, "$1"),
+					withPair(pathFrontendRedirectPermanent, "true"))),
+			expected: &types.Redirect{
+				Regex:       "(.*)",
+				Replacement: "$1",
+				Permanent:   true,
 			},
 		},
 		{

@@ -199,6 +199,7 @@ The following labels can be defined on Marathon applications. They adjust the be
 | `traefik.frontend.redirect.entryPoint=https`               | Enables Redirect to another entryPoint for that frontend (e.g. HTTPS)                                                                                                                                                  |
 | `traefik.frontend.redirect.regex=^http://localhost/(.*)`   | Redirect to another URL for that frontend.<br>Must be set with `traefik.frontend.redirect.replacement`.                                                                                                                |
 | `traefik.frontend.redirect.replacement=http://mydomain/$1` | Redirect to another URL for that frontend.<br>Must be set with `traefik.frontend.redirect.regex`.                                                                                                                      |
+| `traefik.frontend.redirect.permanent=true`                 | Return 301 instead of 302.                                                                                                                                                                                           |
 | `traefik.frontend.rule=EXPR`                               | Override the default frontend rule. Default: `Host:{sub_domain}.{domain}`.                                                                                                                                             |
 | `traefik.frontend.whitelistSourceRange=RANGE`              | List of IP-Ranges which are allowed to access.<br>An unset or empty list allows all Source-IPs to access. If one of the Net-Specifications are invalid, the whole list is invalid and allows all Source-IPs to access. |
 
@@ -253,6 +254,7 @@ For applications that expose multiple ports, specific labels can be used to extr
 | `traefik.<service-name>.frontend.redirect.entryPoint=https`               | Overrides `traefik.frontend.redirect.entryPoint`.                                                    |
 | `traefik.<service-name>.frontend.redirect.regex=^http://localhost/(.*)`   | Overrides `traefik.frontend.redirect.regex`.                                                         |
 | `traefik.<service-name>.frontend.redirect.replacement=http://mydomain/$1` | Overrides `traefik.frontend.redirect.replacement`.                                                   |
+| `traefik.<service-name>.frontend.redirect.permanent=true`                 | Return 301 instead of 302.                                                                         |
 | `traefik.<service-name>.frontend.rule=EXP`                                | Overrides `traefik.frontend.rule`. Default: `{service_name}.{sub_domain}.{domain}`                   |
 | `traefik.<service-name>.frontend.whitelistSourceRange=RANGE`              | Overrides `traefik.frontend.whitelistSourceRange`.                                                   |
 

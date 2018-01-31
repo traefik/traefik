@@ -86,6 +86,7 @@
       entryPoint = "{{ $redirect.EntryPoint }}"
       regex = "{{ $redirect.Regex }}"
       replacement = "{{ $redirect.Replacement }}"
+      permanent = {{ $redirect.Permanent }}
     {{end}}
 
     {{ $errorPages := getErrorPages $app }}

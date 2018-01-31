@@ -273,9 +273,12 @@ func getServers(service rancherData) map[string]types.Server {
 }
 
 func getRedirect(service rancherData) *types.Redirect {
+	permanent := label.GetBoolValue(service.Labels, label.TraefikFrontendRedirectPermanent, false)
+
 	if label.Has(service.Labels, label.TraefikFrontendRedirectEntryPoint) {
 		return &types.Redirect{
 			EntryPoint: label.GetStringValue(service.Labels, label.TraefikFrontendRedirectEntryPoint, ""),
+			Permanent:  permanent,
 		}
 	}
 
@@ -284,6 +287,7 @@ func getRedirect(service rancherData) *types.Redirect {
 		return &types.Redirect{
 			Regex:       label.GetStringValue(service.Labels, label.TraefikFrontendRedirectRegex, ""),
 			Replacement: label.GetStringValue(service.Labels, label.TraefikFrontendRedirectReplacement, ""),
+			Permanent:   permanent,
 		}
 	}
 

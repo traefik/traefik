@@ -1084,6 +1084,17 @@ func TestProviderGetRedirect(t *testing.T) {
 			},
 		},
 		{
+			desc: "should return a struct when entry point redirect tags (permanent)",
+			tags: []string{
+				label.TraefikFrontendRedirectEntryPoint + "=https",
+				label.TraefikFrontendRedirectPermanent + "=true",
+			},
+			expected: &types.Redirect{
+				EntryPoint: "https",
+				Permanent:  true,
+			},
+		},
+		{
 			desc: "should return a struct when regex redirect tags",
 			tags: []string{
 				label.TraefikFrontendRedirectRegex + "=(.*)",
@@ -1092,6 +1103,19 @@ func TestProviderGetRedirect(t *testing.T) {
 			expected: &types.Redirect{
 				Regex:       "(.*)",
 				Replacement: "$1",
+			},
+		},
+		{
+			desc: "should return a struct when regex redirect tags (permanent)",
+			tags: []string{
+				label.TraefikFrontendRedirectRegex + "=(.*)",
+				label.TraefikFrontendRedirectReplacement + "=$1",
+				label.TraefikFrontendRedirectPermanent + "=true",
+			},
+			expected: &types.Redirect{
+				Regex:       "(.*)",
+				Replacement: "$1",
+				Permanent:   true,
 			},
 		},
 	}

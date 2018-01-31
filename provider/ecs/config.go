@@ -212,16 +212,21 @@ func getServers(instances []ecsInstance) map[string]types.Server {
 }
 
 func getRedirect(instance ecsInstance) *types.Redirect {
+	permanent := getBoolValue(instance, label.TraefikFrontendRedirectPermanent, false)
+
 	if hasLabel(instance, label.TraefikFrontendRedirectEntryPoint) {
 		return &types.Redirect{
 			EntryPoint: getStringValue(instance, label.TraefikFrontendRedirectEntryPoint, ""),
+			Permanent:  permanent,
 		}
 	}
+
 	if hasLabel(instance, label.TraefikFrontendRedirectRegex) &&
 		hasLabel(instance, label.TraefikFrontendRedirectReplacement) {
 		return &types.Redirect{
 			Regex:       getStringValue(instance, label.TraefikFrontendRedirectRegex, ""),
 			Replacement: getStringValue(instance, label.TraefikFrontendRedirectReplacement, ""),
+			Permanent:   permanent,
 		}
 	}
 

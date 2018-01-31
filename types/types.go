@@ -171,6 +171,7 @@ type Redirect struct {
 	EntryPoint  string `json:"entryPoint,omitempty"`
 	Regex       string `json:"regex,omitempty"`
 	Replacement string `json:"replacement,omitempty"`
+	Permanent   bool   `json:"permanent,omitempty"`
 }
 
 // LoadBalancerMethod holds the method of load balancing to use.

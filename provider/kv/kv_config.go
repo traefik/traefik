@@ -108,9 +108,12 @@ func (p *Provider) getStickinessCookieName(rootPath string) string {
 }
 
 func (p *Provider) getRedirect(rootPath string) *types.Redirect {
+	permanent := p.getBool(false, rootPath, pathFrontendRedirectPermanent)
+
 	if p.has(rootPath, pathFrontendRedirectEntryPoint) {
 		return &types.Redirect{
 			EntryPoint: p.get("", rootPath, pathFrontendRedirectEntryPoint),
+			Permanent:  permanent,
 		}
 	}
 
@@ -118,6 +121,7 @@ func (p *Provider) getRedirect(rootPath string) *types.Redirect {
 		return &types.Redirect{
 			Regex:       p.get("", rootPath, pathFrontendRedirectRegex),
 			Replacement: p.get("", rootPath, pathFrontendRedirectReplacement),
+			Permanent:   permanent,
 		}
 	}
 

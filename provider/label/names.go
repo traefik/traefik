@@ -62,6 +62,7 @@ const (
 	SuffixFrontendRedirectEntryPoint               = "frontend.redirect.entryPoint"
 	SuffixFrontendRedirectRegex                    = "frontend.redirect.regex"
 	SuffixFrontendRedirectReplacement              = "frontend.redirect.replacement"
+	SuffixFrontendRedirectPermanent                = "frontend.redirect.permanent"
 	SuffixFrontendRule                             = "frontend.rule"
 	SuffixFrontendRuleType                         = "frontend.rule.type"
 	SuffixFrontendWhitelistSourceRange             = "frontend.whitelistSourceRange"
@@ -102,6 +103,7 @@ const (
 	TraefikFrontendRedirectEntryPoint              = Prefix + SuffixFrontendRedirectEntryPoint
 	TraefikFrontendRedirectRegex                   = Prefix + SuffixFrontendRedirectRegex
 	TraefikFrontendRedirectReplacement             = Prefix + SuffixFrontendRedirectReplacement
+	TraefikFrontendRedirectPermanent               = Prefix + SuffixFrontendRedirectPermanent
 	TraefikFrontendRule                            = Prefix + SuffixFrontendRule
 	TraefikFrontendRuleType                        = Prefix + SuffixFrontendRuleType // k8s only
 	TraefikFrontendWhitelistSourceRange            = Prefix + SuffixFrontendWhitelistSourceRange
