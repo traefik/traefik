@@ -616,7 +616,7 @@ func TestIngressAnnotations(t *testing.T) {
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesPreserveHost, "true"),
-			iAnnotation(annotationKubernetesIngressClass, traefikDefaultAnnotationValue),
+			iAnnotation(annotationKubernetesIngressClass, traefikDefaultRealm),
 			iRules(
 				iRule(
 					iHost("other"),
@@ -626,7 +626,7 @@ func TestIngressAnnotations(t *testing.T) {
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesPassTLSCert, "true"),
-			iAnnotation(annotationKubernetesIngressClass, traefikDefaultAnnotationValue),
+			iAnnotation(annotationKubernetesIngressClass, traefikDefaultRealm),
 			iRules(
 				iRule(
 					iHost("other"),
@@ -636,7 +636,7 @@ func TestIngressAnnotations(t *testing.T) {
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesFrontendEntryPoints, "http,https"),
-			iAnnotation(annotationKubernetesIngressClass, traefikDefaultAnnotationValue),
+			iAnnotation(annotationKubernetesIngressClass, traefikDefaultRealm),
 			iRules(
 				iRule(
 					iHost("other"),
@@ -655,7 +655,7 @@ func TestIngressAnnotations(t *testing.T) {
 		),
 		buildIngress(
 			iNamespace("testing"),
-			iAnnotation(annotationKubernetesIngressClass, traefikDefaultAnnotationValue+"-other"),
+			iAnnotation(annotationKubernetesIngressClass, traefikDefaultRealm+"-other"),
 			iRules(
 				iRule(
 					iHost("herp"),
@@ -1003,8 +1003,7 @@ func TestIngressClassAnnotation(t *testing.T) {
 	ingresses := []*v1beta1.Ingress{
 		buildIngress(
 			iNamespace("testing"),
-			iAnnotation(label.TraefikFrontendPassHostHeader, "true"),
-			iAnnotation(annotationKubernetesIngressClass, traefikDefaultAnnotationValue),
+			iAnnotation(annotationKubernetesIngressClass, traefikDefaultIngressClass),
 			iRules(
 				iRule(
 					iHost("other"),
@@ -1013,7 +1012,6 @@ func TestIngressClassAnnotation(t *testing.T) {
 		),
 		buildIngress(
 			iNamespace("testing"),
-			iAnnotation(label.TraefikFrontendPassTLSCert, "true"),
 			iAnnotation(annotationKubernetesIngressClass, ""),
 			iRules(
 				iRule(
@@ -1031,11 +1029,11 @@ func TestIngressClassAnnotation(t *testing.T) {
 		),
 		buildIngress(
 			iNamespace("testing"),
-			iAnnotation(annotationKubernetesIngressClass, traefikDefaultAnnotationValue+"-other"),
+			iAnnotation(annotationKubernetesIngressClass, traefikDefaultIngressClass+"-other"),
 			iRules(
 				iRule(
 					iHost("herp"),
-					iPaths(onePath(iPath("/derp"), iBackend("service2", intstr.FromInt(80))))),
+					iPaths(onePath(iPath("/derp"), iBackend("service1", intstr.FromInt(80))))),
 			),
 		),
 	}
@@ -1050,14 +1048,6 @@ func TestIngressClassAnnotation(t *testing.T) {
 				sType("ExternalName"),
 				sExternalName("example.com"),
 				sPorts(sPort(80, "http"))),
-		),
-		buildService(
-			sName("service2"),
-			sNamespace("testing"),
-			sUID("2"),
-			sSpec(
-				clusterIP("10.0.0.2"),
-				sPorts(sPort(802, ""))),
 		),
 	}
 
@@ -1099,23 +1089,19 @@ func TestIngressClassAnnotation(t *testing.T) {
 				),
 				frontends(
 					frontend("other/stuff",
-						headers(),
 						passHostHeader(),
 						routes(
 							route("/stuff", "PathPrefix:/stuff"),
 							route("other", "Host:other")),
 					),
 					frontend("other/",
-						headers(),
 						passHostHeader(),
 						routes(
 							route("/", "PathPrefix:/"),
 							route("other", "Host:other")),
 					),
 					frontend("other/sslstuff",
-						headers(),
 						passHostHeader(),
-						passTLSCert(),
 						routes(
 							route("/sslstuff", "PathPrefix:/sslstuff"),
 							route("other", "Host:other")),
@@ -1125,17 +1111,18 @@ func TestIngressClassAnnotation(t *testing.T) {
 		},
 		{
 			desc:     "Provided IngressClass annotation",
-			provider: Provider{IngressClass: traefikDefaultAnnotationValue + "-other"},
+			provider: Provider{IngressClass: traefikDefaultRealm + "-other"},
 			expected: buildConfiguration(
 				backends(
 					backend("herp/derp",
-						servers(),
+						servers(
+							server("http://example.com", weight(1)),
+							server("http://example.com", weight(1))),
 						lbMethod("wrr"),
 					),
 				),
 				frontends(
 					frontend("herp/derp",
-						headers(),
 						passHostHeader(),
 						routes(
 							route("/derp", "PathPrefix:/derp"),
