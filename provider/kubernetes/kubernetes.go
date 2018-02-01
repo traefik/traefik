@@ -30,11 +30,8 @@ import (
 var _ provider.Provider = (*Provider)(nil)
 
 const (
-	ruleTypePathPrefix  = "PathPrefix"
-	ruleTypeReplacePath = "ReplacePath"
-)
-
-const (
+	ruleTypePathPrefix         = "PathPrefix"
+	ruleTypeReplacePath        = "ReplacePath"
 	traefikDefaultRealm        = "traefik"
 	traefikDefaultIngressClass = "traefik"
 )
