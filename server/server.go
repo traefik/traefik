@@ -826,7 +826,7 @@ func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.
 
 	var connStateListener func(net.Conn, http.ConnState)
 
-	if (s.globalConfiguration.Web) != nil {
+	if (s.globalConfiguration.API) != nil {
 		connStateListener = newConnChangeListener(s.globalConfiguration.API.StatsRecorder)
 	}
 
