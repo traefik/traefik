@@ -616,7 +616,7 @@ func TestIngressAnnotations(t *testing.T) {
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesPreserveHost, "true"),
-			iAnnotation(annotationKubernetesIngressClass, "traefik"),
+			iAnnotation(annotationKubernetesIngressClass, traefikDefaultRealm),
 			iRules(
 				iRule(
 					iHost("other"),
@@ -626,7 +626,7 @@ func TestIngressAnnotations(t *testing.T) {
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesPassTLSCert, "true"),
-			iAnnotation(annotationKubernetesIngressClass, "traefik"),
+			iAnnotation(annotationKubernetesIngressClass, traefikDefaultRealm),
 			iRules(
 				iRule(
 					iHost("other"),
@@ -636,7 +636,7 @@ func TestIngressAnnotations(t *testing.T) {
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesFrontendEntryPoints, "http,https"),
-			iAnnotation(annotationKubernetesIngressClass, "traefik"),
+			iAnnotation(annotationKubernetesIngressClass, traefikDefaultRealm),
 			iRules(
 				iRule(
 					iHost("other"),
@@ -655,7 +655,7 @@ func TestIngressAnnotations(t *testing.T) {
 		),
 		buildIngress(
 			iNamespace("testing"),
-			iAnnotation(annotationKubernetesIngressClass, "somethingOtherThanTraefik"),
+			iAnnotation(annotationKubernetesIngressClass, traefikDefaultRealm+"-other"),
 			iRules(
 				iRule(
 					iHost("herp"),
@@ -664,7 +664,6 @@ func TestIngressAnnotations(t *testing.T) {
 		),
 		buildIngress(
 			iNamespace("testing"),
-			iAnnotation(annotationKubernetesIngressClass, "traefik"),
 			iAnnotation(annotationKubernetesWhitelistSourceRange, "1.1.1.1/24, 1234:abcd::42/32"),
 			iRules(
 				iRule(
@@ -692,7 +691,6 @@ func TestIngressAnnotations(t *testing.T) {
 		),
 		buildIngress(
 			iNamespace("testing"),
-			iAnnotation(annotationKubernetesIngressClass, "traefik"),
 			iAnnotation(annotationKubernetesRedirectEntryPoint, "https"),
 			iRules(
 				iRule(
@@ -790,14 +788,16 @@ rateset:
 		),
 	}
 
-	secrets := []*v1.Secret{{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      "mySecret",
-			UID:       "1",
-			Namespace: "testing",
+	secrets := []*v1.Secret{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "mySecret",
+				UID:       "1",
+				Namespace: "testing",
+			},
+			Data: map[string][]byte{"auth": []byte("myUser:myEncodedPW")},
 		},
-		Data: map[string][]byte{"auth": []byte("myUser:myEncodedPW")},
-	}}
+	}
 
 	watchChan := make(chan interface{})
 	client := clientMock{
@@ -997,6 +997,153 @@ rateset:
 	)
 
 	assert.Equal(t, expected, actual)
+}
+
+func TestIngressClassAnnotation(t *testing.T) {
+	ingresses := []*v1beta1.Ingress{
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesIngressClass, traefikDefaultIngressClass),
+			iRules(
+				iRule(
+					iHost("other"),
+					iPaths(onePath(iPath("/stuff"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesIngressClass, ""),
+			iRules(
+				iRule(
+					iHost("other"),
+					iPaths(onePath(iPath("/sslstuff"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iRules(
+				iRule(
+					iHost("other"),
+					iPaths(onePath(iPath("/"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesIngressClass, traefikDefaultIngressClass+"-other"),
+			iRules(
+				iRule(
+					iHost("herp"),
+					iPaths(onePath(iPath("/derp"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+	}
+
+	services := []*v1.Service{
+		buildService(
+			sName("service1"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sType("ExternalName"),
+				sExternalName("example.com"),
+				sPorts(sPort(80, "http"))),
+		),
+	}
+
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		watchChan: watchChan,
+	}
+
+	testCases := []struct {
+		desc     string
+		provider Provider
+		expected *types.Configuration
+	}{
+		{
+			desc:     "Empty IngressClass annotation",
+			provider: Provider{},
+			expected: buildConfiguration(
+				backends(
+					backend("other/stuff",
+						servers(
+							server("http://example.com", weight(1)),
+							server("http://example.com", weight(1))),
+						lbMethod("wrr"),
+					),
+					backend("other/",
+						servers(
+							server("http://example.com", weight(1)),
+							server("http://example.com", weight(1))),
+						lbMethod("wrr"),
+					),
+					backend("other/sslstuff",
+						servers(
+							server("http://example.com", weight(1)),
+							server("http://example.com", weight(1))),
+						lbMethod("wrr"),
+					),
+				),
+				frontends(
+					frontend("other/stuff",
+						passHostHeader(),
+						routes(
+							route("/stuff", "PathPrefix:/stuff"),
+							route("other", "Host:other")),
+					),
+					frontend("other/",
+						passHostHeader(),
+						routes(
+							route("/", "PathPrefix:/"),
+							route("other", "Host:other")),
+					),
+					frontend("other/sslstuff",
+						passHostHeader(),
+						routes(
+							route("/sslstuff", "PathPrefix:/sslstuff"),
+							route("other", "Host:other")),
+					),
+				),
+			),
+		},
+		{
+			desc:     "Provided IngressClass annotation",
+			provider: Provider{IngressClass: traefikDefaultRealm + "-other"},
+			expected: buildConfiguration(
+				backends(
+					backend("herp/derp",
+						servers(
+							server("http://example.com", weight(1)),
+							server("http://example.com", weight(1))),
+						lbMethod("wrr"),
+					),
+				),
+				frontends(
+					frontend("herp/derp",
+						passHostHeader(),
+						routes(
+							route("/derp", "PathPrefix:/derp"),
+							route("herp", "Host:herp")),
+					),
+				),
+			),
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual, err := test.provider.loadIngresses(client)
+			require.NoError(t, err, "error loading ingresses")
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
 }
 
 func TestPriorityHeaderValue(t *testing.T) {

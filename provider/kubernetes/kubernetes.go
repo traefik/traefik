@@ -30,10 +30,10 @@ import (
 var _ provider.Provider = (*Provider)(nil)
 
 const (
-	ruleTypePathPrefix  = "PathPrefix"
-	ruleTypeReplacePath = "ReplacePath"
-
-	traefikDefaultRealm = "traefik"
+	ruleTypePathPrefix         = "PathPrefix"
+	ruleTypeReplacePath        = "ReplacePath"
+	traefikDefaultRealm        = "traefik"
+	traefikDefaultIngressClass = "traefik"
 )
 
 // Provider holds configurations of the provider.
@@ -46,6 +46,7 @@ type Provider struct {
 	EnablePassTLSCert      bool       `description:"Kubernetes enable Pass TLS Client Certs" export:"true"`
 	Namespaces             Namespaces `description:"Kubernetes namespaces" export:"true"`
 	LabelSelector          string     `description:"Kubernetes api label selector to use" export:"true"`
+	IngressClass           string     `description:"Value of kubernetes.io/ingress.class annotation to watch for" export:"true"`
 	lastConfiguration      safe.Safe
 }
 
@@ -74,6 +75,12 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	err := flag.Set("logtostderr", "true")
 	if err != nil {
 		return err
+	}
+
+	// We require that IngressClasses start with `traefik` to reduce chances of
+	// conflict with other Ingress Providers
+	if len(p.IngressClass) > 0 && !strings.HasPrefix(p.IngressClass, traefikDefaultIngressClass) {
+		return fmt.Errorf("value for IngressClass has to be empty or start with the prefix %q, instead found %q", traefikDefaultIngressClass, p.IngressClass)
 	}
 
 	k8sClient, err := p.newK8sClient()
@@ -147,7 +154,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 		annotationIngressClass := getAnnotationName(i.Annotations, annotationKubernetesIngressClass)
 		ingressClass := i.Annotations[annotationIngressClass]
 
-		if !shouldProcessIngress(ingressClass) {
+		if !p.shouldProcessIngress(ingressClass) {
 			continue
 		}
 
@@ -451,8 +458,11 @@ func equalPorts(servicePort v1.ServicePort, ingressPort intstr.IntOrString) bool
 	return false
 }
 
-func shouldProcessIngress(ingressClass string) bool {
-	return ingressClass == "" || ingressClass == "traefik"
+func (p *Provider) shouldProcessIngress(annotationIngressClass string) bool {
+	if len(p.IngressClass) == 0 {
+		return len(annotationIngressClass) == 0 || annotationIngressClass == traefikDefaultIngressClass
+	}
+	return annotationIngressClass == p.IngressClass
 }
 
 func getFrontendRedirect(i *v1beta1.Ingress) *types.Redirect {

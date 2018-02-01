@@ -130,8 +130,6 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	//default Kubernetes
 	var defaultKubernetes kubernetes.Provider
 	defaultKubernetes.Watch = true
-	defaultKubernetes.Endpoint = ""
-	defaultKubernetes.LabelSelector = ""
 	defaultKubernetes.Constraints = types.Constraints{}
 
 	// default Mesos
