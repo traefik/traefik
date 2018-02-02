@@ -142,6 +142,19 @@ func (s *AcmeSuite) TestOnHostRuleRetrieveAcmeCertificateWithDynamicWildcard(c *
 	s.retrieveAcmeCertificate(c, testCase)
 }
 
+// Test Let's encrypt down
+func (s *AcmeSuite) TestNoValidLetsEncryptServer(c *check.C) {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/acme/wrong_acme.toml"))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// Expected traefik works
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 10*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+}
+
 // Doing an HTTPS request and test the response certificate
 func (s *AcmeSuite) retrieveAcmeCertificate(c *check.C, testCase AcmeTestCase) {
 	file := s.adaptFile(c, testCase.traefikConfFilePath, struct {

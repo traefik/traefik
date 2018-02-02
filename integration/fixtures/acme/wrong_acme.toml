@@ -2,9 +2,11 @@ logLevel = "DEBUG"
 
 defaultEntryPoints = ["http", "https"]
 
+[api]
+
 [entryPoints]
   [entryPoints.http]
-  address = ":8080"
+  address = ":8081"
   [entryPoints.https]
   address = ":5001"
     [entryPoints.https.tls]
@@ -14,9 +16,8 @@ defaultEntryPoints = ["http", "https"]
 email = "test@traefik.io"
 storage = "/dev/null"
 entryPoint = "https"
-onDemand = {{.OnDemand}}
-OnHostRule = {{.OnHostRule}}
-caServer = "http://{{.BoulderHost}}:4000/directory"
+OnHostRule = true
+caServer = "http://wrongurl:4000/directory"
 
 [file]
 
