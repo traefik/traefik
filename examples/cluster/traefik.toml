@@ -19,8 +19,7 @@ caServer = "http://traefik.boulder.com:4000/directory"
 entryPoint="http"
 
 
-[web]
-address = ":8080"
+[api]
 
 [docker]
 endpoint = "unix:///var/run/docker.sock"
