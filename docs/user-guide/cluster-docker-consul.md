@@ -35,14 +35,14 @@ TL;DR:
 
 ```shell    
 $ traefik \
-    --entrypoints=Name:http Address::80 Redirect.EntryPoint:https \
-    --entrypoints=Name:https Address::443 TLS \
+    --entrypoints='Name:http Address::80 Redirect.EntryPoint:https' \
+    --entrypoints='Name:https Address::443 TLS' \
     --defaultentrypoints=http,https
 ```
 
 To listen to different ports, we need to create an entry point for each.
 
-The CLI syntax is `--entrypoints=Name:a_name Address:an_ip_or_empty:a_port options`.
+The CLI syntax is `--entrypoints='Name:a_name Address:an_ip_or_empty:a_port options'`.
 If you want to redirect traffic from one entry point to another, it's the option `Redirect.EntryPoint:entrypoint_name`.
 
 By default, we don't want to configure all our services to listen on http and https, we add a default entry point configuration: `--defaultentrypoints=http,https`.
@@ -94,8 +94,8 @@ services:
     image: traefik:1.5
     command:
       - "--api"
-      - "--entrypoints=Name:http Address::80 Redirect.EntryPoint:https"
-      - "--entrypoints=Name:https Address::443 TLS"
+      - "--entrypoints='Name:http Address::80 Redirect.EntryPoint:https'"
+      - "--entrypoints='Name:https Address::443 TLS'"
       - "--defaultentrypoints=http,https"
       - "--acme"
       - "--acme.storage=/etc/traefik/acme/acme.json"
@@ -204,8 +204,8 @@ services:
     command:
       - "storeconfig"
       - "--api"
-      - "--entrypoints=Name:http Address::80 Redirect.EntryPoint:https"
-      - "--entrypoints=Name:https Address::443 TLS"
+      - "--entrypoints='Name:http Address::80 Redirect.EntryPoint:https'"
+      - "--entrypoints='Name:https Address::443 TLS'"
       - "--defaultentrypoints=http,https"
       - "--acme"
       - "--acme.storage=traefik/acme/account"
