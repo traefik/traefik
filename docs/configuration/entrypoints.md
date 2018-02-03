@@ -154,7 +154,7 @@ To redirect an entrypoint rewriting the URL.
 
 The syntax used by `regex` and `replacement` rules is different to the syntax used in [URL matchers](/basics/#matchers) (which uses gorilla/mux regex)
 
-Care should be taken when defining replacement expand variables: `$1x` is equivalent to `${1x}`, not `${1}x` [see Regexp.Expand](https://golang.org/pkg/regexp/#Regexp.Expand)
+Care should be taken when defining replacement expand variables: `$1x` is equivalent to `${1x}`, not `${1}x` [Regexp.Expand](https://golang.org/pkg/regexp/#Regexp.Expand)
 
 Regex expressions and replacements can be tested using online tools such as [Regex101](https://regex101.com/r/58sIgx/2) or the [Go Playground](https://play.golang.org/p/mWU9p-wk2ru)
 
