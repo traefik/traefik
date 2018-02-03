@@ -29,11 +29,13 @@ func (s *LogRotationSuite) TestAccessLogRotation(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 	defer display(c)
+	defer displayTraefikLogFile(c, traefikTestLogFile)
+
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
+
 	defer os.Remove(traefikTestAccessLogFile)
-	defer os.Remove(traefikTestLogFile)
 
 	// Verify Traefik started ok
 	verifyEmptyErrorLog(c, "traefik.log")
@@ -86,11 +88,13 @@ func (s *LogRotationSuite) TestTraefikLogRotation(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/traefik_log_config.toml"))
 	defer display(c)
+	defer displayTraefikLogFile(c, traefikTestLogFile)
+
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
+
 	defer os.Remove(traefikTestAccessLogFile)
-	defer os.Remove(traefikTestLogFile)
 
 	waitForTraefik(c, "server1")
 
