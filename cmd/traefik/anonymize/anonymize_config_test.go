@@ -44,7 +44,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 	config.LogLevel = "LogLevel"
 	config.EntryPoints = configuration.EntryPoints{
 		"foo": {
-			Network: "foo Network",
 			Address: "foo Address",
 			TLS: &traefikTls.TLS{
 				MinVersion:   "foo MinVersion",
@@ -90,7 +89,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 			},
 		},
 		"fii": {
-			Network: "fii Network",
 			Address: "fii Address",
 			TLS: &traefikTls.TLS{
 				MinVersion:   "fii MinVersion",

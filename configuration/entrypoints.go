@@ -11,7 +11,6 @@ import (
 
 // EntryPoint holds an entry point configuration of the reverse proxy (ip, port, TLS...)
 type EntryPoint struct {
-	Network              string
 	Address              string
 	TLS                  *tls.TLS        `export:"true"`
 	Redirect             *types.Redirect `export:"true"`
