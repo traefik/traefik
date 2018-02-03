@@ -1,4 +1,4 @@
-﻿# Entry Points Definition
+# Entry Points Definition
 
 ## Reference
 
