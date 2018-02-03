@@ -152,13 +152,11 @@ To redirect an entrypoint rewriting the URL.
 !!! note
     Please note that `regex` and `replacement` do not have to be set in the `redirect` structure if an entrypoint is defined for the redirection (they will not be used in this case).
 
-`regex` and `replacement` follow the rules as per [matchers](/basics/#matchers)
+The syntax used by `regex` and `replacement` rules is different to the syntax used in [URL matchers](/basics/#matchers) (which uses gorilla/mux regex)
 
-Specifically the `replacement` rule uses [Go Regexp.ReplaceAllString](https://golang.org/pkg/regexp/#Regexp.ReplaceAllString)
+Care should be taken when defining replacement expand variables: `$1x` is equivalent to `${1x}`, not `${1}x` [see Regexp.Expand](https://golang.org/pkg/regexp/#Regexp.Expand)
 
-Care should be taken when defining replacement expand variables; `$1x` is equivalent to `${1x}`, not `${1}x` [see Regexp.Expand](https://golang.org/pkg/regexp/#Regexp.Expand)
-
-Regex expressions and replacements can be tested using the [Go Playground](https://play.golang.org/p/mWU9p-wk2ru)
+Regex expressions and replacements can be tested using online tools such as [Regex101](https://regex101.com/r/58sIgx/2) or the [Go Playground](https://play.golang.org/p/mWU9p-wk2ru)
 
 ## TLS
 
