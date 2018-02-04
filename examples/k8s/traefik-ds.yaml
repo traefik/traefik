@@ -35,7 +35,7 @@ spec:
           privileged: true
         args:
         - -d
-        - --web
+        - --api
         - --kubernetes
 ---
 kind: Service
