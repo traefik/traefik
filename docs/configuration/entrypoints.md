@@ -2,6 +2,8 @@
 
 ## Reference
 
+### TOML
+
 ```toml
 [entryPoints]
   [entryPoints.http]
@@ -63,6 +65,37 @@
     # ...
 ```
 
+### CLI
+
+For more information about the CLI, see the documentation about [Traefik command](/basics/#traefik).
+
+```shell
+--entryPoints='Name:http Address::80'
+--entryPoints='Name:https Address::443 TLS'
+```
+
+!!! note
+    Whitespace is used as option separator and `,` is used as value separator for the list.  
+    The names of the options are case-insensitive.
+
+All available options:
+
+```ini
+Name:foo
+Address::80
+TLS:goo,gii
+TLS
+CA:car
+CA.Optional:true
+Redirect.EntryPoint:https
+Redirect.Regex:http://localhost/(.*)
+Redirect.Replacement:http://mydomain/$1
+Compress:true
+WhiteListSourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16
+ProxyProtocol.TrustedIPs:192.168.0.1
+ProxyProtocol.Insecure:tue
+ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24
+```
 
 ## Basic
 
