@@ -334,7 +334,8 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, certs *safe.Safe, checkO
 
 	a.client, err = a.buildACMEClient(account)
 	if err != nil {
-		log.Errorf("Failed to build ACME Client: %s", err)
+		log.Errorf(`Failed to build ACME client: %s
+Let's Encrypt functionality will be limited until traefik is restarted.`, err)
 		return nil
 	}
 

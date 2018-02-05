@@ -144,10 +144,17 @@ entryPoint = "https"
     If `HTTP-01` challenge is used, `acme.httpChallenge.entryPoint` has to be defined and reachable by Let's Encrypt through the port 80.
     These are Let's Encrypt limitations as described on the [community forum](https://community.letsencrypt.org/t/support-for-ports-other-than-80-and-443/3419/72).
 
-!!! note
-    If Let's Encrypt is down when Træfik is started, already generated certificates will be used, but certificates will not be renewed, and no new certificate will be generated.
-    Træfik needs to be restarted when Let's Encrypt is back.
+### Let's Encrypt downtime
 
+Let's Encrypt functionality will be limited until Træfik is restarted.
+
+If Let's Encrypt is not reachable, these certificates will be used :
+  - ACME certificates already generated before downtime,
+  - Expired ACME certificates,
+  - Provided certificates,
+
+!!! note
+ Default Træfik certificate will be used instead of ACME certificates for new (sub)domains (which need Let's Encrypt challenge).
 
 ### `storage`
 
