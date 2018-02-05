@@ -43,6 +43,11 @@ func (s *AccessLogSuite) SetUpSuite(c *check.C) {
 	s.composeProject.Container(c, "server3")
 }
 
+func (s *AccessLogSuite) TearDownTest(c *check.C) {
+	displayTraefikLogFile(c, traefikTestLogFile)
+	os.Remove(traefikTestAccessLogFile)
+}
+
 func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	// Ensure working directory is clean
 	ensureWorkingDirectoryIsClean()
@@ -50,13 +55,10 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 	defer display(c)
-	defer displayTraefikLogFile(c, traefikTestLogFile)
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-
-	defer os.Remove(traefikTestAccessLogFile)
 
 	waitForTraefik(c, "server1")
 
@@ -108,13 +110,10 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontend(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 	defer display(c)
-	defer displayTraefikLogFile(c, traefikTestLogFile)
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-
-	defer os.Remove(traefikTestAccessLogFile)
 
 	checkStatsForLogFile(c)
 
@@ -159,13 +158,10 @@ func (s *AccessLogSuite) TestAccessLogAuthEntrypoint(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 	defer display(c)
-	defer displayTraefikLogFile(c, traefikTestLogFile)
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-
-	defer os.Remove(traefikTestAccessLogFile)
 
 	checkStatsForLogFile(c)
 
@@ -210,13 +206,10 @@ func (s *AccessLogSuite) TestAccessLogAuthEntrypointSuccess(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 	defer display(c)
-	defer displayTraefikLogFile(c, traefikTestLogFile)
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-
-	defer os.Remove(traefikTestAccessLogFile)
 
 	checkStatsForLogFile(c)
 
@@ -268,13 +261,10 @@ func (s *AccessLogSuite) TestAccessLogDigestAuthEntrypoint(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 	defer display(c)
-	defer displayTraefikLogFile(c, traefikTestLogFile)
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-
-	defer os.Remove(traefikTestAccessLogFile)
 
 	checkStatsForLogFile(c)
 
@@ -375,13 +365,10 @@ func (s *AccessLogSuite) TestAccessLogEntrypointRedirect(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 	defer display(c)
-	defer displayTraefikLogFile(c, traefikTestLogFile)
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-
-	defer os.Remove(traefikTestAccessLogFile)
 
 	checkStatsForLogFile(c)
 
@@ -428,13 +415,10 @@ func (s *AccessLogSuite) TestAccessLogFrontendRedirect(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 	defer display(c)
-	defer displayTraefikLogFile(c, traefikTestLogFile)
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-
-	defer os.Remove(traefikTestAccessLogFile)
 
 	checkStatsForLogFile(c)
 
@@ -484,13 +468,10 @@ func (s *AccessLogSuite) TestAccessLogRateLimit(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 	defer display(c)
-	defer displayTraefikLogFile(c, traefikTestLogFile)
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-
-	defer os.Remove(traefikTestAccessLogFile)
 
 	checkStatsForLogFile(c)
 
@@ -538,13 +519,10 @@ func (s *AccessLogSuite) TestAccessLogBackendNotFound(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 	defer display(c)
-	defer displayTraefikLogFile(c, traefikTestLogFile)
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-
-	defer os.Remove(traefikTestAccessLogFile)
 
 	waitForTraefik(c, "server1")
 
@@ -586,13 +564,10 @@ func (s *AccessLogSuite) TestAccessLogEntrypointWhitelist(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 	defer display(c)
-	defer displayTraefikLogFile(c, traefikTestLogFile)
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-
-	defer os.Remove(traefikTestAccessLogFile)
 
 	checkStatsForLogFile(c)
 
@@ -636,13 +611,10 @@ func (s *AccessLogSuite) TestAccessLogFrontendWhitelist(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 	defer display(c)
-	defer displayTraefikLogFile(c, traefikTestLogFile)
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-
-	defer os.Remove(traefikTestAccessLogFile)
 
 	checkStatsForLogFile(c)
 
