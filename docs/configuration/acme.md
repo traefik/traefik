@@ -149,9 +149,9 @@ entryPoint = "https"
 Let's Encrypt functionality will be limited until Træfik is restarted.
 
 If Let's Encrypt is not reachable, these certificates will be used :
-  - ACME certificates already generated before downtime,
-  - Expired ACME certificates,
-  - Provided certificates,
+  - ACME certificates already generated before downtime
+  - Expired ACME certificates
+  - Provided certificates
 
 !!! note
  Default Træfik certificate will be used instead of ACME certificates for new (sub)domains (which need Let's Encrypt challenge).
