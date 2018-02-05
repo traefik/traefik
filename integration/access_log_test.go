@@ -43,6 +43,11 @@ func (s *AccessLogSuite) SetUpSuite(c *check.C) {
 	s.composeProject.Container(c, "server3")
 }
 
+func (s *AccessLogSuite) TearDownTest(c *check.C) {
+	displayTraefikLogFile(c, traefikTestLogFile)
+	os.Remove(traefikTestAccessLogFile)
+}
+
 func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	// Ensure working directory is clean
 	ensureWorkingDirectoryIsClean()
@@ -50,19 +55,17 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 	defer display(c)
+
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-
-	defer os.Remove(traefikTestAccessLogFile)
-	defer os.Remove(traefikTestLogFile)
 
 	waitForTraefik(c, "server1")
 
 	checkStatsForLogFile(c)
 
 	// Verify Traefik started OK
-	traefikLog := checkTraefikStarted(c)
+	checkTraefikStarted(c)
 
 	// Make some requests
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
@@ -82,12 +85,12 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Verify access.log output as expected
-	count := checkAccessLogOutput(err, c)
+	count := checkAccessLogOutput(c)
 
 	c.Assert(count, checker.GreaterOrEqualThan, 3)
 
 	// Verify no other Traefik problems
-	checkNoOtherTraefikProblems(traefikLog, err, c)
+	checkNoOtherTraefikProblems(c)
 }
 
 func (s *AccessLogSuite) TestAccessLogAuthFrontend(c *check.C) {
@@ -107,12 +110,10 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontend(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 	defer display(c)
+
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-
-	defer os.Remove(traefikTestAccessLogFile)
-	defer os.Remove(traefikTestLogFile)
 
 	checkStatsForLogFile(c)
 
@@ -121,7 +122,7 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontend(c *check.C) {
 	waitForTraefik(c, "authFrontend")
 
 	// Verify Traefik started OK
-	traefikLog := checkTraefikStarted(c)
+	checkTraefikStarted(c)
 
 	// Test auth frontend
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8006/", nil)
@@ -132,12 +133,12 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontend(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Verify access.log output as expected
-	count := checkAccessLogExactValuesOutput(err, c, expected)
+	count := checkAccessLogExactValuesOutput(c, expected)
 
 	c.Assert(count, checker.GreaterOrEqualThan, len(expected))
 
 	// Verify no other Traefik problems
-	checkNoOtherTraefikProblems(traefikLog, err, c)
+	checkNoOtherTraefikProblems(c)
 }
 
 func (s *AccessLogSuite) TestAccessLogAuthEntrypoint(c *check.C) {
@@ -157,12 +158,10 @@ func (s *AccessLogSuite) TestAccessLogAuthEntrypoint(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 	defer display(c)
+
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-
-	defer os.Remove(traefikTestAccessLogFile)
-	defer os.Remove(traefikTestLogFile)
 
 	checkStatsForLogFile(c)
 
@@ -171,7 +170,7 @@ func (s *AccessLogSuite) TestAccessLogAuthEntrypoint(c *check.C) {
 	waitForTraefik(c, "authEntrypoint")
 
 	// Verify Traefik started OK
-	traefikLog := checkTraefikStarted(c)
+	checkTraefikStarted(c)
 
 	// Test auth entrypoint
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8004/", nil)
@@ -182,12 +181,12 @@ func (s *AccessLogSuite) TestAccessLogAuthEntrypoint(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Verify access.log output as expected
-	count := checkAccessLogExactValuesOutput(err, c, expected)
+	count := checkAccessLogExactValuesOutput(c, expected)
 
 	c.Assert(count, checker.GreaterOrEqualThan, len(expected))
 
 	// Verify no other Traefik problems
-	checkNoOtherTraefikProblems(traefikLog, err, c)
+	checkNoOtherTraefikProblems(c)
 }
 
 func (s *AccessLogSuite) TestAccessLogAuthEntrypointSuccess(c *check.C) {
@@ -207,12 +206,10 @@ func (s *AccessLogSuite) TestAccessLogAuthEntrypointSuccess(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 	defer display(c)
+
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-
-	defer os.Remove(traefikTestAccessLogFile)
-	defer os.Remove(traefikTestLogFile)
 
 	checkStatsForLogFile(c)
 
@@ -221,7 +218,7 @@ func (s *AccessLogSuite) TestAccessLogAuthEntrypointSuccess(c *check.C) {
 	waitForTraefik(c, "authEntrypoint")
 
 	// Verify Traefik started OK
-	traefikLog := checkTraefikStarted(c)
+	checkTraefikStarted(c)
 
 	// Test auth entrypoint
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8004/", nil)
@@ -233,12 +230,12 @@ func (s *AccessLogSuite) TestAccessLogAuthEntrypointSuccess(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Verify access.log output as expected
-	count := checkAccessLogExactValuesOutput(err, c, expected)
+	count := checkAccessLogExactValuesOutput(c, expected)
 
 	c.Assert(count, checker.GreaterOrEqualThan, len(expected))
 
 	// Verify no other Traefik problems
-	checkNoOtherTraefikProblems(traefikLog, err, c)
+	checkNoOtherTraefikProblems(c)
 }
 
 func (s *AccessLogSuite) TestAccessLogDigestAuthEntrypoint(c *check.C) {
@@ -264,12 +261,10 @@ func (s *AccessLogSuite) TestAccessLogDigestAuthEntrypoint(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 	defer display(c)
+
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-
-	defer os.Remove(traefikTestAccessLogFile)
-	defer os.Remove(traefikTestLogFile)
 
 	checkStatsForLogFile(c)
 
@@ -278,7 +273,7 @@ func (s *AccessLogSuite) TestAccessLogDigestAuthEntrypoint(c *check.C) {
 	waitForTraefik(c, "digestAuthEntrypoint")
 
 	// Verify Traefik started OK
-	traefikLog := checkTraefikStarted(c)
+	checkTraefikStarted(c)
 
 	// Test auth entrypoint
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8008/", nil)
@@ -301,12 +296,12 @@ func (s *AccessLogSuite) TestAccessLogDigestAuthEntrypoint(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Verify access.log output as expected
-	count := checkAccessLogExactValuesOutput(err, c, expected)
+	count := checkAccessLogExactValuesOutput(c, expected)
 
 	c.Assert(count, checker.GreaterOrEqualThan, len(expected))
 
 	// Verify no other Traefik problems
-	checkNoOtherTraefikProblems(traefikLog, err, c)
+	checkNoOtherTraefikProblems(c)
 }
 
 // Thanks to mvndaai for digest authentication
@@ -370,12 +365,10 @@ func (s *AccessLogSuite) TestAccessLogEntrypointRedirect(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 	defer display(c)
+
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-
-	defer os.Remove(traefikTestAccessLogFile)
-	defer os.Remove(traefikTestLogFile)
 
 	checkStatsForLogFile(c)
 
@@ -384,7 +377,7 @@ func (s *AccessLogSuite) TestAccessLogEntrypointRedirect(c *check.C) {
 	waitForTraefik(c, "entrypointRedirect")
 
 	// Verify Traefik started OK
-	traefikLog := checkTraefikStarted(c)
+	checkTraefikStarted(c)
 
 	// Test entrypoint redirect
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8001/test", nil)
@@ -395,12 +388,12 @@ func (s *AccessLogSuite) TestAccessLogEntrypointRedirect(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Verify access.log output as expected
-	count := checkAccessLogExactValuesOutput(err, c, expected)
+	count := checkAccessLogExactValuesOutput(c, expected)
 
 	c.Assert(count, checker.GreaterOrEqualThan, len(expected))
 
 	// Verify no other Traefik problems
-	checkNoOtherTraefikProblems(traefikLog, err, c)
+	checkNoOtherTraefikProblems(c)
 }
 
 func (s *AccessLogSuite) TestAccessLogFrontendRedirect(c *check.C) {
@@ -422,12 +415,10 @@ func (s *AccessLogSuite) TestAccessLogFrontendRedirect(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 	defer display(c)
+
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-
-	defer os.Remove(traefikTestAccessLogFile)
-	defer os.Remove(traefikTestLogFile)
 
 	checkStatsForLogFile(c)
 
@@ -436,7 +427,7 @@ func (s *AccessLogSuite) TestAccessLogFrontendRedirect(c *check.C) {
 	waitForTraefik(c, "frontendRedirect")
 
 	// Verify Traefik started OK
-	traefikLog := checkTraefikStarted(c)
+	checkTraefikStarted(c)
 
 	// Test frontend redirect
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8005/test", nil)
@@ -447,12 +438,12 @@ func (s *AccessLogSuite) TestAccessLogFrontendRedirect(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Verify access.log output as expected
-	count := checkAccessLogExactValuesOutput(err, c, expected)
+	count := checkAccessLogExactValuesOutput(c, expected)
 
 	c.Assert(count, checker.GreaterOrEqualThan, len(expected))
 
 	// Verify no other Traefik problems
-	checkNoOtherTraefikProblems(traefikLog, err, c)
+	checkNoOtherTraefikProblems(c)
 }
 
 func (s *AccessLogSuite) TestAccessLogRateLimit(c *check.C) {
@@ -477,12 +468,10 @@ func (s *AccessLogSuite) TestAccessLogRateLimit(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 	defer display(c)
+
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-
-	defer os.Remove(traefikTestAccessLogFile)
-	defer os.Remove(traefikTestLogFile)
 
 	checkStatsForLogFile(c)
 
@@ -491,7 +480,7 @@ func (s *AccessLogSuite) TestAccessLogRateLimit(c *check.C) {
 	waitForTraefik(c, "rateLimit")
 
 	// Verify Traefik started OK
-	traefikLog := checkTraefikStarted(c)
+	checkTraefikStarted(c)
 
 	// Test rate limit
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8007/", nil)
@@ -506,12 +495,12 @@ func (s *AccessLogSuite) TestAccessLogRateLimit(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Verify access.log output as expected
-	count := checkAccessLogExactValuesOutput(err, c, expected)
+	count := checkAccessLogExactValuesOutput(c, expected)
 
 	c.Assert(count, checker.GreaterOrEqualThan, len(expected))
 
 	// Verify no other Traefik problems
-	checkNoOtherTraefikProblems(traefikLog, err, c)
+	checkNoOtherTraefikProblems(c)
 }
 
 func (s *AccessLogSuite) TestAccessLogBackendNotFound(c *check.C) {
@@ -530,19 +519,17 @@ func (s *AccessLogSuite) TestAccessLogBackendNotFound(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 	defer display(c)
+
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-
-	defer os.Remove(traefikTestAccessLogFile)
-	defer os.Remove(traefikTestLogFile)
 
 	waitForTraefik(c, "server1")
 
 	checkStatsForLogFile(c)
 
 	// Verify Traefik started OK
-	traefikLog := checkTraefikStarted(c)
+	checkTraefikStarted(c)
 
 	// Test rate limit
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
@@ -553,12 +540,12 @@ func (s *AccessLogSuite) TestAccessLogBackendNotFound(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Verify access.log output as expected
-	count := checkAccessLogExactValuesOutput(err, c, expected)
+	count := checkAccessLogExactValuesOutput(c, expected)
 
 	c.Assert(count, checker.GreaterOrEqualThan, len(expected))
 
 	// Verify no other Traefik problems
-	checkNoOtherTraefikProblems(traefikLog, err, c)
+	checkNoOtherTraefikProblems(c)
 }
 
 func (s *AccessLogSuite) TestAccessLogEntrypointWhitelist(c *check.C) {
@@ -577,12 +564,10 @@ func (s *AccessLogSuite) TestAccessLogEntrypointWhitelist(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 	defer display(c)
+
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-
-	defer os.Remove(traefikTestAccessLogFile)
-	defer os.Remove(traefikTestLogFile)
 
 	checkStatsForLogFile(c)
 
@@ -591,7 +576,7 @@ func (s *AccessLogSuite) TestAccessLogEntrypointWhitelist(c *check.C) {
 	waitForTraefik(c, "entrypointWhitelist")
 
 	// Verify Traefik started OK
-	traefikLog := checkTraefikStarted(c)
+	checkTraefikStarted(c)
 
 	// Test rate limit
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8002/", nil)
@@ -602,12 +587,12 @@ func (s *AccessLogSuite) TestAccessLogEntrypointWhitelist(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Verify access.log output as expected
-	count := checkAccessLogExactValuesOutput(err, c, expected)
+	count := checkAccessLogExactValuesOutput(c, expected)
 
 	c.Assert(count, checker.GreaterOrEqualThan, len(expected))
 
 	// Verify no other Traefik problems
-	checkNoOtherTraefikProblems(traefikLog, err, c)
+	checkNoOtherTraefikProblems(c)
 }
 
 func (s *AccessLogSuite) TestAccessLogFrontendWhitelist(c *check.C) {
@@ -626,12 +611,10 @@ func (s *AccessLogSuite) TestAccessLogFrontendWhitelist(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 	defer display(c)
+
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-
-	defer os.Remove(traefikTestAccessLogFile)
-	defer os.Remove(traefikTestLogFile)
 
 	checkStatsForLogFile(c)
 
@@ -640,7 +623,7 @@ func (s *AccessLogSuite) TestAccessLogFrontendWhitelist(c *check.C) {
 	waitForTraefik(c, "frontendWhitelist")
 
 	// Verify Traefik started OK
-	traefikLog := checkTraefikStarted(c)
+	checkTraefikStarted(c)
 
 	// Test rate limit
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
@@ -651,16 +634,16 @@ func (s *AccessLogSuite) TestAccessLogFrontendWhitelist(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Verify access.log output as expected
-	count := checkAccessLogExactValuesOutput(err, c, expected)
+	count := checkAccessLogExactValuesOutput(c, expected)
 
 	c.Assert(count, checker.GreaterOrEqualThan, len(expected))
 
 	// Verify no other Traefik problems
-	checkNoOtherTraefikProblems(traefikLog, err, c)
+	checkNoOtherTraefikProblems(c)
 }
 
-func checkNoOtherTraefikProblems(traefikLog []byte, err error, c *check.C) {
-	traefikLog, err = ioutil.ReadFile(traefikTestLogFile)
+func checkNoOtherTraefikProblems(c *check.C) {
+	traefikLog, err := ioutil.ReadFile(traefikTestLogFile)
 	c.Assert(err, checker.IsNil)
 	if len(traefikLog) > 0 {
 		fmt.Printf("%s\n", string(traefikLog))
@@ -668,8 +651,8 @@ func checkNoOtherTraefikProblems(traefikLog []byte, err error, c *check.C) {
 	}
 }
 
-func checkAccessLogOutput(err error, c *check.C) int {
-	lines := extractLines(err, c)
+func checkAccessLogOutput(c *check.C) int {
+	lines := extractLines(c)
 	count := 0
 	for i, line := range lines {
 		if len(line) > 0 {
@@ -680,8 +663,8 @@ func checkAccessLogOutput(err error, c *check.C) int {
 	return count
 }
 
-func checkAccessLogExactValuesOutput(err error, c *check.C, values []accessLogValue) int {
-	lines := extractLines(err, c)
+func checkAccessLogExactValuesOutput(c *check.C, values []accessLogValue) int {
+	lines := extractLines(c)
 	count := 0
 	for i, line := range lines {
 		fmt.Printf(line)
@@ -698,7 +681,7 @@ func checkAccessLogExactValuesOutput(err error, c *check.C, values []accessLogVa
 	return count
 }
 
-func extractLines(err error, c *check.C) []string {
+func extractLines(c *check.C) []string {
 	accessLog, err := ioutil.ReadFile(traefikTestAccessLogFile)
 	c.Assert(err, checker.IsNil)
 	lines := strings.Split(string(accessLog), "\n")
@@ -762,4 +745,24 @@ func waitForTraefik(c *check.C, containerName string) {
 
 	err = try.Request(req, 2*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains(containerName))
 	c.Assert(err, checker.IsNil)
+}
+
+func displayTraefikLogFile(c *check.C, path string) {
+	if c.Failed() {
+		if _, err := os.Stat(path); !os.IsNotExist(err) {
+			content, errRead := ioutil.ReadFile(path)
+			fmt.Printf("%s: Traefik logs: \n", c.TestName())
+			if errRead == nil {
+				fmt.Println(content)
+			} else {
+				fmt.Println(errRead)
+			}
+		} else {
+			fmt.Printf("%s: No Traefik logs.\n", c.TestName())
+		}
+		errRemove := os.Remove(path)
+		if errRemove != nil {
+			fmt.Println(errRemove)
+		}
+	}
 }
