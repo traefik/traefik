@@ -777,19 +777,21 @@ func listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerD
 
 	for _, service := range serviceList {
 		dockerData := parseService(service, networkMap)
-		if len(dockerData.NetworkSettings.Networks) > 0 {
-			useSwarmLB, _ := strconv.ParseBool(getIsBackendLBSwarm(dockerData))
 
-			if useSwarmLB {
+		useSwarmLB, _ := strconv.ParseBool(getIsBackendLBSwarm(dockerData))
+
+		if useSwarmLB {
+			if len(dockerData.NetworkSettings.Networks) > 0 {
 				dockerDataList = append(dockerDataList, dockerData)
-			} else {
-				isGlobalSvc := service.Spec.Mode.Global != nil
-				dockerDataListTasks, err = listTasks(ctx, dockerClient, service.ID, dockerData, networkMap, isGlobalSvc)
-
-				for _, dockerDataTask := range dockerDataListTasks {
-					dockerDataList = append(dockerDataList, dockerDataTask)
-				}
 			}
+		} else {
+			isGlobalSvc := service.Spec.Mode.Global != nil
+			dockerDataListTasks, err = listTasks(ctx, dockerClient, service.ID, dockerData, networkMap, isGlobalSvc)
+
+			for _, dockerDataTask := range dockerDataListTasks {
+				dockerDataList = append(dockerDataList, dockerDataTask)
+			}
+
 		}
 	}
 	return dockerDataList, err
@@ -805,7 +807,10 @@ func parseService(service swarmtypes.Service, networkMap map[string]*dockertypes
 
 	if service.Spec.EndpointSpec != nil {
 		if service.Spec.EndpointSpec.Mode == swarmtypes.ResolutionModeDNSRR {
-			log.Warnf("Ignored endpoint-mode not supported, service name: %s", service.Spec.Annotations.Name)
+			useSwarmLB, _ := strconv.ParseBool(getIsBackendLBSwarm(dockerData))
+			if useSwarmLB {
+				log.Warnf("Ignored %s endpoint-mode not supported, service name: %s. Fallback to Træfik load balancing", swarmtypes.ResolutionModeDNSRR, service.Spec.Annotations.Name)
+			}
 		} else if service.Spec.EndpointSpec.Mode == swarmtypes.ResolutionModeVIP {
 			dockerData.NetworkSettings.Networks = make(map[string]*networkData)
 			for _, virtualIP := range service.Endpoint.VirtualIPs {
