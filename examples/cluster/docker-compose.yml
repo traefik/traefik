@@ -122,7 +122,7 @@ services:
       image: containous/traefik
       volumes:
         - "./traefik.toml:/traefik.toml:ro"
-      command: storeconfig --debug ${TRAEFIK_CMD}
+      command: storeconfig --debug
       networks:
         - net
 

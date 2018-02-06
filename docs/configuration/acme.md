@@ -165,25 +165,11 @@ storage = "acme.json"
 # ...
 ```
 
-File or key used for certificates storage.
+`storage` allows providing to Træfik an item where storing all the ACME certificates.
 
-**WARNING:** If you use Træfik in Docker, you have 2 options:
-
-- create a file on your host and mount it as a volume:
-```toml
-storage = "acme.json"
-```
-```bash
-docker run -v "/my/host/acme.json:acme.json" traefik
-```
-
-- mount the folder containing the file as a volume
-```toml
-storage = "/etc/traefik/acme/acme.json"
-```
-```bash
-docker run -v "/my/host/acme:/etc/traefik/acme" traefik
-```
+There are two kind of `storage` :
+- a JSON file,
+- a KV store entry.
 
 !!! note
     `storage` replaces `storageFile` which is deprecated.
@@ -193,6 +179,49 @@ docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 
     - `storageFile` will contain the path to the `acme.json` file to migrate.
     - `storage` will contain the key where the certificates will be stored.
+
+#### Storage File
+
+It's a JSON file which with the `600` right mode. 
+
+If you are using Træfik in Docker and want to store data in a file, you have 2 options:
+
+- create a file on your host and mount it as a volume:
+```toml
+storage = "acme.json"
+```
+```bash
+docker run -v "/my/host/acme.json:acme.json" traefik
+```
+- mount the folder containing the file as a volume
+```toml
+storage = "/etc/traefik/acme/acme.json"
+```
+```bash
+docker run -v "/my/host/acme:/etc/traefik/acme" traefik
+```
+
+!!! note
+    This file cannot be shared per many instances of Træfik at the same time.
+    If you have to use Træfik cluster mode, please use [a KV store entry](/configuration/acme/#storage-kv-entry).
+
+#### Storage KV entry
+
+It's a the key where Træfik has to store data in a KV store.
+The key must contain the træfik prefix.
+
+```toml
+storage = "traefik/acme/account"
+```
+
+**This kind of storage is mandatory in cluster mode.**
+Thanks to the Træfik cluster mode algorithm (based on [the Raft Consensus Algorithm](https://raft.github.io/)), only one instance will contact Let's encrypt to resolve the challenges.
+The others instances will get ACME certificate from the `storage` entry.
+
+Because KV stores (like Consul) have limited entries size, the certificates list is compressed before to be set in a KV store entry.
+
+!!! note
+    It's possible to store up to 120 ACME certificates in Consul.
 
 ### `acme.httpChallenge`
 

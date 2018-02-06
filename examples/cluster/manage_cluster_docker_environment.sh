@@ -67,14 +67,31 @@ start_etcd3() {
 }
 
 start_storeconfig_consul() {
+    # Create traefik.toml with consul provider
+    cp $basedir/traefik.toml.tmpl $basedir/traefik.toml
+    echo '
+        [consul]
+        endpoint = "10.0.1.2:8500"
+        watch = true
+        prefix = "traefik"' >> $basedir/traefik.toml
     up_environment traefik-storeconfig
+    rm -f $basedir/traefik.toml
     waiting_counter=5
     delete_services traefik-storeconfig
 
 }
 
 start_storeconfig_etcd3() {
+    # Create traefik.toml with consul provider
+    cp $basedir/traefik.toml.tmpl $basedir/traefik.toml
+    echo '
+        [etcd]
+        endpoint = "10.0.1.12:2379"
+        watch = true
+        prefix = "/traefik"
+        useAPIV3 = true' >> $basedir/traefik.toml
     up_environment traefik-storeconfig
+    rm -f $basedir/traefik.toml
     waiting_counter=5
     # Don't start Traefik store config if ETCD3 is not started
     echo "Delete storage file key..."
@@ -161,7 +178,7 @@ main() {
                 case $2 in
                     "--etcd3")
                         echo "USE ETCD V3 AS KV STORE"
-                        export TRAEFIK_CMD='--etcd --etcd.endpoint=10.0.1.12:2379 --etcd.useAPIV3=true --etcd.watch --etcd.prefix = "/traefik"'
+                        export TRAEFIK_CMD="--etcd --etcd.endpoint=10.0.1.12:2379 --etcd.useAPIV3=true"
                         start_boulder && \
                         start_etcd3 && \
                         start_storeconfig_etcd3 && \
@@ -169,11 +186,11 @@ main() {
                         ;;
                     "--consul")
                         echo "USE CONSUL AS KV STORE"
-                        export TRAEFIK_CMD='--consul --consul.endpoint=10.0.1.2:8500 --consul.watch --consul.prefix="traefik"'
+                        export TRAEFIK_CMD="--consul --consul.endpoint=10.0.1.2:8500"
                         start_boulder && \
                         start_consul && \
-                        start_storeconfig_consul #&& \
-                        #start_traefik
+                        start_storeconfig_consul && \
+                        start_traefik
                         ;;
                     *)
                         show_usage && exit 4
