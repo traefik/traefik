@@ -110,7 +110,7 @@ entryPoint = "http"
 
 This is the minimum configuration required to do the following:
 
-- Log `ERROR`-level messages (or more severe) to the console, but silence `DEBUG`-level messagse
+- Log `ERROR`-level messages (or more severe) to the console, but silence `DEBUG`-level messages
 - Check for new versions of Træfik periodically
 - Create two entry points, namely an `HTTP` endpoint on port `80`, and an `HTTPS` endpoint on port `443` where all incoming traffic on port `80` will immediately get redirected to `HTTPS`.
 - Enable the Docker configuration backend and listen for container events on the Docker unix socket we've mounted earlier. However, **new containers will not be exposed by Træfik by default, we'll get into this in a bit!**
