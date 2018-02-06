@@ -1,6 +1,6 @@
 # Key-value store configuration
 
-Both [static global configuration](/user-guide/kv-config/#static-configuration-in-key-value-store) and [dynamic](/user-guide/kv-config/#dynamic-configuration-in-key-value-store) configuration can be sorted in a Key-value store.
+Both [static global configuration](/user-guide/kv-config/#static-configuration-in-key-value-store) and [dynamic](/user-guide/kv-config/#dynamic-configuration-in-key-value-store) configuration can be stored in a Key-value store.
 
 This section explains how to launch Træfik using a configuration loaded from a Key-value store.
 
