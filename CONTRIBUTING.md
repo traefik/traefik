@@ -64,7 +64,7 @@ Once your environment is set up and the Træfik repository cloned you can build 
 cd ~/go/src/github.com/containous/traefik
 
 # Get go-bindata. Please note, the ellipses are required
-go get github.com/jteeuwen/go-bindata/...
+go get github.com/containous/go-bindata/...
 
 # Start build
 
