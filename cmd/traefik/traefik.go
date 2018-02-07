@@ -27,6 +27,7 @@ import (
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
 	"github.com/coreos/go-systemd/daemon"
+	"github.com/ogier/pflag"
 	"github.com/sirupsen/logrus"
 )
 
@@ -75,6 +76,9 @@ Complete documentation is available at https://traefik.io`,
 	}
 
 	if _, err := f.Parse(usedCmd); err != nil {
+		if err == pflag.ErrHelp {
+			os.Exit(0)
+		}
 		fmtlog.Printf("Error parsing command: %s\n", err)
 		os.Exit(-1)
 	}

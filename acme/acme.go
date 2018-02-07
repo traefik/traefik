@@ -295,6 +295,7 @@ func (a *ACME) leadershipListener(elected bool) error {
 
 // CreateLocalConfig creates a tls.config using local ACME configuration
 func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, certs *safe.Safe, checkOnDemandDomain func(domain string) bool) error {
+	defer a.runJobs()
 	err := a.init()
 	if err != nil {
 		return err
@@ -333,7 +334,9 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, certs *safe.Safe, checkO
 
 	a.client, err = a.buildACMEClient(account)
 	if err != nil {
-		return err
+		log.Errorf(`Failed to build ACME client: %s
+Let's Encrypt functionality will be limited until traefik is restarted.`, err)
+		return nil
 	}
 
 	if needRegister {
@@ -374,7 +377,6 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, certs *safe.Safe, checkO
 
 	a.retrieveCertificates()
 	a.renewCertificates()
-	a.runJobs()
 
 	ticker := time.NewTicker(24 * time.Hour)
 	safe.Go(func() {

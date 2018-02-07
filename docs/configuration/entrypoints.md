@@ -2,6 +2,8 @@
 
 ## Reference
 
+### TOML
+
 ```toml
 [entryPoints]
   [entryPoints.http]
@@ -64,6 +66,37 @@
     # ...
 ```
 
+### CLI
+
+For more information about the CLI, see the documentation about [Traefik command](/basics/#traefik).
+
+```shell
+--entryPoints='Name:http Address::80'
+--entryPoints='Name:https Address::443 TLS'
+```
+
+!!! note
+    Whitespace is used as option separator and `,` is used as value separator for the list.  
+    The names of the options are case-insensitive.
+
+All available options:
+
+```ini
+Name:foo
+Address::80
+TLS:goo,gii
+TLS
+CA:car
+CA.Optional:true
+Redirect.EntryPoint:https
+Redirect.Regex:http://localhost/(.*)
+Redirect.Replacement:http://mydomain/$1
+Compress:true
+WhiteListSourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16
+ProxyProtocol.TrustedIPs:192.168.0.1
+ProxyProtocol.Insecure:tue
+ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24
+```
 
 ## Basic
 
@@ -118,7 +151,11 @@ To redirect an entrypoint rewriting the URL.
 ```
 
 !!! note
-    Please note that `regex` and `replacement` do not have to be set in the `redirect` structure if an entrypoint is defined for the redirection (they will not be used in this case).
+    Please note that `regex` and `replacement` do not have to be set in the `redirect` structure if an `entrypoint` is defined for the redirection (they will not be used in this case).
+
+Care should be taken when defining replacement expand variables: `$1x` is equivalent to `${1x}`, not `${1}x` (see [Regexp.Expand](https://golang.org/pkg/regexp/#Regexp.Expand)), so use `${1}` syntax.
+
+Regular expressions and replacements can be tested using online tools such as [Go Playground](https://play.golang.org/p/mWU9p-wk2ru) or the [Regex101](https://regex101.com/r/58sIgx/2).
 
 ## TLS
 

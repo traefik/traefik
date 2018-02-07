@@ -80,6 +80,7 @@ type fakeServicesClient struct {
 	dockerVersion string
 	networks      []dockertypes.NetworkResource
 	services      []swarm.Service
+	tasks         []swarm.Task
 	err           error
 }
 
@@ -95,10 +96,15 @@ func (c *fakeServicesClient) NetworkList(ctx context.Context, options dockertype
 	return c.networks, c.err
 }
 
+func (c *fakeServicesClient) TaskList(ctx context.Context, options dockertypes.TaskListOptions) ([]swarm.Task, error) {
+	return c.tasks, c.err
+}
+
 func TestListServices(t *testing.T) {
 	testCases := []struct {
 		desc             string
 		services         []swarm.Service
+		tasks            []swarm.Task
 		dockerVersion    string
 		networks         []dockertypes.NetworkResource
 		expectedServices []string
@@ -120,7 +126,8 @@ func TestListServices(t *testing.T) {
 				swarmService(
 					serviceName("service2"),
 					serviceLabels(map[string]string{
-						labelDockerNetwork: "barnet",
+						labelDockerNetwork:            "barnet",
+						labelBackendLoadBalancerSwarm: "true",
 					}),
 					withEndpointSpec(modeDNSSR)),
 			},
@@ -145,7 +152,8 @@ func TestListServices(t *testing.T) {
 				swarmService(
 					serviceName("service2"),
 					serviceLabels(map[string]string{
-						labelDockerNetwork: "barnet",
+						labelDockerNetwork:            "barnet",
+						labelBackendLoadBalancerSwarm: "true",
 					}),
 					withEndpointSpec(modeDNSSR)),
 			},
@@ -174,13 +182,65 @@ func TestListServices(t *testing.T) {
 				"service1",
 			},
 		},
+		{
+			desc: "Should return service1 and service2",
+			services: []swarm.Service{
+				swarmService(
+					serviceName("service1"),
+					serviceLabels(map[string]string{
+						labelDockerNetwork: "barnet",
+					}),
+					withEndpointSpec(modeVIP),
+					withEndpoint(
+						virtualIP("yk6l57rfwizjzxxzftn4amaot", "10.11.12.13/24"),
+						virtualIP("2", "10.11.12.99/24"),
+					)),
+				swarmService(
+					serviceName("service2"),
+					serviceLabels(map[string]string{
+						labelDockerNetwork: "barnet",
+					}),
+					withEndpointSpec(modeDNSSR)),
+			},
+			tasks: []swarm.Task{
+				swarmTask("id1", taskStatus(taskState(swarm.TaskStateRunning))),
+				swarmTask("id2", taskStatus(taskState(swarm.TaskStateRunning))),
+			},
+			dockerVersion: "1.30",
+			networks: []dockertypes.NetworkResource{
+				{
+					Name:       "network_name",
+					ID:         "yk6l57rfwizjzxxzftn4amaot",
+					Created:    time.Now(),
+					Scope:      "swarm",
+					Driver:     "overlay",
+					EnableIPv6: false,
+					Internal:   true,
+					Ingress:    false,
+					ConfigOnly: false,
+					Options: map[string]string{
+						"com.docker.network.driver.overlay.vxlanid_list": "4098",
+						"com.docker.network.enable_ipv6":                 "false",
+					},
+					Labels: map[string]string{
+						"com.docker.stack.namespace": "test",
+					},
+				},
+			},
+			expectedServices: []string{
+				"service1.0",
+				"service1.0",
+				"service2.0",
+				"service2.0",
+			},
+		},
 	}
 
 	for caseID, test := range testCases {
 		test := test
 		t.Run(strconv.Itoa(caseID), func(t *testing.T) {
 			t.Parallel()
-			dockerClient := &fakeServicesClient{services: test.services, dockerVersion: test.dockerVersion, networks: test.networks}
+			dockerClient := &fakeServicesClient{services: test.services, tasks: test.tasks, dockerVersion: test.dockerVersion, networks: test.networks}
 
 			serviceDockerData, err := listServices(context.Background(), dockerClient)
 			assert.NoError(t, err)
