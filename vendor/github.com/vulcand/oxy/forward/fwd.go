@@ -438,16 +438,18 @@ func (f *httpForwarder) serveHTTP(w http.ResponseWriter, inReq *http.Request, ct
 	}
 	revproxy.ServeHTTP(pw, outReq)
 
-	if inReq.TLS != nil {
-		f.log.Infof("vulcand/oxy/forward/http: Round trip: %v, code: %v, Length: %v, duration: %v tls:version: %x, tls:resume:%t, tls:csuite:%x, tls:server:%v",
-			inReq.URL, pw.Code, pw.Length, time.Now().UTC().Sub(start),
-			inReq.TLS.Version,
-			inReq.TLS.DidResume,
-			inReq.TLS.CipherSuite,
-			inReq.TLS.ServerName)
-	} else {
-		f.log.Infof("vulcand/oxy/forward/http: Round trip: %v, code: %v, Length: %v, duration: %v",
-			inReq.URL, pw.Code, pw.Length, time.Now().UTC().Sub(start))
+	if f.log.Level >= log.DebugLevel {
+		if inReq.TLS != nil {
+			f.log.Debugf("vulcand/oxy/forward/http: Round trip: %v, code: %v, Length: %v, duration: %v tls:version: %x, tls:resume:%t, tls:csuite:%x, tls:server:%v",
+				inReq.URL, pw.Code, pw.Length, time.Now().UTC().Sub(start),
+				inReq.TLS.Version,
+				inReq.TLS.DidResume,
+				inReq.TLS.CipherSuite,
+				inReq.TLS.ServerName)
+		} else {
+			f.log.Debugf("vulcand/oxy/forward/http: Round trip: %v, code: %v, Length: %v, duration: %v",
+				inReq.URL, pw.Code, pw.Length, time.Now().UTC().Sub(start))
+		}
 	}
 }
 
