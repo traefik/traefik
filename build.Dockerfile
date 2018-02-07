@@ -11,7 +11,7 @@ RUN go get github.com/containous/go-bindata/... \
 
 # Which docker version to test on
 ARG DOCKER_VERSION=17.03.2
-ARG DEP_VERSION=0.4.0
+ARG DEP_VERSION=0.4.1
 
 # Download dep binary to bin folder in $GOPATH
 RUN mkdir -p /usr/local/bin \
