@@ -1028,7 +1028,7 @@
     "roundrobin",
     "utils"
   ]
-  revision = "7e69a72707cbd367525e3c626be40c4a39454bb2"
+  revision = "af377749f48ff0ae9974b30ce12a816738b94558"
   source = "https://github.com/containous/oxy.git"
 
 [[projects]]
