@@ -165,7 +165,7 @@ storage = "acme.json"
 # ...
 ```
 
-The `storage` option is used to set where Træfik has to store all the ACME certificates.
+The `storage` option sets where are stored your ACME certificates.
 
 There are two kind of `storage` :
 - a JSON file,
