@@ -91,11 +91,22 @@ CA.Optional:true
 Redirect.EntryPoint:https
 Redirect.Regex:http://localhost/(.*)
 Redirect.Replacement:http://mydomain/$1
+Redirect.Permanent:true
 Compress:true
 WhiteListSourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16
 ProxyProtocol.TrustedIPs:192.168.0.1
 ProxyProtocol.Insecure:tue
 ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24
+Auth.Basic.Users:test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0
+Auth.Digest.Users:test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e
+Auth.HeaderField:X-WebAuth-User
+Auth.Forward.Address:https://authserver.com/auth
+Auth.Forward.TrustForwardHeader:true
+Auth.Forward.TLS.CA:path/to/local.crt
+Auth.Forward.TLS.CAOptional:true
+Auth.Forward.TLS.Cert:path/to/foo.cert
+Auth.Forward.TLS.Key:path/to/foo.key
+Auth.Forward.TLS.InsecureSkipVerify:true
 ```
 
 ## Basic

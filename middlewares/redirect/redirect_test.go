@@ -1,7 +1,6 @@
 package redirect
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -108,7 +107,15 @@ func TestNewRegexHandler(t *testing.T) {
 		{
 			desc:           "simple redirection",
 			regex:          `^(?:http?:\/\/)(foo)(\.com)(:\d+)(.*)$`,
-			replacement:    "https://$1{{\"bar\"}}$2:443$4",
+			replacement:    "https://${1}bar$2:443$4",
+			url:            "http://foo.com:80",
+			expectedURL:    "https://foobar.com:443",
+			expectedStatus: http.StatusFound,
+		},
+		{
+			desc:           "use request header",
+			regex:          `^(?:http?:\/\/)(foo)(\.com)(:\d+)(.*)$`,
+			replacement:    `https://${1}{{ .Request.Header.Get "X-Foo" }}$2:443$4`,
 			url:            "http://foo.com:80",
 			expectedURL:    "https://foobar.com:443",
 			expectedStatus: http.StatusFound,
@@ -116,7 +123,7 @@ func TestNewRegexHandler(t *testing.T) {
 		{
 			desc:           "URL doesn't match regex",
 			regex:          `^(?:http?:\/\/)(foo)(\.com)(:\d+)(.*)$`,
-			replacement:    "https://$1{{\"bar\"}}$2:443$4",
+			replacement:    "https://${1}bar$2:443$4",
 			url:            "http://bar.com:80",
 			expectedStatus: http.StatusOK,
 		},
@@ -145,7 +152,6 @@ func TestNewRegexHandler(t *testing.T) {
 
 			if test.errorExpected {
 				require.Nil(t, handler)
-				fmt.Println(err == nil)
 				require.Error(t, err)
 			} else {
 				require.NotNil(t, handler)
@@ -153,6 +159,7 @@ func TestNewRegexHandler(t *testing.T) {
 
 				recorder := httptest.NewRecorder()
 				r := testhelpers.MustNewRequest(http.MethodGet, test.url, nil)
+				r.Header.Set("X-Foo", "bar")
 				next := func(rw http.ResponseWriter, req *http.Request) {}
 				handler.ServeHTTP(recorder, r, next)
 

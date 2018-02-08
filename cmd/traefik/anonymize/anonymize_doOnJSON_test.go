@@ -29,7 +29,6 @@ func Test_doOnJSON(t *testing.T) {
    "Compress": false
   },
   "https": {
-   "Network": "",
    "Address": ":443",
    "TLS": {
     "MinVersion": "",
@@ -119,7 +118,6 @@ func Test_doOnJSON(t *testing.T) {
    "Compress": false
   },
   "https": {
-   "Network": "",
    "Address": ":443",
    "TLS": {
     "MinVersion": "",
