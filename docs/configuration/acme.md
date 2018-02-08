@@ -171,7 +171,7 @@ There are two kind of `storage` :
 - a JSON file,
 - a KV store entry.
 
-!!! warning "DEPRECATED"
+!!! danger "DEPRECATED"
     `storage` replaces `storageFile` which is deprecated.
 
 !!! note
@@ -314,7 +314,7 @@ Useful if internal networks block external DNS queries.
 
 ### `onDemand` (Deprecated)
 
-!!! warning
+!!! danger "DEPRECATED"
     This option is deprecated.
 
 ```toml
@@ -391,12 +391,12 @@ Each domain & SANs will lead to a certificate request.
 
 ### `dnsProvider` (Deprecated)
 
-!!! warning
+!!! danger "DEPRECATED"
     This option is deprecated.
     Please refer to [DNS challenge provider section](/configuration/acme/#provider)
 
 ### `delayDontCheckDNS` (Deprecated)
 
-!!! warning
+!!! danger "DEPRECATED"
     This option is deprecated.
     Please refer to [DNS challenge delayBeforeCheck section](/configuration/acme/#delaybeforecheck)
