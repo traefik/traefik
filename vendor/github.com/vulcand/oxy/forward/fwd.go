@@ -334,8 +334,8 @@ func (f *httpForwarder) serveWebSocket(w http.ResponseWriter, req *http.Request,
 	defer underlyingConn.Close()
 	defer targetConn.Close()
 
-	errClient := make(chan error)
-	errBackend := make(chan error)
+	errClient := make(chan error, 1)
+	errBackend := make(chan error, 1)
 	replicateWebsocketConn := func(dst, src *websocket.Conn, errc chan error) {
 		for {
 			msgType, msg, err := src.ReadMessage()
