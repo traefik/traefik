@@ -23,3 +23,11 @@ A Træfik cluster is based on a manager/worker model.
 
 When starting, Træfik will elect a manager.
 If this instance fails, another manager will be automatically elected.
+
+## Træfik cluster and Let's Encrypt
+
+**In cluster mode, ACME certificates have to be stored in [a KV Store entry](/configuration/acme/#storage-kv-entry).**
+
+Thanks to the Træfik cluster mode algorithm (based on [the Raft Consensus Algorithm](https://raft.github.io/)), only one instance will contact Let's encrypt to solve the challenges.
+
+The others instances will get ACME certificate from the KV Store entry.
