@@ -211,9 +211,8 @@ In the example below both `snitest.com` and `snitest.org` will require client ce
 ```
 
 !!! note
-
-The deprecated argument `ClientCAFiles` allows adding Client CA files which are mandatory.
-If this parameter exists, the new ones are not checked.
+    The deprecated argument `ClientCAFiles` allows adding Client CA files which are mandatory.
+    If this parameter exists, the new ones are not checked.
 
 ## Authentication
 
