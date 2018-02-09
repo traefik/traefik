@@ -432,7 +432,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 			DebugLogGeneratedTemplate: true,
 		},
 		Endpoint: "eureka Endpoint",
-		Delay:    "eureka Delay",
+		Delay:    flaeg.Duration(30 * time.Second),
 	}
 	config.ECS = &ecs.Provider{
 		BaseProvider: provider.BaseProvider{
