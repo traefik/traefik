@@ -78,7 +78,23 @@ For more information about the CLI, see the documentation about [Traefik command
     Whitespace is used as option separator and `,` is used as value separator for the list.  
     The names of the options are case-insensitive.
 
-All available options:
+In compose file the entrypoint syntax is different:
+
+```yaml
+traefik:
+    image: traefik
+    command:
+        - --defaultentrypoints=powpow
+        - "--entryPoints=Name:powpow Address::42 Compress:true"
+```
+or
+```yaml
+traefik:
+    image: traefik
+    command: --defaultentrypoints=powpow --entryPoints='Name:powpow Address::42 Compress:true'
+```
+
+#### All available options:
 
 ```ini
 Name:foo

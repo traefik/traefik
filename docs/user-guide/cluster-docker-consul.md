@@ -94,8 +94,8 @@ services:
     image: traefik:1.5
     command:
       - "--api"
-      - "--entrypoints='Name:http Address::80 Redirect.EntryPoint:https'"
-      - "--entrypoints='Name:https Address::443 TLS'"
+      - "--entrypoints=Name:http Address::80 Redirect.EntryPoint:https"
+      - "--entrypoints=Name:https Address::443 TLS"
       - "--defaultentrypoints=http,https"
       - "--acme"
       - "--acme.storage=/etc/traefik/acme/acme.json"
@@ -204,8 +204,8 @@ services:
     command:
       - "storeconfig"
       - "--api"
-      - "--entrypoints='Name:http Address::80 Redirect.EntryPoint:https'"
-      - "--entrypoints='Name:https Address::443 TLS'"
+      - "--entrypoints=Name:http Address::80 Redirect.EntryPoint:https"
+      - "--entrypoints=Name:https Address::443 TLS"
       - "--defaultentrypoints=http,https"
       - "--acme"
       - "--acme.storage=traefik/acme/account"
