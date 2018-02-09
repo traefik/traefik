@@ -146,7 +146,7 @@ func TestPrepareServerTimeouts(t *testing.T) {
 			router := middlewares.NewHandlerSwitcher(mux.NewRouter())
 
 			srv := NewServer(test.globalConfig, nil)
-			httpServer, _, err := srv.prepareServer(entryPointName, entryPoint, router, nil, nil)
+			httpServer, _, err := srv.prepareServer(entryPointName, entryPoint, router, nil)
 			if err != nil {
 				t.Fatalf("Unexpected error when preparing srv: %s", err)
 			}
@@ -681,7 +681,7 @@ func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
 		},
 	}
 
-	srv := NewServer(globalConfig, nil)
+	srv := NewServer(globalConfig, nil, nil)
 	if _, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
 		t.Fatalf("got error: %s", err)
 	}

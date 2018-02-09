@@ -24,6 +24,7 @@ import (
 	"github.com/containous/mux"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/configuration"
+	"github.com/containous/traefik/configuration/router"
 	"github.com/containous/traefik/healthcheck"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/metrics"
@@ -75,6 +76,11 @@ type Server struct {
 	metricsRegistry               metrics.Registry
 	provider                      provider.Provider
 	configurationListeners        []func(types.Configuration)
+	entrypoints                   map[string]EntryPoint
+}
+
+type EntryPoint struct {
+	InternalRouter types.InternalRouter
 }
 
 type serverEntryPoints map[string]*serverEntryPoint
@@ -88,9 +94,10 @@ type serverEntryPoint struct {
 }
 
 // NewServer returns an initialized Server.
-func NewServer(globalConfiguration configuration.GlobalConfiguration, provider provider.Provider) *Server {
+func NewServer(globalConfiguration configuration.GlobalConfiguration, provider provider.Provider, entrypoints map[string]EntryPoint) *Server {
 	server := new(Server)
 
+	server.entrypoints = entrypoints
 	server.provider = provider
 	server.serverEntryPoints = make(map[string]*serverEntryPoint)
 	server.configurationChan = make(chan types.ConfigMessage, 100)
@@ -210,9 +217,6 @@ func (s *Server) StartWithContext(ctx context.Context) {
 		<-ctx.Done()
 		log.Info("I have to go...")
 		reqAcceptGraceTimeOut := time.Duration(s.globalConfiguration.LifeCycle.RequestAcceptGraceTimeout)
-		if s.globalConfiguration.Ping != nil && reqAcceptGraceTimeOut > 0 {
-			s.globalConfiguration.Ping.SetTerminating()
-		}
 		if reqAcceptGraceTimeOut > 0 {
 			log.Infof("Waiting %s for incoming requests to cease", reqAcceptGraceTimeOut)
 			time.Sleep(reqAcceptGraceTimeOut)
@@ -301,7 +305,7 @@ func (s *Server) startHTTPServers() {
 
 func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServerEntryPoint *serverEntryPoint) *serverEntryPoint {
 	serverMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler()}
-	serverInternalMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler()}
+	//serverInternalMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler()}
 
 	if s.tracingMiddleware.IsEnabled() {
 		serverMiddlewares = append(serverMiddlewares, s.tracingMiddleware.NewEntryPoint(newServerEntryPointName))
@@ -332,7 +336,6 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 			log.Fatal("Error starting server: ", err)
 		}
 		serverMiddlewares = append(serverMiddlewares, s.wrapNegroniHandlerWithAccessLog(authMiddleware, fmt.Sprintf("Auth for entrypoint %s", newServerEntryPointName)))
-		serverInternalMiddlewares = append(serverInternalMiddlewares, authMiddleware)
 	}
 
 	if s.globalConfiguration.EntryPoints[newServerEntryPointName].Compress {
@@ -340,17 +343,15 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 	}
 
 	ipWhitelistMiddleware, err := buildIPWhiteLister(
-		s.globalConfiguration.EntryPoints[newServerEntryPointName].WhiteList,
-		s.globalConfiguration.EntryPoints[newServerEntryPointName].WhitelistSourceRange)
+		s.entryPoints[newServerEntryPointName].Configuration.WhiteList,
+		s.entryPoints[newServerEntryPointName].Configuration.WhitelistSourceRange)
 	if err != nil {
 		log.Fatal("Error starting server: ", err)
 	}
 	if ipWhitelistMiddleware != nil {
 		serverMiddlewares = append(serverMiddlewares, s.wrapNegroniHandlerWithAccessLog(ipWhitelistMiddleware, fmt.Sprintf("ipwhitelister for entrypoint %s", newServerEntryPointName)))
-		serverInternalMiddlewares = append(serverInternalMiddlewares, ipWhitelistMiddleware)
 	}
-
-	newSrv, listener, err := s.prepareServer(newServerEntryPointName, s.globalConfiguration.EntryPoints[newServerEntryPointName], newServerEntryPoint.httpRouter, serverMiddlewares, serverInternalMiddlewares)
+	newSrv, listener, err := s.prepareServer(newServerEntryPointName, s.globalConfiguration.EntryPoints[newServerEntryPointName], newServerEntryPoint.httpRouter, serverMiddlewares)
 	if err != nil {
 		log.Fatal("Error preparing server: ", err)
 	}
@@ -732,39 +733,7 @@ func (s *Server) startServer(serverEntryPoint *serverEntryPoint, globalConfigura
 	}
 }
 
-func (s *Server) addInternalRoutes(entryPointName string, router *mux.Router) {
-	if s.globalConfiguration.Metrics != nil && s.globalConfiguration.Metrics.Prometheus != nil && s.globalConfiguration.Metrics.Prometheus.EntryPoint == entryPointName {
-		metrics.PrometheusHandler{}.AddRoutes(router)
-	}
-
-	if s.globalConfiguration.Rest != nil && s.globalConfiguration.Rest.EntryPoint == entryPointName {
-		s.globalConfiguration.Rest.AddRoutes(router)
-	}
-
-	if s.globalConfiguration.API != nil && s.globalConfiguration.API.EntryPoint == entryPointName {
-		s.globalConfiguration.API.AddRoutes(router)
-	}
-}
-
-func (s *Server) addInternalPublicRoutes(entryPointName string, router *mux.Router) {
-	if s.globalConfiguration.Ping != nil && s.globalConfiguration.Ping.EntryPoint != "" && s.globalConfiguration.Ping.EntryPoint == entryPointName {
-		s.globalConfiguration.Ping.AddRoutes(router)
-	}
-
-	if s.globalConfiguration.API != nil && s.globalConfiguration.API.EntryPoint == entryPointName && s.leadership != nil {
-		s.leadership.AddRoutes(router)
-	}
-}
-
-func (s *Server) addACMERoutes(entryPointName string, router *mux.Router) {
-	if s.globalConfiguration.ACME != nil && s.globalConfiguration.ACME.HTTPChallenge != nil && s.globalConfiguration.ACME.HTTPChallenge.EntryPoint == entryPointName {
-		s.globalConfiguration.ACME.AddRoutes(router)
-	} else if acme.IsEnabled() && acme.Get().HTTPChallenge != nil && acme.Get().HTTPChallenge.EntryPoint == entryPointName {
-		acme.Get().AddRoutes(router)
-	}
-}
-
-func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.EntryPoint, router *middlewares.HandlerSwitcher, middlewares []negroni.Handler, internalMiddlewares []negroni.Handler) (*http.Server, net.Listener, error) {
+func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.EntryPoint, router *middlewares.HandlerSwitcher, middlewares []negroni.Handler) (*http.Server, net.Listener, error) {
 	readTimeout, writeTimeout, idleTimeout := buildServerTimeouts(s.globalConfiguration)
 	log.Infof("Preparing server %s %+v with readTimeout=%s writeTimeout=%s idleTimeout=%s", entryPointName, entryPoint, readTimeout, writeTimeout, idleTimeout)
 
@@ -775,12 +744,7 @@ func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.
 	}
 	n.UseHandler(router)
 
-	path := "/"
-	if s.globalConfiguration.Web != nil && s.globalConfiguration.Web.Path != "" {
-		path = s.globalConfiguration.Web.Path
-	}
-
-	internalMuxRouter := s.buildInternalRouter(entryPointName, path, internalMiddlewares)
+	internalMuxRouter := s.buildInternalRouter(entryPointName)
 	internalMuxRouter.NotFoundHandler = n
 
 	tlsConfig, err := s.createTLSConfig(entryPointName, entryPoint.TLS, router)
@@ -826,32 +790,24 @@ func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.
 		nil
 }
 
-func (s *Server) buildInternalRouter(entryPointName, path string, internalMiddlewares []negroni.Handler) *mux.Router {
+func (s *Server) buildInternalRouter(entryPointName string) *mux.Router {
 	internalMuxRouter := mux.NewRouter()
 	internalMuxRouter.StrictSlash(true)
 	internalMuxRouter.SkipClean(true)
+	if entrypoint, ok := s.entrypoints[entryPointName]; ok {
+		entrypoint.InternalRouter.AddRoutes(internalMuxRouter)
 
-	internalMuxSubrouter := internalMuxRouter.PathPrefix(path).Subrouter()
-	internalMuxSubrouter.StrictSlash(true)
-	internalMuxSubrouter.SkipClean(true)
-
-	s.addInternalRoutes(entryPointName, internalMuxSubrouter)
-	internalMuxRouter.Walk(wrapRoute(internalMiddlewares))
-
-	s.addInternalPublicRoutes(entryPointName, internalMuxSubrouter)
-
-	s.addACMERoutes(entryPointName, internalMuxRouter)
+		if s.globalConfiguration.API != nil && s.globalConfiguration.API.EntryPoint == entryPointName && s.leadership != nil {
+			if s.globalConfiguration.Web != nil && s.globalConfiguration.Web.Path != "" {
+				router := router.RouterWithPrefix{Router: s.leadership, PathPrefix: s.globalConfiguration.Web.Path}
+				router.AddRoutes(internalMuxRouter)
+			} else {
+				s.leadership.AddRoutes(internalMuxRouter)
+			}
+		}
+	}
 
 	return internalMuxRouter
-}
-
-// wrapRoute with middlewares
-func wrapRoute(middlewares []negroni.Handler) func(*mux.Route, *mux.Router, []*mux.Route) error {
-	return func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
-		middles := append(middlewares, negroni.Wrap(route.GetHandler()))
-		route.Handler(negroni.New(middles...))
-		return nil
-	}
 }
 
 func buildServerTimeouts(globalConfig configuration.GlobalConfiguration) (readTimeout, writeTimeout, idleTimeout time.Duration) {
