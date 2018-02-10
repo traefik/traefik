@@ -55,12 +55,12 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		safe.Go(func() {
 			for t := range ticker.C {
 
-				log.Debug("Refreshing Provider " + t.String())
+				log.Debugf("Refreshing Provider %s", t.String())
 
 				configuration, err := p.buildConfiguration()
 				if err != nil {
 					log.Errorf("Failed to refresh Provider configuration, error: %s", err)
-					return
+					continue
 				}
 
 				configurationChan <- types.ConfigMessage{
