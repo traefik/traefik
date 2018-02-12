@@ -243,8 +243,8 @@
 [[projects]]
   name = "github.com/containous/staert"
   packages = ["."]
-  revision = "dbb7c840f31daec0d863ada6829d075a8dbb7469"
-  version = "v3.0.0"
+  revision = "cc00c303ccbd2491ddc1dccc9eb7ccadd807557e"
+  version = "v3.1.0"
 
 [[projects]]
   name = "github.com/containous/traefik-extra-service-fabric"
@@ -1496,6 +1496,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "865659187f3824cb57b8ff8805e3114b806c67ee0ffe9cbc6db237e4038edee6"
+  inputs-digest = "17cefac15e170ca9d73093cad7a8f1fb6874cd03eeb67ccc3f8fe4d239f6e9aa"
   solver-name = "gps-cdcl"
   solver-version = 1
