@@ -1,5 +1,26 @@
 # Change Log
 
+## [v1.5.2](https://github.com/containous/traefik/tree/v1.5.2) (2018-02-12)
+[All Commits](https://github.com/containous/traefik/compare/v1.5.1...v1.5.2)
+
+**Bug fixes:**
+- **[acme,cluster,kv]** Compress ACME certificates in KV stores. ([#2814](https://github.com/containous/traefik/pull/2814) by [nmengin](https://github.com/nmengin))
+- **[acme]** Traefik still start when Let&#39;s encrypt is down ([#2794](https://github.com/containous/traefik/pull/2794) by [Juliens](https://github.com/Juliens))
+- **[docker]** Fix dnsrr endpoint mode excluded when not using swarm LB ([#2795](https://github.com/containous/traefik/pull/2795) by [mmatur](https://github.com/mmatur))
+- **[eureka]** Continue refresh the configuration after a failure. ([#2838](https://github.com/containous/traefik/pull/2838) by [ldez](https://github.com/ldez))
+- **[logs]** Reduce oxy round trip logs to debug. ([#2821](https://github.com/containous/traefik/pull/2821) by [timoreimann](https://github.com/timoreimann))
+- **[websocket]** Fix goroutine leaks in websocket ([#2825](https://github.com/containous/traefik/pull/2825) by [Juliens](https://github.com/Juliens))
+- Hide the pflag error when displaying help. ([#2800](https://github.com/containous/traefik/pull/2800) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[docker]** Explain how to write entrypoints definition in a compose file ([#2834](https://github.com/containous/traefik/pull/2834) by [mmatur](https://github.com/mmatur))
+- **[docker]** Fix typo ([#2813](https://github.com/containous/traefik/pull/2813) by [uschtwill](https://github.com/uschtwill))
+- **[k8s]** typo in &#34;i&#34;ngress annotations. ([#2780](https://github.com/containous/traefik/pull/2780) by [RRAlex](https://github.com/RRAlex))
+- Clarify how setting a frontend priority works ([#2818](https://github.com/containous/traefik/pull/2818) by [sirlatrom](https://github.com/sirlatrom))
+- Fixed typo. ([#2811](https://github.com/containous/traefik/pull/2811) by [sonus21](https://github.com/sonus21))
+- Docs: regex+replacement hints for URL rewriting ([#2802](https://github.com/containous/traefik/pull/2802) by [djeeg](https://github.com/djeeg))
+- Add documentation about entry points definition with CLI. ([#2798](https://github.com/containous/traefik/pull/2798) by [ldez](https://github.com/ldez))
+
 ## [v1.5.1](https://github.com/containous/traefik/tree/v1.5.1) (2018-01-29)
 [All Commits](https://github.com/containous/traefik/compare/v1.5.0...v1.5.1)
 
