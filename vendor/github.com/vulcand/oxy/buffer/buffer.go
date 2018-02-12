@@ -99,7 +99,19 @@ func New(next http.Handler, setters ...optSetter) (*Buffer, error) {
 	return strm, nil
 }
 
-type optSetter func(s *Buffer) error
+type optSetter func(b *Buffer) error
+
+// CondSetter Conditional setter.
+// ex: Cond(a > 4, MemRequestBodyBytes(a))
+func CondSetter(condition bool, setter optSetter) optSetter {
+	if condition {
+		// NoOp setter
+		return func(*Buffer) error {
+			return nil
+		}
+	}
+	return setter
+}
 
 // Retry provides a predicate that allows buffer middleware to replay the request
 // if it matches certain condition, e.g. returns special error code. Available functions are:
@@ -113,31 +125,31 @@ type optSetter func(s *Buffer) error
 // `Attempts() <= 2 && ResponseCode() == 502`
 //
 func Retry(predicate string) optSetter {
-	return func(s *Buffer) error {
+	return func(b *Buffer) error {
 		p, err := parseExpression(predicate)
 		if err != nil {
 			return err
 		}
-		s.retryPredicate = p
+		b.retryPredicate = p
 		return nil
 	}
 }
 
 // ErrorHandler sets error handler of the server
 func ErrorHandler(h utils.ErrorHandler) optSetter {
-	return func(s *Buffer) error {
-		s.errHandler = h
+	return func(b *Buffer) error {
+		b.errHandler = h
 		return nil
 	}
 }
 
 // MaxRequestBodyBytes sets the maximum request body size in bytes
 func MaxRequestBodyBytes(m int64) optSetter {
-	return func(s *Buffer) error {
+	return func(b *Buffer) error {
 		if m < 0 {
 			return fmt.Errorf("max bytes should be >= 0 got %d", m)
 		}
-		s.maxRequestBodyBytes = m
+		b.maxRequestBodyBytes = m
 		return nil
 	}
 }
@@ -145,22 +157,22 @@ func MaxRequestBodyBytes(m int64) optSetter {
 // MaxRequestBody bytes sets the maximum request body to be stored in memory
 // buffer middleware will serialize the excess to disk.
 func MemRequestBodyBytes(m int64) optSetter {
-	return func(s *Buffer) error {
+	return func(b *Buffer) error {
 		if m < 0 {
 			return fmt.Errorf("mem bytes should be >= 0 got %d", m)
 		}
-		s.memRequestBodyBytes = m
+		b.memRequestBodyBytes = m
 		return nil
 	}
 }
 
 // MaxResponseBodyBytes sets the maximum request body size in bytes
 func MaxResponseBodyBytes(m int64) optSetter {
-	return func(s *Buffer) error {
+	return func(b *Buffer) error {
 		if m < 0 {
 			return fmt.Errorf("max bytes should be >= 0 got %d", m)
 		}
-		s.maxResponseBodyBytes = m
+		b.maxResponseBodyBytes = m
 		return nil
 	}
 }
@@ -168,31 +180,31 @@ func MaxResponseBodyBytes(m int64) optSetter {
 // MemResponseBodyBytes sets the maximum request body to be stored in memory
 // buffer middleware will serialize the excess to disk.
 func MemResponseBodyBytes(m int64) optSetter {
-	return func(s *Buffer) error {
+	return func(b *Buffer) error {
 		if m < 0 {
 			return fmt.Errorf("mem bytes should be >= 0 got %d", m)
 		}
-		s.memResponseBodyBytes = m
+		b.memResponseBodyBytes = m
 		return nil
 	}
 }
 
 // Wrap sets the next handler to be called by buffer handler.
-func (s *Buffer) Wrap(next http.Handler) error {
-	s.next = next
+func (b *Buffer) Wrap(next http.Handler) error {
+	b.next = next
 	return nil
 }
 
-func (s *Buffer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (b *Buffer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if log.GetLevel() >= log.DebugLevel {
 		logEntry := log.WithField("Request", utils.DumpHttpRequest(req))
 		logEntry.Debug("vulcand/oxy/buffer: begin ServeHttp on request")
 		defer logEntry.Debug("vulcand/oxy/buffer: competed ServeHttp on request")
 	}
 
-	if err := s.checkLimit(req); err != nil {
+	if err := b.checkLimit(req); err != nil {
 		log.Errorf("vulcand/oxy/buffer: request body over limit, err: %v", err)
-		s.errHandler.ServeHTTP(w, req, err)
+		b.errHandler.ServeHTTP(w, req, err)
 		return
 	}
 
@@ -200,10 +212,10 @@ func (s *Buffer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// to read into memory and disk. This reader returns an error if the total request size exceeds the
 	// prefefined MaxSizeBytes. This can occur if we got chunked request, in this case ContentLength would be set to -1
 	// and the reader would be unbounded bufio in the http.Server
-	body, err := multibuf.New(req.Body, multibuf.MaxBytes(s.maxRequestBodyBytes), multibuf.MemBytes(s.memRequestBodyBytes))
+	body, err := multibuf.New(req.Body, multibuf.MaxBytes(b.maxRequestBodyBytes), multibuf.MemBytes(b.memRequestBodyBytes))
 	if err != nil || body == nil {
 		log.Errorf("vulcand/oxy/buffer: error when reading request body, err: %v", err)
-		s.errHandler.ServeHTTP(w, req, err)
+		b.errHandler.ServeHTTP(w, req, err)
 		return
 	}
 
@@ -224,7 +236,7 @@ func (s *Buffer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	totalSize, err := body.Size()
 	if err != nil {
 		log.Errorf("vulcand/oxy/buffer: failed to get request size, err: %v", err)
-		s.errHandler.ServeHTTP(w, req, err)
+		b.errHandler.ServeHTTP(w, req, err)
 		return
 	}
 
@@ -232,48 +244,48 @@ func (s *Buffer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		body = nil
 	}
 
-	outreq := s.copyRequest(req, body, totalSize)
+	outreq := b.copyRequest(req, body, totalSize)
 
 	attempt := 1
 	for {
 		// We create a special writer that will limit the response size, buffer it to disk if necessary
-		writer, err := multibuf.NewWriterOnce(multibuf.MaxBytes(s.maxResponseBodyBytes), multibuf.MemBytes(s.memResponseBodyBytes))
+		writer, err := multibuf.NewWriterOnce(multibuf.MaxBytes(b.maxResponseBodyBytes), multibuf.MemBytes(b.memResponseBodyBytes))
 		if err != nil {
 			log.Errorf("vulcand/oxy/buffer: failed create response writer, err: %v", err)
-			s.errHandler.ServeHTTP(w, req, err)
+			b.errHandler.ServeHTTP(w, req, err)
 			return
 		}
 
 		// We are mimicking http.ResponseWriter to replace writer with our special writer
-		b := &bufferWriter{
+		bw := &bufferWriter{
 			header:         make(http.Header),
 			buffer:         writer,
 			responseWriter: w,
 		}
-		defer b.Close()
+		defer bw.Close()
 
-		s.next.ServeHTTP(b, outreq)
-		if b.hijacked {
-			log.Infof("vulcand/oxy/buffer: connection was hijacked downstream. Not taking any action in buffer.")
+		b.next.ServeHTTP(bw, outreq)
+		if bw.hijacked {
+			log.Debugf("vulcand/oxy/buffer: connection was hijacked downstream. Not taking any action in buffer.")
 			return
 		}
 
 		var reader multibuf.MultiReader
-		if b.expectBody(outreq) {
+		if bw.expectBody(outreq) {
 			rdr, err := writer.Reader()
 			if err != nil {
 				log.Errorf("vulcand/oxy/buffer: failed to read response, err: %v", err)
-				s.errHandler.ServeHTTP(w, req, err)
+				b.errHandler.ServeHTTP(w, req, err)
 				return
 			}
 			defer rdr.Close()
 			reader = rdr
 		}
 
-		if (s.retryPredicate == nil || attempt > DefaultMaxRetryAttempts) ||
-			!s.retryPredicate(&context{r: req, attempt: attempt, responseCode: b.code}) {
-			utils.CopyHeaders(w.Header(), b.Header())
-			w.WriteHeader(b.code)
+		if (b.retryPredicate == nil || attempt > DefaultMaxRetryAttempts) ||
+			!b.retryPredicate(&context{r: req, attempt: attempt, responseCode: bw.code}) {
+			utils.CopyHeaders(w.Header(), bw.Header())
+			w.WriteHeader(bw.code)
 			if reader != nil {
 				io.Copy(w, reader)
 			}
@@ -284,17 +296,17 @@ func (s *Buffer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		if body != nil {
 			if _, err := body.Seek(0, 0); err != nil {
 				log.Errorf("vulcand/oxy/buffer: failed to rewind response body, err: %v", err)
-				s.errHandler.ServeHTTP(w, req, err)
+				b.errHandler.ServeHTTP(w, req, err)
 				return
 			}
 		}
 
-		outreq = s.copyRequest(req, body, totalSize)
-		log.Infof("vulcand/oxy/buffer: retry Request(%v %v) attempt %v", req.Method, req.URL, attempt)
+		outreq = b.copyRequest(req, body, totalSize)
+		log.Debugf("vulcand/oxy/buffer: retry Request(%v %v) attempt %v", req.Method, req.URL, attempt)
 	}
 }
 
-func (s *Buffer) copyRequest(req *http.Request, body io.ReadCloser, bodySize int64) *http.Request {
+func (b *Buffer) copyRequest(req *http.Request, body io.ReadCloser, bodySize int64) *http.Request {
 	o := *req
 	o.URL = utils.CopyURL(req.URL)
 	o.Header = make(http.Header)
@@ -311,12 +323,12 @@ func (s *Buffer) copyRequest(req *http.Request, body io.ReadCloser, bodySize int
 	return &o
 }
 
-func (s *Buffer) checkLimit(req *http.Request) error {
-	if s.maxRequestBodyBytes <= 0 {
+func (b *Buffer) checkLimit(req *http.Request) error {
+	if b.maxRequestBodyBytes <= 0 {
 		return nil
 	}
-	if req.ContentLength > s.maxRequestBodyBytes {
-		return &multibuf.MaxSizeReachedError{MaxSize: s.maxRequestBodyBytes}
+	if req.ContentLength > b.maxRequestBodyBytes {
+		return &multibuf.MaxSizeReachedError{MaxSize: b.maxRequestBodyBytes}
 	}
 	return nil
 }

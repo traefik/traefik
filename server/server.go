@@ -1491,22 +1491,12 @@ func (s *Server) buildBufferingMiddleware(handler http.Handler, config *types.Bu
 		config.MemRequestBodyBytes, config.MaxRequestBodyBytes, config.MemResponseBodyBytes,
 		config.MaxResponseBodyBytes, config.RetryExpression)
 
-	if len(config.RetryExpression) > 0 {
-		return buffer.New(
-			handler,
-			buffer.MemRequestBodyBytes(config.MemRequestBodyBytes),
-			buffer.MaxRequestBodyBytes(config.MaxRequestBodyBytes),
-			buffer.MemResponseBodyBytes(config.MemResponseBodyBytes),
-			buffer.MaxResponseBodyBytes(config.MaxResponseBodyBytes),
-			buffer.Retry(config.RetryExpression),
-		)
-	}
-
 	return buffer.New(
 		handler,
 		buffer.MemRequestBodyBytes(config.MemRequestBodyBytes),
 		buffer.MaxRequestBodyBytes(config.MaxRequestBodyBytes),
 		buffer.MemResponseBodyBytes(config.MemResponseBodyBytes),
 		buffer.MaxResponseBodyBytes(config.MaxResponseBodyBytes),
+		buffer.CondSetter(len(config.RetryExpression) > 0, buffer.Retry(config.RetryExpression)),
 	)
 }
