@@ -257,12 +257,11 @@ func (c *DNSProvider) makeRequest(method, uri string, body io.Reader) (json.RawM
 	if c.host.Path != "/" {
 		path = c.host.Path
 	}
-	if c.apiVersion > 0 {
-		if !strings.HasPrefix(uri, "api/v") {
-			uri = "/api/v" + strconv.Itoa(c.apiVersion) + uri
-		} else {
-			uri = "/" + uri
-		}
+	if !strings.HasPrefix(uri, "/") {
+		uri = "/" + uri
+	}
+	if c.apiVersion > 0 && !strings.HasPrefix(uri, "/api/v") {
+		uri = "/api/v" + strconv.Itoa(c.apiVersion) + uri
 	}
 	url := c.host.Scheme + "://" + c.host.Host + path + uri
 	req, err := http.NewRequest(method, url, body)
