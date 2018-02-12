@@ -4,27 +4,27 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/client-go/pkg/api/v1"
-	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
-	"k8s.io/client-go/pkg/util/intstr"
+	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func buildIngress(opts ...func(*v1beta1.Ingress)) *v1beta1.Ingress {
-	i := &v1beta1.Ingress{}
+func buildIngress(opts ...func(*extensionsv1beta1.Ingress)) *extensionsv1beta1.Ingress {
+	i := &extensionsv1beta1.Ingress{}
 	for _, opt := range opts {
 		opt(i)
 	}
 	return i
 }
 
-func iNamespace(value string) func(*v1beta1.Ingress) {
-	return func(i *v1beta1.Ingress) {
+func iNamespace(value string) func(*extensionsv1beta1.Ingress) {
+	return func(i *extensionsv1beta1.Ingress) {
 		i.Namespace = value
 	}
 }
 
-func iAnnotation(name string, value string) func(*v1beta1.Ingress) {
-	return func(i *v1beta1.Ingress) {
+func iAnnotation(name string, value string) func(*extensionsv1beta1.Ingress) {
+	return func(i *extensionsv1beta1.Ingress) {
 		if i.Annotations == nil {
 			i.Annotations = make(map[string]string)
 		}
@@ -32,9 +32,9 @@ func iAnnotation(name string, value string) func(*v1beta1.Ingress) {
 	}
 }
 
-func iRules(opts ...func(*v1beta1.IngressSpec)) func(*v1beta1.Ingress) {
-	return func(i *v1beta1.Ingress) {
-		s := &v1beta1.IngressSpec{}
+func iRules(opts ...func(*extensionsv1beta1.IngressSpec)) func(*extensionsv1beta1.Ingress) {
+	return func(i *extensionsv1beta1.Ingress) {
+		s := &extensionsv1beta1.IngressSpec{}
 		for _, opt := range opts {
 			opt(s)
 		}
@@ -42,9 +42,9 @@ func iRules(opts ...func(*v1beta1.IngressSpec)) func(*v1beta1.Ingress) {
 	}
 }
 
-func iRule(opts ...func(*v1beta1.IngressRule)) func(*v1beta1.IngressSpec) {
-	return func(spec *v1beta1.IngressSpec) {
-		r := &v1beta1.IngressRule{}
+func iRule(opts ...func(*extensionsv1beta1.IngressRule)) func(*extensionsv1beta1.IngressSpec) {
+	return func(spec *extensionsv1beta1.IngressSpec) {
+		r := &extensionsv1beta1.IngressRule{}
 		for _, opt := range opts {
 			opt(r)
 		}
@@ -52,24 +52,24 @@ func iRule(opts ...func(*v1beta1.IngressRule)) func(*v1beta1.IngressSpec) {
 	}
 }
 
-func iHost(name string) func(*v1beta1.IngressRule) {
-	return func(rule *v1beta1.IngressRule) {
+func iHost(name string) func(*extensionsv1beta1.IngressRule) {
+	return func(rule *extensionsv1beta1.IngressRule) {
 		rule.Host = name
 	}
 }
 
-func iPaths(opts ...func(*v1beta1.HTTPIngressRuleValue)) func(*v1beta1.IngressRule) {
-	return func(rule *v1beta1.IngressRule) {
-		rule.HTTP = &v1beta1.HTTPIngressRuleValue{}
+func iPaths(opts ...func(*extensionsv1beta1.HTTPIngressRuleValue)) func(*extensionsv1beta1.IngressRule) {
+	return func(rule *extensionsv1beta1.IngressRule) {
+		rule.HTTP = &extensionsv1beta1.HTTPIngressRuleValue{}
 		for _, opt := range opts {
 			opt(rule.HTTP)
 		}
 	}
 }
 
-func onePath(opts ...func(*v1beta1.HTTPIngressPath)) func(*v1beta1.HTTPIngressRuleValue) {
-	return func(irv *v1beta1.HTTPIngressRuleValue) {
-		p := &v1beta1.HTTPIngressPath{}
+func onePath(opts ...func(*extensionsv1beta1.HTTPIngressPath)) func(*extensionsv1beta1.HTTPIngressRuleValue) {
+	return func(irv *extensionsv1beta1.HTTPIngressRuleValue) {
+		p := &extensionsv1beta1.HTTPIngressPath{}
 		for _, opt := range opts {
 			opt(p)
 		}
@@ -77,33 +77,33 @@ func onePath(opts ...func(*v1beta1.HTTPIngressPath)) func(*v1beta1.HTTPIngressRu
 	}
 }
 
-func iPath(name string) func(*v1beta1.HTTPIngressPath) {
-	return func(p *v1beta1.HTTPIngressPath) {
+func iPath(name string) func(*extensionsv1beta1.HTTPIngressPath) {
+	return func(p *extensionsv1beta1.HTTPIngressPath) {
 		p.Path = name
 	}
 }
 
-func iBackend(name string, port intstr.IntOrString) func(*v1beta1.HTTPIngressPath) {
-	return func(p *v1beta1.HTTPIngressPath) {
-		p.Backend = v1beta1.IngressBackend{
+func iBackend(name string, port intstr.IntOrString) func(*extensionsv1beta1.HTTPIngressPath) {
+	return func(p *extensionsv1beta1.HTTPIngressPath) {
+		p.Backend = extensionsv1beta1.IngressBackend{
 			ServiceName: name,
 			ServicePort: port,
 		}
 	}
 }
 
-func iTLSes(opts ...func(*v1beta1.IngressTLS)) func(*v1beta1.Ingress) {
-	return func(i *v1beta1.Ingress) {
+func iTLSes(opts ...func(*extensionsv1beta1.IngressTLS)) func(*extensionsv1beta1.Ingress) {
+	return func(i *extensionsv1beta1.Ingress) {
 		for _, opt := range opts {
-			iTLS := v1beta1.IngressTLS{}
+			iTLS := extensionsv1beta1.IngressTLS{}
 			opt(&iTLS)
 			i.Spec.TLS = append(i.Spec.TLS, iTLS)
 		}
 	}
 }
 
-func iTLS(secret string, hosts ...string) func(*v1beta1.IngressTLS) {
-	return func(i *v1beta1.IngressTLS) {
+func iTLS(secret string, hosts ...string) func(*extensionsv1beta1.IngressTLS) {
+	return func(i *extensionsv1beta1.IngressTLS) {
 		i.SecretName = secret
 		i.Hosts = hosts
 	}
@@ -133,28 +133,28 @@ func TestBuildIngress(t *testing.T) {
 	assert.EqualValues(t, sampleIngress(), i)
 }
 
-func sampleIngress() *v1beta1.Ingress {
-	return &v1beta1.Ingress{
-		ObjectMeta: v1.ObjectMeta{
+func sampleIngress() *extensionsv1beta1.Ingress {
+	return &extensionsv1beta1.Ingress{
+		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "testing",
 		},
-		Spec: v1beta1.IngressSpec{
-			Rules: []v1beta1.IngressRule{
+		Spec: extensionsv1beta1.IngressSpec{
+			Rules: []extensionsv1beta1.IngressRule{
 				{
 					Host: "foo",
-					IngressRuleValue: v1beta1.IngressRuleValue{
-						HTTP: &v1beta1.HTTPIngressRuleValue{
-							Paths: []v1beta1.HTTPIngressPath{
+					IngressRuleValue: extensionsv1beta1.IngressRuleValue{
+						HTTP: &extensionsv1beta1.HTTPIngressRuleValue{
+							Paths: []extensionsv1beta1.HTTPIngressPath{
 								{
 									Path: "/bar",
-									Backend: v1beta1.IngressBackend{
+									Backend: extensionsv1beta1.IngressBackend{
 										ServiceName: "service1",
 										ServicePort: intstr.FromInt(80),
 									},
 								},
 								{
 									Path: "/namedthing",
-									Backend: v1beta1.IngressBackend{
+									Backend: extensionsv1beta1.IngressBackend{
 										ServiceName: "service4",
 										ServicePort: intstr.FromString("https"),
 									},
@@ -165,17 +165,17 @@ func sampleIngress() *v1beta1.Ingress {
 				},
 				{
 					Host: "bar",
-					IngressRuleValue: v1beta1.IngressRuleValue{
-						HTTP: &v1beta1.HTTPIngressRuleValue{
-							Paths: []v1beta1.HTTPIngressPath{
+					IngressRuleValue: extensionsv1beta1.IngressRuleValue{
+						HTTP: &extensionsv1beta1.HTTPIngressRuleValue{
+							Paths: []extensionsv1beta1.HTTPIngressPath{
 								{
-									Backend: v1beta1.IngressBackend{
+									Backend: extensionsv1beta1.IngressBackend{
 										ServiceName: "service3",
 										ServicePort: intstr.FromString("https"),
 									},
 								},
 								{
-									Backend: v1beta1.IngressBackend{
+									Backend: extensionsv1beta1.IngressBackend{
 										ServiceName: "service2",
 										ServicePort: intstr.FromInt(802),
 									},
@@ -185,7 +185,7 @@ func sampleIngress() *v1beta1.Ingress {
 					},
 				},
 			},
-			TLS: []v1beta1.IngressTLS{
+			TLS: []extensionsv1beta1.IngressTLS{
 				{
 					Hosts:      []string{"foo"},
 					SecretName: "tls-secret",
