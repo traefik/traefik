@@ -58,7 +58,7 @@ func (cl *ConnLimiter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := cl.acquire(token, amount); err != nil {
-		log.Infof("limiting request source %s: %v", token, err)
+		log.Debugf("limiting request source %s: %v", token, err)
 		cl.errHandler.ServeHTTP(w, r, err)
 		return
 	}
