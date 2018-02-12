@@ -48,25 +48,25 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 		return err
 	}
 
-	recordId, err := c.FindExistingRecordId(zone, recordName)
+	recordID, err := c.FindExistingRecordId(zone, recordName)
 	if err != nil {
 		return err
 	}
 
 	record := egoscale.DNSRecord{
 		Name:       recordName,
-		Ttl:        ttl,
+		TTL:        ttl,
 		Content:    value,
 		RecordType: "TXT",
 	}
 
-	if recordId == 0 {
+	if recordID == 0 {
 		_, err := c.client.CreateRecord(zone, record)
 		if err != nil {
 			return errors.New("Error while creating DNS record: " + err.Error())
 		}
 	} else {
-		record.Id = recordId
+		record.ID = recordID
 		_, err := c.client.UpdateRecord(zone, record)
 		if err != nil {
 			return errors.New("Error while updating DNS record: " + err.Error())
@@ -84,17 +84,13 @@ func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 		return err
 	}
 
-	recordId, err := c.FindExistingRecordId(zone, recordName)
+	recordID, err := c.FindExistingRecordId(zone, recordName)
 	if err != nil {
 		return err
 	}
 
-	if recordId != 0 {
-		record := egoscale.DNSRecord{
-			Id: recordId,
-		}
-
-		err = c.client.DeleteRecord(zone, record)
+	if recordID != 0 {
+		err = c.client.DeleteRecord(zone, recordID)
 		if err != nil {
 			return errors.New("Error while deleting DNS record: " + err.Error())
 		}
@@ -106,13 +102,13 @@ func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 // Query Exoscale to find an existing record for this name.
 // Returns nil if no record could be found
 func (c *DNSProvider) FindExistingRecordId(zone, recordName string) (int64, error) {
-	responses, err := c.client.GetRecords(zone)
+	records, err := c.client.GetRecords(zone)
 	if err != nil {
 		return -1, errors.New("Error while retrievening DNS records: " + err.Error())
 	}
-	for _, response := range responses {
-		if response.Record.Name == recordName {
-			return response.Record.Id, nil
+	for _, record := range records {
+		if record.Name == recordName {
+			return record.ID, nil
 		}
 	}
 	return 0, nil

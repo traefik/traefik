@@ -5,6 +5,7 @@ import (
 	"net/http"
 )
 
+// NewClient creates a CloudStack API client
 func NewClient(endpoint string, apiKey string, apiSecret string) *Client {
 	cs := &Client{
 		client: &http.Client{

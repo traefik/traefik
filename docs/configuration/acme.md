@@ -113,7 +113,7 @@ entryPoint = "https"
   # Required
   #
   entryPoint = "http"
-  
+
 # Use a DNS-01 acme challenge rather than TLS-SNI-01 challenge
 #
 # Optional
@@ -272,7 +272,7 @@ Use `DNS-01` challenge to generate/renew ACME certificates.
 # ...
 ```
 
-#### `provider` 
+#### `provider`
 
 Select the provider that matches the DNS domain that will host the challenge TXT record, and provide environment variables to enable setting it:
 
@@ -281,6 +281,7 @@ Select the provider that matches the DNS domain that will host the challenge TXT
 | [Auroradns](https://www.pcextreme.com/aurora/dns)      | `auroradns`    | `AURORA_USER_ID`, `AURORA_KEY`, `AURORA_ENDPOINT`                                                                         |
 | [Azure](https://azure.microsoft.com/services/dns/)     | `azure`        | `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_SUBSCRIPTION_ID`, `AZURE_TENANT_ID`, `AZURE_RESOURCE_GROUP`              |
 | [Cloudflare](https://www.cloudflare.com)               | `cloudflare`   | `CLOUDFLARE_EMAIL`, `CLOUDFLARE_API_KEY` - The Cloudflare `Global API Key` needs to be used and not the `Origin CA Key`   |
+| [CloudXNS](https://www.cloudxns.net)                   | `cloudxns`     | `CLOUDXNS_API_KEY`, `CLOUDXNS_SECRET_KEY`                                                                                 |
 | [DigitalOcean](https://www.digitalocean.com)           | `digitalocean` | `DO_AUTH_TOKEN`                                                                                                           |
 | [DNSimple](https://dnsimple.com)                       | `dnsimple`     | `DNSIMPLE_OAUTH_TOKEN`, `DNSIMPLE_BASE_URL`                                                                               |
 | [DNS Made Easy](https://dnsmadeeasy.com)               | `dnsmadeeasy`  | `DNSMADEEASY_API_KEY`, `DNSMADEEASY_API_SECRET`, `DNSMADEEASY_SANDBOX`                                                    |
@@ -288,6 +289,7 @@ Select the provider that matches the DNS domain that will host the challenge TXT
 | [Dyn](https://dyn.com)                                 | `dyn`          | `DYN_CUSTOMER_NAME`, `DYN_USER_NAME`, `DYN_PASSWORD`                                                                      |
 | [Exoscale](https://www.exoscale.ch)                    | `exoscale`     | `EXOSCALE_API_KEY`, `EXOSCALE_API_SECRET`, `EXOSCALE_ENDPOINT`                                                            |
 | [Gandi](https://www.gandi.net)                         | `gandi`        | `GANDI_API_KEY`                                                                                                           |
+| [Gandi V5](http://doc.livedns.gandi.net)               | `gandiv5`      | `GANDIV5_API_KEY`                                                                                                         |
 | [GoDaddy](https://godaddy.com/domains)                 | `godaddy`      | `GODADDY_API_KEY`, `GODADDY_API_SECRET`                                                                                   |
 | [Google Cloud DNS](https://cloud.google.com/dns/docs/) | `gcloud`       | `GCE_PROJECT`, `GCE_SERVICE_ACCOUNT_FILE`                                                                                 |
 | [Linode](https://www.linode.com)                       | `linode`       | `LINODE_API_KEY`                                                                                                          |
@@ -330,7 +332,7 @@ This will request a certificate from Let's Encrypt during the first TLS handshak
 
 !!! warning
     TLS handshakes will be slow when requesting a hostname certificate for the first time, this can lead to DoS attacks.
-    
+
 !!! warning
     Take note that Let's Encrypt have [rate limiting](https://letsencrypt.org/docs/rate-limits).
 

@@ -525,7 +525,8 @@
 [[projects]]
   name = "github.com/exoscale/egoscale"
   packages = ["."]
-  revision = "325740036187ddae3a5b74be00fbbc70011c4d96"
+  revision = "e4fedc381fbddb7fef4d7060388a726c6de37c88"
+  version = "v0.9.7"
 
 [[projects]]
   name = "github.com/fatih/color"
@@ -1182,6 +1183,7 @@
     "providers/dns/auroradns",
     "providers/dns/azure",
     "providers/dns/cloudflare",
+    "providers/dns/cloudxns",
     "providers/dns/digitalocean",
     "providers/dns/dnsimple",
     "providers/dns/dnsmadeeasy",
@@ -1189,6 +1191,7 @@
     "providers/dns/dyn",
     "providers/dns/exoscale",
     "providers/dns/gandi",
+    "providers/dns/gandiv5",
     "providers/dns/godaddy",
     "providers/dns/googlecloud",
     "providers/dns/linode",
@@ -1202,7 +1205,7 @@
     "providers/dns/route53",
     "providers/dns/vultr"
   ]
-  revision = "b929aa5aab5ad2e197bb3d74ef99fac61bfa47bc"
+  revision = "06a8e7c475c03ef8d4773284ac63357d2810601b"
 
 [[projects]]
   branch = "master"
