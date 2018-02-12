@@ -127,7 +127,11 @@ fmt:
 pull-images:
 	grep --no-filename -E '^\s+image:' ./integration/resources/compose/*.yml | awk '{print $$2}' | sort | uniq  | xargs -P 6 -n 1 docker pull
 
-prune-dep:
+dep-ensure:
+	dep ensure -v
+	./script/prune-dep.sh
+
+dep-prune:
 	./script/prune-dep.sh
 
 help: ## this help

@@ -6,4 +6,4 @@ type TestingT interface {
 	FailNow()
 }
 
-//go:generate go run ../_codegen/main.go -output-package=require -template=require.go.tmpl
+//go:generate go run ../_codegen/main.go -output-package=require -template=require.go.tmpl -include-format-funcs

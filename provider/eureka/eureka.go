@@ -55,7 +55,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				configuration, err := p.buildConfiguration()
 				if err != nil {
 					log.Errorf("Failed to refresh Provider configuration, error: %s", err)
-					return
+					continue
 				}
 
 				configurationChan <- types.ConfigMessage{

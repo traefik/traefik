@@ -165,9 +165,26 @@ storage = "acme.json"
 # ...
 ```
 
-File or key used for certificates storage.
+The `storage` option sets where are stored your ACME certificates.
 
-**WARNING:** If you use Træfik in Docker, you have 2 options:
+There are two kind of `storage` :
+- a JSON file,
+- a KV store entry.
+
+!!! danger "DEPRECATED"
+    `storage` replaces `storageFile` which is deprecated.
+
+!!! note
+    During Træfik configuration migration from a configuration file to a KV store (thanks to `storeconfig` subcommand as described [here](/user-guide/kv-config/#store-configuration-in-key-value-store)), if ACME certificates have to be migrated too, use both `storageFile` and `storage`.
+
+    - `storageFile` will contain the path to the `acme.json` file to migrate.
+    - `storage` will contain the key where the certificates will be stored.
+
+#### Store data in a file
+
+ACME certificates can be stored in a JSON file which with the `600` right mode. 
+
+There are two ways to store ACME certificates in a file from Docker:
 
 - create a file on your host and mount it as a volume:
 ```toml
@@ -176,7 +193,6 @@ storage = "acme.json"
 ```bash
 docker run -v "/my/host/acme.json:acme.json" traefik
 ```
-
 - mount the folder containing the file as a volume
 ```toml
 storage = "/etc/traefik/acme/acme.json"
@@ -185,14 +201,24 @@ storage = "/etc/traefik/acme/acme.json"
 docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 ```
 
-!!! note
-    `storage` replaces `storageFile` which is deprecated.
+!!! warning
+    This file cannot be shared per many instances of Træfik at the same time.
+    If you have to use Træfik cluster mode, please use [a KV Store entry](/configuration/acme/#storage-kv-entry).
+
+#### Store data in a KV store entry
+
+ACME certificates can be stored in a KV Store entry.
+
+```toml
+storage = "traefik/acme/account"
+```
+
+**This kind of storage is mandatory in cluster mode.**
+
+Because KV stores (like Consul) have limited entries size, the certificates list is compressed before to be set in a KV store entry.
 
 !!! note
-    During Træfik configuration migration from a configuration file to a KV store (thanks to `storeconfig` subcommand as described [here](/user-guide/kv-config/#store-configuration-in-key-value-store)), if ACME certificates have to be migrated too, use both `storageFile` and `storage`.
-
-    - `storageFile` will contain the path to the `acme.json` file to migrate.
-    - `storage` will contain the key where the certificates will be stored.
+    It's possible to store up to approximately 100 ACME certificates in Consul.
 
 ### `acme.httpChallenge`
 
@@ -288,7 +314,7 @@ Useful if internal networks block external DNS queries.
 
 ### `onDemand` (Deprecated)
 
-!!! warning
+!!! danger "DEPRECATED"
     This option is deprecated.
 
 ```toml
@@ -365,12 +391,12 @@ Each domain & SANs will lead to a certificate request.
 
 ### `dnsProvider` (Deprecated)
 
-!!! warning
+!!! danger "DEPRECATED"
     This option is deprecated.
     Please refer to [DNS challenge provider section](/configuration/acme/#provider)
 
 ### `delayDontCheckDNS` (Deprecated)
 
-!!! warning
+!!! danger "DEPRECATED"
     This option is deprecated.
     Please refer to [DNS challenge delayBeforeCheck section](/configuration/acme/#delaybeforecheck)

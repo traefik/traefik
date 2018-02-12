@@ -157,6 +157,10 @@
   name = "github.com/stvp/go-udp-testing"
 
 [[constraint]]
+  name = "github.com/stretchr/testify"
+  version = "1.2.1"
+
+[[constraint]]
   name = "github.com/uber/jaeger-client-go"
   version = "2.9.0"
 
@@ -233,3 +237,8 @@
   # ALWAYS keep this override
   name = "github.com/mailgun/timetools"
   revision = "7e6055773c5137efbeb3bd2410d705fe10ab6bfd"
+
+[prune]
+  non-go = true
+  go-tests = true
+  unused-packages = true
