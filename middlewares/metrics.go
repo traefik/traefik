@@ -65,7 +65,7 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, r *http.Request, n
 
 	labels = append(labels, "code", strconv.Itoa(recorder.statusCode))
 	m.reqsCounter.With(labels...).Add(1)
-	m.reqDurationHistogram.With(labels...).Observe(float64(time.Since(start).Seconds()))
+	m.reqDurationHistogram.With(labels...).Observe(time.Since(start).Seconds())
 }
 
 func getRequestProtocol(req *http.Request) string {
