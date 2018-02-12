@@ -1,7 +1,6 @@
 package docker
 
 import (
-	"reflect"
 	"strconv"
 	"testing"
 	"time"
@@ -468,70 +467,6 @@ func TestSwarmTraefikFilter(t *testing.T) {
 			actual := test.provider.containerFilter(dData)
 			if actual != test.expected {
 				t.Errorf("expected %v for %+v, got %+v", test.expected, test, actual)
-			}
-		})
-	}
-}
-
-func TestSwarmTaskParsing(t *testing.T) {
-	testCases := []struct {
-		service       swarm.Service
-		tasks         []swarm.Task
-		isGlobalSVC   bool
-		expectedNames map[string]string
-		networks      map[string]*docker.NetworkResource
-	}{
-		{
-			service: swarmService(serviceName("container")),
-			tasks: []swarm.Task{
-				swarmTask("id1", taskSlot(1)),
-				swarmTask("id2", taskSlot(2)),
-				swarmTask("id3", taskSlot(3)),
-			},
-			isGlobalSVC: false,
-			expectedNames: map[string]string{
-				"id1": "container.1",
-				"id2": "container.2",
-				"id3": "container.3",
-			},
-			networks: map[string]*docker.NetworkResource{
-				"1": {
-					Name: "foo",
-				},
-			},
-		},
-		{
-			service: swarmService(serviceName("container")),
-			tasks: []swarm.Task{
-				swarmTask("id1"),
-				swarmTask("id2"),
-				swarmTask("id3"),
-			},
-			isGlobalSVC: true,
-			expectedNames: map[string]string{
-				"id1": "container.id1",
-				"id2": "container.id2",
-				"id3": "container.id3",
-			},
-			networks: map[string]*docker.NetworkResource{
-				"1": {
-					Name: "foo",
-				},
-			},
-		},
-	}
-
-	for caseID, test := range testCases {
-		test := test
-		t.Run(strconv.Itoa(caseID), func(t *testing.T) {
-			t.Parallel()
-			dData := parseService(test.service, test.networks)
-
-			for _, task := range test.tasks {
-				taskDockerData := parseTasks(task, dData, map[string]*docker.NetworkResource{}, test.isGlobalSVC)
-				if !reflect.DeepEqual(taskDockerData.Name, test.expectedNames[task.ID]) {
-					t.Errorf("expect %v, got %v", test.expectedNames[task.ID], taskDockerData.Name)
-				}
 			}
 		})
 	}

@@ -260,19 +260,27 @@ func listContainers(ctx context.Context, dockerClient client.ContainerAPIClient)
 	var containersInspected []dockerData
 	// get inspect containers
 	for _, container := range containerList {
-		containerInspected, err := dockerClient.ContainerInspect(ctx, container.ID)
-		if err != nil {
-			log.Warnf("Failed to inspect container %s, error: %s", container.ID, err)
-		} else {
-			// This condition is here to avoid to have empty IP https://github.com/containous/traefik/issues/2459
-			// We register only container which are running
-			if containerInspected.ContainerJSONBase != nil && containerInspected.ContainerJSONBase.State != nil && containerInspected.ContainerJSONBase.State.Running {
-				dData := parseContainer(containerInspected)
-				containersInspected = append(containersInspected, dData)
-			}
+		dData := inspectContainers(ctx, dockerClient, container.ID)
+		if len(dData.Name) > 0 {
+			containersInspected = append(containersInspected, dData)
 		}
 	}
 	return containersInspected, nil
+}
+
+func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClient, containerID string) dockerData {
+	dData := dockerData{}
+	containerInspected, err := dockerClient.ContainerInspect(ctx, containerID)
+	if err != nil {
+		log.Warnf("Failed to inspect container %s, error: %s", containerID, err)
+	} else {
+		// This condition is here to avoid to have empty IP https://github.com/containous/traefik/issues/2459
+		// We register only container which are running
+		if containerInspected.ContainerJSONBase != nil && containerInspected.ContainerJSONBase.State != nil && containerInspected.ContainerJSONBase.State.Running {
+			dData = parseContainer(containerInspected)
+		}
+	}
+	return dData
 }
 
 func parseContainer(container dockertypes.ContainerJSON) dockerData {
@@ -388,13 +396,17 @@ func parseService(service swarmtypes.Service, networkMap map[string]*dockertypes
 			for _, virtualIP := range service.Endpoint.VirtualIPs {
 				networkService := networkMap[virtualIP.NetworkID]
 				if networkService != nil {
-					ip, _, _ := net.ParseCIDR(virtualIP.Addr)
-					network := &networkData{
-						Name: networkService.Name,
-						ID:   virtualIP.NetworkID,
-						Addr: ip.String(),
+					if len(virtualIP.Addr) > 0 {
+						ip, _, _ := net.ParseCIDR(virtualIP.Addr)
+						network := &networkData{
+							Name: networkService.Name,
+							ID:   virtualIP.NetworkID,
+							Addr: ip.String(),
+						}
+						dData.NetworkSettings.Networks[network.Name] = network
+					} else {
+						log.Debugf("No virtual IPs found in network %s", virtualIP.NetworkID)
 					}
-					dData.NetworkSettings.Networks[network.Name] = network
 				} else {
 					log.Debugf("Network not found, id: %s", virtualIP.NetworkID)
 				}
@@ -421,12 +433,15 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 			continue
 		}
 		dData := parseTasks(task, serviceDockerData, networkMap, isGlobalSvc)
-		dockerDataList = append(dockerDataList, dData)
+		if len(dData.NetworkSettings.Networks) > 0 {
+			dockerDataList = append(dockerDataList, dData)
+		}
 	}
 	return dockerDataList, err
 }
 
-func parseTasks(task swarmtypes.Task, serviceDockerData dockerData, networkMap map[string]*dockertypes.NetworkResource, isGlobalSvc bool) dockerData {
+func parseTasks(task swarmtypes.Task, serviceDockerData dockerData,
+	networkMap map[string]*dockertypes.NetworkResource, isGlobalSvc bool) dockerData {
 	dData := dockerData{
 		ServiceName:     serviceDockerData.Name,
 		Name:            serviceDockerData.Name + "." + strconv.Itoa(task.Slot),
@@ -442,15 +457,19 @@ func parseTasks(task swarmtypes.Task, serviceDockerData dockerData, networkMap m
 		dData.NetworkSettings.Networks = make(map[string]*networkData)
 		for _, virtualIP := range task.NetworksAttachments {
 			if networkService, present := networkMap[virtualIP.Network.ID]; present {
-				// Not sure about this next loop - when would a task have multiple IP's for the same network?
-				for _, addr := range virtualIP.Addresses {
-					ip, _, _ := net.ParseCIDR(addr)
-					network := &networkData{
-						ID:   virtualIP.Network.ID,
-						Name: networkService.Name,
-						Addr: ip.String(),
+				if len(virtualIP.Addresses) > 0 {
+					// Not sure about this next loop - when would a task have multiple IP's for the same network?
+					for _, addr := range virtualIP.Addresses {
+						ip, _, _ := net.ParseCIDR(addr)
+						network := &networkData{
+							ID:   virtualIP.Network.ID,
+							Name: networkService.Name,
+							Addr: ip.String(),
+						}
+						dData.NetworkSettings.Networks[network.Name] = network
 					}
-					dData.NetworkSettings.Networks[network.Name] = network
+				} else {
+					log.Debugf("No IP addresses found for network %s", virtualIP.Network.ID)
 				}
 			}
 		}
