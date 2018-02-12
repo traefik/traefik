@@ -1,10 +1,14 @@
 package staert
 
 import (
+	"bytes"
+	"compress/gzip"
 	"encoding"
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"reflect"
 	"sort"
 	"strconv"
@@ -155,14 +159,30 @@ func decodeHook(fromType reflect.Type, toType reflect.Type, data interface{}) (i
 
 			return dataOutput, nil
 		} else if fromType.Kind() == reflect.String {
-			b, err := base64.StdEncoding.DecodeString(data.(string))
-			if err != nil {
-				return nil, err
-			}
-			return b, nil
+			return readCompressedData(data.(string), gzipReader, base64Reader)
 		}
 	}
 	return data, nil
+}
+
+func readCompressedData(data string, fs ...func(io.Reader) (io.Reader, error)) ([]byte, error) {
+	var err error
+	for _, f := range fs {
+		var reader io.Reader
+		reader, err = f(bytes.NewBufferString(data))
+		if err == nil {
+			return ioutil.ReadAll(reader)
+		}
+	}
+	return nil, err
+}
+
+func base64Reader(r io.Reader) (io.Reader, error) {
+	return base64.NewDecoder(base64.StdEncoding, r), nil
+}
+
+func gzipReader(r io.Reader) (io.Reader, error) {
+	return gzip.NewReader(r)
 }
 
 // StoreConfig stores the config into the KV Store
@@ -263,7 +283,11 @@ func collateKvRecursive(objValue reflect.Value, kv map[string]string, key string
 	case reflect.Array, reflect.Slice:
 		// Byte slices get special treatment
 		if objValue.Type().Elem().Kind() == reflect.Uint8 {
-			kv[name] = base64.StdEncoding.EncodeToString(objValue.Bytes())
+			compressedData, err := writeCompressedData(objValue.Bytes())
+			if err != nil {
+				return err
+			}
+			kv[name] = compressedData
 		} else {
 			for i := 0; i < objValue.Len(); i++ {
 				name = key + "/" + strconv.Itoa(i)
@@ -284,6 +308,17 @@ func collateKvRecursive(objValue reflect.Value, kv map[string]string, key string
 		return fmt.Errorf("kind %s not supported", kind.String())
 	}
 	return nil
+}
+
+func writeCompressedData(data []byte) (string, error) {
+	var buffer bytes.Buffer
+	gzipWriter := gzip.NewWriter(&buffer)
+	_, err := gzipWriter.Write(data)
+	if err != nil {
+		return "", err
+	}
+	gzipWriter.Close()
+	return buffer.String(), nil
 }
 
 // ListRecursive lists all key value children under key
