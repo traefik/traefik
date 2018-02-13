@@ -130,7 +130,6 @@ As such, there is no way to handle this situation deterministically.
 Finally, Marathon health checks are not mandatory (the default is to use the task state as reported by Mesos), so requiring them for Traefik would raise the entry barrier for Marathon users.
 
 Traefik used to use the health check results as a strict requirement but moved away from it as [users reported the dramatic consequences](https://github.com/containous/traefik/issues/653).
-If health check results are known to exist, however, they will be used to signal task availability.
 
 #### Draining
 

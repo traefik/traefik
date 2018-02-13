@@ -153,18 +153,6 @@ func (p *Provider) taskFilter(task marathon.Task, application marathon.Applicati
 		return false
 	}
 
-	// Filter task with existing, bad health check results.
-	if application.HasHealthChecks() {
-		if task.HasHealthCheckResults() {
-			for _, healthCheck := range task.HealthCheckResults {
-				if !healthCheck.Alive {
-					log.Debugf("Filtering Marathon task %s from application %s with bad health check", task.ID, application.ID)
-					return false
-				}
-			}
-		}
-	}
-
 	if ready := p.readyChecker.Do(task, application); !ready {
 		log.Infof("Filtering unready task %s from application %s", task.ID, application.ID)
 		return false
