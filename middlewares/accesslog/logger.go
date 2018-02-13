@@ -45,8 +45,8 @@ type LogHandler struct {
 	logger   *logrus.Logger
 	file     *os.File
 	filePath string
-	maskIPv4 *net.IPMask
-	maskIPv6 *net.IPMask
+	maskIPv4 net.IPMask
+	maskIPv6 net.IPMask
 	mu       sync.Mutex
 }
 
@@ -73,8 +73,8 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 	}
 
 	// Enable masks for remote addresses
-	var maskIPv4 *net.IPMask
-	var maskIPv6 *net.IPMask
+	var maskIPv4 net.IPMask
+	var maskIPv6 net.IPMask
 
 	// Set default value if not set
 	if len(config.RemoteIPMask) == 0 {
@@ -83,20 +83,12 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 
 	switch config.RemoteIPMask {
 	case NoMask:
-		maskIPv4 = nil
-		maskIPv6 = nil
 	case PartialMask:
-		v4 := net.CIDRMask(24, 32)
-		v6 := net.CIDRMask(48, 128)
-
-		maskIPv4 = &v4
-		maskIPv6 = &v6
+		maskIPv4 = net.CIDRMask(24, 32)
+		maskIPv6 = net.CIDRMask(48, 128)
 	case FullMask:
-		v4 := net.CIDRMask(0, 32)
-		v6 := net.CIDRMask(0, 128)
-
-		maskIPv4 = &v4
-		maskIPv6 = &v6
+		maskIPv4 = net.CIDRMask(0, 32)
+		maskIPv6 = net.CIDRMask(0, 128)
 	default:
 		return nil, fmt.Errorf("unsupported IP address mask setting for access log: %s", config.RemoteIPMask)
 	}
@@ -234,7 +226,7 @@ func silentSplitHostPort(value string) (host string, port string) {
 	return host, port
 }
 
-func maskHost(address string, maskIPv4 *net.IPMask, maskIPv6 *net.IPMask, isIPv6 bool) (maskedAddress string) {
+func maskHost(address string, maskIPv4 net.IPMask, maskIPv6 net.IPMask, isIPv6 bool) (maskedAddress string) {
 	// Check if it is a hostname, an IPv4 or an IPv6 address
 	parsedAddress := net.ParseIP(address)
 
@@ -246,11 +238,11 @@ func maskHost(address string, maskIPv4 *net.IPMask, maskIPv6 *net.IPMask, isIPv6
 
 	if isIPv6 {
 		// IPv6
-		return parsedAddress.Mask(*maskIPv6).String()
+		return parsedAddress.Mask(maskIPv6).String()
 	}
 
 	// IPv4
-	return parsedAddress.Mask(*maskIPv4).String()
+	return parsedAddress.Mask(maskIPv4).String()
 }
 
 func usernameIfPresent(theURL *url.URL) string {
