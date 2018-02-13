@@ -754,20 +754,29 @@ func templatesEcsTmpl() (*asset, error) {
 	return a, nil
 }
 
-var _templatesEurekaTmpl = []byte(`[backends]{{range .Applications}}
-    {{ $app := .}}
-    {{range .Instances}}
-    [backends.backend{{$app.Name}}.servers.server-{{ getInstanceID . }}]
-    url = "{{ getProtocol . }}://{{ .IpAddr }}:{{ getPort . }}"
-    weight = {{ getWeight . }}
-{{end}}{{end}}
+var _templatesEurekaTmpl = []byte(`[backends]
+{{range $app := .Applications }}
 
-[frontends]{{range .Applications}}
-  [frontends.frontend{{.Name}}]
-    backend = "backend{{.Name}}"
+  [backends.backend-{{ $app.Name }}]
+
+    {{range $instance := .Instances }}
+    [backends.backend-{{ $app.Name }}.servers.server-{{ getInstanceID $instance }}]
+      url = "{{ getProtocol $instance }}://{{ .IpAddr }}:{{ getPort $instance }}"
+      weight = {{ getWeight $instance }}
+    {{end}}
+
+{{end}}
+
+[frontends]
+{{range $app := .Applications }}
+
+  [frontends.frontend-{{ $app.Name }}]
+    backend = "backend-{{ $app.Name }}"
     entryPoints = ["http"]
-    [frontends.frontend{{.Name }}.routes.route-host{{.Name}}]
-      rule = "Host:{{ .Name | tolower }}"
+
+    [frontends.frontend-{{ $app.Name }}.routes.route-host{{ $app.Name }}]
+      rule = "Host:{{ $app.Name | tolower }}"
+
 {{end}}
 `)
 
