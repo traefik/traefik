@@ -169,16 +169,10 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 	host, port := silentSplitHostPort(req.RemoteAddr)
 
 	// Mask host's address if necessary
-	var isIPv6 = false
+	isIPv6 := strings.Contains(host, ":")
 
 	if l.maskIPv4 != nil && l.maskIPv6 != nil {
-		host, isIPv6 = maskHost(host, l.maskIPv4, l.maskIPv6)
-	} else {
-		if strings.Contains(host, ":") {
-			isIPv6 = true
-		} else {
-			isIPv6 = false
-		}
+		host = maskHost(host, l.maskIPv4, l.maskIPv6, isIPv6)
 	}
 
 	core[ClientHost] = host
@@ -240,23 +234,23 @@ func silentSplitHostPort(value string) (host string, port string) {
 	return host, port
 }
 
-func maskHost(address string, maskIPv4 *net.IPMask, maskIPv6 *net.IPMask) (maskedAddress string, isIPv6 bool) {
+func maskHost(address string, maskIPv4 *net.IPMask, maskIPv6 *net.IPMask, isIPv6 bool) (maskedAddress string) {
 	// Check if it is a hostname, an IPv4 or an IPv6 address
 	parsedAddress := net.ParseIP(address)
 
 	if parsedAddress == nil {
 		// Hostname
 		// As hostnames cannot be masked in a meaningful way, do not log them at all
-		return "[REDACTED]", false
+		return "[REDACTED]"
 	}
 
-	if strings.Contains(address, ":") {
+	if isIPv6 {
 		// IPv6
-		return parsedAddress.Mask(*maskIPv6).String(), true
+		return parsedAddress.Mask(*maskIPv6).String()
 	}
 
 	// IPv4
-	return parsedAddress.Mask(*maskIPv4).String(), false
+	return parsedAddress.Mask(*maskIPv4).String()
 }
 
 func usernameIfPresent(theURL *url.URL) string {
