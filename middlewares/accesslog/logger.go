@@ -163,7 +163,7 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 	// Mask host's address if necessary
 	isIPv6 := strings.Contains(host, ":")
 
-	if l.maskIPv4 != nil && l.maskIPv6 != nil {
+	if len(l.maskIPv4) > 0 && len(l.maskIPv6) > 0 {
 		host = maskHost(host, l.maskIPv4, l.maskIPv6, isIPv6)
 	}
 
