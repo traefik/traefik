@@ -17,9 +17,11 @@ limitations under the License.
 package v1
 
 import (
-	api "k8s.io/client-go/pkg/api"
-	v1 "k8s.io/client-go/pkg/api/v1"
-	watch "k8s.io/client-go/pkg/watch"
+	v1 "k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	types "k8s.io/apimachinery/pkg/types"
+	watch "k8s.io/apimachinery/pkg/watch"
+	scheme "k8s.io/client-go/kubernetes/scheme"
 	rest "k8s.io/client-go/rest"
 )
 
@@ -33,12 +35,12 @@ type EndpointsGetter interface {
 type EndpointsInterface interface {
 	Create(*v1.Endpoints) (*v1.Endpoints, error)
 	Update(*v1.Endpoints) (*v1.Endpoints, error)
-	Delete(name string, options *v1.DeleteOptions) error
-	DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error
-	Get(name string) (*v1.Endpoints, error)
-	List(opts v1.ListOptions) (*v1.EndpointsList, error)
-	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt api.PatchType, data []byte, subresources ...string) (result *v1.Endpoints, err error)
+	Delete(name string, options *meta_v1.DeleteOptions) error
+	DeleteCollection(options *meta_v1.DeleteOptions, listOptions meta_v1.ListOptions) error
+	Get(name string, options meta_v1.GetOptions) (*v1.Endpoints, error)
+	List(opts meta_v1.ListOptions) (*v1.EndpointsList, error)
+	Watch(opts meta_v1.ListOptions) (watch.Interface, error)
+	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.Endpoints, err error)
 	EndpointsExpansion
 }
 
@@ -54,6 +56,41 @@ func newEndpoints(c *CoreV1Client, namespace string) *endpoints {
 		client: c.RESTClient(),
 		ns:     namespace,
 	}
+}
+
+// Get takes name of the endpoints, and returns the corresponding endpoints object, and an error if there is any.
+func (c *endpoints) Get(name string, options meta_v1.GetOptions) (result *v1.Endpoints, err error) {
+	result = &v1.Endpoints{}
+	err = c.client.Get().
+		Namespace(c.ns).
+		Resource("endpoints").
+		Name(name).
+		VersionedParams(&options, scheme.ParameterCodec).
+		Do().
+		Into(result)
+	return
+}
+
+// List takes label and field selectors, and returns the list of Endpoints that match those selectors.
+func (c *endpoints) List(opts meta_v1.ListOptions) (result *v1.EndpointsList, err error) {
+	result = &v1.EndpointsList{}
+	err = c.client.Get().
+		Namespace(c.ns).
+		Resource("endpoints").
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Do().
+		Into(result)
+	return
+}
+
+// Watch returns a watch.Interface that watches the requested endpoints.
+func (c *endpoints) Watch(opts meta_v1.ListOptions) (watch.Interface, error) {
+	opts.Watch = true
+	return c.client.Get().
+		Namespace(c.ns).
+		Resource("endpoints").
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Watch()
 }
 
 // Create takes the representation of a endpoints and creates it.  Returns the server's representation of the endpoints, and an error, if there is any.
@@ -82,7 +119,7 @@ func (c *endpoints) Update(endpoints *v1.Endpoints) (result *v1.Endpoints, err e
 }
 
 // Delete takes name of the endpoints and deletes it. Returns an error if one occurs.
-func (c *endpoints) Delete(name string, options *v1.DeleteOptions) error {
+func (c *endpoints) Delete(name string, options *meta_v1.DeleteOptions) error {
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("endpoints").
@@ -93,52 +130,18 @@ func (c *endpoints) Delete(name string, options *v1.DeleteOptions) error {
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *endpoints) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
+func (c *endpoints) DeleteCollection(options *meta_v1.DeleteOptions, listOptions meta_v1.ListOptions) error {
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("endpoints").
-		VersionedParams(&listOptions, api.ParameterCodec).
+		VersionedParams(&listOptions, scheme.ParameterCodec).
 		Body(options).
 		Do().
 		Error()
 }
 
-// Get takes name of the endpoints, and returns the corresponding endpoints object, and an error if there is any.
-func (c *endpoints) Get(name string) (result *v1.Endpoints, err error) {
-	result = &v1.Endpoints{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("endpoints").
-		Name(name).
-		Do().
-		Into(result)
-	return
-}
-
-// List takes label and field selectors, and returns the list of Endpoints that match those selectors.
-func (c *endpoints) List(opts v1.ListOptions) (result *v1.EndpointsList, err error) {
-	result = &v1.EndpointsList{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("endpoints").
-		VersionedParams(&opts, api.ParameterCodec).
-		Do().
-		Into(result)
-	return
-}
-
-// Watch returns a watch.Interface that watches the requested endpoints.
-func (c *endpoints) Watch(opts v1.ListOptions) (watch.Interface, error) {
-	return c.client.Get().
-		Prefix("watch").
-		Namespace(c.ns).
-		Resource("endpoints").
-		VersionedParams(&opts, api.ParameterCodec).
-		Watch()
-}
-
 // Patch applies the patch and returns the patched endpoints.
-func (c *endpoints) Patch(name string, pt api.PatchType, data []byte, subresources ...string) (result *v1.Endpoints, err error) {
+func (c *endpoints) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.Endpoints, err error) {
 	result = &v1.Endpoints{}
 	err = c.client.Patch(pt).
 		Namespace(c.ns).

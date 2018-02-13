@@ -22,20 +22,21 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"path"
+	"path/filepath"
 	gruntime "runtime"
 	"strings"
 	"time"
 
 	"github.com/golang/glog"
 
-	"k8s.io/client-go/pkg/api"
-	"k8s.io/client-go/pkg/api/unversioned"
-	"k8s.io/client-go/pkg/runtime"
-	certutil "k8s.io/client-go/pkg/util/cert"
-	"k8s.io/client-go/pkg/util/flowcontrol"
+	"k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/pkg/version"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	certutil "k8s.io/client-go/util/cert"
+	"k8s.io/client-go/util/flowcontrol"
 )
 
 const (
@@ -70,8 +71,12 @@ type Config struct {
 	// TODO: demonstrate an OAuth2 compatible client.
 	BearerToken string
 
-	// Impersonate is the username that this RESTClient will impersonate
-	Impersonate string
+	// CacheDir is the directory where we'll store HTTP cached responses.
+	// If set to empty string, no caching mechanism will be used.
+	CacheDir string
+
+	// Impersonate is the configuration that RESTClient will use for impersonation.
+	Impersonate ImpersonationConfig
 
 	// Server requires plugin-specified authentication.
 	AuthProvider *clientcmdapi.AuthProviderConfig
@@ -81,10 +86,6 @@ type Config struct {
 
 	// TLSClientConfig contains settings to enable transport layer security
 	TLSClientConfig
-
-	// Server should be accessed without verifying the TLS
-	// certificate. For testing only.
-	Insecure bool
 
 	// UserAgent is an optional field that specifies the caller of this request.
 	UserAgent string
@@ -113,13 +114,35 @@ type Config struct {
 	// The maximum length of time to wait before giving up on a server request. A value of zero means no timeout.
 	Timeout time.Duration
 
+	// Dial specifies the dial function for creating unencrypted TCP connections.
+	Dial func(network, addr string) (net.Conn, error)
+
 	// Version forces a specific version to be used (if registered)
 	// Do we need this?
 	// Version string
 }
 
+// ImpersonationConfig has all the available impersonation options
+type ImpersonationConfig struct {
+	// UserName is the username to impersonate on each request.
+	UserName string
+	// Groups are the groups to impersonate on each request.
+	Groups []string
+	// Extra is a free-form field which can be used to link some authentication information
+	// to authorization information.  This field allows you to impersonate it.
+	Extra map[string][]string
+}
+
+// +k8s:deepcopy-gen=true
 // TLSClientConfig contains settings to enable transport layer security
 type TLSClientConfig struct {
+	// Server should be accessed without verifying the TLS certificate. For testing only.
+	Insecure bool
+	// ServerName is passed to the server for SNI and is used in the client to check server
+	// ceritificates against. If ServerName is empty, the hostname used to contact the
+	// server is used.
+	ServerName string
+
 	// Server requires TLS client certificate authentication
 	CertFile string
 	// Server requires TLS client certificate authentication
@@ -150,7 +173,7 @@ type ContentConfig struct {
 	// GroupVersion is the API version to talk to. Must be provided when initializing
 	// a RESTClient directly. When initializing a Client, will be set with the default
 	// code version.
-	GroupVersion *unversioned.GroupVersion
+	GroupVersion *schema.GroupVersion
 	// NegotiatedSerializer is used for obtaining encoders and decoders for multiple
 	// supported media types.
 	NegotiatedSerializer runtime.NegotiatedSerializer
@@ -224,7 +247,7 @@ func UnversionedRESTClientFor(config *Config) (*RESTClient, error) {
 
 	versionConfig := config.ContentConfig
 	if versionConfig.GroupVersion == nil {
-		v := unversioned.SchemeGroupVersion
+		v := metav1.SchemeGroupVersion
 		versionConfig.GroupVersion = &v
 	}
 
@@ -240,19 +263,51 @@ func SetKubernetesDefaults(config *Config) error {
 	return nil
 }
 
-// DefaultKubernetesUserAgent returns the default user agent that clients can use.
+// adjustCommit returns sufficient significant figures of the commit's git hash.
+func adjustCommit(c string) string {
+	if len(c) == 0 {
+		return "unknown"
+	}
+	if len(c) > 7 {
+		return c[:7]
+	}
+	return c
+}
+
+// adjustVersion strips "alpha", "beta", etc. from version in form
+// major.minor.patch-[alpha|beta|etc].
+func adjustVersion(v string) string {
+	if len(v) == 0 {
+		return "unknown"
+	}
+	seg := strings.SplitN(v, "-", 2)
+	return seg[0]
+}
+
+// adjustCommand returns the last component of the
+// OS-specific command path for use in User-Agent.
+func adjustCommand(p string) string {
+	// Unlikely, but better than returning "".
+	if len(p) == 0 {
+		return "unknown"
+	}
+	return filepath.Base(p)
+}
+
+// buildUserAgent builds a User-Agent string from given args.
+func buildUserAgent(command, version, os, arch, commit string) string {
+	return fmt.Sprintf(
+		"%s/%s (%s/%s) kubernetes/%s", command, version, os, arch, commit)
+}
+
+// DefaultKubernetesUserAgent returns a User-Agent string built from static global vars.
 func DefaultKubernetesUserAgent() string {
-	commit := version.Get().GitCommit
-	if len(commit) > 7 {
-		commit = commit[:7]
-	}
-	if len(commit) == 0 {
-		commit = "unknown"
-	}
-	version := version.Get().GitVersion
-	seg := strings.SplitN(version, "-", 2)
-	version = seg[0]
-	return fmt.Sprintf("%s/%s (%s/%s) kubernetes/%s", path.Base(os.Args[0]), version, gruntime.GOOS, gruntime.GOARCH, commit)
+	return buildUserAgent(
+		adjustCommand(os.Args[0]),
+		adjustVersion(version.Get().GitVersion),
+		gruntime.GOOS,
+		gruntime.GOARCH,
+		adjustCommit(version.Get().GitCommit))
 }
 
 // InClusterConfig returns a config object which uses the service account
@@ -265,12 +320,12 @@ func InClusterConfig() (*Config, error) {
 		return nil, fmt.Errorf("unable to load in-cluster configuration, KUBERNETES_SERVICE_HOST and KUBERNETES_SERVICE_PORT must be defined")
 	}
 
-	token, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/" + api.ServiceAccountTokenKey)
+	token, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/" + v1.ServiceAccountTokenKey)
 	if err != nil {
 		return nil, err
 	}
 	tlsClientConfig := TLSClientConfig{}
-	rootCAFile := "/var/run/secrets/kubernetes.io/serviceaccount/" + api.ServiceAccountRootCAKey
+	rootCAFile := "/var/run/secrets/kubernetes.io/serviceaccount/" + v1.ServiceAccountRootCAKey
 	if _, err := certutil.NewPool(rootCAFile); err != nil {
 		glog.Errorf("Expected to load root CA config from %s, but got err: %v", rootCAFile, err)
 	} else {
@@ -353,16 +408,57 @@ func AnonymousClientConfig(config *Config) *Config {
 		Prefix:        config.Prefix,
 		ContentConfig: config.ContentConfig,
 		TLSClientConfig: TLSClientConfig{
-			CAFile: config.TLSClientConfig.CAFile,
-			CAData: config.TLSClientConfig.CAData,
+			Insecure:   config.Insecure,
+			ServerName: config.ServerName,
+			CAFile:     config.TLSClientConfig.CAFile,
+			CAData:     config.TLSClientConfig.CAData,
 		},
 		RateLimiter:   config.RateLimiter,
-		Insecure:      config.Insecure,
 		UserAgent:     config.UserAgent,
 		Transport:     config.Transport,
 		WrapTransport: config.WrapTransport,
 		QPS:           config.QPS,
 		Burst:         config.Burst,
 		Timeout:       config.Timeout,
+		Dial:          config.Dial,
+	}
+}
+
+// CopyConfig returns a copy of the given config
+func CopyConfig(config *Config) *Config {
+	return &Config{
+		Host:          config.Host,
+		APIPath:       config.APIPath,
+		Prefix:        config.Prefix,
+		ContentConfig: config.ContentConfig,
+		Username:      config.Username,
+		Password:      config.Password,
+		BearerToken:   config.BearerToken,
+		CacheDir:      config.CacheDir,
+		Impersonate: ImpersonationConfig{
+			Groups:   config.Impersonate.Groups,
+			Extra:    config.Impersonate.Extra,
+			UserName: config.Impersonate.UserName,
+		},
+		AuthProvider:        config.AuthProvider,
+		AuthConfigPersister: config.AuthConfigPersister,
+		TLSClientConfig: TLSClientConfig{
+			Insecure:   config.TLSClientConfig.Insecure,
+			ServerName: config.TLSClientConfig.ServerName,
+			CertFile:   config.TLSClientConfig.CertFile,
+			KeyFile:    config.TLSClientConfig.KeyFile,
+			CAFile:     config.TLSClientConfig.CAFile,
+			CertData:   config.TLSClientConfig.CertData,
+			KeyData:    config.TLSClientConfig.KeyData,
+			CAData:     config.TLSClientConfig.CAData,
+		},
+		UserAgent:     config.UserAgent,
+		Transport:     config.Transport,
+		WrapTransport: config.WrapTransport,
+		QPS:           config.QPS,
+		Burst:         config.Burst,
+		RateLimiter:   config.RateLimiter,
+		Timeout:       config.Timeout,
+		Dial:          config.Dial,
 	}
 }
