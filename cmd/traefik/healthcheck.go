@@ -46,12 +46,12 @@ func runHealthCheck(traefikConfiguration *TraefikConfiguration) func() error {
 
 func healthCheck(globalConfiguration configuration.GlobalConfiguration) (*http.Response, error) {
 	if globalConfiguration.Ping == nil {
-		return nil, errors.New("please enable `ping` to use healtcheck")
+		return nil, errors.New("please enable `ping` to use health check")
 	}
 
 	pingEntryPoint, ok := globalConfiguration.EntryPoints[globalConfiguration.Ping.EntryPoint]
 	if !ok {
-		return nil, errors.New("missing ping entrypoint")
+		return nil, errors.New("missing `ping` entrypoint")
 	}
 
 	client := &http.Client{Timeout: 5 * time.Second}
