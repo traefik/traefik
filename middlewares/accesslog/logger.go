@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -28,6 +29,15 @@ const (
 
 	// JSONFormat is the JSON logging format
 	JSONFormat = "json"
+
+	// NoMask does not apply a mask to logged IP addresses
+	NoMask = "off"
+
+	// PartialMask masks the last octet of IPv4 adresses and the last 80 bits of IPv6 addresses
+	PartialMask = "partial"
+
+	// FullMask completely anonymizes logged IP adresses
+	FullMask = "full"
 )
 
 // LogHandler will write each request and its response to the access log.
@@ -35,6 +45,8 @@ type LogHandler struct {
 	logger   *logrus.Logger
 	file     *os.File
 	filePath string
+	maskIPv4 *net.IPMask
+	maskIPv6 *net.IPMask
 	mu       sync.Mutex
 }
 
@@ -60,13 +72,42 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 		return nil, fmt.Errorf("unsupported access log format: %s", config.Format)
 	}
 
+	// Enable masks for remote addresses
+	var maskIPv4 *net.IPMask
+	var maskIPv6 *net.IPMask
+
+	// Set default value if not set
+	if len(config.RemoteIPMask) == 0 {
+		config.RemoteIPMask = PartialMask
+	}
+
+	switch config.RemoteIPMask {
+	case NoMask:
+		maskIPv4 = nil
+		maskIPv6 = nil
+	case PartialMask:
+		v4 := net.CIDRMask(24, 32)
+		v6 := net.CIDRMask(48, 128)
+
+		maskIPv4 = &v4
+		maskIPv6 = &v6
+	case FullMask:
+		v4 := net.CIDRMask(0, 32)
+		v6 := net.CIDRMask(0, 128)
+
+		maskIPv4 = &v4
+		maskIPv6 = &v6
+	default:
+		return nil, fmt.Errorf("unsupported IP address mask setting for access log: %s", config.RemoteIPMask)
+	}
+
 	logger := &logrus.Logger{
 		Out:       file,
 		Formatter: formatter,
 		Hooks:     make(logrus.LevelHooks),
 		Level:     logrus.InfoLevel,
 	}
-	return &LogHandler{logger: logger, file: file, filePath: config.FilePath}, nil
+	return &LogHandler{logger: logger, file: file, filePath: config.FilePath, maskIPv4: maskIPv4, maskIPv6: maskIPv6}, nil
 }
 
 func openAccessLogFile(filePath string) (*os.File, error) {
@@ -125,8 +166,31 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 	core[RequestProtocol] = req.Proto
 	core[RequestLine] = fmt.Sprintf("%s %s %s", req.Method, urlCopyString, req.Proto)
 
-	core[ClientAddr] = req.RemoteAddr
-	core[ClientHost], core[ClientPort] = silentSplitHostPort(req.RemoteAddr)
+	host, port := silentSplitHostPort(req.RemoteAddr)
+
+	// Mask host's address if necessary
+	var isIPv6 = false
+
+	if l.maskIPv4 != nil && l.maskIPv6 != nil {
+		host, isIPv6 = maskHost(host, l.maskIPv4, l.maskIPv6)
+	} else {
+		if strings.Contains(host, ":") {
+			isIPv6 = true
+		} else {
+			isIPv6 = false
+		}
+	}
+
+	core[ClientHost] = host
+	core[ClientPort] = port
+
+	if isIPv6 {
+		// IPv6 address
+		core[ClientAddr] = "[" + host + "]:" + port
+	} else {
+		// Ipv4 address or hostname
+		core[ClientAddr] = host + ":" + port
+	}
 
 	if forwardedFor := req.Header.Get("X-Forwarded-For"); forwardedFor != "" {
 		core[ClientHost] = forwardedFor
@@ -174,6 +238,25 @@ func silentSplitHostPort(value string) (host string, port string) {
 		return value, "-"
 	}
 	return host, port
+}
+
+func maskHost(address string, maskIPv4 *net.IPMask, maskIPv6 *net.IPMask) (maskedAddress string, isIPv6 bool) {
+	// Check if it is a hostname, an IPv4 or an IPv6 address
+	parsedAddress := net.ParseIP(address)
+
+	if parsedAddress == nil {
+		// Hostname
+		// As hostnames cannot be masked in a meaningful way, do not log them at all
+		return "[REDACTED]", false
+	}
+
+	if strings.Contains(address, ":") {
+		// IPv6
+		return parsedAddress.Mask(*maskIPv6).String(), true
+	}
+
+	// IPv4
+	return parsedAddress.Mask(*maskIPv4).String(), false
 }
 
 func usernameIfPresent(theURL *url.URL) string {

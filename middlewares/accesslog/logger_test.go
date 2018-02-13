@@ -31,6 +31,10 @@ var (
 	testUsername            = "TestUser"
 	testPath                = "testpath"
 	testPort                = 8181
+	testRemoteHost          = "clienthost"
+	testRemoteAddr          = fmt.Sprintf("%s:%d", testRemoteHost, testPort)
+	testIPv4                = "123.123.123.123"
+	testIPv6                = "2001:db8:1234:1234:1234:1234:1234:1234"
 	testProto               = "HTTP/0.0"
 	testMethod              = http.MethodPost
 	testReferer             = "testReferer"
@@ -122,7 +126,7 @@ func TestLoggerCLF(t *testing.T) {
 
 	logFilePath := filepath.Join(tmpDir, logFileNameSuffix)
 	config := &types.AccessLog{FilePath: logFilePath, Format: CommonFormat}
-	doLogging(t, config)
+	doLogging(t, config, testRemoteAddr)
 
 	logData, err := ioutil.ReadFile(logFilePath)
 	require.NoError(t, err)
@@ -134,16 +138,8 @@ func TestLoggerJSON(t *testing.T) {
 	tmpDir := createTempDir(t, JSONFormat)
 	defer os.RemoveAll(tmpDir)
 
-	logFilePath := filepath.Join(tmpDir, logFileNameSuffix)
-	config := &types.AccessLog{FilePath: logFilePath, Format: JSONFormat}
-	doLogging(t, config)
-
-	logData, err := ioutil.ReadFile(logFilePath)
-	require.NoError(t, err)
-
-	jsonData := make(map[string]interface{})
-	err = json.Unmarshal(logData, &jsonData)
-	require.NoError(t, err)
+	config := &types.AccessLog{FilePath: filepath.Join(tmpDir, logFileNameSuffix), Format: JSONFormat}
+	jsonData, logData := doJSONLog(t, config, testRemoteAddr)
 
 	expectedKeys := []string{
 		RequestHost,
@@ -214,11 +210,11 @@ func TestLoggerJSON(t *testing.T) {
 	assertCount++
 	assert.Equal(t, testUsername, jsonData[ClientUsername])
 	assertCount++
-	assert.Equal(t, testHostname, jsonData[ClientHost])
+	assert.Equal(t, "[REDACTED]", jsonData[ClientHost])
 	assertCount++
 	assert.Equal(t, fmt.Sprintf("%d", testPort), jsonData[ClientPort])
 	assertCount++
-	assert.Equal(t, fmt.Sprintf("%s:%d", testHostname, testPort), jsonData[ClientAddr])
+	assert.Equal(t, fmt.Sprintf("%s:%d", "[REDACTED]", testPort), jsonData[ClientAddr])
 	assertCount++
 	assert.Equal(t, "info", jsonData["level"])
 	assertCount++
@@ -244,12 +240,34 @@ func TestLoggerJSON(t *testing.T) {
 	assert.Equal(t, len(jsonData), assertCount, string(logData))
 }
 
+func TestLoggerJSONMask(t *testing.T) {
+	// Test default setting for hostname, IPv4 and IPv6
+	assertJSONMask(t, "", testRemoteHost, "[REDACTED]")
+	assertJSONMask(t, "", testIPv4, "123.123.123.0")
+	assertJSONMask(t, "", testIPv6, "2001:db8:1234::")
+
+	// Test 'partial' setting for hostname, IPv4 and IPv6
+	assertJSONMask(t, "partial", testRemoteHost, "[REDACTED]")
+	assertJSONMask(t, "partial", testIPv4, "123.123.123.0")
+	assertJSONMask(t, "partial", testIPv6, "2001:db8:1234::")
+
+	// Test 'full' setting for hostname, IPv4 and IPv6
+	assertJSONMask(t, "full", testRemoteHost, "[REDACTED]")
+	assertJSONMask(t, "full", testIPv4, "0.0.0.0")
+	assertJSONMask(t, "full", testIPv6, "::")
+
+	// Test 'off' setting for hostname, IPv4 and IPv6
+	assertJSONMask(t, "off", testRemoteHost, testRemoteHost)
+	assertJSONMask(t, "off", testIPv4, testIPv4)
+	assertJSONMask(t, "off", testIPv6, testIPv6)
+}
+
 func TestNewLogHandlerOutputStdout(t *testing.T) {
 	file, restoreStdout := captureStdout(t)
 	defer restoreStdout()
 
 	config := &types.AccessLog{FilePath: "", Format: CommonFormat}
-	doLogging(t, config)
+	doLogging(t, config, testRemoteAddr)
 
 	written, err := ioutil.ReadFile(file.Name())
 	require.NoError(t, err, "unable to read captured stdout from file")
@@ -257,17 +275,56 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 	assertValidLogData(t, written)
 }
 
+func assertJSONMask(t *testing.T, maskSetting string, remoteHost string, maskedHost string) {
+	tmpDir := createTempDir(t, JSONFormat)
+	defer os.RemoveAll(tmpDir)
+
+	config := &types.AccessLog{FilePath: filepath.Join(tmpDir, logFileNameSuffix), Format: JSONFormat, RemoteIPMask: maskSetting}
+	var jsonData map[string]interface{}
+
+	if strings.Contains(maskedHost, ":") {
+		// IPv6
+		jsonData, _ = doJSONLog(t, config, fmt.Sprintf("[%s]:%d", remoteHost, testPort))
+	} else {
+		// IPv4 / hostname
+		jsonData, _ = doJSONLog(t, config, fmt.Sprintf("%s:%d", remoteHost, testPort))
+	}
+
+	assert.Equal(t, maskedHost, jsonData[ClientHost])
+
+	if strings.Count(maskedHost, ":") > 1 {
+		// IPv6
+		assert.Equal(t, fmt.Sprintf("[%s]:%d", maskedHost, testPort), jsonData[ClientAddr])
+	} else {
+		// IPv4 / hostname
+		assert.Equal(t, fmt.Sprintf("%s:%d", maskedHost, testPort), jsonData[ClientAddr])
+	}
+}
+
+func doJSONLog(t *testing.T, config *types.AccessLog, clientHost string) (map[string]interface{}, []byte) {
+	doLogging(t, config, clientHost)
+
+	logData, err := ioutil.ReadFile(config.FilePath)
+	require.NoError(t, err)
+
+	jsonData := make(map[string]interface{})
+	err = json.Unmarshal(logData, &jsonData)
+	require.NoError(t, err)
+
+	return jsonData, logData
+}
+
 func assertValidLogData(t *testing.T, logData []byte) {
 	tokens, err := shellwords.Parse(string(logData))
 	require.NoError(t, err)
 
 	formatErrMessage := fmt.Sprintf(`
-		Expected: TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 1 "testFrontend" "http://127.0.0.1/testBackend" 1ms
+		Expected: [REDACTED] - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 1 "testFrontend" "http://127.0.0.1/testBackend" 1ms
 		Actual:   %s
 		`,
 		string(logData))
 	require.Equal(t, 14, len(tokens), formatErrMessage)
-	assert.Equal(t, testHostname, tokens[0], formatErrMessage)
+	assert.Equal(t, "[REDACTED]", tokens[0], formatErrMessage)
 	assert.Equal(t, testUsername, tokens[2], formatErrMessage)
 	assert.Equal(t, fmt.Sprintf("%s %s %s", testMethod, testPath, testProto), tokens[5], formatErrMessage)
 	assert.Equal(t, fmt.Sprintf("%d", testStatus), tokens[6], formatErrMessage)
@@ -300,7 +357,7 @@ func createTempDir(t *testing.T, prefix string) string {
 	return tmpDir
 }
 
-func doLogging(t *testing.T, config *types.AccessLog) {
+func doLogging(t *testing.T, config *types.AccessLog, remoteAddr string) {
 	logger, err := NewLogHandler(config)
 	require.NoError(t, err)
 	defer logger.Close()
@@ -318,7 +375,7 @@ func doLogging(t *testing.T, config *types.AccessLog) {
 		Proto:      testProto,
 		Host:       testHostname,
 		Method:     testMethod,
-		RemoteAddr: fmt.Sprintf("%s:%d", testHostname, testPort),
+		RemoteAddr: remoteAddr,
 		URL: &url.URL{
 			User: url.UserPassword(testUsername, ""),
 			Path: testPath,
