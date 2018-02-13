@@ -201,10 +201,6 @@
   version = "kubernetes-1.9.0"
 
 [[constraint]]
-  name = "k8s.io/apiextensions-apiserver"
-  version = "kubernetes-1.9.0"
-
-[[constraint]]
   branch = "master"
   name = "github.com/libkermit/docker"
 
@@ -219,6 +215,10 @@
 [[constraint]]
  name = "github.com/docker/docker"
  revision = "7848b8beb9d38a98a78b75f78e05f8d2255f9dfe"
+
+[[override]]
+  name = "k8s.io/kube-openapi"
+  version = "kubernetes-1.9.0"
 
 [[override]]
  name = "github.com/docker/docker"
