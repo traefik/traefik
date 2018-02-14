@@ -228,7 +228,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 				rule, err := getRuleForPath(pa, i)
 				if err != nil {
-					log.Errorf("fail to get rule from ingress path: %s", err)
+					log.Errorf("Failed to get rule for ingress %s/%s: %s", i.Namespace, i.Name, err)
 					delete(templateObjects.Frontends, r.Host+pa.Path)
 					continue
 				}
@@ -328,6 +328,9 @@ func getRuleForPath(pa extensionsv1beta1.HTTPIngressPath, i *extensionsv1beta1.I
 	rules := []string{ruleType + ":" + pa.Path}
 
 	var pathReplaceAnnotation string
+	if ruleType == ruleTypeReplacePath {
+		pathReplaceAnnotation = annotationKubernetesRuleType
+	}
 
 	if rewriteTarget := getStringValue(i.Annotations, annotationKubernetesRewriteTarget, ""); rewriteTarget != "" {
 		if pathReplaceAnnotation != "" {

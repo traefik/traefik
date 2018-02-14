@@ -752,6 +752,32 @@ rateset:
 		),
 		buildIngress(
 			iNamespace("testing"),
+			iAnnotation(annotationKubernetesAppRoot, "/root2"),
+			iAnnotation(annotationKubernetesRewriteTarget, "/abc"),
+			iRules(
+				iRule(
+					iHost("root2"),
+					iPaths(
+						onePath(iPath("/"), iBackend("service2", intstr.FromInt(80))),
+					),
+				),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesRuleType, ruleTypeReplacePath),
+			iAnnotation(annotationKubernetesRewriteTarget, "/abc"),
+			iRules(
+				iRule(
+					iHost("root2"),
+					iPaths(
+						onePath(iPath("/"), iBackend("service2", intstr.FromInt(80))),
+					),
+				),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
 			iAnnotation(annotationKubernetesIngressClass, "traefik"),
 			iAnnotation(annotationKubernetesCustomRequestHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
 			iAnnotation(annotationKubernetesCustomResponseHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
@@ -901,6 +927,10 @@ rateset:
 			backend("root/root1",
 				servers(
 					server("http://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
+			backend("root2/",
+				servers(),
 				lbMethod("wrr"),
 			),
 		),
