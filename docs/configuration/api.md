@@ -56,6 +56,9 @@
     For compatibility reason, when you activate the rest provider, you can use `web` or `rest` as `provider` value.
     But be careful, in the configuration for all providers the key is still `web`.
 
+!!! warning
+    Updating providers with `PUT /api/providers/{provider}` can only be used with `web` or `rest`
+
 ### Provider configurations
 
 ```shell
