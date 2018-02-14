@@ -936,51 +936,6 @@ func TestTaskFilter(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc: "healthcheck available",
-			task: task(taskPorts(80)),
-			application: application(
-				appPorts(80),
-				healthChecks(marathon.NewDefaultHealthCheck()),
-			),
-			expected: true,
-		},
-		{
-			desc: "healthcheck result false",
-			task: task(
-				taskPorts(80),
-				healthCheckResultLiveness(false),
-			),
-			application: application(
-				appPorts(80),
-				healthChecks(marathon.NewDefaultHealthCheck()),
-			),
-			expected: false,
-		},
-		{
-			desc: "healthcheck results mixed",
-			task: task(
-				taskPorts(80),
-				healthCheckResultLiveness(true, false),
-			),
-			application: application(
-				appPorts(80),
-				healthChecks(marathon.NewDefaultHealthCheck()),
-			),
-			expected: false,
-		},
-		{
-			desc: "healthcheck result true",
-			task: task(
-				taskPorts(80),
-				healthCheckResultLiveness(true),
-			),
-			application: application(
-				appPorts(80),
-				healthChecks(marathon.NewDefaultHealthCheck()),
-			),
-			expected: true,
-		},
-		{
 			desc: "readiness check false",
 			task: task(taskPorts(80)),
 			application: application(

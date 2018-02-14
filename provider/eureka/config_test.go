@@ -1,14 +1,16 @@
 package eureka
 
 import (
+	"strconv"
 	"testing"
 
 	"github.com/ArthurHlt/go-eureka-client/eureka"
 	"github.com/containous/traefik/provider/label"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetPort(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
 		expectedPort string
 		instanceInfo eureka.InstanceInfo
 	}{
@@ -36,16 +38,19 @@ func TestGetPort(t *testing.T) {
 		},
 	}
 
-	for _, c := range cases {
-		port := getPort(c.instanceInfo)
-		if port != c.expectedPort {
-			t.Fatalf("Should have been %s, got %s", c.expectedPort, port)
-		}
+	for i, test := range testCases {
+		test := test
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			t.Parallel()
+
+			port := getPort(test.instanceInfo)
+			assert.Equal(t, test.expectedPort, port)
+		})
 	}
 }
 
 func TestGetProtocol(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
 		expectedProtocol string
 		instanceInfo     eureka.InstanceInfo
 	}{
@@ -72,16 +77,20 @@ func TestGetProtocol(t *testing.T) {
 			},
 		},
 	}
-	for _, c := range cases {
-		protocol := getProtocol(c.instanceInfo)
-		if protocol != c.expectedProtocol {
-			t.Fatalf("Should have been %s, got %s", c.expectedProtocol, protocol)
-		}
+
+	for i, test := range testCases {
+		test := test
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			t.Parallel()
+
+			protocol := getProtocol(test.instanceInfo)
+			assert.Equal(t, test.expectedProtocol, protocol)
+		})
 	}
 }
 
 func TestGetWeight(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
 		expectedWeight string
 		instanceInfo   eureka.InstanceInfo
 	}{
@@ -111,16 +120,19 @@ func TestGetWeight(t *testing.T) {
 		},
 	}
 
-	for _, c := range cases {
-		weight := getWeight(c.instanceInfo)
-		if weight != c.expectedWeight {
-			t.Fatalf("Should have been %s, got %s", c.expectedWeight, weight)
-		}
+	for i, test := range testCases {
+		test := test
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			t.Parallel()
+
+			weight := getWeight(test.instanceInfo)
+			assert.Equal(t, test.expectedWeight, weight)
+		})
 	}
 }
 
 func TestGetInstanceId(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
 		expectedID   string
 		instanceInfo eureka.InstanceInfo
 	}{
@@ -158,10 +170,13 @@ func TestGetInstanceId(t *testing.T) {
 		},
 	}
 
-	for _, c := range cases {
-		id := getInstanceID(c.instanceInfo)
-		if id != c.expectedID {
-			t.Fatalf("Should have been %s, got %s", c.expectedID, id)
-		}
+	for i, test := range testCases {
+		test := test
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			t.Parallel()
+
+			id := getInstanceID(test.instanceInfo)
+			assert.Equal(t, test.expectedID, id)
+		})
 	}
 }

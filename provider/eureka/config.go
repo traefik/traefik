@@ -1,7 +1,6 @@
 package eureka
 
 import (
-	"io/ioutil"
 	"strconv"
 	"text/template"
 
@@ -13,32 +12,21 @@ import (
 )
 
 // Build the configuration from Provider server
-func (p *Provider) buildConfiguration() (*types.Configuration, error) {
-	var EurekaFuncMap = template.FuncMap{
+func (p *Provider) buildConfiguration(apps *eureka.Applications) (*types.Configuration, error) {
+	var eurekaFuncMap = template.FuncMap{
 		"getPort":       getPort,
 		"getProtocol":   getProtocol,
 		"getWeight":     getWeight,
 		"getInstanceID": getInstanceID,
 	}
 
-	eureka.GetLogger().SetOutput(ioutil.Discard)
-
-	client := eureka.NewClient([]string{
-		p.Endpoint,
-	})
-
-	applications, err := client.GetApplications()
-	if err != nil {
-		return nil, err
-	}
-
 	templateObjects := struct {
 		Applications []eureka.Application
 	}{
-		applications.Applications,
+		Applications: apps.Applications,
 	}
 
-	configuration, err := p.GetConfiguration("templates/eureka.tmpl", EurekaFuncMap, templateObjects)
+	configuration, err := p.GetConfiguration("templates/eureka.tmpl", eurekaFuncMap, templateObjects)
 	if err != nil {
 		log.Error(err)
 	}

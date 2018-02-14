@@ -22,9 +22,9 @@ import (
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"gopkg.in/yaml.v2"
-	"k8s.io/client-go/pkg/api/v1"
-	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
-	"k8s.io/client-go/pkg/util/intstr"
+	corev1 "k8s.io/api/core/v1"
+	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -313,7 +313,7 @@ func (p *Provider) loadConfig(templateObjects types.Configuration) *types.Config
 	return configuration
 }
 
-func getRuleForPath(pa v1beta1.HTTPIngressPath, i *v1beta1.Ingress) string {
+func getRuleForPath(pa extensionsv1beta1.HTTPIngressPath, i *extensionsv1beta1.Ingress) string {
 	if len(pa.Path) == 0 {
 		return ""
 	}
@@ -335,7 +335,7 @@ func getRuleForHost(host string) string {
 	return "Host:" + host
 }
 
-func handleBasicAuthConfig(i *v1beta1.Ingress, k8sClient Client) ([]string, error) {
+func handleBasicAuthConfig(i *extensionsv1beta1.Ingress, k8sClient Client) ([]string, error) {
 	annotationAuthType := getAnnotationName(i.Annotations, annotationKubernetesAuthType)
 	authType, exists := i.Annotations[annotationAuthType]
 	if !exists {
@@ -391,7 +391,7 @@ func loadAuthCredentials(namespace, secretName string, k8sClient Client) ([]stri
 	return creds, nil
 }
 
-func getTLS(ingress *v1beta1.Ingress, k8sClient Client) ([]*tls.Configuration, error) {
+func getTLS(ingress *extensionsv1beta1.Ingress, k8sClient Client) ([]*tls.Configuration, error) {
 	var tlsConfigs []*tls.Configuration
 
 	for _, t := range ingress.Spec.TLS {
@@ -434,7 +434,7 @@ func getTLS(ingress *v1beta1.Ingress, k8sClient Client) ([]*tls.Configuration, e
 	return tlsConfigs, nil
 }
 
-func endpointPortNumber(servicePort v1.ServicePort, endpointPorts []v1.EndpointPort) int {
+func endpointPortNumber(servicePort corev1.ServicePort, endpointPorts []corev1.EndpointPort) int {
 	if len(endpointPorts) > 0 {
 		//name is optional if there is only one port
 		port := endpointPorts[0]
@@ -448,7 +448,7 @@ func endpointPortNumber(servicePort v1.ServicePort, endpointPorts []v1.EndpointP
 	return int(servicePort.Port)
 }
 
-func equalPorts(servicePort v1.ServicePort, ingressPort intstr.IntOrString) bool {
+func equalPorts(servicePort corev1.ServicePort, ingressPort intstr.IntOrString) bool {
 	if int(servicePort.Port) == ingressPort.IntValue() {
 		return true
 	}
@@ -465,7 +465,7 @@ func (p *Provider) shouldProcessIngress(annotationIngressClass string) bool {
 	return annotationIngressClass == p.IngressClass
 }
 
-func getFrontendRedirect(i *v1beta1.Ingress) *types.Redirect {
+func getFrontendRedirect(i *extensionsv1beta1.Ingress) *types.Redirect {
 	permanent := getBoolValue(i.Annotations, annotationKubernetesRedirectPermanent, false)
 
 	redirectEntryPoint := getStringValue(i.Annotations, annotationKubernetesRedirectEntryPoint, "")
@@ -489,7 +489,7 @@ func getFrontendRedirect(i *v1beta1.Ingress) *types.Redirect {
 	return nil
 }
 
-func getBuffering(service *v1.Service) *types.Buffering {
+func getBuffering(service *corev1.Service) *types.Buffering {
 	var buffering *types.Buffering
 
 	bufferingRaw := getStringValue(service.Annotations, annotationKubernetesBuffering, "")
@@ -506,7 +506,7 @@ func getBuffering(service *v1.Service) *types.Buffering {
 	return buffering
 }
 
-func getLoadBalancer(service *v1.Service) *types.LoadBalancer {
+func getLoadBalancer(service *corev1.Service) *types.LoadBalancer {
 	loadBalancer := &types.LoadBalancer{
 		Method: "wrr",
 	}
@@ -527,7 +527,7 @@ func getLoadBalancer(service *v1.Service) *types.LoadBalancer {
 	return loadBalancer
 }
 
-func getStickiness(service *v1.Service) *types.Stickiness {
+func getStickiness(service *corev1.Service) *types.Stickiness {
 	if getBoolValue(service.Annotations, annotationKubernetesAffinity, false) {
 		stickiness := &types.Stickiness{}
 		if cookieName := getStringValue(service.Annotations, annotationKubernetesSessionCookieName, ""); len(cookieName) > 0 {
@@ -538,7 +538,7 @@ func getStickiness(service *v1.Service) *types.Stickiness {
 	return nil
 }
 
-func getHeader(i *v1beta1.Ingress) *types.Headers {
+func getHeader(i *extensionsv1beta1.Ingress) *types.Headers {
 	headers := &types.Headers{
 		CustomRequestHeaders:    getMapValue(i.Annotations, annotationKubernetesCustomRequestHeaders),
 		CustomResponseHeaders:   getMapValue(i.Annotations, annotationKubernetesCustomResponseHeaders),
@@ -569,7 +569,7 @@ func getHeader(i *v1beta1.Ingress) *types.Headers {
 	return headers
 }
 
-func getMaxConn(service *v1.Service) *types.MaxConn {
+func getMaxConn(service *corev1.Service) *types.MaxConn {
 	amount := getInt64Value(service.Annotations, annotationKubernetesMaxConnAmount, -1)
 	extractorFunc := getStringValue(service.Annotations, annotationKubernetesMaxConnExtractorFunc, "")
 	if amount >= 0 && len(extractorFunc) > 0 {
@@ -581,7 +581,7 @@ func getMaxConn(service *v1.Service) *types.MaxConn {
 	return nil
 }
 
-func getCircuitBreaker(service *v1.Service) *types.CircuitBreaker {
+func getCircuitBreaker(service *corev1.Service) *types.CircuitBreaker {
 	if expression := getStringValue(service.Annotations, annotationKubernetesCircuitBreakerExpression, ""); expression != "" {
 		return &types.CircuitBreaker{
 			Expression: expression,
@@ -590,7 +590,7 @@ func getCircuitBreaker(service *v1.Service) *types.CircuitBreaker {
 	return nil
 }
 
-func getErrorPages(i *v1beta1.Ingress) map[string]*types.ErrorPage {
+func getErrorPages(i *extensionsv1beta1.Ingress) map[string]*types.ErrorPage {
 	var errorPages map[string]*types.ErrorPage
 
 	pagesRaw := getStringValue(i.Annotations, annotationKubernetesErrorPages, "")
@@ -606,7 +606,7 @@ func getErrorPages(i *v1beta1.Ingress) map[string]*types.ErrorPage {
 	return errorPages
 }
 
-func getRateLimit(i *v1beta1.Ingress) *types.RateLimit {
+func getRateLimit(i *extensionsv1beta1.Ingress) *types.RateLimit {
 	var rateLimit *types.RateLimit
 
 	rateRaw := getStringValue(i.Annotations, annotationKubernetesRateLimit, "")
