@@ -358,3 +358,31 @@ func (s *SimpleSuite) TestMetricsPrometheusDefaultEntrypoint(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/metrics", 1*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 }
+
+func (s *SimpleSuite) TestMultipleProviderSameBackendName(c *check.C) {
+
+	s.createComposeProject(c, "base")
+	s.composeProject.Start(c)
+	ipWhoami01 := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
+	ipWhoami02 := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
+	file := s.adaptFile(c, "fixtures/multiple_provider.toml", struct{ IP string }{
+		IP: ipWhoami02,
+	})
+	defer os.Remove(file)
+	cmd, output := s.traefikCmd(withConfigFile(file))
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("PathPrefix"))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.BodyContains(ipWhoami01))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/file", 1*time.Second, try.BodyContains(ipWhoami02))
+	c.Assert(err, checker.IsNil)
+
+}
