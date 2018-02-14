@@ -17,11 +17,9 @@ limitations under the License.
 package v1beta1
 
 import (
-	fmt "fmt"
-	api "k8s.io/client-go/pkg/api"
-	unversioned "k8s.io/client-go/pkg/api/unversioned"
-	registered "k8s.io/client-go/pkg/apimachinery/registered"
-	serializer "k8s.io/client-go/pkg/runtime/serializer"
+	v1beta1 "k8s.io/api/authentication/v1beta1"
+	serializer "k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/client-go/kubernetes/scheme"
 	rest "k8s.io/client-go/rest"
 )
 
@@ -30,7 +28,7 @@ type AuthenticationV1beta1Interface interface {
 	TokenReviewsGetter
 }
 
-// AuthenticationV1beta1Client is used to interact with features provided by the k8s.io/kubernetes/pkg/apimachinery/registered.Group group.
+// AuthenticationV1beta1Client is used to interact with features provided by the authentication.k8s.io group.
 type AuthenticationV1beta1Client struct {
 	restClient rest.Interface
 }
@@ -68,22 +66,14 @@ func New(c rest.Interface) *AuthenticationV1beta1Client {
 }
 
 func setConfigDefaults(config *rest.Config) error {
-	gv, err := unversioned.ParseGroupVersion("authentication.k8s.io/v1beta1")
-	if err != nil {
-		return err
-	}
-	// if authentication.k8s.io/v1beta1 is not enabled, return an error
-	if !registered.IsEnabledVersion(gv) {
-		return fmt.Errorf("authentication.k8s.io/v1beta1 is not enabled")
-	}
+	gv := v1beta1.SchemeGroupVersion
+	config.GroupVersion = &gv
 	config.APIPath = "/apis"
+	config.NegotiatedSerializer = serializer.DirectCodecFactory{CodecFactory: scheme.Codecs}
+
 	if config.UserAgent == "" {
 		config.UserAgent = rest.DefaultKubernetesUserAgent()
 	}
-	copyGroupVersion := gv
-	config.GroupVersion = &copyGroupVersion
-
-	config.NegotiatedSerializer = serializer.DirectCodecFactory{CodecFactory: api.Codecs}
 
 	return nil
 }

@@ -12,13 +12,14 @@ import (
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"k8s.io/client-go/pkg/api/v1"
-	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
-	"k8s.io/client-go/pkg/util/intstr"
+	corev1 "k8s.io/api/core/v1"
+	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 func TestLoadIngresses(t *testing.T) {
-	ingresses := []*v1beta1.Ingress{
+	ingresses := []*extensionsv1beta1.Ingress{
 		buildIngress(
 			iNamespace("testing"),
 			iRules(
@@ -36,7 +37,7 @@ func TestLoadIngresses(t *testing.T) {
 		),
 	}
 
-	services := []*v1.Service{
+	services := []*corev1.Service{
 		buildService(
 			sName("service1"),
 			sNamespace("testing"),
@@ -76,7 +77,7 @@ func TestLoadIngresses(t *testing.T) {
 		),
 	}
 
-	endpoints := []*v1.Endpoints{
+	endpoints := []*corev1.Endpoints{
 		buildEndpoint(
 			eNamespace("testing"),
 			eName("service1"),
@@ -215,8 +216,8 @@ func TestRuleType(t *testing.T) {
 
 			watchChan := make(chan interface{})
 			client := clientMock{
-				ingresses: []*v1beta1.Ingress{ingress},
-				services:  []*v1.Service{service},
+				ingresses: []*extensionsv1beta1.Ingress{ingress},
+				services:  []*corev1.Service{service},
 				watchChan: watchChan,
 			}
 			provider := Provider{DisablePassHostHeaders: true}
@@ -236,7 +237,7 @@ func TestRuleType(t *testing.T) {
 }
 
 func TestGetPassHostHeader(t *testing.T) {
-	ingresses := []*v1beta1.Ingress{
+	ingresses := []*extensionsv1beta1.Ingress{
 		buildIngress(
 			iNamespace("awesome"),
 			iRules(iRule(
@@ -248,7 +249,7 @@ func TestGetPassHostHeader(t *testing.T) {
 		),
 	}
 
-	services := []*v1.Service{
+	services := []*corev1.Service{
 		buildService(
 			sNamespace("awesome"), sName("service1"), sUID("1"),
 			sSpec(sPorts(sPort(801, "http"))),
@@ -281,7 +282,7 @@ func TestGetPassHostHeader(t *testing.T) {
 }
 
 func TestGetPassTLSCert(t *testing.T) {
-	ingresses := []*v1beta1.Ingress{
+	ingresses := []*extensionsv1beta1.Ingress{
 		buildIngress(iNamespace("awesome"),
 			iRules(iRule(
 				iHost("foo"),
@@ -290,7 +291,7 @@ func TestGetPassTLSCert(t *testing.T) {
 		),
 	}
 
-	services := []*v1.Service{
+	services := []*corev1.Service{
 		buildService(
 			sName("service1"),
 			sNamespace("awesome"),
@@ -325,7 +326,7 @@ func TestGetPassTLSCert(t *testing.T) {
 }
 
 func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
-	ingresses := []*v1beta1.Ingress{
+	ingresses := []*extensionsv1beta1.Ingress{
 		buildIngress(iNamespace("awesome"),
 			iRules(iRule(
 				iHost("foo"),
@@ -334,7 +335,7 @@ func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
 		),
 	}
 
-	services := []*v1.Service{
+	services := []*corev1.Service{
 		buildService(
 			sNamespace("awesome"),
 			sName("service"),
@@ -376,7 +377,7 @@ func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
 }
 
 func TestHostlessIngress(t *testing.T) {
-	ingresses := []*v1beta1.Ingress{
+	ingresses := []*extensionsv1beta1.Ingress{
 		buildIngress(iNamespace("awesome"),
 			iRules(iRule(
 				iPaths(onePath(iPath("/bar"), iBackend("service1", intstr.FromInt(801))))),
@@ -384,7 +385,7 @@ func TestHostlessIngress(t *testing.T) {
 		),
 	}
 
-	services := []*v1.Service{
+	services := []*corev1.Service{
 		buildService(
 			sName("service1"),
 			sNamespace("awesome"),
@@ -416,7 +417,7 @@ func TestHostlessIngress(t *testing.T) {
 }
 
 func TestServiceAnnotations(t *testing.T) {
-	ingresses := []*v1beta1.Ingress{
+	ingresses := []*extensionsv1beta1.Ingress{
 		buildIngress(iNamespace("testing"),
 			iRules(
 				iRule(
@@ -435,7 +436,7 @@ func TestServiceAnnotations(t *testing.T) {
 		),
 	}
 
-	services := []*v1.Service{
+	services := []*corev1.Service{
 		buildService(
 			sName("service1"),
 			sNamespace("testing"),
@@ -483,7 +484,7 @@ retryexpression: IsNetworkError() && Attempts() <= 2
 		),
 	}
 
-	endpoints := []*v1.Endpoints{
+	endpoints := []*corev1.Endpoints{
 		buildEndpoint(
 			eNamespace("testing"),
 			eName("service1"),
@@ -603,7 +604,7 @@ retryexpression: IsNetworkError() && Attempts() <= 2
 }
 
 func TestIngressAnnotations(t *testing.T) {
-	ingresses := []*v1beta1.Ingress{
+	ingresses := []*extensionsv1beta1.Ingress{
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesPreserveHost, "false"),
@@ -767,7 +768,7 @@ rateset:
 		),
 	}
 
-	services := []*v1.Service{
+	services := []*corev1.Service{
 		buildService(
 			sName("service1"),
 			sNamespace("testing"),
@@ -788,9 +789,9 @@ rateset:
 		),
 	}
 
-	secrets := []*v1.Secret{
+	secrets := []*corev1.Secret{
 		{
-			ObjectMeta: v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Name:      "mySecret",
 				UID:       "1",
 				Namespace: "testing",
@@ -1000,7 +1001,7 @@ rateset:
 }
 
 func TestIngressClassAnnotation(t *testing.T) {
-	ingresses := []*v1beta1.Ingress{
+	ingresses := []*extensionsv1beta1.Ingress{
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesIngressClass, traefikDefaultIngressClass),
@@ -1038,7 +1039,7 @@ func TestIngressClassAnnotation(t *testing.T) {
 		),
 	}
 
-	services := []*v1.Service{
+	services := []*corev1.Service{
 		buildService(
 			sName("service1"),
 			sNamespace("testing"),
@@ -1147,7 +1148,7 @@ func TestIngressClassAnnotation(t *testing.T) {
 }
 
 func TestPriorityHeaderValue(t *testing.T) {
-	ingresses := []*v1beta1.Ingress{
+	ingresses := []*extensionsv1beta1.Ingress{
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesPriority, "1337"),
@@ -1159,7 +1160,7 @@ func TestPriorityHeaderValue(t *testing.T) {
 		),
 	}
 
-	services := []*v1.Service{
+	services := []*corev1.Service{
 		buildService(
 			sName("service1"),
 			sNamespace("testing"),
@@ -1172,7 +1173,7 @@ func TestPriorityHeaderValue(t *testing.T) {
 		),
 	}
 
-	var endpoints []*v1.Endpoints
+	var endpoints []*corev1.Endpoints
 	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
@@ -1207,7 +1208,7 @@ func TestPriorityHeaderValue(t *testing.T) {
 }
 
 func TestInvalidPassTLSCertValue(t *testing.T) {
-	ingresses := []*v1beta1.Ingress{
+	ingresses := []*extensionsv1beta1.Ingress{
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesPassTLSCert, "herpderp"),
@@ -1219,7 +1220,7 @@ func TestInvalidPassTLSCertValue(t *testing.T) {
 		),
 	}
 
-	services := []*v1.Service{
+	services := []*corev1.Service{
 		buildService(
 			sName("service1"),
 			sNamespace("testing"),
@@ -1264,7 +1265,7 @@ func TestInvalidPassTLSCertValue(t *testing.T) {
 }
 
 func TestInvalidPassHostHeaderValue(t *testing.T) {
-	ingresses := []*v1beta1.Ingress{
+	ingresses := []*extensionsv1beta1.Ingress{
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesPreserveHost, "herpderp"),
@@ -1276,7 +1277,7 @@ func TestInvalidPassHostHeaderValue(t *testing.T) {
 		),
 	}
 
-	services := []*v1.Service{
+	services := []*corev1.Service{
 		buildService(
 			sName("service1"),
 			sNamespace("testing"),
@@ -1321,7 +1322,7 @@ func TestInvalidPassHostHeaderValue(t *testing.T) {
 }
 
 func TestKubeAPIErrors(t *testing.T) {
-	ingresses := []*v1beta1.Ingress{
+	ingresses := []*extensionsv1beta1.Ingress{
 		buildIngress(
 			iNamespace("testing"),
 			iRules(
@@ -1332,7 +1333,7 @@ func TestKubeAPIErrors(t *testing.T) {
 		),
 	}
 
-	services := []*v1.Service{
+	services := []*corev1.Service{
 		buildService(
 			sName("service1"),
 			sNamespace("testing"),
@@ -1384,7 +1385,7 @@ func TestKubeAPIErrors(t *testing.T) {
 }
 
 func TestMissingResources(t *testing.T) {
-	ingresses := []*v1beta1.Ingress{
+	ingresses := []*extensionsv1beta1.Ingress{
 		buildIngress(
 			iNamespace("testing"),
 			iRules(
@@ -1404,7 +1405,7 @@ func TestMissingResources(t *testing.T) {
 		),
 	}
 
-	services := []*v1.Service{
+	services := []*corev1.Service{
 		buildService(
 			sName("fully_working_service"),
 			sNamespace("testing"),
@@ -1431,7 +1432,7 @@ func TestMissingResources(t *testing.T) {
 		),
 	}
 
-	endpoints := []*v1.Endpoints{
+	endpoints := []*corev1.Endpoints{
 		buildEndpoint(
 			eName("fully_working_service"),
 			eUID("1"),
@@ -1500,7 +1501,7 @@ func TestMissingResources(t *testing.T) {
 }
 
 func TestBasicAuthInTemplate(t *testing.T) {
-	ingresses := []*v1beta1.Ingress{
+	ingresses := []*extensionsv1beta1.Ingress{
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesAuthType, "basic"),
@@ -1513,7 +1514,7 @@ func TestBasicAuthInTemplate(t *testing.T) {
 		),
 	}
 
-	services := []*v1.Service{
+	services := []*corev1.Service{
 		buildService(
 			sName("service1"),
 			sNamespace("testing"),
@@ -1526,8 +1527,8 @@ func TestBasicAuthInTemplate(t *testing.T) {
 		),
 	}
 
-	secrets := []*v1.Secret{{
-		ObjectMeta: v1.ObjectMeta{
+	secrets := []*corev1.Secret{{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      "mySecret",
 			UID:       "1",
 			Namespace: "testing",
@@ -1537,7 +1538,7 @@ func TestBasicAuthInTemplate(t *testing.T) {
 		},
 	}}
 
-	var endpoints []*v1.Endpoints
+	var endpoints []*corev1.Endpoints
 	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
@@ -1560,7 +1561,7 @@ func TestBasicAuthInTemplate(t *testing.T) {
 }
 
 func TestTLSSecretLoad(t *testing.T) {
-	ingresses := []*v1beta1.Ingress{
+	ingresses := []*extensionsv1beta1.Ingress{
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesFrontendEntryPoints, "ep1,ep2"),
@@ -1589,7 +1590,7 @@ func TestTLSSecretLoad(t *testing.T) {
 			),
 		),
 	}
-	services := []*v1.Service{
+	services := []*corev1.Service{
 		buildService(
 			sName("example-com"),
 			sNamespace("testing"),
@@ -1609,9 +1610,9 @@ func TestTLSSecretLoad(t *testing.T) {
 				sPorts(sPort(80, "http"))),
 		),
 	}
-	secrets := []*v1.Secret{
+	secrets := []*corev1.Secret{
 		{
-			ObjectMeta: v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Name:      "myTlsSecret",
 				UID:       "1",
 				Namespace: "testing",
@@ -1622,7 +1623,7 @@ func TestTLSSecretLoad(t *testing.T) {
 			},
 		},
 	}
-	endpoints := []*v1.Endpoints{}
+	endpoints := []*corev1.Endpoints{}
 	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
@@ -1691,7 +1692,7 @@ func TestGetTLS(t *testing.T) {
 
 	tests := []struct {
 		desc      string
-		ingress   *v1beta1.Ingress
+		ingress   *extensionsv1beta1.Ingress
 		client    Client
 		result    []*tls.Configuration
 		errResult string
@@ -1714,9 +1715,9 @@ func TestGetTLS(t *testing.T) {
 			desc:    "entry 'tls.crt' in secret missing",
 			ingress: testIngressWithoutHostname,
 			client: clientMock{
-				secrets: []*v1.Secret{
+				secrets: []*corev1.Secret{
 					{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metav1.ObjectMeta{
 							Name:      "test-secret",
 							Namespace: "testing",
 						},
@@ -1732,9 +1733,9 @@ func TestGetTLS(t *testing.T) {
 			desc:    "entry 'tls.key' in secret missing",
 			ingress: testIngressWithoutHostname,
 			client: clientMock{
-				secrets: []*v1.Secret{
+				secrets: []*corev1.Secret{
 					{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metav1.ObjectMeta{
 							Name:      "test-secret",
 							Namespace: "testing",
 						},
@@ -1750,9 +1751,9 @@ func TestGetTLS(t *testing.T) {
 			desc:    "secret doesn't provide any of the required fields",
 			ingress: testIngressWithoutHostname,
 			client: clientMock{
-				secrets: []*v1.Secret{
+				secrets: []*corev1.Secret{
 					{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metav1.ObjectMeta{
 							Name:      "test-secret",
 							Namespace: "testing",
 						},
@@ -1777,9 +1778,9 @@ func TestGetTLS(t *testing.T) {
 				),
 			),
 			client: clientMock{
-				secrets: []*v1.Secret{
+				secrets: []*corev1.Secret{
 					{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metav1.ObjectMeta{
 							Name:      "test-secret",
 							Namespace: "testing",
 						},
@@ -1814,9 +1815,9 @@ func TestGetTLS(t *testing.T) {
 				iTLSes(iTLS("test-secret")),
 			),
 			client: clientMock{
-				secrets: []*v1.Secret{
+				secrets: []*corev1.Secret{
 					{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metav1.ObjectMeta{
 							Name:      "test-secret",
 							Namespace: "testing",
 						},

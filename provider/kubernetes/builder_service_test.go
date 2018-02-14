@@ -4,38 +4,39 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/client-go/pkg/api/v1"
-	"k8s.io/client-go/pkg/types"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
-func buildService(opts ...func(*v1.Service)) *v1.Service {
-	s := &v1.Service{}
+func buildService(opts ...func(*corev1.Service)) *corev1.Service {
+	s := &corev1.Service{}
 	for _, opt := range opts {
 		opt(s)
 	}
 	return s
 }
 
-func sNamespace(value string) func(*v1.Service) {
-	return func(i *v1.Service) {
+func sNamespace(value string) func(*corev1.Service) {
+	return func(i *corev1.Service) {
 		i.Namespace = value
 	}
 }
 
-func sName(value string) func(*v1.Service) {
-	return func(i *v1.Service) {
+func sName(value string) func(*corev1.Service) {
+	return func(i *corev1.Service) {
 		i.Name = value
 	}
 }
 
-func sUID(value types.UID) func(*v1.Service) {
-	return func(i *v1.Service) {
+func sUID(value types.UID) func(*corev1.Service) {
+	return func(i *corev1.Service) {
 		i.UID = value
 	}
 }
 
-func sAnnotation(name string, value string) func(*v1.Service) {
-	return func(s *v1.Service) {
+func sAnnotation(name string, value string) func(*corev1.Service) {
+	return func(s *corev1.Service) {
 		if s.Annotations == nil {
 			s.Annotations = make(map[string]string)
 		}
@@ -43,9 +44,9 @@ func sAnnotation(name string, value string) func(*v1.Service) {
 	}
 }
 
-func sSpec(opts ...func(*v1.ServiceSpec)) func(*v1.Service) {
-	return func(i *v1.Service) {
-		spec := &v1.ServiceSpec{}
+func sSpec(opts ...func(*corev1.ServiceSpec)) func(*corev1.Service) {
+	return func(i *corev1.Service) {
+		spec := &corev1.ServiceSpec{}
 		for _, opt := range opts {
 			opt(spec)
 		}
@@ -53,36 +54,36 @@ func sSpec(opts ...func(*v1.ServiceSpec)) func(*v1.Service) {
 	}
 }
 
-func clusterIP(ip string) func(*v1.ServiceSpec) {
-	return func(spec *v1.ServiceSpec) {
+func clusterIP(ip string) func(*corev1.ServiceSpec) {
+	return func(spec *corev1.ServiceSpec) {
 		spec.ClusterIP = ip
 	}
 }
 
-func sType(value v1.ServiceType) func(*v1.ServiceSpec) {
-	return func(spec *v1.ServiceSpec) {
+func sType(value corev1.ServiceType) func(*corev1.ServiceSpec) {
+	return func(spec *corev1.ServiceSpec) {
 		spec.Type = value
 	}
 }
 
-func sExternalName(name string) func(*v1.ServiceSpec) {
-	return func(spec *v1.ServiceSpec) {
+func sExternalName(name string) func(*corev1.ServiceSpec) {
+	return func(spec *corev1.ServiceSpec) {
 		spec.ExternalName = name
 	}
 }
 
-func sPorts(opts ...func(*v1.ServicePort)) func(*v1.ServiceSpec) {
-	return func(spec *v1.ServiceSpec) {
+func sPorts(opts ...func(*corev1.ServicePort)) func(*corev1.ServiceSpec) {
+	return func(spec *corev1.ServiceSpec) {
 		for _, opt := range opts {
-			p := &v1.ServicePort{}
+			p := &corev1.ServicePort{}
 			opt(p)
 			spec.Ports = append(spec.Ports, *p)
 		}
 	}
 }
 
-func sPort(port int32, name string) func(*v1.ServicePort) {
-	return func(sp *v1.ServicePort) {
+func sPort(port int32, name string) func(*corev1.ServicePort) {
+	return func(sp *corev1.ServicePort) {
 		sp.Port = port
 		sp.Name = name
 	}
@@ -121,16 +122,16 @@ func TestBuildService(t *testing.T) {
 	assert.EqualValues(t, sampleService2(), actual2)
 }
 
-func sampleService1() *v1.Service {
-	return &v1.Service{
-		ObjectMeta: v1.ObjectMeta{
+func sampleService1() *corev1.Service {
+	return &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      "service1",
 			UID:       "1",
 			Namespace: "testing",
 		},
-		Spec: v1.ServiceSpec{
+		Spec: corev1.ServiceSpec{
 			ClusterIP: "10.0.0.1",
-			Ports: []v1.ServicePort{
+			Ports: []corev1.ServicePort{
 				{
 					Port: 80,
 				},
@@ -139,18 +140,18 @@ func sampleService1() *v1.Service {
 	}
 }
 
-func sampleService2() *v1.Service {
-	return &v1.Service{
-		ObjectMeta: v1.ObjectMeta{
+func sampleService2() *corev1.Service {
+	return &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      "service3",
 			UID:       "3",
 			Namespace: "testing",
 		},
-		Spec: v1.ServiceSpec{
+		Spec: corev1.ServiceSpec{
 			ClusterIP:    "10.0.0.3",
 			Type:         "ExternalName",
 			ExternalName: "example.com",
-			Ports: []v1.ServicePort{
+			Ports: []corev1.ServicePort{
 				{
 					Name: "http",
 					Port: 80,

@@ -17,10 +17,11 @@ limitations under the License.
 package v1beta1
 
 import (
-	api "k8s.io/client-go/pkg/api"
-	v1 "k8s.io/client-go/pkg/api/v1"
-	v1beta1 "k8s.io/client-go/pkg/apis/policy/v1beta1"
-	watch "k8s.io/client-go/pkg/watch"
+	v1beta1 "k8s.io/api/policy/v1beta1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	types "k8s.io/apimachinery/pkg/types"
+	watch "k8s.io/apimachinery/pkg/watch"
+	scheme "k8s.io/client-go/kubernetes/scheme"
 	rest "k8s.io/client-go/rest"
 )
 
@@ -37,10 +38,10 @@ type PodDisruptionBudgetInterface interface {
 	UpdateStatus(*v1beta1.PodDisruptionBudget) (*v1beta1.PodDisruptionBudget, error)
 	Delete(name string, options *v1.DeleteOptions) error
 	DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error
-	Get(name string) (*v1beta1.PodDisruptionBudget, error)
+	Get(name string, options v1.GetOptions) (*v1beta1.PodDisruptionBudget, error)
 	List(opts v1.ListOptions) (*v1beta1.PodDisruptionBudgetList, error)
 	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt api.PatchType, data []byte, subresources ...string) (result *v1beta1.PodDisruptionBudget, err error)
+	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.PodDisruptionBudget, err error)
 	PodDisruptionBudgetExpansion
 }
 
@@ -56,6 +57,41 @@ func newPodDisruptionBudgets(c *PolicyV1beta1Client, namespace string) *podDisru
 		client: c.RESTClient(),
 		ns:     namespace,
 	}
+}
+
+// Get takes name of the podDisruptionBudget, and returns the corresponding podDisruptionBudget object, and an error if there is any.
+func (c *podDisruptionBudgets) Get(name string, options v1.GetOptions) (result *v1beta1.PodDisruptionBudget, err error) {
+	result = &v1beta1.PodDisruptionBudget{}
+	err = c.client.Get().
+		Namespace(c.ns).
+		Resource("poddisruptionbudgets").
+		Name(name).
+		VersionedParams(&options, scheme.ParameterCodec).
+		Do().
+		Into(result)
+	return
+}
+
+// List takes label and field selectors, and returns the list of PodDisruptionBudgets that match those selectors.
+func (c *podDisruptionBudgets) List(opts v1.ListOptions) (result *v1beta1.PodDisruptionBudgetList, err error) {
+	result = &v1beta1.PodDisruptionBudgetList{}
+	err = c.client.Get().
+		Namespace(c.ns).
+		Resource("poddisruptionbudgets").
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Do().
+		Into(result)
+	return
+}
+
+// Watch returns a watch.Interface that watches the requested podDisruptionBudgets.
+func (c *podDisruptionBudgets) Watch(opts v1.ListOptions) (watch.Interface, error) {
+	opts.Watch = true
+	return c.client.Get().
+		Namespace(c.ns).
+		Resource("poddisruptionbudgets").
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Watch()
 }
 
 // Create takes the representation of a podDisruptionBudget and creates it.  Returns the server's representation of the podDisruptionBudget, and an error, if there is any.
@@ -82,6 +118,9 @@ func (c *podDisruptionBudgets) Update(podDisruptionBudget *v1beta1.PodDisruption
 		Into(result)
 	return
 }
+
+// UpdateStatus was generated because the type contains a Status member.
+// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
 
 func (c *podDisruptionBudgets) UpdateStatus(podDisruptionBudget *v1beta1.PodDisruptionBudget) (result *v1beta1.PodDisruptionBudget, err error) {
 	result = &v1beta1.PodDisruptionBudget{}
@@ -112,48 +151,14 @@ func (c *podDisruptionBudgets) DeleteCollection(options *v1.DeleteOptions, listO
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("poddisruptionbudgets").
-		VersionedParams(&listOptions, api.ParameterCodec).
+		VersionedParams(&listOptions, scheme.ParameterCodec).
 		Body(options).
 		Do().
 		Error()
 }
 
-// Get takes name of the podDisruptionBudget, and returns the corresponding podDisruptionBudget object, and an error if there is any.
-func (c *podDisruptionBudgets) Get(name string) (result *v1beta1.PodDisruptionBudget, err error) {
-	result = &v1beta1.PodDisruptionBudget{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("poddisruptionbudgets").
-		Name(name).
-		Do().
-		Into(result)
-	return
-}
-
-// List takes label and field selectors, and returns the list of PodDisruptionBudgets that match those selectors.
-func (c *podDisruptionBudgets) List(opts v1.ListOptions) (result *v1beta1.PodDisruptionBudgetList, err error) {
-	result = &v1beta1.PodDisruptionBudgetList{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("poddisruptionbudgets").
-		VersionedParams(&opts, api.ParameterCodec).
-		Do().
-		Into(result)
-	return
-}
-
-// Watch returns a watch.Interface that watches the requested podDisruptionBudgets.
-func (c *podDisruptionBudgets) Watch(opts v1.ListOptions) (watch.Interface, error) {
-	return c.client.Get().
-		Prefix("watch").
-		Namespace(c.ns).
-		Resource("poddisruptionbudgets").
-		VersionedParams(&opts, api.ParameterCodec).
-		Watch()
-}
-
 // Patch applies the patch and returns the patched podDisruptionBudget.
-func (c *podDisruptionBudgets) Patch(name string, pt api.PatchType, data []byte, subresources ...string) (result *v1beta1.PodDisruptionBudget, err error) {
+func (c *podDisruptionBudgets) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.PodDisruptionBudget, err error) {
 	result = &v1beta1.PodDisruptionBudget{}
 	err = c.client.Patch(pt).
 		Namespace(c.ns).

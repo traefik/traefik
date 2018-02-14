@@ -4,39 +4,40 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/client-go/pkg/api/v1"
-	"k8s.io/client-go/pkg/types"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
-func buildEndpoint(opts ...func(*v1.Endpoints)) *v1.Endpoints {
-	e := &v1.Endpoints{}
+func buildEndpoint(opts ...func(*corev1.Endpoints)) *corev1.Endpoints {
+	e := &corev1.Endpoints{}
 	for _, opt := range opts {
 		opt(e)
 	}
 	return e
 }
 
-func eNamespace(value string) func(*v1.Endpoints) {
-	return func(i *v1.Endpoints) {
+func eNamespace(value string) func(*corev1.Endpoints) {
+	return func(i *corev1.Endpoints) {
 		i.Namespace = value
 	}
 }
 
-func eName(value string) func(*v1.Endpoints) {
-	return func(i *v1.Endpoints) {
+func eName(value string) func(*corev1.Endpoints) {
+	return func(i *corev1.Endpoints) {
 		i.Name = value
 	}
 }
 
-func eUID(value types.UID) func(*v1.Endpoints) {
-	return func(i *v1.Endpoints) {
+func eUID(value types.UID) func(*corev1.Endpoints) {
+	return func(i *corev1.Endpoints) {
 		i.UID = value
 	}
 }
 
-func subset(opts ...func(*v1.EndpointSubset)) func(*v1.Endpoints) {
-	return func(e *v1.Endpoints) {
-		s := &v1.EndpointSubset{}
+func subset(opts ...func(*corev1.EndpointSubset)) func(*corev1.Endpoints) {
+	return func(e *corev1.Endpoints) {
+		s := &corev1.EndpointSubset{}
 		for _, opt := range opts {
 			opt(s)
 		}
@@ -44,9 +45,9 @@ func subset(opts ...func(*v1.EndpointSubset)) func(*v1.Endpoints) {
 	}
 }
 
-func eAddresses(opts ...func(*v1.EndpointAddress)) func(*v1.EndpointSubset) {
-	return func(subset *v1.EndpointSubset) {
-		a := &v1.EndpointAddress{}
+func eAddresses(opts ...func(*corev1.EndpointAddress)) func(*corev1.EndpointSubset) {
+	return func(subset *corev1.EndpointSubset) {
+		a := &corev1.EndpointAddress{}
 		for _, opt := range opts {
 			opt(a)
 		}
@@ -54,24 +55,24 @@ func eAddresses(opts ...func(*v1.EndpointAddress)) func(*v1.EndpointSubset) {
 	}
 }
 
-func eAddress(ip string) func(*v1.EndpointAddress) {
-	return func(address *v1.EndpointAddress) {
+func eAddress(ip string) func(*corev1.EndpointAddress) {
+	return func(address *corev1.EndpointAddress) {
 		address.IP = ip
 	}
 }
 
-func ePorts(opts ...func(port *v1.EndpointPort)) func(*v1.EndpointSubset) {
-	return func(spec *v1.EndpointSubset) {
+func ePorts(opts ...func(port *corev1.EndpointPort)) func(*corev1.EndpointSubset) {
+	return func(spec *corev1.EndpointSubset) {
 		for _, opt := range opts {
-			p := &v1.EndpointPort{}
+			p := &corev1.EndpointPort{}
 			opt(p)
 			spec.Ports = append(spec.Ports, *p)
 		}
 	}
 }
 
-func ePort(port int32, name string) func(*v1.EndpointPort) {
-	return func(sp *v1.EndpointPort) {
+func ePort(port int32, name string) func(*corev1.EndpointPort) {
+	return func(sp *corev1.EndpointPort) {
 		sp.Port = port
 		sp.Name = name
 	}
@@ -103,21 +104,21 @@ func TestBuildEndpoint(t *testing.T) {
 	assert.EqualValues(t, sampleEndpoint1(), actual)
 }
 
-func sampleEndpoint1() *v1.Endpoints {
-	return &v1.Endpoints{
-		ObjectMeta: v1.ObjectMeta{
+func sampleEndpoint1() *corev1.Endpoints {
+	return &corev1.Endpoints{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      "service3",
 			UID:       "3",
 			Namespace: "testing",
 		},
-		Subsets: []v1.EndpointSubset{
+		Subsets: []corev1.EndpointSubset{
 			{
-				Addresses: []v1.EndpointAddress{
+				Addresses: []corev1.EndpointAddress{
 					{
 						IP: "10.15.0.1",
 					},
 				},
-				Ports: []v1.EndpointPort{
+				Ports: []corev1.EndpointPort{
 					{
 						Name: "http",
 						Port: 8080,
@@ -129,12 +130,12 @@ func sampleEndpoint1() *v1.Endpoints {
 				},
 			},
 			{
-				Addresses: []v1.EndpointAddress{
+				Addresses: []corev1.EndpointAddress{
 					{
 						IP: "10.15.0.2",
 					},
 				},
-				Ports: []v1.EndpointPort{
+				Ports: []corev1.EndpointPort{
 					{
 						Name: "http",
 						Port: 9080,

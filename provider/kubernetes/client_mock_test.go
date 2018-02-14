@@ -1,15 +1,15 @@
 package kubernetes
 
 import (
-	"k8s.io/client-go/pkg/api/v1"
-	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
+	corev1 "k8s.io/api/core/v1"
+	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 )
 
 type clientMock struct {
-	ingresses []*v1beta1.Ingress
-	services  []*v1.Service
-	secrets   []*v1.Secret
-	endpoints []*v1.Endpoints
+	ingresses []*extensionsv1beta1.Ingress
+	services  []*corev1.Service
+	secrets   []*corev1.Secret
+	endpoints []*corev1.Endpoints
 	watchChan chan interface{}
 
 	apiServiceError   error
@@ -17,11 +17,11 @@ type clientMock struct {
 	apiEndpointsError error
 }
 
-func (c clientMock) GetIngresses() []*v1beta1.Ingress {
+func (c clientMock) GetIngresses() []*extensionsv1beta1.Ingress {
 	return c.ingresses
 }
 
-func (c clientMock) GetService(namespace, name string) (*v1.Service, bool, error) {
+func (c clientMock) GetService(namespace, name string) (*corev1.Service, bool, error) {
 	if c.apiServiceError != nil {
 		return nil, false, c.apiServiceError
 	}
@@ -34,7 +34,7 @@ func (c clientMock) GetService(namespace, name string) (*v1.Service, bool, error
 	return nil, false, nil
 }
 
-func (c clientMock) GetEndpoints(namespace, name string) (*v1.Endpoints, bool, error) {
+func (c clientMock) GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error) {
 	if c.apiEndpointsError != nil {
 		return nil, false, c.apiEndpointsError
 	}
@@ -45,10 +45,10 @@ func (c clientMock) GetEndpoints(namespace, name string) (*v1.Endpoints, bool, e
 		}
 	}
 
-	return &v1.Endpoints{}, false, nil
+	return &corev1.Endpoints{}, false, nil
 }
 
-func (c clientMock) GetSecret(namespace, name string) (*v1.Secret, bool, error) {
+func (c clientMock) GetSecret(namespace, name string) (*corev1.Secret, bool, error) {
 	if c.apiSecretError != nil {
 		return nil, false, c.apiSecretError
 	}
