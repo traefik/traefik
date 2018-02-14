@@ -1497,6 +1497,6 @@ func (s *Server) buildBufferingMiddleware(handler http.Handler, config *types.Bu
 		buffer.MaxRequestBodyBytes(config.MaxRequestBodyBytes),
 		buffer.MemResponseBodyBytes(config.MemResponseBodyBytes),
 		buffer.MaxResponseBodyBytes(config.MaxResponseBodyBytes),
-		buffer.CondSetter(len(config.RetryExpression) > 0, buffer.Retry(config.RetryExpression)),
+		buffer.CondSetter(len(config.RetryExpression) == 0, buffer.Retry(config.RetryExpression)),
 	)
 }
