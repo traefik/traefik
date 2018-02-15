@@ -29,11 +29,6 @@ func runHealthCheck(traefikConfiguration *TraefikConfiguration) func() error {
 	return func() error {
 		traefikConfiguration.GlobalConfiguration.SetEffectiveConfiguration(traefikConfiguration.ConfigFile)
 
-		if traefikConfiguration.Ping == nil {
-			fmt.Println("Please enable `ping` to use healtcheck.")
-			os.Exit(1)
-		}
-
 		resp, errPing := healthCheck(traefikConfiguration.GlobalConfiguration)
 		if errPing != nil {
 			fmt.Printf("Error calling healthcheck: %s\n", errPing)
@@ -50,9 +45,13 @@ func runHealthCheck(traefikConfiguration *TraefikConfiguration) func() error {
 }
 
 func healthCheck(globalConfiguration configuration.GlobalConfiguration) (*http.Response, error) {
+	if globalConfiguration.Ping == nil {
+		return nil, errors.New("please enable `ping` to use health check")
+	}
+
 	pingEntryPoint, ok := globalConfiguration.EntryPoints[globalConfiguration.Ping.EntryPoint]
 	if !ok {
-		return nil, errors.New("missing ping entrypoint")
+		return nil, errors.New("missing `ping` entrypoint")
 	}
 
 	client := &http.Client{Timeout: 5 * time.Second}
