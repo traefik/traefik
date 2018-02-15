@@ -416,3 +416,34 @@ entrypoint="api"
       [frontends.frontend1.routes.test_1]
       rule = "PathPrefixStrip:/yourprefix;PathPrefix:/yourprefix"
 ```
+
+## Address
+
+As web is deprecated, you can handle the `Address` option like this
+
+```toml
+defaultEntryPoints = ["http"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+  [entryPoints.ping]
+  address = ":8082"
+  [entryPoints.api]
+  address = ":8083"
+
+[ping]
+entryPoint = "ping"
+
+[api]
+entryPoint = "api"
+```
+
+In the above example, you would access a regular path, admin panel, and health-check as follows:
+
+* Regular path: `http://hostname:80/foo`
+* Admin Panel: `http://hostname:8083/`
+* Ping URL: `http://hostname:8082/ping`
+
+In the above example, it is _very_ important to create a named dedicated entrypoint, and do **not** include it in `defaultEntryPoints`.
+Otherwise, you are likely to expose _all_ services via that entrypoint.
