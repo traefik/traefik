@@ -478,4 +478,4 @@ defaultEntryPoints = ["http"]
 entrypoint="api"
 ```
 
-For more infomation, see [entry points](/configuration/entrypoints/) .
+For more information, see [entry points](/configuration/entrypoints/) .
