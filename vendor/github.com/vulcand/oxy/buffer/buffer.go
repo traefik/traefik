@@ -104,7 +104,7 @@ type optSetter func(b *Buffer) error
 // CondSetter Conditional setter.
 // ex: Cond(a > 4, MemRequestBodyBytes(a))
 func CondSetter(condition bool, setter optSetter) optSetter {
-	if condition {
+	if !condition {
 		// NoOp setter
 		return func(*Buffer) error {
 			return nil
