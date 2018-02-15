@@ -388,7 +388,7 @@ curl -s "http://localhost:8080/api" | jq .
 
 #### Path
 
-As web is deprecated, you can handle the `Path` option like this:
+As the web provider is deprecated, you can handle the `Path` option like this:
 
 ```toml
 defaultEntryPoints = ["http"]
@@ -423,7 +423,7 @@ entryPoint = "api"
 
 #### Address
 
-As web is deprecated, you can handle the `Address` option like this
+As the web provider is deprecated, you can handle the `Address` option like this:
 
 ```toml
 defaultEntryPoints = ["http"]
@@ -455,6 +455,8 @@ In the above example, it is _very_ important to create a named dedicated entry p
 Otherwise, you are likely to expose _all_ services via that entry point.
 
 #### Authentication
+
+As the web provider is deprecated, you can handle the `auth` option like this:
 
 ```toml
 defaultEntryPoints = ["http"]

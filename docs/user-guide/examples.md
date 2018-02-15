@@ -190,7 +190,7 @@ entryPoint = "https"
 ```
 
 DNS challenge needs environment variables to be executed.
-This variables have to be set on the machine/container which host Træfik.
+These variables have to be set on the machine/container which host Træfik.
 
 These variables are described [in this section](/configuration/acme/#provider).
 
@@ -298,7 +298,7 @@ With two user/pass:
 - `test`:`test`
 - `test2`:`test2`
 
-Passwords are encoded in MD5: you can use `htpasswd` to generate those ones.
+Passwords are encoded in MD5: you can use `htpasswd` to generate them.
 
 ```toml
 defaultEntryPoints = ["http"]
