@@ -913,7 +913,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 	backendsHealthCheck := map[string]*healthcheck.BackendHealthCheck{}
 	errorHandler := NewRecordingErrorHandler(middlewares.DefaultNetErrorRecorder{})
 
-	for _, config := range configurations {
+	for providerName, config := range configurations {
 		frontendNames := sortedFrontendNamesForConfig(config)
 	frontend:
 		for _, frontendName := range frontendNames {
@@ -970,7 +970,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						}
 					}
 				}
-				if backends[entryPointName+frontend.Backend] == nil {
+				if backends[entryPointName+providerName+frontend.Backend] == nil {
 					log.Debugf("Creating backend %s", frontend.Backend)
 
 					roundTripper, err := s.getRoundTripper(entryPointName, globalConfiguration, frontend.PassTLSCert, entryPoint.TLS)
@@ -1191,14 +1191,14 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 					} else {
 						n.UseHandler(lb)
 					}
-					backends[entryPointName+frontend.Backend] = n
+					backends[entryPointName+providerName+frontend.Backend] = n
 				} else {
 					log.Debugf("Reusing backend %s", frontend.Backend)
 				}
 				if frontend.Priority > 0 {
 					newServerRoute.route.Priority(frontend.Priority)
 				}
-				s.wireFrontendBackend(newServerRoute, backends[entryPointName+frontend.Backend])
+				s.wireFrontendBackend(newServerRoute, backends[entryPointName+providerName+frontend.Backend])
 
 				err := newServerRoute.route.GetError()
 				if err != nil {
