@@ -187,15 +187,20 @@ The following annotations are applicable on the Service object associated with a
 !!! note
     `traefik.ingress.kubernetes.io/` and `ingress.kubernetes.io/` are supported prefixes.
 
-### Security annotations
+### Custom Headers Annotations
+
+|                        Annotation                     |                                                                                             Description                                                                          |
+| ------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ingress.kubernetes.io/custom-request-headers: EXPR`  | Provides the container with custom request headers that will be appended to each request forwarded to the container. Format: <code>HEADER:value&vert;&vert;HEADER2:value2</code> |
+| `ingress.kubernetes.io/custom-response-headers: EXPR` | Appends the headers to each response returned by the container, before forwarding the response to the client. Format: <code>HEADER:value&vert;&vert;HEADER2:value2</code>        |
+
+### Security Headers Annotations
 
 The following security annotations are applicable on the Ingress object:
 
-|                        Annotation                        |                                                                                             Description                                                                                             |
-| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|                        Annotation                         |                                                                                             Description                                                                                             |
+| ----------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `ingress.kubernetes.io/allowed-hosts: EXPR`               | Provides a list of allowed hosts that requests will be processed. Format: `Host1,Host2`                                                                                                             |
-| `ingress.kubernetes.io/custom-request-headers: EXPR`      | Provides the container with custom request headers that will be appended to each request forwarded to the container. Format: <code>HEADER:value&vert;&vert;HEADER2:value2</code>                    |
-| `ingress.kubernetes.io/custom-response-headers: EXPR`     | Appends the headers to each response returned by the container, before forwarding the response to the client. Format: <code>HEADER:value&vert;&vert;HEADER2:value2</code>                           |
 | `ingress.kubernetes.io/proxy-headers: EXPR`               | Provides a list of headers that the proxied hostname may be stored. Format:  `HEADER1,HEADER2`                                                                                                      |
 | `ingress.kubernetes.io/ssl-redirect: "true"`              | Forces the frontend to redirect to SSL if a non-SSL request is sent.                                                                                                                                |
 | `ingress.kubernetes.io/ssl-temporary-redirect: "true"`    | Forces the frontend to redirect to SSL if a non-SSL request is sent, but by sending a 302 instead of a 301.                                                                                         |
@@ -219,9 +224,9 @@ The following security annotations are applicable on the Ingress object:
 Is possible to add additional authentication annotations to the Ingress object.
 The source of the authentication is a Secret object that contains the credentials.
 
-| Annotation                                    | Description                                                                                |
-|---------------------------------------------- | --------------------------------------------------------------------------------------------|
-| `ingress.kubernetes.io/auth-type: basic`      | Contains the authentication type. The only permitted type is `basic`.                      |
+| Annotation                                    | Description                                                                                                 |
+|-----------------------------------------------|-------------------------------------------------------------------------------------------------------------|
+| `ingress.kubernetes.io/auth-type: basic`      | Contains the authentication type. The only permitted type is `basic`.                                       |
 | `ingress.kubernetes.io/auth-secret: mysecret` | Name of Secret containing the username and password with access to the paths defined in the Ingress object. |
 
 The secret must be created in the same namespace as the Ingress object.
