@@ -1,5 +1,7 @@
 'use strict';
 
+var _ = require('lodash');
+
 /** @ngInject */
 function ProvidersController($scope, $interval, $log, Providers) {
   const vm = this;
@@ -7,7 +9,12 @@ function ProvidersController($scope, $interval, $log, Providers) {
   function loadProviders() {
     Providers
       .get()
-      .then(providers => vm.providers = providers)
+      .then(providers => {
+        if (!_.isEqual(vm.previousProviders, providers)) {
+          vm.providers = providers;
+          vm.previousProviders = _.cloneDeep(providers);
+        }
+      })
       .catch(error => {
         vm.providers = {};
         $log.error(error);
