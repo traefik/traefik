@@ -44,10 +44,7 @@ func (t *Tracing) Setup() {
 
 	if err != nil {
 		log.Warnf("Could not initialize %s tracing: %v", t.Backend, err)
-		return
 	}
-
-	return
 }
 
 // IsEnabled determines if tracing was successfully activated
