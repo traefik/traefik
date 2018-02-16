@@ -1,5 +1,7 @@
 # API Definition
 
+## Configuration
+
 ```toml
 # API definition
 [api]
@@ -28,6 +30,8 @@
   debug = true
 ```
 
+For more customization, see [entry points](/configuration/entrypoints/) documentation and [examples](/user-guide/examples/#ping-health-check).
+
 ## Web UI
 
 ![Web UI Providers](/img/web.frontend.png)
@@ -42,7 +46,7 @@
 | `/health`                                                       |     `GET`        | json health metrics                       |
 | `/api`                                                          |     `GET`        | Configuration for all providers           |
 | `/api/providers`                                                |     `GET`        | Providers                                 |
-| `/api/providers/{provider}`                                     |     `GET`, `PUT` | Get or update provider                    |
+| `/api/providers/{provider}`                                     |     `GET`, `PUT` | Get or update provider (1)                |
 | `/api/providers/{provider}/backends`                            |     `GET`        | List backends                             |
 | `/api/providers/{provider}/backends/{backend}`                  |     `GET`        | Get backend                               |
 | `/api/providers/{provider}/backends/{backend}/servers`          |     `GET`        | List servers in backend                   |
@@ -51,6 +55,8 @@
 | `/api/providers/{provider}/frontends/{frontend}`                |     `GET`        | Get a frontend                            |
 | `/api/providers/{provider}/frontends/{frontend}/routes`         |     `GET`        | List routes in a frontend                 |
 | `/api/providers/{provider}/frontends/{frontend}/routes/{route}` |     `GET`        | Get a route in a frontend                 |
+
+<1> See [Rest](/configuration/backends/rest/#api) for more information.
 
 !!! warning
     For compatibility reason, when you activate the rest provider, you can use `web` or `rest` as `provider` value.
@@ -185,6 +191,7 @@ curl -s "http://localhost:8080/health" | jq .
 ## Metrics
 
 You can enable Traefik to export internal metrics to different monitoring systems.
+
 ```toml
 [api]
   # ...
