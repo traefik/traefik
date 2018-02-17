@@ -44,7 +44,8 @@ type ACME struct {
 	OnDemand              bool           `description:"Enable on demand certificate generation. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."` //deprecated
 	OnHostRule            bool           `description:"Enable certificate generation on frontends Host rules."`
 	CAServer              string         `description:"CA server to use."`
-	EntryPoint            string         `description:"Entrypoint to proxy acme challenge to."`
+	EntryPoint            string         `description:"Entrypoint to proxy acme challenge to. DEPRECATED, use EntryPoints."`
+	EntryPoints           EntryPoints    `description:"Entrypoints for which to enable acme certificate generation."`
 	DNSChallenge          *DNSChallenge  `description:"Activate DNS-01 Challenge"`
 	HTTPChallenge         *HTTPChallenge `description:"Activate HTTP-01 Challenge"`
 	DNSProvider           string         `description:"Use a DNS-01 acme challenge rather than TLS-SNI-01 challenge."`                                // deprecated
@@ -59,6 +60,44 @@ type ACME struct {
 	jobs                  *channels.InfiniteChannel
 	TLSConfig             *tls.Config `description:"TLS config in case wildcard certs are used"`
 	dynamicCerts          *safe.Safe
+}
+
+// EntryPoints holds default entry points
+type EntryPoints []string
+
+// String is the method to format the flag's value, part of the flag.Value interface.
+// The String method's output will be used in diagnostics.
+func (dep *EntryPoints) String() string {
+	return strings.Join(*dep, ",")
+}
+
+// Set is the method to set the flag value, part of the flag.Value interface.
+// Set's argument is a string to be parsed to set the flag.
+// It's a comma-separated list, so we split it.
+func (dep *EntryPoints) Set(value string) error {
+	entrypoints := strings.Split(value, ",")
+	if len(entrypoints) == 0 {
+		return fmt.Errorf("bad EntryPoints format: %s", value)
+	}
+	for _, entrypoint := range entrypoints {
+		*dep = append(*dep, entrypoint)
+	}
+	return nil
+}
+
+// Get return the EntryPoints map
+func (dep *EntryPoints) Get() interface{} {
+	return *dep
+}
+
+// SetValue sets the EntryPoints map with val
+func (dep *EntryPoints) SetValue(val interface{}) {
+	*dep = val.(EntryPoints)
+}
+
+// Type is type of the struct
+func (dep *EntryPoints) Type() string {
+	return "entrypoints"
 }
 
 // DNSChallenge contains DNS challenge Configuration
@@ -141,6 +180,20 @@ func (a *ACME) init() error {
 	a.defaultCertificate = cert
 
 	a.jobs = channels.NewInfiniteChannel()
+
+	// Add old EntryPoint setting value to EntryPoints
+	if a.EntryPoint != "" {
+		isEntryPointExists := false
+		for _, entryPoint := range a.EntryPoints {
+			if entryPoint == a.EntryPoint {
+				isEntryPointExists = true
+				break
+			}
+		}
+		if isEntryPointExists == false {
+			a.EntryPoints = append(a.EntryPoints, a.EntryPoint)
+		}
+	}
 	return nil
 }
 

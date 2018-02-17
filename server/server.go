@@ -515,12 +515,18 @@ func (s *Server) postLoadConfiguration() {
 				// check if one of the frontend entrypoints is configured with TLS
 				// and is configured with ACME
 				acmeEnabled := false
-				for _, entryPoint := range frontend.EntryPoints {
-					if s.globalConfiguration.ACME.EntryPoint == entryPoint && s.globalConfiguration.EntryPoints[entryPoint].TLS != nil {
-						acmeEnabled = true
-						break
+				CheckAcme:
+					for _, entryPoint := range frontend.EntryPoints {
+						if s.globalConfiguration.EntryPoints[entryPoint].TLS == nil {
+							break
+						}
+						for _, acmeEntryPoint := range s.globalConfiguration.ACME.EntryPoints {
+							if entryPoint == acmeEntryPoint {
+								acmeEnabled = true
+								break CheckAcme
+							}
+						}
 					}
-				}
 
 				if acmeEnabled {
 					for _, route := range frontend.Routes {
@@ -633,25 +639,27 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefikTls.TL
 	}
 
 	if s.globalConfiguration.ACME != nil {
-		if entryPointName == s.globalConfiguration.ACME.EntryPoint {
-			checkOnDemandDomain := func(domain string) bool {
-				routeMatch := &mux.RouteMatch{}
-				router := router.GetHandler()
-				match := router.Match(&http.Request{URL: &url.URL{}, Host: domain}, routeMatch)
-				if match && routeMatch.Route != nil {
-					return true
+		for _, acmeEntryPoint := range s.globalConfiguration.ACME.EntryPoints {
+			if entryPointName == acmeEntryPoint {
+				checkOnDemandDomain := func(domain string) bool {
+					routeMatch := &mux.RouteMatch{}
+					router := router.GetHandler()
+					match := router.Match(&http.Request{URL: &url.URL{}, Host: domain}, routeMatch)
+					if match && routeMatch.Route != nil {
+						return true
+					}
+					return false
 				}
-				return false
-			}
-			if s.leadership == nil {
-				err := s.globalConfiguration.ACME.CreateLocalConfig(config, &s.serverEntryPoints[entryPointName].certs, checkOnDemandDomain)
-				if err != nil {
-					return nil, err
-				}
-			} else {
-				err := s.globalConfiguration.ACME.CreateClusterConfig(s.leadership, config, &s.serverEntryPoints[entryPointName].certs, checkOnDemandDomain)
-				if err != nil {
-					return nil, err
+				if s.leadership == nil {
+					err := s.globalConfiguration.ACME.CreateLocalConfig(config, &s.serverEntryPoints[entryPointName].certs, checkOnDemandDomain)
+					if err != nil {
+						return nil, err
+					}
+				} else {
+					err := s.globalConfiguration.ACME.CreateClusterConfig(s.leadership, config, &s.serverEntryPoints[entryPointName].certs, checkOnDemandDomain)
+					if err != nil {
+						return nil, err
+					}
 				}
 			}
 		}
