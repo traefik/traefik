@@ -229,11 +229,11 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				rule, err := getRuleForPath(pa, i)
 				if err != nil {
 					log.Errorf("Failed to get rule for ingress %s/%s: %s", i.Namespace, i.Name, err)
-					delete(templateObjects.Frontends, r.Host+pa.Path)
+					delete(templateObjects.Frontends, baseName)
 					continue
 				}
 				if rule != "" {
-					templateObjects.Frontends[r.Host+pa.Path].Routes[pa.Path] = types.Route{
+					templateObjects.Frontends[baseName].Routes[pa.Path] = types.Route{
 						Rule: rule,
 					}
 				}
