@@ -21,13 +21,6 @@ import (
 
 const resyncPeriod = 10 * time.Minute
 
-const (
-	kindIngresses = "ingresses"
-	kindServices  = "services"
-	kindEndpoints = "endpoints"
-	kindSecrets   = "secrets"
-)
-
 type resourceEventHandler struct {
 	ev chan<- interface{}
 }
