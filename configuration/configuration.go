@@ -267,7 +267,7 @@ func (gc *GlobalConfiguration) ValidateConfiguration() {
 	if gc.ACME != nil {
 		for _, entryPoint := range gc.ACME.EntryPoints {
 			if _, ok := gc.EntryPoints[entryPoint]; !ok {
-			log.Fatalf("Unknown entrypoint %q for ACME configuration", entryPoint)
+				log.Fatalf("Unknown entrypoint %q for ACME configuration", entryPoint)
 			} else {
 				if gc.EntryPoints[entryPoint].TLS == nil {
 					log.Fatalf("Entrypoint without TLS %q for ACME configuration", entryPoint)
