@@ -38,10 +38,11 @@ type Provider struct {
 
 // Service represent a Consul service.
 type Service struct {
-	Name  string
-	Tags  []string
-	Nodes []string
-	Ports []int
+	Name      string
+	Tags      []string
+	Nodes     []string
+	Addresses []string
+	Ports     []int
 }
 
 type serviceUpdate struct {
@@ -188,6 +189,7 @@ func (p *Provider) watchCatalogServices(stopCh <-chan struct{}, watchCh chan<- m
 
 					nodesID := getServiceIds(nodes)
 					ports := getServicePorts(nodes)
+					addresses := getServiceAddresses(nodes)
 
 					if service, ok := current[key]; ok {
 						service.Tags = value
@@ -195,10 +197,11 @@ func (p *Provider) watchCatalogServices(stopCh <-chan struct{}, watchCh chan<- m
 						service.Ports = ports
 					} else {
 						service := Service{
-							Name:  key,
-							Tags:  value,
-							Nodes: nodesID,
-							Ports: ports,
+							Name:      key,
+							Tags:      value,
+							Nodes:     nodesID,
+							Addresses: addresses,
+							Ports:     ports,
 						}
 						current[key] = service
 					}
@@ -338,6 +341,10 @@ func hasServiceChanged(current map[string]Service, previous map[string]Service) 
 			if len(addedTagsKeys) > 0 || len(removedTagsKeys) > 0 {
 				return true
 			}
+			addedAddressesKeys, removedAddressesKeys := getChangedStringKeys(value.Addresses, prevValue.Addresses)
+			if len(addedAddressesKeys) > 0 || len(removedAddressesKeys) > 0 {
+				return true
+			}
 			addedPortsKeys, removedPortsKeys := getChangedIntKeys(value.Ports, prevValue.Ports)
 			if len(addedPortsKeys) > 0 || len(removedPortsKeys) > 0 {
 				return true
@@ -381,6 +388,14 @@ func getServicePorts(services []*api.CatalogService) []int {
 		servicePorts = append(servicePorts, service.ServicePort)
 	}
 	return servicePorts
+}
+
+func getServiceAddresses(services []*api.CatalogService) []string {
+	var serviceAddresses []string
+	for _, service := range services {
+		serviceAddresses = append(serviceAddresses, service.ServiceAddress)
+	}
+	return serviceAddresses
 }
 
 func (p *Provider) healthyNodes(service string) (catalogUpdate, error) {
