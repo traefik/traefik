@@ -32,10 +32,11 @@ import (
 )
 
 func main() {
-	//traefik config inits
+	// traefik config inits
 	traefikConfiguration := NewTraefikConfiguration()
 	traefikPointersConfiguration := NewTraefikDefaultPointersConfiguration()
-	//traefik Command init
+
+	// traefik Command init
 	traefikCmd := &flaeg.Command{
 		Name: "traefik",
 		Description: `traefik is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease.
@@ -48,12 +49,12 @@ Complete documentation is available at https://traefik.io`,
 		},
 	}
 
-	//storeconfig Command init
+	// storeconfig Command init
 	storeConfigCmd := newStoreConfigCmd(traefikConfiguration, traefikPointersConfiguration)
 
-	//init flaeg source
+	// init flaeg source
 	f := flaeg.New(traefikCmd, os.Args[1:])
-	//add custom parsers
+	// add custom parsers
 	f.AddParser(reflect.TypeOf(configuration.EntryPoints{}), &configuration.EntryPoints{})
 	f.AddParser(reflect.TypeOf(configuration.DefaultEntryPoints{}), &configuration.DefaultEntryPoints{})
 	f.AddParser(reflect.TypeOf(traefikTls.RootCAs{}), &traefikTls.RootCAs{})
@@ -63,7 +64,7 @@ Complete documentation is available at https://traefik.io`,
 	f.AddParser(reflect.TypeOf([]acme.Domain{}), &acme.Domains{})
 	f.AddParser(reflect.TypeOf(types.Buckets{}), &types.Buckets{})
 
-	//add commands
+	// add commands
 	f.AddCommand(newVersionCmd())
 	f.AddCommand(newBugCmd(traefikConfiguration, traefikPointersConfiguration))
 	f.AddCommand(storeConfigCmd)
@@ -83,12 +84,12 @@ Complete documentation is available at https://traefik.io`,
 		os.Exit(-1)
 	}
 
-	//staert init
+	// staert init
 	s := staert.NewStaert(traefikCmd)
-	//init toml source
+	// init TOML source
 	toml := staert.NewTomlSource("traefik", []string{traefikConfiguration.ConfigFile, "/etc/traefik/", "$HOME/.traefik/", "."})
 
-	//add sources to staert
+	// add sources to staert
 	s.AddSource(toml)
 	s.AddSource(f)
 	if _, err := s.LoadConfig(); err != nil {
@@ -105,7 +106,7 @@ Complete documentation is available at https://traefik.io`,
 	}
 	storeConfigCmd.Run = runStoreConfig(kv, traefikConfiguration)
 
-	// IF a KV Store is enable and no sub-command called in args
+	// if a KV Store is enable and no sub-command called in args
 	if kv != nil && usedCmd == traefikCmd {
 		if traefikConfiguration.Cluster == nil {
 			traefikConfiguration.Cluster = &types.Cluster{Node: uuid.Get()}
@@ -223,10 +224,7 @@ func configureLogging(globalConfiguration *configuration.GlobalConfiguration) {
 	if globalConfiguration.TraefikLog != nil && globalConfiguration.TraefikLog.Format == "json" {
 		formatter = &logrus.JSONFormatter{}
 	} else {
-		disableColors := false
-		if len(logFile) > 0 {
-			disableColors = true
-		}
+		disableColors := len(logFile) > 0
 		formatter = &logrus.TextFormatter{DisableColors: disableColors, FullTimestamp: true, DisableSorting: true}
 	}
 	log.SetFormatter(formatter)
@@ -234,8 +232,7 @@ func configureLogging(globalConfiguration *configuration.GlobalConfiguration) {
 	if len(logFile) > 0 {
 		dir := filepath.Dir(logFile)
 
-		err := os.MkdirAll(dir, 0755)
-		if err != nil {
+		if err := os.MkdirAll(dir, 0755); err != nil {
 			log.Errorf("Failed to create log path %s: %s", dir, err)
 		}
 
