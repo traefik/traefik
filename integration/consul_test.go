@@ -289,41 +289,6 @@ func (s *ConsulSuite) TestGlobalConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *ConsulSuite) skipTestGlobalConfigurationWithClientTLS(c *check.C) {
-	c.Skip("wait for relative path issue in the composefile")
-	s.setupConsulTLS(c)
-	consulHost := s.composeProject.Container(c, "consul").NetworkSettings.IPAddress
-
-	err := s.kv.Put("traefik/api/entrypoint", []byte("api"), nil)
-	c.Assert(err, checker.IsNil)
-
-	err = s.kv.Put("traefik/entrypoints/api/address", []byte(":8081"), nil)
-	c.Assert(err, checker.IsNil)
-
-	// wait for consul
-	err = try.Do(60*time.Second, try.KVExists(s.kv, "traefik/web/address"))
-	c.Assert(err, checker.IsNil)
-
-	// start traefik
-	cmd, display := s.traefikCmd(
-		withConfigFile("fixtures/simple_web.toml"),
-		"--consul",
-		"--consul.endpoint="+consulHost+":8585",
-		"--consul.tls.ca=resources/tls/ca.cert",
-		"--consul.tls.cert=resources/tls/consul.cert",
-		"--consul.tls.key=resources/tls/consul.key",
-		"--consul.tls.insecureskipverify")
-	defer display(c)
-
-	err = cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
-
-	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8081/api/providers", 60*time.Second)
-	c.Assert(err, checker.IsNil)
-}
-
 func (s *ConsulSuite) TestCommandStoreConfig(c *check.C) {
 	s.setupConsul(c)
 	consulHost := s.composeProject.Container(c, "consul").NetworkSettings.IPAddress

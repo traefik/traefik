@@ -125,7 +125,7 @@ type retryResponseWriterWithoutCloseNotify struct {
 }
 
 func (rr *retryResponseWriterWithoutCloseNotify) ShouldRetry() bool {
-	return *rr.netErrorOccured == true && !rr.attemptsExhausted
+	return *rr.netErrorOccured && !rr.attemptsExhausted
 }
 
 func (rr *retryResponseWriterWithoutCloseNotify) Header() http.Header {

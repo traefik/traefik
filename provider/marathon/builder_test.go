@@ -61,14 +61,6 @@ func withServiceLabel(key, value string, serviceName string) func(*marathon.Appl
 	}
 }
 
-func healthChecks(checks ...*marathon.HealthCheck) func(*marathon.Application) {
-	return func(app *marathon.Application) {
-		for _, check := range checks {
-			app.AddHealthCheck(*check)
-		}
-	}
-}
-
 func portDefinition(port int) func(*marathon.Application) {
 	return func(app *marathon.Application) {
 		app.AddPortDefinition(marathon.PortDefinition{
@@ -191,16 +183,6 @@ func ipAddresses(addresses ...string) func(*marathon.Task) {
 func state(s TaskState) func(*marathon.Task) {
 	return func(t *marathon.Task) {
 		t.State = string(s)
-	}
-}
-
-func healthCheckResultLiveness(alive ...bool) func(*marathon.Task) {
-	return func(t *marathon.Task) {
-		for _, a := range alive {
-			t.HealthCheckResults = append(t.HealthCheckResults, &marathon.HealthCheckResult{
-				Alive: a,
-			})
-		}
 	}
 }
 

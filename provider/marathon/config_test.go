@@ -1315,7 +1315,7 @@ func TestGetSticky(t *testing.T) {
 			t.Parallel()
 			actual := getSticky(test.application)
 			if actual != test.expected {
-				t.Errorf("actual %q, expected %q", actual, test.expected)
+				t.Errorf("actual %v, expected %v", actual, test.expected)
 			}
 		})
 	}
