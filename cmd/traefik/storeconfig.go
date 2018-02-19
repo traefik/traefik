@@ -67,6 +67,7 @@ func runStoreConfig(kv *staert.KvSource, traefikConfiguration *TraefikConfigurat
 				return err
 			}
 		}
+
 		if traefikConfiguration.GlobalConfiguration.ACME != nil {
 			var object cluster.Object
 			if len(traefikConfiguration.GlobalConfiguration.ACME.StorageFile) > 0 {
@@ -76,11 +77,14 @@ func runStoreConfig(kv *staert.KvSource, traefikConfiguration *TraefikConfigurat
 				if err != nil {
 					return err
 				}
-
 			} else {
 				// Create an empty account to create all the keys into the KV store
 				account := &acme.Account{}
-				account.Init()
+				err = account.Init()
+				if err != nil {
+					return err
+				}
+
 				object = account
 			}
 

@@ -282,7 +282,7 @@ func CustomWriterLevel(level logrus.Level, maxScanTokenSize int) *io.PipeWriter 
 
 // extract from github.com/Sirupsen/logrus/writer.go
 // Hack the buffer size
-func writerScanner(reader *io.PipeReader, scanTokenSize int, printFunc func(args ...interface{})) {
+func writerScanner(reader io.ReadCloser, scanTokenSize int, printFunc func(args ...interface{})) {
 	scanner := bufio.NewScanner(reader)
 
 	if scanTokenSize > bufio.MaxScanTokenSize {
