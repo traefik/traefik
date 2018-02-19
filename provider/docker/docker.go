@@ -849,7 +849,9 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 			continue
 		}
 		dockerData := parseTasks(task, serviceDockerData, networkMap, isGlobalSvc)
-		dockerDataList = append(dockerDataList, dockerData)
+		if len(dockerData.NetworkSettings.Networks) > 0 {
+			dockerDataList = append(dockerDataList, dockerData)
+		}
 	}
 	return dockerDataList, err
 }

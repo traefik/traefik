@@ -95,6 +95,25 @@ func taskSlot(slot int) func(*swarm.Task) {
 	}
 }
 
+func taskNetworkAttachment(id string, name string, driver string, addresses []string) func(*swarm.Task) {
+	return func(task *swarm.Task) {
+		task.NetworksAttachments = append(task.NetworksAttachments, swarm.NetworkAttachment{
+			Network: swarm.Network{
+				ID: id,
+				Spec: swarm.NetworkSpec{
+					Annotations: swarm.Annotations{
+						Name: name,
+					},
+					DriverConfiguration: &swarm.Driver{
+						Name: driver,
+					},
+				},
+			},
+			Addresses: addresses,
+		})
+	}
+}
+
 func taskStatus(ops ...func(*swarm.TaskStatus)) func(*swarm.Task) {
 	return func(task *swarm.Task) {
 		status := &swarm.TaskStatus{}
@@ -110,6 +129,14 @@ func taskStatus(ops ...func(*swarm.TaskStatus)) func(*swarm.Task) {
 func taskState(state swarm.TaskState) func(*swarm.TaskStatus) {
 	return func(status *swarm.TaskStatus) {
 		status.State = state
+	}
+}
+
+func taskContainerStatus(id string) func(*swarm.TaskStatus) {
+	return func(status *swarm.TaskStatus) {
+		status.ContainerStatus = swarm.ContainerStatus{
+			ContainerID: id,
+		}
 	}
 }
 

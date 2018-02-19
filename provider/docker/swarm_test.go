@@ -709,12 +709,17 @@ func TestSwarmTaskParsing(t *testing.T) {
 
 type fakeTasksClient struct {
 	dockerclient.APIClient
-	tasks []swarm.Task
-	err   error
+	tasks     []swarm.Task
+	container dockertypes.ContainerJSON
+	err       error
 }
 
 func (c *fakeTasksClient) TaskList(ctx context.Context, options dockertypes.TaskListOptions) ([]swarm.Task, error) {
 	return c.tasks, c.err
+}
+
+func (c *fakeTasksClient) ContainerInspect(ctx context.Context, container string) (dockertypes.ContainerJSON, error) {
+	return c.container, c.err
 }
 
 func TestListTasks(t *testing.T) {
@@ -728,11 +733,30 @@ func TestListTasks(t *testing.T) {
 		{
 			service: swarmService(serviceName("container")),
 			tasks: []swarm.Task{
-				swarmTask("id1", taskSlot(1), taskStatus(taskState(swarm.TaskStateRunning))),
-				swarmTask("id2", taskSlot(2), taskStatus(taskState(swarm.TaskStatePending))),
-				swarmTask("id3", taskSlot(3)),
-				swarmTask("id4", taskSlot(4), taskStatus(taskState(swarm.TaskStateRunning))),
-				swarmTask("id5", taskSlot(5), taskStatus(taskState(swarm.TaskStateFailed))),
+				swarmTask("id1",
+					taskSlot(1),
+					taskNetworkAttachment("1", "network1", "overlay", []string{"127.0.0.1"}),
+					taskStatus(taskState(swarm.TaskStateRunning)),
+				),
+				swarmTask("id2",
+					taskSlot(2),
+					taskNetworkAttachment("1", "network1", "overlay", []string{"127.0.0.2"}),
+					taskStatus(taskState(swarm.TaskStatePending)),
+				),
+				swarmTask("id3",
+					taskSlot(3),
+					taskNetworkAttachment("1", "network1", "overlay", []string{"127.0.0.3"}),
+				),
+				swarmTask("id4",
+					taskSlot(4),
+					taskNetworkAttachment("1", "network1", "overlay", []string{"127.0.0.4"}),
+					taskStatus(taskState(swarm.TaskStateRunning)),
+				),
+				swarmTask("id5",
+					taskSlot(5),
+					taskNetworkAttachment("1", "network1", "overlay", []string{"127.0.0.5"}),
+					taskStatus(taskState(swarm.TaskStateFailed)),
+				),
 			},
 			isGlobalSVC: false,
 			expectedTasks: []string{
@@ -753,7 +777,7 @@ func TestListTasks(t *testing.T) {
 			t.Parallel()
 			dockerData := parseService(test.service, test.networks)
 			dockerClient := &fakeTasksClient{tasks: test.tasks}
-			taskDockerData, _ := listTasks(context.Background(), dockerClient, test.service.ID, dockerData, map[string]*docker.NetworkResource{}, test.isGlobalSVC)
+			taskDockerData, _ := listTasks(context.Background(), dockerClient, test.service.ID, dockerData, test.networks, test.isGlobalSVC)
 
 			if len(test.expectedTasks) != len(taskDockerData) {
 				t.Errorf("expected tasks %v, got %v", spew.Sdump(test.expectedTasks), spew.Sdump(taskDockerData))
@@ -896,8 +920,14 @@ func TestListServices(t *testing.T) {
 					withEndpointSpec(modeDNSSR)),
 			},
 			tasks: []swarm.Task{
-				swarmTask("id1", taskStatus(taskState(swarm.TaskStateRunning))),
-				swarmTask("id2", taskStatus(taskState(swarm.TaskStateRunning))),
+				swarmTask("id1",
+					taskNetworkAttachment("yk6l57rfwizjzxxzftn4amaot", "network_name", "overlay", []string{"127.0.0.1"}),
+					taskStatus(taskState(swarm.TaskStateRunning)),
+				),
+				swarmTask("id2",
+					taskNetworkAttachment("yk6l57rfwizjzxxzftn4amaot", "network_name", "overlay", []string{"127.0.0.1"}),
+					taskStatus(taskState(swarm.TaskStateRunning)),
+				),
 			},
 			dockerVersion: "1.30",
 			networks: []dockertypes.NetworkResource{
@@ -934,7 +964,9 @@ func TestListServices(t *testing.T) {
 		t.Run(strconv.Itoa(caseID), func(t *testing.T) {
 			t.Parallel()
 			dockerClient := &fakeServicesClient{services: test.services, tasks: test.tasks, dockerVersion: test.dockerVersion, networks: test.networks}
-			serviceDockerData, _ := listServices(context.Background(), dockerClient)
+
+			serviceDockerData, err := listServices(context.Background(), dockerClient)
+			assert.NoError(t, err)
 
 			assert.Equal(t, len(test.expectedServices), len(serviceDockerData))
 			for i, serviceName := range test.expectedServices {
