@@ -73,7 +73,7 @@ Complete documentation is available at https://traefik.io`,
 	usedCmd, err := f.GetCommand()
 	if err != nil {
 		fmtlog.Println(err)
-		os.Exit(-1)
+		os.Exit(1)
 	}
 
 	if _, err := f.Parse(usedCmd); err != nil {
@@ -81,7 +81,7 @@ Complete documentation is available at https://traefik.io`,
 			os.Exit(0)
 		}
 		fmtlog.Printf("Error parsing command: %s\n", err)
-		os.Exit(-1)
+		os.Exit(1)
 	}
 
 	// staert init
@@ -94,7 +94,7 @@ Complete documentation is available at https://traefik.io`,
 	s.AddSource(f)
 	if _, err := s.LoadConfig(); err != nil {
 		fmtlog.Printf("Error reading TOML config file %s : %s\n", toml.ConfigFileUsed(), err)
-		os.Exit(-1)
+		os.Exit(1)
 	}
 
 	traefikConfiguration.ConfigFile = toml.ConfigFileUsed()
@@ -102,7 +102,7 @@ Complete documentation is available at https://traefik.io`,
 	kv, err := createKvSource(traefikConfiguration)
 	if err != nil {
 		fmtlog.Printf("Error creating kv store: %s\n", err)
-		os.Exit(-1)
+		os.Exit(1)
 	}
 	storeConfigCmd.Run = runStoreConfig(kv, traefikConfiguration)
 
@@ -125,13 +125,13 @@ Complete documentation is available at https://traefik.io`,
 		err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
 		if err != nil {
 			fmtlog.Printf("Error loading configuration: %s\n", err)
-			os.Exit(-1)
+			os.Exit(1)
 		}
 	}
 
 	if err := s.Run(); err != nil {
 		fmtlog.Printf("Error running traefik: %s\n", err)
-		os.Exit(-1)
+		os.Exit(1)
 	}
 
 	os.Exit(0)
