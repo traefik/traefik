@@ -13,7 +13,10 @@
 
     [entryPoints.http.tls]
       minVersion = "VersionTLS12"
-      cipherSuites = ["TLS_RSA_WITH_AES_256_GCM_SHA384"]
+      cipherSuites = [
+        "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+        "TLS_RSA_WITH_AES_256_GCM_SHA384"
+       ]
       [[entryPoints.http.tls.certificates]]
         certFile = "path/to/my.cert"
         keyFile = "path/to/my.key"
@@ -308,7 +311,10 @@ To specify an https entry point with a minimum TLS version, and specifying an ar
   address = ":443"
     [entryPoints.https.tls]
     minVersion = "VersionTLS12"
-    cipherSuites = ["TLS_RSA_WITH_AES_256_GCM_SHA384"]
+    cipherSuites = [
+      "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+      "TLS_RSA_WITH_AES_256_GCM_SHA384"
+    ]
       [[entryPoints.https.tls.certificates]]
       certFile = "integration/fixtures/https/snitest.com.cert"
       keyFile = "integration/fixtures/https/snitest.com.key"
