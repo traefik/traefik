@@ -149,8 +149,8 @@
 			<VATDeclarationRequest>
 				<VATDueOnOutputs>13.12</VATDueOnOutputs>
 				<VATDueOnECAcquisitions>13.12</VATDueOnECAcquisitions>
-				<TotalVAT>26.24</TotalVAT>
-				<VATReclaimedOnInputs>10.01</VATReclaimedOnInputs>
+				<TotalVAT>9.99</TotalVAT>
+				<VATReclaimedOnInputs>10.00</VATReclaimedOnInputs>
 				<NetVAT>-99.99</NetVAT>
 				<NetSalesAndOutputs>13</NetSalesAndOutputs>
 				<NetPurchasesAndInputs>13</NetPurchasesAndInputs>

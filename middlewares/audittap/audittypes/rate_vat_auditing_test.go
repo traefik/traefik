@@ -67,7 +67,8 @@ func TestRateVATAuditEventIsNotRepayment(t *testing.T) {
 	<Body>
 	<IRenvelope>
 		<VATDeclarationRequest>
-			<NetVAT>0.01</NetVAT>
+			<TotalVAT>0.02</TotalVAT>
+			<VATReclaimedOnInputs>0.01</VATReclaimedOnInputs>
 		</VATDeclarationRequest>
 	</IRenvelope>
 	</Body>	
@@ -131,5 +132,5 @@ func TestRateVATAuditEventIsRepaymentOmitted(t *testing.T) {
 	event.AuditType = "HMRC-VAT-TMSG"
 	gtm.populateSelfAssessmentData(event)
 
-	assert.Equal(t, "", event.Detail.IsRepayment)
+	assert.Equal(t, "false", event.Detail.IsRepayment)
 }

@@ -218,7 +218,8 @@ var gtmUserType = etree.MustCompilePath("./GovTalkDetails/GatewayAdditions/Submi
 var gtmSa110Repayment = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/MTR/SA110/SelfAssessment/TotalTaxEtcDue")
 var gtmSa900Claim = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/SAtrust/TrustEstate/TaxCalculation/ClaimRepaymentForNextYear")
 var gtmSa900Repayment = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/SAtrust/TrustEstate/TaxCalculation/RepaymentForNextYear")
-var gtmVatRepayment = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/VATDeclarationRequest/NetVAT")
+var gtmVatReclaimedInputs = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/VATDeclarationRequest/VATReclaimedOnInputs")
+var gtmVatTotal = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/VATDeclarationRequest/TotalVAT")
 
 func (partial *partialGovTalkMessage) populateAuditEvent(ae *AuditEvent) {
 	extractIfPresent(partial.Header, gtmClass, &ae.AuditType)
@@ -317,20 +318,22 @@ func (partial *partialGovTalkMessage) populateSelfAssessmentData(ev *RATEAuditEv
 			}
 		}
 		if strings.HasPrefix(ev.AuditType, "HMRC-VAT") {
-			if el := partial.Message.FindElementPath(gtmVatRepayment); el != nil {
-				if amount, err := strconv.ParseFloat(el.Text(), 64); err == nil {
-					ev.Detail.IsRepayment = strconv.FormatBool(amount < 0.00)
-				} else {
-					ev.Detail.IsRepayment = "false"
-				}
-
-			}
+			totalVat, _ := extractMoneyValue(partial.Message, gtmVatTotal)
+			reclaimed, _ := extractMoneyValue(partial.Message, gtmVatReclaimedInputs)
+			ev.Detail.IsRepayment = strconv.FormatBool((totalVat - reclaimed) < 0.00)
 		}
 	}
 }
 
 func auditsRequestPayloadContents(auditType string) bool {
 	return strings.HasPrefix(auditType, "HMRC-SA-") || strings.HasPrefix(auditType, "HMRC-VAT-")
+}
+
+func extractMoneyValue(doc *etree.Document, path etree.Path) (float64, error) {
+	if el := doc.FindElementPath(path); el != nil {
+		return strconv.ParseFloat(el.Text(), 64)
+	}
+	return 0.00, errors.New("No matching element found")
 }
 
 // ChRISEnvelope Processing
