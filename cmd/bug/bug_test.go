@@ -1,9 +1,10 @@
-package main
+package bug
 
 import (
 	"testing"
 
-	"github.com/containous/traefik/cmd/traefik/anonymize"
+	"github.com/containous/traefik/anonymize"
+	"github.com/containous/traefik/cmd"
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/provider/file"
 	"github.com/containous/traefik/tls"
@@ -12,7 +13,7 @@ import (
 )
 
 func Test_createBugReport(t *testing.T) {
-	traefikConfiguration := &TraefikConfiguration{
+	traefikConfiguration := &cmd.TraefikConfiguration{
 		ConfigFile: "FOO",
 		GlobalConfiguration: configuration.GlobalConfiguration{
 			EntryPoints: configuration.EntryPoints{
@@ -47,7 +48,7 @@ func Test_createBugReport(t *testing.T) {
 }
 
 func Test_anonymize_traefikConfiguration(t *testing.T) {
-	traefikConfiguration := &TraefikConfiguration{
+	traefikConfiguration := &cmd.TraefikConfiguration{
 		ConfigFile: "FOO",
 		GlobalConfiguration: configuration.GlobalConfiguration{
 			EntryPoints: configuration.EntryPoints{

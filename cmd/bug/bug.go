@@ -1,4 +1,4 @@
-package main
+package bug
 
 import (
 	"bytes"
@@ -9,7 +9,9 @@ import (
 	"text/template"
 
 	"github.com/containous/flaeg"
-	"github.com/containous/traefik/cmd/traefik/anonymize"
+	"github.com/containous/traefik/anonymize"
+	"github.com/containous/traefik/cmd"
+	"github.com/containous/traefik/cmd/version"
 )
 
 const (
@@ -83,8 +85,8 @@ Add more configuration information here.
 `
 )
 
-// newBugCmd builds a new Bug command
-func newBugCmd(traefikConfiguration *TraefikConfiguration, traefikPointersConfiguration *TraefikConfiguration) *flaeg.Command {
+// NewCmd builds a new Bug command
+func NewCmd(traefikConfiguration *cmd.TraefikConfiguration, traefikPointersConfiguration *cmd.TraefikConfiguration) *flaeg.Command {
 
 	//version Command init
 	return &flaeg.Command{
@@ -99,7 +101,7 @@ func newBugCmd(traefikConfiguration *TraefikConfiguration, traefikPointersConfig
 	}
 }
 
-func runBugCmd(traefikConfiguration *TraefikConfiguration) func() error {
+func runBugCmd(traefikConfiguration *cmd.TraefikConfiguration) func() error {
 	return func() error {
 
 		body, err := createBugReport(traefikConfiguration)
@@ -113,9 +115,9 @@ func runBugCmd(traefikConfiguration *TraefikConfiguration) func() error {
 	}
 }
 
-func createBugReport(traefikConfiguration *TraefikConfiguration) (string, error) {
-	var version bytes.Buffer
-	if err := getVersionPrint(&version); err != nil {
+func createBugReport(traefikConfiguration *cmd.TraefikConfiguration) (string, error) {
+	var versionPrint bytes.Buffer
+	if err := version.GetVersionPrint(&versionPrint); err != nil {
 		return "", err
 	}
 
@@ -133,7 +135,7 @@ func createBugReport(traefikConfiguration *TraefikConfiguration) (string, error)
 		Version       string
 		Configuration string
 	}{
-		Version:       version.String(),
+		Version:       versionPrint.String(),
 		Configuration: config,
 	}
 

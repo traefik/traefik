@@ -1,4 +1,4 @@
-package main
+package version
 
 import (
 	"fmt"
@@ -17,8 +17,8 @@ Go version:   {{.GoVersion}}
 Built:        {{.BuildTime}}
 OS/Arch:      {{.Os}}/{{.Arch}}`
 
-// newVersionCmd builds a new Version command
-func newVersionCmd() *flaeg.Command {
+// NewCmd builds a new Version command
+func NewCmd() *flaeg.Command {
 
 	//version Command init
 	return &flaeg.Command{
@@ -27,7 +27,7 @@ func newVersionCmd() *flaeg.Command {
 		Config:                struct{}{},
 		DefaultPointersConfig: struct{}{},
 		Run: func() error {
-			if err := getVersionPrint(os.Stdout); err != nil {
+			if err := GetVersionPrint(os.Stdout); err != nil {
 				return err
 			}
 			fmt.Print("\n")
@@ -37,7 +37,8 @@ func newVersionCmd() *flaeg.Command {
 	}
 }
 
-func getVersionPrint(wr io.Writer) error {
+// GetVersionPrint write Printable version
+func GetVersionPrint(wr io.Writer) error {
 	tmpl, err := template.New("").Parse(versionTemplate)
 	if err != nil {
 		return err
