@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"reflect"
 	"sync"
 	"time"
 
@@ -134,18 +135,27 @@ func (c *clientImpl) WatchAll(namespaces Namespaces, labelSelector string, stopC
 		factory.Core().V1().Services().Informer().AddEventHandler(eventHandler)
 		factory.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
 		factory.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
+		c.factories[ns] = factory
+	}
 
-		for t, ok := range factory.WaitForCacheSync(stopCh) {
-			if !ok {
-				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %s", t.String(), ns)
-			}
-		}
+	for _, ns := range namespaces {
 		safe.Go(func() {
 			wg.Add(1)
-			factory.Start(stopCh)
+			c.factories[ns].Start(stopCh)
 			wg.Done()
 		})
-		c.factories[ns] = factory
+	}
+
+	for _, ns := range namespaces {
+		for t, ok := range c.factories[ns].WaitForCacheSync(stopCh) {
+			// Do not wait for the Secrets store to get synced since we cannot rely on
+			// users having granted RBAC permissions for this object.
+			// https://github.com/containous/traefik/issues/1784 should improve the
+			// situation here in the future.
+			if t == reflect.TypeOf(&corev1.Secret{}) && !ok {
+				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
+			}
+		}
 	}
 
 	safe.Go(func() {
