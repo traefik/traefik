@@ -12,9 +12,7 @@ For end-user related support questions, refer to one of the following:
 
 ### Do you want to request a *feature* or report a *bug*?
 
-<!--
-If you intend to ask a support question: DO NOT FILE AN ISSUE.
--->
+Bug
 
 ### What did you do?
 
@@ -57,6 +55,7 @@ For the Traefik Docker image:
 ```toml
 # (paste your configuration here)
 ```
+
 <!--
 Add more configuration information here.
 -->

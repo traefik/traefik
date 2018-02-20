@@ -12,11 +12,9 @@ For end-user related support questions, refer to one of the following:
 
 ### Do you want to request a *feature* or report a *bug*?
 
-<!--
-If you intend to ask a support question: DO NOT FILE AN ISSUE.
--->
+Feature
 
-### What did you do?
+### What did you expect to see?
 
 <!--
 
@@ -32,38 +30,3 @@ HOW TO WRITE A GOOD ISSUE?
 
 -->
 
-### What did you expect to see?
-
-
-
-### What did you see instead?
-
-
-
-### Output of `traefik version`: (_What version of Traefik are you using?_)
-
-<!--
-For the Traefik Docker image:
-    docker run [IMAGE] version
-    ex: docker run traefik version
--->
-
-```
-(paste your output here)
-```
-
-### What is your environment & configuration (arguments, toml, provider, platform, ...)?
-
-```toml
-# (paste your configuration here)
-```
-<!--
-Add more configuration information here.
--->
-
-
-### If applicable, please paste the log output in debug mode (`--debug` switch)
-
-```
-(paste your output here)
-```
