@@ -91,8 +91,10 @@ func (p *conyPublisherImpl) GetConyPublisher() *cony.Publisher {
 }
 
 // NewConyClient is a wrapper for calling cony.NewClient
-var NewConyClient = func(endpoint string) amqpConyClient {
-	return &conyClientImpl{cli: cony.NewClient(cony.URL(endpoint))}
+var NewConyClient = func(endpoint string, clientID string, clientVersion string) amqpConyClient {
+	props := amqp.Table{"product": clientID, "version": clientVersion}
+	cfg := amqp.Config{Properties: props}
+	return &conyClientImpl{cli: cony.NewClient(cony.URL(endpoint), cony.Config(cfg))}
 }
 
 // NewConyPublisher is a wrapper for calling cony.NewPublisher
@@ -109,7 +111,18 @@ var NewQueue = func(queueLocation string) (*goque.Queue, error) {
 // A connection is made to the specified endpoint and a number of Producers
 // each backed by an AMQP channel are created, ready to send messages.
 func NewAmqpSink(config *types.AuditSink, messageChan chan atypes.Encoded) (sink AuditSink, err error) {
-	cli := NewConyClient(config.Endpoint)
+
+	clientID := config.ClientID
+	if clientID == "" {
+		clientID = "hmrc-traefik-" + config.ProxyingFor
+	}
+
+	clientVersion := config.ClientVersion
+	if clientVersion == "" {
+		clientVersion = "not-set"
+	}
+
+	cli := NewConyClient(config.Endpoint, clientID, clientVersion)
 
 	exc := cony.Exchange{
 		Name:       config.Destination,

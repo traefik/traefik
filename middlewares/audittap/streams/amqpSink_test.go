@@ -111,7 +111,7 @@ func (p *ConyPublisherTestImpl) GetConyPublisher() *cony.Publisher {
 func TestAmqpSink(t *testing.T) {
 	testClientImpl := &ConyClientTestImpl{Endpoint: "endpoint"}
 
-	NewConyClient = func(endpoint string) amqpConyClient {
+	NewConyClient = func(endpoint string, id string, version string) amqpConyClient {
 		return testClientImpl
 	}
 
@@ -175,7 +175,7 @@ func TestAmqpSinkFull(t *testing.T) {
 
 	log.SetOutput(buf)
 
-	NewConyClient = func(endpoint string) amqpConyClient {
+	NewConyClient = func(endpoint string, id string, version string) amqpConyClient {
 		return testClientImpl
 	}
 

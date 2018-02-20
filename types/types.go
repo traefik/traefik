@@ -546,6 +546,8 @@ type Exclusions map[string]*Exclusion
 type AuditSink struct {
 	Exclusions               Exclusions `json:"exclusions,omitempty"`
 	Type                     string     `json:"type,omitempty" description:"The type of sink: File/HTTP/Kafka/AMQP/Blackhole"`
+	ClientID                 string     `json:"clientId,omitempty" description:"Identifier to be used for the sink client"`
+	ClientVersion            string     `json:"clientVersion,omitempty" description:"Version info to identify the sink client"`
 	Endpoint                 string     `json:"endpoint,omitempty" description:"Endpoint for audit tap. e.g. url for HTTP/Kafka/AMQP or filename for File"`
 	Destination              string     `json:"destination,omitempty" description:"For Kafka the topic, AMQP the exchange etc."`
 	MaxEntityLength          string     `json:"maxEntityLength,omitempty" description:"MaxEntityLength truncates entities (bodies) longer than this (units are allowed, eg. 32KiB)"`
