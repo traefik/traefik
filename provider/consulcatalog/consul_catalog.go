@@ -27,11 +27,12 @@ var _ provider.Provider = (*Provider)(nil)
 // Provider holds configurations of the Consul catalog provider.
 type Provider struct {
 	provider.BaseProvider `mapstructure:",squash" export:"true"`
-	Endpoint              string `description:"Consul server endpoint"`
-	Domain                string `description:"Default domain used"`
-	ExposedByDefault      bool   `description:"Expose Consul services by default" export:"true"`
-	Prefix                string `description:"Prefix used for Consul catalog tags" export:"true"`
-	FrontEndRule          string `description:"Frontend rule used for Consul services" export:"true"`
+	Endpoint              string           `description:"Consul server endpoint"`
+	Domain                string           `description:"Default domain used"`
+	ExposedByDefault      bool             `description:"Expose Consul services by default" export:"true"`
+	Prefix                string           `description:"Prefix used for Consul catalog tags" export:"true"`
+	FrontEndRule          string           `description:"Frontend rule used for Consul services" export:"true"`
+	TLS                   *types.ClientTLS `description:"Enable TLS support" export:"true"`
 	client                *api.Client
 	frontEndRuleTemplate  *template.Template
 }
@@ -87,12 +88,11 @@ func (a nodeSorter) Less(i int, j int) bool {
 // Provide allows the consul catalog provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
-	config := api.DefaultConfig()
-	config.Address = p.Endpoint
-	client, err := api.NewClient(config)
+	client, err := p.createClient()
 	if err != nil {
 		return err
 	}
+
 	p.client = client
 	p.Constraints = append(p.Constraints, constraints...)
 	p.setupFrontEndRuleTemplate()
@@ -109,8 +109,28 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 			log.Errorf("Cannot connect to consul server %+v", errRetry)
 		}
 	})
+	return nil
+}
 
-	return err
+func (p *Provider) createClient() (*api.Client, error) {
+	config := api.DefaultConfig()
+	config.Address = p.Endpoint
+	if p.TLS != nil {
+		tlsConfig, err := p.TLS.CreateTLSConfig()
+		if err != nil {
+			return nil, err
+		}
+
+		config.Scheme = "https"
+		config.Transport.TLSClientConfig = tlsConfig
+	}
+
+	client, err := api.NewClient(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
 }
 
 func (p *Provider) watch(configurationChan chan<- types.ConfigMessage, stop chan bool) error {
@@ -130,7 +150,7 @@ func (p *Provider) watch(configurationChan chan<- types.ConfigMessage, stop chan
 			return nil
 		case index, ok := <-watchCh:
 			if !ok {
-				return errors.New("Consul service list nil")
+				return errors.New("consul service list nil")
 			}
 			log.Debug("List of services changed")
 			nodes, err := p.getNodes(index)

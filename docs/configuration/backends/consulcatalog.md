@@ -48,6 +48,16 @@ prefix = "traefik"
 # Default: "Host:{{.ServiceName}}.{{.Domain}}"
 #
 #frontEndRule = "Host:{{.ServiceName}}.{{.Domain}}"
+
+# Enable Consul catalog TLS connection.
+#
+# Optional
+#
+#    [consulCatalog.tls]
+#    ca = "/etc/ssl/ca.crt"
+#    cert = "/etc/ssl/consul.crt"
+#    key = "/etc/ssl/consul.key"
+#    insecureskipverify = true
 ```
 
 This backend will create routes matching on hostname based on the service name used in Consul.
