@@ -1,5 +1,7 @@
 # Ping Definition
 
+## Configuration
+
 ```toml
 # Ping definition
 [ping]
@@ -19,7 +21,7 @@
 !!! warning
     Even if you have authentication configured on entry point, the `/ping` path of the api is excluded from authentication.
 
-### Example
+## Example
 
 ```shell
 curl -sv "http://localhost:8080/ping"

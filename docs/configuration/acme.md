@@ -135,6 +135,7 @@ entryPoint = "https"
   #
   # delayBeforeCheck = 0
 ```
+
 !!! note
     Even if `TLS-SNI-01` challenge is [disabled](https://community.letsencrypt.org/t/2018-01-11-update-regarding-acme-tls-sni-and-shared-hosting-infrastructure/50188) for the moment, it stays the _by default_ ACME Challenge in Træfik.
     If `TLS-SNI-01` challenge is not re-enabled in the future, it we will be removed from Træfik.
@@ -149,12 +150,13 @@ entryPoint = "https"
 Let's Encrypt functionality will be limited until Træfik is restarted.
 
 If Let's Encrypt is not reachable, these certificates will be used :
+
   - ACME certificates already generated before downtime
   - Expired ACME certificates
   - Provided certificates
 
 !!! note
- Default Træfik certificate will be used instead of ACME certificates for new (sub)domains (which need Let's Encrypt challenge).
+    Default Træfik certificate will be used instead of ACME certificates for new (sub)domains (which need Let's Encrypt challenge).
 
 ### `storage`
 
@@ -168,6 +170,7 @@ storage = "acme.json"
 The `storage` option sets where are stored your ACME certificates.
 
 There are two kind of `storage` :
+
 - a JSON file,
 - a KV store entry.
 
@@ -182,7 +185,7 @@ There are two kind of `storage` :
 
 #### Store data in a file
 
-ACME certificates can be stored in a JSON file which with the `600` right mode. 
+ACME certificates can be stored in a JSON file which with the `600` right mode.
 
 There are two ways to store ACME certificates in a file from Docker:
 
@@ -240,6 +243,8 @@ entryPoint = "https"
 Specify the entryPoint to use during the challenges.
 
 ```toml
+defaultEntryPoints = ["http", "http"]
+
 [entryPoints]
   [entryPoints.http]
   address = ":80"
@@ -328,10 +333,10 @@ onDemand = true
 
 Enable on demand certificate.
 
-This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate.
+This will request a certificate from Let's Encrypt during the first TLS handshake for a host name that does not yet have a certificate.
 
 !!! warning
-    TLS handshakes will be slow when requesting a hostname certificate for the first time, this can lead to DoS attacks.
+    TLS handshakes will be slow when requesting a host name certificate for the first time, this can lead to DoS attacks.
 
 !!! warning
     Take note that Let's Encrypt have [rate limiting](https://letsencrypt.org/docs/rate-limits).
@@ -345,7 +350,7 @@ onHostRule = true
 # ...
 ```
 
-Enable certificate generation on frontends Host rules.
+Enable certificate generation on frontends `Host` rules (for frontends wired on the `acme.entryPoint`).
 
 This will request a certificate from Let's Encrypt for each frontend with a Host rule.
 

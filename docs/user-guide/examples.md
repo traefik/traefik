@@ -91,7 +91,7 @@ entryPoint = "https"
 
 This configuration allows generating Let's Encrypt certificates (thanks to `HTTP-01` challenge) for the four domains `local[1-4].com` with described SANs.
 
-Traefik generates these certificates when it starts and it needs to be restart if new domains are added.
+Træfik generates these certificates when it starts and it needs to be restart if new domains are added.
 
 ### OnHostRule option (with HTTP challenge)
 
@@ -126,9 +126,9 @@ entryPoint = "https"
 
 This configuration allows generating Let's Encrypt certificates (thanks to `HTTP-01` challenge) for the four domains `local[1-4].com`.
 
-Traefik generates these certificates when it starts.
+Træfik generates these certificates when it starts.
 
-If a backend is added with a `onHost` rule, Traefik will automatically generate the Let's Encrypt certificate for the new domain.
+If a backend is added with a `onHost` rule, Træfik will automatically generate the Let's Encrypt certificate for the new domain (for frontends wired on the `acme.entryPoint`).
 
 ### OnDemand option (with HTTP challenge)
 
@@ -152,11 +152,10 @@ entryPoint = "https"
 
 This configuration allows generating a Let's Encrypt certificate (thanks to `HTTP-01` challenge) during the first HTTPS request on a new domain.
 
-
 !!! note
     This option simplifies the configuration but :
 
-    * TLS handshakes will be slow when requesting a hostname certificate for the first time, this can leads to DDoS attacks.
+    * TLS handshakes will be slow when requesting a host name certificate for the first time, this can leads to DDoS attacks.
     * Let's Encrypt have rate limiting: https://letsencrypt.org/docs/rate-limits
 
     That's why, it's better to use the `onHostRule` option if possible.
@@ -191,7 +190,7 @@ entryPoint = "https"
 ```
 
 DNS challenge needs environment variables to be executed.
-This variables have to be set on the machine/container which host Traefik.
+These variables have to be set on the machine/container which host Træfik.
 
 These variables are described [in this section](/configuration/acme/#provider).
 
@@ -218,7 +217,7 @@ entryPoint = "https"
   entryPoint = "http"
 ```
 
-Traefik will only try to generate a Let's encrypt certificate (thanks to `HTTP-01` challenge) if the domain cannot be checked by the provided certificates.
+Træfik will only try to generate a Let's encrypt certificate (thanks to `HTTP-01` challenge) if the domain cannot be checked by the provided certificates.
 
 ### Cluster mode
 
@@ -292,14 +291,14 @@ The `consul` provider contains the configuration.
   rule = "Path:/test"
 ```
 
-## Enable Basic authentication in an entrypoint
+## Enable Basic authentication in an entry point
 
 With two user/pass:
 
 - `test`:`test`
 - `test2`:`test2`
 
-Passwords are encoded in MD5: you can use htpasswd to generate those ones.
+Passwords are encoded in MD5: you can use `htpasswd` to generate them.
 
 ```toml
 defaultEntryPoints = ["http"]
@@ -337,7 +336,7 @@ providersThrottleDuration = "5s"
 idleTimeout = "360s"
 ```
 
-## Securing Ping Health Check
+## Ping Health Check
 
 The `/ping` health-check URL is enabled with the command-line `--ping` or config file option `[ping]`.
 Thus, if you have a regular path for `/foo` and an entrypoint on `:80`, you would access them as follows:
@@ -346,40 +345,36 @@ Thus, if you have a regular path for `/foo` and an entrypoint on `:80`, you woul
 * Admin panel: `http://hostname:8080/`
 * Ping URL: `http://hostname:8080/ping`
 
-However, for security reasons, you may want to be able to expose the `/ping` health-check URL to outside health-checkers, e.g. an Internet service or cloud load-balancer, _without_ exposing your admin panel's port.
+However, for security reasons, you may want to be able to expose the `/ping` health-check URL to outside health-checkers, e.g. an Internet service or cloud load-balancer, _without_ exposing your administration panel's port.
 In many environments, the security staff may not _allow_ you to expose it.
 
 You have two options:
 
-* Enable `/ping` on a regular entrypoint
+* Enable `/ping` on a regular entry point
 * Enable `/ping` on a dedicated port
 
-### Enable ping health check on a regular entrypoint
+### Enable ping health check on a regular entry point
 
-To proxy `/ping` from a regular entrypoint to the admin one without exposing the panel, do the following:
+To proxy `/ping` from a regular entry point to the administration one without exposing the panel, do the following:
 
 ```toml
-[backends]
-  [backends.traefik]
-    [backends.traefik.servers.server1]
-    url = "http://localhost:8080"
-    weight = 10
+defaultEntryPoints = ["http"]
 
-[frontends]
-  [frontends.traefikadmin]
-  backend = "traefik"
-    [frontends.traefikadmin.routes.ping]
-    rule = "Path:/ping"
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+
+[ping]
+entryPoint = "http"
+
 ```
 
-The above creates a new backend called `traefik`, listening on `http://localhost:8080`, i.e. the local admin port.
-We only expose the admin panel via the `frontend` named `traefikadmin`, and only expose the `/ping` Path.
-Be careful with the `traefikadmin` frontend. If you do _not_ specify a `Path:` rule, you would expose the entire dashboard.
+The above link `ping` on the `http` entry point and then expose it on port `80`
 
 ### Enable ping health check on dedicated port
 
-If you do not want to or cannot expose the health-check on a regular entrypoint - e.g. your security rules do not allow it, or you have a conflicting path - then you can enable health-check on its own entrypoint.
-Use the following config:
+If you do not want to or cannot expose the health-check on a regular entry point - e.g. your security rules do not allow it, or you have a conflicting path - then you can enable health-check on its own entry point.
+Use the following configuration:
 
 ```toml
 defaultEntryPoints = ["http"]
@@ -390,32 +385,18 @@ defaultEntryPoints = ["http"]
   [entryPoints.ping]
   address = ":8082"
 
-[backends]
-  [backends.traefik]
-    [backends.traefik.servers.server1]
-    url = "http://localhost:8080"
-    weight = 10
-
-[frontends]
-  [frontends.traefikadmin]
-  backend = "traefik"
-  entrypoints = ["ping"]
-    [frontends.traefikadmin.routes.ping]
-    rule = "Path:/ping"
+[ping]
+entryPoint = "ping"
 ```
 
-The above is similar to the previous example, but instead of enabling `/ping` on the _default_ entrypoint, we enable it on a _dedicated_ entrypoint.
+The above is similar to the previous example, but instead of enabling `/ping` on the _default_ entry point, we enable it on a _dedicated_ entry point.
 
-In the above example, you would access a regular path, admin panel and health-check as follows:
+In the above example, you would access a regular path and health-check as follows:
 
 * Regular path: `http://hostname:80/foo`
-* Admin panel: `http://hostname:8080/`
 * Ping URL: `http://hostname:8082/ping`
 
 Note the dedicated port `:8082` for `/ping`.
 
-In the above example, it is _very_ important to create a named dedicated entrypoint, and do **not** include it in `defaultEntryPoints`.
-Otherwise, you are likely to expose _all_ services via that entrypoint.
-
-In the above example, we have two entrypoints, `http` and `ping`, but we only included `http` in `defaultEntryPoints`, while explicitly tying `frontend.traefikadmin` to the `ping` entrypoint.
-This ensures that all the "normal" frontends will be exposed via entrypoint `http` and _not_ via entrypoint `ping`.
+In the above example, it is _very_ important to create a named dedicated entry point, and do **not** include it in `defaultEntryPoints`.
+Otherwise, you are likely to expose _all_ services via this entry point.

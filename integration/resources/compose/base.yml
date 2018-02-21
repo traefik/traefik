@@ -3,3 +3,9 @@ whoami1:
   labels:
     - traefik.enable=true
     - traefik.frontend.rule=PathPrefix:/whoami
+    - traefik.backend="test"
+
+whoami2:
+  image: emilevauge/whoami
+  labels:
+    - traefik.enable=false
