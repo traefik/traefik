@@ -14,7 +14,7 @@ import (
 	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/go-check/check"
 	d "github.com/libkermit/docker"
-	docker "github.com/libkermit/docker-check"
+	"github.com/libkermit/docker-check"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -25,8 +25,8 @@ var (
 	// Images to have or pull before the build in order to make it work
 	// FIXME handle this offline but loading them before build
 	RequiredImages = map[string]string{
-		"swarm": "1.0.0",
-		"nginx": "1",
+		"swarm":             "1.0.0",
+		"emilevauge/whoami": "latest",
 	}
 )
 
