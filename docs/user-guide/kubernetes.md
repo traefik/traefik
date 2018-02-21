@@ -81,7 +81,7 @@ For namespaced restrictions, one RoleBinding is required per watched namespace a
 It is possible to use Træfik with a [Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) or a [DaemonSet](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) object,
  whereas both options have their own pros and cons:
 
-- The scalability is much better when using a Deployment, because you will have a Single-Pod-per-Node model when using the DeaemonSet.
+- The scalability is much better when using a Deployment, because you will have a Single-Pod-per-Node model when using the DaemonSet.
 - It is possible to exclusively run a Service on a dedicated set of machines using taints and tolerations with a DaemonSet.
 - On the other hand the DaemonSet allows you to access any Node directly on Port 80 and 443, where you have to setup a [Service](https://kubernetes.io/docs/concepts/services-networking/service/) object with a Deployment.
 
@@ -244,7 +244,7 @@ traefik-ingress-controller-678226159-eqseo   1/1       Running   0          7m
 ```
 
 You should see that after submitting the Deployment or DaemonSet to Kubernetes it has launched a Pod, and it is now running.
-_It might take a few moments for kubernetes to pull the Træfik image and start the container._
+_It might take a few moments for Kubernetes to pull the Træfik image and start the container._
 
 !!! note
     You could also check the deployment with the Kubernetes dashboard, run
@@ -279,7 +279,7 @@ All further examples below assume a DaemonSet installation. Deployment users wil
 ## Deploy Træfik using Helm Chart
 
 !!! note
-    The Helm Chart is maintained by the community, not the Traefik project maintainers.
+    The Helm Chart is maintained by the community, not the Træfik project maintainers.
 
 Instead of installing Træfik via Kubernetes object directly, you can also use the Træfik Helm chart.
 
@@ -369,7 +369,7 @@ spec:
     secretName: traefik-ui-tls-cert
 ```
 
-In addition to the modified ingress you need to provide the TLS certificate via a kubernetes secret in the same namespace as the ingress. The following two commands will generate a new certificate and create a secret containing the key and cert files.
+In addition to the modified ingress you need to provide the TLS certificate via a Kubernetes secret in the same namespace as the ingress. The following two commands will generate a new certificate and create a secret containing the key and cert files.
 
 ```shell
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=traefik-ui.minikube"
@@ -379,7 +379,7 @@ kubectl -n kube-system create secret tls traefik-ui-tls-cert --key=tls.key --cer
 If there are any errors while loading the TLS section of an ingress, the whole ingress will be skipped.
 
 !!! note
-    The secret must have two entries named `tls.key`and `tls.crt`. See the [kubernetes documentation](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls) for more details.
+    The secret must have two entries named `tls.key`and `tls.crt`. See the [Kubernetes documentation](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls) for more details.
 
 !!! note
     The TLS certificates will be added to all entrypoints defined by the ingress annotation `traefik.frontend.entryPoints`. If no such annotation is provided, the TLS certificates will be added to all TLS-enabled `defaultEntryPoints`.
@@ -389,7 +389,7 @@ If there are any errors while loading the TLS section of an ingress, the whole i
 
 ## Basic Authentication
 
-It's possible to protect access to Traefik through basic authentication. (See the [Kubernetes Ingress](/configuration/backends/kubernetes) configuration page for syntactical details and restrictions.)
+It's possible to protect access to Træfik through basic authentication. (See the [Kubernetes Ingress](/configuration/backends/kubernetes) configuration page for syntactical details and restrictions.)
 
 ### Creating the Secret
 
@@ -842,7 +842,7 @@ The examples shown deliberately do not specify any [resource limitations](https:
 
 In a production environment, however, it is important to set proper bounds, especially with regards to CPU:
 
-- too strict and Traefik will be throttled while serving requests (as Kubernetes imposes hard quotas)
-- too loose and Traefik may waste resources not available for other containers
+- too strict and Træfik will be throttled while serving requests (as Kubernetes imposes hard quotas)
+- too loose and Træfik may waste resources not available for other containers
 
 When in doubt, you should measure your resource needs, and adjust requests and limits accordingly.
