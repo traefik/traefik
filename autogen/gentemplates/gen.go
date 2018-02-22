@@ -865,9 +865,9 @@ var _templatesKubernetesTmpl = []byte(`[backends]
     {{end}}
 
     {{if $frontend.Errors }}
-    [frontends."frontend-{{ $frontendName }}".errors]
+    [frontends."{{ $frontendName }}".errors]
       {{range $pageName, $page := $frontend.Errors }}
-      [frontends."frontend-{{ $frontendName }}".errors.{{ $pageName }}]
+      [frontends."{{ $frontendName }}".errors.{{ $pageName }}]
         status = [{{range $page.Status }}
           "{{.}}",
           {{end}}]
@@ -877,11 +877,11 @@ var _templatesKubernetesTmpl = []byte(`[backends]
     {{end}}
 
     {{if $frontend.RateLimit }}
-    [frontends."frontend-{{ $frontendName }}".rateLimit]
+    [frontends."{{ $frontendName }}".rateLimit]
       extractorFunc = "{{ $frontend.RateLimit.ExtractorFunc }}"
-      [frontends."frontend-{{ $frontendName }}".rateLimit.rateSet]
+      [frontends."{{ $frontendName }}".rateLimit.rateSet]
         {{range $limitName, $limit := $frontend.RateLimit.RateSet }}
-        [frontends."frontend-{{ $frontendName }}".rateLimit.rateSet.{{ $limitName }}]
+        [frontends."{{ $frontendName }}".rateLimit.rateSet.{{ $limitName }}]
           period = "{{ $limit.Period }}"
           average = {{ $limit.Average }}
           burst = {{ $limit.Burst }}
