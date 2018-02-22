@@ -40,7 +40,10 @@ type dynamoClient struct {
 // createClient configures aws credentials and creates a dynamoClient
 func (p *Provider) createClient() (*dynamoClient, error) {
 	log.Info("Creating Provider client...")
-	sess := session.New()
+	sess, err := session.NewSession()
+	if err != nil {
+		return nil, err
+	}
 	if p.Region == "" {
 		return nil, errors.New("no Region provided for Provider")
 	}

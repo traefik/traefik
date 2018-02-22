@@ -177,6 +177,8 @@
     "aws/request",
     "aws/session",
     "aws/signer/v4",
+    "internal/sdkrand",
+    "internal/shareddefaults",
     "private/protocol",
     "private/protocol/ec2query",
     "private/protocol/json/jsonutil",
@@ -186,7 +188,6 @@
     "private/protocol/rest",
     "private/protocol/restxml",
     "private/protocol/xml/xmlutil",
-    "private/waiter",
     "service/dynamodb",
     "service/dynamodb/dynamodbattribute",
     "service/dynamodb/dynamodbiface",
@@ -195,8 +196,8 @@
     "service/route53",
     "service/sts"
   ]
-  revision = "3f8f870ec9939e32b3372abf74d24e468bcd285d"
-  version = "v1.6.18"
+  revision = "f9a6880d84e16e2a37055793e17164a228d637f4"
+  version = "v1.13.1"
 
 [[projects]]
   branch = "master"
@@ -532,7 +533,8 @@
 [[projects]]
   name = "github.com/go-ini/ini"
   packages = ["."]
-  revision = "f384f410798cbe7cdce40eec40b79ed32bb4f1ad"
+  revision = "32e4c1e6bc4e7d0d8451aa6b75200d19e37a536a"
+  version = "v1.32.0"
 
 [[projects]]
   name = "github.com/go-kit/kit"
@@ -740,7 +742,7 @@
 [[projects]]
   name = "github.com/jmespath/go-jmespath"
   packages = ["."]
-  revision = "bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d"
+  revision = "0b12d6b5"
 
 [[projects]]
   name = "github.com/jonboulle/clockwork"
@@ -1546,6 +1548,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "2fa6756003e3f9ca71c3b55e76b9de45677df953dbee5a2f8be7bd77c8b9987b"
+  inputs-digest = "e78f765f7bce816857f47557633d941e999e714eb6d98dda0f1f1fe1460754cb"
   solver-name = "gps-cdcl"
   solver-version = 1
