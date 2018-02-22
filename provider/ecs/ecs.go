@@ -222,8 +222,8 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 				break
 			}
 		}
-		for _, cArns := range clustersArn {
-			clusters = append(clusters, *cArns)
+		for _, cArn := range clustersArn {
+			clusters = append(clusters, *cArn)
 		}
 	} else if p.Cluster != "" {
 		// TODO: Deprecated configuration - Need to be removed in the future
