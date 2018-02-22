@@ -19,8 +19,23 @@ type Tracing struct {
 	Jaeger      *jaeger.Config `description:"Settings for jaeger"`
 	Zipkin      *zipkin.Config `description:"Settings for zipkin"`
 
-	opentracing.Tracer
+	tracer opentracing.Tracer
 	closer io.Closer
+}
+
+// StartSpan delegates to opentracing.Tracer
+func (t *Tracing) StartSpan(operationName string, opts ...opentracing.StartSpanOption) opentracing.Span {
+	return t.tracer.StartSpan(operationName, opts...)
+}
+
+// Inject delegates to opentracing.Tracer
+func (t *Tracing) Inject(sm opentracing.SpanContext, format interface{}, carrier interface{}) error {
+	return t.tracer.Inject(sm, format, carrier)
+}
+
+// Extract delegates to opentracing.Tracer
+func (t *Tracing) Extract(format interface{}, carrier interface{}) (opentracing.SpanContext, error) {
+	return t.tracer.Extract(format, carrier)
 }
 
 // Backend describes things we can use to setup tracing
@@ -34,9 +49,9 @@ func (t *Tracing) Setup() {
 
 	switch t.Backend {
 	case jaeger.Name:
-		t.Tracer, t.closer, err = t.Jaeger.Setup(t.ServiceName)
+		t.tracer, t.closer, err = t.Jaeger.Setup(t.ServiceName)
 	case zipkin.Name:
-		t.Tracer, t.closer, err = t.Zipkin.Setup(t.ServiceName)
+		t.tracer, t.closer, err = t.Zipkin.Setup(t.ServiceName)
 	default:
 		log.Warnf("Unknown tracer %q", t.Backend)
 		return
@@ -49,7 +64,7 @@ func (t *Tracing) Setup() {
 
 // IsEnabled determines if tracing was successfully activated
 func (t *Tracing) IsEnabled() bool {
-	if t == nil || t.Tracer == nil {
+	if t == nil || t.tracer == nil {
 		return false
 	}
 	return true
