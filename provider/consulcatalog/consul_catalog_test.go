@@ -638,6 +638,24 @@ func TestHasServiceChanged(t *testing.T) {
 			expected: true,
 		},
 		{
+			desc: "Change detected on addresses",
+			current: map[string]Service{
+				"foo-service": {
+					Name:      "foo",
+					Nodes:     []string{"node1"},
+					Addresses: []string{"127.0.0.1"},
+				},
+			},
+			previous: map[string]Service{
+				"foo-service": {
+					Name:      "foo",
+					Nodes:     []string{"node1"},
+					Addresses: []string{"127.0.0.2"},
+				},
+			},
+			expected: true,
+		},
+		{
 			desc: "No Change detected",
 			current: map[string]Service{
 				"foo-service": {
