@@ -1,20 +1,20 @@
-nginx1:
-  image: nginx:alpine
+whoami1:
+  image: emilevauge/whoami
   ports:
     - "8881:80"
-nginx2:
-  image: nginx:alpine
+whoami2:
+  image: emilevauge/whoami
   ports:
     - "8882:80"
-nginx3:
-  image: nginx:alpine
+whoami3:
+  image: emilevauge/whoami
   ports:
     - "8883:80"
-nginx4:
-  image: nginx:alpine
+whoami4:
+  image: emilevauge/whoami
   ports:
     - "8884:80"
-nginx5:
-  image: nginx:alpine
+whoami5:
+  image: emilevauge/whoami
   ports:
     - "8885:80"

@@ -29,6 +29,7 @@ const (
 	annotationKubernetesRateLimit                = "ingress.kubernetes.io/rate-limit"
 	annotationKubernetesErrorPages               = "ingress.kubernetes.io/error-pages"
 	annotationKubernetesBuffering                = "ingress.kubernetes.io/buffering"
+	annotationKubernetesAppRoot                  = "ingress.kubernetes.io/app-root"
 
 	annotationKubernetesSSLRedirect             = "ingress.kubernetes.io/ssl-redirect"
 	annotationKubernetesHSTSMaxAge              = "ingress.kubernetes.io/hsts-max-age"
