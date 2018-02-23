@@ -686,12 +686,19 @@
 [[projects]]
   name = "github.com/hashicorp/consul"
   packages = ["api"]
-  revision = "3f92cc70e8163df866873c16c6d89889b5c95fc4"
+  revision = "9a494b5fb9c86180a5702e29c485df1507a47198"
+  version = "v1.0.6"
 
 [[projects]]
   name = "github.com/hashicorp/go-cleanhttp"
   packages = ["."]
   revision = "3573b8b52aa7b37b9358d966a898feb387f62437"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/hashicorp/go-rootcerts"
+  packages = ["."]
+  revision = "6bb64b370b90e7ef1fa532be9e591a81c3493e00"
 
 [[projects]]
   name = "github.com/hashicorp/go-version"
@@ -878,6 +885,12 @@
   name = "github.com/mitchellh/copystructure"
   packages = ["."]
   revision = "d23ffcb85de31694d6ccaa23ccb4a03e55c1303f"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/mitchellh/go-homedir"
+  packages = ["."]
+  revision = "b8bc1bf767474819792c23f32d8286a45736f1c6"
 
 [[projects]]
   branch = "master"
@@ -1548,6 +1561,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e78f765f7bce816857f47557633d941e999e714eb6d98dda0f1f1fe1460754cb"
+  inputs-digest = "b31bcfd5f1894d3ce3c0468cd7273f89c759fc384254de74548c5cbe219c23e9"
   solver-name = "gps-cdcl"
   solver-version = 1

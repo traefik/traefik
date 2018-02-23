@@ -104,6 +104,10 @@
   name = "github.com/gorilla/websocket"
 
 [[constraint]]
+  name = "github.com/hashicorp/consul"
+  version = "1.0.6"
+
+[[constraint]]
   name = "github.com/influxdata/influxdb"
   version = "1.3.7"
 
