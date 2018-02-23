@@ -340,7 +340,7 @@ func getRuleForPath(pa extensionsv1beta1.HTTPIngressPath, i *extensionsv1beta1.I
 		pathReplaceAnnotation = annotationKubernetesRewriteTarget
 	}
 
-	if rootPath := label.GetStringValue(i.Annotations, annotationKubernetesAppRoot, ""); rootPath != "" && pa.Path == "/" {
+	if rootPath := getStringValue(i.Annotations, annotationKubernetesAppRoot, ""); rootPath != "" && pa.Path == "/" {
 		if pathReplaceAnnotation != "" {
 			return "", fmt.Errorf("app-root must not be used together with annotation %q", pathReplaceAnnotation)
 		}
