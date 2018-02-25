@@ -1292,7 +1292,7 @@ func (s *Server) buildRedirectHandler(srcEntryPointName string, opt *types.Redir
 	}
 
 	// regex redirect
-	redirection, err := redirect.NewRegexHandler(opt.Regex, opt.Replacement, opt.Permanent)
+	redirection, err := redirect.NewRegexHandler(opt.Regex, opt.Replacement, redirect.Permanent(opt.Permanent))
 	if err != nil {
 		return nil, err
 	}

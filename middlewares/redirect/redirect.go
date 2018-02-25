@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -32,27 +33,42 @@ func NewEntryPointHandler(dstEntryPoint *configuration.EntryPoint, permanent boo
 		protocol = "https"
 	}
 
-	replacement := protocol + "://$1" + match[0] + "$2"
+	replacement := protocol + "://${1}" + match[0] + "${2}"
 
-	return NewRegexHandler(defaultRedirectRegex, replacement, permanent)
+	return NewRegexHandler(defaultRedirectRegex, replacement, Permanent(permanent), extractorURL(rawURLDefaultPort))
 }
 
 // NewRegexHandler create a new redirection handler base on regex
-func NewRegexHandler(exp string, replacement string, permanent bool) (negroni.Handler, error) {
+func NewRegexHandler(exp string, replacement string, opts ...func(*handler) error) (negroni.Handler, error) {
 	re, err := regexp.Compile(exp)
 	if err != nil {
 		return nil, err
 	}
 
-	return &handler{
+	h := &handler{
 		regexp:      re,
 		replacement: replacement,
-		permanent:   permanent,
 		errHandler:  utils.DefaultHandler,
-	}, nil
+	}
+
+	for _, opt := range opts {
+		if opt != nil {
+			errOpt := opt(h)
+			if errOpt != nil {
+				return nil, errOpt
+			}
+		}
+	}
+
+	if h.urlExtract == nil {
+		h.urlExtract = rawURL
+	}
+
+	return h, nil
 }
 
 type handler struct {
+	urlExtract  func(r *http.Request) string
 	regexp      *regexp.Regexp
 	replacement string
 	permanent   bool
@@ -60,7 +76,7 @@ type handler struct {
 }
 
 func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
-	oldURL := rawURL(req)
+	oldURL := h.urlExtract(req)
 
 	// only continue if the Regexp param matches the URL
 	if !h.regexp.MatchString(oldURL) {
@@ -113,13 +129,48 @@ func (m *moveHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	rw.Write([]byte(http.StatusText(status)))
 }
 
-func rawURL(request *http.Request) string {
-	scheme := "http"
-	if request.TLS != nil || isXForwardedHTTPS(request) {
-		scheme = "https"
+func Permanent(enable bool) func(*handler) error {
+	return func(h *handler) error {
+		h.permanent = enable
+		return nil
+	}
+}
+
+func extractorURL(extract func(*http.Request) string) func(*handler) error {
+	return func(h *handler) error {
+		h.urlExtract = extract
+		return nil
+	}
+}
+
+func rawURLDefaultPort(request *http.Request) string {
+	scheme := extractScheme(request)
+
+	var extraPort string
+
+	_, _, errPort := net.SplitHostPort(request.Host)
+	if errPort != nil {
+		if scheme == "https" {
+			extraPort = ":443"
+		} else {
+			extraPort = ":80"
+		}
 	}
 
+	return strings.Join([]string{scheme, "://", request.Host + extraPort, request.RequestURI}, "")
+}
+
+func rawURL(request *http.Request) string {
+	scheme := extractScheme(request)
+
 	return strings.Join([]string{scheme, "://", request.Host, request.RequestURI}, "")
+}
+
+func extractScheme(request *http.Request) string {
+	if request.TLS != nil || isXForwardedHTTPS(request) {
+		return "https"
+	}
+	return "http"
 }
 
 func isXForwardedHTTPS(request *http.Request) bool {
