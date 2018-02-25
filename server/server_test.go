@@ -1071,7 +1071,7 @@ func TestServerBuildRedirect(t *testing.T) {
 					"https": &configuration.EntryPoint{Address: ":443", TLS: &tls.TLS{}},
 				},
 			},
-			expectedReplacement: "https://$1:443$2",
+			expectedReplacement: "https://${1}:443${2}",
 		},
 		{
 			desc: "Redirect endpoint http to http02 with HTTP protocol",
@@ -1082,7 +1082,7 @@ func TestServerBuildRedirect(t *testing.T) {
 					"http02": &configuration.EntryPoint{Address: ":88"},
 				},
 			},
-			expectedReplacement: "http://$1:88$2",
+			expectedReplacement: "http://${1}:88${2}",
 		},
 		{
 			desc: "Redirect endpoint to non-existent entry point",
