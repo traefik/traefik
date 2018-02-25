@@ -148,7 +148,7 @@ func TestNewRegexHandler(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			handler, err := NewRegexHandler(test.regex, test.replacement, test.permanent)
+			handler, err := NewRegexHandler(test.regex, test.replacement, Permanent(test.permanent))
 
 			if test.errorExpected {
 				require.Nil(t, handler)
