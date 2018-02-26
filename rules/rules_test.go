@@ -1,4 +1,4 @@
-package server
+package rules
 
 import (
 	"net/http"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/containous/mux"
 	"github.com/containous/traefik/testhelpers"
+	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -14,8 +15,8 @@ import (
 func TestParseOneRule(t *testing.T) {
 	router := mux.NewRouter()
 	route := router.NewRoute()
-	serverRoute := &serverRoute{route: route}
-	rules := &Rules{route: serverRoute}
+	serverRoute := &types.ServerRoute{Route: route}
+	rules := &Rules{Route: serverRoute}
 
 	expression := "Host:foo.bar"
 	routeResult, err := rules.Parse(expression)
@@ -30,8 +31,8 @@ func TestParseOneRule(t *testing.T) {
 func TestParseTwoRules(t *testing.T) {
 	router := mux.NewRouter()
 	route := router.NewRoute()
-	serverRoute := &serverRoute{route: route}
-	rules := &Rules{route: serverRoute}
+	serverRoute := &types.ServerRoute{Route: route}
+	rules := &Rules{Route: serverRoute}
 
 	expression := "Host: Foo.Bar ; Path:/FOObar"
 	routeResult, err := rules.Parse(expression)
@@ -90,7 +91,7 @@ func TestParseDomains(t *testing.T) {
 func TestPriorites(t *testing.T) {
 	router := mux.NewRouter()
 	router.StrictSlash(true)
-	rules := &Rules{route: &serverRoute{route: router.NewRoute()}}
+	rules := &Rules{Route: &types.ServerRoute{Route: router.NewRoute()}}
 	expression01 := "PathPrefix:/foo"
 
 	routeFoo, err := rules.Parse(expression01)
@@ -105,7 +106,7 @@ func TestPriorites(t *testing.T) {
 	routeMatch = router.Match(&http.Request{URL: &url.URL{Path: "/fo"}}, &mux.RouteMatch{})
 	assert.False(t, routeMatch, "Error matching route")
 
-	multipleRules := &Rules{route: &serverRoute{route: router.NewRoute()}}
+	multipleRules := &Rules{Route: &types.ServerRoute{Route: router.NewRoute()}}
 	expression02 := "PathPrefix:/foobar"
 
 	routeFoobar, err := multipleRules.Parse(expression02)
@@ -172,8 +173,8 @@ func TestHostRegexp(t *testing.T) {
 			t.Parallel()
 
 			rls := &Rules{
-				route: &serverRoute{
-					route: &mux.Route{},
+				Route: &types.ServerRoute{
+					Route: &mux.Route{},
 				},
 			}
 
@@ -239,8 +240,8 @@ func TestPathPrefix(t *testing.T) {
 			t.Parallel()
 
 			rls := &Rules{
-				route: &serverRoute{
-					route: &mux.Route{},
+				Route: &types.ServerRoute{
+					Route: &mux.Route{},
 				},
 			}
 

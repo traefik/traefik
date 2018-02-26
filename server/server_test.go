@@ -15,6 +15,7 @@ import (
 	"github.com/containous/traefik/healthcheck"
 	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"
+	"github.com/containous/traefik/rules"
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
@@ -393,8 +394,8 @@ func TestServerMultipleFrontendRules(t *testing.T) {
 
 			router := mux.NewRouter()
 			route := router.NewRoute()
-			serverRoute := &serverRoute{route: route}
-			rules := &Rules{route: serverRoute}
+			serverRoute := &types.ServerRoute{Route: route}
+			rules := &rules.Rules{Route: serverRoute}
 
 			expression := test.expression
 			routeResult, err := rules.Parse(expression)
@@ -417,7 +418,7 @@ func TestServerMultipleFrontendRules(t *testing.T) {
 					t.Fatalf("got URL %s, expected %s", r.URL.String(), test.expectedURL)
 				}
 			}))
-			serverRoute.route.GetHandler().ServeHTTP(nil, request)
+			serverRoute.Route.GetHandler().ServeHTTP(nil, request)
 		})
 	}
 }

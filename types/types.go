@@ -13,6 +13,7 @@ import (
 
 	"github.com/abronan/valkeyrie/store"
 	"github.com/containous/flaeg"
+	"github.com/containous/mux"
 	"github.com/containous/traefik/log"
 	traefikTls "github.com/containous/traefik/tls"
 	"github.com/ryanuber/go-glob"
@@ -76,6 +77,16 @@ type Server struct {
 // Route holds route configuration.
 type Route struct {
 	Rule string `json:"rule,omitempty"`
+}
+
+// ServerRoute holds ServerRoute configuration.
+type ServerRoute struct {
+	Route              *mux.Route
+	StripPrefixes      []string
+	StripPrefixesRegex []string
+	AddPrefix          string
+	ReplacePath        string
+	ReplacePathRegex   string
 }
 
 //ErrorPage holds custom error page configuration

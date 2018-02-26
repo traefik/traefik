@@ -34,6 +34,7 @@ import (
 	"github.com/containous/traefik/middlewares/redirect"
 	"github.com/containous/traefik/middlewares/tracing"
 	"github.com/containous/traefik/provider"
+	"github.com/containous/traefik/rules"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/server/cookie"
 	traefikTls "github.com/containous/traefik/tls"
@@ -82,15 +83,6 @@ type serverEntryPoint struct {
 	listener   net.Listener
 	httpRouter *middlewares.HandlerSwitcher
 	certs      safe.Safe
-}
-
-type serverRoute struct {
-	route              *mux.Route
-	stripPrefixes      []string
-	stripPrefixesRegex []string
-	addPrefix          string
-	replacePath        string
-	replacePathRegex   string
 }
 
 // NewServer returns an initialized Server.
@@ -524,7 +516,7 @@ func (s *Server) postLoadConfiguration() {
 
 				if acmeEnabled {
 					for _, route := range frontend.Routes {
-						rules := Rules{}
+						rules := rules.Rules{}
 						domains, err := rules.ParseDomains(route.Rule)
 						if err != nil {
 							log.Errorf("Error parsing domains: %v", err)
@@ -899,7 +891,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 			for _, entryPointName := range frontend.EntryPoints {
 				log.Debugf("Wiring frontend %s to entryPoint %s", frontendName, entryPointName)
 
-				newServerRoute := &serverRoute{route: serverEntryPoints[entryPointName].httpRouter.GetHandler().NewRoute().Name(frontendName)}
+				newServerRoute := &types.ServerRoute{Route: serverEntryPoints[entryPointName].httpRouter.GetHandler().NewRoute().Name(frontendName)}
 				for routeName, route := range frontend.Routes {
 					err := getRoute(newServerRoute, &route)
 					if err != nil {
@@ -1177,11 +1169,11 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 					log.Debugf("Reusing backend %s", frontend.Backend)
 				}
 				if frontend.Priority > 0 {
-					newServerRoute.route.Priority(frontend.Priority)
+					newServerRoute.Route.Priority(frontend.Priority)
 				}
 				s.wireFrontendBackend(newServerRoute, backends[entryPointName+providerName+frontend.Backend])
 
-				err := newServerRoute.route.GetError()
+				err := newServerRoute.Route.GetError()
 				if err != nil {
 					log.Errorf("Error building route: %s", err)
 				}
@@ -1236,48 +1228,48 @@ func configureIPWhitelistMiddleware(whitelistSourceRanges []string) (negroni.Han
 	return nil, nil
 }
 
-func (s *Server) wireFrontendBackend(serverRoute *serverRoute, handler http.Handler) {
+func (s *Server) wireFrontendBackend(serverRoute *types.ServerRoute, handler http.Handler) {
 	// path replace - This needs to always be the very last on the handler chain (first in the order in this function)
 	// -- Replacing Path should happen at the very end of the Modifier chain, after all the Matcher+Modifiers ran
-	if len(serverRoute.replacePath) > 0 {
+	if len(serverRoute.ReplacePath) > 0 {
 		handler = &middlewares.ReplacePath{
-			Path:    serverRoute.replacePath,
+			Path:    serverRoute.ReplacePath,
 			Handler: handler,
 		}
 	}
 
-	if len(serverRoute.replacePathRegex) > 0 {
-		sp := strings.Split(serverRoute.replacePathRegex, " ")
+	if len(serverRoute.ReplacePathRegex) > 0 {
+		sp := strings.Split(serverRoute.ReplacePathRegex, " ")
 		if len(sp) == 2 {
 			handler = middlewares.NewReplacePathRegexHandler(sp[0], sp[1], handler)
 		} else {
-			log.Warnf("Invalid syntax for ReplacePathRegex: %s. Separate the regular expression and the replacement by a space.", serverRoute.replacePathRegex)
+			log.Warnf("Invalid syntax for ReplacePathRegex: %s. Separate the regular expression and the replacement by a space.", serverRoute.ReplacePathRegex)
 		}
 	}
 
 	// add prefix - This needs to always be right before ReplacePath on the chain (second in order in this function)
 	// -- Adding Path Prefix should happen after all *Strip Matcher+Modifiers ran, but before Replace (in case it's configured)
-	if len(serverRoute.addPrefix) > 0 {
+	if len(serverRoute.AddPrefix) > 0 {
 		handler = &middlewares.AddPrefix{
-			Prefix:  serverRoute.addPrefix,
+			Prefix:  serverRoute.AddPrefix,
 			Handler: handler,
 		}
 	}
 
 	// strip prefix
-	if len(serverRoute.stripPrefixes) > 0 {
+	if len(serverRoute.StripPrefixes) > 0 {
 		handler = &middlewares.StripPrefix{
-			Prefixes: serverRoute.stripPrefixes,
+			Prefixes: serverRoute.StripPrefixes,
 			Handler:  handler,
 		}
 	}
 
 	// strip prefix with regex
-	if len(serverRoute.stripPrefixesRegex) > 0 {
-		handler = middlewares.NewStripPrefixRegex(handler, serverRoute.stripPrefixesRegex)
+	if len(serverRoute.StripPrefixesRegex) > 0 {
+		handler = middlewares.NewStripPrefixRegex(handler, serverRoute.StripPrefixesRegex)
 	}
 
-	serverRoute.route.Handler(handler)
+	serverRoute.Route.Handler(handler)
 }
 
 func (s *Server) buildRedirectHandler(srcEntryPointName string, opt *types.Redirect) (negroni.Handler, error) {
@@ -1335,14 +1327,14 @@ func parseHealthCheckOptions(lb healthcheck.LoadBalancer, backend string, hc *ty
 	}
 }
 
-func getRoute(serverRoute *serverRoute, route *types.Route) error {
-	rules := Rules{route: serverRoute}
+func getRoute(serverRoute *types.ServerRoute, route *types.Route) error {
+	rules := rules.Rules{Route: serverRoute}
 	newRoute, err := rules.Parse(route.Rule)
 	if err != nil {
 		return err
 	}
-	newRoute.Priority(serverRoute.route.GetPriority() + len(route.Rule))
-	serverRoute.route = newRoute
+	newRoute.Priority(serverRoute.Route.GetPriority() + len(route.Rule))
+	serverRoute.Route = newRoute
 	return nil
 }
 

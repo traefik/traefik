@@ -1,4 +1,4 @@
-package server
+package rules
 
 import (
 	"errors"
@@ -16,12 +16,12 @@ import (
 
 // Rules holds rule parsing and configuration
 type Rules struct {
-	route *serverRoute
+	Route *types.ServerRoute
 	err   error
 }
 
 func (r *Rules) host(hosts ...string) *mux.Route {
-	return r.route.route.MatcherFunc(func(req *http.Request, route *mux.RouteMatch) bool {
+	return r.Route.Route.MatcherFunc(func(req *http.Request, route *mux.RouteMatch) bool {
 		reqHost, _, err := net.SplitHostPort(req.Host)
 		if err != nil {
 			reqHost = req.Host
@@ -36,27 +36,27 @@ func (r *Rules) host(hosts ...string) *mux.Route {
 }
 
 func (r *Rules) hostRegexp(hosts ...string) *mux.Route {
-	router := r.route.route.Subrouter()
+	router := r.Route.Route.Subrouter()
 	for _, host := range hosts {
 		router.Host(types.CanonicalDomain(host))
 	}
-	return r.route.route
+	return r.Route.Route
 }
 
 func (r *Rules) path(paths ...string) *mux.Route {
-	router := r.route.route.Subrouter()
+	router := r.Route.Route.Subrouter()
 	for _, path := range paths {
 		router.Path(strings.TrimSpace(path))
 	}
-	return r.route.route
+	return r.Route.Route
 }
 
 func (r *Rules) pathPrefix(paths ...string) *mux.Route {
-	router := r.route.route.Subrouter()
+	router := r.Route.Route.Subrouter()
 	for _, path := range paths {
 		buildPath(path, router)
 	}
-	return r.route.route
+	return r.Route.Route
 }
 
 func buildPath(path string, router *mux.Router) {
@@ -88,75 +88,75 @@ func (a bySize) Less(i, j int) bool { return len(a[i]) > len(a[j]) }
 
 func (r *Rules) pathStrip(paths ...string) *mux.Route {
 	sort.Sort(bySize(paths))
-	r.route.stripPrefixes = paths
-	router := r.route.route.Subrouter()
+	r.Route.StripPrefixes = paths
+	router := r.Route.Route.Subrouter()
 	for _, path := range paths {
 		router.Path(strings.TrimSpace(path))
 	}
-	return r.route.route
+	return r.Route.Route
 }
 
 func (r *Rules) pathStripRegex(paths ...string) *mux.Route {
 	sort.Sort(bySize(paths))
-	r.route.stripPrefixesRegex = paths
-	router := r.route.route.Subrouter()
+	r.Route.StripPrefixesRegex = paths
+	router := r.Route.Route.Subrouter()
 	for _, path := range paths {
 		router.Path(strings.TrimSpace(path))
 	}
-	return r.route.route
+	return r.Route.Route
 }
 
 func (r *Rules) replacePath(paths ...string) *mux.Route {
 	for _, path := range paths {
-		r.route.replacePath = path
+		r.Route.ReplacePath = path
 	}
-	return r.route.route
+	return r.Route.Route
 }
 
 func (r *Rules) replacePathRegex(paths ...string) *mux.Route {
 	for _, path := range paths {
-		r.route.replacePathRegex = path
+		r.Route.ReplacePathRegex = path
 	}
-	return r.route.route
+	return r.Route.Route
 }
 
 func (r *Rules) addPrefix(paths ...string) *mux.Route {
 	for _, path := range paths {
-		r.route.addPrefix = path
+		r.Route.AddPrefix = path
 	}
-	return r.route.route
+	return r.Route.Route
 }
 
 func (r *Rules) pathPrefixStrip(paths ...string) *mux.Route {
 	sort.Sort(bySize(paths))
-	r.route.stripPrefixes = paths
-	router := r.route.route.Subrouter()
+	r.Route.StripPrefixes = paths
+	router := r.Route.Route.Subrouter()
 	for _, path := range paths {
 		buildPath(path, router)
 	}
-	return r.route.route
+	return r.Route.Route
 }
 
 func (r *Rules) pathPrefixStripRegex(paths ...string) *mux.Route {
 	sort.Sort(bySize(paths))
-	r.route.stripPrefixesRegex = paths
-	router := r.route.route.Subrouter()
+	r.Route.StripPrefixesRegex = paths
+	router := r.Route.Route.Subrouter()
 	for _, path := range paths {
 		router.PathPrefix(strings.TrimSpace(path))
 	}
-	return r.route.route
+	return r.Route.Route
 }
 
 func (r *Rules) methods(methods ...string) *mux.Route {
-	return r.route.route.Methods(methods...)
+	return r.Route.Route.Methods(methods...)
 }
 
 func (r *Rules) headers(headers ...string) *mux.Route {
-	return r.route.route.Headers(headers...)
+	return r.Route.Route.Headers(headers...)
 }
 
 func (r *Rules) headersRegexp(headers ...string) *mux.Route {
-	return r.route.route.HeadersRegexp(headers...)
+	return r.Route.Route.HeadersRegexp(headers...)
 }
 
 func (r *Rules) query(query ...string) *mux.Route {
@@ -165,7 +165,7 @@ func (r *Rules) query(query ...string) *mux.Route {
 		queries = append(queries, strings.Split(elem, "=")...)
 	}
 
-	return r.route.route.Queries(queries...)
+	return r.Route.Route.Queries(queries...)
 }
 
 func (r *Rules) parseRules(expression string, onRule func(functionName string, function interface{}, arguments []string) error) error {
