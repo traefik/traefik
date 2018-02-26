@@ -569,6 +569,11 @@ Each command is described at the beginning of the help section:
 
 ```bash
 traefik --help
+
+# or
+
+docker run traefik[:version] --help
+# ex: docker run traefik:1.5 --help
 ```
 
 ### Command: bug
