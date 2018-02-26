@@ -210,9 +210,12 @@
 
 [[projects]]
   name = "github.com/containous/flaeg"
-  packages = ["."]
-  revision = "60c87a513a955ca7225e1b1c772581cea8420cb4"
-  version = "v1.0.1"
+  packages = [
+    ".",
+    "parse"
+  ]
+  revision = "963366c29a7acc2d6e02f4f9bcf260d5a1cf4968"
+  version = "v1.1.1"
 
 [[projects]]
   branch = "master"
@@ -1387,6 +1390,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "bd1e7a1b07d95ff85c675468bbfc4bc7a91c39cf1feceeb58dfcdba9592180a5"
+  inputs-digest = "7122deb7b2056ecfa444c5fb64437c1b0723afae528a331c4b032b841039383b"
   solver-name = "gps-cdcl"
   solver-version = 1
