@@ -952,7 +952,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 
 				entryPoint := globalConfiguration.EntryPoints[entryPointName]
 				n := negroni.New()
-				if entryPoint.Redirect != nil {
+				if entryPoint.Redirect != nil && entryPointName != entryPoint.Redirect.EntryPoint {
 					if redirectHandlers[entryPointName] != nil {
 						n.Use(redirectHandlers[entryPointName])
 					} else if handler, err := s.buildRedirectHandler(entryPointName, entryPoint.Redirect); err != nil {
@@ -1141,7 +1141,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						log.Infof("Configured IP Whitelists: %s", frontend.WhitelistSourceRange)
 					}
 
-					if frontend.Redirect != nil {
+					if frontend.Redirect != nil && entryPointName != frontend.Redirect.EntryPoint {
 						rewrite, err := s.buildRedirectHandler(entryPointName, frontend.Redirect)
 						if err != nil {
 							log.Errorf("Error creating Frontend Redirect: %v", err)
@@ -1347,7 +1347,7 @@ func (s *Server) buildRedirect(entryPointName string) (string, string, error) {
 		protocol = "https"
 	}
 
-	replacement := protocol + "://$1" + match[0] + "$2"
+	replacement := protocol + "://${1}" + match[0] + "${2}"
 	return defaultRedirectRegex, replacement, nil
 }
 
