@@ -4,12 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"reflect"
-	"sync"
 	"time"
 
 	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/safe"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -125,7 +122,6 @@ func (c *clientImpl) WatchAll(namespaces Namespaces, labelSelector string, stopC
 		c.isNamespaceAll = true
 	}
 
-	var wg sync.WaitGroup
 	eventHandler := newResourceEventHandler(eventCh)
 	for _, ns := range namespaces {
 		factory := informers.NewFilteredSharedInformerFactory(c.clientset, resyncPeriod, ns, func(opts *metav1.ListOptions) {
@@ -134,35 +130,29 @@ func (c *clientImpl) WatchAll(namespaces Namespaces, labelSelector string, stopC
 		factory.Extensions().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
 		factory.Core().V1().Services().Informer().AddEventHandler(eventHandler)
 		factory.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
-		factory.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
 		c.factories[ns] = factory
 	}
 
 	for _, ns := range namespaces {
-		safe.Go(func() {
-			wg.Add(1)
-			c.factories[ns].Start(stopCh)
-			wg.Done()
-		})
+		c.factories[ns].Start(stopCh)
 	}
 
 	for _, ns := range namespaces {
 		for t, ok := range c.factories[ns].WaitForCacheSync(stopCh) {
-			// Do not wait for the Secrets store to get synced since we cannot rely on
-			// users having granted RBAC permissions for this object.
-			// https://github.com/containous/traefik/issues/1784 should improve the
-			// situation here in the future.
-			if t == reflect.TypeOf(&corev1.Secret{}) && !ok {
+			if !ok {
 				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
 			}
 		}
 	}
 
-	safe.Go(func() {
-		<-stopCh
-		wg.Wait()
-		close(eventCh)
-	})
+	// Do not wait for the Secrets store to get synced since we cannot rely on
+	// users having granted RBAC permissions for this object.
+	// https://github.com/containous/traefik/issues/1784 should improve the
+	// situation here in the future.
+	for _, ns := range namespaces {
+		c.factories[ns].Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
+		c.factories[ns].Start(stopCh)
+	}
 
 	return eventCh, nil
 }
@@ -173,7 +163,7 @@ func (c *clientImpl) GetIngresses() []*extensionsv1beta1.Ingress {
 	for ns, factory := range c.factories {
 		ings, err := factory.Extensions().V1beta1().Ingresses().Lister().List(labels.Everything())
 		if err != nil {
-			log.Errorf("fail to list ingresses in namespace %s: %s", ns, err)
+			log.Errorf("Failed to list ingresses in namespace %s: %s", ns, err)
 		}
 		for _, ing := range ings {
 			result = append(result, ing)
