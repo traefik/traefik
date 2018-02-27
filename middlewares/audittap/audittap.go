@@ -94,7 +94,7 @@ func NewAuditTap(config *types.AuditSink, streams []audittypes.AuditStream, back
 		}
 	}
 
-	constraints := audittypes.AuditConstraints{MaxAuditLength: maxAudit, MaxRequestContentsLength: maxPayload}
+	constraints := audittypes.AuditConstraints{MaxAuditLength: maxAudit, MaxPayloadContentsLength: maxPayload}
 	ac := AuditConfig{
 		AuditSource:      config.AuditSource,
 		AuditType:        config.AuditType,

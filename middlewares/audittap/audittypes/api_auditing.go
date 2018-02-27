@@ -2,6 +2,7 @@ package audittypes
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/containous/traefik/middlewares/audittap/types"
 )
@@ -16,11 +17,15 @@ type APIAuditEvent struct {
 func (ev *APIAuditEvent) AppendRequest(req *http.Request) {
 	reqHeaders := appendCommonRequestFields(&ev.AuditEvent, req)
 	ev.AuthorisationToken = reqHeaders.GetString("authorization")
+	if body, _, err := copyRequestBody(req); err == nil {
+		ev.addRequestPayloadContents(string(body))
+	}
 }
 
 // AppendResponse appends information about the response to the audit event
 func (ev *APIAuditEvent) AppendResponse(responseHeaders http.Header, respInfo types.ResponseInfo) {
 	appendCommonResponseFields(&ev.AuditEvent, responseHeaders, respInfo)
+	ev.addResponsePayloadContents(strings.TrimSpace(string(respInfo.Entity)))
 }
 
 // EnforceConstraints ensures the audit event satisfies constraints

@@ -5,7 +5,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -62,7 +61,7 @@ func (ev *RATEAuditEvent) AppendRequest(req *http.Request) {
 
 func appendMessageContent(ev *RATEAuditEvent, req *http.Request) {
 
-	body, _, err := copyBody(req)
+	body, _, err := copyRequestBody(req)
 	url, err := url.ParseRequestURI(req.RequestURI)
 
 	if err != nil {
@@ -130,17 +129,6 @@ func NewRATEAuditEvent() Auditer {
 	ev := RATEAuditEvent{}
 	ev.AuditEvent = AuditEvent{AuditSource: "transaction-engine-frontend"}
 	return &ev
-}
-
-// TODO: Can req.GetBody replace it?
-// Need to take a copy of the body contents so a fresh reader for body is available to subsequent handlers
-func copyBody(req *http.Request) ([]byte, int, error) {
-	buf, err := ioutil.ReadAll(req.Body)
-	if err == nil {
-		req.Body = ioutil.NopCloser(bytes.NewBuffer(buf))
-		return buf, len(buf), nil
-	}
-	return nil, 0, err
 }
 
 // GovTalkMessage Processing
@@ -291,7 +279,6 @@ func (partial *partialGovTalkMessage) populateSelfAssessmentData(ev *RATEAuditEv
 		if msg, err := partial.Message.WriteToString(); err == nil {
 			trimmed := strings.TrimSpace(msg)
 			ev.addRequestPayloadContents(trimmed)
-			ev.RequestPayload["length"] = len(trimmed)
 		}
 
 		if strings.HasPrefix(ev.AuditType, "HMRC-SA-SA100") {

@@ -154,7 +154,7 @@ func TestAuditConstraintDefaults(t *testing.T) {
 	tap, err := NewAuditTap(&types.AuditSink{ProxyingFor: "Rate"}, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
 	assert.NoError(t, err)
 	assert.Equal(t, int64(100000), tap.AuditConfig.AuditConstraints.MaxAuditLength)
-	assert.Equal(t, int64(96000), tap.AuditConfig.AuditConstraints.MaxRequestContentsLength)
+	assert.Equal(t, int64(96000), tap.AuditConfig.AuditConstraints.MaxPayloadContentsLength)
 }
 
 func TestAuditConstraintsAssigned(t *testing.T) {
@@ -163,7 +163,7 @@ func TestAuditConstraintsAssigned(t *testing.T) {
 	tap, err := NewAuditTap(&conf, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
 	assert.NoError(t, err)
 	assert.Equal(t, int64(3000000), tap.AuditConfig.AuditConstraints.MaxAuditLength)
-	assert.Equal(t, int64(39000), tap.AuditConfig.AuditConstraints.MaxRequestContentsLength)
+	assert.Equal(t, int64(39000), tap.AuditConfig.AuditConstraints.MaxPayloadContentsLength)
 }
 
 func TestOversizedAuditDropped(t *testing.T) {

@@ -36,6 +36,6 @@ The properties are as follow:
 * auditType (mandatory for API): the auditType value to be included in API audit events
 * encryptSecret (optional): base64 encoded AES-256 key, if provided logged audit events will be encrypted
 * maxAuditLength (optional): maximum byte length of audit defaulted to 100K. e.g 33K or 3M
-* maxPayloadContentsLength (optional): maximum byte length of audit.requestPayload.contents. e.g 15K or 2M
+* maxPayloadContentsLength (optional): maximum combined byte length of audit.requestPayload.contents and audit.responsePayload.contents. e.g 15K or 2M
 * auditSink.exclusions.excname (optional): excludes a request from auditing based on the header name when the header
 contains any of the specified values. Matching condition can be contains|endsWith|startsWith

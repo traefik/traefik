@@ -1,7 +1,9 @@
 package audittypes
 
 import (
+	"bytes"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 
@@ -37,7 +39,7 @@ type AuditEvent struct {
 // AuditConstraints defines validation constraints an audit event must satisfy
 type AuditConstraints struct {
 	MaxAuditLength           int64
-	MaxRequestContentsLength int64
+	MaxPayloadContentsLength int64
 }
 
 // AuditStream describes a type to which audit events can be sent.
@@ -115,12 +117,42 @@ func (ev *AuditEvent) addRequestPayloadContents(s string) {
 		ev.RequestPayload = types.DataMap{}
 	}
 	ev.RequestPayload["contents"] = s
+	ev.RequestPayload["length"] = len(s)
+}
+
+func (ev *AuditEvent) addResponsePayloadContents(s string) {
+	if ev.ResponsePayload == nil {
+		ev.ResponsePayload = types.DataMap{}
+	}
+	ev.ResponsePayload["contents"] = s
+	ev.ResponsePayload["length"] = len(s)
 }
 
 func enforcePrecedentConstraints(ev *AuditEvent, constraints AuditConstraints) {
-	payloadLen, _ := ev.RequestPayload["length"].(int) // Zero if not int or missing
-	contents := ev.RequestPayload["contents"]
-	if contents != nil && int64(payloadLen) > constraints.MaxRequestContentsLength {
-		ev.RequestPayload["contents"] = types.DataMap{} // Contents too big
+	reqLen, _ := ev.RequestPayload["length"].(int) // Zero if not int or missing
+	lenRequest := int64(reqLen)
+	requestContents := ev.RequestPayload["contents"]
+	requestTooBig := lenRequest > constraints.MaxPayloadContentsLength
+	if requestContents != nil && requestTooBig {
+		ev.RequestPayload["contents"] = types.DataMap{} // Request contents too big
 	}
+
+	respLen, _ := ev.ResponsePayload["length"].(int)
+	lenResponse := int64(respLen)
+	reponseContents := ev.ResponsePayload["contents"]
+	responseTooBig := lenResponse > constraints.MaxPayloadContentsLength
+	combinedTooBig := lenRequest+lenResponse > constraints.MaxPayloadContentsLength
+	if reponseContents != nil && (responseTooBig || combinedTooBig) {
+		ev.ResponsePayload["contents"] = types.DataMap{} // Response contents too big
+	}
+}
+
+// Need to take a copy of the body contents so a fresh reader for body is available to subsequent handlers
+func copyRequestBody(req *http.Request) ([]byte, int, error) {
+	buf, err := ioutil.ReadAll(req.Body)
+	if err == nil {
+		req.Body = ioutil.NopCloser(bytes.NewBuffer(buf))
+		return buf, len(buf), nil
+	}
+	return nil, 0, err
 }

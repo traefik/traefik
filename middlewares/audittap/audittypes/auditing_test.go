@@ -116,13 +116,36 @@ func TestAuditResponseHeaders(t *testing.T) {
 
 func TestRequestContentsOmittedWhenTooLong(t *testing.T) {
 	max := 20
-	ev := RATEAuditEvent{}
-	ev.AuditEvent = AuditEvent{RequestPayload: types.DataMap{}}
-	constraints := AuditConstraints{MaxAuditLength: 1000, MaxRequestContentsLength: int64(max)}
+	ev := AuditEvent{RequestPayload: types.DataMap{}}
+	constraints := AuditConstraints{MaxAuditLength: 1000, MaxPayloadContentsLength: int64(max)}
 	ev.RequestPayload["contents"] = types.DataMap{"Key1": "MoreThan20Bytes"}
 	ev.RequestPayload["length"] = max + 1
-	enforcePrecedentConstraints(&ev.AuditEvent, constraints)
+	enforcePrecedentConstraints(&ev, constraints)
 	assert.Equal(t, types.DataMap{}, ev.RequestPayload["contents"])
+}
+
+func TestResponseContentsOmittedWhenTooLong(t *testing.T) {
+	max := 20
+	ev := AuditEvent{ResponsePayload: types.DataMap{}}
+	constraints := AuditConstraints{MaxAuditLength: 1000, MaxPayloadContentsLength: int64(max)}
+	ev.ResponsePayload["contents"] = types.DataMap{"Key1": "MoreThan20Bytes"}
+	ev.ResponsePayload["length"] = max + 1
+	enforcePrecedentConstraints(&ev, constraints)
+	assert.Equal(t, types.DataMap{}, ev.ResponsePayload["contents"])
+}
+
+func TestResponseContentsOmittedWhenResponseAndRequestTooLong(t *testing.T) {
+	requestPayload := types.DataMap{"Key1": "AllowedRequestSize"}
+	max := 40
+	ev := AuditEvent{RequestPayload: types.DataMap{}, ResponsePayload: types.DataMap{}}
+	constraints := AuditConstraints{MaxAuditLength: 1000, MaxPayloadContentsLength: int64(max)}
+	ev.RequestPayload["contents"] = requestPayload
+	ev.RequestPayload["length"] = max / 2
+	ev.ResponsePayload["contents"] = types.DataMap{"Key1": "DisallowedResponseSize"}
+	ev.ResponsePayload["length"] = (max / 2) + 1
+	enforcePrecedentConstraints(&ev, constraints)
+	assert.Equal(t, types.DataMap{}, ev.ResponsePayload["contents"])
+	assert.Equal(t, requestPayload, ev.RequestPayload["contents"])
 }
 
 func TestRequestContentsRetained(t *testing.T) {
@@ -130,7 +153,7 @@ func TestRequestContentsRetained(t *testing.T) {
 	contents := types.DataMap{"Key1": "MoreThan20Bytes"}
 	ev := RATEAuditEvent{}
 	ev.AuditEvent = AuditEvent{RequestPayload: types.DataMap{}}
-	constraints := AuditConstraints{MaxAuditLength: 1000, MaxRequestContentsLength: int64(max)}
+	constraints := AuditConstraints{MaxAuditLength: 1000, MaxPayloadContentsLength: int64(max)}
 	ev.RequestPayload["contents"] = contents
 	ev.RequestPayload["length"] = max - 1
 	enforcePrecedentConstraints(&ev.AuditEvent, constraints)
