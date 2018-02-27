@@ -1,5 +1,27 @@
 # Change Log
 
+## [v1.5.3](https://github.com/containous/traefik/tree/v1.5.3) (2018-02-27)
+[All Commits](https://github.com/containous/traefik/compare/v1.5.2...v1.5.3)
+
+**Bug fixes:**
+- **[acme]** Check all the C/N and SANs of provided certificates before generating ACME certificates ([#2913](https://github.com/containous/traefik/pull/2913) by [nmengin](https://github.com/nmengin))
+- **[docker/swarm]** Empty IP address when use endpoint mode dnsrr ([#2887](https://github.com/containous/traefik/pull/2887) by [mmatur](https://github.com/mmatur))
+- **[middleware]** Infinite entry point redirection. ([#2929](https://github.com/containous/traefik/pull/2929) by [ldez](https://github.com/ldez))
+- **[provider]** Isolate backend with same name on different provider ([#2862](https://github.com/containous/traefik/pull/2862) by [Juliens](https://github.com/Juliens))
+- **[tls]** Starting Træfik even if TLS certificates are in error ([#2909](https://github.com/containous/traefik/pull/2909) by [nmengin](https://github.com/nmengin))
+- **[tls]**  Add DEBUG log when no provided certificate can check a domain ([#2938](https://github.com/containous/traefik/pull/2938) by [nmengin](https://github.com/nmengin))
+- **[webui]** Smooth dashboard refresh. ([#2871](https://github.com/containous/traefik/pull/2871) by [ldez](https://github.com/ldez))
+- Fix Duration JSON unmarshal ([#2935](https://github.com/containous/traefik/pull/2935) by [ldez](https://github.com/ldez))
+- Default value for lifecycle ([#2934](https://github.com/containous/traefik/pull/2934) by [Juliens](https://github.com/Juliens))
+- Check ping configuration. ([#2852](https://github.com/containous/traefik/pull/2852) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[docker]** it&#39;s -&gt; its ([#2901](https://github.com/containous/traefik/pull/2901) by [piec](https://github.com/piec))
+- **[tls]** Fix doc cipher suites ([#2894](https://github.com/containous/traefik/pull/2894) by [emilevauge](https://github.com/emilevauge))
+- Add a CLI help command for Docker. ([#2921](https://github.com/containous/traefik/pull/2921) by [ldez](https://github.com/ldez))
+- Fix traffic pronounce dead link ([#2870](https://github.com/containous/traefik/pull/2870) by [emilevauge](https://github.com/emilevauge))
+- Update documentation on onHostRule, ping examples, and web deprecation ([#2863](https://github.com/containous/traefik/pull/2863) by [Juliens](https://github.com/Juliens))
+
 ## [v1.5.2](https://github.com/containous/traefik/tree/v1.5.2) (2018-02-12)
 [All Commits](https://github.com/containous/traefik/compare/v1.5.1...v1.5.2)
 
