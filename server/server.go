@@ -484,6 +484,7 @@ func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tl
 				}
 			}
 		}
+		log.Debugf("No certificate provided dynamically can check the domain %q, a per default certificate will be used.", domainToCheck)
 	}
 	return nil, nil
 }
