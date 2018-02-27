@@ -92,7 +92,7 @@ func (p *conyPublisherImpl) GetConyPublisher() *cony.Publisher {
 
 // NewConyClient is a wrapper for calling cony.NewClient
 var NewConyClient = func(endpoint string, clientID string, clientVersion string) amqpConyClient {
-	props := amqp.Table{"product": clientID, "version": clientVersion}
+	props := amqp.Table{"product": clientID, "version": clientVersion, "connection_name": clientID}
 	cfg := amqp.Config{Properties: props}
 	return &conyClientImpl{cli: cony.NewClient(cony.URL(endpoint), cony.Config(cfg))}
 }
@@ -102,7 +102,7 @@ var NewConyPublisher = func(exchange string) amqpConyPublisher {
 	return &conyPublisherImpl{publisher: cony.NewPublisher(exchange, "")}
 }
 
-// NewQueue is a wrapper for calling cony.NewPublishelr
+// NewQueue is a wrapper for calling cony.NewPublisher
 var NewQueue = func(queueLocation string) (*goque.Queue, error) {
 	return goque.OpenQueue(queueLocation)
 }
