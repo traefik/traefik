@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"context"
 	"strconv"
 	"testing"
 	"time"
@@ -11,7 +12,6 @@ import (
 	"github.com/docker/docker/api/types/swarm"
 	dockerclient "github.com/docker/docker/client"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 )
 
 type fakeTasksClient struct {

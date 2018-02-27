@@ -308,6 +308,9 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 			HealthCheck: &configuration.HealthCheckConfig{
 				Interval: flaeg.Duration(configuration.DefaultHealthCheckInterval),
 			},
+			LifeCycle: &configuration.LifeCycle{
+				GraceTimeOut: flaeg.Duration(configuration.DefaultGraceTimeout),
+			},
 			CheckNewVersion: true,
 		},
 		ConfigFile: "",

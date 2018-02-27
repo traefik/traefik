@@ -101,7 +101,8 @@ func (c *Certificates) CreateTLSConfig(entryPointName string) (*tls.Config, map[
 		for _, certificate := range *c {
 			err := certificate.AppendCertificates(domainsCertificates, entryPointName)
 			if err != nil {
-				return nil, nil, err
+				log.Errorf("Unable to add a certificate to the entryPoint %q : %v", entryPointName, err)
+				continue
 			}
 			for _, certDom := range domainsCertificates {
 				for _, cert := range certDom.Get().(map[string]*tls.Certificate) {
@@ -133,16 +134,16 @@ func (c *Certificate) AppendCertificates(certs map[string]*DomainsCertificates, 
 
 	certContent, err := c.CertFile.Read()
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to read CertFile : %v", err)
 	}
 
 	keyContent, err := c.KeyFile.Read()
 	if err != nil {
-		return err
+		return fmt.Errorf("uUnable to read KeyFile : %v", err)
 	}
 	tlsCert, err := tls.X509KeyPair(certContent, keyContent)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to generate TLS certificate : %v", err)
 	}
 
 	parsedCert, _ := x509.ParseCertificate(tlsCert.Certificate[0])

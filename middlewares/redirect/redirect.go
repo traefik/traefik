@@ -32,7 +32,7 @@ func NewEntryPointHandler(dstEntryPoint *configuration.EntryPoint, permanent boo
 		protocol = "https"
 	}
 
-	replacement := protocol + "://$1" + match[0] + "$2"
+	replacement := protocol + "://${1}" + match[0] + "${2}"
 
 	return NewRegexHandler(defaultRedirectRegex, replacement, permanent)
 }
