@@ -36,6 +36,7 @@ type LogHandler struct {
 	file     *os.File
 	filePath string
 	mu       sync.Mutex
+	redact   map[string]bool
 }
 
 // NewLogHandler creates a new LogHandler
@@ -66,7 +67,18 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 		Hooks:     make(logrus.LevelHooks),
 		Level:     logrus.InfoLevel,
 	}
-	return &LogHandler{logger: logger, file: file, filePath: config.FilePath}, nil
+
+	headerredactions := make(map[string]bool)
+	for _, header := range config.HeaderRedactions {
+		headerredactions[header] = true
+	}
+
+	return &LogHandler{
+		logger:   logger,
+		file:     file,
+		filePath: config.FilePath,
+		redact:   headerredactions,
+	}, nil
 }
 
 func openAccessLogFile(filePath string) (*os.File, error) {
@@ -223,7 +235,11 @@ func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestR
 	}
 
 	for k := range logDataTable.Request {
-		fields["request_"+k] = logDataTable.Request.Get(k)
+		headerContent := logDataTable.Request.Get(k)
+		if _, shouldredact := l.redact[k]; shouldredact {
+			headerContent = "REDACTED_BY_TRAEFIK"
+		}
+		fields["request_"+k] = headerContent
 	}
 
 	for k := range logDataTable.OriginResponse {

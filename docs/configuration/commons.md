@@ -212,11 +212,16 @@ To write the logs into a logfile specify the `filePath`.
 filePath = "/path/to/access.log"
 ```
 
-To write JSON format logs, specify `json` as the format:
+To write JSON format logs, specify `json` as the format.
+
+This will also log request/response headers and their contents. To redact the contents (e.g. to protect authentication tokens),
+specify a list of header names. `Authorization` is redacted by default. To disable redaction, specify an empty list.
+
 ```toml
 [accessLog]
 filePath = "/path/to/access.log"
 format = "json"
+headerRedactions = [ "Authorization", "X-MyApp-Auth-Token" ]
 ```
 
 Deprecated way (before 1.4):

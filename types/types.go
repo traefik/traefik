@@ -467,8 +467,35 @@ type TraefikLog struct {
 
 // AccessLog holds the configuration settings for the access logger (middlewares/accesslog).
 type AccessLog struct {
-	FilePath string `json:"file,omitempty" description:"Access log file path. Stdout is used when omitted or empty" export:"true"`
-	Format   string `json:"format,omitempty" description:"Access log format: json | common" export:"true"`
+	FilePath         string           `json:"file,omitempty" description:"Access log file path. Stdout is used when omitted or empty" export:"true"`
+	Format           string           `json:"format,omitempty" description:"Access log format: json | common" export:"true"`
+	HeaderRedactions HeaderRedactions `json:"headerredactions,omitempty" description:"List of names of sensitive headers to redact" export:"false"`
+}
+
+// HeaderRedactions holds a list of HTTP header names
+type HeaderRedactions []string
+
+// Set splits string on "," and adds the substrings to the
+// list of headers to be redacted. Whitespace is removed
+func (b *HeaderRedactions) Set(str string) error {
+	headers := strings.Split(str, ",")
+	for _, header := range headers {
+		if trimmed := strings.TrimSpace(header); trimmed != "" {
+			*b = append(*b, strings.TrimSpace(header))
+		}
+	}
+	return nil
+}
+
+// Get returns a list of headers to be redacted
+func (b *HeaderRedactions) Get() interface{} { return HeaderRedactions(*b) }
+
+// String return slice in a string
+func (b *HeaderRedactions) String() string { return fmt.Sprintf("%v", *b) }
+
+// SetValue sets []string into the parser
+func (b *HeaderRedactions) SetValue(val interface{}) {
+	*b = HeaderRedactions(val.(HeaderRedactions))
 }
 
 // ClientTLS holds TLS specific configurations as client
