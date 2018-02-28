@@ -18,7 +18,7 @@ const (
 	active          = "active"
 	running         = "running"
 	upgraded        = "upgraded"
-	upgrading        = "upgrading"
+	upgrading       = "upgrading"
 	updatingActive  = "updating-active"
 	updatingRunning = "updating-running"
 )
