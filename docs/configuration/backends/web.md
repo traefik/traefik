@@ -439,6 +439,7 @@ defaultEntryPoints = ["http"]
 # Activate API and Dashboard
 [api]
 entryPoint = "bar"
+dashboard = true
 
 [file]
   [backends]
