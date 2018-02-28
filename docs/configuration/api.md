@@ -64,7 +64,7 @@ For more customization, see [entry points](/configuration/entrypoints/) document
 
 ### Address / Port
 
-You can defined a custom address/port like that:
+You can define a custom address/port like this:
 
 ```toml
 defaultEntryPoints = ["http"]
@@ -97,7 +97,7 @@ Otherwise, you are likely to expose _all_ services via that entry point.
 
 ### Custom Path
 
-You can defined a custom path like that:
+You can define a custom path like this:
 
 ```toml
 defaultEntryPoints = ["http"]
@@ -133,7 +133,7 @@ dashboard = true
 
 ### Authentication
 
-You can defined the authentication like that:
+You can define the authentication like this:
 
 ```toml
 defaultEntryPoints = ["http"]
