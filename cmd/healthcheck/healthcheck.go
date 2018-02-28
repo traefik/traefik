@@ -10,7 +10,6 @@ import (
 
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/cmd"
-
 	"github.com/containous/traefik/configuration"
 )
 
