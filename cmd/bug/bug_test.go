@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_createBugReport(t *testing.T) {
+func Test_createReport(t *testing.T) {
 	traefikConfiguration := &cmd.TraefikConfiguration{
 		ConfigFile: "FOO",
 		GlobalConfiguration: configuration.GlobalConfiguration{
@@ -38,7 +38,7 @@ func Test_createBugReport(t *testing.T) {
 		},
 	}
 
-	report, err := createBugReport(traefikConfiguration)
+	report, err := createReport(traefikConfiguration)
 	assert.NoError(t, err, report)
 
 	// exported anonymous configuration

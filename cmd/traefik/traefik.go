@@ -49,7 +49,7 @@ Complete documentation is available at https://traefik.io`,
 		Config:                traefikConfiguration,
 		DefaultPointersConfig: traefikPointersConfiguration,
 		Run: func() error {
-			run(&traefikConfiguration.GlobalConfiguration, traefikConfiguration.ConfigFile)
+			runCmd(&traefikConfiguration.GlobalConfiguration, traefikConfiguration.ConfigFile)
 			return nil
 		},
 	}
@@ -142,7 +142,7 @@ Complete documentation is available at https://traefik.io`,
 	os.Exit(0)
 }
 
-func run(globalConfiguration *configuration.GlobalConfiguration, configFile string) {
+func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile string) {
 	configureLogging(globalConfiguration)
 
 	if len(configFile) > 0 {
@@ -183,7 +183,7 @@ func run(globalConfiguration *configuration.GlobalConfiguration, configFile stri
 		safe.Go(func() {
 			tick := time.Tick(t)
 			for range tick {
-				_, errHealthCheck := healthcheck.HealthCheck(*globalConfiguration)
+				_, errHealthCheck := healthcheck.Do(*globalConfiguration)
 				if globalConfiguration.Ping == nil || errHealthCheck == nil {
 					if ok, _ := daemon.SdNotify(false, "WATCHDOG=1"); !ok {
 						log.Error("Fail to tick watchdog")

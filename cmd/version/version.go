@@ -19,15 +19,13 @@ OS/Arch:      {{.Os}}/{{.Arch}}`
 
 // NewCmd builds a new Version command
 func NewCmd() *flaeg.Command {
-
-	//version Command init
 	return &flaeg.Command{
 		Name:                  "version",
 		Description:           `Print version`,
 		Config:                struct{}{},
 		DefaultPointersConfig: struct{}{},
 		Run: func() error {
-			if err := GetVersionPrint(os.Stdout); err != nil {
+			if err := GetPrint(os.Stdout); err != nil {
 				return err
 			}
 			fmt.Print("\n")
@@ -37,8 +35,8 @@ func NewCmd() *flaeg.Command {
 	}
 }
 
-// GetVersionPrint write Printable version
-func GetVersionPrint(wr io.Writer) error {
+// GetPrint write Printable version
+func GetPrint(wr io.Writer) error {
 	tmpl, err := template.New("").Parse(versionTemplate)
 	if err != nil {
 		return err

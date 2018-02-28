@@ -94,30 +94,30 @@ func NewCmd(traefikConfiguration *cmd.TraefikConfiguration, traefikPointersConfi
 		Description:           `Report an issue on Traefik bugtracker`,
 		Config:                traefikConfiguration,
 		DefaultPointersConfig: traefikPointersConfiguration,
-		Run: runBugCmd(traefikConfiguration),
+		Run: runCmd(traefikConfiguration),
 		Metadata: map[string]string{
 			"parseAllSources": "true",
 		},
 	}
 }
 
-func runBugCmd(traefikConfiguration *cmd.TraefikConfiguration) func() error {
+func runCmd(traefikConfiguration *cmd.TraefikConfiguration) func() error {
 	return func() error {
 
-		body, err := createBugReport(traefikConfiguration)
+		body, err := createReport(traefikConfiguration)
 		if err != nil {
 			return err
 		}
 
-		sendBugReport(body)
+		sendReport(body)
 
 		return nil
 	}
 }
 
-func createBugReport(traefikConfiguration *cmd.TraefikConfiguration) (string, error) {
+func createReport(traefikConfiguration *cmd.TraefikConfiguration) (string, error) {
 	var versionPrint bytes.Buffer
-	if err := version.GetVersionPrint(&versionPrint); err != nil {
+	if err := version.GetPrint(&versionPrint); err != nil {
 		return "", err
 	}
 
@@ -147,7 +147,7 @@ func createBugReport(traefikConfiguration *cmd.TraefikConfiguration) (string, er
 	return bug.String(), nil
 }
 
-func sendBugReport(body string) {
+func sendReport(body string) {
 	URL := bugTracker + "?body=" + url.QueryEscape(body)
 	if err := openBrowser(URL); err != nil {
 		fmt.Printf("Please file a new issue at %s using this template:\n\n", bugTracker)

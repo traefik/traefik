@@ -21,18 +21,18 @@ func NewCmd(traefikConfiguration *cmd.TraefikConfiguration, traefikPointersConfi
 		Description:           `Calls traefik /ping to check health (web provider must be enabled)`,
 		Config:                traefikConfiguration,
 		DefaultPointersConfig: traefikPointersConfiguration,
-		Run: runHealthCheck(traefikConfiguration),
+		Run: runCmd(traefikConfiguration),
 		Metadata: map[string]string{
 			"parseAllSources": "true",
 		},
 	}
 }
 
-func runHealthCheck(traefikConfiguration *cmd.TraefikConfiguration) func() error {
+func runCmd(traefikConfiguration *cmd.TraefikConfiguration) func() error {
 	return func() error {
 		traefikConfiguration.GlobalConfiguration.SetEffectiveConfiguration(traefikConfiguration.ConfigFile)
 
-		resp, errPing := HealthCheck(traefikConfiguration.GlobalConfiguration)
+		resp, errPing := Do(traefikConfiguration.GlobalConfiguration)
 		if errPing != nil {
 			fmt.Printf("Error calling healthcheck: %s\n", errPing)
 			os.Exit(1)
@@ -47,8 +47,8 @@ func runHealthCheck(traefikConfiguration *cmd.TraefikConfiguration) func() error
 	}
 }
 
-// HealthCheck try to do a healthcheck
-func HealthCheck(globalConfiguration configuration.GlobalConfiguration) (*http.Response, error) {
+// Do try to do a healthcheck
+func Do(globalConfiguration configuration.GlobalConfiguration) (*http.Response, error) {
 	if globalConfiguration.Ping == nil {
 		return nil, errors.New("please enable `ping` to use health check")
 	}
