@@ -243,7 +243,7 @@ entryPoint = "https"
 Specify the entryPoint to use during the challenges.
 
 ```toml
-defaultEntryPoints = ["http", "http"]
+defaultEntryPoints = ["http", "https"]
 
 [entryPoints]
   [entryPoints.http]
