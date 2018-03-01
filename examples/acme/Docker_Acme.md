@@ -11,7 +11,7 @@ The provided Boulder stack is based on the environment used during integration t
 
 ## Directory content
 
-* **compose-acme.yml** : Docker-Compose file which contains the description of Traefik and all the boulder stack containers to get,
+* **docker-compose.yml** : Docker-Compose file which contains the description of Traefik and all the boulder stack containers to get,
 * **acme.toml** : Traefik configuration file used by the Traefik container described above,
 * **manage_acme_docker_environment.sh**  Shell script which does all needed checks and manages the docker-compose environment.
 
@@ -25,6 +25,7 @@ To work fine, boulder needs a domain name, with a related IP and storage file. T
 
 The script **manage_acme_docker_environment.sh** requires one argument. This argument can have 3 values :
 
-* **--start** : Check environment and launch a new Docker environment.
+* **--start** : Launch a new Docker environment Boulder + Traefik.
 * **--stop** : Stop and delete the current Docker environment.
 * **--restart--** : Concatenate **--stop** and **--start** actions.
+* **--dev** : Launch a new Boulder Docker environment.

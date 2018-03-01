@@ -1,12 +1,10 @@
 version: "2"
 
-# IP_HOST : Docker host IP (not 127.0.0.1)
-
 services :
   boulder:
-      image: containous/boulder:release
+      image: containous/boulder:containous-fork
       environment:
-          FAKE_DNS: $IP_HOST
+          FAKE_DNS: 172.17.0.1
           PKCS11_PROXY_SOCKET: tcp://boulder-hsm:5657
       extra_hosts:
         - le.wtf:127.0.0.1
@@ -29,49 +27,52 @@ services :
         - bhsm
         - bmysql
         - brabbitmq
-      volumes:
-        - "./rate-limit-policies.yml:/go/src/github.com/letsencrypt/boulder/test/rate-limit-policies.yml:ro"
+      networks:
+        - default
 
   bhsm:
       image: letsencrypt/boulder-tools:2016-11-02
       hostname: boulder-hsm
-      networks:
-          default:
-              aliases:
-                - boulder-hsm
       environment:
           PKCS11_DAEMON_SOCKET: tcp://0.0.0.0:5657
       command: /usr/local/bin/pkcs11-daemon /usr/lib/softhsm/libsofthsm.so
       expose:
         - 5657
+      networks:
+        default:
+          aliases:
+            - boulder-hsm
   bmysql:
       image: mariadb:10.1
       hostname: boulder-mysql
-      networks:
-          default:
-              aliases:
-                - boulder-mysql
       environment:
           MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      networks:
+        default:
+          aliases:
+            - boulder-mysql
 
   brabbitmq:
       image: rabbitmq:3-alpine
       hostname: boulder-rabbitmq
-      networks:
-          default:
-              aliases:
-                - boulder-rabbitmq
       environment:
           RABBITMQ_NODE_IP_ADDRESS: "0.0.0.0"
+      networks:
+        default:
+          aliases:
+            - boulder-rabbitmq
+
+  ## TRAEFIK part ##
 
   traefik:
       build:
         context: ../..
-      image: containous/traefik:latest
+      image: traefik:1.5-alpine
+#      image: containous/traefik:latest
       command: --configFile=/etc/traefik/conf/acme.toml
       restart: unless-stopped
       extra_hosts:
-        - traefik.localhost.com:$IP_HOST
+        - traefik.boulder.com:172.17.0.1
       volumes:
         - "./acme.toml:/etc/traefik/conf/acme.toml:ro"
         - "/var/run/docker.sock:/var/run/docker.sock:ro"
