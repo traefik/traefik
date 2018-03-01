@@ -118,20 +118,20 @@ func TestRequestContentsOmittedWhenTooLong(t *testing.T) {
 	max := 20
 	ev := AuditEvent{RequestPayload: types.DataMap{}}
 	constraints := AuditConstraints{MaxAuditLength: 1000, MaxPayloadContentsLength: int64(max)}
-	ev.RequestPayload["contents"] = types.DataMap{"Key1": "MoreThan20Bytes"}
-	ev.RequestPayload["length"] = max + 1
+	ev.RequestPayload[keyPayloadContents] = types.DataMap{"Key1": "MoreThan20Bytes"}
+	ev.RequestPayload[keyPayloadLength] = max + 1
 	enforcePrecedentConstraints(&ev, constraints)
-	assert.Equal(t, types.DataMap{}, ev.RequestPayload["contents"])
+	assert.Nil(t, ev.RequestPayload[keyPayloadContents])
 }
 
 func TestResponseContentsOmittedWhenTooLong(t *testing.T) {
 	max := 20
 	ev := AuditEvent{ResponsePayload: types.DataMap{}}
 	constraints := AuditConstraints{MaxAuditLength: 1000, MaxPayloadContentsLength: int64(max)}
-	ev.ResponsePayload["contents"] = types.DataMap{"Key1": "MoreThan20Bytes"}
-	ev.ResponsePayload["length"] = max + 1
+	ev.ResponsePayload[keyPayloadContents] = types.DataMap{"Key1": "MoreThan20Bytes"}
+	ev.ResponsePayload[keyPayloadLength] = max + 1
 	enforcePrecedentConstraints(&ev, constraints)
-	assert.Equal(t, types.DataMap{}, ev.ResponsePayload["contents"])
+	assert.Nil(t, ev.ResponsePayload[keyPayloadContents])
 }
 
 func TestResponseContentsOmittedWhenResponseAndRequestTooLong(t *testing.T) {
@@ -139,13 +139,13 @@ func TestResponseContentsOmittedWhenResponseAndRequestTooLong(t *testing.T) {
 	max := 40
 	ev := AuditEvent{RequestPayload: types.DataMap{}, ResponsePayload: types.DataMap{}}
 	constraints := AuditConstraints{MaxAuditLength: 1000, MaxPayloadContentsLength: int64(max)}
-	ev.RequestPayload["contents"] = requestPayload
-	ev.RequestPayload["length"] = max / 2
-	ev.ResponsePayload["contents"] = types.DataMap{"Key1": "DisallowedResponseSize"}
-	ev.ResponsePayload["length"] = (max / 2) + 1
+	ev.RequestPayload[keyPayloadContents] = requestPayload
+	ev.RequestPayload[keyPayloadLength] = max / 2
+	ev.ResponsePayload[keyPayloadContents] = types.DataMap{"Key1": "DisallowedResponseSize"}
+	ev.ResponsePayload[keyPayloadLength] = (max / 2) + 1
 	enforcePrecedentConstraints(&ev, constraints)
-	assert.Equal(t, types.DataMap{}, ev.ResponsePayload["contents"])
-	assert.Equal(t, requestPayload, ev.RequestPayload["contents"])
+	assert.Nil(t, ev.ResponsePayload[keyPayloadContents])
+	assert.Equal(t, requestPayload, ev.RequestPayload[keyPayloadContents])
 }
 
 func TestRequestContentsRetained(t *testing.T) {
@@ -154,10 +154,10 @@ func TestRequestContentsRetained(t *testing.T) {
 	ev := RATEAuditEvent{}
 	ev.AuditEvent = AuditEvent{RequestPayload: types.DataMap{}}
 	constraints := AuditConstraints{MaxAuditLength: 1000, MaxPayloadContentsLength: int64(max)}
-	ev.RequestPayload["contents"] = contents
-	ev.RequestPayload["length"] = max - 1
+	ev.RequestPayload[keyPayloadContents] = contents
+	ev.RequestPayload[keyPayloadLength] = max - 1
 	enforcePrecedentConstraints(&ev.AuditEvent, constraints)
-	assert.Equal(t, contents, ev.RequestPayload["contents"])
+	assert.Equal(t, contents, ev.RequestPayload[keyPayloadContents])
 }
 
 type fixedClock time.Time

@@ -14,6 +14,11 @@ import (
 	"github.com/satori/go.uuid"
 )
 
+const (
+	keyPayloadContents = "contents"
+	keyPayloadLength   = "length"
+)
+
 // AuditEvent captures the content and metadata of an HTTP request and response.
 type AuditEvent struct {
 	AuditSource     string        `json:"auditSource,omitempty"`
@@ -116,34 +121,32 @@ func (ev *AuditEvent) addRequestPayloadContents(s string) {
 	if ev.RequestPayload == nil {
 		ev.RequestPayload = types.DataMap{}
 	}
-	ev.RequestPayload["contents"] = s
-	ev.RequestPayload["length"] = len(s)
+	ev.RequestPayload[keyPayloadContents] = s
+	ev.RequestPayload[keyPayloadLength] = len(s)
 }
 
 func (ev *AuditEvent) addResponsePayloadContents(s string) {
 	if ev.ResponsePayload == nil {
 		ev.ResponsePayload = types.DataMap{}
 	}
-	ev.ResponsePayload["contents"] = s
-	ev.ResponsePayload["length"] = len(s)
+	ev.ResponsePayload[keyPayloadContents] = s
+	ev.ResponsePayload[keyPayloadLength] = len(s)
 }
 
 func enforcePrecedentConstraints(ev *AuditEvent, constraints AuditConstraints) {
-	reqLen, _ := ev.RequestPayload["length"].(int) // Zero if not int or missing
+	reqLen, _ := ev.RequestPayload[keyPayloadLength].(int) // Zero if not int or missing
 	lenRequest := int64(reqLen)
-	requestContents := ev.RequestPayload["contents"]
 	requestTooBig := lenRequest > constraints.MaxPayloadContentsLength
-	if requestContents != nil && requestTooBig {
-		ev.RequestPayload["contents"] = types.DataMap{} // Request contents too big
+	if lenRequest == 0 || requestTooBig {
+		delete(ev.RequestPayload, keyPayloadContents)
 	}
 
-	respLen, _ := ev.ResponsePayload["length"].(int)
+	respLen, _ := ev.ResponsePayload[keyPayloadLength].(int)
 	lenResponse := int64(respLen)
-	reponseContents := ev.ResponsePayload["contents"]
 	responseTooBig := lenResponse > constraints.MaxPayloadContentsLength
 	combinedTooBig := lenRequest+lenResponse > constraints.MaxPayloadContentsLength
-	if reponseContents != nil && (responseTooBig || combinedTooBig) {
-		ev.ResponsePayload["contents"] = types.DataMap{} // Response contents too big
+	if lenResponse == 0 || responseTooBig || combinedTooBig {
+		delete(ev.ResponsePayload, keyPayloadContents)
 	}
 }
 
