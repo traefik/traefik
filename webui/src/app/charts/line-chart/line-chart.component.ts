@@ -1,4 +1,5 @@
 import { Component, Input, OnInit, ElementRef, OnChanges, SimpleChanges } from '@angular/core';
+import { WindowService } from '../../services/window.service';
 import {
   range,
   scaleTime,
@@ -41,7 +42,7 @@ export class LineChartComponent implements OnChanges, OnInit {
   margin = { top: 40, right: 40, bottom: 40, left: 40 };
   loading = true;
 
-  constructor(private elementRef: ElementRef) { }
+  constructor(private elementRef: ElementRef, public windowService: WindowService) { }
 
   ngOnInit() {
     this.lineChartEl = this.elementRef.nativeElement.querySelector('.line-chart');
@@ -55,8 +56,16 @@ export class LineChartComponent implements OnChanges, OnInit {
     };
 
     this.render();
-
     setTimeout(() => this.loading = false, 4000);
+    this.windowService.resize.subscribe(size => {
+      if (!this.svg) {
+        return;
+      }
+
+      const el = this.lineChartEl.querySelector('svg');
+      el.parentNode.removeChild(el);
+      this.render();
+    });
   }
 
   render() {
@@ -114,7 +123,6 @@ export class LineChartComponent implements OnChanges, OnInit {
 
   updateData = (value: number) => {
     this.data.push(value * 1000000);
-
     this.now = new Date();
 
     this.x.domain([<any>this.now - (this.limit - 2) * this.duration, <any>this.now - this.duration]);

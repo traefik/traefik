@@ -57,8 +57,14 @@
         <div class="columns">
           <div class="column is-6">
             <div class="content-item">
-              <h2>Average Response Time (ms)</h2>
+              <h2>Average Response Time (µs)</h2>
               <app-line-chart [value]="chartValue"></app-line-chart>
+            </div>
+          </div>
+          <div class="column is-6">
+            <div class="content-item">
+              <h2>Total Status Code Count</h2>
+              <app-bar-chart [value]="statusCodeValue"></app-bar-chart>
             </div>
           </div>
         </div>

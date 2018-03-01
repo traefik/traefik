@@ -5,11 +5,13 @@ import { RouterModule } from '@angular/router';
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from './services/api.service';
+import { WindowService } from './services/window.service';
 import { AppComponent } from './app.component';
 import { HeaderComponent } from './components/header/header.component';
 import { ProvidersComponent } from './components/providers/providers.component';
 import { HealthComponent } from './components/health/health.component';
 import { LineChartComponent } from './charts/line-chart/line-chart.component';
+import { BarChartComponent } from './charts/bar-chart/bar-chart.component';
 import { KeysPipe } from './pipes/keys.pipe';
 
 @NgModule({
@@ -19,6 +21,7 @@ import { KeysPipe } from './pipes/keys.pipe';
     ProvidersComponent,
     HealthComponent,
     LineChartComponent,
+    BarChartComponent,
     KeysPipe
   ],
   imports: [
@@ -32,7 +35,8 @@ import { KeysPipe } from './pipes/keys.pipe';
     ])
   ],
   providers: [
-    ApiService
+    ApiService,
+    WindowService
   ],
   bootstrap: [AppComponent]
 })

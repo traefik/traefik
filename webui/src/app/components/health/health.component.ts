@@ -21,8 +21,8 @@ export class HealthComponent implements OnInit, OnDestroy {
   totalResponseTime: string;
   codeCount: number;
   totalCodeCount: number;
-  healthData: any[] = [];
   chartValue: any;
+  statusCodeValue: any;
 
   constructor(private apiService: ApiService) { }
 
@@ -32,6 +32,9 @@ export class HealthComponent implements OnInit, OnDestroy {
       .mergeMap(() => this.apiService.fetchHealthStatus())
       .subscribe(data => {
         this.chartValue = { count: data.average_response_time_sec, date: data.time };
+        this.statusCodeValue = Object.keys(data.total_status_code_count)
+          .map(key => ({ code: key, count: data.total_status_code_count[key] }));
+
         this.pid = data.pid;
         this.uptime = distanceInWordsStrict(subSeconds(new Date(), data.uptime_sec), new Date());
         this.uptimeSince = format(subSeconds(new Date(), data.uptime_sec), 'MM/DD/YYYY HH:mm:ss');
@@ -39,14 +42,6 @@ export class HealthComponent implements OnInit, OnDestroy {
         this.averageResponseTime = data.average_response_time;
         this.codeCount = data.count;
         this.totalCodeCount = data.total_count;
-
-        this.healthData.push({
-          average_response_time: data.average_response_time_sec,
-          count: data.count,
-          status_code_count: data.status_code_count,
-          total_status_code_count: data.total_status_code_count,
-          time: data.time
-        });
       });
   }
 
