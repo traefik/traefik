@@ -1,4 +1,4 @@
-package main
+package storeconfig
 
 import (
 	"encoding/json"
@@ -10,9 +10,11 @@ import (
 	"github.com/containous/staert"
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/cluster"
+	"github.com/containous/traefik/cmd"
 )
 
-func newStoreConfigCmd(traefikConfiguration *TraefikConfiguration, traefikPointersConfiguration *TraefikConfiguration) *flaeg.Command {
+// NewCmd builds a new StoreConfig command
+func NewCmd(traefikConfiguration *cmd.TraefikConfiguration, traefikPointersConfiguration *cmd.TraefikConfiguration) *flaeg.Command {
 	return &flaeg.Command{
 		Name:                  "storeconfig",
 		Description:           `Store the static traefik configuration into a Key-value stores. Traefik will not start.`,
@@ -24,7 +26,8 @@ func newStoreConfigCmd(traefikConfiguration *TraefikConfiguration, traefikPointe
 	}
 }
 
-func runStoreConfig(kv *staert.KvSource, traefikConfiguration *TraefikConfiguration) func() error {
+// Run store config in KV
+func Run(kv *staert.KvSource, traefikConfiguration *cmd.TraefikConfiguration) func() error {
 	return func() error {
 		if kv == nil {
 			return fmt.Errorf("error using command storeconfig, no Key-value store defined")
@@ -112,9 +115,9 @@ func runStoreConfig(kv *staert.KvSource, traefikConfiguration *TraefikConfigurat
 	}
 }
 
-// createKvSource creates KvSource
+// CreateKvSource creates KvSource
 // TLS support is enable for Consul and Etcd backends
-func createKvSource(traefikConfiguration *TraefikConfiguration) (*staert.KvSource, error) {
+func CreateKvSource(traefikConfiguration *cmd.TraefikConfiguration) (*staert.KvSource, error) {
 	var kv *staert.KvSource
 	var kvStore store.Store
 	var err error

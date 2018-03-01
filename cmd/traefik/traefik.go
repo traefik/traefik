@@ -14,6 +14,11 @@ import (
 	"github.com/containous/flaeg"
 	"github.com/containous/staert"
 	"github.com/containous/traefik/acme"
+	"github.com/containous/traefik/cmd"
+	"github.com/containous/traefik/cmd/bug"
+	"github.com/containous/traefik/cmd/healthcheck"
+	"github.com/containous/traefik/cmd/storeconfig"
+	cmdVersion "github.com/containous/traefik/cmd/version"
 	"github.com/containous/traefik/collector"
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/job"
@@ -33,8 +38,8 @@ import (
 
 func main() {
 	// traefik config inits
-	traefikConfiguration := NewTraefikConfiguration()
-	traefikPointersConfiguration := NewTraefikDefaultPointersConfiguration()
+	traefikConfiguration := cmd.NewTraefikConfiguration()
+	traefikPointersConfiguration := cmd.NewTraefikDefaultPointersConfiguration()
 
 	// traefik Command init
 	traefikCmd := &flaeg.Command{
@@ -44,13 +49,13 @@ Complete documentation is available at https://traefik.io`,
 		Config:                traefikConfiguration,
 		DefaultPointersConfig: traefikPointersConfiguration,
 		Run: func() error {
-			run(&traefikConfiguration.GlobalConfiguration, traefikConfiguration.ConfigFile)
+			runCmd(&traefikConfiguration.GlobalConfiguration, traefikConfiguration.ConfigFile)
 			return nil
 		},
 	}
 
 	// storeconfig Command init
-	storeConfigCmd := newStoreConfigCmd(traefikConfiguration, traefikPointersConfiguration)
+	storeConfigCmd := storeconfig.NewCmd(traefikConfiguration, traefikPointersConfiguration)
 
 	// init flaeg source
 	f := flaeg.New(traefikCmd, os.Args[1:])
@@ -65,10 +70,10 @@ Complete documentation is available at https://traefik.io`,
 	f.AddParser(reflect.TypeOf(types.Buckets{}), &types.Buckets{})
 
 	// add commands
-	f.AddCommand(newVersionCmd())
-	f.AddCommand(newBugCmd(traefikConfiguration, traefikPointersConfiguration))
+	f.AddCommand(cmdVersion.NewCmd())
+	f.AddCommand(bug.NewCmd(traefikConfiguration, traefikPointersConfiguration))
 	f.AddCommand(storeConfigCmd)
-	f.AddCommand(newHealthCheckCmd(traefikConfiguration, traefikPointersConfiguration))
+	f.AddCommand(healthcheck.NewCmd(traefikConfiguration, traefikPointersConfiguration))
 
 	usedCmd, err := f.GetCommand()
 	if err != nil {
@@ -99,12 +104,12 @@ Complete documentation is available at https://traefik.io`,
 
 	traefikConfiguration.ConfigFile = toml.ConfigFileUsed()
 
-	kv, err := createKvSource(traefikConfiguration)
+	kv, err := storeconfig.CreateKvSource(traefikConfiguration)
 	if err != nil {
 		fmtlog.Printf("Error creating kv store: %s\n", err)
 		os.Exit(1)
 	}
-	storeConfigCmd.Run = runStoreConfig(kv, traefikConfiguration)
+	storeConfigCmd.Run = storeconfig.Run(kv, traefikConfiguration)
 
 	// if a KV Store is enable and no sub-command called in args
 	if kv != nil && usedCmd == traefikCmd {
@@ -137,7 +142,7 @@ Complete documentation is available at https://traefik.io`,
 	os.Exit(0)
 }
 
-func run(globalConfiguration *configuration.GlobalConfiguration, configFile string) {
+func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile string) {
 	configureLogging(globalConfiguration)
 
 	if len(configFile) > 0 {
@@ -178,7 +183,7 @@ func run(globalConfiguration *configuration.GlobalConfiguration, configFile stri
 		safe.Go(func() {
 			tick := time.Tick(t)
 			for range tick {
-				_, errHealthCheck := healthCheck(*globalConfiguration)
+				_, errHealthCheck := healthcheck.Do(*globalConfiguration)
 				if globalConfiguration.Ping == nil || errHealthCheck == nil {
 					if ok, _ := daemon.SdNotify(false, "WATCHDOG=1"); !ok {
 						log.Error("Fail to tick watchdog")

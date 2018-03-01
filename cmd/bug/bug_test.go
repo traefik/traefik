@@ -1,9 +1,10 @@
-package main
+package bug
 
 import (
 	"testing"
 
-	"github.com/containous/traefik/cmd/traefik/anonymize"
+	"github.com/containous/traefik/anonymize"
+	"github.com/containous/traefik/cmd"
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/provider/file"
 	"github.com/containous/traefik/tls"
@@ -11,8 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_createBugReport(t *testing.T) {
-	traefikConfiguration := &TraefikConfiguration{
+func Test_createReport(t *testing.T) {
+	traefikConfiguration := &cmd.TraefikConfiguration{
 		ConfigFile: "FOO",
 		GlobalConfiguration: configuration.GlobalConfiguration{
 			EntryPoints: configuration.EntryPoints{
@@ -37,7 +38,7 @@ func Test_createBugReport(t *testing.T) {
 		},
 	}
 
-	report, err := createBugReport(traefikConfiguration)
+	report, err := createReport(traefikConfiguration)
 	assert.NoError(t, err, report)
 
 	// exported anonymous configuration
@@ -47,7 +48,7 @@ func Test_createBugReport(t *testing.T) {
 }
 
 func Test_anonymize_traefikConfiguration(t *testing.T) {
-	traefikConfiguration := &TraefikConfiguration{
+	traefikConfiguration := &cmd.TraefikConfiguration{
 		ConfigFile: "FOO",
 		GlobalConfiguration: configuration.GlobalConfiguration{
 			EntryPoints: configuration.EntryPoints{

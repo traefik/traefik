@@ -1,4 +1,4 @@
-package main
+package healthcheck
 
 import (
 	"crypto/tls"
@@ -9,27 +9,29 @@ import (
 	"time"
 
 	"github.com/containous/flaeg"
+	"github.com/containous/traefik/cmd"
 	"github.com/containous/traefik/configuration"
 )
 
-func newHealthCheckCmd(traefikConfiguration *TraefikConfiguration, traefikPointersConfiguration *TraefikConfiguration) *flaeg.Command {
+// NewCmd builds a new HealthCheck command
+func NewCmd(traefikConfiguration *cmd.TraefikConfiguration, traefikPointersConfiguration *cmd.TraefikConfiguration) *flaeg.Command {
 	return &flaeg.Command{
 		Name:                  "healthcheck",
 		Description:           `Calls traefik /ping to check health (web provider must be enabled)`,
 		Config:                traefikConfiguration,
 		DefaultPointersConfig: traefikPointersConfiguration,
-		Run: runHealthCheck(traefikConfiguration),
+		Run: runCmd(traefikConfiguration),
 		Metadata: map[string]string{
 			"parseAllSources": "true",
 		},
 	}
 }
 
-func runHealthCheck(traefikConfiguration *TraefikConfiguration) func() error {
+func runCmd(traefikConfiguration *cmd.TraefikConfiguration) func() error {
 	return func() error {
 		traefikConfiguration.GlobalConfiguration.SetEffectiveConfiguration(traefikConfiguration.ConfigFile)
 
-		resp, errPing := healthCheck(traefikConfiguration.GlobalConfiguration)
+		resp, errPing := Do(traefikConfiguration.GlobalConfiguration)
 		if errPing != nil {
 			fmt.Printf("Error calling healthcheck: %s\n", errPing)
 			os.Exit(1)
@@ -44,11 +46,11 @@ func runHealthCheck(traefikConfiguration *TraefikConfiguration) func() error {
 	}
 }
 
-func healthCheck(globalConfiguration configuration.GlobalConfiguration) (*http.Response, error) {
+// Do try to do a healthcheck
+func Do(globalConfiguration configuration.GlobalConfiguration) (*http.Response, error) {
 	if globalConfiguration.Ping == nil {
 		return nil, errors.New("please enable `ping` to use health check")
 	}
-
 	pingEntryPoint, ok := globalConfiguration.EntryPoints[globalConfiguration.Ping.EntryPoint]
 	if !ok {
 		return nil, errors.New("missing `ping` entrypoint")
