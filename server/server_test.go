@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"context"
+
 	"github.com/containous/flaeg"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/configuration"
@@ -22,6 +24,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/unrolled/secure"
 	"github.com/urfave/negroni"
 	"github.com/vulcand/oxy/roundrobin"
 )
@@ -1013,6 +1016,123 @@ func TestBuildRedirectHandler(t *testing.T) {
 			location, err := recorder.Result().Location()
 			require.NoError(t, err)
 			assert.Equal(t, test.expectedURL, location.String())
+		})
+	}
+}
+
+type mockContext struct {
+	headers http.Header
+}
+
+func (c mockContext) Deadline() (deadline time.Time, ok bool) {
+	return deadline, ok
+}
+
+func (c mockContext) Done() <-chan struct{} {
+	ch := make(chan struct{})
+	close(ch)
+	return ch
+}
+
+func (c mockContext) Err() error {
+	return context.DeadlineExceeded
+}
+
+func (c mockContext) Value(key interface{}) interface{} {
+	return c.headers
+}
+
+func TestNewServerWithResponseModifiers(t *testing.T) {
+	cases := []struct {
+		desc             string
+		headerMiddleware *middlewares.HeaderStruct
+		secureMiddleware *secure.Secure
+		ctx              context.Context
+		expected         map[string]string
+	}{
+		{
+			desc:             "header and secure nil",
+			headerMiddleware: nil,
+			secureMiddleware: nil,
+			ctx:              mockContext{},
+			expected: map[string]string{
+				"X-Default":       "powpow",
+				"Referrer-Policy": "same-origin",
+			},
+		},
+		{
+			desc: "header middleware not nil",
+			headerMiddleware: middlewares.NewHeaderFromStruct(&types.Headers{
+				CustomResponseHeaders: map[string]string{
+					"X-Default": "powpow",
+				},
+			}),
+			secureMiddleware: nil,
+			ctx:              mockContext{},
+			expected: map[string]string{
+				"X-Default":       "powpow",
+				"Referrer-Policy": "same-origin",
+			},
+		},
+		{
+			desc:             "secure middleware not nil",
+			headerMiddleware: nil,
+			secureMiddleware: middlewares.NewSecure(&types.Headers{
+				ReferrerPolicy: "no-referrer",
+			}),
+			ctx: mockContext{
+				headers: http.Header{"Referrer-Policy": []string{"no-referrer"}},
+			},
+			expected: map[string]string{
+				"X-Default":       "powpow",
+				"Referrer-Policy": "no-referrer",
+			},
+		},
+		{
+			desc: "header and secure middleware not nil",
+			headerMiddleware: middlewares.NewHeaderFromStruct(&types.Headers{
+				CustomResponseHeaders: map[string]string{
+					"Referrer-Policy": "powpow",
+				},
+			}),
+			secureMiddleware: middlewares.NewSecure(&types.Headers{
+				ReferrerPolicy: "no-referrer",
+			}),
+			ctx: mockContext{
+				headers: http.Header{"Referrer-Policy": []string{"no-referrer"}},
+			},
+			expected: map[string]string{
+				"X-Default":       "powpow",
+				"Referrer-Policy": "powpow",
+			},
+		},
+	}
+
+	for _, test := range cases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			headers := make(http.Header)
+			headers.Add("X-Default", "powpow")
+			headers.Add("Referrer-Policy", "same-origin")
+
+			req := httptest.NewRequest(http.MethodGet, "http://127.0.0.1", nil)
+
+			res := &http.Response{
+				Request: req.WithContext(test.ctx),
+				Header:  headers,
+			}
+
+			responseModifier := buildModifyResponse(test.secureMiddleware, test.headerMiddleware)
+			err := responseModifier(res)
+
+			assert.NoError(t, err)
+			assert.Equal(t, len(test.expected), len(res.Header))
+
+			for k, v := range test.expected {
+				assert.Equal(t, v, res.Header.Get(k))
+			}
 		})
 	}
 }

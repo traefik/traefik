@@ -1163,9 +1163,10 @@
   revision = "50716a0a853771bb36bfce61a45cdefdb98c2e6e"
 
 [[projects]]
+  branch = "v1"
   name = "github.com/unrolled/secure"
   packages = ["."]
-  revision = "824e85271811af89640ea25620c67f6c2eed987e"
+  revision = "88720c9cbecfcf2eceb9bb4311ad6e398a8381ed"
 
 [[projects]]
   name = "github.com/urfave/negroni"
@@ -1564,6 +1565,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b31bcfd5f1894d3ce3c0468cd7273f89c759fc384254de74548c5cbe219c23e9"
+  inputs-digest = "b748d60cfaddd7ff38c63bdf1004ae7dc2dcd084b220076f8eed2a8971c8e234"
   solver-name = "gps-cdcl"
   solver-version = 1

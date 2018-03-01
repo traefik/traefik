@@ -43,6 +43,7 @@ import (
 	"github.com/eapache/channels"
 	"github.com/sirupsen/logrus"
 	thoas_stats "github.com/thoas/stats"
+	"github.com/unrolled/secure"
 	"github.com/urfave/negroni"
 	"github.com/vulcand/oxy/buffer"
 	"github.com/vulcand/oxy/connlimit"
@@ -936,11 +937,9 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 					}
 
 					headerMiddleware := middlewares.NewHeaderFromStruct(frontend.Headers)
-					var responseModifier func(res *http.Response) error
-					if headerMiddleware != nil {
-						responseModifier = headerMiddleware.ModifyResponseHeaders
-					}
+					secureMiddleware := middlewares.NewSecure(frontend.Headers)
 
+					var responseModifier = buildModifyResponse(secureMiddleware, headerMiddleware)
 					var fwd http.Handler
 
 					fwd, err = forward.New(
@@ -1136,10 +1135,9 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						n.Use(s.tracingMiddleware.NewNegroniHandlerWrapper("Header", headerMiddleware, false))
 					}
 
-					secureMiddleware := middlewares.NewSecure(frontend.Headers)
 					if secureMiddleware != nil {
 						log.Debugf("Adding secure middleware for frontend %s", frontendName)
-						n.UseFunc(secureMiddleware.HandlerFuncWithNext)
+						n.UseFunc(secureMiddleware.HandlerFuncWithNextForRequestOnly)
 					}
 
 					if config.Backends[frontend.Backend].Buffering != nil {
@@ -1492,4 +1490,22 @@ func (s *Server) buildBufferingMiddleware(handler http.Handler, config *types.Bu
 		buffer.MaxResponseBodyBytes(config.MaxResponseBodyBytes),
 		buffer.CondSetter(len(config.RetryExpression) > 0, buffer.Retry(config.RetryExpression)),
 	)
+}
+
+func buildModifyResponse(secure *secure.Secure, header *middlewares.HeaderStruct) func(res *http.Response) error {
+	return func(res *http.Response) error {
+		if secure != nil {
+			err := secure.ModifyResponseHeaders(res)
+			if err != nil {
+				return err
+			}
+		}
+		if header != nil {
+			err := header.ModifyResponseHeaders(res)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 }

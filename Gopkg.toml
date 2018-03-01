@@ -173,6 +173,10 @@
   version = "1.1.0"
 
 [[constraint]]
+  branch = "v1"
+  name = "github.com/unrolled/secure"
+
+[[constraint]]
   name = "github.com/vdemeester/shakers"
   version = "0.1.0"
 
