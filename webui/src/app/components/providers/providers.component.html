@@ -1,6 +1,7 @@
 <div class="container">
   <div class="content">
-    <div class="columns is-multiline">
+
+    <div class="columns is-multiline" *ngIf="this.providers.length">
       <div class="column is-12">
 
         <div class="search-container">
@@ -280,7 +281,7 @@
                 <div class="message-header">
                   <h2>
                     <div>
-                      <img src="/icons/globe.svg" class="icon">
+                      <img src="/assets/icons/globe.svg" class="icon">
                       <div class="field is-grouped is-grouped-multiline">
                         <div class="control">
                           <div class="tags has-addons">
@@ -418,5 +419,14 @@
         </div>
       </div>
     </div>
+
+    <div class="columns" *ngIf="!this.providers.length">
+      <div class="column is-12">
+        <div class="notification">
+          No providers found.
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>

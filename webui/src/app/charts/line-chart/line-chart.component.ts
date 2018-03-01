@@ -1,8 +1,22 @@
 import { Component, Input, OnInit, ElementRef, OnChanges, SimpleChanges } from '@angular/core';
-import { range, scaleTime, scaleLinear, min, max, curveLinear, line, easeLinear, select, axisLeft, axisBottom, timeSecond, timeFormat } from 'd3';
+import {
+  range,
+  scaleTime,
+  scaleLinear,
+  min,
+  max,
+  curveLinear,
+  line,
+  easeLinear,
+  select,
+  axisLeft,
+  axisBottom,
+  timeSecond,
+  timeFormat
+} from 'd3';
 
 @Component({
-  selector: 'line-chart',
+  selector: 'app-line-chart',
   templateUrl: 'line-chart.component.html'
 })
 export class LineChartComponent implements OnChanges, OnInit {
@@ -21,6 +35,7 @@ export class LineChartComponent implements OnChanges, OnInit {
   limit: number;
   options: any;
   xAxis: any;
+  yAxis: any;
   height: number;
   width: number;
   margin = { top: 40, right: 40, bottom: 40, left: 40 };
@@ -60,7 +75,7 @@ export class LineChartComponent implements OnChanges, OnInit {
     this.y = scaleLinear().range([this.height, 0]);
 
     this.x.domain([<any>this.now - (this.limit - 2), <any>this.now - this.duration]);
-    this.y.domain([-0.005, 0.5]);
+    this.y.domain([0, max(this.data, (d: any) => d)]);
 
     this.line = line()
       .x((d: any, i: number) => this.x(<any>this.now - (this.limit - 1 - i) * this.duration))
@@ -78,7 +93,7 @@ export class LineChartComponent implements OnChanges, OnInit {
       .attr('transform', `translate(0, ${this.height})`)
       .call(axisBottom(this.x).tickSize(-this.height));
 
-    this.svg.append('g')
+    this.yAxis = this.svg.append('g')
       .attr('class', 'y axis')
       .call(axisLeft(this.y).tickSize(-this.width));
 
@@ -94,21 +109,30 @@ export class LineChartComponent implements OnChanges, OnInit {
       return;
     }
 
-    this.updateData(this.value.count)
+    this.updateData(this.value.count);
   }
 
   updateData = (value: number) => {
-    this.data.push(value * 10000);
+    this.data.push(value * 1000000);
+
     this.now = new Date();
 
     this.x.domain([<any>this.now - (this.limit - 2) * this.duration, <any>this.now - this.duration]);
-    this.y.domain([-0.005, max(this.data)])
+    const minv = min(this.data, (d: any) => d) > 0 ? min(this.data, (d: any) => d) - 4 : 0;
+    const maxv = max(this.data, (d: any) => d) + 4;
+    this.y.domain([minv, maxv]);
 
     this.xAxis
       .transition()
       .duration(this.duration)
       .ease(easeLinear)
       .call(axisBottom(this.x).tickSize(-this.height).ticks(timeSecond, 5).tickFormat(timeFormat('%H:%M:%S')));
+
+    this.yAxis
+      .transition()
+      .duration(500)
+      .ease(easeLinear)
+      .call(axisLeft(this.y).tickSize(-this.width));
 
     this.path
       .transition()

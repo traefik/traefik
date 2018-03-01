@@ -9,7 +9,7 @@ import { AppComponent } from './app.component';
 import { HeaderComponent } from './components/header/header.component';
 import { ProvidersComponent } from './components/providers/providers.component';
 import { HealthComponent } from './components/health/health.component';
-import { LineChartComponent } from './charts/line-chart';
+import { LineChartComponent } from './charts/line-chart/line-chart.component';
 import { KeysPipe } from './pipes/keys.pipe';
 
 @NgModule({

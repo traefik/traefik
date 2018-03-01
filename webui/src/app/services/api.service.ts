@@ -12,27 +12,24 @@ export interface ProviderType {
 
 @Injectable()
 export class ApiService {
-  url: string;
   headers: HttpHeaders;
 
   constructor(private http: HttpClient) {
-    const host = `${location.protocol}//${location.hostname}`;
-    this.url = location.port === '4200' ? `${host}:8080` : `${host}`;
     this.headers = new HttpHeaders({
       'Access-Control-Allow-Origin': '*'
     });
   }
 
   fetchVersion(): Observable<any> {
-    return this.http.get(`${this.url}/api/version`, { headers: this.headers });
+    return this.http.get(`/api/version`, { headers: this.headers });
   }
 
   fetchHealthStatus(): Observable<any> {
-    return this.http.get(`${this.url}/health`, { headers: this.headers });
+    return this.http.get(`/health`, { headers: this.headers });
   }
 
   fetchProviders(): Observable<any> {
-    return this.http.get(`${this.url}/api/providers`, { headers: this.headers })
+    return this.http.get(`/api/providers`, { headers: this.headers })
       .map(this.parseProviders);
   }
 
