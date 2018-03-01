@@ -2,13 +2,13 @@ import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { HttpModule } from '@angular/http';
+import { HttpClientModule } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from './services/api.service';
 import { AppComponent } from './app.component';
-import { HeaderComponent } from './components/header';
-import { ProvidersComponent } from './components/providers';
-import { HealthComponent } from './components/health';
+import { HeaderComponent } from './components/header/header.component';
+import { ProvidersComponent } from './components/providers/providers.component';
+import { HealthComponent } from './components/health/health.component';
 import { LineChartComponent } from './charts/line-chart';
 import { KeysPipe } from './pipes/keys.pipe';
 
@@ -24,7 +24,7 @@ import { KeysPipe } from './pipes/keys.pipe';
   imports: [
     BrowserModule,
     CommonModule,
-    HttpModule,
+    HttpClientModule,
     FormsModule,
     RouterModule.forRoot([
       { path: '', component: ProvidersComponent, pathMatch: 'full' },
@@ -34,6 +34,6 @@ import { KeysPipe } from './pipes/keys.pipe';
   providers: [
     ApiService
   ],
-  bootstrap: [ AppComponent ]
+  bootstrap: [AppComponent]
 })
 export class AppModule { }

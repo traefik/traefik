@@ -3,7 +3,7 @@ import { ApiService } from '../../services/api.service';
 import { Subscription } from 'rxjs/Subscription';
 
 @Component({
-  selector: 'providers',
+  selector: 'app-providers',
   templateUrl: 'providers.component.html'
 })
 export class ProvidersComponent implements OnInit, OnDestroy {

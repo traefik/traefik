@@ -9,7 +9,7 @@ import 'rxjs/add/operator/map';
 import { format, distanceInWordsStrict, subSeconds } from 'date-fns';
 
 @Component({
-  selector: 'health',
+  selector: 'app-health',
   templateUrl: 'health.component.html'
 })
 export class HealthComponent implements OnInit, OnDestroy {

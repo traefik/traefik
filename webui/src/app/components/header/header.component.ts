@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ApiService } from '../../services/api.service';
 
 @Component({
-  selector: 'header',
+  selector: 'app-header',
   templateUrl: 'header.component.html'
 })
 export class HeaderComponent implements OnInit {
