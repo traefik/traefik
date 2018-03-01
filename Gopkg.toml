@@ -191,6 +191,18 @@ ignored = ["github.com/sirupsen/logrus"]
   name = "github.com/coreos/bbolt"
   revision = "32c383e75ce054674c53b5a07e55de85332aee14"
 
+[[override]]
+  branch = "master"
+  name = "github.com/miekg/dns"
+
+[[override]]
+  name = "golang.org/x/crypto"
+  revision = "b080dc9a8c480b08e698fb1219160d598526310f"
+
+[[override]]
+  name = "golang.org/x/net"
+  revision = "894f8ed5849b15b810ae41e9590a0d05395bba27"
+
 [prune]
   non-go = true
   go-tests = true
