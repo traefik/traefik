@@ -8,9 +8,7 @@ defaultEntryPoints = ["http", "https"]
   [entryPoints.https]
   address = ":5001"
     [entryPoints.https.tls]
-      [[entryPoints.https.tls.certificates]]
-      certFile = "fixtures/acme/ssl/wildcard.crt"
-      keyFile = "fixtures/acme/ssl/wildcard.key"
+
 
 [acme]
 email = "test@traefik.io"
@@ -21,6 +19,11 @@ OnHostRule = {{.OnHostRule}}
 caServer = "http://{{.BoulderHost}}:4000/directory"
 [acme.httpChallenge]
 entryPoint="http"
+[[acme.domains]]
+main = "traefik.acme.wtf"
+
+
+[api]
 
 [file]
 
@@ -28,7 +31,6 @@ entryPoint="http"
   [backends.backend]
     [backends.backend.servers.server1]
     url = "http://127.0.0.1:9010"
-
 
 [frontends]
   [frontends.frontend]
