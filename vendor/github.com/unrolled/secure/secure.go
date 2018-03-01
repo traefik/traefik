@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+type secureCtxKey string
+
 const (
 	stsHeader            = "Strict-Transport-Security"
 	stsSubdomainString   = "; includeSubdomains"
@@ -21,9 +23,12 @@ const (
 	hpkpHeader           = "Public-Key-Pins"
 	referrerPolicyHeader = "Referrer-Policy"
 
-	ctxSecureHeaderKey = "SecureResponseHeader"
+	ctxSecureHeaderKey = secureCtxKey("SecureResponseHeader")
 	cspNonceSize       = 16
 )
+
+// a type whose pointer is the type of field `SSLHostFunc` of `Options` struct
+type SSLHostFunc func(host string) (newHost string)
 
 func defaultBadHostHandler(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Bad Host", http.StatusInternalServerError)
@@ -41,6 +46,9 @@ type Options struct {
 	SSLTemporaryRedirect bool
 	// SSLHost is the host name that is used to redirect http requests to https. Default is "", which indicates to use the same host.
 	SSLHost string
+	// SSLHostFunc is a function pointer, the return value of the function is the host name that has same functionality as `SSHost`. Default is nil.
+	// If SSLHostFunc is nil, the `SSLHost` option will be used.
+	SSLHostFunc *SSLHostFunc
 	// SSLProxyHeaders is set of header keys with associated values that would indicate a valid https request. Useful when using Nginx: `map[string]string{"X-Forwarded-Proto": "https"}`. Default is blank map.
 	SSLProxyHeaders map[string]string
 	// STSSeconds is the max-age of the Strict-Transport-Security header. Default is 0, which would NOT include the header.
@@ -67,12 +75,12 @@ type Options struct {
 	ContentSecurityPolicy string
 	// PublicKey implements HPKP to prevent MITM attacks with forged certificates. Default is "".
 	PublicKey string
-	// Referrer Policy allows sites to control when browsers will pass the Referer header to other sites. Default is "".
+	// ReferrerPolicy allows sites to control when browsers will pass the Referer header to other sites. Default is "".
 	ReferrerPolicy string
 	// When developing, the AllowedHosts, SSL, and STS options can cause some unwanted effects. Usually testing happens on http, not https, and on localhost, not your production domain... so set this to true for dev environment.
 	// If you would like your development environment to mimic production with complete Host blocking, SSL redirects, and STS headers, leave this as false. Default if false.
 	IsDevelopment bool
-
+	// nonceEnabled is used internally for dynamic nouces.
 	nonceEnabled bool
 }
 
@@ -82,11 +90,11 @@ type Secure struct {
 	// Customize Secure with an Options struct.
 	opt Options
 
-	// Handlers for when an error occurs (ie bad host).
+	// badHostHandler is the handler used when an incorrect host is passed in.
 	badHostHandler http.Handler
 }
 
-// New constructs a new Secure instance with supplied options.
+// New constructs a new Secure instance with the supplied options.
 func New(options ...Options) *Secure {
 	var o Options
 	if len(options) == 0 {
@@ -131,6 +139,7 @@ func (s *Secure) Handler(h http.Handler) http.Handler {
 }
 
 // HandlerForRequestOnly implements the http.HandlerFunc for integration with the standard net/http lib.
+// Note that this is for requests only and will not write any headers.
 func (s *Secure) HandlerForRequestOnly(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if s.opt.nonceEnabled {
@@ -146,8 +155,9 @@ func (s *Secure) HandlerForRequestOnly(h http.Handler) http.Handler {
 			return
 		}
 
-		// Save response headers in the request context
+		// Save response headers in the request context.
 		ctx := context.WithValue(r.Context(), ctxSecureHeaderKey, responseHeader)
+
 		// No headers will be written to the ResponseWriter.
 		h.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -170,6 +180,7 @@ func (s *Secure) HandlerFuncWithNext(w http.ResponseWriter, r *http.Request, nex
 }
 
 // HandlerFuncWithNextForRequestOnly is a special implementation for Negroni, but could be used elsewhere.
+// Note that this is for requests only and will not write any headers.
 func (s *Secure) HandlerFuncWithNextForRequestOnly(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	if s.opt.nonceEnabled {
 		r = withCSPNonce(r, cspRandNonce())
@@ -183,6 +194,7 @@ func (s *Secure) HandlerFuncWithNextForRequestOnly(w http.ResponseWriter, r *htt
 	if err == nil && next != nil {
 		// Save response headers in the request context
 		ctx := context.WithValue(r.Context(), ctxSecureHeaderKey, responseHeader)
+
 		// No headers will be written to the ResponseWriter.
 		next(w, r.WithContext(ctx))
 	}
@@ -237,7 +249,11 @@ func (s *Secure) processRequest(w http.ResponseWriter, r *http.Request) (http.He
 		url.Scheme = "https"
 		url.Host = host
 
-		if len(s.opt.SSLHost) > 0 {
+		if s.opt.SSLHostFunc != nil {
+			if h := (*s.opt.SSLHostFunc)(host); len(h) > 0 {
+				url.Host = h
+			}
+		} else if len(s.opt.SSLHost) > 0 {
 			url.Host = s.opt.SSLHost
 		}
 
@@ -250,7 +266,9 @@ func (s *Secure) processRequest(w http.ResponseWriter, r *http.Request) (http.He
 		return nil, fmt.Errorf("redirecting to HTTPS")
 	}
 
+	// Create our header container.
 	responseHeader := make(http.Header)
+
 	// Strict Transport Security header. Only add header when we know it's an SSL connection.
 	// See https://tools.ietf.org/html/rfc6797#section-7.2 for details.
 	if s.opt.STSSeconds != 0 && (ssl || s.opt.ForceSTSHeader) && !s.opt.IsDevelopment {

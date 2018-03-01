@@ -24,7 +24,7 @@ func CSPNonce(c context.Context) string {
 // WithCSPNonce returns a context derived from ctx containing the given nonce as a value.
 //
 // This is intended for testing or more advanced use-cases;
-// for ordinary HTTP handlers, clients can rely on this package's middleware to populate the CSP nonce in the context.
+// For ordinary HTTP handlers, clients can rely on this package's middleware to populate the CSP nonce in the context.
 func WithCSPNonce(ctx context.Context, nonce string) context.Context {
 	return context.WithValue(ctx, cspNonceKey, nonce)
 }
