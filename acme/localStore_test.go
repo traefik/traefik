@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestLoad(t *testing.T) {
+func TestGet(t *testing.T) {
 	acmeFile := "./acme_example.json"
 
 	folder, prefix := filepath.Split(acmeFile)
@@ -26,13 +26,9 @@ func TestLoad(t *testing.T) {
 	tmpFile.Write(fileContent)
 
 	localStore := NewLocalStore(tmpFile.Name())
-	obj, err := localStore.Load()
+	account, err := localStore.Get()
 	if err != nil {
 		t.Error(err)
-	}
-	account, ok := obj.(*Account)
-	if !ok {
-		t.Error("Object is not an ACME Account")
 	}
 
 	if len(account.DomainsCertificate.Certs) != 1 {

@@ -10,20 +10,22 @@ import (
 	"testing"
 	"time"
 
+	providerACME "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/tls/generate"
+	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/xenolf/lego/acme"
 )
 
 func TestDomainsSet(t *testing.T) {
-	checkMap := map[string]Domains{
+	checkMap := map[string]types.Domains{
 		"":                                   {},
-		"foo.com":                            {Domain{Main: "foo.com", SANs: []string{}}},
-		"foo.com,bar.net":                    {Domain{Main: "foo.com", SANs: []string{"bar.net"}}},
-		"foo.com,bar1.net,bar2.net,bar3.net": {Domain{Main: "foo.com", SANs: []string{"bar1.net", "bar2.net", "bar3.net"}}},
+		"foo.com":                            {types.Domain{Main: "foo.com", SANs: []string{}}},
+		"foo.com,bar.net":                    {types.Domain{Main: "foo.com", SANs: []string{"bar.net"}}},
+		"foo.com,bar1.net,bar2.net,bar3.net": {types.Domain{Main: "foo.com", SANs: []string{"bar1.net", "bar2.net", "bar3.net"}}},
 	}
 	for in, check := range checkMap {
-		ds := Domains{}
+		ds := types.Domains{}
 		ds.Set(in)
 		if !reflect.DeepEqual(check, ds) {
 			t.Errorf("Expected %+v\nGot %+v", check, ds)
@@ -38,30 +40,30 @@ func TestDomainsSetAppend(t *testing.T) {
 		"foo2.com,bar.net",
 		"foo3.com,bar1.net,bar2.net,bar3.net",
 	}
-	checkSlice := []Domains{
+	checkSlice := []types.Domains{
 		{},
 		{
-			Domain{
+			types.Domain{
 				Main: "foo1.com",
 				SANs: []string{}}},
 		{
-			Domain{
+			types.Domain{
 				Main: "foo1.com",
 				SANs: []string{}},
-			Domain{
+			types.Domain{
 				Main: "foo2.com",
 				SANs: []string{"bar.net"}}},
 		{
-			Domain{
+			types.Domain{
 				Main: "foo1.com",
 				SANs: []string{}},
-			Domain{
+			types.Domain{
 				Main: "foo2.com",
 				SANs: []string{"bar.net"}},
-			Domain{Main: "foo3.com",
+			types.Domain{Main: "foo3.com",
 				SANs: []string{"bar1.net", "bar2.net", "bar3.net"}}},
 	}
-	ds := Domains{}
+	ds := types.Domains{}
 	for i, in := range inSlice {
 		ds.Set(in)
 		if !reflect.DeepEqual(checkSlice[i], ds) {
@@ -77,7 +79,7 @@ func TestCertificatesRenew(t *testing.T) {
 		lock: sync.RWMutex{},
 		Certs: []*DomainsCertificate{
 			{
-				Domains: Domain{
+				Domains: types.Domain{
 					Main: "foo1.com",
 					SANs: []string{}},
 				Certificate: &Certificate{
@@ -89,7 +91,7 @@ func TestCertificatesRenew(t *testing.T) {
 				},
 			},
 			{
-				Domains: Domain{
+				Domains: types.Domain{
 					Main: "foo2.com",
 					SANs: []string{}},
 				Certificate: &Certificate{
@@ -113,7 +115,7 @@ func TestCertificatesRenew(t *testing.T) {
 
 	err := domainsCertificates.renewCertificates(
 		newCertificate,
-		Domain{
+		types.Domain{
 			Main: "foo1.com",
 			SANs: []string{}})
 	if err != nil {
@@ -137,7 +139,7 @@ func TestRemoveDuplicates(t *testing.T) {
 		lock: sync.RWMutex{},
 		Certs: []*DomainsCertificate{
 			{
-				Domains: Domain{
+				Domains: types.Domain{
 					Main: "foo.com",
 					SANs: []string{}},
 				Certificate: &Certificate{
@@ -149,7 +151,7 @@ func TestRemoveDuplicates(t *testing.T) {
 				},
 			},
 			{
-				Domains: Domain{
+				Domains: types.Domain{
 					Main: "foo.com",
 					SANs: []string{}},
 				Certificate: &Certificate{
@@ -161,7 +163,7 @@ func TestRemoveDuplicates(t *testing.T) {
 				},
 			},
 			{
-				Domains: Domain{
+				Domains: types.Domain{
 					Main: "foo.com",
 					SANs: []string{}},
 				Certificate: &Certificate{
@@ -173,7 +175,7 @@ func TestRemoveDuplicates(t *testing.T) {
 				},
 			},
 			{
-				Domains: Domain{
+				Domains: types.Domain{
 					Main: "bar.com",
 					SANs: []string{}},
 				Certificate: &Certificate{
@@ -185,7 +187,7 @@ func TestRemoveDuplicates(t *testing.T) {
 				},
 			},
 			{
-				Domains: Domain{
+				Domains: types.Domain{
 					Main: "foo.com",
 					SANs: []string{}},
 				Certificate: &Certificate{
@@ -267,7 +269,7 @@ cijFkALeQp/qyeXdFld2v9gUN3eCgljgcl0QweRoIc=---`)
 }`))
 	}))
 	defer ts.Close()
-	a := ACME{DNSChallenge: &DNSChallenge{Provider: "manual", DelayBeforeCheck: 10}, CAServer: ts.URL}
+	a := ACME{DNSChallenge: &providerACME.DNSChallenge{Provider: "manual", DelayBeforeCheck: 10}, CAServer: ts.URL}
 
 	client, err := a.buildACMEClient(account)
 	if err != nil {
@@ -297,7 +299,7 @@ func TestAcme_getUncheckedCertificates(t *testing.T) {
 	domainsCertificates := DomainsCertificates{Certs: []*DomainsCertificate{
 		{
 			tlsCert: &tls.Certificate{},
-			Domains: Domain{
+			Domains: types.Domain{
 				Main: "*.acme.wtf",
 				SANs: []string{"trae.acme.io"},
 			},

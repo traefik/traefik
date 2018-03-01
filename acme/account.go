@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/types"
 	"github.com/xenolf/lego/acme"
 )
 
@@ -164,7 +165,7 @@ func (dc *DomainsCertificates) Init() error {
 	return nil
 }
 
-func (dc *DomainsCertificates) renewCertificates(acmeCert *Certificate, domain Domain) error {
+func (dc *DomainsCertificates) renewCertificates(acmeCert *Certificate, domain types.Domain) error {
 	dc.lock.Lock()
 	defer dc.lock.Unlock()
 
@@ -182,7 +183,7 @@ func (dc *DomainsCertificates) renewCertificates(acmeCert *Certificate, domain D
 	return fmt.Errorf("certificate to renew not found for domain %s", domain.Main)
 }
 
-func (dc *DomainsCertificates) addCertificateForDomains(acmeCert *Certificate, domain Domain) (*DomainsCertificate, error) {
+func (dc *DomainsCertificates) addCertificateForDomains(acmeCert *Certificate, domain types.Domain) (*DomainsCertificate, error) {
 	dc.lock.Lock()
 	defer dc.lock.Unlock()
 
@@ -211,7 +212,7 @@ func (dc *DomainsCertificates) getCertificateForDomain(domainToFind string) (*Do
 	return nil, false
 }
 
-func (dc *DomainsCertificates) exists(domainToFind Domain) (*DomainsCertificate, bool) {
+func (dc *DomainsCertificates) exists(domainToFind types.Domain) (*DomainsCertificate, bool) {
 	dc.lock.RLock()
 	defer dc.lock.RUnlock()
 	for _, domainsCertificate := range dc.Certs {
@@ -242,7 +243,7 @@ func (dc *DomainsCertificates) toDomainsMap() map[string]*tls.Certificate {
 
 // DomainsCertificate contains a certificate for multiple domains
 type DomainsCertificate struct {
-	Domains     Domain
+	Domains     types.Domain
 	Certificate *Certificate
 	tlsCert     *tls.Certificate
 }

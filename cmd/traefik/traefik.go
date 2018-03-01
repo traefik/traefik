@@ -13,7 +13,6 @@ import (
 	"github.com/cenk/backoff"
 	"github.com/containous/flaeg"
 	"github.com/containous/staert"
-	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/cmd"
 	"github.com/containous/traefik/cmd/bug"
 	"github.com/containous/traefik/cmd/healthcheck"
@@ -23,6 +22,7 @@ import (
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/provider/ecs"
 	"github.com/containous/traefik/provider/kubernetes"
 	"github.com/containous/traefik/safe"
@@ -66,7 +66,7 @@ Complete documentation is available at https://traefik.io`,
 	f.AddParser(reflect.TypeOf(types.Constraints{}), &types.Constraints{})
 	f.AddParser(reflect.TypeOf(kubernetes.Namespaces{}), &kubernetes.Namespaces{})
 	f.AddParser(reflect.TypeOf(ecs.Clusters{}), &ecs.Clusters{})
-	f.AddParser(reflect.TypeOf([]acme.Domain{}), &acme.Domains{})
+	f.AddParser(reflect.TypeOf([]types.Domain{}), &types.Domains{})
 	f.AddParser(reflect.TypeOf(types.Buckets{}), &types.Buckets{})
 
 	// add commands
@@ -164,7 +164,15 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 	stats(globalConfiguration)
 
 	log.Debugf("Global configuration loaded %s", string(jsonConf))
+	if acme.IsEnabled() {
+		store := acme.NewLocalStore(acme.Get().Storage)
+		acme.Get().Store = &store
+	}
 	svr := server.NewServer(*globalConfiguration, configuration.NewProviderAggregator(globalConfiguration))
+	if acme.IsEnabled() && acme.Get().OnHostRule {
+		acme.Get().SetConfigListenerChan(make(chan types.Configuration))
+		svr.AddListener(acme.Get().ListenConfiguration)
+	}
 	svr.Start()
 	defer svr.Close()
 

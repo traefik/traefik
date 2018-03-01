@@ -12,6 +12,7 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares/tracing"
 	"github.com/containous/traefik/ping"
+	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/provider/boltdb"
 	"github.com/containous/traefik/provider/consul"
 	"github.com/containous/traefik/provider/consulcatalog"
@@ -244,6 +245,10 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 		}
 	}
 
+	gc.initACMEProvider()
+}
+
+func (gc *GlobalConfiguration) initACMEProvider() {
 	if gc.ACME != nil {
 		// TODO: to remove in the futurs
 		if len(gc.ACME.StorageFile) > 0 && len(gc.ACME.Storage) == 0 {
@@ -253,11 +258,29 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 
 		if len(gc.ACME.DNSProvider) > 0 {
 			log.Warn("ACME.DNSProvider is deprecated, use ACME.DNSChallenge instead")
-			gc.ACME.DNSChallenge = &acme.DNSChallenge{Provider: gc.ACME.DNSProvider, DelayBeforeCheck: gc.ACME.DelayDontCheckDNS}
+			gc.ACME.DNSChallenge = &acmeprovider.DNSChallenge{Provider: gc.ACME.DNSProvider, DelayBeforeCheck: gc.ACME.DelayDontCheckDNS}
 		}
 
 		if gc.ACME.OnDemand {
 			log.Warn("ACME.OnDemand is deprecated")
+		}
+
+		// TODO: Remove when Provider ACME will replace totally ACME
+		// If provider file, use Provider ACME instead of ACME
+		if gc.Cluster == nil {
+			acmeprovider.Get().Configuration = &acmeprovider.Configuration{
+				OnHostRule:    gc.ACME.OnHostRule,
+				OnDemand:      gc.ACME.OnDemand,
+				Email:         gc.ACME.Email,
+				Storage:       gc.ACME.Storage,
+				HTTPChallenge: gc.ACME.HTTPChallenge,
+				DNSChallenge:  gc.ACME.DNSChallenge,
+				Domains:       gc.ACME.Domains,
+				ACMELogging:   gc.ACME.ACMELogging,
+				CAServer:      gc.ACME.CAServer,
+				EntryPoint:    gc.ACME.EntryPoint,
+			}
+			gc.ACME = nil
 		}
 	}
 }
@@ -270,6 +293,14 @@ func (gc *GlobalConfiguration) ValidateConfiguration() {
 		} else {
 			if gc.EntryPoints[gc.ACME.EntryPoint].TLS == nil {
 				log.Fatalf("Entrypoint without TLS %q for ACME configuration", gc.ACME.EntryPoint)
+			}
+		}
+	} else if acmeprovider.IsEnabled() {
+		if _, ok := gc.EntryPoints[acmeprovider.Get().EntryPoint]; !ok {
+			log.Fatalf("Unknown entrypoint %q for provider ACME configuration", gc.ACME.EntryPoint)
+		} else {
+			if gc.EntryPoints[acmeprovider.Get().EntryPoint].TLS == nil {
+				log.Fatalf("Entrypoint without TLS %q for provider ACME configuration", gc.ACME.EntryPoint)
 			}
 		}
 	}
