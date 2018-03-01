@@ -67,8 +67,7 @@ services :
   traefik:
       build:
         context: ../..
-      image: traefik:1.5-alpine
-#      image: containous/traefik:latest
+      image: containous/traefik:latest
       command: --configFile=/etc/traefik/conf/acme.toml
       restart: unless-stopped
       extra_hosts:

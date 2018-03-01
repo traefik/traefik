@@ -21,7 +21,7 @@ import (
 	"github.com/containous/staert"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/log"
-	providerACME "github.com/containous/traefik/provider/acme"
+	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/safe"
 	traefikTls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/tls/generate"
@@ -46,8 +46,8 @@ type ACME struct {
 	OnHostRule            bool                        `description:"Enable certificate generation on frontends Host rules."`
 	CAServer              string                      `description:"CA server to use."`
 	EntryPoint            string                      `description:"Entrypoint to proxy acme challenge to."`
-	DNSChallenge          *providerACME.DNSChallenge  `description:"Activate DNS-01 Challenge"`
-	HTTPChallenge         *providerACME.HTTPChallenge `description:"Activate HTTP-01 Challenge"`
+	DNSChallenge          *acmeprovider.DNSChallenge  `description:"Activate DNS-01 Challenge"`
+	HTTPChallenge         *acmeprovider.HTTPChallenge `description:"Activate HTTP-01 Challenge"`
 	DNSProvider           string                      `description:"Activate DNS-01 Challenge"`                                                                    // deprecated
 	DelayDontCheckDNS     flaeg.Duration              `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."` // deprecated
 	ACMELogging           bool                        `description:"Enable debug logging of ACME actions."`

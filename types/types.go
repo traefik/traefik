@@ -564,7 +564,7 @@ func (ds *Domains) Set(str string) error {
 	}
 	d := Domain{
 		Main: slice[0],
-		SANs: []string{},
+		//SANs: []string{},
 	}
 	if len(slice) > 1 {
 		d.SANs = slice[1:]

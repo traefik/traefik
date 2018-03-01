@@ -305,11 +305,11 @@ func (p *Provider) getClient() (*acme.Client, error) {
 			client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.TLSSNI01})
 			err = client.SetChallengeProvider(acme.DNS01, provider)
 		} else if p.HTTPChallenge != nil && len(p.HTTPChallenge.EntryPoint) > 0 {
-			log.Debugf("Using HTTP Challenge provider.")
+			log.Debug("Using HTTP Challenge provider.")
 			client.ExcludeChallenges([]acme.Challenge{acme.DNS01, acme.TLSSNI01})
 			err = client.SetChallengeProvider(acme.HTTP01, p)
 		} else {
-			log.Debugf("Using TLS Challenge provider.")
+			log.Debug("Using TLS Challenge provider.")
 			client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.DNS01})
 			err = client.SetChallengeProvider(acme.TLSSNI01, p)
 		}

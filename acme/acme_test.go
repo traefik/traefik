@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	providerACME "github.com/containous/traefik/provider/acme"
+	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +20,7 @@ import (
 func TestDomainsSet(t *testing.T) {
 	checkMap := map[string]types.Domains{
 		"":                                   {},
-		"foo.com":                            {types.Domain{Main: "foo.com", SANs: []string{}}},
+		"foo.com":                            {types.Domain{Main: "foo.com"}},
 		"foo.com,bar.net":                    {types.Domain{Main: "foo.com", SANs: []string{"bar.net"}}},
 		"foo.com,bar1.net,bar2.net,bar3.net": {types.Domain{Main: "foo.com", SANs: []string{"bar1.net", "bar2.net", "bar3.net"}}},
 	}
@@ -44,19 +44,16 @@ func TestDomainsSetAppend(t *testing.T) {
 		{},
 		{
 			types.Domain{
-				Main: "foo1.com",
-				SANs: []string{}}},
+				Main: "foo1.com"}},
 		{
 			types.Domain{
-				Main: "foo1.com",
-				SANs: []string{}},
+				Main: "foo1.com"},
 			types.Domain{
 				Main: "foo2.com",
 				SANs: []string{"bar.net"}}},
 		{
 			types.Domain{
-				Main: "foo1.com",
-				SANs: []string{}},
+				Main: "foo1.com"},
 			types.Domain{
 				Main: "foo2.com",
 				SANs: []string{"bar.net"}},
@@ -80,8 +77,7 @@ func TestCertificatesRenew(t *testing.T) {
 		Certs: []*DomainsCertificate{
 			{
 				Domains: types.Domain{
-					Main: "foo1.com",
-					SANs: []string{}},
+					Main: "foo1.com"},
 				Certificate: &Certificate{
 					Domain:        "foo1.com",
 					CertURL:       "url",
@@ -92,8 +88,7 @@ func TestCertificatesRenew(t *testing.T) {
 			},
 			{
 				Domains: types.Domain{
-					Main: "foo2.com",
-					SANs: []string{}},
+					Main: "foo2.com"},
 				Certificate: &Certificate{
 					Domain:        "foo2.com",
 					CertURL:       "url",
@@ -116,8 +111,7 @@ func TestCertificatesRenew(t *testing.T) {
 	err := domainsCertificates.renewCertificates(
 		newCertificate,
 		types.Domain{
-			Main: "foo1.com",
-			SANs: []string{}})
+			Main: "foo1.com"})
 	if err != nil {
 		t.Errorf("Error in renewCertificates :%v", err)
 	}
@@ -140,8 +134,7 @@ func TestRemoveDuplicates(t *testing.T) {
 		Certs: []*DomainsCertificate{
 			{
 				Domains: types.Domain{
-					Main: "foo.com",
-					SANs: []string{}},
+					Main: "foo.com"},
 				Certificate: &Certificate{
 					Domain:        "foo.com",
 					CertURL:       "url",
@@ -152,8 +145,7 @@ func TestRemoveDuplicates(t *testing.T) {
 			},
 			{
 				Domains: types.Domain{
-					Main: "foo.com",
-					SANs: []string{}},
+					Main: "foo.com"},
 				Certificate: &Certificate{
 					Domain:        "foo.com",
 					CertURL:       "url",
@@ -164,8 +156,7 @@ func TestRemoveDuplicates(t *testing.T) {
 			},
 			{
 				Domains: types.Domain{
-					Main: "foo.com",
-					SANs: []string{}},
+					Main: "foo.com"},
 				Certificate: &Certificate{
 					Domain:        "foo.com",
 					CertURL:       "url",
@@ -176,8 +167,7 @@ func TestRemoveDuplicates(t *testing.T) {
 			},
 			{
 				Domains: types.Domain{
-					Main: "bar.com",
-					SANs: []string{}},
+					Main: "bar.com"},
 				Certificate: &Certificate{
 					Domain:        "bar.com",
 					CertURL:       "url",
@@ -188,8 +178,7 @@ func TestRemoveDuplicates(t *testing.T) {
 			},
 			{
 				Domains: types.Domain{
-					Main: "foo.com",
-					SANs: []string{}},
+					Main: "foo.com"},
 				Certificate: &Certificate{
 					Domain:        "foo.com",
 					CertURL:       "url",
@@ -269,7 +258,7 @@ cijFkALeQp/qyeXdFld2v9gUN3eCgljgcl0QweRoIc=---`)
 }`))
 	}))
 	defer ts.Close()
-	a := ACME{DNSChallenge: &providerACME.DNSChallenge{Provider: "manual", DelayBeforeCheck: 10}, CAServer: ts.URL}
+	a := ACME{DNSChallenge: &acmeprovider.DNSChallenge{Provider: "manual", DelayBeforeCheck: 10}, CAServer: ts.URL}
 
 	client, err := a.buildACMEClient(account)
 	if err != nil {
