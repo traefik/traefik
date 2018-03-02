@@ -129,7 +129,7 @@ func (p *Provider) serviceFilter(service rancherData) bool {
 			return false
 		}
 
-		if service.State != "" && service.State != active && service.State != updatingActive && service.State != upgraded {
+		if service.State != "" && service.State != active && service.State != updatingActive && service.State != upgraded && service.State != upgrading {
 			log.Debugf("Filtering service %s with state of %s", service.Name, service.State)
 			return false
 		}
