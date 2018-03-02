@@ -793,6 +793,7 @@ rateset:
 			iAnnotation(annotationKubernetesFrameDeny, "true"),
 			iAnnotation(annotationKubernetesContentTypeNosniff, "true"),
 			iAnnotation(annotationKubernetesBrowserXSSFilter, "true"),
+			iAnnotation(annotationKubernetesCustomBrowserXSSValue, "foo"),
 			iAnnotation(annotationKubernetesIsDevelopment, "true"),
 			iAnnotation(annotationKubernetesSSLHost, "foo"),
 			iAnnotation(annotationKubernetesCustomFrameOptionsValue, "foo"),
@@ -1042,6 +1043,7 @@ rateset:
 					ContentSecurityPolicy:   "foo",
 					PublicKey:               "foo",
 					ReferrerPolicy:          "foo",
+					CustomBrowserXSSValue:   "foo",
 				}),
 				routes(
 					route("/customheaders", "PathPrefix:/customheaders"),
