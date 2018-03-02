@@ -283,6 +283,8 @@ func (p *Provider) getClient() (*acme.Client, error) {
 			}
 		}
 
+		// Save the account once before all the certificates generation/storing
+		// No certificate can be generated if account is not initialized
 		err = p.Store.SaveAccount(account)
 		if err != nil {
 			return nil, err
@@ -352,7 +354,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	p.init()
 
 	p.configurationChan = configurationChan
-	p.refreshCertificate()
+	p.refreshCertificates()
 
 	for _, domain := range p.Domains {
 		safe.Go(func() {
@@ -392,7 +394,7 @@ func (p *Provider) watchCertificate() {
 			if !certUpdated {
 				p.certificates = append(p.certificates, cert)
 			}
-			p.refreshCertificate()
+			p.saveCertificates()
 		}
 	})
 }
@@ -403,19 +405,18 @@ func (p *Provider) deleteCertificateForDomain(domain types.Domain) {
 			p.certificates = append(p.certificates[:k], p.certificates[k+1:]...)
 		}
 	}
-	p.refreshCertificate()
+	p.saveCertificates()
 }
 
-func (p *Provider) refreshCertificate() {
-	err := p.Store.SaveAccount(p.account)
+func (p *Provider) saveCertificates() {
+	err := p.Store.SaveCertificates(p.certificates)
 	if err != nil {
 		log.Error(err)
 	}
+	p.refreshCertificates()
+}
 
-	err = p.Store.SaveCertificates(p.certificates)
-	if err != nil {
-		log.Error(err)
-	}
+func (p *Provider) refreshCertificates() {
 	config := types.ConfigMessage{
 		ProviderName: "ACME",
 		Configuration: &types.Configuration{

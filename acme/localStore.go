@@ -80,7 +80,7 @@ func ConvertToNewFormat(fileName string) {
 				})
 			}
 			newLocalStore := acme.NewLocalStore(fileName)
-			newLocalStore.Save(acme.StoredData{Account: newAccount, Certificates: newCertificates})
+			newLocalStore.SaveDataChan <- &acme.StoredData{Account: newAccount, Certificates: newCertificates}
 		}
 	}
 }

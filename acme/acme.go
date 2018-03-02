@@ -48,7 +48,7 @@ type ACME struct {
 	EntryPoint            string                      `description:"Entrypoint to proxy acme challenge to."`
 	DNSChallenge          *acmeprovider.DNSChallenge  `description:"Activate DNS-01 Challenge"`
 	HTTPChallenge         *acmeprovider.HTTPChallenge `description:"Activate HTTP-01 Challenge"`
-	DNSProvider           string                      `description:"Activate DNS-01 Challenge"`                                                                    // deprecated
+	DNSProvider           string                      `description:"Activate DNS-01 Challenge (Deprecated)"`                                                       // deprecated
 	DelayDontCheckDNS     flaeg.Duration              `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."` // deprecated
 	ACMELogging           bool                        `description:"Enable debug logging of ACME actions."`
 	client                *acme.Client
