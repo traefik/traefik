@@ -336,6 +336,7 @@ func getHeaders(service rancherData) *types.Headers {
 		ContentSecurityPolicy:   label.GetStringValue(service.Labels, label.TraefikFrontendContentSecurityPolicy, ""),
 		PublicKey:               label.GetStringValue(service.Labels, label.TraefikFrontendPublicKey, ""),
 		ReferrerPolicy:          label.GetStringValue(service.Labels, label.TraefikFrontendReferrerPolicy, ""),
+		CustomBrowserXSSValue:   label.GetStringValue(service.Labels, label.TraefikFrontendCustomBrowserXSSValue, ""),
 	}
 
 	if !headers.HasSecureHeadersDefined() && !headers.HasCustomHeadersDefined() {
