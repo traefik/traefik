@@ -51,6 +51,7 @@ const (
 	SuffixFrontendHeadersCustomFrameOptionsValue   = SuffixFrontendHeaders + "customFrameOptionsValue"
 	SuffixFrontendHeadersContentTypeNosniff        = SuffixFrontendHeaders + "contentTypeNosniff"
 	SuffixFrontendHeadersBrowserXSSFilter          = SuffixFrontendHeaders + "browserXSSFilter"
+	SuffixFrontendHeadersCustomBrowserXSSValue     = SuffixFrontendHeaders + "customBrowserXSSValue"
 	SuffixFrontendHeadersContentSecurityPolicy     = SuffixFrontendHeaders + "contentSecurityPolicy"
 	SuffixFrontendHeadersPublicKey                 = SuffixFrontendHeaders + "publicKey"
 	SuffixFrontendHeadersReferrerPolicy            = SuffixFrontendHeaders + "referrerPolicy"
@@ -124,6 +125,7 @@ const (
 	TraefikFrontendCustomFrameOptionsValue         = Prefix + SuffixFrontendHeadersCustomFrameOptionsValue
 	TraefikFrontendContentTypeNosniff              = Prefix + SuffixFrontendHeadersContentTypeNosniff
 	TraefikFrontendBrowserXSSFilter                = Prefix + SuffixFrontendHeadersBrowserXSSFilter
+	TraefikFrontendCustomBrowserXSSValue           = Prefix + SuffixFrontendHeadersCustomBrowserXSSValue
 	TraefikFrontendContentSecurityPolicy           = Prefix + SuffixFrontendHeadersContentSecurityPolicy
 	TraefikFrontendPublicKey                       = Prefix + SuffixFrontendHeadersPublicKey
 	TraefikFrontendReferrerPolicy                  = Prefix + SuffixFrontendHeadersReferrerPolicy
