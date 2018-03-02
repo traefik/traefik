@@ -292,6 +292,7 @@ func getHeaders(container dockerData) *types.Headers {
 		ContentSecurityPolicy:   label.GetStringValue(container.Labels, label.TraefikFrontendContentSecurityPolicy, ""),
 		PublicKey:               label.GetStringValue(container.Labels, label.TraefikFrontendPublicKey, ""),
 		ReferrerPolicy:          label.GetStringValue(container.Labels, label.TraefikFrontendReferrerPolicy, ""),
+		CustomBrowserXSSValue:   label.GetStringValue(container.Labels, label.TraefikFrontendCustomBrowserXSSValue, ""),
 	}
 
 	if !headers.HasSecureHeadersDefined() && !headers.HasCustomHeadersDefined() {

@@ -577,6 +577,7 @@ func getHeader(i *extensionsv1beta1.Ingress) *types.Headers {
 		CustomFrameOptionsValue: getStringValue(i.Annotations, annotationKubernetesCustomFrameOptionsValue, ""),
 		ContentTypeNosniff:      getBoolValue(i.Annotations, annotationKubernetesContentTypeNosniff, false),
 		BrowserXSSFilter:        getBoolValue(i.Annotations, annotationKubernetesBrowserXSSFilter, false),
+		CustomBrowserXSSValue:   getStringValue(i.Annotations, annotationKubernetesCustomBrowserXSSValue, ""),
 		ContentSecurityPolicy:   getStringValue(i.Annotations, annotationKubernetesContentSecurityPolicy, ""),
 		PublicKey:               getStringValue(i.Annotations, annotationKubernetesPublicKey, ""),
 		ReferrerPolicy:          getStringValue(i.Annotations, annotationKubernetesReferrerPolicy, ""),

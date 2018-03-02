@@ -127,6 +127,7 @@ type Headers struct {
 	CustomFrameOptionsValue string            `json:"customFrameOptionsValue,omitempty"`
 	ContentTypeNosniff      bool              `json:"contentTypeNosniff,omitempty"`
 	BrowserXSSFilter        bool              `json:"browserXssFilter,omitempty"`
+	CustomBrowserXSSValue   string            `json:"customBrowserXSSValue,omitempty"`
 	ContentSecurityPolicy   string            `json:"contentSecurityPolicy,omitempty"`
 	PublicKey               string            `json:"publicKey,omitempty"`
 	ReferrerPolicy          string            `json:"referrerPolicy,omitempty"`
@@ -155,6 +156,7 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 		h.CustomFrameOptionsValue != "" ||
 		h.ContentTypeNosniff ||
 		h.BrowserXSSFilter ||
+		h.CustomBrowserXSSValue != "" ||
 		h.ContentSecurityPolicy != "" ||
 		h.PublicKey != "" ||
 		h.ReferrerPolicy != "" ||

@@ -281,6 +281,7 @@ func getHeaders(instance ecsInstance) *types.Headers {
 		ContentSecurityPolicy:   getStringValue(instance, label.TraefikFrontendContentSecurityPolicy, ""),
 		PublicKey:               getStringValue(instance, label.TraefikFrontendPublicKey, ""),
 		ReferrerPolicy:          getStringValue(instance, label.TraefikFrontendReferrerPolicy, ""),
+		CustomBrowserXSSValue:   getStringValue(instance, label.TraefikFrontendCustomBrowserXSSValue, ""),
 	}
 
 	if !headers.HasSecureHeadersDefined() && !headers.HasCustomHeadersDefined() {

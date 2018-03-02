@@ -26,6 +26,7 @@ func NewSecure(headers *types.Headers) *secure.Secure {
 		CustomFrameOptionsValue: headers.CustomFrameOptionsValue,
 		ContentTypeNosniff:      headers.ContentTypeNosniff,
 		BrowserXssFilter:        headers.BrowserXSSFilter,
+		CustomBrowserXssValue:   headers.CustomBrowserXSSValue,
 		ContentSecurityPolicy:   headers.ContentSecurityPolicy,
 		PublicKey:               headers.PublicKey,
 		ReferrerPolicy:          headers.ReferrerPolicy,
