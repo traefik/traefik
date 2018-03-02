@@ -243,7 +243,7 @@ entryPoint = "https"
 Specify the entryPoint to use during the challenges.
 
 ```toml
-defaultEntryPoints = ["http", "http"]
+defaultEntryPoints = ["http", "https"]
 
 [entryPoints]
   [entryPoints.http]
@@ -399,11 +399,9 @@ Each domain & SANs will lead to a certificate request.
 ### `dnsProvider` (Deprecated)
 
 !!! danger "DEPRECATED"
-    This option is deprecated.
-    Please refer to [DNS challenge provider section](/configuration/acme/#provider)
+    This option is deprecated, use [dnsChallenge.provider](/configuration/acme/#acmednschallenge) instead.
 
 ### `delayDontCheckDNS` (Deprecated)
 
 !!! danger "DEPRECATED"
-    This option is deprecated.
-    Please refer to [DNS challenge delayBeforeCheck section](/configuration/acme/#delaybeforecheck)
+    This option is deprecated, use [dnsChallenge.delayBeforeCheck](/configuration/acme/#acmednschallenge) instead.

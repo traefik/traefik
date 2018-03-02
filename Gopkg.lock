@@ -879,9 +879,10 @@
   source = "https://github.com/containous/mesos-dns.git"
 
 [[projects]]
+  branch = "master"
   name = "github.com/miekg/dns"
   packages = ["."]
-  revision = "8060d9f51305bbe024b99679454e62f552cd0b0b"
+  revision = "906238edc6eb0ddface4a1923f6d41ef2a5ca59b"
 
 [[projects]]
   branch = "master"
@@ -1256,29 +1257,36 @@
   packages = [
     "bcrypt",
     "blowfish",
+    "ed25519",
+    "ed25519/internal/edwards25519",
     "ocsp",
     "pbkdf2",
     "scrypt",
     "ssh/terminal"
   ]
-  revision = "13931e22f9e72ea58bb73048bc752b48c6d4d4ac"
+  revision = "91a49db82a88618983a78a06c1cbd4e00ab749ab"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = [
+    "bpf",
     "context",
     "context/ctxhttp",
     "http2",
     "http2/hpack",
     "idna",
+    "internal/iana",
+    "internal/socket",
     "internal/timeseries",
+    "ipv4",
+    "ipv6",
     "lex/httplex",
     "proxy",
     "trace",
     "websocket"
   ]
-  revision = "5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec"
+  revision = "22ae77b79946ea320088417e4d50825671d82d57"
 
 [[projects]]
   name = "golang.org/x/oauth2"
@@ -1565,6 +1573,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b748d60cfaddd7ff38c63bdf1004ae7dc2dcd084b220076f8eed2a8971c8e234"
+  inputs-digest = "bca5f65f32c7bfc2696eccbebe4145ce6dae7745894d111d3fa32c4d25008049"
   solver-name = "gps-cdcl"
   solver-version = 1

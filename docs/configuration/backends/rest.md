@@ -29,9 +29,10 @@ Træfik can be configured:
 
 
 ```shell
-curl -XPUT @file "http://localhost:8080/api" 
+curl -XPUT @file "http://localhost:8080/api/providers/rest"
 ```
-with `@file`
+
+with `@file`:
 ```json
 {
     "frontends": {

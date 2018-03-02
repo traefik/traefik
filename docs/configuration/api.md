@@ -11,14 +11,14 @@
   # Default: "traefik"
   #
   entryPoint = "traefik"
-  
+
   # Enabled Dashboard
   #
   # Optional
   # Default: true
   #
   dashboard = true
-  
+
   # Enable debug mode.
   # This will install HTTP handlers to expose Go expvars under /debug/vars and
   # pprof profiling data under /debug/pprof.
@@ -43,7 +43,7 @@ For more customization, see [entry points](/configuration/entrypoints/) document
 | Path                                                            | Method           | Description                               |
 |-----------------------------------------------------------------|------------------|-------------------------------------------|
 | `/`                                                             |     `GET`        | Provides a simple HTML frontend of Træfik |
-| `/health`                                                       |     `GET`        | json health metrics                       |
+| `/health`                                                       |     `GET`        | JSON health metrics                       |
 | `/api`                                                          |     `GET`        | Configuration for all providers           |
 | `/api/providers`                                                |     `GET`        | Providers                                 |
 | `/api/providers/{provider}`                                     |     `GET`, `PUT` | Get or update provider (1)                |
@@ -62,7 +62,102 @@ For more customization, see [entry points](/configuration/entrypoints/) document
     For compatibility reason, when you activate the rest provider, you can use `web` or `rest` as `provider` value.
     But be careful, in the configuration for all providers the key is still `web`.
 
-### Provider configurations
+### Address / Port
+
+You can define a custom address/port like this:
+
+```toml
+defaultEntryPoints = ["http"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+
+  [entryPoints.foo]
+  address = ":8082"
+
+  [entryPoints.bar]
+  address = ":8083"
+
+[ping]
+entryPoint = "foo"
+
+[api]
+entryPoint = "bar"
+```
+
+In the above example, you would access a regular path, administration panel, and health-check as follows:
+
+* Regular path: `http://hostname:80/path`
+* Admin Panel: `http://hostname:8083/`
+* Ping URL: `http://hostname:8082/ping`
+
+In the above example, it is _very_ important to create a named dedicated entry point, and do **not** include it in `defaultEntryPoints`.
+Otherwise, you are likely to expose _all_ services via that entry point.
+
+### Custom Path
+
+You can define a custom path like this:
+
+```toml
+defaultEntryPoints = ["http"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+
+  [entryPoints.foo]
+  address = ":8080"
+
+  [entryPoints.bar]
+  address = ":8081"
+
+# Activate API and Dashboard
+[api]
+entryPoint = "bar"
+dashboard = true
+
+[file]
+  [backends]
+    [backends.backend1]
+      [backends.backend1.servers.server1]
+      url = "http://127.0.0.1:8081"
+
+  [frontends]
+    [frontends.frontend1]
+    entryPoints = ["foo"]
+    backend = "backend1"
+      [frontends.frontend1.routes.test_1]
+      rule = "PathPrefixStrip:/yourprefix;PathPrefix:/yourprefix"
+```
+
+### Authentication
+
+You can define the authentication like this:
+
+```toml
+defaultEntryPoints = ["http"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+
+ [entryPoints.foo]
+   address=":8080"
+   [entryPoints.foo.auth]
+     [entryPoints.foo.auth.basic]
+       users = [
+         "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+         "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+       ]
+
+[api]
+entrypoint="foo"
+```
+
+For more information, see [entry points](/configuration/entrypoints/) .
+
+### Provider call example
 
 ```shell
 curl -s "http://localhost:8080/api" | jq .
