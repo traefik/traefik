@@ -119,6 +119,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					withPair(pathFrontendContentSecurityPolicy, "foo"),
 					withPair(pathFrontendPublicKey, "foo"),
 					withPair(pathFrontendReferrerPolicy, "foo"),
+					withPair(pathFrontendCustomBrowserXSSValue, "foo"),
 					withPair(pathFrontendSSLRedirect, "true"),
 					withPair(pathFrontendSSLTemporaryRedirect, "true"),
 					withPair(pathFrontendSTSIncludeSubdomains, "true"),
@@ -248,6 +249,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 							ContentSecurityPolicy:   "foo",
 							PublicKey:               "foo",
 							ReferrerPolicy:          "foo",
+							CustomBrowserXSSValue:   "foo",
 							SSLRedirect:             true,
 							SSLTemporaryRedirect:    true,
 							STSIncludeSubdomains:    true,
@@ -1413,6 +1415,16 @@ func TestProviderGetHeaders(t *testing.T) {
 					withPair(pathFrontendBrowserXSSFilter, "true"))),
 			expected: &types.Headers{
 				BrowserXSSFilter: true,
+			},
+		},
+		{
+			desc:     "Custom Browser XSS Value",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendCustomBrowserXSSValue, "foo"))),
+			expected: &types.Headers{
+				CustomBrowserXSSValue: "foo",
 			},
 		},
 		{
