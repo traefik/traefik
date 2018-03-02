@@ -69,7 +69,10 @@ func NewAccount(email string) (*Account, error) {
 		return nil, err
 	}
 	domainsCerts := DomainsCertificates{Certs: []*DomainsCertificate{}}
-	domainsCerts.Init()
+	err = domainsCerts.Init()
+	if err != nil {
+		return nil, err
+	}
 	return &Account{
 		Email:              email,
 		PrivateKey:         x509.MarshalPKCS1PrivateKey(privateKey),

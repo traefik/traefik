@@ -107,19 +107,16 @@ func (p *Provider) init() error {
 	var err error
 	if p.Store == nil {
 		err = errors.New("no store found for the ACME provider")
-		log.Error(err)
 		return err
 	}
 
 	p.account, err = p.Store.GetAccount()
 	if err != nil {
-		log.Error(err)
 		return err
 	}
 
 	p.certificates, err = p.Store.GetCertificates()
 	if err != nil {
-		log.Error(err)
 		return err
 	}
 
@@ -162,8 +159,8 @@ func (p *Provider) watchNewDomains() {
 			case config := <-p.configFromListenerChan:
 				for _, frontend := range config.Frontends {
 					for _, route := range frontend.Routes {
-						rules := rules.Rules{}
-						domains, err := rules.ParseDomains(route.Rule)
+						domainRules := rules.Rules{}
+						domains, err := domainRules.ParseDomains(route.Rule)
 						if err != nil {
 							log.Errorf("Error parsing domains in provider ACME: %v", err)
 							continue
@@ -180,7 +177,9 @@ func (p *Provider) watchNewDomains() {
 								domain.SANs = domains[1:]
 							}
 							safe.Go(func() {
-								p.resolveCertificate(domain)
+								if _, err := p.resolveCertificate(domain); err != nil {
+									log.Errorf("Unable to obtain ACME certificate for domains %q detected thanks to rule %q : %v", strings.Join(domains, ","), route.Rule, err)
+								}
 							})
 						}
 					}
@@ -225,17 +224,13 @@ func (p *Provider) resolveCertificate(domain types.Domain) (*acme.CertificateRes
 	log.Debugf("Loading ACME certificates %+v...", domains)
 	client, err := p.getClient()
 	if err != nil {
-		errMessage := fmt.Sprintf("Cannot get ACME client %s", err)
-		log.Error(errMessage)
-		return nil, errors.New(errMessage)
+		return nil, fmt.Errorf("cannot get ACME client %v", err)
 	}
 
 	bundle := true
 	certificate, failures := client.ObtainCertificate(domains, bundle, nil, OSCPMustStaple)
 	if len(failures) > 0 {
-		errMessage := fmt.Sprintf("Cannot obtain certificates %s+v", failures)
-		log.Error(errMessage)
-		return nil, errors.New(errMessage)
+		return nil, fmt.Errorf("cannot obtain certificates %+v", failures)
 	}
 	log.Debugf("Certificates obtained for domain %+v", domains)
 	p.addCertificateForDomain(domain, certificate.Certificate, certificate.PrivateKey)
@@ -285,7 +280,7 @@ func (p *Provider) getClient() (*acme.Client, error) {
 			account.Registration = reg
 			err = client.AgreeToTOS()
 			if err != nil {
-				log.Errorf("Error sending ACME agreement to TOS: %+v: %s", account, err.Error())
+				return nil, err
 			}
 		}
 
@@ -312,14 +307,23 @@ func (p *Provider) getClient() (*acme.Client, error) {
 
 			client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.TLSSNI01})
 			err = client.SetChallengeProvider(acme.DNS01, provider)
+			if err != nil {
+				return nil, err
+			}
 		} else if p.HTTPChallenge != nil && len(p.HTTPChallenge.EntryPoint) > 0 {
 			log.Debug("Using HTTP Challenge provider.")
 			client.ExcludeChallenges([]acme.Challenge{acme.DNS01, acme.TLSSNI01})
 			err = client.SetChallengeProvider(acme.HTTP01, p)
+			if err != nil {
+				return nil, err
+			}
 		} else {
 			log.Debug("Using TLS Challenge provider.")
 			client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.DNS01})
 			err = client.SetChallengeProvider(acme.TLSSNI01, p)
+			if err != nil {
+				return nil, err
+			}
 		}
 		p.client = client
 	}
@@ -330,7 +334,7 @@ func (p *Provider) getClient() (*acme.Client, error) {
 // Present presents a challenge to obtain new ACME certificate
 func (p *Provider) Present(domain, token, keyAuth string) error {
 	if p.HTTPChallenge != nil {
-		presentHTTPChallenge(domain, token, keyAuth, p.Store)
+		return presentHTTPChallenge(domain, token, keyAuth, p.Store)
 	} else if p.DNSChallenge == nil {
 		log.Debugf("TLS Challenge CleanUp temp certificate for %s", domain)
 		tempCertPEM, rsaPrivPEM, err := presentTLSChallenge(domain, keyAuth)
@@ -346,7 +350,7 @@ func (p *Provider) Present(domain, token, keyAuth string) error {
 // CleanUp cleans the challenges when certificate is obtained
 func (p *Provider) CleanUp(domain, token, keyAuth string) error {
 	if p.HTTPChallenge != nil {
-		cleanUpHTTPChallenge(domain, token, p.Store)
+		return cleanUpHTTPChallenge(domain, token, p.Store)
 	} else if p.DNSChallenge == nil {
 		log.Debugf("TLS Challenge CleanUp temp certificate for %s", domain)
 		p.deleteCertificateForDomain(types.Domain{Main: "TEMP-" + domain})
@@ -358,14 +362,21 @@ func (p *Provider) CleanUp(domain, token, keyAuth string) error {
 // using the given Configuration channel.
 func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
 	p.pool = pool
-	p.init()
+	err := p.init()
+	if err != nil {
+		return err
+	}
 
 	p.configurationChan = configurationChan
 	p.refreshCertificates()
 
 	for _, domain := range p.Domains {
 		safe.Go(func() {
-			p.resolveCertificate(domain)
+			if _, err := p.resolveCertificate(domain); err != nil {
+				domains := []string{domain.Main}
+				domains = append(domains, domain.SANs...)
+				log.Errorf("Unable to obtain ACME certificate for domains %q : %v", domains, err)
+			}
 		})
 	}
 
@@ -499,7 +510,10 @@ func (p *Provider) AddRoutes(router *mux.Router) {
 				tokenValue := getTokenValue(token, domain, p.Store)
 				if len(tokenValue) > 0 {
 					rw.WriteHeader(http.StatusOK)
-					rw.Write(tokenValue)
+					_, err = rw.Write(tokenValue)
+					if err != nil {
+						log.Errorf("Unable to write token : %v", err)
+					}
 					return
 				}
 			}

@@ -686,13 +686,13 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefikTls.TL
 	}
 	// Set the list of CipherSuites if set in the config TOML
 	if s.globalConfiguration.EntryPoints[entryPointName].TLS.CipherSuites != nil {
-		//if our list of CipherSuites is defined in the entrypoint config, we can re-initilize the suites list as empty
+		// if our list of CipherSuites is defined in the entrypoint config, we can re-initilize the suites list as empty
 		config.CipherSuites = make([]uint16, 0)
 		for _, cipher := range s.globalConfiguration.EntryPoints[entryPointName].TLS.CipherSuites {
 			if cipherConst, exists := traefikTls.CipherSuites[cipher]; exists {
 				config.CipherSuites = append(config.CipherSuites, cipherConst)
 			} else {
-				//CipherSuite listed in the toml does not exist in our listed
+				// CipherSuite listed in the toml does not exist in our listed
 				return nil, errors.New("Invalid CipherSuite: " + cipher)
 			}
 		}

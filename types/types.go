@@ -560,11 +560,10 @@ func (ds *Domains) Set(str string) error {
 	// get function
 	slice := strings.FieldsFunc(str, fargs)
 	if len(slice) < 1 {
-		return fmt.Errorf("Parse error ACME.Domain. Imposible to parse %s", str)
+		return fmt.Errorf("parse error ACME.Domain. Unable to parse %s", str)
 	}
 	d := Domain{
 		Main: slice[0],
-		//SANs: []string{},
 	}
 	if len(slice) > 1 {
 		d.SANs = slice[1:]

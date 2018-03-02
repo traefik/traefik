@@ -103,11 +103,14 @@ func FromNewToOldFormat(fileName string) (*Account, error) {
 		account.Registration = storeAccount.Registration
 		account.DomainsCertificate = DomainsCertificates{}
 		for _, cert := range storeCertificates {
-			account.DomainsCertificate.addCertificateForDomains(&Certificate{
+			_, err = account.DomainsCertificate.addCertificateForDomains(&Certificate{
 				Domain:      cert.Domain.Main,
 				Certificate: cert.Certificate,
 				PrivateKey:  cert.Key,
 			}, cert.Domain)
+			if err != nil {
+				return nil, err
+			}
 		}
 		return account, nil
 	}
