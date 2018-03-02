@@ -61,6 +61,7 @@ type Provider struct {
 	staticCerts            map[string]*tls.Certificate
 	clientMutex            sync.Mutex
 	configFromListenerChan chan types.Configuration
+	pool                   *safe.Pool
 }
 
 // Certificate is a struct which contains all data needed from an ACME certificate
@@ -155,32 +156,37 @@ func (p *Provider) ListenRequest(domain string) (*tls.Certificate, error) {
 }
 
 func (p *Provider) watchNewDomains() {
-	safe.Go(func() {
-		for config := range p.configFromListenerChan {
-			for _, frontend := range config.Frontends {
-				for _, route := range frontend.Routes {
-					rules := rules.Rules{}
-					domains, err := rules.ParseDomains(route.Rule)
-					if err != nil {
-						log.Errorf("Error parsing domains in provider ACME: %v", err)
-						continue
-					}
-					if len(domains) == 0 {
-						log.Debugf("No domain parsed in rule %q", route.Rule)
-						continue
-					}
-					log.Debugf("Try to challenge certificate for domain %v founded in Host rule", domains)
-					var domain types.Domain
-					if len(domains) > 0 {
-						domain = types.Domain{Main: domains[0]}
-						if len(domains) > 1 {
-							domain.SANs = domains[1:]
+	p.pool.Go(func(stop chan bool) {
+		for {
+			select {
+			case config := <-p.configFromListenerChan:
+				for _, frontend := range config.Frontends {
+					for _, route := range frontend.Routes {
+						rules := rules.Rules{}
+						domains, err := rules.ParseDomains(route.Rule)
+						if err != nil {
+							log.Errorf("Error parsing domains in provider ACME: %v", err)
+							continue
 						}
-						safe.Go(func() {
-							p.resolveCertificate(domain)
-						})
+						if len(domains) == 0 {
+							log.Debugf("No domain parsed in rule %q", route.Rule)
+							continue
+						}
+						log.Debugf("Try to challenge certificate for domain %v founded in Host rule", domains)
+						var domain types.Domain
+						if len(domains) > 0 {
+							domain = types.Domain{Main: domains[0]}
+							if len(domains) > 1 {
+								domain.SANs = domains[1:]
+							}
+							safe.Go(func() {
+								p.resolveCertificate(domain)
+							})
+						}
 					}
 				}
+			case <-stop:
+				return
 			}
 		}
 	})
@@ -351,6 +357,7 @@ func (p *Provider) CleanUp(domain, token, keyAuth string) error {
 // Provide allows the file provider to provide configurations to traefik
 // using the given Configuration channel.
 func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
+	p.pool = pool
 	p.init()
 
 	p.configurationChan = configurationChan
@@ -365,9 +372,15 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	p.renewCertificates()
 
 	ticker := time.NewTicker(24 * time.Hour)
-	safe.Go(func() {
-		for range ticker.C {
-			p.renewCertificates()
+	pool.Go(func(stop chan bool) {
+		for {
+			select {
+			case <-ticker.C:
+				p.renewCertificates()
+			case <-stop:
+				ticker.Stop()
+				return
+			}
 		}
 	})
 
@@ -380,21 +393,27 @@ func (p *Provider) addCertificateForDomain(domain types.Domain, certificate []by
 
 func (p *Provider) watchCertificate() {
 	p.certsChan = make(chan *Certificate)
-	safe.Go(func() {
-		for cert := range p.certsChan {
-			certUpdated := false
-			for _, domainsCertificate := range p.certificates {
-				if reflect.DeepEqual(cert.Domain, domainsCertificate.Domain) {
-					domainsCertificate.Certificate = cert.Certificate
-					domainsCertificate.Key = cert.Key
-					certUpdated = true
-					break
+	p.pool.Go(func(stop chan bool) {
+		for {
+			select {
+			case cert := <-p.certsChan:
+				certUpdated := false
+				for _, domainsCertificate := range p.certificates {
+					if reflect.DeepEqual(cert.Domain, domainsCertificate.Domain) {
+						domainsCertificate.Certificate = cert.Certificate
+						domainsCertificate.Key = cert.Key
+						certUpdated = true
+						break
+					}
 				}
+				if !certUpdated {
+					p.certificates = append(p.certificates, cert)
+				}
+				p.saveCertificates()
+
+			case <-stop:
+				return
 			}
-			if !certUpdated {
-				p.certificates = append(p.certificates, cert)
-			}
-			p.saveCertificates()
 		}
 	})
 }
