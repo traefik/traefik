@@ -405,6 +405,7 @@ func getHeaders(task state.Task) *types.Headers {
 		ContentSecurityPolicy:   label.GetStringValue(labels, label.TraefikFrontendContentSecurityPolicy, ""),
 		PublicKey:               label.GetStringValue(labels, label.TraefikFrontendPublicKey, ""),
 		ReferrerPolicy:          label.GetStringValue(labels, label.TraefikFrontendReferrerPolicy, ""),
+		CustomBrowserXSSValue:   label.GetStringValue(labels, label.TraefikFrontendCustomBrowserXSSValue, ""),
 	}
 
 	if !headers.HasSecureHeadersDefined() && !headers.HasCustomHeadersDefined() {
