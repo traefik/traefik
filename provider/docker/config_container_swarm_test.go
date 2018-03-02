@@ -318,7 +318,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
-			//t.Parallel()
+			t.Parallel()
 			var dockerDataList []dockerData
 			for _, service := range test.services {
 				dData := parseService(service, test.networks)
