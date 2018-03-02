@@ -14,10 +14,6 @@ import (
 	"github.com/containous/traefik/types"
 )
 
-// MaximumEntityLength sets the upper limit for request and response entities. This will
-// probably be removed in future versions.
-const MaximumEntityLength = 32 * 1024
-
 // Possible ProxyingFor types
 const (
 	RATE = "rate"
@@ -44,14 +40,8 @@ type AuditTap struct {
 
 // NewAuditTap returns a new AuditTap handler.
 func NewAuditTap(config *types.AuditSink, streams []audittypes.AuditStream, backend string, next http.Handler) (*AuditTap, error) {
-	var th int64 = MaximumEntityLength
+
 	var err error
-	if config.MaxEntityLength != "" {
-		th, _, err = asSI(config.MaxEntityLength)
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	var maxAudit int64
 	if config.MaxAuditLength != "" {
@@ -69,6 +59,14 @@ func NewAuditTap(config *types.AuditSink, streams []audittypes.AuditStream, back
 		}
 	} else {
 		maxPayload = 96000
+	}
+
+	var th = maxAudit // Default the max recorded response length to the max audit size
+	if config.MaxEntityLength != "" {
+		th, _, err = asSI(config.MaxEntityLength)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	pf := strings.ToLower(config.ProxyingFor)

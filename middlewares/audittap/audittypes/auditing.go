@@ -139,6 +139,7 @@ func enforcePrecedentConstraints(ev *AuditEvent, constraints AuditConstraints) {
 	requestTooBig := lenRequest > constraints.MaxPayloadContentsLength
 	if lenRequest == 0 || requestTooBig {
 		delete(ev.RequestPayload, keyPayloadContents)
+		lenRequest = 0
 	}
 
 	respLen, _ := ev.ResponsePayload[keyPayloadLength].(int)

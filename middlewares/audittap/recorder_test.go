@@ -13,7 +13,7 @@ func TestAuditResponseWriter_with_body(t *testing.T) {
 	TheClock = T0
 
 	recorder := httptest.NewRecorder()
-	w := NewAuditResponseWriter(recorder, MaximumEntityLength)
+	w := NewAuditResponseWriter(recorder, 100000)
 	w.WriteHeader(200)
 	w.Write([]byte("hello"))
 	w.Write([]byte("world"))

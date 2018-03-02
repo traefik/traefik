@@ -158,6 +158,21 @@ func TestRequestContentsRetained(t *testing.T) {
 	ev.RequestPayload[keyPayloadLength] = max - 1
 	enforcePrecedentConstraints(&ev.AuditEvent, constraints)
 	assert.Equal(t, contents, ev.RequestPayload[keyPayloadContents])
+	assert.Nil(t, ev.ResponsePayload[keyPayloadContents])
+}
+
+func TestResponseContentsRetained(t *testing.T) {
+	max := 1000
+	contents := types.DataMap{"Key1": "MoreThan20Bytes"}
+	ev := RATEAuditEvent{}
+	ev.AuditEvent = AuditEvent{RequestPayload: types.DataMap{}, ResponsePayload: types.DataMap{}}
+	constraints := AuditConstraints{MaxAuditLength: 1000, MaxPayloadContentsLength: int64(max)}
+	ev.RequestPayload[keyPayloadLength] = max + 1
+	ev.ResponsePayload[keyPayloadContents] = contents
+	ev.ResponsePayload[keyPayloadLength] = max - 1
+	enforcePrecedentConstraints(&ev.AuditEvent, constraints)
+	assert.Nil(t, ev.RequestPayload[keyPayloadContents])
+	assert.Equal(t, contents, ev.ResponsePayload[keyPayloadContents])
 }
 
 type fixedClock time.Time
