@@ -54,7 +54,7 @@ deploy:
     on:
       repo: containous/traefik
   - provider: pages
-    edge: true
+    edge: false
     github_token: ${GITHUB_TOKEN}
     local_dir: site
     skip_cleanup: true
