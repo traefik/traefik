@@ -143,6 +143,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendContentSecurityPolicy:   "foo",
 						label.TraefikFrontendPublicKey:               "foo",
 						label.TraefikFrontendReferrerPolicy:          "foo",
+						label.TraefikFrontendCustomBrowserXSSValue:   "foo",
 						label.TraefikFrontendSTSSeconds:              "666",
 						label.TraefikFrontendSSLRedirect:             "true",
 						label.TraefikFrontendSSLTemporaryRedirect:    "true",
@@ -229,6 +230,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						CustomFrameOptionsValue: "foo",
 						ContentTypeNosniff:      true,
 						BrowserXSSFilter:        true,
+						CustomBrowserXSSValue:   "foo",
 						ContentSecurityPolicy:   "foo",
 						PublicKey:               "foo",
 						ReferrerPolicy:          "foo",
@@ -316,7 +318,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
+			//t.Parallel()
 			var dockerDataList []dockerData
 			for _, service := range test.services {
 				dData := parseService(service, test.networks)
