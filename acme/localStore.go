@@ -60,17 +60,20 @@ func ConvertToNewFormat(fileName string) {
 
 	if storeAccount == nil {
 		localStore := NewLocalStore(fileName)
+
 		account, err := localStore.Get()
 		if err != nil {
 			log.Warnf("Failed to read old account, ACME data conversion is not available : %v", err)
 			return
 		}
+
 		if account != nil {
 			newAccount := &acme.Account{
 				PrivateKey:   account.PrivateKey,
 				Registration: account.Registration,
 				Email:        account.Email,
 			}
+
 			var newCertificates []*acme.Certificate
 			for _, cert := range account.DomainsCertificate.Certs {
 				newCertificates = append(newCertificates, &acme.Certificate{
@@ -88,20 +91,24 @@ func ConvertToNewFormat(fileName string) {
 // FromNewToOldFormat converts new acme.json format to the old one (used for the backward compatibility)
 func FromNewToOldFormat(fileName string) (*Account, error) {
 	localStore := acme.NewLocalStore(fileName)
+
 	storeAccount, err := localStore.GetAccount()
 	if err != nil {
 		return nil, err
 	}
+
 	storeCertificates, err := localStore.GetCertificates()
 	if err != nil {
 		return nil, err
 	}
+
 	if storeAccount != nil {
 		account := &Account{}
 		account.Email = storeAccount.Email
 		account.PrivateKey = storeAccount.PrivateKey
 		account.Registration = storeAccount.Registration
 		account.DomainsCertificate = DomainsCertificates{}
+
 		for _, cert := range storeCertificates {
 			_, err = account.DomainsCertificate.addCertificateForDomains(&Certificate{
 				Domain:      cert.Domain.Main,

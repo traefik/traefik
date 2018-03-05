@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGet(t *testing.T) {
@@ -14,24 +16,16 @@ func TestGet(t *testing.T) {
 	tmpFile, err := ioutil.TempFile(folder, prefix)
 	defer os.Remove(tmpFile.Name())
 
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
 
 	fileContent, err := ioutil.ReadFile(acmeFile)
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
 
 	tmpFile.Write(fileContent)
 
 	localStore := NewLocalStore(tmpFile.Name())
 	account, err := localStore.Get()
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
 
-	if len(account.DomainsCertificate.Certs) != 1 {
-		t.Errorf("Must found %d and found %d certificates in Account", 3, len(account.DomainsCertificate.Certs))
-	}
+	assert.Len(t, account.DomainsCertificate.Certs, 1)
 }

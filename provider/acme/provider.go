@@ -148,7 +148,9 @@ func (p *Provider) ListenRequest(domain string) (*tls.Certificate, error) {
 	if acmeCert == nil || err != nil {
 		return nil, err
 	}
+
 	certificate, err := tls.X509KeyPair(acmeCert.Certificate, acmeCert.PrivateKey)
+
 	return &certificate, err
 }
 
@@ -165,17 +167,21 @@ func (p *Provider) watchNewDomains() {
 							log.Errorf("Error parsing domains in provider ACME: %v", err)
 							continue
 						}
+
 						if len(domains) == 0 {
 							log.Debugf("No domain parsed in rule %q", route.Rule)
 							continue
 						}
+
 						log.Debugf("Try to challenge certificate for domain %v founded in Host rule", domains)
+
 						var domain types.Domain
 						if len(domains) > 0 {
 							domain = types.Domain{Main: domains[0]}
 							if len(domains) > 1 {
 								domain.SANs = domains[1:]
 							}
+
 							safe.Go(func() {
 								if _, err := p.resolveCertificate(domain); err != nil {
 									log.Errorf("Unable to obtain ACME certificate for domains %q detected thanks to rule %q : %v", strings.Join(domains, ","), route.Rule, err)

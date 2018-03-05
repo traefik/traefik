@@ -18,60 +18,108 @@ import (
 )
 
 func TestDomainsSet(t *testing.T) {
-	checkMap := map[string]types.Domains{
-		"":                                   {},
-		"foo.com":                            {types.Domain{Main: "foo.com"}},
-		"foo.com,bar.net":                    {types.Domain{Main: "foo.com", SANs: []string{"bar.net"}}},
-		"foo.com,bar1.net,bar2.net,bar3.net": {types.Domain{Main: "foo.com", SANs: []string{"bar1.net", "bar2.net", "bar3.net"}}},
+	testCases := []struct {
+		input    string
+		expected types.Domains
+	}{
+		{
+			input:    "",
+			expected: types.Domains{},
+		},
+		{
+			input: "foo1.com",
+			expected: types.Domains{
+				types.Domain{Main: "foo1.com"},
+			},
+		},
+		{
+			input: "foo2.com,bar.net",
+			expected: types.Domains{
+				types.Domain{
+					Main: "foo2.com",
+					SANs: []string{"bar.net"},
+				},
+			},
+		},
+		{
+			input: "foo3.com,bar1.net,bar2.net,bar3.net",
+			expected: types.Domains{
+				types.Domain{
+					Main: "foo3.com",
+					SANs: []string{"bar1.net", "bar2.net", "bar3.net"},
+				},
+			},
+		},
 	}
-	for in, check := range checkMap {
-		ds := types.Domains{}
-		ds.Set(in)
-		if !reflect.DeepEqual(check, ds) {
-			t.Errorf("Expected %+v\nGot %+v", check, ds)
-		}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.input, func(t *testing.T) {
+			t.Parallel()
+
+			domains := types.Domains{}
+			domains.Set(test.input)
+			assert.Exactly(t, test.expected, domains)
+		})
 	}
 }
 
 func TestDomainsSetAppend(t *testing.T) {
-	inSlice := []string{
-		"",
-		"foo1.com",
-		"foo2.com,bar.net",
-		"foo3.com,bar1.net,bar2.net,bar3.net",
+	testCases := []struct {
+		input    string
+		expected types.Domains
+	}{
+		{
+			input:    "",
+			expected: types.Domains{},
+		},
+		{
+			input: "foo1.com",
+			expected: types.Domains{
+				types.Domain{Main: "foo1.com"},
+			},
+		},
+		{
+			input: "foo2.com,bar.net",
+			expected: types.Domains{
+				types.Domain{Main: "foo1.com"},
+				types.Domain{
+					Main: "foo2.com",
+					SANs: []string{"bar.net"},
+				},
+			},
+		},
+		{
+			input: "foo3.com,bar1.net,bar2.net,bar3.net",
+			expected: types.Domains{
+				types.Domain{Main: "foo1.com"},
+				types.Domain{
+					Main: "foo2.com",
+					SANs: []string{"bar.net"},
+				},
+				types.Domain{
+					Main: "foo3.com",
+					SANs: []string{"bar1.net", "bar2.net", "bar3.net"},
+				},
+			},
+		},
 	}
-	checkSlice := []types.Domains{
-		{},
-		{
-			types.Domain{
-				Main: "foo1.com"}},
-		{
-			types.Domain{
-				Main: "foo1.com"},
-			types.Domain{
-				Main: "foo2.com",
-				SANs: []string{"bar.net"}}},
-		{
-			types.Domain{
-				Main: "foo1.com"},
-			types.Domain{
-				Main: "foo2.com",
-				SANs: []string{"bar.net"}},
-			types.Domain{Main: "foo3.com",
-				SANs: []string{"bar1.net", "bar2.net", "bar3.net"}}},
-	}
-	ds := types.Domains{}
-	for i, in := range inSlice {
-		ds.Set(in)
-		if !reflect.DeepEqual(checkSlice[i], ds) {
-			t.Errorf("Expected  %s %+v\nGot %+v", in, checkSlice[i], ds)
-		}
+
+	// append to
+	domains := types.Domains{}
+	for _, test := range testCases {
+		t.Run(test.input, func(t *testing.T) {
+
+			domains.Set(test.input)
+			assert.Exactly(t, test.expected, domains)
+		})
 	}
 }
 
 func TestCertificatesRenew(t *testing.T) {
 	foo1Cert, foo1Key, _ := generate.KeyPair("foo1.com", time.Now())
 	foo2Cert, foo2Key, _ := generate.KeyPair("foo2.com", time.Now())
+
 	domainsCertificates := DomainsCertificates{
 		lock: sync.RWMutex{},
 		Certs: []*DomainsCertificate{
@@ -99,6 +147,7 @@ func TestCertificatesRenew(t *testing.T) {
 			},
 		},
 	}
+
 	foo1Cert, foo1Key, _ = generate.KeyPair("foo1.com", time.Now())
 	newCertificate := &Certificate{
 		Domain:        "foo1.com",
@@ -108,16 +157,15 @@ func TestCertificatesRenew(t *testing.T) {
 		Certificate:   foo1Cert,
 	}
 
-	err := domainsCertificates.renewCertificates(
-		newCertificate,
-		types.Domain{
-			Main: "foo1.com"})
+	err := domainsCertificates.renewCertificates(newCertificate, types.Domain{Main: "foo1.com"})
 	if err != nil {
 		t.Errorf("Error in renewCertificates :%v", err)
 	}
+
 	if len(domainsCertificates.Certs) != 2 {
 		t.Errorf("Expected domainsCertificates length %d %+v\nGot %+v", 2, domainsCertificates.Certs, len(domainsCertificates.Certs))
 	}
+
 	if !reflect.DeepEqual(domainsCertificates.Certs[0].Certificate, newCertificate) {
 		t.Errorf("Expected new certificate %+v \nGot %+v", newCertificate, domainsCertificates.Certs[0].Certificate)
 	}

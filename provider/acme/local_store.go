@@ -28,21 +28,25 @@ func NewLocalStore(filename string) LocalStore {
 func (s *LocalStore) get() (*StoredData, error) {
 	if s.storedData == nil {
 		s.storedData = &StoredData{HTTPChallenges: make(map[string]map[string][]byte)}
+
 		f, err := os.Open(s.filename)
 		if err != nil {
 			return nil, err
 		}
 		defer f.Close()
+
 		file, err := ioutil.ReadAll(f)
 		if err != nil {
 			return nil, err
 		}
+
 		if len(file) > 0 {
 			if err := json.Unmarshal(file, s.storedData); err != nil {
 				return nil, err
 			}
 		}
 	}
+
 	return s.storedData, nil
 }
 
@@ -54,6 +58,7 @@ func (s *LocalStore) listenSaveAction() {
 			if err != nil {
 				log.Error(err)
 			}
+
 			err = ioutil.WriteFile(s.filename, data, 0600)
 			if err != nil {
 				log.Error(err)
@@ -68,6 +73,7 @@ func (s *LocalStore) GetAccount() (*Account, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return storedData.Account, nil
 }
 
@@ -77,8 +83,10 @@ func (s *LocalStore) SaveAccount(account *Account) error {
 	if err != nil {
 		return err
 	}
+
 	storedData.Account = account
 	s.SaveDataChan <- storedData
+
 	return nil
 }
 
@@ -88,6 +96,7 @@ func (s *LocalStore) GetCertificates() ([]*Certificate, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return storedData.Certificates, nil
 }
 
@@ -97,8 +106,10 @@ func (s *LocalStore) SaveCertificates(certificates []*Certificate) error {
 	if err != nil {
 		return err
 	}
+
 	storedData.Certificates = certificates
 	s.SaveDataChan <- storedData
+
 	return nil
 }
 

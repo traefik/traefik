@@ -14,16 +14,15 @@ func checkFile(name string) (bool, error) {
 		return false, err
 	}
 	defer f.Close()
+
 	fi, err := f.Stat()
 	if err != nil {
 		return false, err
 	}
+
 	if fi.Mode().Perm()&0077 != 0 {
 		return false, fmt.Errorf("permissions %o for %s are too open, please use 600", fi.Mode().Perm(), name)
 	}
 
-	if fi.Size() == 0 {
-		return false, nil
-	}
-	return true, nil
+	return fi.Size() > 0, nil
 }

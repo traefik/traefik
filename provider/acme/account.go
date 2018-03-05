@@ -24,6 +24,7 @@ func NewAccount(email string) (*Account, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &Account{
 		Email:      email,
 		PrivateKey: x509.MarshalPKCS1PrivateKey(privateKey),
@@ -45,6 +46,7 @@ func (a *Account) GetPrivateKey() crypto.PrivateKey {
 	if privateKey, err := x509.ParsePKCS1PrivateKey(a.PrivateKey); err == nil {
 		return privateKey
 	}
+
 	log.Errorf("Cannot unmarshal private key %+v", a.PrivateKey)
 	return nil
 }
