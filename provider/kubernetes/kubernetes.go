@@ -226,7 +226,13 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					}
 				}
 
-				if rule := getRuleForPath(pa, i); rule != "" {
+				rule, err := getRuleForPath(pa, i)
+				if err != nil {
+					log.Errorf("Failed to get rule for ingress %s/%s: %s", i.Namespace, i.Name, err)
+					delete(templateObjects.Frontends, baseName)
+					continue
+				}
+				if rule != "" {
 					templateObjects.Frontends[baseName].Routes[pa.Path] = types.Route{
 						Rule: rule,
 					}
@@ -313,19 +319,34 @@ func (p *Provider) loadConfig(templateObjects types.Configuration) *types.Config
 	return configuration
 }
 
-func getRuleForPath(pa extensionsv1beta1.HTTPIngressPath, i *extensionsv1beta1.Ingress) string {
+func getRuleForPath(pa extensionsv1beta1.HTTPIngressPath, i *extensionsv1beta1.Ingress) (string, error) {
 	if len(pa.Path) == 0 {
-		return ""
+		return "", nil
 	}
 
 	ruleType := getStringValue(i.Annotations, annotationKubernetesRuleType, ruleTypePathPrefix)
 	rules := []string{ruleType + ":" + pa.Path}
 
-	if rewriteTarget := getStringValue(i.Annotations, annotationKubernetesRewriteTarget, ""); rewriteTarget != "" {
-		rules = append(rules, ruleTypeReplacePath+":"+rewriteTarget)
+	var pathReplaceAnnotation string
+	if ruleType == ruleTypeReplacePath {
+		pathReplaceAnnotation = annotationKubernetesRuleType
 	}
 
-	return strings.Join(rules, ";")
+	if rewriteTarget := getStringValue(i.Annotations, annotationKubernetesRewriteTarget, ""); rewriteTarget != "" {
+		if pathReplaceAnnotation != "" {
+			return "", fmt.Errorf("rewrite-target must not be used together with annotation %q", pathReplaceAnnotation)
+		}
+		rules = append(rules, ruleTypeReplacePath+":"+rewriteTarget)
+		pathReplaceAnnotation = annotationKubernetesRewriteTarget
+	}
+
+	if rootPath := getStringValue(i.Annotations, annotationKubernetesAppRoot, ""); rootPath != "" && pa.Path == "/" {
+		if pathReplaceAnnotation != "" {
+			return "", fmt.Errorf("app-root must not be used together with annotation %q", pathReplaceAnnotation)
+		}
+		rules = append(rules, ruleTypeReplacePath+":"+rootPath)
+	}
+	return strings.Join(rules, ";"), nil
 }
 
 func getRuleForHost(host string) string {
@@ -556,6 +577,7 @@ func getHeader(i *extensionsv1beta1.Ingress) *types.Headers {
 		CustomFrameOptionsValue: getStringValue(i.Annotations, annotationKubernetesCustomFrameOptionsValue, ""),
 		ContentTypeNosniff:      getBoolValue(i.Annotations, annotationKubernetesContentTypeNosniff, false),
 		BrowserXSSFilter:        getBoolValue(i.Annotations, annotationKubernetesBrowserXSSFilter, false),
+		CustomBrowserXSSValue:   getStringValue(i.Annotations, annotationKubernetesCustomBrowserXSSValue, ""),
 		ContentSecurityPolicy:   getStringValue(i.Annotations, annotationKubernetesContentSecurityPolicy, ""),
 		PublicKey:               getStringValue(i.Annotations, annotationKubernetesPublicKey, ""),
 		ReferrerPolicy:          getStringValue(i.Annotations, annotationKubernetesReferrerPolicy, ""),

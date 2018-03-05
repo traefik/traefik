@@ -1,0 +1,42 @@
+{
+  "Vendor": true,
+  "Sort": [
+    "path",
+    "line",
+    "column",
+    "severity",
+    "linter"
+  ],
+  "Test": true,
+  "Cyclo": 15,
+  "Enable": [
+    "gotypex",
+    "nakedret",
+    "vet",
+    "goimports",
+    "golint",
+    "ineffassign",
+    "gotype",
+    "misspell",
+    "structcheck",
+    "gosimple",
+    "unconvert",
+    "varcheck",
+    "errcheck",
+    "unused",
+    "deadcode",
+    "staticcheck"
+  ],
+  "Disable": [
+    "gas",
+    "maligned",
+    "interfacer",
+    "goconst",
+    "gocyclo",
+    "vetshadow"
+  ],
+  "Exclude": [
+    "autogen/.*"
+  ],
+  "Deadline": "5m"
+}

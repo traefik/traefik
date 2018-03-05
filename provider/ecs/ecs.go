@@ -59,7 +59,10 @@ type awsClient struct {
 }
 
 func (p *Provider) createClient() (*awsClient, error) {
-	sess := session.New()
+	sess, err := session.NewSession()
+	if err != nil {
+		return nil, err
+	}
 	ec2meta := ec2metadata.New(sess)
 	if p.Region == "" {
 		log.Infoln("No EC2 region provided, querying instance metadata endpoint...")
@@ -219,8 +222,8 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 				break
 			}
 		}
-		for _, carns := range clustersArn {
-			clusters = append(clusters, *carns)
+		for _, cArn := range clustersArn {
+			clusters = append(clusters, *cArn)
 		}
 	} else if p.Cluster != "" {
 		// TODO: Deprecated configuration - Need to be removed in the future

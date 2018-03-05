@@ -13,7 +13,10 @@
 
     [entryPoints.http.tls]
       minVersion = "VersionTLS12"
-      cipherSuites = ["TLS_RSA_WITH_AES_256_GCM_SHA384"]
+      cipherSuites = [
+        "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+        "TLS_RSA_WITH_AES_256_GCM_SHA384"
+       ]
       [[entryPoints.http.tls.certificates]]
         certFile = "path/to/my.cert"
         keyFile = "path/to/my.key"
@@ -246,9 +249,9 @@ In the example below both `snitest.com` and `snitest.org` will require client ce
 
 ### Basic Authentication
 
-Passwords can be encoded in MD5, SHA1 and BCrypt: you can use `htpasswd` to generate those ones.
+Passwords can be encoded in MD5, SHA1 and BCrypt: you can use `htpasswd` to generate them.
 
-Users can be specified directly in the toml file, or indirectly by referencing an external file;
+Users can be specified directly in the TOML file, or indirectly by referencing an external file;
  if both are provided, the two are merged, with external file contents having precedence.
 
 ```toml
@@ -263,9 +266,9 @@ Users can be specified directly in the toml file, or indirectly by referencing a
 
 ### Digest Authentication
 
-You can use `htdigest` to generate those ones.
+You can use `htdigest` to generate them.
 
-Users can be specified directly in the toml file, or indirectly by referencing an external file;
+Users can be specified directly in the TOML file, or indirectly by referencing an external file;
  if both are provided, the two are merged, with external file contents having precedence
 
 ```toml
@@ -283,7 +286,7 @@ Users can be specified directly in the toml file, or indirectly by referencing a
 This configuration will first forward the request to `http://authserver.com/auth`.
 
 If the response code is 2XX, access is granted and the original request is performed.
-Otherwise, the response from the auth server is returned.
+Otherwise, the response from the authentication server is returned.
 
 ```toml
 [entryPoints]
@@ -320,7 +323,10 @@ To specify an https entry point with a minimum TLS version, and specifying an ar
   address = ":443"
     [entryPoints.https.tls]
     minVersion = "VersionTLS12"
-    cipherSuites = ["TLS_RSA_WITH_AES_256_GCM_SHA384"]
+    cipherSuites = [
+      "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+      "TLS_RSA_WITH_AES_256_GCM_SHA384"
+    ]
       [[entryPoints.https.tls.certificates]]
       certFile = "integration/fixtures/https/snitest.com.cert"
       keyFile = "integration/fixtures/https/snitest.com.key"

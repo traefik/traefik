@@ -368,6 +368,7 @@ func (p *Provider) getHeaders(tags []string) *types.Headers {
 		ContentSecurityPolicy:   p.getAttribute(label.SuffixFrontendHeadersContentSecurityPolicy, tags, ""),
 		PublicKey:               p.getAttribute(label.SuffixFrontendHeadersPublicKey, tags, ""),
 		ReferrerPolicy:          p.getAttribute(label.SuffixFrontendHeadersReferrerPolicy, tags, ""),
+		CustomBrowserXSSValue:   p.getAttribute(label.SuffixFrontendHeadersCustomBrowserXSSValue, tags, ""),
 		STSSeconds:              p.getInt64Attribute(label.SuffixFrontendHeadersSTSSeconds, tags, 0),
 		SSLRedirect:             p.getBoolAttribute(label.SuffixFrontendHeadersSSLRedirect, tags, false),
 		SSLTemporaryRedirect:    p.getBoolAttribute(label.SuffixFrontendHeadersSSLTemporaryRedirect, tags, false),

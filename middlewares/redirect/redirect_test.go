@@ -174,7 +174,7 @@ func TestNewRegexHandler(t *testing.T) {
 					assert.Equal(t, test.expectedStatus, recorder.Code)
 
 					location, err := recorder.Result().Location()
-					require.Error(t, err, "ghf %v", location)
+					require.Errorf(t, err, "Location %v", location)
 				}
 			}
 		})

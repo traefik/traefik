@@ -46,7 +46,7 @@
 
 [[constraint]]
   name = "github.com/aws/aws-sdk-go"
-  version = "1.6.18"
+  version = "1.13.1"
 
 [[constraint]]
   branch = "master"
@@ -102,6 +102,10 @@
 [[constraint]]
   branch = "master"
   name = "github.com/gorilla/websocket"
+
+[[constraint]]
+  name = "github.com/hashicorp/consul"
+  version = "1.0.6"
 
 [[constraint]]
   name = "github.com/influxdata/influxdb"
@@ -167,6 +171,10 @@
 [[constraint]]
   name = "github.com/uber/jaeger-lib"
   version = "1.1.0"
+
+[[constraint]]
+  branch = "v1"
+  name = "github.com/unrolled/secure"
 
 [[constraint]]
   name = "github.com/vdemeester/shakers"
@@ -245,6 +253,18 @@
   # ALWAYS keep this override
   name = "github.com/mailgun/timetools"
   revision = "7e6055773c5137efbeb3bd2410d705fe10ab6bfd"
+
+[[override]]
+  branch = "master"
+  name = "github.com/miekg/dns"
+#
+#[[override]]
+#  name = "golang.org/x/crypto"
+#  revision = "13931e22f9e72ea58bb73048bc752b48c6d4d4ac"
+#
+#[[override]]
+#  name = "golang.org/x/net"
+#  revision = "5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec"
 
 [prune]
   non-go = true

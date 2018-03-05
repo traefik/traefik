@@ -206,6 +206,7 @@ func (p *Provider) getHeaders(rootPath string) *types.Headers {
 		CustomFrameOptionsValue: p.get("", rootPath, pathFrontendCustomFrameOptionsValue),
 		ContentTypeNosniff:      p.getBool(false, rootPath, pathFrontendContentTypeNosniff),
 		BrowserXSSFilter:        p.getBool(false, rootPath, pathFrontendBrowserXSSFilter),
+		CustomBrowserXSSValue:   p.get("", rootPath, pathFrontendCustomBrowserXSSValue),
 		ContentSecurityPolicy:   p.get("", rootPath, pathFrontendContentSecurityPolicy),
 		PublicKey:               p.get("", rootPath, pathFrontendPublicKey),
 		ReferrerPolicy:          p.get("", rootPath, pathFrontendReferrerPolicy),

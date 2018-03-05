@@ -22,6 +22,7 @@
     "animate.css": "^3.4.0",
     "bootstrap": "^3.3.6",
     "http-status-codes": "^1.3.0",
+    "lodash": "^4.17.5",
     "moment": "^2.14.1",
     "nvd3": "^1.8.4"
   },

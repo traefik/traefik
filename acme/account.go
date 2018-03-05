@@ -222,6 +222,24 @@ func (dc *DomainsCertificates) exists(domainToFind Domain) (*DomainsCertificate,
 	return nil, false
 }
 
+func (dc *DomainsCertificates) toDomainsMap() map[string]*tls.Certificate {
+	domainsCertificatesMap := make(map[string]*tls.Certificate)
+	for _, domainCertificate := range dc.Certs {
+		certKey := domainCertificate.Domains.Main
+		if domainCertificate.Domains.SANs != nil {
+			sort.Strings(domainCertificate.Domains.SANs)
+			for _, dnsName := range domainCertificate.Domains.SANs {
+				if dnsName != domainCertificate.Domains.Main {
+					certKey += fmt.Sprintf(",%s", dnsName)
+				}
+			}
+
+		}
+		domainsCertificatesMap[certKey] = domainCertificate.tlsCert
+	}
+	return domainsCertificatesMap
+}
+
 // DomainsCertificate contains a certificate for multiple domains
 type DomainsCertificate struct {
 	Domains     Domain

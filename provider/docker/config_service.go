@@ -169,6 +169,7 @@ func getServiceHeaders(container dockerData, serviceName string) *types.Headers 
 		ContentSecurityPolicy:   getServiceStringValue(container, serviceLabels, label.SuffixFrontendHeadersContentSecurityPolicy, ""),
 		PublicKey:               getServiceStringValue(container, serviceLabels, label.SuffixFrontendHeadersPublicKey, ""),
 		ReferrerPolicy:          getServiceStringValue(container, serviceLabels, label.SuffixFrontendHeadersReferrerPolicy, ""),
+		CustomBrowserXSSValue:   getServiceStringValue(container, serviceLabels, label.SuffixFrontendHeadersCustomBrowserXSSValue, ""),
 	}
 
 	if !headers.HasSecureHeadersDefined() && !headers.HasCustomHeadersDefined() {

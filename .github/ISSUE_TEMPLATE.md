@@ -22,7 +22,7 @@ If you intend to ask a support question: DO NOT FILE AN ISSUE.
 
 HOW TO WRITE A GOOD ISSUE?
 
-- Respect the issue template as more as possible.
+- Respect the issue template as much as possible.
 - If it's possible use the command `traefik bug`. See https://www.youtube.com/watch?v=Lyz62L8m93I.
 - The title must be short and descriptive.
 - Explain the conditions which led you to write this issue: the context.

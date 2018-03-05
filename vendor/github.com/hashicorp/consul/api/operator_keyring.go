@@ -13,6 +13,9 @@ type KeyringResponse struct {
 	// The datacenter name this request corresponds to
 	Datacenter string
 
+	// Segment has the network segment this request corresponds to.
+	Segment string
+
 	// A map of the encryption keys to the number of nodes they're installed on
 	Keys map[string]int
 

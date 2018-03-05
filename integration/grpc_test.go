@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
@@ -13,7 +14,6 @@ import (
 	"github.com/containous/traefik/integration/helloworld"
 	"github.com/containous/traefik/integration/try"
 	"github.com/go-check/check"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )

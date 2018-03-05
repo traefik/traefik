@@ -572,6 +572,7 @@ func getHeaders(application marathon.Application, serviceName string) *types.Hea
 		ContentSecurityPolicy:   label.GetStringValue(labels, getLabelName(serviceName, label.SuffixFrontendHeadersContentSecurityPolicy), ""),
 		PublicKey:               label.GetStringValue(labels, getLabelName(serviceName, label.SuffixFrontendHeadersPublicKey), ""),
 		ReferrerPolicy:          label.GetStringValue(labels, getLabelName(serviceName, label.SuffixFrontendHeadersReferrerPolicy), ""),
+		CustomBrowserXSSValue:   label.GetStringValue(labels, getLabelName(serviceName, label.SuffixFrontendHeadersCustomBrowserXSSValue), ""),
 	}
 
 	if !headers.HasSecureHeadersDefined() && !headers.HasCustomHeadersDefined() {

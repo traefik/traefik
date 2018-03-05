@@ -14,6 +14,11 @@ import (
 	"github.com/containous/flaeg"
 	"github.com/containous/staert"
 	"github.com/containous/traefik/acme"
+	"github.com/containous/traefik/cmd"
+	"github.com/containous/traefik/cmd/bug"
+	"github.com/containous/traefik/cmd/healthcheck"
+	"github.com/containous/traefik/cmd/storeconfig"
+	cmdVersion "github.com/containous/traefik/cmd/version"
 	"github.com/containous/traefik/collector"
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/job"
@@ -32,10 +37,11 @@ import (
 )
 
 func main() {
-	//traefik config inits
-	traefikConfiguration := NewTraefikConfiguration()
-	traefikPointersConfiguration := NewTraefikDefaultPointersConfiguration()
-	//traefik Command init
+	// traefik config inits
+	traefikConfiguration := cmd.NewTraefikConfiguration()
+	traefikPointersConfiguration := cmd.NewTraefikDefaultPointersConfiguration()
+
+	// traefik Command init
 	traefikCmd := &flaeg.Command{
 		Name: "traefik",
 		Description: `traefik is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease.
@@ -43,17 +49,17 @@ Complete documentation is available at https://traefik.io`,
 		Config:                traefikConfiguration,
 		DefaultPointersConfig: traefikPointersConfiguration,
 		Run: func() error {
-			run(&traefikConfiguration.GlobalConfiguration, traefikConfiguration.ConfigFile)
+			runCmd(&traefikConfiguration.GlobalConfiguration, traefikConfiguration.ConfigFile)
 			return nil
 		},
 	}
 
-	//storeconfig Command init
-	storeConfigCmd := newStoreConfigCmd(traefikConfiguration, traefikPointersConfiguration)
+	// storeconfig Command init
+	storeConfigCmd := storeconfig.NewCmd(traefikConfiguration, traefikPointersConfiguration)
 
-	//init flaeg source
+	// init flaeg source
 	f := flaeg.New(traefikCmd, os.Args[1:])
-	//add custom parsers
+	// add custom parsers
 	f.AddParser(reflect.TypeOf(configuration.EntryPoints{}), &configuration.EntryPoints{})
 	f.AddParser(reflect.TypeOf(configuration.DefaultEntryPoints{}), &configuration.DefaultEntryPoints{})
 	f.AddParser(reflect.TypeOf(traefikTls.RootCAs{}), &traefikTls.RootCAs{})
@@ -63,16 +69,16 @@ Complete documentation is available at https://traefik.io`,
 	f.AddParser(reflect.TypeOf([]acme.Domain{}), &acme.Domains{})
 	f.AddParser(reflect.TypeOf(types.Buckets{}), &types.Buckets{})
 
-	//add commands
-	f.AddCommand(newVersionCmd())
-	f.AddCommand(newBugCmd(traefikConfiguration, traefikPointersConfiguration))
+	// add commands
+	f.AddCommand(cmdVersion.NewCmd())
+	f.AddCommand(bug.NewCmd(traefikConfiguration, traefikPointersConfiguration))
 	f.AddCommand(storeConfigCmd)
-	f.AddCommand(newHealthCheckCmd(traefikConfiguration, traefikPointersConfiguration))
+	f.AddCommand(healthcheck.NewCmd(traefikConfiguration, traefikPointersConfiguration))
 
 	usedCmd, err := f.GetCommand()
 	if err != nil {
 		fmtlog.Println(err)
-		os.Exit(-1)
+		os.Exit(1)
 	}
 
 	if _, err := f.Parse(usedCmd); err != nil {
@@ -80,32 +86,32 @@ Complete documentation is available at https://traefik.io`,
 			os.Exit(0)
 		}
 		fmtlog.Printf("Error parsing command: %s\n", err)
-		os.Exit(-1)
+		os.Exit(1)
 	}
 
-	//staert init
+	// staert init
 	s := staert.NewStaert(traefikCmd)
-	//init toml source
+	// init TOML source
 	toml := staert.NewTomlSource("traefik", []string{traefikConfiguration.ConfigFile, "/etc/traefik/", "$HOME/.traefik/", "."})
 
-	//add sources to staert
+	// add sources to staert
 	s.AddSource(toml)
 	s.AddSource(f)
 	if _, err := s.LoadConfig(); err != nil {
 		fmtlog.Printf("Error reading TOML config file %s : %s\n", toml.ConfigFileUsed(), err)
-		os.Exit(-1)
+		os.Exit(1)
 	}
 
 	traefikConfiguration.ConfigFile = toml.ConfigFileUsed()
 
-	kv, err := createKvSource(traefikConfiguration)
+	kv, err := storeconfig.CreateKvSource(traefikConfiguration)
 	if err != nil {
 		fmtlog.Printf("Error creating kv store: %s\n", err)
-		os.Exit(-1)
+		os.Exit(1)
 	}
-	storeConfigCmd.Run = runStoreConfig(kv, traefikConfiguration)
+	storeConfigCmd.Run = storeconfig.Run(kv, traefikConfiguration)
 
-	// IF a KV Store is enable and no sub-command called in args
+	// if a KV Store is enable and no sub-command called in args
 	if kv != nil && usedCmd == traefikCmd {
 		if traefikConfiguration.Cluster == nil {
 			traefikConfiguration.Cluster = &types.Cluster{Node: uuid.Get()}
@@ -124,19 +130,19 @@ Complete documentation is available at https://traefik.io`,
 		err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
 		if err != nil {
 			fmtlog.Printf("Error loading configuration: %s\n", err)
-			os.Exit(-1)
+			os.Exit(1)
 		}
 	}
 
 	if err := s.Run(); err != nil {
 		fmtlog.Printf("Error running traefik: %s\n", err)
-		os.Exit(-1)
+		os.Exit(1)
 	}
 
 	os.Exit(0)
 }
 
-func run(globalConfiguration *configuration.GlobalConfiguration, configFile string) {
+func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile string) {
 	configureLogging(globalConfiguration)
 
 	if len(configFile) > 0 {
@@ -177,7 +183,7 @@ func run(globalConfiguration *configuration.GlobalConfiguration, configFile stri
 		safe.Go(func() {
 			tick := time.Tick(t)
 			for range tick {
-				_, errHealthCheck := healthCheck(*globalConfiguration)
+				_, errHealthCheck := healthcheck.Do(*globalConfiguration)
 				if globalConfiguration.Ping == nil || errHealthCheck == nil {
 					if ok, _ := daemon.SdNotify(false, "WATCHDOG=1"); !ok {
 						log.Error("Fail to tick watchdog")
@@ -223,10 +229,7 @@ func configureLogging(globalConfiguration *configuration.GlobalConfiguration) {
 	if globalConfiguration.TraefikLog != nil && globalConfiguration.TraefikLog.Format == "json" {
 		formatter = &logrus.JSONFormatter{}
 	} else {
-		disableColors := false
-		if len(logFile) > 0 {
-			disableColors = true
-		}
+		disableColors := len(logFile) > 0
 		formatter = &logrus.TextFormatter{DisableColors: disableColors, FullTimestamp: true, DisableSorting: true}
 	}
 	log.SetFormatter(formatter)
@@ -234,8 +237,7 @@ func configureLogging(globalConfiguration *configuration.GlobalConfiguration) {
 	if len(logFile) > 0 {
 		dir := filepath.Dir(logFile)
 
-		err := os.MkdirAll(dir, 0755)
-		if err != nil {
+		if err := os.MkdirAll(dir, 0755); err != nil {
 			log.Errorf("Failed to create log path %s: %s", dir, err)
 		}
 

@@ -29,6 +29,7 @@ const (
 	annotationKubernetesRateLimit                = "ingress.kubernetes.io/rate-limit"
 	annotationKubernetesErrorPages               = "ingress.kubernetes.io/error-pages"
 	annotationKubernetesBuffering                = "ingress.kubernetes.io/buffering"
+	annotationKubernetesAppRoot                  = "ingress.kubernetes.io/app-root"
 
 	annotationKubernetesSSLRedirect             = "ingress.kubernetes.io/ssl-redirect"
 	annotationKubernetesHSTSMaxAge              = "ingress.kubernetes.io/hsts-max-age"
@@ -46,6 +47,7 @@ const (
 	annotationKubernetesCustomFrameOptionsValue = "ingress.kubernetes.io/custom-frame-options-value"
 	annotationKubernetesContentTypeNosniff      = "ingress.kubernetes.io/content-type-nosniff"
 	annotationKubernetesBrowserXSSFilter        = "ingress.kubernetes.io/browser-xss-filter"
+	annotationKubernetesCustomBrowserXSSValue   = "ingress.kubernetes.io/custom-browser-xss-value"
 	annotationKubernetesContentSecurityPolicy   = "ingress.kubernetes.io/content-security-policy"
 	annotationKubernetesPublicKey               = "ingress.kubernetes.io/public-key"
 	annotationKubernetesReferrerPolicy          = "ingress.kubernetes.io/referrer-policy"

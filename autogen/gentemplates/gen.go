@@ -183,6 +183,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
       CustomFrameOptionsValue = "{{ $headers.CustomFrameOptionsValue }}"
       ContentTypeNosniff = {{ $headers.ContentTypeNosniff }}
       BrowserXSSFilter = {{ $headers.BrowserXSSFilter }}
+      CustomBrowserXSSValue = "{{ $headers.CustomBrowserXSSValue }}"
       ContentSecurityPolicy = "{{ $headers.ContentSecurityPolicy }}"
       PublicKey = "{{ $headers.PublicKey }}"
       ReferrerPolicy = "{{ $headers.ReferrerPolicy }}"
@@ -387,6 +388,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
       CustomFrameOptionsValue = "{{ $headers.CustomFrameOptionsValue }}"
       ContentTypeNosniff = {{ $headers.ContentTypeNosniff }}
       BrowserXSSFilter = {{ $headers.BrowserXSSFilter }}
+      CustomBrowserXSSValue = "{{ $headers.CustomBrowserXSSValue }}"
       ContentSecurityPolicy = "{{ $headers.ContentSecurityPolicy }}"
       PublicKey = "{{ $headers.PublicKey }}"
       ReferrerPolicy = "{{ $headers.ReferrerPolicy }}"
@@ -503,6 +505,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
       CustomFrameOptionsValue = "{{ $headers.CustomFrameOptionsValue }}"
       ContentTypeNosniff = {{ $headers.ContentTypeNosniff }}
       BrowserXSSFilter = {{ $headers.BrowserXSSFilter }}
+      CustomBrowserXSSValue = "{{ $headers.CustomBrowserXSSValue }}"
       ContentSecurityPolicy = "{{ $headers.ContentSecurityPolicy }}"
       PublicKey = "{{ $headers.PublicKey }}"
       ReferrerPolicy = "{{ $headers.ReferrerPolicy }}"
@@ -694,6 +697,7 @@ var _templatesEcsTmpl = []byte(`[backends]
       CustomFrameOptionsValue = "{{ $headers.CustomFrameOptionsValue }}"
       ContentTypeNosniff = {{ $headers.ContentTypeNosniff }}
       BrowserXSSFilter = {{ $headers.BrowserXSSFilter }}
+      CustomBrowserXSSValue = "{{ $headers.CustomBrowserXSSValue }}"
       ContentSecurityPolicy = "{{ $headers.ContentSecurityPolicy }}"
       PublicKey = "{{ $headers.PublicKey }}"
       ReferrerPolicy = "{{ $headers.ReferrerPolicy }}"
@@ -865,9 +869,9 @@ var _templatesKubernetesTmpl = []byte(`[backends]
     {{end}}
 
     {{if $frontend.Errors }}
-    [frontends."frontend-{{ $frontendName }}".errors]
+    [frontends."{{ $frontendName }}".errors]
       {{range $pageName, $page := $frontend.Errors }}
-      [frontends."frontend-{{ $frontendName }}".errors.{{ $pageName }}]
+      [frontends."{{ $frontendName }}".errors.{{ $pageName }}]
         status = [{{range $page.Status }}
           "{{.}}",
           {{end}}]
@@ -877,11 +881,11 @@ var _templatesKubernetesTmpl = []byte(`[backends]
     {{end}}
 
     {{if $frontend.RateLimit }}
-    [frontends."frontend-{{ $frontendName }}".rateLimit]
+    [frontends."{{ $frontendName }}".rateLimit]
       extractorFunc = "{{ $frontend.RateLimit.ExtractorFunc }}"
-      [frontends."frontend-{{ $frontendName }}".rateLimit.rateSet]
+      [frontends."{{ $frontendName }}".rateLimit.rateSet]
         {{range $limitName, $limit := $frontend.RateLimit.RateSet }}
-        [frontends."frontend-{{ $frontendName }}".rateLimit.rateSet.{{ $limitName }}]
+        [frontends."{{ $frontendName }}".rateLimit.rateSet.{{ $limitName }}]
           period = "{{ $limit.Period }}"
           average = {{ $limit.Average }}
           burst = {{ $limit.Burst }}
@@ -901,6 +905,7 @@ var _templatesKubernetesTmpl = []byte(`[backends]
     CustomFrameOptionsValue = "{{ $frontend.Headers.CustomFrameOptionsValue }}"
     ContentTypeNosniff = {{ $frontend.Headers.ContentTypeNosniff }}
     BrowserXSSFilter = {{ $frontend.Headers.BrowserXSSFilter }}
+    CustomBrowserXSSValue = "{{ $frontend.Headers.CustomBrowserXSSValue }}"
     ContentSecurityPolicy = "{{ $frontend.Headers.ContentSecurityPolicy }}"
     PublicKey = "{{ $frontend.Headers.PublicKey }}"
     ReferrerPolicy = "{{ $frontend.Headers.ReferrerPolicy }}"
@@ -1096,6 +1101,7 @@ var _templatesKvTmpl = []byte(`[backends]
       CustomFrameOptionsValue = "{{ $headers.CustomFrameOptionsValue }}"
       ContentTypeNosniff = {{ $headers.ContentTypeNosniff }}
       BrowserXSSFilter = {{ $headers.BrowserXSSFilter }}
+      CustomBrowserXSSValue = "{{ $headers.CustomBrowserXSSValue }}"
       ContentSecurityPolicy = "{{ $headers.ContentSecurityPolicy }}"
       PublicKey = "{{ $headers.PublicKey }}"
       ReferrerPolicy = "{{ $headers.ReferrerPolicy }}"
@@ -1306,6 +1312,7 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
       CustomFrameOptionsValue = "{{ $headers.CustomFrameOptionsValue }}"
       ContentTypeNosniff = {{ $headers.ContentTypeNosniff }}
       BrowserXSSFilter = {{ $headers.BrowserXSSFilter }}
+      CustomBrowserXSSValue = "{{ $headers.CustomBrowserXSSValue }}"
       ContentSecurityPolicy = "{{ $headers.ContentSecurityPolicy }}"
       PublicKey = "{{ $headers.PublicKey }}"
       ReferrerPolicy = "{{ $headers.ReferrerPolicy }}"
@@ -1498,6 +1505,7 @@ var _templatesMesosTmpl = []byte(`[backends]
       CustomFrameOptionsValue = "{{ $headers.CustomFrameOptionsValue }}"
       ContentTypeNosniff = {{ $headers.ContentTypeNosniff }}
       BrowserXSSFilter = {{ $headers.BrowserXSSFilter }}
+      CustomBrowserXSSValue = "{{ $headers.CustomBrowserXSSValue }}"
       ContentSecurityPolicy = "{{ $headers.ContentSecurityPolicy }}"
       PublicKey = "{{ $headers.PublicKey }}"
       ReferrerPolicy = "{{ $headers.ReferrerPolicy }}"
@@ -1711,6 +1719,7 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
       CustomFrameOptionsValue = "{{ $headers.CustomFrameOptionsValue }}"
       ContentTypeNosniff = {{ $headers.ContentTypeNosniff }}
       BrowserXSSFilter = {{ $headers.BrowserXSSFilter }}
+      CustomBrowserXSSValue = "{{ $headers.CustomBrowserXSSValue }}"
       ContentSecurityPolicy = "{{ $headers.ContentSecurityPolicy }}"
       PublicKey = "{{ $headers.PublicKey }}"
       ReferrerPolicy = "{{ $headers.ReferrerPolicy }}"

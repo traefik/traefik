@@ -48,6 +48,16 @@ prefix = "traefik"
 # Default: "Host:{{.ServiceName}}.{{.Domain}}"
 #
 #frontEndRule = "Host:{{.ServiceName}}.{{.Domain}}"
+
+# Enable Consul catalog TLS connection.
+#
+# Optional
+#
+#    [consulCatalog.tls]
+#    ca = "/etc/ssl/ca.crt"
+#    cert = "/etc/ssl/consul.crt"
+#    key = "/etc/ssl/consul.key"
+#    insecureskipverify = true
 ```
 
 This backend will create routes matching on hostname based on the service name used in Consul.
@@ -133,6 +143,7 @@ Additional settings can be defined using Consul Catalog tags.
 | `<prefix>.frontend.headers.customFrameOptionsValue=VALUE` | Overrides the `X-Frame-Options` header with the custom value.                                                                                                                                       |
 | `<prefix>.frontend.headers.contentTypeNosniff=true`       | Adds the `X-Content-Type-Options` header with the value `nosniff`.                                                                                                                                  |
 | `<prefix>.frontend.headers.browserXSSFilter=true`         | Adds the X-XSS-Protection header with the value `1; mode=block`.                                                                                                                                    |
+| `<prefix>.frontend.headers.customBrowserXSSValue=VALUE`   | Set custom value for X-XSS-Protection header. This overrides the BrowserXssFilter option.                                                                                                           |
 | `<prefix>.frontend.headers.contentSecurityPolicy=VALUE`   | Adds CSP Header with the custom value.                                                                                                                                                              |
 | `<prefix>.frontend.headers.publicKey=VALUE`               | Adds pinned HTST public key header.                                                                                                                                                                 |
 | `<prefix>.frontend.headers.referrerPolicy=VALUE`          | Adds referrer policy  header.                                                                                                                                                                       |

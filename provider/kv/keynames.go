@@ -61,6 +61,7 @@ const (
 	pathFrontendCustomFrameOptionsValue = "/headers/customframeoptionsvalue"
 	pathFrontendContentTypeNosniff      = "/headers/contenttypenosniff"
 	pathFrontendBrowserXSSFilter        = "/headers/browserxssfilter"
+	pathFrontendCustomBrowserXSSValue   = "/headers/custombrowserxssvalue"
 	pathFrontendContentSecurityPolicy   = "/headers/contentsecuritypolicy"
 	pathFrontendPublicKey               = "/headers/publickey"
 	pathFrontendReferrerPolicy          = "/headers/referrerpolicy"

@@ -34,6 +34,7 @@ import (
 	"github.com/containous/traefik/middlewares/redirect"
 	"github.com/containous/traefik/middlewares/tracing"
 	"github.com/containous/traefik/provider"
+	"github.com/containous/traefik/rules"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/server/cookie"
 	traefikTls "github.com/containous/traefik/tls"
@@ -42,6 +43,7 @@ import (
 	"github.com/eapache/channels"
 	"github.com/sirupsen/logrus"
 	thoas_stats "github.com/thoas/stats"
+	"github.com/unrolled/secure"
 	"github.com/urfave/negroni"
 	"github.com/vulcand/oxy/buffer"
 	"github.com/vulcand/oxy/connlimit"
@@ -82,15 +84,6 @@ type serverEntryPoint struct {
 	listener   net.Listener
 	httpRouter *middlewares.HandlerSwitcher
 	certs      safe.Safe
-}
-
-type serverRoute struct {
-	route              *mux.Route
-	stripPrefixes      []string
-	stripPrefixesRegex []string
-	addPrefix          string
-	replacePath        string
-	replacePathRegex   string
 }
 
 // NewServer returns an initialized Server.
@@ -494,6 +487,7 @@ func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tl
 				}
 			}
 		}
+		log.Debugf("No certificate provided dynamically can check the domain %q, a per default certificate will be used.", domainToCheck)
 	}
 	return nil, nil
 }
@@ -530,7 +524,7 @@ func (s *Server) postLoadConfiguration() {
 
 				if acmeEnabled {
 					for _, route := range frontend.Routes {
-						rules := Rules{}
+						rules := rules.Rules{}
 						domains, err := rules.ParseDomains(route.Rule)
 						if err != nil {
 							log.Errorf("Error parsing domains: %v", err)
@@ -881,7 +875,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 	backendsHealthCheck := map[string]*healthcheck.BackendHealthCheck{}
 	errorHandler := NewRecordingErrorHandler(middlewares.DefaultNetErrorRecorder{})
 
-	for _, config := range configurations {
+	for providerName, config := range configurations {
 		frontendNames := sortedFrontendNamesForConfig(config)
 	frontend:
 		for _, frontendName := range frontendNames {
@@ -907,7 +901,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 			for _, entryPointName := range frontend.EntryPoints {
 				log.Debugf("Wiring frontend %s to entryPoint %s", frontendName, entryPointName)
 
-				newServerRoute := &serverRoute{route: serverEntryPoints[entryPointName].httpRouter.GetHandler().NewRoute().Name(frontendName)}
+				newServerRoute := &types.ServerRoute{Route: serverEntryPoints[entryPointName].httpRouter.GetHandler().NewRoute().Name(frontendName)}
 				for routeName, route := range frontend.Routes {
 					err := getRoute(newServerRoute, &route)
 					if err != nil {
@@ -920,7 +914,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 
 				entryPoint := globalConfiguration.EntryPoints[entryPointName]
 				n := negroni.New()
-				if entryPoint.Redirect != nil {
+				if entryPoint.Redirect != nil && entryPointName != entryPoint.Redirect.EntryPoint {
 					if redirectHandlers[entryPointName] != nil {
 						n.Use(redirectHandlers[entryPointName])
 					} else if handler, err := s.buildRedirectHandler(entryPointName, entryPoint.Redirect); err != nil {
@@ -933,7 +927,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						redirectHandlers[entryPointName] = handlerToUse
 					}
 				}
-				if backends[entryPointName+frontend.Backend] == nil {
+				if backends[entryPointName+providerName+frontend.Backend] == nil {
 					log.Debugf("Creating backend %s", frontend.Backend)
 
 					roundTripper, err := s.getRoundTripper(entryPointName, globalConfiguration, frontend.PassTLSCert, entryPoint.TLS)
@@ -951,11 +945,9 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 					}
 
 					headerMiddleware := middlewares.NewHeaderFromStruct(frontend.Headers)
-					var responseModifier func(res *http.Response) error
-					if headerMiddleware != nil {
-						responseModifier = headerMiddleware.ModifyResponseHeaders
-					}
+					secureMiddleware := middlewares.NewSecure(frontend.Headers)
 
+					var responseModifier = buildModifyResponse(secureMiddleware, headerMiddleware)
 					var fwd http.Handler
 
 					fwd, err = forward.New(
@@ -1118,7 +1110,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						log.Infof("Configured IP Whitelists: %s", frontend.WhitelistSourceRange)
 					}
 
-					if frontend.Redirect != nil {
+					if frontend.Redirect != nil && entryPointName != frontend.Redirect.EntryPoint {
 						rewrite, err := s.buildRedirectHandler(entryPointName, frontend.Redirect)
 						if err != nil {
 							log.Errorf("Error creating Frontend Redirect: %v", err)
@@ -1151,10 +1143,9 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						n.Use(s.tracingMiddleware.NewNegroniHandlerWrapper("Header", headerMiddleware, false))
 					}
 
-					secureMiddleware := middlewares.NewSecure(frontend.Headers)
 					if secureMiddleware != nil {
 						log.Debugf("Adding secure middleware for frontend %s", frontendName)
-						n.UseFunc(secureMiddleware.HandlerFuncWithNext)
+						n.UseFunc(secureMiddleware.HandlerFuncWithNextForRequestOnly)
 					}
 
 					if config.Backends[frontend.Backend].Buffering != nil {
@@ -1180,16 +1171,16 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 					} else {
 						n.UseHandler(lb)
 					}
-					backends[entryPointName+frontend.Backend] = n
+					backends[entryPointName+providerName+frontend.Backend] = n
 				} else {
 					log.Debugf("Reusing backend %s", frontend.Backend)
 				}
 				if frontend.Priority > 0 {
-					newServerRoute.route.Priority(frontend.Priority)
+					newServerRoute.Route.Priority(frontend.Priority)
 				}
-				s.wireFrontendBackend(newServerRoute, backends[entryPointName+frontend.Backend])
+				s.wireFrontendBackend(newServerRoute, backends[entryPointName+providerName+frontend.Backend])
 
-				err := newServerRoute.route.GetError()
+				err := newServerRoute.Route.GetError()
 				if err != nil {
 					log.Errorf("Error building route: %s", err)
 				}
@@ -1244,48 +1235,48 @@ func configureIPWhitelistMiddleware(whitelistSourceRanges []string) (negroni.Han
 	return nil, nil
 }
 
-func (s *Server) wireFrontendBackend(serverRoute *serverRoute, handler http.Handler) {
+func (s *Server) wireFrontendBackend(serverRoute *types.ServerRoute, handler http.Handler) {
 	// path replace - This needs to always be the very last on the handler chain (first in the order in this function)
 	// -- Replacing Path should happen at the very end of the Modifier chain, after all the Matcher+Modifiers ran
-	if len(serverRoute.replacePath) > 0 {
+	if len(serverRoute.ReplacePath) > 0 {
 		handler = &middlewares.ReplacePath{
-			Path:    serverRoute.replacePath,
+			Path:    serverRoute.ReplacePath,
 			Handler: handler,
 		}
 	}
 
-	if len(serverRoute.replacePathRegex) > 0 {
-		sp := strings.Split(serverRoute.replacePathRegex, " ")
+	if len(serverRoute.ReplacePathRegex) > 0 {
+		sp := strings.Split(serverRoute.ReplacePathRegex, " ")
 		if len(sp) == 2 {
 			handler = middlewares.NewReplacePathRegexHandler(sp[0], sp[1], handler)
 		} else {
-			log.Warnf("Invalid syntax for ReplacePathRegex: %s. Separate the regular expression and the replacement by a space.", serverRoute.replacePathRegex)
+			log.Warnf("Invalid syntax for ReplacePathRegex: %s. Separate the regular expression and the replacement by a space.", serverRoute.ReplacePathRegex)
 		}
 	}
 
 	// add prefix - This needs to always be right before ReplacePath on the chain (second in order in this function)
 	// -- Adding Path Prefix should happen after all *Strip Matcher+Modifiers ran, but before Replace (in case it's configured)
-	if len(serverRoute.addPrefix) > 0 {
+	if len(serverRoute.AddPrefix) > 0 {
 		handler = &middlewares.AddPrefix{
-			Prefix:  serverRoute.addPrefix,
+			Prefix:  serverRoute.AddPrefix,
 			Handler: handler,
 		}
 	}
 
 	// strip prefix
-	if len(serverRoute.stripPrefixes) > 0 {
+	if len(serverRoute.StripPrefixes) > 0 {
 		handler = &middlewares.StripPrefix{
-			Prefixes: serverRoute.stripPrefixes,
+			Prefixes: serverRoute.StripPrefixes,
 			Handler:  handler,
 		}
 	}
 
 	// strip prefix with regex
-	if len(serverRoute.stripPrefixesRegex) > 0 {
-		handler = middlewares.NewStripPrefixRegex(handler, serverRoute.stripPrefixesRegex)
+	if len(serverRoute.StripPrefixesRegex) > 0 {
+		handler = middlewares.NewStripPrefixRegex(handler, serverRoute.StripPrefixesRegex)
 	}
 
-	serverRoute.route.Handler(handler)
+	serverRoute.Route.Handler(handler)
 }
 
 func (s *Server) buildRedirectHandler(srcEntryPointName string, opt *types.Redirect) (negroni.Handler, error) {
@@ -1343,14 +1334,14 @@ func parseHealthCheckOptions(lb healthcheck.LoadBalancer, backend string, hc *ty
 	}
 }
 
-func getRoute(serverRoute *serverRoute, route *types.Route) error {
-	rules := Rules{route: serverRoute}
+func getRoute(serverRoute *types.ServerRoute, route *types.Route) error {
+	rules := rules.Rules{Route: serverRoute}
 	newRoute, err := rules.Parse(route.Rule)
 	if err != nil {
 		return err
 	}
-	newRoute.Priority(serverRoute.route.GetPriority() + len(route.Rule))
-	serverRoute.route = newRoute
+	newRoute.Priority(serverRoute.Route.GetPriority() + len(route.Rule))
+	serverRoute.Route = newRoute
 	return nil
 }
 
@@ -1507,4 +1498,22 @@ func (s *Server) buildBufferingMiddleware(handler http.Handler, config *types.Bu
 		buffer.MaxResponseBodyBytes(config.MaxResponseBodyBytes),
 		buffer.CondSetter(len(config.RetryExpression) > 0, buffer.Retry(config.RetryExpression)),
 	)
+}
+
+func buildModifyResponse(secure *secure.Secure, header *middlewares.HeaderStruct) func(res *http.Response) error {
+	return func(res *http.Response) error {
+		if secure != nil {
+			err := secure.ModifyResponseHeaders(res)
+			if err != nil {
+				return err
+			}
+		}
+		if header != nil {
+			err := header.ModifyResponseHeaders(res)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 }

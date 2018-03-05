@@ -69,7 +69,7 @@ networks:
 ```
 
 As you can see, we're mounting the `traefik.toml` file as well as the (empty) `acme.json` file in the container.  
-Also, we're mounting the `/var/run/docker.sock` Docker socket in the container as well, so Træfik can listen to Docker events and reconfigure it's own internal configuration when containers are created (or shut down).  
+Also, we're mounting the `/var/run/docker.sock` Docker socket in the container as well, so Træfik can listen to Docker events and reconfigure its own internal configuration when containers are created (or shut down).  
 Also, we're making sure the container is automatically restarted by the Docker engine in case of problems (or: if the server is rebooted).
 We're publishing the default HTTP ports `80` and `443` on the host, and making sure the container is placed within the `web` network we've created earlier on.  
 Finally, we're giving this container a static name called `traefik`.
@@ -199,7 +199,7 @@ Since the `traefik` container we've created and started earlier is also attached
 As mentioned earlier, we don't want containers exposed automatically by Træfik.
 
 The reason behind this is simple: we want to have control over this process ourselves.
-Thanks to Docker labels, we can tell Træfik how to create it's internal routing configuration.
+Thanks to Docker labels, we can tell Træfik how to create its internal routing configuration.
 
 Let's take a look at the labels themselves for the `app` service, which is a HTTP webservice listing on port 9000:
 
@@ -222,7 +222,7 @@ We use both `container labels` and `service labels`.
 First, we specify the `backend` name which corresponds to the actual service we're routing **to**.
 
 We also tell Træfik to use the `web` network to route HTTP traffic to this container. 
-With the `traefik.enable` label, we tell Træfik to include this container in it's internal configuration.
+With the `traefik.enable` label, we tell Træfik to include this container in its internal configuration.
 
 With the `frontend.rule` label, we tell Træfik that we want to route to this container if the incoming HTTP request contains the `Host` `app.my-awesome-app.org`.
 Essentially, this is the actual rule used for Layer-7 load balancing. 

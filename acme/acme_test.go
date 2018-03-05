@@ -281,7 +281,7 @@ cijFkALeQp/qyeXdFld2v9gUN3eCgljgcl0QweRoIc=---`)
 	}
 }
 
-func TestAcme_getProvidedCertificate(t *testing.T) {
+func TestAcme_getUncheckedCertificates(t *testing.T) {
 	mm := make(map[string]*tls.Certificate)
 	mm["*.containo.us"] = &tls.Certificate{}
 	mm["traefik.acme.io"] = &tls.Certificate{}
@@ -289,9 +289,36 @@ func TestAcme_getProvidedCertificate(t *testing.T) {
 	a := ACME{TLSConfig: &tls.Config{NameToCertificate: mm}}
 
 	domains := []string{"traefik.containo.us", "trae.containo.us"}
-	certificate := a.getProvidedCertificate(domains)
-	assert.NotNil(t, certificate)
+	uncheckedDomains := a.getUncheckedDomains(domains, nil)
+	assert.Empty(t, uncheckedDomains)
 	domains = []string{"traefik.acme.io", "trae.acme.io"}
-	certificate = a.getProvidedCertificate(domains)
+	uncheckedDomains = a.getUncheckedDomains(domains, nil)
+	assert.Len(t, uncheckedDomains, 1)
+	domainsCertificates := DomainsCertificates{Certs: []*DomainsCertificate{
+		{
+			tlsCert: &tls.Certificate{},
+			Domains: Domain{
+				Main: "*.acme.wtf",
+				SANs: []string{"trae.acme.io"},
+			},
+		},
+	}}
+	account := Account{DomainsCertificate: domainsCertificates}
+	uncheckedDomains = a.getUncheckedDomains(domains, &account)
+	assert.Empty(t, uncheckedDomains)
+}
+
+func TestAcme_getProvidedCertificate(t *testing.T) {
+	mm := make(map[string]*tls.Certificate)
+	mm["*.containo.us"] = &tls.Certificate{}
+	mm["traefik.acme.io"] = &tls.Certificate{}
+
+	a := ACME{TLSConfig: &tls.Config{NameToCertificate: mm}}
+
+	domain := "traefik.containo.us"
+	certificate := a.getProvidedCertificate(domain)
+	assert.NotNil(t, certificate)
+	domain = "trae.acme.io"
+	certificate = a.getProvidedCertificate(domain)
 	assert.Nil(t, certificate)
 }

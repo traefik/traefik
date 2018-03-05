@@ -177,6 +177,8 @@
     "aws/request",
     "aws/session",
     "aws/signer/v4",
+    "internal/sdkrand",
+    "internal/shareddefaults",
     "private/protocol",
     "private/protocol/ec2query",
     "private/protocol/json/jsonutil",
@@ -186,7 +188,6 @@
     "private/protocol/rest",
     "private/protocol/restxml",
     "private/protocol/xml/xmlutil",
-    "private/waiter",
     "service/dynamodb",
     "service/dynamodb/dynamodbattribute",
     "service/dynamodb/dynamodbiface",
@@ -195,8 +196,8 @@
     "service/route53",
     "service/sts"
   ]
-  revision = "3f8f870ec9939e32b3372abf74d24e468bcd285d"
-  version = "v1.6.18"
+  revision = "f9a6880d84e16e2a37055793e17164a228d637f4"
+  version = "v1.13.1"
 
 [[projects]]
   branch = "master"
@@ -224,9 +225,12 @@
 
 [[projects]]
   name = "github.com/containous/flaeg"
-  packages = ["."]
-  revision = "60c87a513a955ca7225e1b1c772581cea8420cb4"
-  version = "v1.0.1"
+  packages = [
+    ".",
+    "parse"
+  ]
+  revision = "963366c29a7acc2d6e02f4f9bcf260d5a1cf4968"
+  version = "v1.1.1"
 
 [[projects]]
   branch = "master"
@@ -532,7 +536,8 @@
 [[projects]]
   name = "github.com/go-ini/ini"
   packages = ["."]
-  revision = "f384f410798cbe7cdce40eec40b79ed32bb4f1ad"
+  revision = "32e4c1e6bc4e7d0d8451aa6b75200d19e37a536a"
+  version = "v1.32.0"
 
 [[projects]]
   name = "github.com/go-kit/kit"
@@ -684,12 +689,19 @@
 [[projects]]
   name = "github.com/hashicorp/consul"
   packages = ["api"]
-  revision = "3f92cc70e8163df866873c16c6d89889b5c95fc4"
+  revision = "9a494b5fb9c86180a5702e29c485df1507a47198"
+  version = "v1.0.6"
 
 [[projects]]
   name = "github.com/hashicorp/go-cleanhttp"
   packages = ["."]
   revision = "3573b8b52aa7b37b9358d966a898feb387f62437"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/hashicorp/go-rootcerts"
+  packages = ["."]
+  revision = "6bb64b370b90e7ef1fa532be9e591a81c3493e00"
 
 [[projects]]
   name = "github.com/hashicorp/go-version"
@@ -740,7 +752,7 @@
 [[projects]]
   name = "github.com/jmespath/go-jmespath"
   packages = ["."]
-  revision = "bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d"
+  revision = "0b12d6b5"
 
 [[projects]]
   name = "github.com/jonboulle/clockwork"
@@ -867,15 +879,22 @@
   source = "https://github.com/containous/mesos-dns.git"
 
 [[projects]]
+  branch = "master"
   name = "github.com/miekg/dns"
   packages = ["."]
-  revision = "8060d9f51305bbe024b99679454e62f552cd0b0b"
+  revision = "906238edc6eb0ddface4a1923f6d41ef2a5ca59b"
 
 [[projects]]
   branch = "master"
   name = "github.com/mitchellh/copystructure"
   packages = ["."]
   revision = "d23ffcb85de31694d6ccaa23ccb4a03e55c1303f"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/mitchellh/go-homedir"
+  packages = ["."]
+  revision = "b8bc1bf767474819792c23f32d8286a45736f1c6"
 
 [[projects]]
   branch = "master"
@@ -1145,9 +1164,10 @@
   revision = "50716a0a853771bb36bfce61a45cdefdb98c2e6e"
 
 [[projects]]
+  branch = "v1"
   name = "github.com/unrolled/secure"
   packages = ["."]
-  revision = "824e85271811af89640ea25620c67f6c2eed987e"
+  revision = "88720c9cbecfcf2eceb9bb4311ad6e398a8381ed"
 
 [[projects]]
   name = "github.com/urfave/negroni"
@@ -1237,29 +1257,36 @@
   packages = [
     "bcrypt",
     "blowfish",
+    "ed25519",
+    "ed25519/internal/edwards25519",
     "ocsp",
     "pbkdf2",
     "scrypt",
     "ssh/terminal"
   ]
-  revision = "13931e22f9e72ea58bb73048bc752b48c6d4d4ac"
+  revision = "91a49db82a88618983a78a06c1cbd4e00ab749ab"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = [
+    "bpf",
     "context",
     "context/ctxhttp",
     "http2",
     "http2/hpack",
     "idna",
+    "internal/iana",
+    "internal/socket",
     "internal/timeseries",
+    "ipv4",
+    "ipv6",
     "lex/httplex",
     "proxy",
     "trace",
     "websocket"
   ]
-  revision = "5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec"
+  revision = "22ae77b79946ea320088417e4d50825671d82d57"
 
 [[projects]]
   name = "golang.org/x/oauth2"
@@ -1546,6 +1573,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "2fa6756003e3f9ca71c3b55e76b9de45677df953dbee5a2f8be7bd77c8b9987b"
+  inputs-digest = "bca5f65f32c7bfc2696eccbebe4145ce6dae7745894d111d3fa32c4d25008049"
   solver-name = "gps-cdcl"
   solver-version = 1

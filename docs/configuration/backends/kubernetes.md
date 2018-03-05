@@ -127,6 +127,7 @@ The following general annotations are applicable on the Ingress object:
 | `traefik.ingress.kubernetes.io/rewrite-target: /users`                          | Replaces each matched Ingress path with the specified one, and adds the old path to the `X-Replaced-Path` header.                               |
 | `traefik.ingress.kubernetes.io/rule-type: PathPrefixStrip`                      | Override the default frontend rule type. Default: `PathPrefix`.                                                                                 |
 | `traefik.ingress.kubernetes.io/whitelist-source-range: "1.2.3.0/24, fe80::/16"` | A comma-separated list of IP ranges permitted for access. all source IPs are permitted if the list is empty or a single range is ill-formatted. |
+| `traefik.ingress.kubernetes.io/app-root: "/index.html"`                         | Redirects all requests for `/` to the defined path. (4)                                                                                         |
 
 <1> `traefik.ingress.kubernetes.io/error-pages` example:
 
@@ -168,6 +169,11 @@ maxresponsebodybytes: 10485761
 memresponsebodybytes: 2097152
 retryexpression: IsNetworkError() && Attempts() <= 2
 ```
+
+<4> `traefik.ingress.kubernetes.io/app-root`:
+Non-root paths will not be affected by this annotation and handled normally.
+This annotation may not be combined with the `ReplacePath` rule type or any other annotation leveraging that rule type.
+Trying to do so leads to an error and the corresponding Ingress object being ignored.
 
 !!! note
     Please note that `traefik.ingress.kubernetes.io/redirect-regex` and `traefik.ingress.kubernetes.io/redirect-replacement` do not have to be set if `traefik.ingress.kubernetes.io/redirect-entry-point` is defined for the redirection (they will not be used in this case).
@@ -214,6 +220,7 @@ The following security annotations are applicable on the Ingress object:
 | `ingress.kubernetes.io/custom-frame-options-value: VALUE` | Overrides the `X-Frame-Options` header with the custom value.                                                                                                                                       |
 | `ingress.kubernetes.io/content-type-nosniff: "true"`      | Adds the `X-Content-Type-Options` header with the value `nosniff`.                                                                                                                                  |
 | `ingress.kubernetes.io/browser-xss-filter: "true"`        | Adds the X-XSS-Protection header with the value `1; mode=block`.                                                                                                                                    |
+| `ingress.kubernetes.io/custom-browser-xss-value: VALUE`   | Set custom value for X-XSS-Protection header. This overrides the BrowserXssFilter option.                                                                                                           |
 | `ingress.kubernetes.io/content-security-policy: VALUE`    | Adds CSP Header with the custom value.                                                                                                                                                              |
 | `ingress.kubernetes.io/public-key: VALUE`                 | Adds pinned HTST public key header.                                                                                                                                                                 |
 | `ingress.kubernetes.io/referrer-policy: VALUE`            | Adds referrer policy  header.                                                                                                                                                                       |

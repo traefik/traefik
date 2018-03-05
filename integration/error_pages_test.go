@@ -39,7 +39,7 @@ func (s *ErrorPagesSuite) TestSimpleConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	frontendReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:80", nil)
+	frontendReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080", nil)
 	c.Assert(err, checker.IsNil)
 	frontendReq.Host = "test.local"
 
@@ -62,7 +62,7 @@ func (s *ErrorPagesSuite) TestErrorPage(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	frontendReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:80", nil)
+	frontendReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080", nil)
 	c.Assert(err, checker.IsNil)
 	frontendReq.Host = "test.local"
 
