@@ -604,7 +604,7 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithTlsConfigurationDeletion(c
 
 		cn := resp.TLS.PeerCertificates[0].Subject.CommonName
 		if cn == tr2.TLSClientConfig.ServerName {
-			return fmt.Errorf("domain %s found in place of default one", tr2.TLSClientConfig.ServerName)
+			return fmt.Errorf("domain %s found instead of the default one", tr2.TLSClientConfig.ServerName)
 		}
 
 		return nil

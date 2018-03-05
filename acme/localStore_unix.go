@@ -7,19 +7,22 @@ import (
 	"os"
 )
 
-// Check file permissions
-func checkPermissions(name string) error {
+// Check file permissions and content size
+func checkFile(name string) (bool, error) {
 	f, err := os.Open(name)
 	if err != nil {
-		return err
+		return false, err
 	}
 	defer f.Close()
+
 	fi, err := f.Stat()
 	if err != nil {
-		return err
+		return false, err
 	}
+
 	if fi.Mode().Perm()&0077 != 0 {
-		return fmt.Errorf("permissions %o for %s are too open, please use 600", fi.Mode().Perm(), name)
+		return false, fmt.Errorf("permissions %o for %s are too open, please use 600", fi.Mode().Perm(), name)
 	}
-	return nil
+
+	return fi.Size() > 0, nil
 }

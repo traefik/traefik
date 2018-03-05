@@ -1,5 +1,5 @@
 boulder:
-    image: containous/boulder:release
+    image: containous/boulder:containous-fork
     environment:
         FAKE_DNS: ${DOCKER_HOST_IP}
         PKCS11_PROXY_SOCKET: tcp://boulder-hsm:5657

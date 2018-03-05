@@ -52,20 +52,30 @@ func (s *AcmeSuite) TearDownSuite(c *check.C) {
 	}
 }
 
-// Test OnDemand option with none provided certificate
-func (s *AcmeSuite) TestOnDemandRetrieveAcmeCertificate(c *check.C) {
+// Test ACME provider with certificate at start
+func (s *AcmeSuite) TestACMEProviderAtStart(c *check.C) {
 	testCase := AcmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme.toml",
-		onDemand:            true,
+		traefikConfFilePath: "fixtures/provideracme/acme.toml",
+		onDemand:            false,
 		domainToCheck:       acmeDomain}
 
 	s.retrieveAcmeCertificate(c, testCase)
 }
 
-// Test OnHostRule option with none provided certificate
-func (s *AcmeSuite) TestOnHostRuleRetrieveAcmeCertificate(c *check.C) {
+// Test ACME provider with certificate at start
+func (s *AcmeSuite) TestACMEProviderAtStartInSAN(c *check.C) {
 	testCase := AcmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme.toml",
+		traefikConfFilePath: "fixtures/provideracme/acme_insan.toml",
+		onDemand:            false,
+		domainToCheck:       "acme.wtf"}
+
+	s.retrieveAcmeCertificate(c, testCase)
+}
+
+// Test ACME provider with certificate at start
+func (s *AcmeSuite) TestACMEProviderOnHost(c *check.C) {
+	testCase := AcmeTestCase{
+		traefikConfFilePath: "fixtures/provideracme/acme_onhost.toml",
 		onDemand:            false,
 		domainToCheck:       acmeDomain}
 
@@ -216,7 +226,7 @@ func (s *AcmeSuite) retrieveAcmeCertificate(c *check.C, testCase AcmeTestCase) {
 
 		cn := resp.TLS.PeerCertificates[0].Subject.CommonName
 		if cn != testCase.domainToCheck {
-			return fmt.Errorf("domain %s found in place of %s", cn, testCase.domainToCheck)
+			return fmt.Errorf("domain %s found instead of %s", cn, testCase.domainToCheck)
 		}
 
 		return nil

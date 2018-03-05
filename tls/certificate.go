@@ -87,14 +87,14 @@ func (f FileOrContent) Read() ([]byte, error) {
 }
 
 // CreateTLSConfig creates a TLS config from Certificate structures
-func (c *Certificates) CreateTLSConfig(entryPointName string) (*tls.Config, map[string]*DomainsCertificates, error) {
+func (c *Certificates) CreateTLSConfig(entryPointName string) (*tls.Config, error) {
 	config := &tls.Config{}
 	domainsCertificates := make(map[string]*DomainsCertificates)
 	if c.isEmpty() {
-		config.Certificates = make([]tls.Certificate, 0)
+		config.Certificates = []tls.Certificate{}
 		cert, err := generate.DefaultCertificate()
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		config.Certificates = append(config.Certificates, *cert)
 	} else {
@@ -111,7 +111,7 @@ func (c *Certificates) CreateTLSConfig(entryPointName string) (*tls.Config, map[
 			}
 		}
 	}
-	return config, domainsCertificates, nil
+	return config, nil
 }
 
 // isEmpty checks if the certificates list is empty
@@ -139,7 +139,7 @@ func (c *Certificate) AppendCertificates(certs map[string]*DomainsCertificates, 
 
 	keyContent, err := c.KeyFile.Read()
 	if err != nil {
-		return fmt.Errorf("uUnable to read KeyFile : %v", err)
+		return fmt.Errorf("unable to read KeyFile : %v", err)
 	}
 	tlsCert, err := tls.X509KeyPair(certContent, keyContent)
 	if err != nil {

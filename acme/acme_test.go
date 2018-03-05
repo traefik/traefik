@@ -10,76 +10,122 @@ import (
 	"testing"
 	"time"
 
+	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/tls/generate"
+	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/xenolf/lego/acme"
 )
 
 func TestDomainsSet(t *testing.T) {
-	checkMap := map[string]Domains{
-		"":                                   {},
-		"foo.com":                            {Domain{Main: "foo.com", SANs: []string{}}},
-		"foo.com,bar.net":                    {Domain{Main: "foo.com", SANs: []string{"bar.net"}}},
-		"foo.com,bar1.net,bar2.net,bar3.net": {Domain{Main: "foo.com", SANs: []string{"bar1.net", "bar2.net", "bar3.net"}}},
+	testCases := []struct {
+		input    string
+		expected types.Domains
+	}{
+		{
+			input:    "",
+			expected: types.Domains{},
+		},
+		{
+			input: "foo1.com",
+			expected: types.Domains{
+				types.Domain{Main: "foo1.com"},
+			},
+		},
+		{
+			input: "foo2.com,bar.net",
+			expected: types.Domains{
+				types.Domain{
+					Main: "foo2.com",
+					SANs: []string{"bar.net"},
+				},
+			},
+		},
+		{
+			input: "foo3.com,bar1.net,bar2.net,bar3.net",
+			expected: types.Domains{
+				types.Domain{
+					Main: "foo3.com",
+					SANs: []string{"bar1.net", "bar2.net", "bar3.net"},
+				},
+			},
+		},
 	}
-	for in, check := range checkMap {
-		ds := Domains{}
-		ds.Set(in)
-		if !reflect.DeepEqual(check, ds) {
-			t.Errorf("Expected %+v\nGot %+v", check, ds)
-		}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.input, func(t *testing.T) {
+			t.Parallel()
+
+			domains := types.Domains{}
+			domains.Set(test.input)
+			assert.Exactly(t, test.expected, domains)
+		})
 	}
 }
 
 func TestDomainsSetAppend(t *testing.T) {
-	inSlice := []string{
-		"",
-		"foo1.com",
-		"foo2.com,bar.net",
-		"foo3.com,bar1.net,bar2.net,bar3.net",
+	testCases := []struct {
+		input    string
+		expected types.Domains
+	}{
+		{
+			input:    "",
+			expected: types.Domains{},
+		},
+		{
+			input: "foo1.com",
+			expected: types.Domains{
+				types.Domain{Main: "foo1.com"},
+			},
+		},
+		{
+			input: "foo2.com,bar.net",
+			expected: types.Domains{
+				types.Domain{Main: "foo1.com"},
+				types.Domain{
+					Main: "foo2.com",
+					SANs: []string{"bar.net"},
+				},
+			},
+		},
+		{
+			input: "foo3.com,bar1.net,bar2.net,bar3.net",
+			expected: types.Domains{
+				types.Domain{Main: "foo1.com"},
+				types.Domain{
+					Main: "foo2.com",
+					SANs: []string{"bar.net"},
+				},
+				types.Domain{
+					Main: "foo3.com",
+					SANs: []string{"bar1.net", "bar2.net", "bar3.net"},
+				},
+			},
+		},
 	}
-	checkSlice := []Domains{
-		{},
-		{
-			Domain{
-				Main: "foo1.com",
-				SANs: []string{}}},
-		{
-			Domain{
-				Main: "foo1.com",
-				SANs: []string{}},
-			Domain{
-				Main: "foo2.com",
-				SANs: []string{"bar.net"}}},
-		{
-			Domain{
-				Main: "foo1.com",
-				SANs: []string{}},
-			Domain{
-				Main: "foo2.com",
-				SANs: []string{"bar.net"}},
-			Domain{Main: "foo3.com",
-				SANs: []string{"bar1.net", "bar2.net", "bar3.net"}}},
-	}
-	ds := Domains{}
-	for i, in := range inSlice {
-		ds.Set(in)
-		if !reflect.DeepEqual(checkSlice[i], ds) {
-			t.Errorf("Expected  %s %+v\nGot %+v", in, checkSlice[i], ds)
-		}
+
+	// append to
+	domains := types.Domains{}
+	for _, test := range testCases {
+		t.Run(test.input, func(t *testing.T) {
+
+			domains.Set(test.input)
+			assert.Exactly(t, test.expected, domains)
+		})
 	}
 }
 
 func TestCertificatesRenew(t *testing.T) {
 	foo1Cert, foo1Key, _ := generate.KeyPair("foo1.com", time.Now())
 	foo2Cert, foo2Key, _ := generate.KeyPair("foo2.com", time.Now())
+
 	domainsCertificates := DomainsCertificates{
 		lock: sync.RWMutex{},
 		Certs: []*DomainsCertificate{
 			{
-				Domains: Domain{
-					Main: "foo1.com",
-					SANs: []string{}},
+				Domains: types.Domain{
+					Main: "foo1.com"},
 				Certificate: &Certificate{
 					Domain:        "foo1.com",
 					CertURL:       "url",
@@ -89,9 +135,8 @@ func TestCertificatesRenew(t *testing.T) {
 				},
 			},
 			{
-				Domains: Domain{
-					Main: "foo2.com",
-					SANs: []string{}},
+				Domains: types.Domain{
+					Main: "foo2.com"},
 				Certificate: &Certificate{
 					Domain:        "foo2.com",
 					CertURL:       "url",
@@ -102,6 +147,7 @@ func TestCertificatesRenew(t *testing.T) {
 			},
 		},
 	}
+
 	foo1Cert, foo1Key, _ = generate.KeyPair("foo1.com", time.Now())
 	newCertificate := &Certificate{
 		Domain:        "foo1.com",
@@ -111,17 +157,15 @@ func TestCertificatesRenew(t *testing.T) {
 		Certificate:   foo1Cert,
 	}
 
-	err := domainsCertificates.renewCertificates(
-		newCertificate,
-		Domain{
-			Main: "foo1.com",
-			SANs: []string{}})
+	err := domainsCertificates.renewCertificates(newCertificate, types.Domain{Main: "foo1.com"})
 	if err != nil {
 		t.Errorf("Error in renewCertificates :%v", err)
 	}
+
 	if len(domainsCertificates.Certs) != 2 {
 		t.Errorf("Expected domainsCertificates length %d %+v\nGot %+v", 2, domainsCertificates.Certs, len(domainsCertificates.Certs))
 	}
+
 	if !reflect.DeepEqual(domainsCertificates.Certs[0].Certificate, newCertificate) {
 		t.Errorf("Expected new certificate %+v \nGot %+v", newCertificate, domainsCertificates.Certs[0].Certificate)
 	}
@@ -137,9 +181,8 @@ func TestRemoveDuplicates(t *testing.T) {
 		lock: sync.RWMutex{},
 		Certs: []*DomainsCertificate{
 			{
-				Domains: Domain{
-					Main: "foo.com",
-					SANs: []string{}},
+				Domains: types.Domain{
+					Main: "foo.com"},
 				Certificate: &Certificate{
 					Domain:        "foo.com",
 					CertURL:       "url",
@@ -149,9 +192,8 @@ func TestRemoveDuplicates(t *testing.T) {
 				},
 			},
 			{
-				Domains: Domain{
-					Main: "foo.com",
-					SANs: []string{}},
+				Domains: types.Domain{
+					Main: "foo.com"},
 				Certificate: &Certificate{
 					Domain:        "foo.com",
 					CertURL:       "url",
@@ -161,9 +203,8 @@ func TestRemoveDuplicates(t *testing.T) {
 				},
 			},
 			{
-				Domains: Domain{
-					Main: "foo.com",
-					SANs: []string{}},
+				Domains: types.Domain{
+					Main: "foo.com"},
 				Certificate: &Certificate{
 					Domain:        "foo.com",
 					CertURL:       "url",
@@ -173,9 +214,8 @@ func TestRemoveDuplicates(t *testing.T) {
 				},
 			},
 			{
-				Domains: Domain{
-					Main: "bar.com",
-					SANs: []string{}},
+				Domains: types.Domain{
+					Main: "bar.com"},
 				Certificate: &Certificate{
 					Domain:        "bar.com",
 					CertURL:       "url",
@@ -185,9 +225,8 @@ func TestRemoveDuplicates(t *testing.T) {
 				},
 			},
 			{
-				Domains: Domain{
-					Main: "foo.com",
-					SANs: []string{}},
+				Domains: types.Domain{
+					Main: "foo.com"},
 				Certificate: &Certificate{
 					Domain:        "foo.com",
 					CertURL:       "url",
@@ -267,7 +306,7 @@ cijFkALeQp/qyeXdFld2v9gUN3eCgljgcl0QweRoIc=---`)
 }`))
 	}))
 	defer ts.Close()
-	a := ACME{DNSChallenge: &DNSChallenge{Provider: "manual", DelayBeforeCheck: 10}, CAServer: ts.URL}
+	a := ACME{DNSChallenge: &acmeprovider.DNSChallenge{Provider: "manual", DelayBeforeCheck: 10}, CAServer: ts.URL}
 
 	client, err := a.buildACMEClient(account)
 	if err != nil {
@@ -297,7 +336,7 @@ func TestAcme_getUncheckedCertificates(t *testing.T) {
 	domainsCertificates := DomainsCertificates{Certs: []*DomainsCertificate{
 		{
 			tlsCert: &tls.Certificate{},
-			Domains: Domain{
+			Domains: types.Domain{
 				Main: "*.acme.wtf",
 				SANs: []string{"trae.acme.io"},
 			},

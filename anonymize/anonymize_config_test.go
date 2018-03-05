@@ -9,6 +9,7 @@ import (
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/provider"
+	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/provider/boltdb"
 	"github.com/containous/traefik/provider/consul"
 	"github.com/containous/traefik/provider/consulcatalog"
@@ -155,7 +156,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 	config.ACME = &acme.ACME{
 		Email: "acme Email",
-		Domains: []acme.Domain{
+		Domains: []types.Domain{
 			{
 				Main: "Domains Main",
 				SANs: []string{"Domains acme SANs 1", "Domains acme SANs 2", "Domains acme SANs 3"},
@@ -167,7 +168,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 		OnHostRule:        true,
 		CAServer:          "CAServer",
 		EntryPoint:        "EntryPoint",
-		DNSChallenge:      &acme.DNSChallenge{Provider: "DNSProvider"},
+		DNSChallenge:      &acmeprovider.DNSChallenge{Provider: "DNSProvider"},
 		DelayDontCheckDNS: 666,
 		ACMELogging:       true,
 		TLSConfig: &tls.Config{

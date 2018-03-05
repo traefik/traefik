@@ -3,7 +3,9 @@ package storeconfig
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	stdlog "log"
+	"os"
 
 	"github.com/abronan/valkeyrie/store"
 	"github.com/containous/flaeg"
@@ -11,6 +13,7 @@ import (
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/cmd"
+	"github.com/containous/traefik/log"
 )
 
 // NewCmd builds a new StoreConfig command
@@ -72,47 +75,76 @@ func Run(kv *staert.KvSource, traefikConfiguration *cmd.TraefikConfiguration) fu
 		}
 
 		if traefikConfiguration.GlobalConfiguration.ACME != nil {
-			var object cluster.Object
 			if len(traefikConfiguration.GlobalConfiguration.ACME.StorageFile) > 0 {
-				// convert ACME json file to KV store
-				localStore := acme.NewLocalStore(traefikConfiguration.GlobalConfiguration.ACME.StorageFile)
-				object, err = localStore.Load()
-				if err != nil {
-					return err
-				}
-			} else {
-				// Create an empty account to create all the keys into the KV store
-				account := &acme.Account{}
-				err = account.Init()
-				if err != nil {
-					return err
-				}
-
-				object = account
-			}
-
-			meta := cluster.NewMetadata(object)
-			err = meta.Marshall()
-			if err != nil {
-				return err
-			}
-
-			source := staert.KvSource{
-				Store:  kv,
-				Prefix: traefikConfiguration.GlobalConfiguration.ACME.Storage,
-			}
-			err = source.StoreConfig(meta)
-			if err != nil {
-				return err
-			}
-			// Force to delete storagefile
-			err = kv.Delete(kv.Prefix + "/acme/storagefile")
-			if err != nil {
-				return err
+				return migrateACMEData(traefikConfiguration.GlobalConfiguration.ACME.StorageFile, traefikConfiguration.GlobalConfiguration.ACME.Storage, kv)
 			}
 		}
 		return nil
 	}
+}
+
+// migrateACMEData allows migrating data from acme.json file to KV store in function of the file format
+func migrateACMEData(fileName, storageKey string, kv *staert.KvSource) error {
+	var object cluster.Object
+
+	f, err := os.Open(fileName)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	file, err := ioutil.ReadAll(f)
+	if err != nil {
+		return err
+	}
+
+	// Create an empty account to create all the keys into the KV store
+	account := &acme.Account{}
+	// Check if the storage file is not empty before to get data
+	if len(file) > 0 {
+		accountFromNewFormat, err := acme.FromNewToOldFormat(fileName)
+		if err != nil {
+			return err
+		}
+
+		if accountFromNewFormat == nil {
+			// convert ACME json file to KV store (used for backward compatibility)
+			localStore := acme.NewLocalStore(fileName)
+			account, err = localStore.Get()
+			if err != nil {
+				return err
+			}
+		} else {
+			account = accountFromNewFormat
+		}
+	} else {
+		log.Warnf("No data will be imported from the storageFile %q because it is empty.", fileName)
+	}
+
+	err = account.Init()
+	if err != nil {
+		return err
+	}
+
+	object = account
+	meta := cluster.NewMetadata(object)
+	err = meta.Marshall()
+	if err != nil {
+		return err
+	}
+
+	source := staert.KvSource{
+		Store:  kv,
+		Prefix: storageKey,
+	}
+
+	err = source.StoreConfig(meta)
+	if err != nil {
+		return err
+	}
+
+	// Force to delete storagefile
+	return kv.Delete(kv.Prefix + "/acme/storagefile")
 }
 
 // CreateKvSource creates KvSource

@@ -34,6 +34,7 @@ import (
 	"github.com/containous/traefik/middlewares/redirect"
 	"github.com/containous/traefik/middlewares/tracing"
 	"github.com/containous/traefik/provider"
+	"github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/rules"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/server/cookie"
@@ -75,15 +76,17 @@ type Server struct {
 	defaultForwardingRoundTripper http.RoundTripper
 	metricsRegistry               metrics.Registry
 	provider                      provider.Provider
+	configurationListeners        []func(types.Configuration)
 }
 
 type serverEntryPoints map[string]*serverEntryPoint
 
 type serverEntryPoint struct {
-	httpServer *http.Server
-	listener   net.Listener
-	httpRouter *middlewares.HandlerSwitcher
-	certs      safe.Safe
+	httpServer       *http.Server
+	listener         net.Listener
+	httpRouter       *middlewares.HandlerSwitcher
+	certs            safe.Safe
+	onDemandListener func(string) (*tls.Certificate, error)
 }
 
 // NewServer returns an initialized Server.
@@ -452,12 +455,28 @@ func (s *Server) loadConfiguration(configMsg types.ConfigMessage) {
 			log.Infof("Server configuration reloaded on %s", s.serverEntryPoints[newServerEntryPointName].httpServer.Addr)
 		}
 		s.currentConfigurations.Set(newConfigurations)
+		for _, listener := range s.configurationListeners {
+			listener(*configMsg.Configuration)
+		}
 		s.postLoadConfiguration()
 	} else {
 		s.metricsRegistry.ConfigReloadsFailureCounter().Add(1)
 		s.metricsRegistry.LastConfigReloadFailureGauge().Set(float64(time.Now().Unix()))
 		log.Error("Error loading new configuration, aborted ", err)
 	}
+}
+
+// AddListener adds a new listener function used when new configuration is provided
+func (s *Server) AddListener(listener func(types.Configuration)) {
+	if s.configurationListeners == nil {
+		s.configurationListeners = make([]func(types.Configuration), 0)
+	}
+	s.configurationListeners = append(s.configurationListeners, listener)
+}
+
+// SetOnDemandListener adds a new listener function used when a request is caught
+func (s *serverEntryPoint) SetOnDemandListener(listener func(string) (*tls.Certificate, error)) {
+	s.onDemandListener = listener
 }
 
 // loadHTTPSConfiguration add/delete HTTPS certificate managed dynamically
@@ -476,8 +495,8 @@ func (s *Server) loadHTTPSConfiguration(configurations types.Configurations, def
 
 // getCertificate allows to customize tlsConfig.Getcertificate behaviour to get the certificates inserted dynamically
 func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
+	domainToCheck := types.CanonicalDomain(clientHello.ServerName)
 	if s.certs.Get() != nil {
-		domainToCheck := types.CanonicalDomain(clientHello.ServerName)
 		for domains, cert := range *s.certs.Get().(*traefikTls.DomainsCertificates) {
 			for _, domain := range strings.Split(domains, ",") {
 				selector := "^" + strings.Replace(domain, "*.", "[^\\.]*\\.?", -1) + "$"
@@ -489,18 +508,19 @@ func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tl
 		}
 		log.Debugf("No certificate provided dynamically can check the domain %q, a per default certificate will be used.", domainToCheck)
 	}
+	if s.onDemandListener != nil {
+		return s.onDemandListener(domainToCheck)
+	}
 	return nil, nil
 }
 
 func (s *Server) postLoadConfiguration() {
 	metrics.OnConfigurationUpdate()
 
-	if s.globalConfiguration.ACME == nil {
+	if s.globalConfiguration.ACME == nil || s.leadership == nil || !s.leadership.IsLeader() {
 		return
 	}
-	if s.leadership != nil && !s.leadership.IsLeader() {
-		return
-	}
+
 	if s.globalConfiguration.ACME.OnHostRule {
 		currentConfigurations := s.currentConfigurations.Get().(types.Configurations)
 		for _, config := range currentConfigurations {
@@ -554,7 +574,7 @@ func createClientTLSConfig(entryPointName string, tlsOption *traefikTls.TLS) (*t
 		return nil, errors.New("no TLS provided")
 	}
 
-	config, _, err := tlsOption.Certificates.CreateTLSConfig(entryPointName)
+	config, err := tlsOption.Certificates.CreateTLSConfig(entryPointName)
 	if err != nil {
 		return nil, err
 	}
@@ -587,16 +607,12 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefikTls.TL
 		return nil, nil
 	}
 
-	config, epDomainsCertificates, err := tlsOption.Certificates.CreateTLSConfig(entryPointName)
+	config, err := tlsOption.Certificates.CreateTLSConfig(entryPointName)
 	if err != nil {
 		return nil, err
 	}
 	epDomainsCertificatesTmp := new(traefikTls.DomainsCertificates)
-	if epDomainsCertificates[entryPointName] != nil {
-		epDomainsCertificatesTmp = epDomainsCertificates[entryPointName]
-	} else {
-		*epDomainsCertificatesTmp = make(map[string]*tls.Certificate)
-	}
+	*epDomainsCertificatesTmp = make(map[string]*tls.Certificate)
 	s.serverEntryPoints[entryPointName].certs.Set(epDomainsCertificatesTmp)
 	// ensure http2 enabled
 	config.NextProtos = []string{"h2", "http/1.1"}
@@ -637,16 +653,10 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefikTls.TL
 				}
 				return false
 			}
-			if s.leadership == nil {
-				err := s.globalConfiguration.ACME.CreateLocalConfig(config, &s.serverEntryPoints[entryPointName].certs, checkOnDemandDomain)
-				if err != nil {
-					return nil, err
-				}
-			} else {
-				err := s.globalConfiguration.ACME.CreateClusterConfig(s.leadership, config, &s.serverEntryPoints[entryPointName].certs, checkOnDemandDomain)
-				if err != nil {
-					return nil, err
-				}
+
+			err := s.globalConfiguration.ACME.CreateClusterConfig(s.leadership, config, &s.serverEntryPoints[entryPointName].certs, checkOnDemandDomain)
+			if err != nil {
+				return nil, err
 			}
 		}
 	} else {
@@ -658,20 +668,31 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefikTls.TL
 	// BuildNameToCertificate parses the CommonName and SubjectAlternateName fields
 	// in each certificate and populates the config.NameToCertificate map.
 	config.BuildNameToCertificate()
-	//Set the minimum TLS version if set in the config TOML
+
+	if acme.IsEnabled() {
+		if entryPointName == acme.Get().EntryPoint {
+			acme.Get().SetStaticCertificates(config.NameToCertificate)
+			acme.Get().SetDynamicCertificates(&s.serverEntryPoints[entryPointName].certs)
+			if acme.Get().OnDemand {
+				s.serverEntryPoints[entryPointName].SetOnDemandListener(acme.Get().ListenRequest)
+			}
+		}
+	}
+
+	// Set the minimum TLS version if set in the config TOML
 	if minConst, exists := traefikTls.MinVersion[s.globalConfiguration.EntryPoints[entryPointName].TLS.MinVersion]; exists {
 		config.PreferServerCipherSuites = true
 		config.MinVersion = minConst
 	}
-	//Set the list of CipherSuites if set in the config TOML
+	// Set the list of CipherSuites if set in the config TOML
 	if s.globalConfiguration.EntryPoints[entryPointName].TLS.CipherSuites != nil {
-		//if our list of CipherSuites is defined in the entrypoint config, we can re-initilize the suites list as empty
+		// if our list of CipherSuites is defined in the entrypoint config, we can re-initilize the suites list as empty
 		config.CipherSuites = make([]uint16, 0)
 		for _, cipher := range s.globalConfiguration.EntryPoints[entryPointName].TLS.CipherSuites {
 			if cipherConst, exists := traefikTls.CipherSuites[cipher]; exists {
 				config.CipherSuites = append(config.CipherSuites, cipherConst)
 			} else {
-				//CipherSuite listed in the toml does not exist in our listed
+				// CipherSuite listed in the toml does not exist in our listed
 				return nil, errors.New("Invalid CipherSuite: " + cipher)
 			}
 		}
@@ -715,6 +736,8 @@ func (s *Server) addInternalPublicRoutes(entryPointName string, router *mux.Rout
 func (s *Server) addACMERoutes(entryPointName string, router *mux.Router) {
 	if s.globalConfiguration.ACME != nil && s.globalConfiguration.ACME.HTTPChallenge != nil && s.globalConfiguration.ACME.HTTPChallenge.EntryPoint == entryPointName {
 		s.globalConfiguration.ACME.AddRoutes(router)
+	} else if acme.IsEnabled() && acme.Get().HTTPChallenge != nil && acme.Get().HTTPChallenge.EntryPoint == entryPointName {
+		acme.Get().AddRoutes(router)
 	}
 }
 
@@ -1183,7 +1206,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 	// Get new certificates list sorted per entrypoints
 	// Update certificates
 	entryPointsCertificates, err := s.loadHTTPSConfiguration(configurations, globalConfiguration.DefaultEntryPoints)
-	//sort routes and update certificates
+	// Sort routes and update certificates
 	for serverEntryPointName, serverEntryPoint := range serverEntryPoints {
 		serverEntryPoint.httpRouter.GetHandler().SortRoutes()
 		_, exists := entryPointsCertificates[serverEntryPointName]

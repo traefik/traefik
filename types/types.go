@@ -309,7 +309,7 @@ func (c *Constraint) MatchConstraintWithAtLeastOneTag(tags []string) bool {
 	return false
 }
 
-//Set []*Constraint
+// Set []*Constraint
 func (cs *Constraints) Set(str string) error {
 	exps := strings.Split(str, ",")
 	if len(exps) == 0 {
@@ -328,13 +328,13 @@ func (cs *Constraints) Set(str string) error {
 // Constraints holds a Constraint parser
 type Constraints []*Constraint
 
-//Get []*Constraint
+// Get []*Constraint
 func (cs *Constraints) Get() interface{} { return []*Constraint(*cs) }
 
-//String returns []*Constraint in string
+// String returns []*Constraint in string
 func (cs *Constraints) String() string { return fmt.Sprintf("%+v", *cs) }
 
-//SetValue sets []*Constraint into the parser
+// SetValue sets []*Constraint into the parser
 func (cs *Constraints) SetValue(val interface{}) {
 	*cs = val.(Constraints)
 }
@@ -432,8 +432,8 @@ type InfluxDB struct {
 // Buckets holds Prometheus Buckets
 type Buckets []float64
 
-//Set adds strings elem into the the parser
-//it splits str on "," and ";" and apply ParseFloat to string
+// Set adds strings elem into the the parser
+// it splits str on "," and ";" and apply ParseFloat to string
 func (b *Buckets) Set(str string) error {
 	fargs := func(c rune) bool {
 		return c == ',' || c == ';'
@@ -450,13 +450,13 @@ func (b *Buckets) Set(str string) error {
 	return nil
 }
 
-//Get []float64
+// Get []float64
 func (b *Buckets) Get() interface{} { return *b }
 
-//String return slice in a string
+// String return slice in a string
 func (b *Buckets) String() string { return fmt.Sprintf("%v", *b) }
 
-//SetValue sets []float64 into the parser
+// SetValue sets []float64 into the parser
 func (b *Buckets) SetValue(val interface{}) {
 	*b = val.(Buckets)
 }

@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"reflect"
 
+	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
+	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 )
@@ -64,6 +66,10 @@ func NewProviderAggregator(gc *GlobalConfiguration) provider.Provider {
 	}
 	if gc.ServiceFabric != nil {
 		provider.providers = append(provider.providers, gc.ServiceFabric)
+	}
+	if acmeprovider.IsEnabled() {
+		provider.providers = append(provider.providers, acmeprovider.Get())
+		acme.ConvertToNewFormat(acmeprovider.Get().Storage)
 	}
 	if len(provider.providers) == 1 {
 		return provider.providers[0]
