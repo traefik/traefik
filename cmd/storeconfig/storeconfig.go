@@ -87,7 +87,6 @@ func Run(kv *staert.KvSource, traefikConfiguration *cmd.TraefikConfiguration) fu
 func migrateACMEData(fileName, storageKey string, kv *staert.KvSource) error {
 	var object cluster.Object
 
-	// Check if the storage file is not empty before to get data
 	f, err := os.Open(fileName)
 	if err != nil {
 		return err
@@ -101,6 +100,7 @@ func migrateACMEData(fileName, storageKey string, kv *staert.KvSource) error {
 
 	// Create an empty account to create all the keys into the KV store
 	account := &acme.Account{}
+	// Check if the storage file is not empty before to get data
 	if len(file) > 0 {
 		accountFromNewFormat, err := acme.FromNewToOldFormat(fileName)
 		if err != nil {

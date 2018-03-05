@@ -23,20 +23,20 @@ func dnsOverrideDelay(delay flaeg.Duration) error {
 	}
 
 	if delay > 0 {
-		log.Debugf("Delaying %d rather than validating DNS propagation", delay)
+		log.Debugf("Delaying %d rather than validating DNS propagation now.", delay)
 
 		acme.PreCheckDNS = func(_, _ string) (bool, error) {
 			time.Sleep(time.Duration(delay))
 			return true, nil
 		}
 	} else {
-		return fmt.Errorf("invalid negative DelayBeforeCheck: %d", delay)
+		return fmt.Errorf("delayBeforeCheck: %d cannot be less than 0", delay)
 	}
 	return nil
 }
 
 func presentTLSChallenge(domain, keyAuth string) ([]byte, []byte, error) {
-	log.Debugf("TLS Challenge Present temp certificate for %s\n", domain)
+	log.Debugf("TLS Challenge Present temp certificate for %s", domain)
 
 	var tempPrivKey crypto.PrivateKey
 	tempPrivKey, err := rsa.GenerateKey(rand.Reader, 2048)
@@ -114,7 +114,7 @@ func cleanUpHTTPChallenge(domain, token string, store Store) error {
 		return fmt.Errorf("unable to get HTTPChallenges : %s", err)
 	}
 
-	log.Debugf("Challenge CleanUp %s", domain)
+	log.Debugf("Challenge CleanUp for domain %s", domain)
 
 	if _, ok := httpChallenges[token]; ok {
 		if _, domainOk := httpChallenges[token][domain]; domainOk {
