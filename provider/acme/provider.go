@@ -112,12 +112,12 @@ func (p *Provider) init() error {
 
 	p.account, err = p.Store.GetAccount()
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to get ACME account : %v", err)
 	}
 
 	p.certificates, err = p.Store.GetCertificates()
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to get ACME account : %v", err)
 	}
 
 	p.watchCertificate()
@@ -215,30 +215,29 @@ func (p *Provider) resolveCertificate(domain types.Domain) (*acme.CertificateRes
 	}
 	domains = fun.Map(types.CanonicalDomain, domains).([]string)
 
-	log.Debugf("Looking for provided certificate to validate %s...", domains)
-	cert := searchProvidedCertificateForDomains(domains, p.staticCerts)
-	if cert != nil {
-		return nil, nil
-	}
-	if p.dynamicCerts != nil && p.dynamicCerts.Get() != nil && p.dynamicCerts.Get().(*traefikTLS.DomainsCertificates).Get() != nil {
-		cert = searchProvidedCertificateForDomains(domains, p.dynamicCerts.Get().(*traefikTLS.DomainsCertificates).Get().(map[string]*tls.Certificate))
-	}
-	if cert != nil {
+	// Check provided certificates
+	uncheckedDomains := p.getUncheckedDomains(domains)
+	if len(uncheckedDomains) == 0 {
 		return nil, nil
 	}
 
-	log.Debugf("Loading ACME certificates %+v...", domains)
+	log.Debugf("Loading ACME certificates %+v...", uncheckedDomains)
 	client, err := p.getClient()
 	if err != nil {
 		return nil, fmt.Errorf("cannot get ACME client %v", err)
 	}
 
 	bundle := true
-	certificate, failures := client.ObtainCertificate(domains, bundle, nil, OSCPMustStaple)
+	certificate, failures := client.ObtainCertificate(uncheckedDomains, bundle, nil, OSCPMustStaple)
 	if len(failures) > 0 {
 		return nil, fmt.Errorf("cannot obtain certificates %+v", failures)
 	}
-	log.Debugf("Certificates obtained for domain %+v", domains)
+	log.Debugf("Certificates obtained for domain %+v", uncheckedDomains)
+	if len(uncheckedDomains) > 1 {
+		domain = types.Domain{Main: uncheckedDomains[0], SANs: uncheckedDomains[1:]}
+	} else {
+		domain = types.Domain{Main: uncheckedDomains[0]}
+	}
 	p.addCertificateForDomain(domain, certificate.Certificate, certificate.PrivateKey)
 
 	return &certificate, nil
@@ -286,7 +285,7 @@ func (p *Provider) getClient() (*acme.Client, error) {
 			account.Registration = reg
 			err = client.AgreeToTOS()
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("error sending ACME agreement to TOS: %+v: %v", account, err)
 			}
 		}
 
@@ -527,24 +526,55 @@ func (p *Provider) AddRoutes(router *mux.Router) {
 		}))
 }
 
-func searchProvidedCertificateForDomains(domains []string, certs map[string]*tls.Certificate) *tls.Certificate {
-	// Use regex to test for provided certs that might have been added into TLSConfig
-	providedCertMatch := false
-	for k := range certs {
-		selector := "^" + strings.Replace(k, "*.", "[^\\.]*\\.?", -1) + "$"
-		for _, domainToCheck := range domains {
-			providedCertMatch, _ = regexp.MatchString(selector, domainToCheck)
-			if !providedCertMatch {
+// Get provided certificate which check a domains list (Main and SANs)
+// from static and dynamic provided certificates
+func (p *Provider) getUncheckedDomains(domains []string) []string {
+	log.Debugf("Looking for provided certificate(s) to validate %q...", domains)
+	allCerts := make(map[string]*tls.Certificate)
+
+	// Get static certificates
+	for domains, certificate := range p.staticCerts {
+		allCerts[domains] = certificate
+	}
+
+	// Get dynamic certificates
+	if p.dynamicCerts != nil && p.dynamicCerts.Get() != nil {
+		for domains, certificate := range p.dynamicCerts.Get().(map[string]*tls.Certificate) {
+			allCerts[domains] = certificate
+		}
+	}
+
+	return searchUncheckedDomains(domains, allCerts)
+}
+
+func searchUncheckedDomains(domains []string, certs map[string]*tls.Certificate) []string {
+	uncheckedDomains := []string{}
+	for _, domainToCheck := range domains {
+		domainCheck := false
+		for certDomains := range certs {
+			domainCheck = false
+			for _, certDomain := range strings.Split(certDomains, ",") {
+				// Use regex to test for provided certs that might have been added into TLSConfig
+				selector := "^" + strings.Replace(certDomain, "*.", "[^\\.]*\\.?", -1) + "$"
+				domainCheck, _ = regexp.MatchString(selector, domainToCheck)
+				if domainCheck {
+					break
+				}
+			}
+			if domainCheck {
 				break
 			}
 		}
-		if providedCertMatch {
-			log.Debugf("Got provided certificate for domains %s", domains)
-			return certs[k]
-
+		if !domainCheck {
+			uncheckedDomains = append(uncheckedDomains, domainToCheck)
 		}
 	}
-	return nil
+	if len(uncheckedDomains) == 0 {
+		log.Debugf("No ACME certificate to generate for domains %q.", domains)
+	} else {
+		log.Debugf("Domains %q need ACME certificates generation for domains %q.", domains, strings.Join(uncheckedDomains, ","))
+	}
+	return uncheckedDomains
 }
 
 func getX509Certificate(certificate *Certificate) (*x509.Certificate, error) {

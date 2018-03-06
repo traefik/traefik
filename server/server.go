@@ -480,8 +480,8 @@ func (s *serverEntryPoint) SetOnDemandListener(listener func(string) (*tls.Certi
 }
 
 // loadHTTPSConfiguration add/delete HTTPS certificate managed dynamically
-func (s *Server) loadHTTPSConfiguration(configurations types.Configurations, defaultEntryPoints configuration.DefaultEntryPoints) (map[string]*traefikTls.DomainsCertificates, error) {
-	newEPCertificates := make(map[string]*traefikTls.DomainsCertificates)
+func (s *Server) loadHTTPSConfiguration(configurations types.Configurations, defaultEntryPoints configuration.DefaultEntryPoints) (map[string]map[string]*tls.Certificate, error) {
+	newEPCertificates := make(map[string]map[string]*tls.Certificate)
 	// Get all certificates
 	for _, configuration := range configurations {
 		if configuration.TLS != nil && len(configuration.TLS) > 0 {
@@ -497,7 +497,7 @@ func (s *Server) loadHTTPSConfiguration(configurations types.Configurations, def
 func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	domainToCheck := types.CanonicalDomain(clientHello.ServerName)
 	if s.certs.Get() != nil {
-		for domains, cert := range *s.certs.Get().(*traefikTls.DomainsCertificates) {
+		for domains, cert := range s.certs.Get().(map[string]*tls.Certificate) {
 			for _, domain := range strings.Split(domains, ",") {
 				selector := "^" + strings.Replace(domain, "*.", "[^\\.]*\\.?", -1) + "$"
 				domainCheck, _ := regexp.MatchString(selector, domainToCheck)
@@ -611,9 +611,8 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefikTls.TL
 	if err != nil {
 		return nil, err
 	}
-	epDomainsCertificatesTmp := new(traefikTls.DomainsCertificates)
-	*epDomainsCertificatesTmp = make(map[string]*tls.Certificate)
-	s.serverEntryPoints[entryPointName].certs.Set(epDomainsCertificatesTmp)
+
+	s.serverEntryPoints[entryPointName].certs.Set(make(map[string]*tls.Certificate))
 	// ensure http2 enabled
 	config.NextProtos = []string{"h2", "http/1.1"}
 

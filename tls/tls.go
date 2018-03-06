@@ -32,26 +32,10 @@ type TLS struct {
 // RootCAs hold the CA we want to have in root
 type RootCAs []FileOrContent
 
-// DomainsCertificates allows mapping TLS certificates to a list of domains
-type DomainsCertificates map[string]*tls.Certificate
-
 // Configuration allows mapping a TLS certificate to a list of entrypoints
 type Configuration struct {
 	EntryPoints []string
 	Certificate *Certificate
-}
-
-// Set is the method to set the flag value, part of the flag.Value interface.
-// Set's argument is a string to be parsed to set the flag.
-// It's a comma-separated list, so we split it.
-func (dc *DomainsCertificates) add(domain string, cert *tls.Certificate) error {
-	dc.Get().(map[string]*tls.Certificate)[domain] = cert
-	return nil
-}
-
-// Get method allow getting the map stored into the DomainsCertificates
-func (dc *DomainsCertificates) Get() interface{} {
-	return map[string]*tls.Certificate(*dc)
 }
 
 // String is the method to format the flag's value, part of the flag.Value interface.
@@ -94,9 +78,9 @@ func (r *RootCAs) Type() string {
 }
 
 // SortTLSPerEntryPoints converts TLS configuration sorted by Certificates into TLS configuration sorted by EntryPoints
-func SortTLSPerEntryPoints(configurations []*Configuration, epConfiguration map[string]*DomainsCertificates, defaultEntryPoints []string) error {
+func SortTLSPerEntryPoints(configurations []*Configuration, epConfiguration map[string]map[string]*tls.Certificate, defaultEntryPoints []string) error {
 	if epConfiguration == nil {
-		epConfiguration = make(map[string]*DomainsCertificates)
+		epConfiguration = make(map[string]map[string]*tls.Certificate)
 	}
 	for _, conf := range configurations {
 		if conf.EntryPoints == nil || len(conf.EntryPoints) == 0 {

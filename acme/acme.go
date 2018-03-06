@@ -23,7 +23,6 @@ import (
 	"github.com/containous/traefik/log"
 	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/safe"
-	traefikTls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
 	"github.com/eapache/channels"
@@ -582,7 +581,7 @@ func (a *ACME) getUncheckedDomains(domains []string, account *Account) []string 
 
 	// Get dynamic certificates
 	if a.dynamicCerts != nil && a.dynamicCerts.Get() != nil {
-		for domains, certificate := range a.dynamicCerts.Get().(*traefikTls.DomainsCertificates).Get().(map[string]*tls.Certificate) {
+		for domains, certificate := range a.dynamicCerts.Get().(map[string]*tls.Certificate) {
 			allCerts[domains] = certificate
 		}
 	}
