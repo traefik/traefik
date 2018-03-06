@@ -28,7 +28,7 @@ import (
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/server"
 	"github.com/containous/traefik/server/uuid"
-	traefikTls "github.com/containous/traefik/tls"
+	traefiktls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
 	"github.com/coreos/go-systemd/daemon"
@@ -62,7 +62,7 @@ Complete documentation is available at https://traefik.io`,
 	// add custom parsers
 	f.AddParser(reflect.TypeOf(configuration.EntryPoints{}), &configuration.EntryPoints{})
 	f.AddParser(reflect.TypeOf(configuration.DefaultEntryPoints{}), &configuration.DefaultEntryPoints{})
-	f.AddParser(reflect.TypeOf(traefikTls.RootCAs{}), &traefikTls.RootCAs{})
+	f.AddParser(reflect.TypeOf(traefiktls.RootCAs{}), &traefiktls.RootCAs{})
 	f.AddParser(reflect.TypeOf(types.Constraints{}), &types.Constraints{})
 	f.AddParser(reflect.TypeOf(kubernetes.Namespaces{}), &kubernetes.Namespaces{})
 	f.AddParser(reflect.TypeOf(ecs.Clusters{}), &ecs.Clusters{})

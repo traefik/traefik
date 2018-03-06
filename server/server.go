@@ -38,7 +38,7 @@ import (
 	"github.com/containous/traefik/rules"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/server/cookie"
-	traefikTls "github.com/containous/traefik/tls"
+	traefiktls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/whitelist"
 	"github.com/eapache/channels"
@@ -176,7 +176,7 @@ func createHTTPTransport(globalConfiguration configuration.GlobalConfiguration) 
 	return transport
 }
 
-func createRootCACertPool(rootCAs traefikTls.RootCAs) *x509.CertPool {
+func createRootCACertPool(rootCAs traefiktls.RootCAs) *x509.CertPool {
 	roots := x509.NewCertPool()
 
 	for _, cert := range rootCAs {
@@ -480,12 +480,12 @@ func (s *serverEntryPoint) SetOnDemandListener(listener func(string) (*tls.Certi
 }
 
 // loadHTTPSConfiguration add/delete HTTPS certificate managed dynamically
-func (s *Server) loadHTTPSConfiguration(configurations types.Configurations, defaultEntryPoints configuration.DefaultEntryPoints) (map[string]*traefikTls.DomainsCertificates, error) {
-	newEPCertificates := make(map[string]*traefikTls.DomainsCertificates)
+func (s *Server) loadHTTPSConfiguration(configurations types.Configurations, defaultEntryPoints configuration.DefaultEntryPoints) (map[string]map[string]*tls.Certificate, error) {
+	newEPCertificates := make(map[string]map[string]*tls.Certificate)
 	// Get all certificates
 	for _, configuration := range configurations {
 		if configuration.TLS != nil && len(configuration.TLS) > 0 {
-			if err := traefikTls.SortTLSPerEntryPoints(configuration.TLS, newEPCertificates, defaultEntryPoints); err != nil {
+			if err := traefiktls.SortTLSPerEntryPoints(configuration.TLS, newEPCertificates, defaultEntryPoints); err != nil {
 				return nil, err
 			}
 		}
@@ -497,7 +497,7 @@ func (s *Server) loadHTTPSConfiguration(configurations types.Configurations, def
 func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	domainToCheck := types.CanonicalDomain(clientHello.ServerName)
 	if s.certs.Get() != nil {
-		for domains, cert := range *s.certs.Get().(*traefikTls.DomainsCertificates) {
+		for domains, cert := range s.certs.Get().(map[string]*tls.Certificate) {
 			for _, domain := range strings.Split(domains, ",") {
 				selector := "^" + strings.Replace(domain, "*.", "[^\\.]*\\.?", -1) + "$"
 				domainCheck, _ := regexp.MatchString(selector, domainToCheck)
@@ -569,7 +569,7 @@ func (s *Server) startProvider() {
 	})
 }
 
-func createClientTLSConfig(entryPointName string, tlsOption *traefikTls.TLS) (*tls.Config, error) {
+func createClientTLSConfig(entryPointName string, tlsOption *traefiktls.TLS) (*tls.Config, error) {
 	if tlsOption == nil {
 		return nil, errors.New("no TLS provided")
 	}
@@ -602,7 +602,7 @@ func createClientTLSConfig(entryPointName string, tlsOption *traefikTls.TLS) (*t
 }
 
 // creates a TLS config that allows terminating HTTPS for multiple domains using SNI
-func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefikTls.TLS, router *middlewares.HandlerSwitcher) (*tls.Config, error) {
+func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TLS, router *middlewares.HandlerSwitcher) (*tls.Config, error) {
 	if tlsOption == nil {
 		return nil, nil
 	}
@@ -611,9 +611,8 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefikTls.TL
 	if err != nil {
 		return nil, err
 	}
-	epDomainsCertificatesTmp := new(traefikTls.DomainsCertificates)
-	*epDomainsCertificatesTmp = make(map[string]*tls.Certificate)
-	s.serverEntryPoints[entryPointName].certs.Set(epDomainsCertificatesTmp)
+
+	s.serverEntryPoints[entryPointName].certs.Set(make(map[string]*tls.Certificate))
 	// ensure http2 enabled
 	config.NextProtos = []string{"h2", "http/1.1"}
 
@@ -680,7 +679,7 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefikTls.TL
 	}
 
 	// Set the minimum TLS version if set in the config TOML
-	if minConst, exists := traefikTls.MinVersion[s.globalConfiguration.EntryPoints[entryPointName].TLS.MinVersion]; exists {
+	if minConst, exists := traefiktls.MinVersion[s.globalConfiguration.EntryPoints[entryPointName].TLS.MinVersion]; exists {
 		config.PreferServerCipherSuites = true
 		config.MinVersion = minConst
 	}
@@ -689,7 +688,7 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefikTls.TL
 		// if our list of CipherSuites is defined in the entrypoint config, we can re-initilize the suites list as empty
 		config.CipherSuites = make([]uint16, 0)
 		for _, cipher := range s.globalConfiguration.EntryPoints[entryPointName].TLS.CipherSuites {
-			if cipherConst, exists := traefikTls.CipherSuites[cipher]; exists {
+			if cipherConst, exists := traefiktls.CipherSuites[cipher]; exists {
 				config.CipherSuites = append(config.CipherSuites, cipherConst)
 			} else {
 				// CipherSuite listed in the toml does not exist in our listed
@@ -865,7 +864,7 @@ func (s *Server) buildEntryPoints(globalConfiguration configuration.GlobalConfig
 
 // getRoundTripper will either use server.defaultForwardingRoundTripper or create a new one
 // given a custom TLS configuration is passed and the passTLSCert option is set to true.
-func (s *Server) getRoundTripper(entryPointName string, globalConfiguration configuration.GlobalConfiguration, passTLSCert bool, tls *traefikTls.TLS) (http.RoundTripper, error) {
+func (s *Server) getRoundTripper(entryPointName string, globalConfiguration configuration.GlobalConfiguration, passTLSCert bool, tls *traefiktls.TLS) (http.RoundTripper, error) {
 	if passTLSCert {
 		tlsConfig, err := createClientTLSConfig(entryPointName, tls)
 		if err != nil {
