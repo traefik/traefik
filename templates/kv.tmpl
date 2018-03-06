@@ -90,7 +90,7 @@
     {{if $errorPages }}
     [frontends."{{ $frontendName }}".errors]
       {{range $pageName, $page := $errorPages }}
-      [frontends."{{$frontendName}}".errors.{{ $pageName }}]
+      [frontends."{{$frontendName}}".errors."{{ $pageName }}"]
         status = [{{range $page.Status }}
           "{{.}}",
           {{end}}]
@@ -105,7 +105,7 @@
       extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
       [frontends."{{ $frontendName }}".rateLimit.rateSet]
         {{range $limitName, $rateLimit := $rateLimit.RateSet }}
-        [frontends."{{ $frontendName }}".rateLimit.rateSet.{{ $limitName }}]
+        [frontends."{{ $frontendName }}".rateLimit.rateSet."{{ $limitName }}"]
           period = "{{ $rateLimit.Period }}"
           average = {{ $rateLimit.Average }}
           burst = {{ $rateLimit.Burst }}

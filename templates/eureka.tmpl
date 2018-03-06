@@ -4,7 +4,7 @@
   [backends.backend-{{ $app.Name }}]
 
     {{range $instance := .Instances }}
-    [backends.backend-{{ $app.Name }}.servers.server-{{ getInstanceID $instance }}]
+    [backends."backend-{{ $app.Name }}".servers."server-{{ getInstanceID $instance }}"]
       url = "{{ getProtocol $instance }}://{{ .IpAddr }}:{{ getPort $instance }}"
       weight = {{ getWeight $instance }}
     {{end}}
@@ -14,11 +14,11 @@
 [frontends]
 {{range $app := .Applications }}
 
-  [frontends.frontend-{{ $app.Name }}]
+  [frontends."frontend-{{ $app.Name }}"]
     backend = "backend-{{ $app.Name }}"
     entryPoints = ["http"]
 
-    [frontends.frontend-{{ $app.Name }}.routes.route-host{{ $app.Name }}]
+    [frontends."frontend-{{ $app.Name }}".routes."route-host{{ $app.Name }}"]
       rule = "Host:{{ $app.Name | tolower }}"
 
 {{end}}

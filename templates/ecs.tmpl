@@ -28,7 +28,7 @@
 
   {{ $healthCheck := getHealthCheck $firstInstance }}
   {{if $healthCheck }}
-  [backends.backend-{{ $serviceName }}.healthCheck]
+  [backends."backend-{{ $serviceName }}".healthCheck]
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
@@ -36,7 +36,7 @@
 
   {{ $buffering := getBuffering $firstInstance }}
   {{if $buffering }}
-  [backends.backend-{{ $serviceName }}.buffering]
+  [backends."backend-{{ $serviceName }}".buffering]
     maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
     memRequestBodyBytes = {{ $buffering.MemRequestBodyBytes }}
     maxResponseBodyBytes = {{ $buffering.MaxResponseBodyBytes }}
@@ -45,7 +45,7 @@
   {{end}}
 
   {{range $serverName, $server := getServers $instances }}
-  [backends.backend-{{ $serviceName }}.servers.{{ $serverName }}]
+  [backends."backend-{{ $serviceName }}".servers."{{ $serverName }}"]
     url = "{{ $server.URL }}"
     weight = {{ $server.Weight }}
   {{end}}
@@ -56,7 +56,7 @@
 {{range $serviceName, $instances := .Services }}
 {{range $instance := filterFrontends $instances }}
 
-  [frontends.frontend-{{ $serviceName }}]
+  [frontends."frontend-{{ $serviceName }}"]
     backend = "backend-{{ $serviceName }}"
     priority = {{ getPriority $instance }}
     passHostHeader = {{ getPassHostHeader $instance }}
@@ -91,7 +91,7 @@
     {{if $errorPages }}
     [frontends."frontend-{{ $serviceName }}".errors]
       {{range $pageName, $page := $errorPages }}
-      [frontends."frontend-{{ $serviceName }}".errors.{{ $pageName }}]
+      [frontends."frontend-{{ $serviceName }}".errors."{{ $pageName }}"]
         status = [{{range $page.Status }}
           "{{.}}",
           {{end}}]
@@ -106,7 +106,7 @@
       extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
       [frontends."frontend-{{ $serviceName }}".rateLimit.rateSet]
         {{ range $limitName, $limit := $rateLimit.RateSet }}
-        [frontends."frontend-{{ $serviceName }}".rateLimit.rateSet.{{ $limitName }}]
+        [frontends."frontend-{{ $serviceName }}".rateLimit.rateSet."{{ $limitName }}"]
           period = "{{ $limit.Period }}"
           average = {{ $limit.Average }}
           burst = {{ $limit.Burst }}
@@ -167,7 +167,7 @@
       {{end}}
     {{end}}
 
-    [frontends.frontend-{{ $serviceName }}.routes.route-frontend-{{ $serviceName }}]
+    [frontends."frontend-{{ $serviceName }}".routes."route-frontend-{{ $serviceName }}"]
       rule = "{{getFrontendRule $instance}}"
 
 {{end}}

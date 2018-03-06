@@ -4,7 +4,7 @@
   [backends."{{ $backendName }}"]
 
     {{if $backend.CircuitBreaker }}
-    [backends."{{ $backendName }} ".circuitBreaker]
+    [backends."{{ $backendName }}".circuitBreaker]
       expression = "{{ $backend.CircuitBreaker.Expression }}"
     {{end}}
 
@@ -17,7 +17,7 @@
       {{end}}
 
     {{if $backend.MaxConn }}
-    [backends.backend-{{ $backendName }}.maxConn]
+    [backends."{{ $backendName }}".maxConn]
       amount = {{ $backend.MaxConn.Amount }}
       extractorFunc = "{{ $backend.MaxConn.ExtractorFunc }}"
     {{end}}
@@ -70,7 +70,7 @@
     {{if $frontend.Errors }}
     [frontends."{{ $frontendName }}".errors]
       {{range $pageName, $page := $frontend.Errors }}
-      [frontends."{{ $frontendName }}".errors.{{ $pageName }}]
+      [frontends."{{ $frontendName }}".errors."{{ $pageName }}"]
         status = [{{range $page.Status }}
           "{{.}}",
           {{end}}]
@@ -84,7 +84,7 @@
       extractorFunc = "{{ $frontend.RateLimit.ExtractorFunc }}"
       [frontends."{{ $frontendName }}".rateLimit.rateSet]
         {{range $limitName, $limit := $frontend.RateLimit.RateSet }}
-        [frontends."{{ $frontendName }}".rateLimit.rateSet.{{ $limitName }}]
+        [frontends."{{ $frontendName }}".rateLimit.rateSet."{{ $limitName }}"]
           period = "{{ $limit.Period }}"
           average = {{ $limit.Average }}
           burst = {{ $limit.Burst }}
