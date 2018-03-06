@@ -38,23 +38,20 @@ storage = "acme.json"
 # or `storage = "traefik/acme/account"` if using KV store.
 
 # Entrypoint to proxy acme apply certificates to.
-# WARNING, if the TLS-SNI-01 challenge is used, it must point to an entrypoint on port 443
 #
 # Required
 #
 entryPoint = "https"
 
-# Use a DNS-01 acme challenge rather than TLS-SNI-01 challenge
+# Deprecated, replaced by [acme.dnsChallenge].
 #
-# Optional (Deprecated, replaced by [acme.dnsChallenge])
+# Optional.
 #
 # dnsProvider = "digitalocean"
 
-# By default, the dnsProvider will verify the TXT DNS challenge record before letting ACME verify.
-# If delayDontCheckDNS is greater than zero, avoid this & instead just wait so many seconds.
-# Useful if internal networks block external DNS queries.
+# Deprecated, replaced by [acme.dnsChallenge.delayBeforeCheck].
 #
-# Optional (Deprecated, replaced by [acme.dnsChallenge])
+# Optional
 # Default: 0
 #
 # delayDontCheckDNS = 0
@@ -102,19 +99,19 @@ entryPoint = "https"
 # [[acme.domains]]
 #   main = "local4.com"
 
-# Use a HTTP-01 acme challenge rather than TLS-SNI-01 challenge
+# Use a HTTP-01 acme challenge.
 #
 # Optional but recommend
 #
 [acme.httpChallenge]
 
-  # EntryPoint to use for the challenges.
+  # EntryPoint to use for the HTTP-01 challenges.
   #
   # Required
   #
   entryPoint = "http"
 
-# Use a DNS-01 acme challenge rather than TLS-SNI-01 challenge
+# Use a DNS-01 acme challenge rather than HTTP-01 challenge.
 #
 # Optional
 #
@@ -137,11 +134,6 @@ entryPoint = "https"
 ```
 
 !!! note
-    Even if `TLS-SNI-01` challenge is [disabled](https://community.letsencrypt.org/t/2018-01-11-update-regarding-acme-tls-sni-and-shared-hosting-infrastructure/50188) for the moment, it stays the _by default_ ACME Challenge in Træfik.
-    If `TLS-SNI-01` challenge is not re-enabled in the future, it we will be removed from Træfik.
-
-!!! note
-    If `TLS-SNI-01` challenge is used, `acme.entryPoint` has to be reachable by Let's Encrypt through the port 443.
     If `HTTP-01` challenge is used, `acme.httpChallenge.entryPoint` has to be defined and reachable by Let's Encrypt through the port 80.
     These are Let's Encrypt limitations as described on the [community forum](https://community.letsencrypt.org/t/support-for-ports-other-than-80-and-443/3419/72).
 
