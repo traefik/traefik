@@ -25,7 +25,7 @@ import (
 	"github.com/containous/traefik/provider/mesos"
 	"github.com/containous/traefik/provider/rancher"
 	"github.com/containous/traefik/provider/zk"
-	traefikTls "github.com/containous/traefik/tls"
+	traefiktls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 )
 
@@ -46,14 +46,14 @@ func TestDo_globalConfiguration(t *testing.T) {
 	config.EntryPoints = configuration.EntryPoints{
 		"foo": {
 			Address: "foo Address",
-			TLS: &traefikTls.TLS{
+			TLS: &traefiktls.TLS{
 				MinVersion:   "foo MinVersion",
 				CipherSuites: []string{"foo CipherSuites 1", "foo CipherSuites 2", "foo CipherSuites 3"},
-				Certificates: traefikTls.Certificates{
+				Certificates: traefiktls.Certificates{
 					{CertFile: "CertFile 1", KeyFile: "KeyFile 1"},
 					{CertFile: "CertFile 2", KeyFile: "KeyFile 2"},
 				},
-				ClientCA: traefikTls.ClientCA{
+				ClientCA: traefiktls.ClientCA{
 					Files:    []string{"foo ClientCAFiles 1", "foo ClientCAFiles 2", "foo ClientCAFiles 3"},
 					Optional: false,
 				},
@@ -91,14 +91,14 @@ func TestDo_globalConfiguration(t *testing.T) {
 		},
 		"fii": {
 			Address: "fii Address",
-			TLS: &traefikTls.TLS{
+			TLS: &traefiktls.TLS{
 				MinVersion:   "fii MinVersion",
 				CipherSuites: []string{"fii CipherSuites 1", "fii CipherSuites 2", "fii CipherSuites 3"},
-				Certificates: traefikTls.Certificates{
+				Certificates: traefiktls.Certificates{
 					{CertFile: "CertFile 1", KeyFile: "KeyFile 1"},
 					{CertFile: "CertFile 2", KeyFile: "KeyFile 2"},
 				},
-				ClientCA: traefikTls.ClientCA{
+				ClientCA: traefiktls.ClientCA{
 					Files:    []string{"fii ClientCAFiles 1", "fii ClientCAFiles 2", "fii ClientCAFiles 3"},
 					Optional: false,
 				},
@@ -181,7 +181,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 	config.MaxIdleConnsPerHost = 666
 	config.IdleTimeout = flaeg.Duration(666 * time.Second)
 	config.InsecureSkipVerify = true
-	config.RootCAs = traefikTls.RootCAs{"RootCAs 1", "RootCAs 2", "RootCAs 3"}
+	config.RootCAs = traefiktls.RootCAs{"RootCAs 1", "RootCAs 2", "RootCAs 3"}
 	config.Retry = &configuration.Retry{
 		Attempts: 666,
 	}
