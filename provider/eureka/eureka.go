@@ -18,7 +18,8 @@ import (
 type Provider struct {
 	provider.BaseProvider `mapstructure:",squash" export:"true"`
 	Endpoint              string         `description:"Eureka server endpoint"`
-	Delay                 flaeg.Duration `description:"Override default configuration time between refresh" export:"true"`
+	Delay                 flaeg.Duration `description:"Override default configuration time between refresh (Deprecated)" export:"true"` // Deprecated
+	RefreshSeconds        flaeg.Duration `description:"Override default configuration time between refresh" export:"true"`
 }
 
 // Provide allows the eureka provider to provide configurations to traefik
@@ -46,7 +47,11 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 			Configuration: configuration,
 		}
 
-		ticker := time.NewTicker(time.Duration(p.Delay))
+		if p.Delay != 0 {
+			p.RefreshSeconds = p.Delay
+		}
+
+		ticker := time.NewTicker(time.Duration(p.RefreshSeconds))
 		safe.Go(func() {
 			for t := range ticker.C {
 				log.Debugf("Refreshing Provider %s", t.String())
