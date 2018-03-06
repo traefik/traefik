@@ -174,10 +174,6 @@ ignored = ["github.com/sirupsen/logrus"]
   source = "github.com/ijc25/Gotty"
 
 [[override]]
-  name = "github.com/gorilla/websocket"
-  revision = "a69d9f6de432e2c6b296a947d8a5ee88f68522cf"
-
-[[override]]
   # always keep this override
   name = "github.com/mailgun/timetools"
   revision = "7e6055773c5137efbeb3bd2410d705fe10ab6bfd"
