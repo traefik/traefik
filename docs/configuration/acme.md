@@ -43,17 +43,15 @@ storage = "acme.json"
 #
 entryPoint = "https"
 
-# Use a DNS-01 acme challenge rather than HTTP-01 challenge.
+# Deprecated, replaced by [acme.dnsChallenge].
 #
-# Optional (Deprecated, replaced by [acme.dnsChallenge])
+# Optional.
 #
 # dnsProvider = "digitalocean"
 
-# By default, the dnsProvider will verify the TXT DNS challenge record before letting ACME verify.
-# If delayDontCheckDNS is greater than zero, avoid this & instead just wait so many seconds.
-# Useful if internal networks block external DNS queries.
+# Deprecated, replaced by [acme.dnsChallenge.delayBeforeCheck].
 #
-# Optional (Deprecated, replaced by [acme.dnsChallenge])
+# Optional
 # Default: 0
 #
 # delayDontCheckDNS = 0
