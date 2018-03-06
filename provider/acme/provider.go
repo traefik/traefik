@@ -323,12 +323,7 @@ func (p *Provider) getClient() (*acme.Client, error) {
 				return nil, err
 			}
 		} else {
-			log.Debug("Using TLS Challenge provider.")
-			client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.DNS01})
-			err = client.SetChallengeProvider(acme.TLSSNI01, p)
-			if err != nil {
-				return nil, err
-			}
+			return nil, errors.New("ACME challenge not specified, please select HTTP or DNS Challenge")
 		}
 		p.client = client
 	}
@@ -338,29 +333,12 @@ func (p *Provider) getClient() (*acme.Client, error) {
 
 // Present presents a challenge to obtain new ACME certificate
 func (p *Provider) Present(domain, token, keyAuth string) error {
-	if p.HTTPChallenge != nil {
-		return presentHTTPChallenge(domain, token, keyAuth, p.Store)
-	} else if p.DNSChallenge == nil {
-		log.Debugf("TLS Challenge CleanUp temp certificate for %s", domain)
-		tempCertPEM, rsaPrivPEM, err := presentTLSChallenge(domain, keyAuth)
-		if err != nil {
-			return err
-		}
-		p.addCertificateForDomain(types.Domain{Main: "TEMP-" + domain}, tempCertPEM, rsaPrivPEM)
-	}
-
-	return nil
+	return presentHTTPChallenge(domain, token, keyAuth, p.Store)
 }
 
 // CleanUp cleans the challenges when certificate is obtained
 func (p *Provider) CleanUp(domain, token, keyAuth string) error {
-	if p.HTTPChallenge != nil {
-		return cleanUpHTTPChallenge(domain, token, p.Store)
-	} else if p.DNSChallenge == nil {
-		log.Debugf("TLS Challenge CleanUp temp certificate for %s", domain)
-		p.deleteCertificateForDomain(types.Domain{Main: "TEMP-" + domain})
-	}
-	return nil
+	return cleanUpHTTPChallenge(domain, token, p.Store)
 }
 
 // Provide allows the file provider to provide configurations to traefik

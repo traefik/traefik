@@ -32,6 +32,9 @@ const (
 
 	// Wildcard domain to check
 	wildcardDomain = "*.acme.wtf"
+
+	// Traefik default certificate
+	traefikDefaultDomain = "TRAEFIK DEFAULT CERT"
 )
 
 func (s *AcmeSuite) SetUpSuite(c *check.C) {
@@ -78,6 +81,16 @@ func (s *AcmeSuite) TestACMEProviderOnHost(c *check.C) {
 		traefikConfFilePath: "fixtures/provideracme/acme_onhost.toml",
 		onDemand:            false,
 		domainToCheck:       acmeDomain}
+
+	s.retrieveAcmeCertificate(c, testCase)
+}
+
+// Test ACME provider with certificate at start and no ACME challenge
+func (s *AcmeSuite) TestACMEProviderOnHostWithNoACMEChallenge(c *check.C) {
+	testCase := AcmeTestCase{
+		traefikConfFilePath: "fixtures/acme/no_challenge_acme.toml",
+		onDemand:            false,
+		domainToCheck:       traefikDefaultDomain}
 
 	s.retrieveAcmeCertificate(c, testCase)
 }

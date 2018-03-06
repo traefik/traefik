@@ -1,11 +1,6 @@
 package acme
 
 import (
-	"crypto"
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -13,7 +8,6 @@ import (
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
-	tlsgenerate "github.com/containous/traefik/tls/generate"
 	"github.com/xenolf/lego/acme"
 )
 
@@ -33,30 +27,6 @@ func dnsOverrideDelay(delay flaeg.Duration) error {
 		return fmt.Errorf("delayBeforeCheck: %d cannot be less than 0", delay)
 	}
 	return nil
-}
-
-func presentTLSChallenge(domain, keyAuth string) ([]byte, []byte, error) {
-	log.Debugf("TLS Challenge Present temp certificate for %s", domain)
-
-	var tempPrivKey crypto.PrivateKey
-	tempPrivKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	rsaPrivKey := tempPrivKey.(*rsa.PrivateKey)
-	rsaPrivPEM := tlsgenerate.PemEncode(rsaPrivKey)
-
-	zBytes := sha256.Sum256([]byte(keyAuth))
-	z := hex.EncodeToString(zBytes[:sha256.Size])
-	domainCert := fmt.Sprintf("%s.%s.acme.invalid", z[:32], z[32:])
-
-	tempCertPEM, err := tlsgenerate.PemCert(rsaPrivKey, domainCert, time.Time{})
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return tempCertPEM, rsaPrivPEM, nil
 }
 
 func getTokenValue(token, domain string, store Store) []byte {

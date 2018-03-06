@@ -36,6 +36,7 @@ var (
 )
 
 // ACME allows to connect to lets encrypt and retrieve certs
+// Deprecated Please use provider/acme/Provider
 type ACME struct {
 	Email                 string                      `description:"Email address used for registration"`
 	Domains               []types.Domain              `description:"SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='main.net,san1.net,san2.net'"`
@@ -53,7 +54,6 @@ type ACME struct {
 	client                *acme.Client
 	defaultCertificate    *tls.Certificate
 	store                 cluster.Store
-	challengeTLSProvider  *challengeTLSProvider
 	challengeHTTPProvider *challengeHTTPProvider
 	checkOnDemandDomain   func(domain string) bool
 	jobs                  *channels.InfiniteChannel
@@ -159,7 +159,6 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 	}
 
 	a.store = datastore
-	a.challengeTLSProvider = &challengeTLSProvider{store: a.store}
 
 	ticker := time.NewTicker(24 * time.Hour)
 	leadership.Pool.AddGoCtx(func(ctx context.Context) {
@@ -249,10 +248,6 @@ func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificat
 		return providedCertificate, nil
 	}
 
-	if challengeCert, ok := a.challengeTLSProvider.getCertificate(domain); ok {
-		log.Debugf("ACME got challenge %s", domain)
-		return challengeCert, nil
-	}
 	if domainCert, ok := account.DomainsCertificate.getCertificateForDomain(domain); ok {
 		log.Debugf("ACME got domain cert %s", domain)
 		return domainCert.tlsCert, nil
@@ -431,9 +426,7 @@ func (a *ACME) buildACMEClient(account *Account) (*acme.Client, error) {
 		a.challengeHTTPProvider = &challengeHTTPProvider{store: a.store}
 		err = client.SetChallengeProvider(acme.HTTP01, a.challengeHTTPProvider)
 	} else {
-		log.Debug("Using TLS Challenge provider.")
-		client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.DNS01})
-		err = client.SetChallengeProvider(acme.TLSSNI01, a.challengeTLSProvider)
+		return nil, errors.New("ACME challenge not specified, please select HTTP or DNS Challenge")
 	}
 
 	if err != nil {
