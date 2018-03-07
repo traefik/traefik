@@ -1,4 +1,4 @@
-mkdocs>=0.17.2
+mkdocs>=0.17.3
 pymdown-extensions>=1.4
 mkdocs-bootswatch>=0.4.0
 mkdocs-material>=2.2.6
