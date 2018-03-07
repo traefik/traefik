@@ -335,7 +335,7 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, certs *safe.Safe, checkO
 	a.client, err = a.buildACMEClient(account)
 	if err != nil {
 		log.Errorf(`Failed to build ACME client: %s
-Let's Encrypt functionality will be limited until traefik is restarted.`, err)
+Let's Encrypt functionality will be limited until Traefik is restarted.`, err)
 		return nil
 	}
 
@@ -344,7 +344,9 @@ Let's Encrypt functionality will be limited until traefik is restarted.`, err)
 		log.Info("Register...")
 		reg, err := a.client.Register()
 		if err != nil {
-			return err
+			log.Errorf(`Failed to register user: %s
+Let's Encrypt functionality will be limited until Traefik is restarted.`, err)
+			return nil
 		}
 		account.Registration = reg
 	}
@@ -357,7 +359,9 @@ Let's Encrypt functionality will be limited until traefik is restarted.`, err)
 		// Let's Encrypt Subscriber Agreement renew ?
 		reg, err := a.client.QueryRegistration()
 		if err != nil {
-			return err
+			log.Errorf(`Failed to renew subscriber agreement: %s
+Let's Encrypt functionality will be limited until Traefik is restarted.`, err)
+			return nil
 		}
 		account.Registration = reg
 		err = a.client.AgreeToTOS()
