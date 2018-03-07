@@ -84,7 +84,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
 
   {{ $healthCheck := getHealthCheck $service.Attributes }}
   {{if $healthCheck }}
-  [backends.backend-{{ $backendName }}.healthCheck]
+  [backends."backend-{{ $backendName }}".healthCheck]
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
@@ -92,7 +92,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
 
   {{ $buffering := getBuffering $service.Attributes }}
   {{if $buffering }}
-  [backends.backend-{{ $backendName }}.buffering]
+  [backends."backend-{{ $backendName }}".buffering]
     maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
     memRequestBodyBytes = {{ $buffering.MemRequestBodyBytes }}
     maxResponseBodyBytes = {{ $buffering.MaxResponseBodyBytes }}
@@ -145,7 +145,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
     {{if hasErrorPages $service.Attributes }}
     [frontends."frontend-{{ $service.ServiceName }}".errors]
       {{range $pageName, $page := getErrorPages $service.Attributes }}
-      [frontends."frontend-{{ $service.ServiceName }}".errors.{{ $pageName }}]
+      [frontends."frontend-{{ $service.ServiceName }}".errors."{{ $pageName }}"]
         status = [{{range $page.Status }}
           "{{.}}",
           {{end}}]
@@ -161,7 +161,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
 
       [frontends."frontend-{{ $service.ServiceName }}".rateLimit.rateSet]
         {{range $limitName, $limit := $rateLimit.RateSet }}
-        [frontends."frontend-{{ $service.ServiceName }}".rateLimit.rateSet.{{ $limitName }}]
+        [frontends."frontend-{{ $service.ServiceName }}".rateLimit.rateSet."{{ $limitName }}"]
           period = "{{ $limit.Period }}"
           average = {{ $limit.Average }}
           burst = {{ $limit.Burst }}
@@ -274,7 +274,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
 
   {{ $healthCheck := getHealthCheck $backend }}
   {{if $healthCheck }}
-  [backends.backend-{{ $backendName }}.healthCheck]
+  [backends."backend-{{ $backendName }}".healthCheck]
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
@@ -282,7 +282,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
 
   {{ $buffering := getBuffering $backend }}
   {{if $buffering }}
-  [backends.backend-{{ $backendName }}.buffering]
+  [backends."backend-{{ $backendName }}".buffering]
     maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
     memRequestBodyBytes = {{ $buffering.MemRequestBodyBytes }}
     maxResponseBodyBytes = {{ $buffering.MaxResponseBodyBytes }}
@@ -295,12 +295,12 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
     {{if hasServices $server }}
       {{ $services := getServiceNames $server }}
       {{range $serviceIndex, $serviceName := $services }}
-      [backends.backend-{{ getServiceBackendName $server $serviceName }}.servers.service-{{ $serverName }}]
+      [backends."backend-{{ getServiceBackendName $server $serviceName }}".servers."service-{{ $serverName }}"]
         url = "{{ getServiceProtocol $server $serviceName }}://{{ getIPAddress $server }}:{{ getServicePort $server $serviceName }}"
         weight = {{ getServiceWeight $server $serviceName }}
       {{end}}
     {{else}}
-      [backends.backend-{{ $backendName }}.servers.server-{{ $server.Name | replace "/" "" | replace "." "-" }}]
+      [backends."backend-{{ $backendName }}".servers."server-{{ $server.Name | replace "/" "" | replace "." "-" }}"]
         url = "{{ getProtocol $server }}://{{ getIPAddress $server }}:{{ getPort $server }}"
         weight = {{ getWeight $server }}
     {{end}}
@@ -352,7 +352,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
     {{if $errorPages }}
     [frontends."frontend-{{ $ServiceFrontendName }}".errors]
       {{ range $pageName, $page := $errorPages }}
-      [frontends."frontend-{{ $ServiceFrontendName }}".errors.{{ $pageName }}]
+      [frontends."frontend-{{ $ServiceFrontendName }}".errors."{{ $pageName }}"]
         status = [{{range $page.Status }}
           "{{.}}",
           {{end}}]
@@ -367,7 +367,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
       extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
       [frontends."frontend-{{ $ServiceFrontendName }}".rateLimit.rateSet]
         {{range $limitName, $limit := $rateLimit.RateSet }}
-        [frontends."frontend-{{ $ServiceFrontendName }}".rateLimit.rateSet.{{ $limitName }}]
+        [frontends."frontend-{{ $ServiceFrontendName }}".rateLimit.rateSet."{{ $limitName }}"]
           period = "{{ $limit.Period }}"
           average = {{ $limit.Average }}
           burst = {{ $limit.Burst }}
@@ -469,7 +469,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
     {{if $errorPages }}
     [frontends."frontend-{{ $frontendName }}".errors]
       {{range $pageName, $page := $errorPages }}
-      [frontends."frontend-{{ $frontendName }}".errors.{{ $pageName }}]
+      [frontends."frontend-{{ $frontendName }}".errors."{{ $pageName }}"]
         status = [{{range $page.Status }}
           "{{.}}",
           {{end}}]
@@ -483,8 +483,8 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
     [frontends."frontend-{{ $frontendName }}".rateLimit]
       extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
       [frontends."frontend-{{ $frontendName }}".rateLimit.rateSet]
-        {{ range $limitName, $limit := $rateLimit.RateSet }}
-        [frontends."frontend-{{ $frontendName }}".rateLimit.rateSet.{{ $limitName }}]
+        {{range $limitName, $limit := $rateLimit.RateSet }}
+        [frontends."frontend-{{ $frontendName }}".rateLimit.rateSet."{{ $limitName }}"]
           period = "{{ $limit.Period }}"
           average = {{ $limit.Average }}
           burst = {{ $limit.Burst }}
@@ -598,7 +598,7 @@ var _templatesEcsTmpl = []byte(`[backends]
 
   {{ $healthCheck := getHealthCheck $firstInstance }}
   {{if $healthCheck }}
-  [backends.backend-{{ $serviceName }}.healthCheck]
+  [backends."backend-{{ $serviceName }}".healthCheck]
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
@@ -606,7 +606,7 @@ var _templatesEcsTmpl = []byte(`[backends]
 
   {{ $buffering := getBuffering $firstInstance }}
   {{if $buffering }}
-  [backends.backend-{{ $serviceName }}.buffering]
+  [backends."backend-{{ $serviceName }}".buffering]
     maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
     memRequestBodyBytes = {{ $buffering.MemRequestBodyBytes }}
     maxResponseBodyBytes = {{ $buffering.MaxResponseBodyBytes }}
@@ -615,7 +615,7 @@ var _templatesEcsTmpl = []byte(`[backends]
   {{end}}
 
   {{range $serverName, $server := getServers $instances }}
-  [backends.backend-{{ $serviceName }}.servers.{{ $serverName }}]
+  [backends."backend-{{ $serviceName }}".servers."{{ $serverName }}"]
     url = "{{ $server.URL }}"
     weight = {{ $server.Weight }}
   {{end}}
@@ -626,7 +626,7 @@ var _templatesEcsTmpl = []byte(`[backends]
 {{range $serviceName, $instances := .Services }}
 {{range $instance := filterFrontends $instances }}
 
-  [frontends.frontend-{{ $serviceName }}]
+  [frontends."frontend-{{ $serviceName }}"]
     backend = "backend-{{ $serviceName }}"
     priority = {{ getPriority $instance }}
     passHostHeader = {{ getPassHostHeader $instance }}
@@ -661,7 +661,7 @@ var _templatesEcsTmpl = []byte(`[backends]
     {{if $errorPages }}
     [frontends."frontend-{{ $serviceName }}".errors]
       {{range $pageName, $page := $errorPages }}
-      [frontends."frontend-{{ $serviceName }}".errors.{{ $pageName }}]
+      [frontends."frontend-{{ $serviceName }}".errors."{{ $pageName }}"]
         status = [{{range $page.Status }}
           "{{.}}",
           {{end}}]
@@ -676,7 +676,7 @@ var _templatesEcsTmpl = []byte(`[backends]
       extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
       [frontends."frontend-{{ $serviceName }}".rateLimit.rateSet]
         {{ range $limitName, $limit := $rateLimit.RateSet }}
-        [frontends."frontend-{{ $serviceName }}".rateLimit.rateSet.{{ $limitName }}]
+        [frontends."frontend-{{ $serviceName }}".rateLimit.rateSet."{{ $limitName }}"]
           period = "{{ $limit.Period }}"
           average = {{ $limit.Average }}
           burst = {{ $limit.Burst }}
@@ -737,7 +737,7 @@ var _templatesEcsTmpl = []byte(`[backends]
       {{end}}
     {{end}}
 
-    [frontends.frontend-{{ $serviceName }}.routes.route-frontend-{{ $serviceName }}]
+    [frontends."frontend-{{ $serviceName }}".routes."route-frontend-{{ $serviceName }}"]
       rule = "{{getFrontendRule $instance}}"
 
 {{end}}
@@ -764,7 +764,7 @@ var _templatesEurekaTmpl = []byte(`[backends]
   [backends.backend-{{ $app.Name }}]
 
     {{range $instance := .Instances }}
-    [backends.backend-{{ $app.Name }}.servers.server-{{ getInstanceID $instance }}]
+    [backends."backend-{{ $app.Name }}".servers."server-{{ getInstanceID $instance }}"]
       url = "{{ getProtocol $instance }}://{{ .IpAddr }}:{{ getPort $instance }}"
       weight = {{ getWeight $instance }}
     {{end}}
@@ -774,11 +774,11 @@ var _templatesEurekaTmpl = []byte(`[backends]
 [frontends]
 {{range $app := .Applications }}
 
-  [frontends.frontend-{{ $app.Name }}]
+  [frontends."frontend-{{ $app.Name }}"]
     backend = "backend-{{ $app.Name }}"
     entryPoints = ["http"]
 
-    [frontends.frontend-{{ $app.Name }}.routes.route-host{{ $app.Name }}]
+    [frontends."frontend-{{ $app.Name }}".routes."route-host{{ $app.Name }}"]
       rule = "Host:{{ $app.Name | tolower }}"
 
 {{end}}
@@ -805,7 +805,7 @@ var _templatesKubernetesTmpl = []byte(`[backends]
   [backends."{{ $backendName }}"]
 
     {{if $backend.CircuitBreaker }}
-    [backends."{{ $backendName }} ".circuitBreaker]
+    [backends."{{ $backendName }}".circuitBreaker]
       expression = "{{ $backend.CircuitBreaker.Expression }}"
     {{end}}
 
@@ -818,7 +818,7 @@ var _templatesKubernetesTmpl = []byte(`[backends]
       {{end}}
 
     {{if $backend.MaxConn }}
-    [backends.backend-{{ $backendName }}.maxConn]
+    [backends."{{ $backendName }}".maxConn]
       amount = {{ $backend.MaxConn.Amount }}
       extractorFunc = "{{ $backend.MaxConn.ExtractorFunc }}"
     {{end}}
@@ -871,7 +871,7 @@ var _templatesKubernetesTmpl = []byte(`[backends]
     {{if $frontend.Errors }}
     [frontends."{{ $frontendName }}".errors]
       {{range $pageName, $page := $frontend.Errors }}
-      [frontends."{{ $frontendName }}".errors.{{ $pageName }}]
+      [frontends."{{ $frontendName }}".errors."{{ $pageName }}"]
         status = [{{range $page.Status }}
           "{{.}}",
           {{end}}]
@@ -885,7 +885,7 @@ var _templatesKubernetesTmpl = []byte(`[backends]
       extractorFunc = "{{ $frontend.RateLimit.ExtractorFunc }}"
       [frontends."{{ $frontendName }}".rateLimit.rateSet]
         {{range $limitName, $limit := $frontend.RateLimit.RateSet }}
-        [frontends."{{ $frontendName }}".rateLimit.rateSet.{{ $limitName }}]
+        [frontends."{{ $frontendName }}".rateLimit.rateSet."{{ $limitName }}"]
           period = "{{ $limit.Period }}"
           average = {{ $limit.Average }}
           burst = {{ $limit.Burst }}
@@ -1065,7 +1065,7 @@ var _templatesKvTmpl = []byte(`[backends]
     {{if $errorPages }}
     [frontends."{{ $frontendName }}".errors]
       {{range $pageName, $page := $errorPages }}
-      [frontends."{{$frontendName}}".errors.{{ $pageName }}]
+      [frontends."{{$frontendName}}".errors."{{ $pageName }}"]
         status = [{{range $page.Status }}
           "{{.}}",
           {{end}}]
@@ -1080,7 +1080,7 @@ var _templatesKvTmpl = []byte(`[backends]
       extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
       [frontends."{{ $frontendName }}".rateLimit.rateSet]
         {{range $limitName, $rateLimit := $rateLimit.RateSet }}
-        [frontends."{{ $frontendName }}".rateLimit.rateSet.{{ $limitName }}]
+        [frontends."{{ $frontendName }}".rateLimit.rateSet."{{ $limitName }}"]
           period = "{{ $rateLimit.Period }}"
           average = {{ $rateLimit.Average }}
           burst = {{ $rateLimit.Burst }}
@@ -1276,7 +1276,7 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
     {{if $errorPages }}
     [frontends."{{ $frontendName }}".errors]
       {{range $pageName, $page := $errorPages }}
-      [frontends."{{ $frontendName }}".errors.{{ $pageName }}]
+      [frontends."{{ $frontendName }}".errors."{{ $pageName }}"]
         status = [{{range $page.Status }}
           "{{.}}",
           {{end}}]
@@ -1291,7 +1291,7 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
       extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
       [frontends."{{ $frontendName }}".rateLimit.rateSet]
         {{ range $limitName, $limit := $rateLimit.RateSet }}
-        [frontends."{{ $frontendName }}".rateLimit.rateSet.{{ $limitName }}]
+        [frontends."{{ $frontendName }}".rateLimit.rateSet."{{ $limitName }}"]
           period = "{{ $limit.Period }}"
           average = {{ $limit.Average }}
           burst = {{ $limit.Burst }}
@@ -1379,7 +1379,7 @@ var _templatesMesosTmpl = []byte(`[backends]
   {{ $app := index $tasks 0 }}
   {{ $backendName := getBackendName $app }}
 
-  [backends.backend-{{ $backendName }}]
+  [backends."backend-{{ $backendName }}"]
 
   {{ $circuitBreaker := getCircuitBreaker $app }}
   {{if $circuitBreaker }}
@@ -1407,7 +1407,7 @@ var _templatesMesosTmpl = []byte(`[backends]
 
   {{ $healthCheck := getHealthCheck $app }}
   {{if $healthCheck }}
-  [backends.backend-{{ $backendName }}.healthCheck]
+  [backends."backend-{{ $backendName }}".healthCheck]
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
@@ -1415,7 +1415,7 @@ var _templatesMesosTmpl = []byte(`[backends]
 
   {{ $buffering := getBuffering $app }}
   {{if $buffering }}
-  [backends.backend-{{ $backendName }}.buffering]
+  [backends."backend-{{ $backendName }}".buffering]
     maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
     memRequestBodyBytes = {{ $buffering.MemRequestBodyBytes }}
     maxResponseBodyBytes = {{ $buffering.MaxResponseBodyBytes }}
@@ -1424,7 +1424,7 @@ var _templatesMesosTmpl = []byte(`[backends]
   {{end}}
 
   {{range $serverName, $server := getServers $tasks }}
-  [backends.backend-{{ $backendName }}.servers.{{ $serverName }}]
+  [backends."backend-{{ $backendName }}".servers."{{ $serverName }}"]
     url = "{{ $server.URL }}"
     weight = {{ $server.Weight }}
   {{end}}
@@ -1435,7 +1435,7 @@ var _templatesMesosTmpl = []byte(`[backends]
   {{ $app := index $tasks 0 }}
   {{ $frontendName := getFrontEndName $app }}
 
-  [frontends.frontend-{{ $frontendName }}]
+  [frontends."frontend-{{ $frontendName }}"]
     backend = "backend-{{ getBackendName $app }}"
     priority = {{ getPriority $app }}
     passHostHeader = {{ getPassHostHeader $app }}
@@ -1469,7 +1469,7 @@ var _templatesMesosTmpl = []byte(`[backends]
     {{if $errorPages }}
     [frontends."frontend-{{ $frontendName }}".errors]
       {{range $pageName, $page := $errorPages }}
-      [frontends."frontend-{{ $frontendName }}".errors.{{ $pageName }}]
+      [frontends."frontend-{{ $frontendName }}".errors."{{ $pageName }}"]
         status = [{{range $page.Status }}
         "{{.}}",
         {{end}}]
@@ -1484,7 +1484,7 @@ var _templatesMesosTmpl = []byte(`[backends]
       extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
       [frontends."frontend-{{ $frontendName }}".rateLimit.rateSet]
         {{ range $limitName, $limit := $rateLimit.RateSet }}
-        [frontends."frontend-{{ $frontendName }}".rateLimit.rateSet.{{ $limitName }}]
+        [frontends."frontend-{{ $frontendName }}".rateLimit.rateSet."{{ $limitName }}"]
           period = "{{ $limit.Period }}"
           average = {{ $limit.Average }}
           burst = {{ $limit.Burst }}
@@ -1545,7 +1545,7 @@ var _templatesMesosTmpl = []byte(`[backends]
       {{end}}
     {{end}}
 
-    [frontends.frontend-{{ $frontendName }}.routes.route-host-{{ $frontendName }}]
+    [frontends."frontend-{{ $frontendName }}".routes."route-host-{{ $frontendName }}"]
     rule = "{{ getFrontendRule $app }}"
 
 {{end}}`)
@@ -1594,7 +1594,7 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
 [backends]
 {{range $backendName, $backend := .Backends }}
 
-  [backends.backend-{{ $backendName }}]
+  [backends."backend-{{ $backendName }}"]
 
   {{ $circuitBreaker := getCircuitBreaker $backend }}
   {{if $circuitBreaker }}
@@ -1622,7 +1622,7 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
 
   {{ $healthCheck := getHealthCheck $backend }}
   {{if $healthCheck }}
-  [backends.backend-{{ $backendName }}.healthCheck]
+  [backends."backend-{{ $backendName }}".healthCheck]
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
@@ -1639,7 +1639,7 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
   {{end}}
 
   {{range $serverName, $server := getServers $backend}}
-  [backends.backend-{{ $backendName }}.servers.{{ $serverName }}]
+  [backends."backend-{{ $backendName }}".servers."{{ $serverName }}"]
     url = "{{ $server.URL }}"
     weight = {{ $server.Weight }}
   {{end}}
@@ -1683,7 +1683,7 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
     {{if $errorPages }}
     [frontends."frontend-{{ $frontendName }}".errors]
       {{range $pageName, $page := $errorPages }}
-      [frontends."frontend-{{ $frontendName }}".errors.{{ $pageName }}]
+      [frontends."frontend-{{ $frontendName }}".errors."{{ $pageName }}"]
         status = [{{range $page.Status }}
         "{{.}}",
         {{end}}]
@@ -1698,7 +1698,7 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
       extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
       [frontends."frontend-{{ $frontendName }}".rateLimit.rateSet]
         {{ range $limitName, $limit := $rateLimit.RateSet }}
-        [frontends."frontend-{{ $frontendName }}".rateLimit.rateSet.{{ $limitName }}]
+        [frontends."frontend-{{ $frontendName }}".rateLimit.rateSet."{{ $limitName }}"]
           period = "{{ $limit.Period }}"
           average = {{ $limit.Average }}
           burst = {{ $limit.Burst }}
