@@ -18,7 +18,8 @@ import (
 type Provider struct {
 	provider.BaseProvider `mapstructure:",squash" export:"true"`
 	Endpoint              string         `description:"Eureka server endpoint"`
-	Delay                 flaeg.Duration `description:"Override default configuration time between refresh" export:"true"`
+	Delay                 flaeg.Duration `description:"Override default configuration time between refresh (Deprecated)" export:"true"` // Deprecated
+	RefreshSeconds        flaeg.Duration `description:"Override default configuration time between refresh" export:"true"`
 }
 
 // Provide allows the eureka provider to provide configurations to traefik
@@ -46,26 +47,28 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 			Configuration: configuration,
 		}
 
-		ticker := time.NewTicker(time.Duration(p.Delay))
-		safe.Go(func() {
-			for t := range ticker.C {
-				log.Debugf("Refreshing Provider %s", t.String())
-
-				applications, err := client.GetApplications()
-				if err != nil {
-					log.Errorf("Failed to retrieve applications, error: %s", err)
-					continue
-				}
-
-				configuration, err := p.buildConfiguration(applications)
-				if err != nil {
-					log.Errorf("Failed to refresh Provider configuration, error: %s", err)
-					continue
-				}
-
-				configurationChan <- types.ConfigMessage{
-					ProviderName:  "eureka",
-					Configuration: configuration,
+		ticker := time.NewTicker(time.Duration(p.RefreshSeconds))
+		pool.Go(func(stop chan bool) {
+			for {
+				select {
+				case t := <-ticker.C:
+					log.Debugf("Refreshing Provider %s", t.String())
+					applications, err := client.GetApplications()
+					if err != nil {
+						log.Errorf("Failed to retrieve applications, error: %s", err)
+						continue
+					}
+					configuration, err := p.buildConfiguration(applications)
+					if err != nil {
+						log.Errorf("Failed to refresh Provider configuration, error: %s", err)
+						continue
+					}
+					configurationChan <- types.ConfigMessage{
+						ProviderName:  "eureka",
+						Configuration: configuration,
+					}
+				case <-stop:
+					return
 				}
 			}
 		})

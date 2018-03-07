@@ -166,7 +166,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 
 	// default Eureka
 	var defaultEureka eureka.Provider
-	defaultEureka.Delay = flaeg.Duration(30 * time.Second)
+	defaultEureka.RefreshSeconds = flaeg.Duration(30 * time.Second)
 
 	// default ServiceFabric
 	var defaultServiceFabric servicefabric.Provider
