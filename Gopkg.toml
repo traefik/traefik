@@ -246,10 +246,6 @@
   source = "github.com/ijc25/Gotty"
 
 [[override]]
-  name = "github.com/gorilla/websocket"
-  revision = "a69d9f6de432e2c6b296a947d8a5ee88f68522cf"
-
-[[override]]
   # ALWAYS keep this override
   name = "github.com/mailgun/timetools"
   revision = "7e6055773c5137efbeb3bd2410d705fe10ab6bfd"
@@ -257,14 +253,6 @@
 [[override]]
   branch = "master"
   name = "github.com/miekg/dns"
-#
-#[[override]]
-#  name = "golang.org/x/crypto"
-#  revision = "13931e22f9e72ea58bb73048bc752b48c6d4d4ac"
-#
-#[[override]]
-#  name = "golang.org/x/net"
-#  revision = "5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec"
 
 [prune]
   non-go = true
