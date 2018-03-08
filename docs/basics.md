@@ -234,7 +234,7 @@ The following rules are both `Matchers` and `Modifiers`, so the `Matcher` portio
 #### Priorities
 
 By default, routes will be sorted (in descending order) using rules length (to avoid path overlap):
-`PathPrefix:/12345` will be matched before `PathPrefix:/1234` that will be matched before `PathPrefix:/1`.
+`PathPrefix:/12;Host:foo.com` (length == 27) will be matched before `PathPrefixStrip:/123` (length == 20) will be matched before `PathPrefix:/12,/3` (length == 17).
 
 You can customize priority by frontend. The priority value is added to the rule length during sorting:
 
@@ -254,7 +254,7 @@ You can customize priority by frontend. The priority value is added to the rule 
       rule = "PathPrefix:/toto"
 ```
 
-Here, `frontend1` will be matched before `frontend2` (`(3 + 10 == 13) > (4 + 5 == 9)`).
+Here, `frontend1` will be matched before `frontend2` (`(14 + 10 == 24) > (16 + 5 == 21)`).
 
 #### Custom headers
 
