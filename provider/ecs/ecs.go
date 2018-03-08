@@ -308,12 +308,12 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 		byTaskDefinition := make(map[string]int)
 
 		for _, task := range tasks {
-			if _, found := byContainerInstance[*task.ContainerInstanceArn]; !found {
-				byContainerInstance[*task.ContainerInstanceArn] = len(containerInstanceArns)
+			if _, found := byContainerInstance[aws.StringValue(task.ContainerInstanceArn)]; !found {
+				byContainerInstance[aws.StringValue(task.ContainerInstanceArn)] = len(containerInstanceArns)
 				containerInstanceArns = append(containerInstanceArns, task.ContainerInstanceArn)
 			}
-			if _, found := byTaskDefinition[*task.TaskDefinitionArn]; !found {
-				byTaskDefinition[*task.TaskDefinitionArn] = len(taskDefinitionArns)
+			if _, found := byTaskDefinition[aws.StringValue(task.TaskDefinitionArn)]; !found {
+				byTaskDefinition[aws.StringValue(task.TaskDefinitionArn)] = len(taskDefinitionArns)
 				taskDefinitionArns = append(taskDefinitionArns, task.TaskDefinitionArn)
 			}
 		}
@@ -327,11 +327,10 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 		if err != nil {
 			return nil, err
 		}
-
 		for _, task := range tasks {
 
-			machineIdx := byContainerInstance[*task.ContainerInstanceArn]
-			taskDefIdx := byTaskDefinition[*task.TaskDefinitionArn]
+			machineIdx := byContainerInstance[aws.StringValue(task.ContainerInstanceArn)]
+			taskDefIdx := byTaskDefinition[aws.StringValue(task.TaskDefinitionArn)]
 
 			for _, container := range task.Containers {
 
@@ -345,8 +344,8 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 				}
 
 				instances = append(instances, ecsInstance{
-					fmt.Sprintf("%s-%s", strings.Replace(*task.Group, ":", "-", 1), *container.Name),
-					(*task.TaskArn)[len(*task.TaskArn)-12:],
+					fmt.Sprintf("%s-%s", strings.Replace(aws.StringValue(task.Group), ":", "-", 1), *container.Name),
+					(aws.StringValue(task.TaskArn))[len(aws.StringValue(task.TaskArn))-12:],
 					task,
 					taskDefinition,
 					container,
@@ -381,7 +380,7 @@ func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, cl
 
 		containerResp := req.Data.(*ecs.DescribeContainerInstancesOutput)
 		for i, container := range containerResp.ContainerInstances {
-			order[*container.Ec2InstanceId] = order[*container.ContainerInstanceArn]
+			order[aws.StringValue(container.Ec2InstanceId)] = order[aws.StringValue(container.ContainerInstanceArn)]
 			instanceIds[i] = container.Ec2InstanceId
 		}
 	}
@@ -399,7 +398,7 @@ func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, cl
 		for _, r := range instancesResp.Reservations {
 			for _, i := range r.Instances {
 				if i.InstanceId != nil {
-					instances[order[*i.InstanceId]] = i
+					instances[order[aws.StringValue(i.InstanceId)]] = i
 				}
 			}
 		}
@@ -426,7 +425,7 @@ func (p *Provider) lookupTaskDefinitions(ctx context.Context, client *awsClient,
 
 func (p *Provider) label(i ecsInstance, k string) string {
 	if v, found := i.containerDefinition.DockerLabels[k]; found {
-		return *v
+		return aws.StringValue(v)
 	}
 	return ""
 }
@@ -565,14 +564,14 @@ func (p *Provider) getProtocol(i ecsInstance) string {
 }
 
 func (p *Provider) getHost(i ecsInstance) string {
-	return *i.machine.PrivateIpAddress
+	return aws.StringValue(i.machine.PrivateIpAddress)
 }
 
 func (p *Provider) getPort(i ecsInstance) string {
 	if port := p.label(i, types.LabelPort); port != "" {
 		return port
 	}
-	return strconv.FormatInt(*i.container.NetworkBindings[0].HostPort, 10)
+	return strconv.FormatInt(aws.Int64Value(i.container.NetworkBindings[0].HostPort), 10)
 }
 
 func (p *Provider) getWeight(i ecsInstance) string {
