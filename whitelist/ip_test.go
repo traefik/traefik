@@ -19,12 +19,12 @@ func TestNew(t *testing.T) {
 			desc:               "nil whitelist",
 			whitelistStrings:   nil,
 			expectedWhitelists: nil,
-			errMessage:         "no whiteListsNet provided",
+			errMessage:         "no white list provided",
 		}, {
 			desc:               "empty whitelist",
 			whitelistStrings:   []string{},
 			expectedWhitelists: nil,
-			errMessage:         "no whiteListsNet provided",
+			errMessage:         "no white list provided",
 		}, {
 			desc: "whitelist containing empty string",
 			whitelistStrings: []string{
@@ -90,7 +90,7 @@ func TestNew(t *testing.T) {
 	}
 }
 
-func TestIsAllowed(t *testing.T) {
+func TestContainsIsAllowed(t *testing.T) {
 	cases := []struct {
 		desc             string
 		whitelistStrings []string
@@ -275,6 +275,7 @@ func TestIsAllowed(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			whiteLister, err := NewIP(test.whitelistStrings, false)
 
 			require.NoError(t, err)
@@ -297,7 +298,55 @@ func TestIsAllowed(t *testing.T) {
 	}
 }
 
-func TestBrokenIPs(t *testing.T) {
+func TestContainsInsecure(t *testing.T) {
+	mustNewIP := func(whitelistStrings []string, insecure bool) *IP {
+		ip, err := NewIP(whitelistStrings, insecure)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return ip
+	}
+
+	testCases := []struct {
+		desc        string
+		whiteLister *IP
+		ip          string
+		expected    bool
+	}{
+		{
+			desc:        "valid ip and insecure",
+			whiteLister: mustNewIP([]string{"1.2.3.4/24"}, true),
+			ip:          "1.2.3.1",
+			expected:    true,
+		},
+		{
+			desc:        "invalid ip and insecure",
+			whiteLister: mustNewIP([]string{"1.2.3.4/24"}, true),
+			ip:          "10.2.3.1",
+			expected:    true,
+		},
+		{
+			desc:        "invalid ip and secure",
+			whiteLister: mustNewIP([]string{"1.2.3.4/24"}, false),
+			ip:          "10.2.3.1",
+			expected:    false,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			ok, _, err := test.whiteLister.Contains(test.ip)
+			require.NoError(t, err)
+
+			assert.Equal(t, test.expected, ok)
+		})
+	}
+}
+
+func TestContainsBrokenIPs(t *testing.T) {
 	brokenIPs := []string{
 		"foo",
 		"10.0.0.350",
