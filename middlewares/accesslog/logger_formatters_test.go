@@ -80,33 +80,59 @@ func TestCommonLogFormatter_Format(t *testing.T) {
 func Test_toLog(t *testing.T) {
 
 	testCases := []struct {
-		name        string
-		value       interface{}
-		expectedLog interface{}
+		desc         string
+		fields       logrus.Fields
+		fieldName    string
+		defaultValue string
+		quoted       bool
+		expectedLog  interface{}
 	}{
 		{
-			name:        "",
-			value:       1,
-			expectedLog: 1,
+			desc: "Should return int 1",
+			fields: logrus.Fields{
+				"Powpow": 1,
+			},
+			fieldName:    "Powpow",
+			defaultValue: defaultValue,
+			quoted:       false,
+			expectedLog:  1,
 		},
 		{
-			name:        "",
-			value:       "foo",
-			expectedLog: `"foo"`,
+			desc: "Should return string foo",
+			fields: logrus.Fields{
+				"Powpow": "foo",
+			},
+			fieldName:    "Powpow",
+			defaultValue: defaultValue,
+			quoted:       true,
+			expectedLog:  `"foo"`,
 		},
 		{
-			name:        "",
-			value:       nil,
-			expectedLog: "-",
+			desc: "Should return defaultValue if fieldName does not exist",
+			fields: logrus.Fields{
+				"Powpow": "foo",
+			},
+			fieldName:    "",
+			defaultValue: defaultValue,
+			quoted:       false,
+			expectedLog:  "-",
+		},
+		{
+			desc:         "Should return defaultValue if fields is nil",
+			fields:       nil,
+			fieldName:    "",
+			defaultValue: defaultValue,
+			quoted:       false,
+			expectedLog:  "-",
 		},
 	}
 
 	for _, test := range testCases {
 		test := test
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			lg := toLog(test.value, defaultValue)
+			lg := toLog(test.fields, test.fieldName, defaultValue, test.quoted)
 
 			assert.Equal(t, test.expectedLog, lg)
 		})

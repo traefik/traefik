@@ -32,10 +32,12 @@ const (
 
 // LogHandler will write each request and its response to the access log.
 type LogHandler struct {
-	logger   *logrus.Logger
-	file     *os.File
-	filePath string
-	mu       sync.Mutex
+	logger         *logrus.Logger
+	file           *os.File
+	filePath       string
+	mu             sync.Mutex
+	httpCodeRanges types.HTTPCodeRanges
+	fields         *types.Fields
 }
 
 // NewLogHandler creates a new LogHandler
@@ -66,7 +68,22 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 		Hooks:     make(logrus.LevelHooks),
 		Level:     logrus.InfoLevel,
 	}
-	return &LogHandler{logger: logger, file: file, filePath: config.FilePath}, nil
+
+	logHandler := &LogHandler{
+		logger:   logger,
+		file:     file,
+		filePath: config.FilePath,
+		fields:   config.Fields,
+	}
+
+	if config.Filters != nil {
+		blocks, err := types.NewHTTPCodeRanges(config.Filters.StatusCodes)
+		if err == nil && blocks != nil {
+			logHandler.httpCodeRanges = blocks
+		}
+	}
+
+	return logHandler, nil
 }
 
 func openAccessLogFile(filePath string) (*os.File, error) {
@@ -198,45 +215,110 @@ func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestR
 	}
 
 	core[DownstreamStatus] = crw.Status()
-	core[DownstreamStatusLine] = fmt.Sprintf("%03d %s", crw.Status(), http.StatusText(crw.Status()))
-	core[DownstreamContentSize] = crw.Size()
-	if original, ok := core[OriginContentSize]; ok {
-		o64 := original.(int64)
-		if o64 != crw.Size() && 0 != crw.Size() {
-			core[GzipRatio] = float64(o64) / float64(crw.Size())
+
+	keep := l.keepAccessLog(crw.Status())
+	if keep {
+		core[DownstreamStatusLine] = fmt.Sprintf("%03d %s", crw.Status(), http.StatusText(crw.Status()))
+		core[DownstreamContentSize] = crw.Size()
+		if original, ok := core[OriginContentSize]; ok {
+			o64 := original.(int64)
+			if o64 != crw.Size() && 0 != crw.Size() {
+				core[GzipRatio] = float64(o64) / float64(crw.Size())
+			}
+		}
+
+		// n.b. take care to perform time arithmetic using UTC to avoid errors at DST boundaries
+		total := time.Now().UTC().Sub(core[StartUTC].(time.Time))
+		core[Duration] = total
+		if origin, ok := core[OriginDuration]; ok {
+			core[Overhead] = total - origin.(time.Duration)
+		} else {
+			core[Overhead] = total
+		}
+
+		fields := logrus.Fields{}
+
+		for k, v := range logDataTable.Core {
+			if l.checkField(k) {
+				fields[k] = v
+			}
+		}
+
+		l.redactHeaders(logDataTable.Request, fields, "request_")
+		l.redactHeaders(logDataTable.OriginResponse, fields, "origin_")
+		l.redactHeaders(logDataTable.DownstreamResponse, fields, "downstream_")
+
+		l.mu.Lock()
+		defer l.mu.Unlock()
+		l.logger.WithFields(fields).Println()
+	}
+}
+
+func (l *LogHandler) redactHeaders(headers http.Header, fields logrus.Fields, prefix string) {
+	for k := range headers {
+		v := l.checkHeader(k)
+		if v == "keep" {
+			fields[prefix+k] = headers.Get(k)
+		} else if v == "redact" {
+			fields[prefix+k] = "REDACTED"
 		}
 	}
-
-	// n.b. take care to perform time arithmetic using UTC to avoid errors at DST boundaries
-	total := time.Now().UTC().Sub(core[StartUTC].(time.Time))
-	core[Duration] = total
-	if origin, ok := core[OriginDuration]; ok {
-		core[Overhead] = total - origin.(time.Duration)
+}
+func (l *LogHandler) keepAccessLog(status int) bool {
+	keep := false
+	if l.httpCodeRanges != nil {
+		for _, block := range l.httpCodeRanges {
+			if status >= block[0] && status <= block[1] {
+				keep = true
+				break
+			}
+		}
 	} else {
-		core[Overhead] = total
+		keep = true
 	}
+	return keep
+}
 
-	fields := logrus.Fields{}
-
-	for k, v := range logDataTable.Core {
-		fields[k] = v
+func (l *LogHandler) checkField(field string) bool {
+	defaultKeep := true
+	if l.fields != nil {
+		defaultKeep = checkFieldValue(l.fields.DefaultMode, defaultKeep)
+		v, ok := l.fields.Names[field]
+		if ok {
+			return checkFieldValue(v, defaultKeep)
+		}
 	}
+	return defaultKeep
+}
 
-	for k := range logDataTable.Request {
-		fields["request_"+k] = logDataTable.Request.Get(k)
+func checkFieldValue(value string, defaultKeep bool) bool {
+	switch value {
+	case "keep":
+		return true
+	case "drop":
+		return false
+	default:
+		return defaultKeep
 	}
+}
 
-	for k := range logDataTable.OriginResponse {
-		fields["origin_"+k] = logDataTable.OriginResponse.Get(k)
+func (l *LogHandler) checkHeader(s string) string {
+	defaultValue := "keep"
+	if l.fields != nil && l.fields.Headers != nil {
+		defaultValue = checkFieldHeaderValue(l.fields.Headers.DefaultMode, defaultValue)
+		v, ok := l.fields.Headers.Names[s]
+		if ok {
+			return checkFieldHeaderValue(v, defaultValue)
+		}
 	}
+	return defaultValue
+}
 
-	for k := range logDataTable.DownstreamResponse {
-		fields["downstream_"+k] = logDataTable.DownstreamResponse.Get(k)
+func checkFieldHeaderValue(value string, defaultValue string) string {
+	if value == "keep" || value == "drop" || value == "redact" {
+		return value
 	}
-
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	l.logger.WithFields(fields).Println()
+	return defaultValue
 }
 
 //-------------------------------------------------------------------------------------------------
