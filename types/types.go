@@ -461,18 +461,6 @@ func (b *Buckets) SetValue(val interface{}) {
 	*b = val.(Buckets)
 }
 
-// TraefikLog holds the configuration settings for the traefik logger.
-type TraefikLog struct {
-	FilePath string `json:"file,omitempty" description:"Traefik log file path. Stdout is used when omitted or empty"`
-	Format   string `json:"format,omitempty" description:"Traefik log format: json | common"`
-}
-
-// AccessLog holds the configuration settings for the access logger (middlewares/accesslog).
-type AccessLog struct {
-	FilePath string `json:"file,omitempty" description:"Access log file path. Stdout is used when omitted or empty" export:"true"`
-	Format   string `json:"format,omitempty" description:"Access log format: json | common" export:"true"`
-}
-
 // ClientTLS holds TLS specific configurations as client
 // CA, Cert and Key can be either path or file contents
 type ClientTLS struct {
