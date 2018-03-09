@@ -17,10 +17,10 @@ type IP struct {
 // NewIP builds a new IP given a list of CIDR-Strings to whitelist
 func NewIP(whitelistStrings []string, insecure bool) (*IP, error) {
 	if len(whitelistStrings) == 0 && !insecure {
-		return nil, errors.New("no whiteListsNet provided")
+		return nil, errors.New("no white list provided")
 	}
 
-	ip := IP{}
+	ip := IP{insecure: insecure}
 
 	if !insecure {
 		for _, whitelistString := range whitelistStrings {

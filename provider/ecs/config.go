@@ -372,7 +372,7 @@ func getBoolValue(i ecsInstance, labelName string, defaultValue bool) bool {
 	rawValue, ok := i.containerDefinition.DockerLabels[labelName]
 	if ok {
 		if rawValue != nil {
-			v, err := strconv.ParseBool(*rawValue)
+			v, err := strconv.ParseBool(aws.StringValue(rawValue))
 			if err == nil {
 				return v
 			}
