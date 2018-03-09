@@ -218,8 +218,12 @@ func TestLoggerJSON(t *testing.T) {
 				},
 			},
 			expected: map[string]func(t *testing.T, value interface{}){
-				"request_Referer":    assertString(testReferer),
-				"request_User-Agent": assertString(testUserAgent),
+				"level": assertString("info"),
+				"msg":   assertString(""),
+				"time":  assertNotEqual(""),
+				"downstream_Content-Type": assertString("text/plain; charset=utf-8"),
+				"request_Referer":         assertString(testReferer),
+				"request_User-Agent":      assertString(testUserAgent),
 			},
 		},
 		{
@@ -234,7 +238,11 @@ func TestLoggerJSON(t *testing.T) {
 					},
 				},
 			},
-			expected: map[string]func(t *testing.T, value interface{}){},
+			expected: map[string]func(t *testing.T, value interface{}){
+				"level": assertString("info"),
+				"msg":   assertString(""),
+				"time":  assertNotEqual(""),
+			},
 		},
 		{
 			desc: "default config drop all fields and redact headers",
@@ -249,8 +257,12 @@ func TestLoggerJSON(t *testing.T) {
 				},
 			},
 			expected: map[string]func(t *testing.T, value interface{}){
-				"request_Referer":    assertString("REDACTED"),
-				"request_User-Agent": assertString("REDACTED"),
+				"level": assertString("info"),
+				"msg":   assertString(""),
+				"time":  assertNotEqual(""),
+				"downstream_Content-Type": assertString("REDACTED"),
+				"request_Referer":         assertString("REDACTED"),
+				"request_User-Agent":      assertString("REDACTED"),
 			},
 		},
 	}
@@ -275,10 +287,11 @@ func TestLoggerJSON(t *testing.T) {
 			err = json.Unmarshal(logData, &jsonData)
 			require.NoError(t, err)
 
+			assert.Equal(t, len(test.expected), len(jsonData))
+
 			for field, assertion := range test.expected {
 				assertion(t, jsonData[field])
 			}
-
 		})
 	}
 }
@@ -432,7 +445,6 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
-			//t.Parallel()
 
 			file, restoreStdout := captureStdout(t)
 			defer restoreStdout()
