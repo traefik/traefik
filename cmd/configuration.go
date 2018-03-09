@@ -188,6 +188,13 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultAccessLog := types.AccessLog{
 		Format:   accesslog.CommonFormat,
 		FilePath: "",
+		Filters:  &types.Filters{},
+		Fields: &types.Fields{
+			DefaultMode: "keep",
+			Headers: &types.FieldsHeaders{
+				DefaultMode: "keep",
+			},
+		},
 	}
 
 	// default HealthCheckConfig
