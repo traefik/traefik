@@ -24,8 +24,7 @@ func ParseAccessLog(data string) (map[string]string, error) {
 	buffer.WriteString(`("[^"]*"|-)\s`)          // 13 - BackendURL
 	buffer.WriteString(`(\S+)`)                  // 14 - Duration
 
-	bstring := buffer.String()
-	regex, err := regexp.Compile(bstring)
+	regex, err := regexp.Compile(buffer.String())
 	if err != nil {
 		return nil, err
 	}

@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/containous/traefik/integration/try"
+	"github.com/containous/traefik/middlewares/accesslog"
 	"github.com/go-check/check"
-	"github.com/mattn/go-shellwords"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -714,28 +714,28 @@ func checkTraefikStarted(c *check.C) []byte {
 }
 
 func CheckAccessLogFormat(c *check.C, line string, i int) {
-	tokens, err := shellwords.Parse(line)
+	results, err := accesslog.ParseAccessLog(line)
 	c.Assert(err, checker.IsNil)
-	c.Assert(tokens, checker.HasLen, 14)
-	c.Assert(tokens[6], checker.Matches, `^(-|\d{3})$`)
-	c.Assert(tokens[10], checker.Equals, fmt.Sprintf("%d", i+1))
-	c.Assert(tokens[11], checker.HasPrefix, "Host-")
-	c.Assert(tokens[12], checker.HasPrefix, "http://")
-	c.Assert(tokens[13], checker.Matches, `^\d+ms$`)
+	c.Assert(results, checker.HasLen, 14)
+	c.Assert(results[accesslog.OriginStatus], checker.Matches, `^(-|\d{3})$`)
+	c.Assert(results[accesslog.RequestCount], checker.Equals, fmt.Sprintf("%d", i+1))
+	c.Assert(results[accesslog.FrontendName], checker.HasPrefix, "\"Host-")
+	c.Assert(results[accesslog.BackendURL], checker.HasPrefix, "\"http://")
+	c.Assert(results[accesslog.Duration], checker.Matches, `^\d+ms$`)
 }
 
 func checkAccessLogExactValues(c *check.C, line string, i int, v accessLogValue) {
-	tokens, err := shellwords.Parse(line)
+	results, err := accesslog.ParseAccessLog(line)
 	c.Assert(err, checker.IsNil)
-	c.Assert(tokens, checker.HasLen, 14)
+	c.Assert(results, checker.HasLen, 14)
 	if len(v.user) > 0 {
-		c.Assert(tokens[2], checker.Equals, v.user)
+		c.Assert(results[accesslog.ClientUsername], checker.Equals, v.user)
 	}
-	c.Assert(tokens[6], checker.Equals, v.code)
-	c.Assert(tokens[10], checker.Equals, fmt.Sprintf("%d", i+1))
-	c.Assert(tokens[11], checker.HasPrefix, v.value)
-	c.Assert(tokens[12], checker.HasPrefix, v.backendName)
-	c.Assert(tokens[13], checker.Matches, `^\d+ms$`)
+	c.Assert(results[accesslog.OriginStatus], checker.Equals, v.code)
+	c.Assert(results[accesslog.RequestCount], checker.Equals, fmt.Sprintf("%d", i+1))
+	c.Assert(results[accesslog.FrontendName], checker.Matches, `^"?`+v.value+`.*$`)
+	c.Assert(results[accesslog.BackendURL], checker.Matches, `^"?`+v.backendName+`.*$`)
+	c.Assert(results[accesslog.Duration], checker.Matches, `^\d+ms$`)
 }
 
 func waitForTraefik(c *check.C, containerName string) {
