@@ -154,89 +154,6 @@ constraints = ["tag==api", "tag!=v*-beta"]
 ```
 
 
-## Logs Definition
-
-### Traefik logs
-
-```toml
-# Traefik logs file
-# If not defined, logs to stdout
-#
-# DEPRECATED - see [traefikLog] lower down
-# In case both traefikLogsFile and traefikLog.filePath are specified, the latter will take precedence.
-# Optional
-#
-traefikLogsFile = "log/traefik.log"
-
-# Log level
-#
-# Optional
-# Default: "ERROR"
-#
-# Accepted values, in order of severity: "DEBUG", "INFO", "WARN", "ERROR", "FATAL", "PANIC"
-# Messages at and above the selected level will be logged.
-#
-logLevel = "ERROR"
-```
-
-## Traefik Logs
-
-By default the Traefik log is written to stdout in text format.
-
-To write the logs into a logfile specify the `filePath`.
-```toml
-[traefikLog]
-  filePath = "/path/to/traefik.log"
-```
-
-To write JSON format logs, specify `json` as the format:
-```toml
-[traefikLog]
-  filePath = "/path/to/traefik.log"
-  format   = "json"
-```
-
-### Access Logs
-
-Access logs are written when `[accessLog]` is defined.
-By default it will write to stdout and produce logs in the textual Common Log Format (CLF), extended with additional fields.
-
-To enable access logs using the default settings just add the `[accessLog]` entry.
-```toml
-[accessLog]
-```
-
-To write the logs into a logfile specify the `filePath`.
-```toml
-[accessLog]
-filePath = "/path/to/access.log"
-```
-
-To write JSON format logs, specify `json` as the format:
-```toml
-[accessLog]
-filePath = "/path/to/access.log"
-format = "json"
-```
-
-Deprecated way (before 1.4):
-```toml
-# Access logs file
-#
-# DEPRECATED - see [accessLog] lower down
-#
-accessLogsFile = "log/access.log"
-```
-
-### Log Rotation
-
-Traefik will close and reopen its log files, assuming they're configured, on receipt of a USR1 signal.
-This allows the logs to be rotated and processed by an external program, such as `logrotate`.
-
-!!! note
-    This does not work on Windows due to the lack of USR signals.
-
-
 ## Custom Error pages
 
 Custom error pages can be returned, in lieu of the default, according to frontend-configured ranges of HTTP Status codes.
@@ -302,7 +219,7 @@ These can "burst" up to 10 and 200 in each period respectively.
 ## Buffering
 
 In some cases request/buffering can be enabled for a specific backend.
-By enabling this, Træfik will read the entire request into memory (possibly buffering large requests into disk) and will reject requests that are over a specified limit. 
+By enabling this, Træfik will read the entire request into memory (possibly buffering large requests into disk) and will reject requests that are over a specified limit.
 This may help services deal with large data (multipart/form-data for example) more efficiently and should minimise time spent when sending data to a backend server.
 
 For more information please check [oxy/buffer](http://godoc.org/github.com/vulcand/oxy/buffer) documentation.
@@ -315,8 +232,8 @@ Example configuration:
     [backends.backend1.buffering]
       maxRequestBodyBytes = 10485760  
       memRequestBodyBytes = 2097152  
-      maxResponseBodyBytes = 10485760 
-      memResponseBodyBytes = 2097152 
+      maxResponseBodyBytes = 10485760
+      memResponseBodyBytes = 2097152
       retryExpression = "IsNetworkError() && Attempts() <= 2"
 ```
 
