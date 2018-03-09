@@ -5,6 +5,15 @@ import (
 	"strings"
 )
 
+const (
+	// AccessLogKeep is the keep string value
+	AccessLogKeep = "keep"
+	// AccessLogDrop is the drop string value
+	AccessLogDrop = "drop"
+	// AccessLogRedact is the redact string value
+	AccessLogRedact = "redact"
+)
+
 // TraefikLog holds the configuration settings for the traefik logger.
 type TraefikLog struct {
 	FilePath string `json:"file,omitempty" description:"Traefik log file path. Stdout is used when omitted or empty"`
@@ -131,4 +140,48 @@ func (f *FieldsHeadersNames) Set(value string) error {
 // SetValue sets the FieldsHeadersNames map with val
 func (f *FieldsHeadersNames) SetValue(val interface{}) {
 	*f = val.(FieldsHeadersNames)
+}
+
+// Keep check if the field need to be kept or dropped
+func (f *Fields) Keep(field string) bool {
+	defaultKeep := true
+	if f != nil {
+		defaultKeep = checkFieldValue(f.DefaultMode, defaultKeep)
+		v, ok := f.Names[field]
+		if ok {
+			return checkFieldValue(v, defaultKeep)
+		}
+	}
+	return defaultKeep
+}
+
+func checkFieldValue(value string, defaultKeep bool) bool {
+	switch value {
+	case AccessLogKeep:
+		return true
+	case AccessLogDrop:
+		return false
+	default:
+		return defaultKeep
+	}
+}
+
+// KeepHeader check if header need to be keep, drop or redact and return the status
+func (f *Fields) KeepHeader(header string) string {
+	defaultValue := AccessLogKeep
+	if f != nil && f.Headers != nil {
+		defaultValue = checkFieldHeaderValue(f.Headers.DefaultMode, defaultValue)
+		v, ok := f.Headers.Names[header]
+		if ok {
+			return checkFieldHeaderValue(v, defaultValue)
+		}
+	}
+	return defaultValue
+}
+
+func checkFieldHeaderValue(value string, defaultValue string) string {
+	if value == AccessLogKeep || value == AccessLogDrop || value == AccessLogRedact {
+		return value
+	}
+	return defaultValue
 }

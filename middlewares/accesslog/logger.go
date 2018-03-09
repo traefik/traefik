@@ -239,7 +239,7 @@ func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestR
 		fields := logrus.Fields{}
 
 		for k, v := range logDataTable.Core {
-			if l.checkField(k) {
+			if l.fields.Keep(k) {
 				fields[k] = v
 			}
 		}
@@ -256,10 +256,10 @@ func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestR
 
 func (l *LogHandler) redactHeaders(headers http.Header, fields logrus.Fields, prefix string) {
 	for k := range headers {
-		v := l.checkHeader(k)
-		if v == "keep" {
+		v := l.fields.KeepHeader(k)
+		if v == types.AccessLogKeep {
 			fields[prefix+k] = headers.Get(k)
-		} else if v == "redact" {
+		} else if v == types.AccessLogRedact {
 			fields[prefix+k] = "REDACTED"
 		}
 	}
@@ -277,48 +277,6 @@ func (l *LogHandler) keepAccessLog(status int) bool {
 		keep = true
 	}
 	return keep
-}
-
-func (l *LogHandler) checkField(field string) bool {
-	defaultKeep := true
-	if l.fields != nil {
-		defaultKeep = checkFieldValue(l.fields.DefaultMode, defaultKeep)
-		v, ok := l.fields.Names[field]
-		if ok {
-			return checkFieldValue(v, defaultKeep)
-		}
-	}
-	return defaultKeep
-}
-
-func checkFieldValue(value string, defaultKeep bool) bool {
-	switch value {
-	case "keep":
-		return true
-	case "drop":
-		return false
-	default:
-		return defaultKeep
-	}
-}
-
-func (l *LogHandler) checkHeader(s string) string {
-	defaultValue := "keep"
-	if l.fields != nil && l.fields.Headers != nil {
-		defaultValue = checkFieldHeaderValue(l.fields.Headers.DefaultMode, defaultValue)
-		v, ok := l.fields.Headers.Names[s]
-		if ok {
-			return checkFieldHeaderValue(v, defaultValue)
-		}
-	}
-	return defaultValue
-}
-
-func checkFieldHeaderValue(value string, defaultValue string) string {
-	if value == "keep" || value == "drop" || value == "redact" {
-		return value
-	}
-	return defaultValue
 }
 
 //-------------------------------------------------------------------------------------------------
