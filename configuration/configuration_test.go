@@ -77,6 +77,11 @@ func TestSetEffectiveConfigurationFileProviderFilename(t *testing.T) {
 			fileProvider:             &file.Provider{BaseProvider: provider.BaseProvider{Filename: "other.toml"}},
 			wantFileProviderFilename: "other.toml",
 		},
+		{
+			desc:                     "directory for file provider given",
+			fileProvider:             &file.Provider{Directory: "/"},
+			wantFileProviderFilename: "",
+		},
 	}
 
 	for _, test := range tests {

@@ -239,8 +239,8 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 	}
 
 	// Try to fallback to traefik config file in case the file provider is enabled
-	// but has no file name configured.
-	if gc.File != nil && len(gc.File.Filename) == 0 {
+	// but has no file name configured and is not in a directory mode.
+	if gc.File != nil && len(gc.File.Filename) == 0 && len(gc.File.Directory) == 0 {
 		if len(configFile) > 0 {
 			gc.File.Filename = configFile
 		} else {
