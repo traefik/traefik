@@ -141,7 +141,17 @@ func (p *Provider) loadFileConfig(filename string) (*types.Configuration, error)
 	if err != nil {
 		return nil, fmt.Errorf("error reading configuration file: %s - %s", filename, err)
 	}
-	return p.GetConfiguration(fileContent, template.FuncMap{}, false)
+	configuration, err := p.GetConfiguration(fileContent, template.FuncMap{}, false)
+	if err != nil {
+		return nil, err
+	}
+	if configuration == nil || configuration.Backends == nil && configuration.Frontends == nil && configuration.TLS == nil {
+		configuration = &types.Configuration{
+			Frontends: make(map[string]*types.Frontend),
+			Backends:  make(map[string]*types.Backend),
+		}
+	}
+	return configuration, err
 }
 
 func (p *Provider) loadFileConfigFromDirectory(directory string, configuration *types.Configuration) (*types.Configuration, error) {
