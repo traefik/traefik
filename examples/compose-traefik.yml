@@ -1,6 +1,6 @@
 traefik:
   image: traefik
-  command: -c /dev/null --web --docker --docker.domain=docker.localhost --logLevel=DEBUG
+  command: -c /dev/null --api --docker --docker.domain=docker.localhost --logLevel=DEBUG
   ports:
     - "80:80"
     - "8080:8080"

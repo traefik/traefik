@@ -29,7 +29,7 @@ spec:
       - image: traefik
         name: traefik-ingress-lb
         args:
-        - --web
+        - --api
         - --kubernetes
 ---
 kind: Service
