@@ -214,8 +214,8 @@
     ".",
     "parse"
   ]
-  revision = "963366c29a7acc2d6e02f4f9bcf260d5a1cf4968"
-  version = "v1.1.1"
+  revision = "b4c2f060875361c070ed2bc300c5929b82f5fa2e"
+  version = "v1.1.2"
 
 [[projects]]
   branch = "master"
