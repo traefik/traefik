@@ -205,6 +205,22 @@ func (s *Server) Start() {
 	go s.listenSignals()
 }
 
+func (s *Server) StartWithContext(ctx context.Context) {
+	go func() {
+		defer s.Close()
+		<-ctx.Done()
+		log.Infof("I have to go...")
+		reqAcceptGraceTimeOut := time.Duration(s.globalConfiguration.LifeCycle.RequestAcceptGraceTimeout)
+		if reqAcceptGraceTimeOut > 0 {
+			log.Infof("Waiting %s for incoming requests to cease", reqAcceptGraceTimeOut)
+			time.Sleep(reqAcceptGraceTimeOut)
+		}
+		log.Info("Stopping server gracefully")
+		s.Stop()
+	}()
+	s.Start()
+}
+
 // Wait blocks until server is shutted down.
 func (s *Server) Wait() {
 	<-s.stopChan
