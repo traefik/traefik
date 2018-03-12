@@ -11,7 +11,6 @@ defaultEntryPoints = ["http", "https"]
   address = ":443"
     [entryPoints.https.tls]
 
-
 [acme]
 email = "test@traefik.io"
 storage = "/etc/traefik/conf/acme.json"
@@ -19,12 +18,10 @@ entryPoint = "https"
 onDemand = false
 OnHostRule = true
 caServer = "http://traefik.localhost.com:4000/directory"
-[acme.httpChallenge]
-entryPoint="http"
+  [acme.httpChallenge]
+  entryPoint="http"
 
-
-[web]
-address = ":8080"
+[api]
 
 [docker]
 endpoint = "unix:///var/run/docker.sock"
