@@ -205,6 +205,7 @@ func (s *Server) Start() {
 	go s.listenSignals()
 }
 
+// StartWithContext starts the server and Stop/Close it when context is Done
 func (s *Server) StartWithContext(ctx context.Context) {
 	go func() {
 		defer s.Close()
