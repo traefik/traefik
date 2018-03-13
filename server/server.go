@@ -251,14 +251,14 @@ func (s *Server) Stop() {
 
 // Close destroys the server
 func (s *Server) Close() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(s.globalConfiguration.LifeCycle.GraceTimeOut))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	go func(ctx context.Context) {
 		<-ctx.Done()
 		if ctx.Err() == context.Canceled {
 			return
 		} else if ctx.Err() == context.DeadlineExceeded {
 			log.Warn("Timeout while stopping traefik, killing instance ✝")
-			os.Exit(1)
+			panic("Timeout while stopping traefik, killing instance ✝")
 		}
 	}(ctx)
 	stopMetricsClients()
