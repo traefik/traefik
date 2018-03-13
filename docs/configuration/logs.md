@@ -53,7 +53,7 @@ For more information about the CLI, see the documentation about [Traefik command
 
 By default the Traefik log is written to stdout in text format.
 
-To write the logs into a logfile specify the `filePath`.
+To write the logs into a log file specify the `filePath`:
 ```toml
 [traefikLog]
   filePath = "/path/to/traefik.log"
@@ -85,12 +85,12 @@ logLevel = "ERROR"
 Access logs are written when `[accessLog]` is defined.
 By default it will write to stdout and produce logs in the textual Common Log Format (CLF), extended with additional fields.
 
-To enable access logs using the default settings just add the `[accessLog]` entry.
+To enable access logs using the default settings just add the `[accessLog]` entry:
 ```toml
 [accessLog]
 ```
 
-To write the logs into a logfile specify the `filePath`.
+To write the logs into a log file specify the `filePath`:
 ```toml
 [accessLog]
 filePath = "/path/to/access.log"
