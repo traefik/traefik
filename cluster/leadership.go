@@ -5,10 +5,13 @@ import (
 	"time"
 
 	"github.com/cenk/backoff"
+	"github.com/containous/mux"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/docker/leadership"
+	"github.com/unrolled/render"
+	"net/http"
 )
 
 // Leadership allows leadership election using a KV store
@@ -98,7 +101,36 @@ func (l *Leadership) onElection(elected bool) {
 	}
 }
 
+var (
+	templatesRenderer = render.New(render.Options{
+		Directory: "nowhere",
+	})
+)
+
+type leaderResponse struct {
+	Leader bool `json:"leader"`
+}
+
+func (l *Leadership) getLeaderHandler(response http.ResponseWriter, request *http.Request) {
+	leader := &leaderResponse{Leader: l.IsLeader()}
+	status := http.StatusOK
+	if !leader.Leader {
+		// Set status to be `429`, as this will typically cause load balancers to stop sending requests to the instance without removing them from rotation.
+		status = http.StatusTooManyRequests
+	}
+	err := templatesRenderer.JSON(response, status, leader)
+	if err != nil {
+		log.Error(err)
+	}
+}
+
 // IsLeader returns true if current node is leader
 func (l *Leadership) IsLeader() bool {
 	return l.leader.Get().(bool)
+}
+
+// AddRoutes add dashboard routes on a router
+func (l *Leadership) AddRoutes(router *mux.Router) {
+	// Expose cluster leader
+	router.Methods(http.MethodGet).Path("/cluster/leader").HandlerFunc(l.getLeaderHandler)
 }
