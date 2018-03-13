@@ -210,7 +210,7 @@ func (s *Server) StartWithContext(ctx context.Context) {
 	go func() {
 		defer s.Close()
 		<-ctx.Done()
-		log.Infof("I have to go...")
+		log.Info("I have to go...")
 		reqAcceptGraceTimeOut := time.Duration(s.globalConfiguration.LifeCycle.RequestAcceptGraceTimeout)
 		if reqAcceptGraceTimeOut > 0 {
 			log.Infof("Waiting %s for incoming requests to cease", reqAcceptGraceTimeOut)
