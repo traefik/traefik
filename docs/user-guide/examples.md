@@ -155,7 +155,7 @@ This configuration allows generating a Let's Encrypt certificate (thanks to `HTT
 !!! note
     This option simplifies the configuration but :
 
-    * TLS handshakes will be slow when requesting a host name certificate for the first time, this can leads to DDoS attacks.
+    * TLS handshakes will be slow when requesting a hostname certificate for the first time, which can lead to DDoS attacks.
     * Let's Encrypt have rate limiting: https://letsencrypt.org/docs/rate-limits
 
     That's why, it's better to use the `onHostRule` option if possible.

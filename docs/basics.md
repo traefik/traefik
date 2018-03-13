@@ -234,27 +234,26 @@ The following rules are both `Matchers` and `Modifiers`, so the `Matcher` portio
 #### Priorities
 
 By default, routes will be sorted (in descending order) using rules length (to avoid path overlap):
-`PathPrefix:/12345` will be matched before `PathPrefix:/1234` that will be matched before `PathPrefix:/1`.
+`PathPrefix:/foo;Host:foo.com` (length == 28) will be matched before `PathPrefixStrip:/foobar` (length == 23) will be matched before `PathPrefix:/foo,/bar` (length == 20).
 
-You can customize priority by frontend. The priority value is added to the rule length during sorting:
+You can customize priority by frontend. The priority value override the rule length during sorting:
 
 ```toml
   [frontends]
     [frontends.frontend1]
     backend = "backend1"
-    priority = 10
+    priority = 20
     passHostHeader = true
       [frontends.frontend1.routes.test_1]
       rule = "PathPrefix:/to"
     [frontends.frontend2]
-    priority = 5
     backend = "backend2"
     passHostHeader = true
       [frontends.frontend2.routes.test_1]
       rule = "PathPrefix:/toto"
 ```
 
-Here, `frontend1` will be matched before `frontend2` (`(3 + 10 == 13) > (4 + 5 == 9)`).
+Here, `frontend1` will be matched before `frontend2` (`20 > 16`).
 
 #### Custom headers
 

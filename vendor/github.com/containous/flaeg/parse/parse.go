@@ -1,6 +1,7 @@
 package parse
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"reflect"
@@ -203,6 +204,11 @@ func (d *Duration) UnmarshalText(text []byte) error {
 	return d.Set(string(text))
 }
 
+// MarshalJSON serializes the given duration value.
+func (d *Duration) MarshalJSON() ([]byte, error) {
+	return json.Marshal(time.Duration(*d))
+}
+
 // UnmarshalJSON deserializes the given text into a duration value.
 func (d *Duration) UnmarshalJSON(text []byte) error {
 	if v, err := strconv.Atoi(string(text)); err == nil {
@@ -210,7 +216,13 @@ func (d *Duration) UnmarshalJSON(text []byte) error {
 		return nil
 	}
 
-	v, err := time.ParseDuration(string(text))
+	// We use json unmarshal on value because we have the quoted version
+	var value string
+	err := json.Unmarshal(text, &value)
+	if err != nil {
+		return err
+	}
+	v, err := time.ParseDuration(value)
 	*d = Duration(v)
 	return err
 }

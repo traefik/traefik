@@ -16,8 +16,8 @@ entryPoint = "https"
 onDemand = {{.OnDemand}}
 OnHostRule = {{.OnHostRule}}
 caServer = "http://{{.BoulderHost}}:4000/directory"
-[acme.httpchallenge]
-entrypoint="http"
+  [acme.httpchallenge]
+  entrypoint="http"
 
 [web]
 path="/traefik"

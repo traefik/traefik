@@ -103,7 +103,7 @@ docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/etc/traefik/traefik.to
 You can test Træfik easily using [Docker compose](https://docs.docker.com/compose), with this `docker-compose.yml` file in a folder named `traefik`:
 
 ```yaml
-version: '2'
+version: '3'
 
 services:
   proxy:
@@ -134,7 +134,7 @@ In a browser, you may open [http://localhost:8080](http://localhost:8080) to acc
 Now, create a folder named `test` and create a `docker-compose.yml` in it with this content:
 
 ```yaml
-version: '2'
+version: '3'
 
 services:
   whoami:
@@ -154,8 +154,7 @@ networks:
 Then, start and scale it in the `test` folder:
 
 ```shell
-docker-compose up -d
-docker-compose scale whoami=2
+docker-compose up --scale whoami=2 -d
 ```
 
 Finally, test load-balancing between the two services `test_whoami_1` and `test_whoami_2`:
