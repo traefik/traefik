@@ -219,6 +219,34 @@ filePath = "/path/to/access.log"
 format = "json"
 ```
 
+Depending on your local jurisdiction you may be required to only store masked or fully anonymized IP addresses.
+Traefik partially masks IP addresses in its access log by default.
+This means the last octet of IPv4 addresses and the last 80 bytes of IPv6 addresses are set to 0 in the access log.
+Hostnames are set to `[REDACTED]` as they cannot be masked in a meaningful way:
+
+```toml
+[accessLog]
+remoteIPMask = "partial"
+```
+
+To log no addresses at all (IPv4: `0.0.0.0`, IPv6: `::`, hostname: `[REDACTED]`):
+
+```toml
+[accessLog]
+remoteIPMask = "full"
+```
+
+To keep the legacy behaviour of logging full addresses:
+
+```toml
+[accessLog]
+remoteIPMask = "off"
+```
+
+Note that your access log might still contain other personally identifiable information such as your user's information and IDs in URL parameters or usernames when using `Basic Auth`.
+These settings only affect the access log (which does not include e.g. headers passed).
+A thorough review of your logging and data storage practices is highly recommended.
+
 Deprecated way (before 1.4):
 ```toml
 # Access logs file

@@ -469,8 +469,9 @@ type TraefikLog struct {
 
 // AccessLog holds the configuration settings for the access logger (middlewares/accesslog).
 type AccessLog struct {
-	FilePath string `json:"file,omitempty" description:"Access log file path. Stdout is used when omitted or empty" export:"true"`
-	Format   string `json:"format,omitempty" description:"Access log format: json | common" export:"true"`
+	FilePath     string `json:"file,omitempty" description:"Access log file path. Stdout is used when omitted or empty" export:"true"`
+	Format       string `json:"format,omitempty" description:"Access log format: json | common" export:"true"`
+	RemoteIPMask string `json:"remoteIPMask,omitempty" description:"Completely anonymize, partially mask (default) or do not mask IP addresses in the access log. Hostnames are only logged if this setting is set to off: full | partial | off"`
 }
 
 // ClientTLS holds TLS specific configurations as client
