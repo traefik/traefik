@@ -258,7 +258,6 @@ func (s *Server) Close() {
 		if ctx.Err() == context.Canceled {
 			return
 		} else if ctx.Err() == context.DeadlineExceeded {
-			log.Warn("Timeout while stopping traefik, killing instance ✝")
 			panic("Timeout while stopping traefik, killing instance ✝")
 		}
 	}(ctx)
