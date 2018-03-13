@@ -163,7 +163,6 @@ func assertFloat64NotZero() func(t *testing.T, actual interface{}) {
 }
 
 func TestLoggerJSON(t *testing.T) {
-
 	testCases := []struct {
 		desc     string
 		config   *types.AccessLog
@@ -176,28 +175,28 @@ func TestLoggerJSON(t *testing.T) {
 				Format:   JSONFormat,
 			},
 			expected: map[string]func(t *testing.T, value interface{}){
-				RequestHost:           assertString(testHostname),
-				RequestAddr:           assertString(testHostname),
-				RequestMethod:         assertString(testMethod),
-				RequestPath:           assertString(testPath),
-				RequestProtocol:       assertString(testProto),
-				RequestPort:           assertString("-"),
-				RequestLine:           assertString(fmt.Sprintf("%s %s %s", testMethod, testPath, testProto)),
-				DownstreamStatus:      assertFloat64(float64(testStatus)),
-				DownstreamStatusLine:  assertString(fmt.Sprintf("%d ", testStatus)),
-				DownstreamContentSize: assertFloat64(float64(len(testContent))),
-				OriginContentSize:     assertFloat64(float64(len(testContent))),
-				OriginStatus:          assertFloat64(float64(testStatus)),
-				"request_Referer":     assertString(testReferer),
-				"request_User-Agent":  assertString(testUserAgent),
-				FrontendName:          assertString(testFrontendName),
-				BackendURL:            assertString(testBackendName),
-				ClientUsername:        assertString(testUsername),
-				ClientHost:            assertString(testHostname),
-				ClientPort:            assertString(fmt.Sprintf("%d", testPort)),
-				ClientAddr:            assertString(fmt.Sprintf("%s:%d", testHostname, testPort)),
-				"level":               assertString("info"),
-				"msg":                 assertString(""),
+				RequestHost:            assertString(testHostname),
+				RequestAddr:            assertString(testHostname),
+				RequestMethod:          assertString(testMethod),
+				RequestPath:            assertString(testPath),
+				RequestProtocol:        assertString(testProto),
+				RequestPort:            assertString("-"),
+				RequestLine:            assertString(fmt.Sprintf("%s %s %s", testMethod, testPath, testProto)),
+				DownstreamStatus:       assertFloat64(float64(testStatus)),
+				DownstreamStatusLine:   assertString(fmt.Sprintf("%d ", testStatus)),
+				DownstreamContentSize:  assertFloat64(float64(len(testContent))),
+				OriginContentSize:      assertFloat64(float64(len(testContent))),
+				OriginStatus:           assertFloat64(float64(testStatus)),
+				RequestRefererHeader:   assertString(testReferer),
+				RequestUserAgentHeader: assertString(testUserAgent),
+				FrontendName:           assertString(testFrontendName),
+				BackendURL:             assertString(testBackendName),
+				ClientUsername:         assertString(testUsername),
+				ClientHost:             assertString(testHostname),
+				ClientPort:             assertString(fmt.Sprintf("%d", testPort)),
+				ClientAddr:             assertString(fmt.Sprintf("%s:%d", testHostname, testPort)),
+				"level":                assertString("info"),
+				"msg":                  assertString(""),
 				"downstream_Content-Type": assertString("text/plain; charset=utf-8"),
 				RequestCount:              assertFloat64NotZero(),
 				Duration:                  assertFloat64NotZero(),
@@ -222,8 +221,8 @@ func TestLoggerJSON(t *testing.T) {
 				"msg":   assertString(""),
 				"time":  assertNotEqual(""),
 				"downstream_Content-Type": assertString("text/plain; charset=utf-8"),
-				"request_Referer":         assertString(testReferer),
-				"request_User-Agent":      assertString(testUserAgent),
+				RequestRefererHeader:      assertString(testReferer),
+				RequestUserAgentHeader:    assertString(testUserAgent),
 			},
 		},
 		{
@@ -261,8 +260,8 @@ func TestLoggerJSON(t *testing.T) {
 				"msg":   assertString(""),
 				"time":  assertNotEqual(""),
 				"downstream_Content-Type": assertString("REDACTED"),
-				"request_Referer":         assertString("REDACTED"),
-				"request_User-Agent":      assertString("REDACTED"),
+				RequestRefererHeader:      assertString("REDACTED"),
+				RequestUserAgentHeader:    assertString("REDACTED"),
 			},
 		},
 	}
@@ -446,6 +445,8 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 
+			// NOTE: It is not possible to these cases in parallel because we capture Stdout
+
 			file, restoreStdout := captureStdout(t)
 			defer restoreStdout()
 
@@ -478,8 +479,8 @@ func assertValidLogData(t *testing.T, expected string, logData []byte) {
 		assert.Equal(t, resultExpected[RequestProtocol], result[RequestProtocol], formatErrMessage)
 		assert.Equal(t, resultExpected[OriginStatus], result[OriginStatus], formatErrMessage)
 		assert.Equal(t, resultExpected[OriginContentSize], result[OriginContentSize], formatErrMessage)
-		assert.Equal(t, resultExpected["request_Referer"], result["request_Referer"], formatErrMessage)
-		assert.Equal(t, resultExpected["request_User-Agent"], result["request_User-Agent"], formatErrMessage)
+		assert.Equal(t, resultExpected[RequestRefererHeader], result[RequestRefererHeader], formatErrMessage)
+		assert.Equal(t, resultExpected[RequestUserAgentHeader], result[RequestUserAgentHeader], formatErrMessage)
 		assert.Regexp(t, regexp.MustCompile("[0-9]*"), result[RequestCount], formatErrMessage)
 		assert.Equal(t, resultExpected[FrontendName], result[FrontendName], formatErrMessage)
 		assert.Equal(t, resultExpected[BackendURL], result[BackendURL], formatErrMessage)

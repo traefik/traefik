@@ -38,6 +38,7 @@ func TestStatusCodesSet(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			var statusCodes StatusCodes
 			err := statusCodes.Set(test.value)
 			assert.Nil(t, err)
@@ -105,6 +106,7 @@ func TestStatusCodesString(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			actual := test.values.String()
 			assert.Equal(t, test.expected, actual)
 		})
@@ -137,6 +139,7 @@ func TestStatusCodesSetValue(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			var slice StatusCodes
 			slice.SetValue(test.values)
 			assert.Equal(t, test.expected, slice)

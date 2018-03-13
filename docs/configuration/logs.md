@@ -32,6 +32,7 @@ logLevel = "INFO"
 ```
 
 ### CLI
+
 For more information about the CLI, see the documentation about [Traefik command](/basics/#traefik).
 
 ```shell

@@ -91,11 +91,10 @@ func (f *FieldsNames) Get() interface{} {
 
 // Set is the method to set the flag value, part of the flag.Value interface.
 // Set's argument is a string to be parsed to set the flag.
-// It's a comma-separated list, so we split it.
+// It's a space-separated list, so we split it.
 func (f *FieldsNames) Set(value string) error {
 	fields := strings.Fields(value)
 
-	//(*f) make(FieldsNames)
 	for _, field := range fields {
 		n := strings.SplitN(field, "=", 2)
 		if len(n) == 2 {
@@ -124,11 +123,10 @@ func (f *FieldsHeadersNames) Get() interface{} {
 
 // Set is the method to set the flag value, part of the flag.Value interface.
 // Set's argument is a string to be parsed to set the flag.
-// It's a comma-separated list, so we split it.
+// It's a space-separated list, so we split it.
 func (f *FieldsHeadersNames) Set(value string) error {
 	fields := strings.Fields(value)
 
-	//f = make(FieldsHeadersNames)
 	for _, field := range fields {
 		n := strings.SplitN(field, "=", 2)
 		(*f)[n[0]] = n[1]

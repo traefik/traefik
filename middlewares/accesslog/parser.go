@@ -32,6 +32,7 @@ func ParseAccessLog(data string) (map[string]string, error) {
 	submatch := regex.FindStringSubmatch(data)
 	result := make(map[string]string)
 
+	// Need to be > 13 to match CLF format
 	if len(submatch) > 13 {
 		result[ClientHost] = submatch[1]
 		result[ClientUsername] = submatch[2]
@@ -41,8 +42,8 @@ func ParseAccessLog(data string) (map[string]string, error) {
 		result[RequestProtocol] = submatch[6]
 		result[OriginStatus] = submatch[7]
 		result[OriginContentSize] = submatch[8]
-		result["request_Referer"] = submatch[9]
-		result["request_User-Agent"] = submatch[10]
+		result[RequestRefererHeader] = submatch[9]
+		result[RequestUserAgentHeader] = submatch[10]
 		result[RequestCount] = submatch[11]
 		result[FrontendName] = submatch[12]
 		result[BackendURL] = submatch[13]
