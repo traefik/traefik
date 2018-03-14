@@ -26,11 +26,11 @@ const (
 type AccessLogSuite struct{ BaseSuite }
 
 type accessLogValue struct {
-	formatOnly  bool
-	code        string
-	user        string
-	value       string
-	backendName string
+	formatOnly   bool
+	code         string
+	user         string
+	frontendName string
+	backendName  string
 }
 
 func (s *AccessLogSuite) SetUpSuite(c *check.C) {
@@ -99,11 +99,11 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontend(c *check.C) {
 
 	expected := []accessLogValue{
 		{
-			formatOnly:  false,
-			code:        "401",
-			user:        "-",
-			value:       "Auth for frontend-Host-frontend-auth-docker-local",
-			backendName: "-",
+			formatOnly:   false,
+			code:         "401",
+			user:         "-",
+			frontendName: "Auth for frontend-Host-frontend-auth-docker-local",
+			backendName:  "-",
 		},
 	}
 
@@ -147,11 +147,11 @@ func (s *AccessLogSuite) TestAccessLogAuthEntrypoint(c *check.C) {
 
 	expected := []accessLogValue{
 		{
-			formatOnly:  false,
-			code:        "401",
-			user:        "-",
-			value:       "Auth for entrypoint",
-			backendName: "-",
+			formatOnly:   false,
+			code:         "401",
+			user:         "-",
+			frontendName: "Auth for entrypoint",
+			backendName:  "-",
 		},
 	}
 
@@ -195,11 +195,11 @@ func (s *AccessLogSuite) TestAccessLogAuthEntrypointSuccess(c *check.C) {
 
 	expected := []accessLogValue{
 		{
-			formatOnly:  false,
-			code:        "200",
-			user:        "test",
-			value:       "Host-entrypoint-auth-docker",
-			backendName: "http://172.17.0",
+			formatOnly:   false,
+			code:         "200",
+			user:         "test",
+			frontendName: "Host-entrypoint-auth-docker",
+			backendName:  "http://172.17.0",
 		},
 	}
 
@@ -243,18 +243,18 @@ func (s *AccessLogSuite) TestAccessLogDigestAuthEntrypoint(c *check.C) {
 
 	expected := []accessLogValue{
 		{
-			formatOnly:  false,
-			code:        "401",
-			user:        "-",
-			value:       "Auth for entrypoint",
-			backendName: "-",
+			formatOnly:   false,
+			code:         "401",
+			user:         "-",
+			frontendName: "Auth for entrypoint",
+			backendName:  "-",
 		},
 		{
-			formatOnly:  false,
-			code:        "200",
-			user:        "test",
-			value:       "Host-entrypoint-digest-auth-docker",
-			backendName: "http://172.17.0",
+			formatOnly:   false,
+			code:         "200",
+			user:         "test",
+			frontendName: "Host-entrypoint-digest-auth-docker",
+			backendName:  "http://172.17.0",
 		},
 	}
 
@@ -351,11 +351,11 @@ func (s *AccessLogSuite) TestAccessLogEntrypointRedirect(c *check.C) {
 
 	expected := []accessLogValue{
 		{
-			formatOnly:  false,
-			code:        "302",
-			user:        "-",
-			value:       "entrypoint redirect for frontend-",
-			backendName: "-",
+			formatOnly:   false,
+			code:         "302",
+			user:         "-",
+			frontendName: "entrypoint redirect for frontend-",
+			backendName:  "-",
 		},
 		{
 			formatOnly: true,
@@ -401,11 +401,11 @@ func (s *AccessLogSuite) TestAccessLogFrontendRedirect(c *check.C) {
 
 	expected := []accessLogValue{
 		{
-			formatOnly:  false,
-			code:        "302",
-			user:        "-",
-			value:       "frontend redirect for frontend-Path-",
-			backendName: "-",
+			formatOnly:   false,
+			code:         "302",
+			user:         "-",
+			frontendName: "frontend redirect for frontend-Path-",
+			backendName:  "-",
 		},
 		{
 			formatOnly: true,
@@ -457,11 +457,11 @@ func (s *AccessLogSuite) TestAccessLogRateLimit(c *check.C) {
 			formatOnly: true,
 		},
 		{
-			formatOnly:  false,
-			code:        "429",
-			user:        "-",
-			value:       "rate limit for frontend-Host-ratelimit",
-			backendName: "/",
+			formatOnly:   false,
+			code:         "429",
+			user:         "-",
+			frontendName: "rate limit for frontend-Host-ratelimit",
+			backendName:  "/",
 		},
 	}
 
@@ -508,11 +508,11 @@ func (s *AccessLogSuite) TestAccessLogBackendNotFound(c *check.C) {
 
 	expected := []accessLogValue{
 		{
-			formatOnly:  false,
-			code:        "404",
-			user:        "-",
-			value:       "backend not found",
-			backendName: "/",
+			formatOnly:   false,
+			code:         "404",
+			user:         "-",
+			frontendName: "backend not found",
+			backendName:  "/",
 		},
 	}
 
@@ -553,11 +553,11 @@ func (s *AccessLogSuite) TestAccessLogEntrypointWhitelist(c *check.C) {
 
 	expected := []accessLogValue{
 		{
-			formatOnly:  false,
-			code:        "403",
-			user:        "-",
-			value:       "ipwhitelister for entrypoint httpWhitelistReject",
-			backendName: "-",
+			formatOnly:   false,
+			code:         "403",
+			user:         "-",
+			frontendName: "ipwhitelister for entrypoint httpWhitelistReject",
+			backendName:  "-",
 		},
 	}
 
@@ -600,11 +600,11 @@ func (s *AccessLogSuite) TestAccessLogFrontendWhitelist(c *check.C) {
 
 	expected := []accessLogValue{
 		{
-			formatOnly:  false,
-			code:        "403",
-			user:        "-",
-			value:       "ipwhitelister for frontend-Host-frontend-whitelist",
-			backendName: "-",
+			formatOnly:   false,
+			code:         "403",
+			user:         "-",
+			frontendName: "ipwhitelister for frontend-Host-frontend-whitelist",
+			backendName:  "-",
 		},
 	}
 
@@ -733,7 +733,7 @@ func checkAccessLogExactValues(c *check.C, line string, i int, v accessLogValue)
 	}
 	c.Assert(results[accesslog.OriginStatus], checker.Equals, v.code)
 	c.Assert(results[accesslog.RequestCount], checker.Equals, fmt.Sprintf("%d", i+1))
-	c.Assert(results[accesslog.FrontendName], checker.Matches, `^"?`+v.value+`.*$`)
+	c.Assert(results[accesslog.FrontendName], checker.Matches, `^"?`+v.frontendName+`.*$`)
 	c.Assert(results[accesslog.BackendURL], checker.Matches, `^"?`+v.backendName+`.*$`)
 	c.Assert(results[accesslog.Duration], checker.Matches, `^\d+ms$`)
 }

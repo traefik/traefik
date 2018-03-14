@@ -31,13 +31,13 @@ func NewErrorPagesHandler(errorPage *types.ErrorPage, backendURL string) (*Error
 		return nil, err
 	}
 
-	blocks, err := types.NewHTTPCodeRanges(errorPage.Status)
+	httpCodeRanges, err := types.NewHTTPCodeRanges(errorPage.Status)
 	if err != nil {
 		return nil, err
 	}
 
 	return &ErrorPagesHandler{
-			HTTPCodeRanges:     blocks,
+			HTTPCodeRanges:     httpCodeRanges,
 			BackendURL:         backendURL + errorPage.Query,
 			errorPageForwarder: fwd},
 		nil

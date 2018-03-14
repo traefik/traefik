@@ -74,6 +74,7 @@ func TestStatusCodesGet(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			actual := test.values.Get()
 			assert.Equal(t, test.expected, actual)
 		})
@@ -151,19 +152,19 @@ func TestFieldsNamesSet(t *testing.T) {
 	tests := []struct {
 		desc     string
 		value    string
-		expected *FieldsNames
+		expected *FieldNames
 	}{
 		{
-			desc:  "One value should return FieldsNames of size 1",
+			desc:  "One value should return FieldNames of size 1",
 			value: "field-1=foo",
-			expected: &FieldsNames{
+			expected: &FieldNames{
 				"field-1": "foo",
 			},
 		},
 		{
-			desc:  "Two values separated by space should return FieldsNames of size 2",
+			desc:  "Two values separated by space should return FieldNames of size 2",
 			value: "field-1=foo field-2=bar",
-			expected: &FieldsNames{
+			expected: &FieldNames{
 				"field-1": "foo",
 				"field-2": "bar",
 			},
@@ -175,7 +176,7 @@ func TestFieldsNamesSet(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			fieldsNames := &FieldsNames{}
+			fieldsNames := &FieldNames{}
 			err := fieldsNames.Set(test.value)
 			assert.NoError(t, err)
 
@@ -187,23 +188,23 @@ func TestFieldsNamesSet(t *testing.T) {
 func TestFieldsNamesGet(t *testing.T) {
 	tests := []struct {
 		desc     string
-		values   FieldsNames
-		expected FieldsNames
+		values   FieldNames
+		expected FieldNames
 	}{
 		{
 			desc:     "Should return 1 value",
-			values:   FieldsNames{"field-1": "foo"},
-			expected: FieldsNames{"field-1": "foo"},
+			values:   FieldNames{"field-1": "foo"},
+			expected: FieldNames{"field-1": "foo"},
 		},
 		{
 			desc:     "Should return 2 values",
-			values:   FieldsNames{"field-1": "foo", "field-2": "bar"},
-			expected: FieldsNames{"field-1": "foo", "field-2": "bar"},
+			values:   FieldNames{"field-1": "foo", "field-2": "bar"},
+			expected: FieldNames{"field-1": "foo", "field-2": "bar"},
 		},
 		{
 			desc:     "Should return 3 values",
-			values:   FieldsNames{"field-1": "foo", "field-2": "bar", "field-3": "powpow"},
-			expected: FieldsNames{"field-1": "foo", "field-2": "bar", "field-3": "powpow"},
+			values:   FieldNames{"field-1": "foo", "field-2": "bar", "field-3": "powpow"},
+			expected: FieldNames{"field-1": "foo", "field-2": "bar", "field-3": "powpow"},
 		},
 	}
 
@@ -221,12 +222,12 @@ func TestFieldsNamesGet(t *testing.T) {
 func TestFieldsNamesString(t *testing.T) {
 	tests := []struct {
 		desc     string
-		values   FieldsNames
+		values   FieldNames
 		expected string
 	}{
 		{
 			desc:     "Should return 1 value",
-			values:   FieldsNames{"field-1": "foo"},
+			values:   FieldNames{"field-1": "foo"},
 			expected: "map[field-1:foo]",
 		},
 	}
@@ -234,6 +235,7 @@ func TestFieldsNamesString(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			actual := test.values.String()
 			assert.Equal(t, test.expected, actual)
 		})
@@ -243,23 +245,23 @@ func TestFieldsNamesString(t *testing.T) {
 func TestFieldsNamesSetValue(t *testing.T) {
 	tests := []struct {
 		desc     string
-		values   FieldsNames
-		expected *FieldsNames
+		values   FieldNames
+		expected *FieldNames
 	}{
 		{
 			desc:     "Should return 1 value",
-			values:   FieldsNames{"field-1": "foo"},
-			expected: &FieldsNames{"field-1": "foo"},
+			values:   FieldNames{"field-1": "foo"},
+			expected: &FieldNames{"field-1": "foo"},
 		},
 		{
 			desc:     "Should return 2 values",
-			values:   FieldsNames{"field-1": "foo", "field-2": "bar"},
-			expected: &FieldsNames{"field-1": "foo", "field-2": "bar"},
+			values:   FieldNames{"field-1": "foo", "field-2": "bar"},
+			expected: &FieldNames{"field-1": "foo", "field-2": "bar"},
 		},
 		{
 			desc:     "Should return 3 values",
-			values:   FieldsNames{"field-1": "foo", "field-2": "bar", "field-3": "powpow"},
-			expected: &FieldsNames{"field-1": "foo", "field-2": "bar", "field-3": "powpow"},
+			values:   FieldNames{"field-1": "foo", "field-2": "bar", "field-3": "powpow"},
+			expected: &FieldNames{"field-1": "foo", "field-2": "bar", "field-3": "powpow"},
 		},
 	}
 	for _, test := range tests {
@@ -267,7 +269,7 @@ func TestFieldsNamesSetValue(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			fieldsNames := &FieldsNames{}
+			fieldsNames := &FieldNames{}
 			fieldsNames.SetValue(test.values)
 			assert.Equal(t, test.expected, fieldsNames)
 		})
@@ -278,19 +280,19 @@ func TestFieldsHeadersNamesSet(t *testing.T) {
 	tests := []struct {
 		desc     string
 		value    string
-		expected *FieldsHeadersNames
+		expected *FieldHeaderNames
 	}{
 		{
-			desc:  "One value should return FieldsNames of size 1",
+			desc:  "One value should return FieldNames of size 1",
 			value: "X-HEADER-1=foo",
-			expected: &FieldsHeadersNames{
+			expected: &FieldHeaderNames{
 				"X-HEADER-1": "foo",
 			},
 		},
 		{
-			desc:  "Two values separated by space should return FieldsNames of size 2",
+			desc:  "Two values separated by space should return FieldNames of size 2",
 			value: "X-HEADER-1=foo X-HEADER-2=bar",
-			expected: &FieldsHeadersNames{
+			expected: &FieldHeaderNames{
 				"X-HEADER-1": "foo",
 				"X-HEADER-2": "bar",
 			},
@@ -302,7 +304,7 @@ func TestFieldsHeadersNamesSet(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			headersNames := &FieldsHeadersNames{}
+			headersNames := &FieldHeaderNames{}
 			err := headersNames.Set(test.value)
 			assert.NoError(t, err)
 
@@ -314,23 +316,23 @@ func TestFieldsHeadersNamesSet(t *testing.T) {
 func TestFieldsHeadersNamesGet(t *testing.T) {
 	tests := []struct {
 		desc     string
-		values   FieldsHeadersNames
-		expected FieldsHeadersNames
+		values   FieldHeaderNames
+		expected FieldHeaderNames
 	}{
 		{
 			desc:     "Should return 1 value",
-			values:   FieldsHeadersNames{"X-HEADER-1": "foo"},
-			expected: FieldsHeadersNames{"X-HEADER-1": "foo"},
+			values:   FieldHeaderNames{"X-HEADER-1": "foo"},
+			expected: FieldHeaderNames{"X-HEADER-1": "foo"},
 		},
 		{
 			desc:     "Should return 2 values",
-			values:   FieldsHeadersNames{"X-HEADER-1": "foo", "X-HEADER-2": "bar"},
-			expected: FieldsHeadersNames{"X-HEADER-1": "foo", "X-HEADER-2": "bar"},
+			values:   FieldHeaderNames{"X-HEADER-1": "foo", "X-HEADER-2": "bar"},
+			expected: FieldHeaderNames{"X-HEADER-1": "foo", "X-HEADER-2": "bar"},
 		},
 		{
 			desc:     "Should return 3 values",
-			values:   FieldsHeadersNames{"X-HEADER-1": "foo", "X-HEADER-2": "bar", "X-HEADER-3": "powpow"},
-			expected: FieldsHeadersNames{"X-HEADER-1": "foo", "X-HEADER-2": "bar", "X-HEADER-3": "powpow"},
+			values:   FieldHeaderNames{"X-HEADER-1": "foo", "X-HEADER-2": "bar", "X-HEADER-3": "powpow"},
+			expected: FieldHeaderNames{"X-HEADER-1": "foo", "X-HEADER-2": "bar", "X-HEADER-3": "powpow"},
 		},
 	}
 
@@ -348,12 +350,12 @@ func TestFieldsHeadersNamesGet(t *testing.T) {
 func TestFieldsHeadersNamesString(t *testing.T) {
 	tests := []struct {
 		desc     string
-		values   FieldsHeadersNames
+		values   FieldHeaderNames
 		expected string
 	}{
 		{
 			desc:     "Should return 1 value",
-			values:   FieldsHeadersNames{"X-HEADER-1": "foo"},
+			values:   FieldHeaderNames{"X-HEADER-1": "foo"},
 			expected: "map[X-HEADER-1:foo]",
 		},
 	}
@@ -371,23 +373,23 @@ func TestFieldsHeadersNamesString(t *testing.T) {
 func TestFieldsHeadersNamesSetValue(t *testing.T) {
 	tests := []struct {
 		desc     string
-		values   FieldsHeadersNames
-		expected *FieldsHeadersNames
+		values   FieldHeaderNames
+		expected *FieldHeaderNames
 	}{
 		{
 			desc:     "Should return 1 value",
-			values:   FieldsHeadersNames{"X-HEADER-1": "foo"},
-			expected: &FieldsHeadersNames{"X-HEADER-1": "foo"},
+			values:   FieldHeaderNames{"X-HEADER-1": "foo"},
+			expected: &FieldHeaderNames{"X-HEADER-1": "foo"},
 		},
 		{
 			desc:     "Should return 2 values",
-			values:   FieldsHeadersNames{"X-HEADER-1": "foo", "X-HEADER-2": "bar"},
-			expected: &FieldsHeadersNames{"X-HEADER-1": "foo", "X-HEADER-2": "bar"},
+			values:   FieldHeaderNames{"X-HEADER-1": "foo", "X-HEADER-2": "bar"},
+			expected: &FieldHeaderNames{"X-HEADER-1": "foo", "X-HEADER-2": "bar"},
 		},
 		{
 			desc:     "Should return 3 values",
-			values:   FieldsHeadersNames{"X-HEADER-1": "foo", "X-HEADER-2": "bar", "X-HEADER-3": "powpow"},
-			expected: &FieldsHeadersNames{"X-HEADER-1": "foo", "X-HEADER-2": "bar", "X-HEADER-3": "powpow"},
+			values:   FieldHeaderNames{"X-HEADER-1": "foo", "X-HEADER-2": "bar", "X-HEADER-3": "powpow"},
+			expected: &FieldHeaderNames{"X-HEADER-1": "foo", "X-HEADER-2": "bar", "X-HEADER-3": "powpow"},
 		},
 	}
 	for _, test := range tests {
@@ -395,7 +397,7 @@ func TestFieldsHeadersNamesSetValue(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			headersNames := &FieldsHeadersNames{}
+			headersNames := &FieldHeaderNames{}
 			headersNames.SetValue(test.values)
 			assert.Equal(t, test.expected, headersNames)
 		})

@@ -212,7 +212,7 @@ func TestLoggerJSON(t *testing.T) {
 			config: &types.AccessLog{
 				FilePath: "",
 				Format:   JSONFormat,
-				Fields: &types.Fields{
+				Fields: &types.AccessLogFields{
 					DefaultMode: "drop",
 				},
 			},
@@ -230,9 +230,9 @@ func TestLoggerJSON(t *testing.T) {
 			config: &types.AccessLog{
 				FilePath: "",
 				Format:   JSONFormat,
-				Fields: &types.Fields{
+				Fields: &types.AccessLogFields{
 					DefaultMode: "drop",
-					Headers: &types.FieldsHeaders{
+					Headers: &types.FieldHeaders{
 						DefaultMode: "drop",
 					},
 				},
@@ -248,9 +248,9 @@ func TestLoggerJSON(t *testing.T) {
 			config: &types.AccessLog{
 				FilePath: "",
 				Format:   JSONFormat,
-				Fields: &types.Fields{
+				Fields: &types.AccessLogFields{
 					DefaultMode: "drop",
-					Headers: &types.FieldsHeaders{
+					Headers: &types.FieldHeaders{
 						DefaultMode: "redact",
 					},
 				},
@@ -262,6 +262,32 @@ func TestLoggerJSON(t *testing.T) {
 				"downstream_Content-Type": assertString("REDACTED"),
 				RequestRefererHeader:      assertString("REDACTED"),
 				RequestUserAgentHeader:    assertString("REDACTED"),
+			},
+		},
+		{
+			desc: "default config drop all fields and headers but kept someone",
+			config: &types.AccessLog{
+				FilePath: "",
+				Format:   JSONFormat,
+				Fields: &types.AccessLogFields{
+					DefaultMode: "drop",
+					Names: types.FieldNames{
+						RequestHost: "keep",
+					},
+					Headers: &types.FieldHeaders{
+						DefaultMode: "drop",
+						Names: types.FieldHeaderNames{
+							"Referer": "keep",
+						},
+					},
+				},
+			},
+			expected: map[string]func(t *testing.T, value interface{}){
+				RequestHost:          assertString(testHostname),
+				"level":              assertString("info"),
+				"msg":                assertString(""),
+				"time":               assertNotEqual(""),
+				RequestRefererHeader: assertString(testReferer),
 			},
 		},
 	}
@@ -314,7 +340,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 			config: &types.AccessLog{
 				FilePath: "",
 				Format:   CommonFormat,
-				Filters: &types.Filters{
+				Filters: &types.AccessLogFilters{
 					StatusCodes: []string{"200"},
 				},
 			},
@@ -325,7 +351,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 			config: &types.AccessLog{
 				FilePath: "",
 				Format:   CommonFormat,
-				Filters: &types.Filters{
+				Filters: &types.AccessLogFilters{
 					StatusCodes: []string{"123"},
 				},
 			},
@@ -336,7 +362,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 			config: &types.AccessLog{
 				FilePath: "",
 				Format:   CommonFormat,
-				Fields: &types.Fields{
+				Fields: &types.AccessLogFields{
 					DefaultMode: "keep",
 				},
 			},
@@ -347,9 +373,9 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 			config: &types.AccessLog{
 				FilePath: "",
 				Format:   CommonFormat,
-				Fields: &types.Fields{
+				Fields: &types.AccessLogFields{
 					DefaultMode: "keep",
-					Names: types.FieldsNames{
+					Names: types.FieldNames{
 						ClientHost: "drop",
 					},
 				},
@@ -361,7 +387,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 			config: &types.AccessLog{
 				FilePath: "",
 				Format:   CommonFormat,
-				Fields: &types.Fields{
+				Fields: &types.AccessLogFields{
 					DefaultMode: "drop",
 				},
 			},
@@ -372,9 +398,9 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 			config: &types.AccessLog{
 				FilePath: "",
 				Format:   CommonFormat,
-				Fields: &types.Fields{
+				Fields: &types.AccessLogFields{
 					DefaultMode: "drop",
-					Names: types.FieldsNames{
+					Names: types.FieldNames{
 						ClientHost:     "drop",
 						ClientUsername: "keep",
 					},
@@ -387,13 +413,13 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 			config: &types.AccessLog{
 				FilePath: "",
 				Format:   CommonFormat,
-				Fields: &types.Fields{
+				Fields: &types.AccessLogFields{
 					DefaultMode: "drop",
-					Names: types.FieldsNames{
+					Names: types.FieldNames{
 						ClientHost:     "drop",
 						ClientUsername: "keep",
 					},
-					Headers: &types.FieldsHeaders{
+					Headers: &types.FieldHeaders{
 						DefaultMode: "drop",
 					},
 				},
@@ -405,13 +431,13 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 			config: &types.AccessLog{
 				FilePath: "",
 				Format:   CommonFormat,
-				Fields: &types.Fields{
+				Fields: &types.AccessLogFields{
 					DefaultMode: "drop",
-					Names: types.FieldsNames{
+					Names: types.FieldNames{
 						ClientHost:     "drop",
 						ClientUsername: "keep",
 					},
-					Headers: &types.FieldsHeaders{
+					Headers: &types.FieldHeaders{
 						DefaultMode: "redact",
 					},
 				},
@@ -423,15 +449,15 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 			config: &types.AccessLog{
 				FilePath: "",
 				Format:   CommonFormat,
-				Fields: &types.Fields{
+				Fields: &types.AccessLogFields{
 					DefaultMode: "drop",
-					Names: types.FieldsNames{
+					Names: types.FieldNames{
 						ClientHost:     "drop",
 						ClientUsername: "keep",
 					},
-					Headers: &types.FieldsHeaders{
+					Headers: &types.FieldHeaders{
 						DefaultMode: "keep",
-						Names: types.FieldsHeadersNames{
+						Names: types.FieldHeaderNames{
 							"Referer": "redact",
 						},
 					},
@@ -445,7 +471,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 
-			// NOTE: It is not possible to these cases in parallel because we capture Stdout
+			// NOTE: It is not possible to run these cases in parallel because we capture Stdout
 
 			file, restoreStdout := captureStdout(t)
 			defer restoreStdout()

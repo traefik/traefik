@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
 	"github.com/sirupsen/logrus"
 )
@@ -37,7 +38,7 @@ type LogHandler struct {
 	filePath       string
 	mu             sync.Mutex
 	httpCodeRanges types.HTTPCodeRanges
-	fields         *types.Fields
+	fields         *types.AccessLogFields
 }
 
 // NewLogHandler creates a new LogHandler
@@ -77,9 +78,11 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 	}
 
 	if config.Filters != nil {
-		blocks, err := types.NewHTTPCodeRanges(config.Filters.StatusCodes)
-		if err == nil && blocks != nil {
-			logHandler.httpCodeRanges = blocks
+		httpCodeRanges, err := types.NewHTTPCodeRanges(config.Filters.StatusCodes)
+		if err != nil {
+			log.Errorf("Failed to create new HTTP code ranges: %s", err)
+		} else if httpCodeRanges != nil {
+			logHandler.httpCodeRanges = httpCodeRanges
 		}
 	}
 
@@ -216,8 +219,7 @@ func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestR
 
 	core[DownstreamStatus] = crw.Status()
 
-	keep := l.keepAccessLog(crw.Status())
-	if keep {
+	if l.keepAccessLog(crw.Status()) {
 		core[DownstreamStatusLine] = fmt.Sprintf("%03d %s", crw.Status(), http.StatusText(crw.Status()))
 		core[DownstreamContentSize] = crw.Size()
 		if original, ok := core[OriginContentSize]; ok {
@@ -265,18 +267,16 @@ func (l *LogHandler) redactHeaders(headers http.Header, fields logrus.Fields, pr
 	}
 }
 func (l *LogHandler) keepAccessLog(status int) bool {
-	keep := false
 	if l.httpCodeRanges != nil {
 		for _, block := range l.httpCodeRanges {
 			if status >= block[0] && status <= block[1] {
-				keep = true
-				break
+				return true
 			}
 		}
 	} else {
-		keep = true
+		return true
 	}
-	return keep
+	return false
 }
 
 //-------------------------------------------------------------------------------------------------

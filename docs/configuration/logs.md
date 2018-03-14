@@ -128,7 +128,7 @@ format = "json"
 
   [accessLog.filters]
 
-  # statusCodes keep on only access logs with status code in the range
+  # statusCodes keep only access logs with status codes in the specified range
   #
   # Optional
   # Default: []
@@ -144,7 +144,7 @@ format = "json"
 
   [accessLog.filters]
 
-  # statusCodes keep on only access logs with status code in the range
+  # statusCodes keep only access logs with status codes in the specified range
   #
   # Optional
   # Default: []
@@ -153,12 +153,14 @@ format = "json"
 
   [accessLog.fields]
 
-  # defaultMode keep | drop
+  # defaultMode
   #
   # Optional
   # Default: "keep"
   #
-  defaultMode = "keep|drop"
+  # Accepted values "keep", "drop"
+  #
+  defaultMode = "keep"
 
   # Fields map which is used to override fields defaultMode
   [accessLog.fields.names]
@@ -166,12 +168,14 @@ format = "json"
     # ...
 
   [accessLog.fields.headers]
-    # defaultMode keep | drop | redact
+    # defaultMode
     #
     # Optional
     # Default: "keep"
     #
-    defaultMode = "drop|keep|redact"
+    # Accepted values "keep", "drop", "redact"
+    #
+    defaultMode = "keep"
     # Fields map which is used to override headers defaultMode
     [accessLog.fields.headers.names]
       "User-Agent" = "redact"

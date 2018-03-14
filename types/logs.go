@@ -22,37 +22,37 @@ type TraefikLog struct {
 
 // AccessLog holds the configuration settings for the access logger (middlewares/accesslog).
 type AccessLog struct {
-	FilePath string   `json:"file,omitempty" description:"Access log file path. Stdout is used when omitted or empty" export:"true"`
-	Format   string   `json:"format,omitempty" description:"Access log format: json | common" export:"true"`
-	Filters  *Filters `json:"filters,omitempty" description:"Access log filters, used to keep only specific access log" export:"true"`
-	Fields   *Fields  `json:"fields,omitempty" description:"Fields" export:"true"`
+	FilePath string            `json:"file,omitempty" description:"Access log file path. Stdout is used when omitted or empty" export:"true"`
+	Format   string            `json:"format,omitempty" description:"Access log format: json | common" export:"true"`
+	Filters  *AccessLogFilters `json:"filters,omitempty" description:"Access log filters, used to keep only specific access logs" export:"true"`
+	Fields   *AccessLogFields  `json:"fields,omitempty" description:"AccessLogFields" export:"true"`
 }
 
 // StatusCodes holds status codes ranges to filter access log
 type StatusCodes []string
 
-// Filters holds filters configuration
-type Filters struct {
+// AccessLogFilters holds filters configuration
+type AccessLogFilters struct {
 	StatusCodes StatusCodes `json:"statusCodes,omitempty" description:"Keep only specific ranges of HTTP Status codes" export:"true"`
 }
 
-// FieldsNames holds maps of fields with specific mode
-type FieldsNames map[string]string
+// FieldNames holds maps of fields with specific mode
+type FieldNames map[string]string
 
-// Fields holds configuration for access log fields
-type Fields struct {
-	DefaultMode string         `json:"defaultMode,omitempty" description:"Default mode for fields: keep | drop" export:"true"`
-	Names       FieldsNames    `json:"names,omitempty" description:"Override mode for fields" export:"true"`
-	Headers     *FieldsHeaders `json:"headers,omitempty" description:"Headers to keep, drop or redact" export:"true"`
+// AccessLogFields holds configuration for access log fields
+type AccessLogFields struct {
+	DefaultMode string        `json:"defaultMode,omitempty" description:"Default mode for fields: keep | drop" export:"true"`
+	Names       FieldNames    `json:"names,omitempty" description:"Override mode for fields" export:"true"`
+	Headers     *FieldHeaders `json:"headers,omitempty" description:"Headers to keep, drop or redact" export:"true"`
 }
 
-// FieldsHeadersNames holds maps of fields with specific mode
-type FieldsHeadersNames map[string]string
+// FieldHeaderNames holds maps of fields with specific mode
+type FieldHeaderNames map[string]string
 
-// FieldsHeaders holds configuration for access log headers
-type FieldsHeaders struct {
-	DefaultMode string             `json:"defaultMode,omitempty" description:"Default mode for fields: keep | drop | redact" export:"true"`
-	Names       FieldsHeadersNames `json:"names,omitempty" description:"Override mode for headers" export:"true"`
+// FieldHeaders holds configuration for access log headers
+type FieldHeaders struct {
+	DefaultMode string           `json:"defaultMode,omitempty" description:"Default mode for fields: keep | drop | redact" export:"true"`
+	Names       FieldHeaderNames `json:"names,omitempty" description:"Override mode for headers" export:"true"`
 }
 
 // Set adds strings elem into the the parser
@@ -80,19 +80,19 @@ func (s *StatusCodes) SetValue(val interface{}) {
 
 // String is the method to format the flag's value, part of the flag.Value interface.
 // The String method's output will be used in diagnostics.
-func (f *FieldsNames) String() string {
+func (f *FieldNames) String() string {
 	return fmt.Sprintf("%+v", *f)
 }
 
-// Get return the FieldsNames map
-func (f *FieldsNames) Get() interface{} {
+// Get return the FieldNames map
+func (f *FieldNames) Get() interface{} {
 	return *f
 }
 
 // Set is the method to set the flag value, part of the flag.Value interface.
 // Set's argument is a string to be parsed to set the flag.
 // It's a space-separated list, so we split it.
-func (f *FieldsNames) Set(value string) error {
+func (f *FieldNames) Set(value string) error {
 	fields := strings.Fields(value)
 
 	for _, field := range fields {
@@ -105,26 +105,26 @@ func (f *FieldsNames) Set(value string) error {
 	return nil
 }
 
-// SetValue sets the FieldsNames map with val
-func (f *FieldsNames) SetValue(val interface{}) {
-	*f = val.(FieldsNames)
+// SetValue sets the FieldNames map with val
+func (f *FieldNames) SetValue(val interface{}) {
+	*f = val.(FieldNames)
 }
 
 // String is the method to format the flag's value, part of the flag.Value interface.
 // The String method's output will be used in diagnostics.
-func (f *FieldsHeadersNames) String() string {
+func (f *FieldHeaderNames) String() string {
 	return fmt.Sprintf("%+v", *f)
 }
 
-// Get return the FieldsHeadersNames map
-func (f *FieldsHeadersNames) Get() interface{} {
+// Get return the FieldHeaderNames map
+func (f *FieldHeaderNames) Get() interface{} {
 	return *f
 }
 
 // Set is the method to set the flag value, part of the flag.Value interface.
 // Set's argument is a string to be parsed to set the flag.
 // It's a space-separated list, so we split it.
-func (f *FieldsHeadersNames) Set(value string) error {
+func (f *FieldHeaderNames) Set(value string) error {
 	fields := strings.Fields(value)
 
 	for _, field := range fields {
@@ -135,18 +135,18 @@ func (f *FieldsHeadersNames) Set(value string) error {
 	return nil
 }
 
-// SetValue sets the FieldsHeadersNames map with val
-func (f *FieldsHeadersNames) SetValue(val interface{}) {
-	*f = val.(FieldsHeadersNames)
+// SetValue sets the FieldHeaderNames map with val
+func (f *FieldHeaderNames) SetValue(val interface{}) {
+	*f = val.(FieldHeaderNames)
 }
 
 // Keep check if the field need to be kept or dropped
-func (f *Fields) Keep(field string) bool {
+func (f *AccessLogFields) Keep(field string) bool {
 	defaultKeep := true
 	if f != nil {
 		defaultKeep = checkFieldValue(f.DefaultMode, defaultKeep)
-		v, ok := f.Names[field]
-		if ok {
+
+		if v, ok := f.Names[field]; ok {
 			return checkFieldValue(v, defaultKeep)
 		}
 	}
@@ -164,13 +164,13 @@ func checkFieldValue(value string, defaultKeep bool) bool {
 	}
 }
 
-// KeepHeader check if header need to be keep, drop or redact and return the status
-func (f *Fields) KeepHeader(header string) string {
+// KeepHeader checks if the headers need to be kept, dropped or redacted and returns the status
+func (f *AccessLogFields) KeepHeader(header string) string {
 	defaultValue := AccessLogKeep
 	if f != nil && f.Headers != nil {
 		defaultValue = checkFieldHeaderValue(f.Headers.DefaultMode, defaultValue)
-		v, ok := f.Headers.Names[header]
-		if ok {
+
+		if v, ok := f.Headers.Names[header]; ok {
 			return checkFieldHeaderValue(v, defaultValue)
 		}
 	}
