@@ -1,4 +1,4 @@
-package server
+package cmd
 
 import (
 	"context"
