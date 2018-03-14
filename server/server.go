@@ -252,7 +252,7 @@ func (s *Server) Stop() {
 
 // Close destroys the server
 func (s *Server) Close() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	go func(ctx context.Context) {
 		<-ctx.Done()
 		if ctx.Err() == context.Canceled {
