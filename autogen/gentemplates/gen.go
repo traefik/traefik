@@ -575,7 +575,13 @@ var _templatesKvTmpl = []byte(`{{$frontends := List .Prefix "/frontends/" }}
     {{$entryPoints := GetList . "/entrypoints"}}
     [frontends."{{$frontend}}"]
     backend = "{{Get "" . "/backend"}}"
+    {{ $passHostHeader := Get "" . "/passhostheader"}}
+    {{if $passHostHeader}}
+    passHostHeader = {{ $passHostHeader }}
+    {{else}}
+    # keep for compatibility reason
     passHostHeader = {{Get "true" . "/passHostHeader"}}
+    {{end}}
     priority = {{Get "0" . "/priority"}}
     entryPoints = [{{range $entryPoints}}
       "{{.}}",
