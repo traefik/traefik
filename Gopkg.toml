@@ -120,10 +120,6 @@
   name = "github.com/abronan/valkeyrie"
 
 [[constraint]]
-  name = "github.com/mattn/go-shellwords"
-  version = "1.0.3"
-
-[[constraint]]
   name = "github.com/mesosphere/mesos-dns"
   source = "https://github.com/containous/mesos-dns.git"
 

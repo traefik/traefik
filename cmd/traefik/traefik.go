@@ -69,6 +69,9 @@ Complete documentation is available at https://traefik.io`,
 	f.AddParser(reflect.TypeOf(ecs.Clusters{}), &ecs.Clusters{})
 	f.AddParser(reflect.TypeOf([]types.Domain{}), &types.Domains{})
 	f.AddParser(reflect.TypeOf(types.Buckets{}), &types.Buckets{})
+	f.AddParser(reflect.TypeOf(types.StatusCodes{}), &types.StatusCodes{})
+	f.AddParser(reflect.TypeOf(types.FieldNames{}), &types.FieldNames{})
+	f.AddParser(reflect.TypeOf(types.FieldHeaderNames{}), &types.FieldHeaderNames{})
 
 	// add commands
 	f.AddCommand(cmdVersion.NewCmd())

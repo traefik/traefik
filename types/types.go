@@ -461,18 +461,6 @@ func (b *Buckets) SetValue(val interface{}) {
 	*b = val.(Buckets)
 }
 
-// TraefikLog holds the configuration settings for the traefik logger.
-type TraefikLog struct {
-	FilePath string `json:"file,omitempty" description:"Traefik log file path. Stdout is used when omitted or empty"`
-	Format   string `json:"format,omitempty" description:"Traefik log format: json | common"`
-}
-
-// AccessLog holds the configuration settings for the access logger (middlewares/accesslog).
-type AccessLog struct {
-	FilePath string `json:"file,omitempty" description:"Access log file path. Stdout is used when omitted or empty" export:"true"`
-	Format   string `json:"format,omitempty" description:"Access log format: json | common" export:"true"`
-}
-
 // ClientTLS holds TLS specific configurations as client
 // CA, Cert and Key can be either path or file contents
 type ClientTLS struct {
@@ -497,7 +485,7 @@ func (clientTLS *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
 		if _, errCA := os.Stat(clientTLS.CA); errCA == nil {
 			ca, err = ioutil.ReadFile(clientTLS.CA)
 			if err != nil {
-				return nil, fmt.Errorf("Failed to read CA. %s", err)
+				return nil, fmt.Errorf("failed to read CA. %s", err)
 			}
 		} else {
 			ca = []byte(clientTLS.CA)
@@ -522,7 +510,7 @@ func (clientTLS *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
 			if errKeyIsFile == nil {
 				cert, err = tls.LoadX509KeyPair(clientTLS.Cert, clientTLS.Key)
 				if err != nil {
-					return nil, fmt.Errorf("Failed to load TLS keypair: %v", err)
+					return nil, fmt.Errorf("failed to load TLS keypair: %v", err)
 				}
 			} else {
 				return nil, fmt.Errorf("tls cert is a file, but tls key is not")
@@ -531,11 +519,11 @@ func (clientTLS *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
 			if errKeyIsFile != nil {
 				cert, err = tls.X509KeyPair([]byte(clientTLS.Cert), []byte(clientTLS.Key))
 				if err != nil {
-					return nil, fmt.Errorf("Failed to load TLS keypair: %v", err)
+					return nil, fmt.Errorf("failed to load TLS keypair: %v", err)
 
 				}
 			} else {
-				return nil, fmt.Errorf("tls key is a file, but tls cert is not")
+				return nil, fmt.Errorf("TLS key is a file, but tls cert is not")
 			}
 		}
 	}
@@ -547,4 +535,31 @@ func (clientTLS *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
 		ClientAuth:         clientAuth,
 	}
 	return TLSConfig, nil
+}
+
+// HTTPCodeRanges holds HTTP code ranges
+type HTTPCodeRanges [][2]int
+
+// NewHTTPCodeRanges create a new NewHTTPCodeRanges from a given []string].
+// Break out the http status code ranges into a low int and high int
+// for ease of use at runtime
+func NewHTTPCodeRanges(strBlocks []string) (HTTPCodeRanges, error) {
+	var blocks HTTPCodeRanges
+	for _, block := range strBlocks {
+		codes := strings.Split(block, "-")
+		//if only a single HTTP code was configured, assume the best and create the correct configuration on the user's behalf
+		if len(codes) == 1 {
+			codes = append(codes, codes[0])
+		}
+		lowCode, err := strconv.Atoi(codes[0])
+		if err != nil {
+			return nil, err
+		}
+		highCode, err := strconv.Atoi(codes[1])
+		if err != nil {
+			return nil, err
+		}
+		blocks = append(blocks, [2]int{lowCode, highCode})
+	}
+	return blocks, nil
 }

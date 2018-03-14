@@ -19,7 +19,7 @@ var _ Stateful = &errorPagesResponseRecorderWithCloseNotify{}
 
 //ErrorPagesHandler is a middleware that provides the custom error pages
 type ErrorPagesHandler struct {
-	HTTPCodeRanges     [][2]int
+	HTTPCodeRanges     types.HTTPCodeRanges
 	BackendURL         string
 	errorPageForwarder *forward.Forwarder
 }
@@ -31,27 +31,13 @@ func NewErrorPagesHandler(errorPage *types.ErrorPage, backendURL string) (*Error
 		return nil, err
 	}
 
-	//Break out the http status code ranges into a low int and high int
-	//for ease of use at runtime
-	var blocks [][2]int
-	for _, block := range errorPage.Status {
-		codes := strings.Split(block, "-")
-		//if only a single HTTP code was configured, assume the best and create the correct configuration on the user's behalf
-		if len(codes) == 1 {
-			codes = append(codes, codes[0])
-		}
-		lowCode, err := strconv.Atoi(codes[0])
-		if err != nil {
-			return nil, err
-		}
-		highCode, err := strconv.Atoi(codes[1])
-		if err != nil {
-			return nil, err
-		}
-		blocks = append(blocks, [2]int{lowCode, highCode})
+	httpCodeRanges, err := types.NewHTTPCodeRanges(errorPage.Status)
+	if err != nil {
+		return nil, err
 	}
+
 	return &ErrorPagesHandler{
-			HTTPCodeRanges:     blocks,
+			HTTPCodeRanges:     httpCodeRanges,
 			BackendURL:         backendURL + errorPage.Query,
 			errorPageForwarder: fwd},
 		nil

@@ -841,12 +841,6 @@
   revision = "57fdcb988a5c543893cc61bce354a6e24ab70022"
 
 [[projects]]
-  name = "github.com/mattn/go-shellwords"
-  packages = ["."]
-  revision = "02e3cf038dcea8290e44424da473dd12be796a8a"
-  version = "v1.0.3"
-
-[[projects]]
   branch = "master"
   name = "github.com/matttproud/golang_protobuf_extensions"
   packages = ["pbutil"]
@@ -1574,6 +1568,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5bb840e4352562c416f2f2a3ba8fb7781b72f79fcff8b963d98140a005a2ca3a"
+  inputs-digest = "2fca312eff66fbc2aa41319f67d2c78cf8117bd6b5f7791cf20bddb7fdb7e0af"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -35,3 +35,61 @@ func TestHeaders_ShouldReturnTrueWhenHasSecureHeadersDefined(t *testing.T) {
 
 	assert.True(t, headers.HasSecureHeadersDefined())
 }
+
+func TestNewHTTPCodeRanges(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		strBlocks   []string
+		expected    HTTPCodeRanges
+		errExpected bool
+	}{
+		{
+			desc: "Should return 2 code range",
+			strBlocks: []string{
+				"200-500",
+				"502",
+			},
+			expected:    HTTPCodeRanges{[2]int{200, 500}, [2]int{502, 502}},
+			errExpected: false,
+		},
+		{
+			desc: "Should return 2 code range",
+			strBlocks: []string{
+				"200-500",
+				"205",
+			},
+			expected:    HTTPCodeRanges{[2]int{200, 500}, [2]int{205, 205}},
+			errExpected: false,
+		},
+		{
+			desc: "invalid code range",
+			strBlocks: []string{
+				"200-500",
+				"aaa",
+			},
+			expected:    nil,
+			errExpected: true,
+		},
+		{
+			desc:        "invalid code range nil",
+			strBlocks:   nil,
+			expected:    nil,
+			errExpected: false,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual, err := NewHTTPCodeRanges(test.strBlocks)
+			assert.Equal(t, test.expected, actual)
+			if test.errExpected {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
