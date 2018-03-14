@@ -297,7 +297,10 @@ func TestThrottleProviderConfigReload(t *testing.T) {
 		stop <- true
 	}()
 
-	go throttleProviderConfigReload(throttleDuration, publishConfig, providerConfig, stop)
+	globalConfig := configuration.GlobalConfiguration{}
+	server := NewServer(globalConfig)
+
+	go server.throttleProviderConfigReload(throttleDuration, publishConfig, providerConfig, stop)
 
 	publishedConfigCount := 0
 	stopConsumeConfigs := make(chan bool)
