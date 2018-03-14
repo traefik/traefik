@@ -267,14 +267,14 @@ func (l *LogHandler) redactHeaders(headers http.Header, fields logrus.Fields, pr
 	}
 }
 func (l *LogHandler) keepAccessLog(status int) bool {
-	if l.httpCodeRanges != nil {
-		for _, block := range l.httpCodeRanges {
-			if status >= block[0] && status <= block[1] {
-				return true
-			}
-		}
-	} else {
+	if l.httpCodeRanges == nil {
 		return true
+	}
+
+	for _, block := range l.httpCodeRanges {
+		if status >= block[0] && status <= block[1] {
+			return true
+		}
 	}
 	return false
 }

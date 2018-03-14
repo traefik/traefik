@@ -6,9 +6,11 @@
 
 ```toml
 logLevel = "INFO"
+
 [traefikLog]
   filePath = "/path/to/traefik.log"
   format   = "json"
+
 [accessLog]
   filePath = "/path/to/access.log"
   format = "json"
