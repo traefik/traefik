@@ -205,6 +205,23 @@ func (s *Server) Start() {
 	go s.listenSignals()
 }
 
+// StartWithContext starts the server and Stop/Close it when context is Done
+func (s *Server) StartWithContext(ctx context.Context) {
+	go func() {
+		defer s.Close()
+		<-ctx.Done()
+		log.Info("I have to go...")
+		reqAcceptGraceTimeOut := time.Duration(s.globalConfiguration.LifeCycle.RequestAcceptGraceTimeout)
+		if reqAcceptGraceTimeOut > 0 {
+			log.Infof("Waiting %s for incoming requests to cease", reqAcceptGraceTimeOut)
+			time.Sleep(reqAcceptGraceTimeOut)
+		}
+		log.Info("Stopping server gracefully")
+		s.Stop()
+	}()
+	s.Start()
+}
+
 // Wait blocks until server is shutted down.
 func (s *Server) Wait() {
 	<-s.stopChan
@@ -235,14 +252,13 @@ func (s *Server) Stop() {
 
 // Close destroys the server
 func (s *Server) Close() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(s.globalConfiguration.LifeCycle.GraceTimeOut))
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	go func(ctx context.Context) {
 		<-ctx.Done()
 		if ctx.Err() == context.Canceled {
 			return
 		} else if ctx.Err() == context.DeadlineExceeded {
-			log.Warn("Timeout while stopping traefik, killing instance ✝")
-			os.Exit(1)
+			panic("Timeout while stopping traefik, killing instance ✝")
 		}
 	}(ctx)
 	stopMetricsClients()

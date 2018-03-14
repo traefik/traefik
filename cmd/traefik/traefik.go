@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	fmtlog "log"
 	"net/http"
@@ -173,7 +174,8 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 		acme.Get().SetConfigListenerChan(make(chan types.Configuration))
 		svr.AddListener(acme.Get().ListenConfiguration)
 	}
-	svr.Start()
+	ctx := cmd.ContextWithSignal(context.Background())
+	svr.StartWithContext(ctx)
 	defer svr.Close()
 
 	sent, err := daemon.SdNotify(false, "READY=1")
