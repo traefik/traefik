@@ -37,7 +37,6 @@ func TestHeaders_ShouldReturnTrueWhenHasSecureHeadersDefined(t *testing.T) {
 }
 
 func TestNewHTTPCodeRanges(t *testing.T) {
-
 	testCases := []struct {
 		desc        string
 		strBlocks   []string

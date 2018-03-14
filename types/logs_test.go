@@ -7,7 +7,7 @@ import (
 )
 
 func TestStatusCodesSet(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc     string
 		value    string
 		expected StatusCodes
@@ -34,7 +34,7 @@ func TestStatusCodesSet(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
@@ -48,7 +48,7 @@ func TestStatusCodesSet(t *testing.T) {
 }
 
 func TestStatusCodesGet(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc     string
 		values   StatusCodes
 		expected StatusCodes
@@ -70,7 +70,7 @@ func TestStatusCodesGet(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
@@ -82,7 +82,7 @@ func TestStatusCodesGet(t *testing.T) {
 }
 
 func TestStatusCodesString(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc     string
 		values   StatusCodes
 		expected string
@@ -103,7 +103,8 @@ func TestStatusCodesString(t *testing.T) {
 			expected: "[200 400 500]",
 		},
 	}
-	for _, test := range tests {
+
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
@@ -115,7 +116,7 @@ func TestStatusCodesString(t *testing.T) {
 }
 
 func TestStatusCodesSetValue(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc     string
 		values   StatusCodes
 		expected StatusCodes
@@ -136,7 +137,8 @@ func TestStatusCodesSetValue(t *testing.T) {
 			expected: StatusCodes{"200", "400", "500"},
 		},
 	}
-	for _, test := range tests {
+
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
@@ -149,7 +151,7 @@ func TestStatusCodesSetValue(t *testing.T) {
 }
 
 func TestFieldsNamesSet(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc     string
 		value    string
 		expected *FieldNames
@@ -171,7 +173,7 @@ func TestFieldsNamesSet(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
@@ -186,7 +188,7 @@ func TestFieldsNamesSet(t *testing.T) {
 }
 
 func TestFieldsNamesGet(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc     string
 		values   FieldNames
 		expected FieldNames
@@ -208,7 +210,7 @@ func TestFieldsNamesGet(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
@@ -220,7 +222,7 @@ func TestFieldsNamesGet(t *testing.T) {
 }
 
 func TestFieldsNamesString(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc     string
 		values   FieldNames
 		expected string
@@ -231,7 +233,8 @@ func TestFieldsNamesString(t *testing.T) {
 			expected: "map[field-1:foo]",
 		},
 	}
-	for _, test := range tests {
+
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
@@ -243,7 +246,7 @@ func TestFieldsNamesString(t *testing.T) {
 }
 
 func TestFieldsNamesSetValue(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc     string
 		values   FieldNames
 		expected *FieldNames
@@ -264,7 +267,8 @@ func TestFieldsNamesSetValue(t *testing.T) {
 			expected: &FieldNames{"field-1": "foo", "field-2": "bar", "field-3": "powpow"},
 		},
 	}
-	for _, test := range tests {
+
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
@@ -277,7 +281,7 @@ func TestFieldsNamesSetValue(t *testing.T) {
 }
 
 func TestFieldsHeadersNamesSet(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc     string
 		value    string
 		expected *FieldHeaderNames
@@ -299,7 +303,7 @@ func TestFieldsHeadersNamesSet(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
@@ -314,7 +318,7 @@ func TestFieldsHeadersNamesSet(t *testing.T) {
 }
 
 func TestFieldsHeadersNamesGet(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc     string
 		values   FieldHeaderNames
 		expected FieldHeaderNames
@@ -336,7 +340,7 @@ func TestFieldsHeadersNamesGet(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
@@ -348,7 +352,7 @@ func TestFieldsHeadersNamesGet(t *testing.T) {
 }
 
 func TestFieldsHeadersNamesString(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc     string
 		values   FieldHeaderNames
 		expected string
@@ -359,7 +363,8 @@ func TestFieldsHeadersNamesString(t *testing.T) {
 			expected: "map[X-HEADER-1:foo]",
 		},
 	}
-	for _, test := range tests {
+
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
@@ -371,7 +376,7 @@ func TestFieldsHeadersNamesString(t *testing.T) {
 }
 
 func TestFieldsHeadersNamesSetValue(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc     string
 		values   FieldHeaderNames
 		expected *FieldHeaderNames
@@ -392,7 +397,8 @@ func TestFieldsHeadersNamesSetValue(t *testing.T) {
 			expected: &FieldHeaderNames{"X-HEADER-1": "foo", "X-HEADER-2": "bar", "X-HEADER-3": "powpow"},
 		},
 	}
-	for _, test := range tests {
+
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
