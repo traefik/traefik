@@ -283,7 +283,7 @@ func containerFilter(name, healthState, state string) bool {
 		return false
 	}
 
-	if state != "" && state != "running" && state != "updating-running" {
+	if state != "" && state != "running" && state != "updating-running" && state != "upgraded" {
 		log.Debugf("Filtering container %s with state of %s", name, state)
 		return false
 	}
@@ -319,7 +319,7 @@ func (p *Provider) serviceFilter(service rancherData) bool {
 			return false
 		}
 
-		if service.State != "" && service.State != "active" && service.State != "updating-active" && service.State != "upgraded" {
+		if service.State != "" && service.State != "active" && service.State != "updating-active" && service.State != "upgraded" && service.State != "upgrading" {
 			log.Debugf("Filtering service %s with state of %s", service.Name, service.State)
 			return false
 		}
