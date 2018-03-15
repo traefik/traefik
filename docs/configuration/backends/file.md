@@ -5,6 +5,8 @@ Træfik can be configured with a file.
 ## Reference
 
 ```toml
+[file]
+
 # Backends
 [backends]
 
