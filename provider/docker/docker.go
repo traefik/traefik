@@ -160,33 +160,49 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				Configuration: configuration,
 			}
 			if p.Watch {
-				ctx, cancel := context.WithCancel(ctx)
 				if p.SwarmMode {
+					eventsCtx := context.Background()
+					eventsMsgChan, eventsErrorChan := dockerClient.Events(
+						eventsCtx,
+						dockertypes.EventsOptions{
+							Filters: filters.NewArgs(filters.Arg("scope", "swarm")),
+						},
+					)
 					errChan := make(chan error)
-					// TODO: This need to be change. Linked to Swarm events docker/docker#23827
+
+					// Keep the old poller, in case the event listener experiences issues.
 					ticker := time.NewTicker(SwarmDefaultWatchTime)
 					pool.Go(func(stop chan bool) {
+						watchCtx, cancel := context.WithCancel(ctx)
+						defer cancel()
+
 						defer close(errChan)
+						defer ticker.Stop()
+						defer eventsCtx.Done()
+
 						for {
 							select {
-							case <-ticker.C:
-								services, err := listServices(ctx, dockerClient)
-								if err != nil {
+							case evt := <-eventsMsgChan:
+								if evt.Type != eventtypes.ServiceEventType {
+									continue
+								}
+
+								if err := p.listAndUpdateServices(watchCtx, dockerClient, configurationChan); err != nil {
 									log.Errorf("Failed to list services for docker, error %s", err)
 									errChan <- err
 									return
 								}
-								configuration := p.buildConfiguration(services)
-								if configuration != nil {
-									configurationChan <- types.ConfigMessage{
-										ProviderName:  "docker",
-										Configuration: configuration,
-									}
+							case evtErr := <-eventsErrorChan:
+								log.Errorf("Docker listener: Events error, %s", evtErr.Error())
+								errChan <- evtErr
+								return
+							case <-ticker.C:
+								if err := p.listAndUpdateServices(watchCtx, dockerClient, configurationChan); err != nil {
+									log.Errorf("Failed to list services for docker, error %s", err)
+									errChan <- err
+									return
 								}
-
 							case <-stop:
-								ticker.Stop()
-								cancel()
 								return
 							}
 						}
@@ -197,10 +213,9 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 					// channel closed
 
 				} else {
-					pool.Go(func(stop chan bool) {
-						<-stop
-						cancel()
-					})
+					watchCtx, cancel := context.WithCancel(ctx)
+					defer cancel()
+
 					f := filters.NewArgs()
 					f.Add("type", "container")
 					options := dockertypes.EventsOptions{
@@ -209,7 +224,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 					startStopHandle := func(m eventtypes.Message) {
 						log.Debugf("Provider event received %+v", m)
-						containers, err := listContainers(ctx, dockerClient)
+						containers, err := listContainers(watchCtx, dockerClient)
 						if err != nil {
 							log.Errorf("Failed to list containers for docker, error %s", err)
 							// Call cancel to get out of the monitor
@@ -225,7 +240,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 						}
 					}
 
-					eventsc, errc := dockerClient.Events(ctx, options)
+					eventsc, errc := dockerClient.Events(watchCtx, options)
 					for {
 						select {
 						case event := <-eventsc:
@@ -254,6 +269,23 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 			log.Errorf("Cannot connect to docker server %+v", err)
 		}
 	})
+
+	return nil
+}
+
+func (p *Provider) listAndUpdateServices(ctx context.Context, dockerClient client.APIClient, configurationChan chan<- types.ConfigMessage) error {
+	services, err := listServices(ctx, dockerClient)
+	if err != nil {
+		return err
+	}
+
+	configuration := p.buildConfiguration(services)
+	if configuration != nil {
+		configurationChan <- types.ConfigMessage{
+			ProviderName:  "docker",
+			Configuration: configuration,
+		}
+	}
 
 	return nil
 }
@@ -382,6 +414,7 @@ func listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerD
 			}
 		}
 	}
+
 	return dockerDataList, err
 }
 
