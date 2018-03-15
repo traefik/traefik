@@ -385,7 +385,7 @@ func (s *Server) preLoadConfiguration(configMsg types.ConfigMessage) {
 			providerConfigUpdateCh = make(chan types.ConfigMessage)
 			s.providerConfigUpdateMap[configMsg.ProviderName] = providerConfigUpdateCh
 			s.routinesPool.Go(func(stop chan bool) {
-				throttleProviderConfigReload(providersThrottleDuration, s.configurationValidatedChan, providerConfigUpdateCh, stop)
+				s.throttleProviderConfigReload(providersThrottleDuration, s.configurationValidatedChan, providerConfigUpdateCh, stop)
 			})
 		}
 		providerConfigUpdateCh <- configMsg
@@ -396,11 +396,11 @@ func (s *Server) preLoadConfiguration(configMsg types.ConfigMessage) {
 // It will immediately publish a new configuration and then only publish the next configuration after the throttle duration.
 // Note that in the case it receives N new configs in the timeframe of the throttle duration after publishing,
 // it will publish the last of the newly received configurations.
-func throttleProviderConfigReload(throttle time.Duration, publish chan<- types.ConfigMessage, in <-chan types.ConfigMessage, stop chan bool) {
+func (s *Server) throttleProviderConfigReload(throttle time.Duration, publish chan<- types.ConfigMessage, in <-chan types.ConfigMessage, stop chan bool) {
 	ring := channels.NewRingChannel(1)
 	defer ring.Close()
 
-	safe.Go(func() {
+	s.routinesPool.Go(func(stop chan bool) {
 		for {
 			select {
 			case <-stop:

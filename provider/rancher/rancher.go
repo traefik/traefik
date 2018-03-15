@@ -18,6 +18,7 @@ const (
 	active          = "active"
 	running         = "running"
 	upgraded        = "upgraded"
+	upgrading       = "upgrading"
 	updatingActive  = "updating-active"
 	updatingRunning = "updating-running"
 )
@@ -63,7 +64,7 @@ func containerFilter(name, healthState, state string) bool {
 		return false
 	}
 
-	if state != "" && state != running && state != updatingRunning {
+	if state != "" && state != running && state != updatingRunning && state != upgraded {
 		log.Debugf("Filtering container %s with state of %s", name, state)
 		return false
 	}

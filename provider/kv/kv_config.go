@@ -42,8 +42,8 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 
 		// Frontend functions
 		"getBackendName":          p.getFuncString(pathFrontendBackend, ""),
-		"getPriority":             p.getFuncInt(pathFrontendPriority, 0),
-		"getPassHostHeader":       p.getFuncBool(pathFrontendPassHostHeader, true),
+		"getPriority":             p.getFuncInt(pathFrontendPriority, label.DefaultFrontendPriorityInt),
+		"getPassHostHeader":       p.getPassHostHeader(),
 		"getPassTLSCert":          p.getFuncBool(pathFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getEntryPoints":          p.getFuncList(pathFrontendEntryPoints),
 		"getWhitelistSourceRange": p.getFuncList(pathFrontendWhiteListSourceRange),
@@ -78,6 +78,24 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 	}
 
 	return configuration
+}
+
+// Deprecated
+func (p *Provider) getPassHostHeader() func(rootPath string) bool {
+	return func(rootPath string) bool {
+		rawValue := p.get("", rootPath, pathFrontendPassHostHeader)
+
+		if len(rawValue) > 0 {
+			value, err := strconv.ParseBool(rawValue)
+			if err != nil {
+				log.Errorf("Invalid value for %s %s: %s", rootPath, pathFrontendPassHostHeader, rawValue)
+				return label.DefaultPassHostHeaderBool
+			}
+			return value
+		}
+
+		return p.getBool(label.DefaultPassHostHeaderBool, rootPath, pathFrontendPassHostHeaderDeprecated)
+	}
 }
 
 // Deprecated

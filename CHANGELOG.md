@@ -1,5 +1,30 @@
 # Change Log
 
+## [v1.5.4](https://github.com/containous/traefik/tree/v1.5.4) (2018-03-15)
+[All Commits](https://github.com/containous/traefik/compare/v1.5.3...v1.5.4)
+
+**Bug fixes:**
+- **[acme]** Fix panic when parsing resolv.conf ([#2955](https://github.com/containous/traefik/pull/2955) by [ldez](https://github.com/ldez))
+- **[acme]** Don&#39;t failed traefik start if register and subscribe failed on acme ([#2977](https://github.com/containous/traefik/pull/2977) by [Juliens](https://github.com/Juliens))
+- **[ecs]** Safe access to ECS API pointer values. ([#2983](https://github.com/containous/traefik/pull/2983) by [ldez](https://github.com/ldez))
+- **[kv]** Add lower-case passHostHeader key support. ([#3015](https://github.com/containous/traefik/pull/3015) by [ldez](https://github.com/ldez))
+- **[middleware]** Propagate insecure in white list. ([#2981](https://github.com/containous/traefik/pull/2981) by [ldez](https://github.com/ldez))
+- **[rancher]** Fix Rancher Healthcheck when upgrading a service ([#2962](https://github.com/containous/traefik/pull/2962) by [jmirc](https://github.com/jmirc))
+- **[websocket]** Capitalize Sec-WebSocket-Protocol Header ([#2975](https://github.com/containous/traefik/pull/2975) by [Juliens](https://github.com/Juliens))
+- Use goroutine pool in throttleProvider ([#3013](https://github.com/containous/traefik/pull/3013) by [Juliens](https://github.com/Juliens))
+- Handle quoted strings in UnmarshalJSON ([#3004](https://github.com/containous/traefik/pull/3004) by [Juliens](https://github.com/Juliens))
+
+**Documentation:**
+- **[acme]** Clarify some deprecations. ([#2959](https://github.com/containous/traefik/pull/2959) by [ldez](https://github.com/ldez))
+- **[acme]** Second defaultEntryPoint should be https, not http. ([#2948](https://github.com/containous/traefik/pull/2948) by [GerbenWelter](https://github.com/GerbenWelter))
+- **[api]** Enhance API, REST, ping documentation. ([#2950](https://github.com/containous/traefik/pull/2950) by [ldez](https://github.com/ldez))
+- **[k8s]** Add TLS Docs ([#3012](https://github.com/containous/traefik/pull/3012) by [dtomcej](https://github.com/dtomcej))
+- Enhance Traefik TOML sample. ([#2996](https://github.com/containous/traefik/pull/2996) by [ldez](https://github.com/ldez))
+- Fix typo in docs ([#2990](https://github.com/containous/traefik/pull/2990) by [mo](https://github.com/mo))
+- Clarify how setting a frontend priority works ([#2984](https://github.com/containous/traefik/pull/2984) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Add [file] in syntax reference ([#3016](https://github.com/containous/traefik/pull/3016) by [ldez](https://github.com/ldez))
+- Updated the test-it example according to the latest docker version ([#3000](https://github.com/containous/traefik/pull/3000) by [geraldcroes](https://github.com/geraldcroes))
+
 ## [v1.5.3](https://github.com/containous/traefik/tree/v1.5.3) (2018-02-27)
 [All Commits](https://github.com/containous/traefik/compare/v1.5.2...v1.5.3)
 
