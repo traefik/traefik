@@ -148,3 +148,5 @@ r, err := client.SayHello(context.Background(), &pb.HelloRequest{Name: name})
 // ...
 ```
 
+## Download
+[Get the complete working example here](https://github.com/dioptre/gtrpc)
