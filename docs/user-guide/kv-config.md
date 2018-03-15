@@ -328,7 +328,7 @@ And there, the same dynamic configuration in a KV Store (using `prefix = "traefi
 | Key                                                | Value              |
 |----------------------------------------------------|--------------------|
 | `/traefik/frontends/frontend2/backend`             | `backend1`         |
-| `/traefik/frontends/frontend2/passHostHeader`      | `true`             |
+| `/traefik/frontends/frontend2/passhostheader`      | `true`             |
 | `/traefik/frontends/frontend2/priority`            | `10`               |
 | `/traefik/frontends/frontend2/entrypoints`         | `http,https`       |
 | `/traefik/frontends/frontend2/routes/test_2/rule`  | `PathPrefix:/test` |
