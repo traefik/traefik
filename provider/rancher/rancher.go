@@ -283,7 +283,7 @@ func containerFilter(name, healthState, state string) bool {
 		return false
 	}
 
-	if state != "" && state != "running" && state != "updating-running" && state != "upgraded" && state != "upgrading" {
+	if state != "" && state != "running" && state != "updating-running" && state != "upgraded" {
 		log.Debugf("Filtering container %s with state of %s", name, state)
 		return false
 	}
