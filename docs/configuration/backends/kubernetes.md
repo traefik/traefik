@@ -94,6 +94,17 @@ A label selector can be defined to filter on specific Ingress objects only.
 
 See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details.
 
+### TLS communication between Traefik and backend pods
+
+Traefik automatically requests endpoint information based on the service provided in the ingress spec.
+Although traefik will connect directly to the endpoints (pods), it still checks the service port to see if TLS communication is required.
+If the service port defined in the ingress spec is 443, then the backend communication protocol is assumed to be TLS, and will connect via TLS automatically.
+
+!!! note
+    Please note that by enabling TLS communication between traefik and your pods, you will have to have trusted certificates that have the proper trust chain and IP subject name. 
+    If this is not an option, you may need to skip TLS certificate verification.
+    See the [InsecureSkipVerify](configuration/commons/#main-section) setting for more details.
+    
 ## Annotations
 
 ### General annotations
