@@ -32,7 +32,11 @@ func (s *Server) listenSignals() {
 			}
 		default:
 			log.Infof("I have to go... %+v", sig)
+
 			reqAcceptGraceTimeOut := time.Duration(s.globalConfiguration.LifeCycle.RequestAcceptGraceTimeout)
+			if s.globalConfiguration.Ping != nil && reqAcceptGraceTimeOut > 0 {
+				s.globalConfiguration.Ping.SetTerminating()
+			}
 			if reqAcceptGraceTimeOut > 0 {
 				log.Infof("Waiting %s for incoming requests to cease", reqAcceptGraceTimeOut)
 				time.Sleep(reqAcceptGraceTimeOut)
