@@ -1105,6 +1105,20 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						}
 					}
 
+					if frontend.Mirror != nil {
+						mirror := frontend.Mirror
+						if config.Backends[mirror.Backend] != nil && config.Backends[mirror.Backend].Servers["mirror"].URL != "" {
+							mirrorHandler, err := middlewares.NewMirrorMiddleware(frontend, config.Backends[mirror.Backend])
+							if err != nil {
+								log.Errorf("Error creating mirror middleware, %v", err)
+							} else {
+								n.Use(mirrorHandler)
+							}
+						} else {
+							log.Errorf("Mirror is configured for Frontend %s, but either Backend %s is not set or Backend URL is missing", frontendName, mirror.Backend)
+						}
+					}
+
 					if frontend.RateLimit != nil && len(frontend.RateLimit.RateSet) > 0 {
 						lb, err = s.buildRateLimiter(lb, frontend.RateLimit)
 						lb = s.wrapHTTPHandlerWithAccessLog(lb, fmt.Sprintf("rate limit for %s", frontendName))

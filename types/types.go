@@ -102,6 +102,13 @@ type ErrorPage struct {
 	Query   string   `json:"query,omitempty"`
 }
 
+//Mirror holds request mirroring configuration
+type Mirror struct {
+	Backend        string            `json:"backend,omitempty"`
+	RequestHeaders map[string]string `json:"requestHeaders,omitempty"`
+	SampleRate     int               `json:"sampleRate,omitempty"`
+}
+
 // Rate holds a rate limiting configuration for a specific time period
 type Rate struct {
 	Period  flaeg.Duration `json:"period,omitempty"`
@@ -184,6 +191,7 @@ type Frontend struct {
 	Errors               map[string]*ErrorPage `json:"errors,omitempty"`
 	RateLimit            *RateLimit            `json:"ratelimit,omitempty"`
 	Redirect             *Redirect             `json:"redirect,omitempty"`
+	Mirror               *Mirror               `json:"mirror,omitempty"`
 }
 
 // Redirect configures a redirection of an entry point to another, or to an URL
