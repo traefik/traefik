@@ -33,12 +33,11 @@ const (
 
 // LogHandler will write each request and its response to the access log.
 type LogHandler struct {
+	config         *types.AccessLog
 	logger         *logrus.Logger
 	file           *os.File
-	filePath       string
 	mu             sync.Mutex
 	httpCodeRanges types.HTTPCodeRanges
-	fields         *types.AccessLogFields
 }
 
 // NewLogHandler creates a new LogHandler
@@ -71,17 +70,15 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 	}
 
 	logHandler := &LogHandler{
-		logger:   logger,
-		file:     file,
-		filePath: config.FilePath,
-		fields:   config.Fields,
+		config: config,
+		logger: logger,
+		file:   file,
 	}
 
 	if config.Filters != nil {
-		httpCodeRanges, err := types.NewHTTPCodeRanges(config.Filters.StatusCodes)
-		if err != nil {
+		if httpCodeRanges, err := types.NewHTTPCodeRanges(config.Filters.StatusCodes); err != nil {
 			log.Errorf("Failed to create new HTTP code ranges: %s", err)
-		} else if httpCodeRanges != nil {
+		} else {
 			logHandler.httpCodeRanges = httpCodeRanges
 		}
 	}
@@ -178,7 +175,7 @@ func (l *LogHandler) Rotate() error {
 		}(l.file)
 	}
 
-	l.file, err = os.OpenFile(l.filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
+	l.file, err = os.OpenFile(l.config.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
 	if err != nil {
 		return err
 	}
@@ -210,16 +207,19 @@ func usernameIfPresent(theURL *url.URL) string {
 func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestReader, crw *captureResponseWriter) {
 	core := logDataTable.Core
 
-	if core[RetryAttempts] == nil {
-		core[RetryAttempts] = 0
+	retryAttempts, ok := core[RetryAttempts].(int)
+	if !ok {
+		retryAttempts = 0
 	}
+	core[RetryAttempts] = retryAttempts
+
 	if crr != nil {
 		core[RequestContentSize] = crr.count
 	}
 
 	core[DownstreamStatus] = crw.Status()
 
-	if l.keepAccessLog(crw.Status()) {
+	if l.keepAccessLog(crw.Status(), retryAttempts) {
 		core[DownstreamStatusLine] = fmt.Sprintf("%03d %s", crw.Status(), http.StatusText(crw.Status()))
 		core[DownstreamContentSize] = crw.Size()
 		if original, ok := core[OriginContentSize]; ok {
@@ -240,7 +240,7 @@ func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestR
 		fields := logrus.Fields{}
 
 		for k, v := range logDataTable.Core {
-			if l.fields.Keep(k) {
+			if l.config.Fields.Keep(k) {
 				fields[k] = v
 			}
 		}
@@ -257,7 +257,7 @@ func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestR
 
 func (l *LogHandler) redactHeaders(headers http.Header, fields logrus.Fields, prefix string) {
 	for k := range headers {
-		v := l.fields.KeepHeader(k)
+		v := l.config.Fields.KeepHeader(k)
 		if v == types.AccessLogKeep {
 			fields[prefix+k] = headers.Get(k)
 		} else if v == types.AccessLogRedact {
@@ -266,17 +266,17 @@ func (l *LogHandler) redactHeaders(headers http.Header, fields logrus.Fields, pr
 	}
 }
 
-func (l *LogHandler) keepAccessLog(status int) bool {
-	if l.httpCodeRanges == nil {
+func (l *LogHandler) keepAccessLog(statusCode, retryAttempts int) bool {
+	switch {
+	case l.config.Filters == nil:
 		return true
+	case l.httpCodeRanges.Contains(statusCode):
+		return true
+	case l.config.Filters.RetryAttempts == true && retryAttempts > 0:
+		return true
+	default:
+		return false
 	}
-
-	for _, block := range l.httpCodeRanges {
-		if status >= block[0] && status <= block[1] {
-			return true
-		}
-	}
-	return false
 }
 
 //-------------------------------------------------------------------------------------------------

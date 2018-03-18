@@ -540,7 +540,7 @@ func (clientTLS *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
 // HTTPCodeRanges holds HTTP code ranges
 type HTTPCodeRanges [][2]int
 
-// NewHTTPCodeRanges create a new NewHTTPCodeRanges from a given []string].
+// NewHTTPCodeRanges creates HTTPCodeRanges from a given []string.
 // Break out the http status code ranges into a low int and high int
 // for ease of use at runtime
 func NewHTTPCodeRanges(strBlocks []string) (HTTPCodeRanges, error) {
@@ -562,4 +562,15 @@ func NewHTTPCodeRanges(strBlocks []string) (HTTPCodeRanges, error) {
 		blocks = append(blocks, [2]int{lowCode, highCode})
 	}
 	return blocks, nil
+}
+
+// Contains tests whether the passed status code is within
+// one of its HTTP code ranges.
+func (h HTTPCodeRanges) Contains(statusCode int) bool {
+	for _, block := range h {
+		if statusCode >= block[0] && statusCode <= block[1] {
+			return true
+		}
+	}
+	return false
 }

@@ -33,7 +33,8 @@ type StatusCodes []string
 
 // AccessLogFilters holds filters configuration
 type AccessLogFilters struct {
-	StatusCodes StatusCodes `json:"statusCodes,omitempty" description:"Keep only specific ranges of HTTP Status codes" export:"true"`
+	StatusCodes   StatusCodes `json:"statusCodes,omitempty" description:"Keep access logs with status codes in the specified range" export:"true"`
+	RetryAttempts bool        `json:"retryAttempts,omitempty" description:"Keep access logs when at least one retry happened" export:"true"`
 }
 
 // FieldNames holds maps of fields with specific mode
