@@ -184,9 +184,9 @@ spec:
         securityContext:
           privileged: true
         args:
-        - -d
         - --api
         - --kubernetes
+        - --logLevel=INFO
 ---
 kind: Service
 apiVersion: v1
