@@ -92,14 +92,14 @@ From the `traefik-quickstart/traefik` folder, run the following command (that wi
 docker-compose up -d
 ```
 
-If you'd like, you can open a browser and go to [http://localhost:8080](http://localhost:8080) to see Træfik's dashboard (we'll go back there once we'll have launched a service in step 2).
+If you'd like, you can open a browser and go to [http://localhost:8080](http://localhost:8080) to see Træfik's dashboard (we'll go back there once we have launched a service in step 2).
 
 ### 2 — Launch a Service — Træfik Detects It and Creates a Route for You 
 
 Now that we have a Træfik instance up and running, we will deploy new services. 
 
 Create the `traefik-quickstart/services/docker-compose.yml` file. 
-There, we will define a new service (`whoami`) that is a simple webservice that outputs information about the machine it is deployed on (its IP adress, host, and so on):
+There, we will define a new service (`whoami`) that is a simple webservice that outputs information about the machine it is deployed on (its IP address, host, and so on):
 
 ```yaml
 version: '3'
@@ -172,7 +172,7 @@ IP: 172.27.0.4
 
 Now that you have a basic understanding of how Træfik can automatically create the routes to your services and load balance them, it might be time to dive into [the documentation](https://docs.traefik.io/) and let Træfik work for you! Whatever your infrastructure is, there is probably [an available Træfik backend](#supported-backends) that will do the job. 
 
-Our recommandation would be to see for yourself how simple it is to enable HTTPS with [Træfik's let's encrypt integration](https://docs.traefik.io/user-guide/examples/#lets-encrypt-support) using the dedicated [user guide](https://docs.traefik.io/user-guide/docker-and-lets-encrypt/).
+Our recommendation would be to see for yourself how simple it is to enable HTTPS with [Træfik's let's encrypt integration](https://docs.traefik.io/user-guide/examples/#lets-encrypt-support) using the dedicated [user guide](https://docs.traefik.io/user-guide/docker-and-lets-encrypt/).
 
 ## Resources
 
