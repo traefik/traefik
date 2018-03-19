@@ -11,6 +11,7 @@
 [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com)
 [![Twitter](https://img.shields.io/twitter/follow/traefikproxy.svg?style=social)](https://twitter.com/intent/follow?screen_name=traefikproxy)
 
+
 Træfik is a modern HTTP reverse proxy and load balancer that makes deploying microservices easy.
 Træfik knows how to talk to your existing infrastructure components ([Docker](https://www.docker.com/), [Swarm mode](https://docs.docker.com/engine/swarm/), [Kubernetes](https://kubernetes.io), [Marathon](https://mesosphere.github.io/marathon/), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Rancher](https://rancher.com), [Amazon ECS](https://aws.amazon.com/ecs), ...) and configures itself automatically and dynamically.
 
@@ -89,7 +90,6 @@ Alternatively, if you don't wan't to install anything on your computer, you can 
 
 If you are looking for a more comprehensive and real use-case example, you can also check [Play-With-Docker](http://training.play-with-docker.com/traefik-load-balancing/) to see how to load balance between multiple nodes.
 
-
 ## Web UI
 
 You can access the simple HTML frontend of Træfik.
@@ -97,6 +97,18 @@ You can access the simple HTML frontend of Træfik.
 ![Web UI Providers](docs/img/web.frontend.png)
 ![Web UI Health](docs/img/traefik-health.png)
 
+## Documentation
+
+You can find the complete documentation at [https://docs.traefik.io](https://docs.traefik.io).
+A collection of contributions around Træfik can be found at [https://awesome.traefik.io](https://awesome.traefik.io).
+
+## Support
+
+To get community support, you can:
+- join the Træfik community Slack channel: [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com)
+- use [Stack Overflow](https://stackoverflow.com/questions/tagged/traefik) (using the `traefik` tag)
+
+If you need commercial support, please contact [Containo.us](https://containo.us) by mail: <mailto:support@containo.us>.
 
 ## Download
 
@@ -117,6 +129,7 @@ docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/etc/traefik/traefik.to
 ```shell
 git clone https://github.com/containous/traefik
 ```
+
 ## Introductory Videos
 
 Here is a talk given by [Emile Vauge](https://github.com/emilevauge) at [GopherCon 2017](https://gophercon.com/).
@@ -129,21 +142,16 @@ You will learn fundamental Træfik features and see some demos with Kubernetes.
 
 [![Traefik ContainerCamp UK](https://img.youtube.com/vi/aFtpIShV60I/0.jpg)](https://www.youtube.com/watch?v=aFtpIShV60I)
 
+## Maintainers
 
-## Documentation
+[Information about process and maintainers](MAINTAINER.md)
 
-You can find the complete documentation at [https://docs.traefik.io](https://docs.traefik.io).
-A collection of contributions around Træfik can be found at [https://awesome.traefik.io](https://awesome.traefik.io).
+## Contributing
 
+If you'd like to contribute to the project, refer to the [contributing documentation](CONTRIBUTING.md).
 
-## Support
-
-To get community support, you can:
-- join the Træfik community Slack channel: [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com)
-- use [Stack Overflow](https://stackoverflow.com/questions/tagged/traefik) (using the `traefik` tag)
-
-If you need commercial support, please contact [Containo.us](https://containo.us) by mail: <mailto:support@containo.us>.
-
+Please note that this project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md).
+By participating in this project you agree to abide by its terms.
 
 ## Release Cycle
 
@@ -154,20 +162,6 @@ If you need commercial support, please contact [Containo.us](https://containo.us
 Each version is supported until the next one is released (e.g. 1.1.x will be supported until 1.2.0 is out)
 
 We use [Semantic Versioning](http://semver.org/)
-
-
-## Contributing
-
-If you'd like to contribute to the project, refer to the [contributing documentation](CONTRIBUTING.md).
-
-Please note that this project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md).
-By participating in this project you agree to abide by its terms.
-
-
-## Maintainers
-
-[Information about process and maintainers](MAINTAINER.md)
-
 
 ## Plumbing
 
