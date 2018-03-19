@@ -200,6 +200,92 @@ func TestNewRequest(t *testing.T) {
 	}
 }
 
+func TestNewRequestWithAddHeaders(t *testing.T) {
+	tests := []struct {
+		desc      string
+		host      string
+		headers   map[string]string
+		port      int
+		path      string
+		expected  string
+		headerexp string
+	}{
+		{
+			desc:      "override hostname",
+			host:      "backend1:80",
+			headers:   map[string]string{"host": "myhost"},
+			port:      0,
+			path:      "/",
+			expected:  "myhost",
+			headerexp: "",
+		},
+		{
+			desc:      "not override hostname",
+			host:      "backend1:80",
+			headers:   map[string]string{},
+			port:      0,
+			path:      "/",
+			expected:  "backend1:80",
+			headerexp: "",
+		},
+		{
+			desc:      "custom header",
+			host:      "backend1:80",
+			headers:   map[string]string{"customheader": "foo"},
+			port:      0,
+			path:      "/",
+			expected:  "backend1:80",
+			headerexp: "foo",
+		},
+		{
+			desc:      "custom header with host override",
+			host:      "backend1:80",
+			headers:   map[string]string{"host": "myhost", "customheader": "foo"},
+			port:      0,
+			path:      "/",
+			expected:  "myhost",
+			headerexp: "foo",
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			backend := NewBackendHealthCheck(
+				Options{
+					Path:    test.path,
+					Port:    test.port,
+					Headers: test.headers,
+				}, "backendName")
+
+			u := &url.URL{
+				Scheme: "http",
+				Host:   test.host,
+			}
+
+			req, err := backend.newRequest(u)
+			if err != nil {
+				t.Fatalf("failed to create new backend request: %s", err)
+			}
+
+			req = backend.addHeaders(req)
+
+			actual := req.Host
+			if actual != test.expected {
+				t.Fatalf("got %s for healthcheck URL, wanted %s", actual, test.expected)
+			}
+			header := req.Header.Get("customheader")
+			if len(header) == 0 && len(test.headerexp) > 0 {
+				t.Fatalf("customheader httpheader not found from request")
+			}
+			if header != test.headerexp {
+				t.Fatalf("got %s for customheader, wanted %s", header, test.headerexp)
+			}
+		})
+	}
+}
+
 type testLoadBalancer struct {
 	// RWMutex needed due to parallel test execution: Both the system-under-test
 	// and the test assertions reference the counters.

@@ -424,6 +424,19 @@ To use a different port for the healthcheck:
     port = 8080
 ```
 
+Additional http headers to healthcheck request can be specified under `headers`, for instance:
+```toml
+[backends]
+  [backends.backend1]
+    [backends.backend1.healthcheck]
+    path = "/health"
+    interval = "10s"
+    port = 8080
+      [backends.backend1.healthcheck.headers]
+      host = "myhost.com"
+      mycustomheader = "foobar"
+```
+
 ### Servers
 
 Servers are simply defined using a `url`. You can also apply a custom `weight` to each server (this will be used by load-balancing).

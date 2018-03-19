@@ -184,7 +184,6 @@ func checkHealth(serverURL *url.URL, backend *BackendHealthCheck) error {
 		Timeout:   backend.requestTimeout,
 		Transport: backend.Options.Transport,
 	}
-
 	req, err := backend.newRequest(serverURL)
 	if err != nil {
 		return fmt.Errorf("failed to create HTTP request: %s", err)
