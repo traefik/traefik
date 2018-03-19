@@ -305,7 +305,6 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 		GlobalConfiguration: configuration.GlobalConfiguration{
 			AccessLogsFile:            "",
 			TraefikLogsFile:           "",
-			LogLevel:                  "ERROR",
 			EntryPoints:               map[string]*configuration.EntryPoint{},
 			Constraints:               types.Constraints{},
 			DefaultEntryPoints:        []string{"http"},
