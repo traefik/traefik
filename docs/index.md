@@ -10,65 +10,171 @@
 [![Twitter](https://img.shields.io/twitter/follow/traefikproxy.svg?style=social)](https://twitter.com/intent/follow?screen_name=traefikproxy)
 
 
-Træfik (pronounced like _traffic_) is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease.
-It supports several backends ([Docker](https://www.docker.com/), [Swarm mode](https://docs.docker.com/engine/swarm/), [Kubernetes](https://kubernetes.io), [Marathon](https://mesosphere.github.io/marathon/), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Rancher](https://rancher.com), [Amazon ECS](https://aws.amazon.com/ecs), and a lot more) to manage its configuration automatically and dynamically.
+Træfik is a modern HTTP reverse proxy and load balancer that makes deploying microservices easy.
+Træfik knows how to talk to your existing infrastructure components ([Docker](https://www.docker.com/), [Swarm mode](https://docs.docker.com/engine/swarm/), [Kubernetes](https://kubernetes.io), [Marathon](https://mesosphere.github.io/marathon/), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Rancher](https://rancher.com), [Amazon ECS](https://aws.amazon.com/ecs), ...) and configures itself automatically and dynamically.
 
 ## Overview
 
-Imagine that you have deployed a bunch of microservices on your infrastructure. You probably used a service registry (like etcd or consul) and/or an orchestrator (swarm, Mesos/Marathon) to manage all these services.
-If you want your users to access some of your microservices from the Internet, you will have to use a reverse proxy and configure it using virtual hosts or prefix paths:
+Imagine that you have deployed a bunch of microservices with the help of an orchestrator (like Swarm or Mesos/Marathon) or a service registry (like etcd or consul).
+Now you want users to access these microservices, and you need a reverse proxy.
 
-- domain `api.domain.com` will point the microservice `api` in your private network
-- path `domain.com/web` will point the microservice `web` in your private network
-- domain `backoffice.domain.com` will point the microservices `backoffice` in your private network, load-balancing between your multiple instances
+Traditional reverse-proxies require that you configure _each_ route that will connect paths and subdomains to _each_ microservice. In an environment where you add, remove, kill, upgrade, or scale your services _many_ times a day, the task of keeping the routes up to date becomes tedious. 
 
-Microservices are often deployed in dynamic environments where services are added, removed, killed, upgraded or scaled many times a day.
+**This is when Træfik can help you!**
 
-Traditional reverse-proxies are not natively dynamic. You can't change their configuration and hot-reload easily.
+Træfik listens to your service registry/orchestrator API and instantly generates the routes so your microservices are connected to the outside world -- without further intervention from your part. 
 
-Here enters Træfik.
+**Run Træfik and let it do the work for you!** 
+_(But if you'd rather configure some of your routes manually, Træfik supports that too!)_
 
 ![Architecture](img/architecture.png)
 
-Træfik can listen to your service registry/orchestrator API, and knows each time a microservice is added, removed, killed or upgraded, and can generate its configuration automatically.
-Routes to your services will be created instantly.
-
-Run it and forget it!
-
 ## Features
 
-- [It's fast](/benchmarks)
-- No dependency hell, single binary made with go
-- [Tiny](https://microbadger.com/images/traefik) [official](https://hub.docker.com/r/_/traefik/) docker image
-- Rest API
-- Hot-reloading of configuration. No need to restart the process
+- Continuously updates its configuration (No restarts!)
+- Load balancer, Round Robin, rebalancer load-balancers
+- Enables HTTPS on your microservice (thanks to its [Let's Encrypt](https://letsencrypt.org) support)
 - Circuit breakers, retry
-- Round Robin, rebalancer load-balancers
-- Metrics (Rest, Prometheus, Datadog, Statsd, InfluxDB)
-- Clean AngularJS Web UI
+- High Availability with cluster mode (beta)
+- See the magic through its clean web UI
 - Websocket, HTTP/2, GRPC ready
-- Access Logs (JSON, CLF)
-- [Let's Encrypt](https://letsencrypt.org) support (Automatic HTTPS with renewal)
-- High Availability with cluster mode
+- Provides metrics (Rest, Prometheus, Datadog, Statsd, InfluxDB)
+- Keeps access logs (JSON, CLF)
+- [Fast](/benchmarks) ... which is nice
+- Exposes a Rest API
+- Packaged as a single binary file (made with :heart: with go) and available as a [tiny](https://microbadger.com/images/traefik) [official](https://hub.docker.com/r/_/traefik/) docker image
 
 
 ## Supported backends
 
-- [Docker](https://www.docker.com/) / [Swarm mode](https://docs.docker.com/engine/swarm/)
-- [Kubernetes](https://kubernetes.io)
-- [Mesos](https://github.com/apache/mesos) / [Marathon](https://mesosphere.github.io/marathon/)
-- [Rancher](https://rancher.com) (API, Metadata)
-- [Consul](https://www.consul.io/) / [Etcd](https://coreos.com/etcd/) / [Zookeeper](https://zookeeper.apache.org) / [BoltDB](https://github.com/boltdb/bolt)
-- [Eureka](https://github.com/Netflix/eureka)
-- [Amazon ECS](https://aws.amazon.com/ecs)
-- [Amazon DynamoDB](https://aws.amazon.com/dynamodb)
-- File
-- Rest API
+- [Docker](/configuration/backends/docker/) / [Swarm mode](/configuration/backends/docker/#docker-swarm-mode)
+- [Kubernetes](/configuration/backends/kubernetes/)
+- [Mesos](/configuration/backends/mesos/) / [Marathon](/configuration/backends/marathon/)
+- [Rancher](/configuration/backends/rancher/) (API, Metadata)
+- [Service Fabric](/configuration/backends/servicefabric/)
+- [Consul Catalog](/configuration/backends/consulcatalog/)
+- [Consul](/configuration/backends/consul/) / [Etcd](/configuration/backends/etcd/) / [Zookeeper](/configuration/backends/zookeeper/) / [BoltDB](/configuration/backends/boltdb/)
+- [Eureka](/configuration/backends/eureka/)
+- [Amazon ECS](/configuration/backends/ecs/)
+- [Amazon DynamoDB](/configuration/backends/dynamodb/)
+- [File](/configuration/backends/file/)
+- [Rest](/configuration/backends/rest/)
 
+## The Træfik Quickstart (Using Docker)
 
-## Quickstart
+In this quickstart, we'll use [Docker compose](https://docs.docker.com/compose) to create our demo infrastructure.
 
-You can have a quick look at Træfik in this [Katacoda tutorial](https://www.katacoda.com/courses/traefik/deploy-load-balancer) that shows how to load balance requests between multiple Docker containers.
+To save you some time, you can checkout the quickstart from the [containous/traefik-quickstart](https://github.com/containous/traefik-quickstart) repository and read along.
+
+### 1 — Launch Træfik — Tell It to Listen to Docker
+
+First, create the `traefik-quickstart/traefik` folder. In this folder, we will create a `docker-compose.yml` file where we will define a service `reverse-proxy` that uses the official Træfik image:
+
+```yaml
+version: '3'
+
+services:
+  reverse-proxy:
+    image: traefik #The official Traefik docker image
+    command: --api --docker #Enables the web UI and tells Træfik to listen to docker
+    ports:
+      - "80:80"     #The HTTP port
+      - "8080:8080" #The Web UI (enabled by --api)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock #So that Traefik can listen to the Docker events
+```
+
+**That's it. Now you can launch Træfik!**
+
+From the `traefik-quickstart/traefik` folder, run the following command (that will deploy the container defined in our `docker-compose.yml` file):
+
+```shell
+docker-compose up -d
+```
+
+If you'd like, you can open a browser and go to [http://localhost:8080](http://localhost:8080) to see Træfik's dashboard (we'll go back there once we'll have launched a service in step 2).
+
+### 2 — Launch a Service — Træfik Detects It and Creates a Route for You 
+
+Now that we have a Træfik instance up and running, we will deploy new services. 
+
+Create the `traefik-quickstart/services/docker-compose.yml` file. 
+There, we will define a new service (`whoami`) that is a simple webservice that outputs information about the machine it is deployed on (its IP adress, host, and so on):
+
+```yaml
+version: '3'
+
+services:
+  whoami:
+    image: emilevauge/whoami #A container that exposes an API to show it's IP address
+    labels:
+      - "traefik.frontend.rule=Host:whoami.docker.localhost"
+
+#We're deploying the services on the same network so that the containers can talk to each other
+networks: 
+   default: 
+      external:
+         name: traefik_default 
+```
+
+From the `traefik-quickstart/services` folder, run the following command to deploy your new container:
+ 
+```shell
+docker-compose up -d
+```
+
+Go back to your browser ([http://localhost:8080](http://localhost:8080)) and see that Træfik has automatically detected the new container and updated its own configuration.
+
+Now that Traefik has detected the service, a route is available and you can call your service! (Here, we're using curl)
+
+```shell
+curl -H Host:whoami.docker.localhost http://127.0.0.1
+```
+
+_Shows the following output:_
+```yaml
+Hostname: 8656c8ddca6c
+IP: 172.27.0.3
+#...
+```
+
+### 3 — Launch More Instances — Traefik Load Balances Them
+
+From the `traefik-quickstart/services` folder, run the following command to start more instances of your `whoami` services:
+ 
+```shell
+docker-compose up --scale whoami=2 -d
+```
+
+Go back to your browser ([http://localhost:8080](http://localhost:8080)) and see that Træfik has automatically detected the new instance of the container.
+
+Finally, see that Træfik load-balances between the two instances of your services by running the following command multiple times:
+
+```shell
+curl -H Host:whoami.docker.localhost http://127.0.0.1
+```
+
+The output will show alternatively one of the followings:
+
+```yaml
+Hostname: 8656c8ddca6c
+IP: 172.27.0.3
+#...
+```
+
+```yaml
+Hostname: 8458f154e1f1
+IP: 172.27.0.4
+# ...
+```
+
+### 4 — Enjoy Træfik's Magic
+
+Now that you have a basic understanding of how Træfik can automatically create the routes to your services and load balance them, it might be time to dive into [the documentation](https://docs.traefik.io/) and let Træfik work for you! Whatever your infrastructure is, there is probably [an available Træfik backend](#supported-backends) that will do the job. 
+
+Our recommandation would be to see for yourself how simple it is to enable HTTPS with [Træfik's let's encrypt integration](https://docs.traefik.io/user-guide/examples/#lets-encrypt-support) using the dedicated [user guide](https://docs.traefik.io/user-guide/docker-and-lets-encrypt/).
+
+## Resources
 
 Here is a talk given by [Emile Vauge](https://github.com/emilevauge) at [GopherCon 2017](https://gophercon.com).
 You will learn Træfik basics in less than 10 minutes.
@@ -80,9 +186,9 @@ You will learn fundamental Træfik features and see some demos with Kubernetes.
 
 [![Traefik ContainerCamp UK](https://img.youtube.com/vi/aFtpIShV60I/0.jpg)](https://www.youtube.com/watch?v=aFtpIShV60I)
 
-## Get it
+## Downloads
 
-### Binary
+### The Official Binary File
 
 You can grab the latest binary from the [releases](https://github.com/containous/traefik/releases) page and just run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/master/traefik.sample.toml):
 
@@ -90,113 +196,10 @@ You can grab the latest binary from the [releases](https://github.com/containous
 ./traefik -c traefik.toml
 ```
 
-### Docker
+### The Official Docker Image
 
 Using the tiny Docker image:
 
 ```shell
 docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/etc/traefik/traefik.toml traefik
-```
-
-## Test it
-
-You can test Træfik easily using [Docker compose](https://docs.docker.com/compose), with this `docker-compose.yml` file in a folder named `traefik`:
-
-```yaml
-version: '3'
-
-services:
-  proxy:
-    image: traefik
-    command: --api --docker --docker.domain=docker.localhost --logLevel=DEBUG
-    networks:
-      - webgateway
-    ports:
-      - "80:80"
-      - "8080:8080"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /dev/null:/traefik.toml
-
-networks:
-  webgateway:
-    driver: bridge
-```
-
-Start it from within the `traefik` folder:
-
-```shell
-docker-compose up -d
-```
-
-In a browser, you may open [http://localhost:8080](http://localhost:8080) to access Træfik's dashboard and observe the following magic.
-
-Now, create a folder named `test` and create a `docker-compose.yml` in it with this content:
-
-```yaml
-version: '3'
-
-services:
-  whoami:
-    image: emilevauge/whoami
-    networks:
-      - web
-    labels:
-      - "traefik.backend=whoami"
-      - "traefik.frontend.rule=Host:whoami.docker.localhost"
-
-networks:
-  web:
-    external:
-      name: traefik_webgateway
-```
-
-Then, start and scale it in the `test` folder:
-
-```shell
-docker-compose up --scale whoami=2 -d
-```
-
-Finally, test load-balancing between the two services `test_whoami_1` and `test_whoami_2`:
-
-```shell
-curl -H Host:whoami.docker.localhost http://127.0.0.1
-```
-
-```yaml
-Hostname: ef194d07634a
-IP: 127.0.0.1
-IP: ::1
-IP: 172.17.0.4
-IP: fe80::42:acff:fe11:4
-GET / HTTP/1.1
-Host: 172.17.0.4:80
-User-Agent: curl/7.35.0
-Accept: */*
-Accept-Encoding: gzip
-X-Forwarded-For: 172.17.0.1
-X-Forwarded-Host: 172.17.0.4:80
-X-Forwarded-Proto: http
-X-Forwarded-Server: dbb60406010d
-```
-
-```shell
-curl -H Host:whoami.docker.localhost http://127.0.0.1
-```
-
-```yaml
-Hostname: 6c3c5df0c79a
-IP: 127.0.0.1
-IP: ::1
-IP: 172.17.0.3
-IP: fe80::42:acff:fe11:3
-GET / HTTP/1.1
-Host: 172.17.0.3:80
-User-Agent: curl/7.35.0
-Accept: */*
-Accept-Encoding: gzip
-X-Forwarded-For: 172.17.0.1
-X-Forwarded-Host: 172.17.0.3:80
-X-Forwarded-Proto: http
-X-Forwarded-Server: dbb60406010d
 ```
