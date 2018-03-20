@@ -26,7 +26,7 @@ import (
 	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
 	"github.com/eapache/channels"
-	"github.com/xenolf/lego/acme"
+	acme "github.com/xenolf/lego/acmev2"
 	"github.com/xenolf/lego/providers/dns"
 )
 
@@ -205,28 +205,11 @@ func (a *ACME) leadershipListener(elected bool) error {
 		if needRegister {
 			// New users will need to register; be sure to save it
 			log.Debug("Register...")
-			reg, err := a.client.Register()
+			reg, err := a.client.Register(true)
 			if err != nil {
 				return err
 			}
 			account.Registration = reg
-		}
-		// The client has a URL to the current Let's Encrypt Subscriber
-		// Agreement. The user will need to agree to it.
-		log.Debug("AgreeToTOS...")
-		err = a.client.AgreeToTOS()
-		if err != nil {
-			log.Debug(err)
-			// Let's Encrypt Subscriber Agreement renew ?
-			reg, err := a.client.QueryRegistration()
-			if err != nil {
-				return err
-			}
-			account.Registration = reg
-			err = a.client.AgreeToTOS()
-			if err != nil {
-				log.Errorf("Error sending ACME agreement to TOS: %+v: %s", account, err.Error())
-			}
 		}
 		err = transaction.Commit(account)
 		if err != nil {
@@ -395,7 +378,7 @@ func dnsOverrideDelay(delay flaeg.Duration) error {
 
 func (a *ACME) buildACMEClient(account *Account) (*acme.Client, error) {
 	log.Debug("Building ACME client...")
-	caServer := "https://acme-v01.api.letsencrypt.org/directory"
+	caServer := "https://acme-v02.api.letsencrypt.org/directory"
 	if len(a.CAServer) > 0 {
 		caServer = a.CAServer
 	}
@@ -418,11 +401,11 @@ func (a *ACME) buildACMEClient(account *Account) (*acme.Client, error) {
 			return nil, err
 		}
 
-		client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.TLSSNI01})
+		client.ExcludeChallenges([]acme.Challenge{acme.HTTP01})
 		err = client.SetChallengeProvider(acme.DNS01, provider)
 	} else if a.HTTPChallenge != nil && len(a.HTTPChallenge.EntryPoint) > 0 {
 		log.Debug("Using HTTP Challenge provider.")
-		client.ExcludeChallenges([]acme.Challenge{acme.DNS01, acme.TLSSNI01})
+		client.ExcludeChallenges([]acme.Challenge{acme.DNS01})
 		a.challengeHTTPProvider = &challengeHTTPProvider{store: a.store}
 		err = client.SetChallengeProvider(acme.HTTP01, a.challengeHTTPProvider)
 	} else {

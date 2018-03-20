@@ -24,7 +24,7 @@ import (
 	traefikTLS "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/pkg/errors"
-	"github.com/xenolf/lego/acme"
+	acme "github.com/xenolf/lego/acmev2"
 	"github.com/xenolf/lego/providers/dns"
 )
 
@@ -255,7 +255,7 @@ func (p *Provider) getClient() (*acme.Client, error) {
 		}
 
 		log.Debug("Building ACME client...")
-		caServer := "https://acme-v01.api.letsencrypt.org/directory"
+		caServer := "https://acme-v02.api.letsencrypt.org/directory"
 		if len(p.CAServer) > 0 {
 			caServer = p.CAServer
 		}
@@ -267,26 +267,11 @@ func (p *Provider) getClient() (*acme.Client, error) {
 		if account.GetRegistration() == nil {
 			// New users will need to register; be sure to save it
 			log.Info("Register...")
-			reg, err := client.Register()
+			reg, err := client.Register(true)
 			if err != nil {
 				return nil, err
 			}
 			account.Registration = reg
-		}
-
-		log.Debug("AgreeToTOS...")
-		err = client.AgreeToTOS()
-		if err != nil {
-			// Let's Encrypt Subscriber Agreement renew ?
-			reg, err := client.QueryRegistration()
-			if err != nil {
-				return nil, err
-			}
-			account.Registration = reg
-			err = client.AgreeToTOS()
-			if err != nil {
-				return nil, fmt.Errorf("error sending ACME agreement to TOS: %+v: %v", account, err)
-			}
 		}
 
 		// Save the account once before all the certificates generation/storing
@@ -310,14 +295,14 @@ func (p *Provider) getClient() (*acme.Client, error) {
 				return nil, err
 			}
 
-			client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.TLSSNI01})
+			client.ExcludeChallenges([]acme.Challenge{acme.HTTP01})
 			err = client.SetChallengeProvider(acme.DNS01, provider)
 			if err != nil {
 				return nil, err
 			}
 		} else if p.HTTPChallenge != nil && len(p.HTTPChallenge.EntryPoint) > 0 {
 			log.Debug("Using HTTP Challenge provider.")
-			client.ExcludeChallenges([]acme.Challenge{acme.DNS01, acme.TLSSNI01})
+			client.ExcludeChallenges([]acme.Challenge{acme.DNS01})
 			err = client.SetChallengeProvider(acme.HTTP01, p)
 			if err != nil {
 				return nil, err
