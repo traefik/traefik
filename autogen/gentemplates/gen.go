@@ -7,7 +7,6 @@
 // templates/eureka.tmpl
 // templates/kubernetes.tmpl
 // templates/kv.tmpl
-// templates/marathon-reload.tmpl
 // templates/marathon.tmpl
 // templates/mesos.tmpl
 // templates/notFound.tmpl
@@ -1255,202 +1254,6 @@ func templatesKvTmpl() (*asset, error) {
 	return a, nil
 }
 
-var _templatesMarathonReloadTmpl = []byte(`{{ $apps := .Applications }}
-
-[backends]
-{{range $app := $apps }}
-{{range $serviceIndex, $serviceName := getServiceNames $app }}
-  {{ $backendName := getBackend $app $serviceName}}
-
-  [backends."{{ $backendName }}"]
-
-    {{ $circuitBreaker := getCircuitBreaker $app }}
-    {{if $circuitBreaker }}
-    [backends."{{ $backendName }}".circuitBreaker]
-      expression = "{{ $circuitBreaker.Expression }}"
-    {{end}}
-
-    {{ $loadBalancer := getLoadBalancer $app }}
-    {{if $loadBalancer }}
-    [backends."{{ $backendName }}".loadBalancer]
-      method = "{{ $loadBalancer.Method }}"
-      sticky = {{ $loadBalancer.Sticky }}
-      {{if $loadBalancer.Stickiness }}
-      [backends."{{ $backendName }}".loadBalancer.stickiness]
-        cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
-      {{end}}
-    {{end}}
-
-    {{ $maxConn := getMaxConn $app }}
-    {{if $maxConn }}
-    [backends."{{ $backendName }}".maxConn]
-      extractorFunc = "{{ $maxConn.ExtractorFunc }}"
-      amount = {{ $maxConn.Amount }}
-    {{end}}
-
-    {{ $healthCheck := getHealthCheck $app }}
-    {{if $healthCheck }}
-    [backends."{{ $backendName }}".healthCheck]
-      path = "{{ $healthCheck.Path }}"
-      port = {{ $healthCheck.Port }}
-      interval = "{{ $healthCheck.Interval }}"
-    {{end}}
-
-    {{ $buffering := getBuffering $app }}
-    {{if $buffering }}
-    [backends."{{ $backendName }}".buffering]
-      maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
-      memRequestBodyBytes = {{ $buffering.MemRequestBodyBytes }}
-      maxResponseBodyBytes = {{ $buffering.MaxResponseBodyBytes }}
-      memResponseBodyBytes = {{ $buffering.MemResponseBodyBytes }}
-      retryExpression = "{{ $buffering.RetryExpression }}"
-    {{end}}
-
-    {{range $serverName, $server := getServers $app $serviceName }}
-    [backends."{{ $backendName }}".servers."{{ $serverName }}"]
-      url = "{{ $server.URL }}"
-      weight = {{ $server.Weight }}
-    {{end}}
-
-{{end}}
-{{end}}
-
-[frontends]
-{{range $app := $apps }}
-{{range $serviceIndex, $serviceName := getServiceNames $app }}
-  {{ $frontendName := getFrontendName $app $serviceName }}
-
-  [frontends."{{ $frontendName }}"]
-    backend = "{{ getBackend $app $serviceName }}"
-    priority = {{ getPriority $app $serviceName }}
-    passHostHeader = {{ getPassHostHeader $app $serviceName }}
-    passTLSCert = {{ getPassTLSCert $app $serviceName }}
-
-    entryPoints = [{{range getEntryPoints $app $serviceName }}
-      "{{.}}",
-      {{end}}]
-
-    {{ $whitelistSourceRange := getWhitelistSourceRange $app $serviceName }}
-    {{if $whitelistSourceRange }}
-    whitelistSourceRange = [{{range $whitelistSourceRange }}
-      "{{.}}",
-      {{end}}]
-    {{end}}
-
-    basicAuth = [{{range getBasicAuth $app $serviceName }}
-      "{{.}}",
-      {{end}}]
-
-    {{ $redirect := getRedirect $app $serviceName }}
-    {{if $redirect }}
-    [frontends."{{ $frontendName }}".redirect]
-      entryPoint = "{{ $redirect.EntryPoint }}"
-      regex = "{{ $redirect.Regex }}"
-      replacement = "{{ $redirect.Replacement }}"
-      permanent = {{ $redirect.Permanent }}
-    {{end}}
-
-    {{ $errorPages := getErrorPages $app $serviceName }}
-    {{if $errorPages }}
-    [frontends."{{ $frontendName }}".errors]
-      {{range $pageName, $page := $errorPages }}
-      [frontends."{{ $frontendName }}".errors.{{ $pageName }}]
-        status = [{{range $page.Status }}
-          "{{.}}",
-          {{end}}]
-        backend = "{{ $page.Backend }}"
-        query = "{{ $page.Query }}"
-      {{end}}
-    {{end}}
-
-    {{ $rateLimit := getRateLimit $app $serviceName }}
-    {{if $rateLimit }}
-    [frontends."{{ $frontendName }}".rateLimit]
-      extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
-      [frontends."{{ $frontendName }}".rateLimit.rateSet]
-        {{ range $limitName, $limit := $rateLimit.RateSet }}
-        [frontends."{{ $frontendName }}".rateLimit.rateSet.{{ $limitName }}]
-          period = "{{ $limit.Period }}"
-          average = {{ $limit.Average }}
-          burst = {{ $limit.Burst }}
-        {{end}}
-    {{end}}
-
-    {{ $headers := getHeaders $app $serviceName }}
-    {{if $headers }}
-    [frontends."{{ $frontendName }}".headers]
-      SSLRedirect = {{ $headers.SSLRedirect }}
-      SSLTemporaryRedirect = {{ $headers.SSLTemporaryRedirect }}
-      SSLHost = "{{ $headers.SSLHost }}"
-      STSSeconds = {{ $headers.STSSeconds }}
-      STSIncludeSubdomains = {{ $headers.STSIncludeSubdomains }}
-      STSPreload = {{ $headers.STSPreload }}
-      ForceSTSHeader = {{ $headers.ForceSTSHeader }}
-      FrameDeny = {{ $headers.FrameDeny }}
-      CustomFrameOptionsValue = "{{ $headers.CustomFrameOptionsValue }}"
-      ContentTypeNosniff = {{ $headers.ContentTypeNosniff }}
-      BrowserXSSFilter = {{ $headers.BrowserXSSFilter }}
-      ContentSecurityPolicy = "{{ $headers.ContentSecurityPolicy }}"
-      PublicKey = "{{ $headers.PublicKey }}"
-      ReferrerPolicy = "{{ $headers.ReferrerPolicy }}"
-      IsDevelopment = {{ $headers.IsDevelopment }}
-
-      {{if $headers.AllowedHosts }}
-      AllowedHosts = [{{range $headers.AllowedHosts }}
-        "{{.}}",
-        {{end}}]
-      {{end}}
-
-      {{if $headers.HostsProxyHeaders }}
-      HostsProxyHeaders = [{{range $headers.HostsProxyHeaders }}
-        "{{.}}",
-        {{end}}]
-      {{end}}
-
-      {{if $headers.CustomRequestHeaders }}
-      [frontends."{{ $frontendName }}".headers.customRequestHeaders]
-        {{range $k, $v := $headers.CustomRequestHeaders }}
-        {{$k}} = "{{$v}}"
-        {{end}}
-      {{end}}
-
-      {{if $headers.CustomResponseHeaders }}
-      [frontends."{{ $frontendName }}".headers.customResponseHeaders]
-        {{range $k, $v := $headers.CustomResponseHeaders }}
-        {{$k}} = "{{$v}}"
-        {{end}}
-      {{end}}
-
-      {{if $headers.SSLProxyHeaders }}
-      [frontends."{{ $frontendName }}".headers.SSLProxyHeaders]
-        {{range $k, $v := $headers.SSLProxyHeaders }}
-        {{$k}} = "{{$v}}"
-        {{end}}
-      {{end}}
-    {{end}}
-
-  [frontends."{{ $frontendName }}".routes."route-host{{ $app.ID | replace "/" "-" }}{{ getServiceNameSuffix $serviceName }}"]
-    rule = "{{ getFrontendRule $app $serviceName }}"
-
-{{end}}
-{{end}}
-`)
-
-func templatesMarathonReloadTmplBytes() ([]byte, error) {
-	return _templatesMarathonReloadTmpl, nil
-}
-
-func templatesMarathonReloadTmpl() (*asset, error) {
-	bytes, err := templatesMarathonReloadTmplBytes()
-	if err != nil {
-		return nil, err
-	}
-
-	info := bindataFileInfo{name: "templates/marathon-reload.tmpl", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
-	a := &asset{bytes: bytes, info: info}
-	return a, nil
-}
-
 var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
 
 [backends]
@@ -2106,18 +1909,17 @@ func AssetNames() []string {
 
 // _bindata is a table, holding each asset generator, mapped to its name.
 var _bindata = map[string]func() (*asset, error){
-	"templates/consul_catalog.tmpl":  templatesConsul_catalogTmpl,
-	"templates/docker-v1.tmpl":       templatesDockerV1Tmpl,
-	"templates/docker.tmpl":          templatesDockerTmpl,
-	"templates/ecs.tmpl":             templatesEcsTmpl,
-	"templates/eureka.tmpl":          templatesEurekaTmpl,
-	"templates/kubernetes.tmpl":      templatesKubernetesTmpl,
-	"templates/kv.tmpl":              templatesKvTmpl,
-	"templates/marathon-reload.tmpl": templatesMarathonReloadTmpl,
-	"templates/marathon.tmpl":        templatesMarathonTmpl,
-	"templates/mesos.tmpl":           templatesMesosTmpl,
-	"templates/notFound.tmpl":        templatesNotfoundTmpl,
-	"templates/rancher.tmpl":         templatesRancherTmpl,
+	"templates/consul_catalog.tmpl": templatesConsul_catalogTmpl,
+	"templates/docker-v1.tmpl":      templatesDockerV1Tmpl,
+	"templates/docker.tmpl":         templatesDockerTmpl,
+	"templates/ecs.tmpl":            templatesEcsTmpl,
+	"templates/eureka.tmpl":         templatesEurekaTmpl,
+	"templates/kubernetes.tmpl":     templatesKubernetesTmpl,
+	"templates/kv.tmpl":             templatesKvTmpl,
+	"templates/marathon.tmpl":       templatesMarathonTmpl,
+	"templates/mesos.tmpl":          templatesMesosTmpl,
+	"templates/notFound.tmpl":       templatesNotfoundTmpl,
+	"templates/rancher.tmpl":        templatesRancherTmpl,
 }
 
 // AssetDir returns the file names below a certain
@@ -2162,18 +1964,17 @@ type bintree struct {
 
 var _bintree = &bintree{nil, map[string]*bintree{
 	"templates": {nil, map[string]*bintree{
-		"consul_catalog.tmpl":  {templatesConsul_catalogTmpl, map[string]*bintree{}},
-		"docker-v1.tmpl":       {templatesDockerV1Tmpl, map[string]*bintree{}},
-		"docker.tmpl":          {templatesDockerTmpl, map[string]*bintree{}},
-		"ecs.tmpl":             {templatesEcsTmpl, map[string]*bintree{}},
-		"eureka.tmpl":          {templatesEurekaTmpl, map[string]*bintree{}},
-		"kubernetes.tmpl":      {templatesKubernetesTmpl, map[string]*bintree{}},
-		"kv.tmpl":              {templatesKvTmpl, map[string]*bintree{}},
-		"marathon-reload.tmpl": {templatesMarathonReloadTmpl, map[string]*bintree{}},
-		"marathon.tmpl":        {templatesMarathonTmpl, map[string]*bintree{}},
-		"mesos.tmpl":           {templatesMesosTmpl, map[string]*bintree{}},
-		"notFound.tmpl":        {templatesNotfoundTmpl, map[string]*bintree{}},
-		"rancher.tmpl":         {templatesRancherTmpl, map[string]*bintree{}},
+		"consul_catalog.tmpl": {templatesConsul_catalogTmpl, map[string]*bintree{}},
+		"docker-v1.tmpl":      {templatesDockerV1Tmpl, map[string]*bintree{}},
+		"docker.tmpl":         {templatesDockerTmpl, map[string]*bintree{}},
+		"ecs.tmpl":            {templatesEcsTmpl, map[string]*bintree{}},
+		"eureka.tmpl":         {templatesEurekaTmpl, map[string]*bintree{}},
+		"kubernetes.tmpl":     {templatesKubernetesTmpl, map[string]*bintree{}},
+		"kv.tmpl":             {templatesKvTmpl, map[string]*bintree{}},
+		"marathon.tmpl":       {templatesMarathonTmpl, map[string]*bintree{}},
+		"mesos.tmpl":          {templatesMesosTmpl, map[string]*bintree{}},
+		"notFound.tmpl":       {templatesNotfoundTmpl, map[string]*bintree{}},
+		"rancher.tmpl":        {templatesRancherTmpl, map[string]*bintree{}},
 	}},
 }}
 
