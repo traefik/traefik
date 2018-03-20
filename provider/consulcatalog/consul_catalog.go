@@ -3,6 +3,7 @@ package consulcatalog
 import (
 	"errors"
 	"strings"
+	"sync"
 	"text/template"
 	"time"
 
@@ -260,7 +261,7 @@ func (p *Provider) watchHealthState(stopCh <-chan struct{}, watchCh chan<- map[s
 			healthyState, meta, err := health.State("passing", options)
 			if err != nil {
 				log.WithError(err).Error("Failed to retrieve health checks")
-				errorCh <- err
+				notifyError(err)
 				return
 			}
 
