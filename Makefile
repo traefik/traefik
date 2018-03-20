@@ -73,7 +73,7 @@ test-integration: build ## run the integration tests
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate binary test-integration
 	TEST_HOST=1 ./script/make.sh test-integration
 
-validate: build  ## validate gofmt, golint and go vet
+validate: build  ## validate code, vendor and autogen
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh validate-gofmt validate-govet validate-golint validate-misspell validate-vendor validate-autogen
 
 build: dist
