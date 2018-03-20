@@ -11,11 +11,12 @@
 
 
 Træfik is a modern HTTP reverse proxy and load balancer that makes deploying microservices easy.
-Træfik knows how to talk to your existing infrastructure components ([Docker](https://www.docker.com/), [Swarm mode](https://docs.docker.com/engine/swarm/), [Kubernetes](https://kubernetes.io), [Marathon](https://mesosphere.github.io/marathon/), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Rancher](https://rancher.com), [Amazon ECS](https://aws.amazon.com/ecs), ...) and configures itself automatically and dynamically.
+Træfik integrates with your existing infrastructure components ([Docker](https://www.docker.com/), [Swarm mode](https://docs.docker.com/engine/swarm/), [Kubernetes](https://kubernetes.io), [Marathon](https://mesosphere.github.io/marathon/), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Rancher](https://rancher.com), [Amazon ECS](https://aws.amazon.com/ecs), ...) and configures itself automatically and dynamically.
+Telling Træfik where your orchestrator is could be the _only_ configuration step you need to do.
 
 ## Overview
 
-Imagine that you have deployed a bunch of microservices with the help of an orchestrator (like Swarm or Mesos/Marathon) or a service registry (like etcd or consul).
+Imagine that you have deployed a bunch of microservices with the help of an orchestrator (like Swarm or Kubernetes) or a service registry (like etcd or consul).
 Now you want users to access these microservices, and you need a reverse proxy.
 
 Traditional reverse-proxies require that you configure _each_ route that will connect paths and subdomains to _each_ microservice. In an environment where you add, remove, kill, upgrade, or scale your services _many_ times a day, the task of keeping the routes up to date becomes tedious. 
@@ -32,8 +33,8 @@ _(But if you'd rather configure some of your routes manually, Træfik supports t
 ## Features
 
 - Continuously updates its configuration (No restarts!)
-- Load balancer, Round Robin, rebalancer load-balancers
-- Enables HTTPS on your microservice (thanks to its [Let's Encrypt](https://letsencrypt.org) support)
+- Supports multiple load balancing algorithms
+- Provides HTTPS to your microservices by leveraging [Let's Encrypt](https://letsencrypt.org)
 - Circuit breakers, retry
 - High Availability with cluster mode (beta)
 - See the magic through its clean web UI
