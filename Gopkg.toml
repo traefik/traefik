@@ -181,7 +181,7 @@
   name = "github.com/vulcand/oxy"
 
 [[constraint]]
-  branch = "master"
+  branch = "acmev2"
   name = "github.com/xenolf/lego"
 
 [[constraint]]
