@@ -731,11 +731,11 @@ func TestExtractServiceProperties(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		labels   map[string]string
-		expected ServiceProperties
+		expected RoadProperties
 	}{
 		{
 			desc:     "empty labels map",
-			expected: ServiceProperties{},
+			expected: RoadProperties{},
 		},
 		{
 			desc: "valid label names",
@@ -744,8 +744,8 @@ func TestExtractServiceProperties(t *testing.T) {
 				"traefik.foo.frontend.bar": "1bar",
 				"traefik.foo.backend":      "3bar",
 			},
-			expected: ServiceProperties{
-				"foo": ServicePropertyValues{
+			expected: RoadProperties{
+				"foo": RoadPropertyValues{
 					"port":         "bar",
 					"frontend.bar": "1bar",
 					"backend":      "3bar",
@@ -761,7 +761,7 @@ func TestExtractServiceProperties(t *testing.T) {
 				"traefik.foo.frontend":         "0bar",
 				"traefik.frontend.foo.backend": "0bar",
 			},
-			expected: ServiceProperties{},
+			expected: RoadProperties{},
 		},
 	}
 	for _, test := range testCases {
@@ -779,11 +779,11 @@ func TestExtractServicePropertiesP(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		labels   *map[string]string
-		expected ServiceProperties
+		expected RoadProperties
 	}{
 		{
 			desc:     "nil labels map",
-			expected: ServiceProperties{},
+			expected: RoadProperties{},
 		},
 		{
 			desc: "valid label names",
@@ -792,8 +792,8 @@ func TestExtractServicePropertiesP(t *testing.T) {
 				"traefik.foo.frontend.bar": "1bar",
 				"traefik.foo.backend":      "3bar",
 			},
-			expected: ServiceProperties{
-				"foo": ServicePropertyValues{
+			expected: RoadProperties{
+				"foo": RoadPropertyValues{
 					"port":         "bar",
 					"frontend.bar": "1bar",
 					"backend":      "3bar",
@@ -809,7 +809,7 @@ func TestExtractServicePropertiesP(t *testing.T) {
 				"traefik.foo.frontend":         "0bar",
 				"traefik.frontend.foo.backend": "0bar",
 			},
-			expected: ServiceProperties{},
+			expected: RoadProperties{},
 		},
 	}
 	for _, test := range testCases {
@@ -1134,6 +1134,94 @@ func TestParseRateSets(t *testing.T) {
 			rateSets := ParseRateSets(test.labels, Prefix+BaseFrontendRateLimit, RegexpFrontendRateLimit)
 
 			assert.EqualValues(t, test.expected, rateSets)
+		})
+	}
+}
+
+func TestExtractTraefikLabels(t *testing.T) {
+	testCases := []struct {
+		desc         string
+		prefix       string
+		originLabels map[string]string
+		expected     RoadProperties
+	}{
+		{
+			desc:         "nil labels map",
+			prefix:       "traefik",
+			originLabels: nil,
+			expected:     RoadProperties{"": {}},
+		},
+		{
+			desc:   "container labels",
+			prefix: "traefik",
+			originLabels: map[string]string{
+				"frontend.priority": "foo", // missing prefix: skip
+				"traefik.port":      "bar",
+			},
+			expected: RoadProperties{
+				"": {
+					"traefik.port": "bar",
+				},
+			},
+		},
+		{
+			desc:   "road labels: only road no default",
+			prefix: "traefik",
+			originLabels: map[string]string{
+				"traefik.goo.frontend.priority": "A",
+				"traefik.goo.port":              "D",
+				"traefik.port":                  "C",
+			},
+			expected: RoadProperties{
+				"goo": {
+					"traefik.frontend.priority": "A",
+					"traefik.port":              "D",
+				},
+			},
+		},
+		{
+			desc:   "road labels: use default",
+			prefix: "traefik",
+			originLabels: map[string]string{
+				"traefik.guu.frontend.priority": "B",
+				"traefik.port":                  "C",
+			},
+			expected: RoadProperties{
+				"guu": {
+					"traefik.frontend.priority": "B",
+					"traefik.port":              "C",
+				},
+			},
+		},
+		{
+			desc:   "road labels: several roads",
+			prefix: "traefik",
+			originLabels: map[string]string{
+				"traefik.goo.frontend.priority": "A",
+				"traefik.goo.port":              "D",
+				"traefik.guu.frontend.priority": "B",
+				"traefik.port":                  "C",
+			},
+			expected: RoadProperties{
+				"goo": {
+					"traefik.frontend.priority": "A",
+					"traefik.port":              "D",
+				},
+				"guu": {
+					"traefik.frontend.priority": "B",
+					"traefik.port":              "C",
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := ExtractTraefikLabels(test.originLabels)
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }

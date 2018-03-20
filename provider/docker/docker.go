@@ -55,6 +55,8 @@ type dockerData struct {
 	NetworkSettings networkSettings
 	Health          string
 	Node            *dockertypes.ContainerNode
+	RoadLabels      map[string]string
+	RoadName        string
 }
 
 // NetworkSettings holds the networks data to the Provider p
@@ -84,12 +86,12 @@ func (p *Provider) createClient() (client.APIClient, error) {
 		tr := &http.Transport{
 			TLSClientConfig: config,
 		}
-		proto, addr, _, err := client.ParseHost(p.Endpoint)
+
+		hostURL, err := client.ParseHostURL(p.Endpoint)
 		if err != nil {
 			return nil, err
 		}
-
-		sockets.ConfigureTransport(tr, proto, addr)
+		sockets.ConfigureTransport(tr, hostURL.Scheme, hostURL.Host)
 
 		httpClient = &http.Client{
 			Transport: tr,
@@ -290,7 +292,7 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 
 	if container.ContainerJSONBase != nil {
 		dData.Name = container.ContainerJSONBase.Name
-		dData.ServiceName = dData.Name //Default ServiceName to be the container's Name.
+		dData.ServiceName = dData.Name // Default ServiceName to be the container's Name.
 		dData.Node = container.ContainerJSONBase.Node
 
 		if container.ContainerJSONBase.HostConfig != nil {

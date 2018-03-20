@@ -3,9 +3,7 @@ package docker
 import (
 	"strconv"
 	"testing"
-	"time"
 
-	"github.com/containous/flaeg"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	docker "github.com/docker/docker/api/types"
@@ -14,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSwarmBuildConfiguration(t *testing.T) {
+func TestSwarmBuildConfigurationV1(t *testing.T) {
 	testCases := []struct {
 		desc              string
 		services          []swarm.Service
@@ -107,20 +105,12 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						label.TraefikBackend: "foobar",
 
 						label.TraefikBackendCircuitBreakerExpression:         "NetworkErrorRatio() > 0.5",
-						label.TraefikBackendHealthCheckPath:                  "/health",
-						label.TraefikBackendHealthCheckPort:                  "880",
-						label.TraefikBackendHealthCheckInterval:              "6",
 						label.TraefikBackendLoadBalancerMethod:               "drr",
 						label.TraefikBackendLoadBalancerSticky:               "true",
 						label.TraefikBackendLoadBalancerStickiness:           "true",
 						label.TraefikBackendLoadBalancerStickinessCookieName: "chocolate",
 						label.TraefikBackendMaxConnAmount:                    "666",
 						label.TraefikBackendMaxConnExtractorFunc:             "client.ip",
-						label.TraefikBackendBufferingMaxResponseBodyBytes:    "10485760",
-						label.TraefikBackendBufferingMemResponseBodyBytes:    "2097152",
-						label.TraefikBackendBufferingMaxRequestBodyBytes:     "10485760",
-						label.TraefikBackendBufferingMemRequestBodyBytes:     "2097152",
-						label.TraefikBackendBufferingRetryExpression:         "IsNetworkError() && Attempts() <= 2",
 
 						label.TraefikFrontendAuthBasic:            "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.TraefikFrontendEntryPoints:          "http,https",
@@ -143,7 +133,6 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendContentSecurityPolicy:   "foo",
 						label.TraefikFrontendPublicKey:               "foo",
 						label.TraefikFrontendReferrerPolicy:          "foo",
-						label.TraefikFrontendCustomBrowserXSSValue:   "foo",
 						label.TraefikFrontendSTSSeconds:              "666",
 						label.TraefikFrontendSSLRedirect:             "true",
 						label.TraefikFrontendSSLTemporaryRedirect:    "true",
@@ -154,21 +143,6 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendContentTypeNosniff:      "true",
 						label.TraefikFrontendBrowserXSSFilter:        "true",
 						label.TraefikFrontendIsDevelopment:           "true",
-
-						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageStatus:  "404",
-						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageBackend: "foobar",
-						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageQuery:   "foo_query",
-						label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageStatus:  "500,600",
-						label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageBackend: "foobar",
-						label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageQuery:   "bar_query",
-
-						label.TraefikFrontendRateLimitExtractorFunc:                                        "client.ip",
-						label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitPeriod:  "6",
-						label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitAverage: "12",
-						label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitBurst:   "18",
-						label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitPeriod:  "3",
-						label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitAverage: "6",
-						label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitBurst:   "9",
 					}),
 					withEndpointSpec(modeVIP),
 					withEndpoint(virtualIP("1", "127.0.0.1/24")),
@@ -230,44 +204,15 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						CustomFrameOptionsValue: "foo",
 						ContentTypeNosniff:      true,
 						BrowserXSSFilter:        true,
-						CustomBrowserXSSValue:   "foo",
 						ContentSecurityPolicy:   "foo",
 						PublicKey:               "foo",
 						ReferrerPolicy:          "foo",
 						IsDevelopment:           true,
 					},
-
-					Errors: map[string]*types.ErrorPage{
-						"foo": {
-							Status:  []string{"404"},
-							Query:   "foo_query",
-							Backend: "foobar",
-						},
-						"bar": {
-							Status:  []string{"500", "600"},
-							Query:   "bar_query",
-							Backend: "foobar",
-						},
-					},
-					RateLimit: &types.RateLimit{
-						ExtractorFunc: "client.ip",
-						RateSet: map[string]*types.Rate{
-							"foo": {
-								Period:  flaeg.Duration(6 * time.Second),
-								Average: 12,
-								Burst:   18,
-							},
-							"bar": {
-								Period:  flaeg.Duration(3 * time.Second),
-								Average: 6,
-								Burst:   9,
-							},
-						},
-					},
 					Redirect: &types.Redirect{
 						EntryPoint:  "https",
-						Regex:       "",
-						Replacement: "",
+						Regex:       "nope",
+						Replacement: "nope",
 					},
 				},
 			},
@@ -292,18 +237,6 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 					MaxConn: &types.MaxConn{
 						Amount:        666,
 						ExtractorFunc: "client.ip",
-					},
-					HealthCheck: &types.HealthCheck{
-						Path:     "/health",
-						Port:     880,
-						Interval: "6",
-					},
-					Buffering: &types.Buffering{
-						MaxResponseBodyBytes: 10485760,
-						MemResponseBodyBytes: 2097152,
-						MaxRequestBodyBytes:  10485760,
-						MemRequestBodyBytes:  2097152,
-						RetryExpression:      "IsNetworkError() && Attempts() <= 2",
 					},
 				},
 			},
@@ -331,7 +264,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 				SwarmMode:        true,
 			}
 
-			actualConfig := provider.buildConfigurationV2(dockerDataList)
+			actualConfig := provider.buildConfigurationV1(dockerDataList)
 			require.NotNil(t, actualConfig, "actualConfig")
 
 			assert.EqualValues(t, test.expectedBackends, actualConfig.Backends)
@@ -340,7 +273,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 	}
 }
 
-func TestSwarmTraefikFilter(t *testing.T) {
+func TestSwarmTraefikFilterV1(t *testing.T) {
 	testCases := []struct {
 		service  swarm.Service
 		expected bool
@@ -465,12 +398,8 @@ func TestSwarmTraefikFilter(t *testing.T) {
 		test := test
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
-
 			dData := parseService(test.service, test.networks)
-			roadProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.RoadLabels = roadProperties[""]
-
-			actual := test.provider.containerFilter(dData)
+			actual := test.provider.containerFilterV1(dData)
 			if actual != test.expected {
 				t.Errorf("expected %v for %+v, got %+v", test.expected, test, actual)
 			}
@@ -478,7 +407,48 @@ func TestSwarmTraefikFilter(t *testing.T) {
 	}
 }
 
-func TestSwarmGetFrontendName(t *testing.T) {
+func TestSwarmGetFuncStringLabelV1(t *testing.T) {
+	testCases := []struct {
+		service      swarm.Service
+		labelName    string
+		defaultValue string
+		networks     map[string]*docker.NetworkResource
+		expected     string
+	}{
+		{
+			service:      swarmService(),
+			labelName:    label.TraefikWeight,
+			defaultValue: label.DefaultWeight,
+			networks:     map[string]*docker.NetworkResource{},
+			expected:     "0",
+		},
+		{
+			service: swarmService(serviceLabels(map[string]string{
+				label.TraefikWeight: "10",
+			})),
+			labelName:    label.TraefikWeight,
+			defaultValue: label.DefaultWeight,
+			networks:     map[string]*docker.NetworkResource{},
+			expected:     "10",
+		},
+	}
+
+	for serviceID, test := range testCases {
+		test := test
+		t.Run(test.labelName+strconv.Itoa(serviceID), func(t *testing.T) {
+			t.Parallel()
+
+			dData := parseService(test.service, test.networks)
+
+			actual := getFuncStringLabelV1(test.labelName, test.defaultValue)(dData)
+			if actual != test.expected {
+				t.Errorf("got %q, expected %q", actual, test.expected)
+			}
+		})
+	}
+}
+
+func TestSwarmGetFrontendNameV1(t *testing.T) {
 	testCases := []struct {
 		service  swarm.Service
 		expected string
@@ -526,23 +496,20 @@ func TestSwarmGetFrontendName(t *testing.T) {
 		test := test
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
-
 			dData := parseService(test.service, test.networks)
-			roadProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.RoadLabels = roadProperties[""]
-
 			provider := &Provider{
 				Domain:    "docker.localhost",
 				SwarmMode: true,
 			}
-
-			actual := provider.getFrontendName(dData, 0)
-			assert.Equal(t, test.expected, actual)
+			actual := provider.getFrontendNameV1(dData, 0)
+			if actual != test.expected {
+				t.Errorf("expected %q, got %q", test.expected, actual)
+			}
 		})
 	}
 }
 
-func TestSwarmGetFrontendRule(t *testing.T) {
+func TestSwarmGetFrontendRuleV1(t *testing.T) {
 	testCases := []struct {
 		service  swarm.Service
 		expected string
@@ -578,23 +545,20 @@ func TestSwarmGetFrontendRule(t *testing.T) {
 		test := test
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
-
 			dData := parseService(test.service, test.networks)
-			roadProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.RoadLabels = roadProperties[""]
-
 			provider := &Provider{
 				Domain:    "docker.localhost",
 				SwarmMode: true,
 			}
-
-			actual := provider.getFrontendRule(dData)
-			assert.Equal(t, test.expected, actual)
+			actual := provider.getFrontendRuleV1(dData)
+			if actual != test.expected {
+				t.Errorf("expected %q, got %q", test.expected, actual)
+			}
 		})
 	}
 }
 
-func TestSwarmGetBackendName(t *testing.T) {
+func TestSwarmGetBackendNameV1(t *testing.T) {
 	testCases := []struct {
 		service  swarm.Service
 		expected string
@@ -623,18 +587,16 @@ func TestSwarmGetBackendName(t *testing.T) {
 		test := test
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
-
 			dData := parseService(test.service, test.networks)
-			roadProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.RoadLabels = roadProperties[""]
-
-			actual := getBackendName(dData)
-			assert.Equal(t, test.expected, actual)
+			actual := getBackendNameV1(dData)
+			if actual != test.expected {
+				t.Errorf("expected %q, got %q", test.expected, actual)
+			}
 		})
 	}
 }
 
-func TestSwarmGetIPAddress(t *testing.T) {
+func TestSwarmGetIPAddressV1(t *testing.T) {
 	testCases := []struct {
 		service  swarm.Service
 		expected string
@@ -684,22 +646,19 @@ func TestSwarmGetIPAddress(t *testing.T) {
 		test := test
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
-
+			dData := parseService(test.service, test.networks)
 			provider := &Provider{
 				SwarmMode: true,
 			}
-
-			dData := parseService(test.service, test.networks)
-			roadProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.RoadLabels = roadProperties[""]
-
 			actual := provider.getIPAddress(dData)
-			assert.Equal(t, test.expected, actual)
+			if actual != test.expected {
+				t.Errorf("expected %q, got %q", test.expected, actual)
+			}
 		})
 	}
 }
 
-func TestSwarmGetPort(t *testing.T) {
+func TestSwarmGetPortV1(t *testing.T) {
 	testCases := []struct {
 		service  swarm.Service
 		expected string
@@ -721,13 +680,11 @@ func TestSwarmGetPort(t *testing.T) {
 		test := test
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
-
 			dData := parseService(test.service, test.networks)
-			roadProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.RoadLabels = roadProperties[""]
-
-			actual := getPort(dData)
-			assert.Equal(t, test.expected, actual)
+			actual := getPortV1(dData)
+			if actual != test.expected {
+				t.Errorf("expected %q, got %q", test.expected, actual)
+			}
 		})
 	}
 }
