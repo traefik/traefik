@@ -190,6 +190,7 @@
 
 [[constraint]]
   name = "gopkg.in/fsnotify.v1"
+  source = "github.com/fsnotify/fsnotify"
   version = "1.4.2"
 
 [[constraint]]

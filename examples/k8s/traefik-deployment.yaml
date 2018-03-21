@@ -31,6 +31,7 @@ spec:
         args:
         - --api
         - --kubernetes
+        - --logLevel=INFO
 ---
 kind: Service
 apiVersion: v1
