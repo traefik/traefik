@@ -48,7 +48,7 @@ func (s *LocalStore) get() (*StoredData, error) {
 		}
 		// Check if ACME Account is in ACME V1 format
 		if s.storedData.Account != nil && s.storedData.Account.Registration != nil {
-			isOldRegistration, err := regexp.MatchString(OldRegistrationUrlPath, s.storedData.Account.Registration.URI)
+			isOldRegistration, err := regexp.MatchString(RegistrationURLPathV1Regexp, s.storedData.Account.Registration.URI)
 			if err != nil {
 				return nil, err
 			}

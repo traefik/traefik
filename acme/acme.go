@@ -192,7 +192,11 @@ func (a *ACME) leadershipListener(elected bool) error {
 		account.Init()
 		var needRegister bool
 		if account == nil || len(account.Email) == 0 {
-			account, err = NewAccount(a.Email)
+			domainsCerts := DomainsCertificates{Certs: []*DomainsCertificate{}}
+			if account != nil {
+				domainsCerts = account.DomainsCertificate
+			}
+			account, err = NewAccount(a.Email, domainsCerts.Certs)
 			if err != nil {
 				return err
 			}
