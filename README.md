@@ -78,6 +78,7 @@ Run it and forget it!
 
 - [Docker](https://www.docker.com/) / [Swarm mode](https://docs.docker.com/engine/swarm/)
 - [Kubernetes](https://kubernetes.io)
+- [Service Fabric](https://docs.microsoft.com/azure/service-fabric/)
 - [Mesos](https://github.com/apache/mesos) / [Marathon](https://mesosphere.github.io/marathon/)
 - [Rancher](https://rancher.com) (API, Metadata)
 - [Consul](https://www.consul.io/) / [Etcd](https://coreos.com/etcd/) / [Zookeeper](https://zookeeper.apache.org) / [BoltDB](https://github.com/boltdb/bolt)
