@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"regexp"
 
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
@@ -43,6 +44,17 @@ func (s *LocalStore) get() (*StoredData, error) {
 		if len(file) > 0 {
 			if err := json.Unmarshal(file, s.storedData); err != nil {
 				return nil, err
+			}
+		}
+		// Check if ACME Account is in ACME V1 format
+		if s.storedData.Account != nil && s.storedData.Account.Registration != nil {
+			isOldRegistration, err := regexp.MatchString(OldRegistrationUrlPath, s.storedData.Account.Registration.URI)
+			if err != nil {
+				return nil, err
+			}
+			if isOldRegistration {
+				s.storedData.Account = nil
+				s.SaveDataChan <- s.storedData
 			}
 		}
 	}

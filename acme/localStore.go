@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"regexp"
 
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider/acme"
@@ -45,7 +46,21 @@ func (s *LocalStore) Get() (*Account, error) {
 		if err := json.Unmarshal(file, &account); err != nil {
 			return nil, err
 		}
+
+		// Check if ACME Account is in ACME V1 format
+		if account != nil && account.Registration != nil {
+			isOldRegistration, err := regexp.MatchString(acme.OldRegistrationUrlPath, account.Registration.URI)
+			if err != nil {
+				return nil, err
+			}
+			if isOldRegistration {
+				account.Email = ""
+				account.Registration = nil
+				account.PrivateKey = nil
+			}
+		}
 	}
+
 	return account, nil
 }
 
