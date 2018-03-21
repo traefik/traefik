@@ -146,7 +146,7 @@ func FromNewToOldFormat(fileName string) (*Account, error) {
 
 	// Convert ACME Certificates from new to old format
 	// (Needed by the KV stores)
-	if storeCertificates != nil {
+	if len(storeCertificates) > 0 {
 		// Account can be nil if data are migrated from new format
 		// with a ACME V1 Account
 		if account == nil {

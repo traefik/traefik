@@ -49,7 +49,7 @@ services:
 
   boulder:
     # To minimize fetching this should be the same version used below
-    image: containous/boulder:acmev2
+    image: containous/boulder:containous-acmev2
     environment:
       FAKE_DNS: 172.17.0.1
       PKCS11_PROXY_SOCKET: tcp://boulder-hsm:5657

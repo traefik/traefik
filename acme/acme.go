@@ -259,20 +259,25 @@ func (a *ACME) retrieveCertificates() {
 				domains := []string{}
 				domains = append(domains, domain.Main)
 				domains = append(domains, domain.SANs...)
+				domains, err := a.getValidDomains(domains, true)
+				if err != nil {
+					log.Errorf("Error validating ACME certificate for domain %q: %s", domains, err.Error())
+					continue
+				}
 				certificateResource, err := a.getDomainsCertificates(domains)
 				if err != nil {
-					log.Errorf("Error getting ACME certificate for domain %s: %s", domains, err.Error())
+					log.Errorf("Error getting ACME certificate for domain %q: %s", domains, err.Error())
 					continue
 				}
 				transaction, object, err := a.store.Begin()
 				if err != nil {
-					log.Errorf("Error creating ACME store transaction from domain %s: %s", domain, err.Error())
+					log.Errorf("Error creating ACME store transaction from domain %q: %s", domain, err.Error())
 					continue
 				}
 				account = object.(*Account)
 				_, err = account.DomainsCertificate.addCertificateForDomains(certificateResource, domain)
 				if err != nil {
-					log.Errorf("Error adding ACME certificate for domain %s: %s", domains, err.Error())
+					log.Errorf("Error adding ACME certificate for domain %q: %s", domains, err.Error())
 					continue
 				}
 
@@ -454,12 +459,11 @@ func (a *ACME) LoadCertificateForDomains(domains []string) {
 	a.jobs.In() <- func() {
 		log.Debugf("LoadCertificateForDomains %v...", domains)
 
-		if len(domains) == 0 {
-			// no domain
+		domains, err := a.getValidDomains(domains, false)
+		if err != nil {
+			log.Errorf("Error getting valid domain: %v", err)
 			return
 		}
-
-		domains = fun.Map(types.CanonicalDomain, domains).([]string)
 
 		operation := func() error {
 			if a.client == nil {
@@ -472,7 +476,7 @@ func (a *ACME) LoadCertificateForDomains(domains []string) {
 		}
 		ebo := backoff.NewExponentialBackOff()
 		ebo.MaxElapsedTime = 30 * time.Second
-		err := backoff.RetryNotify(safe.OperationWithRecover(operation), ebo, notify)
+		err = backoff.RetryNotify(safe.OperationWithRecover(operation), ebo, notify)
 		if err != nil {
 			log.Errorf("Error getting ACME client: %v", err)
 			return
@@ -632,4 +636,24 @@ func (a *ACME) runJobs() {
 			function()
 		}
 	})
+}
+
+// getValidDomains checks if given domain is allowed to generate a ACME certificate and return it
+func (a *ACME) getValidDomains(domains []string, wildcardAllowed bool) ([]string, error) {
+	if len(domains) == 0 || (len(domains) == 1 && len(domains[0]) == 0) {
+		return nil, errors.New("unable to generate a certificate when no domain is given")
+	}
+	if strings.HasPrefix(domains[0], "*") {
+		if !wildcardAllowed {
+			return nil, fmt.Errorf("unable to generate a wildcard certificate for domain %q from a 'Host' rule", strings.Join(domains, ","))
+		}
+		if a.DNSChallenge == nil && len(a.DNSProvider) == 0 {
+			return nil, fmt.Errorf("unable to generate a wildcard certificate for domain %q : ACME needs a DNSChallenge", strings.Join(domains, ","))
+		}
+		if len(domains) > 1 {
+			return nil, fmt.Errorf("unable to generate a wildcard certificate for domain %q : SANs are not allowed", strings.Join(domains, ","))
+		}
+	}
+	domains = fun.Map(types.CanonicalDomain, domains).([]string)
+	return domains, nil
 }

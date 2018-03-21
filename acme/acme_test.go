@@ -366,3 +366,80 @@ func TestAcme_getProvidedCertificate(t *testing.T) {
 	certificate = a.getProvidedCertificate(domain)
 	assert.Nil(t, certificate)
 }
+
+func TestAcme_getValidDomain(t *testing.T) {
+	tests := []struct {
+		desc            string
+		domains         []string
+		wildcardAllowed bool
+		dnsChallenge    *acmeprovider.DNSChallenge
+		expectedErr     string
+		expectedDomains []string
+	}{
+		{
+			desc:            "valid wildcard",
+			domains:         []string{"*.traefik.wtf"},
+			dnsChallenge:    &acmeprovider.DNSChallenge{},
+			wildcardAllowed: true,
+			expectedErr:     "",
+			expectedDomains: []string{"*.traefik.wtf"},
+		},
+		{
+			desc:            "no wildcard",
+			domains:         []string{"traefik.wtf", "foo.traefik.wtf"},
+			dnsChallenge:    &acmeprovider.DNSChallenge{},
+			expectedErr:     "",
+			wildcardAllowed: true,
+			expectedDomains: []string{"traefik.wtf", "foo.traefik.wtf"},
+		},
+		{
+			desc:            "unauthorized wildcard",
+			domains:         []string{"*.traefik.wtf"},
+			dnsChallenge:    &acmeprovider.DNSChallenge{},
+			wildcardAllowed: false,
+			expectedErr:     "unable to generate a wildcard certificate for domain \"*.traefik.wtf\" from a 'Host' rule",
+			expectedDomains: nil,
+		},
+		{
+			desc:            "no domain",
+			domains:         []string{},
+			dnsChallenge:    nil,
+			wildcardAllowed: true,
+			expectedErr:     "unable to generate a certificate when no domain is given",
+			expectedDomains: nil,
+		},
+		{
+			desc:            "no DNSChallenge",
+			domains:         []string{"*.traefik.wtf", "foo.traefik.wtf"},
+			dnsChallenge:    nil,
+			wildcardAllowed: true,
+			expectedErr:     "unable to generate a wildcard certificate for domain \"*.traefik.wtf,foo.traefik.wtf\" : ACME needs a DNSChallenge",
+			expectedDomains: nil,
+		},
+		{
+			desc:            "unexpected SANs",
+			domains:         []string{"*.traefik.wtf", "foo.traefik.wtf"},
+			dnsChallenge:    &acmeprovider.DNSChallenge{},
+			wildcardAllowed: true,
+			expectedErr:     "unable to generate a wildcard certificate for domain \"*.traefik.wtf,foo.traefik.wtf\" : SANs are not allowed",
+			expectedDomains: nil,
+		},
+	}
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			a := ACME{}
+			if test.dnsChallenge != nil {
+				a.DNSChallenge = test.dnsChallenge
+			}
+			domains, err := a.getValidDomains(test.domains, test.wildcardAllowed)
+
+			if len(test.expectedErr) > 0 {
+				assert.EqualError(t, err, test.expectedErr, "Unexpected error.")
+			} else {
+				assert.Equal(t, len(test.expectedDomains), len(domains), "Unexpected domains.")
+			}
+		})
+	}
+}
