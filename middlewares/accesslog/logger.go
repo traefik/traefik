@@ -33,11 +33,12 @@ const (
 
 // LogHandler will write each request and its response to the access log.
 type LogHandler struct {
-	config         *types.AccessLog
-	logger         *logrus.Logger
-	file           *os.File
-	mu             sync.Mutex
-	httpCodeRanges types.HTTPCodeRanges
+	config              *types.AccessLog
+	logger              *logrus.Logger
+	asyncWriter         *asyncWriter
+	asyncWriterChanSize int64
+	mu                  sync.Mutex
+	httpCodeRanges      types.HTTPCodeRanges
 }
 
 // NewLogHandler creates a new LogHandler
@@ -62,17 +63,19 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 		return nil, fmt.Errorf("unsupported access log format: %s", config.Format)
 	}
 
+	asyncWriter := newAsyncWriter(config.AsyncWriterChanSize, file)
 	logger := &logrus.Logger{
-		Out:       file,
+		Out:       asyncWriter,
 		Formatter: formatter,
 		Hooks:     make(logrus.LevelHooks),
 		Level:     logrus.InfoLevel,
 	}
 
 	logHandler := &LogHandler{
-		config: config,
-		logger: logger,
-		file:   file,
+		config:              config,
+		logger:              logger,
+		asyncWriter:         asyncWriter,
+		asyncWriterChanSize: config.AsyncWriterChanSize,
 	}
 
 	if config.Filters != nil {
@@ -161,7 +164,7 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 
 // Close closes the Logger (i.e. the file etc).
 func (l *LogHandler) Close() error {
-	return l.file.Close()
+	return l.asyncWriter.Close()
 }
 
 // Rotate closes and reopens the log file to allow for rotation
@@ -169,19 +172,20 @@ func (l *LogHandler) Close() error {
 func (l *LogHandler) Rotate() error {
 	var err error
 
-	if l.file != nil {
-		defer func(f *os.File) {
+	if l.asyncWriter != nil {
+		defer func(f *asyncWriter) {
 			f.Close()
-		}(l.file)
+		}(l.asyncWriter)
 	}
 
-	l.file, err = os.OpenFile(l.config.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
+	file, err := os.OpenFile(l.config.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
 	if err != nil {
 		return err
 	}
+	l.asyncWriter = newAsyncWriter(l.asyncWriterChanSize, file)
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	l.logger.Out = l.file
+	l.logger.Out = l.asyncWriter
 	return nil
 }
 
