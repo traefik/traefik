@@ -27,7 +27,7 @@ services:
 Start your `reverse-proxy` with the following command:
 
 ```shell
-docker-compose up reverse-proxy -d
+docker-compose up -d reverse-proxy 
 ```
 
 You can open a browser and go to [http://localhost:8080](http://localhost:8080) to see Træfik's dashboard (we'll go back there once we have launched a service in step 2).
@@ -46,12 +46,12 @@ Edit your `docker-compose.yml` file and add the following at the end of your fil
       - "traefik.frontend.rule=Host:whoami.docker.localhost"
 ```
 
-The above defines `whoami`: a simple webservice that outputs information about the machine it is deployed on (its IP address, host, and so on).
+The above defines `whoami`: a simple web service that outputs information about the machine it is deployed on (its IP address, host, and so on).
 
 Start the `whoami` service with the following command:
  
 ```shell
-docker-compose up whoami -d
+docker-compose up -d whoami
 ```
 
 Go back to your browser ([http://localhost:8080](http://localhost:8080)) and see that Træfik has automatically detected the new container and updated its own configuration.
@@ -74,7 +74,7 @@ IP: 172.27.0.3
 Run more instances of your `whoami` service with the following command:
  
 ```shell
-docker-compose up --scale whoami=2 -d
+docker-compose up -d --scale whoami=2 
 ```
 
 Go back to your browser ([http://localhost:8080](http://localhost:8080)) and see that Træfik has automatically detected the new instance of the container.
