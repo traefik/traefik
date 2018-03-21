@@ -16,6 +16,7 @@ type asyncWriter struct {
 	originalFile *os.File
 	stopCh       chan interface{}
 	writerStream chan []byte
+	mu           sync.Mutex
 
 	sync.WaitGroup
 }
@@ -39,7 +40,7 @@ func newAsyncWriter(chanSize int64, originalFile *os.File) *asyncWriter {
 		for {
 			select {
 			case log := <-aWriter.writerStream:
-				printLog(aWriter.originalFile, log)
+				printLog(aWriter, aWriter.originalFile, log)
 			case <-stopCh:
 				return
 			}
@@ -58,7 +59,9 @@ func (w *asyncWriter) Write(p []byte) (n int, err error) {
 	return size, nil
 }
 
-func printLog(writer io.Writer, log []byte) {
+func printLog(w *asyncWriter, writer io.Writer, log []byte) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	_, err := writer.Write(log)
 	if err != nil {
 		logrus.Error(err)
@@ -67,7 +70,7 @@ func printLog(writer io.Writer, log []byte) {
 
 func (w *asyncWriter) drainChannel() {
 	for log := range w.writerStream {
-		printLog(w.originalFile, log)
+		printLog(w, w.originalFile, log)
 	}
 }
 
