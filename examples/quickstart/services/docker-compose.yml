@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  whoami:
+    image: emilevauge/whoami #A container that exposes an API to show it's IP address
+    labels:
+      - "traefik.frontend.rule=Host:whoami.docker.localhost"
+
+#we're deploying the services on the same network so that the containers can talk to each other
+networks: 
+   default: 
+      external:
+         name: traefik_default 

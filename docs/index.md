@@ -65,7 +65,7 @@ _(But if you'd rather configure some of your routes manually, Træfik supports t
 
 In this quickstart, we'll use [Docker compose](https://docs.docker.com/compose) to create our demo infrastructure.
 
-To save you some time, you can checkout the quickstart from the [containous/traefik-quickstart](https://github.com/containous/traefik-quickstart) repository and read along.
+To save some time, you can clone [Træfik's repository](https://github.com/containous/traefik) and use the quickstart files located in the [examples/quickstart](https://github.com/containous/traefik/tree/master/examples/quickstart/) directory.
 
 ### 1 — Launch Træfik — Tell It to Listen to Docker
 
