@@ -269,6 +269,10 @@ func (l *LogHandler) redactHeaders(headers http.Header, fields logrus.Fields, pr
 func (l *LogHandler) keepAccessLog(statusCode, retryAttempts int) bool {
 	switch {
 	case l.config.Filters == nil:
+		// no filters were specified
+		return true
+	case len(l.httpCodeRanges) == 0 && l.config.Filters.RetryAttempts == false:
+		// empty filters were specified, e.g. by passing --accessLog.filters only (without other filter options)
 		return true
 	case l.httpCodeRanges.Contains(statusCode):
 		return true
