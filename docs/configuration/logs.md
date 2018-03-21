@@ -120,12 +120,13 @@ filePath = "/path/to/access.log"
 To customize async log writer specify `asyncWriterChanSize`:
 ```toml
 [accessLog]
-# asyncWriterChanSize specify the size of async channel buffer
-#
-# Optional
-# Default: 1024
-#
-asyncWriterChanSize = 1024
+  [accessLog.async]
+  # asyncWriterChanSize specify the size of async channel buffer
+  #
+  # Optional
+  # Default: 1024
+  #
+  asyncWriterChanSize = 1024
 ```
 
 To write JSON format logs, specify `json` as the format:
