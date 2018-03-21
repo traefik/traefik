@@ -3,40 +3,50 @@ version: "2"
 services :
 
   boulder:
-    image: containous/boulder:containous-fork
+    # To minimize fetching this should be the same version used below
+    image: containous/boulder:acmev2
     environment:
       FAKE_DNS: 172.17.0.1
       PKCS11_PROXY_SOCKET: tcp://boulder-hsm:5657
+    restart: unless-stopped
     extra_hosts:
       - le.wtf:127.0.0.1
       - boulder:127.0.0.1
     ports:
       - 4000:4000 # ACME
+      - 4001:4001 # ACMEv2
       - 4002:4002 # OCSP
       - 4003:4003 # OCSP
+      - 4430:4430 # ACME via HTTPS
+      - 4431:4431 # ACMEv2 via HTTPS
       - 4500:4500 # ct-test-srv
+      - 6000:6000 # gsb-test-srv
       - 8000:8000 # debug ports
       - 8001:8001
       - 8002:8002
       - 8003:8003
       - 8004:8004
+      - 8005:8005
+      - 8006:8006
+      - 8008:8008
+      - 8009:8009
+      - 8010:8010
       - 8055:8055 # dns-test-srv updates
       - 9380:9380 # mail-test-srv
       - 9381:9381 # mail-test-srv
-    restart: unless-stopped
     depends_on:
       - bhsm
       - bmysql
-      - brabbitmq
     networks:
       - default
 
   bhsm:
-    image: letsencrypt/boulder-tools:2016-11-02
+    # To minimize fetching this should be the same version used above
+    image: letsencrypt/boulder-tools:2018-03-07
     hostname: boulder-hsm
     environment:
       PKCS11_DAEMON_SOCKET: tcp://0.0.0.0:5657
-    command: /usr/local/bin/pkcs11-daemon /usr/lib/softhsm/libsofthsm.so
+    command: /usr/local/bin/pkcs11-daemon /usr/lib/softhsm/libsofthsm2.so
     expose:
       - 5657
     networks:
@@ -49,20 +59,13 @@ services :
     hostname: boulder-mysql
     environment:
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    command: mysqld --bind-address=0.0.0.0
+    logging:
+        driver: none
     networks:
       default:
         aliases:
           - boulder-mysql
-
-  brabbitmq:
-    image: rabbitmq:3-alpine
-    hostname: boulder-rabbitmq
-    environment:
-      RABBITMQ_NODE_IP_ADDRESS: "0.0.0.0"
-    networks:
-      default:
-        aliases:
-          - boulder-rabbitmq
 
   ## TRAEFIK part ##
 

@@ -11,10 +11,11 @@ defaultEntryPoints = ["http", "https"]
 
 [acme]
 email = "test@traefik.io"
+storagefile = "/acme.json"
 storage = "traefik/acme/account"
 entryPoint = "https"
 OnHostRule = true
-caServer = "http://traefik.boulder.com:4000/directory"
+caServer = "http://traefik.boulder.com:4001/directory"
 [acme.httpChallenge]
 entryPoint="http"
 

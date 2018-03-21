@@ -75,36 +75,62 @@ func Run(kv *staert.KvSource, traefikConfiguration *cmd.TraefikConfiguration) fu
 		}
 
 		if traefikConfiguration.GlobalConfiguration.ACME != nil {
+			var object cluster.Object
+			account := &acme.Account{}
+
+			// Migrate ACME data from file to KV store if needed
 			if len(traefikConfiguration.GlobalConfiguration.ACME.StorageFile) > 0 {
-				return migrateACMEData(traefikConfiguration.GlobalConfiguration.ACME.StorageFile, traefikConfiguration.GlobalConfiguration.ACME.Storage, kv)
+				account, err = migrateACMEData(traefikConfiguration.GlobalConfiguration.ACME.StorageFile)
+				if err != nil {
+					return err
+				}
 			}
+
+			// Store the ACME Account into the KV Store
+			object = account
+			meta := cluster.NewMetadata(object)
+			err = meta.Marshall()
+			if err != nil {
+				return err
+			}
+
+			source := staert.KvSource{
+				Store:  kv,
+				Prefix: traefikConfiguration.GlobalConfiguration.ACME.Storage,
+			}
+
+			err = source.StoreConfig(meta)
+			if err != nil {
+				return err
+			}
+
+			// Force to delete storagefile
+			return kv.Delete(kv.Prefix + "/acme/storagefile")
 		}
 		return nil
 	}
 }
 
 // migrateACMEData allows migrating data from acme.json file to KV store in function of the file format
-func migrateACMEData(fileName, storageKey string, kv *staert.KvSource) error {
-	var object cluster.Object
+func migrateACMEData(fileName string) (*acme.Account, error) {
 
 	f, err := os.Open(fileName)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer f.Close()
 
 	file, err := ioutil.ReadAll(f)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	// Create an empty account to create all the keys into the KV store
-	account := &acme.Account{}
 	// Check if the storage file is not empty before to get data
+	account := &acme.Account{}
 	if len(file) > 0 {
 		accountFromNewFormat, err := acme.FromNewToOldFormat(fileName)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if accountFromNewFormat == nil {
@@ -112,7 +138,7 @@ func migrateACMEData(fileName, storageKey string, kv *staert.KvSource) error {
 			localStore := acme.NewLocalStore(fileName)
 			account, err = localStore.Get()
 			if err != nil {
-				return err
+				return nil, err
 			}
 		} else {
 			account = accountFromNewFormat
@@ -122,29 +148,7 @@ func migrateACMEData(fileName, storageKey string, kv *staert.KvSource) error {
 	}
 
 	err = account.Init()
-	if err != nil {
-		return err
-	}
-
-	object = account
-	meta := cluster.NewMetadata(object)
-	err = meta.Marshall()
-	if err != nil {
-		return err
-	}
-
-	source := staert.KvSource{
-		Store:  kv,
-		Prefix: storageKey,
-	}
-
-	err = source.StoreConfig(meta)
-	if err != nil {
-		return err
-	}
-
-	// Force to delete storagefile
-	return kv.Delete(kv.Prefix + "/acme/storagefile")
+	return account, err
 }
 
 // CreateKvSource creates KvSource

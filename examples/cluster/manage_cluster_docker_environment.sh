@@ -74,10 +74,10 @@ start_storeconfig_consul() {
         endpoint = "10.0.1.2:8500"
         watch = true
         prefix = "traefik"' >> $basedir/traefik.toml
-    up_environment traefik-storeconfig
+    up_environment storeconfig
     rm -f $basedir/traefik.toml
     waiting_counter=5
-    delete_services traefik-storeconfig
+    delete_services storeconfig
 
 }
 
@@ -90,7 +90,7 @@ start_storeconfig_etcd3() {
         watch = true
         prefix = "/traefik"
         useAPIV3 = true' >> $basedir/traefik.toml
-    up_environment traefik-storeconfig
+    up_environment storeconfig
     rm -f $basedir/traefik.toml
     waiting_counter=5
     # Don't start Traefik store config if ETCD3 is not started
@@ -99,7 +99,7 @@ start_storeconfig_etcd3() {
         sleep 5
         let waiting_counter-=1
     done
-    delete_services traefik-storeconfig etcdctl-ping
+    delete_services storeconfig etcdctl-ping
 }
 
 start_traefik() {
@@ -136,11 +136,11 @@ start_traefik() {
 # Start boulder services
 start_boulder() {
     echo "Start boulder environment"
-    up_environment bmysql brabbitmq bhsm boulder
+    up_environment bmysql bhsm boulder
     waiting_counter=12
     # Not start Traefik if boulder is not started
     echo "WAIT for boulder..."
-    while [[ -z $(curl -s http://10.0.1.3:4000/directory) ]]; do
+    while [[ -z $(curl -s http://10.0.1.3:4001/directory) ]]; do
         sleep 5
         let waiting_counter-=1
         if [[ $waiting_counter -eq 0 ]]; then
