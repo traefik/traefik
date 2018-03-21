@@ -127,6 +127,8 @@ func TestHTTPCodeRanges_Contains(t *testing.T) {
 		test := test
 		testName := fmt.Sprintf("%q contains %d", test.strBlocks, test.statusCode)
 		t.Run(testName, func(t *testing.T) {
+			t.Parallel()
+
 			httpCodeRanges, err := NewHTTPCodeRanges(test.strBlocks)
 			assert.NoError(t, err)
 
