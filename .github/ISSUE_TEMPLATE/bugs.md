@@ -61,7 +61,7 @@ Add more configuration information here.
 -->
 
 
-### If applicable, please paste the log output in debug mode (`--debug` switch)
+### If applicable, please paste the log output in DEBUG level (`--logLevel=DEBUG` switch)
 
 ```
 (paste your output here)

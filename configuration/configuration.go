@@ -234,10 +234,6 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 		gc.API.Debug = gc.Debug
 	}
 
-	if gc.Debug {
-		gc.LogLevel = "DEBUG"
-	}
-
 	if gc.Web != nil && (gc.Web.Path == "" || !strings.HasSuffix(gc.Web.Path, "/")) {
 		gc.Web.Path += "/"
 	}

@@ -76,7 +76,7 @@ HOW TO WRITE A GOOD ISSUE?
 Add more configuration information here.
 -->
 
-### If applicable, please paste the log output in debug mode (` + "`" + `--debug` + "`" + ` switch)
+### If applicable, please paste the log output at DEBUG level (` + "`" + `--logLevel=DEBUG` + "`" + ` switch)
 
 ` + "```" + `
 (paste your output here)

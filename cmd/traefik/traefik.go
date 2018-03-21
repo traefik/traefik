@@ -217,12 +217,18 @@ func configureLogging(globalConfiguration *configuration.GlobalConfiguration) {
 	// configure default log flags
 	fmtlog.SetFlags(fmtlog.Lshortfile | fmtlog.LstdFlags)
 
-	if globalConfiguration.Debug {
-		globalConfiguration.LogLevel = "DEBUG"
-	}
-
 	// configure log level
-	level, err := logrus.ParseLevel(strings.ToLower(globalConfiguration.LogLevel))
+	// an explicitly defined log level always has precedence. if none is
+	// given and debug mode is disabled, the default is ERROR, and DEBUG
+	// otherwise.
+	levelStr := strings.ToLower(globalConfiguration.LogLevel)
+	if levelStr == "" {
+		levelStr = "error"
+		if globalConfiguration.Debug {
+			levelStr = "debug"
+		}
+	}
+	level, err := logrus.ParseLevel(levelStr)
 	if err != nil {
 		log.Error("Error getting level", err)
 	}
