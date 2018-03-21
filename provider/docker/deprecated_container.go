@@ -12,13 +12,6 @@ import (
 	"github.com/docker/go-connections/nat"
 )
 
-const (
-	labelDockerNetwork            = "traefik.docker.network"
-	labelBackendLoadBalancerSwarm = "traefik.backend.loadbalancer.swarm"
-	labelDockerComposeProject     = "com.docker.compose.project"
-	labelDockerComposeService     = "com.docker.compose.service"
-)
-
 // Specific functions
 
 // Deprecated
@@ -28,7 +21,6 @@ func (p Provider) getFrontendNameV1(container dockerData, idx int) string {
 
 // GetFrontendRule returns the frontend rule for the specified container, using
 // it's label. It returns a default one (Host) if the label is not present.
-
 // Deprecated
 func (p Provider) getFrontendRuleV1(container dockerData) string {
 	if value := label.GetStringValue(container.Labels, label.TraefikFrontendRule, ""); len(value) != 0 {

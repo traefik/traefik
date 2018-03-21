@@ -16,6 +16,13 @@ import (
 	"github.com/docker/go-connections/nat"
 )
 
+const (
+	labelDockerNetwork            = "traefik.docker.network"
+	labelBackendLoadBalancerSwarm = "traefik.backend.loadbalancer.swarm"
+	labelDockerComposeProject     = "com.docker.compose.project"
+	labelDockerComposeService     = "com.docker.compose.service"
+)
+
 func (p *Provider) buildConfigurationV2(containersInspected []dockerData) *types.Configuration {
 	dockerFuncMap := template.FuncMap{
 		"getSubDomain":     getSubDomain,

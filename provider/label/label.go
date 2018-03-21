@@ -37,7 +37,7 @@ const (
 
 var (
 	// RoadPropertiesRegexp used to extract the name of the road and the name of the property for this road
-	// All properties are under the format traefik.<roadname>.frontend.*= except the port/portIndex/weight/protocol/backend directly after traefik.<roadname>.
+	// All properties are under the format traefik.<road_name>.frontend.*= except the port/portIndex/weight/protocol/backend directly after traefik.<roadname>.
 	RoadPropertiesRegexp = regexp.MustCompile(`^traefik\.(?P<service_name>.+?)\.(?P<property_name>port|portIndex|weight|protocol|backend|frontend\.(.+))$`)
 
 	// PortRegexp used to extract the port label of the road
@@ -453,23 +453,23 @@ func ExtractTraefikLabels(originLabels map[string]string) RoadProperties {
 			// Classic labels
 			allLabels[""][name] = value
 		} else {
-			// services labels
-			var serviceName string
+			// roads labels
+			var roadName string
 			var propertyName string
 			for i, name := range RoadPropertiesRegexp.SubexpNames() {
 				if i != 0 {
 					if name == "service_name" {
-						serviceName = matches[i]
+						roadName = matches[i]
 					} else if name == "property_name" {
 						propertyName = matches[i]
 					}
 				}
 			}
 
-			if _, ok := allLabels[serviceName]; !ok {
-				allLabels[serviceName] = make(RoadPropertyValues)
+			if _, ok := allLabels[roadName]; !ok {
+				allLabels[roadName] = make(RoadPropertyValues)
 			}
-			allLabels[serviceName][Prefix+propertyName] = value
+			allLabels[roadName][Prefix+propertyName] = value
 		}
 	}
 	log.Debug(originLabels, allLabels)
