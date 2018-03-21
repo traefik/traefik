@@ -1,5 +1,5 @@
 boulder:
-    image: containous/boulder:containous-fork
+    image: containous/boulder:acmev2
     environment:
         FAKE_DNS: ${DOCKER_HOST_IP}
         PKCS11_PROXY_SOCKET: tcp://boulder-hsm:5657
@@ -8,37 +8,42 @@ boulder:
       - boulder:127.0.0.1
     ports:
       - 4000:4000 # ACME
+      - 4001:4001 # ACMEv2
       - 4002:4002 # OCSP
       - 4003:4003 # OCSP
+      - 4430:4430 # ACME via HTTPS
+      - 4431:4431 # ACMEv2 via HTTPS
       - 4500:4500 # ct-test-srv
+      - 6000:6000 # gsb-test-srv
       - 8000:8000 # debug ports
       - 8001:8001
       - 8002:8002
       - 8003:8003
       - 8004:8004
+      - 8005:8005
+      - 8006:8006
+      - 8008:8008
+      - 8009:8009
+      - 8010:8010
       - 8055:8055 # dns-test-srv updates
       - 9380:9380 # mail-test-srv
       - 9381:9381 # mail-test-srv
     links:
       - bhsm:boulder-hsm
       - bmysql:boulder-mysql
-      - brabbitmq:boulder-rabbitmq
 
 bhsm:
     # To minimize the fetching of various layers this should match
     # the FROM image and tag in boulder/Dockerfile
-    image: letsencrypt/boulder-tools:2016-11-02
+    image: letsencrypt/boulder-tools:2018-03-07
     environment:
         PKCS11_DAEMON_SOCKET: tcp://0.0.0.0:5657
-    command: /usr/local/bin/pkcs11-daemon /usr/lib/softhsm/libsofthsm.so
+    command: /usr/local/bin/pkcs11-daemon /usr/lib/softhsm/libsofthsm2.so
     expose:
       - 5657
 bmysql:
     image: mariadb:10.1
     environment:
         MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    command: mysqld --bind-address=0.0.0.0
     log_driver: none
-brabbitmq:
-    image: rabbitmq:3-alpine
-    environment:
-        RABBITMQ_NODE_IP_ADDRESS: "0.0.0.0"

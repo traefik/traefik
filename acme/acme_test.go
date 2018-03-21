@@ -299,10 +299,15 @@ llJh9MC0svjevGtNlxJoE3lmEQIhAKXy1wfZ32/XtcrnENPvi6lzxI0T94X7s5pP3aCoPPoJAiEAl
 cijFkALeQp/qyeXdFld2v9gUN3eCgljgcl0QweRoIc=---`)
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{
-"new-authz": "https://foo/acme/new-authz",
-"new-cert": "https://foo/acme/new-cert",
-"new-reg": "https://foo/acme/new-reg",
-"revoke-cert": "https://foo/acme/revoke-cert"
+  "GPHhmRVEDas": "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417",
+  "keyChange": "https://foo/acme/key-change",
+  "meta": {
+    "termsOfService": "https://boulder:4431/terms/v7"
+  },
+  "newAccount": "https://foo/acme/new-acct",
+  "newNonce": "https://foo/acme/new-nonce",
+  "newOrder": "https://foo/acme/new-order",
+  "revokeCert": "https://foo/acme/revoke-cert"
 }`))
 	}))
 	defer ts.Close()
