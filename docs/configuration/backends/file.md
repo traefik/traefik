@@ -54,7 +54,10 @@ Træfik can be configured with a file.
       "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
       "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
     ]
-    whitelistSourceRange = ["10.42.0.0/16", "152.89.1.33/32", "afed:be44::/16"]
+
+    [frontends.frontend2.whiteList]
+      sourceRange = ["10.42.0.0/16", "152.89.1.33/32", "afed:be44::/16"]
+      useXForwardedFor = true
 
     [frontends.frontend1.routes]
       [frontends.frontend1.routes.route0]
