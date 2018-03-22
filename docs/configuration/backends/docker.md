@@ -261,11 +261,11 @@ Segment labels are overriding the default behavior.
 
 | Label                                                                     | Description                                                                                      |
 |---------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|
-| `traefik.<segment_name>.port=PORT`                                        | Overrides `traefik.port`. If several ports need to be exposed, the service labels could be used. |
+| `traefik.<segment_name>.port=PORT`                                        | Overrides `traefik.port`. If several ports need to be exposed, the segment labels could be used. |
 | `traefik.<segment_name>.protocol`                                         | Overrides `traefik.protocol`.                                                                    |
-| `traefik.<segment_name>.weight`                                           | Assign this service weight. Overrides `traefik.weight`.                                          |
+| `traefik.<segment_name>.weight`                                           | Assign this segment weight. Overrides `traefik.weight`.                                          |
 | `traefik.<segment_name>.frontend.auth.basic`                              | Sets a Basic Auth for that frontend                                                              |
-| `traefik.<segment_name>.frontend.backend=BACKEND`                         | Assign this service frontend to `BACKEND`. Default is to assign to the service backend.          |
+| `traefik.<segment_name>.frontend.backend=BACKEND`                         | Assign this segment frontend to `BACKEND`. Default is to assign to the segment backend.          |
 | `traefik.<segment_name>.frontend.entryPoints`                             | Overrides `traefik.frontend.entrypoints`                                                         |
 | `traefik.<segment_name>.frontend.errors.<name>.backend=NAME`              | See [custom error pages](/configuration/commons/#custom-error-pages) section.                    |
 | `traefik.<segment_name>.frontend.errors.<name>.query=PATH`                | See [custom error pages](/configuration/commons/#custom-error-pages) section.                    |
@@ -288,8 +288,8 @@ Segment labels are overriding the default behavior.
 
 | Label                                                                | Description                                                                                                                                                                         |
 |----------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `traefik.<service_name>.frontend.headers.customRequestHeaders=EXPR ` | Provides the container with custom request headers that will be appended to each request forwarded to the container.<br>Format: <code>HEADER:value&vert;&vert;HEADER2:value2</code> |
-| `traefik.<service_name>.frontend.headers.customResponseHeaders=EXPR` | Appends the headers to each response returned by the container, before forwarding the response to the client.<br>Format: <code>HEADER:value&vert;&vert;HEADER2:value2</code>        |
+| `traefik.<segment_name>.frontend.headers.customRequestHeaders=EXPR ` | Provides the container with custom request headers that will be appended to each request forwarded to the container.<br>Format: <code>HEADER:value&vert;&vert;HEADER2:value2</code> |
+| `traefik.<segment_name>.frontend.headers.customResponseHeaders=EXPR` | Appends the headers to each response returned by the container, before forwarding the response to the client.<br>Format: <code>HEADER:value&vert;&vert;HEADER2:value2</code>        |
 
 #### Security Headers
 

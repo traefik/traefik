@@ -32,8 +32,8 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 				containerJSON(
 					name("foo"),
 					labels(map[string]string{
-						"traefik.service.port":                 "2503",
-						"traefik.service.frontend.entryPoints": "http,https",
+						"traefik.sauternes.port":                 "2503",
+						"traefik.sauternes.frontend.entryPoints": "http,https",
 					}),
 					ports(nat.PortMap{
 						"80/tcp": {},
@@ -42,22 +42,22 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 				),
 			},
 			expectedFrontends: map[string]*types.Frontend{
-				"frontend-foo-foo-service": {
-					Backend:        "backend-foo-foo-service",
+				"frontend-foo-foo-sauternes": {
+					Backend:        "backend-foo-foo-sauternes",
 					PassHostHeader: true,
 					EntryPoints:    []string{"http", "https"},
 					BasicAuth:      []string{},
 					Routes: map[string]types.Route{
-						"route-frontend-foo-foo-service": {
+						"route-frontend-foo-foo-sauternes": {
 							Rule: "Host:foo.docker.localhost",
 						},
 					},
 				},
 			},
 			expectedBackends: map[string]*types.Backend{
-				"backend-foo-foo-service": {
+				"backend-foo-foo-sauternes": {
 					Servers: map[string]types.Server{
-						"server-service-foo-0": {
+						"server-sauternes-foo-0": {
 							URL:    "http://127.0.0.1:2503",
 							Weight: 0,
 						},
@@ -72,57 +72,57 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 				containerJSON(
 					name("foo"),
 					labels(map[string]string{
-						label.Prefix + "service." + label.SuffixPort:     "666",
-						label.Prefix + "service." + label.SuffixProtocol: "https",
-						label.Prefix + "service." + label.SuffixWeight:   "12",
+						label.Prefix + "sauternes." + label.SuffixPort:     "666",
+						label.Prefix + "sauternes." + label.SuffixProtocol: "https",
+						label.Prefix + "sauternes." + label.SuffixWeight:   "12",
 
-						label.Prefix + "service." + label.SuffixFrontendAuthBasic:            "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						label.Prefix + "service." + label.SuffixFrontendEntryPoints:          "http,https",
-						label.Prefix + "service." + label.SuffixFrontendPassHostHeader:       "true",
-						label.Prefix + "service." + label.SuffixFrontendPassTLSCert:          "true",
-						label.Prefix + "service." + label.SuffixFrontendPriority:             "666",
-						label.Prefix + "service." + label.SuffixFrontendRedirectEntryPoint:   "https",
-						label.Prefix + "service." + label.SuffixFrontendRedirectRegex:        "nope",
-						label.Prefix + "service." + label.SuffixFrontendRedirectReplacement:  "nope",
-						label.Prefix + "service." + label.SuffixFrontendRedirectPermanent:    "true",
-						label.Prefix + "service." + label.SuffixFrontendWhitelistSourceRange: "10.10.10.10",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasic:            "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.Prefix + "sauternes." + label.SuffixFrontendEntryPoints:          "http,https",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassHostHeader:       "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSCert:          "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPriority:             "666",
+						label.Prefix + "sauternes." + label.SuffixFrontendRedirectEntryPoint:   "https",
+						label.Prefix + "sauternes." + label.SuffixFrontendRedirectRegex:        "nope",
+						label.Prefix + "sauternes." + label.SuffixFrontendRedirectReplacement:  "nope",
+						label.Prefix + "sauternes." + label.SuffixFrontendRedirectPermanent:    "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendWhitelistSourceRange: "10.10.10.10",
 
-						label.Prefix + "service." + label.SuffixFrontendRequestHeaders:                 "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
-						label.Prefix + "service." + label.SuffixFrontendResponseHeaders:                "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
-						label.Prefix + "service." + label.SuffixFrontendHeadersSSLProxyHeaders:         "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
-						label.Prefix + "service." + label.SuffixFrontendHeadersAllowedHosts:            "foo,bar,bor",
-						label.Prefix + "service." + label.SuffixFrontendHeadersHostsProxyHeaders:       "foo,bar,bor",
-						label.Prefix + "service." + label.SuffixFrontendHeadersSSLHost:                 "foo",
-						label.Prefix + "service." + label.SuffixFrontendHeadersCustomFrameOptionsValue: "foo",
-						label.Prefix + "service." + label.SuffixFrontendHeadersContentSecurityPolicy:   "foo",
-						label.Prefix + "service." + label.SuffixFrontendHeadersPublicKey:               "foo",
-						label.Prefix + "service." + label.SuffixFrontendHeadersReferrerPolicy:          "foo",
-						label.Prefix + "service." + label.SuffixFrontendHeadersCustomBrowserXSSValue:   "foo",
-						label.Prefix + "service." + label.SuffixFrontendHeadersSTSSeconds:              "666",
-						label.Prefix + "service." + label.SuffixFrontendHeadersSSLRedirect:             "true",
-						label.Prefix + "service." + label.SuffixFrontendHeadersSSLTemporaryRedirect:    "true",
-						label.Prefix + "service." + label.SuffixFrontendHeadersSTSIncludeSubdomains:    "true",
-						label.Prefix + "service." + label.SuffixFrontendHeadersSTSPreload:              "true",
-						label.Prefix + "service." + label.SuffixFrontendHeadersForceSTSHeader:          "true",
-						label.Prefix + "service." + label.SuffixFrontendHeadersFrameDeny:               "true",
-						label.Prefix + "service." + label.SuffixFrontendHeadersContentTypeNosniff:      "true",
-						label.Prefix + "service." + label.SuffixFrontendHeadersBrowserXSSFilter:        "true",
-						label.Prefix + "service." + label.SuffixFrontendHeadersIsDevelopment:           "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendRequestHeaders:                 "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
+						label.Prefix + "sauternes." + label.SuffixFrontendResponseHeaders:                "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
+						label.Prefix + "sauternes." + label.SuffixFrontendHeadersSSLProxyHeaders:         "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
+						label.Prefix + "sauternes." + label.SuffixFrontendHeadersAllowedHosts:            "foo,bar,bor",
+						label.Prefix + "sauternes." + label.SuffixFrontendHeadersHostsProxyHeaders:       "foo,bar,bor",
+						label.Prefix + "sauternes." + label.SuffixFrontendHeadersSSLHost:                 "foo",
+						label.Prefix + "sauternes." + label.SuffixFrontendHeadersCustomFrameOptionsValue: "foo",
+						label.Prefix + "sauternes." + label.SuffixFrontendHeadersContentSecurityPolicy:   "foo",
+						label.Prefix + "sauternes." + label.SuffixFrontendHeadersPublicKey:               "foo",
+						label.Prefix + "sauternes." + label.SuffixFrontendHeadersReferrerPolicy:          "foo",
+						label.Prefix + "sauternes." + label.SuffixFrontendHeadersCustomBrowserXSSValue:   "foo",
+						label.Prefix + "sauternes." + label.SuffixFrontendHeadersSTSSeconds:              "666",
+						label.Prefix + "sauternes." + label.SuffixFrontendHeadersSSLRedirect:             "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendHeadersSSLTemporaryRedirect:    "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendHeadersSTSIncludeSubdomains:    "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendHeadersSTSPreload:              "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendHeadersForceSTSHeader:          "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendHeadersFrameDeny:               "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendHeadersContentTypeNosniff:      "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendHeadersBrowserXSSFilter:        "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendHeadersIsDevelopment:           "true",
 
-						label.Prefix + "service." + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageStatus:  "404",
-						label.Prefix + "service." + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageBackend: "foobar",
-						label.Prefix + "service." + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageQuery:   "foo_query",
-						label.Prefix + "service." + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageStatus:  "500,600",
-						label.Prefix + "service." + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageBackend: "foobar",
-						label.Prefix + "service." + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageQuery:   "bar_query",
+						label.Prefix + "sauternes." + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageStatus:  "404",
+						label.Prefix + "sauternes." + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageBackend: "foobar",
+						label.Prefix + "sauternes." + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageQuery:   "foo_query",
+						label.Prefix + "sauternes." + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageStatus:  "500,600",
+						label.Prefix + "sauternes." + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageBackend: "foobar",
+						label.Prefix + "sauternes." + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageQuery:   "bar_query",
 
-						label.Prefix + "service." + label.SuffixFrontendRateLimitExtractorFunc:                          "client.ip",
-						label.Prefix + "service." + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitPeriod:  "6",
-						label.Prefix + "service." + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitAverage: "12",
-						label.Prefix + "service." + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitBurst:   "18",
-						label.Prefix + "service." + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitPeriod:  "3",
-						label.Prefix + "service." + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitAverage: "6",
-						label.Prefix + "service." + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitBurst:   "9",
+						label.Prefix + "sauternes." + label.SuffixFrontendRateLimitExtractorFunc:                          "client.ip",
+						label.Prefix + "sauternes." + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitPeriod:  "6",
+						label.Prefix + "sauternes." + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitAverage: "12",
+						label.Prefix + "sauternes." + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitBurst:   "18",
+						label.Prefix + "sauternes." + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitPeriod:  "3",
+						label.Prefix + "sauternes." + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitAverage: "6",
+						label.Prefix + "sauternes." + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitBurst:   "9",
 					}),
 					ports(nat.PortMap{
 						"80/tcp": {},
@@ -131,8 +131,8 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 				),
 			},
 			expectedFrontends: map[string]*types.Frontend{
-				"frontend-foo-foo-service": {
-					Backend: "backend-foo-foo-service",
+				"frontend-foo-foo-sauternes": {
+					Backend: "backend-foo-foo-sauternes",
 					EntryPoints: []string{
 						"http",
 						"https",
@@ -222,16 +222,16 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 					},
 
 					Routes: map[string]types.Route{
-						"route-frontend-foo-foo-service": {
+						"route-frontend-foo-foo-sauternes": {
 							Rule: "Host:foo.docker.localhost",
 						},
 					},
 				},
 			},
 			expectedBackends: map[string]*types.Backend{
-				"backend-foo-foo-service": {
+				"backend-foo-foo-sauternes": {
 					Servers: map[string]types.Server{
-						"server-service-foo-0": {
+						"server-sauternes-foo-0": {
 							URL:    "https://127.0.0.1:666",
 							Weight: 12,
 						},
@@ -246,16 +246,16 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 				containerJSON(
 					name("test1"),
 					labels(map[string]string{
-						"traefik.service.port":                         "2503",
-						"traefik.service.protocol":                     "https",
-						"traefik.service.weight":                       "80",
-						"traefik.service.frontend.backend":             "foobar",
-						"traefik.service.frontend.passHostHeader":      "false",
-						"traefik.service.frontend.rule":                "Path:/mypath",
-						"traefik.service.frontend.priority":            "5000",
-						"traefik.service.frontend.entryPoints":         "http,https,ws",
-						"traefik.service.frontend.auth.basic":          "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						"traefik.service.frontend.redirect.entryPoint": "https",
+						"traefik.sauternes.port":                         "2503",
+						"traefik.sauternes.protocol":                     "https",
+						"traefik.sauternes.weight":                       "80",
+						"traefik.sauternes.frontend.backend":             "foobar",
+						"traefik.sauternes.frontend.passHostHeader":      "false",
+						"traefik.sauternes.frontend.rule":                "Path:/mypath",
+						"traefik.sauternes.frontend.priority":            "5000",
+						"traefik.sauternes.frontend.entryPoints":         "http,https,ws",
+						"traefik.sauternes.frontend.auth.basic":          "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						"traefik.sauternes.frontend.redirect.entryPoint": "https",
 					}),
 					ports(nat.PortMap{
 						"80/tcp": {},
@@ -265,9 +265,9 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 				containerJSON(
 					name("test2"),
 					labels(map[string]string{
-						"traefik.anotherservice.port":          "8079",
-						"traefik.anotherservice.weight":        "33",
-						"traefik.anotherservice.frontend.rule": "Path:/anotherpath",
+						"traefik.anothersauternes.port":          "8079",
+						"traefik.anothersauternes.weight":        "33",
+						"traefik.anothersauternes.frontend.rule": "Path:/anotherpath",
 					}),
 					ports(nat.PortMap{
 						"80/tcp": {},
@@ -291,13 +291,13 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 						},
 					},
 				},
-				"frontend-test2-test2-anotherservice": {
-					Backend:        "backend-test2-test2-anotherservice",
+				"frontend-test2-test2-anothersauternes": {
+					Backend:        "backend-test2-test2-anothersauternes",
 					PassHostHeader: true,
 					EntryPoints:    []string{},
 					BasicAuth:      []string{},
 					Routes: map[string]types.Route{
-						"route-frontend-test2-test2-anotherservice": {
+						"route-frontend-test2-test2-anothersauternes": {
 							Rule: "Path:/anotherpath",
 						},
 					},
@@ -306,16 +306,16 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-test1-foobar": {
 					Servers: map[string]types.Server{
-						"server-service-test1-0": {
+						"server-sauternes-test1-0": {
 							URL:    "https://127.0.0.1:2503",
 							Weight: 80,
 						},
 					},
 					CircuitBreaker: nil,
 				},
-				"backend-test2-test2-anotherservice": {
+				"backend-test2-test2-anothersauternes": {
 					Servers: map[string]types.Server{
-						"server-anotherservice-test2-0": {
+						"server-anothersauternes-test2-0": {
 							URL:    "http://127.0.0.1:8079",
 							Weight: 33,
 						},

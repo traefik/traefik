@@ -241,6 +241,7 @@ func TestDockerBuildConfigurationV1(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			var dockerDataList []dockerData
 			for _, cont := range test.containers {
 				dData := parseContainer(cont)
@@ -563,7 +564,9 @@ func TestDockerTraefikFilterV1(t *testing.T) {
 		test := test
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
+
 			dData := parseContainer(test.container)
+
 			actual := test.provider.containerFilterV1(dData)
 			if actual != test.expected {
 				t.Errorf("expected %v for %+v, got %+v", test.expected, test, actual)
@@ -603,7 +606,6 @@ func TestDockerGetFuncStringLabelV1(t *testing.T) {
 			dData := parseContainer(test.container)
 
 			actual := getFuncStringLabelV1(test.labelName, test.defaultValue)(dData)
-
 			if actual != test.expected {
 				t.Errorf("got %q, expected %q", actual, test.expected)
 			}
@@ -668,10 +670,10 @@ func TestDockerGetSliceStringLabelV1(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			dData := parseContainer(test.container)
 
 			actual := getFuncSliceStringLabelV1(test.labelName)(dData)
-
 			if !reflect.DeepEqual(actual, test.expected) {
 				t.Errorf("expected %q, got %q", test.expected, actual)
 			}
@@ -725,10 +727,13 @@ func TestDockerGetFrontendNameV1(t *testing.T) {
 		test := test
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
+
 			dData := parseContainer(test.container)
+
 			provider := &Provider{
 				Domain: "docker.localhost",
 			}
+
 			actual := provider.getFrontendNameV1(dData, 0)
 			if actual != test.expected {
 				t.Errorf("expected %q, got %q", test.expected, actual)
@@ -774,10 +779,13 @@ func TestDockerGetFrontendRuleV1(t *testing.T) {
 		test := test
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
+
 			dData := parseContainer(test.container)
+
 			provider := &Provider{
 				Domain: "docker.localhost",
 			}
+
 			actual := provider.getFrontendRuleV1(dData)
 			if actual != test.expected {
 				t.Errorf("expected %q, got %q", test.expected, actual)
@@ -818,7 +826,9 @@ func TestDockerGetBackendNameV1(t *testing.T) {
 		test := test
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
+
 			dData := parseContainer(test.container)
+
 			actual := getBackendNameV1(dData)
 			if actual != test.expected {
 				t.Errorf("expected %q, got %q", test.expected, actual)
@@ -943,7 +953,9 @@ func TestDockerGetPortV1(t *testing.T) {
 		e := e
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
+
 			dData := parseContainer(e.container)
+
 			actual := getPortV1(dData)
 			if actual != e.expected {
 				t.Errorf("expected %q, got %q", e.expected, actual)

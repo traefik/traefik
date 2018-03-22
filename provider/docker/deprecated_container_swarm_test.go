@@ -252,6 +252,7 @@ func TestSwarmBuildConfigurationV1(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			var dockerDataList []dockerData
 			for _, service := range test.services {
 				dData := parseService(service, test.networks)
@@ -398,7 +399,9 @@ func TestSwarmTraefikFilterV1(t *testing.T) {
 		test := test
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
+
 			dData := parseService(test.service, test.networks)
+
 			actual := test.provider.containerFilterV1(dData)
 			if actual != test.expected {
 				t.Errorf("expected %v for %+v, got %+v", test.expected, test, actual)
@@ -496,11 +499,14 @@ func TestSwarmGetFrontendNameV1(t *testing.T) {
 		test := test
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
+
 			dData := parseService(test.service, test.networks)
+
 			provider := &Provider{
 				Domain:    "docker.localhost",
 				SwarmMode: true,
 			}
+
 			actual := provider.getFrontendNameV1(dData, 0)
 			if actual != test.expected {
 				t.Errorf("expected %q, got %q", test.expected, actual)
@@ -545,11 +551,14 @@ func TestSwarmGetFrontendRuleV1(t *testing.T) {
 		test := test
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
+
 			dData := parseService(test.service, test.networks)
+
 			provider := &Provider{
 				Domain:    "docker.localhost",
 				SwarmMode: true,
 			}
+
 			actual := provider.getFrontendRuleV1(dData)
 			if actual != test.expected {
 				t.Errorf("expected %q, got %q", test.expected, actual)
@@ -587,7 +596,9 @@ func TestSwarmGetBackendNameV1(t *testing.T) {
 		test := test
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
+
 			dData := parseService(test.service, test.networks)
+
 			actual := getBackendNameV1(dData)
 			if actual != test.expected {
 				t.Errorf("expected %q, got %q", test.expected, actual)
@@ -646,10 +657,13 @@ func TestSwarmGetIPAddressV1(t *testing.T) {
 		test := test
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
+
 			dData := parseService(test.service, test.networks)
+
 			provider := &Provider{
 				SwarmMode: true,
 			}
+
 			actual := provider.getIPAddress(dData)
 			if actual != test.expected {
 				t.Errorf("expected %q, got %q", test.expected, actual)
@@ -680,7 +694,9 @@ func TestSwarmGetPortV1(t *testing.T) {
 		test := test
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
+
 			dData := parseService(test.service, test.networks)
+
 			actual := getPortV1(dData)
 			if actual != test.expected {
 				t.Errorf("expected %q, got %q", test.expected, actual)
