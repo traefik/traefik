@@ -88,4 +88,4 @@ Otherwise, you are likely to expose _all_ services via this entry point.
 
 ### Using ping for external Load-balancer rotation health check
 
-If you are running traefik behind a external Load-balancer, and want to configure rotation health check on the Load-balancer to take a traefik instance out of rotation gracefully, you can configure [lifecycle.requestAcceptGraceTimeout](https://github.com/containous/traefik/blob/master/docs/configuration/commons.md#life-cycle) and the ping endpoint will return `503` response on traefik server termination, so that the Load-balancer can take the terminating traefik instance out of rotation, before it stops responding.
+If you are running traefik behind a external Load-balancer, and want to configure rotation health check on the Load-balancer to take a traefik instance out of rotation gracefully, you can configure [lifecycle.requestAcceptGraceTimeout](/configuration/commons.md#life-cycle) and the ping endpoint will return `503` response on traefik server termination, so that the Load-balancer can take the terminating traefik instance out of rotation, before it stops responding.
