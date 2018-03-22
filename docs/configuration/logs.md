@@ -124,7 +124,7 @@ filePath = "/path/to/access.log"
 format = "json"
 ```
 
-To filter logs:
+To filter logs you can specify a set of filters which are logically "OR-connected". Thus, specifying multiple filters will keep more access logs than specifying only one:
 ```toml
 [accessLog]
 filePath = "/path/to/access.log"
