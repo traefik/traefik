@@ -326,8 +326,8 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 			}
 			serverMiddlewares = append(serverMiddlewares, s.globalConfiguration.API.StatsRecorder)
 		}
-
 	}
+
 	if s.globalConfiguration.EntryPoints[newServerEntryPointName].Auth != nil {
 		authMiddleware, err := mauth.NewAuthenticator(s.globalConfiguration.EntryPoints[newServerEntryPointName].Auth, s.tracingMiddleware)
 		if err != nil {
@@ -336,17 +336,22 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 		serverMiddlewares = append(serverMiddlewares, s.wrapNegroniHandlerWithAccessLog(authMiddleware, fmt.Sprintf("Auth for entrypoint %s", newServerEntryPointName)))
 		serverInternalMiddlewares = append(serverInternalMiddlewares, authMiddleware)
 	}
+
 	if s.globalConfiguration.EntryPoints[newServerEntryPointName].Compress {
 		serverMiddlewares = append(serverMiddlewares, &middlewares.Compress{})
 	}
-	if len(s.globalConfiguration.EntryPoints[newServerEntryPointName].WhitelistSourceRange) > 0 {
-		ipWhitelistMiddleware, err := middlewares.NewIPWhitelister(s.globalConfiguration.EntryPoints[newServerEntryPointName].WhitelistSourceRange)
-		if err != nil {
-			log.Fatal("Error starting server: ", err)
-		}
+
+	ipWhitelistMiddleware, err := buildIPWhiteLister(
+		s.globalConfiguration.EntryPoints[newServerEntryPointName].WhiteList,
+		s.globalConfiguration.EntryPoints[newServerEntryPointName].WhitelistSourceRange)
+	if err != nil {
+		log.Fatal("Error starting server: ", err)
+	}
+	if ipWhitelistMiddleware != nil {
 		serverMiddlewares = append(serverMiddlewares, s.wrapNegroniHandlerWithAccessLog(ipWhitelistMiddleware, fmt.Sprintf("ipwhitelister for entrypoint %s", newServerEntryPointName)))
 		serverInternalMiddlewares = append(serverInternalMiddlewares, ipWhitelistMiddleware)
 	}
+
 	newSrv, listener, err := s.prepareServer(newServerEntryPointName, s.globalConfiguration.EntryPoints[newServerEntryPointName], newServerEntryPoint.httpRouter, serverMiddlewares, serverInternalMiddlewares)
 	if err != nil {
 		log.Fatal("Error preparing server: ", err)
@@ -794,7 +799,7 @@ func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.
 	}
 
 	if entryPoint.ProxyProtocol != nil {
-		IPs, err := whitelist.NewIP(entryPoint.ProxyProtocol.TrustedIPs, entryPoint.ProxyProtocol.Insecure)
+		IPs, err := whitelist.NewIP(entryPoint.ProxyProtocol.TrustedIPs, entryPoint.ProxyProtocol.Insecure, false)
 		if err != nil {
 			return nil, nil, fmt.Errorf("error creating whitelist: %s", err)
 		}
@@ -1137,13 +1142,16 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						n.Use(middlewares.NewBackendMetricsMiddleware(s.metricsRegistry, frontend.Backend))
 					}
 
-					ipWhitelistMiddleware, err := configureIPWhitelistMiddleware(frontend.WhitelistSourceRange)
+					ipWhitelistMiddleware, err := buildIPWhiteLister(frontend.WhiteList, frontend.WhitelistSourceRange)
 					if err != nil {
 						log.Errorf("Error creating IP Whitelister: %s", err)
 					} else if ipWhitelistMiddleware != nil {
-						ipWhitelistMiddleware = s.wrapNegroniHandlerWithAccessLog(ipWhitelistMiddleware, fmt.Sprintf("ipwhitelister for %s", frontendName))
-						n.Use(s.tracingMiddleware.NewNegroniHandlerWrapper("IP whitelist", ipWhitelistMiddleware, false))
-						log.Infof("Configured IP Whitelists: %s", frontend.WhitelistSourceRange)
+						n.Use(
+							s.tracingMiddleware.NewNegroniHandlerWrapper(
+								"IP whitelist",
+								s.wrapNegroniHandlerWithAccessLog(ipWhitelistMiddleware, fmt.Sprintf("ipwhitelister for %s", frontendName)),
+								false))
+						log.Debugf("Configured IP Whitelists: %s", frontend.WhitelistSourceRange)
 					}
 
 					if frontend.Redirect != nil && entryPointName != frontend.Redirect.EntryPoint {
@@ -1256,18 +1264,13 @@ func (s *Server) configureLBServers(lb healthcheck.LoadBalancer, config *types.C
 	return nil
 }
 
-func configureIPWhitelistMiddleware(whitelistSourceRanges []string) (negroni.Handler, error) {
-	if len(whitelistSourceRanges) > 0 {
-		ipSourceRanges := whitelistSourceRanges
-		ipWhitelistMiddleware, err := middlewares.NewIPWhitelister(ipSourceRanges)
-
-		if err != nil {
-			return nil, err
-		}
-
-		return ipWhitelistMiddleware, nil
+func buildIPWhiteLister(whiteList *types.WhiteList, wlRange []string) (*middlewares.IPWhiteLister, error) {
+	if whiteList != nil &&
+		len(whiteList.SourceRange) > 0 {
+		return middlewares.NewIPWhiteLister(whiteList.SourceRange, whiteList.UseXForwardedFor)
+	} else if len(wlRange) > 0 {
+		return middlewares.NewIPWhiteLister(wlRange, false)
 	}
-
 	return nil, nil
 }
 

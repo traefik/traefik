@@ -12,13 +12,26 @@ import (
 // EntryPoint holds an entry point configuration of the reverse proxy (ip, port, TLS...)
 type EntryPoint struct {
 	Address              string
-	TLS                  *tls.TLS        `export:"true"`
-	Redirect             *types.Redirect `export:"true"`
-	Auth                 *types.Auth     `export:"true"`
-	WhitelistSourceRange []string
+	TLS                  *tls.TLS          `export:"true"`
+	Redirect             *types.Redirect   `export:"true"`
+	Auth                 *types.Auth       `export:"true"`
+	WhitelistSourceRange []string          // Deprecated
+	WhiteList            *types.WhiteList  `export:"true"`
 	Compress             bool              `export:"true"`
 	ProxyProtocol        *ProxyProtocol    `export:"true"`
 	ForwardedHeaders     *ForwardedHeaders `export:"true"`
+}
+
+// ProxyProtocol contains Proxy-Protocol configuration
+type ProxyProtocol struct {
+	Insecure   bool `export:"true"`
+	TrustedIPs []string
+}
+
+// ForwardedHeaders Trust client forwarding headers
+type ForwardedHeaders struct {
+	Insecure   bool `export:"true"`
+	TrustedIPs []string
 }
 
 // EntryPoints holds entry points configuration of the reverse proxy (ip, port, TLS...)
@@ -53,6 +66,7 @@ func (ep *EntryPoints) Set(value string) error {
 
 	var whiteListSourceRange []string
 	if len(result["whitelistsourcerange"]) > 0 {
+		log.Warnf("Deprecated configuration found: %s. Please use %s.", "whiteListSourceRange", "whiteList.sourceRange")
 		whiteListSourceRange = strings.Split(result["whitelistsourcerange"], ",")
 	}
 
@@ -70,11 +84,23 @@ func (ep *EntryPoints) Set(value string) error {
 		Redirect:             makeEntryPointRedirect(result),
 		Compress:             compress,
 		WhitelistSourceRange: whiteListSourceRange,
+		WhiteList:            makeWhiteList(result),
 		ProxyProtocol:        makeEntryPointProxyProtocol(result),
 		ForwardedHeaders:     makeEntryPointForwardedHeaders(result),
 	}
 
 	return nil
+}
+
+func makeWhiteList(result map[string]string) *types.WhiteList {
+	var wl *types.WhiteList
+	if rawRange, ok := result["whitelist_sourcerange"]; ok {
+		wl = &types.WhiteList{
+			SourceRange:      strings.Split(rawRange, ","),
+			UseXForwardedFor: toBool(result, "whitelist_usexforwardedfor"),
+		}
+	}
+	return wl
 }
 
 func makeEntryPointAuth(result map[string]string) *types.Auth {

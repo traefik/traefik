@@ -28,7 +28,6 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 				"Redirect.Replacement:http://mydomain/$1 " +
 				"Redirect.Permanent:true " +
 				"Compress:true " +
-				"WhiteListSourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16 " +
 				"ProxyProtocol.TrustedIPs:192.168.0.1 " +
 				"ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24 " +
 				"Auth.Basic.Users:test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0 " +
@@ -40,7 +39,10 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 				"Auth.Forward.TLS.CAOptional:true " +
 				"Auth.Forward.TLS.Cert:path/to/foo.cert " +
 				"Auth.Forward.TLS.Key:path/to/foo.key " +
-				"Auth.Forward.TLS.InsecureSkipVerify:true ",
+				"Auth.Forward.TLS.InsecureSkipVerify:true " +
+				"WhiteListSourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16 " +
+				"whiteList.sourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16 " +
+				"whiteList.useXForwardedFor:true ",
 			expectedResult: map[string]string{
 				"address":                             ":8000",
 				"auth_basic_users":                    "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
@@ -63,9 +65,11 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 				"redirect_permanent":       "true",
 				"redirect_regex":           "http://localhost/(.*)",
 				"redirect_replacement":     "http://mydomain/$1",
-				"tls":                  "goo,gii",
-				"tls_acme":             "TLS",
-				"whitelistsourcerange": "10.42.0.0/16,152.89.1.33/32,afed:be44::/16",
+				"tls":                        "goo,gii",
+				"tls_acme":                   "TLS",
+				"whitelistsourcerange":       "10.42.0.0/16,152.89.1.33/32,afed:be44::/16",
+				"whitelist_sourcerange":      "10.42.0.0/16,152.89.1.33/32,afed:be44::/16",
+				"whitelist_usexforwardedfor": "true",
 			},
 		},
 		{
@@ -175,7 +179,6 @@ func TestEntryPoints_Set(t *testing.T) {
 				"Redirect.Replacement:http://mydomain/$1 " +
 				"Redirect.Permanent:true " +
 				"Compress:true " +
-				"WhiteListSourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16 " +
 				"ProxyProtocol.TrustedIPs:192.168.0.1 " +
 				"ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24 " +
 				"Auth.Basic.Users:test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0 " +
@@ -187,7 +190,10 @@ func TestEntryPoints_Set(t *testing.T) {
 				"Auth.Forward.TLS.CAOptional:true " +
 				"Auth.Forward.TLS.Cert:path/to/foo.cert " +
 				"Auth.Forward.TLS.Key:path/to/foo.key " +
-				"Auth.Forward.TLS.InsecureSkipVerify:true ",
+				"Auth.Forward.TLS.InsecureSkipVerify:true " +
+				"WhiteListSourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16 " +
+				"whiteList.sourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16 " +
+				"whiteList.useXForwardedFor:true ",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
 				Address: ":8000",
@@ -239,6 +245,14 @@ func TestEntryPoints_Set(t *testing.T) {
 					"10.42.0.0/16",
 					"152.89.1.33/32",
 					"afed:be44::/16",
+				},
+				WhiteList: &types.WhiteList{
+					SourceRange: []string{
+						"10.42.0.0/16",
+						"152.89.1.33/32",
+						"afed:be44::/16",
+					},
+					UseXForwardedFor: true,
 				},
 				Compress: true,
 				ProxyProtocol: &ProxyProtocol{

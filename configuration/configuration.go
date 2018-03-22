@@ -378,18 +378,6 @@ type ForwardingTimeouts struct {
 	ResponseHeaderTimeout flaeg.Duration `description:"The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists" export:"true"`
 }
 
-// ProxyProtocol contains Proxy-Protocol configuration
-type ProxyProtocol struct {
-	Insecure   bool
-	TrustedIPs []string
-}
-
-// ForwardedHeaders Trust client forwarding headers
-type ForwardedHeaders struct {
-	Insecure   bool
-	TrustedIPs []string
-}
-
 // LifeCycle contains configurations relevant to the lifecycle (such as the
 // shutdown phase) of Traefik.
 type LifeCycle struct {

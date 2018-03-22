@@ -61,6 +61,12 @@ type Buffering struct {
 	RetryExpression      string `json:"retryExpression,omitempty"`
 }
 
+// WhiteList contains white list configuration.
+type WhiteList struct {
+	SourceRange      []string `json:"sourceRange,omitempty"`
+	UseXForwardedFor bool     `json:"useXForwardedFor,omitempty" export:"true"`
+}
+
 // HealthCheck holds HealthCheck configuration
 type HealthCheck struct {
 	Path     string `json:"path,omitempty"`
@@ -89,7 +95,7 @@ type ServerRoute struct {
 	ReplacePathRegex   string
 }
 
-//ErrorPage holds custom error page configuration
+// ErrorPage holds custom error page configuration
 type ErrorPage struct {
 	Status  []string `json:"status,omitempty"`
 	Backend string   `json:"backend,omitempty"`
@@ -172,7 +178,8 @@ type Frontend struct {
 	PassTLSCert          bool                  `json:"passTLSCert,omitempty"`
 	Priority             int                   `json:"priority"`
 	BasicAuth            []string              `json:"basicAuth"`
-	WhitelistSourceRange []string              `json:"whitelistSourceRange,omitempty"`
+	WhitelistSourceRange []string              `json:"whitelistSourceRange,omitempty"` // Deprecated
+	WhiteList            *WhiteList            `json:"whiteList,omitempty"`
 	Headers              *Headers              `json:"headers,omitempty"`
 	Errors               map[string]*ErrorPage `json:"errors,omitempty"`
 	RateLimit            *RateLimit            `json:"ratelimit,omitempty"`
@@ -547,7 +554,7 @@ func NewHTTPCodeRanges(strBlocks []string) (HTTPCodeRanges, error) {
 	var blocks HTTPCodeRanges
 	for _, block := range strBlocks {
 		codes := strings.Split(block, "-")
-		//if only a single HTTP code was configured, assume the best and create the correct configuration on the user's behalf
+		// if only a single HTTP code was configured, assume the best and create the correct configuration on the user's behalf
 		if len(codes) == 1 {
 			codes = append(codes, codes[0])
 		}
