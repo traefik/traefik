@@ -55,8 +55,8 @@ type dockerData struct {
 	NetworkSettings networkSettings
 	Health          string
 	Node            *dockertypes.ContainerNode
-	RoadLabels      map[string]string
-	RoadName        string
+	SegmentLabels   map[string]string
+	SegmentName     string
 }
 
 // NetworkSettings holds the networks data to the Provider p

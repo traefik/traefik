@@ -467,8 +467,8 @@ func TestSwarmTraefikFilter(t *testing.T) {
 			t.Parallel()
 
 			dData := parseService(test.service, test.networks)
-			roadProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.RoadLabels = roadProperties[""]
+			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
+			dData.SegmentLabels = segmentProperties[""]
 
 			actual := test.provider.containerFilter(dData)
 			if actual != test.expected {
@@ -528,8 +528,8 @@ func TestSwarmGetFrontendName(t *testing.T) {
 			t.Parallel()
 
 			dData := parseService(test.service, test.networks)
-			roadProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.RoadLabels = roadProperties[""]
+			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
+			dData.SegmentLabels = segmentProperties[""]
 
 			provider := &Provider{
 				Domain:    "docker.localhost",
@@ -580,8 +580,8 @@ func TestSwarmGetFrontendRule(t *testing.T) {
 			t.Parallel()
 
 			dData := parseService(test.service, test.networks)
-			roadProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.RoadLabels = roadProperties[""]
+			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
+			dData.SegmentLabels = segmentProperties[""]
 
 			provider := &Provider{
 				Domain:    "docker.localhost",
@@ -625,8 +625,8 @@ func TestSwarmGetBackendName(t *testing.T) {
 			t.Parallel()
 
 			dData := parseService(test.service, test.networks)
-			roadProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.RoadLabels = roadProperties[""]
+			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
+			dData.SegmentLabels = segmentProperties[""]
 
 			actual := getBackendName(dData)
 			assert.Equal(t, test.expected, actual)
@@ -690,8 +690,8 @@ func TestSwarmGetIPAddress(t *testing.T) {
 			}
 
 			dData := parseService(test.service, test.networks)
-			roadProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.RoadLabels = roadProperties[""]
+			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
+			dData.SegmentLabels = segmentProperties[""]
 
 			actual := provider.getIPAddress(dData)
 			assert.Equal(t, test.expected, actual)
@@ -723,8 +723,8 @@ func TestSwarmGetPort(t *testing.T) {
 			t.Parallel()
 
 			dData := parseService(test.service, test.networks)
-			roadProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.RoadLabels = roadProperties[""]
+			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
+			dData.SegmentLabels = segmentProperties[""]
 
 			actual := getPort(dData)
 			assert.Equal(t, test.expected, actual)

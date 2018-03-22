@@ -632,8 +632,8 @@ func TestDockerTraefikFilter(t *testing.T) {
 			t.Parallel()
 
 			dData := parseContainer(test.container)
-			roadProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.RoadLabels = roadProperties[""]
+			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
+			dData.SegmentLabels = segmentProperties[""]
 
 			actual := test.provider.containerFilter(dData)
 			if actual != test.expected {
@@ -789,8 +789,8 @@ func TestDockerGetFrontendName(t *testing.T) {
 			t.Parallel()
 
 			dData := parseContainer(test.container)
-			roadProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.RoadLabels = roadProperties[""]
+			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
+			dData.SegmentLabels = segmentProperties[""]
 
 			provider := &Provider{
 				Domain: "docker.localhost",
@@ -841,8 +841,8 @@ func TestDockerGetFrontendRule(t *testing.T) {
 			t.Parallel()
 
 			dData := parseContainer(test.container)
-			roadProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.RoadLabels = roadProperties[""]
+			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
+			dData.SegmentLabels = segmentProperties[""]
 
 			provider := &Provider{
 				Domain: "docker.localhost",
@@ -887,8 +887,8 @@ func TestDockerGetBackendName(t *testing.T) {
 			t.Parallel()
 
 			dData := parseContainer(test.container)
-			roadProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.RoadLabels = roadProperties[""]
+			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
+			dData.SegmentLabels = segmentProperties[""]
 
 			actual := getBackendName(dData)
 			assert.Equal(t, test.expected, actual)
@@ -953,8 +953,8 @@ func TestDockerGetIPAddress(t *testing.T) {
 			t.Parallel()
 
 			dData := parseContainer(test.container)
-			roadProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.RoadLabels = roadProperties[""]
+			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
+			dData.SegmentLabels = segmentProperties[""]
 
 			provider := &Provider{}
 
@@ -1017,8 +1017,8 @@ func TestDockerGetPort(t *testing.T) {
 			t.Parallel()
 
 			dData := parseContainer(test.container)
-			roadProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.RoadLabels = roadProperties[""]
+			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
+			dData.SegmentLabels = segmentProperties[""]
 
 			actual := getPort(dData)
 			assert.Equal(t, test.expected, actual)

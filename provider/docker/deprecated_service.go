@@ -53,7 +53,7 @@ func checkServiceLabelPortV1(container dockerData) error {
 				serviceLabelPorts[portLabel[0]] = struct{}{}
 			}
 			// Get only one instance of all service names from service labels
-			servicesLabelNames := label.FindRoadSubmatch(lbl)
+			servicesLabelNames := label.FindSegmentSubmatch(lbl)
 
 			if len(servicesLabelNames) > 0 {
 				serviceLabels[strings.Split(servicesLabelNames[0], ".")[1]] = struct{}{}
@@ -209,7 +209,7 @@ func getServiceInt64ValueV1(container dockerData, serviceLabels map[string]strin
 }
 
 // Deprecated
-func getServiceLabelsV1(container dockerData, serviceName string) label.RoadPropertyValues {
+func getServiceLabelsV1(container dockerData, serviceName string) label.SegmentPropertyValues {
 	return label.ExtractServiceProperties(container.Labels)[serviceName]
 }
 

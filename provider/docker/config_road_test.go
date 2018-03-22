@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRoadBuildConfiguration(t *testing.T) {
+func TestSegmentBuildConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc              string
 		containers        []docker.ContainerJSON

@@ -63,17 +63,17 @@ func (p *Provider) buildConfigurationV2(containersInspected []dockerData) *types
 	serviceNames := make(map[string]struct{})
 
 	for idx, container := range filteredContainers {
-		roadProperties := label.ExtractTraefikLabels(container.Labels)
-		for roadName, labels := range roadProperties {
-			container.RoadLabels = labels
-			container.RoadName = roadName
+		segmentProperties := label.ExtractTraefikLabels(container.Labels)
+		for segmentName, labels := range segmentProperties {
+			container.SegmentLabels = labels
+			container.SegmentName = segmentName
 
 			// Frontends
-			if _, exists := serviceNames[container.ServiceName+roadName]; !exists {
+			if _, exists := serviceNames[container.ServiceName+segmentName]; !exists {
 				frontendName := p.getFrontendName(container, idx)
 				frontends[frontendName] = append(frontends[frontendName], container)
-				if len(container.ServiceName+roadName) > 0 {
-					serviceNames[container.ServiceName+roadName] = struct{}{}
+				if len(container.ServiceName+segmentName) > 0 {
+					serviceNames[container.ServiceName+segmentName] = struct{}{}
 				}
 			}
 
@@ -111,14 +111,14 @@ func (p *Provider) containerFilter(container dockerData) bool {
 		return false
 	}
 
-	roadProperties := label.ExtractTraefikLabels(container.Labels)
+	segmentProperties := label.ExtractTraefikLabels(container.Labels)
 
 	var errPort error
-	for roadName, labels := range roadProperties {
-		errPort = checkRoadPort(labels, roadName)
+	for segmentName, labels := range segmentProperties {
+		errPort = checkSegmentPort(labels, segmentName)
 
 		if len(p.getFrontendRule(container)) == 0 {
-			log.Debugf("Filtering container with empty frontend rule %s %s", container.Name, roadName)
+			log.Debugf("Filtering container with empty frontend rule %s %s", container.Name, segmentName)
 			return false
 		}
 	}
@@ -144,21 +144,21 @@ func (p *Provider) containerFilter(container dockerData) bool {
 	return true
 }
 
-func checkRoadPort(labels map[string]string, roadName string) error {
+func checkSegmentPort(labels map[string]string, segmentName string) error {
 	if port, ok := labels[label.TraefikPort]; ok {
 		_, err := strconv.Atoi(port)
 		if err != nil {
-			return fmt.Errorf("invalid port value %q for the road %q: %v", port, roadName, err)
+			return fmt.Errorf("invalid port value %q for the segment %q: %v", port, segmentName, err)
 		}
 	} else {
-		return fmt.Errorf("port label is missing, please use %s as default value or define port label for all roads ('traefik.<roadName>.port')", label.TraefikPort)
+		return fmt.Errorf("port label is missing, please use %s as default value or define port label for all segments ('traefik.<segment_name>.port')", label.TraefikPort)
 	}
 	return nil
 }
 
 func (p *Provider) getFrontendName(container dockerData, idx int) string {
 	var name string
-	if len(container.RoadName) > 0 {
+	if len(container.SegmentName) > 0 {
 		name = getBackendName(container)
 	} else {
 		name = p.getFrontendRule(container) + "-" + strconv.Itoa(idx)
@@ -168,7 +168,7 @@ func (p *Provider) getFrontendName(container dockerData, idx int) string {
 }
 
 func (p *Provider) getFrontendRule(container dockerData) string {
-	if value := label.GetStringValue(container.RoadLabels, label.TraefikFrontendRule, ""); len(value) != 0 {
+	if value := label.GetStringValue(container.SegmentLabels, label.TraefikFrontendRule, ""); len(value) != 0 {
 		return value
 	}
 
@@ -248,16 +248,16 @@ func isBackendLBSwarm(container dockerData) bool {
 	return label.GetBoolValue(container.Labels, labelBackendLoadBalancerSwarm, false)
 }
 
-func getRoadBackendName(container dockerData) string {
-	if value := label.GetStringValue(container.RoadLabels, label.TraefikFrontendBackend, ""); len(value) > 0 {
+func getSegmentBackendName(container dockerData) string {
+	if value := label.GetStringValue(container.SegmentLabels, label.TraefikFrontendBackend, ""); len(value) > 0 {
 		return provider.Normalize(container.ServiceName + "-" + value)
 	}
 
-	return provider.Normalize(container.ServiceName + "-" + getDefaultBackendName(container) + "-" + container.RoadName)
+	return provider.Normalize(container.ServiceName + "-" + getDefaultBackendName(container) + "-" + container.SegmentName)
 }
 
 func getDefaultBackendName(container dockerData) string {
-	if value := label.GetStringValue(container.RoadLabels, label.TraefikBackend, ""); len(value) != 0 {
+	if value := label.GetStringValue(container.SegmentLabels, label.TraefikBackend, ""); len(value) != 0 {
 		return provider.Normalize(value)
 	}
 
@@ -269,8 +269,8 @@ func getDefaultBackendName(container dockerData) string {
 }
 
 func getBackendName(container dockerData) string {
-	if len(container.RoadName) > 0 {
-		return getRoadBackendName(container)
+	if len(container.SegmentName) > 0 {
+		return getSegmentBackendName(container)
 	}
 
 	return getDefaultBackendName(container)
@@ -351,7 +351,7 @@ func getHeaders(labels map[string]string) *types.Headers {
 }
 
 func getPort(container dockerData) string {
-	if value := label.GetStringValue(container.RoadLabels, label.TraefikPort, ""); len(value) != 0 {
+	if value := label.GetStringValue(container.SegmentLabels, label.TraefikPort, ""); len(value) != 0 {
 		return value
 	}
 
@@ -465,18 +465,18 @@ func (p *Provider) getServers(containers []dockerData) map[string]types.Server {
 			servers = make(map[string]types.Server)
 		}
 
-		protocol := label.GetStringValue(container.RoadLabels, label.TraefikProtocol, label.DefaultProtocol)
+		protocol := label.GetStringValue(container.SegmentLabels, label.TraefikProtocol, label.DefaultProtocol)
 		ip := p.getIPAddress(container)
 		port := getPort(container)
 
-		serverName := "server-" + container.RoadName + "-" + container.Name
-		if len(container.RoadName) > 0 {
+		serverName := "server-" + container.SegmentName + "-" + container.Name
+		if len(container.SegmentName) > 0 {
 			serverName += "-" + strconv.Itoa(i)
 		}
 
 		servers[provider.Normalize(serverName)] = types.Server{
 			URL:    fmt.Sprintf("%s://%s:%s", protocol, ip, port),
-			Weight: label.GetIntValue(container.RoadLabels, label.TraefikWeight, label.DefaultWeightInt),
+			Weight: label.GetIntValue(container.SegmentLabels, label.TraefikWeight, label.DefaultWeightInt),
 		}
 	}
 

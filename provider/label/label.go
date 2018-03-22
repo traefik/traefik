@@ -36,11 +36,11 @@ const (
 )
 
 var (
-	// RoadPropertiesRegexp used to extract the name of the road and the name of the property for this road
-	// All properties are under the format traefik.<road_name>.frontend.*= except the port/portIndex/weight/protocol/backend directly after traefik.<roadname>.
-	RoadPropertiesRegexp = regexp.MustCompile(`^traefik\.(?P<service_name>.+?)\.(?P<property_name>port|portIndex|weight|protocol|backend|frontend\.(.+))$`)
+	// SegmentPropertiesRegexp used to extract the name of the segment and the name of the property for this segment
+	// All properties are under the format traefik.<segment_name>.frontend.*= except the port/portIndex/weight/protocol/backend directly after traefik.<segment_name>.
+	SegmentPropertiesRegexp = regexp.MustCompile(`^traefik\.(?P<service_name>.+?)\.(?P<property_name>port|portIndex|weight|protocol|backend|frontend\.(.+))$`)
 
-	// PortRegexp used to extract the port label of the road
+	// PortRegexp used to extract the port label of the segment
 	PortRegexp = regexp.MustCompile(`^traefik\.(?P<service_name>.+?)\.port$`)
 
 	// RegexpBaseFrontendErrorPage used to extract error pages from service's label
@@ -56,14 +56,14 @@ var (
 	RegexpFrontendRateLimit = regexp.MustCompile(`^traefik\.frontend\.rateLimit\.rateSet\.(?P<name>[^ .]+)\.(?P<field>[^ .]+)$`)
 )
 
-// RoadPropertyValues is a map of road properties
+// SegmentPropertyValues is a map of segment properties
 // an example value is: weight=42
-type RoadPropertyValues map[string]string
+type SegmentPropertyValues map[string]string
 
-// RoadProperties is a map of road properties per road,
-// which we can get with label[roadName][propertyName].
+// SegmentProperties is a map of segment properties per segment,
+// which we can get with label[segmentName][propertyName].
 // It yields a property value.
-type RoadProperties map[string]RoadPropertyValues
+type SegmentProperties map[string]SegmentPropertyValues
 
 // GetStringValue get string value associated to a label
 func GetStringValue(labels map[string]string, labelName string, defaultValue string) string {
@@ -245,9 +245,9 @@ func HasPrefixP(labels *map[string]string, prefix string) bool {
 	return HasPrefix(*labels, prefix)
 }
 
-// FindRoadSubmatch split road label
-func FindRoadSubmatch(name string) []string {
-	matches := RoadPropertiesRegexp.FindStringSubmatch(name)
+// FindSegmentSubmatch split segment labels
+func FindSegmentSubmatch(name string) []string {
+	matches := SegmentPropertiesRegexp.FindStringSubmatch(name)
 	if matches == nil ||
 		strings.HasPrefix(name, TraefikFrontend+".") ||
 		strings.HasPrefix(name, TraefikBackend+".") {
@@ -258,31 +258,31 @@ func FindRoadSubmatch(name string) []string {
 
 // ExtractServiceProperties Extract services labels
 // Deprecated
-func ExtractServiceProperties(labels map[string]string) RoadProperties {
-	v := make(RoadProperties)
+func ExtractServiceProperties(labels map[string]string) SegmentProperties {
+	v := make(SegmentProperties)
 
 	for name, value := range labels {
-		matches := FindRoadSubmatch(name)
+		matches := FindSegmentSubmatch(name)
 		if matches == nil {
 			continue
 		}
 
-		var roadName string
+		var segmentName string
 		var propertyName string
-		for i, name := range RoadPropertiesRegexp.SubexpNames() {
+		for i, name := range SegmentPropertiesRegexp.SubexpNames() {
 			if i != 0 {
 				if name == "service_name" {
-					roadName = matches[i]
+					segmentName = matches[i]
 				} else if name == "property_name" {
 					propertyName = matches[i]
 				}
 			}
 		}
 
-		if _, ok := v[roadName]; !ok {
-			v[roadName] = make(RoadPropertyValues)
+		if _, ok := v[segmentName]; !ok {
+			v[segmentName] = make(SegmentPropertyValues)
 		}
-		v[roadName][propertyName] = value
+		v[segmentName][propertyName] = value
 	}
 
 	return v
@@ -290,9 +290,9 @@ func ExtractServiceProperties(labels map[string]string) RoadProperties {
 
 // ExtractServicePropertiesP Extract services labels
 // Deprecated
-func ExtractServicePropertiesP(labels *map[string]string) RoadProperties {
+func ExtractServicePropertiesP(labels *map[string]string) SegmentProperties {
 	if labels == nil {
-		return make(RoadProperties)
+		return make(SegmentProperties)
 	}
 	return ExtractServiceProperties(*labels)
 }
@@ -435,12 +435,12 @@ func GetServiceLabel(labelName, serviceName string) string {
 	return labelName
 }
 
-// ExtractTraefikLabels transform labels to road labels
-func ExtractTraefikLabels(originLabels map[string]string) RoadProperties {
-	allLabels := make(RoadProperties)
+// ExtractTraefikLabels transform labels to segment labels
+func ExtractTraefikLabels(originLabels map[string]string) SegmentProperties {
+	allLabels := make(SegmentProperties)
 
 	if _, ok := allLabels[""]; !ok {
-		allLabels[""] = make(RoadPropertyValues)
+		allLabels[""] = make(SegmentPropertyValues)
 	}
 
 	for name, value := range originLabels {
@@ -448,28 +448,28 @@ func ExtractTraefikLabels(originLabels map[string]string) RoadProperties {
 			continue
 		}
 
-		matches := FindRoadSubmatch(name)
+		matches := FindSegmentSubmatch(name)
 		if matches == nil {
 			// Classic labels
 			allLabels[""][name] = value
 		} else {
-			// roads labels
-			var roadName string
+			// segments labels
+			var segmentName string
 			var propertyName string
-			for i, name := range RoadPropertiesRegexp.SubexpNames() {
+			for i, name := range SegmentPropertiesRegexp.SubexpNames() {
 				if i != 0 {
 					if name == "service_name" {
-						roadName = matches[i]
+						segmentName = matches[i]
 					} else if name == "property_name" {
 						propertyName = matches[i]
 					}
 				}
 			}
 
-			if _, ok := allLabels[roadName]; !ok {
-				allLabels[roadName] = make(RoadPropertyValues)
+			if _, ok := allLabels[segmentName]; !ok {
+				allLabels[segmentName] = make(SegmentPropertyValues)
 			}
-			allLabels[roadName][Prefix+propertyName] = value
+			allLabels[segmentName][Prefix+propertyName] = value
 		}
 	}
 	log.Debug(originLabels, allLabels)
@@ -479,29 +479,29 @@ func ExtractTraefikLabels(originLabels map[string]string) RoadProperties {
 	return allLabels
 }
 
-func (s RoadProperties) mergeDefault() {
+func (s SegmentProperties) mergeDefault() {
 	if defaultLabels, okDefault := s[""]; okDefault {
 
-		roadsNames := s.GetRoadNames()
+		segmentsNames := s.GetSegmentNames()
 		if len(defaultLabels) > 0 {
-			for _, name := range roadsNames {
-				roadLabels := s[name]
+			for _, name := range segmentsNames {
+				segmentLabels := s[name]
 				for key, value := range defaultLabels {
-					if _, ok := roadLabels[key]; !ok {
-						roadLabels[key] = value
+					if _, ok := segmentLabels[key]; !ok {
+						segmentLabels[key] = value
 					}
 				}
 			}
 		}
 
-		if len(roadsNames) > 1 {
+		if len(segmentsNames) > 1 {
 			delete(s, "")
 		}
 	}
 }
 
-// GetRoadNames get all road names
-func (s RoadProperties) GetRoadNames() []string {
+// GetSegmentNames get all segment names
+func (s SegmentProperties) GetSegmentNames() []string {
 	var names []string
 	for name := range s {
 		names = append(names, name)

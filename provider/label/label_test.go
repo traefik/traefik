@@ -731,11 +731,11 @@ func TestExtractServiceProperties(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		labels   map[string]string
-		expected RoadProperties
+		expected SegmentProperties
 	}{
 		{
 			desc:     "empty labels map",
-			expected: RoadProperties{},
+			expected: SegmentProperties{},
 		},
 		{
 			desc: "valid label names",
@@ -744,8 +744,8 @@ func TestExtractServiceProperties(t *testing.T) {
 				"traefik.foo.frontend.bar": "1bar",
 				"traefik.foo.backend":      "3bar",
 			},
-			expected: RoadProperties{
-				"foo": RoadPropertyValues{
+			expected: SegmentProperties{
+				"foo": SegmentPropertyValues{
 					"port":         "bar",
 					"frontend.bar": "1bar",
 					"backend":      "3bar",
@@ -761,7 +761,7 @@ func TestExtractServiceProperties(t *testing.T) {
 				"traefik.foo.frontend":         "0bar",
 				"traefik.frontend.foo.backend": "0bar",
 			},
-			expected: RoadProperties{},
+			expected: SegmentProperties{},
 		},
 	}
 	for _, test := range testCases {
@@ -779,11 +779,11 @@ func TestExtractServicePropertiesP(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		labels   *map[string]string
-		expected RoadProperties
+		expected SegmentProperties
 	}{
 		{
 			desc:     "nil labels map",
-			expected: RoadProperties{},
+			expected: SegmentProperties{},
 		},
 		{
 			desc: "valid label names",
@@ -792,8 +792,8 @@ func TestExtractServicePropertiesP(t *testing.T) {
 				"traefik.foo.frontend.bar": "1bar",
 				"traefik.foo.backend":      "3bar",
 			},
-			expected: RoadProperties{
-				"foo": RoadPropertyValues{
+			expected: SegmentProperties{
+				"foo": SegmentPropertyValues{
 					"port":         "bar",
 					"frontend.bar": "1bar",
 					"backend":      "3bar",
@@ -809,7 +809,7 @@ func TestExtractServicePropertiesP(t *testing.T) {
 				"traefik.foo.frontend":         "0bar",
 				"traefik.frontend.foo.backend": "0bar",
 			},
-			expected: RoadProperties{},
+			expected: SegmentProperties{},
 		},
 	}
 	for _, test := range testCases {
@@ -1143,13 +1143,13 @@ func TestExtractTraefikLabels(t *testing.T) {
 		desc         string
 		prefix       string
 		originLabels map[string]string
-		expected     RoadProperties
+		expected     SegmentProperties
 	}{
 		{
 			desc:         "nil labels map",
 			prefix:       "traefik",
 			originLabels: nil,
-			expected:     RoadProperties{"": {}},
+			expected:     SegmentProperties{"": {}},
 		},
 		{
 			desc:   "container labels",
@@ -1158,21 +1158,21 @@ func TestExtractTraefikLabels(t *testing.T) {
 				"frontend.priority": "foo", // missing prefix: skip
 				"traefik.port":      "bar",
 			},
-			expected: RoadProperties{
+			expected: SegmentProperties{
 				"": {
 					"traefik.port": "bar",
 				},
 			},
 		},
 		{
-			desc:   "road labels: only road no default",
+			desc:   "segment labels: only segment no default",
 			prefix: "traefik",
 			originLabels: map[string]string{
 				"traefik.goo.frontend.priority": "A",
 				"traefik.goo.port":              "D",
 				"traefik.port":                  "C",
 			},
-			expected: RoadProperties{
+			expected: SegmentProperties{
 				"goo": {
 					"traefik.frontend.priority": "A",
 					"traefik.port":              "D",
@@ -1180,13 +1180,13 @@ func TestExtractTraefikLabels(t *testing.T) {
 			},
 		},
 		{
-			desc:   "road labels: use default",
+			desc:   "segment labels: use default",
 			prefix: "traefik",
 			originLabels: map[string]string{
 				"traefik.guu.frontend.priority": "B",
 				"traefik.port":                  "C",
 			},
-			expected: RoadProperties{
+			expected: SegmentProperties{
 				"guu": {
 					"traefik.frontend.priority": "B",
 					"traefik.port":              "C",
@@ -1194,7 +1194,7 @@ func TestExtractTraefikLabels(t *testing.T) {
 			},
 		},
 		{
-			desc:   "road labels: several roads",
+			desc:   "segment labels: several segments",
 			prefix: "traefik",
 			originLabels: map[string]string{
 				"traefik.goo.frontend.priority": "A",
@@ -1202,7 +1202,7 @@ func TestExtractTraefikLabels(t *testing.T) {
 				"traefik.guu.frontend.priority": "B",
 				"traefik.port":                  "C",
 			},
-			expected: RoadProperties{
+			expected: SegmentProperties{
 				"goo": {
 					"traefik.frontend.priority": "A",
 					"traefik.port":              "D",
