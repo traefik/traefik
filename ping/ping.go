@@ -8,17 +8,17 @@ import (
 	"github.com/containous/mux"
 )
 
-//Handler expose ping routes
+// Handler expose ping routes
 type Handler struct {
 	EntryPoint  string `description:"Ping entryPoint" export:"true"`
 	terminating bool
-	termMutex   sync.RWMutex
+	lock        sync.RWMutex
 }
 
 // SetTerminating causes the ping endpoint to serve non 200 responses.
 func (g *Handler) SetTerminating() {
-	g.termMutex.Lock()
-	defer g.termMutex.Unlock()
+	g.lock.Lock()
+	defer g.lock.Unlock()
 
 	g.terminating = true
 }
@@ -27,8 +27,8 @@ func (g *Handler) SetTerminating() {
 func (g *Handler) AddRoutes(router *mux.Router) {
 	router.Methods(http.MethodGet, http.MethodHead).Path("/ping").
 		HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
-			g.termMutex.RLock()
-			defer g.termMutex.RUnlock()
+			g.lock.RLock()
+			defer g.lock.RUnlock()
 
 			statusCode := http.StatusOK
 			if g.terminating {
