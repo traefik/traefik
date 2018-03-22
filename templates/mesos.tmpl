@@ -69,16 +69,18 @@
       "{{.}}",
       {{end}}]
 
-    {{ $whitelistSourceRange := getWhitelistSourceRange $app }}
-    {{if $whitelistSourceRange }}
-    whitelistSourceRange = [{{range $whitelistSourceRange }}
-      "{{.}}",
-      {{end}}]
-    {{end}}
-
     basicAuth = [{{range getBasicAuth $app }}
       "{{.}}",
       {{end}}]
+
+    {{ $whitelist := getWhiteList $app }}
+    {{if $whitelist }}
+    [frontends."frontend-{{ $frontendName }}".whiteList]
+      sourceRange = [{{range $whitelist.SourceRange }}
+        "{{.}}",
+        {{end}}]
+      useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
+    {{end}}
 
     {{ $redirect := getRedirect $app }}
     {{if $redirect }}

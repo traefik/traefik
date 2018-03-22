@@ -123,16 +123,18 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
       "{{.}}",
       {{end}}]
 
-    {{ $whitelistSourceRange := getWhitelistSourceRange $service.Attributes }}
-    {{if $whitelistSourceRange }}
-    whitelistSourceRange = [{{range $whitelistSourceRange }}
-      "{{.}}",
-      {{end}}]
-    {{end}}
-
     basicAuth = [{{range getBasicAuth $service.Attributes }}
       "{{.}}",
       {{end}}]
+
+    {{ $whitelist := getWhiteList $service.Attributes }}
+    {{if $whitelist }}
+    [frontends."frontend-{{ $service.ServiceName }}".whiteList]
+      sourceRange = [{{range $whitelist.SourceRange }}
+        "{{.}}",
+        {{end}}]
+      useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
+    {{end}}
 
     {{ $redirect := getRedirect $service.Attributes }}
     {{if $redirect }}
@@ -713,18 +715,19 @@ var _templatesEcsTmpl = []byte(`[backends]
       "{{.}}",
       {{end}}]
 
-    {{ $whitelistSourceRange := getWhitelistSourceRange $instance }}
-    {{if $whitelistSourceRange }}
-    whitelistSourceRange = [{{range $whitelistSourceRange }}
-      "{{.}}",
-      {{end}}]
-    {{end}}
-
     basicAuth = [{{range getBasicAuth $instance }}
       "{{.}}",
       {{end}}]
 
-          
+    {{ $whitelist := getWhiteList $instance }}
+    {{if $whitelist }}
+    [frontends."frontend-{{ $serviceName }}".whiteList]
+      sourceRange = [{{range $whitelist.SourceRange }}
+        "{{.}}",
+        {{end}}]
+      useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
+    {{end}}
+
     {{ $redirect := getRedirect $instance }}
     {{if $redirect }}
     [frontends."frontend-{{ $serviceName }}".redirect]
@@ -934,9 +937,13 @@ var _templatesKubernetesTmpl = []byte(`[backends]
       "{{.}}",
       {{end}}]
 
-    whitelistSourceRange = [{{range $frontend.WhitelistSourceRange }}
-      "{{.}}",
-      {{end}}]
+    {{if $frontend.WhiteList }}
+    [frontends."{{ $frontendName }}".whiteList]
+      sourceRange = [{{range $frontend.WhiteList.SourceRange }}
+        "{{.}}",
+        {{end}}]
+      useXForwardedFor = {{ $frontend.WhiteList.UseXForwardedFor }}
+    {{end}}
 
     {{if $frontend.Redirect }}
     [frontends."{{ $frontendName }}".redirect]
@@ -1118,16 +1125,18 @@ var _templatesKvTmpl = []byte(`[backends]
       "{{.}}",
       {{end}}]
 
-    {{ $whitelistSourceRange := getWhitelistSourceRange $frontend }}
-    {{if $whitelistSourceRange }}
-    whitelistSourceRange = [{{range $whitelistSourceRange }}
-      "{{.}}",
-      {{end}}]
-    {{end}}
-
     basicAuth = [{{range getBasicAuth $frontend }}
       "{{.}}",
       {{end}}]
+
+    {{ $whitelist := getWhiteList $frontend }}
+    {{if $whitelist }}
+    [frontends."{{ $frontendName }}".whiteList]
+      sourceRange = [{{range $whitelist.SourceRange }}
+        "{{.}}",
+        {{end}}]
+      useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
+    {{end}}
 
     {{ $redirect := getRedirect $frontend }}
     {{if $redirect }}
@@ -1329,16 +1338,18 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
       "{{.}}",
       {{end}}]
 
-    {{ $whitelistSourceRange := getWhitelistSourceRange $app $serviceName }}
-    {{if $whitelistSourceRange }}
-    whitelistSourceRange = [{{range $whitelistSourceRange }}
-      "{{.}}",
-      {{end}}]
-    {{end}}
-
     basicAuth = [{{range getBasicAuth $app $serviceName }}
       "{{.}}",
       {{end}}]
+
+    {{ $whitelist := getWhiteList $app $serviceName }}
+    {{if $whitelist }}
+    [frontends."{{ $frontendName }}".whiteList]
+      sourceRange = [{{range $whitelist.SourceRange }}
+        "{{.}}",
+        {{end}}]
+      useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
+    {{end}}
 
     {{ $redirect := getRedirect $app $serviceName }}
     {{if $redirect }}
@@ -1522,16 +1533,18 @@ var _templatesMesosTmpl = []byte(`[backends]
       "{{.}}",
       {{end}}]
 
-    {{ $whitelistSourceRange := getWhitelistSourceRange $app }}
-    {{if $whitelistSourceRange }}
-    whitelistSourceRange = [{{range $whitelistSourceRange }}
-      "{{.}}",
-      {{end}}]
-    {{end}}
-
     basicAuth = [{{range getBasicAuth $app }}
       "{{.}}",
       {{end}}]
+
+    {{ $whitelist := getWhiteList $app }}
+    {{if $whitelist }}
+    [frontends."frontend-{{ $frontendName }}".whiteList]
+      sourceRange = [{{range $whitelist.SourceRange }}
+        "{{.}}",
+        {{end}}]
+      useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
+    {{end}}
 
     {{ $redirect := getRedirect $app }}
     {{if $redirect }}
@@ -1736,16 +1749,18 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
       "{{.}}",
       {{end}}]
 
-    {{ $whitelistSourceRange := getWhitelistSourceRange $service }}
-    {{if $whitelistSourceRange }}
-    whitelistSourceRange = [{{range $whitelistSourceRange }}
-      "{{.}}",
-      {{end}}]
-    {{end}}
-
     basicAuth = [{{range getBasicAuth $service }}
       "{{.}}",
       {{end}}]
+
+    {{ $whitelist := getWhiteList $service }}
+    {{if $whitelist }}
+    [frontends."frontend-{{ $frontendName }}".whiteList]
+      sourceRange = [{{range $whitelist.SourceRange }}
+        "{{.}}",
+        {{end}}]
+      useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
+    {{end}}
 
     {{ $redirect := getRedirect $service }}
     {{if $redirect }}

@@ -1048,6 +1048,65 @@ func TestProviderGetBuffering(t *testing.T) {
 	}
 }
 
+func TestProviderWhiteList(t *testing.T) {
+	p := &Provider{
+		Prefix: "traefik",
+	}
+
+	testCases := []struct {
+		desc     string
+		tags     []string
+		expected *types.WhiteList
+	}{
+		{
+			desc:     "should return nil when no white list labels",
+			expected: nil,
+		},
+		{
+			desc: "should return a struct when only range",
+			tags: []string{
+				label.TraefikFrontendWhiteListSourceRange + "=10.10.10.10",
+			},
+			expected: &types.WhiteList{
+				SourceRange: []string{
+					"10.10.10.10",
+				},
+				UseXForwardedFor: false,
+			},
+		},
+		{
+			desc: "should return a struct when range and UseXForwardedFor",
+			tags: []string{
+				label.TraefikFrontendWhiteListSourceRange + "=10.10.10.10",
+				label.TraefikFrontendWhiteListUseXForwardedFor + "=true",
+			},
+			expected: &types.WhiteList{
+				SourceRange: []string{
+					"10.10.10.10",
+				},
+				UseXForwardedFor: true,
+			},
+		},
+		{
+			desc: "should return nil when only UseXForwardedFor",
+			tags: []string{
+				label.TraefikFrontendWhiteListUseXForwardedFor + "=true",
+			},
+			expected: nil,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := p.getWhiteList(test.tags)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
 func TestProviderGetRedirect(t *testing.T) {
 	p := &Provider{
 		Prefix: "traefik",

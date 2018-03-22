@@ -200,21 +200,20 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					passTLSCert := getBoolValue(i.Annotations, annotationKubernetesPassTLSCert, p.EnablePassTLSCert)
 					priority := getIntValue(i.Annotations, annotationKubernetesPriority, 0)
 					entryPoints := getSliceStringValue(i.Annotations, annotationKubernetesFrontendEntryPoints)
-					whitelistSourceRange := getSliceStringValue(i.Annotations, annotationKubernetesWhitelistSourceRange)
 
 					templateObjects.Frontends[baseName] = &types.Frontend{
-						Backend:              baseName,
-						PassHostHeader:       passHostHeader,
-						PassTLSCert:          passTLSCert,
-						Routes:               make(map[string]types.Route),
-						Priority:             priority,
-						BasicAuth:            basicAuthCreds,
-						WhitelistSourceRange: whitelistSourceRange,
-						Redirect:             getFrontendRedirect(i),
-						EntryPoints:          entryPoints,
-						Headers:              getHeader(i),
-						Errors:               getErrorPages(i),
-						RateLimit:            getRateLimit(i),
+						Backend:        baseName,
+						PassHostHeader: passHostHeader,
+						PassTLSCert:    passTLSCert,
+						Routes:         make(map[string]types.Route),
+						Priority:       priority,
+						BasicAuth:      basicAuthCreds,
+						WhiteList:      getWhiteList(i),
+						Redirect:       getFrontendRedirect(i),
+						EntryPoints:    entryPoints,
+						Headers:        getHeader(i),
+						Errors:         getErrorPages(i),
+						RateLimit:      getRateLimit(i),
 					}
 				}
 
@@ -457,7 +456,7 @@ func getTLS(ingress *extensionsv1beta1.Ingress, k8sClient Client) ([]*tls.Config
 
 func endpointPortNumber(servicePort corev1.ServicePort, endpointPorts []corev1.EndpointPort) int {
 	if len(endpointPorts) > 0 {
-		//name is optional if there is only one port
+		// name is optional if there is only one port
 		port := endpointPorts[0]
 		for _, endpointPort := range endpointPorts {
 			if servicePort.Name == endpointPort.Name {
@@ -508,6 +507,18 @@ func getFrontendRedirect(i *extensionsv1beta1.Ingress) *types.Redirect {
 	}
 
 	return nil
+}
+
+func getWhiteList(i *extensionsv1beta1.Ingress) *types.WhiteList {
+	ranges := getSliceStringValue(i.Annotations, annotationKubernetesWhiteListSourceRange)
+	if len(ranges) <= 0 {
+		return nil
+	}
+
+	return &types.WhiteList{
+		SourceRange:      ranges,
+		UseXForwardedFor: getBoolValue(i.Annotations, annotationKubernetesWhiteListUseXForwardedFor, false),
+	}
 }
 
 func getBuffering(service *corev1.Service) *types.Buffering {

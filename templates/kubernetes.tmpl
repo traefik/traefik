@@ -56,9 +56,13 @@
       "{{.}}",
       {{end}}]
 
-    whitelistSourceRange = [{{range $frontend.WhitelistSourceRange }}
-      "{{.}}",
-      {{end}}]
+    {{if $frontend.WhiteList }}
+    [frontends."{{ $frontendName }}".whiteList]
+      sourceRange = [{{range $frontend.WhiteList.SourceRange }}
+        "{{.}}",
+        {{end}}]
+      useXForwardedFor = {{ $frontend.WhiteList.UseXForwardedFor }}
+    {{end}}
 
     {{if $frontend.Redirect }}
     [frontends."{{ $frontendName }}".redirect]

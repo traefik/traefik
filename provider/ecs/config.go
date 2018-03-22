@@ -48,18 +48,18 @@ func (p *Provider) buildConfiguration(services map[string][]ecsInstance) (*types
 		"getHealthCheckInterval": getFuncFirstStringValue(label.TraefikBackendHealthCheckInterval, ""),
 
 		// Frontend functions
-		"filterFrontends":         filterFrontends,
-		"getFrontendRule":         p.getFrontendRule,
-		"getPassHostHeader":       getFuncBoolValue(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
-		"getPassTLSCert":          getFuncBoolValue(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getPriority":             getFuncIntValue(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
-		"getBasicAuth":            getFuncSliceString(label.TraefikFrontendAuthBasic),
-		"getEntryPoints":          getFuncSliceString(label.TraefikFrontendEntryPoints),
-		"getWhitelistSourceRange": getFuncSliceString(label.TraefikFrontendWhitelistSourceRange),
-		"getRedirect":             getRedirect,
-		"getErrorPages":           getErrorPages,
-		"getRateLimit":            getRateLimit,
-		"getHeaders":              getHeaders,
+		"filterFrontends":   filterFrontends,
+		"getFrontendRule":   p.getFrontendRule,
+		"getPassHostHeader": getFuncBoolValue(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
+		"getPassTLSCert":    getFuncBoolValue(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
+		"getPriority":       getFuncIntValue(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
+		"getBasicAuth":      getFuncSliceString(label.TraefikFrontendAuthBasic),
+		"getEntryPoints":    getFuncSliceString(label.TraefikFrontendEntryPoints),
+		"getRedirect":       getRedirect,
+		"getErrorPages":     getErrorPages,
+		"getRateLimit":      getRateLimit,
+		"getHeaders":        getHeaders,
+		"getWhiteList":      getWhiteList,
 	}
 	return p.GetConfiguration("templates/ecs.tmpl", ecsFuncMap, struct {
 		Services map[string][]ecsInstance
@@ -209,6 +209,18 @@ func getServers(instances []ecsInstance) map[string]types.Server {
 	}
 
 	return servers
+}
+
+func getWhiteList(instance ecsInstance) *types.WhiteList {
+	ranges := getSliceString(instance, label.TraefikFrontendWhiteListSourceRange)
+	if len(ranges) > 0 {
+		return &types.WhiteList{
+			SourceRange:      ranges,
+			UseXForwardedFor: getBoolValue(instance, label.TraefikFrontendWhiteListUseXForwardedFor, false),
+		}
+	}
+
+	return nil
 }
 
 func getRedirect(instance ecsInstance) *types.Redirect {

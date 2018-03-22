@@ -113,17 +113,17 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						label.TraefikBackendBufferingMemRequestBodyBytes:     "2097152",
 						label.TraefikBackendBufferingRetryExpression:         "IsNetworkError() && Attempts() <= 2",
 
-						label.TraefikFrontendAuthBasic:            "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						label.TraefikFrontendEntryPoints:          "http,https",
-						label.TraefikFrontendPassHostHeader:       "true",
-						label.TraefikFrontendPassTLSCert:          "true",
-						label.TraefikFrontendPriority:             "666",
-						label.TraefikFrontendRedirectEntryPoint:   "https",
-						label.TraefikFrontendRedirectRegex:        "nope",
-						label.TraefikFrontendRedirectReplacement:  "nope",
-						label.TraefikFrontendRedirectPermanent:    "true",
-						label.TraefikFrontendRule:                 "Host:traefik.io",
-						label.TraefikFrontendWhitelistSourceRange: "10.10.10.10",
+						label.TraefikFrontendAuthBasic:                      "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendEntryPoints:                    "http,https",
+						label.TraefikFrontendPassHostHeader:                 "true",
+						label.TraefikFrontendPassTLSCert:                    "true",
+						label.TraefikFrontendPriority:                       "666",
+						label.TraefikFrontendRedirectEntryPoint:             "https",
+						label.TraefikFrontendRedirectRegex:                  "nope",
+						label.TraefikFrontendRedirectReplacement:            "nope",
+						label.TraefikFrontendRedirectPermanent:              "true",
+						label.TraefikFrontendRule:                           "Host:traefik.io",
+						label.TraefikFrontendWhitelistSourceRangeDeprecated: "10.10.10.10",
 
 						label.TraefikFrontendRequestHeaders:          "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
 						label.TraefikFrontendResponseHeaders:         "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
@@ -692,17 +692,17 @@ func TestDockerGetSliceStringLabel(t *testing.T) {
 		{
 			desc: "whitelist-label with empty string",
 			labels: map[string]string{
-				label.TraefikFrontendWhitelistSourceRange: "",
+				label.TraefikFrontendWhitelistSourceRangeDeprecated: "",
 			},
-			labelName: label.TraefikFrontendWhitelistSourceRange,
+			labelName: label.TraefikFrontendWhitelistSourceRangeDeprecated,
 			expected:  nil,
 		},
 		{
 			desc: "whitelist-label with IPv4 mask",
 			labels: map[string]string{
-				label.TraefikFrontendWhitelistSourceRange: "1.2.3.4/16",
+				label.TraefikFrontendWhitelistSourceRangeDeprecated: "1.2.3.4/16",
 			},
-			labelName: label.TraefikFrontendWhitelistSourceRange,
+			labelName: label.TraefikFrontendWhitelistSourceRangeDeprecated,
 			expected: []string{
 				"1.2.3.4/16",
 			},
@@ -710,9 +710,9 @@ func TestDockerGetSliceStringLabel(t *testing.T) {
 		{
 			desc: "whitelist-label with IPv6 mask",
 			labels: map[string]string{
-				label.TraefikFrontendWhitelistSourceRange: "fe80::/16",
+				label.TraefikFrontendWhitelistSourceRangeDeprecated: "fe80::/16",
 			},
-			labelName: label.TraefikFrontendWhitelistSourceRange,
+			labelName: label.TraefikFrontendWhitelistSourceRangeDeprecated,
 			expected: []string{
 				"fe80::/16",
 			},
@@ -720,9 +720,9 @@ func TestDockerGetSliceStringLabel(t *testing.T) {
 		{
 			desc: "whitelist-label with multiple masks",
 			labels: map[string]string{
-				label.TraefikFrontendWhitelistSourceRange: "1.1.1.1/24, 1234:abcd::42/32",
+				label.TraefikFrontendWhitelistSourceRangeDeprecated: "1.1.1.1/24, 1234:abcd::42/32",
 			},
-			labelName: label.TraefikFrontendWhitelistSourceRange,
+			labelName: label.TraefikFrontendWhitelistSourceRangeDeprecated,
 			expected: []string{
 				"1.1.1.1/24",
 				"1234:abcd::42/32",

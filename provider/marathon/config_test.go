@@ -206,7 +206,8 @@ func TestBuildConfigurationNonAPIErrors(t *testing.T) {
 				withLabel(label.TraefikFrontendRedirectReplacement, "nope"),
 				withLabel(label.TraefikFrontendRedirectPermanent, "true"),
 				withLabel(label.TraefikFrontendRule, "Host:traefik.io"),
-				withLabel(label.TraefikFrontendWhitelistSourceRange, "10.10.10.10"),
+				withLabel(label.TraefikFrontendWhiteListSourceRange, "10.10.10.10"),
+				withLabel(label.TraefikFrontendWhiteListUseXForwardedFor, "true"),
 
 				withLabel(label.TraefikFrontendRequestHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
 				withLabel(label.TraefikFrontendResponseHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
@@ -268,8 +269,9 @@ func TestBuildConfigurationNonAPIErrors(t *testing.T) {
 						"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 						"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 					},
-					WhitelistSourceRange: []string{
-						"10.10.10.10",
+					WhiteList: &types.WhiteList{
+						SourceRange:      []string{"10.10.10.10"},
+						UseXForwardedFor: true,
 					},
 					Headers: &types.Headers{
 						CustomRequestHeaders: map[string]string{
@@ -498,7 +500,7 @@ func TestBuildConfigurationServicesNonAPIErrors(t *testing.T) {
 			application: application(
 				appPorts(80, 81),
 
-				//withLabel(label.TraefikBackend, "foobar"),
+				// withLabel(label.TraefikBackend, "foobar"),
 
 				withLabel(label.TraefikBackendCircuitBreakerExpression, "NetworkErrorRatio() > 0.5"),
 				withLabel(label.TraefikBackendHealthCheckPath, "/health"),
@@ -530,7 +532,8 @@ func TestBuildConfigurationServicesNonAPIErrors(t *testing.T) {
 				withServiceLabel(label.TraefikFrontendRedirectReplacement, "nope", "containous"),
 				withServiceLabel(label.TraefikFrontendRedirectPermanent, "true", "containous"),
 				withServiceLabel(label.TraefikFrontendRule, "Host:traefik.io", "containous"),
-				withServiceLabel(label.TraefikFrontendWhitelistSourceRange, "10.10.10.10", "containous"),
+				withServiceLabel(label.TraefikFrontendWhiteListSourceRange, "10.10.10.10", "containous"),
+				withServiceLabel(label.TraefikFrontendWhiteListUseXForwardedFor, "true", "containous"),
 
 				withServiceLabel(label.TraefikFrontendRequestHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8", "containous"),
 				withServiceLabel(label.TraefikFrontendResponseHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8", "containous"),
@@ -591,8 +594,9 @@ func TestBuildConfigurationServicesNonAPIErrors(t *testing.T) {
 						"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 						"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 					},
-					WhitelistSourceRange: []string{
-						"10.10.10.10",
+					WhiteList: &types.WhiteList{
+						SourceRange:      []string{"10.10.10.10"},
+						UseXForwardedFor: true,
 					},
 					Headers: &types.Headers{
 						CustomRequestHeaders: map[string]string{
@@ -1622,6 +1626,107 @@ func TestGetServers(t *testing.T) {
 
 			actual := p.getServers(test.application, test.serviceName)
 
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestWhiteList(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		application marathon.Application
+		serviceName string
+		expected    *types.WhiteList
+	}{
+		{
+			desc: "should return nil when no white list labels",
+			application: application(
+				appPorts(80),
+			),
+			expected: nil,
+		},
+		{
+			desc: "should return a struct when only range",
+			application: application(
+				appPorts(80),
+				withLabel(label.TraefikFrontendWhiteListSourceRange, "10.10.10.10"),
+			),
+			expected: &types.WhiteList{
+				SourceRange: []string{
+					"10.10.10.10",
+				},
+				UseXForwardedFor: false,
+			},
+		},
+		{
+			desc: "should return a struct when range and UseXForwardedFor",
+			application: application(
+				appPorts(80),
+				withLabel(label.TraefikFrontendWhiteListSourceRange, "10.10.10.10"),
+				withLabel(label.TraefikFrontendWhiteListUseXForwardedFor, "true"),
+			),
+			expected: &types.WhiteList{
+				SourceRange: []string{
+					"10.10.10.10",
+				},
+				UseXForwardedFor: true,
+			},
+		},
+		{
+			desc: "should return nil when only UseXForwardedFor",
+			application: application(
+				appPorts(80),
+				withLabel(label.TraefikFrontendWhiteListUseXForwardedFor, "true"),
+			),
+			expected: nil,
+		},
+		// Service
+		{
+			desc: "should return a struct when only range on service",
+			application: application(
+				appPorts(80),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendWhitelistSourceRange, "10.10.10.10"),
+			),
+			serviceName: "containous",
+			expected: &types.WhiteList{
+				SourceRange: []string{
+					"10.10.10.10",
+				},
+				UseXForwardedFor: false,
+			},
+		},
+		{
+			desc: "should return a struct when range and UseXForwardedFor on service",
+			application: application(
+				appPorts(80),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendWhitelistSourceRange, "10.10.10.10"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendWhitelistUseXForwardedFor, "true"),
+			),
+			serviceName: "containous",
+			expected: &types.WhiteList{
+				SourceRange: []string{
+					"10.10.10.10",
+				},
+				UseXForwardedFor: true,
+			},
+		},
+		{
+			desc: "should return nil when only UseXForwardedFor on service",
+			application: application(
+				appPorts(80),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendWhitelistUseXForwardedFor, "true"),
+			),
+			serviceName: "containous",
+			expected:    nil,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := getWhiteList(test.application, test.serviceName)
 			assert.Equal(t, test.expected, actual)
 		})
 	}

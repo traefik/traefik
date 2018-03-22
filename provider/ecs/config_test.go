@@ -142,17 +142,18 @@ func TestBuildConfiguration(t *testing.T) {
 							label.TraefikBackendBufferingMemRequestBodyBytes:     aws.String("2097152"),
 							label.TraefikBackendBufferingRetryExpression:         aws.String("IsNetworkError() && Attempts() <= 2"),
 
-							label.TraefikFrontendAuthBasic:            aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
-							label.TraefikFrontendEntryPoints:          aws.String("http,https"),
-							label.TraefikFrontendPassHostHeader:       aws.String("true"),
-							label.TraefikFrontendPassTLSCert:          aws.String("true"),
-							label.TraefikFrontendPriority:             aws.String("666"),
-							label.TraefikFrontendRedirectEntryPoint:   aws.String("https"),
-							label.TraefikFrontendRedirectRegex:        aws.String("nope"),
-							label.TraefikFrontendRedirectReplacement:  aws.String("nope"),
-							label.TraefikFrontendRedirectPermanent:    aws.String("true"),
-							label.TraefikFrontendRule:                 aws.String("Host:traefik.io"),
-							label.TraefikFrontendWhitelistSourceRange: aws.String("10.10.10.10"),
+							label.TraefikFrontendAuthBasic:                 aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+							label.TraefikFrontendEntryPoints:               aws.String("http,https"),
+							label.TraefikFrontendPassHostHeader:            aws.String("true"),
+							label.TraefikFrontendPassTLSCert:               aws.String("true"),
+							label.TraefikFrontendPriority:                  aws.String("666"),
+							label.TraefikFrontendRedirectEntryPoint:        aws.String("https"),
+							label.TraefikFrontendRedirectRegex:             aws.String("nope"),
+							label.TraefikFrontendRedirectReplacement:       aws.String("nope"),
+							label.TraefikFrontendRedirectPermanent:         aws.String("true"),
+							label.TraefikFrontendRule:                      aws.String("Host:traefik.io"),
+							label.TraefikFrontendWhiteListSourceRange:      aws.String("10.10.10.10"),
+							label.TraefikFrontendWhiteListUseXForwardedFor: aws.String("true"),
 
 							label.TraefikFrontendRequestHeaders:          aws.String("Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
 							label.TraefikFrontendResponseHeaders:         aws.String("Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
@@ -257,8 +258,9 @@ func TestBuildConfiguration(t *testing.T) {
 							"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 							"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						},
-						WhitelistSourceRange: []string{
-							"10.10.10.10",
+						WhiteList: &types.WhiteList{
+							SourceRange:      []string{"10.10.10.10"},
+							UseXForwardedFor: true,
 						},
 						Headers: &types.Headers{
 							CustomRequestHeaders: map[string]string{
@@ -1110,6 +1112,74 @@ func TestGetServers(t *testing.T) {
 
 			actual := getServers(test.instances)
 
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestWhiteList(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		instance ecsInstance
+		expected *types.WhiteList
+	}{
+		{
+			desc: "should return nil when no white list labels",
+			instance: ecsInstance{
+				containerDefinition: &ecs.ContainerDefinition{
+					DockerLabels: map[string]*string{},
+				},
+			},
+			expected: nil,
+		},
+		{
+			desc: "should return a struct when only range",
+			instance: ecsInstance{
+				containerDefinition: &ecs.ContainerDefinition{
+					DockerLabels: map[string]*string{
+						label.TraefikFrontendWhiteListSourceRange: aws.String("10.10.10.10"),
+					}},
+			},
+			expected: &types.WhiteList{
+				SourceRange: []string{
+					"10.10.10.10",
+				},
+				UseXForwardedFor: false,
+			},
+		},
+		{
+			desc: "should return a struct when range and UseXForwardedFor",
+			instance: ecsInstance{
+				containerDefinition: &ecs.ContainerDefinition{
+					DockerLabels: map[string]*string{
+						label.TraefikFrontendWhiteListSourceRange:      aws.String("10.10.10.10"),
+						label.TraefikFrontendWhiteListUseXForwardedFor: aws.String("true"),
+					}},
+			},
+			expected: &types.WhiteList{
+				SourceRange: []string{
+					"10.10.10.10",
+				},
+				UseXForwardedFor: true,
+			},
+		},
+		{
+			desc: "should return nil when only UseXForwardedFor",
+			instance: ecsInstance{
+				containerDefinition: &ecs.ContainerDefinition{
+					DockerLabels: map[string]*string{
+						label.TraefikFrontendWhiteListUseXForwardedFor: aws.String("true"),
+					}},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := getWhiteList(test.instance)
 			assert.Equal(t, test.expected, actual)
 		})
 	}

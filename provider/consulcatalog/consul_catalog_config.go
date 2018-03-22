@@ -43,20 +43,20 @@ func (p *Provider) buildConfiguration(catalog []catalogUpdate) *types.Configurat
 		"getBuffering":            p.getBuffering,
 
 		// Frontend functions
-		"getFrontendRule":         p.getFrontendRule,
-		"getBasicAuth":            p.getFuncSliceAttribute(label.SuffixFrontendAuthBasic),
-		"getEntryPoints":          getEntryPoints,                                           // TODO Deprecated [breaking]
-		"getFrontEndEntryPoints":  p.getFuncSliceAttribute(label.SuffixFrontendEntryPoints), // TODO [breaking] rename to getEntryPoints when getEntryPoints will be removed
-		"getPriority":             p.getFuncIntAttribute(label.SuffixFrontendPriority, label.DefaultFrontendPriorityInt),
-		"getPassHostHeader":       p.getFuncBoolAttribute(label.SuffixFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
-		"getPassTLSCert":          p.getFuncBoolAttribute(label.SuffixFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getWhitelistSourceRange": p.getFuncSliceAttribute(label.SuffixFrontendWhitelistSourceRange),
-		"getRedirect":             p.getRedirect,
-		"hasErrorPages":           p.getFuncHasAttributePrefix(label.BaseFrontendErrorPage),
-		"getErrorPages":           p.getErrorPages,
-		"hasRateLimit":            p.getFuncHasAttributePrefix(label.BaseFrontendRateLimit),
-		"getRateLimit":            p.getRateLimit,
-		"getHeaders":              p.getHeaders,
+		"getFrontendRule":        p.getFrontendRule,
+		"getBasicAuth":           p.getFuncSliceAttribute(label.SuffixFrontendAuthBasic),
+		"getEntryPoints":         getEntryPoints,                                           // TODO Deprecated [breaking]
+		"getFrontEndEntryPoints": p.getFuncSliceAttribute(label.SuffixFrontendEntryPoints), // TODO [breaking] rename to getEntryPoints when getEntryPoints will be removed
+		"getPriority":            p.getFuncIntAttribute(label.SuffixFrontendPriority, label.DefaultFrontendPriorityInt),
+		"getPassHostHeader":      p.getFuncBoolAttribute(label.SuffixFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
+		"getPassTLSCert":         p.getFuncBoolAttribute(label.SuffixFrontendPassTLSCert, label.DefaultPassTLSCert),
+		"getWhiteList":           p.getWhiteList,
+		"getRedirect":            p.getRedirect,
+		"hasErrorPages":          p.getFuncHasAttributePrefix(label.BaseFrontendErrorPage),
+		"getErrorPages":          p.getErrorPages,
+		"hasRateLimit":           p.getFuncHasAttributePrefix(label.BaseFrontendRateLimit),
+		"getRateLimit":           p.getRateLimit,
+		"getHeaders":             p.getHeaders,
 	}
 
 	var allNodes []*api.ServiceEntry
@@ -309,6 +309,19 @@ func (p *Provider) getBuffering(tags []string) *types.Buffering {
 		MemResponseBodyBytes: p.getInt64Attribute(label.SuffixBackendBufferingMemResponseBodyBytes, tags, 0),
 		RetryExpression:      p.getAttribute(label.SuffixBackendBufferingRetryExpression, tags, ""),
 	}
+}
+
+func (p *Provider) getWhiteList(tags []string) *types.WhiteList {
+	ranges := p.getSliceAttribute(label.SuffixFrontendWhitelistSourceRange, tags)
+
+	if len(ranges) > 0 {
+		return &types.WhiteList{
+			SourceRange:      ranges,
+			UseXForwardedFor: p.getBoolAttribute(label.SuffixFrontendWhitelistUseXForwardedFor, tags, false),
+		}
+	}
+
+	return nil
 }
 
 func (p *Provider) getRedirect(tags []string) *types.Redirect {
