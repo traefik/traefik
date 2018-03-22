@@ -121,6 +121,7 @@ spec:
         args:
         - --api
         - --kubernetes
+        - --logLevel=INFO
 ---
 kind: Service
 apiVersion: v1
@@ -182,7 +183,11 @@ spec:
         - name: admin
           containerPort: 8080
         securityContext:
-          privileged: true
+          capabilities:
+            drop:
+            - ALL
+            add:
+            - NET_BIND_SERVICE
         args:
         - --api
         - --kubernetes
