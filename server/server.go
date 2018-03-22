@@ -739,6 +739,9 @@ func (s *Server) addInternalRoutes(entryPointName string, router *mux.Router) {
 
 	if s.globalConfiguration.API != nil && s.globalConfiguration.API.EntryPoint == entryPointName {
 		s.globalConfiguration.API.AddRoutes(router)
+		if s.leadership != nil {
+			s.leadership.AddRoutes(router)
+		}
 	}
 }
 
