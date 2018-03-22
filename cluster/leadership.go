@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"net/http"
 	"time"
 
 	"github.com/cenk/backoff"
@@ -11,7 +12,6 @@ import (
 	"github.com/containous/traefik/types"
 	"github.com/docker/leadership"
 	"github.com/unrolled/render"
-	"net/http"
 )
 
 // Leadership allows leadership election using a KV store
@@ -132,5 +132,5 @@ func (l *Leadership) IsLeader() bool {
 // AddRoutes add dashboard routes on a router
 func (l *Leadership) AddRoutes(router *mux.Router) {
 	// Expose cluster leader
-	router.Methods(http.MethodGet).Path("/cluster/leader").HandlerFunc(l.getLeaderHandler)
+	router.Methods(http.MethodGet).Path("/api/cluster/leader").HandlerFunc(l.getLeaderHandler)
 }
