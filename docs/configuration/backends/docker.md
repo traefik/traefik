@@ -39,6 +39,15 @@ watch = true
 #
 # filename = "docker.tmpl"
 
+# Override template version
+# For advanced users :)
+#
+# Optional
+# - "1": previous template (must be use only with a old custom template, see "filename")
+# - "2": current template (must be use to force template version when "filename" is used)
+#
+# templateVersion = "2"
+
 # Expose containers by default in Traefik.
 # If set to false, containers that don't have `traefik.enable=true` will be ignored.
 #
@@ -122,6 +131,15 @@ swarmmode = true
 # Optional
 #
 # filename = "docker.tmpl"
+
+# Override template version
+# For advanced users :)
+#
+# Optional
+# - "1": previous template (must be use only with a old custom template, see "filename")
+# - "2": current template (must be use to force template version when "filename" is used)
+#
+# templateVersion = "2"
 
 # Expose services by default in Traefik.
 #
