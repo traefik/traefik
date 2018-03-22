@@ -141,7 +141,7 @@ func (p *Provider) loadFileConfig(filename string) (*types.Configuration, error)
 	if err != nil {
 		return nil, fmt.Errorf("error reading configuration file: %s - %s", filename, err)
 	}
-	configuration, err := p.GetConfiguration(fileContent, template.FuncMap{}, false)
+	configuration, err := p.CreateConfiguration(fileContent, template.FuncMap{}, false)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +177,7 @@ func (p *Provider) loadFileConfigFromDirectory(directory string, configuration *
 				return configuration, fmt.Errorf("unable to load content configuration from subdirectory %s: %v", item, err)
 			}
 			continue
-		} else if !strings.HasSuffix(item.Name(), ".toml") {
+		} else if !strings.HasSuffix(item.Name(), ".toml") && !strings.HasSuffix(item.Name(), ".tmpl") {
 			continue
 		}
 
