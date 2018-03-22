@@ -34,18 +34,22 @@ func newAsyncWriter(chanSize int64, originalFile *os.File) *asyncWriter {
 		stopCh:       stopCh,
 	}
 
+	startedCh := make(chan interface{})
 	aWriter.Add(1)
 	go func() {
+		close(startedCh)
 		defer aWriter.Done()
 		for {
 			select {
 			case log := <-aWriter.writerStream:
 				printLog(aWriter, aWriter.originalFile, log)
-			case <-stopCh:
+			case <-aWriter.stopCh:
 				return
 			}
 		}
 	}()
+
+	<-startedCh
 
 	return aWriter
 
