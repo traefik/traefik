@@ -247,8 +247,8 @@
 [[projects]]
   name = "github.com/containous/traefik-extra-service-fabric"
   packages = ["."]
-  revision = "ca1fb57108293caad285b1c366b763f6c6ab71c9"
-  version = "v1.0.5"
+  revision = "a0b20089e99069884b060875fc015c13a23e7953"
+  version = "v1.1.0"
 
 [[projects]]
   name = "github.com/coreos/bbolt"
@@ -745,10 +745,9 @@
   version = "v1.3.7"
 
 [[projects]]
-  branch = "master"
   name = "github.com/jjcollinge/servicefabric"
   packages = ["."]
-  revision = "8026935326c842b71dee8e2329c1fda41a7a92f4"
+  revision = "8eebe170fa1ba25d3dfb928b3f86a7313b13b9fe"
 
 [[projects]]
   name = "github.com/jmespath/go-jmespath"
@@ -1633,6 +1632,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "39b400d9928cce714a46cae410074fd2622a097a9e0faba76a7b21537fabd728"
+  inputs-digest = "ab328aeda9dbd2c4dc87061c25dbfbd151dbdc5946b6f512f676b39bebba8d8e"
   solver-name = "gps-cdcl"
   solver-version = 1
