@@ -6,6 +6,9 @@ logLevel = "DEBUG"
   [entryPoints.http]
   address = ":8000"
 
+  [entryPoints.traefik]
+  address = ":8001"
+
 [lifeCycle]
   requestAcceptGraceTimeout = "10s"
 
@@ -20,3 +23,5 @@ logLevel = "DEBUG"
   backend = "backend"
     [frontends.frontend.routes.service]
     rule = "Path:/service"
+
+[ping]
