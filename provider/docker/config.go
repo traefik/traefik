@@ -25,6 +25,7 @@ const (
 
 func (p *Provider) buildConfigurationV2(containersInspected []dockerData) *types.Configuration {
 	dockerFuncMap := template.FuncMap{
+		"getLabelValue":    label.GetStringValue,
 		"getSubDomain":     getSubDomain,
 		"isBackendLBSwarm": isBackendLBSwarm,
 		"getDomain":        getFuncStringLabel(label.TraefikDomain, p.Domain),
@@ -39,7 +40,7 @@ func (p *Provider) buildConfigurationV2(containersInspected []dockerData) *types
 		"getLoadBalancer":   getLoadBalancer,
 
 		// Frontend functions
-		"getBackend":              getBackendName, // FIXME keep ???
+		"getBackendName":          getBackendName,
 		"getPriority":             getFuncIntLabel(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
 		"getPassHostHeader":       getFuncBoolLabel(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
 		"getPassTLSCert":          getFuncBoolLabel(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
@@ -47,7 +48,6 @@ func (p *Provider) buildConfigurationV2(containersInspected []dockerData) *types
 		"getBasicAuth":            getFuncSliceStringLabel(label.TraefikFrontendAuthBasic),
 		"getWhitelistSourceRange": getFuncSliceStringLabel(label.TraefikFrontendWhitelistSourceRange),
 		"getFrontendRule":         p.getFrontendRule,
-		"getBackendName":          getBackendName,
 		"getRedirect":             getRedirect,
 		"getErrorPages":           getErrorPages,
 		"getRateLimit":            getRateLimit,
