@@ -11,7 +11,7 @@ import (
 
 // NewHeaderRewriter Create a header rewriter
 func NewHeaderRewriter(trustedIPs []string, insecure bool) (forward.ReqRewriter, error) {
-	IPs, err := whitelist.NewIP(trustedIPs, insecure, true) // FIXME
+	IPs, err := whitelist.NewIP(trustedIPs, insecure, true)
 	if err != nil {
 		return nil, err
 	}

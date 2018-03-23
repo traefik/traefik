@@ -603,7 +603,7 @@ func TestBuildIPWhiteLister(t *testing.T) {
 			errMessage:           "parsing CIDR whitelist [foo]: parsing CIDR white list <nil>: invalid CIDR address: foo",
 		},
 		{
-			desc: "whitelists configured )",
+			desc: "whitelists configured",
 			whiteList: &types.WhiteList{
 				SourceRange: []string{
 					"1.2.3.4/24",
