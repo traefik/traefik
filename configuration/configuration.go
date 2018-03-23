@@ -201,6 +201,14 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 		gc.LifeCycle.GraceTimeOut = gc.GraceTimeOut
 	}
 
+	if gc.Docker != nil {
+		if len(gc.Docker.Filename) != 0 && gc.Docker.TemplateVersion != 2 {
+			gc.Docker.TemplateVersion = 1
+		} else {
+			gc.Docker.TemplateVersion = 2
+		}
+	}
+
 	if gc.Eureka != nil {
 		if gc.Eureka.Delay != 0 {
 			log.Warn("Delay has been deprecated -- please use RefreshSeconds")

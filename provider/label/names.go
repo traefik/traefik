@@ -65,7 +65,6 @@ const (
 	SuffixFrontendRedirectReplacement              = "frontend.redirect.replacement"
 	SuffixFrontendRedirectPermanent                = "frontend.redirect.permanent"
 	SuffixFrontendRule                             = "frontend.rule"
-	SuffixFrontendRuleType                         = "frontend.rule.type"
 	SuffixFrontendWhitelistSourceRange             = "frontend.whitelistSourceRange"
 	TraefikDomain                                  = Prefix + SuffixDomain
 	TraefikEnable                                  = Prefix + SuffixEnable
@@ -96,6 +95,7 @@ const (
 	TraefikBackendBufferingRetryExpression         = Prefix + SuffixBackendBufferingRetryExpression
 	TraefikFrontend                                = Prefix + SuffixFrontend
 	TraefikFrontendAuthBasic                       = Prefix + SuffixFrontendAuthBasic
+	TraefikFrontendBackend                         = Prefix + SuffixFrontendBackend
 	TraefikFrontendEntryPoints                     = Prefix + SuffixFrontendEntryPoints
 	TraefikFrontendPassHostHeader                  = Prefix + SuffixFrontendPassHostHeader
 	TraefikFrontendPassTLSCert                     = Prefix + SuffixFrontendPassTLSCert
@@ -106,9 +106,7 @@ const (
 	TraefikFrontendRedirectReplacement             = Prefix + SuffixFrontendRedirectReplacement
 	TraefikFrontendRedirectPermanent               = Prefix + SuffixFrontendRedirectPermanent
 	TraefikFrontendRule                            = Prefix + SuffixFrontendRule
-	TraefikFrontendRuleType                        = Prefix + SuffixFrontendRuleType // k8s only
 	TraefikFrontendWhitelistSourceRange            = Prefix + SuffixFrontendWhitelistSourceRange
-	TraefikFrontendHeaders                         = Prefix + SuffixFrontendHeaders
 	TraefikFrontendRequestHeaders                  = Prefix + SuffixFrontendRequestHeaders
 	TraefikFrontendResponseHeaders                 = Prefix + SuffixFrontendResponseHeaders
 	TraefikFrontendAllowedHosts                    = Prefix + SuffixFrontendHeadersAllowedHosts

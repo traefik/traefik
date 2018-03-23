@@ -36,13 +36,6 @@ const (
 )
 
 var (
-	// ServicesPropertiesRegexp used to extract the name of the service and the name of the property for this service
-	// All properties are under the format traefik.<servicename>.frontend.*= except the port/portIndex/weight/protocol/backend directly after traefik.<servicename>.
-	ServicesPropertiesRegexp = regexp.MustCompile(`^traefik\.(?P<service_name>.+?)\.(?P<property_name>port|portIndex|weight|protocol|backend|frontend\.(.+))$`)
-
-	// PortRegexp used to extract the port label of the service
-	PortRegexp = regexp.MustCompile(`^traefik\.(?P<service_name>.+?)\.port$`)
-
 	// RegexpBaseFrontendErrorPage used to extract error pages from service's label
 	RegexpBaseFrontendErrorPage = regexp.MustCompile(`^frontend\.errors\.(?P<name>[^ .]+)\.(?P<field>[^ .]+)$`)
 
@@ -55,15 +48,6 @@ var (
 	// RegexpFrontendRateLimit used to extract rate limits from label
 	RegexpFrontendRateLimit = regexp.MustCompile(`^traefik\.frontend\.rateLimit\.rateSet\.(?P<name>[^ .]+)\.(?P<field>[^ .]+)$`)
 )
-
-// ServicePropertyValues is a map of services properties
-// an example value is: weight=42
-type ServicePropertyValues map[string]string
-
-// ServiceProperties is a map of service properties per service,
-// which we can get with label[serviceName][propertyName].
-// It yields a property value.
-type ServiceProperties map[string]ServicePropertyValues
 
 // GetStringValue get string value associated to a label
 func GetStringValue(labels map[string]string, labelName string, defaultValue string) string {
@@ -245,56 +229,6 @@ func HasPrefixP(labels *map[string]string, prefix string) bool {
 	return HasPrefix(*labels, prefix)
 }
 
-// FindServiceSubmatch split service label
-func FindServiceSubmatch(name string) []string {
-	matches := ServicesPropertiesRegexp.FindStringSubmatch(name)
-	if matches == nil ||
-		strings.HasPrefix(name, TraefikFrontend+".") ||
-		strings.HasPrefix(name, TraefikBackend+".") {
-		return nil
-	}
-	return matches
-}
-
-// ExtractServiceProperties Extract services labels
-func ExtractServiceProperties(labels map[string]string) ServiceProperties {
-	v := make(ServiceProperties)
-
-	for name, value := range labels {
-		matches := FindServiceSubmatch(name)
-		if matches == nil {
-			continue
-		}
-
-		var serviceName string
-		var propertyName string
-		for i, name := range ServicesPropertiesRegexp.SubexpNames() {
-			if i != 0 {
-				if name == "service_name" {
-					serviceName = matches[i]
-				} else if name == "property_name" {
-					propertyName = matches[i]
-				}
-			}
-		}
-
-		if _, ok := v[serviceName]; !ok {
-			v[serviceName] = make(ServicePropertyValues)
-		}
-		v[serviceName][propertyName] = value
-	}
-
-	return v
-}
-
-// ExtractServicePropertiesP Extract services labels
-func ExtractServicePropertiesP(labels *map[string]string) ServiceProperties {
-	if labels == nil {
-		return make(ServiceProperties)
-	}
-	return ExtractServiceProperties(*labels)
-}
-
 // ParseErrorPages parse error pages to create ErrorPage struct
 func ParseErrorPages(labels map[string]string, labelPrefix string, labelRegex *regexp.Regexp) map[string]*types.ErrorPage {
 	var errorPages map[string]*types.ErrorPage
@@ -419,15 +353,4 @@ func SplitAndTrimString(base string, sep string) []string {
 	}
 
 	return trimmedStrings
-}
-
-// GetServiceLabel converts a key value of Label*, given a serviceName,
-// into a pattern <LabelPrefix>.<serviceName>.<property>
-// i.e. For LabelFrontendRule and serviceName=app it will return "traefik.app.frontend.rule"
-func GetServiceLabel(labelName, serviceName string) string {
-	if len(serviceName) > 0 {
-		property := strings.TrimPrefix(labelName, Prefix)
-		return Prefix + serviceName + "." + property
-	}
-	return labelName
 }

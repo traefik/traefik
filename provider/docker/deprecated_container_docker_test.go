@@ -1,11 +1,10 @@
 package docker
 
 import (
+	"reflect"
 	"strconv"
 	"testing"
-	"time"
 
-	"github.com/containous/flaeg"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	docker "github.com/docker/docker/api/types"
@@ -15,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDockerBuildConfiguration(t *testing.T) {
+func TestDockerBuildConfigurationV1(t *testing.T) {
 	testCases := []struct {
 		desc              string
 		containers        []docker.ContainerJSON
@@ -98,20 +97,12 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						label.TraefikBackend: "foobar",
 
 						label.TraefikBackendCircuitBreakerExpression:         "NetworkErrorRatio() > 0.5",
-						label.TraefikBackendHealthCheckPath:                  "/health",
-						label.TraefikBackendHealthCheckPort:                  "880",
-						label.TraefikBackendHealthCheckInterval:              "6",
 						label.TraefikBackendLoadBalancerMethod:               "drr",
 						label.TraefikBackendLoadBalancerSticky:               "true",
 						label.TraefikBackendLoadBalancerStickiness:           "true",
 						label.TraefikBackendLoadBalancerStickinessCookieName: "chocolate",
 						label.TraefikBackendMaxConnAmount:                    "666",
 						label.TraefikBackendMaxConnExtractorFunc:             "client.ip",
-						label.TraefikBackendBufferingMaxResponseBodyBytes:    "10485760",
-						label.TraefikBackendBufferingMemResponseBodyBytes:    "2097152",
-						label.TraefikBackendBufferingMaxRequestBodyBytes:     "10485760",
-						label.TraefikBackendBufferingMemRequestBodyBytes:     "2097152",
-						label.TraefikBackendBufferingRetryExpression:         "IsNetworkError() && Attempts() <= 2",
 
 						label.TraefikFrontendAuthBasic:            "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.TraefikFrontendEntryPoints:          "http,https",
@@ -121,7 +112,6 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendRedirectEntryPoint:   "https",
 						label.TraefikFrontendRedirectRegex:        "nope",
 						label.TraefikFrontendRedirectReplacement:  "nope",
-						label.TraefikFrontendRedirectPermanent:    "true",
 						label.TraefikFrontendRule:                 "Host:traefik.io",
 						label.TraefikFrontendWhitelistSourceRange: "10.10.10.10",
 
@@ -135,7 +125,6 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendContentSecurityPolicy:   "foo",
 						label.TraefikFrontendPublicKey:               "foo",
 						label.TraefikFrontendReferrerPolicy:          "foo",
-						label.TraefikFrontendCustomBrowserXSSValue:   "foo",
 						label.TraefikFrontendSTSSeconds:              "666",
 						label.TraefikFrontendSSLRedirect:             "true",
 						label.TraefikFrontendSSLTemporaryRedirect:    "true",
@@ -146,21 +135,6 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendContentTypeNosniff:      "true",
 						label.TraefikFrontendBrowserXSSFilter:        "true",
 						label.TraefikFrontendIsDevelopment:           "true",
-
-						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageStatus:  "404",
-						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageBackend: "foobar",
-						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageQuery:   "foo_query",
-						label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageStatus:  "500,600",
-						label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageBackend: "foobar",
-						label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageQuery:   "bar_query",
-
-						label.TraefikFrontendRateLimitExtractorFunc:                                        "client.ip",
-						label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitPeriod:  "6",
-						label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitAverage: "12",
-						label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitBurst:   "18",
-						label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitPeriod:  "3",
-						label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitAverage: "6",
-						label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitBurst:   "9",
 					}),
 					ports(nat.PortMap{
 						"80/tcp": {},
@@ -224,44 +198,15 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						CustomFrameOptionsValue: "foo",
 						ContentTypeNosniff:      true,
 						BrowserXSSFilter:        true,
-						CustomBrowserXSSValue:   "foo",
 						ContentSecurityPolicy:   "foo",
 						PublicKey:               "foo",
 						ReferrerPolicy:          "foo",
 						IsDevelopment:           true,
 					},
-					Errors: map[string]*types.ErrorPage{
-						"foo": {
-							Status:  []string{"404"},
-							Query:   "foo_query",
-							Backend: "foobar",
-						},
-						"bar": {
-							Status:  []string{"500", "600"},
-							Query:   "bar_query",
-							Backend: "foobar",
-						},
-					},
-					RateLimit: &types.RateLimit{
-						ExtractorFunc: "client.ip",
-						RateSet: map[string]*types.Rate{
-							"foo": {
-								Period:  flaeg.Duration(6 * time.Second),
-								Average: 12,
-								Burst:   18,
-							},
-							"bar": {
-								Period:  flaeg.Duration(3 * time.Second),
-								Average: 6,
-								Burst:   9,
-							},
-						},
-					},
 					Redirect: &types.Redirect{
 						EntryPoint:  "https",
-						Regex:       "",
-						Replacement: "",
-						Permanent:   true,
+						Regex:       "nope",
+						Replacement: "nope",
 					},
 				},
 			},
@@ -287,18 +232,6 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						Amount:        666,
 						ExtractorFunc: "client.ip",
 					},
-					HealthCheck: &types.HealthCheck{
-						Path:     "/health",
-						Port:     880,
-						Interval: "6",
-					},
-					Buffering: &types.Buffering{
-						MaxResponseBodyBytes: 10485760,
-						MemResponseBodyBytes: 2097152,
-						MaxRequestBodyBytes:  10485760,
-						MemRequestBodyBytes:  2097152,
-						RetryExpression:      "IsNetworkError() && Attempts() <= 2",
-					},
 				},
 			},
 		},
@@ -308,6 +241,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			var dockerDataList []dockerData
 			for _, cont := range test.containers {
 				dData := parseContainer(cont)
@@ -318,7 +252,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 				Domain:           "docker.localhost",
 				ExposedByDefault: true,
 			}
-			actualConfig := provider.buildConfigurationV2(dockerDataList)
+			actualConfig := provider.buildConfigurationV1(dockerDataList)
 			require.NotNil(t, actualConfig, "actualConfig")
 
 			assert.EqualValues(t, test.expectedBackends, actualConfig.Backends)
@@ -327,7 +261,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 	}
 }
 
-func TestDockerTraefikFilter(t *testing.T) {
+func TestDockerTraefikFilterV1(t *testing.T) {
 	testCases := []struct {
 		container docker.ContainerJSON
 		expected  bool
@@ -632,10 +566,8 @@ func TestDockerTraefikFilter(t *testing.T) {
 			t.Parallel()
 
 			dData := parseContainer(test.container)
-			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.SegmentLabels = segmentProperties[""]
 
-			actual := test.provider.containerFilter(dData)
+			actual := test.provider.containerFilterV1(dData)
 			if actual != test.expected {
 				t.Errorf("expected %v for %+v, got %+v", test.expected, test, actual)
 			}
@@ -643,23 +575,23 @@ func TestDockerTraefikFilter(t *testing.T) {
 	}
 }
 
-func TestDockerGetFuncStringLabel(t *testing.T) {
+func TestDockerGetFuncStringLabelV1(t *testing.T) {
 	testCases := []struct {
-		labels       map[string]string
+		container    docker.ContainerJSON
 		labelName    string
 		defaultValue string
 		expected     string
 	}{
 		{
-			labels:       nil,
+			container:    containerJSON(),
 			labelName:    label.TraefikWeight,
 			defaultValue: label.DefaultWeight,
 			expected:     "0",
 		},
 		{
-			labels: map[string]string{
+			container: containerJSON(labels(map[string]string{
 				label.TraefikWeight: "10",
-			},
+			})),
 			labelName:    label.TraefikWeight,
 			defaultValue: label.DefaultWeight,
 			expected:     "10",
@@ -671,37 +603,41 @@ func TestDockerGetFuncStringLabel(t *testing.T) {
 		t.Run(test.labelName+strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
 
-			actual := getFuncStringLabel(test.labelName, test.defaultValue)(test.labels)
-			assert.Equal(t, test.expected, actual)
+			dData := parseContainer(test.container)
+
+			actual := getFuncStringLabelV1(test.labelName, test.defaultValue)(dData)
+			if actual != test.expected {
+				t.Errorf("got %q, expected %q", actual, test.expected)
+			}
 		})
 	}
 }
 
-func TestDockerGetSliceStringLabel(t *testing.T) {
+func TestDockerGetSliceStringLabelV1(t *testing.T) {
 	testCases := []struct {
 		desc      string
-		labels    map[string]string
+		container docker.ContainerJSON
 		labelName string
 		expected  []string
 	}{
 		{
-			desc:     "no whitelist-label",
-			labels:   nil,
-			expected: nil,
+			desc:      "no whitelist-label",
+			container: containerJSON(),
+			expected:  nil,
 		},
 		{
 			desc: "whitelist-label with empty string",
-			labels: map[string]string{
+			container: containerJSON(labels(map[string]string{
 				label.TraefikFrontendWhitelistSourceRange: "",
-			},
+			})),
 			labelName: label.TraefikFrontendWhitelistSourceRange,
 			expected:  nil,
 		},
 		{
 			desc: "whitelist-label with IPv4 mask",
-			labels: map[string]string{
+			container: containerJSON(labels(map[string]string{
 				label.TraefikFrontendWhitelistSourceRange: "1.2.3.4/16",
-			},
+			})),
 			labelName: label.TraefikFrontendWhitelistSourceRange,
 			expected: []string{
 				"1.2.3.4/16",
@@ -709,9 +645,9 @@ func TestDockerGetSliceStringLabel(t *testing.T) {
 		},
 		{
 			desc: "whitelist-label with IPv6 mask",
-			labels: map[string]string{
+			container: containerJSON(labels(map[string]string{
 				label.TraefikFrontendWhitelistSourceRange: "fe80::/16",
-			},
+			})),
 			labelName: label.TraefikFrontendWhitelistSourceRange,
 			expected: []string{
 				"fe80::/16",
@@ -719,9 +655,9 @@ func TestDockerGetSliceStringLabel(t *testing.T) {
 		},
 		{
 			desc: "whitelist-label with multiple masks",
-			labels: map[string]string{
+			container: containerJSON(labels(map[string]string{
 				label.TraefikFrontendWhitelistSourceRange: "1.1.1.1/24, 1234:abcd::42/32",
-			},
+			})),
 			labelName: label.TraefikFrontendWhitelistSourceRange,
 			expected: []string{
 				"1.1.1.1/24",
@@ -735,13 +671,17 @@ func TestDockerGetSliceStringLabel(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actual := getFuncSliceStringLabel(test.labelName)(test.labels)
-			assert.EqualValues(t, test.expected, actual)
+			dData := parseContainer(test.container)
+
+			actual := getFuncSliceStringLabelV1(test.labelName)(dData)
+			if !reflect.DeepEqual(actual, test.expected) {
+				t.Errorf("expected %q, got %q", test.expected, actual)
+			}
 		})
 	}
 }
 
-func TestDockerGetFrontendName(t *testing.T) {
+func TestDockerGetFrontendNameV1(t *testing.T) {
 	testCases := []struct {
 		container docker.ContainerJSON
 		expected  string
@@ -789,20 +729,20 @@ func TestDockerGetFrontendName(t *testing.T) {
 			t.Parallel()
 
 			dData := parseContainer(test.container)
-			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.SegmentLabels = segmentProperties[""]
 
 			provider := &Provider{
 				Domain: "docker.localhost",
 			}
 
-			actual := provider.getFrontendName(dData, 0)
-			assert.Equal(t, test.expected, actual)
+			actual := provider.getFrontendNameV1(dData, 0)
+			if actual != test.expected {
+				t.Errorf("expected %q, got %q", test.expected, actual)
+			}
 		})
 	}
 }
 
-func TestDockerGetFrontendRule(t *testing.T) {
+func TestDockerGetFrontendRuleV1(t *testing.T) {
 	testCases := []struct {
 		container docker.ContainerJSON
 		expected  string
@@ -841,19 +781,20 @@ func TestDockerGetFrontendRule(t *testing.T) {
 			t.Parallel()
 
 			dData := parseContainer(test.container)
-			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.SegmentLabels = segmentProperties[""]
 
 			provider := &Provider{
 				Domain: "docker.localhost",
 			}
-			actual := provider.getFrontendRule(dData)
-			assert.Equal(t, test.expected, actual)
+
+			actual := provider.getFrontendRuleV1(dData)
+			if actual != test.expected {
+				t.Errorf("expected %q, got %q", test.expected, actual)
+			}
 		})
 	}
 }
 
-func TestDockerGetBackendName(t *testing.T) {
+func TestDockerGetBackendNameV1(t *testing.T) {
 	testCases := []struct {
 		container docker.ContainerJSON
 		expected  string
@@ -887,16 +828,16 @@ func TestDockerGetBackendName(t *testing.T) {
 			t.Parallel()
 
 			dData := parseContainer(test.container)
-			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.SegmentLabels = segmentProperties[""]
 
-			actual := getBackendName(dData)
-			assert.Equal(t, test.expected, actual)
+			actual := getBackendNameV1(dData)
+			if actual != test.expected {
+				t.Errorf("expected %q, got %q", test.expected, actual)
+			}
 		})
 	}
 }
 
-func TestDockerGetIPAddress(t *testing.T) {
+func TestDockerGetIPAddressV1(t *testing.T) {
 	testCases := []struct {
 		container docker.ContainerJSON
 		expected  string
@@ -951,20 +892,17 @@ func TestDockerGetIPAddress(t *testing.T) {
 		test := test
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
-
 			dData := parseContainer(test.container)
-			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.SegmentLabels = segmentProperties[""]
-
 			provider := &Provider{}
-
 			actual := provider.getIPAddress(dData)
-			assert.Equal(t, test.expected, actual)
+			if actual != test.expected {
+				t.Errorf("expected %q, got %q", test.expected, actual)
+			}
 		})
 	}
 }
 
-func TestDockerGetPort(t *testing.T) {
+func TestDockerGetPortV1(t *testing.T) {
 	testCases := []struct {
 		container docker.ContainerJSON
 		expected  string
@@ -1011,17 +949,17 @@ func TestDockerGetPort(t *testing.T) {
 		},
 	}
 
-	for containerID, test := range testCases {
-		test := test
+	for containerID, e := range testCases {
+		e := e
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
 
-			dData := parseContainer(test.container)
-			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.SegmentLabels = segmentProperties[""]
+			dData := parseContainer(e.container)
 
-			actual := getPort(dData)
-			assert.Equal(t, test.expected, actual)
+			actual := getPortV1(dData)
+			if actual != e.expected {
+				t.Errorf("expected %q, got %q", e.expected, actual)
+			}
 		})
 	}
 }

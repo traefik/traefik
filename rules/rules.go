@@ -188,7 +188,7 @@ func (r *Rules) parseRules(expression string, onRule func(functionName string, f
 	}
 
 	if len(expression) == 0 {
-		return errors.New("Empty rule")
+		return errors.New("empty rule")
 	}
 
 	f := func(c rune) bool {
@@ -208,16 +208,18 @@ func (r *Rules) parseRules(expression string, onRule func(functionName string, f
 		if len(parsedFunctions) == 0 {
 			return fmt.Errorf("error parsing rule: '%s'", rule)
 		}
+
 		functionName := strings.TrimSpace(parsedFunctions[0])
 		parsedFunction, ok := functions[functionName]
 		if !ok {
 			return fmt.Errorf("error parsing rule: '%s'. Unknown function: '%s'", rule, parsedFunctions[0])
 		}
 		parsedFunctions = append(parsedFunctions[:0], parsedFunctions[1:]...)
+
+		// get function
 		fargs := func(c rune) bool {
 			return c == ','
 		}
-		// get function
 		parsedArgs := strings.FieldsFunc(strings.Join(parsedFunctions, ":"), fargs)
 		if len(parsedArgs) == 0 {
 			return fmt.Errorf("error parsing args from rule: '%s'", rule)
@@ -229,7 +231,7 @@ func (r *Rules) parseRules(expression string, onRule func(functionName string, f
 
 		err := onRule(functionName, parsedFunction, parsedArgs)
 		if err != nil {
-			return fmt.Errorf("Parsing error on rule: %v", err)
+			return fmt.Errorf("parsing error on rule: %v", err)
 		}
 	}
 	return nil
@@ -238,6 +240,7 @@ func (r *Rules) parseRules(expression string, onRule func(functionName string, f
 // Parse parses rules expressions
 func (r *Rules) Parse(expression string) (*mux.Route, error) {
 	var resultRoute *mux.Route
+
 	err := r.parseRules(expression, func(functionName string, function interface{}, arguments []string) error {
 		inputs := make([]reflect.Value, len(arguments))
 		for i := range arguments {
@@ -252,21 +255,22 @@ func (r *Rules) Parse(expression string) (*mux.Route, error) {
 			if resultRoute.GetError() != nil {
 				return resultRoute.GetError()
 			}
-
 		} else {
-			return fmt.Errorf("Method not found: '%s'", functionName)
+			return fmt.Errorf("method not found: '%s'", functionName)
 		}
 		return nil
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error parsing rule: %v", err)
 	}
+
 	return resultRoute, nil
 }
 
 // ParseDomains parses rules expressions and returns domains
 func (r *Rules) ParseDomains(expression string) ([]string, error) {
-	domains := []string{}
+	var domains []string
+
 	err := r.parseRules(expression, func(functionName string, function interface{}, arguments []string) error {
 		if functionName == "Host" {
 			domains = append(domains, arguments...)
@@ -276,5 +280,6 @@ func (r *Rules) ParseDomains(expression string) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error parsing domains: %v", err)
 	}
+
 	return fun.Map(types.CanonicalDomain, domains).([]string), nil
 }
