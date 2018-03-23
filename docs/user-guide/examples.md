@@ -201,7 +201,7 @@ These variables are described [in this section](/configuration/acme/#provider).
 [acme]
 email = "test@traefik.io"
 storage = "acme.json"
-caServer = "http://172.18.0.1:4000/directory"
+caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
 entryPoint = "https"
   [acme.dnsChallenge]
   provider = "digitalocean" # DNS Provider name (cloudflare, OVH, gandi...)
@@ -209,7 +209,6 @@ entryPoint = "https"
 
 [[acme.domains]]
   main = "*.local1.com"
-  sans = ["test1.local1.com", "test2.local1.com"]
 [[acme.domains]]
   main = "local2.com"
   sans = ["test1.local2.com", "test2x.local2.com"]

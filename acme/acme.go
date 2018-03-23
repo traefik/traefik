@@ -253,7 +253,7 @@ func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificat
 func (a *ACME) retrieveCertificates() {
 	a.jobs.In() <- func() {
 		log.Info("Retrieving ACME certificates...")
-		a.deleteUnecessariesDomains()
+		a.deleteUnnecessariesDomains()
 		for i := 0; i < len(a.Domains); i++ {
 			domain := a.Domains[i]
 			// check if cert isn't already loaded
@@ -678,10 +678,10 @@ func isDomainAlreadyChecked(domainToCheck string, existentDomains map[string]*tl
 	return false
 }
 
-// deleteUnecessariesDomains deletes from the configuration :
+// deleteUnnecessariesDomains deletes from the configuration :
 // - Duplicated domains
 // - Domains which are checked by wildcard domain
-func (a *ACME) deleteUnecessariesDomains() {
+func (a *ACME) deleteUnnecessariesDomains() {
 	var newDomains []types.Domain
 	for idxDomainToCheck, domainToCheck := range a.Domains {
 		keepDomain := true

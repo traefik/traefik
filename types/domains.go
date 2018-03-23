@@ -58,6 +58,7 @@ func (d *Domain) ToStrArray() []string {
 	return append(domains, d.SANs...)
 }
 
+// Set sets a domains from an array of strings
 func (d *Domain) Set(domains []string) {
 	if len(domains) > 0 {
 		d.Main = domains[0]

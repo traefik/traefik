@@ -429,6 +429,7 @@ func TestAcme_getValidDomain(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			a := ACME{}
 			if test.dnsChallenge != nil {
 				a.DNSChallenge = test.dnsChallenge

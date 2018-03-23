@@ -336,7 +336,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	p.configurationChan = configurationChan
 	p.refreshCertificates()
 
-	p.deleteUnecessariesDomains()
+	p.deleteUnnecessariesDomains()
 	for i := 0; i < len(p.Domains); i++ {
 		domain := p.Domains[i]
 		safe.Go(func() {
@@ -598,10 +598,10 @@ func isDomainAlreadyChecked(domainToCheck string, existentDomains []string) bool
 	return false
 }
 
-// deleteUnecessariesDomains deletes from the configuration :
+// deleteUnnecessariesDomains deletes from the configuration :
 // - Duplicated domains
 // - Domains which are checked by wildcard domain
-func (p *Provider) deleteUnecessariesDomains() {
+func (p *Provider) deleteUnnecessariesDomains() {
 	var newDomains []types.Domain
 	for idxDomainToCheck, domainToCheck := range p.Domains {
 		keepDomain := true

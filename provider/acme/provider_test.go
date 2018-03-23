@@ -236,7 +236,7 @@ func TestGetValidDomain(t *testing.T) {
 	}
 }
 
-func TestDeleteUnecessariesDomains(t *testing.T) {
+func TestDeleteUnnecessariesDomains(t *testing.T) {
 	tests := []struct {
 		desc            string
 		domains         []types.Domain
@@ -338,7 +338,7 @@ func TestDeleteUnecessariesDomains(t *testing.T) {
 
 			acmeProvider := Provider{Configuration: &Configuration{Domains: test.domains}}
 
-			acmeProvider.deleteUnecessariesDomains()
+			acmeProvider.deleteUnnecessariesDomains()
 			assert.EqualValues(t, test.expectedDomains, acmeProvider.Domains, "unexpected domain")
 		})
 	}

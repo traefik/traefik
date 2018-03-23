@@ -139,7 +139,7 @@ entryPoint = "https"
     If `HTTP-01` challenge is used, `acme.httpChallenge.entryPoint` has to be defined and reachable by Let's Encrypt through the port 80.
     These are Let's Encrypt limitations as described on the [community forum](https://community.letsencrypt.org/t/support-for-ports-other-than-80-and-443/3419/72).
 
-!!!note
+!!! note
     Wildcard certificates can be generated only if `acme.dnsChallenge`
 option is enable.
 
