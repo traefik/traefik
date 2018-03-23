@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAcme_getUncheckedCertificates(t *testing.T) {
+func TestGetUncheckedCertificates(t *testing.T) {
 
 	wildcardMap := make(map[string]*tls.Certificate)
 	wildcardMap["*.traefik.wtf"] = &tls.Certificate{}
@@ -109,19 +109,19 @@ func TestAcme_getUncheckedCertificates(t *testing.T) {
 		},
 		{
 			desc:            "domain matched by wildcard in dynamic certificates",
-			domains:         []string{"traefik.wtf", "foo.traefik.wtf"},
+			domains:         []string{"who.traefik.wtf", "foo.traefik.wtf"},
 			dynamicCerts:    wildcardSafe,
 			expectedDomains: nil,
 		},
 		{
 			desc:            "domain matched by wildcard in static certificates",
-			domains:         []string{"traefik.wtf", "foo.traefik.wtf"},
+			domains:         []string{"who.traefik.wtf", "foo.traefik.wtf"},
 			staticCerts:     wildcardMap,
 			expectedDomains: nil,
 		},
 		{
 			desc:    "domain matched by wildcard in ACME certificates",
-			domains: []string{"traefik.wtf", "foo.traefik.wtf"},
+			domains: []string{"who.traefik.wtf", "foo.traefik.wtf"},
 			acmeCertificates: []*Certificate{
 				{
 					Domain: types.Domain{Main: "*.traefik.wtf"},
@@ -129,7 +129,18 @@ func TestAcme_getUncheckedCertificates(t *testing.T) {
 			},
 			expectedDomains: nil,
 		},
+		{
+			desc:    "root domain with wildcard in ACME certificates",
+			domains: []string{"traefik.wtf", "foo.traefik.wtf"},
+			acmeCertificates: []*Certificate{
+				{
+					Domain: types.Domain{Main: "*.traefik.wtf"},
+				},
+			},
+			expectedDomains: []string{"traefik.wtf"},
+		},
 	}
+
 	for _, test := range tests {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
@@ -141,13 +152,13 @@ func TestAcme_getUncheckedCertificates(t *testing.T) {
 				certificates: test.acmeCertificates,
 			}
 
-			domains := acmeProvider.getUncheckedDomains(test.domains)
+			domains := acmeProvider.getUncheckedDomains(test.domains, false)
 			assert.Equal(t, len(test.expectedDomains), len(domains), "Unexpected domains.")
 		})
 	}
 }
 
-func TestAcme_getValidDomain(t *testing.T) {
+func TestGetValidDomain(t *testing.T) {
 	tests := []struct {
 		desc            string
 		domains         types.Domain
@@ -205,16 +216,14 @@ func TestAcme_getValidDomain(t *testing.T) {
 			expectedDomains: nil,
 		},
 	}
+
 	for _, test := range tests {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 
 			t.Parallel()
 
-			acmeProvider := Provider{Configuration: &Configuration{}}
-			if test.dnsChallenge != nil {
-				acmeProvider.DNSChallenge = test.dnsChallenge
-			}
+			acmeProvider := Provider{Configuration: &Configuration{DNSChallenge: test.dnsChallenge}}
 
 			domains, err := acmeProvider.getValidDomains(test.domains, test.wildcardAllowed)
 
@@ -223,6 +232,114 @@ func TestAcme_getValidDomain(t *testing.T) {
 			} else {
 				assert.Equal(t, len(test.expectedDomains), len(domains), "Unexpected domains.")
 			}
+		})
+	}
+}
+
+func TestDeleteUnecessariesDomains(t *testing.T) {
+	tests := []struct {
+		desc            string
+		domains         []types.Domain
+		expectedDomains []types.Domain
+	}{
+		{
+			desc: "no domain to delete",
+			domains: []types.Domain{
+				{
+					Main: "acme.wtf",
+					SANs: []string{"traefik.acme.wtf", "foo.bar"},
+				},
+				{
+					Main: "*.foo.acme.wtf",
+				},
+				{
+					Main: "acme.wtf",
+					SANs: []string{"traefik.acme.wtf", "bar.foo"},
+				},
+			},
+			expectedDomains: []types.Domain{
+				{
+					Main: "acme.wtf",
+					SANs: []string{"traefik.acme.wtf", "foo.bar"},
+				},
+				{
+					Main: "*.foo.acme.wtf",
+				},
+				{
+					Main: "acme.wtf",
+					SANs: []string{"traefik.acme.wtf", "bar.foo"},
+				},
+			},
+		},
+		{
+			desc: "2 domains with same values",
+			domains: []types.Domain{
+				{
+					Main: "acme.wtf",
+					SANs: []string{"traefik.acme.wtf", "foo.bar"},
+				},
+				{
+					Main: "acme.wtf",
+					SANs: []string{"traefik.acme.wtf", "foo.bar"},
+				},
+			},
+			expectedDomains: []types.Domain{
+				{
+					Main: "acme.wtf",
+					SANs: []string{"traefik.acme.wtf", "foo.bar"},
+				},
+			},
+		},
+		{
+			desc: "domain totally checked by wildcard",
+			domains: []types.Domain{
+				{
+					Main: "who.acme.wtf",
+					SANs: []string{"traefik.acme.wtf", "bar.acme.wtf"},
+				},
+				{
+					Main: "*.acme.wtf",
+				},
+			},
+			expectedDomains: []types.Domain{
+				{
+					Main: "*.acme.wtf",
+				},
+			},
+		},
+		{
+			desc: "domain partially checked by wildcard",
+			domains: []types.Domain{
+				{
+					Main: "traefik.acme.wtf",
+					SANs: []string{"acme.wtf", "foo.bar"},
+				},
+				{
+					Main: "*.acme.wtf",
+				},
+			},
+			expectedDomains: []types.Domain{
+				{
+					Main: "acme.wtf",
+					SANs: []string{"foo.bar"},
+				},
+				{
+					Main: "*.acme.wtf",
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+
+			t.Parallel()
+
+			acmeProvider := Provider{Configuration: &Configuration{Domains: test.domains}}
+
+			acmeProvider.deleteUnecessariesDomains()
+			assert.EqualValues(t, test.expectedDomains, acmeProvider.Domains, "unexpected domain")
 		})
 	}
 }

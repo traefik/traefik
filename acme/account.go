@@ -218,10 +218,7 @@ func (dc *DomainsCertificates) getCertificateForDomain(domainToFind string) (*Do
 	defer dc.lock.RUnlock()
 
 	for _, domainsCertificate := range dc.Certs {
-		domains := []string{domainsCertificate.Domains.Main}
-		domains = append(domains, domainsCertificate.Domains.SANs...)
-
-		for _, domain := range domains {
+		for _, domain := range domainsCertificate.Domains.ToStrArray() {
 			if domain == domainToFind {
 				return domainsCertificate, true
 			}

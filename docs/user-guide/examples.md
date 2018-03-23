@@ -186,7 +186,7 @@ entryPoint = "https"
 ```
 
 DNS challenge needs environment variables to be executed.
-These variables have to be set on the machine/container which host Træfik.
+These variables have to be set on the machine/container that host Træfik.
 
 These variables are described [in this section](/configuration/acme/#provider).
 
@@ -220,7 +220,7 @@ entryPoint = "https"
 ```
 
 DNS challenge needs environment variables to be executed.
-These variables have to be set on the machine/container which host Træfik.
+These variables have to be set on the machine/container that host Træfik.
 
 These variables are described [in this section](/configuration/acme/#provider).
 

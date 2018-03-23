@@ -394,11 +394,11 @@ CA server to use.
 
 #### Wildcard domains
 
-Wildcard domain as to be defined as a main domain **with no SANs** (alternative domains).
+Wildcard domain has to be defined as a main domain **with no SANs** (alternative domains).
 All domains must have A/AAAA records pointing to Træfik.
 
 !!! warning
-    Take note that Let's Encrypt have [rate limiting](https://letsencrypt.org/docs/rate-limits).
+    Note that Let's Encrypt has [rate limiting](https://letsencrypt.org/docs/rate-limits).
 
 Each domain & SANs will lead to a certificate request.
 
@@ -425,11 +425,11 @@ Each domain & SANs will lead to a certificate request.
 ## Wildcard certificates
 
 [ACME V2](https://community.letsencrypt.org/t/acme-v2-and-wildcard-certificate-support-is-live/55579) allows wildcard certificate support.
-However this feature needs a specific configuration.
+However, this feature needs a specific configuration.
 
 ### DNS-02 Challenge
 
-As described in [Let's Encrypt post](https://community.letsencrypt.org/t/staging-endpoint-for-acme-v2/49605), wildcard certificates can only be generated thanks to  a `DNS-02`Challenge.
+As described in [Let's Encrypt post](https://community.letsencrypt.org/t/staging-endpoint-for-acme-v2/49605), wildcard certificates can only be generated through a `DNS-02`Challenge.
 This challenge is linked to the Træfik option `acme.dnsChallenge`.
 
 ```toml
@@ -445,7 +445,7 @@ For more information about this option, please refer to the [dnsChallenge sectio
 
 ### Wildcard domain
 
-For the moment, a wildcard domain can only be provided thanks to the `acme.domains` option.
+Wildcard domains can currently be provided only by to the `acme.domains` option.
 Theses domains can not have SANs.
 
 ```toml

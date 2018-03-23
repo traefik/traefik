@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -252,7 +253,9 @@ func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificat
 func (a *ACME) retrieveCertificates() {
 	a.jobs.In() <- func() {
 		log.Info("Retrieving ACME certificates...")
-		for _, domain := range a.Domains {
+		a.deleteUnecessariesDomains()
+		for i := 0; i < len(a.Domains); i++ {
+			domain := a.Domains[i]
 			// check if cert isn't already loaded
 			account := a.store.Get().(*Account)
 			if _, exists := account.DomainsCertificate.exists(domain); !exists {
@@ -538,7 +541,7 @@ func searchProvidedCertificateForDomains(domain string, certs map[string]*tls.Ce
 	for certDomains := range certs {
 		domainCheck := false
 		for _, certDomain := range strings.Split(certDomains, ",") {
-			selector := "^" + strings.Replace(certDomain, "*.", "[^\\.]*\\.?", -1) + "$"
+			selector := "^" + strings.Replace(certDomain, "*.", "[^\\.]*\\.", -1) + "$"
 			domainCheck, _ = regexp.MatchString(selector, domain)
 			if domainCheck {
 				break
@@ -577,28 +580,21 @@ func (a *ACME) getUncheckedDomains(domains []string, account *Account) []string 
 		}
 	}
 
+	// Get Configuration Domains
+	for i := 0; i < len(a.Domains); i++ {
+		allCerts[a.Domains[i].Main] = &tls.Certificate{}
+		for _, san := range a.Domains[i].SANs {
+			allCerts[san] = &tls.Certificate{}
+		}
+	}
+
 	return searchUncheckedDomains(domains, allCerts)
 }
 
 func searchUncheckedDomains(domains []string, certs map[string]*tls.Certificate) []string {
 	uncheckedDomains := []string{}
 	for _, domainToCheck := range domains {
-		domainCheck := false
-		for certDomains := range certs {
-			domainCheck = false
-			for _, certDomain := range strings.Split(certDomains, ",") {
-				// Use regex to test for provided certs that might have been added into TLSConfig
-				selector := "^" + strings.Replace(certDomain, "*.", "[^\\.]*\\.?", -1) + "$"
-				domainCheck, _ = regexp.MatchString(selector, domainToCheck)
-				if domainCheck {
-					break
-				}
-			}
-			if domainCheck {
-				break
-			}
-		}
-		if !domainCheck {
+		if !isDomainAlreadyChecked(domainToCheck, certs) {
 			uncheckedDomains = append(uncheckedDomains, domainToCheck)
 		}
 	}
@@ -653,7 +649,83 @@ func (a *ACME) getValidDomains(domains []string, wildcardAllowed bool) ([]string
 		if len(domains) > 1 {
 			return nil, fmt.Errorf("unable to generate a wildcard certificate for domain %q : SANs are not allowed", strings.Join(domains, ","))
 		}
+	} else {
+		for _, san := range domains[1:] {
+			if strings.HasPrefix(san, "*") {
+				return nil, fmt.Errorf("unable to generate a certificate in ACME provider for domains %q: SANs can not be a wildcard domain", strings.Join(domains, ","))
+			}
+		}
 	}
 	domains = fun.Map(types.CanonicalDomain, domains).([]string)
 	return domains, nil
+}
+
+func isDomainAlreadyChecked(domainToCheck string, existentDomains map[string]*tls.Certificate) bool {
+	for certDomains := range existentDomains {
+		for _, certDomain := range strings.Split(certDomains, ",") {
+			// Use regex to test for provided existentDomains that might have been added into TLSConfig
+			selector := "^" + strings.Replace(certDomain, "*.", "[^\\.]*\\.", -1) + "$"
+			domainCheck, err := regexp.MatchString(selector, domainToCheck)
+			if err != nil {
+				log.Errorf("Unable to compare %q and %q : %s", domainToCheck, certDomain, err)
+				continue
+			}
+			if domainCheck {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// deleteUnecessariesDomains deletes from the configuration :
+// - Duplicated domains
+// - Domains which are checked by wildcard domain
+func (a *ACME) deleteUnecessariesDomains() {
+	var newDomains []types.Domain
+	for idxDomainToCheck, domainToCheck := range a.Domains {
+		keepDomain := true
+		for idxDomain, domain := range a.Domains {
+			if idxDomainToCheck == idxDomain {
+				continue
+			}
+
+			if reflect.DeepEqual(domain, domainToCheck) {
+				if idxDomainToCheck > idxDomain {
+					log.Warnf("The domain %v is duplicated in the configuration but will be process by ACME only once.", domainToCheck)
+					keepDomain = false
+				}
+				break
+			} else if strings.HasPrefix(domain.Main, "*") && domain.SANs == nil {
+
+				// Check if domains can be validated by the wildcard domain
+				domainsToCheck := domainToCheck.ToStrArray()
+				var newDomainsToCheck []string
+				// Check if domains can be validated by the wildcard domain
+				domainsMap := make(map[string]*tls.Certificate)
+				domainsMap[domain.Main] = &tls.Certificate{}
+
+				for _, domainProcessed := range domainsToCheck {
+					if isDomainAlreadyChecked(domainProcessed, domainsMap) {
+						log.Warnf("Domain %q will not be processed by ACME because it is validated by the wildcard %q", domainProcessed, domain.Main)
+						continue
+					}
+					newDomainsToCheck = append(newDomainsToCheck, domainProcessed)
+				}
+
+				// Delete the domain if both Main and SANs can be validated by the wildcard domain
+				// otherwise keep the unchecked values
+				if newDomainsToCheck == nil {
+					keepDomain = false
+					break
+				} else {
+					domainToCheck.Set(newDomainsToCheck)
+				}
+			}
+		}
+		if keepDomain {
+			newDomains = append(newDomains, domainToCheck)
+		}
+	}
+	a.Domains = newDomains
 }
