@@ -57,7 +57,7 @@ func (ip *IP) IsAuthorized(req *http.Request) (bool, net.IP, error) {
 
 	if ip.useXForwardedFor {
 		xFFs := req.Header[XForwardedFor]
-		if ip.useXForwardedFor && len(xFFs) > 1 {
+		if len(xFFs) > 1 {
 			for _, xFF := range xFFs {
 				ok, i, err := ip.contains(parseHost(xFF))
 				if err != nil {
