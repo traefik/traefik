@@ -1246,8 +1246,8 @@ func (s *Server) configureLBServers(lb healthcheck.LoadBalancer, config *types.C
 			log.Errorf("Error parsing server URL %s: %v", srv.URL, err)
 			return err
 		}
-		log.Debugf("Creating server %s at %s with weight %d", name, u, srv.Weight)
-		if err := lb.UpsertServer(u, roundrobin.Weight(srv.Weight)); err != nil {
+		log.Debugf("Creating server %s at %s with priority %d, weight %d", name, u, srv.Priority, srv.Weight)
+		if err := lb.UpsertServer(u, roundrobin.Priority(srv.Priority), roundrobin.Weight(srv.Weight)); err != nil {
 			log.Errorf("Error adding server %s to load balancer: %v", srv.URL, err)
 			return err
 		}

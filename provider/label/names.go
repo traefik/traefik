@@ -8,6 +8,7 @@ const (
 	SuffixEnable                                   = "enable"
 	SuffixPort                                     = "port"
 	SuffixPortIndex                                = "portIndex"
+	SuffixPriority                                 = "priority"
 	SuffixProtocol                                 = "protocol"
 	SuffixTags                                     = "tags"
 	SuffixWeight                                   = "weight"
@@ -70,6 +71,7 @@ const (
 	TraefikEnable                                  = Prefix + SuffixEnable
 	TraefikPort                                    = Prefix + SuffixPort
 	TraefikPortIndex                               = Prefix + SuffixPortIndex
+	TraefikPriority                                = Prefix + SuffixPriority
 	TraefikProtocol                                = Prefix + SuffixProtocol
 	TraefikTags                                    = Prefix + SuffixTags
 	TraefikWeight                                  = Prefix + SuffixWeight

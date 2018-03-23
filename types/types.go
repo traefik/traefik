@@ -70,8 +70,9 @@ type HealthCheck struct {
 
 // Server holds server configuration.
 type Server struct {
-	URL    string `json:"url,omitempty"`
-	Weight int    `json:"weight"`
+	URL      string `json:"url,omitempty"`
+	Weight   int    `json:"weight"`
+	Priority int    `json:"priority"`
 }
 
 // Route holds route configuration.
