@@ -228,6 +228,12 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 	}
 
 	if gc.Rancher != nil {
+		if len(gc.Rancher.Filename) != 0 && gc.Rancher.TemplateVersion != 2 {
+			gc.Rancher.TemplateVersion = 1
+		} else {
+			gc.Rancher.TemplateVersion = 2
+		}
+
 		// Ensure backwards compatibility for now
 		if len(gc.Rancher.AccessKey) > 0 ||
 			len(gc.Rancher.Endpoint) > 0 ||

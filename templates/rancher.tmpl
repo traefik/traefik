@@ -4,13 +4,13 @@
 
   [backends."backend-{{ $backendName }}"]
 
-  {{ $circuitBreaker := getCircuitBreaker $backend }}
+  {{ $circuitBreaker := getCircuitBreaker $backend.SegmentLabels }}
   {{if $circuitBreaker }}
   [backends."backend-{{ $backendName }}".circuitBreaker]
     expression = "{{ $circuitBreaker.Expression }}"
   {{end}}
 
-  {{ $loadBalancer := getLoadBalancer $backend }}
+  {{ $loadBalancer := getLoadBalancer $backend.SegmentLabels }}
   {{if $loadBalancer }}
     [backends."backend-{{ $backendName }}".loadBalancer]
       method = "{{ $loadBalancer.Method }}"
@@ -21,14 +21,14 @@
       {{end}}
   {{end}}
 
-  {{ $maxConn := getMaxConn $backend }}
+  {{ $maxConn := getMaxConn $backend.SegmentLabels }}
   {{if $maxConn }}
   [backends."backend-{{ $backendName }}".maxConn]
     extractorFunc = "{{ $maxConn.ExtractorFunc }}"
     amount = {{ $maxConn.Amount }}
   {{end}}
 
-  {{ $healthCheck := getHealthCheck $backend }}
+  {{ $healthCheck := getHealthCheck $backend.SegmentLabels }}
   {{if $healthCheck }}
   [backends."backend-{{ $backendName }}".healthCheck]
     path = "{{ $healthCheck.Path }}"
@@ -36,7 +36,7 @@
     interval = "{{ $healthCheck.Interval }}"
   {{end}}
 
-  {{ $buffering := getBuffering $backend }}
+  {{ $buffering := getBuffering $backend.SegmentLabels }}
   {{if $buffering }}
   [backends."backend-{{ $backendName }}".buffering]
     maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
@@ -59,19 +59,19 @@
 
   [frontends."frontend-{{ $frontendName }}"]
     backend = "backend-{{ getBackendName $service }}"
-    priority = {{ getPriority $service }}
-    passHostHeader = {{ getPassHostHeader $service }}
-    passTLSCert = {{ getPassTLSCert $service }}
+    priority = {{ getPriority $service.SegmentLabels }}
+    passHostHeader = {{ getPassHostHeader $service.SegmentLabels }}
+    passTLSCert = {{ getPassTLSCert $service.SegmentLabels }}
 
-    entryPoints = [{{range getEntryPoints $service }}
+    entryPoints = [{{range getEntryPoints $service.SegmentLabels }}
       "{{.}}",
       {{end}}]
 
-    basicAuth = [{{range getBasicAuth $service }}
+    basicAuth = [{{range getBasicAuth $service.SegmentLabels }}
       "{{.}}",
       {{end}}]
 
-    {{ $whitelist := getWhiteList $service }}
+    {{ $whitelist := getWhiteList $service.SegmentLabels }}
     {{if $whitelist }}
     [frontends."frontend-{{ $frontendName }}".whiteList]
       sourceRange = [{{range $whitelist.SourceRange }}
@@ -80,7 +80,7 @@
       useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
     {{end}}
 
-    {{ $redirect := getRedirect $service }}
+    {{ $redirect := getRedirect $service.SegmentLabels }}
     {{if $redirect }}
     [frontends."frontend-{{ $frontendName }}".redirect]
       entryPoint = "{{ $redirect.EntryPoint }}"
@@ -89,7 +89,7 @@
       permanent = {{ $redirect.Permanent }}
     {{end}}
 
-    {{ $errorPages := getErrorPages $service }}
+    {{ $errorPages := getErrorPages $service.SegmentLabels }}
     {{if $errorPages }}
     [frontends."frontend-{{ $frontendName }}".errors]
       {{range $pageName, $page := $errorPages }}
@@ -102,7 +102,7 @@
       {{end}}
     {{end}}
 
-    {{ $rateLimit := getRateLimit $service }}
+    {{ $rateLimit := getRateLimit $service.SegmentLabels }}
     {{if $rateLimit }}
     [frontends."frontend-{{ $frontendName }}".rateLimit]
       extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
@@ -115,7 +115,7 @@
         {{end}}
     {{end}}
 
-    {{ $headers := getHeaders $service }}
+    {{ $headers := getHeaders $service.SegmentLabels }}
     {{if $headers }}
     [frontends."frontend-{{ $frontendName }}".headers]
       SSLRedirect = {{ $headers.SSLRedirect }}
