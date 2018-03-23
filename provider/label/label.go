@@ -38,10 +38,10 @@ const (
 var (
 	// SegmentPropertiesRegexp used to extract the name of the segment and the name of the property for this segment
 	// All properties are under the format traefik.<segment_name>.frontend.*= except the port/portIndex/weight/protocol/backend directly after traefik.<segment_name>.
-	SegmentPropertiesRegexp = regexp.MustCompile(`^traefik\.(?P<service_name>.+?)\.(?P<property_name>port|portIndex|weight|protocol|backend|frontend\.(.+))$`)
+	SegmentPropertiesRegexp = regexp.MustCompile(`^traefik\.(?P<segment_name>.+?)\.(?P<property_name>port|portIndex|weight|protocol|backend|frontend\.(.+))$`)
 
 	// PortRegexp used to extract the port label of the segment
-	PortRegexp = regexp.MustCompile(`^traefik\.(?P<service_name>.+?)\.port$`)
+	PortRegexp = regexp.MustCompile(`^traefik\.(?P<segment_name>.+?)\.port$`)
 
 	// RegexpBaseFrontendErrorPage used to extract error pages from service's label
 	RegexpBaseFrontendErrorPage = regexp.MustCompile(`^frontend\.errors\.(?P<name>[^ .]+)\.(?P<field>[^ .]+)$`)
@@ -271,7 +271,7 @@ func ExtractServiceProperties(labels map[string]string) SegmentProperties {
 		var propertyName string
 		for i, name := range SegmentPropertiesRegexp.SubexpNames() {
 			if i != 0 {
-				if name == "service_name" {
+				if name == "segment_name" {
 					segmentName = matches[i]
 				} else if name == "property_name" {
 					propertyName = matches[i]
@@ -458,7 +458,7 @@ func ExtractTraefikLabels(originLabels map[string]string) SegmentProperties {
 			var propertyName string
 			for i, name := range SegmentPropertiesRegexp.SubexpNames() {
 				if i != 0 {
-					if name == "service_name" {
+					if name == "segment_name" {
 						segmentName = matches[i]
 					} else if name == "property_name" {
 						propertyName = matches[i]
