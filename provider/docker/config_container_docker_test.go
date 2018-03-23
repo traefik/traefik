@@ -694,17 +694,17 @@ func TestDockerGetSliceStringLabel(t *testing.T) {
 		{
 			desc: "whitelist-label with empty string",
 			labels: map[string]string{
-				label.TraefikFrontendWhitelistSourceRangeDeprecated: "",
+				label.TraefikFrontendWhiteListSourceRange: "",
 			},
-			labelName: label.TraefikFrontendWhitelistSourceRangeDeprecated,
+			labelName: label.TraefikFrontendWhiteListSourceRange,
 			expected:  nil,
 		},
 		{
 			desc: "whitelist-label with IPv4 mask",
 			labels: map[string]string{
-				label.TraefikFrontendWhitelistSourceRangeDeprecated: "1.2.3.4/16",
+				label.TraefikFrontendWhiteListSourceRange: "1.2.3.4/16",
 			},
-			labelName: label.TraefikFrontendWhitelistSourceRangeDeprecated,
+			labelName: label.TraefikFrontendWhiteListSourceRange,
 			expected: []string{
 				"1.2.3.4/16",
 			},
@@ -712,9 +712,9 @@ func TestDockerGetSliceStringLabel(t *testing.T) {
 		{
 			desc: "whitelist-label with IPv6 mask",
 			labels: map[string]string{
-				label.TraefikFrontendWhitelistSourceRangeDeprecated: "fe80::/16",
+				label.TraefikFrontendWhiteListSourceRange: "fe80::/16",
 			},
-			labelName: label.TraefikFrontendWhitelistSourceRangeDeprecated,
+			labelName: label.TraefikFrontendWhiteListSourceRange,
 			expected: []string{
 				"fe80::/16",
 			},
@@ -722,9 +722,9 @@ func TestDockerGetSliceStringLabel(t *testing.T) {
 		{
 			desc: "whitelist-label with multiple masks",
 			labels: map[string]string{
-				label.TraefikFrontendWhitelistSourceRangeDeprecated: "1.1.1.1/24, 1234:abcd::42/32",
+				label.TraefikFrontendWhiteListSourceRange: "1.1.1.1/24, 1234:abcd::42/32",
 			},
-			labelName: label.TraefikFrontendWhitelistSourceRangeDeprecated,
+			labelName: label.TraefikFrontendWhiteListSourceRange,
 			expected: []string{
 				"1.1.1.1/24",
 				"1234:abcd::42/32",

@@ -55,7 +55,7 @@ Træfik can be configured with a file.
       "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
     ]
 
-    [frontends.frontend2.whiteList]
+    [frontends.frontend1.whiteList]
       sourceRange = ["10.42.0.0/16", "152.89.1.33/32", "afed:be44::/16"]
       useXForwardedFor = true
 

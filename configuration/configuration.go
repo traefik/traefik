@@ -182,11 +182,22 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 		}
 	}
 
-	// ForwardedHeaders must be remove in the next breaking version
 	for entryPointName := range gc.EntryPoints {
 		entryPoint := gc.EntryPoints[entryPointName]
+		// ForwardedHeaders must be remove in the next breaking version
 		if entryPoint.ForwardedHeaders == nil {
 			entryPoint.ForwardedHeaders = &ForwardedHeaders{Insecure: true}
+		}
+
+		if len(entryPoint.WhitelistSourceRange) > 0 {
+			log.Warnf("Deprecated configuration found: %s. Please use %s.", "whiteListSourceRange", "whiteList.sourceRange")
+
+			if entryPoint.WhiteList == nil {
+				entryPoint.WhiteList = &types.WhiteList{
+					SourceRange: entryPoint.WhitelistSourceRange,
+				}
+				entryPoint.WhitelistSourceRange = nil
+			}
 		}
 	}
 

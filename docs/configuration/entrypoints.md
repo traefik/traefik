@@ -116,7 +116,7 @@ Redirect.Replacement:http://mydomain/$1
 Redirect.Permanent:true
 Compress:true
 WhiteList.SourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16
-WhiteList.useXForwardedFor:true
+WhiteList.UseXForwardedFor:true
 ProxyProtocol.TrustedIPs:192.168.0.1
 ProxyProtocol.Insecure:tue
 ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24

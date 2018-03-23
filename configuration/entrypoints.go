@@ -66,7 +66,6 @@ func (ep *EntryPoints) Set(value string) error {
 
 	var whiteListSourceRange []string
 	if len(result["whitelistsourcerange"]) > 0 {
-		log.Warnf("Deprecated configuration found: %s. Please use %s.", "whiteListSourceRange", "whiteList.sourceRange")
 		whiteListSourceRange = strings.Split(result["whitelistsourcerange"], ",")
 	}
 
