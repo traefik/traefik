@@ -270,6 +270,7 @@ func ExtractServiceProperties(labels map[string]string) SegmentProperties {
 		var segmentName string
 		var propertyName string
 		for i, name := range SegmentPropertiesRegexp.SubexpNames() {
+			// the group 0 is anonymous because it's always the root expression
 			if i != 0 {
 				if name == "segment_name" {
 					segmentName = matches[i]
@@ -457,6 +458,7 @@ func ExtractTraefikLabels(originLabels map[string]string) SegmentProperties {
 			var segmentName string
 			var propertyName string
 			for i, name := range SegmentPropertiesRegexp.SubexpNames() {
+				// the group 0 is anonymous because it's always the root expression
 				if i != 0 {
 					if name == "segment_name" {
 						segmentName = matches[i]
@@ -480,6 +482,7 @@ func ExtractTraefikLabels(originLabels map[string]string) SegmentProperties {
 }
 
 func (s SegmentProperties) mergeDefault() {
+	// if SegmentProperties contains the default segment, merge each segments with the default segment
 	if defaultLabels, okDefault := s[""]; okDefault {
 
 		segmentsNames := s.GetSegmentNames()
