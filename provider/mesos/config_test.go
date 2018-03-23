@@ -119,6 +119,7 @@ func TestBuildConfiguration(t *testing.T) {
 				aTask("ID1",
 					withLabel(label.TraefikPort, "666"),
 					withLabel(label.TraefikProtocol, "https"),
+					withLabel(label.TraefikPriority, "99"),
 					withLabel(label.TraefikWeight, "12"),
 
 					withLabel(label.TraefikBackend, "foobar"),
@@ -294,8 +295,9 @@ func TestBuildConfiguration(t *testing.T) {
 				"backend-foobar": {
 					Servers: map[string]types.Server{
 						"server-ID1": {
-							URL:    "https://10.10.10.10:666",
-							Weight: 12,
+							URL:      "https://10.10.10.10:666",
+							Priority: 99,
+							Weight:   12,
 						},
 					},
 					CircuitBreaker: &types.CircuitBreaker{

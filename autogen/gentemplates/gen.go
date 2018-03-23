@@ -1505,6 +1505,7 @@ var _templatesMesosTmpl = []byte(`[backends]
   {{range $serverName, $server := getServers $tasks }}
   [backends."backend-{{ $backendName }}".servers."{{ $serverName }}"]
     url = "{{ $server.URL }}"
+    priority = {{ $server.Priority }}
     weight = {{ $server.Weight }}
   {{end}}
 {{end}}
