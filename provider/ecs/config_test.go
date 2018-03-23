@@ -122,6 +122,7 @@ func TestBuildConfiguration(t *testing.T) {
 						DockerLabels: map[string]*string{
 							label.TraefikPort:     aws.String("666"),
 							label.TraefikProtocol: aws.String("https"),
+							label.TraefikPriority: aws.String("99"),
 							label.TraefikWeight:   aws.String("12"),
 
 							label.TraefikBackend: aws.String("foobar"),
@@ -206,8 +207,9 @@ func TestBuildConfiguration(t *testing.T) {
 					"backend-testing-instance": {
 						Servers: map[string]types.Server{
 							"server-testing-instance-6": {
-								URL:    "https://10.0.0.1:666",
-								Weight: 12,
+								URL:      "https://10.0.0.1:666",
+								Priority: 99,
+								Weight:   12,
 							},
 						},
 						CircuitBreaker: &types.CircuitBreaker{

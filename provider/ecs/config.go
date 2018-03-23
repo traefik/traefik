@@ -203,8 +203,9 @@ func getServers(instances []ecsInstance) map[string]types.Server {
 
 		serverName := provider.Normalize(fmt.Sprintf("server-%s-%s", instance.Name, instance.ID))
 		servers[serverName] = types.Server{
-			URL:    fmt.Sprintf("%s://%s:%s", protocol, host, port),
-			Weight: getIntValue(instance, label.TraefikWeight, 0),
+			URL:      fmt.Sprintf("%s://%s:%s", protocol, host, port),
+			Priority: getIntValue(instance, label.TraefikPriority, 0),
+			Weight:   getIntValue(instance, label.TraefikWeight, 0),
 		}
 	}
 

@@ -695,6 +695,7 @@ var _templatesEcsTmpl = []byte(`[backends]
   {{range $serverName, $server := getServers $instances }}
   [backends."backend-{{ $serviceName }}".servers."{{ $serverName }}"]
     url = "{{ $server.URL }}"
+    priority = {{ $server.Priority }}
     weight = {{ $server.Weight }}
   {{end}}
 
