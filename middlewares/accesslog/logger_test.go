@@ -336,6 +336,15 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
 		},
 		{
+			desc: "default config with empty filters",
+			config: &types.AccessLog{
+				FilePath: "",
+				Format:   CommonFormat,
+				Filters:  &types.AccessLogFilters{},
+			},
+			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
+		},
+		{
 			desc: "Status code filter not matching",
 			config: &types.AccessLog{
 				FilePath: "",
@@ -353,6 +362,17 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 				Format:   CommonFormat,
 				Filters: &types.AccessLogFilters{
 					StatusCodes: []string{"123"},
+				},
+			},
+			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
+		},
+		{
+			desc: "Retry attempts filter matching",
+			config: &types.AccessLog{
+				FilePath: "",
+				Format:   CommonFormat,
+				Filters: &types.AccessLogFilters{
+					RetryAttempts: true,
 				},
 			},
 			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,

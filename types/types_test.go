@@ -1,6 +1,7 @@
 package types
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -90,6 +91,48 @@ func TestNewHTTPCodeRanges(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestHTTPCodeRanges_Contains(t *testing.T) {
+	testCases := []struct {
+		strBlocks  []string
+		statusCode int
+		contains   bool
+	}{
+		{
+			strBlocks:  []string{"200-299"},
+			statusCode: 200,
+			contains:   true,
+		},
+		{
+			strBlocks:  []string{"200"},
+			statusCode: 200,
+			contains:   true,
+		},
+		{
+			strBlocks:  []string{"201"},
+			statusCode: 200,
+			contains:   false,
+		},
+		{
+			strBlocks:  []string{"200-299", "500-599"},
+			statusCode: 400,
+			contains:   false,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		testName := fmt.Sprintf("%q contains %d", test.strBlocks, test.statusCode)
+		t.Run(testName, func(t *testing.T) {
+			t.Parallel()
+
+			httpCodeRanges, err := NewHTTPCodeRanges(test.strBlocks)
+			assert.NoError(t, err)
+
+			assert.Equal(t, test.contains, httpCodeRanges.Contains(test.statusCode))
 		})
 	}
 }
