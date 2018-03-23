@@ -70,7 +70,7 @@ func (p *Provider) buildConfiguration(services []rancherData) *types.Configurati
 		"getWhiteList":      getWhiteList,
 
 		// TODO Deprecated [breaking]
-		"getWhitelistSourceRange": getFuncSliceString(label.TraefikFrontendWhitelistSourceRangeDeprecated),
+		"getWhitelistSourceRange": getFuncSliceString(label.TraefikFrontendWhitelistSourceRange),
 	}
 
 	// filter services

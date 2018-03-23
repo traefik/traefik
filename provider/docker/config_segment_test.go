@@ -85,8 +85,8 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 						label.Prefix + "sauternes." + label.SuffixFrontendRedirectRegex:             "nope",
 						label.Prefix + "sauternes." + label.SuffixFrontendRedirectReplacement:       "nope",
 						label.Prefix + "sauternes." + label.SuffixFrontendRedirectPermanent:         "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendWhitelistSourceRange:      "10.10.10.10",
-						label.Prefix + "sauternes." + label.SuffixFrontendWhitelistUseXForwardedFor: "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendWhiteListSourceRange:      "10.10.10.10",
+						label.Prefix + "sauternes." + label.SuffixFrontendWhiteListUseXForwardedFor: "true",
 
 						label.Prefix + "sauternes." + label.SuffixFrontendRequestHeaders:                 "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
 						label.Prefix + "sauternes." + label.SuffixFrontendResponseHeaders:                "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",

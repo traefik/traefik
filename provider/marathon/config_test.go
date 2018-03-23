@@ -1685,7 +1685,7 @@ func TestWhiteList(t *testing.T) {
 			desc: "should return a struct when only range on service",
 			application: application(
 				appPorts(80),
-				withLabel(label.Prefix+"containous."+label.SuffixFrontendWhitelistSourceRange, "10.10.10.10"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendWhiteListSourceRange, "10.10.10.10"),
 			),
 			serviceName: "containous",
 			expected: &types.WhiteList{
@@ -1699,8 +1699,8 @@ func TestWhiteList(t *testing.T) {
 			desc: "should return a struct when range and UseXForwardedFor on service",
 			application: application(
 				appPorts(80),
-				withLabel(label.Prefix+"containous."+label.SuffixFrontendWhitelistSourceRange, "10.10.10.10"),
-				withLabel(label.Prefix+"containous."+label.SuffixFrontendWhitelistUseXForwardedFor, "true"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendWhiteListSourceRange, "10.10.10.10"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendWhiteListUseXForwardedFor, "true"),
 			),
 			serviceName: "containous",
 			expected: &types.WhiteList{
@@ -1714,7 +1714,7 @@ func TestWhiteList(t *testing.T) {
 			desc: "should return nil when only UseXForwardedFor on service",
 			application: application(
 				appPorts(80),
-				withLabel(label.Prefix+"containous."+label.SuffixFrontendWhitelistUseXForwardedFor, "true"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendWhiteListUseXForwardedFor, "true"),
 			),
 			serviceName: "containous",
 			expected:    nil,

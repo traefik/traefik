@@ -83,7 +83,7 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getWhiteList":         getWhiteList,
 
 		// TODO Deprecated [breaking]
-		"getWhitelistSourceRange": getFuncSliceStringService(label.SuffixFrontendWhitelistSourceRangeDeprecated),
+		"getWhitelistSourceRange": getFuncSliceStringService(label.SuffixFrontendWhitelistSourceRange),
 	}
 
 	v := url.Values{}
@@ -492,11 +492,11 @@ func (p *Provider) getServers(application marathon.Application, serviceName stri
 func getWhiteList(application marathon.Application, serviceName string) *types.WhiteList {
 	labels := getLabels(application, serviceName)
 
-	ranges := label.GetSliceStringValue(labels, getLabelName(serviceName, label.SuffixFrontendWhitelistSourceRange))
+	ranges := label.GetSliceStringValue(labels, getLabelName(serviceName, label.SuffixFrontendWhiteListSourceRange))
 	if len(ranges) > 0 {
 		return &types.WhiteList{
 			SourceRange:      ranges,
-			UseXForwardedFor: label.GetBoolValue(labels, getLabelName(serviceName, label.SuffixFrontendWhitelistUseXForwardedFor), false),
+			UseXForwardedFor: label.GetBoolValue(labels, getLabelName(serviceName, label.SuffixFrontendWhiteListUseXForwardedFor), false),
 		}
 	}
 

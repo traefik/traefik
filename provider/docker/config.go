@@ -277,8 +277,8 @@ func getBackendName(container dockerData) string {
 }
 
 func getWhiteList(labels map[string]string) *types.WhiteList {
-	if label.Has(labels, label.TraefikFrontendWhitelistSourceRangeDeprecated) {
-		log.Warnf("Deprecated configuration found: %s. Please use %s.", label.TraefikFrontendWhitelistSourceRangeDeprecated, label.TraefikFrontendWhiteListSourceRange)
+	if label.Has(labels, label.TraefikFrontendWhitelistSourceRange) {
+		log.Warnf("Deprecated configuration found: %s. Please use %s.", label.TraefikFrontendWhitelistSourceRange, label.TraefikFrontendWhiteListSourceRange)
 	}
 
 	ranges := label.GetSliceStringValue(labels, label.TraefikFrontendWhiteListSourceRange)
@@ -290,7 +290,7 @@ func getWhiteList(labels map[string]string) *types.WhiteList {
 	}
 
 	// TODO: Deprecated
-	values := label.GetSliceStringValue(labels, label.TraefikFrontendWhitelistSourceRangeDeprecated)
+	values := label.GetSliceStringValue(labels, label.TraefikFrontendWhitelistSourceRange)
 	if len(values) > 0 {
 		return &types.WhiteList{
 			SourceRange:      values,

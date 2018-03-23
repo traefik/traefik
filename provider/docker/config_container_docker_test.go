@@ -1042,7 +1042,7 @@ func TestWhiteList(t *testing.T) {
 		{
 			desc: "should return a struct when deprecated label",
 			labels: map[string]string{
-				label.TraefikFrontendWhitelistSourceRangeDeprecated: "10.10.10.10",
+				label.TraefikFrontendWhitelistSourceRange: "10.10.10.10",
 			},
 			expected: &types.WhiteList{
 				SourceRange: []string{
@@ -1079,9 +1079,9 @@ func TestWhiteList(t *testing.T) {
 		{
 			desc: "should return a struct when mix deprecated label and new labels",
 			labels: map[string]string{
-				label.TraefikFrontendWhitelistSourceRangeDeprecated: "20.20.20.20",
-				label.TraefikFrontendWhiteListSourceRange:           "10.10.10.10",
-				label.TraefikFrontendWhiteListUseXForwardedFor:      "true",
+				label.TraefikFrontendWhitelistSourceRange:      "20.20.20.20",
+				label.TraefikFrontendWhiteListSourceRange:      "10.10.10.10",
+				label.TraefikFrontendWhiteListUseXForwardedFor: "true",
 			},
 			expected: &types.WhiteList{
 				SourceRange: []string{

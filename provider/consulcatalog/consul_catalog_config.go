@@ -312,12 +312,12 @@ func (p *Provider) getBuffering(tags []string) *types.Buffering {
 }
 
 func (p *Provider) getWhiteList(tags []string) *types.WhiteList {
-	ranges := p.getSliceAttribute(label.SuffixFrontendWhitelistSourceRange, tags)
+	ranges := p.getSliceAttribute(label.SuffixFrontendWhiteListSourceRange, tags)
 
 	if len(ranges) > 0 {
 		return &types.WhiteList{
 			SourceRange:      ranges,
-			UseXForwardedFor: p.getBoolAttribute(label.SuffixFrontendWhitelistUseXForwardedFor, tags, false),
+			UseXForwardedFor: p.getBoolAttribute(label.SuffixFrontendWhiteListUseXForwardedFor, tags, false),
 		}
 	}
 
