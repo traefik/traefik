@@ -494,13 +494,13 @@ func (p *Provider) getUncheckedDomains(domainsToCheck []string) []string {
 	var allCerts []string
 
 	// Get static certificates
-	for domains, _ := range p.staticCerts {
+	for domains := range p.staticCerts {
 		allCerts = append(allCerts, domains)
 	}
 
 	// Get dynamic certificates
 	if p.dynamicCerts != nil && p.dynamicCerts.Get() != nil {
-		for domains, _ := range p.dynamicCerts.Get().(map[string]*tls.Certificate) {
+		for domains := range p.dynamicCerts.Get().(map[string]*tls.Certificate) {
 			allCerts = append(allCerts, domains)
 		}
 	}
