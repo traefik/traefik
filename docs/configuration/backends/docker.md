@@ -43,8 +43,8 @@ watch = true
 # For advanced users :)
 #
 # Optional
-# - "1": previous template (must be use only with a old custom template, see "filename")
-# - "2": current template (must be use to force template version when "filename" is used)
+# - "1": previous template version (must be used only with older custom templates, see "filename")
+# - "2": current template version (must be used to force template version when "filename" is used)
 #
 # templateVersion = "2"
 
@@ -136,8 +136,8 @@ swarmmode = true
 # For advanced users :)
 #
 # Optional
-# - "1": previous template (must be use only with a old custom template, see "filename")
-# - "2": current template (must be use to force template version when "filename" is used)
+# - "1": previous template version (must be used only with older custom templates, see "filename")
+# - "2": current template version (must be used to force template version when "filename" is used)
 #
 # templateVersion = "2"
 
@@ -272,10 +272,13 @@ Or if your service references external network use it's name instead.
 | `traefik.frontend.headers.referrerPolicy=VALUE`          | Adds referrer policy  header.                                                                                                                                                                       |
 | `traefik.frontend.headers.isDevelopment=false`           | This will cause the `AllowedHosts`, `SSLRedirect`, and `STSSeconds`/`STSIncludeSubdomains` options to be ignored during development.<br>When deploying to production, be sure to set this to false. |
 
-### On container with multiple ports (segment label)
+### On containers with Multiple Ports (segment labels)
 
-Segment labels are a way to define more than one (default) port on the same container so you can create different routes to it.
-Segment labels are overriding the default behavior.
+Segment labels are used to define routes to a container exposing multiple ports.
+A segment is a group of labels that apply to a port exposed by a container.
+You can define as many segments as ports exposed in a container.
+
+Segment labels override the default behavior.
 
 | Label                                                                     | Description                                                                                      |
 |---------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|

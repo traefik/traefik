@@ -234,11 +234,11 @@ The following labels can be defined on Marathon applications. They adjust the be
 | `traefik.frontend.headers.referrerPolicy=VALUE`          | Adds referrer policy  header.                                                                                                                                                                       |
 | `traefik.frontend.headers.isDevelopment=false`           | This will cause the `AllowedHosts`, `SSLRedirect`, and `STSSeconds`/`STSIncludeSubdomains` options to be ignored during development.<br>When deploying to production, be sure to set this to false. |
 
-### On application with multiple ports (segment label)
+### Applications with Multiple Ports (segment labels)
 
-For applications that expose multiple ports, specific labels can be used to extract one frontend/backend configuration pair per port.
-Each such pair is called a _segment_.
-The (freely choosable) name of the segment is an integral part of the segment label name.
+Segment labels are used to define routes to an application exposing multiple ports.
+A segment is a group of labels that apply to a port exposed by an application.
+You can define as many segments as ports exposed in an application.
 
 | Label                                                                     | Description                                                                                          |
 |---------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
