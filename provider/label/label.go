@@ -7,9 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/containous/flaeg"
 	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/types"
 )
 
 const (
@@ -28,7 +26,6 @@ const (
 	DefaultFrontendPriority                        = "0" // TODO [breaking] int value
 	DefaultFrontendPriorityInt                     = 0   // TODO rename to DefaultFrontendPriority
 	DefaultCircuitBreakerExpression                = "NetworkErrorRatio() > 1"
-	DefaultFrontendRedirectEntryPoint              = ""
 	DefaultBackendLoadBalancerMethod               = "wrr"
 	DefaultBackendMaxconnExtractorFunc             = "request.host"
 	DefaultBackendLoadbalancerStickinessCookieName = ""
@@ -229,103 +226,6 @@ func HasPrefixP(labels *map[string]string, prefix string) bool {
 	return HasPrefix(*labels, prefix)
 }
 
-// ParseErrorPages parse error pages to create ErrorPage struct
-func ParseErrorPages(labels map[string]string, labelPrefix string, labelRegex *regexp.Regexp) map[string]*types.ErrorPage {
-	var errorPages map[string]*types.ErrorPage
-
-	for lblName, value := range labels {
-		if strings.HasPrefix(lblName, labelPrefix) {
-			submatch := labelRegex.FindStringSubmatch(lblName)
-			if len(submatch) != 3 {
-				log.Errorf("Invalid page error label: %s, sub-match: %v", lblName, submatch)
-				continue
-			}
-
-			if errorPages == nil {
-				errorPages = make(map[string]*types.ErrorPage)
-			}
-
-			pageName := submatch[1]
-
-			ep, ok := errorPages[pageName]
-			if !ok {
-				ep = &types.ErrorPage{}
-				errorPages[pageName] = ep
-			}
-
-			switch submatch[2] {
-			case SuffixErrorPageStatus:
-				ep.Status = SplitAndTrimString(value, ",")
-			case SuffixErrorPageQuery:
-				ep.Query = value
-			case SuffixErrorPageBackend:
-				ep.Backend = value
-			default:
-				log.Errorf("Invalid page error label: %s", lblName)
-				continue
-			}
-		}
-	}
-
-	return errorPages
-}
-
-// ParseRateSets parse rate limits to create Rate struct
-func ParseRateSets(labels map[string]string, labelPrefix string, labelRegex *regexp.Regexp) map[string]*types.Rate {
-	var rateSets map[string]*types.Rate
-
-	for lblName, rawValue := range labels {
-		if strings.HasPrefix(lblName, labelPrefix) && len(rawValue) > 0 {
-			submatch := labelRegex.FindStringSubmatch(lblName)
-			if len(submatch) != 3 {
-				log.Errorf("Invalid rate limit label: %s, sub-match: %v", lblName, submatch)
-				continue
-			}
-
-			if rateSets == nil {
-				rateSets = make(map[string]*types.Rate)
-			}
-
-			limitName := submatch[1]
-
-			ep, ok := rateSets[limitName]
-			if !ok {
-				ep = &types.Rate{}
-				rateSets[limitName] = ep
-			}
-
-			switch submatch[2] {
-			case "period":
-				var d flaeg.Duration
-				err := d.Set(rawValue)
-				if err != nil {
-					log.Errorf("Unable to parse %q: %q. %v", lblName, rawValue, err)
-					continue
-				}
-				ep.Period = d
-			case "average":
-				value, err := strconv.ParseInt(rawValue, 10, 64)
-				if err != nil {
-					log.Errorf("Unable to parse %q: %q. %v", lblName, rawValue, err)
-					continue
-				}
-				ep.Average = value
-			case "burst":
-				value, err := strconv.ParseInt(rawValue, 10, 64)
-				if err != nil {
-					log.Errorf("Unable to parse %q: %q. %v", lblName, rawValue, err)
-					continue
-				}
-				ep.Burst = value
-			default:
-				log.Errorf("Invalid rate limit label: %s", lblName)
-				continue
-			}
-		}
-	}
-	return rateSets
-}
-
 // IsEnabled Check if a container is enabled in Træfik
 func IsEnabled(labels map[string]string, exposedByDefault bool) bool {
 	return GetBoolValue(labels, TraefikEnable, exposedByDefault)
@@ -353,4 +253,32 @@ func SplitAndTrimString(base string, sep string) []string {
 	}
 
 	return trimmedStrings
+}
+
+// GetFuncString a func related to GetStringValue
+func GetFuncString(labelName string, defaultValue string) func(map[string]string) string {
+	return func(labels map[string]string) string {
+		return GetStringValue(labels, labelName, defaultValue)
+	}
+}
+
+// GetFuncInt a func related to GetIntValue
+func GetFuncInt(labelName string, defaultValue int) func(map[string]string) int {
+	return func(labels map[string]string) int {
+		return GetIntValue(labels, labelName, defaultValue)
+	}
+}
+
+// GetFuncBool a func related to GetBoolValue
+func GetFuncBool(labelName string, defaultValue bool) func(map[string]string) bool {
+	return func(labels map[string]string) bool {
+		return GetBoolValue(labels, labelName, defaultValue)
+	}
+}
+
+// GetFuncSliceString a func related to GetSliceStringValue
+func GetFuncSliceString(labelName string) func(map[string]string) []string {
+	return func(labels map[string]string) []string {
+		return GetSliceStringValue(labels, labelName)
+	}
 }

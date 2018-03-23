@@ -1,11 +1,9 @@
 package label
 
 import (
+	"strconv"
 	"testing"
-	"time"
 
-	"github.com/containous/flaeg"
-	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -727,102 +725,6 @@ func TestHasP(t *testing.T) {
 	}
 }
 
-func TestExtractServiceProperties(t *testing.T) {
-	testCases := []struct {
-		desc     string
-		labels   map[string]string
-		expected SegmentProperties
-	}{
-		{
-			desc:     "empty labels map",
-			expected: SegmentProperties{},
-		},
-		{
-			desc: "valid label names",
-			labels: map[string]string{
-				"traefik.foo.port":         "bar",
-				"traefik.foo.frontend.bar": "1bar",
-				"traefik.foo.backend":      "3bar",
-			},
-			expected: SegmentProperties{
-				"foo": SegmentPropertyValues{
-					"port":         "bar",
-					"frontend.bar": "1bar",
-					"backend":      "3bar",
-				},
-			},
-		},
-		{
-			desc: "invalid label names",
-			labels: map[string]string{
-				"foo.frontend.bar":             "1bar",
-				"traefik.foo.frontend.":        "2bar",
-				"traefik.foo.port.bar":         "barbar",
-				"traefik.foo.frontend":         "0bar",
-				"traefik.frontend.foo.backend": "0bar",
-			},
-			expected: SegmentProperties{},
-		},
-	}
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			got := ExtractServiceProperties(test.labels)
-			assert.EqualValues(t, test.expected, got)
-		})
-	}
-}
-
-func TestExtractServicePropertiesP(t *testing.T) {
-	testCases := []struct {
-		desc     string
-		labels   *map[string]string
-		expected SegmentProperties
-	}{
-		{
-			desc:     "nil labels map",
-			expected: SegmentProperties{},
-		},
-		{
-			desc: "valid label names",
-			labels: &map[string]string{
-				"traefik.foo.port":         "bar",
-				"traefik.foo.frontend.bar": "1bar",
-				"traefik.foo.backend":      "3bar",
-			},
-			expected: SegmentProperties{
-				"foo": SegmentPropertyValues{
-					"port":         "bar",
-					"frontend.bar": "1bar",
-					"backend":      "3bar",
-				},
-			},
-		},
-		{
-			desc: "invalid label names",
-			labels: &map[string]string{
-				"foo.frontend.bar":             "1bar",
-				"traefik.foo.frontend.":        "2bar",
-				"traefik.foo.port.bar":         "barbar",
-				"traefik.foo.frontend":         "0bar",
-				"traefik.frontend.foo.backend": "0bar",
-			},
-			expected: SegmentProperties{},
-		},
-	}
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			got := ExtractServicePropertiesP(test.labels)
-			assert.EqualValues(t, test.expected, got)
-		})
-	}
-}
-
 func TestIsEnabled(t *testing.T) {
 	testCases := []struct {
 		desc             string
@@ -945,36 +847,6 @@ func TestIsEnabledP(t *testing.T) {
 	}
 }
 
-func TestGetServiceLabel(t *testing.T) {
-	testCases := []struct {
-		desc        string
-		labelName   string
-		serviceName string
-		expected    string
-	}{
-		{
-			desc:      "without service name",
-			labelName: TraefikPort,
-			expected:  TraefikPort,
-		},
-		{
-			desc:        "with service name",
-			labelName:   TraefikPort,
-			serviceName: "bar",
-			expected:    "traefik.bar.port",
-		},
-	}
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			got := GetServiceLabel(test.labelName, test.serviceName)
-			assert.Equal(t, test.expected, got)
-		})
-	}
-}
-
 func TestHasPrefix(t *testing.T) {
 	testCases := []struct {
 		desc     string
@@ -1023,205 +895,100 @@ func TestHasPrefix(t *testing.T) {
 	}
 }
 
-func TestParseErrorPages(t *testing.T) {
+func TestGetFuncString(t *testing.T) {
 	testCases := []struct {
-		desc     string
-		labels   map[string]string
-		expected map[string]*types.ErrorPage
+		labels       map[string]string
+		labelName    string
+		defaultValue string
+		expected     string
 	}{
 		{
-			desc: "2 errors pages",
-			labels: map[string]string{
-				Prefix + BaseFrontendErrorPage + "foo." + SuffixErrorPageStatus:  "404",
-				Prefix + BaseFrontendErrorPage + "foo." + SuffixErrorPageBackend: "foo_backend",
-				Prefix + BaseFrontendErrorPage + "foo." + SuffixErrorPageQuery:   "foo_query",
-				Prefix + BaseFrontendErrorPage + "bar." + SuffixErrorPageStatus:  "500,600",
-				Prefix + BaseFrontendErrorPage + "bar." + SuffixErrorPageBackend: "bar_backend",
-				Prefix + BaseFrontendErrorPage + "bar." + SuffixErrorPageQuery:   "bar_query",
-			},
-			expected: map[string]*types.ErrorPage{
-				"foo": {
-					Status:  []string{"404"},
-					Query:   "foo_query",
-					Backend: "foo_backend",
-				},
-				"bar": {
-					Status:  []string{"500", "600"},
-					Query:   "bar_query",
-					Backend: "bar_backend",
-				},
-			},
+			labels:       nil,
+			labelName:    TraefikWeight,
+			defaultValue: DefaultWeight,
+			expected:     "0",
 		},
 		{
-			desc: "only status field",
 			labels: map[string]string{
-				Prefix + BaseFrontendErrorPage + "foo." + SuffixErrorPageStatus: "404",
+				TraefikWeight: "10",
 			},
-			expected: map[string]*types.ErrorPage{
-				"foo": {
-					Status: []string{"404"},
-				},
-			},
-		},
-		{
-			desc: "invalid field",
-			labels: map[string]string{
-				Prefix + BaseFrontendErrorPage + "foo." + "courgette": "404",
-			},
-			expected: map[string]*types.ErrorPage{"foo": {}},
-		},
-		{
-			desc:     "no error pages labels",
-			labels:   map[string]string{},
-			expected: nil,
+			labelName:    TraefikWeight,
+			defaultValue: DefaultWeight,
+			expected:     "10",
 		},
 	}
 
-	for _, test := range testCases {
+	for containerID, test := range testCases {
 		test := test
-		t.Run(test.desc, func(t *testing.T) {
+		t.Run(test.labelName+strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
 
-			pages := ParseErrorPages(test.labels, Prefix+BaseFrontendErrorPage, RegexpFrontendErrorPage)
-
-			assert.EqualValues(t, test.expected, pages)
-		})
-	}
-}
-
-func TestParseRateSets(t *testing.T) {
-	testCases := []struct {
-		desc     string
-		labels   map[string]string
-		expected map[string]*types.Rate
-	}{
-		{
-			desc: "2 rate limits",
-			labels: map[string]string{
-				Prefix + BaseFrontendRateLimit + "foo." + SuffixRateLimitPeriod:  "6",
-				Prefix + BaseFrontendRateLimit + "foo." + SuffixRateLimitAverage: "12",
-				Prefix + BaseFrontendRateLimit + "foo." + SuffixRateLimitBurst:   "18",
-				Prefix + BaseFrontendRateLimit + "bar." + SuffixRateLimitPeriod:  "3",
-				Prefix + BaseFrontendRateLimit + "bar." + SuffixRateLimitAverage: "6",
-				Prefix + BaseFrontendRateLimit + "bar." + SuffixRateLimitBurst:   "9",
-			},
-			expected: map[string]*types.Rate{
-				"foo": {
-					Period:  flaeg.Duration(6 * time.Second),
-					Average: 12,
-					Burst:   18,
-				},
-				"bar": {
-					Period:  flaeg.Duration(3 * time.Second),
-					Average: 6,
-					Burst:   9,
-				},
-			},
-		},
-
-		{
-			desc:     "no rate limits labels",
-			labels:   map[string]string{},
-			expected: nil,
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			rateSets := ParseRateSets(test.labels, Prefix+BaseFrontendRateLimit, RegexpFrontendRateLimit)
-
-			assert.EqualValues(t, test.expected, rateSets)
-		})
-	}
-}
-
-func TestExtractTraefikLabels(t *testing.T) {
-	testCases := []struct {
-		desc         string
-		prefix       string
-		originLabels map[string]string
-		expected     SegmentProperties
-	}{
-		{
-			desc:         "nil labels map",
-			prefix:       "traefik",
-			originLabels: nil,
-			expected:     SegmentProperties{"": {}},
-		},
-		{
-			desc:   "container labels",
-			prefix: "traefik",
-			originLabels: map[string]string{
-				"frontend.priority": "foo", // missing prefix: skip
-				"traefik.port":      "bar",
-			},
-			expected: SegmentProperties{
-				"": {
-					"traefik.port": "bar",
-				},
-			},
-		},
-		{
-			desc:   "segment labels: only segment no default",
-			prefix: "traefik",
-			originLabels: map[string]string{
-				"traefik.goo.frontend.priority": "A",
-				"traefik.goo.port":              "D",
-				"traefik.port":                  "C",
-			},
-			expected: SegmentProperties{
-				"goo": {
-					"traefik.frontend.priority": "A",
-					"traefik.port":              "D",
-				},
-			},
-		},
-		{
-			desc:   "segment labels: use default",
-			prefix: "traefik",
-			originLabels: map[string]string{
-				"traefik.guu.frontend.priority": "B",
-				"traefik.port":                  "C",
-			},
-			expected: SegmentProperties{
-				"guu": {
-					"traefik.frontend.priority": "B",
-					"traefik.port":              "C",
-				},
-			},
-		},
-		{
-			desc:   "segment labels: several segments",
-			prefix: "traefik",
-			originLabels: map[string]string{
-				"traefik.goo.frontend.priority": "A",
-				"traefik.goo.port":              "D",
-				"traefik.guu.frontend.priority": "B",
-				"traefik.port":                  "C",
-			},
-			expected: SegmentProperties{
-				"goo": {
-					"traefik.frontend.priority": "A",
-					"traefik.port":              "D",
-				},
-				"guu": {
-					"traefik.frontend.priority": "B",
-					"traefik.port":              "C",
-				},
-			},
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			actual := ExtractTraefikLabels(test.originLabels)
+			actual := GetFuncString(test.labelName, test.defaultValue)(test.labels)
 			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestGetSliceString(t *testing.T) {
+	testCases := []struct {
+		desc      string
+		labels    map[string]string
+		labelName string
+		expected  []string
+	}{
+		{
+			desc:     "no whitelist-label",
+			labels:   nil,
+			expected: nil,
+		},
+		{
+			desc: "whitelist-label with empty string",
+			labels: map[string]string{
+				TraefikFrontendWhiteListSourceRange: "",
+			},
+			labelName: TraefikFrontendWhiteListSourceRange,
+			expected:  nil,
+		},
+		{
+			desc: "whitelist-label with IPv4 mask",
+			labels: map[string]string{
+				TraefikFrontendWhiteListSourceRange: "1.2.3.4/16",
+			},
+			labelName: TraefikFrontendWhiteListSourceRange,
+			expected: []string{
+				"1.2.3.4/16",
+			},
+		},
+		{
+			desc: "whitelist-label with IPv6 mask",
+			labels: map[string]string{
+				TraefikFrontendWhiteListSourceRange: "fe80::/16",
+			},
+			labelName: TraefikFrontendWhiteListSourceRange,
+			expected: []string{
+				"fe80::/16",
+			},
+		},
+		{
+			desc: "whitelist-label with multiple masks",
+			labels: map[string]string{
+				TraefikFrontendWhiteListSourceRange: "1.1.1.1/24, 1234:abcd::42/32",
+			},
+			labelName: TraefikFrontendWhiteListSourceRange,
+			expected: []string{
+				"1.1.1.1/24",
+				"1234:abcd::42/32",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := GetFuncSliceString(test.labelName)(test.labels)
+			assert.EqualValues(t, test.expected, actual)
 		})
 	}
 }
