@@ -40,18 +40,18 @@ func (p *Provider) buildConfigurationV2(containersInspected []dockerData) *types
 		"getLoadBalancer":   getLoadBalancer,
 
 		// Frontend functions
-		"getBackendName":          getBackendName,
-		"getPriority":             getFuncIntLabel(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
-		"getPassHostHeader":       getFuncBoolLabel(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
-		"getPassTLSCert":          getFuncBoolLabel(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getEntryPoints":          getFuncSliceStringLabel(label.TraefikFrontendEntryPoints),
-		"getBasicAuth":            getFuncSliceStringLabel(label.TraefikFrontendAuthBasic),
-		"getWhitelistSourceRange": getFuncSliceStringLabel(label.TraefikFrontendWhitelistSourceRange),
-		"getFrontendRule":         p.getFrontendRule,
-		"getRedirect":             getRedirect,
-		"getErrorPages":           getErrorPages,
-		"getRateLimit":            getRateLimit,
-		"getHeaders":              getHeaders,
+		"getBackendName":    getBackendName,
+		"getPriority":       getFuncIntLabel(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
+		"getPassHostHeader": getFuncBoolLabel(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
+		"getPassTLSCert":    getFuncBoolLabel(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
+		"getEntryPoints":    getFuncSliceStringLabel(label.TraefikFrontendEntryPoints),
+		"getBasicAuth":      getFuncSliceStringLabel(label.TraefikFrontendAuthBasic),
+		"getFrontendRule":   p.getFrontendRule,
+		"getRedirect":       getRedirect,
+		"getErrorPages":     getErrorPages,
+		"getRateLimit":      getRateLimit,
+		"getHeaders":        getHeaders,
+		"getWhiteList":      getWhiteList,
 	}
 
 	// filter containers
@@ -274,6 +274,31 @@ func getBackendName(container dockerData) string {
 	}
 
 	return getDefaultBackendName(container)
+}
+
+func getWhiteList(labels map[string]string) *types.WhiteList {
+	if label.Has(labels, label.TraefikFrontendWhitelistSourceRangeDeprecated) {
+		log.Warnf("Deprecated configuration found: %s. Please use %s.", label.TraefikFrontendWhitelistSourceRangeDeprecated, label.TraefikFrontendWhiteListSourceRange)
+	}
+
+	ranges := label.GetSliceStringValue(labels, label.TraefikFrontendWhiteListSourceRange)
+	if len(ranges) > 0 {
+		return &types.WhiteList{
+			SourceRange:      ranges,
+			UseXForwardedFor: label.GetBoolValue(labels, label.TraefikFrontendWhiteListUseXForwardedFor, false),
+		}
+	}
+
+	// TODO: Deprecated
+	values := label.GetSliceStringValue(labels, label.TraefikFrontendWhitelistSourceRangeDeprecated)
+	if len(values) > 0 {
+		return &types.WhiteList{
+			SourceRange:      values,
+			UseXForwardedFor: false,
+		}
+	}
+
+	return nil
 }
 
 func getRedirect(labels map[string]string) *types.Redirect {

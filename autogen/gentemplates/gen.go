@@ -525,16 +525,18 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
       "{{.}}",
       {{end}}]
 
-    {{ $whitelistSourceRange := getWhitelistSourceRange $container.SegmentLabels }}
-    {{if $whitelistSourceRange }}
-    whitelistSourceRange = [{{range $whitelistSourceRange }}
-      "{{.}}",
-      {{end}}]
-    {{end}}
-
     basicAuth = [{{range getBasicAuth $container.SegmentLabels }}
       "{{.}}",
       {{end}}]
+
+    {{ $whitelist := getWhiteList $container.SegmentLabels }}
+    {{if $whitelist }}
+    [frontends."frontend-{{ $frontendName }}".whiteList]
+      sourceRange = [{{range $whitelist.SourceRange }}
+        "{{.}}",
+        {{end}}]
+      useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
+    {{end}}
 
     {{ $redirect := getRedirect $container.SegmentLabels }}
     {{if $redirect }}

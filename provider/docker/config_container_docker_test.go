@@ -113,17 +113,18 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						label.TraefikBackendBufferingMemRequestBodyBytes:     "2097152",
 						label.TraefikBackendBufferingRetryExpression:         "IsNetworkError() && Attempts() <= 2",
 
-						label.TraefikFrontendAuthBasic:                      "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						label.TraefikFrontendEntryPoints:                    "http,https",
-						label.TraefikFrontendPassHostHeader:                 "true",
-						label.TraefikFrontendPassTLSCert:                    "true",
-						label.TraefikFrontendPriority:                       "666",
-						label.TraefikFrontendRedirectEntryPoint:             "https",
-						label.TraefikFrontendRedirectRegex:                  "nope",
-						label.TraefikFrontendRedirectReplacement:            "nope",
-						label.TraefikFrontendRedirectPermanent:              "true",
-						label.TraefikFrontendRule:                           "Host:traefik.io",
-						label.TraefikFrontendWhitelistSourceRangeDeprecated: "10.10.10.10",
+						label.TraefikFrontendAuthBasic:                 "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendEntryPoints:               "http,https",
+						label.TraefikFrontendPassHostHeader:            "true",
+						label.TraefikFrontendPassTLSCert:               "true",
+						label.TraefikFrontendPriority:                  "666",
+						label.TraefikFrontendRedirectEntryPoint:        "https",
+						label.TraefikFrontendRedirectRegex:             "nope",
+						label.TraefikFrontendRedirectReplacement:       "nope",
+						label.TraefikFrontendRedirectPermanent:         "true",
+						label.TraefikFrontendRule:                      "Host:traefik.io",
+						label.TraefikFrontendWhiteListSourceRange:      "10.10.10.10",
+						label.TraefikFrontendWhiteListUseXForwardedFor: "true",
 
 						label.TraefikFrontendRequestHeaders:          "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
 						label.TraefikFrontendResponseHeaders:         "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
@@ -187,8 +188,9 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 						"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 					},
-					WhitelistSourceRange: []string{
-						"10.10.10.10",
+					WhiteList: &types.WhiteList{
+						SourceRange:      []string{"10.10.10.10"},
+						UseXForwardedFor: true,
 					},
 					Headers: &types.Headers{
 						CustomRequestHeaders: map[string]string{
@@ -1021,6 +1023,88 @@ func TestDockerGetPort(t *testing.T) {
 			dData.SegmentLabels = segmentProperties[""]
 
 			actual := getPort(dData)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestWhiteList(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		labels   map[string]string
+		expected *types.WhiteList
+	}{
+		{
+			desc:     "should return nil when no white list labels",
+			labels:   map[string]string{},
+			expected: nil,
+		},
+		{
+			desc: "should return a struct when deprecated label",
+			labels: map[string]string{
+				label.TraefikFrontendWhitelistSourceRangeDeprecated: "10.10.10.10",
+			},
+			expected: &types.WhiteList{
+				SourceRange: []string{
+					"10.10.10.10",
+				},
+				UseXForwardedFor: false,
+			},
+		},
+		{
+			desc: "should return a struct when only range",
+			labels: map[string]string{
+				label.TraefikFrontendWhiteListSourceRange: "10.10.10.10",
+			},
+			expected: &types.WhiteList{
+				SourceRange: []string{
+					"10.10.10.10",
+				},
+				UseXForwardedFor: false,
+			},
+		},
+		{
+			desc: "should return a struct when range and UseXForwardedFor",
+			labels: map[string]string{
+				label.TraefikFrontendWhiteListSourceRange:      "10.10.10.10",
+				label.TraefikFrontendWhiteListUseXForwardedFor: "true",
+			},
+			expected: &types.WhiteList{
+				SourceRange: []string{
+					"10.10.10.10",
+				},
+				UseXForwardedFor: true,
+			},
+		},
+		{
+			desc: "should return a struct when mix deprecated label and new labels",
+			labels: map[string]string{
+				label.TraefikFrontendWhitelistSourceRangeDeprecated: "20.20.20.20",
+				label.TraefikFrontendWhiteListSourceRange:           "10.10.10.10",
+				label.TraefikFrontendWhiteListUseXForwardedFor:      "true",
+			},
+			expected: &types.WhiteList{
+				SourceRange: []string{
+					"10.10.10.10",
+				},
+				UseXForwardedFor: true,
+			},
+		},
+		{
+			desc: "should return nil when only UseXForwardedFor",
+			labels: map[string]string{
+				label.TraefikFrontendWhiteListUseXForwardedFor: "true",
+			},
+			expected: nil,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := getWhiteList(test.labels)
 			assert.Equal(t, test.expected, actual)
 		})
 	}

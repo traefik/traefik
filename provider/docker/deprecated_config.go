@@ -43,7 +43,7 @@ func (p *Provider) buildConfigurationV1(containersInspected []dockerData) *types
 		"getPassTLSCert":          getFuncBoolLabelV1(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getEntryPoints":          getFuncSliceStringLabelV1(label.TraefikFrontendEntryPoints),
 		"getBasicAuth":            getFuncSliceStringLabelV1(label.TraefikFrontendAuthBasic),
-		"getWhitelistSourceRange": getFuncSliceStringLabelV1(label.TraefikFrontendWhitelistSourceRange),
+		"getWhitelistSourceRange": getFuncSliceStringLabelV1(label.TraefikFrontendWhitelistSourceRangeDeprecated),
 		"getFrontendRule":         p.getFrontendRuleV1,
 		"hasRedirect":             hasRedirectV1,
 		"getRedirectEntryPoint":   getFuncStringLabelV1(label.TraefikFrontendRedirectEntryPoint, ""),

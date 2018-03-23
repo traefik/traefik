@@ -76,16 +76,17 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 						label.Prefix + "sauternes." + label.SuffixProtocol: "https",
 						label.Prefix + "sauternes." + label.SuffixWeight:   "12",
 
-						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasic:            "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						label.Prefix + "sauternes." + label.SuffixFrontendEntryPoints:          "http,https",
-						label.Prefix + "sauternes." + label.SuffixFrontendPassHostHeader:       "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSCert:          "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendPriority:             "666",
-						label.Prefix + "sauternes." + label.SuffixFrontendRedirectEntryPoint:   "https",
-						label.Prefix + "sauternes." + label.SuffixFrontendRedirectRegex:        "nope",
-						label.Prefix + "sauternes." + label.SuffixFrontendRedirectReplacement:  "nope",
-						label.Prefix + "sauternes." + label.SuffixFrontendRedirectPermanent:    "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendWhitelistSourceRange: "10.10.10.10",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasic:                 "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.Prefix + "sauternes." + label.SuffixFrontendEntryPoints:               "http,https",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassHostHeader:            "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSCert:               "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPriority:                  "666",
+						label.Prefix + "sauternes." + label.SuffixFrontendRedirectEntryPoint:        "https",
+						label.Prefix + "sauternes." + label.SuffixFrontendRedirectRegex:             "nope",
+						label.Prefix + "sauternes." + label.SuffixFrontendRedirectReplacement:       "nope",
+						label.Prefix + "sauternes." + label.SuffixFrontendRedirectPermanent:         "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendWhitelistSourceRange:      "10.10.10.10",
+						label.Prefix + "sauternes." + label.SuffixFrontendWhitelistUseXForwardedFor: "true",
 
 						label.Prefix + "sauternes." + label.SuffixFrontendRequestHeaders:                 "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
 						label.Prefix + "sauternes." + label.SuffixFrontendResponseHeaders:                "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
@@ -144,8 +145,9 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 						"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 						"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 					},
-					WhitelistSourceRange: []string{
-						"10.10.10.10",
+					WhiteList: &types.WhiteList{
+						SourceRange:      []string{"10.10.10.10"},
+						UseXForwardedFor: true,
 					},
 					Headers: &types.Headers{
 						CustomRequestHeaders: map[string]string{
