@@ -475,8 +475,9 @@ func (p *Provider) getServers(containers []dockerData) map[string]types.Server {
 		}
 
 		servers[provider.Normalize(serverName)] = types.Server{
-			URL:    fmt.Sprintf("%s://%s:%s", protocol, ip, port),
-			Weight: label.GetIntValue(container.SegmentLabels, label.TraefikWeight, label.DefaultWeightInt),
+			URL:      fmt.Sprintf("%s://%s:%s", protocol, ip, port),
+			Priority: label.GetIntValue(container.SegmentLabels, label.TraefikPriority, label.DefaultPriority),
+			Weight:   label.GetIntValue(container.SegmentLabels, label.TraefikWeight, label.DefaultWeightInt),
 		}
 	}
 

@@ -504,6 +504,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
   {{range $serverName, $server := getServers $servers }}
   [backends."backend-{{ $backendName }}".servers."{{ $serverName }}"]
     url = "{{ $server.URL }}"
+    priority = {{ $server.Priority }}
     weight = {{ $server.Weight }}
   {{end}}
 
