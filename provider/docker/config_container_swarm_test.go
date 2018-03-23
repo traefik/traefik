@@ -122,16 +122,17 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						label.TraefikBackendBufferingMemRequestBodyBytes:     "2097152",
 						label.TraefikBackendBufferingRetryExpression:         "IsNetworkError() && Attempts() <= 2",
 
-						label.TraefikFrontendAuthBasic:            "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						label.TraefikFrontendEntryPoints:          "http,https",
-						label.TraefikFrontendPassHostHeader:       "true",
-						label.TraefikFrontendPassTLSCert:          "true",
-						label.TraefikFrontendPriority:             "666",
-						label.TraefikFrontendRedirectEntryPoint:   "https",
-						label.TraefikFrontendRedirectRegex:        "nope",
-						label.TraefikFrontendRedirectReplacement:  "nope",
-						label.TraefikFrontendRule:                 "Host:traefik.io",
-						label.TraefikFrontendWhitelistSourceRange: "10.10.10.10",
+						label.TraefikFrontendAuthBasic:                 "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendEntryPoints:               "http,https",
+						label.TraefikFrontendPassHostHeader:            "true",
+						label.TraefikFrontendPassTLSCert:               "true",
+						label.TraefikFrontendPriority:                  "666",
+						label.TraefikFrontendRedirectEntryPoint:        "https",
+						label.TraefikFrontendRedirectRegex:             "nope",
+						label.TraefikFrontendRedirectReplacement:       "nope",
+						label.TraefikFrontendRule:                      "Host:traefik.io",
+						label.TraefikFrontendWhiteListSourceRange:      "10.10.10.10",
+						label.TraefikFrontendWhiteListUseXForwardedFor: "true",
 
 						label.TraefikFrontendRequestHeaders:          "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
 						label.TraefikFrontendResponseHeaders:         "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
@@ -193,8 +194,9 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 						"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 					},
-					WhitelistSourceRange: []string{
-						"10.10.10.10",
+					WhiteList: &types.WhiteList{
+						SourceRange:      []string{"10.10.10.10"},
+						UseXForwardedFor: true,
 					},
 					Headers: &types.Headers{
 						CustomRequestHeaders: map[string]string{

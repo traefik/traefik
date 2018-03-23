@@ -182,11 +182,22 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 		}
 	}
 
-	// ForwardedHeaders must be remove in the next breaking version
 	for entryPointName := range gc.EntryPoints {
 		entryPoint := gc.EntryPoints[entryPointName]
+		// ForwardedHeaders must be remove in the next breaking version
 		if entryPoint.ForwardedHeaders == nil {
 			entryPoint.ForwardedHeaders = &ForwardedHeaders{Insecure: true}
+		}
+
+		if len(entryPoint.WhitelistSourceRange) > 0 {
+			log.Warnf("Deprecated configuration found: %s. Please use %s.", "whiteListSourceRange", "whiteList.sourceRange")
+
+			if entryPoint.WhiteList == nil {
+				entryPoint.WhiteList = &types.WhiteList{
+					SourceRange: entryPoint.WhitelistSourceRange,
+				}
+				entryPoint.WhitelistSourceRange = nil
+			}
 		}
 	}
 
@@ -376,18 +387,6 @@ type RespondingTimeouts struct {
 type ForwardingTimeouts struct {
 	DialTimeout           flaeg.Duration `description:"The amount of time to wait until a connection to a backend server can be established. Defaults to 30 seconds. If zero, no timeout exists" export:"true"`
 	ResponseHeaderTimeout flaeg.Duration `description:"The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists" export:"true"`
-}
-
-// ProxyProtocol contains Proxy-Protocol configuration
-type ProxyProtocol struct {
-	Insecure   bool
-	TrustedIPs []string
-}
-
-// ForwardedHeaders Trust client forwarding headers
-type ForwardedHeaders struct {
-	Insecure   bool
-	TrustedIPs []string
 }
 
 // LifeCycle contains configurations relevant to the lifecycle (such as the

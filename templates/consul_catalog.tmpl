@@ -66,16 +66,18 @@
       "{{.}}",
       {{end}}]
 
-    {{ $whitelistSourceRange := getWhitelistSourceRange $service.Attributes }}
-    {{if $whitelistSourceRange }}
-    whitelistSourceRange = [{{range $whitelistSourceRange }}
-      "{{.}}",
-      {{end}}]
-    {{end}}
-
     basicAuth = [{{range getBasicAuth $service.Attributes }}
       "{{.}}",
       {{end}}]
+
+    {{ $whitelist := getWhiteList $service.Attributes }}
+    {{if $whitelist }}
+    [frontends."frontend-{{ $service.ServiceName }}".whiteList]
+      sourceRange = [{{range $whitelist.SourceRange }}
+        "{{.}}",
+        {{end}}]
+      useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
+    {{end}}
 
     {{ $redirect := getRedirect $service.Attributes }}
     {{if $redirect }}

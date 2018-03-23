@@ -103,7 +103,7 @@ func (p *Provider) buildConfigurationV1(containersInspected []dockerData) *types
 		"getServiceWeight":   getFuncServiceStringLabelV1(label.SuffixWeight, label.DefaultWeight),
 		// Services - Frontend functions
 		"getServiceEntryPoints":          getFuncServiceSliceStringLabelV1(label.SuffixFrontendEntryPoints),
-		"getServiceWhitelistSourceRange": getFuncServiceSliceStringLabelV1(label.SuffixFrontendWhitelistSourceRange),
+		"getServiceWhitelistSourceRange": getFuncServiceSliceStringLabelV1(label.SuffixFrontendWhiteListSourceRange),
 		"getServiceBasicAuth":            getFuncServiceSliceStringLabelV1(label.SuffixFrontendAuthBasic),
 		"getServiceFrontendRule":         p.getServiceFrontendRuleV1,
 		"getServicePassHostHeader":       getFuncServiceBoolLabelV1(label.SuffixFrontendPassHostHeader, label.DefaultPassHostHeaderBool),

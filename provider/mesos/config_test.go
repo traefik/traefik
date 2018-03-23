@@ -148,7 +148,8 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel(label.TraefikFrontendRedirectReplacement, "nope"),
 					withLabel(label.TraefikFrontendRedirectPermanent, "true"),
 					withLabel(label.TraefikFrontendRule, "Host:traefik.io"),
-					withLabel(label.TraefikFrontendWhitelistSourceRange, "10.10.10.10"),
+					withLabel(label.TraefikFrontendWhiteListSourceRange, "10.10.10.10"),
+					withLabel(label.TraefikFrontendWhiteListUseXForwardedFor, "true"),
 
 					withLabel(label.TraefikFrontendRequestHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type:application/json; charset=utf-8"),
 					withLabel(label.TraefikFrontendResponseHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type:application/json; charset=utf-8"),
@@ -212,8 +213,9 @@ func TestBuildConfiguration(t *testing.T) {
 						"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 						"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 					},
-					WhitelistSourceRange: []string{
-						"10.10.10.10",
+					WhiteList: &types.WhiteList{
+						SourceRange:      []string{"10.10.10.10"},
+						UseXForwardedFor: true,
 					},
 					Headers: &types.Headers{
 						CustomRequestHeaders: map[string]string{
@@ -948,6 +950,75 @@ func TestGetServers(t *testing.T) {
 
 			actual := p.getServers(test.tasks)
 
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestWhiteList(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		task     state.Task
+		expected *types.WhiteList
+	}{
+		{
+			desc: "should return nil when no white list labels",
+			task: aTask("ID1",
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: nil,
+		},
+		{
+			desc: "should return a struct when only range",
+			task: aTask("ID1",
+				withLabel(label.TraefikFrontendWhiteListSourceRange, "10.10.10.10"),
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: &types.WhiteList{
+				SourceRange: []string{
+					"10.10.10.10",
+				},
+				UseXForwardedFor: false,
+			},
+		},
+		{
+			desc: "should return a struct when range and UseXForwardedFor",
+			task: aTask("ID1",
+				withLabel(label.TraefikFrontendWhiteListSourceRange, "10.10.10.10"),
+				withLabel(label.TraefikFrontendWhiteListUseXForwardedFor, "true"),
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: &types.WhiteList{
+				SourceRange: []string{
+					"10.10.10.10",
+				},
+				UseXForwardedFor: true,
+			},
+		},
+		{
+			desc: "should return nil when only UseXForwardedFor",
+			task: aTask("ID1",
+				withLabel(label.TraefikFrontendWhiteListUseXForwardedFor, "true"),
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: nil,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := getWhiteList(test.task)
 			assert.Equal(t, test.expected, actual)
 		})
 	}

@@ -8,8 +8,11 @@
 [entryPoints]
   [entryPoints.http]
     address = ":80"
-    whitelistSourceRange = ["10.42.0.0/16", "152.89.1.33/32", "afed:be44::/16"]
     compress = true
+
+    [entryPoints.http.whitelist]
+      sourceRange = ["10.42.0.0/16", "152.89.1.33/32", "afed:be44::/16"]
+      useXForwardedFor = true
 
     [entryPoints.http.tls]
       minVersion = "VersionTLS12"
@@ -112,7 +115,8 @@ Redirect.Regex:http://localhost/(.*)
 Redirect.Replacement:http://mydomain/$1
 Redirect.Permanent:true
 Compress:true
-WhiteListSourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16
+WhiteList.SourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16
+WhiteList.UseXForwardedFor:true
 ProxyProtocol.TrustedIPs:192.168.0.1
 ProxyProtocol.Insecure:tue
 ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24
@@ -352,15 +356,18 @@ Responses are compressed when:
 * And the `Accept-Encoding` request header contains `gzip`
 * And the response is not already compressed, i.e. the `Content-Encoding` response header is not already set.
 
-## Whitelisting
+## White Listing
 
-To enable IP whitelisting at the entrypoint level.
+To enable IP white listing at the entry point level.
 
 ```toml
 [entryPoints]
   [entryPoints.http]
-  address = ":80"
-  whiteListSourceRange = ["127.0.0.1/32", "192.168.1.7"]
+    address = ":80"
+
+    [entryPoints.http]
+      sourceRange = ["127.0.0.1/32", "192.168.1.7"]
+      # useXForwardedFor = true
 ```
 
 ## ProxyProtocol

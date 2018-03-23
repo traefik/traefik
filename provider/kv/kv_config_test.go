@@ -91,6 +91,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					withPair(pathFrontendPassTLSCert, "true"),
 					withPair(pathFrontendEntryPoints, "http,https"),
 					withPair(pathFrontendWhiteListSourceRange, "1.1.1.1/24, 1234:abcd::42/32"),
+					withPair(pathFrontendWhiteListUseXForwardedFor, "true"),
 					withPair(pathFrontendBasicAuth, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/, test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 					withPair(pathFrontendRedirectEntryPoint, "https"),
 					withPair(pathFrontendRedirectRegex, "nope"),
@@ -180,12 +181,15 @@ func TestProviderBuildConfiguration(t *testing.T) {
 				},
 				Frontends: map[string]*types.Frontend{
 					"frontend1": {
-						Priority:             6,
-						EntryPoints:          []string{"http", "https"},
-						Backend:              "backend1",
-						PassTLSCert:          true,
-						WhitelistSourceRange: []string{"1.1.1.1/24", "1234:abcd::42/32"},
-						BasicAuth:            []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+						Priority:    6,
+						EntryPoints: []string{"http", "https"},
+						Backend:     "backend1",
+						PassTLSCert: true,
+						WhiteList: &types.WhiteList{
+							SourceRange:      []string{"1.1.1.1/24", "1234:abcd::42/32"},
+							UseXForwardedFor: true,
+						},
+						BasicAuth: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 						Redirect: &types.Redirect{
 							EntryPoint: "https",
 							Permanent:  true,
@@ -1027,6 +1031,68 @@ func TestProviderHasStickinessLabel(t *testing.T) {
 			if actual != test.expected {
 				t.Fatalf("expected %v, got %v", test.expected, actual)
 			}
+		})
+	}
+}
+
+func TestWhiteList(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		rootPath string
+		kvPairs  []*store.KVPair
+		expected *types.WhiteList
+	}{
+		{
+			desc:     "should return nil when no white list labels",
+			rootPath: "traefik/frontends/foo",
+			expected: nil,
+		},
+		{
+			desc:     "should return a struct when only range",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendWhiteListSourceRange, "10.10.10.10"))),
+			expected: &types.WhiteList{
+				SourceRange: []string{
+					"10.10.10.10",
+				},
+				UseXForwardedFor: false,
+			},
+		},
+		{
+			desc:     "should return a struct when range and UseXForwardedFor",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendWhiteListSourceRange, "10.10.10.10"),
+					withPair(pathFrontendWhiteListUseXForwardedFor, "true"))),
+			expected: &types.WhiteList{
+				SourceRange: []string{
+					"10.10.10.10",
+				},
+				UseXForwardedFor: true,
+			},
+		},
+		{
+			desc:     "should return nil when only UseXForwardedFor",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendWhiteListUseXForwardedFor, "true"))),
+			expected: nil,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := newProviderMock(test.kvPairs)
+
+			actual := p.getWhiteList(test.rootPath)
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }

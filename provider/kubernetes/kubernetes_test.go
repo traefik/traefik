@@ -665,7 +665,8 @@ func TestIngressAnnotations(t *testing.T) {
 		),
 		buildIngress(
 			iNamespace("testing"),
-			iAnnotation(annotationKubernetesWhitelistSourceRange, "1.1.1.1/24, 1234:abcd::42/32"),
+			iAnnotation(annotationKubernetesWhiteListSourceRange, "1.1.1.1/24, 1234:abcd::42/32"),
+			iAnnotation(annotationKubernetesWhiteListUseXForwardedFor, "true"),
 			iRules(
 				iRule(
 					iHost("test"),
@@ -984,7 +985,7 @@ rateset:
 			),
 			frontend("test/whitelist-source-range",
 				passHostHeader(),
-				whitelistSourceRange("1.1.1.1/24", "1234:abcd::42/32"),
+				whiteList(true, "1.1.1.1/24", "1234:abcd::42/32"),
 				routes(
 					route("/whitelist-source-range", "PathPrefix:/whitelist-source-range"),
 					route("test", "Host:test")),

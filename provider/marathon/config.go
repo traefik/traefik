@@ -67,20 +67,23 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getHealthCheckInterval": getFuncString(label.TraefikBackendHealthCheckInterval, ""),
 
 		// Frontend functions
-		"getServiceNames":         getServiceNames,
-		"getServiceNameSuffix":    getServiceNameSuffix,
-		"getPassHostHeader":       getFuncBoolService(label.SuffixFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
-		"getPassTLSCert":          getFuncBoolService(label.SuffixFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getPriority":             getFuncIntService(label.SuffixFrontendPriority, label.DefaultFrontendPriorityInt),
-		"getEntryPoints":          getFuncSliceStringService(label.SuffixFrontendEntryPoints),
-		"getFrontendRule":         p.getFrontendRule,
-		"getFrontendName":         p.getFrontendName,
-		"getBasicAuth":            getFuncSliceStringService(label.SuffixFrontendAuthBasic),
+		"getServiceNames":      getServiceNames,
+		"getServiceNameSuffix": getServiceNameSuffix,
+		"getPassHostHeader":    getFuncBoolService(label.SuffixFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
+		"getPassTLSCert":       getFuncBoolService(label.SuffixFrontendPassTLSCert, label.DefaultPassTLSCert),
+		"getPriority":          getFuncIntService(label.SuffixFrontendPriority, label.DefaultFrontendPriorityInt),
+		"getEntryPoints":       getFuncSliceStringService(label.SuffixFrontendEntryPoints),
+		"getFrontendRule":      p.getFrontendRule,
+		"getFrontendName":      p.getFrontendName,
+		"getBasicAuth":         getFuncSliceStringService(label.SuffixFrontendAuthBasic),
+		"getRedirect":          getRedirect,
+		"getErrorPages":        getErrorPages,
+		"getRateLimit":         getRateLimit,
+		"getHeaders":           getHeaders,
+		"getWhiteList":         getWhiteList,
+
+		// TODO Deprecated [breaking]
 		"getWhitelistSourceRange": getFuncSliceStringService(label.SuffixFrontendWhitelistSourceRange),
-		"getRedirect":             getRedirect,
-		"getErrorPages":           getErrorPages,
-		"getRateLimit":            getRateLimit,
-		"getHeaders":              getHeaders,
 	}
 
 	v := url.Values{}
@@ -484,6 +487,20 @@ func (p *Provider) getServers(application marathon.Application, serviceName stri
 	}
 
 	return servers
+}
+
+func getWhiteList(application marathon.Application, serviceName string) *types.WhiteList {
+	labels := getLabels(application, serviceName)
+
+	ranges := label.GetSliceStringValue(labels, getLabelName(serviceName, label.SuffixFrontendWhiteListSourceRange))
+	if len(ranges) > 0 {
+		return &types.WhiteList{
+			SourceRange:      ranges,
+			UseXForwardedFor: label.GetBoolValue(labels, getLabelName(serviceName, label.SuffixFrontendWhiteListUseXForwardedFor), false),
+		}
+	}
+
+	return nil
 }
 
 func getRedirect(application marathon.Application, serviceName string) *types.Redirect {

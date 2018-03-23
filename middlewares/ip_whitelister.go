@@ -2,7 +2,6 @@ package middlewares
 
 import (
 	"fmt"
-	"net"
 	"net/http"
 
 	"github.com/containous/traefik/log"
@@ -18,49 +17,41 @@ type IPWhiteLister struct {
 	whiteLister *whitelist.IP
 }
 
-// NewIPWhitelister builds a new IPWhiteLister given a list of CIDR-Strings to whitelist
-func NewIPWhitelister(whitelistStrings []string) (*IPWhiteLister, error) {
-
-	if len(whitelistStrings) == 0 {
-		return nil, errors.New("no whitelists provided")
+// NewIPWhiteLister builds a new IPWhiteLister given a list of CIDR-Strings to whitelist
+func NewIPWhiteLister(whiteList []string, useXForwardedFor bool) (*IPWhiteLister, error) {
+	if len(whiteList) == 0 {
+		return nil, errors.New("no white list provided")
 	}
 
 	whiteLister := IPWhiteLister{}
 
-	ip, err := whitelist.NewIP(whitelistStrings, false)
+	ip, err := whitelist.NewIP(whiteList, false, useXForwardedFor)
 	if err != nil {
-		return nil, fmt.Errorf("parsing CIDR whitelist %s: %v", whitelistStrings, err)
+		return nil, fmt.Errorf("parsing CIDR whitelist %s: %v", whiteList, err)
 	}
 	whiteLister.whiteLister = ip
 
 	whiteLister.handler = negroni.HandlerFunc(whiteLister.handle)
-	log.Debugf("configured %u IP whitelists: %s", len(whitelistStrings), whitelistStrings)
+	log.Debugf("configured %u IP white list: %s", len(whiteList), whiteList)
 
 	return &whiteLister, nil
 }
 
 func (wl *IPWhiteLister) handle(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	ipAddress, _, err := net.SplitHostPort(r.RemoteAddr)
+	allowed, ip, err := wl.whiteLister.IsAuthorized(r)
 	if err != nil {
-		tracing.SetErrorAndWarnLog(r, "unable to parse remote-address from header: %s - rejecting", r.RemoteAddr)
-		reject(w)
-		return
-	}
-
-	allowed, ip, err := wl.whiteLister.Contains(ipAddress)
-	if err != nil {
-		tracing.SetErrorAndDebugLog(r, "source-IP %s matched none of the whitelists - rejecting", ipAddress)
+		tracing.SetErrorAndDebugLog(r, "request %+v matched none of the white list - rejecting", r)
 		reject(w)
 		return
 	}
 
 	if allowed {
-		tracing.SetErrorAndDebugLog(r, "source-IP %s matched whitelist %s - passing", ipAddress, wl.whiteLister)
+		tracing.SetErrorAndDebugLog(r, "request %+v matched white list %s - passing", r, wl.whiteLister)
 		next.ServeHTTP(w, r)
 		return
 	}
 
-	tracing.SetErrorAndDebugLog(r, "source-IP %s matched none of the whitelists - rejecting", ip)
+	tracing.SetErrorAndDebugLog(r, "source-IP %s matched none of the white list - rejecting", ip)
 	reject(w)
 }
 

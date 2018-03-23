@@ -41,18 +41,18 @@ func (p *Provider) buildConfiguration(tasks []state.Task) *types.Configuration {
 		"getPort": p.getPort,
 
 		// Frontend functions
-		"getFrontEndName":         getFrontendName,
-		"getEntryPoints":          getFuncSliceStringValue(label.TraefikFrontendEntryPoints),
-		"getBasicAuth":            getFuncSliceStringValue(label.TraefikFrontendAuthBasic),
-		"getWhitelistSourceRange": getFuncSliceStringValue(label.TraefikFrontendWhitelistSourceRange),
-		"getPriority":             getFuncStringValue(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
-		"getPassHostHeader":       getFuncBoolValue(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
-		"getPassTLSCert":          getFuncBoolValue(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getFrontendRule":         p.getFrontendRule,
-		"getRedirect":             getRedirect,
-		"getErrorPages":           getErrorPages,
-		"getRateLimit":            getRateLimit,
-		"getHeaders":              getHeaders,
+		"getFrontEndName":   getFrontendName,
+		"getEntryPoints":    getFuncSliceStringValue(label.TraefikFrontendEntryPoints),
+		"getBasicAuth":      getFuncSliceStringValue(label.TraefikFrontendAuthBasic),
+		"getPriority":       getFuncStringValue(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
+		"getPassHostHeader": getFuncBoolValue(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
+		"getPassTLSCert":    getFuncBoolValue(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
+		"getFrontendRule":   p.getFrontendRule,
+		"getRedirect":       getRedirect,
+		"getErrorPages":     getErrorPages,
+		"getRateLimit":      getRateLimit,
+		"getHeaders":        getHeaders,
+		"getWhiteList":      getWhiteList,
 
 		// TODO Deprecated [breaking]
 		"getFrontendBackend": getBackendName,
@@ -335,6 +335,18 @@ func (p *Provider) getServers(tasks []state.Task) map[string]types.Server {
 	}
 
 	return servers
+}
+
+func getWhiteList(task state.Task) *types.WhiteList {
+	ranges := getSliceStringValue(task, label.TraefikFrontendWhiteListSourceRange)
+	if len(ranges) > 0 {
+		return &types.WhiteList{
+			SourceRange:      ranges,
+			UseXForwardedFor: getBoolValue(task, label.TraefikFrontendWhiteListUseXForwardedFor, false),
+		}
+	}
+
+	return nil
 }
 
 func getRedirect(task state.Task) *types.Redirect {

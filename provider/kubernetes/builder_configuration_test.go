@@ -202,9 +202,13 @@ func basicAuth(auth ...string) func(*types.Frontend) {
 	}
 }
 
-func whitelistSourceRange(ranges ...string) func(*types.Frontend) {
+func whiteList(useXFF bool, ranges ...string) func(*types.Frontend) {
 	return func(f *types.Frontend) {
-		f.WhitelistSourceRange = ranges
+		if f.WhiteList == nil {
+			f.WhiteList = &types.WhiteList{}
+		}
+		f.WhiteList.UseXForwardedFor = useXFF
+		f.WhiteList.SourceRange = ranges
 	}
 }
 

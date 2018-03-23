@@ -65,7 +65,10 @@ const (
 	SuffixFrontendRedirectReplacement              = "frontend.redirect.replacement"
 	SuffixFrontendRedirectPermanent                = "frontend.redirect.permanent"
 	SuffixFrontendRule                             = "frontend.rule"
-	SuffixFrontendWhitelistSourceRange             = "frontend.whitelistSourceRange"
+	SuffixFrontendWhitelistSourceRange             = "frontend.whitelistSourceRange" // Deprecated
+	SuffixFrontendWhiteList                        = "frontend.whiteList."
+	SuffixFrontendWhiteListSourceRange             = SuffixFrontendWhiteList + "sourceRange"
+	SuffixFrontendWhiteListUseXForwardedFor        = SuffixFrontendWhiteList + "useXForwardedFor"
 	TraefikDomain                                  = Prefix + SuffixDomain
 	TraefikEnable                                  = Prefix + SuffixEnable
 	TraefikPort                                    = Prefix + SuffixPort
@@ -106,7 +109,9 @@ const (
 	TraefikFrontendRedirectReplacement             = Prefix + SuffixFrontendRedirectReplacement
 	TraefikFrontendRedirectPermanent               = Prefix + SuffixFrontendRedirectPermanent
 	TraefikFrontendRule                            = Prefix + SuffixFrontendRule
-	TraefikFrontendWhitelistSourceRange            = Prefix + SuffixFrontendWhitelistSourceRange
+	TraefikFrontendWhitelistSourceRange            = Prefix + SuffixFrontendWhitelistSourceRange // Deprecated
+	TraefikFrontendWhiteListSourceRange            = Prefix + SuffixFrontendWhiteListSourceRange
+	TraefikFrontendWhiteListUseXForwardedFor       = Prefix + SuffixFrontendWhiteListUseXForwardedFor
 	TraefikFrontendRequestHeaders                  = Prefix + SuffixFrontendRequestHeaders
 	TraefikFrontendResponseHeaders                 = Prefix + SuffixFrontendResponseHeaders
 	TraefikFrontendAllowedHosts                    = Prefix + SuffixFrontendHeadersAllowedHosts

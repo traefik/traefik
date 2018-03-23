@@ -41,18 +41,18 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getTLSSection": p.getTLSSection,
 
 		// Frontend functions
-		"getBackendName":          p.getFuncString(pathFrontendBackend, ""),
-		"getPriority":             p.getFuncInt(pathFrontendPriority, label.DefaultFrontendPriorityInt),
-		"getPassHostHeader":       p.getPassHostHeader(),
-		"getPassTLSCert":          p.getFuncBool(pathFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getEntryPoints":          p.getFuncList(pathFrontendEntryPoints),
-		"getWhitelistSourceRange": p.getFuncList(pathFrontendWhiteListSourceRange),
-		"getBasicAuth":            p.getFuncList(pathFrontendBasicAuth),
-		"getRoutes":               p.getRoutes,
-		"getRedirect":             p.getRedirect,
-		"getErrorPages":           p.getErrorPages,
-		"getRateLimit":            p.getRateLimit,
-		"getHeaders":              p.getHeaders,
+		"getBackendName":    p.getFuncString(pathFrontendBackend, ""),
+		"getPriority":       p.getFuncInt(pathFrontendPriority, label.DefaultFrontendPriorityInt),
+		"getPassHostHeader": p.getPassHostHeader(),
+		"getPassTLSCert":    p.getFuncBool(pathFrontendPassTLSCert, label.DefaultPassTLSCert),
+		"getEntryPoints":    p.getFuncList(pathFrontendEntryPoints),
+		"getBasicAuth":      p.getFuncList(pathFrontendBasicAuth),
+		"getRoutes":         p.getRoutes,
+		"getRedirect":       p.getRedirect,
+		"getErrorPages":     p.getErrorPages,
+		"getRateLimit":      p.getRateLimit,
+		"getHeaders":        p.getHeaders,
+		"getWhiteList":      p.getWhiteList,
 
 		// Backend functions
 		"getServers":              p.getServers,
@@ -123,6 +123,19 @@ func (p *Provider) hasStickinessLabel(rootPath string) bool {
 // Deprecated
 func (p *Provider) getStickinessCookieName(rootPath string) string {
 	return p.get("", rootPath, pathBackendLoadBalancerStickinessCookieName)
+}
+
+func (p *Provider) getWhiteList(rootPath string) *types.WhiteList {
+	ranges := p.getList(rootPath, pathFrontendWhiteListSourceRange)
+
+	if len(ranges) > 0 {
+		return &types.WhiteList{
+			SourceRange:      ranges,
+			UseXForwardedFor: p.getBool(false, rootPath, pathFrontendWhiteListUseXForwardedFor),
+		}
+	}
+
+	return nil
 }
 
 func (p *Provider) getRedirect(rootPath string) *types.Redirect {

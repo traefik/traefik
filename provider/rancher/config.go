@@ -55,20 +55,22 @@ func (p *Provider) buildConfiguration(services []rancherData) *types.Configurati
 		"getStickinessCookieName": getFuncString(label.TraefikBackendLoadBalancerStickinessCookieName, label.DefaultBackendLoadbalancerStickinessCookieName),
 
 		// Frontend functions
-		"getBackend":              getBackendName, // TODO Deprecated [breaking] replaced by getBackendName
-		"getBackendName":          getBackendName,
-		"getFrontendRule":         p.getFrontendRule,
-		"getPriority":             getFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
-		"getPassHostHeader":       getFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
-		"getPassTLSCert":          getFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getEntryPoints":          getFuncSliceString(label.TraefikFrontendEntryPoints),
-		"getBasicAuth":            getFuncSliceString(label.TraefikFrontendAuthBasic),
-		"getWhitelistSourceRange": getFuncSliceString(label.TraefikFrontendWhitelistSourceRange),
+		"getBackend":        getBackendName, // TODO Deprecated [breaking] replaced by getBackendName
+		"getBackendName":    getBackendName,
+		"getFrontendRule":   p.getFrontendRule,
+		"getPriority":       getFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
+		"getPassHostHeader": getFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
+		"getPassTLSCert":    getFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
+		"getEntryPoints":    getFuncSliceString(label.TraefikFrontendEntryPoints),
+		"getBasicAuth":      getFuncSliceString(label.TraefikFrontendAuthBasic),
+		"getErrorPages":     getErrorPages,
+		"getRateLimit":      getRateLimit,
+		"getRedirect":       getRedirect,
+		"getHeaders":        getHeaders,
+		"getWhiteList":      getWhiteList,
 
-		"getErrorPages": getErrorPages,
-		"getRateLimit":  getRateLimit,
-		"getRedirect":   getRedirect,
-		"getHeaders":    getHeaders,
+		// TODO Deprecated [breaking]
+		"getWhitelistSourceRange": getFuncSliceString(label.TraefikFrontendWhitelistSourceRange),
 	}
 
 	// filter services
@@ -269,6 +271,19 @@ func getServers(service rancherData) map[string]types.Server {
 	}
 
 	return servers
+}
+
+func getWhiteList(service rancherData) *types.WhiteList {
+	ranges := label.GetSliceStringValue(service.Labels, label.TraefikFrontendWhiteListSourceRange)
+
+	if len(ranges) > 0 {
+		return &types.WhiteList{
+			SourceRange:      ranges,
+			UseXForwardedFor: label.GetBoolValue(service.Labels, label.TraefikFrontendWhiteListUseXForwardedFor, false),
+		}
+	}
+
+	return nil
 }
 
 func getRedirect(service rancherData) *types.Redirect {
