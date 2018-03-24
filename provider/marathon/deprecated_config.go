@@ -133,7 +133,7 @@ func (p *Provider) getFrontendRuleV1(application marathon.Application, serviceNa
 	}
 
 	if p.MarathonLBCompatibility {
-		if value := label.GetStringValue(Unp(application.Labels), labelLbCompatibility, ""); len(value) > 0 {
+		if value := label.GetStringValue(unp(application.Labels), labelLbCompatibility, ""); len(value) > 0 {
 			return "Host:" + value
 		}
 	}
@@ -158,7 +158,7 @@ func (p *Provider) getBackendServerV1(task marathon.Task, application marathon.A
 	case 1:
 		return task.IPAddresses[0].IPAddress
 	default:
-		ipAddressIdx := label.GetIntValue(Unp(application.Labels), labelIPAddressIdx, math.MinInt32)
+		ipAddressIdx := label.GetIntValue(unp(application.Labels), labelIPAddressIdx, math.MinInt32)
 
 		if ipAddressIdx == math.MinInt32 {
 			log.Errorf("Found %d task IP addresses but missing IP address index for Marathon application %s on task %s",
@@ -206,16 +206,16 @@ func identifierV1(app marathon.Application, task marathon.Task, serviceName stri
 
 // Deprecated
 func hasLoadBalancerLabelsV1(application marathon.Application) bool {
-	method := label.Has(Unp(application.Labels), label.TraefikBackendLoadBalancerMethod)
-	sticky := label.Has(Unp(application.Labels), label.TraefikBackendLoadBalancerSticky)
-	stickiness := label.Has(Unp(application.Labels), label.TraefikBackendLoadBalancerStickiness)
+	method := label.Has(unp(application.Labels), label.TraefikBackendLoadBalancerMethod)
+	sticky := label.Has(unp(application.Labels), label.TraefikBackendLoadBalancerSticky)
+	stickiness := label.Has(unp(application.Labels), label.TraefikBackendLoadBalancerStickiness)
 	return method || sticky || stickiness
 }
 
 // Deprecated
 func hasMaxConnLabelsV1(application marathon.Application) bool {
-	mca := label.Has(Unp(application.Labels), label.TraefikBackendMaxConnAmount)
-	mcef := label.Has(Unp(application.Labels), label.TraefikBackendMaxConnExtractorFunc)
+	mca := label.Has(unp(application.Labels), label.TraefikBackendMaxConnAmount)
+	mcef := label.Has(unp(application.Labels), label.TraefikBackendMaxConnExtractorFunc)
 	return mca && mcef
 }
 
@@ -223,10 +223,10 @@ func hasMaxConnLabelsV1(application marathon.Application) bool {
 // replaced by Stickiness
 // Deprecated
 func getStickyV1(application marathon.Application) bool {
-	if label.Has(Unp(application.Labels), label.TraefikBackendLoadBalancerSticky) {
+	if label.Has(unp(application.Labels), label.TraefikBackendLoadBalancerSticky) {
 		log.Warnf("Deprecated configuration found: %s. Please use %s.", label.TraefikBackendLoadBalancerSticky, label.TraefikBackendLoadBalancerStickiness)
 	}
-	return label.GetBoolValue(Unp(application.Labels), label.TraefikBackendLoadBalancerSticky, false)
+	return label.GetBoolValue(unp(application.Labels), label.TraefikBackendLoadBalancerSticky, false)
 }
 
 // Deprecated
@@ -371,7 +371,7 @@ func getLabelNameV1(serviceName string, suffix string) string {
 // Deprecated
 func hasFuncV1(labelName string) func(application marathon.Application) bool {
 	return func(application marathon.Application) bool {
-		return label.Has(Unp(application.Labels), labelName)
+		return label.Has(unp(application.Labels), labelName)
 	}
 }
 
@@ -413,13 +413,13 @@ func getFuncSliceStringServiceV1(labelName string) func(application marathon.App
 // Deprecated
 func getFuncStringV1(labelName string, defaultValue string) func(application marathon.Application) string {
 	return func(application marathon.Application) string {
-		return label.GetStringValue(Unp(application.Labels), labelName, defaultValue)
+		return label.GetStringValue(unp(application.Labels), labelName, defaultValue)
 	}
 }
 
 // Deprecated
 func getFuncInt64V1(labelName string, defaultValue int64) func(application marathon.Application) int64 {
 	return func(application marathon.Application) int64 {
-		return label.GetInt64Value(Unp(application.Labels), labelName, defaultValue)
+		return label.GetInt64Value(unp(application.Labels), labelName, defaultValue)
 	}
 }

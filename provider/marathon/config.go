@@ -17,7 +17,7 @@ import (
 
 const defaultService = ""
 
-type AppData struct {
+type appData struct {
 	marathon.Application
 	SegmentLabels map[string]string
 	SegmentName   string
@@ -54,7 +54,7 @@ func (p *Provider) buildConfigurationV2(applications *marathon.Applications) *ty
 		"getWhiteList":         label.GetWhiteList,
 	}
 
-	var apps []*AppData
+	var apps []*appData
 	for _, app := range applications.Apps {
 		if p.applicationFilter(app) {
 			// Tasks
@@ -69,9 +69,9 @@ func (p *Provider) buildConfigurationV2(applications *marathon.Applications) *ty
 			app.Tasks = filteredTasks
 
 			// segments
-			segmentProperties := label.ExtractTraefikLabels(Unp(app.Labels))
+			segmentProperties := label.ExtractTraefikLabels(unp(app.Labels))
 			for segmentName, labels := range segmentProperties {
-				data := &AppData{
+				data := &appData{
 					Application:   app,
 					SegmentLabels: labels,
 					SegmentName:   segmentName,
@@ -82,7 +82,7 @@ func (p *Provider) buildConfigurationV2(applications *marathon.Applications) *ty
 	}
 
 	templateObjects := struct {
-		Applications []*AppData
+		Applications []*appData
 		Domain       string
 	}{
 		Applications: apps,
@@ -100,7 +100,7 @@ func (p *Provider) buildConfigurationV2(applications *marathon.Applications) *ty
 // While we cannot filter on the service level, they will eventually get
 // rejected once the server configuration is rendered.
 func logIllegalServices(task marathon.Task, app marathon.Application) {
-	segmentProperties := label.ExtractTraefikLabels(Unp(app.Labels))
+	segmentProperties := label.ExtractTraefikLabels(unp(app.Labels))
 	for segmentName, labels := range segmentProperties {
 		// Check for illegal/missing ports.
 		if _, err := processPortsV2(app, task, labels); err != nil {
@@ -119,15 +119,15 @@ func logIllegalServices(task marathon.Task, app marathon.Application) {
 
 func (p *Provider) applicationFilter(app marathon.Application) bool {
 	// Filter disabled application.
-	if !label.IsEnabled(Unp(app.Labels), p.ExposedByDefault) {
+	if !label.IsEnabled(unp(app.Labels), p.ExposedByDefault) {
 		log.Debugf("Filtering disabled Marathon application %s", app.ID)
 		return false
 	}
 
 	// Filter by constraints.
-	constraintTags := label.GetSliceStringValue(Unp(app.Labels), label.TraefikTags)
+	constraintTags := label.GetSliceStringValue(unp(app.Labels), label.TraefikTags)
 	if p.MarathonLBCompatibility {
-		if haGroup := label.GetStringValue(Unp(app.Labels), labelLbCompatibilityGroup, ""); len(haGroup) > 0 {
+		if haGroup := label.GetStringValue(unp(app.Labels), labelLbCompatibilityGroup, ""); len(haGroup) > 0 {
 			constraintTags = append(constraintTags, haGroup)
 		}
 	}
@@ -146,7 +146,7 @@ func (p *Provider) applicationFilter(app marathon.Application) bool {
 	return true
 }
 
-func (p *Provider) getBackendNameV2(app AppData) string {
+func (p *Provider) getBackendNameV2(app appData) string {
 
 	value := label.GetStringValue(app.SegmentLabels, label.TraefikBackend, "")
 	if len(value) > 0 {
@@ -155,20 +155,20 @@ func (p *Provider) getBackendNameV2(app AppData) string {
 	return provider.Normalize("backend" + app.ID + getSegmentNameSuffix(app.SegmentName))
 }
 
-func (p *Provider) getFrontendNameV2(app AppData) string {
+func (p *Provider) getFrontendNameV2(app appData) string {
 	return provider.Normalize("frontend" + app.ID + getSegmentNameSuffix(app.SegmentName))
 }
 
 // getFrontendRule returns the frontend rule for the specified application, using
 // its label. If service is provided, it will look for serviceName label before generic one.
 // It returns a default one (Host) if the label is not present.
-func (p *Provider) getFrontendRuleV2(app AppData) string {
+func (p *Provider) getFrontendRuleV2(app appData) string {
 	if value := label.GetStringValue(app.SegmentLabels, label.TraefikFrontendRule, ""); len(value) > 0 {
 		return value
 	}
 
 	if p.MarathonLBCompatibility {
-		if value := label.GetStringValue(Unp(app.Labels), labelLbCompatibility, ""); len(value) > 0 {
+		if value := label.GetStringValue(unp(app.Labels), labelLbCompatibility, ""); len(value) > 0 {
 			return "Host:" + value
 		}
 	}
@@ -179,7 +179,7 @@ func (p *Provider) getFrontendRuleV2(app AppData) string {
 	return "Host:" + p.getSubDomain(app.ID) + "." + p.Domain
 }
 
-func getPortV2(task marathon.Task, app AppData) string {
+func getPortV2(task marathon.Task, app appData) string {
 	port, err := processPortsV2(app.Application, task, app.SegmentLabels)
 	if err != nil {
 		log.Errorf("Unable to process ports for %s: %s", identifierV2(app.Application, task, app.SegmentName), err)
@@ -253,7 +253,7 @@ func identifierV2(app marathon.Application, task marathon.Task, segmentName stri
 	return id
 }
 
-func (p *Provider) getServersV2(app AppData) map[string]types.Server {
+func (p *Provider) getServersV2(app appData) map[string]types.Server {
 	var servers map[string]types.Server
 
 	for _, task := range app.Tasks {
@@ -279,7 +279,7 @@ func (p *Provider) getServersV2(app AppData) map[string]types.Server {
 	return servers
 }
 
-func (p *Provider) getBackendServerV2(task marathon.Task, app AppData) string {
+func (p *Provider) getBackendServerV2(task marathon.Task, app appData) string {
 	if app.IPAddressPerTask == nil || p.ForceTaskHostname {
 		return task.Host
 	}
@@ -292,7 +292,7 @@ func (p *Provider) getBackendServerV2(task marathon.Task, app AppData) string {
 	case 1:
 		return task.IPAddresses[0].IPAddress
 	default:
-		ipAddressIdx := label.GetIntValue(Unp(app.Labels), labelIPAddressIdx, math.MinInt32)
+		ipAddressIdx := label.GetIntValue(unp(app.Labels), labelIPAddressIdx, math.MinInt32)
 
 		if ipAddressIdx == math.MinInt32 {
 			log.Errorf("Found %d task IP addresses but missing IP address index for Marathon application %s on task %s",

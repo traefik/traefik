@@ -259,7 +259,7 @@ func GetBuffering(labels map[string]string) *types.Buffering {
 	}
 }
 
-// GetRedirect Create circuit breaker from labels
+// GetCircuitBreaker Create circuit breaker from labels
 func GetCircuitBreaker(labels map[string]string) *types.CircuitBreaker {
 	circuitBreaker := GetStringValue(labels, TraefikBackendCircuitBreakerExpression, "")
 	if len(circuitBreaker) == 0 {
@@ -268,7 +268,7 @@ func GetCircuitBreaker(labels map[string]string) *types.CircuitBreaker {
 	return &types.CircuitBreaker{Expression: circuitBreaker}
 }
 
-// GetBuffering Create load balancer from labels
+// GetLoadBalancer Create load balancer from labels
 func GetLoadBalancer(labels map[string]string) *types.LoadBalancer {
 	if !HasPrefix(labels, TraefikBackendLoadBalancer) {
 		return nil

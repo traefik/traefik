@@ -1,6 +1,6 @@
 package marathon
 
-func Unp(mp *map[string]string) map[string]string {
+func unp(mp *map[string]string) map[string]string {
 	if mp != nil {
 		return *mp
 	}

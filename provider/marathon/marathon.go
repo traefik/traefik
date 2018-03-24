@@ -165,9 +165,9 @@ func (p *Provider) getConfiguration() *types.Configuration {
 	if err != nil {
 		log.Errorf("Failed to retrieve Marathon applications: %v", err)
 		return nil
-	} else {
-		return p.buildConfiguration(applications)
 	}
+
+	return p.buildConfiguration(applications)
 }
 
 func (p *Provider) getApplications() (*marathon.Applications, error) {
