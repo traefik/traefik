@@ -214,6 +214,7 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 
 	if gc.Docker != nil {
 		if len(gc.Docker.Filename) != 0 && gc.Docker.TemplateVersion != 2 {
+			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
 			gc.Docker.TemplateVersion = 1
 		} else {
 			gc.Docker.TemplateVersion = 2
@@ -222,6 +223,7 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 
 	if gc.Marathon != nil {
 		if len(gc.Marathon.Filename) != 0 && gc.Marathon.TemplateVersion != 2 {
+			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
 			gc.Marathon.TemplateVersion = 1
 		} else {
 			gc.Marathon.TemplateVersion = 2
@@ -237,6 +239,7 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 
 	if gc.Rancher != nil {
 		if len(gc.Rancher.Filename) != 0 && gc.Rancher.TemplateVersion != 2 {
+			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
 			gc.Rancher.TemplateVersion = 1
 		} else {
 			gc.Rancher.TemplateVersion = 2
