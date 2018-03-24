@@ -156,7 +156,7 @@ This configuration allows generating a Let's Encrypt certificate (thanks to `HTT
 
     That's why, it's better to use the `onHostRule` option if possible.
 
-### DNS challenge 
+### DNS challenge
 
 ```toml
 [entryPoints]

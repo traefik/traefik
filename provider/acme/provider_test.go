@@ -10,7 +10,6 @@ import (
 )
 
 func TestGetUncheckedCertificates(t *testing.T) {
-
 	wildcardMap := make(map[string]*tls.Certificate)
 	wildcardMap["*.traefik.wtf"] = &tls.Certificate{}
 
@@ -23,7 +22,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 	domainSafe := &safe.Safe{}
 	domainSafe.Set(domainMap)
 
-	tests := []struct {
+	testCases := []struct {
 		desc             string
 		dynamicCerts     *safe.Safe
 		staticCerts      map[string]*tls.Certificate
@@ -141,7 +140,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
@@ -159,7 +158,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 }
 
 func TestGetValidDomain(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc            string
 		domains         types.Domain
 		wildcardAllowed bool
@@ -217,10 +216,9 @@ func TestGetValidDomain(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
-
 			t.Parallel()
 
 			acmeProvider := Provider{Configuration: &Configuration{DNSChallenge: test.dnsChallenge}}
@@ -236,8 +234,8 @@ func TestGetValidDomain(t *testing.T) {
 	}
 }
 
-func TestDeleteUnnecessariesDomains(t *testing.T) {
-	tests := []struct {
+func TestDeleteUnnecessaryDomains(t *testing.T) {
+	testCases := []struct {
 		desc            string
 		domains         []types.Domain
 		expectedDomains []types.Domain
@@ -330,16 +328,15 @@ func TestDeleteUnnecessariesDomains(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
-
 			t.Parallel()
 
 			acmeProvider := Provider{Configuration: &Configuration{Domains: test.domains}}
 
-			acmeProvider.deleteUnnecessariesDomains()
-			assert.EqualValues(t, test.expectedDomains, acmeProvider.Domains, "unexpected domain")
+			acmeProvider.deleteUnnecessaryDomains()
+			assert.Equal(t, test.expectedDomains, acmeProvider.Domains, "unexpected domain")
 		})
 	}
 }

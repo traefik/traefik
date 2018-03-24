@@ -336,7 +336,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	p.configurationChan = configurationChan
 	p.refreshCertificates()
 
-	p.deleteUnnecessariesDomains()
+	p.deleteUnnecessaryDomains()
 	for i := 0; i < len(p.Domains); i++ {
 		domain := p.Domains[i]
 		safe.Go(func() {
@@ -598,13 +598,15 @@ func isDomainAlreadyChecked(domainToCheck string, existentDomains []string) bool
 	return false
 }
 
-// deleteUnnecessariesDomains deletes from the configuration :
+// deleteUnnecessaryDomains deletes from the configuration :
 // - Duplicated domains
 // - Domains which are checked by wildcard domain
-func (p *Provider) deleteUnnecessariesDomains() {
+func (p *Provider) deleteUnnecessaryDomains() {
 	var newDomains []types.Domain
+
 	for idxDomainToCheck, domainToCheck := range p.Domains {
 		keepDomain := true
+
 		for idxDomain, domain := range p.Domains {
 			if idxDomainToCheck == idxDomain {
 				continue
@@ -619,9 +621,8 @@ func (p *Provider) deleteUnnecessariesDomains() {
 			} else if strings.HasPrefix(domain.Main, "*") && domain.SANs == nil {
 
 				// Check if domains can be validated by the wildcard domain
-				domainsToCheck := domainToCheck.ToStrArray()
 				var newDomainsToCheck []string
-				for _, domainProcessed := range domainsToCheck {
+				for _, domainProcessed := range domainToCheck.ToStrArray() {
 					if isDomainAlreadyChecked(domainProcessed, domain.ToStrArray()) {
 						log.Warnf("Domain %q will not be processed by ACME provider because it is validated by the wildcard %q", domainProcessed, domain.Main)
 						continue
@@ -634,14 +635,15 @@ func (p *Provider) deleteUnnecessariesDomains() {
 				if newDomainsToCheck == nil {
 					keepDomain = false
 					break
-				} else {
-					domainToCheck.Set(newDomainsToCheck)
 				}
+				domainToCheck.Set(newDomainsToCheck)
 			}
 		}
+
 		if keepDomain {
 			newDomains = append(newDomains, domainToCheck)
 		}
 	}
+
 	p.Domains = newDomains
 }

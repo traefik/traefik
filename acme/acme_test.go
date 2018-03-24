@@ -368,7 +368,7 @@ func TestAcme_getProvidedCertificate(t *testing.T) {
 }
 
 func TestAcme_getValidDomain(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc            string
 		domains         []string
 		wildcardAllowed bool
@@ -425,7 +425,7 @@ func TestAcme_getValidDomain(t *testing.T) {
 			expectedDomains: nil,
 		},
 	}
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()

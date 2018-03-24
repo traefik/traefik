@@ -53,6 +53,7 @@ func (s *LocalStore) Get() (*Account, error) {
 			if err != nil {
 				return nil, err
 			}
+
 			if isOldRegistration {
 				account.Email = ""
 				account.Registration = nil

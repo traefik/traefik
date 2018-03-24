@@ -358,7 +358,8 @@ This will request a certificate from Let's Encrypt for each frontend with a Host
 For example, a rule `Host:test1.traefik.io,test2.traefik.io` will request a certificate with main domain `test1.traefik.io` and SAN `test2.traefik.io`.
 
 !!! warning
-    `onHostRule` option can not be used to generate wildcard certificates. Refer to [the wildcard generation section](/configuration/acme/#wildcard-domain) for more information
+    `onHostRule` option can not be used to generate wildcard certificates.
+    Refer to [the wildcard generation section](/configuration/acme/#wildcard-domain) for more information.
 
 ### `caServer`
 

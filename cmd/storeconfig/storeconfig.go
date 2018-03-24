@@ -75,7 +75,6 @@ func Run(kv *staert.KvSource, traefikConfiguration *cmd.TraefikConfiguration) fu
 		}
 
 		if traefikConfiguration.GlobalConfiguration.ACME != nil {
-			var object cluster.Object
 			account := &acme.Account{}
 
 			// Migrate ACME data from file to KV store if needed
@@ -87,8 +86,7 @@ func Run(kv *staert.KvSource, traefikConfiguration *cmd.TraefikConfiguration) fu
 			}
 
 			// Store the ACME Account into the KV Store
-			object = account
-			meta := cluster.NewMetadata(object)
+			meta := cluster.NewMetadata(account)
 			err = meta.Marshall()
 			if err != nil {
 				return err
