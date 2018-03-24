@@ -45,6 +45,15 @@ domain = "marathon.localhost"
 #
 # filename = "marathon.tmpl"
 
+# Override template version
+# For advanced users :)
+#
+# Optional
+# - "1": previous template version (must be used only with older custom templates, see "filename")
+# - "2": current template version (must be used to force template version when "filename" is used)
+#
+# templateVersion = "2"
+
 # Expose Marathon apps by default in Traefik.
 #
 # Optional
@@ -241,6 +250,8 @@ Segment labels are used to define routes to an application exposing multiple por
 A segment is a group of labels that apply to a port exposed by an application.
 You can define as many segments as ports exposed in an application.
 
+Segment labels override the default behavior.
+
 | Label                                                                     | Description                                                                                          |
 |---------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
 | `traefik.<segment_name>.portIndex=1`                                      | Create a service binding with frontend/backend using this port index. Overrides `traefik.portIndex`. |
@@ -266,7 +277,7 @@ You can define as many segments as ports exposed in an application.
 | `traefik.<segment_name>.frontend.redirect.permanent=true`                 | Return 301 instead of 302.                                                                           |
 | `traefik.<segment_name>.frontend.rule=EXP`                                | Overrides `traefik.frontend.rule`. Default: `{service_name}.{sub_domain}.{domain}`                   |
 | `traefik.<segment_name>.frontend.whitelistSourceRange=RANGE`              | Overrides `traefik.frontend.whitelistSourceRange`.                                                   |
-| `traefik.<segment_name>.frontend.whiteList.sourceRange=RANGE`             | Overrides `traefik.frontend.whiteList.sourceRange`.                                                   |
+| `traefik.<segment_name>.frontend.whiteList.sourceRange=RANGE`             | Overrides `traefik.frontend.whiteList.sourceRange`.                                                  |
 | `traefik.<segment_name>.frontend.whiteList.useXForwardedFor=true`         | Use `X-Forwarded-For` header as valid source of IP for the white list.                               |
 
 #### Custom Headers
