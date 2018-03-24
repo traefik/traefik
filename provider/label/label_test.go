@@ -106,51 +106,6 @@ func TestGetStringValue(t *testing.T) {
 	}
 }
 
-func TestGetStringValueP(t *testing.T) {
-	testCases := []struct {
-		desc         string
-		labels       *map[string]string
-		labelName    string
-		defaultValue string
-		expected     string
-	}{
-		{
-			desc:         "nil labels map",
-			labels:       nil,
-			labelName:    "foo",
-			defaultValue: "default",
-			expected:     "default",
-		},
-		{
-			desc: "existing label",
-			labels: &map[string]string{
-				"foo": "bar",
-			},
-			labelName:    "foo",
-			defaultValue: "default",
-			expected:     "bar",
-		},
-		{
-			desc: "non existing label",
-			labels: &map[string]string{
-				"foo": "bar",
-			},
-			labelName:    "fii",
-			defaultValue: "default",
-			expected:     "default",
-		},
-	}
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			got := GetStringValueP(test.labels, test.labelName, test.defaultValue)
-			assert.Equal(t, test.expected, got)
-		})
-	}
-}
-
 func TestGetBoolValue(t *testing.T) {
 	testCases := []struct {
 		desc         string
@@ -253,60 +208,6 @@ func TestGetIntValue(t *testing.T) {
 	}
 }
 
-func TestGetIntValueP(t *testing.T) {
-	testCases := []struct {
-		desc         string
-		labels       *map[string]string
-		labelName    string
-		defaultValue int
-		expected     int
-	}{
-		{
-			desc:         "nil map",
-			labels:       nil,
-			labelName:    "foo",
-			defaultValue: 666,
-			expected:     666,
-		},
-		{
-			desc:      "invalid int value",
-			labelName: "foo",
-			labels: &map[string]string{
-				"foo": "bar",
-			},
-			defaultValue: 666,
-			expected:     666,
-		},
-		{
-			desc:      "negative int value",
-			labelName: "foo",
-			labels: &map[string]string{
-				"foo": "-1",
-			},
-			defaultValue: 666,
-			expected:     -1,
-		},
-		{
-			desc:      "positive int value",
-			labelName: "foo",
-			labels: &map[string]string{
-				"foo": "1",
-			},
-			defaultValue: 666,
-			expected:     1,
-		},
-	}
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			got := GetIntValueP(test.labels, test.labelName, test.defaultValue)
-			assert.Equal(t, test.expected, got)
-		})
-	}
-}
-
 func TestGetInt64Value(t *testing.T) {
 	testCases := []struct {
 		desc         string
@@ -358,60 +259,6 @@ func TestGetInt64Value(t *testing.T) {
 	}
 }
 
-func TestGetInt64ValueP(t *testing.T) {
-	testCases := []struct {
-		desc         string
-		labels       *map[string]string
-		labelName    string
-		defaultValue int64
-		expected     int64
-	}{
-		{
-			desc:         "nil map",
-			labels:       nil,
-			labelName:    "foo",
-			defaultValue: 666,
-			expected:     666,
-		},
-		{
-			desc:      "invalid int value",
-			labelName: "foo",
-			labels: &map[string]string{
-				"foo": "bar",
-			},
-			defaultValue: 666,
-			expected:     666,
-		},
-		{
-			desc:      "negative int value",
-			labelName: "foo",
-			labels: &map[string]string{
-				"foo": "-1",
-			},
-			defaultValue: 666,
-			expected:     -1,
-		},
-		{
-			desc:      "positive int value",
-			labelName: "foo",
-			labels: &map[string]string{
-				"foo": "1",
-			},
-			defaultValue: 666,
-			expected:     1,
-		},
-	}
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			got := GetInt64ValueP(test.labels, test.labelName, test.defaultValue)
-			assert.Equal(t, test.expected, got)
-		})
-	}
-}
-
 func TestGetSliceStringValue(t *testing.T) {
 	testCases := []struct {
 		desc      string
@@ -454,47 +301,6 @@ func TestGetSliceStringValue(t *testing.T) {
 			t.Parallel()
 
 			got := GetSliceStringValue(test.labels, test.labelName)
-			assert.EqualValues(t, test.expected, got)
-		})
-	}
-}
-
-func TestGetSliceStringValueP(t *testing.T) {
-	testCases := []struct {
-		desc      string
-		labels    *map[string]string
-		labelName string
-		expected  []string
-	}{
-		{
-			desc:      "nil map",
-			labels:    nil,
-			labelName: "foo",
-			expected:  nil,
-		},
-		{
-			desc: "one value, not split",
-			labels: &map[string]string{
-				"foo": "bar",
-			},
-			labelName: "foo",
-			expected:  []string{"bar"},
-		},
-		{
-			desc: "several values",
-			labels: &map[string]string{
-				"foo": "bar,bir ,bur",
-			},
-			labelName: "foo",
-			expected:  []string{"bar", "bir", "bur"},
-		},
-	}
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			got := GetSliceStringValueP(test.labels, test.labelName)
 			assert.EqualValues(t, test.expected, got)
 		})
 	}
@@ -678,53 +484,6 @@ func TestHas(t *testing.T) {
 	}
 }
 
-func TestHasP(t *testing.T) {
-	testCases := []struct {
-		desc      string
-		labels    *map[string]string
-		labelName string
-		expected  bool
-	}{
-		{
-			desc:      "nil labels map",
-			labelName: "foo",
-		},
-		{
-			desc: "nonexistent label",
-			labels: &map[string]string{
-				"foo": "bar",
-			},
-			labelName: "fii",
-			expected:  false,
-		},
-		{
-			desc: "existent label",
-			labels: &map[string]string{
-				"foo": "bar",
-			},
-			labelName: "foo",
-			expected:  true,
-		},
-		{
-			desc: "existent label with empty value",
-			labels: &map[string]string{
-				"foo": "",
-			},
-			labelName: "foo",
-			expected:  false,
-		},
-	}
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			got := HasP(test.labels, test.labelName)
-			assert.Equal(t, test.expected, got)
-		})
-	}
-}
-
 func TestIsEnabled(t *testing.T) {
 	testCases := []struct {
 		desc             string
@@ -781,67 +540,6 @@ func TestIsEnabled(t *testing.T) {
 			t.Parallel()
 
 			got := IsEnabled(test.labels, test.exposedByDefault)
-			assert.Equal(t, test.expected, got)
-		})
-	}
-}
-
-func TestIsEnabledP(t *testing.T) {
-	testCases := []struct {
-		desc             string
-		labels           *map[string]string
-		exposedByDefault bool
-		expected         bool
-	}{
-		{
-			desc:             "nil labels map & exposedByDefault true",
-			exposedByDefault: true,
-			expected:         true,
-		},
-		{
-			desc:             "nil labels map & exposedByDefault false",
-			exposedByDefault: false,
-			expected:         false,
-		},
-		{
-			desc: "exposedByDefault false and label enable true",
-			labels: &map[string]string{
-				TraefikEnable: "true",
-			},
-			exposedByDefault: false,
-			expected:         true,
-		},
-		{
-			desc: "exposedByDefault false and label enable false",
-			labels: &map[string]string{
-				TraefikEnable: "false",
-			},
-			exposedByDefault: false,
-			expected:         false,
-		},
-		{
-			desc: "exposedByDefault true and label enable false",
-			labels: &map[string]string{
-				TraefikEnable: "false",
-			},
-			exposedByDefault: true,
-			expected:         false,
-		},
-		{
-			desc: "exposedByDefault true and label enable true",
-			labels: &map[string]string{
-				TraefikEnable: "true",
-			},
-			exposedByDefault: true,
-			expected:         true,
-		},
-	}
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			got := IsEnabledP(test.labels, test.exposedByDefault)
 			assert.Equal(t, test.expected, got)
 		})
 	}

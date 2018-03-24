@@ -1,0 +1,68 @@
+{{$apps := .Applications}}
+
+{{range $app := $apps }}
+{{range $task := $app.Tasks }}
+{{range $serviceIndex, $serviceName := getServiceNames $app }}
+  [backends."{{ getBackend $app $serviceName }}".servers."server-{{ $task.ID | replace "." "-"}}{{getServiceNameSuffix $serviceName }}"]
+    url = "{{ getProtocol $app $serviceName }}://{{ getBackendServer $task $app }}:{{ getPort $task $app $serviceName }}"
+    weight = {{ getWeight $app $serviceName }}
+{{end}}
+{{end}}
+{{end}}
+
+{{range $app := $apps }}
+{{range $serviceIndex, $serviceName := getServiceNames $app }}
+
+[backends."{{ getBackend $app $serviceName }}"]
+  {{if hasMaxConnLabels $app }}
+  [backends."{{ getBackend $app $serviceName }}".maxConn]
+    amount = {{ getMaxConnAmount $app }}
+    extractorFunc = "{{ getMaxConnExtractorFunc $app }}"
+  {{end}}
+
+  {{if hasLoadBalancerLabels $app }}
+  [backends."{{ getBackend $app $serviceName }}".loadBalancer]
+    method = "{{ getLoadBalancerMethod $app }}"
+    sticky = {{ getSticky $app }}
+    {{if hasStickinessLabel $app }}
+    [backends."{{ getBackend $app $serviceName }}".loadBalancer.stickiness]
+      cookieName = "{{ getStickinessCookieName $app }}"
+    {{end}}
+  {{end}}
+
+  {{if hasCircuitBreakerLabels $app }}
+  [backends."{{ getBackend $app $serviceName }}".circuitBreaker]
+    expression = "{{ getCircuitBreakerExpression $app }}"
+  {{end}}
+
+  {{if hasHealthCheckLabels $app }}
+  [backends."{{ getBackend $app $serviceName }}".healthCheck]
+    path = "{{ getHealthCheckPath $app }}"
+    interval = "{{ getHealthCheckInterval $app }}"
+  {{end}}
+
+{{end}}
+{{end}}
+
+[frontends]
+{{range $app := $apps }}
+{{range $serviceIndex, $serviceName := getServiceNames . }}
+
+  [frontends."{{ getFrontendName $app $serviceName | normalize }}"]
+    backend = "{{ getBackend $app $serviceName }}"
+    passHostHeader = {{ getPassHostHeader $app $serviceName }}
+    priority = {{ getPriority $app $serviceName }}
+
+    entryPoints = [{{range getEntryPoints $app $serviceName }}
+      "{{.}}",
+      {{end}}]
+
+    basicAuth = [{{range getBasicAuth $app $serviceName }}
+      "{{.}}",
+      {{end}}]
+
+    [frontends."{{ getFrontendName $app $serviceName | normalize }}".routes."route-host{{ $app.ID | replace "/" "-" }}{{ getServiceNameSuffix $serviceName }}"]
+      rule = "{{ getFrontendRule $app $serviceName }}"
+
+{{end}}
+{{end}}

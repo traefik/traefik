@@ -54,14 +54,6 @@ func GetStringValue(labels map[string]string, labelName string, defaultValue str
 	return defaultValue
 }
 
-// GetStringValueP get string value associated to a label
-func GetStringValueP(labels *map[string]string, labelName string, defaultValue string) string {
-	if labels == nil {
-		return defaultValue
-	}
-	return GetStringValue(*labels, labelName, defaultValue)
-}
-
 // GetBoolValue get bool value associated to a label
 func GetBoolValue(labels map[string]string, labelName string, defaultValue bool) bool {
 	rawValue, ok := labels[labelName]
@@ -72,14 +64,6 @@ func GetBoolValue(labels map[string]string, labelName string, defaultValue bool)
 		}
 	}
 	return defaultValue
-}
-
-// GetBoolValueP get bool value associated to a label
-func GetBoolValueP(labels *map[string]string, labelName string, defaultValue bool) bool {
-	if labels == nil {
-		return defaultValue
-	}
-	return GetBoolValue(*labels, labelName, defaultValue)
 }
 
 // GetIntValue get int value associated to a label
@@ -94,14 +78,6 @@ func GetIntValue(labels map[string]string, labelName string, defaultValue int) i
 	return defaultValue
 }
 
-// GetIntValueP get int value associated to a label
-func GetIntValueP(labels *map[string]string, labelName string, defaultValue int) int {
-	if labels == nil {
-		return defaultValue
-	}
-	return GetIntValue(*labels, labelName, defaultValue)
-}
-
 // GetInt64Value get int64 value associated to a label
 func GetInt64Value(labels map[string]string, labelName string, defaultValue int64) int64 {
 	if rawValue, ok := labels[labelName]; ok {
@@ -112,14 +88,6 @@ func GetInt64Value(labels map[string]string, labelName string, defaultValue int6
 		log.Errorf("Unable to parse %q: %q, falling back to %v. %v", labelName, rawValue, defaultValue, err)
 	}
 	return defaultValue
-}
-
-// GetInt64ValueP get int64 value associated to a label
-func GetInt64ValueP(labels *map[string]string, labelName string, defaultValue int64) int64 {
-	if labels == nil {
-		return defaultValue
-	}
-	return GetInt64Value(*labels, labelName, defaultValue)
 }
 
 // GetSliceStringValue get a slice of string associated to a label
@@ -134,14 +102,6 @@ func GetSliceStringValue(labels map[string]string, labelName string) []string {
 		}
 	}
 	return value
-}
-
-// GetSliceStringValueP get a slice of string value associated to a label
-func GetSliceStringValueP(labels *map[string]string, labelName string) []string {
-	if labels == nil {
-		return nil
-	}
-	return GetSliceStringValue(*labels, labelName)
 }
 
 // ParseMapValue get Map value for a label value
@@ -200,14 +160,6 @@ func Has(labels map[string]string, labelName string) bool {
 	return ok && len(value) > 0
 }
 
-// HasP Check if a value is associated to a label
-func HasP(labels *map[string]string, labelName string) bool {
-	if labels == nil {
-		return false
-	}
-	return Has(*labels, labelName)
-}
-
 // HasPrefix Check if a value is associated to a less one label with a prefix
 func HasPrefix(labels map[string]string, prefix string) bool {
 	for name, value := range labels {
@@ -218,25 +170,9 @@ func HasPrefix(labels map[string]string, prefix string) bool {
 	return false
 }
 
-// HasPrefixP Check if a value is associated to a less one label with a prefix
-func HasPrefixP(labels *map[string]string, prefix string) bool {
-	if labels == nil {
-		return false
-	}
-	return HasPrefix(*labels, prefix)
-}
-
 // IsEnabled Check if a container is enabled in Træfik
 func IsEnabled(labels map[string]string, exposedByDefault bool) bool {
 	return GetBoolValue(labels, TraefikEnable, exposedByDefault)
-}
-
-// IsEnabledP Check if a container is enabled in Træfik
-func IsEnabledP(labels *map[string]string, exposedByDefault bool) bool {
-	if labels == nil {
-		return exposedByDefault
-	}
-	return IsEnabled(*labels, exposedByDefault)
 }
 
 // SplitAndTrimString splits separatedString at the separator character and trims each

@@ -220,6 +220,14 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 		}
 	}
 
+	if gc.Marathon != nil {
+		if len(gc.Marathon.Filename) != 0 && gc.Marathon.TemplateVersion != 2 {
+			gc.Marathon.TemplateVersion = 1
+		} else {
+			gc.Marathon.TemplateVersion = 2
+		}
+	}
+
 	if gc.Eureka != nil {
 		if gc.Eureka.Delay != 0 {
 			log.Warn("Delay has been deprecated -- please use RefreshSeconds")
