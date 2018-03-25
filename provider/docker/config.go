@@ -49,6 +49,7 @@ func (p *Provider) buildConfigurationV2(containersInspected []dockerData) *types
 		"getFrontendRule":   p.getFrontendRule,
 		"getRedirect":       getRedirect,
 		"getErrorPages":     getErrorPages,
+		"getMirror":         getMirror,
 		"getRateLimit":      getRateLimit,
 		"getHeaders":        getHeaders,
 		"getWhiteList":      getWhiteList,
@@ -326,6 +327,12 @@ func getRedirect(labels map[string]string) *types.Redirect {
 func getErrorPages(labels map[string]string) map[string]*types.ErrorPage {
 	prefix := label.Prefix + label.BaseFrontendErrorPage
 	return label.ParseErrorPages(labels, prefix, label.RegexpFrontendErrorPage)
+}
+
+func getMirror(labels map[string]string) *types.Mirror {
+	prefix := label.Prefix + label.BaseFrontendErrorPage
+
+	return label.ParseMirror(labels, prefix)
 }
 
 func getRateLimit(labels map[string]string) *types.RateLimit {

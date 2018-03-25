@@ -78,6 +78,7 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getBasicAuth":         getFuncSliceStringService(label.SuffixFrontendAuthBasic),
 		"getRedirect":          getRedirect,
 		"getErrorPages":        getErrorPages,
+		"getMirror":            getMirror,
 		"getRateLimit":         getRateLimit,
 		"getHeaders":           getHeaders,
 		"getWhiteList":         getWhiteList,
@@ -535,6 +536,13 @@ func getErrorPages(application marathon.Application, serviceName string) map[str
 		return label.ParseErrorPages(labels, prefix, label.RegexpBaseFrontendErrorPage)
 	}
 	return label.ParseErrorPages(labels, prefix, label.RegexpFrontendErrorPage)
+}
+
+func getMirror(application marathon.Application, serviceName string) *types.Mirror {
+	labels := getLabels(application, serviceName)
+	prefix := getLabelName(serviceName, label.BaseFrontendErrorPage)
+
+	return label.ParseMirror(labels, prefix)
 }
 
 func getRateLimit(application marathon.Application, serviceName string) *types.RateLimit {
