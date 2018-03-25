@@ -50,6 +50,7 @@ func (p *Provider) buildConfiguration(tasks []state.Task) *types.Configuration {
 		"getFrontendRule":   p.getFrontendRule,
 		"getRedirect":       getRedirect,
 		"getErrorPages":     getErrorPages,
+		"getMirror":         getMirror,
 		"getRateLimit":      getRateLimit,
 		"getHeaders":        getHeaders,
 		"getWhiteList":      getWhiteList,
@@ -369,6 +370,13 @@ func getRedirect(task state.Task) *types.Redirect {
 	}
 
 	return nil
+}
+
+func getMirror(task state.Task) *types.Mirror {
+	prefix := label.Prefix + label.BaseFrontendErrorPage
+	labels := taskLabelsToMap(task)
+
+	return label.ParseMirror(labels, prefix)
 }
 
 func getErrorPages(task state.Task) map[string]*types.ErrorPage {

@@ -54,6 +54,7 @@ func (p *Provider) buildConfiguration(catalog []catalogUpdate) *types.Configurat
 		"getRedirect":            p.getRedirect,
 		"hasErrorPages":          p.getFuncHasAttributePrefix(label.BaseFrontendErrorPage),
 		"getErrorPages":          p.getErrorPages,
+		"getMirror":              p.getMirror,
 		"hasRateLimit":           p.getFuncHasAttributePrefix(label.BaseFrontendRateLimit),
 		"getRateLimit":           p.getRateLimit,
 		"getHeaders":             p.getHeaders,
@@ -350,6 +351,18 @@ func (p *Provider) getErrorPages(tags []string) map[string]*types.ErrorPage {
 
 	prefix := label.Prefix + label.BaseFrontendErrorPage
 	return label.ParseErrorPages(labels, prefix, label.RegexpFrontendErrorPage)
+}
+
+func (p *Provider) getMirror(tags []string) *types.Mirror {
+	backend := p.getAttribute(label.TraefikFrontendMirrorBackend, tags, "")
+	sampleRate := p.getIntAttribute(label.TraefikFrontendMirrorSampleRate, tags, 0)
+	requestHeaders := p.getMapAttribute(label.TraefikFrontendMirrorRequestHeaders, tags)
+
+	return &types.Mirror{
+		Backend:        backend,
+		SampleRate:     sampleRate,
+		RequestHeaders: requestHeaders,
+	}
 }
 
 func (p *Provider) getRateLimit(tags []string) *types.RateLimit {

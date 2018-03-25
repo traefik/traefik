@@ -16,9 +16,9 @@ import (
 
 //Mirror is a middleware that provides the request mirroring capabilities
 type Mirror struct {
-	BackendURL     *url.URL
-	RequestHeaders map[string]string
-	SampleRate     uint64
+	backendURL     *url.URL
+	requestHeaders map[string]string
+	sampleRate     uint64
 	mirror         *forward.Forwarder
 	counter        uint64
 }
@@ -37,21 +37,21 @@ func NewMirrorMiddleware(frontend *types.Frontend, backend *types.Backend) (*Mir
 	}
 
 	forwarder, err := forward.New(
-	//forward.Stream(true),
-	//forward.PassHostHeader(frontend.PassHostHeader),
+		forward.Stream(true),
+		forward.PassHostHeader(frontend.PassHostHeader),
 	)
 	if err != nil {
 		return nil, err
 	}
-	return &Mirror{BackendURL: mirrorURL,
-			RequestHeaders: mirror.RequestHeaders,
-			SampleRate:     sampleRate,
+	return &Mirror{backendURL: mirrorURL,
+			requestHeaders: mirror.RequestHeaders,
+			sampleRate:     sampleRate,
 			mirror:         forwarder},
 		nil
 }
 
 func (m *Mirror) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
-	if m.counter%m.SampleRate == 0 {
+	if m.counter%m.sampleRate == 0 {
 		atomic.AddUint64(&m.counter, 1)
 		// Copy the request and forward to 'next' and to 'mirror'
 		mReq, err := m.copyRequest(req)
@@ -71,6 +71,7 @@ func (m *Mirror) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.H
 		next.ServeHTTP(w, req)
 	} else {
 		// no mirroring
+		atomic.AddUint64(&m.counter, 1)
 		next.ServeHTTP(w, req)
 	}
 }
@@ -107,7 +108,7 @@ func (m *Mirror) copyRequest(req *http.Request) (*http.Request, error) {
 		o.Body = ioutil.NopCloser(bytes.NewReader(body))
 	}
 
-	o.URL = utils.CopyURL(m.BackendURL)
+	o.URL = utils.CopyURL(m.backendURL)
 	o.Header = make(http.Header)
 	utils.CopyHeaders(o.Header, req.Header)
 

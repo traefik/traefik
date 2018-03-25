@@ -50,7 +50,7 @@ func TestMirror(t *testing.T) {
 	testMirrorHandler, err := NewMirrorMiddleware(testFrontend, testMirrorBackend)
 	require.NoError(t, err)
 
-	assert.Equal(t, testMirrorHandler.BackendURL.String(), tsMirror.URL, "Should be equal")
+	assert.Equal(t, testMirrorHandler.backendURL.String(), tsMirror.URL, "Should be equal")
 
 	recorder := httptest.NewRecorder()
 	req, err := http.NewRequest(http.MethodGet, ts.URL+"/test", nil)

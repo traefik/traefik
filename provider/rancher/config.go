@@ -64,6 +64,7 @@ func (p *Provider) buildConfiguration(services []rancherData) *types.Configurati
 		"getEntryPoints":    getFuncSliceString(label.TraefikFrontendEntryPoints),
 		"getBasicAuth":      getFuncSliceString(label.TraefikFrontendAuthBasic),
 		"getErrorPages":     getErrorPages,
+		"getMirror":         getMirror,
 		"getRateLimit":      getRateLimit,
 		"getRedirect":       getRedirect,
 		"getHeaders":        getHeaders,
@@ -311,6 +312,11 @@ func getRedirect(service rancherData) *types.Redirect {
 func getErrorPages(service rancherData) map[string]*types.ErrorPage {
 	prefix := label.Prefix + label.BaseFrontendErrorPage
 	return label.ParseErrorPages(service.Labels, prefix, label.RegexpFrontendErrorPage)
+}
+
+func getMirror(service rancherData) *types.Mirror {
+	prefix := label.Prefix + label.BaseFrontendErrorPage
+	return label.ParseMirror(service.Labels, prefix)
 }
 
 func getRateLimit(service rancherData) *types.RateLimit {
