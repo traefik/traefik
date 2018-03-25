@@ -229,6 +229,19 @@ func HasPrefixP(labels *map[string]string, prefix string) bool {
 	return HasPrefix(*labels, prefix)
 }
 
+// ParseMirror parse mirror to create Mirror struct
+func ParseMirror(labels map[string]string, labelPrefix string) *types.Mirror {
+	backend := GetStringValue(labels, labelPrefix+SuffixMirrorBackend, "")
+	sampleRate := GetIntValue(labels, labelPrefix+SuffixMirrorSampleRate, 0)
+	requestHeaders := GetMapValue(labels, labelPrefix+SuffixMirrorRequestHeaders)
+
+	return &types.Mirror{
+		Backend:        backend,
+		SampleRate:     sampleRate,
+		RequestHeaders: requestHeaders,
+	}
+}
+
 // ParseErrorPages parse error pages to create ErrorPage struct
 func ParseErrorPages(labels map[string]string, labelPrefix string, labelRegex *regexp.Regexp) map[string]*types.ErrorPage {
 	var errorPages map[string]*types.ErrorPage

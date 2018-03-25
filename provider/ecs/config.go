@@ -57,6 +57,7 @@ func (p *Provider) buildConfiguration(services map[string][]ecsInstance) (*types
 		"getEntryPoints":    getFuncSliceString(label.TraefikFrontendEntryPoints),
 		"getRedirect":       getRedirect,
 		"getErrorPages":     getErrorPages,
+		"getMirror":         getMirror,
 		"getRateLimit":      getRateLimit,
 		"getHeaders":        getHeaders,
 		"getWhiteList":      getWhiteList,
@@ -253,6 +254,16 @@ func getErrorPages(instance ecsInstance) map[string]*types.ErrorPage {
 
 	prefix := label.Prefix + label.BaseFrontendErrorPage
 	return label.ParseErrorPages(labels, prefix, label.RegexpFrontendErrorPage)
+}
+
+func getMirror(instance ecsInstance) *types.Mirror {
+	labels := mapPToMap(instance.containerDefinition.DockerLabels)
+	if len(labels) == 0 {
+		return nil
+	}
+
+	prefix := label.Prefix + label.BaseFrontendErrorPage
+	return label.ParseMirror(labels, prefix)
 }
 
 func getRateLimit(instance ecsInstance) *types.RateLimit {

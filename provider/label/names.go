@@ -6,6 +6,7 @@ const (
 	SuffixBackend                                  = "backend"
 	SuffixDomain                                   = "domain"
 	SuffixEnable                                   = "enable"
+	SuffixMirror                                   = "mirror"
 	SuffixPort                                     = "port"
 	SuffixPortIndex                                = "portIndex"
 	SuffixProtocol                                 = "protocol"
@@ -141,4 +142,11 @@ const (
 	SuffixRateLimitPeriod                          = "period"
 	SuffixRateLimitAverage                         = "average"
 	SuffixRateLimitBurst                           = "burst"
+	BaseFrontendMirror                             = "frontend." + SuffixMirror + "."
+	SuffixMirrorBackend                            = "backend"
+	SuffixMirrorSampleRate                         = "sampleRate"
+	SuffixMirrorRequestHeaders                     = "requestHeaders"
+	TraefikFrontendMirrorBackend                   = Prefix + BaseFrontendMirror + SuffixMirrorBackend
+	TraefikFrontendMirrorSampleRate                = Prefix + BaseFrontendMirror + SuffixMirrorSampleRate
+	TraefikFrontendMirrorRequestHeaders            = Prefix + BaseFrontendMirror + SuffixMirrorRequestHeaders
 )
