@@ -3,6 +3,7 @@ package marathon
 import (
 	"net"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/cenk/backoff"
@@ -128,7 +129,8 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 						return
 					case event := <-update:
 						log.Debugf("Received provider event %s", event)
-						configuration := p.buildConfiguration()
+
+						configuration := p.getConfiguration()
 						if configuration != nil {
 							configurationChan <- types.ConfigMessage{
 								ProviderName:  "marathon",
@@ -139,7 +141,8 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				}
 			})
 		}
-		configuration := p.buildConfiguration()
+
+		configuration := p.getConfiguration()
 		configurationChan <- types.ConfigMessage{
 			ProviderName:  "marathon",
 			Configuration: configuration,
@@ -155,4 +158,23 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		log.Errorf("Cannot connect to Provider server %+v", err)
 	}
 	return nil
+}
+
+func (p *Provider) getConfiguration() *types.Configuration {
+	applications, err := p.getApplications()
+	if err != nil {
+		log.Errorf("Failed to retrieve Marathon applications: %v", err)
+		return nil
+	}
+
+	return p.buildConfiguration(applications)
+}
+
+func (p *Provider) getApplications() (*marathon.Applications, error) {
+	v := url.Values{}
+	v.Add("embed", "apps.tasks")
+	v.Add("embed", "apps.deployments")
+	v.Add("embed", "apps.readiness")
+
+	return p.marathonClient.Applications(v)
 }

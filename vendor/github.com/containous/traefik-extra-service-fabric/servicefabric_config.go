@@ -15,8 +15,12 @@ import (
 )
 
 func (p *Provider) buildConfiguration(sfClient sfClient) (*types.Configuration, error) {
-	var sfFuncMap = template.FuncMap{
+	services, err := getClusterServices(sfClient)
+	if err != nil {
+		return nil, err
+	}
 
+	var sfFuncMap = template.FuncMap{
 		// Services
 		"getServices":                getServices,
 		"hasLabel":                   hasService,
@@ -42,25 +46,19 @@ func (p *Provider) buildConfiguration(sfClient sfClient) (*types.Configuration, 
 		"getLoadBalancer":   getLoadBalancer,
 
 		// Frontend Functions
-		"getPriority":             getFuncServiceStringLabel(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
-		"getPassHostHeader":       getFuncServiceStringLabel(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
-		"getPassTLSCert":          getFuncBoolLabel(label.TraefikFrontendPassTLSCert, false),
-		"getEntryPoints":          getFuncServiceSliceStringLabel(label.TraefikFrontendEntryPoints),
-		"getBasicAuth":            getFuncServiceSliceStringLabel(label.TraefikFrontendAuthBasic),
-		"getWhitelistSourceRange": getFuncServiceSliceStringLabel(label.TraefikFrontendWhitelistSourceRange),
-		"getFrontendRules":        getFuncServiceLabelWithPrefix(label.TraefikFrontendRule),
-
-		"getHeaders":  getHeaders,
-		"getRedirect": getRedirect,
+		"getPriority":       getFuncServiceStringLabel(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
+		"getPassHostHeader": getFuncServiceStringLabel(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
+		"getPassTLSCert":    getFuncBoolLabel(label.TraefikFrontendPassTLSCert, false),
+		"getEntryPoints":    getFuncServiceSliceStringLabel(label.TraefikFrontendEntryPoints),
+		"getBasicAuth":      getFuncServiceSliceStringLabel(label.TraefikFrontendAuthBasic),
+		"getFrontendRules":  getFuncServiceLabelWithPrefix(label.TraefikFrontendRule),
+		"getWhiteList":      getWhiteList,
+		"getHeaders":        getHeaders,
+		"getRedirect":       getRedirect,
 
 		// SF Service Grouping
 		"getGroupedServices": getFuncServicesGroupedByLabel(traefikSFGroupName),
 		"getGroupedWeight":   getFuncServiceStringLabel(traefikSFGroupWeight, "1"),
-	}
-
-	services, err := getClusterServices(sfClient)
-	if err != nil {
-		return nil, err
 	}
 
 	templateObjects := struct {
@@ -227,6 +225,31 @@ func getHeaders(service ServiceItemExtended) *types.Headers {
 	}
 
 	return headers
+}
+
+func getWhiteList(service ServiceItemExtended) *types.WhiteList {
+	if label.Has(service.Labels, label.TraefikFrontendWhitelistSourceRange) {
+		log.Warnf("Deprecated configuration found: %s. Please use %s.", label.TraefikFrontendWhitelistSourceRange, label.TraefikFrontendWhiteListSourceRange)
+	}
+
+	ranges := label.GetSliceStringValue(service.Labels, label.TraefikFrontendWhiteListSourceRange)
+	if len(ranges) > 0 {
+		return &types.WhiteList{
+			SourceRange:      ranges,
+			UseXForwardedFor: label.GetBoolValue(service.Labels, label.TraefikFrontendWhiteListUseXForwardedFor, false),
+		}
+	}
+
+	// TODO: Deprecated
+	values := label.GetSliceStringValue(service.Labels, label.TraefikFrontendWhitelistSourceRange)
+	if len(values) > 0 {
+		return &types.WhiteList{
+			SourceRange:      values,
+			UseXForwardedFor: false,
+		}
+	}
+
+	return nil
 }
 
 func getRedirect(service ServiceItemExtended) *types.Redirect {

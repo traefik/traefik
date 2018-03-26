@@ -1,0 +1,58 @@
+{{$backendServers := .Backends}}
+
+[backends]
+{{range $backendName, $backend := .Backends }}
+  {{if hasCircuitBreakerLabel $backend }}
+  [backends."backend-{{ $backendName }}".circuitBreaker]
+    expression = "{{ getCircuitBreakerExpression $backend }}"
+  {{end}}
+
+  {{if hasLoadBalancerLabel $backend }}
+  [backends."backend-{{ $backendName }}".loadBalancer]
+    method = "{{ getLoadBalancerMethod $backend }}"
+    sticky = {{ getSticky $backend }}
+    {{if hasStickinessLabel $backend }}
+    [backends."backend-{{ $backendName }}".loadBalancer.stickiness]
+      cookieName = "{{ getStickinessCookieName $backend }}"
+    {{end}}
+  {{end}}
+
+  {{if hasMaxConnLabels $backend }}
+  [backends."backend-{{ $backendName }}".maxConn]
+    amount = {{ getMaxConnAmount $backend }}
+    extractorFunc = "{{ getMaxConnExtractorFunc $backend }}"
+  {{end}}
+
+  {{range $index, $ip := $backend.Containers }}
+  [backends."backend-{{ $backendName }}".servers."server-{{ $index }}"]
+    url = "{{ getProtocol $backend }}://{{ $ip }}:{{ getPort $backend }}"
+    weight = {{ getWeight $backend }}
+  {{end}}
+
+{{end}}
+
+[frontends]
+{{range $frontendName, $service := .Frontends }}
+  [frontends."frontend-{{ $frontendName }}"]
+    backend = "backend-{{ getBackend $service }}"
+    passHostHeader = {{ getPassHostHeader $service }}
+    priority = {{ getPriority $service }}
+
+  entryPoints = [{{range getEntryPoints $service }}
+      "{{.}}",
+    {{end}}]
+
+  basicAuth = [{{range getBasicAuth $service }}
+      "{{.}}",
+    {{end}}]
+
+  {{if hasRedirect $service }}
+  [frontends."frontend-{{ $frontendName }}".redirect]
+    entryPoint = "{{ getRedirectEntryPoint $service }}"
+    regex = "{{ getRedirectRegex $service }}"
+    replacement = "{{ getRedirectReplacement $service }}"
+  {{end}}
+
+  [frontends."frontend-{{ $frontendName }}".routes."route-frontend-{{ $frontendName }}"]
+    rule = "{{ getFrontendRule $service }}"
+{{end}}

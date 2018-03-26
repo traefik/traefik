@@ -3,7 +3,6 @@ package docker
 import (
 	"context"
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 	"text/template"
@@ -28,30 +27,30 @@ func (p *Provider) buildConfigurationV2(containersInspected []dockerData) *types
 		"getLabelValue":    label.GetStringValue,
 		"getSubDomain":     getSubDomain,
 		"isBackendLBSwarm": isBackendLBSwarm,
-		"getDomain":        getFuncStringLabel(label.TraefikDomain, p.Domain),
+		"getDomain":        label.GetFuncString(label.TraefikDomain, p.Domain),
 
 		// Backend functions
 		"getIPAddress":      p.getIPAddress,
 		"getServers":        p.getServers,
-		"getMaxConn":        getMaxConn,
-		"getHealthCheck":    getHealthCheck,
-		"getBuffering":      getBuffering,
-		"getCircuitBreaker": getCircuitBreaker,
-		"getLoadBalancer":   getLoadBalancer,
+		"getMaxConn":        label.GetMaxConn,
+		"getHealthCheck":    label.GetHealthCheck,
+		"getBuffering":      label.GetBuffering,
+		"getCircuitBreaker": label.GetCircuitBreaker,
+		"getLoadBalancer":   label.GetLoadBalancer,
 
 		// Frontend functions
 		"getBackendName":    getBackendName,
-		"getPriority":       getFuncIntLabel(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
-		"getPassHostHeader": getFuncBoolLabel(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
-		"getPassTLSCert":    getFuncBoolLabel(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getEntryPoints":    getFuncSliceStringLabel(label.TraefikFrontendEntryPoints),
-		"getBasicAuth":      getFuncSliceStringLabel(label.TraefikFrontendAuthBasic),
+		"getPriority":       label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
+		"getPassHostHeader": label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
+		"getPassTLSCert":    label.GetFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
+		"getEntryPoints":    label.GetFuncSliceString(label.TraefikFrontendEntryPoints),
+		"getBasicAuth":      label.GetFuncSliceString(label.TraefikFrontendAuthBasic),
 		"getFrontendRule":   p.getFrontendRule,
-		"getRedirect":       getRedirect,
-		"getErrorPages":     getErrorPages,
-		"getRateLimit":      getRateLimit,
-		"getHeaders":        getHeaders,
-		"getWhiteList":      getWhiteList,
+		"getRedirect":       label.GetRedirect,
+		"getErrorPages":     label.GetErrorPages,
+		"getRateLimit":      label.GetRateLimit,
+		"getHeaders":        label.GetHeaders,
+		"getWhiteList":      label.GetWhiteList,
 	}
 
 	// filter containers
@@ -276,105 +275,6 @@ func getBackendName(container dockerData) string {
 	return getDefaultBackendName(container)
 }
 
-func getWhiteList(labels map[string]string) *types.WhiteList {
-	if label.Has(labels, label.TraefikFrontendWhitelistSourceRange) {
-		log.Warnf("Deprecated configuration found: %s. Please use %s.", label.TraefikFrontendWhitelistSourceRange, label.TraefikFrontendWhiteListSourceRange)
-	}
-
-	ranges := label.GetSliceStringValue(labels, label.TraefikFrontendWhiteListSourceRange)
-	if len(ranges) > 0 {
-		return &types.WhiteList{
-			SourceRange:      ranges,
-			UseXForwardedFor: label.GetBoolValue(labels, label.TraefikFrontendWhiteListUseXForwardedFor, false),
-		}
-	}
-
-	// TODO: Deprecated
-	values := label.GetSliceStringValue(labels, label.TraefikFrontendWhitelistSourceRange)
-	if len(values) > 0 {
-		return &types.WhiteList{
-			SourceRange:      values,
-			UseXForwardedFor: false,
-		}
-	}
-
-	return nil
-}
-
-func getRedirect(labels map[string]string) *types.Redirect {
-	permanent := label.GetBoolValue(labels, label.TraefikFrontendRedirectPermanent, false)
-
-	if label.Has(labels, label.TraefikFrontendRedirectEntryPoint) {
-		return &types.Redirect{
-			EntryPoint: label.GetStringValue(labels, label.TraefikFrontendRedirectEntryPoint, ""),
-			Permanent:  permanent,
-		}
-	}
-
-	if label.Has(labels, label.TraefikFrontendRedirectRegex) &&
-		label.Has(labels, label.TraefikFrontendRedirectReplacement) {
-		return &types.Redirect{
-			Regex:       label.GetStringValue(labels, label.TraefikFrontendRedirectRegex, ""),
-			Replacement: label.GetStringValue(labels, label.TraefikFrontendRedirectReplacement, ""),
-			Permanent:   permanent,
-		}
-	}
-
-	return nil
-}
-
-func getErrorPages(labels map[string]string) map[string]*types.ErrorPage {
-	prefix := label.Prefix + label.BaseFrontendErrorPage
-	return label.ParseErrorPages(labels, prefix, label.RegexpFrontendErrorPage)
-}
-
-func getRateLimit(labels map[string]string) *types.RateLimit {
-	extractorFunc := label.GetStringValue(labels, label.TraefikFrontendRateLimitExtractorFunc, "")
-	if len(extractorFunc) == 0 {
-		return nil
-	}
-
-	prefix := label.Prefix + label.BaseFrontendRateLimit
-	limits := label.ParseRateSets(labels, prefix, label.RegexpFrontendRateLimit)
-
-	return &types.RateLimit{
-		ExtractorFunc: extractorFunc,
-		RateSet:       limits,
-	}
-}
-
-func getHeaders(labels map[string]string) *types.Headers {
-	headers := &types.Headers{
-		CustomRequestHeaders:    label.GetMapValue(labels, label.TraefikFrontendRequestHeaders),
-		CustomResponseHeaders:   label.GetMapValue(labels, label.TraefikFrontendResponseHeaders),
-		SSLProxyHeaders:         label.GetMapValue(labels, label.TraefikFrontendSSLProxyHeaders),
-		AllowedHosts:            label.GetSliceStringValue(labels, label.TraefikFrontendAllowedHosts),
-		HostsProxyHeaders:       label.GetSliceStringValue(labels, label.TraefikFrontendHostsProxyHeaders),
-		STSSeconds:              label.GetInt64Value(labels, label.TraefikFrontendSTSSeconds, 0),
-		SSLRedirect:             label.GetBoolValue(labels, label.TraefikFrontendSSLRedirect, false),
-		SSLTemporaryRedirect:    label.GetBoolValue(labels, label.TraefikFrontendSSLTemporaryRedirect, false),
-		STSIncludeSubdomains:    label.GetBoolValue(labels, label.TraefikFrontendSTSIncludeSubdomains, false),
-		STSPreload:              label.GetBoolValue(labels, label.TraefikFrontendSTSPreload, false),
-		ForceSTSHeader:          label.GetBoolValue(labels, label.TraefikFrontendForceSTSHeader, false),
-		FrameDeny:               label.GetBoolValue(labels, label.TraefikFrontendFrameDeny, false),
-		ContentTypeNosniff:      label.GetBoolValue(labels, label.TraefikFrontendContentTypeNosniff, false),
-		BrowserXSSFilter:        label.GetBoolValue(labels, label.TraefikFrontendBrowserXSSFilter, false),
-		IsDevelopment:           label.GetBoolValue(labels, label.TraefikFrontendIsDevelopment, false),
-		SSLHost:                 label.GetStringValue(labels, label.TraefikFrontendSSLHost, ""),
-		CustomFrameOptionsValue: label.GetStringValue(labels, label.TraefikFrontendCustomFrameOptionsValue, ""),
-		ContentSecurityPolicy:   label.GetStringValue(labels, label.TraefikFrontendContentSecurityPolicy, ""),
-		PublicKey:               label.GetStringValue(labels, label.TraefikFrontendPublicKey, ""),
-		ReferrerPolicy:          label.GetStringValue(labels, label.TraefikFrontendReferrerPolicy, ""),
-		CustomBrowserXSSValue:   label.GetStringValue(labels, label.TraefikFrontendCustomBrowserXSSValue, ""),
-	}
-
-	if !headers.HasSecureHeadersDefined() && !headers.HasCustomHeadersDefined() {
-		return nil
-	}
-
-	return headers
-}
-
 func getPort(container dockerData) string {
 	if value := label.GetStringValue(container.SegmentLabels, label.TraefikPort, ""); len(value) != 0 {
 		return value
@@ -397,89 +297,6 @@ func getPort(container dockerData) string {
 	}
 
 	return ""
-}
-
-func getMaxConn(labels map[string]string) *types.MaxConn {
-	amount := label.GetInt64Value(labels, label.TraefikBackendMaxConnAmount, math.MinInt64)
-	extractorFunc := label.GetStringValue(labels, label.TraefikBackendMaxConnExtractorFunc, label.DefaultBackendMaxconnExtractorFunc)
-
-	if amount == math.MinInt64 || len(extractorFunc) == 0 {
-		return nil
-	}
-
-	return &types.MaxConn{
-		Amount:        amount,
-		ExtractorFunc: extractorFunc,
-	}
-}
-
-func getHealthCheck(labels map[string]string) *types.HealthCheck {
-	path := label.GetStringValue(labels, label.TraefikBackendHealthCheckPath, "")
-	if len(path) == 0 {
-		return nil
-	}
-
-	port := label.GetIntValue(labels, label.TraefikBackendHealthCheckPort, label.DefaultBackendHealthCheckPort)
-	interval := label.GetStringValue(labels, label.TraefikBackendHealthCheckInterval, "")
-
-	return &types.HealthCheck{
-		Path:     path,
-		Port:     port,
-		Interval: interval,
-	}
-}
-
-func getBuffering(labels map[string]string) *types.Buffering {
-	if !label.HasPrefix(labels, label.TraefikBackendBuffering) {
-		return nil
-	}
-
-	return &types.Buffering{
-		MaxRequestBodyBytes:  label.GetInt64Value(labels, label.TraefikBackendBufferingMaxRequestBodyBytes, 0),
-		MaxResponseBodyBytes: label.GetInt64Value(labels, label.TraefikBackendBufferingMaxResponseBodyBytes, 0),
-		MemRequestBodyBytes:  label.GetInt64Value(labels, label.TraefikBackendBufferingMemRequestBodyBytes, 0),
-		MemResponseBodyBytes: label.GetInt64Value(labels, label.TraefikBackendBufferingMemResponseBodyBytes, 0),
-		RetryExpression:      label.GetStringValue(labels, label.TraefikBackendBufferingRetryExpression, ""),
-	}
-}
-
-func getCircuitBreaker(labels map[string]string) *types.CircuitBreaker {
-	circuitBreaker := label.GetStringValue(labels, label.TraefikBackendCircuitBreakerExpression, "")
-	if len(circuitBreaker) == 0 {
-		return nil
-	}
-	return &types.CircuitBreaker{Expression: circuitBreaker}
-}
-
-func getLoadBalancer(labels map[string]string) *types.LoadBalancer {
-	if !label.HasPrefix(labels, label.TraefikBackendLoadBalancer) {
-		return nil
-	}
-
-	method := label.GetStringValue(labels, label.TraefikBackendLoadBalancerMethod, label.DefaultBackendLoadBalancerMethod)
-
-	lb := &types.LoadBalancer{
-		Method: method,
-		Sticky: getSticky(labels),
-	}
-
-	if label.GetBoolValue(labels, label.TraefikBackendLoadBalancerStickiness, false) {
-		cookieName := label.GetStringValue(labels, label.TraefikBackendLoadBalancerStickinessCookieName, label.DefaultBackendLoadbalancerStickinessCookieName)
-		lb.Stickiness = &types.Stickiness{CookieName: cookieName}
-	}
-
-	return lb
-}
-
-// TODO: Deprecated
-// replaced by Stickiness
-// Deprecated
-func getSticky(labels map[string]string) bool {
-	if label.Has(labels, label.TraefikBackendLoadBalancerSticky) {
-		log.Warnf("Deprecated configuration found: %s. Please use %s.", label.TraefikBackendLoadBalancerSticky, label.TraefikBackendLoadBalancerStickiness)
-	}
-
-	return label.GetBoolValue(labels, label.TraefikBackendLoadBalancerSticky, false)
 }
 
 func (p *Provider) getServers(containers []dockerData) map[string]types.Server {
@@ -506,28 +323,4 @@ func (p *Provider) getServers(containers []dockerData) map[string]types.Server {
 	}
 
 	return servers
-}
-
-func getFuncStringLabel(labelName string, defaultValue string) func(map[string]string) string {
-	return func(labels map[string]string) string {
-		return label.GetStringValue(labels, labelName, defaultValue)
-	}
-}
-
-func getFuncIntLabel(labelName string, defaultValue int) func(map[string]string) int {
-	return func(labels map[string]string) int {
-		return label.GetIntValue(labels, labelName, defaultValue)
-	}
-}
-
-func getFuncBoolLabel(labelName string, defaultValue bool) func(map[string]string) bool {
-	return func(labels map[string]string) bool {
-		return label.GetBoolValue(labels, labelName, defaultValue)
-	}
-}
-
-func getFuncSliceStringLabel(labelName string) func(map[string]string) []string {
-	return func(labels map[string]string) []string {
-		return label.GetSliceStringValue(labels, labelName)
-	}
 }

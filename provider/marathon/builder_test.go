@@ -12,6 +12,10 @@ const testTaskName = "taskID"
 
 // Functions related to building applications.
 
+func withApplications(apps ...marathon.Application) *marathon.Applications {
+	return &marathon.Applications{Apps: apps}
+}
+
 func application(ops ...func(*marathon.Application)) marathon.Application {
 	app := marathon.Application{}
 	app.EmptyLabels()

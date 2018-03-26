@@ -161,9 +161,9 @@ exposedbydefault = false
 
 To enable constraints see [backend-specific constraints section](/configuration/commons/#backend-specific).
 
-## Labels: overriding default behaviour
+## Labels: overriding default behavior
 
-#### Using Docker with Swarm Mode
+### Using Docker with Swarm Mode
 
 If you use a compose file with the Swarm mode, labels should be defined in the `deploy` part of your service.
 This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/#labels-1)).
@@ -177,7 +177,7 @@ services:
         traefik.docker.network: traefik
 ```
 
-#### Using Docker Compose
+### Using Docker Compose
 
 If you are intending to use only Docker Compose commands (e.g. `docker-compose up --scale whoami=2 -d`), labels should be under your service, otherwise they will be ignored.
 

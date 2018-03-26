@@ -7,9 +7,11 @@
 // templates/eureka.tmpl
 // templates/kubernetes.tmpl
 // templates/kv.tmpl
+// templates/marathon-v1.tmpl
 // templates/marathon.tmpl
 // templates/mesos.tmpl
 // templates/notFound.tmpl
+// templates/rancher-v1.tmpl
 // templates/rancher.tmpl
 // DO NOT EDIT!
 
@@ -1265,22 +1267,106 @@ func templatesKvTmpl() (*asset, error) {
 	return a, nil
 }
 
+var _templatesMarathonV1Tmpl = []byte(`{{$apps := .Applications}}
+
+{{range $app := $apps }}
+{{range $task := $app.Tasks }}
+{{range $serviceIndex, $serviceName := getServiceNames $app }}
+  [backends."{{ getBackend $app $serviceName }}".servers."server-{{ $task.ID | replace "." "-"}}{{getServiceNameSuffix $serviceName }}"]
+    url = "{{ getProtocol $app $serviceName }}://{{ getBackendServer $task $app }}:{{ getPort $task $app $serviceName }}"
+    weight = {{ getWeight $app $serviceName }}
+{{end}}
+{{end}}
+{{end}}
+
+{{range $app := $apps }}
+{{range $serviceIndex, $serviceName := getServiceNames $app }}
+
+[backends."{{ getBackend $app $serviceName }}"]
+  {{if hasMaxConnLabels $app }}
+  [backends."{{ getBackend $app $serviceName }}".maxConn]
+    amount = {{ getMaxConnAmount $app }}
+    extractorFunc = "{{ getMaxConnExtractorFunc $app }}"
+  {{end}}
+
+  {{if hasLoadBalancerLabels $app }}
+  [backends."{{ getBackend $app $serviceName }}".loadBalancer]
+    method = "{{ getLoadBalancerMethod $app }}"
+    sticky = {{ getSticky $app }}
+    {{if hasStickinessLabel $app }}
+    [backends."{{ getBackend $app $serviceName }}".loadBalancer.stickiness]
+      cookieName = "{{ getStickinessCookieName $app }}"
+    {{end}}
+  {{end}}
+
+  {{if hasCircuitBreakerLabels $app }}
+  [backends."{{ getBackend $app $serviceName }}".circuitBreaker]
+    expression = "{{ getCircuitBreakerExpression $app }}"
+  {{end}}
+
+  {{if hasHealthCheckLabels $app }}
+  [backends."{{ getBackend $app $serviceName }}".healthCheck]
+    path = "{{ getHealthCheckPath $app }}"
+    interval = "{{ getHealthCheckInterval $app }}"
+  {{end}}
+
+{{end}}
+{{end}}
+
+[frontends]
+{{range $app := $apps }}
+{{range $serviceIndex, $serviceName := getServiceNames . }}
+
+  [frontends."{{ getFrontendName $app $serviceName | normalize }}"]
+    backend = "{{ getBackend $app $serviceName }}"
+    passHostHeader = {{ getPassHostHeader $app $serviceName }}
+    priority = {{ getPriority $app $serviceName }}
+
+    entryPoints = [{{range getEntryPoints $app $serviceName }}
+      "{{.}}",
+      {{end}}]
+
+    basicAuth = [{{range getBasicAuth $app $serviceName }}
+      "{{.}}",
+      {{end}}]
+
+    [frontends."{{ getFrontendName $app $serviceName | normalize }}".routes."route-host{{ $app.ID | replace "/" "-" }}{{ getServiceNameSuffix $serviceName }}"]
+      rule = "{{ getFrontendRule $app $serviceName }}"
+
+{{end}}
+{{end}}
+`)
+
+func templatesMarathonV1TmplBytes() ([]byte, error) {
+	return _templatesMarathonV1Tmpl, nil
+}
+
+func templatesMarathonV1Tmpl() (*asset, error) {
+	bytes, err := templatesMarathonV1TmplBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "templates/marathon-v1.tmpl", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
 var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
 
 [backends]
 {{range $app := $apps }}
-{{range $serviceIndex, $serviceName := getServiceNames $app }}
-  {{ $backendName := getBackend $app $serviceName}}
+  {{ $backendName := getBackendName $app }}
 
   [backends."{{ $backendName }}"]
 
-    {{ $circuitBreaker := getCircuitBreaker $app }}
+    {{ $circuitBreaker := getCircuitBreaker $app.SegmentLabels }}
     {{if $circuitBreaker }}
     [backends."{{ $backendName }}".circuitBreaker]
       expression = "{{ $circuitBreaker.Expression }}"
     {{end}}
 
-    {{ $loadBalancer := getLoadBalancer $app }}
+    {{ $loadBalancer := getLoadBalancer $app.SegmentLabels }}
     {{if $loadBalancer }}
     [backends."{{ $backendName }}".loadBalancer]
       method = "{{ $loadBalancer.Method }}"
@@ -1291,14 +1377,14 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
       {{end}}
     {{end}}
 
-    {{ $maxConn := getMaxConn $app }}
+    {{ $maxConn := getMaxConn $app.SegmentLabels }}
     {{if $maxConn }}
     [backends."{{ $backendName }}".maxConn]
       extractorFunc = "{{ $maxConn.ExtractorFunc }}"
       amount = {{ $maxConn.Amount }}
     {{end}}
 
-    {{ $healthCheck := getHealthCheck $app }}
+    {{ $healthCheck := getHealthCheck $app.SegmentLabels }}
     {{if $healthCheck }}
     [backends."{{ $backendName }}".healthCheck]
       path = "{{ $healthCheck.Path }}"
@@ -1306,7 +1392,7 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
       interval = "{{ $healthCheck.Interval }}"
     {{end}}
 
-    {{ $buffering := getBuffering $app }}
+    {{ $buffering := getBuffering $app.SegmentLabels }}
     {{if $buffering }}
     [backends."{{ $backendName }}".buffering]
       maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
@@ -1316,35 +1402,33 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
       retryExpression = "{{ $buffering.RetryExpression }}"
     {{end}}
 
-    {{range $serverName, $server := getServers $app $serviceName }}
+    {{range $serverName, $server := getServers $app }}
     [backends."{{ $backendName }}".servers."{{ $serverName }}"]
       url = "{{ $server.URL }}"
       weight = {{ $server.Weight }}
     {{end}}
 
 {{end}}
-{{end}}
 
 [frontends]
 {{range $app := $apps }}
-{{range $serviceIndex, $serviceName := getServiceNames $app }}
-  {{ $frontendName := getFrontendName $app $serviceName }}
+  {{ $frontendName := getFrontendName $app }}
 
   [frontends."{{ $frontendName }}"]
-    backend = "{{ getBackend $app $serviceName }}"
-    priority = {{ getPriority $app $serviceName }}
-    passHostHeader = {{ getPassHostHeader $app $serviceName }}
-    passTLSCert = {{ getPassTLSCert $app $serviceName }}
+    backend = "{{ getBackendName $app }}"
+    priority = {{ getPriority $app.SegmentLabels }}
+    passHostHeader = {{ getPassHostHeader $app.SegmentLabels }}
+    passTLSCert = {{ getPassTLSCert $app.SegmentLabels }}
 
-    entryPoints = [{{range getEntryPoints $app $serviceName }}
+    entryPoints = [{{range getEntryPoints $app.SegmentLabels }}
       "{{.}}",
       {{end}}]
 
-    basicAuth = [{{range getBasicAuth $app $serviceName }}
+    basicAuth = [{{range getBasicAuth $app.SegmentLabels }}
       "{{.}}",
       {{end}}]
 
-    {{ $whitelist := getWhiteList $app $serviceName }}
+    {{ $whitelist := getWhiteList $app.SegmentLabels }}
     {{if $whitelist }}
     [frontends."{{ $frontendName }}".whiteList]
       sourceRange = [{{range $whitelist.SourceRange }}
@@ -1353,7 +1437,7 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
       useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
     {{end}}
 
-    {{ $redirect := getRedirect $app $serviceName }}
+    {{ $redirect := getRedirect $app.SegmentLabels }}
     {{if $redirect }}
     [frontends."{{ $frontendName }}".redirect]
       entryPoint = "{{ $redirect.EntryPoint }}"
@@ -1362,7 +1446,7 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
       permanent = {{ $redirect.Permanent }}
     {{end}}
 
-    {{ $errorPages := getErrorPages $app $serviceName }}
+    {{ $errorPages := getErrorPages $app.SegmentLabels }}
     {{if $errorPages }}
     [frontends."{{ $frontendName }}".errors]
       {{range $pageName, $page := $errorPages }}
@@ -1375,7 +1459,7 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
       {{end}}
     {{end}}
 
-    {{ $rateLimit := getRateLimit $app $serviceName }}
+    {{ $rateLimit := getRateLimit $app.SegmentLabels }}
     {{if $rateLimit }}
     [frontends."{{ $frontendName }}".rateLimit]
       extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
@@ -1388,7 +1472,7 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
         {{end}}
     {{end}}
 
-    {{ $headers := getHeaders $app $serviceName }}
+    {{ $headers := getHeaders $app.SegmentLabels }}
     {{if $headers }}
     [frontends."{{ $frontendName }}".headers]
       SSLRedirect = {{ $headers.SSLRedirect }}
@@ -1442,10 +1526,9 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
       {{end}}
     {{end}}
 
-  [frontends."{{ $frontendName }}".routes."route-host{{ $app.ID | replace "/" "-" }}{{ getServiceNameSuffix $serviceName }}"]
-    rule = "{{ getFrontendRule $app $serviceName }}"
+  [frontends."{{ $frontendName }}".routes."route-host{{ $app.ID | replace "/" "-" }}{{ getSegmentNameSuffix $app.SegmentName }}"]
+    rule = "{{ getFrontendRule $app }}"
 
-{{end}}
 {{end}}
 `)
 
@@ -1682,19 +1765,94 @@ func templatesNotfoundTmpl() (*asset, error) {
 	return a, nil
 }
 
+var _templatesRancherV1Tmpl = []byte(`{{$backendServers := .Backends}}
+
+[backends]
+{{range $backendName, $backend := .Backends }}
+  {{if hasCircuitBreakerLabel $backend }}
+  [backends."backend-{{ $backendName }}".circuitBreaker]
+    expression = "{{ getCircuitBreakerExpression $backend }}"
+  {{end}}
+
+  {{if hasLoadBalancerLabel $backend }}
+  [backends."backend-{{ $backendName }}".loadBalancer]
+    method = "{{ getLoadBalancerMethod $backend }}"
+    sticky = {{ getSticky $backend }}
+    {{if hasStickinessLabel $backend }}
+    [backends."backend-{{ $backendName }}".loadBalancer.stickiness]
+      cookieName = "{{ getStickinessCookieName $backend }}"
+    {{end}}
+  {{end}}
+
+  {{if hasMaxConnLabels $backend }}
+  [backends."backend-{{ $backendName }}".maxConn]
+    amount = {{ getMaxConnAmount $backend }}
+    extractorFunc = "{{ getMaxConnExtractorFunc $backend }}"
+  {{end}}
+
+  {{range $index, $ip := $backend.Containers }}
+  [backends."backend-{{ $backendName }}".servers."server-{{ $index }}"]
+    url = "{{ getProtocol $backend }}://{{ $ip }}:{{ getPort $backend }}"
+    weight = {{ getWeight $backend }}
+  {{end}}
+
+{{end}}
+
+[frontends]
+{{range $frontendName, $service := .Frontends }}
+  [frontends."frontend-{{ $frontendName }}"]
+    backend = "backend-{{ getBackend $service }}"
+    passHostHeader = {{ getPassHostHeader $service }}
+    priority = {{ getPriority $service }}
+
+  entryPoints = [{{range getEntryPoints $service }}
+      "{{.}}",
+    {{end}}]
+
+  basicAuth = [{{range getBasicAuth $service }}
+      "{{.}}",
+    {{end}}]
+
+  {{if hasRedirect $service }}
+  [frontends."frontend-{{ $frontendName }}".redirect]
+    entryPoint = "{{ getRedirectEntryPoint $service }}"
+    regex = "{{ getRedirectRegex $service }}"
+    replacement = "{{ getRedirectReplacement $service }}"
+  {{end}}
+
+  [frontends."frontend-{{ $frontendName }}".routes."route-frontend-{{ $frontendName }}"]
+    rule = "{{ getFrontendRule $service }}"
+{{end}}
+`)
+
+func templatesRancherV1TmplBytes() ([]byte, error) {
+	return _templatesRancherV1Tmpl, nil
+}
+
+func templatesRancherV1Tmpl() (*asset, error) {
+	bytes, err := templatesRancherV1TmplBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "templates/rancher-v1.tmpl", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
 var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
 [backends]
 {{range $backendName, $backend := .Backends }}
 
   [backends."backend-{{ $backendName }}"]
 
-  {{ $circuitBreaker := getCircuitBreaker $backend }}
+  {{ $circuitBreaker := getCircuitBreaker $backend.SegmentLabels }}
   {{if $circuitBreaker }}
   [backends."backend-{{ $backendName }}".circuitBreaker]
     expression = "{{ $circuitBreaker.Expression }}"
   {{end}}
 
-  {{ $loadBalancer := getLoadBalancer $backend }}
+  {{ $loadBalancer := getLoadBalancer $backend.SegmentLabels }}
   {{if $loadBalancer }}
     [backends."backend-{{ $backendName }}".loadBalancer]
       method = "{{ $loadBalancer.Method }}"
@@ -1705,14 +1863,14 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
       {{end}}
   {{end}}
 
-  {{ $maxConn := getMaxConn $backend }}
+  {{ $maxConn := getMaxConn $backend.SegmentLabels }}
   {{if $maxConn }}
   [backends."backend-{{ $backendName }}".maxConn]
     extractorFunc = "{{ $maxConn.ExtractorFunc }}"
     amount = {{ $maxConn.Amount }}
   {{end}}
 
-  {{ $healthCheck := getHealthCheck $backend }}
+  {{ $healthCheck := getHealthCheck $backend.SegmentLabels }}
   {{if $healthCheck }}
   [backends."backend-{{ $backendName }}".healthCheck]
     path = "{{ $healthCheck.Path }}"
@@ -1720,7 +1878,7 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
     interval = "{{ $healthCheck.Interval }}"
   {{end}}
 
-  {{ $buffering := getBuffering $backend }}
+  {{ $buffering := getBuffering $backend.SegmentLabels }}
   {{if $buffering }}
   [backends."backend-{{ $backendName }}".buffering]
     maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
@@ -1743,19 +1901,19 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
 
   [frontends."frontend-{{ $frontendName }}"]
     backend = "backend-{{ getBackendName $service }}"
-    priority = {{ getPriority $service }}
-    passHostHeader = {{ getPassHostHeader $service }}
-    passTLSCert = {{ getPassTLSCert $service }}
+    priority = {{ getPriority $service.SegmentLabels }}
+    passHostHeader = {{ getPassHostHeader $service.SegmentLabels }}
+    passTLSCert = {{ getPassTLSCert $service.SegmentLabels }}
 
-    entryPoints = [{{range getEntryPoints $service }}
+    entryPoints = [{{range getEntryPoints $service.SegmentLabels }}
       "{{.}}",
       {{end}}]
 
-    basicAuth = [{{range getBasicAuth $service }}
+    basicAuth = [{{range getBasicAuth $service.SegmentLabels }}
       "{{.}}",
       {{end}}]
 
-    {{ $whitelist := getWhiteList $service }}
+    {{ $whitelist := getWhiteList $service.SegmentLabels }}
     {{if $whitelist }}
     [frontends."frontend-{{ $frontendName }}".whiteList]
       sourceRange = [{{range $whitelist.SourceRange }}
@@ -1764,7 +1922,7 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
       useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
     {{end}}
 
-    {{ $redirect := getRedirect $service }}
+    {{ $redirect := getRedirect $service.SegmentLabels }}
     {{if $redirect }}
     [frontends."frontend-{{ $frontendName }}".redirect]
       entryPoint = "{{ $redirect.EntryPoint }}"
@@ -1773,7 +1931,7 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
       permanent = {{ $redirect.Permanent }}
     {{end}}
 
-    {{ $errorPages := getErrorPages $service }}
+    {{ $errorPages := getErrorPages $service.SegmentLabels }}
     {{if $errorPages }}
     [frontends."frontend-{{ $frontendName }}".errors]
       {{range $pageName, $page := $errorPages }}
@@ -1786,7 +1944,7 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
       {{end}}
     {{end}}
 
-    {{ $rateLimit := getRateLimit $service }}
+    {{ $rateLimit := getRateLimit $service.SegmentLabels }}
     {{if $rateLimit }}
     [frontends."frontend-{{ $frontendName }}".rateLimit]
       extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
@@ -1799,7 +1957,7 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
         {{end}}
     {{end}}
 
-    {{ $headers := getHeaders $service }}
+    {{ $headers := getHeaders $service.SegmentLabels }}
     {{if $headers }}
     [frontends."frontend-{{ $frontendName }}".headers]
       SSLRedirect = {{ $headers.SSLRedirect }}
@@ -1933,9 +2091,11 @@ var _bindata = map[string]func() (*asset, error){
 	"templates/eureka.tmpl":         templatesEurekaTmpl,
 	"templates/kubernetes.tmpl":     templatesKubernetesTmpl,
 	"templates/kv.tmpl":             templatesKvTmpl,
+	"templates/marathon-v1.tmpl":    templatesMarathonV1Tmpl,
 	"templates/marathon.tmpl":       templatesMarathonTmpl,
 	"templates/mesos.tmpl":          templatesMesosTmpl,
 	"templates/notFound.tmpl":       templatesNotfoundTmpl,
+	"templates/rancher-v1.tmpl":     templatesRancherV1Tmpl,
 	"templates/rancher.tmpl":        templatesRancherTmpl,
 }
 
@@ -1988,9 +2148,11 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"eureka.tmpl":         {templatesEurekaTmpl, map[string]*bintree{}},
 		"kubernetes.tmpl":     {templatesKubernetesTmpl, map[string]*bintree{}},
 		"kv.tmpl":             {templatesKvTmpl, map[string]*bintree{}},
+		"marathon-v1.tmpl":    {templatesMarathonV1Tmpl, map[string]*bintree{}},
 		"marathon.tmpl":       {templatesMarathonTmpl, map[string]*bintree{}},
 		"mesos.tmpl":          {templatesMesosTmpl, map[string]*bintree{}},
 		"notFound.tmpl":       {templatesNotfoundTmpl, map[string]*bintree{}},
+		"rancher-v1.tmpl":     {templatesRancherV1Tmpl, map[string]*bintree{}},
 		"rancher.tmpl":        {templatesRancherTmpl, map[string]*bintree{}},
 	}},
 }}

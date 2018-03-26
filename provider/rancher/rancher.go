@@ -38,11 +38,13 @@ type Provider struct {
 }
 
 type rancherData struct {
-	Name       string
-	Labels     map[string]string // List of labels set to container or service
-	Containers []string
-	Health     string
-	State      string
+	Name          string
+	Labels        map[string]string // List of labels set to container or service
+	Containers    []string
+	Health        string
+	State         string
+	SegmentLabels map[string]string
+	SegmentName   string
 }
 
 func (r rancherData) String() string {
