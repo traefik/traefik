@@ -56,7 +56,7 @@ _(But if you'd rather configure some of your routes manually, Træfik supports t
 
 - Continuously updates its configuration (No restarts!)
 - Supports multiple load balancing algorithms
-- Provides HTTPS to your microservices by leveraging [Let's Encrypt](https://letsencrypt.org)
+- Provides HTTPS to your microservices by leveraging [Let's Encrypt](https://letsencrypt.org)  (wildcard certificates support)
 - Circuit breakers, retry
 - High Availability with cluster mode (beta)
 - See the magic through its clean web UI

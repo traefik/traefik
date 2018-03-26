@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/cenk/backoff"
+	"github.com/containous/flaeg"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
-	"github.com/xenolf/lego/acme"
-	"github.com/containous/flaeg"
+	acme "github.com/xenolf/lego/acmev2"
 )
 
 func dnsOverrideDelay(delay flaeg.Duration) error {

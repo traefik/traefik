@@ -82,11 +82,12 @@ entryPoint = "https"
 # - Leave comment to go to prod.
 #
 # Optional
-# Default: "https://acme-v01.api.letsencrypt.org/directory"
+# Default: "https://acme-v02.api.letsencrypt.org/directory"
 #
-# caServer = "https://acme-staging.api.letsencrypt.org/directory"
+# caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
 
 # Domains list.
+# Only domains defined here can generate wildcard certificates.
 #
 # [[acme.domains]]
 #   main = "local1.com"
@@ -111,7 +112,8 @@ entryPoint = "https"
   #
   entryPoint = "http"
 
-# Use a DNS-01 acme challenge rather than HTTP-01 challenge.
+# Use a DNS-01/DNS-02 acme challenge rather than HTTP-01 challenge.
+# Note : Mandatory for wildcard certificates generation.
 #
 # Optional
 #
@@ -136,6 +138,10 @@ entryPoint = "https"
 !!! note
     If `HTTP-01` challenge is used, `acme.httpChallenge.entryPoint` has to be defined and reachable by Let's Encrypt through the port 80.
     These are Let's Encrypt limitations as described on the [community forum](https://community.letsencrypt.org/t/support-for-ports-other-than-80-and-443/3419/72).
+
+!!! note
+    Wildcard certificates can be generated only if `acme.dnsChallenge`
+option is enable.
 
 ### Let's Encrypt downtime
 
@@ -215,7 +221,7 @@ Because KV stores (like Consul) have limited entries size, the certificates list
 !!! note
     It's possible to store up to approximately 100 ACME certificates in Consul.
 
-### `acme.httpChallenge`
+### `httpChallenge`
 
 Use `HTTP-01` challenge to generate/renew ACME certificates.
 
@@ -256,9 +262,9 @@ defaultEntryPoints = ["http", "https"]
     `acme.httpChallenge.entryPoint` has to be reachable by Let's Encrypt through the port 80.
     It's a Let's Encrypt limitation as described on the [community forum](https://community.letsencrypt.org/t/support-for-ports-other-than-80-and-443/3419/72).
 
-### `acme.dnsChallenge`
+### `dnsChallenge`
 
-Use `DNS-01` challenge to generate/renew ACME certificates.
+Use `DNS-01/DNS-02` challenge to generate/renew ACME certificates.
 
 ```toml
 [acme]
@@ -268,6 +274,9 @@ Use `DNS-01` challenge to generate/renew ACME certificates.
   delayBeforeCheck = 0
 # ...
 ```
+
+!!! note
+    ACME wildcard certificates can only be generated thanks to a `DNS-02` challenge.
 
 #### `provider`
 
@@ -348,12 +357,16 @@ This will request a certificate from Let's Encrypt for each frontend with a Host
 
 For example, a rule `Host:test1.traefik.io,test2.traefik.io` will request a certificate with main domain `test1.traefik.io` and SAN `test2.traefik.io`.
 
+!!! warning
+    `onHostRule` option can not be used to generate wildcard certificates.
+    Refer to [the wildcard generation section](/configuration/acme/#wildcard-domain) for more information.
+
 ### `caServer`
 
 ```toml
 [acme]
 # ...
-caServer = "https://acme-staging.api.letsencrypt.org/directory"
+caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
 # ...
 ```
 
@@ -362,7 +375,7 @@ CA server to use.
 - Uncomment the line to run on the staging Let's Encrypt server.
 - Leave comment to go to prod.
 
-### `acme.domains`
+### `domains`
 
 ```toml
 [acme]
@@ -376,9 +389,21 @@ CA server to use.
 [[acme.domains]]
   main = "local3.com"
 [[acme.domains]]
-  main = "local4.com"
+  main = "*.local4.com"
 # ...
 ```
+
+#### Wildcard domains
+
+Wildcard domain has to be defined as a main domain **with no SANs** (alternative domains).
+All domains must have A/AAAA records pointing to Træfik.
+
+!!! warning
+    Note that Let's Encrypt has [rate limiting](https://letsencrypt.org/docs/rate-limits).
+
+Each domain & SANs will lead to a certificate request.
+
+#### Others domains
 
 You can provide SANs (alternative domains) to each main domain.
 All domains must have A/AAAA records pointing to Træfik.
@@ -391,9 +416,47 @@ Each domain & SANs will lead to a certificate request.
 ### `dnsProvider` (Deprecated)
 
 !!! danger "DEPRECATED"
-    This option is deprecated, use [dnsChallenge.provider](/configuration/acme/#acmednschallenge) instead.
+    This option is deprecated, use [dnsChallenge.provider](/configuration/acme/#dnschallenge) instead.
 
 ### `delayDontCheckDNS` (Deprecated)
 
 !!! danger "DEPRECATED"
-    This option is deprecated, use [dnsChallenge.delayBeforeCheck](/configuration/acme/#acmednschallenge) instead.
+    This option is deprecated, use [dnsChallenge.delayBeforeCheck](/configuration/acme/#dnschallenge) instead.
+
+## Wildcard certificates
+
+[ACME V2](https://community.letsencrypt.org/t/acme-v2-and-wildcard-certificate-support-is-live/55579) allows wildcard certificate support.
+However, this feature needs a specific configuration.
+
+### DNS-02 Challenge
+
+As described in [Let's Encrypt post](https://community.letsencrypt.org/t/staging-endpoint-for-acme-v2/49605), wildcard certificates can only be generated through a `DNS-02`Challenge.
+This challenge is linked to the Træfik option `acme.dnsChallenge`.
+
+```toml
+[acme]
+# ...
+[acme.dnsChallenge]
+  provider = "digitalocean"
+  delayBeforeCheck = 0
+# ...
+```
+
+For more information about this option, please refer to the [dnsChallenge section](/configuration/acme/#dnschallenge).
+
+### Wildcard domain
+
+Wildcard domains can currently be provided only by to the `acme.domains` option.
+Theses domains can not have SANs.
+
+```toml
+[acme]
+# ...
+[[acme.domains]]
+  main = "*local1.com"
+[[acme.domains]]
+  main = "*.local2.com"
+# ...
+```
+
+For more information about this option, please refer to the [domains section](/configuration/acme/#domains).

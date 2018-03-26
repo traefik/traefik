@@ -14,7 +14,7 @@ import (
 	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/xenolf/lego/acme"
+	acme "github.com/xenolf/lego/acmev2"
 )
 
 func TestDomainsSet(t *testing.T) {
@@ -299,10 +299,15 @@ llJh9MC0svjevGtNlxJoE3lmEQIhAKXy1wfZ32/XtcrnENPvi6lzxI0T94X7s5pP3aCoPPoJAiEAl
 cijFkALeQp/qyeXdFld2v9gUN3eCgljgcl0QweRoIc=---`)
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{
-"new-authz": "https://foo/acme/new-authz",
-"new-cert": "https://foo/acme/new-cert",
-"new-reg": "https://foo/acme/new-reg",
-"revoke-cert": "https://foo/acme/revoke-cert"
+  "GPHhmRVEDas": "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417",
+  "keyChange": "https://foo/acme/key-change",
+  "meta": {
+    "termsOfService": "https://boulder:4431/terms/v7"
+  },
+  "newAccount": "https://foo/acme/new-acct",
+  "newNonce": "https://foo/acme/new-nonce",
+  "newOrder": "https://foo/acme/new-order",
+  "revokeCert": "https://foo/acme/revoke-cert"
 }`))
 	}))
 	defer ts.Close()
@@ -360,4 +365,82 @@ func TestAcme_getProvidedCertificate(t *testing.T) {
 	domain = "trae.acme.io"
 	certificate = a.getProvidedCertificate(domain)
 	assert.Nil(t, certificate)
+}
+
+func TestAcme_getValidDomain(t *testing.T) {
+	testCases := []struct {
+		desc            string
+		domains         []string
+		wildcardAllowed bool
+		dnsChallenge    *acmeprovider.DNSChallenge
+		expectedErr     string
+		expectedDomains []string
+	}{
+		{
+			desc:            "valid wildcard",
+			domains:         []string{"*.traefik.wtf"},
+			dnsChallenge:    &acmeprovider.DNSChallenge{},
+			wildcardAllowed: true,
+			expectedErr:     "",
+			expectedDomains: []string{"*.traefik.wtf"},
+		},
+		{
+			desc:            "no wildcard",
+			domains:         []string{"traefik.wtf", "foo.traefik.wtf"},
+			dnsChallenge:    &acmeprovider.DNSChallenge{},
+			expectedErr:     "",
+			wildcardAllowed: true,
+			expectedDomains: []string{"traefik.wtf", "foo.traefik.wtf"},
+		},
+		{
+			desc:            "unauthorized wildcard",
+			domains:         []string{"*.traefik.wtf"},
+			dnsChallenge:    &acmeprovider.DNSChallenge{},
+			wildcardAllowed: false,
+			expectedErr:     "unable to generate a wildcard certificate for domain \"*.traefik.wtf\" from a 'Host' rule",
+			expectedDomains: nil,
+		},
+		{
+			desc:            "no domain",
+			domains:         []string{},
+			dnsChallenge:    nil,
+			wildcardAllowed: true,
+			expectedErr:     "unable to generate a certificate when no domain is given",
+			expectedDomains: nil,
+		},
+		{
+			desc:            "no DNSChallenge",
+			domains:         []string{"*.traefik.wtf", "foo.traefik.wtf"},
+			dnsChallenge:    nil,
+			wildcardAllowed: true,
+			expectedErr:     "unable to generate a wildcard certificate for domain \"*.traefik.wtf,foo.traefik.wtf\" : ACME needs a DNSChallenge",
+			expectedDomains: nil,
+		},
+		{
+			desc:            "unexpected SANs",
+			domains:         []string{"*.traefik.wtf", "foo.traefik.wtf"},
+			dnsChallenge:    &acmeprovider.DNSChallenge{},
+			wildcardAllowed: true,
+			expectedErr:     "unable to generate a wildcard certificate for domain \"*.traefik.wtf,foo.traefik.wtf\" : SANs are not allowed",
+			expectedDomains: nil,
+		},
+	}
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			a := ACME{}
+			if test.dnsChallenge != nil {
+				a.DNSChallenge = test.dnsChallenge
+			}
+			domains, err := a.getValidDomains(test.domains, test.wildcardAllowed)
+
+			if len(test.expectedErr) > 0 {
+				assert.EqualError(t, err, test.expectedErr, "Unexpected error.")
+			} else {
+				assert.Equal(t, len(test.expectedDomains), len(domains), "Unexpected domains.")
+			}
+		})
+	}
 }

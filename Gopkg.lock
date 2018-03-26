@@ -1213,10 +1213,11 @@
   revision = "0c8571ac0ce161a5feb57375a9cdf148c98c0f70"
 
 [[projects]]
-  branch = "master"
+  branch = "acmev2"
   name = "github.com/xenolf/lego"
   packages = [
     "acme",
+    "acmev2",
     "providers/dns",
     "providers/dns/auroradns",
     "providers/dns/azure",
@@ -1243,7 +1244,7 @@
     "providers/dns/route53",
     "providers/dns/vultr"
   ]
-  revision = "06a8e7c475c03ef8d4773284ac63357d2810601b"
+  revision = "a149e7d6506feb4003da7093cbf818c6b75ed4a4"
 
 [[projects]]
   branch = "master"
@@ -1422,6 +1423,16 @@
   ]
   revision = "aa2e30fdd1fe9dd3394119af66451ae790d50e0d"
   version = "v1.1.0"
+
+[[projects]]
+  name = "gopkg.in/square/go-jose.v2"
+  packages = [
+    ".",
+    "cipher",
+    "json"
+  ]
+  revision = "6ee92191fea850cdcab9a18867abf5f521cdbadb"
+  version = "v2.1.4"
 
 [[projects]]
   name = "gopkg.in/yaml.v2"
@@ -1632,6 +1643,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ab328aeda9dbd2c4dc87061c25dbfbd151dbdc5946b6f512f676b39bebba8d8e"
+  inputs-digest = "5643c4ca177618882a194021e8894c3dc32950da646048883151bee925416771"
   solver-name = "gps-cdcl"
   solver-version = 1

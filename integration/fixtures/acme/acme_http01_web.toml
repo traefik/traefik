@@ -15,7 +15,7 @@ storage = "/dev/null"
 entryPoint = "https"
 onDemand = {{.OnDemand}}
 OnHostRule = {{.OnHostRule}}
-caServer = "http://{{.BoulderHost}}:4000/directory"
+caServer = "http://{{.BoulderHost}}:4001/directory"
   [acme.httpchallenge]
   entrypoint="http"
 
