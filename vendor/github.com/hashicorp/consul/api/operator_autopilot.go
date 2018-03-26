@@ -39,6 +39,10 @@ type AutopilotConfiguration struct {
 	// cluster before promoting them to voters.
 	DisableUpgradeMigration bool
 
+	// (Enterprise-only) UpgradeVersionTag is the node tag to use for version info when
+	// performing upgrade migrations. If left blank, the Consul version will be used.
+	UpgradeVersionTag string
+
 	// CreateIndex holds the index corresponding the creation of this configuration.
 	// This is a read-only field.
 	CreateIndex uint64
@@ -192,7 +196,7 @@ func (op *Operator) AutopilotCASConfiguration(conf *AutopilotConfiguration, q *W
 	if _, err := io.Copy(&buf, resp.Body); err != nil {
 		return false, fmt.Errorf("Failed to read response: %v", err)
 	}
-	res := strings.Contains(string(buf.Bytes()), "true")
+	res := strings.Contains(buf.String(), "true")
 
 	return res, nil
 }

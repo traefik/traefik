@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	"k8s.io/client-go/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/api/meta"
 )
 
 // Store is a generic object storage interface. Reflector knows how to watch a server
@@ -170,6 +170,10 @@ func (c *cache) GetIndexers() Indexers {
 // Index is thread-safe so long as you treat all items as immutable
 func (c *cache) Index(indexName string, obj interface{}) ([]interface{}, error) {
 	return c.cacheStorage.Index(indexName, obj)
+}
+
+func (c *cache) IndexKeys(indexName, indexKey string) ([]string, error) {
+	return c.cacheStorage.IndexKeys(indexName, indexKey)
 }
 
 // ListIndexFuncValues returns the list of generated values of an Index func

@@ -17,9 +17,11 @@ limitations under the License.
 package v1
 
 import (
-	api "k8s.io/client-go/pkg/api"
-	v1 "k8s.io/client-go/pkg/api/v1"
-	watch "k8s.io/client-go/pkg/watch"
+	v1 "k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	types "k8s.io/apimachinery/pkg/types"
+	watch "k8s.io/apimachinery/pkg/watch"
+	scheme "k8s.io/client-go/kubernetes/scheme"
 	rest "k8s.io/client-go/rest"
 )
 
@@ -34,12 +36,12 @@ type PodInterface interface {
 	Create(*v1.Pod) (*v1.Pod, error)
 	Update(*v1.Pod) (*v1.Pod, error)
 	UpdateStatus(*v1.Pod) (*v1.Pod, error)
-	Delete(name string, options *v1.DeleteOptions) error
-	DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error
-	Get(name string) (*v1.Pod, error)
-	List(opts v1.ListOptions) (*v1.PodList, error)
-	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt api.PatchType, data []byte, subresources ...string) (result *v1.Pod, err error)
+	Delete(name string, options *meta_v1.DeleteOptions) error
+	DeleteCollection(options *meta_v1.DeleteOptions, listOptions meta_v1.ListOptions) error
+	Get(name string, options meta_v1.GetOptions) (*v1.Pod, error)
+	List(opts meta_v1.ListOptions) (*v1.PodList, error)
+	Watch(opts meta_v1.ListOptions) (watch.Interface, error)
+	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.Pod, err error)
 	PodExpansion
 }
 
@@ -55,6 +57,41 @@ func newPods(c *CoreV1Client, namespace string) *pods {
 		client: c.RESTClient(),
 		ns:     namespace,
 	}
+}
+
+// Get takes name of the pod, and returns the corresponding pod object, and an error if there is any.
+func (c *pods) Get(name string, options meta_v1.GetOptions) (result *v1.Pod, err error) {
+	result = &v1.Pod{}
+	err = c.client.Get().
+		Namespace(c.ns).
+		Resource("pods").
+		Name(name).
+		VersionedParams(&options, scheme.ParameterCodec).
+		Do().
+		Into(result)
+	return
+}
+
+// List takes label and field selectors, and returns the list of Pods that match those selectors.
+func (c *pods) List(opts meta_v1.ListOptions) (result *v1.PodList, err error) {
+	result = &v1.PodList{}
+	err = c.client.Get().
+		Namespace(c.ns).
+		Resource("pods").
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Do().
+		Into(result)
+	return
+}
+
+// Watch returns a watch.Interface that watches the requested pods.
+func (c *pods) Watch(opts meta_v1.ListOptions) (watch.Interface, error) {
+	opts.Watch = true
+	return c.client.Get().
+		Namespace(c.ns).
+		Resource("pods").
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Watch()
 }
 
 // Create takes the representation of a pod and creates it.  Returns the server's representation of the pod, and an error, if there is any.
@@ -82,6 +119,9 @@ func (c *pods) Update(pod *v1.Pod) (result *v1.Pod, err error) {
 	return
 }
 
+// UpdateStatus was generated because the type contains a Status member.
+// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+
 func (c *pods) UpdateStatus(pod *v1.Pod) (result *v1.Pod, err error) {
 	result = &v1.Pod{}
 	err = c.client.Put().
@@ -96,7 +136,7 @@ func (c *pods) UpdateStatus(pod *v1.Pod) (result *v1.Pod, err error) {
 }
 
 // Delete takes name of the pod and deletes it. Returns an error if one occurs.
-func (c *pods) Delete(name string, options *v1.DeleteOptions) error {
+func (c *pods) Delete(name string, options *meta_v1.DeleteOptions) error {
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("pods").
@@ -107,52 +147,18 @@ func (c *pods) Delete(name string, options *v1.DeleteOptions) error {
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *pods) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
+func (c *pods) DeleteCollection(options *meta_v1.DeleteOptions, listOptions meta_v1.ListOptions) error {
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("pods").
-		VersionedParams(&listOptions, api.ParameterCodec).
+		VersionedParams(&listOptions, scheme.ParameterCodec).
 		Body(options).
 		Do().
 		Error()
 }
 
-// Get takes name of the pod, and returns the corresponding pod object, and an error if there is any.
-func (c *pods) Get(name string) (result *v1.Pod, err error) {
-	result = &v1.Pod{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("pods").
-		Name(name).
-		Do().
-		Into(result)
-	return
-}
-
-// List takes label and field selectors, and returns the list of Pods that match those selectors.
-func (c *pods) List(opts v1.ListOptions) (result *v1.PodList, err error) {
-	result = &v1.PodList{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("pods").
-		VersionedParams(&opts, api.ParameterCodec).
-		Do().
-		Into(result)
-	return
-}
-
-// Watch returns a watch.Interface that watches the requested pods.
-func (c *pods) Watch(opts v1.ListOptions) (watch.Interface, error) {
-	return c.client.Get().
-		Prefix("watch").
-		Namespace(c.ns).
-		Resource("pods").
-		VersionedParams(&opts, api.ParameterCodec).
-		Watch()
-}
-
 // Patch applies the patch and returns the patched pod.
-func (c *pods) Patch(name string, pt api.PatchType, data []byte, subresources ...string) (result *v1.Pod, err error) {
+func (c *pods) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.Pod, err error) {
 	result = &v1.Pod{}
 	err = c.client.Patch(pt).
 		Namespace(c.ns).

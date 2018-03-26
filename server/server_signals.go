@@ -5,13 +5,12 @@ package server
 import (
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/containous/traefik/log"
 )
 
 func (s *Server) configureSignals() {
-	signal.Notify(s.signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGUSR1)
+	signal.Notify(s.signals, syscall.SIGUSR1)
 }
 
 func (s *Server) listenSignals() {
@@ -30,15 +29,6 @@ func (s *Server) listenSignals() {
 			if err := log.RotateFile(); err != nil {
 				log.Errorf("Error rotating traefik log: %s", err)
 			}
-		default:
-			log.Infof("I have to go... %+v", sig)
-			reqAcceptGraceTimeOut := time.Duration(s.globalConfiguration.LifeCycle.RequestAcceptGraceTimeout)
-			if reqAcceptGraceTimeOut > 0 {
-				log.Infof("Waiting %s for incoming requests to cease", reqAcceptGraceTimeOut)
-				time.Sleep(reqAcceptGraceTimeOut)
-			}
-			log.Info("Stopping server gracefully")
-			s.Stop()
 		}
 	}
 }

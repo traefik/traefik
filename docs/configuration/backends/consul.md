@@ -1,4 +1,4 @@
-# Consul Key-Value backend
+# Consul Key-Value Backend
 
 Træfik can be configured to use Consul as a backend configuration.
 

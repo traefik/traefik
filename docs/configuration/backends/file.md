@@ -54,7 +54,10 @@ Træfik can be configured with a file.
       "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
       "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
     ]
-    whitelistSourceRange = ["10.42.0.0/16", "152.89.1.33/32", "afed:be44::/16"]
+
+    [frontends.frontend1.whiteList]
+      sourceRange = ["10.42.0.0/16", "152.89.1.33/32", "afed:be44::/16"]
+      useXForwardedFor = true
 
     [frontends.frontend1.routes]
       [frontends.frontend1.routes.route0]
@@ -121,6 +124,7 @@ Træfik can be configured with a file.
       entryPoint = "https"
       regex = "^http://localhost/(.*)"
       replacement = "http://mydomain/$1"
+      permanent = true
 
   [frontends.frontend2]
     # ...
@@ -187,7 +191,10 @@ defaultEntryPoints = ["http", "https"]
 ```
 
 !!! note
-    adding certificates directly to the entrypoint is still maintained but certificates declared in this way cannot be managed dynamically.
+    If `tls.entryPoints` is not defined, the certificate is attached to all the `defaultEntryPoints` with a TLS configuration.
+
+!!! note
+    Adding certificates directly to the entryPoint is still maintained but certificates declared in this way cannot be managed dynamically.
     It's recommended to use the file provider to declare certificates.
 
 ### Rules in a Separate File

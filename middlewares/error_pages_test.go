@@ -21,7 +21,7 @@ func TestErrorPage(t *testing.T) {
 
 	testErrorPage := &types.ErrorPage{Backend: "error", Query: "/test", Status: []string{"500-501", "503-599"}}
 
-	testHandler, err := NewErrorPagesHandler(*testErrorPage, ts.URL)
+	testHandler, err := NewErrorPagesHandler(testErrorPage, ts.URL)
 	require.NoError(t, err)
 
 	assert.Equal(t, testHandler.BackendURL, ts.URL+"/test", "Should be equal")
@@ -39,8 +39,10 @@ func TestErrorPage(t *testing.T) {
 
 	n.ServeHTTP(recorder, req)
 
-	assert.Equal(t, http.StatusOK, recorder.Code, "HTTP statusOK")
+	assert.Equal(t, http.StatusOK, recorder.Code, "HTTP status")
 	assert.Contains(t, recorder.Body.String(), "traefik")
+
+	// ----
 
 	handler500 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -86,7 +88,7 @@ func TestErrorPageQuery(t *testing.T) {
 
 	testErrorPage := &types.ErrorPage{Backend: "error", Query: "/{status}", Status: []string{"503-503"}}
 
-	testHandler, err := NewErrorPagesHandler(*testErrorPage, ts.URL)
+	testHandler, err := NewErrorPagesHandler(testErrorPage, ts.URL)
 	require.NoError(t, err)
 
 	assert.Equal(t, testHandler.BackendURL, ts.URL+"/{status}", "Should be equal")
@@ -125,7 +127,7 @@ func TestErrorPageSingleCode(t *testing.T) {
 
 	testErrorPage := &types.ErrorPage{Backend: "error", Query: "/{status}", Status: []string{"503"}}
 
-	testHandler, err := NewErrorPagesHandler(*testErrorPage, ts.URL)
+	testHandler, err := NewErrorPagesHandler(testErrorPage, ts.URL)
 	require.NoError(t, err)
 
 	assert.Equal(t, testHandler.BackendURL, ts.URL+"/{status}", "Should be equal")
@@ -149,4 +151,52 @@ func TestErrorPageSingleCode(t *testing.T) {
 	assert.Equal(t, http.StatusServiceUnavailable, recorder.Code, "HTTP status Service Unavailable")
 	assert.Contains(t, recorder.Body.String(), "503 Test Server")
 	assert.NotContains(t, recorder.Body.String(), "oops", "Should not return the oops page")
+}
+
+func TestNewErrorPagesResponseRecorder(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		rw       http.ResponseWriter
+		expected http.ResponseWriter
+	}{
+		{
+			desc:     "Without Close Notify",
+			rw:       httptest.NewRecorder(),
+			expected: &errorPagesResponseRecorderWithoutCloseNotify{},
+		},
+		{
+			desc:     "With Close Notify",
+			rw:       &mockRWCloseNotify{},
+			expected: &errorPagesResponseRecorderWithCloseNotify{},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			rec := newErrorPagesResponseRecorder(test.rw)
+
+			assert.IsType(t, rec, test.expected)
+		})
+	}
+}
+
+type mockRWCloseNotify struct{}
+
+func (m *mockRWCloseNotify) CloseNotify() <-chan bool {
+	panic("implement me")
+}
+
+func (m *mockRWCloseNotify) Header() http.Header {
+	panic("implement me")
+}
+
+func (m *mockRWCloseNotify) Write([]byte) (int, error) {
+	panic("implement me")
+}
+
+func (m *mockRWCloseNotify) WriteHeader(int) {
+	panic("implement me")
 }

@@ -25,6 +25,10 @@ type Area struct {
 	// RetryJoin specifies the address of Consul servers to join to, such as
 	// an IPs or hostnames with an optional port number. This is optional.
 	RetryJoin []string
+
+	// UseTLS specifies whether gossip over this area should be encrypted with TLS
+	// if possible.
+	UseTLS bool
 }
 
 // AreaJoinResponse is returned when a join occurs and gives the result for each
@@ -82,6 +86,27 @@ type SerfMember struct {
 // be empty and a generated ID will be returned on success.
 func (op *Operator) AreaCreate(area *Area, q *WriteOptions) (string, *WriteMeta, error) {
 	r := op.c.newRequest("POST", "/v1/operator/area")
+	r.setWriteOptions(q)
+	r.obj = area
+	rtt, resp, err := requireOK(op.c.doRequest(r))
+	if err != nil {
+		return "", nil, err
+	}
+	defer resp.Body.Close()
+
+	wm := &WriteMeta{}
+	wm.RequestTime = rtt
+
+	var out struct{ ID string }
+	if err := decodeBody(resp, &out); err != nil {
+		return "", nil, err
+	}
+	return out.ID, wm, nil
+}
+
+// AreaUpdate will update the configuration of the network area with the given ID.
+func (op *Operator) AreaUpdate(areaID string, area *Area, q *WriteOptions) (string, *WriteMeta, error) {
+	r := op.c.newRequest("PUT", "/v1/operator/area/"+areaID)
 	r.setWriteOptions(q)
 	r.obj = area
 	rtt, resp, err := requireOK(op.c.doRequest(r))

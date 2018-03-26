@@ -1,6 +1,9 @@
 package middlewares
 
 import (
+	"bufio"
+	"bytes"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -11,48 +14,37 @@ import (
 	"github.com/vulcand/oxy/utils"
 )
 
+// Compile time validation that the response recorder implements http interfaces correctly.
+var _ Stateful = &errorPagesResponseRecorderWithCloseNotify{}
+
 //ErrorPagesHandler is a middleware that provides the custom error pages
 type ErrorPagesHandler struct {
-	HTTPCodeRanges     [][2]int
+	HTTPCodeRanges     types.HTTPCodeRanges
 	BackendURL         string
 	errorPageForwarder *forward.Forwarder
 }
 
 //NewErrorPagesHandler initializes the utils.ErrorHandler for the custom error pages
-func NewErrorPagesHandler(errorPage types.ErrorPage, backendURL string) (*ErrorPagesHandler, error) {
+func NewErrorPagesHandler(errorPage *types.ErrorPage, backendURL string) (*ErrorPagesHandler, error) {
 	fwd, err := forward.New()
 	if err != nil {
 		return nil, err
 	}
 
-	//Break out the http status code ranges into a low int and high int
-	//for ease of use at runtime
-	var blocks [][2]int
-	for _, block := range errorPage.Status {
-		codes := strings.Split(block, "-")
-		//if only a single HTTP code was configured, assume the best and create the correct configuration on the user's behalf
-		if len(codes) == 1 {
-			codes = append(codes, codes[0])
-		}
-		lowCode, err := strconv.Atoi(codes[0])
-		if err != nil {
-			return nil, err
-		}
-		highCode, err := strconv.Atoi(codes[1])
-		if err != nil {
-			return nil, err
-		}
-		blocks = append(blocks, [2]int{lowCode, highCode})
+	httpCodeRanges, err := types.NewHTTPCodeRanges(errorPage.Status)
+	if err != nil {
+		return nil, err
 	}
+
 	return &ErrorPagesHandler{
-			HTTPCodeRanges:     blocks,
+			HTTPCodeRanges:     httpCodeRanges,
 			BackendURL:         backendURL + errorPage.Query,
 			errorPageForwarder: fwd},
 		nil
 }
 
 func (ep *ErrorPagesHandler) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
-	recorder := newRetryResponseRecorder(w)
+	recorder := newErrorPagesResponseRecorder(w)
 
 	next.ServeHTTP(recorder, req)
 
@@ -74,4 +66,109 @@ func (ep *ErrorPagesHandler) ServeHTTP(w http.ResponseWriter, req *http.Request,
 	//did not catch a configured status code so proceed with the request
 	utils.CopyHeaders(w.Header(), recorder.Header())
 	w.Write(recorder.GetBody().Bytes())
+}
+
+type errorPagesResponseRecorder interface {
+	http.ResponseWriter
+	http.Flusher
+	GetCode() int
+	GetBody() *bytes.Buffer
+	IsStreamingResponseStarted() bool
+}
+
+// newErrorPagesResponseRecorder returns an initialized responseRecorder.
+func newErrorPagesResponseRecorder(rw http.ResponseWriter) errorPagesResponseRecorder {
+	recorder := &errorPagesResponseRecorderWithoutCloseNotify{
+		HeaderMap:      make(http.Header),
+		Body:           new(bytes.Buffer),
+		Code:           http.StatusOK,
+		responseWriter: rw,
+	}
+	if _, ok := rw.(http.CloseNotifier); ok {
+		return &errorPagesResponseRecorderWithCloseNotify{recorder}
+	}
+	return recorder
+}
+
+// errorPagesResponseRecorderWithoutCloseNotify is an implementation of http.ResponseWriter that
+// records its mutations for later inspection.
+type errorPagesResponseRecorderWithoutCloseNotify struct {
+	Code      int           // the HTTP response code from WriteHeader
+	HeaderMap http.Header   // the HTTP response headers
+	Body      *bytes.Buffer // if non-nil, the bytes.Buffer to append written data to
+
+	responseWriter           http.ResponseWriter
+	err                      error
+	streamingResponseStarted bool
+}
+
+type errorPagesResponseRecorderWithCloseNotify struct {
+	*errorPagesResponseRecorderWithoutCloseNotify
+}
+
+// CloseNotify returns a channel that receives at most a
+// single value (true) when the client connection has gone
+// away.
+func (rw *errorPagesResponseRecorderWithCloseNotify) CloseNotify() <-chan bool {
+	return rw.responseWriter.(http.CloseNotifier).CloseNotify()
+}
+
+// Header returns the response headers.
+func (rw *errorPagesResponseRecorderWithoutCloseNotify) Header() http.Header {
+	m := rw.HeaderMap
+	if m == nil {
+		m = make(http.Header)
+		rw.HeaderMap = m
+	}
+	return m
+}
+
+func (rw *errorPagesResponseRecorderWithoutCloseNotify) GetCode() int {
+	return rw.Code
+}
+
+func (rw *errorPagesResponseRecorderWithoutCloseNotify) GetBody() *bytes.Buffer {
+	return rw.Body
+}
+
+func (rw *errorPagesResponseRecorderWithoutCloseNotify) IsStreamingResponseStarted() bool {
+	return rw.streamingResponseStarted
+}
+
+// Write always succeeds and writes to rw.Body, if not nil.
+func (rw *errorPagesResponseRecorderWithoutCloseNotify) Write(buf []byte) (int, error) {
+	if rw.err != nil {
+		return 0, rw.err
+	}
+	return rw.Body.Write(buf)
+}
+
+// WriteHeader sets rw.Code.
+func (rw *errorPagesResponseRecorderWithoutCloseNotify) WriteHeader(code int) {
+	rw.Code = code
+}
+
+// Hijack hijacks the connection
+func (rw *errorPagesResponseRecorderWithoutCloseNotify) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	return rw.responseWriter.(http.Hijacker).Hijack()
+}
+
+// Flush sends any buffered data to the client.
+func (rw *errorPagesResponseRecorderWithoutCloseNotify) Flush() {
+	if !rw.streamingResponseStarted {
+		utils.CopyHeaders(rw.responseWriter.Header(), rw.Header())
+		rw.responseWriter.WriteHeader(rw.Code)
+		rw.streamingResponseStarted = true
+	}
+
+	_, err := rw.responseWriter.Write(rw.Body.Bytes())
+	if err != nil {
+		log.Errorf("Error writing response in responseRecorder: %s", err)
+		rw.err = err
+	}
+	rw.Body.Reset()
+	flusher, ok := rw.responseWriter.(http.Flusher)
+	if ok {
+		flusher.Flush()
+	}
 }

@@ -7,7 +7,6 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/network"
@@ -26,6 +25,7 @@ import (
 	"github.com/docker/libcompose/project/options"
 	"github.com/docker/libcompose/utils"
 	"github.com/docker/libcompose/yaml"
+	"github.com/sirupsen/logrus"
 )
 
 // Service is a project.Service implementations.
@@ -257,7 +257,7 @@ func (s *Service) Run(ctx context.Context, commandParts []string, options option
 		return -1, err
 	}
 
-	configOverride := &config.ServiceConfig{Command: commandParts, Tty: true, StdinOpen: true}
+	configOverride := &config.ServiceConfig{Command: commandParts, Tty: !options.DisableTty, StdinOpen: !options.DisableTty}
 
 	c, err := s.createContainer(ctx, namer, "", configOverride, true)
 	if err != nil {
@@ -357,7 +357,7 @@ func (s *Service) connectContainerToNetworks(ctx context.Context, c *container.C
 	}
 	if s.serviceConfig.Networks != nil {
 		for _, network := range s.serviceConfig.Networks.Networks {
-			existingNetwork, ok := connectedNetworks[network.Name]
+			existingNetwork, ok := connectedNetworks[network.RealName]
 			if ok {
 				// FIXME(vdemeester) implement alias checking (to not disconnect/reconnect for nothing)
 				aliasPresent := false
@@ -488,7 +488,7 @@ func (s *Service) OutOfSync(ctx context.Context, c *container.Container) (bool, 
 
 	image, err := image.InspectImage(ctx, s.clientFactory.Create(s), c.ImageConfig())
 	if err != nil {
-		if client.IsErrImageNotFound(err) {
+		if client.IsErrNotFound(err) {
 			logrus.Debugf("Image %s do not exist, do not know if it's out of sync", c.Image())
 			return false, nil
 		}

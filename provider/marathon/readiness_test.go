@@ -20,7 +20,7 @@ func TestDisabledReadinessChecker(t *testing.T) {
 		readinessCheckResult(testTaskName, false),
 	)
 
-	if ready := rc.Do(tsk, app); ready == false {
+	if ready := rc.Do(tsk, app); !ready {
 		t.Error("expected ready = true")
 	}
 }

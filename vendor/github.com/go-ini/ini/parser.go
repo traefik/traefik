@@ -193,7 +193,9 @@ func hasSurroundedQuote(in string, quote byte) bool {
 		strings.IndexByte(in[1:], quote) == len(in)-2
 }
 
-func (p *parser) readValue(in []byte, ignoreContinuation, ignoreInlineComment, unescapeValueDoubleQuotes bool) (string, error) {
+func (p *parser) readValue(in []byte,
+	ignoreContinuation, ignoreInlineComment, unescapeValueDoubleQuotes, unescapeValueCommentSymbols bool) (string, error) {
+
 	line := strings.TrimLeftFunc(string(in), unicode.IsSpace)
 	if len(line) == 0 {
 		return "", nil
@@ -243,6 +245,13 @@ func (p *parser) readValue(in []byte, ignoreContinuation, ignoreInlineComment, u
 	if hasSurroundedQuote(line, '\'') ||
 		hasSurroundedQuote(line, '"') {
 		line = line[1 : len(line)-1]
+	} else if len(valQuote) == 0 && unescapeValueCommentSymbols {
+		if strings.Contains(line, `\;`) {
+			line = strings.Replace(line, `\;`, ";", -1)
+		}
+		if strings.Contains(line, `\#`) {
+			line = strings.Replace(line, `\#`, "#", -1)
+		}
 	}
 	return line, nil
 }
@@ -255,7 +264,15 @@ func (f *File) parse(reader io.Reader) (err error) {
 	}
 
 	// Ignore error because default section name is never empty string.
-	section, _ := f.NewSection(DEFAULT_SECTION)
+	name := DEFAULT_SECTION
+	if f.options.Insensitive {
+		name = strings.ToLower(DEFAULT_SECTION)
+	}
+	section, _ := f.NewSection(name)
+
+	// This "last" is not strictly equivalent to "previous one" if current key is not the first nested key
+	var isLastValueEmpty bool
+	var lastRegularKey *Key
 
 	var line []byte
 	var inUnparseableSection bool
@@ -263,6 +280,14 @@ func (f *File) parse(reader io.Reader) (err error) {
 		line, err = p.readUntil('\n')
 		if err != nil {
 			return err
+		}
+
+		if f.options.AllowNestedValues &&
+			isLastValueEmpty && len(line) > 0 {
+			if line[0] == ' ' || line[0] == '\t' {
+				lastRegularKey.addNestedValue(string(bytes.TrimSpace(line)))
+				continue
+			}
 		}
 
 		line = bytes.TrimLeftFunc(line, unicode.IsSpace)
@@ -329,7 +354,8 @@ func (f *File) parse(reader io.Reader) (err error) {
 				kname, err := p.readValue(line,
 					f.options.IgnoreContinuation,
 					f.options.IgnoreInlineComment,
-					f.options.UnescapeValueDoubleQuotes)
+					f.options.UnescapeValueDoubleQuotes,
+					f.options.UnescapeValueCommentSymbols)
 				if err != nil {
 					return err
 				}
@@ -355,10 +381,12 @@ func (f *File) parse(reader io.Reader) (err error) {
 		value, err := p.readValue(line[offset:],
 			f.options.IgnoreContinuation,
 			f.options.IgnoreInlineComment,
-			f.options.UnescapeValueDoubleQuotes)
+			f.options.UnescapeValueDoubleQuotes,
+			f.options.UnescapeValueCommentSymbols)
 		if err != nil {
 			return err
 		}
+		isLastValueEmpty = len(value) == 0
 
 		key, err := section.NewKey(kname, value)
 		if err != nil {
@@ -367,6 +395,7 @@ func (f *File) parse(reader io.Reader) (err error) {
 		key.isAutoIncrement = isAutoIncr
 		key.Comment = strings.TrimSpace(p.comment.String())
 		p.comment.Reset()
+		lastRegularKey = key
 	}
 	return nil
 }

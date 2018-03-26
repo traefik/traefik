@@ -36,10 +36,10 @@ func (s *ConstraintSuite) SetUpSuite(c *check.C) {
 
 	// Wait for consul to elect itself leader
 	err = try.Do(3*time.Second, func() error {
-		leader, err := consulClient.Status().Leader()
+		leader, errLeader := consulClient.Status().Leader()
 
-		if err != nil || len(leader) == 0 {
-			return fmt.Errorf("Leader not found. %v", err)
+		if errLeader != nil || len(leader) == 0 {
+			return fmt.Errorf("leader not found. %v", errLeader)
 		}
 
 		return nil

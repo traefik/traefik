@@ -4,7 +4,7 @@ defaultEntryPoints = ["http", "https"]
 
 [entryPoints]
   [entryPoints.http]
-  address = ":8080"
+  address = ":5002"
   [entryPoints.https]
   address = ":5001"
     [entryPoints.https.tls]
@@ -19,6 +19,8 @@ entryPoint = "https"
 onDemand = {{.OnDemand}}
 OnHostRule = {{.OnHostRule}}
 caServer = "http://{{.BoulderHost}}:4000/directory"
+[acme.httpChallenge]
+entryPoint="http"
 
 [file]
 

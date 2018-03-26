@@ -67,6 +67,12 @@ func (f FileOrContent) String() string {
 	return string(f)
 }
 
+// IsPath returns true if the FileOrContent is a file path, otherwise returns false
+func (f FileOrContent) IsPath() bool {
+	_, err := os.Stat(f.String())
+	return err == nil
+}
+
 func (f FileOrContent) Read() ([]byte, error) {
 	var content []byte
 	if _, err := os.Stat(f.String()); err == nil {
@@ -81,14 +87,14 @@ func (f FileOrContent) Read() ([]byte, error) {
 }
 
 // CreateTLSConfig creates a TLS config from Certificate structures
-func (c *Certificates) CreateTLSConfig(entryPointName string) (*tls.Config, map[string]*DomainsCertificates, error) {
+func (c *Certificates) CreateTLSConfig(entryPointName string) (*tls.Config, error) {
 	config := &tls.Config{}
-	domainsCertificates := make(map[string]*DomainsCertificates)
+	domainsCertificates := make(map[string]map[string]*tls.Certificate)
 	if c.isEmpty() {
-		config.Certificates = make([]tls.Certificate, 0)
+		config.Certificates = []tls.Certificate{}
 		cert, err := generate.DefaultCertificate()
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		config.Certificates = append(config.Certificates, *cert)
 	} else {
@@ -99,13 +105,13 @@ func (c *Certificates) CreateTLSConfig(entryPointName string) (*tls.Config, map[
 				continue
 			}
 			for _, certDom := range domainsCertificates {
-				for _, cert := range certDom.Get().(map[string]*tls.Certificate) {
+				for _, cert := range map[string]*tls.Certificate(certDom) {
 					config.Certificates = append(config.Certificates, *cert)
 				}
 			}
 		}
 	}
-	return config, domainsCertificates, nil
+	return config, nil
 }
 
 // isEmpty checks if the certificates list is empty
@@ -124,7 +130,7 @@ func (c *Certificates) isEmpty() bool {
 }
 
 // AppendCertificates appends a Certificate to a certificates map sorted by entrypoints
-func (c *Certificate) AppendCertificates(certs map[string]*DomainsCertificates, ep string) error {
+func (c *Certificate) AppendCertificates(certs map[string]map[string]*tls.Certificate, ep string) error {
 
 	certContent, err := c.CertFile.Read()
 	if err != nil {
@@ -133,7 +139,7 @@ func (c *Certificate) AppendCertificates(certs map[string]*DomainsCertificates, 
 
 	keyContent, err := c.KeyFile.Read()
 	if err != nil {
-		return fmt.Errorf("uUnable to read KeyFile : %v", err)
+		return fmt.Errorf("unable to read KeyFile : %v", err)
 	}
 	tlsCert, err := tls.X509KeyPair(certContent, keyContent)
 	if err != nil {
@@ -155,10 +161,9 @@ func (c *Certificate) AppendCertificates(certs map[string]*DomainsCertificates, 
 
 	certExists := false
 	if certs[ep] == nil {
-		certs[ep] = new(DomainsCertificates)
-		*certs[ep] = make(map[string]*tls.Certificate)
+		certs[ep] = make(map[string]*tls.Certificate)
 	} else {
-		for domains := range *certs[ep] {
+		for domains := range certs[ep] {
 			if domains == certKey {
 				certExists = true
 				break
@@ -166,10 +171,10 @@ func (c *Certificate) AppendCertificates(certs map[string]*DomainsCertificates, 
 		}
 	}
 	if certExists {
-		log.Warnf("Into EntryPoint %s, try to add certificate for domains which already have a certificate (%s). The new certificate will not be append to the EntryPoint.", ep, certKey)
+		log.Warnf("Into EntryPoint %s, try to add certificate for domains which already have this certificate (%s). The new certificate will not be append to the EntryPoint.", ep, certKey)
 	} else {
 		log.Debugf("Add certificate for domains %s", certKey)
-		err = certs[ep].add(certKey, &tlsCert)
+		certs[ep][certKey] = &tlsCert
 	}
 
 	return err

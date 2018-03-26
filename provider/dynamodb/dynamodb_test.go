@@ -84,14 +84,14 @@ func (m *mockDynamoDBClient) ScanPages(input *dynamodb.ScanInput, fn func(*dynam
 	return nil
 }
 
-func TestLoadDynamoConfigSuccessful(t *testing.T) {
+func TestBuildConfigurationSuccessful(t *testing.T) {
 	dbiface := &dynamoClient{
 		db: &mockDynamoDBClient{
 			testWithError: false,
 		},
 	}
 	provider := Provider{}
-	loadedConfig, err := provider.loadDynamoConfig(dbiface)
+	loadedConfig, err := provider.buildConfiguration(dbiface)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -108,14 +108,14 @@ func TestLoadDynamoConfigSuccessful(t *testing.T) {
 	}
 }
 
-func TestLoadDynamoConfigFailure(t *testing.T) {
+func TestBuildConfigurationFailure(t *testing.T) {
 	dbiface := &dynamoClient{
 		db: &mockDynamoDBClient{
 			testWithError: true,
 		},
 	}
 	provider := Provider{}
-	_, err := provider.loadDynamoConfig(dbiface)
+	_, err := provider.buildConfiguration(dbiface)
 	if err == nil {
 		t.Fatal("Expected error")
 	}

@@ -12,8 +12,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
+	"github.com/sirupsen/logrus"
 )
 
 type key string
@@ -32,10 +33,11 @@ const (
 
 // LogHandler will write each request and its response to the access log.
 type LogHandler struct {
-	logger   *logrus.Logger
-	file     *os.File
-	filePath string
-	mu       sync.Mutex
+	config         *types.AccessLog
+	logger         *logrus.Logger
+	file           *os.File
+	mu             sync.Mutex
+	httpCodeRanges types.HTTPCodeRanges
 }
 
 // NewLogHandler creates a new LogHandler
@@ -66,7 +68,22 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 		Hooks:     make(logrus.LevelHooks),
 		Level:     logrus.InfoLevel,
 	}
-	return &LogHandler{logger: logger, file: file, filePath: config.FilePath}, nil
+
+	logHandler := &LogHandler{
+		config: config,
+		logger: logger,
+		file:   file,
+	}
+
+	if config.Filters != nil {
+		if httpCodeRanges, err := types.NewHTTPCodeRanges(config.Filters.StatusCodes); err != nil {
+			log.Errorf("Failed to create new HTTP code ranges: %s", err)
+		} else {
+			logHandler.httpCodeRanges = httpCodeRanges
+		}
+	}
+
+	return logHandler, nil
 }
 
 func openAccessLogFile(filePath string) (*os.File, error) {
@@ -127,7 +144,6 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 
 	core[ClientAddr] = req.RemoteAddr
 	core[ClientHost], core[ClientPort] = silentSplitHostPort(req.RemoteAddr)
-	core[ClientUsername] = usernameIfPresent(req.URL)
 
 	if forwardedFor := req.Header.Get("X-Forwarded-For"); forwardedFor != "" {
 		core[ClientHost] = forwardedFor
@@ -136,6 +152,8 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 	crw := &captureResponseWriter{rw: rw}
 
 	next.ServeHTTP(crw, reqWithDataTable)
+
+	core[ClientUsername] = usernameIfPresent(reqWithDataTable.URL)
 
 	logDataTable.DownstreamResponse = crw.Header()
 	l.logTheRoundTrip(logDataTable, crr, crw)
@@ -157,7 +175,7 @@ func (l *LogHandler) Rotate() error {
 		}(l.file)
 	}
 
-	l.file, err = os.OpenFile(l.filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
+	l.file, err = os.OpenFile(l.config.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
 	if err != nil {
 		return err
 	}
@@ -189,53 +207,80 @@ func usernameIfPresent(theURL *url.URL) string {
 func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestReader, crw *captureResponseWriter) {
 	core := logDataTable.Core
 
-	if core[RetryAttempts] == nil {
-		core[RetryAttempts] = 0
+	retryAttempts, ok := core[RetryAttempts].(int)
+	if !ok {
+		retryAttempts = 0
 	}
+	core[RetryAttempts] = retryAttempts
+
 	if crr != nil {
 		core[RequestContentSize] = crr.count
 	}
 
 	core[DownstreamStatus] = crw.Status()
-	core[DownstreamStatusLine] = fmt.Sprintf("%03d %s", crw.Status(), http.StatusText(crw.Status()))
-	core[DownstreamContentSize] = crw.Size()
-	if original, ok := core[OriginContentSize]; ok {
-		o64 := original.(int64)
-		if o64 != crw.Size() && 0 != crw.Size() {
-			core[GzipRatio] = float64(o64) / float64(crw.Size())
+
+	if l.keepAccessLog(crw.Status(), retryAttempts) {
+		core[DownstreamStatusLine] = fmt.Sprintf("%03d %s", crw.Status(), http.StatusText(crw.Status()))
+		core[DownstreamContentSize] = crw.Size()
+		if original, ok := core[OriginContentSize]; ok {
+			o64 := original.(int64)
+			if o64 != crw.Size() && 0 != crw.Size() {
+				core[GzipRatio] = float64(o64) / float64(crw.Size())
+			}
+		}
+
+		// n.b. take care to perform time arithmetic using UTC to avoid errors at DST boundaries
+		total := time.Now().UTC().Sub(core[StartUTC].(time.Time))
+		core[Duration] = total
+		core[Overhead] = total
+		if origin, ok := core[OriginDuration]; ok {
+			core[Overhead] = total - origin.(time.Duration)
+		}
+
+		fields := logrus.Fields{}
+
+		for k, v := range logDataTable.Core {
+			if l.config.Fields.Keep(k) {
+				fields[k] = v
+			}
+		}
+
+		l.redactHeaders(logDataTable.Request, fields, "request_")
+		l.redactHeaders(logDataTable.OriginResponse, fields, "origin_")
+		l.redactHeaders(logDataTable.DownstreamResponse, fields, "downstream_")
+
+		l.mu.Lock()
+		defer l.mu.Unlock()
+		l.logger.WithFields(fields).Println()
+	}
+}
+
+func (l *LogHandler) redactHeaders(headers http.Header, fields logrus.Fields, prefix string) {
+	for k := range headers {
+		v := l.config.Fields.KeepHeader(k)
+		if v == types.AccessLogKeep {
+			fields[prefix+k] = headers.Get(k)
+		} else if v == types.AccessLogRedact {
+			fields[prefix+k] = "REDACTED"
 		}
 	}
+}
 
-	// n.b. take care to perform time arithmetic using UTC to avoid errors at DST boundaries
-	total := time.Now().UTC().Sub(core[StartUTC].(time.Time))
-	core[Duration] = total
-	if origin, ok := core[OriginDuration]; ok {
-		core[Overhead] = total - origin.(time.Duration)
-	} else {
-		core[Overhead] = total
+func (l *LogHandler) keepAccessLog(statusCode, retryAttempts int) bool {
+	switch {
+	case l.config.Filters == nil:
+		// no filters were specified
+		return true
+	case len(l.httpCodeRanges) == 0 && l.config.Filters.RetryAttempts == false:
+		// empty filters were specified, e.g. by passing --accessLog.filters only (without other filter options)
+		return true
+	case l.httpCodeRanges.Contains(statusCode):
+		return true
+	case l.config.Filters.RetryAttempts == true && retryAttempts > 0:
+		return true
+	default:
+		return false
 	}
-
-	fields := logrus.Fields{}
-
-	for k, v := range logDataTable.Core {
-		fields[k] = v
-	}
-
-	for k := range logDataTable.Request {
-		fields["request_"+k] = logDataTable.Request.Get(k)
-	}
-
-	for k := range logDataTable.OriginResponse {
-		fields["origin_"+k] = logDataTable.OriginResponse.Get(k)
-	}
-
-	for k := range logDataTable.DownstreamResponse {
-		fields["downstream_"+k] = logDataTable.DownstreamResponse.Get(k)
-	}
-
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	l.logger.WithFields(fields).Println()
 }
 
 //-------------------------------------------------------------------------------------------------

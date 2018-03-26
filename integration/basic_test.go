@@ -68,7 +68,7 @@ func (s *SimpleSuite) TestDefaultEntryPoints(c *check.C) {
 	defer cmd.Process.Kill()
 
 	err = try.Do(500*time.Millisecond, func() error {
-		expected := "\"DefaultEntryPoints\":[\"http\"]"
+		expected := `\"DefaultEntryPoints\":[\"http\"]`
 		actual := output.String()
 
 		if !strings.Contains(actual, expected) {
@@ -128,6 +128,10 @@ func (s *SimpleSuite) TestRequestAcceptGraceTimeout(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/service", 3*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 
+	// Check that /ping endpoint is responding with 200.
+	err = try.GetRequest("http://127.0.0.1:8001/ping", 3*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
 	// Send SIGTERM to Traefik.
 	proc, err := os.FindProcess(cmd.Process.Pid)
 	c.Assert(err, checker.IsNil)
@@ -142,6 +146,12 @@ func (s *SimpleSuite) TestRequestAcceptGraceTimeout(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer resp.Body.Close()
 	c.Assert(resp.StatusCode, checker.Equals, http.StatusOK)
+
+	// ping endpoint should now return a Service Unavailable.
+	resp, err = http.Get("http://127.0.0.1:8001/ping")
+	c.Assert(err, checker.IsNil)
+	defer resp.Body.Close()
+	c.Assert(resp.StatusCode, checker.Equals, http.StatusServiceUnavailable)
 
 	// Expect Traefik to shut down gracefully once the request accepting grace
 	// period has elapsed.

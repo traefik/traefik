@@ -17,8 +17,8 @@ limitations under the License.
 package v1
 
 import (
-	"k8s.io/client-go/pkg/api"
-	"k8s.io/client-go/pkg/api/v1"
+	"k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 // The NodeExpansion interface allows manually adding extra methods to the NodeInterface.
@@ -32,7 +32,7 @@ type NodeExpansion interface {
 // the node that the server returns, or an error.
 func (c *nodes) PatchStatus(nodeName string, data []byte) (*v1.Node, error) {
 	result := &v1.Node{}
-	err := c.client.Patch(api.StrategicMergePatchType).
+	err := c.client.Patch(types.StrategicMergePatchType).
 		Resource("nodes").
 		Name(nodeName).
 		SubResource("status").

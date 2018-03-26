@@ -109,7 +109,8 @@ func (f *File) NewSections(names ...string) (err error) {
 func (f *File) GetSection(name string) (*Section, error) {
 	if len(name) == 0 {
 		name = DEFAULT_SECTION
-	} else if f.options.Insensitive {
+	}
+	if f.options.Insensitive {
 		name = strings.ToLower(name)
 	}
 
@@ -341,6 +342,12 @@ func (f *File) writeToBuffer(indent string) (*bytes.Buffer, error) {
 					val = "`" + val + "`"
 				}
 				if _, err := buf.WriteString(equalSign + val + LineBreak); err != nil {
+					return nil, err
+				}
+			}
+
+			for _, val := range key.nestedValues {
+				if _, err := buf.WriteString(indent + "  " + val + LineBreak); err != nil {
 					return nil, err
 				}
 			}

@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/types"
 	"github.com/xenolf/lego/acme"
 )
 
@@ -34,7 +35,7 @@ type ChallengeCert struct {
 	certificate *tls.Certificate
 }
 
-// Init inits account struct
+// Init account struct
 func (a *Account) Init() error {
 	err := a.DomainsCertificate.Init()
 	if err != nil {
@@ -49,6 +50,7 @@ func (a *Account) Init() error {
 			}
 			cert.certificate = &certificate
 		}
+
 		if cert.certificate.Leaf == nil {
 			leaf, err := x509.ParseCertificate(cert.certificate.Certificate[0])
 			if err != nil {
@@ -67,8 +69,14 @@ func NewAccount(email string) (*Account, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	domainsCerts := DomainsCertificates{Certs: []*DomainsCertificate{}}
-	domainsCerts.Init()
+
+	err = domainsCerts.Init()
+	if err != nil {
+		return nil, err
+	}
+
 	return &Account{
 		Email:              email,
 		PrivateKey:         x509.MarshalPKCS1PrivateKey(privateKey),
@@ -91,6 +99,7 @@ func (a *Account) GetPrivateKey() crypto.PrivateKey {
 	if privateKey, err := x509.ParsePKCS1PrivateKey(a.PrivateKey); err == nil {
 		return privateKey
 	}
+
 	log.Errorf("Cannot unmarshall private key %+v", a.PrivateKey)
 	return nil
 }
@@ -122,9 +131,11 @@ func (dc *DomainsCertificates) Less(i, j int) bool {
 	if reflect.DeepEqual(dc.Certs[i].Domains, dc.Certs[j].Domains) {
 		return dc.Certs[i].tlsCert.Leaf.NotAfter.After(dc.Certs[j].tlsCert.Leaf.NotAfter)
 	}
+
 	if dc.Certs[i].Domains.Main == dc.Certs[j].Domains.Main {
 		return strings.Join(dc.Certs[i].Domains.SANs, ",") < strings.Join(dc.Certs[j].Domains.SANs, ",")
 	}
+
 	return dc.Certs[i].Domains.Main < dc.Certs[j].Domains.Main
 }
 
@@ -142,29 +153,34 @@ func (dc *DomainsCertificates) removeDuplicates() {
 	}
 }
 
-// Init inits DomainsCertificates
+// Init DomainsCertificates
 func (dc *DomainsCertificates) Init() error {
 	dc.lock.Lock()
 	defer dc.lock.Unlock()
+
 	for _, domainsCertificate := range dc.Certs {
 		tlsCert, err := tls.X509KeyPair(domainsCertificate.Certificate.Certificate, domainsCertificate.Certificate.PrivateKey)
 		if err != nil {
 			return err
 		}
+
 		domainsCertificate.tlsCert = &tlsCert
+
 		if domainsCertificate.tlsCert.Leaf == nil {
 			leaf, err := x509.ParseCertificate(domainsCertificate.tlsCert.Certificate[0])
 			if err != nil {
 				return err
 			}
+
 			domainsCertificate.tlsCert.Leaf = leaf
 		}
 	}
+
 	dc.removeDuplicates()
 	return nil
 }
 
-func (dc *DomainsCertificates) renewCertificates(acmeCert *Certificate, domain Domain) error {
+func (dc *DomainsCertificates) renewCertificates(acmeCert *Certificate, domain types.Domain) error {
 	dc.lock.Lock()
 	defer dc.lock.Unlock()
 
@@ -174,15 +190,17 @@ func (dc *DomainsCertificates) renewCertificates(acmeCert *Certificate, domain D
 			if err != nil {
 				return err
 			}
+
 			domainsCertificate.Certificate = acmeCert
 			domainsCertificate.tlsCert = &tlsCert
 			return nil
 		}
 	}
+
 	return fmt.Errorf("certificate to renew not found for domain %s", domain.Main)
 }
 
-func (dc *DomainsCertificates) addCertificateForDomains(acmeCert *Certificate, domain Domain) (*DomainsCertificate, error) {
+func (dc *DomainsCertificates) addCertificateForDomains(acmeCert *Certificate, domain types.Domain) (*DomainsCertificate, error) {
 	dc.lock.Lock()
 	defer dc.lock.Unlock()
 
@@ -190,18 +208,21 @@ func (dc *DomainsCertificates) addCertificateForDomains(acmeCert *Certificate, d
 	if err != nil {
 		return nil, err
 	}
+
 	cert := DomainsCertificate{Domains: domain, Certificate: acmeCert, tlsCert: &tlsCert}
 	dc.Certs = append(dc.Certs, &cert)
+
 	return &cert, nil
 }
 
 func (dc *DomainsCertificates) getCertificateForDomain(domainToFind string) (*DomainsCertificate, bool) {
 	dc.lock.RLock()
 	defer dc.lock.RUnlock()
+
 	for _, domainsCertificate := range dc.Certs {
-		domains := []string{}
-		domains = append(domains, domainsCertificate.Domains.Main)
+		domains := []string{domainsCertificate.Domains.Main}
 		domains = append(domains, domainsCertificate.Domains.SANs...)
+
 		for _, domain := range domains {
 			if domain == domainToFind {
 				return domainsCertificate, true
@@ -211,9 +232,10 @@ func (dc *DomainsCertificates) getCertificateForDomain(domainToFind string) (*Do
 	return nil, false
 }
 
-func (dc *DomainsCertificates) exists(domainToFind Domain) (*DomainsCertificate, bool) {
+func (dc *DomainsCertificates) exists(domainToFind types.Domain) (*DomainsCertificate, bool) {
 	dc.lock.RLock()
 	defer dc.lock.RUnlock()
+
 	for _, domainsCertificate := range dc.Certs {
 		if reflect.DeepEqual(domainToFind, domainsCertificate.Domains) {
 			return domainsCertificate, true
@@ -224,16 +246,18 @@ func (dc *DomainsCertificates) exists(domainToFind Domain) (*DomainsCertificate,
 
 func (dc *DomainsCertificates) toDomainsMap() map[string]*tls.Certificate {
 	domainsCertificatesMap := make(map[string]*tls.Certificate)
+
 	for _, domainCertificate := range dc.Certs {
 		certKey := domainCertificate.Domains.Main
+
 		if domainCertificate.Domains.SANs != nil {
 			sort.Strings(domainCertificate.Domains.SANs)
+
 			for _, dnsName := range domainCertificate.Domains.SANs {
 				if dnsName != domainCertificate.Domains.Main {
 					certKey += fmt.Sprintf(",%s", dnsName)
 				}
 			}
-
 		}
 		domainsCertificatesMap[certKey] = domainCertificate.tlsCert
 	}
@@ -242,7 +266,7 @@ func (dc *DomainsCertificates) toDomainsMap() map[string]*tls.Certificate {
 
 // DomainsCertificate contains a certificate for multiple domains
 type DomainsCertificate struct {
-	Domains     Domain
+	Domains     types.Domain
 	Certificate *Certificate
 	tlsCert     *tls.Certificate
 }
@@ -254,8 +278,9 @@ func (dc *DomainsCertificate) needRenew() bool {
 			// If there's an error, we assume the cert is broken, and needs update
 			return true
 		}
+
 		// <= 30 days left, renew certificate
-		if crt.NotAfter.Before(time.Now().Add(time.Duration(24 * 30 * time.Hour))) {
+		if crt.NotAfter.Before(time.Now().Add(24 * 30 * time.Hour)) {
 			return true
 		}
 	}

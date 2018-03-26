@@ -1,0 +1,1111 @@
+package docker
+
+import (
+	"strconv"
+	"testing"
+	"time"
+
+	"github.com/containous/flaeg"
+	"github.com/containous/traefik/provider/label"
+	"github.com/containous/traefik/types"
+	docker "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/go-connections/nat"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestDockerBuildConfiguration(t *testing.T) {
+	testCases := []struct {
+		desc              string
+		containers        []docker.ContainerJSON
+		expectedFrontends map[string]*types.Frontend
+		expectedBackends  map[string]*types.Backend
+	}{
+		{
+			desc:              "when no container",
+			containers:        []docker.ContainerJSON{},
+			expectedFrontends: map[string]*types.Frontend{},
+			expectedBackends:  map[string]*types.Backend{},
+		},
+		{
+			desc: "when basic container configuration",
+			containers: []docker.ContainerJSON{
+				containerJSON(
+					name("test"),
+					ports(nat.PortMap{
+						"80/tcp": {},
+					}),
+					withNetwork("bridge", ipv4("127.0.0.1")),
+				),
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-Host-test-docker-localhost-0": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					BasicAuth:      []string{},
+					Routes: map[string]types.Route{
+						"route-frontend-Host-test-docker-localhost-0": {
+							Rule: "Host:test.docker.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test": {
+					Servers: map[string]types.Server{
+						"server-test": {
+							URL:    "http://127.0.0.1:80",
+							Weight: 0,
+						},
+					},
+					CircuitBreaker: nil,
+				},
+			},
+		},
+		{
+			desc: "when container has label 'enable' to false",
+			containers: []docker.ContainerJSON{
+				containerJSON(
+					name("test"),
+					labels(map[string]string{
+						label.TraefikEnable:   "false",
+						label.TraefikPort:     "666",
+						label.TraefikProtocol: "https",
+						label.TraefikWeight:   "12",
+						label.TraefikBackend:  "foobar",
+					}),
+					ports(nat.PortMap{
+						"80/tcp": {},
+					}),
+					withNetwork("bridge", ipv4("127.0.0.1")),
+				),
+			},
+			expectedFrontends: map[string]*types.Frontend{},
+			expectedBackends:  map[string]*types.Backend{},
+		},
+		{
+			desc: "when all labels are set",
+			containers: []docker.ContainerJSON{
+				containerJSON(
+					name("test1"),
+					labels(map[string]string{
+						label.TraefikPort:     "666",
+						label.TraefikProtocol: "https",
+						label.TraefikWeight:   "12",
+
+						label.TraefikBackend: "foobar",
+
+						label.TraefikBackendCircuitBreakerExpression:         "NetworkErrorRatio() > 0.5",
+						label.TraefikBackendHealthCheckPath:                  "/health",
+						label.TraefikBackendHealthCheckPort:                  "880",
+						label.TraefikBackendHealthCheckInterval:              "6",
+						label.TraefikBackendLoadBalancerMethod:               "drr",
+						label.TraefikBackendLoadBalancerSticky:               "true",
+						label.TraefikBackendLoadBalancerStickiness:           "true",
+						label.TraefikBackendLoadBalancerStickinessCookieName: "chocolate",
+						label.TraefikBackendMaxConnAmount:                    "666",
+						label.TraefikBackendMaxConnExtractorFunc:             "client.ip",
+						label.TraefikBackendBufferingMaxResponseBodyBytes:    "10485760",
+						label.TraefikBackendBufferingMemResponseBodyBytes:    "2097152",
+						label.TraefikBackendBufferingMaxRequestBodyBytes:     "10485760",
+						label.TraefikBackendBufferingMemRequestBodyBytes:     "2097152",
+						label.TraefikBackendBufferingRetryExpression:         "IsNetworkError() && Attempts() <= 2",
+
+						label.TraefikFrontendAuthBasic:                 "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendEntryPoints:               "http,https",
+						label.TraefikFrontendPassHostHeader:            "true",
+						label.TraefikFrontendPassTLSCert:               "true",
+						label.TraefikFrontendPriority:                  "666",
+						label.TraefikFrontendRedirectEntryPoint:        "https",
+						label.TraefikFrontendRedirectRegex:             "nope",
+						label.TraefikFrontendRedirectReplacement:       "nope",
+						label.TraefikFrontendRedirectPermanent:         "true",
+						label.TraefikFrontendRule:                      "Host:traefik.io",
+						label.TraefikFrontendWhiteListSourceRange:      "10.10.10.10",
+						label.TraefikFrontendWhiteListUseXForwardedFor: "true",
+
+						label.TraefikFrontendRequestHeaders:          "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
+						label.TraefikFrontendResponseHeaders:         "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
+						label.TraefikFrontendSSLProxyHeaders:         "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
+						label.TraefikFrontendAllowedHosts:            "foo,bar,bor",
+						label.TraefikFrontendHostsProxyHeaders:       "foo,bar,bor",
+						label.TraefikFrontendSSLHost:                 "foo",
+						label.TraefikFrontendCustomFrameOptionsValue: "foo",
+						label.TraefikFrontendContentSecurityPolicy:   "foo",
+						label.TraefikFrontendPublicKey:               "foo",
+						label.TraefikFrontendReferrerPolicy:          "foo",
+						label.TraefikFrontendCustomBrowserXSSValue:   "foo",
+						label.TraefikFrontendSTSSeconds:              "666",
+						label.TraefikFrontendSSLRedirect:             "true",
+						label.TraefikFrontendSSLTemporaryRedirect:    "true",
+						label.TraefikFrontendSTSIncludeSubdomains:    "true",
+						label.TraefikFrontendSTSPreload:              "true",
+						label.TraefikFrontendForceSTSHeader:          "true",
+						label.TraefikFrontendFrameDeny:               "true",
+						label.TraefikFrontendContentTypeNosniff:      "true",
+						label.TraefikFrontendBrowserXSSFilter:        "true",
+						label.TraefikFrontendIsDevelopment:           "true",
+
+						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageStatus:  "404",
+						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageBackend: "foobar",
+						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageQuery:   "foo_query",
+						label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageStatus:  "500,600",
+						label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageBackend: "foobar",
+						label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageQuery:   "bar_query",
+
+						label.TraefikFrontendRateLimitExtractorFunc:                                        "client.ip",
+						label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitPeriod:  "6",
+						label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitAverage: "12",
+						label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitBurst:   "18",
+						label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitPeriod:  "3",
+						label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitAverage: "6",
+						label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitBurst:   "9",
+					}),
+					ports(nat.PortMap{
+						"80/tcp": {},
+					}),
+					withNetwork("bridge", ipv4("127.0.0.1")),
+				),
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-Host-traefik-io-0": {
+					EntryPoints: []string{
+						"http",
+						"https",
+					},
+					Backend: "backend-foobar",
+					Routes: map[string]types.Route{
+						"route-frontend-Host-traefik-io-0": {
+							Rule: "Host:traefik.io",
+						},
+					},
+					PassHostHeader: true,
+					PassTLSCert:    true,
+					Priority:       666,
+					BasicAuth: []string{
+						"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+						"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+					},
+					WhiteList: &types.WhiteList{
+						SourceRange:      []string{"10.10.10.10"},
+						UseXForwardedFor: true,
+					},
+					Headers: &types.Headers{
+						CustomRequestHeaders: map[string]string{
+							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+							"Content-Type":                 "application/json; charset=utf-8",
+						},
+						CustomResponseHeaders: map[string]string{
+							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+							"Content-Type":                 "application/json; charset=utf-8",
+						},
+						AllowedHosts: []string{
+							"foo",
+							"bar",
+							"bor",
+						},
+						HostsProxyHeaders: []string{
+							"foo",
+							"bar",
+							"bor",
+						},
+						SSLRedirect:          true,
+						SSLTemporaryRedirect: true,
+						SSLHost:              "foo",
+						SSLProxyHeaders: map[string]string{
+							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+							"Content-Type":                 "application/json; charset=utf-8",
+						},
+						STSSeconds:              666,
+						STSIncludeSubdomains:    true,
+						STSPreload:              true,
+						ForceSTSHeader:          true,
+						FrameDeny:               true,
+						CustomFrameOptionsValue: "foo",
+						ContentTypeNosniff:      true,
+						BrowserXSSFilter:        true,
+						CustomBrowserXSSValue:   "foo",
+						ContentSecurityPolicy:   "foo",
+						PublicKey:               "foo",
+						ReferrerPolicy:          "foo",
+						IsDevelopment:           true,
+					},
+					Errors: map[string]*types.ErrorPage{
+						"foo": {
+							Status:  []string{"404"},
+							Query:   "foo_query",
+							Backend: "foobar",
+						},
+						"bar": {
+							Status:  []string{"500", "600"},
+							Query:   "bar_query",
+							Backend: "foobar",
+						},
+					},
+					RateLimit: &types.RateLimit{
+						ExtractorFunc: "client.ip",
+						RateSet: map[string]*types.Rate{
+							"foo": {
+								Period:  flaeg.Duration(6 * time.Second),
+								Average: 12,
+								Burst:   18,
+							},
+							"bar": {
+								Period:  flaeg.Duration(3 * time.Second),
+								Average: 6,
+								Burst:   9,
+							},
+						},
+					},
+					Redirect: &types.Redirect{
+						EntryPoint:  "https",
+						Regex:       "",
+						Replacement: "",
+						Permanent:   true,
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-foobar": {
+					Servers: map[string]types.Server{
+						"server-test1": {
+							URL:    "https://127.0.0.1:666",
+							Weight: 12,
+						},
+					},
+					CircuitBreaker: &types.CircuitBreaker{
+						Expression: "NetworkErrorRatio() > 0.5",
+					},
+					LoadBalancer: &types.LoadBalancer{
+						Method: "drr",
+						Sticky: true,
+						Stickiness: &types.Stickiness{
+							CookieName: "chocolate",
+						},
+					},
+					MaxConn: &types.MaxConn{
+						Amount:        666,
+						ExtractorFunc: "client.ip",
+					},
+					HealthCheck: &types.HealthCheck{
+						Path:     "/health",
+						Port:     880,
+						Interval: "6",
+					},
+					Buffering: &types.Buffering{
+						MaxResponseBodyBytes: 10485760,
+						MemResponseBodyBytes: 2097152,
+						MaxRequestBodyBytes:  10485760,
+						MemRequestBodyBytes:  2097152,
+						RetryExpression:      "IsNetworkError() && Attempts() <= 2",
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			var dockerDataList []dockerData
+			for _, cont := range test.containers {
+				dData := parseContainer(cont)
+				dockerDataList = append(dockerDataList, dData)
+			}
+
+			provider := &Provider{
+				Domain:           "docker.localhost",
+				ExposedByDefault: true,
+			}
+			actualConfig := provider.buildConfigurationV2(dockerDataList)
+			require.NotNil(t, actualConfig, "actualConfig")
+
+			assert.EqualValues(t, test.expectedBackends, actualConfig.Backends)
+			assert.EqualValues(t, test.expectedFrontends, actualConfig.Frontends)
+		})
+	}
+}
+
+func TestDockerTraefikFilter(t *testing.T) {
+	testCases := []struct {
+		container docker.ContainerJSON
+		expected  bool
+		provider  *Provider
+	}{
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config:          &container.Config{},
+				NetworkSettings: &docker.NetworkSettings{},
+			},
+			expected: false,
+			provider: &Provider{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						label.TraefikEnable: "false",
+					},
+				},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp": {},
+						},
+					},
+				},
+			},
+			provider: &Provider{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
+			expected: false,
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						label.TraefikFrontendRule: "Host:foo.bar",
+					},
+				},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp": {},
+						},
+					},
+				},
+			},
+			provider: &Provider{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
+			expected: true,
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container-multi-ports",
+				},
+				Config: &container.Config{},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp":  {},
+							"443/tcp": {},
+						},
+					},
+				},
+			},
+			provider: &Provider{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
+			expected: true,
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config: &container.Config{},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp": {},
+						},
+					},
+				},
+			},
+			provider: &Provider{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
+			expected: true,
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						label.TraefikPort: "80",
+					},
+				},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp":  {},
+							"443/tcp": {},
+						},
+					},
+				},
+			},
+			provider: &Provider{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
+			expected: true,
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						label.TraefikEnable: "true",
+					},
+				},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp": {},
+						},
+					},
+				},
+			},
+			provider: &Provider{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
+			expected: true,
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						label.TraefikEnable: "anything",
+					},
+				},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp": {},
+						},
+					},
+				},
+			},
+			provider: &Provider{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
+			expected: true,
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						label.TraefikFrontendRule: "Host:foo.bar",
+					},
+				},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp": {},
+						},
+					},
+				},
+			},
+			provider: &Provider{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
+			expected: true,
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config: &container.Config{},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp": {},
+						},
+					},
+				},
+			},
+			provider: &Provider{
+				Domain:           "test",
+				ExposedByDefault: false,
+			},
+			expected: false,
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						label.TraefikEnable: "true",
+					},
+				},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp": {},
+						},
+					},
+				},
+			},
+			provider: &Provider{
+				Domain:           "test",
+				ExposedByDefault: false,
+			},
+			expected: true,
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						label.TraefikEnable: "true",
+					},
+				},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp": {},
+						},
+					},
+				},
+			},
+			provider: &Provider{
+				ExposedByDefault: false,
+			},
+			expected: false,
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						label.TraefikEnable:       "true",
+						label.TraefikFrontendRule: "Host:i.love.this.host",
+					},
+				},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp": {},
+						},
+					},
+				},
+			},
+			provider: &Provider{
+				ExposedByDefault: false,
+			},
+			expected: true,
+		},
+	}
+
+	for containerID, test := range testCases {
+		test := test
+		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
+			t.Parallel()
+
+			dData := parseContainer(test.container)
+			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
+			dData.SegmentLabels = segmentProperties[""]
+
+			actual := test.provider.containerFilter(dData)
+			if actual != test.expected {
+				t.Errorf("expected %v for %+v, got %+v", test.expected, test, actual)
+			}
+		})
+	}
+}
+
+func TestDockerGetFuncStringLabel(t *testing.T) {
+	testCases := []struct {
+		labels       map[string]string
+		labelName    string
+		defaultValue string
+		expected     string
+	}{
+		{
+			labels:       nil,
+			labelName:    label.TraefikWeight,
+			defaultValue: label.DefaultWeight,
+			expected:     "0",
+		},
+		{
+			labels: map[string]string{
+				label.TraefikWeight: "10",
+			},
+			labelName:    label.TraefikWeight,
+			defaultValue: label.DefaultWeight,
+			expected:     "10",
+		},
+	}
+
+	for containerID, test := range testCases {
+		test := test
+		t.Run(test.labelName+strconv.Itoa(containerID), func(t *testing.T) {
+			t.Parallel()
+
+			actual := getFuncStringLabel(test.labelName, test.defaultValue)(test.labels)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestDockerGetSliceStringLabel(t *testing.T) {
+	testCases := []struct {
+		desc      string
+		labels    map[string]string
+		labelName string
+		expected  []string
+	}{
+		{
+			desc:     "no whitelist-label",
+			labels:   nil,
+			expected: nil,
+		},
+		{
+			desc: "whitelist-label with empty string",
+			labels: map[string]string{
+				label.TraefikFrontendWhiteListSourceRange: "",
+			},
+			labelName: label.TraefikFrontendWhiteListSourceRange,
+			expected:  nil,
+		},
+		{
+			desc: "whitelist-label with IPv4 mask",
+			labels: map[string]string{
+				label.TraefikFrontendWhiteListSourceRange: "1.2.3.4/16",
+			},
+			labelName: label.TraefikFrontendWhiteListSourceRange,
+			expected: []string{
+				"1.2.3.4/16",
+			},
+		},
+		{
+			desc: "whitelist-label with IPv6 mask",
+			labels: map[string]string{
+				label.TraefikFrontendWhiteListSourceRange: "fe80::/16",
+			},
+			labelName: label.TraefikFrontendWhiteListSourceRange,
+			expected: []string{
+				"fe80::/16",
+			},
+		},
+		{
+			desc: "whitelist-label with multiple masks",
+			labels: map[string]string{
+				label.TraefikFrontendWhiteListSourceRange: "1.1.1.1/24, 1234:abcd::42/32",
+			},
+			labelName: label.TraefikFrontendWhiteListSourceRange,
+			expected: []string{
+				"1.1.1.1/24",
+				"1234:abcd::42/32",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := getFuncSliceStringLabel(test.labelName)(test.labels)
+			assert.EqualValues(t, test.expected, actual)
+		})
+	}
+}
+
+func TestDockerGetFrontendName(t *testing.T) {
+	testCases := []struct {
+		container docker.ContainerJSON
+		expected  string
+	}{
+		{
+			container: containerJSON(name("foo")),
+			expected:  "Host-foo-docker-localhost-0",
+		},
+		{
+			container: containerJSON(labels(map[string]string{
+				label.TraefikFrontendRule: "Headers:User-Agent,bat/0.1.0",
+			})),
+			expected: "Headers-User-Agent-bat-0-1-0-0",
+		},
+		{
+			container: containerJSON(labels(map[string]string{
+				"com.docker.compose.project": "foo",
+				"com.docker.compose.service": "bar",
+			})),
+			expected: "Host-bar-foo-docker-localhost-0",
+		},
+		{
+			container: containerJSON(labels(map[string]string{
+				label.TraefikFrontendRule: "Host:foo.bar",
+			})),
+			expected: "Host-foo-bar-0",
+		},
+		{
+			container: containerJSON(labels(map[string]string{
+				label.TraefikFrontendRule: "Path:/test",
+			})),
+			expected: "Path-test-0",
+		},
+		{
+			container: containerJSON(labels(map[string]string{
+				label.TraefikFrontendRule: "PathPrefix:/test2",
+			})),
+			expected: "PathPrefix-test2-0",
+		},
+	}
+
+	for containerID, test := range testCases {
+		test := test
+		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
+			t.Parallel()
+
+			dData := parseContainer(test.container)
+			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
+			dData.SegmentLabels = segmentProperties[""]
+
+			provider := &Provider{
+				Domain: "docker.localhost",
+			}
+
+			actual := provider.getFrontendName(dData, 0)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestDockerGetFrontendRule(t *testing.T) {
+	testCases := []struct {
+		container docker.ContainerJSON
+		expected  string
+	}{
+		{
+			container: containerJSON(name("foo")),
+			expected:  "Host:foo.docker.localhost",
+		},
+		{
+			container: containerJSON(name("bar")),
+			expected:  "Host:bar.docker.localhost",
+		},
+		{
+			container: containerJSON(labels(map[string]string{
+				label.TraefikFrontendRule: "Host:foo.bar",
+			})),
+			expected: "Host:foo.bar",
+		}, {
+			container: containerJSON(labels(map[string]string{
+				"com.docker.compose.project": "foo",
+				"com.docker.compose.service": "bar",
+			})),
+			expected: "Host:bar.foo.docker.localhost",
+		},
+		{
+			container: containerJSON(labels(map[string]string{
+				label.TraefikFrontendRule: "Path:/test",
+			})),
+			expected: "Path:/test",
+		},
+	}
+
+	for containerID, test := range testCases {
+		test := test
+		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
+			t.Parallel()
+
+			dData := parseContainer(test.container)
+			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
+			dData.SegmentLabels = segmentProperties[""]
+
+			provider := &Provider{
+				Domain: "docker.localhost",
+			}
+			actual := provider.getFrontendRule(dData)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestDockerGetBackendName(t *testing.T) {
+	testCases := []struct {
+		container docker.ContainerJSON
+		expected  string
+	}{
+		{
+			container: containerJSON(name("foo")),
+			expected:  "foo",
+		},
+		{
+			container: containerJSON(name("bar")),
+			expected:  "bar",
+		},
+		{
+			container: containerJSON(labels(map[string]string{
+				label.TraefikBackend: "foobar",
+			})),
+			expected: "foobar",
+		},
+		{
+			container: containerJSON(labels(map[string]string{
+				"com.docker.compose.project": "foo",
+				"com.docker.compose.service": "bar",
+			})),
+			expected: "bar-foo",
+		},
+	}
+
+	for containerID, test := range testCases {
+		test := test
+		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
+			t.Parallel()
+
+			dData := parseContainer(test.container)
+			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
+			dData.SegmentLabels = segmentProperties[""]
+
+			actual := getBackendName(dData)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestDockerGetIPAddress(t *testing.T) {
+	testCases := []struct {
+		container docker.ContainerJSON
+		expected  string
+	}{
+		{
+			container: containerJSON(withNetwork("testnet", ipv4("10.11.12.13"))),
+			expected:  "10.11.12.13",
+		},
+		{
+			container: containerJSON(
+				labels(map[string]string{
+					labelDockerNetwork: "testnet",
+				}),
+				withNetwork("testnet", ipv4("10.11.12.13")),
+			),
+			expected: "10.11.12.13",
+		},
+		{
+			container: containerJSON(
+				labels(map[string]string{
+					labelDockerNetwork: "testnet2",
+				}),
+				withNetwork("testnet", ipv4("10.11.12.13")),
+				withNetwork("testnet2", ipv4("10.11.12.14")),
+			),
+			expected: "10.11.12.14",
+		},
+		{
+			container: containerJSON(
+				networkMode("host"),
+				withNetwork("testnet", ipv4("10.11.12.13")),
+				withNetwork("testnet2", ipv4("10.11.12.14")),
+			),
+			expected: "127.0.0.1",
+		},
+		{
+			container: containerJSON(
+				networkMode("host"),
+			),
+			expected: "127.0.0.1",
+		},
+		{
+			container: containerJSON(
+				networkMode("host"),
+				nodeIP("10.0.0.5"),
+			),
+			expected: "10.0.0.5",
+		},
+	}
+
+	for containerID, test := range testCases {
+		test := test
+		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
+			t.Parallel()
+
+			dData := parseContainer(test.container)
+			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
+			dData.SegmentLabels = segmentProperties[""]
+
+			provider := &Provider{}
+
+			actual := provider.getIPAddress(dData)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestDockerGetPort(t *testing.T) {
+	testCases := []struct {
+		container docker.ContainerJSON
+		expected  string
+	}{
+		{
+			container: containerJSON(name("foo")),
+			expected:  "",
+		},
+		{
+			container: containerJSON(ports(nat.PortMap{
+				"80/tcp": {},
+			})),
+			expected: "80",
+		},
+		{
+			container: containerJSON(ports(nat.PortMap{
+				"80/tcp":  {},
+				"443/tcp": {},
+			})),
+			expected: "80",
+		},
+		{
+			container: containerJSON(labels(map[string]string{
+				label.TraefikPort: "8080",
+			})),
+			expected: "8080",
+		},
+		{
+			container: containerJSON(labels(map[string]string{
+				label.TraefikPort: "8080",
+			}), ports(nat.PortMap{
+				"80/tcp": {},
+			})),
+			expected: "8080",
+		},
+		{
+			container: containerJSON(labels(map[string]string{
+				label.TraefikPort: "8080",
+			}), ports(nat.PortMap{
+				"8080/tcp": {},
+				"80/tcp":   {},
+			})),
+			expected: "8080",
+		},
+	}
+
+	for containerID, test := range testCases {
+		test := test
+		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
+			t.Parallel()
+
+			dData := parseContainer(test.container)
+			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
+			dData.SegmentLabels = segmentProperties[""]
+
+			actual := getPort(dData)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestWhiteList(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		labels   map[string]string
+		expected *types.WhiteList
+	}{
+		{
+			desc:     "should return nil when no white list labels",
+			labels:   map[string]string{},
+			expected: nil,
+		},
+		{
+			desc: "should return a struct when deprecated label",
+			labels: map[string]string{
+				label.TraefikFrontendWhitelistSourceRange: "10.10.10.10",
+			},
+			expected: &types.WhiteList{
+				SourceRange: []string{
+					"10.10.10.10",
+				},
+				UseXForwardedFor: false,
+			},
+		},
+		{
+			desc: "should return a struct when only range",
+			labels: map[string]string{
+				label.TraefikFrontendWhiteListSourceRange: "10.10.10.10",
+			},
+			expected: &types.WhiteList{
+				SourceRange: []string{
+					"10.10.10.10",
+				},
+				UseXForwardedFor: false,
+			},
+		},
+		{
+			desc: "should return a struct when range and UseXForwardedFor",
+			labels: map[string]string{
+				label.TraefikFrontendWhiteListSourceRange:      "10.10.10.10",
+				label.TraefikFrontendWhiteListUseXForwardedFor: "true",
+			},
+			expected: &types.WhiteList{
+				SourceRange: []string{
+					"10.10.10.10",
+				},
+				UseXForwardedFor: true,
+			},
+		},
+		{
+			desc: "should return a struct when mix deprecated label and new labels",
+			labels: map[string]string{
+				label.TraefikFrontendWhitelistSourceRange:      "20.20.20.20",
+				label.TraefikFrontendWhiteListSourceRange:      "10.10.10.10",
+				label.TraefikFrontendWhiteListUseXForwardedFor: "true",
+			},
+			expected: &types.WhiteList{
+				SourceRange: []string{
+					"10.10.10.10",
+				},
+				UseXForwardedFor: true,
+			},
+		},
+		{
+			desc: "should return nil when only UseXForwardedFor",
+			labels: map[string]string{
+				label.TraefikFrontendWhiteListUseXForwardedFor: "true",
+			},
+			expected: nil,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := getWhiteList(test.labels)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}

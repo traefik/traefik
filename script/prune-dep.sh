@@ -21,7 +21,8 @@ find vendor -type f  \( ! -iname 'licen[cs]e*' \
  -a ! -iname 'thirdparty*' \
  -a ! -iname '*.go' \
  -a ! -iname '*.c' \
- -a ! -iname '*.S' \
+ -a ! -iname '*.s' \
+ -a ! -iname '*.pl' \
  -a ! -iname '*.cc' \
  -a ! -iname '*.cpp' \
  -a ! -iname '*.cxx' \

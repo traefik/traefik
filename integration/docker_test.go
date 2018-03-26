@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/containous/traefik/integration/try"
-	"github.com/containous/traefik/types"
+	"github.com/containous/traefik/provider/label"
 	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/go-check/check"
 	d "github.com/libkermit/docker"
@@ -138,13 +138,13 @@ func (s *DockerSuite) TestDockerContainersWithLabels(c *check.C) {
 	defer os.Remove(file)
 	// Start a container with some labels
 	labels := map[string]string{
-		types.LabelFrontendRule: "Host:my.super.host",
+		label.TraefikFrontendRule: "Host:my.super.host",
 	}
 	s.startContainerWithLabels(c, "swarm:1.0.0", labels, "manage", "token://blabla")
 
 	// Start another container by replacing a '.' by a '-'
 	labels = map[string]string{
-		types.LabelFrontendRule: "Host:my-super.host",
+		label.TraefikFrontendRule: "Host:my-super.host",
 	}
 	s.startContainerWithLabels(c, "swarm:1.0.0", labels, "manage", "token://blablabla")
 	// Start traefik
@@ -159,7 +159,7 @@ func (s *DockerSuite) TestDockerContainersWithLabels(c *check.C) {
 	req.Host = "my-super.host"
 
 	// FIXME Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
-	resp, err := try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
+	_, err = try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
 	c.Assert(err, checker.IsNil)
 
 	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/version", nil)
@@ -167,7 +167,7 @@ func (s *DockerSuite) TestDockerContainersWithLabels(c *check.C) {
 	req.Host = "my.super.host"
 
 	// FIXME Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
-	resp, err = try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
+	resp, err := try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
 	c.Assert(err, checker.IsNil)
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -184,7 +184,7 @@ func (s *DockerSuite) TestDockerContainersWithOneMissingLabels(c *check.C) {
 	defer os.Remove(file)
 	// Start a container with some labels
 	labels := map[string]string{
-		types.LabelTraefikFrontendValue: "my.super.host",
+		"traefik.frontend.value": "my.super.host",
 	}
 	s.startContainerWithLabels(c, "swarm:1.0.0", labels, "manage", "token://blabla")
 
@@ -213,9 +213,9 @@ func (s *DockerSuite) TestDockerContainersWithServiceLabels(c *check.C) {
 	defer os.Remove(file)
 	// Start a container with some labels
 	labels := map[string]string{
-		types.LabelPrefix + "servicename.frontend.rule": "Host:my.super.host",
-		types.LabelFrontendRule:                         "Host:my.wrong.host",
-		types.LabelPort:                                 "2375",
+		label.Prefix + "servicename.frontend.rule": "Host:my.super.host",
+		label.TraefikFrontendRule:                  "Host:my.wrong.host",
+		label.TraefikPort:                          "2375",
 	}
 	s.startContainerWithLabels(c, "swarm:1.0.0", labels, "manage", "token://blabla")
 
@@ -248,8 +248,8 @@ func (s *DockerSuite) TestRestartDockerContainers(c *check.C) {
 	defer os.Remove(file)
 	// Start a container with some labels
 	labels := map[string]string{
-		types.LabelPrefix + "frontend.rule": "Host:my.super.host",
-		types.LabelPort:                     "2375",
+		label.Prefix + "frontend.rule": "Host:my.super.host",
+		label.TraefikPort:              "2375",
 	}
 	s.startContainerWithNameAndLabels(c, "powpow", "swarm:1.0.0", labels, "manage", "token://blabla")
 

@@ -14,9 +14,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/abronan/valkeyrie"
+	"github.com/abronan/valkeyrie/store"
 	"github.com/containous/flaeg"
-	"github.com/docker/libkv"
-	"github.com/docker/libkv/store"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -31,11 +31,11 @@ type KvSource struct {
 
 // NewKvSource creates a new KvSource
 func NewKvSource(backend store.Backend, addrs []string, options *store.Config, prefix string) (*KvSource, error) {
-	kvStore, err := libkv.NewStore(backend, addrs, options)
+	kvStore, err := valkeyrie.NewStore(backend, addrs, options)
 	return &KvSource{Store: kvStore, Prefix: prefix}, err
 }
 
-// Parse uses libkv and mapstructure to fill the structure
+// Parse uses valkeyrie and mapstructure to fill the structure
 func (kv *KvSource) Parse(cmd *flaeg.Command) (*flaeg.Command, error) {
 	err := kv.LoadConfig(cmd.Config)
 	if err != nil {

@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
@@ -13,7 +14,6 @@ import (
 	"github.com/containous/traefik/integration/helloworld"
 	"github.com/containous/traefik/integration/try"
 	"github.com/go-check/check"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -189,6 +189,7 @@ func (s *GRPCSuite) TestGRPCBuffer(c *check.C) {
 	stopStreamExample := make(chan bool)
 	defer func() { stopStreamExample <- true }()
 	lis, err := net.Listen("tcp", ":0")
+	c.Assert(err, check.IsNil)
 	_, port, err := net.SplitHostPort(lis.Addr().String())
 	c.Assert(err, check.IsNil)
 

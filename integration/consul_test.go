@@ -10,13 +10,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/abronan/valkeyrie"
+	"github.com/abronan/valkeyrie/store"
+	"github.com/abronan/valkeyrie/store/consul"
 	"github.com/containous/staert"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/integration/try"
 	"github.com/containous/traefik/types"
-	"github.com/docker/libkv"
-	"github.com/docker/libkv/store"
-	"github.com/docker/libkv/store/consul"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
 )
@@ -32,7 +32,7 @@ func (s *ConsulSuite) setupConsul(c *check.C) {
 	s.composeProject.Start(c)
 
 	consul.Register()
-	kv, err := libkv.NewStore(
+	kv, err := valkeyrie.NewStore(
 		store.CONSUL,
 		[]string{s.composeProject.Container(c, "consul").NetworkSettings.IPAddress + ":8500"},
 		&store.Config{
@@ -63,7 +63,7 @@ func (s *ConsulSuite) setupConsulTLS(c *check.C) {
 	TLSConfig, err := clientTLS.CreateTLSConfig()
 	c.Assert(err, checker.IsNil)
 
-	kv, err := libkv.NewStore(
+	kv, err := valkeyrie.NewStore(
 		store.CONSUL,
 		[]string{s.composeProject.Container(c, "consul").NetworkSettings.IPAddress + ":8585"},
 		&store.Config{
@@ -286,41 +286,6 @@ func (s *ConsulSuite) TestGlobalConfiguration(c *check.C) {
 	req.Host = "test.localhost"
 
 	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
-}
-
-func (s *ConsulSuite) skipTestGlobalConfigurationWithClientTLS(c *check.C) {
-	c.Skip("wait for relative path issue in the composefile")
-	s.setupConsulTLS(c)
-	consulHost := s.composeProject.Container(c, "consul").NetworkSettings.IPAddress
-
-	err := s.kv.Put("traefik/api/entrypoint", []byte("api"), nil)
-	c.Assert(err, checker.IsNil)
-
-	err = s.kv.Put("traefik/entrypoints/api/address", []byte(":8081"), nil)
-	c.Assert(err, checker.IsNil)
-
-	// wait for consul
-	err = try.Do(60*time.Second, try.KVExists(s.kv, "traefik/web/address"))
-	c.Assert(err, checker.IsNil)
-
-	// start traefik
-	cmd, display := s.traefikCmd(
-		withConfigFile("fixtures/simple_web.toml"),
-		"--consul",
-		"--consul.endpoint="+consulHost+":8585",
-		"--consul.tls.ca=resources/tls/ca.cert",
-		"--consul.tls.cert=resources/tls/consul.cert",
-		"--consul.tls.key=resources/tls/consul.key",
-		"--consul.tls.insecureskipverify")
-	defer display(c)
-
-	err = cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
-
-	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8081/api/providers", 60*time.Second)
 	c.Assert(err, checker.IsNil)
 }
 
@@ -658,6 +623,7 @@ func (s *ConsulSuite) TestSNIDynamicTlsConfig(c *check.C) {
 	req.Header.Set("Host", tr2.TLSClientConfig.ServerName)
 	req.Header.Set("Accept", "*/*")
 	resp, err = client.Do(req)
+	c.Assert(err, checker.IsNil)
 	cn = resp.TLS.PeerCertificates[0].Subject.CommonName
 	c.Assert(cn, checker.Equals, "snitest.org")
 }

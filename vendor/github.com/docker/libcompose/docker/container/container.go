@@ -11,12 +11,10 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
-	"github.com/docker/docker/pkg/promise"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/docker/pkg/term"
 	"github.com/docker/go-connections/nat"
@@ -24,6 +22,7 @@ import (
 	"github.com/docker/libcompose/labels"
 	"github.com/docker/libcompose/logger"
 	"github.com/docker/libcompose/project"
+	"github.com/sirupsen/logrus"
 )
 
 // Container holds information about a docker container and the service it is tied on.
@@ -180,6 +179,7 @@ func (c *Container) Run(ctx context.Context, configOverride *config.ServiceConfi
 		errCh       chan error
 		out, stderr io.Writer
 		in          io.ReadCloser
+		inFd        uintptr
 	)
 
 	if configOverride.StdinOpen {
@@ -202,18 +202,22 @@ func (c *Container) Run(ctx context.Context, configOverride *config.ServiceConfi
 		return -1, err
 	}
 
-	// set raw terminal
-	inFd, _ := term.GetFdInfo(in)
-	state, err := term.SetRawTerminal(inFd)
-	if err != nil {
-		return -1, err
+	if configOverride.StdinOpen {
+		// set raw terminal
+		inFd, _ = term.GetFdInfo(in)
+		state, err := term.SetRawTerminal(inFd)
+		if err != nil {
+			return -1, err
+		}
+		// restore raw terminal
+		defer term.RestoreTerminal(inFd, state)
 	}
-	// restore raw terminal
-	defer term.RestoreTerminal(inFd, state)
+
 	// holdHijackedConnection (in goroutine)
-	errCh = promise.Go(func() error {
-		return holdHijackedConnection(configOverride.Tty, in, out, stderr, resp)
-	})
+	errCh = make(chan error, 1)
+	go func() {
+		errCh <- holdHijackedConnection(configOverride.Tty, in, out, stderr, resp)
+	}()
 
 	if err := c.client.ContainerStart(ctx, c.container.ID, types.ContainerStartOptions{}); err != nil {
 		return -1, err

@@ -1,6 +1,7 @@
 'use strict';
 var d3 = require('d3'),
-    moment = require('moment');
+    moment = require('moment'),
+    HttpStatus = require('http-status-codes');
 
 /** @ngInject */
 function HealthController($scope, $interval, $log, Health) {
@@ -15,6 +16,12 @@ function HealthController($scope, $interval, $log, Health) {
   vm.graph.totalStatusCodeCount.options = {
     "chart": {
       type: 'discreteBarChart',
+      tooltip: {
+        contentGenerator: function (e) {
+          var d = e.data;
+          return d.label + " " + d.text;
+        }
+      },
       height: 200,
       margin: {
         top: 20,
@@ -69,9 +76,17 @@ function HealthController($scope, $interval, $log, Health) {
     vm.graph.totalStatusCodeCount.data[0].values = [];
     for (var code in totalStatusCodeCount) {
       if (totalStatusCodeCount.hasOwnProperty(code)) {
+        var statusCodeText = "";
+        try {
+          statusCodeText = HttpStatus.getStatusText(code);
+        } catch (e) {
+          // HttpStatus.getStatusText throws error on unknown codes
+          statusCodeText = "Unknown status code";
+        }
         vm.graph.totalStatusCodeCount.data[0].values.push({
           label: code,
-          value: totalStatusCodeCount[code]
+          value: totalStatusCodeCount[code],
+          text: statusCodeText
         });
       }
     }

@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/vulcand/oxy/utils"
 )
 
@@ -73,6 +73,6 @@ func (w *WebhookSideEffect) Exec() error {
 	if err != nil {
 		return err
 	}
-	log.Infof("%v got response: (%s): %s", w, re.Status, string(body))
+	log.Debugf("%v got response: (%s): %s", w, re.Status, string(body))
 	return nil
 }

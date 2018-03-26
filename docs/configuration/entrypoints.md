@@ -8,8 +8,11 @@
 [entryPoints]
   [entryPoints.http]
     address = ":80"
-    whitelistSourceRange = ["10.42.0.0/16", "152.89.1.33/32", "afed:be44::/16"]
     compress = true
+
+    [entryPoints.http.whitelist]
+      sourceRange = ["10.42.0.0/16", "152.89.1.33/32", "afed:be44::/16"]
+      useXForwardedFor = true
 
     [entryPoints.http.tls]
       minVersion = "VersionTLS12"
@@ -32,6 +35,7 @@
       entryPoint = "https"
       regex = "^http://localhost/(.*)"
       replacement = "http://mydomain/$1"
+      permanent = true
 
     [entryPoints.http.auth]
       headerField = "X-WebAuth-User"
@@ -109,11 +113,23 @@ CA.Optional:true
 Redirect.EntryPoint:https
 Redirect.Regex:http://localhost/(.*)
 Redirect.Replacement:http://mydomain/$1
+Redirect.Permanent:true
 Compress:true
-WhiteListSourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16
+WhiteList.SourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16
+WhiteList.UseXForwardedFor:true
 ProxyProtocol.TrustedIPs:192.168.0.1
 ProxyProtocol.Insecure:tue
 ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24
+Auth.Basic.Users:test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0
+Auth.Digest.Users:test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e
+Auth.HeaderField:X-WebAuth-User
+Auth.Forward.Address:https://authserver.com/auth
+Auth.Forward.TrustForwardHeader:true
+Auth.Forward.TLS.CA:path/to/local.crt
+Auth.Forward.TLS.CAOptional:true
+Auth.Forward.TLS.Cert:path/to/foo.cert
+Auth.Forward.TLS.Key:path/to/foo.key
+Auth.Forward.TLS.InsecureSkipVerify:true
 ```
 
 ## Basic
@@ -340,15 +356,18 @@ Responses are compressed when:
 * And the `Accept-Encoding` request header contains `gzip`
 * And the response is not already compressed, i.e. the `Content-Encoding` response header is not already set.
 
-## Whitelisting
+## White Listing
 
-To enable IP whitelisting at the entrypoint level.
+To enable IP white listing at the entry point level.
 
 ```toml
 [entryPoints]
   [entryPoints.http]
-  address = ":80"
-  whiteListSourceRange = ["127.0.0.1/32", "192.168.1.7"]
+    address = ":80"
+
+    [entryPoints.http]
+      sourceRange = ["127.0.0.1/32", "192.168.1.7"]
+      # useXForwardedFor = true
 ```
 
 ## ProxyProtocol

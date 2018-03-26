@@ -3,51 +3,100 @@ package middlewares
 import (
 	"net/http"
 	"strconv"
+	"strings"
+	"sync/atomic"
 	"time"
 	"unicode/utf8"
 
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/metrics"
 	gokitmetrics "github.com/go-kit/kit/metrics"
+	"github.com/urfave/negroni"
 )
 
-// MetricsWrapper is a Negroni compatible Handler which relies on a
-// given Metrics implementation to expose and monitor Traefik Metrics.
-type MetricsWrapper struct {
-	registry    metrics.Registry
-	serviceName string
-}
+const (
+	protoHTTP      = "http"
+	protoSSE       = "sse"
+	protoWebsocket = "websocket"
+)
 
-// NewMetricsWrapper return a MetricsWrapper struct with
-// a given Metrics implementation
-func NewMetricsWrapper(registry metrics.Registry, service string) *MetricsWrapper {
-	var metricsWrapper = MetricsWrapper{
-		registry:    registry,
-		serviceName: service,
+// NewEntryPointMetricsMiddleware creates a new metrics middleware for an Entrypoint.
+func NewEntryPointMetricsMiddleware(registry metrics.Registry, entryPointName string) negroni.Handler {
+	return &metricsMiddleware{
+		reqsCounter:          registry.EntrypointReqsCounter(),
+		reqDurationHistogram: registry.EntrypointReqDurationHistogram(),
+		openConnsGauge:       registry.EntrypointOpenConnsGauge(),
+		baseLabels:           []string{"entrypoint", entryPointName},
 	}
-
-	return &metricsWrapper
 }
 
-func (m *MetricsWrapper) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+// NewBackendMetricsMiddleware creates a new metrics middleware for a Backend.
+func NewBackendMetricsMiddleware(registry metrics.Registry, backendName string) negroni.Handler {
+	return &metricsMiddleware{
+		reqsCounter:          registry.BackendReqsCounter(),
+		reqDurationHistogram: registry.BackendReqDurationHistogram(),
+		openConnsGauge:       registry.BackendOpenConnsGauge(),
+		baseLabels:           []string{"backend", backendName},
+	}
+}
+
+type metricsMiddleware struct {
+	reqsCounter          gokitmetrics.Counter
+	reqDurationHistogram gokitmetrics.Histogram
+	openConnsGauge       gokitmetrics.Gauge
+	baseLabels           []string
+	openConns            int64
+}
+
+func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	labels := []string{"method", getMethod(r), "protocol", getRequestProtocol(r)}
+	labels = append(labels, m.baseLabels...)
+
+	openConns := atomic.AddInt64(&m.openConns, 1)
+	m.openConnsGauge.With(labels...).Set(float64(openConns))
+	defer func(labelValues []string) {
+		openConns := atomic.AddInt64(&m.openConns, -1)
+		m.openConnsGauge.With(labelValues...).Set(float64(openConns))
+	}(labels)
+
 	start := time.Now()
-	prw := &responseRecorder{rw, http.StatusOK}
-	next(prw, r)
+	recorder := &responseRecorder{rw, http.StatusOK}
+	next(recorder, r)
 
-	reqLabels := []string{"service", m.serviceName, "code", strconv.Itoa(prw.statusCode), "method", getMethod(r)}
-	m.registry.ReqsCounter().With(reqLabels...).Add(1)
-
-	reqDurationLabels := []string{"service", m.serviceName, "code", strconv.Itoa(prw.statusCode)}
-	m.registry.ReqDurationHistogram().With(reqDurationLabels...).Observe(time.Since(start).Seconds())
+	labels = append(labels, "code", strconv.Itoa(recorder.statusCode))
+	m.reqsCounter.With(labels...).Add(1)
+	m.reqDurationHistogram.With(labels...).Observe(time.Since(start).Seconds())
 }
 
-type retryMetrics interface {
-	RetriesCounter() gokitmetrics.Counter
+func getRequestProtocol(req *http.Request) string {
+	switch {
+	case isWebsocketRequest(req):
+		return protoWebsocket
+	case isSSERequest(req):
+		return protoSSE
+	default:
+		return protoHTTP
+	}
 }
 
-// NewMetricsRetryListener instantiates a MetricsRetryListener with the given retryMetrics.
-func NewMetricsRetryListener(retryMetrics retryMetrics, backendName string) RetryListener {
-	return &MetricsRetryListener{retryMetrics: retryMetrics, backendName: backendName}
+// isWebsocketRequest determines if the specified HTTP request is a websocket handshake request.
+func isWebsocketRequest(req *http.Request) bool {
+	return containsHeader(req, "Connection", "upgrade") && containsHeader(req, "Upgrade", "websocket")
+}
+
+// isSSERequest determines if the specified HTTP request is a request for an event subscription.
+func isSSERequest(req *http.Request) bool {
+	return containsHeader(req, "Accept", "text/event-stream")
+}
+
+func containsHeader(req *http.Request, name, value string) bool {
+	items := strings.Split(req.Header.Get(name), ",")
+	for _, item := range items {
+		if value == strings.ToLower(strings.TrimSpace(item)) {
+			return true
+		}
+	}
+	return false
 }
 
 func getMethod(r *http.Request) string {
@@ -56,6 +105,15 @@ func getMethod(r *http.Request) string {
 		return "NON_UTF8_HTTP_METHOD"
 	}
 	return r.Method
+}
+
+type retryMetrics interface {
+	BackendRetriesCounter() gokitmetrics.Counter
+}
+
+// NewMetricsRetryListener instantiates a MetricsRetryListener with the given retryMetrics.
+func NewMetricsRetryListener(retryMetrics retryMetrics, backendName string) RetryListener {
+	return &MetricsRetryListener{retryMetrics: retryMetrics, backendName: backendName}
 }
 
 // MetricsRetryListener is an implementation of the RetryListener interface to
@@ -67,5 +125,5 @@ type MetricsRetryListener struct {
 
 // Retried tracks the retry in the RequestMetrics implementation.
 func (m *MetricsRetryListener) Retried(req *http.Request, attempt int) {
-	m.retryMetrics.RetriesCounter().With("backend", m.backendName).Add(1)
+	m.retryMetrics.BackendRetriesCounter().With("backend", m.backendName).Add(1)
 }

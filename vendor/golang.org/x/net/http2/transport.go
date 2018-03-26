@@ -306,7 +306,26 @@ func (sew stickyErrWriter) Write(p []byte) (n int, err error) {
 	return
 }
 
-var ErrNoCachedConn = errors.New("http2: no cached connection was available")
+// noCachedConnError is the concrete type of ErrNoCachedConn, which
+// needs to be detected by net/http regardless of whether it's its
+// bundled version (in h2_bundle.go with a rewritten type name) or
+// from a user's x/net/http2. As such, as it has a unique method name
+// (IsHTTP2NoCachedConnError) that net/http sniffs for via func
+// isNoCachedConnError.
+type noCachedConnError struct{}
+
+func (noCachedConnError) IsHTTP2NoCachedConnError() {}
+func (noCachedConnError) Error() string             { return "http2: no cached connection was available" }
+
+// isNoCachedConnError reports whether err is of type noCachedConnError
+// or its equivalent renamed type in net/http2's h2_bundle.go. Both types
+// may coexist in the same running program.
+func isNoCachedConnError(err error) bool {
+	_, ok := err.(interface{ IsHTTP2NoCachedConnError() })
+	return ok
+}
+
+var ErrNoCachedConn error = noCachedConnError{}
 
 // RoundTripOpt are options for the Transport.RoundTripOpt method.
 type RoundTripOpt struct {

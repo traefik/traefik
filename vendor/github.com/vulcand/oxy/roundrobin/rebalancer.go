@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/mailgun/timetools"
+	log "github.com/sirupsen/logrus"
 	"github.com/vulcand/oxy/memmetrics"
 	"github.com/vulcand/oxy/utils"
 )
@@ -159,7 +159,7 @@ func (rb *Rebalancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		cookieUrl, present, err := rb.stickySession.GetBackend(&newReq, rb.Servers())
 
 		if err != nil {
-			log.Infof("vulcand/oxy/roundrobin/rebalancer: error using server from cookie: %v", err)
+			log.Warnf("vulcand/oxy/roundrobin/rebalancer: error using server from cookie: %v", err)
 		}
 
 		if present {
@@ -319,7 +319,7 @@ func (rb *Rebalancer) adjustWeights() {
 
 func (rb *Rebalancer) applyWeights() {
 	for _, srv := range rb.servers {
-		log.Infof("upsert server %v, weight %v", srv.url, srv.curWeight)
+		log.Debugf("upsert server %v, weight %v", srv.url, srv.curWeight)
 		rb.next.UpsertServer(srv.url, Weight(srv.curWeight))
 	}
 }
@@ -331,7 +331,7 @@ func (rb *Rebalancer) setMarkedWeights() bool {
 		if srv.good {
 			weight := increase(srv.curWeight)
 			if weight <= FSMMaxWeight {
-				log.Infof("increasing weight of %v from %v to %v", srv.url, srv.curWeight, weight)
+				log.Debugf("increasing weight of %v from %v to %v", srv.url, srv.curWeight, weight)
 				srv.curWeight = weight
 				changed = true
 			}
@@ -378,7 +378,7 @@ func (rb *Rebalancer) markServers() bool {
 		}
 	}
 	if len(g) != 0 && len(b) != 0 {
-		log.Infof("bad: %v good: %v, ratings: %v", b, g, rb.ratings)
+		log.Debugf("bad: %v good: %v, ratings: %v", b, g, rb.ratings)
 	}
 	return len(g) != 0 && len(b) != 0
 }
@@ -392,7 +392,7 @@ func (rb *Rebalancer) convergeWeights() bool {
 		}
 		changed = true
 		newWeight := decrease(s.origWeight, s.curWeight)
-		log.Infof("decreasing weight of %v from %v to %v", s.url, s.curWeight, newWeight)
+		log.Debugf("decreasing weight of %v from %v to %v", s.url, s.curWeight, newWeight)
 		s.curWeight = newWeight
 	}
 	if !changed {

@@ -7,8 +7,8 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"text/template"
 
-	"github.com/BurntSushi/toml"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
@@ -28,7 +28,7 @@ type Provider struct {
 // Provide allows the file provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
-	configuration, err := p.LoadConfig()
+	configuration, err := p.BuildConfiguration()
 
 	if err != nil {
 		return err
@@ -52,13 +52,13 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	return nil
 }
 
-// LoadConfig loads configuration either from file or a directory specified by 'Filename'/'Directory'
+// BuildConfiguration loads configuration either from file or a directory specified by 'Filename'/'Directory'
 // and returns a 'Configuration' object
-func (p *Provider) LoadConfig() (*types.Configuration, error) {
+func (p *Provider) BuildConfiguration() (*types.Configuration, error) {
 	if p.Directory != "" {
-		return loadFileConfigFromDirectory(p.Directory, nil)
+		return p.loadFileConfigFromDirectory(p.Directory, nil)
 	}
-	return loadFileConfig(p.Filename)
+	return p.loadFileConfig(p.Filename)
 }
 
 func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationChan chan<- types.ConfigMessage, callback func(chan<- types.ConfigMessage, fsnotify.Event)) error {
@@ -108,7 +108,7 @@ func (p *Provider) watcherCallback(configurationChan chan<- types.ConfigMessage,
 		return
 	}
 
-	configuration, err := p.LoadConfig()
+	configuration, err := p.BuildConfiguration()
 
 	if err != nil {
 		log.Errorf("Error occurred during watcher callback: %s", err)
@@ -125,18 +125,36 @@ func sendConfigToChannel(configurationChan chan<- types.ConfigMessage, configura
 	}
 }
 
-func loadFileConfig(filename string) (*types.Configuration, error) {
-	configuration := &types.Configuration{
-		Frontends: make(map[string]*types.Frontend),
-		Backends:  make(map[string]*types.Backend),
+func readFile(filename string) (string, error) {
+	if len(filename) > 0 {
+		buf, err := ioutil.ReadFile(filename)
+		if err != nil {
+			return "", err
+		}
+		return string(buf), nil
 	}
-	if _, err := toml.DecodeFile(filename, configuration); err != nil {
-		return nil, fmt.Errorf("error reading configuration file: %s", err)
-	}
-	return configuration, nil
+	return "", fmt.Errorf("invalid filename: %s", filename)
 }
 
-func loadFileConfigFromDirectory(directory string, configuration *types.Configuration) (*types.Configuration, error) {
+func (p *Provider) loadFileConfig(filename string) (*types.Configuration, error) {
+	fileContent, err := readFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("error reading configuration file: %s - %s", filename, err)
+	}
+	configuration, err := p.CreateConfiguration(fileContent, template.FuncMap{}, false)
+	if err != nil {
+		return nil, err
+	}
+	if configuration == nil || configuration.Backends == nil && configuration.Frontends == nil && configuration.TLS == nil {
+		configuration = &types.Configuration{
+			Frontends: make(map[string]*types.Frontend),
+			Backends:  make(map[string]*types.Backend),
+		}
+	}
+	return configuration, err
+}
+
+func (p *Provider) loadFileConfigFromDirectory(directory string, configuration *types.Configuration) (*types.Configuration, error) {
 	fileList, err := ioutil.ReadDir(directory)
 
 	if err != nil {
@@ -154,17 +172,17 @@ func loadFileConfigFromDirectory(directory string, configuration *types.Configur
 	for _, item := range fileList {
 
 		if item.IsDir() {
-			configuration, err = loadFileConfigFromDirectory(filepath.Join(directory, item.Name()), configuration)
+			configuration, err = p.loadFileConfigFromDirectory(filepath.Join(directory, item.Name()), configuration)
 			if err != nil {
 				return configuration, fmt.Errorf("unable to load content configuration from subdirectory %s: %v", item, err)
 			}
 			continue
-		} else if !strings.HasSuffix(item.Name(), ".toml") {
+		} else if !strings.HasSuffix(item.Name(), ".toml") && !strings.HasSuffix(item.Name(), ".tmpl") {
 			continue
 		}
 
 		var c *types.Configuration
-		c, err = loadFileConfig(path.Join(directory, item.Name()))
+		c, err = p.loadFileConfig(path.Join(directory, item.Name()))
 
 		if err != nil {
 			return configuration, err

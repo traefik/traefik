@@ -276,10 +276,13 @@ func createSubDir(t *testing.T, rootDir, dir string) string {
 
 // createFrontendConfiguration Helper
 func createFrontendConfiguration(n int) string {
-	conf := "[frontends]\n"
+	conf := "{{$home := env \"HOME\"}}\n[frontends]\n"
 	for i := 1; i <= n; i++ {
-		conf += fmt.Sprintf(`  [frontends.frontend%[1]d]
+		conf += fmt.Sprintf(`  [frontends."frontend%[1]d"]
   backend = "backend%[1]d"
+`, i)
+		conf += fmt.Sprintf(`    [frontends."frontend%[1]d".headers]
+    "PublicKey" = "{{$home}}/pub.key"
 `, i)
 	}
 	return conf

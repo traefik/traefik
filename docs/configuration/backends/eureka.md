@@ -21,7 +21,7 @@ endpoint = "http://my.eureka.server/eureka"
 # Optional
 # Default: 30s
 #
-delay = "1m"
+refreshSeconds = "1m"
 
 # Override default configuration template.
 # For advanced users :)

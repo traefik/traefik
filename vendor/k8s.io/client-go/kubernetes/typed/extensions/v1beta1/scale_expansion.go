@@ -17,9 +17,9 @@ limitations under the License.
 package v1beta1
 
 import (
-	"k8s.io/client-go/pkg/api/meta"
-	"k8s.io/client-go/pkg/api/unversioned"
-	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
+	"k8s.io/api/extensions/v1beta1"
+	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // The ScaleExpansion interface allows manually adding extra methods to the ScaleInterface.
@@ -33,8 +33,8 @@ func (c *scales) Get(kind string, name string) (result *v1beta1.Scale, err error
 	result = &v1beta1.Scale{}
 
 	// TODO this method needs to take a proper unambiguous kind
-	fullyQualifiedKind := unversioned.GroupVersionKind{Kind: kind}
-	resource, _ := meta.KindToResource(fullyQualifiedKind)
+	fullyQualifiedKind := schema.GroupVersionKind{Kind: kind}
+	resource, _ := meta.UnsafeGuessKindToResource(fullyQualifiedKind)
 
 	err = c.client.Get().
 		Namespace(c.ns).
@@ -50,8 +50,8 @@ func (c *scales) Update(kind string, scale *v1beta1.Scale) (result *v1beta1.Scal
 	result = &v1beta1.Scale{}
 
 	// TODO this method needs to take a proper unambiguous kind
-	fullyQualifiedKind := unversioned.GroupVersionKind{Kind: kind}
-	resource, _ := meta.KindToResource(fullyQualifiedKind)
+	fullyQualifiedKind := schema.GroupVersionKind{Kind: kind}
+	resource, _ := meta.UnsafeGuessKindToResource(fullyQualifiedKind)
 
 	err = c.client.Put().
 		Namespace(scale.Namespace).

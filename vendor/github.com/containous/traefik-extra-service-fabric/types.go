@@ -9,11 +9,9 @@ import (
 // it belongs too and the replicas/partitions
 type ServiceItemExtended struct {
 	sf.ServiceItem
-	HasHTTPEndpoint bool
-	IsHealthy       bool
-	Application     sf.ApplicationItem
-	Partitions      []PartitionItemExtended
-	Labels          map[string]string
+	Application sf.ApplicationItem
+	Partitions  []PartitionItemExtended
+	Labels      map[string]string
 }
 
 // PartitionItemExtended provides a flattened view
@@ -32,8 +30,9 @@ type sfClient interface {
 	GetPartitions(appName, serviceName string) (*sf.PartitionItemsPage, error)
 	GetReplicas(appName, serviceName, partitionName string) (*sf.ReplicaItemsPage, error)
 	GetInstances(appName, serviceName, partitionName string) (*sf.InstanceItemsPage, error)
-	GetServiceExtension(appType, applicationVersion, serviceTypeName, extensionKey string, response interface{}) error
+	GetServiceExtensionMap(service *sf.ServiceItem, app *sf.ApplicationItem, extensionKey string) (map[string]string, error)
 	GetServiceLabels(service *sf.ServiceItem, app *sf.ApplicationItem, prefix string) (map[string]string, error)
+	GetProperties(name string) (bool, map[string]string, error)
 }
 
 // replicaInstance interface provides a unified interface

@@ -5,6 +5,7 @@ package forward
 
 import (
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -15,10 +16,24 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/websocket"
+	log "github.com/sirupsen/logrus"
 	"github.com/vulcand/oxy/utils"
 )
+
+// Oxy Logger interface of the internal
+type OxyLogger interface {
+	log.FieldLogger
+	GetLevel() log.Level
+}
+
+type internalLogger struct {
+	*log.Logger
+}
+
+func (i *internalLogger) GetLevel() log.Level {
+	return i.Level
+}
 
 // ReqRewriter can alter request headers and body
 type ReqRewriter interface {
@@ -81,10 +96,19 @@ func Stream(stream bool) optSetter {
 // Logger defines the logger the forwarder will use.
 //
 // It defaults to logrus.StandardLogger(), the global logger used by logrus.
-func Logger(l *log.Logger) optSetter {
+func Logger(l log.FieldLogger) optSetter {
 	return func(f *Forwarder) error {
-		f.log = l
-		return nil
+		if logger, ok := l.(OxyLogger); ok {
+			f.log = logger
+			return nil
+		}
+
+		if logger, ok := l.(*log.Logger); ok {
+			f.log = &internalLogger{Logger: logger}
+			return nil
+		}
+
+		return errors.New("the type of the logger must be OxyLogger or logrus.Logger")
 	}
 }
 
@@ -151,7 +175,7 @@ type httpForwarder struct {
 
 	tlsClientConfig *tls.Config
 
-	log *log.Logger
+	log OxyLogger
 }
 
 const (
@@ -165,7 +189,7 @@ type UrlForwardingStateListener func(*url.URL, int)
 // New creates an instance of Forwarder based on the provided list of configuration options
 func New(setters ...optSetter) (*Forwarder, error) {
 	f := &Forwarder{
-		httpForwarder:  &httpForwarder{log: log.StandardLogger()},
+		httpForwarder:  &httpForwarder{log: &internalLogger{Logger: log.StandardLogger()}},
 		handlerContext: &handlerContext{},
 	}
 	for _, s := range setters {
@@ -211,7 +235,7 @@ func New(setters ...optSetter) (*Forwarder, error) {
 // ServeHTTP decides which forwarder to use based on the specified
 // request and delegates to the proper implementation
 func (f *Forwarder) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	if f.log.Level >= log.DebugLevel {
+	if f.log.GetLevel() >= log.DebugLevel {
 		logEntry := f.log.WithField("Request", utils.DumpHttpRequest(req))
 		logEntry.Debug("vulcand/oxy/forward: begin ServeHttp on request")
 		defer logEntry.Debug("vulcand/oxy/forward: completed ServeHttp on request")
@@ -273,7 +297,7 @@ func (f *httpForwarder) modifyRequest(outReq *http.Request, target *url.URL) {
 
 // serveHTTP forwards websocket traffic
 func (f *httpForwarder) serveWebSocket(w http.ResponseWriter, req *http.Request, ctx *handlerContext) {
-	if f.log.Level >= log.DebugLevel {
+	if f.log.GetLevel() >= log.DebugLevel {
 		logEntry := f.log.WithField("Request", utils.DumpHttpRequest(req))
 		logEntry.Debug("vulcand/oxy/forward/websocket: begin ServeHttp on request")
 		defer logEntry.Debug("vulcand/oxy/forward/websocket: competed ServeHttp on request")
@@ -414,7 +438,7 @@ func (f *httpForwarder) copyWebSocketRequest(req *http.Request) (outReq *http.Re
 
 // serveHTTP forwards HTTP traffic using the configured transport
 func (f *httpForwarder) serveHTTP(w http.ResponseWriter, inReq *http.Request, ctx *handlerContext) {
-	if f.log.Level >= log.DebugLevel {
+	if f.log.GetLevel() >= log.DebugLevel {
 		logEntry := f.log.WithField("Request", utils.DumpHttpRequest(inReq))
 		logEntry.Debug("vulcand/oxy/forward/http: begin ServeHttp on request")
 		defer logEntry.Debug("vulcand/oxy/forward/http: completed ServeHttp on request")
@@ -438,18 +462,16 @@ func (f *httpForwarder) serveHTTP(w http.ResponseWriter, inReq *http.Request, ct
 	}
 	revproxy.ServeHTTP(pw, outReq)
 
-	if f.log.Level >= log.DebugLevel {
-		if inReq.TLS != nil {
-			f.log.Debugf("vulcand/oxy/forward/http: Round trip: %v, code: %v, Length: %v, duration: %v tls:version: %x, tls:resume:%t, tls:csuite:%x, tls:server:%v",
-				inReq.URL, pw.Code, pw.Length, time.Now().UTC().Sub(start),
-				inReq.TLS.Version,
-				inReq.TLS.DidResume,
-				inReq.TLS.CipherSuite,
-				inReq.TLS.ServerName)
-		} else {
-			f.log.Debugf("vulcand/oxy/forward/http: Round trip: %v, code: %v, Length: %v, duration: %v",
-				inReq.URL, pw.Code, pw.Length, time.Now().UTC().Sub(start))
-		}
+	if inReq.TLS != nil {
+		f.log.Debugf("vulcand/oxy/forward/http: Round trip: %v, code: %v, Length: %v, duration: %v tls:version: %x, tls:resume:%t, tls:csuite:%x, tls:server:%v",
+			inReq.URL, pw.Code, pw.Length, time.Now().UTC().Sub(start),
+			inReq.TLS.Version,
+			inReq.TLS.DidResume,
+			inReq.TLS.CipherSuite,
+			inReq.TLS.ServerName)
+	} else {
+		f.log.Debugf("vulcand/oxy/forward/http: Round trip: %v, code: %v, Length: %v, duration: %v",
+			inReq.URL, pw.Code, pw.Length, time.Now().UTC().Sub(start))
 	}
 }
 

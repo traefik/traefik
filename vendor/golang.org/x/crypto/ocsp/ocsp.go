@@ -760,7 +760,7 @@ func CreateResponse(issuer, responderCert *x509.Certificate, template Response, 
 	}
 	if template.Certificate != nil {
 		response.Certificates = []asn1.RawValue{
-			asn1.RawValue{FullBytes: template.Certificate.Raw},
+			{FullBytes: template.Certificate.Raw},
 		}
 	}
 	responseDER, err := asn1.Marshal(response)

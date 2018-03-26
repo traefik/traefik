@@ -11,7 +11,7 @@ When you use Let's Encrypt, you need to store certificates, but not only.
 When Træfik generates a new certificate, it configures a challenge and once Let's Encrypt will verify the ownership of the domain, it will ping back the challenge.
 If the challenge is not knowing by other Træfik instances, the validation will fail.
 
-For more information about challenge: [Automatic Certificate Management Environment (ACME)](https://github.com/ietf-wg-acme/acme/blob/master/draft-ietf-acme-acme.md#tls-with-server-name-indication-tls-sni)
+For more information about challenge: [Automatic Certificate Management Environment (ACME)](https://github.com/ietf-wg-acme/acme/blob/master/draft-ietf-acme-acme.md#http-challenge)
 
 ## Prerequisites
 

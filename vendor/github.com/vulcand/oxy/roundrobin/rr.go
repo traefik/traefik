@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"sync"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/vulcand/oxy/utils"
 )
 
@@ -94,7 +94,7 @@ func (r *RoundRobin) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		cookieURL, present, err := r.stickySession.GetBackend(&newReq, r.Servers())
 
 		if err != nil {
-			log.Infof("vulcand/oxy/roundrobin/rr: error using server from cookie: %v", err)
+			log.Warnf("vulcand/oxy/roundrobin/rr: error using server from cookie: %v", err)
 		}
 
 		if present {

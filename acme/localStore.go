@@ -2,22 +2,16 @@ package acme
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
-	"sync"
 
-	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/provider/acme"
 )
-
-var _ cluster.Store = (*LocalStore)(nil)
 
 // LocalStore is a store using a file as storage
 type LocalStore struct {
-	file        string
-	storageLock sync.RWMutex
-	account     *Account
+	file string
 }
 
 // NewLocalStore create a LocalStore
@@ -27,71 +21,105 @@ func NewLocalStore(file string) *LocalStore {
 	}
 }
 
-// Get atomically a struct from the file storage
-func (s *LocalStore) Get() cluster.Object {
-	s.storageLock.RLock()
-	defer s.storageLock.RUnlock()
-	return s.account
-}
-
-// Load loads file into store
-func (s *LocalStore) Load() (cluster.Object, error) {
-	s.storageLock.Lock()
-	defer s.storageLock.Unlock()
+// Get loads file into store and returns the Account
+func (s *LocalStore) Get() (*Account, error) {
 	account := &Account{}
 
-	err := checkPermissions(s.file)
+	hasData, err := checkFile(s.file)
 	if err != nil {
 		return nil, err
 	}
-	f, err := os.Open(s.file)
-	if err != nil {
-		return nil, err
+
+	if hasData {
+		f, err := os.Open(s.file)
+		if err != nil {
+			return nil, err
+		}
+		defer f.Close()
+
+		file, err := ioutil.ReadAll(f)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := json.Unmarshal(file, &account); err != nil {
+			return nil, err
+		}
 	}
-	defer f.Close()
-	file, err := ioutil.ReadAll(f)
-	if err != nil {
-		return nil, err
-	}
-	if err := json.Unmarshal(file, &account); err != nil {
-		return nil, err
-	}
-	account.Init()
-	s.account = account
-	log.Infof("Loaded ACME config from store %s", s.file)
 	return account, nil
 }
 
-// Begin creates a transaction with the KV store.
-func (s *LocalStore) Begin() (cluster.Transaction, cluster.Object, error) {
-	s.storageLock.Lock()
-	return &localTransaction{LocalStore: s}, s.account, nil
+// ConvertToNewFormat converts old acme.json format to the new one and store the result into the file (used for the backward compatibility)
+func ConvertToNewFormat(fileName string) {
+	localStore := acme.NewLocalStore(fileName)
+	storeAccount, err := localStore.GetAccount()
+	if err != nil {
+		log.Warnf("Failed to read new account, ACME data conversion is not available : %v", err)
+		return
+	}
+
+	if storeAccount == nil {
+		localStore := NewLocalStore(fileName)
+
+		account, err := localStore.Get()
+		if err != nil {
+			log.Warnf("Failed to read old account, ACME data conversion is not available : %v", err)
+			return
+		}
+
+		if account != nil {
+			newAccount := &acme.Account{
+				PrivateKey:   account.PrivateKey,
+				Registration: account.Registration,
+				Email:        account.Email,
+			}
+
+			var newCertificates []*acme.Certificate
+			for _, cert := range account.DomainsCertificate.Certs {
+				newCertificates = append(newCertificates, &acme.Certificate{
+					Certificate: cert.Certificate.Certificate,
+					Key:         cert.Certificate.PrivateKey,
+					Domain:      cert.Domains,
+				})
+			}
+			newLocalStore := acme.NewLocalStore(fileName)
+			newLocalStore.SaveDataChan <- &acme.StoredData{Account: newAccount, Certificates: newCertificates}
+		}
+	}
 }
 
-var _ cluster.Transaction = (*localTransaction)(nil)
+// FromNewToOldFormat converts new acme.json format to the old one (used for the backward compatibility)
+func FromNewToOldFormat(fileName string) (*Account, error) {
+	localStore := acme.NewLocalStore(fileName)
 
-type localTransaction struct {
-	*LocalStore
-	dirty bool
-}
-
-// Commit allows to set an object in the file storage
-func (t *localTransaction) Commit(object cluster.Object) error {
-	t.LocalStore.account = object.(*Account)
-	defer t.storageLock.Unlock()
-	if t.dirty {
-		return fmt.Errorf("transaction already used, please begin a new one")
-	}
-
-	// write account to file
-	data, err := json.MarshalIndent(object, "", "  ")
+	storeAccount, err := localStore.GetAccount()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	err = ioutil.WriteFile(t.file, data, 0600)
+
+	storeCertificates, err := localStore.GetCertificates()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	t.dirty = true
-	return nil
+
+	if storeAccount != nil {
+		account := &Account{}
+		account.Email = storeAccount.Email
+		account.PrivateKey = storeAccount.PrivateKey
+		account.Registration = storeAccount.Registration
+		account.DomainsCertificate = DomainsCertificates{}
+
+		for _, cert := range storeCertificates {
+			_, err = account.DomainsCertificate.addCertificateForDomains(&Certificate{
+				Domain:      cert.Domain.Main,
+				Certificate: cert.Certificate,
+				PrivateKey:  cert.Key,
+			}, cert.Domain)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return account, nil
+	}
+	return nil, nil
 }

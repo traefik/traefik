@@ -12,7 +12,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/containous/traefik/integration/try"
-	traefikTls "github.com/containous/traefik/tls"
+	traefiktls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
@@ -525,7 +525,7 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithChange(c *check.C) {
 	c.Assert(resp.StatusCode, checker.Equals, http.StatusNotFound)
 }
 
-// TestWithSNIDynamicConfigRouteWithChangeForEmptyTlsConfiguration involves a client sending HTTPS requests with
+// TestWithSNIDynamicConfigRouteWithTlsConfigurationDeletion involves a client sending HTTPS requests with
 // SNI hostnames of "snitest.org" and "snitest.com". The test verifies
 // that traefik updates its configuration when the HTTPS configuration is modified, even if it totally deleted, and
 // it routes the requests to the expected backends thanks to given certificate if possible
@@ -604,7 +604,7 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithTlsConfigurationDeletion(c
 
 		cn := resp.TLS.PeerCertificates[0].Subject.CommonName
 		if cn == tr2.TLSClientConfig.ServerName {
-			return fmt.Errorf("domain %s found in place of default one", tr2.TLSClientConfig.ServerName)
+			return fmt.Errorf("domain %s found instead of the default one", tr2.TLSClientConfig.ServerName)
 		}
 
 		return nil
@@ -624,11 +624,11 @@ func modifyCertificateConfFileContent(c *check.C, certFileName, confFileName, en
 	// If certificate file is not provided, just truncate the configuration file
 	if len(certFileName) > 0 {
 		tlsConf := types.Configuration{
-			TLS: []*traefikTls.Configuration{
+			TLS: []*traefiktls.Configuration{
 				{
-					Certificate: &traefikTls.Certificate{
-						CertFile: traefikTls.FileOrContent("fixtures/https/" + certFileName + ".cert"),
-						KeyFile:  traefikTls.FileOrContent("fixtures/https/" + certFileName + ".key"),
+					Certificate: &traefiktls.Certificate{
+						CertFile: traefiktls.FileOrContent("fixtures/https/" + certFileName + ".cert"),
+						KeyFile:  traefiktls.FileOrContent("fixtures/https/" + certFileName + ".key"),
 					},
 					EntryPoints: []string{entryPoint},
 				},

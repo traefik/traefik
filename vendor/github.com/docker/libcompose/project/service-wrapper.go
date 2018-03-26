@@ -3,8 +3,8 @@ package project
 import (
 	"sync"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/docker/libcompose/project/events"
+	log "github.com/sirupsen/logrus"
 )
 
 type serviceWrapper struct {

@@ -4,11 +4,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containous/traefik/types"
+	"github.com/containous/traefik/provider/label"
 	"github.com/gambol99/go-marathon"
 )
 
-const testTaskName string = "taskID"
+const testTaskName = "taskID"
 
 // Functions related to building applications.
 
@@ -38,7 +38,7 @@ func appPorts(ports ...int) func(*marathon.Application) {
 	}
 }
 
-func label(key, value string) func(*marathon.Application) {
+func withLabel(key, value string) func(*marathon.Application) {
 	return func(app *marathon.Application) {
 		app.AddLabel(key, value)
 	}
@@ -50,22 +50,14 @@ func constraint(value string) func(*marathon.Application) {
 	}
 }
 
-func labelWithService(key, value string, serviceName string) func(*marathon.Application) {
+func withServiceLabel(key, value string, serviceName string) func(*marathon.Application) {
 	if len(serviceName) == 0 {
 		panic("serviceName can not be empty")
 	}
 
-	property := strings.TrimPrefix(key, types.LabelPrefix)
+	property := strings.TrimPrefix(key, label.Prefix)
 	return func(app *marathon.Application) {
-		app.AddLabel(types.LabelPrefix+serviceName+"."+property, value)
-	}
-}
-
-func healthChecks(checks ...*marathon.HealthCheck) func(*marathon.Application) {
-	return func(app *marathon.Application) {
-		for _, check := range checks {
-			app.AddHealthCheck(*check)
-		}
+		app.AddLabel(label.Prefix+serviceName+"."+property, value)
 	}
 }
 
@@ -121,20 +113,35 @@ func readinessCheckResult(taskID string, ready bool) func(*marathon.Application)
 	}
 }
 
+func withTasks(tasks ...marathon.Task) func(*marathon.Application) {
+	return func(application *marathon.Application) {
+		for _, task := range tasks {
+			tu := task
+			application.Tasks = append(application.Tasks, &tu)
+		}
+	}
+}
+
 // Functions related to building tasks.
 
 func task(ops ...func(*marathon.Task)) marathon.Task {
-	t := marathon.Task{
+	t := &marathon.Task{
 		ID: testTaskName,
 		// The vast majority of tests expect the task state to be TASK_RUNNING.
 		State: string(taskStateRunning),
 	}
 
 	for _, op := range ops {
-		op(&t)
+		op(t)
 	}
 
-	return t
+	return *t
+}
+
+func withTaskID(id string) func(*marathon.Task) {
+	return func(task *marathon.Task) {
+		task.ID = id
+	}
 }
 
 func localhostTask(ops ...func(*marathon.Task)) marathon.Task {
@@ -176,16 +183,6 @@ func ipAddresses(addresses ...string) func(*marathon.Task) {
 func state(s TaskState) func(*marathon.Task) {
 	return func(t *marathon.Task) {
 		t.State = string(s)
-	}
-}
-
-func healthCheckResultLiveness(alive ...bool) func(*marathon.Task) {
-	return func(t *marathon.Task) {
-		for _, a := range alive {
-			t.HealthCheckResults = append(t.HealthCheckResults, &marathon.HealthCheckResult{
-				Alive: a,
-			})
-		}
 	}
 }
 

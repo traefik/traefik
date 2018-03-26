@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 func (m *client) OnChangeWithError(intervalSeconds int, do func(string)) error {

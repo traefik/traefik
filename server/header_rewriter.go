@@ -1,17 +1,17 @@
 package server
 
 import (
-	"net"
 	"net/http"
 	"os"
 
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/whitelist"
 	"github.com/vulcand/oxy/forward"
 )
 
 // NewHeaderRewriter Create a header rewriter
 func NewHeaderRewriter(trustedIPs []string, insecure bool) (forward.ReqRewriter, error) {
-	IPs, err := whitelist.NewIP(trustedIPs, insecure)
+	IPs, err := whitelist.NewIP(trustedIPs, insecure, true)
 	if err != nil {
 		return nil, err
 	}
@@ -37,12 +37,13 @@ type headerRewriter struct {
 }
 
 func (h *headerRewriter) Rewrite(req *http.Request) {
-	clientIP, _, err := net.SplitHostPort(req.RemoteAddr)
+	authorized, _, err := h.ips.IsAuthorized(req)
 	if err != nil {
+		log.Error(err)
 		h.secureRewriter.Rewrite(req)
+		return
 	}
 
-	authorized, _, err := h.ips.Contains(clientIP)
 	if h.insecure || authorized {
 		h.secureRewriter.Rewrite(req)
 	} else {

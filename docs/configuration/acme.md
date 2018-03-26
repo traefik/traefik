@@ -38,23 +38,20 @@ storage = "acme.json"
 # or `storage = "traefik/acme/account"` if using KV store.
 
 # Entrypoint to proxy acme apply certificates to.
-# WARNING, if the TLS-SNI-01 challenge is used, it must point to an entrypoint on port 443
 #
 # Required
 #
 entryPoint = "https"
 
-# Use a DNS-01 acme challenge rather than TLS-SNI-01 challenge
+# Deprecated, replaced by [acme.dnsChallenge].
 #
-# Optional (Deprecated, replaced by [acme.dnsChallenge])
+# Optional.
 #
 # dnsProvider = "digitalocean"
 
-# By default, the dnsProvider will verify the TXT DNS challenge record before letting ACME verify.
-# If delayDontCheckDNS is greater than zero, avoid this & instead just wait so many seconds.
-# Useful if internal networks block external DNS queries.
+# Deprecated, replaced by [acme.dnsChallenge.delayBeforeCheck].
 #
-# Optional (Deprecated, replaced by [acme.dnsChallenge])
+# Optional
 # Default: 0
 #
 # delayDontCheckDNS = 0
@@ -102,19 +99,19 @@ entryPoint = "https"
 # [[acme.domains]]
 #   main = "local4.com"
 
-# Use a HTTP-01 acme challenge rather than TLS-SNI-01 challenge
+# Use a HTTP-01 acme challenge.
 #
 # Optional but recommend
 #
 [acme.httpChallenge]
 
-  # EntryPoint to use for the challenges.
+  # EntryPoint to use for the HTTP-01 challenges.
   #
   # Required
   #
   entryPoint = "http"
 
-# Use a DNS-01 acme challenge rather than TLS-SNI-01 challenge
+# Use a DNS-01 acme challenge rather than HTTP-01 challenge.
 #
 # Optional
 #
@@ -137,11 +134,6 @@ entryPoint = "https"
 ```
 
 !!! note
-    Even if `TLS-SNI-01` challenge is [disabled](https://community.letsencrypt.org/t/2018-01-11-update-regarding-acme-tls-sni-and-shared-hosting-infrastructure/50188) for the moment, it stays the _by default_ ACME Challenge in Træfik.
-    If `TLS-SNI-01` challenge is not re-enabled in the future, it we will be removed from Træfik.
-
-!!! note
-    If `TLS-SNI-01` challenge is used, `acme.entryPoint` has to be reachable by Let's Encrypt through the port 443.
     If `HTTP-01` challenge is used, `acme.httpChallenge.entryPoint` has to be defined and reachable by Let's Encrypt through the port 80.
     These are Let's Encrypt limitations as described on the [community forum](https://community.letsencrypt.org/t/support-for-ports-other-than-80-and-443/3419/72).
 
@@ -286,6 +278,7 @@ Select the provider that matches the DNS domain that will host the challenge TXT
 | [Auroradns](https://www.pcextreme.com/aurora/dns)      | `auroradns`    | `AURORA_USER_ID`, `AURORA_KEY`, `AURORA_ENDPOINT`                                                                         |
 | [Azure](https://azure.microsoft.com/services/dns/)     | `azure`        | `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_SUBSCRIPTION_ID`, `AZURE_TENANT_ID`, `AZURE_RESOURCE_GROUP`              |
 | [Cloudflare](https://www.cloudflare.com)               | `cloudflare`   | `CLOUDFLARE_EMAIL`, `CLOUDFLARE_API_KEY` - The Cloudflare `Global API Key` needs to be used and not the `Origin CA Key`   |
+| [CloudXNS](https://www.cloudxns.net)                   | `cloudxns`     | `CLOUDXNS_API_KEY`, `CLOUDXNS_SECRET_KEY`                                                                                 |
 | [DigitalOcean](https://www.digitalocean.com)           | `digitalocean` | `DO_AUTH_TOKEN`                                                                                                           |
 | [DNSimple](https://dnsimple.com)                       | `dnsimple`     | `DNSIMPLE_OAUTH_TOKEN`, `DNSIMPLE_BASE_URL`                                                                               |
 | [DNS Made Easy](https://dnsmadeeasy.com)               | `dnsmadeeasy`  | `DNSMADEEASY_API_KEY`, `DNSMADEEASY_API_SECRET`, `DNSMADEEASY_SANDBOX`                                                    |
@@ -293,6 +286,7 @@ Select the provider that matches the DNS domain that will host the challenge TXT
 | [Dyn](https://dyn.com)                                 | `dyn`          | `DYN_CUSTOMER_NAME`, `DYN_USER_NAME`, `DYN_PASSWORD`                                                                      |
 | [Exoscale](https://www.exoscale.ch)                    | `exoscale`     | `EXOSCALE_API_KEY`, `EXOSCALE_API_SECRET`, `EXOSCALE_ENDPOINT`                                                            |
 | [Gandi](https://www.gandi.net)                         | `gandi`        | `GANDI_API_KEY`                                                                                                           |
+| [Gandi V5](http://doc.livedns.gandi.net)               | `gandiv5`      | `GANDIV5_API_KEY`                                                                                                         |
 | [GoDaddy](https://godaddy.com/domains)                 | `godaddy`      | `GODADDY_API_KEY`, `GODADDY_API_SECRET`                                                                                   |
 | [Google Cloud DNS](https://cloud.google.com/dns/docs/) | `gcloud`       | `GCE_PROJECT`, `GCE_SERVICE_ACCOUNT_FILE`                                                                                 |
 | [Linode](https://www.linode.com)                       | `linode`       | `LINODE_API_KEY`                                                                                                          |

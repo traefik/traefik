@@ -464,6 +464,45 @@ func TestBaseProvider_GetConfiguration(t *testing.T) {
 	}
 }
 
+func TestNormalize(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		name     string
+		expected string
+	}{
+		{
+			desc:     "without special chars",
+			name:     "foobar",
+			expected: "foobar",
+		},
+		{
+			desc:     "with special chars",
+			name:     "foo.foo.foo;foo:foo!foo/foo\\foo)foo_123-ç_àéè",
+			expected: "foo-foo-foo-foo-foo-foo-foo-foo-foo-123-ç-àéè",
+		},
+		{
+			desc:     "starts with special chars",
+			name:     ".foo.foo",
+			expected: "foo-foo",
+		},
+		{
+			desc:     "ends with special chars",
+			name:     "foo.foo.",
+			expected: "foo-foo",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := Normalize(test.name)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
 func readTemplateFile(t *testing.T, path string) string {
 	t.Helper()
 	expectedContent, err := ioutil.ReadFile(path)

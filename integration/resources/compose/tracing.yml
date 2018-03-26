@@ -1,0 +1,23 @@
+zipkin:
+  # Fix zipkin version 2.4.2
+  # due to a bug in latest version https://github.com/openzipkin/zipkin/releases/tag/2.4.4
+  image: openzipkin/zipkin:2.4.2
+  environment:
+    STORAGE_TYPE: mem
+    JAVA_OPTS: -Dlogging.level.zipkin=DEBUG
+  ports:
+    - 9411:9411
+jaeger:
+  image: jaegertracing/all-in-one:latest
+  environment:
+    COLLECTOR_ZIPKIN_HTTP_PORT: 9411
+  ports:
+    - "5775:5775/udp"
+    - "6831:6831/udp"
+    - "6832:6832/udp"
+    - "5778:5778"
+    - "16686:16686"
+    - "14268:14268"
+    - "9411:9411"
+whoami:
+  image: emilevauge/whoami

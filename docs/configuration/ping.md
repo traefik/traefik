@@ -85,3 +85,7 @@ Note the dedicated port `:8082` for `/ping`.
 
 In the above example, it is _very_ important to create a named dedicated entry point, and do **not** include it in `defaultEntryPoints`.
 Otherwise, you are likely to expose _all_ services via this entry point.
+
+### Using ping for external Load-balancer rotation health check
+
+If you are running traefik behind a external Load-balancer, and want to configure rotation health check on the Load-balancer to take a traefik instance out of rotation gracefully, you can configure [lifecycle.requestAcceptGraceTimeout](/configuration/commons.md#life-cycle) and the ping endpoint will return `503` response on traefik server termination, so that the Load-balancer can take the terminating traefik instance out of rotation, before it stops responding.

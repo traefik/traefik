@@ -166,7 +166,7 @@ func setWithProperType(t reflect.Type, key *Key, field reflect.Value, delim stri
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		durationVal, err := key.Duration()
 		// Skip zero value
-		if err == nil && int(durationVal) > 0 {
+		if err == nil && int64(durationVal) > 0 {
 			field.Set(reflect.ValueOf(durationVal))
 			return nil
 		}

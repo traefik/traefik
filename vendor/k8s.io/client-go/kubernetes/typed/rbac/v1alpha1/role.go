@@ -17,10 +17,11 @@ limitations under the License.
 package v1alpha1
 
 import (
-	api "k8s.io/client-go/pkg/api"
-	v1 "k8s.io/client-go/pkg/api/v1"
-	v1alpha1 "k8s.io/client-go/pkg/apis/rbac/v1alpha1"
-	watch "k8s.io/client-go/pkg/watch"
+	v1alpha1 "k8s.io/api/rbac/v1alpha1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	types "k8s.io/apimachinery/pkg/types"
+	watch "k8s.io/apimachinery/pkg/watch"
+	scheme "k8s.io/client-go/kubernetes/scheme"
 	rest "k8s.io/client-go/rest"
 )
 
@@ -36,10 +37,10 @@ type RoleInterface interface {
 	Update(*v1alpha1.Role) (*v1alpha1.Role, error)
 	Delete(name string, options *v1.DeleteOptions) error
 	DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error
-	Get(name string) (*v1alpha1.Role, error)
+	Get(name string, options v1.GetOptions) (*v1alpha1.Role, error)
 	List(opts v1.ListOptions) (*v1alpha1.RoleList, error)
 	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt api.PatchType, data []byte, subresources ...string) (result *v1alpha1.Role, err error)
+	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.Role, err error)
 	RoleExpansion
 }
 
@@ -55,6 +56,41 @@ func newRoles(c *RbacV1alpha1Client, namespace string) *roles {
 		client: c.RESTClient(),
 		ns:     namespace,
 	}
+}
+
+// Get takes name of the role, and returns the corresponding role object, and an error if there is any.
+func (c *roles) Get(name string, options v1.GetOptions) (result *v1alpha1.Role, err error) {
+	result = &v1alpha1.Role{}
+	err = c.client.Get().
+		Namespace(c.ns).
+		Resource("roles").
+		Name(name).
+		VersionedParams(&options, scheme.ParameterCodec).
+		Do().
+		Into(result)
+	return
+}
+
+// List takes label and field selectors, and returns the list of Roles that match those selectors.
+func (c *roles) List(opts v1.ListOptions) (result *v1alpha1.RoleList, err error) {
+	result = &v1alpha1.RoleList{}
+	err = c.client.Get().
+		Namespace(c.ns).
+		Resource("roles").
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Do().
+		Into(result)
+	return
+}
+
+// Watch returns a watch.Interface that watches the requested roles.
+func (c *roles) Watch(opts v1.ListOptions) (watch.Interface, error) {
+	opts.Watch = true
+	return c.client.Get().
+		Namespace(c.ns).
+		Resource("roles").
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Watch()
 }
 
 // Create takes the representation of a role and creates it.  Returns the server's representation of the role, and an error, if there is any.
@@ -98,48 +134,14 @@ func (c *roles) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListO
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("roles").
-		VersionedParams(&listOptions, api.ParameterCodec).
+		VersionedParams(&listOptions, scheme.ParameterCodec).
 		Body(options).
 		Do().
 		Error()
 }
 
-// Get takes name of the role, and returns the corresponding role object, and an error if there is any.
-func (c *roles) Get(name string) (result *v1alpha1.Role, err error) {
-	result = &v1alpha1.Role{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("roles").
-		Name(name).
-		Do().
-		Into(result)
-	return
-}
-
-// List takes label and field selectors, and returns the list of Roles that match those selectors.
-func (c *roles) List(opts v1.ListOptions) (result *v1alpha1.RoleList, err error) {
-	result = &v1alpha1.RoleList{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("roles").
-		VersionedParams(&opts, api.ParameterCodec).
-		Do().
-		Into(result)
-	return
-}
-
-// Watch returns a watch.Interface that watches the requested roles.
-func (c *roles) Watch(opts v1.ListOptions) (watch.Interface, error) {
-	return c.client.Get().
-		Prefix("watch").
-		Namespace(c.ns).
-		Resource("roles").
-		VersionedParams(&opts, api.ParameterCodec).
-		Watch()
-}
-
 // Patch applies the patch and returns the patched role.
-func (c *roles) Patch(name string, pt api.PatchType, data []byte, subresources ...string) (result *v1alpha1.Role, err error) {
+func (c *roles) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.Role, err error) {
 	result = &v1alpha1.Role{}
 	err = c.client.Patch(pt).
 		Namespace(c.ns).

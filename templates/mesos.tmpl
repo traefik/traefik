@@ -1,18 +1,177 @@
-{{$apps := .Applications}}
-[backends]{{range .Tasks}}
-    [backends.backend{{getBackend . $apps}}.servers.server-{{getID .}}]
-    url = "{{getProtocol . $apps}}://{{getHost .}}:{{getPort . $apps}}"
-    weight = {{getWeight . $apps}}
+[backends]
+{{range $applicationName, $tasks := .ApplicationsTasks }}
+  {{ $app := index $tasks 0 }}
+  {{ $backendName := getBackendName $app }}
+
+  [backends."backend-{{ $backendName }}"]
+
+  {{ $circuitBreaker := getCircuitBreaker $app }}
+  {{if $circuitBreaker }}
+  [backends."backend-{{ $backendName }}".circuitBreaker]
+    expression = "{{ $circuitBreaker.Expression }}"
+  {{end}}
+
+  {{ $loadBalancer := getLoadBalancer $app }}
+  {{if $loadBalancer }}
+    [backends."backend-{{ $backendName }}".loadBalancer]
+      method = "{{ $loadBalancer.Method }}"
+      sticky = {{ $loadBalancer.Sticky }}
+      {{if $loadBalancer.Stickiness }}
+      [backends."backend-{{ $backendName }}".loadBalancer.stickiness]
+        cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
+      {{end}}
+  {{end}}
+
+  {{ $maxConn := getMaxConn $app }}
+  {{if $maxConn }}
+  [backends."backend-{{ $backendName }}".maxConn]
+    extractorFunc = "{{ $maxConn.ExtractorFunc }}"
+    amount = {{ $maxConn.Amount }}
+  {{end}}
+
+  {{ $healthCheck := getHealthCheck $app }}
+  {{if $healthCheck }}
+  [backends."backend-{{ $backendName }}".healthCheck]
+    path = "{{ $healthCheck.Path }}"
+    port = {{ $healthCheck.Port }}
+    interval = "{{ $healthCheck.Interval }}"
+  {{end}}
+
+  {{ $buffering := getBuffering $app }}
+  {{if $buffering }}
+  [backends."backend-{{ $backendName }}".buffering]
+    maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
+    memRequestBodyBytes = {{ $buffering.MemRequestBodyBytes }}
+    maxResponseBodyBytes = {{ $buffering.MaxResponseBodyBytes }}
+    memResponseBodyBytes = {{ $buffering.MemResponseBodyBytes }}
+    retryExpression = "{{ $buffering.RetryExpression }}"
+  {{end}}
+
+  {{range $serverName, $server := getServers $tasks }}
+  [backends."backend-{{ $backendName }}".servers."{{ $serverName }}"]
+    url = "{{ $server.URL }}"
+    weight = {{ $server.Weight }}
+  {{end}}
 {{end}}
 
-[frontends]{{range .Applications}}
-  [frontends.frontend-{{getFrontEndName .}}]
-  backend = "backend{{getFrontendBackend .}}"
-  passHostHeader = {{getPassHostHeader .}}
-  priority = {{getPriority .}}
-  entryPoints = [{{range getEntryPoints .}}
-    "{{.}}",
-  {{end}}]
-    [frontends.frontend-{{getFrontEndName .}}.routes.route-host{{getFrontEndName .}}]
-    rule = "{{getFrontendRule .}}"
+[frontends]
+{{range $applicationName, $tasks := .ApplicationsTasks }}
+  {{ $app := index $tasks 0 }}
+  {{ $frontendName := getFrontEndName $app }}
+
+  [frontends."frontend-{{ $frontendName }}"]
+    backend = "backend-{{ getBackendName $app }}"
+    priority = {{ getPriority $app }}
+    passHostHeader = {{ getPassHostHeader $app }}
+    passTLSCert = {{ getPassTLSCert $app }}
+
+    entryPoints = [{{range getEntryPoints $app }}
+      "{{.}}",
+      {{end}}]
+
+    basicAuth = [{{range getBasicAuth $app }}
+      "{{.}}",
+      {{end}}]
+
+    {{ $whitelist := getWhiteList $app }}
+    {{if $whitelist }}
+    [frontends."frontend-{{ $frontendName }}".whiteList]
+      sourceRange = [{{range $whitelist.SourceRange }}
+        "{{.}}",
+        {{end}}]
+      useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
+    {{end}}
+
+    {{ $redirect := getRedirect $app }}
+    {{if $redirect }}
+    [frontends."frontend-{{ $frontendName }}".redirect]
+      entryPoint = "{{ $redirect.EntryPoint }}"
+      regex = "{{ $redirect.Regex }}"
+      replacement = "{{ $redirect.Replacement }}"
+      permanent = {{ $redirect.Permanent }}
+    {{end}}
+
+    {{ $errorPages := getErrorPages $app }}
+    {{if $errorPages }}
+    [frontends."frontend-{{ $frontendName }}".errors]
+      {{range $pageName, $page := $errorPages }}
+      [frontends."frontend-{{ $frontendName }}".errors."{{ $pageName }}"]
+        status = [{{range $page.Status }}
+        "{{.}}",
+        {{end}}]
+        backend = "{{ $page.Backend }}"
+        query = "{{ $page.Query }}"
+      {{end}}
+    {{end}}
+
+    {{ $rateLimit := getRateLimit $app }}
+    {{if $rateLimit }}
+    [frontends."frontend-{{ $frontendName }}".rateLimit]
+      extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
+      [frontends."frontend-{{ $frontendName }}".rateLimit.rateSet]
+        {{ range $limitName, $limit := $rateLimit.RateSet }}
+        [frontends."frontend-{{ $frontendName }}".rateLimit.rateSet."{{ $limitName }}"]
+          period = "{{ $limit.Period }}"
+          average = {{ $limit.Average }}
+          burst = {{ $limit.Burst }}
+        {{end}}
+    {{end}}
+
+    {{ $headers := getHeaders $app }}
+    {{if $headers }}
+    [frontends."frontend-{{ $frontendName }}".headers]
+      SSLRedirect = {{ $headers.SSLRedirect }}
+      SSLTemporaryRedirect = {{ $headers.SSLTemporaryRedirect }}
+      SSLHost = "{{ $headers.SSLHost }}"
+      STSSeconds = {{ $headers.STSSeconds }}
+      STSIncludeSubdomains = {{ $headers.STSIncludeSubdomains }}
+      STSPreload = {{ $headers.STSPreload }}
+      ForceSTSHeader = {{ $headers.ForceSTSHeader }}
+      FrameDeny = {{ $headers.FrameDeny }}
+      CustomFrameOptionsValue = "{{ $headers.CustomFrameOptionsValue }}"
+      ContentTypeNosniff = {{ $headers.ContentTypeNosniff }}
+      BrowserXSSFilter = {{ $headers.BrowserXSSFilter }}
+      CustomBrowserXSSValue = "{{ $headers.CustomBrowserXSSValue }}"
+      ContentSecurityPolicy = "{{ $headers.ContentSecurityPolicy }}"
+      PublicKey = "{{ $headers.PublicKey }}"
+      ReferrerPolicy = "{{ $headers.ReferrerPolicy }}"
+      IsDevelopment = {{ $headers.IsDevelopment }}
+
+      {{if $headers.AllowedHosts }}
+      AllowedHosts = [{{range $headers.AllowedHosts }}
+        "{{.}}",
+        {{end}}]
+      {{end}}
+
+      {{if $headers.HostsProxyHeaders }}
+      HostsProxyHeaders = [{{range $headers.HostsProxyHeaders }}
+        "{{.}}",
+        {{end}}]
+      {{end}}
+
+      {{if $headers.CustomRequestHeaders }}
+      [frontends."frontend-{{ $frontendName }}".headers.customRequestHeaders]
+        {{range $k, $v := $headers.CustomRequestHeaders }}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
+
+      {{if $headers.CustomResponseHeaders }}
+      [frontends."frontend-{{ $frontendName }}".headers.customResponseHeaders]
+        {{range $k, $v := $headers.CustomResponseHeaders }}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
+
+      {{if $headers.SSLProxyHeaders }}
+      [frontends."frontend-{{ $frontendName }}".headers.SSLProxyHeaders]
+        {{range $k, $v := $headers.SSLProxyHeaders }}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
+    {{end}}
+
+    [frontends."frontend-{{ $frontendName }}".routes."route-host-{{ $frontendName }}"]
+    rule = "{{ getFrontendRule $app }}"
+
 {{end}}

@@ -3,12 +3,12 @@
 package check
 
 import (
-	"github.com/go-check/check"
-
 	"fmt"
-	"github.com/docker/docker/api/types"
-	"github.com/libkermit/compose"
 	"strings"
+
+	"github.com/docker/docker/api/types"
+	"github.com/go-check/check"
+	"github.com/libkermit/compose"
 )
 
 // Project holds compose related project attributes

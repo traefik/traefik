@@ -3,9 +3,7 @@ package ecs
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
-	"text/template"
 	"time"
 
 	"github.com/BurntSushi/ty/fun"
@@ -21,6 +19,7 @@ import (
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
+	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 )
@@ -60,7 +59,10 @@ type awsClient struct {
 }
 
 func (p *Provider) createClient() (*awsClient, error) {
-	sess := session.New()
+	sess, err := session.NewSession()
+	if err != nil {
+		return nil, err
+	}
 	ec2meta := ec2metadata.New(sess)
 	if p.Region == "" {
 		log.Infoln("No EC2 region provided, querying instance metadata endpoint...")
@@ -115,10 +117,8 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	pool.Go(func(stop chan bool) {
 		ctx, cancel := context.WithCancel(context.Background())
 		safe.Go(func() {
-			select {
-			case <-stop:
-				cancel()
-			}
+			<-stop
+			cancel()
 		})
 
 		operation := func() error {
@@ -178,34 +178,6 @@ func wrapAws(ctx context.Context, req *request.Request) error {
 	return req.Send()
 }
 
-// generateECSConfig fills the config template with the given instances
-func (p *Provider) generateECSConfig(services map[string][]ecsInstance) (*types.Configuration, error) {
-	var ecsFuncMap = template.FuncMap{
-		"filterFrontends":         p.filterFrontends,
-		"getFrontendRule":         p.getFrontendRule,
-		"getBasicAuth":            p.getBasicAuth,
-		"getLoadBalancerMethod":   p.getLoadBalancerMethod,
-		"getLoadBalancerSticky":   p.getLoadBalancerSticky,
-		"hasStickinessLabel":      p.hasStickinessLabel,
-		"getStickinessCookieName": p.getStickinessCookieName,
-		"getProtocol":             p.getProtocol,
-		"getHost":                 p.getHost,
-		"getPort":                 p.getPort,
-		"getWeight":               p.getWeight,
-		"getPassHostHeader":       p.getPassHostHeader,
-		"getPriority":             p.getPriority,
-		"getEntryPoints":          p.getEntryPoints,
-		"hasHealthCheckLabels":    p.hasHealthCheckLabels,
-		"getHealthCheckPath":      p.getHealthCheckPath,
-		"getHealthCheckInterval":  p.getHealthCheckInterval,
-	}
-	return p.GetConfiguration("templates/ecs.tmpl", ecsFuncMap, struct {
-		Services map[string][]ecsInstance
-	}{
-		services,
-	})
-}
-
 func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types.Configuration, error) {
 	instances, err := p.listInstances(ctx, client)
 	if err != nil {
@@ -223,7 +195,7 @@ func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types
 			services[instance.Name] = []ecsInstance{instance}
 		}
 	}
-	return p.generateECSConfig(services)
+	return p.buildConfiguration(services)
 }
 
 // Find all running Provider tasks in a cluster, also collect the task definitions (for docker labels)
@@ -250,8 +222,8 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 				break
 			}
 		}
-		for _, carns := range clustersArn {
-			clusters = append(clusters, *carns)
+		for _, cArn := range clustersArn {
+			clusters = append(clusters, *cArn)
 		}
 	} else if p.Cluster != "" {
 		// TODO: Deprecated configuration - Need to be removed in the future
@@ -285,7 +257,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 			continue
 		}
 
-		chunkedTaskArns := p.chunkedTaskArns(taskArns)
+		chunkedTaskArns := chunkedTaskArns(taskArns)
 		var tasks []*ecs.Task
 
 		for _, arns := range chunkedTaskArns {
@@ -327,6 +299,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 		if err != nil {
 			return nil, err
 		}
+
 		for _, task := range tasks {
 
 			machineIdx := byContainerInstance[aws.StringValue(task.ContainerInstanceArn)]
@@ -337,7 +310,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 				taskDefinition := taskDefinitions[taskDefIdx]
 				var containerDefinition *ecs.ContainerDefinition
 				for _, def := range taskDefinition.ContainerDefinitions {
-					if *container.Name == *def.Name {
+					if aws.StringValue(container.Name) == aws.StringValue(def.Name) {
 						containerDefinition = def
 						break
 					}
@@ -365,7 +338,7 @@ func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, cl
 	instanceIds := make([]*string, len(containerArns))
 	instances := make([]*ec2.Instance, len(containerArns))
 	for i, arn := range containerArns {
-		order[*arn] = i
+		order[aws.StringValue(arn)] = i
 	}
 
 	req, _ := client.ecs.DescribeContainerInstancesRequest(&ecs.DescribeContainerInstancesInput{
@@ -423,28 +396,20 @@ func (p *Provider) lookupTaskDefinitions(ctx context.Context, client *awsClient,
 	return taskDefinitions, nil
 }
 
-func (p *Provider) label(i ecsInstance, k string) string {
-	if v, found := i.containerDefinition.DockerLabels[k]; found {
-		return aws.StringValue(v)
-	}
-	return ""
-}
-
 func (p *Provider) filterInstance(i ecsInstance) bool {
-	if labelPort := p.label(i, types.LabelPort); len(i.container.NetworkBindings) == 0 && labelPort == "" {
+
+	if labelPort := getStringValue(i, label.TraefikPort, ""); len(i.container.NetworkBindings) == 0 && labelPort == "" {
 		log.Debugf("Filtering ecs instance without port %s (%s)", i.Name, i.ID)
 		return false
 	}
 
-	if i.machine == nil ||
-		i.machine.State == nil ||
-		i.machine.State.Name == nil {
+	if i.machine == nil || i.machine.State == nil || i.machine.State.Name == nil {
 		log.Debugf("Filtering ecs instance in an missing ec2 information %s (%s)", i.Name, i.ID)
 		return false
 	}
 
-	if *i.machine.State.Name != ec2.InstanceStateNameRunning {
-		log.Debugf("Filtering ecs instance in an incorrect state %s (%s) (state = %s)", i.Name, i.ID, *i.machine.State.Name)
+	if aws.StringValue(i.machine.State.Name) != ec2.InstanceStateNameRunning {
+		log.Debugf("Filtering ecs instance in an incorrect state %s (%s) (state = %s)", i.Name, i.ID, aws.StringValue(i.machine.State.Name))
 		return false
 	}
 
@@ -453,99 +418,20 @@ func (p *Provider) filterInstance(i ecsInstance) bool {
 		return false
 	}
 
-	label := p.label(i, types.LabelEnable)
-	enabled := p.ExposedByDefault && label != "false" || label == "true"
-	if !enabled {
-		log.Debugf("Filtering disabled ecs instance %s (%s) (traefik.enabled = '%s')", i.Name, i.ID, label)
+	if !isEnabled(i, p.ExposedByDefault) {
+		log.Debugf("Filtering disabled ecs instance %s (%s)", i.Name, i.ID)
 		return false
 	}
 
 	return true
 }
 
-func (p *Provider) filterFrontends(instances []ecsInstance) []ecsInstance {
-	byName := make(map[string]bool)
-
-	return fun.Filter(func(i ecsInstance) bool {
-		if _, found := byName[i.Name]; !found {
-			byName[i.Name] = true
-			return true
-		}
-
-		return false
-	}, instances).([]ecsInstance)
-}
-
-func (p *Provider) getFrontendRule(i ecsInstance) string {
-	if label := p.label(i, types.LabelFrontendRule); label != "" {
-		return label
-	}
-	return "Host:" + strings.ToLower(strings.Replace(i.Name, "_", "-", -1)) + "." + p.Domain
-}
-
-func (p *Provider) getBasicAuth(i ecsInstance) []string {
-	label := p.label(i, types.LabelFrontendAuthBasic)
-	if label != "" {
-		return strings.Split(label, ",")
-	}
-	return []string{}
-}
-
-func (p *Provider) getFirstInstanceLabel(instances []ecsInstance, labelName string) string {
-	if len(instances) > 0 {
-		return p.label(instances[0], labelName)
-	}
-	return ""
-}
-
-func (p *Provider) getLoadBalancerSticky(instances []ecsInstance) string {
-	if len(instances) > 0 {
-		label := p.getFirstInstanceLabel(instances, types.LabelBackendLoadbalancerSticky)
-		if label != "" {
-			log.Warnf("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
-			return label
-		}
-	}
-	return "false"
-}
-
-func (p *Provider) hasStickinessLabel(instances []ecsInstance) bool {
-	stickinessLabel := p.getFirstInstanceLabel(instances, types.LabelBackendLoadbalancerStickiness)
-	return len(stickinessLabel) > 0 && strings.EqualFold(strings.TrimSpace(stickinessLabel), "true")
-}
-
-func (p *Provider) getStickinessCookieName(instances []ecsInstance) string {
-	return p.getFirstInstanceLabel(instances, types.LabelBackendLoadbalancerStickinessCookieName)
-}
-
-func (p *Provider) getLoadBalancerMethod(instances []ecsInstance) string {
-	if len(instances) > 0 {
-		label := p.label(instances[0], types.LabelBackendLoadbalancerMethod)
-		if label != "" {
-			return label
-		}
-	}
-	return "wrr"
-}
-
-func (p *Provider) hasHealthCheckLabels(instances []ecsInstance) bool {
-	return p.getHealthCheckPath(instances) != ""
-}
-
-func (p *Provider) getHealthCheckPath(instances []ecsInstance) string {
-	return p.getFirstInstanceLabel(instances, types.LabelBackendHealthcheckPath)
-}
-
-func (p *Provider) getHealthCheckInterval(instances []ecsInstance) string {
-	return p.getFirstInstanceLabel(instances, types.LabelBackendHealthcheckInterval)
-}
-
 // Provider expects no more than 100 parameters be passed to a DescribeTask call; thus, pack
 // each string into an array capped at 100 elements
-func (p *Provider) chunkedTaskArns(tasks []*string) [][]*string {
+func chunkedTaskArns(tasks []*string) [][]*string {
 	var chunkedTasks [][]*string
 	for i := 0; i < len(tasks); i += 100 {
-		sliceEnd := -1
+		var sliceEnd int
 		if i+100 < len(tasks) {
 			sliceEnd = i + 100
 		} else {
@@ -554,50 +440,4 @@ func (p *Provider) chunkedTaskArns(tasks []*string) [][]*string {
 		chunkedTasks = append(chunkedTasks, tasks[i:sliceEnd])
 	}
 	return chunkedTasks
-}
-
-func (p *Provider) getProtocol(i ecsInstance) string {
-	if label := p.label(i, types.LabelProtocol); label != "" {
-		return label
-	}
-	return "http"
-}
-
-func (p *Provider) getHost(i ecsInstance) string {
-	return aws.StringValue(i.machine.PrivateIpAddress)
-}
-
-func (p *Provider) getPort(i ecsInstance) string {
-	if port := p.label(i, types.LabelPort); port != "" {
-		return port
-	}
-	return strconv.FormatInt(aws.Int64Value(i.container.NetworkBindings[0].HostPort), 10)
-}
-
-func (p *Provider) getWeight(i ecsInstance) string {
-	if label := p.label(i, types.LabelWeight); label != "" {
-		return label
-	}
-	return "0"
-}
-
-func (p *Provider) getPassHostHeader(i ecsInstance) string {
-	if label := p.label(i, types.LabelFrontendPassHostHeader); label != "" {
-		return label
-	}
-	return "true"
-}
-
-func (p *Provider) getPriority(i ecsInstance) string {
-	if label := p.label(i, types.LabelFrontendPriority); label != "" {
-		return label
-	}
-	return "0"
-}
-
-func (p *Provider) getEntryPoints(i ecsInstance) []string {
-	if label := p.label(i, types.LabelFrontendEntryPoints); label != "" {
-		return strings.Split(label, ",")
-	}
-	return []string{}
 }

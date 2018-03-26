@@ -1,25 +1,25 @@
 package build
 
 import (
+	"archive/tar"
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
-
-	"archive/tar"
-	"bytes"
 	"time"
 
+	"github.com/docker/docker/builder/remotecontext/git"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/fileutils"
-	"github.com/docker/docker/pkg/gitutils"
-	"github.com/docker/docker/pkg/httputils"
 	"github.com/docker/docker/pkg/ioutils"
+	"github.com/docker/docker/pkg/pools"
 	"github.com/docker/docker/pkg/progress"
 	"github.com/docker/docker/pkg/streamformatter"
 	"github.com/docker/docker/pkg/stringid"
@@ -29,6 +29,8 @@ import (
 const (
 	// DefaultDockerfileName is the Default filename with Docker commands, read by docker build
 	DefaultDockerfileName string = "Dockerfile"
+	// archiveHeaderSize is the number of bytes in an archive header
+	archiveHeaderSize = 512
 )
 
 // ValidateContextDirectory checks if all the contents of the directory
@@ -85,12 +87,12 @@ func ValidateContextDirectory(srcPath string, excludes []string) error {
 func GetContextFromReader(r io.ReadCloser, dockerfileName string) (out io.ReadCloser, relDockerfile string, err error) {
 	buf := bufio.NewReader(r)
 
-	magic, err := buf.Peek(archive.HeaderSize)
+	magic, err := buf.Peek(archiveHeaderSize)
 	if err != nil && err != io.EOF {
 		return nil, "", errors.Errorf("failed to peek context header from STDIN: %v", err)
 	}
 
-	if archive.IsArchive(magic) {
+	if IsArchive(magic) {
 		return ioutils.NewReadCloserWrapper(buf, func() error { return r.Close() }), dockerfileName, nil
 	}
 
@@ -134,6 +136,18 @@ func GetContextFromReader(r io.ReadCloser, dockerfileName string) (out io.ReadCl
 
 }
 
+// IsArchive checks for the magic bytes of a tar or any supported compression
+// algorithm.
+func IsArchive(header []byte) bool {
+	compression := archive.DetectCompression(header)
+	if compression != archive.Uncompressed {
+		return true
+	}
+	r := tar.NewReader(bytes.NewBuffer(header))
+	_, err := r.Next()
+	return err == nil
+}
+
 // GetContextFromGitURL uses a Git URL as context for a `docker build`. The
 // git repo is cloned into a temporary directory used as the context directory.
 // Returns the absolute path to the temporary context directory, the relative
@@ -143,7 +157,7 @@ func GetContextFromGitURL(gitURL, dockerfileName string) (string, string, error)
 	if _, err := exec.LookPath("git"); err != nil {
 		return "", "", errors.Wrapf(err, "unable to find 'git'")
 	}
-	absContextDir, err := gitutils.Clone(gitURL)
+	absContextDir, err := git.Clone(gitURL)
 	if err != nil {
 		return "", "", errors.Wrapf(err, "unable to 'git clone' to temporary context directory")
 	}
@@ -161,7 +175,7 @@ func GetContextFromGitURL(gitURL, dockerfileName string) (string, string, error)
 // Returns the tar archive used for the context and a path of the
 // dockerfile inside the tar.
 func GetContextFromURL(out io.Writer, remoteURL, dockerfileName string) (io.ReadCloser, string, error) {
-	response, err := httputils.Download(remoteURL)
+	response, err := getWithStatusError(remoteURL)
 	if err != nil {
 		return nil, "", errors.Errorf("unable to download remote context %s: %v", remoteURL, err)
 	}
@@ -171,6 +185,24 @@ func GetContextFromURL(out io.Writer, remoteURL, dockerfileName string) (io.Read
 	progReader := progress.NewProgressReader(response.Body, progressOutput, response.ContentLength, "", fmt.Sprintf("Downloading build context from remote url: %s", remoteURL))
 
 	return GetContextFromReader(ioutils.NewReadCloserWrapper(progReader, func() error { return response.Body.Close() }), dockerfileName)
+}
+
+// getWithStatusError does an http.Get() and returns an error if the
+// status code is 4xx or 5xx.
+func getWithStatusError(url string) (resp *http.Response, err error) {
+	if resp, err = http.Get(url); err != nil {
+		return nil, err
+	}
+	if resp.StatusCode < 400 {
+		return resp, nil
+	}
+	msg := fmt.Sprintf("failed to GET %s with status %s", url, resp.Status)
+	body, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		return nil, errors.Wrapf(err, msg+": error reading body")
+	}
+	return nil, errors.Errorf(msg+": %s", bytes.TrimSpace(body))
 }
 
 // GetContextFromLocalDir uses the given local directory as context for a
@@ -343,4 +375,28 @@ func AddDockerfileToBuildContext(dockerfileCtx io.ReadCloser, buildCtx io.ReadCl
 		},
 	})
 	return buildCtx, randomName, nil
+}
+
+// Compress the build context for sending to the API
+func Compress(buildCtx io.ReadCloser) (io.ReadCloser, error) {
+	pipeReader, pipeWriter := io.Pipe()
+
+	go func() {
+		compressWriter, err := archive.CompressStream(pipeWriter, archive.Gzip)
+		if err != nil {
+			pipeWriter.CloseWithError(err)
+		}
+		defer buildCtx.Close()
+
+		if _, err := pools.Copy(compressWriter, buildCtx); err != nil {
+			pipeWriter.CloseWithError(
+				errors.Wrap(err, "failed to compress context"))
+			compressWriter.Close()
+			return
+		}
+		compressWriter.Close()
+		pipeWriter.Close()
+	}()
+
+	return pipeReader, nil
 }

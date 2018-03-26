@@ -54,8 +54,10 @@ func init() {
 		check.Suite(&MarathonSuite{})
 		check.Suite(&MesosSuite{})
 		check.Suite(&RateLimitSuite{})
+		check.Suite(&RetrySuite{})
 		check.Suite(&SimpleSuite{})
 		check.Suite(&TimeoutSuite{})
+		check.Suite(&TracingSuite{})
 		check.Suite(&WebsocketSuite{})
 	}
 	if *host {

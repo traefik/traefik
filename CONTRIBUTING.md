@@ -13,7 +13,7 @@ You need to run the `binary` target. This will create binaries for Linux platfor
 $ make binary
 docker build -t "traefik-dev:no-more-godep-ever" -f build.Dockerfile .
 Sending build context to Docker daemon 295.3 MB
-Step 0 : FROM golang:1.9-alpine
+Step 0 : FROM golang:1.10-alpine
  ---> 8c6473912976
 Step 1 : RUN go get github.com/golang/dep/cmd/dep
 [...]

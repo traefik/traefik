@@ -4,14 +4,18 @@ type Node struct {
 	ID              string
 	Node            string
 	Address         string
+	Datacenter      string
 	TaggedAddresses map[string]string
 	Meta            map[string]string
+	CreateIndex     uint64
+	ModifyIndex     uint64
 }
 
 type CatalogService struct {
 	ID                       string
 	Node                     string
 	Address                  string
+	Datacenter               string
 	TaggedAddresses          map[string]string
 	NodeMeta                 map[string]string
 	ServiceID                string
@@ -38,6 +42,7 @@ type CatalogRegistration struct {
 	Datacenter      string
 	Service         *AgentService
 	Check           *AgentCheck
+	SkipNodeUpdate  bool
 }
 
 type CatalogDeregistration struct {

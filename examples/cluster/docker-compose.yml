@@ -48,7 +48,7 @@ services:
   ## BOULDER part ##
 
   boulder:
-      image: containous/boulder:release
+      image: containous/boulder:containous-fork
       environment:
           FAKE_DNS: 172.17.0.1
           PKCS11_PROXY_SOCKET: tcp://boulder-hsm:5657
@@ -73,8 +73,6 @@ services:
         - bhsm
         - bmysql
         - brabbitmq
-      volumes:
-        - "./rate-limit-policies.yml:/go/src/github.com/letsencrypt/boulder/test/rate-limit-policies.yml:ro"
       networks:
         net:
           ipv4_address: 10.0.1.3

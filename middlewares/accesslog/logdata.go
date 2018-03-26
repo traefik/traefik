@@ -44,6 +44,10 @@ const (
 	RequestLine = "RequestLine"
 	// RequestContentSize is the map key used for the number of bytes in the request entity (a.k.a. body) sent by the client.
 	RequestContentSize = "RequestContentSize"
+	// RequestRefererHeader is the Referer header in the request
+	RequestRefererHeader = "request_Referer"
+	// RequestUserAgentHeader is the User-Agent header in the request
+	RequestUserAgentHeader = "request_User-Agent"
 	// OriginDuration is the map key used for the time taken by the origin server ('upstream') to return its response.
 	OriginDuration = "OriginDuration"
 	// OriginContentSize is the map key used for the content length specified by the origin server, or 0 if unspecified.
