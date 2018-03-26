@@ -8,9 +8,10 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
 	"github.com/xenolf/lego/acme"
+	"github.com/containous/flaeg"
 )
 
-func dnsOverrideDelay(delay int) error {
+func dnsOverrideDelay(delay flaeg.Duration) error {
 	if delay == 0 {
 		return nil
 	}

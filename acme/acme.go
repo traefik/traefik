@@ -27,6 +27,7 @@ import (
 	"github.com/eapache/channels"
 	"github.com/xenolf/lego/acme"
 	"github.com/xenolf/lego/providers/dns"
+	"github.com/containous/flaeg"
 )
 
 var (
@@ -48,7 +49,7 @@ type ACME struct {
 	DNSChallenge          *acmeprovider.DNSChallenge  `description:"Activate DNS-01 Challenge"`
 	HTTPChallenge         *acmeprovider.HTTPChallenge `description:"Activate HTTP-01 Challenge"`
 	DNSProvider           string                      `description:"Activate DNS-01 Challenge (Deprecated)"`                                                       // deprecated
-	DelayDontCheckDNS     int                         `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."` // deprecated
+	DelayDontCheckDNS     flaeg.Duration              `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."` // deprecated
 	ACMELogging           bool                        `description:"Enable debug logging of ACME actions."`
 	client                *acme.Client
 	defaultCertificate    *tls.Certificate
@@ -378,7 +379,7 @@ func (a *ACME) storeRenewedCertificate(certificateResource *DomainsCertificate, 
 	return nil
 }
 
-func dnsOverrideDelay(delay int) error {
+func dnsOverrideDelay(delay flaeg.Duration) error {
 	var err error
 	if delay > 0 {
 		log.Debugf("Delaying %d rather than validating DNS propagation", delay)
