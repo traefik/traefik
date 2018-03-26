@@ -68,6 +68,7 @@
 - **[rancher]** Add all available labels to Rancher Backend ([#2601](https://github.com/containous/traefik/pull/2601) by [ldez](https://github.com/ldez))
 - **[rules]** Externalize Træfik rules in a dedicated package ([#2933](https://github.com/containous/traefik/pull/2933) by [nmengin](https://github.com/nmengin))
 - **[servicefabric]** Update Service Fabric backend. ([#3064](https://github.com/containous/traefik/pull/3064) by [ldez](https://github.com/ldez))
+- **[servicefabric]** Add white list for Service Fabric. ([#3079](https://github.com/containous/traefik/pull/3079) by [ldez](https://github.com/ldez))
 - **[tls]** Use default entryPoints when certificates are added with no entryPoints. ([#2534](https://github.com/containous/traefik/pull/2534) by [nmengin](https://github.com/nmengin))
 - **[tracing]** Handle zipkin collector creation ([#2860](https://github.com/containous/traefik/pull/2860) by [ferhatelmas](https://github.com/ferhatelmas))
 - **[tracing]** Opentracing support ([#2587](https://github.com/containous/traefik/pull/2587) by [mmatur](https://github.com/mmatur))
