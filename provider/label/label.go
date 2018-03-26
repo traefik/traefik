@@ -7,9 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/containous/flaeg"
 	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/types"
 )
 
 const (
@@ -28,7 +26,6 @@ const (
 	DefaultFrontendPriority                        = "0" // TODO [breaking] int value
 	DefaultFrontendPriorityInt                     = 0   // TODO rename to DefaultFrontendPriority
 	DefaultCircuitBreakerExpression                = "NetworkErrorRatio() > 1"
-	DefaultFrontendRedirectEntryPoint              = ""
 	DefaultBackendLoadBalancerMethod               = "wrr"
 	DefaultBackendMaxconnExtractorFunc             = "request.host"
 	DefaultBackendLoadbalancerStickinessCookieName = ""
@@ -57,14 +54,6 @@ func GetStringValue(labels map[string]string, labelName string, defaultValue str
 	return defaultValue
 }
 
-// GetStringValueP get string value associated to a label
-func GetStringValueP(labels *map[string]string, labelName string, defaultValue string) string {
-	if labels == nil {
-		return defaultValue
-	}
-	return GetStringValue(*labels, labelName, defaultValue)
-}
-
 // GetBoolValue get bool value associated to a label
 func GetBoolValue(labels map[string]string, labelName string, defaultValue bool) bool {
 	rawValue, ok := labels[labelName]
@@ -75,14 +64,6 @@ func GetBoolValue(labels map[string]string, labelName string, defaultValue bool)
 		}
 	}
 	return defaultValue
-}
-
-// GetBoolValueP get bool value associated to a label
-func GetBoolValueP(labels *map[string]string, labelName string, defaultValue bool) bool {
-	if labels == nil {
-		return defaultValue
-	}
-	return GetBoolValue(*labels, labelName, defaultValue)
 }
 
 // GetIntValue get int value associated to a label
@@ -97,14 +78,6 @@ func GetIntValue(labels map[string]string, labelName string, defaultValue int) i
 	return defaultValue
 }
 
-// GetIntValueP get int value associated to a label
-func GetIntValueP(labels *map[string]string, labelName string, defaultValue int) int {
-	if labels == nil {
-		return defaultValue
-	}
-	return GetIntValue(*labels, labelName, defaultValue)
-}
-
 // GetInt64Value get int64 value associated to a label
 func GetInt64Value(labels map[string]string, labelName string, defaultValue int64) int64 {
 	if rawValue, ok := labels[labelName]; ok {
@@ -115,14 +88,6 @@ func GetInt64Value(labels map[string]string, labelName string, defaultValue int6
 		log.Errorf("Unable to parse %q: %q, falling back to %v. %v", labelName, rawValue, defaultValue, err)
 	}
 	return defaultValue
-}
-
-// GetInt64ValueP get int64 value associated to a label
-func GetInt64ValueP(labels *map[string]string, labelName string, defaultValue int64) int64 {
-	if labels == nil {
-		return defaultValue
-	}
-	return GetInt64Value(*labels, labelName, defaultValue)
 }
 
 // GetSliceStringValue get a slice of string associated to a label
@@ -137,14 +102,6 @@ func GetSliceStringValue(labels map[string]string, labelName string) []string {
 		}
 	}
 	return value
-}
-
-// GetSliceStringValueP get a slice of string value associated to a label
-func GetSliceStringValueP(labels *map[string]string, labelName string) []string {
-	if labels == nil {
-		return nil
-	}
-	return GetSliceStringValue(*labels, labelName)
 }
 
 // ParseMapValue get Map value for a label value
@@ -203,14 +160,6 @@ func Has(labels map[string]string, labelName string) bool {
 	return ok && len(value) > 0
 }
 
-// HasP Check if a value is associated to a label
-func HasP(labels *map[string]string, labelName string) bool {
-	if labels == nil {
-		return false
-	}
-	return Has(*labels, labelName)
-}
-
 // HasPrefix Check if a value is associated to a less one label with a prefix
 func HasPrefix(labels map[string]string, prefix string) bool {
 	for name, value := range labels {
@@ -221,122 +170,9 @@ func HasPrefix(labels map[string]string, prefix string) bool {
 	return false
 }
 
-// HasPrefixP Check if a value is associated to a less one label with a prefix
-func HasPrefixP(labels *map[string]string, prefix string) bool {
-	if labels == nil {
-		return false
-	}
-	return HasPrefix(*labels, prefix)
-}
-
-// ParseErrorPages parse error pages to create ErrorPage struct
-func ParseErrorPages(labels map[string]string, labelPrefix string, labelRegex *regexp.Regexp) map[string]*types.ErrorPage {
-	var errorPages map[string]*types.ErrorPage
-
-	for lblName, value := range labels {
-		if strings.HasPrefix(lblName, labelPrefix) {
-			submatch := labelRegex.FindStringSubmatch(lblName)
-			if len(submatch) != 3 {
-				log.Errorf("Invalid page error label: %s, sub-match: %v", lblName, submatch)
-				continue
-			}
-
-			if errorPages == nil {
-				errorPages = make(map[string]*types.ErrorPage)
-			}
-
-			pageName := submatch[1]
-
-			ep, ok := errorPages[pageName]
-			if !ok {
-				ep = &types.ErrorPage{}
-				errorPages[pageName] = ep
-			}
-
-			switch submatch[2] {
-			case SuffixErrorPageStatus:
-				ep.Status = SplitAndTrimString(value, ",")
-			case SuffixErrorPageQuery:
-				ep.Query = value
-			case SuffixErrorPageBackend:
-				ep.Backend = value
-			default:
-				log.Errorf("Invalid page error label: %s", lblName)
-				continue
-			}
-		}
-	}
-
-	return errorPages
-}
-
-// ParseRateSets parse rate limits to create Rate struct
-func ParseRateSets(labels map[string]string, labelPrefix string, labelRegex *regexp.Regexp) map[string]*types.Rate {
-	var rateSets map[string]*types.Rate
-
-	for lblName, rawValue := range labels {
-		if strings.HasPrefix(lblName, labelPrefix) && len(rawValue) > 0 {
-			submatch := labelRegex.FindStringSubmatch(lblName)
-			if len(submatch) != 3 {
-				log.Errorf("Invalid rate limit label: %s, sub-match: %v", lblName, submatch)
-				continue
-			}
-
-			if rateSets == nil {
-				rateSets = make(map[string]*types.Rate)
-			}
-
-			limitName := submatch[1]
-
-			ep, ok := rateSets[limitName]
-			if !ok {
-				ep = &types.Rate{}
-				rateSets[limitName] = ep
-			}
-
-			switch submatch[2] {
-			case "period":
-				var d flaeg.Duration
-				err := d.Set(rawValue)
-				if err != nil {
-					log.Errorf("Unable to parse %q: %q. %v", lblName, rawValue, err)
-					continue
-				}
-				ep.Period = d
-			case "average":
-				value, err := strconv.ParseInt(rawValue, 10, 64)
-				if err != nil {
-					log.Errorf("Unable to parse %q: %q. %v", lblName, rawValue, err)
-					continue
-				}
-				ep.Average = value
-			case "burst":
-				value, err := strconv.ParseInt(rawValue, 10, 64)
-				if err != nil {
-					log.Errorf("Unable to parse %q: %q. %v", lblName, rawValue, err)
-					continue
-				}
-				ep.Burst = value
-			default:
-				log.Errorf("Invalid rate limit label: %s", lblName)
-				continue
-			}
-		}
-	}
-	return rateSets
-}
-
 // IsEnabled Check if a container is enabled in Træfik
 func IsEnabled(labels map[string]string, exposedByDefault bool) bool {
 	return GetBoolValue(labels, TraefikEnable, exposedByDefault)
-}
-
-// IsEnabledP Check if a container is enabled in Træfik
-func IsEnabledP(labels *map[string]string, exposedByDefault bool) bool {
-	if labels == nil {
-		return exposedByDefault
-	}
-	return IsEnabled(*labels, exposedByDefault)
 }
 
 // SplitAndTrimString splits separatedString at the separator character and trims each
@@ -353,4 +189,32 @@ func SplitAndTrimString(base string, sep string) []string {
 	}
 
 	return trimmedStrings
+}
+
+// GetFuncString a func related to GetStringValue
+func GetFuncString(labelName string, defaultValue string) func(map[string]string) string {
+	return func(labels map[string]string) string {
+		return GetStringValue(labels, labelName, defaultValue)
+	}
+}
+
+// GetFuncInt a func related to GetIntValue
+func GetFuncInt(labelName string, defaultValue int) func(map[string]string) int {
+	return func(labels map[string]string) int {
+		return GetIntValue(labels, labelName, defaultValue)
+	}
+}
+
+// GetFuncBool a func related to GetBoolValue
+func GetFuncBool(labelName string, defaultValue bool) func(map[string]string) bool {
+	return func(labels map[string]string) bool {
+		return GetBoolValue(labels, labelName, defaultValue)
+	}
+}
+
+// GetFuncSliceString a func related to GetSliceStringValue
+func GetFuncSliceString(labelName string) func(map[string]string) []string {
+	return func(labels map[string]string) []string {
+		return GetSliceStringValue(labels, labelName)
+	}
 }
