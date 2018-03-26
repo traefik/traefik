@@ -104,7 +104,6 @@ func TestParseRateSets(t *testing.T) {
 				},
 			},
 		},
-
 		{
 			desc:     "no rate limits labels",
 			labels:   map[string]string{},

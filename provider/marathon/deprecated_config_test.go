@@ -43,7 +43,7 @@ func TestBuildConfigurationV1(t *testing.T) {
 					Backend: "backend-app",
 					Routes: map[string]types.Route{
 						"route-host-app": {
-							Rule: "Host:app.docker.localhost",
+							Rule: "Host:app.marathon.localhost",
 						},
 					},
 					PassHostHeader: true,
@@ -74,7 +74,7 @@ func TestBuildConfigurationV1(t *testing.T) {
 					Backend: "backend-app",
 					Routes: map[string]types.Route{
 						"route-host-app": {
-							Rule: "Host:app.docker.localhost",
+							Rule: "Host:app.marathon.localhost",
 						},
 					},
 					PassHostHeader: true,
@@ -99,7 +99,7 @@ func TestBuildConfigurationV1(t *testing.T) {
 					Backend: "backend-app",
 					Routes: map[string]types.Route{
 						"route-host-app": {
-							Rule: "Host:app.docker.localhost",
+							Rule: "Host:app.marathon.localhost",
 						},
 					},
 					PassHostHeader: true,
@@ -130,7 +130,7 @@ func TestBuildConfigurationV1(t *testing.T) {
 					Backend: "backend-app",
 					Routes: map[string]types.Route{
 						"route-host-app": {
-							Rule: "Host:app.docker.localhost",
+							Rule: "Host:app.marathon.localhost",
 						},
 					},
 					PassHostHeader: true,
@@ -243,7 +243,7 @@ func TestBuildConfigurationV1(t *testing.T) {
 			}
 
 			p := &Provider{
-				Domain:           "docker.localhost",
+				Domain:           "marathon.localhost",
 				ExposedByDefault: true,
 			}
 
@@ -274,15 +274,15 @@ func TestBuildConfigurationServicesV1(t *testing.T) {
 				withServiceLabel(label.TraefikPort, "80", "web"),
 				withServiceLabel(label.TraefikPort, "81", "admin"),
 				withLabel("traefik..port", "82"), // This should be ignored, as it fails to match the servicesPropertiesRegexp regex.
-				withServiceLabel(label.TraefikFrontendRule, "Host:web.app.docker.localhost", "web"),
-				withServiceLabel(label.TraefikFrontendRule, "Host:admin.app.docker.localhost", "admin"),
+				withServiceLabel(label.TraefikFrontendRule, "Host:web.app.marathon.localhost", "web"),
+				withServiceLabel(label.TraefikFrontendRule, "Host:admin.app.marathon.localhost", "admin"),
 			),
 			expectedFrontends: map[string]*types.Frontend{
 				"frontend-app-service-web": {
 					Backend: "backend-app-service-web",
 					Routes: map[string]types.Route{
 						`route-host-app-service-web`: {
-							Rule: "Host:web.app.docker.localhost",
+							Rule: "Host:web.app.marathon.localhost",
 						},
 					},
 					PassHostHeader: true,
@@ -293,7 +293,7 @@ func TestBuildConfigurationServicesV1(t *testing.T) {
 					Backend: "backend-app-service-admin",
 					Routes: map[string]types.Route{
 						`route-host-app-service-admin`: {
-							Rule: "Host:admin.app.docker.localhost",
+							Rule: "Host:admin.app.marathon.localhost",
 						},
 					},
 					PassHostHeader: true,
@@ -333,8 +333,6 @@ func TestBuildConfigurationServicesV1(t *testing.T) {
 			application: application(
 				appPorts(80, 81),
 				withTasks(localhostTask(taskPorts(80, 81))),
-
-				// withLabel(label.TraefikBackend, "foobar"),
 
 				withLabel(label.TraefikBackendCircuitBreakerExpression, "NetworkErrorRatio() > 0.5"),
 				withLabel(label.TraefikBackendHealthCheckPath, "/health"),
@@ -422,7 +420,7 @@ func TestBuildConfigurationServicesV1(t *testing.T) {
 			}
 
 			p := &Provider{
-				Domain:           "docker.localhost",
+				Domain:           "marathon.localhost",
 				ExposedByDefault: true,
 			}
 
@@ -567,7 +565,7 @@ func TestGetFrontendRuleV1(t *testing.T) {
 			desc:                    "label missing",
 			application:             application(appID("test")),
 			marathonLBCompatibility: true,
-			expected:                "Host:test.docker.localhost",
+			expected:                "Host:test.marathon.localhost",
 		},
 		{
 			desc: "HAProxy vhost available and LB compat disabled",
@@ -576,7 +574,7 @@ func TestGetFrontendRuleV1(t *testing.T) {
 				withLabel("HAPROXY_0_VHOST", "foo.bar"),
 			),
 			marathonLBCompatibility: false,
-			expected:                "Host:test.docker.localhost",
+			expected:                "Host:test.marathon.localhost",
 		},
 		{
 			desc:                    "HAProxy vhost available and LB compat enabled",
@@ -607,8 +605,9 @@ func TestGetFrontendRuleV1(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			p := &Provider{
-				Domain:                  "docker.localhost",
+				Domain:                  "marathon.localhost",
 				MarathonLBCompatibility: test.marathonLBCompatibility,
 			}
 
@@ -753,6 +752,7 @@ func TestGetStickyV1(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			actual := getStickyV1(test.application)
 			if actual != test.expected {
 				t.Errorf("actual %v, expected %v", actual, test.expected)

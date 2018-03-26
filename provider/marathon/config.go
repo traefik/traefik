@@ -62,7 +62,6 @@ func (p *Provider) buildConfigurationV2(applications *marathon.Applications) *ty
 			for _, task := range app.Tasks {
 				if p.taskFilter(*task, app) {
 					filteredTasks = append(filteredTasks, task)
-				} else {
 					logIllegalServices(*task, app)
 				}
 			}

@@ -48,8 +48,6 @@ func (p *Provider) buildConfigurationV2(services []rancherData) *types.Configura
 	backends := map[string]rancherData{}
 
 	for _, service := range filteredServices {
-		fmt.Println(service)
-
 		segmentProperties := label.ExtractTraefikLabels(service.Labels)
 		for segmentName, labels := range segmentProperties {
 			service.SegmentLabels = labels
