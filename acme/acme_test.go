@@ -444,3 +444,90 @@ func TestAcme_getValidDomain(t *testing.T) {
 		})
 	}
 }
+
+func TestAcme_getCertificateForDomain(t *testing.T) {
+	tests := []struct {
+		name          string
+		domain        string
+		dc            *DomainsCertificates
+		expected      *DomainsCertificate
+		expectedFound bool
+	}{
+		{
+			name:   "non-wildcard exact match",
+			domain: "foo.traefik.wtf",
+			dc: &DomainsCertificates{
+				Certs: []*DomainsCertificate{
+					{
+						Domains: types.Domain{
+							Main: "foo.traefik.wtf",
+						},
+					},
+				},
+			},
+			expected: &DomainsCertificate{
+				Domains: types.Domain{
+					Main: "foo.traefik.wtf",
+				},
+			},
+			expectedFound: true,
+		},
+		{
+			name:   "non-wildcard no match",
+			domain: "bar.traefik.wtf",
+			dc: &DomainsCertificates{
+				Certs: []*DomainsCertificate{
+					{
+						Domains: types.Domain{
+							Main: "foo.traefik.wtf",
+						},
+					},
+				},
+			},
+			expected:      nil,
+			expectedFound: false,
+		},
+		{
+			name:   "wildcard match",
+			domain: "foo.traefik.wtf",
+			dc: &DomainsCertificates{
+				Certs: []*DomainsCertificate{
+					{
+						Domains: types.Domain{
+							Main: "*.traefik.wtf",
+						},
+					},
+				},
+			},
+			expected: &DomainsCertificate{
+				Domains: types.Domain{
+					Main: "*.traefik.wtf",
+				},
+			},
+			expectedFound: true,
+		},
+		{
+			name:   "wildcard no match",
+			domain: "foo.traefik.wtf",
+			dc: &DomainsCertificates{
+				Certs: []*DomainsCertificate{
+					{
+						Domains: types.Domain{
+							Main: "*.bar.traefik.wtf",
+						},
+					},
+				},
+			},
+			expected:      nil,
+			expectedFound: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, found := tt.dc.getCertificateForDomain(tt.domain)
+			assert.Equal(t, tt.expectedFound, found)
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}

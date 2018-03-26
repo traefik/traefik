@@ -8,6 +8,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"reflect"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -219,6 +220,12 @@ func (dc *DomainsCertificates) getCertificateForDomain(domainToFind string) (*Do
 
 	for _, domainsCertificate := range dc.Certs {
 		for _, domain := range domainsCertificate.Domains.ToStrArray() {
+			if strings.HasPrefix(domain, "*.") {
+				selector := "^" + strings.Replace(domain, "*.", "[^\\.]*\\.", -1) + "$"
+				if domainCheck, _ := regexp.MatchString(selector, domainToFind); domainCheck {
+					return domainsCertificate, true
+				}
+			}
 			if domain == domainToFind {
 				return domainsCertificate, true
 			}
