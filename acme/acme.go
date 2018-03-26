@@ -395,7 +395,7 @@ func dnsOverrideDelay(delay flaeg.Duration) error {
 	if delay > 0 {
 		log.Debugf("Delaying %d rather than validating DNS propagation", delay)
 		acme.PreCheckDNS = func(_, _ string) (bool, error) {
-			time.Sleep(time.Duration(delay))
+			time.Sleep(time.Duration(delay) * time.Second)
 			return true, nil
 		}
 	} else if delay < 0 {
