@@ -17,7 +17,7 @@ storage = "/etc/traefik/conf/acme.json"
 entryPoint = "https"
 onDemand = false
 OnHostRule = true
-caServer = "http://traefik.boulder.com:4000/directory"
+caServer = "http://traefik.boulder.com:4001/directory"
   [acme.httpChallenge]
   entryPoint="http"
 

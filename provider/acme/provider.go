@@ -24,7 +24,7 @@ import (
 	traefikTLS "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/pkg/errors"
-	"github.com/xenolf/lego/acme"
+	acme "github.com/xenolf/lego/acmev2"
 	"github.com/xenolf/lego/providers/dns"
 )
 
@@ -45,7 +45,7 @@ type Configuration struct {
 	OnDemand      bool           `description:"Enable on demand certificate generation. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."` //deprecated
 	DNSChallenge  *DNSChallenge  `description:"Activate DNS-01 Challenge"`
 	HTTPChallenge *HTTPChallenge `description:"Activate HTTP-01 Challenge"`
-	Domains       []types.Domain `description:"SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='main.net,san1.net,san2.net'"`
+	Domains       []types.Domain `description:"CN and SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='*.main.net'. No SANs for wildcards domain. Wildcard domains only accepted with DNSChallenge"`
 }
 
 // Provider holds configurations of the provider.
@@ -142,9 +142,9 @@ func (p *Provider) ListenConfiguration(config types.Configuration) {
 	p.configFromListenerChan <- config
 }
 
-// ListenRequest resolves new certificates for a domain from an incoming request and retrun a valid Certificate to serve (onDemand option)
+// ListenRequest resolves new certificates for a domain from an incoming request and return a valid Certificate to serve (onDemand option)
 func (p *Provider) ListenRequest(domain string) (*tls.Certificate, error) {
-	acmeCert, err := p.resolveCertificate(types.Domain{Main: domain})
+	acmeCert, err := p.resolveCertificate(types.Domain{Main: domain}, false)
 	if acmeCert == nil || err != nil {
 		return nil, err
 	}
@@ -183,7 +183,7 @@ func (p *Provider) watchNewDomains() {
 							}
 
 							safe.Go(func() {
-								if _, err := p.resolveCertificate(domain); err != nil {
+								if _, err := p.resolveCertificate(domain, false); err != nil {
 									log.Errorf("Unable to obtain ACME certificate for domains %q detected thanks to rule %q : %v", strings.Join(domains, ","), route.Rule, err)
 								}
 							})
@@ -207,16 +207,14 @@ func (p *Provider) SetStaticCertificates(staticCerts map[string]*tls.Certificate
 	p.staticCerts = staticCerts
 }
 
-func (p *Provider) resolveCertificate(domain types.Domain) (*acme.CertificateResource, error) {
-	domains := []string{domain.Main}
-	domains = append(domains, domain.SANs...)
-	if len(domains) == 0 {
-		return nil, nil
+func (p *Provider) resolveCertificate(domain types.Domain, domainFromConfigurationFile bool) (*acme.CertificateResource, error) {
+	domains, err := p.getValidDomains(domain, domainFromConfigurationFile)
+	if err != nil {
+		return nil, err
 	}
-	domains = fun.Map(types.CanonicalDomain, domains).([]string)
 
 	// Check provided certificates
-	uncheckedDomains := p.getUncheckedDomains(domains)
+	uncheckedDomains := p.getUncheckedDomains(domains, !domainFromConfigurationFile)
 	if len(uncheckedDomains) == 0 {
 		return nil, nil
 	}
@@ -255,7 +253,7 @@ func (p *Provider) getClient() (*acme.Client, error) {
 		}
 
 		log.Debug("Building ACME client...")
-		caServer := "https://acme-v01.api.letsencrypt.org/directory"
+		caServer := "https://acme-v02.api.letsencrypt.org/directory"
 		if len(p.CAServer) > 0 {
 			caServer = p.CAServer
 		}
@@ -267,26 +265,11 @@ func (p *Provider) getClient() (*acme.Client, error) {
 		if account.GetRegistration() == nil {
 			// New users will need to register; be sure to save it
 			log.Info("Register...")
-			reg, err := client.Register()
+			reg, err := client.Register(true)
 			if err != nil {
 				return nil, err
 			}
 			account.Registration = reg
-		}
-
-		log.Debug("AgreeToTOS...")
-		err = client.AgreeToTOS()
-		if err != nil {
-			// Let's Encrypt Subscriber Agreement renew ?
-			reg, err := client.QueryRegistration()
-			if err != nil {
-				return nil, err
-			}
-			account.Registration = reg
-			err = client.AgreeToTOS()
-			if err != nil {
-				return nil, fmt.Errorf("error sending ACME agreement to TOS: %+v: %v", account, err)
-			}
 		}
 
 		// Save the account once before all the certificates generation/storing
@@ -310,14 +293,14 @@ func (p *Provider) getClient() (*acme.Client, error) {
 				return nil, err
 			}
 
-			client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.TLSSNI01})
+			client.ExcludeChallenges([]acme.Challenge{acme.HTTP01})
 			err = client.SetChallengeProvider(acme.DNS01, provider)
 			if err != nil {
 				return nil, err
 			}
 		} else if p.HTTPChallenge != nil && len(p.HTTPChallenge.EntryPoint) > 0 {
 			log.Debug("Using HTTP Challenge provider.")
-			client.ExcludeChallenges([]acme.Challenge{acme.DNS01, acme.TLSSNI01})
+			client.ExcludeChallenges([]acme.Challenge{acme.DNS01})
 			err = client.SetChallengeProvider(acme.HTTP01, p)
 			if err != nil {
 				return nil, err
@@ -353,12 +336,13 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	p.configurationChan = configurationChan
 	p.refreshCertificates()
 
-	for _, domain := range p.Domains {
+	p.deleteUnnecessaryDomains()
+	for i := 0; i < len(p.Domains); i++ {
+		domain := p.Domains[i]
 		safe.Go(func() {
-			if _, err := p.resolveCertificate(domain); err != nil {
-				domains := []string{domain.Main}
-				domains = append(domains, domain.SANs...)
-				log.Errorf("Unable to obtain ACME certificate for domains %q : %v", domains, err)
+			if _, err := p.resolveCertificate(domain, true); err != nil {
+				log.Errorf("Unable to obtain ACME certificate for domains %q : %v", strings.Join(domain.ToStrArray(), ","), err)
+			} else {
 			}
 		})
 	}
@@ -506,51 +490,48 @@ func (p *Provider) AddRoutes(router *mux.Router) {
 
 // Get provided certificate which check a domains list (Main and SANs)
 // from static and dynamic provided certificates
-func (p *Provider) getUncheckedDomains(domains []string) []string {
-	log.Debugf("Looking for provided certificate(s) to validate %q...", domains)
-	allCerts := make(map[string]*tls.Certificate)
+func (p *Provider) getUncheckedDomains(domainsToCheck []string, checkConfigurationDomains bool) []string {
+	log.Debugf("Looking for provided certificate(s) to validate %q...", domainsToCheck)
+	var allCerts []string
 
 	// Get static certificates
-	for domains, certificate := range p.staticCerts {
-		allCerts[domains] = certificate
+	for domains := range p.staticCerts {
+		allCerts = append(allCerts, domains)
 	}
 
 	// Get dynamic certificates
 	if p.dynamicCerts != nil && p.dynamicCerts.Get() != nil {
-		for domains, certificate := range p.dynamicCerts.Get().(map[string]*tls.Certificate) {
-			allCerts[domains] = certificate
+		for domains := range p.dynamicCerts.Get().(map[string]*tls.Certificate) {
+			allCerts = append(allCerts, domains)
 		}
 	}
 
-	return searchUncheckedDomains(domains, allCerts)
+	// Get ACME certificates
+	for _, certificate := range p.certificates {
+		allCerts = append(allCerts, strings.Join(certificate.Domain.ToStrArray(), ","))
+	}
+
+	// Get Configuration Domains
+	if checkConfigurationDomains {
+		for i := 0; i < len(p.Domains); i++ {
+			allCerts = append(allCerts, strings.Join(p.Domains[i].ToStrArray(), ","))
+		}
+	}
+
+	return searchUncheckedDomains(domainsToCheck, allCerts)
 }
 
-func searchUncheckedDomains(domains []string, certs map[string]*tls.Certificate) []string {
+func searchUncheckedDomains(domainsToCheck []string, existentDomains []string) []string {
 	uncheckedDomains := []string{}
-	for _, domainToCheck := range domains {
-		domainCheck := false
-		for certDomains := range certs {
-			domainCheck = false
-			for _, certDomain := range strings.Split(certDomains, ",") {
-				// Use regex to test for provided certs that might have been added into TLSConfig
-				selector := "^" + strings.Replace(certDomain, "*.", "[^\\.]*\\.?", -1) + "$"
-				domainCheck, _ = regexp.MatchString(selector, domainToCheck)
-				if domainCheck {
-					break
-				}
-			}
-			if domainCheck {
-				break
-			}
-		}
-		if !domainCheck {
+	for _, domainToCheck := range domainsToCheck {
+		if !isDomainAlreadyChecked(domainToCheck, existentDomains) {
 			uncheckedDomains = append(uncheckedDomains, domainToCheck)
 		}
 	}
 	if len(uncheckedDomains) == 0 {
-		log.Debugf("No ACME certificate to generate for domains %q.", domains)
+		log.Debugf("No ACME certificate to generate for domains %q.", domainsToCheck)
 	} else {
-		log.Debugf("Domains %q need ACME certificates generation for domains %q.", domains, strings.Join(uncheckedDomains, ","))
+		log.Debugf("Domains %q need ACME certificates generation for domains %q.", domainsToCheck, strings.Join(uncheckedDomains, ","))
 	}
 	return uncheckedDomains
 }
@@ -570,4 +551,99 @@ func getX509Certificate(certificate *Certificate) (*x509.Certificate, error) {
 		}
 	}
 	return crt, err
+}
+
+// getValidDomains checks if given domain is allowed to generate a ACME certificate and return it
+func (p *Provider) getValidDomains(domain types.Domain, wildcardAllowed bool) ([]string, error) {
+	domains := domain.ToStrArray()
+	if len(domains) == 0 {
+		return nil, errors.New("unable to generate a certificate in ACME provider when no domain is given")
+	}
+	if strings.HasPrefix(domain.Main, "*") {
+		if !wildcardAllowed {
+			return nil, fmt.Errorf("unable to generate a wildcard certificate in ACME provider for domain %q from a 'Host' rule", strings.Join(domains, ","))
+		}
+		if p.DNSChallenge == nil {
+			return nil, fmt.Errorf("unable to generate a wildcard certificate in ACME provider for domain %q : ACME needs a DNSChallenge", strings.Join(domains, ","))
+		}
+		if len(domain.SANs) > 0 {
+			return nil, fmt.Errorf("unable to generate a wildcard certificate in ACME provider for domain %q : SANs are not allowed", strings.Join(domains, ","))
+		}
+	} else {
+		for _, san := range domain.SANs {
+			if strings.HasPrefix(san, "*") {
+				return nil, fmt.Errorf("unable to generate a certificate in ACME provider for domains %q: SANs can not be a wildcard domain", strings.Join(domains, ","))
+			}
+		}
+	}
+	domains = fun.Map(types.CanonicalDomain, domains).([]string)
+	return domains, nil
+}
+
+func isDomainAlreadyChecked(domainToCheck string, existentDomains []string) bool {
+	for _, certDomains := range existentDomains {
+		for _, certDomain := range strings.Split(certDomains, ",") {
+			// Use regex to test for provided existentDomains that might have been added into TLSConfig
+			selector := "^" + strings.Replace(certDomain, "*.", "[^\\.]*\\.", -1) + "$"
+			domainCheck, err := regexp.MatchString(selector, domainToCheck)
+			if err != nil {
+				log.Errorf("Unable to compare %q and %q in ACME provider : %s", domainToCheck, certDomain, err)
+				continue
+			}
+			if domainCheck {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// deleteUnnecessaryDomains deletes from the configuration :
+// - Duplicated domains
+// - Domains which are checked by wildcard domain
+func (p *Provider) deleteUnnecessaryDomains() {
+	var newDomains []types.Domain
+
+	for idxDomainToCheck, domainToCheck := range p.Domains {
+		keepDomain := true
+
+		for idxDomain, domain := range p.Domains {
+			if idxDomainToCheck == idxDomain {
+				continue
+			}
+
+			if reflect.DeepEqual(domain, domainToCheck) {
+				if idxDomainToCheck > idxDomain {
+					log.Warnf("The domain %v is duplicated in the configuration but will be process by ACME provider only once.", domainToCheck)
+					keepDomain = false
+				}
+				break
+			} else if strings.HasPrefix(domain.Main, "*") && domain.SANs == nil {
+
+				// Check if domains can be validated by the wildcard domain
+				var newDomainsToCheck []string
+				for _, domainProcessed := range domainToCheck.ToStrArray() {
+					if isDomainAlreadyChecked(domainProcessed, domain.ToStrArray()) {
+						log.Warnf("Domain %q will not be processed by ACME provider because it is validated by the wildcard %q", domainProcessed, domain.Main)
+						continue
+					}
+					newDomainsToCheck = append(newDomainsToCheck, domainProcessed)
+				}
+
+				// Delete the domain if both Main and SANs can be validated by the wildcard domain
+				// otherwise keep the unchecked values
+				if newDomainsToCheck == nil {
+					keepDomain = false
+					break
+				}
+				domainToCheck.Set(newDomainsToCheck)
+			}
+		}
+
+		if keepDomain {
+			newDomains = append(newDomains, domainToCheck)
+		}
+	}
+
+	p.Domains = newDomains
 }

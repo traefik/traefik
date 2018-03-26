@@ -15,7 +15,7 @@ import (
 
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
-	"github.com/xenolf/lego/acme"
+	acme "github.com/xenolf/lego/acmev2"
 )
 
 // Account is used to store lets encrypt registration info
@@ -63,15 +63,14 @@ func (a *Account) Init() error {
 }
 
 // NewAccount creates an account
-func NewAccount(email string) (*Account, error) {
+func NewAccount(email string, certs []*DomainsCertificate) (*Account, error) {
 	// Create a user. New accounts need an email and private key to start
 	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		return nil, err
 	}
 
-	domainsCerts := DomainsCertificates{Certs: []*DomainsCertificate{}}
-
+	domainsCerts := DomainsCertificates{Certs: certs}
 	err = domainsCerts.Init()
 	if err != nil {
 		return nil, err
@@ -211,7 +210,6 @@ func (dc *DomainsCertificates) addCertificateForDomains(acmeCert *Certificate, d
 
 	cert := DomainsCertificate{Domains: domain, Certificate: acmeCert, tlsCert: &tlsCert}
 	dc.Certs = append(dc.Certs, &cert)
-
 	return &cert, nil
 }
 
@@ -220,10 +218,7 @@ func (dc *DomainsCertificates) getCertificateForDomain(domainToFind string) (*Do
 	defer dc.lock.RUnlock()
 
 	for _, domainsCertificate := range dc.Certs {
-		domains := []string{domainsCertificate.Domains.Main}
-		domains = append(domains, domainsCertificate.Domains.SANs...)
-
-		for _, domain := range domains {
+		for _, domain := range domainsCertificate.Domains.ToStrArray() {
 			if domain == domainToFind {
 				return domainsCertificate, true
 			}

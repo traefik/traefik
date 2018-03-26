@@ -55,10 +55,6 @@ defaultEntryPoints = ["http", "https"]
 
 ## Let's Encrypt support
 
-!!! note
-    Even if `TLS-SNI-01` challenge is [disabled](https://community.letsencrypt.org/t/2018-01-11-update-regarding-acme-tls-sni-and-shared-hosting-infrastructure/50188), for the moment, it stays the _by default_ ACME Challenge in Træfik but all the examples use the `HTTP-01` challenge (except DNS challenge examples).
-    If `TLS-SNI-01` challenge is not re-enabled in the future, it we will be removed from Træfik.
-
 ### Basic example with HTTP challenge
 
 ```toml
@@ -190,9 +186,44 @@ entryPoint = "https"
 ```
 
 DNS challenge needs environment variables to be executed.
-These variables have to be set on the machine/container which host Træfik.
+These variables have to be set on the machine/container that host Træfik.
 
 These variables are described [in this section](/configuration/acme/#provider).
+
+### DNS challenge with wildcard domains
+
+```toml
+[entryPoints]
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+
+[acme]
+email = "test@traefik.io"
+storage = "acme.json"
+caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
+entryPoint = "https"
+  [acme.dnsChallenge]
+  provider = "digitalocean" # DNS Provider name (cloudflare, OVH, gandi...)
+  delayBeforeCheck = 0
+
+[[acme.domains]]
+  main = "*.local1.com"
+[[acme.domains]]
+  main = "local2.com"
+  sans = ["test1.local2.com", "test2x.local2.com"]
+[[acme.domains]]
+  main = "*.local3.com"
+[[acme.domains]]
+  main = "*.local4.com"
+```
+
+DNS challenge needs environment variables to be executed.
+These variables have to be set on the machine/container that host Træfik.
+
+These variables are described [in this section](/configuration/acme/#provider).
+
+More information about wildcard certificates are available [in this section](/configuration/acme/#wildcard-domain).
 
 ### OnHostRule option and provided certificates (with HTTP challenge)
 

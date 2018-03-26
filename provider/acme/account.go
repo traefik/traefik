@@ -7,7 +7,7 @@ import (
 	"crypto/x509"
 
 	"github.com/containous/traefik/log"
-	"github.com/xenolf/lego/acme"
+	acme "github.com/xenolf/lego/acmev2"
 )
 
 // Account is used to store lets encrypt registration info
@@ -16,6 +16,11 @@ type Account struct {
 	Registration *acme.RegistrationResource
 	PrivateKey   []byte
 }
+
+const (
+	// RegistrationURLPathV1Regexp is a regexp which match ACME registration URL in the V1 format
+	RegistrationURLPathV1Regexp string = `^.*/acme/reg/\d+$`
+)
 
 // NewAccount creates an account
 func NewAccount(email string) (*Account, error) {

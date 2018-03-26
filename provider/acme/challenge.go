@@ -8,7 +8,7 @@ import (
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
-	"github.com/xenolf/lego/acme"
+	acme "github.com/xenolf/lego/acmev2"
 )
 
 func dnsOverrideDelay(delay flaeg.Duration) error {

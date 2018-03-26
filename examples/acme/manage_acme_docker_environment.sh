@@ -32,7 +32,7 @@ init_environment() {
 start_boulder() {
     init_environment
     echo "Start boulder environment"
-    up_environment bmysql brabbitmq bhsm boulder
+    up_environment bmysql bhsm boulder
     waiting_counter=12
     # Not start Traefik if boulder is not started
     echo "WAIT for boulder..."
