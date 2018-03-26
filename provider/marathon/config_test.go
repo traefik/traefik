@@ -71,22 +71,8 @@ func TestBuildConfiguration(t *testing.T) {
 				appPorts(80),
 				withTasks(localhostTask(taskPorts(80), state(taskStateStaging))),
 			),
-			expectedFrontends: map[string]*types.Frontend{
-				"frontend-app": {
-					Backend: "backend-app",
-					Routes: map[string]types.Route{
-						"route-host-app": {
-							Rule: "Host:app.docker.localhost",
-						},
-					},
-					PassHostHeader: true,
-					BasicAuth:      []string{},
-					EntryPoints:    []string{},
-				},
-			},
-			expectedBackends: map[string]*types.Backend{
-				"backend-app": {},
-			},
+			expectedFrontends: map[string]*types.Frontend{},
+			expectedBackends:  map[string]*types.Backend{},
 		},
 		{
 			desc: "max connection extractor function label only",
