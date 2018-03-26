@@ -102,6 +102,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 					serviceLabels(map[string]string{
 						label.TraefikPort:     "666",
 						label.TraefikProtocol: "https",
+						label.TraefikPriority: "99",
 						label.TraefikWeight:   "12",
 
 						label.TraefikBackend: "foobar",
@@ -277,8 +278,9 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 				"backend-foobar": {
 					Servers: map[string]types.Server{
 						"server-test1": {
-							URL:    "https://127.0.0.1:666",
-							Weight: 12,
+							URL:      "https://127.0.0.1:666",
+							Priority: 99,
+							Weight:   12,
 						},
 					},
 					CircuitBreaker: &types.CircuitBreaker{

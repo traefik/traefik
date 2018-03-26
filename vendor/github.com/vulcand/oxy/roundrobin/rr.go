@@ -11,6 +11,17 @@ import (
 	"github.com/vulcand/oxy/utils"
 )
 
+// Priority is an optional functional argument that sets the priority of the server
+func Priority(p int) ServerOption {
+	return func(s *server) error {
+		if p < 0 {
+			return fmt.Errorf("Priority should be >= 0")
+		}
+		s.priority = p
+		return nil
+	}
+}
+
 // Weight is an optional functional argument that sets weight of the server
 func Weight(w int) ServerOption {
 	return func(s *server) error {
@@ -149,6 +160,9 @@ func (r *RoundRobin) nextServer() (*server, error) {
 	// it calculates the GCD  and subtracts it on every iteration, what interleaves servers
 	// and allows us not to build an iterator every time we readjust weights
 
+	// Highest priority across all enabled servers
+	priority := r.maxPriority()
+
 	// GCD across all enabled servers
 	gcd := r.weightGcd()
 	// Maximum weight across all enabled servers
@@ -166,8 +180,10 @@ func (r *RoundRobin) nextServer() (*server, error) {
 			}
 		}
 		srv := r.servers[r.index]
-		if srv.weight >= r.currentWeight {
-			return srv, nil
+		if srv.priority >= priority {
+			if srv.weight >= r.currentWeight {
+				return srv, nil
+			}
 		}
 	}
 }
@@ -262,6 +278,16 @@ func (r *RoundRobin) findServerByURL(u *url.URL) (*server, int) {
 	return nil, -1
 }
 
+func (rr *RoundRobin) maxPriority() int {
+	max := -1
+	for _, s := range rr.servers {
+		if s.priority > max {
+			max = s.priority
+		}
+	}
+	return max
+}
+
 func (rr *RoundRobin) maxWeight() int {
 	max := -1
 	for _, s := range rr.servers {
@@ -300,6 +326,8 @@ type LBOption func(*RoundRobin) error
 // Set additional parameters for the server can be supplied when adding server
 type server struct {
 	url *url.URL
+	// Priority of the server (higher value means higher priority)
+	priority int
 	// Relative weight for the enpoint to other enpoints in the load balancer
 	weight int
 }

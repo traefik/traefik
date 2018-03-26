@@ -19,6 +19,7 @@ const (
 const (
 	DefaultWeight                                  = "0" // TODO [breaking] use int value
 	DefaultWeightInt                               = 0   // TODO rename to DefaultWeight
+	DefaultPriority                                = 0
 	DefaultProtocol                                = "http"
 	DefaultPassHostHeader                          = "true" // TODO [breaking] use bool value
 	DefaultPassHostHeaderBool                      = true   // TODO rename to DefaultPassHostHeader

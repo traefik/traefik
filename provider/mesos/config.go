@@ -329,8 +329,9 @@ func (p *Provider) getServers(tasks []state.Task) map[string]types.Server {
 
 		serverName := "server-" + getID(task)
 		servers[serverName] = types.Server{
-			URL:    fmt.Sprintf("%s://%s:%s", protocol, host, port),
-			Weight: getIntValue(task, label.TraefikWeight, label.DefaultWeightInt, math.MaxInt32),
+			URL:      fmt.Sprintf("%s://%s:%s", protocol, host, port),
+			Priority: getIntValue(task, label.TraefikPriority, label.DefaultPriority, math.MaxInt64),
+			Weight:   getIntValue(task, label.TraefikWeight, label.DefaultWeightInt, math.MaxInt32),
 		}
 	}
 

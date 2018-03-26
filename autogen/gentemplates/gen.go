@@ -508,6 +508,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
   {{range $serverName, $server := getServers $servers }}
   [backends."backend-{{ $backendName }}".servers."{{ $serverName }}"]
     url = "{{ $server.URL }}"
+    priority = {{ $server.Priority }}
     weight = {{ $server.Weight }}
   {{end}}
 
@@ -700,6 +701,7 @@ var _templatesEcsTmpl = []byte(`[backends]
   {{range $serverName, $server := getServers $instances }}
   [backends."backend-{{ $serviceName }}".servers."{{ $serverName }}"]
     url = "{{ $server.URL }}"
+    priority = {{ $server.Priority }}
     weight = {{ $server.Weight }}
   {{end}}
 
@@ -1599,6 +1601,7 @@ var _templatesMesosTmpl = []byte(`[backends]
   {{range $serverName, $server := getServers $tasks }}
   [backends."backend-{{ $backendName }}".servers."{{ $serverName }}"]
     url = "{{ $server.URL }}"
+    priority = {{ $server.Priority }}
     weight = {{ $server.Weight }}
   {{end}}
 {{end}}
