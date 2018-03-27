@@ -88,3 +88,95 @@ func TestDomain_Set(t *testing.T) {
 		})
 	}
 }
+
+func TestMatchDomain(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		certDomain string
+		domain     string
+		expected   bool
+	}{
+		{
+			desc:       "exact match",
+			certDomain: "traefik.wtf",
+			domain:     "traefik.wtf",
+			expected:   true,
+		},
+		{
+			desc:       "wildcard and root domain",
+			certDomain: "*.traefik.wtf",
+			domain:     "traefik.wtf",
+			expected:   false,
+		},
+		{
+			desc:       "wildcard and sub domain",
+			certDomain: "*.traefik.wtf",
+			domain:     "sub.traefik.wtf",
+			expected:   true,
+		},
+		{
+			desc:       "wildcard and sub sub domain",
+			certDomain: "*.traefik.wtf",
+			domain:     "sub.sub.traefik.wtf",
+			expected:   false,
+		},
+		{
+			desc:       "double wildcard and sub sub domain",
+			certDomain: "*.*.traefik.wtf",
+			domain:     "sub.sub.traefik.wtf",
+			expected:   true,
+		},
+		{
+			desc:       "sub sub domain and invalid wildcard",
+			certDomain: "sub.*.traefik.wtf",
+			domain:     "sub.sub.traefik.wtf",
+			expected:   false,
+		},
+		{
+			desc:       "sub sub domain and valid wildcard",
+			certDomain: "*.sub.traefik.wtf",
+			domain:     "sub.sub.traefik.wtf",
+			expected:   true,
+		},
+		{
+			desc:       "dot replaced by a cahr",
+			certDomain: "sub.sub.traefik.wtf",
+			domain:     "sub.sub.traefikiwtf",
+			expected:   false,
+		},
+		{
+			desc:       "*",
+			certDomain: "*",
+			domain:     "sub.sub.traefik.wtf",
+			expected:   false,
+		},
+		{
+			desc:       "?",
+			certDomain: "?",
+			domain:     "sub.sub.traefik.wtf",
+			expected:   false,
+		},
+		{
+			desc:       "...................",
+			certDomain: "...................",
+			domain:     "sub.sub.traefik.wtf",
+			expected:   false,
+		},
+		{
+			desc:       "wildcard and *",
+			certDomain: "*.traefik.wtf",
+			domain:     "*.*.traefik.wtf",
+			expected:   false,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			domains := MatchDomain(test.domain, test.certDomain)
+			assert.Equal(t, test.expected, domains)
+		})
+	}
+}
