@@ -555,20 +555,29 @@ func (a *ACME) getProvidedCertificate(domains string) *tls.Certificate {
 func searchProvidedCertificateForDomains(domain string, certs map[string]*tls.Certificate) *tls.Certificate {
 	// Use regex to test for provided certs that might have been added into TLSConfig
 	for certDomains := range certs {
-		domainCheck := false
+		domainChecked := false
 		for _, certDomain := range strings.Split(certDomains, ",") {
-			selector := "^" + strings.Replace(certDomain, "*.", "[^\\.]*\\.", -1) + "$"
-			domainCheck, _ = regexp.MatchString(selector, domain)
-			if domainCheck {
+			domainChecked = searchProvidedCertificateForDomain(domain, certDomain)
+			if domainChecked {
 				break
 			}
 		}
-		if domainCheck {
+		if domainChecked {
 			log.Debugf("Domain %q checked by provided certificate %q", domain, certDomains)
 			return certs[certDomains]
 		}
 	}
 	return nil
+}
+
+func searchProvidedCertificateForDomain(domain string, certDomain string) bool {
+	// Use regex to test for provided certs that might have been added into TLSConfig
+	selector := "^" + strings.Replace(certDomain, "*.", "[^\\.]*\\.", -1) + "$"
+	domainChecked, err := regexp.MatchString(selector, domain)
+	if err != nil {
+		log.Errorf("Unable to compare %q and %q : %s", domain, certDomain, err.Error())
+	}
+	return domainChecked
 }
 
 // Get provided certificate which check a domains list (Main and SANs)
@@ -684,15 +693,7 @@ func (a *ACME) getValidDomains(domains []string, wildcardAllowed bool) ([]string
 func isDomainAlreadyChecked(domainToCheck string, existentDomains map[string]*tls.Certificate) bool {
 	for certDomains := range existentDomains {
 		for _, certDomain := range strings.Split(certDomains, ",") {
-			// Use regex to test for provided existentDomains that might have been added into TLSConfig
-			selector := "^" + strings.Replace(certDomain, "*.", "[^\\.]*\\.", -1) + "$"
-			domainCheck, err := regexp.MatchString(selector, domainToCheck)
-			if err != nil {
-				log.Errorf("Unable to compare %q and %q : %s", domainToCheck, certDomain, err)
-				continue
-			}
-
-			if domainCheck {
+			if searchProvidedCertificateForDomain(domainToCheck, certDomain) {
 				return true
 			}
 		}
