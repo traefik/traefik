@@ -331,15 +331,15 @@ func (gc *GlobalConfiguration) ValidateConfiguration() {
 			log.Fatalf("Unknown entrypoint %q for ACME configuration", gc.ACME.EntryPoint)
 		} else {
 			if gc.EntryPoints[gc.ACME.EntryPoint].TLS == nil {
-				log.Fatalf("Entrypoint without TLS %q for ACME configuration", gc.ACME.EntryPoint)
+				log.Fatalf("Entrypoint %q has no TLS configuration for ACME configuration", gc.ACME.EntryPoint)
 			}
 		}
 	} else if acmeprovider.IsEnabled() {
 		if _, ok := gc.EntryPoints[acmeprovider.Get().EntryPoint]; !ok {
-			log.Fatalf("Unknown entrypoint %q for provider ACME configuration", gc.ACME.EntryPoint)
+			log.Fatalf("Unknown entrypoint %q for provider ACME configuration", acmeprovider.Get().EntryPoint)
 		} else {
 			if gc.EntryPoints[acmeprovider.Get().EntryPoint].TLS == nil {
-				log.Fatalf("Entrypoint without TLS %q for provider ACME configuration", gc.ACME.EntryPoint)
+				log.Fatalf("Entrypoint %q has no TLS configuration for provider ACME configuration", acmeprovider.Get().EntryPoint)
 			}
 		}
 	}
