@@ -120,7 +120,8 @@ Labels, set through extensions or the property manager, can be used on services 
 | `traefik.frontend.redirect.replacement=http://mydomain/$1` | Redirect to another URL for that frontend.<br>Must be set with `traefik.frontend.redirect.regex`.                                                                                                                         |
 | `traefik.frontend.redirect.permanent=true`                 | Return 301 instead of 302.                                                                                                                                                                                                |
 | `traefik.frontend.rule=EXPR`                               | Override the default frontend rule. Defaults to SF address.                                                                                                                                                               |
-| `traefik.frontend.whitelistSourceRange=RANGE`              | List of IP-Ranges which are allowed to access.<br>An unset or empty list allows all Source-IPs to access.<br>If one of the Net-Specifications are invalid, the whole list is invalid and allows all Source-IPs to access. |
+| `traefik.frontend.whiteList.sourceRange=RANGE`             | List of IP-Ranges which are allowed to access.<br>An unset or empty list allows all Source-IPs to access.<br>If one of the Net-Specifications are invalid, the whole list is invalid and allows all Source-IPs to access. |
+| `traefik.frontend.whiteList.useXForwardedFor=true`         | Use `X-Forwarded-For` header as valid source of IP for the white list.                                                                                                                                                    |
 
 ### Custom Headers
 
