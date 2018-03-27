@@ -2011,8 +2011,8 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
       {{end}}
     {{end}}
 
-    [frontends."frontend-{{$frontendName}}".routes."route-frontend-{{$frontendName}}"]
-      rule = "{{getFrontendRule $service}}"
+    [frontends."frontend-{{ $frontendName }}".routes."route-frontend-{{ $frontendName }}"]
+      rule = "{{ getFrontendRule $service.Name $service.SegmentLabels }}"
 
 {{end}}
 `)

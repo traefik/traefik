@@ -1,6 +1,7 @@
 package rancher
 
 import (
+	"strings"
 	"text/template"
 
 	"github.com/BurntSushi/ty/fun"
@@ -31,7 +32,7 @@ func (p *Provider) buildConfigurationV1(services []rancherData) *types.Configura
 
 		// Frontend functions
 		"getBackend":             getBackendNameV1,
-		"getFrontendRule":        p.getFrontendRule,
+		"getFrontendRule":        p.getFrontendRuleV1,
 		"getPriority":            getFuncIntV1(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
 		"getPassHostHeader":      getFuncBoolV1(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
 		"getEntryPoints":         getFuncSliceStringV1(label.TraefikFrontendEntryPoints),
@@ -110,8 +111,14 @@ func (p *Provider) serviceFilterV1(service rancherData) bool {
 }
 
 // Deprecated
+func (p *Provider) getFrontendRuleV1(service rancherData) string {
+	defaultRule := "Host:" + strings.ToLower(strings.Replace(service.Name, "/", ".", -1)) + "." + p.Domain
+	return label.GetStringValue(service.Labels, label.TraefikFrontendRule, defaultRule)
+}
+
+// Deprecated
 func (p *Provider) getFrontendNameV1(service rancherData) string {
-	return provider.Normalize(p.getFrontendRule(service))
+	return provider.Normalize(p.getFrontendRuleV1(service))
 }
 
 // Deprecated
