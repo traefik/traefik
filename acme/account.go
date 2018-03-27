@@ -219,7 +219,7 @@ func (dc *DomainsCertificates) getCertificateForDomain(domainToFind string) (*Do
 
 	for _, domainsCertificate := range dc.Certs {
 		for _, domain := range domainsCertificate.Domains.ToStrArray() {
-			if strings.HasPrefix(domain, "*.") && searchProvidedCertificateForDomain(domainToFind, domain) {
+			if strings.HasPrefix(domain, "*.") && types.MatchDomain(domainToFind, domain) {
 				return domainsCertificate, true
 			}
 			if domain == domainToFind {

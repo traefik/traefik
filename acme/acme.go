@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"os"
 	"reflect"
-	"regexp"
 	"strings"
 	"time"
 
@@ -27,7 +26,7 @@ import (
 	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
 	"github.com/eapache/channels"
-	acme "github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acmev2"
 	"github.com/xenolf/lego/providers/dns"
 )
 
@@ -557,7 +556,7 @@ func searchProvidedCertificateForDomains(domain string, certs map[string]*tls.Ce
 	for certDomains := range certs {
 		domainChecked := false
 		for _, certDomain := range strings.Split(certDomains, ",") {
-			domainChecked = searchProvidedCertificateForDomain(domain, certDomain)
+			domainChecked = types.MatchDomain(domain, certDomain)
 			if domainChecked {
 				break
 			}
@@ -568,16 +567,6 @@ func searchProvidedCertificateForDomains(domain string, certs map[string]*tls.Ce
 		}
 	}
 	return nil
-}
-
-func searchProvidedCertificateForDomain(domain string, certDomain string) bool {
-	// Use regex to test for provided certs that might have been added into TLSConfig
-	selector := "^" + strings.Replace(certDomain, "*.", "[^\\.]*\\.", -1) + "$"
-	domainChecked, err := regexp.MatchString(selector, domain)
-	if err != nil {
-		log.Errorf("Unable to compare %q and %q : %s", domain, certDomain, err.Error())
-	}
-	return domainChecked
 }
 
 // Get provided certificate which check a domains list (Main and SANs)
@@ -693,7 +682,7 @@ func (a *ACME) getValidDomains(domains []string, wildcardAllowed bool) ([]string
 func isDomainAlreadyChecked(domainToCheck string, existentDomains map[string]*tls.Certificate) bool {
 	for certDomains := range existentDomains {
 		for _, certDomain := range strings.Split(certDomains, ",") {
-			if searchProvidedCertificateForDomain(domainToCheck, certDomain) {
+			if types.MatchDomain(domainToCheck, certDomain) {
 				return true
 			}
 		}

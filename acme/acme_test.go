@@ -14,7 +14,7 @@ import (
 	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
-	acme "github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acmev2"
 )
 
 func TestDomainsSet(t *testing.T) {
@@ -446,15 +446,15 @@ func TestAcme_getValidDomain(t *testing.T) {
 }
 
 func TestAcme_getCertificateForDomain(t *testing.T) {
-	tests := []struct {
-		name          string
+	testCases := []struct {
+		desc          string
 		domain        string
 		dc            *DomainsCertificates
 		expected      *DomainsCertificate
 		expectedFound bool
 	}{
 		{
-			name:   "non-wildcard exact match",
+			desc:   "non-wildcard exact match",
 			domain: "foo.traefik.wtf",
 			dc: &DomainsCertificates{
 				Certs: []*DomainsCertificate{
@@ -473,7 +473,7 @@ func TestAcme_getCertificateForDomain(t *testing.T) {
 			expectedFound: true,
 		},
 		{
-			name:   "non-wildcard no match",
+			desc:   "non-wildcard no match",
 			domain: "bar.traefik.wtf",
 			dc: &DomainsCertificates{
 				Certs: []*DomainsCertificate{
@@ -488,7 +488,7 @@ func TestAcme_getCertificateForDomain(t *testing.T) {
 			expectedFound: false,
 		},
 		{
-			name:   "wildcard match",
+			desc:   "wildcard match",
 			domain: "foo.traefik.wtf",
 			dc: &DomainsCertificates{
 				Certs: []*DomainsCertificate{
@@ -507,7 +507,7 @@ func TestAcme_getCertificateForDomain(t *testing.T) {
 			expectedFound: true,
 		},
 		{
-			name:   "wildcard no match",
+			desc:   "wildcard no match",
 			domain: "foo.traefik.wtf",
 			dc: &DomainsCertificates{
 				Certs: []*DomainsCertificate{
@@ -523,11 +523,14 @@ func TestAcme_getCertificateForDomain(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, found := tt.dc.getCertificateForDomain(tt.domain)
-			assert.Equal(t, tt.expectedFound, found)
-			assert.Equal(t, tt.expected, got)
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			got, found := test.dc.getCertificateForDomain(test.domain)
+			assert.Equal(t, test.expectedFound, found)
+			assert.Equal(t, test.expected, got)
 		})
 	}
 }
