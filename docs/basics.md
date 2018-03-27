@@ -62,13 +62,12 @@ And here is another example with client certificate authentication:
   [entryPoints.https]
   address = ":443"
   [entryPoints.https.tls]
-    [entryPoints.https.tls]
-      [entryPoints.https.tls.ClientCA]
-      files = ["tests/clientca1.crt", "tests/clientca2.crt"]
-      optional = false
-      [[entryPoints.https.tls.certificates]]
-      certFile = "tests/traefik.crt"
-      keyFile = "tests/traefik.key"
+    [entryPoints.https.tls.ClientCA]
+    files = ["tests/clientca1.crt", "tests/clientca2.crt"]
+    optional = false
+    [[entryPoints.https.tls.certificates]]
+    certFile = "tests/traefik.crt"
+    keyFile = "tests/traefik.key"
 ```
 
 - We enable SSL on `https` by giving a certificate and a key.
@@ -483,7 +482,7 @@ Each item takes precedence over the item below it:
 
 It means that arguments override configuration file, and key-value store overrides arguments.
 
-!!! note 
+!!! note
     the provider-enabling argument parameters (e.g., `--docker`) set all default values for the specific provider.  
     It must not be used if a configuration source with less precedence wants to set a non-default provider value.
 
