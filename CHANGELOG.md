@@ -1,5 +1,16 @@
 # Change Log
 
+## [v1.6.0-rc2](https://github.com/containous/traefik/tree/v1.6.0-rc2) (2018-03-27)
+[All Commits](https://github.com/containous/traefik/compare/v1.6.0-rc1...v1.6.0-rc2)
+
+**Bug fixes:**
+- **[acme]** Fix panic with wrong ACME configuration ([#3084](https://github.com/containous/traefik/pull/3084) by [nmengin](https://github.com/nmengin))
+- **[acme]** Fix wildcard match to ACME domains in cluster mode ([#3080](https://github.com/containous/traefik/pull/3080) by [oldmantaiter](https://github.com/oldmantaiter))
+
+**Documentation:**
+- **[servicefabric]** Update SF white list documentation section. ([#3082](https://github.com/containous/traefik/pull/3082) by [ldez](https://github.com/ldez))
+- Fix basic documentation ([#3086](https://github.com/containous/traefik/pull/3086) by [mmatur](https://github.com/mmatur))
+
 ## [v1.6.0-rc1](https://github.com/containous/traefik/tree/v1.6.0-rc1) (2018-03-26)
 [All Commits](https://github.com/containous/traefik/compare/v1.5.0-rc1...v1.6.0-rc1)
 
