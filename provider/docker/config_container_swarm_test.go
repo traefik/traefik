@@ -469,8 +469,6 @@ func TestSwarmTraefikFilter(t *testing.T) {
 			t.Parallel()
 
 			dData := parseService(test.service, test.networks)
-			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.SegmentLabels = segmentProperties[""]
 
 			actual := test.provider.containerFilter(dData)
 			if actual != test.expected {
@@ -583,14 +581,13 @@ func TestSwarmGetFrontendRule(t *testing.T) {
 
 			dData := parseService(test.service, test.networks)
 			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.SegmentLabels = segmentProperties[""]
 
 			provider := &Provider{
 				Domain:    "docker.localhost",
 				SwarmMode: true,
 			}
 
-			actual := provider.getFrontendRule(dData)
+			actual := provider.getFrontendRule(dData, segmentProperties[""])
 			assert.Equal(t, test.expected, actual)
 		})
 	}

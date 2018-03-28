@@ -631,7 +631,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
     {{end}}
 
     [frontends."frontend-{{ $frontendName }}".routes."route-frontend-{{ $frontendName }}"]
-      rule = "{{ getFrontendRule $container }}"
+      rule = "{{ getFrontendRule $container $container.SegmentLabels }}"
 
 {{end}}
 `)
