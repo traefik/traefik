@@ -128,7 +128,9 @@ func ExtractTraefikLabels(originLabels map[string]string) SegmentProperties {
 			allLabels[segmentName][Prefix+propertyName] = value
 		}
 	}
-	log.Debug(originLabels, allLabels)
+
+	log.Debug("originLabels", originLabels)
+	log.Debug("allLabels", allLabels)
 
 	allLabels.mergeDefault()
 
