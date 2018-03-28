@@ -2,9 +2,7 @@ package mesos
 
 import (
 	"testing"
-	"time"
 
-	"github.com/containous/flaeg"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	"github.com/mesosphere/mesos-dns/records/state"
@@ -12,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestBuildConfiguration(t *testing.T) {
+func TestBuildConfigurationV1(t *testing.T) {
 	p := &Provider{
 		Domain:           "mesos.localhost",
 		ExposedByDefault: true,
@@ -65,7 +63,6 @@ func TestBuildConfiguration(t *testing.T) {
 				"frontend-ID1": {
 					Backend:        "backend-name1",
 					EntryPoints:    []string{},
-					BasicAuth:      []string{},
 					PassHostHeader: true,
 					Routes: map[string]types.Route{
 						"route-host-ID1": {
@@ -76,7 +73,6 @@ func TestBuildConfiguration(t *testing.T) {
 				"frontend-ID3": {
 					Backend:        "backend-name2",
 					EntryPoints:    []string{},
-					BasicAuth:      []string{},
 					PassHostHeader: true,
 					Routes: map[string]types.Route{
 						"route-host-ID3": {
@@ -206,89 +202,7 @@ func TestBuildConfiguration(t *testing.T) {
 						},
 					},
 					PassHostHeader: true,
-					PassTLSCert:    true,
 					Priority:       666,
-					BasicAuth: []string{
-						"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-						"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-					},
-					WhiteList: &types.WhiteList{
-						SourceRange:      []string{"10.10.10.10"},
-						UseXForwardedFor: true,
-					},
-					Headers: &types.Headers{
-						CustomRequestHeaders: map[string]string{
-							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
-							"Content-Type":                 "application/json; charset=utf-8",
-						},
-						CustomResponseHeaders: map[string]string{
-							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
-							"Content-Type":                 "application/json; charset=utf-8",
-						},
-						AllowedHosts: []string{
-							"foo",
-							"bar",
-							"bor",
-						},
-						HostsProxyHeaders: []string{
-							"foo",
-							"bar",
-							"bor",
-						},
-						SSLRedirect:          true,
-						SSLTemporaryRedirect: true,
-						SSLHost:              "foo",
-						SSLProxyHeaders: map[string]string{
-							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
-							"Content-Type":                 "application/json; charset=utf-8",
-						},
-						STSSeconds:              666,
-						STSIncludeSubdomains:    true,
-						STSPreload:              true,
-						ForceSTSHeader:          true,
-						FrameDeny:               true,
-						CustomFrameOptionsValue: "foo",
-						ContentTypeNosniff:      true,
-						BrowserXSSFilter:        true,
-						CustomBrowserXSSValue:   "foo",
-						ContentSecurityPolicy:   "foo",
-						PublicKey:               "foo",
-						ReferrerPolicy:          "foo",
-						IsDevelopment:           true,
-					},
-					Errors: map[string]*types.ErrorPage{
-						"foo": {
-							Status:  []string{"404"},
-							Query:   "foo_query",
-							Backend: "foobar",
-						},
-						"bar": {
-							Status:  []string{"500", "600"},
-							Query:   "bar_query",
-							Backend: "foobar",
-						},
-					},
-					RateLimit: &types.RateLimit{
-						ExtractorFunc: "client.ip",
-						RateSet: map[string]*types.Rate{
-							"foo": {
-								Period:  flaeg.Duration(6 * time.Second),
-								Average: 12,
-								Burst:   18,
-							},
-							"bar": {
-								Period:  flaeg.Duration(3 * time.Second),
-								Average: 6,
-								Burst:   9,
-							},
-						},
-					},
-					Redirect: &types.Redirect{
-						EntryPoint:  "https",
-						Regex:       "",
-						Replacement: "",
-						Permanent:   true,
-					},
 				},
 			},
 			expectedBackends: map[string]*types.Backend{
@@ -298,31 +212,6 @@ func TestBuildConfiguration(t *testing.T) {
 							URL:    "https://10.10.10.10:666",
 							Weight: 12,
 						},
-					},
-					CircuitBreaker: &types.CircuitBreaker{
-						Expression: "NetworkErrorRatio() > 0.5",
-					},
-					LoadBalancer: &types.LoadBalancer{
-						Method: "drr",
-						Stickiness: &types.Stickiness{
-							CookieName: "chocolate",
-						},
-					},
-					MaxConn: &types.MaxConn{
-						Amount:        666,
-						ExtractorFunc: "client.ip",
-					},
-					HealthCheck: &types.HealthCheck{
-						Path:     "/health",
-						Port:     880,
-						Interval: "6",
-					},
-					Buffering: &types.Buffering{
-						MaxResponseBodyBytes: 10485760,
-						MemResponseBodyBytes: 2097152,
-						MaxRequestBodyBytes:  10485760,
-						MemRequestBodyBytes:  2097152,
-						RetryExpression:      "IsNetworkError() && Attempts() <= 2",
 					},
 				},
 			},
@@ -334,7 +223,7 @@ func TestBuildConfiguration(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actualConfig := p.buildConfigurationV2(test.tasks)
+			actualConfig := p.buildConfigurationV1(test.tasks)
 
 			require.NotNil(t, actualConfig)
 			assert.Equal(t, test.expectedBackends, actualConfig.Backends)
@@ -343,28 +232,28 @@ func TestBuildConfiguration(t *testing.T) {
 	}
 }
 
-func TestTaskFilter(t *testing.T) {
+func TestTaskFilterV1(t *testing.T) {
 	testCases := []struct {
 		desc             string
-		mesosTask        taskData
+		mesosTask        state.Task
 		exposedByDefault bool
 		expected         bool
 	}{
 		{
 			desc:             "no task",
-			mesosTask:        taskData{},
+			mesosTask:        state.Task{},
 			exposedByDefault: true,
 			expected:         false,
 		},
 		{
 			desc:             "task not healthy",
-			mesosTask:        aTaskData("test", withStatus(withState("TASK_RUNNING"))),
+			mesosTask:        aTask("test", withStatus(withState("TASK_RUNNING"))),
 			exposedByDefault: true,
 			expected:         false,
 		},
 		{
 			desc: "exposedByDefault false and traefik.enable false",
-			mesosTask: aTaskData("test",
+			mesosTask: aTask("test",
 				withDefaultStatus(),
 				withLabel(label.TraefikEnable, "false"),
 				withInfo("test", withPorts(withPortTCP(80, "WEB"))),
@@ -374,7 +263,7 @@ func TestTaskFilter(t *testing.T) {
 		},
 		{
 			desc: "traefik.enable = true",
-			mesosTask: aTaskData("test",
+			mesosTask: aTask("test",
 				withDefaultStatus(),
 				withLabel(label.TraefikEnable, "true"),
 				withInfo("test", withPorts(withPortTCP(80, "WEB"))),
@@ -384,7 +273,7 @@ func TestTaskFilter(t *testing.T) {
 		},
 		{
 			desc: "exposedByDefault true and traefik.enable true",
-			mesosTask: aTaskData("test",
+			mesosTask: aTask("test",
 				withDefaultStatus(),
 				withLabel(label.TraefikEnable, "true"),
 				withInfo("test", withPorts(withPortTCP(80, "WEB"))),
@@ -394,7 +283,7 @@ func TestTaskFilter(t *testing.T) {
 		},
 		{
 			desc: "exposedByDefault true and traefik.enable false",
-			mesosTask: aTaskData("test",
+			mesosTask: aTask("test",
 				withDefaultStatus(),
 				withLabel(label.TraefikEnable, "false"),
 				withInfo("test", withPorts(withPortTCP(80, "WEB"))),
@@ -404,7 +293,7 @@ func TestTaskFilter(t *testing.T) {
 		},
 		{
 			desc: "traefik.portIndex and traefik.port both set",
-			mesosTask: aTaskData("test",
+			mesosTask: aTask("test",
 				withDefaultStatus(),
 				withLabel(label.TraefikEnable, "true"),
 				withLabel(label.TraefikPortIndex, "1"),
@@ -416,7 +305,7 @@ func TestTaskFilter(t *testing.T) {
 		},
 		{
 			desc: "valid traefik.portIndex",
-			mesosTask: aTaskData("test",
+			mesosTask: aTask("test",
 				withDefaultStatus(),
 				withLabel(label.TraefikEnable, "true"),
 				withLabel(label.TraefikPortIndex, "1"),
@@ -430,7 +319,7 @@ func TestTaskFilter(t *testing.T) {
 		},
 		{
 			desc: "default to first port index",
-			mesosTask: aTaskData("test",
+			mesosTask: aTask("test",
 				withDefaultStatus(),
 				withLabel(label.TraefikEnable, "true"),
 				withInfo("test", withPorts(
@@ -443,7 +332,7 @@ func TestTaskFilter(t *testing.T) {
 		},
 		{
 			desc: "traefik.portIndex and discoveryPorts don't correspond",
-			mesosTask: aTaskData("test",
+			mesosTask: aTask("test",
 				withDefaultStatus(),
 				withLabel(label.TraefikEnable, "true"),
 				withLabel(label.TraefikPortIndex, "1"),
@@ -454,7 +343,7 @@ func TestTaskFilter(t *testing.T) {
 		},
 		{
 			desc: "traefik.portIndex and discoveryPorts correspond",
-			mesosTask: aTaskData("test",
+			mesosTask: aTask("test",
 				withDefaultStatus(),
 				withLabel(label.TraefikEnable, "true"),
 				withLabel(label.TraefikPortIndex, "0"),
@@ -465,7 +354,7 @@ func TestTaskFilter(t *testing.T) {
 		},
 		{
 			desc: "traefik.port is not an integer",
-			mesosTask: aTaskData("test",
+			mesosTask: aTask("test",
 				withDefaultStatus(),
 				withLabel(label.TraefikEnable, "true"),
 				withLabel(label.TraefikPort, "TRAEFIK"),
@@ -476,7 +365,7 @@ func TestTaskFilter(t *testing.T) {
 		},
 		{
 			desc: "traefik.port is not the same as discovery.port",
-			mesosTask: aTaskData("test",
+			mesosTask: aTask("test",
 				withDefaultStatus(),
 				withLabel(label.TraefikEnable, "true"),
 				withLabel(label.TraefikPort, "443"),
@@ -487,7 +376,7 @@ func TestTaskFilter(t *testing.T) {
 		},
 		{
 			desc: "traefik.port is the same as discovery.port",
-			mesosTask: aTaskData("test",
+			mesosTask: aTask("test",
 				withDefaultStatus(),
 				withLabel(label.TraefikEnable, "true"),
 				withLabel(label.TraefikPort, "80"),
@@ -498,7 +387,7 @@ func TestTaskFilter(t *testing.T) {
 		},
 		{
 			desc: "healthy nil",
-			mesosTask: aTaskData("test",
+			mesosTask: aTask("test",
 				withStatus(
 					withState("TASK_RUNNING"),
 				),
@@ -511,7 +400,7 @@ func TestTaskFilter(t *testing.T) {
 		},
 		{
 			desc: "healthy false",
-			mesosTask: aTaskData("test",
+			mesosTask: aTask("test",
 				withStatus(
 					withState("TASK_RUNNING"),
 					withHealthy(false),
@@ -530,7 +419,7 @@ func TestTaskFilter(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actual := taskFilter(test.mesosTask, test.exposedByDefault)
+			actual := taskFilterV1(test.mesosTask, test.exposedByDefault)
 			ok := assert.Equal(t, test.expected, actual)
 			if !ok {
 				t.Logf("Statuses : %v", test.mesosTask.Statuses)
@@ -538,117 +427,6 @@ func TestTaskFilter(t *testing.T) {
 				t.Logf("DiscoveryInfo : %v", test.mesosTask.DiscoveryInfo)
 				t.Fatalf("Expected %v, got %v", test.expected, actual)
 			}
-		})
-	}
-}
-
-func TestGetSubDomain(t *testing.T) {
-	providerGroups := &Provider{GroupsAsSubDomains: true}
-	providerNoGroups := &Provider{GroupsAsSubDomains: false}
-
-	testCases := []struct {
-		path     string
-		expected string
-		provider *Provider
-	}{
-		{"/test", "test", providerNoGroups},
-		{"/test", "test", providerGroups},
-		{"/a/b/c/d", "d.c.b.a", providerGroups},
-		{"/b/a/d/c", "c.d.a.b", providerGroups},
-		{"/d/c/b/a", "a.b.c.d", providerGroups},
-		{"/c/d/a/b", "b.a.d.c", providerGroups},
-		{"/a/b/c/d", "a-b-c-d", providerNoGroups},
-		{"/b/a/d/c", "b-a-d-c", providerNoGroups},
-		{"/d/c/b/a", "d-c-b-a", providerNoGroups},
-		{"/c/d/a/b", "c-d-a-b", providerNoGroups},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.path, func(t *testing.T) {
-			t.Parallel()
-
-			actual := test.provider.getSubDomain(test.path)
-
-			assert.Equal(t, test.expected, actual)
-		})
-	}
-}
-
-func TestGetServers(t *testing.T) {
-	testCases := []struct {
-		desc     string
-		tasks    []taskData
-		expected map[string]types.Server
-	}{
-		{
-			desc: "",
-			tasks: []taskData{
-				// App 1
-				aTaskData("ID1",
-					withIP("10.10.10.10"),
-					withInfo("name1",
-						withPorts(withPort("TCP", 80, "WEB"))),
-					withStatus(withHealthy(true), withState("TASK_RUNNING")),
-				),
-				aTaskData("ID2",
-					withIP("10.10.10.11"),
-					withLabel(label.TraefikWeight, "18"),
-					withInfo("name1",
-						withPorts(withPort("TCP", 81, "WEB"))),
-					withStatus(withHealthy(true), withState("TASK_RUNNING")),
-				),
-				// App 2
-				aTaskData("ID3",
-					withLabel(label.TraefikWeight, "12"),
-					withIP("20.10.10.10"),
-					withInfo("name2",
-						withPorts(withPort("TCP", 80, "WEB"))),
-					withStatus(withHealthy(true), withState("TASK_RUNNING")),
-				),
-				aTaskData("ID4",
-					withLabel(label.TraefikWeight, "6"),
-					withIP("20.10.10.11"),
-					withInfo("name2",
-						withPorts(withPort("TCP", 81, "WEB"))),
-					withStatus(withHealthy(true), withState("TASK_RUNNING")),
-				),
-			},
-			expected: map[string]types.Server{
-				"server-ID1": {
-					URL:    "http://10.10.10.10:80",
-					Weight: 0,
-				},
-				"server-ID2": {
-					URL:    "http://10.10.10.11:81",
-					Weight: 18,
-				},
-				"server-ID3": {
-					URL:    "http://20.10.10.10:80",
-					Weight: 12,
-				},
-				"server-ID4": {
-					URL:    "http://20.10.10.11:81",
-					Weight: 6,
-				},
-			},
-		},
-	}
-
-	p := &Provider{
-		Domain:           "docker.localhost",
-		ExposedByDefault: true,
-		IPSources:        "host",
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			actual := p.getServers(test.tasks)
-
-			assert.Equal(t, test.expected, actual)
 		})
 	}
 }

@@ -230,6 +230,15 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 		}
 	}
 
+	if gc.Mesos != nil {
+		if len(gc.Mesos.Filename) != 0 && gc.Mesos.TemplateVersion != 2 {
+			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
+			gc.Mesos.TemplateVersion = 1
+		} else {
+			gc.Mesos.TemplateVersion = 2
+		}
+	}
+
 	if gc.Eureka != nil {
 		if gc.Eureka.Delay != 0 {
 			log.Warn("Delay has been deprecated -- please use RefreshSeconds")

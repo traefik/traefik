@@ -48,6 +48,14 @@ func TestBuilder(t *testing.T) {
 	assert.Equal(t, expected, result)
 }
 
+func aTaskData(id string, ops ...func(*state.Task)) taskData {
+	ts := &state.Task{ID: id}
+	for _, op := range ops {
+		op(ts)
+	}
+	return taskData{Task: *ts, TraefikLabels: extractLabels(*ts)}
+}
+
 func aTask(id string, ops ...func(*state.Task)) state.Task {
 	ts := &state.Task{ID: id}
 	for _, op := range ops {
