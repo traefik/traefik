@@ -2,13 +2,13 @@
 {{range $service := .Services}}
   {{ $backendName := getServiceBackendName $service }}
 
-  {{ $circuitBreaker := getCircuitBreaker $service.Attributes }}
+  {{ $circuitBreaker := getCircuitBreaker $service.TraefikLabels }}
   {{if $circuitBreaker }}
   [backends."backend-{{ $backendName }}".circuitBreaker]
     expression = "{{ $circuitBreaker.Expression }}"
   {{end}}
 
-  {{ $loadBalancer := getLoadBalancer $service.Attributes }}
+  {{ $loadBalancer := getLoadBalancer $service.TraefikLabels }}
   {{if $loadBalancer }}
   [backends."backend-{{ $backendName }}".loadBalancer]
     method = "{{ $loadBalancer.Method }}"
@@ -19,14 +19,14 @@
     {{end}}
   {{end}}
 
-  {{ $maxConn := getMaxConn $service.Attributes }}
+  {{ $maxConn := getMaxConn $service.TraefikLabels }}
   {{if $maxConn }}
   [backends."backend-{{ $backendName }}".maxConn]
     extractorFunc = "{{ $maxConn.ExtractorFunc }}"
     amount = {{ $maxConn.Amount }}
   {{end}}
 
-  {{ $healthCheck := getHealthCheck $service.Attributes }}
+  {{ $healthCheck := getHealthCheck $service.TraefikLabels }}
   {{if $healthCheck }}
   [backends."backend-{{ $backendName }}".healthCheck]
     path = "{{ $healthCheck.Path }}"
@@ -34,7 +34,7 @@
     interval = "{{ $healthCheck.Interval }}"
   {{end}}
 
-  {{ $buffering := getBuffering $service.Attributes }}
+  {{ $buffering := getBuffering $service.TraefikLabels }}
   {{if $buffering }}
   [backends."backend-{{ $backendName }}".buffering]
     maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
@@ -46,10 +46,10 @@
 
 {{end}}
 {{range $index, $node := .Nodes}}
-
+  {{ $server := getServer $node }}
   [backends."backend-{{ getNodeBackendName $node }}".servers."{{ getServerName $node $index }}"]
-    url = "{{ getProtocol $node.Service.Tags }}://{{ getBackendAddress $node }}:{{ $node.Service.Port }}"
-    weight = {{ getWeight $node.Service.Tags }}
+    url = "{{ $server.URL }}"
+    weight = {{ $server.Weight }}
 
 {{end}}
 
@@ -58,19 +58,19 @@
 
   [frontends."frontend-{{ $service.ServiceName }}"]
     backend = "backend-{{ getServiceBackendName $service }}"
-    priority = {{ getPriority $service.Attributes }}
-    passHostHeader = {{ getPassHostHeader $service.Attributes }}
-    passTLSCert = {{ getPassTLSCert $service.Attributes }}
+    priority = {{ getPriority $service.TraefikLabels }}
+    passHostHeader = {{ getPassHostHeader $service.TraefikLabels }}
+    passTLSCert = {{ getPassTLSCert $service.TraefikLabels }}
 
-    entryPoints = [{{range getFrontEndEntryPoints $service.Attributes }}
+    entryPoints = [{{range getFrontEndEntryPoints $service.TraefikLabels }}
       "{{.}}",
       {{end}}]
 
-    basicAuth = [{{range getBasicAuth $service.Attributes }}
+    basicAuth = [{{range getBasicAuth $service.TraefikLabels }}
       "{{.}}",
       {{end}}]
 
-    {{ $whitelist := getWhiteList $service.Attributes }}
+    {{ $whitelist := getWhiteList $service.TraefikLabels }}
     {{if $whitelist }}
     [frontends."frontend-{{ $service.ServiceName }}".whiteList]
       sourceRange = [{{range $whitelist.SourceRange }}
@@ -79,7 +79,7 @@
       useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
     {{end}}
 
-    {{ $redirect := getRedirect $service.Attributes }}
+    {{ $redirect := getRedirect $service.TraefikLabels }}
     {{if $redirect }}
     [frontends."frontend-{{ $service.ServiceName }}".redirect]
       entryPoint = "{{ $redirect.EntryPoint }}"
@@ -88,9 +88,10 @@
       permanent = {{ $redirect.Permanent }}
     {{end}}
 
-    {{if hasErrorPages $service.Attributes }}
+    {{ $errorPages := getErrorPages $service.TraefikLabels }}
+    {{if $errorPages }}
     [frontends."frontend-{{ $service.ServiceName }}".errors]
-      {{range $pageName, $page := getErrorPages $service.Attributes }}
+      {{range $pageName, $page := $errorPages }}
       [frontends."frontend-{{ $service.ServiceName }}".errors."{{ $pageName }}"]
         status = [{{range $page.Status }}
           "{{.}}",
@@ -100,22 +101,20 @@
       {{end}}
     {{end}}
 
-    {{if hasRateLimit $service.Attributes }}
-    {{ $rateLimit := getRateLimit $service.Attributes }}
+    {{ $rateLimit := getRateLimit $service.TraefikLabels }}
+    {{if $rateLimit }}
     [frontends."frontend-{{ $service.ServiceName }}".rateLimit]
       extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
-
       [frontends."frontend-{{ $service.ServiceName }}".rateLimit.rateSet]
-        {{range $limitName, $limit := $rateLimit.RateSet }}
+        {{ range $limitName, $limit := $rateLimit.RateSet }}
         [frontends."frontend-{{ $service.ServiceName }}".rateLimit.rateSet."{{ $limitName }}"]
           period = "{{ $limit.Period }}"
           average = {{ $limit.Average }}
           burst = {{ $limit.Burst }}
         {{end}}
-
     {{end}}
 
-    {{ $headers := getHeaders $service.Attributes }}
+    {{ $headers := getHeaders $service.TraefikLabels }}
     {{if $headers }}
     [frontends."frontend-{{ $service.ServiceName }}".headers]
       SSLRedirect = {{ $headers.SSLRedirect }}

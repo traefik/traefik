@@ -246,6 +246,15 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 		}
 	}
 
+	if gc.ConsulCatalog != nil {
+		if len(gc.ConsulCatalog.Filename) != 0 && gc.ConsulCatalog.TemplateVersion != 2 {
+			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
+			gc.ConsulCatalog.TemplateVersion = 1
+		} else {
+			gc.ConsulCatalog.TemplateVersion = 2
+		}
+	}
+
 	if gc.Rancher != nil {
 		if len(gc.Rancher.Filename) != 0 && gc.Rancher.TemplateVersion != 2 {
 			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
