@@ -2,6 +2,7 @@ package consulcatalog
 
 import (
 	"errors"
+	"strconv"
 	"strings"
 	"sync"
 	"text/template"
@@ -48,8 +49,9 @@ type Service struct {
 }
 
 type serviceUpdate struct {
-	ServiceName string
-	Attributes  []string
+	ServiceName   string
+	Attributes    []string
+	TraefikLabels map[string]string
 }
 
 type catalogUpdate struct {
@@ -446,10 +448,13 @@ func (p *Provider) healthyNodes(service string) (catalogUpdate, error) {
 		).(map[string]bool)).([]string)
 	}, []string{}, nodes).([]string)
 
+	labels := tagsToNeutralLabels(tags, p.Prefix)
+
 	return catalogUpdate{
 		Service: &serviceUpdate{
-			ServiceName: service,
-			Attributes:  tags,
+			ServiceName:   service,
+			Attributes:    tags,
+			TraefikLabels: labels,
 		},
 		Nodes: nodes,
 	}, nil
@@ -473,7 +478,18 @@ func (p *Provider) nodeFilter(service string, node *api.ServiceEntry) bool {
 }
 
 func (p *Provider) isServiceEnabled(node *api.ServiceEntry) bool {
-	return p.getBoolAttribute(label.SuffixEnable, node.Service.Tags, p.ExposedByDefault)
+	rawValue := getTag(p.getPrefixedName(label.SuffixEnable), node.Service.Tags, "")
+
+	if len(rawValue) == 0 {
+		return p.ExposedByDefault
+	}
+
+	value, err := strconv.ParseBool(rawValue)
+	if err != nil {
+		log.Errorf("Invalid value for %s: %s", label.SuffixEnable, rawValue)
+		return p.ExposedByDefault
+	}
+	return value
 }
 
 func (p *Provider) getConstraintTags(tags []string) []string {
