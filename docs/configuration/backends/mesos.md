@@ -34,6 +34,13 @@ watch = true
 #
 domain = "mesos.localhost"
 
+# Expose Mesos apps by default in Traefik.
+#
+# Optional
+# Default: true
+#
+# exposedByDefault = false
+
 # Override default configuration template.
 # For advanced users :)
 #
@@ -41,12 +48,14 @@ domain = "mesos.localhost"
 #
 # filename = "mesos.tmpl"
 
-# Expose Mesos apps by default in Traefik.
+# Override template version
+# For advanced users :)
 #
 # Optional
-# Default: true
+# - "1": previous template version (must be used only with older custom templates, see "filename")
+# - "2": current template version (must be used to force template version when "filename" is used)
 #
-# ExposedByDefault = false
+# templateVersion = "2"
 
 # TLS client configuration. https://golang.org/pkg/crypto/tls/#Config
 #
@@ -90,11 +99,12 @@ domain = "mesos.localhost"
 # Default: false
 #
 # groupsAsSubDomains = true
+
 ```
 
-## Labels: overriding default behaviour
+## Labels: overriding default behavior
 
-The following labels can be defined on Mesos tasks. They adjust the behaviour for the entire application.
+The following labels can be defined on Mesos tasks. They adjust the behavior for the entire application.
 
 | Label                                                      | Description                                                                                                                                                                                                            |
 |------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
