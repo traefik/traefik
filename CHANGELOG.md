@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.6.0-rc3](https://github.com/containous/traefik/tree/v1.6.0-rc3) (2018-03-28)
+[All Commits](https://github.com/containous/traefik/compare/v1.6.0-rc2...v1.6.0-rc3)
+
+**Bug fixes:**
+- **[docker,rancher]** Frontend rule and segment labels. ([#3091](https://github.com/containous/traefik/pull/3091) by [ldez](https://github.com/ldez))
+
 ## [v1.6.0-rc2](https://github.com/containous/traefik/tree/v1.6.0-rc2) (2018-03-27)
 [All Commits](https://github.com/containous/traefik/compare/v1.6.0-rc1...v1.6.0-rc2)
 
