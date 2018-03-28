@@ -371,7 +371,7 @@ spec:
           serviceName: traefik-web-ui
           servicePort: 80
   tls:
-    secretName: traefik-ui-tls-cert
+   - secretName: traefik-ui-tls-cert
 ```
 
 In addition to the modified ingress you need to provide the TLS certificate via a Kubernetes secret in the same namespace as the ingress. The following two commands will generate a new certificate and create a secret containing the key and cert files.
