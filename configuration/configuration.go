@@ -237,6 +237,15 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 		}
 	}
 
+	if gc.ECS != nil {
+		if len(gc.ECS.Filename) != 0 && gc.ECS.TemplateVersion != 2 {
+			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
+			gc.ECS.TemplateVersion = 1
+		} else {
+			gc.ECS.TemplateVersion = 2
+		}
+	}
+
 	if gc.Rancher != nil {
 		if len(gc.Rancher.Filename) != 0 && gc.Rancher.TemplateVersion != 2 {
 			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
