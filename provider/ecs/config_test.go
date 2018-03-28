@@ -351,11 +351,11 @@ func TestBuildConfiguration(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			provider := &Provider{}
+			p := &Provider{}
 
 			services := fakeLoadTraefikLabels(test.services)
 
-			got, err := provider.buildConfiguration(services)
+			got, err := p.buildConfiguration(services)
 			assert.Equal(t, test.err, err) // , err.Error()
 			assert.Equal(t, test.expected, got, test.desc)
 		})
