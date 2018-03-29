@@ -70,18 +70,18 @@ _(But if you'd rather configure some of your routes manually, Træfik supports t
 
 ## Supported Backends
 
-- [Docker](docs/configuration/backends/docker/) / [Swarm mode](docs/configuration/backends/docker/#docker-swarm-mode)
-- [Kubernetes](docs/configuration/backends/kubernetes/)
-- [Mesos](docs/configuration/backends/mesos/) / [Marathon](docs/configuration/backends/marathon/)
-- [Rancher](docs/configuration/backends/rancher/) (API, Metadata)
-- [Service Fabric](docs/configuration/backends/servicefabric/)
-- [Consul Catalog](docs/configuration/backends/consulcatalog/)
-- [Consul](docs/configuration/backends/consul/) / [Etcd](docs/configuration/backends/etcd/) / [Zookeeper](docs/configuration/backends/zookeeper/) / [BoltDB](docs/configuration/backends/boltdb/)
-- [Eureka](docs/configuration/backends/eureka/)
-- [Amazon ECS](docs/configuration/backends/ecs/)
-- [Amazon DynamoDB](docs/configuration/backends/dynamodb/)
-- [File](docs/configuration/backends/file/)
-- [Rest](docs/configuration/backends/rest/)
+- [Docker](docs/configuration/backends/docker.md) / [Swarm mode](docs/configuration/backends/docker.md#docker-swarm-mode)
+- [Kubernetes](docs/configuration/backends/kubernetes.md)
+- [Mesos](docs/configuration/backends/mesos.md) / [Marathon](docs/configuration/backends/marathon.md)
+- [Rancher](docs/configuration/backends/rancher.md) (API, Metadata)
+- [Service Fabric](docs/configuration/backends/servicefabric.md)
+- [Consul Catalog](docs/configuration/backends/consulcatalog.md)
+- [Consul](docs/configuration/backends/consul.md) / [Etcd](docs/configuration/backends/etcd.md) / [Zookeeper](docs/configuration/backends/zookeeper.md) / [BoltDB](docs/configuration/backends/boltdb.md)
+- [Eureka](docs/configuration/backends/eureka.md)
+- [Amazon ECS](docs/configuration/backends/ecs.md)
+- [Amazon DynamoDB](docs/configuration/backends/dynamodb.md)
+- [File](docs/configuration/backends/file.md)
+- [Rest](docs/configuration/backends/rest.md)
 
 ## Quickstart
 
