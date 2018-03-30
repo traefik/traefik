@@ -32,7 +32,7 @@ func NewIPWhiteLister(whiteList []string, useXForwardedFor bool) (*IPWhiteLister
 	whiteLister.whiteLister = ip
 
 	whiteLister.handler = negroni.HandlerFunc(whiteLister.handle)
-	log.Debugf("configured %u IP white list: %s", len(whiteList), whiteList)
+	log.Debugf("configured IP white list: %s", whiteList)
 
 	return &whiteLister, nil
 }
