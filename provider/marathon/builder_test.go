@@ -54,14 +54,14 @@ func constraint(value string) func(*marathon.Application) {
 	}
 }
 
-func withServiceLabel(key, value string, serviceName string) func(*marathon.Application) {
-	if len(serviceName) == 0 {
-		panic("serviceName can not be empty")
+func withSegmentLabel(key, value string, segmentName string) func(*marathon.Application) {
+	if len(segmentName) == 0 {
+		panic("segmentName can not be empty")
 	}
 
 	property := strings.TrimPrefix(key, label.Prefix)
 	return func(app *marathon.Application) {
-		app.AddLabel(label.Prefix+serviceName+"."+property, value)
+		app.AddLabel(label.Prefix+segmentName+"."+property, value)
 	}
 }
 
@@ -152,6 +152,7 @@ func localhostTask(ops ...func(*marathon.Task)) marathon.Task {
 	t := task(
 		host("localhost"),
 		ipAddresses("127.0.0.1"),
+		taskState(taskStateRunning),
 	)
 
 	for _, op := range ops {
@@ -164,6 +165,12 @@ func localhostTask(ops ...func(*marathon.Task)) marathon.Task {
 func taskPorts(ports ...int) func(*marathon.Task) {
 	return func(t *marathon.Task) {
 		t.Ports = append(t.Ports, ports...)
+	}
+}
+
+func taskState(state TaskState) func(*marathon.Task) {
+	return func(t *marathon.Task) {
+		t.State = string(state)
 	}
 }
 
@@ -181,12 +188,6 @@ func ipAddresses(addresses ...string) func(*marathon.Task) {
 				Protocol:  "tcp",
 			})
 		}
-	}
-}
-
-func state(s TaskState) func(*marathon.Task) {
-	return func(t *marathon.Task) {
-		t.State = string(s)
 	}
 }
 

@@ -1,8 +1,7 @@
 {{ $apps := .Applications }}
 
 [backends]
-{{range $app := $apps }}
-  {{ $backendName := getBackendName $app }}
+{{range $backendName, $app := $apps }}
 
   [backends."{{ $backendName }}"]
 
@@ -57,11 +56,11 @@
 {{end}}
 
 [frontends]
-{{range $app := $apps }}
+{{range $backendName, $app := $apps }}
   {{ $frontendName := getFrontendName $app }}
 
   [frontends."{{ $frontendName }}"]
-    backend = "{{ getBackendName $app }}"
+    backend = "{{ $backendName }}"
     priority = {{ getPriority $app.SegmentLabels }}
     passHostHeader = {{ getPassHostHeader $app.SegmentLabels }}
     passTLSCert = {{ getPassTLSCert $app.SegmentLabels }}

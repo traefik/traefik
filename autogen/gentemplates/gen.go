@@ -1490,8 +1490,7 @@ func templatesMarathonV1Tmpl() (*asset, error) {
 var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
 
 [backends]
-{{range $app := $apps }}
-  {{ $backendName := getBackendName $app }}
+{{range $backendName, $app := $apps }}
 
   [backends."{{ $backendName }}"]
 
@@ -1546,11 +1545,11 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
 {{end}}
 
 [frontends]
-{{range $app := $apps }}
+{{range $backendName, $app := $apps }}
   {{ $frontendName := getFrontendName $app }}
 
   [frontends."{{ $frontendName }}"]
-    backend = "{{ getBackendName $app }}"
+    backend = "{{ $backendName }}"
     priority = {{ getPriority $app.SegmentLabels }}
     passHostHeader = {{ getPassHostHeader $app.SegmentLabels }}
     passTLSCert = {{ getPassTLSCert $app.SegmentLabels }}
