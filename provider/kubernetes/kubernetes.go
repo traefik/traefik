@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -184,6 +185,13 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 		}
 		templateObjects.TLS = append(templateObjects.TLS, tlsSection...)
 
+		backendWeightsMap := make(map[string]string)
+		if backendWeightsJSON := getStringValue(i.Annotations, annotationKubernetesBackendPercentageWeights, ""); backendWeightsJSON != "" {
+			if err := json.Unmarshal([]byte(backendWeightsJSON), &backendWeightsMap); err != nil {
+				log.Errorf("Value for annotation %q on ingress %s/%s is not a valid json: %v", annotationKubernetesBackendPercentageWeights, i.Namespace, i.Name, err)
+			}
+		}
+
 		for _, r := range i.Spec.Rules {
 			if r.HTTP == nil {
 				log.Warn("Error in ingress: HTTP is nil")
@@ -274,6 +282,8 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				templateObjects.Backends[baseName].Buffering = getBuffering(service)
 
 				protocol := label.DefaultProtocol
+				serverWeight := label.DefaultWeight
+
 				for _, port := range service.Spec.Ports {
 					if equalPorts(port, pa.Backend.ServicePort) {
 						if port.Port == 443 || strings.HasPrefix(port.Name, "https") {
@@ -288,7 +298,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 							templateObjects.Backends[baseName].Servers[url] = types.Server{
 								URL:    url,
-								Weight: label.DefaultWeight,
+								Weight: serverWeight,
 							}
 						} else {
 							endpoints, exists, err := k8sClient.GetEndpoints(service.Namespace, service.Name)
@@ -307,6 +317,19 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 								break
 							}
 
+							instanceCount := 0
+							for _, subset := range endpoints.Subsets {
+								instanceCount = instanceCount + len(subset.Addresses)
+							}
+
+							if percentageWeight, found := backendWeightsMap[pa.Backend.ServiceName]; found {
+								percentageValue, err := PercentageValueFromString(percentageWeight)
+								if err != nil {
+									log.Warnf("Invalid percentage weight %q, fallback to default: %s", percentageWeight, err)
+								}
+								serverWeight = int(percentageValue.RawValue()) / instanceCount
+							}
+
 							for _, subset := range endpoints.Subsets {
 								endpointPort := endpointPortNumber(port, subset.Ports)
 								if endpointPort == 0 {
@@ -321,7 +344,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 									}
 									templateObjects.Backends[baseName].Servers[name] = types.Server{
 										URL:    url,
-										Weight: label.DefaultWeight,
+										Weight: serverWeight,
 									}
 								}
 							}
