@@ -56,7 +56,7 @@ func TestBuildConfigurationV1(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-task": {
 							URL:    "http://localhost:80",
-							Weight: 0,
+							Weight: label.DefaultWeight,
 						},
 					},
 					CircuitBreaker: nil,
@@ -112,7 +112,7 @@ func TestBuildConfigurationV1(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-task": {
 							URL:    "http://localhost:80",
-							Weight: 0,
+							Weight: label.DefaultWeight,
 						},
 					},
 					MaxConn: nil,
@@ -143,7 +143,7 @@ func TestBuildConfigurationV1(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-task": {
 							URL:    "http://localhost:80",
-							Weight: 0,
+							Weight: label.DefaultWeight,
 						},
 					},
 				},
@@ -306,7 +306,7 @@ func TestBuildConfigurationServicesV1(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-task-service-web": {
 							URL:    "http://localhost:80",
-							Weight: 0,
+							Weight: label.DefaultWeight,
 						},
 					},
 					MaxConn: &types.MaxConn{
@@ -318,7 +318,7 @@ func TestBuildConfigurationServicesV1(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-task-service-admin": {
 							URL:    "http://localhost:81",
-							Weight: 0,
+							Weight: label.DefaultWeight,
 						},
 					},
 					MaxConn: &types.MaxConn{

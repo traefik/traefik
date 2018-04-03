@@ -56,7 +56,7 @@ func TestDockerBuildConfigurationV1(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-test": {
 							URL:    "http://127.0.0.1:80",
-							Weight: 0,
+							Weight: label.DefaultWeight,
 						},
 					},
 					CircuitBreaker: nil,

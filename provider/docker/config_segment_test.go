@@ -59,7 +59,7 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-sauternes-foo-0": {
 							URL:    "http://127.0.0.1:2503",
-							Weight: 0,
+							Weight: label.DefaultWeight,
 						},
 					},
 					CircuitBreaker: nil,
