@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os"
 	"reflect"
-	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -301,8 +300,13 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 							}
 
 							for _, subset := range endpoints.Subsets {
+								endpointPort := endpointPortNumber(port, subset.Ports)
+								if endpointPort == 0 {
+									// endpoint port does not match service.
+									continue
+								}
 								for _, address := range subset.Addresses {
-									url := protocol + "://" + address.IP + ":" + strconv.Itoa(endpointPortNumber(port, subset.Ports))
+									url := fmt.Sprintf("%s://%s:%d", protocol, address.IP, endpointPort)
 									name := url
 									if address.TargetRef != nil && address.TargetRef.Name != "" {
 										name = address.TargetRef.Name
@@ -468,18 +472,23 @@ func getTLS(ingress *extensionsv1beta1.Ingress, k8sClient Client) ([]*tls.Config
 	return tlsConfigs, nil
 }
 
-func endpointPortNumber(servicePort corev1.ServicePort, endpointPorts []corev1.EndpointPort) int {
-	if len(endpointPorts) > 0 {
-		// name is optional if there is only one port
-		port := endpointPorts[0]
-		for _, endpointPort := range endpointPorts {
-			if servicePort.Name == endpointPort.Name {
-				port = endpointPort
-			}
-		}
-		return int(port.Port)
+// endpointPortNumber returns the port to be used for this endpoint. It is zero
+// if the endpoint does not match the given service port.
+func endpointPortNumber(servicePort corev1.ServicePort, endpointPorts []corev1.EndpointPort) int32 {
+	// Is this reasonable to assume?
+	if len(endpointPorts) == 0 {
+		return servicePort.Port
 	}
-	return int(servicePort.Port)
+
+	for _, endpointPort := range endpointPorts {
+		// For matching endpoints, the port names must correspond, either by
+		// being empty or non-empty. Multi-port services mandate non-empty
+		// names and allow us to filter for the right addresses.
+		if servicePort.Name == endpointPort.Name {
+			return endpointPort.Port
+		}
+	}
+	return 0
 }
 
 func equalPorts(servicePort corev1.ServicePort, ingressPort intstr.IntOrString) bool {
