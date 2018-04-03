@@ -17,19 +17,21 @@ const (
 
 // Default values
 const (
-	DefaultWeight                                  = "0" // TODO [breaking] use int value
-	DefaultWeightInt                               = 0   // TODO rename to DefaultWeight
+	DefaultWeight                                  = 0
 	DefaultProtocol                                = "http"
-	DefaultPassHostHeader                          = "true" // TODO [breaking] use bool value
-	DefaultPassHostHeaderBool                      = true   // TODO rename to DefaultPassHostHeader
+	DefaultPassHostHeader                          = true
 	DefaultPassTLSCert                             = false
-	DefaultFrontendPriority                        = "0" // TODO [breaking] int value
-	DefaultFrontendPriorityInt                     = 0   // TODO rename to DefaultFrontendPriority
+	DefaultFrontendPriority                        = 0
 	DefaultCircuitBreakerExpression                = "NetworkErrorRatio() > 1"
 	DefaultBackendLoadBalancerMethod               = "wrr"
 	DefaultBackendMaxconnExtractorFunc             = "request.host"
 	DefaultBackendLoadbalancerStickinessCookieName = ""
 	DefaultBackendHealthCheckPort                  = 0
+
+	// TODO need to be remove in extra-service-fabric
+	DefaultWeightInt           = 0    // Deprecated
+	DefaultPassHostHeaderBool  = true // Deprecated
+	DefaultFrontendPriorityInt = 0    // Deprecated
 )
 
 var (

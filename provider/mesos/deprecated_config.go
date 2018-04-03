@@ -24,7 +24,7 @@ func (p *Provider) buildConfigurationV1(tasks []state.Task) *types.Configuration
 		"getBackendName": getBackendNameV1,
 		"getHost":        p.getHostV1,
 		"getProtocol":    getFuncApplicationStringValueV1(label.TraefikProtocol, label.DefaultProtocol),
-		"getWeight":      getFuncApplicationIntValueV1(label.TraefikWeight, label.DefaultWeightInt),
+		"getWeight":      getFuncApplicationIntValueV1(label.TraefikWeight, label.DefaultWeight),
 		"getBackend":     getBackendV1,
 		"getPort":        p.getPort,
 
@@ -33,8 +33,8 @@ func (p *Provider) buildConfigurationV1(tasks []state.Task) *types.Configuration
 		"getFrontEndName":    getFrontendNameV1,
 		"getEntryPoints":     getFuncSliceStringValueV1(label.TraefikFrontendEntryPoints),
 		"getBasicAuth":       getFuncSliceStringValueV1(label.TraefikFrontendAuthBasic),
-		"getPriority":        getFuncIntValueV1(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
-		"getPassHostHeader":  getFuncBoolValueV1(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
+		"getPriority":        getFuncIntValueV1(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
+		"getPassHostHeader":  getFuncBoolValueV1(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getFrontendRule":    p.getFrontendRuleV1,
 	}
 

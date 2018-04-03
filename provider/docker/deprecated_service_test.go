@@ -272,25 +272,25 @@ func TestDockerGetFuncServiceStringLabelV1(t *testing.T) {
 	}{
 		{
 			container:    containerJSON(),
-			suffixLabel:  label.SuffixWeight,
-			defaultValue: label.DefaultWeight,
-			expected:     "0",
+			suffixLabel:  label.SuffixProtocol,
+			defaultValue: label.DefaultProtocol,
+			expected:     "http",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				label.TraefikWeight: "200",
+				label.TraefikProtocol: "https",
 			})),
-			suffixLabel:  label.SuffixWeight,
-			defaultValue: label.DefaultWeight,
-			expected:     "200",
+			suffixLabel:  label.SuffixProtocol,
+			defaultValue: label.DefaultProtocol,
+			expected:     "https",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.myservice.weight": "31337",
+				label.Prefix + "myservice." + label.SuffixProtocol: "https",
 			})),
-			suffixLabel:  label.SuffixWeight,
-			defaultValue: label.DefaultWeight,
-			expected:     "31337",
+			suffixLabel:  label.SuffixProtocol,
+			defaultValue: label.DefaultProtocol,
+			expected:     "https",
 		},
 	}
 

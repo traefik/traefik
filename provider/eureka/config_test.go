@@ -91,11 +91,11 @@ func TestGetProtocol(t *testing.T) {
 
 func TestGetWeight(t *testing.T) {
 	testCases := []struct {
-		expectedWeight string
+		expectedWeight int
 		instanceInfo   eureka.InstanceInfo
 	}{
 		{
-			expectedWeight: "0",
+			expectedWeight: 1,
 			instanceInfo: eureka.InstanceInfo{
 				Port: &eureka.Port{
 					Port: 80, Enabled: true,
@@ -106,7 +106,7 @@ func TestGetWeight(t *testing.T) {
 			},
 		},
 		{
-			expectedWeight: "10",
+			expectedWeight: 10,
 			instanceInfo: eureka.InstanceInfo{
 				Port: &eureka.Port{
 					Port: 80, Enabled: true,

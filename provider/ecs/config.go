@@ -42,9 +42,9 @@ func (p *Provider) buildConfigurationV2(instances []ecsInstance) (*types.Configu
 		// Frontend functions
 		"filterFrontends":   filterFrontends,
 		"getFrontendRule":   p.getFrontendRule,
-		"getPassHostHeader": label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
+		"getPassHostHeader": label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getPassTLSCert":    label.GetFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getPriority":       label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
+		"getPriority":       label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
 		"getBasicAuth":      label.GetFuncSliceString(label.TraefikFrontendAuthBasic),
 		"getEntryPoints":    label.GetFuncSliceString(label.TraefikFrontendEntryPoints),
 		"getRedirect":       label.GetRedirect,
@@ -133,7 +133,7 @@ func getServers(instances []ecsInstance) map[string]types.Server {
 		serverName := provider.Normalize(fmt.Sprintf("server-%s-%s", instance.Name, instance.ID))
 		servers[serverName] = types.Server{
 			URL:    fmt.Sprintf("%s://%s:%s", protocol, host, port),
-			Weight: label.GetIntValue(instance.TraefikLabels, label.TraefikWeight, 0),
+			Weight: label.GetIntValue(instance.TraefikLabels, label.TraefikWeight, label.DefaultWeight),
 		}
 	}
 

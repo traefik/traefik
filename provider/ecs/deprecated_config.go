@@ -31,7 +31,7 @@ func (p *Provider) buildConfigurationV1(instances []ecsInstance) (*types.Configu
 		"getPort": getPort,
 
 		"getProtocol":             getFuncStringValueV1(label.TraefikProtocol, label.DefaultProtocol),
-		"getWeight":               getFuncIntValueV1(label.TraefikWeight, label.DefaultWeightInt),
+		"getWeight":               getFuncIntValueV1(label.TraefikWeight, label.DefaultWeight),
 		"getLoadBalancerMethod":   getFuncFirstStringValueV1(label.TraefikBackendLoadBalancerMethod, label.DefaultBackendLoadBalancerMethod),
 		"getLoadBalancerSticky":   getStickyV1,
 		"hasStickinessLabel":      getFuncFirstBoolValueV1(label.TraefikBackendLoadBalancerStickiness, false),
@@ -43,9 +43,9 @@ func (p *Provider) buildConfigurationV1(instances []ecsInstance) (*types.Configu
 		// Frontend functions
 		"filterFrontends":   filterFrontends,
 		"getFrontendRule":   p.getFrontendRule,
-		"getPassHostHeader": getFuncBoolValueV1(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
+		"getPassHostHeader": getFuncBoolValueV1(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getPassTLSCert":    getFuncBoolValueV1(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getPriority":       getFuncIntValueV1(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
+		"getPriority":       getFuncIntValueV1(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
 		"getBasicAuth":      getFuncSliceStringV1(label.TraefikFrontendAuthBasic),
 		"getEntryPoints":    getFuncSliceStringV1(label.TraefikFrontendEntryPoints),
 	}

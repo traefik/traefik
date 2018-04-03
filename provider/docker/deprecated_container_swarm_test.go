@@ -420,19 +420,19 @@ func TestSwarmGetFuncStringLabelV1(t *testing.T) {
 	}{
 		{
 			service:      swarmService(),
-			labelName:    label.TraefikWeight,
-			defaultValue: label.DefaultWeight,
+			labelName:    label.TraefikProtocol,
+			defaultValue: label.DefaultProtocol,
 			networks:     map[string]*docker.NetworkResource{},
-			expected:     "0",
+			expected:     "http",
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
-				label.TraefikWeight: "10",
+				label.TraefikProtocol: "https",
 			})),
-			labelName:    label.TraefikWeight,
-			defaultValue: label.DefaultWeight,
+			labelName:    label.TraefikProtocol,
+			defaultValue: label.DefaultProtocol,
 			networks:     map[string]*docker.NetworkResource{},
-			expected:     "10",
+			expected:     "https",
 		},
 	}
 

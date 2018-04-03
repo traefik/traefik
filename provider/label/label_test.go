@@ -602,17 +602,17 @@ func TestGetFuncString(t *testing.T) {
 	}{
 		{
 			labels:       nil,
-			labelName:    TraefikWeight,
-			defaultValue: DefaultWeight,
-			expected:     "0",
+			labelName:    TraefikProtocol,
+			defaultValue: DefaultProtocol,
+			expected:     "http",
 		},
 		{
 			labels: map[string]string{
-				TraefikWeight: "10",
+				TraefikProtocol: "https",
 			},
-			labelName:    TraefikWeight,
-			defaultValue: DefaultWeight,
-			expected:     "10",
+			labelName:    TraefikProtocol,
+			defaultValue: DefaultProtocol,
+			expected:     "https",
 		},
 	}
 
