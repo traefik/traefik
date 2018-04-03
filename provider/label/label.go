@@ -17,7 +17,7 @@ const (
 
 // Default values
 const (
-	DefaultWeight                                  = 0
+	DefaultWeight                                  = 1
 	DefaultProtocol                                = "http"
 	DefaultPassHostHeader                          = true
 	DefaultPassTLSCert                             = false
@@ -29,7 +29,7 @@ const (
 	DefaultBackendHealthCheckPort                  = 0
 
 	// TODO need to be remove in extra-service-fabric
-	DefaultWeightInt           = 0    // Deprecated
+	DefaultWeightInt           = 1    // Deprecated
 	DefaultPassHostHeaderBool  = true // Deprecated
 	DefaultFrontendPriorityInt = 0    // Deprecated
 )
