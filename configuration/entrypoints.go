@@ -224,12 +224,22 @@ func makeEntryPointTLS(result map[string]string) (*tls.TLS, error) {
 		}
 	}
 
-	if len(result["ca"]) > 0 {
-		files := strings.Split(result["ca"], ",")
-		optional := toBool(result, "ca_optional")
-		configTLS.ClientCA = tls.ClientCA{
-			Files:    files,
-			Optional: optional,
+	if configTLS != nil {
+		if len(result["ca"]) > 0 {
+			files := strings.Split(result["ca"], ",")
+			optional := toBool(result, "ca_optional")
+			configTLS.ClientCA = tls.ClientCA{
+				Files:    files,
+				Optional: optional,
+			}
+		}
+
+		if len(result["tls_minversion"]) > 0 {
+			configTLS.MinVersion = result["tls_minversion"]
+		}
+
+		if len(result["tls_ciphersuites"]) > 0 {
+			configTLS.CipherSuites = strings.Split(result["tls_ciphersuites"], ",")
 		}
 	}
 

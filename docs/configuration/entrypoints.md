@@ -108,6 +108,8 @@ Name:foo
 Address::80
 TLS:goo,gii
 TLS
+TLS.MinVersion:VersionTLS11
+TLS.CipherSuites:TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384
 CA:car
 CA.Optional:true
 Redirect.EntryPoint:https
