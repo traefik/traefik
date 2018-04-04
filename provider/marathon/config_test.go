@@ -30,22 +30,24 @@ func TestGetConfigurationAPIErrors(t *testing.T) {
 func TestBuildConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc              string
-		application       marathon.Application
+		applications      *marathon.Applications
 		expectedFrontends map[string]*types.Frontend
 		expectedBackends  map[string]*types.Backend
 	}{
 		{
 			desc: "simple application",
-			application: application(
-				appPorts(80),
-				withTasks(localhostTask(taskPorts(80))),
-			),
+			applications: withApplications(
+				application(
+					appID("/app"),
+					appPorts(80),
+					withTasks(localhostTask(taskPorts(80))),
+				)),
 			expectedFrontends: map[string]*types.Frontend{
 				"frontend-app": {
 					Backend: "backend-app",
 					Routes: map[string]types.Route{
 						"route-host-app": {
-							Rule: "Host:app.docker.localhost",
+							Rule: "Host:app.marathon.localhost",
 						},
 					},
 					PassHostHeader: true,
@@ -56,7 +58,7 @@ func TestBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-app": {
 					Servers: map[string]types.Server{
-						"server-task": {
+						"server-app-taskID": {
 							URL:    "http://localhost:80",
 							Weight: 0,
 						},
@@ -67,27 +69,44 @@ func TestBuildConfiguration(t *testing.T) {
 		},
 		{
 			desc: "filtered task",
-			application: application(
-				appPorts(80),
-				withTasks(localhostTask(taskPorts(80), state(taskStateStaging))),
-			),
-			expectedFrontends: map[string]*types.Frontend{},
-			expectedBackends:  map[string]*types.Backend{},
-		},
-		{
-			desc: "max connection extractor function label only",
-			application: application(
-				appPorts(80),
-				withTasks(localhostTask(taskPorts(80))),
-
-				withLabel(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
-			),
+			applications: withApplications(
+				application(
+					appID("/app"),
+					appPorts(80),
+					withTasks(localhostTask(taskPorts(80), taskState(taskStateStaging))),
+				)),
 			expectedFrontends: map[string]*types.Frontend{
 				"frontend-app": {
 					Backend: "backend-app",
 					Routes: map[string]types.Route{
 						"route-host-app": {
-							Rule: "Host:app.docker.localhost",
+							Rule: "Host:app.marathon.localhost",
+						},
+					},
+					PassHostHeader: true,
+					BasicAuth:      []string{},
+					EntryPoints:    []string{},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-app": {},
+			},
+		},
+		{
+			desc: "max connection extractor function label only",
+			applications: withApplications(application(
+				appID("/app"),
+				appPorts(80),
+				withTasks(localhostTask(taskPorts(80))),
+
+				withLabel(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
+			)),
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-app": {
+					Backend: "backend-app",
+					Routes: map[string]types.Route{
+						"route-host-app": {
+							Rule: "Host:app.marathon.localhost",
 						},
 					},
 					PassHostHeader: true,
@@ -98,7 +117,7 @@ func TestBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-app": {
 					Servers: map[string]types.Server{
-						"server-task": {
+						"server-app-taskID": {
 							URL:    "http://localhost:80",
 							Weight: 0,
 						},
@@ -109,16 +128,18 @@ func TestBuildConfiguration(t *testing.T) {
 		},
 		{
 			desc: "multiple ports",
-			application: application(
-				appPorts(80, 81),
-				withTasks(localhostTask(taskPorts(80, 81))),
-			),
+			applications: withApplications(
+				application(
+					appID("/app"),
+					appPorts(80, 81),
+					withTasks(localhostTask(taskPorts(80, 81))),
+				)),
 			expectedFrontends: map[string]*types.Frontend{
 				"frontend-app": {
 					Backend: "backend-app",
 					Routes: map[string]types.Route{
 						"route-host-app": {
-							Rule: "Host:app.docker.localhost",
+							Rule: "Host:app.marathon.localhost",
 						},
 					},
 					PassHostHeader: true,
@@ -129,7 +150,7 @@ func TestBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-app": {
 					Servers: map[string]types.Server{
-						"server-task": {
+						"server-app-taskID": {
 							URL:    "http://localhost:80",
 							Weight: 0,
 						},
@@ -139,82 +160,84 @@ func TestBuildConfiguration(t *testing.T) {
 		},
 		{
 			desc: "with all labels",
-			application: application(
-				appPorts(80),
-				withTasks(task(host("127.0.0.1"), taskPorts(80))),
+			applications: withApplications(
+				application(
+					appID("/app"),
+					appPorts(80),
+					withTasks(task(host("127.0.0.1"), taskPorts(80), taskState(taskStateRunning))),
 
-				withLabel(label.TraefikPort, "666"),
-				withLabel(label.TraefikProtocol, "https"),
-				withLabel(label.TraefikWeight, "12"),
+					withLabel(label.TraefikPort, "666"),
+					withLabel(label.TraefikProtocol, "https"),
+					withLabel(label.TraefikWeight, "12"),
 
-				withLabel(label.TraefikBackend, "foobar"),
+					withLabel(label.TraefikBackend, "foobar"),
 
-				withLabel(label.TraefikBackendCircuitBreakerExpression, "NetworkErrorRatio() > 0.5"),
-				withLabel(label.TraefikBackendHealthCheckPath, "/health"),
-				withLabel(label.TraefikBackendHealthCheckPort, "880"),
-				withLabel(label.TraefikBackendHealthCheckInterval, "6"),
-				withLabel(label.TraefikBackendLoadBalancerMethod, "drr"),
-				withLabel(label.TraefikBackendLoadBalancerSticky, "true"),
-				withLabel(label.TraefikBackendLoadBalancerStickiness, "true"),
-				withLabel(label.TraefikBackendLoadBalancerStickinessCookieName, "chocolate"),
-				withLabel(label.TraefikBackendMaxConnAmount, "666"),
-				withLabel(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
-				withLabel(label.TraefikBackendBufferingMaxResponseBodyBytes, "10485760"),
-				withLabel(label.TraefikBackendBufferingMemResponseBodyBytes, "2097152"),
-				withLabel(label.TraefikBackendBufferingMaxRequestBodyBytes, "10485760"),
-				withLabel(label.TraefikBackendBufferingMemRequestBodyBytes, "2097152"),
-				withLabel(label.TraefikBackendBufferingRetryExpression, "IsNetworkError() && Attempts() <= 2"),
+					withLabel(label.TraefikBackendCircuitBreakerExpression, "NetworkErrorRatio() > 0.5"),
+					withLabel(label.TraefikBackendHealthCheckPath, "/health"),
+					withLabel(label.TraefikBackendHealthCheckPort, "880"),
+					withLabel(label.TraefikBackendHealthCheckInterval, "6"),
+					withLabel(label.TraefikBackendLoadBalancerMethod, "drr"),
+					withLabel(label.TraefikBackendLoadBalancerSticky, "true"),
+					withLabel(label.TraefikBackendLoadBalancerStickiness, "true"),
+					withLabel(label.TraefikBackendLoadBalancerStickinessCookieName, "chocolate"),
+					withLabel(label.TraefikBackendMaxConnAmount, "666"),
+					withLabel(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
+					withLabel(label.TraefikBackendBufferingMaxResponseBodyBytes, "10485760"),
+					withLabel(label.TraefikBackendBufferingMemResponseBodyBytes, "2097152"),
+					withLabel(label.TraefikBackendBufferingMaxRequestBodyBytes, "10485760"),
+					withLabel(label.TraefikBackendBufferingMemRequestBodyBytes, "2097152"),
+					withLabel(label.TraefikBackendBufferingRetryExpression, "IsNetworkError() && Attempts() <= 2"),
 
-				withLabel(label.TraefikFrontendAuthBasic, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
-				withLabel(label.TraefikFrontendEntryPoints, "http,https"),
-				withLabel(label.TraefikFrontendPassHostHeader, "true"),
-				withLabel(label.TraefikFrontendPassTLSCert, "true"),
-				withLabel(label.TraefikFrontendPriority, "666"),
-				withLabel(label.TraefikFrontendRedirectEntryPoint, "https"),
-				withLabel(label.TraefikFrontendRedirectRegex, "nope"),
-				withLabel(label.TraefikFrontendRedirectReplacement, "nope"),
-				withLabel(label.TraefikFrontendRedirectPermanent, "true"),
-				withLabel(label.TraefikFrontendRule, "Host:traefik.io"),
-				withLabel(label.TraefikFrontendWhiteListSourceRange, "10.10.10.10"),
-				withLabel(label.TraefikFrontendWhiteListUseXForwardedFor, "true"),
+					withLabel(label.TraefikFrontendAuthBasic, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+					withLabel(label.TraefikFrontendEntryPoints, "http,https"),
+					withLabel(label.TraefikFrontendPassHostHeader, "true"),
+					withLabel(label.TraefikFrontendPassTLSCert, "true"),
+					withLabel(label.TraefikFrontendPriority, "666"),
+					withLabel(label.TraefikFrontendRedirectEntryPoint, "https"),
+					withLabel(label.TraefikFrontendRedirectRegex, "nope"),
+					withLabel(label.TraefikFrontendRedirectReplacement, "nope"),
+					withLabel(label.TraefikFrontendRedirectPermanent, "true"),
+					withLabel(label.TraefikFrontendRule, "Host:traefik.io"),
+					withLabel(label.TraefikFrontendWhiteListSourceRange, "10.10.10.10"),
+					withLabel(label.TraefikFrontendWhiteListUseXForwardedFor, "true"),
 
-				withLabel(label.TraefikFrontendRequestHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
-				withLabel(label.TraefikFrontendResponseHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
-				withLabel(label.TraefikFrontendSSLProxyHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
-				withLabel(label.TraefikFrontendAllowedHosts, "foo,bar,bor"),
-				withLabel(label.TraefikFrontendHostsProxyHeaders, "foo,bar,bor"),
-				withLabel(label.TraefikFrontendSSLHost, "foo"),
-				withLabel(label.TraefikFrontendCustomFrameOptionsValue, "foo"),
-				withLabel(label.TraefikFrontendContentSecurityPolicy, "foo"),
-				withLabel(label.TraefikFrontendPublicKey, "foo"),
-				withLabel(label.TraefikFrontendReferrerPolicy, "foo"),
-				withLabel(label.TraefikFrontendCustomBrowserXSSValue, "foo"),
-				withLabel(label.TraefikFrontendSTSSeconds, "666"),
-				withLabel(label.TraefikFrontendSSLRedirect, "true"),
-				withLabel(label.TraefikFrontendSSLTemporaryRedirect, "true"),
-				withLabel(label.TraefikFrontendSTSIncludeSubdomains, "true"),
-				withLabel(label.TraefikFrontendSTSPreload, "true"),
-				withLabel(label.TraefikFrontendForceSTSHeader, "true"),
-				withLabel(label.TraefikFrontendFrameDeny, "true"),
-				withLabel(label.TraefikFrontendContentTypeNosniff, "true"),
-				withLabel(label.TraefikFrontendBrowserXSSFilter, "true"),
-				withLabel(label.TraefikFrontendIsDevelopment, "true"),
+					withLabel(label.TraefikFrontendRequestHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
+					withLabel(label.TraefikFrontendResponseHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
+					withLabel(label.TraefikFrontendSSLProxyHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
+					withLabel(label.TraefikFrontendAllowedHosts, "foo,bar,bor"),
+					withLabel(label.TraefikFrontendHostsProxyHeaders, "foo,bar,bor"),
+					withLabel(label.TraefikFrontendSSLHost, "foo"),
+					withLabel(label.TraefikFrontendCustomFrameOptionsValue, "foo"),
+					withLabel(label.TraefikFrontendContentSecurityPolicy, "foo"),
+					withLabel(label.TraefikFrontendPublicKey, "foo"),
+					withLabel(label.TraefikFrontendReferrerPolicy, "foo"),
+					withLabel(label.TraefikFrontendCustomBrowserXSSValue, "foo"),
+					withLabel(label.TraefikFrontendSTSSeconds, "666"),
+					withLabel(label.TraefikFrontendSSLRedirect, "true"),
+					withLabel(label.TraefikFrontendSSLTemporaryRedirect, "true"),
+					withLabel(label.TraefikFrontendSTSIncludeSubdomains, "true"),
+					withLabel(label.TraefikFrontendSTSPreload, "true"),
+					withLabel(label.TraefikFrontendForceSTSHeader, "true"),
+					withLabel(label.TraefikFrontendFrameDeny, "true"),
+					withLabel(label.TraefikFrontendContentTypeNosniff, "true"),
+					withLabel(label.TraefikFrontendBrowserXSSFilter, "true"),
+					withLabel(label.TraefikFrontendIsDevelopment, "true"),
 
-				withLabel(label.Prefix+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageStatus, "404"),
-				withLabel(label.Prefix+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageBackend, "foobar"),
-				withLabel(label.Prefix+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageQuery, "foo_query"),
-				withLabel(label.Prefix+label.BaseFrontendErrorPage+"bar."+label.SuffixErrorPageStatus, "500,600"),
-				withLabel(label.Prefix+label.BaseFrontendErrorPage+"bar."+label.SuffixErrorPageBackend, "foobar"),
-				withLabel(label.Prefix+label.BaseFrontendErrorPage+"bar."+label.SuffixErrorPageQuery, "bar_query"),
+					withLabel(label.Prefix+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageStatus, "404"),
+					withLabel(label.Prefix+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageBackend, "foobar"),
+					withLabel(label.Prefix+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageQuery, "foo_query"),
+					withLabel(label.Prefix+label.BaseFrontendErrorPage+"bar."+label.SuffixErrorPageStatus, "500,600"),
+					withLabel(label.Prefix+label.BaseFrontendErrorPage+"bar."+label.SuffixErrorPageBackend, "foobar"),
+					withLabel(label.Prefix+label.BaseFrontendErrorPage+"bar."+label.SuffixErrorPageQuery, "bar_query"),
 
-				withLabel(label.TraefikFrontendRateLimitExtractorFunc, "client.ip"),
-				withLabel(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitPeriod, "6"),
-				withLabel(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitAverage, "12"),
-				withLabel(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitBurst, "18"),
-				withLabel(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitPeriod, "3"),
-				withLabel(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitAverage, "6"),
-				withLabel(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitBurst, "9"),
-			),
+					withLabel(label.TraefikFrontendRateLimitExtractorFunc, "client.ip"),
+					withLabel(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitPeriod, "6"),
+					withLabel(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitAverage, "12"),
+					withLabel(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitBurst, "18"),
+					withLabel(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitPeriod, "3"),
+					withLabel(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitAverage, "6"),
+					withLabel(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitBurst, "9"),
+				)),
 			expectedFrontends: map[string]*types.Frontend{
 				"frontend-app": {
 					EntryPoints: []string{
@@ -319,7 +342,7 @@ func TestBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backendfoobar": {
 					Servers: map[string]types.Server{
-						"server-task": {
+						"server-app-taskID": {
 							URL:    "https://127.0.0.1:666",
 							Weight: 12,
 						},
@@ -353,6 +376,60 @@ func TestBuildConfiguration(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "2 applications with the same backend name",
+			applications: withApplications(
+				application(
+					appID("/foo-v000"),
+					withTasks(localhostTask(taskPorts(8080))),
+
+					withLabel("traefik.main.backend", "test.foo"),
+					withLabel("traefik.main.protocol", "http"),
+					withLabel("traefik.protocol", "http"),
+					withLabel("traefik.main.portIndex", "0"),
+					withLabel("traefik.enable", "true"),
+					withLabel("traefik.main.frontend.rule", "Host:app.marathon.localhost"),
+				),
+				application(
+					appID("/foo-v001"),
+					withTasks(localhostTask(taskPorts(8081))),
+
+					withLabel("traefik.main.backend", "test.foo"),
+					withLabel("traefik.main.protocol", "http"),
+					withLabel("traefik.protocol", "http"),
+					withLabel("traefik.main.portIndex", "0"),
+					withLabel("traefik.enable", "true"),
+					withLabel("traefik.main.frontend.rule", "Host:app.marathon.localhost"),
+				),
+			),
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-foo-v000-service-main": {
+					EntryPoints: []string{},
+					Backend:     "backendtest-foo",
+					Routes: map[string]types.Route{
+						"route-host-foo-v000-service-main": {
+							Rule: "Host:app.marathon.localhost",
+						},
+					},
+					PassHostHeader: true,
+					BasicAuth:      []string{},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backendtest-foo": {
+					Servers: map[string]types.Server{
+						"server-foo-v000-taskID-service-main": {
+							URL:    "http://localhost:8080",
+							Weight: 0,
+						},
+						"server-foo-v001-taskID-service-main": {
+							URL:    "http://localhost:8081",
+							Weight: 0,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -360,21 +437,12 @@ func TestBuildConfiguration(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			test.application.ID = "/app"
-
-			for _, task := range test.application.Tasks {
-				task.ID = "task"
-				if task.State == "" {
-					task.State = "TASK_RUNNING"
-				}
-			}
-
 			p := &Provider{
-				Domain:           "docker.localhost",
+				Domain:           "marathon.localhost",
 				ExposedByDefault: true,
 			}
 
-			actualConfig := p.buildConfigurationV2(withApplications(test.application))
+			actualConfig := p.buildConfigurationV2(test.applications)
 
 			assert.NotNil(t, actualConfig)
 			assert.Equal(t, test.expectedBackends, actualConfig.Backends)
@@ -383,33 +451,35 @@ func TestBuildConfiguration(t *testing.T) {
 	}
 }
 
-func TestBuildConfigurationServices(t *testing.T) {
+func TestBuildConfigurationSegments(t *testing.T) {
 	testCases := []struct {
 		desc              string
-		application       marathon.Application
+		applications      *marathon.Applications
 		expectedFrontends map[string]*types.Frontend
 		expectedBackends  map[string]*types.Backend
 	}{
 		{
-			desc: "multiple ports with services",
-			application: application(
-				appPorts(80, 81),
-				withTasks(localhostTask(taskPorts(80, 81))),
+			desc: "multiple ports with segments",
+			applications: withApplications(
+				application(
+					appID("/app"),
+					appPorts(80, 81),
+					withTasks(localhostTask(taskPorts(80, 81))),
 
-				withLabel(label.TraefikBackendMaxConnAmount, "1000"),
-				withLabel(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
-				withServiceLabel(label.TraefikPort, "80", "web"),
-				withServiceLabel(label.TraefikPort, "81", "admin"),
-				withLabel("traefik..port", "82"), // This should be ignored, as it fails to match the segmentPropertiesRegexp regex.
-				withServiceLabel(label.TraefikFrontendRule, "Host:web.app.docker.localhost", "web"),
-				withServiceLabel(label.TraefikFrontendRule, "Host:admin.app.docker.localhost", "admin"),
-			),
+					withLabel(label.TraefikBackendMaxConnAmount, "1000"),
+					withLabel(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
+					withSegmentLabel(label.TraefikPort, "80", "web"),
+					withSegmentLabel(label.TraefikPort, "81", "admin"),
+					withLabel("traefik..port", "82"), // This should be ignored, as it fails to match the segmentPropertiesRegexp regex.
+					withSegmentLabel(label.TraefikFrontendRule, "Host:web.app.marathon.localhost", "web"),
+					withSegmentLabel(label.TraefikFrontendRule, "Host:admin.app.marathon.localhost", "admin"),
+				)),
 			expectedFrontends: map[string]*types.Frontend{
 				"frontend-app-service-web": {
 					Backend: "backend-app-service-web",
 					Routes: map[string]types.Route{
 						`route-host-app-service-web`: {
-							Rule: "Host:web.app.docker.localhost",
+							Rule: "Host:web.app.marathon.localhost",
 						},
 					},
 					PassHostHeader: true,
@@ -420,7 +490,7 @@ func TestBuildConfigurationServices(t *testing.T) {
 					Backend: "backend-app-service-admin",
 					Routes: map[string]types.Route{
 						`route-host-app-service-admin`: {
-							Rule: "Host:admin.app.docker.localhost",
+							Rule: "Host:admin.app.marathon.localhost",
 						},
 					},
 					PassHostHeader: true,
@@ -431,7 +501,7 @@ func TestBuildConfigurationServices(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-app-service-web": {
 					Servers: map[string]types.Server{
-						"server-task-service-web": {
+						"server-app-taskID-service-web": {
 							URL:    "http://localhost:80",
 							Weight: 0,
 						},
@@ -443,7 +513,7 @@ func TestBuildConfigurationServices(t *testing.T) {
 				},
 				"backend-app-service-admin": {
 					Servers: map[string]types.Server{
-						"server-task-service-admin": {
+						"server-app-taskID-service-admin": {
 							URL:    "http://localhost:81",
 							Weight: 0,
 						},
@@ -457,82 +527,84 @@ func TestBuildConfigurationServices(t *testing.T) {
 		},
 		{
 			desc: "when all labels are set",
-			application: application(
-				appPorts(80, 81),
-				withTasks(localhostTask(taskPorts(80, 81))),
+			applications: withApplications(
+				application(
+					appID("/app"),
+					appPorts(80, 81),
+					withTasks(localhostTask(taskPorts(80, 81))),
 
-				// withLabel(label.TraefikBackend, "foobar"),
+					// withLabel(label.TraefikBackend, "foobar"),
 
-				withLabel(label.TraefikBackendCircuitBreakerExpression, "NetworkErrorRatio() > 0.5"),
-				withLabel(label.TraefikBackendHealthCheckPath, "/health"),
-				withLabel(label.TraefikBackendHealthCheckPort, "880"),
-				withLabel(label.TraefikBackendHealthCheckInterval, "6"),
-				withLabel(label.TraefikBackendLoadBalancerMethod, "drr"),
-				withLabel(label.TraefikBackendLoadBalancerSticky, "true"),
-				withLabel(label.TraefikBackendLoadBalancerStickiness, "true"),
-				withLabel(label.TraefikBackendLoadBalancerStickinessCookieName, "chocolate"),
-				withLabel(label.TraefikBackendMaxConnAmount, "666"),
-				withLabel(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
-				withLabel(label.TraefikBackendBufferingMaxResponseBodyBytes, "10485760"),
-				withLabel(label.TraefikBackendBufferingMemResponseBodyBytes, "2097152"),
-				withLabel(label.TraefikBackendBufferingMaxRequestBodyBytes, "10485760"),
-				withLabel(label.TraefikBackendBufferingMemRequestBodyBytes, "2097152"),
-				withLabel(label.TraefikBackendBufferingRetryExpression, "IsNetworkError() && Attempts() <= 2"),
+					withLabel(label.TraefikBackendCircuitBreakerExpression, "NetworkErrorRatio() > 0.5"),
+					withLabel(label.TraefikBackendHealthCheckPath, "/health"),
+					withLabel(label.TraefikBackendHealthCheckPort, "880"),
+					withLabel(label.TraefikBackendHealthCheckInterval, "6"),
+					withLabel(label.TraefikBackendLoadBalancerMethod, "drr"),
+					withLabel(label.TraefikBackendLoadBalancerSticky, "true"),
+					withLabel(label.TraefikBackendLoadBalancerStickiness, "true"),
+					withLabel(label.TraefikBackendLoadBalancerStickinessCookieName, "chocolate"),
+					withLabel(label.TraefikBackendMaxConnAmount, "666"),
+					withLabel(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
+					withLabel(label.TraefikBackendBufferingMaxResponseBodyBytes, "10485760"),
+					withLabel(label.TraefikBackendBufferingMemResponseBodyBytes, "2097152"),
+					withLabel(label.TraefikBackendBufferingMaxRequestBodyBytes, "10485760"),
+					withLabel(label.TraefikBackendBufferingMemRequestBodyBytes, "2097152"),
+					withLabel(label.TraefikBackendBufferingRetryExpression, "IsNetworkError() && Attempts() <= 2"),
 
-				withServiceLabel(label.TraefikPort, "80", "containous"),
-				withServiceLabel(label.TraefikProtocol, "https", "containous"),
-				withServiceLabel(label.TraefikWeight, "12", "containous"),
+					withSegmentLabel(label.TraefikPort, "80", "containous"),
+					withSegmentLabel(label.TraefikProtocol, "https", "containous"),
+					withSegmentLabel(label.TraefikWeight, "12", "containous"),
 
-				withServiceLabel(label.TraefikFrontendAuthBasic, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0", "containous"),
-				withServiceLabel(label.TraefikFrontendEntryPoints, "http,https", "containous"),
-				withServiceLabel(label.TraefikFrontendPassHostHeader, "true", "containous"),
-				withServiceLabel(label.TraefikFrontendPassTLSCert, "true", "containous"),
-				withServiceLabel(label.TraefikFrontendPriority, "666", "containous"),
-				withServiceLabel(label.TraefikFrontendRedirectEntryPoint, "https", "containous"),
-				withServiceLabel(label.TraefikFrontendRedirectRegex, "nope", "containous"),
-				withServiceLabel(label.TraefikFrontendRedirectReplacement, "nope", "containous"),
-				withServiceLabel(label.TraefikFrontendRedirectPermanent, "true", "containous"),
-				withServiceLabel(label.TraefikFrontendRule, "Host:traefik.io", "containous"),
-				withServiceLabel(label.TraefikFrontendWhiteListSourceRange, "10.10.10.10", "containous"),
-				withServiceLabel(label.TraefikFrontendWhiteListUseXForwardedFor, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendAuthBasic, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0", "containous"),
+					withSegmentLabel(label.TraefikFrontendEntryPoints, "http,https", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassHostHeader, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSCert, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPriority, "666", "containous"),
+					withSegmentLabel(label.TraefikFrontendRedirectEntryPoint, "https", "containous"),
+					withSegmentLabel(label.TraefikFrontendRedirectRegex, "nope", "containous"),
+					withSegmentLabel(label.TraefikFrontendRedirectReplacement, "nope", "containous"),
+					withSegmentLabel(label.TraefikFrontendRedirectPermanent, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendRule, "Host:traefik.io", "containous"),
+					withSegmentLabel(label.TraefikFrontendWhiteListSourceRange, "10.10.10.10", "containous"),
+					withSegmentLabel(label.TraefikFrontendWhiteListUseXForwardedFor, "true", "containous"),
 
-				withServiceLabel(label.TraefikFrontendRequestHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8", "containous"),
-				withServiceLabel(label.TraefikFrontendResponseHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8", "containous"),
-				withServiceLabel(label.TraefikFrontendSSLProxyHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8", "containous"),
-				withServiceLabel(label.TraefikFrontendAllowedHosts, "foo,bar,bor", "containous"),
-				withServiceLabel(label.TraefikFrontendHostsProxyHeaders, "foo,bar,bor", "containous"),
-				withServiceLabel(label.TraefikFrontendSSLHost, "foo", "containous"),
-				withServiceLabel(label.TraefikFrontendCustomFrameOptionsValue, "foo", "containous"),
-				withServiceLabel(label.TraefikFrontendContentSecurityPolicy, "foo", "containous"),
-				withServiceLabel(label.TraefikFrontendPublicKey, "foo", "containous"),
-				withServiceLabel(label.TraefikFrontendReferrerPolicy, "foo", "containous"),
-				withServiceLabel(label.TraefikFrontendCustomBrowserXSSValue, "foo", "containous"),
-				withServiceLabel(label.TraefikFrontendSTSSeconds, "666", "containous"),
-				withServiceLabel(label.TraefikFrontendSSLRedirect, "true", "containous"),
-				withServiceLabel(label.TraefikFrontendSSLTemporaryRedirect, "true", "containous"),
-				withServiceLabel(label.TraefikFrontendSTSIncludeSubdomains, "true", "containous"),
-				withServiceLabel(label.TraefikFrontendSTSPreload, "true", "containous"),
-				withServiceLabel(label.TraefikFrontendForceSTSHeader, "true", "containous"),
-				withServiceLabel(label.TraefikFrontendFrameDeny, "true", "containous"),
-				withServiceLabel(label.TraefikFrontendContentTypeNosniff, "true", "containous"),
-				withServiceLabel(label.TraefikFrontendBrowserXSSFilter, "true", "containous"),
-				withServiceLabel(label.TraefikFrontendIsDevelopment, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendRequestHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8", "containous"),
+					withSegmentLabel(label.TraefikFrontendResponseHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8", "containous"),
+					withSegmentLabel(label.TraefikFrontendSSLProxyHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8", "containous"),
+					withSegmentLabel(label.TraefikFrontendAllowedHosts, "foo,bar,bor", "containous"),
+					withSegmentLabel(label.TraefikFrontendHostsProxyHeaders, "foo,bar,bor", "containous"),
+					withSegmentLabel(label.TraefikFrontendSSLHost, "foo", "containous"),
+					withSegmentLabel(label.TraefikFrontendCustomFrameOptionsValue, "foo", "containous"),
+					withSegmentLabel(label.TraefikFrontendContentSecurityPolicy, "foo", "containous"),
+					withSegmentLabel(label.TraefikFrontendPublicKey, "foo", "containous"),
+					withSegmentLabel(label.TraefikFrontendReferrerPolicy, "foo", "containous"),
+					withSegmentLabel(label.TraefikFrontendCustomBrowserXSSValue, "foo", "containous"),
+					withSegmentLabel(label.TraefikFrontendSTSSeconds, "666", "containous"),
+					withSegmentLabel(label.TraefikFrontendSSLRedirect, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendSSLTemporaryRedirect, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendSTSIncludeSubdomains, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendSTSPreload, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendForceSTSHeader, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendFrameDeny, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendContentTypeNosniff, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendBrowserXSSFilter, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendIsDevelopment, "true", "containous"),
 
-				withLabel(label.Prefix+"containous."+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageStatus, "404"),
-				withLabel(label.Prefix+"containous."+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageBackend, "foobar"),
-				withLabel(label.Prefix+"containous."+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageQuery, "foo_query"),
-				withLabel(label.Prefix+"containous."+label.BaseFrontendErrorPage+"bar."+label.SuffixErrorPageStatus, "500,600"),
-				withLabel(label.Prefix+"containous."+label.BaseFrontendErrorPage+"bar."+label.SuffixErrorPageBackend, "foobar"),
-				withLabel(label.Prefix+"containous."+label.BaseFrontendErrorPage+"bar."+label.SuffixErrorPageQuery, "bar_query"),
+					withLabel(label.Prefix+"containous."+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageStatus, "404"),
+					withLabel(label.Prefix+"containous."+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageBackend, "foobar"),
+					withLabel(label.Prefix+"containous."+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageQuery, "foo_query"),
+					withLabel(label.Prefix+"containous."+label.BaseFrontendErrorPage+"bar."+label.SuffixErrorPageStatus, "500,600"),
+					withLabel(label.Prefix+"containous."+label.BaseFrontendErrorPage+"bar."+label.SuffixErrorPageBackend, "foobar"),
+					withLabel(label.Prefix+"containous."+label.BaseFrontendErrorPage+"bar."+label.SuffixErrorPageQuery, "bar_query"),
 
-				withServiceLabel(label.TraefikFrontendRateLimitExtractorFunc, "client.ip", "containous"),
-				withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitPeriod, "6"),
-				withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitAverage, "12"),
-				withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitBurst, "18"),
-				withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitPeriod, "3"),
-				withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitAverage, "6"),
-				withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitBurst, "9"),
-			),
+					withSegmentLabel(label.TraefikFrontendRateLimitExtractorFunc, "client.ip", "containous"),
+					withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitPeriod, "6"),
+					withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitAverage, "12"),
+					withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitBurst, "18"),
+					withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitPeriod, "3"),
+					withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitAverage, "6"),
+					withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitBurst, "9"),
+				)),
 			expectedFrontends: map[string]*types.Frontend{
 				"frontend-app-service-containous": {
 					EntryPoints: []string{
@@ -637,7 +709,7 @@ func TestBuildConfigurationServices(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-app-service-containous": {
 					Servers: map[string]types.Server{
-						"server-task-service-containous": {
+						"server-app-taskID-service-containous": {
 							URL:    "https://localhost:80",
 							Weight: 12,
 						},
@@ -678,21 +750,12 @@ func TestBuildConfigurationServices(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			test.application.ID = "/app"
-
-			for _, task := range test.application.Tasks {
-				task.ID = "task"
-				if task.State == "" {
-					task.State = "TASK_RUNNING"
-				}
-			}
-
 			p := &Provider{
-				Domain:           "docker.localhost",
+				Domain:           "marathon.localhost",
 				ExposedByDefault: true,
 			}
 
-			actualConfig := p.buildConfigurationV2(withApplications(test.application))
+			actualConfig := p.buildConfigurationV2(test.applications)
 
 			assert.NotNil(t, actualConfig)
 			assert.Equal(t, test.expectedBackends, actualConfig.Backends)
@@ -858,7 +921,7 @@ func TestTaskFilter(t *testing.T) {
 			desc: "task not running",
 			task: task(
 				taskPorts(80),
-				state(taskStateStaging),
+				taskState(taskStateStaging),
 			),
 			application: application(appPorts(80)),
 			expected:    false,
@@ -884,8 +947,8 @@ func TestTaskFilter(t *testing.T) {
 			task: task(taskPorts(80, 81)),
 			application: application(
 				appPorts(80, 81),
-				withServiceLabel(label.TraefikPort, "80", "web"),
-				withServiceLabel(label.TraefikPort, "illegal", "admin"),
+				withSegmentLabel(label.TraefikPort, "80", "web"),
+				withSegmentLabel(label.TraefikPort, "illegal", "admin"),
 			),
 			expected: true,
 		},
@@ -894,7 +957,7 @@ func TestTaskFilter(t *testing.T) {
 			task: task(taskPorts(80, 81)),
 			application: application(
 				appPorts(80, 81),
-				withServiceLabel(label.TraefikPort, "81", "admin"),
+				withSegmentLabel(label.TraefikPort, "81", "admin"),
 			),
 			expected: true,
 		},
@@ -1090,7 +1153,7 @@ func TestGetFrontendRule(t *testing.T) {
 			desc:                    "label missing",
 			application:             application(appID("test")),
 			marathonLBCompatibility: true,
-			expected:                "Host:test.docker.localhost",
+			expected:                "Host:test.marathon.localhost",
 		},
 		{
 			desc: "HAProxy vhost available and LB compat disabled",
@@ -1099,7 +1162,7 @@ func TestGetFrontendRule(t *testing.T) {
 				withLabel("HAPROXY_0_VHOST", "foo.bar"),
 			),
 			marathonLBCompatibility: false,
-			expected:                "Host:test.docker.localhost",
+			expected:                "Host:test.marathon.localhost",
 		},
 		{
 			desc:                    "HAProxy vhost available and LB compat enabled",
@@ -1119,7 +1182,7 @@ func TestGetFrontendRule(t *testing.T) {
 		},
 		{
 			desc:                    "service label existing",
-			application:             application(withServiceLabel(label.TraefikFrontendRule, "Host:foo.bar", "app")),
+			application:             application(withSegmentLabel(label.TraefikFrontendRule, "Host:foo.bar", "app")),
 			serviceName:             "app",
 			marathonLBCompatibility: true,
 			expected:                "Host:foo.bar",
@@ -1131,7 +1194,7 @@ func TestGetFrontendRule(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 			p := &Provider{
-				Domain:                  "docker.localhost",
+				Domain:                  "marathon.localhost",
 				MarathonLBCompatibility: test.marathonLBCompatibility,
 			}
 
@@ -1161,7 +1224,7 @@ func TestGetBackendName(t *testing.T) {
 		},
 		{
 			desc:        "service label existing",
-			application: application(withServiceLabel(label.TraefikBackend, "bar", "app")),
+			application: application(withSegmentLabel(label.TraefikBackend, "bar", "app")),
 			serviceName: "app",
 			expected:    "backendbar",
 		},
