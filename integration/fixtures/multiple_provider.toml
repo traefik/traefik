@@ -19,7 +19,9 @@ exposedByDefault = false
     backend = "backend-test"
   [frontends.frontend-1.routes.test_1]
   rule = "PathPrefix:/file"
+
   [backends]
     [backends.backend-test]
         [backends.backend-test.servers.website]
-            url = "http://{{ .IP }}"
+        url = "http://{{ .IP }}"
+        weight = 1
