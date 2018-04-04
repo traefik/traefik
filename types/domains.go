@@ -65,3 +65,24 @@ func (ds *Domains) String() string { return fmt.Sprintf("%+v", *ds) }
 func (ds *Domains) SetValue(val interface{}) {
 	*ds = val.([]Domain)
 }
+
+// MatchDomain return true if a domain match the cert domain
+func MatchDomain(domain string, certDomain string) bool {
+	if domain == certDomain {
+		return true
+	}
+
+	for len(certDomain) > 0 && certDomain[len(certDomain)-1] == '.' {
+		certDomain = certDomain[:len(certDomain)-1]
+	}
+
+	labels := strings.Split(domain, ".")
+	for i := range labels {
+		labels[i] = "*"
+		candidate := strings.Join(labels, ".")
+		if certDomain == candidate {
+			return true
+		}
+	}
+	return false
+}

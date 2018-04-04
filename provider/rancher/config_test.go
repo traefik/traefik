@@ -260,6 +260,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						label.Prefix + "sauternes." + label.SuffixProtocol: "https",
 						label.Prefix + "sauternes." + label.SuffixWeight:   "12",
 
+						label.Prefix + "sauternes." + label.SuffixFrontendRule:                      "Host:traefik.wtf",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasic:                 "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.Prefix + "sauternes." + label.SuffixFrontendEntryPoints:               "http,https",
 						label.Prefix + "sauternes." + label.SuffixFrontendPassHostHeader:            "true",
@@ -319,7 +320,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					Backend:     "backend-sauternes",
 					Routes: map[string]types.Route{
 						"route-frontend-sauternes": {
-							Rule: "Host:.rancher.localhost",
+							Rule: "Host:traefik.wtf",
 						},
 					},
 					PassHostHeader: true,
@@ -697,6 +698,9 @@ func TestProviderGetFrontendName(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
+			segmentProperties := label.ExtractTraefikLabels(test.service.Labels)
+			test.service.SegmentLabels = segmentProperties[""]
+
 			actual := provider.getFrontendName(test.service)
 			assert.Equal(t, test.expected, actual)
 		})
@@ -762,7 +766,10 @@ func TestProviderGetFrontendRule(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actual := provider.getFrontendRule(test.service)
+			segmentProperties := label.ExtractTraefikLabels(test.service.Labels)
+			test.service.SegmentLabels = segmentProperties[""]
+
+			actual := provider.getFrontendRule(test.service.Name, test.service.SegmentLabels)
 			assert.Equal(t, test.expected, actual)
 		})
 	}

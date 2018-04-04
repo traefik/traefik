@@ -230,10 +230,37 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 		}
 	}
 
+	if gc.Mesos != nil {
+		if len(gc.Mesos.Filename) != 0 && gc.Mesos.TemplateVersion != 2 {
+			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
+			gc.Mesos.TemplateVersion = 1
+		} else {
+			gc.Mesos.TemplateVersion = 2
+		}
+	}
+
 	if gc.Eureka != nil {
 		if gc.Eureka.Delay != 0 {
 			log.Warn("Delay has been deprecated -- please use RefreshSeconds")
 			gc.Eureka.RefreshSeconds = gc.Eureka.Delay
+		}
+	}
+
+	if gc.ECS != nil {
+		if len(gc.ECS.Filename) != 0 && gc.ECS.TemplateVersion != 2 {
+			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
+			gc.ECS.TemplateVersion = 1
+		} else {
+			gc.ECS.TemplateVersion = 2
+		}
+	}
+
+	if gc.ConsulCatalog != nil {
+		if len(gc.ConsulCatalog.Filename) != 0 && gc.ConsulCatalog.TemplateVersion != 2 {
+			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
+			gc.ConsulCatalog.TemplateVersion = 1
+		} else {
+			gc.ConsulCatalog.TemplateVersion = 2
 		}
 	}
 
@@ -331,15 +358,15 @@ func (gc *GlobalConfiguration) ValidateConfiguration() {
 			log.Fatalf("Unknown entrypoint %q for ACME configuration", gc.ACME.EntryPoint)
 		} else {
 			if gc.EntryPoints[gc.ACME.EntryPoint].TLS == nil {
-				log.Fatalf("Entrypoint without TLS %q for ACME configuration", gc.ACME.EntryPoint)
+				log.Fatalf("Entrypoint %q has no TLS configuration for ACME configuration", gc.ACME.EntryPoint)
 			}
 		}
 	} else if acmeprovider.IsEnabled() {
 		if _, ok := gc.EntryPoints[acmeprovider.Get().EntryPoint]; !ok {
-			log.Fatalf("Unknown entrypoint %q for provider ACME configuration", gc.ACME.EntryPoint)
+			log.Fatalf("Unknown entrypoint %q for provider ACME configuration", acmeprovider.Get().EntryPoint)
 		} else {
 			if gc.EntryPoints[acmeprovider.Get().EntryPoint].TLS == nil {
-				log.Fatalf("Entrypoint without TLS %q for provider ACME configuration", gc.ACME.EntryPoint)
+				log.Fatalf("Entrypoint %q has no TLS configuration for provider ACME configuration", acmeprovider.Get().EntryPoint)
 			}
 		}
 	}

@@ -459,7 +459,7 @@ func TestProviderGetFrontendRuleV1(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actual := provider.getFrontendRule(test.service)
+			actual := provider.getFrontendRule(test.service.Name, test.service.Labels)
 			assert.Equal(t, test.expected, actual)
 		})
 	}

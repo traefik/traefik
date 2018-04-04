@@ -67,7 +67,7 @@ func TestBuildConfigurationV1(t *testing.T) {
 			desc: "filtered task",
 			application: application(
 				appPorts(80),
-				withTasks(localhostTask(taskPorts(80), state(taskStateStaging))),
+				withTasks(localhostTask(taskPorts(80), taskState(taskStateStaging))),
 			),
 			expectedFrontends: map[string]*types.Frontend{
 				"frontend-app": {
@@ -271,11 +271,11 @@ func TestBuildConfigurationServicesV1(t *testing.T) {
 
 				withLabel(label.TraefikBackendMaxConnAmount, "1000"),
 				withLabel(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
-				withServiceLabel(label.TraefikPort, "80", "web"),
-				withServiceLabel(label.TraefikPort, "81", "admin"),
+				withSegmentLabel(label.TraefikPort, "80", "web"),
+				withSegmentLabel(label.TraefikPort, "81", "admin"),
 				withLabel("traefik..port", "82"), // This should be ignored, as it fails to match the servicesPropertiesRegexp regex.
-				withServiceLabel(label.TraefikFrontendRule, "Host:web.app.marathon.localhost", "web"),
-				withServiceLabel(label.TraefikFrontendRule, "Host:admin.app.marathon.localhost", "admin"),
+				withSegmentLabel(label.TraefikFrontendRule, "Host:web.app.marathon.localhost", "web"),
+				withSegmentLabel(label.TraefikFrontendRule, "Host:admin.app.marathon.localhost", "admin"),
 			),
 			expectedFrontends: map[string]*types.Frontend{
 				"frontend-app-service-web": {
@@ -344,15 +344,15 @@ func TestBuildConfigurationServicesV1(t *testing.T) {
 				withLabel(label.TraefikBackendMaxConnAmount, "666"),
 				withLabel(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
 
-				withServiceLabel(label.TraefikPort, "80", "containous"),
-				withServiceLabel(label.TraefikProtocol, "https", "containous"),
-				withServiceLabel(label.TraefikWeight, "12", "containous"),
+				withSegmentLabel(label.TraefikPort, "80", "containous"),
+				withSegmentLabel(label.TraefikProtocol, "https", "containous"),
+				withSegmentLabel(label.TraefikWeight, "12", "containous"),
 
-				withServiceLabel(label.TraefikFrontendAuthBasic, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0", "containous"),
-				withServiceLabel(label.TraefikFrontendEntryPoints, "http,https", "containous"),
-				withServiceLabel(label.TraefikFrontendPassHostHeader, "true", "containous"),
-				withServiceLabel(label.TraefikFrontendPriority, "666", "containous"),
-				withServiceLabel(label.TraefikFrontendRule, "Host:traefik.io", "containous"),
+				withSegmentLabel(label.TraefikFrontendAuthBasic, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0", "containous"),
+				withSegmentLabel(label.TraefikFrontendEntryPoints, "http,https", "containous"),
+				withSegmentLabel(label.TraefikFrontendPassHostHeader, "true", "containous"),
+				withSegmentLabel(label.TraefikFrontendPriority, "666", "containous"),
+				withSegmentLabel(label.TraefikFrontendRule, "Host:traefik.io", "containous"),
 			),
 			expectedFrontends: map[string]*types.Frontend{
 				"frontend-app-service-containous": {
@@ -594,7 +594,7 @@ func TestGetFrontendRuleV1(t *testing.T) {
 		},
 		{
 			desc:                    "service label existing",
-			application:             application(withServiceLabel(label.TraefikFrontendRule, "Host:foo.bar", "app")),
+			application:             application(withSegmentLabel(label.TraefikFrontendRule, "Host:foo.bar", "app")),
 			serviceName:             "app",
 			marathonLBCompatibility: true,
 			expected:                "Host:foo.bar",
@@ -637,7 +637,7 @@ func TestGetBackendV1(t *testing.T) {
 		},
 		{
 			desc:        "service label existing",
-			application: application(withServiceLabel(label.TraefikBackend, "bar", "app")),
+			application: application(withSegmentLabel(label.TraefikBackend, "bar", "app")),
 			serviceName: "app",
 			expected:    "backendbar",
 		},

@@ -116,7 +116,7 @@ func (p *Provider) containerFilter(container dockerData) bool {
 	for segmentName, labels := range segmentProperties {
 		errPort = checkSegmentPort(labels, segmentName)
 
-		if len(p.getFrontendRule(container)) == 0 {
+		if len(p.getFrontendRule(container, labels)) == 0 {
 			log.Debugf("Filtering container with empty frontend rule %s %s", container.Name, segmentName)
 			return false
 		}
@@ -160,14 +160,14 @@ func (p *Provider) getFrontendName(container dockerData, idx int) string {
 	if len(container.SegmentName) > 0 {
 		name = getBackendName(container)
 	} else {
-		name = p.getFrontendRule(container) + "-" + strconv.Itoa(idx)
+		name = p.getFrontendRule(container, container.SegmentLabels) + "-" + strconv.Itoa(idx)
 	}
 
 	return provider.Normalize(name)
 }
 
-func (p *Provider) getFrontendRule(container dockerData) string {
-	if value := label.GetStringValue(container.SegmentLabels, label.TraefikFrontendRule, ""); len(value) != 0 {
+func (p *Provider) getFrontendRule(container dockerData, segmentLabels map[string]string) string {
+	if value := label.GetStringValue(segmentLabels, label.TraefikFrontendRule, ""); len(value) != 0 {
 		return value
 	}
 

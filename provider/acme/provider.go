@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"reflect"
-	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -24,7 +23,7 @@ import (
 	traefikTLS "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/pkg/errors"
-	acme "github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acmev2"
 	"github.com/xenolf/lego/providers/dns"
 )
 
@@ -522,7 +521,7 @@ func (p *Provider) getUncheckedDomains(domainsToCheck []string, checkConfigurati
 }
 
 func searchUncheckedDomains(domainsToCheck []string, existentDomains []string) []string {
-	uncheckedDomains := []string{}
+	var uncheckedDomains []string
 	for _, domainToCheck := range domainsToCheck {
 		if !isDomainAlreadyChecked(domainToCheck, existentDomains) {
 			uncheckedDomains = append(uncheckedDomains, domainToCheck)
@@ -583,14 +582,7 @@ func (p *Provider) getValidDomains(domain types.Domain, wildcardAllowed bool) ([
 func isDomainAlreadyChecked(domainToCheck string, existentDomains []string) bool {
 	for _, certDomains := range existentDomains {
 		for _, certDomain := range strings.Split(certDomains, ",") {
-			// Use regex to test for provided existentDomains that might have been added into TLSConfig
-			selector := "^" + strings.Replace(certDomain, "*.", "[^\\.]*\\.", -1) + "$"
-			domainCheck, err := regexp.MatchString(selector, domainToCheck)
-			if err != nil {
-				log.Errorf("Unable to compare %q and %q in ACME provider : %s", domainToCheck, certDomain, err)
-				continue
-			}
-			if domainCheck {
+			if types.MatchDomain(domainToCheck, certDomain) {
 				return true
 			}
 		}

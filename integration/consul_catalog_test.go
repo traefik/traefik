@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/containous/traefik/integration/try"
+	"github.com/containous/traefik/provider/label"
 	"github.com/go-check/check"
 	"github.com/hashicorp/consul/api"
 	checker "github.com/vdemeester/shakers"
@@ -160,7 +161,6 @@ func (s *ConsulCatalogSuite) TestSingleService(c *check.C) {
 	s.deregisterService("test", whoami.NetworkSettings.IPAddress)
 	err = try.Request(req, 10*time.Second, try.StatusCodeIs(http.StatusNotFound), try.HasBody())
 	c.Assert(err, checker.IsNil)
-
 }
 
 func (s *ConsulCatalogSuite) TestExposedByDefaultFalseSingleService(c *check.C) {
@@ -202,13 +202,12 @@ func (s *ConsulCatalogSuite) TestExposedByDefaultFalseSimpleServiceMultipleNode(
 	defer cmd.Process.Kill()
 
 	whoami := s.composeProject.Container(c, "whoami1")
-	whoami2 := s.composeProject.Container(c, "whoami2")
-
 	err = s.registerService("test", whoami.NetworkSettings.IPAddress, 80, []string{})
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
 	defer s.deregisterService("test", whoami.NetworkSettings.IPAddress)
 
-	err = s.registerService("test", whoami2.NetworkSettings.IPAddress, 80, []string{"traefik.enable=true"})
+	whoami2 := s.composeProject.Container(c, "whoami2")
+	err = s.registerService("test", whoami2.NetworkSettings.IPAddress, 80, []string{label.TraefikEnable + "=true"})
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
 	defer s.deregisterService("test", whoami2.NetworkSettings.IPAddress)
 
@@ -326,7 +325,7 @@ func (s *ConsulCatalogSuite) TestBasicAuthSimpleService(c *check.C) {
 	whoami := s.composeProject.Container(c, "whoami1")
 
 	err = s.registerService("test", whoami.NetworkSettings.IPAddress, 80, []string{
-		"traefik.frontend.auth.basic=test:$2a$06$O5NksJPAcgrC9MuANkSoE.Xe9DSg7KcLLFYNr1Lj6hPcMmvgwxhme,test2:$2y$10$xP1SZ70QbZ4K2bTGKJOhpujkpcLxQcB3kEPF6XAV19IdcqsZTyDEe",
+		label.TraefikFrontendAuthBasic + "=test:$2a$06$O5NksJPAcgrC9MuANkSoE.Xe9DSg7KcLLFYNr1Lj6hPcMmvgwxhme,test2:$2y$10$xP1SZ70QbZ4K2bTGKJOhpujkpcLxQcB3kEPF6XAV19IdcqsZTyDEe",
 	})
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
 	defer s.deregisterService("test", whoami.NetworkSettings.IPAddress)
@@ -362,7 +361,8 @@ func (s *ConsulCatalogSuite) TestRefreshConfigTagChange(c *check.C) {
 
 	whoami := s.composeProject.Container(c, "whoami1")
 
-	err = s.registerService("test", whoami.NetworkSettings.IPAddress, 80, []string{"name=whoami1", "traefik.enable=false", "traefik.backend.circuitbreaker=NetworkErrorRatio() > 0.5"})
+	err = s.registerService("test", whoami.NetworkSettings.IPAddress, 80,
+		[]string{"name=whoami1", label.TraefikEnable + "=false", label.TraefikBackendCircuitBreakerExpression + "=NetworkErrorRatio() > 0.5"})
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
 	defer s.deregisterService("test", whoami.NetworkSettings.IPAddress)
 
@@ -370,7 +370,8 @@ func (s *ConsulCatalogSuite) TestRefreshConfigTagChange(c *check.C) {
 		try.BodyContains(whoami.NetworkSettings.IPAddress))
 	c.Assert(err, checker.NotNil)
 
-	err = s.registerService("test", whoami.NetworkSettings.IPAddress, 80, []string{"name=whoami1", "traefik.enable=true", "traefik.backend.circuitbreaker=ResponseCodeRatio(500, 600, 0, 600) > 0.5"})
+	err = s.registerService("test", whoami.NetworkSettings.IPAddress, 80,
+		[]string{"name=whoami1", label.TraefikEnable + "=true", label.TraefikBackendCircuitBreakerExpression + "=ResponseCodeRatio(500, 600, 0, 600) > 0.5"})
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
@@ -403,16 +404,20 @@ func (s *ConsulCatalogSuite) TestCircuitBreaker(c *check.C) {
 	defer cmd.Process.Kill()
 
 	whoami := s.composeProject.Container(c, "whoami1")
-	whoami2 := s.composeProject.Container(c, "whoami2")
-	whoami3 := s.composeProject.Container(c, "whoami3")
-
-	err = s.registerService("test", whoami.NetworkSettings.IPAddress, 80, []string{"name=whoami1", "traefik.enable=true", "traefik.backend.circuitbreaker=NetworkErrorRatio() > 0.5"})
+	err = s.registerService("test", whoami.NetworkSettings.IPAddress, 80,
+		[]string{"name=whoami1", label.TraefikEnable + "=true", label.TraefikBackendCircuitBreakerExpression + "=NetworkErrorRatio() > 0.5"})
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
 	defer s.deregisterService("test", whoami.NetworkSettings.IPAddress)
-	err = s.registerService("test", whoami2.NetworkSettings.IPAddress, 42, []string{"name=whoami2", "traefik.enable=true", "traefik.backend.circuitbreaker=NetworkErrorRatio() > 0.5"})
+
+	whoami2 := s.composeProject.Container(c, "whoami2")
+	err = s.registerService("test", whoami2.NetworkSettings.IPAddress, 42,
+		[]string{"name=whoami2", label.TraefikEnable + "=true", label.TraefikBackendCircuitBreakerExpression + "=NetworkErrorRatio() > 0.5"})
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
 	defer s.deregisterService("test", whoami2.NetworkSettings.IPAddress)
-	err = s.registerService("test", whoami3.NetworkSettings.IPAddress, 42, []string{"name=whoami3", "traefik.enable=true", "traefik.backend.circuitbreaker=NetworkErrorRatio() > 0.5"})
+
+	whoami3 := s.composeProject.Container(c, "whoami3")
+	err = s.registerService("test", whoami3.NetworkSettings.IPAddress, 42,
+		[]string{"name=whoami3", label.TraefikEnable + "=true", label.TraefikBackendCircuitBreakerExpression + "=NetworkErrorRatio() > 0.5"})
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
 	defer s.deregisterService("test", whoami3.NetworkSettings.IPAddress)
 
@@ -452,7 +457,7 @@ func (s *ConsulCatalogSuite) TestRefreshConfigPortChange(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/providers/consul_catalog/backends", 5*time.Second, try.BodyContains(whoami.NetworkSettings.IPAddress))
 	c.Assert(err, checker.IsNil)
 
-	err = s.registerService("test", whoami.NetworkSettings.IPAddress, 80, []string{"name=whoami1", "traefik.enable=true"})
+	err = s.registerService("test", whoami.NetworkSettings.IPAddress, 80, []string{"name=whoami1", label.TraefikEnable + "=true"})
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
 
 	defer s.deregisterService("test", whoami.NetworkSettings.IPAddress)

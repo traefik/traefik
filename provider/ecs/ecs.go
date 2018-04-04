@@ -51,6 +51,7 @@ type ecsInstance struct {
 	container           *ecs.Container
 	containerDefinition *ecs.ContainerDefinition
 	machine             *ec2.Instance
+	TraefikLabels       map[string]string
 }
 
 type awsClient struct {
@@ -201,7 +202,6 @@ func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types
 // Find all running Provider tasks in a cluster, also collect the task definitions (for docker labels)
 // and the EC2 instance data
 func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsInstance, error) {
-	var instances []ecsInstance
 	var clustersArn []*string
 	var clusters Clusters
 
@@ -233,7 +233,11 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 	} else {
 		clusters = p.Clusters
 	}
+
+	var instances []ecsInstance
+
 	log.Debugf("ECS Clusters: %s", clusters)
+
 	for _, c := range clusters {
 
 		req, _ := client.ecs.ListTasksRequest(&ecs.ListTasksInput{
@@ -317,13 +321,14 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 				}
 
 				instances = append(instances, ecsInstance{
-					fmt.Sprintf("%s-%s", strings.Replace(aws.StringValue(task.Group), ":", "-", 1), *container.Name),
-					(aws.StringValue(task.TaskArn))[len(aws.StringValue(task.TaskArn))-12:],
-					task,
-					taskDefinition,
-					container,
-					containerDefinition,
-					machines[machineIdx],
+					Name:                fmt.Sprintf("%s-%s", strings.Replace(aws.StringValue(task.Group), ":", "-", 1), *container.Name),
+					ID:                  (aws.StringValue(task.TaskArn))[len(aws.StringValue(task.TaskArn))-12:],
+					task:                task,
+					taskDefinition:      taskDefinition,
+					container:           container,
+					containerDefinition: containerDefinition,
+					machine:             machines[machineIdx],
+					TraefikLabels:       aws.StringValueMap(containerDefinition.DockerLabels),
 				})
 			}
 		}
@@ -398,7 +403,7 @@ func (p *Provider) lookupTaskDefinitions(ctx context.Context, client *awsClient,
 
 func (p *Provider) filterInstance(i ecsInstance) bool {
 
-	if labelPort := getStringValue(i, label.TraefikPort, ""); len(i.container.NetworkBindings) == 0 && labelPort == "" {
+	if labelPort := getStringValueV1(i, label.TraefikPort, ""); len(i.container.NetworkBindings) == 0 && labelPort == "" {
 		log.Debugf("Filtering ecs instance without port %s (%s)", i.Name, i.ID)
 		return false
 	}

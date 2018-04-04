@@ -634,9 +634,6 @@ func TestDockerTraefikFilter(t *testing.T) {
 			t.Parallel()
 
 			dData := parseContainer(test.container)
-			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.SegmentLabels = segmentProperties[""]
-
 			actual := test.provider.containerFilter(dData)
 			if actual != test.expected {
 				t.Errorf("expected %v for %+v, got %+v", test.expected, test, actual)
@@ -746,12 +743,12 @@ func TestDockerGetFrontendRule(t *testing.T) {
 
 			dData := parseContainer(test.container)
 			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.SegmentLabels = segmentProperties[""]
 
 			provider := &Provider{
 				Domain: "docker.localhost",
 			}
-			actual := provider.getFrontendRule(dData)
+
+			actual := provider.getFrontendRule(dData, segmentProperties[""])
 			assert.Equal(t, test.expected, actual)
 		})
 	}

@@ -367,7 +367,7 @@ To enable IP white listing at the entry point level.
   [entryPoints.http]
     address = ":80"
 
-    [entryPoints.http]
+    [entryPoints.http.whiteList]
       sourceRange = ["127.0.0.1/32", "192.168.1.7"]
       # useXForwardedFor = true
 ```

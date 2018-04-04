@@ -21,6 +21,7 @@ type appData struct {
 	marathon.Application
 	SegmentLabels map[string]string
 	SegmentName   string
+	LinkedApps    []*appData
 }
 
 func (p *Provider) buildConfigurationV2(applications *marathon.Applications) *types.Configuration {
@@ -54,7 +55,7 @@ func (p *Provider) buildConfigurationV2(applications *marathon.Applications) *ty
 		"getWhiteList":         label.GetWhiteList,
 	}
 
-	var apps []*appData
+	apps := make(map[string]*appData)
 	for _, app := range applications.Apps {
 		if p.applicationFilter(app) {
 			// Tasks
@@ -66,10 +67,6 @@ func (p *Provider) buildConfigurationV2(applications *marathon.Applications) *ty
 				}
 			}
 
-			if len(filteredTasks) == 0 {
-				log.Warnf("No valid tasks for application %s", app.ID)
-				continue
-			}
 			app.Tasks = filteredTasks
 
 			// segments
@@ -80,13 +77,19 @@ func (p *Provider) buildConfigurationV2(applications *marathon.Applications) *ty
 					SegmentLabels: labels,
 					SegmentName:   segmentName,
 				}
-				apps = append(apps, data)
+
+				backendName := p.getBackendName(*data)
+				if baseApp, ok := apps[backendName]; ok {
+					baseApp.LinkedApps = append(baseApp.LinkedApps, data)
+				} else {
+					apps[backendName] = data
+				}
 			}
 		}
 	}
 
 	templateObjects := struct {
-		Applications []*appData
+		Applications map[string]*appData
 		Domain       string
 	}{
 		Applications: apps,
@@ -181,11 +184,11 @@ func (p *Provider) getSubDomain(name string) string {
 }
 
 func (p *Provider) getBackendName(app appData) string {
-
 	value := label.GetStringValue(app.SegmentLabels, label.TraefikBackend, "")
 	if len(value) > 0 {
 		return provider.Normalize("backend" + value)
 	}
+
 	return provider.Normalize("backend" + app.ID + getSegmentNameSuffix(app.SegmentName))
 }
 
@@ -291,8 +294,9 @@ func (p *Provider) getServers(app appData) map[string]types.Server {
 	var servers map[string]types.Server
 
 	for _, task := range app.Tasks {
-		host := p.getBackendServer(*task, app)
-		if len(host) == 0 {
+		name, server, err := p.getServer(app, *task)
+		if err != nil {
+			log.Error(err)
 			continue
 		}
 
@@ -300,45 +304,68 @@ func (p *Provider) getServers(app appData) map[string]types.Server {
 			servers = make(map[string]types.Server)
 		}
 
-		port := getPort(*task, app)
-		protocol := label.GetStringValue(app.SegmentLabels, label.TraefikProtocol, label.DefaultProtocol)
+		servers[name] = *server
+	}
 
-		serverName := provider.Normalize("server-" + task.ID + getSegmentNameSuffix(app.SegmentName))
-		servers[serverName] = types.Server{
-			URL:    fmt.Sprintf("%s://%s:%v", protocol, host, port),
-			Weight: label.GetIntValue(app.SegmentLabels, label.TraefikWeight, label.DefaultWeightInt),
+	for _, linkedApp := range app.LinkedApps {
+		for _, task := range linkedApp.Tasks {
+			name, server, err := p.getServer(*linkedApp, *task)
+			if err != nil {
+				log.Error(err)
+				continue
+			}
+
+			if servers == nil {
+				servers = make(map[string]types.Server)
+			}
+
+			servers[name] = *server
 		}
 	}
 
 	return servers
 }
 
-func (p *Provider) getBackendServer(task marathon.Task, app appData) string {
+func (p *Provider) getServer(app appData, task marathon.Task) (string, *types.Server, error) {
+	host, err := p.getServerHost(task, app)
+	if len(host) == 0 {
+		return "", nil, err
+	}
+
+	port := getPort(task, app)
+	protocol := label.GetStringValue(app.SegmentLabels, label.TraefikProtocol, label.DefaultProtocol)
+
+	serverName := provider.Normalize("server-" + app.ID + "-" + task.ID + getSegmentNameSuffix(app.SegmentName))
+
+	return serverName, &types.Server{
+		URL:    fmt.Sprintf("%s://%s:%v", protocol, host, port),
+		Weight: label.GetIntValue(app.SegmentLabels, label.TraefikWeight, label.DefaultWeightInt),
+	}, nil
+}
+
+func (p *Provider) getServerHost(task marathon.Task, app appData) (string, error) {
 	if app.IPAddressPerTask == nil || p.ForceTaskHostname {
-		return task.Host
+		return task.Host, nil
 	}
 
 	numTaskIPAddresses := len(task.IPAddresses)
 	switch numTaskIPAddresses {
 	case 0:
-		log.Errorf("Missing IP address for Marathon application %s on task %s", app.ID, task.ID)
-		return ""
+		return "", fmt.Errorf("missing IP address for Marathon application %s on task %s", app.ID, task.ID)
 	case 1:
-		return task.IPAddresses[0].IPAddress
+		return task.IPAddresses[0].IPAddress, nil
 	default:
 		ipAddressIdx := label.GetIntValue(stringValueMap(app.Labels), labelIPAddressIdx, math.MinInt32)
 
 		if ipAddressIdx == math.MinInt32 {
-			log.Errorf("Found %d task IP addresses but missing IP address index for Marathon application %s on task %s",
+			return "", fmt.Errorf("found %d task IP addresses but missing IP address index for Marathon application %s on task %s",
 				numTaskIPAddresses, app.ID, task.ID)
-			return ""
 		}
 		if ipAddressIdx < 0 || ipAddressIdx > numTaskIPAddresses {
-			log.Errorf("Cannot use IP address index to select from %d task IP addresses for Marathon application %s on task %s",
+			return "", fmt.Errorf("cannot use IP address index to select from %d task IP addresses for Marathon application %s on task %s",
 				numTaskIPAddresses, app.ID, task.ID)
-			return ""
 		}
 
-		return task.IPAddresses[ipAddressIdx].IPAddress
+		return task.IPAddresses[ipAddressIdx].IPAddress, nil
 	}
 }

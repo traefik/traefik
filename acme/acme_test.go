@@ -14,7 +14,7 @@ import (
 	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
-	acme "github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acmev2"
 )
 
 func TestDomainsSet(t *testing.T) {
@@ -441,6 +441,96 @@ func TestAcme_getValidDomain(t *testing.T) {
 			} else {
 				assert.Equal(t, len(test.expectedDomains), len(domains), "Unexpected domains.")
 			}
+		})
+	}
+}
+
+func TestAcme_getCertificateForDomain(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		domain        string
+		dc            *DomainsCertificates
+		expected      *DomainsCertificate
+		expectedFound bool
+	}{
+		{
+			desc:   "non-wildcard exact match",
+			domain: "foo.traefik.wtf",
+			dc: &DomainsCertificates{
+				Certs: []*DomainsCertificate{
+					{
+						Domains: types.Domain{
+							Main: "foo.traefik.wtf",
+						},
+					},
+				},
+			},
+			expected: &DomainsCertificate{
+				Domains: types.Domain{
+					Main: "foo.traefik.wtf",
+				},
+			},
+			expectedFound: true,
+		},
+		{
+			desc:   "non-wildcard no match",
+			domain: "bar.traefik.wtf",
+			dc: &DomainsCertificates{
+				Certs: []*DomainsCertificate{
+					{
+						Domains: types.Domain{
+							Main: "foo.traefik.wtf",
+						},
+					},
+				},
+			},
+			expected:      nil,
+			expectedFound: false,
+		},
+		{
+			desc:   "wildcard match",
+			domain: "foo.traefik.wtf",
+			dc: &DomainsCertificates{
+				Certs: []*DomainsCertificate{
+					{
+						Domains: types.Domain{
+							Main: "*.traefik.wtf",
+						},
+					},
+				},
+			},
+			expected: &DomainsCertificate{
+				Domains: types.Domain{
+					Main: "*.traefik.wtf",
+				},
+			},
+			expectedFound: true,
+		},
+		{
+			desc:   "wildcard no match",
+			domain: "foo.traefik.wtf",
+			dc: &DomainsCertificates{
+				Certs: []*DomainsCertificate{
+					{
+						Domains: types.Domain{
+							Main: "*.bar.traefik.wtf",
+						},
+					},
+				},
+			},
+			expected:      nil,
+			expectedFound: false,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			got, found := test.dc.getCertificateForDomain(test.domain)
+			assert.Equal(t, test.expectedFound, found)
+			assert.Equal(t, test.expected, got)
 		})
 	}
 }

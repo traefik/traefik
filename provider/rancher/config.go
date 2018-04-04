@@ -88,7 +88,7 @@ func (p *Provider) serviceFilter(service rancherData) bool {
 			return false
 		}
 
-		if len(p.getFrontendRule(service)) == 0 {
+		if len(p.getFrontendRule(service.Name, labels)) == 0 {
 			log.Debugf("Filtering container with empty frontend rule %s %s", service.Name, segmentName)
 			return false
 		}
@@ -123,9 +123,9 @@ func (p *Provider) serviceFilter(service rancherData) bool {
 	return true
 }
 
-func (p *Provider) getFrontendRule(service rancherData) string {
-	defaultRule := "Host:" + strings.ToLower(strings.Replace(service.Name, "/", ".", -1)) + "." + p.Domain
-	return label.GetStringValue(service.Labels, label.TraefikFrontendRule, defaultRule)
+func (p *Provider) getFrontendRule(serviceName string, labels map[string]string) string {
+	defaultRule := "Host:" + strings.ToLower(strings.Replace(serviceName, "/", ".", -1)) + "." + p.Domain
+	return label.GetStringValue(labels, label.TraefikFrontendRule, defaultRule)
 }
 
 func (p *Provider) getFrontendName(service rancherData) string {
@@ -133,7 +133,7 @@ func (p *Provider) getFrontendName(service rancherData) string {
 	if len(service.SegmentName) > 0 {
 		name = getBackendName(service)
 	} else {
-		name = p.getFrontendRule(service)
+		name = p.getFrontendRule(service.Name, service.SegmentLabels)
 	}
 
 	return provider.Normalize(name)

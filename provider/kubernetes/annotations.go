@@ -77,13 +77,13 @@ func getAnnotationName(annotations map[string]string, name string) string {
 	}
 
 	if _, ok := annotations[label.Prefix+name]; ok {
-		return name
+		return label.Prefix + name
 	}
 
 	// TODO [breaking] remove label support
 	if lbl, compat := compatibilityMapping[name]; compat {
 		if _, ok := annotations[lbl]; ok {
-			return name
+			return lbl
 		}
 	}
 

@@ -15,7 +15,6 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
-	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -517,15 +516,13 @@ func (s *Server) loadHTTPSConfiguration(configurations types.Configurations, def
 	return newEPCertificates, nil
 }
 
-// getCertificate allows to customize tlsConfig.Getcertificate behaviour to get the certificates inserted dynamically
+// getCertificate allows to customize tlsConfig.GetCertificate behaviour to get the certificates inserted dynamically
 func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	domainToCheck := types.CanonicalDomain(clientHello.ServerName)
 	if s.certs.Get() != nil {
 		for domains, cert := range s.certs.Get().(map[string]*tls.Certificate) {
-			for _, domain := range strings.Split(domains, ",") {
-				selector := "^" + strings.Replace(domain, "*.", "[^\\.]*\\.?", -1) + "$"
-				domainCheck, _ := regexp.MatchString(selector, domainToCheck)
-				if domainCheck {
+			for _, certDomain := range strings.Split(domains, ",") {
+				if types.MatchDomain(domainToCheck, certDomain) {
 					return cert, nil
 				}
 			}
@@ -747,15 +744,16 @@ func (s *Server) addInternalRoutes(entryPointName string, router *mux.Router) {
 
 	if s.globalConfiguration.API != nil && s.globalConfiguration.API.EntryPoint == entryPointName {
 		s.globalConfiguration.API.AddRoutes(router)
-		if s.leadership != nil {
-			s.leadership.AddRoutes(router)
-		}
 	}
 }
 
 func (s *Server) addInternalPublicRoutes(entryPointName string, router *mux.Router) {
 	if s.globalConfiguration.Ping != nil && s.globalConfiguration.Ping.EntryPoint != "" && s.globalConfiguration.Ping.EntryPoint == entryPointName {
 		s.globalConfiguration.Ping.AddRoutes(router)
+	}
+
+	if s.globalConfiguration.API != nil && s.globalConfiguration.API.EntryPoint == entryPointName && s.leadership != nil {
+		s.leadership.AddRoutes(router)
 	}
 }
 
