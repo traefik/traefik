@@ -233,7 +233,7 @@ func getFuncApplicationIntValueV1(labelName string, defaultValue int) func(task 
 			return defaultValue
 		}
 
-		return getIntValueV1(task, labelName, defaultValue, math.MaxInt64)
+		return getIntValueV1(task, labelName, defaultValue, math.MaxInt32)
 	}
 }
 
@@ -254,7 +254,7 @@ func getFuncBoolValueV1(labelName string, defaultValue bool) func(task state.Tas
 // Deprecated
 func getFuncIntValueV1(labelName string, defaultValue int) func(task state.Task) int {
 	return func(task state.Task) int {
-		return getIntValueV1(task, labelName, defaultValue, math.MaxInt64)
+		return getIntValueV1(task, labelName, defaultValue, math.MaxInt32)
 	}
 }
 
