@@ -1,5 +1,21 @@
 # Change Log
 
+## [v1.6.0-rc4](https://github.com/containous/traefik/tree/v1.6.0-rc4) (2018-04-04)
+[All Commits](https://github.com/containous/traefik/compare/v1.6.0-rc3...v1.6.0-rc4)
+
+**Enhancements:**
+- **[consulcatalog,ecs,mesos]** Factorize labels managements. ([#3099](https://github.com/containous/traefik/pull/3099) by [ldez](https://github.com/ldez))
+- **[middleware]** Add tests on IPWhiteLister. ([#3106](https://github.com/containous/traefik/pull/3106) by [ldez](https://github.com/ldez))
+
+**Bug fixes:**
+- **[api,cluster]** Moved /api/cluster/leadership handler under public routes (requires no authentication) ([#3101](https://github.com/containous/traefik/pull/3101) by [aantono](https://github.com/aantono))
+- **[k8s]** Fixes prefixed annotations support. ([#3110](https://github.com/containous/traefik/pull/3110) by [ldez](https://github.com/ldez))
+- **[marathon]** Several apps with same backend name in Marathon. ([#3109](https://github.com/containous/traefik/pull/3109) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[k8s]** Update kubernetes.md ([#3093](https://github.com/containous/traefik/pull/3093) by [rdrgporto](https://github.com/rdrgporto))
+- Fixed documentation urls on README.md ([#3102](https://github.com/containous/traefik/pull/3102) by [emir](https://github.com/emir))
+
 ## [v1.6.0-rc3](https://github.com/containous/traefik/tree/v1.6.0-rc3) (2018-03-28)
 [All Commits](https://github.com/containous/traefik/compare/v1.6.0-rc2...v1.6.0-rc3)
 
