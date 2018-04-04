@@ -55,9 +55,11 @@ import (
 	"golang.org/x/net/http2"
 )
 
-var (
-	httpServerLogger = stdlog.New(log.WriterLevel(logrus.DebugLevel), "", 0)
-)
+var httpServerLogger = stdlog.New(log.WriterLevel(logrus.DebugLevel), "", 0)
+
+func init() {
+	roundrobin.SetDefaultWeight(0)
+}
 
 // Server is the reverse-proxy/load-balancer engine
 type Server struct {
