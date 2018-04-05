@@ -1090,15 +1090,11 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 
 					if len(frontend.Errors) > 0 {
 						for _, errorPage := range frontend.Errors {
-							if config.Backends[errorPage.Backend] != nil && config.Backends[errorPage.Backend].Servers["error"].URL != "" {
-								errorPageHandler, err := middlewares.NewErrorPagesHandler(errorPage, config.Backends[errorPage.Backend].Servers["error"].URL)
-								if err != nil {
-									log.Errorf("Error creating custom error page middleware, %v", err)
-								} else {
-									n.Use(errorPageHandler)
-								}
+							errorPageHandler, err := createErrorPageHandler(config, errorPage, frontendName)
+							if err != nil {
+								log.Error(err)
 							} else {
-								log.Errorf("Error Page is configured for Frontend %s, but either Backend %s is not set or Backend URL is missing", frontendName, errorPage.Backend)
+								n.Use(errorPageHandler)
 							}
 						}
 					}
@@ -1260,6 +1256,35 @@ func (s *Server) configureLBServers(lb healthcheck.LoadBalancer, config *types.C
 		s.metricsRegistry.BackendServerUpGauge().With("backend", frontend.Backend, "url", srv.URL).Set(1)
 	}
 	return nil
+}
+
+func createErrorPageHandler(config *types.Configuration, errorPage *types.ErrorPage, frontendName string) (negroni.Handler, error) {
+	if config.Backends[errorPage.Backend] != nil {
+		errorPageServers := config.Backends[errorPage.Backend].Servers
+
+		switch len(errorPageServers) {
+		case 0:
+			return nil, fmt.Errorf("error pages backend %q doesn't have server", errorPage.Backend)
+		case 1:
+			for _, errorPageServer := range errorPageServers {
+				errorPageHandler, err := middlewares.NewErrorPagesHandler(errorPage, errorPageServer.URL)
+				if err != nil {
+					return nil, fmt.Errorf("error creating custom error page middleware, %v", err)
+				}
+				return errorPageHandler, nil
+			}
+		default:
+			if errorPageServer, ok := errorPageServers["error"]; ok {
+				errorPageHandler, err := middlewares.NewErrorPagesHandler(errorPage, errorPageServer.URL)
+				if err != nil {
+					return nil, fmt.Errorf("error creating custom error page middleware, %v", err)
+				}
+				return errorPageHandler, nil
+			}
+			return nil, fmt.Errorf("error pages backend %q have too many server (%d) or 'error' server doesn't exist", errorPage.Backend, len(errorPageServers))
+		}
+	}
+	return nil, fmt.Errorf("error Page is configured for Frontend %s, but Backend %s is not set", frontendName, errorPage.Backend)
 }
 
 func buildIPWhiteLister(whiteList *types.WhiteList, wlRange []string) (*middlewares.IPWhiteLister, error) {
