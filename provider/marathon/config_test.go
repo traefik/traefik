@@ -307,14 +307,14 @@ func TestBuildConfiguration(t *testing.T) {
 								"500",
 								"600",
 							},
-							Backend: "foobar",
+							Backend: "backendfoobar",
 							Query:   "bar_query",
 						},
 						"foo": {
 							Status: []string{
 								"404",
 							},
-							Backend: "foobar",
+							Backend: "backendfoobar",
 							Query:   "foo_query",
 						},
 					},
@@ -674,14 +674,14 @@ func TestBuildConfigurationSegments(t *testing.T) {
 								"500",
 								"600",
 							},
-							Backend: "foobar",
+							Backend: "backendfoobar",
 							Query:   "bar_query",
 						},
 						"foo": {
 							Status: []string{
 								"404",
 							},
-							Backend: "foobar",
+							Backend: "backendfoobar",
 							Query:   "foo_query",
 						},
 					},
