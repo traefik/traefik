@@ -47,15 +47,17 @@ type Client interface {
 }
 
 type clientImpl struct {
-	clientset      *kubernetes.Clientset
-	factories      map[string]informers.SharedInformerFactory
-	isNamespaceAll bool
+	clientset        *kubernetes.Clientset
+	ingressFactories map[string]informers.SharedInformerFactory
+	otherFactories   map[string]informers.SharedInformerFactory
+	isNamespaceAll   bool
 }
 
 func newClientImpl(clientset *kubernetes.Clientset) Client {
 	return &clientImpl{
-		clientset: clientset,
-		factories: make(map[string]informers.SharedInformerFactory),
+		clientset:        clientset,
+		ingressFactories: make(map[string]informers.SharedInformerFactory),
+		otherFactories:   make(map[string]informers.SharedInformerFactory),
 	}
 }
 
@@ -124,23 +126,32 @@ func (c *clientImpl) WatchAll(namespaces Namespaces, labelSelector string, stopC
 
 	eventHandler := newResourceEventHandler(eventCh)
 	for _, ns := range namespaces {
-		factory := informers.NewFilteredSharedInformerFactory(c.clientset, resyncPeriod, ns, func(opts *metav1.ListOptions) {
+		ingressFactory := informers.NewFilteredSharedInformerFactory(c.clientset, resyncPeriod, ns, func(opts *metav1.ListOptions) {
 			opts.LabelSelector = labelSelector
 		})
-		factory.Extensions().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
-		factory.Core().V1().Services().Informer().AddEventHandler(eventHandler)
-		factory.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
-		c.factories[ns] = factory
+		otherFactory := informers.NewFilteredSharedInformerFactory(c.clientset, resyncPeriod, ns, nil)
+		ingressFactory.Extensions().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
+		otherFactory.Core().V1().Services().Informer().AddEventHandler(eventHandler)
+		otherFactory.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
+
+		c.ingressFactories[ns] = ingressFactory
+		c.otherFactories[ns] = otherFactory
 	}
 
 	for _, ns := range namespaces {
-		c.factories[ns].Start(stopCh)
+		c.ingressFactories[ns].Start(stopCh)
+		c.otherFactories[ns].Start(stopCh)
 	}
 
 	for _, ns := range namespaces {
-		for t, ok := range c.factories[ns].WaitForCacheSync(stopCh) {
+		for t, ok := range c.ingressFactories[ns].WaitForCacheSync(stopCh) {
 			if !ok {
-				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
+				return nil, fmt.Errorf("timed out waiting for Ingress controller caches to sync %s in namespace %q", t.String(), ns)
+			}
+		}
+		for t, ok := range c.otherFactories[ns].WaitForCacheSync(stopCh) {
+			if !ok {
+				return nil, fmt.Errorf("timed out waiting for non-Ingress controller caches to sync %s in namespace %q", t.String(), ns)
 			}
 		}
 	}
@@ -150,8 +161,8 @@ func (c *clientImpl) WatchAll(namespaces Namespaces, labelSelector string, stopC
 	// https://github.com/containous/traefik/issues/1784 should improve the
 	// situation here in the future.
 	for _, ns := range namespaces {
-		c.factories[ns].Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
-		c.factories[ns].Start(stopCh)
+		c.otherFactories[ns].Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
+		c.otherFactories[ns].Start(stopCh)
 	}
 
 	return eventCh, nil
@@ -160,7 +171,7 @@ func (c *clientImpl) WatchAll(namespaces Namespaces, labelSelector string, stopC
 // GetIngresses returns all Ingresses for observed namespaces in the cluster.
 func (c *clientImpl) GetIngresses() []*extensionsv1beta1.Ingress {
 	var result []*extensionsv1beta1.Ingress
-	for ns, factory := range c.factories {
+	for ns, factory := range c.ingressFactories {
 		ings, err := factory.Extensions().V1beta1().Ingresses().Lister().List(labels.Everything())
 		if err != nil {
 			log.Errorf("Failed to list ingresses in namespace %s: %s", ns, err)
@@ -175,7 +186,7 @@ func (c *clientImpl) GetIngresses() []*extensionsv1beta1.Ingress {
 // GetService returns the named service from the given namespace.
 func (c *clientImpl) GetService(namespace, name string) (*corev1.Service, bool, error) {
 	var service *corev1.Service
-	item, exists, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Services().Informer().GetStore().GetByKey(namespace + "/" + name)
+	item, exists, err := c.otherFactories[c.lookupNamespace(namespace)].Core().V1().Services().Informer().GetStore().GetByKey(namespace + "/" + name)
 	if item != nil {
 		service = item.(*corev1.Service)
 	}
@@ -185,7 +196,7 @@ func (c *clientImpl) GetService(namespace, name string) (*corev1.Service, bool, 
 // GetEndpoints returns the named endpoints from the given namespace.
 func (c *clientImpl) GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error) {
 	var endpoint *corev1.Endpoints
-	item, exists, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Endpoints().Informer().GetStore().GetByKey(namespace + "/" + name)
+	item, exists, err := c.otherFactories[c.lookupNamespace(namespace)].Core().V1().Endpoints().Informer().GetStore().GetByKey(namespace + "/" + name)
 	if item != nil {
 		endpoint = item.(*corev1.Endpoints)
 	}
@@ -195,7 +206,7 @@ func (c *clientImpl) GetEndpoints(namespace, name string) (*corev1.Endpoints, bo
 // GetSecret returns the named secret from the given namespace.
 func (c *clientImpl) GetSecret(namespace, name string) (*corev1.Secret, bool, error) {
 	var secret *corev1.Secret
-	item, exists, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Secrets().Informer().GetStore().GetByKey(namespace + "/" + name)
+	item, exists, err := c.otherFactories[c.lookupNamespace(namespace)].Core().V1().Secrets().Informer().GetStore().GetByKey(namespace + "/" + name)
 	if err == nil && item != nil {
 		secret = item.(*corev1.Secret)
 	}
