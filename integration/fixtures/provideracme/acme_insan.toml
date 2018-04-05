@@ -15,7 +15,7 @@ email = "test@traefik.io"
 storage = "/dev/null"
 entryPoint = "https"
 onDemand = false
-OnHostRule = false
+onHostRule = false
 caServer = "http://{{.BoulderHost}}:4001/directory"
 [acme.httpChallenge]
 entryPoint="http"

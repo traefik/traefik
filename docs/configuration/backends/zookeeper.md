@@ -53,7 +53,7 @@ prefix = "traefik"
 #    ca = "/etc/ssl/ca.crt"
 #    cert = "/etc/ssl/zookeeper.crt"
 #    key = "/etc/ssl/zookeeper.key"
-#    insecureskipverify = true
+#    insecureSkipVerify = true
 ```
 
 To enable constraints see [backend-specific constraints section](/configuration/commons/#backend-specific).

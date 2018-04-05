@@ -3,7 +3,7 @@ logLevel = "DEBUG"
 defaultEntryPoints = ["http"]
 
 # Use certificate in net/internal/testcert.go
-RootCAs =  [ "fixtures/https/rootcas/local.crt"]
+rootCAs =  [ "fixtures/https/rootcas/local.crt"]
 
 [entryPoints]
   [entryPoints.http]

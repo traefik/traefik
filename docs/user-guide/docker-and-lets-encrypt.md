@@ -97,13 +97,13 @@ defaultEntryPoints = ["https","http"]
 endpoint = "unix:///var/run/docker.sock"
 domain = "my-awesome-app.org"
 watch = true
-exposedbydefault = false
+exposedByDefault = false
 
 [acme]
 email = "your-email-here@my-awesome-app.org"
 storage = "acme.json"
 entryPoint = "https"
-OnHostRule = true
+onHostRule = true
 [acme.httpChallenge]
 entryPoint = "http"
 ```
@@ -250,7 +250,7 @@ Træfik will create a frontend to listen to incoming HTTP requests which contain
 - Always specify the correct port where the container expects HTTP traffic using `traefik.port` label.  
     If a container exposes multiple ports, Træfik may forward traffic to the wrong port.
     Even if a container only exposes one port, you should always write configuration defensively and explicitly.
-- Should you choose to enable the `exposedbydefault` flag in the `traefik.toml` configuration, be aware that all containers that are placed in the same network as Træfik will automatically be reachable from the outside world, for everyone and everyone to see.
+- Should you choose to enable the `exposedByDefault` flag in the `traefik.toml` configuration, be aware that all containers that are placed in the same network as Træfik will automatically be reachable from the outside world, for everyone and everyone to see.
     Usually, this is a bad idea.
 - With the `traefik.frontend.auth.basic` label, it's possible for Træfik to provide a HTTP basic-auth challenge for the endpoints you provide the label for.
 - Træfik has built-in support to automatically export [Prometheus](https://prometheus.io) metrics

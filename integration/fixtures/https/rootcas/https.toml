@@ -3,7 +3,7 @@ logLevel = "DEBUG"
 defaultEntryPoints = ["http"]
 
 # Use certificate in net/internal/testcert.go
-RootCAs =  [ """
+rootCAs =  [ """
 -----BEGIN CERTIFICATE-----
 MIICEzCCAXygAwIBAgIQMIMChMLGrR+QvmQvpwAU6zANBgkqhkiG9w0BAQsFADAS
 MRAwDgYDVQQKEwdBY21lIENvMCAXDTcwMDEwMTAwMDAwMFoYDzIwODQwMTI5MTYw

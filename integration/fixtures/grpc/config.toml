@@ -1,6 +1,6 @@
 defaultEntryPoints = ["https"]
 
-RootCAs = [ """{{ .CertContent }}""" ]
+rootCAs = [ """{{ .CertContent }}""" ]
 
 [entryPoints]
   [entryPoints.https]

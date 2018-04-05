@@ -42,7 +42,7 @@ refreshSeconds = 10
 #   ca = "/etc/ssl/ca.crt"
 #   cert = "/etc/ssl/servicefabric.crt"
 #   key = "/etc/ssl/servicefabric.key"
-#   insecureskipverify = true
+#   insecureSkipVerify = true
 ```
 
 ## Labels

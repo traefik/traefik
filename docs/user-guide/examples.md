@@ -89,7 +89,7 @@ This configuration allows generating Let's Encrypt certificates (thanks to `HTTP
 
 Træfik generates these certificates when it starts and it needs to be restart if new domains are added.
 
-### OnHostRule option (with HTTP challenge)
+### onHostRule option (with HTTP challenge)
 
 ```toml
 [entryPoints]
@@ -225,7 +225,7 @@ These variables are described [in this section](/configuration/acme/#provider).
 
 More information about wildcard certificates are available [in this section](/configuration/acme/#wildcard-domain).
 
-### OnHostRule option and provided certificates (with HTTP challenge)
+### onHostRule option and provided certificates (with HTTP challenge)
 
 ```toml
 [entryPoints]
@@ -358,7 +358,7 @@ defaultEntryPoints = ["http"]
     users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
 ```
 
-## Override the Traefik HTTP server IdleTimeout and/or throttle configurations from re-loading too quickly
+## Override the Traefik HTTP server idleTimeout and/or throttle configurations from re-loading too quickly
 
 ```toml
 providersThrottleDuration = "5s"

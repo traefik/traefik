@@ -62,34 +62,34 @@ domain = "mesos.localhost"
 # Optional
 #
 # [mesos.TLS]
-# InsecureSkipVerify = true
+# insecureSkipVerify = true
 
 # Zookeeper timeout (in seconds).
 #
 # Optional
 # Default: 30
 #
-# ZkDetectionTimeout = 30
+# zkDetectionTimeout = 30
 
 # Polling interval (in seconds).
 #
 # Optional
 # Default: 30
 #
-# RefreshSeconds = 30
+# refreshSeconds = 30
 
 # IP sources (e.g. host, docker, mesos, netinfo).
 #
 # Optional
 #
-# IPSources = "host"
+# ipSources = "host"
 
 # HTTP Timeout (in seconds).
 #
 # Optional
 # Default: 30
 #
-# StateTimeoutSecond = "30"
+# stateTimeoutSecond = "30"
 
 # Convert groups to subdomains.
 # Default behavior: /foo/bar/myapp => foo-bar-myapp.{defaultDomain}

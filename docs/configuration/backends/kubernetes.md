@@ -114,7 +114,7 @@ If the service port defined in the ingress spec is 443, then the backend communi
 !!! note
     Please note that by enabling TLS communication between traefik and your pods, you will have to have trusted certificates that have the proper trust chain and IP subject name. 
     If this is not an option, you may need to skip TLS certificate verification.
-    See the [InsecureSkipVerify](/configuration/commons/#main-section) setting for more details.
+    See the [insecureSkipVerify](/configuration/commons/#main-section) setting for more details.
 
 ## Annotations
 

@@ -63,7 +63,7 @@ useAPIV3 = true
 #    ca = "/etc/ssl/ca.crt"
 #    cert = "/etc/ssl/etcd.crt"
 #    key = "/etc/ssl/etcd.key"
-#    insecureskipverify = true
+#    insecureSkipVerify = true
 ```
 
 To enable constraints see [backend-specific constraints section](/configuration/commons/#backend-specific).
