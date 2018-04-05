@@ -470,7 +470,7 @@ retryexpression: IsNetworkError() && Attempts() <= 2
 `),
 			sSpec(
 				clusterIP("10.0.0.3"),
-				sPorts(sPort(803, ""))),
+				sPorts(sPort(803, "http"))),
 		),
 		buildService(
 			sName("service4"),
@@ -480,7 +480,7 @@ retryexpression: IsNetworkError() && Attempts() <= 2
 			sAnnotation(annotationKubernetesMaxConnAmount, "6"),
 			sSpec(
 				clusterIP("10.0.0.4"),
-				sPorts(sPort(804, ""))),
+				sPorts(sPort(804, "http"))),
 		),
 	}
 
@@ -502,10 +502,10 @@ retryexpression: IsNetworkError() && Attempts() <= 2
 			eUID("2"),
 			subset(
 				eAddresses(eAddress("10.15.0.1")),
-				ePorts(ePort(8080, "http"))),
+				ePorts(ePort(8080, ""))),
 			subset(
 				eAddresses(eAddress("10.15.0.2")),
-				ePorts(ePort(8080, "http"))),
+				ePorts(ePort(8080, ""))),
 		),
 		buildEndpoint(
 			eNamespace("testing"),
