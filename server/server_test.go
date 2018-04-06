@@ -16,7 +16,6 @@ import (
 	"github.com/containous/traefik/healthcheck"
 	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"
-	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/rules"
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/tls"
@@ -211,9 +210,9 @@ func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
 		}
 	}()
 
-	config := buildDynamicConfig(
-		withFrontend("frontend", buildFrontend()),
-		withBackend("backend", buildBackend()),
+	config := testhelpers.BuildDynamicConfig(
+		testhelpers.WithFrontend("frontend", testhelpers.BuildFrontend()),
+		testhelpers.WithBackend("backend", testhelpers.BuildBackend()),
 	)
 
 	// provide a configuration
@@ -252,9 +251,9 @@ func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 		}
 	}()
 
-	config := buildDynamicConfig(
-		withFrontend("frontend", buildFrontend()),
-		withBackend("backend", buildBackend()),
+	config := testhelpers.BuildDynamicConfig(
+		testhelpers.WithFrontend("frontend", testhelpers.BuildFrontend()),
+		testhelpers.WithBackend("backend", testhelpers.BuildBackend()),
 	)
 	server.configurationChan <- types.ConfigMessage{ProviderName: "kubernetes", Configuration: config}
 	server.configurationChan <- types.ConfigMessage{ProviderName: "marathon", Configuration: config}
@@ -865,9 +864,9 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 		{
 			desc: "Ok",
 			dynamicConfig: func(testServerURL string) *types.Configuration {
-				return buildDynamicConfig(
-					withFrontend("frontend", buildFrontend(withRoute(requestPath, routeRule))),
-					withBackend("backend", buildBackend(withServer("testServer", testServerURL))),
+				return testhelpers.BuildDynamicConfig(
+					testhelpers.WithFrontend("frontend", testhelpers.BuildFrontend(testhelpers.WithRoute(requestPath, routeRule))),
+					testhelpers.WithBackend("backend", testhelpers.BuildBackend(testhelpers.WithServer("testServer", testServerURL))),
 				)
 			},
 			wantStatusCode: http.StatusOK,
@@ -875,16 +874,16 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 		{
 			desc: "No Frontend",
 			dynamicConfig: func(testServerURL string) *types.Configuration {
-				return buildDynamicConfig()
+				return testhelpers.BuildDynamicConfig()
 			},
 			wantStatusCode: http.StatusNotFound,
 		},
 		{
 			desc: "Empty Backend LB-Drr",
 			dynamicConfig: func(testServerURL string) *types.Configuration {
-				return buildDynamicConfig(
-					withFrontend("frontend", buildFrontend(withRoute(requestPath, routeRule))),
-					withBackend("backend", buildBackend(withLoadBalancer("Drr", false))),
+				return testhelpers.BuildDynamicConfig(
+					testhelpers.WithFrontend("frontend", testhelpers.BuildFrontend(testhelpers.WithRoute(requestPath, routeRule))),
+					testhelpers.WithBackend("backend", testhelpers.BuildBackend(testhelpers.WithLoadBalancer("Drr", false))),
 				)
 			},
 			wantStatusCode: http.StatusServiceUnavailable,
@@ -892,9 +891,9 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 		{
 			desc: "Empty Backend LB-Drr Sticky",
 			dynamicConfig: func(testServerURL string) *types.Configuration {
-				return buildDynamicConfig(
-					withFrontend("frontend", buildFrontend(withRoute(requestPath, routeRule))),
-					withBackend("backend", buildBackend(withLoadBalancer("Drr", true))),
+				return testhelpers.BuildDynamicConfig(
+					testhelpers.WithFrontend("frontend", testhelpers.BuildFrontend(testhelpers.WithRoute(requestPath, routeRule))),
+					testhelpers.WithBackend("backend", testhelpers.BuildBackend(testhelpers.WithLoadBalancer("Drr", true))),
 				)
 			},
 			wantStatusCode: http.StatusServiceUnavailable,
@@ -902,9 +901,9 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 		{
 			desc: "Empty Backend LB-Wrr",
 			dynamicConfig: func(testServerURL string) *types.Configuration {
-				return buildDynamicConfig(
-					withFrontend("frontend", buildFrontend(withRoute(requestPath, routeRule))),
-					withBackend("backend", buildBackend(withLoadBalancer("Wrr", false))),
+				return testhelpers.BuildDynamicConfig(
+					testhelpers.WithFrontend("frontend", testhelpers.BuildFrontend(testhelpers.WithRoute(requestPath, routeRule))),
+					testhelpers.WithBackend("backend", testhelpers.BuildBackend(testhelpers.WithLoadBalancer("Wrr", false))),
 				)
 			},
 			wantStatusCode: http.StatusServiceUnavailable,
@@ -912,9 +911,9 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 		{
 			desc: "Empty Backend LB-Wrr Sticky",
 			dynamicConfig: func(testServerURL string) *types.Configuration {
-				return buildDynamicConfig(
-					withFrontend("frontend", buildFrontend(withRoute(requestPath, routeRule))),
-					withBackend("backend", buildBackend(withLoadBalancer("Wrr", true))),
+				return testhelpers.BuildDynamicConfig(
+					testhelpers.WithFrontend("frontend", testhelpers.BuildFrontend(testhelpers.WithRoute(requestPath, routeRule))),
+					testhelpers.WithBackend("backend", testhelpers.BuildBackend(testhelpers.WithLoadBalancer("Wrr", true))),
 				)
 			},
 			wantStatusCode: http.StatusServiceUnavailable,
@@ -1164,73 +1163,5 @@ func TestNewServerWithResponseModifiers(t *testing.T) {
 				assert.Equal(t, v, res.Header.Get(k))
 			}
 		})
-	}
-}
-
-func buildDynamicConfig(dynamicConfigBuilders ...func(*types.Configuration)) *types.Configuration {
-	config := &types.Configuration{
-		Frontends: make(map[string]*types.Frontend),
-		Backends:  make(map[string]*types.Backend),
-	}
-	for _, build := range dynamicConfigBuilders {
-		build(config)
-	}
-	return config
-}
-
-func withFrontend(frontendName string, frontend *types.Frontend) func(*types.Configuration) {
-	return func(config *types.Configuration) {
-		config.Frontends[frontendName] = frontend
-	}
-}
-
-func withBackend(backendName string, backend *types.Backend) func(*types.Configuration) {
-	return func(config *types.Configuration) {
-		config.Backends[backendName] = backend
-	}
-}
-
-func buildFrontend(frontendBuilders ...func(*types.Frontend)) *types.Frontend {
-	fe := &types.Frontend{
-		EntryPoints: []string{"http"},
-		Backend:     "backend",
-		Routes:      make(map[string]types.Route),
-	}
-	for _, build := range frontendBuilders {
-		build(fe)
-	}
-	return fe
-}
-
-func withRoute(routeName, rule string) func(*types.Frontend) {
-	return func(fe *types.Frontend) {
-		fe.Routes[routeName] = types.Route{Rule: rule}
-	}
-}
-
-func buildBackend(backendBuilders ...func(*types.Backend)) *types.Backend {
-	be := &types.Backend{
-		Servers:      make(map[string]types.Server),
-		LoadBalancer: &types.LoadBalancer{Method: "Wrr"},
-	}
-	for _, build := range backendBuilders {
-		build(be)
-	}
-	return be
-}
-
-func withServer(name, url string) func(backend *types.Backend) {
-	return func(be *types.Backend) {
-		be.Servers[name] = types.Server{URL: url, Weight: label.DefaultWeight}
-	}
-}
-
-func withLoadBalancer(method string, sticky bool) func(*types.Backend) {
-	return func(be *types.Backend) {
-		if sticky {
-			be.LoadBalancer = &types.LoadBalancer{Method: method, Stickiness: &types.Stickiness{CookieName: "test"}}
-		} else {
-			be.LoadBalancer = &types.LoadBalancer{Method: method}
-		}
 	}
 }
