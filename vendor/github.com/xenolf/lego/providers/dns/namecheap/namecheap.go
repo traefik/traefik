@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/acmev2"
 )
 
 // Notes about namecheap's tool API:
@@ -132,7 +132,7 @@ type challenge struct {
 // newChallenge builds a challenge record from a domain name, a challenge
 // authentication key, and a map of available TLDs.
 func newChallenge(domain, keyAuth string, tlds map[string]string) (*challenge, error) {
-	domain = acme.UnFqdn(domain)
+	domain = acmev2.UnFqdn(domain)
 	parts := strings.Split(domain, ".")
 
 	// Find the longest matching TLD.
@@ -155,7 +155,7 @@ func newChallenge(domain, keyAuth string, tlds map[string]string) (*challenge, e
 		host = strings.Join(parts[:longest-1], ".")
 	}
 
-	key, keyValue, _ := acme.DNS01Record(domain, keyAuth)
+	key, keyValue, _ := acmev2.DNS01Record(domain, keyAuth)
 
 	return &challenge{
 		domain:   domain,

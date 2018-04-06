@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/acmev2"
 )
 
 // Gandi API reference:       http://doc.rpc.gandi.net/index.html
@@ -26,7 +26,7 @@ var (
 	endpoint = "https://rpc.gandi.net/xmlrpc/"
 	// findZoneByFqdn determines the DNS zone of an fqdn. It is overridden
 	// during tests.
-	findZoneByFqdn = acme.FindZoneByFqdn
+	findZoneByFqdn = acmev2.FindZoneByFqdn
 )
 
 // inProgressInfo contains information about an in-progress challenge
@@ -37,7 +37,7 @@ type inProgressInfo struct {
 }
 
 // DNSProvider is an implementation of the
-// acme.ChallengeProviderTimeout interface that uses Gandi's XML-RPC
+// acmev2.ChallengeProviderTimeout interface that uses Gandi's XML-RPC
 // API to manage TXT records for a domain.
 type DNSProvider struct {
 	apiKey              string
@@ -70,12 +70,12 @@ func NewDNSProviderCredentials(apiKey string) (*DNSProvider, error) {
 // does this by creating and activating a new temporary Gandi DNS
 // zone. This new zone contains the TXT record.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
+	fqdn, value, ttl := acmev2.DNS01Record(domain, keyAuth)
 	if ttl < 300 {
 		ttl = 300 // 300 is gandi minimum value for ttl
 	}
 	// find authZone and Gandi zone_id for fqdn
-	authZone, err := findZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := findZoneByFqdn(fqdn, acmev2.RecursiveNameservers)
 	if err != nil {
 		return fmt.Errorf("Gandi DNS: findZoneByFqdn failure: %v", err)
 	}
@@ -103,7 +103,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	// containing the required TXT record
 	newZoneName := fmt.Sprintf(
 		"%s [ACME Challenge %s]",
-		acme.UnFqdn(authZone), time.Now().Format(time.RFC822Z))
+		acmev2.UnFqdn(authZone), time.Now().Format(time.RFC822Z))
 	newZoneID, err := d.cloneZone(zoneID, newZoneName)
 	if err != nil {
 		return err
@@ -138,7 +138,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 // parameters. It does this by restoring the old Gandi DNS zone and
 // removing the temporary one created by Present.
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
 	// acquire lock and retrieve zoneID, newZoneID and authZone
 	d.inProgressMu.Lock()
 	defer d.inProgressMu.Unlock()

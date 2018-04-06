@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/acmev2"
 )
 
 // Gandi API reference:       http://doc.livedns.gandi.net/
@@ -23,7 +23,7 @@ var (
 	endpoint = "https://dns.api.gandi.net/api/v5"
 	// findZoneByFqdn determines the DNS zone of an fqdn. It is overridden
 	// during tests.
-	findZoneByFqdn = acme.FindZoneByFqdn
+	findZoneByFqdn = acmev2.FindZoneByFqdn
 )
 
 // inProgressInfo contains information about an in-progress challenge
@@ -33,7 +33,7 @@ type inProgressInfo struct {
 }
 
 // DNSProvider is an implementation of the
-// acme.ChallengeProviderTimeout interface that uses Gandi's LiveDNS
+// acmev2.ChallengeProviderTimeout interface that uses Gandi's LiveDNS
 // API to manage TXT records for a domain.
 type DNSProvider struct {
 	apiKey          string
@@ -62,12 +62,12 @@ func NewDNSProviderCredentials(apiKey string) (*DNSProvider, error) {
 
 // Present creates a TXT record using the specified parameters.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
+	fqdn, value, ttl := acmev2.DNS01Record(domain, keyAuth)
 	if ttl < 300 {
 		ttl = 300 // 300 is gandi minimum value for ttl
 	}
 	// find authZone
-	authZone, err := findZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := findZoneByFqdn(fqdn, acmev2.RecursiveNameservers)
 	if err != nil {
 		return fmt.Errorf("Gandi DNS: findZoneByFqdn failure: %v", err)
 	}
@@ -83,7 +83,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	d.inProgressMu.Lock()
 	defer d.inProgressMu.Unlock()
 	// add TXT record into authZone
-	err = d.addTXTRecord(acme.UnFqdn(authZone), name, value, ttl)
+	err = d.addTXTRecord(acmev2.UnFqdn(authZone), name, value, ttl)
 	if err != nil {
 		return err
 	}
@@ -97,7 +97,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters.
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
 	// acquire lock and retrieve authZone
 	d.inProgressMu.Lock()
 	defer d.inProgressMu.Unlock()
@@ -109,7 +109,7 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	authZone := d.inProgressFQDNs[fqdn].authZone
 	delete(d.inProgressFQDNs, fqdn)
 	// delete TXT record from authZone
-	err := d.deleteTXTRecord(acme.UnFqdn(authZone), fieldName)
+	err := d.deleteTXTRecord(acmev2.UnFqdn(authZone), fieldName)
 	if err != nil {
 		return err
 	}

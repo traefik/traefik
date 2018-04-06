@@ -8,10 +8,10 @@ import (
 	"os"
 
 	"github.com/exoscale/egoscale"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/acmev2"
 )
 
-// DNSProvider is an implementation of the acme.ChallengeProvider interface.
+// DNSProvider is an implementation of the acmev2.ChallengeProvider interface.
 type DNSProvider struct {
 	client *egoscale.Client
 }
@@ -42,7 +42,7 @@ func NewDNSProviderClient(key, secret, endpoint string) (*DNSProvider, error) {
 
 // Present creates a TXT record to fulfil the dns-01 challenge.
 func (c *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
+	fqdn, value, ttl := acmev2.DNS01Record(domain, keyAuth)
 	zone, recordName, err := c.FindZoneAndRecordName(fqdn, domain)
 	if err != nil {
 		return err
@@ -78,7 +78,7 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the record matching the specified parameters.
 func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
 	zone, recordName, err := c.FindZoneAndRecordName(fqdn, domain)
 	if err != nil {
 		return err
@@ -116,12 +116,12 @@ func (c *DNSProvider) FindExistingRecordId(zone, recordName string) (int64, erro
 
 // Extract DNS zone and DNS entry name
 func (c *DNSProvider) FindZoneAndRecordName(fqdn, domain string) (string, string, error) {
-	zone, err := acme.FindZoneByFqdn(acme.ToFqdn(domain), acme.RecursiveNameservers)
+	zone, err := acmev2.FindZoneByFqdn(acmev2.ToFqdn(domain), acmev2.RecursiveNameservers)
 	if err != nil {
 		return "", "", err
 	}
-	zone = acme.UnFqdn(zone)
-	name := acme.UnFqdn(fqdn)
+	zone = acmev2.UnFqdn(zone)
+	name := acmev2.UnFqdn(fqdn)
 	name = name[:len(name)-len("."+zone)]
 
 	return zone, name, nil

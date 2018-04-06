@@ -10,15 +10,16 @@ import (
 
 	"bytes"
 	"encoding/json"
-	"github.com/xenolf/lego/acme"
 	"io/ioutil"
 	"strings"
+
+	"github.com/xenolf/lego/acmev2"
 )
 
 // GoDaddyAPIURL represents the API endpoint to call.
 const apiURL = "https://api.godaddy.com"
 
-// DNSProvider is an implementation of the acme.ChallengeProvider interface
+// DNSProvider is an implementation of the acmev2.ChallengeProvider interface
 type DNSProvider struct {
 	apiKey    string
 	apiSecret string
@@ -50,7 +51,7 @@ func (c *DNSProvider) Timeout() (timeout, interval time.Duration) {
 }
 
 func (c *DNSProvider) extractRecordName(fqdn, domain string) string {
-	name := acme.UnFqdn(fqdn)
+	name := acmev2.UnFqdn(fqdn)
 	if idx := strings.Index(name, "."+domain); idx != -1 {
 		return name[:idx]
 	}
@@ -59,7 +60,7 @@ func (c *DNSProvider) extractRecordName(fqdn, domain string) string {
 
 // Present creates a TXT record to fulfil the dns-01 challenge
 func (c *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
+	fqdn, value, ttl := acmev2.DNS01Record(domain, keyAuth)
 	domainZone, err := c.getZone(fqdn)
 	if err != nil {
 		return err
@@ -105,7 +106,7 @@ func (c *DNSProvider) updateRecords(records []DNSRecord, domainZone string, reco
 
 // CleanUp sets null value in the TXT DNS record as GoDaddy has no proper DELETE record method
 func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
 	domainZone, err := c.getZone(fqdn)
 	if err != nil {
 		return err
@@ -124,12 +125,12 @@ func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 }
 
 func (c *DNSProvider) getZone(fqdn string) (string, error) {
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := acmev2.FindZoneByFqdn(fqdn, acmev2.RecursiveNameservers)
 	if err != nil {
 		return "", err
 	}
 
-	return acme.UnFqdn(authZone), nil
+	return acmev2.UnFqdn(authZone), nil
 }
 
 func (c *DNSProvider) makeRequest(method, uri string, body io.Reader) (*http.Response, error) {

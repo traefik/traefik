@@ -14,10 +14,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/acmev2"
 )
 
-// DNSProvider is an implementation of the acme.ChallengeProvider interface that uses
+// DNSProvider is an implementation of the acmev2.ChallengeProvider interface that uses
 // DNSMadeEasy's DNS API to manage TXT records for a domain.
 type DNSProvider struct {
 	baseURL   string
@@ -77,9 +77,9 @@ func NewDNSProviderCredentials(baseURL, apiKey, apiSecret string) (*DNSProvider,
 
 // Present creates a TXT record using the specified parameters
 func (d *DNSProvider) Present(domainName, token, keyAuth string) error {
-	fqdn, value, ttl := acme.DNS01Record(domainName, keyAuth)
+	fqdn, value, ttl := acmev2.DNS01Record(domainName, keyAuth)
 
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := acmev2.FindZoneByFqdn(fqdn, acmev2.RecursiveNameservers)
 	if err != nil {
 		return err
 	}
@@ -104,9 +104,9 @@ func (d *DNSProvider) Present(domainName, token, keyAuth string) error {
 
 // CleanUp removes the TXT records matching the specified parameters
 func (d *DNSProvider) CleanUp(domainName, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domainName, keyAuth)
+	fqdn, _, _ := acmev2.DNS01Record(domainName, keyAuth)
 
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := acmev2.FindZoneByFqdn(fqdn, acmev2.RecursiveNameservers)
 	if err != nil {
 		return err
 	}
