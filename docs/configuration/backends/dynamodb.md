@@ -39,13 +39,13 @@ watch = true
 #
 refreshSeconds = 15
 
-# AccessKeyID to use when connecting to AWS.
+# Access Key ID to use when connecting to AWS.
 #
 # Optional
 #
 accessKeyID = "abc"
 
-# SecretAccessKey to use when connecting to AWS.
+# Secret Access Key to use when connecting to AWS.
 #
 # Optional
 #

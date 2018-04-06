@@ -77,12 +77,12 @@ TL;DR:
 ```shell
 $ traefik \
     --docker \
-    --docker.swarmmode \
+    --docker.swarmMode \
     --docker.domain=mydomain.ca \
     --docker.watch
 ```
 
-To enable docker and swarm-mode support, you need to add `--docker` and `--docker.swarmmode` flags.
+To enable docker and swarm-mode support, you need to add `--docker` and `--docker.swarmMode` flags.
 To watch docker events, add `--docker.watch`.
 
 ### Full docker-compose file
@@ -101,11 +101,11 @@ services:
       - "--acme.storage=/etc/traefik/acme/acme.json"
       - "--acme.entryPoint=https"
       - "--acme.httpChallenge.entryPoint=http"
-      - "--acme.OnHostRule=true"
+      - "--acme.onHostRule=true"
       - "--acme.onDemand=false"
       - "--acme.email=contact@mydomain.ca"
       - "--docker"
-      - "--docker.swarmmode"
+      - "--docker.swarmMode"
       - "--docker.domain=mydomain.ca"
       - "--docker.watch"
     volumes:
@@ -211,11 +211,11 @@ services:
       - "--acme.storage=traefik/acme/account"
       - "--acme.entryPoint=https"
       - "--acme.httpChallenge.entryPoint=http"
-      - "--acme.OnHostRule=true"
+      - "--acme.onHostRule=true"
       - "--acme.onDemand=false"
       - "--acme.email=foobar@example.com"
       - "--docker"
-      - "--docker.swarmmode"
+      - "--docker.swarmMode"
       - "--docker.domain=example.com"
       - "--docker.watch"
       - "--consul"

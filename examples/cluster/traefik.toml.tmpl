@@ -13,7 +13,7 @@ defaultEntryPoints = ["http", "https"]
 email = "test@traefik.io"
 storage = "traefik/acme/account"
 entryPoint = "https"
-OnHostRule = true
+onHostRule = true
 caServer = "http://traefik.boulder.com:4001/directory"
 [acme.httpChallenge]
 entryPoint="http"
@@ -25,4 +25,4 @@ entryPoint="http"
 endpoint = "unix:///var/run/docker.sock"
 domain = "localhost.com"
 watch = true
-exposedbydefault = false
+exposedByDefault = false

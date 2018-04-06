@@ -54,7 +54,7 @@ watch = true
 # Optional
 # Default: true
 #
-exposedbydefault = true
+exposedByDefault = true
 
 # Use the IP address from the binded port instead of the inner network one.
 # For specific use-case :)
@@ -69,7 +69,7 @@ usebindportip = true
 # Optional
 # Default: false
 #
-swarmmode = false
+swarmMode = false
 
 # Enable docker TLS connection.
 #
@@ -79,7 +79,7 @@ swarmmode = false
 #  ca = "/etc/ssl/ca.crt"
 #  cert = "/etc/ssl/docker.crt"
 #  key = "/etc/ssl/docker.key"
-#  insecureskipverify = true
+#  insecureSkipVerify = true
 ```
 
 To enable constraints see [backend-specific constraints section](/configuration/commons/#backend-specific).
@@ -89,7 +89,7 @@ To enable constraints see [backend-specific constraints section](/configuration/
 
 ```toml
 ################################################################
-# Docker Swarmmode configuration backend
+# Docker Swarm Mode configuration backend
 ################################################################
 
 # Enable Docker configuration backend.
@@ -123,7 +123,7 @@ watch = true
 # Optional
 # Default: false
 #
-swarmmode = true
+swarmMode = true
 
 # Override default configuration template.
 # For advanced users :)
@@ -146,7 +146,7 @@ swarmmode = true
 # Optional
 # Default: true
 #
-exposedbydefault = false
+exposedByDefault = false
 
 # Enable docker TLS connection.
 #
@@ -156,7 +156,7 @@ exposedbydefault = false
 #  ca = "/etc/ssl/ca.crt"
 #  cert = "/etc/ssl/docker.crt"
 #  key = "/etc/ssl/docker.key"
-#  insecureskipverify = true
+#  insecureSkipVerify = true
 ```
 
 To enable constraints see [backend-specific constraints section](/configuration/commons/#backend-specific).

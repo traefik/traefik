@@ -57,7 +57,7 @@ prefix = "traefik"
 #    ca = "/etc/ssl/ca.crt"
 #    cert = "/etc/ssl/consul.crt"
 #    key = "/etc/ssl/consul.key"
-#    insecureskipverify = true
+#    insecureSkipVerify = true
 
 # Override default configuration template.
 # For advanced users :)

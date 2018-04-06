@@ -645,18 +645,18 @@ Once a day (the first call begins 10 minutes after the start of Træfik), we col
   swarmMode = true
 
   [Docker.TLS]
-    CA = "dockerCA"
-    Cert = "dockerCert"
-    Key = "dockerKey"
-    InsecureSkipVerify = true
+    ca = "dockerCA"
+    cert = "dockerCert"
+    key = "dockerKey"
+    insecureSkipVerify = true
 
 [ECS]
-  Domain = "foo.bar"
-  ExposedByDefault = true
-  Clusters = ["foo-bar"]
-  Region = "us-west-2"
-  AccessKeyID = "AccessKeyID"
-  SecretAccessKey = "SecretAccessKey"
+  domain = "foo.bar"
+  exposedByDefault = true
+  clusters = ["foo-bar"]
+  region = "us-west-2"
+  accessKeyID = "AccessKeyID"
+  secretAccessKey = "SecretAccessKey"
 ```
 
 - Obfuscated and anonymous configuration:
@@ -669,24 +669,24 @@ Once a day (the first call begins 10 minutes after the start of Træfik), we col
 [api]
 
 [Docker]
-  Endpoint = "xxxx"
-  Domain = "xxxx"
-  ExposedByDefault = true
-  SwarmMode = true
+  endpoint = "xxxx"
+  domain = "xxxx"
+  exposedByDefault = true
+  swarmMode = true
 
   [Docker.TLS]
-    CA = "xxxx"
-    Cert = "xxxx"
-    Key = "xxxx"
-    InsecureSkipVerify = false
+    ca = "xxxx"
+    cert = "xxxx"
+    key = "xxxx"
+    insecureSkipVerify = false
 
 [ECS]
-  Domain = "xxxx"
-  ExposedByDefault = true
-  Clusters = []
-  Region = "us-west-2"
-  AccessKeyID = "xxxx"
-  SecretAccessKey = "xxxx"
+  domain = "xxxx"
+  exposedByDefault = true
+  clusters = []
+  region = "us-west-2"
+  accessKeyID = "xxxx"
+  secretAccessKey = "xxxx"
 ```
 
 ### Show me the code !
