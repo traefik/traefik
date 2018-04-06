@@ -44,6 +44,10 @@ HOW TO WRITE A GOOD ISSUE?
 For the Traefik Docker image:
     docker run [IMAGE] version
     ex: docker run traefik version
+
+For the alpine Traefik Docker image:
+    docker run [IMAGE] traefik version
+    ex: docker run traefik traefik version
 -->
 
 ```
