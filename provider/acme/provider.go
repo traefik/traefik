@@ -424,7 +424,7 @@ func (p *Provider) refreshCertificates() {
 
 	for _, cert := range p.certificates {
 		certificate := &traefikTLS.Certificate{CertFile: traefikTLS.FileOrContent(cert.Certificate), KeyFile: traefikTLS.FileOrContent(cert.Key)}
-		config.Configuration.TLS = append(config.Configuration.TLS, &traefikTLS.Configuration{Certificate: certificate})
+		config.Configuration.TLS = append(config.Configuration.TLS, &traefikTLS.Configuration{Certificate: certificate, EntryPoints: []string{p.EntryPoint}})
 	}
 	p.configurationChan <- config
 }
