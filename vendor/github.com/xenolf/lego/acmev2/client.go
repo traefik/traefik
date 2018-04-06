@@ -1,5 +1,5 @@
-// Package acme implements the ACME protocol for Let's Encrypt and other conforming providers.
-package acme
+// package acmev2 implements the ACME protocol for Let's Encrypt and other conforming providers.
+package acmev2
 
 import (
 	"crypto"

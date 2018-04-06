@@ -26,7 +26,7 @@ import (
 	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
 	"github.com/eapache/channels"
-	"github.com/xenolf/lego/acmev2"
+	acme "github.com/xenolf/lego/acmev2"
 	"github.com/xenolf/lego/providers/dns"
 )
 

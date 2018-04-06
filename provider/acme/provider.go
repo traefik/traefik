@@ -23,7 +23,7 @@ import (
 	traefikTLS "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/pkg/errors"
-	"github.com/xenolf/lego/acmev2"
+	acme "github.com/xenolf/lego/acmev2"
 	"github.com/xenolf/lego/providers/dns"
 )
 

@@ -11,10 +11,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/acmev2"
 )
 
-// DNSProvider is an implementation of the acme.ChallengeProvider interface
+// DNSProvider is an implementation of the acmev2.ChallengeProvider interface
 // that uses DigitalOcean's REST API to manage TXT records for a domain.
 type DNSProvider struct {
 	apiAuthToken string
@@ -49,6 +49,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 		RecordType string `json:"type"`
 		Name       string `json:"name"`
 		Data       string `json:"data"`
+		TTL        int    `json:"ttl"`
 	}
 
 	// txtRecordResponse represents a response from DO's API after making a TXT record
@@ -61,17 +62,17 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 		} `json:"domain_record"`
 	}
 
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value, _ := acmev2.DNS01Record(domain, keyAuth)
 
-	authZone, err := acme.FindZoneByFqdn(acme.ToFqdn(domain), acme.RecursiveNameservers)
+	authZone, err := acmev2.FindZoneByFqdn(acmev2.ToFqdn(domain), acmev2.RecursiveNameservers)
 	if err != nil {
 		return fmt.Errorf("Could not determine zone for domain: '%s'. %s", domain, err)
 	}
 
-	authZone = acme.UnFqdn(authZone)
+	authZone = acmev2.UnFqdn(authZone)
 
 	reqURL := fmt.Sprintf("%s/v2/domains/%s/records", digitalOceanBaseURL, authZone)
-	reqData := txtRecordRequest{RecordType: "TXT", Name: fqdn, Data: value}
+	reqData := txtRecordRequest{RecordType: "TXT", Name: fqdn, Data: value, TTL: 60}
 	body, err := json.Marshal(reqData)
 	if err != nil {
 		return err
@@ -112,7 +113,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
 
 	// get the record's unique ID from when we created it
 	d.recordIDsMu.Lock()
@@ -122,12 +123,12 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 		return fmt.Errorf("unknown record ID for '%s'", fqdn)
 	}
 
-	authZone, err := acme.FindZoneByFqdn(acme.ToFqdn(domain), acme.RecursiveNameservers)
+	authZone, err := acmev2.FindZoneByFqdn(acmev2.ToFqdn(domain), acmev2.RecursiveNameservers)
 	if err != nil {
 		return fmt.Errorf("Could not determine zone for domain: '%s'. %s", domain, err)
 	}
 
-	authZone = acme.UnFqdn(authZone)
+	authZone = acmev2.UnFqdn(authZone)
 
 	reqURL := fmt.Sprintf("%s/v2/domains/%s/records/%d", digitalOceanBaseURL, authZone, recordID)
 	req, err := http.NewRequest("DELETE", reqURL, nil)
@@ -164,3 +165,9 @@ type digitalOceanAPIError struct {
 }
 
 var digitalOceanBaseURL = "https://api.digitalocean.com"
+
+// Timeout returns the timeout and interval to use when checking for DNS
+// propagation. Adjusting here to cope with spikes in propagation times.
+func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
+	return 90 * time.Second, 5 * time.Second
+}

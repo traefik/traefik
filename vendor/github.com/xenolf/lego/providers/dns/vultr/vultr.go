@@ -9,10 +9,10 @@ import (
 	"strings"
 
 	vultr "github.com/JamesClonk/vultr/lib"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/acmev2"
 )
 
-// DNSProvider is an implementation of the acme.ChallengeProvider interface.
+// DNSProvider is an implementation of the acmev2.ChallengeProvider interface.
 type DNSProvider struct {
 	client *vultr.Client
 }
@@ -40,7 +40,7 @@ func NewDNSProviderCredentials(apiKey string) (*DNSProvider, error) {
 
 // Present creates a TXT record to fulfil the DNS-01 challenge.
 func (c *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
+	fqdn, value, ttl := acmev2.DNS01Record(domain, keyAuth)
 
 	zoneDomain, err := c.getHostedZone(domain)
 	if err != nil {
@@ -59,7 +59,7 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters.
 func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
 
 	zoneDomain, records, err := c.findTxtRecords(domain, fqdn)
 	if err != nil {
@@ -119,7 +119,7 @@ func (c *DNSProvider) findTxtRecords(domain, fqdn string) (string, []vultr.DNSRe
 }
 
 func (c *DNSProvider) extractRecordName(fqdn, domain string) string {
-	name := acme.UnFqdn(fqdn)
+	name := acmev2.UnFqdn(fqdn)
 	if idx := strings.Index(name, "."+domain); idx != -1 {
 		return name[:idx]
 	}

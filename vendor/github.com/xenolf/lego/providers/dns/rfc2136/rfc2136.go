@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/miekg/dns"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/acmev2"
 )
 
-// DNSProvider is an implementation of the acme.ChallengeProvider interface that
+// DNSProvider is an implementation of the acmev2.ChallengeProvider interface that
 // uses dynamic DNS updates (RFC 2136) to create TXT records on a nameserver.
 type DNSProvider struct {
 	nameserver    string
@@ -27,7 +27,7 @@ type DNSProvider struct {
 // dynamic update. Configured with environment variables:
 // RFC2136_NAMESERVER: Network address in the form "host" or "host:port".
 // RFC2136_TSIG_ALGORITHM: Defaults to hmac-md5.sig-alg.reg.int. (HMAC-MD5).
-// See https://github.com/miekg/dns/blob/master/tsig.go for supported values. 
+// See https://github.com/miekg/dns/blob/master/tsig.go for supported values.
 // RFC2136_TSIG_KEY: Name of the secret key as defined in DNS server configuration.
 // RFC2136_TSIG_SECRET: Secret key payload.
 // RFC2136_TIMEOUT: DNS propagation timeout in time.ParseDuration format. (60s)
@@ -88,24 +88,24 @@ func NewDNSProviderCredentials(nameserver, tsigAlgorithm, tsigKey, tsigSecret, t
 
 // Returns the timeout configured with RFC2136_TIMEOUT, or 60s.
 func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
-    return d.timeout, 2 * time.Second
+	return d.timeout, 2 * time.Second
 }
 
 // Present creates a TXT record using the specified parameters
 func (r *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
+	fqdn, value, ttl := acmev2.DNS01Record(domain, keyAuth)
 	return r.changeRecord("INSERT", fqdn, value, ttl)
 }
 
 // CleanUp removes the TXT record matching the specified parameters
 func (r *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
+	fqdn, value, ttl := acmev2.DNS01Record(domain, keyAuth)
 	return r.changeRecord("REMOVE", fqdn, value, ttl)
 }
 
 func (r *DNSProvider) changeRecord(action, fqdn, value string, ttl int) error {
 	// Find the zone for the given fqdn
-	zone, err := acme.FindZoneByFqdn(fqdn, []string{r.nameserver})
+	zone, err := acmev2.FindZoneByFqdn(fqdn, []string{r.nameserver})
 	if err != nil {
 		return err
 	}
