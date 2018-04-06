@@ -141,6 +141,17 @@
   revision = "063d875e3c5fd734fa2aa12fac83829f62acfc70"
 
 [[projects]]
+  name = "github.com/akamai/AkamaiOPEN-edgegrid-golang"
+  packages = [
+    "client-v1",
+    "configdns-v1",
+    "edgegrid",
+    "jsonhooks-v1"
+  ]
+  revision = "a494eba1efa1f38338393727dff63389a6a66534"
+  version = "v0.6.0"
+
+[[projects]]
   name = "github.com/aokoli/goutils"
   packages = ["."]
   revision = "3391d3790d23d03408670993e957e8f408993c34"
@@ -193,6 +204,7 @@
     "service/dynamodb/dynamodbiface",
     "service/ec2",
     "service/ecs",
+    "service/lightsail",
     "service/route53",
     "service/sts"
   ]
@@ -745,7 +757,6 @@
   version = "v1.3.7"
 
 [[projects]]
-  branch = "master"
   name = "github.com/jjcollinge/servicefabric"
   packages = ["."]
   revision = "8eebe170fa1ba25d3dfb928b3f86a7313b13b9fe"
@@ -913,6 +924,12 @@
   name = "github.com/mvdan/xurls"
   packages = ["."]
   revision = "db96455566f05ffe42bd6ac671f05eeb1152b45d"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/namedotcom/go"
+  packages = ["namecom"]
+  revision = "08470befbe04613bd4b44cb6978b05d50294c4d4"
 
 [[projects]]
   branch = "master"
@@ -1121,6 +1138,12 @@
   revision = "37e84520dcf74488f67654f9c775b9752c232dc1"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/tuvistavie/securerandom"
+  packages = ["."]
+  revision = "15512123a948d62f6361bd84818e11f2ad84059a"
+
+[[projects]]
   name = "github.com/tv42/zbase32"
   packages = ["."]
   revision = "03389da7e0bf9844767f82690f4d68fc097a1306"
@@ -1214,28 +1237,34 @@
   revision = "0c8571ac0ce161a5feb57375a9cdf148c98c0f70"
 
 [[projects]]
-  branch = "acmev2"
+  branch = "containous-fork"
   name = "github.com/xenolf/lego"
   packages = [
-    "acme",
     "acmev2",
     "providers/dns",
     "providers/dns/auroradns",
     "providers/dns/azure",
+    "providers/dns/bluecat",
     "providers/dns/cloudflare",
     "providers/dns/cloudxns",
     "providers/dns/digitalocean",
     "providers/dns/dnsimple",
     "providers/dns/dnsmadeeasy",
     "providers/dns/dnspod",
+    "providers/dns/duckdns",
     "providers/dns/dyn",
+    "providers/dns/exec",
     "providers/dns/exoscale",
+    "providers/dns/fastdns",
     "providers/dns/gandi",
     "providers/dns/gandiv5",
+    "providers/dns/glesys",
     "providers/dns/godaddy",
     "providers/dns/googlecloud",
+    "providers/dns/lightsail",
     "providers/dns/linode",
     "providers/dns/namecheap",
+    "providers/dns/namedotcom",
     "providers/dns/ns1",
     "providers/dns/otc",
     "providers/dns/ovh",
@@ -1245,7 +1274,8 @@
     "providers/dns/route53",
     "providers/dns/vultr"
   ]
-  revision = "a149e7d6506feb4003da7093cbf818c6b75ed4a4"
+  revision = "2357607e4ddeb93d5364c9ae6571ded32b7d01f1"
+  source = "github.com/containous/lego"
 
 [[projects]]
   branch = "master"
@@ -1404,6 +1434,12 @@
   version = "v1.30.0"
 
 [[projects]]
+  branch = "v1"
+  name = "gopkg.in/mattes/go-expand-tilde.v1"
+  packages = ["."]
+  revision = "cb884138e64c9a8bf5c7d6106d74b0fca082df0c"
+
+[[projects]]
   name = "gopkg.in/ns1/ns1-go.v2"
   packages = [
     "rest",
@@ -1414,16 +1450,6 @@
     "rest/model/monitor"
   ]
   revision = "c563826f4cbef9c11bebeb9f20a3f7afe9c1e2f4"
-
-[[projects]]
-  name = "gopkg.in/square/go-jose.v1"
-  packages = [
-    ".",
-    "cipher",
-    "json"
-  ]
-  revision = "aa2e30fdd1fe9dd3394119af66451ae790d50e0d"
-  version = "v1.1.0"
 
 [[projects]]
   name = "gopkg.in/square/go-jose.v2"
@@ -1644,6 +1670,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "593d67272ac35ca0fa59df7f2ac077a81ea842b3181b00acffa20553bfe6f2e0"
+  inputs-digest = "37f92cc9416b1449e9fe4fd1b02d999af8d9887617424db7cb334060cd362e5c"
   solver-name = "gps-cdcl"
   solver-version = 1

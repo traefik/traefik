@@ -181,8 +181,9 @@
   name = "github.com/vulcand/oxy"
 
 [[constraint]]
-  branch = "acmev2"
+  branch = "containous-fork"
   name = "github.com/xenolf/lego"
+  source = "github.com/containous/lego"
 
 [[constraint]]
   name = "google.golang.org/grpc"
