@@ -92,7 +92,6 @@ ${USAGE}" >&2
 	exit 2
 fi
 
-
 if [ ! -d "${certdir}" ]; then
 	echo "
 Path ${certdir} does not seem to be a directory
@@ -104,7 +103,7 @@ fi
 
 jq=$(command -v jq) || exit_jq
 
-priv=$(${jq} -e -r '.Account.PrivateKey' "${acmefile}") || bad_acme
+priv=$(${jq} -e -r '.PrivateKey' "${acmefile}") || bad_acme "$@"
 
 if [ ! -n "${priv}" ]; then
 	echo "
@@ -151,20 +150,20 @@ trap 'umask ${oldumask}' EXIT
 # *because* of openssl combined with the fact that it will refuse to write the
 # key if it does not parse out correctly. The other mechanisms were left as
 # comments so that the user can choose the mechanism most appropriate to them.
-echo -e "-----BEGIN RSA PRIVATE KEY-----\n${priv}\n-----END RSA PRIVATE KEY-----" \
-   | openssl rsa -inform pem -out "${pdir}/letsencrypt.key"
+echo -e "-----BEGIN RSA PRIVATE KEY-----\\n${priv}\\n-----END RSA PRIVATE KEY-----" |
+	openssl rsa -inform pem -out "${pdir}/letsencrypt.key"
 
 # Process the certificates for each of the domains in acme.json
-for domain in $(jq -r '.Certificates[].Domain.Main' ${acmefile}); do
+for domain in $(jq -r '.DomainsCertificate.Certs[].Domains.Main' "${acmefile}"); do
 	# Traefik stores a cert bundle for each domain.  Within this cert
 	# bundle there is both proper the certificate and the Let's Encrypt CA
 	echo "Extracting cert bundle for ${domain}"
-	cert=$(jq -e -r --arg domain "$domain" '.Certificates[] |
-         	select (.Domain.Main == $domain )| .Certificate' ${acmefile}) || bad_acme
-	echo "${cert}" | ${CMD_DECODE_BASE64} > "${cdir}/${domain}.crt"
+	cert=$(jq -e -r --arg domain "$domain" '.DomainsCertificate.Certs[] |
+		select (.Domains.Main == $domain )| .Certificate.Certificate' "${acmefile}") || bad_acme "$@"
+	echo "${cert}" | ${CMD_DECODE_BASE64} >"${cdir}/${domain}.crt"
 
 	echo "Extracting private key for ${domain}"
-	key=$(jq -e -r --arg domain "$domain" '.Certificates[] |
-		select (.Domain.Main == $domain )| .Key' ${acmefile}) || bad_acme
-	echo "${key}" | ${CMD_DECODE_BASE64} > "${pdir}/${domain}.key"
+	key=$(jq -e -r --arg domain "$domain" '.DomainsCertificate.Certs[] |
+		select (.Domains.Main == $domain )| .Certificate.PrivateKey' "${acmefile}") || bad_acme "$@"
+	echo "${key}" | ${CMD_DECODE_BASE64} >"${pdir}/${domain}.key"
 done
