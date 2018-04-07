@@ -39,7 +39,7 @@ func (reh *resourceEventHandler) OnDelete(obj interface{}) {
 // WatchAll starts the watch of the Provider resources and updates the stores.
 // The stores can then be accessed via the Get* functions.
 type Client interface {
-	WatchAll(namespaces Namespaces, labelSelector string, stopCh <-chan struct{}) (<-chan interface{}, error)
+	WatchAll(namespaces Namespaces, stopCh <-chan struct{}) (<-chan interface{}, error)
 	GetIngresses() []*extensionsv1beta1.Ingress
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
@@ -47,21 +47,22 @@ type Client interface {
 }
 
 type clientImpl struct {
-	clientset      *kubernetes.Clientset
-	factories      map[string]informers.SharedInformerFactory
-	isNamespaceAll bool
+	clientset            *kubernetes.Clientset
+	factories            map[string]informers.SharedInformerFactory
+	ingressLabelSelector labels.Selector
+	isNamespaceAll       bool
 }
 
-func newClientImpl(clientset *kubernetes.Clientset) Client {
+func newClientImpl(clientset *kubernetes.Clientset) *clientImpl {
 	return &clientImpl{
 		clientset: clientset,
 		factories: make(map[string]informers.SharedInformerFactory),
 	}
 }
 
-// NewInClusterClient returns a new Provider client that is expected to run
+// newInClusterClient returns a new Provider client that is expected to run
 // inside the cluster.
-func NewInClusterClient(endpoint string) (Client, error) {
+func newInClusterClient(endpoint string) (*clientImpl, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create in-cluster configuration: %s", err)
@@ -74,10 +75,10 @@ func NewInClusterClient(endpoint string) (Client, error) {
 	return createClientFromConfig(config)
 }
 
-// NewExternalClusterClient returns a new Provider client that may run outside
+// newExternalClusterClient returns a new Provider client that may run outside
 // of the cluster.
 // The endpoint parameter must not be empty.
-func NewExternalClusterClient(endpoint, token, caFilePath string) (Client, error) {
+func newExternalClusterClient(endpoint, token, caFilePath string) (*clientImpl, error) {
 	if endpoint == "" {
 		return nil, errors.New("endpoint missing for external cluster client")
 	}
@@ -99,7 +100,7 @@ func NewExternalClusterClient(endpoint, token, caFilePath string) (Client, error
 	return createClientFromConfig(config)
 }
 
-func createClientFromConfig(c *rest.Config) (Client, error) {
+func createClientFromConfig(c *rest.Config) (*clientImpl, error) {
 	clientset, err := kubernetes.NewForConfig(c)
 	if err != nil {
 		return nil, err
@@ -109,24 +110,17 @@ func createClientFromConfig(c *rest.Config) (Client, error) {
 }
 
 // WatchAll starts namespace-specific controllers for all relevant kinds.
-func (c *clientImpl) WatchAll(namespaces Namespaces, labelSelector string, stopCh <-chan struct{}) (<-chan interface{}, error) {
+func (c *clientImpl) WatchAll(namespaces Namespaces, stopCh <-chan struct{}) (<-chan interface{}, error) {
 	eventCh := make(chan interface{}, 1)
-
-	_, err := labels.Parse(labelSelector)
-	if err != nil {
-		return nil, err
-	}
 
 	if len(namespaces) == 0 {
 		namespaces = Namespaces{metav1.NamespaceAll}
 		c.isNamespaceAll = true
 	}
 
-	eventHandler := newResourceEventHandler(eventCh)
+	eventHandler := c.newResourceEventHandler(eventCh)
 	for _, ns := range namespaces {
-		factory := informers.NewFilteredSharedInformerFactory(c.clientset, resyncPeriod, ns, func(opts *metav1.ListOptions) {
-			opts.LabelSelector = labelSelector
-		})
+		factory := informers.NewFilteredSharedInformerFactory(c.clientset, resyncPeriod, ns, nil)
 		factory.Extensions().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
 		factory.Core().V1().Services().Informer().AddEventHandler(eventHandler)
 		factory.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
@@ -161,7 +155,7 @@ func (c *clientImpl) WatchAll(namespaces Namespaces, labelSelector string, stopC
 func (c *clientImpl) GetIngresses() []*extensionsv1beta1.Ingress {
 	var result []*extensionsv1beta1.Ingress
 	for ns, factory := range c.factories {
-		ings, err := factory.Extensions().V1beta1().Ingresses().Lister().List(labels.Everything())
+		ings, err := factory.Extensions().V1beta1().Ingresses().Lister().List(c.ingressLabelSelector)
 		if err != nil {
 			log.Errorf("Failed to list ingresses in namespace %s: %s", ns, err)
 		}
@@ -215,8 +209,18 @@ func (c *clientImpl) lookupNamespace(ns string) string {
 	return ns
 }
 
-func newResourceEventHandler(events chan<- interface{}) cache.ResourceEventHandler {
-	return &resourceEventHandler{events}
+func (c *clientImpl) newResourceEventHandler(events chan<- interface{}) cache.ResourceEventHandler {
+	return &cache.FilteringResourceEventHandler{
+		FilterFunc: func(obj interface{}) bool {
+			// Ignore Ingresses that do not match our custom label selector.
+			if ing, ok := obj.(*extensionsv1beta1.Ingress); ok {
+				lbls := labels.Set(ing.GetLabels())
+				return c.ingressLabelSelector.Matches(lbls)
+			}
+			return true
+		},
+		Handler: &resourceEventHandler{events},
+	}
 }
 
 // eventHandlerFunc will pass the obj on to the events channel or drop it.
