@@ -26,6 +26,12 @@ type AccessLog struct {
 	Format   string            `json:"format,omitempty" description:"Access log format: json | common" export:"true"`
 	Filters  *AccessLogFilters `json:"filters,omitempty" description:"Access log filters, used to keep only specific access logs" export:"true"`
 	Fields   *AccessLogFields  `json:"fields,omitempty" description:"AccessLogFields" export:"true"`
+	Async    *AccessLogAsync   `json:"async,omitempty" description:"Async configuration" export:"true"`
+}
+
+// AccessLogAsync holds async log writer configuration for access log
+type AccessLogAsync struct {
+	AsyncWriterChanSize int64 `json:"asyncWriterChanSize,omitempty" description:"Async Writer chan size" export:"true"`
 }
 
 // StatusCodes holds status codes ranges to filter access log

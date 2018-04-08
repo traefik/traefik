@@ -3,6 +3,7 @@ package accesslog
 import (
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -33,11 +34,18 @@ const (
 
 // LogHandler will write each request and its response to the access log.
 type LogHandler struct {
-	config         *types.AccessLog
-	logger         *logrus.Logger
-	file           *os.File
-	mu             sync.Mutex
-	httpCodeRanges types.HTTPCodeRanges
+	config            *types.AccessLog
+	logger            *logrus.Logger
+	logWriter         logWriter
+	logWriterChanSize int64
+	filePath          string
+	mu                sync.Mutex
+	httpCodeRanges    types.HTTPCodeRanges
+}
+
+type logWriter interface {
+	Close() error
+	io.Writer
 }
 
 // NewLogHandler creates a new LogHandler
@@ -63,7 +71,6 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 	}
 
 	logger := &logrus.Logger{
-		Out:       file,
 		Formatter: formatter,
 		Hooks:     make(logrus.LevelHooks),
 		Level:     logrus.InfoLevel,
@@ -72,8 +79,16 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 	logHandler := &LogHandler{
 		config: config,
 		logger: logger,
-		file:   file,
 	}
+
+	var lw logWriter = file
+	if config.Async != nil {
+		lw = newAsyncWriter(config.Async.AsyncWriterChanSize, file)
+		logHandler.logWriterChanSize = config.Async.AsyncWriterChanSize
+	}
+
+	logger.Out = lw
+	logHandler.logWriter = lw
 
 	if config.Filters != nil {
 		if httpCodeRanges, err := types.NewHTTPCodeRanges(config.Filters.StatusCodes); err != nil {
@@ -161,7 +176,7 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 
 // Close closes the Logger (i.e. the file etc).
 func (l *LogHandler) Close() error {
-	return l.file.Close()
+	return l.logWriter.Close()
 }
 
 // Rotate closes and reopens the log file to allow for rotation
@@ -169,19 +184,20 @@ func (l *LogHandler) Close() error {
 func (l *LogHandler) Rotate() error {
 	var err error
 
-	if l.file != nil {
-		defer func(f *os.File) {
+	if l.logWriter != nil {
+		defer func(f logWriter) {
 			f.Close()
-		}(l.file)
+		}(l.logWriter)
 	}
 
-	l.file, err = os.OpenFile(l.config.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
+	file, err := os.OpenFile(l.config.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
 	if err != nil {
 		return err
 	}
+	l.logWriter = newAsyncWriter(l.logWriterChanSize, file)
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	l.logger.Out = l.file
+	l.logger.Out = l.logWriter
 	return nil
 }
 
