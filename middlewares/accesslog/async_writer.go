@@ -1,6 +1,7 @@
 package accesslog
 
 import (
+	"bufio"
 	"io"
 	"os"
 	"sync"
@@ -14,6 +15,7 @@ const (
 
 type asyncWriter struct {
 	originalFile *os.File
+	writer       *bufio.Writer
 	stopCh       chan interface{}
 	writerStream chan []byte
 	mu           sync.Mutex
@@ -31,6 +33,7 @@ func newAsyncWriter(chanSize int64, originalFile *os.File) *asyncWriter {
 	aWriter := &asyncWriter{
 		writerStream: w,
 		originalFile: originalFile,
+		writer:       bufio.NewWriter(originalFile),
 		stopCh:       stopCh,
 	}
 
@@ -42,7 +45,7 @@ func newAsyncWriter(chanSize int64, originalFile *os.File) *asyncWriter {
 		for {
 			select {
 			case log := <-aWriter.writerStream:
-				printLog(aWriter, aWriter.originalFile, log)
+				printLog(aWriter, aWriter.writer, log)
 			case <-aWriter.stopCh:
 				return
 			}
@@ -74,7 +77,11 @@ func printLog(w *asyncWriter, writer io.Writer, log []byte) {
 
 func (w *asyncWriter) drainChannel() {
 	for log := range w.writerStream {
-		printLog(w, w.originalFile, log)
+		printLog(w, w.writer, log)
+	}
+	err := w.writer.Flush()
+	if err != nil {
+		logrus.Error(err)
 	}
 }
 
