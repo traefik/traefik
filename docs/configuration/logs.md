@@ -124,6 +124,13 @@ filePath = "/path/to/access.log"
 format = "json"
 ```
 
+To write the logs in async, specify `bufferingSize` as the format (must be >0):
+```toml
+[accessLog]
+filePath = "/path/to/access.log"
+bufferingSize = 262140
+```
+
 To filter logs you can specify a set of filters which are logically "OR-connected". Thus, specifying multiple filters will keep more access logs than specifying only one:
 ```toml
 [accessLog]

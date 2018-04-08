@@ -31,6 +31,12 @@ const (
 	JSONFormat = "json"
 )
 
+type logHandlerParams struct {
+	logDataTable *LogData
+	crr          *captureRequestReader
+	crw          *captureResponseWriter
+}
+
 // LogHandler will write each request and its response to the access log.
 type LogHandler struct {
 	config         *types.AccessLog
@@ -38,6 +44,10 @@ type LogHandler struct {
 	file           *os.File
 	mu             sync.Mutex
 	httpCodeRanges types.HTTPCodeRanges
+	stopCh         chan interface{}
+	logHandlerChan chan logHandlerParams
+
+	wg sync.WaitGroup
 }
 
 // NewLogHandler creates a new LogHandler
@@ -50,6 +60,8 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 		}
 		file = f
 	}
+	stopCh := make(chan interface{})
+	logHandlerChan := make(chan logHandlerParams, config.BufferingSize)
 
 	var formatter logrus.Formatter
 
@@ -70,9 +82,11 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 	}
 
 	logHandler := &LogHandler{
-		config: config,
-		logger: logger,
-		file:   file,
+		config:         config,
+		logger:         logger,
+		file:           file,
+		stopCh:         stopCh,
+		logHandlerChan: logHandlerChan,
 	}
 
 	if config.Filters != nil {
@@ -81,6 +95,21 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 		} else {
 			logHandler.httpCodeRanges = httpCodeRanges
 		}
+	}
+
+	if config.BufferingSize > 0 {
+		logHandler.wg.Add(1)
+		go func() {
+			defer logHandler.wg.Done()
+			for {
+				select {
+				case handlerParams := <-logHandler.logHandlerChan:
+					logHandler.logTheRoundTrip(handlerParams.logDataTable, handlerParams.crr, handlerParams.crw)
+				case <-stopCh:
+					return
+				}
+			}
+		}()
 	}
 
 	return logHandler, nil
@@ -162,11 +191,30 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 	core[ClientUsername] = usernameIfPresent(reqWithDataTable.URL)
 
 	logDataTable.DownstreamResponse = crw.Header()
-	l.logTheRoundTrip(logDataTable, crr, crw)
+
+	if l.config.BufferingSize > 0 {
+		l.logHandlerChan <- logHandlerParams{
+			logDataTable: logDataTable,
+			crr:          crr,
+			crw:          crw,
+		}
+	} else {
+		l.logTheRoundTrip(logDataTable, crr, crw)
+	}
+}
+
+func (l *LogHandler) drainChannel() {
+	for handlerParams := range l.logHandlerChan {
+		l.logTheRoundTrip(handlerParams.logDataTable, handlerParams.crr, handlerParams.crw)
+	}
 }
 
 // Close closes the Logger (i.e. the file etc).
 func (l *LogHandler) Close() error {
+	close(l.stopCh)
+	l.wg.Wait()
+	close(l.logHandlerChan)
+	l.drainChannel()
 	return l.file.Close()
 }
 

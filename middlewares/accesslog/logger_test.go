@@ -130,6 +130,21 @@ func TestLoggerCLF(t *testing.T) {
 	assertValidLogData(t, expectedLog, logData)
 }
 
+func TestAsyncLoggerCLF(t *testing.T) {
+	tmpDir := createTempDir(t, CommonFormat)
+	defer os.RemoveAll(tmpDir)
+
+	logFilePath := filepath.Join(tmpDir, logFileNameSuffix)
+	config := &types.AccessLog{FilePath: logFilePath, Format: CommonFormat, BufferingSize: 1024}
+	doLogging(t, config)
+
+	logData, err := ioutil.ReadFile(logFilePath)
+	require.NoError(t, err)
+
+	expectedLog := ` TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 1 "testFrontend" "http://127.0.0.1/testBackend" 1ms`
+	assertValidLogData(t, expectedLog, logData)
+}
+
 func assertString(exp string) func(t *testing.T, actual interface{}) {
 	return func(t *testing.T, actual interface{}) {
 		t.Helper()

@@ -22,10 +22,11 @@ type TraefikLog struct {
 
 // AccessLog holds the configuration settings for the access logger (middlewares/accesslog).
 type AccessLog struct {
-	FilePath string            `json:"file,omitempty" description:"Access log file path. Stdout is used when omitted or empty" export:"true"`
-	Format   string            `json:"format,omitempty" description:"Access log format: json | common" export:"true"`
-	Filters  *AccessLogFilters `json:"filters,omitempty" description:"Access log filters, used to keep only specific access logs" export:"true"`
-	Fields   *AccessLogFields  `json:"fields,omitempty" description:"AccessLogFields" export:"true"`
+	FilePath      string            `json:"file,omitempty" description:"Access log file path. Stdout is used when omitted or empty" export:"true"`
+	Format        string            `json:"format,omitempty" description:"Access log format: json | common" export:"true"`
+	Filters       *AccessLogFilters `json:"filters,omitempty" description:"Access log filters, used to keep only specific access logs" export:"true"`
+	Fields        *AccessLogFields  `json:"fields,omitempty" description:"AccessLogFields" export:"true"`
+	BufferingSize int64             `json:"bufferingSize,omitempty" description:"Size of buffering access logs. Default 0." export:"true"`
 }
 
 // AccessLogFilters holds filters configuration
