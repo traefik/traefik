@@ -4,14 +4,13 @@
 package azure
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/arm/dns"
-
-	"strings"
-
+	"github.com/Azure/azure-sdk-for-go/services/dns/mgmt/2017-09-01/dns"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/adal"
 	"github.com/Azure/go-autorest/autorest/azure"
@@ -26,6 +25,8 @@ type DNSProvider struct {
 	subscriptionId string
 	tenantId       string
 	resourceGroup  string
+
+	context context.Context
 }
 
 // NewDNSProvider returns a DNSProvider instance configured for azure.
@@ -53,6 +54,8 @@ func NewDNSProviderCredentials(clientId, clientSecret, subscriptionId, tenantId,
 		subscriptionId: subscriptionId,
 		tenantId:       tenantId,
 		resourceGroup:  resourceGroup,
+		// TODO: A timeout can be added here for cancellation purposes.
+		context: context.Background(),
 	}, nil
 }
 
@@ -82,7 +85,7 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 			TxtRecords: &[]dns.TxtRecord{dns.TxtRecord{Value: &[]string{value}}},
 		},
 	}
-	_, err = rsc.CreateOrUpdate(c.resourceGroup, zone, relative, dns.TXT, rec, "", "")
+	_, err = rsc.CreateOrUpdate(c.context, c.resourceGroup, zone, relative, dns.TXT, rec, "", "")
 
 	if err != nil {
 		return err
@@ -109,7 +112,7 @@ func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	rsc := dns.NewRecordSetsClient(c.subscriptionId)
 	spt, err := c.newServicePrincipalTokenFromCredentials(azure.PublicCloud.ResourceManagerEndpoint)
 	rsc.Authorizer = autorest.NewBearerAuthorizer(spt)
-	_, err = rsc.Delete(c.resourceGroup, zone, relative, dns.TXT, "")
+	_, err = rsc.Delete(c.context, c.resourceGroup, zone, relative, dns.TXT, "")
 	if err != nil {
 		return err
 	}
@@ -130,7 +133,7 @@ func (c *DNSProvider) getHostedZoneID(fqdn string) (string, error) {
 	dc := dns.NewZonesClient(c.subscriptionId)
 	dc.Authorizer = autorest.NewBearerAuthorizer(spt)
 
-	zone, err := dc.Get(c.resourceGroup, acmev2.UnFqdn(authZone))
+	zone, err := dc.Get(c.context, c.resourceGroup, acmev2.UnFqdn(authZone))
 
 	if err != nil {
 		return "", err

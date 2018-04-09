@@ -18,6 +18,7 @@ package dns
 // Changes may cause incorrect behavior and will be lost if the code is regenerated.
 
 import (
+	"context"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure"
 	"net/http"
@@ -25,7 +26,7 @@ import (
 
 // RecordSetsClient is the the DNS Management Client.
 type RecordSetsClient struct {
-	ManagementClient
+	BaseClient
 }
 
 // NewRecordSetsClient creates an instance of the RecordSetsClient client.
@@ -41,14 +42,14 @@ func NewRecordSetsClientWithBaseURI(baseURI string, subscriptionID string) Recor
 // CreateOrUpdate creates or updates a record set within a DNS zone.
 //
 // resourceGroupName is the name of the resource group. zoneName is the name of the DNS zone (without a terminating
-// dot). relativeRecordSetName is the name of the record set, relative to the name of the zone. recordType is the type
-// of DNS record in this record set. Record sets of type SOA can be updated but not created (they are created when the
-// DNS zone is created). parameters is parameters supplied to the CreateOrUpdate operation. ifMatch is the etag of the
-// record set. Omit this value to always overwrite the current record set. Specify the last-seen etag value to prevent
-// accidentally overwritting any concurrent changes. ifNoneMatch is set to '*' to allow a new record set to be created,
-// but to prevent updating an existing record set. Other values will be ignored.
-func (client RecordSetsClient) CreateOrUpdate(resourceGroupName string, zoneName string, relativeRecordSetName string, recordType RecordType, parameters RecordSet, ifMatch string, ifNoneMatch string) (result RecordSet, err error) {
-	req, err := client.CreateOrUpdatePreparer(resourceGroupName, zoneName, relativeRecordSetName, recordType, parameters, ifMatch, ifNoneMatch)
+// dot). relativeRecordSetName is the name of the record set, relative to the name of the zone. recordType is the
+// type of DNS record in this record set. Record sets of type SOA can be updated but not created (they are created
+// when the DNS zone is created). parameters is parameters supplied to the CreateOrUpdate operation. ifMatch is the
+// etag of the record set. Omit this value to always overwrite the current record set. Specify the last-seen etag
+// value to prevent accidentally overwritting any concurrent changes. ifNoneMatch is set to '*' to allow a new
+// record set to be created, but to prevent updating an existing record set. Other values will be ignored.
+func (client RecordSetsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, zoneName string, relativeRecordSetName string, recordType RecordType, parameters RecordSet, ifMatch string, ifNoneMatch string) (result RecordSet, err error) {
+	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, zoneName, relativeRecordSetName, recordType, parameters, ifMatch, ifNoneMatch)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "dns.RecordSetsClient", "CreateOrUpdate", nil, "Failure preparing request")
 		return
@@ -70,7 +71,7 @@ func (client RecordSetsClient) CreateOrUpdate(resourceGroupName string, zoneName
 }
 
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
-func (client RecordSetsClient) CreateOrUpdatePreparer(resourceGroupName string, zoneName string, relativeRecordSetName string, recordType RecordType, parameters RecordSet, ifMatch string, ifNoneMatch string) (*http.Request, error) {
+func (client RecordSetsClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, zoneName string, relativeRecordSetName string, recordType RecordType, parameters RecordSet, ifMatch string, ifNoneMatch string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"recordType":            autorest.Encode("path", recordType),
 		"relativeRecordSetName": relativeRecordSetName,
@@ -79,13 +80,13 @@ func (client RecordSetsClient) CreateOrUpdatePreparer(resourceGroupName string, 
 		"zoneName":              autorest.Encode("path", zoneName),
 	}
 
-	const APIVersion = "2016-04-01"
+	const APIVersion = "2017-09-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/dnsZones/{zoneName}/{recordType}/{relativeRecordSetName}", pathParameters),
@@ -99,13 +100,14 @@ func (client RecordSetsClient) CreateOrUpdatePreparer(resourceGroupName string, 
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("If-None-Match", autorest.String(ifNoneMatch)))
 	}
-	return preparer.Prepare(&http.Request{})
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecordSetsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
@@ -114,7 +116,7 @@ func (client RecordSetsClient) CreateOrUpdateResponder(resp *http.Response) (res
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),
-		azure.WithErrorUnlessStatusCode(http.StatusCreated, http.StatusOK),
+		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusCreated),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
 	result.Response = autorest.Response{Response: resp}
@@ -124,12 +126,12 @@ func (client RecordSetsClient) CreateOrUpdateResponder(resp *http.Response) (res
 // Delete deletes a record set from a DNS zone. This operation cannot be undone.
 //
 // resourceGroupName is the name of the resource group. zoneName is the name of the DNS zone (without a terminating
-// dot). relativeRecordSetName is the name of the record set, relative to the name of the zone. recordType is the type
-// of DNS record in this record set. Record sets of type SOA cannot be deleted (they are deleted when the DNS zone is
-// deleted). ifMatch is the etag of the record set. Omit this value to always delete the current record set. Specify
-// the last-seen etag value to prevent accidentally deleting any concurrent changes.
-func (client RecordSetsClient) Delete(resourceGroupName string, zoneName string, relativeRecordSetName string, recordType RecordType, ifMatch string) (result autorest.Response, err error) {
-	req, err := client.DeletePreparer(resourceGroupName, zoneName, relativeRecordSetName, recordType, ifMatch)
+// dot). relativeRecordSetName is the name of the record set, relative to the name of the zone. recordType is the
+// type of DNS record in this record set. Record sets of type SOA cannot be deleted (they are deleted when the DNS
+// zone is deleted). ifMatch is the etag of the record set. Omit this value to always delete the current record
+// set. Specify the last-seen etag value to prevent accidentally deleting any concurrent changes.
+func (client RecordSetsClient) Delete(ctx context.Context, resourceGroupName string, zoneName string, relativeRecordSetName string, recordType RecordType, ifMatch string) (result autorest.Response, err error) {
+	req, err := client.DeletePreparer(ctx, resourceGroupName, zoneName, relativeRecordSetName, recordType, ifMatch)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "dns.RecordSetsClient", "Delete", nil, "Failure preparing request")
 		return
@@ -151,7 +153,7 @@ func (client RecordSetsClient) Delete(resourceGroupName string, zoneName string,
 }
 
 // DeletePreparer prepares the Delete request.
-func (client RecordSetsClient) DeletePreparer(resourceGroupName string, zoneName string, relativeRecordSetName string, recordType RecordType, ifMatch string) (*http.Request, error) {
+func (client RecordSetsClient) DeletePreparer(ctx context.Context, resourceGroupName string, zoneName string, relativeRecordSetName string, recordType RecordType, ifMatch string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"recordType":            autorest.Encode("path", recordType),
 		"relativeRecordSetName": relativeRecordSetName,
@@ -160,7 +162,7 @@ func (client RecordSetsClient) DeletePreparer(resourceGroupName string, zoneName
 		"zoneName":              autorest.Encode("path", zoneName),
 	}
 
-	const APIVersion = "2016-04-01"
+	const APIVersion = "2017-09-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -174,13 +176,14 @@ func (client RecordSetsClient) DeletePreparer(resourceGroupName string, zoneName
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("If-Match", autorest.String(ifMatch)))
 	}
-	return preparer.Prepare(&http.Request{})
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecordSetsClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -189,7 +192,7 @@ func (client RecordSetsClient) DeleteResponder(resp *http.Response) (result auto
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),
-		azure.WithErrorUnlessStatusCode(http.StatusNoContent, http.StatusOK),
+		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusNoContent),
 		autorest.ByClosing())
 	result.Response = resp
 	return
@@ -198,10 +201,10 @@ func (client RecordSetsClient) DeleteResponder(resp *http.Response) (result auto
 // Get gets a record set.
 //
 // resourceGroupName is the name of the resource group. zoneName is the name of the DNS zone (without a terminating
-// dot). relativeRecordSetName is the name of the record set, relative to the name of the zone. recordType is the type
-// of DNS record in this record set.
-func (client RecordSetsClient) Get(resourceGroupName string, zoneName string, relativeRecordSetName string, recordType RecordType) (result RecordSet, err error) {
-	req, err := client.GetPreparer(resourceGroupName, zoneName, relativeRecordSetName, recordType)
+// dot). relativeRecordSetName is the name of the record set, relative to the name of the zone. recordType is the
+// type of DNS record in this record set.
+func (client RecordSetsClient) Get(ctx context.Context, resourceGroupName string, zoneName string, relativeRecordSetName string, recordType RecordType) (result RecordSet, err error) {
+	req, err := client.GetPreparer(ctx, resourceGroupName, zoneName, relativeRecordSetName, recordType)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "dns.RecordSetsClient", "Get", nil, "Failure preparing request")
 		return
@@ -223,7 +226,7 @@ func (client RecordSetsClient) Get(resourceGroupName string, zoneName string, re
 }
 
 // GetPreparer prepares the Get request.
-func (client RecordSetsClient) GetPreparer(resourceGroupName string, zoneName string, relativeRecordSetName string, recordType RecordType) (*http.Request, error) {
+func (client RecordSetsClient) GetPreparer(ctx context.Context, resourceGroupName string, zoneName string, relativeRecordSetName string, recordType RecordType) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"recordType":            autorest.Encode("path", recordType),
 		"relativeRecordSetName": relativeRecordSetName,
@@ -232,7 +235,7 @@ func (client RecordSetsClient) GetPreparer(resourceGroupName string, zoneName st
 		"zoneName":              autorest.Encode("path", zoneName),
 	}
 
-	const APIVersion = "2016-04-01"
+	const APIVersion = "2017-09-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -242,13 +245,14 @@ func (client RecordSetsClient) GetPreparer(resourceGroupName string, zoneName st
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/dnsZones/{zoneName}/{recordType}/{relativeRecordSetName}", pathParameters),
 		autorest.WithQueryParameters(queryParameters))
-	return preparer.Prepare(&http.Request{})
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecordSetsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -271,8 +275,9 @@ func (client RecordSetsClient) GetResponder(resp *http.Response) (result RecordS
 // recordsetnamesuffix is the suffix label of the record set name that has to be used to filter the record set
 // enumerations. If this parameter is specified, Enumeration will return only records that end with
 // .<recordSetNameSuffix>
-func (client RecordSetsClient) ListByDNSZone(resourceGroupName string, zoneName string, top *int32, recordsetnamesuffix string) (result RecordSetListResult, err error) {
-	req, err := client.ListByDNSZonePreparer(resourceGroupName, zoneName, top, recordsetnamesuffix)
+func (client RecordSetsClient) ListByDNSZone(ctx context.Context, resourceGroupName string, zoneName string, top *int32, recordsetnamesuffix string) (result RecordSetListResultPage, err error) {
+	result.fn = client.listByDNSZoneNextResults
+	req, err := client.ListByDNSZonePreparer(ctx, resourceGroupName, zoneName, top, recordsetnamesuffix)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "dns.RecordSetsClient", "ListByDNSZone", nil, "Failure preparing request")
 		return
@@ -280,12 +285,12 @@ func (client RecordSetsClient) ListByDNSZone(resourceGroupName string, zoneName 
 
 	resp, err := client.ListByDNSZoneSender(req)
 	if err != nil {
-		result.Response = autorest.Response{Response: resp}
+		result.rslr.Response = autorest.Response{Response: resp}
 		err = autorest.NewErrorWithError(err, "dns.RecordSetsClient", "ListByDNSZone", resp, "Failure sending request")
 		return
 	}
 
-	result, err = client.ListByDNSZoneResponder(resp)
+	result.rslr, err = client.ListByDNSZoneResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "dns.RecordSetsClient", "ListByDNSZone", resp, "Failure responding to request")
 	}
@@ -294,14 +299,14 @@ func (client RecordSetsClient) ListByDNSZone(resourceGroupName string, zoneName 
 }
 
 // ListByDNSZonePreparer prepares the ListByDNSZone request.
-func (client RecordSetsClient) ListByDNSZonePreparer(resourceGroupName string, zoneName string, top *int32, recordsetnamesuffix string) (*http.Request, error) {
+func (client RecordSetsClient) ListByDNSZonePreparer(ctx context.Context, resourceGroupName string, zoneName string, top *int32, recordsetnamesuffix string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"resourceGroupName": autorest.Encode("path", resourceGroupName),
 		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
 		"zoneName":          autorest.Encode("path", zoneName),
 	}
 
-	const APIVersion = "2016-04-01"
+	const APIVersion = "2017-09-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -317,13 +322,14 @@ func (client RecordSetsClient) ListByDNSZonePreparer(resourceGroupName string, z
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/dnsZones/{zoneName}/recordsets", pathParameters),
 		autorest.WithQueryParameters(queryParameters))
-	return preparer.Prepare(&http.Request{})
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
 // ListByDNSZoneSender sends the ListByDNSZone request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecordSetsClient) ListByDNSZoneSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByDNSZoneResponder handles the response to the ListByDNSZone request. The method always
@@ -339,84 +345,43 @@ func (client RecordSetsClient) ListByDNSZoneResponder(resp *http.Response) (resu
 	return
 }
 
-// ListByDNSZoneNextResults retrieves the next set of results, if any.
-func (client RecordSetsClient) ListByDNSZoneNextResults(lastResults RecordSetListResult) (result RecordSetListResult, err error) {
-	req, err := lastResults.RecordSetListResultPreparer()
+// listByDNSZoneNextResults retrieves the next set of results, if any.
+func (client RecordSetsClient) listByDNSZoneNextResults(lastResults RecordSetListResult) (result RecordSetListResult, err error) {
+	req, err := lastResults.recordSetListResultPreparer()
 	if err != nil {
-		return result, autorest.NewErrorWithError(err, "dns.RecordSetsClient", "ListByDNSZone", nil, "Failure preparing next results request")
+		return result, autorest.NewErrorWithError(err, "dns.RecordSetsClient", "listByDNSZoneNextResults", nil, "Failure preparing next results request")
 	}
 	if req == nil {
 		return
 	}
-
 	resp, err := client.ListByDNSZoneSender(req)
 	if err != nil {
 		result.Response = autorest.Response{Response: resp}
-		return result, autorest.NewErrorWithError(err, "dns.RecordSetsClient", "ListByDNSZone", resp, "Failure sending next results request")
+		return result, autorest.NewErrorWithError(err, "dns.RecordSetsClient", "listByDNSZoneNextResults", resp, "Failure sending next results request")
 	}
-
 	result, err = client.ListByDNSZoneResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "dns.RecordSetsClient", "ListByDNSZone", resp, "Failure responding to next results request")
+		err = autorest.NewErrorWithError(err, "dns.RecordSetsClient", "listByDNSZoneNextResults", resp, "Failure responding to next results request")
 	}
-
 	return
 }
 
-// ListByDNSZoneComplete gets all elements from the list without paging.
-func (client RecordSetsClient) ListByDNSZoneComplete(resourceGroupName string, zoneName string, top *int32, recordsetnamesuffix string, cancel <-chan struct{}) (<-chan RecordSet, <-chan error) {
-	resultChan := make(chan RecordSet)
-	errChan := make(chan error, 1)
-	go func() {
-		defer func() {
-			close(resultChan)
-			close(errChan)
-		}()
-		list, err := client.ListByDNSZone(resourceGroupName, zoneName, top, recordsetnamesuffix)
-		if err != nil {
-			errChan <- err
-			return
-		}
-		if list.Value != nil {
-			for _, item := range *list.Value {
-				select {
-				case <-cancel:
-					return
-				case resultChan <- item:
-					// Intentionally left blank
-				}
-			}
-		}
-		for list.NextLink != nil {
-			list, err = client.ListByDNSZoneNextResults(list)
-			if err != nil {
-				errChan <- err
-				return
-			}
-			if list.Value != nil {
-				for _, item := range *list.Value {
-					select {
-					case <-cancel:
-						return
-					case resultChan <- item:
-						// Intentionally left blank
-					}
-				}
-			}
-		}
-	}()
-	return resultChan, errChan
+// ListByDNSZoneComplete enumerates all values, automatically crossing page boundaries as required.
+func (client RecordSetsClient) ListByDNSZoneComplete(ctx context.Context, resourceGroupName string, zoneName string, top *int32, recordsetnamesuffix string) (result RecordSetListResultIterator, err error) {
+	result.page, err = client.ListByDNSZone(ctx, resourceGroupName, zoneName, top, recordsetnamesuffix)
+	return
 }
 
 // ListByType lists the record sets of a specified type in a DNS zone.
 //
 // resourceGroupName is the name of the resource group. zoneName is the name of the DNS zone (without a terminating
-// dot). recordType is the type of record sets to enumerate. top is the maximum number of record sets to return. If not
-// specified, returns up to 100 record sets. recordsetnamesuffix is the suffix label of the record set name that has to
-// be used to filter the record set enumerations. If this parameter is specified, Enumeration will return only records
-// that end with .<recordSetNameSuffix>
-func (client RecordSetsClient) ListByType(resourceGroupName string, zoneName string, recordType RecordType, top *int32, recordsetnamesuffix string) (result RecordSetListResult, err error) {
-	req, err := client.ListByTypePreparer(resourceGroupName, zoneName, recordType, top, recordsetnamesuffix)
+// dot). recordType is the type of record sets to enumerate. top is the maximum number of record sets to return. If
+// not specified, returns up to 100 record sets. recordsetnamesuffix is the suffix label of the record set name
+// that has to be used to filter the record set enumerations. If this parameter is specified, Enumeration will
+// return only records that end with .<recordSetNameSuffix>
+func (client RecordSetsClient) ListByType(ctx context.Context, resourceGroupName string, zoneName string, recordType RecordType, top *int32, recordsetnamesuffix string) (result RecordSetListResultPage, err error) {
+	result.fn = client.listByTypeNextResults
+	req, err := client.ListByTypePreparer(ctx, resourceGroupName, zoneName, recordType, top, recordsetnamesuffix)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "dns.RecordSetsClient", "ListByType", nil, "Failure preparing request")
 		return
@@ -424,12 +389,12 @@ func (client RecordSetsClient) ListByType(resourceGroupName string, zoneName str
 
 	resp, err := client.ListByTypeSender(req)
 	if err != nil {
-		result.Response = autorest.Response{Response: resp}
+		result.rslr.Response = autorest.Response{Response: resp}
 		err = autorest.NewErrorWithError(err, "dns.RecordSetsClient", "ListByType", resp, "Failure sending request")
 		return
 	}
 
-	result, err = client.ListByTypeResponder(resp)
+	result.rslr, err = client.ListByTypeResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "dns.RecordSetsClient", "ListByType", resp, "Failure responding to request")
 	}
@@ -438,7 +403,7 @@ func (client RecordSetsClient) ListByType(resourceGroupName string, zoneName str
 }
 
 // ListByTypePreparer prepares the ListByType request.
-func (client RecordSetsClient) ListByTypePreparer(resourceGroupName string, zoneName string, recordType RecordType, top *int32, recordsetnamesuffix string) (*http.Request, error) {
+func (client RecordSetsClient) ListByTypePreparer(ctx context.Context, resourceGroupName string, zoneName string, recordType RecordType, top *int32, recordsetnamesuffix string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"recordType":        autorest.Encode("path", recordType),
 		"resourceGroupName": autorest.Encode("path", resourceGroupName),
@@ -446,7 +411,7 @@ func (client RecordSetsClient) ListByTypePreparer(resourceGroupName string, zone
 		"zoneName":          autorest.Encode("path", zoneName),
 	}
 
-	const APIVersion = "2016-04-01"
+	const APIVersion = "2017-09-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -462,13 +427,14 @@ func (client RecordSetsClient) ListByTypePreparer(resourceGroupName string, zone
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/dnsZones/{zoneName}/{recordType}", pathParameters),
 		autorest.WithQueryParameters(queryParameters))
-	return preparer.Prepare(&http.Request{})
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
 // ListByTypeSender sends the ListByType request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecordSetsClient) ListByTypeSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByTypeResponder handles the response to the ListByType request. The method always
@@ -484,84 +450,42 @@ func (client RecordSetsClient) ListByTypeResponder(resp *http.Response) (result 
 	return
 }
 
-// ListByTypeNextResults retrieves the next set of results, if any.
-func (client RecordSetsClient) ListByTypeNextResults(lastResults RecordSetListResult) (result RecordSetListResult, err error) {
-	req, err := lastResults.RecordSetListResultPreparer()
+// listByTypeNextResults retrieves the next set of results, if any.
+func (client RecordSetsClient) listByTypeNextResults(lastResults RecordSetListResult) (result RecordSetListResult, err error) {
+	req, err := lastResults.recordSetListResultPreparer()
 	if err != nil {
-		return result, autorest.NewErrorWithError(err, "dns.RecordSetsClient", "ListByType", nil, "Failure preparing next results request")
+		return result, autorest.NewErrorWithError(err, "dns.RecordSetsClient", "listByTypeNextResults", nil, "Failure preparing next results request")
 	}
 	if req == nil {
 		return
 	}
-
 	resp, err := client.ListByTypeSender(req)
 	if err != nil {
 		result.Response = autorest.Response{Response: resp}
-		return result, autorest.NewErrorWithError(err, "dns.RecordSetsClient", "ListByType", resp, "Failure sending next results request")
+		return result, autorest.NewErrorWithError(err, "dns.RecordSetsClient", "listByTypeNextResults", resp, "Failure sending next results request")
 	}
-
 	result, err = client.ListByTypeResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "dns.RecordSetsClient", "ListByType", resp, "Failure responding to next results request")
+		err = autorest.NewErrorWithError(err, "dns.RecordSetsClient", "listByTypeNextResults", resp, "Failure responding to next results request")
 	}
-
 	return
 }
 
-// ListByTypeComplete gets all elements from the list without paging.
-func (client RecordSetsClient) ListByTypeComplete(resourceGroupName string, zoneName string, recordType RecordType, top *int32, recordsetnamesuffix string, cancel <-chan struct{}) (<-chan RecordSet, <-chan error) {
-	resultChan := make(chan RecordSet)
-	errChan := make(chan error, 1)
-	go func() {
-		defer func() {
-			close(resultChan)
-			close(errChan)
-		}()
-		list, err := client.ListByType(resourceGroupName, zoneName, recordType, top, recordsetnamesuffix)
-		if err != nil {
-			errChan <- err
-			return
-		}
-		if list.Value != nil {
-			for _, item := range *list.Value {
-				select {
-				case <-cancel:
-					return
-				case resultChan <- item:
-					// Intentionally left blank
-				}
-			}
-		}
-		for list.NextLink != nil {
-			list, err = client.ListByTypeNextResults(list)
-			if err != nil {
-				errChan <- err
-				return
-			}
-			if list.Value != nil {
-				for _, item := range *list.Value {
-					select {
-					case <-cancel:
-						return
-					case resultChan <- item:
-						// Intentionally left blank
-					}
-				}
-			}
-		}
-	}()
-	return resultChan, errChan
+// ListByTypeComplete enumerates all values, automatically crossing page boundaries as required.
+func (client RecordSetsClient) ListByTypeComplete(ctx context.Context, resourceGroupName string, zoneName string, recordType RecordType, top *int32, recordsetnamesuffix string) (result RecordSetListResultIterator, err error) {
+	result.page, err = client.ListByType(ctx, resourceGroupName, zoneName, recordType, top, recordsetnamesuffix)
+	return
 }
 
 // Update updates a record set within a DNS zone.
 //
 // resourceGroupName is the name of the resource group. zoneName is the name of the DNS zone (without a terminating
-// dot). relativeRecordSetName is the name of the record set, relative to the name of the zone. recordType is the type
-// of DNS record in this record set. parameters is parameters supplied to the Update operation. ifMatch is the etag of
-// the record set. Omit this value to always overwrite the current record set. Specify the last-seen etag value to
-// prevent accidentally overwritting concurrent changes.
-func (client RecordSetsClient) Update(resourceGroupName string, zoneName string, relativeRecordSetName string, recordType RecordType, parameters RecordSet, ifMatch string) (result RecordSet, err error) {
-	req, err := client.UpdatePreparer(resourceGroupName, zoneName, relativeRecordSetName, recordType, parameters, ifMatch)
+// dot). relativeRecordSetName is the name of the record set, relative to the name of the zone. recordType is the
+// type of DNS record in this record set. parameters is parameters supplied to the Update operation. ifMatch is the
+// etag of the record set. Omit this value to always overwrite the current record set. Specify the last-seen etag
+// value to prevent accidentally overwritting concurrent changes.
+func (client RecordSetsClient) Update(ctx context.Context, resourceGroupName string, zoneName string, relativeRecordSetName string, recordType RecordType, parameters RecordSet, ifMatch string) (result RecordSet, err error) {
+	req, err := client.UpdatePreparer(ctx, resourceGroupName, zoneName, relativeRecordSetName, recordType, parameters, ifMatch)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "dns.RecordSetsClient", "Update", nil, "Failure preparing request")
 		return
@@ -583,7 +507,7 @@ func (client RecordSetsClient) Update(resourceGroupName string, zoneName string,
 }
 
 // UpdatePreparer prepares the Update request.
-func (client RecordSetsClient) UpdatePreparer(resourceGroupName string, zoneName string, relativeRecordSetName string, recordType RecordType, parameters RecordSet, ifMatch string) (*http.Request, error) {
+func (client RecordSetsClient) UpdatePreparer(ctx context.Context, resourceGroupName string, zoneName string, relativeRecordSetName string, recordType RecordType, parameters RecordSet, ifMatch string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"recordType":            autorest.Encode("path", recordType),
 		"relativeRecordSetName": relativeRecordSetName,
@@ -592,13 +516,13 @@ func (client RecordSetsClient) UpdatePreparer(resourceGroupName string, zoneName
 		"zoneName":              autorest.Encode("path", zoneName),
 	}
 
-	const APIVersion = "2016-04-01"
+	const APIVersion = "2017-09-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsJSON(),
+		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/dnsZones/{zoneName}/{recordType}/{relativeRecordSetName}", pathParameters),
@@ -608,13 +532,14 @@ func (client RecordSetsClient) UpdatePreparer(resourceGroupName string, zoneName
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("If-Match", autorest.String(ifMatch)))
 	}
-	return preparer.Prepare(&http.Request{})
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecordSetsClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

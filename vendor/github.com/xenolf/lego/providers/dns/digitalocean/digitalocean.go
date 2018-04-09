@@ -72,7 +72,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	authZone = acmev2.UnFqdn(authZone)
 
 	reqURL := fmt.Sprintf("%s/v2/domains/%s/records", digitalOceanBaseURL, authZone)
-	reqData := txtRecordRequest{RecordType: "TXT", Name: fqdn, Data: value, TTL: 60}
+	reqData := txtRecordRequest{RecordType: "TXT", Name: fqdn, Data: value, TTL: 30}
 	body, err := json.Marshal(reqData)
 	if err != nil {
 		return err
@@ -169,5 +169,5 @@ var digitalOceanBaseURL = "https://api.digitalocean.com"
 // Timeout returns the timeout and interval to use when checking for DNS
 // propagation. Adjusting here to cope with spikes in propagation times.
 func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
-	return 90 * time.Second, 5 * time.Second
+	return 60 * time.Second, 5 * time.Second
 }

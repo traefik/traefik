@@ -24,8 +24,12 @@
 
 [[projects]]
   name = "github.com/Azure/azure-sdk-for-go"
-  packages = ["arm/dns"]
-  revision = "f7bb4db3ea4c73dc58bd284c38ea644a79324be0"
+  packages = [
+    "services/dns/mgmt/2017-09-01/dns",
+    "version"
+  ]
+  revision = "068ec4d616be5b2175509bf1fb3e4c8ea160d5c8"
+  version = "v15.0.1"
 
 [[projects]]
   branch = "master"
@@ -45,8 +49,8 @@
     "autorest/date",
     "autorest/to"
   ]
-  revision = "f6be1abbb5abd0517522f850dd785990d373da7e"
-  version = "v9.0.0"
+  revision = "9ad9326b278af8fa5cc67c30c0ce9a58cc0862b2"
+  version = "v10.6.0"
 
 [[projects]]
   branch = "master"
@@ -312,8 +316,8 @@
 [[projects]]
   name = "github.com/dgrijalva/jwt-go"
   packages = ["."]
-  revision = "d2709f9f1f31ebcda9651b03077758c1f3a0018c"
-  version = "v3.0.0"
+  revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
+  version = "v3.2.0"
 
 [[projects]]
   name = "github.com/dnsimple/dnsimple-go"
@@ -1274,7 +1278,7 @@
     "providers/dns/route53",
     "providers/dns/vultr"
   ]
-  revision = "2357607e4ddeb93d5364c9ae6571ded32b7d01f1"
+  revision = "2817d2131186742bc98830c73a5d9c255b3f4537"
   source = "github.com/containous/lego"
 
 [[projects]]
