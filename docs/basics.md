@@ -170,7 +170,7 @@ Here is an example of frontends definition:
 
 - Three frontends are defined: `frontend1`, `frontend2` and `frontend3`
 - `frontend1` will forward the traffic to the `backend2` if the rule `Host:test.localhost,test2.localhost` is matched
-- `frontend2` will forward the traffic to the `backend1` if the rule `Host:localhost,{subdomain:[a-z]+}.localhost` is matched (forwarding client `Host` header to the backend)
+- `frontend2` will forward the traffic to the `backend1` if the rule `HostRegexp:localhost,{subdomain:[a-z]+}.localhost` is matched (forwarding client `Host` header to the backend)
 - `frontend3` will forward the traffic to the `backend2` if the rules `Host:test3.localhost` **AND** `Path:/test` are matched
 
 #### Combining multiple rules
