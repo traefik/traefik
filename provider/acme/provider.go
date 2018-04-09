@@ -42,7 +42,7 @@ type Configuration struct {
 	EntryPoint    string         `description:"EntryPoint to use."`
 	OnHostRule    bool           `description:"Enable certificate generation on frontends Host rules."`
 	OnDemand      bool           `description:"Enable on demand certificate generation. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."` //deprecated
-	DNSChallenge  *DNSChallenge  `description:"Activate DNS-01 Challenge"`
+	DNSChallenge  *DNSChallenge  `description:"Activate DNS-02 Challenge"`
 	HTTPChallenge *HTTPChallenge `description:"Activate HTTP-01 Challenge"`
 	Domains       []types.Domain `description:"CN and SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='*.main.net'. No SANs for wildcards domain. Wildcard domains only accepted with DNSChallenge"`
 }
@@ -72,7 +72,7 @@ type Certificate struct {
 
 // DNSChallenge contains DNS challenge Configuration
 type DNSChallenge struct {
-	Provider         string         `description:"Use a DNS-01 based challenge provider rather than HTTPS."`
+	Provider         string         `description:"Use a DNS-02 based challenge provider rather than HTTPS."`
 	DelayBeforeCheck flaeg.Duration `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."`
 }
 
