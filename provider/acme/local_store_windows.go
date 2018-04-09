@@ -12,8 +12,7 @@ func CheckFile(name string) (bool, error) {
 			if err != nil {
 				return false, err
 			}
-			f.Chmod(0600)
-			return false, nil
+			return false, f.Chmod(0600)
 		}
 		return false, err
 	}
