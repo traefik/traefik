@@ -1,4 +1,4 @@
-// Package dns implements the Azure ARM Dns service API version 2016-04-01.
+// Package dns implements the Azure ARM Dns service API version 2017-09-01.
 //
 // The DNS Management Client.
 package dns
@@ -29,21 +29,21 @@ const (
 	DefaultBaseURI = "https://management.azure.com"
 )
 
-// ManagementClient is the base client for Dns.
-type ManagementClient struct {
+// BaseClient is the base client for Dns.
+type BaseClient struct {
 	autorest.Client
 	BaseURI        string
 	SubscriptionID string
 }
 
-// New creates an instance of the ManagementClient client.
-func New(subscriptionID string) ManagementClient {
+// New creates an instance of the BaseClient client.
+func New(subscriptionID string) BaseClient {
 	return NewWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
-// NewWithBaseURI creates an instance of the ManagementClient client.
-func NewWithBaseURI(baseURI string, subscriptionID string) ManagementClient {
-	return ManagementClient{
+// NewWithBaseURI creates an instance of the BaseClient client.
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
+	return BaseClient{
 		Client:         autorest.NewClientWithUserAgent(UserAgent()),
 		BaseURI:        baseURI,
 		SubscriptionID: subscriptionID,

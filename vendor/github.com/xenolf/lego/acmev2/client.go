@@ -482,6 +482,7 @@ func (c *Client) createOrderForIdentifiers(domains []string) (orderResource, err
 
 	orderRes := orderResource{
 		URL:          hdr.Get("Location"),
+		Domains:      domains,
 		orderMessage: response,
 	}
 	return orderRes, nil
@@ -590,7 +591,7 @@ func (c *Client) requestCertificateForOrder(order orderResource, bundle bool, pr
 	}
 
 	// determine certificate name(s) based on the authorization resources
-	commonName := order.Identifiers[0].Value
+	commonName := order.Domains[0]
 	var san []string
 	for _, auth := range order.Identifiers {
 		san = append(san, auth.Value)
@@ -606,12 +607,7 @@ func (c *Client) requestCertificateForOrder(order orderResource, bundle bool, pr
 }
 
 func (c *Client) requestCertificateForCsr(order orderResource, bundle bool, csr []byte, privateKeyPem []byte) (CertificateResource, error) {
-	commonName := order.Identifiers[0].Value
-
-	var authURLs []string
-	for _, auth := range order.Identifiers[1:] {
-		authURLs = append(authURLs, auth.Value)
-	}
+	commonName := order.Domains[0]
 
 	csrString := base64.RawURLEncoding.EncodeToString(csr)
 	var retOrder orderMessage
