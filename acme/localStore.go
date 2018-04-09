@@ -26,7 +26,7 @@ func NewLocalStore(file string) *LocalStore {
 func (s *LocalStore) Get() (*Account, error) {
 	account := &Account{}
 
-	hasData, err := checkFile(s.file)
+	hasData, err := acme.CheckFile(s.file)
 	if err != nil {
 		return nil, err
 	}

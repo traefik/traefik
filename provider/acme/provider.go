@@ -116,7 +116,7 @@ func (p *Provider) init() error {
 
 	p.certificates, err = p.Store.GetCertificates()
 	if err != nil {
-		return fmt.Errorf("unable to get ACME account : %v", err)
+		return fmt.Errorf("unable to get ACME certificates : %v", err)
 	}
 
 	p.watchCertificate()

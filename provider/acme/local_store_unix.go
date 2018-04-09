@@ -8,9 +8,17 @@ import (
 )
 
 // Check file permissions and content size
-func checkFile(name string) (bool, error) {
+func CheckFile(name string) (bool, error) {
 	f, err := os.Open(name)
 	if err != nil {
+		if os.IsNotExist(err) {
+			f, err = os.Create(name)
+			if err != nil {
+				return false, err
+			}
+			f.Chmod(0600)
+			return false, nil
+		}
 		return false, err
 	}
 	defer f.Close()
