@@ -17,6 +17,9 @@ function Providers($resource, $q) {
         resourceProvider.get()
           .$promise
           .then((rawProviders) => {
+            delete rawProviders.acme;
+            delete rawProviders.ACME;
+
             for (let providerName in rawProviders) {
               if (rawProviders.hasOwnProperty(providerName)) {
                 if (!providerName.startsWith('$')) {
