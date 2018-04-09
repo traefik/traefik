@@ -15,21 +15,24 @@ import (
 
 func TestBuildConfiguration(t *testing.T) {
 	testCases := []struct {
-		desc     string
-		services map[string][]ecsInstance
-		expected *types.Configuration
-		err      error
+		desc      string
+		instances []ecsInstance
+		expected  *types.Configuration
+		err       error
 	}{
 		{
 			desc: "config parsed successfully",
-			services: map[string][]ecsInstance{
-				"testing": {{
+			instances: []ecsInstance{
+				{
 					Name: "instance",
 					ID:   "1",
 					containerDefinition: &ecs.ContainerDefinition{
 						DockerLabels: map[string]*string{},
 					},
 					machine: &ec2.Instance{
+						State: &ec2.InstanceState{
+							Name: aws.String(ec2.InstanceStateNameRunning),
+						},
 						PrivateIpAddress: aws.String("10.0.0.1"),
 					},
 					container: &ecs.Container{
@@ -37,11 +40,11 @@ func TestBuildConfiguration(t *testing.T) {
 							HostPort: aws.Int64(1337),
 						}},
 					},
-				}},
+				},
 			},
 			expected: &types.Configuration{
 				Backends: map[string]*types.Backend{
-					"backend-testing": {
+					"backend-instance": {
 						Servers: map[string]types.Server{
 							"server-instance-1": {
 								URL: "http://10.0.0.1:1337",
@@ -49,11 +52,11 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 				},
 				Frontends: map[string]*types.Frontend{
-					"frontend-testing": {
+					"frontend-instance": {
 						EntryPoints: []string{},
-						Backend:     "backend-testing",
+						Backend:     "backend-instance",
 						Routes: map[string]types.Route{
-							"route-frontend-testing": {
+							"route-frontend-instance": {
 								Rule: "Host:instance.",
 							},
 						},
@@ -65,8 +68,8 @@ func TestBuildConfiguration(t *testing.T) {
 		},
 		{
 			desc: "config parsed successfully with health check labels",
-			services: map[string][]ecsInstance{
-				"testing": {{
+			instances: []ecsInstance{
+				{
 					Name: "instance",
 					ID:   "1",
 					containerDefinition: &ecs.ContainerDefinition{
@@ -75,6 +78,9 @@ func TestBuildConfiguration(t *testing.T) {
 							label.TraefikBackendHealthCheckInterval: aws.String("1s"),
 						}},
 					machine: &ec2.Instance{
+						State: &ec2.InstanceState{
+							Name: aws.String(ec2.InstanceStateNameRunning),
+						},
 						PrivateIpAddress: aws.String("10.0.0.1"),
 					},
 					container: &ecs.Container{
@@ -82,11 +88,11 @@ func TestBuildConfiguration(t *testing.T) {
 							HostPort: aws.Int64(1337),
 						}},
 					},
-				}},
+				},
 			},
 			expected: &types.Configuration{
 				Backends: map[string]*types.Backend{
-					"backend-testing": {
+					"backend-instance": {
 						HealthCheck: &types.HealthCheck{
 							Path:     "/health",
 							Interval: "1s",
@@ -98,11 +104,11 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 				},
 				Frontends: map[string]*types.Frontend{
-					"frontend-testing": {
+					"frontend-instance": {
 						EntryPoints: []string{},
-						Backend:     "backend-testing",
+						Backend:     "backend-instance",
 						Routes: map[string]types.Route{
-							"route-frontend-testing": {
+							"route-frontend-instance": {
 								Rule: "Host:instance.",
 							},
 						},
@@ -114,8 +120,8 @@ func TestBuildConfiguration(t *testing.T) {
 		},
 		{
 			desc: "when all labels are set",
-			services: map[string][]ecsInstance{
-				"testing-instance": {{
+			instances: []ecsInstance{
+				{
 					Name: "testing-instance",
 					ID:   "6",
 					containerDefinition: &ecs.ContainerDefinition{
@@ -193,6 +199,9 @@ func TestBuildConfiguration(t *testing.T) {
 							label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitBurst:   aws.String("9"),
 						}},
 					machine: &ec2.Instance{
+						State: &ec2.InstanceState{
+							Name: aws.String(ec2.InstanceStateNameRunning),
+						},
 						PrivateIpAddress: aws.String("10.0.0.1"),
 					},
 					container: &ecs.Container{
@@ -200,7 +209,7 @@ func TestBuildConfiguration(t *testing.T) {
 							HostPort: aws.Int64(1337),
 						}},
 					},
-				}},
+				},
 			},
 			expected: &types.Configuration{
 				Backends: map[string]*types.Backend{
@@ -351,11 +360,11 @@ func TestBuildConfiguration(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			p := &Provider{}
+			p := &Provider{ExposedByDefault: true}
 
-			services := fakeLoadTraefikLabels(test.services)
+			instances := fakeLoadTraefikLabels(test.instances)
 
-			got, err := p.buildConfiguration(services)
+			got, err := p.buildConfiguration(instances)
 			assert.Equal(t, test.err, err) // , err.Error()
 			assert.Equal(t, test.expected, got, test.desc)
 		})
@@ -756,15 +765,11 @@ func simpleEcsInstanceNoNetwork(labels map[string]*string) ecsInstance {
 	})
 }
 
-func fakeLoadTraefikLabels(services map[string][]ecsInstance) map[string][]ecsInstance {
-	result := make(map[string][]ecsInstance)
-	for name, srcInstances := range services {
-		var instances []ecsInstance
-		for _, instance := range srcInstances {
-			instance.TraefikLabels = aws.StringValueMap(instance.containerDefinition.DockerLabels)
-			instances = append(instances, instance)
-		}
-		result[name] = instances
+func fakeLoadTraefikLabels(instances []ecsInstance) []ecsInstance {
+	var result []ecsInstance
+	for _, instance := range instances {
+		instance.TraefikLabels = aws.StringValueMap(instance.containerDefinition.DockerLabels)
+		result = append(result, instance)
 	}
 	return result
 }

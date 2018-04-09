@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"text/template"
 
+	"github.com/BurntSushi/ty/fun"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider/label"
@@ -12,7 +13,18 @@ import (
 
 // buildConfiguration fills the config template with the given instances
 // Deprecated
-func (p *Provider) buildConfigurationV1(services map[string][]ecsInstance) (*types.Configuration, error) {
+func (p *Provider) buildConfigurationV1(instances []ecsInstance) (*types.Configuration, error) {
+	instances = fun.Filter(p.filterInstance, instances).([]ecsInstance)
+
+	services := make(map[string][]ecsInstance)
+	for _, instance := range instances {
+		if serviceInstances, ok := services[instance.Name]; ok {
+			services[instance.Name] = append(serviceInstances, instance)
+		} else {
+			services[instance.Name] = []ecsInstance{instance}
+		}
+	}
+
 	var ecsFuncMap = template.FuncMap{
 		// Backend functions
 		"getHost": getHost,

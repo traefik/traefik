@@ -8,13 +8,26 @@ import (
 
 	"github.com/BurntSushi/ty/fun"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 )
 
 // buildConfiguration fills the config template with the given instances
-func (p *Provider) buildConfigurationV2(services map[string][]ecsInstance) (*types.Configuration, error) {
+func (p *Provider) buildConfigurationV2(instances []ecsInstance) (*types.Configuration, error) {
+	instances = fun.Filter(p.filterInstance, instances).([]ecsInstance)
+
+	services := make(map[string][]ecsInstance)
+	for _, instance := range instances {
+		if serviceInstances, ok := services[instance.Name]; ok {
+			services[instance.Name] = append(serviceInstances, instance)
+		} else {
+			services[instance.Name] = []ecsInstance{instance}
+		}
+	}
+
 	var ecsFuncMap = template.FuncMap{
 		// Backend functions
 		"getHost":           getHost,
@@ -46,6 +59,35 @@ func (p *Provider) buildConfigurationV2(services map[string][]ecsInstance) (*typ
 	}{
 		Services: services,
 	})
+}
+
+func (p *Provider) filterInstance(i ecsInstance) bool {
+	if labelPort := getStringValueV1(i, label.TraefikPort, ""); len(i.container.NetworkBindings) == 0 && labelPort == "" {
+		log.Debugf("Filtering ecs instance without port %s (%s)", i.Name, i.ID)
+		return false
+	}
+
+	if i.machine == nil || i.machine.State == nil || i.machine.State.Name == nil {
+		log.Debugf("Filtering ecs instance in an missing ec2 information %s (%s)", i.Name, i.ID)
+		return false
+	}
+
+	if aws.StringValue(i.machine.State.Name) != ec2.InstanceStateNameRunning {
+		log.Debugf("Filtering ecs instance in an incorrect state %s (%s) (state = %s)", i.Name, i.ID, aws.StringValue(i.machine.State.Name))
+		return false
+	}
+
+	if i.machine.PrivateIpAddress == nil {
+		log.Debugf("Filtering ecs instance without an ip address %s (%s)", i.Name, i.ID)
+		return false
+	}
+
+	if !isEnabled(i, p.ExposedByDefault) {
+		log.Debugf("Filtering disabled ecs instance %s (%s)", i.Name, i.ID)
+		return false
+	}
+
+	return true
 }
 
 func (p *Provider) getFrontendRule(i ecsInstance) string {
