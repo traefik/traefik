@@ -83,7 +83,7 @@ pages:
     - 'Backend: Mesos': 'configuration/backends/mesos.md'
     - 'Backend: Rancher': 'configuration/backends/rancher.md'
     - 'Backend: Rest': 'configuration/backends/rest.md'
-    - 'Backend: Service Fabric': 'configuration/backends/servicefabric.md'
+    - 'Backend: Azure Service Fabric': 'configuration/backends/servicefabric.md'
     - 'Backend: Zookeeper': 'configuration/backends/zookeeper.md'
     - 'API / Dashboard': 'configuration/api.md'
     - 'Ping': 'configuration/ping.md'
