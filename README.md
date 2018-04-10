@@ -74,7 +74,7 @@ _(But if you'd rather configure some of your routes manually, Træfik supports t
 - [Kubernetes](docs/configuration/backends/kubernetes/)
 - [Mesos](docs/configuration/backends/mesos/) / [Marathon](docs/configuration/backends/marathon/)
 - [Rancher](docs/configuration/backends/rancher/) (API, Metadata)
-- [Service Fabric](docs/configuration/backends/servicefabric/)
+- [Azure Service Fabric](docs/configuration/backends/servicefabric/)
 - [Consul Catalog](docs/configuration/backends/consulcatalog/)
 - [Consul](docs/configuration/backends/consul/) / [Etcd](docs/configuration/backends/etcd/) / [Zookeeper](docs/configuration/backends/zookeeper/) / [BoltDB](docs/configuration/backends/boltdb/)
 - [Eureka](docs/configuration/backends/eureka/)
