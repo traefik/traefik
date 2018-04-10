@@ -156,12 +156,12 @@ func (c *CircuitBreaker) activateFallback(w http.ResponseWriter, req *http.Reque
 
 func (c *CircuitBreaker) serve(w http.ResponseWriter, req *http.Request) {
 	start := c.clock.UtcNow()
-	p := &utils.ProxyWriter{W: w}
+	p := utils.NewSimpleProxyWriter(w)
 
 	c.next.ServeHTTP(p, req)
 
 	latency := c.clock.UtcNow().Sub(start)
-	c.metrics.Record(p.Code, latency)
+	c.metrics.Record(p.StatusCode(), latency)
 
 	// Note that this call is less expensive than it looks -- checkCondition only performs the real check
 	// periodically. Because of that we can afford to call it here on every single response.
