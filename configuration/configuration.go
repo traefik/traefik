@@ -331,6 +331,10 @@ func (gc *GlobalConfiguration) initACMEProvider() {
 			log.Warn("ACME.OnDemand is deprecated")
 		}
 
+		if gc.ACME.HTTPChallenge == nil && gc.ACME.DNSChallenge == nil {
+			log.Error("No challenge define for ACME, please use HTTPChallenge or DNSChallenge.")
+		}
+
 		// TODO: Remove when Provider ACME will replace totally ACME
 		// If provider file, use Provider ACME instead of ACME
 		if gc.Cluster == nil {
