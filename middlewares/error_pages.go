@@ -17,14 +17,14 @@ import (
 // Compile time validation that the response recorder implements http interfaces correctly.
 var _ Stateful = &errorPagesResponseRecorderWithCloseNotify{}
 
-//ErrorPagesHandler is a middleware that provides the custom error pages
+// ErrorPagesHandler is a middleware that provides the custom error pages
 type ErrorPagesHandler struct {
 	HTTPCodeRanges     types.HTTPCodeRanges
 	BackendURL         string
-	errorPageForwarder *forward.Forwarder
+	errorPageForwarder http.Handler
 }
 
-//NewErrorPagesHandler initializes the utils.ErrorHandler for the custom error pages
+// NewErrorPagesHandler initializes the utils.ErrorHandler for the custom error pages
 func NewErrorPagesHandler(errorPage *types.ErrorPage, backendURL string) (*ErrorPagesHandler, error) {
 	fwd, err := forward.New()
 	if err != nil {
@@ -37,10 +37,10 @@ func NewErrorPagesHandler(errorPage *types.ErrorPage, backendURL string) (*Error
 	}
 
 	return &ErrorPagesHandler{
-			HTTPCodeRanges:     httpCodeRanges,
-			BackendURL:         backendURL + errorPage.Query,
-			errorPageForwarder: fwd},
-		nil
+		HTTPCodeRanges:     httpCodeRanges,
+		BackendURL:         backendURL + errorPage.Query,
+		errorPageForwarder: fwd,
+	}, nil
 }
 
 func (ep *ErrorPagesHandler) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
@@ -49,11 +49,14 @@ func (ep *ErrorPagesHandler) ServeHTTP(w http.ResponseWriter, req *http.Request,
 	next.ServeHTTP(recorder, req)
 
 	w.WriteHeader(recorder.GetCode())
-	//check the recorder code against the configured http status code ranges
+
+	// check the recorder code against the configured http status code ranges
 	for _, block := range ep.HTTPCodeRanges {
 		if recorder.GetCode() >= block[0] && recorder.GetCode() <= block[1] {
 			log.Errorf("Caught HTTP Status Code %d, returning error page", recorder.GetCode())
+
 			finalURL := strings.Replace(ep.BackendURL, "{status}", strconv.Itoa(recorder.GetCode()), -1)
+
 			if newReq, err := http.NewRequest(http.MethodGet, finalURL, nil); err != nil {
 				w.Write([]byte(http.StatusText(recorder.GetCode())))
 			} else {
@@ -63,7 +66,7 @@ func (ep *ErrorPagesHandler) ServeHTTP(w http.ResponseWriter, req *http.Request,
 		}
 	}
 
-	//did not catch a configured status code so proceed with the request
+	// did not catch a configured status code so proceed with the request
 	utils.CopyHeaders(w.Header(), recorder.Header())
 	w.Write(recorder.GetBody().Bytes())
 }
