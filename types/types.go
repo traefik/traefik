@@ -70,6 +70,7 @@ type WhiteList struct {
 // HealthCheck holds HealthCheck configuration
 type HealthCheck struct {
 	Headers  map[string]string `json:"headers,omitempty"`
+	Hostname string            `json:"hostname,omitempty"`
 	Path     string            `json:"path,omitempty"`
 	Port     int               `json:"port,omitempty"`
 	Interval string            `json:"interval,omitempty"`

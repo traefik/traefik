@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -31,6 +30,7 @@ func GetHealthCheck(metrics metricsRegistry) *HealthCheck {
 // Options are the public health check options.
 type Options struct {
 	Headers   map[string]string
+	Hostname  string
 	Path      string
 	Port      int
 	Transport http.RoundTripper
@@ -39,7 +39,7 @@ type Options struct {
 }
 
 func (opt Options) String() string {
-	return fmt.Sprintf("[Headers: %v Path: %s Port: %d Interval: %s]", opt.Headers, opt.Path, opt.Port, opt.Interval)
+	return fmt.Sprintf("[Hostname: %s Headers: %v Path: %s Port: %d Interval: %s]", opt.Hostname, opt.Headers, opt.Path, opt.Port, opt.Interval)
 }
 
 // BackendHealthCheck HealthCheck configuration for a backend
@@ -165,14 +165,13 @@ func (backend *BackendHealthCheck) newRequest(serverURL *url.URL) (*http.Request
 	return http.NewRequest(http.MethodGet, u.String(), nil)
 }
 
-// this function adds additional httpheaders to http.request
-func (backend *BackendHealthCheck) addHeaders(req *http.Request) *http.Request {
+// this function adds additional httpheaders and hostname to http.request
+func (backend *BackendHealthCheck) addHeadersAndHost(req *http.Request) *http.Request {
+	if backend.Options.Hostname != "" {
+		req.Host = backend.Options.Hostname
+	}
 	for k, v := range backend.Options.Headers {
-		if strings.ToLower(k) == "host" {
-			req.Host = v
-		} else {
-			req.Header.Set(k, v)
-		}
+		req.Header.Set(k, v)
 	}
 	return req
 }
@@ -188,7 +187,7 @@ func checkHealth(serverURL *url.URL, backend *BackendHealthCheck) error {
 	if err != nil {
 		return fmt.Errorf("failed to create HTTP request: %s", err)
 	}
-	req = backend.addHeaders(req)
+	req = backend.addHeadersAndHost(req)
 
 	resp, err := client.Do(req)
 	if err == nil {

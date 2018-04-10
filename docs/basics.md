@@ -424,17 +424,18 @@ To use a different port for the healthcheck:
     port = 8080
 ```
 
-Additional http headers to healthcheck request can be specified under `headers`, for instance:
+Additional http headers and hostname to healthcheck request can be specified, for instance:
 ```toml
 [backends]
   [backends.backend1]
     [backends.backend1.healthcheck]
     path = "/health"
     interval = "10s"
+    hostname = "myhost.com"
     port = 8080
       [backends.backend1.healthcheck.headers]
-      host = "myhost.com"
-      mycustomheader = "foobar"
+      mycustomheader = "foo"
+      myheader2 = "bar"
 ```
 
 ### Servers

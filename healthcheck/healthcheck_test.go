@@ -205,6 +205,7 @@ func TestNewRequestWithAddHeaders(t *testing.T) {
 		desc      string
 		host      string
 		headers   map[string]string
+		hostname  string
 		port      int
 		path      string
 		expected  string
@@ -213,7 +214,8 @@ func TestNewRequestWithAddHeaders(t *testing.T) {
 		{
 			desc:      "override hostname",
 			host:      "backend1:80",
-			headers:   map[string]string{"host": "myhost"},
+			headers:   map[string]string{},
+			hostname:  "myhost",
 			port:      0,
 			path:      "/",
 			expected:  "myhost",
@@ -223,6 +225,7 @@ func TestNewRequestWithAddHeaders(t *testing.T) {
 			desc:      "not override hostname",
 			host:      "backend1:80",
 			headers:   map[string]string{},
+			hostname:  "",
 			port:      0,
 			path:      "/",
 			expected:  "backend1:80",
@@ -232,6 +235,7 @@ func TestNewRequestWithAddHeaders(t *testing.T) {
 			desc:      "custom header",
 			host:      "backend1:80",
 			headers:   map[string]string{"customheader": "foo"},
+			hostname:  "",
 			port:      0,
 			path:      "/",
 			expected:  "backend1:80",
@@ -240,7 +244,8 @@ func TestNewRequestWithAddHeaders(t *testing.T) {
 		{
 			desc:      "custom header with host override",
 			host:      "backend1:80",
-			headers:   map[string]string{"host": "myhost", "customheader": "foo"},
+			headers:   map[string]string{"customheader": "foo"},
+			hostname:  "myhost",
 			port:      0,
 			path:      "/",
 			expected:  "myhost",
@@ -254,9 +259,10 @@ func TestNewRequestWithAddHeaders(t *testing.T) {
 			t.Parallel()
 			backend := NewBackendHealthCheck(
 				Options{
-					Path:    test.path,
-					Port:    test.port,
-					Headers: test.headers,
+					Hostname: test.hostname,
+					Path:     test.path,
+					Port:     test.port,
+					Headers:  test.headers,
 				}, "backendName")
 
 			u := &url.URL{
@@ -269,7 +275,7 @@ func TestNewRequestWithAddHeaders(t *testing.T) {
 				t.Fatalf("failed to create new backend request: %s", err)
 			}
 
-			req = backend.addHeaders(req)
+			req = backend.addHeadersAndHost(req)
 
 			actual := req.Host
 			if actual != test.expected {
