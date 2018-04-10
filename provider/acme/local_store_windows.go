@@ -2,11 +2,18 @@ package acme
 
 import "os"
 
-// Check file content size
+// CheckFile checks file content size
 // Do not check file permissions on Windows right now
-func checkFile(name string) (bool, error) {
+func CheckFile(name string) (bool, error) {
 	f, err := os.Open(name)
 	if err != nil {
+		if os.IsNotExist(err) {
+			f, err = os.Create(name)
+			if err != nil {
+				return false, err
+			}
+			return false, f.Chmod(0600)
+		}
 		return false, err
 	}
 	defer f.Close()

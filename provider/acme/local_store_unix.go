@@ -7,10 +7,17 @@ import (
 	"os"
 )
 
-// Check file permissions and content size
-func checkFile(name string) (bool, error) {
+// CheckFile checks file permissions and content size
+func CheckFile(name string) (bool, error) {
 	f, err := os.Open(name)
 	if err != nil {
+		if os.IsNotExist(err) {
+			f, err = os.Create(name)
+			if err != nil {
+				return false, err
+			}
+			return false, f.Chmod(0600)
+		}
 		return false, err
 	}
 	defer f.Close()
