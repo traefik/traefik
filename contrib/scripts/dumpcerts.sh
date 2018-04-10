@@ -66,7 +66,7 @@ ${USAGE}" >&2
 
 bad_acme() {
 	echo "
-There was a problem parsing your acme.json file. $1
+There was a problem parsing your acme.json file.
 
 ${USAGE}" >&2
 	exit 2
