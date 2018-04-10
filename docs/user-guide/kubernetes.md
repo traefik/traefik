@@ -398,7 +398,7 @@ It's possible to protect access to Træfik through basic authentication. (See th
 
 ### Creating the Secret
 
-A. Use `htpasswd` to create a file containing the username and the base64-encoded password:
+A. Use `htpasswd` to create a file containing the username and the MD5-encoded password:
 
 ```shell
 htpasswd -c ./auth myusername
