@@ -149,7 +149,7 @@ func TestProviderBuildConfigurationV1(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-0": {
 							URL:    "http://127.0.0.1:80",
-							Weight: 0,
+							Weight: label.DefaultWeight,
 						},
 					},
 					CircuitBreaker: nil,

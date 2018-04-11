@@ -43,9 +43,9 @@ func (p *Provider) buildConfigurationV2(applications *marathon.Applications) *ty
 		"getSegmentNameSuffix": getSegmentNameSuffix,
 		"getFrontendRule":      p.getFrontendRule,
 		"getFrontendName":      p.getFrontendName,
-		"getPassHostHeader":    label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
+		"getPassHostHeader":    label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getPassTLSCert":       label.GetFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getPriority":          label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
+		"getPriority":          label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
 		"getEntryPoints":       label.GetFuncSliceString(label.TraefikFrontendEntryPoints),
 		"getBasicAuth":         label.GetFuncSliceString(label.TraefikFrontendAuthBasic),
 		"getRedirect":          label.GetRedirect,
@@ -339,7 +339,7 @@ func (p *Provider) getServer(app appData, task marathon.Task) (string, *types.Se
 
 	return serverName, &types.Server{
 		URL:    fmt.Sprintf("%s://%s:%v", protocol, host, port),
-		Weight: label.GetIntValue(app.SegmentLabels, label.TraefikWeight, label.DefaultWeightInt),
+		Weight: label.GetIntValue(app.SegmentLabels, label.TraefikWeight, label.DefaultWeight),
 	}, nil
 }
 

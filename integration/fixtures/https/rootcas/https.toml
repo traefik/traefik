@@ -32,6 +32,7 @@ fblo6RBxUQ==
   [backends.backend1]
     [backends.backend1.servers.server1]
     url = "{{ .BackendHost }}"
+    weight = 1
 
 [frontends]
   [frontends.frontend1]

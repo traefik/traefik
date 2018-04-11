@@ -52,6 +52,6 @@ func getProtocol(instance eureka.InstanceInfo) string {
 	return label.DefaultProtocol
 }
 
-func getWeight(instance eureka.InstanceInfo) string {
-	return label.GetStringValue(instance.Metadata.Map, label.TraefikWeight, label.DefaultWeight)
+func getWeight(instance eureka.InstanceInfo) int {
+	return label.GetIntValue(instance.Metadata.Map, label.TraefikWeight, label.DefaultWeight)
 }

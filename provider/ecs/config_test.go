@@ -47,7 +47,8 @@ func TestBuildConfiguration(t *testing.T) {
 					"backend-instance": {
 						Servers: map[string]types.Server{
 							"server-instance-1": {
-								URL: "http://10.0.0.1:1337",
+								URL:    "http://10.0.0.1:1337",
+								Weight: label.DefaultWeight,
 							}},
 					},
 				},
@@ -99,7 +100,8 @@ func TestBuildConfiguration(t *testing.T) {
 						},
 						Servers: map[string]types.Server{
 							"server-instance-1": {
-								URL: "http://10.0.0.1:1337",
+								URL:    "http://10.0.0.1:1337",
+								Weight: label.DefaultWeight,
 							}},
 					},
 				},

@@ -56,7 +56,7 @@ func TestDockerBuildConfigurationV1(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-test": {
 							URL:    "http://127.0.0.1:80",
-							Weight: 0,
+							Weight: label.DefaultWeight,
 						},
 					},
 					CircuitBreaker: nil,
@@ -584,17 +584,17 @@ func TestDockerGetFuncStringLabelV1(t *testing.T) {
 	}{
 		{
 			container:    containerJSON(),
-			labelName:    label.TraefikWeight,
-			defaultValue: label.DefaultWeight,
-			expected:     "0",
+			labelName:    label.TraefikProtocol,
+			defaultValue: label.DefaultProtocol,
+			expected:     "http",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				label.TraefikWeight: "10",
+				label.TraefikProtocol: "https",
 			})),
-			labelName:    label.TraefikWeight,
-			defaultValue: label.DefaultWeight,
-			expected:     "10",
+			labelName:    label.TraefikProtocol,
+			defaultValue: label.DefaultProtocol,
+			expected:     "https",
 		},
 	}
 

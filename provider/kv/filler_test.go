@@ -116,9 +116,9 @@ func TestFiller(t *testing.T) {
 		{Key: "traefik/backends/backend.with.dot.too/servers", Value: []byte("")},
 		{Key: "traefik/backends/backend.with.dot.too/servers/server.with.dot", Value: []byte("")},
 		{Key: "traefik/backends/backend.with.dot.too/servers/server.with.dot.without.url", Value: []byte("")},
-		{Key: "traefik/backends/backend.with.dot.too/servers/server.with.dot.without.url/weight", Value: []byte("0")},
+		{Key: "traefik/backends/backend.with.dot.too/servers/server.with.dot.without.url/weight", Value: []byte("1")},
 		{Key: "traefik/backends/backend.with.dot.too/servers/server.with.dot/url", Value: []byte("http://172.17.0.2:80")},
-		{Key: "traefik/backends/backend.with.dot.too/servers/server.with.dot/weight", Value: []byte("0")},
+		{Key: "traefik/backends/backend.with.dot.too/servers/server.with.dot/weight", Value: []byte("1")},
 		{Key: "traefik/frontends/frontend.with.dot", Value: []byte("")},
 		{Key: "traefik/frontends/frontend.with.dot/backend", Value: []byte("backend.with.dot.too")},
 		{Key: "traefik/frontends/frontend.with.dot/errors", Value: []byte("")},
@@ -157,8 +157,8 @@ func TestFiller(t *testing.T) {
 				withLimit("bar", "3", "6", "9"))),
 		backend("backend.with.dot.too",
 			withPair("servers/server.with.dot/url", "http://172.17.0.2:80"),
-			withPair("servers/server.with.dot/weight", "0"),
-			withPair("servers/server.with.dot.without.url/weight", "0")),
+			withPair("servers/server.with.dot/weight", "1"),
+			withPair("servers/server.with.dot.without.url/weight", "1")),
 	)
 	assert.EqualValues(t, expected, pairs1)
 
@@ -181,8 +181,8 @@ func TestFiller(t *testing.T) {
 			withPair("ratelimit/rateset/bar/period", "9")),
 		entry("backends/backend.with.dot.too",
 			withPair("servers/server.with.dot/url", "http://172.17.0.2:80"),
-			withPair("servers/server.with.dot/weight", "0"),
-			withPair("servers/server.with.dot.without.url/weight", "0")),
+			withPair("servers/server.with.dot/weight", "1"),
+			withPair("servers/server.with.dot.without.url/weight", "1")),
 	)
 	assert.EqualValues(t, expected, pairs2)
 }

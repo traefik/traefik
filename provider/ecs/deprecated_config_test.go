@@ -45,7 +45,8 @@ func TestBuildConfigurationV1(t *testing.T) {
 					"backend-testing": {
 						Servers: map[string]types.Server{
 							"server-testing1": {
-								URL: "http://10.0.0.1:1337",
+								URL:    "http://10.0.0.1:1337",
+								Weight: label.DefaultWeight,
 							}},
 						LoadBalancer: &types.LoadBalancer{
 							Method: "wrr",
@@ -100,7 +101,8 @@ func TestBuildConfigurationV1(t *testing.T) {
 						},
 						Servers: map[string]types.Server{
 							"server-testing1": {
-								URL: "http://10.0.0.1:1337",
+								URL:    "http://10.0.0.1:1337",
+								Weight: label.DefaultWeight,
 							}},
 						LoadBalancer: &types.LoadBalancer{
 							Method: "wrr",

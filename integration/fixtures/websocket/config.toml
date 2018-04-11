@@ -6,7 +6,6 @@ logLevel = "DEBUG"
   [entryPoints.http]
   address = ":8000"
 
-
 [api]
 
 [file]
@@ -15,6 +14,7 @@ logLevel = "DEBUG"
   [backends.backend1]
     [backends.backend1.servers.server1]
     url = "{{ .WebsocketServer }}"
+    weight = 1
 
 [frontends]
   [frontends.frontend1]

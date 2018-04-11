@@ -18,7 +18,7 @@ func (p *Provider) buildConfigurationV1(services []rancherData) *types.Configura
 		// Backend functions
 		"getPort":                     getFuncStringV1(label.TraefikPort, ""),
 		"getProtocol":                 getFuncStringV1(label.TraefikProtocol, label.DefaultProtocol),
-		"getWeight":                   getFuncIntV1(label.TraefikWeight, label.DefaultWeightInt),
+		"getWeight":                   getFuncIntV1(label.TraefikWeight, label.DefaultWeight),
 		"hasCircuitBreakerLabel":      hasFuncV1(label.TraefikBackendCircuitBreakerExpression),
 		"getCircuitBreakerExpression": getFuncStringV1(label.TraefikBackendCircuitBreakerExpression, label.DefaultCircuitBreakerExpression),
 		"hasLoadBalancerLabel":        hasLoadBalancerLabel,
@@ -33,8 +33,8 @@ func (p *Provider) buildConfigurationV1(services []rancherData) *types.Configura
 		// Frontend functions
 		"getBackend":             getBackendNameV1,
 		"getFrontendRule":        p.getFrontendRuleV1,
-		"getPriority":            getFuncIntV1(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
-		"getPassHostHeader":      getFuncBoolV1(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
+		"getPriority":            getFuncIntV1(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
+		"getPassHostHeader":      getFuncBoolV1(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getEntryPoints":         getFuncSliceStringV1(label.TraefikFrontendEntryPoints),
 		"getBasicAuth":           getFuncSliceStringV1(label.TraefikFrontendAuthBasic),
 		"hasRedirect":            hasRedirect,

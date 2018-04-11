@@ -29,8 +29,8 @@ func (p *Provider) buildConfigurationV2(services []rancherData) *types.Configura
 		// Frontend functions
 		"getBackendName":    getBackendName,
 		"getFrontendRule":   p.getFrontendRule,
-		"getPriority":       label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
-		"getPassHostHeader": label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
+		"getPriority":       label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
+		"getPassHostHeader": label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getPassTLSCert":    label.GetFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getEntryPoints":    label.GetFuncSliceString(label.TraefikFrontendEntryPoints),
 		"getBasicAuth":      label.GetFuncSliceString(label.TraefikFrontendAuthBasic),
@@ -170,7 +170,7 @@ func getServers(service rancherData) map[string]types.Server {
 
 		protocol := label.GetStringValue(service.SegmentLabels, label.TraefikProtocol, label.DefaultProtocol)
 		port := label.GetStringValue(service.SegmentLabels, label.TraefikPort, "")
-		weight := label.GetIntValue(service.SegmentLabels, label.TraefikWeight, label.DefaultWeightInt)
+		weight := label.GetIntValue(service.SegmentLabels, label.TraefikWeight, label.DefaultWeight)
 
 		serverName := "server-" + strconv.Itoa(index)
 		servers[serverName] = types.Server{

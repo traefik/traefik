@@ -267,7 +267,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 							templateObjects.Backends[baseName].Servers[name] = types.Server{
 								URL:    url,
-								Weight: 1,
+								Weight: label.DefaultWeight,
 							}
 						} else {
 							endpoints, exists, err := k8sClient.GetEndpoints(service.Namespace, service.Name)
@@ -295,7 +295,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 									}
 									templateObjects.Backends[baseName].Servers[name] = types.Server{
 										URL:    url,
-										Weight: 1,
+										Weight: label.DefaultWeight,
 									}
 								}
 							}

@@ -32,8 +32,8 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					withPair("routes/route.with.dot/rule", "Host:test.localhost")),
 				backend("backend.with.dot.too",
 					withPair("servers/server.with.dot/url", "http://172.17.0.2:80"),
-					withPair("servers/server.with.dot/weight", "0"),
-					withPair("servers/server.with.dot.without.url/weight", "0")),
+					withPair("servers/server.with.dot/weight", strconv.Itoa(label.DefaultWeight)),
+					withPair("servers/server.with.dot.without.url/weight", strconv.Itoa(label.DefaultWeight))),
 			),
 			expected: &types.Configuration{
 				Backends: map[string]*types.Backend{
@@ -42,7 +42,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						Servers: map[string]types.Server{
 							"server.with.dot": {
 								URL:    "http://172.17.0.2:80",
-								Weight: 0,
+								Weight: label.DefaultWeight,
 							},
 						},
 					},
@@ -82,8 +82,8 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					withPair(pathBackendBufferingMemRequestBodyBytes, "2097152"),
 					withPair(pathBackendBufferingRetryExpression, "IsNetworkError() && Attempts() <= 2"),
 					withPair("servers/server1/url", "http://172.17.0.2:80"),
-					withPair("servers/server1/weight", "0"),
-					withPair("servers/server2/weight", "0")),
+					withPair("servers/server1/weight", strconv.Itoa(label.DefaultWeight)),
+					withPair("servers/server2/weight", strconv.Itoa(label.DefaultWeight))),
 				frontend("frontend1",
 					withPair(pathFrontendBackend, "backend1"),
 					withPair(pathFrontendPriority, "6"),
@@ -148,7 +148,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						Servers: map[string]types.Server{
 							"server1": {
 								URL:    "http://172.17.0.2:80",
-								Weight: 0,
+								Weight: label.DefaultWeight,
 							},
 						},
 						CircuitBreaker: &types.CircuitBreaker{
@@ -2012,7 +2012,7 @@ func TestProviderGetServers(t *testing.T) {
 			expected: map[string]types.Server{
 				"server1": {
 					URL:    "http://172.17.0.2:80",
-					Weight: 0,
+					Weight: label.DefaultWeight,
 				},
 			},
 		},
@@ -2027,7 +2027,7 @@ func TestProviderGetServers(t *testing.T) {
 			expected: map[string]types.Server{
 				"server1": {
 					URL:    "http://172.17.0.2:80",
-					Weight: 0,
+					Weight: label.DefaultWeight,
 				},
 				"server2": {
 					URL:    "http://172.17.0.3:80",

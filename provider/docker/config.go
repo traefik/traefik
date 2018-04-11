@@ -40,8 +40,8 @@ func (p *Provider) buildConfigurationV2(containersInspected []dockerData) *types
 
 		// Frontend functions
 		"getBackendName":    getBackendName,
-		"getPriority":       label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
-		"getPassHostHeader": label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
+		"getPriority":       label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
+		"getPassHostHeader": label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getPassTLSCert":    label.GetFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getEntryPoints":    label.GetFuncSliceString(label.TraefikFrontendEntryPoints),
 		"getBasicAuth":      label.GetFuncSliceString(label.TraefikFrontendAuthBasic),
@@ -318,7 +318,7 @@ func (p *Provider) getServers(containers []dockerData) map[string]types.Server {
 
 		servers[provider.Normalize(serverName)] = types.Server{
 			URL:    fmt.Sprintf("%s://%s:%s", protocol, ip, port),
-			Weight: label.GetIntValue(container.SegmentLabels, label.TraefikWeight, label.DefaultWeightInt),
+			Weight: label.GetIntValue(container.SegmentLabels, label.TraefikWeight, label.DefaultWeight),
 		}
 	}
 

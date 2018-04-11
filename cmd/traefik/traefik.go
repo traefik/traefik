@@ -35,6 +35,7 @@ import (
 	"github.com/coreos/go-systemd/daemon"
 	"github.com/ogier/pflag"
 	"github.com/sirupsen/logrus"
+	"github.com/vulcand/oxy/roundrobin"
 )
 
 func main() {
@@ -154,6 +155,10 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 	}
 
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
+
+	if globalConfiguration.AllowMinWeightZero {
+		roundrobin.SetDefaultWeight(0)
+	}
 
 	globalConfiguration.SetEffectiveConfiguration(configFile)
 	globalConfiguration.ValidateConfiguration()

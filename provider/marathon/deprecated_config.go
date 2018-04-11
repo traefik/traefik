@@ -27,7 +27,7 @@ func (p *Provider) buildConfigurationV1(applications *marathon.Applications) *ty
 		"getPort":          getPortV1,
 		"getServers":       p.getServersV1,
 
-		"getWeight":                   getFuncIntServiceV1(label.SuffixWeight, label.DefaultWeightInt),
+		"getWeight":                   getFuncIntServiceV1(label.SuffixWeight, label.DefaultWeight),
 		"getProtocol":                 getFuncStringServiceV1(label.SuffixProtocol, label.DefaultProtocol),
 		"hasCircuitBreakerLabels":     hasFuncV1(label.TraefikBackendCircuitBreakerExpression),
 		"getCircuitBreakerExpression": getFuncStringV1(label.TraefikBackendCircuitBreakerExpression, label.DefaultCircuitBreakerExpression),
@@ -46,9 +46,9 @@ func (p *Provider) buildConfigurationV1(applications *marathon.Applications) *ty
 		// Frontend functions
 		"getServiceNames":         getServiceNamesV1,
 		"getServiceNameSuffix":    getSegmentNameSuffix,
-		"getPassHostHeader":       getFuncBoolServiceV1(label.SuffixFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
+		"getPassHostHeader":       getFuncBoolServiceV1(label.SuffixFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getPassTLSCert":          getFuncBoolServiceV1(label.SuffixFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getPriority":             getFuncIntServiceV1(label.SuffixFrontendPriority, label.DefaultFrontendPriorityInt),
+		"getPriority":             getFuncIntServiceV1(label.SuffixFrontendPriority, label.DefaultFrontendPriority),
 		"getEntryPoints":          getFuncSliceStringServiceV1(label.SuffixFrontendEntryPoints),
 		"getFrontendRule":         p.getFrontendRuleV1,
 		"getFrontendName":         p.getFrontendNameV1,
@@ -323,7 +323,7 @@ func (p *Provider) getServersV1(application marathon.Application, serviceName st
 		serverName := provider.Normalize("server-" + task.ID + getSegmentNameSuffix(serviceName))
 		servers[serverName] = types.Server{
 			URL:    fmt.Sprintf("%s://%s:%v", protocol, host, port),
-			Weight: label.GetIntValue(labels, getLabelNameV1(serviceName, label.SuffixWeight), label.DefaultWeightInt),
+			Weight: label.GetIntValue(labels, getLabelNameV1(serviceName, label.SuffixWeight), label.DefaultWeight),
 		}
 	}
 

@@ -25,6 +25,7 @@ caServer = "http://wrongurl:4001/directory"
   [backends.backend]
     [backends.backend.servers.server1]
     url = "http://127.0.0.1:9010"
+    weight = 1
 
 
 [frontends]

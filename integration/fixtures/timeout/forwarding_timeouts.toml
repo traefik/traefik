@@ -22,9 +22,11 @@ responseHeaderTimeout = "300ms"
     # Non-routable IP address that should always deliver a dial timeout.
     # See: https://stackoverflow.com/questions/100841/artificially-create-a-connection-timeout-error#answer-904609
     url = "http://50.255.255.1"
+    weight = 1
   [backends.backend2]
     [backends.backend2.servers.server2]
     url = "http://{{.TimeoutEndpoint}}:9000"
+    weight = 1
 
 [frontends]
   [frontends.frontend1]
