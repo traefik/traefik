@@ -11,6 +11,7 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/types"
+	"github.com/pkg/errors"
 	"github.com/vulcand/oxy/forward"
 	"github.com/vulcand/oxy/utils"
 )
@@ -30,6 +31,10 @@ type Handler struct {
 
 // NewHandler initializes the utils.ErrorHandler for the custom error pages
 func NewHandler(errorPage *types.ErrorPage, backendName string) (*Handler, error) {
+	if len(backendName) == 0 {
+		return nil, errors.New("error pages: backend name is mandatory ")
+	}
+
 	httpCodeRanges, err := types.NewHTTPCodeRanges(errorPage.Status)
 	if err != nil {
 		return nil, err
@@ -43,7 +48,7 @@ func NewHandler(errorPage *types.ErrorPage, backendName string) (*Handler, error
 	}, nil
 }
 
-// PostLoad add backend handler if available
+// PostLoad adds backend handler if available
 func (ep *Handler) PostLoad(backendHandler http.Handler) error {
 	if backendHandler == nil {
 		fwd, err := forward.New()
@@ -61,7 +66,8 @@ func (ep *Handler) PostLoad(backendHandler http.Handler) error {
 }
 
 func (ep *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
-	if ep.backendHandler == nil || len(ep.BackendName) == 0 {
+	if ep.backendHandler == nil {
+		log.Error("Error pages: no backend handler.")
 		next.ServeHTTP(w, req)
 		return
 	}
@@ -135,20 +141,17 @@ type responseRecorderWithCloseNotify struct {
 }
 
 // CloseNotify returns a channel that receives at most a
-// single value (true) when the client connection has gone
-// away.
+// single value (true) when the client connection has gone away.
 func (rw *responseRecorderWithCloseNotify) CloseNotify() <-chan bool {
 	return rw.responseWriter.(http.CloseNotifier).CloseNotify()
 }
 
 // Header returns the response headers.
 func (rw *responseRecorderWithoutCloseNotify) Header() http.Header {
-	m := rw.HeaderMap
-	if m == nil {
-		m = make(http.Header)
-		rw.HeaderMap = m
+	if rw.HeaderMap == nil {
+		rw.HeaderMap = make(http.Header)
 	}
-	return m
+	return rw.HeaderMap
 }
 
 func (rw *responseRecorderWithoutCloseNotify) GetCode() int {
@@ -195,8 +198,8 @@ func (rw *responseRecorderWithoutCloseNotify) Flush() {
 		rw.err = err
 	}
 	rw.Body.Reset()
-	flusher, ok := rw.responseWriter.(http.Flusher)
-	if ok {
+
+	if flusher, ok := rw.responseWriter.(http.Flusher); ok {
 		flusher.Flush()
 	}
 }

@@ -913,7 +913,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 	redirectHandlers := make(map[string]negroni.Handler)
 	backends := map[string]http.Handler{}
 	backendsHealthCheck := map[string]*healthcheck.BackendHealthCheck{}
-	errorPageHandlers := make(map[string]*errorpages.Handler)
+	var errorPageHandlers []*errorpages.Handler
 
 	errorHandler := NewRecordingErrorHandler(middlewares.DefaultNetErrorRecorder{})
 
@@ -1102,13 +1102,13 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 							} else {
 								errorPagesHandler, err := errorpages.NewHandler(errorPage, entryPointName+providerName+errorPage.Backend)
 								if err != nil {
-									log.Error(err)
+									log.Errorf("Error creating error pages: %v", err)
 								} else {
 									if errorPageServer, ok := config.Backends[errorPage.Backend].Servers["error"]; ok {
 										errorPagesHandler.FallbackURL = errorPageServer.URL
 									}
 
-									errorPageHandlers[entryPointName+providerName+frontendName+errorPageName] = errorPagesHandler
+									errorPageHandlers = append(errorPageHandlers, errorPagesHandler)
 									n.Use(errorPagesHandler)
 								}
 							}
