@@ -231,7 +231,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
         status = [{{range $page.Status }}
           "{{.}}",
           {{end}}]
-        backend = "{{ $page.Backend }}"
+        backend = "backend-{{ $page.Backend }}"
         query = "{{ $page.Query }}"
       {{end}}
     {{end}}
@@ -632,7 +632,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
         status = [{{range $page.Status }}
           "{{.}}",
           {{end}}]
-        backend = "{{ $page.Backend }}"
+        backend = "backend-{{ $page.Backend }}"
         query = "{{ $page.Query }}"
       {{end}}
     {{end}}
@@ -884,7 +884,7 @@ var _templatesEcsTmpl = []byte(`[backends]
         status = [{{range $page.Status }}
           "{{.}}",
           {{end}}]
-        backend = "{{ $page.Backend }}"
+        backend = "backend-{{ $page.Backend }}"
         query = "{{ $page.Query }}"
       {{end}}
     {{end}}
@@ -1588,7 +1588,7 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
         status = [{{range $page.Status }}
           "{{.}}",
           {{end}}]
-        backend = "{{ $page.Backend }}"
+        backend = "backend{{ $page.Backend }}"
         query = "{{ $page.Query }}"
       {{end}}
     {{end}}
@@ -1826,7 +1826,7 @@ var _templatesMesosTmpl = []byte(`[backends]
         status = [{{range $page.Status }}
         "{{.}}",
         {{end}}]
-        backend = "{{ $page.Backend }}"
+        backend = "backend-{{ $page.Backend }}"
         query = "{{ $page.Query }}"
       {{end}}
     {{end}}
@@ -2117,7 +2117,7 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
         status = [{{range $page.Status }}
         "{{.}}",
         {{end}}]
-        backend = "{{ $page.Backend }}"
+        backend = "backend-{{ $page.Backend }}"
         query = "{{ $page.Query }}"
       {{end}}
     {{end}}
