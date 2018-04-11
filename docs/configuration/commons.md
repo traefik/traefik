@@ -69,6 +69,15 @@
 # Default: ["http"]
 #
 # defaultEntryPoints = ["http", "https"]
+
+# Allow the use of 0 as server weight.
+# - false: a weight 0 means internally a weight of 1.
+# - true: a weight 0 means internally a weight of 0 (a server with a weight of 0 is removed from the available servers).
+#
+# Optional
+# Default: false
+#
+# AllowMinWeightZero = true
 ```
 
 - `graceTimeOut`: Duration to give active requests a chance to finish before Traefik stops.  

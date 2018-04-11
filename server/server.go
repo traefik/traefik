@@ -57,10 +57,6 @@ import (
 
 var httpServerLogger = stdlog.New(log.WriterLevel(logrus.DebugLevel), "", 0)
 
-func init() {
-	roundrobin.SetDefaultWeight(0)
-}
-
 // Server is the reverse-proxy/load-balancer engine
 type Server struct {
 	serverEntryPoints             serverEntryPoints
