@@ -30,6 +30,18 @@ func getFuncServiceStringLabel(labelName string, defaultValue string) func(servi
 	}
 }
 
+func getFuncServiceIntLabel(labelName string, defaultValue int) func(service ServiceItemExtended) int {
+	return func(service ServiceItemExtended) int {
+		return label.GetIntValue(service.Labels, labelName, defaultValue)
+	}
+}
+
+func getFuncServiceBoolLabel(labelName string, defaultValue bool) func(service ServiceItemExtended) bool {
+	return func(service ServiceItemExtended) bool {
+		return label.GetBoolValue(service.Labels, labelName, defaultValue)
+	}
+}
+
 func getFuncServiceSliceStringLabel(labelName string) func(service ServiceItemExtended) []string {
 	return func(service ServiceItemExtended) []string {
 		return label.GetSliceStringValue(service.Labels, labelName)
