@@ -1,33 +1,33 @@
-# Service Fabric Backend
+# Azure Service Fabric Backend
 
-Træfik can be configured to use Service Fabric as a backend configuration.
+Træfik can be configured to use Azure Service Fabric as a backend configuration.
 
 See [this repository for an example deployment package and further documentation.](https://aka.ms/traefikonsf)
 
-## Service Fabric
+## Azure Service Fabric
 
 ```toml
 ################################################################
-# Service Fabric provider
+# Azure Service Fabric provider
 ################################################################
 
-# Enable Service Fabric configuration backend
+# Enable Azure Service Fabric configuration backend
 [serviceFabric]
 
-# Service Fabric Management Endpoint
+# Azure Service Fabric Management Endpoint
 #
 # Required
 #
 clusterManagementUrl = "https://localhost:19080"
 
-# Service Fabric Management Endpoint API Version
+# Azure Service Fabric Management Endpoint API Version
 #
 # Required
 # Default: "3.0"
 #
 apiVersion = "3.0"
 
-# Service Fabric Polling Interval (in seconds)
+# Azure Service Fabric Polling Interval (in seconds)
 #
 # Required
 # Default: 10
