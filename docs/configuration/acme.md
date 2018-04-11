@@ -112,7 +112,7 @@ entryPoint = "https"
   #
   entryPoint = "http"
 
-# Use a DNS-01/DNS-02 acme challenge rather than HTTP-01 challenge.
+# Use a DNS-01/DNS-01 acme challenge rather than HTTP-01 challenge.
 # Note : Mandatory for wildcard certificates generation.
 #
 # Optional
@@ -264,7 +264,7 @@ defaultEntryPoints = ["http", "https"]
 
 ### `dnsChallenge`
 
-Use `DNS-01/DNS-02` challenge to generate/renew ACME certificates.
+Use `DNS-01/DNS-01` challenge to generate/renew ACME certificates.
 
 ```toml
 [acme]
@@ -276,7 +276,7 @@ Use `DNS-01/DNS-02` challenge to generate/renew ACME certificates.
 ```
 
 !!! note
-    ACME wildcard certificates can only be generated thanks to a `DNS-02` challenge.
+    ACME wildcard certificates can only be generated thanks to a `DNS-01` challenge.
 
 #### `provider`
 
@@ -397,13 +397,17 @@ CA server to use.
   main = "local3.com"
 [[acme.domains]]
   main = "*.local4.com"
+  sans = ["local4.com", "test1.test1.local4.com"]
 # ...
 ```
 
 #### Wildcard domains
 
-Wildcard domain has to be defined as a main domain **with no SANs** (alternative domains).
+Wildcard domain has to be defined as a main domain.
 All domains must have A/AAAA records pointing to Træfik.
+
+Due to ACME limitation, it's not possible to define a wildcard as a SAN (alternative domains).
+It's neither possible to define a wildcard on a wildcard domain (for example `*.*.local.com`).
 
 !!! warning
     Note that Let's Encrypt has [rate limiting](https://letsencrypt.org/docs/rate-limits).
@@ -435,9 +439,9 @@ Each domain & SANs will lead to a certificate request.
 [ACME V2](https://community.letsencrypt.org/t/acme-v2-and-wildcard-certificate-support-is-live/55579) allows wildcard certificate support.
 However, this feature needs a specific configuration.
 
-### DNS-02 Challenge
+### DNS-01 Challenge
 
-As described in [Let's Encrypt post](https://community.letsencrypt.org/t/staging-endpoint-for-acme-v2/49605), wildcard certificates can only be generated through a `DNS-02`Challenge.
+As described in [Let's Encrypt post](https://community.letsencrypt.org/t/staging-endpoint-for-acme-v2/49605), wildcard certificates can only be generated through a `DNS-01` Challenge.
 This challenge is linked to the Træfik option `acme.dnsChallenge`.
 
 ```toml
@@ -454,16 +458,88 @@ For more information about this option, please refer to the [dnsChallenge sectio
 ### Wildcard domain
 
 Wildcard domains can currently be provided only by to the `acme.domains` option.
-Theses domains can not have SANs.
 
 ```toml
 [acme]
 # ...
 [[acme.domains]]
-  main = "*local1.com"
+  main = "*.local1.com"
+  sans = ["local1.com"]
 [[acme.domains]]
   main = "*.local2.com"
 # ...
 ```
 
 For more information about this option, please refer to the [domains section](/configuration/acme/#domains).
+
+### Limitations
+
+Let's Encrypt wildcard support have some limitations to take into account :
+
+- Wildcard domain can not be a SAN (alternative domain),
+- Wildcard domain on a wildcard domain is forbidden (for example `*.*.local.com`),
+- A DNS-01 Challenge is executed for each domain (CN and SANs), DNS provider can not manage correctly this behavior as explained in the [DNS provider support section](/configuration/acme/#dns-provider-support)
+
+
+### DNS provider support
+
+All DNS providers allow creating ACME wildcard certificates.
+However, many troubles can appear for wildcard domains with SANs.
+
+If a wildcard domain is defined with it root domain as SAN, as described below, 2 DNS-01 Challenges will be executed.
+
+```toml
+[acme]
+# ...
+[[acme.domains]]
+  main = "*.local1.com"
+  sans = ["local1.com"]
+# ...
+```
+
+When a DNS-01 Challenge is done, Let's Encrypt checks if a TXT record is created with a given name and a given value.
+When a certificate is generated for a wildcard domain is defined with it root domain as SAN, the requested TXT record name for both the wildcard domain and the root domain is the same.
+
+The [DNS RFC](https://community.letsencrypt.org/t/wildcard-issuance-two-txt-records-for-the-same-name/54528/2) allows this behavior.
+But all DNS providers keep TXT records values in a cache with a TTL.
+In function of the parameters given by the Træfik ACME client library ([LEGO](https://github.com/xenolf/lego)), the TXT record TTL can be superior to challenge Timeout.
+In that event, the DNS-01 Challenge will not work correctly.
+ 
+[LEGO](https://github.com/xenolf/lego) will involve in the way to be adapted to all of DNS providers.
+Meanwhile, the table described below contains all the DNS providers supported by Træfik and indicates if they allow generating certificates for a wildcard domain and its root domain.
+Do not hesitate to complete it.
+
+| Provider Name                                          | Provider code  | Wildcard and Root Domain Support |
+|--------------------------------------------------------|----------------|----------------------------------|
+| [Auroradns](https://www.pcextreme.com/aurora/dns)      | `auroradns`    | Not tested yet                   |
+| [Azure](https://azure.microsoft.com/services/dns/)     | `azure`        | Not tested yet                   |
+| [Blue Cat](https://www.bluecatnetworks.com/)           | `bluecat`      | Not tested yet                   |
+| [Cloudflare](https://www.cloudflare.com)               | `cloudflare`   | YES                              |
+| [CloudXNS](https://www.cloudxns.net)                   | `cloudxns`     | Not tested yet                   |
+| [DigitalOcean](https://www.digitalocean.com)           | `digitalocean` | YES                              |
+| [DNSimple](https://dnsimple.com)                       | `dnsimple`     | Not tested yet                   |
+| [DNS Made Easy](https://dnsmadeeasy.com)               | `dnsmadeeasy`  | Not tested yet                   |
+| [DNSPod](http://www.dnspod.net/)                       | `dnspod`       | Not tested yet                   |
+| [Duck DNS](https://www.duckdns.org/)                   | `duckdns`      | Not tested yet                   |
+| [Dyn](https://dyn.com)                                 | `dyn`          | Not tested yet                   |
+| External Program                                       | `exec`         | Not tested yet                   |
+| [Exoscale](https://www.exoscale.ch)                    | `exoscale`     | Not tested yet                   |
+| [Fast DNS](https://www.akamai.com/)                    | `fastdns`      | Not tested yet                   |
+| [Gandi](https://www.gandi.net)                         | `gandi`        | Not tested yet                   |
+| [Gandi V5](http://doc.livedns.gandi.net)               | `gandiv5`      | Not tested yet                   |
+| [Glesys](https://glesys.com/)                          | `glesys`       | Not tested yet                   |
+| [GoDaddy](https://godaddy.com/domains)                 | `godaddy`      | Not tested yet                   |
+| [Google Cloud DNS](https://cloud.google.com/dns/docs/) | `gcloud`       | YES                              |
+| [Lightsail](https://aws.amazon.com/lightsail/)         | `lightsail`    | Not tested yet                   |
+| [Linode](https://www.linode.com)                       | `linode`       | Not tested yet                   |
+| manual                                                 | -              | YES                              |
+| [Namecheap](https://www.namecheap.com)                 | `namecheap`    | Not tested yet                   |
+| [name.com](https://www.name.com/)                      | `namedotcom`   | Not tested yet                   |
+| [Ns1](https://ns1.com/)                                | `ns1`          | Not tested yet                   |
+| [Open Telekom Cloud](https://cloud.telekom.de/en/)     | `otc`          | Not tested yet                   |
+| [OVH](https://www.ovh.com)                             | `ovh`          | YES                              |
+| [PowerDNS](https://www.powerdns.com)                   | `pdns`         | Not tested yet                   |
+| [Rackspace](https://www.rackspace.com/cloud/dns)       | `rackspace`    | Not tested yet                   |
+| [RFC2136](https://tools.ietf.org/html/rfc2136)         | `rfc2136`      | Not tested yet                   |
+| [Route 53](https://aws.amazon.com/route53/)            | `route53`      | YES                              |
+| [VULTR](https://www.vultr.com)                         | `vultr`        | Not tested yet                   |

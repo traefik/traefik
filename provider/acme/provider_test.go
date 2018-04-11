@@ -207,11 +207,27 @@ func TestGetValidDomain(t *testing.T) {
 			expectedDomains: nil,
 		},
 		{
-			desc:            "unexpected SANs",
-			domains:         types.Domain{Main: "*.traefik.wtf", SANs: []string{"foo.traefik.wtf"}},
+			desc:            "unauthorized wildcard with SAN",
+			domains:         types.Domain{Main: "*.*.traefik.wtf", SANs: []string{"foo.traefik.wtf"}},
 			dnsChallenge:    &DNSChallenge{},
 			wildcardAllowed: true,
-			expectedErr:     "unable to generate a wildcard certificate in ACME provider for domain \"*.traefik.wtf,foo.traefik.wtf\" : SANs are not allowed",
+			expectedErr:     "unable to generate a wildcard certificate in ACME provider for domain \"*.*.traefik.wtf,foo.traefik.wtf\" : ACME does not allow '*.*' wildcard domain",
+			expectedDomains: nil,
+		},
+		{
+			desc:            "wildcard and SANs",
+			domains:         types.Domain{Main: "*.traefik.wtf", SANs: []string{"traefik.wtf"}},
+			dnsChallenge:    &DNSChallenge{},
+			wildcardAllowed: true,
+			expectedErr:     "",
+			expectedDomains: []string{"*.traefik.wtf", "traefik.wtf"},
+		},
+		{
+			desc:            "unexpected SANs",
+			domains:         types.Domain{Main: "*.traefik.wtf", SANs: []string{"*.acme.wtf"}},
+			dnsChallenge:    &DNSChallenge{},
+			wildcardAllowed: true,
+			expectedErr:     "unable to generate a certificate in ACME provider for domains \"*.traefik.wtf,*.acme.wtf\": SAN \"*.acme.wtf\" can not be a wildcard domain",
 			expectedDomains: nil,
 		},
 	}
@@ -251,8 +267,8 @@ func TestDeleteUnnecessaryDomains(t *testing.T) {
 					Main: "*.foo.acme.wtf",
 				},
 				{
-					Main: "acme.wtf",
-					SANs: []string{"traefik.acme.wtf", "bar.foo"},
+					Main: "acme02.wtf",
+					SANs: []string{"traefik.acme02.wtf", "bar.foo"},
 				},
 			},
 			expectedDomains: []types.Domain{
@@ -262,15 +278,38 @@ func TestDeleteUnnecessaryDomains(t *testing.T) {
 				},
 				{
 					Main: "*.foo.acme.wtf",
+					SANs: []string{},
 				},
 				{
-					Main: "acme.wtf",
-					SANs: []string{"traefik.acme.wtf", "bar.foo"},
+					Main: "acme02.wtf",
+					SANs: []string{"traefik.acme02.wtf", "bar.foo"},
 				},
 			},
 		},
 		{
-			desc: "2 domains with same values",
+			desc: "wildcard and root domain",
+			domains: []types.Domain{
+				{
+					Main: "acme.wtf",
+				},
+				{
+					Main: "*.acme.wtf",
+					SANs: []string{"acme.wtf"},
+				},
+			},
+			expectedDomains: []types.Domain{
+				{
+					Main: "acme.wtf",
+					SANs: []string{},
+				},
+				{
+					Main: "*.acme.wtf",
+					SANs: []string{},
+				},
+			},
+		},
+		{
+			desc: "2 equals domains",
 			domains: []types.Domain{
 				{
 					Main: "acme.wtf",
@@ -285,6 +324,29 @@ func TestDeleteUnnecessaryDomains(t *testing.T) {
 				{
 					Main: "acme.wtf",
 					SANs: []string{"traefik.acme.wtf", "foo.bar"},
+				},
+			},
+		},
+		{
+			desc: "2 domains with same values",
+			domains: []types.Domain{
+				{
+					Main: "acme.wtf",
+					SANs: []string{"traefik.acme.wtf"},
+				},
+				{
+					Main: "acme.wtf",
+					SANs: []string{"traefik.acme.wtf", "foo.bar"},
+				},
+			},
+			expectedDomains: []types.Domain{
+				{
+					Main: "acme.wtf",
+					SANs: []string{"traefik.acme.wtf"},
+				},
+				{
+					Main: "foo.bar",
+					SANs: []string{},
 				},
 			},
 		},
@@ -302,6 +364,25 @@ func TestDeleteUnnecessaryDomains(t *testing.T) {
 			expectedDomains: []types.Domain{
 				{
 					Main: "*.acme.wtf",
+					SANs: []string{},
+				},
+			},
+		},
+		{
+			desc: "duplicated wildcard",
+			domains: []types.Domain{
+				{
+					Main: "*.acme.wtf",
+					SANs: []string{"acme.wtf"},
+				},
+				{
+					Main: "*.acme.wtf",
+				},
+			},
+			expectedDomains: []types.Domain{
+				{
+					Main: "*.acme.wtf",
+					SANs: []string{"acme.wtf"},
 				},
 			},
 		},
@@ -315,6 +396,10 @@ func TestDeleteUnnecessaryDomains(t *testing.T) {
 				{
 					Main: "*.acme.wtf",
 				},
+				{
+					Main: "who.acme.wtf",
+					SANs: []string{"traefik.acme.wtf", "bar.acme.wtf"},
+				},
 			},
 			expectedDomains: []types.Domain{
 				{
@@ -323,6 +408,7 @@ func TestDeleteUnnecessaryDomains(t *testing.T) {
 				},
 				{
 					Main: "*.acme.wtf",
+					SANs: []string{},
 				},
 			},
 		},
