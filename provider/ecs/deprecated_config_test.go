@@ -13,21 +13,24 @@ import (
 
 func TestBuildConfigurationV1(t *testing.T) {
 	testCases := []struct {
-		desc     string
-		services map[string][]ecsInstance
-		expected *types.Configuration
-		err      error
+		desc      string
+		instances []ecsInstance
+		expected  *types.Configuration
+		err       error
 	}{
 		{
 			desc: "config parsed successfully",
-			services: map[string][]ecsInstance{
-				"testing": {{
+			instances: []ecsInstance{
+				{
 					Name: "testing",
 					ID:   "1",
 					containerDefinition: &ecs.ContainerDefinition{
 						DockerLabels: map[string]*string{},
 					},
 					machine: &ec2.Instance{
+						State: &ec2.InstanceState{
+							Name: aws.String(ec2.InstanceStateNameRunning),
+						},
 						PrivateIpAddress: aws.String("10.0.0.1"),
 					},
 					container: &ecs.Container{
@@ -35,7 +38,7 @@ func TestBuildConfigurationV1(t *testing.T) {
 							HostPort: aws.Int64(1337),
 						}},
 					},
-				}},
+				},
 			},
 			expected: &types.Configuration{
 				Backends: map[string]*types.Backend{
@@ -66,8 +69,8 @@ func TestBuildConfigurationV1(t *testing.T) {
 		},
 		{
 			desc: "config parsed successfully with health check labels",
-			services: map[string][]ecsInstance{
-				"testing": {{
+			instances: []ecsInstance{
+				{
 					Name: "testing",
 					ID:   "1",
 					containerDefinition: &ecs.ContainerDefinition{
@@ -76,6 +79,9 @@ func TestBuildConfigurationV1(t *testing.T) {
 							label.TraefikBackendHealthCheckInterval: aws.String("1s"),
 						}},
 					machine: &ec2.Instance{
+						State: &ec2.InstanceState{
+							Name: aws.String(ec2.InstanceStateNameRunning),
+						},
 						PrivateIpAddress: aws.String("10.0.0.1"),
 					},
 					container: &ecs.Container{
@@ -83,7 +89,7 @@ func TestBuildConfigurationV1(t *testing.T) {
 							HostPort: aws.Int64(1337),
 						}},
 					},
-				}},
+				},
 			},
 			expected: &types.Configuration{
 				Backends: map[string]*types.Backend{
@@ -118,8 +124,8 @@ func TestBuildConfigurationV1(t *testing.T) {
 		},
 		{
 			desc: "when all labels are set",
-			services: map[string][]ecsInstance{
-				"testing-instance": {{
+			instances: []ecsInstance{
+				{
 					Name: "testing-instance",
 					ID:   "6",
 					containerDefinition: &ecs.ContainerDefinition{
@@ -144,6 +150,9 @@ func TestBuildConfigurationV1(t *testing.T) {
 							label.TraefikFrontendRule:           aws.String("Host:traefik.io"),
 						}},
 					machine: &ec2.Instance{
+						State: &ec2.InstanceState{
+							Name: aws.String(ec2.InstanceStateNameRunning),
+						},
 						PrivateIpAddress: aws.String("10.0.0.1"),
 					},
 					container: &ecs.Container{
@@ -151,7 +160,7 @@ func TestBuildConfigurationV1(t *testing.T) {
 							HostPort: aws.Int64(1337),
 						}},
 					},
-				}},
+				},
 			},
 			expected: &types.Configuration{
 				Backends: map[string]*types.Backend{
@@ -204,11 +213,11 @@ func TestBuildConfigurationV1(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			provider := &Provider{}
+			provider := &Provider{ExposedByDefault: true}
 
-			services := fakeLoadTraefikLabels(test.services)
+			instances := fakeLoadTraefikLabels(test.instances)
 
-			got, err := provider.buildConfigurationV1(services)
+			got, err := provider.buildConfigurationV1(instances)
 			assert.Equal(t, test.err, err) // , err.Error()
 			assert.Equal(t, test.expected, got, test.desc)
 		})
