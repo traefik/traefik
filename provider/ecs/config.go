@@ -68,12 +68,12 @@ func (p *Provider) filterInstance(i ecsInstance) bool {
 	}
 
 	if i.machine == nil || i.machine.State == nil || i.machine.State.Name == nil {
-		log.Debugf("Filtering ecs instance in an missing ec2 information %s (%s)", i.Name, i.ID)
+		log.Debugf("Filtering ecs instance with missing ec2 information %s (%s)", i.Name, i.ID)
 		return false
 	}
 
 	if aws.StringValue(i.machine.State.Name) != ec2.InstanceStateNameRunning {
-		log.Debugf("Filtering ecs instance in an incorrect state %s (%s) (state = %s)", i.Name, i.ID, aws.StringValue(i.machine.State.Name))
+		log.Debugf("Filtering ecs instance with an incorrect state %s (%s) (state = %s)", i.Name, i.ID, aws.StringValue(i.machine.State.Name))
 		return false
 	}
 
