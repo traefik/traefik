@@ -49,24 +49,24 @@ func NewHandler(errorPage *types.ErrorPage, backendName string) (*Handler, error
 }
 
 // PostLoad adds backend handler if available
-func (ep *Handler) PostLoad(backendHandler http.Handler) error {
+func (h *Handler) PostLoad(backendHandler http.Handler) error {
 	if backendHandler == nil {
 		fwd, err := forward.New()
 		if err != nil {
 			return err
 		}
 
-		ep.backendHandler = fwd
-		ep.backendURL = ep.FallbackURL
+		h.backendHandler = fwd
+		h.backendURL = h.FallbackURL
 	} else {
-		ep.backendHandler = backendHandler
+		h.backendHandler = backendHandler
 	}
 
 	return nil
 }
 
-func (ep *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
-	if ep.backendHandler == nil {
+func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
+	if h.backendHandler == nil {
 		log.Error("Error pages: no backend handler.")
 		next.ServeHTTP(w, req)
 		return
@@ -78,20 +78,20 @@ func (ep *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request, next http
 	w.WriteHeader(recorder.GetCode())
 
 	// check the recorder code against the configured http status code ranges
-	for _, block := range ep.httpCodeRanges {
+	for _, block := range h.httpCodeRanges {
 		if recorder.GetCode() >= block[0] && recorder.GetCode() <= block[1] {
 			log.Errorf("Caught HTTP Status Code %d, returning error page", recorder.GetCode())
 
 			var query string
-			if len(ep.backendQuery) > 0 {
-				query = "/" + strings.TrimPrefix(ep.backendQuery, "/")
+			if len(h.backendQuery) > 0 {
+				query = "/" + strings.TrimPrefix(h.backendQuery, "/")
 				query = strings.Replace(query, "{status}", strconv.Itoa(recorder.GetCode()), -1)
 			}
 
-			if newReq, err := http.NewRequest(http.MethodGet, ep.backendURL+query, nil); err != nil {
+			if newReq, err := http.NewRequest(http.MethodGet, h.backendURL+query, nil); err != nil {
 				w.Write([]byte(http.StatusText(recorder.GetCode())))
 			} else {
-				ep.backendHandler.ServeHTTP(w, newReq)
+				h.backendHandler.ServeHTTP(w, newReq)
 			}
 			return
 		}

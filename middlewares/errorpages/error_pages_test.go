@@ -212,6 +212,7 @@ func TestHandlerOldWay(t *testing.T) {
 	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 
 			errorPageHandler, err := NewHandler(test.errorPage, "test")
 			require.NoError(t, err)
@@ -250,8 +251,7 @@ func TestHandlerOldWayIntegration(t *testing.T) {
 		desc        string
 		errorPage   *types.ErrorPage
 		backendCode int
-		//errorPageForwarder http.HandlerFunc
-		validate func(t *testing.T, recorder *httptest.ResponseRecorder)
+		validate    func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
 		{
 			desc:        "no error",
