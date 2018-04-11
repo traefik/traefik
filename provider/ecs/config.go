@@ -17,14 +17,14 @@ import (
 
 // buildConfiguration fills the config template with the given instances
 func (p *Provider) buildConfigurationV2(instances []ecsInstance) (*types.Configuration, error) {
-	instances = fun.Filter(p.filterInstance, instances).([]ecsInstance)
-
 	services := make(map[string][]ecsInstance)
 	for _, instance := range instances {
-		if serviceInstances, ok := services[instance.Name]; ok {
-			services[instance.Name] = append(serviceInstances, instance)
-		} else {
-			services[instance.Name] = []ecsInstance{instance}
+		if p.filterInstance(instance) {
+			if serviceInstances, ok := services[instance.Name]; ok {
+				services[instance.Name] = append(serviceInstances, instance)
+			} else {
+				services[instance.Name] = []ecsInstance{instance}
+			}
 		}
 	}
 
@@ -62,7 +62,7 @@ func (p *Provider) buildConfigurationV2(instances []ecsInstance) (*types.Configu
 }
 
 func (p *Provider) filterInstance(i ecsInstance) bool {
-	if labelPort := getStringValueV1(i, label.TraefikPort, ""); len(i.container.NetworkBindings) == 0 && labelPort == "" {
+	if labelPort := label.GetStringValue(i.TraefikLabels, label.TraefikPort, ""); len(i.container.NetworkBindings) == 0 && labelPort == "" {
 		log.Debugf("Filtering ecs instance without port %s (%s)", i.Name, i.ID)
 		return false
 	}

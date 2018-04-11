@@ -372,27 +372,6 @@ func TestBuildConfiguration(t *testing.T) {
 }
 
 func TestFilterInstance(t *testing.T) {
-	nilPrivateIP := simpleEcsInstance(map[string]*string{})
-	nilPrivateIP.machine.PrivateIpAddress = nil
-
-	nilMachine := simpleEcsInstance(map[string]*string{})
-	nilMachine.machine = nil
-
-	nilMachineState := simpleEcsInstance(map[string]*string{})
-	nilMachineState.machine.State = nil
-
-	nilMachineStateName := simpleEcsInstance(map[string]*string{})
-	nilMachineStateName.machine.State.Name = nil
-
-	invalidMachineState := simpleEcsInstance(map[string]*string{})
-	invalidMachineState.machine.State.Name = aws.String(ec2.InstanceStateNameStopped)
-
-	noNetwork := simpleEcsInstanceNoNetwork(map[string]*string{})
-
-	noNetworkWithLabel := simpleEcsInstanceNoNetwork(map[string]*string{
-		label.TraefikPort: aws.String("80"),
-	})
-
 	testCases := []struct {
 		desc             string
 		instanceInfo     ecsInstance
@@ -428,44 +407,66 @@ func TestFilterInstance(t *testing.T) {
 			expected:         true,
 		},
 		{
-			desc:             "Instance with nil private ip and exposed by default enabled should be filtered",
-			instanceInfo:     nilPrivateIP,
+			desc: "Instance with nil private ip and exposed by default enabled should be filtered",
+			instanceInfo: func() ecsInstance {
+				nilPrivateIP := simpleEcsInstance(map[string]*string{})
+				nilPrivateIP.machine.PrivateIpAddress = nil
+				return nilPrivateIP
+			}(),
 			exposedByDefault: true,
 			expected:         false,
 		},
 		{
-			desc:             "Instance with nil machine and exposed by default enabled should be filtered",
-			instanceInfo:     nilMachine,
+			desc: "Instance with nil machine and exposed by default enabled should be filtered",
+			instanceInfo: func() ecsInstance {
+				nilMachine := simpleEcsInstance(map[string]*string{})
+				nilMachine.machine = nil
+				return nilMachine
+			}(),
 			exposedByDefault: true,
 			expected:         false,
 		},
 		{
-			desc:             "Instance with nil machine state and exposed by default enabled should be filtered",
-			instanceInfo:     nilMachineState,
+			desc: "Instance with nil machine state and exposed by default enabled should be filtered",
+			instanceInfo: func() ecsInstance {
+				nilMachineState := simpleEcsInstance(map[string]*string{})
+				nilMachineState.machine.State = nil
+				return nilMachineState
+			}(),
 			exposedByDefault: true,
 			expected:         false,
 		},
 		{
-			desc:             "Instance with nil machine state name and exposed by default enabled should be filtered",
-			instanceInfo:     nilMachineStateName,
+			desc: "Instance with nil machine state name and exposed by default enabled should be filtered",
+			instanceInfo: func() ecsInstance {
+				nilMachineStateName := simpleEcsInstance(map[string]*string{})
+				nilMachineStateName.machine.State.Name = nil
+				return nilMachineStateName
+			}(),
 			exposedByDefault: true,
 			expected:         false,
 		},
 		{
-			desc:             "Instance with invalid machine state and exposed by default enabled should be filtered",
-			instanceInfo:     invalidMachineState,
+			desc: "Instance with invalid machine state and exposed by default enabled should be filtered",
+			instanceInfo: func() ecsInstance {
+				invalidMachineState := simpleEcsInstance(map[string]*string{})
+				invalidMachineState.machine.State.Name = aws.String(ec2.InstanceStateNameStopped)
+				return invalidMachineState
+			}(),
 			exposedByDefault: true,
 			expected:         false,
 		},
 		{
 			desc:             "Instance with no port mappings should be filtered",
-			instanceInfo:     noNetwork,
+			instanceInfo:     simpleEcsInstanceNoNetwork(map[string]*string{}),
 			exposedByDefault: true,
 			expected:         false,
 		},
 		{
-			desc:             "Instance with no port mapping and with label should not be filtered",
-			instanceInfo:     noNetworkWithLabel,
+			desc: "Instance with no port mapping and with label should not be filtered",
+			instanceInfo: simpleEcsInstanceNoNetwork(map[string]*string{
+				label.TraefikPort: aws.String("80"),
+			}),
 			exposedByDefault: true,
 			expected:         true,
 		},
@@ -479,6 +480,7 @@ func TestFilterInstance(t *testing.T) {
 			prov := &Provider{
 				ExposedByDefault: test.exposedByDefault,
 			}
+
 			actual := prov.filterInstance(test.instanceInfo)
 			assert.Equal(t, test.expected, actual)
 		})
