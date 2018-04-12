@@ -54,9 +54,9 @@ type Provider struct {
 func (p *Provider) newK8sClient(ingressLabelSelector string) (Client, error) {
 	ingLabelSel, err := labels.Parse(ingressLabelSelector)
 	if err != nil {
-		return nil, fmt.Errorf("invalid ingress label selector: %s", ingressLabelSelector)
+		return nil, fmt.Errorf("invalid ingress label selector: %q", ingressLabelSelector)
 	}
-	log.Infof("ingress label selector is: %s", ingLabelSel)
+	log.Infof("ingress label selector is: %q", ingLabelSel)
 
 	withEndpoint := ""
 	if p.Endpoint != "" {
