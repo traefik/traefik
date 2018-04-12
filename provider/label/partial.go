@@ -236,8 +236,12 @@ func GetHealthCheck(labels map[string]string) *types.HealthCheck {
 
 	port := GetIntValue(labels, TraefikBackendHealthCheckPort, DefaultBackendHealthCheckPort)
 	interval := GetStringValue(labels, TraefikBackendHealthCheckInterval, "")
+	hostname := GetStringValue(labels, TraefikBackendHealthCheckHostname, "")
+	headers := GetMapValue(labels, TraefikBackendHealthCheckHeaders)
 
 	return &types.HealthCheck{
+		Hostname: hostname,
+		Headers:  headers,
 		Path:     path,
 		Port:     port,
 		Interval: interval,

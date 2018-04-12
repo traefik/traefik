@@ -302,8 +302,12 @@ func (p *Provider) getHealthCheck(rootPath string) *types.HealthCheck {
 
 	port := p.getInt(label.DefaultBackendHealthCheckPort, rootPath, pathBackendHealthCheckPort)
 	interval := p.get("30s", rootPath, pathBackendHealthCheckInterval)
+	hostname := p.get("", rootPath, pathBackendHealthCheckHostname)
+	headers := p.getMap(rootPath, pathBackendHealthCheckHeaders)
 
 	return &types.HealthCheck{
+		Hostname: hostname,
+		Headers:  headers,
 		Path:     path,
 		Port:     port,
 		Interval: interval,
