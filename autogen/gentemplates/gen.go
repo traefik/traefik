@@ -836,7 +836,7 @@ var _templatesEcsTmpl = []byte(`[backends]
     interval = "{{ $healthCheck.Interval }}"
     hostname = "{{ $healthCheck.Hostname }}"
     {{if $healthCheck.Headers }}
-    [backends."backend-{{ $backendName }}".healthCheck.headers]
+    [backends."backend-{{ $serviceName }}".healthCheck.headers]
       {{range $k, $v := $healthCheck.Headers }}
       {{$k}} = "{{$v}}"
       {{end}}
