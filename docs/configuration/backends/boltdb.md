@@ -53,7 +53,7 @@ filename = "boltdb.tmpl"
 #    ca = "/etc/ssl/ca.crt"
 #    cert = "/etc/ssl/boltdb.crt"
 #    key = "/etc/ssl/boltdb.key"
-#    insecureskipverify = true
+#    insecureSkipVerify = true
 ```
 
 To enable constraints see [backend-specific constraints section](/configuration/commons/#backend-specific).

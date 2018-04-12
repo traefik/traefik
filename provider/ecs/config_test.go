@@ -15,21 +15,24 @@ import (
 
 func TestBuildConfiguration(t *testing.T) {
 	testCases := []struct {
-		desc     string
-		services map[string][]ecsInstance
-		expected *types.Configuration
-		err      error
+		desc      string
+		instances []ecsInstance
+		expected  *types.Configuration
+		err       error
 	}{
 		{
 			desc: "config parsed successfully",
-			services: map[string][]ecsInstance{
-				"testing": {{
+			instances: []ecsInstance{
+				{
 					Name: "instance",
 					ID:   "1",
 					containerDefinition: &ecs.ContainerDefinition{
 						DockerLabels: map[string]*string{},
 					},
 					machine: &ec2.Instance{
+						State: &ec2.InstanceState{
+							Name: aws.String(ec2.InstanceStateNameRunning),
+						},
 						PrivateIpAddress: aws.String("10.0.0.1"),
 					},
 					container: &ecs.Container{
@@ -37,23 +40,24 @@ func TestBuildConfiguration(t *testing.T) {
 							HostPort: aws.Int64(1337),
 						}},
 					},
-				}},
+				},
 			},
 			expected: &types.Configuration{
 				Backends: map[string]*types.Backend{
-					"backend-testing": {
+					"backend-instance": {
 						Servers: map[string]types.Server{
 							"server-instance-1": {
-								URL: "http://10.0.0.1:1337",
+								URL:    "http://10.0.0.1:1337",
+								Weight: label.DefaultWeight,
 							}},
 					},
 				},
 				Frontends: map[string]*types.Frontend{
-					"frontend-testing": {
+					"frontend-instance": {
 						EntryPoints: []string{},
-						Backend:     "backend-testing",
+						Backend:     "backend-instance",
 						Routes: map[string]types.Route{
-							"route-frontend-testing": {
+							"route-frontend-instance": {
 								Rule: "Host:instance.",
 							},
 						},
@@ -65,8 +69,8 @@ func TestBuildConfiguration(t *testing.T) {
 		},
 		{
 			desc: "config parsed successfully with health check labels",
-			services: map[string][]ecsInstance{
-				"testing": {{
+			instances: []ecsInstance{
+				{
 					Name: "instance",
 					ID:   "1",
 					containerDefinition: &ecs.ContainerDefinition{
@@ -75,6 +79,9 @@ func TestBuildConfiguration(t *testing.T) {
 							label.TraefikBackendHealthCheckInterval: aws.String("1s"),
 						}},
 					machine: &ec2.Instance{
+						State: &ec2.InstanceState{
+							Name: aws.String(ec2.InstanceStateNameRunning),
+						},
 						PrivateIpAddress: aws.String("10.0.0.1"),
 					},
 					container: &ecs.Container{
@@ -82,27 +89,28 @@ func TestBuildConfiguration(t *testing.T) {
 							HostPort: aws.Int64(1337),
 						}},
 					},
-				}},
+				},
 			},
 			expected: &types.Configuration{
 				Backends: map[string]*types.Backend{
-					"backend-testing": {
+					"backend-instance": {
 						HealthCheck: &types.HealthCheck{
 							Path:     "/health",
 							Interval: "1s",
 						},
 						Servers: map[string]types.Server{
 							"server-instance-1": {
-								URL: "http://10.0.0.1:1337",
+								URL:    "http://10.0.0.1:1337",
+								Weight: label.DefaultWeight,
 							}},
 					},
 				},
 				Frontends: map[string]*types.Frontend{
-					"frontend-testing": {
+					"frontend-instance": {
 						EntryPoints: []string{},
-						Backend:     "backend-testing",
+						Backend:     "backend-instance",
 						Routes: map[string]types.Route{
-							"route-frontend-testing": {
+							"route-frontend-instance": {
 								Rule: "Host:instance.",
 							},
 						},
@@ -114,8 +122,8 @@ func TestBuildConfiguration(t *testing.T) {
 		},
 		{
 			desc: "when all labels are set",
-			services: map[string][]ecsInstance{
-				"testing-instance": {{
+			instances: []ecsInstance{
+				{
 					Name: "testing-instance",
 					ID:   "6",
 					containerDefinition: &ecs.ContainerDefinition{
@@ -193,6 +201,9 @@ func TestBuildConfiguration(t *testing.T) {
 							label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitBurst:   aws.String("9"),
 						}},
 					machine: &ec2.Instance{
+						State: &ec2.InstanceState{
+							Name: aws.String(ec2.InstanceStateNameRunning),
+						},
 						PrivateIpAddress: aws.String("10.0.0.1"),
 					},
 					container: &ecs.Container{
@@ -200,7 +211,7 @@ func TestBuildConfiguration(t *testing.T) {
 							HostPort: aws.Int64(1337),
 						}},
 					},
-				}},
+				},
 			},
 			expected: &types.Configuration{
 				Backends: map[string]*types.Backend{
@@ -308,14 +319,14 @@ func TestBuildConfiguration(t *testing.T) {
 									"500",
 									"600",
 								},
-								Backend: "foobar",
+								Backend: "backend-foobar",
 								Query:   "bar_query",
 							},
 							"foo": {
 								Status: []string{
 									"404",
 								},
-								Backend: "foobar",
+								Backend: "backend-foobar",
 								Query:   "foo_query",
 							},
 						},
@@ -351,11 +362,11 @@ func TestBuildConfiguration(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			p := &Provider{}
+			p := &Provider{ExposedByDefault: true}
 
-			services := fakeLoadTraefikLabels(test.services)
+			instances := fakeLoadTraefikLabels(test.instances)
 
-			got, err := p.buildConfiguration(services)
+			got, err := p.buildConfiguration(instances)
 			assert.Equal(t, test.err, err) // , err.Error()
 			assert.Equal(t, test.expected, got, test.desc)
 		})
@@ -363,27 +374,6 @@ func TestBuildConfiguration(t *testing.T) {
 }
 
 func TestFilterInstance(t *testing.T) {
-	nilPrivateIP := simpleEcsInstance(map[string]*string{})
-	nilPrivateIP.machine.PrivateIpAddress = nil
-
-	nilMachine := simpleEcsInstance(map[string]*string{})
-	nilMachine.machine = nil
-
-	nilMachineState := simpleEcsInstance(map[string]*string{})
-	nilMachineState.machine.State = nil
-
-	nilMachineStateName := simpleEcsInstance(map[string]*string{})
-	nilMachineStateName.machine.State.Name = nil
-
-	invalidMachineState := simpleEcsInstance(map[string]*string{})
-	invalidMachineState.machine.State.Name = aws.String(ec2.InstanceStateNameStopped)
-
-	noNetwork := simpleEcsInstanceNoNetwork(map[string]*string{})
-
-	noNetworkWithLabel := simpleEcsInstanceNoNetwork(map[string]*string{
-		label.TraefikPort: aws.String("80"),
-	})
-
 	testCases := []struct {
 		desc             string
 		instanceInfo     ecsInstance
@@ -419,44 +409,66 @@ func TestFilterInstance(t *testing.T) {
 			expected:         true,
 		},
 		{
-			desc:             "Instance with nil private ip and exposed by default enabled should be filtered",
-			instanceInfo:     nilPrivateIP,
+			desc: "Instance with nil private ip and exposed by default enabled should be filtered",
+			instanceInfo: func() ecsInstance {
+				nilPrivateIP := simpleEcsInstance(map[string]*string{})
+				nilPrivateIP.machine.PrivateIpAddress = nil
+				return nilPrivateIP
+			}(),
 			exposedByDefault: true,
 			expected:         false,
 		},
 		{
-			desc:             "Instance with nil machine and exposed by default enabled should be filtered",
-			instanceInfo:     nilMachine,
+			desc: "Instance with nil machine and exposed by default enabled should be filtered",
+			instanceInfo: func() ecsInstance {
+				nilMachine := simpleEcsInstance(map[string]*string{})
+				nilMachine.machine = nil
+				return nilMachine
+			}(),
 			exposedByDefault: true,
 			expected:         false,
 		},
 		{
-			desc:             "Instance with nil machine state and exposed by default enabled should be filtered",
-			instanceInfo:     nilMachineState,
+			desc: "Instance with nil machine state and exposed by default enabled should be filtered",
+			instanceInfo: func() ecsInstance {
+				nilMachineState := simpleEcsInstance(map[string]*string{})
+				nilMachineState.machine.State = nil
+				return nilMachineState
+			}(),
 			exposedByDefault: true,
 			expected:         false,
 		},
 		{
-			desc:             "Instance with nil machine state name and exposed by default enabled should be filtered",
-			instanceInfo:     nilMachineStateName,
+			desc: "Instance with nil machine state name and exposed by default enabled should be filtered",
+			instanceInfo: func() ecsInstance {
+				nilMachineStateName := simpleEcsInstance(map[string]*string{})
+				nilMachineStateName.machine.State.Name = nil
+				return nilMachineStateName
+			}(),
 			exposedByDefault: true,
 			expected:         false,
 		},
 		{
-			desc:             "Instance with invalid machine state and exposed by default enabled should be filtered",
-			instanceInfo:     invalidMachineState,
+			desc: "Instance with invalid machine state and exposed by default enabled should be filtered",
+			instanceInfo: func() ecsInstance {
+				invalidMachineState := simpleEcsInstance(map[string]*string{})
+				invalidMachineState.machine.State.Name = aws.String(ec2.InstanceStateNameStopped)
+				return invalidMachineState
+			}(),
 			exposedByDefault: true,
 			expected:         false,
 		},
 		{
 			desc:             "Instance with no port mappings should be filtered",
-			instanceInfo:     noNetwork,
+			instanceInfo:     simpleEcsInstanceNoNetwork(map[string]*string{}),
 			exposedByDefault: true,
 			expected:         false,
 		},
 		{
-			desc:             "Instance with no port mapping and with label should not be filtered",
-			instanceInfo:     noNetworkWithLabel,
+			desc: "Instance with no port mapping and with label should not be filtered",
+			instanceInfo: simpleEcsInstanceNoNetwork(map[string]*string{
+				label.TraefikPort: aws.String("80"),
+			}),
 			exposedByDefault: true,
 			expected:         true,
 		},
@@ -470,6 +482,7 @@ func TestFilterInstance(t *testing.T) {
 			prov := &Provider{
 				ExposedByDefault: test.exposedByDefault,
 			}
+
 			actual := prov.filterInstance(test.instanceInfo)
 			assert.Equal(t, test.expected, actual)
 		})
@@ -756,15 +769,11 @@ func simpleEcsInstanceNoNetwork(labels map[string]*string) ecsInstance {
 	})
 }
 
-func fakeLoadTraefikLabels(services map[string][]ecsInstance) map[string][]ecsInstance {
-	result := make(map[string][]ecsInstance)
-	for name, srcInstances := range services {
-		var instances []ecsInstance
-		for _, instance := range srcInstances {
-			instance.TraefikLabels = aws.StringValueMap(instance.containerDefinition.DockerLabels)
-			instances = append(instances, instance)
-		}
-		result[name] = instances
+func fakeLoadTraefikLabels(instances []ecsInstance) []ecsInstance {
+	var result []ecsInstance
+	for _, instance := range instances {
+		instance.TraefikLabels = aws.StringValueMap(instance.containerDefinition.DockerLabels)
+		result = append(result, instance)
 	}
 	return result
 }

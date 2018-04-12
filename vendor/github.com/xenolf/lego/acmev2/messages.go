@@ -1,4 +1,4 @@
-package acme
+package acmev2
 
 import (
 	"time"
@@ -34,7 +34,8 @@ type accountMessage struct {
 }
 
 type orderResource struct {
-	URL          string `json:"url,omitempty"`
+	URL          string   `json:"url,omitempty"`
+	Domains      []string `json:"domains,omitempty"`
 	orderMessage `json:"body,omitempty"`
 }
 

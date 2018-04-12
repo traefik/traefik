@@ -6,32 +6,38 @@ debug = true
 [api]
 
 [entryPoints]
-    [entryPoints.http]
+  [entryPoints.http]
     address = ":8000"
 
 [tracing]
-    backend = "{{.TracingBackend}}"
-    servicename = "tracing"
+  backend = "{{.TracingBackend}}"
+  servicename = "tracing"
     [tracing.zipkin]
-        HTTPEndpoint = "http://{{.ZipkinIP}}:9411/api/v1/spans"
-        debug = true
+      httpEndpoint = "http://{{.ZipkinIP}}:9411/api/v1/spans"
+      debug = true
     [tracing.jaeger]
-        SamplingType = "const"
-        SamplingParam = 1.0
+      samplingType = "const"
+      samplingParam = 1.0
+
 [retry]
-    attempts = 3
+  attempts = 3
+
 [file]
 
 [backends]
   [backends.backend1]
     [backends.backend1.servers.server-ratelimit]
       url = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
+      weight = 1
   [backends.backend2]
     [backends.backend2.servers.server-retry]
       url = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
+      weight = 1
   [backends.backend3]
     [backends.backend3.servers.server-auth]
       url = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
+      weight = 1
+
 [frontends]
   [frontends.frontend1]
     passHostHeader = true

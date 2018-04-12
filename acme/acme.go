@@ -26,7 +26,7 @@ import (
 	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
 	"github.com/eapache/channels"
-	"github.com/xenolf/lego/acmev2"
+	acme "github.com/xenolf/lego/acmev2"
 	"github.com/xenolf/lego/providers/dns"
 )
 
@@ -62,20 +62,6 @@ type ACME struct {
 }
 
 func (a *ACME) init() error {
-	// FIXME temporary fix, waiting for https://github.com/xenolf/lego/pull/478
-	acme.HTTPClient = http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-			Dial: (&net.Dialer{
-				Timeout:   30 * time.Second,
-				KeepAlive: 30 * time.Second,
-			}).Dial,
-			TLSHandshakeTimeout:   15 * time.Second,
-			ResponseHeaderTimeout: 15 * time.Second,
-			ExpectContinueTimeout: 1 * time.Second,
-		},
-	}
-
 	if a.ACMELogging {
 		acme.Logger = fmtlog.New(os.Stderr, "legolog: ", fmtlog.LstdFlags)
 	} else {
@@ -651,6 +637,7 @@ func (a *ACME) runJobs() {
 
 // getValidDomains checks if given domain is allowed to generate a ACME certificate and return it
 func (a *ACME) getValidDomains(domains []string, wildcardAllowed bool) ([]string, error) {
+	// Check if the domains array is empty or contains only one empty value
 	if len(domains) == 0 || (len(domains) == 1 && len(domains[0]) == 0) {
 		return nil, errors.New("unable to generate a certificate when no domain is given")
 	}
@@ -663,15 +650,14 @@ func (a *ACME) getValidDomains(domains []string, wildcardAllowed bool) ([]string
 		if a.DNSChallenge == nil && len(a.DNSProvider) == 0 {
 			return nil, fmt.Errorf("unable to generate a wildcard certificate for domain %q : ACME needs a DNSChallenge", strings.Join(domains, ","))
 		}
-
-		if len(domains) > 1 {
-			return nil, fmt.Errorf("unable to generate a wildcard certificate for domain %q : SANs are not allowed", strings.Join(domains, ","))
+		if strings.HasPrefix(domains[0], "*.*") {
+			return nil, fmt.Errorf("unable to generate a wildcard certificate for domain %q : ACME does not allow '*.*' wildcard domain", strings.Join(domains, ","))
 		}
-	} else {
-		for _, san := range domains[1:] {
-			if strings.HasPrefix(san, "*") {
-				return nil, fmt.Errorf("unable to generate a certificate in ACME provider for domains %q: SANs can not be a wildcard domain", strings.Join(domains, ","))
-			}
+	}
+	for _, san := range domains[1:] {
+		if strings.HasPrefix(san, "*") {
+			return nil, fmt.Errorf("unable to generate a certificate for domains %q: SANs can not be a wildcard domain", strings.Join(domains, ","))
+
 		}
 	}
 
@@ -710,31 +696,37 @@ func (a *ACME) deleteUnnecessaryDomains() {
 					keepDomain = false
 				}
 				break
-			} else if strings.HasPrefix(domain.Main, "*") && domain.SANs == nil {
-				// Check if domains can be validated by the wildcard domain
-
-				var newDomainsToCheck []string
-
-				// Check if domains can be validated by the wildcard domain
-				domainsMap := make(map[string]*tls.Certificate)
-				domainsMap[domain.Main] = &tls.Certificate{}
-
-				for _, domainProcessed := range domainToCheck.ToStrArray() {
-					if isDomainAlreadyChecked(domainProcessed, domainsMap) {
-						log.Warnf("Domain %q will not be processed by ACME because it is validated by the wildcard %q", domainProcessed, domain.Main)
-						continue
-					}
-					newDomainsToCheck = append(newDomainsToCheck, domainProcessed)
-				}
-
-				// Delete the domain if both Main and SANs can be validated by the wildcard domain
-				// otherwise keep the unchecked values
-				if newDomainsToCheck == nil {
-					keepDomain = false
-					break
-				}
-				domainToCheck.Set(newDomainsToCheck)
 			}
+
+			var newDomainsToCheck []string
+
+			// Check if domains can be validated by the wildcard domain
+			domainsMap := make(map[string]*tls.Certificate)
+			domainsMap[domain.Main] = &tls.Certificate{}
+			if len(domain.SANs) > 0 {
+				domainsMap[strings.Join(domain.SANs, ",")] = &tls.Certificate{}
+			}
+
+			for _, domainProcessed := range domainToCheck.ToStrArray() {
+				if idxDomain < idxDomainToCheck && isDomainAlreadyChecked(domainProcessed, domainsMap) {
+					// The domain is duplicated in a CN
+					log.Warnf("Domain %q is duplicated in the configuration or validated by the domain %v. It will be processed once.", domainProcessed, domain)
+					continue
+				} else if domain.Main != domainProcessed && strings.HasPrefix(domain.Main, "*") && types.MatchDomain(domainProcessed, domain.Main) {
+					// Check if a wildcard can validate the domain
+					log.Warnf("Domain %q will not be processed by ACME provider because it is validated by the wildcard %q", domainProcessed, domain.Main)
+					continue
+				}
+				newDomainsToCheck = append(newDomainsToCheck, domainProcessed)
+			}
+
+			// Delete the domain if both Main and SANs can be validated by the wildcard domain
+			// otherwise keep the unchecked values
+			if newDomainsToCheck == nil {
+				keepDomain = false
+				break
+			}
+			domainToCheck.Set(newDomainsToCheck)
 		}
 
 		if keepDomain {

@@ -170,7 +170,7 @@ Here is an example of frontends definition:
 
 - Three frontends are defined: `frontend1`, `frontend2` and `frontend3`
 - `frontend1` will forward the traffic to the `backend2` if the rule `Host:test.localhost,test2.localhost` is matched
-- `frontend2` will forward the traffic to the `backend1` if the rule `Host:localhost,{subdomain:[a-z]+}.localhost` is matched (forwarding client `Host` header to the backend)
+- `frontend2` will forward the traffic to the `backend1` if the rule `HostRegexp:localhost,{subdomain:[a-z]+}.localhost` is matched (forwarding client `Host` header to the backend)
 - `frontend3` will forward the traffic to the `backend2` if the rules `Host:test3.localhost` **AND** `Path:/test` are matched
 
 #### Combining multiple rules
@@ -645,18 +645,18 @@ Once a day (the first call begins 10 minutes after the start of Træfik), we col
   swarmMode = true
 
   [Docker.TLS]
-    CA = "dockerCA"
-    Cert = "dockerCert"
-    Key = "dockerKey"
-    InsecureSkipVerify = true
+    ca = "dockerCA"
+    cert = "dockerCert"
+    key = "dockerKey"
+    insecureSkipVerify = true
 
 [ECS]
-  Domain = "foo.bar"
-  ExposedByDefault = true
-  Clusters = ["foo-bar"]
-  Region = "us-west-2"
-  AccessKeyID = "AccessKeyID"
-  SecretAccessKey = "SecretAccessKey"
+  domain = "foo.bar"
+  exposedByDefault = true
+  clusters = ["foo-bar"]
+  region = "us-west-2"
+  accessKeyID = "AccessKeyID"
+  secretAccessKey = "SecretAccessKey"
 ```
 
 - Obfuscated and anonymous configuration:
@@ -669,24 +669,24 @@ Once a day (the first call begins 10 minutes after the start of Træfik), we col
 [api]
 
 [Docker]
-  Endpoint = "xxxx"
-  Domain = "xxxx"
-  ExposedByDefault = true
-  SwarmMode = true
+  endpoint = "xxxx"
+  domain = "xxxx"
+  exposedByDefault = true
+  swarmMode = true
 
   [Docker.TLS]
-    CA = "xxxx"
-    Cert = "xxxx"
-    Key = "xxxx"
-    InsecureSkipVerify = false
+    ca = "xxxx"
+    cert = "xxxx"
+    key = "xxxx"
+    insecureSkipVerify = false
 
 [ECS]
-  Domain = "xxxx"
-  ExposedByDefault = true
-  Clusters = []
-  Region = "us-west-2"
-  AccessKeyID = "xxxx"
-  SecretAccessKey = "xxxx"
+  domain = "xxxx"
+  exposedByDefault = true
+  clusters = []
+  region = "us-west-2"
+  accessKeyID = "xxxx"
+  secretAccessKey = "xxxx"
 ```
 
 ### Show me the code !

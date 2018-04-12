@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/acmev2"
 )
 
 var dynBaseURL = "https://api.dynect.net/REST"
@@ -30,7 +30,7 @@ type dynResponse struct {
 	Messages json.RawMessage `json:"msgs"`
 }
 
-// DNSProvider is an implementation of the acme.ChallengeProvider interface that uses
+// DNSProvider is an implementation of the acmev2.ChallengeProvider interface that uses
 // Dyn's Managed DNS API to manage TXT records for a domain.
 type DNSProvider struct {
 	customerName string
@@ -87,17 +87,21 @@ func (d *DNSProvider) sendRequest(method, resource string, payload interface{}) 
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode >= 400 {
+	if resp.StatusCode >= 500 {
 		return nil, fmt.Errorf("Dyn API request failed with HTTP status code %d", resp.StatusCode)
-	} else if resp.StatusCode == 307 {
-		// TODO add support for HTTP 307 response and long running jobs
-		return nil, fmt.Errorf("Dyn API request returned HTTP 307. This is currently unsupported")
 	}
 
 	var dynRes dynResponse
 	err = json.NewDecoder(resp.Body).Decode(&dynRes)
 	if err != nil {
 		return nil, err
+	}
+
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("Dyn API request failed with HTTP status code %d: %s", resp.StatusCode, dynRes.Messages)
+	} else if resp.StatusCode == 307 {
+		// TODO add support for HTTP 307 response and long running jobs
+		return nil, fmt.Errorf("Dyn API request returned HTTP 307. This is currently unsupported")
 	}
 
 	if dynRes.Status == "failure" {
@@ -172,9 +176,9 @@ func (d *DNSProvider) logout() error {
 
 // Present creates a TXT record using the specified parameters
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
+	fqdn, value, ttl := acmev2.DNS01Record(domain, keyAuth)
 
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := acmev2.FindZoneByFqdn(fqdn, acmev2.RecursiveNameservers)
 	if err != nil {
 		return err
 	}
@@ -228,9 +232,9 @@ func (d *DNSProvider) publish(zone, notes string) error {
 
 // CleanUp removes the TXT record matching the specified parameters
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
 
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := acmev2.FindZoneByFqdn(fqdn, acmev2.RecursiveNameservers)
 	if err != nil {
 		return err
 	}

@@ -97,7 +97,7 @@
         status = [{{range $page.Status }}
           "{{.}}",
           {{end}}]
-        backend = "{{ $page.Backend }}"
+        backend = "backend-{{ $page.Backend }}"
         query = "{{ $page.Query }}"
       {{end}}
     {{end}}

@@ -9,10 +9,10 @@ import (
 	"strings"
 
 	"github.com/dnsimple/dnsimple-go/dnsimple"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/acmev2"
 )
 
-// DNSProvider is an implementation of the acme.ChallengeProvider interface.
+// DNSProvider is an implementation of the acmev2.ChallengeProvider interface.
 type DNSProvider struct {
 	client *dnsimple.Client
 }
@@ -47,7 +47,7 @@ func NewDNSProviderCredentials(accessToken, baseUrl string) (*DNSProvider, error
 
 // Present creates a TXT record to fulfil the dns-01 challenge.
 func (c *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
+	fqdn, value, ttl := acmev2.DNS01Record(domain, keyAuth)
 
 	zoneName, err := c.getHostedZone(domain)
 
@@ -71,7 +71,7 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters.
 func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
 
 	records, err := c.findTxtRecords(domain, fqdn)
 	if err != nil {
@@ -94,7 +94,7 @@ func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 }
 
 func (c *DNSProvider) getHostedZone(domain string) (string, error) {
-	authZone, err := acme.FindZoneByFqdn(acme.ToFqdn(domain), acme.RecursiveNameservers)
+	authZone, err := acmev2.FindZoneByFqdn(acmev2.ToFqdn(domain), acmev2.RecursiveNameservers)
 	if err != nil {
 		return "", err
 	}
@@ -104,7 +104,7 @@ func (c *DNSProvider) getHostedZone(domain string) (string, error) {
 		return "", err
 	}
 
-	zoneName := acme.UnFqdn(authZone)
+	zoneName := acmev2.UnFqdn(authZone)
 
 	zones, err := c.client.Zones.ListZones(accountID, &dnsimple.ZoneListOptions{NameLike: zoneName})
 	if err != nil {
@@ -159,7 +159,7 @@ func (c *DNSProvider) newTxtRecord(zoneName, fqdn, value string, ttl int) *dnsim
 }
 
 func (c *DNSProvider) extractRecordName(fqdn, domain string) string {
-	name := acme.UnFqdn(fqdn)
+	name := acmev2.UnFqdn(fqdn)
 	if idx := strings.Index(name, "."+domain); idx != -1 {
 		return name[:idx]
 	}

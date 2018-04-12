@@ -9,10 +9,10 @@ logLevel = "DEBUG"
   address = ":8081"
 
 [dynamodb]
-  AccessKeyID = "key"
-  SecretAccessKey = "secret"
-  Endpoint = "{{.DynamoURL}}"
-  Region = "us-east-1"
+  accessKeyID = "key"
+  secretAccessKey = "secret"
+  endpoint = "{{.DynamoURL}}"
+  region = "us-east-1"
 
 [api]
   entryPoint = "api"

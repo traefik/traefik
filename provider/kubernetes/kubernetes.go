@@ -24,6 +24,7 @@ import (
 	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
@@ -45,24 +46,37 @@ type Provider struct {
 	DisablePassHostHeaders bool       `description:"Kubernetes disable PassHost Headers" export:"true"`
 	EnablePassTLSCert      bool       `description:"Kubernetes enable Pass TLS Client Certs" export:"true"`
 	Namespaces             Namespaces `description:"Kubernetes namespaces" export:"true"`
-	LabelSelector          string     `description:"Kubernetes api label selector to use" export:"true"`
+	LabelSelector          string     `description:"Kubernetes Ingress label selector to use" export:"true"`
 	IngressClass           string     `description:"Value of kubernetes.io/ingress.class annotation to watch for" export:"true"`
 	lastConfiguration      safe.Safe
 }
 
-func (p *Provider) newK8sClient() (Client, error) {
+func (p *Provider) newK8sClient(ingressLabelSelector string) (Client, error) {
+	ingLabelSel, err := labels.Parse(ingressLabelSelector)
+	if err != nil {
+		return nil, fmt.Errorf("invalid ingress label selector: %q", ingressLabelSelector)
+	}
+	log.Infof("ingress label selector is: %q", ingLabelSel)
+
 	withEndpoint := ""
 	if p.Endpoint != "" {
 		withEndpoint = fmt.Sprintf(" with endpoint %v", p.Endpoint)
 	}
 
+	var cl *clientImpl
 	if os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "" {
 		log.Infof("Creating in-cluster Provider client%s", withEndpoint)
-		return NewInClusterClient(p.Endpoint)
+		cl, err = newInClusterClient(p.Endpoint)
+	} else {
+		log.Infof("Creating cluster-external Provider client%s", withEndpoint)
+		cl, err = newExternalClusterClient(p.Endpoint, p.Token, p.CertAuthFilePath)
 	}
 
-	log.Infof("Creating cluster-external Provider client%s", withEndpoint)
-	return NewExternalClusterClient(p.Endpoint, p.Token, p.CertAuthFilePath)
+	if err == nil {
+		cl.ingressLabelSelector = ingLabelSel
+	}
+
+	return cl, err
 }
 
 // Provide allows the k8s provider to provide configurations to traefik
@@ -83,7 +97,8 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		return fmt.Errorf("value for IngressClass has to be empty or start with the prefix %q, instead found %q", traefikDefaultIngressClass, p.IngressClass)
 	}
 
-	k8sClient, err := p.newK8sClient()
+	log.Debugf("Using Ingress label selector: %q", p.LabelSelector)
+	k8sClient, err := p.newK8sClient(p.LabelSelector)
 	if err != nil {
 		return err
 	}
@@ -94,8 +109,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 			for {
 				stopWatch := make(chan struct{}, 1)
 				defer close(stopWatch)
-				log.Debugf("Using label selector: '%s'", p.LabelSelector)
-				eventsChan, err := k8sClient.WatchAll(p.Namespaces, p.LabelSelector, stopWatch)
+				eventsChan, err := k8sClient.WatchAll(p.Namespaces, stopWatch)
 				if err != nil {
 					log.Errorf("Error watching kubernetes events: %v", err)
 					timer := time.NewTimer(1 * time.Second)
@@ -267,7 +281,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 							templateObjects.Backends[baseName].Servers[name] = types.Server{
 								URL:    url,
-								Weight: 1,
+								Weight: label.DefaultWeight,
 							}
 						} else {
 							endpoints, exists, err := k8sClient.GetEndpoints(service.Namespace, service.Name)
@@ -295,7 +309,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 									}
 									templateObjects.Backends[baseName].Servers[name] = types.Server{
 										URL:    url,
-										Weight: 1,
+										Weight: label.DefaultWeight,
 									}
 								}
 							}

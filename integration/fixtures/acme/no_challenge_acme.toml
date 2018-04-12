@@ -14,9 +14,9 @@ defaultEntryPoints = ["http", "https"]
 
 [acme]
 email = "test@traefik.io"
-storage = "/dev/null"
+storage = "/tmp/acme.json"
 entryPoint = "https"
-OnHostRule = true
+onHostRule = true
 caServer = "http://{{.BoulderHost}}:4001/directory"
 # No challenge defined
 
@@ -26,6 +26,7 @@ caServer = "http://{{.BoulderHost}}:4001/directory"
   [backends.backend]
     [backends.backend.servers.server1]
     url = "http://127.0.0.1:9010"
+    weight = 1
 
 
 [frontends]

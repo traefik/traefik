@@ -90,11 +90,11 @@ func TestBuildConfiguration(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-ID1": {
 							URL:    "http://10.10.10.10:80",
-							Weight: 0,
+							Weight: label.DefaultWeight,
 						},
 						"server-ID2": {
 							URL:    "http://10.10.10.11:81",
-							Weight: 0,
+							Weight: label.DefaultWeight,
 						},
 					},
 				},
@@ -102,11 +102,11 @@ func TestBuildConfiguration(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-ID3": {
 							URL:    "http://20.10.10.10:80",
-							Weight: 0,
+							Weight: label.DefaultWeight,
 						},
 						"server-ID4": {
 							URL:    "http://20.10.10.11:81",
-							Weight: 0,
+							Weight: label.DefaultWeight,
 						},
 					},
 				},
@@ -260,12 +260,12 @@ func TestBuildConfiguration(t *testing.T) {
 						"foo": {
 							Status:  []string{"404"},
 							Query:   "foo_query",
-							Backend: "foobar",
+							Backend: "backend-foobar",
 						},
 						"bar": {
 							Status:  []string{"500", "600"},
 							Query:   "bar_query",
-							Backend: "foobar",
+							Backend: "backend-foobar",
 						},
 					},
 					RateLimit: &types.RateLimit{
@@ -617,7 +617,7 @@ func TestGetServers(t *testing.T) {
 			expected: map[string]types.Server{
 				"server-ID1": {
 					URL:    "http://10.10.10.10:80",
-					Weight: 0,
+					Weight: label.DefaultWeight,
 				},
 				"server-ID2": {
 					URL:    "http://10.10.10.11:81",

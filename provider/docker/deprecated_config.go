@@ -21,7 +21,7 @@ func (p *Provider) buildConfigurationV1(containersInspected []dockerData) *types
 		// Backend functions
 		"getIPAddress": p.getIPAddress,
 		"getPort":      getPortV1,
-		"getWeight":    getFuncIntLabelV1(label.TraefikWeight, label.DefaultWeightInt),
+		"getWeight":    getFuncIntLabelV1(label.TraefikWeight, label.DefaultWeight),
 		"getProtocol":  getFuncStringLabelV1(label.TraefikProtocol, label.DefaultProtocol),
 
 		"hasCircuitBreakerLabel":      hasFuncV1(label.TraefikBackendCircuitBreakerExpression),
@@ -38,8 +38,8 @@ func (p *Provider) buildConfigurationV1(containersInspected []dockerData) *types
 		// Frontend functions
 		"getBackend":              getBackendNameV1,
 		"getBackendName":          getBackendNameV1,
-		"getPriority":             getFuncIntLabelV1(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
-		"getPassHostHeader":       getFuncBoolLabelV1(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
+		"getPriority":             getFuncIntLabelV1(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
+		"getPassHostHeader":       getFuncBoolLabelV1(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getPassTLSCert":          getFuncBoolLabelV1(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getEntryPoints":          getFuncSliceStringLabelV1(label.TraefikFrontendEntryPoints),
 		"getBasicAuth":            getFuncSliceStringLabelV1(label.TraefikFrontendAuthBasic),
@@ -100,15 +100,15 @@ func (p *Provider) buildConfigurationV1(containersInspected []dockerData) *types
 		// Services - Backend server functions
 		"getServicePort":     getServicePortV1,
 		"getServiceProtocol": getFuncServiceStringLabelV1(label.SuffixProtocol, label.DefaultProtocol),
-		"getServiceWeight":   getFuncServiceStringLabelV1(label.SuffixWeight, label.DefaultWeight),
+		"getServiceWeight":   getFuncServiceIntLabelV1(label.SuffixWeight, label.DefaultWeight),
 		// Services - Frontend functions
 		"getServiceEntryPoints":          getFuncServiceSliceStringLabelV1(label.SuffixFrontendEntryPoints),
 		"getServiceWhitelistSourceRange": getFuncServiceSliceStringLabelV1(label.SuffixFrontendWhiteListSourceRange),
 		"getServiceBasicAuth":            getFuncServiceSliceStringLabelV1(label.SuffixFrontendAuthBasic),
 		"getServiceFrontendRule":         p.getServiceFrontendRuleV1,
-		"getServicePassHostHeader":       getFuncServiceBoolLabelV1(label.SuffixFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
+		"getServicePassHostHeader":       getFuncServiceBoolLabelV1(label.SuffixFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getServicePassTLSCert":          getFuncServiceBoolLabelV1(label.SuffixFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getServicePriority":             getFuncServiceIntLabelV1(label.SuffixFrontendPriority, label.DefaultFrontendPriorityInt),
+		"getServicePriority":             getFuncServiceIntLabelV1(label.SuffixFrontendPriority, label.DefaultFrontendPriority),
 		"hasServiceRedirect":             hasServiceRedirectV1,
 		"getServiceRedirectEntryPoint":   getFuncServiceStringLabelV1(label.SuffixFrontendRedirectEntryPoint, ""),
 		"getServiceRedirectReplacement":  getFuncServiceStringLabelV1(label.SuffixFrontendRedirectReplacement, ""),

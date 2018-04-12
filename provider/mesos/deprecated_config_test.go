@@ -86,11 +86,11 @@ func TestBuildConfigurationV1(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-ID1": {
 							URL:    "http://10.10.10.10:80",
-							Weight: 0,
+							Weight: label.DefaultWeight,
 						},
 						"server-ID2": {
 							URL:    "http://10.10.10.11:81",
-							Weight: 0,
+							Weight: label.DefaultWeight,
 						},
 					},
 				},
@@ -98,11 +98,11 @@ func TestBuildConfigurationV1(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-ID3": {
 							URL:    "http://20.10.10.10:80",
-							Weight: 0,
+							Weight: label.DefaultWeight,
 						},
 						"server-ID4": {
 							URL:    "http://20.10.10.11:81",
-							Weight: 0,
+							Weight: label.DefaultWeight,
 						},
 					},
 				},

@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/acmev2"
 
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
@@ -88,7 +88,7 @@ func NewDNSProviderServiceAccount(project string, saFile string) (*DNSProvider, 
 
 // Present creates a TXT record to fulfil the dns-01 challenge.
 func (c *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
+	fqdn, value, ttl := acmev2.DNS01Record(domain, keyAuth)
 
 	zone, err := c.getHostedZone(domain)
 	if err != nil {
@@ -135,7 +135,7 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters.
 func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
 
 	zone, err := c.getHostedZone(domain)
 	if err != nil {
@@ -167,7 +167,7 @@ func (c *DNSProvider) Timeout() (timeout, interval time.Duration) {
 
 // getHostedZone returns the managed-zone
 func (c *DNSProvider) getHostedZone(domain string) (string, error) {
-	authZone, err := acme.FindZoneByFqdn(acme.ToFqdn(domain), acme.RecursiveNameservers)
+	authZone, err := acmev2.FindZoneByFqdn(acmev2.ToFqdn(domain), acmev2.RecursiveNameservers)
 	if err != nil {
 		return "", err
 	}

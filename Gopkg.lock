@@ -24,8 +24,12 @@
 
 [[projects]]
   name = "github.com/Azure/azure-sdk-for-go"
-  packages = ["arm/dns"]
-  revision = "f7bb4db3ea4c73dc58bd284c38ea644a79324be0"
+  packages = [
+    "services/dns/mgmt/2017-09-01/dns",
+    "version"
+  ]
+  revision = "068ec4d616be5b2175509bf1fb3e4c8ea160d5c8"
+  version = "v15.0.1"
 
 [[projects]]
   branch = "master"
@@ -45,8 +49,8 @@
     "autorest/date",
     "autorest/to"
   ]
-  revision = "f6be1abbb5abd0517522f850dd785990d373da7e"
-  version = "v9.0.0"
+  revision = "9ad9326b278af8fa5cc67c30c0ce9a58cc0862b2"
+  version = "v10.6.0"
 
 [[projects]]
   branch = "master"
@@ -141,6 +145,17 @@
   revision = "063d875e3c5fd734fa2aa12fac83829f62acfc70"
 
 [[projects]]
+  name = "github.com/akamai/AkamaiOPEN-edgegrid-golang"
+  packages = [
+    "client-v1",
+    "configdns-v1",
+    "edgegrid",
+    "jsonhooks-v1"
+  ]
+  revision = "a494eba1efa1f38338393727dff63389a6a66534"
+  version = "v0.6.0"
+
+[[projects]]
   name = "github.com/aokoli/goutils"
   packages = ["."]
   revision = "3391d3790d23d03408670993e957e8f408993c34"
@@ -193,6 +208,7 @@
     "service/dynamodb/dynamodbiface",
     "service/ec2",
     "service/ecs",
+    "service/lightsail",
     "service/route53",
     "service/sts"
   ]
@@ -247,8 +263,8 @@
 [[projects]]
   name = "github.com/containous/traefik-extra-service-fabric"
   packages = ["."]
-  revision = "29a6d70ad0f15175efbaa5fd93d8afdd8b373b93"
-  version = "v1.1.1"
+  revision = "503022efdc178146d598911092af75690510a80c"
+  version = "v1.1.3"
 
 [[projects]]
   name = "github.com/coreos/bbolt"
@@ -300,8 +316,8 @@
 [[projects]]
   name = "github.com/dgrijalva/jwt-go"
   packages = ["."]
-  revision = "d2709f9f1f31ebcda9651b03077758c1f3a0018c"
-  version = "v3.0.0"
+  revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
+  version = "v3.2.0"
 
 [[projects]]
   name = "github.com/dnsimple/dnsimple-go"
@@ -916,6 +932,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/namedotcom/go"
+  packages = ["namecom"]
+  revision = "08470befbe04613bd4b44cb6978b05d50294c4d4"
+
+[[projects]]
+  branch = "master"
   name = "github.com/ogier/pflag"
   packages = ["."]
   revision = "45c278ab3607870051a2ea9040bb85fcb8557481"
@@ -1121,6 +1143,12 @@
   revision = "37e84520dcf74488f67654f9c775b9752c232dc1"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/tuvistavie/securerandom"
+  packages = ["."]
+  revision = "15512123a948d62f6361bd84818e11f2ad84059a"
+
+[[projects]]
   name = "github.com/tv42/zbase32"
   packages = ["."]
   revision = "03389da7e0bf9844767f82690f4d68fc097a1306"
@@ -1188,7 +1216,7 @@
     "roundrobin",
     "utils"
   ]
-  revision = "dacf34285ce530b272e9fe04d2f45f52e6374e36"
+  revision = "6956548a7fa4272adeadf828455109c53933ea86"
 
 [[projects]]
   name = "github.com/vulcand/predicate"
@@ -1214,28 +1242,34 @@
   revision = "0c8571ac0ce161a5feb57375a9cdf148c98c0f70"
 
 [[projects]]
-  branch = "acmev2"
+  branch = "containous-fork"
   name = "github.com/xenolf/lego"
   packages = [
-    "acme",
     "acmev2",
     "providers/dns",
     "providers/dns/auroradns",
     "providers/dns/azure",
+    "providers/dns/bluecat",
     "providers/dns/cloudflare",
     "providers/dns/cloudxns",
     "providers/dns/digitalocean",
     "providers/dns/dnsimple",
     "providers/dns/dnsmadeeasy",
     "providers/dns/dnspod",
+    "providers/dns/duckdns",
     "providers/dns/dyn",
+    "providers/dns/exec",
     "providers/dns/exoscale",
+    "providers/dns/fastdns",
     "providers/dns/gandi",
     "providers/dns/gandiv5",
+    "providers/dns/glesys",
     "providers/dns/godaddy",
     "providers/dns/googlecloud",
+    "providers/dns/lightsail",
     "providers/dns/linode",
     "providers/dns/namecheap",
+    "providers/dns/namedotcom",
     "providers/dns/ns1",
     "providers/dns/otc",
     "providers/dns/ovh",
@@ -1245,7 +1279,8 @@
     "providers/dns/route53",
     "providers/dns/vultr"
   ]
-  revision = "a149e7d6506feb4003da7093cbf818c6b75ed4a4"
+  revision = "2817d2131186742bc98830c73a5d9c255b3f4537"
+  source = "github.com/containous/lego"
 
 [[projects]]
   branch = "master"
@@ -1404,6 +1439,12 @@
   version = "v1.30.0"
 
 [[projects]]
+  branch = "v1"
+  name = "gopkg.in/mattes/go-expand-tilde.v1"
+  packages = ["."]
+  revision = "cb884138e64c9a8bf5c7d6106d74b0fca082df0c"
+
+[[projects]]
   name = "gopkg.in/ns1/ns1-go.v2"
   packages = [
     "rest",
@@ -1414,16 +1455,6 @@
     "rest/model/monitor"
   ]
   revision = "c563826f4cbef9c11bebeb9f20a3f7afe9c1e2f4"
-
-[[projects]]
-  name = "gopkg.in/square/go-jose.v1"
-  packages = [
-    ".",
-    "cipher",
-    "json"
-  ]
-  revision = "aa2e30fdd1fe9dd3394119af66451ae790d50e0d"
-  version = "v1.1.0"
 
 [[projects]]
   name = "gopkg.in/square/go-jose.v2"
@@ -1644,6 +1675,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "593d67272ac35ca0fa59df7f2ac077a81ea842b3181b00acffa20553bfe6f2e0"
+  inputs-digest = "c441208e9bf330e85e2939b383515f58a4957286960b43c444e6f512d1ff94ee"
   solver-name = "gps-cdcl"
   solver-version = 1

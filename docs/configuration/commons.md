@@ -38,14 +38,14 @@
 # Optional
 # Default: "2s"
 #
-# ProvidersThrottleDuration = "2s"
+# providersThrottleDuration = "2s"
 
 # Controls the maximum idle (keep-alive) connections to keep per-host.
 #
 # Optional
 # Default: 200
 #
-# MaxIdleConnsPerHost = 200
+# maxIdleConnsPerHost = 200
 
 # If set to true invalid SSL certificates are accepted for backends.
 # This disables detection of man-in-the-middle attacks so should only be used on secure backend networks.
@@ -53,14 +53,14 @@
 # Optional
 # Default: false
 #
-# InsecureSkipVerify = true
+# insecureSkipVerify = true
 
-# Register Certificates in the RootCA.
+# Register Certificates in the rootCA.
 #
 # Optional
 # Default: []
 #
-# RootCAs = [ "/mycert.cert" ]
+# rootCAs = [ "/mycert.cert" ]
 
 # Entrypoints to be used by frontends that do not specify any entrypoint.
 # Each frontend can specify its own entrypoints.
@@ -69,6 +69,15 @@
 # Default: ["http"]
 #
 # defaultEntryPoints = ["http", "https"]
+
+# Allow the use of 0 as server weight.
+# - false: a weight 0 means internally a weight of 1.
+# - true: a weight 0 means internally a weight of 0 (a server with a weight of 0 is removed from the available servers).
+#
+# Optional
+# Default: false
+#
+# AllowMinWeightZero = true
 ```
 
 - `graceTimeOut`: Duration to give active requests a chance to finish before Traefik stops.  
@@ -76,19 +85,19 @@ Can be provided in a format supported by [time.ParseDuration](https://golang.org
 If no units are provided, the value is parsed assuming seconds.  
 **Note:** in this time frame no new requests are accepted.
 
-- `ProvidersThrottleDuration`: Backends throttle duration: minimum duration in seconds between 2 events from providers before applying a new configuration.
+- `providersThrottleDuration`: Backends throttle duration: minimum duration in seconds between 2 events from providers before applying a new configuration.
 It avoids unnecessary reloads if multiples events are sent in a short amount of time.  
 Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
 If no units are provided, the value is parsed assuming seconds.
 
-- `MaxIdleConnsPerHost`: Controls the maximum idle (keep-alive) connections to keep per-host.  
+- `maxIdleConnsPerHost`: Controls the maximum idle (keep-alive) connections to keep per-host.  
 If zero, `DefaultMaxIdleConnsPerHost` from the Go standard library net/http module is used.
 If you encounter 'too many open files' errors, you can either increase this value or change the `ulimit`.
 
-- `InsecureSkipVerify` : If set to true invalid SSL certificates are accepted for backends.  
+- `insecureSkipVerify` : If set to true invalid SSL certificates are accepted for backends.  
 **Note:** This disables detection of man-in-the-middle attacks so should only be used on secure backend networks.
 
-- `RootCAs`: Register Certificates in the RootCA. This certificates will be use for backends calls.  
+- `rootCAs`: Register Certificates in the RootCA. This certificates will be use for backends calls.  
 **Note** You can use file path or cert content directly
 
 - `defaultEntryPoints`: Entrypoints to be used by frontends that do not specify any entrypoint.  
@@ -386,24 +395,24 @@ If no units are provided, the value is parsed assuming seconds.
 
 ### Idle Timeout (deprecated)
 
-Use [respondingTimeouts](/configuration/commons/#responding-timeouts) instead of `IdleTimeout`.
+Use [respondingTimeouts](/configuration/commons/#responding-timeouts) instead of `idleTimeout`.
 In the case both settings are configured, the deprecated option will be overwritten.
 
-`IdleTimeout` is the maximum amount of time an idle (keep-alive) connection will remain idle before closing itself.
+`idleTimeout` is the maximum amount of time an idle (keep-alive) connection will remain idle before closing itself.
 This is set to enforce closing of stale client connections.
 
 Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
 If no units are provided, the value is parsed assuming seconds.
 
 ```toml
-# IdleTimeout
+# idleTimeout
 #
 # DEPRECATED - see [respondingTimeouts] section.
 #
 # Optional
 # Default: "180s"
 #
-IdleTimeout = "360s"
+idleTimeout = "360s"
 ```
 
 

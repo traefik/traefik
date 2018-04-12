@@ -11,17 +11,17 @@ defaultEntryPoints = ["http", "https"]
 
 
 [acme]
-email = "test@traefik.io"
-storage = "/dev/null"
-entryPoint = "https"
-onDemand = false
-OnHostRule = false
-caServer = "http://{{.BoulderHost}}:4001/directory"
-[acme.httpChallenge]
-entryPoint="http"
-[[acme.domains]]
-main = "acme.wtf"
-sans = [ "traefik.acme.wtf" ]
+  email = "test@traefik.io"
+  storage = "/tmp/acme.json"
+  entryPoint = "https"
+  onDemand = false
+  onHostRule = false
+  caServer = "http://{{.BoulderHost}}:4001/directory"
+  [acme.httpChallenge]
+  entryPoint="http"
+  [[acme.domains]]
+  main = "acme.wtf"
+  sans = [ "traefik.acme.wtf" ]
 
 
 [api]
@@ -32,6 +32,7 @@ sans = [ "traefik.acme.wtf" ]
   [backends.backend]
     [backends.backend.servers.server1]
     url = "http://127.0.0.1:9010"
+    weight = 1
 
 [frontends]
   [frontends.frontend]

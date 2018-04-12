@@ -3,7 +3,7 @@ logLevel = "DEBUG"
 defaultEntryPoints = ["http"]
 
 # Use certificate in net/internal/testcert.go
-RootCAs =  [ "fixtures/https/rootcas/local.crt"]
+rootCAs =  [ "fixtures/https/rootcas/local.crt"]
 
 [entryPoints]
   [entryPoints.http]
@@ -17,6 +17,8 @@ RootCAs =  [ "fixtures/https/rootcas/local.crt"]
   [backends.backend1]
     [backends.backend1.servers.server1]
     url = "{{ .BackendHost }}"
+    weight = 1
+
 [frontends]
   [frontends.frontend1]
   backend = "backend1"

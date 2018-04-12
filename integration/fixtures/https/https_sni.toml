@@ -21,9 +21,11 @@ defaultEntryPoints = ["https"]
   [backends.backend1]
     [backends.backend1.servers.server1]
     url = "http://127.0.0.1:9010"
+    weight = 1
   [backends.backend2]
     [backends.backend2.servers.server1]
     url = "http://127.0.0.1:9020"
+    weight = 1
 
 [frontends]
   [frontends.frontend1]

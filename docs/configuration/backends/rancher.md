@@ -77,7 +77,7 @@ To enable constraints see [backend-specific constraints section](/configuration/
 #
 [rancher.metadata]
 
-# Poll the Rancher metadata service for changes every `rancher.RefreshSeconds`.
+# Poll the Rancher metadata service for changes every `rancher.refreshSeconds`.
 # NOTE: this is less accurate than the default long polling technique which
 # will provide near instantaneous updates to Traefik
 #

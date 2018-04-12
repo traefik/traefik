@@ -5,6 +5,7 @@ import (
 	"text/template"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
@@ -12,14 +13,25 @@ import (
 
 // buildConfiguration fills the config template with the given instances
 // Deprecated
-func (p *Provider) buildConfigurationV1(services map[string][]ecsInstance) (*types.Configuration, error) {
+func (p *Provider) buildConfigurationV1(instances []ecsInstance) (*types.Configuration, error) {
+	services := make(map[string][]ecsInstance)
+	for _, instance := range instances {
+		if p.filterInstanceV1(instance) {
+			if serviceInstances, ok := services[instance.Name]; ok {
+				services[instance.Name] = append(serviceInstances, instance)
+			} else {
+				services[instance.Name] = []ecsInstance{instance}
+			}
+		}
+	}
+
 	var ecsFuncMap = template.FuncMap{
 		// Backend functions
 		"getHost": getHost,
 		"getPort": getPort,
 
 		"getProtocol":             getFuncStringValueV1(label.TraefikProtocol, label.DefaultProtocol),
-		"getWeight":               getFuncIntValueV1(label.TraefikWeight, label.DefaultWeightInt),
+		"getWeight":               getFuncIntValueV1(label.TraefikWeight, label.DefaultWeight),
 		"getLoadBalancerMethod":   getFuncFirstStringValueV1(label.TraefikBackendLoadBalancerMethod, label.DefaultBackendLoadBalancerMethod),
 		"getLoadBalancerSticky":   getStickyV1,
 		"hasStickinessLabel":      getFuncFirstBoolValueV1(label.TraefikBackendLoadBalancerStickiness, false),
@@ -31,9 +43,9 @@ func (p *Provider) buildConfigurationV1(services map[string][]ecsInstance) (*typ
 		// Frontend functions
 		"filterFrontends":   filterFrontends,
 		"getFrontendRule":   p.getFrontendRule,
-		"getPassHostHeader": getFuncBoolValueV1(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
+		"getPassHostHeader": getFuncBoolValueV1(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getPassTLSCert":    getFuncBoolValueV1(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getPriority":       getFuncIntValueV1(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
+		"getPriority":       getFuncIntValueV1(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
 		"getBasicAuth":      getFuncSliceStringV1(label.TraefikFrontendAuthBasic),
 		"getEntryPoints":    getFuncSliceStringV1(label.TraefikFrontendEntryPoints),
 	}
@@ -43,6 +55,35 @@ func (p *Provider) buildConfigurationV1(services map[string][]ecsInstance) (*typ
 	}{
 		Services: services,
 	})
+}
+
+func (p *Provider) filterInstanceV1(i ecsInstance) bool {
+	if labelPort := getStringValueV1(i, label.TraefikPort, ""); len(i.container.NetworkBindings) == 0 && labelPort == "" {
+		log.Debugf("Filtering ecs instance without port %s (%s)", i.Name, i.ID)
+		return false
+	}
+
+	if i.machine == nil || i.machine.State == nil || i.machine.State.Name == nil {
+		log.Debugf("Filtering ecs instance in an missing ec2 information %s (%s)", i.Name, i.ID)
+		return false
+	}
+
+	if aws.StringValue(i.machine.State.Name) != ec2.InstanceStateNameRunning {
+		log.Debugf("Filtering ecs instance in an incorrect state %s (%s) (state = %s)", i.Name, i.ID, aws.StringValue(i.machine.State.Name))
+		return false
+	}
+
+	if i.machine.PrivateIpAddress == nil {
+		log.Debugf("Filtering ecs instance without an ip address %s (%s)", i.Name, i.ID)
+		return false
+	}
+
+	if !isEnabled(i, p.ExposedByDefault) {
+		log.Debugf("Filtering disabled ecs instance %s (%s)", i.Name, i.ID)
+		return false
+	}
+
+	return true
 }
 
 // TODO: Deprecated

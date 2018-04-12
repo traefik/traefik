@@ -39,8 +39,8 @@ func (p *Provider) buildConfigurationV2(tasks []state.Task) *types.Configuration
 		"getFrontEndName":   getFrontendName,
 		"getEntryPoints":    label.GetFuncSliceString(label.TraefikFrontendEntryPoints),
 		"getBasicAuth":      label.GetFuncSliceString(label.TraefikFrontendAuthBasic),
-		"getPriority":       label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
-		"getPassHostHeader": label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
+		"getPriority":       label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
+		"getPassHostHeader": label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getPassTLSCert":    label.GetFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getFrontendRule":   p.getFrontendRule,
 		"getRedirect":       label.GetRedirect,
@@ -184,7 +184,7 @@ func (p *Provider) getServers(tasks []taskData) map[string]types.Server {
 		serverName := "server-" + getID(task)
 		servers[serverName] = types.Server{
 			URL:    fmt.Sprintf("%s://%s:%s", protocol, host, port),
-			Weight: getIntValue(task.TraefikLabels, label.TraefikWeight, label.DefaultWeightInt, math.MaxInt32),
+			Weight: getIntValue(task.TraefikLabels, label.TraefikWeight, label.DefaultWeight, math.MaxInt32),
 		}
 	}
 

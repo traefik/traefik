@@ -8,13 +8,26 @@ import (
 
 	"github.com/BurntSushi/ty/fun"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 )
 
 // buildConfiguration fills the config template with the given instances
-func (p *Provider) buildConfigurationV2(services map[string][]ecsInstance) (*types.Configuration, error) {
+func (p *Provider) buildConfigurationV2(instances []ecsInstance) (*types.Configuration, error) {
+	services := make(map[string][]ecsInstance)
+	for _, instance := range instances {
+		if p.filterInstance(instance) {
+			if serviceInstances, ok := services[instance.Name]; ok {
+				services[instance.Name] = append(serviceInstances, instance)
+			} else {
+				services[instance.Name] = []ecsInstance{instance}
+			}
+		}
+	}
+
 	var ecsFuncMap = template.FuncMap{
 		// Backend functions
 		"getHost":           getHost,
@@ -29,9 +42,9 @@ func (p *Provider) buildConfigurationV2(services map[string][]ecsInstance) (*typ
 		// Frontend functions
 		"filterFrontends":   filterFrontends,
 		"getFrontendRule":   p.getFrontendRule,
-		"getPassHostHeader": label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
+		"getPassHostHeader": label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getPassTLSCert":    label.GetFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getPriority":       label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
+		"getPriority":       label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
 		"getBasicAuth":      label.GetFuncSliceString(label.TraefikFrontendAuthBasic),
 		"getEntryPoints":    label.GetFuncSliceString(label.TraefikFrontendEntryPoints),
 		"getRedirect":       label.GetRedirect,
@@ -46,6 +59,35 @@ func (p *Provider) buildConfigurationV2(services map[string][]ecsInstance) (*typ
 	}{
 		Services: services,
 	})
+}
+
+func (p *Provider) filterInstance(i ecsInstance) bool {
+	if labelPort := label.GetStringValue(i.TraefikLabels, label.TraefikPort, ""); len(i.container.NetworkBindings) == 0 && labelPort == "" {
+		log.Debugf("Filtering ecs instance without port %s (%s)", i.Name, i.ID)
+		return false
+	}
+
+	if i.machine == nil || i.machine.State == nil || i.machine.State.Name == nil {
+		log.Debugf("Filtering ecs instance with missing ec2 information %s (%s)", i.Name, i.ID)
+		return false
+	}
+
+	if aws.StringValue(i.machine.State.Name) != ec2.InstanceStateNameRunning {
+		log.Debugf("Filtering ecs instance with an incorrect state %s (%s) (state = %s)", i.Name, i.ID, aws.StringValue(i.machine.State.Name))
+		return false
+	}
+
+	if i.machine.PrivateIpAddress == nil {
+		log.Debugf("Filtering ecs instance without an ip address %s (%s)", i.Name, i.ID)
+		return false
+	}
+
+	if !isEnabled(i, p.ExposedByDefault) {
+		log.Debugf("Filtering disabled ecs instance %s (%s)", i.Name, i.ID)
+		return false
+	}
+
+	return true
 }
 
 func (p *Provider) getFrontendRule(i ecsInstance) string {
@@ -91,7 +133,7 @@ func getServers(instances []ecsInstance) map[string]types.Server {
 		serverName := provider.Normalize(fmt.Sprintf("server-%s-%s", instance.Name, instance.ID))
 		servers[serverName] = types.Server{
 			URL:    fmt.Sprintf("%s://%s:%s", protocol, host, port),
-			Weight: label.GetIntValue(instance.TraefikLabels, label.TraefikWeight, 0),
+			Weight: label.GetIntValue(instance.TraefikLabels, label.TraefikWeight, label.DefaultWeight),
 		}
 	}
 

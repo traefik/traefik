@@ -59,7 +59,7 @@ func TestDockerServiceBuildConfigurationV1(t *testing.T) {
 					Servers: map[string]types.Server{
 						"service-0": {
 							URL:    "http://127.0.0.1:2503",
-							Weight: 0,
+							Weight: label.DefaultWeight,
 						},
 					},
 					CircuitBreaker: nil,
@@ -272,25 +272,25 @@ func TestDockerGetFuncServiceStringLabelV1(t *testing.T) {
 	}{
 		{
 			container:    containerJSON(),
-			suffixLabel:  label.SuffixWeight,
-			defaultValue: label.DefaultWeight,
-			expected:     "0",
+			suffixLabel:  label.SuffixProtocol,
+			defaultValue: label.DefaultProtocol,
+			expected:     "http",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				label.TraefikWeight: "200",
+				label.TraefikProtocol: "https",
 			})),
-			suffixLabel:  label.SuffixWeight,
-			defaultValue: label.DefaultWeight,
-			expected:     "200",
+			suffixLabel:  label.SuffixProtocol,
+			defaultValue: label.DefaultProtocol,
+			expected:     "https",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.myservice.weight": "31337",
+				label.Prefix + "myservice." + label.SuffixProtocol: "https",
 			})),
-			suffixLabel:  label.SuffixWeight,
-			defaultValue: label.DefaultWeight,
-			expected:     "31337",
+			suffixLabel:  label.SuffixProtocol,
+			defaultValue: label.DefaultProtocol,
+			expected:     "https",
 		},
 	}
 

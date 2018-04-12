@@ -66,13 +66,13 @@ exposedByDefault = false
 #
 region = "us-east-1"
 
-# AccessKeyID to use when connecting to AWS.
+# Access Key ID to use when connecting to AWS.
 #
 # Optional
 #
 accessKeyID = "abc"
 
-# SecretAccessKey to use when connecting to AWS.
+# Secret Access Key to use when connecting to AWS.
 #
 # Optional
 #
@@ -95,7 +95,7 @@ secretAccessKey = "123"
 # templateVersion = "2"
 ```
 
-If `AccessKeyID`/`SecretAccessKey` is not given credentials will be resolved in the following order:
+If `accessKeyID`/`secretAccessKey` is not given credentials will be resolved in the following order:
 
 - From environment variables; `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN`.
 - Shared credentials, determined by `AWS_PROFILE` and `AWS_SHARED_CREDENTIALS_FILE`, defaults to `default` and `~/.aws/credentials`.

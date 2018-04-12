@@ -60,7 +60,7 @@ func TestBuildConfiguration(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-app-taskID": {
 							URL:    "http://localhost:80",
-							Weight: 0,
+							Weight: label.DefaultWeight,
 						},
 					},
 					CircuitBreaker: nil,
@@ -119,7 +119,7 @@ func TestBuildConfiguration(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-app-taskID": {
 							URL:    "http://localhost:80",
-							Weight: 0,
+							Weight: label.DefaultWeight,
 						},
 					},
 					MaxConn: nil,
@@ -152,7 +152,7 @@ func TestBuildConfiguration(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-app-taskID": {
 							URL:    "http://localhost:80",
-							Weight: 0,
+							Weight: label.DefaultWeight,
 						},
 					},
 				},
@@ -307,14 +307,14 @@ func TestBuildConfiguration(t *testing.T) {
 								"500",
 								"600",
 							},
-							Backend: "foobar",
+							Backend: "backendfoobar",
 							Query:   "bar_query",
 						},
 						"foo": {
 							Status: []string{
 								"404",
 							},
-							Backend: "foobar",
+							Backend: "backendfoobar",
 							Query:   "foo_query",
 						},
 					},
@@ -420,11 +420,11 @@ func TestBuildConfiguration(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-foo-v000-taskID-service-main": {
 							URL:    "http://localhost:8080",
-							Weight: 0,
+							Weight: label.DefaultWeight,
 						},
 						"server-foo-v001-taskID-service-main": {
 							URL:    "http://localhost:8081",
-							Weight: 0,
+							Weight: label.DefaultWeight,
 						},
 					},
 				},
@@ -503,7 +503,7 @@ func TestBuildConfigurationSegments(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-app-taskID-service-web": {
 							URL:    "http://localhost:80",
-							Weight: 0,
+							Weight: label.DefaultWeight,
 						},
 					},
 					MaxConn: &types.MaxConn{
@@ -515,7 +515,7 @@ func TestBuildConfigurationSegments(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-app-taskID-service-admin": {
 							URL:    "http://localhost:81",
-							Weight: 0,
+							Weight: label.DefaultWeight,
 						},
 					},
 					MaxConn: &types.MaxConn{
@@ -674,14 +674,14 @@ func TestBuildConfigurationSegments(t *testing.T) {
 								"500",
 								"600",
 							},
-							Backend: "foobar",
+							Backend: "backendfoobar",
 							Query:   "bar_query",
 						},
 						"foo": {
 							Status: []string{
 								"404",
 							},
-							Backend: "foobar",
+							Backend: "backendfoobar",
 							Query:   "foo_query",
 						},
 					},
@@ -1278,15 +1278,15 @@ func TestGetServers(t *testing.T) {
 			expected: map[string]types.Server{
 				"server-A": {
 					URL:    "http://1.1.1.1:80",
-					Weight: 0,
+					Weight: label.DefaultWeight,
 				},
 				"server-B": {
 					URL:    "http://1.1.1.2:80",
-					Weight: 0,
+					Weight: label.DefaultWeight,
 				},
 				"server-C": {
 					URL:    "http://1.1.1.3:80",
-					Weight: 0,
+					Weight: label.DefaultWeight,
 				},
 			},
 		},

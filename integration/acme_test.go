@@ -195,6 +195,8 @@ func (s *AcmeSuite) retrieveAcmeCertificate(c *check.C, testCase AcmeTestCase) {
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
+	// A real file is needed to have the right mode on acme.json file
+	defer os.Remove("/tmp/acme.json")
 
 	backend := startTestServer("9010", http.StatusOK)
 	defer backend.Close()

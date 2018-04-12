@@ -14,7 +14,7 @@ import (
 	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/xenolf/lego/acmev2"
+	acme "github.com/xenolf/lego/acmev2"
 )
 
 func TestDomainsSet(t *testing.T) {
@@ -417,11 +417,27 @@ func TestAcme_getValidDomain(t *testing.T) {
 			expectedDomains: nil,
 		},
 		{
-			desc:            "unexpected SANs",
-			domains:         []string{"*.traefik.wtf", "foo.traefik.wtf"},
+			desc:            "unauthorized wildcard with SAN",
+			domains:         []string{"*.*.traefik.wtf", "foo.traefik.wtf"},
 			dnsChallenge:    &acmeprovider.DNSChallenge{},
 			wildcardAllowed: true,
-			expectedErr:     "unable to generate a wildcard certificate for domain \"*.traefik.wtf,foo.traefik.wtf\" : SANs are not allowed",
+			expectedErr:     "unable to generate a wildcard certificate for domain \"*.*.traefik.wtf,foo.traefik.wtf\" : ACME does not allow '*.*' wildcard domain",
+			expectedDomains: nil,
+		},
+		{
+			desc:            "wildcard with SANs",
+			domains:         []string{"*.traefik.wtf", "traefik.wtf"},
+			dnsChallenge:    &acmeprovider.DNSChallenge{},
+			wildcardAllowed: true,
+			expectedErr:     "",
+			expectedDomains: []string{"*.traefik.wtf", "traefik.wtf"},
+		},
+		{
+			desc:            "unexpected SANs",
+			domains:         []string{"*.traefik.wtf", "*.acme.wtf"},
+			dnsChallenge:    &acmeprovider.DNSChallenge{},
+			wildcardAllowed: true,
+			expectedErr:     "unable to generate a certificate for domains \"*.traefik.wtf,*.acme.wtf\": SANs can not be a wildcard domain",
 			expectedDomains: nil,
 		},
 	}

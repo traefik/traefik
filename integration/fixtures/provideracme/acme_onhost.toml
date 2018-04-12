@@ -11,14 +11,14 @@ defaultEntryPoints = ["http", "https"]
 
 
 [acme]
-email = "test@traefik.io"
-storage = "/dev/null"
-entryPoint = "https"
-onDemand = {{.OnDemand}}
-OnHostRule = {{.OnHostRule}}
-caServer = "http://{{.BoulderHost}}:4001/directory"
-[acme.httpChallenge]
-entryPoint="http"
+  email = "test@traefik.io"
+  storage = "/tmp/acme.jsonl"
+  entryPoint = "https"
+  onDemand = {{.OnDemand}}
+  onHostRule = {{.OnHostRule}}
+  caServer = "http://{{.BoulderHost}}:4001/directory"
+  [acme.httpChallenge]
+  entryPoint="http"
 
 [api]
 
@@ -28,6 +28,7 @@ entryPoint="http"
   [backends.backend]
     [backends.backend.servers.server1]
     url = "http://127.0.0.1:9010"
+    weight = 1
 
 [frontends]
   [frontends.frontend]

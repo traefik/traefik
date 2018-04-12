@@ -16,6 +16,7 @@ import (
 	"github.com/containous/traefik/healthcheck"
 	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"
+	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/rules"
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/tls"
@@ -1220,7 +1221,7 @@ func buildBackend(backendBuilders ...func(*types.Backend)) *types.Backend {
 
 func withServer(name, url string) func(backend *types.Backend) {
 	return func(be *types.Backend) {
-		be.Servers[name] = types.Server{URL: url}
+		be.Servers[name] = types.Server{URL: url, Weight: label.DefaultWeight}
 	}
 }
 

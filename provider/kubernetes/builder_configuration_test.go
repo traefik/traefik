@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/containous/flaeg"
+	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
@@ -448,11 +449,11 @@ func sampleConfiguration() *types.Configuration {
 				Servers: map[string]types.Server{
 					"http://10.10.0.1:8080": {
 						URL:    "http://10.10.0.1:8080",
-						Weight: 1,
+						Weight: label.DefaultWeight,
 					},
 					"http://10.21.0.1:8080": {
 						URL:    "http://10.21.0.1:8080",
-						Weight: 1,
+						Weight: label.DefaultWeight,
 					},
 				},
 				CircuitBreaker: nil,
@@ -464,7 +465,7 @@ func sampleConfiguration() *types.Configuration {
 				Servers: map[string]types.Server{
 					"https://example.com": {
 						URL:    "https://example.com",
-						Weight: 1,
+						Weight: label.DefaultWeight,
 					},
 				},
 				CircuitBreaker: nil,
@@ -476,11 +477,11 @@ func sampleConfiguration() *types.Configuration {
 				Servers: map[string]types.Server{
 					"https://10.15.0.1:8443": {
 						URL:    "https://10.15.0.1:8443",
-						Weight: 1,
+						Weight: label.DefaultWeight,
 					},
 					"https://10.15.0.2:9443": {
 						URL:    "https://10.15.0.2:9443",
-						Weight: 1,
+						Weight: label.DefaultWeight,
 					},
 				},
 				CircuitBreaker: nil,

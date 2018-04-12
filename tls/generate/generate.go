@@ -72,7 +72,7 @@ func derCert(privKey *rsa.PrivateKey, expiration time.Time, domain string) ([]by
 	}
 
 	if expiration.IsZero() {
-		expiration = time.Now().Add(365)
+		expiration = time.Now().Add(365 * (24 * time.Hour))
 	}
 
 	template := x509.Certificate{

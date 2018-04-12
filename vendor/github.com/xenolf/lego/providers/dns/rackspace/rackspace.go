@@ -11,13 +11,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/acmev2"
 )
 
 // rackspaceAPIURL represents the Identity API endpoint to call
 var rackspaceAPIURL = "https://identity.api.rackspacecloud.com/v2.0/tokens"
 
-// DNSProvider is an implementation of the acme.ChallengeProvider interface
+// DNSProvider is an implementation of the acmev2.ChallengeProvider interface
 // used to store the reusable token and DNS API endpoint
 type DNSProvider struct {
 	token            string
@@ -126,7 +126,7 @@ func NewDNSProviderCredentials(user, key string) (*DNSProvider, error) {
 
 // Present creates a TXT record to fulfil the dns-01 challenge
 func (c *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value, _ := acmev2.DNS01Record(domain, keyAuth)
 	zoneID, err := c.getHostedZoneID(fqdn)
 	if err != nil {
 		return err
@@ -134,7 +134,7 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 
 	rec := RackspaceRecords{
 		RackspaceRecord: []RackspaceRecord{{
-			Name: acme.UnFqdn(fqdn),
+			Name: acmev2.UnFqdn(fqdn),
 			Type: "TXT",
 			Data: value,
 			TTL:  300,
@@ -156,7 +156,7 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters
 func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
 	zoneID, err := c.getHostedZoneID(fqdn)
 	if err != nil {
 		return err
@@ -187,12 +187,12 @@ func (c *DNSProvider) getHostedZoneID(fqdn string) (int, error) {
 		} `json:"domains"`
 	}
 
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := acmev2.FindZoneByFqdn(fqdn, acmev2.RecursiveNameservers)
 	if err != nil {
 		return 0, err
 	}
 
-	result, err := c.makeRequest("GET", fmt.Sprintf("/domains?name=%s", acme.UnFqdn(authZone)), nil)
+	result, err := c.makeRequest("GET", fmt.Sprintf("/domains?name=%s", acmev2.UnFqdn(authZone)), nil)
 	if err != nil {
 		return 0, err
 	}
@@ -213,7 +213,7 @@ func (c *DNSProvider) getHostedZoneID(fqdn string) (int, error) {
 
 // findTxtRecord searches a DNS zone for a TXT record with a specific name
 func (c *DNSProvider) findTxtRecord(fqdn string, zoneID int) (*RackspaceRecord, error) {
-	result, err := c.makeRequest("GET", fmt.Sprintf("/domains/%d/records?type=TXT&name=%s", zoneID, acme.UnFqdn(fqdn)), nil)
+	result, err := c.makeRequest("GET", fmt.Sprintf("/domains/%d/records?type=TXT&name=%s", zoneID, acmev2.UnFqdn(fqdn)), nil)
 	if err != nil {
 		return nil, err
 	}

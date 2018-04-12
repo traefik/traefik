@@ -14,7 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/acmev2"
 )
 
 const (
@@ -22,7 +22,7 @@ const (
 	route53TTL = 10
 )
 
-// DNSProvider implements the acme.ChallengeProvider interface
+// DNSProvider implements the acmev2.ChallengeProvider interface
 type DNSProvider struct {
 	client       *route53.Route53
 	hostedZoneID string
@@ -80,14 +80,14 @@ func NewDNSProvider() (*DNSProvider, error) {
 
 // Present creates a TXT record using the specified parameters
 func (r *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value, _ := acmev2.DNS01Record(domain, keyAuth)
 	value = `"` + value + `"`
 	return r.changeRecord("UPSERT", fqdn, value, route53TTL)
 }
 
 // CleanUp removes the TXT record matching the specified parameters
 func (r *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value, _ := acmev2.DNS01Record(domain, keyAuth)
 	value = `"` + value + `"`
 	return r.changeRecord("DELETE", fqdn, value, route53TTL)
 }
@@ -119,7 +119,7 @@ func (r *DNSProvider) changeRecord(action, fqdn, value string, ttl int) error {
 
 	statusID := resp.ChangeInfo.Id
 
-	return acme.WaitFor(120*time.Second, 4*time.Second, func() (bool, error) {
+	return acmev2.WaitFor(120*time.Second, 4*time.Second, func() (bool, error) {
 		reqParams := &route53.GetChangeInput{
 			Id: statusID,
 		}
@@ -139,14 +139,14 @@ func (r *DNSProvider) getHostedZoneID(fqdn string) (string, error) {
 		return r.hostedZoneID, nil
 	}
 
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := acmev2.FindZoneByFqdn(fqdn, acmev2.RecursiveNameservers)
 	if err != nil {
 		return "", err
 	}
 
 	// .DNSName should not have a trailing dot
 	reqParams := &route53.ListHostedZonesByNameInput{
-		DNSName: aws.String(acme.UnFqdn(authZone)),
+		DNSName: aws.String(acmev2.UnFqdn(authZone)),
 	}
 	resp, err := r.client.ListHostedZonesByName(reqParams)
 	if err != nil {

@@ -38,7 +38,7 @@ func (p *Provider) buildConfiguration(sfClient sfClient) (*types.Configuration, 
 		"filterServicesByLabelValue": filterServicesByLabelValue, // FIXME unused
 
 		// Backend functions
-		"getWeight":         getFuncServiceStringLabel(label.TraefikWeight, label.DefaultWeight),
+		"getWeight":         getFuncServiceIntLabel(label.TraefikWeight, label.DefaultWeightInt),
 		"getProtocol":       getFuncServiceStringLabel(label.TraefikProtocol, label.DefaultProtocol),
 		"getMaxConn":        getMaxConn,
 		"getHealthCheck":    getHealthCheck,
@@ -46,8 +46,8 @@ func (p *Provider) buildConfiguration(sfClient sfClient) (*types.Configuration, 
 		"getLoadBalancer":   getLoadBalancer,
 
 		// Frontend Functions
-		"getPriority":       getFuncServiceStringLabel(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
-		"getPassHostHeader": getFuncServiceStringLabel(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
+		"getPriority":       getFuncServiceIntLabel(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
+		"getPassHostHeader": getFuncServiceBoolLabel(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
 		"getPassTLSCert":    getFuncBoolLabel(label.TraefikFrontendPassTLSCert, false),
 		"getEntryPoints":    getFuncServiceSliceStringLabel(label.TraefikFrontendEntryPoints),
 		"getBasicAuth":      getFuncServiceSliceStringLabel(label.TraefikFrontendAuthBasic),

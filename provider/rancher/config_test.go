@@ -179,12 +179,12 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						"foo": {
 							Status:  []string{"404"},
 							Query:   "foo_query",
-							Backend: "foobar",
+							Backend: "backend-foobar",
 						},
 						"bar": {
 							Status:  []string{"500", "600"},
 							Query:   "bar_query",
-							Backend: "foobar",
+							Backend: "backend-foobar",
 						},
 					},
 					RateLimit: &types.RateLimit{
@@ -371,12 +371,12 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					Errors: map[string]*types.ErrorPage{
 						"bar": {
 							Status:  []string{"500", "600"},
-							Backend: "foobar",
+							Backend: "backend-foobar",
 							Query:   "bar_query",
 						},
 						"foo": {
 							Status:  []string{"404"},
-							Backend: "foobar",
+							Backend: "backend-foobar",
 							Query:   "foo_query",
 						},
 					},
@@ -454,7 +454,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-0": {
 							URL:    "http://127.0.0.1:80",
-							Weight: 0,
+							Weight: label.DefaultWeight,
 						},
 					},
 					CircuitBreaker: nil,
@@ -855,7 +855,7 @@ func TestGetServers(t *testing.T) {
 			expected: map[string]types.Server{
 				"server-0": {
 					URL:    "http://10.10.10.0:",
-					Weight: 0,
+					Weight: label.DefaultWeight,
 				},
 			},
 		},

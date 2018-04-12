@@ -36,8 +36,8 @@ func (p *Provider) buildConfigurationV1(catalog []catalogUpdate) *types.Configur
 		"getFrontendRule":   p.getFrontendRuleV1,
 		"getBasicAuth":      p.getFuncSliceAttribute(label.SuffixFrontendAuthBasic),
 		"getEntryPoints":    getEntryPointsV1,
-		"getPriority":       p.getFuncIntAttribute(label.SuffixFrontendPriority, label.DefaultFrontendPriorityInt),
-		"getPassHostHeader": p.getFuncBoolAttribute(label.SuffixFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
+		"getPriority":       p.getFuncIntAttribute(label.SuffixFrontendPriority, label.DefaultFrontendPriority),
+		"getPassHostHeader": p.getFuncBoolAttribute(label.SuffixFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getPassTLSCert":    p.getFuncBoolAttribute(label.SuffixFrontendPassTLSCert, label.DefaultPassTLSCert),
 	}
 

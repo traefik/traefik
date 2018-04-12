@@ -30,6 +30,7 @@ import (
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/middlewares/accesslog"
 	mauth "github.com/containous/traefik/middlewares/auth"
+	"github.com/containous/traefik/middlewares/errorpages"
 	"github.com/containous/traefik/middlewares/redirect"
 	"github.com/containous/traefik/middlewares/tracing"
 	"github.com/containous/traefik/provider"
@@ -54,9 +55,7 @@ import (
 	"golang.org/x/net/http2"
 )
 
-var (
-	httpServerLogger = stdlog.New(log.WriterLevel(logrus.DebugLevel), "", 0)
-)
+var httpServerLogger = stdlog.New(log.WriterLevel(logrus.DebugLevel), "", 0)
 
 // Server is the reverse-proxy/load-balancer engine
 type Server struct {
@@ -912,6 +911,8 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 	redirectHandlers := make(map[string]negroni.Handler)
 	backends := map[string]http.Handler{}
 	backendsHealthCheck := map[string]*healthcheck.BackendHealthCheck{}
+	var errorPageHandlers []*errorpages.Handler
+
 	errorHandler := NewRecordingErrorHandler(middlewares.DefaultNetErrorRecorder{})
 
 	for providerName, config := range configurations {
@@ -1089,46 +1090,57 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 					}
 
 					if len(frontend.Errors) > 0 {
-						for _, errorPage := range frontend.Errors {
-							if config.Backends[errorPage.Backend] != nil && config.Backends[errorPage.Backend].Servers["error"].URL != "" {
-								errorPageHandler, err := middlewares.NewErrorPagesHandler(errorPage, config.Backends[errorPage.Backend].Servers["error"].URL)
-								if err != nil {
-									log.Errorf("Error creating custom error page middleware, %v", err)
-								} else {
-									n.Use(errorPageHandler)
-								}
+						for errorPageName, errorPage := range frontend.Errors {
+							if frontend.Backend == errorPage.Backend {
+								log.Errorf("Error when creating error page %q for frontend %q: error pages backend %q is the same as backend for the frontend (infinite call risk).",
+									errorPageName, frontendName, errorPage.Backend)
+							} else if config.Backends[errorPage.Backend] == nil {
+								log.Errorf("Error when creating error page %q for frontend %q: the backend %q doesn't exist.",
+									errorPageName, errorPage.Backend)
 							} else {
-								log.Errorf("Error Page is configured for Frontend %s, but either Backend %s is not set or Backend URL is missing", frontendName, errorPage.Backend)
+								errorPagesHandler, err := errorpages.NewHandler(errorPage, entryPointName+providerName+errorPage.Backend)
+								if err != nil {
+									log.Errorf("Error creating error pages: %v", err)
+								} else {
+									if errorPageServer, ok := config.Backends[errorPage.Backend].Servers["error"]; ok {
+										errorPagesHandler.FallbackURL = errorPageServer.URL
+									}
+
+									errorPageHandlers = append(errorPageHandlers, errorPagesHandler)
+									n.Use(errorPagesHandler)
+								}
 							}
 						}
 					}
 
 					if frontend.RateLimit != nil && len(frontend.RateLimit.RateSet) > 0 {
 						lb, err = s.buildRateLimiter(lb, frontend.RateLimit)
-						lb = s.wrapHTTPHandlerWithAccessLog(lb, fmt.Sprintf("rate limit for %s", frontendName))
 						if err != nil {
 							log.Errorf("Error creating rate limiter: %v", err)
 							log.Errorf("Skipping frontend %s...", frontendName)
 							continue frontend
 						}
+						lb = s.wrapHTTPHandlerWithAccessLog(lb, fmt.Sprintf("rate limit for %s", frontendName))
 					}
 
 					maxConns := config.Backends[frontend.Backend].MaxConn
 					if maxConns != nil && maxConns.Amount != 0 {
 						extractFunc, err := utils.NewExtractor(maxConns.ExtractorFunc)
 						if err != nil {
-							log.Errorf("Error creating connlimit: %v", err)
+							log.Errorf("Error creating connection limit: %v", err)
 							log.Errorf("Skipping frontend %s...", frontendName)
 							continue frontend
 						}
-						log.Debugf("Creating load-balancer connlimit")
+
+						log.Debugf("Creating load-balancer connection limit")
+
 						lb, err = connlimit.New(lb, extractFunc, maxConns.Amount)
-						lb = s.wrapHTTPHandlerWithAccessLog(lb, fmt.Sprintf("connection limit for %s", frontendName))
 						if err != nil {
-							log.Errorf("Error creating connlimit: %v", err)
+							log.Errorf("Error creating connection limit: %v", err)
 							log.Errorf("Skipping frontend %s...", frontendName)
 							continue frontend
 						}
+						lb = s.wrapHTTPHandlerWithAccessLog(lb, fmt.Sprintf("connection limit for %s", frontendName))
 					}
 
 					if globalConfiguration.Retry != nil {
@@ -1229,15 +1241,25 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 			}
 		}
 	}
+
+	for _, errorPageHandler := range errorPageHandlers {
+		if handler, ok := backends[errorPageHandler.BackendName]; ok {
+			errorPageHandler.PostLoad(handler)
+		} else {
+			errorPageHandler.PostLoad(nil)
+		}
+	}
+
 	healthcheck.GetHealthCheck(s.metricsRegistry).SetBackendsConfiguration(s.routinesPool.Ctx(), backendsHealthCheck)
+
 	// Get new certificates list sorted per entrypoints
 	// Update certificates
 	entryPointsCertificates, err := s.loadHTTPSConfiguration(configurations, globalConfiguration.DefaultEntryPoints)
+
 	// Sort routes and update certificates
 	for serverEntryPointName, serverEntryPoint := range serverEntryPoints {
 		serverEntryPoint.httpRouter.GetHandler().SortRoutes()
-		_, exists := entryPointsCertificates[serverEntryPointName]
-		if exists {
+		if _, exists := entryPointsCertificates[serverEntryPointName]; exists {
 			serverEntryPoint.certs.Set(entryPointsCertificates[serverEntryPointName])
 		}
 	}

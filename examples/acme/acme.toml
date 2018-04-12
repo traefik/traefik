@@ -16,7 +16,7 @@ email = "test@traefik.io"
 storage = "/etc/traefik/conf/acme.json"
 entryPoint = "https"
 onDemand = false
-OnHostRule = true
+onHostRule = true
 caServer = "http://traefik.boulder.com:4001/directory"
   [acme.httpChallenge]
   entryPoint="http"
@@ -27,6 +27,6 @@ caServer = "http://traefik.boulder.com:4001/directory"
 endpoint = "unix:///var/run/docker.sock"
 domain = "traefik.localhost.com"
 watch = true
-exposedbydefault = false
+exposedByDefault = false
 
 

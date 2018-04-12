@@ -17,6 +17,7 @@ logLevel = "DEBUG"
   [backends.backend]
     [backends.backend.servers.server]
     url = "{{.Server}}"
+    weight = 1
 
 [frontends]
   [frontends.frontend]

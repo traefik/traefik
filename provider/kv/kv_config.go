@@ -42,7 +42,7 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 
 		// Frontend functions
 		"getBackendName":    p.getFuncString(pathFrontendBackend, ""),
-		"getPriority":       p.getFuncInt(pathFrontendPriority, label.DefaultFrontendPriorityInt),
+		"getPriority":       p.getFuncInt(pathFrontendPriority, label.DefaultFrontendPriority),
 		"getPassHostHeader": p.getPassHostHeader(),
 		"getPassTLSCert":    p.getFuncBool(pathFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getEntryPoints":    p.getFuncList(pathFrontendEntryPoints),
@@ -89,12 +89,12 @@ func (p *Provider) getPassHostHeader() func(rootPath string) bool {
 			value, err := strconv.ParseBool(rawValue)
 			if err != nil {
 				log.Errorf("Invalid value for %s %s: %s", rootPath, pathFrontendPassHostHeader, rawValue)
-				return label.DefaultPassHostHeaderBool
+				return label.DefaultPassHostHeader
 			}
 			return value
 		}
 
-		return p.getBool(label.DefaultPassHostHeaderBool, rootPath, pathFrontendPassHostHeaderDeprecated)
+		return p.getBool(label.DefaultPassHostHeader, rootPath, pathFrontendPassHostHeaderDeprecated)
 	}
 }
 
@@ -402,7 +402,7 @@ func (p *Provider) getServers(rootPath string) map[string]types.Server {
 		serverName := p.last(serverKey)
 		servers[serverName] = types.Server{
 			URL:    serverURL,
-			Weight: p.getInt(0, serverKey, pathBackendServerWeight),
+			Weight: p.getInt(label.DefaultWeight, serverKey, pathBackendServerWeight),
 		}
 	}
 
