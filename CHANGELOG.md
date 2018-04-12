@@ -1,5 +1,31 @@
 # Change Log
 
+## [v1.6.0-rc5](https://github.com/containous/traefik/tree/v1.6.0-rc5) (2018-04-12)
+[All Commits](https://github.com/containous/traefik/compare/v1.6.0-rc4...v1.6.0-rc5)
+
+**Enhancements:**
+- **[acme]** Generate wildcard certificate with SANs in ACME ([#3167](https://github.com/containous/traefik/pull/3167) by [nmengin](https://github.com/nmengin))
+- **[ecs]** Factorize labels managements. ([#3159](https://github.com/containous/traefik/pull/3159) by [ldez](https://github.com/ldez))
+
+**Bug fixes:**
+- **[acme]** Update lego. ([#3158](https://github.com/containous/traefik/pull/3158) by [ldez](https://github.com/ldez))
+- **[acme]** Fix acme.json file automatic creation ([#3156](https://github.com/containous/traefik/pull/3156) by [nmengin](https://github.com/nmengin))
+- **[acme]** Minor updates to dumpcerts.sh ([#3116](https://github.com/containous/traefik/pull/3116) by [mathuin](https://github.com/mathuin))
+- **[acme]** Add TTL and custom Timeout in DigitalOcean DNS provider  ([#3143](https://github.com/containous/traefik/pull/3143) by [ldez](https://github.com/ldez))
+- **[acme]** Add ACME certificates only on ACME EntryPoint ([#3136](https://github.com/containous/traefik/pull/3136) by [nmengin](https://github.com/nmengin))
+- **[consul,docker,ecs,eureka,k8s,kv,marathon,mesos,rancher]** Server weight zero ([#3130](https://github.com/containous/traefik/pull/3130) by [ldez](https://github.com/ldez))
+- **[k8s]** Limit label selector to Ingress factory. ([#3137](https://github.com/containous/traefik/pull/3137) by [timoreimann](https://github.com/timoreimann))
+- **[middleware,consul,consulcatalog,docker,ecs,kv,marathon,mesos,rancher]** Fix: error pages ([#3138](https://github.com/containous/traefik/pull/3138) by [ldez](https://github.com/ldez))
+- **[webui]** Remove useless ACME tab from UI. ([#3154](https://github.com/containous/traefik/pull/3154) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[k8s]** Update kubernetes.md ([#3171](https://github.com/containous/traefik/pull/3171) by [andreyfedoseev](https://github.com/andreyfedoseev))
+- Update some examples ([#3150](https://github.com/containous/traefik/pull/3150) by [zaporylie](https://github.com/zaporylie))
+- Normalize parameter names in configs ([#3132](https://github.com/containous/traefik/pull/3132) by [kachkaev](https://github.com/kachkaev))
+
+**Misc:**
+- **[oxy]** Disable closeNotify when method GET for http pipelining ([#3108](https://github.com/containous/traefik/pull/3108) by [Juliens](https://github.com/Juliens))
+
 ## [v1.6.0-rc4](https://github.com/containous/traefik/tree/v1.6.0-rc4) (2018-04-04)
 [All Commits](https://github.com/containous/traefik/compare/v1.6.0-rc3...v1.6.0-rc4)
 
