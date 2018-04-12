@@ -142,7 +142,7 @@ type partialGovTalkMessage struct {
 func gtmGetMessageParts(decoder *xml.Decoder, path string, message io.Reader) (*partialGovTalkMessage, error) {
 
 	partial := partialGovTalkMessage{}
-	isSaSubmission := false
+	isSubmission := false
 
 	for {
 		t, _ := decoder.Token()
@@ -155,7 +155,7 @@ func gtmGetMessageParts(decoder *xml.Decoder, path string, message io.Reader) (*
 				if doc, err := xmlutils.ElementInnerToDocument(&se, decoder); err == nil {
 					partial.Header = doc
 					if el := doc.FindElementPath(gtmClass); el != nil {
-						isSaSubmission = auditsRequestPayloadContents(el.Text()) && path == "/submission"
+						isSubmission = auditsRequestPayloadContents(el.Text()) && path == "/submission"
 					}
 				}
 			} else if se.Name.Local == "GovTalkDetails" {
@@ -170,10 +170,11 @@ func gtmGetMessageParts(decoder *xml.Decoder, path string, message io.Reader) (*
 		}
 	}
 
-	if isSaSubmission {
+	if isSubmission {
 		partial.Message = etree.NewDocument()
 		partial.Message.ReadFrom(message)
 		partial.Message.Indent(etree.NoIndent)
+		maskSensitiveData(partial.Message)
 	}
 
 	if partial.Header != nil && partial.Details != nil {
@@ -181,6 +182,9 @@ func gtmGetMessageParts(decoder *xml.Decoder, path string, message io.Reader) (*
 	}
 	return nil, errors.New("Unexpected message structure. Headers/GovTalkDetails not present")
 }
+
+// GovTalkMessage XPaths
+var gtmAuth = etree.MustCompilePath("./GovTalkMessage/Header/SenderDetails/IDAuthentication/Authentication")
 
 // Headers XPaths
 var gtmClass = etree.MustCompilePath("./Header/MessageDetails/Class")
@@ -321,6 +325,15 @@ func extractMoneyValue(doc *etree.Document, path etree.Path) (float64, error) {
 		return strconv.ParseFloat(el.Text(), 64)
 	}
 	return 0.00, errors.New("No matching element found")
+}
+
+func maskSensitiveData(doc *etree.Document) {
+	mask := "***"
+	if auth := doc.FindElementPath(gtmAuth); auth != nil {
+		if cred := auth.FindElement("./Value"); cred != nil {
+			cred.SetText(mask)
+		}
+	}
 }
 
 // ChRISEnvelope Processing

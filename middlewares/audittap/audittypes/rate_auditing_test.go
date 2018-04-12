@@ -234,6 +234,51 @@ func TestXmlMissingDetails(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestRemovesAuthenticationCredentials(t *testing.T) {
+	x := `
+	<GovTalkMessage>
+		<EnvelopeVersion>2.0</EnvelopeVersion>
+		<Header>
+			<MessageDetails>
+				<Class>HMRC-SA-SA900</Class>
+				<Qualifier>request</Qualifier>
+				<Function>submit</Function>
+				<TransactionID/>
+				<CorrelationID>2A8E3E81EEF7490D8506C2EEBB82C882</CorrelationID>
+				<ResponseEndPoint>IR-SERVICE-ENDPOINT-EXTRA-4</ResponseEndPoint>
+				<Transformation>XML</Transformation>
+				<GatewayTest>0</GatewayTest>
+				<GatewayTimestamp>2016-04-01T08:04:10.600</GatewayTimestamp>
+			</MessageDetails>
+			<SenderDetails>
+				<IDAuthentication>
+					<SenderID>0000002120421621</SenderID>
+					<Authentication>
+						<Method>clear</Method>
+						<Role>Authenticate/Validate</Role>
+						<Value>DoNotIncludeMe</Value>
+					</Authentication>
+				</IDAuthentication>
+				<X509Certificate/>
+				<EmailAddress>placeholder@gateway.com</EmailAddress>
+			</SenderDetails>
+		</Header>
+		<GovTalkDetails>
+			<Keys>
+				<Key Type='UTR'>7122173812</Key>
+			</Keys>
+		</GovTalkDetails>	
+	</GovTalkMessage>
+	`
+
+	decoder := xml.NewDecoder(bytes.NewReader([]byte(x)))
+	parts, _ := gtmGetMessageParts(decoder, "/submission", bytes.NewReader([]byte(x)))
+	assert.NotEmpty(t, parts.Message)
+	cred := parts.Message.FindElement("./GovTalkMessage/Header/SenderDetails/IDAuthentication/Authentication/Value")
+	assert.NotNil(t, cred)
+	assert.Equal(t, "***", cred.Text())
+}
+
 func TestProcessingSkippedForTestInLive(t *testing.T) {
 	types.TheClock = T0
 
