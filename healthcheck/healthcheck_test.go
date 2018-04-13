@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/containous/traefik/testhelpers"
+	"github.com/stretchr/testify/assert"
 	"github.com/vulcand/oxy/roundrobin"
 )
 
@@ -201,62 +202,63 @@ func TestNewRequest(t *testing.T) {
 }
 
 func TestNewRequestWithAddHeaders(t *testing.T) {
-	tests := []struct {
-		desc      string
-		host      string
-		headers   map[string]string
-		hostname  string
-		port      int
-		path      string
-		expected  string
-		headerexp string
+	testCases := []struct {
+		desc             string
+		host             string
+		headers          map[string]string
+		hostname         string
+		port             int
+		path             string
+		expectedHostname string
+		expectedHeader   string
 	}{
 		{
-			desc:      "override hostname",
-			host:      "backend1:80",
-			headers:   map[string]string{},
-			hostname:  "myhost",
-			port:      0,
-			path:      "/",
-			expected:  "myhost",
-			headerexp: "",
+			desc:             "override hostname",
+			host:             "backend1:80",
+			headers:          map[string]string{},
+			hostname:         "myhost",
+			port:             0,
+			path:             "/",
+			expectedHostname: "myhost",
+			expectedHeader:   "",
 		},
 		{
-			desc:      "not override hostname",
-			host:      "backend1:80",
-			headers:   map[string]string{},
-			hostname:  "",
-			port:      0,
-			path:      "/",
-			expected:  "backend1:80",
-			headerexp: "",
+			desc:             "not override hostname",
+			host:             "backend1:80",
+			headers:          map[string]string{},
+			hostname:         "",
+			port:             0,
+			path:             "/",
+			expectedHostname: "backend1:80",
+			expectedHeader:   "",
 		},
 		{
-			desc:      "custom header",
-			host:      "backend1:80",
-			headers:   map[string]string{"customheader": "foo"},
-			hostname:  "",
-			port:      0,
-			path:      "/",
-			expected:  "backend1:80",
-			headerexp: "foo",
+			desc:             "custom header",
+			host:             "backend1:80",
+			headers:          map[string]string{"Custom-Header": "foo"},
+			hostname:         "",
+			port:             0,
+			path:             "/",
+			expectedHostname: "backend1:80",
+			expectedHeader:   "foo",
 		},
 		{
-			desc:      "custom header with host override",
-			host:      "backend1:80",
-			headers:   map[string]string{"customheader": "foo"},
-			hostname:  "myhost",
-			port:      0,
-			path:      "/",
-			expected:  "myhost",
-			headerexp: "foo",
+			desc:             "custom header with host override",
+			host:             "backend1:80",
+			headers:          map[string]string{"Custom-Header": "foo"},
+			hostname:         "myhost",
+			port:             0,
+			path:             "/",
+			expectedHostname: "myhost",
+			expectedHeader:   "foo",
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			backend := NewBackendHealthCheck(
 				Options{
 					Hostname: test.hostname,
@@ -277,17 +279,8 @@ func TestNewRequestWithAddHeaders(t *testing.T) {
 
 			req = backend.addHeadersAndHost(req)
 
-			actual := req.Host
-			if actual != test.expected {
-				t.Fatalf("got %s for healthcheck URL, wanted %s", actual, test.expected)
-			}
-			header := req.Header.Get("customheader")
-			if len(header) == 0 && len(test.headerexp) > 0 {
-				t.Fatalf("customheader httpheader not found from request")
-			}
-			if header != test.headerexp {
-				t.Fatalf("got %s for customheader, wanted %s", header, test.headerexp)
-			}
+			assert.Equal(t, test.expectedHostname, req.Host)
+			assert.Equal(t, test.expectedHeader, req.Header.Get("Custom-Header"))
 		})
 	}
 }
