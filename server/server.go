@@ -1096,7 +1096,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 									errorPageName, frontendName, errorPage.Backend)
 							} else if config.Backends[errorPage.Backend] == nil {
 								log.Errorf("Error when creating error page %q for frontend %q: the backend %q doesn't exist.",
-									errorPageName, errorPage.Backend)
+									errorPageName, frontendName, errorPage.Backend)
 							} else {
 								errorPagesHandler, err := errorpages.NewHandler(errorPage, entryPointName+providerName+errorPage.Backend)
 								if err != nil {
