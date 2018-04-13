@@ -34,7 +34,9 @@ export class ApiService {
   }
 
   parseProviders(data: any): ProviderType {
-    return Object.keys(data).reduce((acc, curr) => {
+    return Object.keys(data)
+      .filter(value => value !== 'acme' && value !== 'ACME')
+      .reduce((acc, curr) => {
       acc[curr] = {
         backends: Object.keys(data[curr].backends || {}).map(key => {
           data[curr].backends[key].id = key;

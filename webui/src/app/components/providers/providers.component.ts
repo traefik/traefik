@@ -28,14 +28,16 @@ export class ProvidersComponent implements OnInit, OnDestroy {
 
   filter(): void {
     const keyword = this.keyword.toLowerCase();
-    this.providers = Object.keys(this.data).reduce((acc, curr) => {
-      return Object.assign(acc, {
-        [curr]: {
-          backends: this.data[curr].backends.filter(d => d.id.toLowerCase().includes(keyword)),
-          frontends: this.data[curr].frontends.filter(d => d.id.toLowerCase().includes(keyword))
-        }
-      });
-    }, {});
+    this.providers = Object.keys(this.data)
+      .filter(value => value !== 'acme' && value !== 'ACME')
+      .reduce((acc, curr) => {
+        return Object.assign(acc, {
+          [curr]: {
+            backends: this.data[curr].backends.filter(d => d.id.toLowerCase().includes(keyword)),
+            frontends: this.data[curr].frontends.filter(d => d.id.toLowerCase().includes(keyword))
+          }
+        });
+      }, {});
   }
 
   ngOnDestroy() {
