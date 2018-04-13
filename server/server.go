@@ -1174,6 +1174,16 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						}
 					}
 
+					if headerMiddleware != nil {
+						log.Debugf("Adding header middleware for frontend %s", frontendName)
+						n.Use(s.tracingMiddleware.NewNegroniHandlerWrapper("Header", headerMiddleware, false))
+					}
+
+					if secureMiddleware != nil {
+						log.Debugf("Adding secure middleware for frontend %s", frontendName)
+						n.UseFunc(secureMiddleware.HandlerFuncWithNextForRequestOnly)
+					}
+
 					if len(frontend.BasicAuth) > 0 {
 						users := types.Users{}
 						for _, user := range frontend.BasicAuth {
@@ -1192,16 +1202,6 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						}
 					}
 
-					if headerMiddleware != nil {
-						log.Debugf("Adding header middleware for frontend %s", frontendName)
-						n.Use(s.tracingMiddleware.NewNegroniHandlerWrapper("Header", headerMiddleware, false))
-					}
-
-					if secureMiddleware != nil {
-						log.Debugf("Adding secure middleware for frontend %s", frontendName)
-						n.UseFunc(secureMiddleware.HandlerFuncWithNextForRequestOnly)
-					}
-
 					if config.Backends[frontend.Backend].Buffering != nil {
 						bufferedLb, err := s.buildBufferingMiddleware(lb, config.Backends[frontend.Backend].Buffering)
 
@@ -1210,7 +1210,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						} else {
 							lb = bufferedLb
 						}
-					}
+					}	
 
 					if config.Backends[frontend.Backend].CircuitBreaker != nil {
 						log.Debugf("Creating circuit breaker %s", config.Backends[frontend.Backend].CircuitBreaker.Expression)
