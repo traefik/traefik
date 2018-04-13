@@ -11,6 +11,7 @@ import (
 
 	"github.com/containous/traefik/testhelpers"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/vulcand/oxy/roundrobin"
 )
 
@@ -22,57 +23,57 @@ type testHandler struct {
 }
 
 func TestSetBackendsConfiguration(t *testing.T) {
-	tests := []struct {
-		desc                   string
-		startHealthy           bool
-		healthSequence         []bool
-		wantNumRemovedServers  int
-		wantNumUpsertedServers int
-		wantGaugeValue         float64
+	testCases := []struct {
+		desc                       string
+		startHealthy               bool
+		healthSequence             []bool
+		expectedNumRemovedServers  int
+		expectedNumUpsertedServers int
+		expectedGaugeValue         float64
 	}{
 		{
-			desc:                   "healthy server staying healthy",
-			startHealthy:           true,
-			healthSequence:         []bool{true},
-			wantNumRemovedServers:  0,
-			wantNumUpsertedServers: 0,
-			wantGaugeValue:         1,
+			desc:                       "healthy server staying healthy",
+			startHealthy:               true,
+			healthSequence:             []bool{true},
+			expectedNumRemovedServers:  0,
+			expectedNumUpsertedServers: 0,
+			expectedGaugeValue:         1,
 		},
 		{
-			desc:                   "healthy server becoming sick",
-			startHealthy:           true,
-			healthSequence:         []bool{false},
-			wantNumRemovedServers:  1,
-			wantNumUpsertedServers: 0,
-			wantGaugeValue:         0,
+			desc:                       "healthy server becoming sick",
+			startHealthy:               true,
+			healthSequence:             []bool{false},
+			expectedNumRemovedServers:  1,
+			expectedNumUpsertedServers: 0,
+			expectedGaugeValue:         0,
 		},
 		{
-			desc:                   "sick server becoming healthy",
-			startHealthy:           false,
-			healthSequence:         []bool{true},
-			wantNumRemovedServers:  0,
-			wantNumUpsertedServers: 1,
-			wantGaugeValue:         1,
+			desc:                       "sick server becoming healthy",
+			startHealthy:               false,
+			healthSequence:             []bool{true},
+			expectedNumRemovedServers:  0,
+			expectedNumUpsertedServers: 1,
+			expectedGaugeValue:         1,
 		},
 		{
-			desc:                   "sick server staying sick",
-			startHealthy:           false,
-			healthSequence:         []bool{false},
-			wantNumRemovedServers:  0,
-			wantNumUpsertedServers: 0,
-			wantGaugeValue:         0,
+			desc:                       "sick server staying sick",
+			startHealthy:               false,
+			healthSequence:             []bool{false},
+			expectedNumRemovedServers:  0,
+			expectedNumUpsertedServers: 0,
+			expectedGaugeValue:         0,
 		},
 		{
-			desc:                   "healthy server toggling to sick and back to healthy",
-			startHealthy:           true,
-			healthSequence:         []bool{false, true},
-			wantNumRemovedServers:  1,
-			wantNumUpsertedServers: 1,
-			wantGaugeValue:         1,
+			desc:                       "healthy server toggling to sick and back to healthy",
+			startHealthy:               true,
+			healthSequence:             []bool{false, true},
+			expectedNumRemovedServers:  1,
+			expectedNumUpsertedServers: 1,
+			expectedGaugeValue:         1,
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
@@ -89,6 +90,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 				Interval: healthCheckInterval,
 				LB:       lb,
 			}, "backendName")
+
 			serverURL := testhelpers.MustParseURL(ts.URL)
 			if test.startHealthy {
 				lb.servers = append(lb.servers, serverURL)
@@ -101,8 +103,10 @@ func TestSetBackendsConfiguration(t *testing.T) {
 				Backends: make(map[string]*BackendHealthCheck),
 				metrics:  collectingMetrics,
 			}
+
 			wg := sync.WaitGroup{}
 			wg.Add(1)
+
 			go func() {
 				check.execute(ctx, backend)
 				wg.Done()
@@ -120,23 +124,16 @@ func TestSetBackendsConfiguration(t *testing.T) {
 
 			lb.Lock()
 			defer lb.Unlock()
-			if lb.numRemovedServers != test.wantNumRemovedServers {
-				t.Errorf("got %d removed servers, wanted %d", lb.numRemovedServers, test.wantNumRemovedServers)
-			}
 
-			if lb.numUpsertedServers != test.wantNumUpsertedServers {
-				t.Errorf("got %d upserted servers, wanted %d", lb.numUpsertedServers, test.wantNumUpsertedServers)
-			}
-
-			if collectingMetrics.Gauge.GaugeValue != test.wantGaugeValue {
-				t.Errorf("got %v ServerUp Gauge, want %v", collectingMetrics.Gauge.GaugeValue, test.wantGaugeValue)
-			}
+			assert.Equal(t, test.expectedNumRemovedServers, lb.numRemovedServers, "removed servers")
+			assert.Equal(t, test.expectedNumUpsertedServers, lb.numUpsertedServers, "upserted servers")
+			assert.Equal(t, test.expectedGaugeValue, collectingMetrics.Gauge.GaugeValue, "ServerUp Gauge")
 		})
 	}
 }
 
 func TestNewRequest(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc     string
 		host     string
 		port     int
@@ -173,10 +170,11 @@ func TestNewRequest(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			backend := NewBackendHealthCheck(
 				Options{
 					Path: test.path,
@@ -189,14 +187,9 @@ func TestNewRequest(t *testing.T) {
 			}
 
 			req, err := backend.newRequest(u)
-			if err != nil {
-				t.Fatalf("failed to create new backend request: %s", err)
-			}
+			require.NoError(t, err, "failed to create new backend request")
 
-			actual := req.URL.String()
-			if actual != test.expected {
-				t.Fatalf("got %s for healthcheck URL, wanted %s", actual, test.expected)
-			}
+			assert.Equal(t, test.expected, req.URL.String())
 		})
 	}
 }
