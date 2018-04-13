@@ -68,7 +68,7 @@ ignored = ["github.com/sirupsen/logrus"]
 
 [[constraint]]
   name = "github.com/containous/traefik-extra-service-fabric"
-  version = "1.0.5"
+  version = "1.0.6"
 
 [[constraint]]
   name = "github.com/coreos/go-systemd"

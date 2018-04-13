@@ -232,8 +232,8 @@
 [[projects]]
   name = "github.com/containous/traefik-extra-service-fabric"
   packages = ["."]
-  revision = "ca1fb57108293caad285b1c366b763f6c6ab71c9"
-  version = "v1.0.5"
+  revision = "dd5326f23d6e529aa327c10ce1f996079f5d7262"
+  version = "v1.0.6"
 
 [[projects]]
   name = "github.com/coreos/bbolt"
@@ -1400,6 +1400,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7994872ae2ae128f087243191120faabaac8a738140a5ca664422a8f709827ec"
+  inputs-digest = "2211d5f1d7b7137b83976ba0a92441ef7a80c8a858eabb7d9a5102d7b3dfbe4f"
   solver-name = "gps-cdcl"
   solver-version = 1
