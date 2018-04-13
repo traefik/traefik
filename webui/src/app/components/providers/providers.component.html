@@ -1,7 +1,7 @@
 <div class="container">
   <div class="content">
 
-    <div class="columns is-multiline" *ngIf="this.providers.length">
+    <div class="columns is-multiline" *ngIf="keys && keys.length">
       <div class="column is-12">
 
         <div class="search-container">
@@ -420,7 +420,7 @@
       </div>
     </div>
 
-    <div class="columns" *ngIf="!this.providers.length">
+    <div class="columns" *ngIf="!keys || !keys.length">
       <div class="column is-12">
         <div class="notification">
           No providers found.
