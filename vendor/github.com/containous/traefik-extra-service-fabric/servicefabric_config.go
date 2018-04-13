@@ -1,7 +1,6 @@
 package servicefabric
 
 import (
-	"encoding/json"
 	"errors"
 	"math"
 	"strings"
@@ -14,12 +13,7 @@ import (
 	sf "github.com/jjcollinge/servicefabric"
 )
 
-func (p *Provider) buildConfiguration(sfClient sfClient) (*types.Configuration, error) {
-	services, err := getClusterServices(sfClient)
-	if err != nil {
-		return nil, err
-	}
-
+func (p *Provider) buildConfiguration(services []ServiceItemExtended) (*types.Configuration, error) {
 	var sfFuncMap = template.FuncMap{
 		// Services
 		"getServices":                getServices,
@@ -70,12 +64,9 @@ func (p *Provider) buildConfiguration(sfClient sfClient) (*types.Configuration, 
 	return p.GetConfiguration(tmpl, sfFuncMap, templateObjects)
 }
 
-func isStateful(service ServiceItemExtended) bool {
-	return service.ServiceKind == "Stateful"
-}
-
-func isStateless(service ServiceItemExtended) bool {
-	return service.ServiceKind == "Stateless"
+func isPrimary(instance replicaInstance) bool {
+	_, data := instance.GetReplicaData()
+	return data.ReplicaRole == "Primary"
 }
 
 func getBackendName(service ServiceItemExtended, partition PartitionItemExtended) string {
@@ -90,26 +81,6 @@ func getDefaultEndpoint(instance replicaInstance) string {
 		return ""
 	}
 	return endpoint
-}
-
-func getReplicaDefaultEndpoint(replicaData *sf.ReplicaItemBase) (string, error) {
-	endpoints, err := decodeEndpointData(replicaData.Address)
-	if err != nil {
-		return "", err
-	}
-
-	var defaultHTTPEndpoint string
-	for _, v := range endpoints {
-		if strings.Contains(v, "http") {
-			defaultHTTPEndpoint = v
-			break
-		}
-	}
-
-	if len(defaultHTTPEndpoint) == 0 {
-		return "", errors.New("no default endpoint found")
-	}
-	return defaultHTTPEndpoint, nil
 }
 
 func getNamedEndpoint(instance replicaInstance, endpointName string) string {
@@ -173,26 +144,6 @@ func filterServicesByLabelValue(services []ServiceItemExtended, key, expectedVal
 		}
 	}
 	return srvWithLabel
-}
-
-func decodeEndpointData(endpointData string) (map[string]string, error) {
-	var endpointsMap map[string]map[string]string
-
-	if endpointData == "" {
-		return nil, errors.New("endpoint data is empty")
-	}
-
-	err := json.Unmarshal([]byte(endpointData), &endpointsMap)
-	if err != nil {
-		return nil, err
-	}
-
-	endpoints, endpointsExist := endpointsMap["Endpoints"]
-	if !endpointsExist {
-		return nil, errors.New("endpoint doesn't exist in endpoint data")
-	}
-
-	return endpoints, nil
 }
 
 func getHeaders(service ServiceItemExtended) *types.Headers {
