@@ -335,6 +335,12 @@ func (g *gauge) With(labelValues ...string) metrics.Gauge {
 	}
 }
 
+func (g *gauge) Add(delta float64) {
+	collector := g.gv.With(g.labelNamesValues.ToLabels())
+	collector.Add(delta)
+	g.collectors <- newCollector(g.name, g.labelNamesValues, collector)
+}
+
 func (g *gauge) Set(value float64) {
 	collector := g.gv.With(g.labelNamesValues.ToLabels())
 	collector.Set(value)

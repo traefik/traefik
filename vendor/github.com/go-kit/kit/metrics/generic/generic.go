@@ -33,6 +33,7 @@ func NewCounter(name string) *Counter {
 // With implements Counter.
 func (c *Counter) With(labelValues ...string) metrics.Counter {
 	return &Counter{
+		Name: c.Name,
 		bits: atomic.LoadUint64(&c.bits),
 		lvs:  c.lvs.With(labelValues...),
 	}
@@ -95,6 +96,7 @@ func NewGauge(name string) *Gauge {
 // With implements Gauge.
 func (g *Gauge) With(labelValues ...string) metrics.Gauge {
 	return &Gauge{
+		Name: g.Name,
 		bits: atomic.LoadUint64(&g.bits),
 		lvs:  g.lvs.With(labelValues...),
 	}
@@ -103,6 +105,20 @@ func (g *Gauge) With(labelValues ...string) metrics.Gauge {
 // Set implements Gauge.
 func (g *Gauge) Set(value float64) {
 	atomic.StoreUint64(&g.bits, math.Float64bits(value))
+}
+
+// Add implements metrics.Gauge.
+func (g *Gauge) Add(delta float64) {
+	for {
+		var (
+			old  = atomic.LoadUint64(&g.bits)
+			newf = math.Float64frombits(old) + delta
+			new  = math.Float64bits(newf)
+		)
+		if atomic.CompareAndSwapUint64(&g.bits, old, new) {
+			break
+		}
+	}
 }
 
 // Value returns the current value of the gauge.
@@ -121,7 +137,7 @@ func (g *Gauge) LabelValues() []string {
 type Histogram struct {
 	Name string
 	lvs  lv.LabelValues
-	h    gohistogram.Histogram
+	h    *safeHistogram
 }
 
 // NewHistogram returns a numeric histogram based on VividCortex/gohistogram. A
@@ -129,25 +145,30 @@ type Histogram struct {
 func NewHistogram(name string, buckets int) *Histogram {
 	return &Histogram{
 		Name: name,
-		h:    gohistogram.NewHistogram(buckets),
+		h:    &safeHistogram{Histogram: gohistogram.NewHistogram(buckets)},
 	}
 }
 
 // With implements Histogram.
 func (h *Histogram) With(labelValues ...string) metrics.Histogram {
 	return &Histogram{
-		lvs: h.lvs.With(labelValues...),
-		h:   h.h,
+		Name: h.Name,
+		lvs:  h.lvs.With(labelValues...),
+		h:    h.h,
 	}
 }
 
 // Observe implements Histogram.
 func (h *Histogram) Observe(value float64) {
+	h.h.Lock()
+	defer h.h.Unlock()
 	h.h.Add(value)
 }
 
 // Quantile returns the value of the quantile q, 0.0 < q < 1.0.
 func (h *Histogram) Quantile(q float64) float64 {
+	h.h.RLock()
+	defer h.h.RUnlock()
 	return h.h.Quantile(q)
 }
 
@@ -159,7 +180,15 @@ func (h *Histogram) LabelValues() []string {
 // Print writes a string representation of the histogram to the passed writer.
 // Useful for printing to a terminal.
 func (h *Histogram) Print(w io.Writer) {
+	h.h.RLock()
+	defer h.h.RUnlock()
 	fmt.Fprintf(w, h.h.String())
+}
+
+// safeHistogram exists as gohistogram.Histogram is not goroutine-safe.
+type safeHistogram struct {
+	sync.RWMutex
+	gohistogram.Histogram
 }
 
 // Bucket is a range in a histogram which aggregates observations.

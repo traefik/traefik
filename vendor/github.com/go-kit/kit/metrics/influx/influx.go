@@ -66,6 +66,7 @@ func (in *Influx) NewGauge(name string) *Gauge {
 	return &Gauge{
 		name: name,
 		obs:  in.gauges.Observe,
+		add:  in.gauges.Add,
 	}
 }
 
@@ -168,10 +169,14 @@ func mergeTags(tags map[string]string, labelValues []string) map[string]string {
 	if len(labelValues)%2 != 0 {
 		panic("mergeTags received a labelValues with an odd number of strings")
 	}
-	for i := 0; i < len(labelValues); i += 2 {
-		tags[labelValues[i]] = labelValues[i+1]
+	ret := make(map[string]string, len(tags)+len(labelValues)/2)
+	for k, v := range tags {
+		ret[k] = v
 	}
-	return tags
+	for i := 0; i < len(labelValues); i += 2 {
+		ret[labelValues[i]] = labelValues[i+1]
+	}
+	return ret
 }
 
 func sum(a []float64) float64 {
@@ -216,6 +221,7 @@ type Gauge struct {
 	name string
 	lvs  lv.LabelValues
 	obs  observeFunc
+	add  observeFunc
 }
 
 // With implements metrics.Gauge.
@@ -224,12 +230,18 @@ func (g *Gauge) With(labelValues ...string) metrics.Gauge {
 		name: g.name,
 		lvs:  g.lvs.With(labelValues...),
 		obs:  g.obs,
+		add:  g.add,
 	}
 }
 
 // Set implements metrics.Gauge.
 func (g *Gauge) Set(value float64) {
 	g.obs(g.name, g.lvs, value)
+}
+
+// Add implements metrics.Gauge.
+func (g *Gauge) Add(delta float64) {
+	g.add(g.name, g.lvs, delta)
 }
 
 // Histogram is an Influx histrogram. Observations are aggregated into a

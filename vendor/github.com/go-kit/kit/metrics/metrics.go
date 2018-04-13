@@ -12,6 +12,7 @@ type Counter interface {
 type Gauge interface {
 	With(labelValues ...string) Gauge
 	Set(value float64)
+	Add(delta float64)
 }
 
 // Histogram describes a metric that takes repeated observations of the same

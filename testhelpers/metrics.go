@@ -32,7 +32,12 @@ func (g *CollectingGauge) With(labelValues ...string) metrics.Gauge {
 }
 
 // Set is there to satisfy the metrics.Gauge interface.
-func (g *CollectingGauge) Set(delta float64) {
+func (g *CollectingGauge) Set(value float64) {
+	g.GaugeValue = value
+}
+
+// Add is there to satisfy the metrics.Gauge interface.
+func (g *CollectingGauge) Add(delta float64) {
 	g.GaugeValue = delta
 }
 

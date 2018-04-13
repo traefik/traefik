@@ -54,6 +54,13 @@ func (g Gauge) With(labelValues ...string) metrics.Gauge {
 	return next
 }
 
+// Add implements metrics.Gauge.
+func (g Gauge) Add(delta float64) {
+	for _, gauge := range g {
+		gauge.Add(delta)
+	}
+}
+
 // Histogram collects multiple individual histograms and treats them as a unit.
 type Histogram []metrics.Histogram
 
