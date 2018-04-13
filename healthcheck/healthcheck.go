@@ -86,7 +86,7 @@ func NewBackendHealthCheck(options Options, backendName string) *BackendHealthCh
 	}
 }
 
-//SetBackendsConfiguration set backends configuration
+// SetBackendsConfiguration set backends configuration
 func (hc *HealthCheck) SetBackendsConfiguration(parentCtx context.Context, backends map[string]*BackendHealthCheck) {
 	hc.Backends = backends
 	if hc.cancel != nil {
@@ -151,26 +151,26 @@ func (hc *HealthCheck) checkBackend(backend *BackendHealthCheck) {
 	}
 }
 
-func (backend *BackendHealthCheck) newRequest(serverURL *url.URL) (*http.Request, error) {
-	if backend.Port == 0 {
-		return http.NewRequest(http.MethodGet, serverURL.String()+backend.Path, nil)
+func (b *BackendHealthCheck) newRequest(serverURL *url.URL) (*http.Request, error) {
+	if b.Port == 0 {
+		return http.NewRequest(http.MethodGet, serverURL.String()+b.Path, nil)
 	}
 
 	// copy the url and add the port to the host
 	u := &url.URL{}
 	*u = *serverURL
-	u.Host = net.JoinHostPort(u.Hostname(), strconv.Itoa(backend.Port))
-	u.Path = u.Path + backend.Path
+	u.Host = net.JoinHostPort(u.Hostname(), strconv.Itoa(b.Port))
+	u.Path = u.Path + b.Path
 
 	return http.NewRequest(http.MethodGet, u.String(), nil)
 }
 
-// this function adds additional httpheaders and hostname to http.request
-func (backend *BackendHealthCheck) addHeadersAndHost(req *http.Request) *http.Request {
-	if backend.Options.Hostname != "" {
-		req.Host = backend.Options.Hostname
+// this function adds additional http headers and hostname to http.request
+func (b *BackendHealthCheck) addHeadersAndHost(req *http.Request) *http.Request {
+	if b.Options.Hostname != "" {
+		req.Host = b.Options.Hostname
 	}
-	for k, v := range backend.Options.Headers {
+	for k, v := range b.Options.Headers {
 		req.Header.Set(k, v)
 	}
 	return req
