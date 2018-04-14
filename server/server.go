@@ -1210,7 +1210,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						} else {
 							lb = bufferedLb
 						}
-					}	
+					}
 
 					if config.Backends[frontend.Backend].CircuitBreaker != nil {
 						log.Debugf("Creating circuit breaker %s", config.Backends[frontend.Backend].CircuitBreaker.Expression)
