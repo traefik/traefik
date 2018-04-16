@@ -14,10 +14,11 @@ import (
 	"github.com/unrolled/render"
 )
 
+const clusterLeaderKeySuffix = "/leader"
+
 var templatesRenderer = render.New(render.Options{
 	Directory: "nowhere",
 })
-var clusterLeaderKeySuffix = "/leader"
 
 // Leadership allows leadership election using a KV store
 type Leadership struct {
