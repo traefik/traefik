@@ -52,6 +52,7 @@ func (s *LocalStore) get() (*StoredData, error) {
 					return nil, err
 				}
 			}
+
 			// Check if ACME Account is in ACME V1 format
 			if s.storedData.Account != nil && s.storedData.Account.Registration != nil {
 				isOldRegistration, err := regexp.MatchString(RegistrationURLPathV1Regexp, s.storedData.Account.Registration.URI)
@@ -62,6 +63,21 @@ func (s *LocalStore) get() (*StoredData, error) {
 					s.storedData.Account = nil
 					s.SaveDataChan <- s.storedData
 				}
+			}
+
+			// Delete all certificates with no value
+			var certificates []*Certificate
+			for _, certificate := range s.storedData.Certificates {
+				if len(certificate.Certificate) == 0 || len(certificate.Key) == 0 {
+					log.Debugf("Delete certificate %v for domains %v which have no value.", certificate, certificate.Domain.ToStrArray())
+					continue
+				}
+				certificates = append(certificates, certificate)
+			}
+
+			if len(certificates) < len(s.storedData.Certificates) {
+				s.storedData.Certificates = certificates
+				s.SaveDataChan <- s.storedData
 			}
 		}
 	}
