@@ -102,6 +102,7 @@ func ConvertToNewFormat(fileName string) {
 				log.Errorf("Unable to create a backup for the V1 formatted ACME file: %s", err.Error())
 				return
 			}
+
 			err = RemoveAccountV1Values(account)
 			if err != nil {
 				log.Errorf("Unable to remove ACME Account V1 values: %s", err.Error())
@@ -122,8 +123,8 @@ func ConvertToNewFormat(fileName string) {
 					Domain:      cert.Domains,
 				})
 			}
-			// If account is in the old format, storeCertificates is nil or empty
-			// and has to be initialized
+
+			// If account is in the old format, storeCertificates is nil or empty and has to be initialized
 			storeCertificates = newCertificates
 		}
 
