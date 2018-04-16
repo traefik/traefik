@@ -1386,6 +1386,8 @@ func parseHealthCheckOptions(lb healthcheck.LoadBalancer, backend string, hc *ty
 	}
 
 	return &healthcheck.Options{
+		Hostname: hc.Hostname,
+		Headers:  hc.Headers,
 		Path:     hc.Path,
 		Port:     hc.Port,
 		Interval: interval,

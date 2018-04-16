@@ -29,6 +29,8 @@ func GetHealthCheck(metrics metricsRegistry) *HealthCheck {
 
 // Options are the public health check options.
 type Options struct {
+	Headers   map[string]string
+	Hostname  string
 	Path      string
 	Port      int
 	Transport http.RoundTripper
@@ -37,7 +39,7 @@ type Options struct {
 }
 
 func (opt Options) String() string {
-	return fmt.Sprintf("[Path: %s Port: %d Interval: %s]", opt.Path, opt.Port, opt.Interval)
+	return fmt.Sprintf("[Hostname: %s Headers: %v Path: %s Port: %d Interval: %s]", opt.Hostname, opt.Headers, opt.Path, opt.Port, opt.Interval)
 }
 
 // BackendHealthCheck HealthCheck configuration for a backend
@@ -84,7 +86,7 @@ func NewBackendHealthCheck(options Options, backendName string) *BackendHealthCh
 	}
 }
 
-//SetBackendsConfiguration set backends configuration
+// SetBackendsConfiguration set backends configuration
 func (hc *HealthCheck) SetBackendsConfiguration(parentCtx context.Context, backends map[string]*BackendHealthCheck) {
 	hc.Backends = backends
 	if hc.cancel != nil {
@@ -149,18 +151,29 @@ func (hc *HealthCheck) checkBackend(backend *BackendHealthCheck) {
 	}
 }
 
-func (backend *BackendHealthCheck) newRequest(serverURL *url.URL) (*http.Request, error) {
-	if backend.Port == 0 {
-		return http.NewRequest(http.MethodGet, serverURL.String()+backend.Path, nil)
+func (b *BackendHealthCheck) newRequest(serverURL *url.URL) (*http.Request, error) {
+	if b.Port == 0 {
+		return http.NewRequest(http.MethodGet, serverURL.String()+b.Path, nil)
 	}
 
 	// copy the url and add the port to the host
 	u := &url.URL{}
 	*u = *serverURL
-	u.Host = net.JoinHostPort(u.Hostname(), strconv.Itoa(backend.Port))
-	u.Path = u.Path + backend.Path
+	u.Host = net.JoinHostPort(u.Hostname(), strconv.Itoa(b.Port))
+	u.Path = u.Path + b.Path
 
 	return http.NewRequest(http.MethodGet, u.String(), nil)
+}
+
+// this function adds additional http headers and hostname to http.request
+func (b *BackendHealthCheck) addHeadersAndHost(req *http.Request) *http.Request {
+	if b.Options.Hostname != "" {
+		req.Host = b.Options.Hostname
+	}
+	for k, v := range b.Options.Headers {
+		req.Header.Set(k, v)
+	}
+	return req
 }
 
 // checkHealth returns a nil error in case it was successful and otherwise
@@ -174,6 +187,7 @@ func checkHealth(serverURL *url.URL, backend *BackendHealthCheck) error {
 	if err != nil {
 		return fmt.Errorf("failed to create HTTP request: %s", err)
 	}
+	req = backend.addHeadersAndHost(req)
 
 	resp, err := client.Do(req)
 	if err == nil {

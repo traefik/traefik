@@ -176,6 +176,9 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel(label.TraefikBackendHealthCheckPath, "/health"),
 					withLabel(label.TraefikBackendHealthCheckPort, "880"),
 					withLabel(label.TraefikBackendHealthCheckInterval, "6"),
+					withLabel(label.TraefikBackendHealthCheckHostname, "foo.com"),
+					withLabel(label.TraefikBackendHealthCheckHeaders, "Foo:bar || Bar:foo"),
+
 					withLabel(label.TraefikBackendLoadBalancerMethod, "drr"),
 					withLabel(label.TraefikBackendLoadBalancerSticky, "true"),
 					withLabel(label.TraefikBackendLoadBalancerStickiness, "true"),
@@ -365,6 +368,11 @@ func TestBuildConfiguration(t *testing.T) {
 						Path:     "/health",
 						Port:     880,
 						Interval: "6",
+						Hostname: "foo.com",
+						Headers: map[string]string{
+							"Foo": "bar",
+							"Bar": "foo",
+						},
 					},
 					Buffering: &types.Buffering{
 						MaxResponseBodyBytes: 10485760,

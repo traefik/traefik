@@ -167,6 +167,13 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+    hostname = "{{ $healthCheck.Hostname }}"
+    {{if $healthCheck.Headers }}
+    [backends."backend-{{ $backendName }}".healthCheck.headers]
+      {{range $k, $v := $healthCheck.Headers }}
+      {{$k}} = "{{$v}}"
+      {{end}}
+    {{end}}
   {{end}}
 
   {{ $buffering := getBuffering $service.TraefikLabels }}
@@ -568,6 +575,13 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+    hostname = "{{ $healthCheck.Hostname }}"
+    {{if $healthCheck.Headers }}
+    [backends."backend-{{ $backendName }}".healthCheck.headers]
+      {{range $k, $v := $healthCheck.Headers }}
+      {{$k}} = "{{$v}}"
+      {{end}}
+    {{end}}
   {{end}}
 
   {{ $buffering := getBuffering $backend.SegmentLabels }}
@@ -820,6 +834,13 @@ var _templatesEcsTmpl = []byte(`[backends]
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+    hostname = "{{ $healthCheck.Hostname }}"
+    {{if $healthCheck.Headers }}
+    [backends."backend-{{ $serviceName }}".healthCheck.headers]
+      {{range $k, $v := $healthCheck.Headers }}
+      {{$k}} = "{{$v}}"
+      {{end}}
+    {{end}}
   {{end}}
 
   {{ $buffering := getBuffering $firstInstance.TraefikLabels }}
@@ -1230,6 +1251,13 @@ var _templatesKvTmpl = []byte(`[backends]
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+    hostname = "{{ $healthCheck.Hostname }}"
+    {{if $healthCheck.Headers }}
+    [backends.{{ $backendName }}.healthCheck.headers]
+      {{range $k, $v := $healthCheck.Headers }}
+      {{$k}} = "{{$v}}"
+      {{end}}
+    {{end}}
   {{end}}
 
   {{ $buffering := getBuffering $backend }}
@@ -1524,6 +1552,13 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
       path = "{{ $healthCheck.Path }}"
       port = {{ $healthCheck.Port }}
       interval = "{{ $healthCheck.Interval }}"
+      hostname = "{{ $healthCheck.Hostname }}"
+      {{if $healthCheck.Headers }}
+      [backends.{{ $backendName }}.healthCheck.headers]
+        {{range $k, $v := $healthCheck.Headers }}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
     {{end}}
 
     {{ $buffering := getBuffering $app.SegmentLabels }}
@@ -1762,6 +1797,13 @@ var _templatesMesosTmpl = []byte(`[backends]
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+    hostname = "{{ $healthCheck.Hostname }}"
+    {{if $healthCheck.Headers }}
+    [backends."backend-{{ $backendName }}".healthCheck.headers]
+      {{range $k, $v := $healthCheck.Headers }}
+      {{$k}} = "{{$v}}"
+      {{end}}
+    {{end}}
   {{end}}
 
   {{ $buffering := getBuffering $app.TraefikLabels }}
@@ -2054,6 +2096,13 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+    hostname = "{{ $healthCheck.Hostname }}"
+    {{if $healthCheck.Headers }}
+    [backends."backend-{{ $backendName }}".healthCheck.headers]
+      {{range $k, $v := $healthCheck.Headers }}
+      {{$k}} = "{{$v}}"
+      {{end}}
+    {{end}}
   {{end}}
 
   {{ $buffering := getBuffering $backend.SegmentLabels }}
