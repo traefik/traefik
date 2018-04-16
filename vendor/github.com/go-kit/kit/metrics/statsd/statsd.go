@@ -74,6 +74,7 @@ func (s *Statsd) NewGauge(name string) *Gauge {
 	return &Gauge{
 		name: s.prefix + name,
 		obs:  s.gauges.Observe,
+		add:  s.gauges.Add,
 	}
 }
 
@@ -201,6 +202,7 @@ func (c *Counter) Add(delta float64) {
 type Gauge struct {
 	name string
 	obs  observeFunc
+	add  observeFunc
 }
 
 // With is a no-op.
@@ -211,6 +213,11 @@ func (g *Gauge) With(...string) metrics.Gauge {
 // Set implements metrics.Gauge.
 func (g *Gauge) Set(value float64) {
 	g.obs(g.name, lv.LabelValues{}, value)
+}
+
+// Add implements metrics.Gauge.
+func (g *Gauge) Add(delta float64) {
+	g.add(g.name, lv.LabelValues{}, delta)
 }
 
 // Timing is a StatsD timing, or metrics.Histogram. Observations are

@@ -24,21 +24,21 @@ func TestInfluxDB(t *testing.T) {
 	}
 
 	expectedBackend := []string{
-		`(traefik\.backend\.requests\.total,code=200,method=GET,service=test count=1) [\d]{19}`,
-		`(traefik\.backend\.requests\.total,code=404,method=GET,service=test count=1) [\d]{19}`,
-		`(traefik\.backend\.request\.duration(?:,backend=test)?,code=200,method=GET,service=test(?:,url=http://127.0.0.1)? p50=10000,p90=10000,p95=10000,p99=10000) [\d]{19}`,
-		`(traefik\.backend\.retries\.total(?:,code=[\d]{3},method=GET)?,service=test count=2) [\d]{19}`,
+		`(traefik\.backend\.requests\.total,backend=test,code=200,method=GET count=1) [\d]{19}`,
+		`(traefik\.backend\.requests\.total,backend=test,code=404,method=GET count=1) [\d]{19}`,
+		`(traefik\.backend\.request\.duration,backend=test,code=200 p50=10000,p90=10000,p95=10000,p99=10000) [\d]{19}`,
+		`(traefik\.backend\.retries\.total(?:,code=[\d]{3},method=GET)?,backend=test count=2) [\d]{19}`,
 		`(traefik\.config\.reload\.total(?:[a-z=0-9A-Z,]+)? count=1) [\d]{19}`,
 		`(traefik\.config\.reload\.total\.failure(?:[a-z=0-9A-Z,]+)? count=1) [\d]{19}`,
 		`(traefik\.backend\.server\.up,backend=test(?:[a-z=0-9A-Z,]+)?,url=http://127.0.0.1 value=1) [\d]{19}`,
 	}
 
 	msgBackend := udp.ReceiveString(t, func() {
-		influxDBRegistry.BackendReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
-		influxDBRegistry.BackendReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
-		influxDBRegistry.BackendRetriesCounter().With("service", "test").Add(1)
-		influxDBRegistry.BackendRetriesCounter().With("service", "test").Add(1)
-		influxDBRegistry.BackendReqDurationHistogram().With("service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
+		influxDBRegistry.BackendReqsCounter().With("backend", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+		influxDBRegistry.BackendReqsCounter().With("backend", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
+		influxDBRegistry.BackendRetriesCounter().With("backend", "test").Add(1)
+		influxDBRegistry.BackendRetriesCounter().With("backend", "test").Add(1)
+		influxDBRegistry.BackendReqDurationHistogram().With("backend", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 		influxDBRegistry.ConfigReloadsCounter().Add(1)
 		influxDBRegistry.ConfigReloadsFailureCounter().Add(1)
 		influxDBRegistry.BackendServerUpGauge().With("backend", "test", "url", "http://127.0.0.1").Set(1)
@@ -47,9 +47,9 @@ func TestInfluxDB(t *testing.T) {
 	assertMessage(t, msgBackend, expectedBackend)
 
 	expectedEntrypoint := []string{
-		`(traefik\.entrypoint\.requests\.total(?:,backend=test,code=[\d]{3})?,entrypoint=test(?:[a-z=0-9A-Z,:/.]+)? count=1) [\d]{19}`,
-		`(traefik\.entrypoint\.request\.duration(?:,backend=test,code=[\d]{3})?,entrypoint=test(?:[a-z=0-9A-Z,:/.]+)? p50=10000,p90=10000,p95=10000,p99=10000) [\d]{19}`,
-		`(traefik\.entrypoint\.connections\.open(?:[a-z=0-9A-Z,]+)?,entrypoint=test,(?:[a-z=0-9A-Z,:.//]+)? value=1) [\d]{19}`,
+		`(traefik\.entrypoint\.requests\.total,entrypoint=test(?:[a-z=0-9A-Z,:/.]+)? count=1) [\d]{19}`,
+		`(traefik\.entrypoint\.request\.duration(?:,code=[\d]{3})?,entrypoint=test(?:[a-z=0-9A-Z,:/.]+)? p50=10000,p90=10000,p95=10000,p99=10000) [\d]{19}`,
+		`(traefik\.entrypoint\.connections\.open,entrypoint=test value=1) [\d]{19}`,
 	}
 
 	msgEntrypoint := udp.ReceiveString(t, func() {
