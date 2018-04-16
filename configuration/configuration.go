@@ -11,6 +11,8 @@ import (
 	"github.com/containous/traefik/api"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares/tracing"
+	"github.com/containous/traefik/middlewares/tracing/jaeger"
+	"github.com/containous/traefik/middlewares/tracing/zipkin"
 	"github.com/containous/traefik/ping"
 	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/provider/boltdb"
@@ -313,6 +315,43 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 	}
 
 	gc.initACMEProvider()
+	gc.initTracing()
+}
+
+func (gc *GlobalConfiguration) initTracing() {
+	if gc.Tracing != nil {
+		switch gc.Tracing.Backend {
+		case jaeger.Name:
+			if gc.Tracing.Jaeger == nil {
+				gc.Tracing.Jaeger = &jaeger.Config{
+					SamplingServerURL:  "http://localhost:5778/sampling",
+					SamplingType:       "const",
+					SamplingParam:      1.0,
+					LocalAgentHostPort: "127.0.0.1:6832",
+				}
+			}
+			if gc.Tracing.Zipkin != nil {
+				log.Warn("Zipkin configuration will be ignored")
+				gc.Tracing.Zipkin = nil
+			}
+		case zipkin.Name:
+			if gc.Tracing.Zipkin == nil {
+				gc.Tracing.Zipkin = &zipkin.Config{
+					HTTPEndpoint: "http://localhost:9411/api/v1/spans",
+					SameSpan:     false,
+					ID128Bit:     true,
+					Debug:        false,
+				}
+			}
+			if gc.Tracing.Jaeger != nil {
+				log.Warn("Jaeger configuration will be ignored")
+				gc.Tracing.Jaeger = nil
+			}
+		default:
+			log.Warnf("Unknown tracer %q", gc.Tracing.Backend)
+			return
+		}
+	}
 }
 
 func (gc *GlobalConfiguration) initACMEProvider() {
