@@ -5,14 +5,18 @@ import (
 	"time"
 
 	"github.com/containous/flaeg"
+	"github.com/containous/traefik/middlewares/tracing"
+	"github.com/containous/traefik/middlewares/tracing/jaeger"
+	"github.com/containous/traefik/middlewares/tracing/zipkin"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/provider/file"
+	"github.com/stretchr/testify/assert"
 )
 
 const defaultConfigFile = "traefik.toml"
 
 func TestSetEffectiveConfigurationGraceTimeout(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc                  string
 		legacyGraceTimeout    time.Duration
 		lifeCycleGraceTimeout time.Duration
@@ -37,10 +41,11 @@ func TestSetEffectiveConfigurationGraceTimeout(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			gc := &GlobalConfiguration{
 				GraceTimeOut: flaeg.Duration(test.legacyGraceTimeout),
 			}
@@ -52,17 +57,14 @@ func TestSetEffectiveConfigurationGraceTimeout(t *testing.T) {
 
 			gc.SetEffectiveConfiguration(defaultConfigFile)
 
-			gotGraceTimeout := time.Duration(gc.LifeCycle.GraceTimeOut)
-			if gotGraceTimeout != test.wantGraceTimeout {
-				t.Fatalf("got effective grace timeout %d, want %d", gotGraceTimeout, test.wantGraceTimeout)
-			}
+			assert.Equal(t, test.wantGraceTimeout, time.Duration(gc.LifeCycle.GraceTimeOut))
 
 		})
 	}
 }
 
 func TestSetEffectiveConfigurationFileProviderFilename(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc                     string
 		fileProvider             *file.Provider
 		wantFileProviderFilename string
@@ -84,20 +86,128 @@ func TestSetEffectiveConfigurationFileProviderFilename(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			gc := &GlobalConfiguration{
 				File: test.fileProvider,
 			}
 
 			gc.SetEffectiveConfiguration(defaultConfigFile)
 
-			gotFileProviderFilename := gc.File.Filename
-			if gotFileProviderFilename != test.wantFileProviderFilename {
-				t.Fatalf("got file provider file name %q, want %q", gotFileProviderFilename, test.wantFileProviderFilename)
+			assert.Equal(t, test.wantFileProviderFilename, gc.File.Filename)
+		})
+	}
+}
+
+func TestSetEffectiveConfigurationTracing(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		tracing  *tracing.Tracing
+		expected *tracing.Tracing
+	}{
+		{
+			desc:     "no tracing configuration",
+			tracing:  &tracing.Tracing{},
+			expected: &tracing.Tracing{},
+		},
+		{
+			desc: "tracing bad backend name",
+			tracing: &tracing.Tracing{
+				Backend: "powpow",
+			},
+			expected: &tracing.Tracing{
+				Backend: "powpow",
+			},
+		},
+		{
+			desc: "tracing jaeger backend name",
+			tracing: &tracing.Tracing{
+				Backend: "jaeger",
+				Zipkin: &zipkin.Config{
+					HTTPEndpoint: "http://localhost:9411/api/v1/spans",
+					SameSpan:     false,
+					ID128Bit:     true,
+					Debug:        false,
+				},
+			},
+			expected: &tracing.Tracing{
+				Backend: "jaeger",
+				Jaeger: &jaeger.Config{
+					SamplingServerURL:  "http://localhost:5778/sampling",
+					SamplingType:       "const",
+					SamplingParam:      1.0,
+					LocalAgentHostPort: "127.0.0.1:6832",
+				},
+				Zipkin: nil,
+			},
+		},
+		{
+			desc: "tracing zipkin backend name",
+			tracing: &tracing.Tracing{
+				Backend: "zipkin",
+				Jaeger: &jaeger.Config{
+					SamplingServerURL:  "http://localhost:5778/sampling",
+					SamplingType:       "const",
+					SamplingParam:      1.0,
+					LocalAgentHostPort: "127.0.0.1:6832",
+				},
+			},
+			expected: &tracing.Tracing{
+				Backend: "zipkin",
+				Jaeger:  nil,
+				Zipkin: &zipkin.Config{
+					HTTPEndpoint: "http://localhost:9411/api/v1/spans",
+					SameSpan:     false,
+					ID128Bit:     true,
+					Debug:        false,
+				},
+			},
+		},
+		{
+			desc: "tracing zipkin backend name value override",
+			tracing: &tracing.Tracing{
+				Backend: "zipkin",
+				Jaeger: &jaeger.Config{
+					SamplingServerURL:  "http://localhost:5778/sampling",
+					SamplingType:       "const",
+					SamplingParam:      1.0,
+					LocalAgentHostPort: "127.0.0.1:6832",
+				},
+				Zipkin: &zipkin.Config{
+					HTTPEndpoint: "http://powpow:9411/api/v1/spans",
+					SameSpan:     true,
+					ID128Bit:     true,
+					Debug:        true,
+				},
+			},
+			expected: &tracing.Tracing{
+				Backend: "zipkin",
+				Jaeger:  nil,
+				Zipkin: &zipkin.Config{
+					HTTPEndpoint: "http://powpow:9411/api/v1/spans",
+					SameSpan:     true,
+					ID128Bit:     true,
+					Debug:        true,
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			gc := &GlobalConfiguration{
+				Tracing: test.tracing,
 			}
+
+			gc.SetEffectiveConfiguration(defaultConfigFile)
+
+			assert.Equal(t, test.expected, gc.Tracing)
 		})
 	}
 }
