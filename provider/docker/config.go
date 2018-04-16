@@ -67,12 +67,13 @@ func (p *Provider) buildConfigurationV2(containersInspected []dockerData) *types
 			container.SegmentLabels = labels
 			container.SegmentName = segmentName
 
-			// Frontends
-			if _, exists := serviceNames[container.ServiceName+segmentName]; !exists {
+			serviceNamesKey := getServiceNameKey(container, p.SwarmMode, segmentName)
+
+			if _, exists := serviceNames[serviceNamesKey]; !exists {
 				frontendName := p.getFrontendName(container, idx)
 				frontends[frontendName] = append(frontends[frontendName], container)
-				if len(container.ServiceName+segmentName) > 0 {
-					serviceNames[container.ServiceName+segmentName] = struct{}{}
+				if len(serviceNamesKey) > 0 {
+					serviceNames[serviceNamesKey] = struct{}{}
 				}
 			}
 
@@ -102,6 +103,18 @@ func (p *Provider) buildConfigurationV2(containersInspected []dockerData) *types
 	}
 
 	return configuration
+}
+
+func getServiceNameKey(container dockerData, swarmMode bool, segmentName string) string {
+	serviceNameKey := container.ServiceName
+
+	if values, err := label.GetStringMultipleStrict(container.Labels, labelDockerComposeProject, labelDockerComposeService); !swarmMode && err == nil {
+		serviceNameKey = values[labelDockerComposeService] + values[labelDockerComposeProject]
+	}
+
+	serviceNameKey += segmentName
+
+	return serviceNameKey
 }
 
 func (p *Provider) containerFilter(container dockerData) bool {

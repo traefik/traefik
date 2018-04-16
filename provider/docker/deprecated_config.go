@@ -125,11 +125,14 @@ func (p *Provider) buildConfigurationV1(containersInspected []dockerData) *types
 	servers := map[string][]dockerData{}
 	serviceNames := make(map[string]struct{})
 	for idx, container := range filteredContainers {
-		if _, exists := serviceNames[container.ServiceName]; !exists {
+
+		serviceNamesKey := getServiceNameKey(container, p.SwarmMode, "")
+
+		if _, exists := serviceNames[serviceNamesKey]; !exists {
 			frontendName := p.getFrontendNameV1(container, idx)
 			frontends[frontendName] = append(frontends[frontendName], container)
-			if len(container.ServiceName) > 0 {
-				serviceNames[container.ServiceName] = struct{}{}
+			if len(serviceNamesKey) > 0 {
+				serviceNames[serviceNamesKey] = struct{}{}
 			}
 		}
 		backendName := getBackendNameV1(container)
