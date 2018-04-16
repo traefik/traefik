@@ -41,7 +41,7 @@ type Configuration struct {
 	Storage       string         `description:"Storage to use."`
 	EntryPoint    string         `description:"EntryPoint to use."`
 	OnHostRule    bool           `description:"Enable certificate generation on frontends Host rules."`
-	OnDemand      bool           `description:"Enable on demand certificate generation. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."` //deprecated
+	OnDemand      bool           `description:"Enable on demand certificate generation. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."` // Deprecated
 	DNSChallenge  *DNSChallenge  `description:"Activate DNS-01 Challenge"`
 	HTTPChallenge *HTTPChallenge `description:"Activate HTTP-01 Challenge"`
 	Domains       []types.Domain `description:"CN and SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='*.main.net'. No SANs for wildcards domain. Wildcard domains only accepted with DNSChallenge"`
@@ -225,14 +225,17 @@ func (p *Provider) resolveCertificate(domain types.Domain, domainFromConfigurati
 	}
 
 	bundle := true
+
 	certificate, failures := client.ObtainCertificate(uncheckedDomains, bundle, nil, OSCPMustStaple)
 	if len(failures) > 0 {
 		return nil, fmt.Errorf("cannot obtain certificates %+v", failures)
 	}
+
 	if len(certificate.Certificate) == 0 || len(certificate.PrivateKey) == 0 {
 		return nil, fmt.Errorf("domains %v generate certificate with no value: %v", uncheckedDomains, certificate)
 	}
 	log.Debugf("Certificates obtained for domains %+v", uncheckedDomains)
+
 	if len(uncheckedDomains) > 1 {
 		domain = types.Domain{Main: uncheckedDomains[0], SANs: uncheckedDomains[1:]}
 	} else {
@@ -449,20 +452,25 @@ func (p *Provider) renewCertificates() {
 				log.Infof("Error renewing certificate from LE : %+v, %v", certificate.Domain, err)
 				continue
 			}
+
 			log.Infof("Renewing certificate from LE : %+v", certificate.Domain)
+
 			renewedCert, err := client.RenewCertificate(acme.CertificateResource{
 				Domain:      certificate.Domain.Main,
 				PrivateKey:  certificate.Key,
 				Certificate: certificate.Certificate,
 			}, true, OSCPMustStaple)
+
 			if err != nil {
 				log.Errorf("Error renewing certificate from LE: %v, %v", certificate.Domain, err)
 				continue
 			}
+
 			if len(renewedCert.Certificate) == 0 || len(renewedCert.PrivateKey) == 0 {
 				log.Errorf("domains %v renew certificate with no value: %v", certificate.Domain.ToStrArray(), certificate)
 				continue
 			}
+
 			p.addCertificateForDomain(certificate.Domain, renewedCert.Certificate, renewedCert.PrivateKey)
 		}
 	}
@@ -480,6 +488,7 @@ func (p *Provider) AddRoutes(router *mux.Router) {
 					log.Debugf("Unable to split host and port: %v. Fallback to request host.", err)
 					domain = req.Host
 				}
+
 				tokenValue := getTokenValue(token, domain, p.Store)
 				if len(tokenValue) > 0 {
 					rw.WriteHeader(http.StatusOK)
