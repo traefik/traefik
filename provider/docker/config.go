@@ -112,9 +112,7 @@ func getServiceNameKey(container dockerData, swarmMode bool, segmentName string)
 		serviceNameKey = values[labelDockerComposeService] + values[labelDockerComposeProject]
 	}
 
-	serviceNameKey += segmentName
-
-	return serviceNameKey
+	return serviceNameKey + segmentName
 }
 
 func (p *Provider) containerFilter(container dockerData) bool {

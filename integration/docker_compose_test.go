@@ -26,7 +26,7 @@ type DockerComposeSuite struct {
 }
 
 func (s *DockerComposeSuite) SetUpSuite(c *check.C) {
-	s.createComposeProject(c, "minimal")
+	s.createComposeProject(c, composeProject)
 	s.composeProject.Start(c)
 }
 
@@ -38,8 +38,8 @@ func (s *DockerComposeSuite) TearDownSuite(c *check.C) {
 }
 
 func (s *DockerComposeSuite) TestComposeScale(c *check.C) {
-	const serviceCount = 2
-	const composeService = "whoami1"
+	var serviceCount = 2
+	var composeService = "whoami1"
 
 	s.composeProject.Scale(c, composeService, serviceCount)
 
@@ -70,7 +70,9 @@ func (s *DockerComposeSuite) TestComposeScale(c *check.C) {
 
 	// check that we have only one backend with n servers
 	c.Assert(provider.Backends, checker.HasLen, 1)
+
 	myBackend := provider.Backends["backend-"+composeService+"-integrationtest"+composeProject]
+	c.Assert(myBackend, checker.NotNil)
 	c.Assert(myBackend.Servers, checker.HasLen, serviceCount)
 
 	// check that we have only one frontend
