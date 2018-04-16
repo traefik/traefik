@@ -11,7 +11,6 @@ import (
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
 	"github.com/go-check/check"
-	"github.com/libkermit/docker"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -22,7 +21,6 @@ const (
 // Docker test suites
 type DockerComposeSuite struct {
 	BaseSuite
-	project *docker.Project
 }
 
 func (s *DockerComposeSuite) SetUpSuite(c *check.C) {
