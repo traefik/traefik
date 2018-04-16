@@ -14,6 +14,8 @@ import (
 	"github.com/unrolled/render"
 )
 
+const clusterLeaderKeySuffix = "/leader"
+
 var templatesRenderer = render.New(render.Options{
 	Directory: "nowhere",
 })
@@ -32,7 +34,7 @@ func NewLeadership(ctx context.Context, cluster *types.Cluster) *Leadership {
 	return &Leadership{
 		Pool:      safe.NewPool(ctx),
 		Cluster:   cluster,
-		candidate: leadership.NewCandidate(cluster.Store, cluster.Store.Prefix+"/leader", cluster.Node, 20*time.Second),
+		candidate: leadership.NewCandidate(cluster.Store, cluster.Store.Prefix+clusterLeaderKeySuffix, cluster.Node, 20*time.Second),
 		listeners: []LeaderListener{},
 		leader:    safe.New(false),
 	}
@@ -106,11 +108,19 @@ func (l *Leadership) onElection(elected bool) {
 }
 
 type leaderResponse struct {
-	Leader bool `json:"leader"`
+	Leader     bool   `json:"leader"`
+	LeaderNode string `json:"leader_node"`
 }
 
 func (l *Leadership) getLeaderHandler(response http.ResponseWriter, request *http.Request) {
-	leader := &leaderResponse{Leader: l.IsLeader()}
+	leaderNode := ""
+	leaderKv, err := l.Cluster.Store.Get(l.Cluster.Store.Prefix+clusterLeaderKeySuffix, nil)
+	if err != nil {
+		log.Error(err)
+	} else {
+		leaderNode = string(leaderKv.Value)
+	}
+	leader := &leaderResponse{Leader: l.IsLeader(), LeaderNode: leaderNode}
 
 	status := http.StatusOK
 	if !leader.Leader {
@@ -118,7 +128,7 @@ func (l *Leadership) getLeaderHandler(response http.ResponseWriter, request *htt
 		status = http.StatusTooManyRequests
 	}
 
-	err := templatesRenderer.JSON(response, status, leader)
+	err = templatesRenderer.JSON(response, status, leader)
 	if err != nil {
 		log.Error(err)
 	}
