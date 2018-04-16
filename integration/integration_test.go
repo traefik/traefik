@@ -41,6 +41,7 @@ func init() {
 		check.Suite(&ConstraintSuite{})
 		check.Suite(&ConsulCatalogSuite{})
 		check.Suite(&ConsulSuite{})
+		check.Suite(&DockerComposeSuite{})
 		check.Suite(&DockerSuite{})
 		check.Suite(&DynamoDBSuite{})
 		check.Suite(&EtcdSuite{})
