@@ -1174,6 +1174,16 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						}
 					}
 
+					if headerMiddleware != nil {
+						log.Debugf("Adding header middleware for frontend %s", frontendName)
+						n.Use(s.tracingMiddleware.NewNegroniHandlerWrapper("Header", headerMiddleware, false))
+					}
+
+					if secureMiddleware != nil {
+						log.Debugf("Adding secure middleware for frontend %s", frontendName)
+						n.UseFunc(secureMiddleware.HandlerFuncWithNextForRequestOnly)
+					}
+
 					if len(frontend.BasicAuth) > 0 {
 						users := types.Users{}
 						for _, user := range frontend.BasicAuth {
@@ -1190,16 +1200,6 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						} else {
 							n.Use(s.wrapNegroniHandlerWithAccessLog(authMiddleware, fmt.Sprintf("Auth for %s", frontendName)))
 						}
-					}
-
-					if headerMiddleware != nil {
-						log.Debugf("Adding header middleware for frontend %s", frontendName)
-						n.Use(s.tracingMiddleware.NewNegroniHandlerWrapper("Header", headerMiddleware, false))
-					}
-
-					if secureMiddleware != nil {
-						log.Debugf("Adding secure middleware for frontend %s", frontendName)
-						n.UseFunc(secureMiddleware.HandlerFuncWithNextForRequestOnly)
 					}
 
 					if config.Backends[frontend.Backend].Buffering != nil {
