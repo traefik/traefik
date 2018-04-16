@@ -47,11 +47,11 @@ func subset(opts ...func(*corev1.EndpointSubset)) func(*corev1.Endpoints) {
 
 func eAddresses(opts ...func(*corev1.EndpointAddress)) func(*corev1.EndpointSubset) {
 	return func(subset *corev1.EndpointSubset) {
-		a := &corev1.EndpointAddress{}
 		for _, opt := range opts {
+			a := &corev1.EndpointAddress{}
 			opt(a)
+			subset.Addresses = append(subset.Addresses, *a)
 		}
-		subset.Addresses = append(subset.Addresses, *a)
 	}
 }
 

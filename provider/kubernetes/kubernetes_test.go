@@ -470,7 +470,7 @@ retryexpression: IsNetworkError() && Attempts() <= 2
 `),
 			sSpec(
 				clusterIP("10.0.0.3"),
-				sPorts(sPort(803, ""))),
+				sPorts(sPort(803, "http"))),
 		),
 		buildService(
 			sName("service4"),
@@ -480,7 +480,7 @@ retryexpression: IsNetworkError() && Attempts() <= 2
 			sAnnotation(annotationKubernetesMaxConnAmount, "6"),
 			sSpec(
 				clusterIP("10.0.0.4"),
-				sPorts(sPort(804, ""))),
+				sPorts(sPort(804, "http"))),
 		),
 	}
 
@@ -502,10 +502,10 @@ retryexpression: IsNetworkError() && Attempts() <= 2
 			eUID("2"),
 			subset(
 				eAddresses(eAddress("10.15.0.1")),
-				ePorts(ePort(8080, "http"))),
+				ePorts(ePort(8080, ""))),
 			subset(
 				eAddresses(eAddress("10.15.0.2")),
-				ePorts(ePort(8080, "http"))),
+				ePorts(ePort(8080, ""))),
 		),
 		buildEndpoint(
 			eNamespace("testing"),
@@ -1925,4 +1925,96 @@ func TestGetTLS(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestMultiPortServices(t *testing.T) {
+	ingresses := []*extensionsv1beta1.Ingress{
+		buildIngress(
+			iNamespace("testing"),
+			iRules(
+				iRule(iPaths(
+					onePath(iPath("/cheddar"), iBackend("service", intstr.FromString("cheddar"))),
+					onePath(iPath("/stilton"), iBackend("service", intstr.FromString("stilton"))),
+				)),
+			),
+		),
+	}
+
+	services := []*corev1.Service{
+		buildService(
+			sName("service"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sPorts(sPort(80, "cheddar")),
+				sPorts(sPort(81, "stilton")),
+			),
+		),
+	}
+
+	endpoints := []*corev1.Endpoints{
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service"),
+			eUID("1"),
+			subset(
+				eAddresses(
+					eAddress("10.10.0.1"),
+					eAddress("10.10.0.2"),
+				),
+				ePorts(ePort(8080, "cheddar")),
+			),
+			subset(
+				eAddresses(
+					eAddress("10.20.0.1"),
+					eAddress("10.20.0.2"),
+				),
+				ePorts(ePort(8081, "stilton")),
+			),
+		),
+	}
+
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		endpoints: endpoints,
+		watchChan: watchChan,
+	}
+	provider := Provider{}
+
+	actual, err := provider.loadIngresses(client)
+	require.NoError(t, err, "error loading ingresses")
+
+	expected := buildConfiguration(
+		backends(
+			backend("/cheddar",
+				lbMethod("wrr"),
+				servers(
+					server("http://10.10.0.1:8080", weight(1)),
+					server("http://10.10.0.2:8080", weight(1)),
+				),
+			),
+			backend("/stilton",
+				lbMethod("wrr"),
+				servers(
+					server("http://10.20.0.1:8081", weight(1)),
+					server("http://10.20.0.2:8081", weight(1)),
+				),
+			),
+		),
+		frontends(
+			frontend("/cheddar",
+				passHostHeader(),
+				routes(route("/cheddar", "PathPrefix:/cheddar")),
+			),
+			frontend("/stilton",
+				passHostHeader(),
+				routes(route("/stilton", "PathPrefix:/stilton")),
+			),
+		),
+	)
+
+	assert.Equal(t, expected, actual)
 }
