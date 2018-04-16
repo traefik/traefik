@@ -229,7 +229,10 @@ func (p *Provider) resolveCertificate(domain types.Domain, domainFromConfigurati
 	if len(failures) > 0 {
 		return nil, fmt.Errorf("cannot obtain certificates %+v", failures)
 	}
-	log.Debugf("Certificates obtained for domain %+v", uncheckedDomains)
+	if len(certificate.Certificate) == 0 || len(certificate.PrivateKey) == 0 {
+		return nil, fmt.Errorf("domains %v generate certificate with no value: %v", uncheckedDomains, certificate)
+	}
+	log.Debugf("Certificates obtained for domains %+v", uncheckedDomains)
 	if len(uncheckedDomains) > 1 {
 		domain = types.Domain{Main: uncheckedDomains[0], SANs: uncheckedDomains[1:]}
 	} else {
@@ -454,6 +457,10 @@ func (p *Provider) renewCertificates() {
 			}, true, OSCPMustStaple)
 			if err != nil {
 				log.Errorf("Error renewing certificate from LE: %v, %v", certificate.Domain, err)
+				continue
+			}
+			if len(renewedCert.Certificate) == 0 || len(renewedCert.PrivateKey) == 0 {
+				log.Errorf("domains %v renew certificate with no value: %v", certificate.Domain.ToStrArray(), certificate)
 				continue
 			}
 			p.addCertificateForDomain(certificate.Domain, renewedCert.Certificate, renewedCert.PrivateKey)

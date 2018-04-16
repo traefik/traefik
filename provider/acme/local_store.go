@@ -63,6 +63,19 @@ func (s *LocalStore) get() (*StoredData, error) {
 					s.SaveDataChan <- s.storedData
 				}
 			}
+			// Delete all certificates with no value
+			certificates := []*Certificate{}
+			for _, certificate := range s.storedData.Certificates {
+				if len(certificate.Certificate) == 0 || len(certificate.Key) == 0 {
+					log.Debugf("Delete certificate %v for domains %v which have no value.", certificate, certificate.Domain.ToStrArray())
+					continue
+				}
+				certificates = append(certificates, certificate)
+			}
+			if len(certificates) < len(s.storedData.Certificates) {
+				s.storedData.Certificates = certificates
+				s.SaveDataChan <- s.storedData
+			}
 		}
 	}
 
