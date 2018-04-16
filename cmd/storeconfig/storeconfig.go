@@ -138,6 +138,10 @@ func migrateACMEData(fileName string) (*acme.Account, error) {
 			if err != nil {
 				return nil, err
 			}
+			err = acme.RemoveAccountV1Values(account)
+			if err != nil {
+				return nil, err
+			}
 		} else {
 			account = accountFromNewFormat
 		}
