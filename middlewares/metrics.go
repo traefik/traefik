@@ -41,11 +41,13 @@ func NewBackendMetricsMiddleware(registry metrics.Registry, backendName string) 
 }
 
 type metricsMiddleware struct {
+	// Important: Since this int64 field is using sync/atomic, it has to be at the top of the struct due to a bug on 32-bit platform
+	// See: https://golang.org/pkg/sync/atomic/ for more information
+	openConns            int64
 	reqsCounter          gokitmetrics.Counter
 	reqDurationHistogram gokitmetrics.Histogram
 	openConnsGauge       gokitmetrics.Gauge
 	baseLabels           []string
-	openConns            int64
 }
 
 func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
