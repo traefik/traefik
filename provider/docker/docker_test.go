@@ -852,6 +852,94 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 				},
 			},
 		},
+		{
+			containers: []docker.ContainerJSON{
+				containerJSON(
+					name("test_0"),
+					labels(map[string]string{
+						labelDockerComposeProject: "myProject",
+						labelDockerComposeService: "myService",
+					}),
+					ports(nat.PortMap{
+						"80/tcp": {},
+					}),
+					withNetwork("bridge", ipv4("127.0.0.1")),
+				),
+				containerJSON(
+					name("test_1"),
+					labels(map[string]string{
+						labelDockerComposeProject: "myProject",
+						labelDockerComposeService: "myService",
+					}),
+
+					ports(nat.PortMap{
+						"80/tcp": {},
+					}),
+
+					withNetwork("bridge", ipv4("127.0.0.2")),
+				),
+				containerJSON(
+					name("test_2"),
+					labels(map[string]string{
+						labelDockerComposeProject: "myProject",
+						labelDockerComposeService: "myService2",
+					}),
+
+					ports(nat.PortMap{
+						"80/tcp": {},
+					}),
+
+					withNetwork("bridge", ipv4("127.0.0.3")),
+				),
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-Host-myService-myProject-docker-localhost-0": {
+					Backend:        "backend-myService-myProject",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					BasicAuth:      []string{},
+					Routes: map[string]types.Route{
+						"route-frontend-Host-myService-myProject-docker-localhost-0": {
+							Rule: "Host:myService.myProject.docker.localhost",
+						},
+					},
+				},
+				"frontend-Host-myService2-myProject-docker-localhost-2": {
+					Backend:        "backend-myService2-myProject",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					BasicAuth:      []string{},
+					Routes: map[string]types.Route{
+						"route-frontend-Host-myService2-myProject-docker-localhost-2": {
+							Rule: "Host:myService2.myProject.docker.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-myService2-myProject": {
+					Servers: map[string]types.Server{
+						"server-test_2": {
+							URL:    "http://127.0.0.3:80",
+							Weight: 0,
+						},
+					},
+					CircuitBreaker: nil,
+				},
+				"backend-myService-myProject": {
+					Servers: map[string]types.Server{
+						"server-test_0": {
+							URL:    "http://127.0.0.1:80",
+							Weight: 0,
+						}, "server-test_1": {
+							URL:    "http://127.0.0.2:80",
+							Weight: 0,
+						},
+					},
+					CircuitBreaker: nil,
+				},
+			},
+		},
 	}
 
 	for caseID, test := range testCases {
