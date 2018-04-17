@@ -19,7 +19,7 @@ type Account struct {
 
 const (
 	// RegistrationURLPathV1Regexp is a regexp which match ACME registration URL in the V1 format
-	RegistrationURLPathV1Regexp string = `^.*/acme/reg/\d+$`
+	RegistrationURLPathV1Regexp = `^.*/acme/reg/\d+$`
 )
 
 // NewAccount creates an account
