@@ -145,7 +145,7 @@ func TestPrepareServerTimeouts(t *testing.T) {
 			}
 			router := middlewares.NewHandlerSwitcher(mux.NewRouter())
 
-			srv := NewServer(test.globalConfig, nil)
+			srv := NewServer(test.globalConfig, nil, nil)
 			httpServer, _, err := srv.prepareServer(entryPointName, entryPoint, router, nil)
 			if err != nil {
 				t.Fatalf("Unexpected error when preparing srv: %s", err)
@@ -286,7 +286,7 @@ func setupListenProvider(throttleDuration time.Duration) (server *Server, stop c
 		ProvidersThrottleDuration: flaeg.Duration(throttleDuration),
 	}
 
-	server = NewServer(globalConfig, nil)
+	server = NewServer(globalConfig, nil, nil)
 	go server.listenProviders(stop)
 
 	return server, stop, invokeStopChan
@@ -302,7 +302,7 @@ func TestThrottleProviderConfigReload(t *testing.T) {
 	}()
 
 	globalConfig := configuration.GlobalConfiguration{}
-	server := NewServer(globalConfig, nil)
+	server := NewServer(globalConfig, nil, nil)
 
 	go server.throttleProviderConfigReload(throttleDuration, publishConfig, providerConfig, stop)
 
@@ -441,12 +441,14 @@ func TestServerLoadConfigHealthCheckOptions(t *testing.T) {
 		for _, healthCheck := range healthChecks {
 			t.Run(fmt.Sprintf("%s/hc=%t", lbMethod, healthCheck != nil), func(t *testing.T) {
 				globalConfig := configuration.GlobalConfiguration{
-					EntryPoints: configuration.EntryPoints{
-						"http": &configuration.EntryPoint{
+					HealthCheck: &configuration.HealthCheckConfig{Interval: flaeg.Duration(5 * time.Second)},
+				}
+				entryPoints := map[string]EntryPoint{
+					"http": {
+						Configuration: &configuration.EntryPoint{
 							ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true},
 						},
 					},
-					HealthCheck: &configuration.HealthCheckConfig{Interval: flaeg.Duration(5 * time.Second)},
 				}
 
 				dynamicConfigs := types.Configurations{
@@ -482,7 +484,7 @@ func TestServerLoadConfigHealthCheckOptions(t *testing.T) {
 					},
 				}
 
-				srv := NewServer(globalConfig, nil)
+				srv := NewServer(globalConfig, nil, entryPoints)
 				if _, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
 					t.Fatalf("got error: %s", err)
 				}
@@ -689,11 +691,11 @@ func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
 
 func TestServerLoadCertificateWithDefaultEntryPoint(t *testing.T) {
 	globalConfig := configuration.GlobalConfiguration{
-		EntryPoints: configuration.EntryPoints{
-			"https": &configuration.EntryPoint{TLS: &tls.TLS{}},
-			"http":  &configuration.EntryPoint{},
-		},
 		DefaultEntryPoints: []string{"http", "https"},
+	}
+	entryPoints := map[string]EntryPoint{
+		"https": {Configuration: &configuration.EntryPoint{TLS: &tls.TLS{}}},
+		"http":  {Configuration: &configuration.EntryPoint{}},
 	}
 
 	dynamicConfigs := types.Configurations{
@@ -709,7 +711,7 @@ func TestServerLoadCertificateWithDefaultEntryPoint(t *testing.T) {
 		},
 	}
 
-	srv := NewServer(globalConfig, nil)
+	srv := NewServer(globalConfig, nil, entryPoints)
 	if mapEntryPoints, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
 		t.Fatalf("got error: %s", err)
 	} else if mapEntryPoints["https"].certs.Get() == nil {
@@ -824,15 +826,16 @@ func TestServerEntryPointWhitelistConfig(t *testing.T) {
 			t.Parallel()
 
 			srv := Server{
-				globalConfiguration: configuration.GlobalConfiguration{
-					EntryPoints: map[string]*configuration.EntryPoint{
-						"test": test.entrypoint,
+				globalConfiguration: configuration.GlobalConfiguration{},
+				metricsRegistry:     metrics.NewVoidRegistry(),
+				entryPoints: map[string]EntryPoint{
+					"test": {
+						Configuration: test.entrypoint,
 					},
 				},
-				metricsRegistry: metrics.NewVoidRegistry(),
 			}
 
-			srv.serverEntryPoints = srv.buildEntryPoints(srv.globalConfiguration)
+			srv.serverEntryPoints = srv.buildEntryPoints()
 			srvEntryPoint := srv.setupServerEntryPoint("test", srv.serverEntryPoints["test"])
 			handler := srvEntryPoint.httpServer.Handler.(*mux.Router).NotFoundHandler.(*negroni.Negroni)
 			found := false
@@ -932,14 +935,13 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			}))
 			defer testServer.Close()
 
-			globalConfig := configuration.GlobalConfiguration{
-				EntryPoints: configuration.EntryPoints{
-					"http": &configuration.EntryPoint{ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true}},
-				},
+			globalConfig := configuration.GlobalConfiguration{}
+			entryPointsConfig := map[string]EntryPoint{
+				"http": {Configuration: &configuration.EntryPoint{ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true}}},
 			}
 			dynamicConfigs := types.Configurations{"config": test.dynamicConfig(testServer.URL)}
 
-			srv := NewServer(globalConfig, nil)
+			srv := NewServer(globalConfig, nil, entryPointsConfig)
 			entryPoints, err := srv.loadConfig(dynamicConfigs, globalConfig)
 			if err != nil {
 				t.Fatalf("error loading config: %s", err)
@@ -959,11 +961,10 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 
 func TestBuildRedirectHandler(t *testing.T) {
 	srv := Server{
-		globalConfiguration: configuration.GlobalConfiguration{
-			EntryPoints: configuration.EntryPoints{
-				"http":  &configuration.EntryPoint{Address: ":80"},
-				"https": &configuration.EntryPoint{Address: ":443", TLS: &tls.TLS{}},
-			},
+		globalConfiguration: configuration.GlobalConfiguration{},
+		entryPoints: map[string]EntryPoint{
+			"http":  {Configuration: &configuration.EntryPoint{Address: ":80"}},
+			"https": {Configuration: &configuration.EntryPoint{Address: ":443", TLS: &tls.TLS{}}},
 		},
 	}
 

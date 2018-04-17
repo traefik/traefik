@@ -10,6 +10,7 @@ import (
 	"github.com/urfave/negroni"
 )
 
+// NewInternalRouterAggregator Create a new internalRouterAggregator
 func NewInternalRouterAggregator(globalConfiguration configuration.GlobalConfiguration, entryPointName string) *InternalRouterAggregator {
 	var serverMiddlewares []negroni.Handler
 
@@ -51,10 +52,10 @@ func NewInternalRouterAggregator(globalConfiguration configuration.GlobalConfigu
 		router.AddRouter(globalConfiguration.ACME)
 	}
 
-	realRouterWithMiddleware := RouterWithMiddleware{router: &routerWithPrefixAndMiddleware, routerMiddlewares: serverMiddlewares}
+	realRouterWithMiddleware := WithMiddleware{router: &routerWithPrefixAndMiddleware, routerMiddlewares: serverMiddlewares}
 	if globalConfiguration.Web != nil && globalConfiguration.Web.Path != "" {
-		router.AddRouter(&RouterWithPrefix{PathPrefix: globalConfiguration.Web.Path, Router: &routerWithPrefix})
-		router.AddRouter(&RouterWithPrefix{PathPrefix: globalConfiguration.Web.Path, Router: &realRouterWithMiddleware})
+		router.AddRouter(&WithPrefix{PathPrefix: globalConfiguration.Web.Path, Router: &routerWithPrefix})
+		router.AddRouter(&WithPrefix{PathPrefix: globalConfiguration.Web.Path, Router: &realRouterWithMiddleware})
 	} else {
 		router.AddRouter(&routerWithPrefix)
 		router.AddRouter(&realRouterWithMiddleware)
@@ -63,12 +64,14 @@ func NewInternalRouterAggregator(globalConfiguration configuration.GlobalConfigu
 	return &router
 }
 
-type RouterWithMiddleware struct {
+// WithMiddleware router with internal middleware
+type WithMiddleware struct {
 	router            types.InternalRouter
 	routerMiddlewares []negroni.Handler
 }
 
-func (r *RouterWithMiddleware) AddRoutes(systemRouter *mux.Router) {
+// AddRoutes Add routes to the router
+func (r *WithMiddleware) AddRoutes(systemRouter *mux.Router) {
 	realRouter := systemRouter.PathPrefix("/").Subrouter()
 
 	r.router.AddRoutes(realRouter)
@@ -78,12 +81,14 @@ func (r *RouterWithMiddleware) AddRoutes(systemRouter *mux.Router) {
 	}
 }
 
-type RouterWithPrefix struct {
+// WithPrefix router which add a prefix
+type WithPrefix struct {
 	Router     types.InternalRouter
 	PathPrefix string
 }
 
-func (r *RouterWithPrefix) AddRoutes(systemRouter *mux.Router) {
+// AddRoutes Add routes to the router
+func (r *WithPrefix) AddRoutes(systemRouter *mux.Router) {
 	realRouter := systemRouter.PathPrefix("/").Subrouter()
 	if r.PathPrefix != "" {
 		realRouter = systemRouter.PathPrefix(r.PathPrefix).Subrouter()
@@ -93,14 +98,17 @@ func (r *RouterWithPrefix) AddRoutes(systemRouter *mux.Router) {
 	r.Router.AddRoutes(realRouter)
 }
 
+// InternalRouterAggregator InternalRouter that aggregate other internalRouter
 type InternalRouterAggregator struct {
 	internalRouters []types.InternalRouter
 }
 
+// AddRouter add a router in the aggregator
 func (r *InternalRouterAggregator) AddRouter(router types.InternalRouter) {
 	r.internalRouters = append(r.internalRouters, router)
 }
 
+// AddRoutes Add routes to the router
 func (r *InternalRouterAggregator) AddRoutes(systemRouter *mux.Router) {
 	for _, router := range r.internalRouters {
 		router.AddRoutes(systemRouter)

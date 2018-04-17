@@ -76,9 +76,10 @@ type Server struct {
 	metricsRegistry               metrics.Registry
 	provider                      provider.Provider
 	configurationListeners        []func(types.Configuration)
-	entrypoints                   map[string]EntryPoint
+	entryPoints                   map[string]EntryPoint
 }
 
+// EntryPoint entryPoint information (configuration + internalRouter)
 type EntryPoint struct {
 	InternalRouter types.InternalRouter
 	Configuration  *configuration.EntryPoint
@@ -98,7 +99,7 @@ type serverEntryPoint struct {
 func NewServer(globalConfiguration configuration.GlobalConfiguration, provider provider.Provider, entrypoints map[string]EntryPoint) *Server {
 	server := new(Server)
 
-	server.entrypoints = entrypoints
+	server.entryPoints = entrypoints
 	server.provider = provider
 	server.serverEntryPoints = make(map[string]*serverEntryPoint)
 	server.configurationChan = make(chan types.ConfigMessage, 100)
@@ -329,15 +330,15 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 			serverMiddlewares = append(serverMiddlewares, s.globalConfiguration.API.StatsRecorder)
 		}
 	}
-	if s.entrypoints[newServerEntryPointName].Configuration.Auth != nil {
-		authMiddleware, err := mauth.NewAuthenticator(s.entrypoints[newServerEntryPointName].Configuration.Auth, s.tracingMiddleware)
+	if s.entryPoints[newServerEntryPointName].Configuration.Auth != nil {
+		authMiddleware, err := mauth.NewAuthenticator(s.entryPoints[newServerEntryPointName].Configuration.Auth, s.tracingMiddleware)
 		if err != nil {
 			log.Fatal("Error starting server: ", err)
 		}
 		serverMiddlewares = append(serverMiddlewares, s.wrapNegroniHandlerWithAccessLog(authMiddleware, fmt.Sprintf("Auth for entrypoint %s", newServerEntryPointName)))
 	}
 
-	if s.entrypoints[newServerEntryPointName].Configuration.Compress {
+	if s.entryPoints[newServerEntryPointName].Configuration.Compress {
 		serverMiddlewares = append(serverMiddlewares, &middlewares.Compress{})
 	}
 
@@ -350,7 +351,7 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 	if ipWhitelistMiddleware != nil {
 		serverMiddlewares = append(serverMiddlewares, s.wrapNegroniHandlerWithAccessLog(ipWhitelistMiddleware, fmt.Sprintf("ipwhitelister for entrypoint %s", newServerEntryPointName)))
 	}
-	newSrv, listener, err := s.prepareServer(newServerEntryPointName, s.entrypoints[newServerEntryPointName].Configuration, newServerEntryPoint.httpRouter, serverMiddlewares)
+	newSrv, listener, err := s.prepareServer(newServerEntryPointName, s.entryPoints[newServerEntryPointName].Configuration, newServerEntryPoint.httpRouter, serverMiddlewares)
 	if err != nil {
 		log.Fatal("Error preparing server: ", err)
 	}
@@ -467,7 +468,7 @@ func (s *Server) loadConfiguration(configMsg types.ConfigMessage) {
 		s.metricsRegistry.LastConfigReloadSuccessGauge().Set(float64(time.Now().Unix()))
 		for newServerEntryPointName, newServerEntryPoint := range newServerEntryPoints {
 			s.serverEntryPoints[newServerEntryPointName].httpRouter.UpdateHandler(newServerEntryPoint.httpRouter.GetHandler())
-			if s.entrypoints[newServerEntryPointName].Configuration.TLS == nil {
+			if s.entryPoints[newServerEntryPointName].Configuration.TLS == nil {
 				if newServerEntryPoint.certs.Get() != nil {
 					log.Debugf("Certificates not added to non-TLS entryPoint %s.", newServerEntryPointName)
 				}
@@ -550,7 +551,7 @@ func (s *Server) postLoadConfiguration() {
 				// and is configured with ACME
 				acmeEnabled := false
 				for _, entryPoint := range frontend.EntryPoints {
-					if s.globalConfiguration.ACME.EntryPoint == entryPoint && s.entrypoints[entryPoint].Configuration.TLS != nil {
+					if s.globalConfiguration.ACME.EntryPoint == entryPoint && s.entryPoints[entryPoint].Configuration.TLS != nil {
 						acmeEnabled = true
 						break
 					}
@@ -705,10 +706,10 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 	}
 
 	//Set the list of CipherSuites if set in the config TOML
-	if s.entrypoints[entryPointName].Configuration.TLS.CipherSuites != nil {
+	if s.entryPoints[entryPointName].Configuration.TLS.CipherSuites != nil {
 		//if our list of CipherSuites is defined in the entrypoint config, we can re-initilize the suites list as empty
 		config.CipherSuites = make([]uint16, 0)
-		for _, cipher := range s.entrypoints[entryPointName].Configuration.TLS.CipherSuites {
+		for _, cipher := range s.entryPoints[entryPointName].Configuration.TLS.CipherSuites {
 			if cipherConst, exists := traefiktls.CipherSuites[cipher]; exists {
 				config.CipherSuites = append(config.CipherSuites, cipherConst)
 			} else {
@@ -794,12 +795,12 @@ func (s *Server) buildInternalRouter(entryPointName string) *mux.Router {
 	internalMuxRouter := mux.NewRouter()
 	internalMuxRouter.StrictSlash(true)
 	internalMuxRouter.SkipClean(true)
-	if entrypoint, ok := s.entrypoints[entryPointName]; ok {
+	if entrypoint, ok := s.entryPoints[entryPointName]; ok && entrypoint.InternalRouter != nil {
 		entrypoint.InternalRouter.AddRoutes(internalMuxRouter)
 
 		if s.globalConfiguration.API != nil && s.globalConfiguration.API.EntryPoint == entryPointName && s.leadership != nil {
 			if s.globalConfiguration.Web != nil && s.globalConfiguration.Web.Path != "" {
-				router := router.RouterWithPrefix{Router: s.leadership, PathPrefix: s.globalConfiguration.Web.Path}
+				router := router.WithPrefix{Router: s.leadership, PathPrefix: s.globalConfiguration.Web.Path}
 				router.AddRoutes(internalMuxRouter)
 			} else {
 				s.leadership.AddRoutes(internalMuxRouter)
@@ -833,7 +834,7 @@ func buildServerTimeouts(globalConfig configuration.GlobalConfiguration) (readTi
 
 func (s *Server) buildEntryPoints() map[string]*serverEntryPoint {
 	serverEntryPoints := make(map[string]*serverEntryPoint)
-	for entryPointName := range s.entrypoints {
+	for entryPointName := range s.entryPoints {
 		router := s.buildDefaultHTTPRouter()
 		serverEntryPoints[entryPointName] = &serverEntryPoint{
 			httpRouter: middlewares.NewHandlerSwitcher(router),
@@ -908,7 +909,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 					log.Debugf("Creating route %s %s", routeName, route.Rule)
 				}
 
-				entryPoint := globalConfiguration.EntryPoints[entryPointName]
+				entryPoint := s.entryPoints[entryPointName].Configuration
 				n := negroni.New()
 				if entryPoint.Redirect != nil && entryPointName != entryPoint.Redirect.EntryPoint {
 					if redirectHandlers[entryPointName] != nil {
@@ -1297,7 +1298,7 @@ func (s *Server) wireFrontendBackend(serverRoute *types.ServerRoute, handler htt
 func (s *Server) buildRedirectHandler(srcEntryPointName string, opt *types.Redirect) (negroni.Handler, error) {
 	// entry point redirect
 	if len(opt.EntryPoint) > 0 {
-		entryPoint := s.entrypoints[opt.EntryPoint].Configuration
+		entryPoint := s.entryPoints[opt.EntryPoint].Configuration
 		if entryPoint == nil {
 			return nil, fmt.Errorf("unknown target entrypoint %q", srcEntryPointName)
 		}
