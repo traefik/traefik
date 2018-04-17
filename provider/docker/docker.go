@@ -369,11 +369,12 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 	servers := map[string][]dockerData{}
 	serviceNames := make(map[string]struct{})
 	for idx, container := range filteredContainers {
-		if _, exists := serviceNames[container.ServiceName]; !exists {
+		serviceNameKey := getServiceNameKey(container, p.SwarmMode)
+		if _, exists := serviceNames[serviceNameKey]; !exists {
 			frontendName := p.getFrontendName(container, idx)
 			frontends[frontendName] = append(frontends[frontendName], container)
-			if len(container.ServiceName) > 0 {
-				serviceNames[container.ServiceName] = struct{}{}
+			if len(serviceNameKey) > 0 {
+				serviceNames[serviceNameKey] = struct{}{}
 			}
 		}
 		backendName := getBackend(container)
@@ -401,6 +402,16 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 	}
 
 	return configuration
+}
+
+func getServiceNameKey(container dockerData, swarmMode bool) string {
+	serviceNameKey := container.ServiceName
+
+	if len(container.Labels[labelDockerComposeProject]) > 0 && len(container.Labels[labelDockerComposeService]) > 0 && !swarmMode {
+		serviceNameKey = container.Labels[labelDockerComposeService] + container.Labels[labelDockerComposeProject]
+	}
+
+	return serviceNameKey
 }
 
 // Regexp used to extract the name of the service and the name of the property for this service
