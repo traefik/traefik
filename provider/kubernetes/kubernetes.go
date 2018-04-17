@@ -3,7 +3,6 @@ package kubernetes
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -185,17 +184,43 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 		}
 		templateObjects.TLS = append(templateObjects.TLS, tlsSection...)
 
-		backendWeightsMap := make(map[string]string)
-		if backendWeightsJSON := getStringValue(i.Annotations, annotationKubernetesBackendPercentageWeights, ""); backendWeightsJSON != "" {
-			if err := json.Unmarshal([]byte(backendWeightsJSON), &backendWeightsMap); err != nil {
-				log.Errorf("Value for annotation %q on ingress %s/%s is not a valid json: %v", annotationKubernetesBackendPercentageWeights, i.Namespace, i.Name, err)
+		backendPercentageAnnotationValue := getStringValue(i.Annotations, annotationKubernetesBackendPercentageWeights, "")
+		backendPercentageAnnotationMap := make(map[string]string)
+		if err := yaml.Unmarshal([]byte(backendPercentageAnnotationValue), &backendPercentageAnnotationMap); err != nil {
+			log.Errorf("Invalid yaml format for backend weight annotation of ingress %s/%s: %v", i.Namespace, i.Name, err)
+			continue
+		}
+		backendPercentageWeightMap := make(map[string]PercentageValue)
+		for serviceName, percentageStr := range backendPercentageAnnotationMap {
+			percentageValue, err := PercentageValueFromString(percentageStr)
+			if err != nil {
+				log.Errorf("Invalid percentage value %q in ingress %s/%s: %s", percentageStr, i.Name, err)
+				backendPercentageWeightMap = make(map[string]PercentageValue)
+				break
 			}
+			backendPercentageWeightMap[serviceName] = percentageValue
 		}
 
 		for _, r := range i.Spec.Rules {
 			if r.HTTP == nil {
 				log.Warn("Error in ingress: HTTP is nil")
 				continue
+			}
+
+			var leftFractionPercentage float64 = 1
+			leftFractionInstanceCount := 0
+			for _, pa := range r.HTTP.Paths {
+				percentageWeight, found := backendPercentageWeightMap[pa.Backend.ServiceName]
+				if found {
+					leftFractionPercentage -= percentageWeight.Float64()
+					continue
+				}
+				endpoints, exist, err := k8sClient.GetEndpoints(i.Namespace, pa.Backend.ServiceName)
+				if err == nil && exist {
+					for _, subset := range endpoints.Subsets {
+						leftFractionInstanceCount += len(subset.Addresses)
+					}
+				}
 			}
 
 			for _, pa := range r.HTTP.Paths {
@@ -317,17 +342,14 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 								break
 							}
 
-							instanceCount := 0
-							for _, subset := range endpoints.Subsets {
-								instanceCount = instanceCount + len(subset.Addresses)
-							}
-
-							if percentageWeight, found := backendWeightsMap[pa.Backend.ServiceName]; found {
-								percentageValue, err := PercentageValueFromString(percentageWeight)
-								if err != nil {
-									log.Warnf("Invalid percentage weight %q, fallback to default: %s", percentageWeight, err)
+							if percentageWeight, found := backendPercentageWeightMap[pa.Backend.ServiceName]; found {
+								instanceCount := 0
+								for _, subset := range endpoints.Subsets {
+									instanceCount = instanceCount + len(subset.Addresses)
 								}
-								serverWeight = int(percentageValue.RawValue()) / instanceCount
+								serverWeight = int(percentageWeight.RawValue()) / instanceCount
+							} else if leftFractionPercentage < 1 {
+								serverWeight = int(PercentageValueFromFloat64(leftFractionPercentage).RawValue() / int64(leftFractionInstanceCount))
 							}
 
 							for _, subset := range endpoints.Subsets {
