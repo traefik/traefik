@@ -33,6 +33,7 @@ clusters = ["default"]
 watch = true
 
 # Default domain used.
+# Can be overridden by setting the "traefik.domain" label.
 #
 # Optional
 # Default: ""
@@ -135,6 +136,7 @@ Labels can be used on task containers to override default behaviour:
 
 | Label                                                      | Description                                                                                                                                                                                                            |
 |------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `traefik.domain`                                           | Default domain used for frontend rules.                                                                                                                                                                                |
 | `traefik.enable=false`                                     | Disable this container in Træfik                                                                                                                                                                                       |
 | `traefik.port=80`                                          | Override the default `port` value. Overrides `NetworkBindings` from Docker Container                                                                                                                                   |
 | `traefik.protocol=https`                                   | Override the default `http` protocol                                                                                                                                                                                   |
