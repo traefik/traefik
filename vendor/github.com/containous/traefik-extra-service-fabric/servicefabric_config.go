@@ -2,7 +2,6 @@ package servicefabric
 
 import (
 	"errors"
-	"math"
 	"strings"
 	"text/template"
 
@@ -32,7 +31,7 @@ func (p *Provider) buildConfiguration(services []ServiceItemExtended) (*types.Co
 		"filterServicesByLabelValue": filterServicesByLabelValue, // FIXME unused
 
 		// Backend functions
-		"getWeight":         getFuncServiceIntLabel(label.TraefikWeight, label.DefaultWeightInt),
+		"getWeight":         getFuncServiceIntLabel(label.TraefikWeight, label.DefaultWeight),
 		"getProtocol":       getFuncServiceStringLabel(label.TraefikProtocol, label.DefaultProtocol),
 		"getMaxConn":        getMaxConn,
 		"getHealthCheck":    getHealthCheck,
@@ -40,9 +39,9 @@ func (p *Provider) buildConfiguration(services []ServiceItemExtended) (*types.Co
 		"getLoadBalancer":   getLoadBalancer,
 
 		// Frontend Functions
-		"getPriority":       getFuncServiceIntLabel(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
-		"getPassHostHeader": getFuncServiceBoolLabel(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
-		"getPassTLSCert":    getFuncBoolLabel(label.TraefikFrontendPassTLSCert, false),
+		"getPriority":       getFuncServiceIntLabel(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
+		"getPassHostHeader": getFuncServiceBoolLabel(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
+		"getPassTLSCert":    getFuncBoolLabel(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getEntryPoints":    getFuncServiceSliceStringLabel(label.TraefikFrontendEntryPoints),
 		"getBasicAuth":      getFuncServiceSliceStringLabel(label.TraefikFrontendAuthBasic),
 		"getFrontendRules":  getFuncServiceLabelWithPrefix(label.TraefikFrontendRule),
@@ -147,149 +146,29 @@ func filterServicesByLabelValue(services []ServiceItemExtended, key, expectedVal
 }
 
 func getHeaders(service ServiceItemExtended) *types.Headers {
-	headers := &types.Headers{
-		CustomRequestHeaders:    label.GetMapValue(service.Labels, label.TraefikFrontendRequestHeaders),
-		CustomResponseHeaders:   label.GetMapValue(service.Labels, label.TraefikFrontendResponseHeaders),
-		SSLProxyHeaders:         label.GetMapValue(service.Labels, label.TraefikFrontendSSLProxyHeaders),
-		AllowedHosts:            label.GetSliceStringValue(service.Labels, label.TraefikFrontendAllowedHosts),
-		HostsProxyHeaders:       label.GetSliceStringValue(service.Labels, label.TraefikFrontendHostsProxyHeaders),
-		STSSeconds:              label.GetInt64Value(service.Labels, label.TraefikFrontendSTSSeconds, 0),
-		SSLRedirect:             label.GetBoolValue(service.Labels, label.TraefikFrontendSSLRedirect, false),
-		SSLTemporaryRedirect:    label.GetBoolValue(service.Labels, label.TraefikFrontendSSLTemporaryRedirect, false),
-		STSIncludeSubdomains:    label.GetBoolValue(service.Labels, label.TraefikFrontendSTSIncludeSubdomains, false),
-		STSPreload:              label.GetBoolValue(service.Labels, label.TraefikFrontendSTSPreload, false),
-		ForceSTSHeader:          label.GetBoolValue(service.Labels, label.TraefikFrontendForceSTSHeader, false),
-		FrameDeny:               label.GetBoolValue(service.Labels, label.TraefikFrontendFrameDeny, false),
-		ContentTypeNosniff:      label.GetBoolValue(service.Labels, label.TraefikFrontendContentTypeNosniff, false),
-		BrowserXSSFilter:        label.GetBoolValue(service.Labels, label.TraefikFrontendBrowserXSSFilter, false),
-		IsDevelopment:           label.GetBoolValue(service.Labels, label.TraefikFrontendIsDevelopment, false),
-		SSLHost:                 label.GetStringValue(service.Labels, label.TraefikFrontendSSLHost, ""),
-		CustomFrameOptionsValue: label.GetStringValue(service.Labels, label.TraefikFrontendCustomFrameOptionsValue, ""),
-		ContentSecurityPolicy:   label.GetStringValue(service.Labels, label.TraefikFrontendContentSecurityPolicy, ""),
-		PublicKey:               label.GetStringValue(service.Labels, label.TraefikFrontendPublicKey, ""),
-		ReferrerPolicy:          label.GetStringValue(service.Labels, label.TraefikFrontendReferrerPolicy, ""),
-		CustomBrowserXSSValue:   label.GetStringValue(service.Labels, label.TraefikFrontendCustomBrowserXSSValue, ""),
-	}
-
-	if !headers.HasSecureHeadersDefined() && !headers.HasCustomHeadersDefined() {
-		return nil
-	}
-
-	return headers
+	return label.GetHeaders(service.Labels)
 }
 
 func getWhiteList(service ServiceItemExtended) *types.WhiteList {
-	if label.Has(service.Labels, label.TraefikFrontendWhitelistSourceRange) {
-		log.Warnf("Deprecated configuration found: %s. Please use %s.", label.TraefikFrontendWhitelistSourceRange, label.TraefikFrontendWhiteListSourceRange)
-	}
-
-	ranges := label.GetSliceStringValue(service.Labels, label.TraefikFrontendWhiteListSourceRange)
-	if len(ranges) > 0 {
-		return &types.WhiteList{
-			SourceRange:      ranges,
-			UseXForwardedFor: label.GetBoolValue(service.Labels, label.TraefikFrontendWhiteListUseXForwardedFor, false),
-		}
-	}
-
-	// TODO: Deprecated
-	values := label.GetSliceStringValue(service.Labels, label.TraefikFrontendWhitelistSourceRange)
-	if len(values) > 0 {
-		return &types.WhiteList{
-			SourceRange:      values,
-			UseXForwardedFor: false,
-		}
-	}
-
-	return nil
+	return label.GetWhiteList(service.Labels)
 }
 
 func getRedirect(service ServiceItemExtended) *types.Redirect {
-	permanent := label.GetBoolValue(service.Labels, label.TraefikFrontendRedirectPermanent, false)
-
-	if label.Has(service.Labels, label.TraefikFrontendRedirectEntryPoint) {
-		return &types.Redirect{
-			EntryPoint: label.GetStringValue(service.Labels, label.TraefikFrontendRedirectEntryPoint, ""),
-			Permanent:  permanent,
-		}
-	}
-
-	if label.Has(service.Labels, label.TraefikFrontendRedirectRegex) &&
-		label.Has(service.Labels, label.TraefikFrontendRedirectReplacement) {
-		return &types.Redirect{
-			Regex:       label.GetStringValue(service.Labels, label.TraefikFrontendRedirectRegex, ""),
-			Replacement: label.GetStringValue(service.Labels, label.TraefikFrontendRedirectReplacement, ""),
-			Permanent:   permanent,
-		}
-	}
-
-	return nil
+	return label.GetRedirect(service.Labels)
 }
 
 func getMaxConn(service ServiceItemExtended) *types.MaxConn {
-	amount := label.GetInt64Value(service.Labels, label.TraefikBackendMaxConnAmount, math.MinInt64)
-	extractorFunc := label.GetStringValue(service.Labels, label.TraefikBackendMaxConnExtractorFunc, label.DefaultBackendMaxconnExtractorFunc)
-
-	if amount == math.MinInt64 || len(extractorFunc) == 0 {
-		return nil
-	}
-
-	return &types.MaxConn{
-		Amount:        amount,
-		ExtractorFunc: extractorFunc,
-	}
+	return label.GetMaxConn(service.Labels)
 }
 
 func getHealthCheck(service ServiceItemExtended) *types.HealthCheck {
-	path := label.GetStringValue(service.Labels, label.TraefikBackendHealthCheckPath, "")
-	if len(path) == 0 {
-		return nil
-	}
-
-	port := label.GetIntValue(service.Labels, label.TraefikBackendHealthCheckPort, label.DefaultBackendHealthCheckPort)
-	interval := label.GetStringValue(service.Labels, label.TraefikBackendHealthCheckInterval, "")
-
-	return &types.HealthCheck{
-		Path:     path,
-		Port:     port,
-		Interval: interval,
-	}
+	return label.GetHealthCheck(service.Labels)
 }
 
 func getCircuitBreaker(service ServiceItemExtended) *types.CircuitBreaker {
-	circuitBreaker := label.GetStringValue(service.Labels, label.TraefikBackendCircuitBreakerExpression, "")
-	if len(circuitBreaker) == 0 {
-		return nil
-	}
-	return &types.CircuitBreaker{Expression: circuitBreaker}
+	return label.GetCircuitBreaker(service.Labels)
 }
 
 func getLoadBalancer(service ServiceItemExtended) *types.LoadBalancer {
-	if !label.HasPrefix(service.Labels, label.TraefikBackendLoadBalancer) {
-		return nil
-	}
-
-	method := label.GetStringValue(service.Labels, label.TraefikBackendLoadBalancerMethod, label.DefaultBackendLoadBalancerMethod)
-
-	lb := &types.LoadBalancer{
-		Method: method,
-		Sticky: getSticky(service),
-	}
-
-	if label.GetBoolValue(service.Labels, label.TraefikBackendLoadBalancerStickiness, false) {
-		cookieName := label.GetStringValue(service.Labels, label.TraefikBackendLoadBalancerStickinessCookieName, label.DefaultBackendLoadbalancerStickinessCookieName)
-		lb.Stickiness = &types.Stickiness{CookieName: cookieName}
-	}
-
-	return lb
-}
-
-// TODO: Deprecated
-// replaced by Stickiness
-// Deprecated
-func getSticky(service ServiceItemExtended) bool {
-	if label.Has(service.Labels, label.TraefikBackendLoadBalancerSticky) {
-		log.Warnf("Deprecated configuration found: %s. Please use %s.", label.TraefikBackendLoadBalancerSticky, label.TraefikBackendLoadBalancerStickiness)
-	}
-
-	return label.GetBoolValue(service.Labels, label.TraefikBackendLoadBalancerSticky, false)
+	return label.GetLoadBalancer(service.Labels)
 }

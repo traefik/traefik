@@ -66,7 +66,7 @@
 
 [[constraint]]
   name = "github.com/containous/traefik-extra-service-fabric"
-  version = "1.1.4"
+  version = "1.1.5"
 
 [[constraint]]
   name = "github.com/coreos/go-systemd"
