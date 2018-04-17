@@ -140,6 +140,7 @@ Labels can be used on task containers to override default behavior:
 
 | Label                                                      | Description                                                                                                                                                                                                               |
 |------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `traefik.domain`                                           | Default domain used for frontend rules.                                                                                                                                                                                   |
 | `traefik.enable=false`                                     | Disable this container in Træfik                                                                                                                                                                                          |
 | `traefik.port=80`                                          | Register this port. Useful when the container exposes multiples ports.                                                                                                                                                    |
 | `traefik.protocol=https`                                   | Override the default `http` protocol                                                                                                                                                                                      |
@@ -221,6 +222,7 @@ Segment labels override the default behavior.
 
 | Label                                                                     | Description                                                                                      |
 |---------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|
+| `traefik.<segment_name>.domain`                                           | Default domain used for frontend rules.                                                              |
 | `traefik.<segment_name>.port=PORT`                                        | Overrides `traefik.port`. If several ports need to be exposed, the segment labels could be used. |
 | `traefik.<segment_name>.protocol`                                         | Overrides `traefik.protocol`.                                                                    |
 | `traefik.<segment_name>.weight`                                           | Assign this segment weight. Overrides `traefik.weight`.                                          |
