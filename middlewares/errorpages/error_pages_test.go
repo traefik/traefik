@@ -239,7 +239,7 @@ func TestHandlerOldWay(t *testing.T) {
 
 func TestHandlerOldWayIntegration(t *testing.T) {
 	errorPagesServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.RequestURI() == "/"+strconv.Itoa(503) {
+		if r.URL.RequestURI() == "/503" {
 			fmt.Fprintln(w, "My 503 page.")
 		} else {
 			fmt.Fprintln(w, "Test Server")
