@@ -166,7 +166,9 @@ func (p *Provider) getFrontendRule(task taskData) string {
 	if v := label.GetStringValue(task.TraefikLabels, label.TraefikFrontendRule, ""); len(v) > 0 {
 		return v
 	}
-	return "Host:" + strings.ToLower(strings.Replace(p.getSubDomain(task.DiscoveryInfo.Name), "_", "-", -1)) + "." + p.Domain
+
+	domain := label.GetStringValue(task.TraefikLabels, label.TraefikDomain, p.Domain)
+	return "Host:" + strings.ToLower(strings.Replace(p.getSubDomain(task.DiscoveryInfo.Name), "_", "-", -1)) + "." + domain
 }
 
 func (p *Provider) getServers(tasks []taskData) map[string]types.Server {

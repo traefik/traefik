@@ -527,8 +527,11 @@ func TestSwarmGetFrontendRuleV1(t *testing.T) {
 			networks: map[string]*docker.NetworkResource{},
 		},
 		{
-			service:  swarmService(serviceName("bar")),
-			expected: "Host:bar.docker.localhost",
+			service: swarmService(serviceName("foo"),
+				serviceLabels(map[string]string{
+					label.TraefikDomain: "traefik.localhost",
+				})),
+			expected: "Host:foo.traefik.localhost",
 			networks: map[string]*docker.NetworkResource{},
 		},
 		{

@@ -760,3 +760,67 @@ func TestGetStickyV1(t *testing.T) {
 		})
 	}
 }
+
+func TestGetServersV1(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		application marathon.Application
+		segmentName string
+		expected    map[string]types.Server
+	}{
+		{
+			desc:        "should return nil when no task",
+			application: application(ipAddrPerTask(80)),
+			expected:    nil,
+		},
+		{
+			desc: "should return nil when all hosts are empty",
+			application: application(
+				withTasks(
+					task(ipAddresses("1.1.1.1"), withTaskID("A"), taskPorts(80)),
+					task(ipAddresses("1.1.1.2"), withTaskID("B"), taskPorts(80)),
+					task(ipAddresses("1.1.1.3"), withTaskID("C"), taskPorts(80))),
+			),
+			expected: nil,
+		},
+		{
+			desc: "with 3 tasks",
+			application: application(
+				ipAddrPerTask(80),
+				withTasks(
+					task(ipAddresses("1.1.1.1"), withTaskID("A"), taskPorts(80)),
+					task(ipAddresses("1.1.1.2"), withTaskID("B"), taskPorts(80)),
+					task(ipAddresses("1.1.1.3"), withTaskID("C"), taskPorts(80))),
+			),
+			expected: map[string]types.Server{
+				"server-A": {
+					URL:    "http://1.1.1.1:80",
+					Weight: label.DefaultWeight,
+				},
+				"server-B": {
+					URL:    "http://1.1.1.2:80",
+					Weight: label.DefaultWeight,
+				},
+				"server-C": {
+					URL:    "http://1.1.1.3:80",
+					Weight: label.DefaultWeight,
+				},
+			},
+		},
+	}
+
+	p := &Provider{}
+
+	for _, test := range testCases {
+		test := test
+		if test.desc == "should return nil when all hosts are empty" {
+			t.Run(test.desc, func(t *testing.T) {
+				t.Parallel()
+
+				actual := p.getServersV1(test.application, test.segmentName)
+
+				assert.Equal(t, test.expected, actual)
+			})
+		}
+	}
+}
