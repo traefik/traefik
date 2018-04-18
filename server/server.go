@@ -1184,17 +1184,8 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						n.UseFunc(secureMiddleware.HandlerFuncWithNextForRequestOnly)
 					}
 
-					if len(frontend.BasicAuth) > 0 {
-						users := types.Users{}
-						for _, user := range frontend.BasicAuth {
-							users = append(users, user)
-						}
-
-						auth := &types.Auth{}
-						auth.Basic = &types.Basic{
-							Users: users,
-						}
-						authMiddleware, err := mauth.NewAuthenticator(auth, s.tracingMiddleware)
+					if frontend.Auth != nil {
+						authMiddleware, err := mauth.NewAuthenticator(frontend.Auth, s.tracingMiddleware)
 						if err != nil {
 							log.Errorf("Error creating Auth: %s", err)
 						} else {

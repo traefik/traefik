@@ -179,7 +179,7 @@ type Frontend struct {
 	PassHostHeader       bool                  `json:"passHostHeader,omitempty"`
 	PassTLSCert          bool                  `json:"passTLSCert,omitempty"`
 	Priority             int                   `json:"priority"`
-	BasicAuth            []string              `json:"basicAuth"`
+	Auth                 *Auth                 `json:"auth"`
 	WhitelistSourceRange []string              `json:"whitelistSourceRange,omitempty"` // Deprecated
 	WhiteList            *WhiteList            `json:"whiteList,omitempty"`
 	Headers              *Headers              `json:"headers,omitempty"`
@@ -371,6 +371,7 @@ type Auth struct {
 	Basic       *Basic   `export:"true"`
 	Digest      *Digest  `export:"true"`
 	Forward     *Forward `export:"true"`
+	OIDC        *OIDC    `export:"true"`
 	HeaderField string   `export:"true"`
 }
 
@@ -394,6 +395,14 @@ type Forward struct {
 	Address            string     `description:"Authentication server address"`
 	TLS                *ClientTLS `description:"Enable TLS support" export:"true"`
 	TrustForwardHeader bool       `description:"Trust X-Forwarded-* headers" export:"true"`
+}
+
+// OpenID Connect Authentication
+type OIDC struct {
+	ClientID     string   `description:"OpenID Client ID"`
+	ClientSecret string   `description:"OpenID Client Secret"`
+	DiscoveryURL string   `description:"URL of the Identity Provider"`
+	Scopes       []string `description:"Scope of access requests"`
 }
 
 // CanonicalDomain returns a lower case domain with trim space

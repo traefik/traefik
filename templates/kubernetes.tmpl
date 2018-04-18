@@ -52,9 +52,22 @@
       "{{.}}",
       {{end}}]
 
-    basicAuth = [{{range $frontend.BasicAuth }}
-      "{{.}}",
-      {{end}}]
+    {{if $frontend.Auth }}
+    [frontends."{{ $frontendName }}".auth]
+      {{if $frontend.Auth.Basic }}
+      [frontends."{{ $frontendName }}".auth.basic]
+        users = {{ $frontend.Auth.Basic.Users }}
+      {{end}}
+      {{if $frontend.Auth.OIDC }}
+      [frontends."{{ $frontendName }}".auth.oidc]
+        clientId = "{{ $frontend.Auth.OIDC.ClientID }}"
+        clientSecret = "{{ $frontend.Auth.OIDC.ClientSecret }}"
+        discoveryUrl = "{{ $frontend.Auth.OIDC.DiscoveryURL }}"
+        scopes = [{{range $frontend.Auth.OIDC.Scopes }}
+          "{{.}}",
+          {{end}}]
+      {{end}}
+    {{end}}
 
     {{if $frontend.WhiteList }}
     [frontends."{{ $frontendName }}".whiteList]

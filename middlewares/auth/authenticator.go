@@ -56,6 +56,10 @@ func NewAuthenticator(authConfig *types.Auth, tracingMiddleware *tracing.Tracing
 		tracingAuthenticator.handler = createAuthForwardHandler(authConfig)
 		tracingAuthenticator.name = "Auth Forward"
 		tracingAuthenticator.clientSpanKind = true
+	} else if authConfig.OIDC != nil {
+		tracingAuthenticator.handler = createAuthOIDCHandler(authConfig)
+		tracingAuthenticator.name = "Auth OIDC"
+		tracingAuthenticator.clientSpanKind = true
 	}
 	if tracingMiddleware != nil {
 		authenticator.handler = tracingMiddleware.NewNegroniHandlerWrapper(tracingAuthenticator.name, tracingAuthenticator.handler, tracingAuthenticator.clientSpanKind)
@@ -65,6 +69,16 @@ func NewAuthenticator(authConfig *types.Auth, tracingMiddleware *tracing.Tracing
 	return &authenticator, nil
 }
 
+func createAuthOIDCHandler(authConfig *types.Auth) negroni.HandlerFunc {
+	// Persist knowledge of OIDC providers across HTTP requests.
+	// TODO: Use a single refresher for all frontends using the same identity provider.
+	oidcProviderRefresher := NewOIDCProviderRefresher(authConfig.OIDC.DiscoveryURL)
+	// TODO: Set up an encryption key properly.
+	var sharedKey [16]byte
+	return negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+		OIDC(&oidcProviderRefresher, sharedKey[:], authConfig.OIDC, w, r, next)
+	})
+}
 func createAuthForwardHandler(authConfig *types.Auth) negroni.HandlerFunc {
 	return negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 		Forward(authConfig.Forward, w, r, next)

@@ -6,6 +6,8 @@ import (
 
 const (
 	annotationKubernetesIngressClass              = "kubernetes.io/ingress.class"
+	annotationKubernetesAuthOIDCDiscoveryURL      = "ingress.kubernetes.io/auth-oidc-discovery-url"
+	annotationKubernetesAuthOIDCScopes            = "ingress.kubernetes.io/auth-oidc-scopes"
 	annotationKubernetesAuthRealm                 = "ingress.kubernetes.io/auth-realm"
 	annotationKubernetesAuthType                  = "ingress.kubernetes.io/auth-type"
 	annotationKubernetesAuthSecret                = "ingress.kubernetes.io/auth-secret"
