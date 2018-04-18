@@ -1096,7 +1096,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 									errorPageName, frontendName, errorPage.Backend)
 							} else if config.Backends[errorPage.Backend] == nil {
 								log.Errorf("Error when creating error page %q for frontend %q: the backend %q doesn't exist.",
-									errorPageName, errorPage.Backend)
+									errorPageName, frontendName, errorPage.Backend)
 							} else {
 								errorPagesHandler, err := errorpages.NewHandler(errorPage, entryPointName+providerName+errorPage.Backend)
 								if err != nil {
@@ -1174,6 +1174,16 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						}
 					}
 
+					if headerMiddleware != nil {
+						log.Debugf("Adding header middleware for frontend %s", frontendName)
+						n.Use(s.tracingMiddleware.NewNegroniHandlerWrapper("Header", headerMiddleware, false))
+					}
+
+					if secureMiddleware != nil {
+						log.Debugf("Adding secure middleware for frontend %s", frontendName)
+						n.UseFunc(secureMiddleware.HandlerFuncWithNextForRequestOnly)
+					}
+
 					if len(frontend.BasicAuth) > 0 {
 						users := types.Users{}
 						for _, user := range frontend.BasicAuth {
@@ -1190,16 +1200,6 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						} else {
 							n.Use(s.wrapNegroniHandlerWithAccessLog(authMiddleware, fmt.Sprintf("Auth for %s", frontendName)))
 						}
-					}
-
-					if headerMiddleware != nil {
-						log.Debugf("Adding header middleware for frontend %s", frontendName)
-						n.Use(s.tracingMiddleware.NewNegroniHandlerWrapper("Header", headerMiddleware, false))
-					}
-
-					if secureMiddleware != nil {
-						log.Debugf("Adding secure middleware for frontend %s", frontendName)
-						n.UseFunc(secureMiddleware.HandlerFuncWithNextForRequestOnly)
 					}
 
 					if config.Backends[frontend.Backend].Buffering != nil {

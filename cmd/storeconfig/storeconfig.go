@@ -134,7 +134,13 @@ func migrateACMEData(fileName string) (*acme.Account, error) {
 		if accountFromNewFormat == nil {
 			// convert ACME json file to KV store (used for backward compatibility)
 			localStore := acme.NewLocalStore(fileName)
+
 			account, err = localStore.Get()
+			if err != nil {
+				return nil, err
+			}
+
+			err = acme.RemoveAccountV1Values(account)
 			if err != nil {
 				return nil, err
 			}

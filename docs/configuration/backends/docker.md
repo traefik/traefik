@@ -46,7 +46,7 @@ watch = true
 # - "1": previous template version (must be used only with older custom templates, see "filename")
 # - "2": current template version (must be used to force template version when "filename" is used)
 #
-# templateVersion = "2"
+# templateVersion = 2
 
 # Expose containers by default in Traefik.
 # If set to false, containers that don't have `traefik.enable=true` will be ignored.
@@ -139,7 +139,7 @@ swarmMode = true
 # - "1": previous template version (must be used only with older custom templates, see "filename")
 # - "2": current template version (must be used to force template version when "filename" is used)
 #
-# templateVersion = "2"
+# templateVersion = 2
 
 # Expose services by default in Traefik.
 #

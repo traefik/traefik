@@ -263,8 +263,8 @@
 [[projects]]
   name = "github.com/containous/traefik-extra-service-fabric"
   packages = ["."]
-  revision = "503022efdc178146d598911092af75690510a80c"
-  version = "v1.1.3"
+  revision = "2889df8d4f84315e6e527588554ed0ce9d062305"
+  version = "v1.1.5"
 
 [[projects]]
   name = "github.com/coreos/bbolt"
@@ -569,8 +569,8 @@
     "metrics/statsd",
     "util/conn"
   ]
-  revision = "f66b0e13579bfc5a48b9e2a94b1209c107ea1f41"
-  version = "v0.3.0"
+  revision = "ca4112baa34cb55091301bdc13b1420a122b1b9e"
+  version = "v0.7.0"
 
 [[projects]]
   name = "github.com/go-logfmt/logfmt"
@@ -761,7 +761,6 @@
   version = "v1.3.7"
 
 [[projects]]
-  branch = "master"
   name = "github.com/jjcollinge/servicefabric"
   packages = ["."]
   revision = "8eebe170fa1ba25d3dfb928b3f86a7313b13b9fe"
@@ -1675,6 +1674,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c441208e9bf330e85e2939b383515f58a4957286960b43c444e6f512d1ff94ee"
+  inputs-digest = "c7d91203842be1915ca08a31917a079489bff7ffc6f2e494330e9556b4730a06"
   solver-name = "gps-cdcl"
   solver-version = 1

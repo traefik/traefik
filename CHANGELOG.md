@@ -1,5 +1,24 @@
 # Change Log
 
+## [v1.6.0-rc6](https://github.com/containous/traefik/tree/v1.6.0-rc6) (2018-04-17)
+[All Commits](https://github.com/containous/traefik/compare/v1.6.0-rc5...v1.6.0-rc6)
+
+**Enhancements:**
+- **[acme]** Create backup file during migration from ACME V1 to ACME V2 ([#3191](https://github.com/containous/traefik/pull/3191) by [nmengin](https://github.com/nmengin))
+- **[servicefabric]** Use shared label system ([#3197](https://github.com/containous/traefik/pull/3197) by [ldez](https://github.com/ldez))
+
+**Bug fixes:**
+- **[docker]** Fix multiple frontends with docker-compose --scale ([#3190](https://github.com/containous/traefik/pull/3190) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[metrics]** Fix duplicated tags in InfluxDB ([#3189](https://github.com/containous/traefik/pull/3189) by [mmatur](https://github.com/mmatur))
+- **[middleware,tracing]** Fix nil value when tracing is enabled ([#3192](https://github.com/containous/traefik/pull/3192) by [mmatur](https://github.com/mmatur))
+- **[middleware]** Fix panic in atomic on ARM and x86-32 platforms ([#3195](https://github.com/containous/traefik/pull/3195) by [mmatur](https://github.com/mmatur))
+- **[middleware]** Redirect to HTTPS first before basic auth if header redirect (secure) is set ([#3187](https://github.com/containous/traefik/pull/3187) by [SantoDE](https://github.com/SantoDE))
+- **[servicefabric]** Fix backend name for stateful service and more. ([#3183](https://github.com/containous/traefik/pull/3183) by [ldez](https://github.com/ldez))
+- Add missing argument in log. ([#3188](https://github.com/containous/traefik/pull/3188) by [chemidy](https://github.com/chemidy))
+
+**Documentation:**
+- **[provider]** Fix template version documentation. ([#3184](https://github.com/containous/traefik/pull/3184) by [ldez](https://github.com/ldez))
+
 ## [v1.6.0-rc5](https://github.com/containous/traefik/tree/v1.6.0-rc5) (2018-04-12)
 [All Commits](https://github.com/containous/traefik/compare/v1.6.0-rc4...v1.6.0-rc5)
 

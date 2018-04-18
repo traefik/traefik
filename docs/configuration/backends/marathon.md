@@ -52,7 +52,7 @@ domain = "marathon.localhost"
 # - "1": previous template version (must be used only with older custom templates, see "filename")
 # - "2": current template version (must be used to force template version when "filename" is used)
 #
-# templateVersion = "2"
+# templateVersion = 2
 
 # Expose Marathon apps by default in Traefik.
 #

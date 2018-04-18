@@ -543,3 +543,14 @@ Do not hesitate to complete it.
 | [RFC2136](https://tools.ietf.org/html/rfc2136)         | `rfc2136`      | Not tested yet                   |
 | [Route 53](https://aws.amazon.com/route53/)            | `route53`      | YES                              |
 | [VULTR](https://www.vultr.com)                         | `vultr`        | Not tested yet                   |
+
+## ACME V2 migration
+
+During migration from ACME V1 to ACME V2 with a storage file, a backup is created with the content of the ACME V1 file.
+To obtain the name of the backup file, Træfik concatenates the option `acme.storage` and the suffix `.bak`.
+
+For example : if `acme.storage` value is `/etc/traefik/acme/acme.json`, the backup file will be named `/etc/traefik/acme/acme.json.bak`.
+
+!!! note
+    When Træfik is launched in a container, do not forget to create a volume of the parent folder to get the backup file on the host.
+    Otherwise, the backup file will be deleted when the container will be stopped and Træfik will not generate it again.

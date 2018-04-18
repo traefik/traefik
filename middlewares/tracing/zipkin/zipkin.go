@@ -3,6 +3,7 @@ package zipkin
 import (
 	"io"
 
+	"github.com/containous/traefik/log"
 	opentracing "github.com/opentracing/opentracing-go"
 	zipkin "github.com/openzipkin/zipkin-go-opentracing"
 )
@@ -38,6 +39,8 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 
 	// Without this, child spans are getting the NOOP tracer
 	opentracing.SetGlobalTracer(tracer)
+
+	log.Debug("Zipkin tracer configured")
 
 	return tracer, collector, nil
 }

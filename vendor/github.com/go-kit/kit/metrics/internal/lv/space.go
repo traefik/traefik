@@ -21,6 +21,13 @@ func (s *Space) Observe(name string, lvs LabelValues, value float64) {
 	s.nodeFor(name).observe(lvs, value)
 }
 
+// Add locates the time series identified by the name and label values in
+// the vector space, and appends the delta to the last value in the list of
+// observations.
+func (s *Space) Add(name string, lvs LabelValues, delta float64) {
+	s.nodeFor(name).add(lvs, delta)
+}
+
 // Walk traverses the vector space and invokes fn for each non-empty time series
 // which is encountered. Return false to abort the traversal.
 func (s *Space) Walk(fn func(name string, lvs LabelValues, observations []float64) bool) {
@@ -91,6 +98,34 @@ func (n *node) observe(lvs LabelValues, value float64) {
 	child.observe(tail, value)
 }
 
+func (n *node) add(lvs LabelValues, delta float64) {
+	n.mtx.Lock()
+	defer n.mtx.Unlock()
+	if len(lvs) == 0 {
+		var value float64
+		if len(n.observations) > 0 {
+			value = last(n.observations) + delta
+		} else {
+			value = delta
+		}
+		n.observations = append(n.observations, value)
+		return
+	}
+	if len(lvs) < 2 {
+		panic("too few LabelValues; programmer error!")
+	}
+	head, tail := pair{lvs[0], lvs[1]}, lvs[2:]
+	if n.children == nil {
+		n.children = map[pair]*node{}
+	}
+	child, ok := n.children[head]
+	if !ok {
+		child = &node{}
+		n.children[head] = child
+	}
+	child.add(tail, delta)
+}
+
 func (n *node) walk(lvs LabelValues, fn func(LabelValues, []float64) bool) bool {
 	n.mtx.RLock()
 	defer n.mtx.RUnlock()
@@ -103,4 +138,8 @@ func (n *node) walk(lvs LabelValues, fn func(LabelValues, []float64) bool) bool 
 		}
 	}
 	return true
+}
+
+func last(a []float64) float64 {
+	return a[len(a)-1]
 }
