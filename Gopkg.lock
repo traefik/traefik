@@ -290,6 +290,12 @@
   version = "v3.2.9"
 
 [[projects]]
+  branch = "v2"
+  name = "github.com/coreos/go-oidc"
+  packages = ["."]
+  revision = "1180514eaf4d9f38d0d19eef639a1d695e066e72"
+
+[[projects]]
   name = "github.com/coreos/go-semver"
   packages = ["semver"]
   revision = "8ab6407b697782a06568d4b7f1db25550ec2e4c6"
@@ -1031,6 +1037,15 @@
   version = "v1.0.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/pquerna/cachecontrol"
+  packages = [
+    ".",
+    "cacheobject"
+  ]
+  revision = "525d0eb5f91d30e3b1548de401b7ef9ea6898520"
+
+[[projects]]
   name = "github.com/prometheus/client_golang"
   packages = [
     "prometheus",
@@ -1674,6 +1689,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c7d91203842be1915ca08a31917a079489bff7ffc6f2e494330e9556b4730a06"
+  inputs-digest = "4ba2acb7d2c6c746b75143c56b65920f746b2fd6116298438ed7fd54cee946c0"
   solver-name = "gps-cdcl"
   solver-version = 1
