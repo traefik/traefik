@@ -85,6 +85,16 @@ func Run(kv *staert.KvSource, traefikConfiguration *cmd.TraefikConfiguration) fu
 				}
 			}
 
+			// Check to see if ACME account object is already in kv store
+			if traefikConfiguration.GlobalConfiguration.ACME.KeepCerts {
+				if exists, err := kv.Exists(
+					traefikConfiguration.GlobalConfiguration.ACME.Storage+"/object",
+					&store.ReadOptions{Consistent: true}); err == nil && exists {
+					// Force to delete storagefile (early exit)
+					return kv.Delete(kv.Prefix + "/acme/storagefile")
+				}
+			}
+
 			// Store the ACME Account into the KV Store
 			meta := cluster.NewMetadata(account)
 			err = meta.Marshall()
