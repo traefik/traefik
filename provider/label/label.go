@@ -27,11 +27,6 @@ const (
 	DefaultBackendMaxconnExtractorFunc             = "request.host"
 	DefaultBackendLoadbalancerStickinessCookieName = ""
 	DefaultBackendHealthCheckPort                  = 0
-
-	// TODO need to be remove in extra-service-fabric
-	DefaultWeightInt           = 1    // Deprecated
-	DefaultPassHostHeaderBool  = true // Deprecated
-	DefaultFrontendPriorityInt = 0    // Deprecated
 )
 
 var (
