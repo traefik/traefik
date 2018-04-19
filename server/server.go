@@ -315,9 +315,11 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 	if s.accessLoggerMiddleware != nil {
 		serverMiddlewares = append(serverMiddlewares, s.accessLoggerMiddleware)
 	}
+
 	if s.metricsRegistry.IsEnabled() {
 		serverMiddlewares = append(serverMiddlewares, middlewares.NewEntryPointMetricsMiddleware(s.metricsRegistry, newServerEntryPointName))
 	}
+
 	if s.globalConfiguration.API != nil {
 		if s.globalConfiguration.API.Stats == nil {
 			s.globalConfiguration.API.Stats = thoas_stats.New()
@@ -330,6 +332,7 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 			serverMiddlewares = append(serverMiddlewares, s.globalConfiguration.API.StatsRecorder)
 		}
 	}
+
 	if s.entryPoints[newServerEntryPointName].Configuration.Auth != nil {
 		authMiddleware, err := mauth.NewAuthenticator(s.entryPoints[newServerEntryPointName].Configuration.Auth, s.tracingMiddleware)
 		if err != nil {
