@@ -190,7 +190,6 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 			InternalRouter: internalRouter,
 			Configuration:  config,
 		}
-
 	}
 
 	svr := server.NewServer(*globalConfiguration, configuration.NewProviderAggregator(globalConfiguration), entryPoints)

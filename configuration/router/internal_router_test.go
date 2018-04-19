@@ -13,6 +13,7 @@ import (
 	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/urfave/negroni"
 )
 
@@ -41,7 +42,7 @@ func TestNewInternalRouterAggregatorWithWebPath(t *testing.T) {
 		},
 	}
 
-	tests := []struct {
+	testCases := []struct {
 		desc               string
 		testedURL          string
 		expectedStatusCode int
@@ -73,7 +74,7 @@ func TestNewInternalRouterAggregatorWithWebPath(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
@@ -90,11 +91,7 @@ func TestNewInternalRouterAggregatorWithWebPath(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, test.testedURL, nil)
 			internalMuxRouter.ServeHTTP(recorder, request)
 
-			if recorder.Code != test.expectedStatusCode {
-				t.Logf("%d instead of %d", recorder.Code, test.expectedStatusCode)
-				t.Fail()
-			}
-
+			assert.Equal(t, test.expectedStatusCode, recorder.Code)
 		})
 	}
 }
@@ -127,7 +124,7 @@ func TestNewInternalRouterAggregatorWithAuth(t *testing.T) {
 		},
 	}
 
-	tests := []struct {
+	testCases := []struct {
 		desc               string
 		testedURL          string
 		expectedStatusCode int
@@ -154,7 +151,7 @@ func TestNewInternalRouterAggregatorWithAuth(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
@@ -171,10 +168,7 @@ func TestNewInternalRouterAggregatorWithAuth(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, test.testedURL, nil)
 			internalMuxRouter.ServeHTTP(recorder, request)
 
-			if recorder.Code != test.expectedStatusCode {
-				t.Logf("%d instead of %d", recorder.Code, test.expectedStatusCode)
-				t.Fail()
-			}
+			assert.Equal(t, test.expectedStatusCode, recorder.Code)
 		})
 	}
 }
@@ -210,7 +204,7 @@ func TestNewInternalRouterAggregatorWithAuthAndPrefix(t *testing.T) {
 		},
 	}
 
-	tests := []struct {
+	testCases := []struct {
 		desc               string
 		testedURL          string
 		expectedStatusCode int
@@ -237,7 +231,7 @@ func TestNewInternalRouterAggregatorWithAuthAndPrefix(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
@@ -254,10 +248,7 @@ func TestNewInternalRouterAggregatorWithAuthAndPrefix(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, test.testedURL, nil)
 			internalMuxRouter.ServeHTTP(recorder, request)
 
-			if recorder.Code != test.expectedStatusCode {
-				t.Logf("%d instead of %d", recorder.Code, test.expectedStatusCode)
-				t.Fail()
-			}
+			assert.Equal(t, test.expectedStatusCode, recorder.Code)
 		})
 	}
 }
@@ -299,15 +290,11 @@ func TestWithMiddleware(t *testing.T) {
 
 	obtained := string(recorder.Body.Bytes())
 
-	expected := "before middleware1|before middleware2|router|after middleware2|after middleware1"
-	if obtained != expected {
-		t.Logf("%s instead of %s", obtained, expected)
-		t.Fail()
-	}
+	assert.Equal(t, "before middleware1|before middleware2|router|after middleware2|after middleware1", obtained)
 }
 
 func TestWithPrefix(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc               string
 		prefix             string
 		testedURL          string
@@ -332,7 +319,7 @@ func TestWithPrefix(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
@@ -353,10 +340,7 @@ func TestWithPrefix(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, test.testedURL, nil)
 			internalMuxRouter.ServeHTTP(recorder, request)
 
-			if recorder.Code != test.expectedStatusCode {
-				t.Logf("%d instead of %d", recorder.Code, test.expectedStatusCode)
-				t.Fail()
-			}
+			assert.Equal(t, test.expectedStatusCode, recorder.Code)
 		})
 	}
 }

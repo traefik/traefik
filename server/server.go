@@ -351,10 +351,12 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 	if ipWhitelistMiddleware != nil {
 		serverMiddlewares = append(serverMiddlewares, s.wrapNegroniHandlerWithAccessLog(ipWhitelistMiddleware, fmt.Sprintf("ipwhitelister for entrypoint %s", newServerEntryPointName)))
 	}
+
 	newSrv, listener, err := s.prepareServer(newServerEntryPointName, s.entryPoints[newServerEntryPointName].Configuration, newServerEntryPoint.httpRouter, serverMiddlewares)
 	if err != nil {
 		log.Fatal("Error preparing server: ", err)
 	}
+
 	serverEntryPoint := s.serverEntryPoints[newServerEntryPointName]
 	serverEntryPoint.httpServer = newSrv
 	serverEntryPoint.listener = listener
@@ -666,8 +668,8 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 		if entryPointName == s.globalConfiguration.ACME.EntryPoint {
 			checkOnDemandDomain := func(domain string) bool {
 				routeMatch := &mux.RouteMatch{}
-				router := router.GetHandler()
-				match := router.Match(&http.Request{URL: &url.URL{}, Host: domain}, routeMatch)
+				rt := router.GetHandler()
+				match := rt.Match(&http.Request{URL: &url.URL{}, Host: domain}, routeMatch)
 				if match && routeMatch.Route != nil {
 					return true
 				}
@@ -795,13 +797,14 @@ func (s *Server) buildInternalRouter(entryPointName string) *mux.Router {
 	internalMuxRouter := mux.NewRouter()
 	internalMuxRouter.StrictSlash(true)
 	internalMuxRouter.SkipClean(true)
-	if entrypoint, ok := s.entryPoints[entryPointName]; ok && entrypoint.InternalRouter != nil {
-		entrypoint.InternalRouter.AddRoutes(internalMuxRouter)
+
+	if entryPoint, ok := s.entryPoints[entryPointName]; ok && entryPoint.InternalRouter != nil {
+		entryPoint.InternalRouter.AddRoutes(internalMuxRouter)
 
 		if s.globalConfiguration.API != nil && s.globalConfiguration.API.EntryPoint == entryPointName && s.leadership != nil {
 			if s.globalConfiguration.Web != nil && s.globalConfiguration.Web.Path != "" {
-				router := router.WithPrefix{Router: s.leadership, PathPrefix: s.globalConfiguration.Web.Path}
-				router.AddRoutes(internalMuxRouter)
+				rt := router.WithPrefix{Router: s.leadership, PathPrefix: s.globalConfiguration.Web.Path}
+				rt.AddRoutes(internalMuxRouter)
 			} else {
 				s.leadership.AddRoutes(internalMuxRouter)
 			}
@@ -835,9 +838,9 @@ func buildServerTimeouts(globalConfig configuration.GlobalConfiguration) (readTi
 func (s *Server) buildEntryPoints() map[string]*serverEntryPoint {
 	serverEntryPoints := make(map[string]*serverEntryPoint)
 	for entryPointName := range s.entryPoints {
-		router := s.buildDefaultHTTPRouter()
+		rt := s.buildDefaultHTTPRouter()
 		serverEntryPoints[entryPointName] = &serverEntryPoint{
-			httpRouter: middlewares.NewHandlerSwitcher(router),
+			httpRouter: middlewares.NewHandlerSwitcher(rt),
 		}
 	}
 	return serverEntryPoints
@@ -1317,11 +1320,11 @@ func (s *Server) buildRedirectHandler(srcEntryPointName string, opt *types.Redir
 }
 
 func (s *Server) buildDefaultHTTPRouter() *mux.Router {
-	router := mux.NewRouter()
-	router.NotFoundHandler = s.wrapHTTPHandlerWithAccessLog(http.HandlerFunc(notFoundHandler), "backend not found")
-	router.StrictSlash(true)
-	router.SkipClean(true)
-	return router
+	rt := mux.NewRouter()
+	rt.NotFoundHandler = s.wrapHTTPHandlerWithAccessLog(http.HandlerFunc(notFoundHandler), "backend not found")
+	rt.StrictSlash(true)
+	rt.SkipClean(true)
+	return rt
 }
 
 func parseHealthCheckOptions(lb healthcheck.LoadBalancer, backend string, hc *types.HealthCheck, hcConfig *configuration.HealthCheckConfig) *healthcheck.Options {
