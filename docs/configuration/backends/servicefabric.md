@@ -61,7 +61,7 @@ Here is an example of an extension setting Træfik labels:
       <Extension Name="Traefik">
         <Labels xmlns="http://schemas.microsoft.com/2015/03/fabact-no-schema">
           <Label Key="traefik.frontend.rule.example2">PathPrefixStrip: /a/path/to/strip</Label>
-          <Label Key="traefik.expose">true</Label>
+          <Label Key="traefik.enable">true</Label>
           <Label Key="traefik.frontend.passHostHeader">true</Label>
         </Labels>
       </Extension>
