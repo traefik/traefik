@@ -1,44 +1,62 @@
 package kubernetes
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 )
 
-// PercentageValue is int64 form of percentage value with 10^-3 precision.
-type PercentageValue int64
+const (
+	defaultPercentageValuePrecision = 3
+)
 
-// PercentageValueFromString tries to read percentage value from string like "1.1%", "6%".
-// It will lose the extra precision if there are more than 3 digit after decimal point.
-func PercentageValueFromString(s string) (PercentageValue, error) {
-	idx := strings.Index(s, "%")
-	if idx < 0 {
-		return 0, fmt.Errorf("missing %% for parsing percentage value: %q", s)
+// PercentageValue is int64 form of percentage value with 10^-3 precision.
+type PercentageValue struct {
+	value     int64
+	precision int
+}
+
+// PercentageValueFromString tries to read percentage value from string, it can be
+// either "1.1" or "1.1%", "6%". It will lose the extra precision if there are more
+// digits after decimal point.
+func PercentageValueFromString(s string, precision ...int) (*PercentageValue, error) {
+	hasPercentageTag := strings.Index(s, "%") > 0
+	if hasPercentageTag && len(s) > 0 {
+		s = s[:len(s)-1]
 	}
-	f, err := strconv.ParseFloat(s[:idx], 64)
+	f, err := strconv.ParseFloat(s, 64)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return PercentageValue(f * 1000), nil
+	percentageValue := PercentageValueFromFloat64(f)
+	if len(precision) > 0 && precision[0] > 0 {
+		percentageValue.precision = precision[0]
+	}
+	if hasPercentageTag {
+		percentageValue.value /= 100
+		return percentageValue, nil
+	}
+	return percentageValue, nil
 }
 
 // PercentageValueFromFloat64 reads percentage value from float64
-func PercentageValueFromFloat64(f float64) PercentageValue {
-	return PercentageValue(f * 100 * 1000)
+func PercentageValueFromFloat64(f float64) *PercentageValue {
+	return &PercentageValue{
+		value:     int64(f * 100 * 1000),
+		precision: defaultPercentageValuePrecision,
+	}
 }
 
 // RawValue returns its internal raw int64 form of percentage value.
-func (v PercentageValue) RawValue() int64 {
-	return int64(v)
+func (v *PercentageValue) RawValue() int64 {
+	return v.value
 }
 
 // Float64 returns its decimal float64 value.
-func (v PercentageValue) Float64() float64 {
-	return float64(v) / (1000 * 100)
+func (v *PercentageValue) Float64() float64 {
+	return float64(v.value) / (1000 * 100)
 }
 
 // String returns its string form of percentage value.
-func (v PercentageValue) String() string {
-	return fmt.Sprintf("%.3f%%", v.Float64()*100)
+func (v *PercentageValue) String() string {
+	return strconv.FormatFloat(v.Float64()*100, 'f', v.precision, 64) + "%"
 }

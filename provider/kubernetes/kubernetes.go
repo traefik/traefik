@@ -190,12 +190,12 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 			log.Errorf("Invalid yaml format for backend weight annotation of ingress %s/%s: %v", i.Namespace, i.Name, err)
 			continue
 		}
-		backendPercentageWeightMap := make(map[string]PercentageValue)
+		backendPercentageWeightMap := make(map[string]*PercentageValue)
 		for serviceName, percentageStr := range backendPercentageAnnotationMap {
 			percentageValue, err := PercentageValueFromString(percentageStr)
 			if err != nil {
 				log.Errorf("Invalid percentage value %q in ingress %s/%s: %s", percentageStr, i.Name, err)
-				backendPercentageWeightMap = make(map[string]PercentageValue)
+				backendPercentageWeightMap = make(map[string]*PercentageValue)
 				break
 			}
 			backendPercentageWeightMap[serviceName] = percentageValue
