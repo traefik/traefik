@@ -166,6 +166,11 @@ func getServers(service rancherData) map[string]types.Server {
 	var servers map[string]types.Server
 
 	for index, ip := range service.Containers {
+		if len(ip) == 0 {
+			log.Warnf("Unable to find the IP address for a container in the service %q: this container is ignored.", service.Name)
+			continue
+		}
+
 		if servers == nil {
 			servers = make(map[string]types.Server)
 		}
