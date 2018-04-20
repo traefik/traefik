@@ -184,21 +184,10 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 		}
 		templateObjects.TLS = append(templateObjects.TLS, tlsSection...)
 
-		backendPercentageAnnotationValue := getStringValue(i.Annotations, annotationKubernetesBackendPercentageWeights, "")
-		backendPercentageAnnotationMap := make(map[string]string)
-		if err := yaml.Unmarshal([]byte(backendPercentageAnnotationValue), &backendPercentageAnnotationMap); err != nil {
+		backendPercentageWeightMap, err := getPercentageWeightMap(i)
+		if err != nil {
 			log.Errorf("Invalid yaml format for backend weight annotation of ingress %s/%s: %v", i.Namespace, i.Name, err)
 			continue
-		}
-		backendPercentageWeightMap := make(map[string]*PercentageValue)
-		for serviceName, percentageStr := range backendPercentageAnnotationMap {
-			percentageValue, err := PercentageValueFromString(percentageStr)
-			if err != nil {
-				log.Errorf("Invalid percentage value %q in ingress %s/%s: %s", percentageStr, i.Name, err)
-				backendPercentageWeightMap = make(map[string]*PercentageValue)
-				break
-			}
-			backendPercentageWeightMap[serviceName] = percentageValue
 		}
 
 		for _, r := range i.Spec.Rules {
@@ -773,4 +762,23 @@ func getRateLimit(i *extensionsv1beta1.Ingress) *types.RateLimit {
 	}
 
 	return rateLimit
+}
+
+func getPercentageWeightMap(i *extensionsv1beta1.Ingress) (map[string]*PercentageValue, error) {
+	backendPercentageAnnotationValue := getStringValue(i.Annotations, annotationKubernetesBackendPercentageWeights, "")
+	backendPercentageAnnotationMap := make(map[string]string)
+	if err := yaml.Unmarshal([]byte(backendPercentageAnnotationValue), &backendPercentageAnnotationMap); err != nil {
+		return nil, err
+	}
+	backendPercentageWeightMap := make(map[string]*PercentageValue)
+	for serviceName, percentageStr := range backendPercentageAnnotationMap {
+		percentageValue, err := PercentageValueFromString(percentageStr)
+		if err != nil {
+			log.Errorf("Invalid percentage value %q in ingress %s/%s: %s", percentageStr, i.Name, err)
+			backendPercentageWeightMap = make(map[string]*PercentageValue)
+			break
+		}
+		backendPercentageWeightMap[serviceName] = percentageValue
+	}
+	return backendPercentageWeightMap, nil
 }

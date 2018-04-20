@@ -19,11 +19,11 @@ type PercentageValue struct {
 // either "1.1" or "1.1%", "6%". It will lose the extra precision if there are more
 // digits after decimal point.
 func PercentageValueFromString(s string, precision ...int) (*PercentageValue, error) {
-	hasPercentageTag := strings.Index(s, "%") > 0
-	if hasPercentageTag && len(s) > 0 {
-		s = s[:len(s)-1]
+	if len(precision) > 1 {
+		precision = []int{precision[0]}
 	}
-	f, err := strconv.ParseFloat(s, 64)
+	hasPercentageTag := strings.HasSuffix(s, "%")
+	f, err := strconv.ParseFloat(strings.TrimSuffix(s, "%"), 64)
 	if err != nil {
 		return nil, err
 	}

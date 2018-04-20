@@ -8,34 +8,111 @@ import (
 func TestPercentageValueParse(t *testing.T) {
 	newInt := func(i int) *int { return &i }
 	testCases := []struct {
-		s               string
+		parseString     string
 		precision       *int
 		shouldError     bool
 		expectedString  string
 		expectedFloat64 float64
 	}{
-		{"1%", nil, false, "1.000%", 0.01},
-		{"1%", newInt(4), false, "1.0000%", 0.01},
-		{"1%", newInt(0), false, "1.000%", 0.01},
-		{"1%", newInt(-1), false, "1.000%", 0.01},
-		{"0.5", nil, false, "50.000%", 0.5},
-		{"99%", nil, false, "99.000%", 0.99},
-		{"99.999%", nil, false, "99.999%", 0.99999},
-		{"99.9999%", nil, false, "99.999%", 0.99999},
-		{"-99.999%", nil, false, "-99.999%", -0.99999},
-		{"-99.9999%", nil, false, "-99.999%", -0.99999},
-		{"0%", nil, false, "0.000%", 0},
-		{"%", nil, true, "", 0},
-		{"foo", nil, true, "", 0},
-		{"", nil, true, "", 0},
+		{
+			parseString:     "1%",
+			precision:       nil,
+			shouldError:     false,
+			expectedString:  "1.000%",
+			expectedFloat64: 0.01,
+		},
+		{
+			parseString:     "1%",
+			precision:       newInt(4),
+			shouldError:     false,
+			expectedString:  "1.0000%",
+			expectedFloat64: 0.01,
+		},
+		{
+			parseString:     "1%",
+			precision:       newInt(0),
+			shouldError:     false,
+			expectedString:  "1.000%",
+			expectedFloat64: 0.01,
+		},
+		{
+			parseString:     "1%",
+			precision:       newInt(-1),
+			shouldError:     false,
+			expectedString:  "1.000%",
+			expectedFloat64: 0.01,
+		},
+		{
+			parseString:     "0.5",
+			precision:       nil,
+			shouldError:     false,
+			expectedString:  "50.000%",
+			expectedFloat64: 0.5,
+		},
+		{
+			parseString:     "99%",
+			precision:       nil,
+			shouldError:     false,
+			expectedString:  "99.000%",
+			expectedFloat64: 0.99,
+		},
+		{
+			parseString:     "99.999%",
+			precision:       nil,
+			shouldError:     false,
+			expectedString:  "99.999%",
+			expectedFloat64: 0.99999,
+		},
+		{
+			parseString:     "-99.999%",
+			precision:       nil,
+			shouldError:     false,
+			expectedString:  "-99.999%",
+			expectedFloat64: -0.99999,
+		},
+		{
+			parseString:     "-99.9990%",
+			precision:       nil,
+			shouldError:     false,
+			expectedString:  "-99.999%",
+			expectedFloat64: -0.99999,
+		},
+		{
+			parseString:     "0%",
+			precision:       nil,
+			shouldError:     false,
+			expectedString:  "0.000%",
+			expectedFloat64: 0,
+		},
+		{
+			parseString:     "%",
+			precision:       nil,
+			shouldError:     true,
+			expectedString:  "",
+			expectedFloat64: 0,
+		},
+		{
+			parseString:     "foo",
+			precision:       nil,
+			shouldError:     true,
+			expectedString:  "",
+			expectedFloat64: 0,
+		},
+		{
+			parseString:     "",
+			precision:       nil,
+			shouldError:     true,
+			expectedString:  "",
+			expectedFloat64: 0,
+		},
 	}
 	for _, testCase := range testCases {
 		var pv *PercentageValue
 		var err error
 		if testCase.precision == nil {
-			pv, err = PercentageValueFromString(testCase.s)
+			pv, err = PercentageValueFromString(testCase.parseString)
 		} else {
-			pv, err = PercentageValueFromString(testCase.s, *testCase.precision)
+			pv, err = PercentageValueFromString(testCase.parseString, *testCase.precision)
 		}
 		if testCase.shouldError {
 			assert.Error(t, err, "expecting error but not happening")
