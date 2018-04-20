@@ -65,7 +65,7 @@ func TestHandler(t *testing.T) {
 			errorPage:   &types.ErrorPage{Backend: "error", Query: "/{status}", Status: []string{"503-503"}},
 			backendCode: http.StatusServiceUnavailable,
 			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if r.URL.RequestURI() == "/"+strconv.Itoa(503) {
+				if r.RequestURI == "/503" {
 					fmt.Fprintln(w, "My 503 page.")
 				} else {
 					fmt.Fprintln(w, "Failed")
@@ -82,7 +82,7 @@ func TestHandler(t *testing.T) {
 			errorPage:   &types.ErrorPage{Backend: "error", Query: "/{status}", Status: []string{"503"}},
 			backendCode: http.StatusServiceUnavailable,
 			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if r.URL.RequestURI() == "/"+strconv.Itoa(503) {
+				if r.RequestURI == "/503" {
 					fmt.Fprintln(w, "My 503 page.")
 				} else {
 					fmt.Fprintln(w, "Failed")

@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"net"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -88,9 +89,15 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.
 				query = strings.Replace(query, "{status}", strconv.Itoa(recorder.GetCode()), -1)
 			}
 
-			if newReq, err := http.NewRequest(http.MethodGet, h.backendURL+query, nil); err != nil {
+			if u, err := url.Parse(h.backendURL + query); err != nil {
+				log.Errorf("error pages: error when parse URL: %v", err)
+				w.Write([]byte(http.StatusText(recorder.GetCode())))
+			} else if newReq, err := http.NewRequest(http.MethodGet, u.String(), nil); err != nil {
+				log.Errorf("error pages: error when create query: %v", err)
 				w.Write([]byte(http.StatusText(recorder.GetCode())))
 			} else {
+				utils.CopyHeaders(newReq.Header, req.Header)
+				newReq.RequestURI = u.RequestURI()
 				h.backendHandler.ServeHTTP(w, newReq)
 			}
 			return
