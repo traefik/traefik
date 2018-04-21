@@ -44,7 +44,7 @@ func TestHeaderRewriter_Rewrite(t *testing.T) {
 			insecure:   false,
 			expected: map[string]string{
 				"X-Foo":           "bar",
-				"X-Forwarded-For": "30.30.30.30",
+				"X-Forwarded-For": "",
 			},
 		},
 		{

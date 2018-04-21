@@ -17,7 +17,7 @@ func TestIsAuthorized(t *testing.T) {
 		allowXForwardedFor  bool
 		remoteAddr          string
 		xForwardedForValues []string
-		expected            bool
+		authorized          bool
 	}{
 		{
 			desc:                "allow UseXForwardedFor, remoteAddr not in range, UseXForwardedFor in range",
@@ -25,7 +25,7 @@ func TestIsAuthorized(t *testing.T) {
 			allowXForwardedFor:  true,
 			remoteAddr:          "10.2.3.1:123",
 			xForwardedForValues: []string{"1.2.3.1", "10.2.3.1"},
-			expected:            true,
+			authorized:          true,
 		},
 		{
 			desc:                "allow UseXForwardedFor, remoteAddr in range, UseXForwardedFor in range",
@@ -33,7 +33,7 @@ func TestIsAuthorized(t *testing.T) {
 			allowXForwardedFor:  true,
 			remoteAddr:          "1.2.3.1:123",
 			xForwardedForValues: []string{"1.2.3.1", "10.2.3.1"},
-			expected:            true,
+			authorized:          true,
 		},
 		{
 			desc:                "allow UseXForwardedFor, remoteAddr in range, UseXForwardedFor not in range",
@@ -41,7 +41,7 @@ func TestIsAuthorized(t *testing.T) {
 			allowXForwardedFor:  true,
 			remoteAddr:          "1.2.3.1:123",
 			xForwardedForValues: []string{"10.2.3.1", "10.2.3.1"},
-			expected:            true,
+			authorized:          true,
 		},
 		{
 			desc:                "allow UseXForwardedFor, remoteAddr not in range, UseXForwardedFor not in range",
@@ -49,7 +49,7 @@ func TestIsAuthorized(t *testing.T) {
 			allowXForwardedFor:  true,
 			remoteAddr:          "10.2.3.1:123",
 			xForwardedForValues: []string{"10.2.3.1", "10.2.3.1"},
-			expected:            false,
+			authorized:          false,
 		},
 		{
 			desc:                "don't allow UseXForwardedFor, remoteAddr not in range, UseXForwardedFor in range",
@@ -57,7 +57,7 @@ func TestIsAuthorized(t *testing.T) {
 			allowXForwardedFor:  false,
 			remoteAddr:          "10.2.3.1:123",
 			xForwardedForValues: []string{"1.2.3.1", "10.2.3.1"},
-			expected:            false,
+			authorized:          false,
 		},
 		{
 			desc:                "don't allow UseXForwardedFor, remoteAddr in range, UseXForwardedFor in range",
@@ -65,7 +65,7 @@ func TestIsAuthorized(t *testing.T) {
 			allowXForwardedFor:  false,
 			remoteAddr:          "1.2.3.1:123",
 			xForwardedForValues: []string{"1.2.3.1", "10.2.3.1"},
-			expected:            true,
+			authorized:          true,
 		},
 		{
 			desc:                "don't allow UseXForwardedFor, remoteAddr in range, UseXForwardedFor not in range",
@@ -73,7 +73,7 @@ func TestIsAuthorized(t *testing.T) {
 			allowXForwardedFor:  false,
 			remoteAddr:          "1.2.3.1:123",
 			xForwardedForValues: []string{"10.2.3.1", "10.2.3.1"},
-			expected:            true,
+			authorized:          true,
 		},
 		{
 			desc:                "don't allow UseXForwardedFor, remoteAddr not in range, UseXForwardedFor not in range",
@@ -81,7 +81,7 @@ func TestIsAuthorized(t *testing.T) {
 			allowXForwardedFor:  false,
 			remoteAddr:          "10.2.3.1:123",
 			xForwardedForValues: []string{"10.2.3.1", "10.2.3.1"},
-			expected:            false,
+			authorized:          false,
 		},
 	}
 
@@ -95,10 +95,12 @@ func TestIsAuthorized(t *testing.T) {
 			whiteLister, err := NewIP(test.whiteList, false, test.allowXForwardedFor)
 			require.NoError(t, err)
 
-			authorized, err := whiteLister.IsAuthorized(req)
-			require.NoError(t, err)
-
-			assert.Equal(t, test.expected, authorized)
+			err = whiteLister.IsAuthorized(req)
+			if test.authorized {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+			}
 		})
 	}
 }

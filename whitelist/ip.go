@@ -6,9 +6,6 @@ import (
 	"net"
 	"net/http"
 	"strings"
-
-	"github.com/containous/traefik/log"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -53,9 +50,9 @@ func NewIP(whiteList []string, insecure bool, useXForwardedFor bool) (*IP, error
 }
 
 // IsAuthorized checks if provided request is authorized by the white list
-func (ip *IP) IsAuthorized(req *http.Request) (bool, error) {
+func (ip *IP) IsAuthorized(req *http.Request) error {
 	if ip.insecure {
-		return true, nil
+		return nil
 	}
 
 	var invalidMatches []string
@@ -66,11 +63,11 @@ func (ip *IP) IsAuthorized(req *http.Request) (bool, error) {
 			for _, xFF := range xFFs {
 				ok, err := ip.contains(parseHost(xFF))
 				if err != nil {
-					return false, err
+					return err
 				}
 
 				if ok {
-					return ok, nil
+					return nil
 				}
 
 				invalidMatches = append(invalidMatches, xFF)
@@ -80,22 +77,20 @@ func (ip *IP) IsAuthorized(req *http.Request) (bool, error) {
 
 	host, _, err := net.SplitHostPort(req.RemoteAddr)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	ok, err := ip.contains(host)
 	if err != nil {
-		return ok, err
+		return err
 	}
 
 	if !ok {
-		if log.GetLevel() == logrus.DebugLevel {
-			invalidMatches = append(invalidMatches, req.RemoteAddr)
-			log.Debugf("%q matched none of the white list", strings.Join(invalidMatches, ", "))
-		}
+		invalidMatches = append(invalidMatches, req.RemoteAddr)
+		return fmt.Errorf("%q matched none of the white list", strings.Join(invalidMatches, ", "))
 	}
 
-	return ok, err
+	return nil
 }
 
 // contains checks if provided address is in the white list
