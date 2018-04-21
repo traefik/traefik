@@ -318,6 +318,7 @@ func TestHandlerOldWayIntegration(t *testing.T) {
 			require.NoError(t, err)
 
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("X-Foo", "bar")
 				w.WriteHeader(test.backendCode)
 				fmt.Fprintln(w, http.StatusText(test.backendCode))
 			})
@@ -330,6 +331,7 @@ func TestHandlerOldWayIntegration(t *testing.T) {
 			n.ServeHTTP(recorder, req)
 
 			test.validate(t, recorder)
+			assert.Equal(t, "bar", recorder.Header().Get("X-Foo"), "missing header")
 		})
 	}
 }

@@ -3,6 +3,7 @@ package errorpages
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"net"
 	"net/http"
 	"net/url"
@@ -76,8 +77,6 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.
 	recorder := newResponseRecorder(w)
 	next.ServeHTTP(recorder, req)
 
-	w.WriteHeader(recorder.GetCode())
-
 	// check the recorder code against the configured http status code ranges
 	for _, block := range h.httpCodeRanges {
 		if recorder.GetCode() >= block[0] && recorder.GetCode() <= block[1] {
@@ -89,24 +88,41 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.
 				query = strings.Replace(query, "{status}", strconv.Itoa(recorder.GetCode()), -1)
 			}
 
-			if u, err := url.Parse(h.backendURL + query); err != nil {
-				log.Errorf("error pages: error when parse URL: %v", err)
+			pageReq, err := newRequest(h.backendURL + query)
+			if err != nil {
+				log.Error(err)
+				w.WriteHeader(recorder.GetCode())
 				w.Write([]byte(http.StatusText(recorder.GetCode())))
-			} else if newReq, err := http.NewRequest(http.MethodGet, u.String(), nil); err != nil {
-				log.Errorf("error pages: error when create query: %v", err)
-				w.Write([]byte(http.StatusText(recorder.GetCode())))
-			} else {
-				utils.CopyHeaders(newReq.Header, req.Header)
-				newReq.RequestURI = u.RequestURI()
-				h.backendHandler.ServeHTTP(w, newReq)
+				return
 			}
+
+			utils.CopyHeaders(pageReq.Header, req.Header)
+			utils.CopyHeaders(w.Header(), recorder.Header())
+			w.WriteHeader(recorder.GetCode())
+			h.backendHandler.ServeHTTP(w, pageReq)
 			return
 		}
 	}
 
 	// did not catch a configured status code so proceed with the request
 	utils.CopyHeaders(w.Header(), recorder.Header())
+	w.WriteHeader(recorder.GetCode())
 	w.Write(recorder.GetBody().Bytes())
+}
+
+func newRequest(baseURL string) (*http.Request, error) {
+	u, err := url.Parse(baseURL)
+	if err != nil {
+		return nil, fmt.Errorf("error pages: error when parse URL: %v", err)
+	}
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("error pages: error when create query: %v", err)
+	}
+
+	req.RequestURI = u.RequestURI()
+	return req, nil
 }
 
 type responseRecorder interface {
