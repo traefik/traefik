@@ -808,7 +808,8 @@ func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.
 				if !ok {
 					return false, fmt.Errorf("type error %v", addr)
 				}
-				return IPs.ContainsIP(ip.IP)
+
+				return IPs.ContainsIP(ip.IP), nil
 			},
 		}
 	}

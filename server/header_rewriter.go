@@ -37,7 +37,7 @@ type headerRewriter struct {
 }
 
 func (h *headerRewriter) Rewrite(req *http.Request) {
-	authorized, _, err := h.ips.IsAuthorized(req)
+	authorized, err := h.ips.IsAuthorized(req)
 	if err != nil {
 		log.Error(err)
 		h.insecureRewriter.Rewrite(req)
