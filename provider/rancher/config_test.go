@@ -833,6 +833,18 @@ func TestGetServers(t *testing.T) {
 			expected: nil,
 		},
 		{
+			desc: "should return nil when no server IPs",
+			service: rancherData{
+				Labels: map[string]string{
+					label.TraefikWeight: "7",
+				},
+				Containers: []string{""},
+				Health:     "healthy",
+				State:      "active",
+			},
+			expected: nil,
+		},
+		{
 			desc: "should use default weight when invalid weight value",
 			service: rancherData{
 				Labels: map[string]string{
