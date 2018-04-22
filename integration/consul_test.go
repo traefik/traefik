@@ -194,12 +194,14 @@ func (s *ConsulSuite) TestNominalConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/test2", nil)
-	try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
+	c.Assert(err, checker.IsNil)
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
 
 	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	c.Assert(err, checker.IsNil)
 	req.Host = "test2.localhost"
-	try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
 }
 

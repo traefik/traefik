@@ -267,23 +267,26 @@ func (l *LogHandler) redactHeaders(headers http.Header, fields logrus.Fields, pr
 }
 
 func (l *LogHandler) keepAccessLog(statusCode, retryAttempts int) bool {
-	switch {
-	case l.config.Filters == nil:
+	if l.config.Filters == nil {
 		// no filters were specified
 		return true
-	case len(l.httpCodeRanges) == 0 && l.config.Filters.RetryAttempts == false:
+	}
+
+	if len(l.httpCodeRanges) == 0 && !l.config.Filters.RetryAttempts {
 		// empty filters were specified, e.g. by passing --accessLog.filters only (without other filter options)
 		return true
-	case l.httpCodeRanges.Contains(statusCode):
-		return true
-	case l.config.Filters.RetryAttempts == true && retryAttempts > 0:
-		return true
-	default:
-		return false
 	}
-}
 
-//-------------------------------------------------------------------------------------------------
+	if l.httpCodeRanges.Contains(statusCode) {
+		return true
+	}
+
+	if l.config.Filters.RetryAttempts && retryAttempts > 0 {
+		return true
+	}
+
+	return false
+}
 
 var requestCounter uint64 // Request ID
 
