@@ -262,7 +262,7 @@ This allows for setting headers such as `X-Script-Name` to be added to the reque
 !!! warning
     If the custom header name is the same as one header name of the request or response, it will be replaced.
 
-In this example, all matches to the path `/cheese` will have the `X-Script-Name` header added to the proxied request, and the `X-Custom-Response-Header` added to the response.
+In this example, all matches to the path `/cheese` will have the `X-Script-Name` header added to the proxied request and the `X-Custom-Response-Header` header added to the response.
 
 ```toml
 [frontends]
@@ -276,7 +276,7 @@ In this example, all matches to the path `/cheese` will have the `X-Script-Name`
     rule = "PathPrefixStrip:/cheese"
 ```
 
-In this second  example, all matches to the path `/cheese` will have the `X-Script-Name` header added to the proxied request, the `X-Custom-Request-Header` removed to the request and the `X-Custom-Response-Header` removed to the response.
+In this second  example, all matches to the path `/cheese` will have the `X-Script-Name` header added to the proxied request, the `X-Custom-Request-Header` header removed from the request, and the `X-Custom-Response-Header` header removed from the response.
 
 ```toml
 [frontends]
