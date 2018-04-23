@@ -142,19 +142,18 @@ Træfik can be configured with a file.
 
 ## Configuration mode
 
-You have three choices:
+You have two choices:
 
-- [Simple](/configuration/backends/file/#simple)
-- [Rules in a Separate File](/configuration/backends/file/#rules-in-a-separate-file)
-- [Multiple `.toml` Files](/configuration/backends/file/#multiple-toml-files)
+- [Rules in Træfik configuration file](/configuration/backends/file/#rules-in-trfik-configuration-file)
+- [Rules in a Separate Files](/configuration/backends/file/#rules-in-a-separate-files)
 
 To enable the file backend, you must either pass the `--file` option to the Træfik binary or put the `[file]` section (with or without inner settings) in the configuration file.
 
 The configuration file allows managing both backends/frontends and HTTPS certificates (which are not [Let's Encrypt](https://letsencrypt.org) certificates generated through Træfik).
 
-TOML templating can be used if rules are not defined in the file `traefik.toml`.
+TOML templating can be used if rules are not defined in the Træfik configuration file.
 
-### Simple
+### Rules in Træfik configuration file
 
 Add your configuration at the end of the global configuration file `traefik.toml`:
 
@@ -199,13 +198,16 @@ defaultEntryPoints = ["http", "https"]
     Adding certificates directly to the entryPoint is still maintained but certificates declared in this way cannot be managed dynamically.
     It's recommended to use the file provider to declare certificates.
 
-### Rules in a Separate File
+!!! warning
+    TOML templating cannot be used if rules are defined in the Træfik configuration file.
 
-Put your rules in a separate file.
+### Rules in a Separate Files
+
+Træfik allows defining rules in one or more separate files.
  
-#### Simple rules
+#### One separate file
 
-Backends, Frontends and TLS certificates can be defined one at time, as described in the file `rules.toml`:
+You have to specify the file path in the `file.filename` option.
 
 ```toml
 # traefik.toml
@@ -219,7 +221,30 @@ defaultEntryPoints = ["http", "https"]
 
 [file]
   filename = "rules.toml"
+  watch = true
 ```
+
+The option `file.watch` allows Træfik to watch file changes automatically.
+
+#### Multiple seprated files
+
+You could have multiple `.toml` files in a directory (and recursively in its sub-directories):
+
+```toml
+[file]
+  directory = "/path/to/config/"
+  watch = true
+```
+
+The option `file.watch` allows Træfik to watch file changes automatically.
+
+#### Separate files content
+
+If you are defining rules in one or more separate files, you can use two formats.
+
+##### Simple Format
+
+Backends, Frontends and TLS certificates are defined one at time, as described in the file `rules.toml`:
 
 ```toml
 # rules.toml
@@ -245,24 +270,10 @@ defaultEntryPoints = ["http", "https"]
   # ...
 ```
 
-#### TOML templating
+##### TOML templating
 
-Træfik allows using TOML templating to defined Backends, Frontends and TLS certificates.
-Thus, it's possible to defined easily lot of Backends, Frontends and TLS certificates as described in the file `template-rules.toml` :
-
-```toml
-# traefik.toml
-defaultEntryPoints = ["http", "https"]
-
-[entryPoints]
-  [entryPoints.http]
-    # ...
-  [entryPoints.https]
-    # ...
-
-[file]
-  filename = "template-rules.toml"
-```
+Træfik allows using TOML templating.
+Thus, it's possible to define easily lot of Backends, Frontends and TLS certificates as described in the file `template-rules.toml` :
 
 ```toml
 # template-rules.toml
@@ -287,21 +298,5 @@ defaultEntryPoints = ["http", "https"]
 ```
 
 !!! warning
-    TOML templating can only be used **if rules are defined in a separated file**.
-    For example, templating will not work in the file `traefik.toml` described in the section [Simple](/configuration/backends/file/#simple).
-
-### Multiple `.toml` Files
-
-You could have multiple `.toml` files in a directory (and recursively in its sub-directories):
-
-```toml
-[file]
-  directory = "/path/to/config/"
-```
-
-If you want Træfik to watch file changes automatically, just add:
-
-```toml
-[file]
-  watch = true
-```
+    TOML templating can only be used **if rules are defined in one or more separate files**.
+    Templating will not work in the Træfik configuration file.
