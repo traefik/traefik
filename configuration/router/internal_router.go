@@ -3,6 +3,7 @@ package router
 import (
 	"github.com/containous/mux"
 	"github.com/containous/traefik/configuration"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"
 	mauth "github.com/containous/traefik/middlewares/auth"
@@ -15,16 +16,22 @@ func NewInternalRouterAggregator(globalConfiguration configuration.GlobalConfigu
 	var serverMiddlewares []negroni.Handler
 
 	if globalConfiguration.EntryPoints[entryPointName].WhiteList != nil {
-		ipWhitelistMiddleware, _ := middlewares.NewIPWhiteLister(
+		ipWhitelistMiddleware, err := middlewares.NewIPWhiteLister(
 			globalConfiguration.EntryPoints[entryPointName].WhiteList.SourceRange,
 			globalConfiguration.EntryPoints[entryPointName].WhiteList.UseXForwardedFor)
+		if err != nil {
+			log.Fatalf("Error creating whitelist middleware: %s", err)
+		}
 		if ipWhitelistMiddleware != nil {
 			serverMiddlewares = append(serverMiddlewares, ipWhitelistMiddleware)
 		}
 	}
 
 	if globalConfiguration.EntryPoints[entryPointName].Auth != nil {
-		authMiddleware, _ := mauth.NewAuthenticator(globalConfiguration.EntryPoints[entryPointName].Auth, nil)
+		authMiddleware, err := mauth.NewAuthenticator(globalConfiguration.EntryPoints[entryPointName].Auth, nil)
+		if err != nil {
+			log.Fatalf("Error creating authenticator middleware: %s", err)
+		}
 		serverMiddlewares = append(serverMiddlewares, authMiddleware)
 	}
 
