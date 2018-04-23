@@ -152,6 +152,8 @@ To enable the file backend, you must either pass the `--file` option to the Træ
 
 The configuration file allows managing both backends/frontends and HTTPS certificates (which are not [Let's Encrypt](https://letsencrypt.org) certificates generated through Træfik).
 
+TOML templating can be used if rules are not defined in the file `traefik.toml`.
+
 ### Simple
 
 Add your configuration at the end of the global configuration file `traefik.toml`:
@@ -199,7 +201,11 @@ defaultEntryPoints = ["http", "https"]
 
 ### Rules in a Separate File
 
-Put your rules in a separate file, for example `rules.toml`:
+Put your rules in a separate file.
+ 
+#### Simple rules
+
+Backends, Frontends and TLS certificates can be defined one at time, as described in the file `rules.toml`:
 
 ```toml
 # traefik.toml
@@ -238,6 +244,51 @@ defaultEntryPoints = ["http", "https"]
 [[tls]]
   # ...
 ```
+
+#### TOML templating
+
+Træfik allows using TOML templating to defined Backends, Frontends and TLS certificates.
+Thus, it's possible to defined easily lot of Backends, Frontends and TLS certificates as described in the file `template-rules.toml` :
+
+```toml
+# traefik.toml
+defaultEntryPoints = ["http", "https"]
+
+[entryPoints]
+  [entryPoints.http]
+    # ...
+  [entryPoints.https]
+    # ...
+
+[file]
+  filename = "template-rules.toml"
+```
+
+```toml
+# template-rules.toml
+[backends]
+{{ range $i, $e := until 100 }}
+  [backends.backend{{ $e }}]
+    #...
+{{ end }}
+
+[frontends]
+{{ range $i, $e := until 100 }}
+  [frontends.frontend{{ $e }}]
+    #...
+{{ end }}
+
+
+# HTTPS certificate
+{{ range $i, $e := until 100 }}
+[[tls]]
+    #...
+{{ end }}
+```
+
+!!! warning
+    TOML templating can only be used **if rules are defined in a separated file**.
+    For example, templating will not work in the file `traefik.toml` described in the section [Simple](/configuration/backends/file/#simple).
 
 ### Multiple `.toml` Files
 
