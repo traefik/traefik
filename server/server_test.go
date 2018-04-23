@@ -21,7 +21,6 @@ import (
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/unrolled/secure"
@@ -82,12 +81,12 @@ func (lb *testLoadBalancer) Servers() []*url.URL {
 }
 
 func TestPrepareServerTimeouts(t *testing.T) {
-	tests := []struct {
-		desc             string
-		globalConfig     configuration.GlobalConfiguration
-		wantIdleTimeout  time.Duration
-		wantReadTimeout  time.Duration
-		wantWriteTimeout time.Duration
+	testCases := []struct {
+		desc                 string
+		globalConfig         configuration.GlobalConfiguration
+		expectedIdleTimeout  time.Duration
+		expectedReadTimeout  time.Duration
+		expectedWriteTimeout time.Duration
 	}{
 		{
 			desc: "full configuration",
@@ -98,25 +97,25 @@ func TestPrepareServerTimeouts(t *testing.T) {
 					WriteTimeout: flaeg.Duration(14 * time.Second),
 				},
 			},
-			wantIdleTimeout:  time.Duration(10 * time.Second),
-			wantReadTimeout:  time.Duration(12 * time.Second),
-			wantWriteTimeout: time.Duration(14 * time.Second),
+			expectedIdleTimeout:  time.Duration(10 * time.Second),
+			expectedReadTimeout:  time.Duration(12 * time.Second),
+			expectedWriteTimeout: time.Duration(14 * time.Second),
 		},
 		{
-			desc:             "using defaults",
-			globalConfig:     configuration.GlobalConfiguration{},
-			wantIdleTimeout:  time.Duration(180 * time.Second),
-			wantReadTimeout:  time.Duration(0 * time.Second),
-			wantWriteTimeout: time.Duration(0 * time.Second),
+			desc:                 "using defaults",
+			globalConfig:         configuration.GlobalConfiguration{},
+			expectedIdleTimeout:  time.Duration(180 * time.Second),
+			expectedReadTimeout:  time.Duration(0 * time.Second),
+			expectedWriteTimeout: time.Duration(0 * time.Second),
 		},
 		{
 			desc: "deprecated IdleTimeout configured",
 			globalConfig: configuration.GlobalConfiguration{
 				IdleTimeout: flaeg.Duration(45 * time.Second),
 			},
-			wantIdleTimeout:  time.Duration(45 * time.Second),
-			wantReadTimeout:  time.Duration(0 * time.Second),
-			wantWriteTimeout: time.Duration(0 * time.Second),
+			expectedIdleTimeout:  time.Duration(45 * time.Second),
+			expectedReadTimeout:  time.Duration(0 * time.Second),
+			expectedWriteTimeout: time.Duration(0 * time.Second),
 		},
 		{
 			desc: "deprecated and new IdleTimeout configured",
@@ -126,13 +125,13 @@ func TestPrepareServerTimeouts(t *testing.T) {
 					IdleTimeout: flaeg.Duration(80 * time.Second),
 				},
 			},
-			wantIdleTimeout:  time.Duration(45 * time.Second),
-			wantReadTimeout:  time.Duration(0 * time.Second),
-			wantWriteTimeout: time.Duration(0 * time.Second),
+			expectedIdleTimeout:  time.Duration(45 * time.Second),
+			expectedReadTimeout:  time.Duration(0 * time.Second),
+			expectedWriteTimeout: time.Duration(0 * time.Second),
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 
 		t.Run(test.desc, func(t *testing.T) {
@@ -145,21 +144,13 @@ func TestPrepareServerTimeouts(t *testing.T) {
 			}
 			router := middlewares.NewHandlerSwitcher(mux.NewRouter())
 
-			srv := NewServer(test.globalConfig, nil)
-			httpServer, _, err := srv.prepareServer(entryPointName, entryPoint, router, nil, nil)
-			if err != nil {
-				t.Fatalf("Unexpected error when preparing srv: %s", err)
-			}
+			srv := NewServer(test.globalConfig, nil, nil)
+			httpServer, _, err := srv.prepareServer(entryPointName, entryPoint, router, nil)
+			require.NoError(t, err, "Unexpected error when preparing srv")
 
-			if httpServer.IdleTimeout != test.wantIdleTimeout {
-				t.Errorf("Got %s as IdleTimeout, want %s", httpServer.IdleTimeout, test.wantIdleTimeout)
-			}
-			if httpServer.ReadTimeout != test.wantReadTimeout {
-				t.Errorf("Got %s as ReadTimeout, want %s", httpServer.ReadTimeout, test.wantReadTimeout)
-			}
-			if httpServer.WriteTimeout != test.wantWriteTimeout {
-				t.Errorf("Got %s as WriteTimeout, want %s", httpServer.WriteTimeout, test.wantWriteTimeout)
-			}
+			assert.Equal(t, test.expectedIdleTimeout, httpServer.IdleTimeout, "IdleTimeout")
+			assert.Equal(t, test.expectedReadTimeout, httpServer.ReadTimeout, "ReadTimeout")
+			assert.Equal(t, test.expectedWriteTimeout, httpServer.WriteTimeout, "WriteTimeout")
 		})
 	}
 }
@@ -286,7 +277,7 @@ func setupListenProvider(throttleDuration time.Duration) (server *Server, stop c
 		ProvidersThrottleDuration: flaeg.Duration(throttleDuration),
 	}
 
-	server = NewServer(globalConfig, nil)
+	server = NewServer(globalConfig, nil, nil)
 	go server.listenProviders(stop)
 
 	return server, stop, invokeStopChan
@@ -302,7 +293,7 @@ func TestThrottleProviderConfigReload(t *testing.T) {
 	}()
 
 	globalConfig := configuration.GlobalConfiguration{}
-	server := NewServer(globalConfig, nil)
+	server := NewServer(globalConfig, nil, nil)
 
 	go server.throttleProviderConfigReload(throttleDuration, publishConfig, providerConfig, stop)
 
@@ -329,10 +320,7 @@ func TestThrottleProviderConfigReload(t *testing.T) {
 
 	// after 50 milliseconds 5 new configs were published
 	// with a throttle duration of 30 milliseconds this means, we should have received 2 new configs
-	wantPublishedConfigCount := 2
-	if publishedConfigCount != wantPublishedConfigCount {
-		t.Errorf("%d times configs were published, want %d times", publishedConfigCount, wantPublishedConfigCount)
-	}
+	assert.Equal(t, 2, publishedConfigCount, "times configs were published")
 
 	stopConsumeConfigs <- true
 
@@ -351,7 +339,7 @@ func TestThrottleProviderConfigReload(t *testing.T) {
 }
 
 func TestServerMultipleFrontendRules(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
 		expression  string
 		requestURL  string
 		expectedURL string
@@ -393,7 +381,7 @@ func TestServerMultipleFrontendRules(t *testing.T) {
 		},
 	}
 
-	for _, test := range cases {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.expression, func(t *testing.T) {
 			t.Parallel()
@@ -420,9 +408,7 @@ func TestServerMultipleFrontendRules(t *testing.T) {
 			server := new(Server)
 
 			server.wireFrontendBackend(serverRoute, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if r.URL.String() != test.expectedURL {
-					t.Fatalf("got URL %s, expected %s", r.URL.String(), test.expectedURL)
-				}
+				require.Equal(t, test.expectedURL, r.URL.String(), "URL")
 			}))
 			serverRoute.Route.GetHandler().ServeHTTP(nil, request)
 		})
@@ -441,12 +427,14 @@ func TestServerLoadConfigHealthCheckOptions(t *testing.T) {
 		for _, healthCheck := range healthChecks {
 			t.Run(fmt.Sprintf("%s/hc=%t", lbMethod, healthCheck != nil), func(t *testing.T) {
 				globalConfig := configuration.GlobalConfiguration{
-					EntryPoints: configuration.EntryPoints{
-						"http": &configuration.EntryPoint{
+					HealthCheck: &configuration.HealthCheckConfig{Interval: flaeg.Duration(5 * time.Second)},
+				}
+				entryPoints := map[string]EntryPoint{
+					"http": {
+						Configuration: &configuration.EntryPoint{
 							ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true},
 						},
 					},
-					HealthCheck: &configuration.HealthCheckConfig{Interval: flaeg.Duration(5 * time.Second)},
 				}
 
 				dynamicConfigs := types.Configurations{
@@ -482,19 +470,16 @@ func TestServerLoadConfigHealthCheckOptions(t *testing.T) {
 					},
 				}
 
-				srv := NewServer(globalConfig, nil)
-				if _, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
-					t.Fatalf("got error: %s", err)
-				}
+				srv := NewServer(globalConfig, nil, entryPoints)
 
-				wantNumHealthCheckBackends := 0
+				_, err := srv.loadConfig(dynamicConfigs, globalConfig)
+				require.NoError(t, err)
+
+				expectedNumHealthCheckBackends := 0
 				if healthCheck != nil {
-					wantNumHealthCheckBackends = 1
+					expectedNumHealthCheckBackends = 1
 				}
-				gotNumHealthCheckBackends := len(healthcheck.GetHealthCheck(testhelpers.NewCollectingHealthCheckMetrics()).Backends)
-				if gotNumHealthCheckBackends != wantNumHealthCheckBackends {
-					t.Errorf("got %d health check backends, want %d", gotNumHealthCheckBackends, wantNumHealthCheckBackends)
-				}
+				assert.Len(t, healthcheck.GetHealthCheck(testhelpers.NewCollectingHealthCheckMetrics()).Backends, expectedNumHealthCheckBackends, "health check backends")
 			})
 		}
 	}
@@ -504,22 +489,22 @@ func TestServerParseHealthCheckOptions(t *testing.T) {
 	lb := &testLoadBalancer{}
 	globalInterval := 15 * time.Second
 
-	tests := []struct {
-		desc     string
-		hc       *types.HealthCheck
-		wantOpts *healthcheck.Options
+	testCases := []struct {
+		desc         string
+		hc           *types.HealthCheck
+		expectedOpts *healthcheck.Options
 	}{
 		{
-			desc:     "nil health check",
-			hc:       nil,
-			wantOpts: nil,
+			desc:         "nil health check",
+			hc:           nil,
+			expectedOpts: nil,
 		},
 		{
 			desc: "empty path",
 			hc: &types.HealthCheck{
 				Path: "",
 			},
-			wantOpts: nil,
+			expectedOpts: nil,
 		},
 		{
 			desc: "unparseable interval",
@@ -527,7 +512,7 @@ func TestServerParseHealthCheckOptions(t *testing.T) {
 				Path:     "/path",
 				Interval: "unparseable",
 			},
-			wantOpts: &healthcheck.Options{
+			expectedOpts: &healthcheck.Options{
 				Path:     "/path",
 				Interval: globalInterval,
 				LB:       lb,
@@ -539,7 +524,7 @@ func TestServerParseHealthCheckOptions(t *testing.T) {
 				Path:     "/path",
 				Interval: "-42s",
 			},
-			wantOpts: &healthcheck.Options{
+			expectedOpts: &healthcheck.Options{
 				Path:     "/path",
 				Interval: globalInterval,
 				LB:       lb,
@@ -551,7 +536,7 @@ func TestServerParseHealthCheckOptions(t *testing.T) {
 				Path:     "/path",
 				Interval: "5m",
 			},
-			wantOpts: &healthcheck.Options{
+			expectedOpts: &healthcheck.Options{
 				Path:     "/path",
 				Interval: 5 * time.Minute,
 				LB:       lb,
@@ -559,15 +544,13 @@ func TestServerParseHealthCheckOptions(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			gotOpts := parseHealthCheckOptions(lb, "backend", test.hc, &configuration.HealthCheckConfig{Interval: flaeg.Duration(globalInterval)})
-			if !reflect.DeepEqual(gotOpts, test.wantOpts) {
-				t.Errorf("got health check options %+v, want %+v", gotOpts, test.wantOpts)
-			}
+			opts := parseHealthCheckOptions(lb, "backend", test.hc, &configuration.HealthCheckConfig{Interval: flaeg.Duration(globalInterval)})
+			assert.Equal(t, test.expectedOpts, opts, "health check options")
 		})
 	}
 }
@@ -681,19 +664,18 @@ func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
 		},
 	}
 
-	srv := NewServer(globalConfig, nil)
-	if _, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
-		t.Fatalf("got error: %s", err)
-	}
+	srv := NewServer(globalConfig, nil, nil)
+	_, err := srv.loadConfig(dynamicConfigs, globalConfig)
+	require.NoError(t, err)
 }
 
 func TestServerLoadCertificateWithDefaultEntryPoint(t *testing.T) {
 	globalConfig := configuration.GlobalConfiguration{
-		EntryPoints: configuration.EntryPoints{
-			"https": &configuration.EntryPoint{TLS: &tls.TLS{}},
-			"http":  &configuration.EntryPoint{},
-		},
 		DefaultEntryPoints: []string{"http", "https"},
+	}
+	entryPoints := map[string]EntryPoint{
+		"https": {Configuration: &configuration.EntryPoint{TLS: &tls.TLS{}}},
+		"http":  {Configuration: &configuration.EntryPoint{}},
 	}
 
 	dynamicConfigs := types.Configurations{
@@ -709,7 +691,7 @@ func TestServerLoadCertificateWithDefaultEntryPoint(t *testing.T) {
 		},
 	}
 
-	srv := NewServer(globalConfig, nil)
+	srv := NewServer(globalConfig, nil, entryPoints)
 	if mapEntryPoints, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
 		t.Fatalf("got error: %s", err)
 	} else if mapEntryPoints["https"].certs.Get() == nil {
@@ -721,11 +703,11 @@ func TestConfigureBackends(t *testing.T) {
 	validMethod := "Drr"
 	defaultMethod := "wrr"
 
-	tests := []struct {
-		desc           string
-		lb             *types.LoadBalancer
-		wantMethod     string
-		wantStickiness *types.Stickiness
+	testCases := []struct {
+		desc               string
+		lb                 *types.LoadBalancer
+		expectedMethod     string
+		expectedStickiness *types.Stickiness
 	}{
 		{
 			desc: "valid load balancer method with sticky enabled",
@@ -733,8 +715,8 @@ func TestConfigureBackends(t *testing.T) {
 				Method:     validMethod,
 				Stickiness: &types.Stickiness{},
 			},
-			wantMethod:     validMethod,
-			wantStickiness: &types.Stickiness{},
+			expectedMethod:     validMethod,
+			expectedStickiness: &types.Stickiness{},
 		},
 		{
 			desc: "valid load balancer method with sticky disabled",
@@ -742,7 +724,7 @@ func TestConfigureBackends(t *testing.T) {
 				Method:     validMethod,
 				Stickiness: nil,
 			},
-			wantMethod: validMethod,
+			expectedMethod: validMethod,
 		},
 		{
 			desc: "invalid load balancer method with sticky enabled",
@@ -750,8 +732,8 @@ func TestConfigureBackends(t *testing.T) {
 				Method:     "Invalid",
 				Stickiness: &types.Stickiness{},
 			},
-			wantMethod:     defaultMethod,
-			wantStickiness: &types.Stickiness{},
+			expectedMethod:     defaultMethod,
+			expectedStickiness: &types.Stickiness{},
 		},
 		{
 			desc: "invalid load balancer method with sticky disabled",
@@ -759,16 +741,16 @@ func TestConfigureBackends(t *testing.T) {
 				Method:     "Invalid",
 				Stickiness: nil,
 			},
-			wantMethod: defaultMethod,
+			expectedMethod: defaultMethod,
 		},
 		{
-			desc:       "missing load balancer",
-			lb:         nil,
-			wantMethod: defaultMethod,
+			desc:           "missing load balancer",
+			lb:             nil,
+			expectedMethod: defaultMethod,
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
@@ -780,22 +762,21 @@ func TestConfigureBackends(t *testing.T) {
 				"backend": backend,
 			})
 
-			wantLB := types.LoadBalancer{
-				Method:     test.wantMethod,
-				Stickiness: test.wantStickiness,
+			expected := types.LoadBalancer{
+				Method:     test.expectedMethod,
+				Stickiness: test.expectedStickiness,
 			}
-			if !reflect.DeepEqual(*backend.LoadBalancer, wantLB) {
-				t.Errorf("got backend load-balancer\n%v\nwant\n%v\n", spew.Sdump(backend.LoadBalancer), spew.Sdump(wantLB))
-			}
+
+			assert.Equal(t, expected, *backend.LoadBalancer)
 		})
 	}
 }
 
 func TestServerEntryPointWhitelistConfig(t *testing.T) {
-	tests := []struct {
-		desc           string
-		entrypoint     *configuration.EntryPoint
-		wantMiddleware bool
+	testCases := []struct {
+		desc             string
+		entrypoint       *configuration.EntryPoint
+		expectMiddleware bool
 	}{
 		{
 			desc: "no whitelist middleware if no config on entrypoint",
@@ -803,7 +784,7 @@ func TestServerEntryPointWhitelistConfig(t *testing.T) {
 				Address:          ":0",
 				ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true},
 			},
-			wantMiddleware: false,
+			expectMiddleware: false,
 		},
 		{
 			desc: "whitelist middleware should be added if configured on entrypoint",
@@ -814,27 +795,29 @@ func TestServerEntryPointWhitelistConfig(t *testing.T) {
 				},
 				ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true},
 			},
-			wantMiddleware: true,
+			expectMiddleware: true,
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
 			srv := Server{
-				globalConfiguration: configuration.GlobalConfiguration{
-					EntryPoints: map[string]*configuration.EntryPoint{
-						"test": test.entrypoint,
+				globalConfiguration: configuration.GlobalConfiguration{},
+				metricsRegistry:     metrics.NewVoidRegistry(),
+				entryPoints: map[string]EntryPoint{
+					"test": {
+						Configuration: test.entrypoint,
 					},
 				},
-				metricsRegistry: metrics.NewVoidRegistry(),
 			}
 
-			srv.serverEntryPoints = srv.buildEntryPoints(srv.globalConfiguration)
+			srv.serverEntryPoints = srv.buildEntryPoints()
 			srvEntryPoint := srv.setupServerEntryPoint("test", srv.serverEntryPoints["test"])
 			handler := srvEntryPoint.httpServer.Handler.(*mux.Router).NotFoundHandler.(*negroni.Negroni)
+
 			found := false
 			for _, handler := range handler.Handlers() {
 				if reflect.TypeOf(handler) == reflect.TypeOf((*middlewares.IPWhiteLister)(nil)) {
@@ -842,12 +825,12 @@ func TestServerEntryPointWhitelistConfig(t *testing.T) {
 				}
 			}
 
-			if found && !test.wantMiddleware {
-				t.Errorf("ip whitelist middleware was installed even though it should not")
+			if found && !test.expectMiddleware {
+				t.Error("ip whitelist middleware was installed even though it should not")
 			}
 
-			if !found && test.wantMiddleware {
-				t.Errorf("ip whitelist middleware was not installed even though it should have")
+			if !found && test.expectMiddleware {
+				t.Error("ip whitelist middleware was not installed even though it should have")
 			}
 		})
 	}
@@ -858,9 +841,9 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 	const routeRule = "Path:" + requestPath
 
 	testCases := []struct {
-		desc           string
-		dynamicConfig  func(testServerURL string) *types.Configuration
-		wantStatusCode int
+		desc               string
+		dynamicConfig      func(testServerURL string) *types.Configuration
+		expectedStatusCode int
 	}{
 		{
 			desc: "Ok",
@@ -870,14 +853,14 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 					withBackend("backend", buildBackend(withServer("testServer", testServerURL))),
 				)
 			},
-			wantStatusCode: http.StatusOK,
+			expectedStatusCode: http.StatusOK,
 		},
 		{
 			desc: "No Frontend",
 			dynamicConfig: func(testServerURL string) *types.Configuration {
 				return buildDynamicConfig()
 			},
-			wantStatusCode: http.StatusNotFound,
+			expectedStatusCode: http.StatusNotFound,
 		},
 		{
 			desc: "Empty Backend LB-Drr",
@@ -887,7 +870,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 					withBackend("backend", buildBackend(withLoadBalancer("Drr", false))),
 				)
 			},
-			wantStatusCode: http.StatusServiceUnavailable,
+			expectedStatusCode: http.StatusServiceUnavailable,
 		},
 		{
 			desc: "Empty Backend LB-Drr Sticky",
@@ -897,7 +880,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 					withBackend("backend", buildBackend(withLoadBalancer("Drr", true))),
 				)
 			},
-			wantStatusCode: http.StatusServiceUnavailable,
+			expectedStatusCode: http.StatusServiceUnavailable,
 		},
 		{
 			desc: "Empty Backend LB-Wrr",
@@ -907,7 +890,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 					withBackend("backend", buildBackend(withLoadBalancer("Wrr", false))),
 				)
 			},
-			wantStatusCode: http.StatusServiceUnavailable,
+			expectedStatusCode: http.StatusServiceUnavailable,
 		},
 		{
 			desc: "Empty Backend LB-Wrr Sticky",
@@ -917,7 +900,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 					withBackend("backend", buildBackend(withLoadBalancer("Wrr", true))),
 				)
 			},
-			wantStatusCode: http.StatusServiceUnavailable,
+			expectedStatusCode: http.StatusServiceUnavailable,
 		},
 	}
 
@@ -932,14 +915,13 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			}))
 			defer testServer.Close()
 
-			globalConfig := configuration.GlobalConfiguration{
-				EntryPoints: configuration.EntryPoints{
-					"http": &configuration.EntryPoint{ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true}},
-				},
+			globalConfig := configuration.GlobalConfiguration{}
+			entryPointsConfig := map[string]EntryPoint{
+				"http": {Configuration: &configuration.EntryPoint{ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true}}},
 			}
 			dynamicConfigs := types.Configurations{"config": test.dynamicConfig(testServer.URL)}
 
-			srv := NewServer(globalConfig, nil)
+			srv := NewServer(globalConfig, nil, entryPointsConfig)
 			entryPoints, err := srv.loadConfig(dynamicConfigs, globalConfig)
 			if err != nil {
 				t.Fatalf("error loading config: %s", err)
@@ -950,20 +932,17 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 
 			entryPoints["http"].httpRouter.ServeHTTP(responseRecorder, request)
 
-			if responseRecorder.Result().StatusCode != test.wantStatusCode {
-				t.Errorf("got status code %d, want %d", responseRecorder.Result().StatusCode, test.wantStatusCode)
-			}
+			assert.Equal(t, test.expectedStatusCode, responseRecorder.Result().StatusCode, "status code")
 		})
 	}
 }
 
 func TestBuildRedirectHandler(t *testing.T) {
 	srv := Server{
-		globalConfiguration: configuration.GlobalConfiguration{
-			EntryPoints: configuration.EntryPoints{
-				"http":  &configuration.EntryPoint{Address: ":80"},
-				"https": &configuration.EntryPoint{Address: ":443", TLS: &tls.TLS{}},
-			},
+		globalConfiguration: configuration.GlobalConfiguration{},
+		entryPoints: map[string]EntryPoint{
+			"http":  {Configuration: &configuration.EntryPoint{Address: ":80"}},
+			"https": {Configuration: &configuration.EntryPoint{Address: ":443", TLS: &tls.TLS{}}},
 		},
 	}
 
@@ -1073,7 +1052,7 @@ func (c mockContext) Value(key interface{}) interface{} {
 }
 
 func TestNewServerWithResponseModifiers(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
 		desc             string
 		headerMiddleware *middlewares.HeaderStruct
 		secureMiddleware *secure.Secure
@@ -1138,7 +1117,7 @@ func TestNewServerWithResponseModifiers(t *testing.T) {
 		},
 	}
 
-	for _, test := range cases {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
