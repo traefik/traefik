@@ -15,19 +15,19 @@ type Handler struct {
 }
 
 // WithContext causes the ping endpoint to serve non 200 responses.
-func (g *Handler) WithContext(ctx context.Context) {
+func (h *Handler) WithContext(ctx context.Context) {
 	go func() {
 		<-ctx.Done()
-		g.terminating = true
+		h.terminating = true
 	}()
 }
 
 // AddRoutes add ping routes on a router
-func (g *Handler) AddRoutes(router *mux.Router) {
+func (h *Handler) AddRoutes(router *mux.Router) {
 	router.Methods(http.MethodGet, http.MethodHead).Path("/ping").
 		HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 			statusCode := http.StatusOK
-			if g.terminating {
+			if h.terminating {
 				statusCode = http.StatusServiceUnavailable
 			}
 			response.WriteHeader(statusCode)

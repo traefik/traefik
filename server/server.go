@@ -671,8 +671,7 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 		if entryPointName == s.globalConfiguration.ACME.EntryPoint {
 			checkOnDemandDomain := func(domain string) bool {
 				routeMatch := &mux.RouteMatch{}
-				rt := router.GetHandler()
-				match := rt.Match(&http.Request{URL: &url.URL{}, Host: domain}, routeMatch)
+				match := router.GetHandler().Match(&http.Request{URL: &url.URL{}, Host: domain}, routeMatch)
 				if match && routeMatch.Route != nil {
 					return true
 				}
@@ -710,9 +709,9 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 		config.MinVersion = minConst
 	}
 
-	//Set the list of CipherSuites if set in the config TOML
+	// Set the list of CipherSuites if set in the config TOML
 	if s.entryPoints[entryPointName].Configuration.TLS.CipherSuites != nil {
-		//if our list of CipherSuites is defined in the entrypoint config, we can re-initilize the suites list as empty
+		// if our list of CipherSuites is defined in the entrypoint config, we can re-initilize the suites list as empty
 		config.CipherSuites = make([]uint16, 0)
 		for _, cipher := range s.entryPoints[entryPointName].Configuration.TLS.CipherSuites {
 			if cipherConst, exists := traefiktls.CipherSuites[cipher]; exists {
@@ -841,9 +840,8 @@ func buildServerTimeouts(globalConfig configuration.GlobalConfiguration) (readTi
 func (s *Server) buildEntryPoints() map[string]*serverEntryPoint {
 	serverEntryPoints := make(map[string]*serverEntryPoint)
 	for entryPointName := range s.entryPoints {
-		rt := s.buildDefaultHTTPRouter()
 		serverEntryPoints[entryPointName] = &serverEntryPoint{
-			httpRouter: middlewares.NewHandlerSwitcher(rt),
+			httpRouter: middlewares.NewHandlerSwitcher(s.buildDefaultHTTPRouter()),
 		}
 	}
 	return serverEntryPoints
