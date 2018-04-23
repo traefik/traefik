@@ -239,7 +239,7 @@ The following security annotations are applicable on the Ingress object:
 
 ### Authentication
 
-Is possible to add additional authentication annotations to the Ingress object.
+Additional authentication annotations can be added to the Ingress object.
 The source of the authentication is a Secret object that contains the credentials.
 
 | Annotation                                    | Description                                                                                                 |
@@ -253,3 +253,12 @@ The following limitations hold:
 
 - The realm is not configurable; the only supported (and default) value is `traefik`.
 - The Secret must contain a single file only.
+
+### TLS certificates management
+
+TLS certificates can be managed in Secrets objects.
+More information are available in the  [User Guide](/user-guide/kubernetes/#add-a-tls-certificate-to-the-ingress).
+
+!!! note
+    Only TLS certificates provided by users can be stored in Kubernetes Secrets.
+    [Let's Encrypt](https://letsencrypt.org) certificates cannot be managed in Kubernets Secrets yet. 
