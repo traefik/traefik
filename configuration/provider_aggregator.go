@@ -4,21 +4,20 @@ import (
 	"encoding/json"
 	"reflect"
 
-	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
-	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 )
 
-type providerAggregator struct {
+// ProviderAggregator aggregate providers
+type ProviderAggregator struct {
 	providers []provider.Provider
 }
 
 // NewProviderAggregator return an aggregate of all the providers configured in GlobalConfiguration
-func NewProviderAggregator(gc *GlobalConfiguration) provider.Provider {
-	provider := providerAggregator{}
+func NewProviderAggregator(gc *GlobalConfiguration) ProviderAggregator {
+	provider := ProviderAggregator{}
 	if gc.Docker != nil {
 		provider.providers = append(provider.providers, gc.Docker)
 	}
@@ -67,17 +66,16 @@ func NewProviderAggregator(gc *GlobalConfiguration) provider.Provider {
 	if gc.ServiceFabric != nil {
 		provider.providers = append(provider.providers, gc.ServiceFabric)
 	}
-	if acmeprovider.IsEnabled() {
-		provider.providers = append(provider.providers, acmeprovider.Get())
-		acme.ConvertToNewFormat(acmeprovider.Get().Storage)
-	}
-	if len(provider.providers) == 1 {
-		return provider.providers[0]
-	}
 	return provider
 }
 
-func (p providerAggregator) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
+// AddProvider add a provider in the providers map
+func (p *ProviderAggregator) AddProvider(provider provider.Provider) {
+	p.providers = append(p.providers, provider)
+}
+
+// Provide call the provide method of every providers
+func (p ProviderAggregator) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
 	for _, p := range p.providers {
 		providerType := reflect.TypeOf(p)
 		jsonConf, err := json.Marshal(p)

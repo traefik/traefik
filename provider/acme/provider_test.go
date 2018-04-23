@@ -25,7 +25,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 	testCases := []struct {
 		desc             string
 		dynamicCerts     *safe.Safe
-		staticCerts      map[string]*tls.Certificate
+		staticCerts      *safe.Safe
 		acmeCertificates []*Certificate
 		domains          []string
 		expectedDomains  []string
@@ -44,7 +44,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 		{
 			desc:            "wildcard already exists in static certificates",
 			domains:         []string{"*.traefik.wtf"},
-			staticCerts:     wildcardMap,
+			staticCerts:     wildcardSafe,
 			expectedDomains: nil,
 		},
 		{
@@ -71,7 +71,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 		{
 			desc:            "domain CN already exists in static certificates and SANs to generate",
 			domains:         []string{"traefik.wtf", "foo.traefik.wtf"},
-			staticCerts:     domainMap,
+			staticCerts:     domainSafe,
 			expectedDomains: []string{"foo.traefik.wtf"},
 		},
 		{
@@ -93,7 +93,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 		{
 			desc:            "domain already exists in static certificates",
 			domains:         []string{"traefik.wtf"},
-			staticCerts:     domainMap,
+			staticCerts:     domainSafe,
 			expectedDomains: nil,
 		},
 		{
@@ -115,7 +115,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 		{
 			desc:            "domain matched by wildcard in static certificates",
 			domains:         []string{"who.traefik.wtf", "foo.traefik.wtf"},
-			staticCerts:     wildcardMap,
+			staticCerts:     wildcardSafe,
 			expectedDomains: nil,
 		},
 		{

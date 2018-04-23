@@ -57,7 +57,7 @@ type Provider struct {
 	certsChan              chan *Certificate
 	configurationChan      chan<- types.ConfigMessage
 	dynamicCerts           *safe.Safe
-	staticCerts            map[string]*tls.Certificate
+	staticCerts            *safe.Safe
 	clientMutex            sync.Mutex
 	configFromListenerChan chan types.Configuration
 	pool                   *safe.Pool
@@ -202,7 +202,7 @@ func (p *Provider) SetDynamicCertificates(safe *safe.Safe) {
 }
 
 // SetStaticCertificates allow to initialize staticCerts map
-func (p *Provider) SetStaticCertificates(staticCerts map[string]*tls.Certificate) {
+func (p *Provider) SetStaticCertificates(staticCerts *safe.Safe) {
 	p.staticCerts = staticCerts
 }
 
@@ -510,8 +510,10 @@ func (p *Provider) getUncheckedDomains(domainsToCheck []string, checkConfigurati
 	var allCerts []string
 
 	// Get static certificates
-	for domains := range p.staticCerts {
-		allCerts = append(allCerts, domains)
+	if p.staticCerts != nil && p.staticCerts.Get() != nil {
+		for domains := range p.staticCerts.Get().(map[string]*tls.Certificate) {
+			allCerts = append(allCerts, domains)
+		}
 	}
 
 	// Get dynamic certificates
