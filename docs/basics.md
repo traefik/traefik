@@ -335,15 +335,26 @@ Here is an example of backends and servers definition:
 ```toml
 [backends]
   [backends.backend1]
+    # ...
     [backends.backend1.servers.server1]
     url = "http://172.17.0.2:80"
-    weight = 1
+    weight = 10
     [backends.backend1.servers.server2]
     url = "http://172.17.0.3:80"
+    weight = 1
+  [backends.backend2]
+    # ...
+    [backends.backend2.servers.server1]
+    url = "http://172.17.0.4:80"
+    weight = 1
+    [backends.backend2.servers.server2]
+    url = "http://172.17.0.5:80"
     weight = 2
 ```
 
-- `backend1` will forward the traffic to two servers: `http://172.17.0.2:80"` with weight `1` and `http://172.17.0.3:80` with weight `1` using default `wrr` load-balancing strategy.
+- Two backends are defined: `backend1` and `backend2`
+- `backend1` will forward the traffic to two servers: `http://172.17.0.2:80"` with weight `10` and `http://172.17.0.3:80` with weight `1`.
+- `backend2` will forward the traffic to two servers: `http://172.17.0.4:80"` with weight `1` and `http://172.17.0.5:80` with weight `2`.
 
 #### Load-balancing
 
@@ -385,20 +396,9 @@ Here is an example of backends and servers definition:
     [backends.backend1.servers.server2]
     url = "http://172.17.0.3:80"
     weight = 1
-  [backends.backend2]
-    [backends.backend2.LoadBalancer]
-    method = "drr"
-    [backends.backend2.servers.server1]
-    url = "http://172.17.0.4:80"
-    weight = 1
-    [backends.backend2.servers.server2]
-    url = "http://172.17.0.5:80"
-    weight = 2
 ```
 
-- Two backends are defined: `backend1` and `backend2`
 - `backend1` will forward the traffic to two servers: `http://172.17.0.2:80"` with weight `10` and `http://172.17.0.3:80` with weight `1` using default `wrr` load-balancing strategy.
-- `backend2` will forward the traffic to two servers: `http://172.17.0.4:80"` with weight `1` and `http://172.17.0.5:80` with weight `2` using `drr` load-balancing strategy.
 - a circuit breaker is added on `backend1` using the expression `NetworkErrorRatio() > 0.5`: watch error ratio over 10 second sliding window
 
 #### Maximum connections
@@ -414,6 +414,7 @@ For example:
     [backends.backend1.maxconn]
        amount = 10
        extractorfunc = "request.host"
+   # ...
 ```
 
 - `backend1` will return `HTTP code 429 Too Many Requests` if there are already 10 requests in progress for the same Host header.
