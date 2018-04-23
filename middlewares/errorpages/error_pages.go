@@ -3,6 +3,7 @@ package errorpages
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -13,7 +14,6 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/types"
-	"github.com/pkg/errors"
 	"github.com/vulcand/oxy/forward"
 	"github.com/vulcand/oxy/utils"
 )
