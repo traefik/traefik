@@ -78,13 +78,13 @@ type WithMiddleware struct {
 }
 
 // AddRoutes Add routes to the router
-func (r *WithMiddleware) AddRoutes(systemRouter *mux.Router) {
+func (wm *WithMiddleware) AddRoutes(systemRouter *mux.Router) {
 	realRouter := systemRouter.PathPrefix("/").Subrouter()
 
-	r.router.AddRoutes(realRouter)
+	wm.router.AddRoutes(realRouter)
 
-	if len(r.routerMiddlewares) > 0 {
-		realRouter.Walk(wrapRoute(r.routerMiddlewares))
+	if len(wm.routerMiddlewares) > 0 {
+		realRouter.Walk(wrapRoute(wm.routerMiddlewares))
 	}
 }
 
@@ -95,14 +95,14 @@ type WithPrefix struct {
 }
 
 // AddRoutes Add routes to the router
-func (r *WithPrefix) AddRoutes(systemRouter *mux.Router) {
+func (wp *WithPrefix) AddRoutes(systemRouter *mux.Router) {
 	realRouter := systemRouter.PathPrefix("/").Subrouter()
-	if r.PathPrefix != "" {
-		realRouter = systemRouter.PathPrefix(r.PathPrefix).Subrouter()
+	if wp.PathPrefix != "" {
+		realRouter = systemRouter.PathPrefix(wp.PathPrefix).Subrouter()
 		realRouter.StrictSlash(true)
 		realRouter.SkipClean(true)
 	}
-	r.Router.AddRoutes(realRouter)
+	wp.Router.AddRoutes(realRouter)
 }
 
 // InternalRouterAggregator InternalRouter that aggregate other internalRouter
