@@ -327,7 +327,7 @@ func (gc *GlobalConfiguration) initTracing() {
 					SamplingServerURL:  "http://localhost:5778/sampling",
 					SamplingType:       "const",
 					SamplingParam:      1.0,
-					LocalAgentHostPort: "127.0.0.1:6832",
+					LocalAgentHostPort: "127.0.0.1:6831",
 				}
 			}
 			if gc.Tracing.Zipkin != nil {
