@@ -278,8 +278,8 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 							url := protocol + "://" + service.Spec.ExternalName
 							name := url
 							if port.Port != 443 && port.Port != 80 {
-                                                                url = fmt.Sprintf("%s:%d", url, port.Port)
-                                                        }
+								url = fmt.Sprintf("%s:%d", url, port.Port)
+							}
 
 							templateObjects.Backends[baseName].Servers[name] = types.Server{
 								URL:    url,
