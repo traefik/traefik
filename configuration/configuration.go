@@ -370,11 +370,17 @@ func (gc *GlobalConfiguration) initACMEProvider() {
 		if gc.ACME.OnDemand {
 			log.Warn("ACME.OnDemand is deprecated")
 		}
+	}
+}
 
+// InitACMEProvider create an acme provider from the ACME part of globalConfiguration
+func (gc *GlobalConfiguration) InitACMEProvider() *acmeprovider.Provider {
+	if gc.ACME != nil {
 		// TODO: Remove when Provider ACME will replace totally ACME
 		// If provider file, use Provider ACME instead of ACME
 		if gc.Cluster == nil {
-			acmeprovider.Get().Configuration = &acmeprovider.Configuration{
+			provider := &acmeprovider.Provider{}
+			provider.Configuration = &acmeprovider.Configuration{
 				OnHostRule:    gc.ACME.OnHostRule,
 				OnDemand:      gc.ACME.OnDemand,
 				Email:         gc.ACME.Email,
@@ -386,9 +392,15 @@ func (gc *GlobalConfiguration) initACMEProvider() {
 				CAServer:      gc.ACME.CAServer,
 				EntryPoint:    gc.ACME.EntryPoint,
 			}
+
+			store := acmeprovider.NewLocalStore(provider.Storage)
+			provider.Store = &store
+			acme.ConvertToNewFormat(provider.Storage)
 			gc.ACME = nil
+			return provider
 		}
 	}
+	return nil
 }
 
 // ValidateConfiguration validate that configuration is coherent
@@ -399,14 +411,6 @@ func (gc *GlobalConfiguration) ValidateConfiguration() {
 		} else {
 			if gc.EntryPoints[gc.ACME.EntryPoint].TLS == nil {
 				log.Fatalf("Entrypoint %q has no TLS configuration for ACME configuration", gc.ACME.EntryPoint)
-			}
-		}
-	} else if acmeprovider.IsEnabled() {
-		if _, ok := gc.EntryPoints[acmeprovider.Get().EntryPoint]; !ok {
-			log.Fatalf("Unknown entrypoint %q for provider ACME configuration", acmeprovider.Get().EntryPoint)
-		} else {
-			if gc.EntryPoints[acmeprovider.Get().EntryPoint].TLS == nil {
-				log.Fatalf("Entrypoint %q has no TLS configuration for provider ACME configuration", acmeprovider.Get().EntryPoint)
 			}
 		}
 	}

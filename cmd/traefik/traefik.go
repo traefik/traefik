@@ -24,7 +24,6 @@ import (
 	"github.com/containous/traefik/configuration/router"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/provider/ecs"
 	"github.com/containous/traefik/provider/kubernetes"
 	"github.com/containous/traefik/safe"
@@ -174,28 +173,47 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 	stats(globalConfiguration)
 
 	log.Debugf("Global configuration loaded %s", string(jsonConf))
-	if acme.IsEnabled() {
-		store := acme.NewLocalStore(acme.Get().Storage)
-		acme.Get().Store = &store
+
+	providerAggregator := configuration.NewProviderAggregator(globalConfiguration)
+
+	acmeprovider := globalConfiguration.InitACMEProvider()
+	if acmeprovider != nil {
+		providerAggregator.AddProvider(acmeprovider)
 	}
 
 	entryPoints := map[string]server.EntryPoint{}
 	for entryPointName, config := range globalConfiguration.EntryPoints {
-		internalRouter := router.NewInternalRouterAggregator(*globalConfiguration, entryPointName)
-		if acme.IsEnabled() && acme.Get().HTTPChallenge != nil && acme.Get().HTTPChallenge.EntryPoint == entryPointName {
-			internalRouter.AddRouter(acme.Get())
+
+		entryPoint := server.EntryPoint{
+			Configuration: config,
 		}
 
-		entryPoints[entryPointName] = server.EntryPoint{
-			InternalRouter: internalRouter,
-			Configuration:  config,
+		internalRouter := router.NewInternalRouterAggregator(*globalConfiguration, entryPointName)
+		if acmeprovider != nil {
+			if acmeprovider.HTTPChallenge != nil && acmeprovider.HTTPChallenge.EntryPoint == entryPointName {
+				internalRouter.AddRouter(acmeprovider)
+			}
+
+			if acmeprovider.EntryPoint == entryPointName && acmeprovider.OnDemand {
+				entryPoint.OnDemandListener = acmeprovider.ListenRequest
+			}
+
+			entryPoint.CertificateStore = &traefiktls.CertificateStore{
+				DynamicCerts: &safe.Safe{},
+				StaticCerts:  &safe.Safe{},
+			}
+			acmeprovider.SetCertificateStore(*entryPoint.CertificateStore)
+
 		}
+
+		entryPoint.InternalRouter = internalRouter
+		entryPoints[entryPointName] = entryPoint
 	}
 
-	svr := server.NewServer(*globalConfiguration, configuration.NewProviderAggregator(globalConfiguration), entryPoints)
-	if acme.IsEnabled() && acme.Get().OnHostRule {
-		acme.Get().SetConfigListenerChan(make(chan types.Configuration))
-		svr.AddListener(acme.Get().ListenConfiguration)
+	svr := server.NewServer(*globalConfiguration, providerAggregator, entryPoints)
+	if acmeprovider != nil && acmeprovider.OnHostRule {
+		acmeprovider.SetConfigListenerChan(make(chan types.Configuration))
+		svr.AddListener(acmeprovider.ListenConfiguration)
 	}
 	ctx := cmd.ContextWithSignal(context.Background())
 

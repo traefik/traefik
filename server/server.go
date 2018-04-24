@@ -35,7 +35,6 @@ import (
 	"github.com/containous/traefik/middlewares/redirect"
 	"github.com/containous/traefik/middlewares/tracing"
 	"github.com/containous/traefik/provider"
-	"github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/rules"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/server/cookie"
@@ -81,8 +80,10 @@ type Server struct {
 
 // EntryPoint entryPoint information (configuration + internalRouter)
 type EntryPoint struct {
-	InternalRouter types.InternalRouter
-	Configuration  *configuration.EntryPoint
+	InternalRouter   types.InternalRouter
+	Configuration    *configuration.EntryPoint
+	OnDemandListener func(string) (*tls.Certificate, error)
+	CertificateStore *traefiktls.CertificateStore
 }
 
 type serverEntryPoints map[string]*serverEntryPoint
@@ -502,11 +503,6 @@ func (s *Server) AddListener(listener func(types.Configuration)) {
 	s.configurationListeners = append(s.configurationListeners, listener)
 }
 
-// SetOnDemandListener adds a new listener function used when a request is caught
-func (s *serverEntryPoint) SetOnDemandListener(listener func(string) (*tls.Certificate, error)) {
-	s.onDemandListener = listener
-}
-
 // loadHTTPSConfiguration add/delete HTTPS certificate managed dynamically
 func (s *Server) loadHTTPSConfiguration(configurations types.Configurations, defaultEntryPoints configuration.DefaultEntryPoints) (map[string]map[string]*tls.Certificate, error) {
 	newEPCertificates := make(map[string]map[string]*tls.Certificate)
@@ -693,14 +689,8 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 	// in each certificate and populates the config.NameToCertificate map.
 	config.BuildNameToCertificate()
 
-	if acme.IsEnabled() {
-		if entryPointName == acme.Get().EntryPoint {
-			acme.Get().SetStaticCertificates(config.NameToCertificate)
-			acme.Get().SetDynamicCertificates(&s.serverEntryPoints[entryPointName].certs)
-			if acme.Get().OnDemand {
-				s.serverEntryPoints[entryPointName].SetOnDemandListener(acme.Get().ListenRequest)
-			}
-		}
+	if s.entryPoints[entryPointName].CertificateStore != nil {
+		s.entryPoints[entryPointName].CertificateStore.StaticCerts.Set(config.NameToCertificate)
 	}
 
 	// Set the minimum TLS version if set in the config TOML
@@ -839,9 +829,13 @@ func buildServerTimeouts(globalConfig configuration.GlobalConfiguration) (readTi
 
 func (s *Server) buildEntryPoints() map[string]*serverEntryPoint {
 	serverEntryPoints := make(map[string]*serverEntryPoint)
-	for entryPointName := range s.entryPoints {
+	for entryPointName, entryPoint := range s.entryPoints {
 		serverEntryPoints[entryPointName] = &serverEntryPoint{
-			httpRouter: middlewares.NewHandlerSwitcher(s.buildDefaultHTTPRouter()),
+			httpRouter:       middlewares.NewHandlerSwitcher(s.buildDefaultHTTPRouter()),
+			onDemandListener: entryPoint.OnDemandListener,
+		}
+		if entryPoint.CertificateStore != nil {
+			serverEntryPoints[entryPointName].certs = *entryPoint.CertificateStore.DynamicCerts
 		}
 	}
 	return serverEntryPoints
