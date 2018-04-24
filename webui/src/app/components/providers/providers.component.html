@@ -19,6 +19,7 @@
 
         <div *ngIf="keys?.length">
           <div class="columns">
+
             <div class="column is-6">
               <h2 class="subtitle">Frontends</h2>
               <div class="message" *ngFor="let p of providers[tab]?.frontends; let i = index;">
@@ -335,10 +336,10 @@
                         <span>{{ server.title }}</span>
                       </div>
                       <div class="column is-5">
-                        <span class="tag is-light">{{ server.url }}</span>
+                        <a href="{{ server.url }}">{{ server.url }}</a>
                       </div>
                       <div class="column is-2">
-                        <span class="tag is-light">{{ server.weight }}</span>
+                        <span>{{ server.weight }}</span>
                       </div>
                     </div>
                   </div>
@@ -447,6 +448,7 @@
                 </div>
               </div>
             </div>
+
           </div>
         </div>
       </div>
