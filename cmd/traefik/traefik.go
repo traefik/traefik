@@ -198,12 +198,11 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 				entryPoint.OnDemandListener = acmeprovider.ListenRequest
 			}
 
-			entryPoint.CertificateStore = &server.CertificateStore{
+			entryPoint.CertificateStore = &types.CertificateStore{
 				DynamicCerts: &safe.Safe{},
 				StaticCerts:  &safe.Safe{},
 			}
-			acmeprovider.SetDynamicCertificates(entryPoint.CertificateStore.DynamicCerts)
-			acmeprovider.SetStaticCertificates(entryPoint.CertificateStore.StaticCerts)
+			acmeprovider.SetCertificateStore(*entryPoint.CertificateStore)
 
 		}
 

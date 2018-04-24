@@ -56,8 +56,7 @@ type Provider struct {
 	client                 *acme.Client
 	certsChan              chan *Certificate
 	configurationChan      chan<- types.ConfigMessage
-	dynamicCerts           *safe.Safe
-	staticCerts            *safe.Safe
+	certifiateStore        types.CertificateStore
 	clientMutex            sync.Mutex
 	configFromListenerChan chan types.Configuration
 	pool                   *safe.Pool
@@ -196,14 +195,9 @@ func (p *Provider) watchNewDomains() {
 	})
 }
 
-// SetDynamicCertificates allow to initialize dynamicCerts map
-func (p *Provider) SetDynamicCertificates(safe *safe.Safe) {
-	p.dynamicCerts = safe
-}
-
-// SetStaticCertificates allow to initialize staticCerts map
-func (p *Provider) SetStaticCertificates(staticCerts *safe.Safe) {
-	p.staticCerts = staticCerts
+// SetCertificateStore allow to initialize certificate store
+func (p *Provider) SetCertificateStore(certificateStore types.CertificateStore) {
+	p.certifiateStore = certificateStore
 }
 
 func (p *Provider) resolveCertificate(domain types.Domain, domainFromConfigurationFile bool) (*acme.CertificateResource, error) {
@@ -507,35 +501,23 @@ func (p *Provider) AddRoutes(router *mux.Router) {
 // from static and dynamic provided certificates
 func (p *Provider) getUncheckedDomains(domainsToCheck []string, checkConfigurationDomains bool) []string {
 	log.Debugf("Looking for provided certificate(s) to validate %q...", domainsToCheck)
-	var allCerts []string
+	var allDomains []string
 
-	// Get static certificates
-	if p.staticCerts != nil && p.staticCerts.Get() != nil {
-		for domains := range p.staticCerts.Get().(map[string]*tls.Certificate) {
-			allCerts = append(allCerts, domains)
-		}
-	}
-
-	// Get dynamic certificates
-	if p.dynamicCerts != nil && p.dynamicCerts.Get() != nil {
-		for domains := range p.dynamicCerts.Get().(map[string]*tls.Certificate) {
-			allCerts = append(allCerts, domains)
-		}
-	}
+	allDomains = p.certifiateStore.GetAllDomains()
 
 	// Get ACME certificates
 	for _, certificate := range p.certificates {
-		allCerts = append(allCerts, strings.Join(certificate.Domain.ToStrArray(), ","))
+		allDomains = append(allDomains, strings.Join(certificate.Domain.ToStrArray(), ","))
 	}
 
 	// Get Configuration Domains
 	if checkConfigurationDomains {
 		for i := 0; i < len(p.Domains); i++ {
-			allCerts = append(allCerts, strings.Join(p.Domains[i].ToStrArray(), ","))
+			allDomains = append(allDomains, strings.Join(p.Domains[i].ToStrArray(), ","))
 		}
 	}
 
-	return searchUncheckedDomains(domainsToCheck, allCerts)
+	return searchUncheckedDomains(domainsToCheck, allDomains)
 }
 
 func searchUncheckedDomains(domainsToCheck []string, existentDomains []string) []string {

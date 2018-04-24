@@ -78,18 +78,12 @@ type Server struct {
 	entryPoints                   map[string]EntryPoint
 }
 
-// CertificateStore store for dynamic and static certificates
-type CertificateStore struct {
-	DynamicCerts *safe.Safe
-	StaticCerts  *safe.Safe
-}
-
 // EntryPoint entryPoint information (configuration + internalRouter)
 type EntryPoint struct {
 	InternalRouter   types.InternalRouter
 	Configuration    *configuration.EntryPoint
 	OnDemandListener func(string) (*tls.Certificate, error)
-	CertificateStore *CertificateStore
+	CertificateStore *types.CertificateStore
 }
 
 type serverEntryPoints map[string]*serverEntryPoint
