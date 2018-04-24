@@ -184,7 +184,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 		}
 		templateObjects.TLS = append(templateObjects.TLS, tlsSection...)
 
-		backendPercentageWeightMap, err := getPercentageWeightMap(i)
+		servicesPercentageWeightMap, err := getServicesPercentageWeights(i)
 		if err != nil {
 			log.Errorf("Invalid yaml format for backend weight annotation of ingress %s/%s: %v", i.Namespace, i.Name, err)
 			continue
@@ -196,20 +196,10 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				continue
 			}
 
-			var leftFractionPercentage float64 = 1
-			leftFractionInstanceCount := 0
-			for _, pa := range r.HTTP.Paths {
-				percentageWeight, found := backendPercentageWeightMap[pa.Backend.ServiceName]
-				if found {
-					leftFractionPercentage -= percentageWeight.Float64()
-					continue
-				}
-				endpoints, exist, err := k8sClient.GetEndpoints(i.Namespace, pa.Backend.ServiceName)
-				if err == nil && exist {
-					for _, subset := range endpoints.Subsets {
-						leftFractionInstanceCount += len(subset.Addresses)
-					}
-				}
+			leftFractionGetter, err := getLeftFraction(k8sClient, i.Namespace, r.HTTP.Paths, servicesPercentageWeightMap)
+			if err != nil {
+				log.Errorf("Error compute left fraction for ingress %s/%s", i.Namespace, i.Name)
+				continue
 			}
 
 			for _, pa := range r.HTTP.Paths {
@@ -331,14 +321,15 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 								break
 							}
 
-							if percentageWeight, found := backendPercentageWeightMap[pa.Backend.ServiceName]; found {
+							leftFractionPercentage, leftFractionInstanceCount := leftFractionGetter(pa.Path)
+							if percentageWeight, found := servicesPercentageWeightMap[pa.Backend.ServiceName]; found {
 								instanceCount := 0
 								for _, subset := range endpoints.Subsets {
 									instanceCount = instanceCount + len(subset.Addresses)
 								}
-								serverWeight = int(percentageWeight.RawValue()) / instanceCount
-							} else if leftFractionPercentage < 1 {
-								serverWeight = int(PercentageValueFromFloat64(leftFractionPercentage).RawValue() / int64(leftFractionInstanceCount))
+								serverWeight = percentageWeight.computeWeight(instanceCount)
+							} else if f := leftFractionPercentage.toFloat64(); 0 <= f && f < 1 && leftFractionInstanceCount > 0 {
+								serverWeight = leftFractionPercentage.computeWeight(leftFractionInstanceCount)
 							}
 
 							for _, subset := range endpoints.Subsets {
@@ -764,21 +755,64 @@ func getRateLimit(i *extensionsv1beta1.Ingress) *types.RateLimit {
 	return rateLimit
 }
 
-func getPercentageWeightMap(i *extensionsv1beta1.Ingress) (map[string]*PercentageValue, error) {
-	backendPercentageAnnotationValue := getStringValue(i.Annotations, annotationKubernetesBackendPercentageWeights, "")
-	backendPercentageAnnotationMap := make(map[string]string)
-	if err := yaml.Unmarshal([]byte(backendPercentageAnnotationValue), &backendPercentageAnnotationMap); err != nil {
+func getServicesPercentageWeights(i *extensionsv1beta1.Ingress) (map[string]*percentageValue, error) {
+	rawPercentageWeights := getStringValue(i.Annotations, annotationKubernetesPercentageWeights, "")
+
+	percentageWeight := make(map[string]string)
+
+	if err := yaml.Unmarshal([]byte(rawPercentageWeights), percentageWeight); err != nil {
 		return nil, err
 	}
-	backendPercentageWeightMap := make(map[string]*PercentageValue)
-	for serviceName, percentageStr := range backendPercentageAnnotationMap {
-		percentageValue, err := PercentageValueFromString(percentageStr)
+
+	servicesPercentageWeights := make(map[string]*percentageValue)
+	for serviceName, percentageStr := range percentageWeight {
+		percentageValue, err := percentageValueFromString(percentageStr)
 		if err != nil {
-			log.Errorf("Invalid percentage value %q in ingress %s/%s: %s", percentageStr, i.Name, err)
-			backendPercentageWeightMap = make(map[string]*PercentageValue)
-			break
+			return nil, fmt.Errorf("invalid percentage value %q in ingress %s: %v", percentageStr, i.Name, err)
 		}
-		backendPercentageWeightMap[serviceName] = percentageValue
+
+		servicesPercentageWeights[serviceName] = percentageValue
 	}
-	return backendPercentageWeightMap, nil
+	return servicesPercentageWeights, nil
+}
+
+func getLeftFraction(k8sClient Client, namespace string, paths []extensionsv1beta1.HTTPIngressPath, servicesPercentageWeights map[string]*percentageValue) (func(string) (*percentageValue, int), error) {
+	pathLeftFractionPercentageMap := make(map[string]*percentageValue)
+	pathLeftFractionInstanceCountMap := make(map[string]int)
+
+	for _, pa := range paths {
+		pathLeftFractionPercentageMap[pa.Path] = newOneHundredPercentageValue()
+	}
+
+	for _, pa := range paths {
+		endpoints, exist, err := k8sClient.GetEndpoints(namespace, pa.Backend.ServiceName)
+		if err != nil || !exist {
+			log.Warnf("fail to get endpoints %s/%s", namespace, pa.Backend.ServiceName)
+			continue
+		}
+		for _, subset := range endpoints.Subsets {
+			pathLeftFractionInstanceCountMap[pa.Path] += len(subset.Addresses)
+		}
+		percentageWeight, found := servicesPercentageWeights[pa.Backend.ServiceName]
+		if !found {
+			continue
+		}
+
+		leftFractionPercentage := pathLeftFractionPercentageMap[pa.Path].sub(percentageWeight)
+		if f := leftFractionPercentage.toFloat64(); f < 0 || f > 1 {
+			return nil, fmt.Errorf("percentage value %s overflow", leftFractionPercentage.toString())
+		}
+		pathLeftFractionPercentageMap[pa.Path] = leftFractionPercentage
+		for _, subset := range endpoints.Subsets {
+			pathLeftFractionInstanceCountMap[pa.Path] -= len(subset.Addresses)
+		}
+		continue
+	}
+	return func(path string) (*percentageValue, int) {
+		leftPercentage, found := pathLeftFractionPercentageMap[path]
+		if !found {
+			leftPercentage = newOneHundredPercentageValue()
+		}
+		return leftPercentage, pathLeftFractionInstanceCountMap[path]
+	}, nil
 }

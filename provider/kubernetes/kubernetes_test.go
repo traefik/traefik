@@ -2269,7 +2269,121 @@ func TestProviderUpdateIngressStatus(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestPercentageWeightServiceAnnotation(t *testing.T) {
+	ingresses := []*extensionsv1beta1.Ingress{
+		buildIngress(
+			iAnnotation(annotationKubernetesPercentageWeights, `
+service1: 10%
+`),
+			iNamespace("testing"),
+			iRules(
+				iRule(
+					iHost("host1"),
+					iPaths(
+						onePath(iPath("/foo"), iBackend("service1", intstr.FromString("8080"))),
+						onePath(iPath("/foo"), iBackend("service2", intstr.FromString("7070"))),
+						onePath(iPath("/bar"), iBackend("service1", intstr.FromString("8080"))),
+					)),
+			),
+		),
+	}
+	services := []*corev1.Service{
+		buildService(
+			sName("service1"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sPorts(sPort(8080, "")),
+			),
+		),
+		buildService(
+			sName("service2"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sPorts(sPort(7070, "")),
+			),
+		),
+	}
+
+	endpoints := []*corev1.Endpoints{
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service1"),
+			eUID("1"),
+			subset(
+				eAddresses(
+					eAddress("10.10.0.1"),
+					eAddress("10.10.0.2"),
+				),
+				ePorts(ePort(8080, "")),
+			),
+		),
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service2"),
+			eUID("1"),
+			subset(
+				eAddresses(
+					eAddress("10.10.0.3"),
+					eAddress("10.10.0.4"),
+				),
+				ePorts(ePort(7070, "")),
+			),
+		),
+	}
+
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		endpoints: endpoints,
+		watchChan: watchChan,
+	}
+	provider := Provider{}
+
+	actual, err := provider.loadIngresses(client)
+	require.NoError(t, err, "error loading ingresses")
+
+	expected := buildConfiguration(
+		backends(
+			backend("host1/foo",
+				servers(
+					server("http://10.10.0.1:8080", weight(int(percentageValueFromFloat64(0.05).value))),
+					server("http://10.10.0.2:8080", weight(int(percentageValueFromFloat64(0.05).value))),
+					server("http://10.10.0.3:7070", weight(int(percentageValueFromFloat64(0.45).value))),
+					server("http://10.10.0.4:7070", weight(int(percentageValueFromFloat64(0.45).value))),
+				),
+				lbMethod("wrr"),
+			),
+			backend("host1/bar",
+				servers(
+					server("http://10.10.0.1:8080", weight(int(percentageValueFromFloat64(0.05).value))),
+					server("http://10.10.0.2:8080", weight(int(percentageValueFromFloat64(0.05).value))),
+				),
+				lbMethod("wrr"),
+			),
+		),
+		frontends(
+			frontend("host1/bar",
+				passHostHeader(),
+				routes(
+					route("/bar", "PathPrefix:/bar"),
+					route("host1", "Host:host1")),
+			),
+			frontend("host1/foo",
+				passHostHeader(),
+				routes(
+					route("/foo", "PathPrefix:/foo"),
+					route("host1", "Host:host1")),
+			),
+		),
+	)
+	assert.Equal(t, expected, actual, "error loading percentage weight annotation")
 }
 
 func TestProviderNewK8sInClusterClient(t *testing.T) {
