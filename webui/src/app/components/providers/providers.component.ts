@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ApiService } from '../../services/api.service';
 import { Subscription } from 'rxjs/Subscription';
 import { Observable } from 'rxjs/Observable';
+import * as deepEqual from 'deep-equal';
 
 @Component({
   selector: 'app-providers',
@@ -19,14 +20,16 @@ export class ProvidersComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.keyword = '';
-    this.sub = Observable.timer(0, 15000)
+    this.sub = Observable.timer(0, 2000)
       .timeInterval()
       .mergeMap(() => this.apiService.fetchProviders())
       .subscribe(data => {
-        this.data = data;
-        this.providers = data;
-        this.keys = Object.keys(this.providers);
-        this.tab = this.keys[0];
+        if (!deepEqual(this.data, data) || !this.data) {
+          this.data = data;
+          this.providers = data;
+          this.keys = Object.keys(this.providers);
+          this.tab = this.keys[0];
+        }
       });
   }
 
