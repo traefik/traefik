@@ -105,11 +105,11 @@ func TestBuildService(t *testing.T) {
 	assert.EqualValues(t, sampleService1(), actual1)
 
 	actual2 := buildService(
-		sName("service3"),
+		sName("service2"),
 		sNamespace("testing"),
-		sUID("3"),
+		sUID("2"),
 		sSpec(
-			clusterIP("10.0.0.3"),
+			clusterIP("10.0.0.2"),
 			sType("ExternalName"),
 			sExternalName("example.com"),
 			sPorts(
@@ -143,12 +143,12 @@ func sampleService1() *corev1.Service {
 func sampleService2() *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "service3",
-			UID:       "3",
+			Name:      "service2",
+			UID:       "2",
 			Namespace: "testing",
 		},
 		Spec: corev1.ServiceSpec{
-			ClusterIP:    "10.0.0.3",
+			ClusterIP:    "10.0.0.2",
 			Type:         "ExternalName",
 			ExternalName: "example.com",
 			Ports: []corev1.ServicePort{
