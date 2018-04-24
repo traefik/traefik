@@ -55,7 +55,7 @@ type Provider struct {
 	client                 *acme.Client
 	certsChan              chan *Certificate
 	configurationChan      chan<- types.ConfigMessage
-	certifiateStore        traefiktls.CertificateStore
+	certificateStore       traefiktls.CertificateStore
 	clientMutex            sync.Mutex
 	configFromListenerChan chan types.Configuration
 	pool                   *safe.Pool
@@ -186,7 +186,7 @@ func (p *Provider) watchNewDomains() {
 
 // SetCertificateStore allow to initialize certificate store
 func (p *Provider) SetCertificateStore(certificateStore traefiktls.CertificateStore) {
-	p.certifiateStore = certificateStore
+	p.certificateStore = certificateStore
 }
 
 func (p *Provider) resolveCertificate(domain types.Domain, domainFromConfigurationFile bool) (*acme.CertificateResource, error) {
@@ -492,7 +492,7 @@ func (p *Provider) getUncheckedDomains(domainsToCheck []string, checkConfigurati
 	log.Debugf("Looking for provided certificate(s) to validate %q...", domainsToCheck)
 	var allDomains []string
 
-	allDomains = p.certifiateStore.GetAllDomains()
+	allDomains = p.certificateStore.GetAllDomains()
 
 	// Get ACME certificates
 	for _, certificate := range p.certificates {

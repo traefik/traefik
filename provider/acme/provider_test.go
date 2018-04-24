@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/containous/traefik/safe"
+	traefiktls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -146,7 +147,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 			t.Parallel()
 
 			acmeProvider := Provider{
-				certifiateStore: types.CertificateStore{
+				certificateStore: traefiktls.CertificateStore{
 					DynamicCerts: test.dynamicCerts,
 					StaticCerts:  test.staticCerts,
 				},
