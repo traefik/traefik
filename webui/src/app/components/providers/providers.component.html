@@ -60,42 +60,36 @@
                   <!-- Global -->
                   <div *ngIf="p.section !== 'details'">
 
+                    <div *ngIf="p.routes && p.routes.length">
+                      <table class="table is-fullwidth is-hoverable">
+                        <tbody>
+                          <tr>
+                            <td>Route</td>
+                            <td>Rule</td>
+                          </tr>
+                          <tr *ngFor="let route of p.routes; let ri = index;">
+                            <td><span class="has-text-grey-light">{{ route.title }}</span></td>
+                            <td><span class="has-text-grey">{{ route.rule }}</span></td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
                     <div *ngIf="p.entryPoints && p.entryPoints.length">
+                      <hr>
                       <div class="columns">
                         <div class="column is-3">
                           <h2>Entry Points</h2>
                         </div>
-                        <div class="column is-9">
-                          <div class="field is-grouped is-grouped-multiline">
-                            <div class="control">
-                              <div class="tags">
-                                <span class="tag is-info" *ngFor="let ep of p.entryPoints; let ri = index;">{{ ep }}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                      <div class="column is-9">
+                      <div class="field is-grouped is-grouped-multiline">
+                      <div class="control">
+                      <div class="tags">
+                      <span class="tag is-info" *ngFor="let ep of p.entryPoints; let ri = index;">{{ ep }}</span>
                       </div>
-                    </div>
-
-                    <div *ngIf="p.routes && p.routes.length">
-                      <hr>
-                      <div  class="columns list-title">
-                        <div class="column is-6">
-                          <span>Route</span>
-                        </div>
-                        <div class="column is-6">
-                          <span>Route Rule</span>
-                        </div>
                       </div>
-                      <div class="list-item" *ngFor="let route of p.routes; let ri = index;">
-                        <div class="columns">
-                          <div class="column is-6">
-                            <span>{{ route.title }}</span>
-                          </div>
-                          <div class="column is-6">
-                            <span class="tag is-light">{{ route.rule }}</span>
-                          </div>
-                        </div>
+                      </div>
+                      </div>
                       </div>
                     </div>
 
@@ -136,11 +130,7 @@
 
                     <div *ngIf="p.basicAuth && p.basicAuth.length">
                       <hr/>
-                      <div class="columns list-title">
-                        <div class="column is-12">
-                          <span>Basic Authentication</span>
-                        </div>
-                      </div>
+                      <h2>Basic Authentication</h2>
                       <div class="tags padding-5-10">
                           <span class="tag is-info" *ngFor="let auth of p.basicAuth; let ri = index;">{{ auth }}</span>
                       </div>
@@ -149,27 +139,47 @@
                     <div *ngIf="p.errors">
                       <hr/>
                       <h2>Error Pages</h2>
-                      <div class="columns list-title">
-                        <div class="column is-4">
-                          <span>Backend</span>
+                      <table class="table is-fullwidth is-hoverable">
+                        <tbody>
+                          <tr>
+                            <td>Backend</td>
+                            <td>Query</td>
+                            <td>Status</td>
+                          </tr>
+                          <tr *ngFor="let key of p.errors | keys">
+                            <td><span class="has-text-grey-light">{{ p.errors[key].backend }}</span></td>
+                            <td><span class="has-text-grey">{{ p.errors[key].query }}</span></td>
+                            <td>
+                              <span class="tag is-light" *ngFor="let state of p.errors[key].status">{{ state }}</span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div *ngIf="p.whiteList">
+                      <hr/>
+                      <div class="columns is-gapless is-multiline is-mobile">
+                        <div class="column is-half">
+                          <h2>Whitelist</h2>
                         </div>
-                        <div class="column is-4">
-                          <span>Query</span>
-                        </div>
-                        <div class="column is-4">
-                          <span>Status</span>
-                        </div>
-                      </div>
-                      <div class="list-item" *ngFor="let key of p.errors | keys">
-                        <div class="columns">
-                          <div class="column is-4">
-                            <span>{{ p.errors[key].backend }}</span>
+                        <div class="column is-half">
+                          <div class="field">
+                            <div class="control">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">useXForwardedFor</span>
+                                <span class="tag is-info">{{ p.whiteList.useXForwardedFor }}</span>
+                              </div>
+                            </div>
                           </div>
-                          <div class="column is-4">
-                            <span>{{ p.errors[key].query }}</span>
-                          </div>
-                          <div class="column is-4" *ngIf="p.errors[key].status && p.errors[key].status.length">
-                            <span>{{ p.errors[key].status.length }}</span>
+                        </div>
+                        <div class="column">
+                          <div class="field is-grouped is-grouped-multiline">
+                            <div class="control">
+                              <div class="tags">
+                                <span class="tag is-info" *ngFor="let wlRange of p.whiteList.sourceRange; let ri = index;">{{ wlRange }}</span>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -182,121 +192,94 @@
 
                         <div class="column is-12" *ngIf="p.headers.customRequestHeaders">
                           <h2>Custom Request Headers</h2>
-                          <div class="tags-list">
-                            <div class="control" *ngFor="let key of p.headers.customRequestHeaders | keys">
-                              <div class="tags has-addons">
-                                <span class="tag is-light">{{ key }}</span>
-                                <span class="tag is-light">{{ p.headers.customRequestHeaders[key] }}</span>
-                              </div>
-                            </div>
-                          </div>
+                          <table class="table is-fullwidth is-hoverable">
+                            <tbody>
+                              <tr *ngFor="let key of p.headers.customRequestHeaders | keys">
+                                <td><span class="has-text-grey-light">{{ key }}</span></td>
+                                <td><span class="has-text-grey">{{ p.headers.customRequestHeaders[key] }}</span></td>
+                              </tr>
+                            </tbody>
+                          </table>
                         </div>
 
                         <div class="column is-12" *ngIf="p.headers.customResponseHeaders">
                           <h2>Custom Response Headers</h2>
-                          <div class="tags-list">
-                            <div class="control" *ngFor="let key of p.headers.customResponseHeaders | keys">
-                              <div class="tags has-addons">
-                                <span class="tag is-light">{{ key }}</span>
-                                <span class="tag is-light">{{ p.headers.customResponseHeaders[key] }}</span>
-                              </div>
-                            </div>
-                          </div>
+                          <table class="table is-fullwidth is-hoverable">
+                            <tbody>
+                              <tr *ngFor="let key of p.headers.customResponseHeaders | keys">
+                                <td><span class="has-text-grey-light">{{ key }}</span></td>
+                                <td><span class="has-text-grey">{{ p.headers.customResponseHeaders[key] }}</span></td>
+                              </tr>
+                            </tbody>
+                          </table>
                         </div>
 
                         <div class="column is-12">
-                          <div class="tags-list">
-                            <div class="control" *ngIf="p.headers.browserXssFilter">
-                              <div class="tags has-addons">
-                                <span class="tag is-light">Browser XSS Filter</span>
-                                <span class="tag is-light">{{ p.headers.browserXssFilter }}</span>
-                              </div>
-                            </div>
-                            <div class="control" *ngIf="p.headers.contentSecurityPolicy">
-                              <div class="tags has-addons">
-                                <span class="tag is-light">Content Security Policy</span>
-                                <span class="tag is-light">{{ p.headers.contentSecurityPolicy }}</span>
-                              </div>
-                            </div>
-                            <div class="control" *ngIf="p.headers.contentTypeNoSniff">
-                              <div class="tags has-addons">
-                                <span class="tag is-light">Content Type (No sniff)</span>
-                                <span class="tag is-light">{{ p.headers.contentTypeNoSniff }}</span>
-                              </div>
-                            </div>
-                            <div class="control" *ngIf="p.headers.customFrameOptionsValue">
-                              <div class="tags has-addons">
-                                <span class="tag is-light">Custom Frame Options Value</span>
-                                <span class="tag is-light">{{ p.headers.customFrameOptionsValue }}</span>
-                              </div>
-                            </div>
-                            <div class="control" *ngIf="p.headers.forceSTSHeader">
-                              <div class="tags has-addons">
-                                <span class="tag is-light">Force STS Header</span>
-                                <span class="tag is-light">{{ p.headers.forceSTSHeader }}</span>
-                              </div>
-                            </div>
-                            <div class="control" *ngIf="p.headers.frameDeny">
-                              <div class="tags has-addons">
-                                <span class="tag is-light">Frame Deny</span>
-                                <span class="tag is-light">{{ p.headers.frameDeny }}</span>
-                              </div>
-                            </div>
-                            <div class="control" *ngIf="p.headers.isDevelopment">
-                              <div class="tags has-addons">
-                                <span class="tag is-light">Is Development</span>
-                                <span class="tag is-light">{{ p.headers.isDevelopment }}</span>
-                              </div>
-                            </div>
-                            <div class="control" *ngIf="p.headers.publicKey">
-                              <div class="tags has-addons">
-                                <span class="tag is-light">Public Key</span>
-                                <span class="tag is-light">{{ p.headers.publicKey }}</span>
-                              </div>
-                            </div>
-                            <div class="control" *ngIf="p.headers.referrerPolicy">
-                              <div class="tags has-addons">
-                                <span class="tag is-light">Referrer Policy</span>
-                                <span class="tag is-light">{{ p.headers.referrerPolicy }}</span>
-                              </div>
-                            </div>
-                            <div class="control" *ngIf="p.headers.sslHost">
-                              <div class="tags has-addons">
-                                <span class="tag is-light">SSL Host</span>
-                                <span class="tag is-light">{{ p.headers.sslHost }}</span>
-                              </div>
-                            </div>
-                            <div class="control" *ngIf="p.headers.sslRedirect">
-                              <div class="tags has-addons">
-                                <span class="tag is-light">SSL Redirect</span>
-                                <span class="tag is-light">{{ p.headers.sslRedirect }}</span>
-                              </div>
-                            </div>
-                            <div class="control" *ngIf="p.headers.sslTemporaryRedirect">
-                              <div class="tags has-addons">
-                                <span class="tag is-light">SSL Temporary Redirect</span>
-                                <span class="tag is-light">{{ p.headers.sslTemporaryRedirect }}</span>
-                              </div>
-                            </div>
-                            <div class="control" *ngIf="p.headers.stsIncludeSubdomains">
-                              <div class="tags has-addons">
-                                <span class="tag is-light">STS Include Subdomains</span>
-                                <span class="tag is-light">{{ p.headers.stsIncludeSubdomains }}</span>
-                              </div>
-                            </div>
-                            <div class="control" *ngIf="p.headers.stsPreload">
-                              <div class="tags has-addons">
-                                <span class="tag is-light">STS Preload</span>
-                                <span class="tag is-light">{{ p.headers.stsPreload }}</span>
-                              </div>
-                            </div>
-                            <div class="control" *ngIf="p.headers.stsSeconds">
-                              <div class="tags has-addons">
-                                <span class="tag is-light">STS Seconds</span>
-                                <span class="tag is-light">{{ p.headers.stsSeconds }}</span>
-                              </div>
-                            </div>
-                          </div>
+                          <h2>Secure</h2>
+                          <table class="table is-fullwidth is-hoverable">
+                            <tbody>
+                              <tr *ngIf="p.headers.browserXssFilter">
+                                <td><span class="has-text-grey">Browser XSS Filter</span></td>
+                                <td><span class="has-text-grey">{{ p.headers.browserXssFilter }}</span></td>
+                              </tr>
+                              <tr *ngIf="p.headers.contentSecurityPolicy">
+                                <td><span class="has-text-grey">Content Security Policy</span></td>
+                                <td><span class="has-text-grey">{{ p.headers.contentSecurityPolicy }}</span></td>
+                              </tr>
+                              <tr *ngIf="p.headers.contentTypeNoSniff">
+                                <td><span class="has-text-grey">Content Type (No sniff)</span></td>
+                                <td><span class="has-text-grey">{{ p.headers.contentTypeNoSniff }}</span></td>
+                              </tr>
+                              <tr *ngIf="p.headers.customFrameOptionsValue">
+                                <td><span class="has-text-grey">Custom Frame Options Value</span></td>
+                                <td><span class="has-text-grey">{{ p.headers.customFrameOptionsValue }}</span></td>
+                              </tr>
+                              <tr *ngIf="p.headers.forceSTSHeader">
+                                <td><span class="has-text-grey">Force STS Header</span></td>
+                                <td><span class="has-text-grey">{{ p.headers.forceSTSHeader }}</span></td>
+                              </tr>
+                              <tr *ngIf="p.headers.frameDeny">
+                                <td><span class="has-text-grey">Frame Deny</span></td>
+                                <td><span class="has-text-grey">{{ p.headers.frameDeny }}</span></td>
+                              </tr>
+                              <tr *ngIf="p.headers.isDevelopment">
+                                <td><span class="has-text-grey">Is Development</span></td>
+                                <td><span class="has-text-grey">{{ p.headers.isDevelopment }}</span></td>
+                              </tr>
+                              <tr *ngIf="p.headers.publicKey">
+                                <td><span class="has-text-grey">Public Key</span></td>
+                                <td><span class="has-text-grey">{{ p.headers.publicKey }}</span></td>
+                              </tr>
+                              <tr *ngIf="p.headers.referrerPolicy">
+                                <td><span class="has-text-grey">Referrer Policy</span></td>
+                                <td><span class="has-text-grey">{{ p.headers.referrerPolicy }}</span></td>
+                              </tr>
+                              <tr *ngIf="p.headers.sslHost">
+                                <td><span class="has-text-grey">SSL Host</span></td>
+                                <td><span class="has-text-grey">{{ p.headers.sslHost }}</span></td>
+                              </tr>
+                              <tr *ngIf="p.headers.sslRedirect">
+                                <td><span class="has-text-grey">SSL Redirect</span></td>
+                                <td><span class="has-text-grey">{{ p.headers.sslRedirect }}</span></td>
+                              </tr>
+                              <tr *ngIf="p.headers.sslTemporaryRedirect">
+                                <td><span class="has-text-grey">SSL Temporary Redirect</span></td>
+                                <td><span class="has-text-grey">{{ p.headers.sslTemporaryRedirect }}</span></td>
+                              </tr>
+                              <tr *ngIf="p.headers.stsIncludeSubdomains">
+                                <td><span class="has-text-grey">STS Include Subdomains</span></td>
+                                <td><span class="has-text-grey">{{ p.headers.stsIncludeSubdomains }}</span></td>
+                              </tr>
+                              <tr *ngIf="p.headers.stsPreload">
+                                <td><span class="has-text-grey">STS Preload</span></td>
+                                <td><span class="has-text-grey">{{ p.headers.stsPreload }}</span></td>
+                              </tr>
+                              <tr *ngIf="p.headers.stsSeconds">
+                                <td><span class="has-text-grey">STS Seconds</span></td>
+                                <td><span class="has-text-grey">{{ p.headers.stsSeconds }}</span></td>
+                              </tr>
+                            </tbody>
+                          </table>
                         </div>
 
                         <div class="column is-12" *ngIf="p.headers.allowedHosts">
@@ -308,14 +291,14 @@
 
                         <div class="column is-12" *ngIf="p.headers.sslProxyHeaders">
                           <h2>SSL Proxy Headers</h2>
-                          <div class="tags-list">
-                            <div class="control" *ngFor="let key of p.headers.sslProxyHeaders | keys">
-                              <div class="tags has-addons">
-                                <span class="tag is-light">{{ key }}</span>
-                                <span class="tag is-light">{{ p.headers.sslProxyHeaders[key] }}</span>
-                              </div>
-                            </div>
-                          </div>
+                          <table class="table is-fullwidth is-hoverable">
+                            <tbody>
+                              <tr *ngFor="let key of p.headers.sslProxyHeaders | keys">
+                                <td><span class="has-text-grey-light">{{ key }}</span></td>
+                                <td><span class="has-text-grey">{{ p.headers.sslProxyHeaders[key] }}</span></td>
+                              </tr>
+                            </tbody>
+                          </table>
                         </div>
 
                         <div class="column is-12" *ngIf="p.headers.hostsProxyHeaders">
@@ -363,30 +346,20 @@
 
                   <!-- Global -->
                   <div *ngIf="p.section !== 'details'">
-                    <div class="columns list-title">
-                      <div class="column is-5">
-                        <span>Server</span>
-                      </div>
-                      <div class="column is-5">
-                        <span>URL</span>
-                      </div>
-                      <div class="column is-2">
-                        <span>Weight</span>
-                      </div>
-                    </div>
-                    <div class="list-item" *ngFor="let server of p.servers; let ri = index;">
-                      <div class="columns">
-                        <div class="column is-5">
-                          <span>{{ server.title }}</span>
-                        </div>
-                        <div class="column is-5">
-                          <a href="{{ server.url }}">{{ server.url }}</a>
-                        </div>
-                        <div class="column is-2">
-                          <span>{{ server.weight }}</span>
-                        </div>
-                      </div>
-                    </div>
+                    <table class="table is-fullwidth is-hoverable">
+                      <tbody>
+                        <tr>
+                          <td>Server</td>
+                          <td>URL</td>
+                          <td>Weight</td>
+                        </tr>
+                        <tr *ngFor="let server of p.servers; let ri = index;">
+                          <td><span class="has-text-grey-light">{{ server.title }}</span></td>
+                          <td><a href="{{ server.url }}">{{ server.url }}</a></td>
+                          <td><span class="has-text-grey">{{ server.weight }}</span></td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
 
                   <!-- Details -->
@@ -466,35 +439,115 @@
                     </div>
 
                     <div *ngIf="p.healthCheck">
-                    <hr/>
-                    <div class="columns">
-                      <div class="column is-3">
-                        <h2>Health Check</h2>
-                      </div>
-                      <div class="column is-9">
-                        <div class="field is-grouped is-grouped-multiline">
-                          <div class="control">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">Interval</span>
-                              <span class="tag is-info">{{ p.healthCheck.interval }}</span>
+                      <hr/>
+                      <div class="columns">
+                        <div class="column is-3">
+                          <h2>Health Check</h2>
+                        </div>
+                        <div class="column is-9">
+                          <div class="field is-grouped is-grouped-multiline">
+                            <div class="control">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">Path</span>
+                                <span class="tag is-info">{{ p.healthCheck.path }}</span>
+                              </div>
                             </div>
-                          </div>
-                          <div class="control">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">Path</span>
-                              <span class="tag is-info">{{ p.healthCheck.path }}</span>
+                            <div class="control" *ngIf="p.healthCheck.port">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">Port</span>
+                                <span class="tag is-info">{{ p.healthCheck.port }}</span>
+                              </div>
                             </div>
-                          </div>
-                          <div class="control">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">Port</span>
-                              <span class="tag is-info">{{ p.healthCheck.port }}</span>
+                            <div class="control" *ngIf="p.healthCheck.interval">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">Interval</span>
+                                <span class="tag is-info">{{ p.healthCheck.interval }}</span>
+                              </div>
+                            </div>
+                            <div class="control" *ngIf="p.healthCheck.hostname">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">Hostname</span>
+                                <span class="tag is-info">{{ p.healthCheck.hostname }}</span>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+
+                    <div *ngIf="p.buffering">
+                      <hr>
+                      <div class="columns list-title">
+                        <div class="column is-12">
+                          <h2>Buffering</h2>
+                        </div>
+                      </div>
+                      <div class="list-item">
+                        <div class="columns">
+                          <div class="column is-4">
+                            <span>Request Body Bytes</span>
+                          </div>
+                          <div class="column is-4">
+                            <div class="field is-grouped is-grouped-multiline">
+                              <div class="control">
+                                <div class="tags has-addons">
+                                  <span class="tag is-light">Max</span>
+                                  <span class="tag is-info">{{ p.buffering.maxRequestBodyBytes }}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="column is-4">
+                            <div class="field is-grouped is-grouped-multiline">
+                              <div class="control">
+                                <div class="tags has-addons">
+                                  <span class="tag is-light">Men</span>
+                                  <span class="tag is-info">{{ p.buffering.memRequestBodyBytes }}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="list-item">
+                        <div class="columns">
+                          <div class="column is-4">
+                            <span>Response Body Bytes</span>
+                          </div>
+                          <div class="column is-4">
+                            <div class="field is-grouped is-grouped-multiline">
+                              <div class="control">
+                                <div class="tags has-addons">
+                                  <span class="tag is-light">Max</span>
+                                  <span class="tag is-info">{{ p.buffering.maxResponseBodyBytes }}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="column is-4">
+                            <div class="field is-grouped is-grouped-multiline">
+                              <div class="control">
+                                <div class="tags has-addons">
+                                  <span class="tag is-light">Men</span>
+                                  <span class="tag is-info">{{ p.buffering.memResponseBodyBytes }}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="list-item">
+                        <div class="columns">
+                          <div class="column is-4">
+                            <span>Retry Expression</span>
+                          </div>
+                          <div class="column is-8">
+                            <span class="tag is-info">{{ p.buffering.retryExpression }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
                   </div>
 
                 </div>
