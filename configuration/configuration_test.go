@@ -58,7 +58,6 @@ func TestSetEffectiveConfigurationGraceTimeout(t *testing.T) {
 			gc.SetEffectiveConfiguration(defaultConfigFile)
 
 			assert.Equal(t, test.wantGraceTimeout, time.Duration(gc.LifeCycle.GraceTimeOut))
-
 		})
 	}
 }

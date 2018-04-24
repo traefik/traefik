@@ -21,6 +21,7 @@ import (
 	cmdVersion "github.com/containous/traefik/cmd/version"
 	"github.com/containous/traefik/collector"
 	"github.com/containous/traefik/configuration"
+	"github.com/containous/traefik/configuration/router"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider/acme"
@@ -177,12 +178,31 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 		store := acme.NewLocalStore(acme.Get().Storage)
 		acme.Get().Store = &store
 	}
-	svr := server.NewServer(*globalConfiguration, configuration.NewProviderAggregator(globalConfiguration))
+
+	entryPoints := map[string]server.EntryPoint{}
+	for entryPointName, config := range globalConfiguration.EntryPoints {
+		internalRouter := router.NewInternalRouterAggregator(*globalConfiguration, entryPointName)
+		if acme.IsEnabled() && acme.Get().HTTPChallenge != nil && acme.Get().HTTPChallenge.EntryPoint == entryPointName {
+			internalRouter.AddRouter(acme.Get())
+		}
+
+		entryPoints[entryPointName] = server.EntryPoint{
+			InternalRouter: internalRouter,
+			Configuration:  config,
+		}
+	}
+
+	svr := server.NewServer(*globalConfiguration, configuration.NewProviderAggregator(globalConfiguration), entryPoints)
 	if acme.IsEnabled() && acme.Get().OnHostRule {
 		acme.Get().SetConfigListenerChan(make(chan types.Configuration))
 		svr.AddListener(acme.Get().ListenConfiguration)
 	}
 	ctx := cmd.ContextWithSignal(context.Background())
+
+	if globalConfiguration.Ping != nil {
+		globalConfiguration.Ping.WithContext(ctx)
+	}
+
 	svr.StartWithContext(ctx)
 	defer svr.Close()
 
