@@ -41,7 +41,9 @@ export class ProvidersComponent implements OnInit, OnDestroy {
         return Object.assign(acc, {
           [curr]: {
             backends: this.data[curr].backends.filter(d => d.id.toLowerCase().includes(keyword)),
-            frontends: this.data[curr].frontends.filter(d => d.id.toLowerCase().includes(keyword))
+            frontends: this.data[curr].frontends.filter(d => {
+              return d.id.toLowerCase().includes(keyword) || d.backend.toLowerCase().includes(keyword);
+            })
           }
         });
       }, {});
