@@ -83,7 +83,7 @@ type EntryPoint struct {
 	InternalRouter   types.InternalRouter
 	Configuration    *configuration.EntryPoint
 	OnDemandListener func(string) (*tls.Certificate, error)
-	CertificateStore *types.CertificateStore
+	CertificateStore *traefiktls.CertificateStore
 }
 
 type serverEntryPoints map[string]*serverEntryPoint

@@ -20,7 +20,7 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/rules"
 	"github.com/containous/traefik/safe"
-	traefikTLS "github.com/containous/traefik/tls"
+	traefiktls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/pkg/errors"
 	acme "github.com/xenolf/lego/acmev2"
@@ -30,7 +30,6 @@ import (
 var (
 	// OSCPMustStaple enables OSCP stapling as from https://github.com/xenolf/lego/issues/270
 	OSCPMustStaple = false
-	provider       = &Provider{}
 )
 
 // Configuration holds ACME configuration provided by users
@@ -56,7 +55,7 @@ type Provider struct {
 	client                 *acme.Client
 	certsChan              chan *Certificate
 	configurationChan      chan<- types.ConfigMessage
-	certifiateStore        types.CertificateStore
+	certifiateStore        traefiktls.CertificateStore
 	clientMutex            sync.Mutex
 	configFromListenerChan chan types.Configuration
 	pool                   *safe.Pool
@@ -78,16 +77,6 @@ type DNSChallenge struct {
 // HTTPChallenge contains HTTP challenge Configuration
 type HTTPChallenge struct {
 	EntryPoint string `description:"HTTP challenge EntryPoint"`
-}
-
-// Get returns the provider instance
-func Get() *Provider {
-	return provider
-}
-
-// IsEnabled returns true if the provider instance and its configuration are not nil, otherwise false
-func IsEnabled() bool {
-	return provider != nil && provider.Configuration != nil
 }
 
 // SetConfigListenerChan initializes the configFromListenerChan
@@ -196,7 +185,7 @@ func (p *Provider) watchNewDomains() {
 }
 
 // SetCertificateStore allow to initialize certificate store
-func (p *Provider) SetCertificateStore(certificateStore types.CertificateStore) {
+func (p *Provider) SetCertificateStore(certificateStore traefiktls.CertificateStore) {
 	p.certifiateStore = certificateStore
 }
 
@@ -418,13 +407,13 @@ func (p *Provider) refreshCertificates() {
 		Configuration: &types.Configuration{
 			Backends:  map[string]*types.Backend{},
 			Frontends: map[string]*types.Frontend{},
-			TLS:       []*traefikTLS.Configuration{},
+			TLS:       []*traefiktls.Configuration{},
 		},
 	}
 
 	for _, cert := range p.certificates {
-		certificate := &traefikTLS.Certificate{CertFile: traefikTLS.FileOrContent(cert.Certificate), KeyFile: traefikTLS.FileOrContent(cert.Key)}
-		config.Configuration.TLS = append(config.Configuration.TLS, &traefikTLS.Configuration{Certificate: certificate, EntryPoints: []string{p.EntryPoint}})
+		certificate := &traefiktls.Certificate{CertFile: traefiktls.FileOrContent(cert.Certificate), KeyFile: traefiktls.FileOrContent(cert.Key)}
+		config.Configuration.TLS = append(config.Configuration.TLS, &traefiktls.Configuration{Certificate: certificate, EntryPoints: []string{p.EntryPoint}})
 	}
 	p.configurationChan <- config
 }

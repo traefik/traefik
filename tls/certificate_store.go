@@ -1,4 +1,4 @@
-package types
+package tls
 
 import (
 	"crypto/tls"
