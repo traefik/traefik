@@ -48,10 +48,13 @@ Træfik supports two backends: Jaeger and Zipkin.
 
     # Local Agent Host Port instructs reporter to send spans to jaeger-agent at this address
     #
-    # Default: "127.0.0.1:6832"
+    # Default: "127.0.0.1:6831"
     #
-    localAgentHostPort = "127.0.0.1:6832"
+    localAgentHostPort = "127.0.0.1:6831"
 ```
+
+!!! warning
+    Træfik is only able to send data over compact thrift protocol to the [Jaeger agent](https://www.jaegertracing.io/docs/deployment/#agent). 
 
 ## Zipkin
 
