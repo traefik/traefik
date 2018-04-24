@@ -40,7 +40,7 @@
                         <div class="control">
                           <div class="tags has-addons">
                             <span class="tag is-light">Backend</span>
-                            <span class="tag is-info">{{ p.backend }}</span>
+                            <span class="tag is-primary">{{ p.backend }}</span>
                           </div>
                         </div>
                       </div>
@@ -48,9 +48,16 @@
                   </h2>
                 </div>
                 <div class="message-subheader">
-                  <span class="tag is-warning" *ngIf="p.priority">Priority: {{ p.priority }}</span>
-                  <span class="tag is-warning" *ngIf="p.passHostHeader">Host Header: {{ p.passHostHeader }}</span>
-                  <span class="tag is-warning" *ngIf="p.passTLSCert">TLS Cert: {{ p.passTLSCert }}</span>
+                  <div class="columns">
+                    <div class="column is-3">
+                      <h2>Entry Points</h2>
+                    </div>
+                    <div class="column is-9">
+                      <div class="tags">
+                        <span class="tag is-warning" *ngFor="let ep of p.entryPoints; let ri = index;">{{ ep }}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div class="message-body">
                   <div *ngIf="p.routes && p.routes.length">
@@ -73,24 +80,40 @@
                       </div>
                     </div>
                   </div>
+
                   <div *ngIf="p.entryPoints && p.entryPoints.length">
                     <hr/>
-                    <div class="columns list-title">
-                      <div class="column is-12">
-                        <span>Entry Point</span>
+                    <div class="columns">
+                      <div class="column is-3">
+                        <h2>Misc.</h2>
                       </div>
-                    </div>
-                    <div class="list-item" *ngFor="let ep of p.entryPoints; let ri = index;">
-                      <div class="columns">
-                        <div class="column is-12">
-                          <span class="tag is-light">{{ ep }}</span>
+                      <div class="column is-9">
+                        <div class="field is-grouped is-grouped-multiline">
+                          <div class="control" *ngIf="p.priority">
+                            <div class="tags has-addons">
+                              <span class="tag is-light">Priority</span>
+                              <span class="tag is-info">{{ p.priority }}</span>
+                            </div>
+                          </div>
+                          <div class="control" *ngIf="p.passHostHeader">
+                            <div class="tags has-addons">
+                              <span class="tag is-light">Host Header</span>
+                              <span class="tag is-info">{{ p.passHostHeader }}</span>
+                            </div>
+                          </div>
+                          <div class="control" *ngIf="p.passTLSCert">
+                            <div class="tags has-addons">
+                              <span class="tag is-light">TLS Cert</span>
+                              <span class="tag is-info">{{ p.passTLSCert }}</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                   <div *ngIf="p.errors">
                     <hr/>
-                    <h2>Errors</h2>
+                    <h2>Error Pages</h2>
                     <div class="columns list-title">
                       <div class="column is-4">
                         <span>Backend</span>
@@ -99,7 +122,7 @@
                         <span>Query</span>
                       </div>
                       <div class="column is-4">
-                        <span>Errors</span>
+                        <span>Status</span>
                       </div>
                     </div>
                     <div class="list-item" *ngFor="let key of p.errors | keys">
@@ -275,6 +298,7 @@
                 </div>
               </div>
             </div>
+
             <div class="column is-6">
               <h2 class="subtitle">Backends</h2>
               <div class="message" *ngFor="let p of providers[tab]?.backends; let i = index;">
@@ -286,7 +310,7 @@
                         <div class="control">
                           <div class="tags has-addons">
                             <span class="tag is-light">ID</span>
-                            <span class="tag is-info">{{ p.id }}</span>
+                            <span class="tag is-primary">{{ p.id }}</span>
                           </div>
                         </div>
                       </div>
@@ -320,9 +344,11 @@
                   </div>
                   <div *ngIf="p.maxConn">
                     <hr/>
-                    <h2>Max Connections</h2>
                     <div class="columns">
-                      <div class="column is-12">
+                      <div class="column is-3">
+                        <h2>Max Connections</h2>
+                      </div>
+                      <div class="column is-9">
                         <div class="field is-grouped is-grouped-multiline">
                           <div class="control">
                             <div class="tags has-addons">
@@ -342,9 +368,11 @@
                   </div>
                   <div *ngIf="p.circuitBreaker">
                     <hr/>
-                    <h2>Circuit Breaker</h2>
                     <div class="columns">
-                      <div class="column is-12">
+                      <div class="column is-3">
+                        <h2>Circuit Breaker</h2>
+                      </div>
+                      <div class="column is-9">
                         <div class="field is-grouped is-grouped-multiline">
                           <div class="control">
                             <div class="tags has-addons">
@@ -358,9 +386,11 @@
                   </div>
                   <div *ngIf="p.loadBalancer">
                     <hr/>
-                    <h2>Load Balancer</h2>
                     <div class="columns">
-                      <div class="column is-12">
+                      <div class="column is-3">
+                        <h2>Load Balancer</h2>
+                      </div>
+                      <div class="column is-9">
                         <div class="field is-grouped is-grouped-multiline">
                           <div class="control">
                             <div class="tags has-addons">
@@ -369,15 +399,15 @@
                             </div>
                           </div>
                           <div class="control">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">Sticky</span>
-                              <span class="tag is-info">{{ p.loadBalancer.sticky }}</span>
+                            <div class="tags has-addons" *ngIf="p.loadBalancer.stickiness || p.loadBalancer.sticky">
+                              <span class="tag is-light">Stickiness</span>
+                              <span class="tag is-info">true</span>
                             </div>
                           </div>
                           <div class="control" *ngIf="p.loadBalancer.stickiness">
                             <div class="tags has-addons">
-                              <span class="tag is-light">Stickiness</span>
-                              <span class="tag is-info">Cookie Name: {{ p.loadBalancer.stickiness.cookieName }}</span>
+                              <span class="tag is-light">Cookie Name</span>
+                              <span class="tag is-info">{{ p.loadBalancer.stickiness.cookieName }}</span>
                             </div>
                           </div>
                         </div>
@@ -386,9 +416,11 @@
                   </div>
                   <div *ngIf="p.healthCheck">
                     <hr/>
-                    <h2>Health Check</h2>
                     <div class="columns">
-                      <div class="column is-12">
+                      <div class="column is-3">
+                        <h2>Health Check</h2>
+                      </div>
+                      <div class="column is-9">
                         <div class="field is-grouped is-grouped-multiline">
                           <div class="control">
                             <div class="tags has-addons">
