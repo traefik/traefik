@@ -1,7 +1,7 @@
 <div class="container">
   <div class="content">
 
-    <div class="columns is-multiline" *ngIf="keys && keys.length">
+    <div class="columns is-multiline" *ngIf="keys?.length">
       <div class="column is-12">
 
         <div class="search-container">
@@ -19,7 +19,7 @@
 
         <div *ngIf="keys?.length">
           <div class="columns">
-
+            <!-- Frontends -->
             <div class="column is-6">
               <h2 class="subtitle">Frontends</h2>
               <div class="message" *ngFor="let p of providers[tab]?.frontends; let i = index;">
@@ -48,258 +48,292 @@
                     </div>
                   </h2>
                 </div>
-                <div class="message-subheader">
-                  <div class="columns">
-                    <div class="column is-3">
-                      <h2>Entry Points</h2>
-                    </div>
-                    <div class="column is-9">
-                      <div class="tags">
-                        <span class="tag is-warning" *ngFor="let ep of p.entryPoints; let ri = index;">{{ ep }}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+
                 <div class="message-body">
-                  <div *ngIf="p.routes && p.routes.length">
-                    <div class="columns list-title">
-                      <div class="column is-6">
-                        <span>Route</span>
-                      </div>
-                      <div class="column is-6">
-                        <span>Route Rule</span>
-                      </div>
-                    </div>
-                    <div class="list-item" *ngFor="let route of p.routes; let ri = index;">
-                      <div class="columns">
-                        <div class="column is-6">
-                          <span>{{ route.title }}</span>
-                        </div>
-                        <div class="column is-6">
-                          <span class="tag is-light">{{ route.rule }}</span>
-                        </div>
-                      </div>
-                    </div>
+                  <div class="tabs is-fullwidth is-small is-boxed">
+                    <ul>
+                      <li [class.is-active]="p.section !== 'details'" (click)="p.section = 'global'"><a>Global</a></li>
+                      <li [class.is-active]="p.section === 'details'" (click)="p.section = 'details'"><a>Details</a></li>
+                    </ul>
                   </div>
 
-                  <div *ngIf="p.entryPoints && p.entryPoints.length">
-                    <hr/>
-                    <div class="columns">
-                      <div class="column is-3">
-                        <h2>Misc.</h2>
-                      </div>
-                      <div class="column is-9">
-                        <div class="field is-grouped is-grouped-multiline">
-                          <div class="control" *ngIf="p.priority">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">Priority</span>
-                              <span class="tag is-info">{{ p.priority }}</span>
-                            </div>
-                          </div>
-                          <div class="control" *ngIf="p.passHostHeader">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">Host Header</span>
-                              <span class="tag is-info">{{ p.passHostHeader }}</span>
-                            </div>
-                          </div>
-                          <div class="control" *ngIf="p.passTLSCert">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">TLS Cert</span>
-                              <span class="tag is-info">{{ p.passTLSCert }}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div *ngIf="p.errors">
-                    <hr/>
-                    <h2>Error Pages</h2>
-                    <div class="columns list-title">
-                      <div class="column is-4">
-                        <span>Backend</span>
-                      </div>
-                      <div class="column is-4">
-                        <span>Query</span>
-                      </div>
-                      <div class="column is-4">
-                        <span>Status</span>
-                      </div>
-                    </div>
-                    <div class="list-item" *ngFor="let key of p.errors | keys">
+                  <!-- Global -->
+                  <div *ngIf="p.section !== 'details'">
+
+                    <div *ngIf="p.entryPoints && p.entryPoints.length">
                       <div class="columns">
+                        <div class="column is-3">
+                          <h2>Entry Points</h2>
+                        </div>
+                        <div class="column is-9">
+                          <div class="field is-grouped is-grouped-multiline">
+                            <div class="control">
+                              <div class="tags">
+                                <span class="tag is-warning" *ngFor="let ep of p.entryPoints; let ri = index;">{{ ep }}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div *ngIf="p.routes && p.routes.length">
+                      <hr>
+                      <div  class="columns list-title">
+                        <div class="column is-6">
+                          <span>Route</span>
+                        </div>
+                        <div class="column is-6">
+                          <span>Route Rule</span>
+                        </div>
+                      </div>
+                      <div class="list-item" *ngFor="let route of p.routes; let ri = index;">
+                        <div class="columns">
+                          <div class="column is-6">
+                            <span>{{ route.title }}</span>
+                          </div>
+                          <div class="column is-6">
+                            <span class="tag is-light">{{ route.rule }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  <!-- Details -->
+                  <div *ngIf="p.section === 'details'">
+
+                    <div>
+                      <div class="columns">
+                        <div class="column is-3">
+                          <h2>Misc.</h2>
+                        </div>
+                        <div class="column is-9">
+                          <div class="field is-grouped is-grouped-multiline">
+                            <div class="control" *ngIf="p.priority">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">Priority</span>
+                                <span class="tag is-info">{{ p.priority }}</span>
+                              </div>
+                            </div>
+                            <div class="control" *ngIf="p.passHostHeader">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">Host Header</span>
+                                <span class="tag is-info">{{ p.passHostHeader }}</span>
+                              </div>
+                            </div>
+                            <div class="control" *ngIf="p.passTLSCert">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">TLS Cert</span>
+                                <span class="tag is-info">{{ p.passTLSCert }}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div *ngIf="p.basicAuth && p.basicAuth.length">
+                      <hr/>
+                      <div class="columns list-title">
+                        <div class="column is-12">
+                          <span>Basic Authentication</span>
+                        </div>
+                      </div>
+                      <div class="tags padding-5-10">
+                          <span class="tag is-info" *ngFor="let auth of p.basicAuth; let ri = index;">{{ auth }}</span>
+                      </div>
+                    </div>
+
+                    <div *ngIf="p.errors">
+                      <hr/>
+                      <h2>Error Pages</h2>
+                      <div class="columns list-title">
                         <div class="column is-4">
-                          <span>{{ p.errors[key].backend }}</span>
+                          <span>Backend</span>
                         </div>
                         <div class="column is-4">
-                          <span>{{ p.errors[key].query }}</span>
+                          <span>Query</span>
                         </div>
-                        <div class="column is-4" *ngIf="p.errors[key].status && p.errors[key].status.length">
-                          <span>{{ p.errors[key].status.length }}</span>
+                        <div class="column is-4">
+                          <span>Status</span>
+                        </div>
+                      </div>
+                      <div class="list-item" *ngFor="let key of p.errors | keys">
+                        <div class="columns">
+                          <div class="column is-4">
+                            <span>{{ p.errors[key].backend }}</span>
+                          </div>
+                          <div class="column is-4">
+                            <span>{{ p.errors[key].query }}</span>
+                          </div>
+                          <div class="column is-4" *ngIf="p.errors[key].status && p.errors[key].status.length">
+                            <span>{{ p.errors[key].status.length }}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
+
+                    <div *ngIf="p.headers">
+                      <hr/>
+                      <h2>Headers</h2>
+                      <div class="columns is-multiline">
+
+                        <div class="column is-12" *ngIf="p.headers.customRequestHeaders">
+                          <h2>Custom Request Headers</h2>
+                          <div class="tags-list">
+                            <div class="control" *ngFor="let key of p.headers.customRequestHeaders | keys">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">{{ key }}</span>
+                                <span class="tag is-light">{{ p.headers.customRequestHeaders[key] }}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="column is-12" *ngIf="p.headers.customResponseHeaders">
+                          <h2>Custom Response Headers</h2>
+                          <div class="tags-list">
+                            <div class="control" *ngFor="let key of p.headers.customResponseHeaders | keys">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">{{ key }}</span>
+                                <span class="tag is-light">{{ p.headers.customResponseHeaders[key] }}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="column is-12">
+                          <div class="tags-list">
+                            <div class="control" *ngIf="p.headers.browserXssFilter">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">Browser XSS Filter</span>
+                                <span class="tag is-light">{{ p.headers.browserXssFilter }}</span>
+                              </div>
+                            </div>
+                            <div class="control" *ngIf="p.headers.contentSecurityPolicy">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">Content Security Policy</span>
+                                <span class="tag is-light">{{ p.headers.contentSecurityPolicy }}</span>
+                              </div>
+                            </div>
+                            <div class="control" *ngIf="p.headers.contentTypeNoSniff">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">Content Type (No sniff)</span>
+                                <span class="tag is-light">{{ p.headers.contentTypeNoSniff }}</span>
+                              </div>
+                            </div>
+                            <div class="control" *ngIf="p.headers.customFrameOptionsValue">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">Custom Frame Options Value</span>
+                                <span class="tag is-light">{{ p.headers.customFrameOptionsValue }}</span>
+                              </div>
+                            </div>
+                            <div class="control" *ngIf="p.headers.forceSTSHeader">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">Force STS Header</span>
+                                <span class="tag is-light">{{ p.headers.forceSTSHeader }}</span>
+                              </div>
+                            </div>
+                            <div class="control" *ngIf="p.headers.frameDeny">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">Frame Deny</span>
+                                <span class="tag is-light">{{ p.headers.frameDeny }}</span>
+                              </div>
+                            </div>
+                            <div class="control" *ngIf="p.headers.isDevelopment">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">Is Development</span>
+                                <span class="tag is-light">{{ p.headers.isDevelopment }}</span>
+                              </div>
+                            </div>
+                            <div class="control" *ngIf="p.headers.publicKey">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">Public Key</span>
+                                <span class="tag is-light">{{ p.headers.publicKey }}</span>
+                              </div>
+                            </div>
+                            <div class="control" *ngIf="p.headers.referrerPolicy">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">Referrer Policy</span>
+                                <span class="tag is-light">{{ p.headers.referrerPolicy }}</span>
+                              </div>
+                            </div>
+                            <div class="control" *ngIf="p.headers.sslHost">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">SSL Host</span>
+                                <span class="tag is-light">{{ p.headers.sslHost }}</span>
+                              </div>
+                            </div>
+                            <div class="control" *ngIf="p.headers.sslRedirect">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">SSL Redirect</span>
+                                <span class="tag is-light">{{ p.headers.sslRedirect }}</span>
+                              </div>
+                            </div>
+                            <div class="control" *ngIf="p.headers.sslTemporaryRedirect">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">SSL Temporary Redirect</span>
+                                <span class="tag is-light">{{ p.headers.sslTemporaryRedirect }}</span>
+                              </div>
+                            </div>
+                            <div class="control" *ngIf="p.headers.stsIncludeSubdomains">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">STS Include Subdomains</span>
+                                <span class="tag is-light">{{ p.headers.stsIncludeSubdomains }}</span>
+                              </div>
+                            </div>
+                            <div class="control" *ngIf="p.headers.stsPreload">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">STS Preload</span>
+                                <span class="tag is-light">{{ p.headers.stsPreload }}</span>
+                              </div>
+                            </div>
+                            <div class="control" *ngIf="p.headers.stsSeconds">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">STS Seconds</span>
+                                <span class="tag is-light">{{ p.headers.stsSeconds }}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="column is-12" *ngIf="p.headers.allowedHosts">
+                          <h2>Allowed Hosts</h2>
+                          <div class="tags-list">
+                            <span class="tag is-light" *ngFor="let host of p.headers.allowedHosts">{{ host }}</span>
+                          </div>
+                        </div>
+
+                        <div class="column is-12" *ngIf="p.headers.sslProxyHeaders">
+                          <h2>SSL Proxy Headers</h2>
+                          <div class="tags-list">
+                            <div class="control" *ngFor="let key of p.headers.sslProxyHeaders | keys">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">{{ key }}</span>
+                                <span class="tag is-light">{{ p.headers.sslProxyHeaders[key] }}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="column is-12" *ngIf="p.headers.hostsProxyHeaders">
+                          <h2>Hosts Proxy Headers</h2>
+                          <div class="tags-list">
+                            <span class="tag is-light" *ngFor="let h of p.headers.hostsProxyHeaders">{{ h }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
                   </div>
-                  <div *ngIf="p.basicAuth && p.basicAuth.length">
-                    <hr/>
-                    <div class="columns list-title">
-                      <div class="column is-12">
-                        <span>Basic Authentication</span>
-                      </div>
-                    </div>
-                    <div class="tags padding-5-10">
-                        <span class="tag is-info" *ngFor="let auth of p.basicAuth; let ri = index;">{{ auth }}</span>
-                    </div>
-                  </div>
-                  <div *ngIf="p.headers">
-                    <hr/>
-                    <h2>Headers</h2>
-                    <div class="columns is-multiline">
-                      <div class="column is-12">
-                        <div class="tags-list">
-                          <div class="control" *ngIf="p.headers.browserXssFilter">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">Browser XSS Filter</span>
-                              <span class="tag is-light">{{ p.headers.browserXssFilter }}</span>
-                            </div>
-                          </div>
-                          <div class="control" *ngIf="p.headers.contentSecurityPolicy">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">Content Security Policy</span>
-                              <span class="tag is-light">{{ p.headers.contentSecurityPolicy }}</span>
-                            </div>
-                          </div>
-                          <div class="control" *ngIf="p.headers.contentTypeNoSniff">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">Content Type (No sniff)</span>
-                              <span class="tag is-light">{{ p.headers.contentTypeNoSniff }}</span>
-                            </div>
-                          </div>
-                          <div class="control" *ngIf="p.headers.customFrameOptionsValue">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">Custom Frame Options Value</span>
-                              <span class="tag is-light">{{ p.headers.customFrameOptionsValue }}</span>
-                            </div>
-                          </div>
-                          <div class="control" *ngIf="p.headers.forceSTSHeader">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">Force STS Header</span>
-                              <span class="tag is-light">{{ p.headers.forceSTSHeader }}</span>
-                            </div>
-                          </div>
-                          <div class="control" *ngIf="p.headers.frameDeny">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">Frame Deny</span>
-                              <span class="tag is-light">{{ p.headers.frameDeny }}</span>
-                            </div>
-                          </div>
-                          <div class="control" *ngIf="p.headers.isDevelopment">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">Is Development</span>
-                              <span class="tag is-light">{{ p.headers.isDevelopment }}</span>
-                            </div>
-                          </div>
-                          <div class="control" *ngIf="p.headers.publicKey">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">Public Key</span>
-                              <span class="tag is-light">{{ p.headers.publicKey }}</span>
-                            </div>
-                          </div>
-                          <div class="control" *ngIf="p.headers.referrerPolicy">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">Referrer Policy</span>
-                              <span class="tag is-light">{{ p.headers.referrerPolicy }}</span>
-                            </div>
-                          </div>
-                          <div class="control" *ngIf="p.headers.sslHost">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">SSL Host</span>
-                              <span class="tag is-light">{{ p.headers.sslHost }}</span>
-                            </div>
-                          </div>
-                          <div class="control" *ngIf="p.headers.sslRedirect">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">SSL Redirect</span>
-                              <span class="tag is-light">{{ p.headers.sslRedirect }}</span>
-                            </div>
-                          </div>
-                          <div class="control" *ngIf="p.headers.sslTemporaryRedirect">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">SSL Temporary Redirect</span>
-                              <span class="tag is-light">{{ p.headers.sslTemporaryRedirect }}</span>
-                            </div>
-                          </div>
-                          <div class="control" *ngIf="p.headers.stsIncludeSubdomains">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">STS Include Subdomains</span>
-                              <span class="tag is-light">{{ p.headers.stsIncludeSubdomains }}</span>
-                            </div>
-                          </div>
-                          <div class="control" *ngIf="p.headers.stsPreload">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">STS Preload</span>
-                              <span class="tag is-light">{{ p.headers.stsPreload }}</span>
-                            </div>
-                          </div>
-                          <div class="control" *ngIf="p.headers.stsSeconds">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">STS Seconds</span>
-                              <span class="tag is-light">{{ p.headers.stsSeconds }}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="column is-12" *ngIf="p.headers.allowedHosts">
-                        <h2>Allowed Hosts</h2>
-                        <div class="tags-list">
-                          <span class="tag is-light" *ngFor="let host of p.headers.allowedHosts">{{ host }}</span>
-                        </div>
-                      </div>
-                      <div class="column is-12" *ngIf="p.headers.customRequestHeaders">
-                        <h2>Custom Request Headers</h2>
-                        <div class="tags-list">
-                          <div class="control" *ngFor="let key of p.headers.customRequestHeaders | keys">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">{{ key }}</span>
-                              <span class="tag is-light">{{ p.headers.customRequestHeaders[key] }}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="column is-12" *ngIf="p.headers.customResponseHeaders">
-                        <h2>Custom Response Headers</h2>
-                        <div class="tags-list">
-                          <div class="control" *ngFor="let key of p.headers.customResponseHeaders | keys">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">{{ key }}</span>
-                              <span class="tag is-light">{{ p.headers.customResponseHeaders[key] }}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="column is-12" *ngIf="p.headers.sslProxyHeaders">
-                        <h2>SSL Proxy Headers</h2>
-                        <div class="tags-list">
-                          <div class="control" *ngFor="let key of p.headers.sslProxyHeaders | keys">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">{{ key }}</span>
-                              <span class="tag is-light">{{ p.headers.sslProxyHeaders[key] }}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="column is-12" *ngIf="p.headers.hostsProxyHeaders">
-                        <h2>Hosts Proxy Headers</h2>
-                        <div class="tags-list">
-                          <span class="tag is-light" *ngFor="let h of p.headers.hostsProxyHeaders">{{ h }}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+
                 </div>
               </div>
             </div>
 
+            <!-- Backends -->
             <div class="column is-6">
               <h2 class="subtitle">Backends</h2>
               <div class="message" *ngFor="let p of providers[tab]?.backends; let i = index;">
@@ -319,103 +353,119 @@
                   </h2>
                 </div>
                 <div class="message-body">
-                  <div class="columns list-title">
-                    <div class="column is-5">
-                      <span>Server</span>
-                    </div>
-                    <div class="column is-5">
-                      <span>URL</span>
-                    </div>
-                    <div class="column is-2">
-                      <span>Weight</span>
-                    </div>
+
+                  <div class="tabs is-fullwidth is-small is-boxed">
+                    <ul>
+                      <li [class.is-active]="p.section !== 'details'" (click)="p.section = 'global'"><a>Global</a></li>
+                      <li [class.is-active]="p.section === 'details'" (click)="p.section = 'details'"><a>Details</a></li>
+                    </ul>
                   </div>
-                  <div class="list-item" *ngFor="let server of p.servers; let ri = index;">
-                    <div class="columns">
+
+                  <!-- Global -->
+                  <div *ngIf="p.section !== 'details'">
+                    <div class="columns list-title">
                       <div class="column is-5">
-                        <span>{{ server.title }}</span>
+                        <span>Server</span>
                       </div>
                       <div class="column is-5">
-                        <a href="{{ server.url }}">{{ server.url }}</a>
+                        <span>URL</span>
                       </div>
                       <div class="column is-2">
-                        <span>{{ server.weight }}</span>
+                        <span>Weight</span>
+                      </div>
+                    </div>
+                    <div class="list-item" *ngFor="let server of p.servers; let ri = index;">
+                      <div class="columns">
+                        <div class="column is-5">
+                          <span>{{ server.title }}</span>
+                        </div>
+                        <div class="column is-5">
+                          <a href="{{ server.url }}">{{ server.url }}</a>
+                        </div>
+                        <div class="column is-2">
+                          <span>{{ server.weight }}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <div *ngIf="p.maxConn">
-                    <hr/>
-                    <div class="columns">
-                      <div class="column is-3">
-                        <h2>Max Connections</h2>
-                      </div>
-                      <div class="column is-9">
-                        <div class="field is-grouped is-grouped-multiline">
-                          <div class="control">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">Amount</span>
-                              <span class="tag is-info">{{ p.maxConn.amount }}</span>
+
+                  <!-- Details -->
+                  <div *ngIf="p.section === 'details'">
+                    <div *ngIf="p.maxConn">
+                      <div class="columns">
+                        <div class="column is-3">
+                          <h2>Max Connections</h2>
+                        </div>
+                        <div class="column is-9">
+                          <div class="field is-grouped is-grouped-multiline">
+                            <div class="control">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">Amount</span>
+                                <span class="tag is-info">{{ p.maxConn.amount }}</span>
+                              </div>
                             </div>
-                          </div>
-                          <div class="control">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">Extractor Function</span>
-                              <span class="tag is-info">{{ p.maxConn.extractorFunc }}</span>
+                            <div class="control">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">Extractor Function</span>
+                                <span class="tag is-info">{{ p.maxConn.extractorFunc }}</span>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <div *ngIf="p.circuitBreaker">
-                    <hr/>
-                    <div class="columns">
-                      <div class="column is-3">
-                        <h2>Circuit Breaker</h2>
-                      </div>
-                      <div class="column is-9">
-                        <div class="field is-grouped is-grouped-multiline">
-                          <div class="control">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">Expression</span>
-                              <span class="tag is-info">{{ p.circuitBreaker.expression }}</span>
+
+                    <div *ngIf="p.circuitBreaker">
+                      <hr/>
+                      <div class="columns">
+                        <div class="column is-3">
+                          <h2>Circuit Breaker</h2>
+                        </div>
+                        <div class="column is-9">
+                          <div class="field is-grouped is-grouped-multiline">
+                            <div class="control">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">Expression</span>
+                                <span class="tag is-info">{{ p.circuitBreaker.expression }}</span>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <div *ngIf="p.loadBalancer">
-                    <hr/>
-                    <div class="columns">
-                      <div class="column is-3">
-                        <h2>Load Balancer</h2>
-                      </div>
-                      <div class="column is-9">
-                        <div class="field is-grouped is-grouped-multiline">
-                          <div class="control">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">Method</span>
-                              <span class="tag is-info">{{ p.loadBalancer.method }}</span>
+
+                    <div *ngIf="p.loadBalancer">
+                      <hr/>
+                      <div class="columns">
+                        <div class="column is-3">
+                          <h2>Load Balancer</h2>
+                        </div>
+                        <div class="column is-9">
+                          <div class="field is-grouped is-grouped-multiline">
+                            <div class="control">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">Method</span>
+                                <span class="tag is-info">{{ p.loadBalancer.method }}</span>
+                              </div>
                             </div>
-                          </div>
-                          <div class="control">
-                            <div class="tags has-addons" *ngIf="p.loadBalancer.stickiness || p.loadBalancer.sticky">
-                              <span class="tag is-light">Stickiness</span>
-                              <span class="tag is-info">true</span>
+                            <div class="control">
+                              <div class="tags has-addons" *ngIf="p.loadBalancer.stickiness || p.loadBalancer.sticky">
+                                <span class="tag is-light">Stickiness</span>
+                                <span class="tag is-info">true</span>
+                              </div>
                             </div>
-                          </div>
-                          <div class="control" *ngIf="p.loadBalancer.stickiness">
-                            <div class="tags has-addons">
-                              <span class="tag is-light">Cookie Name</span>
-                              <span class="tag is-info">{{ p.loadBalancer.stickiness.cookieName }}</span>
+                            <div class="control" *ngIf="p.loadBalancer.stickiness">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">Cookie Name</span>
+                                <span class="tag is-info">{{ p.loadBalancer.stickiness.cookieName }}</span>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <div *ngIf="p.healthCheck">
+
+                    <div *ngIf="p.healthCheck">
                     <hr/>
                     <div class="columns">
                       <div class="column is-3">
@@ -445,6 +495,8 @@
                       </div>
                     </div>
                   </div>
+                  </div>
+
                 </div>
               </div>
             </div>
