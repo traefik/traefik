@@ -73,7 +73,7 @@
     </div>
   </div>
 
-  <div class="content" *ngIf="data.recent_errors">
+  <div class="content" *ngIf="recentErrors">
     <div class="content-item">
       <h2>Recent HTTP Errors</h2>
       <table class="table is-fullwidth">
@@ -82,7 +82,7 @@
           <td>Request</td>
           <td>Time</td>
         </tr>
-        <tr *ngFor="let entry of data.recent_errors">
+        <tr *ngFor="let entry of recentErrors">
           <td>
             <span class="tag is-info">{{ entry.status_code }}</span>&nbsp;<span>{{ entry.status }}</span>
           </td>
@@ -93,7 +93,7 @@
             <span>{{ entry.time }}</span>
           </td>
         </tr>
-        <tr *ngIf="!data.recent_errors?.length">
+        <tr *ngIf="!recentErrors?.length">
           <td colspan="3">
             <p class="text-muted text-center">No entries</p>
           </td>

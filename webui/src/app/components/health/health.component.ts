@@ -14,7 +14,7 @@ import { format, distanceInWordsStrict, subSeconds } from 'date-fns';
 })
 export class HealthComponent implements OnInit, OnDestroy {
   sub: Subscription;
-  data: any;
+  recentErrors: any;
   pid: number;
   uptime: string;
   uptimeSince: string;
@@ -32,18 +32,20 @@ export class HealthComponent implements OnInit, OnDestroy {
       .timeInterval()
       .mergeMap(() => this.apiService.fetchHealthStatus())
       .subscribe(data => {
-        this.data = data;
-        this.chartValue = { count: data.average_response_time_sec, date: data.time };
-        this.statusCodeValue = Object.keys(data.total_status_code_count)
-          .map(key => ({ code: key, count: data.total_status_code_count[key] }));
+        if (data) {
+          this.recentErrors = data.recent_errors;
+          this.chartValue = { count: data.average_response_time_sec, date: data.time };
+          this.statusCodeValue = Object.keys(data.total_status_code_count)
+            .map(key => ({ code: key, count: data.total_status_code_count[key] }));
 
-        this.pid = data.pid;
-        this.uptime = distanceInWordsStrict(subSeconds(new Date(), data.uptime_sec), new Date());
-        this.uptimeSince = format(subSeconds(new Date(), data.uptime_sec), 'MM/DD/YYYY HH:mm:ss');
-        this.totalResponseTime = data.total_response_time;
-        this.averageResponseTime = data.average_response_time;
-        this.codeCount = data.count;
-        this.totalCodeCount = data.total_count;
+          this.pid = data.pid;
+          this.uptime = distanceInWordsStrict(subSeconds(new Date(), data.uptime_sec), new Date());
+          this.uptimeSince = format(subSeconds(new Date(), data.uptime_sec), 'MM/DD/YYYY HH:mm:ss');
+          this.totalResponseTime = data.total_response_time;
+          this.averageResponseTime = data.average_response_time;
+          this.codeCount = data.count;
+          this.totalCodeCount = data.total_count;
+        }
       });
   }
 
