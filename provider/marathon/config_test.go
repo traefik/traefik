@@ -1034,7 +1034,7 @@ func TestGetPort(t *testing.T) {
 		desc        string
 		application marathon.Application
 		task        marathon.Task
-		serviceName string
+		segmentName string
 		expected    string
 	}{
 		{
@@ -1116,23 +1116,23 @@ func TestGetPort(t *testing.T) {
 		},
 		{
 			desc:        "multiple task ports with service index available",
-			application: application(withLabel(label.Prefix+"http.portIndex", "0")),
+			application: application(withSegmentLabel(label.TraefikPortIndex, "0", "http")),
 			task:        task(taskPorts(80, 443)),
-			serviceName: "http",
+			segmentName: "http",
 			expected:    "80",
 		},
 		{
 			desc:        "multiple task ports with service port available",
-			application: application(withLabel(label.Prefix+"https.port", "443")),
+			application: application(withSegmentLabel(label.TraefikPort, "443", "https")),
 			task:        task(taskPorts(80, 443)),
-			serviceName: "https",
+			segmentName: "https",
 			expected:    "443",
 		},
 		{
 			desc:        "multiple task ports with services but default port available",
-			application: application(withLabel(label.Prefix+"http.weight", "100")),
+			application: application(withSegmentLabel(label.TraefikWeight, "100", "http")),
 			task:        task(taskPorts(80, 443)),
-			serviceName: "http",
+			segmentName: "http",
 			expected:    "80",
 		},
 	}
@@ -1142,7 +1142,7 @@ func TestGetPort(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actual := getPortV1(test.task, test.application, test.serviceName)
+			actual := getPort(test.task, withAppData(test.application, test.segmentName))
 
 			assert.Equal(t, test.expected, actual)
 		})
@@ -1153,7 +1153,7 @@ func TestGetFrontendRule(t *testing.T) {
 	testCases := []struct {
 		desc                    string
 		application             marathon.Application
-		serviceName             string
+		segmentName             string
 		expected                string
 		marathonLBCompatibility bool
 	}{
@@ -1162,6 +1162,15 @@ func TestGetFrontendRule(t *testing.T) {
 			application:             application(appID("test")),
 			marathonLBCompatibility: true,
 			expected:                "Host:test.marathon.localhost",
+		},
+		{
+			desc: "label domain",
+			application: application(
+				appID("test"),
+				withLabel(label.TraefikDomain, "traefik.localhost"),
+			),
+			marathonLBCompatibility: true,
+			expected:                "Host:test.traefik.localhost",
 		},
 		{
 			desc: "HAProxy vhost available and LB compat disabled",
@@ -1180,7 +1189,6 @@ func TestGetFrontendRule(t *testing.T) {
 		},
 		{
 			desc: "frontend rule available",
-
 			application: application(
 				withLabel(label.TraefikFrontendRule, "Host:foo.bar"),
 				withLabel("HAPROXY_0_VHOST", "unused"),
@@ -1189,9 +1197,9 @@ func TestGetFrontendRule(t *testing.T) {
 			expected:                "Host:foo.bar",
 		},
 		{
-			desc:                    "service label existing",
+			desc:                    "segment label frontend rule",
 			application:             application(withSegmentLabel(label.TraefikFrontendRule, "Host:foo.bar", "app")),
-			serviceName:             "app",
+			segmentName:             "app",
 			marathonLBCompatibility: true,
 			expected:                "Host:foo.bar",
 		},
@@ -1206,7 +1214,7 @@ func TestGetFrontendRule(t *testing.T) {
 				MarathonLBCompatibility: test.marathonLBCompatibility,
 			}
 
-			actual := p.getFrontendRuleV1(test.application, test.serviceName)
+			actual := p.getFrontendRule(withAppData(test.application, test.segmentName))
 
 			assert.Equal(t, test.expected, actual)
 		})
@@ -1217,7 +1225,7 @@ func TestGetBackendName(t *testing.T) {
 	testCases := []struct {
 		desc        string
 		application marathon.Application
-		serviceName string
+		segmentName string
 		expected    string
 	}{
 		{
@@ -1231,9 +1239,9 @@ func TestGetBackendName(t *testing.T) {
 			expected:    "backendbar",
 		},
 		{
-			desc:        "service label existing",
+			desc:        "segment label existing",
 			application: application(withSegmentLabel(label.TraefikBackend, "bar", "app")),
-			serviceName: "app",
+			segmentName: "app",
 			expected:    "backendbar",
 		},
 	}
@@ -1245,7 +1253,7 @@ func TestGetBackendName(t *testing.T) {
 
 			p := &Provider{}
 
-			actual := p.getBackendNameV1(test.application, test.serviceName)
+			actual := p.getBackendName(withAppData(test.application, test.segmentName))
 
 			assert.Equal(t, test.expected, actual)
 		})
@@ -1256,7 +1264,7 @@ func TestGetServers(t *testing.T) {
 	testCases := []struct {
 		desc        string
 		application marathon.Application
-		serviceName string
+		segmentName string
 		expected    map[string]types.Server
 	}{
 		{
@@ -1304,12 +1312,14 @@ func TestGetServers(t *testing.T) {
 
 	for _, test := range testCases {
 		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
+		if test.desc == "should return nil when all hosts are empty" {
+			t.Run(test.desc, func(t *testing.T) {
+				t.Parallel()
 
-			actual := p.getServersV1(test.application, test.serviceName)
+				actual := p.getServers(withAppData(test.application, test.segmentName))
 
-			assert.Equal(t, test.expected, actual)
-		})
+				assert.Equal(t, test.expected, actual)
+			})
+		}
 	}
 }

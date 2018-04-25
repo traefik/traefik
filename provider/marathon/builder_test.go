@@ -10,6 +10,16 @@ import (
 
 const testTaskName = "taskID"
 
+func withAppData(app marathon.Application, segmentName string) appData {
+	segmentProperties := label.ExtractTraefikLabels(stringValueMap(app.Labels))
+	return appData{
+		Application:   app,
+		SegmentLabels: segmentProperties[segmentName],
+		SegmentName:   segmentName,
+		LinkedApps:    nil,
+	}
+}
+
 // Functions related to building applications.
 
 func withApplications(apps ...marathon.Application) *marathon.Applications {

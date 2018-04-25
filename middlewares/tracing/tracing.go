@@ -73,7 +73,10 @@ func (t *Tracing) IsEnabled() bool {
 // Close tracer
 func (t *Tracing) Close() {
 	if t.closer != nil {
-		t.closer.Close()
+		err := t.closer.Close()
+		if err != nil {
+			log.Warn(err)
+		}
 	}
 }
 
@@ -104,10 +107,13 @@ func GetSpan(r *http.Request) opentracing.Span {
 // InjectRequestHeaders used to inject OpenTracing headers into the request
 func InjectRequestHeaders(r *http.Request) {
 	if span := GetSpan(r); span != nil {
-		opentracing.GlobalTracer().Inject(
+		err := opentracing.GlobalTracer().Inject(
 			span.Context(),
 			opentracing.HTTPHeaders,
 			opentracing.HTTPHeadersCarrier(r.Header))
+		if err != nil {
+			log.Error(err)
+		}
 	}
 }
 

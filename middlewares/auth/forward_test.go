@@ -11,6 +11,7 @@ import (
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/urfave/negroni"
 )
 
@@ -110,7 +111,6 @@ func TestForwardAuthRedirect(t *testing.T) {
 	assert.Equal(t, http.StatusFound, res.StatusCode, "they should be equal")
 
 	location, err := res.Location()
-
 	assert.NoError(t, err, "there should be no error")
 	assert.Equal(t, "http://example.com/redirect-test", location.String(), "they should be equal")
 
@@ -119,10 +119,11 @@ func TestForwardAuthRedirect(t *testing.T) {
 	assert.NotEmpty(t, string(body), "there should be something in the body")
 }
 
-func TestForwardAuthCookie(t *testing.T) {
+func TestForwardAuthFailResponseHeaders(t *testing.T) {
 	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie := &http.Cookie{Name: "example", Value: "testing", Path: "/"}
 		http.SetCookie(w, cookie)
+		w.Header().Add("X-Foo", "bar")
 		http.Error(w, "Forbidden", http.StatusForbidden)
 	}))
 	defer authTs.Close()
@@ -142,14 +143,28 @@ func TestForwardAuthCookie(t *testing.T) {
 	ts := httptest.NewServer(n)
 	defer ts.Close()
 
-	client := &http.Client{}
 	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	client := &http.Client{}
 	res, err := client.Do(req)
 	assert.NoError(t, err, "there should be no error")
 	assert.Equal(t, http.StatusForbidden, res.StatusCode, "they should be equal")
 
+	require.Len(t, res.Cookies(), 1)
 	for _, cookie := range res.Cookies() {
 		assert.Equal(t, "testing", cookie.Value, "they should be equal")
+	}
+
+	expectedHeaders := http.Header{
+		"Content-Length":         []string{"10"},
+		"Content-Type":           []string{"text/plain; charset=utf-8"},
+		"X-Foo":                  []string{"bar"},
+		"Set-Cookie":             []string{"example=testing; Path=/"},
+		"X-Content-Type-Options": []string{"nosniff"},
+	}
+
+	assert.Len(t, res.Header, 6)
+	for key, value := range expectedHeaders {
+		assert.Equal(t, value, res.Header[key])
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
@@ -158,7 +173,6 @@ func TestForwardAuthCookie(t *testing.T) {
 }
 
 func Test_writeHeader(t *testing.T) {
-
 	testCases := []struct {
 		name               string
 		headers            map[string]string

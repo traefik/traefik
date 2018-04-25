@@ -91,7 +91,9 @@ func (p *Provider) filterInstance(i ecsInstance) bool {
 }
 
 func (p *Provider) getFrontendRule(i ecsInstance) string {
-	defaultRule := "Host:" + strings.ToLower(strings.Replace(i.Name, "_", "-", -1)) + "." + p.Domain
+	domain := label.GetStringValue(i.TraefikLabels, label.TraefikDomain, p.Domain)
+	defaultRule := "Host:" + strings.ToLower(strings.Replace(i.Name, "_", "-", -1)) + "." + domain
+
 	return label.GetStringValue(i.TraefikLabels, label.TraefikFrontendRule, defaultRule)
 }
 

@@ -171,6 +171,7 @@ The following labels can be defined on Marathon applications. They adjust the be
 
 | Label                                                      | Description                                                                                                                                                                                                            |
 |------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `traefik.domain`                                           | Default domain used for frontend rules.                                                                                                                                                                                |
 | `traefik.enable=false`                                     | Disable this container in Træfik                                                                                                                                                                                       |
 | `traefik.port=80`                                          | Register this port. Useful when the container exposes multiples ports.                                                                                                                                                 |
 | `traefik.portIndex=1`                                      | Register port by index in the application's ports array. Useful when the application exposes multiple ports.                                                                                                           |
@@ -256,6 +257,7 @@ Segment labels override the default behavior.
 
 | Label                                                                     | Description                                                                                          |
 |---------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
+| `traefik.<segment_name>.domain`                                           | Default domain used for frontend rules.                                                              |
 | `traefik.<segment_name>.portIndex=1`                                      | Create a service binding with frontend/backend using this port index. Overrides `traefik.portIndex`. |
 | `traefik.<segment_name>.port=PORT`                                        | Overrides `traefik.port`. If several ports need to be exposed, the service labels could be used.     |
 | `traefik.<segment_name>.protocol=http`                                    | Overrides `traefik.protocol`.                                                                        |

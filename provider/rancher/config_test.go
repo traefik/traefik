@@ -730,6 +730,16 @@ func TestProviderGetFrontendRule(t *testing.T) {
 			expected: "Host:foo.rancher.localhost",
 		},
 		{
+			desc: "with domain label",
+			service: rancherData{
+				Name: "test-service",
+				Labels: map[string]string{
+					label.TraefikDomain: "traefik.localhost",
+				},
+			},
+			expected: "Host:test-service.traefik.localhost",
+		},
+		{
 			desc: "host with /",
 			service: rancherData{
 				Name: "foo/bar",
@@ -745,26 +755,6 @@ func TestProviderGetFrontendRule(t *testing.T) {
 				},
 			},
 			expected: "Host:foo.bar.com",
-		},
-		{
-			desc: "with Path label",
-			service: rancherData{
-				Name: "test-service",
-				Labels: map[string]string{
-					label.TraefikFrontendRule: "Path:/test",
-				},
-			},
-			expected: "Path:/test",
-		},
-		{
-			desc: "with PathPrefix label",
-			service: rancherData{
-				Name: "test-service",
-				Labels: map[string]string{
-					label.TraefikFrontendRule: "PathPrefix:/test2",
-				},
-			},
-			expected: "PathPrefix:/test2",
 		},
 	}
 
@@ -844,6 +834,18 @@ func TestGetServers(t *testing.T) {
 					label.TraefikWeight: "7",
 				},
 				Containers: []string{},
+				Health:     "healthy",
+				State:      "active",
+			},
+			expected: nil,
+		},
+		{
+			desc: "should return nil when no server IPs",
+			service: rancherData{
+				Labels: map[string]string{
+					label.TraefikWeight: "7",
+				},
+				Containers: []string{""},
 				Health:     "healthy",
 				State:      "active",
 			},

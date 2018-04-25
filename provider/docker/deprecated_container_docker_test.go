@@ -752,15 +752,19 @@ func TestDockerGetFrontendRuleV1(t *testing.T) {
 			expected:  "Host:foo.docker.localhost",
 		},
 		{
-			container: containerJSON(name("bar")),
-			expected:  "Host:bar.docker.localhost",
+			container: containerJSON(name("foo"),
+				labels(map[string]string{
+					label.TraefikDomain: "traefik.localhost",
+				})),
+			expected: "Host:foo.traefik.localhost",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
 				label.TraefikFrontendRule: "Host:foo.bar",
 			})),
 			expected: "Host:foo.bar",
-		}, {
+		},
+		{
 			container: containerJSON(labels(map[string]string{
 				"com.docker.compose.project": "foo",
 				"com.docker.compose.service": "bar",

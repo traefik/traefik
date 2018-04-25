@@ -138,7 +138,7 @@ func TestSetEffectiveConfigurationTracing(t *testing.T) {
 					SamplingServerURL:  "http://localhost:5778/sampling",
 					SamplingType:       "const",
 					SamplingParam:      1.0,
-					LocalAgentHostPort: "127.0.0.1:6832",
+					LocalAgentHostPort: "127.0.0.1:6831",
 				},
 				Zipkin: nil,
 			},
@@ -151,7 +151,7 @@ func TestSetEffectiveConfigurationTracing(t *testing.T) {
 					SamplingServerURL:  "http://localhost:5778/sampling",
 					SamplingType:       "const",
 					SamplingParam:      1.0,
-					LocalAgentHostPort: "127.0.0.1:6832",
+					LocalAgentHostPort: "127.0.0.1:6831",
 				},
 			},
 			expected: &tracing.Tracing{
@@ -173,7 +173,7 @@ func TestSetEffectiveConfigurationTracing(t *testing.T) {
 					SamplingServerURL:  "http://localhost:5778/sampling",
 					SamplingType:       "const",
 					SamplingParam:      1.0,
-					LocalAgentHostPort: "127.0.0.1:6832",
+					LocalAgentHostPort: "127.0.0.1:6831",
 				},
 				Zipkin: &zipkin.Config{
 					HTTPEndpoint: "http://powpow:9411/api/v1/spans",

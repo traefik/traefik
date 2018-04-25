@@ -330,7 +330,6 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		safe.Go(func() {
 			if _, err := p.resolveCertificate(domain, true); err != nil {
 				log.Errorf("Unable to obtain ACME certificate for domains %q : %v", strings.Join(domain.ToStrArray(), ","), err)
-			} else {
 			}
 		})
 	}
@@ -382,15 +381,6 @@ func (p *Provider) watchCertificate() {
 			}
 		}
 	})
-}
-
-func (p *Provider) deleteCertificateForDomain(domain types.Domain) {
-	for k, cert := range p.certificates {
-		if reflect.DeepEqual(cert.Domain, domain) {
-			p.certificates = append(p.certificates[:k], p.certificates[k+1:]...)
-		}
-	}
-	p.saveCertificates()
 }
 
 func (p *Provider) saveCertificates() {

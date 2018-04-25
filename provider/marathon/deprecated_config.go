@@ -138,10 +138,11 @@ func (p *Provider) getFrontendRuleV1(application marathon.Application, serviceNa
 		}
 	}
 
+	domain := label.GetStringValue(labels, label.SuffixDomain, p.Domain)
 	if len(serviceName) > 0 {
-		return "Host:" + strings.ToLower(provider.Normalize(serviceName)) + "." + p.getSubDomain(application.ID) + "." + p.Domain
+		return "Host:" + strings.ToLower(provider.Normalize(serviceName)) + "." + p.getSubDomain(application.ID) + "." + domain
 	}
-	return "Host:" + p.getSubDomain(application.ID) + "." + p.Domain
+	return "Host:" + p.getSubDomain(application.ID) + "." + domain
 }
 
 // Deprecated

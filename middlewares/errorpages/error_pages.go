@@ -3,15 +3,17 @@ package errorpages
 import (
 	"bufio"
 	"bytes"
+	"errors"
+	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/types"
-	"github.com/pkg/errors"
 	"github.com/vulcand/oxy/forward"
 	"github.com/vulcand/oxy/utils"
 )
@@ -75,8 +77,6 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.
 	recorder := newResponseRecorder(w)
 	next.ServeHTTP(recorder, req)
 
-	w.WriteHeader(recorder.GetCode())
-
 	// check the recorder code against the configured http status code ranges
 	for _, block := range h.httpCodeRanges {
 		if recorder.GetCode() >= block[0] && recorder.GetCode() <= block[1] {
@@ -88,18 +88,41 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.
 				query = strings.Replace(query, "{status}", strconv.Itoa(recorder.GetCode()), -1)
 			}
 
-			if newReq, err := http.NewRequest(http.MethodGet, h.backendURL+query, nil); err != nil {
+			pageReq, err := newRequest(h.backendURL + query)
+			if err != nil {
+				log.Error(err)
+				w.WriteHeader(recorder.GetCode())
 				w.Write([]byte(http.StatusText(recorder.GetCode())))
-			} else {
-				h.backendHandler.ServeHTTP(w, newReq)
+				return
 			}
+
+			utils.CopyHeaders(pageReq.Header, req.Header)
+			utils.CopyHeaders(w.Header(), recorder.Header())
+			w.WriteHeader(recorder.GetCode())
+			h.backendHandler.ServeHTTP(w, pageReq)
 			return
 		}
 	}
 
 	// did not catch a configured status code so proceed with the request
 	utils.CopyHeaders(w.Header(), recorder.Header())
+	w.WriteHeader(recorder.GetCode())
 	w.Write(recorder.GetBody().Bytes())
+}
+
+func newRequest(baseURL string) (*http.Request, error) {
+	u, err := url.Parse(baseURL)
+	if err != nil {
+		return nil, fmt.Errorf("error pages: error when parse URL: %v", err)
+	}
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("error pages: error when create query: %v", err)
+	}
+
+	req.RequestURI = u.RequestURI()
+	return req, nil
 }
 
 type responseRecorder interface {
