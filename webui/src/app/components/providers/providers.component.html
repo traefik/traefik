@@ -12,7 +12,7 @@
         <div class="tabs" *ngIf="keys?.length">
           <ul>
             <li *ngFor="let provider of keys" [class.is-active]="tab === provider" (click)="tab = provider">
-              <a>{{ provider }} ({{ providers[provider].frontends.length + providers[provider].backends.length }})</a>
+              <a>{{ provider }}</a>
             </li>
           </ul>
         </div>
@@ -21,7 +21,7 @@
           <div class="columns">
             <!-- Frontends -->
             <div class="column is-6">
-              <h2 class="subtitle">Frontends</h2>
+              <h2 class="subtitle"><span class="tag is-info">{{ providers[tab]?.frontends.length }}</span> Frontends</h2>
               <div class="message" *ngFor="let p of providers[tab]?.frontends; let i = index;">
                 <div class="message-header">
                   <h2>
@@ -64,12 +64,10 @@
                       <table class="table is-fullwidth is-hoverable">
                         <tbody>
                           <tr>
-                            <td>Route</td>
-                            <td>Rule</td>
+                            <td>Route Rule</td>
                           </tr>
                           <tr *ngFor="let route of p.routes; let ri = index;">
-                            <td><span class="has-text-grey-light">{{ route.title }}</span></td>
-                            <td><span class="has-text-grey">{{ route.rule }}</span></td>
+                            <td><span class="has-text-grey" title="{{ route.title }}">{{ route.rule }}</span></td>
                           </tr>
                         </tbody>
                       </table>
@@ -105,19 +103,19 @@
                         </div>
                         <div class="column is-9">
                           <div class="field is-grouped is-grouped-multiline">
-                            <div class="control" *ngIf="p.priority">
+                            <div class="control">
                               <div class="tags has-addons">
                                 <span class="tag is-light">Priority</span>
                                 <span class="tag is-info">{{ p.priority }}</span>
                               </div>
                             </div>
-                            <div class="control" *ngIf="p.passHostHeader">
+                            <div class="control">
                               <div class="tags has-addons">
                                 <span class="tag is-light">Host Header</span>
                                 <span class="tag is-info">{{ p.passHostHeader }}</span>
                               </div>
                             </div>
-                            <div class="control" *ngIf="p.passTLSCert">
+                            <div class="control">
                               <div class="tags has-addons">
                                 <span class="tag is-light">TLS Cert</span>
                                 <span class="tag is-info">{{ p.passTLSCert }}</span>
@@ -318,7 +316,8 @@
 
             <!-- Backends -->
             <div class="column is-6">
-              <h2 class="subtitle">Backends</h2>
+              <!-- {{ providers[provider].backends.length }} -->
+              <h2 class="subtitle"><span class="tag is-primary">{{ providers[tab]?.backends.length }}</span> Backends</h2>
               <div class="message" *ngFor="let p of providers[tab]?.backends; let i = index;">
                 <div class="message-header">
                   <h2>
@@ -350,12 +349,10 @@
                       <tbody>
                         <tr>
                           <td>Server</td>
-                          <td>URL</td>
                           <td>Weight</td>
                         </tr>
                         <tr *ngFor="let server of p.servers; let ri = index;">
-                          <td><span class="has-text-grey-light">{{ server.title }}</span></td>
-                          <td><a href="{{ server.url }}">{{ server.url }}</a></td>
+                          <td><a href="{{ server.url }}" title="{{ server.title }}">{{ server.url }}</a></td>
                           <td><span class="has-text-grey">{{ server.weight }}</span></td>
                         </tr>
                       </tbody>
