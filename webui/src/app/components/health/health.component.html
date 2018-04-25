@@ -8,20 +8,20 @@
             <div class="columns">
               <div class="column is-4">
                 <div class="item-data border-right">
-                  <span class="data-blue">{{ totalResponseTime }}</span>
                   <span class="data-grey">Total Response Time</span>
+                  <span class="data-blue">{{ totalResponseTime }}</span>
                 </div>
               </div>
               <div class="column is-4">
                 <div class="item-data border-right">
-                  <span class="data-blue">{{ totalCodeCount }}</span>
                   <span class="data-grey">Total Code Count</span>
+                  <span class="data-blue">{{ totalCodeCount }}</span>
                 </div>
               </div>
               <div class="column is-4">
                 <div class="item-data">
-                  <span class="data-blue">{{ uptime }}</span>
                   <span class="data-grey">Uptime Since <br/>{{ uptimeSince }}</span>
+                  <span class="data-blue">{{ uptime }}</span>
                 </div>
               </div>
             </div>
@@ -32,20 +32,20 @@
             <div class="columns">
               <div class="column is-4">
                 <div class="item-data border-right">
-                  <span class="data-blue">{{ averageResponseTime }}</span>
                   <span class="data-grey">Average Response Time</span>
+                  <span class="data-blue">{{ averageResponseTime }}</span>
                 </div>
               </div>
               <div class="column is-4">
                 <div class="item-data border-right">
-                  <span class="data-blue">{{ codeCount }}</span>
                   <span class="data-grey">Code Count</span>
+                  <span class="data-blue">{{ codeCount }}</span>
                 </div>
               </div>
               <div class="column is-4">
                 <div class="item-data">
-                  <span class="data-blue">{{ pid }}</span>
                   <span class="data-grey">PID</span>
+                  <span class="data-blue">{{ pid }}</span>
                 </div>
               </div>
             </div>
@@ -70,6 +70,35 @@
         </div>
       </div>
 
+    </div>
+  </div>
+
+  <div class="content" *ngIf="data.recent_errors">
+    <div class="content-item">
+      <h2>Recent HTTP Errors</h2>
+      <table class="table is-fullwidth">
+        <tr>
+          <td>Status</td>
+          <td>Request</td>
+          <td>Time</td>
+        </tr>
+        <tr *ngFor="let entry of data.recent_errors">
+          <td>
+            <span class="tag is-info">{{ entry.status_code }}</span>&nbsp;<span>{{ entry.status }}</span>
+          </td>
+          <td>
+            <span class="tag">{{ entry.method }}</span>&nbsp;<a>{{ entry.host }}{{ entry.path }}</a>
+          </td>
+          <td>
+            <span>{{ entry.time }}</span>
+          </td>
+        </tr>
+        <tr *ngIf="!data.recent_errors?.length">
+          <td colspan="3">
+            <p class="text-muted text-center">No entries</p>
+          </td>
+        </tr>
+      </table>
     </div>
   </div>
 </div>
