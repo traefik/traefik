@@ -5,19 +5,13 @@ import (
 	"strings"
 )
 
-
 var (
 	defaultPercentageValuePrecision = 3
-	maxPercentageValue = percentageValueFromFloat64(1)
 )
 
 // percentageValue is int64 form of percentage value with 10^-3 precision.
 type percentageValue struct {
 	value int64
-}
-
-func newOneHundredPercentageValue() *percentageValue {
-	return percentageValueFromFloat64(1)
 }
 
 // PercentageValueFromString tries to read percentage value from string, it can be
@@ -69,18 +63,6 @@ func (v *percentageValue) add(value *percentageValue) *percentageValue {
 		value: v.value + value.value,
 	}
 }
-
-/*
-func (v *percentageValue) round() *percentageValue {
-	f := v.toFloat64()
-	floor := math.Floor(f)
-	fraction := f - floor
-	if fraction < 0.0005 {
-		return percentageValueFromFloat64(floor)
-	}
-	return percentageValueFromFloat64(math.Ceil())
-}
-*/
 
 func (p *percentageValue) computeWeight(count int) int {
 	if count == 0 {

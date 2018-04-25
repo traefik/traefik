@@ -102,7 +102,112 @@ func TestPercentageValueParse(t *testing.T) {
 	}
 }
 
-func TestServicesPercentageWeightMap(t *testing.T) {
+func TestGetServicesPercentageWeights(t *testing.T) {
+
+	testCases := []struct {
+		name                              string
+		servicePercentageWeightAnnotation string
+		shouldErrorOnParseAnnotation      bool
+		expectedWeightMap                 map[string]*percentageValue
+	}{
+		{
+			name: "empty annotation",
+			servicePercentageWeightAnnotation: ``,
+			expectedWeightMap:                 map[string]*percentageValue{},
+		},
+		{
+			name: "50% fraction",
+			servicePercentageWeightAnnotation: `
+service1: 10%
+service2: 20%
+service3: 20%
+`,
+			expectedWeightMap: map[string]*percentageValue{
+				"service1": percentageValueFromFloat64(0.1),
+				"service2": percentageValueFromFloat64(0.2),
+				"service3": percentageValueFromFloat64(0.2),
+			},
+		},
+		{
+			name: "50% fraction float form",
+			servicePercentageWeightAnnotation: `
+service1: 0.1
+service2: 0.2 
+service3: 0.2
+`,
+			expectedWeightMap: map[string]*percentageValue{
+				"service1": percentageValueFromFloat64(0.1),
+				"service2": percentageValueFromFloat64(0.2),
+				"service3": percentageValueFromFloat64(0.2),
+			},
+		},
+		{
+			name: "no fraction",
+			servicePercentageWeightAnnotation: `
+service1: 10%
+service2: 90%
+`,
+			expectedWeightMap: map[string]*percentageValue{
+				"service1": percentageValueFromFloat64(0.1),
+				"service2": percentageValueFromFloat64(0.9),
+			},
+		},
+		{
+			name: "extra weight specification",
+			servicePercentageWeightAnnotation: `
+service1: 90%
+service5: 90%
+`,
+			expectedWeightMap: map[string]*percentageValue{
+				"service1": percentageValueFromFloat64(0.9),
+				"service5": percentageValueFromFloat64(0.9),
+			},
+		},
+		{
+			name: "malformed annotation",
+			servicePercentageWeightAnnotation: `
+service1- 90%
+service5- 90%
+`,
+			shouldErrorOnParseAnnotation: true,
+			expectedWeightMap:            nil,
+		},
+		{
+			name: "more than one hundred percentaged service",
+			servicePercentageWeightAnnotation: `
+service1: 100%
+service2: 1%
+`,
+			expectedWeightMap: map[string]*percentageValue{
+				"service1": percentageValueFromFloat64(1),
+				"service2": percentageValueFromFloat64(0.01),
+			},
+		},
+		{
+			name: "incorrect percentage value",
+			servicePercentageWeightAnnotation: `
+service1: 1000%
+`,
+			expectedWeightMap: map[string]*percentageValue{
+				"service1": percentageValueFromFloat64(10),
+			},
+		},
+	}
+	for _, testCase := range testCases {
+		ing := &extensionsv1beta1.Ingress{}
+		ing.Annotations = make(map[string]string)
+		ing.Annotations[annotationKubernetesPercentageWeights] = testCase.servicePercentageWeightAnnotation
+		weightMap, err := getServicesPercentageWeights(ing)
+		if !assert.Equal(t, testCase.shouldErrorOnParseAnnotation, err != nil) {
+			t.Error(err)
+		}
+		if !testCase.shouldErrorOnParseAnnotation {
+			assert.Equal(t, testCase.expectedWeightMap, weightMap, "%s weight map mismatched", testCase.name)
+		}
+	}
+}
+
+func TestGetLeftFraction(t *testing.T) {
 	client := clientMock{
 		endpoints: []*corev1.Endpoints{
 			buildEndpoint(
@@ -151,147 +256,190 @@ func TestServicesPercentageWeightMap(t *testing.T) {
 			),
 		},
 	}
-	testCases := []struct {
-		name                              string
-		servicePercentageWeightAnnotation string
-		shouldErrorOnParseAnnotation      bool
-		shouldErrorOnGetLeftPercentage    bool
-		expectedWeightMap                 map[string]*percentageValue
-		leftPercentage                    *percentageValue
-		leftInstanceCount                 int
-	}{
-		{
-			name: "empty annotation",
-			servicePercentageWeightAnnotation: ``,
-			expectedWeightMap:                 map[string]*percentageValue{},
-			leftPercentage:                    percentageValueFromFloat64(1),
-			leftInstanceCount:                 8,
-		},
-		{
-			name: "50% fraction",
-			servicePercentageWeightAnnotation: `
-service1: 10%
-service2: 20%
-service3: 20%
-`,
-			expectedWeightMap: map[string]*percentageValue{
-				"service1": percentageValueFromFloat64(0.1),
-				"service2": percentageValueFromFloat64(0.2),
-				"service3": percentageValueFromFloat64(0.2),
-			},
-			leftPercentage:    percentageValueFromFloat64(0.5),
-			leftInstanceCount: 1,
-		},
-		{
-			name: "50% fraction float form",
-			servicePercentageWeightAnnotation: `
-service1: 0.1
-service2: 0.2 
-service3: 0.2
-`,
-			expectedWeightMap: map[string]*percentageValue{
-				"service1": percentageValueFromFloat64(0.1),
-				"service2": percentageValueFromFloat64(0.2),
-				"service3": percentageValueFromFloat64(0.2),
-			},
-			leftPercentage:    percentageValueFromFloat64(0.5),
-			leftInstanceCount: 1,
-		},
-		{
-			name: "no fraction",
-			servicePercentageWeightAnnotation: `
-service1: 10%
-service2: 90%
-`,
-			expectedWeightMap: map[string]*percentageValue{
-				"service1": percentageValueFromFloat64(0.1),
-				"service2": percentageValueFromFloat64(0.9),
-			},
-			leftPercentage:    percentageValueFromFloat64(0),
-			leftInstanceCount: 5,
-		},
-		{
-			name: "extra weight specification",
-			servicePercentageWeightAnnotation: `
-service1: 90%
-service5: 90%
-`,
-			expectedWeightMap: map[string]*percentageValue{
-				"service1": percentageValueFromFloat64(0.9),
-				"service5": percentageValueFromFloat64(0.9),
-			},
-			leftPercentage:    percentageValueFromFloat64(0.1),
-			leftInstanceCount: 6,
-		},
-		{
-			name: "malformed annotation",
-			servicePercentageWeightAnnotation: `
-service1- 90%
-service5- 90%
-`,
-			shouldErrorOnParseAnnotation: true,
-			expectedWeightMap:            nil,
-			leftPercentage:               percentageValueFromFloat64(1),
-			leftInstanceCount:            8,
-		},
-		{
-			name: "more than one hundred percentaged service",
-			servicePercentageWeightAnnotation: `
-service1: 100%
-service2: 1%
-`,
-			shouldErrorOnGetLeftPercentage: true,
-			expectedWeightMap: map[string]*percentageValue{
-				"service1": percentageValueFromFloat64(1),
-				"service2": percentageValueFromFloat64(0.01),
-			},
-			leftPercentage:    nil,
-			leftInstanceCount: 0,
-		},
-		{
-			name: "incorrect percentage value",
-			servicePercentageWeightAnnotation: `
-service1: 1000%
-`,
-			shouldErrorOnGetLeftPercentage: true,
-			expectedWeightMap: map[string]*percentageValue{
-				"service1": percentageValueFromFloat64(10),
-			},
-			leftPercentage:    nil,
-			leftInstanceCount: 0,
-		},
-	}
 	buildPath := func(path string, f func(path *extensionsv1beta1.HTTPIngressPath)) extensionsv1beta1.HTTPIngressPath {
 		pa := &extensionsv1beta1.HTTPIngressPath{}
 		pa.Path = path
 		f(pa)
 		return *pa
 	}
-	for _, testCase := range testCases {
-		ing := &extensionsv1beta1.Ingress{}
-		ing.Annotations = make(map[string]string)
-		ing.Annotations[annotationKubernetesPercentageWeights] = testCase.servicePercentageWeightAnnotation
-		weightMap, err := getServicesPercentageWeights(ing)
-		if !assert.Equal(t, testCase.shouldErrorOnParseAnnotation, err != nil) {
-			t.Error(err)
-		}
-		leftFractionGetter, err := getLeftFraction(client, "testing",
-			[]extensionsv1beta1.HTTPIngressPath{
+	testCases := []struct {
+		name                        string
+		weightMap                   map[string]*percentageValue
+		ingressPaths                []extensionsv1beta1.HTTPIngressPath
+		shouldError                 bool
+		expectedLeftInstanceCount   map[string]int
+		expectedLeftPercentageValue map[string]*percentageValue
+	}{
+		{
+			name: "1 path 2 service",
+			weightMap: map[string]*percentageValue{
+				"service1": percentageValueFromFloat64(0.5),
+			},
+			ingressPaths: []extensionsv1beta1.HTTPIngressPath{
+				buildPath("/foo", iBackend("service1", intstr.FromInt(8080))),
+				buildPath("/foo", iBackend("service2", intstr.FromInt(8080))),
+			},
+			shouldError: false,
+			expectedLeftInstanceCount: map[string]int{
+				"/foo": 1,
+			},
+			expectedLeftPercentageValue: map[string]*percentageValue{
+				"/foo": percentageValueFromFloat64(0.5),
+			},
+		},
+		{
+			name: "2 path 4 service",
+			weightMap: map[string]*percentageValue{
+				"service1": percentageValueFromFloat64(0.1),
+				"service2": percentageValueFromFloat64(0.1),
+			},
+			ingressPaths: []extensionsv1beta1.HTTPIngressPath{
+				buildPath("/foo", iBackend("service1", intstr.FromInt(8080))),
+				buildPath("/foo", iBackend("service2", intstr.FromInt(8080))),
+				buildPath("/bar", iBackend("service1", intstr.FromInt(8080))),
+				buildPath("/bar", iBackend("service2", intstr.FromInt(8080))),
+			},
+			shouldError: false,
+			expectedLeftInstanceCount: map[string]int{
+				"/foo": 0,
+				"/bar": 0,
+			},
+			expectedLeftPercentageValue: map[string]*percentageValue{
+				"/foo": percentageValueFromFloat64(0.8),
+				"/bar": percentageValueFromFloat64(0.8),
+			},
+		},
+		{
+			name: "2 path 8 service",
+			weightMap: map[string]*percentageValue{
+				"service1": percentageValueFromFloat64(0.1),
+				"service2": percentageValueFromFloat64(0.1),
+			},
+			ingressPaths: []extensionsv1beta1.HTTPIngressPath{
 				buildPath("/foo", iBackend("service1", intstr.FromInt(8080))),
 				buildPath("/foo", iBackend("service2", intstr.FromInt(8080))),
 				buildPath("/foo", iBackend("service3", intstr.FromInt(8080))),
 				buildPath("/foo", iBackend("service4", intstr.FromInt(8080))),
+				buildPath("/bar", iBackend("service1", intstr.FromInt(8080))),
+				buildPath("/bar", iBackend("service2", intstr.FromInt(8080))),
+				buildPath("/bar", iBackend("service3", intstr.FromInt(8080))),
+				buildPath("/bar", iBackend("service4", intstr.FromInt(8080))),
 			},
-			weightMap)
-		if !assert.Equal(t, testCase.shouldErrorOnGetLeftPercentage, err != nil) {
-			t.Error(err)
-			break
-		}
-		if !testCase.shouldErrorOnGetLeftPercentage {
-			leftPercentage, leftInstanceCount := leftFractionGetter("/foo")
-			assert.Equal(t, testCase.expectedWeightMap, weightMap, "%s weight map mismatched", testCase.name)
-			assert.Equal(t, testCase.leftPercentage, leftPercentage, "%s left percentage wrong", testCase.name)
-			assert.Equal(t, testCase.leftInstanceCount, leftInstanceCount, "%s left instance count wrong", testCase.name)
-		}
+			shouldError: false,
+			expectedLeftInstanceCount: map[string]int{
+				"/foo": 5,
+				"/bar": 5,
+			},
+			expectedLeftPercentageValue: map[string]*percentageValue{
+				"/foo": percentageValueFromFloat64(0.8),
+				"/bar": percentageValueFromFloat64(0.8),
+			},
+		},
+		{
+			name: "2 path 7 service",
+			weightMap: map[string]*percentageValue{
+				"service1": percentageValueFromFloat64(0.1),
+			},
+			ingressPaths: []extensionsv1beta1.HTTPIngressPath{
+				buildPath("/foo", iBackend("service1", intstr.FromInt(8080))),
+				buildPath("/foo", iBackend("service2", intstr.FromInt(8080))),
+				buildPath("/foo", iBackend("service3", intstr.FromInt(8080))),
+				buildPath("/foo", iBackend("service4", intstr.FromInt(8080))),
+				buildPath("/bar", iBackend("service2", intstr.FromInt(8080))),
+				buildPath("/bar", iBackend("service3", intstr.FromInt(8080))),
+				buildPath("/bar", iBackend("service4", intstr.FromInt(8080))),
+			},
+			shouldError: false,
+			expectedLeftInstanceCount: map[string]int{
+				"/foo": 6,
+				"/bar": 6,
+			},
+			expectedLeftPercentageValue: map[string]*percentageValue{
+				"/foo": percentageValueFromFloat64(0.9),
+				"/bar": percentageValueFromFloat64(1),
+			},
+		},
+		{
+			name: "2 path 4 service",
+			weightMap: map[string]*percentageValue{
+				"service1": percentageValueFromFloat64(0.1),
+			},
+			ingressPaths: []extensionsv1beta1.HTTPIngressPath{
+				buildPath("/foo", iBackend("service1", intstr.FromInt(8080))),
+				buildPath("/foo", iBackend("service2", intstr.FromInt(8080))),
+				buildPath("/foo", iBackend("service3", intstr.FromInt(8080))),
+				buildPath("/foo", iBackend("service4", intstr.FromInt(8080))),
+				buildPath("/bar", iBackend("service2", intstr.FromInt(8080))),
+				buildPath("/bar", iBackend("service3", intstr.FromInt(8080))),
+				buildPath("/bar", iBackend("service4", intstr.FromInt(8080))),
+			},
+			shouldError: false,
+			expectedLeftInstanceCount: map[string]int{
+				"/foo": 6,
+				"/bar": 6,
+			},
+			expectedLeftPercentageValue: map[string]*percentageValue{
+				"/foo": percentageValueFromFloat64(0.9),
+				"/bar": percentageValueFromFloat64(1),
+			},
+		},
+		{
+			name: "2 path no service",
+			weightMap: map[string]*percentageValue{
+				"service1": percentageValueFromFloat64(0.1),
+			},
+			ingressPaths: []extensionsv1beta1.HTTPIngressPath{
+				buildPath("/foo", iBackend("noservice", intstr.FromInt(8080))),
+				buildPath("/bar", iBackend("noservice", intstr.FromInt(8080))),
+			},
+			shouldError: false,
+			expectedLeftInstanceCount: map[string]int{
+				"/foo": 0,
+				"/bar": 0,
+			},
+			expectedLeftPercentageValue: map[string]*percentageValue{
+				"/foo": percentageValueFromFloat64(1),
+				"/bar": percentageValueFromFloat64(1),
+			},
+		},
+		{
+			name:      "2 path without weight",
+			weightMap: map[string]*percentageValue{},
+			ingressPaths: []extensionsv1beta1.HTTPIngressPath{
+				buildPath("/foo", iBackend("service1", intstr.FromInt(8080))),
+				buildPath("/bar", iBackend("service2", intstr.FromInt(8080))),
+			},
+			shouldError: false,
+			expectedLeftInstanceCount: map[string]int{
+				"/foo": 2,
+				"/bar": 1,
+			},
+			expectedLeftPercentageValue: map[string]*percentageValue{
+				"/foo": percentageValueFromFloat64(1),
+				"/bar": percentageValueFromFloat64(1),
+			},
+		},
+		{
+			name: "2 path overflow",
+			weightMap: map[string]*percentageValue{
+				"service1": percentageValueFromFloat64(0.7),
+				"service2": percentageValueFromFloat64(0.8),
+			},
+			ingressPaths: []extensionsv1beta1.HTTPIngressPath{
+				buildPath("/foo", iBackend("service1", intstr.FromInt(8080))),
+				buildPath("/foo", iBackend("service2", intstr.FromInt(8080))),
+				buildPath("/bar", iBackend("service2", intstr.FromInt(8080))),
+			},
+			shouldError:                 true,
+			expectedLeftInstanceCount:   nil,
+			expectedLeftPercentageValue: nil,
+		},
 	}
+	for _, testCase := range testCases {
+		leftPercentageMap, leftInstanceMap, err := getLeftFraction(client, "testing", testCase.ingressPaths, testCase.weightMap)
+		assert.Equal(t, testCase.shouldError, err != nil)
+		assert.Equal(t, testCase.expectedLeftPercentageValue, leftPercentageMap, "%s left percentage mismatch", testCase.name)
+		assert.Equal(t, testCase.expectedLeftInstanceCount, leftInstanceMap, "%s left instance count mismatch", testCase.name)
+	}
+
 }
