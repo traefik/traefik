@@ -37,11 +37,6 @@ func percentageValueFromFloat64(f float64) *percentageValue {
 	}
 }
 
-// rawValue returns its internal raw int64 form of percentage value.
-func (v *percentageValue) rawValue() float64 {
-	return float64(v.value)
-}
-
 // Float64 returns its decimal float64 value.
 func (v *percentageValue) toFloat64() float64 {
 	return float64(v.value) / (1000 * 100)
@@ -64,9 +59,9 @@ func (v *percentageValue) add(value *percentageValue) *percentageValue {
 	}
 }
 
-func (p *percentageValue) computeWeight(count int) int {
+func (v *percentageValue) computeWeight(count int) int {
 	if count == 0 {
 		return 0
 	}
-	return int(p.rawValue() / float64(count))
+	return int(float64(v.value) / float64(count))
 }
