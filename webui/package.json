@@ -10,7 +10,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve --proxy-config proxy.conf.json",
-    "build": "ng build --prod",
+    "build": "ng build --prod --no-delete-output-path --output-path ../static/",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e"

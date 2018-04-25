@@ -51,7 +51,6 @@ make generate-webui  # Generate static contents in `traefik/static/` folder.
 
 - Go to the directory `webui`
 - Edit files in `webui/src`
-
 - Run in development mode :
   - `yarn start`
 
@@ -61,5 +60,6 @@ make generate-webui  # Generate static contents in `traefik/static/` folder.
 - [Yarn](https://yarnpkg.com/)
 - [Webpack](https://github.com/webpack/webpack)
 - [Angular](https://angular.io)
+- [Bulma](https://bulma.io)
 - [D3](https://d3js.org)
 - [D3 - Documentation](https://github.com/mbostock/d3/wiki)

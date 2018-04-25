@@ -52,12 +52,12 @@
                 <div class="message-body">
                   <div class="tabs is-fullwidth is-small is-boxed">
                     <ul>
-                      <li [class.is-active]="p.section !== 'details'" (click)="p.section = 'global'"><a>Global</a></li>
+                      <li [class.is-active]="p.section !== 'details'" (click)="p.section = 'main'"><a>Main</a></li>
                       <li [class.is-active]="p.section === 'details'" (click)="p.section = 'details'"><a>Details</a></li>
                     </ul>
                   </div>
 
-                  <!-- Global -->
+                  <!-- Main -->
                   <div *ngIf="p.section !== 'details'">
 
                     <div *ngIf="p.routes && p.routes.length">
@@ -115,7 +115,7 @@
                                 <span class="tag is-info">{{ p.passHostHeader }}</span>
                               </div>
                             </div>
-                            <div class="control">
+                            <div class="control" *ngIf="p.passTLSCert">
                               <div class="tags has-addons">
                                 <span class="tag is-light">TLS Cert</span>
                                 <span class="tag is-info">{{ p.passTLSCert }}</span>
@@ -338,12 +338,12 @@
 
                   <div class="tabs is-fullwidth is-small is-boxed">
                     <ul>
-                      <li [class.is-active]="p.section !== 'details'" (click)="p.section = 'global'"><a>Global</a></li>
+                      <li [class.is-active]="p.section !== 'details'" (click)="p.section = 'main'"><a>Main</a></li>
                       <li [class.is-active]="p.section === 'details'" (click)="p.section = 'details'"><a>Details</a></li>
                     </ul>
                   </div>
 
-                  <!-- Global -->
+                  <!-- Main -->
                   <div *ngIf="p.section !== 'details'">
                     <table class="table is-fullwidth is-hoverable">
                       <tbody>
@@ -361,7 +361,39 @@
 
                   <!-- Details -->
                   <div *ngIf="p.section === 'details'">
+
+                    <div *ngIf="p.loadBalancer">
+                      <div class="columns">
+                        <div class="column is-3">
+                          <h2>Load Balancer</h2>
+                        </div>
+                        <div class="column is-9">
+                          <div class="field is-grouped is-grouped-multiline">
+                            <div class="control">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">Method</span>
+                                <span class="tag is-info">{{ p.loadBalancer.method }}</span>
+                              </div>
+                            </div>
+                            <div class="control">
+                              <div class="tags has-addons" *ngIf="p.loadBalancer.stickiness || p.loadBalancer.sticky">
+                                <span class="tag is-light">Stickiness</span>
+                                <span class="tag is-info">true</span>
+                              </div>
+                            </div>
+                            <div class="control" *ngIf="p.loadBalancer.stickiness">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">Cookie Name</span>
+                                <span class="tag is-info">{{ p.loadBalancer.stickiness.cookieName }}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
                     <div *ngIf="p.maxConn">
+                      <hr/>
                       <div class="columns">
                         <div class="column is-3">
                           <h2>Max Connections</h2>
@@ -397,37 +429,6 @@
                               <div class="tags has-addons">
                                 <span class="tag is-light">Expression</span>
                                 <span class="tag is-info">{{ p.circuitBreaker.expression }}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div *ngIf="p.loadBalancer">
-                      <hr/>
-                      <div class="columns">
-                        <div class="column is-3">
-                          <h2>Load Balancer</h2>
-                        </div>
-                        <div class="column is-9">
-                          <div class="field is-grouped is-grouped-multiline">
-                            <div class="control">
-                              <div class="tags has-addons">
-                                <span class="tag is-light">Method</span>
-                                <span class="tag is-info">{{ p.loadBalancer.method }}</span>
-                              </div>
-                            </div>
-                            <div class="control">
-                              <div class="tags has-addons" *ngIf="p.loadBalancer.stickiness || p.loadBalancer.sticky">
-                                <span class="tag is-light">Stickiness</span>
-                                <span class="tag is-info">true</span>
-                              </div>
-                            </div>
-                            <div class="control" *ngIf="p.loadBalancer.stickiness">
-                              <div class="tags has-addons">
-                                <span class="tag is-light">Cookie Name</span>
-                                <span class="tag is-info">{{ p.loadBalancer.stickiness.cookieName }}</span>
                               </div>
                             </div>
                           </div>
