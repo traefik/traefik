@@ -21,7 +21,10 @@
       "styles": [
         "styles/app.sass"
       ],
-      "scripts": [],
+      "scripts": [
+        "../node_modules/@fortawesome/fontawesome/index.js",
+        "../node_modules/@fortawesome/fontawesome-free-solid/index.js"
+      ],
       "environmentSource": "environments/environment.ts",
       "environments": {
         "dev": "environments/environment.ts",
