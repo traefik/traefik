@@ -196,7 +196,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				continue
 			}
 
-			pathLeftFractionPercentageMap, pathLeftFractionInstanceMap, err := getLeftFraction(k8sClient, i.Namespace, r.HTTP.Paths, servicesPercentageWeightMap)
+			leftFractionPercentages, leftFractionInstances, err := getLeftFraction(k8sClient, i.Namespace, r.HTTP.Paths, servicesPercentageWeightMap)
 			if err != nil {
 				log.Errorf("Error compute left fraction for ingress %s/%s", i.Namespace, i.Name)
 				continue
@@ -321,16 +321,18 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 								break
 							}
 
-							leftFractionPercentage := pathLeftFractionPercentageMap[pa.Path]
-							leftFractionInstanceCount := pathLeftFractionInstanceMap[pa.Path]
-							if percentageWeight, found := servicesPercentageWeightMap[pa.Backend.ServiceName]; found {
+							if percentageWeight, exists := servicesPercentageWeightMap[pa.Backend.ServiceName]; exists {
 								instanceCount := 0
 								for _, subset := range endpoints.Subsets {
 									instanceCount = instanceCount + len(subset.Addresses)
 								}
 								serverWeight = percentageWeight.computeWeight(instanceCount)
-							} else if f := leftFractionPercentage.toFloat64(); 0 <= f && f < 1 && leftFractionInstanceCount > 0 {
-								serverWeight = leftFractionPercentage.computeWeight(leftFractionInstanceCount)
+							} else {
+								leftFractionPercentage := leftFractionPercentages[pa.Path]
+								leftFractionInstanceCount := leftFractionInstances[pa.Path]
+								if f := leftFractionPercentage.toFloat64(); 0 <= f && f < 1 && leftFractionInstanceCount > 0 {
+									serverWeight = leftFractionPercentage.computeWeight(leftFractionInstanceCount)
+								}
 							}
 
 							for _, subset := range endpoints.Subsets {
@@ -345,6 +347,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 									if address.TargetRef != nil && address.TargetRef.Name != "" {
 										name = address.TargetRef.Name
 									}
+
 									templateObjects.Backends[baseName].Servers[name] = types.Server{
 										URL:    url,
 										Weight: serverWeight,
@@ -767,7 +770,7 @@ func getServicesPercentageWeights(i *extensionsv1beta1.Ingress) (map[string]*per
 
 	servicesPercentageWeights := make(map[string]*percentageValue)
 	for serviceName, percentageStr := range percentageWeight {
-		percentageValue, err := percentageValueFromString(percentageStr)
+		percentageValue, err := newPercentageValueFromString(percentageStr)
 		if err != nil {
 			return nil, fmt.Errorf("invalid percentage value %q in ingress %s: %v", percentageStr, i.Name, err)
 		}
@@ -780,7 +783,7 @@ func getServicesPercentageWeights(i *extensionsv1beta1.Ingress) (map[string]*per
 func getLeftFraction(k8sClient Client, namespace string, paths []extensionsv1beta1.HTTPIngressPath, servicesPercentageWeights map[string]*percentageValue) (map[string]*percentageValue, map[string]int, error) {
 	leftFractionPercentages := make(map[string]*percentageValue)
 	leftFractionInstanceCounts := make(map[string]int)
-	oneHundredPercentageValue := percentageValueFromFloat64(1)
+	oneHundredPercentageValue := newPercentageValueFromFloat64(1)
 
 	for _, pa := range paths {
 		leftFractionPercentages[pa.Path] = oneHundredPercentageValue
@@ -805,7 +808,7 @@ func getLeftFraction(k8sClient Client, namespace string, paths []extensionsv1bet
 
 		leftFractionPercentage := leftFractionPercentages[pa.Path].sub(percentageWeight)
 		if f := leftFractionPercentage.toFloat64(); f < 0 || f > 1 {
-			return nil, nil, fmt.Errorf("percentage value %s overflow", leftFractionPercentage.toString())
+			return nil, nil, fmt.Errorf("percentage value %s overflow", leftFractionPercentage)
 		}
 
 		leftFractionPercentages[pa.Path] = leftFractionPercentage

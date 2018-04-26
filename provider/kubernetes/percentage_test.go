@@ -7,103 +7,190 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPercentageValueParse(t *testing.T) {
+func TestNewPercentageValueFromFloat64(t *testing.T) {
 	testCases := []struct {
 		desc            string
-		parseString     string
-		parseFloat64    float64
-		expectError     bool
+		value           float64
 		expectedString  string
 		expectedFloat64 float64
 	}{
 		{
-			parseString:     "1%",
-			parseFloat64:    0.01,
-			expectError:     false,
+			value:           0.01,
 			expectedString:  "1.000%",
 			expectedFloat64: 0.01,
 		},
 		{
-			parseString:     "0.5",
-			parseFloat64:    0.5,
-			expectError:     false,
+			value:           0.5,
 			expectedString:  "50.000%",
 			expectedFloat64: 0.5,
 		},
 		{
-			parseString:     "99%",
-			parseFloat64:    0.99,
-			expectError:     false,
+			value:           0.99,
 			expectedString:  "99.000%",
 			expectedFloat64: 0.99,
 		},
 		{
-			parseString:     "99.999%",
-			parseFloat64:    0.99999,
-			expectError:     false,
+			value:           0.99999,
 			expectedString:  "99.999%",
 			expectedFloat64: 0.99999,
 		},
 		{
-			parseString:     "-99.999%",
-			parseFloat64:    -0.99999,
-			expectError:     false,
+			value:           -0.99999,
 			expectedString:  "-99.999%",
 			expectedFloat64: -0.99999,
 		},
 		{
-			parseString:     "-99.9990%",
-			parseFloat64:    -0.99999,
-			expectError:     false,
+			value:           -0.99999,
 			expectedString:  "-99.999%",
 			expectedFloat64: -0.99999,
 		},
 		{
-			parseString:     "0%",
-			parseFloat64:    0,
-			expectError:     false,
+			value:           0,
 			expectedString:  "0.000%",
 			expectedFloat64: 0,
 		},
-		{
-			parseString:     "%",
-			parseFloat64:    0,
-			expectError:     true,
-			expectedString:  "",
-			expectedFloat64: 0,
-		},
-		{
-			parseString:     "foo",
-			parseFloat64:    0,
-			expectError:     true,
-			expectedString:  "",
-			expectedFloat64: 0,
-		},
-		{
-			parseString:     "",
-			parseFloat64:    0,
-			expectError:     true,
-			expectedString:  "",
-			expectedFloat64: 0,
-		},
 	}
+
 	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			pvFromString, err := percentageValueFromString(test.parseString)
-			pvFromFloat64 := percentageValueFromFloat64(test.parseFloat64)
+			pvFromFloat64 := newPercentageValueFromFloat64(test.value)
+
+			assert.Equal(t, test.expectedString, pvFromFloat64.String(), "percentage string value mismatched")
+			assert.Equal(t, test.expectedFloat64, pvFromFloat64.toFloat64(), "percentage float64 value mismatched")
+		})
+	}
+}
+
+func TestNewPercentageValueFromString(t *testing.T) {
+	testCases := []struct {
+		desc            string
+		value           string
+		expectError     bool
+		expectedString  string
+		expectedFloat64 float64
+	}{
+		{
+			value:           "1%",
+			expectError:     false,
+			expectedString:  "1.000%",
+			expectedFloat64: 0.01,
+		},
+		{
+			value:           "0.5",
+			expectError:     false,
+			expectedString:  "50.000%",
+			expectedFloat64: 0.5,
+		},
+		{
+			value:           "99%",
+			expectError:     false,
+			expectedString:  "99.000%",
+			expectedFloat64: 0.99,
+		},
+		{
+			value:           "99.999%",
+			expectError:     false,
+			expectedString:  "99.999%",
+			expectedFloat64: 0.99999,
+		},
+		{
+			value:           "-99.999%",
+			expectError:     false,
+			expectedString:  "-99.999%",
+			expectedFloat64: -0.99999,
+		},
+		{
+			value:           "-99.9990%",
+			expectError:     false,
+			expectedString:  "-99.999%",
+			expectedFloat64: -0.99999,
+		},
+		{
+			value:           "0%",
+			expectError:     false,
+			expectedString:  "0.000%",
+			expectedFloat64: 0,
+		},
+		{
+			value:       "%",
+			expectError: true,
+		},
+		{
+			value:       "foo",
+			expectError: true,
+		},
+		{
+			value:       "",
+			expectError: true,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			pvFromString, err := newPercentageValueFromString(test.value)
 
 			if test.expectError {
 				require.Error(t, err, "expecting error but not happening")
 			} else {
-				assert.NoError(t, err, "fail to parse percentage value")
+				require.NoError(t, err, "fail to parse percentage value")
 
-				assert.Equal(t, pvFromString, pvFromFloat64)
-				assert.Equal(t, test.expectedString, pvFromFloat64.toString(), "percentage string value mismatched")
-				assert.Equal(t, test.expectedFloat64, pvFromFloat64.toFloat64(), "percentage float64 value mismatched")
+				assert.Equal(t, test.expectedString, pvFromString.String(), "percentage string value mismatched")
+				assert.Equal(t, test.expectedFloat64, pvFromString.toFloat64(), "percentage float64 value mismatched")
 			}
+		})
+	}
+}
+
+func TestNewPercentageValue(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		stringValue string
+		floatValue  float64
+	}{
+		{
+			desc:        "percentage",
+			stringValue: "1%",
+			floatValue:  0.01,
+		},
+		{
+			desc:        "decimal",
+			stringValue: "0.5",
+			floatValue:  0.5,
+		},
+		{
+			desc:        "negative percentage",
+			stringValue: "-99.999%",
+			floatValue:  -0.99999,
+		},
+		{
+			desc:        "negative decimal",
+			stringValue: "-0.99999",
+			floatValue:  -0.99999,
+		},
+		{
+			desc:        "zero",
+			stringValue: "0%",
+			floatValue:  0,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			pvFromString, err := newPercentageValueFromString(test.stringValue)
+			require.NoError(t, err, "fail to parse percentage value")
+
+			pvFromFloat64 := newPercentageValueFromFloat64(test.floatValue)
+
+			assert.Equal(t, pvFromString, pvFromFloat64)
 		})
 	}
 }

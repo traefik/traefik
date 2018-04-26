@@ -2353,17 +2353,17 @@ service1: 10%
 		backends(
 			backend("host1/foo",
 				servers(
-					server("http://10.10.0.1:8080", weight(int(percentageValueFromFloat64(0.05).value))),
-					server("http://10.10.0.2:8080", weight(int(percentageValueFromFloat64(0.05).value))),
-					server("http://10.10.0.3:7070", weight(int(percentageValueFromFloat64(0.45).value))),
-					server("http://10.10.0.4:7070", weight(int(percentageValueFromFloat64(0.45).value))),
+					server("http://10.10.0.1:8080", weight(int(newPercentageValueFromFloat64(0.05).value))),
+					server("http://10.10.0.2:8080", weight(int(newPercentageValueFromFloat64(0.05).value))),
+					server("http://10.10.0.3:7070", weight(int(newPercentageValueFromFloat64(0.45).value))),
+					server("http://10.10.0.4:7070", weight(int(newPercentageValueFromFloat64(0.45).value))),
 				),
 				lbMethod("wrr"),
 			),
 			backend("host1/bar",
 				servers(
-					server("http://10.10.0.1:8080", weight(int(percentageValueFromFloat64(0.05).value))),
-					server("http://10.10.0.2:8080", weight(int(percentageValueFromFloat64(0.05).value))),
+					server("http://10.10.0.1:8080", weight(int(newPercentageValueFromFloat64(0.05).value))),
+					server("http://10.10.0.2:8080", weight(int(newPercentageValueFromFloat64(0.05).value))),
 				),
 				lbMethod("wrr"),
 			),
@@ -2432,9 +2432,9 @@ service2: 20%
 service3: 20%
 `,
 			expectedWeights: map[string]*percentageValue{
-				"service1": percentageValueFromFloat64(0.1),
-				"service2": percentageValueFromFloat64(0.2),
-				"service3": percentageValueFromFloat64(0.2),
+				"service1": newPercentageValueFromFloat64(0.1),
+				"service2": newPercentageValueFromFloat64(0.2),
+				"service3": newPercentageValueFromFloat64(0.2),
 			},
 		},
 		{
@@ -2445,9 +2445,9 @@ service2: 0.2
 service3: 0.2
 `,
 			expectedWeights: map[string]*percentageValue{
-				"service1": percentageValueFromFloat64(0.1),
-				"service2": percentageValueFromFloat64(0.2),
-				"service3": percentageValueFromFloat64(0.2),
+				"service1": newPercentageValueFromFloat64(0.1),
+				"service2": newPercentageValueFromFloat64(0.2),
+				"service3": newPercentageValueFromFloat64(0.2),
 			},
 		},
 		{
@@ -2457,8 +2457,8 @@ service1: 10%
 service2: 90%
 `,
 			expectedWeights: map[string]*percentageValue{
-				"service1": percentageValueFromFloat64(0.1),
-				"service2": percentageValueFromFloat64(0.9),
+				"service1": newPercentageValueFromFloat64(0.1),
+				"service2": newPercentageValueFromFloat64(0.9),
 			},
 		},
 		{
@@ -2468,8 +2468,8 @@ service1: 90%
 service5: 90%
 `,
 			expectedWeights: map[string]*percentageValue{
-				"service1": percentageValueFromFloat64(0.9),
-				"service5": percentageValueFromFloat64(0.9),
+				"service1": newPercentageValueFromFloat64(0.9),
+				"service5": newPercentageValueFromFloat64(0.9),
 			},
 		},
 		{
@@ -2488,8 +2488,8 @@ service1: 100%
 service2: 1%
 `,
 			expectedWeights: map[string]*percentageValue{
-				"service1": percentageValueFromFloat64(1),
-				"service2": percentageValueFromFloat64(0.01),
+				"service1": newPercentageValueFromFloat64(1),
+				"service2": newPercentageValueFromFloat64(0.01),
 			},
 		},
 		{
@@ -2498,7 +2498,7 @@ service2: 1%
 service1: 1000%
 `,
 			expectedWeights: map[string]*percentageValue{
-				"service1": percentageValueFromFloat64(10),
+				"service1": newPercentageValueFromFloat64(10),
 			},
 		},
 	}
@@ -2592,7 +2592,7 @@ func TestGetLeftFraction(t *testing.T) {
 		{
 			desc: "1 path 2 service",
 			weights: map[string]*percentageValue{
-				"service1": percentageValueFromFloat64(0.5),
+				"service1": newPercentageValueFromFloat64(0.5),
 			},
 			ingressPaths: []extensionsv1beta1.HTTPIngressPath{
 				buildPath("/foo", iBackend("service1", intstr.FromInt(8080))),
@@ -2603,14 +2603,14 @@ func TestGetLeftFraction(t *testing.T) {
 				"/foo": 1,
 			},
 			expectedLeftPercentageValue: map[string]*percentageValue{
-				"/foo": percentageValueFromFloat64(0.5),
+				"/foo": newPercentageValueFromFloat64(0.5),
 			},
 		},
 		{
 			desc: "2 path 4 service",
 			weights: map[string]*percentageValue{
-				"service1": percentageValueFromFloat64(0.1),
-				"service2": percentageValueFromFloat64(0.1),
+				"service1": newPercentageValueFromFloat64(0.1),
+				"service2": newPercentageValueFromFloat64(0.1),
 			},
 			ingressPaths: []extensionsv1beta1.HTTPIngressPath{
 				buildPath("/foo", iBackend("service1", intstr.FromInt(8080))),
@@ -2624,15 +2624,15 @@ func TestGetLeftFraction(t *testing.T) {
 				"/bar": 0,
 			},
 			expectedLeftPercentageValue: map[string]*percentageValue{
-				"/foo": percentageValueFromFloat64(0.8),
-				"/bar": percentageValueFromFloat64(0.8),
+				"/foo": newPercentageValueFromFloat64(0.8),
+				"/bar": newPercentageValueFromFloat64(0.8),
 			},
 		},
 		{
 			desc: "2 path 8 service",
 			weights: map[string]*percentageValue{
-				"service1": percentageValueFromFloat64(0.1),
-				"service2": percentageValueFromFloat64(0.1),
+				"service1": newPercentageValueFromFloat64(0.1),
+				"service2": newPercentageValueFromFloat64(0.1),
 			},
 			ingressPaths: []extensionsv1beta1.HTTPIngressPath{
 				buildPath("/foo", iBackend("service1", intstr.FromInt(8080))),
@@ -2650,14 +2650,14 @@ func TestGetLeftFraction(t *testing.T) {
 				"/bar": 5,
 			},
 			expectedLeftPercentageValue: map[string]*percentageValue{
-				"/foo": percentageValueFromFloat64(0.8),
-				"/bar": percentageValueFromFloat64(0.8),
+				"/foo": newPercentageValueFromFloat64(0.8),
+				"/bar": newPercentageValueFromFloat64(0.8),
 			},
 		},
 		{
 			desc: "2 path 7 service",
 			weights: map[string]*percentageValue{
-				"service1": percentageValueFromFloat64(0.1),
+				"service1": newPercentageValueFromFloat64(0.1),
 			},
 			ingressPaths: []extensionsv1beta1.HTTPIngressPath{
 				buildPath("/foo", iBackend("service1", intstr.FromInt(8080))),
@@ -2674,14 +2674,14 @@ func TestGetLeftFraction(t *testing.T) {
 				"/bar": 6,
 			},
 			expectedLeftPercentageValue: map[string]*percentageValue{
-				"/foo": percentageValueFromFloat64(0.9),
-				"/bar": percentageValueFromFloat64(1),
+				"/foo": newPercentageValueFromFloat64(0.9),
+				"/bar": newPercentageValueFromFloat64(1),
 			},
 		},
 		{
 			desc: "2 path 4 service",
 			weights: map[string]*percentageValue{
-				"service1": percentageValueFromFloat64(0.1),
+				"service1": newPercentageValueFromFloat64(0.1),
 			},
 			ingressPaths: []extensionsv1beta1.HTTPIngressPath{
 				buildPath("/foo", iBackend("service1", intstr.FromInt(8080))),
@@ -2698,14 +2698,14 @@ func TestGetLeftFraction(t *testing.T) {
 				"/bar": 6,
 			},
 			expectedLeftPercentageValue: map[string]*percentageValue{
-				"/foo": percentageValueFromFloat64(0.9),
-				"/bar": percentageValueFromFloat64(1),
+				"/foo": newPercentageValueFromFloat64(0.9),
+				"/bar": newPercentageValueFromFloat64(1),
 			},
 		},
 		{
 			desc: "2 path no service",
 			weights: map[string]*percentageValue{
-				"service1": percentageValueFromFloat64(0.1),
+				"service1": newPercentageValueFromFloat64(0.1),
 			},
 			ingressPaths: []extensionsv1beta1.HTTPIngressPath{
 				buildPath("/foo", iBackend("noservice", intstr.FromInt(8080))),
@@ -2717,8 +2717,8 @@ func TestGetLeftFraction(t *testing.T) {
 				"/bar": 0,
 			},
 			expectedLeftPercentageValue: map[string]*percentageValue{
-				"/foo": percentageValueFromFloat64(1),
-				"/bar": percentageValueFromFloat64(1),
+				"/foo": newPercentageValueFromFloat64(1),
+				"/bar": newPercentageValueFromFloat64(1),
 			},
 		},
 		{
@@ -2734,15 +2734,15 @@ func TestGetLeftFraction(t *testing.T) {
 				"/bar": 1,
 			},
 			expectedLeftPercentageValue: map[string]*percentageValue{
-				"/foo": percentageValueFromFloat64(1),
-				"/bar": percentageValueFromFloat64(1),
+				"/foo": newPercentageValueFromFloat64(1),
+				"/bar": newPercentageValueFromFloat64(1),
 			},
 		},
 		{
 			desc: "2 path overflow",
 			weights: map[string]*percentageValue{
-				"service1": percentageValueFromFloat64(0.7),
-				"service2": percentageValueFromFloat64(0.8),
+				"service1": newPercentageValueFromFloat64(0.7),
+				"service2": newPercentageValueFromFloat64(0.8),
 			},
 			ingressPaths: []extensionsv1beta1.HTTPIngressPath{
 				buildPath("/foo", iBackend("service1", intstr.FromInt(8080))),
