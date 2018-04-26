@@ -778,13 +778,13 @@ func getServicesPercentageWeights(i *extensionsv1beta1.Ingress) (map[string]*per
 }
 
 func getLeftFraction(k8sClient Client, namespace string, paths []extensionsv1beta1.HTTPIngressPath, servicesPercentageWeights map[string]*percentageValue) (map[string]*percentageValue, map[string]int, error) {
-	pathLeftFractionPercentageMap := make(map[string]*percentageValue)
-	pathLeftFractionInstanceCountMap := make(map[string]int)
+	leftFractionPercentages := make(map[string]*percentageValue)
+	leftFractionInstanceCounts := make(map[string]int)
 	oneHundredPercentageValue := percentageValueFromFloat64(1)
 
 	for _, pa := range paths {
-		pathLeftFractionPercentageMap[pa.Path] = oneHundredPercentageValue
-		pathLeftFractionInstanceCountMap[pa.Path] = 0
+		leftFractionPercentages[pa.Path] = oneHundredPercentageValue
+		leftFractionInstanceCounts[pa.Path] = 0
 	}
 
 	for _, pa := range paths {
@@ -793,23 +793,26 @@ func getLeftFraction(k8sClient Client, namespace string, paths []extensionsv1bet
 			log.Warnf("fail to get endpoints %s/%s", namespace, pa.Backend.ServiceName)
 			continue
 		}
+
 		for _, subset := range endpoints.Subsets {
-			pathLeftFractionInstanceCountMap[pa.Path] += len(subset.Addresses)
+			leftFractionInstanceCounts[pa.Path] += len(subset.Addresses)
 		}
+
 		percentageWeight, found := servicesPercentageWeights[pa.Backend.ServiceName]
 		if !found {
 			continue
 		}
 
-		leftFractionPercentage := pathLeftFractionPercentageMap[pa.Path].sub(percentageWeight)
+		leftFractionPercentage := leftFractionPercentages[pa.Path].sub(percentageWeight)
 		if f := leftFractionPercentage.toFloat64(); f < 0 || f > 1 {
 			return nil, nil, fmt.Errorf("percentage value %s overflow", leftFractionPercentage.toString())
 		}
-		pathLeftFractionPercentageMap[pa.Path] = leftFractionPercentage
+
+		leftFractionPercentages[pa.Path] = leftFractionPercentage
 		for _, subset := range endpoints.Subsets {
-			pathLeftFractionInstanceCountMap[pa.Path] -= len(subset.Addresses)
+			leftFractionInstanceCounts[pa.Path] -= len(subset.Addresses)
 		}
 		continue
 	}
-	return pathLeftFractionPercentageMap, pathLeftFractionInstanceCountMap, nil
+	return leftFractionPercentages, leftFractionInstanceCounts, nil
 }
