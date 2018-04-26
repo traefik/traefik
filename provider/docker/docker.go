@@ -30,8 +30,6 @@ import (
 const (
 	// SwarmAPIVersion is a constant holding the version of the Provider API traefik will use
 	SwarmAPIVersion = "1.24"
-	// SwarmDefaultWatchTime is the duration of the interval when polling docker
-	SwarmDefaultWatchTime = 15 * time.Second
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -45,6 +43,7 @@ type Provider struct {
 	ExposedByDefault      bool             `description:"Expose containers by default" export:"true"`
 	UseBindPortIP         bool             `description:"Use the ip address from the bound port, rather than from the inner network" export:"true"`
 	SwarmMode             bool             `description:"Use Docker on Swarm Mode" export:"true"`
+	EventHandlers         []Event          `description:"Event handlers with callback support" export:"true"`
 	Network               string           `description:"Default Docker network used" export:"true"`
 }
 
@@ -161,51 +160,37 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 			}
 			if p.Watch {
 				if p.SwarmMode {
-					eventsCtx := context.Background()
-					eventsMsgChan, eventsErrorChan := dockerClient.Events(
-						eventsCtx,
-						dockertypes.EventsOptions{
-							Filters: filters.NewArgs(filters.Arg("scope", "swarm")),
-						},
-					)
 					errChan := make(chan error)
-
-					// Keep the old poller, in case the event listener experiences issues.
-					ticker := time.NewTicker(SwarmDefaultWatchTime)
 					pool.Go(func(stop chan bool) {
 						watchCtx, cancel := context.WithCancel(ctx)
 						defer cancel()
 
 						defer close(errChan)
-						defer ticker.Stop()
-						defer eventsCtx.Done()
 
-						for {
-							select {
-							case evt := <-eventsMsgChan:
-								if evt.Type != eventtypes.ServiceEventType {
-									continue
-								}
-
-								if err := p.listAndUpdateServices(watchCtx, dockerClient, configurationChan); err != nil {
-									log.Errorf("Failed to list services for docker, error %s", err)
-									errChan <- err
-									return
-								}
-							case evtErr := <-eventsErrorChan:
-								log.Errorf("Docker listener: Events error, %s", evtErr.Error())
-								errChan <- evtErr
-								return
-							case <-ticker.C:
-								if err := p.listAndUpdateServices(watchCtx, dockerClient, configurationChan); err != nil {
-									log.Errorf("Failed to list services for docker, error %s", err)
-									errChan <- err
-									return
-								}
-							case <-stop:
-								return
+						callbackFunc := func(eventtypes.Message) {
+							if err := p.listAndUpdateServices(watchCtx, dockerClient, configurationChan); err != nil {
+								log.Errorf("Failed to list services for docker, error %s", err)
+								errChan <- err
 							}
 						}
+
+						event, err := NewEvent(
+							dockerClient,
+							dockertypes.EventsOptions{
+								Filters: filters.NewArgs(filters.Arg("scope", "swarm")),
+							},
+							stop,
+							errChan,
+							callbackFunc,
+						)
+						if err != nil {
+							log.Errorf("Unable to create a new event listener, error %s", err.Error())
+							errChan <- err
+							return
+						}
+
+						// Blocking.
+						event.Start()
 					})
 					if err, ok := <-errChan; ok {
 						return err
