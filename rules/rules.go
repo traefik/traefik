@@ -126,10 +126,7 @@ func (r *Rules) hashedRange(rule ...string) *mux.Route {
 		hash := hash(value)
 
 		factor := float64(rangeHigh-rangeLow) / float64(maxUint)
-		log.Error(factor)
 		adjustedResult := (float64(hash) * factor) + float64(rangeLow)
-
-		log.Error(adjustedResult)
 
 		if adjustedResult >= float64(matchLow) && adjustedResult < float64(matchHigh) {
 			return true

@@ -82,14 +82,17 @@ func TestHashRangeRuleDistribution(t *testing.T) {
 	serverRoute := &types.ServerRoute{Route: route}
 	rules := &Rules{Route: serverRoute}
 
-	expression := "HashedRange: type:header value:x-partitionheader match:0-100 range:0-500"
+	expression := "HashedRange: type:header value:x-partitionheader match:0-10 range:0-500"
 	routeResult, err := rules.Parse(expression)
 	require.NoError(t, err, "Error while building route for %s", expression)
 
 	i := 0
 	matches := 0
 	attempts := 1000
-	allowedVariance := (float64(attempts) / 100) * 5
+	//given match:0-10 range:0-500, what fraction of requests are we expecting this to match?
+	fractionMatched := 500 / 10
+	// Allow 0.2% variance. A rule can match +-0.2% of its expected requests and still pass.
+	allowedVariance := (float64(attempts) / 100) * 0.5
 	for i < attempts {
 		request := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar", nil)
 		request.Header.Add("x-partitionheader", uuid.NewV4().String())
@@ -101,7 +104,7 @@ func TestHashRangeRuleDistribution(t *testing.T) {
 	}
 
 	// For a range 0-500 matching 0-100 we expect 1/5th of requests to match this rule
-	expectedEvenDistribution := float64(attempts) / 5
+	expectedEvenDistribution := float64(attempts) / float64(fractionMatched)
 	lowAcceptableMatch := expectedEvenDistribution - allowedVariance
 	highAcceptableMatch := expectedEvenDistribution + allowedVariance
 	if float64(matches) < lowAcceptableMatch || float64(matches) > highAcceptableMatch {
