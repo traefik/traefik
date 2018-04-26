@@ -26,7 +26,7 @@ export class ApiService {
 
   fetchVersion(): Observable<any> {
     return this.http.get(`/api/version`, { headers: this.headers })
-      .retry(2)
+      .retry(4)
       .catch((err: HttpErrorResponse) => {
         console.error(`[version] returned code ${err.status}, body was: ${err.error}`);
         return Observable.empty<any>();

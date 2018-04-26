@@ -12,7 +12,7 @@
         <div class="tabs" *ngIf="keys?.length">
           <ul>
             <li *ngFor="let provider of keys" [class.is-active]="tab === provider" (click)="tab = provider">
-              <a><span class="icon"><i class="fas fa-cloud"></i></span>{{ provider }}</a>
+              <a>{{ provider }}</a>
             </li>
           </ul>
         </div>
@@ -30,7 +30,6 @@
                       <div class="field is-grouped is-grouped-multiline">
                         <div class="control">
                           <div class="tags has-addons">
-                            <span class="tag is-light">ID</span>
                             <span class="tag is-info">{{ p.id }}</span>
                           </div>
                         </div>
@@ -39,10 +38,10 @@
                     <div *ngIf="p.backend">
                       <div class="field is-grouped is-grouped-multiline">
                         <div class="control">
-                          <div class="tags has-addons">
+                          <a class="tags has-addons" [href]="'#' + p.backend">
                             <span class="tag is-light">Backend</span>
                             <span class="tag is-primary">{{ p.backend }}</span>
-                          </div>
+                          </a>
                         </div>
                       </div>
                     </div>
@@ -319,13 +318,12 @@
               <h2 class="subtitle"><span class="tag is-primary">{{ providers[tab]?.backends.length }}</span> Backends</h2>
               <div class="message" *ngFor="let p of providers[tab]?.backends; let i = index;">
                 <div class="message-header">
-                  <h2>
+                  <h2 [id]="p.id">
                     <div>
                       <i class="icon fas fa-server"></i>
                       <div class="field is-grouped is-grouped-multiline">
                         <div class="control">
                           <div class="tags has-addons">
-                            <span class="tag is-light">ID</span>
                             <span class="tag is-primary">{{ p.id }}</span>
                           </div>
                         </div>

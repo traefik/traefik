@@ -1,6 +1,6 @@
 <nav class="navbar is-fixed-top" role="navigation" aria-label="main navigation">
   <div class="container">
-    <div class="navbar-menu is-active">
+    <div class="navbar-menu">
       <div class="navbar-brand">
         <a class="navbar-item" routerLink="/">
           <img src="./assets/images/traefik.logo.svg" alt="Traefik" class="navbar-logo">
@@ -8,7 +8,7 @@
       </div>
       <div class="navbar-start">
         <div class="navbar-menu">
-          <a class="navbar-item" routerLink="/" routerLinkActive="is-active">
+          <a class="navbar-item" routerLink="/" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">
             Providers
           </a>
           <a class="navbar-item" routerLink="/status" routerLinkActive="is-active">
@@ -17,11 +17,11 @@
         </div>
       </div>
       <div class="navbar-end is-hidden-mobile">
-        <a class="navbar-item" [href]="link" target="_blank">
+        <a class="navbar-item" [href]="releaseLink" target="_blank">
           {{ version }} / {{ codename }}
         </a>
         <a class="navbar-item" href="https://docs.traefik.io" target="_blank">
-          Docs
+          Documentation
         </a>
       </div>
     </div>
