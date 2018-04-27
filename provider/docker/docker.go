@@ -244,7 +244,10 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 						listener, err := event.NewListener(
 							dockerClient,
 							dockertypes.EventsOptions{
-								Filters: filters.NewArgs(filters.Arg("scope", "swarm")),
+								Filters: filters.NewArgs(
+									filters.Arg("scope", "swarm"),
+									filters.Arg("type", "service"),
+								),
 							},
 							stop,
 							errChan,
