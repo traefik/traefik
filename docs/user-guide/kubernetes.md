@@ -833,6 +833,8 @@ The `kubernetes.io/ingress.class` annotation can be attached to any Ingress obje
 
 If the annotation is missing, contains an empty value, or the value `traefik`, then the Træfik controller will take responsibility and process the associated Ingress object. If the annotation contains any other value (usually the name of a different Ingress controller), Træfik will ignore the object.
 
+It is also possible to set the `ingressClass` option in Træfik to a particular value. If that's the case and the value contains a `traefik` prefix, then only those Ingress objects matching the same value will be processed. For instance, setting the option to `traefik-internal` causes Træfik to process Ingress objects with the same `kubernetes.io/ingress.class` annotation value, ignoring all other objects (including those with a `traefik` value, empty value, and missing annotation).
+
 ### Between multiple Træfik Deployments
 
 Sometimes multiple Træfik Deployments are supposed to run concurrently. For instance, it is conceivable to have one Deployment deal with internal and another one with external traffic.
