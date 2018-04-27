@@ -202,7 +202,7 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 				DynamicCerts: &safe.Safe{},
 				StaticCerts:  &safe.Safe{},
 			}
-			acmeprovider.SetCertificateStore(*entryPoint.CertificateStore)
+			acmeprovider.SetCertificateStore(entryPoint.CertificateStore)
 
 		}
 

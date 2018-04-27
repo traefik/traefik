@@ -147,7 +147,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 			t.Parallel()
 
 			acmeProvider := Provider{
-				certificateStore: traefiktls.CertificateStore{
+				certificateStore: &traefiktls.CertificateStore{
 					DynamicCerts: test.dynamicCerts,
 					StaticCerts:  test.staticCerts,
 				},

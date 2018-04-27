@@ -55,7 +55,7 @@ type Provider struct {
 	client                 *acme.Client
 	certsChan              chan *Certificate
 	configurationChan      chan<- types.ConfigMessage
-	certificateStore       traefiktls.CertificateStore
+	certificateStore       *traefiktls.CertificateStore
 	clientMutex            sync.Mutex
 	configFromListenerChan chan types.Configuration
 	pool                   *safe.Pool
@@ -185,7 +185,7 @@ func (p *Provider) watchNewDomains() {
 }
 
 // SetCertificateStore allow to initialize certificate store
-func (p *Provider) SetCertificateStore(certificateStore traefiktls.CertificateStore) {
+func (p *Provider) SetCertificateStore(certificateStore *traefiktls.CertificateStore) {
 	p.certificateStore = certificateStore
 }
 

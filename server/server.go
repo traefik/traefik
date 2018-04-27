@@ -92,7 +92,7 @@ type serverEntryPoint struct {
 	httpServer       *http.Server
 	listener         net.Listener
 	httpRouter       *middlewares.HandlerSwitcher
-	certs            safe.Safe
+	certs            *safe.Safe
 	onDemandListener func(string) (*tls.Certificate, error)
 }
 
@@ -674,7 +674,7 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 				return false
 			}
 
-			err := s.globalConfiguration.ACME.CreateClusterConfig(s.leadership, config, &s.serverEntryPoints[entryPointName].certs, checkOnDemandDomain)
+			err := s.globalConfiguration.ACME.CreateClusterConfig(s.leadership, config, s.serverEntryPoints[entryPointName].certs, checkOnDemandDomain)
 			if err != nil {
 				return nil, err
 			}
@@ -836,7 +836,9 @@ func (s *Server) buildEntryPoints() map[string]*serverEntryPoint {
 			onDemandListener: entryPoint.OnDemandListener,
 		}
 		if entryPoint.CertificateStore != nil {
-			serverEntryPoints[entryPointName].certs = *entryPoint.CertificateStore.DynamicCerts
+			serverEntryPoints[entryPointName].certs = entryPoint.CertificateStore.DynamicCerts
+		} else {
+			serverEntryPoints[entryPointName].certs = &safe.Safe{}
 		}
 	}
 	return serverEntryPoints
