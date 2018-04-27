@@ -167,13 +167,77 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 						defer close(errChan)
 
-						callbackFunc := func(msg eventtypes.Message) {
+						// Explicitly define the callbackFunc so we can call it recursively within itself.
+						var callbackFunc func(eventtypes.Message)
+
+						callbackFunc = func(msg eventtypes.Message) {
 							log.Debugf("Docker events callback function executed with payload: %#v", msg)
 
-							if err := p.listAndUpdateServices(watchCtx, dockerClient, configurationChan); err != nil {
-								log.Errorf("Failed to list services for docker, error %s", err)
-								errChan <- err
+							listAndUpdateServicesHelper := func() {
+								if err := p.listAndUpdateServices(watchCtx, dockerClient, configurationChan); err != nil {
+									log.Errorf("Failed to list services for docker, error %s", err)
+								}
 							}
+
+							if msg.Actor.ID != "" {
+								taskList, err := dockerClient.TaskList(
+									watchCtx,
+									dockertypes.TaskListOptions{
+										Filters: filters.NewArgs(
+											filters.Arg("service", msg.Actor.ID),
+											filters.Arg("desired-state", "running"),
+										),
+									},
+								)
+								if err != nil {
+									log.Errorf("Failed to list tasks for service %s, error %s", msg.Actor.ID, err)
+
+									return
+								}
+
+								retry := false
+								if len(taskList) == 0 {
+									retry = true
+								}
+
+							TaskLoop:
+								for _, task := range taskList {
+									log.Debugf("State of task %s: %s", task.ID, task.Status.State)
+
+									if task.Status.State != swarmtypes.TaskStateRunning {
+										switch task.Status.State {
+										case
+											swarmtypes.TaskStateNew,
+											swarmtypes.TaskStatePending,
+											swarmtypes.TaskStateAssigned,
+											swarmtypes.TaskStateAccepted,
+											swarmtypes.TaskStatePreparing,
+											swarmtypes.TaskStateStarting:
+											retry = true
+
+											break TaskLoop
+										}
+									}
+								}
+
+								if !retry {
+									log.Debug("Callback task state check: Won't retry")
+
+									listAndUpdateServicesHelper()
+								} else {
+									log.Debug("Callback task state check: Retrying in 1 second")
+
+									// Sleep 1 second between retries.
+									time.Sleep(1 * time.Second)
+
+									log.Debug("Retrying...")
+									callbackFunc(msg)
+								}
+
+								return
+							}
+
+							listAndUpdateServicesHelper()
 						}
 
 						event, err := NewEvent(
@@ -355,6 +419,7 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 
 func listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerData, error) {
 	serviceList, err := dockerClient.ServiceList(ctx, dockertypes.ServiceListOptions{})
+	log.Debugf("Service list: %#v", serviceList)
 	if err != nil {
 		return nil, err
 	}
@@ -393,13 +458,16 @@ func listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerD
 		if isBackendLBSwarm(dData) {
 			if len(dData.NetworkSettings.Networks) > 0 {
 				dockerDataList = append(dockerDataList, dData)
+			} else {
+				log.Warnf("No network found for service %s", service.Spec.Name)
 			}
 		} else {
 			isGlobalSvc := service.Spec.Mode.Global != nil
 			dockerDataListTasks, err = listTasks(ctx, dockerClient, service.ID, dData, networkMap, isGlobalSvc)
 			if err != nil {
-				log.Warn(err)
+				log.Warnf("No tasks found for service %s, error %s", service.Spec.Name, err.Error())
 			} else {
+				log.Debugf("Tasks for service %s: %#v", service.Spec.Name, dockerDataListTasks)
 				dockerDataList = append(dockerDataList, dockerDataListTasks...)
 			}
 		}
@@ -460,11 +528,21 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 	var dockerDataList []dockerData
 	for _, task := range taskList {
 		if task.Status.State != swarmtypes.TaskStateRunning {
+			log.Warnf(
+				"Task %s is not in the desired state (current state: %s, desired state: %s, service: %s)",
+				task.ID,
+				task.Status.State,
+				swarmtypes.TaskStateRunning,
+				serviceID,
+			)
+
 			continue
 		}
 		dData := parseTasks(task, serviceDockerData, networkMap, isGlobalSvc)
 		if len(dData.NetworkSettings.Networks) > 0 {
 			dockerDataList = append(dockerDataList, dData)
+		} else {
+			log.Warnf("No networks found for task %s (service: %s)", task.ID, serviceID)
 		}
 	}
 	return dockerDataList, err

@@ -107,6 +107,7 @@ func (e *Streamer) Start() {
 	for {
 		select {
 		case evt := <-e.EventsMsgChan:
+			log.Debugf("Docker events handler, incoming event: %#v", evt)
 			go e.CallbackFunc(evt)
 		case evtErr := <-e.EventsErrChan:
 			log.Errorf("Docker events listener: Events error, %s", evtErr.Error())
