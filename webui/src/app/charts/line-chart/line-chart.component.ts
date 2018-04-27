@@ -39,14 +39,14 @@ export class LineChartComponent implements OnChanges, OnInit {
   yAxis: any;
   height: number;
   width: number;
-  margin = { top: 40, right: 40, bottom: 40, left: 60 };
+  margin = { top: 40, right: 40, bottom: 60, left: 60 };
   loading = true;
 
   constructor(private elementRef: ElementRef, public windowService: WindowService) { }
 
   ngOnInit() {
     this.lineChartEl = this.elementRef.nativeElement.querySelector('.line-chart');
-    this.limit = 20;
+    this.limit = 40;
     this.duration = 3000;
     this.now = new Date(Date.now() - this.duration);
 
@@ -100,7 +100,7 @@ export class LineChartComponent implements OnChanges, OnInit {
     this.xAxis = this.svg.append('g')
       .attr('class', 'x axis')
       .attr('transform', `translate(0, ${this.height})`)
-      .call(axisBottom(this.x).tickSize(-this.height));
+      .call(axisBottom(this.x).tickSize(-this.height).ticks(timeSecond, 5).tickFormat(timeFormat('%H:%M:%S')));
 
     this.yAxis = this.svg.append('g')
       .attr('class', 'y axis')
@@ -134,7 +134,12 @@ export class LineChartComponent implements OnChanges, OnInit {
       .transition()
       .duration(this.duration)
       .ease(easeLinear)
-      .call(axisBottom(this.x).tickSize(-this.height).ticks(timeSecond, 5).tickFormat(timeFormat('%H:%M:%S')));
+      .call(axisBottom(this.x).tickSize(-this.height).ticks(timeSecond, 5).tickFormat(timeFormat('%H:%M:%S')))
+      .selectAll('text')
+      .style('text-anchor', 'end')
+      .attr('dx', '-.8em')
+      .attr('dy', '.15em')
+      .attr('transform', 'rotate(-65)');
 
     this.yAxis
       .transition()
