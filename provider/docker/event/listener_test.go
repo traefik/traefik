@@ -2,6 +2,7 @@ package event_test
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -43,7 +44,7 @@ func TestTickerCallback(t *testing.T) {
 	e.Start()
 }
 
-func TestStreamerCallback(t *testing.T) {
+func TestStreamerCallbackSuccessfulEvent(t *testing.T) {
 	eventsMsgChan := make(chan events.Message)
 	eventsErrChan := make(chan error)
 
@@ -78,4 +79,37 @@ func TestStreamerCallback(t *testing.T) {
 	}(eventsMsgChan, stopChan)
 
 	e.Start()
+}
+
+func TestStreamerCallbackErrorEvent(t *testing.T) {
+	eventsMsgChan := make(chan events.Message)
+	eventsErrChan := make(chan error)
+
+	callback := &callbackTest{}
+
+	stopChan := make(chan bool)
+	errChan := make(chan error)
+	e := event.Streamer{
+		EventsMsgChan: eventsMsgChan,
+		EventsErrChan: eventsErrChan,
+		Callback:      callback,
+		StopChan:      stopChan,
+		ErrChan:       errChan,
+		EventsCtx:     context.Background(),
+	}
+
+	go func(eventsErrChan chan error) {
+		time.Sleep(1 * time.Second)
+
+		eventsErrChan <- fmt.Errorf("oh my")
+	}(eventsErrChan)
+
+	go e.Start()
+
+	expectedErrorStr := "oh my"
+	eventsError := <-errChan
+
+	if expectedErrorStr != eventsError.Error() {
+		t.Fatal("expected", expectedErrorStr, "got", eventsError.Error())
+	}
 }

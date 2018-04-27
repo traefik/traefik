@@ -33,60 +33,62 @@ const (
 	SwarmAPIVersion = "1.24"
 )
 
-type eventCallback struct {
-	listAndUpdateServicesHelper func()
-	listTasksHelper             func(eventtypes.Message) []swarmtypes.Task
+// EventCallback is a callback that the event listener executes on every incoming event.
+type EventCallback struct {
+	ListAndUpdateServicesHelper func()
+	ListTasksHelper             func(eventtypes.Message) []swarmtypes.Task
 }
 
-func (c *eventCallback) Execute(msg eventtypes.Message) {
+// Execute executes the callback logic.
+func (c *EventCallback) Execute(msg eventtypes.Message) {
 	log.Debugf("Docker events callback function executed with payload: %#v", msg)
 
-	if msg.Actor.ID != "" {
-		taskList := c.listTasksHelper(msg)
-
-		retry := false
-		if len(taskList) == 0 {
-			retry = true
-		}
-
-	TaskLoop:
-		for _, task := range taskList {
-			log.Debugf("State of task %s: %s", task.ID, task.Status.State)
-
-			if task.Status.State != swarmtypes.TaskStateRunning {
-				switch task.Status.State {
-				case
-					swarmtypes.TaskStateNew,
-					swarmtypes.TaskStatePending,
-					swarmtypes.TaskStateAssigned,
-					swarmtypes.TaskStateAccepted,
-					swarmtypes.TaskStatePreparing,
-					swarmtypes.TaskStateStarting:
-					retry = true
-
-					break TaskLoop
-				}
-			}
-		}
-
-		if !retry {
-			log.Debug("Callback task state check: Won't retry")
-
-			c.listAndUpdateServicesHelper()
-		} else {
-			log.Debug("Callback task state check: Retrying in 1 second")
-
-			// Sleep 1 second between retries.
-			time.Sleep(1 * time.Second)
-
-			log.Debug("Callback task state check: Retrying...")
-			c.Execute(msg)
-		}
+	if msg.Actor.ID == "" {
+		c.ListAndUpdateServicesHelper()
 
 		return
 	}
 
-	c.listAndUpdateServicesHelper()
+	taskList := c.ListTasksHelper(msg)
+
+	retry := false
+	if len(taskList) == 0 {
+		retry = true
+	}
+
+TaskLoop:
+	for _, task := range taskList {
+		log.Debugf("State of task %s: %s", task.ID, task.Status.State)
+
+		if task.Status.State != swarmtypes.TaskStateRunning {
+			switch task.Status.State {
+			case
+				swarmtypes.TaskStateNew,
+				swarmtypes.TaskStatePending,
+				swarmtypes.TaskStateAssigned,
+				swarmtypes.TaskStateAccepted,
+				swarmtypes.TaskStatePreparing,
+				swarmtypes.TaskStateStarting:
+				retry = true
+
+				break TaskLoop
+			}
+		}
+	}
+
+	if !retry {
+		log.Debug("Callback task state check: Won't retry")
+
+		c.ListAndUpdateServicesHelper()
+	} else {
+		log.Debug("Callback task state check: Retrying in 1 second")
+
+		// Sleep 1 second between retries.
+		time.Sleep(1 * time.Second)
+
+		log.Debug("Callback task state check: Retrying...")
+		c.Execute(msg)
+	}
 }
 
 var _ provider.Provider = (*Provider)(nil)
@@ -224,13 +226,13 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 						defer close(errChan)
 
-						callback := &eventCallback{
-							listAndUpdateServicesHelper: func() {
+						callback := &EventCallback{
+							ListAndUpdateServicesHelper: func() {
 								if err := p.listAndUpdateServices(watchCtx, dockerClient, configurationChan); err != nil {
 									log.Errorf("Failed to list services for docker, error %s", err)
 								}
 							},
-							listTasksHelper: func(msg eventtypes.Message) []swarmtypes.Task {
+							ListTasksHelper: func(msg eventtypes.Message) []swarmtypes.Task {
 								taskList, err := dockerClient.TaskList(
 									watchCtx,
 									dockertypes.TaskListOptions{

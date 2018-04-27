@@ -112,8 +112,8 @@ func (e *Streamer) Start() {
 		case evtErr := <-e.EventsErrChan:
 			log.Errorf("Docker events listener: Events error, %s", evtErr.Error())
 
-			e.Stop()
 			e.ErrChan <- evtErr
+			e.Stop()
 
 			return
 		case <-e.StopChan:
