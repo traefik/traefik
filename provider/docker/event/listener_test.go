@@ -1,4 +1,4 @@
-package docker_test
+package event_test
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/traefik/provider/docker"
+	"github.com/containous/traefik/provider/docker/event"
 	"github.com/docker/docker/api/types/events"
 )
 
@@ -19,7 +19,7 @@ func TestTickerCallback(t *testing.T) {
 	}
 
 	stopChan := make(chan bool)
-	e := &docker.Ticker{
+	e := &event.Ticker{
 		CallbackFunc:   callbackFunc,
 		StopChan:       stopChan,
 		TickerInterval: 1 * time.Second,
@@ -50,7 +50,7 @@ func TestStreamerCallback(t *testing.T) {
 
 	stopChan := make(chan bool)
 	errChan := make(chan error)
-	e := docker.Streamer{
+	e := event.Streamer{
 		EventsMsgChan: eventsMsgChan,
 		EventsErrChan: eventsErrChan,
 		CallbackFunc:  callbackFunc,

@@ -13,6 +13,7 @@ import (
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
+	"github.com/containous/traefik/provider/docker/event"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
@@ -230,7 +231,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 									// Sleep 1 second between retries.
 									time.Sleep(1 * time.Second)
 
-									log.Debug("Retrying...")
+									log.Debug("Callback task state check: Retrying...")
 									callbackFunc(msg)
 								}
 
@@ -240,7 +241,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 							listAndUpdateServicesHelper()
 						}
 
-						event, err := NewEvent(
+						listener, err := event.NewListener(
 							dockerClient,
 							dockertypes.EventsOptions{
 								Filters: filters.NewArgs(filters.Arg("scope", "swarm")),
@@ -256,7 +257,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 						}
 
 						// Blocking.
-						event.Start()
+						listener.Start()
 					})
 					if err, ok := <-errChan; ok {
 						return err

@@ -1,4 +1,4 @@
-package docker
+package event
 
 import (
 	"context"
@@ -16,8 +16,8 @@ const (
 	SwarmDefaultWatchTime = 15 * time.Second
 )
 
-// NewEvent creates a new event listener depending on what the user's Docker daemon supports.
-func NewEvent(dockerClient client.APIClient, dockerEventsOptions types.EventsOptions, stopChan chan bool, errChan chan error, callbackFunc func(events.Message)) (Event, error) {
+// NewListener creates a new event listener depending on what the user's Docker daemon supports.
+func NewListener(dockerClient client.APIClient, dockerEventsOptions types.EventsOptions, stopChan chan bool, errChan chan error, callbackFunc func(events.Message)) (Listener, error) {
 	serverVersion, err := dockerClient.ServerVersion(context.Background())
 	if err != nil {
 		return nil, err
@@ -53,8 +53,8 @@ func NewEvent(dockerClient client.APIClient, dockerEventsOptions types.EventsOpt
 	return e, nil
 }
 
-// Event is an interface for event listeners to implement.
-type Event interface {
+// Listener is an interface for event listeners to implement.
+type Listener interface {
 	Start()
 	Stop()
 }
@@ -79,7 +79,7 @@ type Streamer struct {
 
 // Start starts up the ticker.
 func (e *Ticker) Start() {
-	log.Debug("Docker events handler: Ticker started!")
+	log.Debug("Docker events listener: Ticker started!")
 
 	e.ticker = time.NewTicker(e.TickerInterval)
 
@@ -102,12 +102,12 @@ func (e *Ticker) Stop() {
 
 // Start starts up the real time Docker event listener.
 func (e *Streamer) Start() {
-	log.Debug("Docker events handler: Streamer started!")
+	log.Debug("Docker events listener: Streamer started!")
 
 	for {
 		select {
 		case evt := <-e.EventsMsgChan:
-			log.Debugf("Docker events handler, incoming event: %#v", evt)
+			log.Debugf("Docker events listener, incoming event: %#v", evt)
 			go e.CallbackFunc(evt)
 		case evtErr := <-e.EventsErrChan:
 			log.Errorf("Docker events listener: Events error, %s", evtErr.Error())
