@@ -218,6 +218,61 @@ func CloseFile() error {
 	return nil
 }
 
+// ReOpenFile re-opens the log file using the specified path
+// It looks similar to Close/Open, except that there is no temporary
+// redirection to StdOutput
+func ReOpenFile(path string) error {
+	var oldLogFile = logFile
+	newLogFile, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+
+	if err != nil {
+		return err
+	}
+
+	logrus.SetOutput(newLogFile)
+
+	if oldLogFile != nil {
+		return oldLogFile.Close()
+	}
+
+	logFilePath = path
+	logFile = newLogFile
+
+	return nil
+}
+
+var originalFilePath = ""
+
+func generateNewFileName(filename string, rotationNumber int) string {
+	return fmt.Sprintf("%s.%d", filename, rotationNumber)
+}
+
+// RotateNewFile opens a new file
+func RotateNewFile(rotationNumber int) error {
+	var oldFilePath = logFilePath
+
+	if rotationNumber == 1 {
+		originalFilePath = logFilePath
+	}
+
+	var newFilePath = generateNewFileName(originalFilePath, rotationNumber+1)
+	ReOpenFile(newFilePath)
+
+	// special case for first file: rename the original filename
+	if rotationNumber == 1 {
+		filePath01 := generateNewFileName(logFilePath, 1)
+		os.Rename(oldFilePath, filePath01)
+
+		Infoln("Rename:", oldFilePath, "->", filePath01)
+
+		oldFilePath = filePath01
+	}
+
+	Infoln("RotateNewFile:", oldFilePath, "->", newFilePath)
+
+	return nil
+}
+
 // RotateFile closes and reopens the log file to allow for rotation
 // by an external source.  If the log isn't backed by a file then
 // it does nothing.
