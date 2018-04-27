@@ -17,7 +17,7 @@ const (
 )
 
 // NewListener creates a new event listener depending on what the user's Docker daemon supports.
-func NewListener(dockerClient client.APIClient, dockerEventsOptions types.EventsOptions, stopChan chan bool, errChan chan error, callbackFunc func(events.Message)) (Listener, error) {
+func NewListener(dockerClient client.APIClient, dockerEventsOptions types.EventsOptions, stopChan chan bool, errChan chan error, callback Callback) (Listener, error) {
 	serverVersion, err := dockerClient.ServerVersion(context.Background())
 	if err != nil {
 		return nil, err
@@ -34,7 +34,7 @@ func NewListener(dockerClient client.APIClient, dockerEventsOptions types.Events
 		e := &Streamer{
 			EventsMsgChan: eventsMsgChan,
 			EventsErrChan: eventsErrChan,
-			CallbackFunc:  callbackFunc,
+			Callback:      callback,
 			StopChan:      stopChan,
 			ErrChan:       errChan,
 			EventsCtx:     eventsCtx,
@@ -45,7 +45,7 @@ func NewListener(dockerClient client.APIClient, dockerEventsOptions types.Events
 
 	// Fallback to the ticker.
 	e := &Ticker{
-		CallbackFunc:   callbackFunc,
+		Callback:       callback,
 		StopChan:       stopChan,
 		TickerInterval: SwarmDefaultWatchTime,
 	}
@@ -61,7 +61,7 @@ type Listener interface {
 
 // Ticker is a fake event listener, that instead of listening for real events, the callback function is executed when the ticker ticks.
 type Ticker struct {
-	CallbackFunc   func(events.Message)
+	Callback       Callback
 	StopChan       chan bool
 	TickerInterval time.Duration
 	ticker         *time.Ticker
@@ -71,7 +71,7 @@ type Ticker struct {
 type Streamer struct {
 	EventsMsgChan <-chan events.Message
 	EventsErrChan <-chan error
-	CallbackFunc  func(events.Message)
+	Callback      Callback
 	StopChan      chan bool
 	ErrChan       chan error
 	EventsCtx     context.Context
@@ -86,7 +86,7 @@ func (e *Ticker) Start() {
 	for {
 		select {
 		case <-e.ticker.C:
-			go e.CallbackFunc(events.Message{})
+			go e.Callback.Execute(events.Message{})
 		case <-e.StopChan:
 			e.Stop()
 
@@ -108,7 +108,7 @@ func (e *Streamer) Start() {
 		select {
 		case evt := <-e.EventsMsgChan:
 			log.Debugf("Docker events listener, incoming event: %#v", evt)
-			go e.CallbackFunc(evt)
+			go e.Callback.Execute(evt)
 		case evtErr := <-e.EventsErrChan:
 			log.Errorf("Docker events listener: Events error, %s", evtErr.Error())
 

@@ -10,17 +10,26 @@ import (
 	"github.com/docker/docker/api/types/events"
 )
 
+type callbackTest struct {
+	t        *testing.T
+	expected events.Message
+}
+
+func (c *callbackTest) Execute(msg events.Message) {
+	if !reflect.DeepEqual(c.expected, msg) {
+		c.t.Fatal("expected", c.expected, "got", msg)
+	}
+}
+
 func TestTickerCallback(t *testing.T) {
-	callbackFunc := func(msg events.Message) {
-		expected := events.Message{}
-		if !reflect.DeepEqual(expected, msg) {
-			t.Fatal("expected", expected, "got", msg)
-		}
+	callback := &callbackTest{
+		t:        t,
+		expected: events.Message{},
 	}
 
 	stopChan := make(chan bool)
 	e := &event.Ticker{
-		CallbackFunc:   callbackFunc,
+		Callback:       callback,
 		StopChan:       stopChan,
 		TickerInterval: 1 * time.Second,
 	}
@@ -38,14 +47,11 @@ func TestStreamerCallback(t *testing.T) {
 	eventsMsgChan := make(chan events.Message)
 	eventsErrChan := make(chan error)
 
-	callbackFunc := func(msg events.Message) {
-		expected := events.Message{
+	callback := &callbackTest{
+		t: t,
+		expected: events.Message{
 			Action: "update",
-		}
-
-		if !reflect.DeepEqual(expected, msg) {
-			t.Fatal("expected", expected, "got", msg)
-		}
+		},
 	}
 
 	stopChan := make(chan bool)
@@ -53,7 +59,7 @@ func TestStreamerCallback(t *testing.T) {
 	e := event.Streamer{
 		EventsMsgChan: eventsMsgChan,
 		EventsErrChan: eventsErrChan,
-		CallbackFunc:  callbackFunc,
+		Callback:      callback,
 		StopChan:      stopChan,
 		ErrChan:       errChan,
 		EventsCtx:     context.Background(),

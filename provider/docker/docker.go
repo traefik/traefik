@@ -33,6 +33,62 @@ const (
 	SwarmAPIVersion = "1.24"
 )
 
+type eventCallback struct {
+	listAndUpdateServicesHelper func()
+	listTasksHelper             func(eventtypes.Message) []swarmtypes.Task
+}
+
+func (c *eventCallback) Execute(msg eventtypes.Message) {
+	log.Debugf("Docker events callback function executed with payload: %#v", msg)
+
+	if msg.Actor.ID != "" {
+		taskList := c.listTasksHelper(msg)
+
+		retry := false
+		if len(taskList) == 0 {
+			retry = true
+		}
+
+	TaskLoop:
+		for _, task := range taskList {
+			log.Debugf("State of task %s: %s", task.ID, task.Status.State)
+
+			if task.Status.State != swarmtypes.TaskStateRunning {
+				switch task.Status.State {
+				case
+					swarmtypes.TaskStateNew,
+					swarmtypes.TaskStatePending,
+					swarmtypes.TaskStateAssigned,
+					swarmtypes.TaskStateAccepted,
+					swarmtypes.TaskStatePreparing,
+					swarmtypes.TaskStateStarting:
+					retry = true
+
+					break TaskLoop
+				}
+			}
+		}
+
+		if !retry {
+			log.Debug("Callback task state check: Won't retry")
+
+			c.listAndUpdateServicesHelper()
+		} else {
+			log.Debug("Callback task state check: Retrying in 1 second")
+
+			// Sleep 1 second between retries.
+			time.Sleep(1 * time.Second)
+
+			log.Debug("Callback task state check: Retrying...")
+			c.Execute(msg)
+		}
+
+		return
+	}
+
+	c.listAndUpdateServicesHelper()
+}
+
 var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configurations of the provider.
@@ -168,19 +224,13 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 						defer close(errChan)
 
-						// Explicitly define the callbackFunc so we can call it recursively within itself.
-						var callbackFunc func(eventtypes.Message)
-
-						callbackFunc = func(msg eventtypes.Message) {
-							log.Debugf("Docker events callback function executed with payload: %#v", msg)
-
-							listAndUpdateServicesHelper := func() {
+						callback := &eventCallback{
+							listAndUpdateServicesHelper: func() {
 								if err := p.listAndUpdateServices(watchCtx, dockerClient, configurationChan); err != nil {
 									log.Errorf("Failed to list services for docker, error %s", err)
 								}
-							}
-
-							if msg.Actor.ID != "" {
+							},
+							listTasksHelper: func(msg eventtypes.Message) []swarmtypes.Task {
 								taskList, err := dockerClient.TaskList(
 									watchCtx,
 									dockertypes.TaskListOptions{
@@ -193,52 +243,11 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 								if err != nil {
 									log.Errorf("Failed to list tasks for service %s, error %s", msg.Actor.ID, err)
 
-									return
+									return []swarmtypes.Task{}
 								}
 
-								retry := false
-								if len(taskList) == 0 {
-									retry = true
-								}
-
-							TaskLoop:
-								for _, task := range taskList {
-									log.Debugf("State of task %s: %s", task.ID, task.Status.State)
-
-									if task.Status.State != swarmtypes.TaskStateRunning {
-										switch task.Status.State {
-										case
-											swarmtypes.TaskStateNew,
-											swarmtypes.TaskStatePending,
-											swarmtypes.TaskStateAssigned,
-											swarmtypes.TaskStateAccepted,
-											swarmtypes.TaskStatePreparing,
-											swarmtypes.TaskStateStarting:
-											retry = true
-
-											break TaskLoop
-										}
-									}
-								}
-
-								if !retry {
-									log.Debug("Callback task state check: Won't retry")
-
-									listAndUpdateServicesHelper()
-								} else {
-									log.Debug("Callback task state check: Retrying in 1 second")
-
-									// Sleep 1 second between retries.
-									time.Sleep(1 * time.Second)
-
-									log.Debug("Callback task state check: Retrying...")
-									callbackFunc(msg)
-								}
-
-								return
-							}
-
-							listAndUpdateServicesHelper()
+								return taskList
+							},
 						}
 
 						listener, err := event.NewListener(
@@ -251,7 +260,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 							},
 							stop,
 							errChan,
-							callbackFunc,
+							callback,
 						)
 						if err != nil {
 							log.Errorf("Unable to create a new event listener, error %s", err.Error())
