@@ -167,7 +167,9 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 						defer close(errChan)
 
-						callbackFunc := func(eventtypes.Message) {
+						callbackFunc := func(msg eventtypes.Message) {
+							log.Debugf("Docker events callback function executed with payload: %#v", msg)
+
 							if err := p.listAndUpdateServices(watchCtx, dockerClient, configurationChan); err != nil {
 								log.Errorf("Failed to list services for docker, error %s", err)
 								errChan <- err
@@ -259,12 +261,15 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 }
 
 func (p *Provider) listAndUpdateServices(ctx context.Context, dockerClient client.APIClient, configurationChan chan<- types.ConfigMessage) error {
+	log.Debug("listAndUpdateServices called!")
 	services, err := listServices(ctx, dockerClient)
 	if err != nil {
 		return err
 	}
+	log.Debugf("Services found! %#v", services)
 
 	configuration := p.buildConfiguration(services)
+	log.Debugf("Configuration built: %#v", configuration)
 	if configuration != nil {
 		configurationChan <- types.ConfigMessage{
 			ProviderName:  "docker",

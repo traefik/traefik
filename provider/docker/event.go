@@ -79,6 +79,8 @@ type Streamer struct {
 
 // Start starts up the ticker.
 func (e *Ticker) Start() {
+	log.Debug("Docker events handler: Ticker started!")
+
 	e.ticker = time.NewTicker(e.TickerInterval)
 
 	for {
@@ -100,6 +102,8 @@ func (e *Ticker) Stop() {
 
 // Start starts up the real time Docker event listener.
 func (e *Streamer) Start() {
+	log.Debug("Docker events handler: Streamer started!")
+
 	for {
 		select {
 		case evt := <-e.EventsMsgChan:
