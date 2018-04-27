@@ -66,7 +66,7 @@
                             <td>Route Rule</td>
                           </tr>
                           <tr *ngFor="let route of p.routes; let ri = index;">
-                            <td><span class="has-text-grey" title="{{ route.title }}">{{ route.rule }}</span></td>
+                            <td><code class="has-text-grey" title="{{ route.title }}">{{ route.rule }}</code></td>
                           </tr>
                         </tbody>
                       </table>
@@ -78,15 +78,15 @@
                         <div class="column is-3">
                           <h2>Entry Points</h2>
                         </div>
-                      <div class="column is-9">
-                      <div class="field is-grouped is-grouped-multiline">
-                      <div class="control">
-                      <div class="tags">
-                      <span class="tag is-info" *ngFor="let ep of p.entryPoints; let ri = index;">{{ ep }}</span>
-                      </div>
-                      </div>
-                      </div>
-                      </div>
+                        <div class="column is-9">
+                          <div class="field is-grouped is-grouped-multiline">
+                            <div class="control">
+                              <div class="tags">
+                                <span class="tag is-info" *ngFor="let ep of p.entryPoints; let ri = index;">{{ ep }}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -121,6 +121,39 @@
                               </div>
                             </div>
                           </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div *ngIf="p.redirect">
+                      <hr>
+                      <div class="columns">
+                        <div class="column is-3">
+                          <h2>Redirect</h2>
+                        </div>
+                        <div class="column is-9">
+                          <div class="field is-grouped is-grouped-multiline" *ngIf="p.redirect.entryPoint">
+                            <div class="control">
+                              <div class="tags has-addons">
+                                <span class="tag is-info">{{ p.redirect.permanent?"Permanent":"Temporary" }}</span>
+                                <span class="tag is-light">to</span>
+                                <span class="tag is-info">{{ p.redirect.entryPoint }}</span>
+                              </div>
+                            </div>
+                          </div>
+                            <div *ngIf="!p.redirect.entryPoint">
+                              <div class="padding-5-10">
+                                <span class="tag is-info">{{ p.redirect.permanent?"Permanent":"Temporary" }}</span>
+                              </div>
+                              <div class="padding-5-10">
+                                <span class="tag is-info">From</span>
+                              <code class="has-text-grey">{{ p.redirect.regex }}</code>
+                              </div>
+                              <div class="padding-5-10">
+                                <span class="tag is-info">To</span>
+                              <code class="has-text-grey">{{ p.redirect.replacement }}</code>
+                              </div>
+                            </div>
                         </div>
                       </div>
                     </div>
