@@ -39,7 +39,7 @@ export class LineChartComponent implements OnChanges, OnInit {
   yAxis: any;
   height: number;
   width: number;
-  margin = { top: 40, right: 40, bottom: 40, left: 40 };
+  margin = { top: 40, right: 40, bottom: 40, left: 60 };
   loading = true;
 
   constructor(private elementRef: ElementRef, public windowService: WindowService) { }
@@ -57,14 +57,12 @@ export class LineChartComponent implements OnChanges, OnInit {
 
     this.render();
     setTimeout(() => this.loading = false, 4000);
-    this.windowService.resize.subscribe(size => {
-      if (!this.svg) {
-        return;
+    this.windowService.resize.subscribe(w => {
+      if (this.svg) {
+        const el = this.lineChartEl.querySelector('svg');
+        el.parentNode.removeChild(el);
+        this.render();
       }
-
-      const el = this.lineChartEl.querySelector('svg');
-      el.parentNode.removeChild(el);
-      this.render();
     });
   }
 
@@ -78,7 +76,9 @@ export class LineChartComponent implements OnChanges, OnInit {
       .append('g')
       .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`);
 
-    this.data = range(this.limit).map(i => 0);
+    if (!this.data) {
+      this.data = range(this.limit).map(i => 0);
+    }
 
     this.x = scaleTime().range([0, this.width]);
     this.y = scaleLinear().range([this.height, 0]);

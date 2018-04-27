@@ -39,7 +39,7 @@ export class BarChartComponent implements OnInit, OnChanges {
     this.setup();
     setTimeout(() => this.loading = false, 4000);
 
-    this.windowService.resize.subscribe(size => this.draw());
+    this.windowService.resize.subscribe(w => this.draw());
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -95,8 +95,8 @@ export class BarChartComponent implements OnInit, OnChanges {
 
     const bars = this.g.selectAll('.bar').data(this.data);
 
-    bars
-      .enter().append('rect')
+    bars.enter()
+      .append('rect')
       .attr('class', 'bar')
       .attr('x', (d: any) => d.code)
       .attr('y', (d: any) => d.count)
