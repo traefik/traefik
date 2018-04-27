@@ -4,6 +4,7 @@ package server
 
 import (
 	"fmt"
+	"os"
 	"syscall"
 	"unsafe"
 
@@ -16,11 +17,15 @@ var (
 	procSetEvent    = kernel32.NewProc("SetEvent")
 )
 
-const windowsEventName = "SomeMutexNameGUID"
+const windowsEventName = "traefik-GUID"
 
 var windowsEventHandle uintptr
 
 func (s *Server) configureSignals() {
+
+	windowsEventNameWithPid := fmt.Sprintf("%s-pid-%d", windowsEventName, os.Getpid())
+	fmt.Println("Watching Windows Object {", windowsEventNameWithPid, "}")
+
 	handle, err := createEvent(windowsEventName)
 
 	if err != nil {
