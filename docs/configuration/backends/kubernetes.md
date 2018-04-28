@@ -235,6 +235,7 @@ The following security annotations are applicable on the Ingress object:
 | `ingress.kubernetes.io/ssl-redirect: "true"`              | Forces the frontend to redirect to SSL if a non-SSL request is sent.                                                                                                                                |
 | `ingress.kubernetes.io/ssl-temporary-redirect: "true"`    | Forces the frontend to redirect to SSL if a non-SSL request is sent, but by sending a 302 instead of a 301.                                                                                         |
 | `ingress.kubernetes.io/ssl-host: HOST`                    | This setting configures the hostname that redirects will be based on. Default is "", which is the same host as the request.                                                                         |
+| `ingress.kubernetes.io/ssl-force-host: "true"`            | If `SSLForceHost` is `true` and `SSLHost` is set, requests will be forced to use `SSLHost` even the ones that are already using SSL. Default is false.                                              |
 | `ingress.kubernetes.io/ssl-proxy-headers: EXPR`           | Header combinations that would signify a proper SSL Request (Such as `X-Forwarded-For:https`). Format: <code>HEADER:value&vert;&vert;HEADER2:value2</code>                                          |
 
 ### Authentication
