@@ -83,6 +83,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendReferrerPolicy:          "foo",
 						label.TraefikFrontendCustomBrowserXSSValue:   "foo",
 						label.TraefikFrontendSTSSeconds:              "666",
+						label.TraefikFrontendSSLForceHost:            "true",
 						label.TraefikFrontendSSLRedirect:             "true",
 						label.TraefikFrontendSSLTemporaryRedirect:    "true",
 						label.TraefikFrontendSTSIncludeSubdomains:    "true",
@@ -158,6 +159,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						},
 						SSLRedirect:          true,
 						SSLTemporaryRedirect: true,
+						SSLForceHost:         true,
 						SSLHost:              "foo",
 						SSLProxyHeaders: map[string]string{
 							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
@@ -292,6 +294,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						label.Prefix + "sauternes." + label.SuffixFrontendHeadersReferrerPolicy:          "foo",
 						label.Prefix + "sauternes." + label.SuffixFrontendHeadersCustomBrowserXSSValue:   "foo",
 						label.Prefix + "sauternes." + label.SuffixFrontendHeadersSTSSeconds:              "666",
+						label.Prefix + "sauternes." + label.SuffixFrontendHeadersSSLForceHost:            "true",
 						label.Prefix + "sauternes." + label.SuffixFrontendHeadersSSLRedirect:             "true",
 						label.Prefix + "sauternes." + label.SuffixFrontendHeadersSSLTemporaryRedirect:    "true",
 						label.Prefix + "sauternes." + label.SuffixFrontendHeadersSTSIncludeSubdomains:    "true",
@@ -356,6 +359,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						HostsProxyHeaders:    []string{"foo", "bar", "bor"},
 						SSLRedirect:          true,
 						SSLTemporaryRedirect: true,
+						SSLForceHost:         true,
 						SSLHost:              "foo",
 						SSLProxyHeaders: map[string]string{
 							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",

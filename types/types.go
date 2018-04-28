@@ -119,14 +119,16 @@ type RateLimit struct {
 
 // Headers holds the custom header configuration
 type Headers struct {
-	CustomRequestHeaders    map[string]string `json:"customRequestHeaders,omitempty"`
-	CustomResponseHeaders   map[string]string `json:"customResponseHeaders,omitempty"`
+	CustomRequestHeaders  map[string]string `json:"customRequestHeaders,omitempty"`
+	CustomResponseHeaders map[string]string `json:"customResponseHeaders,omitempty"`
+
 	AllowedHosts            []string          `json:"allowedHosts,omitempty"`
 	HostsProxyHeaders       []string          `json:"hostsProxyHeaders,omitempty"`
 	SSLRedirect             bool              `json:"sslRedirect,omitempty"`
 	SSLTemporaryRedirect    bool              `json:"sslTemporaryRedirect,omitempty"`
 	SSLHost                 string            `json:"sslHost,omitempty"`
 	SSLProxyHeaders         map[string]string `json:"sslProxyHeaders,omitempty"`
+	SSLForceHost            bool              `json:"sslForceHost,omitempty"`
 	STSSeconds              int64             `json:"stsSeconds,omitempty"`
 	STSIncludeSubdomains    bool              `json:"stsIncludeSubdomains,omitempty"`
 	STSPreload              bool              `json:"stsPreload,omitempty"`
@@ -154,6 +156,7 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 		len(h.HostsProxyHeaders) != 0 ||
 		h.SSLRedirect ||
 		h.SSLTemporaryRedirect ||
+		h.SSLForceHost ||
 		h.SSLHost != "" ||
 		len(h.SSLProxyHeaders) != 0 ||
 		h.STSSeconds != 0 ||
