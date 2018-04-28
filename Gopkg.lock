@@ -1189,7 +1189,7 @@
   branch = "v1"
   name = "github.com/unrolled/secure"
   packages = ["."]
-  revision = "88720c9cbecfcf2eceb9bb4311ad6e398a8381ed"
+  revision = "a1cf62cc2159fff407728f118c41aece76c397fa"
 
 [[projects]]
   name = "github.com/urfave/negroni"
