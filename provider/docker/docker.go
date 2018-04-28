@@ -2,6 +2,7 @@ package docker
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -35,8 +36,10 @@ const (
 
 // EventCallback is a callback that the event listener executes on every incoming event.
 type EventCallback struct {
-	ListAndUpdateServicesHelper func()
-	ListTasksHelper             func(eventtypes.Message) []swarmtypes.Task
+	ListAndUpdateServicesHelper func() error
+	ListTasksHelper             func(eventtypes.Message) ([]swarmtypes.Task, error)
+	GetServiceHelper            func(string) (swarmtypes.Service, error)
+	SleepHelper                 func()
 }
 
 // Execute executes the callback logic.
@@ -49,11 +52,54 @@ func (c *EventCallback) Execute(msg eventtypes.Message) {
 		return
 	}
 
-	taskList := c.ListTasksHelper(msg)
+	service, err := c.GetServiceHelper(msg.Actor.ID)
+	if err != nil {
+		// TODO: How should we treat this kind of an error?
+		return
+	}
+
+	if service.Spec.Mode.Global == nil && service.Spec.Mode.Replicated == nil {
+		log.Error("Service has no specified mode! This should never happen...")
+
+		return
+	}
+
+	if service.Spec.Mode.Global != nil {
+		// TODO: For now we just execute the SleepHelper() if it's a global service,
+		// since we don't know how many tasks should be expected (unless we list the nodes, etc. - but there might also be a race condition).
+		log.Info("Service is in global mode. Executing the SleepHelper() and crossing our fingers we won't run into any race conditions...")
+		c.SleepHelper()
+	}
+
+	taskList, err := c.ListTasksHelper(msg)
+	if err != nil {
+		// TODO: How should we treat this kind of an error?
+		return
+	}
 
 	retry := false
+	// Retry if there are no tasks found.
 	if len(taskList) == 0 {
+		log.Infof("No tasks for service %s found! Retrying...", service.ID)
+
 		retry = true
+	}
+
+	if service.Spec.Mode.Replicated != nil {
+		if service.Spec.Mode.Replicated.Replicas == nil {
+			log.Error("Service is in replicated mode, but no replicas are defined! This should never happen...")
+
+			return
+		}
+
+		// Retry if the service is in replicated mode and the list of tasks is shorter than the number of replicas.
+		// We don't need to retry if the number of services is longer than the number of replicas. That means the service is being scaled in.
+		numberOfReplicas := int(*service.Spec.Mode.Replicated.Replicas)
+		if len(taskList) < numberOfReplicas {
+			log.Infof("Task list length for service %s is %d, expected it to be %d. Retrying...", service.ID, len(taskList), numberOfReplicas)
+
+			retry = true
+		}
 	}
 
 TaskLoop:
@@ -77,14 +123,16 @@ TaskLoop:
 	}
 
 	if !retry {
-		log.Debug("Callback task state check: Won't retry")
+		log.Debug("Callback task state check: Updating routing configuration if needed...")
 
 		c.ListAndUpdateServicesHelper()
 	} else {
-		log.Debug("Callback task state check: Retrying in 1 second")
+		// We should only reach this place when new tasks are being created.
+		// Therefore, sleeping here shouldn't affect the graceful scale down.
+		log.Debug("Callback task state check: Retrying in 1 second...")
 
-		// Sleep 1 second between retries.
-		time.Sleep(1 * time.Second)
+		// Execute the SleepHelper() between retries.
+		c.SleepHelper()
 
 		log.Debug("Callback task state check: Retrying...")
 		c.Execute(msg)
@@ -227,12 +275,17 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 						defer close(errChan)
 
 						callback := &EventCallback{
-							ListAndUpdateServicesHelper: func() {
-								if err := p.listAndUpdateServices(watchCtx, dockerClient, configurationChan); err != nil {
+							ListAndUpdateServicesHelper: func() error {
+								err := p.listAndUpdateServices(watchCtx, dockerClient, configurationChan)
+								if err != nil {
 									log.Errorf("Failed to list services for docker, error %s", err)
+
+									return err
 								}
+
+								return nil
 							},
-							ListTasksHelper: func(msg eventtypes.Message) []swarmtypes.Task {
+							ListTasksHelper: func(msg eventtypes.Message) ([]swarmtypes.Task, error) {
 								taskList, err := dockerClient.TaskList(
 									watchCtx,
 									dockertypes.TaskListOptions{
@@ -245,10 +298,38 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 								if err != nil {
 									log.Errorf("Failed to list tasks for service %s, error %s", msg.Actor.ID, err)
 
-									return []swarmtypes.Task{}
+									return []swarmtypes.Task{}, err
 								}
 
-								return taskList
+								return taskList, nil
+							},
+							GetServiceHelper: func(id string) (swarmtypes.Service, error) {
+								services, err := dockerClient.ServiceList(
+									watchCtx,
+									dockertypes.ServiceListOptions{
+										Filters: filters.NewArgs(
+											filters.Arg("id", id),
+										),
+									},
+								)
+								if err != nil {
+									log.Errorf("Failed to list services, error %s", err.Error())
+
+									return swarmtypes.Service{}, err
+								}
+
+								if len(services) != 1 {
+									err = fmt.Errorf("Failed to find service with id %s", id)
+									log.Error(err.Error())
+
+									return swarmtypes.Service{}, err
+								}
+
+								return services[0], nil
+							},
+							SleepHelper: func() {
+								// Sleep for 1 second.
+								time.Sleep(1 * time.Second)
 							},
 						}
 
