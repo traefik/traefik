@@ -193,7 +193,17 @@ Labels can be used on task containers to override default behavior:
 | Label                                                    | Description                                                                                                                                                                                         |
 |----------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `traefik.frontend.headers.allowedHosts=EXPR`             | Provides a list of allowed hosts that requests will be processed.<br>Format: `Host1,Host2`                                                                                                          |
-| `traefik.frontend.headers.hostsProxyHeaders=EXPR`        | Provides a list of headers that the proxied hostname may be stored.<br>Format: `HEADER1,HEADER2`                                                                                                    |
+| `traefik.frontend.headers.browserXSSFilter=true`         | Adds the X-XSS-Protection header with the value `1; mode=block`.                                                                                                                                    |
+| `traefik.frontend.headers.contentSecurityPolicy=VALUE`   | Adds CSP Header with the custom value.                                                                                                                                                              |
+| `traefik.frontend.headers.contentTypeNosniff=true`       | Adds the `X-Content-Type-Options` header with the value `nosniff`.                                                                                                                                  |
+| `traefik.frontend.headers.customBrowserXSSValue=VALUE`   | Set custom value for X-XSS-Protection header. This overrides the BrowserXssFilter option.                                                                                                           |
+| `traefik.frontend.headers.customFrameOptionsValue=VALUE` | Overrides the `X-Frame-Options` header with the custom value.                                                                                                                                       |
+| `traefik.frontend.headers.forceSTSHeader=false`          | Adds the STS  header to non-SSL requests.                                                                                                                                                           |
+| `traefik.frontend.headers.frameDeny=false`               | Adds the `X-Frame-Options` header with the value of `DENY`.                                                                                                                                         |
+| `traefik.frontend.headers.hostsProxyHeaders=EXPR `       | Provides a list of headers that the proxied hostname may be stored.<br>Format: `HEADER1,HEADER2`                                                                                                    |
+| `traefik.frontend.headers.isDevelopment=false`           | This will cause the `AllowedHosts`, `SSLRedirect`, and `STSSeconds`/`STSIncludeSubdomains` options to be ignored during development.<br>When deploying to production, be sure to set this to false. |
+| `traefik.frontend.headers.publicKey=VALUE`               | Adds pinned HTST public key header.                                                                                                                                                                 |
+| `traefik.frontend.headers.referrerPolicy=VALUE`          | Adds referrer policy  header.                                                                                                                                                                       |
 | `traefik.frontend.headers.SSLRedirect=true`              | Forces the frontend to redirect to SSL if a non-SSL request is sent.                                                                                                                                |
 | `traefik.frontend.headers.SSLTemporaryRedirect=true`     | Forces the frontend to redirect to SSL if a non-SSL request is sent, but by sending a 302 instead of a 301.                                                                                         |
 | `traefik.frontend.headers.SSLHost=HOST`                  | This setting configures the hostname that redirects will be based on. Default is "", which is the same host as the request.                                                                         |
@@ -201,16 +211,6 @@ Labels can be used on task containers to override default behavior:
 | `traefik.frontend.headers.STSSeconds=315360000`          | Sets the max-age of the STS header.                                                                                                                                                                 |
 | `traefik.frontend.headers.STSIncludeSubdomains=true`     | Adds the `IncludeSubdomains` section of the STS  header.                                                                                                                                            |
 | `traefik.frontend.headers.STSPreload=true`               | Adds the preload flag to the STS  header.                                                                                                                                                           |
-| `traefik.frontend.headers.forceSTSHeader=false`          | Adds the STS  header to non-SSL requests.                                                                                                                                                           |
-| `traefik.frontend.headers.frameDeny=false`               | Adds the `X-Frame-Options` header with the value of `DENY`.                                                                                                                                         |
-| `traefik.frontend.headers.customFrameOptionsValue=VALUE` | Overrides the `X-Frame-Options` header with the custom value.                                                                                                                                       |
-| `traefik.frontend.headers.contentTypeNosniff=true`       | Adds the `X-Content-Type-Options` header with the value `nosniff`.                                                                                                                                  |
-| `traefik.frontend.headers.browserXSSFilter=true`         | Adds the X-XSS-Protection header with the value `1; mode=block`.                                                                                                                                    |
-| `traefik.frontend.headers.customBrowserXSSValue=VALUE`   | Set custom value for X-XSS-Protection header. This overrides the BrowserXssFilter option.                                                                                                           |
-| `traefik.frontend.headers.contentSecurityPolicy=VALUE`   | Adds CSP Header with the custom value.                                                                                                                                                              |
-| `traefik.frontend.headers.publicKey=VALUE`               | Adds pinned HTST public key header.                                                                                                                                                                 |
-| `traefik.frontend.headers.referrerPolicy=VALUE`          | Adds referrer policy  header.                                                                                                                                                                       |
-| `traefik.frontend.headers.isDevelopment=false`           | This will cause the `AllowedHosts`, `SSLRedirect`, and `STSSeconds`/`STSIncludeSubdomains` options to be ignored during development.<br>When deploying to production, be sure to set this to false. |
 
 ### On containers with Multiple Ports (segment labels)
 
@@ -220,60 +220,60 @@ You can define as many segments as ports exposed in a container.
 
 Segment labels override the default behavior.
 
-| Label                                                                     | Description                                                                                      |
-|---------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|
-| `traefik.<segment_name>.domain`                                           | Default domain used for frontend rules.                                                              |
-| `traefik.<segment_name>.port=PORT`                                        | Overrides `traefik.port`. If several ports need to be exposed, the segment labels could be used. |
-| `traefik.<segment_name>.protocol`                                         | Overrides `traefik.protocol`.                                                                    |
-| `traefik.<segment_name>.weight`                                           | Assign this segment weight. Overrides `traefik.weight`.                                          |
-| `traefik.<segment_name>.frontend.auth.basic`                              | Sets a Basic Auth for that frontend                                                              |
-| `traefik.<segment_name>.frontend.backend=BACKEND`                         | Assign this segment frontend to `BACKEND`. Default is to assign to the segment backend.          |
-| `traefik.<segment_name>.frontend.entryPoints`                             | Overrides `traefik.frontend.entrypoints`                                                         |
-| `traefik.<segment_name>.frontend.errors.<name>.backend=NAME`              | See [custom error pages](/configuration/commons/#custom-error-pages) section.                    |
-| `traefik.<segment_name>.frontend.errors.<name>.query=PATH`                | See [custom error pages](/configuration/commons/#custom-error-pages) section.                    |
-| `traefik.<segment_name>.frontend.errors.<name>.status=RANGE`              | See [custom error pages](/configuration/commons/#custom-error-pages) section.                    |
-| `traefik.<segment_name>.frontend.passHostHeader`                          | Overrides `traefik.frontend.passHostHeader`.                                                     |
-| `traefik.<segment_name>.frontend.passTLSCert`                             | Overrides `traefik.frontend.passTLSCert`.                                                        |
-| `traefik.<segment_name>.frontend.priority`                                | Overrides `traefik.frontend.priority`.                                                           |
-| `traefik.<segment_name>.frontend.rateLimit.extractorFunc=EXP`             | See [rate limiting](/configuration/commons/#rate-limiting) section.                              |
-| `traefik.<segment_name>.frontend.rateLimit.rateSet.<name>.period=6`       | See [rate limiting](/configuration/commons/#rate-limiting) section.                              |
-| `traefik.<segment_name>.frontend.rateLimit.rateSet.<name>.average=6`      | See [rate limiting](/configuration/commons/#rate-limiting) section.                              |
-| `traefik.<segment_name>.frontend.rateLimit.rateSet.<name>.burst=6`        | See [rate limiting](/configuration/commons/#rate-limiting) section.                              |
-| `traefik.<segment_name>.frontend.redirect.entryPoint=https`               | Overrides `traefik.frontend.redirect.entryPoint`.                                                |
-| `traefik.<segment_name>.frontend.redirect.regex=^http://localhost/(.*)`   | Overrides `traefik.frontend.redirect.regex`.                                                     |
-| `traefik.<segment_name>.frontend.redirect.replacement=http://mydomain/$1` | Overrides `traefik.frontend.redirect.replacement`.                                               |
-| `traefik.<segment_name>.frontend.redirect.permanent=true`                 | Return 301 instead of 302.                                                                       |
-| `traefik.<segment_name>.frontend.rule`                                    | Overrides `traefik.frontend.rule`.                                                               |
-| `traefik.<segment_name>.frontend.whiteList.sourceRange=RANGE`             | Overrides `traefik.frontend.whiteList.sourceRange`.                                              |
-| `traefik.<segment_name>.frontend.whiteList.useXForwardedFor=true`         | Overrides `traefik.frontend.whiteList.useXForwardedFor`.                                         |
+| Label                                                                     | Description                                                 |
+|---------------------------------------------------------------------------|-------------------------------------------------------------|
+| `traefik.<segment_name>.domain=DOMAIN`                                    | Same as `traefik.domain`                                    |
+| `traefik.<segment_name>.port=PORT`                                        | Same as `traefik.port`                                      |
+| `traefik.<segment_name>.protocol=http`                                    | Same as `traefik.protocol`                                  |
+| `traefik.<segment_name>.weight=10`                                        | Same as `traefik.weight`                                    |
+| `traefik.<segment_name>.frontend.auth.basic=EXPR`                         | Same as `traefik.frontend.auth.basic`                       |
+| `traefik.<segment_name>.frontend.backend=BACKEND`                         | Same as `traefik.frontend.backend`                          |
+| `traefik.<segment_name>.frontend.entryPoints=https`                       | Same as `traefik.frontend.entryPoints`                      |
+| `traefik.<segment_name>.frontend.errors.<name>.backend=NAME`              | Same as `traefik.frontend.errors.<name>.backend`            |
+| `traefik.<segment_name>.frontend.errors.<name>.query=PATH`                | Same as `traefik.frontend.errors.<name>.query`              |
+| `traefik.<segment_name>.frontend.errors.<name>.status=RANGE`              | Same as `traefik.frontend.errors.<name>.status`             |
+| `traefik.<segment_name>.frontend.passHostHeader=true`                     | Same as `traefik.frontend.passHostHeader`                   |
+| `traefik.<segment_name>.frontend.passTLSCert=true`                        | Same as `traefik.frontend.passTLSCert`                      |
+| `traefik.<segment_name>.frontend.priority=10`                             | Same as `traefik.frontend.priority`                         |
+| `traefik.<segment_name>.frontend.rateLimit.extractorFunc=EXP`             | Same as `traefik.frontend.rateLimit.extractorFunc`          |
+| `traefik.<segment_name>.frontend.rateLimit.rateSet.<name>.period=6`       | Same as `traefik.frontend.rateLimit.rateSet.<name>.period`  |
+| `traefik.<segment_name>.frontend.rateLimit.rateSet.<name>.average=6`      | Same as `traefik.frontend.rateLimit.rateSet.<name>.average` |
+| `traefik.<segment_name>.frontend.rateLimit.rateSet.<name>.burst=6`        | Same as `traefik.frontend.rateLimit.rateSet.<name>.burst`   |
+| `traefik.<segment_name>.frontend.redirect.entryPoint=https`               | Same as `traefik.frontend.redirect.entryPoint`              |
+| `traefik.<segment_name>.frontend.redirect.regex=^http://localhost/(.*)`   | Same as `traefik.frontend.redirect.regex`                   |
+| `traefik.<segment_name>.frontend.redirect.replacement=http://mydomain/$1` | Same as `traefik.frontend.redirect.replacement`             |
+| `traefik.<segment_name>.frontend.redirect.permanent=true`                 | Same as `traefik.frontend.redirect.permanent`               |
+| `traefik.<segment_name>.frontend.rule=EXP`                                | Same as `traefik.frontend.rule`                             |
+| `traefik.<segment_name>.frontend.whiteList.sourceRange=RANGE`             | Same as `traefik.frontend.whiteList.sourceRange`            |
+| `traefik.<segment_name>.frontend.whiteList.useXForwardedFor=true`         | Same as `traefik.frontend.whiteList.useXForwardedFor`       |
 
 #### Custom Headers
 
-| Label                                                                | Description                                                     |
-|----------------------------------------------------------------------|-----------------------------------------------------------------|
-| `traefik.<segment_name>.frontend.headers.customRequestHeaders=EXPR ` | overrides `traefik.frontend.headers.customRequestHeaders=EXPR ` |
-| `traefik.<segment_name>.frontend.headers.customResponseHeaders=EXPR` | overrides `traefik.frontend.headers.customResponseHeaders=EXPR` |
+| Label                                                                | Description                                                |
+|----------------------------------------------------------------------|------------------------------------------------------------|
+| `traefik.<segment_name>.frontend.headers.customRequestHeaders=EXPR ` | overrides `traefik.frontend.headers.customRequestHeaders`  |
+| `traefik.<segment_name>.frontend.headers.customResponseHeaders=EXPR` | overrides `traefik.frontend.headers.customResponseHeaders` |
 
 #### Security Headers
 
-| Label                                                                   | Description                                                        |
-|-------------------------------------------------------------------------|--------------------------------------------------------------------|
-| `traefik.<segment_name>.frontend.headers.allowedHosts=EXPR`             | overrides `traefik.frontend.headers.allowedHosts=EXPR`             |
-| `traefik.<segment_name>.frontend.headers.hostsProxyHeaders=EXPR`        | overrides `traefik.frontend.headers.hostsProxyHeaders=EXPR`        |
-| `traefik.<segment_name>.frontend.headers.SSLRedirect=true`              | overrides `traefik.frontend.headers.SSLRedirect=true`              |
-| `traefik.<segment_name>.frontend.headers.SSLTemporaryRedirect=true`     | overrides `traefik.frontend.headers.SSLTemporaryRedirect=true`     |
-| `traefik.<segment_name>.frontend.headers.SSLHost=HOST`                  | overrides `traefik.frontend.headers.SSLHost=HOST`                  |
-| `traefik.<segment_name>.frontend.headers.SSLProxyHeaders=EXPR`          | overrides `traefik.frontend.headers.SSLProxyHeaders=EXPR`          |
-| `traefik.<segment_name>.frontend.headers.STSSeconds=315360000`          | overrides `traefik.frontend.headers.STSSeconds=315360000`          |
-| `traefik.<segment_name>.frontend.headers.STSIncludeSubdomains=true`     | overrides `traefik.frontend.headers.STSIncludeSubdomains=true`     |
-| `traefik.<segment_name>.frontend.headers.STSPreload=true`               | overrides `traefik.frontend.headers.STSPreload=true`               |
-| `traefik.<segment_name>.frontend.headers.forceSTSHeader=false`          | overrides `traefik.frontend.headers.forceSTSHeader=false`          |
-| `traefik.<segment_name>.frontend.headers.frameDeny=false`               | overrides `traefik.frontend.headers.frameDeny=false`               |
-| `traefik.<segment_name>.frontend.headers.customFrameOptionsValue=VALUE` | overrides `traefik.frontend.headers.customFrameOptionsValue=VALUE` |
-| `traefik.<segment_name>.frontend.headers.contentTypeNosniff=true`       | overrides `traefik.frontend.headers.contentTypeNosniff=true`       |
-| `traefik.<segment_name>.frontend.headers.browserXSSFilter=true`         | overrides `traefik.frontend.headers.browserXSSFilter=true`         |
-| `traefik.<segment_name>.frontend.headers.customBrowserXSSValue=VALUE`   | overrides `traefik.frontend.headers.customBrowserXSSValue=VALUE`   |
-| `traefik.<segment_name>.frontend.headers.contentSecurityPolicy=VALUE`   | overrides `traefik.frontend.headers.contentSecurityPolicy=VALUE`   |
-| `traefik.<segment_name>.frontend.headers.publicKey=VALUE`               | overrides `traefik.frontend.headers.publicKey=VALUE`               |
-| `traefik.<segment_name>.frontend.headers.referrerPolicy=VALUE`          | overrides `traefik.frontend.headers.referrerPolicy=VALUE`          |
-| `traefik.<segment_name>.frontend.headers.isDevelopment=false`           | overrides `traefik.frontend.headers.isDevelopment=false`           |
+| Label                                                                   | Description                                                  |
+|-------------------------------------------------------------------------|--------------------------------------------------------------|
+| `traefik.<segment_name>.frontend.headers.allowedHosts=EXPR`             | overrides `traefik.frontend.headers.allowedHosts`            |
+| `traefik.<segment_name>.frontend.headers.browserXSSFilter=true`         | overrides `traefik.frontend.headers.browserXSSFilter`        |
+| `traefik.<segment_name>.frontend.headers.contentSecurityPolicy=VALUE`   | overrides `traefik.frontend.headers.contentSecurityPolicy`   |
+| `traefik.<segment_name>.frontend.headers.contentTypeNosniff=true`       | overrides `traefik.frontend.headers.contentTypeNosniff`      |
+| `traefik.<segment_name>.frontend.headers.customBrowserXSSValue=VALUE`   | overrides `traefik.frontend.headers.customBrowserXSSValue`   |
+| `traefik.<segment_name>.frontend.headers.customFrameOptionsValue=VALUE` | overrides `traefik.frontend.headers.customFrameOptionsValue` |
+| `traefik.<segment_name>.frontend.headers.forceSTSHeader=false`          | overrides `traefik.frontend.headers.forceSTSHeader`          |
+| `traefik.<segment_name>.frontend.headers.frameDeny=false`               | overrides `traefik.frontend.headers.frameDeny`               |
+| `traefik.<segment_name>.frontend.headers.hostsProxyHeaders=EXPR`        | overrides `traefik.frontend.headers.hostsProxyHeaders`       |
+| `traefik.<segment_name>.frontend.headers.isDevelopment=false`           | overrides `traefik.frontend.headers.isDevelopment`           |
+| `traefik.<segment_name>.frontend.headers.publicKey=VALUE`               | overrides `traefik.frontend.headers.publicKey`               |
+| `traefik.<segment_name>.frontend.headers.referrerPolicy=VALUE`          | overrides `traefik.frontend.headers.referrerPolicy`          |
+| `traefik.<segment_name>.frontend.headers.SSLRedirect=true`              | overrides `traefik.frontend.headers.SSLRedirect`             |
+| `traefik.<segment_name>.frontend.headers.SSLTemporaryRedirect=true`     | overrides `traefik.frontend.headers.SSLTemporaryRedirect`    |
+| `traefik.<segment_name>.frontend.headers.SSLHost=HOST`                  | overrides `traefik.frontend.headers.SSLHost`                 |
+| `traefik.<segment_name>.frontend.headers.SSLProxyHeaders=EXPR`          | overrides `traefik.frontend.headers.SSLProxyHeaders`         |
+| `traefik.<segment_name>.frontend.headers.STSSeconds=315360000`          | overrides `traefik.frontend.headers.STSSeconds`              |
+| `traefik.<segment_name>.frontend.headers.STSIncludeSubdomains=true`     | overrides `traefik.frontend.headers.STSIncludeSubdomains`    |
+| `traefik.<segment_name>.frontend.headers.STSPreload=true`               | overrides `traefik.frontend.headers.STSPreload`              |
