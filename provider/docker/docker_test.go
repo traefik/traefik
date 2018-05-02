@@ -9,68 +9,68 @@ import (
 )
 
 func TestEventCallbackNoActorID(t *testing.T) {
-	serviceHelperCallCount := 0
-	taskHelperCallCount := 0
-	getServiceHelperCallCount := 0
-	sleepHelperCallCount := 0
+	serviceFuncCallCount := 0
+	taskFuncCallCount := 0
+	getServiceFuncCallCount := 0
+	sleepFuncCallCount := 0
 
 	c := docker.EventCallback{
-		ListAndUpdateServicesHelper: func() error {
-			serviceHelperCallCount++
+		ListAndUpdateServicesFunc: func() error {
+			serviceFuncCallCount++
 
 			return nil
 		},
-		ListTasksHelper: func(msg events.Message) ([]swarm.Task, error) {
-			taskHelperCallCount++
+		ListTasksFunc: func(msg events.Message) ([]swarm.Task, error) {
+			taskFuncCallCount++
 
 			return []swarm.Task{}, nil
 		},
-		GetServiceHelper: func(id string) (swarm.Service, error) {
-			getServiceHelperCallCount++
+		GetServiceFunc: func(id string) (swarm.Service, error) {
+			getServiceFuncCallCount++
 
 			return swarm.Service{}, nil
 		},
-		SleepHelper: func() {
-			sleepHelperCallCount++
+		SleepFunc: func() {
+			sleepFuncCallCount++
 		},
 	}
 
 	c.Execute(events.Message{})
 
-	if serviceHelperCallCount != 1 {
-		t.Fatal("expected", 1, "got", serviceHelperCallCount)
+	if serviceFuncCallCount != 1 {
+		t.Fatal("expected", 1, "got", serviceFuncCallCount)
 	}
-	if taskHelperCallCount != 0 {
-		t.Fatal("expected", 0, "got", taskHelperCallCount)
+	if taskFuncCallCount != 0 {
+		t.Fatal("expected", 0, "got", taskFuncCallCount)
 	}
-	if getServiceHelperCallCount != 0 {
-		t.Fatal("expected", 0, "got", getServiceHelperCallCount)
+	if getServiceFuncCallCount != 0 {
+		t.Fatal("expected", 0, "got", getServiceFuncCallCount)
 	}
-	if sleepHelperCallCount != 0 {
-		t.Fatal("expected", 0, "got", sleepHelperCallCount)
+	if sleepFuncCallCount != 0 {
+		t.Fatal("expected", 0, "got", sleepFuncCallCount)
 	}
 }
 
 func TestEventCallbackNoTasksFoundOneRetry(t *testing.T) {
-	serviceHelperCallCount := 0
-	taskHelperCallCount := 0
-	getServiceHelperCallCount := 0
-	sleepHelperCallCount := 0
+	serviceFuncCallCount := 0
+	taskFuncCallCount := 0
+	getServiceFuncCallCount := 0
+	sleepFuncCallCount := 0
 
 	c := docker.EventCallback{
-		ListAndUpdateServicesHelper: func() error {
-			serviceHelperCallCount++
+		ListAndUpdateServicesFunc: func() error {
+			serviceFuncCallCount++
 
 			return nil
 		},
-		ListTasksHelper: func(msg events.Message) ([]swarm.Task, error) {
+		ListTasksFunc: func(msg events.Message) ([]swarm.Task, error) {
 			if msg.Actor.ID != "deadbeef" {
 				t.Fatal("expected", "deadbeef", "got", msg.Actor.ID)
 			}
 
-			taskHelperCallCount++
+			taskFuncCallCount++
 
-			if taskHelperCallCount == 2 {
+			if taskFuncCallCount == 2 {
 				task := swarm.Task{}
 				task.Status.State = swarm.TaskStateRunning
 
@@ -79,12 +79,12 @@ func TestEventCallbackNoTasksFoundOneRetry(t *testing.T) {
 
 			return []swarm.Task{}, nil
 		},
-		GetServiceHelper: func(id string) (swarm.Service, error) {
+		GetServiceFunc: func(id string) (swarm.Service, error) {
 			if id != "deadbeef" {
 				t.Fatal("expected", "deadbeef", "got", id)
 			}
 
-			getServiceHelperCallCount++
+			getServiceFuncCallCount++
 
 			service := swarm.Service{}
 			service.ID = id
@@ -92,8 +92,8 @@ func TestEventCallbackNoTasksFoundOneRetry(t *testing.T) {
 
 			return service, nil
 		},
-		SleepHelper: func() {
-			sleepHelperCallCount++
+		SleepFunc: func() {
+			sleepFuncCallCount++
 		},
 	}
 
@@ -101,41 +101,41 @@ func TestEventCallbackNoTasksFoundOneRetry(t *testing.T) {
 	msg.Actor.ID = "deadbeef"
 	c.Execute(msg)
 
-	if serviceHelperCallCount != 1 {
-		t.Fatal("expected", 1, "got", serviceHelperCallCount)
+	if serviceFuncCallCount != 1 {
+		t.Fatal("expected", 1, "got", serviceFuncCallCount)
 	}
-	if taskHelperCallCount != 2 {
-		t.Fatal("expected", 2, "got", taskHelperCallCount)
+	if taskFuncCallCount != 2 {
+		t.Fatal("expected", 2, "got", taskFuncCallCount)
 	}
-	if getServiceHelperCallCount != 2 {
-		t.Fatal("expected", 2, "got", getServiceHelperCallCount)
+	if getServiceFuncCallCount != 2 {
+		t.Fatal("expected", 2, "got", getServiceFuncCallCount)
 	}
-	if sleepHelperCallCount != 3 {
-		t.Fatal("expected", 3, "got", sleepHelperCallCount)
+	if sleepFuncCallCount != 3 {
+		t.Fatal("expected", 3, "got", sleepFuncCallCount)
 	}
 }
 
 func TestEventCallbackTaskGettingReadyTwoRetries(t *testing.T) {
-	serviceHelperCallCount := 0
-	taskHelperCallCount := 0
-	getServiceHelperCallCount := 0
-	sleepHelperCallCount := 0
+	serviceFuncCallCount := 0
+	taskFuncCallCount := 0
+	getServiceFuncCallCount := 0
+	sleepFuncCallCount := 0
 
 	c := docker.EventCallback{
-		ListAndUpdateServicesHelper: func() error {
-			serviceHelperCallCount++
+		ListAndUpdateServicesFunc: func() error {
+			serviceFuncCallCount++
 
 			return nil
 		},
-		ListTasksHelper: func(msg events.Message) ([]swarm.Task, error) {
+		ListTasksFunc: func(msg events.Message) ([]swarm.Task, error) {
 			if msg.Actor.ID != "deadbeef" {
 				t.Fatal("expected", "deadbeef", "got", msg.Actor.ID)
 			}
 
-			taskHelperCallCount++
+			taskFuncCallCount++
 
 			task := swarm.Task{}
-			switch taskHelperCallCount {
+			switch taskFuncCallCount {
 			case 1:
 				task.Status.State = swarm.TaskStateNew
 
@@ -152,12 +152,12 @@ func TestEventCallbackTaskGettingReadyTwoRetries(t *testing.T) {
 
 			return []swarm.Task{task}, nil
 		},
-		GetServiceHelper: func(id string) (swarm.Service, error) {
+		GetServiceFunc: func(id string) (swarm.Service, error) {
 			if id != "deadbeef" {
 				t.Fatal("expected", "deadbeef", "got", id)
 			}
 
-			getServiceHelperCallCount++
+			getServiceFuncCallCount++
 
 			service := swarm.Service{}
 			service.ID = id
@@ -165,8 +165,8 @@ func TestEventCallbackTaskGettingReadyTwoRetries(t *testing.T) {
 
 			return service, nil
 		},
-		SleepHelper: func() {
-			sleepHelperCallCount++
+		SleepFunc: func() {
+			sleepFuncCallCount++
 		},
 	}
 
@@ -174,41 +174,41 @@ func TestEventCallbackTaskGettingReadyTwoRetries(t *testing.T) {
 	msg.Actor.ID = "deadbeef"
 	c.Execute(msg)
 
-	if serviceHelperCallCount != 1 {
-		t.Fatal("expected", 1, "got", serviceHelperCallCount)
+	if serviceFuncCallCount != 1 {
+		t.Fatal("expected", 1, "got", serviceFuncCallCount)
 	}
-	if taskHelperCallCount != 3 {
-		t.Fatal("expected", 3, "got", taskHelperCallCount)
+	if taskFuncCallCount != 3 {
+		t.Fatal("expected", 3, "got", taskFuncCallCount)
 	}
-	if getServiceHelperCallCount != 3 {
-		t.Fatal("expected", 3, "got", getServiceHelperCallCount)
+	if getServiceFuncCallCount != 3 {
+		t.Fatal("expected", 3, "got", getServiceFuncCallCount)
 	}
-	if sleepHelperCallCount != 5 {
-		t.Fatal("expected", 5, "got", sleepHelperCallCount)
+	if sleepFuncCallCount != 5 {
+		t.Fatal("expected", 5, "got", sleepFuncCallCount)
 	}
 }
 
 func TestEventCallbackTaskGettingReadyFailsAfterTwoRetriesStillExecutesServiceListing(t *testing.T) {
-	serviceHelperCallCount := 0
-	taskHelperCallCount := 0
-	getServiceHelperCallCount := 0
-	sleepHelperCallCount := 0
+	serviceFuncCallCount := 0
+	taskFuncCallCount := 0
+	getServiceFuncCallCount := 0
+	sleepFuncCallCount := 0
 
 	c := docker.EventCallback{
-		ListAndUpdateServicesHelper: func() error {
-			serviceHelperCallCount++
+		ListAndUpdateServicesFunc: func() error {
+			serviceFuncCallCount++
 
 			return nil
 		},
-		ListTasksHelper: func(msg events.Message) ([]swarm.Task, error) {
+		ListTasksFunc: func(msg events.Message) ([]swarm.Task, error) {
 			if msg.Actor.ID != "deadbeef" {
 				t.Fatal("expected", "deadbeef", "got", msg.Actor.ID)
 			}
 
-			taskHelperCallCount++
+			taskFuncCallCount++
 
 			task := swarm.Task{}
-			switch taskHelperCallCount {
+			switch taskFuncCallCount {
 			case 1:
 				task.Status.State = swarm.TaskStateNew
 
@@ -225,12 +225,12 @@ func TestEventCallbackTaskGettingReadyFailsAfterTwoRetriesStillExecutesServiceLi
 
 			return []swarm.Task{task}, nil
 		},
-		GetServiceHelper: func(id string) (swarm.Service, error) {
+		GetServiceFunc: func(id string) (swarm.Service, error) {
 			if id != "deadbeef" {
 				t.Fatal("expected", "deadbeef", "got", id)
 			}
 
-			getServiceHelperCallCount++
+			getServiceFuncCallCount++
 
 			service := swarm.Service{}
 			service.ID = id
@@ -238,8 +238,8 @@ func TestEventCallbackTaskGettingReadyFailsAfterTwoRetriesStillExecutesServiceLi
 
 			return service, nil
 		},
-		SleepHelper: func() {
-			sleepHelperCallCount++
+		SleepFunc: func() {
+			sleepFuncCallCount++
 		},
 	}
 
@@ -247,41 +247,41 @@ func TestEventCallbackTaskGettingReadyFailsAfterTwoRetriesStillExecutesServiceLi
 	msg.Actor.ID = "deadbeef"
 	c.Execute(msg)
 
-	if serviceHelperCallCount != 1 {
-		t.Fatal("expected", 1, "got", serviceHelperCallCount)
+	if serviceFuncCallCount != 1 {
+		t.Fatal("expected", 1, "got", serviceFuncCallCount)
 	}
-	if taskHelperCallCount != 3 {
-		t.Fatal("expected", 3, "got", taskHelperCallCount)
+	if taskFuncCallCount != 3 {
+		t.Fatal("expected", 3, "got", taskFuncCallCount)
 	}
-	if getServiceHelperCallCount != 3 {
-		t.Fatal("expected", 3, "got", getServiceHelperCallCount)
+	if getServiceFuncCallCount != 3 {
+		t.Fatal("expected", 3, "got", getServiceFuncCallCount)
 	}
-	if sleepHelperCallCount != 5 {
-		t.Fatal("expected", 5, "got", sleepHelperCallCount)
+	if sleepFuncCallCount != 5 {
+		t.Fatal("expected", 5, "got", sleepFuncCallCount)
 	}
 }
 
 func TestEventCallbackTaskGettingReadyGoesThroughAllPossibleRetrySteps(t *testing.T) {
-	serviceHelperCallCount := 0
-	taskHelperCallCount := 0
-	getServiceHelperCallCount := 0
-	sleepHelperCallCount := 0
+	serviceFuncCallCount := 0
+	taskFuncCallCount := 0
+	getServiceFuncCallCount := 0
+	sleepFuncCallCount := 0
 
 	c := docker.EventCallback{
-		ListAndUpdateServicesHelper: func() error {
-			serviceHelperCallCount++
+		ListAndUpdateServicesFunc: func() error {
+			serviceFuncCallCount++
 
 			return nil
 		},
-		ListTasksHelper: func(msg events.Message) ([]swarm.Task, error) {
+		ListTasksFunc: func(msg events.Message) ([]swarm.Task, error) {
 			if msg.Actor.ID != "deadbeef" {
 				t.Fatal("expected", "deadbeef", "got", msg.Actor.ID)
 			}
 
-			taskHelperCallCount++
+			taskFuncCallCount++
 
 			task := swarm.Task{}
-			switch taskHelperCallCount {
+			switch taskFuncCallCount {
 			case 1:
 				task.Status.State = swarm.TaskStateNew
 
@@ -314,12 +314,12 @@ func TestEventCallbackTaskGettingReadyGoesThroughAllPossibleRetrySteps(t *testin
 
 			return []swarm.Task{task}, nil
 		},
-		GetServiceHelper: func(id string) (swarm.Service, error) {
+		GetServiceFunc: func(id string) (swarm.Service, error) {
 			if id != "deadbeef" {
 				t.Fatal("expected", "deadbeef", "got", id)
 			}
 
-			getServiceHelperCallCount++
+			getServiceFuncCallCount++
 
 			service := swarm.Service{}
 			service.ID = id
@@ -327,8 +327,8 @@ func TestEventCallbackTaskGettingReadyGoesThroughAllPossibleRetrySteps(t *testin
 
 			return service, nil
 		},
-		SleepHelper: func() {
-			sleepHelperCallCount++
+		SleepFunc: func() {
+			sleepFuncCallCount++
 		},
 	}
 
@@ -336,50 +336,50 @@ func TestEventCallbackTaskGettingReadyGoesThroughAllPossibleRetrySteps(t *testin
 	msg.Actor.ID = "deadbeef"
 	c.Execute(msg)
 
-	if serviceHelperCallCount != 1 {
-		t.Fatal("expected", 1, "got", serviceHelperCallCount)
+	if serviceFuncCallCount != 1 {
+		t.Fatal("expected", 1, "got", serviceFuncCallCount)
 	}
-	if taskHelperCallCount != 7 {
-		t.Fatal("expected", 7, "got", taskHelperCallCount)
+	if taskFuncCallCount != 7 {
+		t.Fatal("expected", 7, "got", taskFuncCallCount)
 	}
-	if getServiceHelperCallCount != 7 {
-		t.Fatal("expected", 7, "got", getServiceHelperCallCount)
+	if getServiceFuncCallCount != 7 {
+		t.Fatal("expected", 7, "got", getServiceFuncCallCount)
 	}
-	if sleepHelperCallCount != 13 {
-		t.Fatal("expected", 13, "got", sleepHelperCallCount)
+	if sleepFuncCallCount != 13 {
+		t.Fatal("expected", 13, "got", sleepFuncCallCount)
 	}
 }
 
 func TestEventCallbackTasksFoundGlobalMode(t *testing.T) {
-	serviceHelperCallCount := 0
-	taskHelperCallCount := 0
-	getServiceHelperCallCount := 0
-	sleepHelperCallCount := 0
+	serviceFuncCallCount := 0
+	taskFuncCallCount := 0
+	getServiceFuncCallCount := 0
+	sleepFuncCallCount := 0
 
 	c := docker.EventCallback{
-		ListAndUpdateServicesHelper: func() error {
-			serviceHelperCallCount++
+		ListAndUpdateServicesFunc: func() error {
+			serviceFuncCallCount++
 
 			return nil
 		},
-		ListTasksHelper: func(msg events.Message) ([]swarm.Task, error) {
+		ListTasksFunc: func(msg events.Message) ([]swarm.Task, error) {
 			if msg.Actor.ID != "deadbeef" {
 				t.Fatal("expected", "deadbeef", "got", msg.Actor.ID)
 			}
 
-			taskHelperCallCount++
+			taskFuncCallCount++
 
 			task := swarm.Task{}
 			task.Status.State = swarm.TaskStateRunning
 
 			return []swarm.Task{task}, nil
 		},
-		GetServiceHelper: func(id string) (swarm.Service, error) {
+		GetServiceFunc: func(id string) (swarm.Service, error) {
 			if id != "deadbeef" {
 				t.Fatal("expected", "deadbeef", "got", id)
 			}
 
-			getServiceHelperCallCount++
+			getServiceFuncCallCount++
 
 			service := swarm.Service{}
 			service.ID = id
@@ -387,8 +387,8 @@ func TestEventCallbackTasksFoundGlobalMode(t *testing.T) {
 
 			return service, nil
 		},
-		SleepHelper: func() {
-			sleepHelperCallCount++
+		SleepFunc: func() {
+			sleepFuncCallCount++
 		},
 	}
 
@@ -396,42 +396,42 @@ func TestEventCallbackTasksFoundGlobalMode(t *testing.T) {
 	msg.Actor.ID = "deadbeef"
 	c.Execute(msg)
 
-	if serviceHelperCallCount != 1 {
-		t.Fatal("expected", 1, "got", serviceHelperCallCount)
+	if serviceFuncCallCount != 1 {
+		t.Fatal("expected", 1, "got", serviceFuncCallCount)
 	}
-	if taskHelperCallCount != 1 {
-		t.Fatal("expected", 1, "got", taskHelperCallCount)
+	if taskFuncCallCount != 1 {
+		t.Fatal("expected", 1, "got", taskFuncCallCount)
 	}
-	if getServiceHelperCallCount != 1 {
-		t.Fatal("expected", 1, "got", getServiceHelperCallCount)
+	if getServiceFuncCallCount != 1 {
+		t.Fatal("expected", 1, "got", getServiceFuncCallCount)
 	}
-	if sleepHelperCallCount != 1 {
-		t.Fatal("expected", 1, "got", sleepHelperCallCount)
+	if sleepFuncCallCount != 1 {
+		t.Fatal("expected", 1, "got", sleepFuncCallCount)
 	}
 }
 
 func TestEventCallbackTasksFoundFewerThanExpectedOneRetryReplicatedMode(t *testing.T) {
-	serviceHelperCallCount := 0
-	taskHelperCallCount := 0
-	getServiceHelperCallCount := 0
-	sleepHelperCallCount := 0
+	serviceFuncCallCount := 0
+	taskFuncCallCount := 0
+	getServiceFuncCallCount := 0
+	sleepFuncCallCount := 0
 
 	c := docker.EventCallback{
-		ListAndUpdateServicesHelper: func() error {
-			serviceHelperCallCount++
+		ListAndUpdateServicesFunc: func() error {
+			serviceFuncCallCount++
 
 			return nil
 		},
-		ListTasksHelper: func(msg events.Message) ([]swarm.Task, error) {
+		ListTasksFunc: func(msg events.Message) ([]swarm.Task, error) {
 			if msg.Actor.ID != "deadbeef" {
 				t.Fatal("expected", "deadbeef", "got", msg.Actor.ID)
 			}
 
-			taskHelperCallCount++
+			taskFuncCallCount++
 
 			task := swarm.Task{}
 			task.Status.State = swarm.TaskStateRunning
-			if taskHelperCallCount == 2 {
+			if taskFuncCallCount == 2 {
 				return []swarm.Task{
 					task,
 					task,
@@ -440,12 +440,12 @@ func TestEventCallbackTasksFoundFewerThanExpectedOneRetryReplicatedMode(t *testi
 
 			return []swarm.Task{task}, nil
 		},
-		GetServiceHelper: func(id string) (swarm.Service, error) {
+		GetServiceFunc: func(id string) (swarm.Service, error) {
 			if id != "deadbeef" {
 				t.Fatal("expected", "deadbeef", "got", id)
 			}
 
-			getServiceHelperCallCount++
+			getServiceFuncCallCount++
 
 			replicas := uint64(2)
 
@@ -457,8 +457,8 @@ func TestEventCallbackTasksFoundFewerThanExpectedOneRetryReplicatedMode(t *testi
 
 			return service, nil
 		},
-		SleepHelper: func() {
-			sleepHelperCallCount++
+		SleepFunc: func() {
+			sleepFuncCallCount++
 		},
 	}
 
@@ -466,55 +466,55 @@ func TestEventCallbackTasksFoundFewerThanExpectedOneRetryReplicatedMode(t *testi
 	msg.Actor.ID = "deadbeef"
 	c.Execute(msg)
 
-	if serviceHelperCallCount != 1 {
-		t.Fatal("expected", 1, "got", serviceHelperCallCount)
+	if serviceFuncCallCount != 1 {
+		t.Fatal("expected", 1, "got", serviceFuncCallCount)
 	}
-	if taskHelperCallCount != 2 {
-		t.Fatal("expected", 2, "got", taskHelperCallCount)
+	if taskFuncCallCount != 2 {
+		t.Fatal("expected", 2, "got", taskFuncCallCount)
 	}
-	if getServiceHelperCallCount != 2 {
-		t.Fatal("expected", 2, "got", getServiceHelperCallCount)
+	if getServiceFuncCallCount != 2 {
+		t.Fatal("expected", 2, "got", getServiceFuncCallCount)
 	}
-	if sleepHelperCallCount != 1 {
-		t.Fatal("expected", 1, "got", sleepHelperCallCount)
+	if sleepFuncCallCount != 1 {
+		t.Fatal("expected", 1, "got", sleepFuncCallCount)
 	}
 }
 
 func TestEventCallbackNoModeSet(t *testing.T) {
-	serviceHelperCallCount := 0
-	taskHelperCallCount := 0
-	getServiceHelperCallCount := 0
-	sleepHelperCallCount := 0
+	serviceFuncCallCount := 0
+	taskFuncCallCount := 0
+	getServiceFuncCallCount := 0
+	sleepFuncCallCount := 0
 
 	c := docker.EventCallback{
-		ListAndUpdateServicesHelper: func() error {
-			serviceHelperCallCount++
+		ListAndUpdateServicesFunc: func() error {
+			serviceFuncCallCount++
 
 			return nil
 		},
-		ListTasksHelper: func(msg events.Message) ([]swarm.Task, error) {
+		ListTasksFunc: func(msg events.Message) ([]swarm.Task, error) {
 			if msg.Actor.ID != "deadbeef" {
 				t.Fatal("expected", "deadbeef", "got", msg.Actor.ID)
 			}
 
-			taskHelperCallCount++
+			taskFuncCallCount++
 
 			return []swarm.Task{}, nil
 		},
-		GetServiceHelper: func(id string) (swarm.Service, error) {
+		GetServiceFunc: func(id string) (swarm.Service, error) {
 			if id != "deadbeef" {
 				t.Fatal("expected", "deadbeef", "got", id)
 			}
 
-			getServiceHelperCallCount++
+			getServiceFuncCallCount++
 
 			service := swarm.Service{}
 			service.ID = id
 
 			return service, nil
 		},
-		SleepHelper: func() {
-			sleepHelperCallCount++
+		SleepFunc: func() {
+			sleepFuncCallCount++
 		},
 	}
 
@@ -522,50 +522,50 @@ func TestEventCallbackNoModeSet(t *testing.T) {
 	msg.Actor.ID = "deadbeef"
 	c.Execute(msg)
 
-	if serviceHelperCallCount != 0 {
-		t.Fatal("expected", 0, "got", serviceHelperCallCount)
+	if serviceFuncCallCount != 0 {
+		t.Fatal("expected", 0, "got", serviceFuncCallCount)
 	}
-	if taskHelperCallCount != 0 {
-		t.Fatal("expected", 0, "got", taskHelperCallCount)
+	if taskFuncCallCount != 0 {
+		t.Fatal("expected", 0, "got", taskFuncCallCount)
 	}
-	if getServiceHelperCallCount != 1 {
-		t.Fatal("expected", 1, "got", getServiceHelperCallCount)
+	if getServiceFuncCallCount != 1 {
+		t.Fatal("expected", 1, "got", getServiceFuncCallCount)
 	}
-	if sleepHelperCallCount != 0 {
-		t.Fatal("expected", 0, "got", sleepHelperCallCount)
+	if sleepFuncCallCount != 0 {
+		t.Fatal("expected", 0, "got", sleepFuncCallCount)
 	}
 }
 
 func TestEventCallbackReplicatedModeNoNumberOfReplicas(t *testing.T) {
-	serviceHelperCallCount := 0
-	taskHelperCallCount := 0
-	getServiceHelperCallCount := 0
-	sleepHelperCallCount := 0
+	serviceFuncCallCount := 0
+	taskFuncCallCount := 0
+	getServiceFuncCallCount := 0
+	sleepFuncCallCount := 0
 
 	c := docker.EventCallback{
-		ListAndUpdateServicesHelper: func() error {
-			serviceHelperCallCount++
+		ListAndUpdateServicesFunc: func() error {
+			serviceFuncCallCount++
 
 			return nil
 		},
-		ListTasksHelper: func(msg events.Message) ([]swarm.Task, error) {
+		ListTasksFunc: func(msg events.Message) ([]swarm.Task, error) {
 			if msg.Actor.ID != "deadbeef" {
 				t.Fatal("expected", "deadbeef", "got", msg.Actor.ID)
 			}
 
-			taskHelperCallCount++
+			taskFuncCallCount++
 
 			task := swarm.Task{}
 			task.Status.State = swarm.TaskStateRunning
 
 			return []swarm.Task{task}, nil
 		},
-		GetServiceHelper: func(id string) (swarm.Service, error) {
+		GetServiceFunc: func(id string) (swarm.Service, error) {
 			if id != "deadbeef" {
 				t.Fatal("expected", "deadbeef", "got", id)
 			}
 
-			getServiceHelperCallCount++
+			getServiceFuncCallCount++
 
 			service := swarm.Service{}
 			service.ID = id
@@ -573,8 +573,8 @@ func TestEventCallbackReplicatedModeNoNumberOfReplicas(t *testing.T) {
 
 			return service, nil
 		},
-		SleepHelper: func() {
-			sleepHelperCallCount++
+		SleepFunc: func() {
+			sleepFuncCallCount++
 		},
 	}
 
@@ -582,38 +582,38 @@ func TestEventCallbackReplicatedModeNoNumberOfReplicas(t *testing.T) {
 	msg.Actor.ID = "deadbeef"
 	c.Execute(msg)
 
-	if serviceHelperCallCount != 0 {
-		t.Fatal("expected", 0, "got", serviceHelperCallCount)
+	if serviceFuncCallCount != 0 {
+		t.Fatal("expected", 0, "got", serviceFuncCallCount)
 	}
-	if taskHelperCallCount != 1 {
-		t.Fatal("expected", 1, "got", taskHelperCallCount)
+	if taskFuncCallCount != 1 {
+		t.Fatal("expected", 1, "got", taskFuncCallCount)
 	}
-	if getServiceHelperCallCount != 1 {
-		t.Fatal("expected", 1, "got", getServiceHelperCallCount)
+	if getServiceFuncCallCount != 1 {
+		t.Fatal("expected", 1, "got", getServiceFuncCallCount)
 	}
-	if sleepHelperCallCount != 0 {
-		t.Fatal("expected", 0, "got", sleepHelperCallCount)
+	if sleepFuncCallCount != 0 {
+		t.Fatal("expected", 0, "got", sleepFuncCallCount)
 	}
 }
 
 func TestEventCallbackTasksFoundMoreThanExpectedNoRetryNeededReplicatedMode(t *testing.T) {
-	serviceHelperCallCount := 0
-	taskHelperCallCount := 0
-	getServiceHelperCallCount := 0
-	sleepHelperCallCount := 0
+	serviceFuncCallCount := 0
+	taskFuncCallCount := 0
+	getServiceFuncCallCount := 0
+	sleepFuncCallCount := 0
 
 	c := docker.EventCallback{
-		ListAndUpdateServicesHelper: func() error {
-			serviceHelperCallCount++
+		ListAndUpdateServicesFunc: func() error {
+			serviceFuncCallCount++
 
 			return nil
 		},
-		ListTasksHelper: func(msg events.Message) ([]swarm.Task, error) {
+		ListTasksFunc: func(msg events.Message) ([]swarm.Task, error) {
 			if msg.Actor.ID != "deadbeef" {
 				t.Fatal("expected", "deadbeef", "got", msg.Actor.ID)
 			}
 
-			taskHelperCallCount++
+			taskFuncCallCount++
 
 			task := swarm.Task{}
 			task.Status.State = swarm.TaskStateRunning
@@ -623,12 +623,12 @@ func TestEventCallbackTasksFoundMoreThanExpectedNoRetryNeededReplicatedMode(t *t
 				task,
 			}, nil
 		},
-		GetServiceHelper: func(id string) (swarm.Service, error) {
+		GetServiceFunc: func(id string) (swarm.Service, error) {
 			if id != "deadbeef" {
 				t.Fatal("expected", "deadbeef", "got", id)
 			}
 
-			getServiceHelperCallCount++
+			getServiceFuncCallCount++
 
 			replicas := uint64(1)
 
@@ -640,8 +640,8 @@ func TestEventCallbackTasksFoundMoreThanExpectedNoRetryNeededReplicatedMode(t *t
 
 			return service, nil
 		},
-		SleepHelper: func() {
-			sleepHelperCallCount++
+		SleepFunc: func() {
+			sleepFuncCallCount++
 		},
 	}
 
@@ -649,16 +649,16 @@ func TestEventCallbackTasksFoundMoreThanExpectedNoRetryNeededReplicatedMode(t *t
 	msg.Actor.ID = "deadbeef"
 	c.Execute(msg)
 
-	if serviceHelperCallCount != 1 {
-		t.Fatal("expected", 1, "got", serviceHelperCallCount)
+	if serviceFuncCallCount != 1 {
+		t.Fatal("expected", 1, "got", serviceFuncCallCount)
 	}
-	if taskHelperCallCount != 1 {
-		t.Fatal("expected", 1, "got", taskHelperCallCount)
+	if taskFuncCallCount != 1 {
+		t.Fatal("expected", 1, "got", taskFuncCallCount)
 	}
-	if getServiceHelperCallCount != 1 {
-		t.Fatal("expected", 1, "got", getServiceHelperCallCount)
+	if getServiceFuncCallCount != 1 {
+		t.Fatal("expected", 1, "got", getServiceFuncCallCount)
 	}
-	if sleepHelperCallCount != 0 {
-		t.Fatal("expected", 0, "got", sleepHelperCallCount)
+	if sleepFuncCallCount != 0 {
+		t.Fatal("expected", 0, "got", sleepFuncCallCount)
 	}
 }

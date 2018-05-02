@@ -36,10 +36,10 @@ const (
 
 // EventCallback is a callback that the event listener executes on every incoming event.
 type EventCallback struct {
-	ListAndUpdateServicesHelper func() error
-	ListTasksHelper             func(eventtypes.Message) ([]swarmtypes.Task, error)
-	GetServiceHelper            func(string) (swarmtypes.Service, error)
-	SleepHelper                 func()
+	ListAndUpdateServicesFunc func() error
+	ListTasksFunc             func(eventtypes.Message) ([]swarmtypes.Task, error)
+	GetServiceFunc            func(string) (swarmtypes.Service, error)
+	SleepFunc                 func()
 }
 
 // Execute executes the callback logic.
@@ -47,12 +47,12 @@ func (c *EventCallback) Execute(msg eventtypes.Message) {
 	log.Debugf("Docker events callback function executed with payload: %#v", msg)
 
 	if msg.Actor.ID == "" {
-		c.ListAndUpdateServicesHelper()
+		c.ListAndUpdateServicesFunc()
 
 		return
 	}
 
-	service, err := c.GetServiceHelper(msg.Actor.ID)
+	service, err := c.GetServiceFunc(msg.Actor.ID)
 	if err != nil {
 		// TODO: How should we treat this kind of an error?
 		return
@@ -65,13 +65,13 @@ func (c *EventCallback) Execute(msg eventtypes.Message) {
 	}
 
 	if service.Spec.Mode.Global != nil {
-		// TODO: For now we just execute the SleepHelper() if it's a global service,
+		// TODO: For now we just execute the SleepFunc() if it's a global service,
 		// since we don't know how many tasks should be expected (unless we list the nodes, etc. - but there might also be a race condition).
-		log.Info("Service is in global mode. Executing the SleepHelper() and crossing our fingers we won't run into any race conditions...")
-		c.SleepHelper()
+		log.Info("Service is in global mode. Executing the SleepFunc() and crossing our fingers we won't run into any race conditions...")
+		c.SleepFunc()
 	}
 
-	taskList, err := c.ListTasksHelper(msg)
+	taskList, err := c.ListTasksFunc(msg)
 	if err != nil {
 		// TODO: How should we treat this kind of an error?
 		return
@@ -125,14 +125,14 @@ TaskLoop:
 	if !retry {
 		log.Debug("Callback task state check: Updating routing configuration if needed...")
 
-		c.ListAndUpdateServicesHelper()
+		c.ListAndUpdateServicesFunc()
 	} else {
 		// We should only reach this place when new tasks are being created.
 		// Therefore, sleeping here shouldn't affect the graceful scale down.
 		log.Debug("Callback task state check: Retrying in 1 second...")
 
-		// Execute the SleepHelper() between retries.
-		c.SleepHelper()
+		// Execute the SleepFunc() between retries.
+		c.SleepFunc()
 
 		log.Debug("Callback task state check: Retrying...")
 		c.Execute(msg)
@@ -275,7 +275,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 						defer close(errChan)
 
 						callback := &EventCallback{
-							ListAndUpdateServicesHelper: func() error {
+							ListAndUpdateServicesFunc: func() error {
 								err := p.listAndUpdateServices(watchCtx, dockerClient, configurationChan)
 								if err != nil {
 									log.Errorf("Failed to list services for docker, error %s", err)
@@ -285,7 +285,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 								return nil
 							},
-							ListTasksHelper: func(msg eventtypes.Message) ([]swarmtypes.Task, error) {
+							ListTasksFunc: func(msg eventtypes.Message) ([]swarmtypes.Task, error) {
 								taskList, err := dockerClient.TaskList(
 									watchCtx,
 									dockertypes.TaskListOptions{
@@ -303,7 +303,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 								return taskList, nil
 							},
-							GetServiceHelper: func(id string) (swarmtypes.Service, error) {
+							GetServiceFunc: func(id string) (swarmtypes.Service, error) {
 								services, err := dockerClient.ServiceList(
 									watchCtx,
 									dockertypes.ServiceListOptions{
@@ -327,7 +327,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 								return services[0], nil
 							},
-							SleepHelper: func() {
+							SleepFunc: func() {
 								// Sleep for 1 second.
 								time.Sleep(1 * time.Second)
 							},
