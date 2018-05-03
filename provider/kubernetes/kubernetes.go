@@ -184,9 +184,10 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 		}
 		templateObjects.TLS = append(templateObjects.TLS, tlsSection...)
 
-		servicesPercentageWeightMap, err := getServicesPercentageWeights(i)
+		percentageWeightsAnnotation := getStringValue(i.Annotations, annotationKubernetesPercentageWeights, "")
+		servicePercentageWeights, err := getServicesPercentageWeights(percentageWeightsAnnotation)
 		if err != nil {
-			log.Errorf("Invalid yaml format for backend weight annotation of ingress %s/%s: %v", i.Namespace, i.Name, err)
+			log.Errorf("Failed to read backend percentage weights for ingress %s/%s: %v", i.Namespace, i.Name, err)
 			continue
 		}
 
@@ -196,9 +197,9 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				continue
 			}
 
-			leftFractionPercentages, leftFractionInstances, err := getLeftFraction(k8sClient, i.Namespace, r.HTTP.Paths, servicesPercentageWeightMap)
+			leftFractionPercentages, leftFractionInstances, err := getRemainingFraction(k8sClient, i.Namespace, r.HTTP.Paths, servicePercentageWeights)
 			if err != nil {
-				log.Errorf("Error compute left fraction for ingress %s/%s", i.Namespace, i.Name)
+				log.Errorf("Failed to compute left fraction for ingress %s/%s", i.Namespace, i.Name)
 				continue
 			}
 
@@ -321,10 +322,10 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 								break
 							}
 
-							if percentageWeight, exists := servicesPercentageWeightMap[pa.Backend.ServiceName]; exists {
+							if percentageWeight, exists := servicePercentageWeights[pa.Backend.ServiceName]; exists {
 								instanceCount := 0
 								for _, subset := range endpoints.Subsets {
-									instanceCount = instanceCount + len(subset.Addresses)
+									instanceCount += len(subset.Addresses)
 								}
 								serverWeight = percentageWeight.computeWeight(instanceCount)
 							} else {
@@ -759,20 +760,18 @@ func getRateLimit(i *extensionsv1beta1.Ingress) *types.RateLimit {
 	return rateLimit
 }
 
-func getServicesPercentageWeights(i *extensionsv1beta1.Ingress) (map[string]*percentageValue, error) {
-	rawPercentageWeights := getStringValue(i.Annotations, annotationKubernetesPercentageWeights, "")
-
+func getServicesPercentageWeights(percentageAnnotation string) (map[string]percentageValue, error) {
 	percentageWeight := make(map[string]string)
 
-	if err := yaml.Unmarshal([]byte(rawPercentageWeights), percentageWeight); err != nil {
+	if err := yaml.Unmarshal([]byte(percentageAnnotation), percentageWeight); err != nil {
 		return nil, err
 	}
 
-	servicesPercentageWeights := make(map[string]*percentageValue)
+	servicesPercentageWeights := make(map[string]percentageValue)
 	for serviceName, percentageStr := range percentageWeight {
 		percentageValue, err := newPercentageValueFromString(percentageStr)
 		if err != nil {
-			return nil, fmt.Errorf("invalid percentage value %q in ingress %s: %v", percentageStr, i.Name, err)
+			return nil, fmt.Errorf("invalid percentage value %q in ingress:: %v", percentageStr, err)
 		}
 
 		servicesPercentageWeights[serviceName] = percentageValue
@@ -780,8 +779,12 @@ func getServicesPercentageWeights(i *extensionsv1beta1.Ingress) (map[string]*per
 	return servicesPercentageWeights, nil
 }
 
-func getLeftFraction(k8sClient Client, namespace string, paths []extensionsv1beta1.HTTPIngressPath, servicesPercentageWeights map[string]*percentageValue) (map[string]*percentageValue, map[string]int, error) {
-	leftFractionPercentages := make(map[string]*percentageValue)
+// getRemainingFraction calculates the last fraction of percentage for each ingress path by
+// the annotation and set weights for the corresponding instances. Returns two maps of
+// which the key is the ingress path and the value is remaining fraction percentage and number
+// of remaining instances.
+func getRemainingFraction(k8sClient Client, namespace string, paths []extensionsv1beta1.HTTPIngressPath, servicesPercentageWeights map[string]percentageValue) (map[string]percentageValue, map[string]int, error) {
+	leftFractionPercentages := make(map[string]percentageValue)
 	leftFractionInstanceCounts := make(map[string]int)
 	oneHundredPercentageValue := newPercentageValueFromFloat64(1)
 
@@ -808,14 +811,13 @@ func getLeftFraction(k8sClient Client, namespace string, paths []extensionsv1bet
 
 		leftFractionPercentage := leftFractionPercentages[pa.Path].sub(percentageWeight)
 		if f := leftFractionPercentage.toFloat64(); f < 0 || f > 1 {
-			return nil, nil, fmt.Errorf("percentage value %s overflow", leftFractionPercentage)
+			return nil, nil, fmt.Errorf("percentage value %s out of range", leftFractionPercentage.String())
 		}
 
 		leftFractionPercentages[pa.Path] = leftFractionPercentage
 		for _, subset := range endpoints.Subsets {
 			leftFractionInstanceCounts[pa.Path] -= len(subset.Addresses)
 		}
-		continue
 	}
 	return leftFractionPercentages, leftFractionInstanceCounts, nil
 }

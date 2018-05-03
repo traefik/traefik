@@ -2353,17 +2353,17 @@ service1: 10%
 		backends(
 			backend("host1/foo",
 				servers(
-					server("http://10.10.0.1:8080", weight(int(newPercentageValueFromFloat64(0.05).value))),
-					server("http://10.10.0.2:8080", weight(int(newPercentageValueFromFloat64(0.05).value))),
-					server("http://10.10.0.3:7070", weight(int(newPercentageValueFromFloat64(0.45).value))),
-					server("http://10.10.0.4:7070", weight(int(newPercentageValueFromFloat64(0.45).value))),
+					server("http://10.10.0.1:8080", weight(int(newPercentageValueFromFloat64(0.05)))),
+					server("http://10.10.0.2:8080", weight(int(newPercentageValueFromFloat64(0.05)))),
+					server("http://10.10.0.3:7070", weight(int(newPercentageValueFromFloat64(0.45)))),
+					server("http://10.10.0.4:7070", weight(int(newPercentageValueFromFloat64(0.45)))),
 				),
 				lbMethod("wrr"),
 			),
 			backend("host1/bar",
 				servers(
-					server("http://10.10.0.1:8080", weight(int(newPercentageValueFromFloat64(0.05).value))),
-					server("http://10.10.0.2:8080", weight(int(newPercentageValueFromFloat64(0.05).value))),
+					server("http://10.10.0.1:8080", weight(int(newPercentageValueFromFloat64(0.05)))),
+					server("http://10.10.0.2:8080", weight(int(newPercentageValueFromFloat64(0.05)))),
 				),
 				lbMethod("wrr"),
 			),
@@ -2417,12 +2417,12 @@ func TestGetServicesPercentageWeights(t *testing.T) {
 		desc            string
 		annotationValue string
 		expectError     bool
-		expectedWeights map[string]*percentageValue
+		expectedWeights map[string]percentageValue
 	}{
 		{
 			desc:            "empty annotation",
 			annotationValue: ``,
-			expectedWeights: map[string]*percentageValue{},
+			expectedWeights: map[string]percentageValue{},
 		},
 		{
 			desc: "50% fraction",
@@ -2431,7 +2431,7 @@ service1: 10%
 service2: 20%
 service3: 20%
 `,
-			expectedWeights: map[string]*percentageValue{
+			expectedWeights: map[string]percentageValue{
 				"service1": newPercentageValueFromFloat64(0.1),
 				"service2": newPercentageValueFromFloat64(0.2),
 				"service3": newPercentageValueFromFloat64(0.2),
@@ -2444,7 +2444,7 @@ service1: 0.1
 service2: 0.2 
 service3: 0.2
 `,
-			expectedWeights: map[string]*percentageValue{
+			expectedWeights: map[string]percentageValue{
 				"service1": newPercentageValueFromFloat64(0.1),
 				"service2": newPercentageValueFromFloat64(0.2),
 				"service3": newPercentageValueFromFloat64(0.2),
@@ -2456,7 +2456,7 @@ service3: 0.2
 service1: 10%
 service2: 90%
 `,
-			expectedWeights: map[string]*percentageValue{
+			expectedWeights: map[string]percentageValue{
 				"service1": newPercentageValueFromFloat64(0.1),
 				"service2": newPercentageValueFromFloat64(0.9),
 			},
@@ -2467,7 +2467,7 @@ service2: 90%
 service1: 90%
 service5: 90%
 `,
-			expectedWeights: map[string]*percentageValue{
+			expectedWeights: map[string]percentageValue{
 				"service1": newPercentageValueFromFloat64(0.9),
 				"service5": newPercentageValueFromFloat64(0.9),
 			},
@@ -2487,7 +2487,7 @@ service5- 90%
 service1: 100%
 service2: 1%
 `,
-			expectedWeights: map[string]*percentageValue{
+			expectedWeights: map[string]percentageValue{
 				"service1": newPercentageValueFromFloat64(1),
 				"service2": newPercentageValueFromFloat64(0.01),
 			},
@@ -2497,7 +2497,7 @@ service2: 1%
 			annotationValue: `
 service1: 1000%
 `,
-			expectedWeights: map[string]*percentageValue{
+			expectedWeights: map[string]percentageValue{
 				"service1": newPercentageValueFromFloat64(10),
 			},
 		},
@@ -2508,11 +2508,7 @@ service1: 1000%
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			ing := &extensionsv1beta1.Ingress{}
-			ing.Annotations = make(map[string]string)
-			ing.Annotations[annotationKubernetesPercentageWeights] = test.annotationValue
-
-			weights, err := getServicesPercentageWeights(ing)
+			weights, err := getServicesPercentageWeights(test.annotationValue)
 
 			if test.expectError {
 				require.Error(t, err)
@@ -2583,15 +2579,15 @@ func TestGetLeftFraction(t *testing.T) {
 
 	testCases := []struct {
 		desc                        string
-		weights                     map[string]*percentageValue
+		weights                     map[string]percentageValue
 		ingressPaths                []extensionsv1beta1.HTTPIngressPath
 		expectError                 bool
 		expectedLeftInstanceCount   map[string]int
-		expectedLeftPercentageValue map[string]*percentageValue
+		expectedLeftPercentageValue map[string]percentageValue
 	}{
 		{
 			desc: "1 path 2 service",
-			weights: map[string]*percentageValue{
+			weights: map[string]percentageValue{
 				"service1": newPercentageValueFromFloat64(0.5),
 			},
 			ingressPaths: []extensionsv1beta1.HTTPIngressPath{
@@ -2602,13 +2598,13 @@ func TestGetLeftFraction(t *testing.T) {
 			expectedLeftInstanceCount: map[string]int{
 				"/foo": 1,
 			},
-			expectedLeftPercentageValue: map[string]*percentageValue{
+			expectedLeftPercentageValue: map[string]percentageValue{
 				"/foo": newPercentageValueFromFloat64(0.5),
 			},
 		},
 		{
 			desc: "2 path 4 service",
-			weights: map[string]*percentageValue{
+			weights: map[string]percentageValue{
 				"service1": newPercentageValueFromFloat64(0.1),
 				"service2": newPercentageValueFromFloat64(0.1),
 			},
@@ -2623,14 +2619,14 @@ func TestGetLeftFraction(t *testing.T) {
 				"/foo": 0,
 				"/bar": 0,
 			},
-			expectedLeftPercentageValue: map[string]*percentageValue{
+			expectedLeftPercentageValue: map[string]percentageValue{
 				"/foo": newPercentageValueFromFloat64(0.8),
 				"/bar": newPercentageValueFromFloat64(0.8),
 			},
 		},
 		{
 			desc: "2 path 8 service",
-			weights: map[string]*percentageValue{
+			weights: map[string]percentageValue{
 				"service1": newPercentageValueFromFloat64(0.1),
 				"service2": newPercentageValueFromFloat64(0.1),
 			},
@@ -2649,14 +2645,14 @@ func TestGetLeftFraction(t *testing.T) {
 				"/foo": 5,
 				"/bar": 5,
 			},
-			expectedLeftPercentageValue: map[string]*percentageValue{
+			expectedLeftPercentageValue: map[string]percentageValue{
 				"/foo": newPercentageValueFromFloat64(0.8),
 				"/bar": newPercentageValueFromFloat64(0.8),
 			},
 		},
 		{
 			desc: "2 path 7 service",
-			weights: map[string]*percentageValue{
+			weights: map[string]percentageValue{
 				"service1": newPercentageValueFromFloat64(0.1),
 			},
 			ingressPaths: []extensionsv1beta1.HTTPIngressPath{
@@ -2673,14 +2669,14 @@ func TestGetLeftFraction(t *testing.T) {
 				"/foo": 6,
 				"/bar": 6,
 			},
-			expectedLeftPercentageValue: map[string]*percentageValue{
+			expectedLeftPercentageValue: map[string]percentageValue{
 				"/foo": newPercentageValueFromFloat64(0.9),
 				"/bar": newPercentageValueFromFloat64(1),
 			},
 		},
 		{
 			desc: "2 path 4 service",
-			weights: map[string]*percentageValue{
+			weights: map[string]percentageValue{
 				"service1": newPercentageValueFromFloat64(0.1),
 			},
 			ingressPaths: []extensionsv1beta1.HTTPIngressPath{
@@ -2697,14 +2693,14 @@ func TestGetLeftFraction(t *testing.T) {
 				"/foo": 6,
 				"/bar": 6,
 			},
-			expectedLeftPercentageValue: map[string]*percentageValue{
+			expectedLeftPercentageValue: map[string]percentageValue{
 				"/foo": newPercentageValueFromFloat64(0.9),
 				"/bar": newPercentageValueFromFloat64(1),
 			},
 		},
 		{
 			desc: "2 path no service",
-			weights: map[string]*percentageValue{
+			weights: map[string]percentageValue{
 				"service1": newPercentageValueFromFloat64(0.1),
 			},
 			ingressPaths: []extensionsv1beta1.HTTPIngressPath{
@@ -2716,14 +2712,14 @@ func TestGetLeftFraction(t *testing.T) {
 				"/foo": 0,
 				"/bar": 0,
 			},
-			expectedLeftPercentageValue: map[string]*percentageValue{
+			expectedLeftPercentageValue: map[string]percentageValue{
 				"/foo": newPercentageValueFromFloat64(1),
 				"/bar": newPercentageValueFromFloat64(1),
 			},
 		},
 		{
 			desc:    "2 path without weight",
-			weights: map[string]*percentageValue{},
+			weights: map[string]percentageValue{},
 			ingressPaths: []extensionsv1beta1.HTTPIngressPath{
 				buildPath("/foo", iBackend("service1", intstr.FromInt(8080))),
 				buildPath("/bar", iBackend("service2", intstr.FromInt(8080))),
@@ -2733,14 +2729,14 @@ func TestGetLeftFraction(t *testing.T) {
 				"/foo": 2,
 				"/bar": 1,
 			},
-			expectedLeftPercentageValue: map[string]*percentageValue{
+			expectedLeftPercentageValue: map[string]percentageValue{
 				"/foo": newPercentageValueFromFloat64(1),
 				"/bar": newPercentageValueFromFloat64(1),
 			},
 		},
 		{
 			desc: "2 path overflow",
-			weights: map[string]*percentageValue{
+			weights: map[string]percentageValue{
 				"service1": newPercentageValueFromFloat64(0.7),
 				"service2": newPercentageValueFromFloat64(0.8),
 			},
@@ -2760,7 +2756,7 @@ func TestGetLeftFraction(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			leftPercentageMap, leftInstanceMap, err := getLeftFraction(client, "testing", test.ingressPaths, test.weights)
+			leftPercentageMap, leftInstanceMap, err := getRemainingFraction(client, "testing", test.ingressPaths, test.weights)
 
 			if test.expectError {
 				require.Error(t, err)

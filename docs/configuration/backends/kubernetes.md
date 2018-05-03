@@ -158,7 +158,7 @@ The following general annotations are applicable on the Ingress object:
 | `traefik.ingress.kubernetes.io/whitelist-source-range: "1.2.3.0/24, fe80::/16"` | A comma-separated list of IP ranges permitted for access. all source IPs are permitted if the list is empty or a single range is ill-formatted. Please note, you may have to set `service.spec.externalTrafficPolicy` to the value `Local` to preserve the source IP of the request for filtering. Please see [this link](https://kubernetes.io/docs/tutorials/services/source-ip/) for more information.|
 | `ingress.kubernetes.io/whitelist-x-forwarded-for: "true"`                       | Use `X-Forwarded-For` header as valid source of IP for the white list.                                                                          |
 | `traefik.ingress.kubernetes.io/app-root: "/index.html"`                         | Redirects all requests for `/` to the defined path. (4)                                                                                         |
-| `traefik.ingress.kubernetes.io/percentage-weights: <YML>`                       | Set ingress backends' weight in the form of percentage number or decimal number. (5)                                                                                            |
+| `traefik.ingress.kubernetes.io/percentage-weights: <YML>`                       | Set ingress backends' weight in the form of percentage number or decimal number in YAML. (5)                                                                                            |
 
 
 <1> `traefik.ingress.kubernetes.io/error-pages` example:
@@ -210,10 +210,11 @@ Trying to do so leads to an error and the corresponding Ingress object being ign
 <5> `traefik.ingress.kubernetes.io/percentage-weights` example:
 
 ```yaml
-service_backend1: 1%
+service_backend1: 1% # Note that the field names must match service names referenced in the Ingress object.
 service_backend2: 33.33%
 service_backend3: 0.9
 ```
+
 
 !!! note
     Please note that `traefik.ingress.kubernetes.io/redirect-regex` and `traefik.ingress.kubernetes.io/redirect-replacement` do not have to be set if `traefik.ingress.kubernetes.io/redirect-entry-point` is defined for the redirection (they will not be used in this case).
