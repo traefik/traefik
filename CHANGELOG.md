@@ -78,7 +78,7 @@
 - **[servicefabric]** Add white list for Service Fabric ([#3079](https://github.com/containous/traefik/pull/3079) by [ldez](https://github.com/ldez))
 - **[tls]** Use default entryPoints when certificates are added with no entryPoints. ([#2534](https://github.com/containous/traefik/pull/2534) by [nmengin](https://github.com/nmengin))
 - **[tracing]** Handle zipkin collector creation ([#2860](https://github.com/containous/traefik/pull/2860) by [ferhatelmas](https://github.com/ferhatelmas))
-- **[tracing]** Opentracing support ([#2587](https://github.com/containous/traefik/pull/2587) by [mmatur](https://github.com/mmatur))
+- **[tracing]** Opentracing support ([#2587](https://github.com/containous/traefik/pull/2587) by [tcolgate](https://github.com/tcolgate) and [mmatur](https://github.com/mmatur))
 - **[webui]** New web ui ([#2226](https://github.com/containous/traefik/pull/2226) by [jkuri](https://github.com/jkuri))
 - **[webui]** Add status code text to webui bar chart tooltip ([#2639](https://github.com/containous/traefik/pull/2639) by [wader](https://github.com/wader))
 - Logger and Leaks ([#2847](https://github.com/containous/traefik/pull/2847) by [ldez](https://github.com/ldez))
