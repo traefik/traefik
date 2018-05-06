@@ -30,7 +30,7 @@
                       <div class="field is-grouped is-grouped-multiline">
                         <div class="control">
                           <div class="tags has-addons">
-                            <span class="tag is-info">{{ p.id }}</span>
+                            <span class="tag" [class.is-info]="p.backend" [class.is-danger]="!p.backend">{{ p.id }}</span>
                           </div>
                         </div>
                       </div>
