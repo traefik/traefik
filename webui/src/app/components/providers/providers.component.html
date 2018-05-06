@@ -35,16 +35,6 @@
                         </div>
                       </div>
                     </div>
-                    <div *ngIf="p.backend">
-                      <div class="field is-grouped is-grouped-multiline">
-                        <div class="control">
-                          <a class="tags has-addons" [href]="'#' + p.backend">
-                            <span class="tag is-light">Backend</span>
-                            <span class="tag is-primary">{{ p.backend }}</span>
-                          </a>
-                        </div>
-                      </div>
-                    </div>
                   </h2>
                 </div>
 
@@ -70,6 +60,24 @@
                           </tr>
                         </tbody>
                       </table>
+                    </div>
+
+                    <div *ngIf="p.backend">
+                      <hr>
+                      <div class="columns">
+                        <div class="column is-3">
+                          <h2>Backend</h2>
+                        </div>
+                        <div class="column is-9">
+                          <div class="field is-grouped is-grouped-multiline">
+                            <div class="control">
+                              <div class="tags">
+                                <a [href]="'#' + p.backend"><span class="tag is-primary">{{ p.backend }}</span></a>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     <div *ngIf="p.entryPoints && p.entryPoints.length">
