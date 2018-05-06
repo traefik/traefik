@@ -87,7 +87,7 @@
             <span class="tag is-info">{{ entry.status_code }}</span>&nbsp;<span>{{ entry.status }}</span>
           </td>
           <td>
-            <span class="tag">{{ entry.method }}</span>&nbsp;<a>{{ entry.host }}{{ entry.path }}</a>
+            <span class="tag">{{ entry.method }}</span>&nbsp;<a [href]="entry.scheme + '://' + entry.host + entry.path" target="_blank">{{entry.scheme}}://{{ entry.host }}{{ entry.path }}</a>
           </td>
           <td>
             <span>{{ entry.time }}</span>
