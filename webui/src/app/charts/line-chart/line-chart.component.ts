@@ -56,7 +56,8 @@ export class LineChartComponent implements OnChanges, OnInit {
     };
 
     this.render();
-    setTimeout(() => this.loading = false, 4000);
+    setTimeout(() => this.loading = false, 1000);
+
     this.windowService.resize.subscribe(w => {
       if (this.svg) {
         const el = this.lineChartEl.querySelector('svg');
@@ -80,7 +81,7 @@ export class LineChartComponent implements OnChanges, OnInit {
       this.data = range(this.limit).map(i => 0);
     }
 
-    this.x = scaleTime().range([0, this.width]);
+    this.x = scaleTime().range([0, this.width - 10]);
     this.y = scaleLinear().range([this.height, 0]);
 
     this.x.domain([<any>this.now - (this.limit - 2), <any>this.now - this.duration]);
@@ -91,7 +92,9 @@ export class LineChartComponent implements OnChanges, OnInit {
       .y((d: any) => this.y(d))
       .curve(curveLinear);
 
-    this.svg.append('defs').append('clipPath')
+    this.svg
+      .append('defs')
+      .append('clipPath')
       .attr('id', 'clip')
       .append('rect')
       .attr('width', this.width)
@@ -132,9 +135,13 @@ export class LineChartComponent implements OnChanges, OnInit {
 
     this.xAxis
       .transition()
-      .duration(this.duration)
+      .duration( this.data[this.data.length - 2] !== 0 ? this.duration : 0)
       .ease(easeLinear)
-      .call(axisBottom(this.x).tickSize(-this.height).ticks(timeSecond, 5).tickFormat(timeFormat('%H:%M:%S')))
+      .call(axisBottom(this.x).tickSize(-this.height).ticks(timeSecond, 5).tickFormat(timeFormat('%H:%M:%S')));
+
+    this.xAxis
+      .transition()
+      .duration(0)
       .selectAll('text')
       .style('text-anchor', 'end')
       .attr('dx', '-.8em')
