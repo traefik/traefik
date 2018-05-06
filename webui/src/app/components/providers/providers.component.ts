@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ApiService } from '../../services/api.service';
 import { Subscription } from 'rxjs/Subscription';
 import { Observable } from 'rxjs/Observable';
-import * as _ from "lodash";
+import * as _ from 'lodash';
 
 @Component({
   selector: 'app-providers',

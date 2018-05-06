@@ -7,6 +7,7 @@ import 'rxjs/add/operator/timeInterval';
 import 'rxjs/add/operator/mergeMap';
 import 'rxjs/add/operator/map';
 import { format, distanceInWordsStrict, subSeconds } from 'date-fns';
+import * as _ from 'lodash';
 
 @Component({
   selector: 'app-health',
@@ -15,6 +16,7 @@ import { format, distanceInWordsStrict, subSeconds } from 'date-fns';
 export class HealthComponent implements OnInit, OnDestroy {
   sub: Subscription;
   recentErrors: any;
+  previousRecentErrors: any;
   pid: number;
   uptime: string;
   uptimeSince: string;
@@ -33,7 +35,11 @@ export class HealthComponent implements OnInit, OnDestroy {
       .mergeMap(() => this.apiService.fetchHealthStatus())
       .subscribe(data => {
         if (data) {
-          this.recentErrors = data.recent_errors;
+          if (!_.isEqual(this.previousRecentErrors, data.recent_errors)) {
+            this.previousRecentErrors = _.cloneDeep(data.recent_errors);
+            this.recentErrors = data.recent_errors;
+          }
+
           this.chartValue = { count: data.average_response_time_sec, date: data.time };
           this.statusCodeValue = Object.keys(data.total_status_code_count)
             .map(key => ({ code: key, count: data.total_status_code_count[key] }));
