@@ -11,6 +11,7 @@ import * as _ from "lodash";
 export class ProvidersComponent implements OnInit, OnDestroy {
   sub: Subscription;
   keys: string[];
+  previousKeys: string[];
   data: any;
   previousData: any;
   providers: any;
@@ -29,26 +30,22 @@ export class ProvidersComponent implements OnInit, OnDestroy {
           this.previousData = _.cloneDeep(data);
           this.data = data;
           this.providers = data;
-          this.keys = Object.keys(this.providers);
-          this.tab = this.keys[0];
+
+          const keys = Object.keys(this.providers);
+          if (!_.isEqual(this.previousKeys, keys)) {
+            this.keys = keys;
+
+            // keep current tab or set to the first tab
+            if (!this.tab || (this.tab && !this.keys.includes(this.tab))) {
+              this.tab = this.keys[0];
+            }
+          }
         }
       });
   }
 
-  filter(): void {
-    const keyword = this.keyword.toLowerCase();
-    this.providers = Object.keys(this.data)
-      .filter(value => value !== 'acme' && value !== 'ACME')
-      .reduce((acc, curr) => {
-        return Object.assign(acc, {
-          [curr]: {
-            backends: this.data[curr].backends.filter(d => d.id.toLowerCase().includes(keyword)),
-            frontends: this.data[curr].frontends.filter(d => {
-              return d.id.toLowerCase().includes(keyword) || d.backend.toLowerCase().includes(keyword);
-            })
-          }
-        });
-      }, {});
+  trackItem(tab): (index, item) => string {
+    return (index, item): string => tab + '-' + item.id;
   }
 
   ngOnDestroy() {

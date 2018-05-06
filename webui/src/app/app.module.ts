@@ -13,6 +13,8 @@ import { HealthComponent } from './components/health/health.component';
 import { LineChartComponent } from './charts/line-chart/line-chart.component';
 import { BarChartComponent } from './charts/bar-chart/bar-chart.component';
 import { KeysPipe } from './pipes/keys.pipe';
+import { FrontendFilterPipe } from './pipes/frontend.filter.pipe';
+import { BackendFilterPipe } from './pipes/backend.filter.pipe';
 
 @NgModule({
   declarations: [
@@ -22,7 +24,9 @@ import { KeysPipe } from './pipes/keys.pipe';
     HealthComponent,
     LineChartComponent,
     BarChartComponent,
-    KeysPipe
+    KeysPipe,
+    FrontendFilterPipe,
+    BackendFilterPipe
   ],
   imports: [
     BrowserModule,

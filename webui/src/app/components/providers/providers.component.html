@@ -6,7 +6,7 @@
 
         <div class="search-container">
           <span class="icon"><i class="fas fa-search"></i></span>
-          <input type="text" placeholder="Filter by name or id ..." [(ngModel)]="keyword" (ngModelChange)="filter()">
+          <input type="text" placeholder="Filter by name or id ..." [(ngModel)]="keyword">
         </div>
 
         <div class="tabs" *ngIf="keys?.length">
@@ -22,7 +22,7 @@
             <!-- Frontends -->
             <div class="column is-6">
               <h2 class="subtitle"><span class="tag is-info">{{ providers[tab]?.frontends.length }}</span> Frontends</h2>
-              <div class="message" *ngFor="let p of providers[tab]?.frontends; let i = index;">
+              <div class="message" *ngFor="let p of providers[tab]?.frontends | frontendFilter:keyword; trackBy: trackItem(tab)">
                 <div class="message-header">
                   <h2>
                     <div>
@@ -72,7 +72,7 @@
                           <div class="field is-grouped is-grouped-multiline">
                             <div class="control">
                               <div class="tags">
-                                <a [href]="'#' + p.backend"><span class="tag is-primary">{{ p.backend }}</span></a>
+                                <span class="tag is-primary">{{ p.backend }}</span>
                               </div>
                             </div>
                           </div>
@@ -357,9 +357,9 @@
             <!-- Backends -->
             <div class="column is-6">
               <h2 class="subtitle"><span class="tag is-primary">{{ providers[tab]?.backends.length }}</span> Backends</h2>
-              <div class="message" *ngFor="let p of providers[tab]?.backends; let i = index;">
+              <div class="message" *ngFor="let p of providers[tab]?.backends | backendFilter:keyword; trackBy: trackItem(tab);">
                 <div class="message-header">
-                  <h2 [id]="p.id">
+                  <h2>
                     <div>
                       <i class="icon fas fa-server"></i>
                       <div class="field is-grouped is-grouped-multiline">
