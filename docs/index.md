@@ -12,7 +12,7 @@
 
 Træfik is a modern HTTP reverse proxy and load balancer that makes deploying microservices easy.
 Træfik integrates with your existing infrastructure components ([Docker](https://www.docker.com/), [Swarm mode](https://docs.docker.com/engine/swarm/), [Kubernetes](https://kubernetes.io), [Marathon](https://mesosphere.github.io/marathon/), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Rancher](https://rancher.com), [Amazon ECS](https://aws.amazon.com/ecs), ...) and configures itself automatically and dynamically.
-Telling Træfik where your orchestrator should be the _only_ configuration step you need to do.
+Pointing Træfik at your orchestrator should be the _only_ configuration step you need.
 
 ## Overview
 
