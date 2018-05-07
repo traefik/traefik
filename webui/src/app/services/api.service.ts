@@ -25,7 +25,7 @@ export class ApiService {
   }
 
   fetchVersion(): Observable<any> {
-    return this.http.get(`/api/version`, { headers: this.headers })
+    return this.http.get(`./api/version`, { headers: this.headers })
       .retry(4)
       .catch((err: HttpErrorResponse) => {
         console.error(`[version] returned code ${err.status}, body was: ${err.error}`);
@@ -34,7 +34,7 @@ export class ApiService {
   }
 
   fetchHealthStatus(): Observable<any> {
-    return this.http.get(`/health`, { headers: this.headers })
+    return this.http.get(`./health`, { headers: this.headers })
       .retry(2)
       .catch((err: HttpErrorResponse) => {
         console.error(`[health] returned code ${err.status}, body was: ${err.error}`);
@@ -43,7 +43,7 @@ export class ApiService {
   }
 
   fetchProviders(): Observable<any> {
-    return this.http.get(`/api/providers`, { headers: this.headers })
+    return this.http.get(`./api/providers`, { headers: this.headers })
       .retry(2)
       .catch((err: HttpErrorResponse) => {
         console.error(`[providers] returned code ${err.status}, body was: ${err.error}`);
