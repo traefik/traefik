@@ -2,7 +2,7 @@
   <div class="container">
 
     <div class="navbar-brand">
-      <a class="navbar-item" routerLink="/">
+      <a class="navbar-item" routerLink="/" (click)="burger = false">
         <img src="./assets/images/traefik.logo.svg" alt="Traefik" class="navbar-logo">
       </a>
       <div class="navbar-burger burger" data-target="navbarMain" (click)="burger = !burger" [class.is-active]="burger">
@@ -14,10 +14,10 @@
 
     <div id="navbarMain" class="navbar-menu" [class.is-active]="burger">
       <div class="navbar-start">
-        <a class="navbar-item" routerLink="/" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">
+        <a class="navbar-item" routerLink="/" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }" (click)="burger = false">
           Providers
         </a>
-        <a class="navbar-item" routerLink="/status" routerLinkActive="is-active">
+        <a class="navbar-item" routerLink="/status" routerLinkActive="is-active" (click)="burger = false">
           Health
         </a>
       </div>
