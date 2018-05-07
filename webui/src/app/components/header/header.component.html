@@ -1,20 +1,25 @@
 <nav class="navbar is-fixed-top is-transparent" role="navigation" aria-label="main navigation">
   <div class="container">
-    <div class="navbar-menu">
-      <div class="navbar-brand">
-        <a class="navbar-item" routerLink="/">
-          <img src="./assets/images/traefik.logo.svg" alt="Traefik" class="navbar-logo">
-        </a>
+
+    <div class="navbar-brand">
+      <a class="navbar-item" routerLink="/">
+        <img src="./assets/images/traefik.logo.svg" alt="Traefik" class="navbar-logo">
+      </a>
+      <div class="navbar-burger burger" data-target="navbarMain" (click)="burger = !burger" [class.is-active]="burger">
+        <span></span>
+        <span></span>
+        <span></span>
       </div>
+    </div>
+
+    <div id="navbarMain" class="navbar-menu" [class.is-active]="burger">
       <div class="navbar-start">
-        <div class="navbar-menu">
-          <a class="navbar-item" routerLink="/" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">
-            Providers
-          </a>
-          <a class="navbar-item" routerLink="/status" routerLinkActive="is-active">
-            Health
-          </a>
-        </div>
+        <a class="navbar-item" routerLink="/" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">
+          Providers
+        </a>
+        <a class="navbar-item" routerLink="/status" routerLinkActive="is-active">
+          Health
+        </a>
       </div>
       <div class="navbar-end">
         <a class="navbar-item" [href]="releaseLink" target="_blank">
@@ -25,5 +30,6 @@
         </a>
       </div>
     </div>
+
   </div>
 </nav>
