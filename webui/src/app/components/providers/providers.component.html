@@ -5,7 +5,8 @@
       <div class="column is-12">
 
         <div class="search-container">
-          <span class="icon"><i class="fas fa-search"></i></span>
+          <span class="icon search-button" *ngIf="!keyword"><i class="fas fa-search"></i></span>
+          <a class="delete search-button" *ngIf="keyword" (click)="keyword = ''"></a>
           <input type="text" placeholder="Filter by name or id ..." [(ngModel)]="keyword">
         </div>
 

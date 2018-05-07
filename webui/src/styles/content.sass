@@ -11,7 +11,7 @@
 
   .list-title
     color: $text-dark
-    weight: $weight-semibold
+    font-weight: $weight-semibold
     margin: 5px 0 0 0
 
   .list-item
@@ -105,37 +105,27 @@
     margin: 15px auto
 
 .search-container
-  height: 50px
   background: $white
-  border-radius: 4px
   color: $black
-  margin: 10px 0
   display: flex
   align-items: center
-  position: relative
+  border-radius: 4px
   box-shadow: 1px 2px 5px rgba($border, 0.4)
   border: 1px solid $border-secondary
+  position: relative
+  height: 3rem
 
-  .icon
+  .search-button
     position: absolute
-    left: 10px
-    top: 13px
+    left: 1rem
+    top: 0.8rem
 
   input
-    font-size: 16px
     color: $text
-    width: 100%
-    height: 48px
-    padding-left: 50px
     border: none
-    outline: none
-    font-weight: $weight-light
     border-radius: 4px
-
-.notification
-  background: $white
-  border-radius: 4px
-  color: $text
-  font-size: 16px
-  box-shadow: 1px 2px 5px rgba($border, 0.4)
-  border: 1px solid $border-secondary
+    outline: none
+    font-size: 1rem
+    font-weight: $weight-light
+    width: 100%
+    padding-left: 2.8rem
