@@ -11,8 +11,8 @@ export class FrontendFilterPipe implements PipeTransform {
     }
 
     const keyword = filter.toLowerCase();
-    return items.filter(d => {
-      return d.id.toLowerCase().includes(keyword) || d.backend.toLowerCase().includes(keyword);
-    });
+    return items.filter(d => d.id.toLowerCase().includes(keyword)
+      || d.backend.toLowerCase().includes(keyword)
+      || d.routes.some(r => r.rule.toLowerCase().includes(keyword)));
   }
 }
