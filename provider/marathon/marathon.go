@@ -105,7 +105,9 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 					KeepAlive: time.Duration(p.KeepAlive),
 					Timeout:   time.Duration(p.DialerTimeout),
 				}).DialContext,
-				TLSClientConfig: TLSConfig,
+				ResponseHeaderTimeout: 10 * time.Second,
+				TLSHandshakeTimeout:   5 * time.Second,
+				TLSClientConfig:       TLSConfig,
 			},
 		}
 		client, err := marathon.NewClient(config)
