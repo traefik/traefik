@@ -21,9 +21,9 @@
         <div *ngIf="keys?.length">
           <div class="columns">
             <!-- Frontends -->
-            <div class="column is-6">
-              <h2 class="subtitle"><span class="tag is-info">{{ providers[tab]?.frontends.length }}</span> Frontends</h2>
-              <div class="message" *ngFor="let p of providers[tab]?.frontends | frontendFilter:keyword; trackBy: trackItem(tab)">
+            <div class="column is-6" *appLet="providers[tab]?.frontends | frontendFilter:keyword as frontends">
+              <h2 class="subtitle"><span class="tag is-info">{{ frontends.length }}</span> Frontends</h2>
+              <div class="message" *ngFor="let p of frontends; trackBy: trackItem(tab)">
                 <div class="message-header">
                   <h2>
                     <div>
@@ -356,9 +356,9 @@
             </div>
 
             <!-- Backends -->
-            <div class="column is-6">
-              <h2 class="subtitle"><span class="tag is-primary">{{ providers[tab]?.backends.length }}</span> Backends</h2>
-              <div class="message" *ngFor="let p of providers[tab]?.backends | backendFilter:keyword; trackBy: trackItem(tab);">
+            <div class="column is-6" *appLet="providers[tab]?.backends | backendFilter:keyword as backends">
+              <h2 class="subtitle"><span class="tag is-primary">{{ backends.length }}</span> Backends</h2>
+              <div class="message" *ngFor="let p of backends; trackBy: trackItem(tab);">
                 <div class="message-header">
                   <h2>
                     <div>

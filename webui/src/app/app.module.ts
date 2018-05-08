@@ -15,6 +15,7 @@ import { BarChartComponent } from './charts/bar-chart/bar-chart.component';
 import { KeysPipe } from './pipes/keys.pipe';
 import { FrontendFilterPipe } from './pipes/frontend.filter.pipe';
 import { BackendFilterPipe } from './pipes/backend.filter.pipe';
+import { LetDirective } from './directives/let.directive';
 
 @NgModule({
   declarations: [
@@ -26,7 +27,8 @@ import { BackendFilterPipe } from './pipes/backend.filter.pipe';
     BarChartComponent,
     KeysPipe,
     FrontendFilterPipe,
-    BackendFilterPipe
+    BackendFilterPipe,
+    LetDirective
   ],
   imports: [
     BrowserModule,
