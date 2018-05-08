@@ -170,7 +170,7 @@ func TestEntryPoints_Set(t *testing.T) {
 			name: "all parameters camelcase",
 			expression: "Name:foo " +
 				"Address::8000 " +
-				"TLS:goo,gii " +
+				"TLS:goo,gii;foo,fii " +
 				"TLS " +
 				"CA:car " +
 				"CA.Optional:true " +
@@ -202,6 +202,10 @@ func TestEntryPoints_Set(t *testing.T) {
 						{
 							CertFile: tls.FileOrContent("goo"),
 							KeyFile:  tls.FileOrContent("gii"),
+						},
+						{
+							CertFile: tls.FileOrContent("foo"),
+							KeyFile:  tls.FileOrContent("fii"),
 						},
 					},
 					ClientCA: tls.ClientCA{
@@ -272,7 +276,7 @@ func TestEntryPoints_Set(t *testing.T) {
 			name: "all parameters lowercase",
 			expression: "Name:foo " +
 				"address::8000 " +
-				"tls:goo,gii " +
+				"tls:goo,gii;foo,fii " +
 				"tls " +
 				"ca:car " +
 				"ca.Optional:true " +
@@ -302,6 +306,10 @@ func TestEntryPoints_Set(t *testing.T) {
 						{
 							CertFile: tls.FileOrContent("goo"),
 							KeyFile:  tls.FileOrContent("gii"),
+						},
+						{
+							CertFile: tls.FileOrContent("foo"),
+							KeyFile:  tls.FileOrContent("fii"),
 						},
 					},
 					ClientCA: tls.ClientCA{
