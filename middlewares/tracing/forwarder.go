@@ -33,7 +33,7 @@ func (f *forwarderMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, 
 	span.SetTag("frontend.name", f.frontend)
 	span.SetTag("backend.name", f.backend)
 	ext.HTTPMethod.Set(span, r.Method)
-	ext.HTTPUrl.Set(span, r.URL.String())
+	ext.HTTPUrl.Set(span, fmt.Sprintf("%s%s", r.URL.String(), r.RequestURI))
 	span.SetTag("http.host", r.Host)
 
 	InjectRequestHeaders(r)
