@@ -38,7 +38,6 @@ type Stats struct {
 type statsError struct {
 	StatusCode int       `json:"status_code"`
 	Status     string    `json:"status"`
-	Scheme     string    `json:"scheme"`
 	Method     string    `json:"method"`
 	Host       string    `json:"host"`
 	Path       string    `json:"path"`
@@ -88,7 +87,6 @@ func (s *StatsRecorder) ServeHTTP(w http.ResponseWriter, r *http.Request, next h
 			{
 				StatusCode: recorder.statusCode,
 				Status:     http.StatusText(recorder.statusCode),
-				Scheme:     r.URL.Scheme,
 				Method:     r.Method,
 				Host:       r.Host,
 				Path:       r.URL.Path,
