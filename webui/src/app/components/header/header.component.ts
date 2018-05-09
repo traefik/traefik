@@ -9,6 +9,7 @@ export class HeaderComponent implements OnInit {
   version: string;
   codename: string;
   releaseLink: string;
+  burger: boolean;
 
   constructor(private apiService: ApiService) { }
 
