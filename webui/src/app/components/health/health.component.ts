@@ -41,8 +41,9 @@ export class HealthComponent implements OnInit, OnDestroy {
           this.pid = data.pid;
           this.uptime = distanceInWordsStrict(subSeconds(new Date(), data.uptime_sec), new Date());
           this.uptimeSince = format(subSeconds(new Date(), data.uptime_sec), 'MM/DD/YYYY HH:mm:ss');
-          this.totalResponseTime = data.total_response_time;
-          this.averageResponseTime = data.average_response_time;
+          const re = /(.*\.\d{3})\d+(.*)/    // To display up to 3 digits of precision in durations
+          this.totalResponseTime = data.total_response_time.replace(re, '$1$2');
+          this.averageResponseTime = data.average_response_time.replace(re, '$1$2');
           this.codeCount = data.count;
           this.totalCodeCount = data.total_count;
         }
