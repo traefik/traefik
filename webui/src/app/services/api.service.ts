@@ -59,27 +59,30 @@ export class ApiService {
       acc[curr] = {
         backends: Object.keys(data[curr].backends || {}).map(key => {
           data[curr].backends[key].id = key;
-          data[curr].backends[key].servers = Object.keys(data[curr].backends[key].servers || {}).map(server => {
-            return {
-              title: server,
-              url: data[curr].backends[key].servers[server].url,
-              weight: data[curr].backends[key].servers[server].weight
-            };
-          });
+          data[curr].backends[key].servers = Object.keys(data[curr].backends[key].servers || {})
+            .map(server => {
+              return {
+                title: server,
+                url: data[curr].backends[key].servers[server].url,
+                weight: data[curr].backends[key].servers[server].weight
+              };
+            });
 
           return data[curr].backends[key];
         }),
-        frontends: Object.keys(data[curr].frontends || {}).map(key => {
-          data[curr].frontends[key].id = key;
-          data[curr].frontends[key].routes = Object.keys(data[curr].frontends[key].routes || {}).map(route => {
-            return {
-              title: route,
-              rule: data[curr].frontends[key].routes[route].rule
-            };
-          });
+        frontends: Object.keys(data[curr].frontends || {})
+          .map(key => {
+            data[curr].frontends[key].id = key;
+            data[curr].frontends[key].routes = Object.keys(data[curr].frontends[key].routes || {})
+              .map( route => {
+                return {
+                  title: route,
+                  rule: data[curr].frontends[key].routes[route].rule
+                };
+              });
 
-          return data[curr].frontends[key];
-        }),
+            return data[curr].frontends[key];
+          }),
       };
 
       return acc;
