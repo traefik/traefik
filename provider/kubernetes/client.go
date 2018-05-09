@@ -44,6 +44,7 @@ type Client interface {
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
+	UpdateIngressStatus(namespace, name, ip, hostname string) error
 }
 
 type clientImpl struct {
@@ -164,6 +165,33 @@ func (c *clientImpl) GetIngresses() []*extensionsv1beta1.Ingress {
 		}
 	}
 	return result
+}
+
+// UpdateIngressStatus updates an Ingress with a provided status.
+func (c *clientImpl) UpdateIngressStatus(namespace, name, ip, hostname string) error {
+	item, exists, err := c.factories[c.lookupNamespace(namespace)].Extensions().V1beta1().Ingresses().Informer().GetStore().GetByKey(namespace + "/" + name)
+	if err != nil {
+		return fmt.Errorf("failed to get ingress %s/%s with error: %v", namespace, name, err)
+	}
+	if !exists {
+		return fmt.Errorf("failed to update ingress %s/%s because it does not exist", namespace, name)
+	}
+
+	ing := item.(*extensionsv1beta1.Ingress)
+	if ing.Status.LoadBalancer.Ingress[0].Hostname == hostname && ing.Status.LoadBalancer.Ingress[0].IP == ip {
+		// If status is already set, skip update
+		log.Debugf("Skipping status update on ingress %s/%s", ing.Namespace, ing.Name)
+	} else {
+		ingCopy := ing.DeepCopy()
+		ingCopy.Status = extensionsv1beta1.IngressStatus{LoadBalancer: corev1.LoadBalancerStatus{Ingress: []corev1.LoadBalancerIngress{{IP: ip, Hostname: hostname}}}}
+
+		_, err := c.clientset.ExtensionsV1beta1().Ingresses(ingCopy.Namespace).UpdateStatus(ingCopy)
+		if err != nil {
+			return fmt.Errorf("failed to update ingress status %s/%s with error: %v", namespace, name, err)
+		}
+		log.Infof("Updated status on ingress %s/%s", namespace, name)
+	}
+	return nil
 }
 
 // GetService returns the named service from the given namespace.

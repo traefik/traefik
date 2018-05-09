@@ -105,6 +105,28 @@ A label selector can be defined to filter on specific Ingress objects only.
 
 See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details.
 
+```toml
+# Enable IngressEndpoint configuration.
+# This will allow Traefik to update the status section of ingress objects, if desired.
+#
+# Optional
+#
+[kubernetes.ingressEndpoint]
+
+# One must be configured.
+# Publishedservice will override the hostname and ip settings if configured.
+
+# hostname = localhost
+
+# ip = 127.0.0.1
+
+# publishedservice = default/cheddar
+```
+
+You can configure a static hostname or IP address that traefik will add to the status section of ingress objects that it manages.
+If you prefer, you can provide a service, which traefik will copy the status spec from.
+This will give more flexibility in cloud/dynamic environments.
+
 ### TLS communication between Traefik and backend pods
 
 Traefik automatically requests endpoint information based on the service provided in the ingress spec.

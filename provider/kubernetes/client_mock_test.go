@@ -64,3 +64,7 @@ func (c clientMock) GetSecret(namespace, name string) (*corev1.Secret, bool, err
 func (c clientMock) WatchAll(namespaces Namespaces, stopCh <-chan struct{}) (<-chan interface{}, error) {
 	return c.watchChan, nil
 }
+
+func (c clientMock) UpdateIngressStatus(namespace, name, ip, hostname string) error {
+	return nil
+}
