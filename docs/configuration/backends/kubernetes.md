@@ -112,7 +112,7 @@ Although traefik will connect directly to the endpoints (pods), it still checks 
 If the service port defined in the ingress spec is 443, then the backend communication protocol is assumed to be TLS, and will connect via TLS automatically.
 
 !!! note
-    Please note that by enabling TLS communication between traefik and your pods, you will have to have trusted certificates that have the proper trust chain and IP subject name. 
+    Please note that by enabling TLS communication between traefik and your pods, you will have to have trusted certificates that have the proper trust chain and IP subject name.
     If this is not an option, you may need to skip TLS certificate verification.
     See the [insecureSkipVerify](/configuration/commons/#main-section) setting for more details.
 
@@ -137,7 +137,7 @@ The following general annotations are applicable on the Ingress object:
 | `traefik.ingress.kubernetes.io/redirect-replacement: http://mydomain/$1`        | Redirect to another URL for that frontend. Must be set with `traefik.ingress.kubernetes.io/redirect-regex`.                                     |
 | `traefik.ingress.kubernetes.io/rewrite-target: /users`                          | Replaces each matched Ingress path with the specified one, and adds the old path to the `X-Replaced-Path` header.                               |
 | `traefik.ingress.kubernetes.io/rule-type: PathPrefixStrip`                      | Override the default frontend rule type. Default: `PathPrefix`.                                                                                 |
-| `traefik.ingress.kubernetes.io/whitelist-source-range: "1.2.3.0/24, fe80::/16"` | A comma-separated list of IP ranges permitted for access. all source IPs are permitted if the list is empty or a single range is ill-formatted. |
+| `traefik.ingress.kubernetes.io/whitelist-source-range: "1.2.3.0/24, fe80::/16"` | A comma-separated list of IP ranges permitted for access. all source IPs are permitted if the list is empty or a single range is ill-formatted. Please note, you may have to set `service.spec.externalTrafficPolicy` to the value `Local` to preserve the source IP of the request for filtering. Please see [this link](https://kubernetes.io/docs/tutorials/services/source-ip/) for more information.|
 | `traefik.ingress.kubernetes.io/app-root: "/index.html"`                         | Redirects all requests for `/` to the defined path. (4)                                                                                         |
 
 <1> `traefik.ingress.kubernetes.io/error-pages` example:
@@ -261,4 +261,4 @@ More information are available in the  [User Guide](/user-guide/kubernetes/#add-
 
 !!! note
     Only TLS certificates provided by users can be stored in Kubernetes Secrets.
-    [Let's Encrypt](https://letsencrypt.org) certificates cannot be managed in Kubernets Secrets yet. 
+    [Let's Encrypt](https://letsencrypt.org) certificates cannot be managed in Kubernets Secrets yet.
