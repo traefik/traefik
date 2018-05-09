@@ -105,13 +105,13 @@ type GlobalConfiguration struct {
 
 // WebCompatibility is a configuration to handle compatibility with deprecated web provider options
 type WebCompatibility struct {
-	Address    string            `description:"Web administration port" export:"true"`
-	CertFile   string            `description:"SSL certificate" export:"true"`
-	KeyFile    string            `description:"SSL certificate" export:"true"`
-	ReadOnly   bool              `description:"Enable read only API" export:"true"`
-	Statistics *types.Statistics `description:"Enable more detailed statistics" export:"true"`
-	Metrics    *types.Metrics    `description:"Enable a metrics exporter" export:"true"`
-	Path       string            `description:"Root path for dashboard and API" export:"true"`
+	Address    string            `description:"(Deprecated) Web administration port" export:"true"`
+	CertFile   string            `description:"(Deprecated) SSL certificate" export:"true"`
+	KeyFile    string            `description:"(Deprecated) SSL certificate" export:"true"`
+	ReadOnly   bool              `description:"(Deprecated) Enable read only API" export:"true"`
+	Statistics *types.Statistics `description:"(Deprecated) Enable more detailed statistics" export:"true"`
+	Metrics    *types.Metrics    `description:"(Deprecated) Enable a metrics exporter" export:"true"`
+	Path       string            `description:"(Deprecated) Root path for dashboard and API" export:"true"`
 	Auth       *types.Auth       `export:"true"`
 	Debug      bool              `export:"true"`
 }
