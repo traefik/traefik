@@ -21,7 +21,9 @@ export class HealthComponent implements OnInit, OnDestroy {
   uptime: string;
   uptimeSince: string;
   averageResponseTime: string;
+  exactAverageResponseTime: string;
   totalResponseTime: string;
+  exactTotalResponseTime: string;
   codeCount: number;
   totalCodeCount: number;
   chartValue: any;
@@ -48,7 +50,9 @@ export class HealthComponent implements OnInit, OnDestroy {
           this.uptime = distanceInWordsStrict(subSeconds(new Date(), data.uptime_sec), new Date());
           this.uptimeSince = format(subSeconds(new Date(), data.uptime_sec), 'MM/DD/YYYY HH:mm:ss');
           this.totalResponseTime = distanceInWordsStrict(subSeconds(new Date(), data.total_response_time_sec), new Date());
+          this.exactTotalResponseTime = data.total_response_time;
           this.averageResponseTime = Math.floor(data.average_response_time_sec * 1000) + ' ms';
+          this.exactAverageResponseTime = data.average_response_time;
           this.codeCount = data.count;
           this.totalCodeCount = data.total_count;
         }

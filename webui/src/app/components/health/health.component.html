@@ -9,7 +9,7 @@
               <div class="column is-4">
                 <div class="item-data border-right">
                   <span class="data-grey">Total Response Time</span>
-                  <span class="data-blue">{{ totalResponseTime }}</span>
+                  <span class="data-blue" [title]="exactTotalResponseTime">{{ totalResponseTime }}</span>
                 </div>
               </div>
               <div class="column is-4">
@@ -33,7 +33,7 @@
               <div class="column is-4">
                 <div class="item-data border-right">
                   <span class="data-grey">Average Response Time</span>
-                  <span class="data-blue">{{ averageResponseTime }}</span>
+                  <span class="data-blue" [title]="exactAverageResponseTime">{{ averageResponseTime }}</span>
                 </div>
               </div>
               <div class="column is-4">
