@@ -1,45 +1,21 @@
 .content
   background: transparent
-  margin: 40px 0
+  margin: 2rem 0
 
   .subtitle
-    font-size: 15px
-    text-transform: uppercase
     color: $black
+    font-size: 0.9rem
     font-weight: $weight-bold
-    margin: 10px 0 0 0
+    text-transform: uppercase
 
-  .list-title
-    color: $text-dark
-    font-weight: $weight-semibold
-    margin: 5px 0 0 0
-
-  .list-item
-    width: 100%
-    display: block
-    align-items: center
-    font-size: 12px
-    padding: 6px 10px
-    border-top: 1px solid $border-light
-
-    .columns
-
-      .column
-        display: flex
-        align-items: center
-
-  .icon
-    width: 22px
-    height: 22px
-    display: block
-    float: left
-    margin-right: 10px
+    .subtitle-name
+      padding-left: 0.5rem
 
 .content-item
   background: $white
   border: 1px solid $border-secondary
   margin: 10px 0
-  border-radius: 4px
+  border-radius: $traefik-border-radius
   box-shadow: 1px 2px 5px rgba($border, 0.4)
 
   h2
@@ -109,7 +85,7 @@
   color: $black
   display: flex
   align-items: center
-  border-radius: 4px
+  border-radius: $traefik-border-radius
   box-shadow: 1px 2px 5px rgba($border, 0.4)
   border: 1px solid $border-secondary
   position: relative
@@ -123,7 +99,7 @@
   input
     color: $text
     border: none
-    border-radius: 4px
+    border-radius: $traefik-border-radius
     outline: none
     font-size: 1rem
     font-weight: $weight-light
