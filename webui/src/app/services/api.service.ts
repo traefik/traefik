@@ -1,11 +1,11 @@
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/observable/empty';
 import 'rxjs/add/observable/of';
 import 'rxjs/add/operator/catch';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/retry';
+import { Observable } from 'rxjs/Observable';
 
 export interface ProviderType {
   [provider: string]: {
@@ -25,7 +25,7 @@ export class ApiService {
   }
 
   fetchVersion(): Observable<any> {
-    return this.http.get('../api/version', { headers: this.headers })
+    return this.http.get('../api/version', {headers: this.headers})
       .retry(4)
       .catch((err: HttpErrorResponse) => {
         console.error(`[version] returned code ${err.status}, body was: ${err.error}`);
@@ -34,7 +34,7 @@ export class ApiService {
   }
 
   fetchHealthStatus(): Observable<any> {
-    return this.http.get('../health', { headers: this.headers })
+    return this.http.get('../health', {headers: this.headers})
       .retry(2)
       .catch((err: HttpErrorResponse) => {
         console.error(`[health] returned code ${err.status}, body was: ${err.error}`);
@@ -43,7 +43,7 @@ export class ApiService {
   }
 
   fetchProviders(): Observable<any> {
-    return this.http.get('../api/providers', { headers: this.headers })
+    return this.http.get('../api/providers', {headers: this.headers})
       .retry(2)
       .catch((err: HttpErrorResponse) => {
         console.error(`[providers] returned code ${err.status}, body was: ${err.error}`);

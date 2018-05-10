@@ -1,16 +1,7 @@
+import { Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { axisBottom, axisLeft, easeLinear, max, min, scaleBand, scaleLinear, select } from 'd3';
 import * as _ from 'lodash';
-import { Component, Input, OnInit, ElementRef, OnChanges, SimpleChanges } from '@angular/core';
 import { WindowService } from '../../services/window.service';
-import {
-  min,
-  max,
-  easeLinear,
-  select,
-  axisLeft,
-  axisBottom,
-  scaleBand,
-  scaleLinear
-} from 'd3';
 
 @Component({
   selector: 'app-bar-chart',
@@ -26,7 +17,7 @@ export class BarChartComponent implements OnInit, OnChanges {
   g: any;
   width: number;
   height: number;
-  margin = { top: 40, right: 40, bottom: 40, left: 40 };
+  margin = {top: 40, right: 40, bottom: 40, left: 40};
   loading: boolean;
   data: any[];
   previousData: any[];

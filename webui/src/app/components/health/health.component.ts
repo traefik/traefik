@@ -1,13 +1,13 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ApiService } from '../../services/api.service';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { distanceInWordsStrict, format, subSeconds } from 'date-fns';
+import * as _ from 'lodash';
+import 'rxjs/add/observable/timer';
+import 'rxjs/add/operator/map';
+import 'rxjs/add/operator/mergeMap';
+import 'rxjs/add/operator/timeInterval';
 import { Observable } from 'rxjs/Observable';
 import { Subscription } from 'rxjs/Subscription';
-import 'rxjs/add/observable/timer';
-import 'rxjs/add/operator/timeInterval';
-import 'rxjs/add/operator/mergeMap';
-import 'rxjs/add/operator/map';
-import { format, distanceInWordsStrict, subSeconds } from 'date-fns';
-import * as _ from 'lodash';
+import { ApiService } from '../../services/api.service';
 
 @Component({
   selector: 'app-health',
@@ -42,9 +42,9 @@ export class HealthComponent implements OnInit, OnDestroy {
             this.recentErrors = data.recent_errors;
           }
 
-          this.chartValue = { count: data.average_response_time_sec, date: data.time };
+          this.chartValue = {count: data.average_response_time_sec, date: data.time};
           this.statusCodeValue = Object.keys(data.total_status_code_count)
-            .map(key => ({ code: key, count: data.total_status_code_count[key] }));
+            .map(key => ({code: key, count: data.total_status_code_count[key]}));
 
           this.pid = data.pid;
           this.uptime = distanceInWordsStrict(subSeconds(new Date(), data.uptime_sec), new Date());

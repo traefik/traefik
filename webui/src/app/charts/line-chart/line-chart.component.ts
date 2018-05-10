@@ -1,20 +1,20 @@
-import { Component, Input, OnInit, ElementRef, OnChanges, SimpleChanges } from '@angular/core';
-import { WindowService } from '../../services/window.service';
+import { Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import {
-  range,
-  scaleTime,
-  scaleLinear,
-  min,
-  max,
-  curveLinear,
-  line,
-  easeLinear,
-  select,
-  axisLeft,
   axisBottom,
-  timeSecond,
-  timeFormat
+  axisLeft,
+  curveLinear,
+  easeLinear,
+  line,
+  max,
+  min,
+  range,
+  scaleLinear,
+  scaleTime,
+  select,
+  timeFormat,
+  timeSecond
 } from 'd3';
+import { WindowService } from '../../services/window.service';
 
 @Component({
   selector: 'app-line-chart',
@@ -42,7 +42,7 @@ export class LineChartComponent implements OnChanges, OnInit {
   yAxis: any;
   height: number;
   width: number;
-  margin = { top: 40, right: 40, bottom: 60, left: 60 };
+  margin = {top: 40, right: 40, bottom: 60, left: 60};
   loading = true;
 
   constructor(private elementRef: ElementRef, public windowService: WindowService) { }
