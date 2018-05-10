@@ -82,7 +82,7 @@
           <td>Request</td>
           <td>Time</td>
         </tr>
-        <tr *ngFor="let entry of recentErrors">
+        <tr *ngFor="let entry of recentErrors; trackBy: trackRecentErrors;">
           <td>
             <span class="tag is-info" [title]="entry.status">{{ entry.status_code }}</span>&nbsp;<span class="is-hidden-mobile is-hidden-desktop-only">{{ entry.status }}</span>
           </td>

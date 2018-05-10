@@ -64,4 +64,8 @@ export class HealthComponent implements OnInit, OnDestroy {
       this.sub.unsubscribe();
     }
   }
+
+  trackRecentErrors(index, item): string {
+    return item.status_code + item.method + item.host + item.path + item.time;
+  }
 }
