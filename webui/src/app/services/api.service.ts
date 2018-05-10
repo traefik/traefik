@@ -49,43 +49,47 @@ export class ApiService {
         console.error(`[providers] returned code ${err.status}, body was: ${err.error}`);
         return Observable.of<any>({});
       })
-      .map(this.parseProviders);
+      .map((data: any): ProviderType => this.parseProviders(data));
   }
 
   parseProviders(data: any): ProviderType {
     return Object.keys(data)
       .filter(value => value !== 'acme' && value !== 'ACME')
       .reduce((acc, curr) => {
-      acc[curr] = {
-        backends: Object.keys(data[curr].backends || {}).map(key => {
-          data[curr].backends[key].id = key;
-          data[curr].backends[key].servers = Object.keys(data[curr].backends[key].servers || {})
-            .map(server => {
-              return {
-                title: server,
-                url: data[curr].backends[key].servers[server].url,
-                weight: data[curr].backends[key].servers[server].weight
-              };
-            });
+        acc[curr] = {};
 
-          return data[curr].backends[key];
-        }),
-        frontends: Object.keys(data[curr].frontends || {})
-          .map(key => {
-            data[curr].frontends[key].id = key;
-            data[curr].frontends[key].routes = Object.keys(data[curr].frontends[key].routes || {})
-              .map( route => {
-                return {
-                  title: route,
-                  rule: data[curr].frontends[key].routes[route].rule
-                };
-              });
+        acc[curr].frontends = this.toArray(data[curr].frontends, 'id')
+          .map(frontend => {
+            frontend.routes = this.toArray(frontend.routes, 'id');
+            frontend.errors = this.toArray(frontend.errors, 'id');
+            if (frontend.headers) {
+              frontend.headers.customRequestHeaders = this.toHeaderArray(frontend.headers.customRequestHeaders);
+              frontend.headers.customResponseHeaders = this.toHeaderArray(frontend.headers.customResponseHeaders);
+              frontend.headers.sslProxyHeaders = this.toHeaderArray(frontend.headers.sslProxyHeaders);
+            }
+            return frontend;
+          });
 
-            return data[curr].frontends[key];
-          }),
-      };
+        acc[curr].backends = this.toArray(data[curr].backends, 'id')
+          .map(backend => {
+            backend.servers = this.toArray(backend.servers, 'id');
+            return backend;
+          });
 
-      return acc;
-    }, {});
+
+        return acc;
+      }, {});
   }
+
+  toHeaderArray(data: any): any[] {
+    return Object.keys(data || {}).map(key => ({name: key, value: data[key]}));
+  }
+
+  toArray(data: any, fieldKeyName: string): any[] {
+    return Object.keys(data || {}).map(key => {
+      data[key][fieldKeyName] = key;
+      return data[key];
+    });
+  }
+
 }

@@ -50,8 +50,8 @@
                       </div>
                       <table class="table is-fullwidth is-hoverable">
                         <tbody>
-                          <tr *ngFor="let route of p.routes; let ri = index;">
-                            <td><code class="has-text-grey" title="{{ route.title }}">{{ route.rule }}</code></td>
+                          <tr *ngFor="let route of p.routes">
+                            <td><code class="has-text-grey" [title]="route.id">{{ route.rule }}</code></td>
                           </tr>
                         </tbody>
                       </table>
@@ -67,7 +67,7 @@
                           <div class="field is-grouped is-grouped-multiline">
                             <div class="control">
                               <div class="tags">
-                                <span class="tag is-info" *ngFor="let ep of p.entryPoints; let ri = index;">{{ ep }}</span>
+                                <span class="tag is-info" *ngFor="let ep of p.entryPoints">{{ ep }}</span>
                               </div>
                             </div>
                           </div>
@@ -163,7 +163,7 @@
                       <div class="section-line">
                         <h2 class="section-line-header">Basic Authentication</h2>
                         <div class="tags padding-5-10">
-                          <span class="tag is-info" *ngFor="let auth of p.basicAuth; let ri = index;">{{ auth }}</span>
+                          <span class="tag is-info" *ngFor="let auth of p.basicAuth">{{ auth }}</span>
                         </div>
                       </div>
                     </div>
@@ -179,11 +179,11 @@
                               <td>Query</td>
                               <td>Status</td>
                             </tr>
-                            <tr *ngFor="let key of p.errors | keys">
-                              <td><span class="has-text-grey-light">{{ p.errors[key].backend }}</span></td>
-                              <td><span class="has-text-grey">{{ p.errors[key].query }}</span></td>
+                            <tr *ngFor="let entry of p.errors">
+                              <td><span class="has-text-grey-light">{{ entry.backend }}</span></td>
+                              <td><span class="has-text-grey">{{ entry.query }}</span></td>
                               <td>
-                                <span class="tag is-light" *ngFor="let state of p.errors[key].status">{{ state }}</span>
+                                <span class="tag is-light" *ngFor="let state of entry.status">{{ state }}</span>
                               </td>
                             </tr>
                           </tbody>
@@ -211,7 +211,7 @@
                           <div class="field is-grouped is-grouped-multiline">
                             <div class="control">
                               <div class="tags">
-                                <span class="tag is-info" *ngFor="let wlRange of p.whiteList.sourceRange; let ri = index;">{{ wlRange }}</span>
+                                <span class="tag is-info" *ngFor="let wlRange of p.whiteList.sourceRange">{{ wlRange }}</span>
                               </div>
                             </div>
                           </div>
@@ -231,9 +231,9 @@
                                 <tr>
                                   <td colspan="2">Custom Request Headers</td>
                                 </tr>
-                                <tr *ngFor="let key of p.headers.customRequestHeaders | keys">
-                                  <td><span class="has-text-grey-light">{{ key }}</span></td>
-                                  <td><span class="has-text-grey">{{ p.headers.customRequestHeaders[key] }}</span></td>
+                                <tr *ngFor="let header of p.headers.customRequestHeaders">
+                                  <td><span class="has-text-grey-light">{{ header.name }}</span></td>
+                                  <td><span class="has-text-grey">{{ header.value }}</span></td>
                                 </tr>
                               </tbody>
                             </table>
@@ -245,9 +245,9 @@
                                 <tr>
                                   <td colspan="2">Custom Response Headers</td>
                                 </tr>
-                                <tr *ngFor="let key of p.headers.customResponseHeaders | keys">
-                                  <td><span class="has-text-grey-light">{{ key }}</span></td>
-                                  <td><span class="has-text-grey">{{ p.headers.customResponseHeaders[key] }}</span></td>
+                                <tr *ngFor="let header of p.headers.customResponseHeaders">
+                                  <td><span class="has-text-grey-light">{{ header.name }}</span></td>
+                                  <td><span class="has-text-grey">{{ header.value }}</span></td>
                                 </tr>
                               </tbody>
                             </table>
@@ -329,9 +329,9 @@
                                 <tr>
                                   <td colspan="2">SSL Proxy Headers</td>
                                 </tr>
-                                <tr *ngFor="let key of p.headers.sslProxyHeaders | keys">
-                                  <td><span class="has-text-grey-light">{{ key }}</span></td>
-                                  <td><span class="has-text-grey">{{ p.headers.sslProxyHeaders[key] }}</span></td>
+                                <tr *ngFor="let header of p.headers.sslProxyHeaders">
+                                  <td><span class="has-text-grey-light">{{ header.name }}</span></td>
+                                  <td><span class="has-text-grey">{{ header.value }}</span></td>
                                 </tr>
                               </tbody>
                             </table>
@@ -395,8 +395,8 @@
                             <td>Server</td>
                             <td>Weight</td>
                           </tr>
-                          <tr *ngFor="let server of p.servers; let ri = index;">
-                            <td class="table-cell-limited"><a href="{{ server.url }}" title="{{ server.title }}">{{ server.url }}</a></td>
+                          <tr *ngFor="let server of p.servers">
+                            <td class="table-cell-limited"><a href="{{ server.url }}" [title]="server.id">{{ server.url }}</a></td>
                             <td><span class="has-text-grey">{{ server.weight }}</span></td>
                           </tr>
                         </tbody>
