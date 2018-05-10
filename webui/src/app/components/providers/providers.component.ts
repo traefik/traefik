@@ -12,7 +12,6 @@ export class ProvidersComponent implements OnInit, OnDestroy {
   sub: Subscription;
   keys: string[];
   previousKeys: string[];
-  data: any;
   previousData: any;
   providers: any;
   tab: string;
@@ -28,7 +27,6 @@ export class ProvidersComponent implements OnInit, OnDestroy {
       .subscribe(data => {
         if (!_.isEqual(this.previousData, data)) {
           this.previousData = _.cloneDeep(data);
-          this.data = data;
           this.providers = data;
 
           const keys = Object.keys(this.providers);
