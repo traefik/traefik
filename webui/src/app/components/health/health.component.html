@@ -90,7 +90,7 @@
             <span class="tag">{{ entry.method }}</span>&nbsp;<span>{{ entry.host }}{{ entry.path }}</span>
           </td>
           <td>
-            <span>{{ entry.time }}</span>
+            <span [title]="entry.time | date:'yyyy-MM-dd HH:mm:ss:SSS a z'">{{ entry.time | date:'yyyy-MM-dd HH:mm:ss a z' }}</span>
           </td>
         </tr>
         <tr *ngIf="!recentErrors?.length">
