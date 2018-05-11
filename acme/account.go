@@ -23,6 +23,7 @@ type Account struct {
 	Email              string
 	Registration       *acme.RegistrationResource
 	PrivateKey         []byte
+	KeyType            acme.KeyType
 	DomainsCertificate DomainsCertificates
 	ChallengeCerts     map[string]*ChallengeCert
 	HTTPChallenge      map[string]map[string][]byte
@@ -63,7 +64,9 @@ func (a *Account) Init() error {
 }
 
 // NewAccount creates an account
-func NewAccount(email string, certs []*DomainsCertificate) (*Account, error) {
+func NewAccount(email string, certs []*DomainsCertificate, keyTypeValue string) (*Account, error) {
+	keyType := getKeyType(keyTypeValue)
+
 	// Create a user. New accounts need an email and private key to start
 	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
@@ -79,6 +82,7 @@ func NewAccount(email string, certs []*DomainsCertificate) (*Account, error) {
 	return &Account{
 		Email:              email,
 		PrivateKey:         x509.MarshalPKCS1PrivateKey(privateKey),
+		KeyType:            keyType,
 		DomainsCertificate: DomainsCertificates{Certs: domainsCerts.Certs},
 		ChallengeCerts:     map[string]*ChallengeCert{}}, nil
 }
@@ -101,6 +105,25 @@ func (a *Account) GetPrivateKey() crypto.PrivateKey {
 
 	log.Errorf("Cannot unmarshall private key %+v", a.PrivateKey)
 	return nil
+}
+
+func getKeyType(value string) acme.KeyType {
+	keyType := acme.RSA4096
+	switch value {
+	case "EC256":
+		keyType = acme.EC256
+	case "EC384":
+		keyType = acme.EC384
+	case "RSA2048":
+		keyType = acme.RSA2048
+	case "RSA4096":
+		keyType = acme.RSA4096
+	case "RSA8192":
+		keyType = acme.RSA8192
+	}
+
+	log.Debugf("Using %s as key type", keyType)
+	return keyType
 }
 
 // Certificate is used to store certificate info

@@ -46,6 +46,7 @@ type ACME struct {
 	OnHostRule            bool                        `description:"Enable certificate generation on frontends Host rules."`
 	CAServer              string                      `description:"CA server to use."`
 	EntryPoint            string                      `description:"Entrypoint to proxy acme challenge to."`
+	KeyType               string                      `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'. Default to 'RSA4096'"`
 	DNSChallenge          *acmeprovider.DNSChallenge  `description:"Activate DNS-01 Challenge"`
 	HTTPChallenge         *acmeprovider.HTTPChallenge `description:"Activate HTTP-01 Challenge"`
 	DNSProvider           string                      `description:"(Deprecated) Activate DNS-01 Challenge"`                                                                    // Deprecated
@@ -186,7 +187,7 @@ func (a *ACME) leadershipListener(elected bool) error {
 				domainsCerts = account.DomainsCertificate
 			}
 
-			account, err = NewAccount(a.Email, domainsCerts.Certs)
+			account, err = NewAccount(a.Email, domainsCerts.Certs, a.KeyType)
 			if err != nil {
 				return err
 			}
@@ -395,7 +396,7 @@ func (a *ACME) buildACMEClient(account *Account) (*acme.Client, error) {
 	if len(a.CAServer) > 0 {
 		caServer = a.CAServer
 	}
-	client, err := acme.NewClient(caServer, account, acme.RSA4096)
+	client, err := acme.NewClient(caServer, account, account.KeyType)
 	if err != nil {
 		return nil, err
 	}

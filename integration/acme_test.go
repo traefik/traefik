@@ -2,6 +2,7 @@ package integration
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"net/http"
 	"os"
@@ -24,6 +25,7 @@ type AcmeTestCase struct {
 	onDemand            bool
 	traefikConfFilePath string
 	domainToCheck       string
+	algorithm           x509.PublicKeyAlgorithm
 }
 
 const (
@@ -60,7 +62,8 @@ func (s *AcmeSuite) TestACMEProviderAtStart(c *check.C) {
 	testCase := AcmeTestCase{
 		traefikConfFilePath: "fixtures/provideracme/acme.toml",
 		onDemand:            false,
-		domainToCheck:       acmeDomain}
+		domainToCheck:       acmeDomain,
+		algorithm:           x509.RSA}
 
 	s.retrieveAcmeCertificate(c, testCase)
 }
@@ -70,7 +73,8 @@ func (s *AcmeSuite) TestACMEProviderAtStartInSAN(c *check.C) {
 	testCase := AcmeTestCase{
 		traefikConfFilePath: "fixtures/provideracme/acme_insan.toml",
 		onDemand:            false,
-		domainToCheck:       "acme.wtf"}
+		domainToCheck:       "acme.wtf",
+		algorithm:           x509.RSA}
 
 	s.retrieveAcmeCertificate(c, testCase)
 }
@@ -80,7 +84,30 @@ func (s *AcmeSuite) TestACMEProviderOnHost(c *check.C) {
 	testCase := AcmeTestCase{
 		traefikConfFilePath: "fixtures/provideracme/acme_onhost.toml",
 		onDemand:            false,
-		domainToCheck:       acmeDomain}
+		domainToCheck:       acmeDomain,
+		algorithm:           x509.RSA}
+
+	s.retrieveAcmeCertificate(c, testCase)
+}
+
+// Test ACME provider with certificate at start ECDSA algo
+func (s *AcmeSuite) TestACMEProviderOnHostECDSA(c *check.C) {
+	testCase := AcmeTestCase{
+		traefikConfFilePath: "fixtures/provideracme/acme_onhost_ecdsa.toml",
+		onDemand:            false,
+		domainToCheck:       acmeDomain,
+		algorithm:           x509.ECDSA}
+
+	s.retrieveAcmeCertificate(c, testCase)
+}
+
+// Test ACME provider with certificate at start invalid algo default RSA
+func (s *AcmeSuite) TestACMEProviderOnHostInvalidAlgo(c *check.C) {
+	testCase := AcmeTestCase{
+		traefikConfFilePath: "fixtures/provideracme/acme_onhost_invalid_algo.toml",
+		onDemand:            false,
+		domainToCheck:       acmeDomain,
+		algorithm:           x509.RSA}
 
 	s.retrieveAcmeCertificate(c, testCase)
 }
@@ -90,7 +117,8 @@ func (s *AcmeSuite) TestACMEProviderOnHostWithNoACMEChallenge(c *check.C) {
 	testCase := AcmeTestCase{
 		traefikConfFilePath: "fixtures/acme/no_challenge_acme.toml",
 		onDemand:            false,
-		domainToCheck:       traefikDefaultDomain}
+		domainToCheck:       traefikDefaultDomain,
+		algorithm:           x509.RSA}
 
 	s.retrieveAcmeCertificate(c, testCase)
 }
@@ -100,7 +128,8 @@ func (s *AcmeSuite) TestOnDemandRetrieveAcmeCertificateHTTP01(c *check.C) {
 	testCase := AcmeTestCase{
 		traefikConfFilePath: "fixtures/acme/acme_http01.toml",
 		onDemand:            true,
-		domainToCheck:       acmeDomain}
+		domainToCheck:       acmeDomain,
+		algorithm:           x509.RSA}
 
 	s.retrieveAcmeCertificate(c, testCase)
 }
@@ -110,7 +139,8 @@ func (s *AcmeSuite) TestOnHostRuleRetrieveAcmeCertificateHTTP01(c *check.C) {
 	testCase := AcmeTestCase{
 		traefikConfFilePath: "fixtures/acme/acme_http01.toml",
 		onDemand:            false,
-		domainToCheck:       acmeDomain}
+		domainToCheck:       acmeDomain,
+		algorithm:           x509.RSA}
 
 	s.retrieveAcmeCertificate(c, testCase)
 }
@@ -120,7 +150,8 @@ func (s *AcmeSuite) TestOnHostRuleRetrieveAcmeCertificateHTTP01WithPath(c *check
 	testCase := AcmeTestCase{
 		traefikConfFilePath: "fixtures/acme/acme_http01_web.toml",
 		onDemand:            false,
-		domainToCheck:       acmeDomain}
+		domainToCheck:       acmeDomain,
+		algorithm:           x509.RSA}
 
 	s.retrieveAcmeCertificate(c, testCase)
 }
@@ -130,7 +161,8 @@ func (s *AcmeSuite) TestOnDemandRetrieveAcmeCertificateWithWildcard(c *check.C) 
 	testCase := AcmeTestCase{
 		traefikConfFilePath: "fixtures/acme/acme_provided.toml",
 		onDemand:            true,
-		domainToCheck:       wildcardDomain}
+		domainToCheck:       wildcardDomain,
+		algorithm:           x509.RSA}
 
 	s.retrieveAcmeCertificate(c, testCase)
 }
@@ -140,7 +172,8 @@ func (s *AcmeSuite) TestOnHostRuleRetrieveAcmeCertificateWithWildcard(c *check.C
 	testCase := AcmeTestCase{
 		traefikConfFilePath: "fixtures/acme/acme_provided.toml",
 		onDemand:            false,
-		domainToCheck:       wildcardDomain}
+		domainToCheck:       wildcardDomain,
+		algorithm:           x509.RSA}
 
 	s.retrieveAcmeCertificate(c, testCase)
 }
@@ -150,7 +183,8 @@ func (s *AcmeSuite) TestOnDemandRetrieveAcmeCertificateWithDynamicWildcard(c *ch
 	testCase := AcmeTestCase{
 		traefikConfFilePath: "fixtures/acme/acme_provided_dynamic.toml",
 		onDemand:            true,
-		domainToCheck:       wildcardDomain}
+		domainToCheck:       wildcardDomain,
+		algorithm:           x509.RSA}
 
 	s.retrieveAcmeCertificate(c, testCase)
 }
@@ -160,7 +194,8 @@ func (s *AcmeSuite) TestOnHostRuleRetrieveAcmeCertificateWithDynamicWildcard(c *
 	testCase := AcmeTestCase{
 		traefikConfFilePath: "fixtures/acme/acme_provided_dynamic.toml",
 		onDemand:            false,
-		domainToCheck:       wildcardDomain}
+		domainToCheck:       wildcardDomain,
+		algorithm:           x509.RSA}
 
 	s.retrieveAcmeCertificate(c, testCase)
 }
@@ -181,8 +216,9 @@ func (s *AcmeSuite) TestNoValidLetsEncryptServer(c *check.C) {
 // Doing an HTTPS request and test the response certificate
 func (s *AcmeSuite) retrieveAcmeCertificate(c *check.C, testCase AcmeTestCase) {
 	file := s.adaptFile(c, testCase.traefikConfFilePath, struct {
-		BoulderHost          string
-		OnDemand, OnHostRule bool
+		BoulderHost string
+		OnDemand    bool
+		OnHostRule  bool
 	}{
 		BoulderHost: s.boulderIP,
 		OnDemand:    testCase.onDemand,
@@ -251,4 +287,5 @@ func (s *AcmeSuite) retrieveAcmeCertificate(c *check.C, testCase AcmeTestCase) {
 	c.Assert(resp.StatusCode, checker.Equals, http.StatusOK)
 	// Check Domain into response certificate
 	c.Assert(resp.TLS.PeerCertificates[0].Subject.CommonName, checker.Equals, testCase.domainToCheck)
+	c.Assert(resp.TLS.PeerCertificates[0].PublicKeyAlgorithm, checker.Equals, testCase.algorithm)
 }
