@@ -192,6 +192,11 @@ type Frontend struct {
 	Redirect             *Redirect             `json:"redirect,omitempty"`
 }
 
+// Hash returns a string to cache Fronted by.
+func (f *Frontend) Hash() string {
+	return f.Backend
+}
+
 // Redirect configures a redirection of an entry point to another, or to an URL
 type Redirect struct {
 	EntryPoint  string `json:"entryPoint,omitempty"`
