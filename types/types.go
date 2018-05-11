@@ -16,6 +16,7 @@ import (
 	"github.com/containous/mux"
 	"github.com/containous/traefik/log"
 	traefiktls "github.com/containous/traefik/tls"
+	"github.com/mitchellh/hashstructure"
 	"github.com/ryanuber/go-glob"
 )
 
@@ -177,9 +178,9 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 
 // Frontend holds frontend configuration.
 type Frontend struct {
-	EntryPoints          []string              `json:"entryPoints,omitempty"`
+	EntryPoints          []string              `json:"entryPoints,omitempty" hash:"ignore"`
 	Backend              string                `json:"backend,omitempty"`
-	Routes               map[string]Route      `json:"routes,omitempty"`
+	Routes               map[string]Route      `json:"routes,omitempty" hash:"ignore"`
 	PassHostHeader       bool                  `json:"passHostHeader,omitempty"`
 	PassTLSCert          bool                  `json:"passTLSCert,omitempty"`
 	Priority             int                   `json:"priority"`
@@ -192,9 +193,11 @@ type Frontend struct {
 	Redirect             *Redirect             `json:"redirect,omitempty"`
 }
 
-// Hash returns a string to cache Fronted by.
+// Hash returns the hash value of a Frontend struct.
 func (f *Frontend) Hash() string {
-	return f.Backend
+	hash, _ := hashstructure.Hash(f, nil)
+
+	return strconv.FormatUint(hash, 10)
 }
 
 // Redirect configures a redirection of an entry point to another, or to an URL
