@@ -14,6 +14,7 @@ const (
 	SuffixBackendID                                = "backend.id"
 	SuffixBackendCircuitBreaker                    = "backend.circuitbreaker"
 	SuffixBackendCircuitBreakerExpression          = "backend.circuitbreaker.expression"
+	SuffixBackendHealthCheckScheme                 = "backend.healthcheck.scheme"
 	SuffixBackendHealthCheckPath                   = "backend.healthcheck.path"
 	SuffixBackendHealthCheckPort                   = "backend.healthcheck.port"
 	SuffixBackendHealthCheckInterval               = "backend.healthcheck.interval"
@@ -83,6 +84,7 @@ const (
 	TraefikBackendID                               = Prefix + SuffixBackendID
 	TraefikBackendCircuitBreaker                   = Prefix + SuffixBackendCircuitBreaker
 	TraefikBackendCircuitBreakerExpression         = Prefix + SuffixBackendCircuitBreakerExpression
+	TraefikBackendHealthCheckScheme                = Prefix + SuffixBackendHealthCheckScheme
 	TraefikBackendHealthCheckPath                  = Prefix + SuffixBackendHealthCheckPath
 	TraefikBackendHealthCheckPort                  = Prefix + SuffixBackendHealthCheckPort
 	TraefikBackendHealthCheckInterval              = Prefix + SuffixBackendHealthCheckInterval
