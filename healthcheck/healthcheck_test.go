@@ -134,38 +134,45 @@ func TestSetBackendsConfiguration(t *testing.T) {
 
 func TestNewRequest(t *testing.T) {
 	testCases := []struct {
-		desc     string
-		host     string
-		port     int
-		path     string
-		expected string
+		desc      string
+		serverURL string
+		options   Options
+		expected  string
 	}{
 		{
-			desc:     "no port override",
-			host:     "backend1:80",
-			port:     0,
-			path:     "/test",
+			desc:      "no port override",
+			serverURL: "http://backend1:80",
+			options: Options{
+				Path: "/test",
+				Port: 0,
+			},
 			expected: "http://backend1:80/test",
 		},
 		{
-			desc:     "port override",
-			host:     "backend2:80",
-			port:     8080,
-			path:     "/test",
+			desc:      "port override",
+			serverURL: "http://backend2:80",
+			options: Options{
+				Path: "/test",
+				Port: 8080,
+			},
 			expected: "http://backend2:8080/test",
 		},
 		{
-			desc:     "no port override with no port in host",
-			host:     "backend1",
-			port:     0,
-			path:     "/health",
+			desc:      "no port override with no port in server URL",
+			serverURL: "http://backend1",
+			options: Options{
+				Path: "/health",
+				Port: 0,
+			},
 			expected: "http://backend1/health",
 		},
 		{
-			desc:     "port override with no port in host",
-			host:     "backend2",
-			port:     8080,
-			path:     "/health",
+			desc:      "port override with no port in server URL",
+			serverURL: "http://backend2",
+			options: Options{
+				Path: "/health",
+				Port: 8080,
+			},
 			expected: "http://backend2:8080/health",
 		},
 	}
@@ -175,16 +182,10 @@ func TestNewRequest(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			backend := NewBackendHealthCheck(
-				Options{
-					Path: test.path,
-					Port: test.port,
-				}, "backendName")
+			backend := NewBackendHealthCheck(test.options, "backendName")
 
-			u := &url.URL{
-				Scheme: "http",
-				Host:   test.host,
-			}
+			u, err := url.Parse(test.serverURL)
+			require.NoError(t, err)
 
 			req, err := backend.newRequest(u)
 			require.NoError(t, err, "failed to create new backend request")
@@ -194,54 +195,53 @@ func TestNewRequest(t *testing.T) {
 	}
 }
 
-func TestNewRequestWithAddHeaders(t *testing.T) {
+func TestAddHeadersAndHost(t *testing.T) {
 	testCases := []struct {
 		desc             string
-		host             string
-		headers          map[string]string
-		hostname         string
-		port             int
-		path             string
+		serverURL        string
+		options          Options
 		expectedHostname string
 		expectedHeader   string
 	}{
 		{
-			desc:             "override hostname",
-			host:             "backend1:80",
-			headers:          map[string]string{},
-			hostname:         "myhost",
-			port:             0,
-			path:             "/",
+			desc:      "override hostname",
+			serverURL: "http://backend1:80",
+			options: Options{
+				Hostname: "myhost",
+				Path:     "/",
+			},
 			expectedHostname: "myhost",
 			expectedHeader:   "",
 		},
 		{
-			desc:             "not override hostname",
-			host:             "backend1:80",
-			headers:          map[string]string{},
-			hostname:         "",
-			port:             0,
-			path:             "/",
+			desc:      "not override hostname",
+			serverURL: "http://backend1:80",
+			options: Options{
+				Hostname: "",
+				Path:     "/",
+			},
 			expectedHostname: "backend1:80",
 			expectedHeader:   "",
 		},
 		{
-			desc:             "custom header",
-			host:             "backend1:80",
-			headers:          map[string]string{"Custom-Header": "foo"},
-			hostname:         "",
-			port:             0,
-			path:             "/",
+			desc:      "custom header",
+			serverURL: "http://backend1:80",
+			options: Options{
+				Headers:  map[string]string{"Custom-Header": "foo"},
+				Hostname: "",
+				Path:     "/",
+			},
 			expectedHostname: "backend1:80",
 			expectedHeader:   "foo",
 		},
 		{
-			desc:             "custom header with host override",
-			host:             "backend1:80",
-			headers:          map[string]string{"Custom-Header": "foo"},
-			hostname:         "myhost",
-			port:             0,
-			path:             "/",
+			desc:      "custom header with hostname override",
+			serverURL: "http://backend1:80",
+			options: Options{
+				Headers:  map[string]string{"Custom-Header": "foo"},
+				Hostname: "myhost",
+				Path:     "/",
+			},
 			expectedHostname: "myhost",
 			expectedHeader:   "foo",
 		},
@@ -252,26 +252,17 @@ func TestNewRequestWithAddHeaders(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			backend := NewBackendHealthCheck(
-				Options{
-					Hostname: test.hostname,
-					Path:     test.path,
-					Port:     test.port,
-					Headers:  test.headers,
-				}, "backendName")
+			backend := NewBackendHealthCheck(test.options, "backendName")
 
-			u := &url.URL{
-				Scheme: "http",
-				Host:   test.host,
-			}
+			u, err := url.Parse(test.serverURL)
+			require.NoError(t, err)
 
 			req, err := backend.newRequest(u)
-			if err != nil {
-				t.Fatalf("failed to create new backend request: %s", err)
-			}
+			require.NoError(t, err, "failed to create new backend request")
 
 			req = backend.addHeadersAndHost(req)
 
+			assert.Equal(t, "http://backend1:80/", req.URL.String())
 			assert.Equal(t, test.expectedHostname, req.Host)
 			assert.Equal(t, test.expectedHeader, req.Header.Get("Custom-Header"))
 		})
