@@ -471,7 +471,7 @@ For example:
     interval = "10s"
 ```
 
-To use a different port for the healthcheck:
+To use a different port for the health check:
 ```toml
 [backends]
   [backends.backend1]
@@ -481,7 +481,18 @@ To use a different port for the healthcheck:
     port = 8080
 ```
 
-Additional http headers and hostname to healthcheck request can be specified, for instance:
+
+To use a different scheme for the health check:
+```toml
+[backends]
+  [backends.backend1]
+    [backends.backend1.healthcheck]
+    path = "/health"
+    interval = "10s"
+    scheme = "http"
+```
+
+Additional http headers and hostname to health check request can be specified, for instance:
 ```toml
 [backends]
   [backends.backend1]
@@ -491,8 +502,8 @@ Additional http headers and hostname to healthcheck request can be specified, fo
     hostname = "myhost.com"
     port = 8080
       [backends.backend1.healthcheck.headers]
-      mycustomheader = "foo"
-      myheader2 = "bar"
+      My-Custom-Header = "foo"
+      My-Header = "bar"
 ```
 
 ## Configuration
