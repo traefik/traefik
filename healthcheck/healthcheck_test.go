@@ -175,6 +175,16 @@ func TestNewRequest(t *testing.T) {
 			},
 			expected: "http://backend2:8080/health",
 		},
+		{
+			desc:      "scheme override",
+			serverURL: "https://backend1:80",
+			options: Options{
+				Scheme: "http",
+				Path:   "/test",
+				Port:   0,
+			},
+			expected: "http://backend1:80/test",
+		},
 	}
 
 	for _, test := range testCases {

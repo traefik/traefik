@@ -31,6 +31,7 @@ func GetHealthCheck(metrics metricsRegistry) *HealthCheck {
 type Options struct {
 	Headers   map[string]string
 	Hostname  string
+	Scheme    string
 	Path      string
 	Port      int
 	Transport http.RoundTripper
@@ -50,7 +51,7 @@ type BackendHealthCheck struct {
 	requestTimeout time.Duration
 }
 
-//HealthCheck struct
+// HealthCheck struct
 type HealthCheck struct {
 	Backends map[string]*BackendHealthCheck
 	metrics  metricsRegistry
@@ -71,8 +72,8 @@ func newHealthCheck(metrics metricsRegistry) *HealthCheck {
 	}
 }
 
-// metricsRegistry is a local interface in the healthcheck package, exposing only the required metrics
-// necessary for the healthcheck package. This makes it easier for the tests.
+// metricsRegistry is a local interface in the health check package, exposing only the required metrics
+// necessary for the health check package. This makes it easier for the tests.
 type metricsRegistry interface {
 	BackendServerUpGauge() metrics.Gauge
 }
@@ -152,15 +153,18 @@ func (hc *HealthCheck) checkBackend(backend *BackendHealthCheck) {
 }
 
 func (b *BackendHealthCheck) newRequest(serverURL *url.URL) (*http.Request, error) {
-	if b.Port == 0 {
-		return http.NewRequest(http.MethodGet, serverURL.String()+b.Path, nil)
-	}
-
-	// copy the url and add the port to the host
 	u := &url.URL{}
 	*u = *serverURL
-	u.Host = net.JoinHostPort(u.Hostname(), strconv.Itoa(b.Port))
-	u.Path = u.Path + b.Path
+
+	if len(b.Scheme) > 0 {
+		u.Scheme = b.Scheme
+	}
+
+	if b.Port != 0 {
+		u.Host = net.JoinHostPort(u.Hostname(), strconv.Itoa(b.Port))
+	}
+
+	u.Path += b.Path
 
 	return http.NewRequest(http.MethodGet, u.String(), nil)
 }
