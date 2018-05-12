@@ -29,6 +29,7 @@
   {{ $healthCheck := getHealthCheck $service.TraefikLabels }}
   {{if $healthCheck }}
   [backends."backend-{{ $backendName }}".healthCheck]
+    scheme = "{{ $healthCheck.Scheme }}"
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"

@@ -123,6 +123,7 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel(label.TraefikBackend, "foobar"),
 
 					withLabel(label.TraefikBackendCircuitBreakerExpression, "NetworkErrorRatio() > 0.5"),
+					withLabel(label.TraefikBackendHealthCheckScheme, "http"),
 					withLabel(label.TraefikBackendHealthCheckPath, "/health"),
 					withLabel(label.TraefikBackendHealthCheckPort, "880"),
 					withLabel(label.TraefikBackendHealthCheckInterval, "6"),
@@ -318,6 +319,7 @@ func TestBuildConfiguration(t *testing.T) {
 						ExtractorFunc: "client.ip",
 					},
 					HealthCheck: &types.HealthCheck{
+						Scheme:   "http",
 						Path:     "/health",
 						Port:     880,
 						Interval: "6",
