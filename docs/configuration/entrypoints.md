@@ -106,7 +106,7 @@ traefik:
 ```ini
 Name:foo
 Address::80
-TLS:goo,gii
+TLS:/my/path/foo.cert,/my/path/foo.key;/my/path/goo.cert,/my/path/goo.key;/my/path/hoo.cert,/my/path/hoo.key
 TLS
 CA:car
 CA.Optional:true
