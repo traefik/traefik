@@ -5,8 +5,9 @@
       <div class="column is-12">
 
         <div class="search-container">
-          <span class="icon"><i class="fas fa-search"></i></span>
-          <input type="text" placeholder="Filter by name or id ..." [(ngModel)]="keyword" (ngModelChange)="filter()">
+          <span class="icon search-button" *ngIf="!keyword"><i class="fas fa-search"></i></span>
+          <a class="delete search-button" *ngIf="keyword" (click)="keyword = ''"></a>
+          <input type="text" placeholder="Filter by name or id ..." [(ngModel)]="keyword">
         </div>
 
         <div class="tabs" *ngIf="keys?.length">
@@ -20,30 +21,17 @@
         <div *ngIf="keys?.length">
           <div class="columns">
             <!-- Frontends -->
-            <div class="column is-6">
-              <h2 class="subtitle"><span class="tag is-info">{{ providers[tab]?.frontends.length }}</span> Frontends</h2>
-              <div class="message" *ngFor="let p of providers[tab]?.frontends; let i = index;">
-                <div class="message-header">
+            <div class="column is-6" *appLet="providers[tab]?.frontends | frontendFilter:keyword as frontends">
+              <h2 class="subtitle"><span class="tag is-info">{{ frontends.length }}</span><span class="subtitle-name">Frontends</span></h2>
+
+              <div *ngIf="frontends.length < maxItem">
+
+              <div class="message" *ngFor="let p of frontends; trackBy: trackItem(tab)">
+                <div class="message-header" [class.has-background-info]="p.backend" [class.has-background-danger]="!p.backend">
                   <h2>
+                    <i class="icon fas fa-globe has-text-white"></i>
                     <div>
-                      <i class="icon fas fa-globe"></i>
-                      <div class="field is-grouped is-grouped-multiline">
-                        <div class="control">
-                          <div class="tags has-addons">
-                            <span class="tag is-info">{{ p.id }}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div *ngIf="p.backend">
-                      <div class="field is-grouped is-grouped-multiline">
-                        <div class="control">
-                          <a class="tags has-addons" [href]="'#' + p.backend">
-                            <span class="tag is-light">Backend</span>
-                            <span class="tag is-primary">{{ p.backend }}</span>
-                          </a>
-                        </div>
-                      </div>
+                      <span class="has-text-white" [class.is-info]="p.backend" [class.is-danger]="!p.backend">{{ p.id }}</span>
                     </div>
                   </h2>
                 </div>
@@ -57,16 +45,16 @@
                   </div>
 
                   <!-- Main -->
-                  <div *ngIf="p.section !== 'details'">
+                  <div *ngIf="p.section !== 'details'" class="section-container">
 
-                    <div *ngIf="p.routes && p.routes.length">
+                    <div *ngIf="p.routes && p.routes.length" class="section-line">
+                      <div>
+                        <h2>Route Rule</h2>
+                      </div>
                       <table class="table is-fullwidth is-hoverable">
                         <tbody>
-                          <tr>
-                            <td>Route Rule</td>
-                          </tr>
-                          <tr *ngFor="let route of p.routes; let ri = index;">
-                            <td><code class="has-text-grey" title="{{ route.title }}">{{ route.rule }}</code></td>
+                          <tr *ngFor="let route of p.routes">
+                            <td><code class="has-text-grey" [title]="route.id">{{ route.rule }}</code></td>
                           </tr>
                         </tbody>
                       </table>
@@ -74,17 +62,32 @@
 
                     <div *ngIf="p.entryPoints && p.entryPoints.length">
                       <hr>
-                      <div class="columns">
+                      <div class="columns section-line">
                         <div class="column is-3">
-                          <h2>Entry Points</h2>
+                          <h2 class="section-line-header">Entry Points</h2>
                         </div>
                         <div class="column is-9">
                           <div class="field is-grouped is-grouped-multiline">
                             <div class="control">
                               <div class="tags">
-                                <span class="tag is-info" *ngFor="let ep of p.entryPoints; let ri = index;">{{ ep }}</span>
+                                <span class="tag is-info" *ngFor="let ep of p.entryPoints">{{ ep }}</span>
                               </div>
                             </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div *ngIf="p.backend">
+                      <hr>
+                      <div class="columns section-line">
+                        <div class="column is-2">
+                          <h2 class="section-line-header">Backend</h2>
+                        </div>
+                        <div class="column is-10">
+                          <div class="field">
+                            <i class="icon fas fa-server has-text-primary" title="Backend"></i>
+                            <span class="has-text-primary">{{ p.backend }}</span>
                           </div>
                         </div>
                       </div>
@@ -93,16 +96,16 @@
                   </div>
 
                   <!-- Details -->
-                  <div *ngIf="p.section === 'details'">
+                  <div *ngIf="p.section === 'details'" class="section-container">
 
-                    <div>
+                    <div class="section-line">
                       <div class="columns">
                         <div class="column is-3">
-                          <h2>Misc.</h2>
+                          <h2 class="section-line-header">Misc.</h2>
                         </div>
                         <div class="column is-9">
                           <div class="field is-grouped is-grouped-multiline">
-                            <div class="control">
+                            <div class="control" *ngIf="p.priority">
                               <div class="tags has-addons">
                                 <span class="tag is-light">Priority</span>
                                 <span class="tag is-info">{{ p.priority }}</span>
@@ -111,7 +114,7 @@
                             <div class="control">
                               <div class="tags has-addons">
                                 <span class="tag is-light">Host Header</span>
-                                <span class="tag is-info">{{ p.passHostHeader }}</span>
+                                <span class="tag is-info">{{ !!p.passHostHeader }}</span>
                               </div>
                             </div>
                             <div class="control" *ngIf="p.passTLSCert">
@@ -127,9 +130,9 @@
 
                     <div *ngIf="p.redirect">
                       <hr>
-                      <div class="columns">
+                      <div class="columns section-line">
                         <div class="column is-3">
-                          <h2>Redirect</h2>
+                          <h2 class="section-line-header">Redirect</h2>
                         </div>
                         <div class="column is-9">
                           <div class="field is-grouped is-grouped-multiline" *ngIf="p.redirect.entryPoint">
@@ -160,45 +163,49 @@
 
                     <div *ngIf="p.basicAuth && p.basicAuth.length">
                       <hr/>
-                      <h2>Basic Authentication</h2>
-                      <div class="tags padding-5-10">
-                          <span class="tag is-info" *ngFor="let auth of p.basicAuth; let ri = index;">{{ auth }}</span>
+                      <div class="section-line">
+                        <h2 class="section-line-header">Basic Authentication</h2>
+                        <div class="tags padding-5-10">
+                          <span class="tag is-info" *ngFor="let auth of p.basicAuth">{{ auth }}</span>
+                        </div>
                       </div>
                     </div>
 
-                    <div *ngIf="p.errors">
+                    <div *ngIf="p.errors?.length">
                       <hr/>
-                      <h2>Error Pages</h2>
-                      <table class="table is-fullwidth is-hoverable">
-                        <tbody>
-                          <tr>
-                            <td>Backend</td>
-                            <td>Query</td>
-                            <td>Status</td>
-                          </tr>
-                          <tr *ngFor="let key of p.errors | keys">
-                            <td><span class="has-text-grey-light">{{ p.errors[key].backend }}</span></td>
-                            <td><span class="has-text-grey">{{ p.errors[key].query }}</span></td>
-                            <td>
-                              <span class="tag is-light" *ngFor="let state of p.errors[key].status">{{ state }}</span>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
+                      <div class="section-line">
+                        <h2 class="section-line-header">Error Pages</h2>
+                        <table class="table is-fullwidth is-hoverable">
+                          <tbody>
+                            <tr>
+                              <td>Backend</td>
+                              <td>Query</td>
+                              <td>Status</td>
+                            </tr>
+                            <tr *ngFor="let entry of p.errors">
+                              <td><span class="has-text-grey-light">{{ entry.backend }}</span></td>
+                              <td><span class="has-text-grey">{{ entry.query }}</span></td>
+                              <td>
+                                <span class="tag is-light" *ngFor="let state of entry.status">{{ state }}</span>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
 
                     <div *ngIf="p.whiteList">
                       <hr/>
-                      <div class="columns is-gapless is-multiline is-mobile">
+                      <div class="columns is-gapless is-multiline is-mobile section-line">
                         <div class="column is-half">
-                          <h2>Whitelist</h2>
+                          <h2 class="section-line-header">Whitelist</h2>
                         </div>
                         <div class="column is-half">
                           <div class="field">
                             <div class="control">
                               <div class="tags has-addons">
                                 <span class="tag is-light">useXForwardedFor</span>
-                                <span class="tag is-info">{{ p.whiteList.useXForwardedFor }}</span>
+                                <span class="tag is-info">{{ !!p.whiteList.useXForwardedFor }}</span>
                               </div>
                             </div>
                           </div>
@@ -207,7 +214,7 @@
                           <div class="field is-grouped is-grouped-multiline">
                             <div class="control">
                               <div class="tags">
-                                <span class="tag is-info" *ngFor="let wlRange of p.whiteList.sourceRange; let ri = index;">{{ wlRange }}</span>
+                                <span class="tag is-info" *ngFor="let wlRange of p.whiteList.sourceRange">{{ wlRange }}</span>
                               </div>
                             </div>
                           </div>
@@ -217,126 +224,137 @@
 
                     <div *ngIf="p.headers">
                       <hr/>
-                      <h2>Headers</h2>
-                      <div class="columns is-multiline">
+                      <div class="section-line">
+                        <h2 class="section-line-header">Headers</h2>
+                        <div class="columns is-multiline">
 
-                        <div class="column is-12" *ngIf="p.headers.customRequestHeaders">
-                          <h2>Custom Request Headers</h2>
-                          <table class="table is-fullwidth is-hoverable">
-                            <tbody>
-                              <tr *ngFor="let key of p.headers.customRequestHeaders | keys">
-                                <td><span class="has-text-grey-light">{{ key }}</span></td>
-                                <td><span class="has-text-grey">{{ p.headers.customRequestHeaders[key] }}</span></td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
+                          <div class="column is-12" *ngIf="p.headers.customRequestHeaders?.length">
+                            <table class="table is-fullwidth is-hoverable table-fixed-break">
+                              <tbody>
+                                <tr>
+                                  <td colspan="2">Custom Request Headers</td>
+                                </tr>
+                                <tr *ngFor="let header of p.headers.customRequestHeaders">
+                                  <td><span class="has-text-grey-light">{{ header.name }}</span></td>
+                                  <td><span class="has-text-grey">{{ header.value }}</span></td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
 
-                        <div class="column is-12" *ngIf="p.headers.customResponseHeaders">
-                          <h2>Custom Response Headers</h2>
-                          <table class="table is-fullwidth is-hoverable">
-                            <tbody>
-                              <tr *ngFor="let key of p.headers.customResponseHeaders | keys">
-                                <td><span class="has-text-grey-light">{{ key }}</span></td>
-                                <td><span class="has-text-grey">{{ p.headers.customResponseHeaders[key] }}</span></td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
+                          <div class="column is-12" *ngIf="p.headers.customResponseHeaders?.length">
+                            <table class="table is-fullwidth is-hoverable table-fixed-break">
+                              <tbody>
+                                <tr>
+                                  <td colspan="2">Custom Response Headers</td>
+                                </tr>
+                                <tr *ngFor="let header of p.headers.customResponseHeaders">
+                                  <td><span class="has-text-grey-light">{{ header.name }}</span></td>
+                                  <td><span class="has-text-grey">{{ header.value }}</span></td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
 
-                        <div class="column is-12">
-                          <h2>Secure</h2>
-                          <table class="table is-fullwidth is-hoverable">
-                            <tbody>
-                              <tr *ngIf="p.headers.browserXssFilter">
-                                <td><span class="has-text-grey">Browser XSS Filter</span></td>
-                                <td><span class="has-text-grey">{{ p.headers.browserXssFilter }}</span></td>
-                              </tr>
-                              <tr *ngIf="p.headers.contentSecurityPolicy">
-                                <td><span class="has-text-grey">Content Security Policy</span></td>
-                                <td><span class="has-text-grey">{{ p.headers.contentSecurityPolicy }}</span></td>
-                              </tr>
-                              <tr *ngIf="p.headers.contentTypeNoSniff">
-                                <td><span class="has-text-grey">Content Type (No sniff)</span></td>
-                                <td><span class="has-text-grey">{{ p.headers.contentTypeNoSniff }}</span></td>
-                              </tr>
-                              <tr *ngIf="p.headers.customFrameOptionsValue">
-                                <td><span class="has-text-grey">Custom Frame Options Value</span></td>
-                                <td><span class="has-text-grey">{{ p.headers.customFrameOptionsValue }}</span></td>
-                              </tr>
-                              <tr *ngIf="p.headers.forceSTSHeader">
-                                <td><span class="has-text-grey">Force STS Header</span></td>
-                                <td><span class="has-text-grey">{{ p.headers.forceSTSHeader }}</span></td>
-                              </tr>
-                              <tr *ngIf="p.headers.frameDeny">
-                                <td><span class="has-text-grey">Frame Deny</span></td>
-                                <td><span class="has-text-grey">{{ p.headers.frameDeny }}</span></td>
-                              </tr>
-                              <tr *ngIf="p.headers.isDevelopment">
-                                <td><span class="has-text-grey">Is Development</span></td>
-                                <td><span class="has-text-grey">{{ p.headers.isDevelopment }}</span></td>
-                              </tr>
-                              <tr *ngIf="p.headers.publicKey">
-                                <td><span class="has-text-grey">Public Key</span></td>
-                                <td><span class="has-text-grey">{{ p.headers.publicKey }}</span></td>
-                              </tr>
-                              <tr *ngIf="p.headers.referrerPolicy">
-                                <td><span class="has-text-grey">Referrer Policy</span></td>
-                                <td><span class="has-text-grey">{{ p.headers.referrerPolicy }}</span></td>
-                              </tr>
-                              <tr *ngIf="p.headers.sslHost">
-                                <td><span class="has-text-grey">SSL Host</span></td>
-                                <td><span class="has-text-grey">{{ p.headers.sslHost }}</span></td>
-                              </tr>
-                              <tr *ngIf="p.headers.sslRedirect">
-                                <td><span class="has-text-grey">SSL Redirect</span></td>
-                                <td><span class="has-text-grey">{{ p.headers.sslRedirect }}</span></td>
-                              </tr>
-                              <tr *ngIf="p.headers.sslTemporaryRedirect">
-                                <td><span class="has-text-grey">SSL Temporary Redirect</span></td>
-                                <td><span class="has-text-grey">{{ p.headers.sslTemporaryRedirect }}</span></td>
-                              </tr>
-                              <tr *ngIf="p.headers.stsIncludeSubdomains">
-                                <td><span class="has-text-grey">STS Include Subdomains</span></td>
-                                <td><span class="has-text-grey">{{ p.headers.stsIncludeSubdomains }}</span></td>
-                              </tr>
-                              <tr *ngIf="p.headers.stsPreload">
-                                <td><span class="has-text-grey">STS Preload</span></td>
-                                <td><span class="has-text-grey">{{ p.headers.stsPreload }}</span></td>
-                              </tr>
-                              <tr *ngIf="p.headers.stsSeconds">
-                                <td><span class="has-text-grey">STS Seconds</span></td>
-                                <td><span class="has-text-grey">{{ p.headers.stsSeconds }}</span></td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
+                          <div class="column is-12">
+                            <table class="table is-fullwidth is-hoverable table-fixed-break">
+                              <tbody>
+                                <tr>
+                                  <td colspan="2">Secure</td>
+                                </tr>
+                                <tr *ngIf="p.headers.browserXssFilter">
+                                  <td><span class="has-text-grey">Browser XSS Filter</span></td>
+                                  <td><span class="has-text-grey">{{ p.headers.browserXssFilter }}</span></td>
+                                </tr>
+                                <tr *ngIf="p.headers.contentSecurityPolicy">
+                                  <td><span class="has-text-grey">Content Security Policy</span></td>
+                                  <td><span class="has-text-grey">{{ p.headers.contentSecurityPolicy }}</span></td>
+                                </tr>
+                                <tr *ngIf="p.headers.contentTypeNoSniff">
+                                  <td><span class="has-text-grey">Content Type (No sniff)</span></td>
+                                  <td><span class="has-text-grey">{{ p.headers.contentTypeNoSniff }}</span></td>
+                                </tr>
+                                <tr *ngIf="p.headers.customFrameOptionsValue">
+                                  <td><span class="has-text-grey">Custom Frame Options Value</span></td>
+                                  <td><span class="has-text-grey">{{ p.headers.customFrameOptionsValue }}</span></td>
+                                </tr>
+                                <tr *ngIf="p.headers.forceSTSHeader">
+                                  <td><span class="has-text-grey">Force STS Header</span></td>
+                                  <td><span class="has-text-grey">{{ p.headers.forceSTSHeader }}</span></td>
+                                </tr>
+                                <tr *ngIf="p.headers.frameDeny">
+                                  <td><span class="has-text-grey">Frame Deny</span></td>
+                                  <td><span class="has-text-grey">{{ p.headers.frameDeny }}</span></td>
+                                </tr>
+                                <tr *ngIf="p.headers.isDevelopment">
+                                  <td><span class="has-text-grey">Is Development</span></td>
+                                  <td><span class="has-text-grey">{{ p.headers.isDevelopment }}</span></td>
+                                </tr>
+                                <tr *ngIf="p.headers.publicKey">
+                                  <td><span class="has-text-grey">Public Key</span></td>
+                                  <td><span class="has-text-grey">{{ p.headers.publicKey }}</span></td>
+                                </tr>
+                                <tr *ngIf="p.headers.referrerPolicy">
+                                  <td><span class="has-text-grey">Referrer Policy</span></td>
+                                  <td><span class="has-text-grey">{{ p.headers.referrerPolicy }}</span></td>
+                                </tr>
+                                <tr *ngIf="p.headers.sslHost">
+                                  <td><span class="has-text-grey">SSL Host</span></td>
+                                  <td><span class="has-text-grey">{{ p.headers.sslHost }}</span></td>
+                                </tr>
+                                <tr *ngIf="p.headers.sslRedirect">
+                                  <td><span class="has-text-grey">SSL Redirect</span></td>
+                                  <td><span class="has-text-grey">{{ p.headers.sslRedirect }}</span></td>
+                                </tr>
+                                <tr *ngIf="p.headers.sslTemporaryRedirect">
+                                  <td><span class="has-text-grey">SSL Temporary Redirect</span></td>
+                                  <td><span class="has-text-grey">{{ p.headers.sslTemporaryRedirect }}</span></td>
+                                </tr>
+                                <tr *ngIf="p.headers.stsIncludeSubdomains">
+                                  <td><span class="has-text-grey">STS Include Subdomains</span></td>
+                                  <td><span class="has-text-grey">{{ p.headers.stsIncludeSubdomains }}</span></td>
+                                </tr>
+                                <tr *ngIf="p.headers.stsPreload">
+                                  <td><span class="has-text-grey">STS Preload</span></td>
+                                  <td><span class="has-text-grey">{{ p.headers.stsPreload }}</span></td>
+                                </tr>
+                                <tr *ngIf="p.headers.stsSeconds">
+                                  <td><span class="has-text-grey">STS Seconds</span></td>
+                                  <td><span class="has-text-grey">{{ p.headers.stsSeconds }}</span></td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
 
-                        <div class="column is-12" *ngIf="p.headers.allowedHosts">
-                          <h2>Allowed Hosts</h2>
-                          <div class="tags-list">
-                            <span class="tag is-light" *ngFor="let host of p.headers.allowedHosts">{{ host }}</span>
+                          <div class="column is-12" *ngIf="p.headers.sslProxyHeaders?.length">
+                            <table class="table is-fullwidth is-hoverable table-fixed-break">
+                              <tbody>
+                                <tr>
+                                  <td colspan="2">SSL Proxy Headers</td>
+                                </tr>
+                                <tr *ngFor="let header of p.headers.sslProxyHeaders">
+                                  <td><span class="has-text-grey-light">{{ header.name }}</span></td>
+                                  <td><span class="has-text-grey">{{ header.value }}</span></td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+
+                          <div class="column is-12" *ngIf="p.headers.allowedHosts">
+                            <h2>Allowed Hosts</h2>
+                            <div class="tags-list">
+                              <span class="tag is-light" *ngFor="let host of p.headers.allowedHosts">{{ host }}</span>
+                            </div>
+                          </div>
+
+                          <div class="column is-12" *ngIf="p.headers.hostsProxyHeaders">
+                            <h2>Hosts Proxy Headers</h2>
+                            <div class="tags-list">
+                              <span class="tag is-light" *ngFor="let h of p.headers.hostsProxyHeaders">{{ h }}</span>
+                            </div>
                           </div>
                         </div>
 
-                        <div class="column is-12" *ngIf="p.headers.sslProxyHeaders">
-                          <h2>SSL Proxy Headers</h2>
-                          <table class="table is-fullwidth is-hoverable">
-                            <tbody>
-                              <tr *ngFor="let key of p.headers.sslProxyHeaders | keys">
-                                <td><span class="has-text-grey-light">{{ key }}</span></td>
-                                <td><span class="has-text-grey">{{ p.headers.sslProxyHeaders[key] }}</span></td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-
-                        <div class="column is-12" *ngIf="p.headers.hostsProxyHeaders">
-                          <h2>Hosts Proxy Headers</h2>
-                          <div class="tags-list">
-                            <span class="tag is-light" *ngFor="let h of p.headers.hostsProxyHeaders">{{ h }}</span>
-                          </div>
-                        </div>
                       </div>
                     </div>
 
@@ -344,23 +362,33 @@
 
                 </div>
               </div>
+
+              </div>
+              <div *ngIf="frontends.length > maxItem">
+
+                <div class="message">
+                  <div class="message-header has-background-warning has-text-black">
+                    Too many frontends to display, please add a filter.
+                  </div>
+                </div>
+
+              </div>
+
+
             </div>
 
             <!-- Backends -->
-            <div class="column is-6">
-              <h2 class="subtitle"><span class="tag is-primary">{{ providers[tab]?.backends.length }}</span> Backends</h2>
-              <div class="message" *ngFor="let p of providers[tab]?.backends; let i = index;">
-                <div class="message-header">
-                  <h2 [id]="p.id">
+            <div class="column is-6" *appLet="providers[tab]?.backends | backendFilter:keyword as backends">
+              <h2 class="subtitle"><span class="tag is-primary">{{ backends.length }}</span><span class="subtitle-name">Backends</span></h2>
+
+              <div *ngIf="backends.length < maxItem">
+
+              <div class="message" *ngFor="let p of backends; trackBy: trackItem(tab);">
+                <div class="message-header" [class.has-background-primary]="p.servers?.length" [class.has-background-danger]="!p.servers?.length">
+                  <h2>
+                    <i class="icon fas fa-server has-text-white"></i>
                     <div>
-                      <i class="icon fas fa-server"></i>
-                      <div class="field is-grouped is-grouped-multiline">
-                        <div class="control">
-                          <div class="tags has-addons">
-                            <span class="tag is-primary">{{ p.id }}</span>
-                          </div>
-                        </div>
-                      </div>
+                      <span class="has-text-white">{{ p.id }}</span>
                     </div>
                   </h2>
                 </div>
@@ -374,28 +402,34 @@
                   </div>
 
                   <!-- Main -->
-                  <div *ngIf="p.section !== 'details'">
-                    <table class="table is-fullwidth is-hoverable">
-                      <tbody>
-                        <tr>
-                          <td>Server</td>
-                          <td>Weight</td>
-                        </tr>
-                        <tr *ngFor="let server of p.servers; let ri = index;">
-                          <td><a href="{{ server.url }}" title="{{ server.title }}">{{ server.url }}</a></td>
-                          <td><span class="has-text-grey">{{ server.weight }}</span></td>
-                        </tr>
-                      </tbody>
-                    </table>
+                  <div *ngIf="p.section !== 'details'" class="section-container">
+                    <div class="section-line">
+                      <table class="table is-fullwidth is-hoverable table-fixed">
+                      <colgroup>
+                        <col class="table-col-75">
+                        <col>
+                      </colgroup>
+                        <tbody>
+                          <tr>
+                            <td>Server</td>
+                            <td>Weight</td>
+                          </tr>
+                          <tr *ngFor="let server of p.servers">
+                            <td class="table-cell-limited"><a href="{{ server.url }}" [title]="server.id">{{ server.url }}</a></td>
+                            <td><span class="has-text-grey">{{ server.weight }}</span></td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
 
                   <!-- Details -->
-                  <div *ngIf="p.section === 'details'">
+                  <div *ngIf="p.section === 'details'" class="section-container">
 
-                    <div *ngIf="p.loadBalancer">
+                    <div *ngIf="p.loadBalancer" class="section-line">
                       <div class="columns">
                         <div class="column is-3">
-                          <h2>Load Balancer</h2>
+                          <h2 class="section-line-header">Load Balancer</h2>
                         </div>
                         <div class="column is-9">
                           <div class="field is-grouped is-grouped-multiline">
@@ -424,9 +458,9 @@
 
                     <div *ngIf="p.maxConn">
                       <hr/>
-                      <div class="columns">
+                      <div class="columns section-line">
                         <div class="column is-3">
-                          <h2>Max Connections</h2>
+                          <h2 class="section-line-header">Max Connections</h2>
                         </div>
                         <div class="column is-9">
                           <div class="field is-grouped is-grouped-multiline">
@@ -449,9 +483,9 @@
 
                     <div *ngIf="p.circuitBreaker">
                       <hr/>
-                      <div class="columns">
+                      <div class="columns section-line">
                         <div class="column is-3">
-                          <h2>Circuit Breaker</h2>
+                          <h2 class="section-line-header">Circuit Breaker</h2>
                         </div>
                         <div class="column is-9">
                           <div class="field is-grouped is-grouped-multiline">
@@ -468,9 +502,9 @@
 
                     <div *ngIf="p.healthCheck">
                       <hr/>
-                      <div class="columns">
+                      <div class="columns section-line">
                         <div class="column is-3">
-                          <h2>Health Check</h2>
+                          <h2 class="section-line-header">Health Check</h2>
                         </div>
                         <div class="column is-9">
                           <div class="field is-grouped is-grouped-multiline">
@@ -505,80 +539,78 @@
 
                     <div *ngIf="p.buffering">
                       <hr>
-                      <div class="columns list-title">
-                        <div class="column is-12">
-                          <h2>Buffering</h2>
-                        </div>
-                      </div>
-                      <div class="list-item">
-                        <div class="columns">
-                          <div class="column is-4">
-                            <span>Request Body Bytes</span>
-                          </div>
-                          <div class="column is-4">
-                            <div class="field is-grouped is-grouped-multiline">
-                              <div class="control">
-                                <div class="tags has-addons">
-                                  <span class="tag is-light">Max</span>
-                                  <span class="tag is-info">{{ p.buffering.maxRequestBodyBytes }}</span>
+                      <div class="section-line">
+                        <h2 class="section-line-header">Buffering</h2>
+                        <table class="table is-fullwidth is-hoverable table-fixedd">
+                          <tbody>
+                            <tr>
+                              <td><span class="has-text-grey">Request Body Bytes</span></td>
+                              <td>
+                                <div class="field is-grouped is-grouped-multiline">
+                                  <div class="control">
+                                    <div class="tags has-addons">
+                                      <span class="tag is-light">Max</span>
+                                      <span class="tag is-info">{{ p.buffering.maxRequestBodyBytes }}</span>
+                                    </div>
+                                  </div>
                                 </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div class="column is-4">
-                            <div class="field is-grouped is-grouped-multiline">
-                              <div class="control">
-                                <div class="tags has-addons">
-                                  <span class="tag is-light">Men</span>
-                                  <span class="tag is-info">{{ p.buffering.memRequestBodyBytes }}</span>
+                              </td>
+                              <td>
+                                <div class="field is-grouped is-grouped-multiline">
+                                  <div class="control">
+                                    <div class="tags has-addons">
+                                      <span class="tag is-light">Men</span>
+                                      <span class="tag is-info">{{ p.buffering.memRequestBodyBytes }}</span>
+                                    </div>
+                                  </div>
                                 </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="list-item">
-                        <div class="columns">
-                          <div class="column is-4">
-                            <span>Response Body Bytes</span>
-                          </div>
-                          <div class="column is-4">
-                            <div class="field is-grouped is-grouped-multiline">
-                              <div class="control">
-                                <div class="tags has-addons">
-                                  <span class="tag is-light">Max</span>
-                                  <span class="tag is-info">{{ p.buffering.maxResponseBodyBytes }}</span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td><span class="has-text-grey">Response Body Bytes</span></td>
+                              <td>
+                                <div class="field is-grouped is-grouped-multiline">
+                                  <div class="control">
+                                    <div class="tags has-addons">
+                                      <span class="tag is-light">Max</span>
+                                      <span class="tag is-info">{{ p.buffering.maxResponseBodyBytes }}</span>
+                                    </div>
+                                  </div>
                                 </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div class="column is-4">
-                            <div class="field is-grouped is-grouped-multiline">
-                              <div class="control">
-                                <div class="tags has-addons">
-                                  <span class="tag is-light">Men</span>
-                                  <span class="tag is-info">{{ p.buffering.memResponseBodyBytes }}</span>
+                              </td>
+                              <td>
+                                <div class="field is-grouped is-grouped-multiline">
+                                  <div class="control">
+                                    <div class="tags has-addons">
+                                      <span class="tag is-light">Men</span>
+                                      <span class="tag is-info">{{ p.buffering.memResponseBodyBytes }}</span>
+                                    </div>
+                                  </div>
                                 </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="list-item">
-                        <div class="columns">
-                          <div class="column is-4">
-                            <span>Retry Expression</span>
-                          </div>
-                          <div class="column is-8">
-                            <span class="tag is-info">{{ p.buffering.retryExpression }}</span>
-                          </div>
-                        </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td class="has-text-grey">Retry Expression</td>
+                              <td colspan="2"><span class="tag is-info">{{ p.buffering.retryExpression }}</span></td>
+                            </tr>
+                          </tbody>
+                        </table>
                       </div>
                     </div>
 
                   </div>
-
                 </div>
+              </div>
+
+              </div>
+              <div *ngIf="backends.length > maxItem">
+
+                <div class="message">
+                  <div class="message-header has-background-warning has-text-black">
+                    Too many backends to display, please add a filter.
+                  </div>
+                </div>
+
               </div>
             </div>
 

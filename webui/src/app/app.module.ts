@@ -1,18 +1,21 @@
-import { NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
 import { HttpClientModule } from '@angular/common/http';
+import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { BrowserModule } from '@angular/platform-browser';
+import { RouterModule } from '@angular/router';
+import { AppComponent } from './app.component';
+import { BarChartComponent } from './charts/bar-chart/bar-chart.component';
+import { LineChartComponent } from './charts/line-chart/line-chart.component';
+import { HeaderComponent } from './components/header/header.component';
+import { HealthComponent } from './components/health/health.component';
+import { ProvidersComponent } from './components/providers/providers.component';
+import { LetDirective } from './directives/let.directive';
+import { BackendFilterPipe } from './pipes/backend.filter.pipe';
+import { FrontendFilterPipe } from './pipes/frontend.filter.pipe';
+import { KeysPipe } from './pipes/keys.pipe';
 import { ApiService } from './services/api.service';
 import { WindowService } from './services/window.service';
-import { AppComponent } from './app.component';
-import { HeaderComponent } from './components/header/header.component';
-import { ProvidersComponent } from './components/providers/providers.component';
-import { HealthComponent } from './components/health/health.component';
-import { LineChartComponent } from './charts/line-chart/line-chart.component';
-import { BarChartComponent } from './charts/bar-chart/bar-chart.component';
-import { KeysPipe } from './pipes/keys.pipe';
 
 @NgModule({
   declarations: [
@@ -22,7 +25,10 @@ import { KeysPipe } from './pipes/keys.pipe';
     HealthComponent,
     LineChartComponent,
     BarChartComponent,
-    KeysPipe
+    KeysPipe,
+    FrontendFilterPipe,
+    BackendFilterPipe,
+    LetDirective
   ],
   imports: [
     BrowserModule,
@@ -30,8 +36,8 @@ import { KeysPipe } from './pipes/keys.pipe';
     HttpClientModule,
     FormsModule,
     RouterModule.forRoot([
-      { path: '', component: ProvidersComponent, pathMatch: 'full' },
-      { path: 'status', component: HealthComponent }
+      {path: '', component: ProvidersComponent, pathMatch: 'full'},
+      {path: 'status', component: HealthComponent}
     ])
   ],
   providers: [

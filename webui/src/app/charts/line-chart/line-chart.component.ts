@@ -1,20 +1,20 @@
-import { Component, Input, OnInit, ElementRef, OnChanges, SimpleChanges } from '@angular/core';
-import { WindowService } from '../../services/window.service';
+import { Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import {
-  range,
-  scaleTime,
-  scaleLinear,
-  min,
-  max,
-  curveLinear,
-  line,
-  easeLinear,
-  select,
-  axisLeft,
   axisBottom,
-  timeSecond,
-  timeFormat
+  axisLeft,
+  curveLinear,
+  easeLinear,
+  line,
+  max,
+  min,
+  range,
+  scaleLinear,
+  scaleTime,
+  select,
+  timeFormat,
+  timeSecond
 } from 'd3';
+import { WindowService } from '../../services/window.service';
 
 @Component({
   selector: 'app-line-chart',
@@ -23,7 +23,10 @@ import {
 export class LineChartComponent implements OnChanges, OnInit {
   @Input() value: { count: number, date: string };
 
+  firstDisplay: boolean;
+  dirty: boolean;
   lineChartEl: HTMLElement;
+  loadingEl: HTMLElement;
   svg: any;
   g: any;
   line: any;
@@ -39,15 +42,19 @@ export class LineChartComponent implements OnChanges, OnInit {
   yAxis: any;
   height: number;
   width: number;
-  margin = { top: 40, right: 40, bottom: 60, left: 60 };
+  margin = {top: 40, right: 40, bottom: 60, left: 60};
   loading = true;
 
   constructor(private elementRef: ElementRef, public windowService: WindowService) { }
 
   ngOnInit() {
     this.lineChartEl = this.elementRef.nativeElement.querySelector('.line-chart');
+    this.loadingEl = this.elementRef.nativeElement.querySelector('.line-chart-loading');
     this.limit = 40;
+
+    // related to the Observable.timer(0, 3000) in health component
     this.duration = 3000;
+
     this.now = new Date(Date.now() - this.duration);
 
     this.options = {
@@ -55,22 +62,37 @@ export class LineChartComponent implements OnChanges, OnInit {
       color: '#3A84C5'
     };
 
+    this.firstDisplay = true;
     this.render();
-    setTimeout(() => this.loading = false, 4000);
+
     this.windowService.resize.subscribe(w => {
       if (this.svg) {
-        const el = this.lineChartEl.querySelector('svg');
-        el.parentNode.removeChild(el);
+        this.dirty = true;
+        this.loading = true;
         this.render();
       }
     });
   }
 
   render() {
-    this.width = this.lineChartEl.clientWidth - this.margin.left - this.margin.right;
-    this.height = this.lineChartEl.clientHeight - this.margin.top - this.margin.bottom;
+    // When the lineChartEl is not displayed (is-hidden), width and length are equal to 0.
+    let elt;
+    if (this.lineChartEl.clientWidth === 0 || this.lineChartEl.clientHeight === 0) {
+      elt = this.loadingEl;
+    } else {
+      elt = this.lineChartEl;
+    }
+    this.width = elt.clientWidth - this.margin.left - this.margin.right;
+    this.height = elt.clientHeight - this.margin.top - this.margin.bottom;
 
-    this.svg = select(this.lineChartEl).append('svg')
+
+    const el = this.lineChartEl.querySelector('svg');
+    if (el) {
+      el.parentNode.removeChild(el);
+    }
+
+    this.svg = select(this.lineChartEl)
+      .append('svg')
       .attr('width', this.width + this.margin.left + this.margin.right)
       .attr('height', this.height + this.margin.top + this.margin.bottom)
       .append('g')
@@ -80,7 +102,7 @@ export class LineChartComponent implements OnChanges, OnInit {
       this.data = range(this.limit).map(i => 0);
     }
 
-    this.x = scaleTime().range([0, this.width]);
+    this.x = scaleTime().range([0, this.width - 10]);
     this.y = scaleLinear().range([this.height, 0]);
 
     this.x.domain([<any>this.now - (this.limit - 2), <any>this.now - this.duration]);
@@ -91,7 +113,9 @@ export class LineChartComponent implements OnChanges, OnInit {
       .y((d: any) => this.y(d))
       .curve(curveLinear);
 
-    this.svg.append('defs').append('clipPath')
+    this.svg
+      .append('defs')
+      .append('clipPath')
       .attr('id', 'clip')
       .append('rect')
       .attr('width', this.width)
@@ -121,7 +145,7 @@ export class LineChartComponent implements OnChanges, OnInit {
     this.updateData(this.value.count);
   }
 
-  updateData = (value: number) => {
+  updateData(value: number) {
     this.data.push(value * 1000000);
     this.now = new Date();
 
@@ -132,9 +156,13 @@ export class LineChartComponent implements OnChanges, OnInit {
 
     this.xAxis
       .transition()
-      .duration(this.duration)
+      .duration(this.firstDisplay || this.dirty ? 0 : this.duration)
       .ease(easeLinear)
-      .call(axisBottom(this.x).tickSize(-this.height).ticks(timeSecond, 5).tickFormat(timeFormat('%H:%M:%S')))
+      .call(axisBottom(this.x).tickSize(-this.height).ticks(timeSecond, 5).tickFormat(timeFormat('%H:%M:%S')));
+
+    this.xAxis
+      .transition()
+      .duration(0)
       .selectAll('text')
       .style('text-anchor', 'end')
       .attr('dx', '-.8em')
@@ -156,6 +184,13 @@ export class LineChartComponent implements OnChanges, OnInit {
       .duration(this.duration)
       .ease(easeLinear)
       .attr('transform', `translate(${this.x(<any>this.now - (this.limit - 1) * this.duration)})`);
+
+    this.firstDisplay = false;
+    this.dirty = false;
+
+    if (this.loading) {
+      this.loading = false;
+    }
 
     this.data.shift();
   }

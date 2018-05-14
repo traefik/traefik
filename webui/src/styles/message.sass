@@ -1,89 +1,65 @@
 .message
   display: block
-  font-size: 14px
-  margin: 20px 0 30px 0
+  font-size: 0.8rem
+  margin: 1rem 0 1.5rem 0
+  padding-bottom: 0.3rem
   border: 1px solid $border
   background: $white
-  border-radius: 4px
+  border-radius: $traefik-border-radius
   box-shadow: 1px 2px 5px rgba($border, 0.4)
 
   .message-header
     color: $color-secondary
     border-bottom: 1px solid $border-secondary
-    padding: 20px 10px
-    background: #f8f9fa
-    border-top-left-radius: 4px
-    border-top-right-radius: 4px
+    padding: 0.6rem
+    border-top-left-radius: $traefik-border-radius
+    border-top-right-radius: $traefik-border-radius
+
+    .icon
+      display: block
+      float: left
+      width: 1.4rem
+      height: 1.4rem
+      margin-right: 0.5rem
 
     h2
-      font-size: 14px
-      weight: $weight-bold
       display: flex
-      justify-content: space-between
-
-    &.red
-        background: rgba($red-secondary, 0.4)
-        border-bottom: 1px solid $red-secondary
-        color: $red-secondary
-
-        p
-        color: $red-secondary
-
-    &.green
-        background-color: rgba($green-secondary, 0.4)
-        border-bottom: 1px solid $green-secondary
-        color: $green-secondary
-
-        p
-        color: darken($green-secondary, 10) !important
-
-    &.orange
-        background-color: rgba($orange-secondary, 0.4)
-        border-bottom: 1px solid $orange-secondary
-        color: $orange-secondary
-
-        p
-        color: $orange-secondary
-
-    &.blue
-        background-color: rgba($blue-background, 0.4)
-        border-bottom: 1px solid $blue-background
-        color: $blue-background
-
-        p
-        color: $blue-background !important
 
     img
         margin-right: 15px
 
   .message-body
 
-    .field
-      margin: 5px 10px
-      padding-bottom: 10px
+    .tabs
+      margin-bottom: 0.5rem
 
-    .tags-list
-      margin: 5px 10px
+    .section-container
+      padding: 0.3em 0 0 0
 
-      .control
-        width: 100%
-        margin: 5px 0
+    .section-line
+      padding: 0 0.75em
 
-        .tags
-          width: 100%
+    .section-line-header
+      padding: 0.2em 0 0 0
 
-          .tag
-            width: 50%
+    // required for small screen (without -> table overlapping)
+    .table-fixed
+      table-layout: fixed
+
+    // required for small screen (without -> table overlapping)
+    .table-fixed-break
+      table-layout: fixed
+      word-wrap: break-word
+
+    .table-cell-limited
+      overflow: hidden
+      text-overflow: ellipsis
+
+    .table-col-75
+      width: 75%
 
     h2
-      margin: 10px 10px 0 10px
       color: $black
 
     hr
       margin: 5px 0
-
-  .message-subheader
-    border-bottom: 1px solid $border-secondary
-    padding: 10px
-    margin-bottom: 5px
-

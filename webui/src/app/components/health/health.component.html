@@ -9,7 +9,7 @@
               <div class="column is-4">
                 <div class="item-data border-right">
                   <span class="data-grey">Total Response Time</span>
-                  <span class="data-blue">{{ totalResponseTime }}</span>
+                  <span class="data-blue" [title]="exactTotalResponseTime">{{ totalResponseTime }}</span>
                 </div>
               </div>
               <div class="column is-4">
@@ -33,7 +33,7 @@
               <div class="column is-4">
                 <div class="item-data border-right">
                   <span class="data-grey">Average Response Time</span>
-                  <span class="data-blue">{{ averageResponseTime }}</span>
+                  <span class="data-blue" [title]="exactAverageResponseTime">{{ averageResponseTime }}</span>
                 </div>
               </div>
               <div class="column is-4">
@@ -82,15 +82,15 @@
           <td>Request</td>
           <td>Time</td>
         </tr>
-        <tr *ngFor="let entry of recentErrors">
+        <tr *ngFor="let entry of recentErrors; trackBy: trackRecentErrors;">
           <td>
-            <span class="tag is-info">{{ entry.status_code }}</span>&nbsp;<span>{{ entry.status }}</span>
+            <span class="tag is-info" [title]="entry.status">{{ entry.status_code }}</span>&nbsp;<span class="is-hidden-mobile is-hidden-desktop-only">{{ entry.status }}</span>
           </td>
           <td>
-            <span class="tag">{{ entry.method }}</span>&nbsp;<a>{{ entry.host }}{{ entry.path }}</a>
+            <span class="tag">{{ entry.method }}</span>&nbsp;<span>{{ entry.host }}{{ entry.path }}</span>
           </td>
           <td>
-            <span>{{ entry.time }}</span>
+            <span [title]="entry.time | date:'yyyy-MM-dd HH:mm:ss:SSS a z'">{{ entry.time | date:'yyyy-MM-dd HH:mm:ss a z' }}</span>
           </td>
         </tr>
         <tr *ngIf="!recentErrors?.length">

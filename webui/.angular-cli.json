@@ -8,7 +8,7 @@
       "root": "src",
       "outDir": "dist",
       "assets": [
-        "assets",
+        "assets/images",
         "favicon.ico"
       ],
       "index": "index.html",
@@ -19,7 +19,7 @@
       "testTsconfig": "tsconfig.spec.json",
       "prefix": "app",
       "styles": [
-        "styles/app.sass"
+        "app.sass"
       ],
       "scripts": [
         "../node_modules/@fortawesome/fontawesome/index.js",
