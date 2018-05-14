@@ -270,7 +270,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				protocol := label.DefaultProtocol
 				for _, port := range service.Spec.Ports {
 					if equalPorts(port, pa.Backend.ServicePort) {
-						if port.Port == 443 || port.Name == "https" {
+						if port.Port == 443 || strings.HasPrefix(port.Name, "https") {
 							protocol = "https"
 						}
 
