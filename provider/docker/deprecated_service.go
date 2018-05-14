@@ -88,7 +88,7 @@ func extractServicePortV1(labelName string) []string {
 // Extract backend from labels for a given service and a given docker container
 // Deprecated
 func getServiceBackendNameV1(container dockerData, serviceName string) string {
-	if value, ok := getServiceLabelsV1(container, serviceName)[label.SuffixFrontendBackend]; ok {
+	if value, ok := getServiceLabelsV1(container, serviceName)[label.SuffixBackend]; ok {
 		return provider.Normalize(container.ServiceName + "-" + value)
 	}
 	return provider.Normalize(container.ServiceName + "-" + getBackendNameV1(container) + "-" + serviceName)

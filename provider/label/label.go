@@ -27,11 +27,6 @@ const (
 	DefaultBackendMaxconnExtractorFunc             = "request.host"
 	DefaultBackendLoadbalancerStickinessCookieName = ""
 	DefaultBackendHealthCheckPort                  = 0
-
-	// TODO need to be remove in extra-service-fabric
-	DefaultWeightInt           = 1    // Deprecated
-	DefaultPassHostHeaderBool  = true // Deprecated
-	DefaultFrontendPriorityInt = 0    // Deprecated
 )
 
 var (
@@ -64,6 +59,7 @@ func GetBoolValue(labels map[string]string, labelName string, defaultValue bool)
 		if err == nil {
 			return v
 		}
+		log.Errorf("Unable to parse %q: %q, falling back to %v. %v", labelName, rawValue, defaultValue, err)
 	}
 	return defaultValue
 }

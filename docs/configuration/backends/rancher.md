@@ -222,12 +222,12 @@ Segment labels override the default behavior.
 
 | Label                                                                     | Description                                                 |
 |---------------------------------------------------------------------------|-------------------------------------------------------------|
+| `traefik.<segment_name>.backend=BACKEND`                                  | Same as `traefik.backend`                                   |
 | `traefik.<segment_name>.domain=DOMAIN`                                    | Same as `traefik.domain`                                    |
 | `traefik.<segment_name>.port=PORT`                                        | Same as `traefik.port`                                      |
 | `traefik.<segment_name>.protocol=http`                                    | Same as `traefik.protocol`                                  |
 | `traefik.<segment_name>.weight=10`                                        | Same as `traefik.weight`                                    |
 | `traefik.<segment_name>.frontend.auth.basic=EXPR`                         | Same as `traefik.frontend.auth.basic`                       |
-| `traefik.<segment_name>.frontend.backend=BACKEND`                         | Same as `traefik.frontend.backend`                          |
 | `traefik.<segment_name>.frontend.entryPoints=https`                       | Same as `traefik.frontend.entryPoints`                      |
 | `traefik.<segment_name>.frontend.errors.<name>.backend=NAME`              | Same as `traefik.frontend.errors.<name>.backend`            |
 | `traefik.<segment_name>.frontend.errors.<name>.query=PATH`                | Same as `traefik.frontend.errors.<name>.query`              |
