@@ -168,7 +168,7 @@
                       </div>
                     </div>
 
-                    <div *ngIf="p.errors">
+                    <div *ngIf="p.errors?.length">
                       <hr/>
                       <div class="section-line">
                         <h2 class="section-line-header">Error Pages</h2>
@@ -225,7 +225,7 @@
                         <h2 class="section-line-header">Headers</h2>
                         <div class="columns is-multiline">
 
-                          <div class="column is-12" *ngIf="p.headers.customRequestHeaders">
+                          <div class="column is-12" *ngIf="p.headers.customRequestHeaders?.length">
                             <table class="table is-fullwidth is-hoverable table-fixed-break">
                               <tbody>
                                 <tr>
@@ -239,7 +239,7 @@
                             </table>
                           </div>
 
-                          <div class="column is-12" *ngIf="p.headers.customResponseHeaders">
+                          <div class="column is-12" *ngIf="p.headers.customResponseHeaders?.length">
                             <table class="table is-fullwidth is-hoverable table-fixed-break">
                               <tbody>
                                 <tr>
@@ -323,7 +323,7 @@
                             </table>
                           </div>
 
-                          <div class="column is-12" *ngIf="p.headers.sslProxyHeaders">
+                          <div class="column is-12" *ngIf="p.headers.sslProxyHeaders?.length">
                             <table class="table is-fullwidth is-hoverable table-fixed-break">
                               <tbody>
                                 <tr>
