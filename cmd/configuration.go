@@ -89,6 +89,8 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultMarathon.ExposedByDefault = true
 	defaultMarathon.Constraints = types.Constraints{}
 	defaultMarathon.DialerTimeout = flaeg.Duration(5 * time.Second)
+	defaultMarathon.ResponseHeaderTimeout = flaeg.Duration(60 * time.Second)
+	defaultMarathon.TLSHandshakeTimeout = flaeg.Duration(5 * time.Second)
 	defaultMarathon.KeepAlive = flaeg.Duration(10 * time.Second)
 
 	// default Consul
