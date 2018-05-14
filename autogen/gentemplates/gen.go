@@ -164,6 +164,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
   {{ $healthCheck := getHealthCheck $service.TraefikLabels }}
   {{if $healthCheck }}
   [backends."backend-{{ $backendName }}".healthCheck]
+    scheme = "{{ $healthCheck.Scheme }}"
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
@@ -573,6 +574,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
   {{ $healthCheck := getHealthCheck $backend.SegmentLabels }}
   {{if $healthCheck }}
   [backends."backend-{{ $backendName }}".healthCheck]
+    scheme = "{{ $healthCheck.Scheme }}"
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
@@ -833,6 +835,7 @@ var _templatesEcsTmpl = []byte(`[backends]
   {{ $healthCheck := getHealthCheck $firstInstance.TraefikLabels }}
   {{if $healthCheck }}
   [backends."backend-{{ $serviceName }}".healthCheck]
+    scheme = "{{ $healthCheck.Scheme }}"
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
@@ -1252,6 +1255,7 @@ var _templatesKvTmpl = []byte(`[backends]
   {{ $healthCheck := getHealthCheck $backend }}
   {{if $healthCheck }}
   [backends.{{ $backendName }}.healthCheck]
+    scheme = "{{ $healthCheck.Scheme }}"
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
@@ -1554,6 +1558,7 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
     {{ $healthCheck := getHealthCheck $app.SegmentLabels }}
     {{if $healthCheck }}
     [backends."{{ $backendName }}".healthCheck]
+      scheme = "{{ $healthCheck.Scheme }}"
       path = "{{ $healthCheck.Path }}"
       port = {{ $healthCheck.Port }}
       interval = "{{ $healthCheck.Interval }}"
@@ -1800,6 +1805,7 @@ var _templatesMesosTmpl = []byte(`[backends]
   {{ $healthCheck := getHealthCheck $app.TraefikLabels }}
   {{if $healthCheck }}
   [backends."backend-{{ $backendName }}".healthCheck]
+    scheme = "{{ $healthCheck.Scheme }}"
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
@@ -2100,6 +2106,7 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
   {{ $healthCheck := getHealthCheck $backend.SegmentLabels }}
   {{if $healthCheck }}
   [backends."backend-{{ $backendName }}".healthCheck]
+    scheme = "{{ $healthCheck.Scheme }}"
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"

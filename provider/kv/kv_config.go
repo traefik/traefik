@@ -301,17 +301,19 @@ func (p *Provider) getHealthCheck(rootPath string) *types.HealthCheck {
 		return nil
 	}
 
+	scheme := p.get("", rootPath, pathBackendHealthCheckScheme)
 	port := p.getInt(label.DefaultBackendHealthCheckPort, rootPath, pathBackendHealthCheckPort)
 	interval := p.get("30s", rootPath, pathBackendHealthCheckInterval)
 	hostname := p.get("", rootPath, pathBackendHealthCheckHostname)
 	headers := p.getMap(rootPath, pathBackendHealthCheckHeaders)
 
 	return &types.HealthCheck{
-		Hostname: hostname,
-		Headers:  headers,
+		Scheme:   scheme,
 		Path:     path,
 		Port:     port,
 		Interval: interval,
+		Hostname: hostname,
+		Headers:  headers,
 	}
 }
 

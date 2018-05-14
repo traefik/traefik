@@ -371,11 +371,20 @@ func TestGetHealthCheck(t *testing.T) {
 				TraefikBackendHealthCheckPath:     "/health",
 				TraefikBackendHealthCheckPort:     "80",
 				TraefikBackendHealthCheckInterval: "6",
+				TraefikBackendHealthCheckHeaders:  "Foo:bar || Goo:bir",
+				TraefikBackendHealthCheckHostname: "traefik",
+				TraefikBackendHealthCheckScheme:   "http",
 			},
 			expected: &types.HealthCheck{
+				Scheme:   "http",
 				Path:     "/health",
 				Port:     80,
 				Interval: "6",
+				Hostname: "traefik",
+				Headers: map[string]string{
+					"Foo": "bar",
+					"Goo": "bir",
+				},
 			},
 		},
 	}

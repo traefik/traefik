@@ -3,6 +3,7 @@ package kv
 const (
 	pathBackends                                = "/backends/"
 	pathBackendCircuitBreakerExpression         = "/circuitbreaker/expression"
+	pathBackendHealthCheckScheme                = "/healthcheck/scheme"
 	pathBackendHealthCheckPath                  = "/healthcheck/path"
 	pathBackendHealthCheckPort                  = "/healthcheck/port"
 	pathBackendHealthCheckInterval              = "/healthcheck/interval"

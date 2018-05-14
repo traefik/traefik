@@ -1335,21 +1335,22 @@ func parseHealthCheckOptions(lb healthcheck.LoadBalancer, backend string, hc *ty
 		intervalOverride, err := time.ParseDuration(hc.Interval)
 		switch {
 		case err != nil:
-			log.Errorf("Illegal healthcheck interval for backend '%s': %s", backend, err)
+			log.Errorf("Illegal health check interval for backend '%s': %s", backend, err)
 		case intervalOverride <= 0:
-			log.Errorf("Healthcheck interval smaller than zero for backend '%s', backend", backend)
+			log.Errorf("Health check interval smaller than zero for backend '%s', backend", backend)
 		default:
 			interval = intervalOverride
 		}
 	}
 
 	return &healthcheck.Options{
-		Hostname: hc.Hostname,
-		Headers:  hc.Headers,
+		Scheme:   hc.Scheme,
 		Path:     hc.Path,
 		Port:     hc.Port,
 		Interval: interval,
 		LB:       lb,
+		Hostname: hc.Hostname,
+		Headers:  hc.Headers,
 	}
 }
 

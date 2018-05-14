@@ -235,17 +235,19 @@ func GetHealthCheck(labels map[string]string) *types.HealthCheck {
 		return nil
 	}
 
+	scheme := GetStringValue(labels, TraefikBackendHealthCheckScheme, "")
 	port := GetIntValue(labels, TraefikBackendHealthCheckPort, DefaultBackendHealthCheckPort)
 	interval := GetStringValue(labels, TraefikBackendHealthCheckInterval, "")
 	hostname := GetStringValue(labels, TraefikBackendHealthCheckHostname, "")
 	headers := GetMapValue(labels, TraefikBackendHealthCheckHeaders)
 
 	return &types.HealthCheck{
-		Hostname: hostname,
-		Headers:  headers,
+		Scheme:   scheme,
 		Path:     path,
 		Port:     port,
 		Interval: interval,
+		Hostname: hostname,
+		Headers:  headers,
 	}
 }
 

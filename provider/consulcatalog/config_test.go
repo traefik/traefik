@@ -126,6 +126,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 
 							label.TraefikBackendCircuitBreakerExpression + "=NetworkErrorRatio() > 0.5",
 							label.TraefikBackendHealthCheckPath + "=/health",
+							label.TraefikBackendHealthCheckScheme + "=http",
 							label.TraefikBackendHealthCheckPort + "=880",
 							label.TraefikBackendHealthCheckInterval + "=6",
 							label.TraefikBackendHealthCheckHostname + "=foo.com",
@@ -356,6 +357,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						ExtractorFunc: "client.ip",
 					},
 					HealthCheck: &types.HealthCheck{
+						Scheme:   "http",
 						Path:     "/health",
 						Port:     880,
 						Interval: "6",
