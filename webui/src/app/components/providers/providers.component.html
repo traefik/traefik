@@ -23,6 +23,9 @@
             <!-- Frontends -->
             <div class="column is-6" *appLet="providers[tab]?.frontends | frontendFilter:keyword as frontends">
               <h2 class="subtitle"><span class="tag is-info">{{ frontends.length }}</span><span class="subtitle-name">Frontends</span></h2>
+
+              <div *ngIf="frontends.length < maxItem">
+
               <div class="message" *ngFor="let p of frontends; trackBy: trackItem(tab)">
                 <div class="message-header" [class.has-background-info]="p.backend" [class.has-background-danger]="!p.backend">
                   <h2>
@@ -359,11 +362,27 @@
 
                 </div>
               </div>
+
+              </div>
+              <div *ngIf="frontends.length > maxItem">
+
+                <div class="message">
+                  <div class="message-header has-background-warning has-text-black">
+                    Too many frontends to display, please add a filter.
+                  </div>
+                </div>
+
+              </div>
+
+
             </div>
 
             <!-- Backends -->
             <div class="column is-6" *appLet="providers[tab]?.backends | backendFilter:keyword as backends">
               <h2 class="subtitle"><span class="tag is-primary">{{ backends.length }}</span><span class="subtitle-name">Backends</span></h2>
+
+              <div *ngIf="backends.length < maxItem">
+
               <div class="message" *ngFor="let p of backends; trackBy: trackItem(tab);">
                 <div class="message-header" [class.has-background-primary]="p.servers?.length" [class.has-background-danger]="!p.servers?.length">
                   <h2>
@@ -581,6 +600,17 @@
 
                   </div>
                 </div>
+              </div>
+
+              </div>
+              <div *ngIf="backends.length > maxItem">
+
+                <div class="message">
+                  <div class="message-header has-background-warning has-text-black">
+                    Too many backends to display, please add a filter.
+                  </div>
+                </div>
+
               </div>
             </div>
 

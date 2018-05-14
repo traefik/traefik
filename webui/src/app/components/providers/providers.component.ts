@@ -10,6 +10,7 @@ import { ApiService } from '../../services/api.service';
 })
 export class ProvidersComponent implements OnInit, OnDestroy {
   sub: Subscription;
+  maxItem: number;
   keys: string[];
   previousKeys: string[];
   previousData: any;
@@ -20,6 +21,7 @@ export class ProvidersComponent implements OnInit, OnDestroy {
   constructor(private apiService: ApiService) { }
 
   ngOnInit() {
+    this.maxItem = 100;
     this.keyword = '';
     this.sub = Observable.timer(0, 2000)
       .timeInterval()
