@@ -599,6 +599,7 @@ func getHeader(i *extensionsv1beta1.Ingress) *types.Headers {
 		CustomResponseHeaders:   getMapValue(i.Annotations, annotationKubernetesCustomResponseHeaders),
 		AllowedHosts:            getSliceStringValue(i.Annotations, annotationKubernetesAllowedHosts),
 		HostsProxyHeaders:       getSliceStringValue(i.Annotations, annotationKubernetesProxyHeaders),
+		SSLForceHost:            getBoolValue(i.Annotations, annotationKubernetesSSLForceHost, false),
 		SSLRedirect:             getBoolValue(i.Annotations, annotationKubernetesSSLRedirect, false),
 		SSLTemporaryRedirect:    getBoolValue(i.Annotations, annotationKubernetesSSLTemporaryRedirect, false),
 		SSLHost:                 getStringValue(i.Annotations, annotationKubernetesSSLHost, ""),

@@ -140,6 +140,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendReferrerPolicy:          "foo",
 						label.TraefikFrontendCustomBrowserXSSValue:   "foo",
 						label.TraefikFrontendSTSSeconds:              "666",
+						label.TraefikFrontendSSLForceHost:            "true",
 						label.TraefikFrontendSSLRedirect:             "true",
 						label.TraefikFrontendSSLTemporaryRedirect:    "true",
 						label.TraefikFrontendSTSIncludeSubdomains:    "true",
@@ -216,6 +217,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						SSLRedirect:          true,
 						SSLTemporaryRedirect: true,
 						SSLHost:              "foo",
+						SSLForceHost:         true,
 						SSLProxyHeaders: map[string]string{
 							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
 							"Content-Type":                 "application/json; charset=utf-8",

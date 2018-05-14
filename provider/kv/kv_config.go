@@ -226,6 +226,7 @@ func (p *Provider) getHeaders(rootPath string) *types.Headers {
 		SSLProxyHeaders:         p.getMap(rootPath, pathFrontendSSLProxyHeaders),
 		AllowedHosts:            p.getList("", rootPath, pathFrontendAllowedHosts),
 		HostsProxyHeaders:       p.getList(rootPath, pathFrontendHostsProxyHeaders),
+		SSLForceHost:            p.getBool(false, rootPath, pathFrontendSSLForceHost),
 		SSLRedirect:             p.getBool(false, rootPath, pathFrontendSSLRedirect),
 		SSLTemporaryRedirect:    p.getBool(false, rootPath, pathFrontendSSLTemporaryRedirect),
 		SSLHost:                 p.get("", rootPath, pathFrontendSSLHost),

@@ -175,6 +175,7 @@ func TestBuildConfiguration(t *testing.T) {
 							label.TraefikFrontendReferrerPolicy:          aws.String("foo"),
 							label.TraefikFrontendCustomBrowserXSSValue:   aws.String("foo"),
 							label.TraefikFrontendSTSSeconds:              aws.String("666"),
+							label.TraefikFrontendSSLForceHost:            aws.String("true"),
 							label.TraefikFrontendSSLRedirect:             aws.String("true"),
 							label.TraefikFrontendSSLTemporaryRedirect:    aws.String("true"),
 							label.TraefikFrontendSTSIncludeSubdomains:    aws.String("true"),
@@ -294,6 +295,7 @@ func TestBuildConfiguration(t *testing.T) {
 							},
 							SSLRedirect:          true,
 							SSLTemporaryRedirect: true,
+							SSLForceHost:         true,
 							SSLHost:              "foo",
 							SSLProxyHeaders: map[string]string{
 								"Access-Control-Allow-Methods": "POST,GET,OPTIONS",

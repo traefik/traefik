@@ -209,6 +209,7 @@ Labels can be used on task containers to override default behavior:
 | `traefik.frontend.headers.SSLRedirect=true`              | Forces the frontend to redirect to SSL if a non-SSL request is sent.                                                                                                                                |
 | `traefik.frontend.headers.SSLTemporaryRedirect=true`     | Forces the frontend to redirect to SSL if a non-SSL request is sent, but by sending a 302 instead of a 301.                                                                                         |
 | `traefik.frontend.headers.SSLHost=HOST`                  | This setting configures the hostname that redirects will be based on. Default is "", which is the same host as the request.                                                                         |
+| `traefik.frontend.headers.SSLForceHost=true`             | If `SSLForceHost` is `true` and `SSLHost` is set, requests will be forced to use `SSLHost` even the ones that are already using SSL. Default is false.                                              |
 | `traefik.frontend.headers.SSLProxyHeaders=EXPR`          | Header combinations that would signify a proper SSL Request (Such as `X-Forwarded-For:https`).<br>Format:  <code>HEADER:value&vert;&vert;HEADER2:value2</code>                                      |
 | `traefik.frontend.headers.STSSeconds=315360000`          | Sets the max-age of the STS header.                                                                                                                                                                 |
 | `traefik.frontend.headers.STSIncludeSubdomains=true`     | Adds the `IncludeSubdomains` section of the STS  header.                                                                                                                                            |
@@ -275,6 +276,7 @@ Segment labels override the default behavior.
 | `traefik.<segment_name>.frontend.headers.SSLRedirect=true`              | overrides `traefik.frontend.headers.SSLRedirect`             |
 | `traefik.<segment_name>.frontend.headers.SSLTemporaryRedirect=true`     | overrides `traefik.frontend.headers.SSLTemporaryRedirect`    |
 | `traefik.<segment_name>.frontend.headers.SSLHost=HOST`                  | overrides `traefik.frontend.headers.SSLHost`                 |
+| `traefik.<segment_name>.frontend.headers.SSLForceHost=true`             | overrides `traefik.frontend.headers.SSLForceHost`            |
 | `traefik.<segment_name>.frontend.headers.SSLProxyHeaders=EXPR`          | overrides `traefik.frontend.headers.SSLProxyHeaders`         |
 | `traefik.<segment_name>.frontend.headers.STSSeconds=315360000`          | overrides `traefik.frontend.headers.STSSeconds`              |
 | `traefik.<segment_name>.frontend.headers.STSIncludeSubdomains=true`     | overrides `traefik.frontend.headers.STSIncludeSubdomains`    |

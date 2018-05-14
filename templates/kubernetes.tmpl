@@ -100,6 +100,7 @@
     SSLRedirect = {{ $frontend.Headers.SSLRedirect }}
     SSLTemporaryRedirect = {{ $frontend.Headers.SSLTemporaryRedirect }}
     SSLHost = "{{ $frontend.Headers.SSLHost }}"
+    SSLForceHost = {{ $frontend.Headers.SSLForceHost }}
     STSSeconds = {{ $frontend.Headers.STSSeconds }}
     STSIncludeSubdomains = {{ $frontend.Headers.STSIncludeSubdomains }}
     STSPreload = {{ $frontend.Headers.STSPreload }}

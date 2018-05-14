@@ -190,6 +190,7 @@ func GetHeaders(labels map[string]string) *types.Headers {
 		STSSeconds:              GetInt64Value(labels, TraefikFrontendSTSSeconds, 0),
 		SSLRedirect:             GetBoolValue(labels, TraefikFrontendSSLRedirect, false),
 		SSLTemporaryRedirect:    GetBoolValue(labels, TraefikFrontendSSLTemporaryRedirect, false),
+		SSLForceHost:            GetBoolValue(labels, TraefikFrontendSSLForceHost, false),
 		STSIncludeSubdomains:    GetBoolValue(labels, TraefikFrontendSTSIncludeSubdomains, false),
 		STSPreload:              GetBoolValue(labels, TraefikFrontendSTSPreload, false),
 		ForceSTSHeader:          GetBoolValue(labels, TraefikFrontendForceSTSHeader, false),

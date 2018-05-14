@@ -32,6 +32,7 @@ const (
 	annotationKubernetesBuffering                 = "ingress.kubernetes.io/buffering"
 	annotationKubernetesAppRoot                   = "ingress.kubernetes.io/app-root"
 
+	annotationKubernetesSSLForceHost            = "ingress.kubernetes.io/ssl-force-host"
 	annotationKubernetesSSLRedirect             = "ingress.kubernetes.io/ssl-redirect"
 	annotationKubernetesHSTSMaxAge              = "ingress.kubernetes.io/hsts-max-age"
 	annotationKubernetesHSTSIncludeSubdomains   = "ingress.kubernetes.io/hsts-include-subdomains"

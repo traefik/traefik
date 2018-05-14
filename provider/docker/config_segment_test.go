@@ -100,6 +100,7 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 						label.Prefix + "sauternes." + label.SuffixFrontendHeadersReferrerPolicy:          "foo",
 						label.Prefix + "sauternes." + label.SuffixFrontendHeadersCustomBrowserXSSValue:   "foo",
 						label.Prefix + "sauternes." + label.SuffixFrontendHeadersSTSSeconds:              "666",
+						label.Prefix + "sauternes." + label.SuffixFrontendHeadersSSLForceHost:            "true",
 						label.Prefix + "sauternes." + label.SuffixFrontendHeadersSSLRedirect:             "true",
 						label.Prefix + "sauternes." + label.SuffixFrontendHeadersSSLTemporaryRedirect:    "true",
 						label.Prefix + "sauternes." + label.SuffixFrontendHeadersSTSIncludeSubdomains:    "true",
@@ -170,6 +171,7 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 						},
 						SSLRedirect:          true,
 						SSLTemporaryRedirect: true,
+						SSLForceHost:         true,
 						SSLHost:              "foo",
 						SSLProxyHeaders: map[string]string{
 							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",

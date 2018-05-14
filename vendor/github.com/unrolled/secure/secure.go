@@ -27,7 +27,7 @@ const (
 	cspNonceSize       = 16
 )
 
-// a type whose pointer is the type of field `SSLHostFunc` of `Options` struct
+// SSLHostFunc a type whose pointer is the type of field `SSLHostFunc` of `Options` struct
 type SSLHostFunc func(host string) (newHost string)
 
 func defaultBadHostHandler(w http.ResponseWriter, r *http.Request) {
@@ -36,16 +36,47 @@ func defaultBadHostHandler(w http.ResponseWriter, r *http.Request) {
 
 // Options is a struct for specifying configuration options for the secure.Secure middleware.
 type Options struct {
+	// If BrowserXssFilter is true, adds the X-XSS-Protection header with the value `1; mode=block`. Default is false.
+	BrowserXssFilter bool // nolint: golint
+	// If ContentTypeNosniff is true, adds the X-Content-Type-Options header with the value `nosniff`. Default is false.
+	ContentTypeNosniff bool
+	// If ForceSTSHeader is set to true, the STS header will be added even when the connection is HTTP. Default is false.
+	ForceSTSHeader bool
+	// If FrameDeny is set to true, adds the X-Frame-Options header with the value of `DENY`. Default is false.
+	FrameDeny bool
+	// When developing, the AllowedHosts, SSL, and STS options can cause some unwanted effects. Usually testing happens on http, not https, and on localhost, not your production domain... so set this to true for dev environment.
+	// If you would like your development environment to mimic production with complete Host blocking, SSL redirects, and STS headers, leave this as false. Default if false.
+	IsDevelopment bool
+	// nonceEnabled is used internally for dynamic nouces.
+	nonceEnabled bool
+	// If SSLRedirect is set to true, then only allow https requests. Default is false.
+	SSLRedirect bool
+	// If SSLForceHost is true and SSLHost is set, requests will be forced to use SSLHost even the ones that are already using SSL. Default is false.
+	SSLForceHost bool
+	// If SSLTemporaryRedirect is true, the a 302 will be used while redirecting. Default is false (301).
+	SSLTemporaryRedirect bool
+	// If STSIncludeSubdomains is set to true, the `includeSubdomains` will be appended to the Strict-Transport-Security header. Default is false.
+	STSIncludeSubdomains bool
+	// If STSPreload is set to true, the `preload` flag will be appended to the Strict-Transport-Security header. Default is false.
+	STSPreload bool
+	// ContentSecurityPolicy allows the Content-Security-Policy header value to be set with a custom value. Default is "".
+	ContentSecurityPolicy string
+	// CustomBrowserXssValue allows the X-XSS-Protection header value to be set with a custom value. This overrides the BrowserXssFilter option. Default is "".
+	CustomBrowserXssValue string // nolint: golint
+	// Passing a template string will replace `$NONCE` with a dynamic nonce value of 16 bytes for each request which can be later retrieved using the Nonce function.
+	// Eg: script-src $NONCE -> script-src 'nonce-a2ZobGFoZg=='
+	// CustomFrameOptionsValue allows the X-Frame-Options header value to be set with a custom value. This overrides the FrameDeny option. Default is "".
+	CustomFrameOptionsValue string
+	// PublicKey implements HPKP to prevent MITM attacks with forged certificates. Default is "".
+	PublicKey string
+	// ReferrerPolicy allows sites to control when browsers will pass the Referer header to other sites. Default is "".
+	ReferrerPolicy string
+	// SSLHost is the host name that is used to redirect http requests to https. Default is "", which indicates to use the same host.
+	SSLHost string
 	// AllowedHosts is a list of fully qualified domain names that are allowed. Default is empty list, which allows any and all host names.
 	AllowedHosts []string
 	// HostsProxyHeaders is a set of header keys that may hold a proxied hostname value for the request.
 	HostsProxyHeaders []string
-	// If SSLRedirect is set to true, then only allow https requests. Default is false.
-	SSLRedirect bool
-	// If SSLTemporaryRedirect is true, the a 302 will be used while redirecting. Default is false (301).
-	SSLTemporaryRedirect bool
-	// SSLHost is the host name that is used to redirect http requests to https. Default is "", which indicates to use the same host.
-	SSLHost string
 	// SSLHostFunc is a function pointer, the return value of the function is the host name that has same functionality as `SSHost`. Default is nil.
 	// If SSLHostFunc is nil, the `SSLHost` option will be used.
 	SSLHostFunc *SSLHostFunc
@@ -53,35 +84,6 @@ type Options struct {
 	SSLProxyHeaders map[string]string
 	// STSSeconds is the max-age of the Strict-Transport-Security header. Default is 0, which would NOT include the header.
 	STSSeconds int64
-	// If STSIncludeSubdomains is set to true, the `includeSubdomains` will be appended to the Strict-Transport-Security header. Default is false.
-	STSIncludeSubdomains bool
-	// If STSPreload is set to true, the `preload` flag will be appended to the Strict-Transport-Security header. Default is false.
-	STSPreload bool
-	// If ForceSTSHeader is set to true, the STS header will be added even when the connection is HTTP. Default is false.
-	ForceSTSHeader bool
-	// If FrameDeny is set to true, adds the X-Frame-Options header with the value of `DENY`. Default is false.
-	FrameDeny bool
-	// CustomFrameOptionsValue allows the X-Frame-Options header value to be set with a custom value. This overrides the FrameDeny option. Default is "".
-	CustomFrameOptionsValue string
-	// If ContentTypeNosniff is true, adds the X-Content-Type-Options header with the value `nosniff`. Default is false.
-	ContentTypeNosniff bool
-	// If BrowserXssFilter is true, adds the X-XSS-Protection header with the value `1; mode=block`. Default is false.
-	BrowserXssFilter bool
-	// CustomBrowserXssValue allows the X-XSS-Protection header value to be set with a custom value. This overrides the BrowserXssFilter option. Default is "".
-	CustomBrowserXssValue string
-	// ContentSecurityPolicy allows the Content-Security-Policy header value to be set with a custom value. Default is "".
-	// Passing a template string will replace `$NONCE` with a dynamic nonce value of 16 bytes for each request which can be later retrieved using the Nonce function.
-	// Eg: script-src $NONCE -> script-src 'nonce-a2ZobGFoZg=='
-	ContentSecurityPolicy string
-	// PublicKey implements HPKP to prevent MITM attacks with forged certificates. Default is "".
-	PublicKey string
-	// ReferrerPolicy allows sites to control when browsers will pass the Referer header to other sites. Default is "".
-	ReferrerPolicy string
-	// When developing, the AllowedHosts, SSL, and STS options can cause some unwanted effects. Usually testing happens on http, not https, and on localhost, not your production domain... so set this to true for dev environment.
-	// If you would like your development environment to mimic production with complete Host blocking, SSL redirects, and STS headers, leave this as false. Default if false.
-	IsDevelopment bool
-	// nonceEnabled is used internally for dynamic nouces.
-	nonceEnabled bool
 }
 
 // Secure is a middleware that helps setup a few basic security features. A single secure.Options struct can be
@@ -264,6 +266,30 @@ func (s *Secure) processRequest(w http.ResponseWriter, r *http.Request) (http.He
 
 		http.Redirect(w, r, url.String(), status)
 		return nil, fmt.Errorf("redirecting to HTTPS")
+	}
+
+	if s.opt.SSLForceHost {
+		var SSLHost = host;
+		if s.opt.SSLHostFunc != nil {
+			if h := (*s.opt.SSLHostFunc)(host); len(h) > 0 {
+				SSLHost = h
+			}
+		} else if len(s.opt.SSLHost) > 0 {
+			SSLHost = s.opt.SSLHost
+		}
+		if SSLHost != host {
+			url := r.URL
+			url.Scheme = "https"
+			url.Host = SSLHost
+
+			status := http.StatusMovedPermanently
+			if s.opt.SSLTemporaryRedirect {
+				status = http.StatusTemporaryRedirect
+			}
+
+			http.Redirect(w, r, url.String(), status)
+			return nil, fmt.Errorf("redirecting to HTTPS")
+		}
 	}
 
 	// Create our header container.

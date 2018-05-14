@@ -41,6 +41,7 @@ const (
 	SuffixFrontendResponseHeaders                  = SuffixFrontendHeaders + "customResponseHeaders"
 	SuffixFrontendHeadersAllowedHosts              = SuffixFrontendHeaders + "allowedHosts"
 	SuffixFrontendHeadersHostsProxyHeaders         = SuffixFrontendHeaders + "hostsProxyHeaders"
+	SuffixFrontendHeadersSSLForceHost              = SuffixFrontendHeaders + "SSLForceHost"
 	SuffixFrontendHeadersSSLRedirect               = SuffixFrontendHeaders + "SSLRedirect"
 	SuffixFrontendHeadersSSLTemporaryRedirect      = SuffixFrontendHeaders + "SSLTemporaryRedirect"
 	SuffixFrontendHeadersSSLHost                   = SuffixFrontendHeaders + "SSLHost"
@@ -120,6 +121,7 @@ const (
 	TraefikFrontendResponseHeaders                 = Prefix + SuffixFrontendResponseHeaders
 	TraefikFrontendAllowedHosts                    = Prefix + SuffixFrontendHeadersAllowedHosts
 	TraefikFrontendHostsProxyHeaders               = Prefix + SuffixFrontendHeadersHostsProxyHeaders
+	TraefikFrontendSSLForceHost                    = Prefix + SuffixFrontendHeadersSSLForceHost
 	TraefikFrontendSSLRedirect                     = Prefix + SuffixFrontendHeadersSSLRedirect
 	TraefikFrontendSSLTemporaryRedirect            = Prefix + SuffixFrontendHeadersSSLTemporaryRedirect
 	TraefikFrontendSSLHost                         = Prefix + SuffixFrontendHeadersSSLHost
