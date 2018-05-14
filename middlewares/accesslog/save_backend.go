@@ -43,8 +43,6 @@ func (sb *SaveBackend) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	table.Core[OriginContentSize] = crw.Size()
 }
 
-//-------------------------------------------------------------------------------------------------
-
 // SaveFrontend sends the frontend name to the logger. These are sometimes used with a corresponding
 // SaveBackend handler, but not always. For example, redirected requests don't reach a backend.
 type SaveFrontend struct {
