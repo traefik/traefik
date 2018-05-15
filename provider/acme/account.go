@@ -25,7 +25,7 @@ const (
 
 // NewAccount creates an account
 func NewAccount(email string, keyTypeValue string) (*Account, error) {
-	keyType := getKeyType(keyTypeValue)
+	keyType := GetKeyType(keyTypeValue)
 
 	// Create a user. New accounts need an email and private key to start
 	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
@@ -60,21 +60,21 @@ func (a *Account) GetPrivateKey() crypto.PrivateKey {
 	return nil
 }
 
-func getKeyType(value string) acme.KeyType {
-	keyType := acme.RSA4096
+// GetKeyType used to determine which algo to used
+func GetKeyType(value string) acme.KeyType {
 	switch value {
 	case "EC256":
-		keyType = acme.EC256
+		return acme.EC256
 	case "EC384":
-		keyType = acme.EC384
+		return acme.EC384
 	case "RSA2048":
-		keyType = acme.RSA2048
+		return acme.RSA2048
 	case "RSA4096":
-		keyType = acme.RSA4096
+		return acme.RSA4096
 	case "RSA8192":
-		keyType = acme.RSA8192
+		return acme.RSA8192
+	default:
+		log.Warnf("Unable to determine key type value %s. Use %s as default value", value, acme.RSA4096)
+		return acme.RSA4096
 	}
-
-	log.Debugf("Using %s as key type", keyType)
-	return keyType
 }

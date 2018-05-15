@@ -91,7 +91,7 @@ entryPoint = "https"
 # Optional
 # Default: "RSA4096"
 #
-# Available value : "EC256", "EC384", "RSA2048", "RSA4096", "RSA8192"
+# Available values : "EC256", "EC384", "RSA2048", "RSA4096", "RSA8192"
 #
 # KeyType = "RSA4096"
 
