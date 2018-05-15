@@ -101,19 +101,25 @@ func openAccessLogFile(filePath string) (*os.File, error) {
 	return file, nil
 }
 
-// GetLogDataTable gets the request context object that contains logging data. This accretes
-// data as the request passes through the middleware chain.
+// GetLogDataTable gets the request context object that contains logging data.
+// This creates data as the request passes through the middleware chain.
 func GetLogDataTable(req *http.Request) *LogData {
-	return req.Context().Value(DataTableKey).(*LogData)
+	if ld, ok := req.Context().Value(DataTableKey).(*LogData); ok {
+		return ld
+	}
+	log.Errorf("%s is nil", DataTableKey)
+	return &LogData{Core: make(CoreLogData)}
 }
 
 func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
 	now := time.Now().UTC()
-	core := make(CoreLogData)
+
+	core := CoreLogData{
+		StartUTC:   now,
+		StartLocal: now.Local(),
+	}
 
 	logDataTable := &LogData{Core: core, Request: req.Header}
-	core[StartUTC] = now
-	core[StartLocal] = now.Local()
 
 	reqWithDataTable := req.WithContext(context.WithValue(req.Context(), DataTableKey, logDataTable))
 

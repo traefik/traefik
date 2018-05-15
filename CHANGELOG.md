@@ -1,5 +1,20 @@
 # Change Log
 
+## [v1.6.1](https://github.com/containous/traefik/tree/v1.6.1) (2018-05-14)
+[All Commits](https://github.com/containous/traefik/compare/v1.6.0...v1.6.1)
+
+**Bug fixes:**
+- **[acme]** Add missing deprecation info in CLI help. ([#3291](https://github.com/containous/traefik/pull/3291) by [ldez](https://github.com/ldez))
+- **[docker,marathon,rancher]** Fix segment backend name ([#3317](https://github.com/containous/traefik/pull/3317) by [ldez](https://github.com/ldez))
+- **[logs,middleware]** Error when accesslog and error pages ([#3314](https://github.com/containous/traefik/pull/3314) by [ldez](https://github.com/ldez))
+- **[middleware,tracing]** Fix wrong tag in forward span in tracing middleware ([#3279](https://github.com/containous/traefik/pull/3279) by [mmatur](https://github.com/mmatur))
+- **[webui]** Fix webui ([#3299](https://github.com/containous/traefik/pull/3299) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[k8s]** Add Documentation update for Kubernetes Ingress ([#3294](https://github.com/containous/traefik/pull/3294) by [dtomcej](https://github.com/dtomcej))
+- **[tls]** Enhance entry point TLS CLI reference. ([#3290](https://github.com/containous/traefik/pull/3290) by [ldez](https://github.com/ldez))
+- Typo in documentation ([#3261](https://github.com/containous/traefik/pull/3261) by [blakethepatton](https://github.com/blakethepatton))
+
 ## [v1.6.0](https://github.com/containous/traefik/tree/v1.6.0) (2018-04-30)
 [Commits](https://github.com/containous/traefik/compare/v1.5.0-rc1...v1.6.0)
 [Commits pre RC](https://github.com/containous/traefik/compare/v1.5.0-rc1...v1.6.0-rc1)

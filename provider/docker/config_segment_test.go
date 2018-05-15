@@ -253,7 +253,7 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 						"traefik.sauternes.port":                         "2503",
 						"traefik.sauternes.protocol":                     "https",
 						"traefik.sauternes.weight":                       "80",
-						"traefik.sauternes.frontend.backend":             "foobar",
+						"traefik.sauternes.backend":                      "foobar",
 						"traefik.sauternes.frontend.passHostHeader":      "false",
 						"traefik.sauternes.frontend.rule":                "Path:/mypath",
 						"traefik.sauternes.frontend.priority":            "5000",

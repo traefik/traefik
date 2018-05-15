@@ -35,7 +35,6 @@ const (
 	SuffixBackendBufferingRetryExpression          = SuffixBackendBuffering + ".retryExpression"
 	SuffixFrontend                                 = "frontend"
 	SuffixFrontendAuthBasic                        = "frontend.auth.basic"
-	SuffixFrontendBackend                          = "frontend.backend"
 	SuffixFrontendEntryPoints                      = "frontend.entryPoints"
 	SuffixFrontendHeaders                          = "frontend.headers."
 	SuffixFrontendRequestHeaders                   = SuffixFrontendHeaders + "customRequestHeaders"
@@ -105,7 +104,6 @@ const (
 	TraefikBackendBufferingRetryExpression         = Prefix + SuffixBackendBufferingRetryExpression
 	TraefikFrontend                                = Prefix + SuffixFrontend
 	TraefikFrontendAuthBasic                       = Prefix + SuffixFrontendAuthBasic
-	TraefikFrontendBackend                         = Prefix + SuffixFrontendBackend
 	TraefikFrontendEntryPoints                     = Prefix + SuffixFrontendEntryPoints
 	TraefikFrontendPassHostHeader                  = Prefix + SuffixFrontendPassHostHeader
 	TraefikFrontendPassTLSCert                     = Prefix + SuffixFrontendPassTLSCert

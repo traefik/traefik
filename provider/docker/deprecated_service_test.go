@@ -162,7 +162,7 @@ func TestDockerServiceBuildConfigurationV1(t *testing.T) {
 						"traefik.service.port":                         "2503",
 						"traefik.service.protocol":                     "https",
 						"traefik.service.weight":                       "80",
-						"traefik.service.frontend.backend":             "foobar",
+						"traefik.service.backend":                      "foobar",
 						"traefik.service.frontend.passHostHeader":      "false",
 						"traefik.service.frontend.rule":                "Path:/mypath",
 						"traefik.service.frontend.priority":            "5000",
@@ -595,7 +595,7 @@ func TestDockerGetServiceBackendNameV1(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.myservice.frontend.backend": "custom-backend",
+				"traefik.myservice.backend": "custom-backend",
 			})),
 			expected: "fake-custom-backend",
 		},

@@ -99,7 +99,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.
 			utils.CopyHeaders(pageReq.Header, req.Header)
 			utils.CopyHeaders(w.Header(), recorder.Header())
 			w.WriteHeader(recorder.GetCode())
-			h.backendHandler.ServeHTTP(w, pageReq)
+
+			h.backendHandler.ServeHTTP(w, pageReq.WithContext(req.Context()))
 			return
 		}
 	}

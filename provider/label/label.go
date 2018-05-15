@@ -59,6 +59,7 @@ func GetBoolValue(labels map[string]string, labelName string, defaultValue bool)
 		if err == nil {
 			return v
 		}
+		log.Errorf("Unable to parse %q: %q, falling back to %v. %v", labelName, rawValue, defaultValue, err)
 	}
 	return defaultValue
 }
