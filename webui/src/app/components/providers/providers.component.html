@@ -302,6 +302,10 @@
                                   <td><span class="has-text-grey">SSL Host</span></td>
                                   <td><span class="has-text-grey">{{ p.headers.sslHost }}</span></td>
                                 </tr>
+                                <tr *ngIf="p.headers.sslForceHost">
+                                  <td><span class="has-text-grey">SSL Host</span></td>
+                                  <td><span class="has-text-grey">{{ p.headers.sslForceHost }}</span></td>
+                                </tr>
                                 <tr *ngIf="p.headers.sslRedirect">
                                   <td><span class="has-text-grey">SSL Redirect</span></td>
                                   <td><span class="has-text-grey">{{ p.headers.sslRedirect }}</span></td>
@@ -514,16 +518,22 @@
                                 <span class="tag is-info">{{ p.healthCheck.path }}</span>
                               </div>
                             </div>
+                            <div class="control" *ngIf="p.healthCheck.interval">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">Interval</span>
+                                <span class="tag is-info">{{ p.healthCheck.interval }}</span>
+                              </div>
+                            </div>
                             <div class="control" *ngIf="p.healthCheck.port">
                               <div class="tags has-addons">
                                 <span class="tag is-light">Port</span>
                                 <span class="tag is-info">{{ p.healthCheck.port }}</span>
                               </div>
                             </div>
-                            <div class="control" *ngIf="p.healthCheck.interval">
+                            <div class="control" *ngIf="p.healthCheck.scheme">
                               <div class="tags has-addons">
-                                <span class="tag is-light">Interval</span>
-                                <span class="tag is-info">{{ p.healthCheck.interval }}</span>
+                                <span class="tag is-light">Scheme</span>
+                                <span class="tag is-info">{{ p.healthCheck.scheme }}</span>
                               </div>
                             </div>
                             <div class="control" *ngIf="p.healthCheck.hostname">
