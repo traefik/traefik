@@ -611,11 +611,13 @@ func (a *ACME) getDomainsCertificates(domains []string) (*Certificate, error) {
 	domains = fun.Map(types.CanonicalDomain, domains).([]string)
 	log.Debugf("Loading ACME certificates %s...", domains)
 	bundle := true
-	certificate, failures := a.client.ObtainCertificate(domains, bundle, nil, OSCPMustStaple)
-	if len(failures) > 0 {
-		log.Error(failures)
-		return nil, fmt.Errorf("cannot obtain certificates %+v", failures)
+
+	certificate, err := a.client.ObtainCertificate(domains, bundle, nil, OSCPMustStaple)
+	if err != nil {
+		log.Error(err)
+		return nil, fmt.Errorf("cannot obtain certificates: %+v", err)
 	}
+
 	log.Debugf("Loaded ACME certificates %s", domains)
 	return &Certificate{
 		Domain:        certificate.Domain,

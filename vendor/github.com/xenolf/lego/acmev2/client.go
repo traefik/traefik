@@ -189,7 +189,7 @@ func (c *Client) ResolveAccountByKey() (*RegistrationResource, error) {
 	logf("[INFO] acme: Trying to resolve account by key")
 
 	acc := accountMessage{OnlyReturnExisting: true}
-	hdr, err := postJSON(c.jws, c.directory.NewAccountURL, acc, &acc)
+	hdr, err := postJSON(c.jws, c.directory.NewAccountURL, acc, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -265,7 +265,7 @@ func (c *Client) QueryRegistration() (*RegistrationResource, error) {
 // your issued certificate as a bundle.
 // This function will never return a partial certificate. If one domain in the list fails,
 // the whole certificate will fail.
-func (c *Client) ObtainCertificateForCSR(csr x509.CertificateRequest, bundle bool) (CertificateResource, map[string]error) {
+func (c *Client) ObtainCertificateForCSR(csr x509.CertificateRequest, bundle bool) (CertificateResource, error) {
 	// figure out what domains it concerns
 	// start with the common name
 	domains := []string{csr.Subject.CommonName}
@@ -292,30 +292,26 @@ DNSNames:
 
 	order, err := c.createOrderForIdentifiers(domains)
 	if err != nil {
-		identErrors := make(map[string]error)
-		for _, auth := range order.Identifiers {
-			identErrors[auth.Value] = err
-		}
-		return CertificateResource{}, identErrors
+		return CertificateResource{}, err
 	}
-	authz, failures := c.getAuthzForOrder(order)
-	// If any challenge fails - return. Do not generate partial SAN certificates.
-	if len(failures) > 0 {
+	authz, err := c.getAuthzForOrder(order)
+	if err != nil {
+		// If any challenge fails, return. Do not generate partial SAN certificates.
 		/*for _, auth := range authz {
 			c.disableAuthz(auth)
 		}*/
-
-		return CertificateResource{}, failures
+		return CertificateResource{}, err
 	}
 
-	errs := c.solveChallengeForAuthz(authz)
-	// If any challenge fails - return. Do not generate partial SAN certificates.
-	if len(errs) > 0 {
-		return CertificateResource{}, errs
+	err = c.solveChallengeForAuthz(authz)
+	if err != nil {
+		// If any challenge fails, return. Do not generate partial SAN certificates.
+		return CertificateResource{}, err
 	}
 
 	logf("[INFO][%s] acme: Validations succeeded; requesting certificates", strings.Join(domains, ", "))
 
+	failures := make(ObtainError)
 	cert, err := c.requestCertificateForCsr(order, bundle, csr.Raw, nil)
 	if err != nil {
 		for _, chln := range authz {
@@ -326,7 +322,12 @@ DNSNames:
 	// Add the CSR to the certificate so that it can be used for renewals.
 	cert.CSR = pemEncode(&csr)
 
-	return cert, failures
+	// do not return an empty failures map, because
+	// it would still be a non-nil error value
+	if len(failures) > 0 {
+		return cert, failures
+	}
+	return cert, nil
 }
 
 // ObtainCertificate tries to obtain a single certificate using all domains passed into it.
@@ -338,7 +339,11 @@ DNSNames:
 // your issued certificate as a bundle.
 // This function will never return a partial certificate. If one domain in the list fails,
 // the whole certificate will fail.
-func (c *Client) ObtainCertificate(domains []string, bundle bool, privKey crypto.PrivateKey, mustStaple bool) (CertificateResource, map[string]error) {
+func (c *Client) ObtainCertificate(domains []string, bundle bool, privKey crypto.PrivateKey, mustStaple bool) (CertificateResource, error) {
+	if len(domains) == 0 {
+		return CertificateResource{}, errors.New("No domains to obtain a certificate for")
+	}
+
 	if bundle {
 		logf("[INFO][%s] acme: Obtaining bundled SAN certificate", strings.Join(domains, ", "))
 	} else {
@@ -347,30 +352,26 @@ func (c *Client) ObtainCertificate(domains []string, bundle bool, privKey crypto
 
 	order, err := c.createOrderForIdentifiers(domains)
 	if err != nil {
-		identErrors := make(map[string]error)
-		for _, auth := range order.Identifiers {
-			identErrors[auth.Value] = err
-		}
-		return CertificateResource{}, identErrors
+		return CertificateResource{}, err
 	}
-	authz, failures := c.getAuthzForOrder(order)
-	// If any challenge fails - return. Do not generate partial SAN certificates.
-	if len(failures) > 0 {
+	authz, err := c.getAuthzForOrder(order)
+	if err != nil {
+		// If any challenge fails, return. Do not generate partial SAN certificates.
 		/*for _, auth := range authz {
 			c.disableAuthz(auth)
 		}*/
-
-		return CertificateResource{}, failures
+		return CertificateResource{}, err
 	}
 
-	errs := c.solveChallengeForAuthz(authz)
-	// If any challenge fails - return. Do not generate partial SAN certificates.
-	if len(errs) > 0 {
-		return CertificateResource{}, errs
+	err = c.solveChallengeForAuthz(authz)
+	if err != nil {
+		// If any challenge fails, return. Do not generate partial SAN certificates.
+		return CertificateResource{}, err
 	}
 
 	logf("[INFO][%s] acme: Validations succeeded; requesting certificates", strings.Join(domains, ", "))
 
+	failures := make(ObtainError)
 	cert, err := c.requestCertificateForOrder(order, bundle, privKey, mustStaple)
 	if err != nil {
 		for _, auth := range authz {
@@ -378,7 +379,12 @@ func (c *Client) ObtainCertificate(domains []string, bundle bool, privKey crypto
 		}
 	}
 
-	return cert, failures
+	// do not return an empty failures map, because
+	// it would still be a non-nil error value
+	if len(failures) > 0 {
+		return cert, failures
+	}
+	return cert, nil
 }
 
 // RevokeCertificate takes a PEM encoded certificate or bundle and tries to revoke it at the CA.
@@ -433,7 +439,7 @@ func (c *Client) RenewCertificate(cert CertificateResource, bundle, mustStaple b
 			return CertificateResource{}, err
 		}
 		newCert, failures := c.ObtainCertificateForCSR(*csr, bundle)
-		return newCert, failures[cert.Domain]
+		return newCert, failures
 	}
 
 	var privKey crypto.PrivateKey
@@ -445,7 +451,6 @@ func (c *Client) RenewCertificate(cert CertificateResource, bundle, mustStaple b
 	}
 
 	var domains []string
-	var failures map[string]error
 	// check for SAN certificate
 	if len(x509Cert.DNSNames) > 1 {
 		domains = append(domains, x509Cert.Subject.CommonName)
@@ -459,8 +464,8 @@ func (c *Client) RenewCertificate(cert CertificateResource, bundle, mustStaple b
 		domains = append(domains, x509Cert.Subject.CommonName)
 	}
 
-	newCert, failures := c.ObtainCertificate(domains, bundle, privKey, mustStaple)
-	return newCert, failures[cert.Domain]
+	newCert, err := c.ObtainCertificate(domains, bundle, privKey, mustStaple)
+	return newCert, err
 }
 
 func (c *Client) createOrderForIdentifiers(domains []string) (orderResource, error) {
@@ -490,9 +495,10 @@ func (c *Client) createOrderForIdentifiers(domains []string) (orderResource, err
 
 // Looks through the challenge combinations to find a solvable match.
 // Then solves the challenges in series and returns.
-func (c *Client) solveChallengeForAuthz(authorizations []authorization) map[string]error {
+func (c *Client) solveChallengeForAuthz(authorizations []authorization) error {
+	failures := make(ObtainError)
+
 	// loop through the resources, basically through the domains.
-	failures := make(map[string]error)
 	for _, authz := range authorizations {
 		if authz.Status == "valid" {
 			// Boulder might recycle recent validated authz (see issue #267)
@@ -513,7 +519,12 @@ func (c *Client) solveChallengeForAuthz(authorizations []authorization) map[stri
 		}
 	}
 
-	return failures
+	// be careful not to return an empty failures map, for
+	// even an empty ObtainError is a non-nil error value
+	if len(failures) > 0 {
+		return failures
+	}
+	return nil
 }
 
 // Checks all challenges from the server in order and returns the first matching solver.
@@ -528,7 +539,7 @@ func (c *Client) chooseSolver(auth authorization, domain string) (int, solver) {
 }
 
 // Get the challenges needed to proof our identifier to the ACME server.
-func (c *Client) getAuthzForOrder(order orderResource) ([]authorization, map[string]error) {
+func (c *Client) getAuthzForOrder(order orderResource) ([]authorization, error) {
 	resc, errc := make(chan authorization), make(chan domainError)
 
 	delay := time.Second / overallRequestLimit
@@ -549,7 +560,7 @@ func (c *Client) getAuthzForOrder(order orderResource) ([]authorization, map[str
 	}
 
 	var responses []authorization
-	failures := make(map[string]error)
+	failures := make(ObtainError)
 	for i := 0; i < len(order.Authorizations); i++ {
 		select {
 		case res := <-resc:
@@ -564,7 +575,12 @@ func (c *Client) getAuthzForOrder(order orderResource) ([]authorization, map[str
 	close(resc)
 	close(errc)
 
-	return responses, failures
+	// be careful to not return an empty failures map;
+	// even if empty, they become non-nil error values
+	if len(failures) > 0 {
+		return responses, failures
+	}
+	return responses, nil
 }
 
 func logAuthz(order orderResource) {
