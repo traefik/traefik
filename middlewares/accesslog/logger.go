@@ -44,10 +44,7 @@ type LogHandler struct {
 	file           *os.File
 	mu             sync.Mutex
 	httpCodeRanges types.HTTPCodeRanges
-	stopCh         chan interface{}
 	logHandlerChan chan logHandlerParams
-
-	wg sync.WaitGroup
 }
 
 // NewLogHandler creates a new LogHandler
@@ -60,7 +57,6 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 		}
 		file = f
 	}
-	stopCh := make(chan interface{})
 	logHandlerChan := make(chan logHandlerParams, config.BufferingSize)
 
 	var formatter logrus.Formatter
@@ -85,7 +81,6 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 		config:         config,
 		logger:         logger,
 		file:           file,
-		stopCh:         stopCh,
 		logHandlerChan: logHandlerChan,
 	}
 
@@ -98,16 +93,13 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 	}
 
 	if config.BufferingSize > 0 {
-		logHandler.wg.Add(1)
 		go func() {
-			defer logHandler.wg.Done()
 			for {
-				select {
-				case handlerParams := <-logHandler.logHandlerChan:
-					logHandler.logTheRoundTrip(handlerParams.logDataTable, handlerParams.crr, handlerParams.crw)
-				case <-stopCh:
+				handlerParams, ok := <-logHandler.logHandlerChan
+				if !ok {
 					return
 				}
+				logHandler.logTheRoundTrip(handlerParams.logDataTable, handlerParams.crr, handlerParams.crw)
 			}
 		}()
 	}
@@ -203,18 +195,12 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 	}
 }
 
-func (l *LogHandler) drainChannel() {
+// Close closes the Logger (i.e. the file, drain logHandlerChan, etc).
+func (l *LogHandler) Close() error {
+	close(l.logHandlerChan)
 	for handlerParams := range l.logHandlerChan {
 		l.logTheRoundTrip(handlerParams.logDataTable, handlerParams.crr, handlerParams.crw)
 	}
-}
-
-// Close closes the Logger (i.e. the file etc).
-func (l *LogHandler) Close() error {
-	close(l.stopCh)
-	l.wg.Wait()
-	close(l.logHandlerChan)
-	l.drainChannel()
 	return l.file.Close()
 }
 
