@@ -2,11 +2,11 @@ package integration
 
 import (
 	"context"
-	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
 	"io/ioutil"
+	"math/rand"
 	"net"
 	"os"
 	"time"
@@ -20,6 +20,8 @@ import (
 
 var LocalhostCert []byte
 var LocalhostKey []byte
+
+const randCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 
 // GRPCSuite
 type GRPCSuite struct{ BaseSuite }
@@ -42,7 +44,9 @@ func (s *myserver) SayHello(ctx context.Context, in *helloworld.HelloRequest) (*
 
 func (s *myserver) StreamExample(in *helloworld.StreamExampleRequest, server helloworld.Greeter_StreamExampleServer) error {
 	data := make([]byte, 512)
-	rand.Read(data)
+	for i := range data {
+		data[i] = randCharset[rand.Intn(len(randCharset))]
+	}
 	server.Send(&helloworld.StreamExampleReply{Data: string(data)})
 	<-s.stopStreamExample
 	return nil
