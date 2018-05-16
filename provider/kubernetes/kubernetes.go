@@ -347,32 +347,33 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 func (p *Provider) updateIngressStatus(i *extensionsv1beta1.Ingress, k8sClient Client) error {
 	// Only process if an IngressEndpoint has been configured
-	if p.IngressEndpoint != nil {
-		if p.IngressEndpoint.PublishedService == "" {
-			return k8sClient.UpdateIngressStatus(i.Namespace, i.Name, p.IngressEndpoint.IP, p.IngressEndpoint.Hostname)
-		}
-
-		serviceInfos := strings.Split(p.IngressEndpoint.PublishedService, "/")
-		serviceNamespace, serviceName := serviceInfos[0], serviceInfos[1]
-
-		service, exists, err := k8sClient.GetService(serviceNamespace, serviceName)
-		if err != nil {
-			return fmt.Errorf("cannot get service %s, received error: %s", p.IngressEndpoint.PublishedService, err)
-		}
-
-		if exists && service.Status.LoadBalancer.Ingress == nil {
-			// service exists, but has no Load Balancer status
-			log.Debugf("Skipping updating Ingress %s/%s due to service %s having no status set", i.Namespace, i.Name, p.IngressEndpoint.PublishedService)
-			return nil
-		}
-
-		if !exists {
-			return fmt.Errorf("missing service: %s", p.IngressEndpoint.PublishedService)
-		}
-
-		return k8sClient.UpdateIngressStatus(i.Namespace, i.Name, service.Status.LoadBalancer.Ingress[0].IP, service.Status.LoadBalancer.Ingress[0].Hostname)
+	if p.IngressEndpoint == nil {
+		return nil
 	}
-	return nil
+
+	if p.IngressEndpoint.PublishedService == "" {
+		return k8sClient.UpdateIngressStatus(i.Namespace, i.Name, p.IngressEndpoint.IP, p.IngressEndpoint.Hostname)
+	}
+
+	serviceInfos := strings.Split(p.IngressEndpoint.PublishedService, "/")
+	serviceNamespace, serviceName := serviceInfos[0], serviceInfos[1]
+
+	service, exists, err := k8sClient.GetService(serviceNamespace, serviceName)
+	if err != nil {
+		return fmt.Errorf("cannot get service %s, received error: %s", p.IngressEndpoint.PublishedService, err)
+	}
+
+	if exists && service.Status.LoadBalancer.Ingress == nil {
+		// service exists, but has no Load Balancer status
+		log.Debugf("Skipping updating Ingress %s/%s due to service %s having no status set", i.Namespace, i.Name, p.IngressEndpoint.PublishedService)
+		return nil
+	}
+
+	if !exists {
+		return fmt.Errorf("missing service: %s", p.IngressEndpoint.PublishedService)
+	}
+
+	return k8sClient.UpdateIngressStatus(i.Namespace, i.Name, service.Status.LoadBalancer.Ingress[0].IP, service.Status.LoadBalancer.Ingress[0].Hostname)
 }
 
 func (p *Provider) loadConfig(templateObjects types.Configuration) *types.Configuration {
