@@ -381,6 +381,7 @@ func (gc *GlobalConfiguration) InitACMEProvider() *acmeprovider.Provider {
 		if gc.Cluster == nil {
 			provider := &acmeprovider.Provider{}
 			provider.Configuration = &acmeprovider.Configuration{
+				KeyType:       gc.ACME.KeyType,
 				OnHostRule:    gc.ACME.OnHostRule,
 				OnDemand:      gc.ACME.OnDemand,
 				Email:         gc.ACME.Email,

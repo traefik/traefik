@@ -17,6 +17,7 @@ defaultEntryPoints = ["http", "https"]
   onDemand = {{.OnDemand}}
   onHostRule = {{.OnHostRule}}
   caServer = "http://{{.BoulderHost}}:4001/directory"
+  keyType = "INVALID"
   [acme.httpChallenge]
   entryPoint="http"
 

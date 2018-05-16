@@ -39,6 +39,7 @@ type Configuration struct {
 	CAServer      string         `description:"CA server to use."`
 	Storage       string         `description:"Storage to use."`
 	EntryPoint    string         `description:"EntryPoint to use."`
+	KeyType       string         `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'. Default to 'RSA4096'"`
 	OnHostRule    bool           `description:"Enable certificate generation on frontends Host rules."`
 	OnDemand      bool           `description:"Enable on demand certificate generation. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."` // Deprecated
 	DNSChallenge  *DNSChallenge  `description:"Activate DNS-01 Challenge"`
@@ -116,7 +117,7 @@ func (p *Provider) init() error {
 func (p *Provider) initAccount() (*Account, error) {
 	if p.account == nil || len(p.account.Email) == 0 {
 		var err error
-		p.account, err = NewAccount(p.Email)
+		p.account, err = NewAccount(p.Email, p.KeyType)
 		if err != nil {
 			return nil, err
 		}
@@ -246,7 +247,7 @@ func (p *Provider) getClient() (*acme.Client, error) {
 			caServer = p.CAServer
 		}
 		log.Debugf(caServer)
-		client, err := acme.NewClient(caServer, account, acme.RSA4096)
+		client, err := acme.NewClient(caServer, account, account.KeyType)
 		if err != nil {
 			return nil, err
 		}
