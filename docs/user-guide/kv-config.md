@@ -329,14 +329,15 @@ And there, the same dynamic configuration in a KV Store (using `prefix = "traefi
 
 - frontend 2
 
-| Key                                                | Value              |
-|----------------------------------------------------|--------------------|
-| `/traefik/frontends/frontend2/backend`             | `backend1`         |
-| `/traefik/frontends/frontend2/passhostheader`      | `true`             |
-| `/traefik/frontends/frontend2/priority`            | `10`               |
-| `/traefik/frontends/frontend2/basicauth`           | `test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0` |
-| `/traefik/frontends/frontend2/entrypoints`         | `http,https`       |
-| `/traefik/frontends/frontend2/routes/test_2/rule`  | `PathPrefix:/test` |
+| Key                                                | Value                                         |
+|----------------------------------------------------|-----------------------------------------------|
+| `/traefik/frontends/frontend2/backend`             | `backend1`                                    |
+| `/traefik/frontends/frontend2/passhostheader`      | `true`                                        |
+| `/traefik/frontends/frontend2/priority`            | `10`                                          |
+| `/traefik/frontends/frontend2/basicauth/0`         | `test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/`  |
+| `/traefik/frontends/frontend2/basicauth/1`         | `test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0` |
+| `/traefik/frontends/frontend2/entrypoints`         | `http,https`                                  |
+| `/traefik/frontends/frontend2/routes/test_2/rule`  | `PathPrefix:/test`                            |
 
 - certificate 1
 
