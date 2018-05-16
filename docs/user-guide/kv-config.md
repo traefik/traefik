@@ -76,7 +76,7 @@ defaultEntryPoints = ["http", "https"]
   address = ":80"
   [entryPoints.https]
   address = ":443"
-  
+
     [entryPoints.https.tls]
       [[entryPoints.https.tls.certificates]]
       certFile = "integration/fixtures/https/snitest.com.cert"
@@ -164,7 +164,7 @@ If a Consul ACL is used to restrict Træfik read/write access, one of the follow
     key "traefik" {
         policy = "write"
     },
-    
+
     session "" {
         policy = "write"
     }
@@ -422,7 +422,7 @@ Træfik will not start but the [static configuration](/basics/#static-trfik-conf
 
 If you configured ACME (Let's Encrypt), your registration account and your certificates will also be uploaded.
 
-If you configured a file backend `[file]`, all your dynamic configuration (backends, frontends...) will be uploaded to the Key-value store.
+If you configured a file provider `[file]`, all your dynamic configuration (backends, frontends...) will be uploaded to the Key-value store.
 
 To upload your ACME certificates to the KV store, get your Traefik TOML file and add the new `storage` option in the `acme` section:
 

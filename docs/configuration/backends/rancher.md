@@ -1,15 +1,15 @@
-# Rancher Backend
+# Rancher Provider
 
-Træfik can be configured to use Rancher as a backend configuration.
+Træfik can be configured to use Rancher as a provider.
 
 ## Global Configuration
 
 ```toml
 ################################################################
-# Rancher configuration backend
+# Rancher Provider
 ################################################################
 
-# Enable Rancher configuration backend.
+# Enable Rancher Provider.
 [rancher]
 
 # Default domain used.
@@ -64,13 +64,13 @@ enableServiceHealthFilter = true
 # templateVersion = 2
 ```
 
-To enable constraints see [backend-specific constraints section](/configuration/commons/#backend-specific).
+To enable constraints see [provider-specific constraints section](/configuration/commons/#provider-specific).
 
 ## Rancher Metadata Service
 
 ```toml
-# Enable Rancher metadata service configuration backend instead of the API
-# configuration backend.
+# Enable Rancher metadata service provider instead of the API
+# provider.
 #
 # Optional
 # Default: false
@@ -97,7 +97,7 @@ prefix = "/2016-07-29"
 ## Rancher API
 
 ```toml
-# Enable Rancher API configuration backend.
+# Enable Rancher API provider.
 #
 # Optional
 # Default: true

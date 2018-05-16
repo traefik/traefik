@@ -1,6 +1,6 @@
-# Azure Service Fabric Backend
+# Azure Service Fabric Provider
 
-Træfik can be configured to use Azure Service Fabric as a backend configuration.
+Træfik can be configured to use Azure Service Fabric as a provider.
 
 See [this repository for an example deployment package and further documentation.](https://aka.ms/traefikonsf)
 
@@ -8,10 +8,10 @@ See [this repository for an example deployment package and further documentation
 
 ```toml
 ################################################################
-# Azure Service Fabric provider
+# Azure Service Fabric Provider
 ################################################################
 
-# Enable Azure Service Fabric configuration backend
+# Enable Azure Service Fabric Provider
 [serviceFabric]
 
 # Azure Service Fabric Management Endpoint
@@ -61,7 +61,7 @@ Here is an example of an extension setting Træfik labels:
       <Extension Name="Traefik">
         <Labels xmlns="http://schemas.microsoft.com/2015/03/fabact-no-schema">
           <Label Key="traefik.frontend.rule.example2">PathPrefixStrip: /a/path/to/strip</Label>
-          <Label Key="traefik.enable">true</Label> 
+          <Label Key="traefik.enable">true</Label>
           <Label Key="traefik.frontend.passHostHeader">true</Label>
         </Labels>
       </Extension>

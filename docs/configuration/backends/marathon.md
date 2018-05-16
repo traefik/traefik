@@ -1,6 +1,6 @@
-# Marathon Backend
+# Marathon Provider
 
-Træfik can be configured to use Marathon as a backend configuration.
+Træfik can be configured to use Marathon as a provider.
 
 See also [Marathon user guide](/user-guide/marathon).
 
@@ -9,10 +9,10 @@ See also [Marathon user guide](/user-guide/marathon).
 
 ```toml
 ################################################################
-# Mesos/Marathon configuration backend
+# Mesos/Marathon Provider
 ################################################################
 
-# Enable Marathon configuration backend.
+# Enable Marathon Provider.
 [marathon]
 
 # Marathon server endpoint.
@@ -157,7 +157,7 @@ domain = "marathon.localhost"
 # respectReadinessChecks = true
 ```
 
-To enable constraints see [backend-specific constraints section](/configuration/commons/#backend-specific).
+To enable constraints see [provider-specific constraints section](/configuration/commons/#provider-specific).
 
 ## Labels: overriding default behavior
 

@@ -1,15 +1,15 @@
-# ECS Backend
+# ECS Provider
 
-Træfik can be configured to use Amazon ECS as a backend configuration.
+Træfik can be configured to use Amazon ECS as a provider.
 
 ## Configuration
 
 ```toml
 ################################################################
-# ECS configuration backend
+# ECS Provider
 ################################################################
 
-# Enable ECS configuration backend.
+# Enable ECS Provider.
 [ecs]
 
 # ECS Cluster Name.

@@ -1,13 +1,13 @@
-# Mesos Generic Backend
+# Mesos Generic Provider
 
-Træfik can be configured to use Mesos as a backend configuration.
+Træfik can be configured to use Mesos as a provider.
 
 ```toml
 ################################################################
-# Mesos configuration backend
+# Mesos Provider
 ################################################################
 
-# Enable Mesos configuration backend.
+# Enable Mesos Provider.
 [mesos]
 
 # Mesos server endpoint.

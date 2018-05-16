@@ -1,4 +1,4 @@
-# Rest Backend
+# Rest Provider
 
 Træfik can be configured:
 
@@ -7,7 +7,7 @@ Træfik can be configured:
 ## Configuration
 
 ```toml
-# Enable rest backend.
+# Enable REST Provider.
 [rest]
   # Name of the related entry point
   #
