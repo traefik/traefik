@@ -113,7 +113,7 @@ This is the minimum configuration required to do the following:
 - Log `ERROR`-level messages (or more severe) to the console, but silence `DEBUG`-level messages
 - Check for new versions of Træfik periodically
 - Create two entry points, namely an `HTTP` endpoint on port `80`, and an `HTTPS` endpoint on port `443` where all incoming traffic on port `80` will immediately get redirected to `HTTPS`.
-- Enable the Docker configuration backend and listen for container events on the Docker unix socket we've mounted earlier. However, **new containers will not be exposed by Træfik by default, we'll get into this in a bit!**
+- Enable the Docker provider and listen for container events on the Docker unix socket we've mounted earlier. However, **new containers will not be exposed by Træfik by default, we'll get into this in a bit!**
 - Enable automatic request and configuration of SSL certificates using Let's Encrypt.
     These certificates will be stored in the `acme.json` file, which you can back-up yourself and store off-premises.
 
@@ -123,7 +123,7 @@ Alright, let's boot the container. From the `/opt/traefik` directory, run `docke
 
 Now that we've fully configured and started Træfik, it's time to get our applications running!
 
-Let's take a simple example of a micro-service project consisting of various services, where some will be exposed to the outside world and some will not. 
+Let's take a simple example of a micro-service project consisting of various services, where some will be exposed to the outside world and some will not.
 
 The `docker-compose.yml` of our project looks like this:
 
@@ -221,11 +221,11 @@ We use both `container labels` and `service labels`.
 
 First, we specify the `backend` name which corresponds to the actual service we're routing **to**.
 
-We also tell Træfik to use the `web` network to route HTTP traffic to this container. 
+We also tell Træfik to use the `web` network to route HTTP traffic to this container.
 With the `traefik.enable` label, we tell Træfik to include this container in its internal configuration.
 
 With the `frontend.rule` label, we tell Træfik that we want to route to this container if the incoming HTTP request contains the `Host` `app.my-awesome-app.org`.
-Essentially, this is the actual rule used for Layer-7 load balancing. 
+Essentially, this is the actual rule used for Layer-7 load balancing.
 
 Finally but not unimportantly, we tell Træfik to route **to** port `9000`, since that is the actual TCP/IP port the container actually listens on.
 

@@ -54,7 +54,7 @@ Træfik supports two backends: Jaeger and Zipkin.
 ```
 
 !!! warning
-    Træfik is only able to send data over compact thrift protocol to the [Jaeger agent](https://www.jaegertracing.io/docs/deployment/#agent). 
+    Træfik is only able to send data over compact thrift protocol to the [Jaeger agent](https://www.jaegertracing.io/docs/deployment/#agent).
 
 ## Zipkin
 

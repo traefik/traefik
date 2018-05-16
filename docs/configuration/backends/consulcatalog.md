@@ -1,13 +1,13 @@
-# Consul Catalog backend
+# Consul Catalog Provider
 
-Træfik can be configured to use service discovery catalog of Consul as a backend configuration.
+Træfik can be configured to use service discovery catalog of Consul as a provider.
 
 ```toml
 ################################################################
-# Consul Catalog configuration backend
+# Consul Catalog Provider
 ################################################################
 
-# Enable Consul Catalog configuration backend.
+# Enable Consul Catalog Provider.
 [consulCatalog]
 
 # Consul server endpoint.
@@ -76,9 +76,9 @@ prefix = "traefik"
 # templateVersion = 2
 ```
 
-This backend will create routes matching on hostname based on the service name used in Consul.
+This provider will create routes matching on hostname based on the service name used in Consul.
 
-To enable constraints see [backend-specific constraints section](/configuration/commons/#backend-specific).
+To enable constraints see [provider-specific constraints section](/configuration/commons/#provider-specific).
 
 ## Tags
 

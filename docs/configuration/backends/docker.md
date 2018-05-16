@@ -1,16 +1,16 @@
 
-# Docker Backend
+# Docker Provider
 
-Træfik can be configured to use Docker as a backend configuration.
+Træfik can be configured to use Docker as a provider.
 
 ## Docker
 
 ```toml
 ################################################################
-# Docker configuration backend
+# Docker Provider
 ################################################################
 
-# Enable Docker configuration backend.
+# Enable Docker Provider.
 [docker]
 
 # Docker server endpoint. Can be a tcp or a unix socket endpoint.
@@ -82,17 +82,17 @@ swarmMode = false
 #  insecureSkipVerify = true
 ```
 
-To enable constraints see [backend-specific constraints section](/configuration/commons/#backend-specific).
+To enable constraints see [provider-specific constraints section](/configuration/commons/#provider-specific).
 
 
 ## Docker Swarm Mode
 
 ```toml
 ################################################################
-# Docker Swarm Mode configuration backend
+# Docker Swarm Mode Provider
 ################################################################
 
-# Enable Docker configuration backend.
+# Enable Docker Provider.
 [docker]
 
 # Docker server endpoint.
@@ -159,7 +159,7 @@ exposedByDefault = false
 #  insecureSkipVerify = true
 ```
 
-To enable constraints see [backend-specific constraints section](/configuration/commons/#backend-specific).
+To enable constraints see [provider-specific constraints section](/configuration/commons/#provider-specific).
 
 ## Labels: overriding default behavior
 
