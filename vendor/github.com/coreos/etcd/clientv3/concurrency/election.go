@@ -15,13 +15,13 @@
 package concurrency
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
 	v3 "github.com/coreos/etcd/clientv3"
 	pb "github.com/coreos/etcd/etcdserver/etcdserverpb"
 	"github.com/coreos/etcd/mvcc/mvccpb"
-	"golang.org/x/net/context"
 )
 
 var (
@@ -185,12 +185,12 @@ func (e *Election) observe(ctx context.Context, ch chan<- v3.GetResponse) {
 					cancel()
 					return
 				}
-				// only accept PUTs; a DELETE will make observe() spin
+				// only accept puts; a delete will make observe() spin
 				for _, ev := range wr.Events {
 					if ev.Type == mvccpb.PUT {
 						hdr, kv = &wr.Header, ev.Kv
 						// may have multiple revs; hdr.rev = the last rev
-						// set to kv's rev in case batch has multiple PUTs
+						// set to kv's rev in case batch has multiple Puts
 						hdr.Revision = kv.ModRevision
 						break
 					}
@@ -213,6 +213,7 @@ func (e *Election) observe(ctx context.Context, ch chan<- v3.GetResponse) {
 		for !keyDeleted {
 			wr, ok := <-wch
 			if !ok {
+				cancel()
 				return
 			}
 			for _, ev := range wr.Events {
@@ -225,6 +226,7 @@ func (e *Election) observe(ctx context.Context, ch chan<- v3.GetResponse) {
 				select {
 				case ch <- *resp:
 				case <-cctx.Done():
+					cancel()
 					return
 				}
 			}
@@ -240,4 +242,4 @@ func (e *Election) Key() string { return e.leaderKey }
 func (e *Election) Rev() int64 { return e.leaderRev }
 
 // Header is the response header from the last successful election proposal.
-func (m *Election) Header() *pb.ResponseHeader { return m.hdr }
+func (e *Election) Header() *pb.ResponseHeader { return e.hdr }

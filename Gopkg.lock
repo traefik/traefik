@@ -286,8 +286,8 @@
     "pkg/types",
     "version"
   ]
-  revision = "f1d7dd87da3e8feab4aaf675b8e29c6a5ed5f58b"
-  version = "v3.2.9"
+  revision = "70c8726202dd91e482fb4029fd14af1d4ed1d5af"
+  version = "v3.3.5"
 
 [[projects]]
   name = "github.com/coreos/go-semver"
@@ -607,7 +607,9 @@
 [[projects]]
   name = "github.com/gogo/protobuf"
   packages = [
+    "gogoproto",
     "proto",
+    "protoc-gen-gogo/descriptor",
     "sortkeys"
   ]
   revision = "909568be09de550ed094403c2bf8a261b5bb730a"
@@ -1178,7 +1180,8 @@
 [[projects]]
   name = "github.com/ugorji/go"
   packages = ["codec"]
-  revision = "ea9cd21fa0bc41ee4bdd50ac7ed8cbc7ea2ed960"
+  revision = "b4c50a2b199d93b13dc15e78929cfb23bfdf21ab"
+  version = "v1.1.1"
 
 [[projects]]
   name = "github.com/unrolled/render"
@@ -1405,6 +1408,7 @@
     "credentials",
     "grpclb/grpc_lb_v1",
     "grpclog",
+    "health/grpc_health_v1",
     "internal",
     "keepalive",
     "metadata",
