@@ -86,31 +86,25 @@ func Run(kv *staert.KvSource, traefikConfiguration *cmd.TraefikConfiguration) fu
 			}
 
 			// Check to see if ACME account object is already in kv store
-			if !traefikConfiguration.GlobalConfiguration.ACME.OverrideCertificates {
-				if exists, err := kv.Exists(
-					traefikConfiguration.GlobalConfiguration.ACME.Storage+"/object",
-					&store.ReadOptions{Consistent: true}); err == nil && exists {
-					// Force to delete storagefile (early exit)
-					return kv.Delete(kv.Prefix + "/acme/storagefile")
+			if traefikConfiguration.GlobalConfiguration.ACME.OverrideCertificates {
+
+				// Store the ACME Account into the KV Store
+				// Certificates in KV Store will be overridden
+				meta := cluster.NewMetadata(account)
+				err = meta.Marshall()
+				if err != nil {
+					return err
 				}
-			}
 
-			// Store the ACME Account into the KV Store
-			// Certificates in KV Store will be overridden
-			meta := cluster.NewMetadata(account)
-			err = meta.Marshall()
-			if err != nil {
-				return err
-			}
+				source := staert.KvSource{
+					Store:  kv,
+					Prefix: traefikConfiguration.GlobalConfiguration.ACME.Storage,
+				}
 
-			source := staert.KvSource{
-				Store:  kv,
-				Prefix: traefikConfiguration.GlobalConfiguration.ACME.Storage,
-			}
-
-			err = source.StoreConfig(meta)
-			if err != nil {
-				return err
+				err = source.StoreConfig(meta)
+				if err != nil {
+					return err
+				}
 			}
 
 			// Force to delete storagefile
