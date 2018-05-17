@@ -63,6 +63,13 @@ entryPoint = "https"
 #
 # acmeLogging = true
 
+# If true, override certificates in key-value store when using storeconfig.
+#
+# Optional
+# Default: false
+#
+# overrideCertificates = true
+
 # Enable on demand certificate generation.
 #
 # Optional (Deprecated)
