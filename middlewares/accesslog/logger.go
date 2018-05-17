@@ -45,6 +45,7 @@ type LogHandler struct {
 	mu             sync.Mutex
 	httpCodeRanges types.HTTPCodeRanges
 	logHandlerChan chan logHandlerParams
+	wg             sync.WaitGroup
 }
 
 // NewLogHandler creates a new LogHandler
@@ -93,12 +94,10 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 	}
 
 	if config.BufferingSize > 0 {
+		logHandler.wg.Add(1)
 		go func() {
-			for {
-				handlerParams, ok := <-logHandler.logHandlerChan
-				if !ok {
-					return
-				}
+			defer logHandler.wg.Done()
+			for handlerParams := range logHandler.logHandlerChan {
 				logHandler.logTheRoundTrip(handlerParams.logDataTable, handlerParams.crr, handlerParams.crw)
 			}
 		}()
@@ -198,9 +197,7 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 // Close closes the Logger (i.e. the file, drain logHandlerChan, etc).
 func (l *LogHandler) Close() error {
 	close(l.logHandlerChan)
-	for handlerParams := range l.logHandlerChan {
-		l.logTheRoundTrip(handlerParams.logDataTable, handlerParams.crr, handlerParams.crw)
-	}
+	l.wg.Wait()
 	return l.file.Close()
 }
 
