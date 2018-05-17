@@ -92,15 +92,23 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.
 			if err != nil {
 				log.Error(err)
 				w.WriteHeader(recorder.GetCode())
-				w.Write([]byte(http.StatusText(recorder.GetCode())))
+				fmt.Fprint(w, http.StatusText(recorder.GetCode()))
 				return
 			}
 
+			recorderErrorPage := newResponseRecorder(w)
 			utils.CopyHeaders(pageReq.Header, req.Header)
-			utils.CopyHeaders(w.Header(), recorder.Header())
-			w.WriteHeader(recorder.GetCode())
 
-			h.backendHandler.ServeHTTP(w, pageReq.WithContext(req.Context()))
+			h.backendHandler.ServeHTTP(recorderErrorPage, pageReq.WithContext(req.Context()))
+
+			utils.CopyHeaders(w.Header(), recorder.Header())
+			for key := range recorderErrorPage.Header() {
+				w.Header().Del(key)
+			}
+			utils.CopyHeaders(w.Header(), recorderErrorPage.Header())
+
+			w.WriteHeader(recorder.GetCode())
+			w.Write(recorderErrorPage.GetBody().Bytes())
 			return
 		}
 	}
