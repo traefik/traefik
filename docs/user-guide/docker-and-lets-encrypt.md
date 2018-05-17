@@ -145,12 +145,11 @@ services:
     expose:
       - "9000"
     labels:
-      - "traefik.backend=my-awesome-app-app"
       - "traefik.docker.network=web"
-      - "traefik.frontend.rule=Host:app.my-awesome-app.org"
       - "traefik.enable=true"
-      - "traefik.port=9000"
-      - "traefik.default.protocol=http"
+      - "traefik.basic.frontend.rule=Host:app.my-awesome-app.org"
+      - "traefik.basic.port=9000"
+      - "traefik.basic.protocol=http"
       - "traefik.admin.frontend.rule=Host:admin-app.my-awesome-app.org"
       - "traefik.admin.protocol=https"
       - "traefik.admin.port=9443"
@@ -204,12 +203,11 @@ Thanks to Docker labels, we can tell Træfik how to create its internal routing 
 Let's take a look at the labels themselves for the `app` service, which is a HTTP webservice listing on port 9000:
 
 ```yaml
-- "traefik.backend=my-awesome-app-app"
 - "traefik.docker.network=web"
-- "traefik.frontend.rule=Host:app.my-awesome-app.org"
 - "traefik.enable=true"
-- "traefik.port=9000"
-- "traefik.default.protocol=http"
+- "traefik.basic.frontend.rule=Host:app.my-awesome-app.org"
+- "traefik.basic.port=9000"
+- "traefik.basic.protocol=http"
 - "traefik.admin.frontend.rule=Host:admin-app.my-awesome-app.org"
 - "traefik.admin.protocol=https"
 - "traefik.admin.port=9443"
@@ -236,11 +234,11 @@ Finally but not unimportantly, we tell Træfik to route **to** port `9000`, sinc
 When both `container labels` and `service labels` are defined, `container labels` are just used as default values for missing `service labels` but no frontend/backend are going to be defined only with these labels.
 Obviously, labels `traefik.frontend.rule` and `traefik.port` described above, will only be used to complete information set in `service labels` during the container frontends/bakends creation.
 
-In the example, two service names are defined : `default` and `admin`.
+In the example, two service names are defined : `basic` and `admin`.
 They allow creating two frontends and two backends.
 
-- `default` has only one `service label` : `traefik.default.protocol`.
-Træfik will use values set in `traefik.frontend.rule` and `traefik.port` to create the `default` frontend and backend.
+- `basic` has only one `service label` : `traefik.basic.protocol`.
+Træfik will use values set in `traefik.frontend.rule` and `traefik.port` to create the `basic` frontend and backend.
 The frontend listens to incoming HTTP requests which contain the `Host` `app.my-awesome-app.org` and redirect them in `HTTP` to the port `9000` of the backend.
 - `admin` has all the `services labels` needed to create the `admin` frontend and backend (`traefik.admin.frontend.rule`, `traefik.admin.protocol`, `traefik.admin.port`).
 Træfik will create a frontend to listen to incoming HTTP requests which contain the `Host` `admin-app.my-awesome-app.org` and redirect them in `HTTPS` to the port `9443` of the backend.
