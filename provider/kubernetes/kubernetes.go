@@ -359,8 +359,11 @@ func (p *Provider) updateIngressStatus(i *extensionsv1beta1.Ingress, k8sClient C
 		return k8sClient.UpdateIngressStatus(i.Namespace, i.Name, p.IngressEndpoint.IP, p.IngressEndpoint.Hostname)
 	}
 
-	serviceInfos := strings.Split(p.IngressEndpoint.PublishedService, "/")
-	serviceNamespace, serviceName := serviceInfos[0], serviceInfos[1]
+	serviceInfo := strings.Split(p.IngressEndpoint.PublishedService, "/")
+	if len(serviceInfo) != 2 {
+		return fmt.Errorf("invalid publishedService format (expected 'namespace/service' format): %s", p.IngressEndpoint.PublishedService)
+	}
+	serviceNamespace, serviceName := serviceInfo[0], serviceInfo[1]
 
 	service, exists, err := k8sClient.GetService(serviceNamespace, serviceName)
 	if err != nil {

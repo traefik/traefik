@@ -2020,3 +2020,146 @@ func TestMultiPortServices(t *testing.T) {
 
 	assert.Equal(t, expected, actual)
 }
+
+func TestProviderUpdateIngressStatus(t *testing.T) {
+	testCases := []struct {
+		desc                  string
+		ingressEndpoint       *IngressEndpoint
+		apiServiceError       error
+		apiIngressStatusError error
+		expectedError         bool
+	}{
+		{
+			desc:          "without IngressEndpoint configuration",
+			expectedError: false,
+		},
+		{
+			desc:            "without any IngressEndpoint option",
+			ingressEndpoint: &IngressEndpoint{},
+			expectedError:   true,
+		},
+		{
+			desc: "PublishedService - invalid format",
+			ingressEndpoint: &IngressEndpoint{
+				PublishedService: "foo",
+			},
+			expectedError: true,
+		},
+		{
+			desc: "PublishedService - missing service",
+			ingressEndpoint: &IngressEndpoint{
+				PublishedService: "foo/bar",
+			},
+			expectedError: true,
+		},
+		{
+			desc: "PublishedService - get service error",
+			ingressEndpoint: &IngressEndpoint{
+				PublishedService: "foo/bar",
+			},
+			apiServiceError: errors.New("error"),
+			expectedError:   true,
+		},
+		{
+			desc: "PublishedService - Skipping empty LoadBalancerIngress",
+			ingressEndpoint: &IngressEndpoint{
+				PublishedService: "testing/service-empty-status",
+			},
+			expectedError: false,
+		},
+		{
+			desc: "PublishedService - with update error",
+			ingressEndpoint: &IngressEndpoint{
+				PublishedService: "testing/service",
+			},
+			apiIngressStatusError: errors.New("error"),
+			expectedError:         true,
+		},
+		{
+			desc: "PublishedService - right service",
+			ingressEndpoint: &IngressEndpoint{
+				PublishedService: "testing/service",
+			},
+			expectedError: false,
+		},
+		{
+			desc: "IP - valid",
+			ingressEndpoint: &IngressEndpoint{
+				IP: "127.0.0.1",
+			},
+			expectedError: false,
+		},
+		{
+			desc: "IP - with update error",
+			ingressEndpoint: &IngressEndpoint{
+				IP: "127.0.0.1",
+			},
+			apiIngressStatusError: errors.New("error"),
+			expectedError:         true,
+		},
+		{
+			desc: "hostname - valid",
+			ingressEndpoint: &IngressEndpoint{
+				Hostname: "foo",
+			},
+			expectedError: false,
+		},
+		{
+			desc: "hostname - with update error",
+			ingressEndpoint: &IngressEndpoint{
+				Hostname: "foo",
+			},
+			apiIngressStatusError: errors.New("error"),
+			expectedError:         true,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := &Provider{
+				IngressEndpoint: test.ingressEndpoint,
+			}
+
+			services := []*corev1.Service{
+				buildService(
+					sName("service-empty-status"),
+					sNamespace("testing"),
+					sLoadBalancerStatus(),
+					sUID("1"),
+					sSpec(
+						clusterIP("10.0.0.1"),
+						sPorts(sPort(80, ""))),
+				),
+				buildService(
+					sName("service"),
+					sNamespace("testing"),
+					sLoadBalancerStatus(sLoadBalancerIngress("127.0.0.1", "")),
+					sUID("2"),
+					sSpec(
+						clusterIP("10.0.0.2"),
+						sPorts(sPort(80, ""))),
+				),
+			}
+
+			client := clientMock{
+				services:              services,
+				apiServiceError:       test.apiServiceError,
+				apiIngressStatusError: test.apiIngressStatusError,
+			}
+
+			i := &extensionsv1beta1.Ingress{}
+
+			err := p.updateIngressStatus(i, client)
+
+			if test.expectedError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+
+}
