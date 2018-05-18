@@ -351,7 +351,11 @@ func (p *Provider) updateIngressStatus(i *extensionsv1beta1.Ingress, k8sClient C
 		return nil
 	}
 
-	if p.IngressEndpoint.PublishedService == "" {
+	if len(p.IngressEndpoint.PublishedService) == 0 {
+		if len(p.IngressEndpoint.IP) == 0 && len(p.IngressEndpoint.Hostname) == 0 {
+			return errors.New("publishedService or ip or hostname must be defined")
+		}
+
 		return k8sClient.UpdateIngressStatus(i.Namespace, i.Name, p.IngressEndpoint.IP, p.IngressEndpoint.Hostname)
 	}
 
