@@ -169,12 +169,14 @@ func (c *clientImpl) GetIngresses() []*extensionsv1beta1.Ingress {
 
 // UpdateIngressStatus updates an Ingress with a provided status.
 func (c *clientImpl) UpdateIngressStatus(namespace, name, ip, hostname string) error {
-	item, exists, err := c.factories[c.lookupNamespace(namespace)].Extensions().V1beta1().Ingresses().Informer().GetStore().GetByKey(namespace + "/" + name)
+	keyName := namespace + "/" + name
+
+	item, exists, err := c.factories[c.lookupNamespace(namespace)].Extensions().V1beta1().Ingresses().Informer().GetStore().GetByKey(keyName)
 	if err != nil {
-		return fmt.Errorf("failed to get ingress %s/%s with error: %v", namespace, name, err)
+		return fmt.Errorf("failed to get ingress %s with error: %v", keyName, err)
 	}
 	if !exists {
-		return fmt.Errorf("failed to update ingress %s/%s because it does not exist", namespace, name)
+		return fmt.Errorf("failed to update ingress %s because it does not exist", keyName)
 	}
 
 	ing := item.(*extensionsv1beta1.Ingress)
@@ -187,9 +189,9 @@ func (c *clientImpl) UpdateIngressStatus(namespace, name, ip, hostname string) e
 
 		_, err := c.clientset.ExtensionsV1beta1().Ingresses(ingCopy.Namespace).UpdateStatus(ingCopy)
 		if err != nil {
-			return fmt.Errorf("failed to update ingress status %s/%s with error: %v", namespace, name, err)
+			return fmt.Errorf("failed to update ingress status %s with error: %v", keyName, err)
 		}
-		log.Infof("Updated status on ingress %s/%s", namespace, name)
+		log.Infof("Updated status on ingress %s", keyName)
 	}
 	return nil
 }
