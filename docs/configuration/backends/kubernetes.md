@@ -89,7 +89,7 @@ See also [Kubernetes user guide](/user-guide/kubernetes).
 #
 # [kubernetes.ingressEndpoint]
 #
-# One must be configured.
+# At least one must be configured.
 # `publishedservice` will override the `hostname` and `ip` settings if configured.
 #
 # hostname = "localhost"
