@@ -62,8 +62,6 @@ func (p *BaseProvider) GetConfiguration(defaultTemplate string, funcMap template
 
 // CreateConfiguration create a provider configuration from content using templating
 func (p *BaseProvider) CreateConfiguration(tmplContent string, funcMap template.FuncMap, templateObjects interface{}) (*types.Configuration, error) {
-	configuration := new(types.Configuration)
-
 	var defaultFuncMap = sprig.TxtFuncMap()
 	// tolower is deprecated in favor of sprig's lower function
 	defaultFuncMap["tolower"] = strings.ToLower
@@ -91,7 +89,13 @@ func (p *BaseProvider) CreateConfiguration(tmplContent string, funcMap template.
 		log.Debugf("Template content: %s", tmplContent)
 		log.Debugf("Rendering results: %s", renderedTemplate)
 	}
-	if _, err := toml.Decode(renderedTemplate, configuration); err != nil {
+	return p.DecodeConfiguration(renderedTemplate)
+}
+
+// DecodeConfiguration Decode a *types.Configuration from a content
+func (p *BaseProvider) DecodeConfiguration(content string) (*types.Configuration, error) {
+	configuration := new(types.Configuration)
+	if _, err := toml.Decode(content, configuration); err != nil {
 		return nil, err
 	}
 	return configuration, nil

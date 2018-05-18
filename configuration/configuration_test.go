@@ -65,24 +65,28 @@ func TestSetEffectiveConfigurationGraceTimeout(t *testing.T) {
 
 func TestSetEffectiveConfigurationFileProviderFilename(t *testing.T) {
 	testCases := []struct {
-		desc                     string
-		fileProvider             *file.Provider
-		wantFileProviderFilename string
+		desc                        string
+		fileProvider                *file.Provider
+		wantFileProviderFilename    string
+		wantFileProviderTraefikFile string
 	}{
 		{
-			desc:                     "no filename for file provider given",
-			fileProvider:             &file.Provider{},
-			wantFileProviderFilename: defaultConfigFile,
+			desc:                        "no filename for file provider given",
+			fileProvider:                &file.Provider{},
+			wantFileProviderFilename:    "",
+			wantFileProviderTraefikFile: defaultConfigFile,
 		},
 		{
-			desc:                     "filename for file provider given",
-			fileProvider:             &file.Provider{BaseProvider: provider.BaseProvider{Filename: "other.toml"}},
-			wantFileProviderFilename: "other.toml",
+			desc:                        "filename for file provider given",
+			fileProvider:                &file.Provider{BaseProvider: provider.BaseProvider{Filename: "other.toml"}},
+			wantFileProviderFilename:    "other.toml",
+			wantFileProviderTraefikFile: defaultConfigFile,
 		},
 		{
-			desc:                     "directory for file provider given",
-			fileProvider:             &file.Provider{Directory: "/"},
-			wantFileProviderFilename: "",
+			desc:                        "directory for file provider given",
+			fileProvider:                &file.Provider{Directory: "/"},
+			wantFileProviderFilename:    "",
+			wantFileProviderTraefikFile: defaultConfigFile,
 		},
 	}
 
@@ -98,6 +102,7 @@ func TestSetEffectiveConfigurationFileProviderFilename(t *testing.T) {
 			gc.SetEffectiveConfiguration(defaultConfigFile)
 
 			assert.Equal(t, test.wantFileProviderFilename, gc.File.Filename)
+			assert.Equal(t, test.wantFileProviderTraefikFile, gc.File.TraefikFile)
 		})
 	}
 }
