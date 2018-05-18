@@ -36,17 +36,25 @@ const (
 	traefikDefaultIngressClass = "traefik"
 )
 
+// IngressEndpoint holds the endpoint information for the Kubernetes provider
+type IngressEndpoint struct {
+	IP               string `description:"IP used for Kubernetes Ingress endpoints"`
+	Hostname         string `description:"Hostname used for Kubernetes Ingress endpoints"`
+	PublishedService string `description:"Published Kubernetes Service to copy status from"`
+}
+
 // Provider holds configurations of the provider.
 type Provider struct {
 	provider.BaseProvider  `mapstructure:",squash" export:"true"`
-	Endpoint               string     `description:"Kubernetes server endpoint (required for external cluster client)"`
-	Token                  string     `description:"Kubernetes bearer token (not needed for in-cluster client)"`
-	CertAuthFilePath       string     `description:"Kubernetes certificate authority file path (not needed for in-cluster client)"`
-	DisablePassHostHeaders bool       `description:"Kubernetes disable PassHost Headers" export:"true"`
-	EnablePassTLSCert      bool       `description:"Kubernetes enable Pass TLS Client Certs" export:"true"`
-	Namespaces             Namespaces `description:"Kubernetes namespaces" export:"true"`
-	LabelSelector          string     `description:"Kubernetes Ingress label selector to use" export:"true"`
-	IngressClass           string     `description:"Value of kubernetes.io/ingress.class annotation to watch for" export:"true"`
+	Endpoint               string           `description:"Kubernetes server endpoint (required for external cluster client)"`
+	Token                  string           `description:"Kubernetes bearer token (not needed for in-cluster client)"`
+	CertAuthFilePath       string           `description:"Kubernetes certificate authority file path (not needed for in-cluster client)"`
+	DisablePassHostHeaders bool             `description:"Kubernetes disable PassHost Headers" export:"true"`
+	EnablePassTLSCert      bool             `description:"Kubernetes enable Pass TLS Client Certs" export:"true"`
+	Namespaces             Namespaces       `description:"Kubernetes namespaces" export:"true"`
+	LabelSelector          string           `description:"Kubernetes Ingress label selector to use" export:"true"`
+	IngressClass           string           `description:"Value of kubernetes.io/ingress.class annotation to watch for" export:"true"`
+	IngressEndpoint        *IngressEndpoint `description:"Kubernetes Ingress Endpoint"`
 	lastConfiguration      safe.Safe
 }
 
@@ -125,10 +133,12 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 						return nil
 					case event := <-eventsChan:
 						log.Debugf("Received Kubernetes event kind %T", event)
+
 						templateObjects, err := p.loadIngresses(k8sClient)
 						if err != nil {
 							return err
 						}
+
 						if reflect.DeepEqual(p.lastConfiguration.Get(), templateObjects) {
 							log.Debugf("Skipping Kubernetes event kind %T", event)
 						} else {
@@ -326,8 +336,51 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				}
 			}
 		}
+
+		err = p.updateIngressStatus(i, k8sClient)
+		if err != nil {
+			log.Errorf("Cannot update Ingress %s/%s due to error: %v", i.Namespace, i.Name, err)
+		}
 	}
 	return &templateObjects, nil
+}
+
+func (p *Provider) updateIngressStatus(i *extensionsv1beta1.Ingress, k8sClient Client) error {
+	// Only process if an IngressEndpoint has been configured
+	if p.IngressEndpoint == nil {
+		return nil
+	}
+
+	if len(p.IngressEndpoint.PublishedService) == 0 {
+		if len(p.IngressEndpoint.IP) == 0 && len(p.IngressEndpoint.Hostname) == 0 {
+			return errors.New("publishedService or ip or hostname must be defined")
+		}
+
+		return k8sClient.UpdateIngressStatus(i.Namespace, i.Name, p.IngressEndpoint.IP, p.IngressEndpoint.Hostname)
+	}
+
+	serviceInfo := strings.Split(p.IngressEndpoint.PublishedService, "/")
+	if len(serviceInfo) != 2 {
+		return fmt.Errorf("invalid publishedService format (expected 'namespace/service' format): %s", p.IngressEndpoint.PublishedService)
+	}
+	serviceNamespace, serviceName := serviceInfo[0], serviceInfo[1]
+
+	service, exists, err := k8sClient.GetService(serviceNamespace, serviceName)
+	if err != nil {
+		return fmt.Errorf("cannot get service %s, received error: %s", p.IngressEndpoint.PublishedService, err)
+	}
+
+	if exists && service.Status.LoadBalancer.Ingress == nil {
+		// service exists, but has no Load Balancer status
+		log.Debugf("Skipping updating Ingress %s/%s due to service %s having no status set", i.Namespace, i.Name, p.IngressEndpoint.PublishedService)
+		return nil
+	}
+
+	if !exists {
+		return fmt.Errorf("missing service: %s", p.IngressEndpoint.PublishedService)
+	}
+
+	return k8sClient.UpdateIngressStatus(i.Namespace, i.Name, service.Status.LoadBalancer.Ingress[0].IP, service.Status.LoadBalancer.Ingress[0].Hostname)
 }
 
 func (p *Provider) loadConfig(templateObjects types.Configuration) *types.Configuration {

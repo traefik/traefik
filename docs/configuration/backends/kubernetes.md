@@ -81,6 +81,20 @@ See also [Kubernetes user guide](/user-guide/kubernetes).
 # Default: <built-in template>
 #
 # filename = "kubernetes.tmpl"
+
+# Enable IngressEndpoint configuration.
+# This will allow Traefik to update the status section of ingress objects, if desired.
+#
+# Optional
+#
+# [kubernetes.ingressEndpoint]
+#
+# At least one must be configured.
+# `publishedservice` will override the `hostname` and `ip` settings if configured.
+#
+# hostname = "localhost"
+# ip = "127.0.0.1"
+# publishedService = "namespace/servicename"
 ```
 
 ### `endpoint`
@@ -104,6 +118,12 @@ By default, Traefik processes all Ingress objects in the configured namespaces.
 A label selector can be defined to filter on specific Ingress objects only.
 
 See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details.
+
+### `ingressEndpoint`
+
+You can configure a static hostname or IP address that Traefik will add to the status section of Ingress objects that it manages.
+If you prefer, you can provide a service, which traefik will copy the status spec from.
+This will give more flexibility in cloud/dynamic environments.
 
 ### TLS communication between Traefik and backend pods
 
