@@ -90,11 +90,11 @@ See also [Kubernetes user guide](/user-guide/kubernetes).
 # [kubernetes.ingressEndpoint]
 #
 # One must be configured.
-# Publishedservice will override the hostname and ip settings if configured.
+# `publishedservice` will override the `hostname` and `ip` settings if configured.
 #
 # hostname = "localhost"
 # ip = "127.0.0.1"
-# publishedService = "default/cheddar"
+# publishedService = "namespace/servicename"
 ```
 
 ### `endpoint`
@@ -121,7 +121,7 @@ See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-
 
 ### `ingressEndpoint`
 
-You can configure a static hostname or IP address that traefik will add to the status section of ingress objects that it manages.
+You can configure a static hostname or IP address that Traefik will add to the status section of Ingress objects that it manages.
 If you prefer, you can provide a service, which traefik will copy the status spec from.
 This will give more flexibility in cloud/dynamic environments.
 

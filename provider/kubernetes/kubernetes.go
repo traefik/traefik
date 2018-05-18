@@ -339,7 +339,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 		err = p.updateIngressStatus(i, k8sClient)
 		if err != nil {
-			log.Printf("cannot update Ingress %s/%s due to error: %s", i.Namespace, i.Name, err)
+			log.Errorf("Cannot update Ingress %s/%s due to error: %v", i.Namespace, i.Name, err)
 		}
 	}
 	return &templateObjects, nil
