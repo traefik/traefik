@@ -218,7 +218,7 @@ Labels can be used on containers to override default behavior.
 | `traefik.backend.loadbalancer.swarm=true`                  | Use Swarm's inbuilt load balancer (only relevant under Swarm Mode).                                                                                                                                                       |
 | `traefik.backend.maxconn.amount=10`                        | Set a maximum number of connections to the backend.<br>Must be used in conjunction with the below label to take effect.                                                                                                   |
 | `traefik.backend.maxconn.extractorfunc=client.ip`          | Set the function to be used against the request to determine what to limit maximum connections to the backend by.<br>Must be used in conjunction with the above label to take effect.                                     |
-| `traefik.frontend.auth.basic=EXPR`                         | Sets basic authentication for that frontend in CSV format: `User:Hash,User:Hash` [2]                                                                                                                                    |
+| `traefik.frontend.auth.basic=EXPR`                         | Sets basic authentication for that frontend in CSV format: `User:Hash,User:Hash` [2]                                                                                                                                      |
 | `traefik.frontend.entryPoints=http,https`                  | Assign this frontend to entry points `http` and `https`.<br>Overrides `defaultEntryPoints`                                                                                                                                |
 | `traefik.frontend.errors.<name>.backend=NAME`              | See [custom error pages](/configuration/commons/#custom-error-pages) section.                                                                                                                                             |
 | `traefik.frontend.errors.<name>.query=PATH`                | See [custom error pages](/configuration/commons/#custom-error-pages) section.                                                                                                                                             |
@@ -244,59 +244,8 @@ For instance when deploying docker `stack` from compose files, the compose defin
 Or if your service references external network use it's name instead.
 
 [2] `traefik.frontend.auth.basic=EXPR`:
-This short example show you how use `traefik.frontend.auth.basic` in docker swarm to secure your dashboard.
-First of all you need to create user:password pair throug this command `echo $(htpasswd -nb root 12345678) | sed -e s/\\$/\\$\\$/g`. You will get `root:$$apr1$$IWO6Seyw$$vG/W55B6MgVkYbZ5fCOzE1` , note additional symbol `$` makes escaping. Note that in docker-compose.yml in section `ports` showed, that you should comment щге exposing of 8080 port to make access to dashboard only through domainname, which is will be secured by basic auth.
-
-Docker-compose.yml will look:
-
-```yml
-version: "3.3"
-services:
-  traefik:
-    image: traefik:1.5
-    command:
-      - "--api"
-      - "--entrypoints=Name:http Address::80"
-      - "--defaultentrypoints=http"
-      - "--docker"
-      - "--docker.swarmMode"
-      - "--docker.domain=mydomain.ca"
-      - "--docker.watch"
-      - "--debug"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    networks:
-      - webgateway
-      - traefik
-    ports:
-      - target: 80
-        published: 80
-        mode: host
-#      - target: 8080
-#        published: 8080
-#        mode: host
-    deploy:
-      mode: global
-      labels:
-          - "traefik.backend.rule=traefik"
-          - "traefik.frontend.rule=Host:dashboard.example.com"
-          - "traefik.frontend.auth.basic=root:$$apr1$$IWO6Seyw$$vG/W55B6MgVkYbZ5fCOzE1"
-          - "traefik.port=8080"
-      placement:
-        constraints:
-          - node.role == manager
-      update_config:
-        parallelism: 1
-        delay: 10s
-      restart_policy:
-        condition: on-failure
-networks:
-  webgateway:
-    driver: overlay
-    external: true
-  traefik:
-    driver: overlay
-```
+To create `user:password` pair, it's possible to use this command `echo $(htpasswd -nb user password) | sed -e s/\\$/\\$\\$/g`.
+The result will be `user:$$apr1$$9Cv/OMGj$$ZomWQzuQbL.3TRCS81A1g/`, note additional symbol `$` makes escaping.
 
 #### Custom Headers
 
