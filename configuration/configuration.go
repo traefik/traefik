@@ -50,6 +50,9 @@ const (
 	// DefaultGraceTimeout controls how long Traefik serves pending requests
 	// prior to shutting down.
 	DefaultGraceTimeout = 10 * time.Second
+
+	// DefaultAcmeCAServer is the default ACME API endpoint
+	DefaultAcmeCAServer = "https://acme-v02.api.letsencrypt.org/directory"
 )
 
 // GlobalConfiguration holds global configuration (with providers, etc.).
@@ -350,6 +353,16 @@ func (gc *GlobalConfiguration) initTracing() {
 
 func (gc *GlobalConfiguration) initACMEProvider() {
 	if gc.ACME != nil {
+		if len(gc.ACME.CAServer) == 0 {
+			gc.ACME.CAServer = DefaultAcmeCAServer
+		}
+
+		if strings.Contains(gc.ACME.CAServer, "v01") {
+			caServer := strings.Replace(gc.ACME.CAServer, "v01", "v02", 1)
+			log.Warn("the CA server %q refer to a v01 endpoint of the ACME API, please change to %q.", gc.ACME.CAServer, caServer)
+			gc.ACME.CAServer = caServer
+		}
+
 		// TODO: to remove in the futurs
 		if len(gc.ACME.StorageFile) > 0 && len(gc.ACME.Storage) == 0 {
 			log.Warn("ACME.StorageFile is deprecated, use ACME.Storage instead")
