@@ -353,15 +353,7 @@ func (gc *GlobalConfiguration) initTracing() {
 
 func (gc *GlobalConfiguration) initACMEProvider() {
 	if gc.ACME != nil {
-		if len(gc.ACME.CAServer) == 0 {
-			gc.ACME.CAServer = DefaultAcmeCAServer
-		} else if strings.HasPrefix(gc.ACME.CAServer, "https://acme-v01.api.letsencrypt.org") ||
-			strings.HasPrefix(gc.ACME.CAServer, "https://acme-staging-v01.api.letsencrypt.org") {
-			caServer := strings.Replace(gc.ACME.CAServer, "v01", "v02", 1)
-			log.Warnf("The CA server %q refer to a v01 endpoint of the ACME API, please change to %q.", gc.ACME.CAServer, caServer)
-			log.Warnf("ACME CA server fallback to %q.", caServer)
-			gc.ACME.CAServer = caServer
-		}
+		gc.ACME.CAServer = getSafeACMECAServer(gc.ACME.CAServer)
 
 		if gc.ACME.DNSChallenge != nil && gc.ACME.HTTPChallenge != nil {
 			log.Warn("Unable to use DNS challenge and HTTP challenge at the same time. Fallback to DNS challenge.")
@@ -401,6 +393,28 @@ func (gc *GlobalConfiguration) initACMEProvider() {
 			gc.ACME = nil
 		}
 	}
+}
+
+func getSafeACMECAServer(caServerSrc string) string {
+	if len(caServerSrc) == 0 {
+		return DefaultAcmeCAServer
+	}
+
+	if strings.HasPrefix(caServerSrc, "https://acme-v01.api.letsencrypt.org") {
+		caServer := strings.Replace(caServerSrc, "v01", "v02", 1)
+		log.Warnf("The CA server %q refer to a v01 endpoint of the ACME API, please change to %q.", caServerSrc, caServer)
+		log.Warnf("ACME CA server fallback to %q.", caServer)
+		return caServer
+	}
+
+	if strings.HasPrefix(caServerSrc, "https://acme-staging.api.letsencrypt.org") {
+		caServer := strings.Replace(caServerSrc, "https://acme-staging.api.letsencrypt.org", "https://acme-staging-v02.api.letsencrypt.org", 1)
+		log.Warnf("The CA server %q refer to a v01 endpoint of the ACME API, please change to %q.", caServerSrc, caServer)
+		log.Warnf("ACME CA server fallback to %q.", caServer)
+		return caServer
+	}
+
+	return caServerSrc
 }
 
 // ValidateConfiguration validate that configuration is coherent
