@@ -355,11 +355,11 @@ func (gc *GlobalConfiguration) initACMEProvider() {
 	if gc.ACME != nil {
 		if len(gc.ACME.CAServer) == 0 {
 			gc.ACME.CAServer = DefaultAcmeCAServer
-		}
-
-		if strings.Contains(gc.ACME.CAServer, "v01") {
+		} else if strings.HasPrefix(gc.ACME.CAServer, "https://acme-v01.api.letsencrypt.org") ||
+			strings.HasPrefix(gc.ACME.CAServer, "https://acme-staging-v01.api.letsencrypt.org") {
 			caServer := strings.Replace(gc.ACME.CAServer, "v01", "v02", 1)
-			log.Warn("the CA server %q refer to a v01 endpoint of the ACME API, please change to %q.", gc.ACME.CAServer, caServer)
+			log.Warnf("The CA server %q refer to a v01 endpoint of the ACME API, please change to %q.", gc.ACME.CAServer, caServer)
+			log.Warnf("ACME CA server fallback to %q.", caServer)
 			gc.ACME.CAServer = caServer
 		}
 
