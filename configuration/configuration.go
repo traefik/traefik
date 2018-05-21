@@ -363,7 +363,12 @@ func (gc *GlobalConfiguration) initACMEProvider() {
 			gc.ACME.CAServer = caServer
 		}
 
-		// TODO: to remove in the futurs
+		if gc.ACME.DNSChallenge != nil && gc.ACME.HTTPChallenge != nil {
+			log.Warn("Unable to use DNS challenge and HTTP challenge at the same time. Fallback to DNS challenge.")
+			gc.ACME.HTTPChallenge = nil
+		}
+
+		// TODO: to remove in the future
 		if len(gc.ACME.StorageFile) > 0 && len(gc.ACME.Storage) == 0 {
 			log.Warn("ACME.StorageFile is deprecated, use ACME.Storage instead")
 			gc.ACME.Storage = gc.ACME.StorageFile
