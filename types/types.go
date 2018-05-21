@@ -211,16 +211,21 @@ var loadBalancerMethodNames = []string{
 
 // NewLoadBalancerMethod create a new LoadBalancerMethod from a given LoadBalancer.
 func NewLoadBalancerMethod(loadBalancer *LoadBalancer) (LoadBalancerMethod, error) {
-	var method string
-	if loadBalancer != nil {
-		method = loadBalancer.Method
-		for i, name := range loadBalancerMethodNames {
-			if strings.EqualFold(name, method) {
-				return LoadBalancerMethod(i), nil
-			}
+	if loadBalancer == nil {
+		return Wrr, errors.New("no load-balancer defined, fallback to 'wrr' method")
+	}
+
+	if len(loadBalancer.Method) == 0 {
+		return Wrr, errors.New("no load-balancing method defined, fallback to 'wrr' method")
+	}
+
+	for i, name := range loadBalancerMethodNames {
+		if strings.EqualFold(name, loadBalancer.Method) {
+			return LoadBalancerMethod(i), nil
 		}
 	}
-	return Wrr, fmt.Errorf("invalid load-balancing method '%s'", method)
+
+	return Wrr, fmt.Errorf("invalid load-balancing method %q, fallback to 'wrr' method", loadBalancer.Method)
 }
 
 // Configurations is for currentConfigurations Map
