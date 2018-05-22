@@ -1438,7 +1438,7 @@ func configureBackends(backends map[string]*types.Backend) {
 				}
 			}
 		} else {
-			log.Debugf("Validation of load balancer method for backend %s failed: %s. Using default method wrr.", backendName, err)
+			log.Debugf("Backend %s: %v", backendName, err)
 
 			var stickiness *types.Stickiness
 			if backend.LoadBalancer != nil {
