@@ -454,12 +454,12 @@ The deprecated way:
 
 #### Health Check
 
-A health check can be configured in order to remove a backend from LB rotation as long as it keeps returning HTTP status codes other than `2xx` to HTTP GET requests periodically carried out by Traefik.  
+A health check can be configured in order to remove a backend from LB rotation as long as it keeps returning HTTP status codes other than `1xx`, `2xx` or `3xx` to HTTP GET requests periodically carried out by Traefik.  
 The check is defined by a path appended to the backend URL and an interval (given in a format understood by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration)) specifying how often the health check should be executed (the default being 30 seconds).
 Each backend must respond to the health check within 5 seconds.  
 By default, the port of the backend server is used, however, this may be overridden.
 
-A recovering backend returning `2xx` responses again is being returned to the LB rotation pool.
+A recovering backend returning `1xx`, `2xx` or `3xx` responses again is being returned to the LB rotation pool.
 
 For example:
 ```toml

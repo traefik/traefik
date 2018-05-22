@@ -48,6 +48,22 @@ func TestSetBackendsConfiguration(t *testing.T) {
 			expectedGaugeValue:         1,
 		},
 		{
+			desc:                       "healthy server staying healthy (StatusPermanentRedirect)",
+			startHealthy:               true,
+			healthSequence:             []int{http.StatusPermanentRedirect},
+			expectedNumRemovedServers:  0,
+			expectedNumUpsertedServers: 0,
+			expectedGaugeValue:         1,
+		},
+		{
+			desc:                       "healthy server staying healthy (StatusContinue)",
+			startHealthy:               true,
+			healthSequence:             []int{http.StatusContinue},
+			expectedNumRemovedServers:  0,
+			expectedNumUpsertedServers: 0,
+			expectedGaugeValue:         1,
+		},
+		{
 			desc:                       "healthy server becoming sick",
 			startHealthy:               true,
 			healthSequence:             []int{http.StatusServiceUnavailable},
