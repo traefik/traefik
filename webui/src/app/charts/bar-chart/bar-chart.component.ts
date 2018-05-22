@@ -1,5 +1,6 @@
 import { Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { axisBottom, axisLeft, easeLinear, max, min, scaleBand, scaleLinear, select } from 'd3';
+import { format } from 'd3-format';
 import * as _ from 'lodash';
 import { WindowService } from '../../services/window.service';
 
@@ -93,7 +94,7 @@ export class BarChartComponent implements OnInit, OnChanges {
       .call(axisBottom(this.x));
 
     this.g.select('.axis--y')
-      .call(axisLeft(this.y).tickSize(-this.width));
+      .call(axisLeft(this.y).tickFormat(format('~s')).tickSize(-this.width));
 
     // Clean previous graph
     this.g.selectAll('.bar').remove();
