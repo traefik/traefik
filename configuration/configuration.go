@@ -304,14 +304,8 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 		gc.Web.Path += "/"
 	}
 
-	// Try to fallback to traefik config file in case the file provider is enabled
-	// but has no file name configured and is not in a directory mode.
-	if gc.File != nil && len(gc.File.Filename) == 0 && len(gc.File.Directory) == 0 {
-		if len(configFile) > 0 {
-			gc.File.Filename = configFile
-		} else {
-			log.Errorln("Error using file configuration backend, no filename defined")
-		}
+	if gc.File != nil {
+		gc.File.TraefikFile = configFile
 	}
 
 	gc.initACMEProvider()
