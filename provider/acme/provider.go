@@ -210,9 +210,9 @@ func (p *Provider) resolveCertificate(domain types.Domain, domainFromConfigurati
 
 	bundle := true
 
-	certificate, failures := client.ObtainCertificate(uncheckedDomains, bundle, nil, OSCPMustStaple)
-	if len(failures) > 0 {
-		return nil, fmt.Errorf("cannot obtain certificates %+v", failures)
+	certificate, err := client.ObtainCertificate(uncheckedDomains, bundle, nil, OSCPMustStaple)
+	if err != nil {
+		return nil, fmt.Errorf("cannot obtain certificates: %+v", err)
 	}
 
 	if len(certificate.Certificate) == 0 || len(certificate.PrivateKey) == 0 {

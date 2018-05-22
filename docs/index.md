@@ -47,7 +47,7 @@ _(But if you'd rather configure some of your routes manually, Træfik supports t
 - Packaged as a single binary file (made with :heart: with go) and available as a [tiny](https://microbadger.com/images/traefik) [official](https://hub.docker.com/r/_/traefik/) docker image
 
 
-## Supported backends
+## Supported Providers
 
 - [Docker](/configuration/backends/docker/) / [Swarm mode](/configuration/backends/docker/#docker-swarm-mode)
 - [Kubernetes](/configuration/backends/kubernetes/)
@@ -166,7 +166,7 @@ IP: 172.27.0.4
 ### 4 — Enjoy Træfik's Magic
 
 Now that you have a basic understanding of how Træfik can automatically create the routes to your services and load balance them, it might be time to dive into [the documentation](/) and let Træfik work for you!
-Whatever your infrastructure is, there is probably [an available Træfik backend](/#supported-backends) that will do the job.
+Whatever your infrastructure is, there is probably [an available Træfik provider](/#supported-providers) that will do the job.
 
 Our recommendation would be to see for yourself how simple it is to enable HTTPS with [Træfik's let's encrypt integration](/user-guide/examples/#lets-encrypt-support) using the dedicated [user guide](/user-guide/docker-and-lets-encrypt/).
 

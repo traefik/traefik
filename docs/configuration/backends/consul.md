@@ -1,13 +1,13 @@
-# Consul Key-Value Backend
+# Consul Key-Value Provider
 
-Træfik can be configured to use Consul as a backend configuration.
+Træfik can be configured to use Consul as a provider.
 
 ```toml
 ################################################################
-# Consul KV configuration backend
+# Consul KV Provider
 ################################################################
 
-# Enable Consul KV configuration backend.
+# Enable Consul KV Provider.
 [consul]
 
 # Consul server endpoint.
@@ -56,6 +56,6 @@ prefix = "traefik"
 #    insecureSkipVerify = true
 ```
 
-To enable constraints see [backend-specific constraints section](/configuration/commons/#backend-specific).
+To enable constraints see [provider-specific constraints section](/configuration/commons/#provider-specific).
 
 Please refer to the [Key Value storage structure](/user-guide/kv-config/#key-value-storage-structure) section to get documentation on Traefik KV structure.

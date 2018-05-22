@@ -1116,6 +1116,7 @@ var _templatesKubernetesTmpl = []byte(`[backends]
       entryPoint = "{{ $frontend.Redirect.EntryPoint }}"
       regex = "{{ $frontend.Redirect.Regex }}"
       replacement = "{{ $frontend.Redirect.Replacement }}"
+      permanent = {{ $frontend.Redirect.Permanent }}
     {{end}}
 
     {{if $frontend.Errors }}

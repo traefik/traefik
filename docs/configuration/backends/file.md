@@ -1,4 +1,4 @@
-# File Backends
+# File Provider
 
 Træfik can be configured with a file.
 

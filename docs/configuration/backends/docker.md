@@ -1,16 +1,16 @@
 
-# Docker Backend
+# Docker Provider
 
-Træfik can be configured to use Docker as a backend configuration.
+Træfik can be configured to use Docker as a provider.
 
 ## Docker
 
 ```toml
 ################################################################
-# Docker configuration backend
+# Docker Provider
 ################################################################
 
-# Enable Docker configuration backend.
+# Enable Docker Provider.
 [docker]
 
 # Docker server endpoint. Can be a tcp or a unix socket endpoint.
@@ -82,17 +82,17 @@ swarmMode = false
 #  insecureSkipVerify = true
 ```
 
-To enable constraints see [backend-specific constraints section](/configuration/commons/#backend-specific).
+To enable constraints see [provider-specific constraints section](/configuration/commons/#provider-specific).
 
 
 ## Docker Swarm Mode
 
 ```toml
 ################################################################
-# Docker Swarm Mode configuration backend
+# Docker Swarm Mode Provider
 ################################################################
 
-# Enable Docker configuration backend.
+# Enable Docker Provider.
 [docker]
 
 # Docker server endpoint.
@@ -159,7 +159,7 @@ exposedByDefault = false
 #  insecureSkipVerify = true
 ```
 
-To enable constraints see [backend-specific constraints section](/configuration/commons/#backend-specific).
+To enable constraints see [provider-specific constraints section](/configuration/commons/#provider-specific).
 
 ## Labels: overriding default behavior
 
@@ -221,7 +221,7 @@ Labels can be used on containers to override default behavior.
 | `traefik.backend.loadbalancer.swarm=true`                  | Use Swarm's inbuilt load balancer (only relevant under Swarm Mode).                                                                                                                                                       |
 | `traefik.backend.maxconn.amount=10`                        | Set a maximum number of connections to the backend.<br>Must be used in conjunction with the below label to take effect.                                                                                                   |
 | `traefik.backend.maxconn.extractorfunc=client.ip`          | Set the function to be used against the request to determine what to limit maximum connections to the backend by.<br>Must be used in conjunction with the above label to take effect.                                     |
-| `traefik.frontend.auth.basic=EXPR`                         | Sets basic authentication for that frontend in CSV format: `User:Hash,User:Hash`                                                                                                                                          |
+| `traefik.frontend.auth.basic=EXPR`                         | Sets basic authentication for that frontend in CSV format: `User:Hash,User:Hash` [2]                                                                                                                                      |
 | `traefik.frontend.entryPoints=http,https`                  | Assign this frontend to entry points `http` and `https`.<br>Overrides `defaultEntryPoints`                                                                                                                                |
 | `traefik.frontend.errors.<name>.backend=NAME`              | See [custom error pages](/configuration/commons/#custom-error-pages) section.                                                                                                                                             |
 | `traefik.frontend.errors.<name>.query=PATH`                | See [custom error pages](/configuration/commons/#custom-error-pages) section.                                                                                                                                             |
@@ -245,6 +245,10 @@ Labels can be used on containers to override default behavior.
 If a container is linked to several networks, be sure to set the proper network name (you can check with `docker inspect <container_id>`) otherwise it will randomly pick one (depending on how docker is returning them).
 For instance when deploying docker `stack` from compose files, the compose defined networks will be prefixed with the `stack` name.
 Or if your service references external network use it's name instead.
+
+[2] `traefik.frontend.auth.basic=EXPR`:
+To create `user:password` pair, it's possible to use this command `echo $(htpasswd -nb user password) | sed -e s/\\$/\\$\\$/g`.
+The result will be `user:$$apr1$$9Cv/OMGj$$ZomWQzuQbL.3TRCS81A1g/`, note additional symbol `$` makes escaping.
 
 #### Custom Headers
 

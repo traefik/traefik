@@ -1,6 +1,6 @@
-# Azure Service Fabric Backend
+# Azure Service Fabric Provider
 
-Træfik can be configured to use Azure Service Fabric as a backend configuration.
+Træfik can be configured to use Azure Service Fabric as a provider.
 
 See [this repository for an example deployment package and further documentation.](https://aka.ms/traefikonsf)
 
@@ -8,10 +8,10 @@ See [this repository for an example deployment package and further documentation
 
 ```toml
 ################################################################
-# Azure Service Fabric provider
+# Azure Service Fabric Provider
 ################################################################
 
-# Enable Azure Service Fabric configuration backend
+# Enable Azure Service Fabric Provider
 [serviceFabric]
 
 # Azure Service Fabric Management Endpoint
@@ -61,7 +61,7 @@ Here is an example of an extension setting Træfik labels:
       <Extension Name="Traefik">
         <Labels xmlns="http://schemas.microsoft.com/2015/03/fabact-no-schema">
           <Label Key="traefik.frontend.rule.example2">PathPrefixStrip: /a/path/to/strip</Label>
-          <Label Key="traefik.enable">true</Label> 
+          <Label Key="traefik.enable">true</Label>
           <Label Key="traefik.frontend.passHostHeader">true</Label>
         </Labels>
       </Extension>
@@ -98,8 +98,9 @@ Labels, set through extensions or the property manager, can be used on services 
 |------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `traefik.enable=false`                                     | Disable this container in Træfik                                                                                                                                                                                          |
 | `traefik.backend.circuitbreaker.expression=EXPR`           | Create a [circuit breaker](/basics/#backends) to be used against the backend                                                                                                                                              |
-| `traefik.backend.group.name`                               | Group all services with the same name into a single backend in Træfik                                                                                                                                                     |
-| `traefik.backend.group.weight`                             | Set the weighting of the current services nodes in the backend group                                                                                                                                                      |
+| `traefik.servicefabric.groupname`                               | Group all services with the same name into a single backend in Træfik                                                                                                                                                     |
+| `traefik.servicefabric.groupweight`                             | Set the weighting of the current services nodes in the backend group                                                                                                                                                      |
+| `traefik.servicefabric.enablelabeloverrides`                             | Toggle whether labels can be overridden using the Service Fabric Property Manager API                                                                                                                                                      |
 | `traefik.backend.healthcheck.path=/health`                 | Enable health check for the backend, hitting the container at `path`.                                                                                                                                                     |
 | `traefik.backend.healthcheck.port=8080`                    | Allow to use a different port for the health check.                                                                                                                                                                       |
 | `traefik.backend.healthcheck.interval=1s`                  | Define the health check interval.                                                                                                                                                                                         |

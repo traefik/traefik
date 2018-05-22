@@ -1,5 +1,26 @@
 # Change Log
 
+## [v1.6.2](https://github.com/containous/traefik/tree/v1.6.2) (2018-05-22)
+[All Commits](https://github.com/containous/traefik/compare/v1.6.1...v1.6.2)
+
+**Bug fixes:**
+- **[acme]** fix: acme errors management. ([#3329](https://github.com/containous/traefik/pull/3329) by [ldez](https://github.com/ldez))
+- **[acme]** Force to use ACME v02 endpoint. ([#3358](https://github.com/containous/traefik/pull/3358) by [ldez](https://github.com/ldez))
+- **[file]** No template parsing on traefik configuration file ([#3347](https://github.com/containous/traefik/pull/3347) by [Juliens](https://github.com/Juliens))
+- **[k8s]** Add redirect-permanent to kubernetes template ([#3332](https://github.com/containous/traefik/pull/3332) by [dtomcej](https://github.com/dtomcej))
+- **[logs]** Enhance Load-balancing method validation log. ([#3361](https://github.com/containous/traefik/pull/3361) by [ldez](https://github.com/ldez))
+- **[middleware]** Fix error pages content.  ([#3337](https://github.com/containous/traefik/pull/3337) by [ldez](https://github.com/ldez))
+- **[webui]** Route rules overlaps in UI ([#3333](https://github.com/containous/traefik/pull/3333) by [ldez](https://github.com/ldez))
+- **[webui]** WebUI typo into the buffering section. ([#3363](https://github.com/containous/traefik/pull/3363) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[acme]** Update caServer to letsencrypt one in examples ([#3339](https://github.com/containous/traefik/pull/3339) by [woernfl](https://github.com/woernfl))
+- **[docker]** Add command for basic auth with Docker Compose ([#3346](https://github.com/containous/traefik/pull/3346) by [DeamonMV](https://github.com/DeamonMV))
+- **[docker]** Removes ambiguity with the word &#39;default&#39; ([#3344](https://github.com/containous/traefik/pull/3344) by [ldez](https://github.com/ldez))
+- **[kv]** Add basicAuth example for KV ([#3274](https://github.com/containous/traefik/pull/3274) by [MichaelErmer](https://github.com/MichaelErmer))
+- **[provider]** Update docs to reflect Provider wording ([#3331](https://github.com/containous/traefik/pull/3331) by [dtomcej](https://github.com/dtomcej))
+- **[servicefabric]** Update docs to match SF provider labels ([#3335](https://github.com/containous/traefik/pull/3335) by [jjcollinge](https://github.com/jjcollinge))
+
 ## [v1.6.1](https://github.com/containous/traefik/tree/v1.6.1) (2018-05-14)
 [All Commits](https://github.com/containous/traefik/compare/v1.6.0...v1.6.1)
 

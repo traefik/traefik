@@ -1278,7 +1278,7 @@
     "providers/dns/route53",
     "providers/dns/vultr"
   ]
-  revision = "2817d2131186742bc98830c73a5d9c255b3f4537"
+  revision = "3d653ee2ee38f1d71beb5f09b37b23344eff0ab3"
   source = "github.com/containous/lego"
 
 [[projects]]

@@ -1,13 +1,13 @@
-# BoltDB Backend
+# BoltDB Provider
 
-Træfik can be configured to use BoltDB as a backend configuration.
+Træfik can be configured to use BoltDB as a provider.
 
 ```toml
 ################################################################
-# BoltDB configuration backend
+# BoltDB Provider
 ################################################################
 
-# Enable BoltDB configuration backend.
+# Enable BoltDB Provider.
 [boltdb]
 
 # BoltDB file.
@@ -56,4 +56,4 @@ filename = "boltdb.tmpl"
 #    insecureSkipVerify = true
 ```
 
-To enable constraints see [backend-specific constraints section](/configuration/commons/#backend-specific).
+To enable constraints see [provider-specific constraints section](/configuration/commons/#provider-specific).

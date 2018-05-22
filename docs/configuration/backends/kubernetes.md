@@ -1,6 +1,6 @@
-# Kubernetes Ingress Backend
+# Kubernetes Ingress Provider
 
-Træfik can be configured to use Kubernetes Ingress as a backend configuration.
+Træfik can be configured to use Kubernetes Ingress as a provider.
 
 See also [Kubernetes user guide](/user-guide/kubernetes).
 
@@ -8,10 +8,10 @@ See also [Kubernetes user guide](/user-guide/kubernetes).
 
 ```toml
 ################################################################
-# Kubernetes Ingress configuration backend
+# Kubernetes Ingress Provider
 ################################################################
 
-# Enable Kubernetes Ingress configuration backend.
+# Enable Kubernetes Ingress Provider.
 [kubernetes]
 
 # Kubernetes server endpoint.
