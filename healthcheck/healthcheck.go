@@ -174,6 +174,7 @@ func (b *BackendHealthCheck) addHeadersAndHost(req *http.Request) *http.Request 
 	if b.Options.Hostname != "" {
 		req.Host = b.Options.Hostname
 	}
+
 	for k, v := range b.Options.Headers {
 		req.Header.Set(k, v)
 	}
@@ -183,26 +184,28 @@ func (b *BackendHealthCheck) addHeadersAndHost(req *http.Request) *http.Request 
 // checkHealth returns a nil error in case it was successful and otherwise
 // a non-nil error with a meaningful description why the health check failed.
 func checkHealth(serverURL *url.URL, backend *BackendHealthCheck) error {
-	client := http.Client{
-		Timeout:   backend.requestTimeout,
-		Transport: backend.Options.Transport,
-	}
 	req, err := backend.newRequest(serverURL)
 	if err != nil {
 		return fmt.Errorf("failed to create HTTP request: %s", err)
 	}
+
 	req = backend.addHeadersAndHost(req)
 
-	resp, err := client.Do(req)
-	if err == nil {
-		defer resp.Body.Close()
+	client := http.Client{
+		Timeout:   backend.requestTimeout,
+		Transport: backend.Options.Transport,
 	}
 
-	switch {
-	case err != nil:
+	resp, err := client.Do(req)
+	if err != nil {
 		return fmt.Errorf("HTTP request failed: %s", err)
-	case resp.StatusCode != http.StatusOK:
-		return fmt.Errorf("received non-200 status code: %v", resp.StatusCode)
 	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return fmt.Errorf("received non-2xx status code: %v", resp.StatusCode)
+	}
+
 	return nil
 }

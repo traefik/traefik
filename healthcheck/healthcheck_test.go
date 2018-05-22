@@ -19,14 +19,14 @@ const healthCheckInterval = 100 * time.Millisecond
 
 type testHandler struct {
 	done           func()
-	healthSequence []bool
+	healthSequence []int
 }
 
 func TestSetBackendsConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc                       string
 		startHealthy               bool
-		healthSequence             []bool
+		healthSequence             []int
 		expectedNumRemovedServers  int
 		expectedNumUpsertedServers int
 		expectedGaugeValue         float64
@@ -34,7 +34,15 @@ func TestSetBackendsConfiguration(t *testing.T) {
 		{
 			desc:                       "healthy server staying healthy",
 			startHealthy:               true,
-			healthSequence:             []bool{true},
+			healthSequence:             []int{http.StatusOK},
+			expectedNumRemovedServers:  0,
+			expectedNumUpsertedServers: 0,
+			expectedGaugeValue:         1,
+		},
+		{
+			desc:                       "healthy server staying healthy (StatusNoContent)",
+			startHealthy:               true,
+			healthSequence:             []int{http.StatusNoContent},
 			expectedNumRemovedServers:  0,
 			expectedNumUpsertedServers: 0,
 			expectedGaugeValue:         1,
@@ -42,7 +50,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 		{
 			desc:                       "healthy server becoming sick",
 			startHealthy:               true,
-			healthSequence:             []bool{false},
+			healthSequence:             []int{http.StatusServiceUnavailable},
 			expectedNumRemovedServers:  1,
 			expectedNumUpsertedServers: 0,
 			expectedGaugeValue:         0,
@@ -50,7 +58,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 		{
 			desc:                       "sick server becoming healthy",
 			startHealthy:               false,
-			healthSequence:             []bool{true},
+			healthSequence:             []int{http.StatusOK},
 			expectedNumRemovedServers:  0,
 			expectedNumUpsertedServers: 1,
 			expectedGaugeValue:         1,
@@ -58,7 +66,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 		{
 			desc:                       "sick server staying sick",
 			startHealthy:               false,
-			healthSequence:             []bool{false},
+			healthSequence:             []int{http.StatusServiceUnavailable},
 			expectedNumRemovedServers:  0,
 			expectedNumUpsertedServers: 0,
 			expectedGaugeValue:         0,
@@ -66,7 +74,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 		{
 			desc:                       "healthy server toggling to sick and back to healthy",
 			startHealthy:               true,
-			healthSequence:             []bool{false, true},
+			healthSequence:             []int{http.StatusServiceUnavailable, http.StatusOK},
 			expectedNumRemovedServers:  1,
 			expectedNumUpsertedServers: 1,
 			expectedGaugeValue:         1,
@@ -77,6 +85,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			// The context is passed to the health check and canonically cancelled by
 			// the test server once all expected requests have been received.
 			ctx, cancel := context.WithCancel(context.Background())
@@ -320,7 +329,7 @@ func (lb *testLoadBalancer) removeServer(u *url.URL) {
 	lb.servers = append(lb.servers[:i], lb.servers[i+1:]...)
 }
 
-func newTestServer(done func(), healthSequence []bool) *httptest.Server {
+func newTestServer(done func(), healthSequence []int) *httptest.Server {
 	handler := &testHandler{
 		done:           done,
 		healthSequence: healthSequence,
@@ -328,21 +337,14 @@ func newTestServer(done func(), healthSequence []bool) *httptest.Server {
 	return httptest.NewServer(handler)
 }
 
-// ServeHTTP returns 200 or 503 HTTP response codes depending on whether the
-// current request is marked as healthy or not.
-// It calls the given 'done' function once all request health indicators have
-// been depleted.
+// ServeHTTP returns HTTP response codes following a status sequences.
+// It calls the given 'done' function once all request health indicators have been depleted.
 func (th *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if len(th.healthSequence) == 0 {
 		panic("received unexpected request")
 	}
 
-	healthy := th.healthSequence[0]
-	if healthy {
-		w.WriteHeader(http.StatusOK)
-	} else {
-		w.WriteHeader(http.StatusServiceUnavailable)
-	}
+	w.WriteHeader(th.healthSequence[0])
 
 	th.healthSequence = th.healthSequence[1:]
 	if len(th.healthSequence) == 0 {
