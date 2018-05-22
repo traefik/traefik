@@ -50,6 +50,9 @@ const (
 	// DefaultGraceTimeout controls how long Traefik serves pending requests
 	// prior to shutting down.
 	DefaultGraceTimeout = 10 * time.Second
+
+	// DefaultAcmeCAServer is the default ACME API endpoint
+	DefaultAcmeCAServer = "https://acme-v02.api.letsencrypt.org/directory"
 )
 
 // GlobalConfiguration holds global configuration (with providers, etc.).
@@ -350,7 +353,14 @@ func (gc *GlobalConfiguration) initTracing() {
 
 func (gc *GlobalConfiguration) initACMEProvider() {
 	if gc.ACME != nil {
-		// TODO: to remove in the futurs
+		gc.ACME.CAServer = getSafeACMECAServer(gc.ACME.CAServer)
+
+		if gc.ACME.DNSChallenge != nil && gc.ACME.HTTPChallenge != nil {
+			log.Warn("Unable to use DNS challenge and HTTP challenge at the same time. Fallback to DNS challenge.")
+			gc.ACME.HTTPChallenge = nil
+		}
+
+		// TODO: to remove in the future
 		if len(gc.ACME.StorageFile) > 0 && len(gc.ACME.Storage) == 0 {
 			log.Warn("ACME.StorageFile is deprecated, use ACME.Storage instead")
 			gc.ACME.Storage = gc.ACME.StorageFile
@@ -383,6 +393,26 @@ func (gc *GlobalConfiguration) initACMEProvider() {
 			gc.ACME = nil
 		}
 	}
+}
+
+func getSafeACMECAServer(caServerSrc string) string {
+	if len(caServerSrc) == 0 {
+		return DefaultAcmeCAServer
+	}
+
+	if strings.HasPrefix(caServerSrc, "https://acme-v01.api.letsencrypt.org") {
+		caServer := strings.Replace(caServerSrc, "v01", "v02", 1)
+		log.Warnf("The CA server %[1]q refers to a v01 endpoint of the ACME API, please change to %[2]q. Fallback to %[2]q.", caServerSrc, caServer)
+		return caServer
+	}
+
+	if strings.HasPrefix(caServerSrc, "https://acme-staging.api.letsencrypt.org") {
+		caServer := strings.Replace(caServerSrc, "https://acme-staging.api.letsencrypt.org", "https://acme-staging-v02.api.letsencrypt.org", 1)
+		log.Warnf("The CA server %[1]q refers to a v01 endpoint of the ACME API, please change to %[2]q. Fallback to %[2]q.", caServerSrc, caServer)
+		return caServer
+	}
+
+	return caServerSrc
 }
 
 // ValidateConfiguration validate that configuration is coherent
