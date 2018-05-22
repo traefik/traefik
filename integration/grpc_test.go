@@ -146,12 +146,12 @@ func (s *GRPCSuite) TestGRPC(c *check.C) {
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("Host:127.0.0.1"))
 	c.Assert(err, check.IsNil)
+
 	var response string
 	err = try.Do(1*time.Second, func() error {
 		response, err = callHelloClientGRPC("World")
 		return err
 	})
-
 	c.Assert(err, check.IsNil)
 	c.Assert(response, check.Equals, "Hello World")
 }
@@ -188,12 +188,12 @@ func (s *GRPCSuite) TestGRPCh2c(c *check.C) {
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("Host:127.0.0.1"))
 	c.Assert(err, check.IsNil)
+
 	var response string
 	err = try.Do(1*time.Second, func() error {
 		response, err = callHelloClientGRPC("World")
 		return err
 	})
-
 	c.Assert(err, check.IsNil)
 	c.Assert(response, check.Equals, "Hello World")
 }
@@ -230,12 +230,12 @@ func (s *GRPCSuite) TestGRPCInsecure(c *check.C) {
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("Host:127.0.0.1"))
 	c.Assert(err, check.IsNil)
+
 	var response string
 	err = try.Do(1*time.Second, func() error {
 		response, err = callHelloClientGRPC("World")
 		return err
 	})
-
 	c.Assert(err, check.IsNil)
 	c.Assert(response, check.Equals, "Hello World")
 }
