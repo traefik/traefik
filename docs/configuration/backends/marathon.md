@@ -120,9 +120,33 @@ domain = "marathon.localhost"
 # If no units are provided, the value is parsed assuming seconds.
 #
 # Optional
+# Default: "5s"
+#
+# dialerTimeout = "5s"
+
+# Override ResponseHeaderTimeout.
+# Amount of time to allow the Marathon provider to wait until the first response
+# header from the Marathon master is received.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
+# values (digits).
+# If no units are provided, the value is parsed assuming seconds.
+#
+# Optional
 # Default: "60s"
 #
-# dialerTimeout = "60s"
+# responseHeaderTimeout = "60s"
+
+# Override TLSHandshakeTimeout.
+# Amount of time to allow the Marathon provider to wait until the TLS
+# handshake completes.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
+# values (digits).
+# If no units are provided, the value is parsed assuming seconds.
+#
+# Optional
+# Default: "5s"
+#
+# TLSHandshakeTimeout = "5s"
 
 # Set the TCP Keep Alive interval for the Marathon HTTP Client.
 # Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw

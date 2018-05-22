@@ -55,8 +55,10 @@ type Provider struct {
 	MarathonLBCompatibility   bool             `description:"Add compatibility with marathon-lb labels" export:"true"`
 	FilterMarathonConstraints bool             `description:"Enable use of Marathon constraints in constraint filtering" export:"true"`
 	TLS                       *types.ClientTLS `description:"Enable TLS support" export:"true"`
-	DialerTimeout             flaeg.Duration   `description:"Set a non-default connection timeout for Marathon" export:"true"`
-	KeepAlive                 flaeg.Duration   `description:"Set a non-default TCP Keep Alive time in seconds" export:"true"`
+	DialerTimeout             flaeg.Duration   `description:"Set a dialer timeout for Marathon" export:"true"`
+	ResponseHeaderTimeout     flaeg.Duration   `description:"Set a response header timeout for Marathon" export:"true"`
+	TLSHandshakeTimeout       flaeg.Duration   `description:"Set a TLS handhsake timeout for Marathon" export:"true"`
+	KeepAlive                 flaeg.Duration   `description:"Set a TCP Keep Alive time in seconds" export:"true"`
 	ForceTaskHostname         bool             `description:"Force to use the task's hostname." export:"true"`
 	Basic                     *Basic           `description:"Enable basic authentication" export:"true"`
 	RespectReadinessChecks    bool             `description:"Filter out tasks with non-successful readiness checks during deployments" export:"true"`
@@ -105,7 +107,9 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 					KeepAlive: time.Duration(p.KeepAlive),
 					Timeout:   time.Duration(p.DialerTimeout),
 				}).DialContext,
-				TLSClientConfig: TLSConfig,
+				ResponseHeaderTimeout: time.Duration(p.ResponseHeaderTimeout),
+				TLSHandshakeTimeout:   time.Duration(p.TLSHandshakeTimeout),
+				TLSClientConfig:       TLSConfig,
 			},
 		}
 		client, err := marathon.NewClient(config)
