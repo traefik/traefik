@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
@@ -106,7 +107,15 @@ service1: 1000%
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			weights, err := getServicesPercentageWeights(test.annotationValue)
+			ingress := &extensionsv1beta1.Ingress{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{
+						annotationKubernetesPercentageWeights: test.annotationValue,
+					},
+				},
+			}
+
+			weights, err := getServicesPercentageWeights(ingress)
 
 			if test.expectError {
 				require.Error(t, err)
@@ -398,7 +407,7 @@ service2: 80%
 				require.Error(t, err)
 			} else {
 				for ingSvc, percentage := range test.expectedWeights {
-					assert.Equal(t, int(percentage), weightAllocator.allocWeight(ingSvc.host, ingSvc.path, ingSvc.service))
+					assert.Equal(t, int(percentage), weightAllocator.getWeight(ingSvc.host, ingSvc.path, ingSvc.service))
 				}
 			}
 		})

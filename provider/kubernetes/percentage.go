@@ -5,9 +5,7 @@ import (
 	"strings"
 )
 
-var (
-	defaultPercentageValuePrecision = 3
-)
+const defaultPercentageValuePrecision = 3
 
 // percentageValue is int64 form of percentage value with 10^-3 precision.
 type percentageValue int64

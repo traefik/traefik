@@ -185,7 +185,8 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 		templateObjects.TLS = append(templateObjects.TLS, tlsSection...)
 
 		var weightAllocator weightAllocator = &defaultWeightAllocator{}
-		if _, ok := i.Annotations[annotationKubernetesPercentageWeights]; ok {
+		annotationPercentageWeights := getAnnotationName(i.Annotations, annotationKubernetesPercentageWeights)
+		if _, ok := i.Annotations[annotationPercentageWeights]; ok {
 			fractionalAllocator, err := newFractionalWeightAllocator(i, k8sClient)
 			if err != nil {
 				log.Warnf("Failed to read backend percentage weights for ingress %s/%s: %v", i.Namespace, i.Name, err)
@@ -335,7 +336,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 									templateObjects.Backends[baseName].Servers[name] = types.Server{
 										URL:    url,
-										Weight: weightAllocator.allocWeight(r.Host, pa.Path, pa.Backend.ServiceName),
+										Weight: weightAllocator.getWeight(r.Host, pa.Path, pa.Backend.ServiceName),
 									}
 								}
 							}
