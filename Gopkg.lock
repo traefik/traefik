@@ -189,6 +189,7 @@
     "aws/request",
     "aws/session",
     "aws/signer/v4",
+    "internal/sdkio",
     "internal/sdkrand",
     "internal/shareddefaults",
     "private/protocol",
@@ -209,8 +210,8 @@
     "service/route53",
     "service/sts"
   ]
-  revision = "f9a6880d84e16e2a37055793e17164a228d637f4"
-  version = "v1.13.1"
+  revision = "fad131ddc707880428615dc8bc1587b55fb46d74"
+  version = "v1.13.54"
 
 [[projects]]
   branch = "master"
@@ -1680,6 +1681,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "43f8acdb9c80004418ca3fd30c4c82f47589f96845fbaf2eaca5924b137eeed6"
+  inputs-digest = "4d18e76b6d54a2698d3f1acd9f43110c609e3f61e72d480b9acd2327720dcc5c"
   solver-name = "gps-cdcl"
   solver-version = 1

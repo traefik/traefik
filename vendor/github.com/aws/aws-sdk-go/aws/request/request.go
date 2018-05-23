@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/client/metadata"
+	"github.com/aws/aws-sdk-go/internal/sdkio"
 )
 
 const (
@@ -258,7 +259,7 @@ func (r *Request) SetStringBody(s string) {
 // SetReaderBody will set the request's body reader.
 func (r *Request) SetReaderBody(reader io.ReadSeeker) {
 	r.Body = reader
-	r.BodyStart, _ = reader.Seek(0, 1) // Get the Bodies current offset.
+	r.BodyStart, _ = reader.Seek(0, sdkio.SeekCurrent) // Get the Bodies current offset.
 	r.ResetBody()
 }
 
@@ -294,6 +295,11 @@ func (r *Request) Presign(expire time.Duration) (string, error) {
 func (r *Request) PresignRequest(expire time.Duration) (string, http.Header, error) {
 	r = r.copy()
 	return getPresignedURL(r, expire)
+}
+
+// IsPresigned returns true if the request represents a presigned API url.
+func (r *Request) IsPresigned() bool {
+	return r.ExpireTime != 0
 }
 
 func getPresignedURL(r *Request, expire time.Duration) (string, http.Header, error) {
@@ -336,7 +342,7 @@ func debugLogReqError(r *Request, stage string, retrying bool, err error) {
 
 // Build will build the request's object so it can be signed and sent
 // to the service. Build will also validate all the request's parameters.
-// Anny additional build Handlers set on this request will be run
+// Any additional build Handlers set on this request will be run
 // in the order they were set.
 //
 // The request will only be built once. Multiple calls to build will have
