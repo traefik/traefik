@@ -1,8 +1,11 @@
 package rules
 
 import (
+	"context"
+	"net"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/containous/mux"
@@ -183,6 +186,189 @@ func TestHostRegexp(t *testing.T) {
 			for testURL, match := range test.urls {
 				req := testhelpers.MustNewRequest(http.MethodGet, testURL, nil)
 				assert.Equal(t, match, rt.Match(req, &mux.RouteMatch{}))
+			}
+		})
+	}
+}
+
+var _ net.Addr = mockAddr{}
+
+type mockAddr struct {
+	addr string
+}
+
+func (mockAddr) Network() string {
+	return "mock"
+}
+
+func (ma mockAddr) String() string {
+	return ma.addr
+}
+
+func TestLocalAddr(t *testing.T) {
+	testCases := []struct {
+		desc             string
+		matchedAddresses []string
+		testAddresses    map[string]bool
+	}{
+		{
+			desc:             "IPv4_single",
+			matchedAddresses: []string{"127.0.0.1:80"},
+			testAddresses: map[string]bool{
+				"127.0.0.1":    false,
+				"127.0.0.1:80": true,
+				"127.0.0.1:81": false,
+				"127.0.0.2:80": false,
+			},
+		},
+		{
+			desc:             "IPv4_multi",
+			matchedAddresses: []string{"127.0.0.1:80", "127.0.0.2:80", "127.0.0.1:443"},
+			testAddresses: map[string]bool{
+				"127.0.0.1":     false,
+				"127.0.0.1:80":  true,
+				"127.0.0.1:81":  false,
+				"127.0.0.1:443": true,
+				"127.0.0.2:80":  true,
+			},
+		},
+		{
+			desc:             "all_mismatch",
+			matchedAddresses: []string{"127.0.0.1:80"},
+			testAddresses: map[string]bool{
+				"127.0.0.1:81": false,
+				"127.0.0.2:80": false,
+				"1.2.3.4:80":   false,
+			},
+		},
+		{
+			desc:             "IPv6_single",
+			matchedAddresses: []string{"[::1]:80"},
+			testAddresses: map[string]bool{
+				"127.0.0.1:80": false,
+				"[::1]:80":     true,
+				"[fe80::1]:80": false,
+			},
+		},
+		{
+			desc:             "IPv6_multi",
+			matchedAddresses: []string{"[::1]:80", "[fe80::1]:443"},
+			testAddresses: map[string]bool{
+				"127.0.0.1":     false,
+				"[::1]:80":      true,
+				"[fe80::1]:443": true,
+				"[::1]:81":      false,
+				"[::2]:80":      false,
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			rls := &Rules{
+				Route: &types.ServerRoute{
+					Route: &mux.Route{},
+				},
+			}
+
+			rt := rls.localAddr(test.matchedAddresses...)
+
+			for testAddr, expectedMatch := range test.testAddresses {
+				addr := mockAddr{
+					addr: testAddr,
+				}
+				ctx := context.WithValue(context.Background(), http.LocalAddrContextKey, addr)
+				req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost:80/test", nil).WithContext(ctx)
+
+				match := rt.Match(req, &mux.RouteMatch{})
+				if match != expectedMatch {
+					t.Errorf("Error matching %s with %s, got %v expected %v", strings.Join(test.matchedAddresses, ","), testAddr, match, expectedMatch)
+				}
+			}
+		})
+	}
+}
+
+func TestLocalIP(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		matchedIPs []string
+		testIPs    map[string]bool
+	}{
+		{
+			desc:       "IPv4_single",
+			matchedIPs: []string{"127.0.0.1"},
+			testIPs: map[string]bool{
+				"127.0.0.1": true,
+				"127.0.0.2": false,
+			},
+		},
+		{
+			desc:       "IPv4_multi",
+			matchedIPs: []string{"127.0.0.1", "127.0.0.2"},
+			testIPs: map[string]bool{
+				"127.0.0.1": true,
+				"127.0.0.2": true,
+			},
+		},
+		{
+			desc:       "all_mismatch",
+			matchedIPs: []string{"127.0.0.1"},
+			testIPs: map[string]bool{
+				"127.0.0.2": false,
+				"127.0.0.3": false,
+				"1.2.3.4":   false,
+			},
+		},
+		{
+			desc:       "IPv6_single",
+			matchedIPs: []string{"::1"},
+			testIPs: map[string]bool{
+				"127.0.0.1": false,
+				"::1":       true,
+				"fe80::1":   false,
+			},
+		},
+		{
+			desc:       "IPv6_multi",
+			matchedIPs: []string{"::1", "fe80::1"},
+			testIPs: map[string]bool{
+				"127.0.0.1": false,
+				"::1":       true,
+				"fe80::1":   true,
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			rls := &Rules{
+				Route: &types.ServerRoute{
+					Route: &mux.Route{},
+				},
+			}
+
+			rt := rls.localIP(test.matchedIPs...)
+
+			for testIP, expectedMatch := range test.testIPs {
+				ip := net.ParseIP(testIP)
+				require.NotNil(t, ip)
+				ctx := context.WithValue(context.Background(), http.LocalAddrContextKey, &net.TCPAddr{
+					IP:   ip,
+					Port: 80,
+				})
+				req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost:80/test", nil).WithContext(ctx)
+
+				match := rt.Match(req, &mux.RouteMatch{})
+				if match != expectedMatch {
+					t.Errorf("Error matching %s with %s, got %v expected %v", strings.Join(test.matchedIPs, ","), testIP, match, expectedMatch)
+				}
 			}
 		})
 	}
