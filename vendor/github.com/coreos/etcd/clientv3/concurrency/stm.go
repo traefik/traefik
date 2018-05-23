@@ -15,10 +15,10 @@
 package concurrency
 
 import (
+	"context"
 	"math"
 
 	v3 "github.com/coreos/etcd/clientv3"
-	"golang.org/x/net/context"
 )
 
 // STM is an interface for software transactional memory.
@@ -46,7 +46,7 @@ const (
 	// SerializableSnapshot provides serializable isolation and also checks
 	// for write conflicts.
 	SerializableSnapshot Isolation = iota
-	// Serializable reads within the same transactiona attempt return data
+	// Serializable reads within the same transaction attempt return data
 	// from the at the revision of the first read.
 	Serializable
 	// RepeatableReads reads within the same transaction attempt always
@@ -85,7 +85,7 @@ func WithPrefetch(keys ...string) stmOption {
 	return func(so *stmOptions) { so.prefetch = append(so.prefetch, keys...) }
 }
 
-// NewSTM initiates a new STM instance, using snapshot isolation by default.
+// NewSTM initiates a new STM instance, using serializable snapshot isolation by default.
 func NewSTM(c *v3.Client, apply func(STM) error, so ...stmOption) (*v3.TxnResponse, error) {
 	opts := &stmOptions{ctx: c.Ctx()}
 	for _, f := range so {

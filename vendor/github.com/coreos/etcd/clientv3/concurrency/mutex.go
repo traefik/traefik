@@ -15,12 +15,12 @@
 package concurrency
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
 	v3 "github.com/coreos/etcd/clientv3"
 	pb "github.com/coreos/etcd/etcdserver/etcdserverpb"
-	"golang.org/x/net/context"
 )
 
 // Mutex implements the sync Locker interface with etcd
@@ -49,13 +49,21 @@ func (m *Mutex) Lock(ctx context.Context) error {
 	put := v3.OpPut(m.myKey, "", v3.WithLease(s.Lease()))
 	// reuse key in case this session already holds the lock
 	get := v3.OpGet(m.myKey)
-	resp, err := client.Txn(ctx).If(cmp).Then(put).Else(get).Commit()
+	// fetch current holder to complete uncontended path with only one RPC
+	getOwner := v3.OpGet(m.pfx, v3.WithFirstCreate()...)
+	resp, err := client.Txn(ctx).If(cmp).Then(put, getOwner).Else(get, getOwner).Commit()
 	if err != nil {
 		return err
 	}
 	m.myRev = resp.Header.Revision
 	if !resp.Succeeded {
 		m.myRev = resp.Responses[0].GetResponseRange().Kvs[0].CreateRevision
+	}
+	// if no key on prefix / the minimum rev is key, already hold the lock
+	ownerKey := resp.Responses[1].GetResponseRange().Kvs
+	if len(ownerKey) == 0 || ownerKey[0].CreateRevision == m.myRev {
+		m.hdr = resp.Header
+		return nil
 	}
 
 	// wait for deletion revisions prior to myKey
