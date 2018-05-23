@@ -203,7 +203,7 @@ func checkHealth(serverURL *url.URL, backend *BackendHealthCheck) error {
 
 	defer resp.Body.Close()
 
-	if resp.StatusCode < http.StatusContinue || resp.StatusCode >= http.StatusBadRequest {
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
 		return fmt.Errorf("received error status code: %v", resp.StatusCode)
 	}
 
