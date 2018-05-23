@@ -188,10 +188,11 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 		if _, ok := i.Annotations[annotationKubernetesPercentageWeights]; ok {
 			fractionalAllocator, err := newFractionalWeightAllocator(i, k8sClient)
 			if err != nil {
-				log.Errorf("Failed to read backend percentage weights for ingress %s/%s: %v", i.Namespace, i.Name, err)
-				continue
+				log.Warnf("Failed to read backend percentage weights for ingress %s/%s: %v", i.Namespace, i.Name, err)
+				weightAllocator = &defaultWeightAllocator{}
+			} else {
+				weightAllocator = fractionalAllocator
 			}
-			weightAllocator = fractionalAllocator
 		}
 
 		for _, r := range i.Spec.Rules {
