@@ -101,7 +101,7 @@ func newFractionalWeightAllocator(ingress *extensionsv1beta1.Ingress, client Cli
 					path:    pa,
 					service: svc,
 				}
-				serviceWeights[ingSvc] = fractionalPathWeights[pa].computeWeight(serviceInstanceCounts[ingSvc])
+				serviceWeights[ingSvc] = fractionalPathWeights[pa].computeWeight(totalFractionalInstanceCount)
 			}
 		}
 	}
