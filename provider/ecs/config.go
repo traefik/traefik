@@ -19,11 +19,12 @@ import (
 func (p *Provider) buildConfigurationV2(instances []ecsInstance) (*types.Configuration, error) {
 	services := make(map[string][]ecsInstance)
 	for _, instance := range instances {
+	    backendName := getBackendName(instance)
 		if p.filterInstance(instance) {
-			if serviceInstances, ok := services[instance.Name]; ok {
-				services[instance.Name] = append(serviceInstances, instance)
+			if serviceInstances, ok := services[backendName]; ok {
+				services[backendName] = append(serviceInstances, instance)
 			} else {
-				services[instance.Name] = []ecsInstance{instance}
+				services[backendName] = []ecsInstance{instance}
 			}
 		}
 	}
@@ -90,6 +91,13 @@ func (p *Provider) filterInstance(i ecsInstance) bool {
 	return true
 }
 
+func getBackendName(i ecsInstance) string {
+	if value := label.GetStringValue(i.TraefikLabels, label.TraefikBackend, ""); len(value) > 0 {
+		return value
+	}
+	return i.Name
+}
+
 func (p *Provider) getFrontendRule(i ecsInstance) string {
 	domain := label.GetStringValue(i.TraefikLabels, label.TraefikDomain, p.Domain)
 	defaultRule := "Host:" + strings.ToLower(strings.Replace(i.Name, "_", "-", -1)) + "." + domain
@@ -112,9 +120,9 @@ func filterFrontends(instances []ecsInstance) []ecsInstance {
 	byName := make(map[string]struct{})
 
 	return fun.Filter(func(i ecsInstance) bool {
-		_, found := byName[i.Name]
+		_, found := byName[getBackendName(i)]
 		if !found {
-			byName[i.Name] = struct{}{}
+			byName[getBackendName(i)] = struct{}{}
 		}
 		return !found
 	}, instances).([]ecsInstance)
