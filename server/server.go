@@ -145,6 +145,15 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration, provider p
 	return server
 }
 
+type h2cTransportWrapper struct {
+	*http2.Transport
+}
+
+func (t *h2cTransportWrapper) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.URL.Scheme = "http"
+	return t.Transport.RoundTrip(req)
+}
+
 // createHTTPTransport creates an http.Transport configured with the GlobalConfiguration settings.
 // For the settings that can't be configured in Traefik it uses the default http.Transport settings.
 // An exception to this is the MaxIdleConns setting as we only provide the option MaxIdleConnsPerHost
@@ -168,6 +177,16 @@ func createHTTPTransport(globalConfiguration configuration.GlobalConfiguration) 
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
 	}
+
+	transport.RegisterProtocol("h2c", &h2cTransportWrapper{
+		Transport: &http2.Transport{
+			DialTLS: func(netw, addr string, cfg *tls.Config) (net.Conn, error) {
+				return net.Dial(netw, addr)
+			},
+			AllowHTTP: true,
+		},
+	})
+
 	if globalConfiguration.ForwardingTimeouts != nil {
 		transport.ResponseHeaderTimeout = time.Duration(globalConfiguration.ForwardingTimeouts.ResponseHeaderTimeout)
 	}
