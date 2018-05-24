@@ -201,7 +201,7 @@ func TestBuildConfiguration(t *testing.T) {
 			},
 			expected: &types.Configuration{
 				Backends: map[string]*types.Backend{
-					"backend-testing-instance": {
+					"backend-foobar": {
 						Servers: map[string]types.Server{
 							"server-testing-instance-6": {
 								URL:    "https://10.0.0.1:666",
@@ -243,14 +243,14 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 				},
 				Frontends: map[string]*types.Frontend{
-					"frontend-testing-instance": {
+					"frontend-foobar": {
 						EntryPoints: []string{
 							"http",
 							"https",
 						},
-						Backend: "backend-testing-instance",
+						Backend: "backend-foobar",
 						Routes: map[string]types.Route{
-							"route-frontend-testing-instance": {
+							"route-frontend-foobar": {
 								Rule: "Host:traefik.io",
 							},
 						},
