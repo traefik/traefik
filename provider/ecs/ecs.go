@@ -228,9 +228,10 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 				})
 				if err != nil {
 					log.Errorf("Unable to describe tasks for %s", page.TaskArns)
-				}
-				for _, t := range resp.Tasks {
-					tasks[aws.StringValue(t.TaskArn)] = t
+				} else {
+					for _, t := range resp.Tasks {
+						tasks[aws.StringValue(t.TaskArn)] = t
+					}
 				}
 			}
 			return !lastPage
@@ -272,6 +273,11 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 					}
 				}
 
+				if containerDefinition == nil {
+					log.Debugf("Unable to find container definition for %s", aws.StringValue(container.Name))
+					continue
+				}
+
 				var mach *machine
 				if aws.StringValue(task.LaunchType) == ecs.LaunchTypeFargate {
 					var hostPort int64
@@ -297,7 +303,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 
 				instances = append(instances, ecsInstance{
 					Name:                fmt.Sprintf("%s-%s", strings.Replace(aws.StringValue(task.Group), ":", "-", 1), *container.Name),
-					ID:                  (key)[len(key)-12:],
+					ID:                  key[len(key)-12:],
 					containerDefinition: containerDefinition,
 					machine:             mach,
 					TraefikLabels:       aws.StringValueMap(containerDefinition.DockerLabels),
