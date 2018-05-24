@@ -94,6 +94,10 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 		return
 	}
 
+	for _, header := range config.AuthResponseHeaders {
+		r.Header.Set(header.As, forwardResponse.Header.Get(header.Name))
+	}
+
 	r.RequestURI = r.URL.RequestURI()
 	next(w, r)
 }
