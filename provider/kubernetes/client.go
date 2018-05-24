@@ -41,18 +41,22 @@ func (reh *resourceEventHandler) OnDelete(obj interface{}) {
 // The stores can then be accessed via the Get* functions.
 type Client interface {
 	WatchAll(namespaces Namespaces, stopCh <-chan struct{}) (<-chan interface{}, error)
+	WatchNamespaces(namespaces Namespaces, stopCh <-chan struct{}) (<-chan interface{}, error)
 	GetIngresses() []*extensionsv1beta1.Ingress
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
 	UpdateIngressStatus(namespace, name, ip, hostname string) error
+	GetNamespaces() (*corev1.NamespaceList, error)
 }
 
 type clientImpl struct {
-	clientset            *kubernetes.Clientset
-	factories            map[string]informers.SharedInformerFactory
-	ingressLabelSelector labels.Selector
-	isNamespaceAll       bool
+	clientset              *kubernetes.Clientset
+	factories              map[string]informers.SharedInformerFactory
+	namespaceFactory       informers.SharedInformerFactory
+	ingressLabelSelector   labels.Selector
+	namespaceLabelSelector labels.Selector
+	isNamespaceAll         bool
 }
 
 func newClientImpl(clientset *kubernetes.Clientset) *clientImpl {
@@ -111,16 +115,53 @@ func createClientFromConfig(c *rest.Config) (*clientImpl, error) {
 	return newClientImpl(clientset), nil
 }
 
+// WatchNamespaces starts a controller to watch for namespace events.
+func (c *clientImpl) WatchNamespaces(namespaces Namespaces, stopCh <-chan struct{}) (<-chan interface{}, error) {
+	eventCh := make(chan interface{}, 1)
+	eventHandler := c.newResourceEventHandler(eventCh)
+
+	c.namespaceFactory = informers.NewSharedInformerFactory(c.clientset, resyncPeriod)
+	c.namespaceFactory.Core().V1().Namespaces().Informer().AddEventHandler(eventHandler)
+
+	// If no namespaces are specified
+	if len(namespaces) == 0 {
+		// If no namespacelabels are specified
+		if c.namespaceLabelSelector.String() == "" {
+			namespaces = Namespaces{metav1.NamespaceAll}
+			c.isNamespaceAll = true
+		} else {
+			// namespacelabels are being used, watch all namespaces for events, use them to get namespaces to watch..
+			c.namespaceFactory.Start(stopCh)
+		}
+	}
+	return eventCh, nil
+}
+
 // WatchAll starts namespace-specific controllers for all relevant kinds.
 func (c *clientImpl) WatchAll(namespaces Namespaces, stopCh <-chan struct{}) (<-chan interface{}, error) {
 	eventCh := make(chan interface{}, 1)
-
-	if len(namespaces) == 0 {
-		namespaces = Namespaces{metav1.NamespaceAll}
-		c.isNamespaceAll = true
-	}
-
 	eventHandler := c.newResourceEventHandler(eventCh)
+
+	// If no namespaces are specified
+	if len(namespaces) == 0 {
+		// If no namespacelabels are specified
+		if c.namespaceLabelSelector.String() == "" {
+			namespaces = Namespaces{metav1.NamespaceAll}
+			c.isNamespaceAll = true
+		} else {
+			// namespacelabels are being used, get all namespaces being watched
+			namespaceList, err := c.clientset.CoreV1().Namespaces().List(metav1.ListOptions{LabelSelector: c.namespaceLabelSelector.String()})
+			log.Debugf("Current Namespace List: %+v", namespaceList)
+			if err != nil {
+				return eventCh, fmt.Errorf("could not list namespaces with error: %s", err)
+			}
+			for _, item := range namespaceList.Items {
+				log.Debugf("Adding found namespace: %s to namespace list", item.ObjectMeta.Name)
+				namespaces = append(namespaces, item.ObjectMeta.Name)
+			}
+		}
+	}
+	log.Debugf("Starting watches on %v namespaces", namespaces)
 	for _, ns := range namespaces {
 		factory := informers.NewFilteredSharedInformerFactory(c.clientset, resyncPeriod, ns, nil)
 		factory.Extensions().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
@@ -156,10 +197,23 @@ func (c *clientImpl) WatchAll(namespaces Namespaces, stopCh <-chan struct{}) (<-
 // GetIngresses returns all Ingresses for observed namespaces in the cluster.
 func (c *clientImpl) GetIngresses() []*extensionsv1beta1.Ingress {
 	var result []*extensionsv1beta1.Ingress
-	for ns, factory := range c.factories {
-		ings, err := factory.Extensions().V1beta1().Ingresses().Lister().List(c.ingressLabelSelector)
+	namespaceList, err := c.GetNamespaces()
+	if err != nil {
+		log.Errorf("could not list namespaces: %v", err)
+		return result
+	}
+
+	var namespaces Namespaces
+	for _, item := range namespaceList.Items {
+		namespaces = append(namespaces, item.ObjectMeta.Name)
+	}
+	for _, ns := range namespaces {
+		log.Debugf("ns: %v, sel: %v", ns, c.ingressLabelSelector)
+		log.Debugf("factories: %+v", c.factories)
+		ings, err := c.factories[ns].Extensions().V1beta1().Ingresses().Lister().List(c.ingressLabelSelector)
 		if err != nil {
 			log.Errorf("Failed to list ingresses in namespace %s: %s", ns, err)
+			continue
 		}
 		for _, ing := range ings {
 			result = append(result, ing)
@@ -191,6 +245,15 @@ func (c *clientImpl) UpdateIngressStatus(namespace, name, ip, hostname string) e
 	}
 	log.Infof("Updated status on ingress %s/%s", namespace, name)
 	return nil
+}
+
+// GetNamespaces returns namespaces with the given labelselector.
+func (c *clientImpl) GetNamespaces() (*corev1.NamespaceList, error) {
+	item, err := c.clientset.CoreV1().Namespaces().List(metav1.ListOptions{LabelSelector: c.namespaceLabelSelector.String()})
+	if err != nil {
+		return nil, err
+	}
+	return item, nil
 }
 
 // GetService returns the named service from the given namespace.
