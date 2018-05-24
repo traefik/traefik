@@ -3,25 +3,12 @@
 This section explains how to use Traefik as reverse proxy for gRPC application with self-signed certificates.
 
 !!! warning
-    As gRPC needs HTTP2, we need HTTPS certificates on both gRPC Server and Træfik.
+    As gRPC needs HTTP2, we need HTTPS certificates on Træfik.
+    For exchanges with the backend, we will use h2c (HTTP2 on HTTP without TLS)
 
 <p align="center">
 <img src="/img/grpc.svg" alt="gRPC architecture" title="gRPC architecture" />
 </p>
-
-## gRPC Server certificate
-
-In order to secure the gRPC server, we generate a self-signed certificate for backend url:
-
-```bash
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./backend.key -out ./backend.cert
-```
-
-That will prompt for information, the important answer is:
-
-```
-Common Name (e.g. server FQDN or YOUR name) []: backend.local
-```
 
 ## gRPC Client certificate
 
@@ -44,9 +31,6 @@ At last, we configure our Træfik instance to use both self-signed certificates.
 ```toml
 defaultEntryPoints = ["https"]
 
-# For secure connection on backend.local
-rootCAs = [ "./backend.cert" ]
-
 [entryPoints]
   [entryPoints.https]
   address = ":4443"
@@ -64,8 +48,8 @@ rootCAs = [ "./backend.cert" ]
 [backends]
   [backends.backend1]
     [backends.backend1.servers.server1]
-    # Access on backend with HTTPS
-    url = "https://backend.local:8080"
+    # Access on backend with h2c
+    url = "h2c://backend.local:8080"
 
 
 [frontends]
@@ -76,40 +60,25 @@ rootCAs = [ "./backend.cert" ]
 ```
 
 !!! warning
-    With some backends, the server URLs use the IP, so you may need to configure `insecureSkipVerify` instead of the `rootCAS` to activate HTTPS without hostname verification.
+    For provider with label, you will have to specify the `traefik.protocol=h2c`
 
 ## Conclusion
 
-We don't need specific configuration to use gRPC in Træfik, we just need to be careful that all the exchanges (between client and Træfik, and between Træfik and backend) are HTTPS communications because gRPC uses HTTP2.
+We don't need specific configuration to use gRPC in Træfik, we just need to be careful that exchanges between client and Træfik are HTTPS communications.
+For exchanges between Træfik and backend, you need to use `h2c` protocol, or use HTTPS communications to have HTTP2.
 
 ## A gRPC example in go
 
 We will use the gRPC greeter example in [grpc-go](https://github.com/grpc/grpc-go/tree/master/examples/helloworld)
 
-!!! warning
-    In order to use this gRPC example, we need to modify it to use HTTPS
-
-So we modify the "gRPC server example" to use our own self-signed certificate:
-
+We can keep the Server example as is with the h2c protocol
 ```go
 // ...
-
-// Read cert and key file
-BackendCert, _ := ioutil.ReadFile("./backend.cert")
-BackendKey, _ := ioutil.ReadFile("./backend.key")
-
-// Generate Certificate struct
-cert, err := tls.X509KeyPair(BackendCert, BackendKey)
+lis, err := net.Listen("tcp", port)
 if err != nil {
-  log.Fatalf("failed to parse certificate: %v", err)
+    log.Fatalf("failed to listen: %v", err)
 }
-
-// Create credentials
-creds := credentials.NewServerTLSFromCert(&cert)
-
-// Use Credentials in gRPC server options
-serverOption := grpc.Creds(creds)
-var s *grpc.Server = grpc.NewServer(serverOption)
+var s *grpc.Server = grpc.NewServer()
 defer s.Stop()
 
 pb.RegisterGreeterServer(s, &server{})
@@ -117,6 +86,10 @@ err := s.Serve(lis)
 
 // ...
 ```
+
+!!! warning
+    In order to use this gRPC example, we need to modify it to use HTTPS
+
 
 Next we will modify gRPC Client to use our Træfik self-signed certificate:
 
@@ -147,4 +120,3 @@ r, err := client.SayHello(context.Background(), &pb.HelloRequest{Name: name})
 
 // ...
 ```
-
