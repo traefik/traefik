@@ -60,7 +60,7 @@ defaultEntryPoints = ["https"]
 ```
 
 !!! warning
-    For provider with label, you will have to specify the `frontend.protocol=h2c`
+    For provider with label, you will have to specify the `traefik.protocol=h2c`
 
 ## Conclusion
 
