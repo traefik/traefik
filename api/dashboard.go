@@ -4,15 +4,22 @@ import (
 	"net/http"
 
 	"github.com/containous/mux"
-	"github.com/containous/traefik/autogen/genstatic"
+	"github.com/containous/traefik/log"
 	"github.com/elazarl/go-bindata-assetfs"
 )
 
 // DashboardHandler expose dashboard routes
-type DashboardHandler struct{}
+type DashboardHandler struct {
+	Assets *assetfs.AssetFS
+}
 
 // AddRoutes add dashboard routes on a router
 func (g DashboardHandler) AddRoutes(router *mux.Router) {
+	if g.Assets == nil {
+		log.Error("No assets for dashboard")
+		return
+	}
+
 	// Expose dashboard
 	router.Methods(http.MethodGet).
 		Path("/").
@@ -28,5 +35,5 @@ func (g DashboardHandler) AddRoutes(router *mux.Router) {
 
 	router.Methods(http.MethodGet).
 		PathPrefix("/dashboard/").
-		Handler(http.StripPrefix("/dashboard/", http.FileServer(&assetfs.AssetFS{Asset: genstatic.Asset, AssetInfo: genstatic.AssetInfo, AssetDir: genstatic.AssetDir, Prefix: "static"})))
+		Handler(http.StripPrefix("/dashboard/", http.FileServer(g.Assets)))
 }
