@@ -233,6 +233,44 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 	assertMetricsExist(t, mustScrape(), entrypointReqsTotalName)
 }
 
+func TestPrometheusRemovedMetricsReset(t *testing.T) {
+	// Reset state of global promState.
+	defer promState.reset()
+
+	prometheusRegistry := RegisterPrometheus(&types.Prometheus{})
+	defer prometheus.Unregister(promState)
+
+	labelNamesValues := []string{
+		"backend", "backend",
+		"code", strconv.Itoa(http.StatusOK),
+		"method", http.MethodGet,
+		"protocol", "http",
+	}
+	prometheusRegistry.
+		BackendReqsCounter().
+		With(labelNamesValues...).
+		Add(3)
+
+	delayForTrackingCompletion()
+
+	metricsFamilies := mustScrape()
+	assertCounterValue(t, 3, findMetricFamily(backendReqsTotalName, metricsFamilies), labelNamesValues...)
+
+	// There is no dynamic configuration and so this metric will be deleted
+	// after the first scrape.
+	assertMetricsAbsent(t, mustScrape(), backendReqsTotalName)
+
+	prometheusRegistry.
+		BackendReqsCounter().
+		With(labelNamesValues...).
+		Add(1)
+
+	delayForTrackingCompletion()
+
+	metricsFamilies = mustScrape()
+	assertCounterValue(t, 1, findMetricFamily(backendReqsTotalName, metricsFamilies), labelNamesValues...)
+}
+
 // Tracking and gathering the metrics happens concurrently.
 // In practice this is no problem, because in case a tracked metric would miss
 // the current scrape, it would just be there in the next one.
@@ -278,6 +316,58 @@ func findMetricFamily(name string, families []*dto.MetricFamily) *dto.MetricFami
 		}
 	}
 	return nil
+}
+
+func findMetricByLabelNamesValues(family *dto.MetricFamily, labelNamesValues ...string) *dto.Metric {
+	if family == nil {
+		return nil
+	}
+
+	for _, metric := range family.Metric {
+		match := true
+
+		for i := 0; i < len(labelNamesValues); i += 2 {
+			hasLabel := false
+			name, val := labelNamesValues[i], labelNamesValues[i+1]
+
+			for _, labelPair := range metric.Label {
+				if labelPair.GetName() == name && labelPair.GetValue() == val {
+					hasLabel = true
+					break
+				}
+			}
+
+			if !hasLabel {
+				match = false
+				break
+			}
+		}
+
+		if match {
+			return metric
+		}
+	}
+
+	return nil
+}
+
+func assertCounterValue(t *testing.T, want float64, family *dto.MetricFamily, labelNamesValues ...string) {
+	t.Helper()
+
+	metric := findMetricByLabelNamesValues(family, labelNamesValues...)
+
+	if metric == nil {
+		t.Error("metric must not be nil")
+		return
+	}
+	if metric.Counter == nil {
+		t.Errorf("metric %s must be a counter", family.GetName())
+		return
+	}
+
+	if cv := metric.Counter.GetValue(); cv != want {
+		t.Errorf("metric %s has value %v, want %v", family.GetName(), cv, want)
+	}
 }
 
 func buildCounterAssert(t *testing.T, metricName string, expectedValue int) func(family *dto.MetricFamily) {

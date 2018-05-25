@@ -248,6 +248,7 @@ func (ps *prometheusState) Collect(ch chan<- stdprometheus.Metric) {
 	}
 
 	for _, key := range outdatedKeys {
+		ps.state[key].delete()
 		delete(ps.state, key)
 	}
 }
@@ -307,11 +308,12 @@ func (cs *dynamicConfig) hasServerURL(backendName, serverURL string) bool {
 	return false
 }
 
-func newCollector(metricName string, labels stdprometheus.Labels, c stdprometheus.Collector) *collector {
+func newCollector(metricName string, labels stdprometheus.Labels, c stdprometheus.Collector, delete func()) *collector {
 	return &collector{
 		id:        buildMetricID(metricName, labels),
 		labels:    labels,
 		collector: c,
+		delete:    delete,
 	}
 }
 
@@ -322,6 +324,7 @@ type collector struct {
 	id        string
 	labels    stdprometheus.Labels
 	collector stdprometheus.Collector
+	delete    func()
 }
 
 func buildMetricID(metricName string, labels stdprometheus.Labels) string {
@@ -366,7 +369,9 @@ func (c *counter) Add(delta float64) {
 	labels := c.labelNamesValues.ToLabels()
 	collector := c.cv.With(labels)
 	collector.Add(delta)
-	c.collectors <- newCollector(c.name, labels, collector)
+	c.collectors <- newCollector(c.name, labels, collector, func() {
+		c.cv.Delete(labels)
+	})
 }
 
 func (c *counter) Describe(ch chan<- *stdprometheus.Desc) {
@@ -406,14 +411,18 @@ func (g *gauge) Add(delta float64) {
 	labels := g.labelNamesValues.ToLabels()
 	collector := g.gv.With(labels)
 	collector.Add(delta)
-	g.collectors <- newCollector(g.name, labels, collector)
+	g.collectors <- newCollector(g.name, labels, collector, func() {
+		g.gv.Delete(labels)
+	})
 }
 
 func (g *gauge) Set(value float64) {
 	labels := g.labelNamesValues.ToLabels()
 	collector := g.gv.With(labels)
 	collector.Set(value)
-	g.collectors <- newCollector(g.name, labels, collector)
+	g.collectors <- newCollector(g.name, labels, collector, func() {
+		g.gv.Delete(labels)
+	})
 }
 
 func (g *gauge) Describe(ch chan<- *stdprometheus.Desc) {
@@ -449,7 +458,9 @@ func (h *histogram) Observe(value float64) {
 	labels := h.labelNamesValues.ToLabels()
 	collector := h.hv.With(labels)
 	collector.Observe(value)
-	h.collectors <- newCollector(h.name, labels, collector)
+	h.collectors <- newCollector(h.name, labels, collector, func() {
+		h.hv.Delete(labels)
+	})
 }
 
 func (h *histogram) Describe(ch chan<- *stdprometheus.Desc) {
