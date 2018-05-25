@@ -324,31 +324,31 @@ func findMetricByLabelNamesValues(family *dto.MetricFamily, labelNamesValues ...
 	}
 
 	for _, metric := range family.Metric {
-		match := true
-
-		for i := 0; i < len(labelNamesValues); i += 2 {
-			hasLabel := false
-			name, val := labelNamesValues[i], labelNamesValues[i+1]
-
-			for _, labelPair := range metric.Label {
-				if labelPair.GetName() == name && labelPair.GetValue() == val {
-					hasLabel = true
-					break
-				}
-			}
-
-			if !hasLabel {
-				match = false
-				break
-			}
-		}
-
-		if match {
+		if hasMetricAllLabelPairs(metric, labelNamesValues...) {
 			return metric
 		}
 	}
 
 	return nil
+}
+
+func hasMetricAllLabelPairs(metric *dto.Metric, labelNamesValues ...string) bool {
+	for i := 0; i < len(labelNamesValues); i += 2 {
+		name, val := labelNamesValues[i], labelNamesValues[i+1]
+		if !hasMetricLabelPair(metric, name, val) {
+			return false
+		}
+	}
+	return true
+}
+
+func hasMetricLabelPair(metric *dto.Metric, labelName, labelValue string) bool {
+	for _, labelPair := range metric.Label {
+		if labelPair.GetName() == labelName && labelPair.GetValue() == labelValue {
+			return true
+		}
+	}
+	return false
 }
 
 func assertCounterValue(t *testing.T, want float64, family *dto.MetricFamily, labelNamesValues ...string) {
