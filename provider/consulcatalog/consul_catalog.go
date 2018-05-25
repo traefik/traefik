@@ -274,7 +274,6 @@ func (p *Provider) watchHealthState(stopCh <-chan struct{}, watchCh chan<- map[s
 				return
 			}
 
-
 			var current = make(map[string][]string)
 			if healthyState != nil {
 				for _, healthy := range healthyState {
