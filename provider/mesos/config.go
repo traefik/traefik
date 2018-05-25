@@ -22,10 +22,10 @@ type taskData struct {
 
 func (p *Provider) buildConfigurationV2(tasks []state.Task) *types.Configuration {
 	var mesosFuncMap = template.FuncMap{
-		"getDomain":          label.GetFuncString(label.TraefikDomain, p.Domain),
-		"getSubDomain":       p.getSubDomain,
-		"getSegentSubDomain": p.getSegmentSubDomain,
-		"getID":              getID,
+		"getDomain":           label.GetFuncString(label.TraefikDomain, p.Domain),
+		"getSubDomain":        p.getSubDomain,
+		"getSegmentSubDomain": p.getSegmentSubDomain,
+		"getID":               getID,
 
 		// Backend functions
 		"getBackendName":    getBackendName,
