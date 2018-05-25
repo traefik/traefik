@@ -152,10 +152,22 @@ func (dc *DomainsCertificates) removeDuplicates() {
 	}
 }
 
+func (dc *DomainsCertificates) removeEmpty() {
+	certs := []*DomainsCertificate{}
+	for _, cert := range dc.Certs {
+		if cert.Certificate != nil && len(cert.Certificate.Certificate) > 0 && len(cert.Certificate.PrivateKey) > 0 {
+			certs = append(certs, cert)
+		}
+	}
+	dc.Certs = certs
+}
+
 // Init DomainsCertificates
 func (dc *DomainsCertificates) Init() error {
 	dc.lock.Lock()
 	defer dc.lock.Unlock()
+
+	dc.removeEmpty()
 
 	for _, domainsCertificate := range dc.Certs {
 		tlsCert, err := tls.X509KeyPair(domainsCertificate.Certificate.Certificate, domainsCertificate.Certificate.PrivateKey)
