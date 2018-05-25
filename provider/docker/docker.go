@@ -40,6 +40,7 @@ type EventCallback struct {
 	ListTasksFunc             func(eventtypes.Message) ([]swarmtypes.Task, error)
 	GetServiceFunc            func(string) (swarmtypes.Service, error)
 	SleepFunc                 func()
+	ExecutionFinishedChan     chan bool
 }
 
 // Execute executes the callback logic.
@@ -126,6 +127,10 @@ TaskLoop:
 		log.Debug("Callback task state check: Updating routing configuration if needed...")
 
 		c.ListAndUpdateServicesFunc()
+
+		if c.ExecutionFinishedChan != nil {
+			c.ExecutionFinishedChan <- true
+		}
 	} else {
 		// We should only reach this place when new tasks are being created.
 		// Therefore, sleeping here shouldn't affect the graceful scale down.
@@ -135,7 +140,7 @@ TaskLoop:
 		c.SleepFunc()
 
 		log.Debug("Callback task state check: Retrying...")
-		c.Execute(msg)
+		go c.Execute(msg)
 	}
 }
 

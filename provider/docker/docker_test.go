@@ -56,6 +56,7 @@ func TestEventCallbackNoTasksFoundOneRetry(t *testing.T) {
 	taskFuncCallCount := 0
 	getServiceFuncCallCount := 0
 	sleepFuncCallCount := 0
+	executionFinishedChan := make(chan bool)
 
 	c := docker.EventCallback{
 		ListAndUpdateServicesFunc: func() error {
@@ -95,11 +96,14 @@ func TestEventCallbackNoTasksFoundOneRetry(t *testing.T) {
 		SleepFunc: func() {
 			sleepFuncCallCount++
 		},
+		ExecutionFinishedChan: executionFinishedChan,
 	}
 
 	msg := events.Message{}
 	msg.Actor.ID = "deadbeef"
 	c.Execute(msg)
+
+	<-executionFinishedChan
 
 	if serviceFuncCallCount != 1 {
 		t.Fatal("expected", 1, "got", serviceFuncCallCount)
@@ -120,6 +124,7 @@ func TestEventCallbackTaskGettingReadyTwoRetries(t *testing.T) {
 	taskFuncCallCount := 0
 	getServiceFuncCallCount := 0
 	sleepFuncCallCount := 0
+	executionFinishedChan := make(chan bool)
 
 	c := docker.EventCallback{
 		ListAndUpdateServicesFunc: func() error {
@@ -168,11 +173,14 @@ func TestEventCallbackTaskGettingReadyTwoRetries(t *testing.T) {
 		SleepFunc: func() {
 			sleepFuncCallCount++
 		},
+		ExecutionFinishedChan: executionFinishedChan,
 	}
 
 	msg := events.Message{}
 	msg.Actor.ID = "deadbeef"
 	c.Execute(msg)
+
+	<-executionFinishedChan
 
 	if serviceFuncCallCount != 1 {
 		t.Fatal("expected", 1, "got", serviceFuncCallCount)
@@ -193,6 +201,7 @@ func TestEventCallbackTaskGettingReadyFailsAfterTwoRetriesStillExecutesServiceLi
 	taskFuncCallCount := 0
 	getServiceFuncCallCount := 0
 	sleepFuncCallCount := 0
+	executionFinishedChan := make(chan bool)
 
 	c := docker.EventCallback{
 		ListAndUpdateServicesFunc: func() error {
@@ -241,11 +250,14 @@ func TestEventCallbackTaskGettingReadyFailsAfterTwoRetriesStillExecutesServiceLi
 		SleepFunc: func() {
 			sleepFuncCallCount++
 		},
+		ExecutionFinishedChan: executionFinishedChan,
 	}
 
 	msg := events.Message{}
 	msg.Actor.ID = "deadbeef"
 	c.Execute(msg)
+
+	<-executionFinishedChan
 
 	if serviceFuncCallCount != 1 {
 		t.Fatal("expected", 1, "got", serviceFuncCallCount)
@@ -266,6 +278,7 @@ func TestEventCallbackTaskGettingReadyGoesThroughAllPossibleRetrySteps(t *testin
 	taskFuncCallCount := 0
 	getServiceFuncCallCount := 0
 	sleepFuncCallCount := 0
+	executionFinishedChan := make(chan bool)
 
 	c := docker.EventCallback{
 		ListAndUpdateServicesFunc: func() error {
@@ -330,11 +343,14 @@ func TestEventCallbackTaskGettingReadyGoesThroughAllPossibleRetrySteps(t *testin
 		SleepFunc: func() {
 			sleepFuncCallCount++
 		},
+		ExecutionFinishedChan: executionFinishedChan,
 	}
 
 	msg := events.Message{}
 	msg.Actor.ID = "deadbeef"
 	c.Execute(msg)
+
+	<-executionFinishedChan
 
 	if serviceFuncCallCount != 1 {
 		t.Fatal("expected", 1, "got", serviceFuncCallCount)
@@ -415,6 +431,7 @@ func TestEventCallbackTasksFoundFewerThanExpectedOneRetryReplicatedMode(t *testi
 	taskFuncCallCount := 0
 	getServiceFuncCallCount := 0
 	sleepFuncCallCount := 0
+	executionFinishedChan := make(chan bool)
 
 	c := docker.EventCallback{
 		ListAndUpdateServicesFunc: func() error {
@@ -460,11 +477,14 @@ func TestEventCallbackTasksFoundFewerThanExpectedOneRetryReplicatedMode(t *testi
 		SleepFunc: func() {
 			sleepFuncCallCount++
 		},
+		ExecutionFinishedChan: executionFinishedChan,
 	}
 
 	msg := events.Message{}
 	msg.Actor.ID = "deadbeef"
 	c.Execute(msg)
+
+	<-executionFinishedChan
 
 	if serviceFuncCallCount != 1 {
 		t.Fatal("expected", 1, "got", serviceFuncCallCount)
