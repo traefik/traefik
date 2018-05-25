@@ -48,6 +48,7 @@ type Server struct {
 	originalHandler http.Handler
 }
 
+// Serve Put a middleware around the original handler to handle h2c
 func (s Server) Serve(l net.Listener) error {
 	originalHandler := s.Server.Handler
 	if originalHandler == nil {
@@ -89,7 +90,7 @@ func (s Server) Serve(l net.Listener) error {
 func initH2CWithPriorKnowledge(w http.ResponseWriter) (net.Conn, error) {
 	hijacker, ok := w.(http.Hijacker)
 	if !ok {
-		return nil, errors.New("hijack not supported.")
+		return nil, errors.New("hijack not supported")
 	}
 	conn, rw, err := hijacker.Hijack()
 	if err != nil {
@@ -150,7 +151,7 @@ func h2cUpgrade(w http.ResponseWriter, r *http.Request) (net.Conn, error) {
 
 	hijacker, ok := w.(http.Hijacker)
 	if !ok {
-		return nil, errors.New("hijack not supported.")
+		return nil, errors.New("hijack not supported")
 	}
 	conn, rw, err := hijacker.Hijack()
 	if err != nil {
@@ -311,7 +312,7 @@ func (w *settingsAckSwallowWriter) Write(p []byte) (int, error) {
 			}
 			fSize := fh.Length + 9
 			if uint32(len(w.buf)) < fSize {
-				// Have not collected whole frame. Stop processing buf, and withold on
+				// Have not collected whole frame. Stop processing buf, and withhold on
 				// forward bytes to w.Writer until we get the full frame.
 				break
 			}
