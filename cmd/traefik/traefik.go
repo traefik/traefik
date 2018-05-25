@@ -14,6 +14,7 @@ import (
 	"github.com/cenk/backoff"
 	"github.com/containous/flaeg"
 	"github.com/containous/staert"
+	"github.com/containous/traefik/autogen/genstatic"
 	"github.com/containous/traefik/cmd"
 	"github.com/containous/traefik/cmd/bug"
 	"github.com/containous/traefik/cmd/healthcheck"
@@ -33,6 +34,7 @@ import (
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
 	"github.com/coreos/go-systemd/daemon"
+	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/ogier/pflag"
 	"github.com/sirupsen/logrus"
 	"github.com/vulcand/oxy/roundrobin"
@@ -162,6 +164,10 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 
 	globalConfiguration.SetEffectiveConfiguration(configFile)
 	globalConfiguration.ValidateConfiguration()
+
+	if globalConfiguration.API != nil && globalConfiguration.API.Dashboard {
+		globalConfiguration.API.DashboardAssets = &assetfs.AssetFS{Asset: genstatic.Asset, AssetInfo: genstatic.AssetInfo, AssetDir: genstatic.AssetDir, Prefix: "static"}
+	}
 
 	jsonConf, _ := json.Marshal(globalConfiguration)
 	log.Infof("Traefik version %s built on %s", version.Version, version.BuildDate)
