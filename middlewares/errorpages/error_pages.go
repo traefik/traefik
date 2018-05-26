@@ -101,12 +101,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.
 
 			h.backendHandler.ServeHTTP(recorderErrorPage, pageReq.WithContext(req.Context()))
 
-			utils.CopyHeaders(w.Header(), recorder.Header())
-			for key := range recorderErrorPage.Header() {
-				w.Header().Del(key)
-			}
-			utils.CopyHeaders(w.Header(), recorderErrorPage.Header())
-
+			mergeResponseHeader(w, recorder, recorderErrorPage)
 			w.WriteHeader(recorder.GetCode())
 			w.Write(recorderErrorPage.GetBody().Bytes())
 			return
@@ -117,6 +112,18 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.
 	utils.CopyHeaders(w.Header(), recorder.Header())
 	w.WriteHeader(recorder.GetCode())
 	w.Write(recorder.GetBody().Bytes())
+}
+
+func mergeResponseHeader(dst http.ResponseWriter, backendWriter http.ResponseWriter, epWriter http.ResponseWriter) {
+	utils.CopyHeaders(dst.Header(), backendWriter.Header())
+	for key := range epWriter.Header() {
+		dst.Header().Del(key)
+	}
+	utils.CopyHeaders(dst.Header(), epWriter.Header())
+
+	if _, exist := epWriter.Header()["Content-Length"]; !exist {
+		dst.Header().Del("Content-Length")
+	}
 }
 
 func newRequest(baseURL string) (*http.Request, error) {
