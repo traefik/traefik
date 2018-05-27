@@ -8,10 +8,12 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/BurntSushi/ty/fun"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/types"
+	"github.com/miekg/dns"
 )
 
 // Rules holds rule parsing and configuration
@@ -26,8 +28,11 @@ func (r *Rules) host(hosts ...string) *mux.Route {
 		if err != nil {
 			reqHost = req.Host
 		}
+		reqH,flatH := CNAMEFlatten(types.CanonicalDomain(reqHost))
 		for _, host := range hosts {
-			if types.CanonicalDomain(reqHost) == types.CanonicalDomain(host) {
+			if types.CanonicalDomain(reqH) == types.CanonicalDomain(host) {
+				return true
+			}else if types.CanonicalDomain(flatH)==types.CanonicalDomain(host){
 				return true
 			}
 		}
@@ -282,4 +287,30 @@ func (r *Rules) ParseDomains(expression string) ([]string, error) {
 	}
 
 	return fun.Map(types.CanonicalDomain, domains).([]string), nil
+}
+
+func CNAMEFlatten(host string) (string,string) {
+	config, _ := dns.ClientConfigFromFile("/etc/resolv.conf")
+	c := new(dns.Client)
+	c.Timeout = 30 * time.Second
+	m := new(dns.Msg)
+	m.SetQuestion(dns.Fqdn(host), dns.TypeCNAME)
+	var result []string
+	result = append(result,host)
+	for true {
+		r, _, err := c.Exchange(m, net.JoinHostPort(config.Servers[0], config.Port))
+		if r == nil {
+			fmt.Errorf("*** error: %s\n", err.Error())
+			break
+		}
+		if len(r.Answer) > 0 {
+			temp := strings.Split(r.Answer[0].String(), "CNAME")
+			str := strings.TrimSuffix(strings.TrimSpace(temp[len(temp)-1]),".")
+			result = append(result, str)
+			m.SetQuestion(dns.Fqdn(str), dns.TypeCNAME)
+		}else {
+			break
+		}
+	}
+	return result[0],result[len(result)-1]
 }
