@@ -1,8 +1,10 @@
-# gRPC example with HTTP (h2c)
+# gRPC examples
+
+## With HTTP (h2c)
 
 This section explains how to use Traefik as reverse proxy for gRPC application.
 
-## Træfik configuration
+### Træfik configuration
 
 At last, we configure our Træfik instance to use both self-signed certificates.
 
@@ -35,11 +37,11 @@ defaultEntryPoints = ["https"]
 !!! warning
     For provider with label, you will have to specify the `traefik.protocol=h2c`
 
-## Conclusion
+### Conclusion
 
 We don't need specific configuration to use gRPC in Træfik, we just need to use `h2c` protocol, or use HTTPS communications to have HTTP2 with the backend.
 
-# gRPC example with HTTPS
+## With HTTPS
 
 This section explains how to use Traefik as reverse proxy for gRPC application with self-signed certificates.
 
@@ -47,7 +49,7 @@ This section explains how to use Traefik as reverse proxy for gRPC application w
 <img src="/img/grpc.svg" alt="gRPC architecture" title="gRPC architecture" />
 </p>
 
-## gRPC Server certificate
+### gRPC Server certificate
 
 In order to secure the gRPC server, we generate a self-signed certificate for backend url:
 
@@ -61,7 +63,7 @@ That will prompt for information, the important answer is:
 Common Name (e.g. server FQDN or YOUR name) []: backend.local
 ```
 
-## gRPC Client certificate
+### gRPC Client certificate
 
 Generate your self-signed certificate for frontend url:
 
@@ -75,7 +77,7 @@ with
 Common Name (e.g. server FQDN or YOUR name) []: frontend.local
 ```
 
-## Træfik configuration
+### Træfik configuration
 
 At last, we configure our Træfik instance to use both self-signed certificates.
 
@@ -116,9 +118,9 @@ rootCAs = [ "./backend.cert" ]
 !!! warning
     With some backends, the server URLs use the IP, so you may need to configure `insecureSkipVerify` instead of the `rootCAS` to activate HTTPS without hostname verification.
 
-## A gRPC example in go (modify for https)
+### A gRPC example in go (modify for https)
 
-We will use the gRPC greeter example in [grpc-go](https://github.com/grpc/grpc-go/tree/master/examples/helloworld)
+We use the gRPC greeter example in [grpc-go](https://github.com/grpc/grpc-go/tree/master/examples/helloworld)
 
 !!! warning
     In order to use this gRPC example, we need to modify it to use HTTPS
