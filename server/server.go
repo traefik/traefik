@@ -28,7 +28,7 @@ import (
 	"github.com/containous/traefik/healthcheck"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/metrics"
-	"github.com/containous/traefik/middlewares"
+	"github.com/containous/traefik/middlewares"	
 	"github.com/containous/traefik/middlewares/accesslog"
 	mauth "github.com/containous/traefik/middlewares/auth"
 	"github.com/containous/traefik/middlewares/errorpages"
@@ -966,15 +966,38 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 
 					var responseModifier = buildModifyResponse(secureMiddleware, headerMiddleware)
 					var fwd http.Handler
+					var isLambda = false
+					for _, srv := range config.Backends[frontend.Backend].Servers {
+						u, err := url.Parse(srv.URL)
+						if err != nil {
+							log.Errorf("Error parsing server URL %s: %v", srv.URL, err)
+							log.Errorf("Skipping frontend %s...", frontendName)
+							continue frontend
+						}
 
-					fwd, err = forward.New(
-						forward.Stream(true),
-						forward.PassHostHeader(frontend.PassHostHeader),
-						forward.RoundTripper(roundTripper),
-						forward.ErrorHandler(errorHandler),
-						forward.Rewriter(rewriter),
-						forward.ResponseModifier(responseModifier),
-					)
+						if u.Scheme == "lambda" {
+							isLambda = true
+						}
+
+						if isLambda && u.Scheme != "lambda" {
+							log.Errorf("Backend can not have lambda and non-lambda servers at the same time %s", frontend.Backend)
+							log.Errorf("Skipping frontend %s...", frontendName)
+							continue frontend
+						}
+
+					}
+					if isLambda {
+						fwd = middlewares.NewLambda(fwd)
+					} else {
+						fwd, err = forward.New(
+							forward.Stream(true),
+							forward.PassHostHeader(frontend.PassHostHeader),
+							forward.RoundTripper(roundTripper),
+							forward.ErrorHandler(errorHandler),
+							forward.Rewriter(rewriter),
+							forward.ResponseModifier(responseModifier),
+						)
+					}
 
 					if err != nil {
 						log.Errorf("Error creating forwarder for frontend %s: %v", frontendName, err)
