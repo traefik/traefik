@@ -114,6 +114,11 @@ func (p *Provider) init() error {
 		return fmt.Errorf("unable to get ACME account : %v", err)
 	}
 
+	// Reset Account if caServer changed, thus registration URI can be updated
+	if p.account != nil && p.account.Registration != nil && !strings.HasPrefix(p.account.Registration.URI, p.CAServer) {
+		p.account = nil
+	}
+
 	p.certificates, err = p.Store.GetCertificates()
 	if err != nil {
 		return fmt.Errorf("unable to get ACME certificates : %v", err)
@@ -315,7 +320,6 @@ func (p *Provider) getClient() (*acme.Client, error) {
 		}
 		p.client = client
 	}
-
 	return p.client, nil
 }
 

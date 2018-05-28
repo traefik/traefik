@@ -178,6 +178,10 @@ func (a *ACME) leadershipListener(elected bool) error {
 
 		account := object.(*Account)
 		account.Init()
+		// Reset Account values if caServer changed, thus registration URI can be updated
+		if account != nil && account.Registration != nil && !strings.HasPrefix(account.Registration.URI, a.CAServer) {
+			account.reset()
+		}
 
 		var needRegister bool
 		if account == nil || len(account.Email) == 0 {

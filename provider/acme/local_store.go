@@ -60,6 +60,7 @@ func (s *LocalStore) get() (*StoredData, error) {
 					return nil, err
 				}
 				if isOldRegistration {
+					log.Debug("Reset ACME account.")
 					s.storedData.Account = nil
 					s.SaveDataChan <- s.storedData
 				}
