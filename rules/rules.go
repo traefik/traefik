@@ -291,6 +291,7 @@ func (r *Rules) ParseDomains(expression string) ([]string, error) {
 	return fun.Map(types.CanonicalDomain, domains).([]string), nil
 }
 
+// CNAMEFlatten check if CNAME records is exist, flatten if possible
 func (r *Rules) CNAMEFlatten(host string) (string, string) {
 	var result []string
 	result = append(result, host)
@@ -307,12 +308,8 @@ func (r *Rules) CNAMEFlatten(host string) (string, string) {
 		m := new(dns.Msg)
 		m.SetQuestion(dns.Fqdn(host), dns.TypeCNAME)
 		for true {
-			r, _, err := c.Exchange(m, net.JoinHostPort(config.Servers[0], config.Port))
-			if r == nil {
-				fmt.Errorf("*** error: %s\n", err.Error())
-				break
-			}
-			if len(r.Answer) > 0 {
+			r, _, _ := c.Exchange(m, net.JoinHostPort(config.Servers[0], config.Port))
+			if r != nil && len(r.Answer) > 0 {
 				temp := strings.Split(r.Answer[0].String(), "CNAME")
 				str := strings.TrimSuffix(strings.TrimSpace(temp[len(temp)-1]), ".")
 				result = append(result, str)

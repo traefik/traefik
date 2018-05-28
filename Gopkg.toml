@@ -222,10 +222,6 @@
  name = "github.com/docker/docker"
  revision = "7848b8beb9d38a98a78b75f78e05f8d2255f9dfe"
 
-[[constraint]]
-  name = "github.com/patrickmn/go-cache"
-  version = "2.1.0"
-
 [[override]]
  name = "github.com/docker/docker"
  revision = "7848b8beb9d38a98a78b75f78e05f8d2255f9dfe"
@@ -260,3 +256,7 @@
   non-go = true
   go-tests = true
   unused-packages = true
+
+[[constraint]]
+  name = "github.com/patrickmn/go-cache"
+  version = "2.1.0"
