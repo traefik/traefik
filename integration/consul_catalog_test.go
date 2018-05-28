@@ -1,12 +1,15 @@
 package integration
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/containous/traefik/integration/try"
 	"github.com/containous/traefik/provider/label"
+	"github.com/docker/docker/api/types"
+	docker "github.com/docker/docker/client"
 	"github.com/go-check/check"
 	"github.com/hashicorp/consul/api"
 	checker "github.com/vdemeester/shakers"
@@ -93,6 +96,26 @@ func (s *ConsulCatalogSuite) registerAgentService(name string, address string, p
 			},
 		},
 	)
+	return err
+}
+
+func (s *ConsulCatalogSuite) registerAgentServiceWithMultiplePorts(name string, address string, tags []string, ports ...int) error {
+	var checks []*api.AgentServiceCheck
+	for _, port := range ports {
+		checks = append(checks, &api.AgentServiceCheck{
+			HTTP:     fmt.Sprintf("http://%s:%d", address, port),
+			Interval: "1s",
+		})
+	}
+	agent := s.consulClient.Agent()
+	err := agent.ServiceRegister(&api.AgentServiceRegistration{
+		ID:      address,
+		Tags:    tags,
+		Name:    name,
+		Address: address,
+		Port:    ports[0],
+		Checks:  checks,
+	})
 	return err
 }
 
@@ -511,6 +534,52 @@ func (s *ConsulCatalogSuite) TestRetryWithConsulServer(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Should be ok
+	err = try.Request(req, 10*time.Second, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *ConsulCatalogSuite) TestSingleServiceWithMultipleHealthChecks(c *check.C) {
+	cmd, display := s.traefikCmd(
+		withConfigFile("fixtures/consul_catalog/simple.toml"),
+		"--consulCatalog",
+		"--consulCatalog.endpoint="+s.consulIP+":8500",
+		"--consulCatalog.domain=consul.localhost")
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// Wait for Traefik to turn ready.
+	err = try.GetRequest("http://127.0.0.1:8000/", 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	c.Assert(err, checker.IsNil)
+
+	whoami := s.composeProject.Container(c, "whoami1")
+
+	err = s.registerAgentServiceWithMultiplePorts("test", whoami.NetworkSettings.IPAddress, []string{"name=whoami1"}, 80, 90)
+	c.Assert(err, checker.IsNil, check.Commentf("Error registering agent service"))
+	defer s.deregisterAgentService(whoami.NetworkSettings.IPAddress)
+
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "test.consul.localhost"
+
+	err = try.Request(req, 10*time.Second, try.StatusCodeIs(http.StatusNotFound), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	dockerClient, err := docker.NewEnvClient()
+	c.Assert(err, checker.IsNil)
+	defer dockerClient.Close()
+
+	execResponse, err := dockerClient.ContainerExecCreate(context.Background(), whoami.ID, types.ExecConfig{
+		Cmd: []string{"/whoamI", "-port", "90"},
+	})
+	c.Assert(err, checker.IsNil)
+
+	err = dockerClient.ContainerExecStart(context.Background(), execResponse.ID, types.ExecStartCheck{
+		Detach: true,
+	})
+	c.Assert(err, checker.IsNil)
+
 	err = try.Request(req, 10*time.Second, try.StatusCodeIs(http.StatusOK), try.HasBody())
 	c.Assert(err, checker.IsNil)
 }

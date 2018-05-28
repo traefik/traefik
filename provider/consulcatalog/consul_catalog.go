@@ -277,7 +277,7 @@ func (p *Provider) watchHealthState(stopCh <-chan struct{}, watchCh chan<- map[s
 			var current []string
 			if healthyState != nil {
 				for _, healthy := range healthyState {
-					current = append(current, healthy.ServiceID)
+					current = append(current, healthy.CheckID)
 				}
 
 			}
