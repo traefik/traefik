@@ -190,6 +190,105 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 		}
 		templateObjects.TLS = append(templateObjects.TLS, tlsSection...)
 
+		if i.Spec.Backend != nil {
+			// If a global backend is configured, add this as a "default route" by adding a wildcard frontend, with the priority of the ingress.
+			defaultBackendName := "global-default-backend"
+			defaultFrontendName := "global-default-frontend"
+			if _, exists := templateObjects.Frontends[defaultFrontendName]; !exists {
+				// Ensure that we are not duplicating the frontend
+				if _, exists := templateObjects.Backends[defaultBackendName]; !exists {
+					// Ensure we are not duplicating the backend
+					templateObjects.Backends[defaultBackendName] = &types.Backend{
+						Servers: make(map[string]types.Server),
+						LoadBalancer: &types.LoadBalancer{
+							Method: "wrr",
+						},
+					}
+
+					service, exists, err := k8sClient.GetService(i.Namespace, i.Spec.Backend.ServiceName)
+					if err != nil {
+						return nil, fmt.Errorf("Error while retrieving service information from k8s API %s/%s: %v", i.Namespace, i.Spec.Backend.ServiceName, err)
+					}
+					if !exists {
+						log.Errorf("Service not found for %s/%s", i.Namespace, i.Spec.Backend.ServiceName)
+						continue
+					}
+
+					templateObjects.Backends[defaultBackendName].CircuitBreaker = getCircuitBreaker(service)
+					templateObjects.Backends[defaultBackendName].LoadBalancer = getLoadBalancer(service)
+					templateObjects.Backends[defaultBackendName].MaxConn = getMaxConn(service)
+					templateObjects.Backends[defaultBackendName].Buffering = getBuffering(service)
+
+					endpoints, exists, err := k8sClient.GetEndpoints(service.Namespace, service.Name)
+					if err != nil {
+						return nil, fmt.Errorf("Error retrieving endpoint information from k8s API %s/%s: %v", service.Namespace, service.Name, err)
+					}
+					if !exists {
+						log.Warnf("Endpoints not found for %s/%s", service.Namespace, service.Name)
+						break
+					}
+					if len(endpoints.Subsets) == 0 {
+						log.Warnf("Endpoints not available for %s/%s", service.Namespace, service.Name)
+						break
+					}
+
+					for _, subset := range endpoints.Subsets {
+						endpointPort := endpointPortNumber(corev1.ServicePort{Protocol: "TCP", Port: int32(i.Spec.Backend.ServicePort.IntValue())}, subset.Ports)
+						if endpointPort == 0 {
+							// endpoint port does not match service.
+							continue
+						}
+						protocol := "http"
+						for _, address := range subset.Addresses {
+							if endpointPort == 443 {
+								protocol = "https"
+							}
+							url := fmt.Sprintf("%s://%s:%d", protocol, address.IP, endpointPort)
+							name := url
+							if address.TargetRef != nil && address.TargetRef.Name != "" {
+								name = address.TargetRef.Name
+							}
+							templateObjects.Backends[defaultBackendName].Servers[name] = types.Server{
+								URL:    url,
+								Weight: label.DefaultWeight,
+							}
+						}
+					}
+
+				} else {
+					log.Error("Duplicate backend: global-default-backend. Skipping...")
+					continue
+				}
+				passHostHeader := getBoolValue(i.Annotations, annotationKubernetesPreserveHost, !p.DisablePassHostHeaders)
+				passTLSCert := getBoolValue(i.Annotations, annotationKubernetesPassTLSCert, p.EnablePassTLSCert)
+				priority := getIntValue(i.Annotations, annotationKubernetesPriority, 0)
+				entryPoints := getSliceStringValue(i.Annotations, annotationKubernetesFrontendEntryPoints)
+
+				templateObjects.Frontends[defaultFrontendName] = &types.Frontend{
+					Backend:        defaultBackendName,
+					PassHostHeader: passHostHeader,
+					PassTLSCert:    passTLSCert,
+					Routes:         make(map[string]types.Route),
+					Priority:       priority,
+					WhiteList:      getWhiteList(i),
+					Redirect:       getFrontendRedirect(i),
+					EntryPoints:    entryPoints,
+					Headers:        getHeader(i),
+					Errors:         getErrorPages(i),
+					RateLimit:      getRateLimit(i),
+				}
+
+			} else {
+				log.Error("Duplicate frontend: global-default-backend. Skipping...")
+				continue
+			}
+			// Set the default global backend rule
+			templateObjects.Frontends[defaultFrontendName].Routes["/"] = types.Route{
+				Rule: "PathPrefix:/",
+			}
+			continue
+		}
+
 		for _, r := range i.Spec.Rules {
 			if r.HTTP == nil {
 				log.Warn("Error in ingress: HTTP is nil")
@@ -264,8 +363,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 				service, exists, err := k8sClient.GetService(i.Namespace, pa.Backend.ServiceName)
 				if err != nil {
-					log.Errorf("Error while retrieving service information from k8s API %s/%s: %v", i.Namespace, pa.Backend.ServiceName, err)
-					return nil, err
+					return nil, fmt.Errorf("Error while retrieving service information from k8s API %s/%s: %v", i.Namespace, pa.Backend.ServiceName, err)
 				}
 
 				if !exists {
@@ -300,8 +398,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						} else {
 							endpoints, exists, err := k8sClient.GetEndpoints(service.Namespace, service.Name)
 							if err != nil {
-								log.Errorf("Error retrieving endpoints %s/%s: %v", service.Namespace, service.Name, err)
-								return nil, err
+								return nil, fmt.Errorf("Error retrieving endpoint information from k8s API %s/%s: %v", service.Namespace, service.Name, err)
 							}
 
 							if !exists {
