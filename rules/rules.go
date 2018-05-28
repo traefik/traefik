@@ -30,11 +30,11 @@ func (r *Rules) host(hosts ...string) *mux.Route {
 		if err != nil {
 			reqHost = req.Host
 		}
-		reqH,flatH := r.CNAMEFlatten(types.CanonicalDomain(reqHost))
+		reqH, flatH := r.CNAMEFlatten(types.CanonicalDomain(reqHost))
 		for _, host := range hosts {
 			if types.CanonicalDomain(reqH) == types.CanonicalDomain(host) {
 				return true
-			}else if types.CanonicalDomain(flatH)==types.CanonicalDomain(host){
+			} else if types.CanonicalDomain(flatH) == types.CanonicalDomain(host) {
 				return true
 			}
 		}
@@ -291,16 +291,16 @@ func (r *Rules) ParseDomains(expression string) ([]string, error) {
 	return fun.Map(types.CanonicalDomain, domains).([]string), nil
 }
 
-func (r *Rules)CNAMEFlatten(host string) (string,string) {
+func (r *Rules) CNAMEFlatten(host string) (string, string) {
 	var result []string
 	result = append(result, host)
-	if r.cache == nil{
-		r.cache = cache.New(10*time.Minute,30*time.Minute)
+	if r.cache == nil {
+		r.cache = cache.New(10*time.Minute, 30*time.Minute)
 	}
-	rst,found := r.cache.Get(host)
+	rst, found := r.cache.Get(host)
 	if found {
-		result = strings.Split(rst.(string),",")
-	}else {
+		result = strings.Split(rst.(string), ",")
+	} else {
 		config, _ := dns.ClientConfigFromFile("/etc/resolv.conf")
 		c := new(dns.Client)
 		c.Timeout = 30 * time.Second
@@ -322,5 +322,5 @@ func (r *Rules)CNAMEFlatten(host string) (string,string) {
 			}
 		}
 	}
-	return result[0],result[len(result)-1]
+	return result[0], result[len(result)-1]
 }
