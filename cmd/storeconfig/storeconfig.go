@@ -140,7 +140,7 @@ func migrateACMEData(fileName string) (*acme.Account, error) {
 				return nil, err
 			}
 
-			err = acme.RemoveAccountV1Values(account)
+			err = account.RemoveAccountV1Values()
 			if err != nil {
 				return nil, err
 			}

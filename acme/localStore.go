@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
-	"regexp"
 
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider/acme"
@@ -51,24 +50,6 @@ func (s *LocalStore) Get() (*Account, error) {
 	return account, nil
 }
 
-// RemoveAccountV1Values removes ACME account V1 values
-func RemoveAccountV1Values(account *Account) error {
-	// Check if ACME Account is in ACME V1 format
-	if account != nil && account.Registration != nil {
-		isOldRegistration, err := regexp.MatchString(acme.RegistrationURLPathV1Regexp, account.Registration.URI)
-		if err != nil {
-			return err
-		}
-
-		if isOldRegistration {
-			account.Email = ""
-			account.Registration = nil
-			account.PrivateKey = nil
-		}
-	}
-	return nil
-}
-
 // ConvertToNewFormat converts old acme.json format to the new one and store the result into the file (used for the backward compatibility)
 func ConvertToNewFormat(fileName string) {
 	localStore := acme.NewLocalStore(fileName)
@@ -103,9 +84,9 @@ func ConvertToNewFormat(fileName string) {
 				return
 			}
 
-			err = RemoveAccountV1Values(account)
+			err = account.RemoveAccountV1Values()
 			if err != nil {
-				log.Errorf("Unable to remove ACME Account V1 values: %s", err.Error())
+				log.Errorf("Unable to remove ACME Account V1 values during format conversion: %s", err.Error())
 				return
 			}
 

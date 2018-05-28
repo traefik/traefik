@@ -8,12 +8,14 @@ import (
 	"crypto/x509"
 	"fmt"
 	"reflect"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/containous/traefik/log"
+	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/types"
 	acme "github.com/xenolf/lego/acmev2"
 )
@@ -40,6 +42,11 @@ func (a *Account) Init() error {
 	err := a.DomainsCertificate.Init()
 	if err != nil {
 		return err
+	}
+
+	err = a.RemoveAccountV1Values()
+	if err != nil {
+		log.Errorf("Unable to remove ACME Account V1 values during account initialization: %s", err.Error())
 	}
 
 	for _, cert := range a.ChallengeCerts {
@@ -101,6 +108,29 @@ func (a *Account) GetPrivateKey() crypto.PrivateKey {
 
 	log.Errorf("Cannot unmarshall private key %+v", a.PrivateKey)
 	return nil
+}
+
+// RemoveAccountV1Values removes ACME account V1 values
+func (a *Account) RemoveAccountV1Values() error {
+	// Check if ACME Account is in ACME V1 format
+	if a.Registration != nil {
+		isOldRegistration, err := regexp.MatchString(acmeprovider.RegistrationURLPathV1Regexp, a.Registration.URI)
+		if err != nil {
+			return err
+		}
+
+		if isOldRegistration {
+			a.reset()
+		}
+	}
+	return nil
+}
+
+func (a *Account) reset() {
+	log.Debug("Reset ACME account object.")
+	a.Email = ""
+	a.Registration = nil
+	a.PrivateKey = nil
 }
 
 // Certificate is used to store certificate info
