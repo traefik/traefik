@@ -62,7 +62,7 @@ func (d DefaultRetryer) ShouldRetry(r *request.Request) bool {
 		return *r.Retryable
 	}
 
-	if r.HTTPResponse.StatusCode >= 500 {
+	if r.HTTPResponse.StatusCode >= 500 && r.HTTPResponse.StatusCode != 501 {
 		return true
 	}
 	return r.IsErrorRetryable() || d.shouldThrottle(r)

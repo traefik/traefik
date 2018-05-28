@@ -41,11 +41,24 @@ const (
 	// The specified global table does not exist.
 	ErrCodeGlobalTableNotFoundException = "GlobalTableNotFoundException"
 
+	// ErrCodeIndexNotFoundException for service response error code
+	// "IndexNotFoundException".
+	//
+	// The operation tried to access a nonexistent index.
+	ErrCodeIndexNotFoundException = "IndexNotFoundException"
+
 	// ErrCodeInternalServerError for service response error code
 	// "InternalServerError".
 	//
 	// An error occurred on the server side.
 	ErrCodeInternalServerError = "InternalServerError"
+
+	// ErrCodeInvalidRestoreTimeException for service response error code
+	// "InvalidRestoreTimeException".
+	//
+	// An invalid restore time was specified. RestoreDateTime must be between EarliestRestorableDateTime
+	// and LatestRestorableDateTime.
+	ErrCodeInvalidRestoreTimeException = "InvalidRestoreTimeException"
 
 	// ErrCodeItemCollectionSizeLimitExceededException for service response error code
 	// "ItemCollectionSizeLimitExceededException".
@@ -61,13 +74,8 @@ const (
 	// is no limit to the number of daily on-demand backups that can be taken.
 	//
 	// Up to 10 simultaneous table operations are allowed per account. These operations
-	// include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, and RestoreTableFromBackup.
-	//
-	// For tables with secondary indexes, only one of those tables can be in the
-	// CREATING state at any point in time. Do not attempt to create more than one
-	// such table simultaneously.
-	//
-	// The total limit of tables in the ACTIVE state is 250.
+	// include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, RestoreTableFromBackup,
+	// and RestoreTableToPointInTime.
 	//
 	// For tables with secondary indexes, only one of those tables can be in the
 	// CREATING state at any point in time. Do not attempt to create more than one
@@ -75,6 +83,12 @@ const (
 	//
 	// The total limit of tables in the ACTIVE state is 250.
 	ErrCodeLimitExceededException = "LimitExceededException"
+
+	// ErrCodePointInTimeRecoveryUnavailableException for service response error code
+	// "PointInTimeRecoveryUnavailableException".
+	//
+	// Point in time recovery has not yet been enabled for this source table.
+	ErrCodePointInTimeRecoveryUnavailableException = "PointInTimeRecoveryUnavailableException"
 
 	// ErrCodeProvisionedThroughputExceededException for service response error code
 	// "ProvisionedThroughputExceededException".
@@ -117,19 +131,19 @@ const (
 	// ErrCodeTableAlreadyExistsException for service response error code
 	// "TableAlreadyExistsException".
 	//
-	// A table with the name already exists.
+	// A target table with the specified name already exists.
 	ErrCodeTableAlreadyExistsException = "TableAlreadyExistsException"
 
 	// ErrCodeTableInUseException for service response error code
 	// "TableInUseException".
 	//
-	// A table by that name is either being created or deleted.
+	// A target table with the specified name is either being created or deleted.
 	ErrCodeTableInUseException = "TableInUseException"
 
 	// ErrCodeTableNotFoundException for service response error code
 	// "TableNotFoundException".
 	//
-	// A table with the name TableName does not currently exist within the subscriber's
-	// account.
+	// A source table with the name TableName does not currently exist within the
+	// subscriber's account.
 	ErrCodeTableNotFoundException = "TableNotFoundException"
 )

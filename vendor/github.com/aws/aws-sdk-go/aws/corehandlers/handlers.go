@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
-	"runtime"
 	"strconv"
 	"time"
 
@@ -53,13 +52,6 @@ var BuildContentLengthHandler = request.NamedHandler{Name: "core.BuildContentLen
 		r.HTTPRequest.Header.Del("Content-Length")
 	}
 }}
-
-// SDKVersionUserAgentHandler is a request handler for adding the SDK Version to the user agent.
-var SDKVersionUserAgentHandler = request.NamedHandler{
-	Name: "core.SDKVersionUserAgentHandler",
-	Fn: request.MakeAddToUserAgentHandler(aws.SDKName, aws.SDKVersion,
-		runtime.Version(), runtime.GOOS, runtime.GOARCH),
-}
 
 var reStatusCode = regexp.MustCompile(`^(\d{3})`)
 
