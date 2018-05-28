@@ -88,7 +88,7 @@ func initInfluxDBClient(config *types.InfluxDB) *influx.Influx {
 			config.RetentionPolicy = ""
 		}
 	default:
-		log.Warnf("Unsupported protocol: %s, defaulting to udp.", config.Address)
+		log.Warnf("Unsupported protocol: %s, defaulting to udp.", config.Protocol)
 		config.Protocol = "udp"
 		config.Database = ""
 		config.RetentionPolicy = ""
