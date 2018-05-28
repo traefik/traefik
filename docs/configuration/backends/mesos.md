@@ -190,8 +190,8 @@ The following labels can be defined on Mesos tasks. They adjust the behavior for
 Segment labels are used to define routes to an application exposing multiple ports.
 A segment is a group of labels that apply to a port exposed by an application.
 You can define as many segments as ports exposed in an application.
-Additionally, if a segment name matches a named port, that port will be used unless
-portIndex, portName, or port labels are specified for that segment.
+
+Additionally, if a segment name matches a named port, that port will be used unless `portIndex`, `portName`, or `port` labels are specified for that segment.
 
 Segment labels override the default behavior.
 
