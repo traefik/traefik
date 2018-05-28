@@ -1677,6 +1677,12 @@
   packages = ["pkg/common"]
   revision = "275e2ce91dec4c05a4094a7b1daee5560b555ac9"
 
+[[projects]]
+  name = "github.com/patrickmn/go-cache"
+  packages = ["."]
+  revision = "a3647f8e31d79543b2d0f0ae2fe5c379d72cedc0"
+  version = "v2.1.0"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
