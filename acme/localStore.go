@@ -80,13 +80,13 @@ func ConvertToNewFormat(fileName string) {
 		if account != nil && len(account.Email) > 0 {
 			err = backupACMEFile(fileName, account)
 			if err != nil {
-				log.Errorf("Unable to create a backup for the V1 formatted ACME file: %s", err.Error())
+				log.Errorf("Unable to create a backup for the V1 formatted ACME file: %v", err)
 				return
 			}
 
 			err = account.RemoveAccountV1Values()
 			if err != nil {
-				log.Errorf("Unable to remove ACME Account V1 values during format conversion: %s", err.Error())
+				log.Errorf("Unable to remove ACME Account V1 values during format conversion: %v", err)
 				return
 			}
 

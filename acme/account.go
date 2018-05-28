@@ -46,7 +46,7 @@ func (a *Account) Init() error {
 
 	err = a.RemoveAccountV1Values()
 	if err != nil {
-		log.Errorf("Unable to remove ACME Account V1 values during account initialization: %s", err.Error())
+		log.Errorf("Unable to remove ACME Account V1 values during account initialization: %v", err)
 	}
 
 	for _, cert := range a.ChallengeCerts {
