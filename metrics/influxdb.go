@@ -67,22 +67,31 @@ func RegisterInfluxDB(config *types.InfluxDB) Registry {
 
 // initInfluxDBTicker creates a influxDBClient
 func initInfluxDBClient(config *types.InfluxDB) *influx.Influx {
-	if config.Protocol == "udp" {
+	// TODO deprecated: move this switch into configuration.SetEffectiveConfiguration when web provider will be removed.
+	switch config.Protocol {
+	case "udp":
 		if len(config.Database) > 0 || len(config.RetentionPolicy) > 0 {
-			log.Warn("Database and RetentionPolicy are only used when protocol is http")
+			log.Warn("Database and RetentionPolicy are only used when protocol is http.")
+			config.Database = ""
+			config.RetentionPolicy = ""
 		}
-	} else if config.Protocol == "http" {
+	case "http":
 		if u, err := url.Parse(config.Address); err == nil {
 			if u.Scheme != "http" && u.Scheme != "https" {
-				log.Warnf("InfluxDB address %s should specify a scheme of http or https, defaulting to http", config.Address)
+				log.Warnf("InfluxDB address %s should specify a scheme of http or https, defaulting to http.", config.Address)
 				config.Address = "http://" + config.Address
 			}
 		} else {
-			log.Errorf("Unable to parse influxdb address: %s", err)
+			log.Errorf("Unable to parse influxdb address: %v, defaulting to udp.", err)
+			config.Protocol = "udp"
+			config.Database = ""
+			config.RetentionPolicy = ""
 		}
-	} else {
-		log.Warnf("Unsupported protocol: %s, defaulting to udp")
+	default:
+		log.Warnf("Unsupported protocol: %s, defaulting to udp.", config.Address)
 		config.Protocol = "udp"
+		config.Database = ""
+		config.RetentionPolicy = ""
 	}
 
 	return influx.New(
