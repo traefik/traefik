@@ -2,6 +2,7 @@ package consulcatalog
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"sync"
@@ -267,7 +268,7 @@ func (p *Provider) watchHealthState(stopCh <-chan struct{}, watchCh chan<- map[s
 			}
 
 			// Listening to changes that leads to `passing` state or degrades from it.
-			healthyState, meta, err := health.State("passing", options)
+			healthyState, meta, err := health.State("any", options)
 			if err != nil {
 				log.WithError(err).Error("Failed to retrieve health checks")
 				notifyError(err)
@@ -275,9 +276,19 @@ func (p *Provider) watchHealthState(stopCh <-chan struct{}, watchCh chan<- map[s
 			}
 
 			var current = make(map[string][]string)
+			var currentFailing = make(map[string]*api.HealthCheck)
 			if healthyState != nil {
 				for _, healthy := range healthyState {
-					current[healthy.ServiceID] = append(current[healthy.ServiceID], healthy.Node)
+					key := fmt.Sprintf("%s-%s", healthy.Node, healthy.ServiceID)
+					_, failing := currentFailing[key]
+					if healthy.Status == "passing" && !failing {
+						current[key] = append(current[key], healthy.Node)
+					} else {
+						currentFailing[key] = healthy
+						if _, ok := current[key]; ok {
+							delete(current, key)
+						}
+					}
 				}
 			}
 
