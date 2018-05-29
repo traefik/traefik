@@ -8,7 +8,6 @@ package storage
 
 import (
 	"os"
-	"path/filepath"
 )
 
 type plan9FileLock struct {
@@ -48,8 +47,7 @@ func rename(oldpath, newpath string) error {
 		}
 	}
 
-	_, fname := filepath.Split(newpath)
-	return os.Rename(oldpath, fname)
+	return os.Rename(oldpath, newpath)
 }
 
 func syncDir(name string) error {

@@ -41,6 +41,7 @@ func init() {
 		check.Suite(&ConstraintSuite{})
 		check.Suite(&ConsulCatalogSuite{})
 		check.Suite(&ConsulSuite{})
+		check.Suite(&DockerComposeSuite{})
 		check.Suite(&DockerSuite{})
 		check.Suite(&DynamoDBSuite{})
 		check.Suite(&EtcdSuite{})
@@ -54,8 +55,10 @@ func init() {
 		check.Suite(&MarathonSuite{})
 		check.Suite(&MesosSuite{})
 		check.Suite(&RateLimitSuite{})
+		check.Suite(&RetrySuite{})
 		check.Suite(&SimpleSuite{})
 		check.Suite(&TimeoutSuite{})
+		check.Suite(&TracingSuite{})
 		check.Suite(&WebsocketSuite{})
 		check.Suite(&RabbitMQSuite{})
 	}

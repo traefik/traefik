@@ -7,9 +7,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/containous/traefik/middlewares/tracing"
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/urfave/negroni"
 )
 
@@ -23,7 +25,7 @@ func TestForwardAuthFail(t *testing.T) {
 		Forward: &types.Forward{
 			Address: server.URL,
 		},
-	})
+	}, &tracing.Tracing{})
 	assert.NoError(t, err, "there should be no error")
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -55,7 +57,7 @@ func TestForwardAuthSuccess(t *testing.T) {
 		Forward: &types.Forward{
 			Address: server.URL,
 		},
-	})
+	}, &tracing.Tracing{})
 	assert.NoError(t, err, "there should be no error")
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -87,7 +89,7 @@ func TestForwardAuthRedirect(t *testing.T) {
 		Forward: &types.Forward{
 			Address: authTs.URL,
 		},
-	})
+	}, &tracing.Tracing{})
 	assert.NoError(t, err, "there should be no error")
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -109,7 +111,6 @@ func TestForwardAuthRedirect(t *testing.T) {
 	assert.Equal(t, http.StatusFound, res.StatusCode, "they should be equal")
 
 	location, err := res.Location()
-
 	assert.NoError(t, err, "there should be no error")
 	assert.Equal(t, "http://example.com/redirect-test", location.String(), "they should be equal")
 
@@ -118,10 +119,11 @@ func TestForwardAuthRedirect(t *testing.T) {
 	assert.NotEmpty(t, string(body), "there should be something in the body")
 }
 
-func TestForwardAuthCookie(t *testing.T) {
+func TestForwardAuthFailResponseHeaders(t *testing.T) {
 	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie := &http.Cookie{Name: "example", Value: "testing", Path: "/"}
 		http.SetCookie(w, cookie)
+		w.Header().Add("X-Foo", "bar")
 		http.Error(w, "Forbidden", http.StatusForbidden)
 	}))
 	defer authTs.Close()
@@ -130,7 +132,7 @@ func TestForwardAuthCookie(t *testing.T) {
 		Forward: &types.Forward{
 			Address: authTs.URL,
 		},
-	})
+	}, &tracing.Tracing{})
 	assert.NoError(t, err, "there should be no error")
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -141,14 +143,28 @@ func TestForwardAuthCookie(t *testing.T) {
 	ts := httptest.NewServer(n)
 	defer ts.Close()
 
-	client := &http.Client{}
 	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	client := &http.Client{}
 	res, err := client.Do(req)
 	assert.NoError(t, err, "there should be no error")
 	assert.Equal(t, http.StatusForbidden, res.StatusCode, "they should be equal")
 
+	require.Len(t, res.Cookies(), 1)
 	for _, cookie := range res.Cookies() {
 		assert.Equal(t, "testing", cookie.Value, "they should be equal")
+	}
+
+	expectedHeaders := http.Header{
+		"Content-Length":         []string{"10"},
+		"Content-Type":           []string{"text/plain; charset=utf-8"},
+		"X-Foo":                  []string{"bar"},
+		"Set-Cookie":             []string{"example=testing; Path=/"},
+		"X-Content-Type-Options": []string{"nosniff"},
+	}
+
+	assert.Len(t, res.Header, 6)
+	for key, value := range expectedHeaders {
+		assert.Equal(t, value, res.Header[key])
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
@@ -157,7 +173,6 @@ func TestForwardAuthCookie(t *testing.T) {
 }
 
 func Test_writeHeader(t *testing.T) {
-
 	testCases := []struct {
 		name               string
 		headers            map[string]string
@@ -215,12 +230,40 @@ func Test_writeHeader(t *testing.T) {
 				"X-Forwarded-Host": "",
 			},
 		},
+		{
+			name: "trust Forward Header with forwarded URI",
+			headers: map[string]string{
+				"Accept":           "application/json",
+				"X-Forwarded-Host": "fii.bir",
+				"X-Forwarded-Uri":  "/forward?q=1",
+			},
+			trustForwardHeader: true,
+			expectedHeaders: map[string]string{
+				"Accept":           "application/json",
+				"X-Forwarded-Host": "fii.bir",
+				"X-Forwarded-Uri":  "/forward?q=1",
+			},
+		},
+		{
+			name: "not trust Forward Header with forward requested URI",
+			headers: map[string]string{
+				"Accept":           "application/json",
+				"X-Forwarded-Host": "fii.bir",
+				"X-Forwarded-Uri":  "/forward?q=1",
+			},
+			trustForwardHeader: false,
+			expectedHeaders: map[string]string{
+				"Accept":           "application/json",
+				"X-Forwarded-Host": "foo.bar",
+				"X-Forwarded-Uri":  "/path?q=1",
+			},
+		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
 
-			req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar", nil)
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/path?q=1", nil)
 			for key, value := range test.headers {
 				req.Header.Set(key, value)
 			}
@@ -229,7 +272,7 @@ func Test_writeHeader(t *testing.T) {
 				req.Host = ""
 			}
 
-			forwardReq := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar", nil)
+			forwardReq := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/path?q=1", nil)
 
 			writeHeader(req, forwardReq, test.trustForwardHeader)
 

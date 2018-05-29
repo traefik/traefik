@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/docker/libkv/store"
+	"github.com/abronan/valkeyrie/store"
 )
 
 // ResponseCondition is a retry condition function.

@@ -1,4 +1,4 @@
-# Web Backend
+# Web Provider
 
 !!! danger "DEPRECATED"
     The web provider is deprecated, please use the [api](/configuration/api.md), the [ping](/configuration/ping.md), the [metrics](/configuration/metrics) and the [rest](/configuration/backends/rest.md) provider.
@@ -12,7 +12,7 @@ Træfik can be configured:
 ## Configuration
 
 ```toml
-# Enable web backend.
+# Enable Web Provider.
 [web]
 
 # Web administration port.
@@ -36,7 +36,6 @@ address = ":8080"
 #
 readOnly = true
 
- 
 # Set the root path for webui and API
 #
 # Deprecated
@@ -55,13 +54,13 @@ readOnly = true
 ### Authentication
 
 !!! note
-    The `/ping` path of the api is excluded from authentication (since 1.4).
+    The `/ping` path of the API is excluded from authentication (since 1.4).
 
 #### Basic Authentication
 
 Passwords can be encoded in MD5, SHA1 and BCrypt: you can use `htpasswd` to generate those ones.
 
-Users can be specified directly in the toml file, or indirectly by referencing an external file;
+Users can be specified directly in the TOML file, or indirectly by referencing an external file;
  if both are provided, the two are merged, with external file contents having precedence.
 
 ```toml
@@ -80,7 +79,7 @@ usersFile = "/path/to/.htpasswd"
 
 You can use `htdigest` to generate those ones.
 
-Users can be specified directly in the toml file, or indirectly by referencing an external file;
+Users can be specified directly in the TOML file, or indirectly by referencing an external file;
  if both are provided, the two are merged, with external file contents having precedence
 
 ```toml
@@ -98,7 +97,7 @@ usersFile = "/path/to/.htdigest"
 
 ## Metrics
 
-You can enable Traefik to export internal metrics to different monitoring systems.
+You can enable Træfik to export internal metrics to different monitoring systems.
 
 ### Prometheus
 
@@ -114,7 +113,7 @@ You can enable Traefik to export internal metrics to different monitoring system
 # Optional
 # Default: [0.1, 0.3, 1.2, 5]
 buckets=[0.1,0.3,1.2,5.0]
-    
+
 # ...
 ```
 
@@ -221,7 +220,7 @@ recentErrors = 10
 |-----------------------------------------------------------------|:-------------:|----------------------------------------------------------------------------------------------------|
 | `/`                                                             |     `GET`     | Provides a simple HTML frontend of Træfik                                                          |
 | `/ping`                                                         | `GET`, `HEAD` | A simple endpoint to check for Træfik process liveness. Return a code `200` with the content: `OK` |
-| `/health`                                                       |     `GET`     | json health metrics                                                                                |
+| `/health`                                                       |     `GET`     | JSON health metrics                                                                                |
 | `/api`                                                          |     `GET`     | Configuration for all providers                                                                    |
 | `/api/providers`                                                |     `GET`     | Providers                                                                                          |
 | `/api/providers/{provider}`                                     |  `GET`, `PUT` | Get or update provider                                                                             |
@@ -244,7 +243,7 @@ curl -sv "http://localhost:8080/ping"
 ```
 ```shell
 *   Trying ::1...
-* Connected to localhost (::1) port 8080 (#0)
+* Connected to localhost (::1) port 8080 (\#0)
 > GET /ping HTTP/1.1
 > Host: localhost:8080
 > User-Agent: curl/7.43.0
@@ -255,7 +254,7 @@ curl -sv "http://localhost:8080/ping"
 < Content-Length: 2
 < Content-Type: text/plain; charset=utf-8
 <
-* Connection #0 to host localhost left intact
+* Connection \#0 to host localhost left intact
 OK
 ```
 
@@ -309,7 +308,7 @@ curl -s "http://localhost:8080/health" | jq .
       "status": "Internal Server Error",
       // request HTTP method
       "method": "GET",
-      // request hostname
+      // request host name
       "host": "localhost",
       // request path
       "path": "/path",
@@ -385,23 +384,62 @@ curl -s "http://localhost:8080/api" | jq .
 }
 ```
 
-## Path
+### Deprecation compatibility
 
-As web is deprecated, you can handle the `Path` option like this
+#### Address
+
+As the web provider is deprecated, you can handle the `Address` option like this:
 
 ```toml
-[entrypoints.http]
-address=":80"
+defaultEntryPoints = ["http"]
 
-[entrypoints.dashboard]
-address=":8080"
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
 
-[entrypoints.api]
-address=":8081"
+  [entryPoints.foo]
+  address = ":8082"
 
-#Activate API and Dashboard
+  [entryPoints.bar]
+  address = ":8083"
+
+[ping]
+entryPoint = "foo"
+
 [api]
-entrypoint="api"
+entryPoint = "bar"
+```
+
+In the above example, you would access a regular path, administration panel, and health-check as follows:
+
+* Regular path: `http://hostname:80/path`
+* Admin Panel: `http://hostname:8083/`
+* Ping URL: `http://hostname:8082/ping`
+
+In the above example, it is _very_ important to create a named dedicated entry point, and do **not** include it in `defaultEntryPoints`.
+Otherwise, you are likely to expose _all_ services via that entry point.
+
+#### Path
+
+As the web provider is deprecated, you can handle the `Path` option like this:
+
+```toml
+defaultEntryPoints = ["http"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+
+  [entryPoints.foo]
+  address = ":8080"
+
+  [entryPoints.bar]
+  address = ":8081"
+
+# Activate API and Dashboard
+[api]
+entryPoint = "bar"
+dashboard = true
 
 [file]
   [backends]
@@ -411,8 +449,34 @@ entrypoint="api"
 
   [frontends]
     [frontends.frontend1]
-    entrypoints=["dashboard"]
+    entryPoints = ["foo"]
     backend = "backend1"
       [frontends.frontend1.routes.test_1]
       rule = "PathPrefixStrip:/yourprefix;PathPrefix:/yourprefix"
 ```
+
+#### Authentication
+
+As the web provider is deprecated, you can handle the `auth` option like this:
+
+```toml
+defaultEntryPoints = ["http"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+
+ [entryPoints.foo]
+   address=":8080"
+   [entryPoints.foo.auth]
+     [entryPoints.foo.auth.basic]
+       users = [
+         "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+         "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+       ]
+
+[api]
+entrypoint="foo"
+```
+
+For more information, see [entry points](/configuration/entrypoints/) .

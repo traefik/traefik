@@ -32,6 +32,9 @@ const (
 
 	// Wildcard domain to check
 	wildcardDomain = "*.acme.wtf"
+
+	// Traefik default certificate
+	traefikDefaultDomain = "TRAEFIK DEFAULT CERT"
 )
 
 func (s *AcmeSuite) SetUpSuite(c *check.C) {
@@ -41,7 +44,7 @@ func (s *AcmeSuite) SetUpSuite(c *check.C) {
 	s.boulderIP = s.composeProject.Container(c, "boulder").NetworkSettings.IPAddress
 
 	// wait for boulder
-	err := try.GetRequest("http://"+s.boulderIP+":4000/directory", 120*time.Second, try.StatusCodeIs(http.StatusOK))
+	err := try.GetRequest("http://"+s.boulderIP+":4001/directory", 120*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 }
 
@@ -52,22 +55,42 @@ func (s *AcmeSuite) TearDownSuite(c *check.C) {
 	}
 }
 
-// Test OnDemand option with none provided certificate
-func (s *AcmeSuite) TestOnDemandRetrieveAcmeCertificate(c *check.C) {
+// Test ACME provider with certificate at start
+func (s *AcmeSuite) TestACMEProviderAtStart(c *check.C) {
 	testCase := AcmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme.toml",
-		onDemand:            true,
+		traefikConfFilePath: "fixtures/provideracme/acme.toml",
+		onDemand:            false,
 		domainToCheck:       acmeDomain}
 
 	s.retrieveAcmeCertificate(c, testCase)
 }
 
-// Test OnHostRule option with none provided certificate
-func (s *AcmeSuite) TestOnHostRuleRetrieveAcmeCertificate(c *check.C) {
+// Test ACME provider with certificate at start
+func (s *AcmeSuite) TestACMEProviderAtStartInSAN(c *check.C) {
 	testCase := AcmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme.toml",
+		traefikConfFilePath: "fixtures/provideracme/acme_insan.toml",
+		onDemand:            false,
+		domainToCheck:       "acme.wtf"}
+
+	s.retrieveAcmeCertificate(c, testCase)
+}
+
+// Test ACME provider with certificate at start
+func (s *AcmeSuite) TestACMEProviderOnHost(c *check.C) {
+	testCase := AcmeTestCase{
+		traefikConfFilePath: "fixtures/provideracme/acme_onhost.toml",
 		onDemand:            false,
 		domainToCheck:       acmeDomain}
+
+	s.retrieveAcmeCertificate(c, testCase)
+}
+
+// Test ACME provider with certificate at start and no ACME challenge
+func (s *AcmeSuite) TestACMEProviderOnHostWithNoACMEChallenge(c *check.C) {
+	testCase := AcmeTestCase{
+		traefikConfFilePath: "fixtures/acme/no_challenge_acme.toml",
+		onDemand:            false,
+		domainToCheck:       traefikDefaultDomain}
 
 	s.retrieveAcmeCertificate(c, testCase)
 }
@@ -142,6 +165,19 @@ func (s *AcmeSuite) TestOnHostRuleRetrieveAcmeCertificateWithDynamicWildcard(c *
 	s.retrieveAcmeCertificate(c, testCase)
 }
 
+// Test Let's encrypt down
+func (s *AcmeSuite) TestNoValidLetsEncryptServer(c *check.C) {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/acme/wrong_acme.toml"))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// Expected traefik works
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 10*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+}
+
 // Doing an HTTPS request and test the response certificate
 func (s *AcmeSuite) retrieveAcmeCertificate(c *check.C, testCase AcmeTestCase) {
 	file := s.adaptFile(c, testCase.traefikConfFilePath, struct {
@@ -159,6 +195,8 @@ func (s *AcmeSuite) retrieveAcmeCertificate(c *check.C, testCase AcmeTestCase) {
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
+	// A real file is needed to have the right mode on acme.json file
+	defer os.Remove("/tmp/acme.json")
 
 	backend := startTestServer("9010", http.StatusOK)
 	defer backend.Close()
@@ -170,8 +208,8 @@ func (s *AcmeSuite) retrieveAcmeCertificate(c *check.C, testCase AcmeTestCase) {
 
 	// wait for traefik (generating acme account take some seconds)
 	err = try.Do(90*time.Second, func() error {
-		_, err := client.Get("https://127.0.0.1:5001")
-		return err
+		_, errGet := client.Get("https://127.0.0.1:5001")
+		return errGet
 	})
 	c.Assert(err, checker.IsNil)
 
@@ -203,7 +241,7 @@ func (s *AcmeSuite) retrieveAcmeCertificate(c *check.C, testCase AcmeTestCase) {
 
 		cn := resp.TLS.PeerCertificates[0].Subject.CommonName
 		if cn != testCase.domainToCheck {
-			return fmt.Errorf("domain %s found in place of %s", cn, testCase.domainToCheck)
+			return fmt.Errorf("domain %s found instead of %s", cn, testCase.domainToCheck)
 		}
 
 		return nil

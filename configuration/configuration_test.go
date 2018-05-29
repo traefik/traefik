@@ -5,309 +5,18 @@ import (
 	"time"
 
 	"github.com/containous/flaeg"
+	"github.com/containous/traefik/middlewares/tracing"
+	"github.com/containous/traefik/middlewares/tracing/jaeger"
+	"github.com/containous/traefik/middlewares/tracing/zipkin"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/provider/file"
-	"github.com/containous/traefik/tls"
-	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const defaultConfigFile = "traefik.toml"
 
-func Test_parseEntryPointsConfiguration(t *testing.T) {
-	testCases := []struct {
-		name           string
-		value          string
-		expectedResult map[string]string
-	}{
-		{
-			name:  "all parameters",
-			value: "Name:foo TLS:goo TLS CA:car Redirect.EntryPoint:RedirectEntryPoint Redirect.Regex:RedirectRegex Redirect.Replacement:RedirectReplacement Compress:true WhiteListSourceRange:WhiteListSourceRange ProxyProtocol.TrustedIPs:192.168.0.1 ProxyProtocol.Insecure:false Address::8000",
-			expectedResult: map[string]string{
-				"name":                     "foo",
-				"address":                  ":8000",
-				"ca":                       "car",
-				"tls":                      "goo",
-				"tls_acme":                 "TLS",
-				"redirect_entrypoint":      "RedirectEntryPoint",
-				"redirect_regex":           "RedirectRegex",
-				"redirect_replacement":     "RedirectReplacement",
-				"whitelistsourcerange":     "WhiteListSourceRange",
-				"proxyprotocol_trustedips": "192.168.0.1",
-				"proxyprotocol_insecure":   "false",
-				"compress":                 "true",
-			},
-		},
-		{
-			name:  "compress on",
-			value: "name:foo Compress:on",
-			expectedResult: map[string]string{
-				"name":     "foo",
-				"compress": "on",
-			},
-		},
-		{
-			name:  "TLS",
-			value: "Name:foo TLS:goo TLS",
-			expectedResult: map[string]string{
-				"name":     "foo",
-				"tls":      "goo",
-				"tls_acme": "TLS",
-			},
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-
-			conf := parseEntryPointsConfiguration(test.value)
-
-			assert.Len(t, conf, len(test.expectedResult))
-			assert.Equal(t, test.expectedResult, conf)
-		})
-	}
-}
-
-func Test_toBool(t *testing.T) {
-	testCases := []struct {
-		name         string
-		value        string
-		key          string
-		expectedBool bool
-	}{
-		{
-			name:         "on",
-			value:        "on",
-			key:          "foo",
-			expectedBool: true,
-		},
-		{
-			name:         "true",
-			value:        "true",
-			key:          "foo",
-			expectedBool: true,
-		},
-		{
-			name:         "enable",
-			value:        "enable",
-			key:          "foo",
-			expectedBool: true,
-		},
-		{
-			name:         "arbitrary string",
-			value:        "bar",
-			key:          "foo",
-			expectedBool: false,
-		},
-		{
-			name:         "no existing entry",
-			value:        "bar",
-			key:          "fii",
-			expectedBool: false,
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-
-			conf := map[string]string{
-				"foo": test.value,
-			}
-
-			result := toBool(conf, test.key)
-
-			assert.Equal(t, test.expectedBool, result)
-		})
-	}
-}
-
-func TestEntryPoints_Set(t *testing.T) {
-	testCases := []struct {
-		name                   string
-		expression             string
-		expectedEntryPointName string
-		expectedEntryPoint     *EntryPoint
-	}{
-		{
-			name:                   "all parameters camelcase",
-			expression:             "Name:foo Address::8000 TLS:goo,gii TLS CA:car CA.Optional:false Redirect.EntryPoint:RedirectEntryPoint Redirect.Regex:RedirectRegex Redirect.Replacement:RedirectReplacement Compress:true WhiteListSourceRange:Range ProxyProtocol.TrustedIPs:192.168.0.1 ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24",
-			expectedEntryPointName: "foo",
-			expectedEntryPoint: &EntryPoint{
-				Address: ":8000",
-				Redirect: &types.Redirect{
-					EntryPoint:  "RedirectEntryPoint",
-					Regex:       "RedirectRegex",
-					Replacement: "RedirectReplacement",
-				},
-				Compress: true,
-				ProxyProtocol: &ProxyProtocol{
-					TrustedIPs: []string{"192.168.0.1"},
-				},
-				ForwardedHeaders: &ForwardedHeaders{
-					TrustedIPs: []string{"10.0.0.3/24", "20.0.0.3/24"},
-				},
-				WhitelistSourceRange: []string{"Range"},
-				TLS: &tls.TLS{
-					ClientCA: tls.ClientCA{
-						Files:    []string{"car"},
-						Optional: false,
-					},
-					Certificates: tls.Certificates{
-						{
-							CertFile: tls.FileOrContent("goo"),
-							KeyFile:  tls.FileOrContent("gii"),
-						},
-					},
-				},
-			},
-		},
-		{
-			name:                   "all parameters lowercase",
-			expression:             "name:foo address::8000 tls:goo,gii tls ca:car ca.optional:true redirect.entryPoint:RedirectEntryPoint redirect.regex:RedirectRegex redirect.replacement:RedirectReplacement compress:true whiteListSourceRange:Range proxyProtocol.trustedIPs:192.168.0.1 forwardedHeaders.trustedIPs:10.0.0.3/24,20.0.0.3/24",
-			expectedEntryPointName: "foo",
-			expectedEntryPoint: &EntryPoint{
-				Address: ":8000",
-				Redirect: &types.Redirect{
-					EntryPoint:  "RedirectEntryPoint",
-					Regex:       "RedirectRegex",
-					Replacement: "RedirectReplacement",
-				},
-				Compress: true,
-				ProxyProtocol: &ProxyProtocol{
-					TrustedIPs: []string{"192.168.0.1"},
-				},
-				ForwardedHeaders: &ForwardedHeaders{
-					TrustedIPs: []string{"10.0.0.3/24", "20.0.0.3/24"},
-				},
-				WhitelistSourceRange: []string{"Range"},
-				TLS: &tls.TLS{
-					ClientCA: tls.ClientCA{
-						Files:    []string{"car"},
-						Optional: true,
-					},
-					Certificates: tls.Certificates{
-						{
-							CertFile: tls.FileOrContent("goo"),
-							KeyFile:  tls.FileOrContent("gii"),
-						},
-					},
-				},
-			},
-		},
-		{
-			name:                   "default",
-			expression:             "Name:foo",
-			expectedEntryPointName: "foo",
-			expectedEntryPoint: &EntryPoint{
-				WhitelistSourceRange: []string{},
-				ForwardedHeaders:     &ForwardedHeaders{Insecure: true},
-			},
-		},
-		{
-			name:                   "ForwardedHeaders insecure true",
-			expression:             "Name:foo ForwardedHeaders.Insecure:true",
-			expectedEntryPointName: "foo",
-			expectedEntryPoint: &EntryPoint{
-				WhitelistSourceRange: []string{},
-				ForwardedHeaders:     &ForwardedHeaders{Insecure: true},
-			},
-		},
-		{
-			name:                   "ForwardedHeaders insecure false",
-			expression:             "Name:foo ForwardedHeaders.Insecure:false",
-			expectedEntryPointName: "foo",
-			expectedEntryPoint: &EntryPoint{
-				WhitelistSourceRange: []string{},
-				ForwardedHeaders:     &ForwardedHeaders{Insecure: false},
-			},
-		},
-		{
-			name:                   "ForwardedHeaders TrustedIPs",
-			expression:             "Name:foo ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24",
-			expectedEntryPointName: "foo",
-			expectedEntryPoint: &EntryPoint{
-				WhitelistSourceRange: []string{},
-				ForwardedHeaders: &ForwardedHeaders{
-					TrustedIPs: []string{"10.0.0.3/24", "20.0.0.3/24"},
-				},
-			},
-		},
-		{
-			name:                   "ProxyProtocol insecure true",
-			expression:             "Name:foo ProxyProtocol.Insecure:true",
-			expectedEntryPointName: "foo",
-			expectedEntryPoint: &EntryPoint{
-				WhitelistSourceRange: []string{},
-				ForwardedHeaders:     &ForwardedHeaders{Insecure: true},
-				ProxyProtocol:        &ProxyProtocol{Insecure: true},
-			},
-		},
-		{
-			name:                   "ProxyProtocol insecure false",
-			expression:             "Name:foo ProxyProtocol.Insecure:false",
-			expectedEntryPointName: "foo",
-			expectedEntryPoint: &EntryPoint{
-				WhitelistSourceRange: []string{},
-				ForwardedHeaders:     &ForwardedHeaders{Insecure: true},
-				ProxyProtocol:        &ProxyProtocol{},
-			},
-		},
-		{
-			name:                   "ProxyProtocol TrustedIPs",
-			expression:             "Name:foo ProxyProtocol.TrustedIPs:10.0.0.3/24,20.0.0.3/24",
-			expectedEntryPointName: "foo",
-			expectedEntryPoint: &EntryPoint{
-				WhitelistSourceRange: []string{},
-				ForwardedHeaders:     &ForwardedHeaders{Insecure: true},
-				ProxyProtocol: &ProxyProtocol{
-					TrustedIPs: []string{"10.0.0.3/24", "20.0.0.3/24"},
-				},
-			},
-		},
-		{
-			name:                   "compress on",
-			expression:             "Name:foo Compress:on",
-			expectedEntryPointName: "foo",
-			expectedEntryPoint: &EntryPoint{
-				Compress:             true,
-				WhitelistSourceRange: []string{},
-				ForwardedHeaders:     &ForwardedHeaders{Insecure: true},
-			},
-		},
-		{
-			name:                   "compress true",
-			expression:             "Name:foo Compress:true",
-			expectedEntryPointName: "foo",
-			expectedEntryPoint: &EntryPoint{
-				Compress:             true,
-				WhitelistSourceRange: []string{},
-				ForwardedHeaders:     &ForwardedHeaders{Insecure: true},
-			},
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-
-			eps := EntryPoints{}
-			err := eps.Set(test.expression)
-			require.NoError(t, err)
-
-			ep := eps[test.expectedEntryPointName]
-			assert.EqualValues(t, test.expectedEntryPoint, ep)
-		})
-	}
-}
-
 func TestSetEffectiveConfigurationGraceTimeout(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc                  string
 		legacyGraceTimeout    time.Duration
 		lifeCycleGraceTimeout time.Duration
@@ -332,10 +41,11 @@ func TestSetEffectiveConfigurationGraceTimeout(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			gc := &GlobalConfiguration{
 				GraceTimeOut: flaeg.Duration(test.legacyGraceTimeout),
 			}
@@ -347,47 +57,162 @@ func TestSetEffectiveConfigurationGraceTimeout(t *testing.T) {
 
 			gc.SetEffectiveConfiguration(defaultConfigFile)
 
-			gotGraceTimeout := time.Duration(gc.LifeCycle.GraceTimeOut)
-			if gotGraceTimeout != test.wantGraceTimeout {
-				t.Fatalf("got effective grace timeout %d, want %d", gotGraceTimeout, test.wantGraceTimeout)
-			}
+			assert.Equal(t, test.wantGraceTimeout, time.Duration(gc.LifeCycle.GraceTimeOut))
 
 		})
 	}
 }
 
 func TestSetEffectiveConfigurationFileProviderFilename(t *testing.T) {
-	tests := []struct {
-		desc                     string
-		fileProvider             *file.Provider
-		wantFileProviderFilename string
+	testCases := []struct {
+		desc                        string
+		fileProvider                *file.Provider
+		wantFileProviderFilename    string
+		wantFileProviderTraefikFile string
 	}{
 		{
-			desc:                     "no filename for file provider given",
-			fileProvider:             &file.Provider{},
-			wantFileProviderFilename: defaultConfigFile,
+			desc:                        "no filename for file provider given",
+			fileProvider:                &file.Provider{},
+			wantFileProviderFilename:    "",
+			wantFileProviderTraefikFile: defaultConfigFile,
 		},
 		{
-			desc:                     "filename for file provider given",
-			fileProvider:             &file.Provider{BaseProvider: provider.BaseProvider{Filename: "other.toml"}},
-			wantFileProviderFilename: "other.toml",
+			desc:                        "filename for file provider given",
+			fileProvider:                &file.Provider{BaseProvider: provider.BaseProvider{Filename: "other.toml"}},
+			wantFileProviderFilename:    "other.toml",
+			wantFileProviderTraefikFile: defaultConfigFile,
+		},
+		{
+			desc:                        "directory for file provider given",
+			fileProvider:                &file.Provider{Directory: "/"},
+			wantFileProviderFilename:    "",
+			wantFileProviderTraefikFile: defaultConfigFile,
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			gc := &GlobalConfiguration{
 				File: test.fileProvider,
 			}
 
 			gc.SetEffectiveConfiguration(defaultConfigFile)
 
-			gotFileProviderFilename := gc.File.Filename
-			if gotFileProviderFilename != test.wantFileProviderFilename {
-				t.Fatalf("got file provider file name %q, want %q", gotFileProviderFilename, test.wantFileProviderFilename)
+			assert.Equal(t, test.wantFileProviderFilename, gc.File.Filename)
+			assert.Equal(t, test.wantFileProviderTraefikFile, gc.File.TraefikFile)
+		})
+	}
+}
+
+func TestSetEffectiveConfigurationTracing(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		tracing  *tracing.Tracing
+		expected *tracing.Tracing
+	}{
+		{
+			desc:     "no tracing configuration",
+			tracing:  &tracing.Tracing{},
+			expected: &tracing.Tracing{},
+		},
+		{
+			desc: "tracing bad backend name",
+			tracing: &tracing.Tracing{
+				Backend: "powpow",
+			},
+			expected: &tracing.Tracing{
+				Backend: "powpow",
+			},
+		},
+		{
+			desc: "tracing jaeger backend name",
+			tracing: &tracing.Tracing{
+				Backend: "jaeger",
+				Zipkin: &zipkin.Config{
+					HTTPEndpoint: "http://localhost:9411/api/v1/spans",
+					SameSpan:     false,
+					ID128Bit:     true,
+					Debug:        false,
+				},
+			},
+			expected: &tracing.Tracing{
+				Backend: "jaeger",
+				Jaeger: &jaeger.Config{
+					SamplingServerURL:  "http://localhost:5778/sampling",
+					SamplingType:       "const",
+					SamplingParam:      1.0,
+					LocalAgentHostPort: "127.0.0.1:6831",
+				},
+				Zipkin: nil,
+			},
+		},
+		{
+			desc: "tracing zipkin backend name",
+			tracing: &tracing.Tracing{
+				Backend: "zipkin",
+				Jaeger: &jaeger.Config{
+					SamplingServerURL:  "http://localhost:5778/sampling",
+					SamplingType:       "const",
+					SamplingParam:      1.0,
+					LocalAgentHostPort: "127.0.0.1:6831",
+				},
+			},
+			expected: &tracing.Tracing{
+				Backend: "zipkin",
+				Jaeger:  nil,
+				Zipkin: &zipkin.Config{
+					HTTPEndpoint: "http://localhost:9411/api/v1/spans",
+					SameSpan:     false,
+					ID128Bit:     true,
+					Debug:        false,
+				},
+			},
+		},
+		{
+			desc: "tracing zipkin backend name value override",
+			tracing: &tracing.Tracing{
+				Backend: "zipkin",
+				Jaeger: &jaeger.Config{
+					SamplingServerURL:  "http://localhost:5778/sampling",
+					SamplingType:       "const",
+					SamplingParam:      1.0,
+					LocalAgentHostPort: "127.0.0.1:6831",
+				},
+				Zipkin: &zipkin.Config{
+					HTTPEndpoint: "http://powpow:9411/api/v1/spans",
+					SameSpan:     true,
+					ID128Bit:     true,
+					Debug:        true,
+				},
+			},
+			expected: &tracing.Tracing{
+				Backend: "zipkin",
+				Jaeger:  nil,
+				Zipkin: &zipkin.Config{
+					HTTPEndpoint: "http://powpow:9411/api/v1/spans",
+					SameSpan:     true,
+					ID128Bit:     true,
+					Debug:        true,
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			gc := &GlobalConfiguration{
+				Tracing: test.tracing,
 			}
+
+			gc.SetEffectiveConfiguration(defaultConfigFile)
+
+			assert.Equal(t, test.expected, gc.Tracing)
 		})
 	}
 }

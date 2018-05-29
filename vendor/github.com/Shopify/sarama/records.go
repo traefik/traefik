@@ -62,16 +62,12 @@ func (r *Records) encode(pe packetEncoder) error {
 		}
 		return r.recordBatch.encode(pe)
 	}
+
 	return fmt.Errorf("unknown records type: %v", r.recordsType)
 }
 
 func (r *Records) setTypeFromMagic(pd packetDecoder) error {
-	dec, err := pd.peek(magicOffset, magicLength)
-	if err != nil {
-		return err
-	}
-
-	magic, err := dec.getInt8()
+	magic, err := magicValue(pd)
 	if err != nil {
 		return err
 	}
@@ -80,13 +76,14 @@ func (r *Records) setTypeFromMagic(pd packetDecoder) error {
 	if magic < 2 {
 		r.recordsType = legacyRecords
 	}
+
 	return nil
 }
 
 func (r *Records) decode(pd packetDecoder) error {
 	if r.recordsType == unknownRecords {
 		if err := r.setTypeFromMagic(pd); err != nil {
-			return nil
+			return err
 		}
 	}
 
@@ -164,4 +161,13 @@ func (r *Records) isControl() (bool, error) {
 		return r.recordBatch.Control, nil
 	}
 	return false, fmt.Errorf("unknown records type: %v", r.recordsType)
+}
+
+func magicValue(pd packetDecoder) (int8, error) {
+	dec, err := pd.peek(magicOffset, magicLength)
+	if err != nil {
+		return 0, err
+	}
+
+	return dec.getInt8()
 }

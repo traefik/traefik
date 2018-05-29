@@ -19,7 +19,6 @@ type Timer interface {
 	RateMean() float64
 	Snapshot() Timer
 	StdDev() float64
-	Stop()
 	Sum() int64
 	Time(func())
 	Update(time.Duration)
@@ -29,8 +28,6 @@ type Timer interface {
 
 // GetOrRegisterTimer returns an existing Timer or constructs and registers a
 // new StandardTimer.
-// Be sure to unregister the meter from the registry once it is of no use to
-// allow for garbage collection.
 func GetOrRegisterTimer(name string, r Registry) Timer {
 	if nil == r {
 		r = DefaultRegistry
@@ -39,7 +36,6 @@ func GetOrRegisterTimer(name string, r Registry) Timer {
 }
 
 // NewCustomTimer constructs a new StandardTimer from a Histogram and a Meter.
-// Be sure to call Stop() once the timer is of no use to allow for garbage collection.
 func NewCustomTimer(h Histogram, m Meter) Timer {
 	if UseNilMetrics {
 		return NilTimer{}
@@ -51,8 +47,6 @@ func NewCustomTimer(h Histogram, m Meter) Timer {
 }
 
 // NewRegisteredTimer constructs and registers a new StandardTimer.
-// Be sure to unregister the meter from the registry once it is of no use to
-// allow for garbage collection.
 func NewRegisteredTimer(name string, r Registry) Timer {
 	c := NewTimer()
 	if nil == r {
@@ -64,7 +58,6 @@ func NewRegisteredTimer(name string, r Registry) Timer {
 
 // NewTimer constructs a new StandardTimer using an exponentially-decaying
 // sample with the same reservoir size and alpha as UNIX load averages.
-// Be sure to call Stop() once the timer is of no use to allow for garbage collection.
 func NewTimer() Timer {
 	if UseNilMetrics {
 		return NilTimer{}
@@ -118,9 +111,6 @@ func (NilTimer) Snapshot() Timer { return NilTimer{} }
 
 // StdDev is a no-op.
 func (NilTimer) StdDev() float64 { return 0.0 }
-
-// Stop is a no-op.
-func (NilTimer) Stop() {}
 
 // Sum is a no-op.
 func (NilTimer) Sum() int64 { return 0 }
@@ -211,11 +201,6 @@ func (t *StandardTimer) StdDev() float64 {
 	return t.histogram.StdDev()
 }
 
-// Stop stops the meter.
-func (t *StandardTimer) Stop() {
-	t.meter.Stop()
-}
-
 // Sum returns the sum in the sample.
 func (t *StandardTimer) Sum() int64 {
 	return t.histogram.Sum()
@@ -302,9 +287,6 @@ func (t *TimerSnapshot) Snapshot() Timer { return t }
 // StdDev returns the standard deviation of the values at the time the snapshot
 // was taken.
 func (t *TimerSnapshot) StdDev() float64 { return t.histogram.StdDev() }
-
-// Stop is a no-op.
-func (t *TimerSnapshot) Stop() {}
 
 // Sum returns the sum at the time the snapshot was taken.
 func (t *TimerSnapshot) Sum() int64 { return t.histogram.Sum() }

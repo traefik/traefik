@@ -1,30 +1,30 @@
 package server
 
 import (
-	"net"
 	"net/http"
 	"os"
 
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/whitelist"
 	"github.com/vulcand/oxy/forward"
 )
 
 // NewHeaderRewriter Create a header rewriter
 func NewHeaderRewriter(trustedIPs []string, insecure bool) (forward.ReqRewriter, error) {
-	IPs, err := whitelist.NewIP(trustedIPs, insecure)
+	ips, err := whitelist.NewIP(trustedIPs, insecure, true)
 	if err != nil {
 		return nil, err
 	}
 
-	h, err := os.Hostname()
+	hostname, err := os.Hostname()
 	if err != nil {
-		h = "localhost"
+		hostname = "localhost"
 	}
 
 	return &headerRewriter{
-		secureRewriter:   &forward.HeaderRewriter{TrustForwardHeader: true, Hostname: h},
-		insecureRewriter: &forward.HeaderRewriter{TrustForwardHeader: false, Hostname: h},
-		ips:              IPs,
+		secureRewriter:   &forward.HeaderRewriter{TrustForwardHeader: false, Hostname: hostname},
+		insecureRewriter: &forward.HeaderRewriter{TrustForwardHeader: true, Hostname: hostname},
+		ips:              ips,
 		insecure:         insecure,
 	}, nil
 }
@@ -37,15 +37,17 @@ type headerRewriter struct {
 }
 
 func (h *headerRewriter) Rewrite(req *http.Request) {
-	clientIP, _, err := net.SplitHostPort(req.RemoteAddr)
-	if err != nil {
-		h.secureRewriter.Rewrite(req)
+	if h.insecure {
+		h.insecureRewriter.Rewrite(req)
+		return
 	}
 
-	authorized, _, err := h.ips.Contains(clientIP)
-	if h.insecure || authorized {
+	err := h.ips.IsAuthorized(req)
+	if err != nil {
+		log.Error(err)
 		h.secureRewriter.Rewrite(req)
-	} else {
-		h.insecureRewriter.Rewrite(req)
+		return
 	}
+
+	h.insecureRewriter.Rewrite(req)
 }

@@ -79,36 +79,24 @@ func (xxh *xxHash) Write(input []byte) (int, error) {
 		xxh.bufused += len(input) - r
 
 		// fast rotl(13)
-		p32 := xxh.v1 + (uint32(xxh.buf[p+3])<<24|uint32(xxh.buf[p+2])<<16|uint32(xxh.buf[p+1])<<8|uint32(xxh.buf[p]))*prime32_2
-		xxh.v1 = (p32<<13 | p32>>19) * prime32_1
-		p += 4
-		p32 = xxh.v2 + (uint32(xxh.buf[p+3])<<24|uint32(xxh.buf[p+2])<<16|uint32(xxh.buf[p+1])<<8|uint32(xxh.buf[p]))*prime32_2
-		xxh.v2 = (p32<<13 | p32>>19) * prime32_1
-		p += 4
-		p32 = xxh.v3 + (uint32(xxh.buf[p+3])<<24|uint32(xxh.buf[p+2])<<16|uint32(xxh.buf[p+1])<<8|uint32(xxh.buf[p]))*prime32_2
-		xxh.v3 = (p32<<13 | p32>>19) * prime32_1
-		p += 4
-		p32 = xxh.v4 + (uint32(xxh.buf[p+3])<<24|uint32(xxh.buf[p+2])<<16|uint32(xxh.buf[p+1])<<8|uint32(xxh.buf[p]))*prime32_2
-		xxh.v4 = (p32<<13 | p32>>19) * prime32_1
-
+		xxh.v1 = rol13(xxh.v1+u32(xxh.buf[:])*prime32_2) * prime32_1
+		xxh.v2 = rol13(xxh.v2+u32(xxh.buf[4:])*prime32_2) * prime32_1
+		xxh.v3 = rol13(xxh.v3+u32(xxh.buf[8:])*prime32_2) * prime32_1
+		xxh.v4 = rol13(xxh.v4+u32(xxh.buf[12:])*prime32_2) * prime32_1
 		p = r
 		xxh.bufused = 0
 	}
 
-	for n := n - 16; p <= n; {
-		p32 := xxh.v1 + (uint32(input[p+3])<<24|uint32(input[p+2])<<16|uint32(input[p+1])<<8|uint32(input[p]))*prime32_2
-		xxh.v1 = (p32<<13 | p32>>19) * prime32_1
-		p += 4
-		p32 = xxh.v2 + (uint32(input[p+3])<<24|uint32(input[p+2])<<16|uint32(input[p+1])<<8|uint32(input[p]))*prime32_2
-		xxh.v2 = (p32<<13 | p32>>19) * prime32_1
-		p += 4
-		p32 = xxh.v3 + (uint32(input[p+3])<<24|uint32(input[p+2])<<16|uint32(input[p+1])<<8|uint32(input[p]))*prime32_2
-		xxh.v3 = (p32<<13 | p32>>19) * prime32_1
-		p += 4
-		p32 = xxh.v4 + (uint32(input[p+3])<<24|uint32(input[p+2])<<16|uint32(input[p+1])<<8|uint32(input[p]))*prime32_2
-		xxh.v4 = (p32<<13 | p32>>19) * prime32_1
-		p += 4
+	// Causes compiler to work directly from registers instead of stack:
+	v1, v2, v3, v4 := xxh.v1, xxh.v2, xxh.v3, xxh.v4
+	for n := n - 16; p <= n; p += 16 {
+		sub := input[p:][:16] //BCE hint for compiler
+		v1 = rol13(v1+u32(sub[:])*prime32_2) * prime32_1
+		v2 = rol13(v2+u32(sub[4:])*prime32_2) * prime32_1
+		v3 = rol13(v3+u32(sub[8:])*prime32_2) * prime32_1
+		v4 = rol13(v4+u32(sub[12:])*prime32_2) * prime32_1
 	}
+	xxh.v1, xxh.v2, xxh.v3, xxh.v4 = v1, v2, v3, v4
 
 	copy(xxh.buf[xxh.bufused:], input[p:])
 	xxh.bufused += len(input) - p
@@ -120,10 +108,7 @@ func (xxh *xxHash) Write(input []byte) (int, error) {
 func (xxh *xxHash) Sum32() uint32 {
 	h32 := uint32(xxh.totalLen)
 	if xxh.totalLen >= 16 {
-		h32 += ((xxh.v1 << 1) | (xxh.v1 >> 31)) +
-			((xxh.v2 << 7) | (xxh.v2 >> 25)) +
-			((xxh.v3 << 12) | (xxh.v3 >> 20)) +
-			((xxh.v4 << 18) | (xxh.v4 >> 14))
+		h32 += rol1(xxh.v1) + rol7(xxh.v2) + rol12(xxh.v3) + rol18(xxh.v4)
 	} else {
 		h32 += xxh.seed + prime32_5
 	}
@@ -131,12 +116,12 @@ func (xxh *xxHash) Sum32() uint32 {
 	p := 0
 	n := xxh.bufused
 	for n := n - 4; p <= n; p += 4 {
-		h32 += (uint32(xxh.buf[p+3])<<24 | uint32(xxh.buf[p+2])<<16 | uint32(xxh.buf[p+1])<<8 | uint32(xxh.buf[p])) * prime32_3
-		h32 = ((h32 << 17) | (h32 >> 15)) * prime32_4
+		h32 += u32(xxh.buf[p:p+4]) * prime32_3
+		h32 = rol17(h32) * prime32_4
 	}
 	for ; p < n; p++ {
 		h32 += uint32(xxh.buf[p]) * prime32_5
-		h32 = ((h32 << 11) | (h32 >> 21)) * prime32_1
+		h32 = rol11(h32) * prime32_1
 	}
 
 	h32 ^= h32 >> 15
@@ -161,37 +146,26 @@ func Checksum(input []byte, seed uint32) uint32 {
 		v3 := seed
 		v4 := seed - prime32_1
 		p := 0
-		for p <= n-16 {
-			v1 += (uint32(input[p+3])<<24 | uint32(input[p+2])<<16 | uint32(input[p+1])<<8 | uint32(input[p])) * prime32_2
-			v1 = (v1<<13 | v1>>19) * prime32_1
-			p += 4
-			v2 += (uint32(input[p+3])<<24 | uint32(input[p+2])<<16 | uint32(input[p+1])<<8 | uint32(input[p])) * prime32_2
-			v2 = (v2<<13 | v2>>19) * prime32_1
-			p += 4
-			v3 += (uint32(input[p+3])<<24 | uint32(input[p+2])<<16 | uint32(input[p+1])<<8 | uint32(input[p])) * prime32_2
-			v3 = (v3<<13 | v3>>19) * prime32_1
-			p += 4
-			v4 += (uint32(input[p+3])<<24 | uint32(input[p+2])<<16 | uint32(input[p+1])<<8 | uint32(input[p])) * prime32_2
-			v4 = (v4<<13 | v4>>19) * prime32_1
-			p += 4
+		for n := n - 16; p <= n; p += 16 {
+			sub := input[p:][:16] //BCE hint for compiler
+			v1 = rol13(v1+u32(sub[:])*prime32_2) * prime32_1
+			v2 = rol13(v2+u32(sub[4:])*prime32_2) * prime32_1
+			v3 = rol13(v3+u32(sub[8:])*prime32_2) * prime32_1
+			v4 = rol13(v4+u32(sub[12:])*prime32_2) * prime32_1
 		}
 		input = input[p:]
 		n -= p
-		h32 += ((v1 << 1) | (v1 >> 31)) +
-			((v2 << 7) | (v2 >> 25)) +
-			((v3 << 12) | (v3 >> 20)) +
-			((v4 << 18) | (v4 >> 14))
+		h32 += rol1(v1) + rol7(v2) + rol12(v3) + rol18(v4)
 	}
 
 	p := 0
-	for p <= n-4 {
-		h32 += (uint32(input[p+3])<<24 | uint32(input[p+2])<<16 | uint32(input[p+1])<<8 | uint32(input[p])) * prime32_3
-		h32 = ((h32 << 17) | (h32 >> 15)) * prime32_4
-		p += 4
+	for n := n - 4; p <= n; p += 4 {
+		h32 += u32(input[p:p+4]) * prime32_3
+		h32 = rol17(h32) * prime32_4
 	}
 	for p < n {
 		h32 += uint32(input[p]) * prime32_5
-		h32 = ((h32 << 11) | (h32 >> 21)) * prime32_1
+		h32 = rol11(h32) * prime32_1
 		p++
 	}
 
@@ -202,4 +176,37 @@ func Checksum(input []byte, seed uint32) uint32 {
 	h32 ^= h32 >> 16
 
 	return h32
+}
+
+func u32(buf []byte) uint32 {
+	// go compiler recognizes this pattern and optimizes it on little endian platforms
+	return uint32(buf[0]) | uint32(buf[1])<<8 | uint32(buf[2])<<16 | uint32(buf[3])<<24
+}
+
+func rol1(u uint32) uint32 {
+	return u<<1 | u>>31
+}
+
+func rol7(u uint32) uint32 {
+	return u<<7 | u>>25
+}
+
+func rol11(u uint32) uint32 {
+	return u<<11 | u>>21
+}
+
+func rol12(u uint32) uint32 {
+	return u<<12 | u>>20
+}
+
+func rol13(u uint32) uint32 {
+	return u<<13 | u>>19
+}
+
+func rol17(u uint32) uint32 {
+	return u<<17 | u>>15
+}
+
+func rol18(u uint32) uint32 {
+	return u<<18 | u>>14
 }

@@ -14,10 +14,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/acmev2"
 )
 
-// DNSProvider is an implementation of the acme.ChallengeProvider interface
+// DNSProvider is an implementation of the acmev2.ChallengeProvider interface
 type DNSProvider struct {
 	apiKey     string
 	host       *url.URL
@@ -65,7 +65,7 @@ func (c *DNSProvider) Timeout() (timeout, interval time.Duration) {
 
 // Present creates a TXT record to fulfil the dns-01 challenge
 func (c *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value, _ := acmev2.DNS01Record(domain, keyAuth)
 	zone, err := c.getHostedZone(fqdn)
 	if err != nil {
 		return err
@@ -75,7 +75,7 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 
 	// pre-v1 API wants non-fqdn
 	if c.apiVersion == 0 {
-		name = acme.UnFqdn(fqdn)
+		name = acmev2.UnFqdn(fqdn)
 	}
 
 	rec := pdnsRecord{
@@ -117,7 +117,7 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters
 func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
 
 	zone, err := c.getHostedZone(fqdn)
 	if err != nil {
@@ -153,7 +153,7 @@ func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 
 func (c *DNSProvider) getHostedZone(fqdn string) (*hostedZone, error) {
 	var zone hostedZone
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := acmev2.FindZoneByFqdn(fqdn, acmev2.RecursiveNameservers)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +172,7 @@ func (c *DNSProvider) getHostedZone(fqdn string) (*hostedZone, error) {
 
 	url = ""
 	for _, zone := range zones {
-		if acme.UnFqdn(zone.Name) == acme.UnFqdn(authZone) {
+		if acmev2.UnFqdn(zone.Name) == acmev2.UnFqdn(authZone) {
 			url = zone.URL
 		}
 	}
@@ -215,7 +215,7 @@ func (c *DNSProvider) findTxtRecord(fqdn string) (*rrSet, error) {
 	}
 
 	for _, set := range zone.RRSets {
-		if (set.Name == acme.UnFqdn(fqdn) || set.Name == fqdn) && set.Type == "TXT" {
+		if (set.Name == acmev2.UnFqdn(fqdn) || set.Name == fqdn) && set.Type == "TXT" {
 			return &set, nil
 		}
 	}
@@ -257,12 +257,11 @@ func (c *DNSProvider) makeRequest(method, uri string, body io.Reader) (json.RawM
 	if c.host.Path != "/" {
 		path = c.host.Path
 	}
-	if c.apiVersion > 0 {
-		if !strings.HasPrefix(uri, "api/v") {
-			uri = "/api/v" + strconv.Itoa(c.apiVersion) + uri
-		} else {
-			uri = "/" + uri
-		}
+	if !strings.HasPrefix(uri, "/") {
+		uri = "/" + uri
+	}
+	if c.apiVersion > 0 && !strings.HasPrefix(uri, "/api/v") {
+		uri = "/api/v" + strconv.Itoa(c.apiVersion) + uri
 	}
 	url := c.host.Scheme + "://" + c.host.Host + path + uri
 	req, err := http.NewRequest(method, url, body)

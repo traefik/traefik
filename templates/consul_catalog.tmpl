@@ -1,52 +1,174 @@
 [backends]
-{{range $index, $node := .Nodes}}
-  [backends."backend-{{getBackend $node}}".servers."{{getBackendName $node $index}}"]
-    url = "{{getAttribute "protocol" $node.Service.Tags "http"}}://{{getBackendAddress $node}}:{{$node.Service.Port}}"
-    {{$weight := getAttribute "backend.weight" $node.Service.Tags "0"}}
-    {{with $weight}}
-      weight = {{$weight}}
+{{range $service := .Services}}
+  {{ $backendName := getServiceBackendName $service }}
+
+  {{ $circuitBreaker := getCircuitBreaker $service.TraefikLabels }}
+  {{if $circuitBreaker }}
+  [backends."backend-{{ $backendName }}".circuitBreaker]
+    expression = "{{ $circuitBreaker.Expression }}"
+  {{end}}
+
+  {{ $loadBalancer := getLoadBalancer $service.TraefikLabels }}
+  {{if $loadBalancer }}
+  [backends."backend-{{ $backendName }}".loadBalancer]
+    method = "{{ $loadBalancer.Method }}"
+    sticky = {{ $loadBalancer.Sticky }}
+    {{if $loadBalancer.Stickiness }}
+    [backends."backend-{{ $backendName }}".loadBalancer.stickiness]
+      cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
     {{end}}
+  {{end}}
+
+  {{ $maxConn := getMaxConn $service.TraefikLabels }}
+  {{if $maxConn }}
+  [backends."backend-{{ $backendName }}".maxConn]
+    extractorFunc = "{{ $maxConn.ExtractorFunc }}"
+    amount = {{ $maxConn.Amount }}
+  {{end}}
+
+  {{ $healthCheck := getHealthCheck $service.TraefikLabels }}
+  {{if $healthCheck }}
+  [backends."backend-{{ $backendName }}".healthCheck]
+    path = "{{ $healthCheck.Path }}"
+    port = {{ $healthCheck.Port }}
+    interval = "{{ $healthCheck.Interval }}"
+  {{end}}
+
+  {{ $buffering := getBuffering $service.TraefikLabels }}
+  {{if $buffering }}
+  [backends."backend-{{ $backendName }}".buffering]
+    maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
+    memRequestBodyBytes = {{ $buffering.MemRequestBodyBytes }}
+    maxResponseBodyBytes = {{ $buffering.MaxResponseBodyBytes }}
+    memResponseBodyBytes = {{ $buffering.MemResponseBodyBytes }}
+    retryExpression = "{{ $buffering.RetryExpression }}"
+  {{end}}
+
 {{end}}
-
-{{range .Services}}
-  {{$service := .ServiceName}}
-  {{$circuitBreaker := getAttribute "backend.circuitbreaker" .Attributes ""}}
-  {{with $circuitBreaker}}
-  [backends."backend-{{$service}}".circuitbreaker]
-    expression = "{{$circuitBreaker}}"
-  {{end}}
-
-  [backends."backend-{{$service}}".loadbalancer]
-    method = "{{getAttribute "backend.loadbalancer" .Attributes "wrr"}}"
-    sticky = {{getSticky .Attributes}}
-    {{if hasStickinessLabel .Attributes}}
-    [backends."backend-{{$service}}".loadbalancer.stickiness]
-      cookieName = "{{getStickinessCookieName .Attributes}}"
-    {{end}}
-
-  {{if hasMaxconnAttributes .Attributes}}
-  [backends."backend-{{$service}}".maxconn]
-    amount = {{getAttribute "backend.maxconn.amount" .Attributes "" }}
-    extractorfunc = "{{getAttribute "backend.maxconn.extractorfunc" .Attributes "" }}"
-  {{end}}
+{{range $index, $node := .Nodes}}
+  {{ $server := getServer $node }}
+  [backends."backend-{{ getNodeBackendName $node }}".servers."{{ getServerName $node $index }}"]
+    url = "{{ $server.URL }}"
+    weight = {{ $server.Weight }}
 
 {{end}}
 
 [frontends]
-{{range .Services}}
-  [frontends."frontend-{{.ServiceName}}"]
-  backend = "backend-{{.ServiceName}}"
-  passHostHeader = {{getAttribute "frontend.passHostHeader" .Attributes "true"}}
-  priority = {{getAttribute "frontend.priority" .Attributes "0"}}
-  {{$entryPoints := getAttribute "frontend.entrypoints" .Attributes ""}}
-  {{with $entryPoints}}
-    entrypoints = [{{range getEntryPoints $entryPoints}}
+{{range $service := .Services}}
+
+  [frontends."frontend-{{ $service.ServiceName }}"]
+    backend = "backend-{{ getServiceBackendName $service }}"
+    priority = {{ getPriority $service.TraefikLabels }}
+    passHostHeader = {{ getPassHostHeader $service.TraefikLabels }}
+    passTLSCert = {{ getPassTLSCert $service.TraefikLabels }}
+
+    entryPoints = [{{range getFrontEndEntryPoints $service.TraefikLabels }}
       "{{.}}",
-    {{end}}]
-  {{end}}
-  basicAuth = [{{range getBasicAuth .Attributes}}
-  "{{.}}",
-  {{end}}]
-  [frontends."frontend-{{.ServiceName}}".routes."route-host-{{.ServiceName}}"]
-    rule = "{{getFrontendRule .}}"
+      {{end}}]
+
+    basicAuth = [{{range getBasicAuth $service.TraefikLabels }}
+      "{{.}}",
+      {{end}}]
+
+    {{ $whitelist := getWhiteList $service.TraefikLabels }}
+    {{if $whitelist }}
+    [frontends."frontend-{{ $service.ServiceName }}".whiteList]
+      sourceRange = [{{range $whitelist.SourceRange }}
+        "{{.}}",
+        {{end}}]
+      useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
+    {{end}}
+
+    {{ $redirect := getRedirect $service.TraefikLabels }}
+    {{if $redirect }}
+    [frontends."frontend-{{ $service.ServiceName }}".redirect]
+      entryPoint = "{{ $redirect.EntryPoint }}"
+      regex = "{{ $redirect.Regex }}"
+      replacement = "{{ $redirect.Replacement }}"
+      permanent = {{ $redirect.Permanent }}
+    {{end}}
+
+    {{ $errorPages := getErrorPages $service.TraefikLabels }}
+    {{if $errorPages }}
+    [frontends."frontend-{{ $service.ServiceName }}".errors]
+      {{range $pageName, $page := $errorPages }}
+      [frontends."frontend-{{ $service.ServiceName }}".errors."{{ $pageName }}"]
+        status = [{{range $page.Status }}
+          "{{.}}",
+          {{end}}]
+        backend = "backend-{{ $page.Backend }}"
+        query = "{{ $page.Query }}"
+      {{end}}
+    {{end}}
+
+    {{ $rateLimit := getRateLimit $service.TraefikLabels }}
+    {{if $rateLimit }}
+    [frontends."frontend-{{ $service.ServiceName }}".rateLimit]
+      extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
+      [frontends."frontend-{{ $service.ServiceName }}".rateLimit.rateSet]
+        {{ range $limitName, $limit := $rateLimit.RateSet }}
+        [frontends."frontend-{{ $service.ServiceName }}".rateLimit.rateSet."{{ $limitName }}"]
+          period = "{{ $limit.Period }}"
+          average = {{ $limit.Average }}
+          burst = {{ $limit.Burst }}
+        {{end}}
+    {{end}}
+
+    {{ $headers := getHeaders $service.TraefikLabels }}
+    {{if $headers }}
+    [frontends."frontend-{{ $service.ServiceName }}".headers]
+      SSLRedirect = {{ $headers.SSLRedirect }}
+      SSLTemporaryRedirect = {{ $headers.SSLTemporaryRedirect }}
+      SSLHost = "{{ $headers.SSLHost }}"
+      STSSeconds = {{ $headers.STSSeconds }}
+      STSIncludeSubdomains = {{ $headers.STSIncludeSubdomains }}
+      STSPreload = {{ $headers.STSPreload }}
+      ForceSTSHeader = {{ $headers.ForceSTSHeader }}
+      FrameDeny = {{ $headers.FrameDeny }}
+      CustomFrameOptionsValue = "{{ $headers.CustomFrameOptionsValue }}"
+      ContentTypeNosniff = {{ $headers.ContentTypeNosniff }}
+      BrowserXSSFilter = {{ $headers.BrowserXSSFilter }}
+      CustomBrowserXSSValue = "{{ $headers.CustomBrowserXSSValue }}"
+      ContentSecurityPolicy = "{{ $headers.ContentSecurityPolicy }}"
+      PublicKey = "{{ $headers.PublicKey }}"
+      ReferrerPolicy = "{{ $headers.ReferrerPolicy }}"
+      IsDevelopment = {{ $headers.IsDevelopment }}
+
+      {{if $headers.AllowedHosts }}
+      AllowedHosts = [{{range $headers.AllowedHosts }}
+        "{{.}}",
+        {{end}}]
+      {{end}}
+
+      {{if $headers.HostsProxyHeaders }}
+      HostsProxyHeaders = [{{range $headers.HostsProxyHeaders }}
+        "{{.}}",
+        {{end}}]
+      {{end}}
+
+      {{if $headers.CustomRequestHeaders }}
+      [frontends."frontend-{{ $service.ServiceName }}".headers.customRequestHeaders]
+        {{range $k, $v := $headers.CustomRequestHeaders }}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
+
+      {{if $headers.CustomResponseHeaders }}
+      [frontends."frontend-{{ $service.ServiceName }}".headers.customResponseHeaders]
+        {{range $k, $v := $headers.CustomResponseHeaders }}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
+
+      {{if $headers.SSLProxyHeaders }}
+      [frontends."frontend-{{ $service.ServiceName }}".headers.SSLProxyHeaders]
+        {{range $k, $v := $headers.SSLProxyHeaders}}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
+    {{end}}
+
+    [frontends."frontend-{{ $service.ServiceName }}".routes."route-host-{{ $service.ServiceName }}"]
+      rule = "{{ getFrontendRule $service }}"
+
 {{end}}

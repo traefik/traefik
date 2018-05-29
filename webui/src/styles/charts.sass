@@ -1,0 +1,48 @@
+.line-chart
+  width: 100%
+  height: 320px
+  background-color: $white
+
+  svg
+    font: 10px sans-serif
+
+  .line
+    fill: none
+    stroke: $blue
+    stroke-width: 3px
+    shape-rendering: geometricPrecision
+
+  .axis line, .axis path
+    stroke: $text
+    opacity: .2
+    shape-rendering: crispEdges
+    fill: none
+
+  .axis path
+    display: none
+
+  .axis text
+    fill: $text
+
+
+.bar-chart
+  width: 100%
+  height: 320px
+  background-color: $white
+
+  .axis text
+    fill: $text
+    font: 10px sans-serif
+
+  .axis line, .axis path
+    fill: none
+    opacity: .2
+    stroke: $text
+
+  .axis--x
+
+    text
+      font: 12px sans-serif
+
+    path
+      display: none

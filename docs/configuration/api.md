@@ -1,5 +1,7 @@
 # API Definition
 
+## Configuration
+
 ```toml
 # API definition
 [api]
@@ -9,14 +11,14 @@
   # Default: "traefik"
   #
   entryPoint = "traefik"
-  
+
   # Enabled Dashboard
   #
   # Optional
   # Default: true
   #
   dashboard = true
-  
+
   # Enable debug mode.
   # This will install HTTP handlers to expose Go expvars under /debug/vars and
   # pprof profiling data under /debug/pprof.
@@ -27,6 +29,8 @@
   #
   debug = true
 ```
+
+For more customization, see [entry points](/configuration/entrypoints/) documentation and [examples](/user-guide/examples/#ping-health-check).
 
 ## Web UI
 
@@ -39,10 +43,11 @@
 | Path                                                            | Method           | Description                               |
 |-----------------------------------------------------------------|------------------|-------------------------------------------|
 | `/`                                                             |     `GET`        | Provides a simple HTML frontend of Træfik |
-| `/health`                                                       |     `GET`        | json health metrics                       |
+| `/cluster/leader`                                               |     `GET`        | JSON leader true/false response           |
+| `/health`                                                       |     `GET`        | JSON health metrics                       |
 | `/api`                                                          |     `GET`        | Configuration for all providers           |
 | `/api/providers`                                                |     `GET`        | Providers                                 |
-| `/api/providers/{provider}`                                     |     `GET`, `PUT` | Get or update provider                    |
+| `/api/providers/{provider}`                                     |     `GET`, `PUT` | Get or update provider (1)                |
 | `/api/providers/{provider}/backends`                            |     `GET`        | List backends                             |
 | `/api/providers/{provider}/backends/{backend}`                  |     `GET`        | Get backend                               |
 | `/api/providers/{provider}/backends/{backend}/servers`          |     `GET`        | List servers in backend                   |
@@ -52,11 +57,108 @@
 | `/api/providers/{provider}/frontends/{frontend}/routes`         |     `GET`        | List routes in a frontend                 |
 | `/api/providers/{provider}/frontends/{frontend}/routes/{route}` |     `GET`        | Get a route in a frontend                 |
 
+<1> See [Rest](/configuration/backends/rest/#api) for more information.
+
 !!! warning
     For compatibility reason, when you activate the rest provider, you can use `web` or `rest` as `provider` value.
     But be careful, in the configuration for all providers the key is still `web`.
 
-### Provider configurations
+### Address / Port
+
+You can define a custom address/port like this:
+
+```toml
+defaultEntryPoints = ["http"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+
+  [entryPoints.foo]
+  address = ":8082"
+
+  [entryPoints.bar]
+  address = ":8083"
+
+[ping]
+entryPoint = "foo"
+
+[api]
+entryPoint = "bar"
+```
+
+In the above example, you would access a regular path, administration panel, and health-check as follows:
+
+* Regular path: `http://hostname:80/path`
+* Admin Panel: `http://hostname:8083/`
+* Ping URL: `http://hostname:8082/ping`
+
+In the above example, it is _very_ important to create a named dedicated entry point, and do **not** include it in `defaultEntryPoints`.
+Otherwise, you are likely to expose _all_ services via that entry point.
+
+### Custom Path
+
+You can define a custom path like this:
+
+```toml
+defaultEntryPoints = ["http"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+
+  [entryPoints.foo]
+  address = ":8080"
+
+  [entryPoints.bar]
+  address = ":8081"
+
+# Activate API and Dashboard
+[api]
+entryPoint = "bar"
+dashboard = true
+
+[file]
+  [backends]
+    [backends.backend1]
+      [backends.backend1.servers.server1]
+      url = "http://127.0.0.1:8081"
+
+  [frontends]
+    [frontends.frontend1]
+    entryPoints = ["foo"]
+    backend = "backend1"
+      [frontends.frontend1.routes.test_1]
+      rule = "PathPrefixStrip:/yourprefix;PathPrefix:/yourprefix"
+```
+
+### Authentication
+
+You can define the authentication like this:
+
+```toml
+defaultEntryPoints = ["http"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+
+ [entryPoints.foo]
+   address=":8080"
+   [entryPoints.foo.auth]
+     [entryPoints.foo.auth.basic]
+       users = [
+         "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+         "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+       ]
+
+[api]
+entrypoint="foo"
+```
+
+For more information, see [entry points](/configuration/entrypoints/) .
+
+### Provider call example
 
 ```shell
 curl -s "http://localhost:8080/api" | jq .
@@ -118,6 +220,25 @@ curl -s "http://localhost:8080/api" | jq .
       }
     }
   }
+}
+```
+
+### Cluster Leadership
+
+```shell
+curl -s "http://localhost:8080/cluster/leader" | jq .
+```
+```shell
+< HTTP/1.1 200 OK
+< Content-Type: application/json; charset=UTF-8
+< Date: xxx
+< Content-Length: 15
+```
+If the given node is not a cluster leader, an HTTP status of `429-Too-Many-Requests` will be returned.
+```json
+{
+  // current leadership status of the queried node
+  "leader": true
 }
 ```
 
@@ -185,6 +306,7 @@ curl -s "http://localhost:8080/health" | jq .
 ## Metrics
 
 You can enable Traefik to export internal metrics to different monitoring systems.
+
 ```toml
 [api]
   # ...

@@ -35,6 +35,7 @@ type DB struct {
 	// Stats. Need 64-bit alignment.
 	cWriteDelay            int64 // The cumulative duration of write delays
 	cWriteDelayN           int32 // The cumulative number of write delays
+	inWritePaused          int32 // The indicator whether write operation is paused by compaction
 	aliveSnaps, aliveIters int32
 
 	// Session.
@@ -906,6 +907,8 @@ func (db *DB) GetSnapshot() (*Snapshot, error) {
 //		Returns the number of files at level 'n'.
 //	leveldb.stats
 //		Returns statistics of the underlying DB.
+//	leveldb.iostats
+//		Returns statistics of effective disk read and write.
 //	leveldb.writedelay
 //		Returns cumulative write delay caused by compaction.
 //	leveldb.sstables
@@ -959,9 +962,14 @@ func (db *DB) GetProperty(name string) (value string, err error) {
 				level, len(tables), float64(tables.size())/1048576.0, duration.Seconds(),
 				float64(read)/1048576.0, float64(write)/1048576.0)
 		}
+	case p == "iostats":
+		value = fmt.Sprintf("Read(MB):%.5f Write(MB):%.5f",
+			float64(db.s.stor.reads())/1048576.0,
+			float64(db.s.stor.writes())/1048576.0)
 	case p == "writedelay":
 		writeDelayN, writeDelay := atomic.LoadInt32(&db.cWriteDelayN), time.Duration(atomic.LoadInt64(&db.cWriteDelay))
-		value = fmt.Sprintf("DelayN:%d Delay:%s", writeDelayN, writeDelay)
+		paused := atomic.LoadInt32(&db.inWritePaused) == 1
+		value = fmt.Sprintf("DelayN:%d Delay:%s Paused:%t", writeDelayN, writeDelay, paused)
 	case p == "sstables":
 		for level, tables := range v.levels {
 			value += fmt.Sprintf("--- level %d ---\n", level)
@@ -988,6 +996,75 @@ func (db *DB) GetProperty(name string) (value string, err error) {
 	}
 
 	return
+}
+
+// DBStats is database statistics.
+type DBStats struct {
+	WriteDelayCount    int32
+	WriteDelayDuration time.Duration
+	WritePaused        bool
+
+	AliveSnapshots int32
+	AliveIterators int32
+
+	IOWrite uint64
+	IORead  uint64
+
+	BlockCacheSize    int
+	OpenedTablesCount int
+
+	LevelSizes        []int64
+	LevelTablesCounts []int
+	LevelRead         []int64
+	LevelWrite        []int64
+	LevelDurations    []time.Duration
+}
+
+// Stats populates s with database statistics.
+func (db *DB) Stats(s *DBStats) error {
+	err := db.ok()
+	if err != nil {
+		return err
+	}
+
+	s.IORead = db.s.stor.reads()
+	s.IOWrite = db.s.stor.writes()
+	s.WriteDelayCount = atomic.LoadInt32(&db.cWriteDelayN)
+	s.WriteDelayDuration = time.Duration(atomic.LoadInt64(&db.cWriteDelay))
+	s.WritePaused = atomic.LoadInt32(&db.inWritePaused) == 1
+
+	s.OpenedTablesCount = db.s.tops.cache.Size()
+	if db.s.tops.bcache != nil {
+		s.BlockCacheSize = db.s.tops.bcache.Size()
+	} else {
+		s.BlockCacheSize = 0
+	}
+
+	s.AliveIterators = atomic.LoadInt32(&db.aliveIters)
+	s.AliveSnapshots = atomic.LoadInt32(&db.aliveSnaps)
+
+	s.LevelDurations = s.LevelDurations[:0]
+	s.LevelRead = s.LevelRead[:0]
+	s.LevelWrite = s.LevelWrite[:0]
+	s.LevelSizes = s.LevelSizes[:0]
+	s.LevelTablesCounts = s.LevelTablesCounts[:0]
+
+	v := db.s.version()
+	defer v.release()
+
+	for level, tables := range v.levels {
+		duration, read, write := db.compStats.getStat(level)
+		if len(tables) == 0 && duration == 0 {
+			continue
+		}
+		s.LevelDurations = append(s.LevelDurations, duration)
+		s.LevelRead = append(s.LevelRead, read)
+		s.LevelWrite = append(s.LevelWrite, write)
+		s.LevelSizes = append(s.LevelSizes, tables.size())
+		s.LevelTablesCounts = append(s.LevelTablesCounts, len(tables))
+	}
+
+	return nil
 }
 
 // SizeOf calculates approximate sizes of the given key ranges.

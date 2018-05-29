@@ -1,78 +1,189 @@
-{{$frontends := List .Prefix "/frontends/" }}
-{{$backends :=  List .Prefix "/backends/"}}
-{{$tls := List .Prefix "/tls/"}}
+[backends]
+{{range $backend := List .Prefix "/backends/" }}
+  {{ $backendName := Last $backend }}
 
-[backends]{{range $backends}}
-{{$backend := .}}
-{{$backendName := Last $backend}}
-{{$servers := ListServers $backend }}
+  {{ $circuitBreaker := getCircuitBreaker $backend }}
+  {{if $circuitBreaker }}
+  [backends."{{ $backendName }}".circuitBreaker]
+    expression = "{{ $circuitBreaker.Expression }}"
+  {{end}}
 
-{{$circuitBreaker := Get "" . "/circuitbreaker/" "expression"}}
-{{with $circuitBreaker}}
-[backends."{{$backendName}}".circuitBreaker]
-    expression = "{{$circuitBreaker}}"
+  {{ $loadBalancer := getLoadBalancer $backend }}
+  {{if $loadBalancer }}
+    [backends."{{ $backendName }}".loadBalancer]
+      method = "{{ $loadBalancer.Method }}"
+      sticky = {{ $loadBalancer.Sticky }}
+      {{if $loadBalancer.Stickiness }}
+      [backends."{{ $backendName }}".loadBalancer.stickiness]
+        cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
+      {{end}}
+  {{end}}
+
+  {{ $maxConn := getMaxConn $backend }}
+  {{if $maxConn }}
+  [backends."{{ $backendName }}".maxConn]
+    extractorFunc = "{{ $maxConn.ExtractorFunc }}"
+    amount = {{ $maxConn.Amount }}
+  {{end}}
+
+  {{ $healthCheck := getHealthCheck $backend }}
+  {{if $healthCheck }}
+  [backends.{{ $backendName }}.healthCheck]
+    path = "{{ $healthCheck.Path }}"
+    port = {{ $healthCheck.Port }}
+    interval = "{{ $healthCheck.Interval }}"
+  {{end}}
+
+  {{ $buffering := getBuffering $backend }}
+  {{if $buffering }}
+  [backends.{{ $backendName }}.buffering]
+    maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
+    memRequestBodyBytes = {{ $buffering.MemRequestBodyBytes }}
+    maxResponseBodyBytes = {{ $buffering.MaxResponseBodyBytes }}
+    memResponseBodyBytes = {{ $buffering.MemResponseBodyBytes }}
+    retryExpression = "{{ $buffering.RetryExpression }}"
+  {{end}}
+
+  {{range $serverName, $server := getServers $backend}}
+  [backends."{{ $backendName }}".servers."{{ $serverName }}"]
+    url = "{{ $server.URL }}"
+    weight = {{ $server.Weight }}
+  {{end}}
+
 {{end}}
 
-{{$loadBalancer := Get "" . "/loadbalancer/" "method"}}
-{{with $loadBalancer}}
-[backends."{{$backendName}}".loadBalancer]
-    method = "{{$loadBalancer}}"
-    sticky = {{ getSticky . }}
-    {{if hasStickinessLabel $backend}}
-    [backends."{{$backendName}}".loadBalancer.stickiness]
-      cookieName = "{{getStickinessCookieName $backend}}"
+[frontends]
+{{range $frontend := List .Prefix "/frontends/" }}
+  {{ $frontendName := Last $frontend }}
+
+  [frontends."{{ $frontendName }}"]
+    backend = "{{ getBackendName $frontend }}"
+    priority = {{ getPriority $frontend }}
+    passHostHeader = {{ getPassHostHeader $frontend }}
+    passTLSCert = {{ getPassTLSCert $frontend }}
+
+    entryPoints = [{{range getEntryPoints $frontend }}
+      "{{.}}",
+      {{end}}]
+
+    basicAuth = [{{range getBasicAuth $frontend }}
+      "{{.}}",
+      {{end}}]
+
+    {{ $whitelist := getWhiteList $frontend }}
+    {{if $whitelist }}
+    [frontends."{{ $frontendName }}".whiteList]
+      sourceRange = [{{range $whitelist.SourceRange }}
+        "{{.}}",
+        {{end}}]
+      useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
     {{end}}
-{{end}}
 
-{{$healthCheck := Get "" . "/healthcheck/" "path"}}
-{{with $healthCheck}}
-[backends."{{$backendName}}".healthCheck]
-    path = "{{$healthCheck}}"
-    interval = "{{ Get "30s" $backend "/healthcheck/" "interval" }}"
-{{end}}
+    {{ $redirect := getRedirect $frontend }}
+    {{if $redirect }}
+    [frontends."{{ $frontendName }}".redirect]
+      entryPoint = "{{ $redirect.EntryPoint }}"
+      regex = "{{ $redirect.Regex }}"
+      replacement = "{{ $redirect.Replacement }}"
+      permanent = {{ $redirect.Permanent }}
+    {{end}}
 
-{{$maxConnAmt := Get "" . "/maxconn/" "amount"}}
-{{$maxConnExtractorFunc := Get "" . "/maxconn/" "extractorfunc"}}
-{{with $maxConnAmt}}
-{{with $maxConnExtractorFunc}}
-[backends."{{$backendName}}".maxConn]
-    amount = {{$maxConnAmt}}
-    extractorFunc = "{{$maxConnExtractorFunc}}"
-{{end}}
-{{end}}
+    {{ $errorPages := getErrorPages $frontend }}
+    {{if $errorPages }}
+    [frontends."{{ $frontendName }}".errors]
+      {{range $pageName, $page := $errorPages }}
+      [frontends."{{$frontendName}}".errors."{{ $pageName }}"]
+        status = [{{range $page.Status }}
+          "{{.}}",
+          {{end}}]
+        backend = "{{$page.Backend}}"
+        query = "{{$page.Query}}"
+      {{end}}
+    {{end}}
 
-{{range $servers}}
-[backends."{{$backendName}}".servers."{{Last .}}"]
-    url = "{{Get "" . "/url"}}"
-    weight = {{Get "0"  . "/weight"}}
-{{end}}
-{{end}}
-
-[frontends]{{range $frontends}}
-    {{$frontend := Last .}}
-    {{$entryPoints := GetList . "/entrypoints"}}
-    [frontends."{{$frontend}}"]
-    backend = "{{Get "" . "/backend"}}"
-    passHostHeader = {{Get "true" . "/passHostHeader"}}
-    priority = {{Get "0" . "/priority"}}
-    entryPoints = [{{range $entryPoints}}
-      "{{.}}",
-    {{end}}]
-    {{$routes := List . "/routes/"}}
-        {{range $routes}}
-        [frontends."{{$frontend}}".routes."{{Last .}}"]
-        rule = "{{Get "" . "/rule"}}"
+    {{ $rateLimit := getRateLimit $frontend }}
+    {{if $rateLimit }}
+    [frontends."{{ $frontendName }}".rateLimit]
+      extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
+      [frontends."{{ $frontendName }}".rateLimit.rateSet]
+        {{range $limitName, $rateLimit := $rateLimit.RateSet }}
+        [frontends."{{ $frontendName }}".rateLimit.rateSet."{{ $limitName }}"]
+          period = "{{ $rateLimit.Period }}"
+          average = {{ $rateLimit.Average }}
+          burst = {{ $rateLimit.Burst }}
         {{end}}
+    {{end}}
+
+    {{ $headers := getHeaders $frontend }}
+    {{if $headers }}
+    [frontends."{{ $frontendName }}".headers]
+      SSLRedirect = {{ $headers.SSLRedirect }}
+      SSLTemporaryRedirect = {{ $headers.SSLTemporaryRedirect }}
+      SSLHost = "{{ $headers.SSLHost }}"
+      STSSeconds = {{ $headers.STSSeconds }}
+      STSIncludeSubdomains = {{ $headers.STSIncludeSubdomains }}
+      STSPreload = {{ $headers.STSPreload }}
+      ForceSTSHeader = {{ $headers.ForceSTSHeader }}
+      FrameDeny = {{ $headers.FrameDeny }}
+      CustomFrameOptionsValue = "{{ $headers.CustomFrameOptionsValue }}"
+      ContentTypeNosniff = {{ $headers.ContentTypeNosniff }}
+      BrowserXSSFilter = {{ $headers.BrowserXSSFilter }}
+      CustomBrowserXSSValue = "{{ $headers.CustomBrowserXSSValue }}"
+      ContentSecurityPolicy = "{{ $headers.ContentSecurityPolicy }}"
+      PublicKey = "{{ $headers.PublicKey }}"
+      ReferrerPolicy = "{{ $headers.ReferrerPolicy }}"
+      IsDevelopment = {{ $headers.IsDevelopment }}
+
+      {{if $headers.AllowedHosts }}
+      AllowedHosts = [{{range $headers.AllowedHosts }}
+        "{{.}}",
+        {{end}}]
+      {{end}}
+
+      {{if $headers.HostsProxyHeaders }}
+      HostsProxyHeaders = [{{range $headers.HostsProxyHeaders }}
+        "{{.}}",
+        {{end}}]
+      {{end}}
+
+      {{if $headers.CustomRequestHeaders }}
+      [frontends."{{ $frontendName }}".headers.customRequestHeaders]
+        {{range $k, $v := $headers.CustomRequestHeaders }}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
+
+      {{if $headers.CustomResponseHeaders }}
+      [frontends."{{ $frontendName }}".headers.customResponseHeaders]
+        {{range $k, $v := $headers.CustomResponseHeaders }}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
+
+      {{if $headers.SSLProxyHeaders }}
+      [frontends."{{ $frontendName }}".headers.SSLProxyHeaders]
+        {{range $k, $v := $headers.SSLProxyHeaders}}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
+    {{end}}
+
+    {{range $routeName, $route := getRoutes $frontend }}
+    [frontends."{{ $frontendName }}".routes."{{ $routeName }}"]
+      rule = "{{ $route.Rule }}"
+    {{end}}
+
 {{end}}
 
-{{range $tls}}
-{{$entryPoints := SplitGet . "/entrypoints"}}
+{{range $tls := getTLSSection .Prefix }}
 [[tls]]
-    entryPoints = [{{range $entryPoints}}
-      "{{.}}",
-    {{end}}]
-    [tls.certificate]
-        certFile = """{{Get "" . "/certificate" "/certfile"}}"""
-        keyFile = """{{Get "" . "/certificate" "/keyfile"}}"""
-{{end}}
 
+  entryPoints = [{{range $tls.EntryPoints }}
+    "{{.}}",
+    {{end}}]
+
+  [tls.certificate]
+    certFile = """{{ $tls.Certificate.CertFile }}"""
+    keyFile = """{{ $tls.Certificate.KeyFile }}"""
+
+{{end}}

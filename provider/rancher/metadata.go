@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
+	"github.com/sirupsen/logrus"
 
 	rancher "github.com/rancher/go-rancher-metadata/metadata"
 )
@@ -45,7 +45,7 @@ func (p *Provider) metadataProvide(configurationChan chan<- types.ConfigMessage,
 				}
 
 				rancherData := parseMetadataSourcedRancherData(stacks)
-				configuration := p.loadRancherConfig(rancherData)
+				configuration := p.buildConfiguration(rancherData)
 				configurationChan <- types.ConfigMessage{
 					ProviderName:  "rancher",
 					Configuration: configuration,

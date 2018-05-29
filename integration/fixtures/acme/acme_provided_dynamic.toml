@@ -4,7 +4,7 @@ defaultEntryPoints = ["http", "https"]
 
 [entryPoints]
   [entryPoints.http]
-  address = ":8080"
+  address = ":5002"
   [entryPoints.https]
   address = ":5001"
     [entryPoints.https.tls]
@@ -12,11 +12,13 @@ defaultEntryPoints = ["http", "https"]
 
 [acme]
 email = "test@traefik.io"
-storage = "/dev/null"
+storage = "/tmp/acme.json"
 entryPoint = "https"
 onDemand = {{.OnDemand}}
-OnHostRule = {{.OnHostRule}}
-caServer = "http://{{.BoulderHost}}:4000/directory"
+onHostRule = {{.OnHostRule}}
+caServer = "http://{{.BoulderHost}}:4001/directory"
+[acme.httpChallenge]
+entryPoint="http"
 
 [file]
 filename = "fixtures/acme/certificates.toml"

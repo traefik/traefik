@@ -62,13 +62,12 @@ And here is another example with client certificate authentication:
   [entryPoints.https]
   address = ":443"
   [entryPoints.https.tls]
-    [entryPoints.https.tls]
-      [entryPoints.https.tls.ClientCA]
-      files = ["tests/clientca1.crt", "tests/clientca2.crt"]
-      optional = false
-      [[entryPoints.https.tls.certificates]]
-      certFile = "tests/traefik.crt"
-      keyFile = "tests/traefik.key"
+    [entryPoints.https.tls.ClientCA]
+    files = ["tests/clientca1.crt", "tests/clientca2.crt"]
+    optional = false
+    [[entryPoints.https.tls.certificates]]
+    certFile = "tests/traefik.crt"
+    keyFile = "tests/traefik.key"
 ```
 
 - We enable SSL on `https` by giving a certificate and a key.
@@ -171,7 +170,7 @@ Here is an example of frontends definition:
 
 - Three frontends are defined: `frontend1`, `frontend2` and `frontend3`
 - `frontend1` will forward the traffic to the `backend2` if the rule `Host:test.localhost,test2.localhost` is matched
-- `frontend2` will forward the traffic to the `backend1` if the rule `Host:localhost,{subdomain:[a-z]+}.localhost` is matched (forwarding client `Host` header to the backend)
+- `frontend2` will forward the traffic to the `backend1` if the rule `HostRegexp:localhost,{subdomain:[a-z]+}.localhost` is matched (forwarding client `Host` header to the backend)
 - `frontend3` will forward the traffic to the `backend2` if the rules `Host:test3.localhost` **AND** `Path:/test` are matched
 
 #### Combining multiple rules
@@ -234,27 +233,26 @@ The following rules are both `Matchers` and `Modifiers`, so the `Matcher` portio
 #### Priorities
 
 By default, routes will be sorted (in descending order) using rules length (to avoid path overlap):
-`PathPrefix:/12345` will be matched before `PathPrefix:/1234` that will be matched before `PathPrefix:/1`.
+`PathPrefix:/foo;Host:foo.com` (length == 28) will be matched before `PathPrefixStrip:/foobar` (length == 23) will be matched before `PathPrefix:/foo,/bar` (length == 20).
 
-You can customize priority by frontend:
+You can customize priority by frontend. The priority value override the rule length during sorting:
 
 ```toml
   [frontends]
     [frontends.frontend1]
     backend = "backend1"
-    priority = 10
+    priority = 20
     passHostHeader = true
       [frontends.frontend1.routes.test_1]
       rule = "PathPrefix:/to"
     [frontends.frontend2]
-    priority = 5
     backend = "backend2"
     passHostHeader = true
       [frontends.frontend2.routes.test_1]
       rule = "PathPrefix:/toto"
 ```
 
-Here, `frontend1` will be matched before `frontend2` (`10 > 5`).
+Here, `frontend1` will be matched before `frontend2` (`20 > 16`).
 
 #### Custom headers
 
@@ -264,7 +262,7 @@ This allows for setting headers such as `X-Script-Name` to be added to the reque
 !!! warning
     If the custom header name is the same as one header name of the request or response, it will be replaced.
 
-In this example, all matches to the path `/cheese` will have the `X-Script-Name` header added to the proxied request, and the `X-Custom-Response-Header` added to the response.
+In this example, all matches to the path `/cheese` will have the `X-Script-Name` header added to the proxied request and the `X-Custom-Response-Header` header added to the response.
 
 ```toml
 [frontends]
@@ -278,7 +276,7 @@ In this example, all matches to the path `/cheese` will have the `X-Script-Name`
     rule = "PathPrefixStrip:/cheese"
 ```
 
-In this second  example, all matches to the path `/cheese` will have the `X-Script-Name` header added to the proxied request, the `X-Custom-Request-Header` removed to the request and the `X-Custom-Response-Header` removed to the response.
+In this second  example, all matches to the path `/cheese` will have the `X-Script-Name` header added to the proxied request, the `X-Custom-Request-Header` header removed from the request, and the `X-Custom-Response-Header` header removed from the response.
 
 ```toml
 [frontends]
@@ -325,11 +323,48 @@ In this example, traffic routed through the first frontend will have the `X-Fram
 
 A backend is responsible to load-balance the traffic coming from one or more frontends to a set of http servers.
 
+#### Servers
+
+Servers are simply defined using a `url`. You can also apply a custom `weight` to each server (this will be used by load-balancing).
+
+!!! note
+    Paths in `url` are ignored. Use `Modifier` to specify paths instead.
+
+Here is an example of backends and servers definition:
+
+```toml
+[backends]
+  [backends.backend1]
+    # ...
+    [backends.backend1.servers.server1]
+    url = "http://172.17.0.2:80"
+    weight = 10
+    [backends.backend1.servers.server2]
+    url = "http://172.17.0.3:80"
+    weight = 1
+  [backends.backend2]
+    # ...
+    [backends.backend2.servers.server1]
+    url = "http://172.17.0.4:80"
+    weight = 1
+    [backends.backend2.servers.server2]
+    url = "http://172.17.0.5:80"
+    weight = 2
+```
+
+- Two backends are defined: `backend1` and `backend2`
+- `backend1` will forward the traffic to two servers: `http://172.17.0.2:80"` with weight `10` and `http://172.17.0.3:80` with weight `1`.
+- `backend2` will forward the traffic to two servers: `http://172.17.0.4:80"` with weight `1` and `http://172.17.0.5:80` with weight `2`.
+
+#### Load-balancing
+
 Various methods of load-balancing are supported:
 
 - `wrr`: Weighted Round Robin.
 - `drr`: Dynamic Round Robin: increases weights on servers that perform better than others.
     It also rolls back to original weights if the servers have changed.
+
+#### Circuit breakers
 
 A circuit breaker can also be applied to a backend, preventing high loads on failing servers.
 Initial state is Standby. CB observes the statistics and does not modify the request.
@@ -348,6 +383,26 @@ For example:
 - `LatencyAtQuantileMS(50.0) > 50`:  watch latency at quantile in milliseconds.
 - `ResponseCodeRatio(500, 600, 0, 600) > 0.5`: ratio of response codes in ranges [500-600) and [0-600).
 
+Here is an example of backends and servers definition:
+
+```toml
+[backends]
+  [backends.backend1]
+    [backends.backend1.circuitbreaker]
+    expression = "NetworkErrorRatio() > 0.5"
+    [backends.backend1.servers.server1]
+    url = "http://172.17.0.2:80"
+    weight = 10
+    [backends.backend1.servers.server2]
+    url = "http://172.17.0.3:80"
+    weight = 1
+```
+
+- `backend1` will forward the traffic to two servers: `http://172.17.0.2:80"` with weight `10` and `http://172.17.0.3:80` with weight `1` using default `wrr` load-balancing strategy.
+- a circuit breaker is added on `backend1` using the expression `NetworkErrorRatio() > 0.5`: watch error ratio over 10 second sliding window
+
+#### Maximum connections
+
 To proactively prevent backends from being overwhelmed with high load, a maximum connection limit can also be applied to each backend.
 
 Maximum connections can be configured by specifying an integer value for `maxconn.amount` and `maxconn.extractorfunc` which is a strategy used to determine how to categorize requests in order to evaluate the maximum connections.
@@ -359,20 +414,20 @@ For example:
     [backends.backend1.maxconn]
        amount = 10
        extractorfunc = "request.host"
+   # ...
 ```
 
 - `backend1` will return `HTTP code 429 Too Many Requests` if there are already 10 requests in progress for the same Host header.
 - Another possible value for `extractorfunc` is `client.ip` which will categorize requests based on client source ip.
 - Lastly `extractorfunc` can take the value of `request.header.ANY_HEADER` which will categorize requests based on `ANY_HEADER` that you provide.
 
-### Sticky sessions
+#### Sticky sessions
 
 Sticky sessions are supported with both load balancers.  
 When sticky sessions are enabled, a cookie is set on the initial request.
 The default cookie name is an abbreviation of a sha1 (ex: `_1d52e`).
 On subsequent requests, the client will be directed to the backend stored in the cookie if it is still healthy.
 If not, a new backend will be assigned.
-
 
 ```toml
 [backends]
@@ -397,10 +452,10 @@ The deprecated way:
       sticky = true
 ```
 
-### Health Check
+#### Health Check
 
 A health check can be configured in order to remove a backend from LB rotation as long as it keeps returning HTTP status codes other than `200 OK` to HTTP GET requests periodically carried out by Traefik.  
-The check is defined by a pathappended to the backend URL and an interval (given in a format understood by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration)) specifying how often the health check should be executed (the default being 30 seconds).
+The check is defined by a path appended to the backend URL and an interval (given in a format understood by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration)) specifying how often the health check should be executed (the default being 30 seconds).
 Each backend must respond to the health check within 5 seconds.  
 By default, the port of the backend server is used, however, this may be overridden.
 
@@ -426,43 +481,6 @@ To use a different port for the healthcheck:
     port = 8080
 ```
 
-### Servers
-
-Servers are simply defined using a `url`. You can also apply a custom `weight` to each server (this will be used by load-balancing).
-
-!!! note
-    Paths in `url` are ignored. Use `Modifier` to specify paths instead.
-
-Here is an example of backends and servers definition:
-
-```toml
-[backends]
-  [backends.backend1]
-    [backends.backend1.circuitbreaker]
-    expression = "NetworkErrorRatio() > 0.5"
-    [backends.backend1.servers.server1]
-    url = "http://172.17.0.2:80"
-    weight = 10
-    [backends.backend1.servers.server2]
-    url = "http://172.17.0.3:80"
-    weight = 1
-  [backends.backend2]
-    [backends.backend2.LoadBalancer]
-    method = "drr"
-    [backends.backend2.servers.server1]
-    url = "http://172.17.0.4:80"
-    weight = 1
-    [backends.backend2.servers.server2]
-    url = "http://172.17.0.5:80"
-    weight = 2
-```
-
-- Two backends are defined: `backend1` and `backend2`
-- `backend1` will forward the traffic to two servers: `http://172.17.0.2:80"` with weight `10` and `http://172.17.0.3:80` with weight `1` using default `wrr` load-balancing strategy.
-- `backend2` will forward the traffic to two servers: `http://172.17.0.4:80"` with weight `1` and `http://172.17.0.5:80` with weight `2` using `drr` load-balancing strategy.
-- a circuit breaker is added on `backend1` using the expression `NetworkErrorRatio() > 0.5`: watch error ratio over 10 second sliding window
-
-
 ## Configuration
 
 Træfik's configuration has two parts:
@@ -484,7 +502,7 @@ Each item takes precedence over the item below it:
 
 It means that arguments override configuration file, and key-value store overrides arguments.
 
-!!! note 
+!!! note
     the provider-enabling argument parameters (e.g., `--docker`) set all default values for the specific provider.  
     It must not be used if a configuration source with less precedence wants to set a non-default provider value.
 
@@ -569,6 +587,11 @@ Each command is described at the beginning of the help section:
 
 ```bash
 traefik --help
+
+# or
+
+docker run traefik[:version] --help
+# ex: docker run traefik:1.5 --help
 ```
 
 ### Command: bug
@@ -612,6 +635,7 @@ Those data help us prioritize our developments and focus on what's more importan
 ### What ?
 
 Once a day (the first call begins 10 minutes after the start of Træfik), we collect:
+
 - the Træfik version
 - a hash of the configuration
 - an **anonymous version** of the static configuration:
@@ -641,18 +665,18 @@ Once a day (the first call begins 10 minutes after the start of Træfik), we col
   swarmMode = true
 
   [Docker.TLS]
-    CA = "dockerCA"
-    Cert = "dockerCert"
-    Key = "dockerKey"
-    InsecureSkipVerify = true
+    ca = "dockerCA"
+    cert = "dockerCert"
+    key = "dockerKey"
+    insecureSkipVerify = true
 
 [ECS]
-  Domain = "foo.bar"
-  ExposedByDefault = true
-  Clusters = ["foo-bar"]
-  Region = "us-west-2"
-  AccessKeyID = "AccessKeyID"
-  SecretAccessKey = "SecretAccessKey"
+  domain = "foo.bar"
+  exposedByDefault = true
+  clusters = ["foo-bar"]
+  region = "us-west-2"
+  accessKeyID = "AccessKeyID"
+  secretAccessKey = "SecretAccessKey"
 ```
 
 - Obfuscated and anonymous configuration:
@@ -665,24 +689,24 @@ Once a day (the first call begins 10 minutes after the start of Træfik), we col
 [api]
 
 [Docker]
-  Endpoint = "xxxx"
-  Domain = "xxxx"
-  ExposedByDefault = true
-  SwarmMode = true
+  endpoint = "xxxx"
+  domain = "xxxx"
+  exposedByDefault = true
+  swarmMode = true
 
   [Docker.TLS]
-    CA = "xxxx"
-    Cert = "xxxx"
-    Key = "xxxx"
-    InsecureSkipVerify = false
+    ca = "xxxx"
+    cert = "xxxx"
+    key = "xxxx"
+    insecureSkipVerify = false
 
 [ECS]
-  Domain = "xxxx"
-  ExposedByDefault = true
-  Clusters = []
-  Region = "us-west-2"
-  AccessKeyID = "xxxx"
-  SecretAccessKey = "xxxx"
+  domain = "xxxx"
+  exposedByDefault = true
+  clusters = []
+  region = "us-west-2"
+  accessKeyID = "xxxx"
+  secretAccessKey = "xxxx"
 ```
 
 ### Show me the code !

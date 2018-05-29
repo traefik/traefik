@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -15,12 +16,15 @@ import (
 	"github.com/containous/traefik/healthcheck"
 	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"
+	"github.com/containous/traefik/provider/label"
+	"github.com/containous/traefik/rules"
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/unrolled/secure"
 	"github.com/urfave/negroni"
 	"github.com/vulcand/oxy/roundrobin"
 )
@@ -141,7 +145,7 @@ func TestPrepareServerTimeouts(t *testing.T) {
 			}
 			router := middlewares.NewHandlerSwitcher(mux.NewRouter())
 
-			srv := NewServer(test.globalConfig)
+			srv := NewServer(test.globalConfig, nil)
 			httpServer, _, err := srv.prepareServer(entryPointName, entryPoint, router, nil, nil)
 			if err != nil {
 				t.Fatalf("Unexpected error when preparing srv: %s", err)
@@ -282,7 +286,7 @@ func setupListenProvider(throttleDuration time.Duration) (server *Server, stop c
 		ProvidersThrottleDuration: flaeg.Duration(throttleDuration),
 	}
 
-	server = NewServer(globalConfig)
+	server = NewServer(globalConfig, nil)
 	go server.listenProviders(stop)
 
 	return server, stop, invokeStopChan
@@ -297,7 +301,10 @@ func TestThrottleProviderConfigReload(t *testing.T) {
 		stop <- true
 	}()
 
-	go throttleProviderConfigReload(throttleDuration, publishConfig, providerConfig, stop)
+	globalConfig := configuration.GlobalConfiguration{}
+	server := NewServer(globalConfig, nil)
+
+	go server.throttleProviderConfigReload(throttleDuration, publishConfig, providerConfig, stop)
 
 	publishedConfigCount := 0
 	stopConsumeConfigs := make(chan bool)
@@ -393,8 +400,8 @@ func TestServerMultipleFrontendRules(t *testing.T) {
 
 			router := mux.NewRouter()
 			route := router.NewRoute()
-			serverRoute := &serverRoute{route: route}
-			rules := &Rules{route: serverRoute}
+			serverRoute := &types.ServerRoute{Route: route}
+			rules := &rules.Rules{Route: serverRoute}
 
 			expression := test.expression
 			routeResult, err := rules.Parse(expression)
@@ -417,7 +424,7 @@ func TestServerMultipleFrontendRules(t *testing.T) {
 					t.Fatalf("got URL %s, expected %s", r.URL.String(), test.expectedURL)
 				}
 			}))
-			serverRoute.route.GetHandler().ServeHTTP(nil, request)
+			serverRoute.Route.GetHandler().ServeHTTP(nil, request)
 		})
 	}
 }
@@ -475,7 +482,7 @@ func TestServerLoadConfigHealthCheckOptions(t *testing.T) {
 					},
 				}
 
-				srv := NewServer(globalConfig)
+				srv := NewServer(globalConfig, nil)
 				if _, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
 					t.Fatalf("got error: %s", err)
 				}
@@ -484,7 +491,7 @@ func TestServerLoadConfigHealthCheckOptions(t *testing.T) {
 				if healthCheck != nil {
 					wantNumHealthCheckBackends = 1
 				}
-				gotNumHealthCheckBackends := len(healthcheck.GetHealthCheck().Backends)
+				gotNumHealthCheckBackends := len(healthcheck.GetHealthCheck(testhelpers.NewCollectingHealthCheckMetrics()).Backends)
 				if gotNumHealthCheckBackends != wantNumHealthCheckBackends {
 					t.Errorf("got %d health check backends, want %d", gotNumHealthCheckBackends, wantNumHealthCheckBackends)
 				}
@@ -565,48 +572,75 @@ func TestServerParseHealthCheckOptions(t *testing.T) {
 	}
 }
 
-func TestNewServerWithWhitelistSourceRange(t *testing.T) {
-	cases := []struct {
+func TestBuildIPWhiteLister(t *testing.T) {
+	testCases := []struct {
 		desc                 string
-		whitelistStrings     []string
+		whitelistSourceRange []string
+		whiteList            *types.WhiteList
 		middlewareConfigured bool
 		errMessage           string
 	}{
 		{
-			desc:                 "no whitelists configued",
-			whitelistStrings:     nil,
+			desc:                 "no whitelists configured",
+			whitelistSourceRange: nil,
 			middlewareConfigured: false,
 			errMessage:           "",
-		}, {
-			desc: "whitelists configued",
-			whitelistStrings: []string{
+		},
+		{
+			desc: "whitelists configured (deprecated)",
+			whitelistSourceRange: []string{
 				"1.2.3.4/24",
 				"fe80::/16",
 			},
 			middlewareConfigured: true,
 			errMessage:           "",
-		}, {
-			desc: "invalid whitelists configued",
-			whitelistStrings: []string{
+		},
+		{
+			desc: "invalid whitelists configured (deprecated)",
+			whitelistSourceRange: []string{
 				"foo",
 			},
 			middlewareConfigured: false,
-			errMessage:           "parsing CIDR whitelist [foo]: parsing CIDR whitelist <nil>: invalid CIDR address: foo",
+			errMessage:           "parsing CIDR whitelist [foo]: parsing CIDR white list <nil>: invalid CIDR address: foo",
+		},
+		{
+			desc: "whitelists configured",
+			whiteList: &types.WhiteList{
+				SourceRange: []string{
+					"1.2.3.4/24",
+					"fe80::/16",
+				},
+				UseXForwardedFor: false,
+			},
+			middlewareConfigured: true,
+			errMessage:           "",
+		},
+		{
+			desc: "invalid whitelists configured (deprecated)",
+			whiteList: &types.WhiteList{
+				SourceRange: []string{
+					"foo",
+				},
+				UseXForwardedFor: false,
+			},
+			middlewareConfigured: false,
+			errMessage:           "parsing CIDR whitelist [foo]: parsing CIDR white list <nil>: invalid CIDR address: foo",
 		},
 	}
 
-	for _, tc := range cases {
-		tc := tc
-		t.Run(tc.desc, func(t *testing.T) {
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			middleware, err := configureIPWhitelistMiddleware(tc.whitelistStrings)
 
-			if tc.errMessage != "" {
-				require.EqualError(t, err, tc.errMessage)
+			middleware, err := buildIPWhiteLister(test.whiteList, test.whitelistSourceRange)
+
+			if test.errMessage != "" {
+				require.EqualError(t, err, test.errMessage)
 			} else {
 				assert.NoError(t, err)
 
-				if tc.middlewareConfigured {
+				if test.middlewareConfigured {
 					require.NotNil(t, middleware, "not expected middleware to be configured")
 				} else {
 					require.Nil(t, middleware, "expected middleware to be configured")
@@ -644,21 +678,42 @@ func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
 					},
 				},
 			},
+		},
+	}
+
+	srv := NewServer(globalConfig, nil)
+	if _, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
+		t.Fatalf("got error: %s", err)
+	}
+}
+
+func TestServerLoadCertificateWithDefaultEntryPoint(t *testing.T) {
+	globalConfig := configuration.GlobalConfiguration{
+		EntryPoints: configuration.EntryPoints{
+			"https": &configuration.EntryPoint{TLS: &tls.TLS{}},
+			"http":  &configuration.EntryPoint{},
+		},
+		DefaultEntryPoints: []string{"http", "https"},
+	}
+
+	dynamicConfigs := types.Configurations{
+		"config": &types.Configuration{
 			TLS: []*tls.Configuration{
 				{
 					Certificate: &tls.Certificate{
 						CertFile: localhostCert,
 						KeyFile:  localhostKey,
 					},
-					EntryPoints: []string{"http"},
 				},
 			},
 		},
 	}
 
-	srv := NewServer(globalConfig)
-	if _, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
+	srv := NewServer(globalConfig, nil)
+	if mapEntryPoints, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
 		t.Fatalf("got error: %s", err)
+	} else if mapEntryPoints["https"].certs.Get() == nil {
+		t.Fatal("got error: https entryPoint must have TLS certificates.")
 	}
 }
 
@@ -721,8 +776,7 @@ func TestConfigureBackends(t *testing.T) {
 				LoadBalancer: test.lb,
 			}
 
-			srv := Server{}
-			srv.configureBackends(map[string]*types.Backend{
+			configureBackends(map[string]*types.Backend{
 				"backend": backend,
 			})
 
@@ -885,7 +939,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			}
 			dynamicConfigs := types.Configurations{"config": test.dynamicConfig(testServer.URL)}
 
-			srv := NewServer(globalConfig)
+			srv := NewServer(globalConfig, nil)
 			entryPoints, err := srv.loadConfig(dynamicConfigs, globalConfig)
 			if err != nil {
 				t.Fatalf("error loading config: %s", err)
@@ -903,7 +957,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 	}
 }
 
-func TestBuildEntryPointRedirect(t *testing.T) {
+func TestBuildRedirectHandler(t *testing.T) {
 	srv := Server{
 		globalConfiguration: configuration.GlobalConfiguration{
 			EntryPoints: configuration.EntryPoints{
@@ -996,129 +1050,119 @@ func TestBuildEntryPointRedirect(t *testing.T) {
 	}
 }
 
-func TestServerBuildEntryPointRedirect(t *testing.T) {
-	srv := Server{
-		globalConfiguration: configuration.GlobalConfiguration{
-			EntryPoints: configuration.EntryPoints{
-				"http":  &configuration.EntryPoint{Address: ":80"},
-				"https": &configuration.EntryPoint{Address: ":443", TLS: &tls.TLS{}},
-			},
-		},
-	}
-
-	testCases := []struct {
-		desc               string
-		srcEntryPointName  string
-		redirectEntryPoint string
-		url                string
-		expectedURL        string
-		errorExpected      bool
-	}{
-		{
-			desc:               "existing redirect entry point",
-			srcEntryPointName:  "http",
-			redirectEntryPoint: "https",
-			url:                "http://foo:80",
-			expectedURL:        "https://foo:443",
-		},
-		{
-			desc:               "non-existing redirect entry point",
-			srcEntryPointName:  "http",
-			redirectEntryPoint: "foo",
-			url:                "http://foo:80",
-			errorExpected:      true,
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			rewrite, err := srv.buildEntryPointRedirect(test.srcEntryPointName, test.redirectEntryPoint)
-			if test.errorExpected {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-
-				recorder := httptest.NewRecorder()
-				r := testhelpers.MustNewRequest(http.MethodGet, test.url, nil)
-				rewrite.ServeHTTP(recorder, r, nil)
-
-				location, err := recorder.Result().Location()
-				require.NoError(t, err)
-
-				assert.Equal(t, test.expectedURL, location.String())
-			}
-		})
-	}
+type mockContext struct {
+	headers http.Header
 }
 
-func TestServerBuildRedirect(t *testing.T) {
-	testCases := []struct {
-		desc                   string
-		globalConfiguration    configuration.GlobalConfiguration
-		redirectEntryPointName string
-		expectedReplacement    string
-		errorExpected          bool
+func (c mockContext) Deadline() (deadline time.Time, ok bool) {
+	return deadline, ok
+}
+
+func (c mockContext) Done() <-chan struct{} {
+	ch := make(chan struct{})
+	close(ch)
+	return ch
+}
+
+func (c mockContext) Err() error {
+	return context.DeadlineExceeded
+}
+
+func (c mockContext) Value(key interface{}) interface{} {
+	return c.headers
+}
+
+func TestNewServerWithResponseModifiers(t *testing.T) {
+	cases := []struct {
+		desc             string
+		headerMiddleware *middlewares.HeaderStruct
+		secureMiddleware *secure.Secure
+		ctx              context.Context
+		expected         map[string]string
 	}{
 		{
-			desc: "Redirect endpoint http to https with HTTPS protocol",
-			redirectEntryPointName: "https",
-			globalConfiguration: configuration.GlobalConfiguration{
-				EntryPoints: configuration.EntryPoints{
-					"http":  &configuration.EntryPoint{Address: ":80"},
-					"https": &configuration.EntryPoint{Address: ":443", TLS: &tls.TLS{}},
-				},
+			desc:             "header and secure nil",
+			headerMiddleware: nil,
+			secureMiddleware: nil,
+			ctx:              mockContext{},
+			expected: map[string]string{
+				"X-Default":       "powpow",
+				"Referrer-Policy": "same-origin",
 			},
-			expectedReplacement: "https://$1:443$2",
 		},
 		{
-			desc: "Redirect endpoint http to http02 with HTTP protocol",
-			redirectEntryPointName: "http02",
-			globalConfiguration: configuration.GlobalConfiguration{
-				EntryPoints: configuration.EntryPoints{
-					"http":   &configuration.EntryPoint{Address: ":80"},
-					"http02": &configuration.EntryPoint{Address: ":88"},
+			desc: "header middleware not nil",
+			headerMiddleware: middlewares.NewHeaderFromStruct(&types.Headers{
+				CustomResponseHeaders: map[string]string{
+					"X-Default": "powpow",
 				},
+			}),
+			secureMiddleware: nil,
+			ctx:              mockContext{},
+			expected: map[string]string{
+				"X-Default":       "powpow",
+				"Referrer-Policy": "same-origin",
 			},
-			expectedReplacement: "http://$1:88$2",
 		},
 		{
-			desc: "Redirect endpoint to non-existent entry point",
-			redirectEntryPointName: "foobar",
-			globalConfiguration: configuration.GlobalConfiguration{
-				EntryPoints: configuration.EntryPoints{
-					"http":   &configuration.EntryPoint{Address: ":80"},
-					"http02": &configuration.EntryPoint{Address: ":88"},
-				},
+			desc:             "secure middleware not nil",
+			headerMiddleware: nil,
+			secureMiddleware: middlewares.NewSecure(&types.Headers{
+				ReferrerPolicy: "no-referrer",
+			}),
+			ctx: mockContext{
+				headers: http.Header{"Referrer-Policy": []string{"no-referrer"}},
 			},
-			errorExpected: true,
+			expected: map[string]string{
+				"X-Default":       "powpow",
+				"Referrer-Policy": "no-referrer",
+			},
 		},
 		{
-			desc: "Redirect endpoint to an entry point with a malformed address",
-			redirectEntryPointName: "http02",
-			globalConfiguration: configuration.GlobalConfiguration{
-				EntryPoints: configuration.EntryPoints{
-					"http":   &configuration.EntryPoint{Address: ":80"},
-					"http02": &configuration.EntryPoint{Address: "88"},
+			desc: "header and secure middleware not nil",
+			headerMiddleware: middlewares.NewHeaderFromStruct(&types.Headers{
+				CustomResponseHeaders: map[string]string{
+					"Referrer-Policy": "powpow",
 				},
+			}),
+			secureMiddleware: middlewares.NewSecure(&types.Headers{
+				ReferrerPolicy: "no-referrer",
+			}),
+			ctx: mockContext{
+				headers: http.Header{"Referrer-Policy": []string{"no-referrer"}},
 			},
-			errorExpected: true,
+			expected: map[string]string{
+				"X-Default":       "powpow",
+				"Referrer-Policy": "powpow",
+			},
 		},
 	}
 
-	for _, test := range testCases {
+	for _, test := range cases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			srv := Server{globalConfiguration: test.globalConfiguration}
+			headers := make(http.Header)
+			headers.Add("X-Default", "powpow")
+			headers.Add("Referrer-Policy", "same-origin")
 
-			_, replacement, err := srv.buildRedirect(test.redirectEntryPointName)
+			req := httptest.NewRequest(http.MethodGet, "http://127.0.0.1", nil)
 
-			require.Equal(t, test.errorExpected, err != nil, "Expected an error but don't have error, or Expected no error but have an error: %v", err)
-			assert.Equal(t, test.expectedReplacement, replacement, "build redirect does not return the right replacement pattern")
+			res := &http.Response{
+				Request: req.WithContext(test.ctx),
+				Header:  headers,
+			}
+
+			responseModifier := buildModifyResponse(test.secureMiddleware, test.headerMiddleware)
+			err := responseModifier(res)
+
+			assert.NoError(t, err)
+			assert.Equal(t, len(test.expected), len(res.Header))
+
+			for k, v := range test.expected {
+				assert.Equal(t, v, res.Header.Get(k))
+			}
 		})
 	}
 }
@@ -1177,7 +1221,7 @@ func buildBackend(backendBuilders ...func(*types.Backend)) *types.Backend {
 
 func withServer(name, url string) func(backend *types.Backend) {
 	return func(be *types.Backend) {
-		be.Servers[name] = types.Server{URL: url}
+		be.Servers[name] = types.Server{URL: url, Weight: label.DefaultWeight}
 	}
 }
 

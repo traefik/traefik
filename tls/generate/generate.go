@@ -1,6 +1,7 @@
 package generate
 
 import (
+	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
@@ -71,7 +72,7 @@ func derCert(privKey *rsa.PrivateKey, expiration time.Time, domain string) ([]by
 	}
 
 	if expiration.IsZero() {
-		expiration = time.Now().Add(365)
+		expiration = time.Now().Add(365 * (24 * time.Hour))
 	}
 
 	template := x509.Certificate{
@@ -88,4 +89,22 @@ func derCert(privKey *rsa.PrivateKey, expiration time.Time, domain string) ([]by
 	}
 
 	return x509.CreateCertificate(rand.Reader, &template, &template, &privKey.PublicKey, privKey)
+}
+
+// PemEncode encodes date in PEM format
+func PemEncode(data interface{}) []byte {
+	var pemBlock *pem.Block
+	switch key := data.(type) {
+	case *ecdsa.PrivateKey:
+		keyBytes, _ := x509.MarshalECPrivateKey(key)
+		pemBlock = &pem.Block{Type: "EC PRIVATE KEY", Bytes: keyBytes}
+	case *rsa.PrivateKey:
+		pemBlock = &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)}
+	case *x509.CertificateRequest:
+		pemBlock = &pem.Block{Type: "CERTIFICATE REQUEST", Bytes: key.Raw}
+	case []byte:
+		pemBlock = &pem.Block{Type: "CERTIFICATE", Bytes: data.([]byte)}
+	}
+
+	return pem.EncodeToMemory(pemBlock)
 }

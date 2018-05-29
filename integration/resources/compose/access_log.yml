@@ -1,0 +1,107 @@
+server0:
+  image: emilevauge/whoami
+  labels:
+    - traefik.enable=true
+    - traefik.port=80
+    - traefik.backend=backend1
+    - traefik.frontend.entryPoints=http
+    - traefik.frontend.rule=Path:/test
+server1:
+  image: emilevauge/whoami
+  labels:
+    - traefik.enable=true
+    - traefik.port=80
+    - traefik.backend=backend1
+    - traefik.frontend.entryPoints=http
+    - traefik.frontend.rule=Host:frontend1.docker.local
+server2:
+  image: emilevauge/whoami
+  labels:
+    - traefik.enable=true
+    - traefik.port=80
+    - traefik.backend=backend2
+    - traefik.frontend.entryPoints=http
+    - traefik.frontend.rule=Host:frontend2.docker.local
+    - traefik.frontend.passHostHeader=true
+    - backend.loadbalancer.method=drr
+server3:
+  image: emilevauge/whoami
+  labels:
+    - traefik.enable=true
+    - traefik.port=80
+    - traefik.backend=backend2
+    - traefik.frontend.entryPoints=http
+    - traefik.frontend.rule=Host:frontend2.docker.local
+    - traefik.frontend.passHostHeader=true
+    - backend.loadbalancer.method=drr
+authFrontend:
+  image: emilevauge/whoami
+  labels:
+    - traefik.enable=true
+    - traefik.port=80
+    - traefik.backend=backend3
+    - traefik.frontend.entryPoints=httpFrontendAuth
+    - traefik.frontend.rule=Host:frontend.auth.docker.local
+    - traefik.frontend.auth.basic=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/
+authEntrypoint:
+  image: emilevauge/whoami
+  labels:
+    - traefik.enable=true
+    - traefik.port=80
+    - traefik.backend=backend3
+    - traefik.frontend.entryPoints=httpAuth
+    - traefik.frontend.rule=Host:entrypoint.auth.docker.local
+digestAuthEntrypoint:
+  image: emilevauge/whoami
+  labels:
+    - traefik.enable=true
+    - traefik.port=80
+    - traefik.backend=backend3
+    - traefik.frontend.entryPoints=digestAuth
+    - traefik.frontend.rule=Host:entrypoint.digest.auth.docker.local
+entrypointRedirect:
+  image: emilevauge/whoami
+  labels:
+    - traefik.enable=true
+    - traefik.port=80
+    - traefik.backend=backend3
+    - traefik.frontend.entryPoints=httpRedirect
+    - traefik.frontend.rule=Path:/test
+frontendRedirect:
+  image: emilevauge/whoami
+  labels:
+    - traefik.enable=true
+    - traefik.port=80
+    - traefik.backend=backend3
+    - traefik.frontend.entryPoints=frontendRedirect
+    - traefik.frontend.rule=Path:/test
+    - traefik.frontend.redirect.entryPoint=http
+rateLimit:
+  image: emilevauge/whoami
+  labels:
+    - traefik.enable=true
+    - traefik.port=80
+    - traefik.backend=backend3
+    - traefik.frontend.entryPoints=httpRateLimit
+    - traefik.frontend.rule=Host:ratelimit.docker.local
+    - traefik.frontend.rateLimit.extractorFunc=client.ip
+    - traefik.frontend.rateLimit.rateSet.powpow.period=3s
+    - traefik.frontend.rateLimit.rateSet.powpow.average=1
+    - traefik.frontend.rateLimit.rateSet.powpow.burst=2
+entrypointWhitelist:
+  image: emilevauge/whoami
+  labels:
+    - traefik.enable=true
+    - traefik.port=80
+    - traefik.backend=backend3
+    - traefik.frontend.entryPoints=httpWhitelistReject
+    - traefik.frontend.rule=Host:entrypoint.whitelist.docker.local
+frontendWhitelist:
+  image: emilevauge/whoami
+  labels:
+    - traefik.enable=true
+    - traefik.port=80
+    - traefik.backend=backend3
+    - traefik.frontend.whitelistSourceRange=8.8.8.8/32
+    - traefik.frontend.entryPoints=http
+    - traefik.frontend.rule=Host:frontend.whitelist.docker.local

@@ -9,7 +9,6 @@ import (
 	"reflect"
 	"sync"
 	"sync/atomic"
-	"time"
 )
 
 // 0      1         3             7                  size+7 size+8
@@ -30,7 +29,6 @@ type Channel struct {
 	m          sync.Mutex // struct field mutex
 	confirmM   sync.Mutex // publisher confirms state mutex
 	notifyM    sync.RWMutex
-	rpcM       sync.Mutex
 
 	connection *Connection
 
@@ -170,11 +168,6 @@ func (ch *Channel) open() error {
 // Performs a request/response call for when the message is not NoWait and is
 // specified as Synchronous.
 func (ch *Channel) call(req message, res ...message) error {
-	if req.wait() {
-		ch.rpcM.Lock()
-		defer ch.rpcM.Unlock()
-	}
-
 	if err := ch.send(req); err != nil {
 		return err
 	}
@@ -204,15 +197,6 @@ func (ch *Channel) call(req message, res ...message) error {
 			// error on the Connection.  This indicates we have already been
 			// shutdown and if were waiting, will have returned from the errors chan.
 			return ErrClosed
-		case <-time.After(ch.connection.Config.Heartbeat):
-			ch.transition((*Channel).recvMethod)
-			// drain any stale response that might have arrived before the state transition happened
-			select {
-			case <-ch.rpc:
-			case <-time.After(time.Millisecond):
-			}
-
-			return ErrChannelOpTimeout
 		}
 	}
 
@@ -836,7 +820,7 @@ func (ch *Channel) QueueDeclarePassive(name string, durable, autoDelete, exclusi
 QueueInspect passively declares a queue by name to inspect the current message
 count and consumer count.
 
-Use this method to check how many unacknowledged messages reside in the queue,
+Use this method to check how many messages ready for delivery reside in the queue,
 how many consumers are receiving deliveries, and whether a queue by this
 name already exists.
 
@@ -1561,6 +1545,9 @@ is true.
 See also Delivery.Ack
 */
 func (ch *Channel) Ack(tag uint64, multiple bool) error {
+	ch.m.Lock()
+	defer ch.m.Unlock()
+
 	return ch.send(&basicAck{
 		DeliveryTag: tag,
 		Multiple:    multiple,
@@ -1575,6 +1562,9 @@ it must be redelivered or dropped.
 See also Delivery.Nack
 */
 func (ch *Channel) Nack(tag uint64, multiple bool, requeue bool) error {
+	ch.m.Lock()
+	defer ch.m.Unlock()
+
 	return ch.send(&basicNack{
 		DeliveryTag: tag,
 		Multiple:    multiple,

@@ -35,7 +35,9 @@ func (n *Network) fullName() string {
 
 // Inspect inspect the current network
 func (n *Network) Inspect(ctx context.Context) (types.NetworkResource, error) {
-	return n.client.NetworkInspect(ctx, n.fullName(), false)
+	return n.client.NetworkInspect(ctx, n.fullName(), types.NetworkInspectOptions{
+		Verbose: true,
+	})
 }
 
 // Remove removes the current network (from docker engine)
@@ -53,13 +55,13 @@ func (n *Network) Remove(ctx context.Context) error {
 func (n *Network) EnsureItExists(ctx context.Context) error {
 	networkResource, err := n.Inspect(ctx)
 	if n.external {
-		if client.IsErrNetworkNotFound(err) {
+		if client.IsErrNotFound(err) {
 			// FIXME(vdemeester) introduce some libcompose error type
 			return fmt.Errorf("Network %s declared as external, but could not be found. Please create the network manually using docker network create %s and try again", n.fullName(), n.fullName())
 		}
 		return err
 	}
-	if err != nil && client.IsErrNetworkNotFound(err) {
+	if err != nil && client.IsErrNotFound(err) {
 		return n.create(ctx)
 	}
 	if n.driver != "" && networkResource.Driver != n.driver {

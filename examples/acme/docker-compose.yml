@@ -1,0 +1,97 @@
+version: "2"
+
+services :
+
+  boulder:
+    # To minimize fetching this should be the same version used below
+    image: containous/boulder:containous-acmev2
+    environment:
+      FAKE_DNS: 172.17.0.1
+      PKCS11_PROXY_SOCKET: tcp://boulder-hsm:5657
+    restart: unless-stopped
+    extra_hosts:
+      - le.wtf:127.0.0.1
+      - boulder:127.0.0.1
+    ports:
+      - 4000:4000 # ACME
+      - 4001:4001 # ACMEv2
+      - 4002:4002 # OCSP
+      - 4003:4003 # OCSP
+      - 4430:4430 # ACME via HTTPS
+      - 4431:4431 # ACMEv2 via HTTPS
+      - 4500:4500 # ct-test-srv
+      - 6000:6000 # gsb-test-srv
+      - 8000:8000 # debug ports
+      - 8001:8001
+      - 8002:8002
+      - 8003:8003
+      - 8004:8004
+      - 8005:8005
+      - 8006:8006
+      - 8008:8008
+      - 8009:8009
+      - 8010:8010
+      - 8055:8055 # dns-test-srv updates
+      - 9380:9380 # mail-test-srv
+      - 9381:9381 # mail-test-srv
+    depends_on:
+      - bhsm
+      - bmysql
+    networks:
+      - default
+
+  bhsm:
+    # To minimize fetching this should be the same version used above
+    image: letsencrypt/boulder-tools:2018-03-07
+    hostname: boulder-hsm
+    environment:
+      PKCS11_DAEMON_SOCKET: tcp://0.0.0.0:5657
+    command: /usr/local/bin/pkcs11-daemon /usr/lib/softhsm/libsofthsm2.so
+    expose:
+      - 5657
+    networks:
+      default:
+        aliases:
+          - boulder-hsm
+
+  bmysql:
+    image: mariadb:10.1
+    hostname: boulder-mysql
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    command: mysqld --bind-address=0.0.0.0
+    logging:
+        driver: none
+    networks:
+      default:
+        aliases:
+          - boulder-mysql
+
+  ## TRAEFIK part ##
+
+  traefik:
+    build:
+      context: ../..
+    image: containous/traefik:latest
+    command: --configFile=/etc/traefik/conf/acme.toml
+    restart: unless-stopped
+    extra_hosts:
+      - traefik.boulder.com:172.17.0.1
+    volumes:
+      - "./acme.toml:/etc/traefik/conf/acme.toml:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./acme.json:/etc/traefik/conf/acme.json:rw"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "5001:443" # Needed for SNI challenge
+      - "5002:80" # Needed for HTTP challenge
+    expose:
+      - "8080"
+    labels:
+      - "traefik.port=8080"
+      - "traefik.backend=traefikception"
+      - "traefik.frontend.rule=Host:traefik.localhost.com"
+      - "traefik.enable=true"
+    depends_on:
+      - boulder

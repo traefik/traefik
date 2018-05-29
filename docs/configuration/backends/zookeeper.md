@@ -1,13 +1,13 @@
-# Zookeeper Backend
+# Zookeeper Provider
 
-Træfik can be configured to use Zookeeper as a backend configuration.
+Træfik can be configured to use Zookeeper as a provider.
 
 ```toml
 ################################################################
-# Zookeeper configuration backend
+# Zookeeper Provider
 ################################################################
 
-# Enable Zookeeperconfiguration backend.
+# Enable Zookeeper Provider.
 [zookeeper]
 
 # Zookeeper server endpoint.
@@ -53,9 +53,9 @@ prefix = "traefik"
 #    ca = "/etc/ssl/ca.crt"
 #    cert = "/etc/ssl/zookeeper.crt"
 #    key = "/etc/ssl/zookeeper.key"
-#    insecureskipverify = true
+#    insecureSkipVerify = true
 ```
 
-To enable constraints see [backend-specific constraints section](/configuration/commons/#backend-specific).
+To enable constraints see [provider-specific constraints section](/configuration/commons/#provider-specific).
 
 Please refer to the [Key Value storage structure](/user-guide/kv-config/#key-value-storage-structure) section to get documentation on Traefik KV structure.

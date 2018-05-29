@@ -1,0 +1,27 @@
+defaultEntryPoints = ["http"]
+
+debug=true
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":8000"
+
+[api]
+
+[docker]
+endpoint = "unix:///var/run/docker.sock"
+watch = true
+exposedByDefault = false
+
+[file]
+  [frontends]
+  [frontends.frontend-1]
+    backend = "backend-test"
+  [frontends.frontend-1.routes.test_1]
+  rule = "PathPrefix:/file"
+
+  [backends]
+    [backends.backend-test]
+        [backends.backend-test.servers.website]
+        url = "http://{{ .IP }}"
+        weight = 1

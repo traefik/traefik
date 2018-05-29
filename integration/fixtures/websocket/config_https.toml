@@ -1,7 +1,7 @@
 defaultEntryPoints = ["wss"]
 
 logLevel = "DEBUG"
-InsecureSkipVerify=true
+insecureSkipVerify=true
 
 [entryPoints]
   [entryPoints.wss]
@@ -19,6 +19,7 @@ InsecureSkipVerify=true
   [backends.backend1]
     [backends.backend1.servers.server1]
     url = "{{ .WebsocketServer }}"
+    weight = 1
 
 [frontends]
   [frontends.frontend1]

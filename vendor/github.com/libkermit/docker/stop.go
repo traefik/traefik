@@ -14,9 +14,6 @@ func (p *Project) Stop(containerID string) error {
 // StopWithTimeout stops the container with the specified timeout.
 func (p *Project) StopWithTimeout(containerID string, timeout int) error {
 	timeoutDuration := time.Duration(timeout) * time.Second
-	if err := p.Client.ContainerStop(context.Background(), containerID, &timeoutDuration); err != nil {
-		return err
-	}
 
-	return nil
+	return p.Client.ContainerStop(context.Background(), containerID, &timeoutDuration)
 }

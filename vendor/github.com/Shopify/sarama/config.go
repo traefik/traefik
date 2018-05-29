@@ -175,7 +175,7 @@ type Config struct {
 			// Equivalent to the JVM's `fetch.min.bytes`.
 			Min int32
 			// The default number of message bytes to fetch from the broker in each
-			// request (default 32768). This should be larger than the majority of
+			// request (default 1MB). This should be larger than the majority of
 			// your messages, or else the consumer will spend a lot of time
 			// negotiating sizes and not actually consuming. Similar to the JVM's
 			// `fetch.message.max.bytes`.
@@ -292,7 +292,7 @@ func NewConfig() *Config {
 	c.Producer.Return.Errors = true
 
 	c.Consumer.Fetch.Min = 1
-	c.Consumer.Fetch.Default = 32768
+	c.Consumer.Fetch.Default = 1024 * 1024
 	c.Consumer.Retry.Backoff = 2 * time.Second
 	c.Consumer.MaxWaitTime = 250 * time.Millisecond
 	c.Consumer.MaxProcessingTime = 100 * time.Millisecond

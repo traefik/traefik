@@ -10,9 +10,14 @@ import (
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/api"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/middlewares/tracing"
+	"github.com/containous/traefik/middlewares/tracing/jaeger"
+	"github.com/containous/traefik/middlewares/tracing/zipkin"
 	"github.com/containous/traefik/ping"
+	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/provider/boltdb"
 	"github.com/containous/traefik/provider/consul"
+	"github.com/containous/traefik/provider/consulcatalog"
 	"github.com/containous/traefik/provider/docker"
 	"github.com/containous/traefik/provider/dynamodb"
 	"github.com/containous/traefik/provider/ecs"
@@ -45,6 +50,9 @@ const (
 	// DefaultGraceTimeout controls how long Traefik serves pending requests
 	// prior to shutting down.
 	DefaultGraceTimeout = 10 * time.Second
+
+	// DefaultAcmeCAServer is the default ACME API endpoint
+	DefaultAcmeCAServer = "https://acme-v02.api.letsencrypt.org/directory"
 )
 
 // GlobalConfiguration holds global configuration (with providers, etc.).
@@ -59,6 +67,7 @@ type GlobalConfiguration struct {
 	AccessLog                 *types.AccessLog        `description:"Access log settings" export:"true"`
 	TraefikLogsFile           string                  `description:"(Deprecated) Traefik logs file. Stdout is used when omitted or empty" export:"true"` // Deprecated
 	TraefikLog                *types.TraefikLog       `description:"Traefik log settings" export:"true"`
+	Tracing                   *tracing.Tracing        `description:"OpenTracing configuration" export:"true"`
 	LogLevel                  string                  `short:"l" description:"Log level" export:"true"`
 	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key;prod/traefik.crt,prod/traefik.key'" export:"true"`
 	Cluster                   *types.Cluster          `description:"Enable clustering" export:"true"`
@@ -74,12 +83,13 @@ type GlobalConfiguration struct {
 	HealthCheck               *HealthCheckConfig      `description:"Health check parameters" export:"true"`
 	RespondingTimeouts        *RespondingTimeouts     `description:"Timeouts for incoming requests to the Traefik instance" export:"true"`
 	ForwardingTimeouts        *ForwardingTimeouts     `description:"Timeouts for requests forwarded to the backend servers" export:"true"`
+	AllowMinWeightZero        bool                    `description:"Allow weight to take 0 as minimum real value." export:"true"`         // Deprecated
 	Web                       *WebCompatibility       `description:"(Deprecated) Enable Web backend with default settings" export:"true"` // Deprecated
 	Docker                    *docker.Provider        `description:"Enable Docker backend with default settings" export:"true"`
 	File                      *file.Provider          `description:"Enable File backend with default settings" export:"true"`
 	Marathon                  *marathon.Provider      `description:"Enable Marathon backend with default settings" export:"true"`
 	Consul                    *consul.Provider        `description:"Enable Consul backend with default settings" export:"true"`
-	ConsulCatalog             *consul.CatalogProvider `description:"Enable Consul catalog backend with default settings" export:"true"`
+	ConsulCatalog             *consulcatalog.Provider `description:"Enable Consul catalog backend with default settings" export:"true"`
 	Etcd                      *etcd.Provider          `description:"Enable Etcd backend with default settings" export:"true"`
 	Zookeeper                 *zk.Provider            `description:"Enable Zookeeper backend with default settings" export:"true"`
 	Boltdb                    *boltdb.Provider        `description:"Enable Boltdb backend with default settings" export:"true"`
@@ -99,13 +109,13 @@ type GlobalConfiguration struct {
 
 // WebCompatibility is a configuration to handle compatibility with deprecated web provider options
 type WebCompatibility struct {
-	Address    string            `description:"Web administration port" export:"true"`
-	CertFile   string            `description:"SSL certificate" export:"true"`
-	KeyFile    string            `description:"SSL certificate" export:"true"`
-	ReadOnly   bool              `description:"Enable read only API" export:"true"`
-	Statistics *types.Statistics `description:"Enable more detailed statistics" export:"true"`
-	Metrics    *types.Metrics    `description:"Enable a metrics exporter" export:"true"`
-	Path       string            `description:"Root path for dashboard and API" export:"true"`
+	Address    string            `description:"(Deprecated) Web administration port" export:"true"`
+	CertFile   string            `description:"(Deprecated) SSL certificate" export:"true"`
+	KeyFile    string            `description:"(Deprecated) SSL certificate" export:"true"`
+	ReadOnly   bool              `description:"(Deprecated) Enable read only API" export:"true"`
+	Statistics *types.Statistics `description:"(Deprecated) Enable more detailed statistics" export:"true"`
+	Metrics    *types.Metrics    `description:"(Deprecated) Enable a metrics exporter" export:"true"`
+	Path       string            `description:"(Deprecated) Root path for dashboard and API" export:"true"`
 	Auth       *types.Auth       `export:"true"`
 	Debug      bool              `export:"true"`
 }
@@ -179,11 +189,22 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 		}
 	}
 
-	// ForwardedHeaders must be remove in the next breaking version
 	for entryPointName := range gc.EntryPoints {
 		entryPoint := gc.EntryPoints[entryPointName]
+		// ForwardedHeaders must be remove in the next breaking version
 		if entryPoint.ForwardedHeaders == nil {
 			entryPoint.ForwardedHeaders = &ForwardedHeaders{Insecure: true}
+		}
+
+		if len(entryPoint.WhitelistSourceRange) > 0 {
+			log.Warnf("Deprecated configuration found: %s. Please use %s.", "whiteListSourceRange", "whiteList.sourceRange")
+
+			if entryPoint.WhiteList == nil {
+				entryPoint.WhiteList = &types.WhiteList{
+					SourceRange: entryPoint.WhitelistSourceRange,
+				}
+				entryPoint.WhitelistSourceRange = nil
+			}
 		}
 	}
 
@@ -198,7 +219,66 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 		gc.LifeCycle.GraceTimeOut = gc.GraceTimeOut
 	}
 
+	if gc.Docker != nil {
+		if len(gc.Docker.Filename) != 0 && gc.Docker.TemplateVersion != 2 {
+			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
+			gc.Docker.TemplateVersion = 1
+		} else {
+			gc.Docker.TemplateVersion = 2
+		}
+	}
+
+	if gc.Marathon != nil {
+		if len(gc.Marathon.Filename) != 0 && gc.Marathon.TemplateVersion != 2 {
+			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
+			gc.Marathon.TemplateVersion = 1
+		} else {
+			gc.Marathon.TemplateVersion = 2
+		}
+	}
+
+	if gc.Mesos != nil {
+		if len(gc.Mesos.Filename) != 0 && gc.Mesos.TemplateVersion != 2 {
+			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
+			gc.Mesos.TemplateVersion = 1
+		} else {
+			gc.Mesos.TemplateVersion = 2
+		}
+	}
+
+	if gc.Eureka != nil {
+		if gc.Eureka.Delay != 0 {
+			log.Warn("Delay has been deprecated -- please use RefreshSeconds")
+			gc.Eureka.RefreshSeconds = gc.Eureka.Delay
+		}
+	}
+
+	if gc.ECS != nil {
+		if len(gc.ECS.Filename) != 0 && gc.ECS.TemplateVersion != 2 {
+			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
+			gc.ECS.TemplateVersion = 1
+		} else {
+			gc.ECS.TemplateVersion = 2
+		}
+	}
+
+	if gc.ConsulCatalog != nil {
+		if len(gc.ConsulCatalog.Filename) != 0 && gc.ConsulCatalog.TemplateVersion != 2 {
+			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
+			gc.ConsulCatalog.TemplateVersion = 1
+		} else {
+			gc.ConsulCatalog.TemplateVersion = 2
+		}
+	}
+
 	if gc.Rancher != nil {
+		if len(gc.Rancher.Filename) != 0 && gc.Rancher.TemplateVersion != 2 {
+			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
+			gc.Rancher.TemplateVersion = 1
+		} else {
+			gc.Rancher.TemplateVersion = 2
+		}
+
 		// Ensure backwards compatibility for now
 		if len(gc.Rancher.AccessKey) > 0 ||
 			len(gc.Rancher.Endpoint) > 0 ||
@@ -224,26 +304,64 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 		gc.API.Debug = gc.Debug
 	}
 
-	if gc.Debug {
-		gc.LogLevel = "DEBUG"
-	}
-
 	if gc.Web != nil && (gc.Web.Path == "" || !strings.HasSuffix(gc.Web.Path, "/")) {
 		gc.Web.Path += "/"
 	}
 
-	// Try to fallback to traefik config file in case the file provider is enabled
-	// but has no file name configured.
-	if gc.File != nil && len(gc.File.Filename) == 0 {
-		if len(configFile) > 0 {
-			gc.File.Filename = configFile
-		} else {
-			log.Errorln("Error using file configuration backend, no filename defined")
-		}
+	if gc.File != nil {
+		gc.File.TraefikFile = configFile
 	}
 
+	gc.initACMEProvider()
+	gc.initTracing()
+}
+
+func (gc *GlobalConfiguration) initTracing() {
+	if gc.Tracing != nil {
+		switch gc.Tracing.Backend {
+		case jaeger.Name:
+			if gc.Tracing.Jaeger == nil {
+				gc.Tracing.Jaeger = &jaeger.Config{
+					SamplingServerURL:  "http://localhost:5778/sampling",
+					SamplingType:       "const",
+					SamplingParam:      1.0,
+					LocalAgentHostPort: "127.0.0.1:6831",
+				}
+			}
+			if gc.Tracing.Zipkin != nil {
+				log.Warn("Zipkin configuration will be ignored")
+				gc.Tracing.Zipkin = nil
+			}
+		case zipkin.Name:
+			if gc.Tracing.Zipkin == nil {
+				gc.Tracing.Zipkin = &zipkin.Config{
+					HTTPEndpoint: "http://localhost:9411/api/v1/spans",
+					SameSpan:     false,
+					ID128Bit:     true,
+					Debug:        false,
+				}
+			}
+			if gc.Tracing.Jaeger != nil {
+				log.Warn("Jaeger configuration will be ignored")
+				gc.Tracing.Jaeger = nil
+			}
+		default:
+			log.Warnf("Unknown tracer %q", gc.Tracing.Backend)
+			return
+		}
+	}
+}
+
+func (gc *GlobalConfiguration) initACMEProvider() {
 	if gc.ACME != nil {
-		// TODO: to remove in the futurs
+		gc.ACME.CAServer = getSafeACMECAServer(gc.ACME.CAServer)
+
+		if gc.ACME.DNSChallenge != nil && gc.ACME.HTTPChallenge != nil {
+			log.Warn("Unable to use DNS challenge and HTTP challenge at the same time. Fallback to DNS challenge.")
+			gc.ACME.HTTPChallenge = nil
+		}
+
+		// TODO: to remove in the future
 		if len(gc.ACME.StorageFile) > 0 && len(gc.ACME.Storage) == 0 {
 			log.Warn("ACME.StorageFile is deprecated, use ACME.Storage instead")
 			gc.ACME.Storage = gc.ACME.StorageFile
@@ -251,11 +369,70 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 
 		if len(gc.ACME.DNSProvider) > 0 {
 			log.Warn("ACME.DNSProvider is deprecated, use ACME.DNSChallenge instead")
-			gc.ACME.DNSChallenge = &acme.DNSChallenge{Provider: gc.ACME.DNSProvider, DelayBeforeCheck: gc.ACME.DelayDontCheckDNS}
+			gc.ACME.DNSChallenge = &acmeprovider.DNSChallenge{Provider: gc.ACME.DNSProvider, DelayBeforeCheck: gc.ACME.DelayDontCheckDNS}
 		}
 
 		if gc.ACME.OnDemand {
 			log.Warn("ACME.OnDemand is deprecated")
+		}
+
+		// TODO: Remove when Provider ACME will replace totally ACME
+		// If provider file, use Provider ACME instead of ACME
+		if gc.Cluster == nil {
+			acmeprovider.Get().Configuration = &acmeprovider.Configuration{
+				OnHostRule:    gc.ACME.OnHostRule,
+				OnDemand:      gc.ACME.OnDemand,
+				Email:         gc.ACME.Email,
+				Storage:       gc.ACME.Storage,
+				HTTPChallenge: gc.ACME.HTTPChallenge,
+				DNSChallenge:  gc.ACME.DNSChallenge,
+				Domains:       gc.ACME.Domains,
+				ACMELogging:   gc.ACME.ACMELogging,
+				CAServer:      gc.ACME.CAServer,
+				EntryPoint:    gc.ACME.EntryPoint,
+			}
+			gc.ACME = nil
+		}
+	}
+}
+
+func getSafeACMECAServer(caServerSrc string) string {
+	if len(caServerSrc) == 0 {
+		return DefaultAcmeCAServer
+	}
+
+	if strings.HasPrefix(caServerSrc, "https://acme-v01.api.letsencrypt.org") {
+		caServer := strings.Replace(caServerSrc, "v01", "v02", 1)
+		log.Warnf("The CA server %[1]q refers to a v01 endpoint of the ACME API, please change to %[2]q. Fallback to %[2]q.", caServerSrc, caServer)
+		return caServer
+	}
+
+	if strings.HasPrefix(caServerSrc, "https://acme-staging.api.letsencrypt.org") {
+		caServer := strings.Replace(caServerSrc, "https://acme-staging.api.letsencrypt.org", "https://acme-staging-v02.api.letsencrypt.org", 1)
+		log.Warnf("The CA server %[1]q refers to a v01 endpoint of the ACME API, please change to %[2]q. Fallback to %[2]q.", caServerSrc, caServer)
+		return caServer
+	}
+
+	return caServerSrc
+}
+
+// ValidateConfiguration validate that configuration is coherent
+func (gc *GlobalConfiguration) ValidateConfiguration() {
+	if gc.ACME != nil {
+		if _, ok := gc.EntryPoints[gc.ACME.EntryPoint]; !ok {
+			log.Fatalf("Unknown entrypoint %q for ACME configuration", gc.ACME.EntryPoint)
+		} else {
+			if gc.EntryPoints[gc.ACME.EntryPoint].TLS == nil {
+				log.Fatalf("Entrypoint %q has no TLS configuration for ACME configuration", gc.ACME.EntryPoint)
+			}
+		}
+	} else if acmeprovider.IsEnabled() {
+		if _, ok := gc.EntryPoints[acmeprovider.Get().EntryPoint]; !ok {
+			log.Fatalf("Unknown entrypoint %q for provider ACME configuration", acmeprovider.Get().EntryPoint)
+		} else {
+			if gc.EntryPoints[acmeprovider.Get().EntryPoint].TLS == nil {
+				log.Fatalf("Entrypoint %q has no TLS configuration for provider ACME configuration", acmeprovider.Get().EntryPoint)
+			}
 		}
 	}
 }
@@ -285,168 +462,17 @@ func (dep *DefaultEntryPoints) Set(value string) error {
 
 // Get return the EntryPoints map
 func (dep *DefaultEntryPoints) Get() interface{} {
-	return DefaultEntryPoints(*dep)
+	return *dep
 }
 
 // SetValue sets the EntryPoints map with val
 func (dep *DefaultEntryPoints) SetValue(val interface{}) {
-	*dep = DefaultEntryPoints(val.(DefaultEntryPoints))
+	*dep = val.(DefaultEntryPoints)
 }
 
 // Type is type of the struct
 func (dep *DefaultEntryPoints) Type() string {
 	return "defaultentrypoints"
-}
-
-// EntryPoints holds entry points configuration of the reverse proxy (ip, port, TLS...)
-type EntryPoints map[string]*EntryPoint
-
-// String is the method to format the flag's value, part of the flag.Value interface.
-// The String method's output will be used in diagnostics.
-func (ep *EntryPoints) String() string {
-	return fmt.Sprintf("%+v", *ep)
-}
-
-// Set is the method to set the flag value, part of the flag.Value interface.
-// Set's argument is a string to be parsed to set the flag.
-// It's a comma-separated list, so we split it.
-func (ep *EntryPoints) Set(value string) error {
-	result := parseEntryPointsConfiguration(value)
-
-	var configTLS *tls.TLS
-	if len(result["tls"]) > 0 {
-		certs := tls.Certificates{}
-		if err := certs.Set(result["tls"]); err != nil {
-			return err
-		}
-		configTLS = &tls.TLS{
-			Certificates: certs,
-		}
-	} else if len(result["tls_acme"]) > 0 {
-		configTLS = &tls.TLS{
-			Certificates: tls.Certificates{},
-		}
-	}
-	if len(result["ca"]) > 0 {
-		files := strings.Split(result["ca"], ",")
-		optional := toBool(result, "ca_optional")
-		configTLS.ClientCA = tls.ClientCA{
-			Files:    files,
-			Optional: optional,
-		}
-	}
-	var redirect *types.Redirect
-	if len(result["redirect_entrypoint"]) > 0 || len(result["redirect_regex"]) > 0 || len(result["redirect_replacement"]) > 0 {
-		redirect = &types.Redirect{
-			EntryPoint:  result["redirect_entrypoint"],
-			Regex:       result["redirect_regex"],
-			Replacement: result["redirect_replacement"],
-		}
-	}
-
-	whiteListSourceRange := []string{}
-	if len(result["whitelistsourcerange"]) > 0 {
-		whiteListSourceRange = strings.Split(result["whitelistsourcerange"], ",")
-	}
-
-	compress := toBool(result, "compress")
-
-	var proxyProtocol *ProxyProtocol
-	ppTrustedIPs := result["proxyprotocol_trustedips"]
-	if len(result["proxyprotocol_insecure"]) > 0 || len(ppTrustedIPs) > 0 {
-		proxyProtocol = &ProxyProtocol{
-			Insecure: toBool(result, "proxyprotocol_insecure"),
-		}
-		if len(ppTrustedIPs) > 0 {
-			proxyProtocol.TrustedIPs = strings.Split(ppTrustedIPs, ",")
-		}
-	}
-
-	// TODO must be changed to false by default in the next breaking version.
-	forwardedHeaders := &ForwardedHeaders{Insecure: true}
-	if _, ok := result["forwardedheaders_insecure"]; ok {
-		forwardedHeaders.Insecure = toBool(result, "forwardedheaders_insecure")
-	}
-
-	fhTrustedIPs := result["forwardedheaders_trustedips"]
-	if len(fhTrustedIPs) > 0 {
-		// TODO must be removed in the next breaking version.
-		forwardedHeaders.Insecure = toBool(result, "forwardedheaders_insecure")
-		forwardedHeaders.TrustedIPs = strings.Split(fhTrustedIPs, ",")
-	}
-
-	if proxyProtocol != nil && proxyProtocol.Insecure {
-		log.Warn("ProxyProtocol.Insecure:true is dangerous. Please use 'ProxyProtocol.TrustedIPs:IPs' and remove 'ProxyProtocol.Insecure:true'")
-	}
-
-	(*ep)[result["name"]] = &EntryPoint{
-		Address:              result["address"],
-		TLS:                  configTLS,
-		Redirect:             redirect,
-		Compress:             compress,
-		WhitelistSourceRange: whiteListSourceRange,
-		ProxyProtocol:        proxyProtocol,
-		ForwardedHeaders:     forwardedHeaders,
-	}
-
-	return nil
-}
-
-func parseEntryPointsConfiguration(raw string) map[string]string {
-	sections := strings.Fields(raw)
-
-	config := make(map[string]string)
-	for _, part := range sections {
-		field := strings.SplitN(part, ":", 2)
-		name := strings.ToLower(strings.Replace(field[0], ".", "_", -1))
-		if len(field) > 1 {
-			config[name] = field[1]
-		} else {
-			if strings.EqualFold(name, "TLS") {
-				config["tls_acme"] = "TLS"
-			} else {
-				config[name] = ""
-			}
-		}
-	}
-	return config
-}
-
-func toBool(conf map[string]string, key string) bool {
-	if val, ok := conf[key]; ok {
-		return strings.EqualFold(val, "true") ||
-			strings.EqualFold(val, "enable") ||
-			strings.EqualFold(val, "on")
-	}
-	return false
-}
-
-// Get return the EntryPoints map
-func (ep *EntryPoints) Get() interface{} {
-	return EntryPoints(*ep)
-}
-
-// SetValue sets the EntryPoints map with val
-func (ep *EntryPoints) SetValue(val interface{}) {
-	*ep = EntryPoints(val.(EntryPoints))
-}
-
-// Type is type of the struct
-func (ep *EntryPoints) Type() string {
-	return "entrypoints"
-}
-
-// EntryPoint holds an entry point configuration of the reverse proxy (ip, port, TLS...)
-type EntryPoint struct {
-	Network              string
-	Address              string
-	TLS                  *tls.TLS        `export:"true"`
-	Redirect             *types.Redirect `export:"true"`
-	Auth                 *types.Auth     `export:"true"`
-	WhitelistSourceRange []string
-	Compress             bool              `export:"true"`
-	ProxyProtocol        *ProxyProtocol    `export:"true"`
-	ForwardedHeaders     *ForwardedHeaders `export:"true"`
 }
 
 // Retry contains request retry config
@@ -470,18 +496,6 @@ type RespondingTimeouts struct {
 type ForwardingTimeouts struct {
 	DialTimeout           flaeg.Duration `description:"The amount of time to wait until a connection to a backend server can be established. Defaults to 30 seconds. If zero, no timeout exists" export:"true"`
 	ResponseHeaderTimeout flaeg.Duration `description:"The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists" export:"true"`
-}
-
-// ProxyProtocol contains Proxy-Protocol configuration
-type ProxyProtocol struct {
-	Insecure   bool
-	TrustedIPs []string
-}
-
-// ForwardedHeaders Trust client forwarding headers
-type ForwardedHeaders struct {
-	Insecure   bool
-	TrustedIPs []string
 }
 
 // LifeCycle contains configurations relevant to the lifecycle (such as the

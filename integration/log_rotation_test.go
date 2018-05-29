@@ -18,28 +18,36 @@ import (
 // Log rotation integration test suite
 type LogRotationSuite struct{ BaseSuite }
 
+func (s *LogRotationSuite) SetUpSuite(c *check.C) {
+	s.createComposeProject(c, "access_log")
+	s.composeProject.Start(c)
+
+	s.composeProject.Container(c, "server1")
+}
+
 func (s *LogRotationSuite) TestAccessLogRotation(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
 	defer display(c)
+	defer displayTraefikLogFile(c, traefikTestLogFile)
+
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
+
 	defer os.Remove(traefikTestAccessLogFile)
-	defer os.Remove(traefikTestLogFile)
 
 	// Verify Traefik started ok
 	verifyEmptyErrorLog(c, "traefik.log")
 
-	// Start test servers
-	ts1 := startAccessLogServer(8081)
-	defer ts1.Close()
-
-	// Allow time to startup
-	time.Sleep(1 * time.Second)
+	waitForTraefik(c, "server1")
 
 	// Make some requests
-	err = try.GetRequest("http://127.0.0.1:8000/test1", 500*time.Millisecond)
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "frontend1.docker.local"
+
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
 	c.Assert(err, checker.IsNil)
 
 	// Rename access log
@@ -51,9 +59,9 @@ func (s *LogRotationSuite) TestAccessLogRotation(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// continue issuing requests
-	_, err = http.Get("http://127.0.0.1:8000/test1")
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
 	c.Assert(err, checker.IsNil)
-	_, err = http.Get("http://127.0.0.1:8000/test1")
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
 	c.Assert(err, checker.IsNil)
 
 	// Verify access.log.rotated output as expected
@@ -80,15 +88,15 @@ func (s *LogRotationSuite) TestTraefikLogRotation(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/traefik_log_config.toml"))
 	defer display(c)
+	defer displayTraefikLogFile(c, traefikTestLogFile)
+
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-	defer os.Remove(traefikTestAccessLogFile)
-	defer os.Remove(traefikTestLogFile)
 
-	// Ensure Traefik has started
-	err = try.GetRequest("http://127.0.0.1:8000/test1", 500*time.Millisecond)
-	c.Assert(err, checker.IsNil)
+	defer os.Remove(traefikTestAccessLogFile)
+
+	waitForTraefik(c, "server1")
 
 	// Rename traefik log
 	err = os.Rename(traefikTestLogFile, traefikTestLogFile+".rotated")

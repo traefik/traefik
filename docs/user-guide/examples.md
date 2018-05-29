@@ -55,10 +55,6 @@ defaultEntryPoints = ["http", "https"]
 
 ## Let's Encrypt support
 
-!!! note
-    Even if `TLS-SNI-01` challenge is [disabled](https://community.letsencrypt.org/t/2018-01-11-update-regarding-acme-tls-sni-and-shared-hosting-infrastructure/50188), for the moment, it stays the _by default_ ACME Challenge in Træfik but all the examples use the `HTTP-01` challenge (except DNS challenge examples).
-    If `TLS-SNI-01` challenge is not re-enabled in the future, it we will be removed from Træfik.
-
 ### Basic example with HTTP challenge
 
 ```toml
@@ -72,7 +68,7 @@ defaultEntryPoints = ["http", "https"]
 [acme]
 email = "test@traefik.io"
 storage = "acme.json"
-caServer = "http://172.18.0.1:4000/directory"
+caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
 entryPoint = "https"
   [acme.httpChallenge]
   entryPoint = "http"
@@ -91,9 +87,9 @@ entryPoint = "https"
 
 This configuration allows generating Let's Encrypt certificates (thanks to `HTTP-01` challenge) for the four domains `local[1-4].com` with described SANs.
 
-Traefik generates these certificates when it starts and it needs to be restart if new domains are added.
+Træfik generates these certificates when it starts and it needs to be restart if new domains are added.
 
-### OnHostRule option (with HTTP challenge)
+### onHostRule option (with HTTP challenge)
 
 ```toml
 [entryPoints]
@@ -107,7 +103,7 @@ Traefik generates these certificates when it starts and it needs to be restart i
 email = "test@traefik.io"
 storage = "acme.json"
 onHostRule = true
-caServer = "http://172.18.0.1:4000/directory"
+caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
 entryPoint = "https"
   [acme.httpChallenge]
   entryPoint = "http"
@@ -126,9 +122,9 @@ entryPoint = "https"
 
 This configuration allows generating Let's Encrypt certificates (thanks to `HTTP-01` challenge) for the four domains `local[1-4].com`.
 
-Traefik generates these certificates when it starts.
+Træfik generates these certificates when it starts.
 
-If a backend is added with a `onHost` rule, Traefik will automatically generate the Let's Encrypt certificate for the new domain.
+If a backend is added with a `onHost` rule, Træfik will automatically generate the Let's Encrypt certificate for the new domain (for frontends wired on the `acme.entryPoint`).
 
 ### OnDemand option (with HTTP challenge)
 
@@ -144,7 +140,7 @@ If a backend is added with a `onHost` rule, Traefik will automatically generate 
 email = "test@traefik.io"
 storage = "acme.json"
 onDemand = true
-caServer = "http://172.18.0.1:4000/directory"
+caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
 entryPoint = "https"
   [acme.httpChallenge]
   entryPoint = "http"
@@ -152,11 +148,10 @@ entryPoint = "https"
 
 This configuration allows generating a Let's Encrypt certificate (thanks to `HTTP-01` challenge) during the first HTTPS request on a new domain.
 
-
 !!! note
     This option simplifies the configuration but :
 
-    * TLS handshakes will be slow when requesting a hostname certificate for the first time, this can leads to DDoS attacks.
+    * TLS handshakes will be slow when requesting a hostname certificate for the first time, which can lead to DDoS attacks.
     * Let's Encrypt have rate limiting: https://letsencrypt.org/docs/rate-limits
 
     That's why, it's better to use the `onHostRule` option if possible.
@@ -172,7 +167,7 @@ This configuration allows generating a Let's Encrypt certificate (thanks to `HTT
 [acme]
 email = "test@traefik.io"
 storage = "acme.json"
-caServer = "http://172.18.0.1:4000/directory"
+caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
 entryPoint = "https"
   [acme.dnsChallenge]
   provider = "digitalocean" # DNS Provider name (cloudflare, OVH, gandi...)
@@ -191,11 +186,46 @@ entryPoint = "https"
 ```
 
 DNS challenge needs environment variables to be executed.
-This variables have to be set on the machine/container which host Traefik.
+These variables have to be set on the machine/container that host Træfik.
 
 These variables are described [in this section](/configuration/acme/#provider).
 
-### OnHostRule option and provided certificates (with HTTP challenge)
+### DNS challenge with wildcard domains
+
+```toml
+[entryPoints]
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+
+[acme]
+email = "test@traefik.io"
+storage = "acme.json"
+caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
+entryPoint = "https"
+  [acme.dnsChallenge]
+  provider = "digitalocean" # DNS Provider name (cloudflare, OVH, gandi...)
+  delayBeforeCheck = 0
+
+[[acme.domains]]
+  main = "*.local1.com"
+[[acme.domains]]
+  main = "local2.com"
+  sans = ["test1.local2.com", "test2x.local2.com"]
+[[acme.domains]]
+  main = "*.local3.com"
+[[acme.domains]]
+  main = "*.local4.com"
+```
+
+DNS challenge needs environment variables to be executed.
+These variables have to be set on the machine/container that host Træfik.
+
+These variables are described [in this section](/configuration/acme/#provider).
+
+More information about wildcard certificates are available [in this section](/configuration/acme/#wildcard-domain).
+
+### onHostRule option and provided certificates (with HTTP challenge)
 
 ```toml
 [entryPoints]
@@ -218,7 +248,7 @@ entryPoint = "https"
   entryPoint = "http"
 ```
 
-Traefik will only try to generate a Let's encrypt certificate (thanks to `HTTP-01` challenge) if the domain cannot be checked by the provided certificates.
+Træfik will only try to generate a Let's encrypt certificate (thanks to `HTTP-01` challenge) if the domain cannot be checked by the provided certificates.
 
 ### Cluster mode
 
@@ -292,14 +322,14 @@ The `consul` provider contains the configuration.
   rule = "Path:/test"
 ```
 
-## Enable Basic authentication in an entrypoint
+## Enable Basic authentication in an entry point
 
 With two user/pass:
 
 - `test`:`test`
 - `test2`:`test2`
 
-Passwords are encoded in MD5: you can use htpasswd to generate those ones.
+Passwords are encoded in MD5: you can use `htpasswd` to generate them.
 
 ```toml
 defaultEntryPoints = ["http"]
@@ -328,7 +358,7 @@ defaultEntryPoints = ["http"]
     users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
 ```
 
-## Override the Traefik HTTP server IdleTimeout and/or throttle configurations from re-loading too quickly
+## Override the Traefik HTTP server idleTimeout and/or throttle configurations from re-loading too quickly
 
 ```toml
 providersThrottleDuration = "5s"
@@ -336,86 +366,3 @@ providersThrottleDuration = "5s"
 [respondingTimeouts]
 idleTimeout = "360s"
 ```
-
-## Securing Ping Health Check
-
-The `/ping` health-check URL is enabled with the command-line `--ping` or config file option `[ping]`.
-Thus, if you have a regular path for `/foo` and an entrypoint on `:80`, you would access them as follows:
-
-* Regular path: `http://hostname:80/foo`
-* Admin panel: `http://hostname:8080/`
-* Ping URL: `http://hostname:8080/ping`
-
-However, for security reasons, you may want to be able to expose the `/ping` health-check URL to outside health-checkers, e.g. an Internet service or cloud load-balancer, _without_ exposing your admin panel's port.
-In many environments, the security staff may not _allow_ you to expose it.
-
-You have two options:
-
-* Enable `/ping` on a regular entrypoint
-* Enable `/ping` on a dedicated port
-
-### Enable ping health check on a regular entrypoint
-
-To proxy `/ping` from a regular entrypoint to the admin one without exposing the panel, do the following:
-
-```toml
-[backends]
-  [backends.traefik]
-    [backends.traefik.servers.server1]
-    url = "http://localhost:8080"
-    weight = 10
-
-[frontends]
-  [frontends.traefikadmin]
-  backend = "traefik"
-    [frontends.traefikadmin.routes.ping]
-    rule = "Path:/ping"
-```
-
-The above creates a new backend called `traefik`, listening on `http://localhost:8080`, i.e. the local admin port.
-We only expose the admin panel via the `frontend` named `traefikadmin`, and only expose the `/ping` Path.
-Be careful with the `traefikadmin` frontend. If you do _not_ specify a `Path:` rule, you would expose the entire dashboard.
-
-### Enable ping health check on dedicated port
-
-If you do not want to or cannot expose the health-check on a regular entrypoint - e.g. your security rules do not allow it, or you have a conflicting path - then you can enable health-check on its own entrypoint.
-Use the following config:
-
-```toml
-defaultEntryPoints = ["http"]
-
-[entryPoints]
-  [entryPoints.http]
-  address = ":80"
-  [entryPoints.ping]
-  address = ":8082"
-
-[backends]
-  [backends.traefik]
-    [backends.traefik.servers.server1]
-    url = "http://localhost:8080"
-    weight = 10
-
-[frontends]
-  [frontends.traefikadmin]
-  backend = "traefik"
-  entrypoints = ["ping"]
-    [frontends.traefikadmin.routes.ping]
-    rule = "Path:/ping"
-```
-
-The above is similar to the previous example, but instead of enabling `/ping` on the _default_ entrypoint, we enable it on a _dedicated_ entrypoint.
-
-In the above example, you would access a regular path, admin panel and health-check as follows:
-
-* Regular path: `http://hostname:80/foo`
-* Admin panel: `http://hostname:8080/`
-* Ping URL: `http://hostname:8082/ping`
-
-Note the dedicated port `:8082` for `/ping`.
-
-In the above example, it is _very_ important to create a named dedicated entrypoint, and do **not** include it in `defaultEntryPoints`.
-Otherwise, you are likely to expose _all_ services via that entrypoint.
-
-In the above example, we have two entrypoints, `http` and `ping`, but we only included `http` in `defaultEntryPoints`, while explicitly tying `frontend.traefikadmin` to the `ping` entrypoint.
-This ensures that all the "normal" frontends will be exposed via entrypoint `http` and _not_ via entrypoint `ping`.

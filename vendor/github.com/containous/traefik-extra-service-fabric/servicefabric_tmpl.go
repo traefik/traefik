@@ -1,140 +1,221 @@
 package servicefabric
 
 const tmpl = `
-{{$groupedServiceMap := getServices .Services "backend.group.name"}}
 [backends]
-    {{range $aggName, $aggServices := $groupedServiceMap }}
-      [backends."{{$aggName}}"]
-      {{range $service := $aggServices}}
-        {{range $partition := $service.Partitions}}
-          {{range $instance := $partition.Instances}}
-            [backends."{{$aggName}}".servers."{{$service.ID}}-{{$instance.ID}}"]
-            url = "{{getDefaultEndpoint $instance}}"
-            weight = {{getLabelValue $service "backend.group.weight" "1"}}
-          {{end}}
-        {{end}}
-      {{end}}
-    {{end}}
-  {{range $service := .Services}}
-    {{range $partition := $service.Partitions}}
-      {{if eq $partition.ServiceKind "Stateless"}}
-      [backends."{{$service.Name}}"]
-        [backends."{{$service.Name}}".LoadBalancer]
-        {{if hasLabel $service "backend.loadbalancer.method"}}
-          method = "{{getLabelValue $service "backend.loadbalancer.method" "" }}"
-        {{else}}
-          method = "drr"
+{{range $aggName, $aggServices := getGroupedServices .Services }}
+  [backends."{{ $aggName }}"]
+  {{range $service := $aggServices }}
+  {{range $partition := $service.Partitions }}
+  {{range $instance := $partition.Instances }}
+    [backends."{{ $aggName }}".servers."{{ $service.ID }}-{{ $instance.ID }}"]
+      url = "{{ getDefaultEndpoint $instance }}"
+      weight = {{ getGroupedWeight $service }}
+  {{end}}
+  {{end}}
+  {{end}}
+{{end}}
+
+{{range $service := .Services }}
+  {{if isEnabled $service }}
+    {{range $partition := $service.Partitions }}
+
+      {{if isStateless $service }}
+
+        {{ $backendName := $service.Name }}
+        [backends."{{ $backendName }}"]
+
+        {{ $circuitBreaker := getCircuitBreaker $service }}
+        {{if $circuitBreaker }}
+          [backends."{{ $backendName }}".circuitBreaker]
+            expression = "{{ $circuitBreaker.Expression }}"
         {{end}}
 
-        {{if hasLabel $service "backend.healthcheck"}}
-          [backends."{{$service.Name}}".healthcheck]
-          path = "{{getLabelValue $service "backend.healthcheck" ""}}"
-          interval = "{{getLabelValue $service "backend.healthcheck.interval" "10s"}}"
+        {{ $loadBalancer := getLoadBalancer $service }}
+        {{if $loadBalancer }}
+          [backends."{{ $backendName }}".loadBalancer]
+            method = "{{ $loadBalancer.Method }}"
+            sticky = {{ $loadBalancer.Sticky }}
+            {{if $loadBalancer.Stickiness }}
+            [backends."{{ $backendName }}".loadBalancer.stickiness]
+              cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
+            {{end}}
         {{end}}
 
-        {{if hasLabel $service "backend.loadbalancer.stickiness"}}
-          [backends."{{$service.Name}}".LoadBalancer.stickiness]
+        {{ $maxConn := getMaxConn $service }}
+        {{if $maxConn }}
+          [backends."{{ $backendName }}".maxConn]
+            extractorFunc = "{{ $maxConn.ExtractorFunc }}"
+            amount = {{ $maxConn.Amount }}
         {{end}}
 
-        {{if hasLabel $service "backend.circuitbreaker"}}
-          [backends."{{$service.Name}}".circuitbreaker]
-          expression = "{{getLabelValue $service "backend.circuitbreaker" ""}}"
-        {{end}}
-
-        {{if hasLabel $service "backend.maxconn.amount"}}
-          [backends."{{$service.Name}}".maxconn]
-          amount = {{getLabelValue $service "backend.maxconn.amount" ""}}
-          {{if hasLabel $service "backend.maxconn.extractorfunc"}}
-          extractorfunc = "{{getLabelValue $service "backend.maxconn.extractorfunc" ""}}"
-          {{end}}
+        {{ $healthCheck := getHealthCheck $service }}
+        {{if $healthCheck }}
+          [backends."{{ $backendName }}".healthCheck]
+            path = "{{ $healthCheck.Path }}"
+            port = {{ $healthCheck.Port }}
+            interval = "{{ $healthCheck.Interval }}"
         {{end}}
 
         {{range $instance := $partition.Instances}}
-          [backends."{{$service.Name}}".servers."{{$instance.ID}}"]
-          url = "{{getDefaultEndpoint $instance}}"
-          weight = {{getLabelValue $service "backend.weight" "1"}}
+          [backends."{{ $service.Name }}".servers."{{ $instance.ID }}"]
+            url = "{{ getDefaultEndpoint $instance }}"
+            weight = {{ getWeight $service }}
         {{end}}
-      {{else if eq $partition.ServiceKind "Stateful"}}
+
+      {{else if isStateful $service}}
+
         {{range $replica := $partition.Replicas}}
           {{if isPrimary $replica}}
-
-            {{$backendName := getBackendName $service.Name $partition}}
-            [backends."{{$backendName}}".servers."{{$replica.ID}}"]
-            url = "{{getDefaultEndpoint $replica}}"
-            weight = 1
+            {{ $backendName := getBackendName $service $partition }}
+            [backends."{{ $backendName }}".servers."{{ $replica.ID }}"]
+              url = "{{ getDefaultEndpoint $replica }}"
+							weight = 1
 
             [backends."{{$backendName}}".LoadBalancer]
-            method = "drr"
-
-            [backends."{{$backendName}}".circuitbreaker]
-            expression = "NetworkErrorRatio() > 0.5"
+              method = "drr"
 
           {{end}}
         {{end}}
-      {{end}}
-    {{end}}
-{{end}}
-
-[frontends]
-{{range $groupName, $groupServices := $groupedServiceMap}}
-  {{$service := index $groupServices 0}}
-    [frontends."{{$groupName}}"]
-    backend = "{{$groupName}}"
-
-    {{if hasLabel $service "frontend.priority"}}
-    priority = 100
-    {{end}}
-
-    {{range $key, $value := getLabelsWithPrefix $service "frontend.rule"}}
-    [frontends."{{$groupName}}".routes."{{$key}}"]
-    rule = "{{$value}}"
-    {{end}}
-{{end}}
-{{range $service := .Services}}
-  {{if isExposed $service}}
-    {{if eq $service.ServiceKind "Stateless"}}
-
-    [frontends."{{$service.Name}}"]
-    backend = "{{$service.Name}}"
-
-    {{if hasLabel $service "frontend.passHostHeader"}}
-      passHostHeader = {{getLabelValue $service "frontend.passHostHeader"  ""}}
-    {{end}}
-
-    {{if hasLabel $service "frontend.whitelistSourceRange"}}
-      whitelistSourceRange = {{getLabelValue $service "frontend.whitelistSourceRange"  ""}}
-    {{end}}
-
-    {{if hasLabel $service "frontend.priority"}}
-      priority = {{getLabelValue $service "frontend.priority" ""}}
-    {{end}}
-
-    {{if hasLabel $service "frontend.basicAuth"}}
-      basicAuth = {{getLabelValue $service "frontend.basicAuth" ""}}
-    {{end}}
-
-    {{if hasLabel $service "frontend.entryPoints"}}
-      entryPoints = {{getLabelValue $service "frontend.entryPoints" ""}}
-    {{end}}
-
-    {{range $key, $value := getLabelsWithPrefix $service "frontend.rule"}}
-    [frontends."{{$service.Name}}".routes."{{$key}}"]
-    rule = "{{$value}}"
-    {{end}}
-
-    {{else if eq $service.ServiceKind "Stateful"}}
-      {{range $partition := $service.Partitions}}
-        {{$partitionId := $partition.PartitionInformation.ID}}
-
-        {{if hasLabel $service "frontend.rule"}}
-          [frontends."{{$service.Name}}/{{$partitionId}}"]
-          backend = "{{getBackendName $service.Name $partition}}"
-          [frontends."{{$service.Name}}/{{$partitionId}}".routes.default]
-          rule = {{getLabelValue $service "frontend.rule.partition.$partitionId" ""}}
 
       {{end}}
+
     {{end}}
   {{end}}
 {{end}}
+
+[frontends]
+{{range $groupName, $groupServices := getGroupedServices .Services }}
+  {{ $service := index $groupServices 0 }}
+  [frontends."{{ $groupName }}"]
+    backend = "{{ $groupName }}"
+    priority = 50
+
+  {{range $key, $value := getFrontendRules $service }}
+    [frontends."{{ $groupName }}".routes."{{ $key }}"]
+      rule = "{{ $value }}"
+  {{end}}
+{{end}}
+
+{{range $service := .Services }}
+  {{if isEnabled $service }}
+    {{ $frontendName := $service.Name }}
+
+    {{if isStateless $service }}
+
+      [frontends."frontend-{{ $frontendName }}"]
+        backend = "{{ $service.Name }}"
+        passHostHeader = {{ getPassHostHeader $service }}
+        passTLSCert = {{ getPassTLSCert $service }}
+        priority = {{ getPriority $service }}
+  
+        {{ $entryPoints := getEntryPoints $service }}
+        {{if $entryPoints }}
+        entryPoints = [{{range $entryPoints }}
+          "{{.}}",
+          {{end}}]
+        {{end}}
+  
+        {{ $basicAuth := getBasicAuth $service }}
+        {{if $basicAuth }}
+         basicAuth = [{{range $basicAuth }}
+          "{{.}}",
+          {{end}}]
+        {{end}}
+
+        {{ $whitelist := getWhiteList $service }}
+        {{if $whitelist }}
+        [frontends."frontend-{{ $frontendName }}".whiteList]
+          sourceRange = [{{range $whitelist.SourceRange }}
+            "{{.}}",
+            {{end}}]
+          useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
+        {{end}}
+
+        {{ $redirect := getRedirect $service }}
+        {{if $redirect }}
+        [frontends."frontend-{{ $frontendName }}".redirect]
+          entryPoint = "{{ $redirect.EntryPoint }}"
+          regex = "{{ $redirect.Regex }}"
+          replacement = "{{ $redirect.Replacement }}"
+          permanent = {{ $redirect.Permanent }}
+        {{end}}
+
+        {{ $headers := getHeaders $service }}
+        {{if $headers }}
+        [frontends."frontend-{{ $frontendName }}".headers]
+          SSLRedirect = {{ $headers.SSLRedirect }}
+          SSLTemporaryRedirect = {{ $headers.SSLTemporaryRedirect }}
+          SSLHost = "{{ $headers.SSLHost }}"
+          STSSeconds = {{ $headers.STSSeconds }}
+          STSIncludeSubdomains = {{ $headers.STSIncludeSubdomains }}
+          STSPreload = {{ $headers.STSPreload }}
+          ForceSTSHeader = {{ $headers.ForceSTSHeader }}
+          FrameDeny = {{ $headers.FrameDeny }}
+          CustomFrameOptionsValue = "{{ $headers.CustomFrameOptionsValue }}"
+          ContentTypeNosniff = {{ $headers.ContentTypeNosniff }}
+          BrowserXSSFilter = {{ $headers.BrowserXSSFilter }}
+          CustomBrowserXSSValue = "{{ $headers.CustomBrowserXSSValue }}"
+          ContentSecurityPolicy = "{{ $headers.ContentSecurityPolicy }}"
+          PublicKey = "{{ $headers.PublicKey }}"
+          ReferrerPolicy = "{{ $headers.ReferrerPolicy }}"
+          IsDevelopment = {{ $headers.IsDevelopment }}
+  
+          {{if $headers.AllowedHosts }}
+          AllowedHosts = [{{range $headers.AllowedHosts }}
+            "{{.}}",
+            {{end}}]
+          {{end}}
+  
+          {{if $headers.HostsProxyHeaders }}
+          HostsProxyHeaders = [{{range $headers.HostsProxyHeaders }}
+            "{{.}}",
+            {{end}}]
+          {{end}}
+  
+          {{if $headers.CustomRequestHeaders }}
+          [frontends."frontend-{{ $frontendName }}".headers.customRequestHeaders]
+            {{range $k, $v := $headers.CustomRequestHeaders }}
+            {{$k}} = "{{$v}}"
+            {{end}}
+          {{end}}
+  
+          {{if $headers.CustomResponseHeaders }}
+          [frontends."frontend-{{ $frontendName }}".headers.customResponseHeaders]
+            {{range $k, $v := $headers.CustomResponseHeaders }}
+            {{$k}} = "{{$v}}"
+            {{end}}
+          {{end}}
+  
+          {{if $headers.SSLProxyHeaders }}
+          [frontends."frontend-{{ $frontendName }}".headers.SSLProxyHeaders]
+            {{range $k, $v := $headers.SSLProxyHeaders }}
+            {{$k}} = "{{$v}}"
+            {{end}}
+          {{end}}
+        {{end}}
+  
+      {{range $key, $value := getFrontendRules $service }}
+        [frontends."frontend-{{ $frontendName }}".routes."{{ $key }}"]
+          rule = "{{ $value }}"
+      {{end}}
+
+    {{else if isStateful $service }}
+
+      {{range $partition := $service.Partitions }}
+        {{ $partitionId := $partition.PartitionInformation.ID }}
+
+        {{ $rule := getLabelValue $service (print "traefik.frontend.rule.partition." $partitionId) "" }}
+        {{if $rule }}
+        [frontends."{{ $service.Name }}/{{ $partitionId }}"]
+          backend = "{{ getBackendName $service $partition }}"
+
+          [frontends."{{ $service.Name }}/{{ $partitionId }}".routes.default]
+            rule = "{{ $rule }}"
+        {{end}}
+      {{end}}
+
+    {{end}}
+
+  {{end}}
 {{end}}
 `

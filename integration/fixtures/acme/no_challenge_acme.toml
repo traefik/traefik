@@ -1,0 +1,36 @@
+logLevel = "DEBUG"
+
+defaultEntryPoints = ["http", "https"]
+
+[api]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":8081"
+  [entryPoints.https]
+  address = ":5001"
+    [entryPoints.https.tls]
+
+
+[acme]
+email = "test@traefik.io"
+storage = "/tmp/acme.json"
+entryPoint = "https"
+onHostRule = true
+caServer = "http://{{.BoulderHost}}:4001/directory"
+# No challenge defined
+
+[file]
+
+[backends]
+  [backends.backend]
+    [backends.backend.servers.server1]
+    url = "http://127.0.0.1:9010"
+    weight = 1
+
+
+[frontends]
+  [frontends.frontend]
+  backend = "backend"
+    [frontends.frontend.routes.test]
+    rule = "Host:traefik.acme.wtf"

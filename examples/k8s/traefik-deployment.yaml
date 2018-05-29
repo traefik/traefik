@@ -29,8 +29,9 @@ spec:
       - image: traefik
         name: traefik-ingress-lb
         args:
-        - --web
+        - --api
         - --kubernetes
+        - --logLevel=INFO
 ---
 kind: Service
 apiVersion: v1

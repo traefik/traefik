@@ -1,2 +1,2 @@
-nginx1:
-  image: nginx:alpine
+whoami1:
+  image: emilevauge/whoami

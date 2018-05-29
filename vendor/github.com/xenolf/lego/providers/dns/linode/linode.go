@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/timewasted/linode/dns"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/acmev2"
 )
 
 const (
@@ -23,7 +23,7 @@ type hostedZoneInfo struct {
 	resourceName string
 }
 
-// DNSProvider implements the acme.ChallengeProvider interface.
+// DNSProvider implements the acmev2.ChallengeProvider interface.
 type DNSProvider struct {
 	linode *dns.DNS
 }
@@ -66,13 +66,13 @@ func (p *DNSProvider) Timeout() (timeout, interval time.Duration) {
 
 // Present creates a TXT record using the specified parameters.
 func (p *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value, _ := acmev2.DNS01Record(domain, keyAuth)
 	zone, err := p.getHostedZoneInfo(fqdn)
 	if err != nil {
 		return err
 	}
 
-	if _, err = p.linode.CreateDomainResourceTXT(zone.domainId, acme.UnFqdn(fqdn), value, 60); err != nil {
+	if _, err = p.linode.CreateDomainResourceTXT(zone.domainId, acmev2.UnFqdn(fqdn), value, 60); err != nil {
 		return err
 	}
 
@@ -81,7 +81,7 @@ func (p *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters.
 func (p *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value, _ := acmev2.DNS01Record(domain, keyAuth)
 	zone, err := p.getHostedZoneInfo(fqdn)
 	if err != nil {
 		return err
@@ -112,14 +112,14 @@ func (p *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 
 func (p *DNSProvider) getHostedZoneInfo(fqdn string) (*hostedZoneInfo, error) {
 	// Lookup the zone that handles the specified FQDN.
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := acmev2.FindZoneByFqdn(fqdn, acmev2.RecursiveNameservers)
 	if err != nil {
 		return nil, err
 	}
 	resourceName := strings.TrimSuffix(fqdn, "."+authZone)
 
 	// Query the authority zone.
-	domain, err := p.linode.GetDomain(acme.UnFqdn(authZone))
+	domain, err := p.linode.GetDomain(acmev2.UnFqdn(authZone))
 	if err != nil {
 		return nil, err
 	}

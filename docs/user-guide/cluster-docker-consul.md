@@ -11,7 +11,7 @@ When you use Let's Encrypt, you need to store certificates, but not only.
 When Træfik generates a new certificate, it configures a challenge and once Let's Encrypt will verify the ownership of the domain, it will ping back the challenge.
 If the challenge is not knowing by other Træfik instances, the validation will fail.
 
-For more information about challenge: [Automatic Certificate Management Environment (ACME)](https://github.com/ietf-wg-acme/acme/blob/master/draft-ietf-acme-acme.md#tls-with-server-name-indication-tls-sni)
+For more information about challenge: [Automatic Certificate Management Environment (ACME)](https://github.com/ietf-wg-acme/acme/blob/master/draft-ietf-acme-acme.md#http-challenge)
 
 ## Prerequisites
 
@@ -35,14 +35,14 @@ TL;DR:
 
 ```shell    
 $ traefik \
-    --entrypoints=Name:http Address::80 Redirect.EntryPoint:https \
-    --entrypoints=Name:https Address::443 TLS \
+    --entrypoints='Name:http Address::80 Redirect.EntryPoint:https' \
+    --entrypoints='Name:https Address::443 TLS' \
     --defaultentrypoints=http,https
 ```
 
 To listen to different ports, we need to create an entry point for each.
 
-The CLI syntax is `--entrypoints=Name:a_name Address:an_ip_or_empty:a_port options`.
+The CLI syntax is `--entrypoints='Name:a_name Address:an_ip_or_empty:a_port options'`.
 If you want to redirect traffic from one entry point to another, it's the option `Redirect.EntryPoint:entrypoint_name`.
 
 By default, we don't want to configure all our services to listen on http and https, we add a default entry point configuration: `--defaultentrypoints=http,https`.
@@ -77,12 +77,12 @@ TL;DR:
 ```shell
 $ traefik \
     --docker \
-    --docker.swarmmode \
+    --docker.swarmMode \
     --docker.domain=mydomain.ca \
     --docker.watch
 ```
 
-To enable docker and swarm-mode support, you need to add `--docker` and `--docker.swarmmode` flags.
+To enable docker and swarm-mode support, you need to add `--docker` and `--docker.swarmMode` flags.
 To watch docker events, add `--docker.watch`.
 
 ### Full docker-compose file
@@ -101,11 +101,11 @@ services:
       - "--acme.storage=/etc/traefik/acme/acme.json"
       - "--acme.entryPoint=https"
       - "--acme.httpChallenge.entryPoint=http"
-      - "--acme.OnHostRule=true"
+      - "--acme.onHostRule=true"
       - "--acme.onDemand=false"
       - "--acme.email=contact@mydomain.ca"
       - "--docker"
-      - "--docker.swarmmode"
+      - "--docker.swarmMode"
       - "--docker.domain=mydomain.ca"
       - "--docker.watch"
     volumes:
@@ -211,11 +211,11 @@ services:
       - "--acme.storage=traefik/acme/account"
       - "--acme.entryPoint=https"
       - "--acme.httpChallenge.entryPoint=http"
-      - "--acme.OnHostRule=true"
+      - "--acme.onHostRule=true"
       - "--acme.onDemand=false"
       - "--acme.email=foobar@example.com"
       - "--docker"
-      - "--docker.swarmmode"
+      - "--docker.swarmMode"
       - "--docker.domain=example.com"
       - "--docker.watch"
       - "--consul"

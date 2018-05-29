@@ -45,7 +45,7 @@ At last, we configure our Træfik instance to use both self-signed certificates.
 defaultEntryPoints = ["https"]
 
 # For secure connection on backend.local
-RootCAs = [ "./backend.cert" ]
+rootCAs = [ "./backend.cert" ]
 
 [entryPoints]
   [entryPoints.https]
@@ -76,7 +76,7 @@ RootCAs = [ "./backend.cert" ]
 ```
 
 !!! warning
-    With some backends, the server URLs use the IP, so you may need to configure `InsecureSkipVerify` instead of the `RootCAS` to activate HTTPS without hostname verification.
+    With some backends, the server URLs use the IP, so you may need to configure `insecureSkipVerify` instead of the `rootCAS` to activate HTTPS without hostname verification.
 
 ## Conclusion
 

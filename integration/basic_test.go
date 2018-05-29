@@ -68,7 +68,7 @@ func (s *SimpleSuite) TestDefaultEntryPoints(c *check.C) {
 	defer cmd.Process.Kill()
 
 	err = try.Do(500*time.Millisecond, func() error {
-		expected := "\"DefaultEntryPoints\":[\"http\"]"
+		expected := `\"DefaultEntryPoints\":[\"http\"]`
 		actual := output.String()
 
 		if !strings.Contains(actual, expected) {
@@ -128,6 +128,10 @@ func (s *SimpleSuite) TestRequestAcceptGraceTimeout(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/service", 3*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 
+	// Check that /ping endpoint is responding with 200.
+	err = try.GetRequest("http://127.0.0.1:8001/ping", 3*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
 	// Send SIGTERM to Traefik.
 	proc, err := os.FindProcess(cmd.Process.Pid)
 	c.Assert(err, checker.IsNil)
@@ -142,6 +146,12 @@ func (s *SimpleSuite) TestRequestAcceptGraceTimeout(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer resp.Body.Close()
 	c.Assert(resp.StatusCode, checker.Equals, http.StatusOK)
+
+	// ping endpoint should now return a Service Unavailable.
+	resp, err = http.Get("http://127.0.0.1:8001/ping")
+	c.Assert(err, checker.IsNil)
+	defer resp.Body.Close()
+	c.Assert(resp.StatusCode, checker.Equals, http.StatusServiceUnavailable)
 
 	// Expect Traefik to shut down gracefully once the request accepting grace
 	// period has elapsed.
@@ -357,4 +367,32 @@ func (s *SimpleSuite) TestMetricsPrometheusDefaultEntrypoint(c *check.C) {
 
 	err = try.GetRequest("http://127.0.0.1:8080/metrics", 1*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
+}
+
+func (s *SimpleSuite) TestMultipleProviderSameBackendName(c *check.C) {
+
+	s.createComposeProject(c, "base")
+	s.composeProject.Start(c)
+	ipWhoami01 := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
+	ipWhoami02 := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
+	file := s.adaptFile(c, "fixtures/multiple_provider.toml", struct{ IP string }{
+		IP: ipWhoami02,
+	})
+	defer os.Remove(file)
+	cmd, output := s.traefikCmd(withConfigFile(file))
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("PathPrefix"))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.BodyContains(ipWhoami01))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/file", 1*time.Second, try.BodyContains(ipWhoami02))
+	c.Assert(err, checker.IsNil)
+
 }

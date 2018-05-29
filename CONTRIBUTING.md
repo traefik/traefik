@@ -13,7 +13,7 @@ You need to run the `binary` target. This will create binaries for Linux platfor
 $ make binary
 docker build -t "traefik-dev:no-more-godep-ever" -f build.Dockerfile .
 Sending build context to Docker daemon 295.3 MB
-Step 0 : FROM golang:1.9-alpine
+Step 0 : FROM golang:1.10-alpine
  ---> 8c6473912976
 Step 1 : RUN go get github.com/golang/dep/cmd/dep
 [...]
@@ -64,7 +64,7 @@ Once your environment is set up and the Træfik repository cloned you can build 
 cd ~/go/src/github.com/containous/traefik
 
 # Get go-bindata. Please note, the ellipses are required
-go get github.com/jteeuwen/go-bindata/...
+go get github.com/containous/go-bindata/...
 
 # Start build
 
@@ -87,9 +87,11 @@ If you happen to update the provider templates (in `/templates`), you need to ru
 
 [dep](https://github.com/golang/dep) is not required for building; however, it is necessary to modify dependencies (i.e., add, update, or remove third-party packages)
 
+You need to use [dep](https://github.com/golang/dep) >= O.4.1.
+
 If you want to add a dependency, use `dep ensure -add` to have [dep](https://github.com/golang/dep) put it into the vendor folder and update the dep manifest/lock files (`Gopkg.toml` and `Gopkg.lock`, respectively).
 
-A following `make prune-dep` run should be triggered to trim down the size of the vendor folder.
+A following `make dep-prune` run should be triggered to trim down the size of the vendor folder.
 The final result must be committed into VCS.
 
 Here's a full example using dep to add a new dependency:

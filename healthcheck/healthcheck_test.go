@@ -27,6 +27,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 		healthSequence         []bool
 		wantNumRemovedServers  int
 		wantNumUpsertedServers int
+		wantGaugeValue         float64
 	}{
 		{
 			desc:                   "healthy server staying healthy",
@@ -34,6 +35,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 			healthSequence:         []bool{true},
 			wantNumRemovedServers:  0,
 			wantNumUpsertedServers: 0,
+			wantGaugeValue:         1,
 		},
 		{
 			desc:                   "healthy server becoming sick",
@@ -41,6 +43,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 			healthSequence:         []bool{false},
 			wantNumRemovedServers:  1,
 			wantNumUpsertedServers: 0,
+			wantGaugeValue:         0,
 		},
 		{
 			desc:                   "sick server becoming healthy",
@@ -48,6 +51,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 			healthSequence:         []bool{true},
 			wantNumRemovedServers:  0,
 			wantNumUpsertedServers: 1,
+			wantGaugeValue:         1,
 		},
 		{
 			desc:                   "sick server staying sick",
@@ -55,6 +59,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 			healthSequence:         []bool{false},
 			wantNumRemovedServers:  0,
 			wantNumUpsertedServers: 0,
+			wantGaugeValue:         0,
 		},
 		{
 			desc:                   "healthy server toggling to sick and back to healthy",
@@ -62,6 +67,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 			healthSequence:         []bool{false, true},
 			wantNumRemovedServers:  1,
 			wantNumUpsertedServers: 1,
+			wantGaugeValue:         1,
 		},
 	}
 
@@ -81,7 +87,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 				Path:     "/path",
 				Interval: healthCheckInterval,
 				LB:       lb,
-			})
+			}, "backendName")
 			serverURL := testhelpers.MustParseURL(ts.URL)
 			if test.startHealthy {
 				lb.servers = append(lb.servers, serverURL)
@@ -89,13 +95,15 @@ func TestSetBackendsConfiguration(t *testing.T) {
 				backend.disabledURLs = append(backend.disabledURLs, serverURL)
 			}
 
+			collectingMetrics := testhelpers.NewCollectingHealthCheckMetrics()
 			check := HealthCheck{
 				Backends: make(map[string]*BackendHealthCheck),
+				metrics:  collectingMetrics,
 			}
 			wg := sync.WaitGroup{}
 			wg.Add(1)
 			go func() {
-				check.execute(ctx, "id", backend)
+				check.execute(ctx, backend)
 				wg.Done()
 			}()
 
@@ -117,6 +125,10 @@ func TestSetBackendsConfiguration(t *testing.T) {
 
 			if lb.numUpsertedServers != test.wantNumUpsertedServers {
 				t.Errorf("got %d upserted servers, wanted %d", lb.numUpsertedServers, test.wantNumUpsertedServers)
+			}
+
+			if collectingMetrics.Gauge.GaugeValue != test.wantGaugeValue {
+				t.Errorf("got %v ServerUp Gauge, want %v", collectingMetrics.Gauge.GaugeValue, test.wantGaugeValue)
 			}
 		})
 	}
@@ -168,7 +180,7 @@ func TestNewRequest(t *testing.T) {
 				Options{
 					Path: test.path,
 					Port: test.port,
-				})
+				}, "backendName")
 
 			u := &url.URL{
 				Scheme: "http",

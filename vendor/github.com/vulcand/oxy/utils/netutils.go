@@ -9,19 +9,46 @@ import (
 	"net/url"
 	"reflect"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
-// ProxyWriter helps to capture response headers and status code
+type ProxyWriter interface {
+	http.ResponseWriter
+	GetLength() int64
+	StatusCode() int
+	GetWriter() http.ResponseWriter
+}
+
+// ProxyWriterWithoutCloseNotify helps to capture response headers and status code
 // from the ServeHTTP. It can be safely passed to ServeHTTP handler,
 // wrapping the real response writer.
-type ProxyWriter struct {
+type ProxyWriterWithoutCloseNotify struct {
 	W      http.ResponseWriter
 	Code   int
 	Length int64
 }
 
-func (p *ProxyWriter) StatusCode() int {
+func NewProxyWriterWithoutCloseNotify(writer http.ResponseWriter) *ProxyWriterWithoutCloseNotify {
+	return &ProxyWriterWithoutCloseNotify{
+		W: writer,
+	}
+}
+
+func NewSimpleProxyWriter(writer http.ResponseWriter) *SimpleProxyWriter {
+	return &SimpleProxyWriter{
+		ProxyWriterWithoutCloseNotify: NewProxyWriterWithoutCloseNotify(writer),
+	}
+}
+
+type SimpleProxyWriter struct {
+	*ProxyWriterWithoutCloseNotify
+}
+
+func (p *ProxyWriterWithoutCloseNotify) GetWriter() http.ResponseWriter {
+	return p.W
+}
+
+func (p *ProxyWriterWithoutCloseNotify) StatusCode() int {
 	if p.Code == 0 {
 		// per contract standard lib will set this to http.StatusOK if not set
 		// by user, here we avoid the confusion by mirroring this logic
@@ -30,35 +57,39 @@ func (p *ProxyWriter) StatusCode() int {
 	return p.Code
 }
 
-func (p *ProxyWriter) Header() http.Header {
+func (p *ProxyWriterWithoutCloseNotify) Header() http.Header {
 	return p.W.Header()
 }
 
-func (p *ProxyWriter) Write(buf []byte) (int, error) {
+func (p *ProxyWriterWithoutCloseNotify) Write(buf []byte) (int, error) {
 	p.Length = p.Length + int64(len(buf))
 	return p.W.Write(buf)
 }
 
-func (p *ProxyWriter) WriteHeader(code int) {
+func (p *ProxyWriterWithoutCloseNotify) WriteHeader(code int) {
 	p.Code = code
 	p.W.WriteHeader(code)
 }
 
-func (p *ProxyWriter) Flush() {
+func (p *ProxyWriterWithoutCloseNotify) Flush() {
 	if f, ok := p.W.(http.Flusher); ok {
 		f.Flush()
 	}
 }
 
-func (p *ProxyWriter) CloseNotify() <-chan bool {
-	if cn, ok := p.W.(http.CloseNotifier); ok {
+func (p *ProxyWriterWithoutCloseNotify) GetLength() int64 {
+	return p.Length
+}
+
+func (p *SimpleProxyWriter) CloseNotify() <-chan bool {
+	if cn, ok := p.GetWriter().(http.CloseNotifier); ok {
 		return cn.CloseNotify()
 	}
-	log.Warningf("Upstream ResponseWriter of type %v does not implement http.CloseNotifier. Returning dummy channel.", reflect.TypeOf(p.W))
+	log.Warningf("Upstream ResponseWriter of type %v does not implement http.CloseNotifier. Returning dummy channel.", reflect.TypeOf(p.GetWriter()))
 	return make(<-chan bool)
 }
 
-func (p *ProxyWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+func (p *ProxyWriterWithoutCloseNotify) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	if hi, ok := p.W.(http.Hijacker); ok {
 		return hi.Hijack()
 	}

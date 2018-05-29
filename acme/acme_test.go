@@ -10,76 +10,122 @@ import (
 	"testing"
 	"time"
 
+	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/tls/generate"
+	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/xenolf/lego/acme"
+	acme "github.com/xenolf/lego/acmev2"
 )
 
 func TestDomainsSet(t *testing.T) {
-	checkMap := map[string]Domains{
-		"":                                   {},
-		"foo.com":                            {Domain{Main: "foo.com", SANs: []string{}}},
-		"foo.com,bar.net":                    {Domain{Main: "foo.com", SANs: []string{"bar.net"}}},
-		"foo.com,bar1.net,bar2.net,bar3.net": {Domain{Main: "foo.com", SANs: []string{"bar1.net", "bar2.net", "bar3.net"}}},
+	testCases := []struct {
+		input    string
+		expected types.Domains
+	}{
+		{
+			input:    "",
+			expected: types.Domains{},
+		},
+		{
+			input: "foo1.com",
+			expected: types.Domains{
+				types.Domain{Main: "foo1.com"},
+			},
+		},
+		{
+			input: "foo2.com,bar.net",
+			expected: types.Domains{
+				types.Domain{
+					Main: "foo2.com",
+					SANs: []string{"bar.net"},
+				},
+			},
+		},
+		{
+			input: "foo3.com,bar1.net,bar2.net,bar3.net",
+			expected: types.Domains{
+				types.Domain{
+					Main: "foo3.com",
+					SANs: []string{"bar1.net", "bar2.net", "bar3.net"},
+				},
+			},
+		},
 	}
-	for in, check := range checkMap {
-		ds := Domains{}
-		ds.Set(in)
-		if !reflect.DeepEqual(check, ds) {
-			t.Errorf("Expected %+v\nGot %+v", check, ds)
-		}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.input, func(t *testing.T) {
+			t.Parallel()
+
+			domains := types.Domains{}
+			domains.Set(test.input)
+			assert.Exactly(t, test.expected, domains)
+		})
 	}
 }
 
 func TestDomainsSetAppend(t *testing.T) {
-	inSlice := []string{
-		"",
-		"foo1.com",
-		"foo2.com,bar.net",
-		"foo3.com,bar1.net,bar2.net,bar3.net",
+	testCases := []struct {
+		input    string
+		expected types.Domains
+	}{
+		{
+			input:    "",
+			expected: types.Domains{},
+		},
+		{
+			input: "foo1.com",
+			expected: types.Domains{
+				types.Domain{Main: "foo1.com"},
+			},
+		},
+		{
+			input: "foo2.com,bar.net",
+			expected: types.Domains{
+				types.Domain{Main: "foo1.com"},
+				types.Domain{
+					Main: "foo2.com",
+					SANs: []string{"bar.net"},
+				},
+			},
+		},
+		{
+			input: "foo3.com,bar1.net,bar2.net,bar3.net",
+			expected: types.Domains{
+				types.Domain{Main: "foo1.com"},
+				types.Domain{
+					Main: "foo2.com",
+					SANs: []string{"bar.net"},
+				},
+				types.Domain{
+					Main: "foo3.com",
+					SANs: []string{"bar1.net", "bar2.net", "bar3.net"},
+				},
+			},
+		},
 	}
-	checkSlice := []Domains{
-		{},
-		{
-			Domain{
-				Main: "foo1.com",
-				SANs: []string{}}},
-		{
-			Domain{
-				Main: "foo1.com",
-				SANs: []string{}},
-			Domain{
-				Main: "foo2.com",
-				SANs: []string{"bar.net"}}},
-		{
-			Domain{
-				Main: "foo1.com",
-				SANs: []string{}},
-			Domain{
-				Main: "foo2.com",
-				SANs: []string{"bar.net"}},
-			Domain{Main: "foo3.com",
-				SANs: []string{"bar1.net", "bar2.net", "bar3.net"}}},
-	}
-	ds := Domains{}
-	for i, in := range inSlice {
-		ds.Set(in)
-		if !reflect.DeepEqual(checkSlice[i], ds) {
-			t.Errorf("Expected  %s %+v\nGot %+v", in, checkSlice[i], ds)
-		}
+
+	// append to
+	domains := types.Domains{}
+	for _, test := range testCases {
+		t.Run(test.input, func(t *testing.T) {
+
+			domains.Set(test.input)
+			assert.Exactly(t, test.expected, domains)
+		})
 	}
 }
 
 func TestCertificatesRenew(t *testing.T) {
 	foo1Cert, foo1Key, _ := generate.KeyPair("foo1.com", time.Now())
 	foo2Cert, foo2Key, _ := generate.KeyPair("foo2.com", time.Now())
+
 	domainsCertificates := DomainsCertificates{
 		lock: sync.RWMutex{},
 		Certs: []*DomainsCertificate{
 			{
-				Domains: Domain{
-					Main: "foo1.com",
-					SANs: []string{}},
+				Domains: types.Domain{
+					Main: "foo1.com"},
 				Certificate: &Certificate{
 					Domain:        "foo1.com",
 					CertURL:       "url",
@@ -89,9 +135,8 @@ func TestCertificatesRenew(t *testing.T) {
 				},
 			},
 			{
-				Domains: Domain{
-					Main: "foo2.com",
-					SANs: []string{}},
+				Domains: types.Domain{
+					Main: "foo2.com"},
 				Certificate: &Certificate{
 					Domain:        "foo2.com",
 					CertURL:       "url",
@@ -102,6 +147,7 @@ func TestCertificatesRenew(t *testing.T) {
 			},
 		},
 	}
+
 	foo1Cert, foo1Key, _ = generate.KeyPair("foo1.com", time.Now())
 	newCertificate := &Certificate{
 		Domain:        "foo1.com",
@@ -111,17 +157,15 @@ func TestCertificatesRenew(t *testing.T) {
 		Certificate:   foo1Cert,
 	}
 
-	err := domainsCertificates.renewCertificates(
-		newCertificate,
-		Domain{
-			Main: "foo1.com",
-			SANs: []string{}})
+	err := domainsCertificates.renewCertificates(newCertificate, types.Domain{Main: "foo1.com"})
 	if err != nil {
 		t.Errorf("Error in renewCertificates :%v", err)
 	}
+
 	if len(domainsCertificates.Certs) != 2 {
 		t.Errorf("Expected domainsCertificates length %d %+v\nGot %+v", 2, domainsCertificates.Certs, len(domainsCertificates.Certs))
 	}
+
 	if !reflect.DeepEqual(domainsCertificates.Certs[0].Certificate, newCertificate) {
 		t.Errorf("Expected new certificate %+v \nGot %+v", newCertificate, domainsCertificates.Certs[0].Certificate)
 	}
@@ -137,9 +181,8 @@ func TestRemoveDuplicates(t *testing.T) {
 		lock: sync.RWMutex{},
 		Certs: []*DomainsCertificate{
 			{
-				Domains: Domain{
-					Main: "foo.com",
-					SANs: []string{}},
+				Domains: types.Domain{
+					Main: "foo.com"},
 				Certificate: &Certificate{
 					Domain:        "foo.com",
 					CertURL:       "url",
@@ -149,9 +192,8 @@ func TestRemoveDuplicates(t *testing.T) {
 				},
 			},
 			{
-				Domains: Domain{
-					Main: "foo.com",
-					SANs: []string{}},
+				Domains: types.Domain{
+					Main: "foo.com"},
 				Certificate: &Certificate{
 					Domain:        "foo.com",
 					CertURL:       "url",
@@ -161,9 +203,8 @@ func TestRemoveDuplicates(t *testing.T) {
 				},
 			},
 			{
-				Domains: Domain{
-					Main: "foo.com",
-					SANs: []string{}},
+				Domains: types.Domain{
+					Main: "foo.com"},
 				Certificate: &Certificate{
 					Domain:        "foo.com",
 					CertURL:       "url",
@@ -173,9 +214,8 @@ func TestRemoveDuplicates(t *testing.T) {
 				},
 			},
 			{
-				Domains: Domain{
-					Main: "bar.com",
-					SANs: []string{}},
+				Domains: types.Domain{
+					Main: "bar.com"},
 				Certificate: &Certificate{
 					Domain:        "bar.com",
 					CertURL:       "url",
@@ -185,9 +225,8 @@ func TestRemoveDuplicates(t *testing.T) {
 				},
 			},
 			{
-				Domains: Domain{
-					Main: "foo.com",
-					SANs: []string{}},
+				Domains: types.Domain{
+					Main: "foo.com"},
 				Certificate: &Certificate{
 					Domain:        "foo.com",
 					CertURL:       "url",
@@ -260,14 +299,19 @@ llJh9MC0svjevGtNlxJoE3lmEQIhAKXy1wfZ32/XtcrnENPvi6lzxI0T94X7s5pP3aCoPPoJAiEAl
 cijFkALeQp/qyeXdFld2v9gUN3eCgljgcl0QweRoIc=---`)
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{
-"new-authz": "https://foo/acme/new-authz",
-"new-cert": "https://foo/acme/new-cert",
-"new-reg": "https://foo/acme/new-reg",
-"revoke-cert": "https://foo/acme/revoke-cert"
+  "GPHhmRVEDas": "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417",
+  "keyChange": "https://foo/acme/key-change",
+  "meta": {
+    "termsOfService": "https://boulder:4431/terms/v7"
+  },
+  "newAccount": "https://foo/acme/new-acct",
+  "newNonce": "https://foo/acme/new-nonce",
+  "newOrder": "https://foo/acme/new-order",
+  "revokeCert": "https://foo/acme/revoke-cert"
 }`))
 	}))
 	defer ts.Close()
-	a := ACME{DNSChallenge: &DNSChallenge{Provider: "manual", DelayBeforeCheck: 10}, CAServer: ts.URL}
+	a := ACME{DNSChallenge: &acmeprovider.DNSChallenge{Provider: "manual", DelayBeforeCheck: 10}, CAServer: ts.URL}
 
 	client, err := a.buildACMEClient(account)
 	if err != nil {
@@ -281,7 +325,7 @@ cijFkALeQp/qyeXdFld2v9gUN3eCgljgcl0QweRoIc=---`)
 	}
 }
 
-func TestAcme_getProvidedCertificate(t *testing.T) {
+func TestAcme_getUncheckedCertificates(t *testing.T) {
 	mm := make(map[string]*tls.Certificate)
 	mm["*.containo.us"] = &tls.Certificate{}
 	mm["traefik.acme.io"] = &tls.Certificate{}
@@ -289,9 +333,220 @@ func TestAcme_getProvidedCertificate(t *testing.T) {
 	a := ACME{TLSConfig: &tls.Config{NameToCertificate: mm}}
 
 	domains := []string{"traefik.containo.us", "trae.containo.us"}
-	certificate := a.getProvidedCertificate(domains)
-	assert.NotNil(t, certificate)
+	uncheckedDomains := a.getUncheckedDomains(domains, nil)
+	assert.Empty(t, uncheckedDomains)
 	domains = []string{"traefik.acme.io", "trae.acme.io"}
-	certificate = a.getProvidedCertificate(domains)
+	uncheckedDomains = a.getUncheckedDomains(domains, nil)
+	assert.Len(t, uncheckedDomains, 1)
+	domainsCertificates := DomainsCertificates{Certs: []*DomainsCertificate{
+		{
+			tlsCert: &tls.Certificate{},
+			Domains: types.Domain{
+				Main: "*.acme.wtf",
+				SANs: []string{"trae.acme.io"},
+			},
+		},
+	}}
+	account := Account{DomainsCertificate: domainsCertificates}
+	uncheckedDomains = a.getUncheckedDomains(domains, &account)
+	assert.Empty(t, uncheckedDomains)
+}
+
+func TestAcme_getProvidedCertificate(t *testing.T) {
+	mm := make(map[string]*tls.Certificate)
+	mm["*.containo.us"] = &tls.Certificate{}
+	mm["traefik.acme.io"] = &tls.Certificate{}
+
+	a := ACME{TLSConfig: &tls.Config{NameToCertificate: mm}}
+
+	domain := "traefik.containo.us"
+	certificate := a.getProvidedCertificate(domain)
+	assert.NotNil(t, certificate)
+	domain = "trae.acme.io"
+	certificate = a.getProvidedCertificate(domain)
 	assert.Nil(t, certificate)
+}
+
+func TestAcme_getValidDomain(t *testing.T) {
+	testCases := []struct {
+		desc            string
+		domains         []string
+		wildcardAllowed bool
+		dnsChallenge    *acmeprovider.DNSChallenge
+		expectedErr     string
+		expectedDomains []string
+	}{
+		{
+			desc:            "valid wildcard",
+			domains:         []string{"*.traefik.wtf"},
+			dnsChallenge:    &acmeprovider.DNSChallenge{},
+			wildcardAllowed: true,
+			expectedErr:     "",
+			expectedDomains: []string{"*.traefik.wtf"},
+		},
+		{
+			desc:            "no wildcard",
+			domains:         []string{"traefik.wtf", "foo.traefik.wtf"},
+			dnsChallenge:    &acmeprovider.DNSChallenge{},
+			expectedErr:     "",
+			wildcardAllowed: true,
+			expectedDomains: []string{"traefik.wtf", "foo.traefik.wtf"},
+		},
+		{
+			desc:            "unauthorized wildcard",
+			domains:         []string{"*.traefik.wtf"},
+			dnsChallenge:    &acmeprovider.DNSChallenge{},
+			wildcardAllowed: false,
+			expectedErr:     "unable to generate a wildcard certificate for domain \"*.traefik.wtf\" from a 'Host' rule",
+			expectedDomains: nil,
+		},
+		{
+			desc:            "no domain",
+			domains:         []string{},
+			dnsChallenge:    nil,
+			wildcardAllowed: true,
+			expectedErr:     "unable to generate a certificate when no domain is given",
+			expectedDomains: nil,
+		},
+		{
+			desc:            "no DNSChallenge",
+			domains:         []string{"*.traefik.wtf", "foo.traefik.wtf"},
+			dnsChallenge:    nil,
+			wildcardAllowed: true,
+			expectedErr:     "unable to generate a wildcard certificate for domain \"*.traefik.wtf,foo.traefik.wtf\" : ACME needs a DNSChallenge",
+			expectedDomains: nil,
+		},
+		{
+			desc:            "unauthorized wildcard with SAN",
+			domains:         []string{"*.*.traefik.wtf", "foo.traefik.wtf"},
+			dnsChallenge:    &acmeprovider.DNSChallenge{},
+			wildcardAllowed: true,
+			expectedErr:     "unable to generate a wildcard certificate for domain \"*.*.traefik.wtf,foo.traefik.wtf\" : ACME does not allow '*.*' wildcard domain",
+			expectedDomains: nil,
+		},
+		{
+			desc:            "wildcard with SANs",
+			domains:         []string{"*.traefik.wtf", "traefik.wtf"},
+			dnsChallenge:    &acmeprovider.DNSChallenge{},
+			wildcardAllowed: true,
+			expectedErr:     "",
+			expectedDomains: []string{"*.traefik.wtf", "traefik.wtf"},
+		},
+		{
+			desc:            "unexpected SANs",
+			domains:         []string{"*.traefik.wtf", "*.acme.wtf"},
+			dnsChallenge:    &acmeprovider.DNSChallenge{},
+			wildcardAllowed: true,
+			expectedErr:     "unable to generate a certificate for domains \"*.traefik.wtf,*.acme.wtf\": SANs can not be a wildcard domain",
+			expectedDomains: nil,
+		},
+	}
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			a := ACME{}
+			if test.dnsChallenge != nil {
+				a.DNSChallenge = test.dnsChallenge
+			}
+			domains, err := a.getValidDomains(test.domains, test.wildcardAllowed)
+
+			if len(test.expectedErr) > 0 {
+				assert.EqualError(t, err, test.expectedErr, "Unexpected error.")
+			} else {
+				assert.Equal(t, len(test.expectedDomains), len(domains), "Unexpected domains.")
+			}
+		})
+	}
+}
+
+func TestAcme_getCertificateForDomain(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		domain        string
+		dc            *DomainsCertificates
+		expected      *DomainsCertificate
+		expectedFound bool
+	}{
+		{
+			desc:   "non-wildcard exact match",
+			domain: "foo.traefik.wtf",
+			dc: &DomainsCertificates{
+				Certs: []*DomainsCertificate{
+					{
+						Domains: types.Domain{
+							Main: "foo.traefik.wtf",
+						},
+					},
+				},
+			},
+			expected: &DomainsCertificate{
+				Domains: types.Domain{
+					Main: "foo.traefik.wtf",
+				},
+			},
+			expectedFound: true,
+		},
+		{
+			desc:   "non-wildcard no match",
+			domain: "bar.traefik.wtf",
+			dc: &DomainsCertificates{
+				Certs: []*DomainsCertificate{
+					{
+						Domains: types.Domain{
+							Main: "foo.traefik.wtf",
+						},
+					},
+				},
+			},
+			expected:      nil,
+			expectedFound: false,
+		},
+		{
+			desc:   "wildcard match",
+			domain: "foo.traefik.wtf",
+			dc: &DomainsCertificates{
+				Certs: []*DomainsCertificate{
+					{
+						Domains: types.Domain{
+							Main: "*.traefik.wtf",
+						},
+					},
+				},
+			},
+			expected: &DomainsCertificate{
+				Domains: types.Domain{
+					Main: "*.traefik.wtf",
+				},
+			},
+			expectedFound: true,
+		},
+		{
+			desc:   "wildcard no match",
+			domain: "foo.traefik.wtf",
+			dc: &DomainsCertificates{
+				Certs: []*DomainsCertificate{
+					{
+						Domains: types.Domain{
+							Main: "*.bar.traefik.wtf",
+						},
+					},
+				},
+			},
+			expected:      nil,
+			expectedFound: false,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			got, found := test.dc.getCertificateForDomain(test.domain)
+			assert.Equal(t, test.expectedFound, found)
+			assert.Equal(t, test.expected, got)
+		})
+	}
 }

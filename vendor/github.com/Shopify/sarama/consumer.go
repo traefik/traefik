@@ -441,40 +441,41 @@ func (child *partitionConsumer) HighWaterMarkOffset() int64 {
 
 func (child *partitionConsumer) responseFeeder() {
 	var msgs []*ConsumerMessage
-	msgSent := false
+	expiryTicker := time.NewTicker(child.conf.Consumer.MaxProcessingTime)
+	firstAttempt := true
 
 feederLoop:
 	for response := range child.feeder {
 		msgs, child.responseResult = child.parseResponse(response)
-		expiryTicker := time.NewTicker(child.conf.Consumer.MaxProcessingTime)
 
 		for i, msg := range msgs {
 		messageSelect:
 			select {
 			case child.messages <- msg:
-				msgSent = true
+				firstAttempt = true
 			case <-expiryTicker.C:
-				if !msgSent {
+				if !firstAttempt {
 					child.responseResult = errTimedOut
 					child.broker.acks.Done()
 					for _, msg = range msgs[i:] {
 						child.messages <- msg
 					}
 					child.broker.input <- child
+					expiryTicker.Stop()
 					continue feederLoop
 				} else {
 					// current message has not been sent, return to select
 					// statement
-					msgSent = false
+					firstAttempt = false
 					goto messageSelect
 				}
 			}
 		}
 
-		expiryTicker.Stop()
 		child.broker.acks.Done()
 	}
 
+	expiryTicker.Stop()
 	close(child.messages)
 	close(child.errors)
 }
@@ -523,6 +524,7 @@ func (child *partitionConsumer) parseRecords(batch *RecordBatch) ([]*ConsumerMes
 	var messages []*ConsumerMessage
 	var incomplete bool
 	prelude := true
+	originalOffset := child.offset
 
 	for _, rec := range batch.Records {
 		offset := batch.FirstOffset + rec.OffsetDelta
@@ -547,9 +549,15 @@ func (child *partitionConsumer) parseRecords(batch *RecordBatch) ([]*ConsumerMes
 		}
 	}
 
-	if incomplete || len(messages) == 0 {
+	if incomplete {
 		return nil, ErrIncompleteResponse
 	}
+
+	child.offset = batch.FirstOffset + int64(batch.LastOffsetDelta) + 1
+	if child.offset <= originalOffset {
+		return nil, ErrConsumerOffsetNotAdvanced
+	}
+
 	return messages, nil
 }
 
@@ -563,12 +571,12 @@ func (child *partitionConsumer) parseResponse(response *FetchResponse) ([]*Consu
 		return nil, block.Err
 	}
 
-	nRecs, err := block.Records.numRecords()
+	nRecs, err := block.numRecords()
 	if err != nil {
 		return nil, err
 	}
 	if nRecs == 0 {
-		partialTrailingMessage, err := block.Records.isPartial()
+		partialTrailingMessage, err := block.isPartial()
 		if err != nil {
 			return nil, err
 		}
@@ -594,14 +602,33 @@ func (child *partitionConsumer) parseResponse(response *FetchResponse) ([]*Consu
 	child.fetchSize = child.conf.Consumer.Fetch.Default
 	atomic.StoreInt64(&child.highWaterMarkOffset, block.HighWaterMarkOffset)
 
-	if control, err := block.Records.isControl(); err != nil || control {
-		return nil, err
+	messages := []*ConsumerMessage{}
+	for _, records := range block.RecordsSet {
+		if control, err := records.isControl(); err != nil || control {
+			continue
+		}
+
+		switch records.recordsType {
+		case legacyRecords:
+			messageSetMessages, err := child.parseMessages(records.msgSet)
+			if err != nil {
+				return nil, err
+			}
+
+			messages = append(messages, messageSetMessages...)
+		case defaultRecords:
+			recordBatchMessages, err := child.parseRecords(records.recordBatch)
+			if err != nil {
+				return nil, err
+			}
+
+			messages = append(messages, recordBatchMessages...)
+		default:
+			return nil, fmt.Errorf("unknown records type: %v", records.recordsType)
+		}
 	}
 
-	if block.Records.recordsType == legacyRecords {
-		return child.parseMessages(block.Records.msgSet)
-	}
-	return child.parseRecords(block.Records.recordBatch)
+	return messages, nil
 }
 
 // brokerConsumer

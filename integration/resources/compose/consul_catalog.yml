@@ -11,9 +11,9 @@ consul:
     - "8301/udp"
     - "8302"
     - "8302/udp"
-nginx1:
-  image: nginx:alpine
-nginx2:
-  image: nginx:alpine
-nginx3:
-  image: nginx:alpine
+whoami1:
+  image: emilevauge/whoami
+whoami2:
+  image: emilevauge/whoami
+whoami3:
+  image: emilevauge/whoami

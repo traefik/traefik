@@ -1,13 +1,13 @@
-# Eureka Backend
+# Eureka Provider
 
-Træfik can be configured to use Eureka as a backend configuration.
+Træfik can be configured to use Eureka as a provider.
 
 ```toml
 ################################################################
-# Eureka configuration backend
+# Eureka Provider
 ################################################################
 
-# Enable Eureka configuration backend.
+# Enable Eureka Provider.
 [eureka]
 
 # Eureka server endpoint.
@@ -21,7 +21,7 @@ endpoint = "http://my.eureka.server/eureka"
 # Optional
 # Default: 30s
 #
-delay = "1m"
+refreshSeconds = "1m"
 
 # Override default configuration template.
 # For advanced users :)

@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"sync"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/vulcand/oxy/utils"
 )
 
@@ -94,7 +94,7 @@ func (r *RoundRobin) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		cookieURL, present, err := r.stickySession.GetBackend(&newReq, r.Servers())
 
 		if err != nil {
-			log.Infof("vulcand/oxy/roundrobin/rr: error using server from cookie: %v", err)
+			log.Warnf("vulcand/oxy/roundrobin/rr: error using server from cookie: %v", err)
 		}
 
 		if present {
@@ -185,43 +185,43 @@ func (r *RoundRobin) RemoveServer(u *url.URL) error {
 	return nil
 }
 
-func (rr *RoundRobin) Servers() []*url.URL {
-	rr.mutex.Lock()
-	defer rr.mutex.Unlock()
+func (r *RoundRobin) Servers() []*url.URL {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
 
-	out := make([]*url.URL, len(rr.servers))
-	for i, srv := range rr.servers {
+	out := make([]*url.URL, len(r.servers))
+	for i, srv := range r.servers {
 		out[i] = srv.url
 	}
 	return out
 }
 
-func (rr *RoundRobin) ServerWeight(u *url.URL) (int, bool) {
-	rr.mutex.Lock()
-	defer rr.mutex.Unlock()
+func (r *RoundRobin) ServerWeight(u *url.URL) (int, bool) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
 
-	if s, _ := rr.findServerByURL(u); s != nil {
+	if s, _ := r.findServerByURL(u); s != nil {
 		return s.weight, true
 	}
 	return -1, false
 }
 
 // In case if server is already present in the load balancer, returns error
-func (rr *RoundRobin) UpsertServer(u *url.URL, options ...ServerOption) error {
-	rr.mutex.Lock()
-	defer rr.mutex.Unlock()
+func (r *RoundRobin) UpsertServer(u *url.URL, options ...ServerOption) error {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
 
 	if u == nil {
 		return fmt.Errorf("server URL can't be nil")
 	}
 
-	if s, _ := rr.findServerByURL(u); s != nil {
+	if s, _ := r.findServerByURL(u); s != nil {
 		for _, o := range options {
 			if err := o(s); err != nil {
 				return err
 			}
 		}
-		rr.resetState()
+		r.resetState()
 		return nil
 	}
 
@@ -236,8 +236,8 @@ func (rr *RoundRobin) UpsertServer(u *url.URL, options ...ServerOption) error {
 		srv.weight = defaultWeight
 	}
 
-	rr.servers = append(rr.servers, srv)
-	rr.resetState()
+	r.servers = append(r.servers, srv)
+	r.resetState()
 	return nil
 }
 
@@ -262,9 +262,9 @@ func (r *RoundRobin) findServerByURL(u *url.URL) (*server, int) {
 	return nil, -1
 }
 
-func (rr *RoundRobin) maxWeight() int {
+func (r *RoundRobin) maxWeight() int {
 	max := -1
-	for _, s := range rr.servers {
+	for _, s := range r.servers {
 		if s.weight > max {
 			max = s.weight
 		}
@@ -272,9 +272,9 @@ func (rr *RoundRobin) maxWeight() int {
 	return max
 }
 
-func (rr *RoundRobin) weightGcd() int {
+func (r *RoundRobin) weightGcd() int {
 	divisor := -1
-	for _, s := range rr.servers {
+	for _, s := range r.servers {
 		if divisor == -1 {
 			divisor = s.weight
 		} else {
@@ -304,7 +304,15 @@ type server struct {
 	weight int
 }
 
-const defaultWeight = 1
+var defaultWeight = 1
+
+func SetDefaultWeight(weight int) error {
+	if weight < 0 {
+		return fmt.Errorf("default weight should be >= 0")
+	}
+	defaultWeight = weight
+	return nil
+}
 
 func sameURL(a, b *url.URL) bool {
 	return a.Path == b.Path && a.Host == b.Host && a.Scheme == b.Scheme

@@ -19,7 +19,7 @@ func (p *Project) ensureImageExists(ref string, force bool) error {
 	if !force {
 		// Check if ref is already there
 		_, _, err := p.Client.ImageInspectWithRaw(context.Background(), ref)
-		if err != nil && !client.IsErrImageNotFound(err) {
+		if err != nil && !client.IsErrNotFound(err) {
 			return err
 		}
 		if err == nil {

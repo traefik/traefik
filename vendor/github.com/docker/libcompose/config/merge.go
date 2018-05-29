@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"strings"
 
+	"reflect"
+
 	"github.com/docker/docker/pkg/urlutil"
 	"github.com/docker/libcompose/utils"
 	composeYaml "github.com/docker/libcompose/yaml"
 	"gopkg.in/yaml.v2"
-	"reflect"
 )
 
 var (
@@ -228,8 +229,6 @@ func readEnvFile(resourceLookup ResourceLookup, inFile string, serviceData RawSe
 	}
 
 	serviceData["environment"] = vars
-
-	delete(serviceData, "env_file")
 
 	return serviceData, nil
 }

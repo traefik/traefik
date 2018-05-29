@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/containous/traefik/cmd/traefik/anonymize"
+	"github.com/containous/traefik/anonymize"
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/version"

@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/Sirupsen/logrus"
-	request_errors "github.com/edeckers/auroradnsclient/requests/errors"
-	"github.com/edeckers/auroradnsclient/tokens"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"time"
+
+	request_errors "github.com/edeckers/auroradnsclient/requests/errors"
+	"github.com/edeckers/auroradnsclient/tokens"
+	"github.com/sirupsen/logrus"
 )
 
 // AuroraRequestor performs actual requests to API

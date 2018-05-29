@@ -88,7 +88,7 @@ type GzipResponseWriterWithCloseNotify struct {
 	*GzipResponseWriter
 }
 
-func (w *GzipResponseWriterWithCloseNotify) CloseNotify() <-chan bool {
+func (w GzipResponseWriterWithCloseNotify) CloseNotify() <-chan bool {
 	return w.ResponseWriter.(http.CloseNotifier).CloseNotify()
 }
 

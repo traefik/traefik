@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/abronan/valkeyrie"
+	"github.com/abronan/valkeyrie/store"
+	"github.com/abronan/valkeyrie/store/etcd/v3"
 	"github.com/containous/traefik/integration/try"
-	"github.com/docker/libkv"
-	"github.com/docker/libkv/store"
-	"github.com/docker/libkv/store/etcd/v3"
 	"github.com/go-check/check"
 
 	checker "github.com/vdemeester/shakers"
@@ -19,14 +19,14 @@ import (
 
 const (
 	// Services IP addresses fixed in the configuration
-	ipEtcd     string = "172.18.0.2"
-	ipWhoami01 string = "172.18.0.3"
-	ipWhoami02 string = "172.18.0.4"
-	ipWhoami03 string = "172.18.0.5"
-	ipWhoami04 string = "172.18.0.6"
+	ipEtcd     = "172.18.0.2"
+	ipWhoami01 = "172.18.0.3"
+	ipWhoami02 = "172.18.0.4"
+	ipWhoami03 = "172.18.0.5"
+	ipWhoami04 = "172.18.0.6"
 
-	traefikEtcdURL    string = "http://127.0.0.1:8000/"
-	traefikWebEtcdURL string = "http://127.0.0.1:8081/"
+	traefikEtcdURL    = "http://127.0.0.1:8000/"
+	traefikWebEtcdURL = "http://127.0.0.1:8081/"
 )
 
 // Etcd test suites (using libcompose)
@@ -41,7 +41,7 @@ func (s *Etcd3Suite) SetUpTest(c *check.C) {
 
 	etcdv3.Register()
 	url := ipEtcd + ":2379"
-	kv, err := libkv.NewStore(
+	kv, err := valkeyrie.NewStore(
 		store.ETCDV3,
 		[]string{url},
 		&store.Config{
@@ -289,7 +289,7 @@ func (s *Etcd3Suite) TestGlobalConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *Etcd3Suite) TestCertificatesContentstWithSNIConfigHandshake(c *check.C) {
+func (s *Etcd3Suite) TestCertificatesContentWithSNIConfigHandshake(c *check.C) {
 	// start traefik
 	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/simple_web.toml"),

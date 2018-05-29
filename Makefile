@@ -73,7 +73,7 @@ test-integration: build ## run the integration tests
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate binary test-integration
 	TEST_HOST=1 ./script/make.sh test-integration
 
-validate: build  ## validate gofmt, golint and go vet
+validate: build  ## validate code, vendor and autogen
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh validate-gofmt validate-govet validate-golint validate-misspell validate-vendor validate-autogen
 
 build: dist
@@ -127,7 +127,11 @@ fmt:
 pull-images:
 	grep --no-filename -E '^\s+image:' ./integration/resources/compose/*.yml | awk '{print $$2}' | sort | uniq  | xargs -P 6 -n 1 docker pull
 
-prune-dep:
+dep-ensure:
+	dep ensure -v
+	./script/prune-dep.sh
+
+dep-prune:
 	./script/prune-dep.sh
 
 help: ## this help

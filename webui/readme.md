@@ -19,7 +19,7 @@ make generate-webui  # Generate static contents in `traefik/static/` folder.
 
 ## How to build (only for frontends developer)
 
-- prerequisite: [Node 4+](https://nodejs.org) [yarn](https://yarnpkg.com/)
+- prerequisite: [Node 6+](https://nodejs.org) [yarn](https://yarnpkg.com/)
 
   Note: In case of conflict with the Apache Hadoop Yarn Command Line Interface, use the `yarnpkg`
   alias.
@@ -51,29 +51,15 @@ make generate-webui  # Generate static contents in `traefik/static/` folder.
 
 - Go to the directory `webui`
 - Edit files in `webui/src`
-
 - Run in development mode :
-  - `yarn run serve`
-
-- Træfik API connections are defined in:
-  - `webui/src/app/core/health.resource.js`
-  - `webui/src/app/core/providers.resource.js`
-
-- The pages contents are in the directory `webui/src/app/sections`.
-
+  - `yarn start`
 
 ## Libraries
 
 - [Node](https://nodejs.org)
 - [Yarn](https://yarnpkg.com/)
-- [Generator FountainJS](https://github.com/FountainJS/generator-fountain-webapp)
 - [Webpack](https://github.com/webpack/webpack)
-- [AngularJS](https://docs.angularjs.org/api)
-- [UI Router](https://github.com/angular-ui/ui-router)
-  - [UI Router - Documentation](https://github.com/angular-ui/ui-router/wiki)
-- [Bootstrap](https://getbootstrap.com)
-- [Angular Bootstrap](https://angular-ui.github.io/bootstrap)
+- [Angular](https://angular.io)
+- [Bulma](https://bulma.io)
 - [D3](https://d3js.org)
-  - [D3 - Documentation](https://github.com/mbostock/d3/wiki)
-- [NVD3](http://nvd3.org)
-- [Angular nvD3](https://krispo.github.io/angular-nvd3)
+- [D3 - Documentation](https://github.com/mbostock/d3/wiki)

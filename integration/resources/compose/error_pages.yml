@@ -1,4 +1,4 @@
 nginx1:
-  image: nginx:alpine
+  image: nginx:1.13.8-alpine
 nginx2:
-  image: nginx:alpine
+  image: nginx:1.13.8-alpine

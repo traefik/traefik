@@ -18,8 +18,10 @@ logLevel = "DEBUG"
     interval = "1s"
     [backends.backend1.servers.server1]
     url = "http://{{.Server1}}:80"
+    weight = 1
     [backends.backend1.servers.server2]
     url = "http://{{.Server2}}:80"
+    weight = 1
 
 [frontends]
   [frontends.frontend1]

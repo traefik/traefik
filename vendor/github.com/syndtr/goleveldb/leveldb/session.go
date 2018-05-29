@@ -42,7 +42,7 @@ type session struct {
 	stTempFileNum    int64
 	stSeqNum         uint64 // last mem compacted seq; need external synchronization
 
-	stor     storage.Storage
+	stor     *iStorage
 	storLock storage.Locker
 	o        *cachedOptions
 	icmp     *iComparer
@@ -68,7 +68,7 @@ func newSession(stor storage.Storage, o *opt.Options) (s *session, err error) {
 		return
 	}
 	s = &session{
-		stor:     stor,
+		stor:     newIStorage(stor),
 		storLock: storLock,
 		fileRef:  make(map[int64]int),
 	}

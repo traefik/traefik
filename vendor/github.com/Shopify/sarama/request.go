@@ -114,6 +114,30 @@ func allocateBody(key, version int16) protocolBody {
 		return &SaslHandshakeRequest{}
 	case 18:
 		return &ApiVersionsRequest{}
+	case 19:
+		return &CreateTopicsRequest{}
+	case 20:
+		return &DeleteTopicsRequest{}
+	case 22:
+		return &InitProducerIDRequest{}
+	case 24:
+		return &AddPartitionsToTxnRequest{}
+	case 25:
+		return &AddOffsetsToTxnRequest{}
+	case 26:
+		return &EndTxnRequest{}
+	case 28:
+		return &TxnOffsetCommitRequest{}
+	case 29:
+		return &DescribeAclsRequest{}
+	case 30:
+		return &CreateAclsRequest{}
+	case 31:
+		return &DeleteAclsRequest{}
+	case 32:
+		return &DescribeConfigsRequest{}
+	case 33:
+		return &AlterConfigsRequest{}
 	case 37:
 		return &CreatePartitionsRequest{}
 	}

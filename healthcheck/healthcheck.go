@@ -12,6 +12,7 @@ import (
 
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
+	"github.com/go-kit/kit/metrics"
 	"github.com/vulcand/oxy/roundrobin"
 )
 
@@ -19,9 +20,9 @@ var singleton *HealthCheck
 var once sync.Once
 
 // GetHealthCheck returns the health check which is guaranteed to be a singleton.
-func GetHealthCheck() *HealthCheck {
+func GetHealthCheck(metrics metricsRegistry) *HealthCheck {
 	once.Do(func() {
-		singleton = newHealthCheck()
+		singleton = newHealthCheck(metrics)
 	})
 	return singleton
 }
@@ -42,14 +43,15 @@ func (opt Options) String() string {
 // BackendHealthCheck HealthCheck configuration for a backend
 type BackendHealthCheck struct {
 	Options
+	name           string
 	disabledURLs   []*url.URL
 	requestTimeout time.Duration
 }
 
 //HealthCheck struct
 type HealthCheck struct {
-	mutex    sync.Mutex
 	Backends map[string]*BackendHealthCheck
+	metrics  metricsRegistry
 	cancel   context.CancelFunc
 }
 
@@ -60,77 +62,90 @@ type LoadBalancer interface {
 	Servers() []*url.URL
 }
 
-func newHealthCheck() *HealthCheck {
+func newHealthCheck(metrics metricsRegistry) *HealthCheck {
 	return &HealthCheck{
 		Backends: make(map[string]*BackendHealthCheck),
+		metrics:  metrics,
 	}
 }
 
+// metricsRegistry is a local interface in the healthcheck package, exposing only the required metrics
+// necessary for the healthcheck package. This makes it easier for the tests.
+type metricsRegistry interface {
+	BackendServerUpGauge() metrics.Gauge
+}
+
 // NewBackendHealthCheck Instantiate a new BackendHealthCheck
-func NewBackendHealthCheck(options Options) *BackendHealthCheck {
+func NewBackendHealthCheck(options Options, backendName string) *BackendHealthCheck {
 	return &BackendHealthCheck{
 		Options:        options,
+		name:           backendName,
 		requestTimeout: 5 * time.Second,
 	}
 }
 
 //SetBackendsConfiguration set backends configuration
 func (hc *HealthCheck) SetBackendsConfiguration(parentCtx context.Context, backends map[string]*BackendHealthCheck) {
-	hc.mutex.Lock()
 	hc.Backends = backends
 	if hc.cancel != nil {
 		hc.cancel()
 	}
 	ctx, cancel := context.WithCancel(parentCtx)
 	hc.cancel = cancel
-	hc.mutex.Unlock()
 
-	for backendID, backend := range backends {
-		currentBackendID := backendID
+	for _, backend := range backends {
 		currentBackend := backend
 		safe.Go(func() {
-			hc.execute(ctx, currentBackendID, currentBackend)
+			hc.execute(ctx, currentBackend)
 		})
 	}
 }
 
-func (hc *HealthCheck) execute(ctx context.Context, backendID string, backend *BackendHealthCheck) {
-	log.Debugf("Initial healthcheck for currentBackend %s ", backendID)
-	checkBackend(backend)
+func (hc *HealthCheck) execute(ctx context.Context, backend *BackendHealthCheck) {
+	log.Debugf("Initial health check for backend: %q", backend.name)
+	hc.checkBackend(backend)
 	ticker := time.NewTicker(backend.Interval)
 	defer ticker.Stop()
 	for {
 		select {
 		case <-ctx.Done():
-			log.Debug("Stopping all current Healthcheck goroutines")
+			log.Debug("Stopping current health check goroutines of backend: %s", backend.name)
 			return
 		case <-ticker.C:
-			log.Debugf("Refreshing healthcheck for currentBackend %s ", backendID)
-			checkBackend(backend)
+			log.Debugf("Refreshing health check for backend: %s", backend.name)
+			hc.checkBackend(backend)
 		}
 	}
 }
 
-func checkBackend(currentBackend *BackendHealthCheck) {
-	enabledURLs := currentBackend.LB.Servers()
+func (hc *HealthCheck) checkBackend(backend *BackendHealthCheck) {
+	enabledURLs := backend.LB.Servers()
 	var newDisabledURLs []*url.URL
-	for _, url := range currentBackend.disabledURLs {
-		if checkHealth(url, currentBackend) {
-			log.Debugf("HealthCheck is up [%s]: Upsert in server list", url.String())
-			currentBackend.LB.UpsertServer(url, roundrobin.Weight(1))
+	for _, url := range backend.disabledURLs {
+		serverUpMetricValue := float64(0)
+		if err := checkHealth(url, backend); err == nil {
+			log.Warnf("Health check up: Returning to server list. Backend: %q URL: %q", backend.name, url.String())
+			backend.LB.UpsertServer(url, roundrobin.Weight(1))
+			serverUpMetricValue = 1
 		} else {
-			log.Warnf("HealthCheck is still failing [%s]", url.String())
+			log.Warnf("Health check still failing. Backend: %q URL: %q Reason: %s", backend.name, url.String(), err)
 			newDisabledURLs = append(newDisabledURLs, url)
 		}
+		labelValues := []string{"backend", backend.name, "url", url.String()}
+		hc.metrics.BackendServerUpGauge().With(labelValues...).Set(serverUpMetricValue)
 	}
-	currentBackend.disabledURLs = newDisabledURLs
+	backend.disabledURLs = newDisabledURLs
 
 	for _, url := range enabledURLs {
-		if !checkHealth(url, currentBackend) {
-			log.Warnf("HealthCheck has failed [%s]: Remove from server list", url.String())
-			currentBackend.LB.RemoveServer(url)
-			currentBackend.disabledURLs = append(currentBackend.disabledURLs, url)
+		serverUpMetricValue := float64(1)
+		if err := checkHealth(url, backend); err != nil {
+			log.Warnf("Health check failed: Remove from server list. Backend: %q URL: %q Reason: %s", backend.name, url.String(), err)
+			backend.LB.RemoveServer(url)
+			backend.disabledURLs = append(backend.disabledURLs, url)
+			serverUpMetricValue = 0
 		}
+		labelValues := []string{"backend", backend.name, "url", url.String()}
+		hc.metrics.BackendServerUpGauge().With(labelValues...).Set(serverUpMetricValue)
 	}
 }
 
@@ -148,21 +163,28 @@ func (backend *BackendHealthCheck) newRequest(serverURL *url.URL) (*http.Request
 	return http.NewRequest(http.MethodGet, u.String(), nil)
 }
 
-func checkHealth(serverURL *url.URL, backend *BackendHealthCheck) bool {
+// checkHealth returns a nil error in case it was successful and otherwise
+// a non-nil error with a meaningful description why the health check failed.
+func checkHealth(serverURL *url.URL, backend *BackendHealthCheck) error {
 	client := http.Client{
 		Timeout:   backend.requestTimeout,
 		Transport: backend.Options.Transport,
 	}
 	req, err := backend.newRequest(serverURL)
 	if err != nil {
-		log.Errorf("Failed to create HTTP request [%s] for healthcheck: %s", serverURL, err)
-		return false
+		return fmt.Errorf("failed to create HTTP request: %s", err)
 	}
 
 	resp, err := client.Do(req)
-
 	if err == nil {
 		defer resp.Body.Close()
 	}
-	return err == nil && resp.StatusCode == http.StatusOK
+
+	switch {
+	case err != nil:
+		return fmt.Errorf("HTTP request failed: %s", err)
+	case resp.StatusCode != http.StatusOK:
+		return fmt.Errorf("received non-200 status code: %v", resp.StatusCode)
+	}
+	return nil
 }

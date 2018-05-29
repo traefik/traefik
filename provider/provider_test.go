@@ -23,27 +23,25 @@ func (p *myProvider) Foo() string {
 
 func TestConfigurationErrors(t *testing.T) {
 	templateErrorFile, err := ioutil.TempFile("", "provider-configuration-error")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+
 	defer os.RemoveAll(templateErrorFile.Name())
+
 	data := []byte("Not a valid template {{ Bar }}")
+
 	err = ioutil.WriteFile(templateErrorFile.Name(), data, 0700)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	templateInvalidTOMLFile, err := ioutil.TempFile("", "provider-configuration-error")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+
 	defer os.RemoveAll(templateInvalidTOMLFile.Name())
+
 	data = []byte(`Hello {{ .Name }}
 {{ Foo }}`)
+
 	err = ioutil.WriteFile(templateInvalidTOMLFile.Name(), data, 0700)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	invalids := []struct {
 		provider        *myProvider
@@ -54,10 +52,9 @@ func TestConfigurationErrors(t *testing.T) {
 	}{
 		{
 			provider: &myProvider{
-				BaseProvider{
+				BaseProvider: BaseProvider{
 					Filename: "/non/existent/template.tmpl",
 				},
-				nil,
 			},
 			expectedError: "open /non/existent/template.tmpl: no such file or directory",
 		},
@@ -68,19 +65,17 @@ func TestConfigurationErrors(t *testing.T) {
 		},
 		{
 			provider: &myProvider{
-				BaseProvider{
+				BaseProvider: BaseProvider{
 					Filename: templateErrorFile.Name(),
 				},
-				nil,
 			},
 			expectedError: `function "Bar" not defined`,
 		},
 		{
 			provider: &myProvider{
-				BaseProvider{
+				BaseProvider: BaseProvider{
 					Filename: templateInvalidTOMLFile.Name(),
 				},
-				nil,
 			},
 			expectedError: "Near line 1 (last key parsed 'Hello'): expected key separator '=', but got '<' instead",
 			funcMap: template.FuncMap{
@@ -97,18 +92,17 @@ func TestConfigurationErrors(t *testing.T) {
 		if err == nil || !strings.Contains(err.Error(), invalid.expectedError) {
 			t.Fatalf("should have generate an error with %q, got %v", invalid.expectedError, err)
 		}
-		if configuration != nil {
-			t.Fatalf("shouldn't have return a configuration object : %v", configuration)
-		}
+
+		assert.Nil(t, configuration)
 	}
 }
 
 func TestGetConfiguration(t *testing.T) {
 	templateFile, err := ioutil.TempFile("", "provider-configuration")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+
 	defer os.RemoveAll(templateFile.Name())
+
 	data := []byte(`[backends]
   [backends.backend1]
     [backends.backend1.circuitbreaker]
@@ -127,120 +121,103 @@ func TestGetConfiguration(t *testing.T) {
     [frontends.frontend11.routes.test_2]
     rule = "Path"
     value = "/test"`)
+
 	err = ioutil.WriteFile(templateFile.Name(), data, 0700)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	provider := &myProvider{
-		BaseProvider{
+		BaseProvider: BaseProvider{
 			Filename: templateFile.Name(),
 		},
-		nil,
 	}
+
 	configuration, err := provider.GetConfiguration(templateFile.Name(), nil, nil)
-	if err != nil {
-		t.Fatalf("Shouldn't have error out, got %v", err)
-	}
-	if configuration == nil {
-		t.Fatal("Configuration should not be nil, but was")
-	}
+	require.NoError(t, err)
+
+	assert.NotNil(t, configuration)
 }
 
 func TestGetConfigurationReturnsCorrectMaxConnConfiguration(t *testing.T) {
 	templateFile, err := ioutil.TempFile("", "provider-configuration")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+
 	defer os.RemoveAll(templateFile.Name())
+
 	data := []byte(`[backends]
   [backends.backend1]
     [backends.backend1.maxconn]
       amount = 10
       extractorFunc = "request.host"`)
+
 	err = ioutil.WriteFile(templateFile.Name(), data, 0700)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	provider := &myProvider{
-		BaseProvider{
+		BaseProvider: BaseProvider{
 			Filename: templateFile.Name(),
 		},
-		nil,
 	}
+
 	configuration, err := provider.GetConfiguration(templateFile.Name(), nil, nil)
-	if err != nil {
-		t.Fatalf("Shouldn't have error out, got %v", err)
-	}
-	if configuration == nil {
-		t.Fatal("Configuration should not be nil, but was")
-	}
+	require.NoError(t, err)
 
-	if configuration.Backends["backend1"].MaxConn.Amount != 10 {
-		t.Fatal("Configuration did not parse MaxConn.Amount properly")
-	}
-
-	if configuration.Backends["backend1"].MaxConn.ExtractorFunc != "request.host" {
-		t.Fatal("Configuration did not parse MaxConn.ExtractorFunc properly")
-	}
+	require.NotNil(t, configuration)
+	require.Contains(t, configuration.Backends, "backend1")
+	assert.EqualValues(t, 10, configuration.Backends["backend1"].MaxConn.Amount)
+	assert.Equal(t, "request.host", configuration.Backends["backend1"].MaxConn.ExtractorFunc)
 }
 
 func TestNilClientTLS(t *testing.T) {
-	provider := &myProvider{
-		BaseProvider{
+	p := &myProvider{
+		BaseProvider: BaseProvider{
 			Filename: "",
 		},
-		nil,
 	}
-	_, err := provider.TLS.CreateTLSConfig()
-	if err != nil {
-		t.Fatal("CreateTLSConfig should assume that consumer does not want a TLS configuration if input is nil")
-	}
+
+	_, err := p.TLS.CreateTLSConfig()
+	require.NoError(t, err, "CreateTLSConfig should assume that consumer does not want a TLS configuration if input is nil")
 }
 
 func TestInsecureSkipVerifyClientTLS(t *testing.T) {
-	provider := &myProvider{
-		BaseProvider{
+	p := &myProvider{
+		BaseProvider: BaseProvider{
 			Filename: "",
 		},
-		&types.ClientTLS{
+		TLS: &types.ClientTLS{
 			InsecureSkipVerify: true,
 		},
 	}
-	config, err := provider.TLS.CreateTLSConfig()
-	if err != nil {
-		t.Fatal("CreateTLSConfig should assume that consumer does not want a TLS configuration if input is nil")
-	}
-	if !config.InsecureSkipVerify {
-		t.Fatal("CreateTLSConfig should support setting only InsecureSkipVerify property")
-	}
+
+	config, err := p.TLS.CreateTLSConfig()
+	require.NoError(t, err, "CreateTLSConfig should assume that consumer does not want a TLS configuration if input is nil")
+
+	assert.True(t, config.InsecureSkipVerify, "CreateTLSConfig should support setting only InsecureSkipVerify property")
 }
 
 func TestInsecureSkipVerifyFalseClientTLS(t *testing.T) {
-	provider := &myProvider{
-		BaseProvider{
+	p := &myProvider{
+		BaseProvider: BaseProvider{
 			Filename: "",
 		},
-		&types.ClientTLS{
+		TLS: &types.ClientTLS{
 			InsecureSkipVerify: false,
 		},
 	}
-	_, err := provider.TLS.CreateTLSConfig()
-	if err == nil {
-		t.Fatal("CreateTLSConfig should error if consumer does not set a TLS cert or key configuration and not chooses InsecureSkipVerify to be true")
-	}
-	t.Log(err)
+
+	_, err := p.TLS.CreateTLSConfig()
+	assert.Errorf(t, err, "CreateTLSConfig should error if consumer does not set a TLS cert or key configuration and not chooses InsecureSkipVerify to be true")
 }
 
 func TestMatchingConstraints(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
+		desc        string
 		constraints types.Constraints
 		tags        []string
 		expected    bool
 	}{
 		// simple test: must match
 		{
+			desc: "tag==us-east-1 with us-east-1",
 			constraints: types.Constraints{
 				{
 					Key:       "tag",
@@ -255,6 +232,7 @@ func TestMatchingConstraints(t *testing.T) {
 		},
 		// simple test: must match but does not match
 		{
+			desc: "tag==us-east-1 with us-east-2",
 			constraints: types.Constraints{
 				{
 					Key:       "tag",
@@ -269,6 +247,7 @@ func TestMatchingConstraints(t *testing.T) {
 		},
 		// simple test: must not match
 		{
+			desc: "tag!=us-east-1 with us-east-1",
 			constraints: types.Constraints{
 				{
 					Key:       "tag",
@@ -283,6 +262,7 @@ func TestMatchingConstraints(t *testing.T) {
 		},
 		// complex test: globbing
 		{
+			desc: "tag!=us-east-* with us-east-1",
 			constraints: types.Constraints{
 				{
 					Key:       "tag",
@@ -297,6 +277,7 @@ func TestMatchingConstraints(t *testing.T) {
 		},
 		// complex test: multiple constraints
 		{
+			desc: "tag==us-east-* & tag!=api with us-east-1 & api",
 			constraints: types.Constraints{
 				{
 					Key:       "tag",
@@ -317,26 +298,23 @@ func TestMatchingConstraints(t *testing.T) {
 		},
 	}
 
-	for i, c := range cases {
-		provider := myProvider{
-			BaseProvider{
-				Constraints: c.constraints,
+	for _, test := range testCases {
+		p := myProvider{
+			BaseProvider: BaseProvider{
+				Constraints: test.constraints,
 			},
-			nil,
 		}
-		actual, _ := provider.MatchConstraints(c.tags)
-		if actual != c.expected {
-			t.Fatalf("test #%v: expected %t, got %t, for %#v", i, c.expected, actual, c.constraints)
-		}
+
+		actual, _ := p.MatchConstraints(test.tags)
+		assert.Equal(t, test.expected, actual)
 	}
 }
 
 func TestDefaultFuncMap(t *testing.T) {
 	templateFile, err := ioutil.TempFile("", "provider-configuration")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	defer os.RemoveAll(templateFile.Name())
+
 	data := []byte(`
   [backends]
   [backends.{{ "backend-1" | replace  "-" "" }}]
@@ -360,38 +338,30 @@ func TestDefaultFuncMap(t *testing.T) {
     [frontends.frontend-1.routes.test_2]
     rule = "Path"
     value = "/test"`)
+
 	err = ioutil.WriteFile(templateFile.Name(), data, 0700)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	provider := &myProvider{
-		BaseProvider{
+		BaseProvider: BaseProvider{
 			Filename: templateFile.Name(),
 		},
-		nil,
 	}
+
 	configuration, err := provider.GetConfiguration(templateFile.Name(), nil, nil)
-	if err != nil {
-		t.Fatalf("Shouldn't have error out, got %v", err)
-	}
-	if configuration == nil {
-		t.Fatal("Configuration should not be nil, but was")
-	}
-	if _, ok := configuration.Backends["backend1"]; !ok {
-		t.Fatal("backend1 should exists, but it not")
-	}
-	if _, ok := configuration.Frontends["frontend-1"]; !ok {
-		t.Fatal("Frontend frontend-1 should exists, but it not")
-	}
+	require.NoError(t, err)
+
+	require.NotNil(t, configuration)
+	assert.Contains(t, configuration.Backends, "backend1")
+	assert.Contains(t, configuration.Frontends, "frontend-1")
 }
 
 func TestSprigFunctions(t *testing.T) {
 	templateFile, err := ioutil.TempFile("", "provider-configuration")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+
 	defer os.RemoveAll(templateFile.Name())
+
 	data := []byte(`
   {{$backend_name := trimAll "-" uuidv4}}
   [backends]
@@ -408,30 +378,22 @@ func TestSprigFunctions(t *testing.T) {
     [frontends.frontend-1.routes.test_2]
     rule = "Path"
     value = "/test"`)
+
 	err = ioutil.WriteFile(templateFile.Name(), data, 0700)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	provider := &myProvider{
-		BaseProvider{
+		BaseProvider: BaseProvider{
 			Filename: templateFile.Name(),
 		},
-		nil,
 	}
+
 	configuration, err := provider.GetConfiguration(templateFile.Name(), nil, nil)
-	if err != nil {
-		t.Fatalf("Shouldn't have error out, got %v", err)
-	}
-	if configuration == nil {
-		t.Fatal("Configuration should not be nil, but was")
-	}
-	if len(configuration.Backends) != 1 {
-		t.Fatal("one backend should be defined, but it's not")
-	}
-	if _, ok := configuration.Frontends["frontend-1"]; !ok {
-		t.Fatal("Frontend frontend-1 should exists, but it not")
-	}
+	require.NoError(t, err)
+
+	require.NotNil(t, configuration)
+	assert.Len(t, configuration.Backends, 1)
+	assert.Contains(t, configuration.Frontends, "frontend-1")
 }
 
 func TestBaseProvider_GetConfiguration(t *testing.T) {
@@ -460,6 +422,45 @@ func TestBaseProvider_GetConfiguration(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, test.expectedContent, content)
+		})
+	}
+}
+
+func TestNormalize(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		name     string
+		expected string
+	}{
+		{
+			desc:     "without special chars",
+			name:     "foobar",
+			expected: "foobar",
+		},
+		{
+			desc:     "with special chars",
+			name:     "foo.foo.foo;foo:foo!foo/foo\\foo)foo_123-ç_àéè",
+			expected: "foo-foo-foo-foo-foo-foo-foo-foo-foo-123-ç-àéè",
+		},
+		{
+			desc:     "starts with special chars",
+			name:     ".foo.foo",
+			expected: "foo-foo",
+		},
+		{
+			desc:     "ends with special chars",
+			name:     "foo.foo.",
+			expected: "foo-foo",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := Normalize(test.name)
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }

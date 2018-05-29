@@ -8,6 +8,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/containous/traefik/middlewares/tracing"
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
@@ -70,14 +71,14 @@ func TestBasicAuthFail(t *testing.T) {
 		Basic: &types.Basic{
 			Users: []string{"test"},
 		},
-	})
+	}, &tracing.Tracing{})
 	assert.Contains(t, err.Error(), "Error parsing Authenticator user", "should contains")
 
 	authMiddleware, err := NewAuthenticator(&types.Auth{
 		Basic: &types.Basic{
 			Users: []string{"test:test"},
 		},
-	})
+	}, &tracing.Tracing{})
 	assert.NoError(t, err, "there should be no error")
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -101,7 +102,7 @@ func TestBasicAuthSuccess(t *testing.T) {
 		Basic: &types.Basic{
 			Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
 		},
-	})
+	}, &tracing.Tracing{})
 	assert.NoError(t, err, "there should be no error")
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -129,14 +130,14 @@ func TestDigestAuthFail(t *testing.T) {
 		Digest: &types.Digest{
 			Users: []string{"test"},
 		},
-	})
+	}, &tracing.Tracing{})
 	assert.Contains(t, err.Error(), "Error parsing Authenticator user", "should contains")
 
 	authMiddleware, err := NewAuthenticator(&types.Auth{
 		Digest: &types.Digest{
 			Users: []string{"test:traefik:test"},
 		},
-	})
+	}, &tracing.Tracing{})
 	assert.NoError(t, err, "there should be no error")
 	assert.NotNil(t, authMiddleware, "this should not be nil")
 
@@ -162,7 +163,7 @@ func TestBasicAuthUserHeader(t *testing.T) {
 			Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
 		},
 		HeaderField: "X-Webauth-User",
-	})
+	}, &tracing.Tracing{})
 	assert.NoError(t, err, "there should be no error")
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

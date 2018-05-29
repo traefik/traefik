@@ -89,7 +89,11 @@ func (db *DB) flush(n int) (mdb *memDB, mdbFree int, err error) {
 			return false
 		case tLen >= pauseTrigger:
 			delayed = true
+			// Set the write paused flag explicitly.
+			atomic.StoreInt32(&db.inWritePaused, 1)
 			err = db.compTriggerWait(db.tcompCmdC)
+			// Unset the write paused flag.
+			atomic.StoreInt32(&db.inWritePaused, 0)
 			if err != nil {
 				return false
 			}
@@ -146,7 +150,7 @@ func (db *DB) unlockWrite(overflow bool, merged int, err error) {
 	}
 }
 
-// ourBatch if defined should equal with batch.
+// ourBatch is batch that we can modify.
 func (db *DB) writeLocked(batch, ourBatch *Batch, merge, sync bool) error {
 	// Try to flush memdb. This method would also trying to throttle writes
 	// if it is too fast and compaction cannot catch-up.
@@ -213,6 +217,11 @@ func (db *DB) writeLocked(batch, ourBatch *Batch, merge, sync bool) error {
 				break merge
 			}
 		}
+	}
+
+	// Release ourBatch if any.
+	if ourBatch != nil {
+		defer db.batchPool.Put(ourBatch)
 	}
 
 	// Seq number.

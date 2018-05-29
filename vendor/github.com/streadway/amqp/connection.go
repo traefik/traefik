@@ -25,8 +25,10 @@ const (
 	defaultConnectionTimeout = 30 * time.Second
 	defaultProduct           = "https://github.com/streadway/amqp"
 	defaultVersion           = "β"
-	defaultChannelMax        = maxChannelMax
-	defaultLocale            = "en_US"
+	// Safer default that makes channel leaks a lot easier to spot
+	// before they create operational headaches. See https://github.com/rabbitmq/rabbitmq-server/issues/1593.
+	defaultChannelMax = (2 << 10) - 1
+	defaultLocale     = "en_US"
 )
 
 // Config is used in DialConfig and Open to specify the desired tuning

@@ -28,9 +28,6 @@ var (
 	// server.
 	ErrChannelMax = &Error{Code: ChannelError, Reason: "channel id space exhausted"}
 
-	// ErrChannelOpTimeout is returned when an operation performed on a channel doesn't return a response within the hearbeat interval
-	ErrChannelOpTimeout = &Error{Code: ChannelError, Reason: "channel operation timed out"}
-
 	// ErrSASL is returned from Dial when the authentication mechanism could not
 	// be negoated.
 	ErrSASL = &Error{Code: AccessRefused, Reason: "SASL could not negotiate a shared mechanism"}

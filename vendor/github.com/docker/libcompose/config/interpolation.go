@@ -5,11 +5,17 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
+
+var defaultValues = make(map[string]string)
 
 func isNum(c uint8) bool {
 	return c >= '0' && c <= '9'
+}
+
+func validVariableDefault(c uint8, line string, pos int) bool {
+	return (c == ':' && line[pos+1] == '-') || (c == '-')
 }
 
 func validVariableNameChar(c uint8) bool {
@@ -36,6 +42,30 @@ func parseVariable(line string, pos int, mapping func(string) string) (string, i
 	return mapping(buffer.String()), pos, true
 }
 
+func parseDefaultValue(line string, pos int) (string, int, bool) {
+	var buffer bytes.Buffer
+
+	// only skip :, :- and - at the beginning
+	for ; pos < len(line); pos++ {
+		c := line[pos]
+		if c == ':' || c == '-' {
+			continue
+		}
+		break
+	}
+	for ; pos < len(line); pos++ {
+		c := line[pos]
+		if c == '}' {
+			return buffer.String(), pos - 1, true
+		}
+		err := buffer.WriteByte(c)
+		if err != nil {
+			return "", pos, false
+		}
+	}
+	return "", 0, false
+}
+
 func parseVariableWithBraces(line string, pos int, mapping func(string) string) (string, int, bool) {
 	var buffer bytes.Buffer
 
@@ -49,10 +79,13 @@ func parseVariableWithBraces(line string, pos int, mapping func(string) string) 
 			if bufferString == "" {
 				return "", 0, false
 			}
-
 			return mapping(buffer.String()), pos, true
 		case validVariableNameChar(c):
 			buffer.WriteByte(c)
+		case validVariableDefault(c, line, pos):
+			defaultValue := ""
+			defaultValue, pos, _ = parseDefaultValue(line, pos)
+			defaultValues[buffer.String()] = defaultValue
 		default:
 			return "", 0, false
 		}
@@ -143,8 +176,17 @@ func Interpolate(key string, data *interface{}, environmentLookup EnvironmentLoo
 		values := environmentLookup.Lookup(s, nil)
 
 		if len(values) == 0 {
+			if val, ok := defaultValues[s]; ok {
+				return val
+			}
 			logrus.Warnf("The %s variable is not set. Substituting a blank string.", s)
 			return ""
+		}
+
+		if strings.SplitN(values[0], "=", 2)[1] == "" {
+			if val, ok := defaultValues[s]; ok {
+				return val
+			}
 		}
 
 		// Use first result if many are given

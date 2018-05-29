@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/mailgun/timetools"
+	log "github.com/sirupsen/logrus"
 )
 
 // ratioController allows passing portions traffic back to the endpoints,
@@ -34,17 +34,17 @@ func (r *ratioController) String() string {
 }
 
 func (r *ratioController) allowRequest() bool {
-	log.Infof("%v", r)
+	log.Debugf("%v", r)
 	t := r.targetRatio()
 	// This condition answers the question - would we satisfy the target ratio if we allow this request?
 	e := r.computeRatio(r.allowed+1, r.denied)
 	if e < t {
 		r.allowed++
-		log.Infof("%v allowed", r)
+		log.Debugf("%v allowed", r)
 		return true
 	}
 	r.denied++
-	log.Infof("%v denied", r)
+	log.Debugf("%v denied", r)
 	return false
 }
 

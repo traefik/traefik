@@ -1,0 +1,35 @@
+<nav class="navbar is-fixed-top is-transparent" role="navigation" aria-label="main navigation">
+  <div class="container">
+
+    <div class="navbar-brand">
+      <a class="navbar-item" routerLink="/" (click)="burger = false">
+        <img src="./assets/images/traefik.logo.svg" alt="Traefik" class="navbar-logo">
+      </a>
+      <div class="navbar-burger burger" data-target="navbarMain" (click)="burger = !burger" [class.is-active]="burger">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </div>
+    </div>
+
+    <div id="navbarMain" class="navbar-menu" [class.is-active]="burger">
+      <div class="navbar-start">
+        <a class="navbar-item" routerLink="/" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }" (click)="burger = false">
+          Providers
+        </a>
+        <a class="navbar-item" routerLink="/status" routerLinkActive="is-active" (click)="burger = false">
+          Health
+        </a>
+      </div>
+      <div class="navbar-end">
+        <a class="navbar-item" [href]="releaseLink" target="_blank">
+          {{ version }} / {{ codename }}
+        </a>
+        <a class="navbar-item" href="https://docs.traefik.io" target="_blank">
+          Documentation
+        </a>
+      </div>
+    </div>
+
+  </div>
+</nav>

@@ -219,8 +219,30 @@ func (c Client) GetServiceExtension(appType, applicationVersion, serviceTypeName
 	return nil
 }
 
+// GetServiceExtensionMap returns all the extension xml specified
+// in a Service's manifest file into (which must conform to ServiceExtensionLabels)
+// a map[string]string
+func (c Client) GetServiceExtensionMap(service *ServiceItem, app *ApplicationItem, extensionKey string) (map[string]string, error) {
+	extensionData := ServiceExtensionLabels{}
+	err := c.GetServiceExtension(app.TypeName, app.TypeVersion, service.TypeName, extensionKey, &extensionData)
+	if err != nil {
+		return nil, err
+	}
+
+	labels := map[string]string{}
+	if extensionData.Label != nil {
+		for _, label := range extensionData.Label {
+			labels[label.Key] = label.Value
+		}
+	}
+
+	return labels, nil
+}
+
 // GetProperties uses the Property Manager API to retrieve
 // string properties from a name as a dictionary
+// Property name is the path to the properties you would like to list.
+// for example a serviceID
 func (c Client) GetProperties(name string) (bool, map[string]string, error) {
 	nameExists, err := c.nameExists(name)
 	if err != nil {
@@ -264,6 +286,8 @@ func (c Client) GetProperties(name string) (bool, map[string]string, error) {
 
 // GetServiceLabels add labels from service manifest extensions and properties manager
 // expects extension xml in <Label key="key">value</Label>
+//
+// Deprecated: Use GetProperties and GetServiceExtensionMap instead.
 func (c Client) GetServiceLabels(service *ServiceItem, app *ApplicationItem, prefix string) (map[string]string, error) {
 	extensionData := ServiceExtensionLabels{}
 	err := c.GetServiceExtension(app.TypeName, app.TypeVersion, service.TypeName, prefix, &extensionData)

@@ -4,33 +4,34 @@
 package azure
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/arm/dns"
-
-	"strings"
-
+	"github.com/Azure/azure-sdk-for-go/services/dns/mgmt/2017-09-01/dns"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/adal"
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/to"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/acmev2"
 )
 
-// DNSProvider is an implementation of the acme.ChallengeProvider interface
+// DNSProvider is an implementation of the acmev2.ChallengeProvider interface
 type DNSProvider struct {
 	clientId       string
 	clientSecret   string
 	subscriptionId string
 	tenantId       string
 	resourceGroup  string
+
+	context context.Context
 }
 
 // NewDNSProvider returns a DNSProvider instance configured for azure.
 // Credentials must be passed in the environment variables: AZURE_CLIENT_ID,
-// AZURE_CLIENT_SECRET, AZURE_SUBSCRIPTION_ID, AZURE_TENANT_ID
+// AZURE_CLIENT_SECRET, AZURE_SUBSCRIPTION_ID, AZURE_TENANT_ID, AZURE_RESOURCE_GROUP
 func NewDNSProvider() (*DNSProvider, error) {
 	clientId := os.Getenv("AZURE_CLIENT_ID")
 	clientSecret := os.Getenv("AZURE_CLIENT_SECRET")
@@ -53,6 +54,8 @@ func NewDNSProviderCredentials(clientId, clientSecret, subscriptionId, tenantId,
 		subscriptionId: subscriptionId,
 		tenantId:       tenantId,
 		resourceGroup:  resourceGroup,
+		// TODO: A timeout can be added here for cancellation purposes.
+		context: context.Background(),
 	}, nil
 }
 
@@ -64,7 +67,7 @@ func (c *DNSProvider) Timeout() (timeout, interval time.Duration) {
 
 // Present creates a TXT record to fulfil the dns-01 challenge
 func (c *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value, _ := acmev2.DNS01Record(domain, keyAuth)
 	zone, err := c.getHostedZoneID(fqdn)
 	if err != nil {
 		return err
@@ -74,7 +77,7 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 	spt, err := c.newServicePrincipalTokenFromCredentials(azure.PublicCloud.ResourceManagerEndpoint)
 	rsc.Authorizer = autorest.NewBearerAuthorizer(spt)
 
-	relative := toRelativeRecord(fqdn, acme.ToFqdn(zone))
+	relative := toRelativeRecord(fqdn, acmev2.ToFqdn(zone))
 	rec := dns.RecordSet{
 		Name: &relative,
 		RecordSetProperties: &dns.RecordSetProperties{
@@ -82,7 +85,7 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 			TxtRecords: &[]dns.TxtRecord{dns.TxtRecord{Value: &[]string{value}}},
 		},
 	}
-	_, err = rsc.CreateOrUpdate(c.resourceGroup, zone, relative, dns.TXT, rec, "", "")
+	_, err = rsc.CreateOrUpdate(c.context, c.resourceGroup, zone, relative, dns.TXT, rec, "", "")
 
 	if err != nil {
 		return err
@@ -93,23 +96,23 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // Returns the relative record to the domain
 func toRelativeRecord(domain, zone string) string {
-	return acme.UnFqdn(strings.TrimSuffix(domain, zone))
+	return acmev2.UnFqdn(strings.TrimSuffix(domain, zone))
 }
 
 // CleanUp removes the TXT record matching the specified parameters
 func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
 
 	zone, err := c.getHostedZoneID(fqdn)
 	if err != nil {
 		return err
 	}
 
-	relative := toRelativeRecord(fqdn, acme.ToFqdn(zone))
+	relative := toRelativeRecord(fqdn, acmev2.ToFqdn(zone))
 	rsc := dns.NewRecordSetsClient(c.subscriptionId)
 	spt, err := c.newServicePrincipalTokenFromCredentials(azure.PublicCloud.ResourceManagerEndpoint)
 	rsc.Authorizer = autorest.NewBearerAuthorizer(spt)
-	_, err = rsc.Delete(c.resourceGroup, zone, relative, dns.TXT, "")
+	_, err = rsc.Delete(c.context, c.resourceGroup, zone, relative, dns.TXT, "")
 	if err != nil {
 		return err
 	}
@@ -119,7 +122,7 @@ func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 
 // Checks that azure has a zone for this domain name.
 func (c *DNSProvider) getHostedZoneID(fqdn string) (string, error) {
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := acmev2.FindZoneByFqdn(fqdn, acmev2.RecursiveNameservers)
 	if err != nil {
 		return "", err
 	}
@@ -130,7 +133,7 @@ func (c *DNSProvider) getHostedZoneID(fqdn string) (string, error) {
 	dc := dns.NewZonesClient(c.subscriptionId)
 	dc.Authorizer = autorest.NewBearerAuthorizer(spt)
 
-	zone, err := dc.Get(c.resourceGroup, acme.UnFqdn(authZone))
+	zone, err := dc.Get(c.context, c.resourceGroup, acmev2.UnFqdn(authZone))
 
 	if err != nil {
 		return "", err

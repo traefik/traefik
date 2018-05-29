@@ -11,14 +11,14 @@ import (
 	"os"
 	"time"
 
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/acmev2"
 )
 
 // CloudFlareAPIURL represents the API endpoint to call.
 // TODO: Unexport?
 const CloudFlareAPIURL = "https://api.cloudflare.com/client/v4"
 
-// DNSProvider is an implementation of the acme.ChallengeProvider interface
+// DNSProvider is an implementation of the acmev2.ChallengeProvider interface
 type DNSProvider struct {
 	authEmail string
 	authKey   string
@@ -54,7 +54,7 @@ func (c *DNSProvider) Timeout() (timeout, interval time.Duration) {
 
 // Present creates a TXT record to fulfil the dns-01 challenge
 func (c *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value, _ := acmev2.DNS01Record(domain, keyAuth)
 	zoneID, err := c.getHostedZoneID(fqdn)
 	if err != nil {
 		return err
@@ -62,7 +62,7 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 
 	rec := cloudFlareRecord{
 		Type:    "TXT",
-		Name:    acme.UnFqdn(fqdn),
+		Name:    acmev2.UnFqdn(fqdn),
 		Content: value,
 		TTL:     120,
 	}
@@ -82,7 +82,7 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters
 func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
 
 	record, err := c.findTxtRecord(fqdn)
 	if err != nil {
@@ -104,12 +104,12 @@ func (c *DNSProvider) getHostedZoneID(fqdn string) (string, error) {
 		Name string `json:"name"`
 	}
 
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := acmev2.FindZoneByFqdn(fqdn, acmev2.RecursiveNameservers)
 	if err != nil {
 		return "", err
 	}
 
-	result, err := c.makeRequest("GET", "/zones?name="+acme.UnFqdn(authZone), nil)
+	result, err := c.makeRequest("GET", "/zones?name="+acmev2.UnFqdn(authZone), nil)
 	if err != nil {
 		return "", err
 	}
@@ -135,7 +135,7 @@ func (c *DNSProvider) findTxtRecord(fqdn string) (*cloudFlareRecord, error) {
 
 	result, err := c.makeRequest(
 		"GET",
-		fmt.Sprintf("/zones/%s/dns_records?per_page=1000&type=TXT&name=%s", zoneID, acme.UnFqdn(fqdn)),
+		fmt.Sprintf("/zones/%s/dns_records?per_page=1000&type=TXT&name=%s", zoneID, acmev2.UnFqdn(fqdn)),
 		nil,
 	)
 	if err != nil {
@@ -149,7 +149,7 @@ func (c *DNSProvider) findTxtRecord(fqdn string) (*cloudFlareRecord, error) {
 	}
 
 	for _, rec := range records {
-		if rec.Name == acme.UnFqdn(fqdn) {
+		if rec.Name == acmev2.UnFqdn(fqdn) {
 			return &rec, nil
 		}
 	}

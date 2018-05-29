@@ -1,0 +1,104 @@
+<div class="container">
+  <div class="content">
+    <div class="columns is-multiline">
+
+      <div class="column is-12">
+        <div class="content-item">
+          <div class="content-item-data">
+            <div class="columns">
+              <div class="column is-4">
+                <div class="item-data border-right">
+                  <span class="data-grey">Total Response Time</span>
+                  <span class="data-blue" [title]="exactTotalResponseTime">{{ totalResponseTime }}</span>
+                </div>
+              </div>
+              <div class="column is-4">
+                <div class="item-data border-right">
+                  <span class="data-grey">Total Code Count</span>
+                  <span class="data-blue">{{ totalCodeCount }}</span>
+                </div>
+              </div>
+              <div class="column is-4">
+                <div class="item-data">
+                  <span class="data-grey">Uptime Since <br/>{{ uptimeSince }}</span>
+                  <span class="data-blue">{{ uptime }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="content-item">
+          <div class="content-item-data">
+            <div class="columns">
+              <div class="column is-4">
+                <div class="item-data border-right">
+                  <span class="data-grey">Average Response Time</span>
+                  <span class="data-blue" [title]="exactAverageResponseTime">{{ averageResponseTime }}</span>
+                </div>
+              </div>
+              <div class="column is-4">
+                <div class="item-data border-right">
+                  <span class="data-grey">Code Count</span>
+                  <span class="data-blue">{{ codeCount }}</span>
+                </div>
+              </div>
+              <div class="column is-4">
+                <div class="item-data">
+                  <span class="data-grey">PID</span>
+                  <span class="data-blue">{{ pid }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="column is-12">
+        <div class="columns">
+          <div class="column is-6">
+            <div class="content-item">
+              <h2>Average Response Time (µs)</h2>
+              <app-line-chart [value]="chartValue"></app-line-chart>
+            </div>
+          </div>
+          <div class="column is-6">
+            <div class="content-item">
+              <h2>Total Status Code Count</h2>
+              <app-bar-chart [value]="statusCodeValue"></app-bar-chart>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="content" *ngIf="recentErrors">
+    <div class="content-item">
+      <h2>Recent HTTP Errors</h2>
+      <table class="table is-fullwidth">
+        <tr>
+          <td>Status</td>
+          <td>Request</td>
+          <td>Time</td>
+        </tr>
+        <tr *ngFor="let entry of recentErrors; trackBy: trackRecentErrors;">
+          <td>
+            <span class="tag is-info" [title]="entry.status">{{ entry.status_code }}</span>&nbsp;<span class="is-hidden-mobile is-hidden-desktop-only">{{ entry.status }}</span>
+          </td>
+          <td>
+            <span class="tag">{{ entry.method }}</span>&nbsp;<span>{{ entry.host }}{{ entry.path }}</span>
+          </td>
+          <td>
+            <span [title]="entry.time | date:'yyyy-MM-dd HH:mm:ss:SSS a z'">{{ entry.time | date:'yyyy-MM-dd HH:mm:ss a z' }}</span>
+          </td>
+        </tr>
+        <tr *ngIf="!recentErrors?.length">
+          <td colspan="3">
+            <p class="text-muted text-center">No entries</p>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>

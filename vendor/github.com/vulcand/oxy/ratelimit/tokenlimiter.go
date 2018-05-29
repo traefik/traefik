@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/mailgun/timetools"
 	"github.com/mailgun/ttlmap"
+	log "github.com/sirupsen/logrus"
 	"github.com/vulcand/oxy/utils"
 )
 
@@ -110,7 +110,7 @@ func (tl *TokenLimiter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if err := tl.consumeRates(req, source, amount); err != nil {
-		log.Infof("limiting request %v %v, limit: %v", req.Method, req.URL, err)
+		log.Warnf("limiting request %v %v, limit: %v", req.Method, req.URL, err)
 		tl.errHandler.ServeHTTP(w, req, err)
 		return
 	}

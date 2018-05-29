@@ -1,18 +1,159 @@
-# File Backends
+# File Provider
 
-Like any other reverse proxy, Træfik can be configured with a file.
+Træfik can be configured with a file.
 
-You have three choices:
+## Reference
 
-- [Simple](/configuration/backends/file/#simple)
-- [Rules in a Separate File](/configuration/backends/file/#rules-in-a-separate-file)
-- [Multiple `.toml` Files](/configuration/backends/file/#multiple-toml-files)
+```toml
+[file]
+
+# Backends
+[backends]
+
+  [backends.backend1]
+
+    [backends.backend1.servers]
+      [backends.backend1.servers.server0]
+        url = "http://10.10.10.1:80"
+        weight = 1
+      [backends.backend1.servers.server1]
+        url = "http://10.10.10.2:80"
+        weight = 2
+      # ...
+
+    [backends.backend1.circuitBreaker]
+      expression = "NetworkErrorRatio() > 0.5"
+
+    [backends.backend1.loadBalancer]
+      method = "drr"
+      [backends.backend1.loadBalancer.stickiness]
+        cookieName = "foobar"
+
+    [backends.backend1.maxConn]
+      amount = 10
+      extractorfunc = "request.host"
+
+    [backends.backend1.healthCheck]
+      path = "/health"
+      port = 88
+      interval = "30s"
+
+  [backends.backend2]
+    # ...
+
+# Frontends
+[frontends]
+
+  [frontends.frontend1]
+    entryPoints = ["http", "https"]
+    backend = "backend1"
+    passHostHeader = true
+    passTLSCert = true
+    priority = 42
+    basicAuth = [
+      "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+      "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+    ]
+
+    [frontends.frontend1.whiteList]
+      sourceRange = ["10.42.0.0/16", "152.89.1.33/32", "afed:be44::/16"]
+      useXForwardedFor = true
+
+    [frontends.frontend1.routes]
+      [frontends.frontend1.routes.route0]
+        rule = "Host:test.localhost"
+      [frontends.frontend1.routes.Route1]
+        rule = "Method:GET"
+      # ...
+
+    [frontends.frontend1.headers]
+      allowedHosts = ["foobar", "foobar"]
+      hostsProxyHeaders = ["foobar", "foobar"]
+      SSLRedirect = true
+      SSLTemporaryRedirect = true
+      SSLHost = "foobar"
+      STSSeconds = 42
+      STSIncludeSubdomains = true
+      STSPreload = true
+      forceSTSHeader = true
+      frameDeny = true
+      customFrameOptionsValue = "foobar"
+      contentTypeNosniff = true
+      browserXSSFilter = true
+      contentSecurityPolicy = "foobar"
+      publicKey = "foobar"
+      referrerPolicy = "foobar"
+      isDevelopment = true
+      [frontends.frontend1.headers.customRequestHeaders]
+        X-Foo-Bar-01 = "foobar"
+        X-Foo-Bar-02 = "foobar"
+        # ...
+      [frontends.frontend1.headers.customResponseHeaders]
+        X-Foo-Bar-03 = "foobar"
+        X-Foo-Bar-04 = "foobar"
+        # ...
+      [frontends.frontend1.headers.SSLProxyHeaders]
+        X-Foo-Bar-05 = "foobar"
+        X-Foo-Bar-06 = "foobar"
+        # ...
+
+    [frontends.frontend1.errors]
+      [frontends.frontend1.errors.errorPage0]
+        status = ["500-599"]
+        backend = "error"
+        query = "/{status}.html"
+      [frontends.frontend1.errors.errorPage1]
+        status = ["404", "403"]
+        backend = "error"
+        query = "/{status}.html"
+      # ...
+
+    [frontends.frontend1.ratelimit]
+      extractorfunc = "client.ip"
+        [frontends.frontend1.ratelimit.rateset.rateset1]
+          period = "10s"
+          average = 100
+          burst = 200
+        [frontends.frontend1.ratelimit.rateset.rateset2]
+          period = "3s"
+          average = 5
+          burst = 10
+        # ...
+
+    [frontends.frontend1.redirect]
+      entryPoint = "https"
+      regex = "^http://localhost/(.*)"
+      replacement = "http://mydomain/$1"
+      permanent = true
+
+  [frontends.frontend2]
+    # ...
+
+# HTTPS certificates
+[[tls]]
+  entryPoints = ["https"]
+  [tls.certificate]
+    certFile = "path/to/my.cert"
+    keyFile = "path/to/my.key"
+
+[[tls]]
+  # ...
+```
+
+## Configuration Mode
+
+You have two choices:
+
+- [Rules in Træfik configuration file](/configuration/backends/file/#rules-in-trfik-configuration-file)
+- [Rules in dedicated files](/configuration/backends/file/#rules-in-dedicated-files)
 
 To enable the file backend, you must either pass the `--file` option to the Træfik binary or put the `[file]` section (with or without inner settings) in the configuration file.
 
 The configuration file allows managing both backends/frontends and HTTPS certificates (which are not [Let's Encrypt](https://letsencrypt.org) certificates generated through Træfik).
 
-## Simple
+TOML templating can be used if rules are not defined in the Træfik configuration file.
+
+### Rules in Træfik Configuration File
 
 Add your configuration at the end of the global configuration file `traefik.toml`:
 
@@ -21,172 +162,142 @@ defaultEntryPoints = ["http", "https"]
 
 [entryPoints]
   [entryPoints.http]
-  address = ":80"
-    [entryPoints.http.redirect]
-    entryPoint = "https"
+    # ...
   [entryPoints.https]
-  address = ":443"
-    [entryPoints.https.tls]
-      [[entryPoints.https.tls.certificates]]
-      certFile = "integration/fixtures/https/snitest.org.cert"
-      keyFile = "integration/fixtures/https/snitest.org.key"
+    # ...
 
 [file]
 
 # rules
 [backends]
   [backends.backend1]
-    [backends.backend1.circuitbreaker]
-    expression = "NetworkErrorRatio() > 0.5"
-    [backends.backend1.servers.server1]
-    url = "http://172.17.0.2:80"
-    weight = 10
-    [backends.backend1.servers.server2]
-    url = "http://172.17.0.3:80"
-    weight = 1
+    # ...
   [backends.backend2]
-    [backends.backend2.maxconn]
-    amount = 10
-    extractorfunc = "request.host"
-    [backends.backend2.LoadBalancer]
-    method = "drr"
-    [backends.backend2.servers.server1]
-    url = "http://172.17.0.4:80"
-    weight = 1
-    [backends.backend2.servers.server2]
-    url = "http://172.17.0.5:80"
-    weight = 2
+    # ...
 
 [frontends]
   [frontends.frontend1]
-  backend = "backend2"
-    [frontends.frontend1.routes.test_1]
-    rule = "Host:test.localhost"
-
+  # ...
   [frontends.frontend2]
-  backend = "backend1"
-  passHostHeader = true
-  priority = 10
-
-  # restrict access to this frontend to the specified list of IPv4/IPv6 CIDR Nets
-  # an unset or empty list allows all Source-IPs to access
-  # if one of the Net-Specifications are invalid, the whole list is invalid
-  # and allows all Source-IPs to access.
-  whitelistSourceRange = ["10.42.0.0/16", "152.89.1.33/32", "afed:be44::/16"]
-
-  entrypoints = ["https"] # overrides defaultEntryPoints
-    [frontends.frontend2.routes.test_1]
-    rule = "Host:{subdomain:[a-z]+}.localhost"
-
+  # ...
   [frontends.frontend3]
-  entrypoints = ["http", "https"] # overrides defaultEntryPoints
-  backend = "backend2"
-  rule = "Path:/test"
+  # ...
 
 # HTTPS certificate
 [[tls]]
-  entryPoints = ["https"]
-  [tls.certificate]
-    certFile = "path/to/my.cert"
-    keyFile = "path/to/my.key"
-    
+  # ...
+
 [[tls]]
-  entryPoints = ["https"]
-  [tls.certificate]
-    certFile = "path/to/my/other.cert"
-    keyFile = "path/to/my/other.key"
+  # ...
 ```
 
 !!! note
-    adding certificates directly to the entrypoint is still maintained but certificates declared in this way cannot be managed dynamically.
+    If `tls.entryPoints` is not defined, the certificate is attached to all the `defaultEntryPoints` with a TLS configuration.
+
+!!! note
+    Adding certificates directly to the entryPoint is still maintained but certificates declared in this way cannot be managed dynamically.
     It's recommended to use the file provider to declare certificates.
 
-## Rules in a Separate File
+!!! warning
+    TOML templating cannot be used if rules are defined in the Træfik configuration file.
 
-Put your rules in a separate file, for example `rules.toml`:
+### Rules in Dedicated Files
+
+Træfik allows defining rules in one or more separate files.
+
+#### One Separate File
+
+You have to specify the file path in the `file.filename` option.
 
 ```toml
 # traefik.toml
+defaultEntryPoints = ["http", "https"]
+
 [entryPoints]
   [entryPoints.http]
-  address = ":80"
-    [entryPoints.http.redirect]
-      entryPoint = "https"
+    # ...
   [entryPoints.https]
-  address = ":443"
-    [entryPoints.https.tls]
+    # ...
 
 [file]
-filename = "rules.toml"
+  filename = "rules.toml"
+  watch = true
 ```
 
-```toml
-# rules.toml
-[backends]
-  [backends.backend1]
-    [backends.backend1.circuitbreaker]
-    expression = "NetworkErrorRatio() > 0.5"
-    [backends.backend1.servers.server1]
-    url = "http://172.17.0.2:80"
-    weight = 10
-    [backends.backend1.servers.server2]
-    url = "http://172.17.0.3:80"
-    weight = 1
-  [backends.backend2]
-    [backends.backend2.maxconn]
-    amount = 10
-    extractorfunc = "request.host"
-    [backends.backend2.LoadBalancer]
-    method = "drr"
-    [backends.backend2.servers.server1]
-    url = "http://172.17.0.4:80"
-    weight = 1
-    [backends.backend2.servers.server2]
-    url = "http://172.17.0.5:80"
-    weight = 2
+The option `file.watch` allows Træfik to watch file changes automatically.
 
-[frontends]
-  [frontends.frontend1]
-  backend = "backend2"
-    [frontends.frontend1.routes.test_1]
-    rule = "Host:test.localhost"
-  [frontends.frontend2]
-  backend = "backend1"
-  passHostHeader = true
-  priority = 10
-  entrypoints = ["https"] # overrides defaultEntryPoints
-    [frontends.frontend2.routes.test_1]
-    rule = "Host:{subdomain:[a-z]+}.localhost"
-  [frontends.frontend3]
-  entrypoints = ["http", "https"] # overrides defaultEntryPoints
-  backend = "backend2"
-  rule = "Path:/test"
-  
-# HTTPS certificate
-[[tls]]
-  entryPoints = ["https"]
-  [tls.certificate]
-    certFile = "path/to/my.cert"
-    keyFile = "path/to/my.key"
-    
-[[tls]]
-  entryPoints = ["https"]
-  [tls.certificate]
-    certFile = "path/to/my/other.cert"
-    keyFile = "path/to/my/other.key"
-
-## Multiple `.toml` Files
+#### Multiple Separated Files
 
 You could have multiple `.toml` files in a directory (and recursively in its sub-directories):
 
 ```toml
 [file]
-directory = "/path/to/config/"
+  directory = "/path/to/config/"
+  watch = true
 ```
 
-If you want Træfik to watch file changes automatically, just add:
+The option `file.watch` allows Træfik to watch file changes automatically.
+
+#### Separate Files Content
+
+If you are defining rules in one or more separate files, you can use two formats.
+
+##### Simple Format
+
+Backends, Frontends and TLS certificates are defined one at time, as described in the file `rules.toml`:
 
 ```toml
-[file]
-watch = true
+# rules.toml
+[backends]
+  [backends.backend1]
+    # ...
+  [backends.backend2]
+    # ...
+
+[frontends]
+  [frontends.frontend1]
+  # ...
+  [frontends.frontend2]
+  # ...
+  [frontends.frontend3]
+  # ...
+
+# HTTPS certificate
+[[tls]]
+  # ...
+
+[[tls]]
+  # ...
+```
+
+##### TOML Templating
+
+!!! warning
+    TOML templating can only be used **if rules are defined in one or more separate files**.
+    Templating will not work in the Træfik configuration file.
+
+Træfik allows using TOML templating.
+
+Thus, it's possible to define easily lot of Backends, Frontends and TLS certificates as described in the file `template-rules.toml` :
+
+```toml
+# template-rules.toml
+[backends]
+{{ range $i, $e := until 100 }}
+  [backends.backend{{ $e }}]
+    #...
+{{ end }}
+
+[frontends]
+{{ range $i, $e := until 100 }}
+  [frontends.frontend{{ $e }}]
+    #...
+{{ end }}
+
+
+# HTTPS certificate
+{{ range $i, $e := until 100 }}
+[[tls]]
+    #...
+{{ end }}
 ```

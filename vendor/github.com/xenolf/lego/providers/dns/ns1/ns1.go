@@ -8,12 +8,12 @@ import (
 	"os"
 	"time"
 
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/acmev2"
 	"gopkg.in/ns1/ns1-go.v2/rest"
 	"gopkg.in/ns1/ns1-go.v2/rest/model/dns"
 )
 
-// DNSProvider is an implementation of the acme.ChallengeProvider interface.
+// DNSProvider is an implementation of the acmev2.ChallengeProvider interface.
 type DNSProvider struct {
 	client *rest.Client
 }
@@ -43,7 +43,7 @@ func NewDNSProviderCredentials(key string) (*DNSProvider, error) {
 
 // Present creates a TXT record to fulfil the dns-01 challenge.
 func (c *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
+	fqdn, value, ttl := acmev2.DNS01Record(domain, keyAuth)
 
 	zone, err := c.getHostedZone(domain)
 	if err != nil {
@@ -61,14 +61,14 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters.
 func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
 
 	zone, err := c.getHostedZone(domain)
 	if err != nil {
 		return err
 	}
 
-	name := acme.UnFqdn(fqdn)
+	name := acmev2.UnFqdn(fqdn)
 	_, err = c.client.Records.Delete(zone.Zone, name, "TXT")
 	return err
 }
@@ -83,7 +83,7 @@ func (c *DNSProvider) getHostedZone(domain string) (*dns.Zone, error) {
 }
 
 func (c *DNSProvider) newTxtRecord(zone *dns.Zone, fqdn, value string, ttl int) *dns.Record {
-	name := acme.UnFqdn(fqdn)
+	name := acmev2.UnFqdn(fqdn)
 
 	return &dns.Record{
 		Type:   "TXT",

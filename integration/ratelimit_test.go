@@ -19,7 +19,7 @@ func (s *RateLimitSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "ratelimit")
 	s.composeProject.Start(c)
 
-	s.ServerIP = s.composeProject.Container(c, "nginx1").NetworkSettings.IPAddress
+	s.ServerIP = s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
 }
 
 func (s *RateLimitSuite) TestSimpleConfiguration(c *check.C) {

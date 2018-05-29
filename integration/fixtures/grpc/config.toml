@@ -1,6 +1,6 @@
 defaultEntryPoints = ["https"]
 
-RootCAs = [ """{{ .CertContent }}""" ]
+rootCAs = [ """{{ .CertContent }}""" ]
 
 [entryPoints]
   [entryPoints.https]
@@ -19,6 +19,7 @@ RootCAs = [ """{{ .CertContent }}""" ]
   [backends.backend1]
     [backends.backend1.servers.server1]
     url = "https://127.0.0.1:{{ .GRPCServerPort }}"
+    weight = 1
 
 
 [frontends]

@@ -28,10 +28,11 @@ type BaseProvider struct {
 	Filename                  string            `description:"Override default configuration template. For advanced users :)" export:"true"`
 	Constraints               types.Constraints `description:"Filter services by constraint, matching with Traefik tags." export:"true"`
 	Trace                     bool              `description:"Display additional provider logs (if available)." export:"true"`
+	TemplateVersion           int               `description:"Template version." export:"true"`
 	DebugLogGeneratedTemplate bool              `description:"Enable debug logging of generated configuration template." export:"true"`
 }
 
-// MatchConstraints must match with EVERY single contraint
+// MatchConstraints must match with EVERY single constraint
 // returns first constraint that do not match or nil
 func (p *BaseProvider) MatchConstraints(tags []string) (bool, *types.Constraint) {
 	// if there is no tags and no constraints, filtering is disabled
@@ -50,10 +51,17 @@ func (p *BaseProvider) MatchConstraints(tags []string) (bool, *types.Constraint)
 	return true, nil
 }
 
-// GetConfiguration return the provider configuration using templating
-func (p *BaseProvider) GetConfiguration(defaultTemplateFile string, funcMap template.FuncMap, templateObjects interface{}) (*types.Configuration, error) {
-	configuration := new(types.Configuration)
+// GetConfiguration return the provider configuration from default template (file or content) or overrode template file
+func (p *BaseProvider) GetConfiguration(defaultTemplate string, funcMap template.FuncMap, templateObjects interface{}) (*types.Configuration, error) {
+	tmplContent, err := p.getTemplateContent(defaultTemplate)
+	if err != nil {
+		return nil, err
+	}
+	return p.CreateConfiguration(tmplContent, funcMap, templateObjects)
+}
 
+// CreateConfiguration create a provider configuration from content using templating
+func (p *BaseProvider) CreateConfiguration(tmplContent string, funcMap template.FuncMap, templateObjects interface{}) (*types.Configuration, error) {
 	var defaultFuncMap = sprig.TxtFuncMap()
 	// tolower is deprecated in favor of sprig's lower function
 	defaultFuncMap["tolower"] = strings.ToLower
@@ -65,12 +73,7 @@ func (p *BaseProvider) GetConfiguration(defaultTemplateFile string, funcMap temp
 
 	tmpl := template.New(p.Filename).Funcs(defaultFuncMap)
 
-	tmplContent, err := p.getTemplateContent(defaultTemplateFile)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = tmpl.Parse(tmplContent)
+	_, err := tmpl.Parse(tmplContent)
 	if err != nil {
 		return nil, err
 	}
@@ -83,9 +86,16 @@ func (p *BaseProvider) GetConfiguration(defaultTemplateFile string, funcMap temp
 
 	var renderedTemplate = buffer.String()
 	if p.DebugLogGeneratedTemplate {
-		log.Debugf("Rendering results of %s:\n%s", defaultTemplateFile, renderedTemplate)
+		log.Debugf("Template content: %s", tmplContent)
+		log.Debugf("Rendering results: %s", renderedTemplate)
 	}
-	if _, err := toml.Decode(renderedTemplate, configuration); err != nil {
+	return p.DecodeConfiguration(renderedTemplate)
+}
+
+// DecodeConfiguration Decode a *types.Configuration from a content
+func (p *BaseProvider) DecodeConfiguration(content string) (*types.Configuration, error) {
+	configuration := new(types.Configuration)
+	if _, err := toml.Decode(content, configuration); err != nil {
 		return nil, err
 	}
 	return configuration, nil
@@ -116,6 +126,7 @@ func split(sep, s string) []string {
 }
 
 // Normalize transform a string that work with the rest of traefik
+// Replace '.' with '-' in quoted keys because of this issue https://github.com/BurntSushi/toml/issues/78
 func Normalize(name string) string {
 	fargs := func(c rune) bool {
 		return !unicode.IsLetter(c) && !unicode.IsNumber(c)

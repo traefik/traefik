@@ -5,11 +5,15 @@ traefikLogsFile = "log/traefik.log"
 accessLogsFile = "log/access.log"
 logLevel = "DEBUG"
 
+[entryPoints]
+  [entryPoints.api]
+  address = ":7888"
+
 ################################################################
-# Web configuration backend
+# API configuration
 ################################################################
-[web]
-address = ":7888"
+[api]
+entryPoint = "api"
 
 ################################################################
 # File configuration backend
@@ -25,10 +29,13 @@ address = ":7888"
       method = "drr"
       [backends.backend.servers.server1]
       url = "http://127.0.0.1:8081"
+      weight = 1
       [backends.backend.servers.server2]
       url = "http://127.0.0.1:8082"
+      weight = 1
       [backends.backend.servers.server3]
       url = "http://127.0.0.1:8083"
+      weight = 1
   [frontends]
     [frontends.frontend]
     backend = "backend"

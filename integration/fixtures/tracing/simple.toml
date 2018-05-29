@@ -1,0 +1,67 @@
+defaultEntryPoints = ["http"]
+
+logLevel = "DEBUG"
+debug = true
+
+[api]
+
+[entryPoints]
+  [entryPoints.http]
+    address = ":8000"
+
+[tracing]
+  backend = "{{.TracingBackend}}"
+  servicename = "tracing"
+    [tracing.zipkin]
+      httpEndpoint = "http://{{.ZipkinIP}}:9411/api/v1/spans"
+      debug = true
+    [tracing.jaeger]
+      samplingType = "const"
+      samplingParam = 1.0
+
+[retry]
+  attempts = 3
+
+[file]
+
+[backends]
+  [backends.backend1]
+    [backends.backend1.servers.server-ratelimit]
+      url = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
+      weight = 1
+  [backends.backend2]
+    [backends.backend2.servers.server-retry]
+      url = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
+      weight = 1
+  [backends.backend3]
+    [backends.backend3.servers.server-auth]
+      url = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
+      weight = 1
+
+[frontends]
+  [frontends.frontend1]
+    passHostHeader = true
+    backend = "backend1"
+    [frontends.frontend1.routes.test_ratelimit]
+      rule = "Path:/ratelimit"
+    [frontends.frontend1.ratelimit]
+      extractorfunc = "client.ip"
+        [frontends.frontend1.ratelimit.rateset.rateset1]
+          period = "60s"
+          average = 4
+          burst = 5
+        [frontends.frontend1.ratelimit.rateset.rateset2]
+          period = "3s"
+          average = 1
+          burst = 2
+  [frontends.frontend2]
+    passHostHeader = true
+    backend = "backend2"
+    [frontends.frontend2.routes.test_retry]
+      rule = "Path:/retry"
+  [frontends.frontend3]
+    passHostHeader = true
+    backend = "backend3"
+    basicAuth = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
+    [frontends.frontend3.routes.test_auth]
+      rule = "Path:/auth"

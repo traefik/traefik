@@ -6,16 +6,30 @@
 package amqp
 
 import (
-	"fmt"
 	"os"
+	"strconv"
 	"sync"
 	"sync/atomic"
 )
 
 var consumerSeq uint64
 
+const consumerTagLengthMax = 0xFF // see writeShortstr
+
 func uniqueConsumerTag() string {
-	return fmt.Sprintf("ctag-%s-%d", os.Args[0], atomic.AddUint64(&consumerSeq, 1))
+	return commandNameBasedUniqueConsumerTag(os.Args[0])
+}
+
+func commandNameBasedUniqueConsumerTag(commandName string) string {
+	tagPrefix := "ctag-"
+	tagInfix := commandName
+	tagSuffix := "-" + strconv.FormatUint(atomic.AddUint64(&consumerSeq, 1), 10)
+
+	if len(tagPrefix)+len(tagInfix)+len(tagSuffix) > consumerTagLengthMax {
+		tagInfix = "streadway/amqp"
+	}
+
+	return tagPrefix + tagInfix + tagSuffix
 }
 
 type consumerBuffers map[string]chan *Delivery

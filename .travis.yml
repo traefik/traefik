@@ -11,7 +11,7 @@ env:
   global:
     - REPO: $TRAVIS_REPO_SLUG
     - VERSION: $TRAVIS_TAG
-    - CODENAME: cancoillotte
+    - CODENAME: tetedemoine
     - N_MAKE_JOBS: 2
 
 script:
@@ -24,13 +24,14 @@ before_deploy:
       sudo -E apt-get -yq update;
       sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install docker-ce=${DOCKER_VERSION}*;
       docker version;
+      make image;
       if [ "$TRAVIS_TAG" ]; then
         make -j${N_MAKE_JOBS} crossbinary-parallel;
-        make image-dirty;
+        tar cfz dist/traefik-${VERSION}.src.tar.gz --exclude-vcs --exclude dist .;
       fi;
       curl -sI https://github.com/containous/structor/releases/latest | grep -Fi Location  | tr -d '\r' | sed "s/tag/download/g" | awk -F " " '{ print $2 "/structor_linux-amd64"}' | wget --output-document=$GOPATH/bin/structor -i -;
       chmod +x $GOPATH/bin/structor;
-      structor -o containous -r traefik --dockerfile-url="https://raw.githubusercontent.com/containous/traefik/master/docs.Dockerfile" --menu.js-url="https://raw.githubusercontent.com/containous/structor/master/traefik-menu.js.gotmpl" --exp-branch=master --debug;
+      structor -o containous -r traefik --dockerfile-url="https://raw.githubusercontent.com/containous/traefik/master/docs.Dockerfile" --menu.js-url="https://raw.githubusercontent.com/containous/structor/master/traefik-menu.js.gotmpl" --rqts-url="https://raw.githubusercontent.com/containous/structor/master/requirements-override.txt" --exp-branch=master --debug;
     fi
 deploy:
   - provider: releases
@@ -53,7 +54,7 @@ deploy:
     on:
       repo: containous/traefik
   - provider: pages
-    edge: true
+    edge: false
     github_token: ${GITHUB_TOKEN}
     local_dir: site
     skip_cleanup: true

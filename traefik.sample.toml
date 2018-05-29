@@ -14,7 +14,7 @@
 # Optional
 # Default: "ERROR"
 #
-# logLevel = "ERROR"
+# logLevel = "DEBUG"
 
 # Entrypoints to be used by frontends that do not specify any entrypoint.
 # Each frontend can specify its own entrypoints.
@@ -24,6 +24,10 @@
 #
 # defaultEntryPoints = ["http", "https"]
 
+################################################################
+# Entrypoints configuration
+################################################################
+
 # Entrypoints definition
 #
 # Optional
@@ -31,6 +35,10 @@
 [entryPoints]
     [entryPoints.http]
     address = ":80"
+
+################################################################
+# Traefik logs configuration
+################################################################
 
 # Traefik logs
 # Enabled by default and log to stdout
@@ -53,6 +61,10 @@
 # Default: "common"
 #
 # format = "common"
+
+################################################################
+# Access logs configuration
+################################################################
 
 # Enable access logs
 # By default it will write to stdout and produce logs in the textual
@@ -78,17 +90,39 @@
 # format = "common"
 
 ################################################################
-# Web configuration backend
+# API and dashboard configuration
 ################################################################
 
-# Enable web configuration backend
-[web]
+# Enable API and dashboard
+[api]
 
-# Web administration port
-#
-# Required
-#
-address = ":8080"
+  # Name of the related entry point
+  #
+  # Optional
+  # Default: "traefik"
+  #
+  # entryPoint = "traefik"
+
+  # Enabled Dashboard
+  #
+  # Optional
+  # Default: true
+  #
+  # dashboard = false
+
+################################################################
+# Ping configuration
+################################################################
+
+# Enable ping
+[ping]
+
+  # Name of the related entry point
+  #
+  # Optional
+  # Default: "traefik"
+  #
+  # entryPoint = "traefik"
 
 ################################################################
 # Docker configuration backend
@@ -117,4 +151,4 @@ address = ":8080"
 # Optional
 # Default: true
 #
-# exposedbydefault = true
+# exposedByDefault = true

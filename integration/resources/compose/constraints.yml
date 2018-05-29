@@ -11,7 +11,7 @@ consul:
     - "8301/udp"
     - "8302"
     - "8302/udp"
-nginx:
-  image: nginx:alpine
+whoami:
+  image: emilevauge/whoami
   ports:
     - "8881:80"

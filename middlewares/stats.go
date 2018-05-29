@@ -23,8 +23,9 @@ var (
 type StatsRecorder struct {
 	Stats
 	mutex           sync.RWMutex
-	backendReqMutex sync.RWMutex
 	numRecentErrors int
+	recentErrors    []*statsError
+	backendReqMutex sync.RWMutex
 	connStateMutex  sync.RWMutex
 	connStateMap    map[net.Conn]http.ConnState
 }
@@ -99,7 +100,7 @@ func (s *StatsRecorder) ServeHTTP(w http.ResponseWriter, r *http.Request, next h
 	if recorder.statusCode >= http.StatusBadRequest {
 		s.mutex.Lock()
 		defer s.mutex.Unlock()
-		s.RecentErrors = append([]*statsError{
+		s.recentErrors = append([]*statsError{
 			{
 				StatusCode: recorder.statusCode,
 				Status:     http.StatusText(recorder.statusCode),
@@ -108,10 +109,10 @@ func (s *StatsRecorder) ServeHTTP(w http.ResponseWriter, r *http.Request, next h
 				Path:       r.URL.Path,
 				Time:       time.Now(),
 			},
-		}, s.RecentErrors...)
+		}, s.recentErrors...)
 		// Limit the size of the list to numRecentErrors
-		if len(s.RecentErrors) > s.numRecentErrors {
-			s.RecentErrors = s.RecentErrors[:s.numRecentErrors]
+		if len(s.recentErrors) > s.numRecentErrors {
+			s.recentErrors = s.recentErrors[:s.numRecentErrors]
 		}
 	}
 
@@ -124,12 +125,22 @@ func (s *StatsRecorder) Data() *Stats {
 	defer s.mutex.RUnlock()
 
 	// We can't return the slice directly or a race condition might develop
-	recentErrors := make([]*statsError, len(s.RecentErrors))
-	copy(recentErrors, s.RecentErrors)
+	recentErrors := make([]*statsError, len(s.recentErrors))
+	copy(recentErrors, s.recentErrors)
 
-	res := s.Stats
-	res.RecentErrors = recentErrors
-	return &res
+	backendRequests := make(map[string]int64)
+	for k, v := range s.BackendRequests {
+		backendRequests[k] = v
+	}
+
+	return &Stats{
+		RecentErrors:       recentErrors,
+		ActiveConnections:  s.ActiveConnections,
+		CurrentConnections: s.CurrentConnections,
+		HandledConnections: s.HandledConnections,
+		IdleConnections:    s.IdleConnections,
+		BackendRequests:    backendRequests,
+	}
 }
 
 // ConnStateChange updates stats on change of connection state.

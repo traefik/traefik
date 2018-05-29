@@ -25,9 +25,18 @@ type influxDBWriter struct {
 var influxDBTicker *time.Ticker
 
 const (
-	influxDBMetricsReqsName    = "traefik.requests.total"
-	influxDBMetricsLatencyName = "traefik.request.duration"
-	influxDBRetriesTotalName   = "traefik.backend.retries.total"
+	influxDBMetricsBackendReqsName      = "traefik.backend.requests.total"
+	influxDBMetricsBackendLatencyName   = "traefik.backend.request.duration"
+	influxDBRetriesTotalName            = "traefik.backend.retries.total"
+	influxDBConfigReloadsName           = "traefik.config.reload.total"
+	influxDBConfigReloadsFailureName    = influxDBConfigReloadsName + ".failure"
+	influxDBLastConfigReloadSuccessName = "traefik.config.reload.lastSuccessTimestamp"
+	influxDBLastConfigReloadFailureName = "traefik.config.reload.lastFailureTimestamp"
+	influxDBEntrypointReqsName          = "traefik.entrypoint.requests.total"
+	influxDBEntrypointReqDurationName   = "traefik.entrypoint.request.duration"
+	influxDBEntrypointOpenConnsName     = "traefik.entrypoint.connections.open"
+	influxDBOpenConnsName               = "traefik.backend.connections.open"
+	influxDBServerUpName                = "traefik.backend.server.up"
 )
 
 // RegisterInfluxDB registers the metrics pusher if this didn't happen yet and creates a InfluxDB Registry instance.
@@ -37,20 +46,24 @@ func RegisterInfluxDB(config *types.InfluxDB) Registry {
 	}
 
 	return &standardRegistry{
-		enabled:              true,
-		reqsCounter:          influxDBClient.NewCounter(influxDBMetricsReqsName),
-		reqDurationHistogram: influxDBClient.NewHistogram(influxDBMetricsLatencyName),
-		retriesCounter:       influxDBClient.NewCounter(influxDBRetriesTotalName),
+		enabled:                        true,
+		configReloadsCounter:           influxDBClient.NewCounter(influxDBConfigReloadsName),
+		configReloadsFailureCounter:    influxDBClient.NewCounter(influxDBConfigReloadsFailureName),
+		lastConfigReloadSuccessGauge:   influxDBClient.NewGauge(influxDBLastConfigReloadSuccessName),
+		lastConfigReloadFailureGauge:   influxDBClient.NewGauge(influxDBLastConfigReloadFailureName),
+		entrypointReqsCounter:          influxDBClient.NewCounter(influxDBEntrypointReqsName),
+		entrypointReqDurationHistogram: influxDBClient.NewHistogram(influxDBEntrypointReqDurationName),
+		entrypointOpenConnsGauge:       influxDBClient.NewGauge(influxDBEntrypointOpenConnsName),
+		backendReqsCounter:             influxDBClient.NewCounter(influxDBMetricsBackendReqsName),
+		backendReqDurationHistogram:    influxDBClient.NewHistogram(influxDBMetricsBackendLatencyName),
+		backendRetriesCounter:          influxDBClient.NewCounter(influxDBRetriesTotalName),
+		backendOpenConnsGauge:          influxDBClient.NewGauge(influxDBOpenConnsName),
+		backendServerUpGauge:           influxDBClient.NewGauge(influxDBServerUpName),
 	}
 }
 
 // initInfluxDBTicker initializes metrics pusher and creates a influxDBClient if not created already
 func initInfluxDBTicker(config *types.InfluxDB) *time.Ticker {
-	address := config.Address
-	if len(address) == 0 {
-		address = "localhost:8089"
-	}
-
 	pushInterval, err := time.ParseDuration(config.PushInterval)
 	if err != nil {
 		log.Warnf("Unable to parse %s into pushInterval, using 10s as default value", config.PushInterval)

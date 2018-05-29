@@ -1,0 +1,65 @@
+.message
+  display: block
+  font-size: 0.8rem
+  margin: 1rem 0 1.5rem 0
+  padding-bottom: 0.3rem
+  border: 1px solid $border
+  background: $white
+  border-radius: $traefik-border-radius
+  box-shadow: 1px 2px 5px rgba($border, 0.4)
+
+  .message-header
+    color: $color-secondary
+    border-bottom: 1px solid $border-secondary
+    padding: 0.6rem
+    border-top-left-radius: $traefik-border-radius
+    border-top-right-radius: $traefik-border-radius
+
+    .icon
+      display: block
+      float: left
+      width: 1.4rem
+      height: 1.4rem
+      margin-right: 0.5rem
+
+    h2
+      display: flex
+
+    img
+        margin-right: 15px
+
+  .message-body
+
+    .tabs
+      margin-bottom: 0.5rem
+
+    .section-container
+      padding: 0.3em 0 0 0
+
+    .section-line
+      padding: 0 0.75em
+
+    .section-line-header
+      padding: 0.2em 0 0 0
+
+    // required for small screen (without -> table overlapping)
+    .table-fixed
+      table-layout: fixed
+
+    // required for small screen (without -> table overlapping)
+    .table-fixed-break
+      table-layout: fixed
+      word-wrap: break-word
+
+    .table-cell-limited
+      overflow: hidden
+      text-overflow: ellipsis
+
+    .table-col-75
+      width: 75%
+
+    h2
+      color: $black
+
+    hr
+      margin: 5px 0

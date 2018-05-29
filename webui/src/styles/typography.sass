@@ -1,0 +1,14 @@
+=font-face($family, $path, $weight: normal, $style: normal)
+  @font-face
+    font-family: $family
+    src: url('./#{$path}.ttf') format('truetype')
+    font-weight: $weight
+    font-style: $style
+
++font-face('Open Sans', 'assets/fonts/OpenSans-Light', 300, 'light')
++font-face('Open Sans', 'assets/fonts/OpenSans-Regular', 400, 'regular')
++font-face('Open Sans', 'assets/fonts/OpenSans-Semibold', 600, 'semibold')
++font-face('Open Sans', 'assets/fonts/OpenSans-Bold', 700, 'bold')
++font-face('Open Sans', 'assets/fonts/OpenSans-ExtraBold', 800, 'extrabold')
+
+$open-sans: 'Open Sans', sans-serif

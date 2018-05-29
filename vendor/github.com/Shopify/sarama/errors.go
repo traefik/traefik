@@ -37,6 +37,10 @@ var ErrShuttingDown = errors.New("kafka: message received by producer in process
 // ErrMessageTooLarge is returned when the next message to consume is larger than the configured Consumer.Fetch.Max
 var ErrMessageTooLarge = errors.New("kafka: message is larger than Consumer.Fetch.Max")
 
+// ErrConsumerOffsetNotAdvanced is returned when a partition consumer didn't advance its offset after parsing
+// a RecordBatch.
+var ErrConsumerOffsetNotAdvanced = errors.New("kafka: consumer offset was not advanced after a RecordBatch")
+
 // PacketEncodingError is returned from a failure while encoding a Kafka packet. This can happen, for example,
 // if you try to encode a string over 2^15 characters in length, since Kafka's encoding rules do not permit that.
 type PacketEncodingError struct {

@@ -15,9 +15,8 @@ import (
 
 // Provider is a provider.Provider implementation that provides a Rest API
 type Provider struct {
-	configurationChan     chan<- types.ConfigMessage
-	EntryPoint            string `description:"EntryPoint" export:"true"`
-	CurrentConfigurations *safe.Safe
+	configurationChan chan<- types.ConfigMessage
+	EntryPoint        string `description:"EntryPoint" export:"true"`
 }
 
 var templatesRenderer = render.New(render.Options{Directory: "nowhere"})
@@ -45,7 +44,10 @@ func (p *Provider) AddRoutes(systemRouter *mux.Router) {
 			if err == nil {
 				// TODO: Deprecated configuration - Change to `rest` in the future
 				p.configurationChan <- types.ConfigMessage{ProviderName: "web", Configuration: configuration}
-				p.getConfigHandler(response, request)
+				err := templatesRenderer.JSON(response, http.StatusOK, configuration)
+				if err != nil {
+					log.Error(err)
+				}
 			} else {
 				log.Errorf("Error parsing configuration %+v", err)
 				http.Error(response, fmt.Sprintf("%+v", err), http.StatusBadRequest)
@@ -58,12 +60,4 @@ func (p *Provider) AddRoutes(systemRouter *mux.Router) {
 func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, _ types.Constraints) error {
 	p.configurationChan = configurationChan
 	return nil
-}
-
-func (p *Provider) getConfigHandler(response http.ResponseWriter, request *http.Request) {
-	currentConfigurations := p.CurrentConfigurations.Get().(types.Configurations)
-	err := templatesRenderer.JSON(response, http.StatusOK, currentConfigurations)
-	if err != nil {
-		log.Error(err)
-	}
 }
