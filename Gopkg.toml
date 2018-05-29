@@ -19,11 +19,6 @@
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 
-ignored = [
-    "github.com/sirupsen/logrus",
-    "github.com/syndtr/goleveldb/manualtest"
-   ]
-
 [[constraint]]
   branch = "master"
   name = "github.com/ArthurHlt/go-eureka-client"
@@ -51,7 +46,7 @@ ignored = [
 
 [[constraint]]
   name = "github.com/aws/aws-sdk-go"
-  version = "1.6.18"
+  version = "1.13.1"
 
 [[constraint]]
   branch = "master"
@@ -67,11 +62,11 @@ ignored = [
 
 [[constraint]]
   name = "github.com/containous/staert"
-  version = "2.0.0"
+  version = "3.1.0"
 
 [[constraint]]
   name = "github.com/containous/traefik-extra-service-fabric"
-  version = "1.0.5"
+  version = "1.1.5"
 
 [[constraint]]
   name = "github.com/coreos/go-systemd"
@@ -83,10 +78,6 @@ ignored = [
   source = "github.com/containous/leadership"
 
 [[constraint]]
-  name = "github.com/docker/libkv"
-  source = "github.com/abronan/libkv"
-
-[[constraint]]
   name = "github.com/eapache/channels"
   version = "1.1.0"
 
@@ -95,12 +86,26 @@ ignored = [
   name = "github.com/elazarl/go-bindata-assetfs"
 
 [[constraint]]
+  branch = "fork-containous"
+  name = "github.com/go-check/check"
+  source = "github.com/containous/check"
+
+[[override]]
+  branch = "fork-containous"
   name = "github.com/go-check/check"
   source = "github.com/containous/check"
 
 [[constraint]]
   name = "github.com/go-kit/kit"
-  version = "0.3.0"
+  version = "0.7.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/gorilla/websocket"
+
+[[constraint]]
+  name = "github.com/hashicorp/consul"
+  version = "1.0.6"
 
 [[constraint]]
   name = "github.com/influxdata/influxdb"
@@ -111,8 +116,8 @@ ignored = [
   name = "github.com/jjcollinge/servicefabric"
 
 [[constraint]]
-  name = "github.com/mattn/go-shellwords"
-  version = "1.0.3"
+  branch = "master"
+  name = "github.com/abronan/valkeyrie"
 
 [[constraint]]
   name = "github.com/mesosphere/mesos-dns"
@@ -131,8 +136,13 @@ ignored = [
   name = "github.com/mitchellh/mapstructure"
 
 [[constraint]]
-  branch = "master"
+  name = "github.com/opentracing/opentracing-go"
+  version = "1.0.2"
+
+[[constraint]]
+  branch = "containous-fork"
   name = "github.com/rancher/go-rancher-metadata"
+  source = "github.com/containous/go-rancher-metadata"
 
 [[constraint]]
   branch = "master"
@@ -147,17 +157,33 @@ ignored = [
   name = "github.com/stvp/go-udp-testing"
 
 [[constraint]]
+  name = "github.com/stretchr/testify"
+  version = "1.2.1"
+
+[[constraint]]
+  name = "github.com/uber/jaeger-client-go"
+  version = "2.9.0"
+
+[[constraint]]
+  name = "github.com/uber/jaeger-lib"
+  version = "1.1.0"
+
+[[constraint]]
+  branch = "v1"
+  name = "github.com/unrolled/secure"
+
+[[constraint]]
   name = "github.com/vdemeester/shakers"
   version = "0.1.0"
 
 [[constraint]]
-  branch = "containous-fork"
+  branch = "master"
   name = "github.com/vulcand/oxy"
-  source = "https://github.com/containous/oxy.git"
 
 [[constraint]]
+  branch = "containous-fork"
   name = "github.com/xenolf/lego"
-  version = "0.4.1"
+  source = "github.com/containous/lego"
 
 [[constraint]]
   name = "google.golang.org/grpc"
@@ -165,34 +191,66 @@ ignored = [
 
 [[constraint]]
   name = "gopkg.in/fsnotify.v1"
+  source = "github.com/fsnotify/fsnotify"
   version = "1.4.2"
 
 [[constraint]]
   name = "k8s.io/client-go"
-  version = "2.0.0"
+  version = "6.0.0"
+
+[[constraint]]
+  name = "k8s.io/api"
+  version = "kubernetes-1.9.0"
+
+[[constraint]]
+  name = "k8s.io/apimachinery"
+  version = "kubernetes-1.9.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/libkermit/docker"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/libkermit/docker-check"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/libkermit/compose"
+
+[[constraint]]
+ name = "github.com/docker/docker"
+ revision = "7848b8beb9d38a98a78b75f78e05f8d2255f9dfe"
+
+[[override]]
+ name = "github.com/docker/docker"
+ revision = "7848b8beb9d38a98a78b75f78e05f8d2255f9dfe"
+
+[[override]]
+ name = "github.com/docker/cli"
+ revision = "6b63d7b96a41055baddc3fa71f381c7f60bd5d8e"
+
+[[override]]
+ name = "github.com/docker/distribution"
+ revision = "edc3ab29cdff8694dd6feb85cfeb4b5f1b38ed9c"
+
+[[override]]
+  branch = "master"
+  name = "github.com/docker/libcompose"
 
 [[override]]
   name = "github.com/Nvveen/Gotty"
-  revision = "6018b68f96b839edfbe3fb48668853f5dbad88a3"
+  revision = "a8b993ba6abdb0e0c12b0125c603323a71c7790c"
   source = "github.com/ijc25/Gotty"
 
 [[override]]
-  name = "github.com/gorilla/websocket"
-  revision = "a69d9f6de432e2c6b296a947d8a5ee88f68522cf"
-
-[[override]]
-  # always keep this override
+  # ALWAYS keep this override
   name = "github.com/mailgun/timetools"
   revision = "7e6055773c5137efbeb3bd2410d705fe10ab6bfd"
 
 [[override]]
-  name = "github.com/vulcand/predicate"
-  revision = "19b9dde14240d94c804ae5736ad0e1de10bf8fe6"
-
-[[override]]
-  # remove override on master
-  name = "github.com/coreos/bbolt"
-  revision = "32c383e75ce054674c53b5a07e55de85332aee14"
+  branch = "master"
+  name = "github.com/miekg/dns"
 
 [[constraint]]
   name = "github.com/Shopify/sarama"
@@ -214,3 +272,7 @@ ignored = [
   name = "github.com/beevik/etree"
   version = "v1.0.0"
 
+[prune]
+  non-go = true
+  go-tests = true
+  unused-packages = true
