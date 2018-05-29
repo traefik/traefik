@@ -7,7 +7,6 @@ import (
 	"text/template"
 
 	"github.com/BurntSushi/ty/fun"
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
@@ -62,22 +61,22 @@ func (p *Provider) buildConfigurationV2(instances []ecsInstance) (*types.Configu
 }
 
 func (p *Provider) filterInstance(i ecsInstance) bool {
-	if labelPort := label.GetStringValue(i.TraefikLabels, label.TraefikPort, ""); len(i.container.NetworkBindings) == 0 && labelPort == "" {
+	if i.machine == nil {
+		log.Debug("Filtering ecs instance with nil machine")
+		return false
+	}
+
+	if labelPort := label.GetStringValue(i.TraefikLabels, label.TraefikPort, ""); i.machine.port == 0 && labelPort == "" {
 		log.Debugf("Filtering ecs instance without port %s (%s)", i.Name, i.ID)
 		return false
 	}
 
-	if i.machine == nil || i.machine.State == nil || i.machine.State.Name == nil {
-		log.Debugf("Filtering ecs instance with missing ec2 information %s (%s)", i.Name, i.ID)
+	if strings.ToLower(i.machine.state) != ec2.InstanceStateNameRunning {
+		log.Debugf("Filtering ecs instance with an incorrect state %s (%s) (state = %s)", i.Name, i.ID, i.machine.state)
 		return false
 	}
 
-	if aws.StringValue(i.machine.State.Name) != ec2.InstanceStateNameRunning {
-		log.Debugf("Filtering ecs instance with an incorrect state %s (%s) (state = %s)", i.Name, i.ID, aws.StringValue(i.machine.State.Name))
-		return false
-	}
-
-	if i.machine.PrivateIpAddress == nil {
+	if len(i.machine.privateIP) == 0 {
 		log.Debugf("Filtering ecs instance without an ip address %s (%s)", i.Name, i.ID)
 		return false
 	}
@@ -98,14 +97,14 @@ func (p *Provider) getFrontendRule(i ecsInstance) string {
 }
 
 func getHost(i ecsInstance) string {
-	return aws.StringValue(i.machine.PrivateIpAddress)
+	return i.machine.privateIP
 }
 
 func getPort(i ecsInstance) string {
 	if value := label.GetStringValue(i.TraefikLabels, label.TraefikPort, ""); len(value) > 0 {
 		return value
 	}
-	return strconv.FormatInt(aws.Int64Value(i.container.NetworkBindings[0].HostPort), 10)
+	return strconv.FormatInt(i.machine.port, 10)
 }
 
 func filterFrontends(instances []ecsInstance) []ecsInstance {
