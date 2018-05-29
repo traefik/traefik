@@ -12,7 +12,7 @@ HOW TO WRITE A GOOD PULL REQUEST?
 - Write useful descriptions and titles.
 - Address review comments in terms of additional commits.
 - Do not amend/squash existing ones unless the PR is trivial.
-- Read the contributing guide: https://github.com/containous/traefik/blob/master/.github/CONTRIBUTING.md.
+- Read the contributing guide: https://github.com/containous/traefik/blob/master/CONTRIBUTING.md.
 
 -->
 

@@ -124,7 +124,9 @@ func (p *Provider) serviceFilter(service rancherData) bool {
 }
 
 func (p *Provider) getFrontendRule(serviceName string, labels map[string]string) string {
-	defaultRule := "Host:" + strings.ToLower(strings.Replace(serviceName, "/", ".", -1)) + "." + p.Domain
+	domain := label.GetStringValue(labels, label.TraefikDomain, p.Domain)
+	defaultRule := "Host:" + strings.ToLower(strings.Replace(serviceName, "/", ".", -1)) + "." + domain
+
 	return label.GetStringValue(labels, label.TraefikFrontendRule, defaultRule)
 }
 
@@ -148,7 +150,7 @@ func getBackendName(service rancherData) string {
 }
 
 func getSegmentBackendName(service rancherData) string {
-	if value := label.GetStringValue(service.SegmentLabels, label.TraefikFrontendBackend, ""); len(value) > 0 {
+	if value := label.GetStringValue(service.SegmentLabels, label.TraefikBackend, ""); len(value) > 0 {
 		return provider.Normalize(service.Name + "-" + value)
 	}
 
@@ -164,6 +166,11 @@ func getServers(service rancherData) map[string]types.Server {
 	var servers map[string]types.Server
 
 	for index, ip := range service.Containers {
+		if len(ip) == 0 {
+			log.Warnf("Unable to find the IP address for a container in the service %q: this container is ignored.", service.Name)
+			continue
+		}
+
 		if servers == nil {
 			servers = make(map[string]types.Server)
 		}

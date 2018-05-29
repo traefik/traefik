@@ -210,10 +210,12 @@ func (p *Provider) getFrontendRule(app appData) string {
 		}
 	}
 
+	domain := label.GetStringValue(app.SegmentLabels, label.TraefikDomain, p.Domain)
+
 	if len(app.SegmentName) > 0 {
-		return "Host:" + strings.ToLower(provider.Normalize(app.SegmentName)) + "." + p.getSubDomain(app.ID) + "." + p.Domain
+		return "Host:" + strings.ToLower(provider.Normalize(app.SegmentName)) + "." + p.getSubDomain(app.ID) + "." + domain
 	}
-	return "Host:" + p.getSubDomain(app.ID) + "." + p.Domain
+	return "Host:" + p.getSubDomain(app.ID) + "." + domain
 }
 
 func getPort(task marathon.Task, app appData) string {
@@ -345,6 +347,9 @@ func (p *Provider) getServer(app appData, task marathon.Task) (string, *types.Se
 
 func (p *Provider) getServerHost(task marathon.Task, app appData) (string, error) {
 	if app.IPAddressPerTask == nil || p.ForceTaskHostname {
+		if len(task.Host) == 0 {
+			return "", fmt.Errorf("host is undefined for task %q app %q", task.ID, app.ID)
+		}
 		return task.Host, nil
 	}
 

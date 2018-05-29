@@ -15,15 +15,18 @@ type Account struct {
 	Email        string
 	Registration *acme.RegistrationResource
 	PrivateKey   []byte
+	KeyType      acme.KeyType
 }
 
 const (
 	// RegistrationURLPathV1Regexp is a regexp which match ACME registration URL in the V1 format
-	RegistrationURLPathV1Regexp string = `^.*/acme/reg/\d+$`
+	RegistrationURLPathV1Regexp = `^.*/acme/reg/\d+$`
 )
 
 // NewAccount creates an account
-func NewAccount(email string) (*Account, error) {
+func NewAccount(email string, keyTypeValue string) (*Account, error) {
+	keyType := GetKeyType(keyTypeValue)
+
 	// Create a user. New accounts need an email and private key to start
 	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
@@ -33,6 +36,7 @@ func NewAccount(email string) (*Account, error) {
 	return &Account{
 		Email:      email,
 		PrivateKey: x509.MarshalPKCS1PrivateKey(privateKey),
+		KeyType:    keyType,
 	}, nil
 }
 
@@ -54,4 +58,23 @@ func (a *Account) GetPrivateKey() crypto.PrivateKey {
 
 	log.Errorf("Cannot unmarshal private key %+v", a.PrivateKey)
 	return nil
+}
+
+// GetKeyType used to determine which algo to used
+func GetKeyType(value string) acme.KeyType {
+	switch value {
+	case "EC256":
+		return acme.EC256
+	case "EC384":
+		return acme.EC384
+	case "RSA2048":
+		return acme.RSA2048
+	case "RSA4096":
+		return acme.RSA4096
+	case "RSA8192":
+		return acme.RSA8192
+	default:
+		log.Warnf("Unable to determine key type value %s. Use %s as default value", value, acme.RSA4096)
+		return acme.RSA4096
+	}
 }

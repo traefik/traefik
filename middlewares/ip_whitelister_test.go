@@ -89,6 +89,13 @@ func TestIPWhiteLister_ServeHTTP(t *testing.T) {
 			expected:         200,
 		},
 		{
+			desc:             "authorized with only one X-Forwarded-For",
+			whiteList:        []string{"30.30.30.30"},
+			useXForwardedFor: true,
+			xForwardedFor:    []string{"30.30.30.30"},
+			expected:         200,
+		},
+		{
 			desc:             "non authorized with X-Forwarded-For",
 			whiteList:        []string{"30.30.30.30"},
 			useXForwardedFor: true,

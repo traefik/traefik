@@ -30,6 +30,7 @@
   {{ $healthCheck := getHealthCheck $backend.SegmentLabels }}
   {{if $healthCheck }}
   [backends."backend-{{ $backendName }}".healthCheck]
+    scheme = "{{ $healthCheck.Scheme }}"
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
@@ -128,6 +129,7 @@
       SSLRedirect = {{ $headers.SSLRedirect }}
       SSLTemporaryRedirect = {{ $headers.SSLTemporaryRedirect }}
       SSLHost = "{{ $headers.SSLHost }}"
+      SSLForceHost = {{ $headers.SSLForceHost }}
       STSSeconds = {{ $headers.STSSeconds }}
       STSIncludeSubdomains = {{ $headers.STSIncludeSubdomains }}
       STSPreload = {{ $headers.STSPreload }}

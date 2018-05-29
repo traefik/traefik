@@ -41,6 +41,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						label.TraefikBackend: "foobar",
 
 						label.TraefikBackendCircuitBreakerExpression:         "NetworkErrorRatio() > 0.5",
+						label.TraefikBackendHealthCheckScheme:                "http",
 						label.TraefikBackendHealthCheckPath:                  "/health",
 						label.TraefikBackendHealthCheckPort:                  "880",
 						label.TraefikBackendHealthCheckInterval:              "6",
@@ -83,6 +84,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendReferrerPolicy:          "foo",
 						label.TraefikFrontendCustomBrowserXSSValue:   "foo",
 						label.TraefikFrontendSTSSeconds:              "666",
+						label.TraefikFrontendSSLForceHost:            "true",
 						label.TraefikFrontendSSLRedirect:             "true",
 						label.TraefikFrontendSSLTemporaryRedirect:    "true",
 						label.TraefikFrontendSTSIncludeSubdomains:    "true",
@@ -158,6 +160,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						},
 						SSLRedirect:          true,
 						SSLTemporaryRedirect: true,
+						SSLForceHost:         true,
 						SSLHost:              "foo",
 						SSLProxyHeaders: map[string]string{
 							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
@@ -239,6 +242,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						ExtractorFunc: "client.ip",
 					},
 					HealthCheck: &types.HealthCheck{
+						Scheme:   "http",
 						Path:     "/health",
 						Port:     880,
 						Interval: "6",
@@ -292,6 +296,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						label.Prefix + "sauternes." + label.SuffixFrontendHeadersReferrerPolicy:          "foo",
 						label.Prefix + "sauternes." + label.SuffixFrontendHeadersCustomBrowserXSSValue:   "foo",
 						label.Prefix + "sauternes." + label.SuffixFrontendHeadersSTSSeconds:              "666",
+						label.Prefix + "sauternes." + label.SuffixFrontendHeadersSSLForceHost:            "true",
 						label.Prefix + "sauternes." + label.SuffixFrontendHeadersSSLRedirect:             "true",
 						label.Prefix + "sauternes." + label.SuffixFrontendHeadersSSLTemporaryRedirect:    "true",
 						label.Prefix + "sauternes." + label.SuffixFrontendHeadersSTSIncludeSubdomains:    "true",
@@ -356,6 +361,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						HostsProxyHeaders:    []string{"foo", "bar", "bor"},
 						SSLRedirect:          true,
 						SSLTemporaryRedirect: true,
+						SSLForceHost:         true,
 						SSLHost:              "foo",
 						SSLProxyHeaders: map[string]string{
 							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
@@ -730,6 +736,16 @@ func TestProviderGetFrontendRule(t *testing.T) {
 			expected: "Host:foo.rancher.localhost",
 		},
 		{
+			desc: "with domain label",
+			service: rancherData{
+				Name: "test-service",
+				Labels: map[string]string{
+					label.TraefikDomain: "traefik.localhost",
+				},
+			},
+			expected: "Host:test-service.traefik.localhost",
+		},
+		{
 			desc: "host with /",
 			service: rancherData{
 				Name: "foo/bar",
@@ -745,26 +761,6 @@ func TestProviderGetFrontendRule(t *testing.T) {
 				},
 			},
 			expected: "Host:foo.bar.com",
-		},
-		{
-			desc: "with Path label",
-			service: rancherData{
-				Name: "test-service",
-				Labels: map[string]string{
-					label.TraefikFrontendRule: "Path:/test",
-				},
-			},
-			expected: "Path:/test",
-		},
-		{
-			desc: "with PathPrefix label",
-			service: rancherData{
-				Name: "test-service",
-				Labels: map[string]string{
-					label.TraefikFrontendRule: "PathPrefix:/test2",
-				},
-			},
-			expected: "PathPrefix:/test2",
 		},
 	}
 
@@ -844,6 +840,18 @@ func TestGetServers(t *testing.T) {
 					label.TraefikWeight: "7",
 				},
 				Containers: []string{},
+				Health:     "healthy",
+				State:      "active",
+			},
+			expected: nil,
+		},
+		{
+			desc: "should return nil when no server IPs",
+			service: rancherData{
+				Labels: map[string]string{
+					label.TraefikWeight: "7",
+				},
+				Containers: []string{""},
 				Health:     "healthy",
 				State:      "active",
 			},

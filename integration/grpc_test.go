@@ -2,11 +2,11 @@ package integration
 
 import (
 	"context"
-	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
 	"io/ioutil"
+	"math/rand"
 	"net"
 	"os"
 	"time"
@@ -20,6 +20,8 @@ import (
 
 var LocalhostCert []byte
 var LocalhostKey []byte
+
+const randCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 
 // GRPCSuite
 type GRPCSuite struct{ BaseSuite }
@@ -42,7 +44,9 @@ func (s *myserver) SayHello(ctx context.Context, in *helloworld.HelloRequest) (*
 
 func (s *myserver) StreamExample(in *helloworld.StreamExampleRequest, server helloworld.Greeter_StreamExampleServer) error {
 	data := make([]byte, 512)
-	rand.Read(data)
+	for i := range data {
+		data[i] = randCharset[rand.Intn(len(randCharset))]
+	}
 	server.Send(&helloworld.StreamExampleReply{Data: string(data)})
 	<-s.stopStreamExample
 	return nil
@@ -63,6 +67,15 @@ func startGRPCServer(lis net.Listener, server *myserver) error {
 	helloworld.RegisterGreeterServer(s, server)
 	return s.Serve(lis)
 }
+
+func starth2cGRPCServer(lis net.Listener, server *myserver) error {
+	s := grpc.NewServer()
+	defer s.Stop()
+
+	helloworld.RegisterGreeterServer(s, server)
+	return s.Serve(lis)
+}
+
 func getHelloClientGRPC() (helloworld.GreeterClient, func() error, error) {
 	roots := x509.NewCertPool()
 	roots.AppendCertsFromPEM(LocalhostCert)
@@ -75,9 +88,27 @@ func getHelloClientGRPC() (helloworld.GreeterClient, func() error, error) {
 
 }
 
-func callHelloClientGRPC(name string) (string, error) {
-	client, closer, err := getHelloClientGRPC()
+func getHelloClientGRPCh2c() (helloworld.GreeterClient, func() error, error) {
+	conn, err := grpc.Dial("127.0.0.1:8081", grpc.WithInsecure())
+	if err != nil {
+		return nil, func() error { return nil }, err
+	}
+	return helloworld.NewGreeterClient(conn), conn.Close, nil
+
+}
+
+func callHelloClientGRPC(name string, secure bool) (string, error) {
+	var client helloworld.GreeterClient
+	var closer func() error
+	var err error
+
+	if secure {
+		client, closer, err = getHelloClientGRPC()
+	} else {
+		client, closer, err = getHelloClientGRPCh2c()
+	}
 	defer closer()
+
 	if err != nil {
 		return "", err
 	}
@@ -133,12 +164,92 @@ func (s *GRPCSuite) TestGRPC(c *check.C) {
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("Host:127.0.0.1"))
 	c.Assert(err, check.IsNil)
+
 	var response string
 	err = try.Do(1*time.Second, func() error {
-		response, err = callHelloClientGRPC("World")
+		response, err = callHelloClientGRPC("World", true)
 		return err
 	})
+	c.Assert(err, check.IsNil)
+	c.Assert(response, check.Equals, "Hello World")
+}
 
+func (s *GRPCSuite) TestGRPCh2c(c *check.C) {
+	lis, err := net.Listen("tcp", ":0")
+	_, port, err := net.SplitHostPort(lis.Addr().String())
+	c.Assert(err, check.IsNil)
+
+	go func() {
+		err := starth2cGRPCServer(lis, &myserver{})
+		c.Log(err)
+		c.Assert(err, check.IsNil)
+	}()
+
+	file := s.adaptFile(c, "fixtures/grpc/config_h2c.toml", struct {
+		GRPCServerPort string
+	}{
+		GRPCServerPort: port,
+	})
+
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+
+	err = cmd.Start()
+	c.Assert(err, check.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("Host:127.0.0.1"))
+	c.Assert(err, check.IsNil)
+
+	var response string
+	err = try.Do(1*time.Second, func() error {
+		response, err = callHelloClientGRPC("World", false)
+		return err
+	})
+	c.Assert(err, check.IsNil)
+	c.Assert(response, check.Equals, "Hello World")
+}
+
+func (s *GRPCSuite) TestGRPCh2cTermination(c *check.C) {
+	lis, err := net.Listen("tcp", ":0")
+	_, port, err := net.SplitHostPort(lis.Addr().String())
+	c.Assert(err, check.IsNil)
+
+	go func() {
+		err := starth2cGRPCServer(lis, &myserver{})
+		c.Log(err)
+		c.Assert(err, check.IsNil)
+	}()
+
+	file := s.adaptFile(c, "fixtures/grpc/config_h2c_termination.toml", struct {
+		CertContent    string
+		KeyContent     string
+		GRPCServerPort string
+	}{
+		CertContent:    string(LocalhostCert),
+		KeyContent:     string(LocalhostKey),
+		GRPCServerPort: port,
+	})
+
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+
+	err = cmd.Start()
+	c.Assert(err, check.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("Host:127.0.0.1"))
+	c.Assert(err, check.IsNil)
+
+	var response string
+	err = try.Do(1*time.Second, func() error {
+		response, err = callHelloClientGRPC("World", true)
+		return err
+	})
 	c.Assert(err, check.IsNil)
 	c.Assert(response, check.Equals, "Hello World")
 }
@@ -175,12 +286,12 @@ func (s *GRPCSuite) TestGRPCInsecure(c *check.C) {
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("Host:127.0.0.1"))
 	c.Assert(err, check.IsNil)
+
 	var response string
 	err = try.Do(1*time.Second, func() error {
-		response, err = callHelloClientGRPC("World")
+		response, err = callHelloClientGRPC("World", true)
 		return err
 	})
-
 	c.Assert(err, check.IsNil)
 	c.Assert(response, check.Equals, "Hello World")
 }

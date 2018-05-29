@@ -19,14 +19,14 @@ const healthCheckInterval = 100 * time.Millisecond
 
 type testHandler struct {
 	done           func()
-	healthSequence []bool
+	healthSequence []int
 }
 
 func TestSetBackendsConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc                       string
 		startHealthy               bool
-		healthSequence             []bool
+		healthSequence             []int
 		expectedNumRemovedServers  int
 		expectedNumUpsertedServers int
 		expectedGaugeValue         float64
@@ -34,7 +34,23 @@ func TestSetBackendsConfiguration(t *testing.T) {
 		{
 			desc:                       "healthy server staying healthy",
 			startHealthy:               true,
-			healthSequence:             []bool{true},
+			healthSequence:             []int{http.StatusOK},
+			expectedNumRemovedServers:  0,
+			expectedNumUpsertedServers: 0,
+			expectedGaugeValue:         1,
+		},
+		{
+			desc:                       "healthy server staying healthy (StatusNoContent)",
+			startHealthy:               true,
+			healthSequence:             []int{http.StatusNoContent},
+			expectedNumRemovedServers:  0,
+			expectedNumUpsertedServers: 0,
+			expectedGaugeValue:         1,
+		},
+		{
+			desc:                       "healthy server staying healthy (StatusPermanentRedirect)",
+			startHealthy:               true,
+			healthSequence:             []int{http.StatusPermanentRedirect},
 			expectedNumRemovedServers:  0,
 			expectedNumUpsertedServers: 0,
 			expectedGaugeValue:         1,
@@ -42,7 +58,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 		{
 			desc:                       "healthy server becoming sick",
 			startHealthy:               true,
-			healthSequence:             []bool{false},
+			healthSequence:             []int{http.StatusServiceUnavailable},
 			expectedNumRemovedServers:  1,
 			expectedNumUpsertedServers: 0,
 			expectedGaugeValue:         0,
@@ -50,7 +66,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 		{
 			desc:                       "sick server becoming healthy",
 			startHealthy:               false,
-			healthSequence:             []bool{true},
+			healthSequence:             []int{http.StatusOK},
 			expectedNumRemovedServers:  0,
 			expectedNumUpsertedServers: 1,
 			expectedGaugeValue:         1,
@@ -58,7 +74,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 		{
 			desc:                       "sick server staying sick",
 			startHealthy:               false,
-			healthSequence:             []bool{false},
+			healthSequence:             []int{http.StatusServiceUnavailable},
 			expectedNumRemovedServers:  0,
 			expectedNumUpsertedServers: 0,
 			expectedGaugeValue:         0,
@@ -66,7 +82,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 		{
 			desc:                       "healthy server toggling to sick and back to healthy",
 			startHealthy:               true,
-			healthSequence:             []bool{false, true},
+			healthSequence:             []int{http.StatusServiceUnavailable, http.StatusOK},
 			expectedNumRemovedServers:  1,
 			expectedNumUpsertedServers: 1,
 			expectedGaugeValue:         1,
@@ -77,6 +93,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			// The context is passed to the health check and canonically cancelled by
 			// the test server once all expected requests have been received.
 			ctx, cancel := context.WithCancel(context.Background())
@@ -134,39 +151,56 @@ func TestSetBackendsConfiguration(t *testing.T) {
 
 func TestNewRequest(t *testing.T) {
 	testCases := []struct {
-		desc     string
-		host     string
-		port     int
-		path     string
-		expected string
+		desc      string
+		serverURL string
+		options   Options
+		expected  string
 	}{
 		{
-			desc:     "no port override",
-			host:     "backend1:80",
-			port:     0,
-			path:     "/test",
+			desc:      "no port override",
+			serverURL: "http://backend1:80",
+			options: Options{
+				Path: "/test",
+				Port: 0,
+			},
 			expected: "http://backend1:80/test",
 		},
 		{
-			desc:     "port override",
-			host:     "backend2:80",
-			port:     8080,
-			path:     "/test",
+			desc:      "port override",
+			serverURL: "http://backend2:80",
+			options: Options{
+				Path: "/test",
+				Port: 8080,
+			},
 			expected: "http://backend2:8080/test",
 		},
 		{
-			desc:     "no port override with no port in host",
-			host:     "backend1",
-			port:     0,
-			path:     "/health",
+			desc:      "no port override with no port in server URL",
+			serverURL: "http://backend1",
+			options: Options{
+				Path: "/health",
+				Port: 0,
+			},
 			expected: "http://backend1/health",
 		},
 		{
-			desc:     "port override with no port in host",
-			host:     "backend2",
-			port:     8080,
-			path:     "/health",
+			desc:      "port override with no port in server URL",
+			serverURL: "http://backend2",
+			options: Options{
+				Path: "/health",
+				Port: 8080,
+			},
 			expected: "http://backend2:8080/health",
+		},
+		{
+			desc:      "scheme override",
+			serverURL: "https://backend1:80",
+			options: Options{
+				Scheme: "http",
+				Path:   "/test",
+				Port:   0,
+			},
+			expected: "http://backend1:80/test",
 		},
 	}
 
@@ -175,16 +209,10 @@ func TestNewRequest(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			backend := NewBackendHealthCheck(
-				Options{
-					Path: test.path,
-					Port: test.port,
-				}, "backendName")
+			backend := NewBackendHealthCheck(test.options, "backendName")
 
-			u := &url.URL{
-				Scheme: "http",
-				Host:   test.host,
-			}
+			u, err := url.Parse(test.serverURL)
+			require.NoError(t, err)
 
 			req, err := backend.newRequest(u)
 			require.NoError(t, err, "failed to create new backend request")
@@ -194,54 +222,53 @@ func TestNewRequest(t *testing.T) {
 	}
 }
 
-func TestNewRequestWithAddHeaders(t *testing.T) {
+func TestAddHeadersAndHost(t *testing.T) {
 	testCases := []struct {
 		desc             string
-		host             string
-		headers          map[string]string
-		hostname         string
-		port             int
-		path             string
+		serverURL        string
+		options          Options
 		expectedHostname string
 		expectedHeader   string
 	}{
 		{
-			desc:             "override hostname",
-			host:             "backend1:80",
-			headers:          map[string]string{},
-			hostname:         "myhost",
-			port:             0,
-			path:             "/",
+			desc:      "override hostname",
+			serverURL: "http://backend1:80",
+			options: Options{
+				Hostname: "myhost",
+				Path:     "/",
+			},
 			expectedHostname: "myhost",
 			expectedHeader:   "",
 		},
 		{
-			desc:             "not override hostname",
-			host:             "backend1:80",
-			headers:          map[string]string{},
-			hostname:         "",
-			port:             0,
-			path:             "/",
+			desc:      "not override hostname",
+			serverURL: "http://backend1:80",
+			options: Options{
+				Hostname: "",
+				Path:     "/",
+			},
 			expectedHostname: "backend1:80",
 			expectedHeader:   "",
 		},
 		{
-			desc:             "custom header",
-			host:             "backend1:80",
-			headers:          map[string]string{"Custom-Header": "foo"},
-			hostname:         "",
-			port:             0,
-			path:             "/",
+			desc:      "custom header",
+			serverURL: "http://backend1:80",
+			options: Options{
+				Headers:  map[string]string{"Custom-Header": "foo"},
+				Hostname: "",
+				Path:     "/",
+			},
 			expectedHostname: "backend1:80",
 			expectedHeader:   "foo",
 		},
 		{
-			desc:             "custom header with host override",
-			host:             "backend1:80",
-			headers:          map[string]string{"Custom-Header": "foo"},
-			hostname:         "myhost",
-			port:             0,
-			path:             "/",
+			desc:      "custom header with hostname override",
+			serverURL: "http://backend1:80",
+			options: Options{
+				Headers:  map[string]string{"Custom-Header": "foo"},
+				Hostname: "myhost",
+				Path:     "/",
+			},
 			expectedHostname: "myhost",
 			expectedHeader:   "foo",
 		},
@@ -252,26 +279,17 @@ func TestNewRequestWithAddHeaders(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			backend := NewBackendHealthCheck(
-				Options{
-					Hostname: test.hostname,
-					Path:     test.path,
-					Port:     test.port,
-					Headers:  test.headers,
-				}, "backendName")
+			backend := NewBackendHealthCheck(test.options, "backendName")
 
-			u := &url.URL{
-				Scheme: "http",
-				Host:   test.host,
-			}
+			u, err := url.Parse(test.serverURL)
+			require.NoError(t, err)
 
 			req, err := backend.newRequest(u)
-			if err != nil {
-				t.Fatalf("failed to create new backend request: %s", err)
-			}
+			require.NoError(t, err, "failed to create new backend request")
 
 			req = backend.addHeadersAndHost(req)
 
+			assert.Equal(t, "http://backend1:80/", req.URL.String())
 			assert.Equal(t, test.expectedHostname, req.Host)
 			assert.Equal(t, test.expectedHeader, req.Header.Get("Custom-Header"))
 		})
@@ -319,7 +337,7 @@ func (lb *testLoadBalancer) removeServer(u *url.URL) {
 	lb.servers = append(lb.servers[:i], lb.servers[i+1:]...)
 }
 
-func newTestServer(done func(), healthSequence []bool) *httptest.Server {
+func newTestServer(done func(), healthSequence []int) *httptest.Server {
 	handler := &testHandler{
 		done:           done,
 		healthSequence: healthSequence,
@@ -327,21 +345,14 @@ func newTestServer(done func(), healthSequence []bool) *httptest.Server {
 	return httptest.NewServer(handler)
 }
 
-// ServeHTTP returns 200 or 503 HTTP response codes depending on whether the
-// current request is marked as healthy or not.
-// It calls the given 'done' function once all request health indicators have
-// been depleted.
+// ServeHTTP returns HTTP response codes following a status sequences.
+// It calls the given 'done' function once all request health indicators have been depleted.
 func (th *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if len(th.healthSequence) == 0 {
 		panic("received unexpected request")
 	}
 
-	healthy := th.healthSequence[0]
-	if healthy {
-		w.WriteHeader(http.StatusOK)
-	} else {
-		w.WriteHeader(http.StatusServiceUnavailable)
-	}
+	w.WriteHeader(th.healthSequence[0])
 
 	th.healthSequence = th.healthSequence[1:]
 	if len(th.healthSequence) == 0 {

@@ -1,11 +1,11 @@
 package whitelist
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
-
-	"github.com/pkg/errors"
+	"strings"
 )
 
 const (
@@ -50,64 +50,78 @@ func NewIP(whiteList []string, insecure bool, useXForwardedFor bool) (*IP, error
 }
 
 // IsAuthorized checks if provided request is authorized by the white list
-func (ip *IP) IsAuthorized(req *http.Request) (bool, net.IP, error) {
+func (ip *IP) IsAuthorized(req *http.Request) error {
 	if ip.insecure {
-		return true, nil, nil
+		return nil
 	}
+
+	var invalidMatches []string
 
 	if ip.useXForwardedFor {
 		xFFs := req.Header[XForwardedFor]
-		if len(xFFs) > 1 {
+		if len(xFFs) > 0 {
 			for _, xFF := range xFFs {
-				ok, i, err := ip.contains(parseHost(xFF))
+				ok, err := ip.contains(parseHost(xFF))
 				if err != nil {
-					return false, nil, err
+					return err
 				}
 
 				if ok {
-					return ok, i, nil
+					return nil
 				}
+
+				invalidMatches = append(invalidMatches, xFF)
 			}
 		}
 	}
 
 	host, _, err := net.SplitHostPort(req.RemoteAddr)
 	if err != nil {
-		return false, nil, err
+		return err
 	}
-	return ip.contains(host)
+
+	ok, err := ip.contains(host)
+	if err != nil {
+		return err
+	}
+
+	if !ok {
+		invalidMatches = append(invalidMatches, req.RemoteAddr)
+		return fmt.Errorf("%q matched none of the white list", strings.Join(invalidMatches, ", "))
+	}
+
+	return nil
 }
 
 // contains checks if provided address is in the white list
-func (ip *IP) contains(addr string) (bool, net.IP, error) {
+func (ip *IP) contains(addr string) (bool, error) {
 	ipAddr, err := parseIP(addr)
 	if err != nil {
-		return false, nil, fmt.Errorf("unable to parse address: %s: %s", addr, err)
+		return false, fmt.Errorf("unable to parse address: %s: %s", addr, err)
 	}
 
-	contains, err := ip.ContainsIP(ipAddr)
-	return contains, ipAddr, err
+	return ip.ContainsIP(ipAddr), nil
 }
 
 // ContainsIP checks if provided address is in the white list
-func (ip *IP) ContainsIP(addr net.IP) (bool, error) {
+func (ip *IP) ContainsIP(addr net.IP) bool {
 	if ip.insecure {
-		return true, nil
+		return true
 	}
 
 	for _, whiteListIP := range ip.whiteListsIPs {
 		if whiteListIP.Equal(addr) {
-			return true, nil
+			return true
 		}
 	}
 
 	for _, whiteListNet := range ip.whiteListsNet {
 		if whiteListNet.Contains(addr) {
-			return true, nil
+			return true
 		}
 	}
 
-	return false, nil
+	return false
 }
 
 func parseIP(addr string) (net.IP, error) {

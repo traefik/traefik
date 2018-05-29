@@ -38,21 +38,15 @@ func NewIPWhiteLister(whiteList []string, useXForwardedFor bool) (*IPWhiteLister
 }
 
 func (wl *IPWhiteLister) handle(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	allowed, ip, err := wl.whiteLister.IsAuthorized(r)
+	err := wl.whiteLister.IsAuthorized(r)
 	if err != nil {
-		tracing.SetErrorAndDebugLog(r, "request %+v matched none of the white list - rejecting", r)
+		tracing.SetErrorAndDebugLog(r, "request %+v - rejecting: %v", r, err)
 		reject(w)
 		return
 	}
 
-	if allowed {
-		tracing.SetErrorAndDebugLog(r, "request %+v matched white list %s - passing", r, wl.whiteLister)
-		next.ServeHTTP(w, r)
-		return
-	}
-
-	tracing.SetErrorAndDebugLog(r, "source-IP %s matched none of the white list - rejecting", ip)
-	reject(w)
+	tracing.SetErrorAndDebugLog(r, "request %+v matched white list %s - passing", r, wl.whiteLister)
+	next.ServeHTTP(w, r)
 }
 
 func (wl *IPWhiteLister) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
@@ -63,5 +57,8 @@ func reject(w http.ResponseWriter) {
 	statusCode := http.StatusForbidden
 
 	w.WriteHeader(statusCode)
-	w.Write([]byte(http.StatusText(statusCode)))
+	_, err := w.Write([]byte(http.StatusText(statusCode)))
+	if err != nil {
+		log.Error(err)
+	}
 }

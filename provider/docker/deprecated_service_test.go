@@ -162,7 +162,7 @@ func TestDockerServiceBuildConfigurationV1(t *testing.T) {
 						"traefik.service.port":                         "2503",
 						"traefik.service.protocol":                     "https",
 						"traefik.service.weight":                       "80",
-						"traefik.service.frontend.backend":             "foobar",
+						"traefik.service.backend":                      "foobar",
 						"traefik.service.frontend.passHostHeader":      "false",
 						"traefik.service.frontend.rule":                "Path:/mypath",
 						"traefik.service.frontend.priority":            "5000",
@@ -405,154 +405,6 @@ func TestDockerGetServiceStringValueV1(t *testing.T) {
 	}
 }
 
-func TestDockerHasStrictServiceLabelV1(t *testing.T) {
-	testCases := []struct {
-		desc          string
-		serviceLabels map[string]string
-		labelSuffix   string
-		expected      bool
-	}{
-		{
-			desc:          "should return false when service don't have label",
-			serviceLabels: map[string]string{},
-			labelSuffix:   "",
-			expected:      false,
-		},
-		{
-			desc: "should return true when service have label",
-			serviceLabels: map[string]string{
-				"foo": "bar",
-			},
-			labelSuffix: "foo",
-			expected:    true,
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			actual := hasStrictServiceLabelV1(test.serviceLabels, test.labelSuffix)
-
-			assert.Equal(t, test.expected, actual)
-		})
-	}
-}
-
-func TestDockerGetStrictServiceStringValueV1(t *testing.T) {
-	testCases := []struct {
-		desc          string
-		serviceLabels map[string]string
-		labelSuffix   string
-		defaultValue  string
-		expected      string
-	}{
-		{
-			desc: "should return a string when the label exists",
-			serviceLabels: map[string]string{
-				"foo": "bar",
-			},
-			labelSuffix: "foo",
-			expected:    "bar",
-		},
-		{
-			desc: "should return a string when the label exists and value empty",
-			serviceLabels: map[string]string{
-				"foo": "",
-			},
-			labelSuffix:  "foo",
-			defaultValue: "cube",
-			expected:     "",
-		},
-		{
-			desc:          "should return the default value when the label doesn't exist",
-			serviceLabels: map[string]string{},
-			labelSuffix:   "foo",
-			defaultValue:  "cube",
-			expected:      "cube",
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			actual := getStrictServiceStringValueV1(test.serviceLabels, test.labelSuffix, test.defaultValue)
-
-			assert.Equal(t, test.expected, actual)
-		})
-	}
-}
-
-func TestDockerGetServiceMapValueV1(t *testing.T) {
-	testCases := []struct {
-		desc          string
-		container     docker.ContainerJSON
-		serviceLabels map[string]string
-		serviceName   string
-		labelSuffix   string
-		expected      map[string]string
-	}{
-		{
-			desc: "should return when no labels",
-			container: containerJSON(
-				name("test1"),
-				labels(map[string]string{})),
-			serviceLabels: map[string]string{},
-			serviceName:   "soo",
-			labelSuffix:   "foo",
-			expected:      nil,
-		},
-		{
-			desc: "should return a map when label exists",
-			container: containerJSON(
-				name("test1"),
-				labels(map[string]string{
-					"traefik.foo": "bir:fii",
-				})),
-			serviceLabels: map[string]string{
-				"foo": "bar:foo",
-			},
-			serviceName: "soo",
-			labelSuffix: "foo",
-			expected: map[string]string{
-				"Bar": "foo",
-			},
-		},
-		{
-			desc: "should return a map when label exists (fallback to container labels)",
-			container: containerJSON(
-				name("test1"),
-				labels(map[string]string{
-					"traefik.foo": "bir:fii",
-				})),
-			serviceLabels: map[string]string{
-				"fo": "bar:foo",
-			},
-			serviceName: "soo",
-			labelSuffix: "foo",
-			expected: map[string]string{
-				"Bir": "fii",
-			},
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			dData := parseContainer(test.container)
-
-			actual := getServiceMapValueV1(dData, test.serviceLabels, test.serviceName, test.labelSuffix)
-
-			assert.Equal(t, test.expected, actual)
-		})
-	}
-}
-
 func TestDockerGetServiceSliceValueV1(t *testing.T) {
 	testCases := []struct {
 		desc          string
@@ -672,67 +524,6 @@ func TestDockerGetServiceBoolValueV1(t *testing.T) {
 	}
 }
 
-func TestDockerGetServiceInt64ValueV1(t *testing.T) {
-	testCases := []struct {
-		desc          string
-		container     docker.ContainerJSON
-		serviceLabels map[string]string
-		labelSuffix   string
-		defaultValue  int64
-		expected      int64
-	}{
-		{
-			desc: "should return default value when no label",
-			container: containerJSON(
-				name("test1"),
-				labels(map[string]string{})),
-			serviceLabels: map[string]string{},
-			labelSuffix:   "foo",
-			defaultValue:  666,
-			expected:      666,
-		},
-		{
-			desc: "should return a int64 when label",
-			container: containerJSON(
-				name("test1"),
-				labels(map[string]string{
-					"traefik.foo": "20",
-				})),
-			serviceLabels: map[string]string{
-				"foo": "10",
-			},
-			labelSuffix: "foo",
-			expected:    10,
-		},
-		{
-			desc: "should return a int64 when label (fallback to container labels)",
-			container: containerJSON(
-				name("test1"),
-				labels(map[string]string{
-					"traefik.foo": "20",
-				})),
-			serviceLabels: map[string]string{
-				"fo": "10",
-			},
-			labelSuffix: "foo",
-			expected:    20,
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			dData := parseContainer(test.container)
-
-			actual := getServiceInt64ValueV1(dData, test.serviceLabels, test.labelSuffix, test.defaultValue)
-
-			assert.Equal(t, test.expected, actual)
-		})
-	}
-}
-
 func TestDockerCheckPortLabelsV1(t *testing.T) {
 	testCases := []struct {
 		container     docker.ContainerJSON
@@ -804,7 +595,7 @@ func TestDockerGetServiceBackendNameV1(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.myservice.frontend.backend": "custom-backend",
+				"traefik.myservice.backend": "custom-backend",
 			})),
 			expected: "fake-custom-backend",
 		},

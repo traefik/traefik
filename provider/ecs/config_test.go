@@ -29,16 +29,10 @@ func TestBuildConfiguration(t *testing.T) {
 					containerDefinition: &ecs.ContainerDefinition{
 						DockerLabels: map[string]*string{},
 					},
-					machine: &ec2.Instance{
-						State: &ec2.InstanceState{
-							Name: aws.String(ec2.InstanceStateNameRunning),
-						},
-						PrivateIpAddress: aws.String("10.0.0.1"),
-					},
-					container: &ecs.Container{
-						NetworkBindings: []*ecs.NetworkBinding{{
-							HostPort: aws.Int64(1337),
-						}},
+					machine: &machine{
+						state:     ec2.InstanceStateNameRunning,
+						privateIP: "10.0.0.1",
+						port:      1337,
 					},
 				},
 			},
@@ -78,16 +72,10 @@ func TestBuildConfiguration(t *testing.T) {
 							label.TraefikBackendHealthCheckPath:     aws.String("/health"),
 							label.TraefikBackendHealthCheckInterval: aws.String("1s"),
 						}},
-					machine: &ec2.Instance{
-						State: &ec2.InstanceState{
-							Name: aws.String(ec2.InstanceStateNameRunning),
-						},
-						PrivateIpAddress: aws.String("10.0.0.1"),
-					},
-					container: &ecs.Container{
-						NetworkBindings: []*ecs.NetworkBinding{{
-							HostPort: aws.Int64(1337),
-						}},
+					machine: &machine{
+						state:     ec2.InstanceStateNameRunning,
+						privateIP: "10.0.0.1",
+						port:      1337,
 					},
 				},
 			},
@@ -135,9 +123,12 @@ func TestBuildConfiguration(t *testing.T) {
 							label.TraefikBackend: aws.String("foobar"),
 
 							label.TraefikBackendCircuitBreakerExpression:         aws.String("NetworkErrorRatio() > 0.5"),
+							label.TraefikBackendHealthCheckScheme:                aws.String("http"),
 							label.TraefikBackendHealthCheckPath:                  aws.String("/health"),
 							label.TraefikBackendHealthCheckPort:                  aws.String("880"),
 							label.TraefikBackendHealthCheckInterval:              aws.String("6"),
+							label.TraefikBackendHealthCheckHostname:              aws.String("foo.com"),
+							label.TraefikBackendHealthCheckHeaders:               aws.String("Foo:bar || Bar:foo"),
 							label.TraefikBackendLoadBalancerMethod:               aws.String("drr"),
 							label.TraefikBackendLoadBalancerSticky:               aws.String("true"),
 							label.TraefikBackendLoadBalancerStickiness:           aws.String("true"),
@@ -175,6 +166,7 @@ func TestBuildConfiguration(t *testing.T) {
 							label.TraefikFrontendReferrerPolicy:          aws.String("foo"),
 							label.TraefikFrontendCustomBrowserXSSValue:   aws.String("foo"),
 							label.TraefikFrontendSTSSeconds:              aws.String("666"),
+							label.TraefikFrontendSSLForceHost:            aws.String("true"),
 							label.TraefikFrontendSSLRedirect:             aws.String("true"),
 							label.TraefikFrontendSSLTemporaryRedirect:    aws.String("true"),
 							label.TraefikFrontendSTSIncludeSubdomains:    aws.String("true"),
@@ -200,16 +192,10 @@ func TestBuildConfiguration(t *testing.T) {
 							label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitAverage: aws.String("6"),
 							label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitBurst:   aws.String("9"),
 						}},
-					machine: &ec2.Instance{
-						State: &ec2.InstanceState{
-							Name: aws.String(ec2.InstanceStateNameRunning),
-						},
-						PrivateIpAddress: aws.String("10.0.0.1"),
-					},
-					container: &ecs.Container{
-						NetworkBindings: []*ecs.NetworkBinding{{
-							HostPort: aws.Int64(1337),
-						}},
+					machine: &machine{
+						state:     ec2.InstanceStateNameRunning,
+						privateIP: "10.0.0.1",
+						port:      1337,
 					},
 				},
 			},
@@ -237,9 +223,15 @@ func TestBuildConfiguration(t *testing.T) {
 							ExtractorFunc: "client.ip",
 						},
 						HealthCheck: &types.HealthCheck{
+							Scheme:   "http",
 							Path:     "/health",
 							Port:     880,
 							Interval: "6",
+							Hostname: "foo.com",
+							Headers: map[string]string{
+								"Foo": "bar",
+								"Bar": "foo",
+							},
 						},
 						Buffering: &types.Buffering{
 							MaxResponseBodyBytes: 10485760,
@@ -294,6 +286,7 @@ func TestBuildConfiguration(t *testing.T) {
 							},
 							SSLRedirect:          true,
 							SSLTemporaryRedirect: true,
+							SSLForceHost:         true,
 							SSLHost:              "foo",
 							SSLProxyHeaders: map[string]string{
 								"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
@@ -409,10 +402,10 @@ func TestFilterInstance(t *testing.T) {
 			expected:         true,
 		},
 		{
-			desc: "Instance with nil private ip and exposed by default enabled should be filtered",
+			desc: "Instance with empty private ip and exposed by default enabled should be filtered",
 			instanceInfo: func() ecsInstance {
 				nilPrivateIP := simpleEcsInstance(map[string]*string{})
-				nilPrivateIP.machine.PrivateIpAddress = nil
+				nilPrivateIP.machine.privateIP = ""
 				return nilPrivateIP
 			}(),
 			exposedByDefault: true,
@@ -429,21 +422,11 @@ func TestFilterInstance(t *testing.T) {
 			expected:         false,
 		},
 		{
-			desc: "Instance with nil machine state and exposed by default enabled should be filtered",
+			desc: "Instance with empty machine state and exposed by default enabled should be filtered",
 			instanceInfo: func() ecsInstance {
 				nilMachineState := simpleEcsInstance(map[string]*string{})
-				nilMachineState.machine.State = nil
+				nilMachineState.machine.state = ""
 				return nilMachineState
-			}(),
-			exposedByDefault: true,
-			expected:         false,
-		},
-		{
-			desc: "Instance with nil machine state name and exposed by default enabled should be filtered",
-			instanceInfo: func() ecsInstance {
-				nilMachineStateName := simpleEcsInstance(map[string]*string{})
-				nilMachineStateName.machine.State.Name = nil
-				return nilMachineStateName
 			}(),
 			exposedByDefault: true,
 			expected:         false,
@@ -452,7 +435,7 @@ func TestFilterInstance(t *testing.T) {
 			desc: "Instance with invalid machine state and exposed by default enabled should be filtered",
 			instanceInfo: func() ecsInstance {
 				invalidMachineState := simpleEcsInstance(map[string]*string{})
-				invalidMachineState.machine.State.Name = aws.String(ec2.InstanceStateNameStopped)
+				invalidMachineState.machine.state = ec2.InstanceStateNameStopped
 				return invalidMachineState
 			}(),
 			exposedByDefault: true,
@@ -724,21 +707,13 @@ func makeEcsInstance(containerDef *ecs.ContainerDefinition) ecsInstance {
 	}
 
 	instance := ecsInstance{
-		Name: "foo-http",
-		ID:   "123456789abc",
-		task: &ecs.Task{
-			Containers: []*ecs.Container{container},
-		},
-		taskDefinition: &ecs.TaskDefinition{
-			ContainerDefinitions: []*ecs.ContainerDefinition{containerDef},
-		},
-		container:           container,
+		Name:                "foo-http",
+		ID:                  "123456789abc",
 		containerDefinition: containerDef,
-		machine: &ec2.Instance{
-			PrivateIpAddress: aws.String("10.0.0.0"),
-			State: &ec2.InstanceState{
-				Name: aws.String(ec2.InstanceStateNameRunning),
-			},
+		machine: &machine{
+			state:     ec2.InstanceStateNameRunning,
+			privateIP: "10.0.0.0",
+			port:      1337,
 		},
 	}
 
@@ -750,23 +725,21 @@ func makeEcsInstance(containerDef *ecs.ContainerDefinition) ecsInstance {
 }
 
 func simpleEcsInstance(labels map[string]*string) ecsInstance {
-	return makeEcsInstance(&ecs.ContainerDefinition{
-		Name: aws.String("http"),
-		PortMappings: []*ecs.PortMapping{{
-			HostPort:      aws.Int64(80),
-			ContainerPort: aws.Int64(80),
-			Protocol:      aws.String("tcp"),
-		}},
+	instance := makeEcsInstance(&ecs.ContainerDefinition{
+		Name:         aws.String("http"),
 		DockerLabels: labels,
 	})
+	instance.machine.port = 80
+	return instance
 }
 
 func simpleEcsInstanceNoNetwork(labels map[string]*string) ecsInstance {
-	return makeEcsInstance(&ecs.ContainerDefinition{
+	instance := makeEcsInstance(&ecs.ContainerDefinition{
 		Name:         aws.String("http"),
-		PortMappings: []*ecs.PortMapping{},
 		DockerLabels: labels,
 	})
+	instance.machine.port = 0
+	return instance
 }
 
 func fakeLoadTraefikLabels(instances []ecsInstance) []ecsInstance {

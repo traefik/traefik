@@ -31,6 +31,12 @@ const (
 	JSONFormat = "json"
 )
 
+type logHandlerParams struct {
+	logDataTable *LogData
+	crr          *captureRequestReader
+	crw          *captureResponseWriter
+}
+
 // LogHandler will write each request and its response to the access log.
 type LogHandler struct {
 	config         *types.AccessLog
@@ -38,6 +44,8 @@ type LogHandler struct {
 	file           *os.File
 	mu             sync.Mutex
 	httpCodeRanges types.HTTPCodeRanges
+	logHandlerChan chan logHandlerParams
+	wg             sync.WaitGroup
 }
 
 // NewLogHandler creates a new LogHandler
@@ -50,6 +58,7 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 		}
 		file = f
 	}
+	logHandlerChan := make(chan logHandlerParams, config.BufferingSize)
 
 	var formatter logrus.Formatter
 
@@ -70,9 +79,10 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 	}
 
 	logHandler := &LogHandler{
-		config: config,
-		logger: logger,
-		file:   file,
+		config:         config,
+		logger:         logger,
+		file:           file,
+		logHandlerChan: logHandlerChan,
 	}
 
 	if config.Filters != nil {
@@ -81,6 +91,16 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 		} else {
 			logHandler.httpCodeRanges = httpCodeRanges
 		}
+	}
+
+	if config.BufferingSize > 0 {
+		logHandler.wg.Add(1)
+		go func() {
+			defer logHandler.wg.Done()
+			for handlerParams := range logHandler.logHandlerChan {
+				logHandler.logTheRoundTrip(handlerParams.logDataTable, handlerParams.crr, handlerParams.crw)
+			}
+		}()
 	}
 
 	return logHandler, nil
@@ -101,19 +121,25 @@ func openAccessLogFile(filePath string) (*os.File, error) {
 	return file, nil
 }
 
-// GetLogDataTable gets the request context object that contains logging data. This accretes
-// data as the request passes through the middleware chain.
+// GetLogDataTable gets the request context object that contains logging data.
+// This creates data as the request passes through the middleware chain.
 func GetLogDataTable(req *http.Request) *LogData {
-	return req.Context().Value(DataTableKey).(*LogData)
+	if ld, ok := req.Context().Value(DataTableKey).(*LogData); ok {
+		return ld
+	}
+	log.Errorf("%s is nil", DataTableKey)
+	return &LogData{Core: make(CoreLogData)}
 }
 
 func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
 	now := time.Now().UTC()
-	core := make(CoreLogData)
+
+	core := CoreLogData{
+		StartUTC:   now,
+		StartLocal: now.Local(),
+	}
 
 	logDataTable := &LogData{Core: core, Request: req.Header}
-	core[StartUTC] = now
-	core[StartLocal] = now.Local()
 
 	reqWithDataTable := req.WithContext(context.WithValue(req.Context(), DataTableKey, logDataTable))
 
@@ -156,11 +182,22 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 	core[ClientUsername] = usernameIfPresent(reqWithDataTable.URL)
 
 	logDataTable.DownstreamResponse = crw.Header()
-	l.logTheRoundTrip(logDataTable, crr, crw)
+
+	if l.config.BufferingSize > 0 {
+		l.logHandlerChan <- logHandlerParams{
+			logDataTable: logDataTable,
+			crr:          crr,
+			crw:          crw,
+		}
+	} else {
+		l.logTheRoundTrip(logDataTable, crr, crw)
+	}
 }
 
-// Close closes the Logger (i.e. the file etc).
+// Close closes the Logger (i.e. the file, drain logHandlerChan, etc).
 func (l *LogHandler) Close() error {
+	close(l.logHandlerChan)
+	l.wg.Wait()
 	return l.file.Close()
 }
 
@@ -267,23 +304,26 @@ func (l *LogHandler) redactHeaders(headers http.Header, fields logrus.Fields, pr
 }
 
 func (l *LogHandler) keepAccessLog(statusCode, retryAttempts int) bool {
-	switch {
-	case l.config.Filters == nil:
+	if l.config.Filters == nil {
 		// no filters were specified
 		return true
-	case len(l.httpCodeRanges) == 0 && l.config.Filters.RetryAttempts == false:
+	}
+
+	if len(l.httpCodeRanges) == 0 && !l.config.Filters.RetryAttempts {
 		// empty filters were specified, e.g. by passing --accessLog.filters only (without other filter options)
 		return true
-	case l.httpCodeRanges.Contains(statusCode):
-		return true
-	case l.config.Filters.RetryAttempts == true && retryAttempts > 0:
-		return true
-	default:
-		return false
 	}
-}
 
-//-------------------------------------------------------------------------------------------------
+	if l.httpCodeRanges.Contains(statusCode) {
+		return true
+	}
+
+	if l.config.Filters.RetryAttempts && retryAttempts > 0 {
+		return true
+	}
+
+	return false
+}
 
 var requestCounter uint64 // Request ID
 

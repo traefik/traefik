@@ -123,6 +123,7 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel(label.TraefikBackend, "foobar"),
 
 					withLabel(label.TraefikBackendCircuitBreakerExpression, "NetworkErrorRatio() > 0.5"),
+					withLabel(label.TraefikBackendHealthCheckScheme, "http"),
 					withLabel(label.TraefikBackendHealthCheckPath, "/health"),
 					withLabel(label.TraefikBackendHealthCheckPort, "880"),
 					withLabel(label.TraefikBackendHealthCheckInterval, "6"),
@@ -158,6 +159,7 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel(label.TraefikFrontendSSLProxyHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type:application/json; charset=utf-8"),
 					withLabel(label.TraefikFrontendAllowedHosts, "foo,bar,bor"),
 					withLabel(label.TraefikFrontendHostsProxyHeaders, "foo,bar,bor"),
+					withLabel(label.TraefikFrontendSSLForceHost, "true"),
 					withLabel(label.TraefikFrontendSSLHost, "foo"),
 					withLabel(label.TraefikFrontendCustomFrameOptionsValue, "foo"),
 					withLabel(label.TraefikFrontendContentSecurityPolicy, "foo"),
@@ -240,6 +242,7 @@ func TestBuildConfiguration(t *testing.T) {
 						},
 						SSLRedirect:          true,
 						SSLTemporaryRedirect: true,
+						SSLForceHost:         true,
 						SSLHost:              "foo",
 						SSLProxyHeaders: map[string]string{
 							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
@@ -316,6 +319,7 @@ func TestBuildConfiguration(t *testing.T) {
 						ExtractorFunc: "client.ip",
 					},
 					HealthCheck: &types.HealthCheck{
+						Scheme:   "http",
 						Path:     "/health",
 						Port:     880,
 						Interval: "6",
@@ -657,6 +661,53 @@ func TestGetServers(t *testing.T) {
 			actual := p.getServers(test.tasks)
 
 			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestGetFrontendRule(t *testing.T) {
+	p := Provider{
+		Domain: "mesos.localhost",
+	}
+
+	testCases := []struct {
+		desc      string
+		mesosTask taskData
+		expected  string
+	}{
+		{
+			desc: "label missing",
+			mesosTask: aTaskData("test",
+				withInfo("foo"),
+			),
+			expected: "Host:foo.mesos.localhost",
+		},
+		{
+			desc: "label domain",
+			mesosTask: aTaskData("test",
+				withInfo("foo"),
+				withLabel(label.TraefikDomain, "traefik.localhost"),
+			),
+			expected: "Host:foo.traefik.localhost",
+		},
+		{
+			desc: "frontend rule available",
+			mesosTask: aTaskData("test",
+				withInfo("foo"),
+				withLabel(label.TraefikFrontendRule, "Host:foo.bar"),
+			),
+			expected: "Host:foo.bar",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			rule := p.getFrontendRule(test.mesosTask)
+
+			assert.Equal(t, test.expected, rule)
 		})
 	}
 }

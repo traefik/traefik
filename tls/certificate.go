@@ -90,12 +90,15 @@ func (f FileOrContent) Read() ([]byte, error) {
 func (c *Certificates) CreateTLSConfig(entryPointName string) (*tls.Config, error) {
 	config := &tls.Config{}
 	domainsCertificates := make(map[string]map[string]*tls.Certificate)
+
 	if c.isEmpty() {
 		config.Certificates = []tls.Certificate{}
+
 		cert, err := generate.DefaultCertificate()
 		if err != nil {
 			return nil, err
 		}
+
 		config.Certificates = append(config.Certificates, *cert)
 	} else {
 		for _, certificate := range *c {
@@ -104,8 +107,9 @@ func (c *Certificates) CreateTLSConfig(entryPointName string) (*tls.Config, erro
 				log.Errorf("Unable to add a certificate to the entryPoint %q : %v", entryPointName, err)
 				continue
 			}
+
 			for _, certDom := range domainsCertificates {
-				for _, cert := range map[string]*tls.Certificate(certDom) {
+				for _, cert := range certDom {
 					config.Certificates = append(config.Certificates, *cert)
 				}
 			}

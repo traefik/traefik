@@ -12,20 +12,21 @@
 
 Træfik is a modern HTTP reverse proxy and load balancer that makes deploying microservices easy.
 Træfik integrates with your existing infrastructure components ([Docker](https://www.docker.com/), [Swarm mode](https://docs.docker.com/engine/swarm/), [Kubernetes](https://kubernetes.io), [Marathon](https://mesosphere.github.io/marathon/), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Rancher](https://rancher.com), [Amazon ECS](https://aws.amazon.com/ecs), ...) and configures itself automatically and dynamically.
-Telling Træfik where your orchestrator is could be the _only_ configuration step you need to do.
+Pointing Træfik at your orchestrator should be the _only_ configuration step you need.
 
 ## Overview
 
 Imagine that you have deployed a bunch of microservices with the help of an orchestrator (like Swarm or Kubernetes) or a service registry (like etcd or consul).
 Now you want users to access these microservices, and you need a reverse proxy.
 
-Traditional reverse-proxies require that you configure _each_ route that will connect paths and subdomains to _each_ microservice. In an environment where you add, remove, kill, upgrade, or scale your services _many_ times a day, the task of keeping the routes up to date becomes tedious. 
+Traditional reverse-proxies require that you configure _each_ route that will connect paths and subdomains to _each_ microservice.
+In an environment where you add, remove, kill, upgrade, or scale your services _many_ times a day, the task of keeping the routes up to date becomes tedious.
 
 **This is when Træfik can help you!**
 
-Træfik listens to your service registry/orchestrator API and instantly generates the routes so your microservices are connected to the outside world -- without further intervention from your part. 
+Træfik listens to your service registry/orchestrator API and instantly generates the routes so your microservices are connected to the outside world -- without further intervention from your part.
 
-**Run Træfik and let it do the work for you!** 
+**Run Træfik and let it do the work for you!**
 _(But if you'd rather configure some of your routes manually, Træfik supports that too!)_
 
 ![Architecture](img/architecture.png)
@@ -46,7 +47,7 @@ _(But if you'd rather configure some of your routes manually, Træfik supports t
 - Packaged as a single binary file (made with :heart: with go) and available as a [tiny](https://microbadger.com/images/traefik) [official](https://hub.docker.com/r/_/traefik/) docker image
 
 
-## Supported backends
+## Supported Providers
 
 - [Docker](/configuration/backends/docker/) / [Swarm mode](/configuration/backends/docker/#docker-swarm-mode)
 - [Kubernetes](/configuration/backends/kubernetes/)
@@ -76,13 +77,13 @@ version: '3'
 
 services:
   reverse-proxy:
-    image: traefik #The official Traefik docker image
-    command: --api --docker #Enables the web UI and tells Træfik to listen to docker
+    image: traefik # The official Traefik docker image
+    command: --api --docker # Enables the web UI and tells Træfik to listen to docker
     ports:
-      - "80:80"     #The HTTP port
-      - "8080:8080" #The Web UI (enabled by --api)
+      - "80:80"     # The HTTP port
+      - "8080:8080" # The Web UI (enabled by --api)
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock #So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock # So that Traefik can listen to the Docker events
 ```
 
 **That's it. Now you can launch Træfik!**
@@ -90,21 +91,21 @@ services:
 Start your `reverse-proxy` with the following command:
 
 ```shell
-docker-compose up -d reverse-proxy 
+docker-compose up -d reverse-proxy
 ```
 
 You can open a browser and go to [http://localhost:8080](http://localhost:8080) to see Træfik's dashboard (we'll go back there once we have launched a service in step 2).
 
-### 2 — Launch a Service — Træfik Detects It and Creates a Route for You 
+### 2 — Launch a Service — Træfik Detects It and Creates a Route for You
 
-Now that we have a Træfik instance up and running, we will deploy new services. 
+Now that we have a Træfik instance up and running, we will deploy new services.
 
-Edit your `docker-compose.yml` file and add the following at the end of your file. 
+Edit your `docker-compose.yml` file and add the following at the end of your file.
 
 ```yaml
-# ... 
+# ...
   whoami:
-    image: emilevauge/whoami #A container that exposes an API to show it's IP address
+    image: emilevauge/whoami # A container that exposes an API to show its IP address
     labels:
       - "traefik.frontend.rule=Host:whoami.docker.localhost"
 ```
@@ -112,7 +113,7 @@ Edit your `docker-compose.yml` file and add the following at the end of your fil
 The above defines `whoami`: a simple web service that outputs information about the machine it is deployed on (its IP address, host, and so on).
 
 Start the `whoami` service with the following command:
- 
+
 ```shell
 docker-compose up -d whoami
 ```
@@ -135,9 +136,9 @@ IP: 172.27.0.3
 ### 3 — Launch More Instances — Traefik Load Balances Them
 
 Run more instances of your `whoami` service with the following command:
- 
+
 ```shell
-docker-compose up -d --scale whoami=2 
+docker-compose up -d --scale whoami=2
 ```
 
 Go back to your browser ([http://localhost:8080](http://localhost:8080)) and see that Træfik has automatically detected the new instance of the container.
@@ -164,9 +165,10 @@ IP: 172.27.0.4
 
 ### 4 — Enjoy Træfik's Magic
 
-Now that you have a basic understanding of how Træfik can automatically create the routes to your services and load balance them, it might be time to dive into [the documentation](https://docs.traefik.io/) and let Træfik work for you! Whatever your infrastructure is, there is probably [an available Træfik backend](https://docs.traefik.io/configuration/backends/available) that will do the job. 
+Now that you have a basic understanding of how Træfik can automatically create the routes to your services and load balance them, it might be time to dive into [the documentation](/) and let Træfik work for you!
+Whatever your infrastructure is, there is probably [an available Træfik provider](/#supported-providers) that will do the job.
 
-Our recommendation would be to see for yourself how simple it is to enable HTTPS with [Træfik's let's encrypt integration](https://docs.traefik.io/user-guide/examples/#lets-encrypt-support) using the dedicated [user guide](https://docs.traefik.io/user-guide/docker-and-lets-encrypt/).
+Our recommendation would be to see for yourself how simple it is to enable HTTPS with [Træfik's let's encrypt integration](/user-guide/examples/#lets-encrypt-support) using the dedicated [user guide](/user-guide/docker-and-lets-encrypt/).
 
 ## Resources
 

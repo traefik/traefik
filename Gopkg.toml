@@ -46,7 +46,7 @@
 
 [[constraint]]
   name = "github.com/aws/aws-sdk-go"
-  version = "1.13.1"
+  version = "1.13.11"
 
 [[constraint]]
   branch = "master"
@@ -66,7 +66,7 @@
 
 [[constraint]]
   name = "github.com/containous/traefik-extra-service-fabric"
-  version = "1.1.5"
+  version = "1.2.0"
 
 [[constraint]]
   name = "github.com/coreos/go-systemd"

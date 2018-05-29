@@ -157,17 +157,6 @@ func (p *Provider) getFuncSliceAttribute(name string) func(tags []string) []stri
 }
 
 // Deprecated
-func (p *Provider) getMapAttribute(name string, tags []string) map[string]string {
-	rawValue := getTag(p.getPrefixedName(name), tags, "")
-
-	if len(rawValue) == 0 {
-		return nil
-	}
-
-	return label.ParseMapValue(p.getPrefixedName(name), rawValue)
-}
-
-// Deprecated
 func (p *Provider) getFuncIntAttribute(name string, defaultValue int) func(tags []string) int {
 	return func(tags []string) int {
 		return p.getIntAttribute(name, tags, defaultValue)
@@ -177,13 +166,6 @@ func (p *Provider) getFuncIntAttribute(name string, defaultValue int) func(tags 
 func (p *Provider) getFuncBoolAttribute(name string, defaultValue bool) func(tags []string) bool {
 	return func(tags []string) bool {
 		return p.getBoolAttribute(name, tags, defaultValue)
-	}
-}
-
-// Deprecated
-func (p *Provider) getFuncHasAttributePrefix(name string) func(tags []string) bool {
-	return func(tags []string) bool {
-		return p.hasAttributePrefix(name, tags)
 	}
 }
 
@@ -243,8 +225,4 @@ func (p *Provider) getBoolAttribute(name string, tags []string, defaultValue boo
 		return defaultValue
 	}
 	return value
-}
-
-func (p *Provider) hasAttributePrefix(name string, tags []string) bool {
-	return hasTagPrefix(p.getPrefixedName(name), tags)
 }

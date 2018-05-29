@@ -69,11 +69,12 @@ type WhiteList struct {
 
 // HealthCheck holds HealthCheck configuration
 type HealthCheck struct {
-	Headers  map[string]string `json:"headers,omitempty"`
-	Hostname string            `json:"hostname,omitempty"`
+	Scheme   string            `json:"scheme,omitempty"`
 	Path     string            `json:"path,omitempty"`
 	Port     int               `json:"port,omitempty"`
 	Interval string            `json:"interval,omitempty"`
+	Hostname string            `json:"hostname,omitempty"`
+	Headers  map[string]string `json:"headers,omitempty"`
 }
 
 // Server holds server configuration.
@@ -119,14 +120,16 @@ type RateLimit struct {
 
 // Headers holds the custom header configuration
 type Headers struct {
-	CustomRequestHeaders    map[string]string `json:"customRequestHeaders,omitempty"`
-	CustomResponseHeaders   map[string]string `json:"customResponseHeaders,omitempty"`
+	CustomRequestHeaders  map[string]string `json:"customRequestHeaders,omitempty"`
+	CustomResponseHeaders map[string]string `json:"customResponseHeaders,omitempty"`
+
 	AllowedHosts            []string          `json:"allowedHosts,omitempty"`
 	HostsProxyHeaders       []string          `json:"hostsProxyHeaders,omitempty"`
 	SSLRedirect             bool              `json:"sslRedirect,omitempty"`
 	SSLTemporaryRedirect    bool              `json:"sslTemporaryRedirect,omitempty"`
 	SSLHost                 string            `json:"sslHost,omitempty"`
 	SSLProxyHeaders         map[string]string `json:"sslProxyHeaders,omitempty"`
+	SSLForceHost            bool              `json:"sslForceHost,omitempty"`
 	STSSeconds              int64             `json:"stsSeconds,omitempty"`
 	STSIncludeSubdomains    bool              `json:"stsIncludeSubdomains,omitempty"`
 	STSPreload              bool              `json:"stsPreload,omitempty"`
@@ -154,6 +157,7 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 		len(h.HostsProxyHeaders) != 0 ||
 		h.SSLRedirect ||
 		h.SSLTemporaryRedirect ||
+		h.SSLForceHost ||
 		h.SSLHost != "" ||
 		len(h.SSLProxyHeaders) != 0 ||
 		h.STSSeconds != 0 ||
@@ -213,16 +217,21 @@ var loadBalancerMethodNames = []string{
 
 // NewLoadBalancerMethod create a new LoadBalancerMethod from a given LoadBalancer.
 func NewLoadBalancerMethod(loadBalancer *LoadBalancer) (LoadBalancerMethod, error) {
-	var method string
-	if loadBalancer != nil {
-		method = loadBalancer.Method
-		for i, name := range loadBalancerMethodNames {
-			if strings.EqualFold(name, method) {
-				return LoadBalancerMethod(i), nil
-			}
+	if loadBalancer == nil {
+		return Wrr, errors.New("no load-balancer defined, fallback to 'wrr' method")
+	}
+
+	if len(loadBalancer.Method) == 0 {
+		return Wrr, errors.New("no load-balancing method defined, fallback to 'wrr' method")
+	}
+
+	for i, name := range loadBalancerMethodNames {
+		if strings.EqualFold(name, loadBalancer.Method) {
+			return LoadBalancerMethod(i), nil
 		}
 	}
-	return Wrr, fmt.Errorf("invalid load-balancing method '%s'", method)
+
+	return Wrr, fmt.Errorf("invalid load-balancing method %q, fallback to 'wrr' method", loadBalancer.Method)
 }
 
 // Configurations is for currentConfigurations Map

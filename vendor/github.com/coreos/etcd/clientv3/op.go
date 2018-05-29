@@ -23,6 +23,7 @@ const (
 	tRange opType = iota + 1
 	tPut
 	tDeleteRange
+	tTxn
 )
 
 var (
@@ -67,9 +68,17 @@ type Op struct {
 	// for put
 	val     []byte
 	leaseID LeaseID
+
+	// txn
+	cmps    []Cmp
+	thenOps []Op
+	elseOps []Op
 }
 
-// accesors / mutators
+// accessors / mutators
+
+func (op Op) IsTxn() bool              { return op.t == tTxn }
+func (op Op) Txn() ([]Cmp, []Op, []Op) { return op.cmps, op.thenOps, op.elseOps }
 
 // KeyBytes returns the byte slice holding the Op's key.
 func (op Op) KeyBytes() []byte { return op.key }
@@ -79,6 +88,39 @@ func (op *Op) WithKeyBytes(key []byte) { op.key = key }
 
 // RangeBytes returns the byte slice holding with the Op's range end, if any.
 func (op Op) RangeBytes() []byte { return op.end }
+
+// Rev returns the requested revision, if any.
+func (op Op) Rev() int64 { return op.rev }
+
+// IsPut returns true iff the operation is a Put.
+func (op Op) IsPut() bool { return op.t == tPut }
+
+// IsGet returns true iff the operation is a Get.
+func (op Op) IsGet() bool { return op.t == tRange }
+
+// IsDelete returns true iff the operation is a Delete.
+func (op Op) IsDelete() bool { return op.t == tDeleteRange }
+
+// IsSerializable returns true if the serializable field is true.
+func (op Op) IsSerializable() bool { return op.serializable == true }
+
+// IsKeysOnly returns whether keysOnly is set.
+func (op Op) IsKeysOnly() bool { return op.keysOnly == true }
+
+// IsCountOnly returns whether countOnly is set.
+func (op Op) IsCountOnly() bool { return op.countOnly == true }
+
+// MinModRev returns the operation's minimum modify revision.
+func (op Op) MinModRev() int64 { return op.minModRev }
+
+// MaxModRev returns the operation's maximum modify revision.
+func (op Op) MaxModRev() int64 { return op.maxModRev }
+
+// MinCreateRev returns the operation's minimum create revision.
+func (op Op) MinCreateRev() int64 { return op.minCreateRev }
+
+// MaxCreateRev returns the operation's maximum create revision.
+func (op Op) MaxCreateRev() int64 { return op.maxCreateRev }
 
 // WithRangeBytes sets the byte slice for the Op's range end.
 func (op *Op) WithRangeBytes(end []byte) { op.end = end }
@@ -113,6 +155,22 @@ func (op Op) toRangeRequest() *pb.RangeRequest {
 	return r
 }
 
+func (op Op) toTxnRequest() *pb.TxnRequest {
+	thenOps := make([]*pb.RequestOp, len(op.thenOps))
+	for i, tOp := range op.thenOps {
+		thenOps[i] = tOp.toRequestOp()
+	}
+	elseOps := make([]*pb.RequestOp, len(op.elseOps))
+	for i, eOp := range op.elseOps {
+		elseOps[i] = eOp.toRequestOp()
+	}
+	cmps := make([]*pb.Compare, len(op.cmps))
+	for i := range op.cmps {
+		cmps[i] = (*pb.Compare)(&op.cmps[i])
+	}
+	return &pb.TxnRequest{Compare: cmps, Success: thenOps, Failure: elseOps}
+}
+
 func (op Op) toRequestOp() *pb.RequestOp {
 	switch op.t {
 	case tRange:
@@ -123,12 +181,27 @@ func (op Op) toRequestOp() *pb.RequestOp {
 	case tDeleteRange:
 		r := &pb.DeleteRangeRequest{Key: op.key, RangeEnd: op.end, PrevKv: op.prevKV}
 		return &pb.RequestOp{Request: &pb.RequestOp_RequestDeleteRange{RequestDeleteRange: r}}
+	case tTxn:
+		return &pb.RequestOp{Request: &pb.RequestOp_RequestTxn{RequestTxn: op.toTxnRequest()}}
 	default:
 		panic("Unknown Op")
 	}
 }
 
 func (op Op) isWrite() bool {
+	if op.t == tTxn {
+		for _, tOp := range op.thenOps {
+			if tOp.isWrite() {
+				return true
+			}
+		}
+		for _, tOp := range op.elseOps {
+			if tOp.isWrite() {
+				return true
+			}
+		}
+		return false
+	}
 	return op.t != tRange
 }
 
@@ -194,6 +267,10 @@ func OpPut(key, val string, opts ...OpOption) Op {
 	return ret
 }
 
+func OpTxn(cmps []Cmp, thenOps []Op, elseOps []Op) Op {
+	return Op{t: tTxn, cmps: cmps, thenOps: thenOps, elseOps: elseOps}
+}
+
 func opWatch(key string, opts ...OpOption) Op {
 	ret := Op{t: tRange, key: []byte(key)}
 	ret.applyOpts(opts)
@@ -247,9 +324,9 @@ func WithSort(target SortTarget, order SortOrder) OpOption {
 		if target == SortByKey && order == SortAscend {
 			// If order != SortNone, server fetches the entire key-space,
 			// and then applies the sort and limit, if provided.
-			// Since current mvcc.Range implementation returns results
-			// sorted by keys in lexicographically ascending order,
-			// client should ignore SortOrder if the target is SortByKey.
+			// Since by default the server returns results sorted by keys
+			// in lexicographically ascending order, the client should ignore
+			// SortOrder if the target is SortByKey.
 			order = SortNone
 		}
 		op.sort = &SortOption{target, order}
@@ -390,7 +467,7 @@ func WithPrevKV() OpOption {
 }
 
 // WithIgnoreValue updates the key using its current value.
-// Empty value should be passed when ignore_value is set.
+// This option can not be combined with non-empty values.
 // Returns an error if the key does not exist.
 func WithIgnoreValue() OpOption {
 	return func(op *Op) {
@@ -399,7 +476,7 @@ func WithIgnoreValue() OpOption {
 }
 
 // WithIgnoreLease updates the key using its current lease.
-// Empty lease should be passed when ignore_lease is set.
+// This option can not be combined with WithLease.
 // Returns an error if the key does not exist.
 func WithIgnoreLease() OpOption {
 	return func(op *Op) {
@@ -424,8 +501,7 @@ func (op *LeaseOp) applyOpts(opts []LeaseOption) {
 	}
 }
 
-// WithAttachedKeys requests lease timetolive API to return
-// attached keys of given lease ID.
+// WithAttachedKeys makes TimeToLive list the keys attached to the given lease ID.
 func WithAttachedKeys() LeaseOption {
 	return func(op *LeaseOp) { op.attachedKeys = true }
 }

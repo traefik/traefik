@@ -22,14 +22,12 @@ type TraefikLog struct {
 
 // AccessLog holds the configuration settings for the access logger (middlewares/accesslog).
 type AccessLog struct {
-	FilePath string            `json:"file,omitempty" description:"Access log file path. Stdout is used when omitted or empty" export:"true"`
-	Format   string            `json:"format,omitempty" description:"Access log format: json | common" export:"true"`
-	Filters  *AccessLogFilters `json:"filters,omitempty" description:"Access log filters, used to keep only specific access logs" export:"true"`
-	Fields   *AccessLogFields  `json:"fields,omitempty" description:"AccessLogFields" export:"true"`
+	FilePath      string            `json:"file,omitempty" description:"Access log file path. Stdout is used when omitted or empty" export:"true"`
+	Format        string            `json:"format,omitempty" description:"Access log format: json | common" export:"true"`
+	Filters       *AccessLogFilters `json:"filters,omitempty" description:"Access log filters, used to keep only specific access logs" export:"true"`
+	Fields        *AccessLogFields  `json:"fields,omitempty" description:"AccessLogFields" export:"true"`
+	BufferingSize int64             `json:"bufferingSize,omitempty" description:"Number of access log lines to process in a buffered way. Default 0." export:"true"`
 }
-
-// StatusCodes holds status codes ranges to filter access log
-type StatusCodes []string
 
 // AccessLogFilters holds filters configuration
 type AccessLogFilters struct {
@@ -37,24 +35,14 @@ type AccessLogFilters struct {
 	RetryAttempts bool        `json:"retryAttempts,omitempty" description:"Keep access logs when at least one retry happened" export:"true"`
 }
 
-// FieldNames holds maps of fields with specific mode
-type FieldNames map[string]string
-
-// AccessLogFields holds configuration for access log fields
-type AccessLogFields struct {
-	DefaultMode string        `json:"defaultMode,omitempty" description:"Default mode for fields: keep | drop" export:"true"`
-	Names       FieldNames    `json:"names,omitempty" description:"Override mode for fields" export:"true"`
-	Headers     *FieldHeaders `json:"headers,omitempty" description:"Headers to keep, drop or redact" export:"true"`
-}
-
-// FieldHeaderNames holds maps of fields with specific mode
-type FieldHeaderNames map[string]string
-
 // FieldHeaders holds configuration for access log headers
 type FieldHeaders struct {
 	DefaultMode string           `json:"defaultMode,omitempty" description:"Default mode for fields: keep | drop | redact" export:"true"`
 	Names       FieldHeaderNames `json:"names,omitempty" description:"Override mode for headers" export:"true"`
 }
+
+// StatusCodes holds status codes ranges to filter access log
+type StatusCodes []string
 
 // Set adds strings elem into the the parser
 // it splits str on , and ;
@@ -78,6 +66,9 @@ func (s *StatusCodes) String() string { return fmt.Sprintf("%v", *s) }
 func (s *StatusCodes) SetValue(val interface{}) {
 	*s = val.(StatusCodes)
 }
+
+// FieldNames holds maps of fields with specific mode
+type FieldNames map[string]string
 
 // String is the method to format the flag's value, part of the flag.Value interface.
 // The String method's output will be used in diagnostics.
@@ -111,6 +102,9 @@ func (f *FieldNames) SetValue(val interface{}) {
 	*f = val.(FieldNames)
 }
 
+// FieldHeaderNames holds maps of fields with specific mode
+type FieldHeaderNames map[string]string
+
 // String is the method to format the flag's value, part of the flag.Value interface.
 // The String method's output will be used in diagnostics.
 func (f *FieldHeaderNames) String() string {
@@ -141,6 +135,13 @@ func (f *FieldHeaderNames) SetValue(val interface{}) {
 	*f = val.(FieldHeaderNames)
 }
 
+// AccessLogFields holds configuration for access log fields
+type AccessLogFields struct {
+	DefaultMode string        `json:"defaultMode,omitempty" description:"Default mode for fields: keep | drop" export:"true"`
+	Names       FieldNames    `json:"names,omitempty" description:"Override mode for fields" export:"true"`
+	Headers     *FieldHeaders `json:"headers,omitempty" description:"Headers to keep, drop or redact" export:"true"`
+}
+
 // Keep check if the field need to be kept or dropped
 func (f *AccessLogFields) Keep(field string) bool {
 	defaultKeep := true
@@ -154,17 +155,6 @@ func (f *AccessLogFields) Keep(field string) bool {
 	return defaultKeep
 }
 
-func checkFieldValue(value string, defaultKeep bool) bool {
-	switch value {
-	case AccessLogKeep:
-		return true
-	case AccessLogDrop:
-		return false
-	default:
-		return defaultKeep
-	}
-}
-
 // KeepHeader checks if the headers need to be kept, dropped or redacted and returns the status
 func (f *AccessLogFields) KeepHeader(header string) string {
 	defaultValue := AccessLogKeep
@@ -176,6 +166,17 @@ func (f *AccessLogFields) KeepHeader(header string) string {
 		}
 	}
 	return defaultValue
+}
+
+func checkFieldValue(value string, defaultKeep bool) bool {
+	switch value {
+	case AccessLogKeep:
+		return true
+	case AccessLogDrop:
+		return false
+	default:
+		return defaultKeep
+	}
 }
 
 func checkFieldHeaderValue(value string, defaultValue string) string {

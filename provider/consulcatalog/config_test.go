@@ -3,7 +3,9 @@ package consulcatalog
 import (
 	"testing"
 	"text/template"
+	"time"
 
+	"github.com/containous/flaeg"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	"github.com/hashicorp/consul/api"
@@ -109,6 +111,268 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					MaxConn: &types.MaxConn{
 						Amount:        1000,
 						ExtractorFunc: "client.ip",
+					},
+				},
+			},
+		},
+		{
+			desc: "when all labels are set",
+			nodes: []catalogUpdate{
+				{
+					Service: &serviceUpdate{
+						ServiceName: "test",
+						Attributes: []string{
+							label.TraefikBackend + "=foobar",
+
+							label.TraefikBackendCircuitBreakerExpression + "=NetworkErrorRatio() > 0.5",
+							label.TraefikBackendHealthCheckPath + "=/health",
+							label.TraefikBackendHealthCheckScheme + "=http",
+							label.TraefikBackendHealthCheckPort + "=880",
+							label.TraefikBackendHealthCheckInterval + "=6",
+							label.TraefikBackendHealthCheckHostname + "=foo.com",
+							label.TraefikBackendHealthCheckHeaders + "=Foo:bar || Bar:foo",
+							label.TraefikBackendLoadBalancerMethod + "=drr",
+							label.TraefikBackendLoadBalancerSticky + "=true",
+							label.TraefikBackendLoadBalancerStickiness + "=true",
+							label.TraefikBackendLoadBalancerStickinessCookieName + "=chocolate",
+							label.TraefikBackendMaxConnAmount + "=666",
+							label.TraefikBackendMaxConnExtractorFunc + "=client.ip",
+							label.TraefikBackendBufferingMaxResponseBodyBytes + "=10485760",
+							label.TraefikBackendBufferingMemResponseBodyBytes + "=2097152",
+							label.TraefikBackendBufferingMaxRequestBodyBytes + "=10485760",
+							label.TraefikBackendBufferingMemRequestBodyBytes + "=2097152",
+							label.TraefikBackendBufferingRetryExpression + "=IsNetworkError() && Attempts() <= 2",
+
+							label.TraefikFrontendAuthBasic + "=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+							label.TraefikFrontendEntryPoints + "=http,https",
+							label.TraefikFrontendPassHostHeader + "=true",
+							label.TraefikFrontendPassTLSCert + "=true",
+							label.TraefikFrontendPriority + "=666",
+							label.TraefikFrontendRedirectEntryPoint + "=https",
+							label.TraefikFrontendRedirectRegex + "=nope",
+							label.TraefikFrontendRedirectReplacement + "=nope",
+							label.TraefikFrontendRedirectPermanent + "=true",
+							label.TraefikFrontendRule + "=Host:traefik.io",
+							label.TraefikFrontendWhiteListSourceRange + "=10.10.10.10",
+							label.TraefikFrontendWhiteListUseXForwardedFor + "=true",
+
+							label.TraefikFrontendRequestHeaders + "=Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
+							label.TraefikFrontendResponseHeaders + "=Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
+							label.TraefikFrontendSSLProxyHeaders + "=Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
+							label.TraefikFrontendAllowedHosts + "=foo,bar,bor",
+							label.TraefikFrontendHostsProxyHeaders + "=foo,bar,bor",
+							label.TraefikFrontendSSLHost + "=foo",
+							label.TraefikFrontendCustomFrameOptionsValue + "=foo",
+							label.TraefikFrontendContentSecurityPolicy + "=foo",
+							label.TraefikFrontendPublicKey + "=foo",
+							label.TraefikFrontendReferrerPolicy + "=foo",
+							label.TraefikFrontendCustomBrowserXSSValue + "=foo",
+							label.TraefikFrontendSTSSeconds + "=666",
+							label.TraefikFrontendSSLForceHost + "=true",
+							label.TraefikFrontendSSLRedirect + "=true",
+							label.TraefikFrontendSSLTemporaryRedirect + "=true",
+							label.TraefikFrontendSTSIncludeSubdomains + "=true",
+							label.TraefikFrontendSTSPreload + "=true",
+							label.TraefikFrontendForceSTSHeader + "=true",
+							label.TraefikFrontendFrameDeny + "=true",
+							label.TraefikFrontendContentTypeNosniff + "=true",
+							label.TraefikFrontendBrowserXSSFilter + "=true",
+							label.TraefikFrontendIsDevelopment + "=true",
+
+							label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageStatus + "=404",
+							label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageBackend + "=foobar",
+							label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageQuery + "=foo_query",
+							label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageStatus + "=500,600",
+							label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageBackend + "=foobar",
+							label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageQuery + "=bar_query",
+
+							label.TraefikFrontendRateLimitExtractorFunc + "=client.ip",
+							label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitPeriod + "=6",
+							label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitAverage + "=12",
+							label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitBurst + "=18",
+							label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitPeriod + "=3",
+							label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitAverage + "=6",
+							label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitBurst + "=9",
+						},
+					},
+					Nodes: []*api.ServiceEntry{
+						{
+							Service: &api.AgentService{
+								Service: "test",
+								Address: "10.0.0.1",
+								Port:    80,
+								Tags: []string{
+									label.TraefikProtocol + "=https",
+									label.TraefikWeight + "=12",
+								},
+							},
+							Node: &api.Node{
+								Node:    "localhost",
+								Address: "127.0.0.1",
+							},
+						},
+						{
+							Service: &api.AgentService{
+								Service: "test",
+								Address: "10.0.0.2",
+								Port:    80,
+								Tags: []string{
+									label.TraefikProtocol + "=https",
+									label.TraefikWeight + "=12",
+								},
+							},
+							Node: &api.Node{
+								Node:    "localhost",
+								Address: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-test": {
+					EntryPoints: []string{
+						"http",
+						"https",
+					},
+					Backend: "backend-test",
+					Routes: map[string]types.Route{
+						"route-host-test": {
+							Rule: "Host:traefik.io",
+						},
+					},
+					PassHostHeader: true,
+					PassTLSCert:    true,
+					Priority:       666,
+					BasicAuth: []string{
+						"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+						"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+					},
+					WhiteList: &types.WhiteList{
+						SourceRange: []string{
+							"10.10.10.10",
+						},
+						UseXForwardedFor: true,
+					},
+					Headers: &types.Headers{
+						CustomRequestHeaders: map[string]string{
+							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+							"Content-Type":                 "application/json; charset=utf-8",
+						},
+						CustomResponseHeaders: map[string]string{
+							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+							"Content-Type":                 "application/json; charset=utf-8",
+						},
+						AllowedHosts: []string{
+							"foo",
+							"bar",
+							"bor",
+						},
+						HostsProxyHeaders: []string{
+							"foo",
+							"bar",
+							"bor",
+						},
+						SSLRedirect:          true,
+						SSLTemporaryRedirect: true,
+						SSLForceHost:         true,
+						SSLHost:              "foo",
+						SSLProxyHeaders: map[string]string{
+							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+							"Content-Type":                 "application/json; charset=utf-8",
+						},
+						STSSeconds:              666,
+						STSIncludeSubdomains:    true,
+						STSPreload:              true,
+						ForceSTSHeader:          true,
+						FrameDeny:               true,
+						CustomFrameOptionsValue: "foo",
+						ContentTypeNosniff:      true,
+						BrowserXSSFilter:        true,
+						CustomBrowserXSSValue:   "foo",
+						ContentSecurityPolicy:   "foo",
+						PublicKey:               "foo",
+						ReferrerPolicy:          "foo",
+						IsDevelopment:           true,
+					},
+					Errors: map[string]*types.ErrorPage{
+						"foo": {
+							Status:  []string{"404"},
+							Query:   "foo_query",
+							Backend: "backend-foobar",
+						},
+						"bar": {
+							Status:  []string{"500", "600"},
+							Query:   "bar_query",
+							Backend: "backend-foobar",
+						},
+					},
+					RateLimit: &types.RateLimit{
+						ExtractorFunc: "client.ip",
+						RateSet: map[string]*types.Rate{
+							"foo": {
+								Period:  flaeg.Duration(6 * time.Second),
+								Average: 12,
+								Burst:   18,
+							},
+							"bar": {
+								Period:  flaeg.Duration(3 * time.Second),
+								Average: 6,
+								Burst:   9,
+							},
+						},
+					},
+					Redirect: &types.Redirect{
+						EntryPoint:  "https",
+						Regex:       "",
+						Replacement: "",
+						Permanent:   true,
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test": {
+					Servers: map[string]types.Server{
+						"test-0-N753CZ-JEP1SmRf5Wfe6S3-RuM": {
+							URL:    "https://10.0.0.1:80",
+							Weight: 12,
+						},
+						"test-1-u4RAIw2K4-PDJh41dqqB4kM2wy0": {
+							URL:    "https://10.0.0.2:80",
+							Weight: 12,
+						},
+					},
+					CircuitBreaker: &types.CircuitBreaker{
+						Expression: "NetworkErrorRatio() > 0.5",
+					},
+					LoadBalancer: &types.LoadBalancer{
+						Method: "drr",
+						Sticky: true,
+						Stickiness: &types.Stickiness{
+							CookieName: "chocolate",
+						},
+					},
+					MaxConn: &types.MaxConn{
+						Amount:        666,
+						ExtractorFunc: "client.ip",
+					},
+					HealthCheck: &types.HealthCheck{
+						Scheme:   "http",
+						Path:     "/health",
+						Port:     880,
+						Interval: "6",
+						Hostname: "foo.com",
+						Headers: map[string]string{
+							"Foo": "bar",
+							"Bar": "foo",
+						},
+					},
+					Buffering: &types.Buffering{
+						MaxResponseBodyBytes: 10485760,
+						MemResponseBodyBytes: 2097152,
+						MaxRequestBodyBytes:  10485760,
+						MemRequestBodyBytes:  2097152,
+						RetryExpression:      "IsNetworkError() && Attempts() <= 2",
 					},
 				},
 			},

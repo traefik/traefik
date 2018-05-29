@@ -226,6 +226,7 @@ func (p *Provider) getHeaders(rootPath string) *types.Headers {
 		SSLProxyHeaders:         p.getMap(rootPath, pathFrontendSSLProxyHeaders),
 		AllowedHosts:            p.getList("", rootPath, pathFrontendAllowedHosts),
 		HostsProxyHeaders:       p.getList(rootPath, pathFrontendHostsProxyHeaders),
+		SSLForceHost:            p.getBool(false, rootPath, pathFrontendSSLForceHost),
 		SSLRedirect:             p.getBool(false, rootPath, pathFrontendSSLRedirect),
 		SSLTemporaryRedirect:    p.getBool(false, rootPath, pathFrontendSSLTemporaryRedirect),
 		SSLHost:                 p.get("", rootPath, pathFrontendSSLHost),
@@ -300,17 +301,19 @@ func (p *Provider) getHealthCheck(rootPath string) *types.HealthCheck {
 		return nil
 	}
 
+	scheme := p.get("", rootPath, pathBackendHealthCheckScheme)
 	port := p.getInt(label.DefaultBackendHealthCheckPort, rootPath, pathBackendHealthCheckPort)
 	interval := p.get("30s", rootPath, pathBackendHealthCheckInterval)
 	hostname := p.get("", rootPath, pathBackendHealthCheckHostname)
 	headers := p.getMap(rootPath, pathBackendHealthCheckHeaders)
 
 	return &types.HealthCheck{
-		Hostname: hostname,
-		Headers:  headers,
+		Scheme:   scheme,
 		Path:     path,
 		Port:     port,
 		Interval: interval,
+		Hostname: hostname,
+		Headers:  headers,
 	}
 }
 

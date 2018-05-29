@@ -41,16 +41,18 @@ type ACME struct {
 	Email                 string                      `description:"Email address used for registration"`
 	Domains               []types.Domain              `description:"SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='main.net,san1.net,san2.net'"`
 	Storage               string                      `description:"File or key used for certificates storage."`
-	StorageFile           string                      // deprecated
-	OnDemand              bool                        `description:"Enable on demand certificate generation. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."` //deprecated
+	StorageFile           string                      // Deprecated
+	OnDemand              bool                        `description:"(Deprecated) Enable on demand certificate generation. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."` //deprecated
 	OnHostRule            bool                        `description:"Enable certificate generation on frontends Host rules."`
 	CAServer              string                      `description:"CA server to use."`
 	EntryPoint            string                      `description:"Entrypoint to proxy acme challenge to."`
+	KeyType               string                      `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'. Default to 'RSA4096'"`
 	DNSChallenge          *acmeprovider.DNSChallenge  `description:"Activate DNS-01 Challenge"`
 	HTTPChallenge         *acmeprovider.HTTPChallenge `description:"Activate HTTP-01 Challenge"`
-	DNSProvider           string                      `description:"Activate DNS-01 Challenge (Deprecated)"`                                                       // deprecated
-	DelayDontCheckDNS     flaeg.Duration              `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."` // deprecated
+	DNSProvider           string                      `description:"(Deprecated) Activate DNS-01 Challenge"`                                                                    // Deprecated
+	DelayDontCheckDNS     flaeg.Duration              `description:"(Deprecated) Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."` // Deprecated
 	ACMELogging           bool                        `description:"Enable debug logging of ACME actions."`
+	OverrideCertificates  bool                        `description:"Enable to override certificates in key-value store when using storeconfig"`
 	client                *acme.Client
 	defaultCertificate    *tls.Certificate
 	store                 cluster.Store
@@ -186,7 +188,7 @@ func (a *ACME) leadershipListener(elected bool) error {
 				domainsCerts = account.DomainsCertificate
 			}
 
-			account, err = NewAccount(a.Email, domainsCerts.Certs)
+			account, err = NewAccount(a.Email, domainsCerts.Certs, a.KeyType)
 			if err != nil {
 				return err
 			}
@@ -395,7 +397,7 @@ func (a *ACME) buildACMEClient(account *Account) (*acme.Client, error) {
 	if len(a.CAServer) > 0 {
 		caServer = a.CAServer
 	}
-	client, err := acme.NewClient(caServer, account, acme.RSA4096)
+	client, err := acme.NewClient(caServer, account, account.KeyType)
 	if err != nil {
 		return nil, err
 	}
@@ -611,11 +613,13 @@ func (a *ACME) getDomainsCertificates(domains []string) (*Certificate, error) {
 	domains = fun.Map(types.CanonicalDomain, domains).([]string)
 	log.Debugf("Loading ACME certificates %s...", domains)
 	bundle := true
-	certificate, failures := a.client.ObtainCertificate(domains, bundle, nil, OSCPMustStaple)
-	if len(failures) > 0 {
-		log.Error(failures)
-		return nil, fmt.Errorf("cannot obtain certificates %+v", failures)
+
+	certificate, err := a.client.ObtainCertificate(domains, bundle, nil, OSCPMustStaple)
+	if err != nil {
+		log.Error(err)
+		return nil, fmt.Errorf("cannot obtain certificates: %+v", err)
 	}
+
 	log.Debugf("Loaded ACME certificates %s", domains)
 	return &Certificate{
 		Domain:        certificate.Domain,

@@ -68,7 +68,7 @@ defaultEntryPoints = ["http", "https"]
 [acme]
 email = "test@traefik.io"
 storage = "acme.json"
-caServer = "http://172.18.0.1:4000/directory"
+caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
 entryPoint = "https"
   [acme.httpChallenge]
   entryPoint = "http"
@@ -103,7 +103,7 @@ Træfik generates these certificates when it starts and it needs to be restart i
 email = "test@traefik.io"
 storage = "acme.json"
 onHostRule = true
-caServer = "http://172.18.0.1:4000/directory"
+caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
 entryPoint = "https"
   [acme.httpChallenge]
   entryPoint = "http"
@@ -140,7 +140,7 @@ If a backend is added with a `onHost` rule, Træfik will automatically generate 
 email = "test@traefik.io"
 storage = "acme.json"
 onDemand = true
-caServer = "http://172.18.0.1:4000/directory"
+caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
 entryPoint = "https"
   [acme.httpChallenge]
   entryPoint = "http"
@@ -167,7 +167,7 @@ This configuration allows generating a Let's Encrypt certificate (thanks to `HTT
 [acme]
 email = "test@traefik.io"
 storage = "acme.json"
-caServer = "http://172.18.0.1:4000/directory"
+caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
 entryPoint = "https"
   [acme.dnsChallenge]
   provider = "digitalocean" # DNS Provider name (cloudflare, OVH, gandi...)

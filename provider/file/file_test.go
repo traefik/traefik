@@ -14,216 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestProvideSingleFileAndWatch(t *testing.T) {
-	tempDir := createTempDir(t, "testfile")
-	defer os.RemoveAll(tempDir)
-
-	expectedNumFrontends := 2
-	expectedNumBackends := 2
-	expectedNumTLSConf := 2
-
-	tempFile := createFile(t,
-		tempDir, "simple.toml",
-		createFrontendConfiguration(expectedNumFrontends),
-		createBackendConfiguration(expectedNumBackends),
-		createTLS(expectedNumTLSConf))
-
-	configurationChan, signal := createConfigurationRoutine(t, &expectedNumFrontends, &expectedNumBackends, &expectedNumTLSConf)
-
-	provide(configurationChan, watch, withFile(tempFile))
-
-	// Wait for initial message to be tested
-	err := waitForSignal(signal, 2*time.Second, "initial config")
-	assert.NoError(t, err)
-
-	// Now test again with single frontend and backend
-	expectedNumFrontends = 1
-	expectedNumBackends = 1
-	expectedNumTLSConf = 1
-
-	createFile(t,
-		tempDir, "simple.toml",
-		createFrontendConfiguration(expectedNumFrontends),
-		createBackendConfiguration(expectedNumBackends),
-		createTLS(expectedNumTLSConf))
-
-	err = waitForSignal(signal, 2*time.Second, "single frontend, backend, TLS configuration")
-	assert.NoError(t, err)
-}
-
-func TestProvideSingleFileAndNotWatch(t *testing.T) {
-	tempDir := createTempDir(t, "testfile")
-	defer os.RemoveAll(tempDir)
-
-	expectedNumFrontends := 2
-	expectedNumBackends := 2
-	expectedNumTLSConf := 2
-
-	tempFile := createFile(t,
-		tempDir, "simple.toml",
-		createFrontendConfiguration(expectedNumFrontends),
-		createBackendConfiguration(expectedNumBackends),
-		createTLS(expectedNumTLSConf))
-
-	configurationChan, signal := createConfigurationRoutine(t, &expectedNumFrontends, &expectedNumBackends, &expectedNumTLSConf)
-
-	provide(configurationChan, withFile(tempFile))
-
-	// Wait for initial message to be tested
-	err := waitForSignal(signal, 2*time.Second, "initial config")
-	assert.NoError(t, err)
-
-	// Now test again with single frontend and backend
-	expectedNumFrontends = 1
-	expectedNumBackends = 1
-	expectedNumTLSConf = 1
-
-	createFile(t,
-		tempDir, "simple.toml",
-		createFrontendConfiguration(expectedNumFrontends),
-		createBackendConfiguration(expectedNumBackends),
-		createTLS(expectedNumTLSConf))
-
-	// Must fail because we don't watch the changes
-	err = waitForSignal(signal, 2*time.Second, "single frontend, backend and TLS configuration")
-	assert.Error(t, err)
-}
-
-func TestProvideDirectoryAndWatch(t *testing.T) {
-	tempDir := createTempDir(t, "testdir")
-	defer os.RemoveAll(tempDir)
-
-	expectedNumFrontends := 2
-	expectedNumBackends := 2
-	expectedNumTLSConf := 2
-
-	tempFile1 := createRandomFile(t, tempDir, createFrontendConfiguration(expectedNumFrontends))
-	tempFile2 := createRandomFile(t, tempDir, createBackendConfiguration(expectedNumBackends))
-	tempFile3 := createRandomFile(t, tempDir, createTLS(expectedNumTLSConf))
-
-	configurationChan, signal := createConfigurationRoutine(t, &expectedNumFrontends, &expectedNumBackends, &expectedNumTLSConf)
-
-	provide(configurationChan, watch, withDirectory(tempDir))
-
-	// Wait for initial config message to be tested
-	err := waitForSignal(signal, 2*time.Second, "initial config")
-	assert.NoError(t, err)
-
-	// Now remove the backends file
-	expectedNumFrontends = 2
-	expectedNumBackends = 0
-	expectedNumTLSConf = 2
-	os.Remove(tempFile2.Name())
-	err = waitForSignal(signal, 2*time.Second, "remove the backends file")
-	assert.NoError(t, err)
-
-	// Now remove the frontends file
-	expectedNumFrontends = 0
-	expectedNumBackends = 0
-	expectedNumTLSConf = 2
-	os.Remove(tempFile1.Name())
-	err = waitForSignal(signal, 2*time.Second, "remove the frontends file")
-	assert.NoError(t, err)
-
-	// Now remove the TLS configuration file
-	expectedNumFrontends = 0
-	expectedNumBackends = 0
-	expectedNumTLSConf = 0
-	os.Remove(tempFile3.Name())
-	err = waitForSignal(signal, 2*time.Second, "remove the TLS configuration file")
-	assert.NoError(t, err)
-}
-
-func TestProvideDirectoryAndNotWatch(t *testing.T) {
-	tempDir := createTempDir(t, "testdir")
-	tempTLSDir := createSubDir(t, tempDir, "tls")
-	defer os.RemoveAll(tempDir)
-
-	expectedNumFrontends := 2
-	expectedNumBackends := 2
-	expectedNumTLSConf := 2
-
-	createRandomFile(t, tempDir, createFrontendConfiguration(expectedNumFrontends))
-	tempFile2 := createRandomFile(t, tempDir, createBackendConfiguration(expectedNumBackends))
-	createRandomFile(t, tempTLSDir, createTLS(expectedNumTLSConf))
-
-	configurationChan, signal := createConfigurationRoutine(t, &expectedNumFrontends, &expectedNumBackends, &expectedNumTLSConf)
-
-	provide(configurationChan, withDirectory(tempDir))
-
-	// Wait for initial config message to be tested
-	err := waitForSignal(signal, 2*time.Second, "initial config")
-	assert.NoError(t, err)
-
-	// Now remove the backends file
-	expectedNumFrontends = 2
-	expectedNumBackends = 0
-	expectedNumTLSConf = 2
-	os.Remove(tempFile2.Name())
-
-	// Must fail because we don't watch the changes
-	err = waitForSignal(signal, 2*time.Second, "remove the backends file")
-	assert.Error(t, err)
-
-}
-
-func createConfigurationRoutine(t *testing.T, expectedNumFrontends *int, expectedNumBackends *int, expectedNumTLSes *int) (chan types.ConfigMessage, chan interface{}) {
-	configurationChan := make(chan types.ConfigMessage)
-	signal := make(chan interface{})
-
-	safe.Go(func() {
-		for {
-			data := <-configurationChan
-			assert.Equal(t, "file", data.ProviderName)
-			assert.Len(t, data.Configuration.Frontends, *expectedNumFrontends)
-			assert.Len(t, data.Configuration.Backends, *expectedNumBackends)
-			assert.Len(t, data.Configuration.TLS, *expectedNumTLSes)
-			signal <- nil
-		}
-	})
-
-	return configurationChan, signal
-}
-
-func waitForSignal(signal chan interface{}, timeout time.Duration, caseName string) error {
-	timer := time.NewTimer(timeout)
-	defer timer.Stop()
-
-	select {
-	case <-signal:
-
-	case <-timer.C:
-		return fmt.Errorf("Timed out waiting for assertions to be tested: %s", caseName)
-	}
-	return nil
-}
-
-func provide(configurationChan chan types.ConfigMessage, builders ...func(p *Provider)) {
-	pvd := &Provider{}
-
-	for _, builder := range builders {
-		builder(pvd)
-	}
-
-	pvd.Provide(configurationChan, safe.NewPool(context.Background()), nil)
-}
-
-func watch(pvd *Provider) {
-	pvd.Watch = true
-}
-
-func withDirectory(name string) func(*Provider) {
-	return func(pvd *Provider) {
-		pvd.Directory = name
-	}
-}
-
-func withFile(tempFile *os.File) func(*Provider) {
-	return func(p *Provider) {
-		p.Filename = tempFile.Name()
-	}
-}
-
 // createRandomFile Helper
 func createRandomFile(t *testing.T, tempDir string, contents ...string) *os.File {
 	return createFile(t, tempDir, fmt.Sprintf("temp%d.toml", time.Now().UnixNano()), contents...)
@@ -264,25 +54,12 @@ func createTempDir(t *testing.T, dir string) string {
 	return d
 }
 
-// createDir Helper
-func createSubDir(t *testing.T, rootDir, dir string) string {
-	t.Helper()
-	err := os.Mkdir(rootDir+"/"+dir, 0775)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return rootDir + "/" + dir
-}
-
 // createFrontendConfiguration Helper
 func createFrontendConfiguration(n int) string {
-	conf := "{{$home := env \"HOME\"}}\n[frontends]\n"
+	conf := "[frontends]\n"
 	for i := 1; i <= n; i++ {
 		conf += fmt.Sprintf(`  [frontends."frontend%[1]d"]
   backend = "backend%[1]d"
-`, i)
-		conf += fmt.Sprintf(`    [frontends."frontend%[1]d".headers]
-    "PublicKey" = "{{$home}}/pub.key"
 `, i)
 	}
 	return conf
@@ -312,4 +89,241 @@ func createTLS(n int) string {
 `, i)
 	}
 	return conf
+}
+
+type ProvideTestCase struct {
+	desc                string
+	directoryContent    []string
+	fileContent         string
+	traefikFileContent  string
+	expectedNumFrontend int
+	expectedNumBackend  int
+	expectedNumTLSConf  int
+}
+
+func getTestCases() []ProvideTestCase {
+	return []ProvideTestCase{
+		{
+			desc:                "simple file",
+			fileContent:         createFrontendConfiguration(2) + createBackendConfiguration(3) + createTLS(4),
+			expectedNumFrontend: 2,
+			expectedNumBackend:  3,
+			expectedNumTLSConf:  4,
+		},
+		{
+			desc:        "simple file and a traefik file",
+			fileContent: createFrontendConfiguration(2) + createBackendConfiguration(3) + createTLS(4),
+			traefikFileContent: `
+			debug=true
+`,
+			expectedNumFrontend: 2,
+			expectedNumBackend:  3,
+			expectedNumTLSConf:  4,
+		},
+		{
+			desc: "template file",
+			fileContent: `
+[frontends]
+{{ range $i, $e := until 20 }}
+  [frontends.frontend{{ $e }}]
+  backend = "backend"  
+{{ end }}
+`,
+			expectedNumFrontend: 20,
+		},
+		{
+			desc: "simple directory",
+			directoryContent: []string{
+				createFrontendConfiguration(2),
+				createBackendConfiguration(3),
+				createTLS(4),
+			},
+			expectedNumFrontend: 2,
+			expectedNumBackend:  3,
+			expectedNumTLSConf:  4,
+		},
+		{
+			desc: "template in directory",
+			directoryContent: []string{
+				`
+[frontends]
+{{ range $i, $e := until 20 }}
+  [frontends.frontend{{ $e }}]
+  backend = "backend"  
+{{ end }}
+`,
+				`
+[backends]
+{{ range $i, $e := until 20 }}
+  [backends.backend{{ $e }}]
+ [backends.backend{{ $e }}.servers.server1]
+	url="http://127.0.0.1"
+{{ end }}
+`,
+			},
+			expectedNumFrontend: 20,
+			expectedNumBackend:  20,
+		},
+		{
+			desc: "simple traefik file",
+			traefikFileContent: `
+				debug=true
+				[file]	
+				` + createFrontendConfiguration(2) + createBackendConfiguration(3) + createTLS(4),
+			expectedNumFrontend: 2,
+			expectedNumBackend:  3,
+			expectedNumTLSConf:  4,
+		},
+		{
+			desc: "simple traefik file with templating",
+			traefikFileContent: `
+				temp="{{ getTag \"test\" }}"
+				[file]	
+				` + createFrontendConfiguration(2) + createBackendConfiguration(3) + createTLS(4),
+			expectedNumFrontend: 2,
+			expectedNumBackend:  3,
+			expectedNumTLSConf:  4,
+		},
+	}
+}
+
+func TestProvideWithoutWatch(t *testing.T) {
+	for _, test := range getTestCases() {
+		test := test
+		t.Run(test.desc+" without watch", func(t *testing.T) {
+			t.Parallel()
+
+			provider, clean := createProvider(t, test, false)
+			defer clean()
+			configChan := make(chan types.ConfigMessage)
+
+			go func() {
+				err := provider.Provide(configChan, safe.NewPool(context.Background()), types.Constraints{})
+				assert.NoError(t, err)
+			}()
+
+			timeout := time.After(time.Second)
+			select {
+			case config := <-configChan:
+				assert.Len(t, config.Configuration.Backends, test.expectedNumBackend)
+				assert.Len(t, config.Configuration.Frontends, test.expectedNumFrontend)
+				assert.Len(t, config.Configuration.TLS, test.expectedNumTLSConf)
+			case <-timeout:
+				t.Errorf("timeout while waiting for config")
+			}
+		})
+	}
+}
+
+func TestProvideWithWatch(t *testing.T) {
+	for _, test := range getTestCases() {
+		test := test
+		t.Run(test.desc+" with watch", func(t *testing.T) {
+			t.Parallel()
+
+			provider, clean := createProvider(t, test, true)
+			defer clean()
+			configChan := make(chan types.ConfigMessage)
+
+			go func() {
+				err := provider.Provide(configChan, safe.NewPool(context.Background()), types.Constraints{})
+				assert.NoError(t, err)
+			}()
+
+			timeout := time.After(time.Second)
+			select {
+			case config := <-configChan:
+				assert.Len(t, config.Configuration.Backends, 0)
+				assert.Len(t, config.Configuration.Frontends, 0)
+				assert.Len(t, config.Configuration.TLS, 0)
+			case <-timeout:
+				t.Errorf("timeout while waiting for config")
+			}
+
+			if len(test.fileContent) > 0 {
+				ioutil.WriteFile(provider.Filename, []byte(test.fileContent), 0755)
+			}
+
+			if len(test.traefikFileContent) > 0 {
+				ioutil.WriteFile(provider.TraefikFile, []byte(test.traefikFileContent), 0755)
+			}
+
+			if len(test.directoryContent) > 0 {
+				for _, fileContent := range test.directoryContent {
+					createRandomFile(t, provider.Directory, fileContent)
+				}
+			}
+
+			timeout = time.After(time.Second * 1)
+			success := false
+			for !success {
+				select {
+				case config := <-configChan:
+					success = assert.Len(t, config.Configuration.Backends, test.expectedNumBackend)
+					success = success && assert.Len(t, config.Configuration.Frontends, test.expectedNumFrontend)
+					success = success && assert.Len(t, config.Configuration.TLS, test.expectedNumTLSConf)
+				case <-timeout:
+					t.Errorf("timeout while waiting for config")
+					return
+				}
+			}
+		})
+	}
+}
+
+func TestErrorWhenEmptyConfig(t *testing.T) {
+	provider := &Provider{}
+	configChan := make(chan types.ConfigMessage)
+	errorChan := make(chan struct{})
+	go func() {
+		err := provider.Provide(configChan, safe.NewPool(context.Background()), types.Constraints{})
+		assert.Error(t, err)
+		close(errorChan)
+	}()
+
+	timeout := time.After(time.Second)
+	select {
+	case <-configChan:
+		t.Fatal("We should not receive config message")
+	case <-timeout:
+		t.Fatal("timeout while waiting for config")
+	case <-errorChan:
+	}
+}
+
+func createProvider(t *testing.T, test ProvideTestCase, watch bool) (*Provider, func()) {
+	tempDir := createTempDir(t, "testdir")
+
+	provider := &Provider{}
+	provider.Watch = watch
+
+	if len(test.directoryContent) > 0 {
+		if !watch {
+			for _, fileContent := range test.directoryContent {
+				createRandomFile(t, tempDir, fileContent)
+			}
+		}
+		provider.Directory = tempDir
+	}
+
+	if len(test.fileContent) > 0 {
+		if watch {
+			test.fileContent = ""
+		}
+		filename := createRandomFile(t, tempDir, test.fileContent)
+		provider.Filename = filename.Name()
+
+	}
+
+	if len(test.traefikFileContent) > 0 {
+		if watch {
+			test.traefikFileContent = ""
+		}
+		filename := createRandomFile(t, tempDir, test.traefikFileContent)
+		provider.TraefikFile = filename.Name()
+	}
+
+	return provider, func() {
+		os.Remove(tempDir)
+	}
 }

@@ -13,11 +13,11 @@ version: '3'
 
 services:
   reverse-proxy:
-    image: traefik #The official Traefik docker image
-    command: --api --docker #Enables the web UI and tells Træfik to listen to docker
+    image: traefik # The official Traefik docker image
+    command: --api --docker # Enables the web UI and tells Træfik to listen to docker
     ports:
-      - "80:80"     #The HTTP port
-      - "8080:8080" #The Web UI (enabled by --api)
+      - "80:80"     # The HTTP port
+      - "8080:8080" # The Web UI (enabled by --api)
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock #So that Traefik can listen to the Docker events
 ```
@@ -41,7 +41,7 @@ Edit your `docker-compose.yml` file and add the following at the end of your fil
 ```yaml
 # ... 
   whoami:
-    image: emilevauge/whoami #A container that exposes an API to show it's IP address
+    image: emilevauge/whoami # A container that exposes an API to show its IP address
     labels:
       - "traefik.frontend.rule=Host:whoami.docker.localhost"
 ```
@@ -101,6 +101,7 @@ IP: 172.27.0.4
 
 ### 4 — Enjoy Træfik's Magic
 
-Now that you have a basic understanding of how Træfik can automatically create the routes to your services and load balance them, it might be time to dive into [the documentation](https://docs.traefik.io/) and let Træfik work for you! Whatever your infrastructure is, there is probably [an available Træfik backend](https://docs.traefik.io/configuration/backends/available) that will do the job. 
+Now that you have a basic understanding of how Træfik can automatically create the routes to your services and load balance them, it might be time to dive into [the documentation](https://docs.traefik.io/) and let Træfik work for you!
+Whatever your infrastructure is, there is probably [an available Træfik backend](https://docs.traefik.io/#supported-backends) that will do the job.
 
 Our recommendation would be to see for yourself how simple it is to enable HTTPS with [Træfik's let's encrypt integration](https://docs.traefik.io/user-guide/examples/#lets-encrypt-support) using the dedicated [user guide](https://docs.traefik.io/user-guide/docker-and-lets-encrypt/).

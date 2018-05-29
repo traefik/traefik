@@ -9,6 +9,7 @@ import (
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
+	"github.com/elazarl/go-bindata-assetfs"
 	thoas_stats "github.com/thoas/stats"
 	"github.com/unrolled/render"
 )
@@ -22,6 +23,7 @@ type Handler struct {
 	Statistics            *types.Statistics          `description:"Enable more detailed statistics" export:"true"`
 	Stats                 *thoas_stats.Stats         `json:"-"`
 	StatsRecorder         *middlewares.StatsRecorder `json:"-"`
+	DashboardAssets       *assetfs.AssetFS
 }
 
 var (
@@ -54,7 +56,7 @@ func (p Handler) AddRoutes(router *mux.Router) {
 	version.Handler{}.AddRoutes(router)
 
 	if p.Dashboard {
-		DashboardHandler{}.AddRoutes(router)
+		DashboardHandler{Assets: p.DashboardAssets}.AddRoutes(router)
 	}
 }
 

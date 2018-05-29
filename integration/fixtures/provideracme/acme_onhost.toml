@@ -12,7 +12,7 @@ defaultEntryPoints = ["http", "https"]
 
 [acme]
   email = "test@traefik.io"
-  storage = "/tmp/acme.jsonl"
+  storage = "/tmp/acme.json"
   entryPoint = "https"
   onDemand = {{.OnDemand}}
   onHostRule = {{.OnHostRule}}

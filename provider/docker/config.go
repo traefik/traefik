@@ -182,19 +182,20 @@ func (p *Provider) getFrontendRule(container dockerData, segmentLabels map[strin
 		return value
 	}
 
+	domain := label.GetStringValue(segmentLabels, label.TraefikDomain, p.Domain)
+
 	if values, err := label.GetStringMultipleStrict(container.Labels, labelDockerComposeProject, labelDockerComposeService); err == nil {
-		return "Host:" + getSubDomain(values[labelDockerComposeService]+"."+values[labelDockerComposeProject]) + "." + p.Domain
+		return "Host:" + getSubDomain(values[labelDockerComposeService]+"."+values[labelDockerComposeProject]) + "." + domain
 	}
 
-	if len(p.Domain) > 0 {
-		return "Host:" + getSubDomain(container.ServiceName) + "." + p.Domain
+	if len(domain) > 0 {
+		return "Host:" + getSubDomain(container.ServiceName) + "." + domain
 	}
 
 	return ""
 }
 
 func (p Provider) getIPAddress(container dockerData) string {
-
 	if value := label.GetStringValue(container.Labels, labelDockerNetwork, ""); value != "" {
 		networkSettings := container.NetworkSettings
 		if networkSettings.Networks != nil {
@@ -246,6 +247,8 @@ func (p Provider) getIPAddress(container dockerData) string {
 	for _, network := range container.NetworkSettings.Networks {
 		return network.Addr
 	}
+
+	log.Warnf("Unable to find the IP address for the container %q.", container.Name)
 	return ""
 }
 
@@ -259,7 +262,7 @@ func isBackendLBSwarm(container dockerData) bool {
 }
 
 func getSegmentBackendName(container dockerData) string {
-	if value := label.GetStringValue(container.SegmentLabels, label.TraefikFrontendBackend, ""); len(value) > 0 {
+	if value := label.GetStringValue(container.SegmentLabels, label.TraefikBackend, ""); len(value) > 0 {
 		return provider.Normalize(container.ServiceName + "-" + value)
 	}
 
@@ -314,12 +317,17 @@ func (p *Provider) getServers(containers []dockerData) map[string]types.Server {
 	var servers map[string]types.Server
 
 	for i, container := range containers {
+		ip := p.getIPAddress(container)
+		if len(ip) == 0 {
+			log.Warnf("Unable to find the IP address for the container %q: the server is ignored.", container.Name)
+			continue
+		}
+
 		if servers == nil {
 			servers = make(map[string]types.Server)
 		}
 
 		protocol := label.GetStringValue(container.SegmentLabels, label.TraefikProtocol, label.DefaultProtocol)
-		ip := p.getIPAddress(container)
 		port := getPort(container)
 
 		serverName := "server-" + container.SegmentName + "-" + container.Name

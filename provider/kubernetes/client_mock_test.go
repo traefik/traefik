@@ -12,9 +12,10 @@ type clientMock struct {
 	endpoints []*corev1.Endpoints
 	watchChan chan interface{}
 
-	apiServiceError   error
-	apiSecretError    error
-	apiEndpointsError error
+	apiServiceError       error
+	apiSecretError        error
+	apiEndpointsError     error
+	apiIngressStatusError error
 }
 
 func (c clientMock) GetIngresses() []*extensionsv1beta1.Ingress {
@@ -31,7 +32,7 @@ func (c clientMock) GetService(namespace, name string) (*corev1.Service, bool, e
 			return service, true, nil
 		}
 	}
-	return nil, false, nil
+	return nil, false, c.apiServiceError
 }
 
 func (c clientMock) GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error) {
@@ -63,4 +64,8 @@ func (c clientMock) GetSecret(namespace, name string) (*corev1.Secret, bool, err
 
 func (c clientMock) WatchAll(namespaces Namespaces, stopCh <-chan struct{}) (<-chan interface{}, error) {
 	return c.watchChan, nil
+}
+
+func (c clientMock) UpdateIngressStatus(namespace, name, ip, hostname string) error {
+	return c.apiIngressStatusError
 }

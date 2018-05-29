@@ -196,7 +196,9 @@ func (p *Provider) getFrontendRuleV1(task state.Task) string {
 	if v := getStringValueV1(task, label.TraefikFrontendRule, ""); len(v) > 0 {
 		return v
 	}
-	return "Host:" + strings.ToLower(strings.Replace(p.getSubDomain(task.DiscoveryInfo.Name), "_", "-", -1)) + "." + p.Domain
+
+	domain := getStringValueV1(task, label.TraefikDomain, p.Domain)
+	return "Host:" + strings.ToLower(strings.Replace(p.getSubDomain(task.DiscoveryInfo.Name), "_", "-", -1)) + "." + domain
 }
 
 // Deprecated

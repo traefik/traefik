@@ -101,7 +101,7 @@ Let's explain this command:
 | `--constraint=node.role==manager`                                           | we ask docker to schedule Træfik on a manager node.                                            |
 | `--mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock` | we bind mount the docker socket where Træfik is scheduled to be able to speak to the daemon.   |
 | `--network traefik-net`                                                     | we attach the Træfik service (and thus the underlying container) to the `traefik-net` network. |
-| `--docker`                                                                  | enable docker backend, and `--docker.swarmMode` to enable the swarm mode on Træfik.            |
+| `--docker`                                                                  | enable docker provider, and `--docker.swarmMode` to enable the swarm mode on Træfik.            |
 | `--api                                                                      | activate the webUI on port 8080                                                                |
 
 

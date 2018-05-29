@@ -14,6 +14,7 @@ const (
 	SuffixBackendID                                = "backend.id"
 	SuffixBackendCircuitBreaker                    = "backend.circuitbreaker"
 	SuffixBackendCircuitBreakerExpression          = "backend.circuitbreaker.expression"
+	SuffixBackendHealthCheckScheme                 = "backend.healthcheck.scheme"
 	SuffixBackendHealthCheckPath                   = "backend.healthcheck.path"
 	SuffixBackendHealthCheckPort                   = "backend.healthcheck.port"
 	SuffixBackendHealthCheckInterval               = "backend.healthcheck.interval"
@@ -34,13 +35,13 @@ const (
 	SuffixBackendBufferingRetryExpression          = SuffixBackendBuffering + ".retryExpression"
 	SuffixFrontend                                 = "frontend"
 	SuffixFrontendAuthBasic                        = "frontend.auth.basic"
-	SuffixFrontendBackend                          = "frontend.backend"
 	SuffixFrontendEntryPoints                      = "frontend.entryPoints"
 	SuffixFrontendHeaders                          = "frontend.headers."
 	SuffixFrontendRequestHeaders                   = SuffixFrontendHeaders + "customRequestHeaders"
 	SuffixFrontendResponseHeaders                  = SuffixFrontendHeaders + "customResponseHeaders"
 	SuffixFrontendHeadersAllowedHosts              = SuffixFrontendHeaders + "allowedHosts"
 	SuffixFrontendHeadersHostsProxyHeaders         = SuffixFrontendHeaders + "hostsProxyHeaders"
+	SuffixFrontendHeadersSSLForceHost              = SuffixFrontendHeaders + "SSLForceHost"
 	SuffixFrontendHeadersSSLRedirect               = SuffixFrontendHeaders + "SSLRedirect"
 	SuffixFrontendHeadersSSLTemporaryRedirect      = SuffixFrontendHeaders + "SSLTemporaryRedirect"
 	SuffixFrontendHeadersSSLHost                   = SuffixFrontendHeaders + "SSLHost"
@@ -82,6 +83,7 @@ const (
 	TraefikBackendID                               = Prefix + SuffixBackendID
 	TraefikBackendCircuitBreaker                   = Prefix + SuffixBackendCircuitBreaker
 	TraefikBackendCircuitBreakerExpression         = Prefix + SuffixBackendCircuitBreakerExpression
+	TraefikBackendHealthCheckScheme                = Prefix + SuffixBackendHealthCheckScheme
 	TraefikBackendHealthCheckPath                  = Prefix + SuffixBackendHealthCheckPath
 	TraefikBackendHealthCheckPort                  = Prefix + SuffixBackendHealthCheckPort
 	TraefikBackendHealthCheckInterval              = Prefix + SuffixBackendHealthCheckInterval
@@ -102,7 +104,6 @@ const (
 	TraefikBackendBufferingRetryExpression         = Prefix + SuffixBackendBufferingRetryExpression
 	TraefikFrontend                                = Prefix + SuffixFrontend
 	TraefikFrontendAuthBasic                       = Prefix + SuffixFrontendAuthBasic
-	TraefikFrontendBackend                         = Prefix + SuffixFrontendBackend
 	TraefikFrontendEntryPoints                     = Prefix + SuffixFrontendEntryPoints
 	TraefikFrontendPassHostHeader                  = Prefix + SuffixFrontendPassHostHeader
 	TraefikFrontendPassTLSCert                     = Prefix + SuffixFrontendPassTLSCert
@@ -120,6 +121,7 @@ const (
 	TraefikFrontendResponseHeaders                 = Prefix + SuffixFrontendResponseHeaders
 	TraefikFrontendAllowedHosts                    = Prefix + SuffixFrontendHeadersAllowedHosts
 	TraefikFrontendHostsProxyHeaders               = Prefix + SuffixFrontendHeadersHostsProxyHeaders
+	TraefikFrontendSSLForceHost                    = Prefix + SuffixFrontendHeadersSSLForceHost
 	TraefikFrontendSSLRedirect                     = Prefix + SuffixFrontendHeadersSSLRedirect
 	TraefikFrontendSSLTemporaryRedirect            = Prefix + SuffixFrontendHeadersSSLTemporaryRedirect
 	TraefikFrontendSSLHost                         = Prefix + SuffixFrontendHeadersSSLHost

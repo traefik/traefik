@@ -164,6 +164,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
   {{ $healthCheck := getHealthCheck $service.TraefikLabels }}
   {{if $healthCheck }}
   [backends."backend-{{ $backendName }}".healthCheck]
+    scheme = "{{ $healthCheck.Scheme }}"
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
@@ -262,6 +263,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
       SSLRedirect = {{ $headers.SSLRedirect }}
       SSLTemporaryRedirect = {{ $headers.SSLTemporaryRedirect }}
       SSLHost = "{{ $headers.SSLHost }}"
+      SSLForceHost = {{ $headers.SSLForceHost }}
       STSSeconds = {{ $headers.STSSeconds }}
       STSIncludeSubdomains = {{ $headers.STSIncludeSubdomains }}
       STSPreload = {{ $headers.STSPreload }}
@@ -572,6 +574,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
   {{ $healthCheck := getHealthCheck $backend.SegmentLabels }}
   {{if $healthCheck }}
   [backends."backend-{{ $backendName }}".healthCheck]
+    scheme = "{{ $healthCheck.Scheme }}"
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
@@ -670,6 +673,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
       SSLRedirect = {{ $headers.SSLRedirect }}
       SSLTemporaryRedirect = {{ $headers.SSLTemporaryRedirect }}
       SSLHost = "{{ $headers.SSLHost }}"
+      SSLForceHost = {{ $headers.SSLForceHost }}
       STSSeconds = {{ $headers.STSSeconds }}
       STSIncludeSubdomains = {{ $headers.STSIncludeSubdomains }}
       STSPreload = {{ $headers.STSPreload }}
@@ -831,6 +835,7 @@ var _templatesEcsTmpl = []byte(`[backends]
   {{ $healthCheck := getHealthCheck $firstInstance.TraefikLabels }}
   {{if $healthCheck }}
   [backends."backend-{{ $serviceName }}".healthCheck]
+    scheme = "{{ $healthCheck.Scheme }}"
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
@@ -929,6 +934,7 @@ var _templatesEcsTmpl = []byte(`[backends]
       SSLRedirect = {{ $headers.SSLRedirect }}
       SSLTemporaryRedirect = {{ $headers.SSLTemporaryRedirect }}
       SSLHost = "{{ $headers.SSLHost }}"
+      SSLForceHost = {{ $headers.SSLForceHost }}
       STSSeconds = {{ $headers.STSSeconds }}
       STSIncludeSubdomains = {{ $headers.STSIncludeSubdomains }}
       STSPreload = {{ $headers.STSPreload }}
@@ -1110,6 +1116,7 @@ var _templatesKubernetesTmpl = []byte(`[backends]
       entryPoint = "{{ $frontend.Redirect.EntryPoint }}"
       regex = "{{ $frontend.Redirect.Regex }}"
       replacement = "{{ $frontend.Redirect.Replacement }}"
+      permanent = {{ $frontend.Redirect.Permanent }}
     {{end}}
 
     {{if $frontend.Errors }}
@@ -1141,6 +1148,7 @@ var _templatesKubernetesTmpl = []byte(`[backends]
     SSLRedirect = {{ $frontend.Headers.SSLRedirect }}
     SSLTemporaryRedirect = {{ $frontend.Headers.SSLTemporaryRedirect }}
     SSLHost = "{{ $frontend.Headers.SSLHost }}"
+    SSLForceHost = {{ $frontend.Headers.SSLForceHost }}
     STSSeconds = {{ $frontend.Headers.STSSeconds }}
     STSIncludeSubdomains = {{ $frontend.Headers.STSIncludeSubdomains }}
     STSPreload = {{ $frontend.Headers.STSPreload }}
@@ -1248,6 +1256,7 @@ var _templatesKvTmpl = []byte(`[backends]
   {{ $healthCheck := getHealthCheck $backend }}
   {{if $healthCheck }}
   [backends.{{ $backendName }}.healthCheck]
+    scheme = "{{ $healthCheck.Scheme }}"
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
@@ -1346,6 +1355,7 @@ var _templatesKvTmpl = []byte(`[backends]
       SSLRedirect = {{ $headers.SSLRedirect }}
       SSLTemporaryRedirect = {{ $headers.SSLTemporaryRedirect }}
       SSLHost = "{{ $headers.SSLHost }}"
+      SSLForceHost = {{ $headers.SSLForceHost }}
       STSSeconds = {{ $headers.STSSeconds }}
       STSIncludeSubdomains = {{ $headers.STSIncludeSubdomains }}
       STSPreload = {{ $headers.STSPreload }}
@@ -1549,6 +1559,7 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
     {{ $healthCheck := getHealthCheck $app.SegmentLabels }}
     {{if $healthCheck }}
     [backends."{{ $backendName }}".healthCheck]
+      scheme = "{{ $healthCheck.Scheme }}"
       path = "{{ $healthCheck.Path }}"
       port = {{ $healthCheck.Port }}
       interval = "{{ $healthCheck.Interval }}"
@@ -1647,6 +1658,7 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
       SSLRedirect = {{ $headers.SSLRedirect }}
       SSLTemporaryRedirect = {{ $headers.SSLTemporaryRedirect }}
       SSLHost = "{{ $headers.SSLHost }}"
+      SSLForceHost = {{ $headers.SSLForceHost }}
       STSSeconds = {{ $headers.STSSeconds }}
       STSIncludeSubdomains = {{ $headers.STSIncludeSubdomains }}
       STSPreload = {{ $headers.STSPreload }}
@@ -1794,6 +1806,7 @@ var _templatesMesosTmpl = []byte(`[backends]
   {{ $healthCheck := getHealthCheck $app.TraefikLabels }}
   {{if $healthCheck }}
   [backends."backend-{{ $backendName }}".healthCheck]
+    scheme = "{{ $healthCheck.Scheme }}"
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
@@ -1892,6 +1905,7 @@ var _templatesMesosTmpl = []byte(`[backends]
       SSLRedirect = {{ $headers.SSLRedirect }}
       SSLTemporaryRedirect = {{ $headers.SSLTemporaryRedirect }}
       SSLHost = "{{ $headers.SSLHost }}"
+      SSLForceHost = {{ $headers.SSLForceHost }}
       STSSeconds = {{ $headers.STSSeconds }}
       STSIncludeSubdomains = {{ $headers.STSIncludeSubdomains }}
       STSPreload = {{ $headers.STSPreload }}
@@ -2093,6 +2107,7 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
   {{ $healthCheck := getHealthCheck $backend.SegmentLabels }}
   {{if $healthCheck }}
   [backends."backend-{{ $backendName }}".healthCheck]
+    scheme = "{{ $healthCheck.Scheme }}"
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
@@ -2190,6 +2205,7 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
       SSLRedirect = {{ $headers.SSLRedirect }}
       SSLTemporaryRedirect = {{ $headers.SSLTemporaryRedirect }}
       SSLHost = "{{ $headers.SSLHost }}"
+      SSLForceHost = {{ $headers.SSLForceHost }}
       STSSeconds = {{ $headers.STSSeconds }}
       STSIncludeSubdomains = {{ $headers.STSIncludeSubdomains }}
       STSPreload = {{ $headers.STSPreload }}

@@ -54,6 +54,13 @@ const tmpl = `
             path = "{{ $healthCheck.Path }}"
             port = {{ $healthCheck.Port }}
             interval = "{{ $healthCheck.Interval }}"
+            hostname = "{{ $healthCheck.Hostname }}"
+            {{if $healthCheck.Headers }}
+            [backends."{{ $backendName }}".healthCheck.headers]
+              {{range $k, $v := $healthCheck.Headers }}
+              {{$k}} = "{{$v}}"
+              {{end}}
+            {{end}}
         {{end}}
 
         {{range $instance := $partition.Instances}}

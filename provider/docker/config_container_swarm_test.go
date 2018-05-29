@@ -107,6 +107,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						label.TraefikBackend: "foobar",
 
 						label.TraefikBackendCircuitBreakerExpression:         "NetworkErrorRatio() > 0.5",
+						label.TraefikBackendHealthCheckScheme:                "http",
 						label.TraefikBackendHealthCheckPath:                  "/health",
 						label.TraefikBackendHealthCheckPort:                  "880",
 						label.TraefikBackendHealthCheckInterval:              "6",
@@ -148,6 +149,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendReferrerPolicy:          "foo",
 						label.TraefikFrontendCustomBrowserXSSValue:   "foo",
 						label.TraefikFrontendSTSSeconds:              "666",
+						label.TraefikFrontendSSLForceHost:            "true",
 						label.TraefikFrontendSSLRedirect:             "true",
 						label.TraefikFrontendSSLTemporaryRedirect:    "true",
 						label.TraefikFrontendSTSIncludeSubdomains:    "true",
@@ -221,6 +223,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						},
 						SSLRedirect:          true,
 						SSLTemporaryRedirect: true,
+						SSLForceHost:         true,
 						SSLHost:              "foo",
 						SSLProxyHeaders: map[string]string{
 							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
@@ -298,6 +301,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						ExtractorFunc: "client.ip",
 					},
 					HealthCheck: &types.HealthCheck{
+						Scheme:   "http",
 						Path:     "/health",
 						Port:     880,
 						Interval: "6",
@@ -561,8 +565,11 @@ func TestSwarmGetFrontendRule(t *testing.T) {
 			networks: map[string]*docker.NetworkResource{},
 		},
 		{
-			service:  swarmService(serviceName("bar")),
-			expected: "Host:bar.docker.localhost",
+			service: swarmService(serviceName("foo"),
+				serviceLabels(map[string]string{
+					label.TraefikDomain: "traefik.localhost",
+				})),
+			expected: "Host:foo.traefik.localhost",
 			networks: map[string]*docker.NetworkResource{},
 		},
 		{

@@ -1,0 +1,24 @@
+defaultEntryPoints = ["http"]
+
+debug=true
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":8081"
+
+[api]
+
+[file]
+
+[backends]
+  [backends.backend1]
+    [backends.backend1.servers.server1]
+    url = "h2c://127.0.0.1:{{ .GRPCServerPort }}"
+    weight = 1
+
+
+[frontends]
+  [frontends.frontend1]
+  backend = "backend1"
+    [frontends.frontend1.routes.test_1]
+    rule = "Host:127.0.0.1"

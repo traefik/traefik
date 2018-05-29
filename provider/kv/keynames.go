@@ -3,6 +3,7 @@ package kv
 const (
 	pathBackends                                = "/backends/"
 	pathBackendCircuitBreakerExpression         = "/circuitbreaker/expression"
+	pathBackendHealthCheckScheme                = "/healthcheck/scheme"
 	pathBackendHealthCheckPath                  = "/healthcheck/path"
 	pathBackendHealthCheckPort                  = "/healthcheck/port"
 	pathBackendHealthCheckInterval              = "/healthcheck/interval"
@@ -53,6 +54,7 @@ const (
 	pathFrontendCustomResponseHeaders   = "/headers/customresponseheaders/"
 	pathFrontendAllowedHosts            = "/headers/allowedhosts"
 	pathFrontendHostsProxyHeaders       = "/headers/hostsproxyheaders"
+	pathFrontendSSLForceHost            = "/headers/sslforcehost"
 	pathFrontendSSLRedirect             = "/headers/sslredirect"
 	pathFrontendSSLTemporaryRedirect    = "/headers/ssltemporaryredirect"
 	pathFrontendSSLHost                 = "/headers/sslhost"

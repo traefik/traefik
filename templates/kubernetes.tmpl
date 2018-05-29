@@ -82,6 +82,7 @@
       entryPoint = "{{ $frontend.Redirect.EntryPoint }}"
       regex = "{{ $frontend.Redirect.Regex }}"
       replacement = "{{ $frontend.Redirect.Replacement }}"
+      permanent = {{ $frontend.Redirect.Permanent }}
     {{end}}
 
     {{if $frontend.Errors }}
@@ -113,6 +114,7 @@
     SSLRedirect = {{ $frontend.Headers.SSLRedirect }}
     SSLTemporaryRedirect = {{ $frontend.Headers.SSLTemporaryRedirect }}
     SSLHost = "{{ $frontend.Headers.SSLHost }}"
+    SSLForceHost = {{ $frontend.Headers.SSLForceHost }}
     STSSeconds = {{ $frontend.Headers.STSSeconds }}
     STSIncludeSubdomains = {{ $frontend.Headers.STSIncludeSubdomains }}
     STSPreload = {{ $frontend.Headers.STSPreload }}

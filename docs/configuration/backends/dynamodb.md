@@ -1,15 +1,15 @@
-# DynamoDB Backend
+# DynamoDB Provider
 
-Træfik can be configured to use Amazon DynamoDB as a backend configuration.
+Træfik can be configured to use Amazon DynamoDB as a provider.
 
 ## Configuration
 
 ```toml
 ################################################################
-# DynamoDB configuration backend
+# DynamoDB Provider
 ################################################################
 
-# Enable DynamoDB configuration backend.
+# Enable DynamoDB Provider.
 [dynamodb]
 
 # Region to use when connecting to AWS.
@@ -68,4 +68,3 @@ Items in the `dynamodb` table must have three attributes:
     See `types/types.go` for details.  
     The presence or absence of this attribute determines its type.
     So an item should never have both a `frontend` and a `backend` attribute.
-

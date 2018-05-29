@@ -33,7 +33,7 @@
 #
 # checkNewVersion = false
 
-# Backends throttle duration.
+# Providers throttle duration.
 #
 # Optional
 # Default: "2s"
@@ -85,7 +85,7 @@ Can be provided in a format supported by [time.ParseDuration](https://golang.org
 If no units are provided, the value is parsed assuming seconds.  
 **Note:** in this time frame no new requests are accepted.
 
-- `providersThrottleDuration`: Backends throttle duration: minimum duration in seconds between 2 events from providers before applying a new configuration.
+- `providersThrottleDuration`: Providers throttle duration: minimum duration in seconds between 2 events from providers before applying a new configuration.
 It avoids unnecessary reloads if multiples events are sent in a short amount of time.  
 Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
 If no units are provided, the value is parsed assuming seconds.
@@ -108,7 +108,7 @@ Each frontend can specify its own entrypoints.
 
 In a micro-service architecture, with a central service discovery, setting constraints limits Træfik scope to a smaller number of routes.
 
-Træfik filters services according to service attributes/tags set in your configuration backends.
+Træfik filters services according to service attributes/tags set in your providers.
 
 Supported filters:
 
@@ -136,9 +136,9 @@ constraints = ["tag==us-*"]
 constraints = ["tag!=us-*", "tag!=asia-*"]
 ```
 
-### Backend-specific
+### provider-specific
 
-Supported backends:
+Supported Providers:
 
 - Docker
 - Consul K/V
@@ -151,12 +151,12 @@ Supported backends:
 - Kubernetes (using a provider-specific mechanism based on label selectors)
 
 ```toml
-# Backend-specific constraint
+# Provider-specific constraint
 [consulCatalog]
 # ...
 constraints = ["tag==api"]
 
-# Backend-specific constraint
+# Provider-specific constraint
 [marathon]
 # ...
 constraints = ["tag==api", "tag!=v*-beta"]
@@ -421,12 +421,12 @@ idleTimeout = "360s"
 !!! warning
     For advanced users only.
 
-Supported by all backends except: File backend, Web backend and DynamoDB backend.
+Supported by all providers except: File Provider, Web Provider and DynamoDB Provider.
 
 ```toml
-[backend_name]
+[provider_name]
 
-# Override default configuration template. For advanced users :)
+# Override default provider configuration template. For advanced users :)
 #
 # Optional
 # Default: ""

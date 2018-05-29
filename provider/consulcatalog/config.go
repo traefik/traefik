@@ -237,19 +237,6 @@ func hasTag(name string, tags []string) bool {
 	return false
 }
 
-func hasTagPrefix(name string, tags []string) bool {
-	lowerName := strings.ToLower(name)
-
-	for _, tag := range tags {
-		lowerTag := strings.ToLower(tag)
-
-		if strings.HasPrefix(lowerTag, lowerName) {
-			return true
-		}
-	}
-	return false
-}
-
 func getTag(name string, tags []string, defaultValue string) string {
 	lowerName := strings.ToLower(name)
 

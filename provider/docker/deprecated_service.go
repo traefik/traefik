@@ -88,7 +88,7 @@ func extractServicePortV1(labelName string) []string {
 // Extract backend from labels for a given service and a given docker container
 // Deprecated
 func getServiceBackendNameV1(container dockerData, serviceName string) string {
-	if value, ok := getServiceLabelsV1(container, serviceName)[label.SuffixFrontendBackend]; ok {
+	if value, ok := getServiceLabelsV1(container, serviceName)[label.SuffixBackend]; ok {
 		return provider.Normalize(container.ServiceName + "-" + value)
 	}
 	return provider.Normalize(container.ServiceName + "-" + getBackendNameV1(container) + "-" + serviceName)
@@ -137,34 +137,11 @@ func getFuncServiceIntLabelV1(labelSuffix string, defaultValue int) func(contain
 }
 
 // Deprecated
-func hasStrictServiceLabelV1(serviceLabels map[string]string, labelSuffix string) bool {
-	value, ok := serviceLabels[labelSuffix]
-	return ok && len(value) > 0
-}
-
-// Deprecated
 func getServiceStringValueV1(container dockerData, serviceLabels map[string]string, labelSuffix string, defaultValue string) string {
 	if value, ok := serviceLabels[labelSuffix]; ok {
 		return value
 	}
 	return label.GetStringValue(container.Labels, label.Prefix+labelSuffix, defaultValue)
-}
-
-// Deprecated
-func getStrictServiceStringValueV1(serviceLabels map[string]string, labelSuffix string, defaultValue string) string {
-	if value, ok := serviceLabels[labelSuffix]; ok {
-		return value
-	}
-	return defaultValue
-}
-
-// Deprecated
-func getServiceMapValueV1(container dockerData, serviceLabels map[string]string, serviceName string, labelSuffix string) map[string]string {
-	if value, ok := serviceLabels[labelSuffix]; ok {
-		lblName := label.GetServiceLabel(labelSuffix, serviceName)
-		return label.ParseMapValue(lblName, value)
-	}
-	return label.GetMapValue(container.Labels, label.Prefix+labelSuffix)
 }
 
 // Deprecated
@@ -195,17 +172,6 @@ func getServiceIntLabelV1(container dockerData, serviceName string, labelSuffix 
 		}
 	}
 	return label.GetIntValue(container.Labels, label.Prefix+labelSuffix, defaultValue)
-}
-
-// Deprecated
-func getServiceInt64ValueV1(container dockerData, serviceLabels map[string]string, labelSuffix string, defaultValue int64) int64 {
-	if rawValue, ok := serviceLabels[labelSuffix]; ok {
-		value, err := strconv.ParseInt(rawValue, 10, 64)
-		if err == nil {
-			return value
-		}
-	}
-	return label.GetInt64Value(container.Labels, label.Prefix+labelSuffix, defaultValue)
 }
 
 // Deprecated

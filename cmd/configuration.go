@@ -88,7 +88,9 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultMarathon.Endpoint = "http://127.0.0.1:8080"
 	defaultMarathon.ExposedByDefault = true
 	defaultMarathon.Constraints = types.Constraints{}
-	defaultMarathon.DialerTimeout = flaeg.Duration(60 * time.Second)
+	defaultMarathon.DialerTimeout = flaeg.Duration(5 * time.Second)
+	defaultMarathon.ResponseHeaderTimeout = flaeg.Duration(60 * time.Second)
+	defaultMarathon.TLSHandshakeTimeout = flaeg.Duration(5 * time.Second)
 	defaultMarathon.KeepAlive = flaeg.Duration(10 * time.Second)
 
 	// default Consul
@@ -220,7 +222,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 			SamplingServerURL:  "http://localhost:5778/sampling",
 			SamplingType:       "const",
 			SamplingParam:      1.0,
-			LocalAgentHostPort: "127.0.0.1:6832",
+			LocalAgentHostPort: "127.0.0.1:6831",
 		},
 		Zipkin: &zipkin.Config{
 			HTTPEndpoint: "http://localhost:9411/api/v1/spans",

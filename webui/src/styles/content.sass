@@ -1,0 +1,107 @@
+.content
+  background: transparent
+  margin: 2rem 0
+
+  .subtitle
+    color: $black
+    font-size: 0.9rem
+    font-weight: $weight-bold
+    text-transform: uppercase
+
+    .subtitle-name
+      padding-left: 0.5rem
+
+.content-item
+  background: $white
+  border: 1px solid $border-secondary
+  margin: 10px 0
+  border-radius: $traefik-border-radius
+  box-shadow: 1px 2px 5px rgba($border, 0.4)
+
+  h2
+    color: $text-dark
+    font-size: 14px
+    padding: 20px 20px 0 20px
+    font-weight: $weight-semibold
+
+  .content-item-data
+    padding: 10px 20px
+
+    .item-data
+      display: flex
+      align-items: center
+      justify-content: space-between
+      padding: 5px 10px
+
+      &.border-right
+        border-right: 1px solid #DFE3E9
+
+    .data-blue
+      color: $blue
+      font-size: 22px
+      font-weight: $weight-semibold
+
+    .data-grey
+      color: $grey
+      font-size: 12px
+      font-weight: $weight-light
+
+  .widget-item
+    min-height: 80px
+    padding: 20px
+
+    h1
+      color: $text-dark
+      font-size: 18px
+      font-weight: $weight-light
+
+    img
+      width: 40px
+      height: 40px
+      display: block
+      float: left
+      margin-right: 10px
+
+    span
+      font-size: 13px
+      display: block
+
+      &.mtop12
+        margin-top: 12px
+
+.loading-text
+  height: 320px
+  display: flex
+  align-items: center
+  justify-content: center
+
+  .main-loader
+    width: 70px
+    display: block
+    margin: 15px auto
+
+.search-container
+  background: $white
+  color: $black
+  display: flex
+  align-items: center
+  border-radius: $traefik-border-radius
+  box-shadow: 1px 2px 5px rgba($border, 0.4)
+  border: 1px solid $border-secondary
+  position: relative
+  height: 3rem
+
+  .search-button
+    position: absolute
+    left: 1rem
+    top: 0.8rem
+
+  input
+    color: $text
+    border: none
+    border-radius: $traefik-border-radius
+    outline: none
+    font-size: 1rem
+    font-weight: $weight-light
+    width: 100%
+    padding-left: 2.8rem

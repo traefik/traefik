@@ -20,7 +20,7 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/rules"
 	"github.com/containous/traefik/safe"
-	traefikTLS "github.com/containous/traefik/tls"
+	traefiktls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/pkg/errors"
 	acme "github.com/xenolf/lego/acmev2"
@@ -30,7 +30,6 @@ import (
 var (
 	// OSCPMustStaple enables OSCP stapling as from https://github.com/xenolf/lego/issues/270
 	OSCPMustStaple = false
-	provider       = &Provider{}
 )
 
 // Configuration holds ACME configuration provided by users
@@ -40,6 +39,7 @@ type Configuration struct {
 	CAServer      string         `description:"CA server to use."`
 	Storage       string         `description:"Storage to use."`
 	EntryPoint    string         `description:"EntryPoint to use."`
+	KeyType       string         `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'. Default to 'RSA4096'"`
 	OnHostRule    bool           `description:"Enable certificate generation on frontends Host rules."`
 	OnDemand      bool           `description:"Enable on demand certificate generation. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."` // Deprecated
 	DNSChallenge  *DNSChallenge  `description:"Activate DNS-01 Challenge"`
@@ -56,8 +56,7 @@ type Provider struct {
 	client                 *acme.Client
 	certsChan              chan *Certificate
 	configurationChan      chan<- types.ConfigMessage
-	dynamicCerts           *safe.Safe
-	staticCerts            map[string]*tls.Certificate
+	certificateStore       *traefiktls.CertificateStore
 	clientMutex            sync.Mutex
 	configFromListenerChan chan types.Configuration
 	pool                   *safe.Pool
@@ -79,16 +78,6 @@ type DNSChallenge struct {
 // HTTPChallenge contains HTTP challenge Configuration
 type HTTPChallenge struct {
 	EntryPoint string `description:"HTTP challenge EntryPoint"`
-}
-
-// Get returns the provider instance
-func Get() *Provider {
-	return provider
-}
-
-// IsEnabled returns true if the provider instance and its configuration are not nil, otherwise false
-func IsEnabled() bool {
-	return provider != nil && provider.Configuration != nil
 }
 
 // SetConfigListenerChan initializes the configFromListenerChan
@@ -128,7 +117,7 @@ func (p *Provider) init() error {
 func (p *Provider) initAccount() (*Account, error) {
 	if p.account == nil || len(p.account.Email) == 0 {
 		var err error
-		p.account, err = NewAccount(p.Email)
+		p.account, err = NewAccount(p.Email, p.KeyType)
 		if err != nil {
 			return nil, err
 		}
@@ -196,14 +185,9 @@ func (p *Provider) watchNewDomains() {
 	})
 }
 
-// SetDynamicCertificates allow to initialize dynamicCerts map
-func (p *Provider) SetDynamicCertificates(safe *safe.Safe) {
-	p.dynamicCerts = safe
-}
-
-// SetStaticCertificates allow to initialize staticCerts map
-func (p *Provider) SetStaticCertificates(staticCerts map[string]*tls.Certificate) {
-	p.staticCerts = staticCerts
+// SetCertificateStore allow to initialize certificate store
+func (p *Provider) SetCertificateStore(certificateStore *traefiktls.CertificateStore) {
+	p.certificateStore = certificateStore
 }
 
 func (p *Provider) resolveCertificate(domain types.Domain, domainFromConfigurationFile bool) (*acme.CertificateResource, error) {
@@ -226,9 +210,9 @@ func (p *Provider) resolveCertificate(domain types.Domain, domainFromConfigurati
 
 	bundle := true
 
-	certificate, failures := client.ObtainCertificate(uncheckedDomains, bundle, nil, OSCPMustStaple)
-	if len(failures) > 0 {
-		return nil, fmt.Errorf("cannot obtain certificates %+v", failures)
+	certificate, err := client.ObtainCertificate(uncheckedDomains, bundle, nil, OSCPMustStaple)
+	if err != nil {
+		return nil, fmt.Errorf("cannot obtain certificates: %+v", err)
 	}
 
 	if len(certificate.Certificate) == 0 || len(certificate.PrivateKey) == 0 {
@@ -263,7 +247,7 @@ func (p *Provider) getClient() (*acme.Client, error) {
 			caServer = p.CAServer
 		}
 		log.Debugf(caServer)
-		client, err := acme.NewClient(caServer, account, acme.RSA4096)
+		client, err := acme.NewClient(caServer, account, account.KeyType)
 		if err != nil {
 			return nil, err
 		}
@@ -347,7 +331,6 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		safe.Go(func() {
 			if _, err := p.resolveCertificate(domain, true); err != nil {
 				log.Errorf("Unable to obtain ACME certificate for domains %q : %v", strings.Join(domain.ToStrArray(), ","), err)
-			} else {
 			}
 		})
 	}
@@ -401,15 +384,6 @@ func (p *Provider) watchCertificate() {
 	})
 }
 
-func (p *Provider) deleteCertificateForDomain(domain types.Domain) {
-	for k, cert := range p.certificates {
-		if reflect.DeepEqual(cert.Domain, domain) {
-			p.certificates = append(p.certificates[:k], p.certificates[k+1:]...)
-		}
-	}
-	p.saveCertificates()
-}
-
 func (p *Provider) saveCertificates() {
 	err := p.Store.SaveCertificates(p.certificates)
 	if err != nil {
@@ -424,13 +398,13 @@ func (p *Provider) refreshCertificates() {
 		Configuration: &types.Configuration{
 			Backends:  map[string]*types.Backend{},
 			Frontends: map[string]*types.Frontend{},
-			TLS:       []*traefikTLS.Configuration{},
+			TLS:       []*traefiktls.Configuration{},
 		},
 	}
 
 	for _, cert := range p.certificates {
-		certificate := &traefikTLS.Certificate{CertFile: traefikTLS.FileOrContent(cert.Certificate), KeyFile: traefikTLS.FileOrContent(cert.Key)}
-		config.Configuration.TLS = append(config.Configuration.TLS, &traefikTLS.Configuration{Certificate: certificate, EntryPoints: []string{p.EntryPoint}})
+		certificate := &traefiktls.Certificate{CertFile: traefiktls.FileOrContent(cert.Certificate), KeyFile: traefiktls.FileOrContent(cert.Key)}
+		config.Configuration.TLS = append(config.Configuration.TLS, &traefiktls.Configuration{Certificate: certificate, EntryPoints: []string{p.EntryPoint}})
 	}
 	p.configurationChan <- config
 }
@@ -507,33 +481,23 @@ func (p *Provider) AddRoutes(router *mux.Router) {
 // from static and dynamic provided certificates
 func (p *Provider) getUncheckedDomains(domainsToCheck []string, checkConfigurationDomains bool) []string {
 	log.Debugf("Looking for provided certificate(s) to validate %q...", domainsToCheck)
-	var allCerts []string
+	var allDomains []string
 
-	// Get static certificates
-	for domains := range p.staticCerts {
-		allCerts = append(allCerts, domains)
-	}
-
-	// Get dynamic certificates
-	if p.dynamicCerts != nil && p.dynamicCerts.Get() != nil {
-		for domains := range p.dynamicCerts.Get().(map[string]*tls.Certificate) {
-			allCerts = append(allCerts, domains)
-		}
-	}
+	allDomains = p.certificateStore.GetAllDomains()
 
 	// Get ACME certificates
 	for _, certificate := range p.certificates {
-		allCerts = append(allCerts, strings.Join(certificate.Domain.ToStrArray(), ","))
+		allDomains = append(allDomains, strings.Join(certificate.Domain.ToStrArray(), ","))
 	}
 
 	// Get Configuration Domains
 	if checkConfigurationDomains {
 		for i := 0; i < len(p.Domains); i++ {
-			allCerts = append(allCerts, strings.Join(p.Domains[i].ToStrArray(), ","))
+			allDomains = append(allDomains, strings.Join(p.Domains[i].ToStrArray(), ","))
 		}
 	}
 
-	return searchUncheckedDomains(domainsToCheck, allCerts)
+	return searchUncheckedDomains(domainsToCheck, allDomains)
 }
 
 func searchUncheckedDomains(domainsToCheck []string, existentDomains []string) []string {

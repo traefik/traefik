@@ -98,6 +98,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						label.TraefikBackend: "foobar",
 
 						label.TraefikBackendCircuitBreakerExpression:         "NetworkErrorRatio() > 0.5",
+						label.TraefikBackendHealthCheckScheme:                "http",
 						label.TraefikBackendHealthCheckPath:                  "/health",
 						label.TraefikBackendHealthCheckPort:                  "880",
 						label.TraefikBackendHealthCheckInterval:              "6",
@@ -140,6 +141,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendReferrerPolicy:          "foo",
 						label.TraefikFrontendCustomBrowserXSSValue:   "foo",
 						label.TraefikFrontendSTSSeconds:              "666",
+						label.TraefikFrontendSSLForceHost:            "true",
 						label.TraefikFrontendSSLRedirect:             "true",
 						label.TraefikFrontendSSLTemporaryRedirect:    "true",
 						label.TraefikFrontendSTSIncludeSubdomains:    "true",
@@ -216,6 +218,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						SSLRedirect:          true,
 						SSLTemporaryRedirect: true,
 						SSLHost:              "foo",
+						SSLForceHost:         true,
 						SSLProxyHeaders: map[string]string{
 							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
 							"Content-Type":                 "application/json; charset=utf-8",
@@ -292,6 +295,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						ExtractorFunc: "client.ip",
 					},
 					HealthCheck: &types.HealthCheck{
+						Scheme:   "http",
 						Path:     "/health",
 						Port:     880,
 						Interval: "6",
@@ -406,6 +410,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			var dockerDataList []dockerData
 			for _, cont := range test.containers {
 				dData := parseContainer(cont)
@@ -809,15 +814,19 @@ func TestDockerGetFrontendRule(t *testing.T) {
 			expected:  "Host:foo.docker.localhost",
 		},
 		{
-			container: containerJSON(name("bar")),
-			expected:  "Host:bar.docker.localhost",
+			container: containerJSON(name("foo"),
+				labels(map[string]string{
+					label.TraefikDomain: "traefik.localhost",
+				})),
+			expected: "Host:foo.traefik.localhost",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
 				label.TraefikFrontendRule: "Host:foo.bar",
 			})),
 			expected: "Host:foo.bar",
-		}, {
+		},
+		{
 			container: containerJSON(labels(map[string]string{
 				"com.docker.compose.project": "foo",
 				"com.docker.compose.service": "bar",
@@ -1019,6 +1028,125 @@ func TestDockerGetPort(t *testing.T) {
 
 			actual := getPort(dData)
 			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestDockerGetServers(t *testing.T) {
+	p := &Provider{}
+
+	testCases := []struct {
+		desc       string
+		containers []docker.ContainerJSON
+		expected   map[string]types.Server
+	}{
+		{
+			desc:     "no container",
+			expected: nil,
+		},
+		{
+			desc: "with a simple container",
+			containers: []docker.ContainerJSON{
+				containerJSON(
+					name("test1"),
+					withNetwork("testnet", ipv4("10.10.10.10")),
+					ports(nat.PortMap{
+						"80/tcp": {},
+					})),
+			},
+			expected: map[string]types.Server{
+				"server-test1": {
+					URL:    "http://10.10.10.10:80",
+					Weight: 1,
+				},
+			},
+		},
+		{
+			desc: "with several containers",
+			containers: []docker.ContainerJSON{
+				containerJSON(
+					name("test1"),
+					withNetwork("testnet", ipv4("10.10.10.11")),
+					ports(nat.PortMap{
+						"80/tcp": {},
+					})),
+				containerJSON(
+					name("test2"),
+					withNetwork("testnet", ipv4("10.10.10.12")),
+					ports(nat.PortMap{
+						"81/tcp": {},
+					})),
+				containerJSON(
+					name("test3"),
+					withNetwork("testnet", ipv4("10.10.10.13")),
+					ports(nat.PortMap{
+						"82/tcp": {},
+					})),
+			},
+			expected: map[string]types.Server{
+				"server-test1": {
+					URL:    "http://10.10.10.11:80",
+					Weight: 1,
+				},
+				"server-test2": {
+					URL:    "http://10.10.10.12:81",
+					Weight: 1,
+				},
+				"server-test3": {
+					URL:    "http://10.10.10.13:82",
+					Weight: 1,
+				},
+			},
+		},
+		{
+			desc: "ignore one container because no ip address",
+			containers: []docker.ContainerJSON{
+				containerJSON(
+					name("test1"),
+					withNetwork("testnet", ipv4("")),
+					ports(nat.PortMap{
+						"80/tcp": {},
+					})),
+				containerJSON(
+					name("test2"),
+					withNetwork("testnet", ipv4("10.10.10.12")),
+					ports(nat.PortMap{
+						"81/tcp": {},
+					})),
+				containerJSON(
+					name("test3"),
+					withNetwork("testnet", ipv4("10.10.10.13")),
+					ports(nat.PortMap{
+						"82/tcp": {},
+					})),
+			},
+			expected: map[string]types.Server{
+				"server-test2": {
+					URL:    "http://10.10.10.12:81",
+					Weight: 1,
+				},
+				"server-test3": {
+					URL:    "http://10.10.10.13:82",
+					Weight: 1,
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var dockerDataList []dockerData
+			for _, cont := range test.containers {
+				dData := parseContainer(cont)
+				dockerDataList = append(dockerDataList, dData)
+			}
+
+			servers := p.getServers(dockerDataList)
+
+			assert.Equal(t, test.expected, servers)
 		})
 	}
 }

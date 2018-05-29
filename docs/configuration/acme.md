@@ -63,6 +63,13 @@ entryPoint = "https"
 #
 # acmeLogging = true
 
+# If true, override certificates in key-value store when using storeconfig.
+#
+# Optional
+# Default: false
+#
+# overrideCertificates = true
+
 # Enable on demand certificate generation.
 #
 # Optional (Deprecated)
@@ -85,6 +92,15 @@ entryPoint = "https"
 # Default: "https://acme-v02.api.letsencrypt.org/directory"
 #
 # caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
+
+# KeyType to use.
+#
+# Optional
+# Default: "RSA4096"
+#
+# Available values : "EC256", "EC384", "RSA2048", "RSA4096", "RSA8192"
+#
+# KeyType = "RSA4096"
 
 # Domains list.
 # Only domains defined here can generate wildcard certificates.

@@ -31,6 +31,7 @@ func GetHealthCheck(metrics metricsRegistry) *HealthCheck {
 type Options struct {
 	Headers   map[string]string
 	Hostname  string
+	Scheme    string
 	Path      string
 	Port      int
 	Transport http.RoundTripper
@@ -50,7 +51,7 @@ type BackendHealthCheck struct {
 	requestTimeout time.Duration
 }
 
-//HealthCheck struct
+// HealthCheck struct
 type HealthCheck struct {
 	Backends map[string]*BackendHealthCheck
 	metrics  metricsRegistry
@@ -71,8 +72,8 @@ func newHealthCheck(metrics metricsRegistry) *HealthCheck {
 	}
 }
 
-// metricsRegistry is a local interface in the healthcheck package, exposing only the required metrics
-// necessary for the healthcheck package. This makes it easier for the tests.
+// metricsRegistry is a local interface in the health check package, exposing only the required metrics
+// necessary for the health check package. This makes it easier for the tests.
 type metricsRegistry interface {
 	BackendServerUpGauge() metrics.Gauge
 }
@@ -152,15 +153,18 @@ func (hc *HealthCheck) checkBackend(backend *BackendHealthCheck) {
 }
 
 func (b *BackendHealthCheck) newRequest(serverURL *url.URL) (*http.Request, error) {
-	if b.Port == 0 {
-		return http.NewRequest(http.MethodGet, serverURL.String()+b.Path, nil)
-	}
-
-	// copy the url and add the port to the host
 	u := &url.URL{}
 	*u = *serverURL
-	u.Host = net.JoinHostPort(u.Hostname(), strconv.Itoa(b.Port))
-	u.Path = u.Path + b.Path
+
+	if len(b.Scheme) > 0 {
+		u.Scheme = b.Scheme
+	}
+
+	if b.Port != 0 {
+		u.Host = net.JoinHostPort(u.Hostname(), strconv.Itoa(b.Port))
+	}
+
+	u.Path += b.Path
 
 	return http.NewRequest(http.MethodGet, u.String(), nil)
 }
@@ -170,6 +174,7 @@ func (b *BackendHealthCheck) addHeadersAndHost(req *http.Request) *http.Request 
 	if b.Options.Hostname != "" {
 		req.Host = b.Options.Hostname
 	}
+
 	for k, v := range b.Options.Headers {
 		req.Header.Set(k, v)
 	}
@@ -179,26 +184,28 @@ func (b *BackendHealthCheck) addHeadersAndHost(req *http.Request) *http.Request 
 // checkHealth returns a nil error in case it was successful and otherwise
 // a non-nil error with a meaningful description why the health check failed.
 func checkHealth(serverURL *url.URL, backend *BackendHealthCheck) error {
-	client := http.Client{
-		Timeout:   backend.requestTimeout,
-		Transport: backend.Options.Transport,
-	}
 	req, err := backend.newRequest(serverURL)
 	if err != nil {
 		return fmt.Errorf("failed to create HTTP request: %s", err)
 	}
+
 	req = backend.addHeadersAndHost(req)
 
-	resp, err := client.Do(req)
-	if err == nil {
-		defer resp.Body.Close()
+	client := http.Client{
+		Timeout:   backend.requestTimeout,
+		Transport: backend.Options.Transport,
 	}
 
-	switch {
-	case err != nil:
+	resp, err := client.Do(req)
+	if err != nil {
 		return fmt.Errorf("HTTP request failed: %s", err)
-	case resp.StatusCode != http.StatusOK:
-		return fmt.Errorf("received non-200 status code: %v", resp.StatusCode)
 	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
+		return fmt.Errorf("received error status code: %v", resp.StatusCode)
+	}
+
 	return nil
 }
