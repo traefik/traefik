@@ -29,6 +29,7 @@ import (
 	"github.com/containous/traefik/provider/zk"
 	"github.com/containous/traefik/types"
 	sf "github.com/jjcollinge/servicefabric"
+	"github.com/containous/flaeg/parse"
 )
 
 // TraefikConfiguration holds GlobalConfiguration and other stuff
@@ -266,6 +267,13 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		},
 	}
 
+	defaultResolver := configuration.ResolverConfig{
+		CnameFlattening: configuration.DefaultCNAMEFlattening,
+		ResolvConfig:    configuration.DefaultResolverConfig,
+		ResolvDepth:     configuration.DefaultResolverDepth,
+		CacheDuration:   parse.Duration(configuration.DefaultCacheDuration),
+	}
+
 	defaultConfiguration := configuration.GlobalConfiguration{
 		Docker:             &defaultDocker,
 		File:               &defaultFile,
@@ -294,6 +302,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		API:                &defaultAPI,
 		Metrics:            &defaultMetrics,
 		Tracing:            &defaultTracing,
+		Resolver:           &defaultResolver,
 	}
 
 	return &TraefikConfiguration{

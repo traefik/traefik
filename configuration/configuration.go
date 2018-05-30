@@ -32,6 +32,7 @@ import (
 	"github.com/containous/traefik/provider/zk"
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
+	"github.com/containous/flaeg/parse"
 )
 
 const (
@@ -53,6 +54,18 @@ const (
 
 	// DefaultAcmeCAServer is the default ACME API endpoint
 	DefaultAcmeCAServer = "https://acme-v02.api.letsencrypt.org/directory"
+
+	// DefaultCNAMEFlattening is whether CNAME Flattening enabled or not
+	DefaultCNAMEFlattening = false
+
+	// DefaultResolverConfig location of resolv.conf
+	DefaultResolverConfig = "/etc/resolv.conf"
+
+	// DefaultResolverDepth how deep CNAME Flattening before exiting
+	DefaultResolverDepth = 5
+
+	// DefaultCacheDuration how long CNAME Flattening should be cached
+	DefaultCacheDuration = 30 * time.Minute
 )
 
 // GlobalConfiguration holds global configuration (with providers, etc.).
@@ -104,6 +117,7 @@ type GlobalConfiguration struct {
 	API                       *api.Handler            `description:"Enable api/dashboard" export:"true"`
 	Metrics                   *types.Metrics          `description:"Enable a metrics exporter" export:"true"`
 	Ping                      *ping.Handler           `description:"Enable ping" export:"true"`
+	Resolver                  *ResolverConfig         `description:"Enable CNAME Flattening" export:"true"`
 }
 
 // WebCompatibility is a configuration to handle compatibility with deprecated web provider options
@@ -507,4 +521,11 @@ type ForwardingTimeouts struct {
 type LifeCycle struct {
 	RequestAcceptGraceTimeout flaeg.Duration `description:"Duration to keep accepting requests before Traefik initiates the graceful shutdown procedure"`
 	GraceTimeOut              flaeg.Duration `description:"Duration to give active requests a chance to finish before Traefik stops"`
+}
+
+type ResolverConfig struct {
+	CnameFlattening bool           `description:"A flag to enable/disable CNAME flattening" export:"true"`
+	ResolvConfig    string         `description:"resolv.conf used for DNS resolving" export:"true"`
+	ResolvDepth     int            `description:"The maximal depth of DNS recursive resolving" export:"true"`
+	CacheDuration   parse.Duration `description:"Cache duration of DNS resolve" export:"true"`
 }

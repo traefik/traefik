@@ -53,6 +53,7 @@ import (
 	"github.com/vulcand/oxy/roundrobin"
 	"github.com/vulcand/oxy/utils"
 	"golang.org/x/net/http2"
+	"github.com/containous/traefik/hostresolver"
 )
 
 var httpServerLogger = stdlog.New(log.WriterLevel(logrus.DebugLevel), "", 0)
@@ -793,14 +794,14 @@ func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.
 	}
 
 	return &http.Server{
-			Addr:         entryPoint.Address,
-			Handler:      internalMuxRouter,
-			TLSConfig:    tlsConfig,
-			ReadTimeout:  readTimeout,
-			WriteTimeout: writeTimeout,
-			IdleTimeout:  idleTimeout,
-			ErrorLog:     httpServerLogger,
-		},
+		Addr:         entryPoint.Address,
+		Handler:      internalMuxRouter,
+		TLSConfig:    tlsConfig,
+		ReadTimeout:  readTimeout,
+		WriteTimeout: writeTimeout,
+		IdleTimeout:  idleTimeout,
+		ErrorLog:     httpServerLogger,
+	},
 		listener,
 		nil
 }
@@ -888,6 +889,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 	redirectHandlers := make(map[string]negroni.Handler)
 	backends := map[string]http.Handler{}
 	backendsHealthCheck := map[string]*healthcheck.BackendHealthCheck{}
+	hostResolver := buildHostResolver(globalConfiguration)
 	var errorPageHandlers []*errorpages.Handler
 
 	errorHandler := NewRecordingErrorHandler(middlewares.DefaultNetErrorRecorder{})
@@ -920,7 +922,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 
 				newServerRoute := &types.ServerRoute{Route: serverEntryPoints[entryPointName].httpRouter.GetHandler().NewRoute().Name(frontendName)}
 				for routeName, route := range frontend.Routes {
-					err := getRoute(newServerRoute, &route)
+					err := getRoute(newServerRoute, &route, hostResolver)
 					if err != nil {
 						log.Errorf("Error creating route for frontend %s: %v", frontendName, err)
 						log.Errorf("Skipping frontend %s...", frontendName)
@@ -1373,8 +1375,8 @@ func parseHealthCheckOptions(lb healthcheck.LoadBalancer, backend string, hc *ty
 	}
 }
 
-func getRoute(serverRoute *types.ServerRoute, route *types.Route) error {
-	rules := rules.Rules{Route: serverRoute}
+func getRoute(serverRoute *types.ServerRoute, route *types.Route, hostResolver *hostresolver.HostResolver) error {
+	rules := rules.Rules{Route: serverRoute, HostResolver: hostResolver}
 	newRoute, err := rules.Parse(route.Rule)
 	if err != nil {
 		return err
@@ -1554,5 +1556,14 @@ func buildModifyResponse(secure *secure.Secure, header *middlewares.HeaderStruct
 			}
 		}
 		return nil
+	}
+}
+
+// buildHostResolver build host resolver, if no config, create default
+func buildHostResolver(globalConfig configuration.GlobalConfiguration) *hostresolver.HostResolver {
+	if globalConfig.Resolver != nil {
+		return hostresolver.NewHostResolver(globalConfig.Resolver.CnameFlattening, globalConfig.Resolver.ResolvConfig, globalConfig.Resolver.ResolvDepth, time.Duration(globalConfig.Resolver.CacheDuration))
+	} else {
+		return hostresolver.NewDefaultHostResolver()
 	}
 }

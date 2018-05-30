@@ -8,20 +8,17 @@ import (
 	"reflect"
 	"sort"
 	"strings"
-	"time"
-
 	"github.com/BurntSushi/ty/fun"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/types"
-	"github.com/miekg/dns"
-	"github.com/patrickmn/go-cache"
+	"github.com/containous/traefik/hostresolver"
 )
 
 // Rules holds rule parsing and configuration
 type Rules struct {
-	Route *types.ServerRoute
-	err   error
-	cache *cache.Cache
+	Route        *types.ServerRoute
+	err          error
+	HostResolver *hostresolver.HostResolver
 }
 
 func (r *Rules) host(hosts ...string) *mux.Route {
@@ -30,12 +27,20 @@ func (r *Rules) host(hosts ...string) *mux.Route {
 		if err != nil {
 			reqHost = req.Host
 		}
-		reqH, flatH := r.CNAMEFlatten(types.CanonicalDomain(reqHost))
-		for _, host := range hosts {
-			if types.CanonicalDomain(reqH) == types.CanonicalDomain(host) {
-				return true
-			} else if types.CanonicalDomain(flatH) == types.CanonicalDomain(host) {
-				return true
+		if r.HostResolver != nil && r.HostResolver.Enabled {
+			reqH, flatH := r.HostResolver.CNAMEFlatten(types.CanonicalDomain(reqHost))
+			for _, host := range hosts {
+				if types.CanonicalDomain(reqH) == types.CanonicalDomain(host) {
+					return true
+				} else if types.CanonicalDomain(flatH) == types.CanonicalDomain(host) {
+					return true
+				}
+			}
+		} else {
+			for _, host := range hosts {
+				if types.CanonicalDomain(reqHost) == types.CanonicalDomain(host) {
+					return true
+				}
 			}
 		}
 		return false
@@ -289,35 +294,4 @@ func (r *Rules) ParseDomains(expression string) ([]string, error) {
 	}
 
 	return fun.Map(types.CanonicalDomain, domains).([]string), nil
-}
-
-// CNAMEFlatten check if CNAME records is exist, flatten if possible
-func (r *Rules) CNAMEFlatten(host string) (string, string) {
-	var result []string
-	result = append(result, host)
-	if r.cache == nil {
-		r.cache = cache.New(10*time.Minute, 30*time.Minute)
-	}
-	rst, found := r.cache.Get(host)
-	if found {
-		result = strings.Split(rst.(string), ",")
-	} else {
-		config, _ := dns.ClientConfigFromFile("/etc/resolv.conf")
-		c := new(dns.Client)
-		c.Timeout = 30 * time.Second
-		m := new(dns.Msg)
-		m.SetQuestion(dns.Fqdn(host), dns.TypeCNAME)
-		for true {
-			r, _, _ := c.Exchange(m, net.JoinHostPort(config.Servers[0], config.Port))
-			if r != nil && len(r.Answer) > 0 {
-				temp := strings.Split(r.Answer[0].String(), "CNAME")
-				str := strings.TrimSuffix(strings.TrimSpace(temp[len(temp)-1]), ".")
-				result = append(result, str)
-				m.SetQuestion(dns.Fqdn(str), dns.TypeCNAME)
-			} else {
-				break
-			}
-		}
-	}
-	return result[0], result[len(result)-1]
 }
