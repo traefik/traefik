@@ -301,7 +301,21 @@ Install the Træfik chart by:
 ```shell
 helm install stable/traefik
 ```
+Install the Træfik chart using a values.yaml file.
 
+```shell
+helm install --values values.yaml stable/traefik
+```
+
+```yaml
+dashboard:
+  enabled: true
+  domain: traefik-ui.minikube
+kubernetes:
+  namespaces:
+    - default
+    - kube-system
+```
 For more information, check out [the documentation](https://github.com/kubernetes/charts/tree/master/stable/traefik).
 
 ## Submitting an Ingress to the Cluster
