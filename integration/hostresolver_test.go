@@ -1,12 +1,12 @@
 package integration
 
 import (
-	"time"
 	"net/http"
+	"time"
 
+	"github.com/containous/traefik/integration/try"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
-	"github.com/containous/traefik/integration/try"
 )
 
 type HostResolverSuite struct{ BaseSuite }
