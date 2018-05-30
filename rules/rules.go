@@ -168,6 +168,56 @@ func (r *Rules) query(query ...string) *mux.Route {
 	return r.Route.Route.Queries(queries...)
 }
 
+func (r *Rules) localIP(ips ...string) *mux.Route {
+	return r.Route.Route.MatcherFunc(func(req *http.Request, route *mux.RouteMatch) bool {
+		// Retrieve local address from HTTP request
+		localAddr, ok := req.Context().Value(http.LocalAddrContextKey).(net.Addr)
+		if localAddr == nil || !ok {
+			// If we cannot find the local address we just return false here
+			return false
+		}
+
+		// Retrieve host part (IP address) from localAddr
+		localIP, _, err := net.SplitHostPort(localAddr.String())
+		if err != nil {
+			return false
+		}
+
+		// Range over all configured ips ...
+		for _, ip := range ips {
+			// ... and compare the string representations of both
+			if ip == localIP {
+				return true
+			}
+		}
+
+		return false
+	})
+}
+
+func (r *Rules) localAddr(addresses ...string) *mux.Route {
+	return r.Route.Route.MatcherFunc(func(req *http.Request, route *mux.RouteMatch) bool {
+		// Retrieve local address from HTTP request
+		localAddr, ok := req.Context().Value(http.LocalAddrContextKey).(net.Addr)
+		if localAddr == nil || !ok {
+			// If we cannot find the local address we just return false here
+			return false
+		}
+		localAddrString := localAddr.String()
+
+		// Range over all configured addresses ...
+		for _, addr := range addresses {
+			// ... and check if the string representation of the local address
+			// matches.
+			if addr == localAddrString {
+				return true
+			}
+		}
+
+		return false
+	})
+}
+
 func (r *Rules) parseRules(expression string, onRule func(functionName string, function interface{}, arguments []string) error) error {
 	functions := map[string]interface{}{
 		"Host":                 r.host,
@@ -185,6 +235,8 @@ func (r *Rules) parseRules(expression string, onRule func(functionName string, f
 		"ReplacePath":          r.replacePath,
 		"ReplacePathRegex":     r.replacePathRegex,
 		"Query":                r.query,
+		"LocalAddr":            r.localAddr,
+		"LocalIP":              r.localIP,
 	}
 
 	if len(expression) == 0 {
