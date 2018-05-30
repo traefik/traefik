@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik-extra-service-fabric"
 	"github.com/containous/traefik/api"
 	"github.com/containous/traefik/configuration"
@@ -29,7 +30,6 @@ import (
 	"github.com/containous/traefik/provider/zk"
 	"github.com/containous/traefik/types"
 	sf "github.com/jjcollinge/servicefabric"
-	"github.com/containous/flaeg/parse"
 )
 
 // TraefikConfiguration holds GlobalConfiguration and other stuff

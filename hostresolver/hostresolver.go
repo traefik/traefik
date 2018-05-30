@@ -1,9 +1,9 @@
 package hostresolver
 
 import (
-	"time"
-	"strings"
 	"net"
+	"strings"
+	"time"
 
 	"github.com/miekg/dns"
 	"github.com/patrickmn/go-cache"

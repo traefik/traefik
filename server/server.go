@@ -27,6 +27,7 @@ import (
 	"github.com/containous/traefik/configuration/router"
 	"github.com/containous/traefik/h2c"
 	"github.com/containous/traefik/healthcheck"
+	"github.com/containous/traefik/hostresolver"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"
@@ -54,7 +55,6 @@ import (
 	"github.com/vulcand/oxy/roundrobin"
 	"github.com/vulcand/oxy/utils"
 	"golang.org/x/net/http2"
-	"github.com/containous/traefik/hostresolver"
 )
 
 var httpServerLogger = stdlog.New(log.WriterLevel(logrus.DebugLevel), "", 0)

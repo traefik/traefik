@@ -8,10 +8,11 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+
 	"github.com/BurntSushi/ty/fun"
 	"github.com/containous/mux"
-	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/hostresolver"
+	"github.com/containous/traefik/types"
 )
 
 // Rules holds rule parsing and configuration
