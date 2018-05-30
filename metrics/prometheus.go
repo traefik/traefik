@@ -238,7 +238,7 @@ func (ps *prometheusState) Collect(ch chan<- stdprometheus.Metric) {
 	ps.mtx.Lock()
 	defer ps.mtx.Unlock()
 
-	outdatedKeys := []string{}
+	var outdatedKeys []string
 	for key, cs := range ps.state {
 		cs.collector.Collect(ch)
 
@@ -290,18 +290,18 @@ type dynamicConfig struct {
 	backends    map[string]map[string]bool
 }
 
-func (cs *dynamicConfig) hasEntrypoint(entrypointName string) bool {
-	_, ok := cs.entrypoints[entrypointName]
+func (d *dynamicConfig) hasEntrypoint(entrypointName string) bool {
+	_, ok := d.entrypoints[entrypointName]
 	return ok
 }
 
-func (cs *dynamicConfig) hasBackend(backendName string) bool {
-	_, ok := cs.backends[backendName]
+func (d *dynamicConfig) hasBackend(backendName string) bool {
+	_, ok := d.backends[backendName]
 	return ok
 }
 
-func (cs *dynamicConfig) hasServerURL(backendName, serverURL string) bool {
-	if backend, hasBackend := cs.backends[backendName]; hasBackend {
+func (d *dynamicConfig) hasServerURL(backendName, serverURL string) bool {
+	if backend, hasBackend := d.backends[backendName]; hasBackend {
 		_, ok := backend[serverURL]
 		return ok
 	}
@@ -328,7 +328,7 @@ type collector struct {
 }
 
 func buildMetricID(metricName string, labels stdprometheus.Labels) string {
-	labelNamesValues := []string{}
+	var labelNamesValues []string
 	for name, value := range labels {
 		labelNamesValues = append(labelNamesValues, name, value)
 	}
