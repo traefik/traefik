@@ -60,6 +60,7 @@ func init() {
 		check.Suite(&TimeoutSuite{})
 		check.Suite(&TracingSuite{})
 		check.Suite(&WebsocketSuite{})
+		check.Suite(&HostResolverSuite{})
 	}
 	if *host {
 		// tests launched from the host

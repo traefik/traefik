@@ -269,7 +269,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		},
 	}
 
-	defaultResolver := configuration.ResolverConfig{
+	defaultResolver := configuration.HostResolverConfig{
 		CnameFlattening: configuration.DefaultCNAMEFlattening,
 		ResolvConfig:    configuration.DefaultResolverConfig,
 		ResolvDepth:     configuration.DefaultResolverDepth,
@@ -304,7 +304,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		API:                &defaultAPI,
 		Metrics:            &defaultMetrics,
 		Tracing:            &defaultTracing,
-		Resolver:           &defaultResolver,
+		HostResolver:       &defaultResolver,
 	}
 
 	return &TraefikConfiguration{
