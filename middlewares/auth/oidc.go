@@ -260,7 +260,9 @@ func OIDC(oidcProviderRefresher *OIDCProviderRefresher, sharedKey []byte, config
 			Path:     "/",
 			HttpOnly: true,
 		})
+		w.Header().Set("Cache-Control", "no-cache, no-store")
 		w.Header().Set("Content-Type", "text/plain")
+		w.Header().Set("Pragma", "no-cache")
 		w.Write([]byte("You have been logged out.\n"))
 	} else {
 		cookie, err := oidcGetCookie(r, sharedKey, oidcCookieTypeDone)
