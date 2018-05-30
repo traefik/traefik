@@ -140,7 +140,7 @@ entryPoint = "https"
     These are Let's Encrypt limitations as described on the [community forum](https://community.letsencrypt.org/t/support-for-ports-other-than-80-and-443/3419/72).
 
 !!! note
-    Wildcard certificates can be generated only if `acme.dnsChallenge` option is enable.
+    Wildcard certificates can only be generated if the `acme.dnsChallenge` option is enabled.
 
 ### Let's Encrypt downtime
 
@@ -552,4 +552,4 @@ For example : if `acme.storage` value is `/etc/traefik/acme/acme.json`, the back
 
 !!! note
     When Træfik is launched in a container, do not forget to create a volume of the parent folder to get the backup file on the host.
-    Otherwise, the backup file will be deleted when the container will be stopped and Træfik will not generate it again.
+    Otherwise, the backup file will be permanently deleted when the container is stopped, and Træfik will not be able to generate it again.
