@@ -19,6 +19,8 @@ import (
 	"gopkg.in/square/go-jose.v2"
 )
 
+const oidcCookieName = "traefik-oidc"
+
 // OIDCProviderRefresher is a wrapper around oidc.Provider that only allows
 // discovery information to be used for up to one hour. After one hour, it
 // refreshes the discovery information.
@@ -77,7 +79,7 @@ const (
 
 // oidcGetCookie decodes the cookie sent by the client.
 func oidcGetCookie(r *http.Request, sharedKey []byte, expectedType string) (oidcCookie, error) {
-	encrypted, err := r.Cookie("banana4")
+	encrypted, err := r.Cookie(oidcCookieName)
 	if err != nil {
 		return oidcCookie{}, err
 	}
@@ -122,7 +124,7 @@ func oidcSetCookie(w http.ResponseWriter, sharedKey []byte, cookie *oidcCookie) 
 		log.Fatal(err)
 	}
 	http.SetCookie(w, &http.Cookie{
-		Name:     "banana4",
+		Name:     oidcCookieName,
 		Value:    serialized,
 		Path:     "/",
 		HttpOnly: true,
@@ -250,6 +252,16 @@ func OIDC(oidcProviderRefresher *OIDCProviderRefresher, sharedKey []byte, config
 			Path:   cookie.ReturnPath,
 		}
 		http.Redirect(w, r, originatingURL.String(), http.StatusSeeOther)
+	} else if r.URL.Path == "/.traefik-oidc-logout" {
+		// OpenID Connect Front-Channel Logout.
+		http.SetCookie(w, &http.Cookie{
+			Name:     oidcCookieName,
+			Value:    "",
+			Path:     "/",
+			HttpOnly: true,
+		})
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write([]byte("You have been logged out.\n"))
 	} else {
 		cookie, err := oidcGetCookie(r, sharedKey, oidcCookieTypeDone)
 		if err == nil {
