@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"testing"
@@ -8,9 +9,108 @@ import (
 	"github.com/containous/mux"
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
+	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestParseHashRangeRule(t *testing.T) {
+
+	testCases := []struct {
+		desc        string
+		expectMatch bool
+		request     func() *http.Request
+		rule        string
+	}{
+		{
+			desc: "Match: header in range",
+			request: func() *http.Request {
+				request := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar", nil)
+				request.Header.Add("x-partitionheader", "hello")
+				return request
+			},
+			expectMatch: true,
+			rule:        "HashedRange: type:header value:x-partitionheader match:50-200 range:0-300",
+		},
+		{
+			desc: "Don't match: header not in range",
+			request: func() *http.Request {
+				request := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar", nil)
+				request.Header.Add("x-partitionheader", "hello outside range please")
+				return request
+			},
+			expectMatch: false,
+			rule:        "HashedRange: type:header value:x-partitionheader match:50-200 range:0-300",
+		},
+		{
+			desc: "Error case: missing part",
+			request: func() *http.Request {
+				request := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar", nil)
+				return request
+			},
+			expectMatch: false,
+			rule:        "HashedRange: type:header match:50-200 range:0-300",
+		},
+	}
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			router := mux.NewRouter()
+			route := router.NewRoute()
+			serverRoute := &types.ServerRoute{Route: route}
+			rules := &Rules{Route: serverRoute}
+			routeResult, err := rules.Parse(test.rule)
+			require.NoError(t, err, "Error while building route for %s", test.rule)
+
+			routeMatch := routeResult.Match(test.request(), &mux.RouteMatch{Route: routeResult})
+
+			if test.expectMatch {
+				assert.True(t, routeMatch, "Rule %s don't match.", test.rule)
+			} else {
+				assert.False(t, routeMatch, "Rule %s matched when not expected.", test.rule)
+
+			}
+		})
+	}
+}
+
+func TestHashRangeRuleDistribution(t *testing.T) {
+	router := mux.NewRouter()
+	route := router.NewRoute()
+	serverRoute := &types.ServerRoute{Route: route}
+	rules := &Rules{Route: serverRoute}
+
+	expression := "HashedRange: type:header value:x-partitionheader match:0-10 range:0-500"
+	routeResult, err := rules.Parse(expression)
+	require.NoError(t, err, "Error while building route for %s", expression)
+
+	i := 0
+	matches := 0
+	attempts := 1000
+	//given match:0-10 range:0-500, what fraction of requests are we expecting this to match?
+	fractionMatched := 500 / 10
+	// Allow 0.2% variance. A rule can match +-0.2% of its expected requests and still pass.
+	allowedVariance := (float64(attempts) / 100) * 0.5
+	for i < attempts {
+		request := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar", nil)
+		request.Header.Add("x-partitionheader", uuid.NewV4().String())
+		routeMatch := routeResult.Match(request, &mux.RouteMatch{Route: routeResult})
+		if routeMatch {
+			matches++
+		}
+		i++
+	}
+
+	// For a range 0-500 matching 0-100 we expect 1/5th of requests to match this rule
+	expectedEvenDistribution := float64(attempts) / float64(fractionMatched)
+	lowAcceptableMatch := expectedEvenDistribution - allowedVariance
+	highAcceptableMatch := expectedEvenDistribution + allowedVariance
+	if float64(matches) < lowAcceptableMatch || float64(matches) > highAcceptableMatch {
+		assert.Fail(t, fmt.Sprintf("Matched attempts: %v fell outside acceptable range: %v -> %v for even distrubtion", matches, lowAcceptableMatch, highAcceptableMatch))
+	}
+}
 
 func TestParseOneRule(t *testing.T) {
 	router := mux.NewRouter()

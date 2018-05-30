@@ -3,14 +3,17 @@ package rules
 import (
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"net"
 	"net/http"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/BurntSushi/ty/fun"
 	"github.com/containous/mux"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
 )
 
@@ -31,6 +34,104 @@ func (r *Rules) host(hosts ...string) *mux.Route {
 				return true
 			}
 		}
+		return false
+	})
+}
+
+const (
+	maxUint             = ^uint64(0)
+	hashRangeHeaderType = "header"
+)
+
+func hash(s string) uint64 {
+	h := fnv.New64a()
+	h.Write([]byte(s))
+	return h.Sum64()
+}
+
+func getMinMax(s string) (min, max int, err error) {
+	matchParts := strings.Split(s, "-")
+	if len(matchParts) != 2 {
+		return 0, 0, fmt.Errorf("failed to parse int range: %v", s)
+	}
+	min, err = strconv.Atoi(matchParts[0])
+	if err != nil {
+		return 0, 0, fmt.Errorf("failed to parse int range: %v", s)
+	}
+	max, err = strconv.Atoi(matchParts[1])
+	if err != nil {
+		return 0, 0, fmt.Errorf("failed to parse int range: %v", s)
+	}
+	return
+}
+
+func (r *Rules) hashedRange(rule ...string) *mux.Route {
+	falseMatch := func(req *http.Request, route *mux.RouteMatch) bool { return false }
+	args := map[string]string{}
+	items := strings.Split(rule[0], " ")
+	//expect 4 parts: type, value, match and range
+	if len(items) != 4 {
+		log.Errorf("Failed parsing hashedRange matcher rule: %v", rule)
+		return r.Route.Route.MatcherFunc(falseMatch)
+	}
+	for _, item := range items {
+		parts := strings.Split(item, ":")
+		//expect format 'type:header'
+		if len(parts) != 2 {
+			log.Error("Failed parsing hashedRange matcher rule: %v", rule)
+			r.Route.Route.MatcherFunc(falseMatch)
+		}
+		args[parts[0]] = parts[1]
+	}
+
+	//check parts included
+	typeMatch, exists := args["type"]
+	if !exists {
+		log.Errorf("Failed parsing hashedRange matcher rule: %v", rule)
+		r.Route.Route.MatcherFunc(falseMatch)
+	}
+	typeValue, exists := args["value"]
+	if !exists {
+		log.Errorf("Failed parsing hashedRange matcher rule: %v", rule)
+		r.Route.Route.MatcherFunc(falseMatch)
+	}
+	matchString, exists := args["match"]
+	if !exists {
+		log.Errorf("Failed parsing hashedRange matcher rule: %v", rule)
+		r.Route.Route.MatcherFunc(falseMatch)
+	}
+	matchLow, matchHigh, err := getMinMax(matchString)
+	if err != nil {
+		log.Errorf("Failed parsing hashedRange matcher rule: %v", rule)
+		r.Route.Route.MatcherFunc(falseMatch)
+	}
+
+	rangeString, exists := args["range"]
+	if !exists {
+		log.Errorf("Failed parsing hashedRange matcher rule: %v", rule)
+		r.Route.Route.MatcherFunc(falseMatch)
+	}
+	rangeLow, rangeHigh, err := getMinMax(rangeString)
+	if err != nil {
+		log.Errorf("Failed parsing hashedRange matcher rule: %v", rule)
+		r.Route.Route.MatcherFunc(falseMatch)
+	}
+
+	return r.Route.Route.MatcherFunc(func(req *http.Request, route *mux.RouteMatch) bool {
+		var value string
+		if typeMatch == hashRangeHeaderType {
+			value = req.Header.Get(typeValue)
+		}
+
+		hash := hash(value)
+
+		factor := float64(rangeHigh-rangeLow) / float64(maxUint)
+		adjustedResult := (float64(hash) * factor) + float64(rangeLow)
+
+		if adjustedResult >= float64(matchLow) && adjustedResult < float64(matchHigh) {
+			return true
+		}
+
 		return false
 	})
 }
@@ -185,6 +286,7 @@ func (r *Rules) parseRules(expression string, onRule func(functionName string, f
 		"ReplacePath":          r.replacePath,
 		"ReplacePathRegex":     r.replacePathRegex,
 		"Query":                r.query,
+		"HashedRange":          r.hashedRange,
 	}
 
 	if len(expression) == 0 {
