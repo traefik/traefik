@@ -25,6 +25,7 @@ import (
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/configuration/router"
+	"github.com/containous/traefik/h2c"
 	"github.com/containous/traefik/healthcheck"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/metrics"
@@ -90,7 +91,7 @@ type EntryPoint struct {
 type serverEntryPoints map[string]*serverEntryPoint
 
 type serverEntryPoint struct {
-	httpServer       *http.Server
+	httpServer       *h2c.Server
 	listener         net.Listener
 	httpRouter       *middlewares.HandlerSwitcher
 	certs            *safe.Safe
@@ -748,7 +749,7 @@ func (s *Server) startServer(serverEntryPoint *serverEntryPoint) {
 	}
 }
 
-func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.EntryPoint, router *middlewares.HandlerSwitcher, middlewares []negroni.Handler) (*http.Server, net.Listener, error) {
+func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.EntryPoint, router *middlewares.HandlerSwitcher, middlewares []negroni.Handler) (*h2c.Server, net.Listener, error) {
 	readTimeout, writeTimeout, idleTimeout := buildServerTimeouts(s.globalConfiguration)
 	log.Infof("Preparing server %s %+v with readTimeout=%s writeTimeout=%s idleTimeout=%s", entryPointName, entryPoint, readTimeout, writeTimeout, idleTimeout)
 
@@ -793,15 +794,17 @@ func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.
 		}
 	}
 
-	return &http.Server{
-		Addr:         entryPoint.Address,
-		Handler:      internalMuxRouter,
-		TLSConfig:    tlsConfig,
-		ReadTimeout:  readTimeout,
-		WriteTimeout: writeTimeout,
-		IdleTimeout:  idleTimeout,
-		ErrorLog:     httpServerLogger,
-	},
+	return &h2c.Server{
+			Server: &http.Server{
+				Addr:         entryPoint.Address,
+				Handler:      internalMuxRouter,
+				TLSConfig:    tlsConfig,
+				ReadTimeout:  readTimeout,
+				WriteTimeout: writeTimeout,
+				IdleTimeout:  idleTimeout,
+				ErrorLog:     httpServerLogger,
+			},
+		},
 		listener,
 		nil
 }
