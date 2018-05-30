@@ -523,6 +523,7 @@ type LifeCycle struct {
 	GraceTimeOut              flaeg.Duration `description:"Duration to give active requests a chance to finish before Traefik stops"`
 }
 
+// ResolverConfig contain configuration for CNAME Flattening
 type ResolverConfig struct {
 	CnameFlattening bool           `description:"A flag to enable/disable CNAME flattening" export:"true"`
 	ResolvConfig    string         `description:"resolv.conf used for DNS resolving" export:"true"`
