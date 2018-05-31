@@ -194,10 +194,14 @@ type Frontend struct {
 }
 
 // Hash returns the hash value of a Frontend struct.
-func (f *Frontend) Hash() string {
-	hash, _ := hashstructure.Hash(f, nil)
+func (f *Frontend) Hash() (string, error) {
+	hash, err := hashstructure.Hash(f, nil)
 
-	return strconv.FormatUint(hash, 10)
+	if err != nil {
+		return "", err
+	}
+
+	return strconv.FormatUint(hash, 10), nil
 }
 
 // Redirect configures a redirection of an entry point to another, or to an URL

@@ -950,7 +950,14 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						redirectHandlers[entryPointName] = handlerToUse
 					}
 				}
-				backendCacheKey := entryPointName + providerName + frontend.Hash()
+
+				frontendHash, err := frontend.Hash()
+				if err != nil {
+					log.Errorf("Error calculating hash value for frontend %s: %v", frontendName, err)
+					log.Errorf("Skipping frontend %s...", frontendName)
+					continue frontend
+				}
+				backendCacheKey := entryPointName + providerName + frontendHash
 				if backends[backendCacheKey] == nil {
 					log.Debugf("Creating backend %s", frontend.Backend)
 
@@ -1218,7 +1225,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 				}
 				s.wireFrontendBackend(newServerRoute, backends[backendCacheKey])
 
-				err := newServerRoute.Route.GetError()
+				err = newServerRoute.Route.GetError()
 				if err != nil {
 					log.Errorf("Error building route: %s", err)
 				}
