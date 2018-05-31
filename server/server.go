@@ -950,7 +950,8 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						redirectHandlers[entryPointName] = handlerToUse
 					}
 				}
-				if backends[entryPointName+providerName+frontend.Hash()] == nil {
+				backendCacheKey := entryPointName + providerName + frontend.Hash()
+				if backends[backendCacheKey] == nil {
 					log.Debugf("Creating backend %s", frontend.Backend)
 
 					roundTripper, err := s.getRoundTripper(entryPointName, globalConfiguration, frontend.PassTLSCert, entryPoint.TLS)
@@ -1208,14 +1209,14 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 					} else {
 						n.UseHandler(lb)
 					}
-					backends[entryPointName+providerName+frontend.Hash()] = n
+					backends[backendCacheKey] = n
 				} else {
 					log.Debugf("Reusing backend %s", frontend.Backend)
 				}
 				if frontend.Priority > 0 {
 					newServerRoute.Route.Priority(frontend.Priority)
 				}
-				s.wireFrontendBackend(newServerRoute, backends[entryPointName+providerName+frontend.Hash()])
+				s.wireFrontendBackend(newServerRoute, backends[backendCacheKey])
 
 				err := newServerRoute.Route.GetError()
 				if err != nil {
