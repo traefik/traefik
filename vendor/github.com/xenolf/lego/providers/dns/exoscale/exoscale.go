@@ -8,15 +8,15 @@ import (
 	"os"
 
 	"github.com/exoscale/egoscale"
-	"github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
 )
 
-// DNSProvider is an implementation of the acmev2.ChallengeProvider interface.
+// DNSProvider is an implementation of the acme.ChallengeProvider interface.
 type DNSProvider struct {
 	client *egoscale.Client
 }
 
-// Credentials must be passed in the environment variables:
+// NewDNSProvider Credentials must be passed in the environment variables:
 // EXOSCALE_API_KEY, EXOSCALE_API_SECRET, EXOSCALE_ENDPOINT.
 func NewDNSProvider() (*DNSProvider, error) {
 	key := os.Getenv("EXOSCALE_API_KEY")
@@ -25,7 +25,7 @@ func NewDNSProvider() (*DNSProvider, error) {
 	return NewDNSProviderClient(key, secret, endpoint)
 }
 
-// Uses the supplied parameters to return a DNSProvider instance
+// NewDNSProviderClient Uses the supplied parameters to return a DNSProvider instance
 // configured for Exoscale.
 func NewDNSProviderClient(key, secret, endpoint string) (*DNSProvider, error) {
 	if key == "" || secret == "" {
@@ -42,13 +42,13 @@ func NewDNSProviderClient(key, secret, endpoint string) (*DNSProvider, error) {
 
 // Present creates a TXT record to fulfil the dns-01 challenge.
 func (c *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
 	zone, recordName, err := c.FindZoneAndRecordName(fqdn, domain)
 	if err != nil {
 		return err
 	}
 
-	recordID, err := c.FindExistingRecordId(zone, recordName)
+	recordID, err := c.FindExistingRecordID(zone, recordName)
 	if err != nil {
 		return err
 	}
@@ -78,13 +78,13 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the record matching the specified parameters.
 func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
 	zone, recordName, err := c.FindZoneAndRecordName(fqdn, domain)
 	if err != nil {
 		return err
 	}
 
-	recordID, err := c.FindExistingRecordId(zone, recordName)
+	recordID, err := c.FindExistingRecordID(zone, recordName)
 	if err != nil {
 		return err
 	}
@@ -99,9 +99,9 @@ func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	return nil
 }
 
-// Query Exoscale to find an existing record for this name.
+// FindExistingRecordID Query Exoscale to find an existing record for this name.
 // Returns nil if no record could be found
-func (c *DNSProvider) FindExistingRecordId(zone, recordName string) (int64, error) {
+func (c *DNSProvider) FindExistingRecordID(zone, recordName string) (int64, error) {
 	records, err := c.client.GetRecords(zone)
 	if err != nil {
 		return -1, errors.New("Error while retrievening DNS records: " + err.Error())
@@ -114,14 +114,14 @@ func (c *DNSProvider) FindExistingRecordId(zone, recordName string) (int64, erro
 	return 0, nil
 }
 
-// Extract DNS zone and DNS entry name
+// FindZoneAndRecordName Extract DNS zone and DNS entry name
 func (c *DNSProvider) FindZoneAndRecordName(fqdn, domain string) (string, string, error) {
-	zone, err := acmev2.FindZoneByFqdn(acmev2.ToFqdn(domain), acmev2.RecursiveNameservers)
+	zone, err := acme.FindZoneByFqdn(acme.ToFqdn(domain), acme.RecursiveNameservers)
 	if err != nil {
 		return "", "", err
 	}
-	zone = acmev2.UnFqdn(zone)
-	name := acmev2.UnFqdn(fqdn)
+	zone = acme.UnFqdn(zone)
+	name := acme.UnFqdn(fqdn)
 	name = name[:len(name)-len("."+zone)]
 
 	return zone, name, nil

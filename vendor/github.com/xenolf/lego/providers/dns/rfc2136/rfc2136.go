@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/miekg/dns"
-	"github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
 )
 
-// DNSProvider is an implementation of the acmev2.ChallengeProvider interface that
+// DNSProvider is an implementation of the acme.ChallengeProvider interface that
 // uses dynamic DNS updates (RFC 2136) to create TXT records on a nameserver.
 type DNSProvider struct {
 	nameserver    string
@@ -77,7 +77,7 @@ func NewDNSProviderCredentials(nameserver, tsigAlgorithm, tsigKey, tsigSecret, t
 		if err != nil {
 			return nil, err
 		} else if t < 0 {
-			return nil, fmt.Errorf("Invalid/negative RFC2136_TIMEOUT: %v", timeout)
+			return nil, fmt.Errorf("invalid/negative RFC2136_TIMEOUT: %v", timeout)
 		} else {
 			d.timeout = t
 		}
@@ -86,26 +86,26 @@ func NewDNSProviderCredentials(nameserver, tsigAlgorithm, tsigKey, tsigSecret, t
 	return d, nil
 }
 
-// Returns the timeout configured with RFC2136_TIMEOUT, or 60s.
+// Timeout Returns the timeout configured with RFC2136_TIMEOUT, or 60s.
 func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 	return d.timeout, 2 * time.Second
 }
 
 // Present creates a TXT record using the specified parameters
-func (r *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acmev2.DNS01Record(domain, keyAuth)
-	return r.changeRecord("INSERT", fqdn, value, ttl)
+func (d *DNSProvider) Present(domain, token, keyAuth string) error {
+	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
+	return d.changeRecord("INSERT", fqdn, value, ttl)
 }
 
 // CleanUp removes the TXT record matching the specified parameters
-func (r *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acmev2.DNS01Record(domain, keyAuth)
-	return r.changeRecord("REMOVE", fqdn, value, ttl)
+func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
+	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
+	return d.changeRecord("REMOVE", fqdn, value, ttl)
 }
 
-func (r *DNSProvider) changeRecord(action, fqdn, value string, ttl int) error {
+func (d *DNSProvider) changeRecord(action, fqdn, value string, ttl int) error {
 	// Find the zone for the given fqdn
-	zone, err := acmev2.FindZoneByFqdn(fqdn, []string{r.nameserver})
+	zone, err := acme.FindZoneByFqdn(fqdn, []string{d.nameserver})
 	if err != nil {
 		return err
 	}
@@ -127,20 +127,20 @@ func (r *DNSProvider) changeRecord(action, fqdn, value string, ttl int) error {
 	case "REMOVE":
 		m.Remove(rrs)
 	default:
-		return fmt.Errorf("Unexpected action: %s", action)
+		return fmt.Errorf("unexpected action: %s", action)
 	}
 
 	// Setup client
 	c := new(dns.Client)
 	c.SingleInflight = true
 	// TSIG authentication / msg signing
-	if len(r.tsigKey) > 0 && len(r.tsigSecret) > 0 {
-		m.SetTsig(dns.Fqdn(r.tsigKey), r.tsigAlgorithm, 300, time.Now().Unix())
-		c.TsigSecret = map[string]string{dns.Fqdn(r.tsigKey): r.tsigSecret}
+	if len(d.tsigKey) > 0 && len(d.tsigSecret) > 0 {
+		m.SetTsig(dns.Fqdn(d.tsigKey), d.tsigAlgorithm, 300, time.Now().Unix())
+		c.TsigSecret = map[string]string{dns.Fqdn(d.tsigKey): d.tsigSecret}
 	}
 
 	// Send the query
-	reply, _, err := c.Exchange(m, r.nameserver)
+	reply, _, err := c.Exchange(m, d.nameserver)
 	if err != nil {
 		return fmt.Errorf("DNS update failed: %v", err)
 	}
