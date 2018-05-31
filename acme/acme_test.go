@@ -15,7 +15,7 @@ import (
 	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
-	acme "github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
 )
 
 func TestDomainsSet(t *testing.T) {

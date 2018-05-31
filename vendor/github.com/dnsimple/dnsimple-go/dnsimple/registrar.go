@@ -28,7 +28,7 @@ type domainCheckResponse struct {
 // CheckDomain checks a domain name.
 //
 // See https://developer.dnsimple.com/v2/registrar/#check
-func (s *RegistrarService) CheckDomain(accountID, domainName string) (*domainCheckResponse, error) {
+func (s *RegistrarService) CheckDomain(accountID string, domainName string) (*domainCheckResponse, error) {
 	path := versioned(fmt.Sprintf("/%v/registrar/domains/%v/check", accountID, domainName))
 	checkResponse := &domainCheckResponse{}
 
@@ -70,7 +70,7 @@ type DomainPremiumPriceOptions struct {
 // - renewal
 //
 // See https://developer.dnsimple.com/v2/registrar/#premium-price
-func (s *RegistrarService) GetDomainPremiumPrice(accountID, domainName string, options *DomainPremiumPriceOptions) (*domainPremiumPriceResponse, error) {
+func (s *RegistrarService) GetDomainPremiumPrice(accountID string, domainName string, options *DomainPremiumPriceOptions) (*domainPremiumPriceResponse, error) {
 	var err error
 	path := versioned(fmt.Sprintf("/%v/registrar/domains/%v/premium_price", accountID, domainName))
 	priceResponse := &domainPremiumPriceResponse{}
@@ -100,7 +100,6 @@ type DomainRegistration struct {
 	State        string `json:"state"`
 	AutoRenew    bool   `json:"auto_renew"`
 	WhoisPrivacy bool   `json:"whois_privacy"`
-	PremiumPrice string `json:"premium_price"`
 	CreatedAt    string `json:"created_at,omitempty"`
 	UpdatedAt    string `json:"updated_at,omitempty"`
 }
@@ -122,6 +121,8 @@ type DomainRegisterRequest struct {
 	// Set to true to enable the auto-renewal of the domain.
 	// Default to true.
 	EnableAutoRenewal bool `json:"auto_renew,omitempty"`
+	// Required as confirmation of the price, only if the domain is premium.
+	PremiumPrice string `json:"premium_price,omitempty"`
 }
 
 // RegisterDomain registers a domain name.
@@ -150,7 +151,6 @@ type DomainTransfer struct {
 	State        string `json:"state"`
 	AutoRenew    bool   `json:"auto_renew"`
 	WhoisPrivacy bool   `json:"whois_privacy"`
-	PremiumPrice string `json:"premium_price"`
 	CreatedAt    string `json:"created_at,omitempty"`
 	UpdatedAt    string `json:"updated_at,omitempty"`
 }
@@ -175,6 +175,8 @@ type DomainTransferRequest struct {
 	// Set to true to enable the auto-renewal of the domain.
 	// Default to true.
 	EnableAutoRenewal bool `json:"auto_renew,omitempty"`
+	// Required as confirmation of the price, only if the domain is premium.
+	PremiumPrice string `json:"premium_price,omitempty"`
 }
 
 // TransferDomain transfers a domain name.
@@ -219,13 +221,12 @@ func (s *RegistrarService) TransferDomainOut(accountID string, domainName string
 
 // DomainRenewal represents the result of a domain renewal call.
 type DomainRenewal struct {
-	ID           int    `json:"id"`
-	DomainID     int    `json:"domain_id"`
-	Period       int    `json:"period"`
-	State        string `json:"state"`
-	PremiumPrice string `json:"premium_price"`
-	CreatedAt    string `json:"created_at,omitempty"`
-	UpdatedAt    string `json:"updated_at,omitempty"`
+	ID        int    `json:"id"`
+	DomainID  int    `json:"domain_id"`
+	Period    int    `json:"period"`
+	State     string `json:"state"`
+	CreatedAt string `json:"created_at,omitempty"`
+	UpdatedAt string `json:"updated_at,omitempty"`
 }
 
 // domainRenewalResponse represents a response from an API method that returns a domain renewal.
@@ -239,6 +240,8 @@ type domainRenewalResponse struct {
 type DomainRenewRequest struct {
 	// The number of years
 	Period int `json:"period"`
+	// Required as confirmation of the price, only if the domain is premium.
+	PremiumPrice string `json:"premium_price,omitempty"`
 }
 
 // RenewDomain renews a domain name.

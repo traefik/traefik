@@ -14,9 +14,9 @@ type DomainsService struct {
 
 // Domain represents a domain in DNSimple.
 type Domain struct {
-	ID           int    `json:"id,omitempty"`
-	AccountID    int    `json:"account_id,omitempty"`
-	RegistrantID int    `json:"registrant_id,omitempty"`
+	ID           int64  `json:"id,omitempty"`
+	AccountID    int64  `json:"account_id,omitempty"`
+	RegistrantID int64  `json:"registrant_id,omitempty"`
 	Name         string `json:"name,omitempty"`
 	UnicodeName  string `json:"unicode_name,omitempty"`
 	Token        string `json:"token,omitempty"`

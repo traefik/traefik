@@ -4,11 +4,11 @@ import (
 	"fmt"
 )
 
-func domainServicesPath(accountID string, domainID string, serviceIdentifier string) string {
+func domainServicesPath(accountID string, domainIdentifier string, serviceIdentifier string) string {
 	if serviceIdentifier != "" {
-		return fmt.Sprintf("/%v/domains/%v/services/%v", accountID, domainID, serviceIdentifier)
+		return fmt.Sprintf("/%v/domains/%v/services/%v", accountID, domainIdentifier, serviceIdentifier)
 	}
-	return fmt.Sprintf("/%v/domains/%v/services", accountID, domainID)
+	return fmt.Sprintf("/%v/domains/%v/services", accountID, domainIdentifier)
 }
 
 // DomainServiceSettings represents optional settings when applying a DNSimple one-click service to a domain.
@@ -19,8 +19,8 @@ type DomainServiceSettings struct {
 // AppliedServices lists the applied one-click services for a domain.
 //
 // See https://developer.dnsimple.com/v2/services/domains/#applied
-func (s *ServicesService) AppliedServices(accountID string, domainID string, options *ListOptions) (*servicesResponse, error) {
-	path := versioned(domainServicesPath(accountID, domainID, ""))
+func (s *ServicesService) AppliedServices(accountID string, domainIdentifier string, options *ListOptions) (*servicesResponse, error) {
+	path := versioned(domainServicesPath(accountID, domainIdentifier, ""))
 	servicesResponse := &servicesResponse{}
 
 	path, err := addURLQueryOptions(path, options)
@@ -40,8 +40,8 @@ func (s *ServicesService) AppliedServices(accountID string, domainID string, opt
 // ApplyService applies a one-click services to a domain.
 //
 // See https://developer.dnsimple.com/v2/services/domains/#apply
-func (s *ServicesService) ApplyService(accountID string, serviceIdentifier string, domainID string, settings DomainServiceSettings) (*serviceResponse, error) {
-	path := versioned(domainServicesPath(accountID, domainID, serviceIdentifier))
+func (s *ServicesService) ApplyService(accountID string, serviceIdentifier string, domainIdentifier string, settings DomainServiceSettings) (*serviceResponse, error) {
+	path := versioned(domainServicesPath(accountID, domainIdentifier, serviceIdentifier))
 	serviceResponse := &serviceResponse{}
 
 	resp, err := s.client.post(path, settings, nil)
@@ -56,8 +56,8 @@ func (s *ServicesService) ApplyService(accountID string, serviceIdentifier strin
 // UnapplyService unapplies a one-click services from a domain.
 //
 // See https://developer.dnsimple.com/v2/services/domains/#unapply
-func (s *ServicesService) UnapplyService(accountID string, serviceIdentifier string, domainID string) (*serviceResponse, error) {
-	path := versioned(domainServicesPath(accountID, domainID, serviceIdentifier))
+func (s *ServicesService) UnapplyService(accountID string, serviceIdentifier string, domainIdentifier string) (*serviceResponse, error) {
+	path := versioned(domainServicesPath(accountID, domainIdentifier, serviceIdentifier))
 	serviceResponse := &serviceResponse{}
 
 	resp, err := s.client.delete(path, nil, nil)

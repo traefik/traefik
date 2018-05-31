@@ -1,10 +1,9 @@
-// Factory for DNS providers
 package dns
 
 import (
 	"fmt"
 
-	"github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
 	"github.com/xenolf/lego/providers/dns/auroradns"
 	"github.com/xenolf/lego/providers/dns/azure"
 	"github.com/xenolf/lego/providers/dns/bluecat"
@@ -21,9 +20,9 @@ import (
 	"github.com/xenolf/lego/providers/dns/fastdns"
 	"github.com/xenolf/lego/providers/dns/gandi"
 	"github.com/xenolf/lego/providers/dns/gandiv5"
+	"github.com/xenolf/lego/providers/dns/gcloud"
 	"github.com/xenolf/lego/providers/dns/glesys"
 	"github.com/xenolf/lego/providers/dns/godaddy"
-	"github.com/xenolf/lego/providers/dns/googlecloud"
 	"github.com/xenolf/lego/providers/dns/lightsail"
 	"github.com/xenolf/lego/providers/dns/linode"
 	"github.com/xenolf/lego/providers/dns/namecheap"
@@ -38,9 +37,10 @@ import (
 	"github.com/xenolf/lego/providers/dns/vultr"
 )
 
-func NewDNSChallengeProviderByName(name string) (acmev2.ChallengeProvider, error) {
+// NewDNSChallengeProviderByName Factory for DNS providers
+func NewDNSChallengeProviderByName(name string) (acme.ChallengeProvider, error) {
 	var err error
-	var provider acmev2.ChallengeProvider
+	var provider acme.ChallengeProvider
 	switch name {
 	case "azure":
 		provider, err = azure.NewDNSProvider()
@@ -75,7 +75,7 @@ func NewDNSChallengeProviderByName(name string) (acmev2.ChallengeProvider, error
 	case "glesys":
 		provider, err = glesys.NewDNSProvider()
 	case "gcloud":
-		provider, err = googlecloud.NewDNSProvider()
+		provider, err = gcloud.NewDNSProvider()
 	case "godaddy":
 		provider, err = godaddy.NewDNSProvider()
 	case "lightsail":
@@ -83,7 +83,7 @@ func NewDNSChallengeProviderByName(name string) (acmev2.ChallengeProvider, error
 	case "linode":
 		provider, err = linode.NewDNSProvider()
 	case "manual":
-		provider, err = acmev2.NewDNSProviderManual()
+		provider, err = acme.NewDNSProviderManual()
 	case "namecheap":
 		provider, err = namecheap.NewDNSProvider()
 	case "namedotcom":
@@ -107,7 +107,7 @@ func NewDNSChallengeProviderByName(name string) (acmev2.ChallengeProvider, error
 	case "exec":
 		provider, err = exec.NewDNSProvider()
 	default:
-		err = fmt.Errorf("Unrecognised DNS provider: %s", name)
+		err = fmt.Errorf("unrecognised DNS provider: %s", name)
 	}
 	return provider, err
 }

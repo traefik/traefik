@@ -23,7 +23,8 @@ import (
 	traefikTLS "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/pkg/errors"
-	acme "github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
+	legolog "github.com/xenolf/lego/log"
 	"github.com/xenolf/lego/providers/dns"
 )
 
@@ -98,9 +99,9 @@ func (p *Provider) SetConfigListenerChan(configFromListenerChan chan types.Confi
 
 func (p *Provider) init() error {
 	if p.ACMELogging {
-		acme.Logger = fmtlog.New(os.Stderr, "legolog: ", fmtlog.LstdFlags)
+		legolog.Logger = fmtlog.New(os.Stderr, "legolog: ", fmtlog.LstdFlags)
 	} else {
-		acme.Logger = fmtlog.New(ioutil.Discard, "", 0)
+		legolog.Logger = fmtlog.New(ioutil.Discard, "", 0)
 	}
 
 	var err error
@@ -248,7 +249,7 @@ func (p *Provider) resolveCertificate(domain types.Domain, domainFromConfigurati
 	}
 	p.addCertificateForDomain(domain, certificate.Certificate, certificate.PrivateKey)
 
-	return &certificate, nil
+	return certificate, nil
 }
 
 func (p *Provider) getClient() (*acme.Client, error) {

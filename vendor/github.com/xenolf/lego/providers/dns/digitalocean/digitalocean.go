@@ -11,15 +11,21 @@ import (
 	"sync"
 	"time"
 
-	"github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
 )
 
-// DNSProvider is an implementation of the acmev2.ChallengeProvider interface
+// DNSProvider is an implementation of the acme.ChallengeProvider interface
 // that uses DigitalOcean's REST API to manage TXT records for a domain.
 type DNSProvider struct {
 	apiAuthToken string
 	recordIDs    map[string]int
 	recordIDsMu  sync.Mutex
+}
+
+// Timeout returns the timeout and interval to use when checking for DNS
+// propagation. Adjusting here to cope with spikes in propagation times.
+func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
+	return 60 * time.Second, 5 * time.Second
 }
 
 // NewDNSProvider returns a DNSProvider instance configured for Digital
@@ -44,32 +50,14 @@ func NewDNSProviderCredentials(apiAuthToken string) (*DNSProvider, error) {
 
 // Present creates a TXT record using the specified parameters
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	// txtRecordRequest represents the request body to DO's API to make a TXT record
-	type txtRecordRequest struct {
-		RecordType string `json:"type"`
-		Name       string `json:"name"`
-		Data       string `json:"data"`
-		TTL        int    `json:"ttl"`
-	}
+	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
 
-	// txtRecordResponse represents a response from DO's API after making a TXT record
-	type txtRecordResponse struct {
-		DomainRecord struct {
-			ID   int    `json:"id"`
-			Type string `json:"type"`
-			Name string `json:"name"`
-			Data string `json:"data"`
-		} `json:"domain_record"`
-	}
-
-	fqdn, value, _ := acmev2.DNS01Record(domain, keyAuth)
-
-	authZone, err := acmev2.FindZoneByFqdn(acmev2.ToFqdn(domain), acmev2.RecursiveNameservers)
+	authZone, err := acme.FindZoneByFqdn(acme.ToFqdn(domain), acme.RecursiveNameservers)
 	if err != nil {
-		return fmt.Errorf("Could not determine zone for domain: '%s'. %s", domain, err)
+		return fmt.Errorf("could not determine zone for domain: '%s'. %s", domain, err)
 	}
 
-	authZone = acmev2.UnFqdn(authZone)
+	authZone = acme.UnFqdn(authZone)
 
 	reqURL := fmt.Sprintf("%s/v2/domains/%s/records", digitalOceanBaseURL, authZone)
 	reqData := txtRecordRequest{RecordType: "TXT", Name: fqdn, Data: value, TTL: 30}
@@ -113,7 +101,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
 
 	// get the record's unique ID from when we created it
 	d.recordIDsMu.Lock()
@@ -123,12 +111,12 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 		return fmt.Errorf("unknown record ID for '%s'", fqdn)
 	}
 
-	authZone, err := acmev2.FindZoneByFqdn(acmev2.ToFqdn(domain), acmev2.RecursiveNameservers)
+	authZone, err := acme.FindZoneByFqdn(acme.ToFqdn(domain), acme.RecursiveNameservers)
 	if err != nil {
-		return fmt.Errorf("Could not determine zone for domain: '%s'. %s", domain, err)
+		return fmt.Errorf("could not determine zone for domain: '%s'. %s", domain, err)
 	}
 
-	authZone = acmev2.UnFqdn(authZone)
+	authZone = acme.UnFqdn(authZone)
 
 	reqURL := fmt.Sprintf("%s/v2/domains/%s/records/%d", digitalOceanBaseURL, authZone, recordID)
 	req, err := http.NewRequest("DELETE", reqURL, nil)
@@ -166,8 +154,20 @@ type digitalOceanAPIError struct {
 
 var digitalOceanBaseURL = "https://api.digitalocean.com"
 
-// Timeout returns the timeout and interval to use when checking for DNS
-// propagation. Adjusting here to cope with spikes in propagation times.
-func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
-	return 60 * time.Second, 5 * time.Second
+// txtRecordRequest represents the request body to DO's API to make a TXT record
+type txtRecordRequest struct {
+	RecordType string `json:"type"`
+	Name       string `json:"name"`
+	Data       string `json:"data"`
+	TTL        int    `json:"ttl"`
+}
+
+// txtRecordResponse represents a response from DO's API after making a TXT record
+type txtRecordResponse struct {
+	DomainRecord struct {
+		ID   int    `json:"id"`
+		Type string `json:"type"`
+		Name string `json:"name"`
+		Data string `json:"data"`
+	} `json:"domain_record"`
 }

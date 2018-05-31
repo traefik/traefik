@@ -1,15 +1,12 @@
 package dnsimple
 
-import (
-)
-
 type AccountsService struct {
 	client *Client
 }
 
 // Account represents a DNSimple account.
 type Account struct {
-	ID             int    `json:"id,omitempty"`
+	ID             int64  `json:"id,omitempty"`
 	Email          string `json:"email,omitempty"`
 	PlanIdentifier string `json:"plan_identifier,omitempty"`
 	CreatedAt      string `json:"created_at,omitempty"`

@@ -1,5 +1,6 @@
 package dns
 
+import "encoding/json"
 import "gopkg.in/ns1/ns1-go.v2/rest/model/data"
 
 // Zone wraps an NS1 /zone resource
@@ -44,13 +45,13 @@ func (z Zone) String() string {
 
 // ZoneRecord wraps Zone's "records" attribute
 type ZoneRecord struct {
-	Domain   string   `json:"Domain,omitempty"`
-	ID       string   `json:"id,omitempty"`
-	Link     string   `json:"link,omitempty"`
-	ShortAns []string `json:"short_answers,omitempty"`
-	Tier     int      `json:"tier,omitempty"`
-	TTL      int      `json:"ttl,omitempty"`
-	Type     string   `json:"type,omitempty"`
+	Domain   string      `json:"Domain,omitempty"`
+	ID       string      `json:"id,omitempty"`
+	Link     string      `json:"link,omitempty"`
+	ShortAns []string    `json:"short_answers,omitempty"`
+	Tier     json.Number `json:"tier,omitempty"`
+	TTL      int         `json:"ttl,omitempty"`
+	Type     string      `json:"type,omitempty"`
 }
 
 // ZonePrimary wraps a Zone's "primary" attribute

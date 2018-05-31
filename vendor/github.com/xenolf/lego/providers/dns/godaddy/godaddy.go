@@ -13,13 +13,13 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
 )
 
 // GoDaddyAPIURL represents the API endpoint to call.
 const apiURL = "https://api.godaddy.com"
 
-// DNSProvider is an implementation of the acmev2.ChallengeProvider interface
+// DNSProvider is an implementation of the acme.ChallengeProvider interface
 type DNSProvider struct {
 	apiKey    string
 	apiSecret string
@@ -51,7 +51,7 @@ func (c *DNSProvider) Timeout() (timeout, interval time.Duration) {
 }
 
 func (c *DNSProvider) extractRecordName(fqdn, domain string) string {
-	name := acmev2.UnFqdn(fqdn)
+	name := acme.UnFqdn(fqdn)
 	if idx := strings.Index(name, "."+domain); idx != -1 {
 		return name[:idx]
 	}
@@ -60,7 +60,7 @@ func (c *DNSProvider) extractRecordName(fqdn, domain string) string {
 
 // Present creates a TXT record to fulfil the dns-01 challenge
 func (c *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
 	domainZone, err := c.getZone(fqdn)
 	if err != nil {
 		return err
@@ -76,7 +76,7 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 			Type: "TXT",
 			Name: recordName,
 			Data: value,
-			Ttl:  ttl,
+			TTL:  ttl,
 		},
 	}
 
@@ -99,14 +99,14 @@ func (c *DNSProvider) updateRecords(records []DNSRecord, domainZone string, reco
 
 	if resp.StatusCode != http.StatusOK {
 		bodyBytes, _ := ioutil.ReadAll(resp.Body)
-		return fmt.Errorf("Could not create record %v; Status: %v; Body: %s\n", string(body), resp.StatusCode, string(bodyBytes))
+		return fmt.Errorf("could not create record %v; Status: %v; Body: %s", string(body), resp.StatusCode, string(bodyBytes))
 	}
 	return nil
 }
 
 // CleanUp sets null value in the TXT DNS record as GoDaddy has no proper DELETE record method
 func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
 	domainZone, err := c.getZone(fqdn)
 	if err != nil {
 		return err
@@ -125,12 +125,12 @@ func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 }
 
 func (c *DNSProvider) getZone(fqdn string) (string, error) {
-	authZone, err := acmev2.FindZoneByFqdn(fqdn, acmev2.RecursiveNameservers)
+	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
 	if err != nil {
 		return "", err
 	}
 
-	return acmev2.UnFqdn(authZone), nil
+	return acme.UnFqdn(authZone), nil
 }
 
 func (c *DNSProvider) makeRequest(method, uri string, body io.Reader) (*http.Response, error) {
@@ -147,10 +147,11 @@ func (c *DNSProvider) makeRequest(method, uri string, body io.Reader) (*http.Res
 	return client.Do(req)
 }
 
+// DNSRecord a DNS record
 type DNSRecord struct {
 	Type     string `json:"type"`
 	Name     string `json:"name"`
 	Data     string `json:"data"`
 	Priority int    `json:"priority,omitempty"`
-	Ttl      int    `json:"ttl,omitempty"`
+	TTL      int    `json:"ttl,omitempty"`
 }

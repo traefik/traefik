@@ -1,4 +1,4 @@
-// Package OVH implements a DNS provider for solving the DNS-01
+// Package ovh implements a DNS provider for solving the DNS-01
 // challenge using OVH DNS.
 package ovh
 
@@ -9,13 +9,13 @@ import (
 	"sync"
 
 	"github.com/ovh/go-ovh/ovh"
-	"github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
 )
 
 // OVH API reference:       https://eu.api.ovh.com/
 // Create a Token:					https://eu.api.ovh.com/createToken/
 
-// DNSProvider is an implementation of the acmev2.ChallengeProvider interface
+// DNSProvider is an implementation of the acme.ChallengeProvider interface
 // that uses OVH's REST API to manage TXT records for a domain.
 type DNSProvider struct {
 	client      *ovh.Client
@@ -78,15 +78,15 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 		Zone      string `json:"zone"`
 	}
 
-	fqdn, value, ttl := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
 
 	// Parse domain name
-	authZone, err := acmev2.FindZoneByFqdn(acmev2.ToFqdn(domain), acmev2.RecursiveNameservers)
+	authZone, err := acme.FindZoneByFqdn(acme.ToFqdn(domain), acme.RecursiveNameservers)
 	if err != nil {
 		return fmt.Errorf("Could not determine zone for domain: '%s'. %s", domain, err)
 	}
 
-	authZone = acmev2.UnFqdn(authZone)
+	authZone = acme.UnFqdn(authZone)
 	subDomain := d.extractRecordName(fqdn, authZone)
 
 	reqURL := fmt.Sprintf("/domain/zone/%s/record", authZone)
@@ -117,7 +117,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
 
 	// get the record's unique ID from when we created it
 	d.recordIDsMu.Lock()
@@ -127,12 +127,12 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 		return fmt.Errorf("unknown record ID for '%s'", fqdn)
 	}
 
-	authZone, err := acmev2.FindZoneByFqdn(acmev2.ToFqdn(domain), acmev2.RecursiveNameservers)
+	authZone, err := acme.FindZoneByFqdn(acme.ToFqdn(domain), acme.RecursiveNameservers)
 	if err != nil {
 		return fmt.Errorf("Could not determine zone for domain: '%s'. %s", domain, err)
 	}
 
-	authZone = acmev2.UnFqdn(authZone)
+	authZone = acme.UnFqdn(authZone)
 
 	reqURL := fmt.Sprintf("/domain/zone/%s/record/%d", authZone, recordID)
 
@@ -151,7 +151,7 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 }
 
 func (d *DNSProvider) extractRecordName(fqdn, domain string) string {
-	name := acmev2.UnFqdn(fqdn)
+	name := acme.UnFqdn(fqdn)
 	if idx := strings.Index(name, "."+domain); idx != -1 {
 		return name[:idx]
 	}
