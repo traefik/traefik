@@ -17,7 +17,7 @@ import (
 	"github.com/containous/traefik/log"
 	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/types"
-	acme "github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
 )
 
 // Account is used to store lets encrypt registration info

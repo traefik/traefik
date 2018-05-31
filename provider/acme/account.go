@@ -7,7 +7,7 @@ import (
 	"crypto/x509"
 
 	"github.com/containous/traefik/log"
-	acme "github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
 )
 
 // Account is used to store lets encrypt registration info
