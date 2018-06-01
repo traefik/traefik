@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/containous/flaeg"
-	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik-extra-service-fabric"
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/api"
@@ -525,8 +524,7 @@ type LifeCycle struct {
 
 // HostResolverConfig contain configuration for CNAME Flattening
 type HostResolverConfig struct {
-	CnameFlattening bool           `description:"A flag to enable/disable CNAME flattening" export:"true"`
-	ResolvConfig    string         `description:"resolv.conf used for DNS resolving" export:"true"`
-	ResolvDepth     int            `description:"The maximal depth of DNS recursive resolving" export:"true"`
-	CacheDuration   parse.Duration `description:"Cache duration of DNS resolve" export:"true"`
+	CnameFlattening bool   `description:"A flag to enable/disable CNAME flattening" export:"true"`
+	ResolvConfig    string `description:"resolv.conf used for DNS resolving" export:"true"`
+	ResolvDepth     int    `description:"The maximal depth of DNS recursive resolving" export:"true"`
 }

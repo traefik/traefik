@@ -1565,7 +1565,7 @@ func buildModifyResponse(secure *secure.Secure, header *middlewares.HeaderStruct
 // buildHostResolver build host resolver, if no config, create default
 func buildHostResolver(globalConfig configuration.GlobalConfiguration) *hostresolver.HostResolver {
 	if globalConfig.HostResolver != nil {
-		return hostresolver.NewHostResolver(globalConfig.HostResolver.CnameFlattening, globalConfig.HostResolver.ResolvConfig, globalConfig.HostResolver.ResolvDepth, time.Duration(globalConfig.HostResolver.CacheDuration))
+		return hostresolver.NewHostResolver(globalConfig.HostResolver.CnameFlattening, globalConfig.HostResolver.ResolvConfig, globalConfig.HostResolver.ResolvDepth)
 	}
 	return hostresolver.NewDefaultHostResolver()
 }

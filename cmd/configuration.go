@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/containous/flaeg"
-	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik-extra-service-fabric"
 	"github.com/containous/traefik/api"
 	"github.com/containous/traefik/configuration"
@@ -273,7 +272,6 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		CnameFlattening: configuration.DefaultCNAMEFlattening,
 		ResolvConfig:    configuration.DefaultResolverConfig,
 		ResolvDepth:     configuration.DefaultResolverDepth,
-		CacheDuration:   parse.Duration(configuration.DefaultCacheDuration),
 	}
 
 	defaultConfiguration := configuration.GlobalConfiguration{

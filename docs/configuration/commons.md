@@ -440,21 +440,14 @@ resolvConf = "/etc/resolv.conf"
 # Default : 5
 resolvDepth = 5
 
-# cacheDuration is the cache expiration time of CNAME Flattening process,
-# increase the duration to lessen the resolving process.
-#
-# Optional
-# Default : "30m"
-cacheDuration = "30m"
-
 ```
 
 - `cacheDuration` is the cache expiration time of CNAME Flattening process, increase the duration to lessen the resolving process.
 Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
 If no units are provided, the value is parsed assuming seconds.
 
-- To allow serving secure https request while `cnameFlattening` is set to `true`. The `acme` configuration must be set use
-`HTTP-01` challenge and `onDemand` must be set to `true`.
+- To allow serving secure https request and generate the SSL while `cnameFlattening` is set to `true`. The `acme` configuration must be set use
+`HTTP-01` challenge and `onDemand` must be set to `true`. Refer to [ACME configuration](/configuration/acme) for more information.
 
 ## Override Default Configuration Template
 

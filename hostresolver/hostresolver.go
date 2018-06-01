@@ -2,6 +2,7 @@ package hostresolver
 
 import (
 	"net"
+	"strconv"
 	"strings"
 	"time"
 
@@ -11,32 +12,29 @@ import (
 
 // HostResolver used for host resolver
 type HostResolver struct {
-	Enabled       bool
-	Cache         *cache.Cache
-	CacheDuration time.Duration
-	ResolvConfig  string
-	ResolvDepth   int
+	Enabled      bool
+	Cache        *cache.Cache
+	ResolvConfig string
+	ResolvDepth  int
 }
 
 // NewHostResolver init host resolver
-func NewHostResolver(enabled bool, resConfig string, resDepth int, cacheDuration time.Duration) *HostResolver {
+func NewHostResolver(enabled bool, resConfig string, resDepth int) *HostResolver {
 	return &HostResolver{
-		Enabled:       enabled,
-		CacheDuration: cacheDuration,
-		ResolvConfig:  resConfig,
-		ResolvDepth:   resDepth,
-		Cache:         cache.New(cacheDuration, 3*cacheDuration),
+		Enabled:      enabled,
+		ResolvConfig: resConfig,
+		ResolvDepth:  resDepth,
+		Cache:        cache.New(cache.DefaultExpiration, 5*time.Minute),
 	}
 }
 
 // NewDefaultHostResolver init default host resolver
 func NewDefaultHostResolver() *HostResolver {
 	return &HostResolver{
-		Enabled:       false,
-		CacheDuration: time.Minute * 30,
-		ResolvConfig:  "/etc/resolv.conf",
-		ResolvDepth:   5,
-		Cache:         cache.New(time.Minute*30, 3*time.Minute*30),
+		Enabled:      false,
+		ResolvConfig: "/etc/resolv.conf",
+		ResolvDepth:  5,
+		Cache:        cache.New(cache.DefaultExpiration, 5*time.Minute),
 	}
 }
 
@@ -45,7 +43,7 @@ func (hr *HostResolver) CNAMEFlatten(host string) (string, string) {
 	var result []string
 	result = append(result, host)
 	if hr.Cache == nil {
-		hr.Cache = cache.New(hr.CacheDuration, 3*hr.CacheDuration)
+		hr.Cache = cache.New(cache.DefaultExpiration, 5*time.Minute)
 	}
 	rst, found := hr.Cache.Get(host)
 	if found {
@@ -56,6 +54,7 @@ func (hr *HostResolver) CNAMEFlatten(host string) (string, string) {
 		c.Timeout = 30 * time.Second
 		m := new(dns.Msg)
 		m.SetQuestion(dns.Fqdn(host), dns.TypeCNAME)
+		var cacheDuration = 0 * time.Second
 		for i := 0; i < hr.ResolvDepth; i++ {
 			r, _, err := c.Exchange(m, net.JoinHostPort(config.Servers[0], config.Port))
 			if err != nil {
@@ -63,15 +62,21 @@ func (hr *HostResolver) CNAMEFlatten(host string) (string, string) {
 				continue
 			}
 			if r != nil && len(r.Answer) > 0 {
-				temp := strings.Split(r.Answer[0].String(), "CNAME")
+				temp := strings.Fields(r.Answer[0].String())
 				str := strings.TrimSuffix(strings.TrimSpace(temp[len(temp)-1]), ".")
 				result = append(result, str)
+				if i == 0 {
+					ttl, err := strconv.Atoi(temp[1])
+					if err != nil {
+						cacheDuration = time.Duration(ttl) * time.Second
+					}
+				}
 				m.SetQuestion(dns.Fqdn(str), dns.TypeCNAME)
 			} else {
 				break
 			}
 		}
-		hr.Cache.Add(host, strings.Join(result, ","), cache.DefaultExpiration)
+		hr.Cache.Add(host, strings.Join(result, ","), cacheDuration)
 	}
 	return result[0], result[len(result)-1]
 }
