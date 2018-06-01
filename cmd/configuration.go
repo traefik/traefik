@@ -78,6 +78,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		},
 		InfluxDB: &types.InfluxDB{
 			Address:      "localhost:8089",
+			Protocol:     "udp",
 			PushInterval: "10s",
 		},
 	}
@@ -262,6 +263,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		},
 		InfluxDB: &types.InfluxDB{
 			Address:      "localhost:8089",
+			Protocol:     "udp",
 			PushInterval: "10s",
 		},
 	}

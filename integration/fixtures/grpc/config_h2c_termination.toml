@@ -1,11 +1,12 @@
-defaultEntryPoints = ["http"]
-
-debug=true
+defaultEntryPoints = ["https"]
 
 [entryPoints]
-  [entryPoints.http]
-  address = ":8081"
-
+  [entryPoints.https]
+  address = ":4443"
+    [entryPoints.https.tls]
+     [[entryPoints.https.tls.certificates]]
+     certFile = """{{ .CertContent }}"""
+     keyFile  = """{{ .KeyContent }}"""
 [api]
 
 [file]

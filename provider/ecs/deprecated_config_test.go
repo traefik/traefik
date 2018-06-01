@@ -27,16 +27,10 @@ func TestBuildConfigurationV1(t *testing.T) {
 					containerDefinition: &ecs.ContainerDefinition{
 						DockerLabels: map[string]*string{},
 					},
-					machine: &ec2.Instance{
-						State: &ec2.InstanceState{
-							Name: aws.String(ec2.InstanceStateNameRunning),
-						},
-						PrivateIpAddress: aws.String("10.0.0.1"),
-					},
-					container: &ecs.Container{
-						NetworkBindings: []*ecs.NetworkBinding{{
-							HostPort: aws.Int64(1337),
-						}},
+					machine: &machine{
+						state:     ec2.InstanceStateNameRunning,
+						privateIP: "10.0.0.1",
+						port:      1337,
 					},
 				},
 			},
@@ -79,16 +73,10 @@ func TestBuildConfigurationV1(t *testing.T) {
 							label.TraefikBackendHealthCheckPath:     aws.String("/health"),
 							label.TraefikBackendHealthCheckInterval: aws.String("1s"),
 						}},
-					machine: &ec2.Instance{
-						State: &ec2.InstanceState{
-							Name: aws.String(ec2.InstanceStateNameRunning),
-						},
-						PrivateIpAddress: aws.String("10.0.0.1"),
-					},
-					container: &ecs.Container{
-						NetworkBindings: []*ecs.NetworkBinding{{
-							HostPort: aws.Int64(1337),
-						}},
+					machine: &machine{
+						state:     ec2.InstanceStateNameRunning,
+						privateIP: "10.0.0.1",
+						port:      1337,
 					},
 				},
 			},
@@ -151,16 +139,10 @@ func TestBuildConfigurationV1(t *testing.T) {
 							label.TraefikFrontendPriority:       aws.String("666"),
 							label.TraefikFrontendRule:           aws.String("Host:traefik.io"),
 						}},
-					machine: &ec2.Instance{
-						State: &ec2.InstanceState{
-							Name: aws.String(ec2.InstanceStateNameRunning),
-						},
-						PrivateIpAddress: aws.String("10.0.0.1"),
-					},
-					container: &ecs.Container{
-						NetworkBindings: []*ecs.NetworkBinding{{
-							HostPort: aws.Int64(1337),
-						}},
+					machine: &machine{
+						state:     ec2.InstanceStateNameRunning,
+						privateIP: "10.0.0.1",
+						port:      1337,
 					},
 				},
 			},
