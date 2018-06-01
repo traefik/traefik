@@ -12,15 +12,15 @@ type percentageValue int64
 
 // toFloat64 returns its decimal float64 value.
 func (v percentageValue) toFloat64() float64 {
-	return float64(int64(v)) / (1000 * 100)
+	return float64(v) / (1000 * 100)
 }
 
 func (v percentageValue) sub(value percentageValue) percentageValue {
-	return percentageValue(v - value)
+	return v - value
 }
 
 func (v percentageValue) add(value percentageValue) percentageValue {
-	return percentageValue(v + value)
+	return v + value
 }
 
 func (v percentageValue) computeWeight(count int) int {
@@ -38,19 +38,20 @@ func (v percentageValue) String() string {
 // newPercentageValueFromString tries to read percentage value from string, it can be either "1.1" or "1.1%", "6%".
 // It will lose the extra precision if there are more digits after decimal point.
 func newPercentageValueFromString(rawValue string) (percentageValue, error) {
-	value, err := strconv.ParseFloat(strings.TrimSuffix(rawValue, "%"), 64)
+	if strings.HasSuffix(rawValue, "%") {
+		rawValue = rawValue[:len(rawValue)-1]
+	}
+	value, err := strconv.ParseFloat(rawValue, 64)
 	if err != nil {
 		return 0, err
 	}
 
 	percentageValue := newPercentageValueFromFloat64(value)
-	if strings.HasSuffix(rawValue, "%") {
-		percentageValue /= 100
-	}
-	return percentageValue, nil
+
+	return percentageValue / 100, nil
 }
 
 // newPercentageValueFromFloat64 reads percentage value from float64
 func newPercentageValueFromFloat64(f float64) percentageValue {
-	return percentageValue(int64(f * 100 * 1000))
+	return percentageValue(int64(f * (1000 * 100)))
 }

@@ -44,9 +44,9 @@ service2: 0.2
 service3: 0.2
 `,
 			expectedWeights: map[string]percentageValue{
-				"service1": newPercentageValueFromFloat64(0.1),
-				"service2": newPercentageValueFromFloat64(0.2),
-				"service3": newPercentageValueFromFloat64(0.2),
+				"service1": newPercentageValueFromFloat64(0.001),
+				"service2": newPercentageValueFromFloat64(0.002),
+				"service3": newPercentageValueFromFloat64(0.002),
 			},
 		},
 		{

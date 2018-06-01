@@ -212,7 +212,7 @@ Trying to do so leads to an error and the corresponding Ingress object being ign
 ```yaml
 service_backend1: 1% # Note that the field names must match service names referenced in the Ingress object.
 service_backend2: 33.33%
-service_backend3: 0.9
+service_backend3: -0.9 # Same as 0.9%, the percentage sign is optional
 ```
 
 

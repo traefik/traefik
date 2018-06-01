@@ -40,7 +40,7 @@ func TestNewPercentageValueFromFloat64(t *testing.T) {
 			expectedFloat64: -0.99999,
 		},
 		{
-			value:           -0.99999,
+			value:           -0.9999999,
 			expectedString:  "-99.999%",
 			expectedFloat64: -0.99999,
 		},
@@ -81,8 +81,8 @@ func TestNewPercentageValueFromString(t *testing.T) {
 		{
 			value:           "0.5",
 			expectError:     false,
-			expectedString:  "50.000%",
-			expectedFloat64: 0.5,
+			expectedString:  "0.500%",
+			expectedFloat64: 0.005,
 		},
 		{
 			value:           "99%",
@@ -91,19 +91,19 @@ func TestNewPercentageValueFromString(t *testing.T) {
 			expectedFloat64: 0.99,
 		},
 		{
-			value:           "99.999%",
+			value:           "99.9%",
 			expectError:     false,
-			expectedString:  "99.999%",
-			expectedFloat64: 0.99999,
+			expectedString:  "99.900%",
+			expectedFloat64: 0.999,
 		},
 		{
-			value:           "-99.999%",
+			value:           "-99.9%",
 			expectError:     false,
-			expectedString:  "-99.999%",
-			expectedFloat64: -0.99999,
+			expectedString:  "-99.900%",
+			expectedFloat64: -0.999,
 		},
 		{
-			value:           "-99.9990%",
+			value:           "-99.99999%",
 			expectError:     false,
 			expectedString:  "-99.999%",
 			expectedFloat64: -0.99999,
@@ -161,7 +161,7 @@ func TestNewPercentageValue(t *testing.T) {
 		{
 			desc:        "decimal",
 			stringValue: "0.5",
-			floatValue:  0.5,
+			floatValue:  0.005,
 		},
 		{
 			desc:        "negative percentage",
@@ -171,7 +171,7 @@ func TestNewPercentageValue(t *testing.T) {
 		{
 			desc:        "negative decimal",
 			stringValue: "-0.99999",
-			floatValue:  -0.99999,
+			floatValue:  -0.0099999,
 		},
 		{
 			desc:        "zero",
