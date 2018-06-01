@@ -70,6 +70,7 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 	// returned a 200 response.
 	if forwardResponse.StatusCode == http.StatusOK {
 		r.Header.Set("X-Request-Context", forwardResponse.Header.Get("X-Request-Context"))
+		r.Header.Set("X-User-Context", forwardResponse.Header.Get("X-User-Context"))
 	}
 		// Pass the forward response's body and selected headers if it
 	// didn't return a response within the range of [200, 300).

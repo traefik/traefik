@@ -56,6 +56,9 @@ func (l *Lambda) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	jsonString, _ := json.Marshal(
 		map[string]string{
 			"X-Request-Context": r.Header.Get("X-Request-Context"),
+			"X-User-Context": r.Header.Get("X-User-Context"),
+			"X-Original-Request-Method": r.Method,
+			"X-Original-Request-Url": r.RequestURI,
 		},
 	)
 	userContext := string(base64.StdEncoding.EncodeToString([]byte(jsonString)))
