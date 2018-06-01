@@ -257,6 +257,25 @@ func Test_writeHeader(t *testing.T) {
 				"X-Forwarded-Host": "foo.bar",
 				"X-Forwarded-Uri":  "/path?q=1",
 			},
+		}, {
+			name: "trust Forward Header with forwarded request Method",
+			headers: map[string]string{
+				"X-Forwarded-Method": "OPTIONS",
+			},
+			trustForwardHeader: true,
+			expectedHeaders: map[string]string{
+				"X-Forwarded-Method": "OPTIONS",
+			},
+		},
+		{
+			name: "not trust Forward Header with forward request Method",
+			headers: map[string]string{
+				"X-Forwarded-Method": "OPTIONS",
+			},
+			trustForwardHeader: false,
+			expectedHeaders: map[string]string{
+				"X-Forwarded-Method": "GET",
+			},
 		},
 	}
 
