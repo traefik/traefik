@@ -1,6 +1,6 @@
 # ACME (Let's Encrypt) Configuration
 
-See [Let's Encrypt examples](/user-guide/examples/#lets-encrypt-support) and [Docker & Let's Encrypt user guide](/user-guide/docker-and-lets-encrypt) too.
+See [Let's Encrypt examples](/user-guide/examples/#lets-encrypt-support) and [Docker & Let's Encrypt user guide](/user-guide/docker-and-lets-encrypt) as well.
 
 ## Configuration
 
@@ -79,7 +79,7 @@ entryPoint = "https"
 
 # CA server to use.
 # Uncomment the line to use Let's Encrypt's staging server,
-# leave comment to go to prod.
+# leave commented to go to prod.
 #
 # Optional
 # Default: "https://acme-v02.api.letsencrypt.org/directory"
@@ -117,14 +117,14 @@ entryPoint = "https"
 #
 # [acme.dnsChallenge]
 
-  # DNS management provider used.
+  # DNS provider used.
   #
   # Required
   #
   # provider = "digitalocean"
 
   # By default, the provider will verify the TXT DNS challenge record before letting ACME verify.
-  # If delayBeforeCheck is greater than zero, this is avoided and the given duration in seconds is waited.
+  # If delayBeforeCheck is greater than zero, this check is delayed for the configured duration in seconds.
   # Useful if internal networks block external DNS queries.
   #
   # Optional
@@ -167,7 +167,7 @@ Use the `DNS-01` challenge to generate and renew ACME certificates by provisioni
 #### `delayBeforeCheck`
 
 By default, the `provider` will verify the TXT DNS challenge record before letting ACME verify.
-If `delayBeforeCheck` is greater than zero, this is avoided and the given duration in seconds is waited.
+If `delayBeforeCheck` is greater than zero, this check is delayed for the configured duration in seconds.
 
 Useful if internal networks block external DNS queries.
 
@@ -258,8 +258,8 @@ As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/stagi
 # ...
 ```
 
-It is impossible possible to define a wildcard on a wildcard domain (for example `*.*.local.com`).
-Due to ACME limitation it is neither possible to define wildcards in SANs (alternative domains). Thus, the wildcard domain has to be defined as a main domain.
+It is not possible to request a double wildcard certificate for a domain (for example `*.*.local.com`).
+Due to ACME limitation it is not possible to define wildcards in SANs (alternative domains). Thus, the wildcard domain has to be defined as a main domain.
 Most likely the root domain should receive a certificate too, so it needs to be specified as SAN and 2 `DNS-01` challenges are executed.
 In this case the generated DNS TXT record for both domains is the same.
 Eventhough this behaviour is [DNS RFC](https://community.letsencrypt.org/t/wildcard-issuance-two-txt-records-for-the-same-name/54528/2) compliant, it can lead to problems as all DNS providers keep DNS records cached for a certain time (TTL) and this TTL can be superior to the challenge timeout making the `DNS-01` challenge fail.
@@ -407,7 +407,7 @@ During migration from ACME v1 to ACME v2, using a storage file, a backup of the 
 For example: if `acme.storage`'s value is `/etc/traefik/acme/acme.json`, the backup file will be `/etc/traefik/acme/acme.json.bak`.
 
 !!! note
-    When Træfik is launched in a container the storage file's parent directory needs to be mounted to be able to access the backup file on the host.
+    When Træfik is launched in a container, the storage file's parent directory needs to be mounted to be able to access the backup file on the host.
     Otherwise the backup file will be deleted when the container is stopped. Træfik will only generate it once!
 
 ## Fallbacks
@@ -419,4 +419,4 @@ If Let's Encrypt is not reachable, these certificates will be used:
   1. Provided certificates
 
 !!! note
-    For new (sub)domains which need Let's Encrypt authentification the default Træfik certificate will be used until Træfik is restarted.
+    For new (sub)domains which need Let's Encrypt authentification, the default Træfik certificate will be used until Træfik is restarted.
