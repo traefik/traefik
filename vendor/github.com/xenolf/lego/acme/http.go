@@ -155,6 +155,6 @@ func postJSON(j *jws, uri string, reqBody, respBody interface{}) (http.Header, e
 
 // userAgent builds and returns the User-Agent string to use in requests.
 func userAgent() string {
-	ua := fmt.Sprintf("%s (%s; %s) %s %s", defaultGoUserAgent, runtime.GOOS, runtime.GOARCH, ourUserAgent, UserAgent)
+	ua := fmt.Sprintf("%s %s (%s; %s) %s", UserAgent, ourUserAgent, runtime.GOOS, runtime.GOARCH, defaultGoUserAgent)
 	return strings.TrimSpace(ua)
 }

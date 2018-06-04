@@ -822,6 +822,7 @@ func validate(j *jws, domain, uri string, c challenge) error {
 			log.Printf("[INFO][%s] The server validated our request", domain)
 			return nil
 		case "pending":
+		case "processing":
 		case "invalid":
 			return handleChallengeError(chlng)
 		default:
