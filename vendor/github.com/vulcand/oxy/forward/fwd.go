@@ -302,7 +302,7 @@ func (f *httpForwarder) serveWebSocket(w http.ResponseWriter, req *http.Request,
 	if f.log.GetLevel() >= log.DebugLevel {
 		logEntry := f.log.WithField("Request", utils.DumpHttpRequest(req))
 		logEntry.Debug("vulcand/oxy/forward/websocket: begin ServeHttp on request")
-		defer logEntry.Debug("vulcand/oxy/forward/websocket: competed ServeHttp on request")
+		defer logEntry.Debug("vulcand/oxy/forward/websocket: completed ServeHttp on request")
 	}
 
 	outReq := f.copyWebSocketRequest(req)
@@ -351,6 +351,7 @@ func (f *httpForwarder) serveWebSocket(w http.ResponseWriter, req *http.Request,
 	}}
 
 	utils.RemoveHeaders(resp.Header, WebsocketUpgradeHeaders...)
+	utils.CopyHeaders(resp.Header, w.Header())
 
 	underlyingConn, err := upgrader.Upgrade(w, req, resp.Header)
 	if err != nil {
@@ -370,11 +371,20 @@ func (f *httpForwarder) serveWebSocket(w http.ResponseWriter, req *http.Request,
 				m := websocket.FormatCloseMessage(websocket.CloseNormalClosure, fmt.Sprintf("%v", err))
 				if e, ok := err.(*websocket.CloseError); ok {
 					if e.Code != websocket.CloseNoStatusReceived {
-						m = websocket.FormatCloseMessage(e.Code, e.Text)
+						m = nil
+						// Following codes are not valid on the wire so just close the
+						// underlying TCP connection without sending a close frame.
+						if e.Code != websocket.CloseAbnormalClosure &&
+							e.Code != websocket.CloseTLSHandshake {
+
+							m = websocket.FormatCloseMessage(e.Code, e.Text)
+						}
 					}
 				}
 				errc <- err
-				dst.WriteMessage(websocket.CloseMessage, m)
+				if m != nil {
+					dst.WriteMessage(websocket.CloseMessage, m)
+				}
 				break
 			}
 			err = dst.WriteMessage(msgType, msg)
