@@ -7,12 +7,16 @@ import (
 	"testing"
 	"time"
 
+	th "github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 )
 
 func TestPrometheus(t *testing.T) {
+	// Reset state of global promState.
+	defer promState.reset()
+
 	prometheusRegistry := RegisterPrometheus(&types.Prometheus{})
 	defer prometheus.Unregister(promState)
 
@@ -177,56 +181,94 @@ func TestPrometheus(t *testing.T) {
 	}
 }
 
-func TestPrometheusGenerationLogicForMetricWithLabel(t *testing.T) {
+func TestPrometheusMetricRemoval(t *testing.T) {
+	// Reset state of global promState.
+	defer promState.reset()
+
 	prometheusRegistry := RegisterPrometheus(&types.Prometheus{})
 	defer prometheus.Unregister(promState)
 
-	// Metrics with labels belonging to a specific configuration in Traefik
-	// should be removed when the generationMaxAge is exceeded. As example
-	// we use the traefik_backend_requests_total metric.
+	configurations := make(types.Configurations)
+	configurations["providerName"] = th.BuildConfiguration(
+		th.WithFrontends(
+			th.WithFrontend("backend1", th.WithEntryPoints("entrypoint1")),
+		),
+		th.WithBackends(
+			th.WithBackendNew("backend1", th.WithServersNew(th.WithServerNew("http://localhost:9000"))),
+		),
+	)
+	OnConfigurationUpdate(configurations)
+
+	// Register some metrics manually that are not part of the active configuration.
+	// Those metrics should be part of the /metrics output on the first scrape but
+	// should be removed after that scrape.
+	prometheusRegistry.
+		EntrypointReqsCounter().
+		With("entrypoint", "entrypoint2", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		Add(1)
 	prometheusRegistry.
 		BackendReqsCounter().
-		With("backend", "backend1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		With("backend", "backend2", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		Add(1)
+	prometheusRegistry.
+		BackendServerUpGauge().
+		With("backend", "backend1", "url", "http://localhost:9999").
+		Set(1)
+
+	delayForTrackingCompletion()
+
+	assertMetricsExist(t, mustScrape(), entrypointReqsTotalName, backendReqsTotalName, backendServerUpName)
+	assertMetricsAbsent(t, mustScrape(), entrypointReqsTotalName, backendReqsTotalName, backendServerUpName)
+
+	// To verify that metrics belonging to active configurations are not removed
+	// here the counter examples.
+	prometheusRegistry.
+		EntrypointReqsCounter().
+		With("entrypoint", "entrypoint1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
 
 	delayForTrackingCompletion()
 
-	assertMetricExists(t, backendReqsTotalName, mustScrape())
-
-	// Increase the config generation one more than the max age of a metric.
-	for i := 0; i < generationAgeDefault+1; i++ {
-		OnConfigurationUpdate()
-	}
-
-	// On the next scrape the metric still exists and will be removed
-	// after the scrape completed.
-	assertMetricExists(t, backendReqsTotalName, mustScrape())
-
-	// Now the metric should be absent.
-	assertMetricAbsent(t, backendReqsTotalName, mustScrape())
+	assertMetricsExist(t, mustScrape(), entrypointReqsTotalName)
+	assertMetricsExist(t, mustScrape(), entrypointReqsTotalName)
 }
 
-func TestPrometheusGenerationLogicForMetricWithoutLabel(t *testing.T) {
+func TestPrometheusRemovedMetricsReset(t *testing.T) {
+	// Reset state of global promState.
+	defer promState.reset()
+
 	prometheusRegistry := RegisterPrometheus(&types.Prometheus{})
 	defer prometheus.Unregister(promState)
 
-	// Metrics without labels like traefik_config_reloads_total should live forever
-	// and never get removed.
-	prometheusRegistry.ConfigReloadsCounter().Add(1)
+	labelNamesValues := []string{
+		"backend", "backend",
+		"code", strconv.Itoa(http.StatusOK),
+		"method", http.MethodGet,
+		"protocol", "http",
+	}
+	prometheusRegistry.
+		BackendReqsCounter().
+		With(labelNamesValues...).
+		Add(3)
 
 	delayForTrackingCompletion()
 
-	assertMetricExists(t, configReloadsTotalName, mustScrape())
+	metricsFamilies := mustScrape()
+	assertCounterValue(t, 3, findMetricFamily(backendReqsTotalName, metricsFamilies), labelNamesValues...)
 
-	// Increase the config generation one more than the max age of a metric.
-	for i := 0; i < generationAgeDefault+100; i++ {
-		OnConfigurationUpdate()
-	}
+	// There is no dynamic configuration and so this metric will be deleted
+	// after the first scrape.
+	assertMetricsAbsent(t, mustScrape(), backendReqsTotalName)
 
-	// Scrape two times in order to verify, that it is not removed after the
-	// first scrape completed.
-	assertMetricExists(t, configReloadsTotalName, mustScrape())
-	assertMetricExists(t, configReloadsTotalName, mustScrape())
+	prometheusRegistry.
+		BackendReqsCounter().
+		With(labelNamesValues...).
+		Add(1)
+
+	delayForTrackingCompletion()
+
+	metricsFamilies = mustScrape()
+	assertCounterValue(t, 1, findMetricFamily(backendReqsTotalName, metricsFamilies), labelNamesValues...)
 }
 
 // Tracking and gathering the metrics happens concurrently.
@@ -247,17 +289,23 @@ func mustScrape() []*dto.MetricFamily {
 	return families
 }
 
-func assertMetricExists(t *testing.T, name string, families []*dto.MetricFamily) {
+func assertMetricsExist(t *testing.T, families []*dto.MetricFamily, metricNames ...string) {
 	t.Helper()
-	if findMetricFamily(name, families) == nil {
-		t.Errorf("gathered metrics do not contain %q", name)
+
+	for _, metricName := range metricNames {
+		if findMetricFamily(metricName, families) == nil {
+			t.Errorf("gathered metrics should contain %q", metricName)
+		}
 	}
 }
 
-func assertMetricAbsent(t *testing.T, name string, families []*dto.MetricFamily) {
+func assertMetricsAbsent(t *testing.T, families []*dto.MetricFamily, metricNames ...string) {
 	t.Helper()
-	if findMetricFamily(name, families) != nil {
-		t.Errorf("gathered metrics contain %q, but should not", name)
+
+	for _, metricName := range metricNames {
+		if findMetricFamily(metricName, families) != nil {
+			t.Errorf("gathered metrics should not contain %q", metricName)
+		}
 	}
 }
 
@@ -268,6 +316,58 @@ func findMetricFamily(name string, families []*dto.MetricFamily) *dto.MetricFami
 		}
 	}
 	return nil
+}
+
+func findMetricByLabelNamesValues(family *dto.MetricFamily, labelNamesValues ...string) *dto.Metric {
+	if family == nil {
+		return nil
+	}
+
+	for _, metric := range family.Metric {
+		if hasMetricAllLabelPairs(metric, labelNamesValues...) {
+			return metric
+		}
+	}
+
+	return nil
+}
+
+func hasMetricAllLabelPairs(metric *dto.Metric, labelNamesValues ...string) bool {
+	for i := 0; i < len(labelNamesValues); i += 2 {
+		name, val := labelNamesValues[i], labelNamesValues[i+1]
+		if !hasMetricLabelPair(metric, name, val) {
+			return false
+		}
+	}
+	return true
+}
+
+func hasMetricLabelPair(metric *dto.Metric, labelName, labelValue string) bool {
+	for _, labelPair := range metric.Label {
+		if labelPair.GetName() == labelName && labelPair.GetValue() == labelValue {
+			return true
+		}
+	}
+	return false
+}
+
+func assertCounterValue(t *testing.T, want float64, family *dto.MetricFamily, labelNamesValues ...string) {
+	t.Helper()
+
+	metric := findMetricByLabelNamesValues(family, labelNamesValues...)
+
+	if metric == nil {
+		t.Error("metric must not be nil")
+		return
+	}
+	if metric.Counter == nil {
+		t.Errorf("metric %s must be a counter", family.GetName())
+		return
+	}
+
+	if cv := metric.Counter.GetValue(); cv != want {
+		t.Errorf("metric %s has value %v, want %v", family.GetName(), cv, want)
+	}
 }
 
 func buildCounterAssert(t *testing.T, metricName string, expectedValue int) func(family *dto.MetricFamily) {

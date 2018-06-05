@@ -7,16 +7,6 @@ import (
 	"net/url"
 )
 
-// Intp returns a pointer to the given integer value.
-func Intp(i int) *int {
-	return &i
-}
-
-// Stringp returns a pointer to the given string value.
-func Stringp(s string) *string {
-	return &s
-}
-
 // MustNewRequest creates a new http get request or panics if it can't
 func MustNewRequest(method, urlStr string, body io.Reader) *http.Request {
 	request, err := http.NewRequest(method, urlStr, body)

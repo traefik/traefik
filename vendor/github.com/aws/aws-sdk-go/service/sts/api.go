@@ -14,7 +14,7 @@ const opAssumeRole = "AssumeRole"
 
 // AssumeRoleRequest generates a "aws/request.Request" representing the
 // client's request for the AssumeRole operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -88,9 +88,18 @@ func (c *STS) AssumeRoleRequest(input *AssumeRoleInput) (req *request.Request, o
 // Scenarios for Temporary Credentials (http://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html#sts-introduction)
 // in the IAM User Guide.
 //
-// The temporary security credentials are valid for the duration that you specified
-// when calling AssumeRole, which can be from 900 seconds (15 minutes) to a
-// maximum of 3600 seconds (1 hour). The default is 1 hour.
+// By default, the temporary security credentials created by AssumeRole last
+// for one hour. However, you can use the optional DurationSeconds parameter
+// to specify the duration of your session. You can provide a value from 900
+// seconds (15 minutes) up to the maximum session duration setting for the role.
+// This setting can have a value from 1 hour to 12 hours. To learn how to view
+// the maximum value for your role, see View the Maximum Session Duration Setting
+// for a Role (http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html#id_roles_use_view-role-max-session)
+// in the IAM User Guide. The maximum session duration limit applies when you
+// use the AssumeRole* API operations or the assume-role* CLI operations but
+// does not apply when you use those operations to create a console URL. For
+// more information, see Using IAM Roles (http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html)
+// in the IAM User Guide.
 //
 // The temporary security credentials created by AssumeRole can be used to make
 // API calls to any AWS service with the following exception: you cannot call
@@ -121,7 +130,12 @@ func (c *STS) AssumeRoleRequest(input *AssumeRoleInput) (req *request.Request, o
 // the user to call AssumeRole on the ARN of the role in the other account.
 // If the user is in the same account as the role, then you can either attach
 // a policy to the user (identical to the previous different account user),
-// or you can add the user as a principal directly in the role's trust policy
+// or you can add the user as a principal directly in the role's trust policy.
+// In this case, the trust policy acts as the only resource-based policy in
+// IAM, and users in the same account as the role do not need explicit permission
+// to assume the role. For more information about trust policies and resource-based
+// policies, see IAM Policies (http://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html)
+// in the IAM User Guide.
 //
 // Using MFA with AssumeRole
 //
@@ -194,7 +208,7 @@ const opAssumeRoleWithSAML = "AssumeRoleWithSAML"
 
 // AssumeRoleWithSAMLRequest generates a "aws/request.Request" representing the
 // client's request for the AssumeRoleWithSAML operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -247,11 +261,20 @@ func (c *STS) AssumeRoleWithSAMLRequest(input *AssumeRoleWithSAMLInput) (req *re
 // an access key ID, a secret access key, and a security token. Applications
 // can use these temporary security credentials to sign calls to AWS services.
 //
-// The temporary security credentials are valid for the duration that you specified
-// when calling AssumeRole, or until the time specified in the SAML authentication
-// response's SessionNotOnOrAfter value, whichever is shorter. The duration
-// can be from 900 seconds (15 minutes) to a maximum of 3600 seconds (1 hour).
-// The default is 1 hour.
+// By default, the temporary security credentials created by AssumeRoleWithSAML
+// last for one hour. However, you can use the optional DurationSeconds parameter
+// to specify the duration of your session. Your role session lasts for the
+// duration that you specify, or until the time specified in the SAML authentication
+// response's SessionNotOnOrAfter value, whichever is shorter. You can provide
+// a DurationSeconds value from 900 seconds (15 minutes) up to the maximum session
+// duration setting for the role. This setting can have a value from 1 hour
+// to 12 hours. To learn how to view the maximum value for your role, see View
+// the Maximum Session Duration Setting for a Role (http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html#id_roles_use_view-role-max-session)
+// in the IAM User Guide. The maximum session duration limit applies when you
+// use the AssumeRole* API operations or the assume-role* CLI operations but
+// does not apply when you use those operations to create a console URL. For
+// more information, see Using IAM Roles (http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html)
+// in the IAM User Guide.
 //
 // The temporary security credentials created by AssumeRoleWithSAML can be used
 // to make API calls to any AWS service with the following exception: you cannot
@@ -367,7 +390,7 @@ const opAssumeRoleWithWebIdentity = "AssumeRoleWithWebIdentity"
 
 // AssumeRoleWithWebIdentityRequest generates a "aws/request.Request" representing the
 // client's request for the AssumeRoleWithWebIdentity operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -438,9 +461,18 @@ func (c *STS) AssumeRoleWithWebIdentityRequest(input *AssumeRoleWithWebIdentityI
 // key ID, a secret access key, and a security token. Applications can use these
 // temporary security credentials to sign calls to AWS service APIs.
 //
-// The credentials are valid for the duration that you specified when calling
-// AssumeRoleWithWebIdentity, which can be from 900 seconds (15 minutes) to
-// a maximum of 3600 seconds (1 hour). The default is 1 hour.
+// By default, the temporary security credentials created by AssumeRoleWithWebIdentity
+// last for one hour. However, you can use the optional DurationSeconds parameter
+// to specify the duration of your session. You can provide a value from 900
+// seconds (15 minutes) up to the maximum session duration setting for the role.
+// This setting can have a value from 1 hour to 12 hours. To learn how to view
+// the maximum value for your role, see View the Maximum Session Duration Setting
+// for a Role (http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html#id_roles_use_view-role-max-session)
+// in the IAM User Guide. The maximum session duration limit applies when you
+// use the AssumeRole* API operations or the assume-role* CLI operations but
+// does not apply when you use those operations to create a console URL. For
+// more information, see Using IAM Roles (http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html)
+// in the IAM User Guide.
 //
 // The temporary security credentials created by AssumeRoleWithWebIdentity can
 // be used to make API calls to any AWS service with the following exception:
@@ -492,7 +524,7 @@ func (c *STS) AssumeRoleWithWebIdentityRequest(input *AssumeRoleWithWebIdentityI
 //    the information from these providers to get and use temporary security
 //    credentials.
 //
-//    * Web Identity Federation with Mobile Applications (http://aws.amazon.com/articles/4617974389850313).
+//    * Web Identity Federation with Mobile Applications (http://aws.amazon.com/articles/web-identity-federation-with-mobile-applications).
 //    This article discusses web identity federation and shows an example of
 //    how to use web identity federation to get access to content in Amazon
 //    S3.
@@ -569,7 +601,7 @@ const opDecodeAuthorizationMessage = "DecodeAuthorizationMessage"
 
 // DecodeAuthorizationMessageRequest generates a "aws/request.Request" representing the
 // client's request for the DecodeAuthorizationMessage operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -681,7 +713,7 @@ const opGetCallerIdentity = "GetCallerIdentity"
 
 // GetCallerIdentityRequest generates a "aws/request.Request" representing the
 // client's request for the GetCallerIdentity operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -756,7 +788,7 @@ const opGetFederationToken = "GetFederationToken"
 
 // GetFederationTokenRequest generates a "aws/request.Request" representing the
 // client's request for the GetFederationToken operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -925,7 +957,7 @@ const opGetSessionToken = "GetSessionToken"
 
 // GetSessionTokenRequest generates a "aws/request.Request" representing the
 // client's request for the GetSessionToken operation. The "output" return
-// value will be populated with the request's response once the request complets
+// value will be populated with the request's response once the request completes
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
@@ -1053,15 +1085,23 @@ type AssumeRoleInput struct {
 	_ struct{} `type:"structure"`
 
 	// The duration, in seconds, of the role session. The value can range from 900
-	// seconds (15 minutes) to 3600 seconds (1 hour). By default, the value is set
-	// to 3600 seconds.
+	// seconds (15 minutes) up to the maximum session duration setting for the role.
+	// This setting can have a value from 1 hour to 12 hours. If you specify a value
+	// higher than this setting, the operation fails. For example, if you specify
+	// a session duration of 12 hours, but your administrator set the maximum session
+	// duration to 6 hours, your operation fails. To learn how to view the maximum
+	// value for your role, see View the Maximum Session Duration Setting for a
+	// Role (http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html#id_roles_use_view-role-max-session)
+	// in the IAM User Guide.
 	//
-	// This is separate from the duration of a console session that you might request
-	// using the returned credentials. The request to the federation endpoint for
-	// a console sign-in token takes a SessionDuration parameter that specifies
-	// the maximum length of the console session, separately from the DurationSeconds
-	// parameter on this API. For more information, see Creating a URL that Enables
-	// Federated Users to Access the AWS Management Console (http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_enable-console-custom-url.html)
+	// By default, the value is set to 3600 seconds.
+	//
+	// The DurationSeconds parameter is separate from the duration of a console
+	// session that you might request using the returned credentials. The request
+	// to the federation endpoint for a console sign-in token takes a SessionDuration
+	// parameter that specifies the maximum length of the console session. For more
+	// information, see Creating a URL that Enables Federated Users to Access the
+	// AWS Management Console (http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_enable-console-custom-url.html)
 	// in the IAM User Guide.
 	DurationSeconds *int64 `min:"900" type:"integer"`
 
@@ -1296,18 +1336,27 @@ func (s *AssumeRoleOutput) SetPackedPolicySize(v int64) *AssumeRoleOutput {
 type AssumeRoleWithSAMLInput struct {
 	_ struct{} `type:"structure"`
 
-	// The duration, in seconds, of the role session. The value can range from 900
-	// seconds (15 minutes) to 3600 seconds (1 hour). By default, the value is set
-	// to 3600 seconds. An expiration can also be specified in the SAML authentication
-	// response's SessionNotOnOrAfter value. The actual expiration time is whichever
-	// value is shorter.
+	// The duration, in seconds, of the role session. Your role session lasts for
+	// the duration that you specify for the DurationSeconds parameter, or until
+	// the time specified in the SAML authentication response's SessionNotOnOrAfter
+	// value, whichever is shorter. You can provide a DurationSeconds value from
+	// 900 seconds (15 minutes) up to the maximum session duration setting for the
+	// role. This setting can have a value from 1 hour to 12 hours. If you specify
+	// a value higher than this setting, the operation fails. For example, if you
+	// specify a session duration of 12 hours, but your administrator set the maximum
+	// session duration to 6 hours, your operation fails. To learn how to view the
+	// maximum value for your role, see View the Maximum Session Duration Setting
+	// for a Role (http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html#id_roles_use_view-role-max-session)
+	// in the IAM User Guide.
 	//
-	// This is separate from the duration of a console session that you might request
-	// using the returned credentials. The request to the federation endpoint for
-	// a console sign-in token takes a SessionDuration parameter that specifies
-	// the maximum length of the console session, separately from the DurationSeconds
-	// parameter on this API. For more information, see Enabling SAML 2.0 Federated
-	// Users to Access the AWS Management Console (http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_enable-console-saml.html)
+	// By default, the value is set to 3600 seconds.
+	//
+	// The DurationSeconds parameter is separate from the duration of a console
+	// session that you might request using the returned credentials. The request
+	// to the federation endpoint for a console sign-in token takes a SessionDuration
+	// parameter that specifies the maximum length of the console session. For more
+	// information, see Creating a URL that Enables Federated Users to Access the
+	// AWS Management Console (http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_enable-console-custom-url.html)
 	// in the IAM User Guide.
 	DurationSeconds *int64 `min:"900" type:"integer"`
 
@@ -1548,15 +1597,23 @@ type AssumeRoleWithWebIdentityInput struct {
 	_ struct{} `type:"structure"`
 
 	// The duration, in seconds, of the role session. The value can range from 900
-	// seconds (15 minutes) to 3600 seconds (1 hour). By default, the value is set
-	// to 3600 seconds.
+	// seconds (15 minutes) up to the maximum session duration setting for the role.
+	// This setting can have a value from 1 hour to 12 hours. If you specify a value
+	// higher than this setting, the operation fails. For example, if you specify
+	// a session duration of 12 hours, but your administrator set the maximum session
+	// duration to 6 hours, your operation fails. To learn how to view the maximum
+	// value for your role, see View the Maximum Session Duration Setting for a
+	// Role (http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html#id_roles_use_view-role-max-session)
+	// in the IAM User Guide.
 	//
-	// This is separate from the duration of a console session that you might request
-	// using the returned credentials. The request to the federation endpoint for
-	// a console sign-in token takes a SessionDuration parameter that specifies
-	// the maximum length of the console session, separately from the DurationSeconds
-	// parameter on this API. For more information, see Creating a URL that Enables
-	// Federated Users to Access the AWS Management Console (http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_enable-console-custom-url.html)
+	// By default, the value is set to 3600 seconds.
+	//
+	// The DurationSeconds parameter is separate from the duration of a console
+	// session that you might request using the returned credentials. The request
+	// to the federation endpoint for a console sign-in token takes a SessionDuration
+	// parameter that specifies the maximum length of the console session. For more
+	// information, see Creating a URL that Enables Federated Users to Access the
+	// AWS Management Console (http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_enable-console-custom-url.html)
 	// in the IAM User Guide.
 	DurationSeconds *int64 `min:"900" type:"integer"`
 

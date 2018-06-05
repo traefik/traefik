@@ -25,8 +25,10 @@ import (
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
+	"github.com/containous/traefik/version"
 	"github.com/eapache/channels"
-	acme "github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
+	legolog "github.com/xenolf/lego/log"
 	"github.com/xenolf/lego/providers/dns"
 )
 
@@ -42,7 +44,7 @@ type ACME struct {
 	Domains               []types.Domain              `description:"SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='main.net,san1.net,san2.net'"`
 	Storage               string                      `description:"File or key used for certificates storage."`
 	StorageFile           string                      // Deprecated
-	OnDemand              bool                        `description:"(Deprecated) Enable on demand certificate generation. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."` //deprecated
+	OnDemand              bool                        `description:"(Deprecated) Enable on demand certificate generation. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."` // Deprecated
 	OnHostRule            bool                        `description:"Enable certificate generation on frontends Host rules."`
 	CAServer              string                      `description:"CA server to use."`
 	EntryPoint            string                      `description:"Entrypoint to proxy acme challenge to."`
@@ -64,10 +66,11 @@ type ACME struct {
 }
 
 func (a *ACME) init() error {
+	acme.UserAgent = fmt.Sprintf("containous-traefik/%s", version.Version)
 	if a.ACMELogging {
-		acme.Logger = fmtlog.New(os.Stderr, "legolog: ", fmtlog.LstdFlags)
+		legolog.Logger = fmtlog.New(os.Stderr, "legolog: ", fmtlog.LstdFlags)
 	} else {
-		acme.Logger = fmtlog.New(ioutil.Discard, "", 0)
+		legolog.Logger = fmtlog.New(ioutil.Discard, "", 0)
 	}
 	// no certificates in TLS config, so we add a default one
 	cert, err := generate.DefaultCertificate()
@@ -180,6 +183,10 @@ func (a *ACME) leadershipListener(elected bool) error {
 
 		account := object.(*Account)
 		account.Init()
+		// Reset Account values if caServer changed, thus registration URI can be updated
+		if account != nil && account.Registration != nil && !strings.HasPrefix(account.Registration.URI, a.CAServer) {
+			account.reset()
+		}
 
 		var needRegister bool
 		if account == nil || len(account.Email) == 0 {

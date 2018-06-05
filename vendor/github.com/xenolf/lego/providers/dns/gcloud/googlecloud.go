@@ -1,17 +1,17 @@
-// Package googlecloud implements a DNS provider for solving the DNS-01
+// Package gcloud implements a DNS provider for solving the DNS-01
 // challenge using Google Cloud DNS.
-package googlecloud
+package gcloud
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"time"
 
-	"github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
 
 	"golang.org/x/net/context"
-	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 
 	"google.golang.org/api/dns/v1"
@@ -28,10 +28,10 @@ type DNSProvider struct {
 // A Service Account file can be passed in the environment variable:
 // GCE_SERVICE_ACCOUNT_FILE
 func NewDNSProvider() (*DNSProvider, error) {
-	project := os.Getenv("GCE_PROJECT")
 	if saFile, ok := os.LookupEnv("GCE_SERVICE_ACCOUNT_FILE"); ok {
-		return NewDNSProviderServiceAccount(project, saFile)
+		return NewDNSProviderServiceAccount(saFile)
 	}
+	project := os.Getenv("GCE_PROJECT")
 	return NewDNSProviderCredentials(project)
 }
 
@@ -58,10 +58,7 @@ func NewDNSProviderCredentials(project string) (*DNSProvider, error) {
 
 // NewDNSProviderServiceAccount uses the supplied service account JSON file to
 // return a DNSProvider instance configured for Google Cloud DNS.
-func NewDNSProviderServiceAccount(project string, saFile string) (*DNSProvider, error) {
-	if project == "" {
-		return nil, fmt.Errorf("Google Cloud project name missing")
-	}
+func NewDNSProviderServiceAccount(saFile string) (*DNSProvider, error) {
 	if saFile == "" {
 		return nil, fmt.Errorf("Google Cloud Service Account file missing")
 	}
@@ -70,11 +67,22 @@ func NewDNSProviderServiceAccount(project string, saFile string) (*DNSProvider, 
 	if err != nil {
 		return nil, fmt.Errorf("Unable to read Service Account file: %v", err)
 	}
+
+	// read project id from service account file
+	var datJSON struct {
+		ProjectID string `json:"project_id"`
+	}
+	err = json.Unmarshal(dat, &datJSON)
+	if err != nil || datJSON.ProjectID == "" {
+		return nil, fmt.Errorf("Project ID not found in Google Cloud Service Account file")
+	}
+	project := datJSON.ProjectID
+
 	conf, err := google.JWTConfigFromJSON(dat, dns.NdevClouddnsReadwriteScope)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to acquire config: %v", err)
 	}
-	client := conf.Client(oauth2.NoContext)
+	client := conf.Client(context.Background())
 
 	svc, err := dns.New(client)
 	if err != nil {
@@ -88,7 +96,7 @@ func NewDNSProviderServiceAccount(project string, saFile string) (*DNSProvider, 
 
 // Present creates a TXT record to fulfil the dns-01 challenge.
 func (c *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
 
 	zone, err := c.getHostedZone(domain)
 	if err != nil {
@@ -135,7 +143,7 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters.
 func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
 
 	zone, err := c.getHostedZone(domain)
 	if err != nil {
@@ -167,7 +175,7 @@ func (c *DNSProvider) Timeout() (timeout, interval time.Duration) {
 
 // getHostedZone returns the managed-zone
 func (c *DNSProvider) getHostedZone(domain string) (string, error) {
-	authZone, err := acmev2.FindZoneByFqdn(acmev2.ToFqdn(domain), acmev2.RecursiveNameservers)
+	authZone, err := acme.FindZoneByFqdn(acme.ToFqdn(domain), acme.RecursiveNameservers)
 	if err != nil {
 		return "", err
 	}

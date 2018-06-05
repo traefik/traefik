@@ -9,10 +9,10 @@ import (
 	"strings"
 
 	"github.com/dnsimple/dnsimple-go/dnsimple"
-	"github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
 )
 
-// DNSProvider is an implementation of the acmev2.ChallengeProvider interface.
+// DNSProvider is an implementation of the acme.ChallengeProvider interface.
 type DNSProvider struct {
 	client *dnsimple.Client
 }
@@ -23,14 +23,14 @@ type DNSProvider struct {
 // See: https://developer.dnsimple.com/v2/#authentication
 func NewDNSProvider() (*DNSProvider, error) {
 	accessToken := os.Getenv("DNSIMPLE_OAUTH_TOKEN")
-	baseUrl := os.Getenv("DNSIMPLE_BASE_URL")
+	baseURL := os.Getenv("DNSIMPLE_BASE_URL")
 
-	return NewDNSProviderCredentials(accessToken, baseUrl)
+	return NewDNSProviderCredentials(accessToken, baseURL)
 }
 
 // NewDNSProviderCredentials uses the supplied credentials to return a
 // DNSProvider instance configured for dnsimple.
-func NewDNSProviderCredentials(accessToken, baseUrl string) (*DNSProvider, error) {
+func NewDNSProviderCredentials(accessToken, baseURL string) (*DNSProvider, error) {
 	if accessToken == "" {
 		return nil, fmt.Errorf("DNSimple OAuth token is missing")
 	}
@@ -38,8 +38,8 @@ func NewDNSProviderCredentials(accessToken, baseUrl string) (*DNSProvider, error
 	client := dnsimple.NewClient(dnsimple.NewOauthTokenCredentials(accessToken))
 	client.UserAgent = "lego"
 
-	if baseUrl != "" {
-		client.BaseURL = baseUrl
+	if baseURL != "" {
+		client.BaseURL = baseURL
 	}
 
 	return &DNSProvider{client: client}, nil
@@ -47,7 +47,7 @@ func NewDNSProviderCredentials(accessToken, baseUrl string) (*DNSProvider, error
 
 // Present creates a TXT record to fulfil the dns-01 challenge.
 func (c *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
 
 	zoneName, err := c.getHostedZone(domain)
 
@@ -71,7 +71,7 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters.
 func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
 
 	records, err := c.findTxtRecords(domain, fqdn)
 	if err != nil {
@@ -94,7 +94,7 @@ func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 }
 
 func (c *DNSProvider) getHostedZone(domain string) (string, error) {
-	authZone, err := acmev2.FindZoneByFqdn(acmev2.ToFqdn(domain), acmev2.RecursiveNameservers)
+	authZone, err := acme.FindZoneByFqdn(acme.ToFqdn(domain), acme.RecursiveNameservers)
 	if err != nil {
 		return "", err
 	}
@@ -104,7 +104,7 @@ func (c *DNSProvider) getHostedZone(domain string) (string, error) {
 		return "", err
 	}
 
-	zoneName := acmev2.UnFqdn(authZone)
+	zoneName := acme.UnFqdn(authZone)
 
 	zones, err := c.client.Zones.ListZones(accountID, &dnsimple.ZoneListOptions{NameLike: zoneName})
 	if err != nil {
@@ -119,8 +119,7 @@ func (c *DNSProvider) getHostedZone(domain string) (string, error) {
 	}
 
 	if hostedZone.ID == 0 {
-		return "", fmt.Errorf("Zone %s not found in DNSimple for domain %s", authZone, domain)
-
+		return "", fmt.Errorf("zone %s not found in DNSimple for domain %s", authZone, domain)
 	}
 
 	return hostedZone.Name, nil
@@ -159,7 +158,7 @@ func (c *DNSProvider) newTxtRecord(zoneName, fqdn, value string, ttl int) *dnsim
 }
 
 func (c *DNSProvider) extractRecordName(fqdn, domain string) string {
-	name := acmev2.UnFqdn(fqdn)
+	name := acme.UnFqdn(fqdn)
 	if idx := strings.Index(name, "."+domain); idx != -1 {
 		return name[:idx]
 	}
@@ -173,8 +172,8 @@ func (c *DNSProvider) getAccountID() (string, error) {
 	}
 
 	if whoamiResponse.Data.Account == nil {
-		return "", fmt.Errorf("DNSimple user tokens are not supported, please use an account token.")
+		return "", fmt.Errorf("DNSimple user tokens are not supported, please use an account token")
 	}
 
-	return strconv.Itoa(whoamiResponse.Data.Account.ID), nil
+	return strconv.FormatInt(whoamiResponse.Data.Account.ID, 10), nil
 }

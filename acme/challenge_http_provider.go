@@ -9,7 +9,7 @@ import (
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
-	acme "github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
 )
 
 var _ acme.ChallengeProviderTimeout = (*challengeHTTPProvider)(nil)
