@@ -318,34 +318,24 @@ func (p *Provider) watchHealthState(stopCh <-chan struct{}, watchCh chan<- map[s
 				// Thus it is required to do extra check for changes...
 				addedKeys, removedKeys, changedKeys := getChangedHealth(current, flashback)
 
-				if len(addedKeys) > 0 {
-					log.WithField("DiscoveredServices", addedKeys).Debug("Health State change detected.")
+				if len(addedKeys) > 0 || len(removedKeys) > 0 || len(changedKeys) > 0 {
+					log.WithField("DiscoveredServices", addedKeys).
+						WithField("MissingServices", removedKeys).
+						WithField("ChangedServices", changedKeys).
+						Debug("Health State change detected.")
+
 					watchCh <- data
 					flashback = current
 					flashbackMaintenance = maintenance
-				}
+				} else {
+					addedKeysMaintenance, removedMaintenance := getChangedStringKeys(maintenance, flashbackMaintenance)
 
-				if len(removedKeys) > 0 {
-					log.WithField("MissingServices", removedKeys).Debug("Health State change detected.")
-					watchCh <- data
-					flashback = current
-					flashbackMaintenance = maintenance
-				}
-
-				if len(changedKeys) > 0 {
-					log.WithField("ChangedServices", changedKeys).Debug("Health State change detected.")
-					watchCh <- data
-					flashback = current
-					flashbackMaintenance = maintenance
-				}
-
-				addedKeysMaintenance, removedMaintenance := getChangedStringKeys(maintenance, flashbackMaintenance)
-
-				if len(addedKeysMaintenance) > 0 || len(removedMaintenance) > 0 {
-					log.WithField("MaintenanceMode", maintenance).Debug("Maintenance change detected.")
-					watchCh <- data
-					flashback = current
-					flashbackMaintenance = maintenance
+					if len(addedKeysMaintenance) > 0 || len(removedMaintenance) > 0 {
+						log.WithField("MaintenanceMode", maintenance).Debug("Maintenance change detected.")
+						watchCh <- data
+						flashback = current
+						flashbackMaintenance = maintenance
+					}
 				}
 			}
 		}
