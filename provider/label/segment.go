@@ -10,7 +10,7 @@ import (
 var (
 	// SegmentPropertiesRegexp used to extract the name of the segment and the name of the property for this segment
 	// All properties are under the format traefik.<segment_name>.frontend.*= except the port/portIndex/weight/protocol/backend directly after traefik.<segment_name>.
-	SegmentPropertiesRegexp = regexp.MustCompile(`^traefik\.(?P<segment_name>.+?)\.(?P<property_name>port|portIndex|weight|protocol|backend|frontend\.(.+))$`)
+	SegmentPropertiesRegexp = regexp.MustCompile(`^traefik\.(?P<segment_name>.+?)\.(?P<property_name>port|portIndex|portName|weight|protocol|backend|frontend\.(.+))$`)
 
 	// PortRegexp used to extract the port label of the segment
 	PortRegexp = regexp.MustCompile(`^traefik\.(?P<segment_name>.+?)\.port$`)
