@@ -25,6 +25,7 @@ import (
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
+	"github.com/containous/traefik/version"
 	"github.com/eapache/channels"
 	"github.com/xenolf/lego/acme"
 	legolog "github.com/xenolf/lego/log"
@@ -63,6 +64,7 @@ type ACME struct {
 }
 
 func (a *ACME) init() error {
+	acme.UserAgent = fmt.Sprintf("containous-traefik/%s", version.Version)
 	if a.ACMELogging {
 		legolog.Logger = fmtlog.New(os.Stderr, "legolog: ", fmtlog.LstdFlags)
 	} else {

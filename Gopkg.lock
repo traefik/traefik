@@ -1243,6 +1243,7 @@
   revision = "0c8571ac0ce161a5feb57375a9cdf148c98c0f70"
 
 [[projects]]
+  branch = "master"
   name = "github.com/xenolf/lego"
   packages = [
     "acme",
@@ -1280,8 +1281,7 @@
     "providers/dns/route53",
     "providers/dns/vultr"
   ]
-  revision = "fefeb24353e513a985358d4a7746b2467ac05e31"
-  version = "v1.0.0"
+  revision = "7fedfd1388f016c7ca7ed92a7f2024d06a7e20d8"
 
 [[projects]]
   branch = "master"
@@ -1679,6 +1679,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a6acf97e7459604ff987fa8af4520a1660ad8871df0db131ae3e9442574460b0"
+  inputs-digest = "ac06fad81167510635546d4e5500b938d61f2eb999bf04d5520d7967b9621f0d"
   solver-name = "gps-cdcl"
   solver-version = 1
