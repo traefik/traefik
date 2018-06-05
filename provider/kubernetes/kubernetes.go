@@ -6,6 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"net"
 	"os"
 	"reflect"
 	"strconv"
@@ -302,7 +303,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 							for _, subset := range endpoints.Subsets {
 								for _, address := range subset.Addresses {
-									url := protocol + "://" + address.IP + ":" + strconv.Itoa(endpointPortNumber(port, subset.Ports))
+									url := protocol + "://" + net.JoinHostPort(address.IP, strconv.Itoa(endpointPortNumber(port, subset.Ports)))
 									name := url
 									if address.TargetRef != nil && address.TargetRef.Name != "" {
 										name = address.TargetRef.Name
