@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/traefik/testhelpers"
+	th "github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
@@ -189,13 +189,13 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 	defer prometheus.Unregister(promState)
 
 	configurations := make(types.Configurations)
-	configurations["providerName"] = testhelpers.BuildDynamicConfig(
-		testhelpers.WithFrontend("frontend", testhelpers.BuildFrontend(
-			testhelpers.WithEntrypoint("entrypoint1"),
-		)),
-		testhelpers.WithBackend("backend1", testhelpers.BuildBackend(
-			testhelpers.WithServer("server1", "http://localhost:9000"),
-		)),
+	configurations["providerName"] = th.BuildConfiguration(
+		th.WithFrontends(
+			th.WithFrontend("backend1", th.WithEntryPoints("entrypoint1")),
+		),
+		th.WithBackends(
+			th.WithBackendNew("backend1", th.WithServersNew(th.WithServerNew("http://localhost:9000"))),
+		),
 	)
 	OnConfigurationUpdate(configurations)
 

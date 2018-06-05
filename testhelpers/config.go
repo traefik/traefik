@@ -1,88 +1,134 @@
 package testhelpers
 
-import "github.com/containous/traefik/types"
+import (
+	"github.com/containous/traefik/provider"
+	"github.com/containous/traefik/types"
+)
 
-// BuildDynamicConfig is a helper to create a configuration with the builder pattern.
-func BuildDynamicConfig(dynamicConfigBuilders ...func(*types.Configuration)) *types.Configuration {
-	config := &types.Configuration{
-		Frontends: make(map[string]*types.Frontend),
-		Backends:  make(map[string]*types.Backend),
-	}
+// BuildConfiguration is a helper to create a configuration.
+func BuildConfiguration(dynamicConfigBuilders ...func(*types.Configuration)) *types.Configuration {
+	config := &types.Configuration{}
 	for _, build := range dynamicConfigBuilders {
 		build(config)
 	}
 	return config
 }
 
-// WithFrontend builds a function that adds the passed frontend to a configuration.
-func WithFrontend(frontendName string, frontend *types.Frontend) func(*types.Configuration) {
-	return func(config *types.Configuration) {
-		config.Frontends[frontendName] = frontend
-	}
-}
+// -- Backend
 
-// WithBackend builds a function that adds the passed backend to a configuration.
-func WithBackend(backendName string, backend *types.Backend) func(*types.Configuration) {
-	return func(config *types.Configuration) {
-		config.Backends[backendName] = backend
-	}
-}
-
-// BuildFrontend builds a frontend with some default configuration and allows for
-// further configuration by passing in frontend builders.
-func BuildFrontend(frontendBuilders ...func(*types.Frontend)) *types.Frontend {
-	fe := &types.Frontend{
-		EntryPoints: []string{"http"},
-		Backend:     "backend",
-		Routes:      make(map[string]types.Route),
-	}
-	for _, build := range frontendBuilders {
-		build(fe)
-	}
-	return fe
-}
-
-// WithRoute builds a function that adds the passed route to a frontend.
-func WithRoute(routeName, rule string) func(*types.Frontend) {
-	return func(fe *types.Frontend) {
-		fe.Routes[routeName] = types.Route{Rule: rule}
-	}
-}
-
-// WithEntrypoint builds a function that adds the passed entrypoint to a frontend.
-func WithEntrypoint(entrypointName string) func(*types.Frontend) {
-	return func(fe *types.Frontend) {
-		fe.EntryPoints = append(fe.EntryPoints, entrypointName)
-	}
-}
-
-// BuildBackend builds a backend with some default configuration and allows for
-// further configuration by passing in backend builders.
-func BuildBackend(backendBuilders ...func(*types.Backend)) *types.Backend {
-	be := &types.Backend{
-		Servers:      make(map[string]types.Server),
-		LoadBalancer: &types.LoadBalancer{Method: "Wrr"},
-	}
-	for _, build := range backendBuilders {
-		build(be)
-	}
-	return be
-}
-
-// WithServer builds a function that adds the passed server to a backend.
-func WithServer(name, url string) func(backend *types.Backend) {
-	return func(be *types.Backend) {
-		be.Servers[name] = types.Server{URL: url}
-	}
-}
-
-// WithLoadBalancer builds a function that sets the passed load balancer configuration to a backend.
-func WithLoadBalancer(method string, sticky bool) func(*types.Backend) {
-	return func(be *types.Backend) {
-		if sticky {
-			be.LoadBalancer = &types.LoadBalancer{Method: method, Stickiness: &types.Stickiness{CookieName: "test"}}
-		} else {
-			be.LoadBalancer = &types.LoadBalancer{Method: method}
+// WithBackends is a helper to create a configuration
+func WithBackends(opts ...func(*types.Backend) string) func(*types.Configuration) {
+	return func(c *types.Configuration) {
+		c.Backends = make(map[string]*types.Backend)
+		for _, opt := range opts {
+			b := &types.Backend{}
+			name := opt(b)
+			c.Backends[name] = b
 		}
+	}
+}
+
+// WithBackendNew is a helper to create a configuration
+func WithBackendNew(name string, opts ...func(*types.Backend)) func(*types.Backend) string {
+	return func(b *types.Backend) string {
+		for _, opt := range opts {
+			opt(b)
+		}
+		return name
+	}
+}
+
+// WithServersNew is a helper to create a configuration
+func WithServersNew(opts ...func(*types.Server) string) func(*types.Backend) {
+	return func(b *types.Backend) {
+		b.Servers = make(map[string]types.Server)
+		for _, opt := range opts {
+			s := &types.Server{Weight: 1}
+			name := opt(s)
+			b.Servers[name] = *s
+		}
+	}
+}
+
+// WithServerNew is a helper to create a configuration
+func WithServerNew(url string, opts ...func(*types.Server)) func(*types.Server) string {
+	return func(s *types.Server) string {
+		for _, opt := range opts {
+			opt(s)
+		}
+		s.URL = url
+		return provider.Normalize(url)
+	}
+}
+
+// WithLBMethod is a helper to create a configuration
+func WithLBMethod(method string) func(*types.Backend) {
+	return func(b *types.Backend) {
+		if b.LoadBalancer == nil {
+			b.LoadBalancer = &types.LoadBalancer{}
+		}
+		b.LoadBalancer.Method = method
+	}
+}
+
+// -- Frontend
+
+// WithFrontends is a helper to create a configuration
+func WithFrontends(opts ...func(*types.Frontend) string) func(*types.Configuration) {
+	return func(c *types.Configuration) {
+		c.Frontends = make(map[string]*types.Frontend)
+		for _, opt := range opts {
+			f := &types.Frontend{}
+			name := opt(f)
+			c.Frontends[name] = f
+		}
+	}
+}
+
+// WithFrontend is a helper to create a configuration
+func WithFrontend(backend string, opts ...func(*types.Frontend)) func(*types.Frontend) string {
+	return func(f *types.Frontend) string {
+		for _, opt := range opts {
+			opt(f)
+		}
+		f.Backend = backend
+		return backend
+	}
+}
+
+// WithEntryPoints is a helper to create a configuration
+func WithEntryPoints(eps ...string) func(*types.Frontend) {
+	return func(f *types.Frontend) {
+		f.EntryPoints = eps
+	}
+}
+
+// WithRoutes is a helper to create a configuration
+func WithRoutes(opts ...func(*types.Route) string) func(*types.Frontend) {
+	return func(f *types.Frontend) {
+		f.Routes = make(map[string]types.Route)
+		for _, opt := range opts {
+			s := &types.Route{}
+			name := opt(s)
+			f.Routes[name] = *s
+		}
+	}
+}
+
+// WithRoute is a helper to create a configuration
+func WithRoute(name string, rule string) func(*types.Route) string {
+	return func(r *types.Route) string {
+		r.Rule = rule
+		return name
+	}
+}
+
+// WithLBSticky is a helper to create a configuration
+func WithLBSticky(cookieName string) func(*types.Backend) {
+	return func(b *types.Backend) {
+		if b.LoadBalancer == nil {
+			b.LoadBalancer = &types.LoadBalancer{}
+		}
+		b.LoadBalancer.Stickiness = &types.Stickiness{CookieName: cookieName}
 	}
 }
