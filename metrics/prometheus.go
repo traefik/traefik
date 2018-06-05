@@ -36,25 +36,18 @@ const (
 	backendServerUpName     = metricNamePrefix + "backend_server_up"
 )
 
-const (
-	// generationAgeForever indicates that a metric never gets outdated.
-	generationAgeForever = 0
-	// generationAgeDefault is the default age of three generations.
-	generationAgeDefault = 3
-)
-
 // promState holds all metric state internally and acts as the only Collector we register for Prometheus.
 //
 // This enables control to remove metrics that belong to outdated configuration.
 // As an example why this is required, consider Traefik learns about a new service.
 // It populates the 'traefik_server_backend_up' metric for it with a value of 1 (alive).
 // When the backend is undeployed now the metric is still there in the client library
-// and will be until Traefik would be restarted.
+// and will be returned on the metrics endpoint until Traefik would be restarted.
 //
-// To solve this problem promState keeps track of configuration generations.
-// Every time a new configuration is loaded, the generation is increased by one.
-// Metrics that "belong" to a dynamic configuration part of Traefik (e.g. backend, entrypoint)
-// are removed, given they were tracked more than 3 generations ago.
+// To solve this problem promState keeps track of Traefik's dynamic configuration.
+// Metrics that "belong" to a dynamic configuration part like backends or entrypoints
+// are removed after they were scraped at least once when the corresponding object
+// doesn't exist anymore.
 var promState = newPrometheusState()
 
 // PrometheusHandler exposes Prometheus routes.
@@ -163,40 +156,66 @@ func RegisterPrometheus(config *types.Prometheus) Registry {
 	}
 }
 
-// OnConfigurationUpdate increases the current generation of the prometheus state.
-func OnConfigurationUpdate() {
-	promState.IncGeneration()
+// OnConfigurationUpdate receives the current configuration from Traefik.
+// It then converts the configuration to the optimized package internal format
+// and sets it to the promState.
+func OnConfigurationUpdate(configurations types.Configurations) {
+	dynamicConfig := newDynamicConfig()
+
+	for _, config := range configurations {
+		for _, frontend := range config.Frontends {
+			for _, entrypointName := range frontend.EntryPoints {
+				dynamicConfig.entrypoints[entrypointName] = true
+			}
+		}
+
+		for backendName, backend := range config.Backends {
+			dynamicConfig.backends[backendName] = make(map[string]bool)
+			for _, server := range backend.Servers {
+				dynamicConfig.backends[backendName][server.URL] = true
+			}
+		}
+	}
+
+	promState.SetDynamicConfig(dynamicConfig)
 }
 
 func newPrometheusState() *prometheusState {
-	collectors := make(chan *collector)
-	state := make(map[string]*collector)
-
 	return &prometheusState{
-		collectors: collectors,
-		state:      state,
+		collectors:    make(chan *collector),
+		dynamicConfig: newDynamicConfig(),
+		state:         make(map[string]*collector),
 	}
 }
 
 type prometheusState struct {
-	currentGeneration int
-	collectors        chan *collector
-	describers        []func(ch chan<- *stdprometheus.Desc)
+	collectors chan *collector
+	describers []func(ch chan<- *stdprometheus.Desc)
 
-	mtx   sync.Mutex
-	state map[string]*collector
+	mtx           sync.Mutex
+	dynamicConfig *dynamicConfig
+	state         map[string]*collector
 }
 
-func (ps *prometheusState) IncGeneration() {
+// reset is a utility method for unit testing. It should be called after each
+// test run that changes promState internally in order to avoid dependencies
+// between unit tests.
+func (ps *prometheusState) reset() {
+	ps.collectors = make(chan *collector)
+	ps.describers = []func(ch chan<- *stdprometheus.Desc){}
+	ps.dynamicConfig = newDynamicConfig()
+	ps.state = make(map[string]*collector)
+}
+
+func (ps *prometheusState) SetDynamicConfig(dynamicConfig *dynamicConfig) {
 	ps.mtx.Lock()
 	defer ps.mtx.Unlock()
-	ps.currentGeneration++
+	ps.dynamicConfig = dynamicConfig
 }
 
 func (ps *prometheusState) ListenValueUpdates() {
 	for collector := range ps.collectors {
 		ps.mtx.Lock()
-		collector.lastTrackedGeneration = ps.currentGeneration
 		ps.state[collector.id] = collector
 		ps.mtx.Unlock()
 	}
@@ -212,42 +231,89 @@ func (ps *prometheusState) Describe(ch chan<- *stdprometheus.Desc) {
 
 // Collect implements prometheus.Collector. It calls the Collect
 // method of all metrics it received on the collectors channel.
-// It's also responsible to remove metrics that were tracked
-// at least three generations ago. Those metrics are cleaned up
-// after the Collect of them were called.
+// It's also responsible to remove metrics that belong to an outdated configuration.
+// The removal happens only after their Collect method was called to ensure that
+// also those metrics will be exported on the current scrape.
 func (ps *prometheusState) Collect(ch chan<- stdprometheus.Metric) {
 	ps.mtx.Lock()
 	defer ps.mtx.Unlock()
 
-	outdatedKeys := []string{}
+	var outdatedKeys []string
 	for key, cs := range ps.state {
 		cs.collector.Collect(ch)
 
-		if cs.maxAge == generationAgeForever {
-			continue
-		}
-		if ps.currentGeneration-cs.lastTrackedGeneration >= cs.maxAge {
+		if ps.isOutdated(cs) {
 			outdatedKeys = append(outdatedKeys, key)
 		}
 	}
 
 	for _, key := range outdatedKeys {
+		ps.state[key].delete()
 		delete(ps.state, key)
 	}
 }
 
-func newCollector(metricName string, lnvs labelNamesValues, c stdprometheus.Collector) *collector {
-	maxAge := generationAgeDefault
+// isOutdated checks whether the passed collector has labels that mark
+// it as belonging to an outdated configuration of Traefik.
+func (ps *prometheusState) isOutdated(collector *collector) bool {
+	labels := collector.labels
 
-	// metrics without labels should never become outdated
-	if len(lnvs) == 0 {
-		maxAge = generationAgeForever
+	if entrypointName, ok := labels["entrypoint"]; ok && !ps.dynamicConfig.hasEntrypoint(entrypointName) {
+		return true
 	}
 
+	if backendName, ok := labels["backend"]; ok {
+		if !ps.dynamicConfig.hasBackend(backendName) {
+			return true
+		}
+		if url, ok := labels["url"]; ok && !ps.dynamicConfig.hasServerURL(backendName, url) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func newDynamicConfig() *dynamicConfig {
+	return &dynamicConfig{
+		entrypoints: make(map[string]bool),
+		backends:    make(map[string]map[string]bool),
+	}
+}
+
+// dynamicConfig holds the current configuration for entrypoints, backends,
+// and server URLs in an optimized way to check for existence. This provides
+// a performant way to check whether the collected metrics belong to the
+// current configuration or to an outdated one.
+type dynamicConfig struct {
+	entrypoints map[string]bool
+	backends    map[string]map[string]bool
+}
+
+func (d *dynamicConfig) hasEntrypoint(entrypointName string) bool {
+	_, ok := d.entrypoints[entrypointName]
+	return ok
+}
+
+func (d *dynamicConfig) hasBackend(backendName string) bool {
+	_, ok := d.backends[backendName]
+	return ok
+}
+
+func (d *dynamicConfig) hasServerURL(backendName, serverURL string) bool {
+	if backend, hasBackend := d.backends[backendName]; hasBackend {
+		_, ok := backend[serverURL]
+		return ok
+	}
+	return false
+}
+
+func newCollector(metricName string, labels stdprometheus.Labels, c stdprometheus.Collector, delete func()) *collector {
 	return &collector{
-		id:        buildMetricID(metricName, lnvs),
-		maxAge:    maxAge,
+		id:        buildMetricID(metricName, labels),
+		labels:    labels,
 		collector: c,
+		delete:    delete,
 	}
 }
 
@@ -255,16 +321,19 @@ func newCollector(metricName string, lnvs labelNamesValues, c stdprometheus.Coll
 // It adds information on how many generations this metric should be present
 // in the /metrics output, relatived to the time it was last tracked.
 type collector struct {
-	id                    string
-	collector             stdprometheus.Collector
-	lastTrackedGeneration int
-	maxAge                int
+	id        string
+	labels    stdprometheus.Labels
+	collector stdprometheus.Collector
+	delete    func()
 }
 
-func buildMetricID(metricName string, lnvs labelNamesValues) string {
-	newLnvs := append([]string{}, lnvs...)
-	sort.Strings(newLnvs)
-	return metricName + ":" + strings.Join(newLnvs, "|")
+func buildMetricID(metricName string, labels stdprometheus.Labels) string {
+	var labelNamesValues []string
+	for name, value := range labels {
+		labelNamesValues = append(labelNamesValues, name, value)
+	}
+	sort.Strings(labelNamesValues)
+	return metricName + ":" + strings.Join(labelNamesValues, "|")
 }
 
 func newCounterFrom(collectors chan<- *collector, opts stdprometheus.CounterOpts, labelNames []string) *counter {
@@ -297,9 +366,12 @@ func (c *counter) With(labelValues ...string) metrics.Counter {
 }
 
 func (c *counter) Add(delta float64) {
-	collector := c.cv.With(c.labelNamesValues.ToLabels())
+	labels := c.labelNamesValues.ToLabels()
+	collector := c.cv.With(labels)
 	collector.Add(delta)
-	c.collectors <- newCollector(c.name, c.labelNamesValues, collector)
+	c.collectors <- newCollector(c.name, labels, collector, func() {
+		c.cv.Delete(labels)
+	})
 }
 
 func (c *counter) Describe(ch chan<- *stdprometheus.Desc) {
@@ -336,15 +408,21 @@ func (g *gauge) With(labelValues ...string) metrics.Gauge {
 }
 
 func (g *gauge) Add(delta float64) {
-	collector := g.gv.With(g.labelNamesValues.ToLabels())
+	labels := g.labelNamesValues.ToLabels()
+	collector := g.gv.With(labels)
 	collector.Add(delta)
-	g.collectors <- newCollector(g.name, g.labelNamesValues, collector)
+	g.collectors <- newCollector(g.name, labels, collector, func() {
+		g.gv.Delete(labels)
+	})
 }
 
 func (g *gauge) Set(value float64) {
-	collector := g.gv.With(g.labelNamesValues.ToLabels())
+	labels := g.labelNamesValues.ToLabels()
+	collector := g.gv.With(labels)
 	collector.Set(value)
-	g.collectors <- newCollector(g.name, g.labelNamesValues, collector)
+	g.collectors <- newCollector(g.name, labels, collector, func() {
+		g.gv.Delete(labels)
+	})
 }
 
 func (g *gauge) Describe(ch chan<- *stdprometheus.Desc) {
@@ -377,9 +455,12 @@ func (h *histogram) With(labelValues ...string) metrics.Histogram {
 }
 
 func (h *histogram) Observe(value float64) {
-	collector := h.hv.With(h.labelNamesValues.ToLabels())
+	labels := h.labelNamesValues.ToLabels()
+	collector := h.hv.With(labels)
 	collector.Observe(value)
-	h.collectors <- newCollector(h.name, h.labelNamesValues, collector)
+	h.collectors <- newCollector(h.name, labels, collector, func() {
+		h.hv.Delete(labels)
+	})
 }
 
 func (h *histogram) Describe(ch chan<- *stdprometheus.Desc) {
