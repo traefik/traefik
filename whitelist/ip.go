@@ -61,16 +61,19 @@ func (ip *IP) IsAuthorized(req *http.Request) error {
 		xFFs := req.Header[XForwardedFor]
 		if len(xFFs) > 0 {
 			for _, xFF := range xFFs {
-				ok, err := ip.contains(parseHost(xFF))
-				if err != nil {
-					return err
-				}
+				xffs := strings.Split(xFF, ",")
+				for _, xff := range xffs {
+					ok, err := ip.contains(parseHost(xff))
+					if err != nil {
+						return err
+					}
 
-				if ok {
-					return nil
-				}
+					if ok {
+						return nil
+					}
 
-				invalidMatches = append(invalidMatches, xFF)
+					invalidMatches = append(invalidMatches, xff)
+				}
 			}
 		}
 	}

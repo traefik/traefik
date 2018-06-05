@@ -4,8 +4,8 @@ import "fmt"
 
 // DelegationSignerRecord represents a delegation signer record for a domain in DNSimple.
 type DelegationSignerRecord struct {
-	ID         int    `json:"id,omitempty"`
-	DomainID   int    `json:"domain_id,omitempty"`
+	ID         int64  `json:"id,omitempty"`
+	DomainID   int64  `json:"domain_id,omitempty"`
 	Algorithm  string `json:"algorithm"`
 	Digest     string `json:"digest"`
 	DigestType string `json:"digest_type"`
@@ -14,10 +14,10 @@ type DelegationSignerRecord struct {
 	UpdatedAt  string `json:"updated_at,omitempty"`
 }
 
-func delegationSignerRecordPath(accountID string, domainIdentifier string, dsRecordID int) (path string) {
+func delegationSignerRecordPath(accountID string, domainIdentifier string, dsRecordID int64) (path string) {
 	path = fmt.Sprintf("%v/ds_records", domainPath(accountID, domainIdentifier))
 	if dsRecordID != 0 {
-		path += fmt.Sprintf("/%d", dsRecordID)
+		path += fmt.Sprintf("/%v", dsRecordID)
 	}
 	return
 }
@@ -74,7 +74,7 @@ func (s *DomainsService) CreateDelegationSignerRecord(accountID string, domainId
 // GetDelegationSignerRecord fetches a delegation signer record.
 //
 // See https://developer.dnsimple.com/v2/domains/dnssec/#ds-record-get
-func (s *DomainsService) GetDelegationSignerRecord(accountID string, domainIdentifier string, dsRecordID int) (*delegationSignerRecordResponse, error) {
+func (s *DomainsService) GetDelegationSignerRecord(accountID string, domainIdentifier string, dsRecordID int64) (*delegationSignerRecordResponse, error) {
 	path := versioned(delegationSignerRecordPath(accountID, domainIdentifier, dsRecordID))
 	dsRecordResponse := &delegationSignerRecordResponse{}
 
@@ -91,7 +91,7 @@ func (s *DomainsService) GetDelegationSignerRecord(accountID string, domainIdent
 // from the domain.
 //
 // See https://developer.dnsimple.com/v2/domains/dnssec/#ds-record-delete
-func (s *DomainsService) DeleteDelegationSignerRecord(accountID string, domainIdentifier string, dsRecordID int) (*delegationSignerRecordResponse, error) {
+func (s *DomainsService) DeleteDelegationSignerRecord(accountID string, domainIdentifier string, dsRecordID int64) (*delegationSignerRecordResponse, error) {
 	path := versioned(delegationSignerRecordPath(accountID, domainIdentifier, dsRecordID))
 	dsRecordResponse := &delegationSignerRecordResponse{}
 

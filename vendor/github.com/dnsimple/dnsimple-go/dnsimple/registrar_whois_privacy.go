@@ -6,8 +6,8 @@ import (
 
 // WhoisPrivacy represents a whois privacy in DNSimple.
 type WhoisPrivacy struct {
-	ID        int    `json:"id,omitempty"`
-	DomainID  int    `json:"domain_id,omitempty"`
+	ID        int64  `json:"id,omitempty"`
+	DomainID  int64  `json:"domain_id,omitempty"`
 	Enabled   bool   `json:"enabled,omitempty"`
 	ExpiresOn string `json:"expires_on,omitempty"`
 	CreatedAt string `json:"created_at,omitempty"`

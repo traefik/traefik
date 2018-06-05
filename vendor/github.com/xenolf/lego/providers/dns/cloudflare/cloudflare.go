@@ -7,18 +7,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
-	"github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
 )
 
 // CloudFlareAPIURL represents the API endpoint to call.
 // TODO: Unexport?
 const CloudFlareAPIURL = "https://api.cloudflare.com/client/v4"
 
-// DNSProvider is an implementation of the acmev2.ChallengeProvider interface
+// DNSProvider is an implementation of the acme.ChallengeProvider interface
 type DNSProvider struct {
 	authEmail string
 	authKey   string
@@ -37,7 +39,14 @@ func NewDNSProvider() (*DNSProvider, error) {
 // DNSProvider instance configured for cloudflare.
 func NewDNSProviderCredentials(email, key string) (*DNSProvider, error) {
 	if email == "" || key == "" {
-		return nil, fmt.Errorf("CloudFlare credentials missing")
+		missingEnvVars := []string{}
+		if email == "" {
+			missingEnvVars = append(missingEnvVars, "CLOUDFLARE_EMAIL")
+		}
+		if key == "" {
+			missingEnvVars = append(missingEnvVars, "CLOUDFLARE_API_KEY")
+		}
+		return nil, fmt.Errorf("CloudFlare credentials missing: %s", strings.Join(missingEnvVars, ","))
 	}
 
 	return &DNSProvider{
@@ -54,7 +63,7 @@ func (c *DNSProvider) Timeout() (timeout, interval time.Duration) {
 
 // Present creates a TXT record to fulfil the dns-01 challenge
 func (c *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
 	zoneID, err := c.getHostedZoneID(fqdn)
 	if err != nil {
 		return err
@@ -62,7 +71,7 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 
 	rec := cloudFlareRecord{
 		Type:    "TXT",
-		Name:    acmev2.UnFqdn(fqdn),
+		Name:    acme.UnFqdn(fqdn),
 		Content: value,
 		TTL:     120,
 	}
@@ -73,16 +82,12 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 	}
 
 	_, err = c.makeRequest("POST", fmt.Sprintf("/zones/%s/dns_records", zoneID), bytes.NewReader(body))
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // CleanUp removes the TXT record matching the specified parameters
 func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
 
 	record, err := c.findTxtRecord(fqdn)
 	if err != nil {
@@ -90,11 +95,7 @@ func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	}
 
 	_, err = c.makeRequest("DELETE", fmt.Sprintf("/zones/%s/dns_records/%s", record.ZoneID, record.ID), nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (c *DNSProvider) getHostedZoneID(fqdn string) (string, error) {
@@ -104,12 +105,12 @@ func (c *DNSProvider) getHostedZoneID(fqdn string) (string, error) {
 		Name string `json:"name"`
 	}
 
-	authZone, err := acmev2.FindZoneByFqdn(fqdn, acmev2.RecursiveNameservers)
+	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
 	if err != nil {
 		return "", err
 	}
 
-	result, err := c.makeRequest("GET", "/zones?name="+acmev2.UnFqdn(authZone), nil)
+	result, err := c.makeRequest("GET", "/zones?name="+acme.UnFqdn(authZone), nil)
 	if err != nil {
 		return "", err
 	}
@@ -135,7 +136,7 @@ func (c *DNSProvider) findTxtRecord(fqdn string) (*cloudFlareRecord, error) {
 
 	result, err := c.makeRequest(
 		"GET",
-		fmt.Sprintf("/zones/%s/dns_records?per_page=1000&type=TXT&name=%s", zoneID, acmev2.UnFqdn(fqdn)),
+		fmt.Sprintf("/zones/%s/dns_records?per_page=1000&type=TXT&name=%s", zoneID, acme.UnFqdn(fqdn)),
 		nil,
 	)
 	if err != nil {
@@ -149,12 +150,12 @@ func (c *DNSProvider) findTxtRecord(fqdn string) (*cloudFlareRecord, error) {
 	}
 
 	for _, rec := range records {
-		if rec.Name == acmev2.UnFqdn(fqdn) {
+		if rec.Name == acme.UnFqdn(fqdn) {
 			return &rec, nil
 		}
 	}
 
-	return nil, fmt.Errorf("No existing record found for %s", fqdn)
+	return nil, fmt.Errorf("no existing record found for %s", fqdn)
 }
 
 func (c *DNSProvider) makeRequest(method, uri string, body io.Reader) (json.RawMessage, error) {
@@ -179,7 +180,6 @@ func (c *DNSProvider) makeRequest(method, uri string, body io.Reader) (json.RawM
 
 	req.Header.Set("X-Auth-Email", c.authEmail)
 	req.Header.Set("X-Auth-Key", c.authKey)
-	//req.Header.Set("User-Agent", userAgent())
 
 	client := http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Do(req)
@@ -206,7 +206,11 @@ func (c *DNSProvider) makeRequest(method, uri string, body io.Reader) (json.RawM
 			}
 			return nil, fmt.Errorf("Cloudflare API Error \n%s", errStr)
 		}
-		return nil, fmt.Errorf("Cloudflare API error")
+		strBody := "Unreadable body"
+		if body, err := ioutil.ReadAll(resp.Body); err == nil {
+			strBody = string(body)
+		}
+		return nil, fmt.Errorf("Cloudflare API error: the request %s sent a response with a body which is not in JSON format: %s", req.URL.String(), strBody)
 	}
 
 	return r.Result, nil

@@ -14,8 +14,8 @@ type ZonesService struct {
 
 // Zone represents a Zone in DNSimple.
 type Zone struct {
-	ID        int    `json:"id,omitempty"`
-	AccountID int    `json:"account_id,omitempty"`
+	ID        int64    `json:"id,omitempty"`
+	AccountID int64    `json:"account_id,omitempty"`
 	Name      string `json:"name,omitempty"`
 	Reverse   bool   `json:"reverse,omitempty"`
 	CreatedAt string `json:"created_at,omitempty"`

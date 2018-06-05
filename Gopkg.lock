@@ -318,9 +318,10 @@
   version = "v3.2.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/dnsimple/dnsimple-go"
   packages = ["dnsimple"]
-  revision = "f2d9b723cc9547d182e24ac2e527ae25d25fc93f"
+  revision = "bbe1a2c87affea187478e24d3aea3cac25f870b3"
 
 [[projects]]
   name = "github.com/docker/cli"
@@ -757,6 +758,7 @@
   version = "v1.3.7"
 
 [[projects]]
+  branch = "master"
   name = "github.com/jjcollinge/servicefabric"
   packages = ["."]
   revision = "8eebe170fa1ba25d3dfb928b3f86a7313b13b9fe"
@@ -987,9 +989,10 @@
   revision = "1f5c07e90700ae93ddcba0c7af7d9c7201646ccc"
 
 [[projects]]
+  branch = "master"
   name = "github.com/ovh/go-ovh"
   packages = ["ovh"]
-  revision = "4b1fea467323b74c5f462f0947f402b428ca0626"
+  revision = "91b7eb631d2eced3e706932a0b36ee8b5ee22e92"
 
 [[projects]]
   branch = "master"
@@ -1212,7 +1215,7 @@
     "roundrobin",
     "utils"
   ]
-  revision = "6956548a7fa4272adeadf828455109c53933ea86"
+  revision = "7a2284ad8d6f4d362a6b38f3cdcc812291dce293"
 
 [[projects]]
   name = "github.com/vulcand/predicate"
@@ -1238,10 +1241,11 @@
   revision = "0c8571ac0ce161a5feb57375a9cdf148c98c0f70"
 
 [[projects]]
-  branch = "containous-fork"
+  branch = "master"
   name = "github.com/xenolf/lego"
   packages = [
-    "acmev2",
+    "acme",
+    "log",
     "providers/dns",
     "providers/dns/auroradns",
     "providers/dns/azure",
@@ -1259,9 +1263,9 @@
     "providers/dns/fastdns",
     "providers/dns/gandi",
     "providers/dns/gandiv5",
+    "providers/dns/gcloud",
     "providers/dns/glesys",
     "providers/dns/godaddy",
-    "providers/dns/googlecloud",
     "providers/dns/lightsail",
     "providers/dns/linode",
     "providers/dns/namecheap",
@@ -1275,8 +1279,7 @@
     "providers/dns/route53",
     "providers/dns/vultr"
   ]
-  revision = "3d653ee2ee38f1d71beb5f09b37b23344eff0ab3"
-  source = "github.com/containous/lego"
+  revision = "7fedfd1388f016c7ca7ed92a7f2024d06a7e20d8"
 
 [[projects]]
   branch = "master"
@@ -1316,6 +1319,7 @@
   revision = "22ae77b79946ea320088417e4d50825671d82d57"
 
 [[projects]]
+  branch = "master"
   name = "golang.org/x/oauth2"
   packages = [
     ".",
@@ -1324,7 +1328,7 @@
     "jws",
     "jwt"
   ]
-  revision = "7fdf09982454086d5570c7db3e11f360194830ca"
+  revision = "ec22f46f877b4505e0117eeaab541714644fdd28"
 
 [[projects]]
   branch = "master"
@@ -1363,6 +1367,7 @@
   revision = "8be79e1e0910c292df4e79c241bb7e8f7e725959"
 
 [[projects]]
+  branch = "master"
   name = "google.golang.org/api"
   packages = [
     "dns/v1",
@@ -1370,7 +1375,7 @@
     "googleapi",
     "googleapi/internal/uritemplates"
   ]
-  revision = "1575df15c1bb8b18ad4d9bc5ca495cc85b0764fe"
+  revision = "de943baf05a022a8f921b544b7827bacaba1aed5"
 
 [[projects]]
   name = "google.golang.org/appengine"
@@ -1451,6 +1456,7 @@
   revision = "cb884138e64c9a8bf5c7d6106d74b0fca082df0c"
 
 [[projects]]
+  branch = "v2"
   name = "gopkg.in/ns1/ns1-go.v2"
   packages = [
     "rest",
@@ -1460,7 +1466,7 @@
     "rest/model/filter",
     "rest/model/monitor"
   ]
-  revision = "c563826f4cbef9c11bebeb9f20a3f7afe9c1e2f4"
+  revision = "a5bcac82d3f637d3928d30476610891935b2d691"
 
 [[projects]]
   name = "gopkg.in/square/go-jose.v2"
@@ -1681,6 +1687,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4d18e76b6d54a2698d3f1acd9f43110c609e3f61e72d480b9acd2327720dcc5c"
+  inputs-digest = "f9bdfe14aca106f6bfc75da6f7282791c12c503b65581797bbb484566858a2f3"
   solver-name = "gps-cdcl"
   solver-version = 1

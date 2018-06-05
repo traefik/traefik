@@ -6,8 +6,10 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"net"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -319,7 +321,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 									continue
 								}
 								for _, address := range subset.Addresses {
-									url := fmt.Sprintf("%s://%s:%d", protocol, address.IP, endpointPort)
+									url := protocol + "://" + net.JoinHostPort(address.IP, strconv.FormatInt(int64(endpointPort), 10))
 									name := url
 									if address.TargetRef != nil && address.TargetRef.Name != "" {
 										name = address.TargetRef.Name

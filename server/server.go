@@ -557,7 +557,10 @@ func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tl
 }
 
 func (s *Server) postLoadConfiguration() {
-	metrics.OnConfigurationUpdate()
+	if s.metricsRegistry.IsEnabled() {
+		activeConfig := s.currentConfigurations.Get().(types.Configurations)
+		metrics.OnConfigurationUpdate(activeConfig)
+	}
 
 	if s.globalConfiguration.ACME == nil || s.leadership == nil || !s.leadership.IsLeader() {
 		return

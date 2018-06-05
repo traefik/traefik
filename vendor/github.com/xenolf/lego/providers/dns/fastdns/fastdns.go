@@ -7,10 +7,10 @@ import (
 
 	configdns "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
-	"github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
 )
 
-// DNSProvider is an implementation of the acmev2.ChallengeProvider interface.
+// DNSProvider is an implementation of the acme.ChallengeProvider interface.
 type DNSProvider struct {
 	config edgegrid.Config
 }
@@ -47,7 +47,7 @@ func NewDNSProviderClient(host, clientToken, clientSecret, accessToken string) (
 
 // Present creates a TXT record to fullfil the dns-01 challenge.
 func (c *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
 	zoneName, recordName, err := c.findZoneAndRecordName(fqdn, domain)
 	if err != nil {
 		return err
@@ -81,7 +81,7 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the record matching the specified parameters.
 func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
 	zoneName, recordName, err := c.findZoneAndRecordName(fqdn, domain)
 	if err != nil {
 		return err
@@ -108,12 +108,12 @@ func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 }
 
 func (c *DNSProvider) findZoneAndRecordName(fqdn, domain string) (string, string, error) {
-	zone, err := acmev2.FindZoneByFqdn(acmev2.ToFqdn(domain), acmev2.RecursiveNameservers)
+	zone, err := acme.FindZoneByFqdn(acme.ToFqdn(domain), acme.RecursiveNameservers)
 	if err != nil {
 		return "", "", err
 	}
-	zone = acmev2.UnFqdn(zone)
-	name := acmev2.UnFqdn(fqdn)
+	zone = acme.UnFqdn(zone)
+	name := acme.UnFqdn(fqdn)
 	name = name[:len(name)-len("."+zone)]
 
 	return zone, name, nil

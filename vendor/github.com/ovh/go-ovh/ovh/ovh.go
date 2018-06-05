@@ -21,6 +21,7 @@ const DefaultTimeout = 180 * time.Second
 const (
 	OvhEU        = "https://eu.api.ovh.com/1.0"
 	OvhCA        = "https://ca.api.ovh.com/1.0"
+	OvhUS        = "https://api.ovh.us/1.0"
 	KimsufiEU    = "https://eu.api.kimsufi.com/1.0"
 	KimsufiCA    = "https://ca.api.kimsufi.com/1.0"
 	SoyoustartEU = "https://eu.api.soyoustart.com/1.0"
@@ -32,6 +33,7 @@ const (
 var Endpoints = map[string]string{
 	"ovh-eu":        OvhEU,
 	"ovh-ca":        OvhCA,
+	"ovh-us":        OvhUS,
 	"kimsufi-eu":    KimsufiEU,
 	"kimsufi-ca":    KimsufiCA,
 	"soyoustart-eu": SoyoustartEU,
@@ -170,45 +172,15 @@ func (c *Client) DeleteUnAuth(url string, resType interface{}) error {
 	return c.CallAPI("DELETE", url, nil, resType, false)
 }
 
-//
-// Low level API access
-//
-
-// getResult check the response and unmarshals it into the response type if needed.
-// Helper function, called from CallAPI.
-func (c *Client) getResponse(response *http.Response, resType interface{}) error {
-	// Read all the response body
-	defer response.Body.Close()
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return err
-	}
-
-	// < 200 && >= 300 : API error
-	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
-		apiError := &APIError{Code: response.StatusCode}
-		if err = json.Unmarshal(body, apiError); err != nil {
-			apiError.Message = string(body)
-		}
-		apiError.QueryID = response.Header.Get("X-Ovh-QueryID")
-
-		return apiError
-	}
-
-	// Nothing to unmarshal
-	if len(body) == 0 || resType == nil {
-		return nil
-	}
-
-	return json.Unmarshal(body, &resType)
-}
-
 // timeDelta returns the time  delta between the host and the remote API
 func (c *Client) getTimeDelta() (time.Duration, error) {
 
 	if !c.timeDeltaDone {
 		// Ensure only one thread is updating
 		c.timeDeltaMutex.Lock()
+
+		// Ensure that the mutex will be released on return
+		defer c.timeDeltaMutex.Unlock()
 
 		// Did we wait ? Maybe no more needed
 		if !c.timeDeltaDone {
@@ -220,7 +192,6 @@ func (c *Client) getTimeDelta() (time.Duration, error) {
 			c.timeDelta = time.Since(*ovhTime)
 			c.timeDeltaDone = true
 		}
-		c.timeDeltaMutex.Unlock()
 	}
 
 	return c.timeDelta, nil
@@ -251,39 +222,22 @@ var getEndpointForSignature = func(c *Client) string {
 	return c.endpoint
 }
 
-// CallAPI is the lowest level call helper. If needAuth is true,
-// inject authentication headers and sign the request.
-//
-// Request signature is a sha1 hash on following fields, joined by '+':
-// - applicationSecret (from Client instance)
-// - consumerKey (from Client instance)
-// - capitalized method (from arguments)
-// - full request url, including any query string argument
-// - full serialized request body
-// - server current time (takes time delta into account)
-//
-// Call will automatically assemble the target url from the endpoint
-// configured in the client instance and the path argument. If the reqBody
-// argument is not nil, it will also serialize it as json and inject
-// the required Content-Type header.
-//
-// If everyrthing went fine, unmarshall response into resType and return nil
-// otherwise, return the error
-func (c *Client) CallAPI(method, path string, reqBody, resType interface{}, needAuth bool) error {
+// NewRequest returns a new HTTP request
+func (c *Client) NewRequest(method, path string, reqBody interface{}, needAuth bool) (*http.Request, error) {
 	var body []byte
 	var err error
 
 	if reqBody != nil {
 		body, err = json.Marshal(reqBody)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	target := fmt.Sprintf("%s%s", c.endpoint, path)
 	req, err := http.NewRequest(method, target, bytes.NewReader(body))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Inject headers
@@ -298,7 +252,7 @@ func (c *Client) CallAPI(method, path string, reqBody, resType interface{}, need
 	if needAuth {
 		timeDelta, err := c.TimeDelta()
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		timestamp := getLocalTime().Add(-timeDelta).Unix()
@@ -321,12 +275,71 @@ func (c *Client) CallAPI(method, path string, reqBody, resType interface{}, need
 
 	// Send the request with requested timeout
 	c.Client.Timeout = c.Timeout
-	response, err := c.Client.Do(req)
 
+	return req, nil
+}
+
+// Do sends an HTTP request and returns an HTTP response
+func (c *Client) Do(req *http.Request) (*http.Response, error) {
+	return c.Client.Do(req)
+}
+
+// CallAPI is the lowest level call helper. If needAuth is true,
+// inject authentication headers and sign the request.
+//
+// Request signature is a sha1 hash on following fields, joined by '+':
+// - applicationSecret (from Client instance)
+// - consumerKey (from Client instance)
+// - capitalized method (from arguments)
+// - full request url, including any query string argument
+// - full serialized request body
+// - server current time (takes time delta into account)
+//
+// Call will automatically assemble the target url from the endpoint
+// configured in the client instance and the path argument. If the reqBody
+// argument is not nil, it will also serialize it as json and inject
+// the required Content-Type header.
+//
+// If everything went fine, unmarshall response into resType and return nil
+// otherwise, return the error
+func (c *Client) CallAPI(method, path string, reqBody, resType interface{}, needAuth bool) error {
+	req, err := c.NewRequest(method, path, reqBody, needAuth)
+	if err != nil {
+		return err
+	}
+	response, err := c.Do(req)
+	if err != nil {
+		return err
+	}
+	return c.UnmarshalResponse(response, resType)
+
+}
+
+// UnmarshalResponse checks the response and unmarshals it into the response
+// type if needed Helper function, called from CallAPI
+func (c *Client) UnmarshalResponse(response *http.Response, resType interface{}) error {
+	// Read all the response body
+	defer response.Body.Close()
+	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		return err
 	}
 
-	// Unmarshal the result into the resType if possible
-	return c.getResponse(response, resType)
+	// < 200 && >= 300 : API error
+	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
+		apiError := &APIError{Code: response.StatusCode}
+		if err = json.Unmarshal(body, apiError); err != nil {
+			apiError.Message = string(body)
+		}
+		apiError.QueryID = response.Header.Get("X-Ovh-QueryID")
+
+		return apiError
+	}
+
+	// Nothing to unmarshal
+	if len(body) == 0 || resType == nil {
+		return nil
+	}
+
+	return json.Unmarshal(body, &resType)
 }

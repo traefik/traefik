@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
 )
 
 // Notes about namecheap's tool API:
@@ -132,7 +132,7 @@ type challenge struct {
 // newChallenge builds a challenge record from a domain name, a challenge
 // authentication key, and a map of available TLDs.
 func newChallenge(domain, keyAuth string, tlds map[string]string) (*challenge, error) {
-	domain = acmev2.UnFqdn(domain)
+	domain = acme.UnFqdn(domain)
 	parts := strings.Split(domain, ".")
 
 	// Find the longest matching TLD.
@@ -144,7 +144,7 @@ func newChallenge(domain, keyAuth string, tlds map[string]string) (*challenge, e
 		}
 	}
 	if longest < 1 {
-		return nil, fmt.Errorf("Invalid domain name '%s'", domain)
+		return nil, fmt.Errorf("invalid domain name %q", domain)
 	}
 
 	tld := strings.Join(parts[longest:], ".")
@@ -155,7 +155,7 @@ func newChallenge(domain, keyAuth string, tlds map[string]string) (*challenge, e
 		host = strings.Join(parts[:longest-1], ".")
 	}
 
-	key, keyValue, _ := acmev2.DNS01Record(domain, keyAuth)
+	key, keyValue, _ := acme.DNS01Record(domain, keyAuth)
 
 	return &challenge{
 		domain:   domain,
@@ -318,7 +318,7 @@ func (d *DNSProvider) setHosts(ch *challenge, hosts []host) error {
 			shr.Errors[0].Description, shr.Errors[0].Number)
 	}
 	if shr.Result.IsSuccess != "true" {
-		return fmt.Errorf("Namecheap setHosts failed.")
+		return fmt.Errorf("Namecheap setHosts failed")
 	}
 
 	return nil

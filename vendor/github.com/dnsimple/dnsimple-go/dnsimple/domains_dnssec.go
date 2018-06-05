@@ -1,6 +1,8 @@
 package dnsimple
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Dnssec represents the current DNSSEC settings for a domain in DNSimple.
 type Dnssec struct {
