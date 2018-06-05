@@ -257,6 +257,7 @@ func (p *Provider) watchHealthState(stopCh <-chan struct{}, watchCh chan<- map[s
 	safe.Go(func() {
 		// variable to hold previous state
 		var flashback map[string][]string
+		var flashbackMaintenance []string
 
 		options := &api.QueryOptions{WaitTime: DefaultWatchWaitTime}
 
@@ -277,12 +278,15 @@ func (p *Provider) watchHealthState(stopCh <-chan struct{}, watchCh chan<- map[s
 
 			var current = make(map[string][]string)
 			var currentFailing = make(map[string]*api.HealthCheck)
+			var maintenance []string
 			if healthyState != nil {
 				for _, healthy := range healthyState {
 					key := fmt.Sprintf("%s-%s", healthy.Node, healthy.ServiceID)
 					_, failing := currentFailing[key]
 					if healthy.Status == "passing" && !failing {
 						current[key] = append(current[key], healthy.Node)
+					} else if strings.HasPrefix(healthy.CheckID, "_service_maintenance") || strings.HasPrefix(healthy.CheckID, "_node_maintenance") {
+						maintenance = append(maintenance, healthy.CheckID)
 					} else {
 						currentFailing[key] = healthy
 						if _, ok := current[key]; ok {
@@ -318,20 +322,31 @@ func (p *Provider) watchHealthState(stopCh <-chan struct{}, watchCh chan<- map[s
 					log.WithField("DiscoveredServices", addedKeys).Debug("Health State change detected.")
 					watchCh <- data
 					flashback = current
+					flashbackMaintenance = maintenance
 				}
 
 				if len(removedKeys) > 0 {
 					log.WithField("MissingServices", removedKeys).Debug("Health State change detected.")
 					watchCh <- data
 					flashback = current
+					flashbackMaintenance = maintenance
 				}
 
 				if len(changedKeys) > 0 {
 					log.WithField("ChangedServices", changedKeys).Debug("Health State change detected.")
 					watchCh <- data
 					flashback = current
+					flashbackMaintenance = maintenance
 				}
 
+				addedKeysMaintenance, removedMaintenance := getChangedStringKeys(maintenance, flashbackMaintenance)
+
+				if len(addedKeysMaintenance) > 0 || len(removedMaintenance) > 0 {
+					log.WithField("MaintenanceMode", maintenance).Debug("Maintenance change detected.")
+					watchCh <- data
+					flashback = current
+					flashbackMaintenance = maintenance
+				}
 			}
 		}
 	})

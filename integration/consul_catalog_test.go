@@ -76,8 +76,17 @@ func (s *ConsulCatalogSuite) registerService(name string, address string, port i
 	return err
 }
 
-func (s *ConsulCatalogSuite) registerAgentService(name string, address string, port int, tags []string) error {
+func (s *ConsulCatalogSuite) registerAgentService(name string, address string, port int, tags []string, withHealthCheck bool) error {
 	agent := s.consulClient.Agent()
+	var healthCheck *api.AgentServiceCheck
+	if withHealthCheck {
+		healthCheck = &api.AgentServiceCheck{
+			HTTP:     "http://" + address,
+			Interval: "10s",
+		}
+	} else {
+		healthCheck = nil
+	}
 	return agent.ServiceRegister(
 		&api.AgentServiceRegistration{
 			ID:      address,
@@ -85,10 +94,7 @@ func (s *ConsulCatalogSuite) registerAgentService(name string, address string, p
 			Name:    name,
 			Address: address,
 			Port:    port,
-			Check: &api.AgentServiceCheck{
-				HTTP:     "http://" + address,
-				Interval: "10s",
-			},
+			Check:   healthCheck,
 		},
 	)
 }
@@ -122,6 +128,22 @@ func (s *ConsulCatalogSuite) deregisterService(name string, address string) erro
 		&api.WriteOptions{},
 	)
 	return err
+}
+
+func (s *ConsulCatalogSuite) consulEnableServiceMaintenance(name string) error {
+	return s.consulClient.Agent().EnableServiceMaintenance(name, fmt.Sprintf("Maintenance mode for service %s", name))
+}
+
+func (s *ConsulCatalogSuite) consulDisableServiceMaintenance(name string) error {
+	return s.consulClient.Agent().DisableServiceMaintenance(name)
+}
+
+func (s *ConsulCatalogSuite) consulEnableNodeMaintenance() error {
+	return s.consulClient.Agent().EnableNodeMaintenance("Maintenance mode for node")
+}
+
+func (s *ConsulCatalogSuite) consulDisableNodeMaintenance() error {
+	return s.consulClient.Agent().DisableNodeMaintenance()
 }
 
 func (s *ConsulCatalogSuite) TestSimpleConfiguration(c *check.C) {
@@ -282,7 +304,7 @@ func (s *ConsulCatalogSuite) TestRefreshConfigWithMultipleNodeWithoutHealthCheck
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
 	defer s.deregisterService("test", whoami.NetworkSettings.IPAddress)
 
-	err = s.registerAgentService("test", whoami.NetworkSettings.IPAddress, 80, []string{"name=whoami1"})
+	err = s.registerAgentService("test", whoami.NetworkSettings.IPAddress, 80, []string{"name=whoami1"}, true)
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering agent service"))
 	defer s.deregisterAgentService(whoami.NetworkSettings.IPAddress)
 
@@ -558,7 +580,7 @@ func (s *ConsulCatalogSuite) TestServiceWithMultipleHealthCheck(c *check.C) {
 
 	whoami := s.composeProject.Container(c, "whoami1")
 	// Register service
-	err = s.registerAgentService("test", whoami.NetworkSettings.IPAddress, 80, []string{"name=whoami1"})
+	err = s.registerAgentService("test", whoami.NetworkSettings.IPAddress, 80, []string{"name=whoami1"}, true)
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering agent service"))
 	defer s.deregisterAgentService(whoami.NetworkSettings.IPAddress)
 
@@ -593,6 +615,62 @@ func (s *ConsulCatalogSuite) TestServiceWithMultipleHealthCheck(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Should be a 200
+	err = try.Request(req, 10*time.Second, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *ConsulCatalogSuite) TestMaintenanceMode(c *check.C) {
+	cmd, display := s.traefikCmd(
+		withConfigFile("fixtures/consul_catalog/simple.toml"),
+		"--consulCatalog",
+		"--consulCatalog.endpoint="+s.consulIP+":8500",
+		"--consulCatalog.domain=consul.localhost")
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// Wait for Traefik to turn ready.
+	err = try.GetRequest("http://127.0.0.1:8000/", 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	c.Assert(err, checker.IsNil)
+
+	whoami := s.composeProject.Container(c, "whoami1")
+
+	err = s.registerAgentService("test", whoami.NetworkSettings.IPAddress, 80, []string{}, false)
+	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
+
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "test.consul.localhost"
+
+	err = try.Request(req, 10*time.Second, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	// Enable service maintenance mode
+	err = s.consulEnableServiceMaintenance(whoami.NetworkSettings.IPAddress)
+	c.Assert(err, checker.IsNil)
+
+	err = try.Request(req, 10*time.Second, try.StatusCodeIs(http.StatusNotFound), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	// Disable service maintenance mode
+	err = s.consulDisableServiceMaintenance(whoami.NetworkSettings.IPAddress)
+	c.Assert(err, checker.IsNil)
+
+	err = try.Request(req, 10*time.Second, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	// Enable node maintenance mode
+	err = s.consulEnableNodeMaintenance()
+	c.Assert(err, checker.IsNil)
+
+	err = try.Request(req, 10*time.Second, try.StatusCodeIs(http.StatusNotFound), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	// Disable node maintenance mode
+	err = s.consulDisableNodeMaintenance()
+	c.Assert(err, checker.IsNil)
+
 	err = try.Request(req, 10*time.Second, try.StatusCodeIs(http.StatusOK), try.HasBody())
 	c.Assert(err, checker.IsNil)
 }
