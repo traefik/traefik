@@ -146,11 +146,6 @@ caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
 # ...
 ```
 
-### `delayDontCheckDNS` (Deprecated)
-
-!!! danger "DEPRECATED"
-    This option is deprecated. Please use [dnsChallenge.delayBeforeCheck](/configuration/acme/#dnschallenge) instead.
-
 ### `dnsChallenge`
 
 Use the `DNS-01` challenge to generate and renew ACME certificates by provisioning a DNS record.
@@ -213,11 +208,6 @@ Here is a list of supported `provider`s, that can automate the DNS verification,
 | [Route 53](https://aws.amazon.com/route53/)            | `route53`      | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_HOSTED_ZONE_ID` or a configured user/instance IAM profile. | YES                            |
 | [VULTR](https://www.vultr.com)                         | `vultr`        | `VULTR_API_KEY`                                                                                                             | Not tested yet                 |
 
-### `dnsProvider` (Deprecated)
-
-!!! danger "DEPRECATED"
-    This option is deprecated. Please use [dnsChallenge.provider](/configuration/acme/#provider) instead.
-
 ### `domains`
 
 You can provide SANs (alternative domains) to each main domain.
@@ -263,7 +253,8 @@ Due to ACME limitation it is not possible to define wildcards in SANs (alternati
 Most likely the root domain should receive a certificate too, so it needs to be specified as SAN and 2 `DNS-01` challenges are executed.
 In this case the generated DNS TXT record for both domains is the same.
 Eventhough this behaviour is [DNS RFC](https://community.letsencrypt.org/t/wildcard-issuance-two-txt-records-for-the-same-name/54528/2) compliant, it can lead to problems as all DNS providers keep DNS records cached for a certain time (TTL) and this TTL can be superior to the challenge timeout making the `DNS-01` challenge fail.
-The Træfik ACME client library [LEGO](https://github.com/xenolf/lego) supports some but not all DNS providers to work around this issue. The [`provider` table](/configuration/acme/#provider) indicates if they allow generating certificates for a wildcard domain and its root domain.
+The Træfik ACME client library [LEGO](https://github.com/xenolf/lego) supports some but not all DNS providers to work around this issue.
+The [`provider` table](/configuration/acme/#provider) indicates if they allow generating certificates for a wildcard domain and its root domain.
 
 ### `httpChallenge`
 
@@ -409,6 +400,16 @@ For example: if `acme.storage`'s value is `/etc/traefik/acme/acme.json`, the bac
 !!! note
     When Træfik is launched in a container, the storage file's parent directory needs to be mounted to be able to access the backup file on the host.
     Otherwise the backup file will be deleted when the container is stopped. Træfik will only generate it once!
+
+### `dnsProvider` (Deprecated)
+
+!!! danger "DEPRECATED"
+    This option is deprecated. Please use [dnsChallenge.provider](/configuration/acme/#provider) instead.
+
+### `delayDontCheckDNS` (Deprecated)
+
+!!! danger "DEPRECATED"
+    This option is deprecated. Please use [dnsChallenge.delayBeforeCheck](/configuration/acme/#dnschallenge) instead.
 
 ## Fallbacks
 
