@@ -2,6 +2,7 @@ package consulcatalog
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"sync"
@@ -255,7 +256,7 @@ func (p *Provider) watchHealthState(stopCh <-chan struct{}, watchCh chan<- map[s
 
 	safe.Go(func() {
 		// variable to hold previous state
-		var flashback []string
+		var flashback map[string][]string
 
 		options := &api.QueryOptions{WaitTime: DefaultWatchWaitTime}
 
@@ -267,19 +268,28 @@ func (p *Provider) watchHealthState(stopCh <-chan struct{}, watchCh chan<- map[s
 			}
 
 			// Listening to changes that leads to `passing` state or degrades from it.
-			healthyState, meta, err := health.State("passing", options)
+			healthyState, meta, err := health.State("any", options)
 			if err != nil {
 				log.WithError(err).Error("Failed to retrieve health checks")
 				notifyError(err)
 				return
 			}
 
-			var current []string
+			var current = make(map[string][]string)
+			var currentFailing = make(map[string]*api.HealthCheck)
 			if healthyState != nil {
 				for _, healthy := range healthyState {
-					current = append(current, healthy.ServiceID)
+					key := fmt.Sprintf("%s-%s", healthy.Node, healthy.ServiceID)
+					_, failing := currentFailing[key]
+					if healthy.Status == "passing" && !failing {
+						current[key] = append(current[key], healthy.Node)
+					} else {
+						currentFailing[key] = healthy
+						if _, ok := current[key]; ok {
+							delete(current, key)
+						}
+					}
 				}
-
 			}
 
 			// If LastIndex didn't change then it means `Get` returned
@@ -302,7 +312,7 @@ func (p *Provider) watchHealthState(stopCh <-chan struct{}, watchCh chan<- map[s
 				// A critical note is that the return of a blocking request is no guarantee of a change.
 				// It is possible that there was an idempotent write that does not affect the result of the query.
 				// Thus it is required to do extra check for changes...
-				addedKeys, removedKeys := getChangedStringKeys(current, flashback)
+				addedKeys, removedKeys, changedKeys := getChangedHealth(current, flashback)
 
 				if len(addedKeys) > 0 {
 					log.WithField("DiscoveredServices", addedKeys).Debug("Health State change detected.")
@@ -315,6 +325,13 @@ func (p *Provider) watchHealthState(stopCh <-chan struct{}, watchCh chan<- map[s
 					watchCh <- data
 					flashback = current
 				}
+
+				if len(changedKeys) > 0 {
+					log.WithField("ChangedServices", changedKeys).Debug("Health State change detected.")
+					watchCh <- data
+					flashback = current
+				}
+
 			}
 		}
 	})
@@ -392,6 +409,27 @@ func getChangedStringKeys(currState []string, prevState []string) ([]string, []s
 	removedKeys := fun.Difference(prevKeySet, currKeySet).(map[string]bool)
 
 	return fun.Keys(addedKeys).([]string), fun.Keys(removedKeys).([]string)
+}
+
+func getChangedHealth(current map[string][]string, previous map[string][]string) ([]string, []string, []string) {
+	currKeySet := fun.Set(fun.Keys(current).([]string)).(map[string]bool)
+	prevKeySet := fun.Set(fun.Keys(previous).([]string)).(map[string]bool)
+
+	addedKeys := fun.Difference(currKeySet, prevKeySet).(map[string]bool)
+	removedKeys := fun.Difference(prevKeySet, currKeySet).(map[string]bool)
+
+	var changedKeys []string
+
+	for key, value := range current {
+		if prevValue, ok := previous[key]; ok {
+			addedNodesKeys, removedNodesKeys := getChangedStringKeys(value, prevValue)
+			if len(addedNodesKeys) > 0 || len(removedNodesKeys) > 0 {
+				changedKeys = append(changedKeys, key)
+			}
+		}
+	}
+
+	return fun.Keys(addedKeys).([]string), fun.Keys(removedKeys).([]string), changedKeys
 }
 
 func getChangedIntKeys(currState []int, prevState []int) ([]int, []int) {
