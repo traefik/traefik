@@ -962,6 +962,63 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 	}
 }
 
+func TestBackendCaching(t *testing.T) {
+	testServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
+	defer testServer.Close()
+
+	globalConfig := configuration.GlobalConfiguration{
+		DefaultEntryPoints: []string{"http"},
+	}
+
+	entryPoints := map[string]EntryPoint{
+		"http": {Configuration: &configuration.EntryPoint{
+			ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true},
+		}},
+	}
+
+	dynamicConfigs := types.Configurations{
+		"config": th.BuildConfiguration(
+			th.WithFrontends(
+				th.WithFrontend("frontend0", "backend",
+					th.WithEntryPoints("http"),
+					th.WithRoutes(th.WithRoute("/ok", "Path: /ok"))),
+				th.WithFrontend("frontend1", "backend",
+					th.WithEntryPoints("http"),
+					th.WithRoutes(th.WithRoute("/unauthorized", "Path: /unauthorized")),
+					th.WithBasicAuth("foo", "bar")),
+			),
+			th.WithBackends(th.WithBackendNew("backend",
+				th.WithLBMethod("wrr"),
+				th.WithServersNew(th.WithServerNew(testServer.URL))),
+			),
+		),
+	}
+
+	srv := NewServer(globalConfig, nil, entryPoints)
+
+	serverEntryPoints, err := srv.loadConfig(dynamicConfigs, globalConfig)
+	if err != nil {
+		t.Fatalf("error loading config: %s", err)
+	}
+
+	// Test that the /ok path returns a status 200.
+	responseRecorderOk := &httptest.ResponseRecorder{}
+	requestOk := httptest.NewRequest(http.MethodGet, testServer.URL+"/ok", nil)
+	serverEntryPoints["http"].httpRouter.ServeHTTP(responseRecorderOk, requestOk)
+
+	assert.Equal(t, http.StatusOK, responseRecorderOk.Result().StatusCode, "status code")
+
+	// Test that the /unauthorized path returns a 401 because of
+	// the basic authentication defined on the frontend.
+	responseRecorderUnauthorized := &httptest.ResponseRecorder{}
+	requestUnauthorized := httptest.NewRequest(http.MethodGet, testServer.URL+"/unauthorized", nil)
+	serverEntryPoints["http"].httpRouter.ServeHTTP(responseRecorderUnauthorized, requestUnauthorized)
+
+	assert.Equal(t, http.StatusUnauthorized, responseRecorderUnauthorized.Result().StatusCode, "status code")
+}
+
 func TestBuildRedirectHandler(t *testing.T) {
 	srv := Server{
 		globalConfiguration: configuration.GlobalConfiguration{},
