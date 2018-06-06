@@ -11,6 +11,7 @@ import (
 	stdlog "log"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"os"
 	"os/signal"
@@ -75,6 +76,7 @@ type Server struct {
 	metricsRegistry               metrics.Registry
 	provider                      provider.Provider
 	configurationListeners        []func(types.Configuration)
+	bufferPool                    httputil.BufferPool
 }
 
 type serverEntryPoints map[string]*serverEntryPoint
@@ -105,6 +107,8 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration, provider p
 	if server.globalConfiguration.API != nil {
 		server.globalConfiguration.API.CurrentConfigurations = &server.currentConfigurations
 	}
+
+	server.bufferPool = newBufferPool()
 
 	server.routinesPool = safe.NewPool(context.Background())
 	server.defaultForwardingRoundTripper = createHTTPTransport(globalConfiguration)
@@ -1001,6 +1005,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						forward.ErrorHandler(errorHandler),
 						forward.Rewriter(rewriter),
 						forward.ResponseModifier(responseModifier),
+						forward.BufferPool(s.bufferPool),
 					)
 
 					if err != nil {
