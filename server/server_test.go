@@ -962,7 +962,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 	}
 }
 
-func TestBackendCaching(t *testing.T) {
+func TestReuseBackend(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}))
@@ -981,10 +981,12 @@ func TestBackendCaching(t *testing.T) {
 	dynamicConfigs := types.Configurations{
 		"config": th.BuildConfiguration(
 			th.WithFrontends(
-				th.WithFrontend("frontend0", "backend",
+				th.WithFrontend("backend",
+					th.WithFrontendName("frontend0"),
 					th.WithEntryPoints("http"),
 					th.WithRoutes(th.WithRoute("/ok", "Path: /ok"))),
-				th.WithFrontend("frontend1", "backend",
+				th.WithFrontend("backend",
+					th.WithFrontendName("frontend1"),
 					th.WithEntryPoints("http"),
 					th.WithRoutes(th.WithRoute("/unauthorized", "Path: /unauthorized")),
 					th.WithBasicAuth("foo", "bar")),
