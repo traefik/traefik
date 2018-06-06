@@ -91,8 +91,22 @@ func WithFrontend(backend string, opts ...func(*types.Frontend)) func(*types.Fro
 		for _, opt := range opts {
 			opt(f)
 		}
+
+		// related the function WithFrontendName
+		name := f.Backend
 		f.Backend = backend
+		if len(name) > 0 {
+			return name
+		}
 		return backend
+	}
+}
+
+// WithFrontendName is a helper to create a configuration
+func WithFrontendName(name string) func(*types.Frontend) {
+	return func(f *types.Frontend) {
+		// store temporary the frontend name into the backend name
+		f.Backend = name
 	}
 }
 
