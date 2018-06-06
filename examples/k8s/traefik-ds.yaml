@@ -30,7 +30,7 @@ spec:
           hostPort: 80
         - name: admin
           containerPort: 8080
-          hostport: 8080
+          hostPort: 8080
         securityContext:
           capabilities:
             drop:
