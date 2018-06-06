@@ -1,7 +1,7 @@
 
 # Docker Provider
 
-Træfik can be configured to use Docker as a provider.
+Træfik can be configured to use Docker as a provider. Note that the Docker backend does not work with Docker for Mac because of [limitations with its networking features](https://docs.docker.com/docker-for-mac/networking/#known-limitations-use-cases-and-workarounds).
 
 ## Docker
 
