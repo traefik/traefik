@@ -185,7 +185,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 		templateObjects.TLS = append(templateObjects.TLS, tlsSection...)
 
 		var weightAllocator weightAllocator = &defaultWeightAllocator{}
-		annotationPercentageWeights := getAnnotationName(i.Annotations, annotationKubernetesPercentageWeights)
+		annotationPercentageWeights := getAnnotationName(i.Annotations, annotationKubernetesServiceWeights)
 		if _, ok := i.Annotations[annotationPercentageWeights]; ok {
 			fractionalAllocator, err := newFractionalWeightAllocator(i, k8sClient)
 			if err != nil {

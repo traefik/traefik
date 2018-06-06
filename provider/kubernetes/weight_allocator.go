@@ -145,7 +145,7 @@ func getServiceInstanceCounts(ingress *extensionsv1beta1.Ingress, client Client)
 func getServicesPercentageWeights(ingress *extensionsv1beta1.Ingress) (map[string]percentageValue, error) {
 	percentageWeight := make(map[string]string)
 
-	annotationPercentageWeights := getAnnotationName(ingress.Annotations, annotationKubernetesPercentageWeights)
+	annotationPercentageWeights := getAnnotationName(ingress.Annotations, annotationKubernetesServiceWeights)
 	if err := yaml.Unmarshal([]byte(ingress.Annotations[annotationPercentageWeights]), percentageWeight); err != nil {
 		return nil, err
 	}

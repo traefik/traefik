@@ -31,7 +31,7 @@ const (
 	annotationKubernetesErrorPages                = "ingress.kubernetes.io/error-pages"
 	annotationKubernetesBuffering                 = "ingress.kubernetes.io/buffering"
 	annotationKubernetesAppRoot                   = "ingress.kubernetes.io/app-root"
-	annotationKubernetesPercentageWeights         = "ingress.kubernetes.io/percentage-weights"
+	annotationKubernetesServiceWeights            = "ingress.kubernetes.io/service-weights"
 
 	annotationKubernetesSSLForceHost            = "ingress.kubernetes.io/ssl-force-host"
 	annotationKubernetesSSLRedirect             = "ingress.kubernetes.io/ssl-redirect"

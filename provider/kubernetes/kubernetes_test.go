@@ -2274,7 +2274,7 @@ func TestProviderUpdateIngressStatus(t *testing.T) {
 func TestPercentageWeightServiceAnnotation(t *testing.T) {
 	ingresses := []*extensionsv1beta1.Ingress{
 		buildIngress(
-			iAnnotation(annotationKubernetesPercentageWeights, `
+			iAnnotation(annotationKubernetesServiceWeights, `
 service1: 10%
 `),
 			iNamespace("testing"),

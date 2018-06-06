@@ -46,12 +46,10 @@ func newPercentageValueFromString(rawValue string) (percentageValue, error) {
 		return 0, err
 	}
 
-	percentageValue := newPercentageValueFromFloat64(value)
-
-	return percentageValue / 100, nil
+	return newPercentageValueFromFloat64(value) / 100, nil
 }
 
 // newPercentageValueFromFloat64 reads percentage value from float64
 func newPercentageValueFromFloat64(f float64) percentageValue {
-	return percentageValue(int64(f * (1000 * 100)))
+	return percentageValue(f * (1000 * 100))
 }

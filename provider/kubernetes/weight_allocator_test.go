@@ -110,7 +110,7 @@ service1: 1000%
 			ingress := &extensionsv1beta1.Ingress{
 				ObjectMeta: v1.ObjectMeta{
 					Annotations: map[string]string{
-						annotationKubernetesPercentageWeights: test.annotationValue,
+						annotationKubernetesServiceWeights: test.annotationValue,
 					},
 				},
 			}
@@ -187,7 +187,7 @@ func TestComputeServiceWeights(t *testing.T) {
 			desc: "1 path 2 service",
 			ingress: buildIngress(
 				iNamespace("testing"),
-				iAnnotation(annotationKubernetesPercentageWeights, `
+				iAnnotation(annotationKubernetesServiceWeights, `
 service1: 10%
 `),
 				iRules(
@@ -215,7 +215,7 @@ service1: 10%
 			desc: "2 path 2 service",
 			ingress: buildIngress(
 				iNamespace("testing"),
-				iAnnotation(annotationKubernetesPercentageWeights, `
+				iAnnotation(annotationKubernetesServiceWeights, `
 service1: 60%
 `),
 				iRules(
@@ -255,7 +255,7 @@ service1: 60%
 			desc: "2 path 3 service",
 			ingress: buildIngress(
 				iNamespace("testing"),
-				iAnnotation(annotationKubernetesPercentageWeights, `
+				iAnnotation(annotationKubernetesServiceWeights, `
 service1: 20%
 service3: 20%
 `),
@@ -296,7 +296,7 @@ service3: 20%
 			desc: "1 path 4 service",
 			ingress: buildIngress(
 				iNamespace("testing"),
-				iAnnotation(annotationKubernetesPercentageWeights, `
+				iAnnotation(annotationKubernetesServiceWeights, `
 service1: 20%
 service2: 40%
 service3: 40%
@@ -338,7 +338,7 @@ service3: 40%
 			desc: "2 path no service",
 			ingress: buildIngress(
 				iNamespace("testing"),
-				iAnnotation(annotationKubernetesPercentageWeights, `
+				iAnnotation(annotationKubernetesServiceWeights, `
 service1: 20%
 service2: 40%
 service3: 40%
@@ -356,7 +356,7 @@ service3: 40%
 			desc: "2 path without weight",
 			ingress: buildIngress(
 				iNamespace("testing"),
-				iAnnotation(annotationKubernetesPercentageWeights, ``),
+				iAnnotation(annotationKubernetesServiceWeights, ``),
 				iRules(
 					iRule(iHost("foo.test"), iPaths(
 						onePath(iPath("/foo"), iBackend("service1", intstr.FromInt(8080))),
@@ -382,7 +382,7 @@ service3: 40%
 			desc: "2 path overflow",
 			ingress: buildIngress(
 				iNamespace("testing"),
-				iAnnotation(annotationKubernetesPercentageWeights, `
+				iAnnotation(annotationKubernetesServiceWeights, `
 service1: 70%
 service2: 80%
 `),
