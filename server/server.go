@@ -950,7 +950,15 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						redirectHandlers[entryPointName] = handlerToUse
 					}
 				}
-				if backends[entryPointName+providerName+frontend.Backend] == nil {
+
+				frontendHash, err := frontend.Hash()
+				if err != nil {
+					log.Errorf("Error calculating hash value for frontend %s: %v", frontendName, err)
+					log.Errorf("Skipping frontend %s...", frontendName)
+					continue frontend
+				}
+				backendCacheKey := entryPointName + providerName + frontendHash
+				if backends[backendCacheKey] == nil {
 					log.Debugf("Creating backend %s", frontend.Backend)
 
 					roundTripper, err := s.getRoundTripper(entryPointName, globalConfiguration, frontend.PassTLSCert, entryPoint.TLS)
@@ -1045,7 +1053,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						if hcOpts != nil {
 							log.Debugf("Setting up backend health check %s", *hcOpts)
 							hcOpts.Transport = s.defaultForwardingRoundTripper
-							backendsHealthCheck[entryPointName+frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts, frontend.Backend)
+							backendsHealthCheck[backendCacheKey] = healthcheck.NewBackendHealthCheck(*hcOpts, frontend.Backend)
 						}
 						lb = middlewares.NewEmptyBackendHandler(rebalancer, lb)
 					case types.Wrr:
@@ -1067,7 +1075,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						if hcOpts != nil {
 							log.Debugf("Setting up backend health check %s", *hcOpts)
 							hcOpts.Transport = s.defaultForwardingRoundTripper
-							backendsHealthCheck[entryPointName+frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts, frontend.Backend)
+							backendsHealthCheck[backendCacheKey] = healthcheck.NewBackendHealthCheck(*hcOpts, frontend.Backend)
 						}
 						lb = middlewares.NewEmptyBackendHandler(rr, lb)
 					}
@@ -1208,16 +1216,16 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 					} else {
 						n.UseHandler(lb)
 					}
-					backends[entryPointName+providerName+frontend.Backend] = n
+					backends[backendCacheKey] = n
 				} else {
 					log.Debugf("Reusing backend %s", frontend.Backend)
 				}
 				if frontend.Priority > 0 {
 					newServerRoute.Route.Priority(frontend.Priority)
 				}
-				s.wireFrontendBackend(newServerRoute, backends[entryPointName+providerName+frontend.Backend])
+				s.wireFrontendBackend(newServerRoute, backends[backendCacheKey])
 
-				err := newServerRoute.Route.GetError()
+				err = newServerRoute.Route.GetError()
 				if err != nil {
 					log.Errorf("Error building route: %s", err)
 				}
