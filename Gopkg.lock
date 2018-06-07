@@ -288,6 +288,12 @@
   version = "v3.3.5"
 
 [[projects]]
+  branch = "v2"
+  name = "github.com/coreos/go-oidc"
+  packages = ["."]
+  revision = "1180514eaf4d9f38d0d19eef639a1d695e066e72"
+
+[[projects]]
   name = "github.com/coreos/go-semver"
   packages = ["semver"]
   revision = "8ab6407b697782a06568d4b7f1db25550ec2e4c6"
@@ -1028,6 +1034,15 @@
   packages = ["difflib"]
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
   version = "v1.0.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/pquerna/cachecontrol"
+  packages = [
+    ".",
+    "cacheobject"
+  ]
+  revision = "525d0eb5f91d30e3b1548de401b7ef9ea6898520"
 
 [[projects]]
   name = "github.com/prometheus/client_golang"

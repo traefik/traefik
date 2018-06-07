@@ -215,9 +215,9 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				}
 
 				if _, exists := templateObjects.Frontends[baseName]; !exists {
-					basicAuthCreds, err := handleBasicAuthConfig(i, k8sClient)
+					auth, err := handleAuthConfig(i, k8sClient)
 					if err != nil {
-						log.Errorf("Failed to retrieve basic auth configuration for ingress %s/%s: %s", i.Namespace, i.Name, err)
+						log.Errorf("Failed to retrieve auth configuration for ingress %s/%s: %s", i.Namespace, i.Name, err)
 						continue
 					}
 
@@ -232,7 +232,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						PassTLSCert:    passTLSCert,
 						Routes:         make(map[string]types.Route),
 						Priority:       priority,
-						BasicAuth:      basicAuthCreds,
+						Auth:           auth,
 						WhiteList:      getWhiteList(i),
 						Redirect:       getFrontendRedirect(i),
 						EntryPoints:    entryPoints,
@@ -431,60 +431,100 @@ func getRuleForHost(host string) string {
 	return "Host:" + host
 }
 
-func handleBasicAuthConfig(i *extensionsv1beta1.Ingress, k8sClient Client) ([]string, error) {
+func handleAuthConfig(i *extensionsv1beta1.Ingress, k8sClient Client) (*types.Auth, error) {
 	annotationAuthType := getAnnotationName(i.Annotations, annotationKubernetesAuthType)
 	authType, exists := i.Annotations[annotationAuthType]
 	if !exists {
 		return nil, nil
 	}
-
-	if strings.ToLower(authType) != "basic" {
+	switch strings.ToLower(authType) {
+	case "basic":
+		return loadBasicAuthConfig(i, k8sClient)
+	case "oidc":
+		return loadOIDCAuthConfig(i, k8sClient)
+	default:
 		return nil, fmt.Errorf("unsupported auth-type on annotation ingress.kubernetes.io/auth-type: %q", authType)
 	}
+}
+
+func loadBasicAuthConfig(i *extensionsv1beta1.Ingress, k8sClient Client) (*types.Auth, error) {
+	authSecret := getStringValue(i.Annotations, annotationKubernetesAuthSecret, "")
+	if authSecret == "" {
+		return nil, errors.New("auth-secret annotation ingress.kubernetes.io/auth-secret must be set")
+	}
+	secret, ok, err := k8sClient.GetSecret(i.Namespace, authSecret)
+	switch { // keep order of case conditions
+	case err != nil:
+		return nil, fmt.Errorf("failed to fetch secret %q/%q: %s", i.Namespace, authSecret, err)
+	case !ok:
+		return nil, fmt.Errorf("secret %q/%q not found", i.Namespace, authSecret)
+	case secret == nil:
+		return nil, fmt.Errorf("data for secret %q/%q must not be nil", i.Namespace, authSecret)
+	case len(secret.Data) != 1:
+		return nil, fmt.Errorf("found %d elements for secret %q/%q, must be single element exactly", len(secret.Data), i.Namespace, authSecret)
+	default:
+		var firstSecret []byte
+		for _, v := range secret.Data {
+			firstSecret = v
+			break
+		}
+
+		users := types.Users{}
+		scanner := bufio.NewScanner(bytes.NewReader(firstSecret))
+		for scanner.Scan() {
+			if user := scanner.Text(); user != "" {
+				users = append(users, user)
+			}
+		}
+		if len(users) == 0 {
+			return nil, fmt.Errorf("secret %q/%q does not contain any credentials", i.Namespace, authSecret)
+		}
+
+		return &types.Auth{
+			Basic: &types.Basic{
+				Users: users,
+			},
+		}, nil
+	}
+}
+
+func loadOIDCAuthConfig(i *extensionsv1beta1.Ingress, k8sClient Client) (*types.Auth, error) {
+	oidcDiscoveryURL := getStringValue(i.Annotations, annotationKubernetesAuthOIDCDiscoveryURL, "")
+	if oidcDiscoveryURL == "" {
+		return nil, errors.New("auth-oidc-discovery-url annotation ingress.kubernetes.io/auth-oidc-discovery-url must be set")
+	}
+	oidcScopes := getStringValue(i.Annotations, annotationKubernetesAuthOIDCScopes, "")
 
 	authSecret := getStringValue(i.Annotations, annotationKubernetesAuthSecret, "")
 	if authSecret == "" {
 		return nil, errors.New("auth-secret annotation ingress.kubernetes.io/auth-secret must be set")
 	}
-
-	basicAuthCreds, err := loadAuthCredentials(i.Namespace, authSecret, k8sClient)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load auth credentials: %s", err)
-	}
-
-	return basicAuthCreds, nil
-}
-
-func loadAuthCredentials(namespace, secretName string, k8sClient Client) ([]string, error) {
-	secret, ok, err := k8sClient.GetSecret(namespace, secretName)
+	secret, ok, err := k8sClient.GetSecret(i.Namespace, authSecret)
 	switch { // keep order of case conditions
 	case err != nil:
-		return nil, fmt.Errorf("failed to fetch secret %q/%q: %s", namespace, secretName, err)
+		return nil, fmt.Errorf("failed to fetch secret %q/%q: %s", i.Namespace, authSecret, err)
 	case !ok:
-		return nil, fmt.Errorf("secret %q/%q not found", namespace, secretName)
+		return nil, fmt.Errorf("secret %q/%q not found", i.Namespace, authSecret)
 	case secret == nil:
-		return nil, fmt.Errorf("data for secret %q/%q must not be nil", namespace, secretName)
-	case len(secret.Data) != 1:
-		return nil, fmt.Errorf("found %d elements for secret %q/%q, must be single element exactly", len(secret.Data), namespace, secretName)
+		return nil, fmt.Errorf("data for secret %q/%q must not be nil", i.Namespace, authSecret)
 	default:
-	}
-	var firstSecret []byte
-	for _, v := range secret.Data {
-		firstSecret = v
-		break
-	}
-	creds := make([]string, 0)
-	scanner := bufio.NewScanner(bytes.NewReader(firstSecret))
-	for scanner.Scan() {
-		if cred := scanner.Text(); cred != "" {
-			creds = append(creds, cred)
+		clientId, ok := secret.Data["client-id"]
+		if !ok {
+			return nil, fmt.Errorf("secret %q/%q must have a client-id entry", i.Namespace, authSecret)
 		}
+		clientSecret, ok := secret.Data["client-secret"]
+		if !ok {
+			return nil, fmt.Errorf("secret %q/%q must have a client-secret entry", i.Namespace, authSecret)
+		}
+		return &types.Auth{
+			OIDC: &types.OIDC{
+				ClientID: string(clientId),
+				ClientSecret: string(clientSecret),
+				DiscoveryURL: oidcDiscoveryURL,
+				Scopes: strings.Fields(oidcScopes),
+			},
+		}, nil
 	}
-	if len(creds) == 0 {
-		return nil, fmt.Errorf("secret %q/%q does not contain any credentials", namespace, secretName)
-	}
-
-	return creds, nil
 }
 
 func getTLS(ingress *extensionsv1beta1.Ingress, k8sClient Client) ([]*tls.Configuration, error) {
