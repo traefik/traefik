@@ -85,6 +85,14 @@ func ErrorHandler(h utils.ErrorHandler) optSetter {
 	}
 }
 
+// BufferPool specifies a buffer pool for httputil.ReverseProxy.
+func BufferPool(pool httputil.BufferPool) optSetter {
+	return func(f *Forwarder) error {
+		f.bufferPool = pool
+		return nil
+	}
+}
+
 // Stream specifies if HTTP responses should be streamed.
 func Stream(stream bool) optSetter {
 	return func(f *Forwarder) error {
@@ -176,6 +184,8 @@ type httpForwarder struct {
 	tlsClientConfig *tls.Config
 
 	log OxyLogger
+
+	bufferPool httputil.BufferPool
 }
 
 const (
@@ -478,6 +488,7 @@ func (f *httpForwarder) serveHTTP(w http.ResponseWriter, inReq *http.Request, ct
 		Transport:      f.roundTripper,
 		FlushInterval:  f.flushInterval,
 		ModifyResponse: f.modifyResponse,
+		BufferPool:     f.bufferPool,
 	}
 	revproxy.ServeHTTP(pw, outReq)
 
