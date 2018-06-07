@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"reflect"
 	"testing"
 	"time"
 
@@ -219,6 +218,76 @@ func TestLoadIngresses(t *testing.T) {
 			),
 		),
 	)
+	assert.Equal(t, expected, actual)
+}
+
+func TestLoadIngressesGenericAuth(t *testing.T) {
+	ingresses := []*extensionsv1beta1.Ingress{
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation("ingress.kubernetes.io/auth-type", "forward"),
+			iAnnotation("ingress.kubernetes.io/auth-forward-url", "https://auth.host"),
+			iRules(
+				iRule(iHost("foo"),
+					iPaths(
+						onePath(iPath("/bar"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+	}
+
+	services := []*corev1.Service{
+		buildService(
+			sName("service1"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sPorts(sPort(80, ""))),
+		),
+	}
+
+	endpoints := []*corev1.Endpoints{
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service1"),
+			eUID("1"),
+			subset(
+				eAddresses(eAddress("10.10.0.1")),
+				ePorts(ePort(8080, ""))),
+		),
+	}
+
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		endpoints: endpoints,
+		watchChan: watchChan,
+	}
+	provider := Provider{}
+
+	actual, err := provider.loadIngresses(client)
+	require.NoError(t, err, "error loading ingresses")
+
+	expected := buildConfiguration(
+		backends(
+			backend("foo/bar",
+				lbMethod("wrr"),
+				servers(
+					server("http://10.10.0.1:8080", weight(1))),
+			),
+		),
+		frontends(
+			frontend("foo/bar",
+				passHostHeader(),
+				genericForwardAuth("https://auth.host"),
+				routes(
+					route("/bar", "PathPrefix:/bar"),
+					route("foo", "Host:foo")),
+			),
+		),
+	)
+
 	assert.Equal(t, expected, actual)
 }
 
@@ -1734,10 +1803,8 @@ func TestBasicAuthInTemplate(t *testing.T) {
 
 	actual = provider.loadConfig(*actual)
 	require.NotNil(t, actual)
-	got := actual.Frontends["basic/auth"].BasicAuth
-	if !reflect.DeepEqual(got, []string{"myUser:myEncodedPW"}) {
-		t.Fatalf("unexpected credentials: %+v", got)
-	}
+	got := actual.Frontends["basic/auth"].Auth.Basic.Users
+	assert.Equal(t, types.Users{"myUser:myEncodedPW"}, got)
 }
 
 func TestTLSSecretLoad(t *testing.T) {
