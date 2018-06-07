@@ -67,6 +67,10 @@ f9Oeos0UUothgiDktdQHxdNEwLjQf7lJJBzV+5OtwswCWA==
 
 type testLoadBalancer struct{}
 
+func (lb *testLoadBalancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	// noop
+}
+
 func (lb *testLoadBalancer) RemoveServer(u *url.URL) error {
 	return nil
 }

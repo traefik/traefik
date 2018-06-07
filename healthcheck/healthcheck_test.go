@@ -102,7 +102,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 			defer ts.Close()
 
 			lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
-			backend := NewBackendHealthCheck(Options{
+			backend := NewBackendConfig(Options{
 				Path:     "/path",
 				Interval: healthCheckInterval,
 				LB:       lb,
@@ -117,7 +117,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 
 			collectingMetrics := testhelpers.NewCollectingHealthCheckMetrics()
 			check := HealthCheck{
-				Backends: make(map[string]*BackendHealthCheck),
+				Backends: make(map[string]*BackendConfig),
 				metrics:  collectingMetrics,
 			}
 
@@ -209,7 +209,7 @@ func TestNewRequest(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			backend := NewBackendHealthCheck(test.options, "backendName")
+			backend := NewBackendConfig(test.options, "backendName")
 
 			u, err := url.Parse(test.serverURL)
 			require.NoError(t, err)
@@ -279,7 +279,7 @@ func TestAddHeadersAndHost(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			backend := NewBackendHealthCheck(test.options, "backendName")
+			backend := NewBackendConfig(test.options, "backendName")
 
 			u, err := url.Parse(test.serverURL)
 			require.NoError(t, err)
@@ -303,6 +303,10 @@ type testLoadBalancer struct {
 	numRemovedServers  int
 	numUpsertedServers int
 	servers            []*url.URL
+}
+
+func (lb *testLoadBalancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	// noop
 }
 
 func (lb *testLoadBalancer) RemoveServer(u *url.URL) error {

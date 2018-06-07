@@ -10,13 +10,12 @@ import (
 // has at least one active Server in respect to the healthchecks and if this
 // is not the case, it will stop the middleware chain and respond with 503.
 type EmptyBackendHandler struct {
-	lb   healthcheck.LoadBalancer
-	next http.Handler
+	lb healthcheck.BalancerHandler
 }
 
 // NewEmptyBackendHandler creates a new EmptyBackendHandler instance.
-func NewEmptyBackendHandler(lb healthcheck.LoadBalancer, next http.Handler) *EmptyBackendHandler {
-	return &EmptyBackendHandler{lb: lb, next: next}
+func NewEmptyBackendHandler(lb healthcheck.BalancerHandler) *EmptyBackendHandler {
+	return &EmptyBackendHandler{lb: lb}
 }
 
 // ServeHTTP responds with 503 when there is no active Server and otherwise
@@ -26,6 +25,6 @@ func (h *EmptyBackendHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request)
 		rw.WriteHeader(http.StatusServiceUnavailable)
 		rw.Write([]byte(http.StatusText(http.StatusServiceUnavailable)))
 	} else {
-		h.next.ServeHTTP(rw, r)
+		h.lb.ServeHTTP(rw, r)
 	}
 }

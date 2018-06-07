@@ -897,7 +897,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 	serverEntryPoints := s.buildEntryPoints()
 	redirectHandlers := make(map[string]negroni.Handler)
 	backends := map[string]http.Handler{}
-	backendsHealthCheck := map[string]*healthcheck.BackendHealthCheck{}
+	backendsHealthCheck := map[string]*healthcheck.BackendConfig{}
 	var errorPageHandlers []*errorpages.Handler
 
 	errorHandler := NewRecordingErrorHandler(middlewares.DefaultNetErrorRecorder{})
@@ -1049,7 +1049,6 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 							log.Debugf("Sticky session with cookie %v", cookieName)
 							rebalancer, _ = roundrobin.NewRebalancer(rr, roundrobin.RebalancerStickySession(sticky))
 						}
-						lb = rebalancer
 						if err := s.configureLBServers(rebalancer, config, frontend); err != nil {
 							log.Errorf("Skipping frontend %s...", frontendName)
 							continue frontend
@@ -1058,9 +1057,9 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						if hcOpts != nil {
 							log.Debugf("Setting up backend health check %s", *hcOpts)
 							hcOpts.Transport = s.defaultForwardingRoundTripper
-							backendsHealthCheck[backendCacheKey] = healthcheck.NewBackendHealthCheck(*hcOpts, frontend.Backend)
+							backendsHealthCheck[backendCacheKey] = healthcheck.NewBackendConfig(*hcOpts, frontend.Backend)
 						}
-						lb = middlewares.NewEmptyBackendHandler(rebalancer, lb)
+						lb = middlewares.NewEmptyBackendHandler(rebalancer)
 					case types.Wrr:
 						log.Debugf("Creating load-balancer wrr")
 						if sticky != nil {
@@ -1071,7 +1070,6 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 								rr, _ = roundrobin.New(fwd, roundrobin.EnableStickySession(sticky))
 							}
 						}
-						lb = rr
 						if err := s.configureLBServers(rr, config, frontend); err != nil {
 							log.Errorf("Skipping frontend %s...", frontendName)
 							continue frontend
@@ -1080,9 +1078,9 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						if hcOpts != nil {
 							log.Debugf("Setting up backend health check %s", *hcOpts)
 							hcOpts.Transport = s.defaultForwardingRoundTripper
-							backendsHealthCheck[backendCacheKey] = healthcheck.NewBackendHealthCheck(*hcOpts, frontend.Backend)
+							backendsHealthCheck[backendCacheKey] = healthcheck.NewBackendConfig(*hcOpts, frontend.Backend)
 						}
-						lb = middlewares.NewEmptyBackendHandler(rr, lb)
+						lb = middlewares.NewEmptyBackendHandler(rr)
 					}
 
 					if len(frontend.Errors) > 0 {
@@ -1217,7 +1215,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 							log.Errorf("Skipping frontend %s...", frontendName)
 							continue frontend
 						}
-						n.Use(s.tracingMiddleware.NewNegroniHandlerWrapper("Circuit breaker", circuitBreaker, false))
+						n.Use(negroni.Wrap(s.tracingMiddleware.NewHTTPHandlerWrapper("Circuit breaker", circuitBreaker, false)))
 					} else {
 						n.UseHandler(lb)
 					}
@@ -1263,7 +1261,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 	return serverEntryPoints, err
 }
 
-func (s *Server) configureLBServers(lb healthcheck.LoadBalancer, config *types.Configuration, frontend *types.Frontend) error {
+func (s *Server) configureLBServers(lb healthcheck.BalancerHandler, config *types.Configuration, frontend *types.Frontend) error {
 	for name, srv := range config.Backends[frontend.Backend].Servers {
 		u, err := url.Parse(srv.URL)
 		if err != nil {
@@ -1363,7 +1361,7 @@ func (s *Server) buildDefaultHTTPRouter() *mux.Router {
 	return rt
 }
 
-func parseHealthCheckOptions(lb healthcheck.LoadBalancer, backend string, hc *types.HealthCheck, hcConfig *configuration.HealthCheckConfig) *healthcheck.Options {
+func parseHealthCheckOptions(lb healthcheck.BalancerHandler, backend string, hc *types.HealthCheck, hcConfig *configuration.HealthCheckConfig) *healthcheck.Options {
 	if hc == nil || hc.Path == "" || hcConfig == nil {
 		return nil
 	}
