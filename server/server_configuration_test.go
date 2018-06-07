@@ -178,7 +178,14 @@ func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
 		},
 	}
 
-	srv := NewServer(globalConfig, nil, nil)
+	entryPoints := map[string]EntryPoint{}
+	for key, value := range globalConfig.EntryPoints {
+		entryPoints[key] = EntryPoint{
+			Configuration: value,
+		}
+	}
+
+	srv := NewServer(globalConfig, nil, entryPoints)
 	_, err := srv.loadConfig(dynamicConfigs, globalConfig)
 	require.NoError(t, err)
 }

@@ -60,7 +60,7 @@ func TestServerEntryPointWhitelistConfig(t *testing.T) {
 				},
 			}
 
-			srv.serverEntryPoints = srv.buildEntryPoints()
+			srv.serverEntryPoints = srv.buildServerEntryPoints()
 			srvEntryPoint := srv.setupServerEntryPoint("test", srv.serverEntryPoints["test"])
 			handler := srvEntryPoint.httpServer.Handler.(*mux.Router).NotFoundHandler.(*negroni.Negroni)
 

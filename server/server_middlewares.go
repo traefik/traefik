@@ -8,6 +8,7 @@ import (
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/middlewares/accesslog"
 	mauth "github.com/containous/traefik/middlewares/auth"
+	"github.com/containous/traefik/middlewares/errorpages"
 	"github.com/containous/traefik/middlewares/redirect"
 	"github.com/containous/traefik/types"
 	thoas_stats "github.com/thoas/stats"
@@ -77,14 +78,50 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 	return serverEntryPoint
 }
 
-func buildIPWhiteLister(whiteList *types.WhiteList, wlRange []string) (*middlewares.IPWhiteLister, error) {
-	if whiteList != nil &&
-		len(whiteList.SourceRange) > 0 {
-		return middlewares.NewIPWhiteLister(whiteList.SourceRange, whiteList.UseXForwardedFor)
-	} else if len(wlRange) > 0 {
-		return middlewares.NewIPWhiteLister(wlRange, false)
+func buildErrorPagesMiddleware(frontendName string, frontend *types.Frontend, backends map[string]*types.Backend, entryPointName string, providerName string) ([]*errorpages.Handler, error) {
+	var errorPageHandlers []*errorpages.Handler
+
+	for errorPageName, errorPage := range frontend.Errors {
+		if frontend.Backend == errorPage.Backend {
+			log.Errorf("Error when creating error page %q for frontend %q: error pages backend %q is the same as backend for the frontend (infinite call risk).",
+				errorPageName, frontendName, errorPage.Backend)
+		} else if backends[errorPage.Backend] == nil {
+			log.Errorf("Error when creating error page %q for frontend %q: the backend %q doesn't exist.",
+				errorPageName, frontendName, errorPage.Backend)
+		} else {
+			errorPagesHandler, err := errorpages.NewHandler(errorPage, entryPointName+providerName+errorPage.Backend)
+			if err != nil {
+				return nil, fmt.Errorf("error creating error pages: %v", err)
+			}
+
+			if errorPageServer, ok := backends[errorPage.Backend].Servers["error"]; ok {
+				errorPagesHandler.FallbackURL = errorPageServer.URL
+			}
+
+			errorPageHandlers = append(errorPageHandlers, errorPagesHandler)
+		}
 	}
-	return nil, nil
+
+	return errorPageHandlers, nil
+}
+
+func (s *Server) buildBasicAuthMiddleware(authData []string) (*mauth.Authenticator, error) {
+	users := types.Users{}
+	for _, user := range authData {
+		users = append(users, user)
+	}
+
+	auth := &types.Auth{}
+	auth.Basic = &types.Basic{
+		Users: users,
+	}
+
+	authMiddleware, err := mauth.NewAuthenticator(auth, s.tracingMiddleware)
+	if err != nil {
+		return nil, fmt.Errorf("error creating Basic Auth: %v", err)
+	}
+
+	return authMiddleware, nil
 }
 
 func (s *Server) buildRedirectHandler(srcEntryPointName string, opt *types.Redirect) (negroni.Handler, error) {
@@ -108,6 +145,16 @@ func (s *Server) buildRedirectHandler(srcEntryPointName string, opt *types.Redir
 	return redirection, nil
 }
 
+func buildIPWhiteLister(whiteList *types.WhiteList, wlRange []string) (*middlewares.IPWhiteLister, error) {
+	if whiteList != nil &&
+		len(whiteList.SourceRange) > 0 {
+		return middlewares.NewIPWhiteLister(whiteList.SourceRange, whiteList.UseXForwardedFor)
+	} else if len(wlRange) > 0 {
+		return middlewares.NewIPWhiteLister(wlRange, false)
+	}
+	return nil, nil
+}
+
 func (s *Server) wrapNegroniHandlerWithAccessLog(handler negroni.Handler, frontendName string) negroni.Handler {
 	if s.accessLoggerMiddleware != nil {
 		saveBackend := accesslog.NewSaveNegroniBackend(handler, "Træfik")
@@ -129,14 +176,13 @@ func (s *Server) wrapHTTPHandlerWithAccessLog(handler http.Handler, frontendName
 func buildModifyResponse(secure *secure.Secure, header *middlewares.HeaderStruct) func(res *http.Response) error {
 	return func(res *http.Response) error {
 		if secure != nil {
-			err := secure.ModifyResponseHeaders(res)
-			if err != nil {
+			if err := secure.ModifyResponseHeaders(res); err != nil {
 				return err
 			}
 		}
+
 		if header != nil {
-			err := header.ModifyResponseHeaders(res)
-			if err != nil {
+			if err := header.ModifyResponseHeaders(res); err != nil {
 				return err
 			}
 		}

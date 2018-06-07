@@ -306,7 +306,7 @@ func (s *Server) stopLeadership() {
 }
 
 func (s *Server) startHTTPServers() {
-	s.serverEntryPoints = s.buildEntryPoints()
+	s.serverEntryPoints = s.buildServerEntryPoints()
 
 	for newServerEntryPointName, newServerEntryPoint := range s.serverEntryPoints {
 		serverEntryPoint := s.setupServerEntryPoint(newServerEntryPointName, newServerEntryPoint)
