@@ -144,6 +144,13 @@ func WithBasicAuth(username string, password string) func(*types.Frontend) {
 	}
 }
 
+// WithFrontEndAuth is a helper to create a configuration
+func WithFrontEndAuth(auth *types.Auth) func(*types.Frontend) {
+	return func(fe *types.Frontend) {
+		fe.Auth = auth
+	}
+}
+
 // WithLBSticky is a helper to create a configuration
 func WithLBSticky(cookieName string) func(*types.Backend) {
 	return func(b *types.Backend) {
