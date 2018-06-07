@@ -191,6 +191,7 @@ type Frontend struct {
 	Errors               map[string]*ErrorPage `json:"errors,omitempty"`
 	RateLimit            *RateLimit            `json:"ratelimit,omitempty"`
 	Redirect             *Redirect             `json:"redirect,omitempty"`
+	Auth                 *Auth                 `json:"auth,omitempty"`
 }
 
 // Hash returns the hash value of a Frontend struct.
