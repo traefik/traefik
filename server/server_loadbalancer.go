@@ -15,6 +15,7 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/middlewares/accesslog"
+	"github.com/containous/traefik/server/cookie"
 	traefiktls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/vulcand/oxy/buffer"
@@ -23,6 +24,78 @@ import (
 	"github.com/vulcand/oxy/roundrobin"
 	"github.com/vulcand/oxy/utils"
 )
+
+func (s *Server) buildLoadBalancer(frontendName string, backendName string, backend *types.Backend, fwd http.Handler) (healthcheck.BalancerHandler, error) {
+	var rr *roundrobin.RoundRobin
+	var saveFrontend http.Handler
+	if s.accessLoggerMiddleware != nil {
+		saveBackend := accesslog.NewSaveBackend(fwd, backendName)
+		saveFrontend = accesslog.NewSaveFrontend(saveBackend, frontendName)
+		rr, _ = roundrobin.New(saveFrontend)
+	} else {
+		rr, _ = roundrobin.New(fwd)
+	}
+
+	var sticky *roundrobin.StickySession
+	var cookieName string
+	if stickiness := backend.LoadBalancer.Stickiness; stickiness != nil {
+		cookieName = cookie.GetName(stickiness.CookieName, backendName)
+		sticky = roundrobin.NewStickySession(cookieName)
+	}
+
+	lbMethod, err := types.NewLoadBalancerMethod(backend.LoadBalancer)
+	if err != nil {
+		return nil, fmt.Errorf("error loading load balancer method '%+v' for frontend %s: %v", backend.LoadBalancer, frontendName, err)
+	}
+
+	var lb healthcheck.BalancerHandler
+
+	switch lbMethod {
+	case types.Drr:
+		log.Debug("Creating load-balancer drr")
+
+		lb, err = roundrobin.NewRebalancer(rr)
+		if err != nil {
+			return nil, err
+		}
+
+		if sticky != nil {
+			log.Debugf("Sticky session with cookie %v", cookieName)
+			lb, err = roundrobin.NewRebalancer(rr, roundrobin.RebalancerStickySession(sticky))
+			if err != nil {
+				return nil, err
+			}
+		}
+	case types.Wrr:
+		log.Debug("Creating load-balancer wrr")
+
+		if sticky != nil {
+			log.Debugf("Sticky session with cookie %v", cookieName)
+
+			if s.accessLoggerMiddleware != nil {
+				lb, err = roundrobin.New(saveFrontend, roundrobin.EnableStickySession(sticky))
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				lb, err = roundrobin.New(fwd, roundrobin.EnableStickySession(sticky))
+				if err != nil {
+					return nil, err
+				}
+			}
+		} else {
+			lb = rr
+		}
+	default:
+		return nil, fmt.Errorf("invalid load-balancing method %q", lbMethod)
+	}
+
+	if err := s.configureLBServers(lb, backend, backendName); err != nil {
+		return nil, fmt.Errorf("error configuring load balancer for frontend %s: %v", frontendName, err)
+	}
+
+	return lb, nil
+}
 
 func (s *Server) configureLBServers(lb healthcheck.BalancerHandler, backend *types.Backend, backendName string) error {
 	for name, srv := range backend.Servers {

@@ -16,17 +16,14 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"
-	"github.com/containous/traefik/middlewares/accesslog"
 	"github.com/containous/traefik/middlewares/errorpages"
 	"github.com/containous/traefik/rules"
 	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/server/cookie"
 	traefiktls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/eapache/channels"
 	"github.com/urfave/negroni"
 	"github.com/vulcand/oxy/forward"
-	"github.com/vulcand/oxy/roundrobin"
 	"github.com/vulcand/oxy/utils"
 )
 
@@ -135,20 +132,6 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 					headerMiddleware := middlewares.NewHeaderFromStruct(frontend.Headers)
 					secureMiddleware := middlewares.NewSecure(frontend.Headers)
 
-					lbMethod, err := types.NewLoadBalancerMethod(config.Backends[frontend.Backend].LoadBalancer)
-					if err != nil {
-						log.Errorf("Error loading load balancer method '%+v' for frontend %s: %v", config.Backends[frontend.Backend].LoadBalancer, frontendName, err)
-						log.Errorf("Skipping frontend %s...", frontendName)
-						continue frontend
-					}
-
-					var sticky *roundrobin.StickySession
-					var cookieName string
-					if stickiness := config.Backends[frontend.Backend].LoadBalancer.Stickiness; stickiness != nil {
-						cookieName = cookie.GetName(stickiness.CookieName, frontend.Backend)
-						sticky = roundrobin.NewStickySession(cookieName)
-					}
-
 					if len(frontend.Errors) > 0 {
 						handlers, err := buildErrorPagesMiddleware(frontendName, frontend, config.Backends, entryPointName, providerName)
 						if err != nil {
@@ -217,60 +200,22 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						continue frontend
 					}
 
-					var rr *roundrobin.RoundRobin
-					var saveFrontend http.Handler
-					if s.accessLoggerMiddleware != nil {
-						saveBackend := accesslog.NewSaveBackend(fwd, frontend.Backend)
-						saveFrontend = accesslog.NewSaveFrontend(saveBackend, frontendName)
-						rr, _ = roundrobin.New(saveFrontend)
-					} else {
-						rr, _ = roundrobin.New(fwd)
+					balancer, err := s.buildLoadBalancer(frontendName, frontend.Backend, config.Backends[frontend.Backend], fwd)
+					if err != nil {
+						log.Errorf("Failed to create the load-balancer for frontend %s: %v", frontendName, err)
+						log.Errorf("Skipping frontend %s...", frontendName)
 					}
 
-					var lb http.Handler
-					switch lbMethod {
-					case types.Drr:
-						log.Debugf("Creating load-balancer drr")
-						rebalancer, _ := roundrobin.NewRebalancer(rr)
-						if sticky != nil {
-							log.Debugf("Sticky session with cookie %v", cookieName)
-							rebalancer, _ = roundrobin.NewRebalancer(rr, roundrobin.RebalancerStickySession(sticky))
-						}
+					// Health Check
+					if hcOpts := parseHealthCheckOptions(balancer, frontend.Backend, config.Backends[frontend.Backend].HealthCheck, s.globalConfiguration.HealthCheck); hcOpts != nil {
+						log.Debugf("Setting up backend health check %s", *hcOpts)
 
-						if err := s.configureLBServers(rebalancer, config.Backends[frontend.Backend], frontend.Backend); err != nil {
-							log.Errorf("Skipping frontend %s...", frontendName)
-							continue frontend
-						}
-
-						hcOpts := parseHealthCheckOptions(rebalancer, frontend.Backend, config.Backends[frontend.Backend].HealthCheck, globalConfiguration.HealthCheck)
-						if hcOpts != nil {
-							log.Debugf("Setting up backend health check %s", *hcOpts)
-							hcOpts.Transport = s.defaultForwardingRoundTripper
-							backendsHealthCheck[entryPointName+providerName+frontendHash] = healthcheck.NewBackendConfig(*hcOpts, frontend.Backend)
-						}
-						lb = middlewares.NewEmptyBackendHandler(rebalancer)
-					case types.Wrr:
-						log.Debugf("Creating load-balancer wrr")
-						if sticky != nil {
-							log.Debugf("Sticky session with cookie %v", cookieName)
-							if s.accessLoggerMiddleware != nil {
-								rr, _ = roundrobin.New(saveFrontend, roundrobin.EnableStickySession(sticky))
-							} else {
-								rr, _ = roundrobin.New(fwd, roundrobin.EnableStickySession(sticky))
-							}
-						}
-						if err := s.configureLBServers(rr, config.Backends[frontend.Backend], frontend.Backend); err != nil {
-							log.Errorf("Skipping frontend %s...", frontendName)
-							continue frontend
-						}
-						hcOpts := parseHealthCheckOptions(rr, frontend.Backend, config.Backends[frontend.Backend].HealthCheck, globalConfiguration.HealthCheck)
-						if hcOpts != nil {
-							log.Debugf("Setting up backend health check %s", *hcOpts)
-							hcOpts.Transport = s.defaultForwardingRoundTripper
-							backendsHealthCheck[entryPointName+providerName+frontendHash] = healthcheck.NewBackendConfig(*hcOpts, frontend.Backend)
-						}
-						lb = middlewares.NewEmptyBackendHandler(rr)
+						hcOpts.Transport = s.defaultForwardingRoundTripper
+						backendsHealthCheck[entryPointName+providerName+frontendHash] = healthcheck.NewBackendConfig(*hcOpts, frontend.Backend)
 					}
+
+					// Empty (backend with no servers)
+					var lb http.Handler = middlewares.NewEmptyBackendHandler(balancer)
 
 					if frontend.RateLimit != nil && len(frontend.RateLimit.RateSet) > 0 {
 						lb, err = buildRateLimiter(lb, frontend.RateLimit)

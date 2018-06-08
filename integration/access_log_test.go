@@ -354,7 +354,7 @@ func (s *AccessLogSuite) TestAccessLogEntrypointRedirect(c *check.C) {
 			formatOnly:   false,
 			code:         "302",
 			user:         "-",
-			frontendName: "entrypoint redirect for frontend-",
+			frontendName: "entrypoint redirect for httpRedirect",
 			backendURL:   "/",
 		},
 		{
