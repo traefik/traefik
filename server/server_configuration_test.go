@@ -401,11 +401,13 @@ func TestServerMultipleFrontendRules(t *testing.T) {
 				t.Fatalf("Rule %s doesn't match", expression)
 			}
 
-			server := new(Server)
-
-			server.wireFrontendBackend(serverRoute, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				require.Equal(t, test.expectedURL, r.URL.String(), "URL")
-			}))
+			})
+
+			hd := buildMatcherMiddlewares(serverRoute, handler)
+			serverRoute.Route.Handler(hd)
+
 			serverRoute.Route.GetHandler().ServeHTTP(nil, request)
 		})
 	}

@@ -204,11 +204,12 @@ func (s *Server) loadFrontendConfig(
 			return nil, err
 		}
 
-		s.wireFrontendBackend(serverRoute, backendsHandlers[entryPointName+providerName+frontendHash])
+		handler := buildMatcherMiddlewares(serverRoute, backendsHandlers[entryPointName+providerName+frontendHash])
+		serverRoute.Route.Handler(handler)
 
 		err = serverRoute.Route.GetError()
 		if err != nil {
-			// FIXME error managament
+			// FIXME error management
 			log.Errorf("Error building route: %s", err)
 		}
 	}
@@ -443,7 +444,7 @@ func (s *Server) throttleProviderConfigReload(throttle time.Duration, publish ch
 	}
 }
 
-func (s *Server) wireFrontendBackend(serverRoute *types.ServerRoute, handler http.Handler) {
+func buildMatcherMiddlewares(serverRoute *types.ServerRoute, handler http.Handler) http.Handler {
 	// path replace - This needs to always be the very last on the handler chain (first in the order in this function)
 	// -- Replacing Path should happen at the very end of the Modifier chain, after all the Matcher+Modifiers ran
 	if len(serverRoute.ReplacePath) > 0 {
@@ -484,7 +485,7 @@ func (s *Server) wireFrontendBackend(serverRoute *types.ServerRoute, handler htt
 		handler = middlewares.NewStripPrefixRegex(handler, serverRoute.StripPrefixesRegex)
 	}
 
-	serverRoute.Route.Handler(handler)
+	return handler
 }
 
 func (s *Server) postLoadConfiguration() {
