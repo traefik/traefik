@@ -126,11 +126,11 @@ func (c *clientImpl) WatchNamespaces(namespaces Namespaces, stopCh <-chan struct
 	// If no namespaces are specified
 	if len(namespaces) == 0 {
 		// If no namespacelabels are specified
-		if c.namespaceLabelSelector.String() == "" {
+		if c.namespaceLabelSelector.Empty() {
 			namespaces = Namespaces{metav1.NamespaceAll}
 			c.isNamespaceAll = true
 		} else {
-			// namespacelabels are being used, watch all namespaces for events, use them to get namespaces to watch..
+			// namespacelabels are being used: watch all namespaces for events and use them to get namespaces to watch.
 			c.namespaceFactory.Start(stopCh)
 		}
 	}
@@ -145,23 +145,21 @@ func (c *clientImpl) WatchAll(namespaces Namespaces, stopCh <-chan struct{}) (<-
 	// If no namespaces are specified
 	if len(namespaces) == 0 {
 		// If no namespacelabels are specified
-		if c.namespaceLabelSelector.String() == "" {
+		if c.namespaceLabelSelector.Empty() {
 			namespaces = Namespaces{metav1.NamespaceAll}
-			c.isNamespaceAll = true
 		} else {
 			// namespacelabels are being used, get all namespaces being watched
 			namespaceList, err := c.clientset.CoreV1().Namespaces().List(metav1.ListOptions{LabelSelector: c.namespaceLabelSelector.String()})
 			log.Debugf("Current Namespace List: %+v", namespaceList)
 			if err != nil {
-				return eventCh, fmt.Errorf("could not list namespaces with error: %s", err)
+				return eventCh, fmt.Errorf("could not list namespaces: %s", err)
 			}
 			for _, item := range namespaceList.Items {
-				log.Debugf("Adding found namespace: %s to namespace list", item.ObjectMeta.Name)
+				log.Debugf("Adding found namespace: %q to namespace list", item.ObjectMeta.Name)
 				namespaces = append(namespaces, item.ObjectMeta.Name)
 			}
 		}
 	}
-	log.Debugf("Starting watches on %v namespaces", namespaces)
 	for _, ns := range namespaces {
 		factory := informers.NewFilteredSharedInformerFactory(c.clientset, resyncPeriod, ns, nil)
 		factory.Extensions().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
@@ -203,13 +201,8 @@ func (c *clientImpl) GetIngresses() []*extensionsv1beta1.Ingress {
 		return result
 	}
 
-	var namespaces Namespaces
 	for _, item := range namespaceList.Items {
-		namespaces = append(namespaces, item.ObjectMeta.Name)
-	}
-	for _, ns := range namespaces {
-		log.Debugf("ns: %v, sel: %v", ns, c.ingressLabelSelector)
-		log.Debugf("factories: %+v", c.factories)
+		ns := item.ObjectMeta.Name
 		ings, err := c.factories[ns].Extensions().V1beta1().Ingresses().Lister().List(c.ingressLabelSelector)
 		if err != nil {
 			log.Errorf("Failed to list ingresses in namespace %s: %s", ns, err)
@@ -247,7 +240,7 @@ func (c *clientImpl) UpdateIngressStatus(namespace, name, ip, hostname string) e
 	return nil
 }
 
-// GetNamespaces returns namespaces with the given labelselector.
+// GetNamespaces returns namespaces with the configured labelselector.
 func (c *clientImpl) GetNamespaces() (*corev1.NamespaceList, error) {
 	item, err := c.clientset.CoreV1().Namespaces().List(metav1.ListOptions{LabelSelector: c.namespaceLabelSelector.String()})
 	if err != nil {
@@ -256,21 +249,21 @@ func (c *clientImpl) GetNamespaces() (*corev1.NamespaceList, error) {
 	return item, nil
 }
 
-// GetService returns the named service from the given namespace.
+// GetService returns the named service from the configured namespace.
 func (c *clientImpl) GetService(namespace, name string) (*corev1.Service, bool, error) {
 	service, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Services().Lister().Services(namespace).Get(name)
 	exist, err := translateNotFoundError(err)
 	return service, exist, err
 }
 
-// GetEndpoints returns the named endpoints from the given namespace.
+// GetEndpoints returns the named endpoints from the configured namespace.
 func (c *clientImpl) GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error) {
 	endpoint, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Endpoints().Lister().Endpoints(namespace).Get(name)
 	exist, err := translateNotFoundError(err)
 	return endpoint, exist, err
 }
 
-// GetSecret returns the named secret from the given namespace.
+// GetSecret returns the named secret from the configured namespace.
 func (c *clientImpl) GetSecret(namespace, name string) (*corev1.Secret, bool, error) {
 	secret, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Secrets().Lister().Secrets(namespace).Get(name)
 	exist, err := translateNotFoundError(err)

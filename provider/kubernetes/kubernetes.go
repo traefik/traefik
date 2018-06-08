@@ -171,17 +171,14 @@ func (p *Provider) watchNamespaceContent(k8sClient Client, configurationChan cha
 	stopWatch := make(chan struct{}, 1)
 	defer close(stopWatch)
 	eventsChan, err := k8sClient.WatchAll(p.Namespaces, stopWatch)
-	log.Debugf("Creating watchers on eventsChan")
 	if err != nil {
 		log.Errorf("Error watching kubernetes namespaced events: %s", err)
 		return err
 	}
 	for {
 		// Watch for events from eventsChan and namespaceChan
-		log.Debugf("Starting to loop for events/namespace Chan Events")
 		select {
 		case event := <-eventsChan:
-			log.Debugf("EVENTSCHAN - Received Kubernetes event kind %T", event)
 			templateObjects, err := p.loadIngresses(k8sClient)
 			if err != nil {
 				return err
@@ -197,9 +194,8 @@ func (p *Provider) watchNamespaceContent(k8sClient Client, configurationChan cha
 				}
 			}
 
-		case event := <-namespaceChan:
+		case <-namespaceChan:
 			// namespace event received, retrigger watch all
-			log.Debugf("NAMESPACECHAN - Received Kubernetes namespace event %T, reloading watches", event)
 			return nil
 		}
 	}

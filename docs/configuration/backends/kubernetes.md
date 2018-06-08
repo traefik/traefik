@@ -44,6 +44,7 @@ See also [Kubernetes user guide](/user-guide/kubernetes).
 # namespaces = ["default", "production"]
 
 # Namespace label selector to filter namespaces that should be watched.
+# This label selector is ignored if a static list of namespaces is provided in the "namespaces" option above
 #
 # Optional
 # Default: empty (watch all namespaces).
@@ -134,6 +135,7 @@ This will give more flexibility in cloud/dynamic environments.
 
 You can configure Traefik to watch for namespaces that have a particular label and value set.
 This will allow you to dynamically manage which namespaces Traefik watches without having to statically define them, or restart Traefik.
+This setting will be ignored if you provide a static list of namespaces to watch.
 
 ### TLS communication between Traefik and backend pods
 
