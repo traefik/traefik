@@ -123,7 +123,8 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 				if backendsHandlers[entryPointName+providerName+frontendHash] == nil {
 					log.Debugf("Creating backend %s", frontend.Backend)
 
-					if config.Backends[frontend.Backend] == nil {
+					backend := config.Backends[frontend.Backend]
+					if backend == nil {
 						log.Errorf("Undefined backend '%s' for frontend %s", frontend.Backend, frontendName)
 						log.Errorf("Skipping frontend %s...", frontendName)
 						continue frontend
@@ -200,14 +201,14 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						continue frontend
 					}
 
-					balancer, err := s.buildLoadBalancer(frontendName, frontend.Backend, config.Backends[frontend.Backend], fwd)
+					balancer, err := s.buildLoadBalancer(frontendName, frontend.Backend, backend, fwd)
 					if err != nil {
 						log.Errorf("Failed to create the load-balancer for frontend %s: %v", frontendName, err)
 						log.Errorf("Skipping frontend %s...", frontendName)
 					}
 
 					// Health Check
-					if hcOpts := parseHealthCheckOptions(balancer, frontend.Backend, config.Backends[frontend.Backend].HealthCheck, s.globalConfiguration.HealthCheck); hcOpts != nil {
+					if hcOpts := parseHealthCheckOptions(balancer, frontend.Backend, backend.HealthCheck, s.globalConfiguration.HealthCheck); hcOpts != nil {
 						log.Debugf("Setting up backend health check %s", *hcOpts)
 
 						hcOpts.Transport = s.defaultForwardingRoundTripper
@@ -231,7 +232,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						)
 					}
 
-					maxConns := config.Backends[frontend.Backend].MaxConn
+					maxConns := backend.MaxConn
 					if maxConns != nil && maxConns.Amount != 0 {
 						log.Debugf("Creating load-balancer connection limit")
 
@@ -246,13 +247,13 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 					}
 
 					if globalConfiguration.Retry != nil {
-						countServers := len(config.Backends[frontend.Backend].Servers)
+						countServers := len(backend.Servers)
 						lb = s.buildRetryMiddleware(lb, globalConfiguration.Retry, countServers, frontend.Backend)
 						lb = s.tracingMiddleware.NewHTTPHandlerWrapper("Retry", lb, false)
 					}
 
-					if config.Backends[frontend.Backend].Buffering != nil {
-						bufferedLb, err := buildBufferingMiddleware(lb, config.Backends[frontend.Backend].Buffering)
+					if backend.Buffering != nil {
+						bufferedLb, err := buildBufferingMiddleware(lb, backend.Buffering)
 						if err != nil {
 							log.Errorf("Error setting up buffering middleware: %s", err)
 						} else {
@@ -260,9 +261,9 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						}
 					}
 
-					if config.Backends[frontend.Backend].CircuitBreaker != nil {
-						log.Debugf("Creating circuit breaker %s", config.Backends[frontend.Backend].CircuitBreaker.Expression)
-						expression := config.Backends[frontend.Backend].CircuitBreaker.Expression
+					if backend.CircuitBreaker != nil {
+						log.Debugf("Creating circuit breaker %s", backend.CircuitBreaker.Expression)
+						expression := backend.CircuitBreaker.Expression
 						circuitBreaker, err := middlewares.NewCircuitBreaker(lb, expression, middlewares.NewCircuitBreakerOptions(expression))
 						if err != nil {
 							log.Errorf("Error creating circuit breaker: %v", err)
