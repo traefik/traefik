@@ -483,6 +483,24 @@ func (s *Server) startServer(serverEntryPoint *serverEntryPoint) {
 	}
 }
 
+func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServerEntryPoint *serverEntryPoint) *serverEntryPoint {
+	serverMiddlewares, err := s.buildServerEntryPointMiddlewares(newServerEntryPointName, newServerEntryPoint)
+	if err != nil {
+		log.Fatal("Error preparing server: ", err)
+	}
+
+	newSrv, listener, err := s.prepareServer(newServerEntryPointName, s.entryPoints[newServerEntryPointName].Configuration, newServerEntryPoint.httpRouter, serverMiddlewares)
+	if err != nil {
+		log.Fatal("Error preparing server: ", err)
+	}
+
+	serverEntryPoint := s.serverEntryPoints[newServerEntryPointName]
+	serverEntryPoint.httpServer = newSrv
+	serverEntryPoint.listener = listener
+
+	return serverEntryPoint
+}
+
 func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.EntryPoint, router *middlewares.HandlerSwitcher, middlewares []negroni.Handler) (*h2c.Server, net.Listener, error) {
 	readTimeout, writeTimeout, idleTimeout := buildServerTimeouts(s.globalConfiguration)
 	log.Infof("Preparing server %s %+v with readTimeout=%s writeTimeout=%s idleTimeout=%s", entryPointName, entryPoint, readTimeout, writeTimeout, idleTimeout)
@@ -499,34 +517,18 @@ func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.
 
 	tlsConfig, err := s.createTLSConfig(entryPointName, entryPoint.TLS, router)
 	if err != nil {
-		log.Errorf("Error creating TLS config: %s", err)
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("error creating TLS config: %v", err)
 	}
 
 	listener, err := net.Listen("tcp", entryPoint.Address)
 	if err != nil {
-		log.Error("Error opening listener ", err)
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("error opening listener: %v", err)
 	}
 
 	if entryPoint.ProxyProtocol != nil {
-		IPs, err := whitelist.NewIP(entryPoint.ProxyProtocol.TrustedIPs, entryPoint.ProxyProtocol.Insecure, false)
+		listener, err = buildProxyProtocolListener(entryPoint, listener)
 		if err != nil {
-			return nil, nil, fmt.Errorf("error creating whitelist: %s", err)
-		}
-
-		log.Infof("Enabling ProxyProtocol for trusted IPs %v", entryPoint.ProxyProtocol.TrustedIPs)
-
-		listener = &proxyproto.Listener{
-			Listener: listener,
-			SourceCheck: func(addr net.Addr) (bool, error) {
-				ip, ok := addr.(*net.TCPAddr)
-				if !ok {
-					return false, fmt.Errorf("type error %v", addr)
-				}
-
-				return IPs.ContainsIP(ip.IP), nil
-			},
+			return nil, nil, err
 		}
 	}
 
@@ -543,6 +545,27 @@ func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.
 		},
 		listener,
 		nil
+}
+
+func buildProxyProtocolListener(entryPoint *configuration.EntryPoint, listener net.Listener) (net.Listener, error) {
+	IPs, err := whitelist.NewIP(entryPoint.ProxyProtocol.TrustedIPs, entryPoint.ProxyProtocol.Insecure, false)
+	if err != nil {
+		return nil, fmt.Errorf("error creating whitelist: %s", err)
+	}
+
+	log.Infof("Enabling ProxyProtocol for trusted IPs %v", entryPoint.ProxyProtocol.TrustedIPs)
+
+	return &proxyproto.Listener{
+		Listener: listener,
+		SourceCheck: func(addr net.Addr) (bool, error) {
+			ip, ok := addr.(*net.TCPAddr)
+			if !ok {
+				return false, fmt.Errorf("type error %v", addr)
+			}
+
+			return IPs.ContainsIP(ip.IP), nil
+		},
+	}, nil
 }
 
 func (s *Server) buildInternalRouter(entryPointName string) *mux.Router {

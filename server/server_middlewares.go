@@ -111,11 +111,11 @@ func (s *Server) buildMiddlewares(frontendName string, frontend *types.Frontend,
 	return middle, buildModifyResponse(secureMiddleware, headerMiddleware), postConfig, nil
 }
 
-func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServerEntryPoint *serverEntryPoint) *serverEntryPoint {
+func (s *Server) buildServerEntryPointMiddlewares(serverEntryPointName string, serverEntryPoint *serverEntryPoint) ([]negroni.Handler, error) {
 	serverMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler()}
 
 	if s.tracingMiddleware.IsEnabled() {
-		serverMiddlewares = append(serverMiddlewares, s.tracingMiddleware.NewEntryPoint(newServerEntryPointName))
+		serverMiddlewares = append(serverMiddlewares, s.tracingMiddleware.NewEntryPoint(serverEntryPointName))
 	}
 
 	if s.accessLoggerMiddleware != nil {
@@ -123,7 +123,7 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 	}
 
 	if s.metricsRegistry.IsEnabled() {
-		serverMiddlewares = append(serverMiddlewares, middlewares.NewEntryPointMetricsMiddleware(s.metricsRegistry, newServerEntryPointName))
+		serverMiddlewares = append(serverMiddlewares, middlewares.NewEntryPointMetricsMiddleware(s.metricsRegistry, serverEntryPointName))
 	}
 
 	if s.globalConfiguration.API != nil {
@@ -139,38 +139,29 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 		}
 	}
 
-	if s.entryPoints[newServerEntryPointName].Configuration.Auth != nil {
-		authMiddleware, err := mauth.NewAuthenticator(s.entryPoints[newServerEntryPointName].Configuration.Auth, s.tracingMiddleware)
+	if s.entryPoints[serverEntryPointName].Configuration.Auth != nil {
+		authMiddleware, err := mauth.NewAuthenticator(s.entryPoints[serverEntryPointName].Configuration.Auth, s.tracingMiddleware)
 		if err != nil {
-			log.Fatal("Error starting server: ", err)
+			return nil, fmt.Errorf("failed to create authentication middleware: %v", err)
 		}
-		serverMiddlewares = append(serverMiddlewares, s.wrapNegroniHandlerWithAccessLog(authMiddleware, fmt.Sprintf("Auth for entrypoint %s", newServerEntryPointName)))
+		serverMiddlewares = append(serverMiddlewares, s.wrapNegroniHandlerWithAccessLog(authMiddleware, fmt.Sprintf("Auth for entrypoint %s", serverEntryPointName)))
 	}
 
-	if s.entryPoints[newServerEntryPointName].Configuration.Compress {
+	if s.entryPoints[serverEntryPointName].Configuration.Compress {
 		serverMiddlewares = append(serverMiddlewares, &middlewares.Compress{})
 	}
 
 	ipWhitelistMiddleware, err := buildIPWhiteLister(
-		s.entryPoints[newServerEntryPointName].Configuration.WhiteList,
-		s.entryPoints[newServerEntryPointName].Configuration.WhitelistSourceRange)
+		s.entryPoints[serverEntryPointName].Configuration.WhiteList,
+		s.entryPoints[serverEntryPointName].Configuration.WhitelistSourceRange)
 	if err != nil {
-		log.Fatal("Error starting server: ", err)
+		return nil, fmt.Errorf("failed to create ip whitelist middleware: %v", err)
 	}
 	if ipWhitelistMiddleware != nil {
-		serverMiddlewares = append(serverMiddlewares, s.wrapNegroniHandlerWithAccessLog(ipWhitelistMiddleware, fmt.Sprintf("ipwhitelister for entrypoint %s", newServerEntryPointName)))
+		serverMiddlewares = append(serverMiddlewares, s.wrapNegroniHandlerWithAccessLog(ipWhitelistMiddleware, fmt.Sprintf("ipwhitelister for entrypoint %s", serverEntryPointName)))
 	}
 
-	newSrv, listener, err := s.prepareServer(newServerEntryPointName, s.entryPoints[newServerEntryPointName].Configuration, newServerEntryPoint.httpRouter, serverMiddlewares)
-	if err != nil {
-		log.Fatal("Error preparing server: ", err)
-	}
-
-	serverEntryPoint := s.serverEntryPoints[newServerEntryPointName]
-	serverEntryPoint.httpServer = newSrv
-	serverEntryPoint.listener = listener
-
-	return serverEntryPoint
+	return serverMiddlewares, nil
 }
 
 func errorPagesPostConfig(epHandlers []*errorpages.Handler) handlerPostConfig {
