@@ -125,27 +125,16 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 				if backendsHandlers[entryPointName+providerName+frontendHash] == nil {
 					log.Debugf("Creating backend %s", frontend.Backend)
 
-					n := negroni.New()
-
-					if _, exist := redirectHandlers[entryPointName]; exist {
-						n.Use(redirectHandlers[entryPointName])
-					}
-
 					handlers, responseModifier, postConfig, err := s.buildMiddlewares(frontendName, frontend, config.Backends, entryPointName, entryPoint, providerName)
 					if err != nil {
 						log.Error(err)
+						log.Errorf("Skipping frontend %s...", frontendName)
 						continue frontend
 					}
 
 					if postConfig != nil {
 						postConfigs = append(postConfigs, postConfig)
 					}
-
-					for _, handler := range handlers {
-						n.Use(handler)
-					}
-
-					// LB
 
 					fwd, err := s.buildForwarder(entryPointName, entryPoint, frontendName, frontend, errorHandler, responseModifier)
 					if err != nil {
@@ -154,77 +143,23 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						continue frontend
 					}
 
-					balancer, err := s.buildLoadBalancer(frontendName, frontend.Backend, backend, fwd)
+					lb, healthCheckConfig, err := s.buildBalancerMiddlewares(frontendName, frontend, backend, fwd)
 					if err != nil {
-						log.Errorf("Failed to create the load-balancer for frontend %s: %v", frontendName, err)
-						log.Errorf("Skipping frontend %s...", frontendName)
-						continue frontend
+						return nil, err
 					}
 
-					// Health Check
-					if hcOpts := parseHealthCheckOptions(balancer, frontend.Backend, backend.HealthCheck, s.globalConfiguration.HealthCheck); hcOpts != nil {
-						log.Debugf("Setting up backend health check %s", *hcOpts)
-
-						hcOpts.Transport = s.defaultForwardingRoundTripper
-						backendsHealthCheck[entryPointName+providerName+frontendHash] = healthcheck.NewBackendConfig(*hcOpts, frontend.Backend)
+					if healthCheckConfig != nil {
+						backendsHealthCheck[entryPointName+providerName+frontendHash] = healthCheckConfig
 					}
 
-					// Empty (backend with no servers)
-					var lb http.Handler = middlewares.NewEmptyBackendHandler(balancer)
+					n := negroni.New()
 
-					if frontend.RateLimit != nil && len(frontend.RateLimit.RateSet) > 0 {
-						lb, err = buildRateLimiter(lb, frontend.RateLimit)
-						if err != nil {
-							log.Errorf("Error creating rate limiter: %v", err)
-							log.Errorf("Skipping frontend %s...", frontendName)
-							continue frontend
-						}
-
-						lb = s.wrapHTTPHandlerWithAccessLog(
-							s.tracingMiddleware.NewHTTPHandlerWrapper("Rate limit", lb, false),
-							fmt.Sprintf("rate limit for %s", frontendName),
-						)
+					if _, exist := redirectHandlers[entryPointName]; exist {
+						n.Use(redirectHandlers[entryPointName])
 					}
 
-					maxConns := backend.MaxConn
-					if maxConns != nil && maxConns.Amount != 0 {
-						log.Debugf("Creating load-balancer connection limit")
-
-						handler, err := buildMaxConn(lb, maxConns)
-						if err != nil {
-							log.Error(err)
-							log.Errorf("Skipping frontend %s...", frontendName)
-							continue frontend
-						} else {
-							lb = s.wrapHTTPHandlerWithAccessLog(handler, fmt.Sprintf("connection limit for %s", frontendName))
-						}
-					}
-
-					if globalConfiguration.Retry != nil {
-						countServers := len(backend.Servers)
-						lb = s.buildRetryMiddleware(lb, globalConfiguration.Retry, countServers, frontend.Backend)
-						lb = s.tracingMiddleware.NewHTTPHandlerWrapper("Retry", lb, false)
-					}
-
-					if backend.Buffering != nil {
-						bufferedLb, err := buildBufferingMiddleware(lb, backend.Buffering)
-						if err != nil {
-							log.Errorf("Error setting up buffering middleware: %s", err)
-						} else {
-							lb = bufferedLb
-						}
-					}
-
-					if backend.CircuitBreaker != nil {
-						log.Debugf("Creating circuit breaker %s", backend.CircuitBreaker.Expression)
-						expression := backend.CircuitBreaker.Expression
-						circuitBreaker, err := middlewares.NewCircuitBreaker(lb, expression, middlewares.NewCircuitBreakerOptions(expression))
-						if err != nil {
-							log.Errorf("Error creating circuit breaker: %v", err)
-							log.Errorf("Skipping frontend %s...", frontendName)
-							continue frontend
-						}
-						lb = s.tracingMiddleware.NewHTTPHandlerWrapper("Circuit breaker", circuitBreaker, false)
+					for _, handler := range handlers {
+						n.Use(handler)
 					}
 
 					n.UseHandler(lb)

@@ -25,6 +25,81 @@ import (
 	"github.com/vulcand/oxy/utils"
 )
 
+func (s *Server) buildBalancerMiddlewares(frontendName string, frontend *types.Frontend, backend *types.Backend, fwd http.Handler) (http.Handler, *healthcheck.BackendConfig, error) {
+	balancer, err := s.buildLoadBalancer(frontendName, frontend.Backend, backend, fwd)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Health Check
+	var backendHealthCheck *healthcheck.BackendConfig
+	if hcOpts := parseHealthCheckOptions(balancer, frontend.Backend, backend.HealthCheck, s.globalConfiguration.HealthCheck); hcOpts != nil {
+		log.Debugf("Setting up backend health check %s", *hcOpts)
+
+		hcOpts.Transport = s.defaultForwardingRoundTripper
+		backendHealthCheck = healthcheck.NewBackendConfig(*hcOpts, frontend.Backend)
+	}
+
+	// Empty (backend with no servers)
+	var lb http.Handler = middlewares.NewEmptyBackendHandler(balancer)
+
+	// Rate Limit
+	if frontend.RateLimit != nil && len(frontend.RateLimit.RateSet) > 0 {
+		handler, err := buildRateLimiter(lb, frontend.RateLimit)
+		if err != nil {
+			return nil, nil, fmt.Errorf("error creating rate limiter: %v", err)
+		}
+
+		lb = s.wrapHTTPHandlerWithAccessLog(
+			s.tracingMiddleware.NewHTTPHandlerWrapper("Rate limit", handler, false),
+			fmt.Sprintf("rate limit for %s", frontendName),
+		)
+	}
+
+	// Max Connections
+	if backend.MaxConn != nil && backend.MaxConn.Amount != 0 {
+		log.Debugf("Creating load-balancer connection limit")
+
+		handler, err := buildMaxConn(lb, backend.MaxConn)
+		if err != nil {
+			return nil, nil, err
+		}
+		lb = s.wrapHTTPHandlerWithAccessLog(handler, fmt.Sprintf("connection limit for %s", frontendName))
+	}
+
+	// Retry
+	if s.globalConfiguration.Retry != nil {
+		handler := s.buildRetryMiddleware(lb, s.globalConfiguration.Retry, len(backend.Servers), frontend.Backend)
+		lb = s.tracingMiddleware.NewHTTPHandlerWrapper("Retry", handler, false)
+	}
+
+	// Buffering
+	if backend.Buffering != nil {
+		handler, err := buildBufferingMiddleware(lb, backend.Buffering)
+		if err != nil {
+			return nil, nil, fmt.Errorf("error setting up buffering middleware: %s", err)
+		}
+
+		// TODO refactor ?
+		lb = handler
+	}
+
+	// Circuit Breaker
+	if backend.CircuitBreaker != nil {
+		log.Debugf("Creating circuit breaker %s", backend.CircuitBreaker.Expression)
+
+		expression := backend.CircuitBreaker.Expression
+		circuitBreaker, err := middlewares.NewCircuitBreaker(lb, expression, middlewares.NewCircuitBreakerOptions(expression))
+		if err != nil {
+			return nil, nil, fmt.Errorf("error creating circuit breaker: %v", err)
+		}
+
+		lb = s.tracingMiddleware.NewHTTPHandlerWrapper("Circuit breaker", circuitBreaker, false)
+	}
+
+	return lb, backendHealthCheck, nil
+}
+
 func (s *Server) buildLoadBalancer(frontendName string, backendName string, backend *types.Backend, fwd http.Handler) (healthcheck.BalancerHandler, error) {
 	var rr *roundrobin.RoundRobin
 	var saveFrontend http.Handler
