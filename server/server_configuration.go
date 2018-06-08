@@ -575,32 +575,3 @@ func sortedFrontendNamesForConfig(configuration *types.Configuration) []string {
 	sort.Strings(keys)
 	return keys
 }
-
-func parseHealthCheckOptions(lb healthcheck.BalancerHandler, backend string, hc *types.HealthCheck, hcConfig *configuration.HealthCheckConfig) *healthcheck.Options {
-	if hc == nil || hc.Path == "" || hcConfig == nil {
-		return nil
-	}
-
-	interval := time.Duration(hcConfig.Interval)
-	if hc.Interval != "" {
-		intervalOverride, err := time.ParseDuration(hc.Interval)
-		switch {
-		case err != nil:
-			log.Errorf("Illegal health check interval for backend '%s': %s", backend, err)
-		case intervalOverride <= 0:
-			log.Errorf("Health check interval smaller than zero for backend '%s', backend", backend)
-		default:
-			interval = intervalOverride
-		}
-	}
-
-	return &healthcheck.Options{
-		Scheme:   hc.Scheme,
-		Path:     hc.Path,
-		Port:     hc.Port,
-		Interval: interval,
-		LB:       lb,
-		Hostname: hc.Hostname,
-		Headers:  hc.Headers,
-	}
-}

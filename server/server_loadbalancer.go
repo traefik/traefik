@@ -33,7 +33,7 @@ func (s *Server) buildBalancerMiddlewares(frontendName string, frontend *types.F
 
 	// Health Check
 	var backendHealthCheck *healthcheck.BackendConfig
-	if hcOpts := parseHealthCheckOptions(balancer, frontend.Backend, backend.HealthCheck, s.globalConfiguration.HealthCheck); hcOpts != nil {
+	if hcOpts := buildHealthCheckOptions(balancer, frontend.Backend, backend.HealthCheck, s.globalConfiguration.HealthCheck); hcOpts != nil {
 		log.Debugf("Setting up backend health check %s", *hcOpts)
 
 		hcOpts.Transport = s.defaultForwardingRoundTripper
@@ -303,4 +303,32 @@ func buildMaxConn(lb http.Handler, maxConns *types.MaxConn) (http.Handler, error
 	}
 
 	return handler, nil
+}
+
+func buildHealthCheckOptions(lb healthcheck.BalancerHandler, backend string, hc *types.HealthCheck, hcConfig *configuration.HealthCheckConfig) *healthcheck.Options {
+	if hc == nil || hc.Path == "" || hcConfig == nil {
+		return nil
+	}
+
+	interval := time.Duration(hcConfig.Interval)
+	if hc.Interval != "" {
+		intervalOverride, err := time.ParseDuration(hc.Interval)
+		if err != nil {
+			log.Errorf("Illegal health check interval for backend '%s': %s", backend, err)
+		} else if intervalOverride <= 0 {
+			log.Errorf("Health check interval smaller than zero for backend '%s', backend", backend)
+		} else {
+			interval = intervalOverride
+		}
+	}
+
+	return &healthcheck.Options{
+		Scheme:   hc.Scheme,
+		Path:     hc.Path,
+		Port:     hc.Port,
+		Interval: interval,
+		LB:       lb,
+		Hostname: hc.Hostname,
+		Headers:  hc.Headers,
+	}
 }
