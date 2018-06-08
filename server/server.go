@@ -85,10 +85,11 @@ type serverEntryPoint struct {
 
 // NewServer returns an initialized Server.
 func NewServer(globalConfiguration configuration.GlobalConfiguration, provider provider.Provider, entrypoints map[string]EntryPoint) *Server {
-	server := new(Server)
+	server := &Server{}
 
 	server.entryPoints = entrypoints
 	server.provider = provider
+	server.globalConfiguration = globalConfiguration
 	server.serverEntryPoints = make(map[string]*serverEntryPoint)
 	server.configurationChan = make(chan types.ConfigMessage, 100)
 	server.configurationValidatedChan = make(chan types.ConfigMessage, 100)
@@ -98,7 +99,7 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration, provider p
 	currentConfigurations := make(types.Configurations)
 	server.currentConfigurations.Set(currentConfigurations)
 	server.providerConfigUpdateMap = make(map[string]chan types.ConfigMessage)
-	server.globalConfiguration = globalConfiguration
+
 	if server.globalConfiguration.API != nil {
 		server.globalConfiguration.API.CurrentConfigurations = &server.currentConfigurations
 	}
@@ -109,7 +110,7 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration, provider p
 	server.defaultForwardingRoundTripper = createHTTPTransport(globalConfiguration)
 
 	server.tracingMiddleware = globalConfiguration.Tracing
-	if globalConfiguration.Tracing != nil && globalConfiguration.Tracing.Backend != "" {
+	if server.tracingMiddleware != nil && server.tracingMiddleware.Backend != "" {
 		server.tracingMiddleware.Setup()
 	}
 
@@ -401,7 +402,7 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 			}
 			ok := pool.AppendCertsFromPEM(data)
 			if !ok {
-				return nil, errors.New("invalid certificate(s) in " + caFile)
+				return nil, fmt.Errorf("invalid certificate(s) in %s", caFile)
 			}
 		}
 		config.ClientCAs = pool
@@ -431,9 +432,11 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 	} else {
 		config.GetCertificate = s.serverEntryPoints[entryPointName].getCertificate
 	}
+
 	if len(config.Certificates) == 0 {
 		return nil, errors.New("No certificates found for TLS entrypoint " + entryPointName)
 	}
+
 	// BuildNameToCertificate parses the CommonName and SubjectAlternateName fields
 	// in each certificate and populates the config.NameToCertificate map.
 	config.BuildNameToCertificate()
@@ -461,17 +464,20 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 			}
 		}
 	}
+
 	return config, nil
 }
 
 func (s *Server) startServer(serverEntryPoint *serverEntryPoint) {
 	log.Infof("Starting server on %s", serverEntryPoint.httpServer.Addr)
+
 	var err error
 	if serverEntryPoint.httpServer.TLSConfig != nil {
 		err = serverEntryPoint.httpServer.ServeTLS(serverEntryPoint.listener, "", "")
 	} else {
 		err = serverEntryPoint.httpServer.Serve(serverEntryPoint.listener)
 	}
+
 	if err != http.ErrServerClosed {
 		log.Error("Error creating server: ", err)
 	}
@@ -508,7 +514,9 @@ func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.
 		if err != nil {
 			return nil, nil, fmt.Errorf("error creating whitelist: %s", err)
 		}
+
 		log.Infof("Enabling ProxyProtocol for trusted IPs %v", entryPoint.ProxyProtocol.TrustedIPs)
+
 		listener = &proxyproto.Listener{
 			Listener: listener,
 			SourceCheck: func(addr net.Addr) (bool, error) {

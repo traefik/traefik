@@ -103,6 +103,7 @@ func (s *Server) buildBalancerMiddlewares(frontendName string, frontend *types.F
 func (s *Server) buildLoadBalancer(frontendName string, backendName string, backend *types.Backend, fwd http.Handler) (healthcheck.BalancerHandler, error) {
 	var rr *roundrobin.RoundRobin
 	var saveFrontend http.Handler
+
 	if s.accessLoggerMiddleware != nil {
 		saveBackend := accesslog.NewSaveBackend(fwd, backendName)
 		saveFrontend = accesslog.NewSaveFrontend(saveBackend, frontendName)
@@ -111,11 +112,11 @@ func (s *Server) buildLoadBalancer(frontendName string, backendName string, back
 		rr, _ = roundrobin.New(fwd)
 	}
 
-	var sticky *roundrobin.StickySession
+	var stickySession *roundrobin.StickySession
 	var cookieName string
 	if stickiness := backend.LoadBalancer.Stickiness; stickiness != nil {
 		cookieName = cookie.GetName(stickiness.CookieName, backendName)
-		sticky = roundrobin.NewStickySession(cookieName)
+		stickySession = roundrobin.NewStickySession(cookieName)
 	}
 
 	lbMethod, err := types.NewLoadBalancerMethod(backend.LoadBalancer)
@@ -129,14 +130,15 @@ func (s *Server) buildLoadBalancer(frontendName string, backendName string, back
 	case types.Drr:
 		log.Debug("Creating load-balancer drr")
 
-		lb, err = roundrobin.NewRebalancer(rr)
-		if err != nil {
-			return nil, err
-		}
-
-		if sticky != nil {
+		if stickySession != nil {
 			log.Debugf("Sticky session with cookie %v", cookieName)
-			lb, err = roundrobin.NewRebalancer(rr, roundrobin.RebalancerStickySession(sticky))
+
+			lb, err = roundrobin.NewRebalancer(rr, roundrobin.RebalancerStickySession(stickySession))
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			lb, err = roundrobin.NewRebalancer(rr)
 			if err != nil {
 				return nil, err
 			}
@@ -144,16 +146,16 @@ func (s *Server) buildLoadBalancer(frontendName string, backendName string, back
 	case types.Wrr:
 		log.Debug("Creating load-balancer wrr")
 
-		if sticky != nil {
+		if stickySession != nil {
 			log.Debugf("Sticky session with cookie %v", cookieName)
 
 			if s.accessLoggerMiddleware != nil {
-				lb, err = roundrobin.New(saveFrontend, roundrobin.EnableStickySession(sticky))
+				lb, err = roundrobin.New(saveFrontend, roundrobin.EnableStickySession(stickySession))
 				if err != nil {
 					return nil, err
 				}
 			} else {
-				lb, err = roundrobin.New(fwd, roundrobin.EnableStickySession(sticky))
+				lb, err = roundrobin.New(fwd, roundrobin.EnableStickySession(stickySession))
 				if err != nil {
 					return nil, err
 				}
@@ -178,10 +180,13 @@ func (s *Server) configureLBServers(lb healthcheck.BalancerHandler, backend *typ
 		if err != nil {
 			return fmt.Errorf("error parsing server URL %s: %v", srv.URL, err)
 		}
+
 		log.Debugf("Creating server %s at %s with weight %d", name, u, srv.Weight)
+
 		if err := lb.UpsertServer(u, roundrobin.Weight(srv.Weight)); err != nil {
 			return fmt.Errorf("error adding server %s to load balancer: %v", srv.URL, err)
 		}
+
 		s.metricsRegistry.BackendServerUpGauge().With("backend", backendName, "url", srv.URL).Set(1)
 	}
 	return nil
@@ -193,8 +198,7 @@ func (s *Server) getRoundTripper(entryPointName string, passTLSCert bool, tls *t
 	if passTLSCert {
 		tlsConfig, err := createClientTLSConfig(entryPointName, tls)
 		if err != nil {
-			log.Errorf("Failed to create TLSClientConfig: %s", err)
-			return nil, err
+			return nil, fmt.Errorf("failed to create TLSClientConfig: %v", err)
 		}
 
 		transport := createHTTPTransport(s.globalConfiguration)
