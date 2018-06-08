@@ -231,6 +231,7 @@ func createHTTPTransport(globalConfiguration configuration.GlobalConfiguration) 
 		KeepAlive: 30 * time.Second,
 		DualStack: true,
 	}
+
 	if globalConfiguration.ForwardingTimeouts != nil {
 		dialer.Timeout = time.Duration(globalConfiguration.ForwardingTimeouts.DialTimeout)
 	}
@@ -256,14 +257,17 @@ func createHTTPTransport(globalConfiguration configuration.GlobalConfiguration) 
 	if globalConfiguration.ForwardingTimeouts != nil {
 		transport.ResponseHeaderTimeout = time.Duration(globalConfiguration.ForwardingTimeouts.ResponseHeaderTimeout)
 	}
+
 	if globalConfiguration.InsecureSkipVerify {
 		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
+
 	if len(globalConfiguration.RootCAs) > 0 {
 		transport.TLSClientConfig = &tls.Config{
 			RootCAs: createRootCACertPool(globalConfiguration.RootCAs),
 		}
 	}
+
 	http2.ConfigureTransport(transport)
 
 	return transport
@@ -299,6 +303,7 @@ func createClientTLSConfig(entryPointName string, tlsOption *traefiktls.TLS) (*t
 		tlsOption.ClientCA.Files = tlsOption.ClientCAFiles
 		tlsOption.ClientCA.Optional = false
 	}
+
 	if len(tlsOption.ClientCA.Files) > 0 {
 		pool := x509.NewCertPool()
 		for _, caFile := range tlsOption.ClientCA.Files {
@@ -306,13 +311,16 @@ func createClientTLSConfig(entryPointName string, tlsOption *traefiktls.TLS) (*t
 			if err != nil {
 				return nil, err
 			}
+
 			if !pool.AppendCertsFromPEM(data) {
-				return nil, errors.New("invalid certificate(s) in " + caFile)
+				return nil, fmt.Errorf("invalid certificate(s) in %s", caFile)
 			}
 		}
 		config.RootCAs = pool
 	}
+
 	config.BuildNameToCertificate()
+
 	return config, nil
 }
 

@@ -310,6 +310,7 @@ func (s *Server) preLoadConfiguration(configMsg types.ConfigMessage) {
 			s.throttleProviderConfigReload(providersThrottleDuration, s.configurationValidatedChan, providerConfigUpdateCh, stop)
 		})
 	}
+
 	providerConfigUpdateCh <- configMsg
 }
 

@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	stdlog "log"
@@ -360,7 +359,7 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 	}
 
 	if len(config.Certificates) == 0 {
-		return nil, errors.New("No certificates found for TLS entrypoint " + entryPointName)
+		return nil, fmt.Errorf("no certificates found for TLS entrypoint %s", entryPointName)
 	}
 
 	// BuildNameToCertificate parses the CommonName and SubjectAlternateName fields
@@ -386,7 +385,7 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 				config.CipherSuites = append(config.CipherSuites, cipherConst)
 			} else {
 				// CipherSuite listed in the toml does not exist in our listed
-				return nil, errors.New("Invalid CipherSuite: " + cipher)
+				return nil, fmt.Errorf("invalid CipherSuite: %s", cipher)
 			}
 		}
 	}
