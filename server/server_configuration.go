@@ -74,114 +74,32 @@ func (s *Server) loadConfiguration(configMsg types.ConfigMessage) {
 // loadConfig returns a new gorilla.mux Route from the specified global configuration and the dynamic
 // provider configurations.
 func (s *Server) loadConfig(configurations types.Configurations, globalConfiguration configuration.GlobalConfiguration) (map[string]*serverEntryPoint, error) {
-	serverEntryPoints := s.buildServerEntryPoints()
-	redirectHandlers := make(map[string]negroni.Handler)
-	backendsHandlers := map[string]http.Handler{}
-	backendsHealthCheck := map[string]*healthcheck.BackendConfig{}
-
-	errorHandler := NewRecordingErrorHandler(middlewares.DefaultNetErrorRecorder{})
-
 	redirectHandlers, err := s.buildEntryPointRedirect()
 	if err != nil {
 		return nil, err
 	}
 
+	serverEntryPoints := s.buildServerEntryPoints()
+	errorHandler := NewRecordingErrorHandler(middlewares.DefaultNetErrorRecorder{})
+
+	backendsHandlers := map[string]http.Handler{}
+	backendsHealthCheck := map[string]*healthcheck.BackendConfig{}
+
 	var postConfigs []handlerPostConfig
 
 	for providerName, config := range configurations {
 		frontendNames := sortedFrontendNamesForConfig(config)
-	frontend:
+
 		for _, frontendName := range frontendNames {
-			frontend := config.Frontends[frontendName]
-
-			log.Debugf("Creating frontend %s", frontendName)
-
-			if len(frontend.EntryPoints) == 0 {
-				log.Errorf("no entrypoint defined for frontend %s", frontendName)
-				log.Errorf("Skipping frontend %s...", frontendName)
-				continue frontend
+			frontendPostConfigs, err := s.loadFrontendConfig(providerName, frontendName, config,
+				redirectHandlers, serverEntryPoints, errorHandler,
+				backendsHandlers, backendsHealthCheck)
+			if err != nil {
+				log.Errorf("%v. Skipping frontend %s...", err, frontendName)
 			}
 
-			backends := config.Backends
-			backend := backends[frontend.Backend]
-			if backend == nil {
-				log.Errorf("Undefined backend '%s' for frontend %s", frontend.Backend, frontendName)
-				log.Errorf("Skipping frontend %s...", frontendName)
-				continue frontend
-			}
-
-			for _, entryPointName := range frontend.EntryPoints {
-				log.Debugf("Wiring frontend %s to entryPoint %s", frontendName, entryPointName)
-
-				entryPoint := s.entryPoints[entryPointName].Configuration
-
-				frontendHash, err := frontend.Hash()
-				if err != nil {
-					log.Errorf("Error calculating hash value for frontend %s: %v", frontendName, err)
-					log.Errorf("Skipping frontend %s...", frontendName)
-					continue frontend
-				}
-
-				if backendsHandlers[entryPointName+providerName+frontendHash] == nil {
-					log.Debugf("Creating backend %s", frontend.Backend)
-
-					handlers, responseModifier, postConfig, err := s.buildMiddlewares(frontendName, frontend, config.Backends, entryPointName, entryPoint, providerName)
-					if err != nil {
-						log.Error(err)
-						log.Errorf("Skipping frontend %s...", frontendName)
-						continue frontend
-					}
-
-					if postConfig != nil {
-						postConfigs = append(postConfigs, postConfig)
-					}
-
-					fwd, err := s.buildForwarder(entryPointName, entryPoint, frontendName, frontend, errorHandler, responseModifier)
-					if err != nil {
-						log.Errorf("Failed to create the forwarder for frontend %s: %v", frontendName, err)
-						log.Errorf("Skipping frontend %s...", frontendName)
-						continue frontend
-					}
-
-					lb, healthCheckConfig, err := s.buildBalancerMiddlewares(frontendName, frontend, backend, fwd)
-					if err != nil {
-						return nil, err
-					}
-
-					if healthCheckConfig != nil {
-						backendsHealthCheck[entryPointName+providerName+frontendHash] = healthCheckConfig
-					}
-
-					n := negroni.New()
-
-					if _, exist := redirectHandlers[entryPointName]; exist {
-						n.Use(redirectHandlers[entryPointName])
-					}
-
-					for _, handler := range handlers {
-						n.Use(handler)
-					}
-
-					n.UseHandler(lb)
-
-					backendsHandlers[entryPointName+providerName+frontendHash] = n
-				} else {
-					log.Debugf("Reusing backend %s", frontend.Backend)
-				}
-
-				serverRoute, err := buildServerRoute(serverEntryPoints[entryPointName], frontendName, frontend)
-				if err != nil {
-					log.Error(err)
-					log.Errorf("Skipping frontend %s...", frontendName)
-					continue frontend
-				}
-
-				s.wireFrontendBackend(serverRoute, backendsHandlers[entryPointName+providerName+frontendHash])
-
-				err = serverRoute.Route.GetError()
-				if err != nil {
-					log.Errorf("Error building route: %s", err)
-				}
+			if len(frontendPostConfigs) > 0 {
+				postConfigs = append(postConfigs, frontendPostConfigs...)
 			}
 		}
 	}
@@ -206,6 +124,96 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 	}
 
 	return serverEntryPoints, err
+}
+
+func (s *Server) loadFrontendConfig(
+	providerName string, frontendName string, config *types.Configuration,
+	redirectHandlers map[string]negroni.Handler, serverEntryPoints map[string]*serverEntryPoint, errorHandler *RecordingErrorHandler,
+	backendsHandlers map[string]http.Handler, backendsHealthCheck map[string]*healthcheck.BackendConfig,
+) ([]handlerPostConfig, error) {
+
+	frontend := config.Frontends[frontendName]
+
+	if len(frontend.EntryPoints) == 0 {
+		return nil, fmt.Errorf("no entrypoint defined for frontend %s", frontendName)
+	}
+
+	backend := config.Backends[frontend.Backend]
+	if backend == nil {
+		return nil, fmt.Errorf("undefined backend '%s' for frontend %s", frontend.Backend, frontendName)
+	}
+
+	frontendHash, err := frontend.Hash()
+	if err != nil {
+		return nil, fmt.Errorf("error calculating hash value for frontend %s: %v", frontendName, err)
+	}
+
+	var postConfigs []handlerPostConfig
+
+	for _, entryPointName := range frontend.EntryPoints {
+		log.Debugf("Wiring frontend %s to entryPoint %s", frontendName, entryPointName)
+
+		entryPoint := s.entryPoints[entryPointName].Configuration
+
+		if backendsHandlers[entryPointName+providerName+frontendHash] == nil {
+			log.Debugf("Creating backend %s", frontend.Backend)
+
+			handlers, responseModifier, postConfig, err := s.buildMiddlewares(frontendName, frontend, config.Backends, entryPointName, entryPoint, providerName)
+			if err != nil {
+				return nil, err
+			}
+
+			if postConfig != nil {
+				postConfigs = append(postConfigs, postConfig)
+			}
+
+			fwd, err := s.buildForwarder(entryPointName, entryPoint, frontendName, frontend, errorHandler, responseModifier)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create the forwarder for frontend %s: %v", frontendName, err)
+			}
+
+			lb, healthCheckConfig, err := s.buildBalancerMiddlewares(frontendName, frontend, backend, fwd)
+			if err != nil {
+				return nil, err
+			}
+
+			if healthCheckConfig != nil {
+				backendsHealthCheck[entryPointName+providerName+frontendHash] = healthCheckConfig
+			}
+
+			n := negroni.New()
+
+			if _, exist := redirectHandlers[entryPointName]; exist {
+				n.Use(redirectHandlers[entryPointName])
+			}
+
+			for _, handler := range handlers {
+				n.Use(handler)
+			}
+
+			n.UseHandler(lb)
+
+			backendsHandlers[entryPointName+providerName+frontendHash] = n
+		} else {
+			log.Debugf("Reusing backend %s [%s - %s - %s - %s]",
+				frontend.Backend, entryPointName, providerName, frontendName, frontendHash)
+		}
+
+		serverRoute, err := buildServerRoute(serverEntryPoints[entryPointName], frontendName, frontend)
+		if err != nil {
+			return nil, err
+		}
+
+		s.wireFrontendBackend(serverRoute, backendsHandlers[entryPointName+providerName+frontendHash])
+
+		err = serverRoute.Route.GetError()
+		if err != nil {
+			// FIXME error managament
+			log.Errorf("Error building route: %s", err)
+		}
+	}
+
+	return postConfigs, nil
 }
 
 func (s *Server) buildForwarder(entryPointName string, entryPoint *configuration.EntryPoint,
