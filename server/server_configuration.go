@@ -27,6 +27,7 @@ import (
 	"github.com/urfave/negroni"
 	"github.com/vulcand/oxy/forward"
 	"github.com/vulcand/oxy/roundrobin"
+	"github.com/vulcand/oxy/utils"
 )
 
 // loadConfiguration manages dynamically frontends, backends and TLS configurations
@@ -209,43 +210,11 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 
 					var responseModifier = buildModifyResponse(secureMiddleware, headerMiddleware)
 
-					roundTripper, err := s.getRoundTripper(entryPointName, frontend.PassTLSCert, entryPoint.TLS)
+					fwd, err := s.buildForwarder(entryPointName, entryPoint, frontendName, frontend, errorHandler, responseModifier)
 					if err != nil {
-						log.Errorf("Failed to create RoundTripper for frontend %s: %v", frontendName, err)
+						log.Errorf("Failed to create the forwarder for frontend %s: %v", frontendName, err)
 						log.Errorf("Skipping frontend %s...", frontendName)
 						continue frontend
-					}
-
-					rewriter, err := NewHeaderRewriter(entryPoint.ForwardedHeaders.TrustedIPs, entryPoint.ForwardedHeaders.Insecure)
-					if err != nil {
-						log.Errorf("Error creating rewriter for frontend %s: %v", frontendName, err)
-						log.Errorf("Skipping frontend %s...", frontendName)
-						continue frontend
-					}
-
-					var fwd http.Handler
-					fwd, err = forward.New(
-						forward.Stream(true),
-						forward.PassHostHeader(frontend.PassHostHeader),
-						forward.RoundTripper(roundTripper),
-						forward.ErrorHandler(errorHandler),
-						forward.Rewriter(rewriter),
-						forward.ResponseModifier(responseModifier),
-						forward.BufferPool(s.bufferPool),
-					)
-					if err != nil {
-						log.Errorf("Error creating forwarder for frontend %s: %v", frontendName, err)
-						log.Errorf("Skipping frontend %s...", frontendName)
-						continue frontend
-					}
-
-					if s.tracingMiddleware.IsEnabled() {
-						tm := s.tracingMiddleware.NewForwarderMiddleware(frontendName, frontend.Backend)
-
-						next := fwd
-						fwd = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-							tm.ServeHTTP(w, r, next.ServeHTTP)
-						})
 					}
 
 					var rr *roundrobin.RoundRobin
@@ -406,6 +375,46 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 	}
 
 	return serverEntryPoints, err
+}
+
+func (s *Server) buildForwarder(entryPointName string, entryPoint *configuration.EntryPoint,
+	frontendName string, frontend *types.Frontend,
+	errorHandler utils.ErrorHandler, responseModifier modifyResponse) (http.Handler, error) {
+
+	roundTripper, err := s.getRoundTripper(entryPointName, frontend.PassTLSCert, entryPoint.TLS)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create RoundTripper for frontend %s: %v", frontendName, err)
+	}
+
+	rewriter, err := NewHeaderRewriter(entryPoint.ForwardedHeaders.TrustedIPs, entryPoint.ForwardedHeaders.Insecure)
+	if err != nil {
+		return nil, fmt.Errorf("error creating rewriter for frontend %s: %v", frontendName, err)
+	}
+
+	var fwd http.Handler
+	fwd, err = forward.New(
+		forward.Stream(true),
+		forward.PassHostHeader(frontend.PassHostHeader),
+		forward.RoundTripper(roundTripper),
+		forward.ErrorHandler(errorHandler),
+		forward.Rewriter(rewriter),
+		forward.ResponseModifier(responseModifier),
+		forward.BufferPool(s.bufferPool),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error creating forwarder for frontend %s: %v", frontendName, err)
+	}
+
+	if s.tracingMiddleware.IsEnabled() {
+		tm := s.tracingMiddleware.NewForwarderMiddleware(frontendName, frontend.Backend)
+
+		next := fwd
+		fwd = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			tm.ServeHTTP(w, r, next.ServeHTTP)
+		})
+	}
+
+	return fwd, nil
 }
 
 func buildServerRoute(serverEntryPoint *serverEntryPoint, frontendName string, frontend *types.Frontend) (*types.ServerRoute, error) {

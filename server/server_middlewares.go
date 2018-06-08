@@ -16,6 +16,8 @@ import (
 	"github.com/urfave/negroni"
 )
 
+type modifyResponse func(*http.Response) error
+
 func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServerEntryPoint *serverEntryPoint) *serverEntryPoint {
 	serverMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler()}
 
