@@ -16,7 +16,6 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"
-	"github.com/containous/traefik/middlewares/errorpages"
 	"github.com/containous/traefik/rules"
 	"github.com/containous/traefik/safe"
 	traefiktls "github.com/containous/traefik/tls"
@@ -79,7 +78,6 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 	redirectHandlers := make(map[string]negroni.Handler)
 	backendsHandlers := map[string]http.Handler{}
 	backendsHealthCheck := map[string]*healthcheck.BackendConfig{}
-	var errorPageHandlers []*errorpages.Handler
 
 	errorHandler := NewRecordingErrorHandler(middlewares.DefaultNetErrorRecorder{})
 
@@ -87,6 +85,8 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 	if err != nil {
 		return nil, err
 	}
+
+	var postConfigs []handlerPostConfig
 
 	for providerName, config := range configurations {
 		frontendNames := sortedFrontendNamesForConfig(config)
@@ -131,69 +131,21 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						n.Use(redirectHandlers[entryPointName])
 					}
 
-					headerMiddleware := middlewares.NewHeaderFromStruct(frontend.Headers)
-					secureMiddleware := middlewares.NewSecure(frontend.Headers)
-
-					if len(frontend.Errors) > 0 {
-						handlers, err := buildErrorPagesMiddleware(frontendName, frontend, backends, entryPointName, providerName)
-						if err != nil {
-							log.Error(err)
-						} else {
-							errorPageHandlers = append(errorPageHandlers, handlers...)
-							for _, handler := range handlers {
-								n.Use(handler)
-							}
-						}
-					}
-
-					if s.metricsRegistry.IsEnabled() {
-						n.Use(middlewares.NewBackendMetricsMiddleware(s.metricsRegistry, frontend.Backend))
-					}
-
-					ipWhitelistMiddleware, err := buildIPWhiteLister(frontend.WhiteList, frontend.WhitelistSourceRange)
+					handlers, responseModifier, postConfig, err := s.buildMiddlewares(frontendName, frontend, config.Backends, entryPointName, entryPoint, providerName)
 					if err != nil {
-						log.Errorf("Error creating IP Whitelister: %s", err)
-					} else if ipWhitelistMiddleware != nil {
-						n.Use(
-							s.tracingMiddleware.NewNegroniHandlerWrapper(
-								"IP whitelist",
-								s.wrapNegroniHandlerWithAccessLog(ipWhitelistMiddleware, fmt.Sprintf("ipwhitelister for %s", frontendName)),
-								false))
-						log.Debugf("Configured IP Whitelists: %s", frontend.WhitelistSourceRange)
+						log.Error(err)
+						continue frontend
 					}
 
-					if frontend.Redirect != nil && entryPointName != frontend.Redirect.EntryPoint {
-						rewrite, err := s.buildRedirectHandler(entryPointName, frontend.Redirect)
-						if err != nil {
-							log.Errorf("Error creating Frontend Redirect: %v", err)
-						} else {
-							n.Use(s.wrapNegroniHandlerWithAccessLog(rewrite, fmt.Sprintf("frontend redirect for %s", frontendName)))
-							log.Debugf("Frontend %s redirect created", frontendName)
-						}
+					if postConfig != nil {
+						postConfigs = append(postConfigs, postConfig)
 					}
 
-					if headerMiddleware != nil {
-						log.Debugf("Adding header middleware for frontend %s", frontendName)
-						n.Use(s.tracingMiddleware.NewNegroniHandlerWrapper("Header", headerMiddleware, false))
-					}
-
-					if secureMiddleware != nil {
-						log.Debugf("Adding secure middleware for frontend %s", frontendName)
-						n.UseFunc(secureMiddleware.HandlerFuncWithNextForRequestOnly)
-					}
-
-					if len(frontend.BasicAuth) > 0 {
-						authMiddleware, err := s.buildBasicAuthMiddleware(frontend.BasicAuth)
-						if err != nil {
-							log.Errorf("Error creating Auth: %s", err)
-						} else {
-							n.Use(s.wrapNegroniHandlerWithAccessLog(authMiddleware, fmt.Sprintf("Auth for %s", frontendName)))
-						}
+					for _, handler := range handlers {
+						n.Use(handler)
 					}
 
 					// LB
-
-					var responseModifier = buildModifyResponse(secureMiddleware, headerMiddleware)
 
 					fwd, err := s.buildForwarder(entryPointName, entryPoint, frontendName, frontend, errorHandler, responseModifier)
 					if err != nil {
@@ -206,6 +158,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 					if err != nil {
 						log.Errorf("Failed to create the load-balancer for frontend %s: %v", frontendName, err)
 						log.Errorf("Skipping frontend %s...", frontendName)
+						continue frontend
 					}
 
 					// Health Check
@@ -298,12 +251,8 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 		}
 	}
 
-	for _, errorPageHandler := range errorPageHandlers {
-		if handler, ok := backendsHandlers[errorPageHandler.BackendName]; ok {
-			errorPageHandler.PostLoad(handler)
-		} else {
-			errorPageHandler.PostLoad(nil)
-		}
+	for _, postConfig := range postConfigs {
+		postConfig(backendsHandlers)
 	}
 
 	healthcheck.GetHealthCheck(s.metricsRegistry).SetBackendsConfiguration(s.routinesPool.Ctx(), backendsHealthCheck)

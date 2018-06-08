@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/middlewares/accesslog"
@@ -16,7 +17,99 @@ import (
 	"github.com/urfave/negroni"
 )
 
+type handlerPostConfig func(backendsHandlers map[string]http.Handler) error
+
 type modifyResponse func(*http.Response) error
+
+func (s *Server) buildMiddlewares(frontendName string, frontend *types.Frontend,
+	backends map[string]*types.Backend,
+	entryPointName string, entryPoint *configuration.EntryPoint,
+	providerName string) ([]negroni.Handler, modifyResponse, handlerPostConfig, error) {
+
+	var middle []negroni.Handler
+	var postConfig handlerPostConfig
+
+	// Error pages
+	if len(frontend.Errors) > 0 {
+		handlers, err := buildErrorPagesMiddleware(frontendName, frontend, backends, entryPointName, providerName)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+
+		postConfig = errorPagesPostConfig(handlers)
+
+		for _, handler := range handlers {
+			middle = append(middle, handler)
+		}
+	}
+
+	// Metrics
+	if s.metricsRegistry.IsEnabled() {
+		handler := middlewares.NewBackendMetricsMiddleware(s.metricsRegistry, frontend.Backend)
+		middle = append(middle, handler)
+	}
+
+	// Whitelist
+	ipWhitelistMiddleware, err := buildIPWhiteLister(frontend.WhiteList, frontend.WhitelistSourceRange)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("error creating IP Whitelister: %s", err)
+	}
+	if ipWhitelistMiddleware != nil {
+		log.Debugf("Configured IP Whitelists: %v", frontend.WhiteList.SourceRange)
+
+		handler := s.tracingMiddleware.NewNegroniHandlerWrapper(
+			"IP whitelist",
+			s.wrapNegroniHandlerWithAccessLog(ipWhitelistMiddleware, fmt.Sprintf("ipwhitelister for %s", frontendName)),
+			false)
+		middle = append(middle, handler)
+	}
+
+	// Redirect
+	if frontend.Redirect != nil && entryPointName != frontend.Redirect.EntryPoint {
+		rewrite, err := s.buildRedirectHandler(entryPointName, frontend.Redirect)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("error creating Frontend Redirect: %v", err)
+		}
+
+		handler := s.wrapNegroniHandlerWithAccessLog(rewrite, fmt.Sprintf("frontend redirect for %s", frontendName))
+		middle = append(middle, handler)
+
+		log.Debugf("Frontend %s redirect created", frontendName)
+	}
+
+	// Header
+	headerMiddleware := middlewares.NewHeaderFromStruct(frontend.Headers)
+	if headerMiddleware != nil {
+		log.Debugf("Adding header middleware for frontend %s", frontendName)
+
+		handler := s.tracingMiddleware.NewNegroniHandlerWrapper("Header", headerMiddleware, false)
+		middle = append(middle, handler)
+	}
+
+	// Secure
+	secureMiddleware := middlewares.NewSecure(frontend.Headers)
+	if secureMiddleware != nil {
+		log.Debugf("Adding secure middleware for frontend %s", frontendName)
+
+		handler := negroni.HandlerFunc(secureMiddleware.HandlerFuncWithNextForRequestOnly)
+		middle = append(middle, handler)
+	}
+
+	// Basic auth
+	if len(frontend.BasicAuth) > 0 {
+		log.Debugf("Adding basic authentication for frontend %s", frontendName)
+
+		authMiddleware, err := s.buildBasicAuthMiddleware(frontend.BasicAuth)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+
+		handler := s.wrapNegroniHandlerWithAccessLog(authMiddleware, fmt.Sprintf("Basic Auth for %s", frontendName))
+		middle = append(middle, handler)
+	}
+
+	return middle, buildModifyResponse(secureMiddleware, headerMiddleware), postConfig, nil
+}
 
 func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServerEntryPoint *serverEntryPoint) *serverEntryPoint {
 	serverMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler()}
@@ -78,6 +171,19 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 	serverEntryPoint.listener = listener
 
 	return serverEntryPoint
+}
+
+func errorPagesPostConfig(epHandlers []*errorpages.Handler) handlerPostConfig {
+	return func(backendsHandlers map[string]http.Handler) error {
+		for _, errorPageHandler := range epHandlers {
+			if handler, ok := backendsHandlers[errorPageHandler.BackendName]; ok {
+				errorPageHandler.PostLoad(handler)
+			} else {
+				errorPageHandler.PostLoad(nil)
+			}
+		}
+		return nil
+	}
 }
 
 func buildErrorPagesMiddleware(frontendName string, frontend *types.Frontend, backends map[string]*types.Backend, entryPointName string, providerName string) ([]*errorpages.Handler, error) {
