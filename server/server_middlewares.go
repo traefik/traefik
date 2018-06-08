@@ -124,6 +124,26 @@ func (s *Server) buildBasicAuthMiddleware(authData []string) (*mauth.Authenticat
 	return authMiddleware, nil
 }
 
+func (s *Server) buildEntryPointRedirect() (map[string]negroni.Handler, error) {
+	redirectHandlers := map[string]negroni.Handler{}
+
+	for entryPointName, ep := range s.entryPoints {
+		entryPoint := ep.Configuration
+
+		if entryPoint.Redirect != nil && entryPointName != entryPoint.Redirect.EntryPoint {
+			handler, err := s.buildRedirectHandler(entryPointName, entryPoint.Redirect)
+			if err != nil {
+				return nil, fmt.Errorf("error loading configuration for entrypoint %s: %v", entryPointName, err)
+			}
+
+			handlerToUse := s.wrapNegroniHandlerWithAccessLog(handler, fmt.Sprintf("entrypoint redirect for %s", entryPointName))
+			redirectHandlers[entryPointName] = handlerToUse
+		}
+	}
+
+	return redirectHandlers, nil
+}
+
 func (s *Server) buildRedirectHandler(srcEntryPointName string, opt *types.Redirect) (negroni.Handler, error) {
 	// entry point redirect
 	if len(opt.EntryPoint) > 0 {

@@ -85,6 +85,11 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 
 	errorHandler := NewRecordingErrorHandler(middlewares.DefaultNetErrorRecorder{})
 
+	redirectHandlers, err := s.buildEntryPointRedirect()
+	if err != nil {
+		return nil, err
+	}
+
 	for providerName, config := range configurations {
 		frontendNames := sortedFrontendNamesForConfig(config)
 	frontend:
@@ -103,19 +108,11 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 				log.Debugf("Wiring frontend %s to entryPoint %s", frontendName, entryPointName)
 
 				entryPoint := s.entryPoints[entryPointName].Configuration
+
 				n := negroni.New()
-				if entryPoint.Redirect != nil && entryPointName != entryPoint.Redirect.EntryPoint {
-					if redirectHandlers[entryPointName] != nil {
-						n.Use(redirectHandlers[entryPointName])
-					} else if handler, err := s.buildRedirectHandler(entryPointName, entryPoint.Redirect); err != nil {
-						log.Errorf("Error loading entrypoint configuration for frontend %s: %v", frontendName, err)
-						log.Errorf("Skipping frontend %s...", frontendName)
-						continue frontend
-					} else {
-						handlerToUse := s.wrapNegroniHandlerWithAccessLog(handler, fmt.Sprintf("entrypoint redirect for %s", frontendName))
-						n.Use(handlerToUse)
-						redirectHandlers[entryPointName] = handlerToUse
-					}
+
+				if _, exist := redirectHandlers[entryPointName]; exist {
+					n.Use(redirectHandlers[entryPointName])
 				}
 
 				frontendHash, err := frontend.Hash()
