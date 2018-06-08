@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"time"
@@ -23,7 +24,17 @@ import (
 	"github.com/vulcand/oxy/ratelimit"
 	"github.com/vulcand/oxy/roundrobin"
 	"github.com/vulcand/oxy/utils"
+	"golang.org/x/net/http2"
 )
+
+type h2cTransportWrapper struct {
+	*http2.Transport
+}
+
+func (t *h2cTransportWrapper) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.URL.Scheme = "http"
+	return t.Transport.RoundTrip(req)
+}
 
 func (s *Server) buildBalancerMiddlewares(frontendName string, frontend *types.Frontend, backend *types.Backend, fwd http.Handler) (http.Handler, *healthcheck.BackendConfig, error) {
 	balancer, err := s.buildLoadBalancer(frontendName, frontend.Backend, backend, fwd)
@@ -207,6 +218,70 @@ func (s *Server) getRoundTripper(entryPointName string, passTLSCert bool, tls *t
 	}
 
 	return s.defaultForwardingRoundTripper, nil
+}
+
+// createHTTPTransport creates an http.Transport configured with the GlobalConfiguration settings.
+// For the settings that can't be configured in Traefik it uses the default http.Transport settings.
+// An exception to this is the MaxIdleConns setting as we only provide the option MaxIdleConnsPerHost
+// in Traefik at this point in time. Setting this value to the default of 100 could lead to confusing
+// behaviour and backwards compatibility issues.
+func createHTTPTransport(globalConfiguration configuration.GlobalConfiguration) *http.Transport {
+	dialer := &net.Dialer{
+		Timeout:   configuration.DefaultDialTimeout,
+		KeepAlive: 30 * time.Second,
+		DualStack: true,
+	}
+	if globalConfiguration.ForwardingTimeouts != nil {
+		dialer.Timeout = time.Duration(globalConfiguration.ForwardingTimeouts.DialTimeout)
+	}
+
+	transport := &http.Transport{
+		Proxy:                 http.ProxyFromEnvironment,
+		DialContext:           dialer.DialContext,
+		MaxIdleConnsPerHost:   globalConfiguration.MaxIdleConnsPerHost,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
+
+	transport.RegisterProtocol("h2c", &h2cTransportWrapper{
+		Transport: &http2.Transport{
+			DialTLS: func(netw, addr string, cfg *tls.Config) (net.Conn, error) {
+				return net.Dial(netw, addr)
+			},
+			AllowHTTP: true,
+		},
+	})
+
+	if globalConfiguration.ForwardingTimeouts != nil {
+		transport.ResponseHeaderTimeout = time.Duration(globalConfiguration.ForwardingTimeouts.ResponseHeaderTimeout)
+	}
+	if globalConfiguration.InsecureSkipVerify {
+		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	}
+	if len(globalConfiguration.RootCAs) > 0 {
+		transport.TLSClientConfig = &tls.Config{
+			RootCAs: createRootCACertPool(globalConfiguration.RootCAs),
+		}
+	}
+	http2.ConfigureTransport(transport)
+
+	return transport
+}
+
+func createRootCACertPool(rootCAs traefiktls.RootCAs) *x509.CertPool {
+	roots := x509.NewCertPool()
+
+	for _, cert := range rootCAs {
+		certContent, err := cert.Read()
+		if err != nil {
+			log.Error("Error while read RootCAs", err)
+			continue
+		}
+		roots.AppendCertsFromPEM(certContent)
+	}
+
+	return roots
 }
 
 func createClientTLSConfig(entryPointName string, tlsOption *traefiktls.TLS) (*tls.Config, error) {
