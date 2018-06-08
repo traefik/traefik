@@ -102,16 +102,18 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 				continue frontend
 			}
 
+			backends := config.Backends
+			backend := backends[frontend.Backend]
+			if backend == nil {
+				log.Errorf("Undefined backend '%s' for frontend %s", frontend.Backend, frontendName)
+				log.Errorf("Skipping frontend %s...", frontendName)
+				continue frontend
+			}
+
 			for _, entryPointName := range frontend.EntryPoints {
 				log.Debugf("Wiring frontend %s to entryPoint %s", frontendName, entryPointName)
 
 				entryPoint := s.entryPoints[entryPointName].Configuration
-
-				n := negroni.New()
-
-				if _, exist := redirectHandlers[entryPointName]; exist {
-					n.Use(redirectHandlers[entryPointName])
-				}
 
 				frontendHash, err := frontend.Hash()
 				if err != nil {
@@ -123,18 +125,17 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 				if backendsHandlers[entryPointName+providerName+frontendHash] == nil {
 					log.Debugf("Creating backend %s", frontend.Backend)
 
-					backend := config.Backends[frontend.Backend]
-					if backend == nil {
-						log.Errorf("Undefined backend '%s' for frontend %s", frontend.Backend, frontendName)
-						log.Errorf("Skipping frontend %s...", frontendName)
-						continue frontend
+					n := negroni.New()
+
+					if _, exist := redirectHandlers[entryPointName]; exist {
+						n.Use(redirectHandlers[entryPointName])
 					}
 
 					headerMiddleware := middlewares.NewHeaderFromStruct(frontend.Headers)
 					secureMiddleware := middlewares.NewSecure(frontend.Headers)
 
 					if len(frontend.Errors) > 0 {
-						handlers, err := buildErrorPagesMiddleware(frontendName, frontend, config.Backends, entryPointName, providerName)
+						handlers, err := buildErrorPagesMiddleware(frontendName, frontend, backends, entryPointName, providerName)
 						if err != nil {
 							log.Error(err)
 						} else {
