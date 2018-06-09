@@ -105,7 +105,13 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration, provider p
 	server.bufferPool = newBufferPool()
 
 	server.routinesPool = safe.NewPool(context.Background())
-	server.defaultForwardingRoundTripper = createHTTPTransport(globalConfiguration)
+
+	transport, err := createHTTPTransport(globalConfiguration)
+	if err != nil {
+		log.Errorf("failed to create HTTP transport: %v", err)
+	}
+
+	server.defaultForwardingRoundTripper = transport
 
 	server.tracingMiddleware = globalConfiguration.Tracing
 	if server.tracingMiddleware != nil && server.tracingMiddleware.Backend != "" {
@@ -182,7 +188,10 @@ func (s *Server) Stop() {
 			log.Debugf("Waiting %s seconds before killing connections on entrypoint %s...", graceTimeOut, serverEntryPointName)
 			if err := serverEntryPoint.httpServer.Shutdown(ctx); err != nil {
 				log.Debugf("Wait is over due to: %s", err)
-				serverEntryPoint.httpServer.Close()
+				err = serverEntryPoint.httpServer.Close()
+				if err != nil {
+					log.Error(err)
+				}
 			}
 			cancel()
 			log.Debugf("Entrypoint %s closed", serverEntryPointName)

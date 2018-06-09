@@ -105,7 +105,10 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 	}
 
 	for _, postConfig := range postConfigs {
-		postConfig(backendsHandlers)
+		err := postConfig(backendsHandlers)
+		if err != nil {
+			log.Errorf("middleware post configuration error: %v", err)
+		}
 	}
 
 	healthcheck.GetHealthCheck(s.metricsRegistry).SetBackendsConfiguration(s.routinesPool.Ctx(), backendsHealthCheck)

@@ -212,7 +212,11 @@ func (s *Server) getRoundTripper(entryPointName string, passTLSCert bool, tls *t
 			return nil, fmt.Errorf("failed to create TLSClientConfig: %v", err)
 		}
 
-		transport := createHTTPTransport(s.globalConfiguration)
+		transport, err := createHTTPTransport(s.globalConfiguration)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create HTTP transport: %v", err)
+		}
+
 		transport.TLSClientConfig = tlsConfig
 		return transport, nil
 	}
@@ -225,7 +229,7 @@ func (s *Server) getRoundTripper(entryPointName string, passTLSCert bool, tls *t
 // An exception to this is the MaxIdleConns setting as we only provide the option MaxIdleConnsPerHost
 // in Traefik at this point in time. Setting this value to the default of 100 could lead to confusing
 // behaviour and backwards compatibility issues.
-func createHTTPTransport(globalConfiguration configuration.GlobalConfiguration) *http.Transport {
+func createHTTPTransport(globalConfiguration configuration.GlobalConfiguration) (*http.Transport, error) {
 	dialer := &net.Dialer{
 		Timeout:   configuration.DefaultDialTimeout,
 		KeepAlive: 30 * time.Second,
@@ -268,9 +272,12 @@ func createHTTPTransport(globalConfiguration configuration.GlobalConfiguration) 
 		}
 	}
 
-	http2.ConfigureTransport(transport)
+	err := http2.ConfigureTransport(transport)
+	if err != nil {
+		return nil, err
+	}
 
-	return transport
+	return transport, nil
 }
 
 func createRootCACertPool(rootCAs traefiktls.RootCAs) *x509.CertPool {

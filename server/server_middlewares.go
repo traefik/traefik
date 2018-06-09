@@ -168,9 +168,15 @@ func errorPagesPostConfig(epHandlers []*errorpages.Handler) handlerPostConfig {
 	return func(backendsHandlers map[string]http.Handler) error {
 		for _, errorPageHandler := range epHandlers {
 			if handler, ok := backendsHandlers[errorPageHandler.BackendName]; ok {
-				errorPageHandler.PostLoad(handler)
+				err := errorPageHandler.PostLoad(handler)
+				if err != nil {
+					return fmt.Errorf("failed to configure error pages for backend %s: %v", errorPageHandler.BackendName, err)
+				}
 			} else {
-				errorPageHandler.PostLoad(nil)
+				err := errorPageHandler.PostLoad(nil)
+				if err != nil {
+					return fmt.Errorf("failed to configure error pages for %s: %v", errorPageHandler.FallbackURL, err)
+				}
 			}
 		}
 		return nil
