@@ -256,7 +256,11 @@ func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestR
 
 	core[DownstreamStatus] = crw.Status()
 
-	if l.keepAccessLog(crw.Status(), retryAttempts) {
+	// n.b. take care to perform time arithmetic using UTC to avoid errors at DST boundaries
+	totalDuration := time.Now().UTC().Sub(core[StartUTC].(time.Time))
+	core[Duration] = totalDuration
+
+	if l.keepAccessLog(crw.Status(), retryAttempts, totalDuration) {
 		core[DownstreamStatusLine] = fmt.Sprintf("%03d %s", crw.Status(), http.StatusText(crw.Status()))
 		core[DownstreamContentSize] = crw.Size()
 		if original, ok := core[OriginContentSize]; ok {
@@ -266,12 +270,9 @@ func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestR
 			}
 		}
 
-		// n.b. take care to perform time arithmetic using UTC to avoid errors at DST boundaries
-		total := time.Now().UTC().Sub(core[StartUTC].(time.Time))
-		core[Duration] = total
-		core[Overhead] = total
+		core[Overhead] = totalDuration
 		if origin, ok := core[OriginDuration]; ok {
-			core[Overhead] = total - origin.(time.Duration)
+			core[Overhead] = totalDuration - origin.(time.Duration)
 		}
 
 		fields := logrus.Fields{}
@@ -303,13 +304,13 @@ func (l *LogHandler) redactHeaders(headers http.Header, fields logrus.Fields, pr
 	}
 }
 
-func (l *LogHandler) keepAccessLog(statusCode, retryAttempts int) bool {
+func (l *LogHandler) keepAccessLog(statusCode, retryAttempts int, duration time.Duration) bool {
 	if l.config.Filters == nil {
 		// no filters were specified
 		return true
 	}
 
-	if len(l.httpCodeRanges) == 0 && !l.config.Filters.RetryAttempts {
+	if len(l.httpCodeRanges) == 0 && !l.config.Filters.RetryAttempts && l.config.Filters.Duration == 0 {
 		// empty filters were specified, e.g. by passing --accessLog.filters only (without other filter options)
 		return true
 	}
@@ -319,6 +320,10 @@ func (l *LogHandler) keepAccessLog(statusCode, retryAttempts int) bool {
 	}
 
 	if l.config.Filters.RetryAttempts && retryAttempts > 0 {
+		return true
+	}
+
+	if l.config.Filters.Duration > 0 && (duration > l.config.Filters.Duration) {
 		return true
 	}
 

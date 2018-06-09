@@ -3,6 +3,7 @@ package types
 import (
 	"fmt"
 	"strings"
+	"time"
 )
 
 const (
@@ -31,8 +32,9 @@ type AccessLog struct {
 
 // AccessLogFilters holds filters configuration
 type AccessLogFilters struct {
-	StatusCodes   StatusCodes `json:"statusCodes,omitempty" description:"Keep access logs with status codes in the specified range" export:"true"`
-	RetryAttempts bool        `json:"retryAttempts,omitempty" description:"Keep access logs when at least one retry happened" export:"true"`
+	StatusCodes   StatusCodes   `json:"statusCodes,omitempty" description:"Keep access logs with status codes in the specified range" export:"true"`
+	RetryAttempts bool          `json:"retryAttempts,omitempty" description:"Keep access logs when at least one retry happened" export:"true"`
+	Duration      time.Duration `json:"duration,omitempty" description:"Keep access logs with response times above the specific duration" export:"true"`
 }
 
 // FieldHeaders holds configuration for access log headers
