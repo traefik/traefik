@@ -196,7 +196,7 @@ func (p *Provider) getFrontendRule(container dockerData, segmentLabels map[strin
 }
 
 func (p Provider) getIPAddress(container dockerData) string {
-	if value := label.GetStringValue(container.Labels, labelDockerNetwork, p.DefaultNetwork); value != "" {
+	if value := label.GetStringValue(container.Labels, labelDockerNetwork, p.Network); value != "" {
 		networkSettings := container.NetworkSettings
 		if networkSettings.Networks != nil {
 			network := networkSettings.Networks[value]
