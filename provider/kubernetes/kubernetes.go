@@ -189,11 +189,9 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 		if _, ok := i.Annotations[annotationPercentageWeights]; ok {
 			fractionalAllocator, err := newFractionalWeightAllocator(i, k8sClient)
 			if err != nil {
-				log.Warnf("Failed to create fractional weight allocator for ingress %s/%s: %v", i.Namespace, i.Name, err)
-				weightAllocator = &defaultWeightAllocator{}
-			} else {
-				weightAllocator = fractionalAllocator
+				return nil, fmt.Errorf("Failed to create fractional weight allocator for ingress %s/%s: %v", i.Namespace, i.Name, err)
 			}
+			weightAllocator = fractionalAllocator
 		}
 
 		for _, r := range i.Spec.Rules {
