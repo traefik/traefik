@@ -144,7 +144,7 @@ func getServiceInstanceCounts(ingress *extensionsv1beta1.Ingress, client Client)
 				return nil, fmt.Errorf("failed to get endpoints %s/%s: %v", ingress.Namespace, pa.Backend.ServiceName, err)
 			}
 			if !exists {
-				return nil, fmt.Errorf("Endpoints not found for %s/%s", ingress.Namespace, pa.Backend.ServiceName)
+				return nil, fmt.Errorf("endpoints not found for %s/%s", ingress.Namespace, pa.Backend.ServiceName)
 			}
 
 			for _, subset := range endpoints.Subsets {
