@@ -71,6 +71,12 @@ usebindportip = true
 #
 swarmMode = false
 
+# Define a default docker network to use for connections to all containers.
+#
+# Optional
+#
+network = "web"
+
 # Enable docker TLS connection.
 #
 # Optional
@@ -124,6 +130,12 @@ watch = true
 # Default: false
 #
 swarmMode = true
+
+# Define a default docker network to use for connections to all containers.
+#
+# Optional
+#
+network = "web"
 
 # Override default configuration template.
 # For advanced users :)
