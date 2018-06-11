@@ -19,12 +19,18 @@ import (
 var singleton *HealthCheck
 var once sync.Once
 
-// GetHealthCheck returns the health check which is guaranteed to be a singleton.
-func GetHealthCheck(metrics metricsRegistry) *HealthCheck {
-	once.Do(func() {
-		singleton = newHealthCheck(metrics)
-	})
-	return singleton
+// BalancerHandler includes functionality for load-balancing management.
+type BalancerHandler interface {
+	ServeHTTP(w http.ResponseWriter, req *http.Request)
+	Servers() []*url.URL
+	RemoveServer(u *url.URL) error
+	UpsertServer(u *url.URL, options ...roundrobin.ServerOption) error
+}
+
+// metricsRegistry is a local interface in the health check package, exposing only the required metrics
+// necessary for the health check package. This makes it easier for the tests.
+type metricsRegistry interface {
+	BackendServerUpGauge() metrics.Gauge
 }
 
 // Options are the public health check options.
@@ -36,59 +42,59 @@ type Options struct {
 	Port      int
 	Transport http.RoundTripper
 	Interval  time.Duration
-	LB        LoadBalancer
+	LB        BalancerHandler
 }
 
 func (opt Options) String() string {
 	return fmt.Sprintf("[Hostname: %s Headers: %v Path: %s Port: %d Interval: %s]", opt.Hostname, opt.Headers, opt.Path, opt.Port, opt.Interval)
 }
 
-// BackendHealthCheck HealthCheck configuration for a backend
-type BackendHealthCheck struct {
+// BackendConfig HealthCheck configuration for a backend
+type BackendConfig struct {
 	Options
 	name           string
 	disabledURLs   []*url.URL
 	requestTimeout time.Duration
 }
 
+func (b *BackendConfig) newRequest(serverURL *url.URL) (*http.Request, error) {
+	u := &url.URL{}
+	*u = *serverURL
+
+	if len(b.Scheme) > 0 {
+		u.Scheme = b.Scheme
+	}
+
+	if b.Port != 0 {
+		u.Host = net.JoinHostPort(u.Hostname(), strconv.Itoa(b.Port))
+	}
+
+	u.Path += b.Path
+
+	return http.NewRequest(http.MethodGet, u.String(), nil)
+}
+
+// this function adds additional http headers and hostname to http.request
+func (b *BackendConfig) addHeadersAndHost(req *http.Request) *http.Request {
+	if b.Options.Hostname != "" {
+		req.Host = b.Options.Hostname
+	}
+
+	for k, v := range b.Options.Headers {
+		req.Header.Set(k, v)
+	}
+	return req
+}
+
 // HealthCheck struct
 type HealthCheck struct {
-	Backends map[string]*BackendHealthCheck
+	Backends map[string]*BackendConfig
 	metrics  metricsRegistry
 	cancel   context.CancelFunc
 }
 
-// LoadBalancer includes functionality for load-balancing management.
-type LoadBalancer interface {
-	RemoveServer(u *url.URL) error
-	UpsertServer(u *url.URL, options ...roundrobin.ServerOption) error
-	Servers() []*url.URL
-}
-
-func newHealthCheck(metrics metricsRegistry) *HealthCheck {
-	return &HealthCheck{
-		Backends: make(map[string]*BackendHealthCheck),
-		metrics:  metrics,
-	}
-}
-
-// metricsRegistry is a local interface in the health check package, exposing only the required metrics
-// necessary for the health check package. This makes it easier for the tests.
-type metricsRegistry interface {
-	BackendServerUpGauge() metrics.Gauge
-}
-
-// NewBackendHealthCheck Instantiate a new BackendHealthCheck
-func NewBackendHealthCheck(options Options, backendName string) *BackendHealthCheck {
-	return &BackendHealthCheck{
-		Options:        options,
-		name:           backendName,
-		requestTimeout: 5 * time.Second,
-	}
-}
-
 // SetBackendsConfiguration set backends configuration
-func (hc *HealthCheck) SetBackendsConfiguration(parentCtx context.Context, backends map[string]*BackendHealthCheck) {
+func (hc *HealthCheck) SetBackendsConfiguration(parentCtx context.Context, backends map[string]*BackendConfig) {
 	hc.Backends = backends
 	if hc.cancel != nil {
 		hc.cancel()
@@ -104,7 +110,7 @@ func (hc *HealthCheck) SetBackendsConfiguration(parentCtx context.Context, backe
 	}
 }
 
-func (hc *HealthCheck) execute(ctx context.Context, backend *BackendHealthCheck) {
+func (hc *HealthCheck) execute(ctx context.Context, backend *BackendConfig) {
 	log.Debugf("Initial health check for backend: %q", backend.name)
 	hc.checkBackend(backend)
 	ticker := time.NewTicker(backend.Interval)
@@ -121,7 +127,7 @@ func (hc *HealthCheck) execute(ctx context.Context, backend *BackendHealthCheck)
 	}
 }
 
-func (hc *HealthCheck) checkBackend(backend *BackendHealthCheck) {
+func (hc *HealthCheck) checkBackend(backend *BackendConfig) {
 	enabledURLs := backend.LB.Servers()
 	var newDisabledURLs []*url.URL
 	for _, url := range backend.disabledURLs {
@@ -152,38 +158,33 @@ func (hc *HealthCheck) checkBackend(backend *BackendHealthCheck) {
 	}
 }
 
-func (b *BackendHealthCheck) newRequest(serverURL *url.URL) (*http.Request, error) {
-	u := &url.URL{}
-	*u = *serverURL
-
-	if len(b.Scheme) > 0 {
-		u.Scheme = b.Scheme
-	}
-
-	if b.Port != 0 {
-		u.Host = net.JoinHostPort(u.Hostname(), strconv.Itoa(b.Port))
-	}
-
-	u.Path += b.Path
-
-	return http.NewRequest(http.MethodGet, u.String(), nil)
+// GetHealthCheck returns the health check which is guaranteed to be a singleton.
+func GetHealthCheck(metrics metricsRegistry) *HealthCheck {
+	once.Do(func() {
+		singleton = newHealthCheck(metrics)
+	})
+	return singleton
 }
 
-// this function adds additional http headers and hostname to http.request
-func (b *BackendHealthCheck) addHeadersAndHost(req *http.Request) *http.Request {
-	if b.Options.Hostname != "" {
-		req.Host = b.Options.Hostname
+func newHealthCheck(metrics metricsRegistry) *HealthCheck {
+	return &HealthCheck{
+		Backends: make(map[string]*BackendConfig),
+		metrics:  metrics,
 	}
+}
 
-	for k, v := range b.Options.Headers {
-		req.Header.Set(k, v)
+// NewBackendConfig Instantiate a new BackendConfig
+func NewBackendConfig(options Options, backendName string) *BackendConfig {
+	return &BackendConfig{
+		Options:        options,
+		name:           backendName,
+		requestTimeout: 5 * time.Second,
 	}
-	return req
 }
 
 // checkHealth returns a nil error in case it was successful and otherwise
 // a non-nil error with a meaningful description why the health check failed.
-func checkHealth(serverURL *url.URL, backend *BackendHealthCheck) error {
+func checkHealth(serverURL *url.URL, backend *BackendConfig) error {
 	req, err := backend.newRequest(serverURL)
 	if err != nil {
 		return fmt.Errorf("failed to create HTTP request: %s", err)

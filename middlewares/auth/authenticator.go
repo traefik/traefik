@@ -31,38 +31,43 @@ func NewAuthenticator(authConfig *types.Auth, tracingMiddleware *tracing.Tracing
 	if authConfig == nil {
 		return nil, fmt.Errorf("error creating Authenticator: auth is nil")
 	}
+
 	var err error
-	authenticator := Authenticator{}
-	tracingAuthenticator := tracingAuthenticator{}
+	authenticator := &Authenticator{}
+	tracingAuth := tracingAuthenticator{}
+
 	if authConfig.Basic != nil {
 		authenticator.users, err = parserBasicUsers(authConfig.Basic)
 		if err != nil {
 			return nil, err
 		}
+
 		basicAuth := goauth.NewBasicAuthenticator("traefik", authenticator.secretBasic)
-		tracingAuthenticator.handler = createAuthBasicHandler(basicAuth, authConfig)
-		tracingAuthenticator.name = "Auth Basic"
-		tracingAuthenticator.clientSpanKind = false
+		tracingAuth.handler = createAuthBasicHandler(basicAuth, authConfig)
+		tracingAuth.name = "Auth Basic"
+		tracingAuth.clientSpanKind = false
 	} else if authConfig.Digest != nil {
 		authenticator.users, err = parserDigestUsers(authConfig.Digest)
 		if err != nil {
 			return nil, err
 		}
+
 		digestAuth := goauth.NewDigestAuthenticator("traefik", authenticator.secretDigest)
-		tracingAuthenticator.handler = createAuthDigestHandler(digestAuth, authConfig)
-		tracingAuthenticator.name = "Auth Digest"
-		tracingAuthenticator.clientSpanKind = false
+		tracingAuth.handler = createAuthDigestHandler(digestAuth, authConfig)
+		tracingAuth.name = "Auth Digest"
+		tracingAuth.clientSpanKind = false
 	} else if authConfig.Forward != nil {
-		tracingAuthenticator.handler = createAuthForwardHandler(authConfig)
-		tracingAuthenticator.name = "Auth Forward"
-		tracingAuthenticator.clientSpanKind = true
+		tracingAuth.handler = createAuthForwardHandler(authConfig)
+		tracingAuth.name = "Auth Forward"
+		tracingAuth.clientSpanKind = true
 	}
+
 	if tracingMiddleware != nil {
-		authenticator.handler = tracingMiddleware.NewNegroniHandlerWrapper(tracingAuthenticator.name, tracingAuthenticator.handler, tracingAuthenticator.clientSpanKind)
+		authenticator.handler = tracingMiddleware.NewNegroniHandlerWrapper(tracingAuth.name, tracingAuth.handler, tracingAuth.clientSpanKind)
 	} else {
-		authenticator.handler = tracingAuthenticator.handler
+		authenticator.handler = tracingAuth.handler
 	}
-	return &authenticator, nil
+	return authenticator, nil
 }
 
 func createAuthForwardHandler(authConfig *types.Auth) negroni.HandlerFunc {

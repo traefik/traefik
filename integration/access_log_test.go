@@ -102,7 +102,7 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontend(c *check.C) {
 			formatOnly:   false,
 			code:         "401",
 			user:         "-",
-			frontendName: "Auth for frontend-Host-frontend-auth-docker-local",
+			frontendName: "Basic Auth for frontend-Host-frontend-auth-docker-local",
 			backendURL:   "/",
 		},
 	}
@@ -354,7 +354,7 @@ func (s *AccessLogSuite) TestAccessLogEntrypointRedirect(c *check.C) {
 			formatOnly:   false,
 			code:         "302",
 			user:         "-",
-			frontendName: "entrypoint redirect for frontend-",
+			frontendName: "entrypoint redirect for httpRedirect",
 			backendURL:   "/",
 		},
 		{

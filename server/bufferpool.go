@@ -2,7 +2,7 @@ package server
 
 import "sync"
 
-const bufferPoolSize int = 32 * 1024
+const bufferPoolSize = 32 * 1024
 
 func newBufferPool() *bufferPool {
 	return &bufferPool{
