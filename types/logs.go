@@ -3,6 +3,8 @@ package types
 import (
 	"fmt"
 	"strings"
+
+	"github.com/containous/flaeg/parse"
 )
 
 const (
@@ -31,8 +33,9 @@ type AccessLog struct {
 
 // AccessLogFilters holds filters configuration
 type AccessLogFilters struct {
-	StatusCodes   StatusCodes `json:"statusCodes,omitempty" description:"Keep access logs with status codes in the specified range" export:"true"`
-	RetryAttempts bool        `json:"retryAttempts,omitempty" description:"Keep access logs when at least one retry happened" export:"true"`
+	StatusCodes   StatusCodes    `json:"statusCodes,omitempty" description:"Keep access logs with status codes in the specified range" export:"true"`
+	RetryAttempts bool           `json:"retryAttempts,omitempty" description:"Keep access logs when at least one retry happened" export:"true"`
+	MinDuration   parse.Duration `json:"duration,omitempty" description:"Keep access logs when request took longer than the specified duration" export:"true"`
 }
 
 // FieldHeaders holds configuration for access log headers

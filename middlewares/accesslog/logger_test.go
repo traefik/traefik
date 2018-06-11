@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -35,6 +36,7 @@ var (
 	testReferer             = "testReferer"
 	testUserAgent           = "testUserAgent"
 	testRetryAttempts       = 2
+	testStart               = time.Now()
 )
 
 func TestLogRotation(t *testing.T) {
@@ -382,6 +384,28 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
 		},
 		{
+			desc: "Duration filter not matching",
+			config: &types.AccessLog{
+				FilePath: "",
+				Format:   CommonFormat,
+				Filters: &types.AccessLogFilters{
+					MinDuration: parse.Duration(1 * time.Hour),
+				},
+			},
+			expectedLog: ``,
+		},
+		{
+			desc: "Duration filter matching",
+			config: &types.AccessLog{
+				FilePath: "",
+				Format:   CommonFormat,
+				Filters: &types.AccessLogFilters{
+					MinDuration: parse.Duration(1 * time.Millisecond),
+				},
+			},
+			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
+		},
+		{
 			desc: "Retry attempts filter matching",
 			config: &types.AccessLog{
 				FilePath: "",
@@ -521,32 +545,37 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 }
 
 func assertValidLogData(t *testing.T, expected string, logData []byte) {
-	if len(expected) > 0 {
-		result, err := ParseAccessLog(string(logData))
-		require.NoError(t, err)
 
-		resultExpected, err := ParseAccessLog(expected)
-		require.NoError(t, err)
-
-		formatErrMessage := fmt.Sprintf(`
-		Expected: %s
-		Actual:   %s`, expected, string(logData))
-
-		require.Equal(t, len(resultExpected), len(result), formatErrMessage)
-		assert.Equal(t, resultExpected[ClientHost], result[ClientHost], formatErrMessage)
-		assert.Equal(t, resultExpected[ClientUsername], result[ClientUsername], formatErrMessage)
-		assert.Equal(t, resultExpected[RequestMethod], result[RequestMethod], formatErrMessage)
-		assert.Equal(t, resultExpected[RequestPath], result[RequestPath], formatErrMessage)
-		assert.Equal(t, resultExpected[RequestProtocol], result[RequestProtocol], formatErrMessage)
-		assert.Equal(t, resultExpected[OriginStatus], result[OriginStatus], formatErrMessage)
-		assert.Equal(t, resultExpected[OriginContentSize], result[OriginContentSize], formatErrMessage)
-		assert.Equal(t, resultExpected[RequestRefererHeader], result[RequestRefererHeader], formatErrMessage)
-		assert.Equal(t, resultExpected[RequestUserAgentHeader], result[RequestUserAgentHeader], formatErrMessage)
-		assert.Regexp(t, regexp.MustCompile("[0-9]*"), result[RequestCount], formatErrMessage)
-		assert.Equal(t, resultExpected[FrontendName], result[FrontendName], formatErrMessage)
-		assert.Equal(t, resultExpected[BackendURL], result[BackendURL], formatErrMessage)
-		assert.Regexp(t, regexp.MustCompile("[0-9]*ms"), result[Duration], formatErrMessage)
+	if len(expected) == 0 {
+		assert.Zero(t, len(logData))
+		t.Log(string(logData))
+		return
 	}
+
+	result, err := ParseAccessLog(string(logData))
+	require.NoError(t, err)
+
+	resultExpected, err := ParseAccessLog(expected)
+	require.NoError(t, err)
+
+	formatErrMessage := fmt.Sprintf(`
+	Expected: %s
+	Actual:   %s`, expected, string(logData))
+
+	require.Equal(t, len(resultExpected), len(result), formatErrMessage)
+	assert.Equal(t, resultExpected[ClientHost], result[ClientHost], formatErrMessage)
+	assert.Equal(t, resultExpected[ClientUsername], result[ClientUsername], formatErrMessage)
+	assert.Equal(t, resultExpected[RequestMethod], result[RequestMethod], formatErrMessage)
+	assert.Equal(t, resultExpected[RequestPath], result[RequestPath], formatErrMessage)
+	assert.Equal(t, resultExpected[RequestProtocol], result[RequestProtocol], formatErrMessage)
+	assert.Equal(t, resultExpected[OriginStatus], result[OriginStatus], formatErrMessage)
+	assert.Equal(t, resultExpected[OriginContentSize], result[OriginContentSize], formatErrMessage)
+	assert.Equal(t, resultExpected[RequestRefererHeader], result[RequestRefererHeader], formatErrMessage)
+	assert.Equal(t, resultExpected[RequestUserAgentHeader], result[RequestUserAgentHeader], formatErrMessage)
+	assert.Regexp(t, regexp.MustCompile("[0-9]*"), result[RequestCount], formatErrMessage)
+	assert.Equal(t, resultExpected[FrontendName], result[FrontendName], formatErrMessage)
+	assert.Equal(t, resultExpected[BackendURL], result[BackendURL], formatErrMessage)
+	assert.Regexp(t, regexp.MustCompile("[0-9]*ms"), result[Duration], formatErrMessage)
 }
 
 func captureStdout(t *testing.T) (out *os.File, restoreStdout func()) {
@@ -608,4 +637,6 @@ func logWriterTestHandlerFunc(rw http.ResponseWriter, r *http.Request) {
 	logDataTable.Core[OriginStatus] = testStatus
 	logDataTable.Core[OriginContentSize] = testContentSize
 	logDataTable.Core[RetryAttempts] = testRetryAttempts
+	logDataTable.Core[StartUTC] = testStart.UTC()
+	logDataTable.Core[StartLocal] = testStart.Local()
 }
