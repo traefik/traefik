@@ -76,7 +76,7 @@ swarmMode = false
 #
 # Optional
 #
-network = "web"
+defaultNetwork = "web"
 
 # Enable docker TLS connection.
 #
@@ -137,7 +137,7 @@ swarmMode = true
 #
 # Optional
 #
-network = "web"
+defaultNetwork = "web"
 
 # Override default configuration template.
 # For advanced users :)

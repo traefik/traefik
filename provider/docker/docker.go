@@ -45,7 +45,7 @@ type Provider struct {
 	ExposedByDefault      bool             `description:"Expose containers by default" export:"true"`
 	UseBindPortIP         bool             `description:"Use the ip address from the bound port, rather than from the inner network" export:"true"`
 	SwarmMode             bool             `description:"Use Docker on Swarm Mode" export:"true"`
-	Network               string           `description:"Default Docker network used" export:"true"`
+	DefaultNetwork        string           `description:"Default Docker network used" export:"true"`
 }
 
 // dockerData holds the need data to the Provider p
