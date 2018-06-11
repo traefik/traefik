@@ -287,6 +287,7 @@ More information are available in the  [User Guide](/user-guide/kubernetes/#add-
 ### Global Default Backend Ingresses
 
 Ingresses can be created that look like the following:
+
 ```yaml
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -297,8 +298,9 @@ spec:
     serviceName: stilton
     servicePort: 80
 ```
+
 This ingress follows the [Global Default Backend](https://kubernetes.io/docs/concepts/services-networking/ingress/#the-ingress-resource) property of ingresses.
 This will allow users to create a "default backend" that will match all unmatched requests.
 
 !!! note
-    Due to traefik's use of priorities, you may have to set this ingress priority lower than other ingresses in your environment, to avoid this global ingress from satisfying requests that _could_ match other ingresses.
+    Due to Træfik's use of priorities, you may have to set this ingress priority lower than other ingresses in your environment, to avoid this global ingress from satisfying requests that _could_ match other ingresses.

@@ -1516,13 +1516,13 @@ func TestKubeAPIErrors(t *testing.T) {
 			if _, err := provider.loadIngresses(client); err != nil {
 				switch {
 				case client.apiServiceError != nil:
-					expected := errors.New("Error while retrieving service information from k8s API testing/service1: failed kube api call")
+					expected := errors.New("error while retrieving service information from k8s API testing/service1: failed kube api call")
 					if err.Error() != expected.Error() {
 						t.Errorf("Got error: %+v, wanted error: %+v, provided: %v", err, expected, client.apiServiceError)
 					}
 
 				case client.apiEndpointsError != nil:
-					expected := errors.New("Error retrieving endpoint information from k8s API testing/service1: failed kube api call")
+					expected := errors.New("error retrieving endpoint information from k8s API testing/service1: failed kube api call")
 					if err.Error() != expected.Error() {
 						t.Errorf("Got error: %+v, wanted error: %+v, provided: %v", err, expected, client.apiServiceError)
 					}

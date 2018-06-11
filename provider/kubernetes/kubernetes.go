@@ -207,7 +207,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 					service, exists, err := k8sClient.GetService(i.Namespace, i.Spec.Backend.ServiceName)
 					if err != nil {
-						return nil, fmt.Errorf("Error while retrieving service information from k8s API %s/%s: %v", i.Namespace, i.Spec.Backend.ServiceName, err)
+						return nil, fmt.Errorf("error while retrieving service information from k8s API %s/%s: %v", i.Namespace, i.Spec.Backend.ServiceName, err)
 					}
 					if !exists {
 						log.Errorf("Service not found for %s/%s", i.Namespace, i.Spec.Backend.ServiceName)
@@ -221,7 +221,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 					endpoints, exists, err := k8sClient.GetEndpoints(service.Namespace, service.Name)
 					if err != nil {
-						return nil, fmt.Errorf("Error retrieving endpoint information from k8s API %s/%s: %v", service.Namespace, service.Name, err)
+						return nil, fmt.Errorf("error retrieving endpoint information from k8s API %s/%s: %v", service.Namespace, service.Name, err)
 					}
 					if !exists {
 						log.Warnf("Endpoints not found for %s/%s", service.Namespace, service.Name)
@@ -363,7 +363,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 				service, exists, err := k8sClient.GetService(i.Namespace, pa.Backend.ServiceName)
 				if err != nil {
-					return nil, fmt.Errorf("Error while retrieving service information from k8s API %s/%s: %v", i.Namespace, pa.Backend.ServiceName, err)
+					return nil, fmt.Errorf("error while retrieving service information from k8s API %s/%s: %v", i.Namespace, pa.Backend.ServiceName, err)
 				}
 
 				if !exists {
@@ -398,7 +398,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						} else {
 							endpoints, exists, err := k8sClient.GetEndpoints(service.Namespace, service.Name)
 							if err != nil {
-								return nil, fmt.Errorf("Error retrieving endpoint information from k8s API %s/%s: %v", service.Namespace, service.Name, err)
+								return nil, fmt.Errorf("error retrieving endpoint information from k8s API %s/%s: %v", service.Namespace, service.Name, err)
 							}
 
 							if !exists {
