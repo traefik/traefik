@@ -189,7 +189,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 		if _, ok := i.Annotations[annotationPercentageWeights]; ok {
 			fractionalAllocator, err := newFractionalWeightAllocator(i, k8sClient)
 			if err != nil {
-				log.Warnf("Failed to read backend percentage weights for ingress %s/%s: %v", i.Namespace, i.Name, err)
+				log.Warnf("Failed to create fractional weight allocator for ingress %s/%s: %v", i.Namespace, i.Name, err)
 				weightAllocator = &defaultWeightAllocator{}
 			} else {
 				weightAllocator = fractionalAllocator
@@ -286,7 +286,6 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				templateObjects.Backends[baseName].Buffering = getBuffering(service)
 
 				protocol := label.DefaultProtocol
-				serverWeight := label.DefaultWeight
 
 				for _, port := range service.Spec.Ports {
 					if equalPorts(port, pa.Backend.ServicePort) {
@@ -302,7 +301,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 							templateObjects.Backends[baseName].Servers[url] = types.Server{
 								URL:    url,
-								Weight: serverWeight,
+								Weight: label.DefaultWeight,
 							}
 						} else {
 							endpoints, exists, err := k8sClient.GetEndpoints(service.Namespace, service.Name)

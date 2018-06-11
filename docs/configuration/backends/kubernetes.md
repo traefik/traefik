@@ -212,7 +212,7 @@ Trying to do so leads to an error and the corresponding Ingress object being ign
 ```yaml
 service_backend1: 1% # Note that the field names must match service names referenced in the Ingress object.
 service_backend2: 33.33%
-service_backend3: 33.33% # Same as 33.33%, the percentage sign is optional
+service_backend3: 33.33 # Same as 33.33%, the percentage sign is optional
 ```
 
 <6> `traefik.ingress.kubernetes.io/whitelist-source-range`:

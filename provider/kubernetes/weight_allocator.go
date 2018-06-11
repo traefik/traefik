@@ -72,7 +72,7 @@ func newFractionalWeightAllocator(ingress *extensionsv1beta1.Ingress, client Cli
 
 				fractionalPathWeights[pa.Path] = fractionalPathWeights[pa.Path].sub(weight)
 				if fractionalPathWeights[pa.Path].toFloat64() < 0 {
-					return nil, fmt.Errorf("percentage value %s out of range", fractionalPathWeights[pa.Path].String())
+					return nil, fmt.Errorf("percentage value %s is out of range", fractionalPathWeights[pa.Path].String())
 				}
 			} else {
 				fractionalPathServices[pa.Path] = append(fractionalPathServices[pa.Path], pa.Backend.ServiceName)
@@ -113,6 +113,26 @@ func (f *fractionalWeightAllocator) getWeight(host, path, serviceName string) in
 	}]
 }
 
+func getServicesPercentageWeights(ingress *extensionsv1beta1.Ingress) (map[string]percentageValue, error) {
+	percentageWeight := make(map[string]string)
+
+	annotationPercentageWeights := getAnnotationName(ingress.Annotations, annotationKubernetesServiceWeights)
+	if err := yaml.Unmarshal([]byte(ingress.Annotations[annotationPercentageWeights]), percentageWeight); err != nil {
+		return nil, err
+	}
+
+	servicesPercentageWeights := make(map[string]percentageValue)
+	for serviceName, percentageStr := range percentageWeight {
+		percentageValue, err := newPercentageValueFromString(percentageStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid percentage value %q", percentageStr)
+		}
+
+		servicesPercentageWeights[serviceName] = percentageValue
+	}
+	return servicesPercentageWeights, nil
+}
+
 func getServiceInstanceCounts(ingress *extensionsv1beta1.Ingress, client Client) (map[ingressService]int, error) {
 	serviceInstanceCounts := map[ingressService]int{}
 
@@ -121,10 +141,10 @@ func getServiceInstanceCounts(ingress *extensionsv1beta1.Ingress, client Client)
 			count := 0
 			endpoints, exists, err := client.GetEndpoints(ingress.Namespace, pa.Backend.ServiceName)
 			if err != nil {
-				return nil, fmt.Errorf("fail to get endpoints %s/%s: %v", ingress.Namespace, pa.Backend.ServiceName, err)
+				return nil, fmt.Errorf("failed to get endpoints %s/%s: %v", ingress.Namespace, pa.Backend.ServiceName, err)
 			}
 			if !exists {
-				return nil, fmt.Errorf("fail to get endpoints %s/%s: non-existent endpoint", ingress.Namespace, pa.Backend.ServiceName)
+				return nil, fmt.Errorf("Endpoints not found for %s/%s", ingress.Namespace, pa.Backend.ServiceName)
 			}
 
 			for _, subset := range endpoints.Subsets {
@@ -140,24 +160,4 @@ func getServiceInstanceCounts(ingress *extensionsv1beta1.Ingress, client Client)
 	}
 
 	return serviceInstanceCounts, nil
-}
-
-func getServicesPercentageWeights(ingress *extensionsv1beta1.Ingress) (map[string]percentageValue, error) {
-	percentageWeight := make(map[string]string)
-
-	annotationPercentageWeights := getAnnotationName(ingress.Annotations, annotationKubernetesServiceWeights)
-	if err := yaml.Unmarshal([]byte(ingress.Annotations[annotationPercentageWeights]), percentageWeight); err != nil {
-		return nil, err
-	}
-
-	servicesPercentageWeights := make(map[string]percentageValue)
-	for serviceName, percentageStr := range percentageWeight {
-		percentageValue, err := newPercentageValueFromString(percentageStr)
-		if err != nil {
-			return nil, fmt.Errorf("invalid percentage value %q in ingress: %v", percentageStr, err)
-		}
-
-		servicesPercentageWeights[serviceName] = percentageValue
-	}
-	return servicesPercentageWeights, nil
 }
