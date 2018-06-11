@@ -355,7 +355,7 @@ And there, the same dynamic configuration in a KV Store (using `prefix = "traefi
 |---------------------------------------|-----------------------|
 | `/traefik/tls/2/entrypoints`          | `https,other-https`   |
 | `/traefik/tls/2/certificate/certfile` | `<cert file content>` |
-| `/traefik/tls/2/certificate/keyfile` | `<key file content>`  |
+| `/traefik/tls/2/certificate/keyfile`  | `<key file content>`  |
 
 ### Atomic configuration changes
 
