@@ -54,11 +54,14 @@ func (l *Lambda) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	svc := lambda.New(sess, cfg)
 	body, err := ioutil.ReadAll(r.Body)
 	jsonString, _ := json.Marshal(
-		map[string]string{
-			"X-Request-Context": r.Header.Get("X-Request-Context"),
-			"X-User-Context": r.Header.Get("X-User-Context"),
-			"X-Original-Request-Method": r.Method,
-			"X-Original-Request-Url": r.RequestURI,
+		map[string]map[string]string{
+			"custom": {
+				"X-Request-Context":         r.Header.Get("X-Request-Context"),
+				"X-User-Context":            r.Header.Get("X-User-Context"),
+				"X-Original-Request-Method": r.Method,
+				"X-Original-Request-Url":    r.URL.RawPath,
+				"X-Original-Request-Query":  r.URL.RawQuery,
+			},
 		},
 	)
 	userContext := string(base64.StdEncoding.EncodeToString([]byte(jsonString)))
