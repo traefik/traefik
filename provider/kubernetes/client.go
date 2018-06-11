@@ -9,6 +9,7 @@ import (
 	"github.com/containous/traefik/log"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	kubeerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/informers"
@@ -171,15 +172,11 @@ func (c *clientImpl) GetIngresses() []*extensionsv1beta1.Ingress {
 func (c *clientImpl) UpdateIngressStatus(namespace, name, ip, hostname string) error {
 	keyName := namespace + "/" + name
 
-	item, exists, err := c.factories[c.lookupNamespace(namespace)].Extensions().V1beta1().Ingresses().Informer().GetStore().GetByKey(keyName)
+	ing, err := c.factories[c.lookupNamespace(namespace)].Extensions().V1beta1().Ingresses().Lister().Ingresses(namespace).Get(name)
 	if err != nil {
 		return fmt.Errorf("failed to get ingress %s with error: %v", keyName, err)
 	}
-	if !exists {
-		return fmt.Errorf("failed to update ingress %s because it does not exist", keyName)
-	}
 
-	ing := item.(*extensionsv1beta1.Ingress)
 	if len(ing.Status.LoadBalancer.Ingress) > 0 {
 		if ing.Status.LoadBalancer.Ingress[0].Hostname == hostname && ing.Status.LoadBalancer.Ingress[0].IP == ip {
 			// If status is already set, skip update
@@ -200,32 +197,30 @@ func (c *clientImpl) UpdateIngressStatus(namespace, name, ip, hostname string) e
 
 // GetService returns the named service from the given namespace.
 func (c *clientImpl) GetService(namespace, name string) (*corev1.Service, bool, error) {
-	var service *corev1.Service
-	item, exists, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Services().Informer().GetStore().GetByKey(namespace + "/" + name)
-	if item != nil {
-		service = item.(*corev1.Service)
+	service, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Services().Lister().Services(namespace).Get(name)
+	if err != nil {
+		return nil, !kubeerror.IsNotFound(err), err
 	}
-	return service, exists, err
+	return service, true, nil
 }
 
 // GetEndpoints returns the named endpoints from the given namespace.
 func (c *clientImpl) GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error) {
-	var endpoint *corev1.Endpoints
-	item, exists, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Endpoints().Informer().GetStore().GetByKey(namespace + "/" + name)
-	if item != nil {
-		endpoint = item.(*corev1.Endpoints)
+	endpoint, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Endpoints().Lister().Endpoints(namespace).Get(name)
+	if err != nil {
+		return nil, !kubeerror.IsNotFound(err), err
 	}
-	return endpoint, exists, err
+	return endpoint, true, nil
 }
 
 // GetSecret returns the named secret from the given namespace.
 func (c *clientImpl) GetSecret(namespace, name string) (*corev1.Secret, bool, error) {
 	var secret *corev1.Secret
-	item, exists, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Secrets().Informer().GetStore().GetByKey(namespace + "/" + name)
-	if err == nil && item != nil {
-		secret = item.(*corev1.Secret)
+	secret, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Secrets().Lister().Secrets(namespace).Get(name)
+	if err != nil {
+		return nil, !kubeerror.IsNotFound(err), err
 	}
-	return secret, exists, err
+	return secret, true, nil
 }
 
 // lookupNamespace returns the lookup namespace key for the given namespace.
