@@ -18,7 +18,7 @@ logLevel = "INFO"
   [accessLog.filters]
     statusCodes = ["200", "300-302"]
     retryAttempts = true
-    duration = "10ms"
+    minDuration = "10ms"
 
   [accessLog.fields]
     defaultMode = "keep"
@@ -47,7 +47,7 @@ For more information about the CLI, see the documentation about [Traefik command
 --accessLog.format="json"
 --accessLog.filters.statusCodes="200,300-302"
 --accessLog.filters.retryAttempts="true"
---accessLog.filters.duration="10ms"
+--accessLog.filters.minDuration="10ms"
 --accessLog.fields.defaultMode="keep"
 --accessLog.fields.names="Username=drop Hostname=drop"
 --accessLog.fields.headers.defaultMode="keep"
@@ -148,26 +148,26 @@ format = "json"
 
   [accessLog.filters]
 
-  # statusCodes keep access logs with status codes in the specified range
+  # statusCodes: keep access logs with status codes in the specified range
   #
   # Optional
   # Default: []
   #
   statusCodes = ["200", "300-302"]
 
-  # retryAttempts keep access logs when at least one retry happened
+  # retryAttempts: keep access logs when at least one retry happened
   #
   # Optional
   # Default: false
   #
   retryAttempts = true
 
-  # duration keep access logs when request took more than the specified duration
+  # minDuration: keep access logs when request took longer than the specified duration
   #
   # Optional
   # Default: 0
   #
-  duration = "10ms"
+  minDuration = "10ms"
 ```
 
 To customize logs format:

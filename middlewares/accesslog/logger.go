@@ -311,7 +311,7 @@ func (l *LogHandler) keepAccessLog(statusCode, retryAttempts int, duration time.
 		return true
 	}
 
-	if len(l.httpCodeRanges) == 0 && !l.config.Filters.RetryAttempts && l.config.Filters.Duration == 0 {
+	if len(l.httpCodeRanges) == 0 && !l.config.Filters.RetryAttempts && l.config.Filters.MinDuration == 0 {
 		// empty filters were specified, e.g. by passing --accessLog.filters only (without other filter options)
 		return true
 	}
@@ -324,7 +324,7 @@ func (l *LogHandler) keepAccessLog(statusCode, retryAttempts int, duration time.
 		return true
 	}
 
-	if l.config.Filters.Duration > 0 && (parse.Duration(duration) > l.config.Filters.Duration) {
+	if l.config.Filters.MinDuration > 0 && (parse.Duration(duration) > l.config.Filters.MinDuration) {
 		return true
 	}
 

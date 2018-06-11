@@ -35,7 +35,7 @@ type AccessLog struct {
 type AccessLogFilters struct {
 	StatusCodes   StatusCodes    `json:"statusCodes,omitempty" description:"Keep access logs with status codes in the specified range" export:"true"`
 	RetryAttempts bool           `json:"retryAttempts,omitempty" description:"Keep access logs when at least one retry happened" export:"true"`
-	Duration      parse.Duration `json:"duration,omitempty" description:"Keep access logs with response times above the specific duration" export:"true"`
+	MinDuration   parse.Duration `json:"duration,omitempty" description:"Keep access logs when request took longer than the specified duration" export:"true"`
 }
 
 // FieldHeaders holds configuration for access log headers
