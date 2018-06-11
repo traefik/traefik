@@ -72,7 +72,7 @@ usebindportip = true
 swarmMode = false
 
 # Define a default docker network to use for connections to all containers.
-# Can be overriden by the traefik.docker.network label.
+# Can be overridden by the traefik.docker.network label.
 #
 # Optional
 #
@@ -133,7 +133,7 @@ watch = true
 swarmMode = true
 
 # Define a default docker network to use for connections to all containers.
-# Can be overriden by the traefik.docker.network label.
+# Can be overridden by the traefik.docker.network label.
 #
 # Optional
 #
