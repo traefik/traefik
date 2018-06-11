@@ -32,8 +32,13 @@ import (
 var _ provider.Provider = (*Provider)(nil)
 
 const (
+	ruleTypePath               = "Path"
 	ruleTypePathPrefix         = "PathPrefix"
+	ruleTypePathStrip          = "PathStrip"
+	ruleTypePathPrefixStrip    = "PathPrefixStrip"
+	ruleTypeAddPrefix          = "AddPrefix"
 	ruleTypeReplacePath        = "ReplacePath"
+	ruleTypeReplacePathRegex   = "ReplacePathRegex"
 	traefikDefaultRealm        = "traefik"
 	traefikDefaultIngressClass = "traefik"
 	defaultBackendName         = "global-default-backend"
@@ -511,6 +516,17 @@ func getRuleForPath(pa extensionsv1beta1.HTTPIngressPath, i *extensionsv1beta1.I
 	}
 
 	ruleType := getStringValue(i.Annotations, annotationKubernetesRuleType, ruleTypePathPrefix)
+
+	switch ruleType {
+	case ruleTypePath, ruleTypePathPrefix, ruleTypePathStrip, ruleTypePathPrefixStrip:
+	case ruleTypeReplacePath:
+		log.Warnf("Using %s as %s will be deprecated in the future. Please use the %s annotation instead", ruleType, annotationKubernetesRuleType, annotationKubernetesRequestModifier)
+	case "":
+		return "", fmt.Errorf("cannot use empty rule")
+	default:
+		return "", fmt.Errorf("cannot use non-matcher rule: %q", ruleType)
+	}
+
 	rules := []string{ruleType + ":" + pa.Path}
 
 	var pathReplaceAnnotation string
@@ -532,7 +548,46 @@ func getRuleForPath(pa extensionsv1beta1.HTTPIngressPath, i *extensionsv1beta1.I
 		}
 		rules = append(rules, ruleTypeReplacePath+":"+rootPath)
 	}
+
+	if requestModifier := getStringValue(i.Annotations, annotationKubernetesRequestModifier, ""); requestModifier != "" {
+		rule, err := parseRequestModifier(requestModifier, ruleType)
+		if err != nil {
+			return "", err
+		}
+
+		rules = append(rules, rule)
+	}
 	return strings.Join(rules, ";"), nil
+}
+
+func parseRequestModifier(requestModifier, ruleType string) (string, error) {
+	trimmedRequestModifier := strings.TrimRight(requestModifier, " :")
+	if trimmedRequestModifier == "" {
+		return "", fmt.Errorf("rule %q is empty", requestModifier)
+	}
+
+	// Split annotation to determine modifier type
+	modifierParts := strings.Split(trimmedRequestModifier, ":")
+	if len(modifierParts) < 2 {
+		return "", fmt.Errorf("rule %q is missing type or value", requestModifier)
+	}
+
+	modifier := strings.TrimSpace(modifierParts[0])
+	value := strings.TrimSpace(modifierParts[1])
+
+	switch modifier {
+	case ruleTypeAddPrefix, ruleTypeReplacePath, ruleTypeReplacePathRegex:
+		if ruleType == ruleTypeReplacePath {
+			return "", fmt.Errorf("cannot use '%s: %s' and '%s: %s', as this leads to rule duplication, and unintended behavior",
+				annotationKubernetesRuleType, ruleTypeReplacePath, annotationKubernetesRequestModifier, modifier)
+		}
+	case "":
+		return "", fmt.Errorf("cannot use empty rule")
+	default:
+		return "", fmt.Errorf("cannot use non-modifier rule: %q", modifier)
+	}
+
+	return modifier + ":" + value, nil
 }
 
 func getRuleForHost(host string) string {

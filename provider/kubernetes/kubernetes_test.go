@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -371,9 +372,9 @@ func TestRuleType(t *testing.T) {
 			frontendRuleType: "PathStrip",
 		},
 		{
-			desc:             "PathStripPrefix rule type annotation set",
-			ingressRuleType:  "PathStripPrefix",
-			frontendRuleType: "PathStripPrefix",
+			desc:             "PathPrefixStrip rule type annotation set",
+			ingressRuleType:  "PathPrefixStrip",
+			frontendRuleType: "PathPrefixStrip",
 		},
 	}
 
@@ -389,10 +390,8 @@ func TestRuleType(t *testing.T) {
 				),
 			)))
 
-			if test.ingressRuleType != "" {
-				ingress.Annotations = map[string]string{
-					annotationKubernetesRuleType: test.ingressRuleType,
-				}
+			ingress.Annotations = map[string]string{
+				annotationKubernetesRuleType: test.ingressRuleType,
 			}
 
 			service := buildService(
@@ -419,6 +418,197 @@ func TestRuleType(t *testing.T) {
 			))
 
 			assert.Equal(t, expected, actualConfig.Frontends)
+		})
+	}
+}
+
+func TestRuleFails(t *testing.T) {
+	tests := []struct {
+		desc                      string
+		ruletypeAnnotation        string
+		requestModifierAnnotation string
+	}{
+		{
+			desc:               "Rule-type using unknown rule",
+			ruletypeAnnotation: "Foo: /bar",
+		},
+		{
+			desc:               "Rule type full of spaces",
+			ruletypeAnnotation: "  ",
+		},
+		{
+			desc:               "Rule type missing both parts of rule",
+			ruletypeAnnotation: "  :  ",
+		},
+		{
+			desc:                      "Rule type combined with replacepath modifier",
+			ruletypeAnnotation:        "ReplacePath",
+			requestModifierAnnotation: "ReplacePath:/foo",
+		},
+		{
+			desc:                      "Rule type combined with replacepathregex modifier",
+			ruletypeAnnotation:        "ReplacePath",
+			requestModifierAnnotation: "ReplacePathRegex:/foo /bar",
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			ingress := buildIngress(iRules(iRule(
+				iHost("host"),
+				iPaths(
+					onePath(iPath("/path"), iBackend("service", intstr.FromInt(80))),
+				),
+			)))
+
+			ingress.Annotations = map[string]string{
+				annotationKubernetesRuleType:        test.ruletypeAnnotation,
+				annotationKubernetesRequestModifier: test.requestModifierAnnotation,
+			}
+
+			_, err := getRuleForPath(extensionsv1beta1.HTTPIngressPath{Path: "/path"}, ingress)
+			assert.Error(t, err)
+		})
+	}
+}
+
+func TestModifierType(t *testing.T) {
+	tests := []struct {
+		desc                      string
+		requestModifierAnnotation string
+		expectedModifierRule      string
+	}{
+		{
+			desc: "Request modifier annotation missing",
+			requestModifierAnnotation: "",
+			expectedModifierRule:      "",
+		},
+		{
+			desc: "AddPrefix modifier annotation",
+			requestModifierAnnotation: " AddPrefix: /foo",
+			expectedModifierRule:      "AddPrefix:/foo",
+		},
+		{
+			desc: "ReplacePath modifier annotation",
+			requestModifierAnnotation: " ReplacePath: /foo",
+			expectedModifierRule:      "ReplacePath:/foo",
+		},
+		{
+			desc: "ReplacePathRegex modifier annotation",
+			requestModifierAnnotation: " ReplacePathRegex: /foo /bar",
+			expectedModifierRule:      "ReplacePathRegex:/foo /bar",
+		},
+		{
+			desc: "AddPrefix modifier annotation",
+			requestModifierAnnotation: "AddPrefix:/foo",
+			expectedModifierRule:      "AddPrefix:/foo",
+		},
+		{
+			desc: "ReplacePath modifier annotation",
+			requestModifierAnnotation: "ReplacePath:/foo",
+			expectedModifierRule:      "ReplacePath:/foo",
+		},
+		{
+			desc: "ReplacePathRegex modifier annotation",
+			requestModifierAnnotation: "ReplacePathRegex:/foo /bar",
+			expectedModifierRule:      "ReplacePathRegex:/foo /bar",
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			ingress := buildIngress(iRules(iRule(
+				iHost("host"),
+				iPaths(
+					onePath(iPath("/path"), iBackend("service", intstr.FromInt(80))),
+				),
+			)))
+
+			ingress.Annotations = map[string]string{
+				annotationKubernetesRequestModifier: test.requestModifierAnnotation,
+			}
+
+			service := buildService(
+				sName("service"),
+				sUID("1"),
+				sSpec(sPorts(sPort(801, "http"))),
+			)
+
+			watchChan := make(chan interface{})
+			client := clientMock{
+				ingresses: []*extensionsv1beta1.Ingress{ingress},
+				services:  []*corev1.Service{service},
+				watchChan: watchChan,
+			}
+
+			provider := Provider{DisablePassHostHeaders: true}
+
+			actualConfig, err := provider.loadIngresses(client)
+			require.NoError(t, err, "error loading ingresses")
+
+			expectedRules := []string{"PathPrefix:/path"}
+			if len(test.expectedModifierRule) > 0 {
+				expectedRules = append(expectedRules, test.expectedModifierRule)
+			}
+
+			expected := buildFrontends(frontend("host/path",
+				routes(
+					route("/path", strings.Join(expectedRules, ";")),
+					route("host", "Host:host")),
+			))
+
+			assert.Equal(t, expected, actualConfig.Frontends)
+		})
+	}
+}
+
+func TestModifierFails(t *testing.T) {
+	tests := []struct {
+		desc                      string
+		requestModifierAnnotation string
+	}{
+		{
+			desc: "Request modifier missing part of annotation",
+			requestModifierAnnotation: "AddPrefix: ",
+		},
+		{
+			desc: "Request modifier full of spaces annotation",
+			requestModifierAnnotation: "    ",
+		},
+		{
+			desc: "Request modifier missing both parts of annotation",
+			requestModifierAnnotation: "  :  ",
+		},
+		{
+			desc: "Request modifier using unknown rule",
+			requestModifierAnnotation: "Foo: /bar",
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			ingress := buildIngress(iRules(iRule(
+				iHost("host"),
+				iPaths(
+					onePath(iPath("/path"), iBackend("service", intstr.FromInt(80))),
+				),
+			)))
+
+			ingress.Annotations = map[string]string{
+				annotationKubernetesRequestModifier: test.requestModifierAnnotation,
+			}
+
+			_, err := getRuleForPath(extensionsv1beta1.HTTPIngressPath{Path: "/path"}, ingress)
+			assert.Error(t, err)
 		})
 	}
 }
