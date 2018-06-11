@@ -497,7 +497,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 			provider := &Provider{
 				Domain:           "docker.localhost",
 				ExposedByDefault: true,
-				DefaultNetwork:   "webnet",
+				Network:          "webnet",
 			}
 			actualConfig := provider.buildConfigurationV2(dockerDataList)
 			require.NotNil(t, actualConfig, "actualConfig")
@@ -1059,7 +1059,7 @@ func TestDockerGetIPAddress(t *testing.T) {
 			dData.SegmentLabels = segmentProperties[""]
 
 			provider := &Provider{}
-			provider.DefaultNetwork = "webnet"
+			provider.Network = "webnet"
 
 			actual := provider.getIPAddress(dData)
 			assert.Equal(t, test.expected, actual)
