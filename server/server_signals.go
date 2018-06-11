@@ -22,12 +22,12 @@ func (s *Server) listenSignals() {
 
 			if s.accessLoggerMiddleware != nil {
 				if err := s.accessLoggerMiddleware.Rotate(); err != nil {
-					log.Errorf("Error rotating access log: %s", err)
+					log.Errorf("Error rotating access log: %v", err)
 				}
 			}
 
 			if err := log.RotateFile(); err != nil {
-				log.Errorf("Error rotating traefik log: %s", err)
+				log.Errorf("Error rotating traefik log: %v", err)
 			}
 		}
 	}
