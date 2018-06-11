@@ -400,7 +400,7 @@ func getRuleForPath(pa extensionsv1beta1.HTTPIngressPath, i *extensionsv1beta1.I
 	}
 
 	ruleType := getStringValue(i.Annotations, annotationKubernetesRuleType, ruleTypePathPrefix)
-	modifierType := getStringValue(i.Annotations, annotationKubernetesModifierType, ruleTypePathPrefix)
+	modifierType := getStringValue(i.Annotations, annotationKubernetesModifierType, ruleTypeReplacePath)
 	rules := []string{ruleType + ":" + pa.Path}
 
 	var pathReplaceAnnotation string

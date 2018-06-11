@@ -684,6 +684,16 @@ func TestIngressAnnotations(t *testing.T) {
 		),
 		buildIngress(
 			iNamespace("testing"),
+			iAnnotation(annotationKubernetesRewriteTarget, "/(.*) /$1"),
+			iAnnotation(annotationKubernetesModifierType, "ReplacePathRegex"),
+			iRules(
+				iRule(
+					iHost("rewrite"),
+					iPaths(onePath(iPath("/regex"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
 			iAnnotation(annotationKubernetesAuthRealm, "customized"),
 			iRules(
 				iRule(
@@ -904,6 +914,12 @@ rateset:
 					server("http://example.com", weight(1))),
 				lbMethod("wrr"),
 			),
+			backend("rewrite/regex",
+				servers(
+					server("http://example.com", weight(1)),
+					server("http://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
 			backend("error-pages/errorpages",
 				servers(
 					server("http://example.com", weight(1)),
@@ -995,6 +1011,12 @@ rateset:
 				passHostHeader(),
 				routes(
 					route("/api", "PathPrefix:/api;ReplacePath:/"),
+					route("rewrite", "Host:rewrite")),
+			),
+			frontend("rewrite/regex",
+				passHostHeader(),
+				routes(
+					route("/regex", "PathPrefix:/regex;ReplacePathRegex:/(.*) /$1"),
 					route("rewrite", "Host:rewrite")),
 			),
 			frontend("error-pages/errorpages",
