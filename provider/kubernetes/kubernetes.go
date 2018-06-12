@@ -453,7 +453,7 @@ func (p *Provider) addGlobalBackend(k8sClient Client, i *extensionsv1beta1.Ingre
 
 		protocol := "http"
 		for _, address := range subset.Addresses {
-			if endpointPort == 443 {
+			if endpointPort == 443 || strings.HasPrefix(i.Spec.Backend.ServicePort.String(), "https") {
 				protocol = "https"
 			}
 			url := fmt.Sprintf("%s://%s:%d", protocol, address.IP, endpointPort)
