@@ -43,7 +43,7 @@ google_analytics:
 #    - type: 'stack-overflow'
 #      link: 'https://stackoverflow.com/questions/tagged/traefik'
 #    - type: 'slack'
-#      link: 'https://traefik.herokuapp.com'
+#      link: 'https://slack.traefik.io'
 #    - type: 'twitter'
 #      link: 'https://twitter.com/traefikproxy'
 
