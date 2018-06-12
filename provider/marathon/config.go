@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"net"
 	"strconv"
 	"strings"
 	"text/template"
@@ -340,7 +341,7 @@ func (p *Provider) getServer(app appData, task marathon.Task) (string, *types.Se
 	serverName := provider.Normalize("server-" + app.ID + "-" + task.ID + getSegmentNameSuffix(app.SegmentName))
 
 	return serverName, &types.Server{
-		URL:    fmt.Sprintf("%s://%s:%v", protocol, host, port),
+		URL:    fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(host, port)),
 		Weight: label.GetIntValue(app.SegmentLabels, label.TraefikWeight, label.DefaultWeight),
 	}, nil
 }
