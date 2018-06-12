@@ -117,7 +117,7 @@ func (p *Provider) getServer(node *api.ServiceEntry) types.Server {
 	address := getBackendAddress(node)
 
 	return types.Server{
-		URL:    fmt.Sprintf("%s://%s", scheme, net.JoinHostPort(address, strconv.FormatInt(int64(node.Service.Port), 10))),
+		URL:    fmt.Sprintf("%s://%s", scheme, net.JoinHostPort(address, strconv.Itoa(node.Service.Port))),
 		Weight: p.getWeight(node.Service.Tags),
 	}
 }
