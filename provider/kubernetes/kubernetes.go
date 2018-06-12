@@ -195,7 +195,6 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 		templateObjects, err = p.buildTemplateFromIngress(i, templateObjects, k8sClient)
 		if err != nil {
 			log.Errorf("Cannot build Ingress %s/%s due to error: %v", i.Namespace, i.Name, err)
-			continue
 		}
 
 		err = p.updateIngressStatus(i, k8sClient)
