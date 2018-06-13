@@ -63,6 +63,83 @@ func TestDockerBuildConfiguration(t *testing.T) {
 					CircuitBreaker: nil,
 				},
 			},
+		}, {
+			desc: "when basic container configuration with multiple network",
+			containers: []docker.ContainerJSON{
+				containerJSON(
+					name("test"),
+					ports(nat.PortMap{
+						"80/tcp": {},
+					}),
+					withNetwork("bridge", ipv4("127.0.0.1")),
+					withNetwork("webnet", ipv4("127.0.0.2")),
+				),
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-Host-test-docker-localhost-0": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					BasicAuth:      []string{},
+					Routes: map[string]types.Route{
+						"route-frontend-Host-test-docker-localhost-0": {
+							Rule: "Host:test.docker.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test": {
+					Servers: map[string]types.Server{
+						"server-test": {
+							URL:    "http://127.0.0.2:80",
+							Weight: label.DefaultWeight,
+						},
+					},
+					CircuitBreaker: nil,
+				},
+			},
+		},
+		{
+			desc: "when basic container configuration with specific network",
+			containers: []docker.ContainerJSON{
+				containerJSON(
+					name("test"),
+					labels(map[string]string{
+						"traefik.docker.network": "mywebnet",
+					}),
+					ports(nat.PortMap{
+						"80/tcp": {},
+					}),
+					withNetwork("bridge", ipv4("127.0.0.1")),
+					withNetwork("webnet", ipv4("127.0.0.2")),
+					withNetwork("mywebnet", ipv4("127.0.0.3")),
+				),
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-Host-test-docker-localhost-0": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					BasicAuth:      []string{},
+					Routes: map[string]types.Route{
+						"route-frontend-Host-test-docker-localhost-0": {
+							Rule: "Host:test.docker.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test": {
+					Servers: map[string]types.Server{
+						"server-test": {
+							URL:    "http://127.0.0.3:80",
+							Weight: label.DefaultWeight,
+						},
+					},
+					CircuitBreaker: nil,
+				},
+			},
 		},
 		{
 			desc: "when container has label 'enable' to false",
@@ -420,6 +497,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 			provider := &Provider{
 				Domain:           "docker.localhost",
 				ExposedByDefault: true,
+				Network:          "webnet",
 			}
 			actualConfig := provider.buildConfigurationV2(dockerDataList)
 			require.NotNil(t, actualConfig, "actualConfig")
@@ -941,6 +1019,24 @@ func TestDockerGetIPAddress(t *testing.T) {
 		{
 			container: containerJSON(
 				networkMode("host"),
+				withNetwork("testnet", ipv4("10.11.12.13")),
+				withNetwork("webnet", ipv4("10.11.12.14")),
+			),
+			expected: "10.11.12.14",
+		},
+		{
+			container: containerJSON(
+				labels(map[string]string{
+					labelDockerNetwork: "testnet",
+				}),
+				withNetwork("testnet", ipv4("10.11.12.13")),
+				withNetwork("webnet", ipv4("10.11.12.14")),
+			),
+			expected: "10.11.12.13",
+		},
+		{
+			container: containerJSON(
+				networkMode("host"),
 			),
 			expected: "127.0.0.1",
 		},
@@ -962,7 +1058,9 @@ func TestDockerGetIPAddress(t *testing.T) {
 			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
 			dData.SegmentLabels = segmentProperties[""]
 
-			provider := &Provider{}
+			provider := &Provider{
+				Network: "webnet",
+			}
 
 			actual := provider.getIPAddress(dData)
 			assert.Equal(t, test.expected, actual)
