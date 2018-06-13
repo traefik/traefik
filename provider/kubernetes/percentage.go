@@ -19,10 +19,6 @@ func (v percentageValue) sub(value percentageValue) percentageValue {
 	return v - value
 }
 
-func (v percentageValue) add(value percentageValue) percentageValue {
-	return v + value
-}
-
 func (v percentageValue) computeWeight(count int) int {
 	if count == 0 {
 		return 0
