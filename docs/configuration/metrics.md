@@ -80,7 +80,8 @@
 
   # ...
 ```
-### InfluxDB
+
+## InfluxDB
 
 ```toml
 [metrics]
@@ -102,25 +103,6 @@
     # Default: "10s"
     #
     pushinterval = "10s"
-
-  # ...
-```
-
-## Statistics
-
-```toml
-# Metrics definition
-[metrics]
-  # ...
-
-  # Enable more detailed statistics.
-  [metrics.statistics]
-
-    # Number of recent errors logged.
-    #
-    # Default: 10
-    #
-    recentErrors = 10
 
   # ...
 ```
