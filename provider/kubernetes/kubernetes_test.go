@@ -40,6 +40,11 @@ func TestLoadIngresses(t *testing.T) {
 						onePath(iBackend("service5", intstr.FromInt(8888))),
 					),
 				),
+				iRule(iHost("service6"),
+					iPaths(
+						onePath(iBackend("service6", intstr.FromInt(80))),
+					),
+				),
 			),
 		),
 	}
@@ -92,6 +97,14 @@ func TestLoadIngresses(t *testing.T) {
 				sExternalName("example.com"),
 				sPorts(sPort(8888, "http"))),
 		),
+		buildService(
+			sName("service6"),
+			sNamespace("testing"),
+			sUID("6"),
+			sSpec(
+				clusterIP("10.0.0.6"),
+				sPorts(sPort(80, ""))),
+		),
 	}
 
 	endpoints := []*corev1.Endpoints{
@@ -122,6 +135,14 @@ func TestLoadIngresses(t *testing.T) {
 					ePort(9080, "http"),
 					ePort(9443, "https")),
 			),
+		),
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service6"),
+			eUID("6"),
+			subset(
+				eAddresses(eAddressWithTargetRef("http://10.15.0.3:80", "10.15.0.3")),
+				ePorts(ePort(80, ""))),
 		),
 	}
 
@@ -164,6 +185,12 @@ func TestLoadIngresses(t *testing.T) {
 					server("http://example.com:8888", weight(1)),
 				),
 			),
+			backend("service6",
+				lbMethod("wrr"),
+				servers(
+					server("http://10.15.0.3:80", weight(1)),
+				),
+			),
 		),
 		frontends(
 			frontend("foo/bar",
@@ -185,6 +212,10 @@ func TestLoadIngresses(t *testing.T) {
 			frontend("service5",
 				passHostHeader(),
 				routes(route("service5", "Host:service5")),
+			),
+			frontend("service6",
+				passHostHeader(),
+				routes(route("service6", "Host:service6")),
 			),
 		),
 	)
@@ -1546,7 +1577,6 @@ func TestMissingResources(t *testing.T) {
 			eName("missing_endpoint_subsets_service"),
 			eUID("4"),
 			eNamespace("testing"),
-			subset(),
 		),
 	}
 
