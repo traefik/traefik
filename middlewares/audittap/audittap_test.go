@@ -86,6 +86,12 @@ func TestApiProxyingFor(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestMdtpProxyingFor(t *testing.T) {
+	capture := &noopAuditStream{}
+	_, err := NewAuditTap(&types.AuditSink{ProxyingFor: "MDTP"}, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
+	assert.NoError(t, err)
+}
+
 func TestAuditExclusion(t *testing.T) {
 
 	atypes.TheClock = T0
@@ -147,6 +153,16 @@ func TestShouldExclude(t *testing.T) {
 	assert.False(t, shouldExclude("bcd", &types.Exclusion{HeaderName: "x", StartsWith: []string{"abc"}}))
 	assert.False(t, shouldExclude("bcd", &types.Exclusion{HeaderName: "x", EndsWith: []string{"def"}}))
 	assert.False(t, shouldExclude("bcd", &types.Exclusion{HeaderName: "x", Contains: []string{"abcde"}}))
+}
+
+func TestShouldExcludeMatch(t *testing.T) {
+
+	mdtpUrlPattern := "http(s)?:\\/\\/.*\\.(service|mdtp)($|[:\\/])"
+	assert.True(t, shouldExclude("beginWithThis", &types.Exclusion{HeaderName: "x", Matches: []string{"^begin.*"}}))
+	assert.True(t, shouldExclude("http://auth.service/auth/authority", &types.Exclusion{HeaderName: "x", Matches: []string{mdtpUrlPattern}}))
+
+	assert.False(t, shouldExclude("abcdx", &types.Exclusion{HeaderName: "x", Matches: []string{"abcde"}}))
+	assert.False(t, shouldExclude("http://auth.com/auth/authority", &types.Exclusion{HeaderName: "x", Matches: []string{mdtpUrlPattern}}))
 }
 
 func TestAuditConstraintDefaults(t *testing.T) {

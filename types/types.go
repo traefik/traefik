@@ -594,6 +594,7 @@ type Exclusion struct {
 	Contains   []string `json:"contains,omitempty" description:"Substring values to exclude"`
 	EndsWith   []string `json:"endsWith,omitempty" description:"End of string values to exclude"`
 	StartsWith []string `json:"startsWith,omitempty" description:"Start of string values to exclude"`
+	Matches    []string `json:"matches,omitempty" description:"Regex matches to exclude"`
 }
 
 // Enabled states whether any exclusion filters are specified

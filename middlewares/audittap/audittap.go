@@ -3,6 +3,7 @@ package audittap
 import (
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"unicode"
@@ -18,6 +19,7 @@ import (
 const (
 	RATE = "rate"
 	API  = "api"
+	MDTP = "mdtp"
 )
 
 // AuditConfig specifies audit construction characteristics
@@ -70,12 +72,12 @@ func NewAuditTap(config *types.AuditSink, streams []audittypes.AuditStream, back
 	}
 
 	pf := strings.ToLower(config.ProxyingFor)
-	if pf != API && pf != RATE {
+	if pf != MDTP && pf != API && pf != RATE {
 		return nil, fmt.Errorf(fmt.Sprintf("ProxyingFor value '%s' is invalid", config.ProxyingFor))
 	}
 
 	// RATE values are either constant or chosen dynamically
-	if pf != RATE {
+	if pf != RATE && pf != MDTP {
 		if config.AuditSource == "" {
 			return nil, fmt.Errorf("AuditSource not set in configuration")
 		}
@@ -116,6 +118,8 @@ func (tap *AuditTap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			auditer = audittypes.NewAPIAuditEvent(tap.AuditSource, tap.AuditType)
 		case "rate":
 			auditer = audittypes.NewRATEAuditEvent()
+		case "mdtp":
+			auditer = audittypes.NewMdtpAuditEvent()
 		}
 		auditer.AppendRequest(req)
 	}
@@ -169,13 +173,27 @@ func isExcluded(exclusions []*types.Exclusion, req *http.Request) bool {
 func shouldExclude(v string, exc *types.Exclusion) bool {
 	return excludeValue(v, exc.StartsWith, strings.HasPrefix) ||
 		excludeValue(v, exc.EndsWith, strings.HasSuffix) ||
-		excludeValue(v, exc.Contains, strings.Contains)
+		excludeValue(v, exc.Contains, strings.Contains) ||
+		excludeMatch(v, exc.Matches)
 }
 
 func excludeValue(v string, exclusions []string, fn func(string, string) bool) bool {
 	if v != "" {
 		for _, x := range exclusions {
 			if fn(v, x) {
+				return true
+			}
+		}
+
+	}
+	return false
+}
+
+// TODO: Do paths need to be precompiled
+func excludeMatch(v string, expressions []string) bool {
+	if v != "" {
+		for _, pattern := range expressions {
+			if matched, err := regexp.Match(pattern, []byte(v)); err == nil && matched {
 				return true
 			}
 		}
