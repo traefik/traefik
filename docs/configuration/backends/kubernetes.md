@@ -215,6 +215,9 @@ service_backend2: 33.33%
 service_backend3: 33.33 # Same as 33.33%, the percentage sign is optional
 ```
 
+!!! note
+    For each service weight given, the Ingress specification must include a backend item with the corresponding `serviceName`.
+
 <6> `traefik.ingress.kubernetes.io/whitelist-source-range`:
 All source IPs are permitted if the list is empty or a single range is ill-formatted.
 Please note, you may have to set `service.spec.externalTrafficPolicy` to the value `Local` to preserve the source IP of the request for filtering.
