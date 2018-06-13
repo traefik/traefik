@@ -192,6 +192,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				log.Errorf("failed to create fractional weight allocator for ingress %s/%s: %v", i.Namespace, i.Name, err)
 				continue
 			}
+			log.Debugf("Created custom weight allocator for %s/%s: %s", i.Namespace, i.Name, fractionalAllocator)
 			weightAllocator = fractionalAllocator
 		}
 

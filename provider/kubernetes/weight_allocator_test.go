@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,6 +11,35 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
+
+func TestString(t *testing.T) {
+	pv1 := newPercentageValueFromFloat64(0.5)
+	pv2 := newPercentageValueFromFloat64(0.2)
+	pv3 := newPercentageValueFromFloat64(0.3)
+	f := fractionalWeightAllocator{
+		serviceWeights: map[ingressService]int{
+			ingressService{
+				host:    "host2",
+				path:    "path2",
+				service: "service2",
+			}: int(pv2),
+			ingressService{
+				host:    "host3",
+				path:    "path3",
+				service: "service3",
+			}: int(pv3),
+			ingressService{
+				host:    "host1",
+				path:    "path1",
+				service: "service1",
+			}: int(pv1),
+		},
+	}
+
+	expected := fmt.Sprintf("[service1: %s service2: %s service3: %s]", pv1, pv2, pv3)
+	actual := f.String()
+	assert.Equal(t, expected, actual)
+}
 
 func TestGetServicesPercentageWeights(t *testing.T) {
 	testCases := []struct {

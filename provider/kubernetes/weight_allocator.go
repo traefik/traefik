@@ -2,6 +2,8 @@ package kubernetes
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/containous/traefik/provider/label"
 	"gopkg.in/yaml.v2"
@@ -29,6 +31,22 @@ type ingressService struct {
 
 type fractionalWeightAllocator struct {
 	serviceWeights map[ingressService]int
+}
+
+func (f *fractionalWeightAllocator) String() string {
+	var sorted []ingressService
+	for ingServ := range f.serviceWeights {
+		sorted = append(sorted, ingServ)
+	}
+	sort.Slice(sorted, func(i, j int) bool {
+		return sorted[i].service < sorted[j].service
+	})
+
+	var res []string
+	for _, ingServ := range sorted {
+		res = append(res, fmt.Sprintf("%s: %s", ingServ.service, percentageValue(f.serviceWeights[ingServ])))
+	}
+	return fmt.Sprintf("[%s]", strings.Join(res, " "))
 }
 
 func newFractionalWeightAllocator(ingress *extensionsv1beta1.Ingress, client Client) (*fractionalWeightAllocator, error) {
