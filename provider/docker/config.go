@@ -3,6 +3,7 @@ package docker
 import (
 	"context"
 	"fmt"
+	"net"
 	"strconv"
 	"strings"
 	"text/template"
@@ -336,7 +337,7 @@ func (p *Provider) getServers(containers []dockerData) map[string]types.Server {
 		}
 
 		servers[provider.Normalize(serverName)] = types.Server{
-			URL:    fmt.Sprintf("%s://%s:%s", protocol, ip, port),
+			URL:    fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(ip, port)),
 			Weight: label.GetIntValue(container.SegmentLabels, label.TraefikWeight, label.DefaultWeight),
 		}
 	}
