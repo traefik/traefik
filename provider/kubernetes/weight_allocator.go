@@ -33,6 +33,9 @@ type fractionalWeightAllocator struct {
 	serviceWeights map[ingressService]int
 }
 
+// String returns a string representation as service name / percentage tuples
+// sorted by service names.
+// Example: [foo-svc: 30.000% bar-svc: 70.000%]
 func (f *fractionalWeightAllocator) String() string {
 	var sorted []ingressService
 	for ingServ := range f.serviceWeights {
