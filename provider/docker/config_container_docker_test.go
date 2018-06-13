@@ -1058,8 +1058,9 @@ func TestDockerGetIPAddress(t *testing.T) {
 			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
 			dData.SegmentLabels = segmentProperties[""]
 
-			provider := &Provider{}
-			provider.Network = "webnet"
+			provider := &Provider{
+				Network: "webnet",
+			}
 
 			actual := provider.getIPAddress(dData)
 			assert.Equal(t, test.expected, actual)
