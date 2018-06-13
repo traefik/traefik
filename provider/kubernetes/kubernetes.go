@@ -456,11 +456,13 @@ func (p *Provider) addGlobalBackend(k8sClient Client, i *extensionsv1beta1.Ingre
 			if endpointPort == 443 || strings.HasPrefix(i.Spec.Backend.ServicePort.String(), "https") {
 				protocol = "https"
 			}
-			url := fmt.Sprintf("%s://%s:%d", protocol, address.IP, endpointPort)
+
+			url := fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(address.IP, strconv.FormatInt(int64(endpointPort), 10)))
 			name := url
 			if address.TargetRef != nil && address.TargetRef.Name != "" {
 				name = address.TargetRef.Name
 			}
+
 			templateObjects.Backends[defaultBackendName].Servers[name] = types.Server{
 				URL:    url,
 				Weight: label.DefaultWeight,
