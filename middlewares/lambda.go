@@ -59,8 +59,7 @@ func (l *Lambda) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 				"X-Request-Context":         r.Header.Get("X-Request-Context"),
 				"X-User-Context":            r.Header.Get("X-User-Context"),
 				"X-Original-Request-Method": r.Method,
-				"X-Original-Request-Url":    r.URL.RawPath,
-				"X-Original-Request-Query":  r.URL.RawQuery,
+				"X-Original-Request-Url":    r.RequestURI,
 			},
 		},
 	)
