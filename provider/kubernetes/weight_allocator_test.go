@@ -18,17 +18,17 @@ func TestString(t *testing.T) {
 	pv3 := newPercentageValueFromFloat64(0.3)
 	f := fractionalWeightAllocator{
 		serviceWeights: map[ingressService]int{
-			ingressService{
+			{
 				host:    "host2",
 				path:    "path2",
 				service: "service2",
 			}: int(pv2),
-			ingressService{
+			{
 				host:    "host3",
 				path:    "path3",
 				service: "service3",
 			}: int(pv3),
-			ingressService{
+			{
 				host:    "host1",
 				path:    "path1",
 				service: "service1",
