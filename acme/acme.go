@@ -9,7 +9,6 @@ import (
 	fmtlog "log"
 	"net"
 	"net/http"
-	"os"
 	"reflect"
 	"strings"
 	"time"
@@ -27,6 +26,7 @@ import (
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
 	"github.com/eapache/channels"
+	"github.com/sirupsen/logrus"
 	"github.com/xenolf/lego/acme"
 	legolog "github.com/xenolf/lego/log"
 	"github.com/xenolf/lego/providers/dns"
@@ -65,16 +65,19 @@ type ACME struct {
 
 func (a *ACME) init() error {
 	acme.UserAgent = fmt.Sprintf("containous-traefik/%s", version.Version)
+
 	if a.ACMELogging {
-		legolog.Logger = fmtlog.New(os.Stderr, "legolog: ", fmtlog.LstdFlags)
+		legolog.Logger = fmtlog.New(log.WriterLevel(logrus.DebugLevel), "legolog: ", 0)
 	} else {
 		legolog.Logger = fmtlog.New(ioutil.Discard, "", 0)
 	}
+
 	// no certificates in TLS config, so we add a default one
 	cert, err := generate.DefaultCertificate()
 	if err != nil {
 		return err
 	}
+
 	a.defaultCertificate = cert
 
 	a.jobs = channels.NewInfiniteChannel()
