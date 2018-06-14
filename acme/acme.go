@@ -117,14 +117,18 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 	if err != nil {
 		return err
 	}
+
 	if len(a.Storage) == 0 {
 		return errors.New("Empty Store, please provide a key for certs storage")
 	}
+
 	a.checkOnDemandDomain = checkOnDemandDomain
 	a.dynamicCerts = certs
+
 	tlsConfig.Certificates = append(tlsConfig.Certificates, *a.defaultCertificate)
 	tlsConfig.GetCertificate = a.getCertificate
 	a.TLSConfig = tlsConfig
+
 	listener := func(object cluster.Object) error {
 		account := object.(*Account)
 		account.Init()
@@ -404,6 +408,7 @@ func (a *ACME) buildACMEClient(account *Account) (*acme.Client, error) {
 	if len(a.CAServer) > 0 {
 		caServer = a.CAServer
 	}
+
 	client, err := acme.NewClient(caServer, account, account.KeyType)
 	if err != nil {
 		return nil, err
@@ -425,19 +430,19 @@ func (a *ACME) buildACMEClient(account *Account) (*acme.Client, error) {
 
 		client.ExcludeChallenges([]acme.Challenge{acme.HTTP01})
 		err = client.SetChallengeProvider(acme.DNS01, provider)
-	} else if a.HTTPChallenge != nil && len(a.HTTPChallenge.EntryPoint) > 0 {
+		return client, err
+	}
+
+	if a.HTTPChallenge != nil && len(a.HTTPChallenge.EntryPoint) > 0 {
 		log.Debug("Using HTTP Challenge provider.")
+
 		client.ExcludeChallenges([]acme.Challenge{acme.DNS01})
 		a.challengeHTTPProvider = &challengeHTTPProvider{store: a.store}
 		err = client.SetChallengeProvider(acme.HTTP01, a.challengeHTTPProvider)
-	} else {
-		return nil, errors.New("ACME challenge not specified, please select HTTP or DNS Challenge")
+		return client, err
 	}
 
-	if err != nil {
-		return nil, err
-	}
-	return client, nil
+	return nil, errors.New("ACME challenge not specified, please select HTTP or DNS Challenge")
 }
 
 func (a *ACME) loadCertificateOnDemand(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
