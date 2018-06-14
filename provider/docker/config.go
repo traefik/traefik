@@ -263,11 +263,16 @@ func isBackendLBSwarm(container dockerData) bool {
 }
 
 func getSegmentBackendName(container dockerData) string {
-	if value := label.GetStringValue(container.SegmentLabels, label.TraefikBackend, ""); len(value) > 0 {
-		return provider.Normalize(container.ServiceName + "-" + value)
+	serviceName := container.ServiceName
+	if values, err := label.GetStringMultipleStrict(container.Labels, labelDockerComposeProject, labelDockerComposeService); err == nil {
+		serviceName = provider.Normalize(values[labelDockerComposeService] + "_" + values[labelDockerComposeProject])
 	}
 
-	return provider.Normalize(container.ServiceName + "-" + getDefaultBackendName(container) + "-" + container.SegmentName)
+	if value := label.GetStringValue(container.SegmentLabels, label.TraefikBackend, ""); len(value) > 0 {
+		return provider.Normalize(serviceName + "-" + value)
+	}
+
+	return provider.Normalize(serviceName + "-" + getDefaultBackendName(container) + "-" + container.SegmentName)
 }
 
 func getDefaultBackendName(container dockerData) string {
