@@ -2227,8 +2227,8 @@ func TestProviderNewK8sInClusterClient(t *testing.T) {
 	p := Provider{}
 	os.Setenv("KUBERNETES_SERVICE_HOST", "localhost")
 	os.Setenv("KUBERNETES_SERVICE_PORT", "443")
+	defer os.Clearenv()
 	_, err := p.newK8sClient("")
-	os.Clearenv()
 	assert.EqualError(t, err, "failed to create in-cluster configuration: open /var/run/secrets/kubernetes.io/serviceaccount/token: no such file or directory")
 }
 
@@ -2236,8 +2236,8 @@ func TestProviderNewK8sInClusterClientFailLabelSel(t *testing.T) {
 	p := Provider{}
 	os.Setenv("KUBERNETES_SERVICE_HOST", "localhost")
 	os.Setenv("KUBERNETES_SERVICE_PORT", "443")
+	defer os.Clearenv()
 	_, err := p.newK8sClient("%")
-	os.Clearenv()
 	assert.EqualError(t, err, "invalid ingress label selector: \"%\"")
 }
 
