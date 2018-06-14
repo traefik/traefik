@@ -38,4 +38,8 @@ The properties are as follow:
 * maxAuditLength (optional): maximum byte length of audit defaulted to 100K. e.g 33K or 3M
 * maxPayloadContentsLength (optional): maximum combined byte length of audit.requestPayload.contents and audit.responsePayload.contents. e.g 15K or 2M
 * auditSink.exclusions.excname (optional): excludes a request from auditing based on the header name when the header
-contains any of the specified values. Matching condition can be contains|endsWith|startsWith
+satisfies any of the specified values. Matching condition can be
+    * contains
+    * endsWith
+    * startsWith
+    * matches (a regex pattern)

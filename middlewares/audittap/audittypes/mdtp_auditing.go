@@ -11,6 +11,7 @@ import (
 // MdtpAuditEvent is the audit event created for API calls
 type MdtpAuditEvent struct {
 	AuditEvent
+	AuthorisationToken string
 }
 
 // AppendRequest appends information about the request to the audit event
@@ -18,7 +19,8 @@ func (ev *MdtpAuditEvent) AppendRequest(req *http.Request) {
 	//reqHeaders := appendCommonRequestFields(&ev.AuditEvent, req)
 	ev.AuditSource = deriveAuditSource(req.Host)
 	ev.AuditType = "RequestReceived"
-	appendCommonRequestFields(&ev.AuditEvent, req)
+	reqHeaders := appendCommonRequestFields(&ev.AuditEvent, req)
+	ev.AuthorisationToken = reqHeaders.GetString("authorization")
 	if body, _, err := copyRequestBody(req); err == nil {
 		ev.addRequestPayloadContents(string(body))
 	}
