@@ -16,6 +16,7 @@ defaultEntryPoints = ["http", "https"]
 email = "test@traefik.io"
 storage = "/tmp/acme.json"
 entryPoint = "https"
+acmeLogging = true
 onHostRule = true
 caServer = "http://wrongurl:4001/directory"
 
