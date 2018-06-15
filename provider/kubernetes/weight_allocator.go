@@ -68,6 +68,7 @@ func newFractionalWeightAllocator(ingress *extensionsv1beta1.Ingress, client Cli
 	}
 
 	serviceWeights := map[ingressService]int{}
+
 	for _, rule := range ingress.Spec.Rules {
 		// key: rule path string
 		// value: service names
@@ -93,17 +94,27 @@ func newFractionalWeightAllocator(ingress *extensionsv1beta1.Ingress, client Cli
 
 				fractionalPathWeights[pa.Path] = fractionalPathWeights[pa.Path].sub(weight)
 				if fractionalPathWeights[pa.Path].toFloat64() < 0 {
-					return nil, fmt.Errorf("percentage value %s is out of range", fractionalPathWeights[pa.Path].String())
+					assignedWeight := newPercentageValueFromFloat64(1) - fractionalPathWeights[pa.Path]
+					return nil, fmt.Errorf("percentage value %s must not exceed 100%%", assignedWeight.String())
 				}
 			} else {
 				fractionalPathServices[pa.Path] = append(fractionalPathServices[pa.Path], pa.Backend.ServiceName)
 			}
 		}
 
-		for pa, svcs := range fractionalPathServices {
-			totalFractionalInstanceCount := 0
+		for pa, fractionalWeight := range fractionalPathWeights {
+			fractionalServices := fractionalPathServices[pa]
 
-			for _, svc := range svcs {
+			if len(fractionalServices) == 0 {
+				if fractionalWeight > 0 {
+					assignedWeight := newPercentageValueFromFloat64(1) - fractionalWeight
+					return nil, fmt.Errorf("weights of path %s/%s in ingress %s/%s not summing up to 100%%: %s", rule.Host, pa, ingress.Namespace, ingress.Name, assignedWeight.String())
+				}
+				continue
+			}
+
+			totalFractionalInstanceCount := 0
+			for _, svc := range fractionalServices {
 				totalFractionalInstanceCount += serviceInstanceCounts[ingressService{
 					host:    rule.Host,
 					path:    pa,
@@ -111,7 +122,7 @@ func newFractionalWeightAllocator(ingress *extensionsv1beta1.Ingress, client Cli
 				}]
 			}
 
-			for _, svc := range svcs {
+			for _, svc := range fractionalServices {
 				ingSvc := ingressService{
 					host:    rule.Host,
 					path:    pa,
