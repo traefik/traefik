@@ -14,6 +14,7 @@ defaultEntryPoints = ["http", "https"]
 email = "test@traefik.io"
 storage = "/tmp/acme.json"
 entryPoint = "https"
+acmeLogging = true
 onDemand = {{.OnDemand}}
 onHostRule = {{.OnHostRule}}
 caServer = "http://{{.BoulderHost}}:4001/directory"
