@@ -29,16 +29,14 @@ type ingressService struct {
 	service string
 }
 
-type fractionalWeightAllocator struct {
-	serviceWeights map[ingressService]int
-}
+type fractionalWeightAllocator map[ingressService]int
 
 // String returns a string representation as service name / percentage tuples
 // sorted by service names.
 // Example: [foo-svc: 30.000% bar-svc: 70.000%]
 func (f *fractionalWeightAllocator) String() string {
 	var sorted []ingressService
-	for ingServ := range f.serviceWeights {
+	for ingServ := range map[ingressService]int(*f) {
 		sorted = append(sorted, ingServ)
 	}
 	sort.Slice(sorted, func(i, j int) bool {
@@ -47,7 +45,7 @@ func (f *fractionalWeightAllocator) String() string {
 
 	var res []string
 	for _, ingServ := range sorted {
-		res = append(res, fmt.Sprintf("%s: %s", ingServ.service, percentageValue(f.serviceWeights[ingServ])))
+		res = append(res, fmt.Sprintf("%s: %s", ingServ.service, percentageValue(map[ingressService]int(*f)[ingServ])))
 	}
 	return fmt.Sprintf("[%s]", strings.Join(res, " "))
 }
@@ -56,10 +54,6 @@ func newFractionalWeightAllocator(ingress *extensionsv1beta1.Ingress, client Cli
 	servicePercentageWeights, err := getServicesPercentageWeights(ingress)
 	if err != nil {
 		return nil, err
-	}
-
-	allocator := &fractionalWeightAllocator{
-		serviceWeights: map[ingressService]int{},
 	}
 
 	serviceInstanceCounts, err := getServiceInstanceCounts(ingress, client)
@@ -129,17 +123,17 @@ func newFractionalWeightAllocator(ingress *extensionsv1beta1.Ingress, client Cli
 					path:    pa,
 					service: svc,
 				}
-				serviceWeights[ingSvc] = fractionalPathWeights[pa].computeWeight(totalFractionalInstanceCount)
+				serviceWeights[ingSvc] = fractionalWeight.computeWeight(totalFractionalInstanceCount)
 			}
 		}
 	}
 
-	allocator.serviceWeights = serviceWeights
-	return allocator, nil
+	allocator := fractionalWeightAllocator(serviceWeights)
+	return &allocator, nil
 }
 
 func (f *fractionalWeightAllocator) getWeight(host, path, serviceName string) int {
-	return f.serviceWeights[ingressService{
+	return map[ingressService]int(*f)[ingressService{
 		host:    host,
 		path:    path,
 		service: serviceName,

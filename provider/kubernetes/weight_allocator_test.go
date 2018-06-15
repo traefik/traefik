@@ -16,8 +16,8 @@ func TestString(t *testing.T) {
 	pv1 := newPercentageValueFromFloat64(0.5)
 	pv2 := newPercentageValueFromFloat64(0.2)
 	pv3 := newPercentageValueFromFloat64(0.3)
-	f := fractionalWeightAllocator{
-		serviceWeights: map[ingressService]int{
+	f := fractionalWeightAllocator(
+		map[ingressService]int{
 			{
 				host:    "host2",
 				path:    "path2",
@@ -34,7 +34,7 @@ func TestString(t *testing.T) {
 				service: "service1",
 			}: int(pv1),
 		},
-	}
+	)
 
 	expected := fmt.Sprintf("[service1: %s service2: %s service3: %s]", pv1, pv2, pv3)
 	actual := f.String()
