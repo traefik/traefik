@@ -211,6 +211,7 @@ func (p *Provider) resolveCertificate(domain types.Domain, domainFromConfigurati
 	}
 
 	log.Debugf("Loading ACME certificates %+v...", uncheckedDomains)
+
 	client, err := p.getClient()
 	if err != nil {
 		return nil, fmt.Errorf("cannot get ACME client %v", err)
@@ -226,6 +227,7 @@ func (p *Provider) resolveCertificate(domain types.Domain, domainFromConfigurati
 	if len(certificate.Certificate) == 0 || len(certificate.PrivateKey) == 0 {
 		return nil, fmt.Errorf("domains %v generate certificate with no value: %v", uncheckedDomains, certificate)
 	}
+
 	log.Debugf("Certificates obtained for domains %+v", uncheckedDomains)
 
 	if len(uncheckedDomains) > 1 {
@@ -241,72 +243,82 @@ func (p *Provider) resolveCertificate(domain types.Domain, domainFromConfigurati
 func (p *Provider) getClient() (*acme.Client, error) {
 	p.clientMutex.Lock()
 	defer p.clientMutex.Unlock()
-	var account *Account
-	if p.client == nil {
-		var err error
-		account, err = p.initAccount()
-		if err != nil {
-			return nil, err
-		}
 
-		log.Debug("Building ACME client...")
-		caServer := "https://acme-v02.api.letsencrypt.org/directory"
-		if len(p.CAServer) > 0 {
-			caServer = p.CAServer
-		}
-		log.Debugf(caServer)
-		client, err := acme.NewClient(caServer, account, account.KeyType)
-		if err != nil {
-			return nil, err
-		}
-		if account.GetRegistration() == nil {
-			// New users will need to register; be sure to save it
-			log.Info("Register...")
-			reg, err := client.Register(true)
-			if err != nil {
-				return nil, err
-			}
-			account.Registration = reg
-		}
-
-		// Save the account once before all the certificates generation/storing
-		// No certificate can be generated if account is not initialized
-		err = p.Store.SaveAccount(account)
-		if err != nil {
-			return nil, err
-		}
-
-		if p.DNSChallenge != nil && len(p.DNSChallenge.Provider) > 0 {
-			log.Debugf("Using DNS Challenge provider: %s", p.DNSChallenge.Provider)
-
-			err = dnsOverrideDelay(p.DNSChallenge.DelayBeforeCheck)
-			if err != nil {
-				return nil, err
-			}
-
-			var provider acme.ChallengeProvider
-			provider, err = dns.NewDNSChallengeProviderByName(p.DNSChallenge.Provider)
-			if err != nil {
-				return nil, err
-			}
-
-			client.ExcludeChallenges([]acme.Challenge{acme.HTTP01})
-			err = client.SetChallengeProvider(acme.DNS01, provider)
-			if err != nil {
-				return nil, err
-			}
-		} else if p.HTTPChallenge != nil && len(p.HTTPChallenge.EntryPoint) > 0 {
-			log.Debug("Using HTTP Challenge provider.")
-			client.ExcludeChallenges([]acme.Challenge{acme.DNS01})
-			err = client.SetChallengeProvider(acme.HTTP01, p)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			return nil, errors.New("ACME challenge not specified, please select HTTP or DNS Challenge")
-		}
-		p.client = client
+	if p.client != nil {
+		return p.client, nil
 	}
+
+	account, err := p.initAccount()
+	if err != nil {
+		return nil, err
+	}
+
+	log.Debug("Building ACME client...")
+
+	caServer := "https://acme-v02.api.letsencrypt.org/directory"
+	if len(p.CAServer) > 0 {
+		caServer = p.CAServer
+	}
+	log.Debug(caServer)
+
+	client, err := acme.NewClient(caServer, account, account.KeyType)
+	if err != nil {
+		return nil, err
+	}
+
+	// New users will need to register; be sure to save it
+	if account.GetRegistration() == nil {
+		log.Info("Register...")
+
+		reg, err := client.Register(true)
+		if err != nil {
+			return nil, err
+		}
+
+		account.Registration = reg
+	}
+
+	// Save the account once before all the certificates generation/storing
+	// No certificate can be generated if account is not initialized
+	err = p.Store.SaveAccount(account)
+	if err != nil {
+		return nil, err
+	}
+
+	if p.DNSChallenge != nil && len(p.DNSChallenge.Provider) > 0 {
+		log.Debugf("Using DNS Challenge provider: %s", p.DNSChallenge.Provider)
+
+		err = dnsOverrideDelay(p.DNSChallenge.DelayBeforeCheck)
+		if err != nil {
+			return nil, err
+		}
+
+		var provider acme.ChallengeProvider
+		provider, err = dns.NewDNSChallengeProviderByName(p.DNSChallenge.Provider)
+		if err != nil {
+			return nil, err
+		}
+
+		client.ExcludeChallenges([]acme.Challenge{acme.HTTP01})
+
+		err = client.SetChallengeProvider(acme.DNS01, provider)
+		if err != nil {
+			return nil, err
+		}
+	} else if p.HTTPChallenge != nil && len(p.HTTPChallenge.EntryPoint) > 0 {
+		log.Debug("Using HTTP Challenge provider.")
+
+		client.ExcludeChallenges([]acme.Challenge{acme.DNS01})
+
+		err = client.SetChallengeProvider(acme.HTTP01, p)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, errors.New("ACME challenge not specified, please select HTTP or DNS Challenge")
+	}
+
+	p.client = client
 	return p.client, nil
 }
 
