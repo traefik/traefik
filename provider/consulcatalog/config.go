@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"fmt"
+	"net"
 	"sort"
 	"strconv"
 	"strings"
@@ -116,7 +117,7 @@ func (p *Provider) getServer(node *api.ServiceEntry) types.Server {
 	address := getBackendAddress(node)
 
 	return types.Server{
-		URL:    fmt.Sprintf("%s://%s:%d", scheme, address, node.Service.Port),
+		URL:    fmt.Sprintf("%s://%s", scheme, net.JoinHostPort(address, strconv.Itoa(node.Service.Port))),
 		Weight: p.getWeight(node.Service.Tags),
 	}
 }

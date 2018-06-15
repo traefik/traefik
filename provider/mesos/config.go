@@ -3,6 +3,7 @@ package mesos
 import (
 	"fmt"
 	"math"
+	"net"
 	"strconv"
 	"strings"
 	"text/template"
@@ -237,7 +238,7 @@ func (p *Provider) getServers(tasks []taskData) map[string]types.Server {
 
 		serverName := "server-" + getID(task)
 		servers[serverName] = types.Server{
-			URL:    fmt.Sprintf("%s://%s:%s", protocol, host, port),
+			URL:    fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(host, port)),
 			Weight: getIntValue(task.TraefikLabels, label.TraefikWeight, label.DefaultWeight, math.MaxInt32),
 		}
 	}

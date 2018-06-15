@@ -939,8 +939,9 @@ func TestDockerGetFrontendRule(t *testing.T) {
 
 func TestDockerGetBackendName(t *testing.T) {
 	testCases := []struct {
-		container docker.ContainerJSON
-		expected  string
+		container   docker.ContainerJSON
+		segmentName string
+		expected    string
 	}{
 		{
 			container: containerJSON(name("foo")),
@@ -963,6 +964,15 @@ func TestDockerGetBackendName(t *testing.T) {
 			})),
 			expected: "bar-foo",
 		},
+		{
+			container: containerJSON(labels(map[string]string{
+				"com.docker.compose.project": "foo",
+				"com.docker.compose.service": "bar",
+				"traefik.sauternes.backend":  "titi",
+			})),
+			segmentName: "sauternes",
+			expected:    "bar-foo-titi",
+		},
 	}
 
 	for containerID, test := range testCases {
@@ -972,7 +982,8 @@ func TestDockerGetBackendName(t *testing.T) {
 
 			dData := parseContainer(test.container)
 			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.SegmentLabels = segmentProperties[""]
+			dData.SegmentLabels = segmentProperties[test.segmentName]
+			dData.SegmentName = test.segmentName
 
 			actual := getBackendName(dData)
 			assert.Equal(t, test.expected, actual)

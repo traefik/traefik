@@ -8,7 +8,6 @@ import (
 	fmtlog "log"
 	"net"
 	"net/http"
-	"os"
 	"reflect"
 	"strings"
 	"sync"
@@ -24,6 +23,7 @@ import (
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/xenolf/lego/acme"
 	legolog "github.com/xenolf/lego/log"
 	"github.com/xenolf/lego/providers/dns"
@@ -90,7 +90,7 @@ func (p *Provider) SetConfigListenerChan(configFromListenerChan chan types.Confi
 func (p *Provider) init() error {
 	acme.UserAgent = fmt.Sprintf("containous-traefik/%s", version.Version)
 	if p.ACMELogging {
-		legolog.Logger = fmtlog.New(os.Stderr, "legolog: ", fmtlog.LstdFlags)
+		legolog.Logger = fmtlog.New(log.WriterLevel(logrus.DebugLevel), "legolog: ", 0)
 	} else {
 		legolog.Logger = fmtlog.New(ioutil.Discard, "", 0)
 	}

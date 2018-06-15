@@ -158,6 +158,7 @@ The following general annotations are applicable on the Ingress object:
 | `traefik.ingress.kubernetes.io/rewrite-target: /users`                          | Replaces each matched Ingress path with the specified one, and adds the old path to the `X-Replaced-Path` header.                               |
 | `traefik.ingress.kubernetes.io/rule-type: PathPrefixStrip`                      | Override the default frontend rule type. Default: `PathPrefix`.                                                                                 |
 | `traefik.ingress.kubernetes.io/whitelist-source-range: "1.2.3.0/24, fe80::/16"` | A comma-separated list of IP ranges permitted for access. all source IPs are permitted if the list is empty or a single range is ill-formatted. Please note, you may have to set `service.spec.externalTrafficPolicy` to the value `Local` to preserve the source IP of the request for filtering. Please see [this link](https://kubernetes.io/docs/tutorials/services/source-ip/) for more information.|
+| `ingress.kubernetes.io/whitelist-x-forwarded-for: "true"`                       | Use `X-Forwarded-For` header as valid source of IP for the white list.                                                                          |
 | `traefik.ingress.kubernetes.io/app-root: "/index.html"`                         | Redirects all requests for `/` to the defined path. (4)                                                                                         |
 
 <1> `traefik.ingress.kubernetes.io/error-pages` example:

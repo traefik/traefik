@@ -2,6 +2,7 @@ package ecs
 
 import (
 	"fmt"
+	"net"
 	"strconv"
 	"strings"
 	"text/template"
@@ -133,7 +134,7 @@ func getServers(instances []ecsInstance) map[string]types.Server {
 
 		serverName := provider.Normalize(fmt.Sprintf("server-%s-%s", instance.Name, instance.ID))
 		servers[serverName] = types.Server{
-			URL:    fmt.Sprintf("%s://%s:%s", protocol, host, port),
+			URL:    fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(host, port)),
 			Weight: label.GetIntValue(instance.TraefikLabels, label.TraefikWeight, label.DefaultWeight),
 		}
 	}

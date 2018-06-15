@@ -101,4 +101,3 @@ pages:
     - 'Clustering/HA': 'user-guide/cluster.md'
     - 'gRPC Example': 'user-guide/grpc.md'
     - 'Traefik cluster example with Swarm': 'user-guide/cluster-docker-consul.md'
-  - Benchmarks: benchmarks.md
