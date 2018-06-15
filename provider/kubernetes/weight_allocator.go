@@ -92,7 +92,8 @@ func newFractionalWeightAllocator(ingress *extensionsv1beta1.Ingress, client Cli
 
 				serviceWeights[ingSvc] = weight.computeWeight(serviceInstanceCounts[ingSvc])
 
-				fractionalPathWeights[pa.Path] = fractionalPathWeights[pa.Path].sub(weight)
+				fractionalPathWeights[pa.Path] -= weight
+
 				if fractionalPathWeights[pa.Path].toFloat64() < 0 {
 					assignedWeight := newPercentageValueFromFloat64(1) - fractionalPathWeights[pa.Path]
 					return nil, fmt.Errorf("percentage value %s must not exceed 100%%", assignedWeight.String())

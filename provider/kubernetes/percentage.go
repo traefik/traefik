@@ -15,10 +15,6 @@ func (v percentageValue) toFloat64() float64 {
 	return float64(v) / (1000 * 100)
 }
 
-func (v percentageValue) sub(value percentageValue) percentageValue {
-	return v - value
-}
-
 func (v percentageValue) computeWeight(count int) int {
 	if count == 0 {
 		return 0
