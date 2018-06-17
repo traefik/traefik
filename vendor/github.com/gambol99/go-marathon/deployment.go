@@ -1,5 +1,5 @@
 /*
-Copyright 2014 Rohith All rights reserved.
+Copyright 2014 The go-marathon Authors All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ type Deployment struct {
 	CurrentStep    int                 `json:"currentStep"`
 	TotalSteps     int                 `json:"totalSteps"`
 	AffectedApps   []string            `json:"affectedApps"`
+	AffectedPods   []string            `json:"affectedPods"`
 	Steps          [][]*DeploymentStep `json:"-"`
 	XXStepsRaw     json.RawMessage     `json:"steps"` // Holds raw steps JSON to unmarshal later
 	CurrentActions []*DeploymentStep   `json:"currentActions"`
@@ -107,8 +108,17 @@ func (r *marathonClient) Deployments() ([]*Deployment, error) {
 // 	id:		the deployment id you wish to delete
 // 	force:	whether or not to force the deletion
 func (r *marathonClient) DeleteDeployment(id string, force bool) (*DeploymentID, error) {
+	path := fmt.Sprintf("%s/%s", marathonAPIDeployments, id)
+
+	// if force=true, no body is returned
+	if force {
+		path += "?force=true"
+		return nil, r.apiDelete(path, nil, nil)
+	}
+
 	deployment := new(DeploymentID)
-	err := r.apiDelete(fmt.Sprintf("%s/%s", marathonAPIDeployments, id), nil, deployment)
+	err := r.apiDelete(path, nil, deployment)
+
 	if err != nil {
 		return nil, err
 	}

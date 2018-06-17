@@ -1,5 +1,5 @@
 /*
-Copyright 2014 Rohith All rights reserved.
+Copyright 2014 The go-marathon Authors All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -186,7 +186,10 @@ func (r *marathonClient) TaskEndpoints(name string, port int, healthCheck bool) 
 	// step: we need to get the port index of the service we are interested in
 	portIndex, err := application.Container.Docker.ServicePortIndex(port)
 	if err != nil {
-		return nil, err
+		portIndex, err = application.Container.ServicePortIndex(port)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// step: do we have any tasks?
@@ -217,7 +220,7 @@ func (r *Task) allHealthChecksAlive() bool {
 	}
 	// step: check the health results then
 	for _, check := range r.HealthCheckResults {
-		if check.Alive == false {
+		if !check.Alive {
 			return false
 		}
 	}

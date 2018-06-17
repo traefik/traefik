@@ -1,5 +1,5 @@
 /*
-Copyright 2014 Rohith All rights reserved.
+Copyright 2014 The go-marathon Authors All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,6 +28,35 @@ type HealthCheck struct {
 	IntervalSeconds        int      `json:"intervalSeconds,omitempty"`
 	TimeoutSeconds         int      `json:"timeoutSeconds,omitempty"`
 	IgnoreHTTP1xx          *bool    `json:"ignoreHttp1xx,omitempty"`
+}
+
+// HTTPHealthCheck describes an HTTP based health check
+type HTTPHealthCheck struct {
+	Endpoint string `json:"endpoint,omitempty"`
+	Path     string `json:"path,omitempty"`
+	Scheme   string `json:"scheme,omitempty"`
+}
+
+// TCPHealthCheck describes a TCP based health check
+type TCPHealthCheck struct {
+	Endpoint string `json:"endpoint,omitempty"`
+}
+
+// CommandHealthCheck describes a shell-based health check
+type CommandHealthCheck struct {
+	Command PodCommand `json:"command,omitempty"`
+}
+
+// PodHealthCheck describes how to determine a pod's health
+type PodHealthCheck struct {
+	HTTP                   *HTTPHealthCheck    `json:"http,omitempty"`
+	TCP                    *TCPHealthCheck     `json:"tcp,omitempty"`
+	Exec                   *CommandHealthCheck `json:"exec,omitempty"`
+	GracePeriodSeconds     *int                `json:"gracePeriodSeconds,omitempty"`
+	IntervalSeconds        *int                `json:"intervalSeconds,omitempty"`
+	MaxConsecutiveFailures *int                `json:"maxConsecutiveFailures,omitempty"`
+	TimeoutSeconds         *int                `json:"timeoutSeconds,omitempty"`
+	DelaySeconds           *int                `json:"delaySeconds,omitempty"`
 }
 
 // SetCommand sets the given command on the health check.

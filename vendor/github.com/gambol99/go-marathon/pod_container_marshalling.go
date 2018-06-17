@@ -21,44 +21,33 @@ import (
 	"fmt"
 )
 
-// Alias aliases the Application struct so that it will be marshaled/unmarshaled automatically
-type Alias Application
+// PodContainerAlias aliases the PodContainer struct so that it will be marshaled/unmarshaled automatically
+type PodContainerAlias PodContainer
 
-// TmpEnvSecret holds the secret values deserialized from the environment variables field
-type TmpEnvSecret struct {
-	Secret string `json:"secret,omitempty"`
-}
-
-// TmpSecret holds the deserialized secrets field in a Marathon application configuration
-type TmpSecret struct {
-	Source string `json:"source,omitempty"`
-}
-
-// UnmarshalJSON unmarshals the given Application JSON as expected except for environment variables and secrets.
-// Environment varialbes are stored in the Env field. Secrets, including the environment variable part,
+// UnmarshalJSON unmarshals the given PodContainer JSON as expected except for environment variables and secrets.
+// Environment variables are stored in the Env field. Secrets, including the environment variable part,
 // are stored in the Secrets field.
-func (app *Application) UnmarshalJSON(b []byte) error {
+func (p *PodContainer) UnmarshalJSON(b []byte) error {
 	aux := &struct {
-		*Alias
-		Env     map[string]interface{} `json:"env"`
-		Secrets map[string]TmpSecret   `json:"secrets"`
+		*PodContainerAlias
+		Env map[string]interface{} `json:"environment"`
 	}{
-		Alias: (*Alias)(app),
+		PodContainerAlias: (*PodContainerAlias)(p),
 	}
 	if err := json.Unmarshal(b, aux); err != nil {
-		return fmt.Errorf("malformed application definition %v", err)
+		return fmt.Errorf("malformed pod container definition %v", err)
 	}
-	env := &map[string]string{}
-	secrets := &map[string]Secret{}
+	env := map[string]string{}
+	secrets := map[string]Secret{}
 
 	for envName, genericEnvValue := range aux.Env {
 		switch envValOrSecret := genericEnvValue.(type) {
 		case string:
-			(*env)[envName] = envValOrSecret
+			env[envName] = envValOrSecret
 		case map[string]interface{}:
 			for secret, secretStore := range envValOrSecret {
 				if secStore, ok := secretStore.(string); ok && secret == "secret" {
-					(*secrets)[secStore] = Secret{EnvVar: envName}
+					secrets[secStore] = Secret{EnvVar: envName}
 					break
 				}
 				return fmt.Errorf("unexpected secret field %v of value type %T", secret, envValOrSecret[secret])
@@ -67,40 +56,39 @@ func (app *Application) UnmarshalJSON(b []byte) error {
 			return fmt.Errorf("unexpected environment variable type %T", envValOrSecret)
 		}
 	}
-	app.Env = env
+	p.Env = env
 	for k, v := range aux.Secrets {
-		tmp := (*secrets)[k]
+		tmp := secrets[k]
 		tmp.Source = v.Source
-		(*secrets)[k] = tmp
+		secrets[k] = tmp
 	}
-	app.Secrets = secrets
+	p.Secrets = secrets
 	return nil
 }
 
-// MarshalJSON marshals the given Application as expected except for environment variables and secrets,
+// MarshalJSON marshals the given PodContainer as expected except for environment variables and secrets,
 // which are marshaled from specialized structs.  The environment variable piece of the secrets and other
 // normal environment variables are combined and marshaled to the env field.  The secrets and the related
 // source are marshaled into the secrets field.
-func (app *Application) MarshalJSON() ([]byte, error) {
+func (p *PodContainer) MarshalJSON() ([]byte, error) {
 	env := make(map[string]interface{})
 	secrets := make(map[string]TmpSecret)
 
-	if app.Env != nil {
-		for k, v := range *app.Env {
+	if p.Env != nil {
+		for k, v := range p.Env {
 			env[string(k)] = string(v)
 		}
 	}
-	if app.Secrets != nil {
-		for k, v := range *app.Secrets {
+	if p.Secrets != nil {
+		for k, v := range p.Secrets {
 			env[v.EnvVar] = TmpEnvSecret{Secret: k}
 			secrets[k] = TmpSecret{v.Source}
 		}
 	}
 	aux := &struct {
-		*Alias
-		Env     map[string]interface{} `json:"env,omitempty"`
-		Secrets map[string]TmpSecret   `json:"secrets,omitempty"`
-	}{Alias: (*Alias)(app), Env: env, Secrets: secrets}
+		*PodContainerAlias
+		Env map[string]interface{} `json:"environment,omitempty"`
+	}{PodContainerAlias: (*PodContainerAlias)(p), Env: env}
 
 	return json.Marshal(aux)
 }

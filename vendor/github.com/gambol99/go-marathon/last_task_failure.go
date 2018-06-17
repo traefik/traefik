@@ -1,4 +1,5 @@
 /*
+Copyright 2015 The go-marathon Authors All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,6 +21,7 @@ type LastTaskFailure struct {
 	AppID     string `json:"appId,omitempty"`
 	Host      string `json:"host,omitempty"`
 	Message   string `json:"message,omitempty"`
+	SlaveID   string `json:"slaveId,omitempty"`
 	State     string `json:"state,omitempty"`
 	TaskID    string `json:"taskId,omitempty"`
 	Timestamp string `json:"timestamp,omitempty"`

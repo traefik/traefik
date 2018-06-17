@@ -1,5 +1,5 @@
 /*
-Copyright 2014 Rohith All rights reserved.
+Copyright 2014 The go-marathon Authors All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ const (
 	marathonAPIEventStream  = marathonAPIVersion + "/events"
 	marathonAPISubscription = marathonAPIVersion + "/eventSubscriptions"
 	marathonAPIApps         = marathonAPIVersion + "/apps"
+	marathonAPIPods         = marathonAPIVersion + "/pods"
 	marathonAPITasks        = marathonAPIVersion + "/tasks"
 	marathonAPIDeployments  = marathonAPIVersion + "/deployments"
 	marathonAPIGroups       = marathonAPIVersion + "/groups"

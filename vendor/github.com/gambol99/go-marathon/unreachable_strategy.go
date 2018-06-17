@@ -1,5 +1,5 @@
 /*
-Copyright 2017 Rohith All rights reserved.
+Copyright 2017 The go-marathon Authors All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import (
 	"fmt"
 )
 
+// UnreachableStrategyAbsenceReasonDisabled signifies the reason of disabled unreachable strategy
 const UnreachableStrategyAbsenceReasonDisabled = "disabled"
 
 // UnreachableStrategy is the unreachable strategy applied to an application.

@@ -1,5 +1,5 @@
 /*
-Copyright 2015 Rohith All rights reserved.
+Copyright 2015 The go-marathon Authors All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -42,6 +42,8 @@ const (
 	ErrCodeServer
 	// ErrCodeUnknown specifies an unknown error.
 	ErrCodeUnknown
+	// ErrCodeMethodNotAllowed specifies a 405 Method Not Allowed.
+	ErrCodeMethodNotAllowed
 )
 
 // InvalidEndpointError indicates a endpoint error in the marathon urls
@@ -82,6 +84,8 @@ func NewAPIError(code int, content []byte) error {
 		errDef = &simpleErrDef{code: ErrCodeForbidden}
 	case code == http.StatusNotFound:
 		errDef = &simpleErrDef{code: ErrCodeNotFound}
+	case code == http.StatusMethodNotAllowed:
+		errDef = &simpleErrDef{code: ErrCodeMethodNotAllowed}
 	case code == http.StatusConflict:
 		errDef = &conflictDef{}
 	case code == 422:

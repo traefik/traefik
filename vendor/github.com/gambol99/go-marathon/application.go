@@ -1,5 +1,5 @@
 /*
-Copyright 2014 Rohith All rights reserved.
+Copyright 2014 The go-marathon Authors All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -56,14 +56,16 @@ type Port struct {
 
 // Application is the definition for an application in marathon
 type Application struct {
-	ID          string      `json:"id,omitempty"`
-	Cmd         *string     `json:"cmd,omitempty"`
-	Args        *[]string   `json:"args,omitempty"`
-	Constraints *[][]string `json:"constraints,omitempty"`
-	Container   *Container  `json:"container,omitempty"`
-	CPUs        float64     `json:"cpus,omitempty"`
-	GPUs        *float64    `json:"gpus,omitempty"`
-	Disk        *float64    `json:"disk,omitempty"`
+	ID          string        `json:"id,omitempty"`
+	Cmd         *string       `json:"cmd,omitempty"`
+	Args        *[]string     `json:"args,omitempty"`
+	Constraints *[][]string   `json:"constraints,omitempty"`
+	Container   *Container    `json:"container,omitempty"`
+	CPUs        float64       `json:"cpus,omitempty"`
+	GPUs        *float64      `json:"gpus,omitempty"`
+	Disk        *float64      `json:"disk,omitempty"`
+	Networks    *[]PodNetwork `json:"networks,omitempty"`
+
 	// Contains non-secret environment variables. Secrets environment variables are part of the Secrets map.
 	Env                        *map[string]string  `json:"-"`
 	Executor                   *string             `json:"executor,omitempty"`
@@ -100,6 +102,7 @@ type Application struct {
 	LastTaskFailure       *LastTaskFailure        `json:"lastTaskFailure,omitempty"`
 	Fetch                 *[]Fetch                `json:"fetch,omitempty"`
 	IPAddressPerTask      *IPAddressPerTask       `json:"ipAddress,omitempty"`
+	Residency             *Residency              `json:"residency,omitempty"`
 	Secrets               *map[string]Secret      `json:"-"`
 }
 
@@ -494,7 +497,10 @@ func (r *Application) CheckHTTP(path string, port, interval int) (*Application, 
 	// step: get the port index
 	portIndex, err := r.Container.Docker.ServicePortIndex(port)
 	if err != nil {
-		return nil, err
+		portIndex, err = r.Container.ServicePortIndex(port)
+		if err != nil {
+			return nil, err
+		}
 	}
 	health := NewDefaultHealthCheck()
 	health.IntervalSeconds = interval
@@ -517,7 +523,10 @@ func (r *Application) CheckTCP(port, interval int) (*Application, error) {
 	// step: get the port index
 	portIndex, err := r.Container.Docker.ServicePortIndex(port)
 	if err != nil {
-		return nil, err
+		portIndex, err = r.Container.ServicePortIndex(port)
+		if err != nil {
+			return nil, err
+		}
 	}
 	health := NewDefaultHealthCheck()
 	health.Protocol = "TCP"
@@ -603,6 +612,23 @@ func (r *Application) EmptyUnreachableStrategy() *Application {
 	return r
 }
 
+// SetResidency sets behavior for resident applications, an application is resident when
+// it has local persistent volumes set
+func (r *Application) SetResidency(whenLost TaskLostBehaviorType) *Application {
+	r.Residency = &Residency{
+		TaskLostBehavior: whenLost,
+	}
+	return r
+}
+
+// EmptyResidency explicitly empties the residency -- use this if
+// you need to empty the residency of an application that already has
+// the residency set (setting it to nil will keep the current value).
+func (r *Application) EmptyResidency() *Application {
+	r.Residency = &Residency{}
+	return r
+}
+
 // String returns the json representation of this application
 func (r *Application) String() string {
 	s, err := json.MarshalIndent(r, "", "  ")
@@ -671,7 +697,7 @@ func (r *marathonClient) ApplicationVersions(name string) (*ApplicationVersions,
 // 		name: 		the id used to identify the application
 //		version: 	the version (normally a timestamp) you wish to change to
 func (r *marathonClient) SetApplicationVersion(name string, version *ApplicationVersion) (*DeploymentID, error) {
-	path := fmt.Sprintf(buildPath(name))
+	path := buildPath(name)
 	deploymentID := new(DeploymentID)
 	if err := r.apiPut(path, version, deploymentID); err != nil {
 		return nil, err
@@ -792,24 +818,7 @@ func (r *marathonClient) CreateApplication(application *Application) (*Applicati
 //		name:		the id of the application
 //		timeout:	a duration of time to wait for an application to deploy
 func (r *marathonClient) WaitOnApplication(name string, timeout time.Duration) error {
-	if r.appExistAndRunning(name) {
-		return nil
-	}
-
-	timeoutTimer := time.After(timeout)
-	ticker := time.NewTicker(r.config.PollingWaitTime)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-timeoutTimer:
-			return ErrTimeoutError
-		case <-ticker.C:
-			if r.appExistAndRunning(name) {
-				return nil
-			}
-		}
-	}
+	return r.wait(name, timeout, r.appExistAndRunning)
 }
 
 func (r *marathonClient) appExistAndRunning(name string) bool {
@@ -954,4 +963,23 @@ func (d *Discovery) AddPort(port Port) *Discovery {
 	ports = append(ports, port)
 	d.Ports = &ports
 	return d
+}
+
+// EmptyNetworks explicitly empties networks
+func (r *Application) EmptyNetworks() *Application {
+	r.Networks = &[]PodNetwork{}
+	return r
+}
+
+// SetNetwork sets the networking mode
+func (r *Application) SetNetwork(name string, mode PodNetworkMode) *Application {
+	if r.Networks == nil {
+		r.EmptyNetworks()
+	}
+
+	network := PodNetwork{Name: name, Mode: mode}
+	networks := *r.Networks
+	networks = append(networks, network)
+	r.Networks = &networks
+	return r
 }
