@@ -1,5 +1,5 @@
 /*
-Copyright 2014 The go-marathon Authors All rights reserved.
+Copyright 2014 Rohith All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -100,7 +100,6 @@ type Application struct {
 	LastTaskFailure       *LastTaskFailure        `json:"lastTaskFailure,omitempty"`
 	Fetch                 *[]Fetch                `json:"fetch,omitempty"`
 	IPAddressPerTask      *IPAddressPerTask       `json:"ipAddress,omitempty"`
-	Residency             *Residency              `json:"residency,omitempty"`
 	Secrets               *map[string]Secret      `json:"-"`
 }
 
@@ -604,23 +603,6 @@ func (r *Application) EmptyUnreachableStrategy() *Application {
 	return r
 }
 
-// SetResidency sets behavior for resident applications, an application is resident when
-// it has local persistent volumes set
-func (r *Application) SetResidency(whenLost TaskLostBehaviorType) *Application {
-	r.Residency = &Residency{
-		TaskLostBehavior: whenLost,
-	}
-	return r
-}
-
-// EmptyResidency explicitly empties the residency -- use this if
-// you need to empty the residency of an application that already has
-// the residency set (setting it to nil will keep the current value).
-func (r *Application) EmptyResidency() *Application {
-	r.Residency = &Residency{}
-	return r
-}
-
 // String returns the json representation of this application
 func (r *Application) String() string {
 	s, err := json.MarshalIndent(r, "", "  ")
@@ -689,7 +671,7 @@ func (r *marathonClient) ApplicationVersions(name string) (*ApplicationVersions,
 // 		name: 		the id used to identify the application
 //		version: 	the version (normally a timestamp) you wish to change to
 func (r *marathonClient) SetApplicationVersion(name string, version *ApplicationVersion) (*DeploymentID, error) {
-	path := buildPath(name)
+	path := fmt.Sprintf(buildPath(name))
 	deploymentID := new(DeploymentID)
 	if err := r.apiPut(path, version, deploymentID); err != nil {
 		return nil, err

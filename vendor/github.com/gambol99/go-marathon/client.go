@@ -1,5 +1,5 @@
 /*
-Copyright 2014 The go-marathon Authors All rights reserved.
+Copyright 2014 Rohith All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -196,8 +196,8 @@ type marathonClient struct {
 	hosts *cluster
 	// a map of service you wish to listen to
 	listeners map[EventsChannel]EventsChannelContext
-	// a custom log function for debug messages
-	debugLog func(format string, v ...interface{})
+	// a custom logger for debug log messages
+	debugLog *log.Logger
 	// the marathon HTTP client to ensure consistency in requests
 	client *httpClient
 }
@@ -243,19 +243,16 @@ func NewClient(config Config) (Marathon, error) {
 		return nil, err
 	}
 
-	debugLog := func(string, ...interface{}) {}
-	if config.LogOutput != nil {
-		logger := log.New(config.LogOutput, "", 0)
-		debugLog = func(format string, v ...interface{}) {
-			logger.Printf(format, v...)
-		}
+	debugLogOutput := config.LogOutput
+	if debugLogOutput == nil {
+		debugLogOutput = ioutil.Discard
 	}
 
 	return &marathonClient{
 		config:    config,
 		listeners: make(map[EventsChannel]EventsChannelContext),
 		hosts:     hosts,
-		debugLog:  debugLog,
+		debugLog:  log.New(debugLogOutput, "", 0),
 		client:    client,
 	}, nil
 }
@@ -311,7 +308,7 @@ func (r *marathonClient) apiCall(method, path string, body, result interface{}) 
 		if err != nil {
 			r.hosts.markDown(member)
 			// step: attempt the request on another member
-			r.debugLog("apiCall(): request failed on host: %s, error: %s, trying another", member, err)
+			r.debugLog.Printf("apiCall(): request failed on host: %s, error: %s, trying another\n", member, err)
 			continue
 		}
 		defer response.Body.Close()
@@ -323,9 +320,9 @@ func (r *marathonClient) apiCall(method, path string, body, result interface{}) 
 		}
 
 		if len(requestBody) > 0 {
-			r.debugLog("apiCall(): %v %v %s returned %v %s", request.Method, request.URL.String(), requestBody, response.Status, oneLogLine(respBody))
+			r.debugLog.Printf("apiCall(): %v %v %s returned %v %s\n", request.Method, request.URL.String(), requestBody, response.Status, oneLogLine(respBody))
 		} else {
-			r.debugLog("apiCall(): %v %v returned %v %s", request.Method, request.URL.String(), response.Status, oneLogLine(respBody))
+			r.debugLog.Printf("apiCall(): %v %v returned %v %s\n", request.Method, request.URL.String(), response.Status, oneLogLine(respBody))
 		}
 
 		// step: check for a successfull response
@@ -342,7 +339,7 @@ func (r *marathonClient) apiCall(method, path string, body, result interface{}) 
 		if response.StatusCode >= 500 && response.StatusCode <= 599 {
 			// step: mark the host as down
 			r.hosts.markDown(member)
-			r.debugLog("apiCall(): request failed, host: %s, status: %d, trying another", member, response.StatusCode)
+			r.debugLog.Printf("apiCall(): request failed, host: %s, status: %d, trying another\n", member, response.StatusCode)
 			continue
 		}
 
