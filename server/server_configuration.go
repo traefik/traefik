@@ -554,10 +554,29 @@ func (s *Server) buildServerEntryPoints() map[string]*serverEntryPoint {
 			httpRouter:       middlewares.NewHandlerSwitcher(s.buildDefaultHTTPRouter()),
 			onDemandListener: entryPoint.OnDemandListener,
 		}
+
+		serverEntryPoints[entryPointName].certs = &safe.Safe{}
+		serverEntryPoints[entryPointName].staticCerts = &safe.Safe{}
+
 		if entryPoint.CertificateStore != nil {
 			serverEntryPoints[entryPointName].certs = entryPoint.CertificateStore.DynamicCerts
-		} else {
-			serverEntryPoints[entryPointName].certs = &safe.Safe{}
+		}
+
+		serverEntryPoints[entryPointName].sniStrict = entryPoint.Configuration.SniStrict
+
+		if entryPoint.Configuration.TLS != nil {
+			if entryPoint.Configuration.TLS.DefaultCertificate != nil {
+				cert, err := tls.LoadX509KeyPair(entryPoint.Configuration.TLS.DefaultCertificate.CertFile.String(), entryPoint.Configuration.TLS.DefaultCertificate.KeyFile.String())
+				if err != nil {
+				}
+				serverEntryPoints[entryPointName].defaultCertificate = &cert
+			}
+			if len(entryPoint.Configuration.TLS.Certificates) > 0 {
+				config, _ := entryPoint.Configuration.TLS.Certificates.CreateTLSConfig(entryPointName)
+				config.BuildNameToCertificate()
+				serverEntryPoints[entryPointName].staticCerts.Set(config.NameToCertificate)
+
+			}
 		}
 	}
 	return serverEntryPoints

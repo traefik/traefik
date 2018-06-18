@@ -21,6 +21,8 @@ import (
 // HTTPSSuite
 type HTTPSSuite struct{ BaseSuite }
 
+const httpTimeout = 1500
+
 // TestWithSNIConfigHandshake involves a client sending a SNI hostname of
 // "snitest.com", which happens to match the CN of 'snitest.com.crt'. The test
 // verifies that traefik presents the correct certificate.
@@ -32,7 +34,7 @@ func (s *HTTPSSuite) TestWithSNIConfigHandshake(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 500*time.Millisecond, try.BodyContains("Host:snitest.org"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", httpTimeout*time.Millisecond, try.BodyContains("Host:snitest.org"))
 	c.Assert(err, checker.IsNil)
 
 	tlsConfig := &tls.Config{
@@ -115,6 +117,134 @@ func (s *HTTPSSuite) TestWithSNIConfigRoute(c *check.C) {
 	c.Assert(resp.StatusCode, checker.Equals, http.StatusResetContent)
 }
 
+// TestWithSNIStrictNotMatchedRequest involves a client sending a SNI hostname of
+// "snitest.org", which does not match the CN of 'snitest.com.crt'. The test
+// verifies that traefik closes the connection.
+func (s *HTTPSSuite) TestWithSNIStrictNotMatchedRequest(c *check.C) {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/https_sni_strict.toml"))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", httpTimeout*time.Millisecond, try.BodyContains("Host:snitest.com"))
+	c.Assert(err, checker.IsNil)
+
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+		ServerName:         "snitest.org",
+		NextProtos:         []string{"h2", "http/1.1"},
+	}
+	// Connection with no matching certificate should fail
+	_, err = tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
+	c.Assert(err, checker.NotNil, check.Commentf("failed to connect to server"))
+}
+
+// TestWithDefaultCertificate involves a client sending a SNI hostname of
+// "snitest.org", which does not match the CN of 'snitest.com.crt'. The test
+// verifies that traefik returns the default certificate.
+func (s *HTTPSSuite) TestWithDefaultCertificate(c *check.C) {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/https_sni_default_cert.toml"))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", httpTimeout*time.Millisecond, try.BodyContains("Host:snitest.com"))
+	c.Assert(err, checker.IsNil)
+
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+		ServerName:         "snitest.org",
+		NextProtos:         []string{"h2", "http/1.1"},
+	}
+	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
+	c.Assert(err, checker.IsNil, check.Commentf("failed to connect to server"))
+
+	defer conn.Close()
+	err = conn.Handshake()
+	c.Assert(err, checker.IsNil, check.Commentf("TLS handshake error"))
+
+	cs := conn.ConnectionState()
+	err = cs.PeerCertificates[0].VerifyHostname("snitest.com")
+	c.Assert(err, checker.IsNil, check.Commentf("certificate did not serve correct default certificate"))
+
+	proto := conn.ConnectionState().NegotiatedProtocol
+	c.Assert(proto, checker.Equals, "h2")
+}
+
+// TestWithOverlappingCertificate involves a client sending a SNI hostname of
+// "www.snitest.com", which matches the CN of two static certificates:
+// 'wildcard.snitest.com.crt', and `www.snitest.com.crt`. The test
+// verifies that traefik returns the non-wildcard certificate.
+func (s *HTTPSSuite) TestWithOverlappingStaticCertificate(c *check.C) {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/https_sni_default_cert.toml"))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", httpTimeout*time.Millisecond, try.BodyContains("Host:snitest.com"))
+	c.Assert(err, checker.IsNil)
+
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+		ServerName:         "www.snitest.com",
+		NextProtos:         []string{"h2", "http/1.1"},
+	}
+	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
+	c.Assert(err, checker.IsNil, check.Commentf("failed to connect to server"))
+
+	defer conn.Close()
+	err = conn.Handshake()
+	c.Assert(err, checker.IsNil, check.Commentf("TLS handshake error"))
+
+	cs := conn.ConnectionState()
+	err = cs.PeerCertificates[0].VerifyHostname("www.snitest.com")
+	c.Assert(err, checker.IsNil, check.Commentf("certificate did not serve correct default certificate"))
+
+	proto := conn.ConnectionState().NegotiatedProtocol
+	c.Assert(proto, checker.Equals, "h2")
+}
+
+// TestWithOverlappingCertificate involves a client sending a SNI hostname of
+// "www.snitest.com", which matches the CN of two dynamic certificates:
+// 'wildcard.snitest.com.crt', and `www.snitest.com.crt`. The test
+// verifies that traefik returns the non-wildcard certificate.
+func (s *HTTPSSuite) TestWithOverlappingDynamicCertificate(c *check.C) {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/dynamic_https_sni_default_cert.toml"))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", httpTimeout*time.Millisecond, try.BodyContains("Host:snitest.com"))
+	c.Assert(err, checker.IsNil)
+
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+		ServerName:         "www.snitest.com",
+		NextProtos:         []string{"h2", "http/1.1"},
+	}
+	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
+	c.Assert(err, checker.IsNil, check.Commentf("failed to connect to server"))
+
+	defer conn.Close()
+	err = conn.Handshake()
+	c.Assert(err, checker.IsNil, check.Commentf("TLS handshake error"))
+
+	cs := conn.ConnectionState()
+	err = cs.PeerCertificates[0].VerifyHostname("www.snitest.com")
+	c.Assert(err, checker.IsNil, check.Commentf("certificate did not serve correct default certificate"))
+
+	proto := conn.ConnectionState().NegotiatedProtocol
+	c.Assert(proto, checker.Equals, "h2")
+}
+
 // TestWithClientCertificateAuthentication
 // The client can send a certificate signed by a CA trusted by the server but it's optional
 func (s *HTTPSSuite) TestWithClientCertificateAuthentication(c *check.C) {
@@ -125,7 +255,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthentication(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 500*time.Millisecond, try.BodyContains("Host:snitest.org"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", httpTimeout*time.Millisecond, try.BodyContains("Host:snitest.org"))
 	c.Assert(err, checker.IsNil)
 
 	tlsConfig := &tls.Config{
@@ -181,7 +311,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAs(c *check.
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 500*time.Millisecond, try.BodyContains("Host:snitest.org"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", httpTimeout*time.Millisecond, try.BodyContains("Host:snitest.org"))
 	c.Assert(err, checker.IsNil)
 
 	tlsConfig := &tls.Config{
@@ -242,7 +372,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAsMultipleFi
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1000*time.Millisecond, try.BodyContains("Host:snitest.org"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", httpTimeout*time.Millisecond, try.BodyContains("Host:snitest.org"))
 	c.Assert(err, checker.IsNil)
 
 	tlsConfig := &tls.Config{
@@ -307,10 +437,10 @@ func (s *HTTPSSuite) TestWithRootCAsContentForHTTPSOnBackend(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains(backend.URL))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", httpTimeout*time.Millisecond, try.BodyContains(backend.URL))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8081/ping", 1*time.Second, try.StatusCodeIs(http.StatusOK))
+	err = try.GetRequest("http://127.0.0.1:8081/ping", httpTimeout*time.Millisecond, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 }
 
@@ -329,10 +459,10 @@ func (s *HTTPSSuite) TestWithRootCAsFileForHTTPSOnBackend(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains(backend.URL))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", httpTimeout*time.Millisecond, try.BodyContains(backend.URL))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8081/ping", 1*time.Second, try.StatusCodeIs(http.StatusOK))
+	err = try.GetRequest("http://127.0.0.1:8081/ping", httpTimeout*time.Millisecond, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 }
 
@@ -387,7 +517,7 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithNoChange(c *check.C) {
 	}
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("Host:"+tr1.TLSClientConfig.ServerName))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", httpTimeout*time.Millisecond, try.BodyContains("Host:"+tr1.TLSClientConfig.ServerName))
 	c.Assert(err, checker.IsNil)
 
 	backend1 := startTestServer("9010", http.StatusNoContent)
@@ -395,9 +525,9 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithNoChange(c *check.C) {
 	defer backend1.Close()
 	defer backend2.Close()
 
-	err = try.GetRequest(backend1.URL, 500*time.Millisecond, try.StatusCodeIs(http.StatusNoContent))
+	err = try.GetRequest(backend1.URL, httpTimeout*time.Millisecond, try.StatusCodeIs(http.StatusNoContent))
 	c.Assert(err, checker.IsNil)
-	err = try.GetRequest(backend2.URL, 500*time.Millisecond, try.StatusCodeIs(http.StatusResetContent))
+	err = try.GetRequest(backend2.URL, httpTimeout*time.Millisecond, try.StatusCodeIs(http.StatusResetContent))
 	c.Assert(err, checker.IsNil)
 
 	client := &http.Client{Transport: tr1}
@@ -459,7 +589,7 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithChange(c *check.C) {
 	}
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("Host:"+tr2.TLSClientConfig.ServerName))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", httpTimeout*time.Millisecond, try.BodyContains("Host:"+tr2.TLSClientConfig.ServerName))
 	c.Assert(err, checker.IsNil)
 
 	backend1 := startTestServer("9010", http.StatusNoContent)
@@ -467,9 +597,9 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithChange(c *check.C) {
 	defer backend1.Close()
 	defer backend2.Close()
 
-	err = try.GetRequest(backend1.URL, 500*time.Millisecond, try.StatusCodeIs(http.StatusNoContent))
+	err = try.GetRequest(backend1.URL, httpTimeout*time.Millisecond, try.StatusCodeIs(http.StatusNoContent))
 	c.Assert(err, checker.IsNil)
-	err = try.GetRequest(backend2.URL, 500*time.Millisecond, try.StatusCodeIs(http.StatusResetContent))
+	err = try.GetRequest(backend2.URL, httpTimeout*time.Millisecond, try.StatusCodeIs(http.StatusResetContent))
 	c.Assert(err, checker.IsNil)
 
 	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
@@ -553,14 +683,14 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithTlsConfigurationDeletion(c
 	}
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("Host:"+tr2.TLSClientConfig.ServerName))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", httpTimeout*time.Millisecond, try.BodyContains("Host:"+tr2.TLSClientConfig.ServerName))
 	c.Assert(err, checker.IsNil)
 
 	backend2 := startTestServer("9020", http.StatusResetContent)
 
 	defer backend2.Close()
 
-	err = try.GetRequest(backend2.URL, 500*time.Millisecond, try.StatusCodeIs(http.StatusResetContent))
+	err = try.GetRequest(backend2.URL, httpTimeout*time.Millisecond, try.StatusCodeIs(http.StatusResetContent))
 	c.Assert(err, checker.IsNil)
 
 	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)

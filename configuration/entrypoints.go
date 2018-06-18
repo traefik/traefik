@@ -20,6 +20,7 @@ type EntryPoint struct {
 	Compress             bool              `export:"true"`
 	ProxyProtocol        *ProxyProtocol    `export:"true"`
 	ForwardedHeaders     *ForwardedHeaders `export:"true"`
+	SniStrict            bool              `export:"true"`
 }
 
 // ProxyProtocol contains Proxy-Protocol configuration
@@ -86,6 +87,7 @@ func (ep *EntryPoints) Set(value string) error {
 		WhiteList:            makeWhiteList(result),
 		ProxyProtocol:        makeEntryPointProxyProtocol(result),
 		ForwardedHeaders:     makeEntryPointForwardedHeaders(result),
+		SniStrict:            toBool(result, "snistrict"),
 	}
 
 	return nil
@@ -240,6 +242,13 @@ func makeEntryPointTLS(result map[string]string) (*tls.TLS, error) {
 
 		if len(result["tls_ciphersuites"]) > 0 {
 			configTLS.CipherSuites = strings.Split(result["tls_ciphersuites"], ",")
+		}
+
+		if len(result["tls_defaultcertificate_cert"]) > 0 && len(result["tls_defaultcertificate_key"]) > 0 {
+			configTLS.DefaultCertificate = &tls.Certificate{
+				CertFile: tls.FileOrContent(result["tls_defaultcertificate_cert"]),
+				KeyFile:  tls.FileOrContent(result["tls_defaultcertificate_key"]),
+			}
 		}
 	}
 

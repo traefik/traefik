@@ -22,11 +22,12 @@ type ClientCA struct {
 
 // TLS configures TLS for an entry point
 type TLS struct {
-	MinVersion    string `export:"true"`
-	CipherSuites  []string
-	Certificates  Certificates
-	ClientCAFiles []string // Deprecated
-	ClientCA      ClientCA
+	MinVersion         string `export:"true"`
+	CipherSuites       []string
+	Certificates       Certificates
+	ClientCAFiles      []string // Deprecated
+	ClientCA           ClientCA
+	DefaultCertificate *Certificate
 }
 
 // RootCAs hold the CA we want to have in root
