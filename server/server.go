@@ -32,6 +32,7 @@ import (
 	"github.com/containous/traefik/middlewares/accesslog"
 	mauth "github.com/containous/traefik/middlewares/auth"
 	"github.com/containous/traefik/middlewares/errorpages"
+	"github.com/containous/traefik/middlewares/pipelining"
 	"github.com/containous/traefik/middlewares/redirect"
 	"github.com/containous/traefik/middlewares/tracing"
 	"github.com/containous/traefik/provider"
@@ -1022,6 +1023,11 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 							tm.ServeHTTP(w, r, next.ServeHTTP)
 						})
 					}
+
+					pm := pipelining.NewPipelining(fwd)
+					fwd = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						pm.ServeHTTP(w, r)
+					})
 
 					var rr *roundrobin.RoundRobin
 					var saveFrontend http.Handler
