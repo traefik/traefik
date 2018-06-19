@@ -23,7 +23,6 @@ import (
 	"github.com/eapache/channels"
 	"github.com/urfave/negroni"
 	"github.com/vulcand/oxy/forward"
-	"github.com/vulcand/oxy/utils"
 )
 
 // loadConfiguration manages dynamically frontends, backends and TLS configurations
@@ -80,7 +79,6 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 	}
 
 	serverEntryPoints := s.buildServerEntryPoints()
-	errorHandler := NewRecordingErrorHandler(middlewares.DefaultNetErrorRecorder{})
 
 	backendsHandlers := map[string]http.Handler{}
 	backendsHealthCheck := map[string]*healthcheck.BackendConfig{}
@@ -92,7 +90,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 
 		for _, frontendName := range frontendNames {
 			frontendPostConfigs, err := s.loadFrontendConfig(providerName, frontendName, config,
-				redirectHandlers, serverEntryPoints, errorHandler,
+				redirectHandlers, serverEntryPoints,
 				backendsHandlers, backendsHealthCheck)
 			if err != nil {
 				log.Errorf("%v. Skipping frontend %s...", err, frontendName)
@@ -131,7 +129,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 
 func (s *Server) loadFrontendConfig(
 	providerName string, frontendName string, config *types.Configuration,
-	redirectHandlers map[string]negroni.Handler, serverEntryPoints map[string]*serverEntryPoint, errorHandler *RecordingErrorHandler,
+	redirectHandlers map[string]negroni.Handler, serverEntryPoints map[string]*serverEntryPoint,
 	backendsHandlers map[string]http.Handler, backendsHealthCheck map[string]*healthcheck.BackendConfig,
 ) ([]handlerPostConfig, error) {
 
@@ -170,7 +168,7 @@ func (s *Server) loadFrontendConfig(
 				postConfigs = append(postConfigs, postConfig)
 			}
 
-			fwd, err := s.buildForwarder(entryPointName, entryPoint, frontendName, frontend, errorHandler, responseModifier)
+			fwd, err := s.buildForwarder(entryPointName, entryPoint, frontendName, frontend, responseModifier)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create the forwarder for frontend %s: %v", frontendName, err)
 			}
@@ -222,7 +220,7 @@ func (s *Server) loadFrontendConfig(
 
 func (s *Server) buildForwarder(entryPointName string, entryPoint *configuration.EntryPoint,
 	frontendName string, frontend *types.Frontend,
-	errorHandler utils.ErrorHandler, responseModifier modifyResponse) (http.Handler, error) {
+	responseModifier modifyResponse) (http.Handler, error) {
 
 	roundTripper, err := s.getRoundTripper(entryPointName, frontend.PassTLSCert, entryPoint.TLS)
 	if err != nil {
@@ -239,7 +237,6 @@ func (s *Server) buildForwarder(entryPointName string, entryPoint *configuration
 		forward.Stream(true),
 		forward.PassHostHeader(frontend.PassHostHeader),
 		forward.RoundTripper(roundTripper),
-		forward.ErrorHandler(errorHandler),
 		forward.Rewriter(rewriter),
 		forward.ResponseModifier(responseModifier),
 		forward.BufferPool(s.bufferPool),
