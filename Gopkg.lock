@@ -1006,6 +1006,12 @@
   version = "v2.0.1"
 
 [[projects]]
+  name = "github.com/philhofer/fwd"
+  packages = ["."]
+  revision = "bb6d471dc95d4fe11e432687f8b70ff496cf3136"
+  version = "v1.0.0"
+
+[[projects]]
   name = "github.com/pierrec/lz4"
   packages = ["."]
   revision = "08c27939df1bd95e881e2c2367a749964ad1fceb"
@@ -1138,6 +1144,12 @@
     "dns"
   ]
   revision = "37e84520dcf74488f67654f9c775b9752c232dc1"
+
+[[projects]]
+  name = "github.com/tinylib/msgp"
+  packages = ["msgp"]
+  revision = "b2b6a672cf1e5b90748f79b8b81fc8c5cf0571a1"
+  version = "1.0.2"
 
 [[projects]]
   branch = "master"
@@ -1431,6 +1443,18 @@
   version = "v1.12.0"
 
 [[projects]]
+  name = "gopkg.in/DataDog/dd-trace-go.v1"
+  packages = [
+    "ddtrace",
+    "ddtrace/ext",
+    "ddtrace/internal",
+    "ddtrace/opentracer",
+    "ddtrace/tracer"
+  ]
+  revision = "d052956664af54dbcff2712d10c67c76fbfc299f"
+  version = "v1.0.0"
+
+[[projects]]
   name = "gopkg.in/fsnotify.v1"
   packages = ["."]
   revision = "629574ca2a5df945712d3079857300b5e4da0236"
@@ -1687,6 +1711,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6090df9fbed29043b8602fafc92694ee7f3783d1c97a2cb080dc44913f928d1e"
+  inputs-digest = "63fb25f0e549ec7942fda4d11c25e04bdf756dcc44d31e897b103f2270dc42d9"
   solver-name = "gps-cdcl"
   solver-version = 1

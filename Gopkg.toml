@@ -256,3 +256,7 @@
   non-go = true
   go-tests = true
   unused-packages = true
+
+[[constraint]]
+  name = "gopkg.in/DataDog/dd-trace-go.v1"
+  version = "1.0.0"
