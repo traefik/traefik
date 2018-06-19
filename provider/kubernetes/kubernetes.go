@@ -115,40 +115,36 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 	pool.Go(func(stop chan bool) {
 		operation := func() error {
-			for {
-				stopWatch := make(chan struct{}, 1)
-				defer close(stopWatch)
-				eventsChan, err := k8sClient.WatchAll(p.Namespaces, stopWatch)
-				if err != nil {
-					log.Errorf("Error watching kubernetes events: %v", err)
-					timer := time.NewTimer(1 * time.Second)
-					select {
-					case <-timer.C:
-						return err
-					case <-stop:
-						return nil
-					}
+			stopWatch := make(chan struct{}, 1)
+			defer close(stopWatch)
+			eventsChan, err := k8sClient.WatchAll(p.Namespaces, stopWatch)
+			if err != nil {
+				log.Errorf("Error watching kubernetes events: %v", err)
+				timer := time.NewTimer(1 * time.Second)
+				select {
+				case <-timer.C:
+					return err
+				case <-stop:
+					return nil
 				}
-				for {
-					select {
-					case <-stop:
-						return nil
-					case event := <-eventsChan:
-						log.Debugf("Received Kubernetes event kind %T", event)
-
-						templateObjects, err := p.loadIngresses(k8sClient)
-						if err != nil {
-							return err
-						}
-
-						if reflect.DeepEqual(p.lastConfiguration.Get(), templateObjects) {
-							log.Debugf("Skipping Kubernetes event kind %T", event)
-						} else {
-							p.lastConfiguration.Set(templateObjects)
-							configurationChan <- types.ConfigMessage{
-								ProviderName:  "kubernetes",
-								Configuration: p.loadConfig(*templateObjects),
-							}
+			}
+			for {
+				select {
+				case <-stop:
+					return nil
+				case event := <-eventsChan:
+					log.Debugf("Received Kubernetes event kind %T", event)
+					templateObjects, err := p.loadIngresses(k8sClient)
+					if err != nil {
+						return err
+					}
+					if reflect.DeepEqual(p.lastConfiguration.Get(), templateObjects) {
+						log.Debugf("Skipping Kubernetes event kind %T", event)
+					} else {
+						p.lastConfiguration.Set(templateObjects)
+						configurationChan <- types.ConfigMessage{
+							ProviderName:  "kubernetes",
+							Configuration: p.loadConfig(*templateObjects),
 						}
 					}
 				}
