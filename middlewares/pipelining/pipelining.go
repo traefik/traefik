@@ -4,12 +4,7 @@ import (
 	"bufio"
 	"net"
 	"net/http"
-
-	"github.com/containous/traefik/middlewares"
 )
-
-// Compile time validation that the response recorder implements http interfaces correctly.
-var _ middlewares.Stateful = &writerWithCloseNotify{}
 
 // Pipelining returns a middleware
 type Pipelining struct {
@@ -24,23 +19,13 @@ func NewPipelining(next http.Handler) *Pipelining {
 }
 
 func (p *Pipelining) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	writer := &writerWithoutCloseNotify{rw}
+	// https://github.com/golang/go/blob/3d59583836630cf13ec4bfbed977d27b1b7adbdc/src/net/http/server.go#L201-L218
 	if r.Method == http.MethodPut || r.Method == http.MethodPost {
-		p.next.ServeHTTP(&writerWithCloseNotify{writer}, r)
+		p.next.ServeHTTP(rw, r)
 	} else {
-		p.next.ServeHTTP(writer, r)
+		p.next.ServeHTTP(&writerWithoutCloseNotify{rw}, r)
 	}
 
-}
-
-type writerWithCloseNotify struct {
-	*writerWithoutCloseNotify
-}
-
-// CloseNotify returns a channel that receives at most a
-// single value (true) when the client connection has gone away.
-func (w *writerWithCloseNotify) CloseNotify() <-chan bool {
-	return w.W.(http.CloseNotifier).CloseNotify()
 }
 
 // writerWithoutCloseNotify helps to disable closeNotify

@@ -1024,10 +1024,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						})
 					}
 
-					pm := pipelining.NewPipelining(fwd)
-					fwd = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-						pm.ServeHTTP(w, r)
-					})
+					fwd = pipelining.NewPipelining(fwd)
 
 					var rr *roundrobin.RoundRobin
 					var saveFrontend http.Handler

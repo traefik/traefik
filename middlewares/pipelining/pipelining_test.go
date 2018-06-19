@@ -8,6 +8,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type recorderWithCloseNotify struct {
+	*httptest.ResponseRecorder
+}
+
+func (r *recorderWithCloseNotify) CloseNotify() <-chan bool {
+	panic("implement me")
+}
+
 func TestNewPipelining(t *testing.T) {
 	testCases := []struct {
 		desc                   string
@@ -53,10 +61,9 @@ func TestNewPipelining(t *testing.T) {
 			})
 			handler := NewPipelining(nextHandler)
 
-			recorder := httptest.NewRecorder()
 			req := httptest.NewRequest(test.HTTPMethod, "http://localhost", nil)
 
-			handler.ServeHTTP(recorder, req)
+			handler.ServeHTTP(&recorderWithCloseNotify{httptest.NewRecorder()}, req)
 		})
 	}
 }
