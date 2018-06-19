@@ -1169,6 +1169,15 @@ func TestIngressClassAnnotation(t *testing.T) {
 					iPaths(onePath(iPath("/derp"), iBackend("service1", intstr.FromInt(80))))),
 			),
 		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesIngressClass, "custom"),
+			iRules(
+				iRule(
+					iHost("herp"),
+					iPaths(onePath(iPath("/derp"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
 	}
 
 	services := []*corev1.Service{
@@ -1245,6 +1254,28 @@ func TestIngressClassAnnotation(t *testing.T) {
 		{
 			desc:     "Provided IngressClass annotation",
 			provider: Provider{IngressClass: traefikDefaultRealm + "-other"},
+			expected: buildConfiguration(
+				backends(
+					backend("herp/derp",
+						servers(
+							server("http://example.com", weight(1)),
+							server("http://example.com", weight(1))),
+						lbMethod("wrr"),
+					),
+				),
+				frontends(
+					frontend("herp/derp",
+						passHostHeader(),
+						routes(
+							route("/derp", "PathPrefix:/derp"),
+							route("herp", "Host:herp")),
+					),
+				),
+			),
+		},
+		{
+			desc:     "Provided IngressClass annotation",
+			provider: Provider{IngressClass: "custom"},
 			expected: buildConfiguration(
 				backends(
 					backend("herp/derp",
