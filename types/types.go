@@ -415,6 +415,14 @@ type Forward struct {
 	Address            string     `description:"Authentication server address"`
 	TLS                *ClientTLS `description:"Enable TLS support" export:"true"`
 	TrustForwardHeader bool       `description:"Trust X-Forwarded-* headers" export:"true"`
+	AuthResponseHeaders           map[string]*AuthResponseHeader
+}
+
+// Defines an HTTP response header which should be forwarded from the auth response to the subsequent request with a new
+// name
+type AuthResponseHeader struct {
+    Name    string
+    As      string
 }
 
 // CanonicalDomain returns a lower case domain with trim space

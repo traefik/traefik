@@ -49,6 +49,7 @@ func TestForwardAuthFail(t *testing.T) {
 
 func TestForwardAuthSuccess(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Auth-User", "user@example.com")
 		fmt.Fprintln(w, "Success")
 	}))
 	defer server.Close()
@@ -56,11 +57,18 @@ func TestForwardAuthSuccess(t *testing.T) {
 	middleware, err := NewAuthenticator(&types.Auth{
 		Forward: &types.Forward{
 			Address: server.URL,
+			AuthResponseHeaders: map[string]*types.AuthResponseHeader{
+                "user": {
+                    Name: "X-Auth-User",
+                    As:   "X-Authenticated-User",
+                },
+            },
 		},
 	}, &tracing.Tracing{})
 	assert.NoError(t, err, "there should be no error")
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "user@example.com", r.Header.Get("X-Authenticated-User"), "they should be equal")
 		fmt.Fprintln(w, "traefik")
 	})
 	n := negroni.New(middleware)
