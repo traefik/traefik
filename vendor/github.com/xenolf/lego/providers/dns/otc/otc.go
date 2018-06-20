@@ -12,10 +12,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
 )
 
-// DNSProvider is an implementation of the acmev2.ChallengeProvider interface that uses
+// DNSProvider is an implementation of the acme.ChallengeProvider interface that uses
 // OTC's Managed DNS API to manage TXT records for a domain.
 type DNSProvider struct {
 	identityEndpoint string
@@ -59,6 +59,7 @@ func NewDNSProviderCredentials(domainName, userName, password, projectName, iden
 	}, nil
 }
 
+// SendRequest send request
 func (d *DNSProvider) SendRequest(method, resource string, payload interface{}) (io.Reader, error) {
 	url := fmt.Sprintf("%s/%s", d.otcBaseURL, resource)
 
@@ -81,7 +82,7 @@ func (d *DNSProvider) SendRequest(method, resource string, payload interface{}) 
 	tr.DisableKeepAlives = true
 
 	client := &http.Client{
-		Timeout:   time.Duration(10 * time.Second),
+		Timeout:   10 * time.Second,
 		Transport: tr,
 	}
 	resp, err := client.Do(req)
@@ -168,7 +169,7 @@ func (d *DNSProvider) loginRequest() error {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{Timeout: time.Duration(10 * time.Second)}
+	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
@@ -221,12 +222,7 @@ func (d *DNSProvider) loginRequest() error {
 // Starts a new OTC API Session. Authenticates using userName, password
 // and receives a token to be used in for subsequent requests.
 func (d *DNSProvider) login() error {
-	err := d.loginRequest()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return d.loginRequest()
 }
 
 func (d *DNSProvider) getZoneID(zone string) (string, error) {
@@ -305,21 +301,18 @@ func (d *DNSProvider) deleteRecordSet(zoneID, recordID string) error {
 	resource := fmt.Sprintf("zones/%s/recordsets/%s", zoneID, recordID)
 
 	_, err := d.SendRequest("DELETE", resource, nil)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 // Present creates a TXT record using the specified parameters
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
 
 	if ttl < 300 {
 		ttl = 300 // 300 is otc minimum value for ttl
 	}
 
-	authZone, err := acmev2.FindZoneByFqdn(fqdn, acmev2.RecursiveNameservers)
+	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
 	if err != nil {
 		return err
 	}
@@ -340,7 +333,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 		Name        string   `json:"name"`
 		Description string   `json:"description"`
 		Type        string   `json:"type"`
-		Ttl         int      `json:"ttl"`
+		TTL         int      `json:"ttl"`
 		Records     []string `json:"records"`
 	}
 
@@ -348,23 +341,18 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 		Name:        fqdn,
 		Description: "Added TXT record for ACME dns-01 challenge using lego client",
 		Type:        "TXT",
-		Ttl:         300,
+		TTL:         ttl,
 		Records:     []string{fmt.Sprintf("\"%s\"", value)},
 	}
 	_, err = d.SendRequest("POST", resource, r1)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // CleanUp removes the TXT record matching the specified parameters
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
 
-	authZone, err := acmev2.FindZoneByFqdn(fqdn, acmev2.RecursiveNameservers)
+	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
 	if err != nil {
 		return err
 	}
@@ -375,7 +363,6 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	}
 
 	zoneID, err := d.getZoneID(authZone)
-
 	if err != nil {
 		return err
 	}
@@ -384,5 +371,6 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	if err != nil {
 		return fmt.Errorf("unable go get record %s for zone %s: %s", fqdn, domain, err)
 	}
+
 	return d.deleteRecordSet(zoneID, recordID)
 }

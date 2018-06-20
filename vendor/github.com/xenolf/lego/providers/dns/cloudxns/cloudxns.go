@@ -13,12 +13,12 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
 )
 
 const cloudXNSBaseURL = "https://www.cloudxns.net/api2/"
 
-// DNSProvider is an implementation of the acmev2.ChallengeProvider interface
+// DNSProvider is an implementation of the acme.ChallengeProvider interface
 type DNSProvider struct {
 	apiKey    string
 	secretKey string
@@ -48,7 +48,7 @@ func NewDNSProviderCredentials(apiKey, secretKey string) (*DNSProvider, error) {
 
 // Present creates a TXT record to fulfil the dns-01 challenge.
 func (c *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
 	zoneID, err := c.getHostedZoneID(fqdn)
 	if err != nil {
 		return err
@@ -59,7 +59,7 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters.
 func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
 	zoneID, err := c.getHostedZoneID(fqdn)
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func (c *DNSProvider) getHostedZoneID(fqdn string) (string, error) {
 		Domain string `json:"domain"`
 	}
 
-	authZone, err := acmev2.FindZoneByFqdn(fqdn, acmev2.RecursiveNameservers)
+	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
 	if err != nil {
 		return "", err
 	}
@@ -101,7 +101,7 @@ func (c *DNSProvider) getHostedZoneID(fqdn string) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("Zone %s not found in cloudxns for domain %s", authZone, fqdn)
+	return "", fmt.Errorf("zone %s not found in cloudxns for domain %s", authZone, fqdn)
 }
 
 func (c *DNSProvider) findTxtRecord(zoneID, fqdn string) (string, error) {
@@ -117,12 +117,12 @@ func (c *DNSProvider) findTxtRecord(zoneID, fqdn string) (string, error) {
 	}
 
 	for _, record := range records {
-		if record.Host == acmev2.UnFqdn(fqdn) && record.Type == "TXT" {
+		if record.Host == acme.UnFqdn(fqdn) && record.Type == "TXT" {
 			return record.RecordID, nil
 		}
 	}
 
-	return "", fmt.Errorf("No existing record found for %s", fqdn)
+	return "", fmt.Errorf("no existing record found for %s", fqdn)
 }
 
 func (c *DNSProvider) addTxtRecord(zoneID, fqdn, value string, ttl int) error {
@@ -133,7 +133,7 @@ func (c *DNSProvider) addTxtRecord(zoneID, fqdn, value string, ttl int) error {
 
 	payload := cloudXNSRecord{
 		ID:     id,
-		Host:   acmev2.UnFqdn(fqdn),
+		Host:   acme.UnFqdn(fqdn),
 		Value:  value,
 		Type:   "TXT",
 		LineID: 1,
@@ -146,11 +146,7 @@ func (c *DNSProvider) addTxtRecord(zoneID, fqdn, value string, ttl int) error {
 	}
 
 	_, err = c.makeRequest("POST", "record", body)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (c *DNSProvider) delTxtRecord(recordID, zoneID string) error {
@@ -183,7 +179,7 @@ func (c *DNSProvider) makeRequest(method, uri string, body []byte) (json.RawMess
 	req.Header.Set("API-HMAC", c.hmac(url, requestDate, string(body)))
 	req.Header.Set("API-FORMAT", "json")
 
-	resp, err := acmev2.HTTPClient.Do(req)
+	resp, err := acme.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

@@ -1,5 +1,4 @@
-// Adds lego support for http://duckdns.org .
-//
+// Package duckdns Adds lego support for http://duckdns.org .
 // See http://www.duckdns.org/spec.jsp for more info on updating TXT records.
 package duckdns
 
@@ -9,7 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
 )
 
 // DNSProvider adds and removes the record for the DNS challenge
@@ -47,7 +46,7 @@ func makeDuckdnsURL(domain, token, txt string) string {
 }
 
 func issueDuckdnsRequest(url string) error {
-	response, err := acmev2.HTTPClient.Get(url)
+	response, err := acme.HTTPClient.Get(url)
 	if err != nil {
 		return err
 	}
@@ -70,7 +69,7 @@ func issueDuckdnsRequest(url string) error {
 //
 // To update the TXT record we just need to make one simple get request.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	_, txtRecord, _ := acmev2.DNS01Record(domain, keyAuth)
+	_, txtRecord, _ := acme.DNS01Record(domain, keyAuth)
 	url := makeDuckdnsURL(domain, d.token, txtRecord)
 	return issueDuckdnsRequest(url)
 }

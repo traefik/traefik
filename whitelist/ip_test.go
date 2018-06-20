@@ -28,6 +28,14 @@ func TestIsAuthorized(t *testing.T) {
 			authorized:          true,
 		},
 		{
+			desc:                "allow UseXForwardedFor, remoteAddr not in range, UseXForwardedFor in range (compact XFF)",
+			whiteList:           []string{"1.2.3.4/24"},
+			allowXForwardedFor:  true,
+			remoteAddr:          "10.2.3.1:123",
+			xForwardedForValues: []string{"1.2.3.1, 10.2.3.1"},
+			authorized:          true,
+		},
+		{
 			desc:                "allow UseXForwardedFor, remoteAddr in range, UseXForwardedFor in range",
 			whiteList:           []string{"1.2.3.4/24"},
 			allowXForwardedFor:  true,

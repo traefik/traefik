@@ -180,11 +180,22 @@ func frontend(backend string, opts ...func(*types.Frontend)) func(*types.Fronten
 		for _, opt := range opts {
 			opt(f)
 		}
+		// related the function frontendName
+		name := f.Backend
 		f.Backend = backend
+		if len(name) > 0 {
+			return name
+		}
 		return backend
 	}
 }
 
+func frontendName(name string) func(*types.Frontend) {
+	return func(f *types.Frontend) {
+		// store temporary the frontend name into the backend name
+		f.Backend = name
+	}
+}
 func passHostHeader() func(*types.Frontend) {
 	return func(f *types.Frontend) {
 		f.PassHostHeader = true

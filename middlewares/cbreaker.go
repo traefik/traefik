@@ -23,14 +23,14 @@ func NewCircuitBreaker(next http.Handler, expression string, options ...cbreaker
 
 // NewCircuitBreakerOptions returns a new CircuitBreakerOption
 func NewCircuitBreakerOptions(expression string) cbreaker.CircuitBreakerOption {
-	return cbreaker.Fallback(
-		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			tracing.LogEventf(r, "blocked by circuitbreaker (%q)", expression)
-			w.WriteHeader(http.StatusServiceUnavailable)
-			w.Write([]byte(http.StatusText(http.StatusServiceUnavailable)))
-		}))
+	return cbreaker.Fallback(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		tracing.LogEventf(r, "blocked by circuit-breaker (%q)", expression)
+
+		w.WriteHeader(http.StatusServiceUnavailable)
+		w.Write([]byte(http.StatusText(http.StatusServiceUnavailable)))
+	}))
 }
 
-func (cb *CircuitBreaker) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+func (cb *CircuitBreaker) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	cb.circuitBreaker.ServeHTTP(rw, r)
 }

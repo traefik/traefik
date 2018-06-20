@@ -3,6 +3,7 @@ package docker
 import (
 	"context"
 	"fmt"
+	"net"
 	"strconv"
 	"strings"
 	"text/template"
@@ -196,7 +197,7 @@ func (p *Provider) getFrontendRule(container dockerData, segmentLabels map[strin
 }
 
 func (p Provider) getIPAddress(container dockerData) string {
-	if value := label.GetStringValue(container.Labels, labelDockerNetwork, ""); value != "" {
+	if value := label.GetStringValue(container.Labels, labelDockerNetwork, p.Network); value != "" {
 		networkSettings := container.NetworkSettings
 		if networkSettings.Networks != nil {
 			network := networkSettings.Networks[value]
@@ -262,11 +263,16 @@ func isBackendLBSwarm(container dockerData) bool {
 }
 
 func getSegmentBackendName(container dockerData) string {
-	if value := label.GetStringValue(container.SegmentLabels, label.TraefikBackend, ""); len(value) > 0 {
-		return provider.Normalize(container.ServiceName + "-" + value)
+	serviceName := container.ServiceName
+	if values, err := label.GetStringMultipleStrict(container.Labels, labelDockerComposeProject, labelDockerComposeService); err == nil {
+		serviceName = provider.Normalize(values[labelDockerComposeService] + "_" + values[labelDockerComposeProject])
 	}
 
-	return provider.Normalize(container.ServiceName + "-" + getDefaultBackendName(container) + "-" + container.SegmentName)
+	if value := label.GetStringValue(container.SegmentLabels, label.TraefikBackend, ""); len(value) > 0 {
+		return provider.Normalize(serviceName + "-" + value)
+	}
+
+	return provider.Normalize(serviceName + "-" + getDefaultBackendName(container) + "-" + container.SegmentName)
 }
 
 func getDefaultBackendName(container dockerData) string {
@@ -336,7 +342,7 @@ func (p *Provider) getServers(containers []dockerData) map[string]types.Server {
 		}
 
 		servers[provider.Normalize(serverName)] = types.Server{
-			URL:    fmt.Sprintf("%s://%s:%s", protocol, ip, port),
+			URL:    fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(ip, port)),
 			Weight: label.GetIntValue(container.SegmentLabels, label.TraefikWeight, label.DefaultWeight),
 		}
 	}

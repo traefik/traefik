@@ -6,19 +6,19 @@ import (
 
 // DomainPush represents a domain push in DNSimple.
 type DomainPush struct {
-	ID         int    `json:"id,omitempty"`
-	DomainID   int    `json:"domain_id,omitempty"`
-	ContactID  int    `json:"contact_id,omitempty"`
-	AccountID  int    `json:"account_id,omitempty"`
+	ID         int64  `json:"id,omitempty"`
+	DomainID   int64  `json:"domain_id,omitempty"`
+	ContactID  int64  `json:"contact_id,omitempty"`
+	AccountID  int64  `json:"account_id,omitempty"`
 	CreatedAt  string `json:"created_at,omitempty"`
 	UpdatedAt  string `json:"updated_at,omitempty"`
 	AcceptedAt string `json:"accepted_at,omitempty"`
 }
 
-func domainPushPath(accountID string, pushID int) (path string) {
+func domainPushPath(accountID string, pushID int64) (path string) {
 	path = fmt.Sprintf("/%v/pushes", accountID)
 	if pushID != 0 {
-		path += fmt.Sprintf("/%d", pushID)
+		path += fmt.Sprintf("/%v", pushID)
 	}
 	return
 }
@@ -38,13 +38,13 @@ type domainPushesResponse struct {
 // DomainPushAttributes represent a domain push payload (see initiate).
 type DomainPushAttributes struct {
 	NewAccountEmail string `json:"new_account_email,omitempty"`
-	ContactID       string `json:"contact_id,omitempty"`
+	ContactID       int64  `json:"contact_id,omitempty"`
 }
 
 // InitiatePush initiate a new domain push.
 //
 // See https://developer.dnsimple.com/v2/domains/pushes/#initiate
-func (s *DomainsService) InitiatePush(accountID string, domainID string, pushAttributes DomainPushAttributes) (*domainPushResponse, error) {
+func (s *DomainsService) InitiatePush(accountID, domainID string, pushAttributes DomainPushAttributes) (*domainPushResponse, error) {
 	path := versioned(fmt.Sprintf("/%v/pushes", domainPath(accountID, domainID)))
 	pushResponse := &domainPushResponse{}
 
@@ -81,7 +81,7 @@ func (s *DomainsService) ListPushes(accountID string, options *ListOptions) (*do
 // AcceptPush accept a push for a domain.
 //
 // See https://developer.dnsimple.com/v2/domains/pushes/#accept
-func (s *DomainsService) AcceptPush(accountID string, pushID int, pushAttributes DomainPushAttributes) (*domainPushResponse, error) {
+func (s *DomainsService) AcceptPush(accountID string, pushID int64, pushAttributes DomainPushAttributes) (*domainPushResponse, error) {
 	path := versioned(domainPushPath(accountID, pushID))
 	pushResponse := &domainPushResponse{}
 
@@ -97,7 +97,7 @@ func (s *DomainsService) AcceptPush(accountID string, pushID int, pushAttributes
 // RejectPush reject a push for a domain.
 //
 // See https://developer.dnsimple.com/v2/domains/pushes/#reject
-func (s *DomainsService) RejectPush(accountID string, pushID int) (*domainPushResponse, error) {
+func (s *DomainsService) RejectPush(accountID string, pushID int64) (*domainPushResponse, error) {
 	path := versioned(domainPushPath(accountID, pushID))
 	pushResponse := &domainPushResponse{}
 

@@ -8,10 +8,10 @@ import (
 	"strings"
 
 	"github.com/decker502/dnspod-go"
-	"github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
 )
 
-// DNSProvider is an implementation of the acmev2.ChallengeProvider interface.
+// DNSProvider is an implementation of the acme.ChallengeProvider interface.
 type DNSProvider struct {
 	client *dnspod.Client
 }
@@ -38,7 +38,7 @@ func NewDNSProviderCredentials(key string) (*DNSProvider, error) {
 
 // Present creates a TXT record to fulfil the dns-01 challenge.
 func (c *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
 	zoneID, zoneName, err := c.getHostedZone(domain)
 	if err != nil {
 		return err
@@ -55,7 +55,7 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters.
 func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
 
 	records, err := c.findTxtRecords(domain, fqdn)
 	if err != nil {
@@ -82,14 +82,14 @@ func (c *DNSProvider) getHostedZone(domain string) (string, string, error) {
 		return "", "", fmt.Errorf("dnspod API call failed: %v", err)
 	}
 
-	authZone, err := acmev2.FindZoneByFqdn(acmev2.ToFqdn(domain), acmev2.RecursiveNameservers)
+	authZone, err := acme.FindZoneByFqdn(acme.ToFqdn(domain), acme.RecursiveNameservers)
 	if err != nil {
 		return "", "", err
 	}
 
 	var hostedZone dnspod.Domain
 	for _, zone := range zones {
-		if zone.Name == acmev2.UnFqdn(authZone) {
+		if zone.Name == acme.UnFqdn(authZone) {
 			hostedZone = zone
 		}
 	}
@@ -138,7 +138,7 @@ func (c *DNSProvider) findTxtRecords(domain, fqdn string) ([]dnspod.Record, erro
 }
 
 func (c *DNSProvider) extractRecordName(fqdn, domain string) string {
-	name := acmev2.UnFqdn(fqdn)
+	name := acme.UnFqdn(fqdn)
 	if idx := strings.Index(name, "."+domain); idx != -1 {
 		return name[:idx]
 	}

@@ -15,26 +15,26 @@ import (
 
 	"io/ioutil"
 
-	"github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
 )
 
-const bluecatUrlTemplate = "%s/Services/REST/v1"
+const bluecatURLTemplate = "%s/Services/REST/v1"
 const configType = "Configuration"
 const viewType = "View"
 const txtType = "TXTRecord"
 const zoneType = "Zone"
 
 type entityResponse struct {
-	Id         uint   `json:"id"`
+	ID         uint   `json:"id"`
 	Name       string `json:"name"`
 	Type       string `json:"type"`
 	Properties string `json:"properties"`
 }
 
-// DNSProvider is an implementation of the acmev2.ChallengeProvider interface that uses
+// DNSProvider is an implementation of the acme.ChallengeProvider interface that uses
 // Bluecat's Address Manager REST API to manage TXT records for a domain.
 type DNSProvider struct {
-	baseUrl    string
+	baseURL    string
 	userName   string
 	password   string
 	configName string
@@ -56,7 +56,7 @@ func NewDNSProvider() (*DNSProvider, error) {
 	password := os.Getenv("BLUECAT_PASSWORD")
 	configName := os.Getenv("BLUECAT_CONFIG_NAME")
 	dnsView := os.Getenv("BLUECAT_DNS_VIEW")
-	httpClient := http.Client{Timeout: time.Duration(30 * time.Second)}
+	httpClient := http.Client{Timeout: 30 * time.Second}
 	return NewDNSProviderCredentials(server, userName, password, configName, dnsView, httpClient)
 }
 
@@ -68,7 +68,7 @@ func NewDNSProviderCredentials(server, userName, password, configName, dnsView s
 	}
 
 	return &DNSProvider{
-		baseUrl:    fmt.Sprintf(bluecatUrlTemplate, server),
+		baseURL:    fmt.Sprintf(bluecatURLTemplate, server),
 		userName:   userName,
 		password:   password,
 		configName: configName,
@@ -80,7 +80,7 @@ func NewDNSProviderCredentials(server, userName, password, configName, dnsView s
 // Send a REST request, using query parameters specified. The Authorization
 // header will be set if we have an active auth token
 func (d *DNSProvider) sendRequest(method, resource string, payload interface{}, queryArgs map[string]string) (*http.Response, error) {
-	url := fmt.Sprintf("%s/%s", d.baseUrl, resource)
+	url := fmt.Sprintf("%s/%s", d.baseURL, resource)
 
 	body, err := json.Marshal(payload)
 	if err != nil {
@@ -160,14 +160,14 @@ func (d *DNSProvider) logout() error {
 
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("Bluecat API request failed to delete session with HTTP status code %d", resp.StatusCode)
-	} else {
-		authBytes, _ := ioutil.ReadAll(resp.Body)
-		authResp := string(authBytes)
+	}
 
-		if !strings.Contains(authResp, "successfully") {
-			msg := strings.Trim(authResp, "\"")
-			return fmt.Errorf("Bluecat API request failed to delete session: %s", msg)
-		}
+	authBytes, _ := ioutil.ReadAll(resp.Body)
+	authResp := string(authBytes)
+
+	if !strings.Contains(authResp, "successfully") {
+		msg := strings.Trim(authResp, "\"")
+		return fmt.Errorf("Bluecat API request failed to delete session: %s", msg)
 	}
 
 	d.token = ""
@@ -176,7 +176,7 @@ func (d *DNSProvider) logout() error {
 }
 
 // Lookup the entity ID of the configuration named in our properties
-func (d *DNSProvider) lookupConfId() (uint, error) {
+func (d *DNSProvider) lookupConfID() (uint, error) {
 	queryArgs := map[string]string{
 		"parentId": strconv.Itoa(0),
 		"name":     d.configName,
@@ -194,18 +194,18 @@ func (d *DNSProvider) lookupConfId() (uint, error) {
 	if err != nil {
 		return 0, err
 	}
-	return conf.Id, nil
+	return conf.ID, nil
 }
 
 // Find the DNS view with the given name within
-func (d *DNSProvider) lookupViewId(viewName string) (uint, error) {
-	confId, err := d.lookupConfId()
+func (d *DNSProvider) lookupViewID(viewName string) (uint, error) {
+	confID, err := d.lookupConfID()
 	if err != nil {
 		return 0, err
 	}
 
 	queryArgs := map[string]string{
-		"parentId": strconv.FormatUint(uint64(confId), 10),
+		"parentId": strconv.FormatUint(uint64(confID), 10),
 		"name":     d.dnsView,
 		"type":     viewType,
 	}
@@ -222,13 +222,13 @@ func (d *DNSProvider) lookupViewId(viewName string) (uint, error) {
 		return 0, err
 	}
 
-	return view.Id, nil
+	return view.ID, nil
 }
 
 // Return the entityId of the parent zone by recursing from the root view
 // Also return the simple name of the host
-func (d *DNSProvider) lookupParentZoneId(viewId uint, fqdn string) (uint, string, error) {
-	parentViewId := viewId
+func (d *DNSProvider) lookupParentZoneID(viewID uint, fqdn string) (uint, string, error) {
+	parentViewID := viewID
 	name := ""
 
 	if fqdn != "" {
@@ -237,25 +237,24 @@ func (d *DNSProvider) lookupParentZoneId(viewId uint, fqdn string) (uint, string
 		name = zones[0]
 
 		for i := last; i > -1; i-- {
-			zoneId, err := d.getZone(parentViewId, zones[i])
-			if err != nil || zoneId == 0 {
-				return parentViewId, name, err
+			zoneID, err := d.getZone(parentViewID, zones[i])
+			if err != nil || zoneID == 0 {
+				return parentViewID, name, err
 			}
 			if i > 0 {
 				name = strings.Join(zones[0:i], ".")
 			}
-			parentViewId = zoneId
+			parentViewID = zoneID
 		}
 	}
 
-	return parentViewId, name, nil
+	return parentViewID, name, nil
 }
 
 // Get the DNS zone with the specified name under the parentId
-func (d *DNSProvider) getZone(parentId uint, name string) (uint, error) {
-
+func (d *DNSProvider) getZone(parentID uint, name string) (uint, error) {
 	queryArgs := map[string]string{
-		"parentId": strconv.FormatUint(uint64(parentId), 10),
+		"parentId": strconv.FormatUint(uint64(parentID), 10),
 		"name":     name,
 		"type":     zoneType,
 	}
@@ -276,29 +275,32 @@ func (d *DNSProvider) getZone(parentId uint, name string) (uint, error) {
 		return 0, err
 	}
 
-	return zone.Id, nil
+	return zone.ID, nil
 }
 
 // Present creates a TXT record using the specified parameters
 // This will *not* create a subzone to contain the TXT record,
 // so make sure the FQDN specified is within an extant zone.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
 
 	err := d.login()
 	if err != nil {
 		return err
 	}
 
-	viewId, err := d.lookupViewId(d.dnsView)
+	viewID, err := d.lookupViewID(d.dnsView)
 	if err != nil {
 		return err
 	}
 
-	parentZoneId, name, err := d.lookupParentZoneId(viewId, fqdn)
+	parentZoneID, name, err := d.lookupParentZoneID(viewID, fqdn)
+	if err != nil {
+		return err
+	}
 
 	queryArgs := map[string]string{
-		"parentId": strconv.FormatUint(uint64(parentZoneId), 10),
+		"parentId": strconv.FormatUint(uint64(parentZoneID), 10),
 	}
 
 	body := bluecatEntity{
@@ -322,23 +324,18 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 		return fmt.Errorf("Bluecat API addEntity request failed: %s", addTxtResp)
 	}
 
-	err = d.deploy(uint(parentZoneId))
+	err = d.deploy(parentZoneID)
 	if err != nil {
 		return err
 	}
 
-	err = d.logout()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return d.logout()
 }
 
 // Deploy the DNS config for the specified entity to the authoritative servers
-func (d *DNSProvider) deploy(entityId uint) error {
+func (d *DNSProvider) deploy(entityID uint) error {
 	queryArgs := map[string]string{
-		"entityId": strconv.FormatUint(uint64(entityId), 10),
+		"entityId": strconv.FormatUint(uint64(entityID), 10),
 	}
 
 	resp, err := d.sendRequest("POST", "quickDeploy", nil, queryArgs)
@@ -353,25 +350,25 @@ func (d *DNSProvider) deploy(entityId uint) error {
 
 // CleanUp removes the TXT record matching the specified parameters
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
 
 	err := d.login()
 	if err != nil {
 		return err
 	}
 
-	viewId, err := d.lookupViewId(d.dnsView)
+	viewID, err := d.lookupViewID(d.dnsView)
 	if err != nil {
 		return err
 	}
 
-	parentId, name, err := d.lookupParentZoneId(viewId, fqdn)
+	parentID, name, err := d.lookupParentZoneID(viewID, fqdn)
 	if err != nil {
 		return err
 	}
 
 	queryArgs := map[string]string{
-		"parentId": strconv.FormatUint(uint64(parentId), 10),
+		"parentId": strconv.FormatUint(uint64(parentID), 10),
 		"name":     name,
 		"type":     txtType,
 	}
@@ -388,7 +385,7 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 		return err
 	}
 	queryArgs = map[string]string{
-		"objectId": strconv.FormatUint(uint64(txtRec.Id), 10),
+		"objectId": strconv.FormatUint(uint64(txtRec.ID), 10),
 	}
 
 	resp, err = d.sendRequest("DELETE", "delete", nil, queryArgs)
@@ -397,20 +394,15 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	}
 	defer resp.Body.Close()
 
-	err = d.deploy(parentId)
+	err = d.deploy(parentID)
 	if err != nil {
 		return err
 	}
 
-	err = d.logout()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return d.logout()
 }
 
-//JSON body for Bluecat entity requests and responses
+// JSON body for Bluecat entity requests and responses
 type bluecatEntity struct {
 	ID         string `json:"id,omitempty"`
 	Name       string `json:"name"`

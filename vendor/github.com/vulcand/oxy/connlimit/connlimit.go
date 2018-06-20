@@ -110,7 +110,7 @@ func (e *ConnErrHandler) ServeHTTP(w http.ResponseWriter, req *http.Request, err
 	if log.GetLevel() >= log.DebugLevel {
 		logEntry := log.WithField("Request", utils.DumpHttpRequest(req))
 		logEntry.Debug("vulcand/oxy/connlimit: begin ServeHttp on request")
-		defer logEntry.Debug("vulcand/oxy/connlimit: competed ServeHttp on request")
+		defer logEntry.Debug("vulcand/oxy/connlimit: completed ServeHttp on request")
 	}
 
 	if _, ok := err.(*MaxConnError); ok {

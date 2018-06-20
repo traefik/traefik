@@ -71,6 +71,13 @@ usebindportip = true
 #
 swarmMode = false
 
+# Define a default docker network to use for connections to all containers.
+# Can be overridden by the traefik.docker.network label.
+#
+# Optional
+#
+network = "web"
+
 # Enable docker TLS connection.
 #
 # Optional
@@ -124,6 +131,13 @@ watch = true
 # Default: false
 #
 swarmMode = true
+
+# Define a default docker network to use for connections to all containers.
+# Can be overridden by the traefik.docker.network label.
+#
+# Optional
+#
+network = "web"
 
 # Override default configuration template.
 # For advanced users :)
@@ -195,7 +209,7 @@ Labels can be used on containers to override default behavior.
 
 | Label                                                      | Description                                                                                                                                                                                                               |
 |------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `traefik.docker.network`                                   | Set the docker network to use for connections to this container. [1]                                                                                                                                                      |
+| `traefik.docker.network`                                   | Override the default docker network to use for connections to this container. [1]                                                                                                                                         |
 | `traefik.domain`                                           | Default domain used for frontend rules.                                                                                                                                                                                   |
 | `traefik.enable=false`                                     | Disable this container in Træfik                                                                                                                                                                                          |
 | `traefik.port=80`                                          | Register this port. Useful when the container exposes multiples ports.                                                                                                                                                    |
