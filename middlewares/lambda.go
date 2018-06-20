@@ -15,12 +15,12 @@ import (
 	"net/http"
 )
 
-// Retry is a middleware that retries requests
+// Lambda
 type Lambda struct {
 	next http.Handler
 }
 
-// NewRetry returns a new Retry instance
+// NewLambda
 func NewLambda(next http.Handler) *Lambda {
 	return &Lambda{
 		next: next,
@@ -126,10 +126,10 @@ func (l *Lambda) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		rw.Write([]byte(aerr.Code() + aerr.Error()))
 		return
 
-	} else {
-		tracing.LogResponseCode(tracing.GetSpan(r), 200)
-		rw.WriteHeader(200)
-		rw.Write(resp.Payload)
-		return
 	}
+
+    tracing.LogResponseCode(tracing.GetSpan(r), 200)
+    rw.WriteHeader(200)
+    rw.Write(resp.Payload)
+    return
 }

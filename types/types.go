@@ -418,7 +418,7 @@ type Forward struct {
 	AuthResponseHeaders map[string]*AuthResponseHeader
 }
 
-// Defines an HTTP response header which should be forwarded from the auth response to the subsequent request with a new
+// AuthResponseHeader HTTP response header which should be forwarded from the auth response to the subsequent request with a new
 // name
 type AuthResponseHeader struct {
 	Name string
