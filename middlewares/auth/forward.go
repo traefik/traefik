@@ -73,7 +73,7 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 		r.Header.Set("X-Request-Context", forwardResponse.Header.Get("X-Request-Context"))
 		r.Header.Set("X-User-Context", forwardResponse.Header.Get("X-User-Context"))
 	}
-		// Pass the forward response's body and selected headers if it
+	// Pass the forward response's body and selected headers if it
 	// didn't return a response within the range of [200, 300).
 	if forwardResponse.StatusCode < http.StatusOK || forwardResponse.StatusCode >= http.StatusMultipleChoices {
 		log.Debugf("Remote error %s. StatusCode: %d", config.Address, forwardResponse.StatusCode)
@@ -101,8 +101,8 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 	}
 
 	for _, header := range config.AuthResponseHeaders {
-    		r.Header.Set(header.As, forwardResponse.Header.Get(header.Name))
-    }
+		r.Header.Set(header.As, forwardResponse.Header.Get(header.Name))
+	}
 
 	r.RequestURI = r.URL.RequestURI()
 	next(w, r)

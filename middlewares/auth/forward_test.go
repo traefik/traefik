@@ -58,11 +58,11 @@ func TestForwardAuthSuccess(t *testing.T) {
 		Forward: &types.Forward{
 			Address: server.URL,
 			AuthResponseHeaders: map[string]*types.AuthResponseHeader{
-                "user": {
-                    Name: "X-Auth-User",
-                    As:   "X-Authenticated-User",
-                },
-            },
+				"user": {
+					Name: "X-Auth-User",
+					As:   "X-Authenticated-User",
+				},
+			},
 		},
 	}, &tracing.Tracing{})
 	assert.NoError(t, err, "there should be no error")
