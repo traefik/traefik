@@ -19,7 +19,7 @@ import (
 func (p *Provider) buildConfigurationV2(instances []ecsInstance) (*types.Configuration, error) {
 	services := make(map[string][]ecsInstance)
 	for _, instance := range instances {
-	    backendName := getBackendName(instance)
+		backendName := getBackendName(instance)
 		if p.filterInstance(instance) {
 			if serviceInstances, ok := services[backendName]; ok {
 				services[backendName] = append(serviceInstances, instance)

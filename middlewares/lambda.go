@@ -1,18 +1,18 @@
 package middlewares
 
 import (
-	"net/http"
+	"encoding/base64"
+	"encoding/json"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/service/lambda"
-	"github.com/aws/aws-sdk-go/aws/ec2metadata"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/defaults"
+	"github.com/aws/aws-sdk-go/aws/ec2metadata"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/containous/traefik/middlewares/tracing"
 	"io/ioutil"
-	"encoding/json"
-	"encoding/base64"
+	"net/http"
 )
 
 // Retry is a middleware that retries requests
