@@ -310,7 +310,7 @@ func (p *Provider) getClient() (*acme.Client, error) {
 
 		client.ExcludeChallenges([]acme.Challenge{acme.DNS01})
 
-		err = client.SetChallengeProvider(acme.HTTP01, p)
+		err = client.SetChallengeProvider(acme.HTTP01, &ChallengeHTTP{Store: p.Store})
 		if err != nil {
 			return nil, err
 		}
@@ -322,14 +322,22 @@ func (p *Provider) getClient() (*acme.Client, error) {
 	return p.client, nil
 }
 
-// Present presents a challenge to obtain new ACME certificate
-func (p *Provider) Present(domain, token, keyAuth string) error {
-	return presentHTTPChallenge(domain, token, keyAuth, p.Store)
-}
+func dnsOverrideDelay(delay flaeg.Duration) error {
+	if delay == 0 {
+		return nil
+	}
 
-// CleanUp cleans the challenges when certificate is obtained
-func (p *Provider) CleanUp(domain, token, keyAuth string) error {
-	return cleanUpHTTPChallenge(domain, token, p.Store)
+	if delay > 0 {
+		log.Debugf("Delaying %d rather than validating DNS propagation now.", delay)
+
+		acme.PreCheckDNS = func(_, _ string) (bool, error) {
+			time.Sleep(time.Duration(delay))
+			return true, nil
+		}
+	} else {
+		return fmt.Errorf("delayBeforeCheck: %d cannot be less than 0", delay)
+	}
+	return nil
 }
 
 // Provide allows the file provider to provide configurations to traefik
@@ -426,11 +434,6 @@ func (p *Provider) refreshCertificates() {
 		config.Configuration.TLS = append(config.Configuration.TLS, &traefiktls.Configuration{Certificate: certificate, EntryPoints: []string{p.EntryPoint}})
 	}
 	p.configurationChan <- config
-}
-
-// Timeout calculates the maximum of time allowed to resolved an ACME challenge
-func (p *Provider) Timeout() (timeout, interval time.Duration) {
-	return 60 * time.Second, 5 * time.Second
 }
 
 func (p *Provider) renewCertificates() {
