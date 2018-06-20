@@ -128,8 +128,8 @@ func (l *Lambda) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	}
 
-    tracing.LogResponseCode(tracing.GetSpan(r), 200)
-    rw.WriteHeader(200)
-    rw.Write(resp.Payload)
-    return
+	tracing.LogResponseCode(tracing.GetSpan(r), 200)
+	rw.WriteHeader(200)
+	rw.Write(resp.Payload)
+	return
 }
