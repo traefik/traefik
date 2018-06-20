@@ -54,8 +54,6 @@ See also [Kubernetes user guide](/user-guide/kubernetes).
 # If the parameter is non-empty, only Ingresses containing an annotation with the same value are processed.
 # Otherwise, Ingresses missing the annotation, having an empty value, or the value `traefik` are processed.
 #
-# Note : `ingressClass` option must begin with the "traefik" prefix.
-#
 # Optional
 # Default: empty
 #
