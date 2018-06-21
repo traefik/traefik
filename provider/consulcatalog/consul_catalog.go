@@ -32,7 +32,7 @@ type Provider struct {
 	provider.BaseProvider `mapstructure:",squash" export:"true"`
 	Endpoint              string           `description:"Consul server endpoint"`
 	Domain                string           `description:"Default domain used"`
-	Stale				  bool			   `description:"Use stale consistency for catalog reads" export:"true"`
+	Stale                 bool             `description:"Use stale consistency for catalog reads" export:"true"`
 	ExposedByDefault      bool             `description:"Expose Consul services by default" export:"true"`
 	Prefix                string           `description:"Prefix used for Consul catalog tags" export:"true"`
 	FrontEndRule          string           `description:"Frontend rule used for Consul services" export:"true"`
