@@ -15,8 +15,6 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
-	"sort"
-	"strings"
 	"sync"
 	"time"
 
@@ -75,14 +73,11 @@ type EntryPoint struct {
 type serverEntryPoints map[string]*serverEntryPoint
 
 type serverEntryPoint struct {
-	httpServer         *h2c.Server
-	listener           net.Listener
-	httpRouter         *middlewares.HandlerSwitcher
-	certs              *safe.Safe
-	staticCerts        *safe.Safe
-	onDemandListener   func(string) (*tls.Certificate, error)
-	defaultCertificate *tls.Certificate
-	sniStrict          bool
+	httpServer       *h2c.Server
+	listener         net.Listener
+	httpRouter       *middlewares.HandlerSwitcher
+	certs            *traefiktls.CertificateStore
+	onDemandListener func(string) (*tls.Certificate, error)
 }
 
 // NewServer returns an initialized Server.
@@ -277,44 +272,22 @@ func (s *Server) AddListener(listener func(types.Configuration)) {
 
 // getCertificate allows to customize tlsConfig.GetCertificate behaviour to get the certificates inserted dynamically
 func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-	matchedCerts := map[string]*tls.Certificate{}
 	domainToCheck := types.CanonicalDomain(clientHello.ServerName)
-	if s.certs.Get() != nil {
-		for domains, cert := range s.certs.Get().(map[string]*tls.Certificate) {
-			for _, certDomain := range strings.Split(domains, ",") {
-				if types.MatchDomain(domainToCheck, certDomain) {
-					matchedCerts[domainToCheck] = cert
-				}
-			}
-		}
-	}
-	if s.staticCerts.Get() != nil {
-		for domains, cert := range s.staticCerts.Get().(map[string]*tls.Certificate) {
-			for _, certDomain := range strings.Split(domains, ",") {
-				if types.MatchDomain(domainToCheck, certDomain) {
-					matchedCerts[domainToCheck] = cert
-				}
-			}
-		}
-	}
-	if len(matchedCerts) > 0 {
-		//sort map by keys
-		keys := make([]string, 0, len(matchedCerts))
-		for k := range matchedCerts {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-		return matchedCerts[keys[len(keys)-1]], nil
-	}
 
+	bestCertificate := s.certs.GetBestCertificate(domainToCheck)
+
+	if bestCertificate != nil {
+		return bestCertificate, nil
+	}
 	if s.onDemandListener != nil {
 		return s.onDemandListener(domainToCheck)
 	}
-	if s.sniStrict {
-		return nil, fmt.Errorf("Strict SNI enabled - No certificate found for domain: %q, closing connection", domainToCheck)
+	if s.certs.SniStrict {
+		return nil, fmt.Errorf("strict SNI enabled - No certificate found for domain: %q, closing connection", domainToCheck)
 	}
+
 	log.Debugf("Serving default cert for request: %q", domainToCheck)
-	return s.defaultCertificate, nil
+	return s.certs.DefaultCertificate, nil
 }
 
 func (s *Server) startProvider() {
@@ -345,18 +318,7 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 		return nil, err
 	}
 
-	if tlsOption.DefaultCertificate != nil {
-
-		cert, err := tls.LoadX509KeyPair(tlsOption.DefaultCertificate.CertFile.String(), tlsOption.DefaultCertificate.KeyFile.String())
-		if err != nil {
-			return nil, fmt.Errorf("Could not load default certificate: %v", err)
-		}
-
-		config.Certificates = append([]tls.Certificate{cert}, config.Certificates...)
-
-	}
-
-	s.serverEntryPoints[entryPointName].certs.Set(make(map[string]*tls.Certificate))
+	s.serverEntryPoints[entryPointName].certs.DynamicCerts.Set(make(map[string]*tls.Certificate))
 	// ensure http2 enabled
 	config.NextProtos = []string{"h2", "http/1.1"}
 
@@ -396,7 +358,7 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 				return false
 			}
 
-			err := s.globalConfiguration.ACME.CreateClusterConfig(s.leadership, config, s.serverEntryPoints[entryPointName].certs, checkOnDemandDomain)
+			err := s.globalConfiguration.ACME.CreateClusterConfig(s.leadership, config, s.serverEntryPoints[entryPointName].certs.DynamicCerts, checkOnDemandDomain)
 			if err != nil {
 				return nil, err
 			}

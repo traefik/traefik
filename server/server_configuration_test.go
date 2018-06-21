@@ -215,7 +215,7 @@ func TestServerLoadCertificateWithDefaultEntryPoint(t *testing.T) {
 	srv := NewServer(globalConfig, nil, entryPoints)
 	if mapEntryPoints, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
 		t.Fatalf("got error: %s", err)
-	} else if mapEntryPoints["https"].certs.Get() == nil {
+	} else if !mapEntryPoints["https"].certs.ContainsCertificates() {
 		t.Fatal("got error: https entryPoint must have TLS certificates.")
 	}
 }

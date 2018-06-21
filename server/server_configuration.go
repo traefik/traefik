@@ -53,11 +53,12 @@ func (s *Server) loadConfiguration(configMsg types.ConfigMessage) {
 		s.serverEntryPoints[newServerEntryPointName].httpRouter.UpdateHandler(newServerEntryPoint.httpRouter.GetHandler())
 
 		if s.entryPoints[newServerEntryPointName].Configuration.TLS == nil {
-			if newServerEntryPoint.certs.Get() != nil {
+			if newServerEntryPoint.certs.ContainsCertificates() {
 				log.Debugf("Certificates not added to non-TLS entryPoint %s.", newServerEntryPointName)
 			}
 		} else {
-			s.serverEntryPoints[newServerEntryPointName].certs.Set(newServerEntryPoint.certs.Get())
+			s.serverEntryPoints[newServerEntryPointName].certs.StaticCerts.Set(newServerEntryPoint.certs.StaticCerts.Get())
+			s.serverEntryPoints[newServerEntryPointName].certs.DynamicCerts.Set(newServerEntryPoint.certs.DynamicCerts.Get())
 		}
 		log.Infof("Server configuration reloaded on %s", s.serverEntryPoints[newServerEntryPointName].httpServer.Addr)
 	}
@@ -122,7 +123,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 	for serverEntryPointName, serverEntryPoint := range serverEntryPoints {
 		serverEntryPoint.httpRouter.GetHandler().SortRoutes()
 		if _, exists := entryPointsCertificates[serverEntryPointName]; exists {
-			serverEntryPoint.certs.Set(entryPointsCertificates[serverEntryPointName])
+			serverEntryPoint.certs.StaticCerts.Set(entryPointsCertificates[serverEntryPointName])
 		}
 	}
 
@@ -555,26 +556,28 @@ func (s *Server) buildServerEntryPoints() map[string]*serverEntryPoint {
 			onDemandListener: entryPoint.OnDemandListener,
 		}
 
-		serverEntryPoints[entryPointName].certs = &safe.Safe{}
-		serverEntryPoints[entryPointName].staticCerts = &safe.Safe{}
+		serverEntryPoints[entryPointName].certs = &traefiktls.CertificateStore{}
+		serverEntryPoints[entryPointName].certs.StaticCerts = &safe.Safe{}
+		serverEntryPoints[entryPointName].certs.DynamicCerts = &safe.Safe{}
 
 		if entryPoint.CertificateStore != nil {
-			serverEntryPoints[entryPointName].certs = entryPoint.CertificateStore.DynamicCerts
+			serverEntryPoints[entryPointName].certs.StaticCerts = entryPoint.CertificateStore.StaticCerts
+			serverEntryPoints[entryPointName].certs.DynamicCerts = entryPoint.CertificateStore.DynamicCerts
 		}
 
-		serverEntryPoints[entryPointName].sniStrict = entryPoint.Configuration.SniStrict
-
 		if entryPoint.Configuration.TLS != nil {
+			serverEntryPoints[entryPointName].certs.SniStrict = entryPoint.Configuration.TLS.SniStrict
+
 			if entryPoint.Configuration.TLS.DefaultCertificate != nil {
 				cert, err := tls.LoadX509KeyPair(entryPoint.Configuration.TLS.DefaultCertificate.CertFile.String(), entryPoint.Configuration.TLS.DefaultCertificate.KeyFile.String())
 				if err != nil {
 				}
-				serverEntryPoints[entryPointName].defaultCertificate = &cert
+				serverEntryPoints[entryPointName].certs.DefaultCertificate = &cert
 			}
 			if len(entryPoint.Configuration.TLS.Certificates) > 0 {
 				config, _ := entryPoint.Configuration.TLS.Certificates.CreateTLSConfig(entryPointName)
 				config.BuildNameToCertificate()
-				serverEntryPoints[entryPointName].staticCerts.Set(config.NameToCertificate)
+				serverEntryPoints[entryPointName].certs.StaticCerts.Set(config.NameToCertificate)
 
 			}
 		}

@@ -28,6 +28,7 @@ type TLS struct {
 	ClientCAFiles      []string // Deprecated
 	ClientCA           ClientCA
 	DefaultCertificate *Certificate
+	SniStrict          bool `export:"true"`
 }
 
 // RootCAs hold the CA we want to have in root

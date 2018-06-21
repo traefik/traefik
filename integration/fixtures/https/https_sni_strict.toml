@@ -5,8 +5,8 @@ defaultEntryPoints = ["https"]
 [entryPoints]
   [entryPoints.https]
   address = ":4443"
-  sniStrict = true
     [entryPoints.https.tls]
+    sniStrict = true
      [entryPoints.https.tls.defaultCertificate]
      certFile = "fixtures/https/snitest.com.cert"
      keyFile = "fixtures/https/snitest.com.key"
