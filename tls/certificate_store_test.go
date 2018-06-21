@@ -80,26 +80,26 @@ func TestGetBestCertificate(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			static_map := map[string]*tls.Certificate{}
-			dynamic_map := map[string]*tls.Certificate{}
+			staticMap := map[string]*tls.Certificate{}
+			dynamicMap := map[string]*tls.Certificate{}
 
 			if test.staticCert != "" {
-				static_cert, _ := tls.LoadX509KeyPair(
+				staticCert, _ := tls.LoadX509KeyPair(
 					fmt.Sprintf("../integration/fixtures/https/%s.cert", strings.Replace(test.staticCert, "*", "wildcard", -1)),
 					fmt.Sprintf("../integration/fixtures/https/%s.key", strings.Replace(test.staticCert, "*", "wildcard", -1)),
 				)
-				static_map[test.staticCert] = &static_cert
+				staticMap[test.staticCert] = &staticCert
 			}
 			if test.dynamicCert != "" {
-				dynamic_cert, _ := tls.LoadX509KeyPair(
+				dynamicCert, _ := tls.LoadX509KeyPair(
 					fmt.Sprintf("../integration/fixtures/https/%s.cert", strings.Replace(test.dynamicCert, "*", "wildcard", -1)),
 					fmt.Sprintf("../integration/fixtures/https/%s.key", strings.Replace(test.dynamicCert, "*", "wildcard", -1)),
 				)
-				dynamic_map[test.dynamicCert] = &dynamic_cert
+				dynamicMap[test.dynamicCert] = &dynamicCert
 			}
 			store := CertificateStore{
-				DynamicCerts: safe.New(dynamic_map),
-				StaticCerts:  safe.New(static_map),
+				DynamicCerts: safe.New(dynamicMap),
+				StaticCerts:  safe.New(staticMap),
 			}
 			var expected *tls.Certificate
 			if test.expectedCert != "" {
