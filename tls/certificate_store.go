@@ -37,6 +37,7 @@ func (c CertificateStore) GetAllDomains() []string {
 	return allCerts
 }
 
+// GetBestCertificate returns the best match certificate, and caches the response
 func (c CertificateStore) GetBestCertificate(domainToCheck string) *tls.Certificate {
 	if c.CertCache == nil {
 		c.CertCache = map[string]*tls.Certificate{}
@@ -79,10 +80,12 @@ func (c CertificateStore) GetBestCertificate(domainToCheck string) *tls.Certific
 	return nil
 }
 
+// ContainsCertificates checks if there are any certs in the store
 func (c CertificateStore) ContainsCertificates() bool {
 	return c.StaticCerts.Get() != nil || c.DynamicCerts.Get() != nil
 }
 
+// ResetCache clears the cache in the store
 func (c CertificateStore) ResetCache() {
 	c.CertCache = map[string]*tls.Certificate{}
 }

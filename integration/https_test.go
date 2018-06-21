@@ -171,7 +171,7 @@ func (s *HTTPSSuite) TestWithDefaultCertificate(c *check.C) {
 	err = cs.PeerCertificates[0].VerifyHostname("snitest.com")
 	c.Assert(err, checker.IsNil, check.Commentf("certificate did not serve correct default certificate"))
 
-	proto := conn.ConnectionState().NegotiatedProtocol
+	proto := cs.NegotiatedProtocol
 	c.Assert(proto, checker.Equals, "h2")
 }
 
@@ -206,7 +206,7 @@ func (s *HTTPSSuite) TestWithOverlappingStaticCertificate(c *check.C) {
 	err = cs.PeerCertificates[0].VerifyHostname("www.snitest.com")
 	c.Assert(err, checker.IsNil, check.Commentf("certificate did not serve correct default certificate"))
 
-	proto := conn.ConnectionState().NegotiatedProtocol
+	proto := cs.NegotiatedProtocol
 	c.Assert(proto, checker.Equals, "h2")
 }
 
@@ -241,7 +241,7 @@ func (s *HTTPSSuite) TestWithOverlappingDynamicCertificate(c *check.C) {
 	err = cs.PeerCertificates[0].VerifyHostname("www.snitest.com")
 	c.Assert(err, checker.IsNil, check.Commentf("certificate did not serve correct default certificate"))
 
-	proto := conn.ConnectionState().NegotiatedProtocol
+	proto := cs.NegotiatedProtocol
 	c.Assert(proto, checker.Equals, "h2")
 }
 
