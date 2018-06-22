@@ -198,29 +198,22 @@ func (c *clientImpl) UpdateIngressStatus(namespace, name, ip, hostname string) e
 // GetService returns the named service from the given namespace.
 func (c *clientImpl) GetService(namespace, name string) (*corev1.Service, bool, error) {
 	service, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Services().Lister().Services(namespace).Get(name)
-	if err != nil {
-		return nil, !kubeerror.IsNotFound(err), err
-	}
-	return service, true, nil
+	exist, err := translateNotFoundError(err)
+	return service, exist, err
 }
 
 // GetEndpoints returns the named endpoints from the given namespace.
 func (c *clientImpl) GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error) {
 	endpoint, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Endpoints().Lister().Endpoints(namespace).Get(name)
-	if err != nil {
-		return nil, !kubeerror.IsNotFound(err), err
-	}
-	return endpoint, true, nil
+	exist, err := translateNotFoundError(err)
+	return endpoint, exist, err
 }
 
 // GetSecret returns the named secret from the given namespace.
 func (c *clientImpl) GetSecret(namespace, name string) (*corev1.Secret, bool, error) {
-	var secret *corev1.Secret
 	secret, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Secrets().Lister().Secrets(namespace).Get(name)
-	if err != nil {
-		return nil, !kubeerror.IsNotFound(err), err
-	}
-	return secret, true, nil
+	exist, err := translateNotFoundError(err)
+	return secret, exist, err
 }
 
 // lookupNamespace returns the lookup namespace key for the given namespace.
@@ -258,4 +251,16 @@ func eventHandlerFunc(events chan<- interface{}, obj interface{}) {
 	case events <- obj:
 	default:
 	}
+}
+
+// translateNotFoundError will translate a "not found" error to a boolean return
+// value which indicates if the resource exists and a nil error.
+func translateNotFoundError(err error) (bool, error) {
+	if err != nil {
+		if kubeerror.IsNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }
