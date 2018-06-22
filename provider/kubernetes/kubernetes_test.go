@@ -1165,8 +1165,17 @@ func TestIngressClassAnnotation(t *testing.T) {
 			iAnnotation(annotationKubernetesIngressClass, traefikDefaultIngressClass+"-other"),
 			iRules(
 				iRule(
-					iHost("herp"),
-					iPaths(onePath(iPath("/derp"), iBackend("service1", intstr.FromInt(80))))),
+					iHost("foo"),
+					iPaths(onePath(iPath("/bar"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesIngressClass, "custom"),
+			iRules(
+				iRule(
+					iHost("foo"),
+					iPaths(onePath(iPath("/bar"), iBackend("service2", intstr.FromInt(80))))),
 			),
 		),
 	}
@@ -1182,12 +1191,32 @@ func TestIngressClassAnnotation(t *testing.T) {
 				sExternalName("example.com"),
 				sPorts(sPort(80, "http"))),
 		),
+		buildService(
+			sName("service2"),
+			sNamespace("testing"),
+			sUID("2"),
+			sSpec(
+				clusterIP("10.0.0.2"),
+				sPorts(sPort(80, "http"))),
+		),
+	}
+
+	endpoints := []*corev1.Endpoints{
+		buildEndpoint(
+			eName("service2"),
+			eUID("1"),
+			eNamespace("testing"),
+			subset(
+				eAddresses(eAddress("10.10.0.1")),
+				ePorts(ePort(80, "http"))),
+		),
 	}
 
 	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
+		endpoints: endpoints,
 		watchChan: watchChan,
 	}
 
@@ -1247,19 +1276,39 @@ func TestIngressClassAnnotation(t *testing.T) {
 			provider: Provider{IngressClass: traefikDefaultRealm + "-other"},
 			expected: buildConfiguration(
 				backends(
-					backend("herp/derp",
+					backend("foo/bar",
 						servers(
-							server("http://example.com", weight(1)),
 							server("http://example.com", weight(1))),
 						lbMethod("wrr"),
 					),
 				),
 				frontends(
-					frontend("herp/derp",
+					frontend("foo/bar",
 						passHostHeader(),
 						routes(
-							route("/derp", "PathPrefix:/derp"),
-							route("herp", "Host:herp")),
+							route("/bar", "PathPrefix:/bar"),
+							route("foo", "Host:foo")),
+					),
+				),
+			),
+		},
+		{
+			desc:     "Provided IngressClass annotation",
+			provider: Provider{IngressClass: "custom"},
+			expected: buildConfiguration(
+				backends(
+					backend("foo/bar",
+						servers(
+							server("http://10.10.0.1:80", weight(1))),
+						lbMethod("wrr"),
+					),
+				),
+				frontends(
+					frontend("foo/bar",
+						passHostHeader(),
+						routes(
+							route("/bar", "PathPrefix:/bar"),
+							route("foo", "Host:foo")),
 					),
 				),
 			),
