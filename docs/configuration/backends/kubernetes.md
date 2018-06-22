@@ -209,6 +209,13 @@ Trying to do so leads to an error and the corresponding Ingress object being ign
 
 <5> `traefik.ingress.kubernetes.io/service-weights` example:
 
+Note that currently 3 decimal places is supported at most. And exceeding precision might bring unknown problems.
+For each path definition, this annotation will fail when:
+
+- the sum of backends' weights exceeds 100%
+- the sum of backends' weights is less than 100% without one or more omitted backends
+
+
 ```yaml
 service_backend1: 1% # Note that the field names must match service names referenced in the Ingress object.
 service_backend2: 33.33%
