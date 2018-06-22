@@ -341,6 +341,39 @@ To specify an https entry point with a minimum TLS version, and specifying an ar
       keyFile = "integration/fixtures/https/snitest.org.key"
 ```
 
+## Strict SNI Checking
+
+To enable strict SNI checking, so that connections cannot be made if a matching certificate does not exist.
+
+```toml
+[entryPoints]
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+    sniStrict = true
+      [[entryPoints.https.tls.certificates]]
+      certFile = "integration/fixtures/https/snitest.com.cert"
+      keyFile = "integration/fixtures/https/snitest.com.key"
+```
+
+## Default Certificate
+
+To enable a default certificate to serve, so that connections without SNI or without a matching domain will be served this certificate.
+
+```toml
+[entryPoints]
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+    [entryPoints.https.tls.defaultCertificate]
+      certFile = "integration/fixtures/https/snitest.com.cert"
+      keyFile = "integration/fixtures/https/snitest.com.key"
+```
+
+!!! note
+    There can only be one `defaultCertificate` set per entrypoint.
+    Use a single set of square brackets `[ ]`, instead of the two needed for normal certificates.
+
 ## Compression
 
 To enable compression support using gzip format.
