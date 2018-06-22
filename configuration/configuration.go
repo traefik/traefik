@@ -53,18 +53,6 @@ const (
 
 	// DefaultAcmeCAServer is the default ACME API endpoint
 	DefaultAcmeCAServer = "https://acme-v02.api.letsencrypt.org/directory"
-
-	// DefaultCNAMEFlattening is whether CNAME Flattening enabled or not
-	DefaultCNAMEFlattening = false
-
-	// DefaultResolverConfig location of resolv.conf
-	DefaultResolverConfig = "/etc/resolv.conf"
-
-	// DefaultResolverDepth how deep CNAME Flattening before exiting
-	DefaultResolverDepth = 5
-
-	// DefaultCacheDuration how long CNAME Flattening should be cached
-	DefaultCacheDuration = 30 * time.Minute
 )
 
 // GlobalConfiguration holds global configuration (with providers, etc.).

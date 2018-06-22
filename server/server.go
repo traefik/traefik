@@ -795,16 +795,16 @@ func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.
 	}
 
 	return &h2c.Server{
-			Server: &http.Server{
-				Addr:         entryPoint.Address,
-				Handler:      internalMuxRouter,
-				TLSConfig:    tlsConfig,
-				ReadTimeout:  readTimeout,
-				WriteTimeout: writeTimeout,
-				IdleTimeout:  idleTimeout,
-				ErrorLog:     httpServerLogger,
-			},
+		Server: &http.Server{
+			Addr:         entryPoint.Address,
+			Handler:      internalMuxRouter,
+			TLSConfig:    tlsConfig,
+			ReadTimeout:  readTimeout,
+			WriteTimeout: writeTimeout,
+			IdleTimeout:  idleTimeout,
+			ErrorLog:     httpServerLogger,
 		},
+	},
 		listener,
 		nil
 }
@@ -1565,7 +1565,11 @@ func buildModifyResponse(secure *secure.Secure, header *middlewares.HeaderStruct
 // buildHostResolver build host resolver, if no config, create default
 func buildHostResolver(globalConfig configuration.GlobalConfiguration) *hostresolver.HostResolver {
 	if globalConfig.HostResolver != nil {
-		return hostresolver.NewHostResolver(globalConfig.HostResolver.CnameFlattening, globalConfig.HostResolver.ResolvConfig, globalConfig.HostResolver.ResolvDepth)
+		return &hostresolver.HostResolver{
+			Enabled:      globalConfig.HostResolver.CnameFlattening,
+			ResolvConfig: globalConfig.HostResolver.ResolvConfig,
+			ResolvDepth:  globalConfig.HostResolver.ResolvDepth,
+		}
 	}
-	return hostresolver.NewDefaultHostResolver()
+	return nil
 }

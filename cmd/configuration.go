@@ -269,9 +269,9 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	}
 
 	defaultResolver := configuration.HostResolverConfig{
-		CnameFlattening: configuration.DefaultCNAMEFlattening,
-		ResolvConfig:    configuration.DefaultResolverConfig,
-		ResolvDepth:     configuration.DefaultResolverDepth,
+		CnameFlattening: false,
+		ResolvConfig:    "/etc/resolv.conf",
+		ResolvDepth:     5,
 	}
 
 	defaultConfiguration := configuration.GlobalConfiguration{

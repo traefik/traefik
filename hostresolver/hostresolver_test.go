@@ -1,23 +1,52 @@
 package hostresolver
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestRules_CNAMEFlatten(t *testing.T) {
-	hostResolver := NewDefaultHostResolver()
-	host := [4]string{"www.github.com", "github.com", "www.icann.org", "icann.org"}
-	reqHost, flatHost := hostResolver.CNAMEFlatten(host[0])
-	assert.Equal(t, host[0], reqHost)
-	assert.NotEqual(t, host[0], flatHost)
-	reqHost, flatHost = hostResolver.CNAMEFlatten(host[1])
-	assert.Equal(t, host[1], reqHost)
-	assert.Equal(t, host[1], flatHost)
-	reqHost, flatHost = hostResolver.CNAMEFlatten(host[2])
-	assert.Equal(t, host[2], reqHost)
-	assert.NotEqual(t, host[2], flatHost)
-	reqHost, flatHost = hostResolver.CNAMEFlatten(host[3])
-	assert.Equal(t, host[3], reqHost)
-	assert.Equal(t, host[3], flatHost)
+func TestCNAMEFlatten(t *testing.T) {
+	hostResolver := &HostResolver{
+		Enabled:      false,
+		ResolvConfig: "/etc/resolv.conf",
+		ResolvDepth:  5,
+	}
+
+	testCase := []struct {
+		desc           string
+		domain         string
+		expectedDomain string
+		isCNAME        bool
+	}{
+		{
+			desc:           "host request is CNAME record",
+			domain:         "www.github.com",
+			expectedDomain: "github.com",
+			isCNAME:        true,
+		},
+		{
+			desc:           "host request is not CNAME record",
+			domain:         "github.com",
+			expectedDomain: "github.com",
+			isCNAME:        false,
+		},
+	}
+	for _, test := range testCase {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			reqH, flatH := hostResolver.CNAMEFlatten(test.domain)
+			if test.isCNAME {
+				assert.Equal(t, test.domain, reqH)
+				assert.Equal(t, test.expectedDomain, flatH)
+				assert.NotEqual(t, test.expectedDomain, reqH)
+			} else {
+				assert.Equal(t, test.domain, reqH)
+				assert.Equal(t, test.expectedDomain, flatH)
+				assert.Equal(t, test.expectedDomain, reqH)
+			}
+		})
+
+	}
 }

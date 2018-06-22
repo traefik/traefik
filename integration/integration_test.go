@@ -50,6 +50,7 @@ func init() {
 		check.Suite(&FileSuite{})
 		check.Suite(&GRPCSuite{})
 		check.Suite(&HealthCheckSuite{})
+		check.Suite(&HostResolverSuite{})
 		check.Suite(&HTTPSSuite{})
 		check.Suite(&LogRotationSuite{})
 		check.Suite(&MarathonSuite{})
@@ -60,7 +61,6 @@ func init() {
 		check.Suite(&TimeoutSuite{})
 		check.Suite(&TracingSuite{})
 		check.Suite(&WebsocketSuite{})
-		check.Suite(&HostResolverSuite{})
 	}
 	if *host {
 		// tests launched from the host

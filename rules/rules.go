@@ -31,9 +31,7 @@ func (r *Rules) host(hosts ...string) *mux.Route {
 		if r.HostResolver != nil && r.HostResolver.Enabled {
 			reqH, flatH := r.HostResolver.CNAMEFlatten(types.CanonicalDomain(reqHost))
 			for _, host := range hosts {
-				if types.CanonicalDomain(reqH) == types.CanonicalDomain(host) {
-					return true
-				} else if types.CanonicalDomain(flatH) == types.CanonicalDomain(host) {
+				if types.CanonicalDomain(reqH) == types.CanonicalDomain(host) || types.CanonicalDomain(flatH) == types.CanonicalDomain(host) {
 					return true
 				}
 			}
