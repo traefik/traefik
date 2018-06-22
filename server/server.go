@@ -795,16 +795,16 @@ func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.
 	}
 
 	return &h2c.Server{
-		Server: &http.Server{
-			Addr:         entryPoint.Address,
-			Handler:      internalMuxRouter,
-			TLSConfig:    tlsConfig,
-			ReadTimeout:  readTimeout,
-			WriteTimeout: writeTimeout,
-			IdleTimeout:  idleTimeout,
-			ErrorLog:     httpServerLogger,
+			Server: &http.Server{
+				Addr:         entryPoint.Address,
+				Handler:      internalMuxRouter,
+				TLSConfig:    tlsConfig,
+				ReadTimeout:  readTimeout,
+				WriteTimeout: writeTimeout,
+				IdleTimeout:  idleTimeout,
+				ErrorLog:     httpServerLogger,
+			},
 		},
-	},
 		listener,
 		nil
 }

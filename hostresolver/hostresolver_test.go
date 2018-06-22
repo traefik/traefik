@@ -1,8 +1,8 @@
 package hostresolver
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestCNAMEFlatten(t *testing.T) {
