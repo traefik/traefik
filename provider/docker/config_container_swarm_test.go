@@ -57,7 +57,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-test": {
 					Servers: map[string]types.Server{
-						"server-test": {
+						"server-test-842895ca2aca17f6ee36ddb2f621194d": {
 							URL:    "http://127.0.0.1:80",
 							Weight: label.DefaultWeight,
 						},
@@ -238,7 +238,6 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						ReferrerPolicy:          "foo",
 						IsDevelopment:           true,
 					},
-
 					Errors: map[string]*types.ErrorPage{
 						"foo": {
 							Status:  []string{"404"},
@@ -276,7 +275,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-foobar": {
 					Servers: map[string]types.Server{
-						"server-test1": {
+						"server-test1-7f6444e0dff3330c8b0ad2bbbd383b0f": {
 							URL:    "https://127.0.0.1:666",
 							Weight: 12,
 						},

@@ -55,7 +55,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-test": {
 					Servers: map[string]types.Server{
-						"server-test": {
+						"server-test-842895ca2aca17f6ee36ddb2f621194d": {
 							URL:    "http://127.0.0.1:80",
 							Weight: label.DefaultWeight,
 						},
@@ -270,7 +270,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-foobar": {
 					Servers: map[string]types.Server{
-						"server-test1": {
+						"server-test1-7f6444e0dff3330c8b0ad2bbbd383b0f": {
 							URL:    "https://127.0.0.1:666",
 							Weight: 12,
 						},
@@ -372,10 +372,11 @@ func TestDockerBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-myService-myProject": {
 					Servers: map[string]types.Server{
-						"server-test-0": {
+						"server-test-0-842895ca2aca17f6ee36ddb2f621194d": {
 							URL:    "http://127.0.0.1:80",
 							Weight: label.DefaultWeight,
-						}, "server-test-1": {
+						},
+						"server-test-1-48093b9fc43454203aacd2bc4057a08c": {
 							URL:    "http://127.0.0.2:80",
 							Weight: label.DefaultWeight,
 						},
@@ -384,7 +385,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 				},
 				"backend-myService2-myProject": {
 					Servers: map[string]types.Server{
-						"server-test-2": {
+						"server-test-2-405767e9733427148cd8dae6c4d331b0": {
 							URL:    "http://127.0.0.3:80",
 							Weight: label.DefaultWeight,
 						},
@@ -1055,7 +1056,7 @@ func TestDockerGetServers(t *testing.T) {
 					})),
 			},
 			expected: map[string]types.Server{
-				"server-test1": {
+				"server-test1-fb00f762970935200c76ccdaf91458f6": {
 					URL:    "http://10.10.10.10:80",
 					Weight: 1,
 				},
@@ -1084,15 +1085,15 @@ func TestDockerGetServers(t *testing.T) {
 					})),
 			},
 			expected: map[string]types.Server{
-				"server-test1": {
+				"server-test1-743440b6f4a8ffd8737626215f2c5a33": {
 					URL:    "http://10.10.10.11:80",
 					Weight: 1,
 				},
-				"server-test2": {
+				"server-test2-547f74bbb5da02b6c8141ce9aa96c13b": {
 					URL:    "http://10.10.10.12:81",
 					Weight: 1,
 				},
-				"server-test3": {
+				"server-test3-c57fd8b848c814a3f2a4a4c12e13c179": {
 					URL:    "http://10.10.10.13:82",
 					Weight: 1,
 				},
@@ -1121,11 +1122,11 @@ func TestDockerGetServers(t *testing.T) {
 					})),
 			},
 			expected: map[string]types.Server{
-				"server-test2": {
+				"server-test2-547f74bbb5da02b6c8141ce9aa96c13b": {
 					URL:    "http://10.10.10.12:81",
 					Weight: 1,
 				},
-				"server-test3": {
+				"server-test3-c57fd8b848c814a3f2a4a4c12e13c179": {
 					URL:    "http://10.10.10.13:82",
 					Weight: 1,
 				},
