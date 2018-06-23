@@ -8,24 +8,19 @@ import (
 
 	"github.com/containous/traefik/integration/try"
 	"github.com/containous/traefik/provider/label"
-	"github.com/gambol99/go-marathon"
+	marathon "github.com/gambol99/go-marathon"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
 )
 
-const (
-	containerNameMesosSlave = "mesos-slave"
-	containerNameMarathon   = "marathon"
-)
-
 // Marathon test suites (using libcompose)
-type MarathonSuite struct {
+type MarathonSuite15 struct {
 	BaseSuite
 	marathonURL string
 }
 
-func (s *MarathonSuite) SetUpSuite(c *check.C) {
-	s.createComposeProject(c, "marathon")
+func (s *MarathonSuite15) SetUpSuite(c *check.C) {
+	s.createComposeProject(c, "marathon1.5")
 	s.composeProject.Start(c)
 
 	marathonIPAddr := s.composeProject.Container(c, containerNameMarathon).NetworkSettings.IPAddress
@@ -52,7 +47,7 @@ func (s *MarathonSuite) SetUpSuite(c *check.C) {
 
 // extendDockerHostsFile extends the hosts file (/etc/hosts) by the given
 // host/IP address mapping if we are running inside a container.
-func (s *MarathonSuite) extendDockerHostsFile(host, ipAddr string) error {
+func (s *MarathonSuite15) extendDockerHostsFile(host, ipAddr string) error {
 	const hostsFile = "/etc/hosts"
 
 	// Determine if the run inside a container. The most reliable way to
@@ -75,14 +70,7 @@ func (s *MarathonSuite) extendDockerHostsFile(host, ipAddr string) error {
 	return nil
 }
 
-func deployApplication(c *check.C, client marathon.Marathon, application *marathon.Application) {
-	deploy, err := client.UpdateApplication(application, false)
-	c.Assert(err, checker.IsNil)
-	// Wait for deployment to complete.
-	c.Assert(client.WaitOnDeployment(deploy.DeploymentID, 1*time.Minute), checker.IsNil)
-}
-
-func (s *MarathonSuite) TestConfigurationUpdate(c *check.C) {
+func (s *MarathonSuite15) TestConfigurationUpdate(c *check.C) {
 	// Start Traefik.
 	file := s.adaptFile(c, "fixtures/marathon/simple.toml", struct {
 		MarathonURL string
@@ -109,8 +97,9 @@ func (s *MarathonSuite) TestConfigurationUpdate(c *check.C) {
 		Name("/whoami").
 		CPU(0.1).
 		Memory(32).
+		SetNetwork("main", marathon.BridgeNetworkMode).
 		AddLabel(label.TraefikFrontendRule, "PathPrefix:/service")
-	app.Container.Docker.Bridged().
+	app.Container.Docker.
 		Expose(80).
 		Container("emilevauge/whoami")
 
@@ -126,8 +115,9 @@ func (s *MarathonSuite) TestConfigurationUpdate(c *check.C) {
 		Name("/whoami").
 		CPU(0.1).
 		Memory(32).
+		SetNetwork("main", marathon.BridgeNetworkMode).
 		AddLabel(label.GetServiceLabel(label.TraefikFrontendRule, "app"), "PathPrefix:/app")
-	app.Container.Docker.Bridged().
+	app.Container.Docker.
 		Expose(80).
 		Container("emilevauge/whoami")
 
@@ -139,7 +129,7 @@ func (s *MarathonSuite) TestConfigurationUpdate(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *MarathonSuite) TestHostNetwork(c *check.C) {
+func (s *MarathonSuite15) TestHostNetwork(c *check.C) {
 	// Start Traefik.
 	file := s.adaptFile(c, "fixtures/marathon/simple.toml", struct {
 		MarathonURL string
@@ -166,8 +156,9 @@ func (s *MarathonSuite) TestHostNetwork(c *check.C) {
 		Name("/whoami").
 		CPU(0.1).
 		Memory(32).
+		SetNetwork("main", marathon.HostNetworkMode).
 		AddLabel(label.GetServiceLabel(label.TraefikFrontendRule, "app"), "PathPrefix:/app")
-	app.Container.Docker.Host().
+	app.Container.Docker.
 		Expose(80).
 		Container("emilevauge/whoami")
 
