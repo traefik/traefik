@@ -20,7 +20,7 @@ type MarathonSuite15 struct {
 }
 
 func (s *MarathonSuite15) SetUpSuite(c *check.C) {
-	s.createComposeProject(c, "marathon1.5")
+	s.createComposeProject(c, "marathon15")
 	s.composeProject.Start(c)
 
 	marathonIPAddr := s.composeProject.Container(c, containerNameMarathon).NetworkSettings.IPAddress
