@@ -103,7 +103,7 @@ func newFractionalWeightAllocator(ingress *extensionsv1beta1.Ingress, client Cli
 			if len(fractionalServices) == 0 {
 				if fractionalWeight > 0 {
 					assignedWeight := newPercentageValueFromFloat64(1) - fractionalWeight
-					return nil, fmt.Errorf("the sum of weights(%s) in the path %s/%s must be 100%% when no omitted fractional service left", assignedWeight.String(), rule.Host, pa)
+					return nil, fmt.Errorf("the sum of weights(%s) in the path %s%s must be 100%% when no omitted fractional service left", assignedWeight.String(), rule.Host, pa)
 				}
 				continue
 			}
