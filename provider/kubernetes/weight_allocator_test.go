@@ -67,6 +67,16 @@ service3: 20%
 			},
 		},
 		{
+			desc: "50% fraction with empty fraction",
+			annotationValue: `
+service1: 10%
+service2: 20%
+service3: 20%
+service4:
+`,
+			expectError: true,
+		},
+		{
 			desc: "50% fraction float form",
 			annotationValue: `
 service1: 0.1
