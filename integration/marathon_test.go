@@ -139,42 +139,50 @@ func (s *MarathonSuite) TestConfigurationUpdate(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *MarathonSuite) TestHostNetwork(c *check.C) {
-	// Start Traefik.
-	file := s.adaptFile(c, "fixtures/marathon/simple.toml", struct {
-		MarathonURL string
-	}{s.marathonURL})
-	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+// func (s *MarathonSuite) TestHostNetwork(c *check.C) {
+// 	// Start Traefik.
+// 	file := s.adaptFile(c, "fixtures/marathon/simple.toml", struct {
+// 		MarathonURL string
+// 	}{s.marathonURL})
+// 	defer os.Remove(file)
+// 	cmd, display := s.traefikCmd(withConfigFile(file))
+// 	defer display(c)
+// 	err := cmd.Start()
+// 	c.Assert(err, checker.IsNil)
+// 	defer cmd.Process.Kill()
 
-	// Wait for Traefik to turn ready.
-	err = try.GetRequest("http://127.0.0.1:8000/", 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
-	c.Assert(err, checker.IsNil)
+// 	// Wait for Traefik to turn ready.
+// 	err = try.GetRequest("http://127.0.0.1:8000/", 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
+// 	c.Assert(err, checker.IsNil)
 
-	// Prepare Marathon client.
-	config := marathon.NewDefaultConfig()
-	config.URL = s.marathonURL
-	client, err := marathon.NewClient(config)
-	c.Assert(err, checker.IsNil)
+// 	// Prepare Marathon client.
+// 	config := marathon.NewDefaultConfig()
+// 	config.URL = s.marathonURL
+// 	client, err := marathon.NewClient(config)
+// 	c.Assert(err, checker.IsNil)
 
-	// Create test application with services to be deployed.
-	app := marathon.NewDockerApplication().
-		Name("/whoami").
-		CPU(0.1).
-		Memory(32).
-		AddLabel(label.GetServiceLabel(label.TraefikFrontendRule, "app"), "PathPrefix:/app")
-	app.Container.Docker.Host().
-		Expose(80).
-		Container("emilevauge/whoami")
+// 	port := 12345
+// 	requirePorts := true
 
-	// Deploy the test application.
-	deployApplication(c, client, app)
+// 	// Create test application with services to be deployed.
+// 	app := marathon.NewDockerApplication().
+// 		Name("/whoami").
+// 		CPU(0.1).
+// 		Memory(32).
+// 		AddPortDefinition(marathon.PortDefinition{
+// 				Port: &port,
+// 				Name: "test",
+// 				Protocol: "tcp",
+// 			}).
+// 		AddLabel(label.TraefikFrontendRule, "PathPrefix:/service")
+// 	app.Container.Docker.Host().
+// 		Container("emilevauge/whoami")
+// 	app.RequirePorts = &requirePorts
 
-	// Query application via Traefik.
-	err = try.GetRequest("http://127.0.0.1:8000/app", 30*time.Second, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
-}
+// 	// Deploy the test application.
+// 	deployApplication(c, client, app)
+
+// 	// Query application via Traefik.
+// 	err = try.GetRequest("http://127.0.0.1:8000/service", 30*time.Second, try.StatusCodeIs(http.StatusOK))
+// 	c.Assert(err, checker.IsNil)
+// }

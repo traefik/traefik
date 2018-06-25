@@ -97,11 +97,13 @@ func (s *MarathonSuite15) TestConfigurationUpdate(c *check.C) {
 		Name("/whoami").
 		CPU(0.1).
 		Memory(32).
-		SetNetwork("main", marathon.BridgeNetworkMode).
+		EmptyNetworks().
 		AddLabel(label.TraefikFrontendRule, "PathPrefix:/service")
-	app.Container.Docker.
+	app.Container.
 		Expose(80).
+		Docker.
 		Container("emilevauge/whoami")
+	(*app.Networks) = append((*app.Networks), *marathon.NewBridgePodNetwork())
 
 	// Deploy the test application.
 	deployApplication(c, client, app)
@@ -115,52 +117,13 @@ func (s *MarathonSuite15) TestConfigurationUpdate(c *check.C) {
 		Name("/whoami").
 		CPU(0.1).
 		Memory(32).
-		SetNetwork("main", marathon.BridgeNetworkMode).
+		EmptyNetworks().
 		AddLabel(label.GetServiceLabel(label.TraefikFrontendRule, "app"), "PathPrefix:/app")
-	app.Container.Docker.
+	app.Container.
 		Expose(80).
+		Docker.
 		Container("emilevauge/whoami")
-
-	// Deploy the test application.
-	deployApplication(c, client, app)
-
-	// Query application via Traefik.
-	err = try.GetRequest("http://127.0.0.1:8000/app", 30*time.Second, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
-}
-
-func (s *MarathonSuite15) TestHostNetwork(c *check.C) {
-	// Start Traefik.
-	file := s.adaptFile(c, "fixtures/marathon/simple.toml", struct {
-		MarathonURL string
-	}{s.marathonURL})
-	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
-
-	// Wait for Traefik to turn ready.
-	err = try.GetRequest("http://127.0.0.1:8000/", 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
-	c.Assert(err, checker.IsNil)
-
-	// Prepare Marathon client.
-	config := marathon.NewDefaultConfig()
-	config.URL = s.marathonURL
-	client, err := marathon.NewClient(config)
-	c.Assert(err, checker.IsNil)
-
-	// Create test application with services to be deployed.
-	app := marathon.NewDockerApplication().
-		Name("/whoami").
-		CPU(0.1).
-		Memory(32).
-		SetNetwork("main", marathon.HostNetworkMode).
-		AddLabel(label.GetServiceLabel(label.TraefikFrontendRule, "app"), "PathPrefix:/app")
-	app.Container.Docker.
-		Expose(80).
-		Container("emilevauge/whoami")
+	(*app.Networks) = append((*app.Networks), *marathon.NewBridgePodNetwork())
 
 	// Deploy the test application.
 	deployApplication(c, client, app)
