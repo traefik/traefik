@@ -623,4 +623,6 @@ type AuditSink struct {
 	EncryptSecret            string     `json:"encryptSecret,omitempty" description:"Key for encrypting failed events. If present events will be AES encrypted"`
 	MaxAuditLength           string     `json:"maxAuditLength,omitempty" description:"The allowed maximum size of an audit event (units are allowed, eg. 32K)"`
 	MaxPayloadContentsLength string     `json:"maxPayloadContentsLength,omitempty" description:"The allowed maximum combined size of audit requestPayload.contents and responsePayload.contents (units are allowed, eg. 32K)"`
+	MaskValue                string     `json:"maskValue,omitempty" description:"The value to be used when obfuscating fields. Default is #########"`
+	MaskFields               string     `json:"maskFields,omitempty" description:"Names of payload fields whose values should be obfuscated"`
 }

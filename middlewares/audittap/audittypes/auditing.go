@@ -2,10 +2,12 @@ package audittypes
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"regexp"
 
 	"strconv"
 
@@ -47,6 +49,12 @@ type AuditConstraints struct {
 	MaxPayloadContentsLength int64
 }
 
+// AuditObfuscation defines obfuscation of sensitive data in audits
+type AuditObfuscation struct {
+	MaskFields []string
+	MaskValue  string
+}
+
 // AuditStream describes a type to which audit events can be sent.
 type AuditStream interface {
 	io.Closer
@@ -55,8 +63,8 @@ type AuditStream interface {
 
 // Auditer is a type that audits information from a HTTP request and response
 type Auditer interface {
-	AppendRequest(req *http.Request)
-	AppendResponse(responseHeaders http.Header, resp types.ResponseInfo)
+	AppendRequest(req *http.Request, obfuscate AuditObfuscation)
+	AppendResponse(responseHeaders http.Header, resp types.ResponseInfo, obfuscate AuditObfuscation)
 	// EnforceConstraints ensures the audit event complies with rules for the audit type
 	// returns true if audit event is valid for auditing
 	EnforceConstraints(constraints AuditConstraints) bool
@@ -131,6 +139,22 @@ func (ev *AuditEvent) addResponsePayloadContents(s string) {
 	}
 	ev.ResponsePayload[keyPayloadContents] = s
 	ev.ResponsePayload[keyPayloadLength] = len(s)
+}
+
+// ObfuscateURLEncoded applies the obfuscation criteria against the supplied byte slice than contains
+// URLEncoded key=value content
+func (obs *AuditObfuscation) ObfuscateURLEncoded(b []byte) ([]byte, error) {
+	src := b
+	for _, field := range obs.MaskFields {
+		expr := fmt.Sprintf("(%s=[^\\&]+)", field)
+		re, err := regexp.Compile(expr)
+		replacement := field + "=" + obs.MaskValue
+		if err != nil {
+			return nil, fmt.Errorf("Obfuscation error for required mask '%s'. %v", expr, err)
+		}
+		src = re.ReplaceAll(src, []byte(replacement))
+	}
+	return src, nil
 }
 
 func enforcePrecedentConstraints(ev *AuditEvent, constraints AuditConstraints) {

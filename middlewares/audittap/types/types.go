@@ -84,3 +84,12 @@ func (m DataMap) GetDataMap(key string) DataMap {
 	}
 	return DataMap{}
 }
+
+// PurgeEmptyValues removes nil and empty values from this map
+func (m DataMap) PurgeEmptyValues() {
+	for k, v := range m {
+		if v == nil || v == "" {
+			delete(m, k)
+		}
+	}
+}

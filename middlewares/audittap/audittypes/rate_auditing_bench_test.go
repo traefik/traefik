@@ -471,7 +471,8 @@ func benchWithPayload(b *testing.B, payloadKbs int) {
 
 	for i := 0; i < b.N; i++ {
 		event := &RATEAuditEvent{}
-		event.AppendRequest(req)
+		obsfucate := AuditObfuscation{}
+		event.AppendRequest(req, obsfucate)
 	}
 }
 

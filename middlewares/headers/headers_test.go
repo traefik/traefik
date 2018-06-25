@@ -44,3 +44,19 @@ func TestHeaders_requestIdAddedNoS(t *testing.T) {
 	id, _ := uuid.FromString(requestID)
 	assert.Equal(t, uint(0x4), id.Version())
 }
+
+func TestHeaders_requestIdAlreadyPresent(t *testing.T) {
+	req, err := http.NewRequest("GET", "/foo", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("X-Request-ID", "itshouldbeme")
+	var requestID string
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestID = r.Header.Get("X-Request-ID")
+	})
+	h := NewHeaders()
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, req, next)
+	assert.Equal(t, "itshouldbeme", requestID)
+}

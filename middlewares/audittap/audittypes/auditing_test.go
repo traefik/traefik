@@ -175,6 +175,18 @@ func TestResponseContentsRetained(t *testing.T) {
 	assert.Equal(t, contents, ev.ResponsePayload[keyPayloadContents])
 }
 
+func TestAuditObfuscateUrlEncoded(t *testing.T) {
+	obs := AuditObfuscation{MaskValue: "@++@", MaskFields: []string{"x1"}}
+
+	masked, err := obs.ObfuscateURLEncoded([]byte("start=s1&x1=kkdw09dkwad&def=d1&x1=wdoueqoi2ej&end=e1"))
+	assert.NoError(t, err)
+	assert.Equal(t, "start=s1&x1=@++@&def=d1&x1=@++@&end=e1", string(masked))
+
+	masked, err = obs.ObfuscateURLEncoded([]byte("x1=aefaef&d1=dere%20e&x1=wdawdwwd&d2=ziefjef&x1=brerber"))
+	assert.NoError(t, err)
+	assert.Equal(t, "x1=@++@&d1=dere%20e&x1=@++@&d2=ziefjef&x1=@++@", string(masked))
+}
+
 type fixedClock time.Time
 
 func (c fixedClock) Now() time.Time {

@@ -54,7 +54,7 @@ type contentExtractor interface {
 }
 
 // AppendRequest appends information about the request to the audit event
-func (ev *RATEAuditEvent) AppendRequest(req *http.Request) {
+func (ev *RATEAuditEvent) AppendRequest(req *http.Request, obfuscate AuditObfuscation) {
 	appendCommonRequestFields(&ev.AuditEvent, req)
 	appendMessageContent(ev, req)
 }
@@ -103,7 +103,7 @@ func appendMessageContent(ev *RATEAuditEvent, req *http.Request) {
 }
 
 // AppendResponse appends information about the response to the audit event
-func (ev *RATEAuditEvent) AppendResponse(responseHeaders http.Header, respInfo types.ResponseInfo) {
+func (ev *RATEAuditEvent) AppendResponse(responseHeaders http.Header, respInfo types.ResponseInfo, obfuscate AuditObfuscation) {
 	// Avoid the processing for test messages
 	if !strings.HasSuffix(ev.AuditType, TestInLive) {
 		appendCommonResponseFields(&ev.AuditEvent, responseHeaders, respInfo)

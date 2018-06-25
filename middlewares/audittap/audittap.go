@@ -29,6 +29,7 @@ type AuditConfig struct {
 	ProxyingFor string
 	Exclusions  []*types.Exclusion
 	audittypes.AuditConstraints
+	audittypes.AuditObfuscation
 }
 
 // AuditTap writes an event to the audit streams for every request.
@@ -94,6 +95,17 @@ func NewAuditTap(config *types.AuditSink, streams []audittypes.AuditStream, back
 		}
 	}
 
+	obfuscate := audittypes.AuditObfuscation{}
+	if len(config.MaskFields) > 0 {
+		mf := strings.Split(config.MaskFields, ",")
+		obfuscate.MaskFields = mf
+		if config.MaskValue != "" {
+			obfuscate.MaskValue = config.MaskValue
+		} else {
+			obfuscate.MaskValue = "#########"
+		}
+	}
+
 	constraints := audittypes.AuditConstraints{MaxAuditLength: maxAudit, MaxPayloadContentsLength: maxPayload}
 	ac := AuditConfig{
 		AuditSource:      config.AuditSource,
@@ -101,6 +113,7 @@ func NewAuditTap(config *types.AuditSink, streams []audittypes.AuditStream, back
 		ProxyingFor:      config.ProxyingFor,
 		Exclusions:       exclusions,
 		AuditConstraints: constraints,
+		AuditObfuscation: obfuscate,
 	}
 	return &AuditTap{ac, streams, backend, int(th), next}, nil
 }
@@ -121,14 +134,14 @@ func (tap *AuditTap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		case "mdtp":
 			auditer = audittypes.NewMdtpAuditEvent()
 		}
-		auditer.AppendRequest(req)
+		auditer.AppendRequest(req, tap.AuditObfuscation)
 	}
 
 	ww := NewAuditResponseWriter(rw, tap.MaxEntityLength)
 	tap.next.ServeHTTP(ww, req)
 
 	if !excludeAudit {
-		auditer.AppendResponse(ww.Header(), ww.GetResponseInfo())
+		auditer.AppendResponse(ww.Header(), ww.GetResponseInfo(), tap.AuditObfuscation)
 		if auditer.EnforceConstraints(tap.AuditConstraints) {
 			tap.submitAudit(auditer)
 		}

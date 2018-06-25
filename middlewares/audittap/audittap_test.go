@@ -157,12 +157,12 @@ func TestShouldExclude(t *testing.T) {
 
 func TestShouldExcludeMatch(t *testing.T) {
 
-	mdtpUrlPattern := "http(s)?:\\/\\/.*\\.(service|mdtp)($|[:\\/])"
+	mdtpURLPattern := "http(s)?:\\/\\/.*\\.(service|mdtp)($|[:\\/])"
 	assert.True(t, shouldExclude("beginWithThis", &types.Exclusion{HeaderName: "x", Matches: []string{"^begin.*"}}))
-	assert.True(t, shouldExclude("http://auth.service/auth/authority", &types.Exclusion{HeaderName: "x", Matches: []string{mdtpUrlPattern}}))
+	assert.True(t, shouldExclude("http://auth.service/auth/authority", &types.Exclusion{HeaderName: "x", Matches: []string{mdtpURLPattern}}))
 
 	assert.False(t, shouldExclude("abcdx", &types.Exclusion{HeaderName: "x", Matches: []string{"abcde"}}))
-	assert.False(t, shouldExclude("http://auth.com/auth/authority", &types.Exclusion{HeaderName: "x", Matches: []string{mdtpUrlPattern}}))
+	assert.False(t, shouldExclude("http://auth.com/auth/authority", &types.Exclusion{HeaderName: "x", Matches: []string{mdtpURLPattern}}))
 }
 
 func TestAuditConstraintDefaults(t *testing.T) {

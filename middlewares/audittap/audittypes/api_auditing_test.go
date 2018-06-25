@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"encoding/json"
+
 	"github.com/containous/traefik/middlewares/audittap/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -31,8 +32,9 @@ func TestApiAuditEvent(t *testing.T) {
 	respHdrs.Set("Content-Type", "text/plain")
 	respInfo := types.ResponseInfo{404, 101, responseBody, 2048}
 
-	ev.AppendRequest(req)
-	ev.AppendResponse(respHdrs, respInfo)
+	obfuscate := AuditObfuscation{}
+	ev.AppendRequest(req, obfuscate)
+	ev.AppendResponse(respHdrs, respInfo, obfuscate)
 
 	assert.Equal(t, "POST", ev.Method)
 	assert.Equal(t, "/some/api/resource", ev.Path)

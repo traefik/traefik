@@ -34,8 +34,9 @@ func TestRateAuditEvent(t *testing.T) {
 	respInfo := types.ResponseInfo{}
 
 	event := &RATEAuditEvent{}
-	event.AppendRequest(req)
-	event.AppendResponse(respHdrs, respInfo)
+	obfuscate := AuditObfuscation{}
+	event.AppendRequest(req, obfuscate)
+	event.AppendResponse(respHdrs, respInfo, obfuscate)
 
 	assert.Equal(t, "HMRC-VAT-DEC-TMSG", event.AuditType)
 	assert.Equal(t, "1", event.Version)
@@ -96,8 +97,9 @@ func TestChrisRateAuditEvent(t *testing.T) {
 	respInfo := types.ResponseInfo{}
 
 	event := &RATEAuditEvent{}
-	event.AppendRequest(req)
-	event.AppendResponse(respHdrs, respInfo)
+	obfuscate := AuditObfuscation{}
+	event.AppendRequest(req, obfuscate)
+	event.AppendResponse(respHdrs, respInfo, obfuscate)
 
 	assert.Equal(t, "HMRC-PAYE-RTI-EPS", event.AuditType)
 	assert.Equal(t, "1", event.Version)
@@ -164,8 +166,9 @@ func TestWillHandleUnknownXml(t *testing.T) {
 	respInfo := types.ResponseInfo{}
 
 	event := &RATEAuditEvent{}
-	event.AppendRequest(req)
-	event.AppendResponse(respHdrs, respInfo)
+	obfuscate := AuditObfuscation{}
+	event.AppendRequest(req, obfuscate)
+	event.AppendResponse(respHdrs, respInfo, obfuscate)
 
 	assert.Equal(t, "UnclassifiedRequest", event.AuditType)
 	assert.Equal(t, "1", event.Version)
@@ -292,8 +295,9 @@ func TestProcessingSkippedForTestInLive(t *testing.T) {
 	respInfo := types.ResponseInfo{}
 
 	event := &RATEAuditEvent{}
-	event.AppendRequest(req)
-	event.AppendResponse(respHdrs, respInfo)
+	obfuscate := AuditObfuscation{}
+	event.AppendRequest(req, obfuscate)
+	event.AppendResponse(respHdrs, respInfo, obfuscate)
 
 	assert.Equal(t, "HMRC-SA-SA100-TIL", event.AuditType)
 	assert.Equal(t, types.DataMap{}, event.RequestPayload.GetDataMap("contents"))
