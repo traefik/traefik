@@ -14,7 +14,7 @@ type APIAuditEvent struct {
 }
 
 // AppendRequest appends information about the request to the audit event
-func (ev *APIAuditEvent) AppendRequest(req *http.Request, obfuscate AuditObfuscation) {
+func (ev *APIAuditEvent) AppendRequest(req *http.Request, auditSpec *AuditSpecification) {
 	reqHeaders := appendCommonRequestFields(&ev.AuditEvent, req)
 	ev.AuthorisationToken = reqHeaders.GetString("authorization")
 	if body, _, err := copyRequestBody(req); err == nil {
@@ -23,7 +23,7 @@ func (ev *APIAuditEvent) AppendRequest(req *http.Request, obfuscate AuditObfusca
 }
 
 // AppendResponse appends information about the response to the audit event
-func (ev *APIAuditEvent) AppendResponse(responseHeaders http.Header, respInfo types.ResponseInfo, obfuscate AuditObfuscation) {
+func (ev *APIAuditEvent) AppendResponse(responseHeaders http.Header, respInfo types.ResponseInfo, auditSpec *AuditSpecification) {
 	appendCommonResponseFields(&ev.AuditEvent, responseHeaders, respInfo)
 	ev.addResponsePayloadContents(strings.TrimSpace(string(respInfo.Entity)))
 }

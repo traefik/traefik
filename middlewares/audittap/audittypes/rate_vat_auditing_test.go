@@ -26,9 +26,9 @@ func TestRateVATInfoIgnoresNonSubmission(t *testing.T) {
 	respInfo := types.ResponseInfo{}
 
 	event := &RATEAuditEvent{}
-	obfuscate := AuditObfuscation{}
-	event.AppendRequest(req, obfuscate)
-	event.AppendResponse(respHdrs, respInfo, obfuscate)
+	spec := &AuditSpecification{}
+	event.AppendRequest(req, spec)
+	event.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.Equal(t, "HMRC-VAT-DEC-TMSG", event.AuditType)
 	assert.Equal(t, types.DataMap{}, event.RequestPayload.GetDataMap("contents"))
@@ -48,9 +48,9 @@ func TestRateVATAuditEvent(t *testing.T) {
 	respInfo := types.ResponseInfo{}
 
 	event := &RATEAuditEvent{}
-	obfuscate := AuditObfuscation{}
-	event.AppendRequest(req, obfuscate)
-	event.AppendResponse(respHdrs, respInfo, obfuscate)
+	spec := &AuditSpecification{}
+	event.AppendRequest(req, spec)
+	event.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.Equal(t, "HMRC-VAT-DEC-TMSG", event.AuditType)
 	assert.NotEmpty(t, event.RequestPayload)

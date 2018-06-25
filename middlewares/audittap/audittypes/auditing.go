@@ -55,6 +55,19 @@ type AuditObfuscation struct {
 	MaskValue  string
 }
 
+// HeaderMapping defines a field whose value is sourced from a header
+type HeaderMapping map[string]string
+
+// HeaderMappings defines the dynamic mappings to be applied for a section of an audit event.
+type HeaderMappings map[string]HeaderMapping
+
+// AuditSpecification groups together configuration used to define the structure of audit events.
+type AuditSpecification struct {
+	AuditConstraints
+	AuditObfuscation
+	HeaderMappings
+}
+
 // AuditStream describes a type to which audit events can be sent.
 type AuditStream interface {
 	io.Closer
@@ -63,8 +76,8 @@ type AuditStream interface {
 
 // Auditer is a type that audits information from a HTTP request and response
 type Auditer interface {
-	AppendRequest(req *http.Request, obfuscate AuditObfuscation)
-	AppendResponse(responseHeaders http.Header, resp types.ResponseInfo, obfuscate AuditObfuscation)
+	AppendRequest(req *http.Request, auditSpec *AuditSpecification)
+	AppendResponse(responseHeaders http.Header, resp types.ResponseInfo, auditSpec *AuditSpecification)
 	// EnforceConstraints ensures the audit event complies with rules for the audit type
 	// returns true if audit event is valid for auditing
 	EnforceConstraints(constraints AuditConstraints) bool

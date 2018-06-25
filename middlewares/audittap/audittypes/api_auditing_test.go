@@ -32,9 +32,9 @@ func TestApiAuditEvent(t *testing.T) {
 	respHdrs.Set("Content-Type", "text/plain")
 	respInfo := types.ResponseInfo{404, 101, responseBody, 2048}
 
-	obfuscate := AuditObfuscation{}
-	ev.AppendRequest(req, obfuscate)
-	ev.AppendResponse(respHdrs, respInfo, obfuscate)
+	spec := &AuditSpecification{}
+	ev.AppendRequest(req, spec)
+	ev.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.Equal(t, "POST", ev.Method)
 	assert.Equal(t, "/some/api/resource", ev.Path)

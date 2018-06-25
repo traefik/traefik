@@ -29,8 +29,6 @@ func TestMdtpAuditEvent(t *testing.T) {
 	req.Header.Set("X-Forwarded-For", "77.88.77.99")
 	req.Header.Set("X-Request-ID", "mdtp-req-123")
 	req.Header.Set("X-Session-ID", "mdtp-session-99")
-	req.Header.Set("Gateway-Token", "SomeGatewayToken")
-	req.Header.Set("Partner-Token", "SomePartnerToken")
 	req.AddCookie(&http.Cookie{Name: "mdtpdi", Value: "myMdtpDevice"})
 	req.AddCookie(&http.Cookie{Name: "mdtpdf", Value: base64.StdEncoding.EncodeToString([]byte("myDeviceHasFingers"))})
 
@@ -40,9 +38,9 @@ func TestMdtpAuditEvent(t *testing.T) {
 	respHdrs.Set("Location", "nowherespecific")
 	respInfo := types.ResponseInfo{200, 101, []byte(respBody), 2048}
 
-	obfuscate := AuditObfuscation{}
-	ev.AppendRequest(req, obfuscate)
-	ev.AppendResponse(respHdrs, respInfo, obfuscate)
+	spec := &AuditSpecification{}
+	ev.AppendRequest(req, spec)
+	ev.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.NotEmpty(t, ev.EventID)
 	assert.Equal(t, "my-mdtp-app", ev.AuditSource)
@@ -76,8 +74,31 @@ func TestMdtpAuditEvent(t *testing.T) {
 	assert.Equal(t, "55.44.33.22", ev.Tags["clientIP"])
 	assert.Equal(t, "11223", ev.Tags["clientPort"])
 	assert.Equal(t, "rep-54321", ev.Tags["Akamai-Reputation"])
+}
+
+func TestMdtpMappedAuditFieldsAppliedJustAtRequest(t *testing.T) {
+
+	ev := &MdtpAuditEvent{}
+	reqBody := "say=Hi&to=Dave"
+	req := httptest.NewRequest("POST", "http://my-mdtp-app.public.mdtp/some/resource?p1=v1", strings.NewReader(reqBody))
+	req.Header.Set("Gateway-Token", "SomeGatewayToken")
+	req.Header.Set("Partner-Token", "SomePartnerToken")
+
+	respHdrs := http.Header{}
+	respHdrs.Set("Gateway-Token", "IShouldNotBeUsed")
+	respHdrs.Set("Partner-Token", "IShouldNotBeUsed")
+	respInfo := types.ResponseInfo{200, 101, nil, 2048}
+
+	mappings := HeaderMappings{
+		"detail": HeaderMapping{"partnerToken": "Partner-Token"},
+		"tags":   HeaderMapping{"GatewayToken": "Gateway-Token"},
+	}
+	spec := &AuditSpecification{HeaderMappings: mappings}
+	ev.AppendRequest(req, spec)
+	ev.AppendResponse(respHdrs, respInfo, spec)
+
 	assert.Equal(t, "SomeGatewayToken", ev.Tags["GatewayToken"])
-	assert.Equal(t, "SomePartnerToken", ev.Tags["partnerToken"])
+	assert.Equal(t, "SomePartnerToken", ev.Detail["partnerToken"])
 }
 
 func TestRequestPayloadObfuscatedForFormContentType(t *testing.T) {
@@ -94,9 +115,10 @@ func TestRequestPayloadObfuscatedForFormContentType(t *testing.T) {
 	respInfo := types.ResponseInfo{200, 101, []byte(respBody), 2048}
 
 	obfuscate := AuditObfuscation{MaskFields: []string{"password", "authKey"}, MaskValue: "@@@"}
+	spec := &AuditSpecification{AuditObfuscation: obfuscate}
 	expectedBody := "say=Hi&password=@@@&authKey=@@@&to=Dave"
-	ev.AppendRequest(req, obfuscate)
-	ev.AppendResponse(respHdrs, respInfo, obfuscate)
+	ev.AppendRequest(req, spec)
+	ev.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.EqualValues(t, len(reqBody), ev.Detail.Get(requestBodyLen))
 	assert.Equal(t, expectedBody, ev.Detail.GetString(requestBody))
@@ -120,8 +142,9 @@ func TestPayloadsNotObfuscated(t *testing.T) {
 	respInfo := types.ResponseInfo{200, 101, []byte(respBody), 2048}
 
 	obfuscate := AuditObfuscation{MaskFields: []string{"password", "authKey"}, MaskValue: "@@@"}
-	ev.AppendRequest(req, obfuscate)
-	ev.AppendResponse(respHdrs, respInfo, obfuscate)
+	spec := &AuditSpecification{AuditObfuscation: obfuscate}
+	ev.AppendRequest(req, spec)
+	ev.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.EqualValues(t, len(reqBody), ev.Detail.Get(requestBodyLen))
 	assert.Equal(t, reqBody, ev.Detail.GetString(requestBody))
@@ -139,9 +162,9 @@ func TestHtmlResponseFiltered(t *testing.T) {
 	respHdrs.Set("Content-Type", "text/html")
 	respInfo := types.ResponseInfo{200, 101, []byte(respBody), 2048}
 
-	obfuscate := AuditObfuscation{}
-	ev.AppendRequest(req, obfuscate)
-	ev.AppendResponse(respHdrs, respInfo, obfuscate)
+	spec := &AuditSpecification{}
+	ev.AppendRequest(req, spec)
+	ev.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.EqualValues(t, len(respBody), ev.Detail.Get(responseBodyLen))
 	assert.Equal(t, "<HTML>...</HTML>", ev.Detail.GetString(responseBody))

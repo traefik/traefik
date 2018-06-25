@@ -39,7 +39,7 @@ type MdtpAuditEvent struct {
 }
 
 // AppendRequest appends information about the request to the audit event
-func (ev *MdtpAuditEvent) AppendRequest(req *http.Request, obfuscate AuditObfuscation) {
+func (ev *MdtpAuditEvent) AppendRequest(req *http.Request, auditSpec *AuditSpecification) {
 
 	ev.AuditSource = deriveAuditSource(req.Host)
 	ev.AuditType = "RequestReceived"
@@ -62,12 +62,12 @@ func (ev *MdtpAuditEvent) AppendRequest(req *http.Request, obfuscate AuditObfusc
 	ev.RequestHeaders = requestHeaders
 
 	url, _ := url.ParseRequestURI(req.RequestURI)
-	ev.Detail.AddAll(detailFromRequest(req, url, flatHdr, &obfuscate))
-	ev.Tags.AddAll(tagsFromRequest(req, url, flatHdr))
+	ev.Detail.AddAll(detailFromRequest(req, url, flatHdr, auditSpec))
+	ev.Tags.AddAll(tagsFromRequest(req, url, flatHdr, auditSpec))
 }
 
 // AppendResponse appends information about the response to the audit event
-func (ev *MdtpAuditEvent) AppendResponse(responseHeaders http.Header, respInfo types.ResponseInfo, obfuscate AuditObfuscation) {
+func (ev *MdtpAuditEvent) AppendResponse(responseHeaders http.Header, respInfo types.ResponseInfo, auditSpec *AuditSpecification) {
 	headers := ahttp.NewHeaders(responseHeaders).SimplifyCookies()
 	flatHeaders := headers.Flatten()
 	ev.ResponseHeaders = headers.ResponseHeaders()
@@ -119,7 +119,7 @@ func deriveAuditSource(s string) string {
 	return auditSource
 }
 
-func detailFromRequest(req *http.Request, url *url.URL, headers types.DataMap, obfuscate *AuditObfuscation) types.DataMap {
+func detailFromRequest(req *http.Request, url *url.URL, headers types.DataMap, spec *AuditSpecification) types.DataMap {
 	m := types.DataMap{}
 
 	m["Authorization"] = headers.GetString("authorization")
@@ -144,8 +144,8 @@ func detailFromRequest(req *http.Request, url *url.URL, headers types.DataMap, o
 	if body, _, err := copyRequestBody(req); err == nil {
 		m[requestBodyLen] = len(body)
 		// Obfuscation only applies to form requests
-		if ct == "application/x-www-form-urlencoded" {
-			if sanitised, err := obfuscate.ObfuscateURLEncoded(body); err == nil {
+		if ct == "application/x-www-form-urlencoded" && &spec.AuditObfuscation != nil {
+			if sanitised, err := spec.AuditObfuscation.ObfuscateURLEncoded(body); err == nil {
 				m[requestBody] = strings.TrimSpace(string(sanitised))
 			}
 		} else {
@@ -153,10 +153,12 @@ func detailFromRequest(req *http.Request, url *url.URL, headers types.DataMap, o
 		}
 	}
 
+	m.AddAll(extractAdditionalHeaders(headers, "detail", spec.HeaderMappings))
+
 	return m
 }
 
-func tagsFromRequest(req *http.Request, url *url.URL, headers types.DataMap) types.DataMap {
+func tagsFromRequest(req *http.Request, url *url.URL, headers types.DataMap, spec *AuditSpecification) types.DataMap {
 	m := types.DataMap{}
 	m["X-Request-ID"] = headers.GetString("x-request-id")
 	m["X-Session-ID"] = headers.GetString("x-session-id")
@@ -165,8 +167,7 @@ func tagsFromRequest(req *http.Request, url *url.URL, headers types.DataMap) typ
 	m["path"] = url.Path
 	m["transactionName"] = url.RequestURI()
 	m["Akamai-Reputation"] = headers.GetString("akamai-reputation")
-	m["GatewayToken"] = headers.GetString("gateway-token")
-	m["partnerToken"] = headers.GetString("partner-token")
+	m.AddAll(extractAdditionalHeaders(headers, "tags", spec.HeaderMappings))
 	return m
 }
 
@@ -184,6 +185,7 @@ func detailFromResponse(respInfo types.ResponseInfo, headers types.DataMap) type
 	} else {
 		m[responseBody] = strings.TrimSpace(string(respInfo.Entity))
 	}
+
 	return m
 }
 
@@ -212,4 +214,14 @@ func extractDeviceID(req *http.Request, headers types.DataMap) string {
 		}
 	}
 	return deviceID
+}
+
+func extractAdditionalHeaders(headers types.DataMap, section string, mappings HeaderMappings) types.DataMap {
+	m := types.DataMap{}
+	if mappings != nil {
+		for k, v := range mappings[section] {
+			m[k] = headers.GetString(strings.ToLower(v))
+		}
+	}
+	return m
 }

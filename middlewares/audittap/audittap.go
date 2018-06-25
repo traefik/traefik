@@ -28,8 +28,7 @@ type AuditConfig struct {
 	AuditType   string
 	ProxyingFor string
 	Exclusions  []*types.Exclusion
-	audittypes.AuditConstraints
-	audittypes.AuditObfuscation
+	audittypes.AuditSpecification
 }
 
 // AuditTap writes an event to the audit streams for every request.
@@ -96,9 +95,8 @@ func NewAuditTap(config *types.AuditSink, streams []audittypes.AuditStream, back
 	}
 
 	obfuscate := audittypes.AuditObfuscation{}
-	if len(config.MaskFields) > 0 {
-		mf := strings.Split(config.MaskFields, ",")
-		obfuscate.MaskFields = mf
+	obfuscate.MaskFields = config.MaskFields
+	if len(obfuscate.MaskFields) > 0 {
 		if config.MaskValue != "" {
 			obfuscate.MaskValue = config.MaskValue
 		} else {
@@ -106,14 +104,25 @@ func NewAuditTap(config *types.AuditSink, streams []audittypes.AuditStream, back
 		}
 	}
 
+	dynamicFields := make(audittypes.HeaderMappings)
+	// for section, mappings := range config.HeaderMappings {
+	// 	dynamicFields[section] = audittypes.HeaderMapping(mappings)
+	// }
+
 	constraints := audittypes.AuditConstraints{MaxAuditLength: maxAudit, MaxPayloadContentsLength: maxPayload}
-	ac := AuditConfig{
-		AuditSource:      config.AuditSource,
-		AuditType:        config.AuditType,
-		ProxyingFor:      config.ProxyingFor,
-		Exclusions:       exclusions,
+
+	auditSpec := audittypes.AuditSpecification{
 		AuditConstraints: constraints,
 		AuditObfuscation: obfuscate,
+		HeaderMappings:   dynamicFields,
+	}
+
+	ac := AuditConfig{
+		AuditSource:        config.AuditSource,
+		AuditType:          config.AuditType,
+		ProxyingFor:        config.ProxyingFor,
+		Exclusions:         exclusions,
+		AuditSpecification: auditSpec,
 	}
 	return &AuditTap{ac, streams, backend, int(th), next}, nil
 }
@@ -134,15 +143,15 @@ func (tap *AuditTap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		case "mdtp":
 			auditer = audittypes.NewMdtpAuditEvent()
 		}
-		auditer.AppendRequest(req, tap.AuditObfuscation)
+		auditer.AppendRequest(req, &tap.AuditSpecification)
 	}
 
 	ww := NewAuditResponseWriter(rw, tap.MaxEntityLength)
 	tap.next.ServeHTTP(ww, req)
 
 	if !excludeAudit {
-		auditer.AppendResponse(ww.Header(), ww.GetResponseInfo(), tap.AuditObfuscation)
-		if auditer.EnforceConstraints(tap.AuditConstraints) {
+		auditer.AppendResponse(ww.Header(), ww.GetResponseInfo(), &tap.AuditSpecification)
+		if auditer.EnforceConstraints(tap.AuditSpecification.AuditConstraints) {
 			tap.submitAudit(auditer)
 		}
 	}

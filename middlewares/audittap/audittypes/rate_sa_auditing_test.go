@@ -26,9 +26,9 @@ func TestRateSaInfoIgnoresNonSubmission(t *testing.T) {
 	respInfo := types.ResponseInfo{}
 
 	event := &RATEAuditEvent{}
-	obfuscate := AuditObfuscation{}
-	event.AppendRequest(req, obfuscate)
-	event.AppendResponse(respHdrs, respInfo, obfuscate)
+	spec := &AuditSpecification{}
+	event.AppendRequest(req, spec)
+	event.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.Equal(t, "HMRC-SA-SA100-ATT", event.AuditType)
 	assert.Equal(t, types.DataMap{}, event.RequestPayload.GetDataMap("contents"))
@@ -48,9 +48,9 @@ func TestRateSA100AuditEvent(t *testing.T) {
 	respInfo := types.ResponseInfo{}
 
 	event := &RATEAuditEvent{}
-	obfuscate := AuditObfuscation{}
-	event.AppendRequest(req, obfuscate)
-	event.AppendResponse(respHdrs, respInfo, obfuscate)
+	spec := &AuditSpecification{}
+	event.AppendRequest(req, spec)
+	event.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.Equal(t, "HMRC-SA-SA100-ATT", event.AuditType)
 	assert.NotEmpty(t, event.RequestPayload)
@@ -76,9 +76,9 @@ func TestRateSA100AuditEventIsRepayment(t *testing.T) {
 	respInfo := types.ResponseInfo{}
 
 	event := &RATEAuditEvent{}
-	obfuscate := AuditObfuscation{}
-	event.AppendRequest(req, obfuscate)
-	event.AppendResponse(respHdrs, respInfo, obfuscate)
+	spec := &AuditSpecification{}
+	event.AppendRequest(req, spec)
+	event.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.Equal(t, "HMRC-SA-SA100-TMSG", event.AuditType)
 	assert.Equal(t, "true", event.Detail.IsRepayment)
@@ -162,9 +162,9 @@ func TestRateSA800AuditEvent(t *testing.T) {
 	respInfo := types.ResponseInfo{}
 
 	event := &RATEAuditEvent{}
-	obfuscate := AuditObfuscation{}
-	event.AppendRequest(req, obfuscate)
-	event.AppendResponse(respHdrs, respInfo, obfuscate)
+	spec := &AuditSpecification{}
+	event.AppendRequest(req, spec)
+	event.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.Equal(t, "HMRC-SA-SA800-ATT-TMSG", event.AuditType)
 	assert.NotEmpty(t, event.RequestPayload)
@@ -190,9 +190,9 @@ func TestRateSA900AuditEvent(t *testing.T) {
 	respInfo := types.ResponseInfo{}
 
 	event := &RATEAuditEvent{}
-	obfuscate := AuditObfuscation{}
-	event.AppendRequest(req, obfuscate)
-	event.AppendResponse(respHdrs, respInfo, obfuscate)
+	spec := &AuditSpecification{}
+	event.AppendRequest(req, spec)
+	event.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.Equal(t, "HMRC-SA-SA900-ATT-TMSG", event.AuditType)
 	assert.NotEmpty(t, event.RequestPayload)
@@ -217,9 +217,9 @@ func TestRateSA900AuditEventIsRepayment(t *testing.T) {
 	respInfo := types.ResponseInfo{}
 
 	event := &RATEAuditEvent{}
-	obfuscate := AuditObfuscation{}
-	event.AppendRequest(req, obfuscate)
-	event.AppendResponse(respHdrs, respInfo, obfuscate)
+	spec := &AuditSpecification{}
+	event.AppendRequest(req, spec)
+	event.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.Equal(t, "HMRC-SA-SA900", event.AuditType)
 	assert.NotEmpty(t, event.RequestPayload)

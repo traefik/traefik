@@ -73,6 +73,8 @@ Complete documentation is available at https://traefik.io`,
 	f.AddParser(reflect.TypeOf(types.StatusCodes{}), &types.StatusCodes{})
 	f.AddParser(reflect.TypeOf(types.FieldNames{}), &types.FieldNames{})
 	f.AddParser(reflect.TypeOf(types.FieldHeaderNames{}), &types.FieldHeaderNames{})
+	f.AddParser(reflect.TypeOf(types.MaskFields{}), &types.MaskFields{})
+	//f.AddParser(reflect.TypeOf(types.HeaderMapping{}), &types.HeaderMapping{})
 
 	// add commands
 	f.AddCommand(cmdVersion.NewCmd())

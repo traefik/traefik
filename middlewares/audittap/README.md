@@ -19,7 +19,7 @@ An example follows
   encryptSecret = "RDFXVxTgrrT9IseypJrwDLzk/nTVeTjbjaUR3RVyv94="
   maxAuditLength = "2M"
   maxPayloadContentsLength = "99K"
-  maskFields = "field1,field2,field3"
+  maskFields = ["field1","field2","field3"]
   maskValue = "***"
   [auditSink.exclusions]
     [auditSink.exclusions.exc1]
