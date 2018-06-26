@@ -48,11 +48,16 @@ type ecsInstance struct {
 	TraefikLabels       map[string]string
 }
 
+type portMapping struct {
+	containerPort int64
+	hostPort      int64
+}
+
 type machine struct {
 	name      string
 	state     string
 	privateIP string
-	port      int64
+	ports     []portMapping
 }
 
 type awsClient struct {
@@ -280,23 +285,37 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 
 				var mach *machine
 				if aws.StringValue(task.LaunchType) == ecs.LaunchTypeFargate {
-					var hostPort int64
-					if len(containerDefinition.PortMappings) > 0 && containerDefinition.PortMappings[0] != nil {
-						hostPort = aws.Int64Value(containerDefinition.PortMappings[0].HostPort)
+					ports := []portMapping{}
+					if len(containerDefinition.PortMappings) > 0 {
+						for _, mapping := range containerDefinition.PortMappings {
+							if mapping != nil {
+								ports = append(ports, portMapping{
+									hostPort:      aws.Int64Value(mapping.HostPort),
+									containerPort: aws.Int64Value(mapping.ContainerPort),
+								})
+							}
+						}
 					}
 					mach = &machine{
 						privateIP: aws.StringValue(container.NetworkInterfaces[0].PrivateIpv4Address),
-						port:      hostPort,
+						ports:     ports,
 						state:     aws.StringValue(task.LastStatus),
 					}
 				} else {
-					var hostPort int64
-					if len(container.NetworkBindings) > 0 && container.NetworkBindings[0] != nil {
-						hostPort = aws.Int64Value(container.NetworkBindings[0].HostPort)
+					ports := []portMapping{}
+					if len(container.NetworkBindings) > 0 {
+						for _, mapping := range container.NetworkBindings {
+							if mapping != nil {
+								ports = append(ports, portMapping{
+									hostPort:      aws.Int64Value(mapping.HostPort),
+									containerPort: aws.Int64Value(mapping.ContainerPort),
+								})
+							}
+						}
 					}
 					mach = &machine{
 						privateIP: aws.StringValue(containerInstance.PrivateIpAddress),
-						port:      hostPort,
+						ports:     ports,
 						state:     aws.StringValue(containerInstance.State.Name),
 					}
 				}

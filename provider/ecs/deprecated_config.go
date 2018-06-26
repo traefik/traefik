@@ -86,7 +86,7 @@ func (p *Provider) filterInstanceV1(i ecsInstance) bool {
 		return false
 	}
 
-	if labelPort := getStringValueV1(i, label.TraefikPort, ""); i.machine.port == 0 && labelPort == "" {
+	if labelPort := getStringValueV1(i, label.TraefikPort, ""); len(i.machine.ports) == 0 && labelPort == "" {
 		log.Debugf("Filtering ecs instance without port %s (%s)", i.Name, i.ID)
 		return false
 	}

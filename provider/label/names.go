@@ -4,6 +4,7 @@ package label
 const (
 	Prefix                                         = "traefik."
 	SuffixBackend                                  = "backend"
+	SuffixContainerPort                            = "containerPort"
 	SuffixDomain                                   = "domain"
 	SuffixEnable                                   = "enable"
 	SuffixPort                                     = "port"
@@ -73,6 +74,7 @@ const (
 	SuffixFrontendWhiteList                        = "frontend.whiteList."
 	SuffixFrontendWhiteListSourceRange             = SuffixFrontendWhiteList + "sourceRange"
 	SuffixFrontendWhiteListUseXForwardedFor        = SuffixFrontendWhiteList + "useXForwardedFor"
+	TraefikContainerPort                           = Prefix + SuffixContainerPort
 	TraefikDomain                                  = Prefix + SuffixDomain
 	TraefikEnable                                  = Prefix + SuffixEnable
 	TraefikPort                                    = Prefix + SuffixPort

@@ -32,7 +32,9 @@ func TestBuildConfiguration(t *testing.T) {
 					machine: &machine{
 						state:     ec2.InstanceStateNameRunning,
 						privateIP: "10.0.0.1",
-						port:      1337,
+						ports: []portMapping{
+							{hostPort: 1337},
+						},
 					},
 				},
 			},
@@ -75,7 +77,9 @@ func TestBuildConfiguration(t *testing.T) {
 					machine: &machine{
 						state:     ec2.InstanceStateNameRunning,
 						privateIP: "10.0.0.1",
-						port:      1337,
+						ports: []portMapping{
+							{hostPort: 1337},
+						},
 					},
 				},
 			},
@@ -195,7 +199,9 @@ func TestBuildConfiguration(t *testing.T) {
 					machine: &machine{
 						state:     ec2.InstanceStateNameRunning,
 						privateIP: "10.0.0.1",
-						port:      1337,
+						ports: []portMapping{
+							{hostPort: 1337},
+						},
 					},
 				},
 			},
@@ -876,6 +882,27 @@ func TestGetPort(t *testing.T) {
 				label.TraefikPort: aws.String("80"),
 			}),
 		},
+		{
+			desc:     "Container label should provide exposed port",
+			expected: "6536",
+			instanceInfo: simpleEcsInstanceDynamicPorts(map[string]*string{
+				label.TraefikContainerPort: aws.String("8080"),
+			}),
+		},
+		{
+			desc:     "Wrong port container label should provide default exposed port",
+			expected: "6535",
+			instanceInfo: simpleEcsInstanceDynamicPorts(map[string]*string{
+				label.TraefikContainerPort: aws.String("9000"),
+			}),
+		},
+		{
+			desc:     "Invalid port container label should provide default exposed port",
+			expected: "6535",
+			instanceInfo: simpleEcsInstanceDynamicPorts(map[string]*string{
+				label.TraefikContainerPort: aws.String("foo"),
+			}),
+		},
 	}
 
 	for _, test := range testCases {
@@ -987,7 +1014,9 @@ func makeEcsInstance(containerDef *ecs.ContainerDefinition) ecsInstance {
 		machine: &machine{
 			state:     ec2.InstanceStateNameRunning,
 			privateIP: "10.0.0.0",
-			port:      1337,
+			ports: []portMapping{
+				{hostPort: 1337},
+			},
 		},
 	}
 
@@ -1003,7 +1032,9 @@ func simpleEcsInstance(labels map[string]*string) ecsInstance {
 		Name:         aws.String("http"),
 		DockerLabels: labels,
 	})
-	instance.machine.port = 80
+	instance.machine.ports = []portMapping{
+		{hostPort: 80},
+	}
 	return instance
 }
 
@@ -1012,7 +1043,19 @@ func simpleEcsInstanceNoNetwork(labels map[string]*string) ecsInstance {
 		Name:         aws.String("http"),
 		DockerLabels: labels,
 	})
-	instance.machine.port = 0
+	instance.machine.ports = []portMapping{}
+	return instance
+}
+
+func simpleEcsInstanceDynamicPorts(labels map[string]*string) ecsInstance {
+	instance := makeEcsInstance(&ecs.ContainerDefinition{
+		Name:         aws.String("http"),
+		DockerLabels: labels,
+	})
+	instance.machine.ports = []portMapping{
+		{containerPort: 80, hostPort: 6535},
+		{containerPort: 8080, hostPort: 6536},
+	}
 	return instance
 }
 

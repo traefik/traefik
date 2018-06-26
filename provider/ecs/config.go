@@ -68,7 +68,7 @@ func (p *Provider) filterInstance(i ecsInstance) bool {
 		return false
 	}
 
-	if labelPort := label.GetStringValue(i.TraefikLabels, label.TraefikPort, ""); i.machine.port == 0 && labelPort == "" {
+	if labelPort := label.GetStringValue(i.TraefikLabels, label.TraefikPort, ""); len(i.machine.ports) == 0 && labelPort == "" {
 		log.Debugf("Filtering ecs instance without port %s (%s)", i.Name, i.ID)
 		return false
 	}
@@ -121,7 +121,14 @@ func getPort(i ecsInstance) string {
 	if value := label.GetStringValue(i.TraefikLabels, label.TraefikPort, ""); len(value) > 0 {
 		return value
 	}
-	return strconv.FormatInt(i.machine.port, 10)
+	if value := label.GetStringValue(i.TraefikLabels, label.TraefikContainerPort, ""); len(value) > 0 {
+		for _, mapping := range i.machine.ports {
+			if port, err := strconv.ParseInt(value, 10, 64); err == nil && port == mapping.containerPort {
+				return strconv.FormatInt(mapping.hostPort, 10)
+			}
+		}
+	}
+	return strconv.FormatInt(i.machine.ports[0].hostPort, 10)
 }
 
 func filterFrontends(instances []ecsInstance) []ecsInstance {
