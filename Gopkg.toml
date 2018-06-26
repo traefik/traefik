@@ -62,7 +62,7 @@
 
 [[constraint]]
   name = "github.com/containous/staert"
-  version = "3.1.0"
+  version = "3.1.1"
 
 [[constraint]]
   name = "github.com/containous/traefik-extra-service-fabric"
