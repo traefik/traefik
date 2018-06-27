@@ -6,7 +6,6 @@ import (
 
 	"github.com/containous/traefik/log"
 	"github.com/opentracing/opentracing-go"
-
 	ddtracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/opentracer"
 	datadog "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
@@ -14,7 +13,7 @@ import (
 // Name sets the name of this tracer
 const Name = "datadog"
 
-// Config provides configuration settings for a zipkin tracer
+// Config provides configuration settings for a datadog tracer
 type Config struct {
 	LocalAgentHostPort string `description:"Set datadog-agent's host:port that the reporter will used. Defaults to localhost:8126" export:"false"`
 	GlobalTag          string `description:"Key:Value tag to be set on all the spans." export:"true"`
