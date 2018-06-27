@@ -73,8 +73,11 @@ func GetKeyType(value string) acme.KeyType {
 		return acme.RSA4096
 	case "RSA8192":
 		return acme.RSA8192
+	case "":
+		log.Infof("The key type is empty. Use default key type %v.", acme.RSA4096)
+		return acme.RSA4096
 	default:
-		log.Warnf("Unable to determine key type value %s. Use %s as default value", value, acme.RSA4096)
+		log.Infof("Unable to determine key type value %q. Use default key type %v.", value, acme.RSA4096)
 		return acme.RSA4096
 	}
 }

@@ -2,22 +2,25 @@ package acme
 
 import (
 	"fmt"
+	"net"
+	"net/http"
 	"time"
 
 	"github.com/cenk/backoff"
+	"github.com/containous/mux"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
 	"github.com/xenolf/lego/acme"
 )
 
-var _ acme.ChallengeProviderTimeout = (*ChallengeHTTP)(nil)
+var _ acme.ChallengeProviderTimeout = (*challengeHTTP)(nil)
 
-type ChallengeHTTP struct {
+type challengeHTTP struct {
 	Store Store
 }
 
 // Present presents a challenge to obtain new ACME certificate
-func (c *ChallengeHTTP) Present(domain, token, keyAuth string) error {
+func (c *challengeHTTP) Present(domain, token, keyAuth string) error {
 	httpChallenges, err := c.Store.GetHTTPChallenges()
 	if err != nil {
 		return fmt.Errorf("unable to get HTTPChallenges : %s", err)
@@ -37,7 +40,7 @@ func (c *ChallengeHTTP) Present(domain, token, keyAuth string) error {
 }
 
 // CleanUp cleans the challenges when certificate is obtained
-func (c *ChallengeHTTP) CleanUp(domain, token, keyAuth string) error {
+func (c *challengeHTTP) CleanUp(domain, token, keyAuth string) error {
 	httpChallenges, err := c.Store.GetHTTPChallenges()
 	if err != nil {
 		return fmt.Errorf("unable to get HTTPChallenges : %s", err)
@@ -58,7 +61,7 @@ func (c *ChallengeHTTP) CleanUp(domain, token, keyAuth string) error {
 }
 
 // Timeout calculates the maximum of time allowed to resolved an ACME challenge
-func (c *ChallengeHTTP) Timeout() (timeout, interval time.Duration) {
+func (c *challengeHTTP) Timeout() (timeout, interval time.Duration) {
 	return 60 * time.Second, 5 * time.Second
 }
 
@@ -92,4 +95,31 @@ func getTokenValue(token, domain string, store Store) []byte {
 	}
 
 	return result
+}
+
+// AddRoutes add routes on internal router
+func (p *Provider) AddRoutes(router *mux.Router) {
+	router.Methods(http.MethodGet).
+		Path(acme.HTTP01ChallengePath("{token}")).
+		Handler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			vars := mux.Vars(req)
+			if token, ok := vars["token"]; ok {
+				domain, _, err := net.SplitHostPort(req.Host)
+				if err != nil {
+					log.Debugf("Unable to split host and port: %v. Fallback to request host.", err)
+					domain = req.Host
+				}
+
+				tokenValue := getTokenValue(token, domain, p.Store)
+				if len(tokenValue) > 0 {
+					rw.WriteHeader(http.StatusOK)
+					_, err = rw.Write(tokenValue)
+					if err != nil {
+						log.Errorf("Unable to write token : %v", err)
+					}
+					return
+				}
+			}
+			rw.WriteHeader(http.StatusNotFound)
+		}))
 }

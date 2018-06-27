@@ -399,7 +399,7 @@ func (gc *GlobalConfiguration) InitACMEProvider() *acmeprovider.Provider {
 			}
 
 			store := acmeprovider.NewLocalStore(provider.Storage)
-			provider.Store = &store
+			provider.Store = store
 			acme.ConvertToNewFormat(provider.Storage)
 			gc.ACME = nil
 			return provider

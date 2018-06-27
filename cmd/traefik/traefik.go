@@ -200,6 +200,11 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 				internalRouter.AddRouter(acmeprovider)
 			}
 
+			// TLS ALPN 01
+			if acmeprovider.HTTPChallenge == nil && acmeprovider.DNSChallenge == nil {
+				entryPoint.TLSALPNGetter = acmeprovider.GetTLSALPNCertificate
+			}
+
 			if acmeprovider.EntryPoint == entryPointName && acmeprovider.OnDemand {
 				entryPoint.OnDemandListener = acmeprovider.ListenRequest
 			}
