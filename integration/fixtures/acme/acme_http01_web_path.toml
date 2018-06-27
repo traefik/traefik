@@ -9,19 +9,31 @@ defaultEntryPoints = ["http", "https"]
   address = ":5001"
     [entryPoints.https.tls]
 
-
 [acme]
   email = "test@traefik.io"
   storage = "/tmp/acme.json"
   entryPoint = "https"
-  onDemand = {{.OnDemand}}
-  onHostRule = {{.OnHostRule}}
-  caServer = "http://{{.BoulderHost}}:4001/directory"
-  keyType = "INVALID"
-  [acme.httpChallenge]
-  entryPoint="http"
+  acmeLogging = true
+  onDemand = {{ .OnDemand }}
+  onHostRule = {{ .OnHostRule }}
+  keyType = "{{ .KeyType }}"
+  caServer = "{{ .CAServer }}"
 
-[api]
+  {{if .HTTPChallenge }}
+  [acme.httpChallenge]
+    entryPoint = "{{ .HTTPChallenge.EntryPoint }}"
+  {{end}}
+
+  {{range .Domains}}
+  [[acme.domains]]
+    main = "{{ .Main }}"
+    sans = [{{range .SANs }}
+      "{{.}}",
+      {{end}}]
+  {{end}}
+
+[web]
+path="/traefik"
 
 [file]
 
