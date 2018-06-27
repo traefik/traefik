@@ -372,6 +372,7 @@ func TestFilterInstance(t *testing.T) {
 		instanceInfo     ecsInstance
 		exposedByDefault bool
 		expected         bool
+		constrain        bool
 	}{
 		{
 			desc:             "Instance without enable label and exposed by default enabled should be not filtered",
@@ -455,6 +456,24 @@ func TestFilterInstance(t *testing.T) {
 			exposedByDefault: true,
 			expected:         true,
 		},
+		{
+			desc: "Instance with failing constraint should be filtered",
+			instanceInfo: simpleEcsInstance(map[string]*string{
+				label.TraefikTags: aws.String("private"),
+			}),
+			exposedByDefault: true,
+			expected:         false,
+			constrain:        true,
+		},
+		{
+			desc: "Instance with passing constraint should not be filtered",
+			instanceInfo: simpleEcsInstance(map[string]*string{
+				label.TraefikTags: aws.String("public"),
+			}),
+			exposedByDefault: true,
+			expected:         true,
+			constrain:        true,
+		},
 	}
 
 	for _, test := range testCases {
@@ -464,6 +483,11 @@ func TestFilterInstance(t *testing.T) {
 
 			prov := &Provider{
 				ExposedByDefault: test.exposedByDefault,
+			}
+			if test.constrain {
+				constraints := types.Constraints{}
+				assert.NoError(t, constraints.Set("tag==public"))
+				prov.Constraints = constraints
 			}
 
 			actual := prov.filterInstance(test.instanceInfo)
