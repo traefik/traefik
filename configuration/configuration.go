@@ -10,6 +10,7 @@ import (
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/api"
 	"github.com/containous/traefik/log"
+	atconf "github.com/containous/traefik/middlewares/audittap/configuration"
 	"github.com/containous/traefik/middlewares/tracing"
 	"github.com/containous/traefik/middlewares/tracing/jaeger"
 	"github.com/containous/traefik/middlewares/tracing/zipkin"
@@ -104,7 +105,7 @@ type GlobalConfiguration struct {
 	API                       *api.Handler            `description:"Enable api/dashboard" export:"true"`
 	Metrics                   *types.Metrics          `description:"Enable a metrics exporter" export:"true"`
 	Ping                      *ping.Handler           `description:"Enable ping" export:"true"`
-	AuditSink                 *types.AuditSink        `description:"Audit Sink settings"`
+	AuditSink                 *atconf.AuditSink       `description:"Audit Sink settings"`
 }
 
 // WebCompatibility is a configuration to handle compatibility with deprecated web provider options

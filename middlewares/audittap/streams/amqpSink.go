@@ -9,9 +9,9 @@ import (
 	"github.com/beeker1121/goque"
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/middlewares/audittap/configuration"
 	"github.com/containous/traefik/middlewares/audittap/encryption"
 	atypes "github.com/containous/traefik/middlewares/audittap/types"
-	"github.com/containous/traefik/types"
 	"github.com/streadway/amqp"
 )
 
@@ -110,7 +110,7 @@ var NewQueue = func(queueLocation string) (*goque.Queue, error) {
 // NewAmqpSink returns an AuditSink for sending messages to an AMQP service.
 // A connection is made to the specified endpoint and a number of Producers
 // each backed by an AMQP channel are created, ready to send messages.
-func NewAmqpSink(config *types.AuditSink, messageChan chan atypes.Encoded) (sink AuditSink, err error) {
+func NewAmqpSink(config *configuration.AuditSink, messageChan chan atypes.Encoded) (sink AuditSink, err error) {
 
 	clientID := config.ClientID
 	if clientID == "" {

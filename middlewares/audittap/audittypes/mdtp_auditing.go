@@ -218,6 +218,7 @@ func extractDeviceID(req *http.Request, headers types.DataMap) string {
 
 func extractAdditionalHeaders(headers types.DataMap, section string, mappings HeaderMappings) types.DataMap {
 	m := types.DataMap{}
+	log.Debugf("Adding additional fields to %s. +%v +%v", section, mappings, headers)
 	if mappings != nil {
 		for k, v := range mappings[section] {
 			m[k] = headers.GetString(strings.ToLower(v))

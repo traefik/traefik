@@ -9,9 +9,9 @@ import (
 	"github.com/assembla/cony"
 	"github.com/beeker1121/goque"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/middlewares/audittap/configuration"
 	"github.com/containous/traefik/middlewares/audittap/encryption"
 	atypes "github.com/containous/traefik/middlewares/audittap/types"
-	"github.com/containous/traefik/types"
 	"github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
 )
@@ -121,7 +121,7 @@ func TestAmqpSink(t *testing.T) {
 		return testPublisherImpl
 	}
 
-	var config = types.AuditSink{
+	var config = configuration.AuditSink{
 		Endpoint:      "foo",
 		Destination:   "bar",
 		DiskStorePath: "/tmp/test",
@@ -185,7 +185,7 @@ func TestAmqpSinkFull(t *testing.T) {
 		return testPublisherImpl
 	}
 
-	var config = types.AuditSink{
+	var config = configuration.AuditSink{
 		Endpoint:      "foo",
 		Destination:   "bar",
 		DiskStorePath: "/",

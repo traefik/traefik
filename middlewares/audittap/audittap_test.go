@@ -11,8 +11,8 @@ import (
 	"testing"
 
 	"github.com/containous/traefik/middlewares/audittap/audittypes"
+	"github.com/containous/traefik/middlewares/audittap/configuration"
 	atypes "github.com/containous/traefik/middlewares/audittap/types"
-	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,7 +33,7 @@ func TestAuditTap_noop(t *testing.T) {
 	atypes.TheClock = T0
 
 	capture := &noopAuditStream{}
-	cfg := &types.AuditSink{
+	cfg := &configuration.AuditSink{
 		ProxyingFor:   "API",
 		AuditSource:   "testSource",
 		AuditType:     "testType",
@@ -62,22 +62,22 @@ func TestAuditTap_noop(t *testing.T) {
 
 func TestInvalidProxyingForRequired(t *testing.T) {
 	capture := &noopAuditStream{}
-	_, err := NewAuditTap(&types.AuditSink{}, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
+	_, err := NewAuditTap(&configuration.AuditSink{}, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
 	assert.Error(t, err)
-	_, err = NewAuditTap(&types.AuditSink{ProxyingFor: "IPA"}, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
+	_, err = NewAuditTap(&configuration.AuditSink{ProxyingFor: "IPA"}, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
 	assert.Error(t, err)
 }
 
 func TestRateProxyingFor(t *testing.T) {
 	capture := &noopAuditStream{}
-	_, err := NewAuditTap(&types.AuditSink{ProxyingFor: "Rate"}, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
+	_, err := NewAuditTap(&configuration.AuditSink{ProxyingFor: "Rate"}, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
 	assert.NoError(t, err)
 }
 
 func TestApiProxyingFor(t *testing.T) {
 
 	capture := &noopAuditStream{}
-	cfg := &types.AuditSink{
+	cfg := &configuration.AuditSink{
 		ProxyingFor: "API",
 		AuditSource: "testSource",
 		AuditType:   "testType",
@@ -88,7 +88,7 @@ func TestApiProxyingFor(t *testing.T) {
 
 func TestMdtpProxyingFor(t *testing.T) {
 	capture := &noopAuditStream{}
-	_, err := NewAuditTap(&types.AuditSink{ProxyingFor: "MDTP"}, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
+	_, err := NewAuditTap(&configuration.AuditSink{ProxyingFor: "MDTP"}, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
 	assert.NoError(t, err)
 }
 
@@ -96,15 +96,15 @@ func TestAuditExclusion(t *testing.T) {
 
 	atypes.TheClock = T0
 	capture := &noopAuditStream{}
-	excludes := make(types.Exclusions)
+	excludes := make(configuration.Exclusions)
 
-	excludes["Ex1"] = &types.Exclusion{HeaderName: "Host", Contains: []string{"aaaignorehost1bbb", "hostignore"}}
-	excludes["Ex2"] = &types.Exclusion{HeaderName: "Path", StartsWith: []string{"/excludeme", "/someotherpath"}}
+	excludes["Ex1"] = &configuration.Exclusion{HeaderName: "Host", Contains: []string{"aaaignorehost1bbb", "hostignore"}}
+	excludes["Ex2"] = &configuration.Exclusion{HeaderName: "Path", StartsWith: []string{"/excludeme", "/someotherpath"}}
 
-	excludes["Ex3"] = &types.Exclusion{HeaderName: "Hdr1", Contains: []string{"abcdefg", "drv1"}}
-	excludes["Ex4"] = &types.Exclusion{HeaderName: "Hdr2", Contains: []string{"tauditm"}}
+	excludes["Ex3"] = &configuration.Exclusion{HeaderName: "Hdr1", Contains: []string{"abcdefg", "drv1"}}
+	excludes["Ex4"] = &configuration.Exclusion{HeaderName: "Hdr2", Contains: []string{"tauditm"}}
 
-	cfg := &types.AuditSink{
+	cfg := &configuration.AuditSink{
 		ProxyingFor: "api",
 		AuditSource: "as1",
 		AuditType:   "at1",
@@ -146,28 +146,28 @@ func TestAuditExclusion(t *testing.T) {
 }
 
 func TestShouldExclude(t *testing.T) {
-	assert.True(t, shouldExclude("beginWithThis", &types.Exclusion{HeaderName: "x", StartsWith: []string{"begin"}}))
-	assert.True(t, shouldExclude("endWithThat", &types.Exclusion{HeaderName: "x", EndsWith: []string{"That"}}))
-	assert.True(t, shouldExclude("ithasthatthing", &types.Exclusion{HeaderName: "x", Contains: []string{"hasthat"}}))
+	assert.True(t, shouldExclude("beginWithThis", &configuration.Exclusion{HeaderName: "x", StartsWith: []string{"begin"}}))
+	assert.True(t, shouldExclude("endWithThat", &configuration.Exclusion{HeaderName: "x", EndsWith: []string{"That"}}))
+	assert.True(t, shouldExclude("ithasthatthing", &configuration.Exclusion{HeaderName: "x", Contains: []string{"hasthat"}}))
 
-	assert.False(t, shouldExclude("bcd", &types.Exclusion{HeaderName: "x", StartsWith: []string{"abc"}}))
-	assert.False(t, shouldExclude("bcd", &types.Exclusion{HeaderName: "x", EndsWith: []string{"def"}}))
-	assert.False(t, shouldExclude("bcd", &types.Exclusion{HeaderName: "x", Contains: []string{"abcde"}}))
+	assert.False(t, shouldExclude("bcd", &configuration.Exclusion{HeaderName: "x", StartsWith: []string{"abc"}}))
+	assert.False(t, shouldExclude("bcd", &configuration.Exclusion{HeaderName: "x", EndsWith: []string{"def"}}))
+	assert.False(t, shouldExclude("bcd", &configuration.Exclusion{HeaderName: "x", Contains: []string{"abcde"}}))
 }
 
 func TestShouldExcludeMatch(t *testing.T) {
 
 	mdtpURLPattern := "http(s)?:\\/\\/.*\\.(service|mdtp)($|[:\\/])"
-	assert.True(t, shouldExclude("beginWithThis", &types.Exclusion{HeaderName: "x", Matches: []string{"^begin.*"}}))
-	assert.True(t, shouldExclude("http://auth.service/auth/authority", &types.Exclusion{HeaderName: "x", Matches: []string{mdtpURLPattern}}))
+	assert.True(t, shouldExclude("beginWithThis", &configuration.Exclusion{HeaderName: "x", Matches: []string{"^begin.*"}}))
+	assert.True(t, shouldExclude("http://auth.service/auth/authority", &configuration.Exclusion{HeaderName: "x", Matches: []string{mdtpURLPattern}}))
 
-	assert.False(t, shouldExclude("abcdx", &types.Exclusion{HeaderName: "x", Matches: []string{"abcde"}}))
-	assert.False(t, shouldExclude("http://auth.com/auth/authority", &types.Exclusion{HeaderName: "x", Matches: []string{mdtpURLPattern}}))
+	assert.False(t, shouldExclude("abcdx", &configuration.Exclusion{HeaderName: "x", Matches: []string{"abcde"}}))
+	assert.False(t, shouldExclude("http://auth.com/auth/authority", &configuration.Exclusion{HeaderName: "x", Matches: []string{mdtpURLPattern}}))
 }
 
 func TestAuditConstraintDefaults(t *testing.T) {
 	capture := &noopAuditStream{}
-	tap, err := NewAuditTap(&types.AuditSink{ProxyingFor: "Rate"}, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
+	tap, err := NewAuditTap(&configuration.AuditSink{ProxyingFor: "Rate"}, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
 	assert.NoError(t, err)
 	assert.Equal(t, int64(100000), tap.AuditConfig.AuditConstraints.MaxAuditLength)
 	assert.Equal(t, int64(96000), tap.AuditConfig.AuditConstraints.MaxPayloadContentsLength)
@@ -175,7 +175,7 @@ func TestAuditConstraintDefaults(t *testing.T) {
 
 func TestAuditConstraintsAssigned(t *testing.T) {
 	capture := &noopAuditStream{}
-	conf := types.AuditSink{ProxyingFor: "Rate", MaxAuditLength: "3M", MaxPayloadContentsLength: "39k"}
+	conf := configuration.AuditSink{ProxyingFor: "Rate", MaxAuditLength: "3M", MaxPayloadContentsLength: "39k"}
 	tap, err := NewAuditTap(&conf, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
 	assert.NoError(t, err)
 	assert.Equal(t, int64(3000000), tap.AuditConfig.AuditConstraints.MaxAuditLength)
@@ -184,7 +184,7 @@ func TestAuditConstraintsAssigned(t *testing.T) {
 
 func TestOversizedAuditDropped(t *testing.T) {
 	capture := &noopAuditStream{}
-	cfg := &types.AuditSink{
+	cfg := &configuration.AuditSink{
 		ProxyingFor:    "API",
 		AuditSource:    "testSource",
 		AuditType:      "testType",
@@ -205,7 +205,7 @@ func TestOversizedAuditDropped(t *testing.T) {
 
 func TestEnforceConstraintsFailDropsAudit(t *testing.T) {
 	capture := &noopAuditStream{}
-	conf := types.AuditSink{ProxyingFor: "Rate", MaxAuditLength: "3M", MaxPayloadContentsLength: "1M"}
+	conf := configuration.AuditSink{ProxyingFor: "Rate", MaxAuditLength: "3M", MaxPayloadContentsLength: "1M"}
 	tap, err := NewAuditTap(&conf, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
 	assert.NoError(t, err)
 

@@ -12,7 +12,7 @@ import (
 
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares/audittap/audittypes"
-	"github.com/containous/traefik/types"
+	"github.com/containous/traefik/middlewares/audittap/configuration"
 )
 
 // Possible ProxyingFor types
@@ -27,7 +27,7 @@ type AuditConfig struct {
 	AuditSource string
 	AuditType   string
 	ProxyingFor string
-	Exclusions  []*types.Exclusion
+	Exclusions  []*configuration.Exclusion
 	audittypes.AuditSpecification
 }
 
@@ -41,7 +41,7 @@ type AuditTap struct {
 }
 
 // NewAuditTap returns a new AuditTap handler.
-func NewAuditTap(config *types.AuditSink, streams []audittypes.AuditStream, backend string, next http.Handler) (*AuditTap, error) {
+func NewAuditTap(config *configuration.AuditSink, streams []audittypes.AuditStream, backend string, next http.Handler) (*AuditTap, error) {
 
 	var err error
 
@@ -87,7 +87,7 @@ func NewAuditTap(config *types.AuditSink, streams []audittypes.AuditStream, back
 		}
 	}
 
-	exclusions := []*types.Exclusion{}
+	exclusions := []*configuration.Exclusion{}
 	for _, exc := range config.Exclusions {
 		if exc.Enabled() {
 			exclusions = append(exclusions, exc)
@@ -105,9 +105,9 @@ func NewAuditTap(config *types.AuditSink, streams []audittypes.AuditStream, back
 	}
 
 	dynamicFields := make(audittypes.HeaderMappings)
-	// for section, mappings := range config.HeaderMappings {
-	// 	dynamicFields[section] = audittypes.HeaderMapping(mappings)
-	// }
+	for section, mappings := range config.HeaderMappings {
+		dynamicFields[section] = audittypes.HeaderMapping(mappings)
+	}
 
 	constraints := audittypes.AuditConstraints{MaxAuditLength: maxAudit, MaxPayloadContentsLength: maxPayload}
 
@@ -173,7 +173,7 @@ func (tap *AuditTap) submitAudit(auditer audittypes.Auditer) error {
 }
 
 // isExcluded asserts if request metadata matches specified exclusions from config
-func isExcluded(exclusions []*types.Exclusion, req *http.Request) bool {
+func isExcluded(exclusions []*configuration.Exclusion, req *http.Request) bool {
 
 	for _, exc := range exclusions {
 		lcHdr := strings.ToLower(exc.HeaderName)
@@ -192,7 +192,7 @@ func isExcluded(exclusions []*types.Exclusion, req *http.Request) bool {
 	return false
 }
 
-func shouldExclude(v string, exc *types.Exclusion) bool {
+func shouldExclude(v string, exc *configuration.Exclusion) bool {
 	return excludeValue(v, exc.StartsWith, strings.HasPrefix) ||
 		excludeValue(v, exc.EndsWith, strings.HasSuffix) ||
 		excludeValue(v, exc.Contains, strings.Contains) ||

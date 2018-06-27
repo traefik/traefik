@@ -23,6 +23,7 @@ import (
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
+	atconf "github.com/containous/traefik/middlewares/audittap/configuration"
 	"github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/provider/ecs"
 	"github.com/containous/traefik/provider/kubernetes"
@@ -73,8 +74,8 @@ Complete documentation is available at https://traefik.io`,
 	f.AddParser(reflect.TypeOf(types.StatusCodes{}), &types.StatusCodes{})
 	f.AddParser(reflect.TypeOf(types.FieldNames{}), &types.FieldNames{})
 	f.AddParser(reflect.TypeOf(types.FieldHeaderNames{}), &types.FieldHeaderNames{})
-	f.AddParser(reflect.TypeOf(types.MaskFields{}), &types.MaskFields{})
-	//f.AddParser(reflect.TypeOf(types.HeaderMapping{}), &types.HeaderMapping{})
+	f.AddParser(reflect.TypeOf(atconf.MaskFields{}), &atconf.MaskFields{})
+	f.AddParser(reflect.TypeOf(atconf.HeaderMappings{}), &atconf.HeaderMappings{})
 
 	// add commands
 	f.AddCommand(cmdVersion.NewCmd())

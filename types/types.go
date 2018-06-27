@@ -15,6 +15,7 @@ import (
 	"github.com/containous/flaeg"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/log"
+	atconf "github.com/containous/traefik/middlewares/audittap/configuration"
 	traefiktls "github.com/containous/traefik/tls"
 	"github.com/ryanuber/go-glob"
 )
@@ -27,7 +28,7 @@ type Backend struct {
 	MaxConn        *MaxConn          `json:"maxConn,omitempty"`
 	HealthCheck    *HealthCheck      `json:"healthCheck,omitempty"`
 	Buffering      *Buffering        `json:"buffering,omitempty"`
-	AuditTap       *AuditSink        `json:"auditTap,omitempty"`
+	AuditTap       *atconf.AuditSink `json:"auditTap,omitempty"`
 }
 
 // MaxConn holds maximum connection configuration
