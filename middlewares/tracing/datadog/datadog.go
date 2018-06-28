@@ -23,8 +23,8 @@ type Config struct {
 // Setup sets up the tracer
 func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error) {
 	tag := strings.SplitN(c.GlobalTag, ":", 2)
-	key, value := tag[0], ""
 
+	value := ""
 	if len(tag) == 2 {
 		value = tag[1]
 	}
@@ -32,7 +32,7 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 	tracer := ddtracer.New(
 		datadog.WithAgentAddr(c.LocalAgentHostPort),
 		datadog.WithServiceName(serviceName),
-		datadog.WithGlobalTag(key, value),
+		datadog.WithGlobalTag(tag[0], value),
 		datadog.WithDebugMode(c.Debug),
 	)
 
