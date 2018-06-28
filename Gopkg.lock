@@ -758,7 +758,6 @@
   version = "v1.3.7"
 
 [[projects]]
-  branch = "master"
   name = "github.com/jjcollinge/servicefabric"
   packages = ["."]
   revision = "8eebe170fa1ba25d3dfb928b3f86a7313b13b9fe"
@@ -1303,20 +1302,21 @@
     "bpf",
     "context",
     "context/ctxhttp",
+    "http/httpguts",
     "http2",
     "http2/hpack",
     "idna",
     "internal/iana",
     "internal/socket",
+    "internal/socks",
     "internal/timeseries",
     "ipv4",
     "ipv6",
-    "lex/httplex",
     "proxy",
     "trace",
     "websocket"
   ]
-  revision = "22ae77b79946ea320088417e4d50825671d82d57"
+  revision = "e514e69ffb8bc3c76a71ae40de0118d794855992"
 
 [[projects]]
   branch = "master"
@@ -1687,6 +1687,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f9bdfe14aca106f6bfc75da6f7282791c12c503b65581797bbb484566858a2f3"
+  inputs-digest = "6090df9fbed29043b8602fafc92694ee7f3783d1c97a2cb080dc44913f928d1e"
   solver-name = "gps-cdcl"
   solver-version = 1
