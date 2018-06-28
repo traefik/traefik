@@ -323,7 +323,6 @@ For more information, check out [the documentation](https://github.com/kubernete
 Lets start by creating a Service and an Ingress that will expose the [Træfik Web UI](https://github.com/containous/traefik#web-ui).
 
 ```yaml
----
 apiVersion: v1
 kind: Service
 metadata:
@@ -350,7 +349,7 @@ spec:
       - path: /
         backend:
           serviceName: traefik-web-ui
-servicePort: web
+          servicePort: web
 ```
 
 [examples/k8s/ui.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/ui.yaml)
