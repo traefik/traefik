@@ -556,9 +556,10 @@ func (s *Server) buildServerEntryPoints() map[string]*serverEntryPoint {
 			onDemandListener: entryPoint.OnDemandListener,
 		}
 
-		serverEntryPoints[entryPointName].certs = &traefiktls.CertificateStore{}
-		serverEntryPoints[entryPointName].certs.StaticCerts = &safe.Safe{}
-		serverEntryPoints[entryPointName].certs.DynamicCerts = &safe.Safe{}
+		serverEntryPoints[entryPointName].certs = &traefiktls.CertificateStore{
+			StaticCerts:  &safe.Safe{},
+			DynamicCerts: &safe.Safe{},
+		}
 
 		if entryPoint.CertificateStore != nil {
 			serverEntryPoints[entryPointName].certs.StaticCerts = entryPoint.CertificateStore.StaticCerts

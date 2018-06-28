@@ -84,18 +84,12 @@ func TestGetBestCertificate(t *testing.T) {
 			dynamicMap := map[string]*tls.Certificate{}
 
 			if test.staticCert != "" {
-				staticCert, _ := tls.LoadX509KeyPair(
-					fmt.Sprintf("../integration/fixtures/https/%s.cert", strings.Replace(test.staticCert, "*", "wildcard", -1)),
-					fmt.Sprintf("../integration/fixtures/https/%s.key", strings.Replace(test.staticCert, "*", "wildcard", -1)),
-				)
-				staticMap[test.staticCert] = &staticCert
+				staticCert, _ := loadTestCert(test.staticCert)
+				staticMap[test.staticCert] = staticCert
 			}
 			if test.dynamicCert != "" {
-				dynamicCert, _ := tls.LoadX509KeyPair(
-					fmt.Sprintf("../integration/fixtures/https/%s.cert", strings.Replace(test.dynamicCert, "*", "wildcard", -1)),
-					fmt.Sprintf("../integration/fixtures/https/%s.key", strings.Replace(test.dynamicCert, "*", "wildcard", -1)),
-				)
-				dynamicMap[test.dynamicCert] = &dynamicCert
+				dynamicCert, _ := loadTestCert(test.dynamicCert)
+				dynamicMap[test.dynamicCert] = dynamicCert
 			}
 			store := CertificateStore{
 				DynamicCerts: safe.New(dynamicMap),
@@ -103,14 +97,23 @@ func TestGetBestCertificate(t *testing.T) {
 			}
 			var expected *tls.Certificate
 			if test.expectedCert != "" {
-				cert, _ := tls.LoadX509KeyPair(
-					fmt.Sprintf("../integration/fixtures/https/%s.cert", strings.Replace(test.expectedCert, "*", "wildcard", -1)),
-					fmt.Sprintf("../integration/fixtures/https/%s.key", strings.Replace(test.expectedCert, "*", "wildcard", -1)),
-				)
-				expected = &cert
+				cert, _ := loadTestCert(test.expectedCert)
+				expected = cert
 			}
 			actual := store.GetBestCertificate(test.domainToCheck)
 			assert.Equal(t, expected, actual)
 		})
 	}
+}
+
+func loadTestCert(certName string) (*tls.Certificate, error) {
+	staticCert, err := tls.LoadX509KeyPair(
+		fmt.Sprintf("../integration/fixtures/https/%s.cert", strings.Replace(certName, "*", "wildcard", -1)),
+		fmt.Sprintf("../integration/fixtures/https/%s.key", strings.Replace(certName, "*", "wildcard", -1)),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &staticCert, nil
 }
