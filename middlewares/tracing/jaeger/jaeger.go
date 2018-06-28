@@ -6,7 +6,6 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/opentracing/opentracing-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
-	jaegerlog "github.com/uber/jaeger-client-go/log"
 	jaegermet "github.com/uber/jaeger-lib/metrics"
 )
 
@@ -35,13 +34,12 @@ func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, err
 		},
 	}
 
-	jLogger := jaegerlog.StdLogger
 	jMetricsFactory := jaegermet.NullFactory
 
 	// Initialize tracer with a logger and a metrics factory
 	closer, err := jcfg.InitGlobalTracer(
 		componentName,
-		jaegercfg.Logger(jLogger),
+		jaegercfg.Logger(&jaegerLogger{}),
 		jaegercfg.Metrics(jMetricsFactory),
 	)
 	if err != nil {
