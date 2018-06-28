@@ -57,18 +57,13 @@ func TestForwardAuthSuccess(t *testing.T) {
 	middleware, err := NewAuthenticator(&types.Auth{
 		Forward: &types.Forward{
 			Address: server.URL,
-			AuthResponseHeaders: map[string]*types.AuthResponseHeader{
-				"user": {
-					Name: "X-Auth-User",
-					As:   "X-Authenticated-User",
-				},
-			},
+			AuthResponseHeaders: []string{"X-Auth-User"},
 		},
 	}, &tracing.Tracing{})
 	assert.NoError(t, err, "there should be no error")
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, "user@example.com", r.Header.Get("X-Authenticated-User"), "they should be equal")
+		assert.Equal(t, "user@example.com", r.Header.Get("X-Auth-User"), "they should be equal")
 		fmt.Fprintln(w, "traefik")
 	})
 	n := negroni.New(middleware)

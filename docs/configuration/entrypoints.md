@@ -60,9 +60,8 @@
           cert = "path/to/foo.cert"
           key = "path/to/foo.key"
           insecureSkipVerify = true
-        [entryPoints.http.auth.forward.authResponseHeaders.user]
-          name = "X-Auth-User"
-          as = "X-Authenticated-User"
+        [entryPoints.http.auth.forward]
+          authResponseHeaders = ["X-Auth-User"]
 
     [entryPoints.http.proxyProtocol]
       insecure = true
