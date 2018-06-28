@@ -29,7 +29,7 @@ An example follows
     headerName = "RequestPath"
     contains = ["/ping/ping"]
   [auditSink.headerMappings]
-    [auditSink.headerMappings.details]
+    [auditSink.headerMappings.detail]
     field1 = "header-1"
     [auditSink.headerMappings.tags]
     field2 = "header-2"    
