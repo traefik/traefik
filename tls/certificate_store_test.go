@@ -8,6 +8,7 @@ import (
 
 	"github.com/containous/traefik/safe"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetBestCertificate(t *testing.T) {
@@ -84,12 +85,14 @@ func TestGetBestCertificate(t *testing.T) {
 			dynamicMap := map[string]*tls.Certificate{}
 
 			if test.staticCert != "" {
-				staticCert, _ := loadTestCert(test.staticCert)
-				staticMap[test.staticCert] = staticCert
+				cert, err := loadTestCert(test.staticCert)
+				require.NoError(t, err)
+				staticMap[test.staticCert] = cert
 			}
 			if test.dynamicCert != "" {
-				dynamicCert, _ := loadTestCert(test.dynamicCert)
-				dynamicMap[test.dynamicCert] = dynamicCert
+				cert, err := loadTestCert(test.dynamicCert)
+				require.NoError(t, err)
+				dynamicMap[test.dynamicCert] = cert
 			}
 			store := CertificateStore{
 				DynamicCerts: safe.New(dynamicMap),
@@ -97,7 +100,8 @@ func TestGetBestCertificate(t *testing.T) {
 			}
 			var expected *tls.Certificate
 			if test.expectedCert != "" {
-				cert, _ := loadTestCert(test.expectedCert)
+				cert, err := loadTestCert(test.expectedCert)
+				require.NoError(t, err)
 				expected = cert
 			}
 			actual := store.GetBestCertificate(test.domainToCheck)
