@@ -758,7 +758,6 @@
   version = "v1.3.7"
 
 [[projects]]
-  branch = "master"
   name = "github.com/jjcollinge/servicefabric"
   packages = ["."]
   revision = "8eebe170fa1ba25d3dfb928b3f86a7313b13b9fe"
@@ -1007,6 +1006,12 @@
   version = "v2.0.1"
 
 [[projects]]
+  name = "github.com/philhofer/fwd"
+  packages = ["."]
+  revision = "bb6d471dc95d4fe11e432687f8b70ff496cf3136"
+  version = "v1.0.0"
+
+[[projects]]
   name = "github.com/pierrec/lz4"
   packages = ["."]
   revision = "08c27939df1bd95e881e2c2367a749964ad1fceb"
@@ -1139,6 +1144,12 @@
     "dns"
   ]
   revision = "37e84520dcf74488f67654f9c775b9752c232dc1"
+
+[[projects]]
+  name = "github.com/tinylib/msgp"
+  packages = ["msgp"]
+  revision = "b2b6a672cf1e5b90748f79b8b81fc8c5cf0571a1"
+  version = "1.0.2"
 
 [[projects]]
   branch = "master"
@@ -1303,20 +1314,21 @@
     "bpf",
     "context",
     "context/ctxhttp",
+    "http/httpguts",
     "http2",
     "http2/hpack",
     "idna",
     "internal/iana",
     "internal/socket",
+    "internal/socks",
     "internal/timeseries",
     "ipv4",
     "ipv6",
-    "lex/httplex",
     "proxy",
     "trace",
     "websocket"
   ]
-  revision = "22ae77b79946ea320088417e4d50825671d82d57"
+  revision = "e514e69ffb8bc3c76a71ae40de0118d794855992"
 
 [[projects]]
   branch = "master"
@@ -1429,6 +1441,18 @@
   ]
   revision = "41344da2231b913fa3d983840a57a6b1b7b631a1"
   version = "v1.12.0"
+
+[[projects]]
+  name = "gopkg.in/DataDog/dd-trace-go.v1"
+  packages = [
+    "ddtrace",
+    "ddtrace/ext",
+    "ddtrace/internal",
+    "ddtrace/opentracer",
+    "ddtrace/tracer"
+  ]
+  revision = "d052956664af54dbcff2712d10c67c76fbfc299f"
+  version = "v1.0.0"
 
 [[projects]]
   name = "gopkg.in/fsnotify.v1"
@@ -1687,6 +1711,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f9bdfe14aca106f6bfc75da6f7282791c12c503b65581797bbb484566858a2f3"
+  inputs-digest = "63fb25f0e549ec7942fda4d11c25e04bdf756dcc44d31e897b103f2270dc42d9"
   solver-name = "gps-cdcl"
   solver-version = 1
