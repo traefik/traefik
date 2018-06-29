@@ -319,17 +319,16 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 	}
 
 	if tlsOption.DefaultCertificate != nil {
-
 		cert, err := tls.LoadX509KeyPair(tlsOption.DefaultCertificate.CertFile.String(), tlsOption.DefaultCertificate.KeyFile.String())
 		if err != nil {
-			return nil, fmt.Errorf("Could not load default certificate: %v", err)
+			return nil, fmt.Errorf("could not load default certificate: %v", err)
 		}
 
 		config.Certificates = append([]tls.Certificate{cert}, config.Certificates...)
-
 	}
 
 	s.serverEntryPoints[entryPointName].certs.DynamicCerts.Set(make(map[string]*tls.Certificate))
+
 	// ensure http2 enabled
 	config.NextProtos = []string{"h2", "http/1.1"}
 
@@ -338,6 +337,7 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 		tlsOption.ClientCA.Files = tlsOption.ClientCAFiles
 		tlsOption.ClientCA.Optional = false
 	}
+
 	if len(tlsOption.ClientCA.Files) > 0 {
 		pool := x509.NewCertPool()
 		for _, caFile := range tlsOption.ClientCA.Files {

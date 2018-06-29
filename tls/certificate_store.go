@@ -2,9 +2,10 @@ package tls
 
 import (
 	"crypto/tls"
-	"github.com/containous/traefik/safe"
 	"sort"
 	"strings"
+
+	"github.com/containous/traefik/safe"
 )
 
 // CertificateStore store for dynamic and static certificates
@@ -47,40 +48,39 @@ func (c CertificateStore) GetBestCertificate(domainToCheck string) *tls.Certific
 	}
 
 	matchedCerts := map[string]*tls.Certificate{}
-	if c.DynamicCerts != nil {
-		if c.DynamicCerts.Get() != nil {
-			for domains, cert := range c.DynamicCerts.Get().(map[string]*tls.Certificate) {
-				for _, certDomain := range strings.Split(domains, ",") {
-					if MatchDomain(domainToCheck, certDomain) {
-						matchedCerts[certDomain] = cert
-					}
+	if c.DynamicCerts != nil && c.DynamicCerts.Get() != nil {
+		for domains, cert := range c.DynamicCerts.Get().(map[string]*tls.Certificate) {
+			for _, certDomain := range strings.Split(domains, ",") {
+				if MatchDomain(domainToCheck, certDomain) {
+					matchedCerts[certDomain] = cert
 				}
 			}
 		}
 	}
-	if c.StaticCerts != nil {
-		if c.StaticCerts.Get() != nil {
-			for domains, cert := range c.StaticCerts.Get().(map[string]*tls.Certificate) {
-				for _, certDomain := range strings.Split(domains, ",") {
-					if MatchDomain(domainToCheck, certDomain) {
-						matchedCerts[certDomain] = cert
-					}
+
+	if c.StaticCerts != nil && c.StaticCerts.Get() != nil {
+		for domains, cert := range c.StaticCerts.Get().(map[string]*tls.Certificate) {
+			for _, certDomain := range strings.Split(domains, ",") {
+				if MatchDomain(domainToCheck, certDomain) {
+					matchedCerts[certDomain] = cert
 				}
 			}
 		}
 	}
+
 	if len(matchedCerts) > 0 {
-		//sort map by keys
+		// sort map by keys
 		keys := make([]string, 0, len(matchedCerts))
 		for k := range matchedCerts {
 			keys = append(keys, k)
 		}
 		sort.Strings(keys)
-		//cache best match
+
+		// cache best match
 		c.CertCache[domainToCheck] = matchedCerts[keys[len(keys)-1]]
 		return c.CertCache[domainToCheck]
-
 	}
+
 	return nil
 }
 
