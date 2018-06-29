@@ -301,9 +301,9 @@ The source of the authentication is a Secret object that contains the credential
 |----------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
 | `ingress.kubernetes.io/auth-type: basic`           | Contains the authentication type. The only permitted type is `basic`.                                                          |
 | `ingress.kubernetes.io/auth-secret: mysecret`      | Name of Secret containing the username and password with access to the paths defined in the Ingress object.                    |
-| `ingress.kubernetes.io/auth-url`                   | Only when `auth-type` == `forward`. [The URL of the authentication server](configuration/entrypoints/#forward-authentication). |
-| `ingress.kubernetes.io/auth-trust-headers` | Only when `auth-type` == `forward`. Boolean, trust `X-Forwarded-*` headers.                                                    |
-| `ingress.kubernetes.io/auth-tls-secret`      | Only when `auth-type` == `forward`. Name of Secret containing the certificate and key for the forward auth.                                          |
+| `ingress.kubernetes.io/auth-url: https://example.com`                   | Only when `auth-type` == `forward`. [The URL of the authentication server](configuration/entrypoints/#forward-authentication). |
+| `ingress.kubernetes.io/auth-trust-headers: false` | Only when `auth-type` == `forward`. Boolean, trust `X-Forwarded-*` headers.                                                    |
+| `ingress.kubernetes.io/auth-tls-secret: secret`      | Only when `auth-type` == `forward`. Name of Secret containing the certificate and key for the forward auth.                                          |
 
 The secret must be created in the same namespace as the Ingress object.
 
