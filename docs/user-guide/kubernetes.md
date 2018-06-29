@@ -332,7 +332,8 @@ spec:
   selector:
     k8s-app: traefik-ingress-lb
   ports:
-  - port: 80
+  - name: web
+    port: 80
     targetPort: 8080
 ---
 apiVersion: extensions/v1beta1
@@ -340,16 +341,15 @@ kind: Ingress
 metadata:
   name: traefik-web-ui
   namespace: kube-system
-  annotations:
-    kubernetes.io/ingress.class: traefik
 spec:
   rules:
   - host: traefik-ui.minikube
     http:
       paths:
-      - backend:
+      - path: /
+        backend:
           serviceName: traefik-web-ui
-          servicePort: 80
+          servicePort: web
 ```
 
 [examples/k8s/ui.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/ui.yaml)
