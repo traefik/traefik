@@ -280,7 +280,7 @@ func TestLoadIngressesGenericForwardAuth(t *testing.T) {
 		frontends(
 			frontend("foo/bar",
 				passHostHeader(),
-				forwardAuth("https://auth.host"),
+				auth(forwardAuth("https://auth.host")),
 				routes(
 					route("/bar", "PathPrefix:/bar"),
 					route("foo", "Host:foo")),
@@ -424,7 +424,11 @@ func TestLoadIngressesGenericForwardAuthWithTLSSecret(t *testing.T) {
 		frontends(
 			frontend("foo/bar",
 				passHostHeader(),
-				forwardAuthWithTLS("https://auth.host", "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----", "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+				auth(
+					forwardAuth("https://auth.host",
+						fwdAuthTLS(
+							"-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
+							"-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"))),
 				routes(
 					route("/bar", "PathPrefix:/bar"),
 					route("foo", "Host:foo")),

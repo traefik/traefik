@@ -221,7 +221,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				}
 
 				if _, exists := templateObjects.Frontends[baseName]; !exists {
-					genericAuthCreds, err := handleGenericAuthConfig(i, k8sClient)
+					auth, err := getAuthConfig(i, k8sClient)
 					if err != nil {
 						log.Errorf("Failed to retrieve auth configuration for ingress %s/%s: %s", i.Namespace, i.Name, err)
 						continue
@@ -245,7 +245,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						Headers:        getHeader(i),
 						Errors:         getErrorPages(i),
 						RateLimit:      getRateLimit(i),
-						Auth:           genericAuthCreds,
+						Auth:           auth,
 					}
 				}
 
@@ -439,155 +439,11 @@ func getRuleForHost(host string) string {
 	return "Host:" + host
 }
 
-func handleGenericAuthConfig(i *extensionsv1beta1.Ingress, k8sClient Client) (*types.Auth, error) {
-	annotationAuthType := getAnnotationName(i.Annotations, annotationKubernetesAuthType)
-	authType, exists := i.Annotations[annotationAuthType]
-	if !exists {
-		return nil, nil
-	}
-
-	switch strings.ToLower(authType) {
-	case "basic":
-		return handleBasicAuthConfig(i, k8sClient)
-	case "digest":
-		return handleDigestAuthConfig()
-	case "forward":
-		return handleForwardAuthConfig(i, k8sClient)
-	}
-	return nil, fmt.Errorf("unsupported auth-type on annotation %s: %s", annotationKubernetesAuthType, authType)
-}
-
-// assumes validation of "annotationKubernetesAuthType" (handled in handleGenericAuthConfig)
-func handleBasicAuthConfig(i *extensionsv1beta1.Ingress, k8sClient Client) (*types.Auth, error) {
-	authSecret := getStringValue(i.Annotations, annotationKubernetesAuthSecret, "")
-	if authSecret == "" {
-		return nil, fmt.Errorf("auth-secret annotation %s must be set", annotationKubernetesAuthSecret)
-	}
-
-	basicAuthCreds, err := loadAuthCredentials(i.Namespace, authSecret, k8sClient)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load auth credentials: %s", err)
-	}
-
-	return &types.Auth{Basic: &types.Basic{Users: basicAuthCreds}}, nil
-}
-
-func loadAuthCredentials(namespace, secretName string, k8sClient Client) ([]string, error) {
-	secret, ok, err := k8sClient.GetSecret(namespace, secretName)
-	switch { // keep order of case conditions
-	case err != nil:
-		return nil, fmt.Errorf("failed to fetch secret %q/%q: %s", namespace, secretName, err)
-	case !ok:
-		return nil, fmt.Errorf("secret %q/%q not found", namespace, secretName)
-	case secret == nil:
-		return nil, fmt.Errorf("data for secret %q/%q must not be nil", namespace, secretName)
-	case len(secret.Data) != 1:
-		return nil, fmt.Errorf("found %d elements for secret %q/%q, must be single element exactly", len(secret.Data), namespace, secretName)
-	default:
-	}
-	var firstSecret []byte
-	for _, v := range secret.Data {
-		firstSecret = v
-		break
-	}
-	creds := make([]string, 0)
-	scanner := bufio.NewScanner(bytes.NewReader(firstSecret))
-	for scanner.Scan() {
-		if cred := scanner.Text(); cred != "" {
-			creds = append(creds, cred)
-		}
-	}
-	if len(creds) == 0 {
-		return nil, fmt.Errorf("secret %q/%q does not contain any credentials", namespace, secretName)
-	}
-
-	return creds, nil
-}
-
-func handleDigestAuthConfig() (*types.Auth, error) {
-	return nil, fmt.Errorf("non-implemented auth-type on annotation %s: %q", annotationKubernetesAuthType, "digest")
-}
-
-func loadAuthTLSSecret(namespace, secretName string, k8sClient Client) (string, string, error) {
-
-	secret, exists, err := k8sClient.GetSecret(namespace, secretName)
-	switch { // keep order of case conditions
-	case err != nil:
-		return "", "", fmt.Errorf("failed to fetch secret %q/%q: %s", namespace, secretName, err)
-	case !exists:
-		return "", "", fmt.Errorf("secret %q/%q does not exist", namespace, secretName)
-	case secret == nil:
-		return "", "", fmt.Errorf("data for secret %q/%q must not be nil", namespace, secretName)
-	case len(secret.Data) != 2:
-		return "", "", fmt.Errorf("found %d elements for secret %q/%q, must be two elements exactly", len(secret.Data), namespace, secretName)
-	default:
-	}
-
-	tlsCrtData, tlsCrtExists := secret.Data["tls.crt"]
-	tlsKeyData, tlsKeyExists := secret.Data["tls.key"]
-
-	var missingEntries []string
-	if !tlsCrtExists {
-		missingEntries = append(missingEntries, "tls.crt")
-	}
-	if !tlsKeyExists {
-		missingEntries = append(missingEntries, "tls.key")
-	}
-	if len(missingEntries) > 0 {
-		return "", "", fmt.Errorf("secret %s/%s is missing the following TLS data entries: %s",
-			namespace, secretName, strings.Join(missingEntries, ", "))
-	}
-
-	cert := string(tlsCrtData[:])
-	key := string(tlsKeyData[:])
-
-	missingEntries = []string{}
-	if cert == "" {
-		missingEntries = append(missingEntries, "tls.crt")
-	}
-	if key == "" {
-		missingEntries = append(missingEntries, "tls.key")
-	}
-	if len(missingEntries) > 0 {
-		return "", "", fmt.Errorf("secret %s/%s contains the following empty TLS data entries: %s",
-			namespace, secretName, strings.Join(missingEntries, ", "))
-	}
-
-	return cert, key, nil
-}
-
-func handleForwardAuthConfig(i *extensionsv1beta1.Ingress, k8sClient Client) (*types.Auth, error) {
-	forwardAuth := &types.Forward{}
-
-	authURL := getStringValue(i.Annotations, annotationKubernetesAuthForwardURL, "")
-	if authURL == "" {
-		return nil, fmt.Errorf("forward authentication requires a url")
-	}
-
-	authSecretName := getStringValue(i.Annotations, annotationKubernetesAuthForwardSecret, "")
-	if authSecretName != "" {
-		authSecretCert, authSecretKey, err := loadAuthTLSSecret(i.Namespace, authSecretName, k8sClient)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load auth secret: %s", err)
-		}
-
-		forwardAuth.TLS = &types.ClientTLS{
-			Cert: authSecretCert,
-			Key:  authSecretKey,
-		}
-	}
-
-	forwardAuth.Address = authURL
-	forwardAuth.TrustForwardHeader = getBoolValue(i.Annotations, annotationKubernetesAuthForwardTrustHeaders, false)
-
-	return &types.Auth{Forward: forwardAuth}, nil
-}
-
 func getTLS(ingress *extensionsv1beta1.Ingress, k8sClient Client) ([]*tls.Configuration, error) {
 	var tlsConfigs []*tls.Configuration
 
 	for _, t := range ingress.Spec.TLS {
-		tlsSecret, exists, err := k8sClient.GetSecret(ingress.Namespace, t.SecretName)
+		secret, exists, err := k8sClient.GetSecret(ingress.Namespace, t.SecretName)
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch secret %s/%s: %v", ingress.Namespace, t.SecretName, err)
 		}
@@ -595,19 +451,9 @@ func getTLS(ingress *extensionsv1beta1.Ingress, k8sClient Client) ([]*tls.Config
 			return nil, fmt.Errorf("secret %s/%s does not exist", ingress.Namespace, t.SecretName)
 		}
 
-		tlsCrtData, tlsCrtExists := tlsSecret.Data["tls.crt"]
-		tlsKeyData, tlsKeyExists := tlsSecret.Data["tls.key"]
-
-		var missingEntries []string
-		if !tlsCrtExists {
-			missingEntries = append(missingEntries, "tls.crt")
-		}
-		if !tlsKeyExists {
-			missingEntries = append(missingEntries, "tls.key")
-		}
-		if len(missingEntries) > 0 {
-			return nil, fmt.Errorf("secret %s/%s is missing the following TLS data entries: %s",
-				ingress.Namespace, t.SecretName, strings.Join(missingEntries, ", "))
+		cert, key, err := getCertificateBlocks(secret, ingress.Namespace, t.SecretName)
+		if err != nil {
+			return nil, err
 		}
 
 		entryPoints := getSliceStringValue(ingress.Annotations, annotationKubernetesFrontendEntryPoints)
@@ -615,8 +461,8 @@ func getTLS(ingress *extensionsv1beta1.Ingress, k8sClient Client) ([]*tls.Config
 		tlsConfig := &tls.Configuration{
 			EntryPoints: entryPoints,
 			Certificate: &tls.Certificate{
-				CertFile: tls.FileOrContent(tlsCrtData),
-				KeyFile:  tls.FileOrContent(tlsKeyData),
+				CertFile: tls.FileOrContent(cert),
+				KeyFile:  tls.FileOrContent(key),
 			},
 		}
 
@@ -624,6 +470,42 @@ func getTLS(ingress *extensionsv1beta1.Ingress, k8sClient Client) ([]*tls.Config
 	}
 
 	return tlsConfigs, nil
+}
+
+func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (string, string, error) {
+	var missingEntries []string
+
+	tlsCrtData, tlsCrtExists := secret.Data["tls.crt"]
+	if !tlsCrtExists {
+		missingEntries = append(missingEntries, "tls.crt")
+	}
+
+	tlsKeyData, tlsKeyExists := secret.Data["tls.key"]
+	if !tlsKeyExists {
+		missingEntries = append(missingEntries, "tls.key")
+	}
+
+	if len(missingEntries) > 0 {
+		return "", "", fmt.Errorf("secret %s/%s is missing the following TLS data entries: %s",
+			namespace, secretName, strings.Join(missingEntries, ", "))
+	}
+
+	cert := string(tlsCrtData[:])
+	if cert == "" {
+		missingEntries = append(missingEntries, "tls.crt")
+	}
+
+	key := string(tlsKeyData[:])
+	if key == "" {
+		missingEntries = append(missingEntries, "tls.key")
+	}
+
+	if len(missingEntries) > 0 {
+		return "", "", fmt.Errorf("secret %s/%s contains the following empty TLS data entries: %s",
+			namespace, secretName, strings.Join(missingEntries, ", "))
+	}
+
+	return cert, key, nil
 }
 
 // endpointPortNumber returns the port to be used for this endpoint. It is zero
@@ -660,6 +542,123 @@ func (p *Provider) shouldProcessIngress(annotationIngressClass string) bool {
 		return len(annotationIngressClass) == 0 || annotationIngressClass == traefikDefaultIngressClass
 	}
 	return annotationIngressClass == p.IngressClass
+}
+
+func getAuthConfig(i *extensionsv1beta1.Ingress, k8sClient Client) (*types.Auth, error) {
+	annotationAuthType := getAnnotationName(i.Annotations, annotationKubernetesAuthType)
+	authType, exists := i.Annotations[annotationAuthType]
+	if !exists {
+		return nil, nil
+	}
+
+	switch strings.ToLower(authType) {
+	case "basic":
+		return getBasicAuthConfig(i, k8sClient)
+	case "digest":
+		return getDigestAuthConfig()
+	case "forward":
+		return getForwardAuthConfig(i, k8sClient)
+	}
+	return nil, fmt.Errorf("unsupported auth-type on annotation %s: %s", annotationKubernetesAuthType, authType)
+}
+
+func getBasicAuthConfig(i *extensionsv1beta1.Ingress, k8sClient Client) (*types.Auth, error) {
+	authSecret := getStringValue(i.Annotations, annotationKubernetesAuthSecret, "")
+	if authSecret == "" {
+		return nil, fmt.Errorf("auth-secret annotation %s must be set", annotationKubernetesAuthSecret)
+	}
+
+	auth, err := loadAuthCredentials(i.Namespace, authSecret, k8sClient)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load auth credentials: %s", err)
+	}
+
+	return &types.Auth{Basic: &types.Basic{Users: auth}}, nil
+}
+
+func loadAuthCredentials(namespace, secretName string, k8sClient Client) ([]string, error) {
+	secret, ok, err := k8sClient.GetSecret(namespace, secretName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch secret %q/%q: %s", namespace, secretName, err)
+	}
+	if !ok {
+		return nil, fmt.Errorf("secret %q/%q not found", namespace, secretName)
+	}
+	if secret == nil {
+		return nil, fmt.Errorf("data for secret %q/%q must not be nil", namespace, secretName)
+	}
+	if len(secret.Data) != 1 {
+		return nil, fmt.Errorf("found %d elements for secret %q/%q, must be single element exactly", len(secret.Data), namespace, secretName)
+	}
+
+	var firstSecret []byte
+	for _, v := range secret.Data {
+		firstSecret = v
+		break
+	}
+
+	var credentials []string
+	scanner := bufio.NewScanner(bytes.NewReader(firstSecret))
+	for scanner.Scan() {
+		if cred := scanner.Text(); len(cred) > 0 {
+			credentials = append(credentials, cred)
+		}
+	}
+
+	if len(credentials) == 0 {
+		return nil, fmt.Errorf("secret %q/%q does not contain any credentials", namespace, secretName)
+	}
+
+	return credentials, nil
+}
+
+func getDigestAuthConfig() (*types.Auth, error) {
+	return nil, fmt.Errorf("non-implemented auth-type on annotation %s: %q", annotationKubernetesAuthType, "digest")
+}
+
+func getForwardAuthConfig(i *extensionsv1beta1.Ingress, k8sClient Client) (*types.Auth, error) {
+	authURL := getStringValue(i.Annotations, annotationKubernetesAuthForwardURL, "")
+	if len(authURL) == 0 {
+		return nil, fmt.Errorf("forward authentication requires a url")
+	}
+
+	forwardAuth := &types.Forward{
+		Address:            authURL,
+		TrustForwardHeader: getBoolValue(i.Annotations, annotationKubernetesAuthForwardTrustHeaders, false),
+	}
+
+	authSecretName := getStringValue(i.Annotations, annotationKubernetesAuthForwardSecret, "")
+	if len(authSecretName) > 0 {
+		authSecretCert, authSecretKey, err := loadAuthTLSSecret(i.Namespace, authSecretName, k8sClient)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load auth secret: %s", err)
+		}
+
+		forwardAuth.TLS = &types.ClientTLS{
+			Cert: authSecretCert,
+			Key:  authSecretKey,
+		}
+	}
+
+	return &types.Auth{Forward: forwardAuth}, nil
+}
+
+func loadAuthTLSSecret(namespace, secretName string, k8sClient Client) (string, string, error) {
+	secret, exists, err := k8sClient.GetSecret(namespace, secretName)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to fetch secret %q/%q: %s", namespace, secretName, err)
+	}
+	if !exists {
+		return "", "", fmt.Errorf("secret %q/%q does not exist", namespace, secretName)
+	}
+	if secret == nil {
+		return "", "", fmt.Errorf("data for secret %q/%q must not be nil", namespace, secretName)
+	}
+	if len(secret.Data) != 2 {
+		return "", "", fmt.Errorf("found %d elements for secret %q/%q, must be two elements exactly", len(secret.Data), namespace, secretName)
+	}
+
+	return getCertificateBlocks(secret, namespace, secretName)
 }
 
 func getFrontendRedirect(i *extensionsv1beta1.Ingress) *types.Redirect {

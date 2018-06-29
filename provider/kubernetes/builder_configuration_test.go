@@ -214,22 +214,33 @@ func basicAuthDeprecated(auth ...string) func(*types.Frontend) {
 	}
 }
 
-func basicAuth(auth ...string) func(*types.Frontend) {
+func auth(opt func(*types.Auth)) func(*types.Frontend) {
 	return func(f *types.Frontend) {
-		f.Auth = &types.Auth{Basic: &types.Basic{Users: auth}}
+		auth := &types.Auth{}
+		opt(auth)
+		f.Auth = auth
 	}
 }
 
-func forwardAuth(forwardURL string) func(*types.Frontend) {
-	return func(f *types.Frontend) {
-		f.Auth = &types.Auth{Forward: &types.Forward{Address: forwardURL}}
+func basicAuth(users ...string) func(*types.Auth) {
+	return func(a *types.Auth) {
+		a.Basic = &types.Basic{Users: users}
 	}
 }
 
-func forwardAuthWithTLS(forwardURL, cert, key string) func(*types.Frontend) {
-	return func(f *types.Frontend) {
-		f.Auth = &types.Auth{Forward: &types.Forward{Address: forwardURL}}
-		f.Auth.Forward.TLS = &types.ClientTLS{Cert: cert, Key: key}
+func forwardAuth(forwardURL string, opts ...func(*types.Forward)) func(*types.Auth) {
+	return func(a *types.Auth) {
+		fwd := &types.Forward{Address: forwardURL}
+		for _, opt := range opts {
+			opt(fwd)
+		}
+		a.Forward = fwd
+	}
+}
+
+func fwdAuthTLS(cert, key string) func(*types.Forward) {
+	return func(f *types.Forward) {
+		f.TLS = &types.ClientTLS{Cert: cert, Key: key}
 	}
 }
 
