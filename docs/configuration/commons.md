@@ -144,6 +144,7 @@ Supported Providers:
 - Consul K/V
 - BoltDB
 - Zookeeper
+- ECS
 - Etcd
 - Consul Catalog
 - Rancher
