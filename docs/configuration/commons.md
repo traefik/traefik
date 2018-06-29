@@ -442,8 +442,9 @@ resolvDepth = 5
 
 ```
 
-- To allow serving secure https request and generate the SSL using ACME while `cnameFlattening` is set to `true`. The `acme` configuration 
-for `HTTP-01` challenge and `onDemand` is mandatory. Refer to [ACME configuration](/configuration/acme) for more information.
+- To allow serving secure https request and generate the SSL using ACME while `cnameFlattening` is active. 
+The `acme` configuration for `HTTP-01` challenge and `onDemand` is mandatory. 
+Refer to [ACME configuration](/configuration/acme) for more information.
 
 ## Override Default Configuration Template
 

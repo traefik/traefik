@@ -26,7 +26,7 @@ type CNAMEResolv struct {
 	Record string
 }
 
-// CNAMEFlatten check if CNAME records is exists, flatten if possible
+// CNAMEFlatten check if CNAME records exists, flatten if possible
 func (hr *HostResolver) CNAMEFlatten(host string) (string, string) {
 	var result []string
 	result = append(result, host)
@@ -40,7 +40,7 @@ func (hr *HostResolver) CNAMEFlatten(host string) (string, string) {
 	} else {
 		var cacheDuration = 0 * time.Second
 		for i := 0; i < hr.ResolvDepth; i++ {
-			r := hr.CNAMEResolve(request)
+			r := hr.cnameResolve(request)
 			if r != nil {
 				result = append(result, r.Record)
 				if i == 0 {
@@ -56,9 +56,13 @@ func (hr *HostResolver) CNAMEFlatten(host string) (string, string) {
 	return result[0], result[len(result)-1]
 }
 
-// CNAMEResolve resolve CNAME if exists, and return with the highest TTL
-func (hr *HostResolver) CNAMEResolve(host string) *CNAMEResolv {
-	config, _ := dns.ClientConfigFromFile(hr.ResolvConfig)
+// CNAMEResolve resolves CNAME if exists, and return with the highest TTL
+func (hr *HostResolver) cnameResolve(host string) *CNAMEResolv {
+	config, err := dns.ClientConfigFromFile(hr.ResolvConfig)
+	if err != nil {
+		log.Errorf("Invalid resolver configuration file")
+		return nil
+	}
 	c := dns.Client{Timeout: 30 * time.Second}
 	c.Timeout = 30 * time.Second
 	m := &dns.Msg{}
@@ -68,6 +72,7 @@ func (hr *HostResolver) CNAMEResolve(host string) *CNAMEResolv {
 		r, _, err := c.Exchange(m, net.JoinHostPort(config.Servers[i], config.Port))
 		if err != nil {
 			log.Errorf("Failed to resolve host %s with server %s", host, config.Servers[i])
+			continue
 		}
 		if r != nil && len(r.Answer) > 0 {
 			temp := strings.Fields(r.Answer[0].String())
