@@ -255,8 +255,8 @@
 [[projects]]
   name = "github.com/containous/staert"
   packages = ["."]
-  revision = "cc00c303ccbd2491ddc1dccc9eb7ccadd807557e"
-  version = "v3.1.0"
+  revision = "66717a0e0ca950c4b6dc8c87b46da0b8495c6e41"
+  version = "v3.1.1"
 
 [[projects]]
   name = "github.com/containous/traefik-extra-service-fabric"
@@ -1226,7 +1226,7 @@
     "roundrobin",
     "utils"
   ]
-  revision = "d5b73186eed4aa34b52748699ad19e90f61d4059"
+  revision = "c2414f4542f085363f490048da2fbec5e4537eb6"
 
 [[projects]]
   name = "github.com/vulcand/predicate"
@@ -1711,6 +1711,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "63fb25f0e549ec7942fda4d11c25e04bdf756dcc44d31e897b103f2270dc42d9"
+  inputs-digest = "593c88b41d6384d68bd610a8c80c39017e77584f4e3454b2ca5c26ee904bf1da"
   solver-name = "gps-cdcl"
   solver-version = 1

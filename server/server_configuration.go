@@ -16,6 +16,7 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"
+	"github.com/containous/traefik/middlewares/pipelining"
 	"github.com/containous/traefik/rules"
 	"github.com/containous/traefik/safe"
 	traefiktls "github.com/containous/traefik/tls"
@@ -253,6 +254,8 @@ func (s *Server) buildForwarder(entryPointName string, entryPoint *configuration
 			tm.ServeHTTP(w, r, next.ServeHTTP)
 		})
 	}
+
+	fwd = pipelining.NewPipelining(fwd)
 
 	return fwd, nil
 }
