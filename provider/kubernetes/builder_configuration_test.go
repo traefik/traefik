@@ -226,6 +226,13 @@ func forwardAuth(forwardURL string) func(*types.Frontend) {
 	}
 }
 
+func forwardAuthWithTLS(forwardURL, cert, key string) func(*types.Frontend) {
+	return func(f *types.Frontend) {
+		f.Auth = &types.Auth{Forward: &types.Forward{Address: forwardURL}}
+		f.Auth.Forward.TLS = &types.ClientTLS{Cert: cert, Key: key}
+	}
+}
+
 func whiteList(useXFF bool, ranges ...string) func(*types.Frontend) {
 	return func(f *types.Frontend) {
 		if f.WhiteList == nil {
