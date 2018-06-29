@@ -297,14 +297,15 @@ The following security annotations are applicable on the Ingress object:
 Additional authentication annotations can be added to the Ingress object.
 The source of the authentication is a Secret object that contains the credentials.
 
-| Annotation                                    | Description                                                                                                 |
-|-----------------------------------------------|-------------------------------------------------------------------------------------------------------------|
-| `ingress.kubernetes.io/auth-type: basic`      | Contains the authentication type. The only permitted type is `basic`.                                       |
-| `ingress.kubernetes.io/auth-secret: mysecret` | Name of Secret containing the username and password with access to the paths defined in the Ingress object. |
-| `ingress.kubernetes.io/auth-forward-url` | Only when `auth-type` == `forward` (The URL of the authentication server](configuration/entrypoints/#forward-authentication) |
-| `ingress.kubernetes.io/auth-forward-trust-headers` | Only when `auth-type` == `forward` Boolean, trust X-Forwarded-* headers |
-| `ingress.kubernetes.io/auth-forward-tls-cert` | Only when `auth-type` == `forward` TLS certificate file used by forward auth server|
-| `ingress.kubernetes.io/auth-forward-tls-key` | Only when `auth-type` == `forward` TLS key used by forward auth server |
+| Annotation                                         | Description                                                                                                                    |
+|----------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| `ingress.kubernetes.io/auth-type: basic`           | Contains the authentication type. The only permitted type is `basic`.                                                          |
+| `ingress.kubernetes.io/auth-secret: mysecret`      | Name of Secret containing the username and password with access to the paths defined in the Ingress object.                    |
+| `ingress.kubernetes.io/auth-url`                   | Only when `auth-type` == `forward`. [The URL of the authentication server](configuration/entrypoints/#forward-authentication). |
+| `ingress.kubernetes.io/auth-forward-trust-headers` | Only when `auth-type` == `forward`. Boolean, trust `X-Forwarded-*` headers.                                                    |
+| `ingress.kubernetes.io/auth-forward-tls-cert`      | Only when `auth-type` == `forward`. TLS certificate file used by forward auth server.                                          |
+| `ingress.kubernetes.io/auth-forward-tls-key`       | Only when `auth-type` == `forward`. TLS key used by forward auth server.                                                       |
+
 The secret must be created in the same namespace as the Ingress object.
 
 The following limitations hold for basic auth:

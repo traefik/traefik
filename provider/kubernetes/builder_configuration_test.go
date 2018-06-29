@@ -208,20 +208,19 @@ func entryPoints(eps ...string) func(*types.Frontend) {
 	}
 }
 
-//Schedule for deprecation?
+func basicAuthDeprecated(auth ...string) func(*types.Frontend) {
+	return func(f *types.Frontend) {
+		f.Auth = &types.Auth{Basic: &types.Basic{Users: auth}}
+	}
+}
+
 func basicAuth(auth ...string) func(*types.Frontend) {
 	return func(f *types.Frontend) {
 		f.Auth = &types.Auth{Basic: &types.Basic{Users: auth}}
 	}
 }
 
-func genericBasicAuth(auth ...string) func(*types.Frontend) {
-	return func(f *types.Frontend) {
-		f.Auth = &types.Auth{Basic: &types.Basic{Users: auth}}
-	}
-}
-
-func genericForwardAuth(forwardURL string) func(*types.Frontend) {
+func forwardAuth(forwardURL string) func(*types.Frontend) {
 	return func(f *types.Frontend) {
 		f.Auth = &types.Auth{Forward: &types.Forward{Address: forwardURL}}
 	}

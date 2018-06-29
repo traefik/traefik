@@ -225,8 +225,8 @@ func TestLoadIngressesGenericAuth(t *testing.T) {
 	ingresses := []*extensionsv1beta1.Ingress{
 		buildIngress(
 			iNamespace("testing"),
-			iAnnotation("ingress.kubernetes.io/auth-type", "forward"),
-			iAnnotation("ingress.kubernetes.io/auth-forward-url", "https://auth.host"),
+			iAnnotation(annotationKubernetesAuthType, "forward"),
+			iAnnotation(annotationKubernetesAuthForwardURL, "https://auth.host"),
 			iRules(
 				iRule(iHost("foo"),
 					iPaths(
@@ -280,7 +280,7 @@ func TestLoadIngressesGenericAuth(t *testing.T) {
 		frontends(
 			frontend("foo/bar",
 				passHostHeader(),
-				genericForwardAuth("https://auth.host"),
+				forwardAuth("https://auth.host"),
 				routes(
 					route("/bar", "PathPrefix:/bar"),
 					route("foo", "Host:foo")),
@@ -1101,7 +1101,7 @@ rateset:
 			),
 			frontend("basic/auth",
 				passHostHeader(),
-				basicAuth("myUser:myEncodedPW"),
+				basicAuthDeprecated("myUser:myEncodedPW"),
 				routes(
 					route("/auth", "PathPrefix:/auth"),
 					route("basic", "Host:basic")),

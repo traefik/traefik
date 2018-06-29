@@ -450,18 +450,18 @@ func handleGenericAuthConfig(i *extensionsv1beta1.Ingress, k8sClient Client) (*t
 	case "basic":
 		return handleBasicAuthConfig(i, k8sClient)
 	case "digest":
-		return handleDigestAuthConfig(i, k8sClient)
+		return handleDigestAuthConfig()
 	case "forward":
-		return handleForwardAuthConfig(i, k8sClient)
+		return handleForwardAuthConfig(i)
 	}
-	return nil, fmt.Errorf("unsupported auth-type on annotation ingress.kubernetes.io/auth-type: %s", authType)
+	return nil, fmt.Errorf("unsupported auth-type on annotation %s: %s", annotationKubernetesAuthType, authType)
 }
 
 // assumes validation of "annotationKubernetesAuthType" (handled in handleGenericAuthConfig)
 func handleBasicAuthConfig(i *extensionsv1beta1.Ingress, k8sClient Client) (*types.Auth, error) {
 	authSecret := getStringValue(i.Annotations, annotationKubernetesAuthSecret, "")
 	if authSecret == "" {
-		return nil, errors.New("auth-secret annotation ingress.kubernetes.io/auth-secret must be set")
+		return nil, fmt.Errorf("auth-secret annotation %s must be set", annotationKubernetesAuthSecret)
 	}
 
 	basicAuthCreds, err := loadAuthCredentials(i.Namespace, authSecret, k8sClient)
@@ -504,32 +504,35 @@ func loadAuthCredentials(namespace, secretName string, k8sClient Client) ([]stri
 	return creds, nil
 }
 
-func handleDigestAuthConfig(i *extensionsv1beta1.Ingress, k8sClient Client) (*types.Auth, error) {
-	return nil, fmt.Errorf("non-implemented auth-type on annotation ingress.kubernetes.io/auth-type: %q", "digest")
+func handleDigestAuthConfig() (*types.Auth, error) {
+	return nil, fmt.Errorf("non-implemented auth-type on annotation %s: %q", annotationKubernetesAuthType, "digest")
 }
 
-func handleForwardAuthConfig(i *extensionsv1beta1.Ingress, k8sClient Client) (*types.Auth, error) {
-	ForwardAuth := &types.Forward{}
+func handleForwardAuthConfig(i *extensionsv1beta1.Ingress) (*types.Auth, error) {
+	forwardAuth := &types.Forward{}
 
-	ForwarURL := getStringValue(i.Annotations, annotationKubernetesForwardAuthURL, "")
-	if ForwarURL == "" {
-		return nil, fmt.Errorf("unsupported value for forward authentication ingress.kubernetes.io/auth-forward-url")
+	authURL := getStringValue(i.Annotations, annotationKubernetesAuthForwardURL, "")
+	if authURL == "" {
+		return nil, fmt.Errorf("unsupported value for forward authentication %s", annotationKubernetesAuthForwardURL)
 	}
 
-	ForwarTLSCert := getStringValue(i.Annotations, annotationKubernetesForwardAuthTLSCert, "")
-	ForwarTLSKey := getStringValue(i.Annotations, annotationKubernetesForwardAuthTLSKey, "")
-	if (ForwarTLSKey == "" && ForwarTLSCert != "") || (ForwarTLSKey != "" && ForwarTLSCert == "") {
-		return nil, fmt.Errorf("both ingress.kubernetes.io/auth-forward-tls-cert & ingress.kubernetes.io/auth-forward-tls-key must be set or not set")
-	} else if ForwarTLSKey != "" && ForwarTLSCert != "" {
-		ForwardAuth.TLS = &types.ClientTLS{}
-		ForwardAuth.TLS.Cert = ForwarTLSCert
-		ForwardAuth.TLS.Key = ForwarTLSKey
+	tlsCert := getStringValue(i.Annotations, annotationKubernetesForwardAuthTLSCert, "")
+	tlsKey := getStringValue(i.Annotations, annotationKubernetesForwardAuthTLSKey, "")
+	if (tlsKey == "" && tlsCert != "") || (tlsKey != "" && tlsCert == "") {
+		return nil, fmt.Errorf("both %s & %s must be set or not set", annotationKubernetesForwardAuthTLSCert, annotationKubernetesForwardAuthTLSKey)
 	}
 
-	ForwardAuth.Address = ForwarURL
-	ForwardAuth.TrustForwardHeader = getBoolValue(i.Annotations, annotationKubernetesForwardAuthTrustHeaders, false)
+	if tlsKey != "" && tlsCert != "" {
+		forwardAuth.TLS = &types.ClientTLS{
+			Cert: tlsCert,
+			Key:  tlsKey,
+		}
+	}
 
-	return &types.Auth{Forward: ForwardAuth}, nil
+	forwardAuth.Address = authURL
+	forwardAuth.TrustForwardHeader = getBoolValue(i.Annotations, annotationKubernetesAuthForwardTrustHeaders, false)
+
+	return &types.Auth{Forward: forwardAuth}, nil
 }
 
 func getTLS(ingress *extensionsv1beta1.Ingress, k8sClient Client) ([]*tls.Configuration, error) {

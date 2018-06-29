@@ -9,8 +9,8 @@ const (
 	annotationKubernetesAuthRealm                 = "ingress.kubernetes.io/auth-realm"
 	annotationKubernetesAuthType                  = "ingress.kubernetes.io/auth-type"
 	annotationKubernetesAuthSecret                = "ingress.kubernetes.io/auth-secret"
-	annotationKubernetesForwardAuthURL            = "ingress.kubernetes.io/auth-forward-url"
-	annotationKubernetesForwardAuthTrustHeaders   = "ingress.kubernetes.io/auth-forward-trust-headers"
+	annotationKubernetesAuthForwardURL            = "ingress.kubernetes.io/auth-forward-url"
+	annotationKubernetesAuthForwardTrustHeaders   = "ingress.kubernetes.io/auth-forward-trust-headers"
 	annotationKubernetesForwardAuthTLSCert        = "ingress.kubernetes.io/auth-forward-tls-cert"
 	annotationKubernetesForwardAuthTLSKey         = "ingress.kubernetes.io/auth-forward-tls-key"
 	annotationKubernetesRewriteTarget             = "ingress.kubernetes.io/rewrite-target"
@@ -75,10 +75,6 @@ var compatibilityMapping = map[string]string{
 	annotationKubernetesRedirectEntryPoint:       "traefik.frontend.redirect.entrypoint",
 	annotationKubernetesRedirectRegex:            "traefik.frontend.redirect.regex",
 	annotationKubernetesRedirectReplacement:      "traefik.frontend.redirect.replacement",
-	annotationKubernetesForwardAuthURL:           "traefik.frontend.auth.forward.address",
-	annotationKubernetesForwardAuthTrustHeaders:  "traefik.frontend.auth.forward.trustheaders",
-	annotationKubernetesForwardAuthTLSCert:       "traefik.frontend.auth.forward.tls.cert",
-	annotationKubernetesForwardAuthTLSKey:        "traefik.frontend.auth.forward.tls.key",
 }
 
 func getAnnotationName(annotations map[string]string, name string) string {
