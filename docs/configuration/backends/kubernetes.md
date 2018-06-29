@@ -220,7 +220,7 @@ service_backend3: 75 # Same as 75%, the percentage sign is optional
 ```
 
 A single service backend definition may be omitted; in this case, Traefik auto-completes that service backend to 100% automatically.
-Convienently, users need not bother to compute the percentage remainder for a main service backend.
+Conveniently, users need not bother to compute the percentage remainder for a main service backend.
 For instance, in the example above `service_backend3` does not need to be specified to be assigned 75%.
 
 !!! note
