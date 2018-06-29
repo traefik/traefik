@@ -123,7 +123,7 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 	}
 
 	if len(a.Storage) == 0 {
-		return errors.New("Empty Store, please provide a key for certs storage")
+		return errors.New("empty Store, please provide a key for certs storage")
 	}
 
 	a.checkOnDemandDomain = checkOnDemandDomain
