@@ -309,7 +309,7 @@ The source of the authentication is a Secret object that contains the credential
 
 The secret must be created in the same namespace as the Ingress object.
 
-The following limitations hold for basic auth:
+The following limitations hold for basic/digest auth:
 
 - The realm is not configurable; the only supported (and default) value is `traefik`.
 - The Secret must contain a single file only.

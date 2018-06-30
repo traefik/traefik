@@ -53,7 +53,6 @@
         usersFile = "/path/to/.htdigest"
       [entryPoints.http.auth.forward]
         address = "https://authserver.com/auth"
-        trustForwardHeader = true
         [entryPoints.http.auth.forward.tls]
           ca =  [ "path/to/local.crt"]
           caOptional = true
@@ -273,6 +272,18 @@ Users can be specified directly in the TOML file, or indirectly by referencing a
   usersFile = "/path/to/.htpasswd"
 ```
 
+Optionally, you can pass authenticated user to application via headers
+
+```toml
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+  [entryPoints.http.auth]
+    headerField = "X-WebAuth-User" # <--
+    [entryPoints.http.auth.basic]
+    users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
+```
+
 ### Digest Authentication
 
 You can use `htdigest` to generate them.
@@ -288,6 +299,18 @@ Users can be specified directly in the TOML file, or indirectly by referencing a
   [entryPoints.http.auth.digest]
   users = ["test:traefik:a2688e031edb4be6a3797f3882655c05", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
   usersFile = "/path/to/.htdigest"
+```
+
+Optionally, you can pass authenticated user to application via headers
+
+```toml
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+  [entryPoints.http.auth]
+    headerField = "X-WebAuth-User" # <--
+    [entryPoints.http.auth.digest]
+    users = ["test:traefik:a2688e031edb4be6a3797f3882655c05", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
 ```
 
 ### Forward Authentication
@@ -313,17 +336,22 @@ Otherwise, the response from the authentication server is returned.
     #
     trustForwardHeader = true
 
-    # Copy headers from the authentication server to the request
-    [entryPoints.http.auth.forward]
-    authResponseHeaders = ["X-Auth-User", "X-Secret"]
+      # Copy headers from the authentication server to the request.
+      #
+      # Optional
+      #
+      [entryPoints.http.auth.forward]
+      authResponseHeaders = ["X-Auth-User", "X-Secret"]
 
-    # Enable forward auth TLS connection.
-    #
-    # Optional
-    #
-    [entryPoints.http.auth.forward.tls]
-    cert = "authserver.crt"
-    key = "authserver.key"
+      # Enable forward auth TLS connection.
+      #
+      # Optional
+      #
+      [entryPoints.http.auth.forward.tls]
+      ca =  [ "path/to/local.crt"]
+      caOptional = true
+      cert = "path/to/foo.cert"
+      key = "path/to/foo.key"
 ```
 
 ## Specify Minimum TLS Version
