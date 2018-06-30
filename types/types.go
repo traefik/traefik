@@ -184,7 +184,7 @@ type Frontend struct {
 	PassHostHeader       bool                  `json:"passHostHeader,omitempty"`
 	PassTLSCert          bool                  `json:"passTLSCert,omitempty"`
 	Priority             int                   `json:"priority"`
-	BasicAuth            []string              `json:"basicAuth"`
+	BasicAuth            []string              `json:"basicAuth"`                      // Deprecated
 	WhitelistSourceRange []string              `json:"whitelistSourceRange,omitempty"` // Deprecated
 	WhiteList            *WhiteList            `json:"whiteList,omitempty"`
 	Headers              *Headers              `json:"headers,omitempty"`

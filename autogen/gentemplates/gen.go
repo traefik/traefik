@@ -1104,24 +1104,35 @@ var _templatesKubernetesTmpl = []byte(`[backends]
       {{end}}]
 
     {{if $frontend.Auth }}
-    [frontends."{{ $frontendName }}".Auth]
+    [frontends."{{ $frontendName }}".auth]
+      headerField = "X-WebAuth-User"
+
+      {{if $frontend.Auth.Basic }}
+      [frontends."{{ $frontendName }}".auth.basic]
+        users = [{{range $frontend.Auth.Basic.Users }}
+          "{{.}}",
+          {{end}}]
+      {{end}}
+
+      {{if $frontend.Auth.Digest }}
+      [frontends."{{ $frontendName }}".auth.digest]
+        users = [{{range $frontend.Auth.Digest.Users }}
+          "{{.}}",
+          {{end}}]
+      {{end}}
+
       {{if $frontend.Auth.Forward }}
-        [frontends."{{ $frontendName }}".Auth.Forward]
+        [frontends."{{ $frontendName }}".auth.forward]
           address = "{{ $frontend.Auth.Forward.Address }}"
           trustForwardHeader = {{ $frontend.Auth.Forward.TrustForwardHeader }}
           {{if $frontend.Auth.Forward.TLS }}
-          [frontends."{{ $frontendName }}".Auth.Forward.TLS]
+          [frontends."{{ $frontendName }}".auth.forward.tls]
             cert = "{{ $frontend.Auth.Forward.TLS.Cert }}"
             key = "{{ $frontend.Auth.Forward.TLS.Key }}"
+            insecureSkipVerify = {{ $frontend.Auth.Forward.TLS.InsecureSkipVerify }}
           {{end}}
       {{end}}
 
-      {{if $frontend.Auth.Basic }}
-      [frontends."{{ $frontendName }}".Auth.Basic]
-         users = [{{range $frontend.Auth.Basic.Users }}
-           "{{.}}",
-         {{end}}]
-      {{end}}
     {{end}}
 
     {{if $frontend.WhiteList }}

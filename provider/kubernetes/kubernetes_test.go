@@ -221,7 +221,7 @@ func TestLoadIngresses(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-func TestLoadIngressesGenericForwardAuth(t *testing.T) {
+func TestLoadIngressesForwardAuth(t *testing.T) {
 	ingresses := []*extensionsv1beta1.Ingress{
 		buildIngress(
 			iNamespace("testing"),
@@ -291,7 +291,7 @@ func TestLoadIngressesGenericForwardAuth(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-func TestLoadIngressesGenericForwardAuthMissingURL(t *testing.T) {
+func TestLoadIngressesForwardAuthMissingURL(t *testing.T) {
 	ingresses := []*extensionsv1beta1.Ingress{
 		buildIngress(
 			iNamespace("testing"),
@@ -351,13 +351,14 @@ func TestLoadIngressesGenericForwardAuthMissingURL(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-func TestLoadIngressesGenericForwardAuthWithTLSSecret(t *testing.T) {
+func TestLoadIngressesForwardAuthWithTLSSecret(t *testing.T) {
 	ingresses := []*extensionsv1beta1.Ingress{
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesAuthType, "forward"),
 			iAnnotation(annotationKubernetesAuthForwardURL, "https://auth.host"),
-			iAnnotation(annotationKubernetesAuthForwardSecret, "secret"),
+			iAnnotation(annotationKubernetesAuthForwardTLSSecret, "secret"),
+			iAnnotation(annotationKubernetesAuthForwardTLSInsecure, "true"),
 			iRules(
 				iRule(iHost("foo"),
 					iPaths(
@@ -428,7 +429,8 @@ func TestLoadIngressesGenericForwardAuthWithTLSSecret(t *testing.T) {
 					forwardAuth("https://auth.host",
 						fwdAuthTLS(
 							"-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
-							"-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"))),
+							"-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----",
+							true))),
 				routes(
 					route("/bar", "PathPrefix:/bar"),
 					route("foo", "Host:foo")),
@@ -439,7 +441,7 @@ func TestLoadIngressesGenericForwardAuthWithTLSSecret(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-func TestLoadIngressesGenericForwardAuthWithTLSSecretFailures(t *testing.T) {
+func TestLoadIngressesForwardAuthWithTLSSecretFailures(t *testing.T) {
 	tests := []struct {
 		desc       string
 		secretName string
@@ -503,7 +505,7 @@ func TestLoadIngressesGenericForwardAuthWithTLSSecretFailures(t *testing.T) {
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesAuthType, "forward"),
 			iAnnotation(annotationKubernetesAuthForwardURL, "https://auth.host"),
-			iAnnotation(annotationKubernetesAuthForwardSecret, "secret"),
+			iAnnotation(annotationKubernetesAuthForwardTLSSecret, "secret"),
 			iRules(
 				iRule(iHost("foo"),
 					iPaths(

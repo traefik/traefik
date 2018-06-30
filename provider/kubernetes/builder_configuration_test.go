@@ -208,6 +208,7 @@ func entryPoints(eps ...string) func(*types.Frontend) {
 	}
 }
 
+// Deprecated
 func basicAuthDeprecated(auth ...string) func(*types.Frontend) {
 	return func(f *types.Frontend) {
 		f.Auth = &types.Auth{Basic: &types.Basic{Users: auth}}
@@ -238,9 +239,9 @@ func forwardAuth(forwardURL string, opts ...func(*types.Forward)) func(*types.Au
 	}
 }
 
-func fwdAuthTLS(cert, key string) func(*types.Forward) {
+func fwdAuthTLS(cert, key string, insecure bool) func(*types.Forward) {
 	return func(f *types.Forward) {
-		f.TLS = &types.ClientTLS{Cert: cert, Key: key}
+		f.TLS = &types.ClientTLS{Cert: cert, Key: key, InsecureSkipVerify: insecure}
 	}
 }
 
