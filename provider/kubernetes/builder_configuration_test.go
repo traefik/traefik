@@ -239,6 +239,18 @@ func forwardAuth(forwardURL string, opts ...func(*types.Forward)) func(*types.Au
 	}
 }
 
+func fwdAuthResponseHeaders(headers ...string) func(*types.Forward) {
+	return func(f *types.Forward) {
+		f.AuthResponseHeaders = headers
+	}
+}
+
+func fwdTrustForwardHeader() func(*types.Forward) {
+	return func(f *types.Forward) {
+		f.TrustForwardHeader = true
+	}
+}
+
 func fwdAuthTLS(cert, key string, insecure bool) func(*types.Forward) {
 	return func(f *types.Forward) {
 		f.TLS = &types.ClientTLS{Cert: cert, Key: key, InsecureSkipVerify: insecure}

@@ -297,15 +297,16 @@ The following security annotations are applicable on the Ingress object:
 Additional authentication annotations can be added to the Ingress object.
 The source of the authentication is a Secret object that contains the credentials.
 
-| Annotation                                                | basic | digest | forward | Description                                                                                                 |
-|-----------------------------------------------------------|-------|--------|---------|-------------------------------------------------------------------------------------------------------------|
-| `ingress.kubernetes.io/auth-type: basic`                  |   x   |   x    |    x    | Contains the authentication type: `basic`, `digest`, `forward`.                                             |
-| `ingress.kubernetes.io/auth-secret: mysecret`             |   x   |   x    |         | Name of Secret containing the username and password with access to the paths defined in the Ingress object. |
-| `ingress.kubernetes.io/auth-header-field: X-WebAuth-User` |   x   |   x    |         | Pass Authenticated user to application via headers.                                                         |
-| `ingress.kubernetes.io/auth-url: https://example.com`     |       |        |    x    | [The URL of the authentication server](configuration/entrypoints/#forward-authentication).                  |
-| `ingress.kubernetes.io/auth-trust-headers: false`         |       |        |    x    | Trust `X-Forwarded-*` headers.                                                                              |
-| `ingress.kubernetes.io/auth-tls-secret: secret`           |       |        |    x    | Name of Secret containing the certificate and key for the forward auth.                                     |
-| `ingress.kubernetes.io/auth-tls-insecure`                 |       |        |    x    | If set to `true` invalid SSL certificates are accepted.                                                     |
+| Annotation                                                           | basic | digest | forward | Description                                                                                                 |
+|----------------------------------------------------------------------|-------|--------|---------|-------------------------------------------------------------------------------------------------------------|
+| `ingress.kubernetes.io/auth-type: basic`                             |   x   |   x    |    x    | Contains the authentication type: `basic`, `digest`, `forward`.                                             |
+| `ingress.kubernetes.io/auth-secret: mysecret`                        |   x   |   x    |         | Name of Secret containing the username and password with access to the paths defined in the Ingress object. |
+| `ingress.kubernetes.io/auth-header-field: X-WebAuth-User`            |   x   |   x    |         | Pass Authenticated user to application via headers.                                                         |
+| `ingress.kubernetes.io/auth-url: https://example.com`                |       |        |    x    | [The URL of the authentication server](configuration/entrypoints/#forward-authentication).                  |
+| `ingress.kubernetes.io/auth-trust-headers: false`                    |       |        |    x    | Trust `X-Forwarded-*` headers.                                                                              |
+| `ingress.kubernetes.io/auth-response-headers: X-Auth-User, X-Secret` |       |        |    x    | Copy headers from the authentication server to the request.                                                 |
+| `ingress.kubernetes.io/auth-tls-secret: secret`                      |       |        |    x    | Name of Secret containing the certificate and key for the forward auth.                                     |
+| `ingress.kubernetes.io/auth-tls-insecure`                            |       |        |    x    | If set to `true` invalid SSL certificates are accepted.                                                     |
 
 The secret must be created in the same namespace as the Ingress object.
 

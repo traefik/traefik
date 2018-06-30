@@ -1124,6 +1124,9 @@ var _templatesKubernetesTmpl = []byte(`[backends]
       {{if $frontend.Auth.Forward }}
         [frontends."{{ $frontendName }}".auth.forward]
           address = "{{ $frontend.Auth.Forward.Address }}"
+          authResponseHeaders = [{{range $frontend.Auth.Forward.AuthResponseHeaders }}
+            "{{.}}",
+            {{end}}]
           trustForwardHeader = {{ $frontend.Auth.Forward.TrustForwardHeader }}
           {{if $frontend.Auth.Forward.TLS }}
           [frontends."{{ $frontendName }}".auth.forward.tls]

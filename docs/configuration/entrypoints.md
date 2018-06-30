@@ -53,14 +53,14 @@
         usersFile = "/path/to/.htdigest"
       [entryPoints.http.auth.forward]
         address = "https://authserver.com/auth"
+        trustForwardHeader = true
+        authResponseHeaders = ["X-Auth-User"]
         [entryPoints.http.auth.forward.tls]
           ca =  [ "path/to/local.crt"]
           caOptional = true
           cert = "path/to/foo.cert"
           key = "path/to/foo.key"
           insecureSkipVerify = true
-        [entryPoints.http.auth.forward]
-          authResponseHeaders = ["X-Auth-User"]
 
     [entryPoints.http.proxyProtocol]
       insecure = true
@@ -336,12 +336,11 @@ Otherwise, the response from the authentication server is returned.
     #
     trustForwardHeader = true
 
-      # Copy headers from the authentication server to the request.
-      #
-      # Optional
-      #
-      [entryPoints.http.auth.forward]
-      authResponseHeaders = ["X-Auth-User", "X-Secret"]
+    # Copy headers from the authentication server to the request.
+    #
+    # Optional
+    #
+    authResponseHeaders = ["X-Auth-User", "X-Secret"]
 
       # Enable forward auth TLS connection.
       #
