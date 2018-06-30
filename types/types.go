@@ -412,9 +412,10 @@ type Digest struct {
 
 // Forward authentication
 type Forward struct {
-	Address            string     `description:"Authentication server address"`
-	TLS                *ClientTLS `description:"Enable TLS support" export:"true"`
-	TrustForwardHeader bool       `description:"Trust X-Forwarded-* headers" export:"true"`
+	Address             string     `description:"Authentication server address"`
+	TLS                 *ClientTLS `description:"Enable TLS support" export:"true"`
+	TrustForwardHeader  bool       `description:"Trust X-Forwarded-* headers" export:"true"`
+	AuthResponseHeaders []string   `description:"Headers to be forwarded from auth response"`
 }
 
 // CanonicalDomain returns a lower case domain with trim space

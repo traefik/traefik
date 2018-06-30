@@ -60,6 +60,8 @@
           cert = "path/to/foo.cert"
           key = "path/to/foo.key"
           insecureSkipVerify = true
+        [entryPoints.http.auth.forward]
+          authResponseHeaders = ["X-Auth-User"]
 
     [entryPoints.http.proxyProtocol]
       insecure = true
@@ -126,6 +128,7 @@ Auth.Basic.Users:test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB
 Auth.Digest.Users:test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e
 Auth.HeaderField:X-WebAuth-User
 Auth.Forward.Address:https://authserver.com/auth
+Auth.Forward.AuthResponseHeaders:X-Auth,X-Test,X-Secret
 Auth.Forward.TrustForwardHeader:true
 Auth.Forward.TLS.CA:path/to/local.crt
 Auth.Forward.TLS.CAOptional:true
@@ -309,6 +312,10 @@ Otherwise, the response from the authentication server is returned.
     # Default: false
     #
     trustForwardHeader = true
+
+    # Copy headers from the authentication server to the request
+    [entryPoints.http.auth.forward]
+    authResponseHeaders = ["X-Auth-User", "X-Secret"]
 
     # Enable forward auth TLS connection.
     #
