@@ -155,9 +155,11 @@ The following general annotations are applicable on the Ingress object:
 | `traefik.ingress.kubernetes.io/redirect-replacement: http://mydomain/$1`        | Redirect to another URL for that frontend. Must be set with `traefik.ingress.kubernetes.io/redirect-regex`.                                     |
 | `traefik.ingress.kubernetes.io/rewrite-target: /users`                          | Replaces each matched Ingress path with the specified one, and adds the old path to the `X-Replaced-Path` header.                               |
 | `traefik.ingress.kubernetes.io/rule-type: PathPrefixStrip`                      | Override the default frontend rule type. Default: `PathPrefix`.                                                                                 |
-| `traefik.ingress.kubernetes.io/whitelist-source-range: "1.2.3.0/24, fe80::/16"` | A comma-separated list of IP ranges permitted for access. all source IPs are permitted if the list is empty or a single range is ill-formatted. Please note, you may have to set `service.spec.externalTrafficPolicy` to the value `Local` to preserve the source IP of the request for filtering. Please see [this link](https://kubernetes.io/docs/tutorials/services/source-ip/) for more information.|
+| `traefik.ingress.kubernetes.io/whitelist-source-range: "1.2.3.0/24, fe80::/16"` | A comma-separated list of IP ranges permitted for access (6).                                                                                       |
 | `ingress.kubernetes.io/whitelist-x-forwarded-for: "true"`                       | Use `X-Forwarded-For` header as valid source of IP for the white list.                                                                          |
 | `traefik.ingress.kubernetes.io/app-root: "/index.html"`                         | Redirects all requests for `/` to the defined path. (4)                                                                                         |
+| `traefik.ingress.kubernetes.io/service-weights: <YML>`                          | Set ingress backend weights specified as percentage or decimal numbers in YAML. (5)                                                    |
+
 
 <1> `traefik.ingress.kubernetes.io/error-pages` example:
 
@@ -204,6 +206,39 @@ retryexpression: IsNetworkError() && Attempts() <= 2
 Non-root paths will not be affected by this annotation and handled normally.
 This annotation may not be combined with the `ReplacePath` rule type or any other annotation leveraging that rule type.
 Trying to do so leads to an error and the corresponding Ingress object being ignored.
+
+<5> `traefik.ingress.kubernetes.io/service-weights`:
+Service weights enable to split traffic across multiple backing services in a fine-grained manner.
+A canonical use case are canary releases where a new deployment starts to receive a small percentage of traffic (e.g., 1%) and steadily increases over time as confidence in the new deployment improves.
+
+Example:
+
+```yaml
+service_backend1: 12.50%
+service_backend2: 12.50%
+service_backend3: 75 # Same as 75%, the percentage sign is optional
+```
+
+A single service backend definition may be omitted; in this case, Traefik auto-completes that service backend to 100% automatically.
+Conveniently, users need not bother to compute the percentage remainder for a main service backend.
+For instance, in the example above `service_backend3` does not need to be specified to be assigned 75%.
+
+!!! note
+    For each service weight given, the Ingress specification must include a backend item with the corresponding `serviceName` and (if given) matching path.
+
+Currently, 3 decimal places for the weight are supported.
+An attempt to exceed the precision should be avoided as it may lead to percentage computation flaws and, in consequence, Ingress parsing errors.
+
+For each path definition, this annotation will fail if:
+
+- the sum of backend weights exceeds 100% or
+- the sum of backend weights is less than 100% without one or more omitted backends
+
+<6> `traefik.ingress.kubernetes.io/whitelist-source-range`:
+All source IPs are permitted if the list is empty or a single range is ill-formatted.
+Please note, you may have to set `service.spec.externalTrafficPolicy` to the value `Local` to preserve the source IP of the request for filtering.
+Please see [this link](https://kubernetes.io/docs/tutorials/services/source-ip/) for more information.
+
 
 !!! note
     Please note that `traefik.ingress.kubernetes.io/redirect-regex` and `traefik.ingress.kubernetes.io/redirect-replacement` do not have to be set if `traefik.ingress.kubernetes.io/redirect-entry-point` is defined for the redirection (they will not be used in this case).
