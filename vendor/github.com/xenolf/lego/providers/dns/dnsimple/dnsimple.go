@@ -46,22 +46,22 @@ func NewDNSProviderCredentials(accessToken, baseURL string) (*DNSProvider, error
 }
 
 // Present creates a TXT record to fulfil the dns-01 challenge.
-func (c *DNSProvider) Present(domain, token, keyAuth string) error {
+func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
 
-	zoneName, err := c.getHostedZone(domain)
+	zoneName, err := d.getHostedZone(domain)
 
 	if err != nil {
 		return err
 	}
 
-	accountID, err := c.getAccountID()
+	accountID, err := d.getAccountID()
 	if err != nil {
 		return err
 	}
 
-	recordAttributes := c.newTxtRecord(zoneName, fqdn, value, ttl)
-	_, err = c.client.Zones.CreateRecord(accountID, zoneName, *recordAttributes)
+	recordAttributes := d.newTxtRecord(zoneName, fqdn, value, ttl)
+	_, err = d.client.Zones.CreateRecord(accountID, zoneName, *recordAttributes)
 	if err != nil {
 		return fmt.Errorf("DNSimple API call failed: %v", err)
 	}
@@ -70,21 +70,21 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 }
 
 // CleanUp removes the TXT record matching the specified parameters.
-func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
+func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
 
-	records, err := c.findTxtRecords(domain, fqdn)
+	records, err := d.findTxtRecords(domain, fqdn)
 	if err != nil {
 		return err
 	}
 
-	accountID, err := c.getAccountID()
+	accountID, err := d.getAccountID()
 	if err != nil {
 		return err
 	}
 
 	for _, rec := range records {
-		_, err := c.client.Zones.DeleteRecord(accountID, rec.ZoneID, rec.ID)
+		_, err := d.client.Zones.DeleteRecord(accountID, rec.ZoneID, rec.ID)
 		if err != nil {
 			return err
 		}
@@ -93,20 +93,20 @@ func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	return nil
 }
 
-func (c *DNSProvider) getHostedZone(domain string) (string, error) {
+func (d *DNSProvider) getHostedZone(domain string) (string, error) {
 	authZone, err := acme.FindZoneByFqdn(acme.ToFqdn(domain), acme.RecursiveNameservers)
 	if err != nil {
 		return "", err
 	}
 
-	accountID, err := c.getAccountID()
+	accountID, err := d.getAccountID()
 	if err != nil {
 		return "", err
 	}
 
 	zoneName := acme.UnFqdn(authZone)
 
-	zones, err := c.client.Zones.ListZones(accountID, &dnsimple.ZoneListOptions{NameLike: zoneName})
+	zones, err := d.client.Zones.ListZones(accountID, &dnsimple.ZoneListOptions{NameLike: zoneName})
 	if err != nil {
 		return "", fmt.Errorf("DNSimple API call failed: %v", err)
 	}
@@ -125,20 +125,20 @@ func (c *DNSProvider) getHostedZone(domain string) (string, error) {
 	return hostedZone.Name, nil
 }
 
-func (c *DNSProvider) findTxtRecords(domain, fqdn string) ([]dnsimple.ZoneRecord, error) {
-	zoneName, err := c.getHostedZone(domain)
+func (d *DNSProvider) findTxtRecords(domain, fqdn string) ([]dnsimple.ZoneRecord, error) {
+	zoneName, err := d.getHostedZone(domain)
 	if err != nil {
 		return nil, err
 	}
 
-	accountID, err := c.getAccountID()
+	accountID, err := d.getAccountID()
 	if err != nil {
 		return nil, err
 	}
 
-	recordName := c.extractRecordName(fqdn, zoneName)
+	recordName := d.extractRecordName(fqdn, zoneName)
 
-	result, err := c.client.Zones.ListRecords(accountID, zoneName, &dnsimple.ZoneRecordListOptions{Name: recordName, Type: "TXT", ListOptions: dnsimple.ListOptions{}})
+	result, err := d.client.Zones.ListRecords(accountID, zoneName, &dnsimple.ZoneRecordListOptions{Name: recordName, Type: "TXT", ListOptions: dnsimple.ListOptions{}})
 	if err != nil {
 		return []dnsimple.ZoneRecord{}, fmt.Errorf("DNSimple API call has failed: %v", err)
 	}
@@ -146,8 +146,8 @@ func (c *DNSProvider) findTxtRecords(domain, fqdn string) ([]dnsimple.ZoneRecord
 	return result.Data, nil
 }
 
-func (c *DNSProvider) newTxtRecord(zoneName, fqdn, value string, ttl int) *dnsimple.ZoneRecord {
-	name := c.extractRecordName(fqdn, zoneName)
+func (d *DNSProvider) newTxtRecord(zoneName, fqdn, value string, ttl int) *dnsimple.ZoneRecord {
+	name := d.extractRecordName(fqdn, zoneName)
 
 	return &dnsimple.ZoneRecord{
 		Type:    "TXT",
@@ -157,7 +157,7 @@ func (c *DNSProvider) newTxtRecord(zoneName, fqdn, value string, ttl int) *dnsim
 	}
 }
 
-func (c *DNSProvider) extractRecordName(fqdn, domain string) string {
+func (d *DNSProvider) extractRecordName(fqdn, domain string) string {
 	name := acme.UnFqdn(fqdn)
 	if idx := strings.Index(name, "."+domain); idx != -1 {
 		return name[:idx]
@@ -165,8 +165,8 @@ func (c *DNSProvider) extractRecordName(fqdn, domain string) string {
 	return name
 }
 
-func (c *DNSProvider) getAccountID() (string, error) {
-	whoamiResponse, err := c.client.Identity.Whoami()
+func (d *DNSProvider) getAccountID() (string, error) {
+	whoamiResponse, err := d.client.Identity.Whoami()
 	if err != nil {
 		return "", err
 	}

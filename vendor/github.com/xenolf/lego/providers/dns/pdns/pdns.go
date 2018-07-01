@@ -9,12 +9,13 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/log"
+	"github.com/xenolf/lego/platform/config/env"
 )
 
 // DNSProvider is an implementation of the acme.ChallengeProvider interface
@@ -22,19 +23,24 @@ type DNSProvider struct {
 	apiKey     string
 	host       *url.URL
 	apiVersion int
+	client     *http.Client
 }
 
 // NewDNSProvider returns a DNSProvider instance configured for pdns.
 // Credentials must be passed in the environment variable:
 // PDNS_API_URL and PDNS_API_KEY.
 func NewDNSProvider() (*DNSProvider, error) {
-	key := os.Getenv("PDNS_API_KEY")
-	hostURL, err := url.Parse(os.Getenv("PDNS_API_URL"))
+	values, err := env.Get("PDNS_API_KEY", "PDNS_API_URL")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("PDNS: %v", err)
 	}
 
-	return NewDNSProviderCredentials(hostURL, key)
+	hostURL, err := url.Parse(values["PDNS_API_URL"])
+	if err != nil {
+		return nil, fmt.Errorf("PDNS: %v", err)
+	}
+
+	return NewDNSProviderCredentials(hostURL, values["PDNS_API_KEY"])
 }
 
 // NewDNSProviderCredentials uses the supplied credentials to return a
@@ -48,25 +54,31 @@ func NewDNSProviderCredentials(host *url.URL, key string) (*DNSProvider, error) 
 		return nil, fmt.Errorf("PDNS API URL missing")
 	}
 
-	provider := &DNSProvider{
+	d := &DNSProvider{
 		host:   host,
 		apiKey: key,
+		client: &http.Client{Timeout: 30 * time.Second},
 	}
-	provider.getAPIVersion()
 
-	return provider, nil
+	apiVersion, err := d.getAPIVersion()
+	if err != nil {
+		log.Warnf("PDNS: failed to get API version %v", err)
+	}
+	d.apiVersion = apiVersion
+
+	return d, nil
 }
 
 // Timeout returns the timeout and interval to use when checking for DNS
 // propagation. Adjusting here to cope with spikes in propagation times.
-func (c *DNSProvider) Timeout() (timeout, interval time.Duration) {
+func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 	return 120 * time.Second, 2 * time.Second
 }
 
 // Present creates a TXT record to fulfil the dns-01 challenge
-func (c *DNSProvider) Present(domain, token, keyAuth string) error {
+func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
-	zone, err := c.getHostedZone(fqdn)
+	zone, err := d.getHostedZone(fqdn)
 	if err != nil {
 		return err
 	}
@@ -74,7 +86,7 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 	name := fqdn
 
 	// pre-v1 API wants non-fqdn
-	if c.apiVersion == 0 {
+	if d.apiVersion == 0 {
 		name = acme.UnFqdn(fqdn)
 	}
 
@@ -106,20 +118,20 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 		return err
 	}
 
-	_, err = c.makeRequest("PATCH", zone.URL, bytes.NewReader(body))
+	_, err = d.makeRequest(http.MethodPatch, zone.URL, bytes.NewReader(body))
 	return err
 }
 
 // CleanUp removes the TXT record matching the specified parameters
-func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
+func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
 
-	zone, err := c.getHostedZone(fqdn)
+	zone, err := d.getHostedZone(fqdn)
 	if err != nil {
 		return err
 	}
 
-	set, err := c.findTxtRecord(fqdn)
+	set, err := d.findTxtRecord(fqdn)
 	if err != nil {
 		return err
 	}
@@ -138,11 +150,11 @@ func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 		return err
 	}
 
-	_, err = c.makeRequest("PATCH", zone.URL, bytes.NewReader(body))
+	_, err = d.makeRequest(http.MethodPatch, zone.URL, bytes.NewReader(body))
 	return err
 }
 
-func (c *DNSProvider) getHostedZone(fqdn string) (*hostedZone, error) {
+func (d *DNSProvider) getHostedZone(fqdn string) (*hostedZone, error) {
 	var zone hostedZone
 	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
 	if err != nil {
@@ -150,12 +162,12 @@ func (c *DNSProvider) getHostedZone(fqdn string) (*hostedZone, error) {
 	}
 
 	url := "/servers/localhost/zones"
-	result, err := c.makeRequest("GET", url, nil)
+	result, err := d.makeRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	zones := []hostedZone{}
+	var zones []hostedZone
 	err = json.Unmarshal(result, &zones)
 	if err != nil {
 		return nil, err
@@ -168,7 +180,7 @@ func (c *DNSProvider) getHostedZone(fqdn string) (*hostedZone, error) {
 		}
 	}
 
-	result, err = c.makeRequest("GET", url, nil)
+	result, err = d.makeRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -194,13 +206,13 @@ func (c *DNSProvider) getHostedZone(fqdn string) (*hostedZone, error) {
 	return &zone, nil
 }
 
-func (c *DNSProvider) findTxtRecord(fqdn string) (*rrSet, error) {
-	zone, err := c.getHostedZone(fqdn)
+func (d *DNSProvider) findTxtRecord(fqdn string) (*rrSet, error) {
+	zone, err := d.getHostedZone(fqdn)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = c.makeRequest("GET", zone.URL, nil)
+	_, err = d.makeRequest(http.MethodGet, zone.URL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -214,21 +226,21 @@ func (c *DNSProvider) findTxtRecord(fqdn string) (*rrSet, error) {
 	return nil, fmt.Errorf("no existing record found for %s", fqdn)
 }
 
-func (c *DNSProvider) getAPIVersion() {
+func (d *DNSProvider) getAPIVersion() (int, error) {
 	type APIVersion struct {
 		URL     string `json:"url"`
 		Version int    `json:"version"`
 	}
 
-	result, err := c.makeRequest("GET", "/api", nil)
+	result, err := d.makeRequest(http.MethodGet, "/api", nil)
 	if err != nil {
-		return
+		return 0, err
 	}
 
 	var versions []APIVersion
 	err = json.Unmarshal(result, &versions)
 	if err != nil {
-		return
+		return 0, err
 	}
 
 	latestVersion := 0
@@ -237,41 +249,45 @@ func (c *DNSProvider) getAPIVersion() {
 			latestVersion = v.Version
 		}
 	}
-	c.apiVersion = latestVersion
+
+	return latestVersion, err
 }
 
-func (c *DNSProvider) makeRequest(method, uri string, body io.Reader) (json.RawMessage, error) {
+func (d *DNSProvider) makeRequest(method, uri string, body io.Reader) (json.RawMessage, error) {
 	type APIError struct {
 		Error string `json:"error"`
 	}
+
 	var path = ""
-	if c.host.Path != "/" {
-		path = c.host.Path
+	if d.host.Path != "/" {
+		path = d.host.Path
 	}
+
 	if !strings.HasPrefix(uri, "/") {
 		uri = "/" + uri
 	}
-	if c.apiVersion > 0 && !strings.HasPrefix(uri, "/api/v") {
-		uri = "/api/v" + strconv.Itoa(c.apiVersion) + uri
+
+	if d.apiVersion > 0 && !strings.HasPrefix(uri, "/api/v") {
+		uri = "/api/v" + strconv.Itoa(d.apiVersion) + uri
 	}
-	url := c.host.Scheme + "://" + c.host.Host + path + uri
+
+	url := d.host.Scheme + "://" + d.host.Host + path + uri
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Set("X-API-Key", c.apiKey)
+	req.Header.Set("X-API-Key", d.apiKey)
 
-	client := http.Client{Timeout: 30 * time.Second}
-	resp, err := client.Do(req)
+	resp, err := d.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("Error talking to PDNS API -> %v", err)
+		return nil, fmt.Errorf("error talking to PDNS API -> %v", err)
 	}
 
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 422 && (resp.StatusCode < 200 || resp.StatusCode >= 300) {
-		return nil, fmt.Errorf("Unexpected HTTP status code %d when fetching '%s'", resp.StatusCode, url)
+	if resp.StatusCode != http.StatusUnprocessableEntity && (resp.StatusCode < 200 || resp.StatusCode >= 300) {
+		return nil, fmt.Errorf("unexpected HTTP status code %d when fetching '%s'", resp.StatusCode, url)
 	}
 
 	var msg json.RawMessage
@@ -293,7 +309,7 @@ func (c *DNSProvider) makeRequest(method, uri string, body io.Reader) (json.RawM
 			return nil, err
 		}
 		if apiError.Error != "" {
-			return nil, fmt.Errorf("Error talking to PDNS API -> %v", apiError.Error)
+			return nil, fmt.Errorf("error talking to PDNS API -> %v", apiError.Error)
 		}
 	}
 	return msg, nil

@@ -77,7 +77,7 @@ func (m *DNSMock) HandleListZonesSuccessfully() {
 		  }]}
 		`)
 
-		assert.Equal(m.t, r.Method, "GET")
+		assert.Equal(m.t, r.Method, http.MethodGet)
 		assert.Equal(m.t, r.URL.Path, "/v2/zones")
 		assert.Equal(m.t, r.URL.RawQuery, "name=example.com.")
 		assert.Equal(m.t, r.Header.Get("Content-Type"), "application/json")
@@ -92,7 +92,7 @@ func (m *DNSMock) HandleListZonesEmpty() {
 		  ]}
 		`)
 
-		assert.Equal(m.t, r.Method, "GET")
+		assert.Equal(m.t, r.Method, http.MethodGet)
 		assert.Equal(m.t, r.URL.Path, "/v2/zones")
 		assert.Equal(m.t, r.URL.RawQuery, "name=example.com.")
 		assert.Equal(m.t, r.Header.Get("Content-Type"), "application/json")
@@ -108,7 +108,7 @@ func (m *DNSMock) HandleDeleteRecordsetsSuccessfully() {
 		  }]}
 		`)
 
-		assert.Equal(m.t, r.Method, "DELETE")
+		assert.Equal(m.t, r.Method, http.MethodDelete)
 		assert.Equal(m.t, r.URL.Path, "/v2/zones/123123/recordsets/321321")
 		assert.Equal(m.t, r.Header.Get("Content-Type"), "application/json")
 	})
@@ -130,7 +130,7 @@ func (m *DNSMock) HandleListRecordsetsEmpty() {
 // HandleListRecordsetsSuccessfully Handle list recordsets successfully
 func (m *DNSMock) HandleListRecordsetsSuccessfully() {
 	m.Mux.HandleFunc("/v2/zones/123123/recordsets", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "GET" {
+		if r.Method == http.MethodGet {
 			fmt.Fprintf(w, `{
 			  "recordsets":[{
 			    "id":"321321"
@@ -140,7 +140,7 @@ func (m *DNSMock) HandleListRecordsetsSuccessfully() {
 			assert.Equal(m.t, r.URL.Path, "/v2/zones/123123/recordsets")
 			assert.Equal(m.t, r.URL.RawQuery, "type=TXT&name=_acme-challenge.example.com.")
 
-		} else if r.Method == "POST" {
+		} else if r.Method == http.MethodPost {
 			body, err := ioutil.ReadAll(r.Body)
 
 			assert.Nil(m.t, err)

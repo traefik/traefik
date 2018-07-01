@@ -4,6 +4,7 @@ package lightsail
 
 import (
 	"math/rand"
+	"os"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -20,7 +21,8 @@ const (
 
 // DNSProvider implements the acme.ChallengeProvider interface
 type DNSProvider struct {
-	client *lightsail.Lightsail
+	client  *lightsail.Lightsail
+	dnsZone string
 }
 
 // customRetryer implements the client.Retryer interface by composing the
@@ -35,7 +37,7 @@ type customRetryer struct {
 // delay of ~400ms with an upper limit of ~30 seconds which should prevent
 // causing a high number of consecutive throttling errors.
 // For reference: Route 53 enforces an account-wide(!) 5req/s query limit.
-func (d customRetryer) RetryRules(r *request.Request) time.Duration {
+func (c customRetryer) RetryRules(r *request.Request) time.Duration {
 	retryCount := r.RetryCount
 	if retryCount > 7 {
 		retryCount = 7
@@ -61,47 +63,53 @@ func (d customRetryer) RetryRules(r *request.Request) time.Duration {
 func NewDNSProvider() (*DNSProvider, error) {
 	r := customRetryer{}
 	r.NumMaxRetries = maxRetries
-	config := request.WithRetryer(aws.NewConfig(), r)
-	client := lightsail.New(session.New(config))
+
+	config := aws.NewConfig().WithRegion("us-east-1")
+	sess, err := session.NewSession(request.WithRetryer(config, r))
+	if err != nil {
+		return nil, err
+	}
 
 	return &DNSProvider{
-		client: client,
+		dnsZone: os.Getenv("DNS_ZONE"),
+		client:  lightsail.New(sess),
 	}, nil
 }
 
 // Present creates a TXT record using the specified parameters
-func (r *DNSProvider) Present(domain, token, keyAuth string) error {
+func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
 	value = `"` + value + `"`
-	err := r.newTxtRecord(domain, fqdn, value)
+
+	err := d.newTxtRecord(domain, fqdn, value)
 	return err
 }
 
 // CleanUp removes the TXT record matching the specified parameters
-func (r *DNSProvider) CleanUp(domain, token, keyAuth string) error {
+func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
 	value = `"` + value + `"`
 	params := &lightsail.DeleteDomainEntryInput{
-		DomainName: aws.String(domain),
+		DomainName: aws.String(d.dnsZone),
 		DomainEntry: &lightsail.DomainEntry{
 			Name:   aws.String(fqdn),
 			Type:   aws.String("TXT"),
 			Target: aws.String(value),
 		},
 	}
-	_, err := r.client.DeleteDomainEntry(params)
+	_, err := d.client.DeleteDomainEntry(params)
 	return err
 }
 
-func (r *DNSProvider) newTxtRecord(domain string, fqdn string, value string) error {
+func (d *DNSProvider) newTxtRecord(domain string, fqdn string, value string) error {
 	params := &lightsail.CreateDomainEntryInput{
-		DomainName: aws.String(domain),
+		DomainName: aws.String(d.dnsZone),
 		DomainEntry: &lightsail.DomainEntry{
 			Name:   aws.String(fqdn),
 			Target: aws.String(value),
 			Type:   aws.String("TXT"),
 		},
 	}
-	_, err := r.client.CreateDomainEntry(params)
+	_, err := d.client.CreateDomainEntry(params)
 	return err
 }

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/platform/config/env"
 )
 
 // DNSProvider is an implementation of the acme.ChallengeProvider interface that uses
@@ -31,12 +32,18 @@ type DNSProvider struct {
 // Credentials must be passed in the environment variables: OTC_USER_NAME,
 // OTC_DOMAIN_NAME, OTC_PASSWORD OTC_PROJECT_NAME and OTC_IDENTITY_ENDPOINT.
 func NewDNSProvider() (*DNSProvider, error) {
-	domainName := os.Getenv("OTC_DOMAIN_NAME")
-	userName := os.Getenv("OTC_USER_NAME")
-	password := os.Getenv("OTC_PASSWORD")
-	projectName := os.Getenv("OTC_PROJECT_NAME")
-	identityEndpoint := os.Getenv("OTC_IDENTITY_ENDPOINT")
-	return NewDNSProviderCredentials(domainName, userName, password, projectName, identityEndpoint)
+	values, err := env.Get("OTC_DOMAIN_NAME", "OTC_USER_NAME", "OTC_PASSWORD", "OTC_PROJECT_NAME")
+	if err != nil {
+		return nil, fmt.Errorf("OTC: %v", err)
+	}
+
+	return NewDNSProviderCredentials(
+		values["OTC_DOMAIN_NAME"],
+		values["OTC_USER_NAME"],
+		values["OTC_PASSWORD"],
+		values["OTC_PROJECT_NAME"],
+		os.Getenv("OTC_IDENTITY_ENDPOINT"),
+	)
 }
 
 // NewDNSProviderCredentials uses the supplied credentials to return a
@@ -163,7 +170,7 @@ func (d *DNSProvider) loginRequest() error {
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequest("POST", d.identityEndpoint, bytes.NewReader(body))
+	req, err := http.NewRequest(http.MethodPost, d.identityEndpoint, bytes.NewReader(body))
 	if err != nil {
 		return err
 	}
@@ -235,7 +242,7 @@ func (d *DNSProvider) getZoneID(zone string) (string, error) {
 	}
 
 	resource := fmt.Sprintf("zones?name=%s", zone)
-	resp, err := d.SendRequest("GET", resource, nil)
+	resp, err := d.SendRequest(http.MethodGet, resource, nil)
 	if err != nil {
 		return "", err
 	}
@@ -271,7 +278,7 @@ func (d *DNSProvider) getRecordSetID(zoneID string, fqdn string) (string, error)
 	}
 
 	resource := fmt.Sprintf("zones/%s/recordsets?type=TXT&name=%s", zoneID, fqdn)
-	resp, err := d.SendRequest("GET", resource, nil)
+	resp, err := d.SendRequest(http.MethodGet, resource, nil)
 	if err != nil {
 		return "", err
 	}
@@ -300,7 +307,7 @@ func (d *DNSProvider) getRecordSetID(zoneID string, fqdn string) (string, error)
 func (d *DNSProvider) deleteRecordSet(zoneID, recordID string) error {
 	resource := fmt.Sprintf("zones/%s/recordsets/%s", zoneID, recordID)
 
-	_, err := d.SendRequest("DELETE", resource, nil)
+	_, err := d.SendRequest(http.MethodDelete, resource, nil)
 	return err
 }
 
@@ -344,7 +351,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 		TTL:         ttl,
 		Records:     []string{fmt.Sprintf("\"%s\"", value)},
 	}
-	_, err = d.SendRequest("POST", resource, r1)
+	_, err = d.SendRequest(http.MethodPost, resource, r1)
 	return err
 }
 
