@@ -619,9 +619,46 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
       "{{.}}",
       {{end}}]
 
-    basicAuth = [{{range getBasicAuth $container.SegmentLabels }}
-      "{{.}}",
-      {{end}}]
+    {{ $auth := getAuth $container.SegmentLabels }}
+    {{if $auth }}
+    [frontends."frontend-{{ $frontendName }}".auth]
+      headerField = "{{ $auth.HeaderField }}"
+
+      {{if $auth.Forward }}
+      [frontends.frontend-{{ $frontendName }}.auth.forward]
+        address = "{{ $auth.Forward.Address }}"
+        trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
+
+        {{if $auth.Forward.TLS }}
+        [frontends.frontend-{{ $frontendName }}.auth.forward.tls]
+          ca = "{{ $auth.Forward.TLS.CA }}"
+          caOptional = {{ $auth.Forward.TLS.CAOptional }}
+          cert = "{{ $auth.Forward.TLS.Cert }}"
+          key = "{{ $auth.Forward.TLS.Key }}"
+          insecureSkipVerify = {{ $auth.Forward.TLS.InsecureSkipVerify }}
+        {{end}}
+      {{end}}
+
+      {{if $auth.Basic }}
+      [frontends.frontend-{{ $frontendName }}.auth.basic]
+        {{if $auth.Basic.Users }}
+        users = [{{range $auth.Basic.Users }}
+          "{{.}}",
+          {{end}}]
+        {{end}}
+        usersFile = "{{ $auth.Basic.UsersFile }}"
+      {{end}}
+
+      {{if $auth.Digest }}
+      [frontends.frontend-{{ $frontendName }}.auth.digest]
+        {{if $auth.Digest.Users }}
+        users = [{{range $auth.Digest.Users }}
+          "{{.}}",
+          {{end}}]
+        {{end}}
+        usersFile = "{{ $auth.Digest.UsersFile }}"
+      {{end}}
+    {{end}}
 
     {{ $whitelist := getWhiteList $container.SegmentLabels }}
     {{if $whitelist }}
