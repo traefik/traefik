@@ -881,7 +881,7 @@ The label selectors on the Træfik Deployments would then be `traffic-type=inter
 It is possible to split Ingress traffic in a fine-grained manner between multiple deployments using _service weights_.
 
 One canonical use case is canary releases where a deployment representing a newer release is to receive an initially small but ever-increasing fraction of the requests over time.
-The way this can be done in Traefik is to specify a percentage of requests that should go into each deployment.
+The way this can be done in Træfik is to specify a percentage of requests that should go into each deployment.
 
 For instance, say that an application `my-app` runs in version 1.
 A newer version 2 is about to be released, but confidence in the robustness and reliability of new version running in production can only be gained gradually.
@@ -914,7 +914,7 @@ spec:
 ```
 
 Take note of the `traefik.ingress.kubernetes.io/service-weights` annotation: It specifies the distribution of requests among the referenced backend services, `my-app` and `my-app-canary`.
-With this definition, Traefik will route 99% of the requests to the pods backed by the `my-app` deployment, and 1% to those backed by `my-app-canary`.
+With this definition, Træfik will route 99% of the requests to the pods backed by the `my-app` deployment, and 1% to those backed by `my-app-canary`.
 Over time, the ratio may slowly shift towards the canary deployment until it is deemed to replace the previous main application, in steps such as 5%/95%, 10%/90%, 50%/50%, and finally 100%/0%.
 
 A few conditions must hold for service weights to be applied correctly:
