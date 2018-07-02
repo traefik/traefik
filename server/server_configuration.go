@@ -13,6 +13,7 @@ import (
 	"github.com/containous/mux"
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/healthcheck"
+	"github.com/containous/traefik/hostresolver"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"
@@ -24,7 +25,6 @@ import (
 	"github.com/eapache/channels"
 	"github.com/urfave/negroni"
 	"github.com/vulcand/oxy/forward"
-	"github.com/containous/traefik/hostresolver"
 )
 
 // loadConfiguration manages dynamically frontends, backends and TLS configurations
