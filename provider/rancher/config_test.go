@@ -59,7 +59,20 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						label.TraefikBackendBufferingMemRequestBodyBytes:     "2097152",
 						label.TraefikBackendBufferingRetryExpression:         "IsNetworkError() && Attempts() <= 2",
 
-						label.TraefikFrontendAuthBasic:                 "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendAuthBasic:                        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendAuthBasicUsers:                   "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendAuthBasicUsersFile:               ".htpasswd",
+						label.TraefikFrontendAuthDigestUsers:                  "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendAuthDigestUsersFile:              ".htpasswd",
+						label.TraefikFrontendAuthForwardAddress:               "auth.server",
+						label.TraefikFrontendAuthForwardTrustForwardHeader:    "true",
+						label.TraefikFrontendAuthForwardTLSCa:                 "ca.crt",
+						label.TraefikFrontendAuthForwardTLSCaOptional:         "true",
+						label.TraefikFrontendAuthForwardTLSCert:               "server.crt",
+						label.TraefikFrontendAuthForwardTLSKey:                "server.key",
+						label.TraefikFrontendAuthForwardTLSInsecureSkipVerify: "true",
+						label.TraefikFrontendAuthHeaderField:                  "X-WebAuth-User",
+
 						label.TraefikFrontendEntryPoints:               "http,https",
 						label.TraefikFrontendPassHostHeader:            "true",
 						label.TraefikFrontendPassTLSCert:               "true",
@@ -129,9 +142,13 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					PassHostHeader: true,
 					PassTLSCert:    true,
 					Priority:       666,
-					BasicAuth: []string{
-						"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-						"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+					Auth: &types.Auth{
+						HeaderField: "X-WebAuth-User",
+						Basic: &types.Basic{
+							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							UsersFile: ".htpasswd",
+						},
 					},
 					WhiteList: &types.WhiteList{
 						SourceRange: []string{
@@ -271,8 +288,20 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						label.Prefix + "sauternes." + label.SuffixProtocol: "https",
 						label.Prefix + "sauternes." + label.SuffixWeight:   "12",
 
-						label.Prefix + "sauternes." + label.SuffixFrontendRule:                      "Host:traefik.wtf",
-						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasic:                 "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.Prefix + "sauternes." + label.SuffixFrontendRule:                             "Host:traefik.wtf",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicUsers:                   "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicUsersFile:               ".htpasswd",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthDigestUsers:                  "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthDigestUsersFile:              ".htpasswd",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthForwardAddress:               "auth.server",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthForwardTrustForwardHeader:    "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthForwardTLSCa:                 "ca.crt",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthForwardTLSCaOptional:         "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthForwardTLSCert:               "server.crt",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthForwardTLSKey:                "server.key",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthForwardTLSInsecureSkipVerify: "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthHeaderField:                  "X-WebAuth-User",
+
 						label.Prefix + "sauternes." + label.SuffixFrontendEntryPoints:               "http,https",
 						label.Prefix + "sauternes." + label.SuffixFrontendPassHostHeader:            "true",
 						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSCert:               "true",
@@ -338,9 +367,13 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					PassHostHeader: true,
 					PassTLSCert:    true,
 					Priority:       666,
-					BasicAuth: []string{
-						"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-						"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+					Auth: &types.Auth{
+						HeaderField: "X-WebAuth-User",
+						Basic: &types.Basic{
+							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							UsersFile: ".htpasswd",
+						},
 					},
 					WhiteList: &types.WhiteList{
 						SourceRange: []string{
@@ -438,7 +471,8 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					Name: "test/service",
 					Labels: map[string]string{
 						label.TraefikPort:                       "80",
-						label.TraefikFrontendAuthBasic:          "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendAuthBasicUsers:     "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendAuthBasicUsersFile: ".htpasswd",
 						label.TraefikFrontendRedirectEntryPoint: "https",
 					},
 					Health:     "healthy",
@@ -450,11 +484,166 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					Backend:        "backend-test-service",
 					PassHostHeader: true,
 					EntryPoints:    []string{},
-					BasicAuth:      []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
-					Priority:       0,
+					Auth: &types.Auth{
+						Basic: &types.Basic{
+							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							UsersFile: ".htpasswd",
+						},
+					},
+					Priority: 0,
 					Redirect: &types.Redirect{
 						EntryPoint: "https",
 					},
+					Routes: map[string]types.Route{
+						"route-frontend-Host-test-service-rancher-localhost": {
+							Rule: "Host:test.service.rancher.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test-service": {
+					Servers: map[string]types.Server{
+						"server-0": {
+							URL:    "http://127.0.0.1:80",
+							Weight: label.DefaultWeight,
+						},
+					},
+					CircuitBreaker: nil,
+				},
+			},
+		},
+		{
+			desc: "with basic auth backward compatibility",
+			services: []rancherData{
+				{
+					Name: "test/service",
+					Labels: map[string]string{
+						label.TraefikPort:              "80",
+						label.TraefikFrontendAuthBasic: "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+					},
+					Health:     "healthy",
+					Containers: []string{"127.0.0.1"},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-Host-test-service-rancher-localhost": {
+					Backend:        "backend-test-service",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					Auth: &types.Auth{
+						Basic: &types.Basic{
+							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+						},
+					},
+					Priority: 0,
+					Routes: map[string]types.Route{
+						"route-frontend-Host-test-service-rancher-localhost": {
+							Rule: "Host:test.service.rancher.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test-service": {
+					Servers: map[string]types.Server{
+						"server-0": {
+							URL:    "http://127.0.0.1:80",
+							Weight: label.DefaultWeight,
+						},
+					},
+					CircuitBreaker: nil,
+				},
+			},
+		},
+		{
+			desc: "with digest auth",
+			services: []rancherData{
+				{
+					Name: "test/service",
+					Labels: map[string]string{
+						label.TraefikPort:                        "80",
+						label.TraefikFrontendAuthDigestUsers:     "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendAuthDigestUsersFile: ".htpasswd",
+					},
+					Health:     "healthy",
+					Containers: []string{"127.0.0.1"},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-Host-test-service-rancher-localhost": {
+					Backend:        "backend-test-service",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					Auth: &types.Auth{
+						Digest: &types.Digest{
+							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							UsersFile: ".htpasswd",
+						},
+					},
+					Priority: 0,
+					Routes: map[string]types.Route{
+						"route-frontend-Host-test-service-rancher-localhost": {
+							Rule: "Host:test.service.rancher.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test-service": {
+					Servers: map[string]types.Server{
+						"server-0": {
+							URL:    "http://127.0.0.1:80",
+							Weight: label.DefaultWeight,
+						},
+					},
+					CircuitBreaker: nil,
+				},
+			},
+		},
+		{
+			desc: "with forward auth",
+			services: []rancherData{
+				{
+					Name: "test/service",
+					Labels: map[string]string{
+						label.TraefikPort:                                     "80",
+						label.TraefikFrontendAuthForwardAddress:               "auth.server",
+						label.TraefikFrontendAuthForwardTrustForwardHeader:    "true",
+						label.TraefikFrontendAuthForwardTLSCa:                 "ca.crt",
+						label.TraefikFrontendAuthForwardTLSCaOptional:         "true",
+						label.TraefikFrontendAuthForwardTLSCert:               "server.crt",
+						label.TraefikFrontendAuthForwardTLSKey:                "server.key",
+						label.TraefikFrontendAuthForwardTLSInsecureSkipVerify: "true",
+						label.TraefikFrontendAuthHeaderField:                  "X-WebAuth-User",
+					},
+					Health:     "healthy",
+					Containers: []string{"127.0.0.1"},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-Host-test-service-rancher-localhost": {
+					Backend:        "backend-test-service",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					Auth: &types.Auth{
+						HeaderField: "X-WebAuth-User",
+						Forward: &types.Forward{
+							Address:            "auth.server",
+							TrustForwardHeader: true,
+							TLS: &types.ClientTLS{
+								CA:                 "ca.crt",
+								CAOptional:         true,
+								InsecureSkipVerify: true,
+								Cert:               "server.crt",
+								Key:                "server.key",
+							},
+						},
+					},
+					Priority: 0,
 					Routes: map[string]types.Route{
 						"route-frontend-Host-test-service-rancher-localhost": {
 							Rule: "Host:test.service.rancher.localhost",
