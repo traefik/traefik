@@ -209,9 +209,47 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
       "{{.}}",
       {{end}}]
 
-    basicAuth = [{{range getBasicAuth $service.TraefikLabels }}
-      "{{.}}",
-      {{end}}]
+    {{ $auth := getAuth $service.TraefikLabels }}
+
+    {{if $auth }}
+    [frontends."frontend-{{ $service.ServiceName }}".auth]
+      headerField = "{{ $auth.HeaderField }}"
+
+      {{if $auth.Forward }}
+      [frontends.frontend-{{ $service.ServiceName }}.auth.forward]
+        address = "{{ $auth.Forward.Address }}"
+        trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
+
+        {{if $auth.Forward.TLS }}
+        [frontends.frontend-{{ $service.ServiceName }}.auth.forward.tls]
+          ca = "{{ $auth.Forward.TLS.CA }}"
+          caOptional = {{ $auth.Forward.TLS.CAOptional }}
+          cert = "{{ $auth.Forward.TLS.Cert }}"
+          key = "{{ $auth.Forward.TLS.Key }}"
+          insecureSkipVerify = {{ $auth.Forward.TLS.InsecureSkipVerify }}
+        {{end}}
+      {{end}}
+
+      {{if $auth.Basic }}
+      [frontends.frontend-{{ $service.ServiceName }}.auth.basic]
+        {{if $auth.Basic.Users }}
+        users = [{{range $auth.Basic.Users }}
+          "{{.}}",
+          {{end}}]
+        {{end}}
+        usersFile = "{{ $auth.Basic.UsersFile }}"
+      {{end}}
+
+      {{if $auth.Digest }}
+      [frontends.frontend-{{ $service.ServiceName }}.auth.digest]
+        {{if $auth.Digest.Users }}
+        users = [{{range $auth.Digest.Users }}
+          "{{.}}",
+          {{end}}]
+        {{end}}
+        usersFile = "{{ $auth.Digest.UsersFile }}"
+      {{end}}
+    {{end}}
 
     {{ $whitelist := getWhiteList $service.TraefikLabels }}
     {{if $whitelist }}
