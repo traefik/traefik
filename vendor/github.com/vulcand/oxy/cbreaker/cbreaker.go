@@ -103,7 +103,7 @@ func (c *CircuitBreaker) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if log.GetLevel() >= log.DebugLevel {
 		logEntry := log.WithField("Request", utils.DumpHttpRequest(req))
 		logEntry.Debug("vulcand/oxy/circuitbreaker: begin ServeHttp on request")
-		defer logEntry.Debug("vulcand/oxy/circuitbreaker: competed ServeHttp on request")
+		defer logEntry.Debug("vulcand/oxy/circuitbreaker: completed ServeHttp on request")
 	}
 	if c.activateFallback(w, req) {
 		c.fallback.ServeHTTP(w, req)
@@ -156,7 +156,7 @@ func (c *CircuitBreaker) activateFallback(w http.ResponseWriter, req *http.Reque
 
 func (c *CircuitBreaker) serve(w http.ResponseWriter, req *http.Request) {
 	start := c.clock.UtcNow()
-	p := utils.NewSimpleProxyWriter(w)
+	p := utils.NewProxyWriter(w)
 
 	c.next.ServeHTTP(p, req)
 

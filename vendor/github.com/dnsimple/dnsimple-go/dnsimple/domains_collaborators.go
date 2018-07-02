@@ -6,10 +6,10 @@ import (
 
 // Collaborator represents a Collaborator in DNSimple.
 type Collaborator struct {
-	ID         int    `json:"id,omitempty"`
-	DomainID   int    `json:"domain_id,omitempty"`
+	ID         int64  `json:"id,omitempty"`
+	DomainID   int64  `json:"domain_id,omitempty"`
 	DomainName string `json:"domain_name,omitempty"`
-	UserID     int    `json:"user_id,omitempty"`
+	UserID     int64  `json:"user_id,omitempty"`
 	UserEmail  string `json:"user_email,omitempty"`
 	Invitation bool   `json:"invitation,omitempty"`
 	CreatedAt  string `json:"created_at,omitempty"`
@@ -17,9 +17,9 @@ type Collaborator struct {
 	AcceptedAt string `json:"accepted_at,omitempty"`
 }
 
-func collaboratorPath(accountID, domainIdentifier, collaboratorID string) (path string) {
+func collaboratorPath(accountID, domainIdentifier string, collaboratorID int64) (path string) {
 	path = fmt.Sprintf("%v/collaborators", domainPath(accountID, domainIdentifier))
-	if collaboratorID != "" {
+	if collaboratorID != 0 {
 		path += fmt.Sprintf("/%v", collaboratorID)
 	}
 	return
@@ -46,7 +46,7 @@ type collaboratorsResponse struct {
 //
 // See https://developer.dnsimple.com/v2/domains/collaborators#list
 func (s *DomainsService) ListCollaborators(accountID, domainIdentifier string, options *ListOptions) (*collaboratorsResponse, error) {
-	path := versioned(collaboratorPath(accountID, domainIdentifier, ""))
+	path := versioned(collaboratorPath(accountID, domainIdentifier, 0))
 	collaboratorsResponse := &collaboratorsResponse{}
 
 	path, err := addURLQueryOptions(path, options)
@@ -67,7 +67,7 @@ func (s *DomainsService) ListCollaborators(accountID, domainIdentifier string, o
 //
 // See https://developer.dnsimple.com/v2/domains/collaborators#add
 func (s *DomainsService) AddCollaborator(accountID string, domainIdentifier string, attributes CollaboratorAttributes) (*collaboratorResponse, error) {
-	path := versioned(collaboratorPath(accountID, domainIdentifier, ""))
+	path := versioned(collaboratorPath(accountID, domainIdentifier, 0))
 	collaboratorResponse := &collaboratorResponse{}
 
 	resp, err := s.client.post(path, attributes, collaboratorResponse)
@@ -81,8 +81,8 @@ func (s *DomainsService) AddCollaborator(accountID string, domainIdentifier stri
 
 // RemoveCollaborator PERMANENTLY deletes a domain from the account.
 //
-// See https://developer.dnsimple.com/v2/domains/collaborators#add
-func (s *DomainsService) RemoveCollaborator(accountID string, domainIdentifier string, collaboratorID string) (*collaboratorResponse, error) {
+// See https://developer.dnsimple.com/v2/domains/collaborators#remove
+func (s *DomainsService) RemoveCollaborator(accountID string, domainIdentifier string, collaboratorID int64) (*collaboratorResponse, error) {
 	path := versioned(collaboratorPath(accountID, domainIdentifier, collaboratorID))
 	collaboratorResponse := &collaboratorResponse{}
 

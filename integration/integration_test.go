@@ -22,6 +22,7 @@ import (
 var integration = flag.Bool("integration", false, "run integration tests")
 var container = flag.Bool("container", false, "run container integration tests")
 var host = flag.Bool("host", false, "run host integration tests")
+var showLog = flag.Bool("tlog", false, "always show Traefik logs")
 
 func Test(t *testing.T) {
 	check.TestingT(t)
@@ -115,7 +116,7 @@ func (s *BaseSuite) cmdTraefik(args ...string) (*exec.Cmd, *bytes.Buffer) {
 func (s *BaseSuite) traefikCmd(args ...string) (*exec.Cmd, func(*check.C)) {
 	cmd, out := s.cmdTraefik(args...)
 	return cmd, func(c *check.C) {
-		if c.Failed() {
+		if c.Failed() || *showLog {
 			s.displayTraefikLog(c, out)
 		}
 	}

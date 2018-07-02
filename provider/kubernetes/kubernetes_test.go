@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"errors"
 	"fmt"
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -31,7 +32,18 @@ func TestLoadIngresses(t *testing.T) {
 				iRule(iHost("bar"),
 					iPaths(
 						onePath(iBackend("service3", intstr.FromString("https"))),
-						onePath(iBackend("service2", intstr.FromInt(802)))),
+						onePath(iBackend("service2", intstr.FromInt(802))),
+					),
+				),
+				iRule(iHost("service5"),
+					iPaths(
+						onePath(iBackend("service5", intstr.FromInt(8888))),
+					),
+				),
+				iRule(iHost("service6"),
+					iPaths(
+						onePath(iBackend("service6", intstr.FromInt(80))),
+					),
 				),
 			),
 		),
@@ -75,6 +87,24 @@ func TestLoadIngresses(t *testing.T) {
 				sExternalName("example.com"),
 				sPorts(sPort(443, "https"))),
 		),
+		buildService(
+			sName("service5"),
+			sNamespace("testing"),
+			sUID("5"),
+			sSpec(
+				clusterIP("10.0.0.5"),
+				sType("ExternalName"),
+				sExternalName("example.com"),
+				sPorts(sPort(8888, "http"))),
+		),
+		buildService(
+			sName("service6"),
+			sNamespace("testing"),
+			sUID("6"),
+			sSpec(
+				clusterIP("10.0.0.6"),
+				sPorts(sPort(80, ""))),
+		),
 	}
 
 	endpoints := []*corev1.Endpoints{
@@ -106,6 +136,14 @@ func TestLoadIngresses(t *testing.T) {
 					ePort(9443, "https")),
 			),
 		),
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service6"),
+			eUID("6"),
+			subset(
+				eAddresses(eAddressWithTargetRef("http://10.15.0.3:80", "10.15.0.3")),
+				ePorts(ePort(80, ""))),
+		),
 	}
 
 	watchChan := make(chan interface{})
@@ -130,13 +168,28 @@ func TestLoadIngresses(t *testing.T) {
 			),
 			backend("foo/namedthing",
 				lbMethod("wrr"),
-				servers(server("https://example.com", weight(1))),
+				servers(
+					server("https://example.com", weight(1)),
+				),
 			),
 			backend("bar",
 				lbMethod("wrr"),
 				servers(
 					server("https://10.15.0.1:8443", weight(1)),
-					server("https://10.15.0.2:9443", weight(1))),
+					server("https://10.15.0.2:9443", weight(1)),
+				),
+			),
+			backend("service5",
+				lbMethod("wrr"),
+				servers(
+					server("http://example.com:8888", weight(1)),
+				),
+			),
+			backend("service6",
+				lbMethod("wrr"),
+				servers(
+					server("http://10.15.0.3:80", weight(1)),
+				),
 			),
 		),
 		frontends(
@@ -156,9 +209,16 @@ func TestLoadIngresses(t *testing.T) {
 				passHostHeader(),
 				routes(route("bar", "Host:bar")),
 			),
+			frontend("service5",
+				passHostHeader(),
+				routes(route("service5", "Host:service5")),
+			),
+			frontend("service6",
+				passHostHeader(),
+				routes(route("service6", "Host:service6")),
+			),
 		),
 	)
-
 	assert.Equal(t, expected, actual)
 }
 
@@ -1105,8 +1165,17 @@ func TestIngressClassAnnotation(t *testing.T) {
 			iAnnotation(annotationKubernetesIngressClass, traefikDefaultIngressClass+"-other"),
 			iRules(
 				iRule(
-					iHost("herp"),
-					iPaths(onePath(iPath("/derp"), iBackend("service1", intstr.FromInt(80))))),
+					iHost("foo"),
+					iPaths(onePath(iPath("/bar"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesIngressClass, "custom"),
+			iRules(
+				iRule(
+					iHost("foo"),
+					iPaths(onePath(iPath("/bar"), iBackend("service2", intstr.FromInt(80))))),
 			),
 		),
 	}
@@ -1122,12 +1191,32 @@ func TestIngressClassAnnotation(t *testing.T) {
 				sExternalName("example.com"),
 				sPorts(sPort(80, "http"))),
 		),
+		buildService(
+			sName("service2"),
+			sNamespace("testing"),
+			sUID("2"),
+			sSpec(
+				clusterIP("10.0.0.2"),
+				sPorts(sPort(80, "http"))),
+		),
+	}
+
+	endpoints := []*corev1.Endpoints{
+		buildEndpoint(
+			eName("service2"),
+			eUID("1"),
+			eNamespace("testing"),
+			subset(
+				eAddresses(eAddress("10.10.0.1")),
+				ePorts(ePort(80, "http"))),
+		),
 	}
 
 	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
+		endpoints: endpoints,
 		watchChan: watchChan,
 	}
 
@@ -1187,19 +1276,39 @@ func TestIngressClassAnnotation(t *testing.T) {
 			provider: Provider{IngressClass: traefikDefaultRealm + "-other"},
 			expected: buildConfiguration(
 				backends(
-					backend("herp/derp",
+					backend("foo/bar",
 						servers(
-							server("http://example.com", weight(1)),
 							server("http://example.com", weight(1))),
 						lbMethod("wrr"),
 					),
 				),
 				frontends(
-					frontend("herp/derp",
+					frontend("foo/bar",
 						passHostHeader(),
 						routes(
-							route("/derp", "PathPrefix:/derp"),
-							route("herp", "Host:herp")),
+							route("/bar", "PathPrefix:/bar"),
+							route("foo", "Host:foo")),
+					),
+				),
+			),
+		},
+		{
+			desc:     "Provided IngressClass annotation",
+			provider: Provider{IngressClass: "custom"},
+			expected: buildConfiguration(
+				backends(
+					backend("foo/bar",
+						servers(
+							server("http://10.10.0.1:80", weight(1))),
+						lbMethod("wrr"),
+					),
+				),
+				frontends(
+					frontend("foo/bar",
+						passHostHeader(),
+						routes(
+							route("/bar", "PathPrefix:/bar"),
+							route("foo", "Host:foo")),
 					),
 				),
 			),
@@ -1517,7 +1626,6 @@ func TestMissingResources(t *testing.T) {
 			eName("missing_endpoint_subsets_service"),
 			eUID("4"),
 			eNamespace("testing"),
-			subset(),
 		),
 	}
 
@@ -2161,5 +2269,145 @@ func TestProviderUpdateIngressStatus(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestPercentageWeightServiceAnnotation(t *testing.T) {
+	ingresses := []*extensionsv1beta1.Ingress{
+		buildIngress(
+			iAnnotation(annotationKubernetesServiceWeights, `
+service1: 10%
+`),
+			iNamespace("testing"),
+			iRules(
+				iRule(
+					iHost("host1"),
+					iPaths(
+						onePath(iPath("/foo"), iBackend("service1", intstr.FromString("8080"))),
+						onePath(iPath("/foo"), iBackend("service2", intstr.FromString("7070"))),
+						onePath(iPath("/bar"), iBackend("service2", intstr.FromString("7070"))),
+					)),
+			),
+		),
+	}
+	services := []*corev1.Service{
+		buildService(
+			sName("service1"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sPorts(sPort(8080, "")),
+			),
+		),
+		buildService(
+			sName("service2"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sPorts(sPort(7070, "")),
+			),
+		),
+	}
+
+	endpoints := []*corev1.Endpoints{
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service1"),
+			eUID("1"),
+			subset(
+				eAddresses(
+					eAddress("10.10.0.1"),
+					eAddress("10.10.0.2"),
+				),
+				ePorts(ePort(8080, "")),
+			),
+		),
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service2"),
+			eUID("1"),
+			subset(
+				eAddresses(
+					eAddress("10.10.0.3"),
+					eAddress("10.10.0.4"),
+				),
+				ePorts(ePort(7070, "")),
+			),
+		),
+	}
+
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		endpoints: endpoints,
+		watchChan: watchChan,
+	}
+	provider := Provider{}
+
+	actual, err := provider.loadIngresses(client)
+	require.NoError(t, err, "error loading ingresses")
+
+	expected := buildConfiguration(
+		backends(
+			backend("host1/foo",
+				servers(
+					server("http://10.10.0.1:8080", weight(int(newPercentageValueFromFloat64(0.05)))),
+					server("http://10.10.0.2:8080", weight(int(newPercentageValueFromFloat64(0.05)))),
+					server("http://10.10.0.3:7070", weight(int(newPercentageValueFromFloat64(0.45)))),
+					server("http://10.10.0.4:7070", weight(int(newPercentageValueFromFloat64(0.45)))),
+				),
+				lbMethod("wrr"),
+			),
+			backend("host1/bar",
+				servers(
+					server("http://10.10.0.3:7070", weight(int(newPercentageValueFromFloat64(0.5)))),
+					server("http://10.10.0.4:7070", weight(int(newPercentageValueFromFloat64(0.5)))),
+				),
+				lbMethod("wrr"),
+			),
+		),
+		frontends(
+			frontend("host1/bar",
+				passHostHeader(),
+				routes(
+					route("/bar", "PathPrefix:/bar"),
+					route("host1", "Host:host1")),
+			),
+			frontend("host1/foo",
+				passHostHeader(),
+				routes(
+					route("/foo", "PathPrefix:/foo"),
+					route("host1", "Host:host1")),
+			),
+		),
+	)
+
+	assert.Equal(t, expected, actual, "error loading percentage weight annotation")
+}
+
+func TestProviderNewK8sInClusterClient(t *testing.T) {
+	p := Provider{}
+	os.Setenv("KUBERNETES_SERVICE_HOST", "localhost")
+	os.Setenv("KUBERNETES_SERVICE_PORT", "443")
+	defer os.Clearenv()
+	_, err := p.newK8sClient("")
+	assert.EqualError(t, err, "failed to create in-cluster configuration: open /var/run/secrets/kubernetes.io/serviceaccount/token: no such file or directory")
+}
+
+func TestProviderNewK8sInClusterClientFailLabelSel(t *testing.T) {
+	p := Provider{}
+	os.Setenv("KUBERNETES_SERVICE_HOST", "localhost")
+	os.Setenv("KUBERNETES_SERVICE_PORT", "443")
+	defer os.Clearenv()
+	_, err := p.newK8sClient("%")
+	assert.EqualError(t, err, "invalid ingress label selector: \"%\"")
+}
+
+func TestProviderNewK8sOutOfClusterClient(t *testing.T) {
+	p := Provider{}
+	p.Endpoint = "localhost"
+	_, err := p.newK8sClient("")
+	assert.NoError(t, err)
 }

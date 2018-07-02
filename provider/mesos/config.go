@@ -3,6 +3,7 @@ package mesos
 import (
 	"fmt"
 	"math"
+	"net"
 	"strconv"
 	"strings"
 	"text/template"
@@ -17,12 +18,15 @@ import (
 type taskData struct {
 	state.Task
 	TraefikLabels map[string]string
+	SegmentName   string
 }
 
 func (p *Provider) buildConfigurationV2(tasks []state.Task) *types.Configuration {
 	var mesosFuncMap = template.FuncMap{
-		"getDomain": label.GetFuncString(label.TraefikDomain, p.Domain),
-		"getID":     getID,
+		"getDomain":           label.GetFuncString(label.TraefikDomain, p.Domain),
+		"getSubDomain":        p.getSubDomain,
+		"getSegmentSubDomain": p.getSegmentSubDomain,
+		"getID":               getID,
 
 		// Backend functions
 		"getBackendName":    getBackendName,
@@ -36,35 +40,22 @@ func (p *Provider) buildConfigurationV2(tasks []state.Task) *types.Configuration
 		"getServerPort":     p.getServerPort,
 
 		// Frontend functions
-		"getFrontEndName":   getFrontendName,
-		"getEntryPoints":    label.GetFuncSliceString(label.TraefikFrontendEntryPoints),
-		"getBasicAuth":      label.GetFuncSliceString(label.TraefikFrontendAuthBasic),
-		"getPriority":       label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
-		"getPassHostHeader": label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
-		"getPassTLSCert":    label.GetFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getFrontendRule":   p.getFrontendRule,
-		"getRedirect":       label.GetRedirect,
-		"getErrorPages":     label.GetErrorPages,
-		"getRateLimit":      label.GetRateLimit,
-		"getHeaders":        label.GetHeaders,
-		"getWhiteList":      label.GetWhiteList,
+		"getSegmentNameSuffix": getSegmentNameSuffix,
+		"getFrontEndName":      getFrontendName,
+		"getEntryPoints":       label.GetFuncSliceString(label.TraefikFrontendEntryPoints),
+		"getBasicAuth":         label.GetFuncSliceString(label.TraefikFrontendAuthBasic),
+		"getPriority":          label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
+		"getPassHostHeader":    label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
+		"getPassTLSCert":       label.GetFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
+		"getFrontendRule":      p.getFrontendRule,
+		"getRedirect":          label.GetRedirect,
+		"getErrorPages":        label.GetErrorPages,
+		"getRateLimit":         label.GetRateLimit,
+		"getHeaders":           label.GetHeaders,
+		"getWhiteList":         label.GetWhiteList,
 	}
 
-	// filter tasks
-	appsTasks := make(map[string][]taskData)
-	for _, task := range tasks {
-		data := taskData{
-			Task:          task,
-			TraefikLabels: extractLabels(task),
-		}
-		if taskFilter(data, p.ExposedByDefault) {
-			if _, ok := appsTasks[task.DiscoveryInfo.Name]; !ok {
-				appsTasks[task.DiscoveryInfo.Name] = []taskData{data}
-			} else {
-				appsTasks[task.DiscoveryInfo.Name] = append(appsTasks[task.DiscoveryInfo.Name], data)
-			}
-		}
-	}
+	appsTasks := p.filterTasks(tasks)
 
 	templateObjects := struct {
 		ApplicationsTasks map[string][]taskData
@@ -82,19 +73,47 @@ func (p *Provider) buildConfigurationV2(tasks []state.Task) *types.Configuration
 	return configuration
 }
 
-func taskFilter(task taskData, exposedByDefaultFlag bool) bool {
-	if len(task.DiscoveryInfo.Ports.DiscoveryPorts) == 0 {
-		log.Debugf("Filtering Mesos task without port %s", task.Name)
-		return false
+func (p *Provider) filterTasks(tasks []state.Task) map[string][]taskData {
+	appsTasks := make(map[string][]taskData)
+
+	for _, task := range tasks {
+		taskLabels := label.ExtractTraefikLabels(extractLabels(task))
+		for segmentName, traefikLabels := range taskLabels {
+			data := taskData{
+				Task:          task,
+				TraefikLabels: traefikLabels,
+				SegmentName:   segmentName,
+			}
+
+			if taskFilter(data, p.ExposedByDefault) {
+				name := getName(data)
+				if _, ok := appsTasks[name]; !ok {
+					appsTasks[name] = []taskData{data}
+				} else {
+					appsTasks[name] = append(appsTasks[name], data)
+				}
+			}
+		}
 	}
 
+	return appsTasks
+}
+
+func taskFilter(task taskData, exposedByDefaultFlag bool) bool {
+	name := getName(task)
+
+	if len(task.DiscoveryInfo.Ports.DiscoveryPorts) == 0 {
+		log.Debugf("Filtering Mesos task without port %s", name)
+		return false
+	}
 	if !isEnabled(task, exposedByDefaultFlag) {
-		log.Debugf("Filtering disabled Mesos task %s", task.DiscoveryInfo.Name)
+		log.Debugf("Filtering disabled Mesos task %s", name)
 		return false
 	}
 
 	// filter indeterminable task port
 	portIndexLabel := label.GetStringValue(task.TraefikLabels, label.TraefikPortIndex, "")
+	portNameLabel := label.GetStringValue(task.TraefikLabels, label.TraefikPortName, "")
 	portValueLabel := label.GetStringValue(task.TraefikLabels, label.TraefikPort, "")
 	if portIndexLabel != "" && portValueLabel != "" {
 		log.Debugf("Filtering Mesos task %s specifying both %q' and %q labels", task.Name, label.TraefikPortIndex, label.TraefikPort)
@@ -127,10 +146,24 @@ func taskFilter(task taskData, exposedByDefaultFlag bool) bool {
 			return false
 		}
 	}
+	if portNameLabel != "" {
+		var foundPort bool
+		for _, exposedPort := range task.DiscoveryInfo.Ports.DiscoveryPorts {
+			if portNameLabel == exposedPort.Name {
+				foundPort = true
+				break
+			}
+		}
+
+		if !foundPort {
+			log.Debugf("Filtering Mesos task %s without a matching port for %q label", task.Name, label.TraefikPortName)
+			return false
+		}
+	}
 
 	// filter healthChecks
 	if task.Statuses != nil && len(task.Statuses) > 0 && task.Statuses[0].Healthy != nil && !*task.Statuses[0].Healthy {
-		log.Debugf("Filtering Mesos task %s with bad healthCheck", task.DiscoveryInfo.Name)
+		log.Debugf("Filtering Mesos task %s with bad healthCheck", name)
 		return false
 
 	}
@@ -138,16 +171,27 @@ func taskFilter(task taskData, exposedByDefaultFlag bool) bool {
 }
 
 func getID(task taskData) string {
-	return provider.Normalize(task.ID)
+	return provider.Normalize(task.ID + getSegmentNameSuffix(task.SegmentName))
+}
+
+func getName(task taskData) string {
+	return provider.Normalize(task.DiscoveryInfo.Name + getSegmentNameSuffix(task.SegmentName))
 }
 
 func getBackendName(task taskData) string {
-	return label.GetStringValue(task.TraefikLabels, label.TraefikBackend, provider.Normalize(task.DiscoveryInfo.Name))
+	return label.GetStringValue(task.TraefikLabels, label.TraefikBackend, getName(task))
 }
 
 func getFrontendName(task taskData) string {
 	// TODO task.ID -> task.Name + task.ID
-	return provider.Normalize(task.ID)
+	return provider.Normalize(task.ID + getSegmentNameSuffix(task.SegmentName))
+}
+
+func getSegmentNameSuffix(serviceName string) string {
+	if len(serviceName) > 0 {
+		return "-service-" + provider.Normalize(serviceName)
+	}
+	return ""
 }
 
 func (p *Provider) getSubDomain(name string) string {
@@ -157,7 +201,15 @@ func (p *Provider) getSubDomain(name string) string {
 		reverseName := strings.Join(splitedName, ".")
 		return reverseName
 	}
-	return strings.Replace(strings.TrimPrefix(name, "/"), "/", "-", -1)
+	return strings.Replace(strings.Replace(strings.TrimPrefix(name, "/"), "/", "-", -1), "_", "-", -1)
+}
+
+func (p *Provider) getSegmentSubDomain(task taskData) string {
+	subDomain := strings.ToLower(p.getSubDomain(task.DiscoveryInfo.Name))
+	if len(task.SegmentName) > 0 {
+		subDomain = strings.ToLower(provider.Normalize(task.SegmentName)) + "." + subDomain
+	}
+	return subDomain
 }
 
 // getFrontendRule returns the frontend rule for the specified application, using it's label.
@@ -168,7 +220,8 @@ func (p *Provider) getFrontendRule(task taskData) string {
 	}
 
 	domain := label.GetStringValue(task.TraefikLabels, label.TraefikDomain, p.Domain)
-	return "Host:" + strings.ToLower(strings.Replace(p.getSubDomain(task.DiscoveryInfo.Name), "_", "-", -1)) + "." + domain
+
+	return "Host:" + p.getSegmentSubDomain(task) + "." + domain
 }
 
 func (p *Provider) getServers(tasks []taskData) map[string]types.Server {
@@ -185,7 +238,7 @@ func (p *Provider) getServers(tasks []taskData) map[string]types.Server {
 
 		serverName := "server-" + getID(task)
 		servers[serverName] = types.Server{
-			URL:    fmt.Sprintf("%s://%s:%s", protocol, host, port),
+			URL:    fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(host, port)),
 			Weight: getIntValue(task.TraefikLabels, label.TraefikWeight, label.DefaultWeight, math.MaxInt32),
 		}
 	}
@@ -198,13 +251,27 @@ func (p *Provider) getHost(task taskData) string {
 }
 
 func (p *Provider) getServerPort(task taskData) string {
+	if label.Has(task.TraefikLabels, label.TraefikPort) {
+		pv := label.GetIntValue(task.TraefikLabels, label.TraefikPort, 0)
+		if pv <= 0 {
+			log.Errorf("explicitly specified port %d must be larger than zero", pv)
+			return ""
+		}
+		return strconv.Itoa(pv)
+	}
+
 	plv := getIntValue(task.TraefikLabels, label.TraefikPortIndex, math.MinInt32, len(task.DiscoveryInfo.Ports.DiscoveryPorts)-1)
 	if plv >= 0 {
 		return strconv.Itoa(task.DiscoveryInfo.Ports.DiscoveryPorts[plv].Number)
 	}
 
-	if pv := label.GetStringValue(task.TraefikLabels, label.TraefikPort, ""); len(pv) > 0 {
-		return pv
+	// Find named port using traefik.portName or the segment name
+	if pn := label.GetStringValue(task.TraefikLabels, label.TraefikPortName, task.SegmentName); len(pn) > 0 {
+		for _, port := range task.DiscoveryInfo.Ports.DiscoveryPorts {
+			if pn == port.Name {
+				return strconv.Itoa(port.Number)
+			}
+		}
 	}
 
 	for _, port := range task.DiscoveryInfo.Ports.DiscoveryPorts {
@@ -224,7 +291,7 @@ func getIntValue(labels map[string]string, labelName string, defaultValue int, m
 	if value <= maxValue {
 		return value
 	}
-	log.Warnf("The value %q for %q exceed the max authorized value %q, falling back to %v.", value, labelName, maxValue, defaultValue)
+	log.Warnf("The value %d for %s exceed the max authorized value %d, falling back to %d.", value, labelName, maxValue, defaultValue)
 	return defaultValue
 }
 

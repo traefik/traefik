@@ -81,7 +81,7 @@
   # ...
 ```
 
-### InfluxDB
+## InfluxDB
 
 ```toml
 [metrics]
@@ -124,25 +124,6 @@
     # Default: ""
     #
     retentionpolicy = ""
-
-  # ...
-```
-
-## Statistics
-
-```toml
-# Metrics definition
-[metrics]
-  # ...
-
-  # Enable more detailed statistics.
-  [metrics.statistics]
-
-    # Number of recent errors logged.
-    #
-    # Default: 10
-    #
-    recentErrors = 10
 
   # ...
 ```

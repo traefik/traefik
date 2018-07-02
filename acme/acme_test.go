@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"sort"
 	"sync"
 	"testing"
 	"time"
@@ -14,7 +15,7 @@ import (
 	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
-	acme "github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
 )
 
 func TestDomainsSet(t *testing.T) {
@@ -547,6 +548,271 @@ func TestAcme_getCertificateForDomain(t *testing.T) {
 			got, found := test.dc.getCertificateForDomain(test.domain)
 			assert.Equal(t, test.expectedFound, found)
 			assert.Equal(t, test.expected, got)
+		})
+	}
+}
+
+func TestRemoveEmptyCertificates(t *testing.T) {
+	now := time.Now()
+	fooCert, fooKey, _ := generate.KeyPair("foo.com", now)
+	acmeCert, acmeKey, _ := generate.KeyPair("acme.wtf", now.Add(24*time.Hour))
+	barCert, barKey, _ := generate.KeyPair("bar.com", now)
+	testCases := []struct {
+		desc       string
+		dc         *DomainsCertificates
+		expectedDc *DomainsCertificates
+	}{
+		{
+			desc: "No empty certificate",
+			dc: &DomainsCertificates{
+				Certs: []*DomainsCertificate{
+					{
+						Certificate: &Certificate{
+							Certificate: fooCert,
+							PrivateKey:  fooKey,
+						},
+						Domains: types.Domain{
+							Main: "foo.com",
+						},
+					},
+					{
+						Certificate: &Certificate{
+							Certificate: acmeCert,
+							PrivateKey:  acmeKey,
+						},
+						Domains: types.Domain{
+							Main: "acme.wtf",
+						},
+					},
+					{
+						Certificate: &Certificate{
+							Certificate: barCert,
+							PrivateKey:  barKey,
+						},
+						Domains: types.Domain{
+							Main: "bar.com",
+						},
+					},
+				},
+			},
+			expectedDc: &DomainsCertificates{
+				Certs: []*DomainsCertificate{
+					{
+						Certificate: &Certificate{
+							Certificate: fooCert,
+							PrivateKey:  fooKey,
+						},
+						Domains: types.Domain{
+							Main: "foo.com",
+						},
+					},
+					{
+						Certificate: &Certificate{
+							Certificate: acmeCert,
+							PrivateKey:  acmeKey,
+						},
+						Domains: types.Domain{
+							Main: "acme.wtf",
+						},
+					},
+					{
+						Certificate: &Certificate{
+							Certificate: barCert,
+							PrivateKey:  barKey,
+						},
+						Domains: types.Domain{
+							Main: "bar.com",
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "First certificate is nil",
+			dc: &DomainsCertificates{
+				Certs: []*DomainsCertificate{
+					{
+						Domains: types.Domain{
+							Main: "foo.com",
+						},
+					},
+					{
+						Certificate: &Certificate{
+							Certificate: acmeCert,
+							PrivateKey:  acmeKey,
+						},
+						Domains: types.Domain{
+							Main: "acme.wtf",
+						},
+					},
+					{
+						Certificate: &Certificate{
+							Certificate: barCert,
+							PrivateKey:  barKey,
+						},
+						Domains: types.Domain{
+							Main: "bar.com",
+						},
+					},
+				},
+			},
+			expectedDc: &DomainsCertificates{
+				Certs: []*DomainsCertificate{
+					{
+						Certificate: &Certificate{
+							Certificate: acmeCert,
+							PrivateKey:  acmeKey,
+						},
+						Domains: types.Domain{
+							Main: "acme.wtf",
+						},
+					},
+					{
+						Certificate: &Certificate{
+							Certificate: nil,
+							PrivateKey:  barKey,
+						},
+						Domains: types.Domain{
+							Main: "bar.com",
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "Last certificate is empty",
+			dc: &DomainsCertificates{
+				Certs: []*DomainsCertificate{
+					{
+						Certificate: &Certificate{
+							Certificate: fooCert,
+							PrivateKey:  fooKey,
+						},
+						Domains: types.Domain{
+							Main: "foo.com",
+						},
+					},
+					{
+						Certificate: &Certificate{
+							Certificate: acmeCert,
+							PrivateKey:  acmeKey,
+						},
+						Domains: types.Domain{
+							Main: "acme.wtf",
+						},
+					},
+					{
+						Certificate: &Certificate{},
+						Domains: types.Domain{
+							Main: "bar.com",
+						},
+					},
+				},
+			},
+			expectedDc: &DomainsCertificates{
+				Certs: []*DomainsCertificate{
+					{
+						Certificate: &Certificate{
+							Certificate: fooCert,
+							PrivateKey:  fooKey,
+						},
+						Domains: types.Domain{
+							Main: "foo.com",
+						},
+					},
+					{
+						Certificate: &Certificate{
+							Certificate: acmeCert,
+							PrivateKey:  acmeKey,
+						},
+						Domains: types.Domain{
+							Main: "acme.wtf",
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "First and last certificates are nil or empty",
+			dc: &DomainsCertificates{
+				Certs: []*DomainsCertificate{
+					{
+						Domains: types.Domain{
+							Main: "foo.com",
+						},
+					},
+					{
+						Certificate: &Certificate{
+							Certificate: acmeCert,
+							PrivateKey:  acmeKey,
+						},
+						Domains: types.Domain{
+							Main: "acme.wtf",
+						},
+					},
+					{
+						Certificate: &Certificate{},
+						Domains: types.Domain{
+							Main: "bar.com",
+						},
+					},
+				},
+			},
+			expectedDc: &DomainsCertificates{
+				Certs: []*DomainsCertificate{
+					{
+						Certificate: &Certificate{
+							Certificate: acmeCert,
+							PrivateKey:  acmeKey,
+						},
+						Domains: types.Domain{
+							Main: "acme.wtf",
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "All certificates are nil or empty",
+			dc: &DomainsCertificates{
+				Certs: []*DomainsCertificate{
+					{
+						Domains: types.Domain{
+							Main: "foo.com",
+						},
+					},
+					{
+						Domains: types.Domain{
+							Main: "foo24.com",
+						},
+					},
+					{
+						Certificate: &Certificate{},
+						Domains: types.Domain{
+							Main: "bar.com",
+						},
+					},
+				},
+			},
+			expectedDc: &DomainsCertificates{
+				Certs: []*DomainsCertificate{},
+			},
+		},
+	}
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			a := &Account{DomainsCertificate: *test.dc}
+			a.Init()
+
+			assert.Equal(t, len(test.expectedDc.Certs), len(a.DomainsCertificate.Certs))
+			sort.Sort(&a.DomainsCertificate)
+			sort.Sort(test.expectedDc)
+			for key, value := range test.expectedDc.Certs {
+				assert.Equal(t, value.Domains.Main, a.DomainsCertificate.Certs[key].Domains.Main)
+			}
 		})
 	}
 }

@@ -62,7 +62,7 @@
 
 [[constraint]]
   name = "github.com/containous/staert"
-  version = "3.1.0"
+  version = "3.1.1"
 
 [[constraint]]
   name = "github.com/containous/traefik-extra-service-fabric"
@@ -181,9 +181,9 @@
   name = "github.com/vulcand/oxy"
 
 [[constraint]]
-  branch = "containous-fork"
+  branch = "master"
   name = "github.com/xenolf/lego"
-  source = "github.com/containous/lego"
+#  version = "1.0.0"
 
 [[constraint]]
   name = "google.golang.org/grpc"
@@ -260,3 +260,7 @@
 [[constraint]]
   name = "github.com/patrickmn/go-cache"
   version = "2.1.0"
+
+[[constraint]]
+  name = "gopkg.in/DataDog/dd-trace-go.v1"
+  version = "1.0.0"

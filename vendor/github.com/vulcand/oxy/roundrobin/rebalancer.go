@@ -145,10 +145,10 @@ func (rb *Rebalancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if log.GetLevel() >= log.DebugLevel {
 		logEntry := log.WithField("Request", utils.DumpHttpRequest(req))
 		logEntry.Debug("vulcand/oxy/roundrobin/rebalancer: begin ServeHttp on request")
-		defer logEntry.Debug("vulcand/oxy/roundrobin/rebalancer: competed ServeHttp on request")
+		defer logEntry.Debug("vulcand/oxy/roundrobin/rebalancer: completed ServeHttp on request")
 	}
 
-	pw := utils.NewSimpleProxyWriter(w)
+	pw := utils.NewProxyWriter(w)
 	start := rb.clock.UtcNow()
 
 	// make shallow copy of request before changing anything to avoid side effects
