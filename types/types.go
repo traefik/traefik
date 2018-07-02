@@ -184,13 +184,14 @@ type Frontend struct {
 	PassHostHeader       bool                  `json:"passHostHeader,omitempty"`
 	PassTLSCert          bool                  `json:"passTLSCert,omitempty"`
 	Priority             int                   `json:"priority"`
-	BasicAuth            []string              `json:"basicAuth"`
+	BasicAuth            []string              `json:"basicAuth"`                      // Deprecated
 	WhitelistSourceRange []string              `json:"whitelistSourceRange,omitempty"` // Deprecated
 	WhiteList            *WhiteList            `json:"whiteList,omitempty"`
 	Headers              *Headers              `json:"headers,omitempty"`
 	Errors               map[string]*ErrorPage `json:"errors,omitempty"`
 	RateLimit            *RateLimit            `json:"ratelimit,omitempty"`
 	Redirect             *Redirect             `json:"redirect,omitempty"`
+	Auth                 *Auth                 `json:"auth,omitempty"`
 }
 
 // Hash returns the hash value of a Frontend struct.

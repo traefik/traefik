@@ -108,6 +108,17 @@ func (s *Server) buildMiddlewares(frontendName string, frontend *types.Frontend,
 		middle = append(middle, handler)
 	}
 
+	// Authentication
+	if frontend.Auth != nil {
+		authMiddleware, err := mauth.NewAuthenticator(frontend.Auth, s.tracingMiddleware)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+
+		handler := s.wrapNegroniHandlerWithAccessLog(authMiddleware, fmt.Sprintf("Auth for %s", frontendName))
+		middle = append(middle, handler)
+	}
+
 	return middle, buildModifyResponse(secureMiddleware, headerMiddleware), postConfig, nil
 }
 

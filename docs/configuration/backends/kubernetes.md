@@ -140,25 +140,25 @@ If the service port defined in the ingress spec is 443, then the backend communi
 
 The following general annotations are applicable on the Ingress object:
 
-| Annotation                                                                      | Description                                                                                                                                     |
-|---------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| `traefik.ingress.kubernetes.io/buffering: <YML>`                                | (3) See [buffering](/configuration/commons/#buffering) section.                                                                                 |
-| `traefik.ingress.kubernetes.io/error-pages: <YML>`                              | (1) See [custom error pages](/configuration/commons/#custom-error-pages) section.                                                               |
-| `traefik.ingress.kubernetes.io/frontend-entry-points: http,https`               | Override the default frontend endpoints.                                                                                                        |
-| `traefik.ingress.kubernetes.io/pass-tls-cert: "true"`                           | Override the default frontend PassTLSCert value. Default: `false`.                                                                              |
-| `traefik.ingress.kubernetes.io/preserve-host: "true"`                           | Forward client `Host` header to the backend.                                                                                                    |
-| `traefik.ingress.kubernetes.io/priority: "3"`                                   | Override the default frontend rule priority.                                                                                                    |
-| `traefik.ingress.kubernetes.io/rate-limit: <YML>`                               | (2) See [rate limiting](/configuration/commons/#rate-limiting) section.                                                                         |
-| `traefik.ingress.kubernetes.io/redirect-entry-point: https`                     | Enables Redirect to another entryPoint for that frontend (e.g. HTTPS).                                                                          |
-| `traefik.ingress.kubernetes.io/redirect-permanent: "true"`                      | Return 301 instead of 302.                                                                                                                      |
-| `traefik.ingress.kubernetes.io/redirect-regex: ^http://localhost/(.*)`          | Redirect to another URL for that frontend. Must be set with `traefik.ingress.kubernetes.io/redirect-replacement`.                               |
-| `traefik.ingress.kubernetes.io/redirect-replacement: http://mydomain/$1`        | Redirect to another URL for that frontend. Must be set with `traefik.ingress.kubernetes.io/redirect-regex`.                                     |
-| `traefik.ingress.kubernetes.io/rewrite-target: /users`                          | Replaces each matched Ingress path with the specified one, and adds the old path to the `X-Replaced-Path` header.                               |
-| `traefik.ingress.kubernetes.io/rule-type: PathPrefixStrip`                      | Override the default frontend rule type. Default: `PathPrefix`.                                                                                 |
-| `traefik.ingress.kubernetes.io/whitelist-source-range: "1.2.3.0/24, fe80::/16"` | A comma-separated list of IP ranges permitted for access (6).                                                                                       |
-| `ingress.kubernetes.io/whitelist-x-forwarded-for: "true"`                       | Use `X-Forwarded-For` header as valid source of IP for the white list.                                                                          |
-| `traefik.ingress.kubernetes.io/app-root: "/index.html"`                         | Redirects all requests for `/` to the defined path. (4)                                                                                         |
-| `traefik.ingress.kubernetes.io/service-weights: <YML>`                          | Set ingress backend weights specified as percentage or decimal numbers in YAML. (5)                                                    |
+| Annotation                                                                      | Description                                                                                                       |
+|---------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| `traefik.ingress.kubernetes.io/buffering: <YML>`                                | (3) See [buffering](/configuration/commons/#buffering) section.                                                   |
+| `traefik.ingress.kubernetes.io/error-pages: <YML>`                              | (1) See [custom error pages](/configuration/commons/#custom-error-pages) section.                                 |
+| `traefik.ingress.kubernetes.io/frontend-entry-points: http,https`               | Override the default frontend endpoints.                                                                          |
+| `traefik.ingress.kubernetes.io/pass-tls-cert: "true"`                           | Override the default frontend PassTLSCert value. Default: `false`.                                                |
+| `traefik.ingress.kubernetes.io/preserve-host: "true"`                           | Forward client `Host` header to the backend.                                                                      |
+| `traefik.ingress.kubernetes.io/priority: "3"`                                   | Override the default frontend rule priority.                                                                      |
+| `traefik.ingress.kubernetes.io/rate-limit: <YML>`                               | (2) See [rate limiting](/configuration/commons/#rate-limiting) section.                                           |
+| `traefik.ingress.kubernetes.io/redirect-entry-point: https`                     | Enables Redirect to another entryPoint for that frontend (e.g. HTTPS).                                            |
+| `traefik.ingress.kubernetes.io/redirect-permanent: "true"`                      | Return 301 instead of 302.                                                                                        |
+| `traefik.ingress.kubernetes.io/redirect-regex: ^http://localhost/(.*)`          | Redirect to another URL for that frontend. Must be set with `traefik.ingress.kubernetes.io/redirect-replacement`. |
+| `traefik.ingress.kubernetes.io/redirect-replacement: http://mydomain/$1`        | Redirect to another URL for that frontend. Must be set with `traefik.ingress.kubernetes.io/redirect-regex`.       |
+| `traefik.ingress.kubernetes.io/rewrite-target: /users`                          | Replaces each matched Ingress path with the specified one, and adds the old path to the `X-Replaced-Path` header. |
+| `traefik.ingress.kubernetes.io/rule-type: PathPrefixStrip`                      | Override the default frontend rule type. Default: `PathPrefix`.                                                   |
+| `traefik.ingress.kubernetes.io/whitelist-source-range: "1.2.3.0/24, fe80::/16"` | A comma-separated list of IP ranges permitted for access (6).                                                     |
+| `ingress.kubernetes.io/whitelist-x-forwarded-for: "true"`                       | Use `X-Forwarded-For` header as valid source of IP for the white list.                                            |
+| `traefik.ingress.kubernetes.io/app-root: "/index.html"`                         | Redirects all requests for `/` to the defined path. (4)                                                           |
+| `traefik.ingress.kubernetes.io/service-weights: <YML>`                          | Set ingress backend weights specified as percentage or decimal numbers in YAML. (5)                               |
 
 
 <1> `traefik.ingress.kubernetes.io/error-pages` example:
@@ -297,14 +297,20 @@ The following security annotations are applicable on the Ingress object:
 Additional authentication annotations can be added to the Ingress object.
 The source of the authentication is a Secret object that contains the credentials.
 
-| Annotation                                    | Description                                                                                                 |
-|-----------------------------------------------|-------------------------------------------------------------------------------------------------------------|
-| `ingress.kubernetes.io/auth-type: basic`      | Contains the authentication type. The only permitted type is `basic`.                                       |
-| `ingress.kubernetes.io/auth-secret: mysecret` | Name of Secret containing the username and password with access to the paths defined in the Ingress object. |
+| Annotation                                                           | basic | digest | forward | Description                                                                                                 |
+|----------------------------------------------------------------------|-------|--------|---------|-------------------------------------------------------------------------------------------------------------|
+| `ingress.kubernetes.io/auth-type: basic`                             |   x   |   x    |    x    | Contains the authentication type: `basic`, `digest`, `forward`.                                             |
+| `ingress.kubernetes.io/auth-secret: mysecret`                        |   x   |   x    |         | Name of Secret containing the username and password with access to the paths defined in the Ingress object. |
+| `ingress.kubernetes.io/auth-header-field: X-WebAuth-User`            |   x   |   x    |         | Pass Authenticated user to application via headers.                                                         |
+| `ingress.kubernetes.io/auth-url: https://example.com`                |       |        |    x    | [The URL of the authentication server](configuration/entrypoints/#forward-authentication).                  |
+| `ingress.kubernetes.io/auth-trust-headers: false`                    |       |        |    x    | Trust `X-Forwarded-*` headers.                                                                              |
+| `ingress.kubernetes.io/auth-response-headers: X-Auth-User, X-Secret` |       |        |    x    | Copy headers from the authentication server to the request.                                                 |
+| `ingress.kubernetes.io/auth-tls-secret: secret`                      |       |        |    x    | Name of Secret containing the certificate and key for the forward auth.                                     |
+| `ingress.kubernetes.io/auth-tls-insecure`                            |       |        |    x    | If set to `true` invalid SSL certificates are accepted.                                                     |
 
 The secret must be created in the same namespace as the Ingress object.
 
-The following limitations hold:
+The following limitations hold for basic/digest auth:
 
 - The realm is not configurable; the only supported (and default) value is `traefik`.
 - The Secret must contain a single file only.
