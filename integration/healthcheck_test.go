@@ -194,7 +194,7 @@ func (s *HealthCheckSuite) TestPortOverload(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	frontendHealthReq.Host = "test.localhost"
 
-	//We test bad gateway because we use an invalid port for the backend
+	// We test bad gateway because we use an invalid port for the backend
 	err = try.Request(frontendHealthReq, 500*time.Millisecond, try.StatusCodeIs(http.StatusBadGateway))
 	c.Assert(err, checker.IsNil)
 

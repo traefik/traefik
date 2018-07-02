@@ -227,7 +227,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 					Cluster: &c,
 				})
 				if err != nil {
-					log.Errorf("Unable to describe tasks for %s", page.TaskArns)
+					log.Errorf("Unable to describe tasks for %v", page.TaskArns)
 				} else {
 					for _, t := range resp.Tasks {
 						tasks[aws.StringValue(t.TaskArn)] = t
@@ -395,20 +395,4 @@ func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types
 	}
 
 	return p.buildConfiguration(instances)
-}
-
-// Provider expects no more than 100 parameters be passed to a DescribeTask call; thus, pack
-// each string into an array capped at 100 elements
-func chunkedTaskArns(tasks []*string) [][]*string {
-	var chunkedTasks [][]*string
-	for i := 0; i < len(tasks); i += 100 {
-		var sliceEnd int
-		if i+100 < len(tasks) {
-			sliceEnd = i + 100
-		} else {
-			sliceEnd = len(tasks)
-		}
-		chunkedTasks = append(chunkedTasks, tasks[i:sliceEnd])
-	}
-	return chunkedTasks
 }

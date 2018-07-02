@@ -8,7 +8,7 @@ import (
 
 	"github.com/containous/traefik/integration/try"
 	"github.com/containous/traefik/provider/label"
-	marathon "github.com/gambol99/go-marathon"
+	"github.com/gambol99/go-marathon"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
 )

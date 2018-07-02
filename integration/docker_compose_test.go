@@ -41,7 +41,7 @@ func (s *DockerComposeSuite) TestComposeScale(c *check.C) {
 
 	s.composeProject.Scale(c, composeService, serviceCount)
 
-	file := s.adaptFileForHost(c, "fixtures/docker/simple.toml")
+	file := s.adaptFileForHost(c, "fixtures/docker/minimal.toml")
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))

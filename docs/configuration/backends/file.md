@@ -81,7 +81,7 @@ Træfik can be configured with a file.
         trustForwardHeader = true
         authResponseHeaders = ["X-Auth-User"]
         [frontends.frontend1.auth.forward.tls]
-          ca =  [ "path/to/local.crt"]
+          ca = "path/to/local.crt"
           caOptional = true
           cert = "path/to/foo.cert"
           key = "path/to/foo.key"

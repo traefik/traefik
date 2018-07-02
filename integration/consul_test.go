@@ -282,7 +282,7 @@ func (s *ConsulSuite) TestGlobalConfiguration(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, try.BodyContains("Path:/test"))
 	c.Assert(err, checker.IsNil)
 
-	//check
+	// check
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8001/", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = "test.localhost"
@@ -469,7 +469,7 @@ func datastoreContains(datastore *cluster.Datastore, expectedValue string) func(
 	return func() error {
 		kvStruct := datastore.Get().(*TestStruct)
 		if kvStruct.String != expectedValue {
-			return fmt.Errorf("Got %s, wanted %s", kvStruct.String, expectedValue)
+			return fmt.Errorf("got %s, wanted %s", kvStruct.String, expectedValue)
 		}
 		return nil
 	}

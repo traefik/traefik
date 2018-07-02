@@ -279,7 +279,7 @@ func (s *WebsocketSuite) TestSSLTermination(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 10*time.Second, try.BodyContains("127.0.0.1"))
 	c.Assert(err, checker.IsNil)
 
-	//Add client self-signed cert
+	// Add client self-signed cert
 	roots := x509.NewCertPool()
 	certContent, err := ioutil.ReadFile("./resources/tls/local.cert")
 	c.Assert(err, checker.IsNil)
@@ -487,7 +487,7 @@ func (s *WebsocketSuite) TestSSLhttp2(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 10*time.Second, try.BodyContains("127.0.0.1"))
 	c.Assert(err, checker.IsNil)
 
-	//Add client self-signed cert
+	// Add client self-signed cert
 	roots := x509.NewCertPool()
 	certContent, err := ioutil.ReadFile("./resources/tls/local.cert")
 	c.Assert(err, checker.IsNil)

@@ -56,7 +56,7 @@
         trustForwardHeader = true
         authResponseHeaders = ["X-Auth-User"]
         [entryPoints.http.auth.forward.tls]
-          ca =  [ "path/to/local.crt"]
+          ca = "path/to/local.crt"
           caOptional = true
           cert = "path/to/foo.cert"
           key = "path/to/foo.key"
@@ -347,7 +347,7 @@ Otherwise, the response from the authentication server is returned.
       # Optional
       #
       [entryPoints.http.auth.forward.tls]
-      ca =  [ "path/to/local.crt"]
+      ca = "path/to/local.crt"
       caOptional = true
       cert = "path/to/foo.cert"
       key = "path/to/foo.key"

@@ -154,17 +154,16 @@ func (w *influxDBWriter) Write(bp influxdb.BatchPoints) error {
 	return nil
 }
 
-func (w *influxDBWriter) initWriteClient() (c influxdb.Client, err error) {
+func (w *influxDBWriter) initWriteClient() (influxdb.Client, error) {
 	if w.config.Protocol == "http" {
-		c, err = influxdb.NewHTTPClient(influxdb.HTTPConfig{
-			Addr: w.config.Address,
-		})
-	} else {
-		c, err = influxdb.NewUDPClient(influxdb.UDPConfig{
+		return influxdb.NewHTTPClient(influxdb.HTTPConfig{
 			Addr: w.config.Address,
 		})
 	}
-	return
+
+	return influxdb.NewUDPClient(influxdb.UDPConfig{
+		Addr: w.config.Address,
+	})
 }
 
 func (w *influxDBWriter) handleWriteError(c influxdb.Client, writeErr error) error {

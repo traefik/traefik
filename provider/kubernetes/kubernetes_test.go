@@ -2165,7 +2165,7 @@ func TestTLSSecretLoad(t *testing.T) {
 			},
 		},
 	}
-	endpoints := []*corev1.Endpoints{}
+	var endpoints []*corev1.Endpoints
 	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
