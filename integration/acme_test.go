@@ -91,7 +91,7 @@ func (s *AcmeSuite) SetUpSuite(c *check.C) {
 		c.Fatal(err)
 	}
 
-	// wait for boulder
+	// wait for peddle
 	req := testhelpers.MustNewRequest(http.MethodGet, s.getAcmeURL(), nil)
 
 	client := &http.Client{
@@ -310,7 +310,8 @@ func (s *AcmeSuite) TestTLSALPN01OnHostRule(c *check.C) {
 		traefikConfFilePath: "fixtures/acme/acme-base.toml",
 		template: templateModel{
 			Acme: acme.Configuration{
-				OnHostRule: true,
+				TLSChallenge: &acme.TLSChallenge{},
+				OnHostRule:   true,
 			},
 		},
 		expectedCommonName: acmeDomain,
@@ -325,7 +326,8 @@ func (s *AcmeSuite) TestTLSALPN01OnDemand(c *check.C) {
 		traefikConfFilePath: "fixtures/acme/acme-base.toml",
 		template: templateModel{
 			Acme: acme.Configuration{
-				OnDemand: true,
+				TLSChallenge: &acme.TLSChallenge{},
+				OnDemand:     true,
 			},
 		},
 		expectedCommonName: acmeDomain,
@@ -340,6 +342,7 @@ func (s *AcmeSuite) TestTLSALPN01DomainsAtStart(c *check.C) {
 		traefikConfFilePath: "fixtures/acme/acme-base.toml",
 		template: templateModel{
 			Acme: acme.Configuration{
+				TLSChallenge: &acme.TLSChallenge{},
 				Domains: types.Domains{types.Domain{
 					Main: "traefik.acme.wtf",
 				}},
@@ -357,6 +360,7 @@ func (s *AcmeSuite) TestTLSALPN01DomainsInSANAtStart(c *check.C) {
 		traefikConfFilePath: "fixtures/acme/acme-base.toml",
 		template: templateModel{
 			Acme: acme.Configuration{
+				TLSChallenge: &acme.TLSChallenge{},
 				Domains: types.Domains{types.Domain{
 					Main: "acme.wtf",
 					SANs: []string{"traefik.acme.wtf"},

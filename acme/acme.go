@@ -51,6 +51,7 @@ type ACME struct {
 	KeyType               string                      `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'. Default to 'RSA4096'"`
 	DNSChallenge          *acmeprovider.DNSChallenge  `description:"Activate DNS-01 Challenge"`
 	HTTPChallenge         *acmeprovider.HTTPChallenge `description:"Activate HTTP-01 Challenge"`
+	TLSChallenge          *acmeprovider.TLSChallenge  `description:"Activate TLS-ALPN-01 Challenge"`
 	DNSProvider           string                      `description:"(Deprecated) Activate DNS-01 Challenge"`                                                                    // Deprecated
 	DelayDontCheckDNS     flaeg.Duration              `description:"(Deprecated) Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."` // Deprecated
 	ACMELogging           bool                        `description:"Enable debug logging of ACME actions."`
@@ -457,10 +458,14 @@ func (a *ACME) buildACMEClient(account *Account) (*acme.Client, error) {
 	}
 
 	// TLS Challenge
-	log.Debug("Using TLS Challenge provider.")
-	client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.DNS01})
-	err = client.SetChallengeProvider(acme.TLSALPN01, a.challengeTLSProvider)
-	return client, err
+	if a.TLSChallenge != nil {
+		log.Debug("Using TLS Challenge provider.")
+		client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.DNS01})
+		err = client.SetChallengeProvider(acme.TLSALPN01, a.challengeTLSProvider)
+		return client, err
+	}
+
+	return nil, errors.New("ACME challenge not specified, please select TLS or HTTP or DNS Challenge")
 }
 
 func (a *ACME) loadCertificateOnDemand(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {

@@ -201,7 +201,7 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 			}
 
 			// TLS ALPN 01
-			if acmeprovider.HTTPChallenge == nil && acmeprovider.DNSChallenge == nil {
+			if acmeprovider.HTTPChallenge == nil && acmeprovider.DNSChallenge == nil && acmeprovider.TLSChallenge != nil {
 				entryPoint.TLSALPNGetter = acmeprovider.GetTLSALPNCertificate
 			}
 

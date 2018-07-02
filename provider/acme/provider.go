@@ -43,6 +43,7 @@ type Configuration struct {
 	OnDemand      bool           `description:"Enable on demand certificate generation. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."` // Deprecated
 	DNSChallenge  *DNSChallenge  `description:"Activate DNS-01 Challenge"`
 	HTTPChallenge *HTTPChallenge `description:"Activate HTTP-01 Challenge"`
+	TLSChallenge  *TLSChallenge  `description:"Activate TLS-ALPN-01 Challenge"`
 	Domains       []types.Domain `description:"CN and SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='*.main.net'. No SANs for wildcards domain. Wildcard domains only accepted with DNSChallenge"`
 }
 
@@ -78,6 +79,9 @@ type DNSChallenge struct {
 type HTTPChallenge struct {
 	EntryPoint string `description:"HTTP challenge EntryPoint"`
 }
+
+// TLSChallenge contains TLS challenge Configuration
+type TLSChallenge struct{}
 
 // SetConfigListenerChan initializes the configFromListenerChan
 func (p *Provider) SetConfigListenerChan(configFromListenerChan chan types.Configuration) {
@@ -254,7 +258,7 @@ func (p *Provider) getClient() (*acme.Client, error) {
 		if err != nil {
 			return nil, err
 		}
-	} else {
+	} else if p.TLSChallenge != nil {
 		log.Debug("Using TLS Challenge provider.")
 
 		client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.DNS01})
@@ -263,6 +267,8 @@ func (p *Provider) getClient() (*acme.Client, error) {
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		return nil, errors.New("ACME challenge not specified, please select TLS or HTTP or DNS Challenge")
 	}
 
 	p.client = client

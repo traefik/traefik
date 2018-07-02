@@ -47,5 +47,6 @@ func (p *Provider) GetTLSALPNCertificate(domain string) (*tls.Certificate, error
 	if err != nil {
 		return nil, err
 	}
+
 	return &certificate, nil
 }

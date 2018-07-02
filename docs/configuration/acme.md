@@ -164,8 +164,6 @@ caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
 
 ### ACME Challenge
 
-By default Træfik use the TLS challenge. 
-
 #### TLS Challenge
 
 Use the `TLS-ALPN-01` challenge to generate and renew ACME certificates by provisioning a TLS certificate.
@@ -174,6 +172,7 @@ Use the `TLS-ALPN-01` challenge to generate and renew ACME certificates by provi
 [acme]
 # ...
 entryPoint = "https"
+[acme.tlsChallenge]
 ```
 
 #### `httpChallenge`
