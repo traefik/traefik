@@ -60,6 +60,72 @@ func GetRedirect(labels map[string]string) *types.Redirect {
 	return nil
 }
 
+// GetAuth Create auth from labels
+func GetAuth(labels map[string]string) *types.Auth {
+	if HasPrefix(labels, TraefikFrontendAuth) {
+		auth := &types.Auth{
+			HeaderField: GetStringValue(labels, TraefikFrontendAuthHeaderField, ""),
+		}
+
+		if HasPrefix(labels, TraefikFrontendAuthBasic) {
+			auth.Basic = getAuthBasic(labels)
+		} else if HasPrefix(labels, TraefikFrontendAuthDigest) {
+			auth.Digest = getAuthDigest(labels)
+		} else if HasPrefix(labels, TraefikFrontendAuthForward) {
+			auth.Forward = getAuthForward(labels)
+		}
+
+		return auth
+	}
+	return nil
+}
+
+// getAuthBasic Create Basic Auth from labels
+func getAuthBasic(labels map[string]string) *types.Basic {
+	basicAuth := &types.Basic{
+		UsersFile: GetStringValue(labels, TraefikFrontendAuthBasicUsersFile, ""),
+	}
+
+	// backward compatibility
+	if Has(labels, TraefikFrontendAuthBasic) {
+		basicAuth.Users = GetSliceStringValue(labels, TraefikFrontendAuthBasic)
+		log.Warnf("Deprecated configuration found: %s. Please use %s.", TraefikFrontendAuthBasic, TraefikFrontendAuthBasicUsers)
+	} else {
+		basicAuth.Users = GetSliceStringValue(labels, TraefikFrontendAuthBasicUsers)
+	}
+
+	return basicAuth
+}
+
+// getAuthDigest Create Digest Auth from labels
+func getAuthDigest(labels map[string]string) *types.Digest {
+	return &types.Digest{
+		Users:     GetSliceStringValue(labels, TraefikFrontendAuthDigestUsers),
+		UsersFile: GetStringValue(labels, TraefikFrontendAuthDigestUsersFile, ""),
+	}
+}
+
+// getAuthForward Create Forward Auth from labels
+func getAuthForward(labels map[string]string) *types.Forward {
+	forwardAuth := &types.Forward{
+		Address:            GetStringValue(labels, TraefikFrontendAuthForwardAddress, ""),
+		TrustForwardHeader: GetBoolValue(labels, TraefikFrontendAuthForwardTrustForwardHeader, false),
+	}
+
+	// TLS configuration
+	if HasPrefix(labels, TraefikFrontendAuthForwardTLS) {
+		forwardAuth.TLS = &types.ClientTLS{
+			CA:                 GetStringValue(labels, TraefikFrontendAuthForwardTLSCa, ""),
+			CAOptional:         GetBoolValue(labels, TraefikFrontendAuthForwardTLSCaOptional, false),
+			Cert:               GetStringValue(labels, TraefikFrontendAuthForwardTLSCert, ""),
+			InsecureSkipVerify: GetBoolValue(labels, TraefikFrontendAuthForwardTLSInsecureSkipVerify, false),
+			Key:                GetStringValue(labels, TraefikFrontendAuthForwardTLSKey, ""),
+		}
+	}
+
+	return forwardAuth
+}
+
 // GetErrorPages Create error pages from labels
 func GetErrorPages(labels map[string]string) map[string]*types.ErrorPage {
 	prefix := Prefix + BaseFrontendErrorPage
