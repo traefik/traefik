@@ -24,6 +24,7 @@ import (
 	"github.com/eapache/channels"
 	"github.com/urfave/negroni"
 	"github.com/vulcand/oxy/forward"
+	"github.com/containous/traefik/hostresolver"
 )
 
 // loadConfiguration manages dynamically frontends, backends and TLS configurations
@@ -135,6 +136,7 @@ func (s *Server) loadFrontendConfig(
 ) ([]handlerPostConfig, error) {
 
 	frontend := config.Frontends[frontendName]
+	hostResolver := buildHostResolver(s.globalConfiguration)
 
 	if len(frontend.EntryPoints) == 0 {
 		return nil, fmt.Errorf("no entrypoint defined for frontend %s", frontendName)
@@ -201,7 +203,7 @@ func (s *Server) loadFrontendConfig(
 				frontend.Backend, entryPointName, providerName, frontendName, frontendHash)
 		}
 
-		serverRoute, err := buildServerRoute(serverEntryPoints[entryPointName], frontendName, frontend)
+		serverRoute, err := buildServerRoute(serverEntryPoints[entryPointName], frontendName, frontend, hostResolver)
 		if err != nil {
 			return nil, err
 		}
@@ -260,12 +262,12 @@ func (s *Server) buildForwarder(entryPointName string, entryPoint *configuration
 	return fwd, nil
 }
 
-func buildServerRoute(serverEntryPoint *serverEntryPoint, frontendName string, frontend *types.Frontend) (*types.ServerRoute, error) {
+func buildServerRoute(serverEntryPoint *serverEntryPoint, frontendName string, frontend *types.Frontend, hostResolver *hostresolver.HostResolver) (*types.ServerRoute, error) {
 	serverRoute := &types.ServerRoute{Route: serverEntryPoint.httpRouter.GetHandler().NewRoute().Name(frontendName)}
 
 	priority := 0
 	for routeName, route := range frontend.Routes {
-		rls := rules.Rules{Route: serverRoute}
+		rls := rules.Rules{Route: serverRoute, HostResolver: hostResolver}
 		newRoute, err := rls.Parse(route.Rule)
 		if err != nil {
 			return nil, fmt.Errorf("error creating route for frontend %s: %v", frontendName, err)
@@ -578,4 +580,15 @@ func sortedFrontendNamesForConfig(configuration *types.Configuration) []string {
 	}
 	sort.Strings(keys)
 	return keys
+}
+
+func buildHostResolver(globalConfig configuration.GlobalConfiguration) *hostresolver.HostResolver {
+	if globalConfig.HostResolver != nil {
+		return &hostresolver.HostResolver{
+			Enabled:      globalConfig.HostResolver.CnameFlattening,
+			ResolvConfig: globalConfig.HostResolver.ResolvConfig,
+			ResolvDepth:  globalConfig.HostResolver.ResolvDepth,
+		}
+	}
+	return nil
 }

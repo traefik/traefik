@@ -13,6 +13,7 @@ import (
 	"github.com/containous/mux"
 	"github.com/containous/traefik/hostresolver"
 	"github.com/containous/traefik/types"
+	"github.com/containous/traefik/log"
 )
 
 // Rules holds rule parsing and configuration
@@ -34,6 +35,7 @@ func (r *Rules) host(hosts ...string) *mux.Route {
 				if types.CanonicalDomain(reqH) == types.CanonicalDomain(host) || types.CanonicalDomain(flatH) == types.CanonicalDomain(host) {
 					return true
 				}
+				log.Debugf("CNAMEFlattening: request %s which resolved to %s, is not matched to route %s", reqH, flatH, host)
 			}
 		} else {
 			for _, host := range hosts {

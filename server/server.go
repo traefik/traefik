@@ -25,7 +25,6 @@ import (
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/configuration/router"
 	"github.com/containous/traefik/h2c"
-	"github.com/containous/traefik/hostresolver"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"

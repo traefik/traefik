@@ -20,13 +20,13 @@ type HostResolver struct {
 	ResolvDepth  int
 }
 
-// CNAMEResolv used for storing CNAME result
+// CNAMEResolv used to store CNAME result
 type CNAMEResolv struct {
 	TTL    int
 	Record string
 }
 
-// CNAMEFlatten check if CNAME records exists, flatten if possible
+// CNAMEFlatten check if CNAME record exists, flatten if possible
 func (hr *HostResolver) CNAMEFlatten(host string) (string, string) {
 	var result []string
 	result = append(result, host)

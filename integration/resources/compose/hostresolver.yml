@@ -5,4 +5,4 @@ server1:
     - traefik.port=80
     - traefik.backend=backend1
     - traefik.frontend.entryPoints=http
-    - traefik.frontend.rule=Host:frontend1.docker.local
+    - traefik.frontend.rule=Host:github.com
