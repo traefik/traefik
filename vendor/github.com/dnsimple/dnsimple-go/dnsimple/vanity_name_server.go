@@ -14,7 +14,7 @@ type VanityNameServersService struct {
 
 // VanityNameServer represents data for a single vanity name server
 type VanityNameServer struct {
-	ID        int    `json:"id,omitempty"`
+	ID        int64  `json:"id,omitempty"`
 	Name      string `json:"name,omitempty"`
 	IPv4      string `json:"ipv4,omitempty"`
 	IPv6      string `json:"ipv6,omitempty"`
@@ -22,8 +22,8 @@ type VanityNameServer struct {
 	UpdatedAt string `json:"updated_at,omitempty"`
 }
 
-func vanityNameServerPath(accountID string, domainID string) string {
-	return fmt.Sprintf("/%v/vanity/%v", accountID, domainID)
+func vanityNameServerPath(accountID string, domainIdentifier string) string {
+	return fmt.Sprintf("/%v/vanity/%v", accountID, domainIdentifier)
 }
 
 // vanityNameServerResponse represents a response for vanity name server enable and disable operations.
@@ -35,8 +35,8 @@ type vanityNameServerResponse struct {
 // EnableVanityNameServers Vanity Name Servers for the given domain
 //
 // See https://developer.dnsimple.com/v2/vanity/#enable
-func (s *VanityNameServersService) EnableVanityNameServers(accountID string, domainID string) (*vanityNameServerResponse, error) {
-	path := versioned(vanityNameServerPath(accountID, domainID))
+func (s *VanityNameServersService) EnableVanityNameServers(accountID string, domainIdentifier string) (*vanityNameServerResponse, error) {
+	path := versioned(vanityNameServerPath(accountID, domainIdentifier))
 	vanityNameServerResponse := &vanityNameServerResponse{}
 
 	resp, err := s.client.put(path, nil, vanityNameServerResponse)
@@ -51,8 +51,8 @@ func (s *VanityNameServersService) EnableVanityNameServers(accountID string, dom
 // DisableVanityNameServers Vanity Name Servers for the given domain
 //
 // See https://developer.dnsimple.com/v2/vanity/#disable
-func (s *VanityNameServersService) DisableVanityNameServers(accountID string, domainID string) (*vanityNameServerResponse, error) {
-	path := versioned(vanityNameServerPath(accountID, domainID))
+func (s *VanityNameServersService) DisableVanityNameServers(accountID string, domainIdentifier string) (*vanityNameServerResponse, error) {
+	path := versioned(vanityNameServerPath(accountID, domainIdentifier))
 	vanityNameServerResponse := &vanityNameServerResponse{}
 
 	resp, err := s.client.delete(path, nil, nil)

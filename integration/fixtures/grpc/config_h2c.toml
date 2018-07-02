@@ -1,15 +1,10 @@
-defaultEntryPoints = ["https"]
+defaultEntryPoints = ["http"]
 
-rootCAs = [ """{{ .CertContent }}""" ]
+debug=true
 
 [entryPoints]
-  [entryPoints.https]
-  address = ":4443"
-    [entryPoints.https.tls]
-     [[entryPoints.https.tls.certificates]]
-     certFile = """{{ .CertContent }}"""
-     keyFile  = """{{ .KeyContent }}"""
-
+  [entryPoints.http]
+  address = ":8081"
 
 [api]
 

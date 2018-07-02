@@ -2,6 +2,7 @@ package ecs
 
 import (
 	"strconv"
+	"strings"
 	"text/template"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -58,22 +59,22 @@ func (p *Provider) buildConfigurationV1(instances []ecsInstance) (*types.Configu
 }
 
 func (p *Provider) filterInstanceV1(i ecsInstance) bool {
-	if labelPort := getStringValueV1(i, label.TraefikPort, ""); len(i.container.NetworkBindings) == 0 && labelPort == "" {
+	if i.machine == nil {
+		log.Debug("Filtering ecs instance with nil machine")
+		return false
+	}
+
+	if labelPort := getStringValueV1(i, label.TraefikPort, ""); i.machine.port == 0 && labelPort == "" {
 		log.Debugf("Filtering ecs instance without port %s (%s)", i.Name, i.ID)
 		return false
 	}
 
-	if i.machine == nil || i.machine.State == nil || i.machine.State.Name == nil {
-		log.Debugf("Filtering ecs instance in an missing ec2 information %s (%s)", i.Name, i.ID)
+	if strings.ToLower(i.machine.state) != ec2.InstanceStateNameRunning {
+		log.Debugf("Filtering ecs instance in an incorrect state %s (%s) (state = %s)", i.Name, i.ID, i.machine.state)
 		return false
 	}
 
-	if aws.StringValue(i.machine.State.Name) != ec2.InstanceStateNameRunning {
-		log.Debugf("Filtering ecs instance in an incorrect state %s (%s) (state = %s)", i.Name, i.ID, aws.StringValue(i.machine.State.Name))
-		return false
-	}
-
-	if i.machine.PrivateIpAddress == nil {
+	if len(i.machine.privateIP) == 0 {
 		log.Debugf("Filtering ecs instance without an ip address %s (%s)", i.Name, i.ID)
 		return false
 	}

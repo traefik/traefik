@@ -6,8 +6,10 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"net"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -98,12 +100,6 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		return err
 	}
 
-	// We require that IngressClasses start with `traefik` to reduce chances of
-	// conflict with other Ingress Providers
-	if len(p.IngressClass) > 0 && !strings.HasPrefix(p.IngressClass, traefikDefaultIngressClass) {
-		return fmt.Errorf("value for IngressClass has to be empty or start with the prefix %q, instead found %q", traefikDefaultIngressClass, p.IngressClass)
-	}
-
 	log.Debugf("Using Ingress label selector: %q", p.LabelSelector)
 	k8sClient, err := p.newK8sClient(p.LabelSelector)
 	if err != nil {
@@ -187,6 +183,18 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 			continue
 		}
 		templateObjects.TLS = append(templateObjects.TLS, tlsSection...)
+
+		var weightAllocator weightAllocator = &defaultWeightAllocator{}
+		annotationPercentageWeights := getAnnotationName(i.Annotations, annotationKubernetesServiceWeights)
+		if _, ok := i.Annotations[annotationPercentageWeights]; ok {
+			fractionalAllocator, err := newFractionalWeightAllocator(i, k8sClient)
+			if err != nil {
+				log.Errorf("failed to create fractional weight allocator for ingress %s/%s: %v", i.Namespace, i.Name, err)
+				continue
+			}
+			log.Debugf("Created custom weight allocator for %s/%s: %s", i.Namespace, i.Name, fractionalAllocator)
+			weightAllocator = fractionalAllocator
+		}
 
 		for _, r := range i.Spec.Rules {
 			if r.HTTP == nil {
@@ -278,6 +286,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				templateObjects.Backends[baseName].Buffering = getBuffering(service)
 
 				protocol := label.DefaultProtocol
+
 				for _, port := range service.Spec.Ports {
 					if equalPorts(port, pa.Backend.ServicePort) {
 						if port.Port == 443 || strings.HasPrefix(port.Name, "https") {
@@ -286,12 +295,11 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 						if service.Spec.Type == "ExternalName" {
 							url := protocol + "://" + service.Spec.ExternalName
-							name := url
 							if port.Port != 443 && port.Port != 80 {
 								url = fmt.Sprintf("%s:%d", url, port.Port)
 							}
 
-							templateObjects.Backends[baseName].Servers[name] = types.Server{
+							templateObjects.Backends[baseName].Servers[url] = types.Server{
 								URL:    url,
 								Weight: label.DefaultWeight,
 							}
@@ -319,14 +327,15 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 									continue
 								}
 								for _, address := range subset.Addresses {
-									url := fmt.Sprintf("%s://%s:%d", protocol, address.IP, endpointPort)
+									url := protocol + "://" + net.JoinHostPort(address.IP, strconv.FormatInt(int64(endpointPort), 10))
 									name := url
 									if address.TargetRef != nil && address.TargetRef.Name != "" {
 										name = address.TargetRef.Name
 									}
+
 									templateObjects.Backends[baseName].Servers[name] = types.Server{
 										URL:    url,
-										Weight: label.DefaultWeight,
+										Weight: weightAllocator.getWeight(r.Host, pa.Path, pa.Backend.ServiceName),
 									}
 								}
 							}

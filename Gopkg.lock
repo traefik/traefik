@@ -189,6 +189,7 @@
     "aws/request",
     "aws/session",
     "aws/signer/v4",
+    "internal/sdkio",
     "internal/sdkrand",
     "internal/shareddefaults",
     "private/protocol",
@@ -209,8 +210,8 @@
     "service/route53",
     "service/sts"
   ]
-  revision = "f9a6880d84e16e2a37055793e17164a228d637f4"
-  version = "v1.13.1"
+  revision = "fad131ddc707880428615dc8bc1587b55fb46d74"
+  version = "v1.13.54"
 
 [[projects]]
   branch = "master"
@@ -254,8 +255,8 @@
 [[projects]]
   name = "github.com/containous/staert"
   packages = ["."]
-  revision = "cc00c303ccbd2491ddc1dccc9eb7ccadd807557e"
-  version = "v3.1.0"
+  revision = "66717a0e0ca950c4b6dc8c87b46da0b8495c6e41"
+  version = "v3.1.1"
 
 [[projects]]
   name = "github.com/containous/traefik-extra-service-fabric"
@@ -317,9 +318,10 @@
   version = "v3.2.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/dnsimple/dnsimple-go"
   packages = ["dnsimple"]
-  revision = "f2d9b723cc9547d182e24ac2e527ae25d25fc93f"
+  revision = "bbe1a2c87affea187478e24d3aea3cac25f870b3"
 
 [[projects]]
   name = "github.com/docker/cli"
@@ -986,9 +988,10 @@
   revision = "1f5c07e90700ae93ddcba0c7af7d9c7201646ccc"
 
 [[projects]]
+  branch = "master"
   name = "github.com/ovh/go-ovh"
   packages = ["ovh"]
-  revision = "4b1fea467323b74c5f462f0947f402b428ca0626"
+  revision = "91b7eb631d2eced3e706932a0b36ee8b5ee22e92"
 
 [[projects]]
   branch = "master"
@@ -1001,6 +1004,12 @@
   packages = ["."]
   revision = "5f041e8faa004a95c88a202771f4cc3e991971e6"
   version = "v2.0.1"
+
+[[projects]]
+  name = "github.com/philhofer/fwd"
+  packages = ["."]
+  revision = "bb6d471dc95d4fe11e432687f8b70ff496cf3136"
+  version = "v1.0.0"
 
 [[projects]]
   name = "github.com/pierrec/lz4"
@@ -1137,6 +1146,12 @@
   revision = "37e84520dcf74488f67654f9c775b9752c232dc1"
 
 [[projects]]
+  name = "github.com/tinylib/msgp"
+  packages = ["msgp"]
+  revision = "b2b6a672cf1e5b90748f79b8b81fc8c5cf0571a1"
+  version = "1.0.2"
+
+[[projects]]
   branch = "master"
   name = "github.com/tuvistavie/securerandom"
   packages = ["."]
@@ -1211,7 +1226,7 @@
     "roundrobin",
     "utils"
   ]
-  revision = "6956548a7fa4272adeadf828455109c53933ea86"
+  revision = "c2414f4542f085363f490048da2fbec5e4537eb6"
 
 [[projects]]
   name = "github.com/vulcand/predicate"
@@ -1237,10 +1252,11 @@
   revision = "0c8571ac0ce161a5feb57375a9cdf148c98c0f70"
 
 [[projects]]
-  branch = "containous-fork"
+  branch = "master"
   name = "github.com/xenolf/lego"
   packages = [
-    "acmev2",
+    "acme",
+    "log",
     "providers/dns",
     "providers/dns/auroradns",
     "providers/dns/azure",
@@ -1258,9 +1274,9 @@
     "providers/dns/fastdns",
     "providers/dns/gandi",
     "providers/dns/gandiv5",
+    "providers/dns/gcloud",
     "providers/dns/glesys",
     "providers/dns/godaddy",
-    "providers/dns/googlecloud",
     "providers/dns/lightsail",
     "providers/dns/linode",
     "providers/dns/namecheap",
@@ -1274,8 +1290,7 @@
     "providers/dns/route53",
     "providers/dns/vultr"
   ]
-  revision = "3d653ee2ee38f1d71beb5f09b37b23344eff0ab3"
-  source = "github.com/containous/lego"
+  revision = "7fedfd1388f016c7ca7ed92a7f2024d06a7e20d8"
 
 [[projects]]
   branch = "master"
@@ -1299,22 +1314,24 @@
     "bpf",
     "context",
     "context/ctxhttp",
+    "http/httpguts",
     "http2",
     "http2/hpack",
     "idna",
     "internal/iana",
     "internal/socket",
+    "internal/socks",
     "internal/timeseries",
     "ipv4",
     "ipv6",
-    "lex/httplex",
     "proxy",
     "trace",
     "websocket"
   ]
-  revision = "22ae77b79946ea320088417e4d50825671d82d57"
+  revision = "e514e69ffb8bc3c76a71ae40de0118d794855992"
 
 [[projects]]
+  branch = "master"
   name = "golang.org/x/oauth2"
   packages = [
     ".",
@@ -1323,7 +1340,7 @@
     "jws",
     "jwt"
   ]
-  revision = "7fdf09982454086d5570c7db3e11f360194830ca"
+  revision = "ec22f46f877b4505e0117eeaab541714644fdd28"
 
 [[projects]]
   branch = "master"
@@ -1362,6 +1379,7 @@
   revision = "8be79e1e0910c292df4e79c241bb7e8f7e725959"
 
 [[projects]]
+  branch = "master"
   name = "google.golang.org/api"
   packages = [
     "dns/v1",
@@ -1369,7 +1387,7 @@
     "googleapi",
     "googleapi/internal/uritemplates"
   ]
-  revision = "1575df15c1bb8b18ad4d9bc5ca495cc85b0764fe"
+  revision = "de943baf05a022a8f921b544b7827bacaba1aed5"
 
 [[projects]]
   name = "google.golang.org/appengine"
@@ -1425,6 +1443,18 @@
   version = "v1.12.0"
 
 [[projects]]
+  name = "gopkg.in/DataDog/dd-trace-go.v1"
+  packages = [
+    "ddtrace",
+    "ddtrace/ext",
+    "ddtrace/internal",
+    "ddtrace/opentracer",
+    "ddtrace/tracer"
+  ]
+  revision = "d052956664af54dbcff2712d10c67c76fbfc299f"
+  version = "v1.0.0"
+
+[[projects]]
   name = "gopkg.in/fsnotify.v1"
   packages = ["."]
   revision = "629574ca2a5df945712d3079857300b5e4da0236"
@@ -1450,6 +1480,7 @@
   revision = "cb884138e64c9a8bf5c7d6106d74b0fca082df0c"
 
 [[projects]]
+  branch = "v2"
   name = "gopkg.in/ns1/ns1-go.v2"
   packages = [
     "rest",
@@ -1459,7 +1490,7 @@
     "rest/model/filter",
     "rest/model/monitor"
   ]
-  revision = "c563826f4cbef9c11bebeb9f20a3f7afe9c1e2f4"
+  revision = "a5bcac82d3f637d3928d30476610891935b2d691"
 
 [[projects]]
   name = "gopkg.in/square/go-jose.v2"
@@ -1680,6 +1711,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "43f8acdb9c80004418ca3fd30c4c82f47589f96845fbaf2eaca5924b137eeed6"
+  inputs-digest = "593c88b41d6384d68bd610a8c80c39017e77584f4e3454b2ca5c26ee904bf1da"
   solver-name = "gps-cdcl"
   solver-version = 1

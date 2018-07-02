@@ -31,7 +31,7 @@ import (
 	"os/exec"
 	"strconv"
 
-	"github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
 )
 
 // DNSProvider adds and removes the record for the DNS challenge by calling a
@@ -53,7 +53,7 @@ func NewDNSProvider() (*DNSProvider, error) {
 
 // Present creates a TXT record to fulfil the dns-01 challenge.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
 	cmd := exec.Command(d.program, "present", fqdn, value, strconv.Itoa(ttl))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -63,7 +63,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
 	cmd := exec.Command(d.program, "cleanup", fqdn, value, strconv.Itoa(ttl))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

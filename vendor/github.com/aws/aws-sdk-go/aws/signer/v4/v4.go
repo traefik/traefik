@@ -71,6 +71,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/internal/sdkio"
 	"github.com/aws/aws-sdk-go/private/protocol/rest"
 )
 
@@ -726,8 +727,8 @@ func makeSha256(data []byte) []byte {
 
 func makeSha256Reader(reader io.ReadSeeker) []byte {
 	hash := sha256.New()
-	start, _ := reader.Seek(0, 1)
-	defer reader.Seek(start, 0)
+	start, _ := reader.Seek(0, sdkio.SeekCurrent)
+	defer reader.Seek(start, sdkio.SeekStart)
 
 	io.Copy(hash, reader)
 	return hash.Sum(nil)

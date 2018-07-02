@@ -7,6 +7,7 @@ const (
 	SuffixDomain                                   = "domain"
 	SuffixEnable                                   = "enable"
 	SuffixPort                                     = "port"
+	SuffixPortName                                 = "portName"
 	SuffixPortIndex                                = "portIndex"
 	SuffixProtocol                                 = "protocol"
 	SuffixTags                                     = "tags"
@@ -75,6 +76,7 @@ const (
 	TraefikDomain                                  = Prefix + SuffixDomain
 	TraefikEnable                                  = Prefix + SuffixEnable
 	TraefikPort                                    = Prefix + SuffixPort
+	TraefikPortName                                = Prefix + SuffixPortName
 	TraefikPortIndex                               = Prefix + SuffixPortIndex
 	TraefikProtocol                                = Prefix + SuffixProtocol
 	TraefikTags                                    = Prefix + SuffixTags

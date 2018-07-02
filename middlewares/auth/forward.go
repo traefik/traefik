@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	xForwardedURI = "X-Forwarded-Uri"
+	xForwardedURI    = "X-Forwarded-Uri"
+	xForwardedMethod = "X-Forwarded-Method"
 )
 
 // Forward the authentication to a external server
@@ -93,6 +94,10 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 		return
 	}
 
+	for _, headerName := range config.AuthResponseHeaders {
+		r.Header.Set(headerName, forwardResponse.Header.Get(headerName))
+	}
+
 	r.RequestURI = r.URL.RequestURI()
 	next(w, r)
 }
@@ -107,6 +112,14 @@ func writeHeader(req *http.Request, forwardReq *http.Request, trustForwardHeader
 			}
 		}
 		forwardReq.Header.Set(forward.XForwardedFor, clientIP)
+	}
+
+	if xMethod := req.Header.Get(xForwardedMethod); xMethod != "" && trustForwardHeader {
+		forwardReq.Header.Set(xForwardedMethod, xMethod)
+	} else if req.Method != "" {
+		forwardReq.Header.Set(xForwardedMethod, req.Method)
+	} else {
+		forwardReq.Header.Del(xForwardedMethod)
 	}
 
 	if xfp := req.Header.Get(forward.XForwardedProto); xfp != "" && trustForwardHeader {

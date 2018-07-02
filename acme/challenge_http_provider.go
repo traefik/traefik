@@ -9,7 +9,7 @@ import (
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
-	acme "github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
 )
 
 var _ acme.ChallengeProviderTimeout = (*challengeHTTPProvider)(nil)
@@ -23,10 +23,12 @@ func (c *challengeHTTPProvider) getTokenValue(token, domain string) []byte {
 	log.Debugf("Looking for an existing ACME challenge for token %v...", token)
 	c.lock.RLock()
 	defer c.lock.RUnlock()
+
 	account := c.store.Get().(*Account)
 	if account.HTTPChallenge == nil {
 		return []byte{}
 	}
+
 	var result []byte
 	operation := func() error {
 		var ok bool
@@ -35,9 +37,11 @@ func (c *challengeHTTPProvider) getTokenValue(token, domain string) []byte {
 		}
 		return nil
 	}
+
 	notify := func(err error, time time.Duration) {
 		log.Errorf("Error getting challenge for token retrying in %s", time)
 	}
+
 	ebo := backoff.NewExponentialBackOff()
 	ebo.MaxElapsedTime = 60 * time.Second
 	err := backoff.RetryNotify(safe.OperationWithRecover(operation), ebo, notify)
@@ -52,18 +56,23 @@ func (c *challengeHTTPProvider) Present(domain, token, keyAuth string) error {
 	log.Debugf("Challenge Present %s", domain)
 	c.lock.Lock()
 	defer c.lock.Unlock()
+
 	transaction, object, err := c.store.Begin()
 	if err != nil {
 		return err
 	}
+
 	account := object.(*Account)
 	if account.HTTPChallenge == nil {
 		account.HTTPChallenge = map[string]map[string][]byte{}
 	}
+
 	if _, ok := account.HTTPChallenge[token]; !ok {
 		account.HTTPChallenge[token] = map[string][]byte{}
 	}
+
 	account.HTTPChallenge[token][domain] = []byte(keyAuth)
+
 	return transaction.Commit(account)
 }
 
@@ -71,10 +80,12 @@ func (c *challengeHTTPProvider) CleanUp(domain, token, keyAuth string) error {
 	log.Debugf("Challenge CleanUp %s", domain)
 	c.lock.Lock()
 	defer c.lock.Unlock()
+
 	transaction, object, err := c.store.Begin()
 	if err != nil {
 		return err
 	}
+
 	account := object.(*Account)
 	if _, ok := account.HTTPChallenge[token]; ok {
 		if _, domainOk := account.HTTPChallenge[token][domain]; domainOk {
@@ -84,6 +95,7 @@ func (c *challengeHTTPProvider) CleanUp(domain, token, keyAuth string) error {
 			delete(account.HTTPChallenge, token)
 		}
 	}
+
 	return transaction.Commit(account)
 }
 

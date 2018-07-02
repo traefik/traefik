@@ -180,19 +180,21 @@ func (c *clientImpl) UpdateIngressStatus(namespace, name, ip, hostname string) e
 	}
 
 	ing := item.(*extensionsv1beta1.Ingress)
-	if ing.Status.LoadBalancer.Ingress[0].Hostname == hostname && ing.Status.LoadBalancer.Ingress[0].IP == ip {
-		// If status is already set, skip update
-		log.Debugf("Skipping status update on ingress %s/%s", ing.Namespace, ing.Name)
-	} else {
-		ingCopy := ing.DeepCopy()
-		ingCopy.Status = extensionsv1beta1.IngressStatus{LoadBalancer: corev1.LoadBalancerStatus{Ingress: []corev1.LoadBalancerIngress{{IP: ip, Hostname: hostname}}}}
-
-		_, err := c.clientset.ExtensionsV1beta1().Ingresses(ingCopy.Namespace).UpdateStatus(ingCopy)
-		if err != nil {
-			return fmt.Errorf("failed to update ingress status %s with error: %v", keyName, err)
+	if len(ing.Status.LoadBalancer.Ingress) > 0 {
+		if ing.Status.LoadBalancer.Ingress[0].Hostname == hostname && ing.Status.LoadBalancer.Ingress[0].IP == ip {
+			// If status is already set, skip update
+			log.Debugf("Skipping status update on ingress %s/%s", ing.Namespace, ing.Name)
+			return nil
 		}
-		log.Infof("Updated status on ingress %s", keyName)
 	}
+	ingCopy := ing.DeepCopy()
+	ingCopy.Status = extensionsv1beta1.IngressStatus{LoadBalancer: corev1.LoadBalancerStatus{Ingress: []corev1.LoadBalancerIngress{{IP: ip, Hostname: hostname}}}}
+
+	_, err = c.clientset.ExtensionsV1beta1().Ingresses(ingCopy.Namespace).UpdateStatus(ingCopy)
+	if err != nil {
+		return fmt.Errorf("failed to update ingress status %s with error: %v", keyName, err)
+	}
+	log.Infof("Updated status on ingress %s", keyName)
 	return nil
 }
 

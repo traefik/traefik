@@ -1,5 +1,48 @@
 # Change Log
 
+## [v1.6.4](https://github.com/containous/traefik/tree/v1.6.4) (2018-06-15)
+[All Commits](https://github.com/containous/traefik/compare/v1.6.3...v1.6.4)
+
+**Bug fixes:**
+- **[acme]** Use logrus writer instead of os.Stderr ([#3498](https://github.com/containous/traefik/pull/3498) by [ldez](https://github.com/ldez))
+- **[consulcatalog]** Enclose IPv6 addresses in &#34;[]&#34; ([#3477](https://github.com/containous/traefik/pull/3477) by [herver](https://github.com/herver))
+- **[docker,ecs,marathon,mesos,rancher]** Use net.JoinHostPort for servers URL ([#3484](https://github.com/containous/traefik/pull/3484) by [ldez](https://github.com/ldez))
+- **[docker]** Backend name with docker-compose and segments. ([#3485](https://github.com/containous/traefik/pull/3485) by [ldez](https://github.com/ldez))
+- **[oxy]** Handle buffer pool for oxy ([#3450](https://github.com/containous/traefik/pull/3450) by [Juliens](https://github.com/Juliens))
+
+**Documentation:**
+- **[acme]** The exoscale provider works with wildcard ([#3479](https://github.com/containous/traefik/pull/3479) by [greut](https://github.com/greut))
+- **[consul,docker]** Edit wording ([#3438](https://github.com/containous/traefik/pull/3438) by [mayank23](https://github.com/mayank23))
+- **[k8s]** Add missing annotation documentation. ([#3454](https://github.com/containous/traefik/pull/3454) by [ldez](https://github.com/ldez))
+- **[kv]** Fix typo in kv user guide ([#3474](https://github.com/containous/traefik/pull/3474) by [shambarick](https://github.com/shambarick))
+- Clean metrics documentation. ([#3488](https://github.com/containous/traefik/pull/3488) by [ldez](https://github.com/ldez))
+
+## [v1.6.3](https://github.com/containous/traefik/tree/v1.6.3) (2018-06-05)
+[All Commits](https://github.com/containous/traefik/compare/v1.6.2...v1.6.3)
+
+**Enhancements:**
+- **[acme]** Add user agent for ACME ([#3431](https://github.com/containous/traefik/pull/3431) by [ldez](https://github.com/ldez))
+- **[acme]** Use to the stable version of Lego ([#3418](https://github.com/containous/traefik/pull/3418) by [ldez](https://github.com/ldez))
+
+**Bug fixes:**
+- **[acme,cluster]** Improve ACME account registration URI management ([#3398](https://github.com/containous/traefik/pull/3398) by [nmengin](https://github.com/nmengin))
+- **[acme,cluster]** Remove ACME empty certificates from KV store ([#3389](https://github.com/containous/traefik/pull/3389) by [nmengin](https://github.com/nmengin))
+- **[consulcatalog]** Reflect changes in catalog healthy nodes in healthCheck watch ([#3390](https://github.com/containous/traefik/pull/3390) by [thebinary](https://github.com/thebinary))
+- **[consulcatalog]** Detect change when service or node are in maintenance mode ([#3434](https://github.com/containous/traefik/pull/3434) by [mmatur](https://github.com/mmatur))
+- **[k8s]** Update Kubernetes provider to support IPv6 Backends ([#3432](https://github.com/containous/traefik/pull/3432) by [dtomcej](https://github.com/dtomcej))
+- **[logs,middleware]** Add URL and Host for some access logs. ([#3430](https://github.com/containous/traefik/pull/3430) by [ldez](https://github.com/ldez))
+- **[metrics]** Improve Prometheus metrics removal ([#3287](https://github.com/containous/traefik/pull/3287) by [marco-jantke](https://github.com/marco-jantke))
+- **[middleware]** Whitelist and XFF. ([#3411](https://github.com/containous/traefik/pull/3411) by [ldez](https://github.com/ldez))
+- **[middleware]** Error pages and header merge ([#3394](https://github.com/containous/traefik/pull/3394) by [ldez](https://github.com/ldez))
+- **[websocket]** Includes the headers in the HTTP response of a websocket request ([#3425](https://github.com/containous/traefik/pull/3425) by [geraldcroes](https://github.com/geraldcroes))
+- **[webui]** Webui Whitelist overflow. ([#3412](https://github.com/containous/traefik/pull/3412) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[acme]** Docs: ACME Overhaul ([#3421](https://github.com/containous/traefik/pull/3421) by [Dargmuesli](https://github.com/Dargmuesli))
+- **[acme]** Minor documentation changes ([#3405](https://github.com/containous/traefik/pull/3405) by [amincheloh](https://github.com/amincheloh))
+- **[k8s]** Helm installation using values ([#3392](https://github.com/containous/traefik/pull/3392) by [erikaulin](https://github.com/erikaulin))
+- **[k8s]** Update Kubernetes Port Documentation ([#3368](https://github.com/containous/traefik/pull/3368) by [dtomcej](https://github.com/dtomcej))
+
 ## [v1.6.2](https://github.com/containous/traefik/tree/v1.6.2) (2018-05-22)
 [All Commits](https://github.com/containous/traefik/compare/v1.6.1...v1.6.2)
 

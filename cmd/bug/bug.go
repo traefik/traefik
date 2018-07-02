@@ -23,7 +23,7 @@ The issue tracker is for reporting bugs and feature requests only.
 For end-user related support questions, refer to one of the following:
 
 - Stack Overflow (using the "traefik" tag): https://stackoverflow.com/questions/tagged/traefik
-- the Traefik community Slack channel: https://traefik.herokuapp.com
+- the Traefik community Slack channel: https://slack.traefik.io
 
 -->
 
@@ -31,7 +31,7 @@ For end-user related support questions, refer to one of the following:
 
 (If you intend to ask a support question: **DO NOT FILE AN ISSUE**.
 Use [Stack Overflow](https://stackoverflow.com/questions/tagged/traefik)
-or [Slack](https://traefik.herokuapp.com) instead.)
+or [Slack](https://slack.traefik.io) instead.)
 
 
 

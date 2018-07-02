@@ -80,7 +80,8 @@
 
   # ...
 ```
-### InfluxDB
+
+## InfluxDB
 
 ```toml
 [metrics]
@@ -96,6 +97,13 @@
     #
     address = "localhost:8089"
 
+    # InfluxDB's address protocol (udp or http)
+    #
+    # Required
+    # Default: "udp"
+    #
+    protocol = "udp"
+
     # InfluxDB push interval
     #
     # Optional
@@ -103,24 +111,19 @@
     #
     pushinterval = "10s"
 
-  # ...
-```
-
-## Statistics
-
-```toml
-# Metrics definition
-[metrics]
-  # ...
-
-  # Enable more detailed statistics.
-  [metrics.statistics]
-
-    # Number of recent errors logged.
+    # InfluxDB database used when protocol is http
     #
-    # Default: 10
+    # Optional
+    # Default: ""
     #
-    recentErrors = 10
+    database = ""
+
+    # InfluxDB retention policy used when protocol is http
+    #
+    # Optional
+    # Default: ""
+    #
+    retentionpolicy = ""
 
   # ...
 ```

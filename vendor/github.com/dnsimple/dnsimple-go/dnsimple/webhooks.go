@@ -14,11 +14,11 @@ type WebhooksService struct {
 
 // Webhook represents a DNSimple webhook.
 type Webhook struct {
-	ID  int    `json:"id,omitempty"`
+	ID  int64    `json:"id,omitempty"`
 	URL string `json:"url,omitempty"`
 }
 
-func webhookPath(accountID string, webhookID int) (path string) {
+func webhookPath(accountID string, webhookID int64) (path string) {
 	path = fmt.Sprintf("/%v/webhooks", accountID)
 	if webhookID != 0 {
 		path = fmt.Sprintf("%v/%v", path, webhookID)
@@ -73,7 +73,7 @@ func (s *WebhooksService) CreateWebhook(accountID string, webhookAttributes Webh
 // GetWebhook fetches a webhook.
 //
 // See https://developer.dnsimple.com/v2/webhooks#get
-func (s *WebhooksService) GetWebhook(accountID string, webhookID int) (*webhookResponse, error) {
+func (s *WebhooksService) GetWebhook(accountID string, webhookID int64) (*webhookResponse, error) {
 	path := versioned(webhookPath(accountID, webhookID))
 	webhookResponse := &webhookResponse{}
 
@@ -89,7 +89,7 @@ func (s *WebhooksService) GetWebhook(accountID string, webhookID int) (*webhookR
 // DeleteWebhook PERMANENTLY deletes a webhook from the account.
 //
 // See https://developer.dnsimple.com/v2/webhooks#delete
-func (s *WebhooksService) DeleteWebhook(accountID string, webhookID int) (*webhookResponse, error) {
+func (s *WebhooksService) DeleteWebhook(accountID string, webhookID int64) (*webhookResponse, error) {
 	path := versioned(webhookPath(accountID, webhookID))
 	webhookResponse := &webhookResponse{}
 

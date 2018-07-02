@@ -55,8 +55,85 @@ func TestDockerBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-test": {
 					Servers: map[string]types.Server{
-						"server-test": {
+						"server-test-842895ca2aca17f6ee36ddb2f621194d": {
 							URL:    "http://127.0.0.1:80",
+							Weight: label.DefaultWeight,
+						},
+					},
+					CircuitBreaker: nil,
+				},
+			},
+		}, {
+			desc: "when basic container configuration with multiple network",
+			containers: []docker.ContainerJSON{
+				containerJSON(
+					name("test"),
+					ports(nat.PortMap{
+						"80/tcp": {},
+					}),
+					withNetwork("bridge", ipv4("127.0.0.1")),
+					withNetwork("webnet", ipv4("127.0.0.2")),
+				),
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-Host-test-docker-localhost-0": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					BasicAuth:      []string{},
+					Routes: map[string]types.Route{
+						"route-frontend-Host-test-docker-localhost-0": {
+							Rule: "Host:test.docker.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test": {
+					Servers: map[string]types.Server{
+						"server-test-48093b9fc43454203aacd2bc4057a08c": {
+							URL:    "http://127.0.0.2:80",
+							Weight: label.DefaultWeight,
+						},
+					},
+					CircuitBreaker: nil,
+				},
+			},
+		},
+		{
+			desc: "when basic container configuration with specific network",
+			containers: []docker.ContainerJSON{
+				containerJSON(
+					name("test"),
+					labels(map[string]string{
+						"traefik.docker.network": "mywebnet",
+					}),
+					ports(nat.PortMap{
+						"80/tcp": {},
+					}),
+					withNetwork("bridge", ipv4("127.0.0.1")),
+					withNetwork("webnet", ipv4("127.0.0.2")),
+					withNetwork("mywebnet", ipv4("127.0.0.3")),
+				),
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-Host-test-docker-localhost-0": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					BasicAuth:      []string{},
+					Routes: map[string]types.Route{
+						"route-frontend-Host-test-docker-localhost-0": {
+							Rule: "Host:test.docker.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test": {
+					Servers: map[string]types.Server{
+						"server-test-405767e9733427148cd8dae6c4d331b0": {
+							URL:    "http://127.0.0.3:80",
 							Weight: label.DefaultWeight,
 						},
 					},
@@ -275,7 +352,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-foobar": {
 					Servers: map[string]types.Server{
-						"server-test1": {
+						"server-test1-7f6444e0dff3330c8b0ad2bbbd383b0f": {
 							URL:    "https://127.0.0.1:666",
 							Weight: 12,
 						},
@@ -383,10 +460,11 @@ func TestDockerBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-myService-myProject": {
 					Servers: map[string]types.Server{
-						"server-test-0": {
+						"server-test-0-842895ca2aca17f6ee36ddb2f621194d": {
 							URL:    "http://127.0.0.1:80",
 							Weight: label.DefaultWeight,
-						}, "server-test-1": {
+						},
+						"server-test-1-48093b9fc43454203aacd2bc4057a08c": {
 							URL:    "http://127.0.0.2:80",
 							Weight: label.DefaultWeight,
 						},
@@ -395,7 +473,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 				},
 				"backend-myService2-myProject": {
 					Servers: map[string]types.Server{
-						"server-test-2": {
+						"server-test-2-405767e9733427148cd8dae6c4d331b0": {
 							URL:    "http://127.0.0.3:80",
 							Weight: label.DefaultWeight,
 						},
@@ -420,6 +498,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 			provider := &Provider{
 				Domain:           "docker.localhost",
 				ExposedByDefault: true,
+				Network:          "webnet",
 			}
 			actualConfig := provider.buildConfigurationV2(dockerDataList)
 			require.NotNil(t, actualConfig, "actualConfig")
@@ -861,8 +940,9 @@ func TestDockerGetFrontendRule(t *testing.T) {
 
 func TestDockerGetBackendName(t *testing.T) {
 	testCases := []struct {
-		container docker.ContainerJSON
-		expected  string
+		container   docker.ContainerJSON
+		segmentName string
+		expected    string
 	}{
 		{
 			container: containerJSON(name("foo")),
@@ -885,6 +965,15 @@ func TestDockerGetBackendName(t *testing.T) {
 			})),
 			expected: "bar-foo",
 		},
+		{
+			container: containerJSON(labels(map[string]string{
+				"com.docker.compose.project": "foo",
+				"com.docker.compose.service": "bar",
+				"traefik.sauternes.backend":  "titi",
+			})),
+			segmentName: "sauternes",
+			expected:    "bar-foo-titi",
+		},
 	}
 
 	for containerID, test := range testCases {
@@ -894,7 +983,8 @@ func TestDockerGetBackendName(t *testing.T) {
 
 			dData := parseContainer(test.container)
 			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
-			dData.SegmentLabels = segmentProperties[""]
+			dData.SegmentLabels = segmentProperties[test.segmentName]
+			dData.SegmentName = test.segmentName
 
 			actual := getBackendName(dData)
 			assert.Equal(t, test.expected, actual)
@@ -941,6 +1031,24 @@ func TestDockerGetIPAddress(t *testing.T) {
 		{
 			container: containerJSON(
 				networkMode("host"),
+				withNetwork("testnet", ipv4("10.11.12.13")),
+				withNetwork("webnet", ipv4("10.11.12.14")),
+			),
+			expected: "10.11.12.14",
+		},
+		{
+			container: containerJSON(
+				labels(map[string]string{
+					labelDockerNetwork: "testnet",
+				}),
+				withNetwork("testnet", ipv4("10.11.12.13")),
+				withNetwork("webnet", ipv4("10.11.12.14")),
+			),
+			expected: "10.11.12.13",
+		},
+		{
+			container: containerJSON(
+				networkMode("host"),
 			),
 			expected: "127.0.0.1",
 		},
@@ -962,7 +1070,9 @@ func TestDockerGetIPAddress(t *testing.T) {
 			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
 			dData.SegmentLabels = segmentProperties[""]
 
-			provider := &Provider{}
+			provider := &Provider{
+				Network: "webnet",
+			}
 
 			actual := provider.getIPAddress(dData)
 			assert.Equal(t, test.expected, actual)
@@ -1055,7 +1165,7 @@ func TestDockerGetServers(t *testing.T) {
 					})),
 			},
 			expected: map[string]types.Server{
-				"server-test1": {
+				"server-test1-fb00f762970935200c76ccdaf91458f6": {
 					URL:    "http://10.10.10.10:80",
 					Weight: 1,
 				},
@@ -1084,15 +1194,15 @@ func TestDockerGetServers(t *testing.T) {
 					})),
 			},
 			expected: map[string]types.Server{
-				"server-test1": {
+				"server-test1-743440b6f4a8ffd8737626215f2c5a33": {
 					URL:    "http://10.10.10.11:80",
 					Weight: 1,
 				},
-				"server-test2": {
+				"server-test2-547f74bbb5da02b6c8141ce9aa96c13b": {
 					URL:    "http://10.10.10.12:81",
 					Weight: 1,
 				},
-				"server-test3": {
+				"server-test3-c57fd8b848c814a3f2a4a4c12e13c179": {
 					URL:    "http://10.10.10.13:82",
 					Weight: 1,
 				},
@@ -1121,11 +1231,11 @@ func TestDockerGetServers(t *testing.T) {
 					})),
 			},
 			expected: map[string]types.Server{
-				"server-test2": {
+				"server-test2-547f74bbb5da02b6c8141ce9aa96c13b": {
 					URL:    "http://10.10.10.12:81",
 					Weight: 1,
 				},
-				"server-test3": {
+				"server-test3-c57fd8b848c814a3f2a4a4c12e13c179": {
 					URL:    "http://10.10.10.13:82",
 					Weight: 1,
 				},

@@ -31,7 +31,7 @@ func (f *ResponseFallback) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if log.GetLevel() >= log.DebugLevel {
 		logEntry := log.WithField("Request", utils.DumpHttpRequest(req))
 		logEntry.Debug("vulcand/oxy/fallback/response: begin ServeHttp on request")
-		defer logEntry.Debug("vulcand/oxy/fallback/response: competed ServeHttp on request")
+		defer logEntry.Debug("vulcand/oxy/fallback/response: completed ServeHttp on request")
 	}
 
 	if f.r.ContentType != "" {
@@ -67,7 +67,7 @@ func (f *RedirectFallback) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if log.GetLevel() >= log.DebugLevel {
 		logEntry := log.WithField("Request", utils.DumpHttpRequest(req))
 		logEntry.Debug("vulcand/oxy/fallback/redirect: begin ServeHttp on request")
-		defer logEntry.Debug("vulcand/oxy/fallback/redirect: competed ServeHttp on request")
+		defer logEntry.Debug("vulcand/oxy/fallback/redirect: completed ServeHttp on request")
 	}
 
 	location := f.u.String()

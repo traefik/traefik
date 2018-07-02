@@ -78,6 +78,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		},
 		InfluxDB: &types.InfluxDB{
 			Address:      "localhost:8089",
+			Protocol:     "udp",
 			PushInterval: "10s",
 		},
 	}
@@ -107,6 +108,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultConsulCatalog.Constraints = types.Constraints{}
 	defaultConsulCatalog.Prefix = "traefik"
 	defaultConsulCatalog.FrontEndRule = "Host:{{.ServiceName}}.{{.Domain}}"
+	defaultConsulCatalog.Stale = false
 
 	// default Etcd
 	var defaultEtcd etcd.Provider
@@ -262,6 +264,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		},
 		InfluxDB: &types.InfluxDB{
 			Address:      "localhost:8089",
+			Protocol:     "udp",
 			PushInterval: "10s",
 		},
 	}

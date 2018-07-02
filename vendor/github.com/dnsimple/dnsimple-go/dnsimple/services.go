@@ -14,7 +14,7 @@ type ServicesService struct {
 
 // Service represents a Service in DNSimple.
 type Service struct {
-	ID               int              `json:"id,omitempty"`
+	ID               int64            `json:"id,omitempty"`
 	SID              string           `json:"sid,omitempty"`
 	Name             string           `json:"name,omitempty"`
 	Description      string           `json:"description,omitempty"`
@@ -36,10 +36,10 @@ type ServiceSetting struct {
 	Password    bool   `json:"password,omitempty"`
 }
 
-func servicePath(serviceID string) (path string) {
+func servicePath(serviceIdentifier string) (path string) {
 	path = "/services"
-	if serviceID != "" {
-		path += fmt.Sprintf("/%v", serviceID)
+	if serviceIdentifier != "" {
+		path += fmt.Sprintf("/%v", serviceIdentifier)
 	}
 	return
 }

@@ -2,7 +2,10 @@ package docker
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
+	"net"
 	"strconv"
 	"strings"
 	"text/template"
@@ -106,13 +109,11 @@ func (p *Provider) buildConfigurationV2(containersInspected []dockerData) *types
 }
 
 func getServiceNameKey(container dockerData, swarmMode bool, segmentName string) string {
-	serviceNameKey := container.ServiceName
-
-	if values, err := label.GetStringMultipleStrict(container.Labels, labelDockerComposeProject, labelDockerComposeService); !swarmMode && err == nil {
-		serviceNameKey = values[labelDockerComposeService] + values[labelDockerComposeProject]
+	if swarmMode {
+		return container.ServiceName + segmentName
 	}
 
-	return serviceNameKey + segmentName
+	return getServiceName(container) + segmentName
 }
 
 func (p *Provider) containerFilter(container dockerData) bool {
@@ -169,7 +170,7 @@ func checkSegmentPort(labels map[string]string, segmentName string) error {
 func (p *Provider) getFrontendName(container dockerData, idx int) string {
 	var name string
 	if len(container.SegmentName) > 0 {
-		name = getBackendName(container)
+		name = container.SegmentName + "-" + getBackendName(container)
 	} else {
 		name = p.getFrontendRule(container, container.SegmentLabels) + "-" + strconv.Itoa(idx)
 	}
@@ -196,7 +197,7 @@ func (p *Provider) getFrontendRule(container dockerData, segmentLabels map[strin
 }
 
 func (p Provider) getIPAddress(container dockerData) string {
-	if value := label.GetStringValue(container.Labels, labelDockerNetwork, ""); value != "" {
+	if value := label.GetStringValue(container.Labels, labelDockerNetwork, p.Network); value != "" {
 		networkSettings := container.NetworkSettings
 		if networkSettings.Networks != nil {
 			network := networkSettings.Networks[value]
@@ -261,12 +262,21 @@ func isBackendLBSwarm(container dockerData) bool {
 	return label.GetBoolValue(container.Labels, labelBackendLoadBalancerSwarm, false)
 }
 
-func getSegmentBackendName(container dockerData) string {
-	if value := label.GetStringValue(container.SegmentLabels, label.TraefikBackend, ""); len(value) > 0 {
-		return provider.Normalize(container.ServiceName + "-" + value)
+func getBackendName(container dockerData) string {
+	if len(container.SegmentName) > 0 {
+		return getSegmentBackendName(container)
 	}
 
-	return provider.Normalize(container.ServiceName + "-" + getDefaultBackendName(container) + "-" + container.SegmentName)
+	return getDefaultBackendName(container)
+}
+
+func getSegmentBackendName(container dockerData) string {
+	serviceName := getServiceName(container)
+	if value := label.GetStringValue(container.SegmentLabels, label.TraefikBackend, ""); len(value) > 0 {
+		return provider.Normalize(serviceName + "-" + value)
+	}
+
+	return provider.Normalize(serviceName + "-" + container.SegmentName)
 }
 
 func getDefaultBackendName(container dockerData) string {
@@ -274,19 +284,17 @@ func getDefaultBackendName(container dockerData) string {
 		return provider.Normalize(value)
 	}
 
-	if values, err := label.GetStringMultipleStrict(container.Labels, labelDockerComposeProject, labelDockerComposeService); err == nil {
-		return provider.Normalize(values[labelDockerComposeService] + "_" + values[labelDockerComposeProject])
-	}
-
-	return provider.Normalize(container.ServiceName)
+	return provider.Normalize(getServiceName(container))
 }
 
-func getBackendName(container dockerData) string {
-	if len(container.SegmentName) > 0 {
-		return getSegmentBackendName(container)
+func getServiceName(container dockerData) string {
+	serviceName := container.ServiceName
+
+	if values, err := label.GetStringMultipleStrict(container.Labels, labelDockerComposeProject, labelDockerComposeService); err == nil {
+		serviceName = values[labelDockerComposeService] + "_" + values[labelDockerComposeProject]
 	}
 
-	return getDefaultBackendName(container)
+	return serviceName
 }
 
 func getPort(container dockerData) string {
@@ -316,7 +324,7 @@ func getPort(container dockerData) string {
 func (p *Provider) getServers(containers []dockerData) map[string]types.Server {
 	var servers map[string]types.Server
 
-	for i, container := range containers {
+	for _, container := range containers {
 		ip := p.getIPAddress(container)
 		if len(ip) == 0 {
 			log.Warnf("Unable to find the IP address for the container %q: the server is ignored.", container.Name)
@@ -330,16 +338,30 @@ func (p *Provider) getServers(containers []dockerData) map[string]types.Server {
 		protocol := label.GetStringValue(container.SegmentLabels, label.TraefikProtocol, label.DefaultProtocol)
 		port := getPort(container)
 
-		serverName := "server-" + container.SegmentName + "-" + container.Name
-		if len(container.SegmentName) > 0 {
-			serverName += "-" + strconv.Itoa(i)
+		serverURL := fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(ip, port))
+
+		serverName := getServerName(container.Name, serverURL)
+		if _, exist := servers[serverName]; exist {
+			log.Debugf("Skipping server %q with the same URL.", serverName)
+			continue
 		}
 
-		servers[provider.Normalize(serverName)] = types.Server{
-			URL:    fmt.Sprintf("%s://%s:%s", protocol, ip, port),
+		servers[serverName] = types.Server{
+			URL:    serverURL,
 			Weight: label.GetIntValue(container.SegmentLabels, label.TraefikWeight, label.DefaultWeight),
 		}
 	}
 
 	return servers
+}
+
+func getServerName(containerName, url string) string {
+	hash := md5.New()
+	_, err := hash.Write([]byte(url))
+	if err != nil {
+		// Impossible case
+		log.Errorf("Fail to hash server URL %q", url)
+	}
+
+	return provider.Normalize("server-" + containerName + "-" + hex.EncodeToString(hash.Sum(nil)))
 }

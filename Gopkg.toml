@@ -46,7 +46,7 @@
 
 [[constraint]]
   name = "github.com/aws/aws-sdk-go"
-  version = "1.13.1"
+  version = "1.13.11"
 
 [[constraint]]
   branch = "master"
@@ -62,7 +62,7 @@
 
 [[constraint]]
   name = "github.com/containous/staert"
-  version = "3.1.0"
+  version = "3.1.1"
 
 [[constraint]]
   name = "github.com/containous/traefik-extra-service-fabric"
@@ -181,9 +181,9 @@
   name = "github.com/vulcand/oxy"
 
 [[constraint]]
-  branch = "containous-fork"
+  branch = "master"
   name = "github.com/xenolf/lego"
-  source = "github.com/containous/lego"
+#  version = "1.0.0"
 
 [[constraint]]
   name = "google.golang.org/grpc"
@@ -256,3 +256,7 @@
   non-go = true
   go-tests = true
   unused-packages = true
+
+[[constraint]]
+  name = "gopkg.in/DataDog/dd-trace-go.v1"
+  version = "1.0.0"

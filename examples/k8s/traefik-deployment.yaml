@@ -28,6 +28,11 @@ spec:
       containers:
       - image: traefik
         name: traefik-ingress-lb
+        ports:
+        - name: http
+          containerPort: 80
+        - name: admin
+          containerPort: 8080
         args:
         - --api
         - --kubernetes

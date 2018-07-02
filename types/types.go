@@ -16,6 +16,7 @@ import (
 	"github.com/containous/mux"
 	"github.com/containous/traefik/log"
 	traefiktls "github.com/containous/traefik/tls"
+	"github.com/mitchellh/hashstructure"
 	"github.com/ryanuber/go-glob"
 )
 
@@ -177,9 +178,9 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 
 // Frontend holds frontend configuration.
 type Frontend struct {
-	EntryPoints          []string              `json:"entryPoints,omitempty"`
+	EntryPoints          []string              `json:"entryPoints,omitempty" hash:"ignore"`
 	Backend              string                `json:"backend,omitempty"`
-	Routes               map[string]Route      `json:"routes,omitempty"`
+	Routes               map[string]Route      `json:"routes,omitempty" hash:"ignore"`
 	PassHostHeader       bool                  `json:"passHostHeader,omitempty"`
 	PassTLSCert          bool                  `json:"passTLSCert,omitempty"`
 	Priority             int                   `json:"priority"`
@@ -190,6 +191,17 @@ type Frontend struct {
 	Errors               map[string]*ErrorPage `json:"errors,omitempty"`
 	RateLimit            *RateLimit            `json:"ratelimit,omitempty"`
 	Redirect             *Redirect             `json:"redirect,omitempty"`
+}
+
+// Hash returns the hash value of a Frontend struct.
+func (f *Frontend) Hash() (string, error) {
+	hash, err := hashstructure.Hash(f, nil)
+
+	if err != nil {
+		return "", err
+	}
+
+	return strconv.FormatUint(hash, 10), nil
 }
 
 // Redirect configures a redirection of an entry point to another, or to an URL
@@ -400,9 +412,10 @@ type Digest struct {
 
 // Forward authentication
 type Forward struct {
-	Address            string     `description:"Authentication server address"`
-	TLS                *ClientTLS `description:"Enable TLS support" export:"true"`
-	TrustForwardHeader bool       `description:"Trust X-Forwarded-* headers" export:"true"`
+	Address             string     `description:"Authentication server address"`
+	TLS                 *ClientTLS `description:"Enable TLS support" export:"true"`
+	TrustForwardHeader  bool       `description:"Trust X-Forwarded-* headers" export:"true"`
+	AuthResponseHeaders []string   `description:"Headers to be forwarded from auth response"`
 }
 
 // CanonicalDomain returns a lower case domain with trim space
@@ -443,8 +456,11 @@ type Statsd struct {
 
 // InfluxDB contains address and metrics pushing interval configuration
 type InfluxDB struct {
-	Address      string `description:"InfluxDB address"`
-	PushInterval string `description:"InfluxDB push interval"`
+	Address         string `description:"InfluxDB address"`
+	Protocol        string `description:"InfluxDB address protocol (udp or http)"`
+	PushInterval    string `description:"InfluxDB push interval" export:"true"`
+	Database        string `description:"InfluxDB database used when protocol is http" export:"true"`
+	RetentionPolicy string `description:"InfluxDB retention policy used when protocol is http" export:"true"`
 }
 
 // Buckets holds Prometheus Buckets

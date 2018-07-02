@@ -8,10 +8,10 @@ import (
 	"strings"
 
 	"github.com/namedotcom/go/namecom"
-	"github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
 )
 
-// DNSProvider is an implementation of the acmev2.ChallengeProvider interface.
+// DNSProvider is an implementation of the acme.ChallengeProvider interface.
 type DNSProvider struct {
 	client *namecom.NameCom
 }
@@ -47,7 +47,7 @@ func NewDNSProviderCredentials(username, apiToken, server string) (*DNSProvider,
 
 // Present creates a TXT record to fulfil the dns-01 challenge.
 func (c *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
 
 	request := &namecom.Record{
 		DomainName: domain,
@@ -67,7 +67,7 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters.
 func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acmev2.DNS01Record(domain, keyAuth)
+	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
 
 	records, err := c.getRecords(domain)
 	if err != nil {
@@ -116,7 +116,7 @@ func (c *DNSProvider) getRecords(domain string) ([]*namecom.Record, error) {
 }
 
 func (c *DNSProvider) extractRecordName(fqdn, domain string) string {
-	name := acmev2.UnFqdn(fqdn)
+	name := acme.UnFqdn(fqdn)
 	if idx := strings.Index(name, "."+domain); idx != -1 {
 		return name[:idx]
 	}
