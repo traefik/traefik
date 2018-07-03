@@ -209,7 +209,6 @@ Trying to do so leads to an error and the corresponding Ingress object being ign
 
 <5> `traefik.ingress.kubernetes.io/service-weights`:
 Service weights enable to split traffic across multiple backing services in a fine-grained manner.
-A canonical use case are canary releases where a new deployment starts to receive a small percentage of traffic (e.g., 1%) and steadily increases over time as confidence in the new deployment improves.
 
 Example:
 
@@ -233,6 +232,8 @@ For each path definition, this annotation will fail if:
 
 - the sum of backend weights exceeds 100% or
 - the sum of backend weights is less than 100% without one or more omitted backends
+
+See also the [user guide section traffic splitting](/user-guide/kubernetes/#traffic-splitting).
 
 <6> `traefik.ingress.kubernetes.io/whitelist-source-range`:
 All source IPs are permitted if the list is empty or a single range is ill-formatted.

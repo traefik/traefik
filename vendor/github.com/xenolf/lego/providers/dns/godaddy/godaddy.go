@@ -2,18 +2,17 @@
 package godaddy
 
 import (
-	"fmt"
-	"io"
-	"net/http"
-	"os"
-	"time"
-
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"io"
 	"io/ioutil"
+	"net/http"
 	"strings"
+	"time"
 
 	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/platform/config/env"
 )
 
 // GoDaddyAPIURL represents the API endpoint to call.
@@ -23,15 +22,19 @@ const apiURL = "https://api.godaddy.com"
 type DNSProvider struct {
 	apiKey    string
 	apiSecret string
+	client    *http.Client
 }
 
 // NewDNSProvider returns a DNSProvider instance configured for godaddy.
 // Credentials must be passed in the environment variables: GODADDY_API_KEY
 // and GODADDY_API_SECRET.
 func NewDNSProvider() (*DNSProvider, error) {
-	apikey := os.Getenv("GODADDY_API_KEY")
-	secret := os.Getenv("GODADDY_API_SECRET")
-	return NewDNSProviderCredentials(apikey, secret)
+	values, err := env.Get("GODADDY_API_KEY", "GODADDY_API_SECRET")
+	if err != nil {
+		return nil, fmt.Errorf("GoDaddy: %v", err)
+	}
+
+	return NewDNSProviderCredentials(values["GODADDY_API_KEY"], values["GODADDY_API_SECRET"])
 }
 
 // NewDNSProviderCredentials uses the supplied credentials to return a
@@ -41,16 +44,20 @@ func NewDNSProviderCredentials(apiKey, apiSecret string) (*DNSProvider, error) {
 		return nil, fmt.Errorf("GoDaddy credentials missing")
 	}
 
-	return &DNSProvider{apiKey, apiSecret}, nil
+	return &DNSProvider{
+		apiKey:    apiKey,
+		apiSecret: apiSecret,
+		client:    &http.Client{Timeout: 30 * time.Second},
+	}, nil
 }
 
 // Timeout returns the timeout and interval to use when checking for DNS
 // propagation. Adjusting here to cope with spikes in propagation times.
-func (c *DNSProvider) Timeout() (timeout, interval time.Duration) {
+func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 	return 120 * time.Second, 2 * time.Second
 }
 
-func (c *DNSProvider) extractRecordName(fqdn, domain string) string {
+func (d *DNSProvider) extractRecordName(fqdn, domain string) string {
 	name := acme.UnFqdn(fqdn)
 	if idx := strings.Index(name, "."+domain); idx != -1 {
 		return name[:idx]
@@ -59,9 +66,9 @@ func (c *DNSProvider) extractRecordName(fqdn, domain string) string {
 }
 
 // Present creates a TXT record to fulfil the dns-01 challenge
-func (c *DNSProvider) Present(domain, token, keyAuth string) error {
+func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
-	domainZone, err := c.getZone(fqdn)
+	domainZone, err := d.getZone(fqdn)
 	if err != nil {
 		return err
 	}
@@ -70,7 +77,7 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 		ttl = 600
 	}
 
-	recordName := c.extractRecordName(fqdn, domainZone)
+	recordName := d.extractRecordName(fqdn, domainZone)
 	rec := []DNSRecord{
 		{
 			Type: "TXT",
@@ -80,17 +87,17 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 		},
 	}
 
-	return c.updateRecords(rec, domainZone, recordName)
+	return d.updateRecords(rec, domainZone, recordName)
 }
 
-func (c *DNSProvider) updateRecords(records []DNSRecord, domainZone string, recordName string) error {
+func (d *DNSProvider) updateRecords(records []DNSRecord, domainZone string, recordName string) error {
 	body, err := json.Marshal(records)
 	if err != nil {
 		return err
 	}
 
 	var resp *http.Response
-	resp, err = c.makeRequest("PUT", fmt.Sprintf("/v1/domains/%s/records/TXT/%s", domainZone, recordName), bytes.NewReader(body))
+	resp, err = d.makeRequest(http.MethodPut, fmt.Sprintf("/v1/domains/%s/records/TXT/%s", domainZone, recordName), bytes.NewReader(body))
 	if err != nil {
 		return err
 	}
@@ -105,14 +112,14 @@ func (c *DNSProvider) updateRecords(records []DNSRecord, domainZone string, reco
 }
 
 // CleanUp sets null value in the TXT DNS record as GoDaddy has no proper DELETE record method
-func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
+func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
-	domainZone, err := c.getZone(fqdn)
+	domainZone, err := d.getZone(fqdn)
 	if err != nil {
 		return err
 	}
 
-	recordName := c.extractRecordName(fqdn, domainZone)
+	recordName := d.extractRecordName(fqdn, domainZone)
 	rec := []DNSRecord{
 		{
 			Type: "TXT",
@@ -121,10 +128,10 @@ func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 		},
 	}
 
-	return c.updateRecords(rec, domainZone, recordName)
+	return d.updateRecords(rec, domainZone, recordName)
 }
 
-func (c *DNSProvider) getZone(fqdn string) (string, error) {
+func (d *DNSProvider) getZone(fqdn string) (string, error) {
 	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
 	if err != nil {
 		return "", err
@@ -133,7 +140,7 @@ func (c *DNSProvider) getZone(fqdn string) (string, error) {
 	return acme.UnFqdn(authZone), nil
 }
 
-func (c *DNSProvider) makeRequest(method, uri string, body io.Reader) (*http.Response, error) {
+func (d *DNSProvider) makeRequest(method, uri string, body io.Reader) (*http.Response, error) {
 	req, err := http.NewRequest(method, fmt.Sprintf("%s%s", apiURL, uri), body)
 	if err != nil {
 		return nil, err
@@ -141,10 +148,9 @@ func (c *DNSProvider) makeRequest(method, uri string, body io.Reader) (*http.Res
 
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("sso-key %s:%s", c.apiKey, c.apiSecret))
+	req.Header.Set("Authorization", fmt.Sprintf("sso-key %s:%s", d.apiKey, d.apiSecret))
 
-	client := http.Client{Timeout: 30 * time.Second}
-	return client.Do(req)
+	return d.client.Do(req)
 }
 
 // DNSRecord a DNS record
