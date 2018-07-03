@@ -51,6 +51,7 @@ func init() {
 		check.Suite(&FileSuite{})
 		check.Suite(&GRPCSuite{})
 		check.Suite(&HealthCheckSuite{})
+		check.Suite(&HostResolverSuite{})
 		check.Suite(&HTTPSSuite{})
 		check.Suite(&LogRotationSuite{})
 		check.Suite(&MarathonSuite{})

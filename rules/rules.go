@@ -11,13 +11,16 @@ import (
 
 	"github.com/BurntSushi/ty/fun"
 	"github.com/containous/mux"
+	"github.com/containous/traefik/hostresolver"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
 )
 
 // Rules holds rule parsing and configuration
 type Rules struct {
-	Route *types.ServerRoute
-	err   error
+	Route        *types.ServerRoute
+	err          error
+	HostResolver *hostresolver.Resolver
 }
 
 func (r *Rules) host(hosts ...string) *mux.Route {
@@ -26,6 +29,19 @@ func (r *Rules) host(hosts ...string) *mux.Route {
 		if err != nil {
 			reqHost = req.Host
 		}
+
+		if r.HostResolver != nil && r.HostResolver.CnameFlattening {
+			reqH, flatH := r.HostResolver.CNAMEFlatten(types.CanonicalDomain(reqHost))
+			for _, host := range hosts {
+				if types.CanonicalDomain(reqH) == types.CanonicalDomain(host) ||
+					types.CanonicalDomain(flatH) == types.CanonicalDomain(host) {
+					return true
+				}
+				log.Debugf("CNAMEFlattening: request %s which resolved to %s, is not matched to route %s", reqH, flatH, host)
+			}
+			return false
+		}
+
 		for _, host := range hosts {
 			if types.CanonicalDomain(reqHost) == types.CanonicalDomain(host) {
 				return true

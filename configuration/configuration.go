@@ -104,6 +104,7 @@ type GlobalConfiguration struct {
 	API                       *api.Handler            `description:"Enable api/dashboard" export:"true"`
 	Metrics                   *types.Metrics          `description:"Enable a metrics exporter" export:"true"`
 	Ping                      *ping.Handler           `description:"Enable ping" export:"true"`
+	HostResolver              *HostResolverConfig     `description:"Enable CNAME Flattening" export:"true"`
 }
 
 // WebCompatibility is a configuration to handle compatibility with deprecated web provider options
@@ -518,4 +519,11 @@ type ForwardingTimeouts struct {
 type LifeCycle struct {
 	RequestAcceptGraceTimeout flaeg.Duration `description:"Duration to keep accepting requests before Traefik initiates the graceful shutdown procedure"`
 	GraceTimeOut              flaeg.Duration `description:"Duration to give active requests a chance to finish before Traefik stops"`
+}
+
+// HostResolverConfig contain configuration for CNAME Flattening
+type HostResolverConfig struct {
+	CnameFlattening bool   `description:"A flag to enable/disable CNAME flattening" export:"true"`
+	ResolvConfig    string `description:"resolv.conf used for DNS resolving" export:"true"`
+	ResolvDepth     int    `description:"The maximal depth of DNS recursive resolving" export:"true"`
 }

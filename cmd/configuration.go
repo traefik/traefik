@@ -269,6 +269,12 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		},
 	}
 
+	defaultResolver := configuration.HostResolverConfig{
+		CnameFlattening: false,
+		ResolvConfig:    "/etc/resolv.conf",
+		ResolvDepth:     5,
+	}
+
 	defaultConfiguration := configuration.GlobalConfiguration{
 		Docker:             &defaultDocker,
 		File:               &defaultFile,
@@ -297,6 +303,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		API:                &defaultAPI,
 		Metrics:            &defaultMetrics,
 		Tracing:            &defaultTracing,
+		HostResolver:       &defaultResolver,
 	}
 
 	return &TraefikConfiguration{
