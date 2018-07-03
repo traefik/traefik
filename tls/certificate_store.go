@@ -4,8 +4,10 @@ import (
 	"crypto/tls"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/containous/traefik/safe"
+	"github.com/patrickmn/go-cache"
 )
 
 // CertificateStore store for dynamic and static certificates
@@ -13,7 +15,7 @@ type CertificateStore struct {
 	DynamicCerts       *safe.Safe
 	StaticCerts        *safe.Safe
 	DefaultCertificate *tls.Certificate
-	CertCache          map[string]*tls.Certificate
+	CertCache          *cache.Cache
 	SniStrict          bool
 }
 
@@ -40,11 +42,11 @@ func (c CertificateStore) GetAllDomains() []string {
 // GetBestCertificate returns the best match certificate, and caches the response
 func (c CertificateStore) GetBestCertificate(domainToCheck string) *tls.Certificate {
 	if c.CertCache == nil {
-		c.CertCache = map[string]*tls.Certificate{}
+		c.CertCache = cache.New(1*time.Hour, 10*time.Minute)
 	}
 
-	if c.CertCache[domainToCheck] != nil {
-		return c.CertCache[domainToCheck]
+	if cert, ok := c.CertCache.Get(domainToCheck); ok {
+		return cert.(*tls.Certificate)
 	}
 
 	matchedCerts := map[string]*tls.Certificate{}
@@ -77,8 +79,8 @@ func (c CertificateStore) GetBestCertificate(domainToCheck string) *tls.Certific
 		sort.Strings(keys)
 
 		// cache best match
-		c.CertCache[domainToCheck] = matchedCerts[keys[len(keys)-1]]
-		return c.CertCache[domainToCheck]
+		c.CertCache.SetDefault(domainToCheck, matchedCerts[keys[len(keys)-1]])
+		return matchedCerts[keys[len(keys)-1]]
 	}
 
 	return nil
@@ -91,7 +93,7 @@ func (c CertificateStore) ContainsCertificates() bool {
 
 // ResetCache clears the cache in the store
 func (c CertificateStore) ResetCache() {
-	c.CertCache = map[string]*tls.Certificate{}
+	c.CertCache.Flush()
 }
 
 // MatchDomain return true if a domain match the cert domain
