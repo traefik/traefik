@@ -48,7 +48,13 @@ func NewDNSProvider() (*DNSProvider, error) {
 		return nil, errors.New("environment variable EXEC_PATH not set")
 	}
 
-	return &DNSProvider{program: s}, nil
+	return NewDNSProviderProgram(s)
+}
+
+// NewDNSProviderProgram returns a new DNS provider which runs the given program
+// for adding and removing the DNS record.
+func NewDNSProviderProgram(program string) (*DNSProvider, error) {
+	return &DNSProvider{program: program}, nil
 }
 
 // Present creates a TXT record to fulfil the dns-01 challenge.

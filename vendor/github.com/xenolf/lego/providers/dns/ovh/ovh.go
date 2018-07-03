@@ -4,12 +4,12 @@ package ovh
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"sync"
 
 	"github.com/ovh/go-ovh/ovh"
 	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/platform/config/env"
 )
 
 // OVH API reference:       https://eu.api.ovh.com/
@@ -30,11 +30,17 @@ type DNSProvider struct {
 // OVH_APPLICATION_SECRET
 // OVH_CONSUMER_KEY
 func NewDNSProvider() (*DNSProvider, error) {
-	apiEndpoint := os.Getenv("OVH_ENDPOINT")
-	applicationKey := os.Getenv("OVH_APPLICATION_KEY")
-	applicationSecret := os.Getenv("OVH_APPLICATION_SECRET")
-	consumerKey := os.Getenv("OVH_CONSUMER_KEY")
-	return NewDNSProviderCredentials(apiEndpoint, applicationKey, applicationSecret, consumerKey)
+	values, err := env.Get("OVH_ENDPOINT", "OVH_APPLICATION_KEY", "OVH_APPLICATION_SECRET", "OVH_CONSUMER_KEY")
+	if err != nil {
+		return nil, fmt.Errorf("OVH: %v", err)
+	}
+
+	return NewDNSProviderCredentials(
+		values["OVH_ENDPOINT"],
+		values["OVH_APPLICATION_KEY"],
+		values["OVH_APPLICATION_SECRET"],
+		values["OVH_CONSUMER_KEY"],
+	)
 }
 
 // NewDNSProviderCredentials uses the supplied credentials to return a
@@ -96,16 +102,14 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	// Create TXT record
 	err = d.client.Post(reqURL, reqData, &respData)
 	if err != nil {
-		fmt.Printf("Error when call OVH api to add record : %q \n", err)
-		return err
+		return fmt.Errorf("error when call OVH api to add record: %v", err)
 	}
 
 	// Apply the change
 	reqURL = fmt.Sprintf("/domain/zone/%s/refresh", authZone)
 	err = d.client.Post(reqURL, nil, nil)
 	if err != nil {
-		fmt.Printf("Error when call OVH api to refresh zone : %q \n", err)
-		return err
+		return fmt.Errorf("error when call OVH api to refresh zone: %v", err)
 	}
 
 	d.recordIDsMu.Lock()
@@ -138,8 +142,7 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 
 	err = d.client.Delete(reqURL, nil)
 	if err != nil {
-		fmt.Printf("Error when call OVH api to delete challenge record : %q \n", err)
-		return err
+		return fmt.Errorf("error when call OVH api to delete challenge record: %v", err)
 	}
 
 	// Delete record ID from map
