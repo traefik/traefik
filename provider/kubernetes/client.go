@@ -170,11 +170,9 @@ func (c *clientImpl) GetIngresses() []*extensionsv1beta1.Ingress {
 
 // UpdateIngressStatus updates an Ingress with a provided status.
 func (c *clientImpl) UpdateIngressStatus(namespace, name, ip, hostname string) error {
-	keyName := namespace + "/" + name
-
 	ing, err := c.factories[c.lookupNamespace(namespace)].Extensions().V1beta1().Ingresses().Lister().Ingresses(namespace).Get(name)
 	if err != nil {
-		return fmt.Errorf("failed to get ingress %s with error: %v", keyName, err)
+		return fmt.Errorf("failed to get ingress %s: %v", namespace+"/"+name, err)
 	}
 
 	if len(ing.Status.LoadBalancer.Ingress) > 0 {
@@ -189,9 +187,9 @@ func (c *clientImpl) UpdateIngressStatus(namespace, name, ip, hostname string) e
 
 	_, err = c.clientset.ExtensionsV1beta1().Ingresses(ingCopy.Namespace).UpdateStatus(ingCopy)
 	if err != nil {
-		return fmt.Errorf("failed to update ingress status %s with error: %v", keyName, err)
+		return fmt.Errorf("failed to update ingress status %s: %v", namespace+"/"+name, err)
 	}
-	log.Infof("Updated status on ingress %s", keyName)
+	log.Infof("Updated status on ingress %s", namespace+"/"+name)
 	return nil
 }
 
@@ -256,11 +254,8 @@ func eventHandlerFunc(events chan<- interface{}, obj interface{}) {
 // translateNotFoundError will translate a "not found" error to a boolean return
 // value which indicates if the resource exists and a nil error.
 func translateNotFoundError(err error) (bool, error) {
-	if err != nil {
-		if kubeerror.IsNotFound(err) {
-			return false, nil
-		}
-		return false, err
+	if kubeerror.IsNotFound(err) {
+		return false, nil
 	}
-	return true, nil
+	return err == nil, err
 }
