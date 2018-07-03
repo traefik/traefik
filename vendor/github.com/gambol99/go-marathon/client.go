@@ -70,6 +70,40 @@ type Marathon interface {
 	// wait of application
 	WaitOnApplication(name string, timeout time.Duration) error
 
+	// -- PODS ---
+	// whether this version of Marathon supports pods
+	SupportsPods() (bool, error)
+
+	// get pod status
+	PodStatus(name string) (*PodStatus, error)
+	// get all pod statuses
+	PodStatuses() ([]*PodStatus, error)
+
+	// get pod
+	Pod(name string) (*Pod, error)
+	// get all pods
+	Pods() ([]Pod, error)
+	// create pod
+	CreatePod(pod *Pod) (*Pod, error)
+	// update pod
+	UpdatePod(pod *Pod, force bool) (*Pod, error)
+	// delete pod
+	DeletePod(name string, force bool) (*DeploymentID, error)
+	// wait on pod to be deployed
+	WaitOnPod(name string, timeout time.Duration) error
+	// check if a pod is running
+	PodIsRunning(name string) bool
+
+	// get versions of a pod
+	PodVersions(name string) ([]string, error)
+	// get pod by version
+	PodByVersion(name, version string) (*Pod, error)
+
+	// delete instances of a pod
+	DeletePodInstances(name string, instances []string) ([]*PodInstance, error)
+	// delete pod instance
+	DeletePodInstance(name, instance string) (*PodInstance, error)
+
 	// -- TASKS ---
 
 	// get a list of tasks for a specific application
@@ -273,6 +307,10 @@ func (r *marathonClient) Ping() (bool, error) {
 	return true, nil
 }
 
+func (r *marathonClient) apiHead(path string, result interface{}) error {
+	return r.apiCall("HEAD", path, nil, result)
+}
+
 func (r *marathonClient) apiGet(path string, post, result interface{}) error {
 	return r.apiCall("GET", path, post, result)
 }
@@ -290,6 +328,8 @@ func (r *marathonClient) apiDelete(path string, post, result interface{}) error 
 }
 
 func (r *marathonClient) apiCall(method, path string, body, result interface{}) error {
+	const deploymentHeader = "Marathon-Deployment-Id"
+
 	for {
 		// step: marshall the request to json
 		var requestBody []byte
@@ -328,11 +368,24 @@ func (r *marathonClient) apiCall(method, path string, body, result interface{}) 
 			r.debugLog("apiCall(): %v %v returned %v %s", request.Method, request.URL.String(), response.Status, oneLogLine(respBody))
 		}
 
-		// step: check for a successfull response
+		// step: check for a successful response
 		if response.StatusCode >= 200 && response.StatusCode <= 299 {
 			if result != nil {
-				if err := json.Unmarshal(respBody, result); err != nil {
-					return fmt.Errorf("failed to unmarshal response from Marathon: %s", err)
+				// If we have a deployment ID header and no response body, give them that
+				// This specifically handles the use case of a DELETE on an app/pod
+				// We need a way to retrieve the deployment ID
+				deploymentID := response.Header.Get(deploymentHeader)
+				if len(respBody) == 0 && deploymentID != "" {
+					d := DeploymentID{
+						DeploymentID: deploymentID,
+					}
+					if deployID, ok := result.(*DeploymentID); ok {
+						*deployID = d
+					}
+				} else {
+					if err := json.Unmarshal(respBody, result); err != nil {
+						return fmt.Errorf("failed to unmarshal response from Marathon: %s", err)
+					}
 				}
 			}
 			return nil
@@ -347,6 +400,27 @@ func (r *marathonClient) apiCall(method, path string, body, result interface{}) 
 		}
 
 		return NewAPIError(response.StatusCode, respBody)
+	}
+}
+
+// wait waits until the provided function returns true (or times out)
+func (r *marathonClient) wait(name string, timeout time.Duration, fn func(string) bool) error {
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+
+	ticker := time.NewTicker(r.config.PollingWaitTime)
+	defer ticker.Stop()
+	for {
+		if fn(name) {
+			return nil
+		}
+
+		select {
+		case <-timer.C:
+			return ErrTimeoutError
+		case <-ticker.C:
+			continue
+		}
 	}
 }
 
