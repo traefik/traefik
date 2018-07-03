@@ -172,7 +172,7 @@ func (c *clientImpl) GetIngresses() []*extensionsv1beta1.Ingress {
 func (c *clientImpl) UpdateIngressStatus(namespace, name, ip, hostname string) error {
 	ing, err := c.factories[c.lookupNamespace(namespace)].Extensions().V1beta1().Ingresses().Lister().Ingresses(namespace).Get(name)
 	if err != nil {
-		return fmt.Errorf("failed to get ingress %s: %v", namespace+"/"+name, err)
+		return fmt.Errorf("failed to get ingress %s/%s: %v", namespace, name, err)
 	}
 
 	if len(ing.Status.LoadBalancer.Ingress) > 0 {
@@ -187,9 +187,9 @@ func (c *clientImpl) UpdateIngressStatus(namespace, name, ip, hostname string) e
 
 	_, err = c.clientset.ExtensionsV1beta1().Ingresses(ingCopy.Namespace).UpdateStatus(ingCopy)
 	if err != nil {
-		return fmt.Errorf("failed to update ingress status %s: %v", namespace+"/"+name, err)
+		return fmt.Errorf("failed to update ingress status %s/%s: %v", namespace, name, err)
 	}
-	log.Infof("Updated status on ingress %s", namespace+"/"+name)
+	log.Infof("Updated status on ingress %s/%s", namespace, name)
 	return nil
 }
 
