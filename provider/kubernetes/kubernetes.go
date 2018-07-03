@@ -316,7 +316,8 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						} else {
 							endpoints, exists, err := k8sClient.GetEndpoints(service.Namespace, service.Name)
 							if err != nil {
-								return nil, fmt.Errorf("error retrieving endpoint information from k8s API %s/%s: %v", service.Namespace, service.Name, err)
+								log.Errorf("Error retrieving endpoints %s/%s: %v", service.Namespace, service.Name, err)
+								return nil, err
 							}
 
 							if !exists {

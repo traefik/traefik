@@ -1690,7 +1690,7 @@ func TestKubeAPIErrors(t *testing.T) {
 					assert.EqualError(t, err, "failed kube api call")
 				}
 				if client.apiEndpointsError != nil {
-					assert.EqualError(t, err, "error retrieving endpoint information from k8s API testing/service1: failed kube api call")
+					assert.EqualError(t, err, "failed kube api call")
 				}
 			}
 		})
