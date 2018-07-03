@@ -11,4 +11,4 @@ logLevel = "DEBUG"
 [docker]
 endpoint = "{{.DockerHost}}"
 domain = "docker.localhost"
-exposedByDefault = true
+exposedByDefault = false

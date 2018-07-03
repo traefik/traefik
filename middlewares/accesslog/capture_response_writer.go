@@ -49,7 +49,7 @@ func (crw *captureResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) 
 	if h, ok := crw.rw.(http.Hijacker); ok {
 		return h.Hijack()
 	}
-	return nil, nil, fmt.Errorf("Not a hijacker: %T", crw.rw)
+	return nil, nil, fmt.Errorf("not a hijacker: %T", crw.rw)
 }
 
 func (crw *captureResponseWriter) CloseNotify() <-chan bool {

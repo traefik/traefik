@@ -30,14 +30,8 @@ const (
 )
 
 var (
-	// RegexpBaseFrontendErrorPage used to extract error pages from service's label
-	RegexpBaseFrontendErrorPage = regexp.MustCompile(`^frontend\.errors\.(?P<name>[^ .]+)\.(?P<field>[^ .]+)$`)
-
 	// RegexpFrontendErrorPage used to extract error pages from label
 	RegexpFrontendErrorPage = regexp.MustCompile(`^traefik\.frontend\.errors\.(?P<name>[^ .]+)\.(?P<field>[^ .]+)$`)
-
-	// RegexpBaseFrontendRateLimit used to extract rate limits from service's label
-	RegexpBaseFrontendRateLimit = regexp.MustCompile(`^frontend\.rateLimit\.rateSet\.(?P<name>[^ .]+)\.(?P<field>[^ .]+)$`)
 
 	// RegexpFrontendRateLimit used to extract rate limits from label
 	RegexpFrontendRateLimit = regexp.MustCompile(`^traefik\.frontend\.rateLimit\.rateSet\.(?P<name>[^ .]+)\.(?P<field>[^ .]+)$`)

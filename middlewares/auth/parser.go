@@ -20,7 +20,7 @@ func parserBasicUsers(basic *types.Basic) (map[string]string, error) {
 	for _, user := range userStrs {
 		split := strings.Split(user, ":")
 		if len(split) != 2 {
-			return nil, fmt.Errorf("Error parsing Authenticator user: %v", user)
+			return nil, fmt.Errorf("error parsing Authenticator user: %v", user)
 		}
 		userMap[split[0]] = split[1]
 	}
@@ -40,7 +40,7 @@ func parserDigestUsers(digest *types.Digest) (map[string]string, error) {
 	for _, user := range userStrs {
 		split := strings.Split(user, ":")
 		if len(split) != 3 {
-			return nil, fmt.Errorf("Error parsing Authenticator user: %v", user)
+			return nil, fmt.Errorf("error parsing Authenticator user: %v", user)
 		}
 		userMap[split[0]+":"+split[1]] = split[2]
 	}

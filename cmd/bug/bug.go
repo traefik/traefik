@@ -88,7 +88,7 @@ Add more configuration information here.
 // NewCmd builds a new Bug command
 func NewCmd(traefikConfiguration *cmd.TraefikConfiguration, traefikPointersConfiguration *cmd.TraefikConfiguration) *flaeg.Command {
 
-	//version Command init
+	// version Command init
 	return &flaeg.Command{
 		Name:                  "bug",
 		Description:           `Report an issue on Traefik bugtracker`,
