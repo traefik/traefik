@@ -24,9 +24,9 @@ import (
 
 	"github.com/containous/traefik/log"
 
+	"golang.org/x/net/http/httpguts"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/hpack"
-	"golang.org/x/net/lex/httplex"
 )
 
 var (
@@ -45,7 +45,6 @@ func init() {
 // to provide an http.Server.
 type Server struct {
 	*http.Server
-	originalHandler http.Handler
 }
 
 // Serve Put a middleware around the original handler to handle h2c
@@ -101,6 +100,9 @@ func initH2CWithPriorKnowledge(w http.ResponseWriter) (net.Conn, error) {
 
 	buf := make([]byte, len(expectedBody))
 	n, err := io.ReadFull(rw, buf)
+	if err != nil {
+		return nil, fmt.Errorf("fail to read body: %v", err)
+	}
 
 	if bytes.Equal(buf[0:n], []byte(expectedBody)) {
 		c := &rwConn{
@@ -132,7 +134,7 @@ func drainClientPreface(r io.Reader) error {
 		return err
 	}
 	if n != prefaceLen || buf.String() != http2.ClientPreface {
-		return fmt.Errorf("Client never sent: %s", http2.ClientPreface)
+		return fmt.Errorf("client never sent: %s", http2.ClientPreface)
 	}
 	return nil
 }
@@ -347,8 +349,8 @@ func (w *settingsAckSwallowWriter) Flush() error {
 // isH2CUpgrade returns true if the header properly request an upgrade to h2c
 // as specified by Section 3.2.
 func isH2CUpgrade(h http.Header) bool {
-	return httplex.HeaderValuesContainsToken(h[textproto.CanonicalMIMEHeaderKey("Upgrade")], "h2c") &&
-		httplex.HeaderValuesContainsToken(h[textproto.CanonicalMIMEHeaderKey("Connection")], "HTTP2-Settings")
+	return httpguts.HeaderValuesContainsToken(h[textproto.CanonicalMIMEHeaderKey("Upgrade")], "h2c") &&
+		httpguts.HeaderValuesContainsToken(h[textproto.CanonicalMIMEHeaderKey("Connection")], "HTTP2-Settings")
 }
 
 // getH2Settings returns the []http2.Setting that are encoded in the
@@ -363,7 +365,7 @@ func getH2Settings(h http.Header) ([]http2.Setting, error) {
 	}
 	settings, err := decodeSettings(vals[0])
 	if err != nil {
-		return nil, fmt.Errorf("Invalid HTTP2-Settings: %q", vals[0])
+		return nil, fmt.Errorf("invalid HTTP2-Settings: %q", vals[0])
 	}
 	return settings, nil
 }

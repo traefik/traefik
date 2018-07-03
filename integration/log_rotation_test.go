@@ -123,7 +123,7 @@ func (s *LogRotationSuite) TestTraefikLogRotation(c *check.C) {
 	// If more log entries are output on startup
 	c.Assert(lineCount, checker.GreaterOrEqualThan, 5)
 
-	//Verify traefik.log output as expected
+	// Verify traefik.log output as expected
 	lineCount = verifyLogLines(c, traefikTestLogFile, lineCount, false)
 	c.Assert(lineCount, checker.GreaterOrEqualThan, 7)
 }

@@ -377,6 +377,97 @@ func TestProviderBuildConfiguration(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "Should build config containing one frontend, one IPv4 and one IPv6 backend",
+			nodes: []catalogUpdate{
+				{
+					Service: &serviceUpdate{
+						ServiceName: "test",
+						Attributes: []string{
+							"random.foo=bar",
+							label.TraefikBackendLoadBalancerMethod + "=drr",
+							label.TraefikBackendCircuitBreakerExpression + "=NetworkErrorRatio() > 0.5",
+							label.TraefikBackendMaxConnAmount + "=1000",
+							label.TraefikBackendMaxConnExtractorFunc + "=client.ip",
+							label.TraefikFrontendAuthBasic + "=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						},
+					},
+					Nodes: []*api.ServiceEntry{
+						{
+							Service: &api.AgentService{
+								Service: "test",
+								Address: "127.0.0.1",
+								Port:    80,
+								Tags: []string{
+									"random.foo=bar",
+									label.Prefix + "backend.weight=42", // Deprecated label
+									label.TraefikFrontendPassHostHeader + "=true",
+									label.TraefikProtocol + "=https",
+								},
+							},
+							Node: &api.Node{
+								Node:    "localhost",
+								Address: "127.0.0.1",
+							},
+						},
+						{
+							Service: &api.AgentService{
+								Service: "test",
+								Address: "::1",
+								Port:    80,
+								Tags: []string{
+									"random.foo=bar",
+									label.Prefix + "backend.weight=42", // Deprecated label
+									label.TraefikFrontendPassHostHeader + "=true",
+									label.TraefikProtocol + "=https",
+								},
+							},
+							Node: &api.Node{
+								Node:    "localhost",
+								Address: "::1",
+							},
+						},
+					},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-test": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					Routes: map[string]types.Route{
+						"route-host-test": {
+							Rule: "Host:test.localhost",
+						},
+					},
+					EntryPoints: []string{},
+					BasicAuth:   []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test": {
+					Servers: map[string]types.Server{
+						"test-0-us4-27hAOu2ARV7nNrmv6GoKlcA": {
+							URL:    "https://127.0.0.1:80",
+							Weight: 42,
+						},
+						"test-1-Gh4zrXo5flAAz1A8LAEHm1-TSnE": {
+							URL:    "https://[::1]:80",
+							Weight: 42,
+						},
+					},
+					LoadBalancer: &types.LoadBalancer{
+						Method: "drr",
+					},
+					CircuitBreaker: &types.CircuitBreaker{
+						Expression: "NetworkErrorRatio() > 0.5",
+					},
+					MaxConn: &types.MaxConn{
+						Amount:        1000,
+						ExtractorFunc: "client.ip",
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {

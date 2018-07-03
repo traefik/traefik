@@ -37,7 +37,7 @@ func TestBuilder(t *testing.T) {
 		DiscoveryInfo: state.DiscoveryInfo{
 			Name: "name1",
 			Labels: struct {
-				Labels []state.Label "json:\"labels\""
+				Labels []state.Label `json:"labels"`
 			}{},
 			Ports: state.Ports{DiscoveryPorts: []state.DiscoveryPort{
 				{Protocol: "TCP", Number: 80, Name: "p"},
@@ -63,7 +63,7 @@ func aTaskData(id, segment string, ops ...func(*state.Task)) taskData {
 }
 
 func segmentedTaskData(segments []string, ts state.Task) []taskData {
-	td := []taskData{}
+	var td []taskData
 	lbls := label.ExtractTraefikLabels(extractLabels(ts))
 	for _, s := range segments {
 		if l, ok := lbls[s]; !ok {

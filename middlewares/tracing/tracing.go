@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/middlewares/tracing/datadog"
 	"github.com/containous/traefik/middlewares/tracing/jaeger"
 	"github.com/containous/traefik/middlewares/tracing/zipkin"
 	"github.com/opentracing/opentracing-go"
@@ -14,10 +15,11 @@ import (
 
 // Tracing middleware
 type Tracing struct {
-	Backend     string         `description:"Selects the tracking backend ('jaeger','zipkin')." export:"true"`
-	ServiceName string         `description:"Set the name for this service" export:"true"`
-	Jaeger      *jaeger.Config `description:"Settings for jaeger"`
-	Zipkin      *zipkin.Config `description:"Settings for zipkin"`
+	Backend     string          `description:"Selects the tracking backend ('jaeger','zipkin', 'datadog')." export:"true"`
+	ServiceName string          `description:"Set the name for this service" export:"true"`
+	Jaeger      *jaeger.Config  `description:"Settings for jaeger"`
+	Zipkin      *zipkin.Config  `description:"Settings for zipkin"`
+	DataDog     *datadog.Config `description:"Settings for DataDog"`
 
 	tracer opentracing.Tracer
 	closer io.Closer
@@ -52,6 +54,8 @@ func (t *Tracing) Setup() {
 		t.tracer, t.closer, err = t.Jaeger.Setup(t.ServiceName)
 	case zipkin.Name:
 		t.tracer, t.closer, err = t.Zipkin.Setup(t.ServiceName)
+	case datadog.Name:
+		t.tracer, t.closer, err = t.DataDog.Setup(t.ServiceName)
 	default:
 		log.Warnf("Unknown tracer %q", t.Backend)
 		return

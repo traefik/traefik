@@ -6,7 +6,7 @@
 [![Docs](https://img.shields.io/badge/docs-current-brightgreen.svg)](https://docs.traefik.io)
 [![Go Report Card](https://goreportcard.com/badge/github.com/containous/traefik)](https://goreportcard.com/report/github.com/containous/traefik)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/containous/traefik/blob/master/LICENSE.md)
-[![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com)
+[![Join the chat at https://slack.traefik.io](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://slack.traefik.io)
 [![Twitter](https://img.shields.io/twitter/follow/traefikproxy.svg?style=social)](https://twitter.com/intent/follow?screen_name=traefikproxy)
 
 
@@ -42,7 +42,7 @@ _(But if you'd rather configure some of your routes manually, Træfik supports t
 - Websocket, HTTP/2, GRPC ready
 - Provides metrics (Rest, Prometheus, Datadog, Statsd, InfluxDB)
 - Keeps access logs (JSON, CLF)
-- [Fast](/benchmarks) ... which is nice
+- Fast
 - Exposes a Rest API
 - Packaged as a single binary file (made with :heart: with go) and available as a [tiny](https://microbadger.com/images/traefik) [official](https://hub.docker.com/r/_/traefik/) docker image
 

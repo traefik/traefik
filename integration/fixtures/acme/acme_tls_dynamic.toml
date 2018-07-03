@@ -1,0 +1,40 @@
+logLevel = "DEBUG"
+
+defaultEntryPoints = ["http", "https"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":5002"
+  [entryPoints.https]
+  address = ":5001"
+    [entryPoints.https.tls]
+
+
+[acme]
+  email = "test@traefik.io"
+  storage = "/tmp/acme.json"
+  entryPoint = "https"
+  acmeLogging = true
+  onDemand = {{ .OnDemand }}
+  onHostRule = {{ .OnHostRule }}
+  keyType = "{{ .KeyType }}"
+  caServer = "{{ .CAServer }}"
+
+  {{if .HTTPChallenge }}
+  [acme.httpChallenge]
+    entryPoint = "{{ .HTTPChallenge.EntryPoint }}"
+  {{end}}
+
+  {{range .Domains}}
+  [[acme.domains]]
+    main = "{{ .Main }}"
+    sans = [{{range .SANs }}
+      "{{.}}",
+      {{end}}]
+  {{end}}
+
+[api]
+
+[file]
+filename = "fixtures/acme/certificates.toml"
+watch = true

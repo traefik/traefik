@@ -332,7 +332,8 @@ spec:
   selector:
     k8s-app: traefik-ingress-lb
   ports:
-  - port: 80
+  - name: web
+    port: 80
     targetPort: 8080
 ---
 apiVersion: extensions/v1beta1
@@ -340,16 +341,15 @@ kind: Ingress
 metadata:
   name: traefik-web-ui
   namespace: kube-system
-  annotations:
-    kubernetes.io/ingress.class: traefik
 spec:
   rules:
   - host: traefik-ui.minikube
     http:
       paths:
-      - backend:
+      - path: /
+        backend:
           serviceName: traefik-web-ui
-          servicePort: 80
+          servicePort: web
 ```
 
 [examples/k8s/ui.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/ui.yaml)
@@ -859,11 +859,13 @@ Sometimes Træfik runs along other Ingress controller implementations. One such 
 The `kubernetes.io/ingress.class` annotation can be attached to any Ingress object in order to control whether Træfik should handle it.
 
 If the annotation is missing, contains an empty value, or the value `traefik`, then the Træfik controller will take responsibility and process the associated Ingress object.
-If the annotation contains any other value (usually the name of a different Ingress controller), Træfik will ignore the object.
 
-It is also possible to set the `ingressClass` option in Træfik to a particular value.
-If that's the case and the value contains a `traefik` prefix, then only those Ingress objects matching the same value will be processed.
+It is also possible to set the `ingressClass` option in Træfik to a particular value. Træfik will only process matching Ingress objects.
 For instance, setting the option to `traefik-internal` causes Træfik to process Ingress objects with the same `kubernetes.io/ingress.class` annotation value, ignoring all other objects (including those with a `traefik` value, empty value, and missing annotation).
+
+!!! note
+    Letting multiple ingress controllers handle the same ingress objects can lead to unintended behavior.
+    It is recommended to prefix all ingressClass values with `traefik` to avoid unintended collisions with other ingress implementations.
 
 ### Between multiple Træfik Deployments
 

@@ -9,9 +9,6 @@ logLevel = "DEBUG"
 [api]
 
 [docker]
-
-# It's dynamagic !
 endpoint = "{{.DockerHost}}"
-
 domain = "docker.localhost"
 exposedByDefault = true

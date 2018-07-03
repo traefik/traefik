@@ -212,7 +212,7 @@ INFO    -  Cleaning site directory
 Please keep in mind that the GitHub issue tracker is not intended as a general support forum, but for reporting bugs and feature requests.
 
 For end-user related support questions, refer to one of the following:
-- the Traefik community Slack channel: [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com)
+- the Traefik community Slack channel: [![Join the chat at https://slack.traefik.io](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://slack.traefik.io)
 - [Stack Overflow](https://stackoverflow.com/questions/tagged/traefik) (using the `traefik` tag)
 
 ### Title

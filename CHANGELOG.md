@@ -1,5 +1,22 @@
 # Change Log
 
+## [v1.6.4](https://github.com/containous/traefik/tree/v1.6.4) (2018-06-15)
+[All Commits](https://github.com/containous/traefik/compare/v1.6.3...v1.6.4)
+
+**Bug fixes:**
+- **[acme]** Use logrus writer instead of os.Stderr ([#3498](https://github.com/containous/traefik/pull/3498) by [ldez](https://github.com/ldez))
+- **[consulcatalog]** Enclose IPv6 addresses in &#34;[]&#34; ([#3477](https://github.com/containous/traefik/pull/3477) by [herver](https://github.com/herver))
+- **[docker,ecs,marathon,mesos,rancher]** Use net.JoinHostPort for servers URL ([#3484](https://github.com/containous/traefik/pull/3484) by [ldez](https://github.com/ldez))
+- **[docker]** Backend name with docker-compose and segments. ([#3485](https://github.com/containous/traefik/pull/3485) by [ldez](https://github.com/ldez))
+- **[oxy]** Handle buffer pool for oxy ([#3450](https://github.com/containous/traefik/pull/3450) by [Juliens](https://github.com/Juliens))
+
+**Documentation:**
+- **[acme]** The exoscale provider works with wildcard ([#3479](https://github.com/containous/traefik/pull/3479) by [greut](https://github.com/greut))
+- **[consul,docker]** Edit wording ([#3438](https://github.com/containous/traefik/pull/3438) by [mayank23](https://github.com/mayank23))
+- **[k8s]** Add missing annotation documentation. ([#3454](https://github.com/containous/traefik/pull/3454) by [ldez](https://github.com/ldez))
+- **[kv]** Fix typo in kv user guide ([#3474](https://github.com/containous/traefik/pull/3474) by [shambarick](https://github.com/shambarick))
+- Clean metrics documentation. ([#3488](https://github.com/containous/traefik/pull/3488) by [ldez](https://github.com/ldez))
+
 ## [v1.6.3](https://github.com/containous/traefik/tree/v1.6.3) (2018-06-05)
 [All Commits](https://github.com/containous/traefik/compare/v1.6.2...v1.6.3)
 

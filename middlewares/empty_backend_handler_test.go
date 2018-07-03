@@ -32,10 +32,7 @@ func TestEmptyBackendHandler(t *testing.T) {
 		t.Run(fmt.Sprintf("amount servers %d", test.amountServer), func(t *testing.T) {
 			t.Parallel()
 
-			nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusOK)
-			})
-			handler := NewEmptyBackendHandler(&healthCheckLoadBalancer{test.amountServer}, nextHandler)
+			handler := NewEmptyBackendHandler(&healthCheckLoadBalancer{test.amountServer})
 
 			recorder := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, "http://localhost", nil)
@@ -53,12 +50,8 @@ type healthCheckLoadBalancer struct {
 	amountServer int
 }
 
-func (lb *healthCheckLoadBalancer) RemoveServer(u *url.URL) error {
-	return nil
-}
-
-func (lb *healthCheckLoadBalancer) UpsertServer(u *url.URL, options ...roundrobin.ServerOption) error {
-	return nil
+func (lb *healthCheckLoadBalancer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
 }
 
 func (lb *healthCheckLoadBalancer) Servers() []*url.URL {
@@ -67,4 +60,24 @@ func (lb *healthCheckLoadBalancer) Servers() []*url.URL {
 		servers = append(servers, testhelpers.MustParseURL("http://localhost"))
 	}
 	return servers
+}
+
+func (lb *healthCheckLoadBalancer) RemoveServer(u *url.URL) error {
+	return nil
+}
+
+func (lb *healthCheckLoadBalancer) UpsertServer(u *url.URL, options ...roundrobin.ServerOption) error {
+	return nil
+}
+
+func (lb *healthCheckLoadBalancer) ServerWeight(u *url.URL) (int, bool) {
+	return 0, false
+}
+
+func (lb *healthCheckLoadBalancer) NextServer() (*url.URL, error) {
+	return nil, nil
+}
+
+func (lb *healthCheckLoadBalancer) Next() http.Handler {
+	return nil
 }

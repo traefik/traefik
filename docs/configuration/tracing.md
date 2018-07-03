@@ -98,3 +98,41 @@ Træfik supports two backends: Jaeger and Zipkin.
     #
     id128Bit = true
 ```
+
+## DataDog
+
+```toml
+# Tracing definition
+[tracing]
+  # Backend name used to send tracing data
+  #
+  # Default: "jaeger"
+  #
+  backend = "datadog"
+
+  # Service name used in DataDog backend
+  #
+  # Default: "traefik"
+  #
+  serviceName = "traefik"
+
+  [tracing.datadog]
+    # Local Agent Host Port instructs reporter to send spans to datadog-tracing-agent at this address
+    #
+    # Default: "127.0.0.1:8126"
+    #
+    localAgentHostPort = "127.0.0.1:8126"
+
+    # Enable DataDog debug
+    #
+    # Default: false
+    #
+    debug = false
+
+    # Apply shared tag in a form of Key:Value to all the traces
+    #
+    # Default: ""
+    #
+    globalTag = ""
+
+```

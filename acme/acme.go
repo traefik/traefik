@@ -9,7 +9,6 @@ import (
 	fmtlog "log"
 	"net"
 	"net/http"
-	"os"
 	"reflect"
 	"strings"
 	"time"
@@ -27,6 +26,7 @@ import (
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
 	"github.com/eapache/channels"
+	"github.com/sirupsen/logrus"
 	"github.com/xenolf/lego/acme"
 	legolog "github.com/xenolf/lego/log"
 	"github.com/xenolf/lego/providers/dns"
@@ -67,16 +67,19 @@ type ACME struct {
 
 func (a *ACME) init() error {
 	acme.UserAgent = fmt.Sprintf("containous-traefik/%s", version.Version)
+
 	if a.ACMELogging {
-		legolog.Logger = fmtlog.New(os.Stderr, "legolog: ", fmtlog.LstdFlags)
+		legolog.Logger = fmtlog.New(log.WriterLevel(logrus.DebugLevel), "legolog: ", 0)
 	} else {
 		legolog.Logger = fmtlog.New(ioutil.Discard, "", 0)
 	}
+
 	// no certificates in TLS config, so we add a default one
 	cert, err := generate.DefaultCertificate()
 	if err != nil {
 		return err
 	}
+
 	a.defaultCertificate = cert
 
 	a.jobs = channels.NewInfiniteChannel()
@@ -117,14 +120,18 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 	if err != nil {
 		return err
 	}
+
 	if len(a.Storage) == 0 {
 		return errors.New("Empty Store, please provide a key for certs storage")
 	}
+
 	a.checkOnDemandDomain = checkOnDemandDomain
 	a.dynamicCerts = certs
+
 	tlsConfig.Certificates = append(tlsConfig.Certificates, *a.defaultCertificate)
 	tlsConfig.GetCertificate = a.getCertificate
 	a.TLSConfig = tlsConfig
+
 	listener := func(object cluster.Object) error {
 		account := object.(*Account)
 		account.Init()
@@ -404,6 +411,7 @@ func (a *ACME) buildACMEClient(account *Account) (*acme.Client, error) {
 	if len(a.CAServer) > 0 {
 		caServer = a.CAServer
 	}
+
 	client, err := acme.NewClient(caServer, account, account.KeyType)
 	if err != nil {
 		return nil, err
@@ -425,19 +433,19 @@ func (a *ACME) buildACMEClient(account *Account) (*acme.Client, error) {
 
 		client.ExcludeChallenges([]acme.Challenge{acme.HTTP01})
 		err = client.SetChallengeProvider(acme.DNS01, provider)
-	} else if a.HTTPChallenge != nil && len(a.HTTPChallenge.EntryPoint) > 0 {
+		return client, err
+	}
+
+	if a.HTTPChallenge != nil && len(a.HTTPChallenge.EntryPoint) > 0 {
 		log.Debug("Using HTTP Challenge provider.")
+
 		client.ExcludeChallenges([]acme.Challenge{acme.DNS01})
 		a.challengeHTTPProvider = &challengeHTTPProvider{store: a.store}
 		err = client.SetChallengeProvider(acme.HTTP01, a.challengeHTTPProvider)
-	} else {
-		return nil, errors.New("ACME challenge not specified, please select HTTP or DNS Challenge")
+		return client, err
 	}
 
-	if err != nil {
-		return nil, err
-	}
-	return client, nil
+	return nil, errors.New("ACME challenge not specified, please select HTTP or DNS Challenge")
 }
 
 func (a *ACME) loadCertificateOnDemand(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {

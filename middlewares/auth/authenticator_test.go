@@ -72,7 +72,7 @@ func TestBasicAuthFail(t *testing.T) {
 			Users: []string{"test"},
 		},
 	}, &tracing.Tracing{})
-	assert.Contains(t, err.Error(), "Error parsing Authenticator user", "should contains")
+	assert.Contains(t, err.Error(), "error parsing Authenticator user", "should contains")
 
 	authMiddleware, err := NewAuthenticator(&types.Auth{
 		Basic: &types.Basic{
@@ -131,7 +131,7 @@ func TestDigestAuthFail(t *testing.T) {
 			Users: []string{"test"},
 		},
 	}, &tracing.Tracing{})
-	assert.Contains(t, err.Error(), "Error parsing Authenticator user", "should contains")
+	assert.Contains(t, err.Error(), "error parsing Authenticator user", "should contains")
 
 	authMiddleware, err := NewAuthenticator(&types.Auth{
 		Digest: &types.Digest{

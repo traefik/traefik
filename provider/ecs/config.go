@@ -2,6 +2,7 @@ package ecs
 
 import (
 	"fmt"
+	"net"
 	"strconv"
 	"strings"
 	"text/template"
@@ -86,6 +87,14 @@ func (p *Provider) filterInstance(i ecsInstance) bool {
 		return false
 	}
 
+	constraintTags := label.GetSliceStringValue(i.TraefikLabels, label.TraefikTags)
+	if ok, failingConstraint := p.MatchConstraints(constraintTags); !ok {
+		if failingConstraint != nil {
+			log.Debugf("Filtering ecs instance pruned by constraint %s (%s) (constraint = %q)", i.Name, i.ID, failingConstraint.String())
+		}
+		return false
+	}
+
 	return true
 }
 
@@ -133,7 +142,7 @@ func getServers(instances []ecsInstance) map[string]types.Server {
 
 		serverName := provider.Normalize(fmt.Sprintf("server-%s-%s", instance.Name, instance.ID))
 		servers[serverName] = types.Server{
-			URL:    fmt.Sprintf("%s://%s:%s", protocol, host, port),
+			URL:    fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(host, port)),
 			Weight: label.GetIntValue(instance.TraefikLabels, label.TraefikWeight, label.DefaultWeight),
 		}
 	}

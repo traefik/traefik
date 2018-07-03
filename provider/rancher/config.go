@@ -2,6 +2,7 @@ package rancher
 
 import (
 	"fmt"
+	"net"
 	"strconv"
 	"strings"
 	"text/template"
@@ -181,7 +182,7 @@ func getServers(service rancherData) map[string]types.Server {
 
 		serverName := "server-" + strconv.Itoa(index)
 		servers[serverName] = types.Server{
-			URL:    fmt.Sprintf("%s://%s:%s", protocol, ip, port),
+			URL:    fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(ip, port)),
 			Weight: weight,
 		}
 	}

@@ -85,6 +85,14 @@ func ErrorHandler(h utils.ErrorHandler) optSetter {
 	}
 }
 
+// BufferPool specifies a buffer pool for httputil.ReverseProxy.
+func BufferPool(pool httputil.BufferPool) optSetter {
+	return func(f *Forwarder) error {
+		f.bufferPool = pool
+		return nil
+	}
+}
+
 // Stream specifies if HTTP responses should be streamed.
 func Stream(stream bool) optSetter {
 	return func(f *Forwarder) error {
@@ -176,6 +184,8 @@ type httpForwarder struct {
 	tlsClientConfig *tls.Config
 
 	log OxyLogger
+
+	bufferPool httputil.BufferPool
 }
 
 const (
@@ -456,16 +466,6 @@ func (f *httpForwarder) serveHTTP(w http.ResponseWriter, inReq *http.Request, ct
 		defer logEntry.Debug("vulcand/oxy/forward/http: completed ServeHttp on request")
 	}
 
-	var pw utils.ProxyWriter
-
-	// Disable closeNotify when method GET for http pipelining
-	// Waiting for https://github.com/golang/go/issues/23921
-	if inReq.Method == http.MethodGet {
-		pw = utils.NewProxyWriterWithoutCloseNotify(w)
-	} else {
-		pw = utils.NewSimpleProxyWriter(w)
-	}
-
 	start := time.Now().UTC()
 
 	outReq := new(http.Request)
@@ -478,19 +478,26 @@ func (f *httpForwarder) serveHTTP(w http.ResponseWriter, inReq *http.Request, ct
 		Transport:      f.roundTripper,
 		FlushInterval:  f.flushInterval,
 		ModifyResponse: f.modifyResponse,
+		BufferPool:     f.bufferPool,
 	}
-	revproxy.ServeHTTP(pw, outReq)
 
-	if inReq.TLS != nil {
-		f.log.Debugf("vulcand/oxy/forward/http: Round trip: %v, code: %v, Length: %v, duration: %v tls:version: %x, tls:resume:%t, tls:csuite:%x, tls:server:%v",
-			inReq.URL, pw.StatusCode(), pw.GetLength(), time.Now().UTC().Sub(start),
-			inReq.TLS.Version,
-			inReq.TLS.DidResume,
-			inReq.TLS.CipherSuite,
-			inReq.TLS.ServerName)
+	if f.log.GetLevel() >= log.DebugLevel {
+		pw := utils.NewProxyWriter(w)
+		revproxy.ServeHTTP(pw, outReq)
+
+		if inReq.TLS != nil {
+			f.log.Debugf("vulcand/oxy/forward/http: Round trip: %v, code: %v, Length: %v, duration: %v tls:version: %x, tls:resume:%t, tls:csuite:%x, tls:server:%v",
+				inReq.URL, pw.StatusCode(), pw.GetLength(), time.Now().UTC().Sub(start),
+				inReq.TLS.Version,
+				inReq.TLS.DidResume,
+				inReq.TLS.CipherSuite,
+				inReq.TLS.ServerName)
+		} else {
+			f.log.Debugf("vulcand/oxy/forward/http: Round trip: %v, code: %v, Length: %v, duration: %v",
+				inReq.URL, pw.StatusCode(), pw.GetLength(), time.Now().UTC().Sub(start))
+		}
 	} else {
-		f.log.Debugf("vulcand/oxy/forward/http: Round trip: %v, code: %v, Length: %v, duration: %v",
-			inReq.URL, pw.StatusCode(), pw.GetLength(), time.Now().UTC().Sub(start))
+		revproxy.ServeHTTP(w, outReq)
 	}
 }
 

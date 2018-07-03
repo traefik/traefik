@@ -137,6 +137,21 @@ func WithRoute(name string, rule string) func(*types.Route) string {
 	}
 }
 
+// WithBasicAuth is a helper to create a configuration
+// Deprecated
+func WithBasicAuth(username string, password string) func(*types.Frontend) {
+	return func(fe *types.Frontend) {
+		fe.BasicAuth = []string{username + ":" + password}
+	}
+}
+
+// WithFrontEndAuth is a helper to create a configuration
+func WithFrontEndAuth(auth *types.Auth) func(*types.Frontend) {
+	return func(fe *types.Frontend) {
+		fe.Auth = auth
+	}
+}
+
 // WithLBSticky is a helper to create a configuration
 func WithLBSticky(cookieName string) func(*types.Backend) {
 	return func(b *types.Backend) {

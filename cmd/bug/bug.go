@@ -23,7 +23,7 @@ The issue tracker is for reporting bugs and feature requests only.
 For end-user related support questions, refer to one of the following:
 
 - Stack Overflow (using the "traefik" tag): https://stackoverflow.com/questions/tagged/traefik
-- the Traefik community Slack channel: https://traefik.herokuapp.com
+- the Traefik community Slack channel: https://slack.traefik.io
 
 -->
 
@@ -31,7 +31,7 @@ For end-user related support questions, refer to one of the following:
 
 (If you intend to ask a support question: **DO NOT FILE AN ISSUE**.
 Use [Stack Overflow](https://stackoverflow.com/questions/tagged/traefik)
-or [Slack](https://traefik.herokuapp.com) instead.)
+or [Slack](https://slack.traefik.io) instead.)
 
 
 
@@ -88,7 +88,7 @@ Add more configuration information here.
 // NewCmd builds a new Bug command
 func NewCmd(traefikConfiguration *cmd.TraefikConfiguration, traefikPointersConfiguration *cmd.TraefikConfiguration) *flaeg.Command {
 
-	//version Command init
+	// version Command init
 	return &flaeg.Command{
 		Name:                  "bug",
 		Description:           `Report an issue on Traefik bugtracker`,
