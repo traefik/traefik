@@ -8,7 +8,7 @@ import (
 
 	"github.com/containous/traefik/integration/try"
 	"github.com/containous/traefik/provider/label"
-	marathon "github.com/gambol99/go-marathon"
+	"github.com/gambol99/go-marathon"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
 )
@@ -103,7 +103,7 @@ func (s *MarathonSuite15) TestConfigurationUpdate(c *check.C) {
 		Expose(80).
 		Docker.
 		Container("emilevauge/whoami")
-	(*app.Networks) = append((*app.Networks), *marathon.NewBridgePodNetwork())
+	*app.Networks = append(*app.Networks, *marathon.NewBridgePodNetwork())
 
 	// Deploy the test application.
 	deployApplication(c, client, app)
@@ -123,7 +123,7 @@ func (s *MarathonSuite15) TestConfigurationUpdate(c *check.C) {
 		Expose(80).
 		Docker.
 		Container("emilevauge/whoami")
-	(*app.Networks) = append((*app.Networks), *marathon.NewBridgePodNetwork())
+	*app.Networks = append(*app.Networks, *marathon.NewBridgePodNetwork())
 
 	// Deploy the test application.
 	deployApplication(c, client, app)
