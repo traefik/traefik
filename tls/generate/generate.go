@@ -1,7 +1,6 @@
 package generate
 
 import (
-	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
@@ -14,6 +13,9 @@ import (
 	"math/big"
 	"time"
 )
+
+// DefaultDomain Traefik domain for the default certificate
+const DefaultDomain = "TRAEFIK DEFAULT CERT"
 
 // DefaultCertificate generates random TLS certificates
 func DefaultCertificate() (*tls.Certificate, error) {
@@ -78,7 +80,7 @@ func derCert(privKey *rsa.PrivateKey, expiration time.Time, domain string) ([]by
 	template := x509.Certificate{
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
-			CommonName: "TRAEFIK DEFAULT CERT",
+			CommonName: DefaultDomain,
 		},
 		NotBefore: time.Now(),
 		NotAfter:  expiration,
@@ -89,22 +91,4 @@ func derCert(privKey *rsa.PrivateKey, expiration time.Time, domain string) ([]by
 	}
 
 	return x509.CreateCertificate(rand.Reader, &template, &template, &privKey.PublicKey, privKey)
-}
-
-// PemEncode encodes date in PEM format
-func PemEncode(data interface{}) []byte {
-	var pemBlock *pem.Block
-	switch key := data.(type) {
-	case *ecdsa.PrivateKey:
-		keyBytes, _ := x509.MarshalECPrivateKey(key)
-		pemBlock = &pem.Block{Type: "EC PRIVATE KEY", Bytes: keyBytes}
-	case *rsa.PrivateKey:
-		pemBlock = &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)}
-	case *x509.CertificateRequest:
-		pemBlock = &pem.Block{Type: "CERTIFICATE REQUEST", Bytes: key.Raw}
-	case []byte:
-		pemBlock = &pem.Block{Type: "CERTIFICATE", Bytes: data.([]byte)}
-	}
-
-	return pem.EncodeToMemory(pemBlock)
 }

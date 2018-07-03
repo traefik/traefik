@@ -8,11 +8,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/log"
+	"github.com/xenolf/lego/platform/config/env"
 )
 
 // Notes about namecheap's tool API:
@@ -32,7 +33,6 @@ var (
 	debug          = false
 	defaultBaseURL = "https://api.namecheap.com/xml.response"
 	getIPURL       = "https://dynamicdns.park-your-domain.com/getip"
-	httpClient     = http.Client{Timeout: 60 * time.Second}
 )
 
 // DNSProvider is an implementation of the ChallengeProviderTimeout interface
@@ -42,15 +42,19 @@ type DNSProvider struct {
 	apiUser  string
 	apiKey   string
 	clientIP string
+	client   *http.Client
 }
 
 // NewDNSProvider returns a DNSProvider instance configured for namecheap.
 // Credentials must be passed in the environment variables: NAMECHEAP_API_USER
 // and NAMECHEAP_API_KEY.
 func NewDNSProvider() (*DNSProvider, error) {
-	apiUser := os.Getenv("NAMECHEAP_API_USER")
-	apiKey := os.Getenv("NAMECHEAP_API_KEY")
-	return NewDNSProviderCredentials(apiUser, apiKey)
+	values, err := env.Get("NAMECHEAP_API_USER", "NAMECHEAP_API_KEY")
+	if err != nil {
+		return nil, fmt.Errorf("NameCheap: %v", err)
+	}
+
+	return NewDNSProviderCredentials(values["NAMECHEAP_API_USER"], values["NAMECHEAP_API_KEY"])
 }
 
 // NewDNSProviderCredentials uses the supplied credentials to return a
@@ -60,7 +64,9 @@ func NewDNSProviderCredentials(apiUser, apiKey string) (*DNSProvider, error) {
 		return nil, fmt.Errorf("Namecheap credentials missing")
 	}
 
-	clientIP, err := getClientIP()
+	client := &http.Client{Timeout: 60 * time.Second}
+
+	clientIP, err := getClientIP(client)
 	if err != nil {
 		return nil, err
 	}
@@ -70,6 +76,7 @@ func NewDNSProviderCredentials(apiUser, apiKey string) (*DNSProvider, error) {
 		apiUser:  apiUser,
 		apiKey:   apiKey,
 		clientIP: clientIP,
+		client:   client,
 	}, nil
 }
 
@@ -99,8 +106,8 @@ type apierror struct {
 
 // getClientIP returns the client's public IP address. It uses namecheap's
 // IP discovery service to perform the lookup.
-func getClientIP() (addr string, err error) {
-	resp, err := httpClient.Get(getIPURL)
+func getClientIP(client *http.Client) (addr string, err error) {
+	resp, err := client.Get(getIPURL)
 	if err != nil {
 		return "", err
 	}
@@ -112,12 +119,12 @@ func getClientIP() (addr string, err error) {
 	}
 
 	if debug {
-		fmt.Println("Client IP:", string(clientIP))
+		log.Println("Client IP:", string(clientIP))
 	}
 	return string(clientIP), nil
 }
 
-// A challenge repesents all the data needed to specify a dns-01 challenge
+// A challenge represents all the data needed to specify a dns-01 challenge
 // to lets-encrypt.
 type challenge struct {
 	domain   string
@@ -186,7 +193,7 @@ func (d *DNSProvider) getTLDs() (tlds map[string]string, err error) {
 	reqURL, _ := url.Parse(d.baseURL)
 	reqURL.RawQuery = values.Encode()
 
-	resp, err := httpClient.Get(reqURL.String())
+	resp, err := d.client.Get(reqURL.String())
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +242,7 @@ func (d *DNSProvider) getHosts(ch *challenge) (hosts []host, err error) {
 	reqURL, _ := url.Parse(d.baseURL)
 	reqURL.RawQuery = values.Encode()
 
-	resp, err := httpClient.Get(reqURL.String())
+	resp, err := d.client.Get(reqURL.String())
 	if err != nil {
 		return nil, err
 	}
@@ -285,7 +292,7 @@ func (d *DNSProvider) setHosts(ch *challenge, hosts []host) error {
 		values.Add("TTL"+ind, h.TTL)
 	}
 
-	resp, err := httpClient.PostForm(d.baseURL, values)
+	resp, err := d.client.PostForm(d.baseURL, values)
 	if err != nil {
 		return err
 	}
@@ -382,7 +389,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 	if debug {
 		for _, h := range hosts {
-			fmt.Printf(
+			log.Printf(
 				"%-5.5s %-30.30s %-6s %-70.70s\n",
 				h.Type, h.Name, h.TTL, h.Address)
 		}

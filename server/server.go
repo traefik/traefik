@@ -37,6 +37,7 @@ import (
 	"github.com/containous/traefik/whitelist"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
+	"github.com/xenolf/lego/acme"
 )
 
 var httpServerLogger = stdlog.New(log.WriterLevel(logrus.DebugLevel), "", 0)
@@ -68,6 +69,7 @@ type EntryPoint struct {
 	InternalRouter   types.InternalRouter
 	Configuration    *configuration.EntryPoint
 	OnDemandListener func(string) (*tls.Certificate, error)
+	TLSALPNGetter    func(string) (*tls.Certificate, error)
 	CertificateStore *traefiktls.CertificateStore
 }
 
@@ -79,6 +81,7 @@ type serverEntryPoint struct {
 	httpRouter       *middlewares.HandlerSwitcher
 	certs            *safe.Safe
 	onDemandListener func(string) (*tls.Certificate, error)
+	tlsALPNGetter    func(string) (*tls.Certificate, error)
 }
 
 // NewServer returns an initialized Server.
@@ -274,6 +277,7 @@ func (s *Server) AddListener(listener func(types.Configuration)) {
 // getCertificate allows to customize tlsConfig.GetCertificate behaviour to get the certificates inserted dynamically
 func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	domainToCheck := types.CanonicalDomain(clientHello.ServerName)
+
 	if s.certs.Get() != nil {
 		for domains, cert := range s.certs.Get().(map[string]*tls.Certificate) {
 			for _, certDomain := range strings.Split(domains, ",") {
@@ -284,9 +288,22 @@ func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tl
 		}
 		log.Debugf("No certificate provided dynamically can check the domain %q, a per default certificate will be used.", domainToCheck)
 	}
+
+	if s.tlsALPNGetter != nil {
+		cert, err := s.tlsALPNGetter(domainToCheck)
+		if err != nil {
+			return nil, err
+		}
+
+		if cert != nil {
+			return cert, nil
+		}
+	}
+
 	if s.onDemandListener != nil {
 		return s.onDemandListener(domainToCheck)
 	}
+
 	return nil, nil
 }
 
@@ -319,8 +336,9 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 	}
 
 	s.serverEntryPoints[entryPointName].certs.Set(make(map[string]*tls.Certificate))
+
 	// ensure http2 enabled
-	config.NextProtos = []string{"h2", "http/1.1"}
+	config.NextProtos = []string{"h2", "http/1.1", acme.ACMETLS1Protocol}
 
 	if len(tlsOption.ClientCAFiles) > 0 {
 		log.Warnf("Deprecated configuration found during TLS configuration creation: %s. Please use %s (which allows to make the CA Files optional).", "tls.ClientCAFiles", "tls.ClientCA.files")

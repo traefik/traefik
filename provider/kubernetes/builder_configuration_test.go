@@ -208,9 +208,52 @@ func entryPoints(eps ...string) func(*types.Frontend) {
 	}
 }
 
-func basicAuth(auth ...string) func(*types.Frontend) {
+// Deprecated
+func basicAuthDeprecated(auth ...string) func(*types.Frontend) {
 	return func(f *types.Frontend) {
-		f.BasicAuth = auth
+		f.Auth = &types.Auth{Basic: &types.Basic{Users: auth}}
+	}
+}
+
+func auth(opt func(*types.Auth)) func(*types.Frontend) {
+	return func(f *types.Frontend) {
+		auth := &types.Auth{}
+		opt(auth)
+		f.Auth = auth
+	}
+}
+
+func basicAuth(users ...string) func(*types.Auth) {
+	return func(a *types.Auth) {
+		a.Basic = &types.Basic{Users: users}
+	}
+}
+
+func forwardAuth(forwardURL string, opts ...func(*types.Forward)) func(*types.Auth) {
+	return func(a *types.Auth) {
+		fwd := &types.Forward{Address: forwardURL}
+		for _, opt := range opts {
+			opt(fwd)
+		}
+		a.Forward = fwd
+	}
+}
+
+func fwdAuthResponseHeaders(headers ...string) func(*types.Forward) {
+	return func(f *types.Forward) {
+		f.AuthResponseHeaders = headers
+	}
+}
+
+func fwdTrustForwardHeader() func(*types.Forward) {
+	return func(f *types.Forward) {
+		f.TrustForwardHeader = true
+	}
+}
+
+func fwdAuthTLS(cert, key string, insecure bool) func(*types.Forward) {
+	return func(f *types.Forward) {
+		f.TLS = &types.ClientTLS{Cert: cert, Key: key, InsecureSkipVerify: insecure}
 	}
 }
 

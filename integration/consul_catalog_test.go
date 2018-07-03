@@ -501,7 +501,7 @@ func (s *ConsulCatalogSuite) TestRefreshConfigPortChange(c *check.C) {
 }
 
 func (s *ConsulCatalogSuite) TestRetryWithConsulServer(c *check.C) {
-	//Scale consul to 0 to be able to start traefik before and test retry
+	// Scale consul to 0 to be able to start traefik before and test retry
 	s.composeProject.Scale(c, "consul", 0)
 
 	cmd, display := s.traefikCmd(
@@ -547,7 +547,7 @@ func (s *ConsulCatalogSuite) TestRetryWithConsulServer(c *check.C) {
 }
 
 func (s *ConsulCatalogSuite) TestServiceWithMultipleHealthCheck(c *check.C) {
-	//Scale consul to 0 to be able to start traefik before and test retry
+	// Scale consul to 0 to be able to start traefik before and test retry
 	s.composeProject.Scale(c, "consul", 0)
 
 	cmd, display := s.traefikCmd(

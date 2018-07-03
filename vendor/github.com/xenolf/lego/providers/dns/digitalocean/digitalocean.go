@@ -7,11 +7,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"sync"
 	"time"
 
 	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/platform/config/env"
 )
 
 // DNSProvider is an implementation of the acme.ChallengeProvider interface
@@ -20,20 +20,19 @@ type DNSProvider struct {
 	apiAuthToken string
 	recordIDs    map[string]int
 	recordIDsMu  sync.Mutex
-}
-
-// Timeout returns the timeout and interval to use when checking for DNS
-// propagation. Adjusting here to cope with spikes in propagation times.
-func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
-	return 60 * time.Second, 5 * time.Second
+	client       *http.Client
 }
 
 // NewDNSProvider returns a DNSProvider instance configured for Digital
 // Ocean. Credentials must be passed in the environment variable:
 // DO_AUTH_TOKEN.
 func NewDNSProvider() (*DNSProvider, error) {
-	apiAuthToken := os.Getenv("DO_AUTH_TOKEN")
-	return NewDNSProviderCredentials(apiAuthToken)
+	values, err := env.Get("DO_AUTH_TOKEN")
+	if err != nil {
+		return nil, fmt.Errorf("DigitalOcean: %v", err)
+	}
+
+	return NewDNSProviderCredentials(values["DO_AUTH_TOKEN"])
 }
 
 // NewDNSProviderCredentials uses the supplied credentials to return a
@@ -45,7 +44,14 @@ func NewDNSProviderCredentials(apiAuthToken string) (*DNSProvider, error) {
 	return &DNSProvider{
 		apiAuthToken: apiAuthToken,
 		recordIDs:    make(map[string]int),
+		client:       &http.Client{Timeout: 30 * time.Second},
 	}, nil
+}
+
+// Timeout returns the timeout and interval to use when checking for DNS
+// propagation. Adjusting here to cope with spikes in propagation times.
+func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
+	return 60 * time.Second, 5 * time.Second
 }
 
 // Present creates a TXT record using the specified parameters
@@ -66,15 +72,14 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 		return err
 	}
 
-	req, err := http.NewRequest("POST", reqURL, bytes.NewReader(body))
+	req, err := http.NewRequest(http.MethodPost, reqURL, bytes.NewReader(body))
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", d.apiAuthToken))
 
-	client := http.Client{Timeout: 30 * time.Second}
-	resp, err := client.Do(req)
+	resp, err := d.client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -119,15 +124,15 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	authZone = acme.UnFqdn(authZone)
 
 	reqURL := fmt.Sprintf("%s/v2/domains/%s/records/%d", digitalOceanBaseURL, authZone, recordID)
-	req, err := http.NewRequest("DELETE", reqURL, nil)
+	req, err := http.NewRequest(http.MethodDelete, reqURL, nil)
 	if err != nil {
 		return err
 	}
+
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", d.apiAuthToken))
 
-	client := http.Client{Timeout: 30 * time.Second}
-	resp, err := client.Do(req)
+	resp, err := d.client.Do(req)
 	if err != nil {
 		return err
 	}

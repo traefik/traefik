@@ -23,6 +23,7 @@ import (
 	traefiktls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/eapache/channels"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
 	"github.com/vulcand/oxy/forward"
 )
@@ -293,9 +294,10 @@ func (s *Server) preLoadConfiguration(configMsg types.ConfigMessage) {
 	s.defaultConfigurationValues(configMsg.Configuration)
 	currentConfigurations := s.currentConfigurations.Get().(types.Configurations)
 
-	jsonConf, _ := json.Marshal(configMsg.Configuration)
-
-	log.Debugf("Configuration received from provider %s: %s", configMsg.ProviderName, string(jsonConf))
+	if log.GetLevel() == logrus.DebugLevel {
+		jsonConf, _ := json.Marshal(configMsg.Configuration)
+		log.Debugf("Configuration received from provider %s: %s", configMsg.ProviderName, string(jsonConf))
+	}
 
 	if configMsg.Configuration == nil || configMsg.Configuration.Backends == nil && configMsg.Configuration.Frontends == nil && configMsg.Configuration.TLS == nil {
 		log.Infof("Skipping empty Configuration for provider %s", configMsg.ProviderName)
@@ -555,6 +557,7 @@ func (s *Server) buildServerEntryPoints() map[string]*serverEntryPoint {
 		serverEntryPoints[entryPointName] = &serverEntryPoint{
 			httpRouter:       middlewares.NewHandlerSwitcher(s.buildDefaultHTTPRouter()),
 			onDemandListener: entryPoint.OnDemandListener,
+			tlsALPNGetter:    entryPoint.TLSALPNGetter,
 		}
 		if entryPoint.CertificateStore != nil {
 			serverEntryPoints[entryPointName].certs = entryPoint.CertificateStore.DynamicCerts

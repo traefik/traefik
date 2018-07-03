@@ -361,6 +361,16 @@ func (gc *GlobalConfiguration) initACMEProvider() {
 			gc.ACME.HTTPChallenge = nil
 		}
 
+		if gc.ACME.DNSChallenge != nil && gc.ACME.TLSChallenge != nil {
+			log.Warn("Unable to use DNS challenge and TLS challenge at the same time. Fallback to DNS challenge.")
+			gc.ACME.TLSChallenge = nil
+		}
+
+		if gc.ACME.HTTPChallenge != nil && gc.ACME.TLSChallenge != nil {
+			log.Warn("Unable to use HTTP challenge and TLS challenge at the same time. Fallback to TLS challenge.")
+			gc.ACME.HTTPChallenge = nil
+		}
+
 		// TODO: to remove in the future
 		if len(gc.ACME.StorageFile) > 0 && len(gc.ACME.Storage) == 0 {
 			log.Warn("ACME.StorageFile is deprecated, use ACME.Storage instead")
@@ -393,6 +403,7 @@ func (gc *GlobalConfiguration) InitACMEProvider() *acmeprovider.Provider {
 				Storage:       gc.ACME.Storage,
 				HTTPChallenge: gc.ACME.HTTPChallenge,
 				DNSChallenge:  gc.ACME.DNSChallenge,
+				TLSChallenge:  gc.ACME.TLSChallenge,
 				Domains:       gc.ACME.Domains,
 				ACMELogging:   gc.ACME.ACMELogging,
 				CAServer:      gc.ACME.CAServer,
@@ -400,7 +411,7 @@ func (gc *GlobalConfiguration) InitACMEProvider() *acmeprovider.Provider {
 			}
 
 			store := acmeprovider.NewLocalStore(provider.Storage)
-			provider.Store = &store
+			provider.Store = store
 			acme.ConvertToNewFormat(provider.Storage)
 			gc.ACME = nil
 			return provider

@@ -5,10 +5,10 @@ package ns1
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/platform/config/env"
 	"gopkg.in/ns1/ns1-go.v2/rest"
 	"gopkg.in/ns1/ns1-go.v2/rest/model/dns"
 )
@@ -21,11 +21,12 @@ type DNSProvider struct {
 // NewDNSProvider returns a DNSProvider instance configured for NS1.
 // Credentials must be passed in the environment variables: NS1_API_KEY.
 func NewDNSProvider() (*DNSProvider, error) {
-	key := os.Getenv("NS1_API_KEY")
-	if key == "" {
-		return nil, fmt.Errorf("NS1 credentials missing")
+	values, err := env.Get("NS1_API_KEY")
+	if err != nil {
+		return nil, fmt.Errorf("NS1: %v", err)
 	}
-	return NewDNSProviderCredentials(key)
+
+	return NewDNSProviderCredentials(values["NS1_API_KEY"])
 }
 
 // NewDNSProviderCredentials uses the supplied credentials to return a
@@ -42,16 +43,16 @@ func NewDNSProviderCredentials(key string) (*DNSProvider, error) {
 }
 
 // Present creates a TXT record to fulfil the dns-01 challenge.
-func (c *DNSProvider) Present(domain, token, keyAuth string) error {
+func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
 
-	zone, err := c.getHostedZone(domain)
+	zone, err := d.getHostedZone(domain)
 	if err != nil {
 		return err
 	}
 
-	record := c.newTxtRecord(zone, fqdn, value, ttl)
-	_, err = c.client.Records.Create(record)
+	record := d.newTxtRecord(zone, fqdn, value, ttl)
+	_, err = d.client.Records.Create(record)
 	if err != nil && err != rest.ErrRecordExists {
 		return err
 	}
@@ -60,21 +61,21 @@ func (c *DNSProvider) Present(domain, token, keyAuth string) error {
 }
 
 // CleanUp removes the TXT record matching the specified parameters.
-func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
+func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
 
-	zone, err := c.getHostedZone(domain)
+	zone, err := d.getHostedZone(domain)
 	if err != nil {
 		return err
 	}
 
 	name := acme.UnFqdn(fqdn)
-	_, err = c.client.Records.Delete(zone.Zone, name, "TXT")
+	_, err = d.client.Records.Delete(zone.Zone, name, "TXT")
 	return err
 }
 
-func (c *DNSProvider) getHostedZone(domain string) (*dns.Zone, error) {
-	zone, _, err := c.client.Zones.Get(domain)
+func (d *DNSProvider) getHostedZone(domain string) (*dns.Zone, error) {
+	zone, _, err := d.client.Zones.Get(domain)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +83,7 @@ func (c *DNSProvider) getHostedZone(domain string) (*dns.Zone, error) {
 	return zone, nil
 }
 
-func (c *DNSProvider) newTxtRecord(zone *dns.Zone, fqdn, value string, ttl int) *dns.Record {
+func (d *DNSProvider) newTxtRecord(zone *dns.Zone, fqdn, value string, ttl int) *dns.Record {
 	name := acme.UnFqdn(fqdn)
 
 	return &dns.Record{

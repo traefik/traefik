@@ -162,7 +162,63 @@ caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
 # ...
 ```
 
-### `dnsChallenge`
+### ACME Challenge
+
+#### TLS Challenge
+
+Use the `TLS-ALPN-01` challenge to generate and renew ACME certificates by provisioning a TLS certificate.
+
+```toml
+[acme]
+# ...
+entryPoint = "https"
+[acme.tlsChallenge]
+```
+
+#### `httpChallenge`
+
+Use the `HTTP-01` challenge to generate and renew ACME certificates by provisioning a HTTP resource under a well-known URI.
+
+Redirection is fully compatible with the `HTTP-01` challenge.
+
+```toml
+[acme]
+# ...
+entryPoint = "https"
+[acme.httpChallenge]
+  entryPoint = "http"
+```
+
+!!! note
+    If the `HTTP-01` challenge is used, `acme.httpChallenge.entryPoint` has to be defined and reachable by Let's Encrypt through port 80.
+    This is a Let's Encrypt limitation as described on the [community forum](https://community.letsencrypt.org/t/support-for-ports-other-than-80-and-443/3419/72).
+
+##### `entryPoint`
+
+Specify the entryPoint to use during the challenges.
+
+```toml
+defaultEntryPoints = ["http", "https"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+# ...
+
+[acme]
+  # ...
+  entryPoint = "https"
+  [acme.httpChallenge]
+    entryPoint = "http"
+```
+
+!!! note
+    `acme.httpChallenge.entryPoint` has to be reachable through port 80. It's a Let's Encrypt limitation as described on the [community forum](https://community.letsencrypt.org/t/support-for-ports-other-than-80-and-443/3419/72).
+
+#### `dnsChallenge`
 
 Use the `DNS-01` challenge to generate and renew ACME certificates by provisioning a DNS record.
 
@@ -175,7 +231,7 @@ Use the `DNS-01` challenge to generate and renew ACME certificates by provisioni
 # ...
 ```
 
-#### `delayBeforeCheck`
+##### `delayBeforeCheck`
 
 By default, the `provider` will verify the TXT DNS challenge record before letting ACME verify.
 If `delayBeforeCheck` is greater than zero, this check is delayed for the configured duration in seconds.
@@ -185,7 +241,7 @@ Useful if internal networks block external DNS queries.
 !!! note
     A `provider` is mandatory.
 
-#### `provider`
+##### `provider`
 
 Here is a list of supported `provider`s, that can automate the DNS verification, along with the required environment variables and their [wildcard & root domain support](/configuration/acme/#wildcard-domains) for each. Do not hesitate to complete it.
 
@@ -203,7 +259,7 @@ Here is a list of supported `provider`s, that can automate the DNS verification,
 | [Duck DNS](https://www.duckdns.org/)                   | `duckdns`      | `DUCKDNS_TOKEN`                                                                                                             | Not tested yet                 |
 | [Dyn](https://dyn.com)                                 | `dyn`          | `DYN_CUSTOMER_NAME`, `DYN_USER_NAME`, `DYN_PASSWORD`                                                                        | Not tested yet                 |
 | External Program                                       | `exec`         | `EXEC_PATH`                                                                                                                 | Not tested yet                 |
-| [Exoscale](https://www.exoscale.ch)                    | `exoscale`     | `EXOSCALE_API_KEY`, `EXOSCALE_API_SECRET`, `EXOSCALE_ENDPOINT`                                                              | YES                 |
+| [Exoscale](https://www.exoscale.ch)                    | `exoscale`     | `EXOSCALE_API_KEY`, `EXOSCALE_API_SECRET`, `EXOSCALE_ENDPOINT`                                                              | YES                            |
 | [Fast DNS](https://www.akamai.com/)                    | `fastdns`      | `AKAMAI_CLIENT_TOKEN`,  `AKAMAI_CLIENT_SECRET`,  `AKAMAI_ACCESS_TOKEN`                                                      | Not tested yet                 |
 | [Gandi](https://www.gandi.net)                         | `gandi`        | `GANDI_API_KEY`                                                                                                             | Not tested yet                 |
 | [Gandi V5](http://doc.livedns.gandi.net)               | `gandiv5`      | `GANDIV5_API_KEY`                                                                                                           | YES                            |
@@ -215,6 +271,7 @@ Here is a list of supported `provider`s, that can automate the DNS verification,
 | manual                                                 | -              | none, but you need to run Træfik interactively, turn on `acmeLogging` to see instructions and press <kbd>Enter</kbd>.       | YES                            |
 | [Namecheap](https://www.namecheap.com)                 | `namecheap`    | `NAMECHEAP_API_USER`, `NAMECHEAP_API_KEY`                                                                                   | Not tested yet                 |
 | [name.com](https://www.name.com/)                      | `namedotcom`   | `NAMECOM_USERNAME`, `NAMECOM_API_TOKEN`, `NAMECOM_SERVER`                                                                   | Not tested yet                 |
+| [NIFCloud](https://cloud.nifty.com/service/dns.htm)    | `nifcloud`     | `NIFCLOUD_ACCESS_KEY_ID`, `NIFCLOUD_SECRET_ACCESS_KEY`                                                                      | Not tested yet                 |
 | [Ns1](https://ns1.com/)                                | `ns1`          | `NS1_API_KEY`                                                                                                               | Not tested yet                 |
 | [Open Telekom Cloud](https://cloud.telekom.de/en/)     | `otc`          | `OTC_DOMAIN_NAME`, `OTC_USER_NAME`, `OTC_PASSWORD`, `OTC_PROJECT_NAME`, `OTC_IDENTITY_ENDPOINT`                             | Not tested yet                 |
 | [OVH](https://www.ovh.com)                             | `ovh`          | `OVH_ENDPOINT`, `OVH_APPLICATION_KEY`, `OVH_APPLICATION_SECRET`, `OVH_CONSUMER_KEY`                                         | YES                            |
@@ -222,7 +279,10 @@ Here is a list of supported `provider`s, that can automate the DNS verification,
 | [Rackspace](https://www.rackspace.com/cloud/dns)       | `rackspace`    | `RACKSPACE_USER`, `RACKSPACE_API_KEY`                                                                                       | Not tested yet                 |
 | [RFC2136](https://tools.ietf.org/html/rfc2136)         | `rfc2136`      | `RFC2136_TSIG_KEY`, `RFC2136_TSIG_SECRET`, `RFC2136_TSIG_ALGORITHM`, `RFC2136_NAMESERVER`                                   | Not tested yet                 |
 | [Route 53](https://aws.amazon.com/route53/)            | `route53`      | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_HOSTED_ZONE_ID` or a configured user/instance IAM profile. | YES                            |
+| [Sakura Cloud](https://cloud.sakura.ad.jp/)            | `sakuracloud`  | `SAKURACLOUD_ACCESS_TOKEN`, `SAKURACLOUD_ACCESS_TOKEN_SECRET`                                                               | Not tested yet                 |
+| [VegaDNS](https://github.com/shupp/VegaDNS-API)        | `vegadns`      | `SECRET_VEGADNS_KEY`, `SECRET_VEGADNS_SECRET`, `VEGADNS_URL`                                                                | Not tested yet                 |
 | [VULTR](https://www.vultr.com)                         | `vultr`        | `VULTR_API_KEY`                                                                                                             | Not tested yet                 |
+
 
 ### `domains`
 
@@ -271,49 +331,6 @@ In this case the generated DNS TXT record for both domains is the same.
 Eventhough this behaviour is [DNS RFC](https://community.letsencrypt.org/t/wildcard-issuance-two-txt-records-for-the-same-name/54528/2) compliant, it can lead to problems as all DNS providers keep DNS records cached for a certain time (TTL) and this TTL can be superior to the challenge timeout making the `DNS-01` challenge fail.
 The Træfik ACME client library [LEGO](https://github.com/xenolf/lego) supports some but not all DNS providers to work around this issue.
 The [`provider` table](/configuration/acme/#provider) indicates if they allow generating certificates for a wildcard domain and its root domain.
-
-### `httpChallenge`
-
-Use the `HTTP-01` challenge to generate and renew ACME certificates by provisioning a HTTP resource under a well-known URI.
-
-Redirection is fully compatible with the `HTTP-01` challenge.
-
-```toml
-[acme]
-# ...
-entryPoint = "https"
-[acme.httpChallenge]
-  entryPoint = "http"
-```
-
-!!! note
-    If the `HTTP-01` challenge is used, `acme.httpChallenge.entryPoint` has to be defined and reachable by Let's Encrypt through port 80.
-    This is a Let's Encrypt limitation as described on the [community forum](https://community.letsencrypt.org/t/support-for-ports-other-than-80-and-443/3419/72).
-
-#### `entryPoint`
-
-Specify the entryPoint to use during the challenges.
-
-```toml
-defaultEntryPoints = ["http", "https"]
-
-[entryPoints]
-  [entryPoints.http]
-  address = ":80"
-  [entryPoints.https]
-  address = ":443"
-    [entryPoints.https.tls]
-# ...
-
-[acme]
-  # ...
-  entryPoint = "https"
-  [acme.httpChallenge]
-    entryPoint = "http"
-```
-
-!!! note
-    `acme.httpChallenge.entryPoint` has to be reachable through port 80. It's a Let's Encrypt limitation as described on the [community forum](https://community.letsencrypt.org/t/support-for-ports-other-than-80-and-443/3419/72).
 
 ### `onDemand` (Deprecated)
 

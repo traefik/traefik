@@ -99,6 +99,12 @@
   source = "github.com/ijc25/Gotty"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/OpenDNS/vegadns2client"
+  packages = ["."]
+  revision = "a3fa4a771d87bda2514a90a157e1fed1b6897d2e"
+
+[[projects]]
   name = "github.com/PuerkitoBio/purell"
   packages = ["."]
   revision = "8a290539e2e8629dbc4e6bad948158f790ec31f4"
@@ -758,6 +764,7 @@
   version = "v1.3.7"
 
 [[projects]]
+  branch = "master"
   name = "github.com/jjcollinge/servicefabric"
   packages = ["."]
   revision = "8eebe170fa1ba25d3dfb928b3f86a7313b13b9fe"
@@ -1094,6 +1101,17 @@
   revision = "256dc444b735e061061cf46c809487313d5b0065"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/sacloud/libsacloud"
+  packages = [
+    ".",
+    "api",
+    "sacloud",
+    "sacloud/ostype"
+  ]
+  revision = "306ea89b6ef19334614f7b0fc5aa19595022bb8c"
+
+[[projects]]
   name = "github.com/samuel/go-zookeeper"
   packages = ["zk"]
   revision = "1d7be4effb13d2d908342d349d71a284a7542693"
@@ -1263,6 +1281,7 @@
   packages = [
     "acme",
     "log",
+    "platform/config/env",
     "providers/dns",
     "providers/dns/auroradns",
     "providers/dns/azure",
@@ -1287,6 +1306,7 @@
     "providers/dns/linode",
     "providers/dns/namecheap",
     "providers/dns/namedotcom",
+    "providers/dns/nifcloud",
     "providers/dns/ns1",
     "providers/dns/otc",
     "providers/dns/ovh",
@@ -1294,9 +1314,11 @@
     "providers/dns/rackspace",
     "providers/dns/rfc2136",
     "providers/dns/route53",
+    "providers/dns/sakuracloud",
+    "providers/dns/vegadns",
     "providers/dns/vultr"
   ]
-  revision = "7fedfd1388f016c7ca7ed92a7f2024d06a7e20d8"
+  revision = "e0d512138c43e3f056a41cd7a5beff662ec130d3"
 
 [[projects]]
   branch = "master"
@@ -1717,6 +1739,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "593c88b41d6384d68bd610a8c80c39017e77584f4e3454b2ca5c26ee904bf1da"
+  inputs-digest = "53d03fd81596d9560d751bc1102615990a91b0779cff079784a9a1c6641bd503"
   solver-name = "gps-cdcl"
   solver-version = 1

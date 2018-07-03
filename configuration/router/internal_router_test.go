@@ -288,7 +288,7 @@ func TestWithMiddleware(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, "/test", nil)
 	internalMuxRouter.ServeHTTP(recorder, request)
 
-	obtained := string(recorder.Body.Bytes())
+	obtained := recorder.Body.String()
 
 	assert.Equal(t, "before middleware1|before middleware2|router|after middleware2|after middleware1", obtained)
 }

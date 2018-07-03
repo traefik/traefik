@@ -28,7 +28,7 @@ func (s *SimpleSuite) TestInvalidConfigShouldFail(c *check.C) {
 		actual := output.String()
 
 		if !strings.Contains(actual, expected) {
-			return fmt.Errorf("Got %s, wanted %s", actual, expected)
+			return fmt.Errorf("got %s, wanted %s", actual, expected)
 		}
 
 		return nil
@@ -72,7 +72,7 @@ func (s *SimpleSuite) TestDefaultEntryPoints(c *check.C) {
 		actual := output.String()
 
 		if !strings.Contains(actual, expected) {
-			return fmt.Errorf("Got %s, wanted %s", actual, expected)
+			return fmt.Errorf("got %s, wanted %s", actual, expected)
 		}
 
 		return nil
@@ -93,10 +93,10 @@ func (s *SimpleSuite) TestPrintHelp(c *check.C) {
 		actual := output.String()
 
 		if strings.Contains(actual, notExpected) {
-			return fmt.Errorf("Got %s", actual)
+			return fmt.Errorf("got %s", actual)
 		}
 		if !strings.Contains(actual, expected) {
-			return fmt.Errorf("Got %s, wanted %s", actual, expected)
+			return fmt.Errorf("got %s, wanted %s", actual, expected)
 		}
 
 		return nil
