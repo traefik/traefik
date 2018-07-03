@@ -280,7 +280,7 @@ func (s *Etcd3Suite) TestGlobalConfiguration(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, try.BodyContains("Path:/test"))
 	c.Assert(err, checker.IsNil)
 
-	//check
+	// check
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8001/", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = "test.localhost"
@@ -298,7 +298,7 @@ func (s *Etcd3Suite) TestCertificatesContentWithSNIConfigHandshake(c *check.C) {
 		"--etcd.useAPIV3=true")
 	defer display(c)
 
-	//Copy the contents of the certificate files into ETCD
+	// Copy the contents of the certificate files into ETCD
 	snitestComCert, err := ioutil.ReadFile("fixtures/https/snitest.com.cert")
 	c.Assert(err, checker.IsNil)
 	snitestComKey, err := ioutil.ReadFile("fixtures/https/snitest.com.key")
@@ -376,7 +376,7 @@ func (s *Etcd3Suite) TestCertificatesContentWithSNIConfigHandshake(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, try.BodyContains("Host:snitest.org"))
 	c.Assert(err, checker.IsNil)
 
-	//check
+	// check
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
 		ServerName:         "snitest.com",
@@ -406,7 +406,7 @@ func (s *Etcd3Suite) TestCommandStoreConfig(c *check.C) {
 	// wait for traefik finish without error
 	cmd.Wait()
 
-	//CHECK
+	// CHECK
 	checkmap := map[string]string{
 		"/traefik/loglevel":                 "DEBUG",
 		"/traefik/defaultentrypoints/0":     "http",

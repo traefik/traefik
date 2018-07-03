@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"regexp"
+	"sync"
 
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
@@ -17,18 +18,22 @@ type LocalStore struct {
 	filename     string
 	storedData   *StoredData
 	SaveDataChan chan *StoredData `json:"-"`
+	lock         sync.RWMutex
 }
 
 // NewLocalStore initializes a new LocalStore with a file name
-func NewLocalStore(filename string) LocalStore {
-	store := LocalStore{filename: filename, SaveDataChan: make(chan *StoredData)}
+func NewLocalStore(filename string) *LocalStore {
+	store := &LocalStore{filename: filename, SaveDataChan: make(chan *StoredData)}
 	store.listenSaveAction()
 	return store
 }
 
 func (s *LocalStore) get() (*StoredData, error) {
 	if s.storedData == nil {
-		s.storedData = &StoredData{HTTPChallenges: make(map[string]map[string][]byte)}
+		s.storedData = &StoredData{
+			HTTPChallenges: make(map[string]map[string][]byte),
+			TLSChallenges:  make(map[string]*Certificate),
+		}
 
 		hasData, err := CheckFile(s.filename)
 		if err != nil {
@@ -157,5 +162,43 @@ func (s *LocalStore) GetHTTPChallenges() (map[string]map[string][]byte, error) {
 // SaveHTTPChallenges stores ACME HTTP Challenges list
 func (s *LocalStore) SaveHTTPChallenges(httpChallenges map[string]map[string][]byte) error {
 	s.storedData.HTTPChallenges = httpChallenges
+	return nil
+}
+
+// AddTLSChallenge Add a certificate to the ACME TLS-ALPN-01 certificates storage
+func (s *LocalStore) AddTLSChallenge(domain string, cert *Certificate) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	if s.storedData.TLSChallenges == nil {
+		s.storedData.TLSChallenges = make(map[string]*Certificate)
+	}
+
+	s.storedData.TLSChallenges[domain] = cert
+	return nil
+}
+
+// GetTLSChallenge Get a certificate from the ACME TLS-ALPN-01 certificates storage
+func (s *LocalStore) GetTLSChallenge(domain string) (*Certificate, error) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	if s.storedData.TLSChallenges == nil {
+		s.storedData.TLSChallenges = make(map[string]*Certificate)
+	}
+
+	return s.storedData.TLSChallenges[domain], nil
+}
+
+// RemoveTLSChallenge Remove a certificate from the ACME TLS-ALPN-01 certificates storage
+func (s *LocalStore) RemoveTLSChallenge(domain string) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	if s.storedData.TLSChallenges == nil {
+		return nil
+	}
+
+	delete(s.storedData.TLSChallenges, domain)
 	return nil
 }

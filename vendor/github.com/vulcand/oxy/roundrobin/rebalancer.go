@@ -148,7 +148,7 @@ func (rb *Rebalancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		defer logEntry.Debug("vulcand/oxy/roundrobin/rebalancer: completed ServeHttp on request")
 	}
 
-	pw := utils.NewSimpleProxyWriter(w)
+	pw := utils.NewProxyWriter(w)
 	start := rb.clock.UtcNow()
 
 	// make shallow copy of request before changing anything to avoid side effects

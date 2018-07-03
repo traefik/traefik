@@ -1,0 +1,14 @@
+defaultEntryPoints = ["http"]
+
+logLevel = "DEBUG"
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":8000"
+
+[api]
+
+[docker]
+endpoint = "{{.DockerHost}}"
+domain = "docker.localhost"
+exposedByDefault = false

@@ -251,3 +251,40 @@ func TestBuildRedirectHandler(t *testing.T) {
 		})
 	}
 }
+
+func TestServerGenericFrontendAuthFail(t *testing.T) {
+	globalConfig := configuration.GlobalConfiguration{
+		EntryPoints: configuration.EntryPoints{
+			"http": &configuration.EntryPoint{ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true}},
+		},
+	}
+
+	dynamicConfigs := types.Configurations{
+		"config": &types.Configuration{
+			Frontends: map[string]*types.Frontend{
+				"frontend": {
+					EntryPoints: []string{"http"},
+					Backend:     "backend",
+					BasicAuth:   []string{""},
+				},
+			},
+			Backends: map[string]*types.Backend{
+				"backend": {
+					Servers: map[string]types.Server{
+						"server": {
+							URL: "http://localhost",
+						},
+					},
+					LoadBalancer: &types.LoadBalancer{
+						Method: "Wrr",
+					},
+				},
+			},
+		},
+	}
+
+	srv := NewServer(globalConfig, nil, nil)
+
+	_, err := srv.loadConfig(dynamicConfigs, globalConfig)
+	require.NoError(t, err)
+}

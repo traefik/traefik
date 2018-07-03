@@ -36,6 +36,7 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 				"Auth.Digest.Users:test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e " +
 				"Auth.HeaderField:X-WebAuth-User " +
 				"Auth.Forward.Address:https://authserver.com/auth " +
+				"Auth.Forward.AuthResponseHeaders:X-Auth,X-Test,X-Secret " +
 				"Auth.Forward.TrustForwardHeader:true " +
 				"Auth.Forward.TLS.CA:path/to/local.crt " +
 				"Auth.Forward.TLS.CAOptional:true " +
@@ -50,6 +51,7 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 				"auth_basic_users":                    "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 				"auth_digest_users":                   "test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e",
 				"auth_forward_address":                "https://authserver.com/auth",
+				"auth_forward_authresponseheaders":    "X-Auth,X-Test,X-Secret",
 				"auth_forward_tls_ca":                 "path/to/local.crt",
 				"auth_forward_tls_caoptional":         "true",
 				"auth_forward_tls_cert":               "path/to/foo.cert",
@@ -191,6 +193,7 @@ func TestEntryPoints_Set(t *testing.T) {
 				"Auth.Digest.Users:test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e " +
 				"Auth.HeaderField:X-WebAuth-User " +
 				"Auth.Forward.Address:https://authserver.com/auth " +
+				"Auth.Forward.AuthResponseHeaders:X-Auth,X-Test,X-Secret " +
 				"Auth.Forward.TrustForwardHeader:true " +
 				"Auth.Forward.TLS.CA:path/to/local.crt " +
 				"Auth.Forward.TLS.CAOptional:true " +
@@ -241,7 +244,8 @@ func TestEntryPoints_Set(t *testing.T) {
 						},
 					},
 					Forward: &types.Forward{
-						Address: "https://authserver.com/auth",
+						Address:             "https://authserver.com/auth",
+						AuthResponseHeaders: []string{"X-Auth", "X-Test", "X-Secret"},
 						TLS: &types.ClientTLS{
 							CA:                 "path/to/local.crt",
 							CAOptional:         true,
@@ -302,6 +306,7 @@ func TestEntryPoints_Set(t *testing.T) {
 				"auth.digest.users:test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e " +
 				"auth.headerField:X-WebAuth-User " +
 				"auth.forward.address:https://authserver.com/auth " +
+				"auth.forward.authResponseHeaders:X-Auth,X-Test,X-Secret " +
 				"auth.forward.trustForwardHeader:true " +
 				"auth.forward.tls.ca:path/to/local.crt " +
 				"auth.forward.tls.caOptional:true " +
@@ -349,7 +354,8 @@ func TestEntryPoints_Set(t *testing.T) {
 						},
 					},
 					Forward: &types.Forward{
-						Address: "https://authserver.com/auth",
+						Address:             "https://authserver.com/auth",
+						AuthResponseHeaders: []string{"X-Auth", "X-Test", "X-Secret"},
 						TLS: &types.ClientTLS{
 							CA:                 "path/to/local.crt",
 							CAOptional:         true,

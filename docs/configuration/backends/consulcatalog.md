@@ -24,6 +24,13 @@ endpoint = "127.0.0.1:8500"
 #
 exposedByDefault = false
 
+# Allow Consul server to serve the catalog reads regardless of whether it is the leader.
+#
+# Optional
+# Default: false
+#
+stale = false
+
 # Default domain used.
 #
 # Optional

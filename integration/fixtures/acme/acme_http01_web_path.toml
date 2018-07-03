@@ -1,0 +1,50 @@
+logLevel = "DEBUG"
+
+defaultEntryPoints = ["http", "https"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = "{{ .PortHTTP }}"
+  [entryPoints.https]
+  address = "{{ .PortHTTPS }}"
+    [entryPoints.https.tls]
+
+[acme]
+  email = "test@traefik.io"
+  storage = "/tmp/acme.json"
+  entryPoint = "https"
+  acmeLogging = true
+  onDemand = {{ .Acme.OnDemand }}
+  onHostRule = {{ .Acme.OnHostRule }}
+  keyType = "{{ .Acme.KeyType }}"
+  caServer = "{{ .Acme.CAServer }}"
+
+  {{if .Acme.HTTPChallenge }}
+  [acme.httpChallenge]
+    entryPoint = "{{ .Acme.HTTPChallenge.EntryPoint }}"
+  {{end}}
+
+  {{range .Acme.Domains}}
+  [[acme.domains]]
+    main = "{{ .Main }}"
+    sans = [{{range .SANs }}
+      "{{.}}",
+      {{end}}]
+  {{end}}
+
+[web]
+path="/traefik"
+
+[file]
+
+[backends]
+  [backends.backend]
+    [backends.backend.servers.server1]
+    url = "http://127.0.0.1:9010"
+    weight = 1
+
+[frontends]
+  [frontends.frontend]
+  backend = "backend"
+    [frontends.frontend.routes.test]
+    rule = "Host:traefik.acme.wtf"

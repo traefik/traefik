@@ -4,7 +4,7 @@ import (
 	"io"
 
 	"github.com/containous/traefik/log"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	zipkin "github.com/openzipkin/zipkin-go-opentracing"
 )
 

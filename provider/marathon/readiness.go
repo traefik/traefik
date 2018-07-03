@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/containous/traefik/log"
-	marathon "github.com/gambol99/go-marathon"
+	"github.com/gambol99/go-marathon"
 )
 
 const (

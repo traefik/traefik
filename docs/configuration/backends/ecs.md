@@ -102,6 +102,8 @@ If `accessKeyID`/`secretAccessKey` is not given credentials will be resolved in 
 - Shared credentials, determined by `AWS_PROFILE` and `AWS_SHARED_CREDENTIALS_FILE`, defaults to `default` and `~/.aws/credentials`.
 - EC2 instance role or ECS task role
 
+To enable constraints see [provider-specific constraints section](/configuration/commons/#provider-specific).
+
 ## Policy
 
 Træfik needs the following policy to read ECS information:

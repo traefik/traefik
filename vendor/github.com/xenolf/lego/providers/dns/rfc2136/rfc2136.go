@@ -38,6 +38,7 @@ func NewDNSProvider() (*DNSProvider, error) {
 	tsigKey := os.Getenv("RFC2136_TSIG_KEY")
 	tsigSecret := os.Getenv("RFC2136_TSIG_SECRET")
 	timeout := os.Getenv("RFC2136_TIMEOUT")
+
 	return NewDNSProviderCredentials(nameserver, tsigAlgorithm, tsigKey, tsigSecret, timeout)
 }
 
@@ -58,13 +59,14 @@ func NewDNSProviderCredentials(nameserver, tsigAlgorithm, tsigKey, tsigSecret, t
 			return nil, err
 		}
 	}
-	d := &DNSProvider{
-		nameserver: nameserver,
-	}
+
+	d := &DNSProvider{nameserver: nameserver}
+
 	if tsigAlgorithm == "" {
 		tsigAlgorithm = dns.HmacMD5
 	}
 	d.tsigAlgorithm = tsigAlgorithm
+
 	if len(tsigKey) > 0 && len(tsigSecret) > 0 {
 		d.tsigKey = tsigKey
 		d.tsigSecret = tsigSecret

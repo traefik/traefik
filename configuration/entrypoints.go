@@ -135,10 +135,16 @@ func makeEntryPointAuth(result map[string]string) *types.Auth {
 			}
 		}
 
+		var authResponseHeaders []string
+		if v, ok := result["auth_forward_authresponseheaders"]; ok {
+			authResponseHeaders = strings.Split(v, ",")
+		}
+
 		forward = &types.Forward{
-			Address:            address,
-			TLS:                clientTLS,
-			TrustForwardHeader: toBool(result, "auth_forward_trustforwardheader"),
+			Address:             address,
+			TLS:                 clientTLS,
+			TrustForwardHeader:  toBool(result, "auth_forward_trustforwardheader"),
+			AuthResponseHeaders: authResponseHeaders,
 		}
 	}
 

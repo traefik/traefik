@@ -24,7 +24,7 @@ import (
 
 var _ provider.Provider = (*Provider)(nil)
 
-//Provider holds configuration of the provider.
+// Provider holds configuration of the provider.
 type Provider struct {
 	provider.BaseProvider
 	Endpoint           string `description:"Mesos server endpoint. You can also specify multiple endpoint for Mesos"`

@@ -144,6 +144,7 @@ Supported Providers:
 - Consul K/V
 - BoltDB
 - Zookeeper
+- ECS
 - Etcd
 - Consul Catalog
 - Rancher
@@ -415,6 +416,38 @@ If no units are provided, the value is parsed assuming seconds.
 idleTimeout = "360s"
 ```
 
+## Host Resolver
+
+`hostResolver` are used for request host matching process.
+
+```toml
+[hostResolver]
+
+# cnameFlattening is a trigger to flatten request host, assuming it is a CNAME record
+#
+# Optional
+# Default : false
+#
+cnameFlattening = true
+
+# resolvConf is dns resolving configuration file, the default is /etc/resolv.conf
+#
+# Optional
+# Default : "/etc/resolv.conf"
+#
+# resolvConf = "/etc/resolv.conf"
+
+# resolvDepth is the maximum CNAME recursive lookup
+#
+# Optional
+# Default : 5
+#
+# resolvDepth = 5
+```
+
+- To allow serving secure https request and generate the SSL using ACME while `cnameFlattening` is active. 
+The `acme` configuration for `HTTP-01` challenge and `onDemand` is mandatory. 
+Refer to [ACME configuration](/configuration/acme) for more information.
 
 ## Override Default Configuration Template
 

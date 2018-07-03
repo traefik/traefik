@@ -372,6 +372,7 @@ func TestFilterInstance(t *testing.T) {
 		instanceInfo     ecsInstance
 		exposedByDefault bool
 		expected         bool
+		constrain        bool
 	}{
 		{
 			desc:             "Instance without enable label and exposed by default enabled should be not filtered",
@@ -455,6 +456,24 @@ func TestFilterInstance(t *testing.T) {
 			exposedByDefault: true,
 			expected:         true,
 		},
+		{
+			desc: "Instance with failing constraint should be filtered",
+			instanceInfo: simpleEcsInstance(map[string]*string{
+				label.TraefikTags: aws.String("private"),
+			}),
+			exposedByDefault: true,
+			expected:         false,
+			constrain:        true,
+		},
+		{
+			desc: "Instance with passing constraint should not be filtered",
+			instanceInfo: simpleEcsInstance(map[string]*string{
+				label.TraefikTags: aws.String("public"),
+			}),
+			exposedByDefault: true,
+			expected:         true,
+			constrain:        true,
+		},
 	}
 
 	for _, test := range testCases {
@@ -465,90 +484,14 @@ func TestFilterInstance(t *testing.T) {
 			prov := &Provider{
 				ExposedByDefault: test.exposedByDefault,
 			}
+			if test.constrain {
+				constraints := types.Constraints{}
+				assert.NoError(t, constraints.Set("tag==public"))
+				prov.Constraints = constraints
+			}
 
 			actual := prov.filterInstance(test.instanceInfo)
 			assert.Equal(t, test.expected, actual)
-		})
-	}
-}
-
-func TestChunkedTaskArns(t *testing.T) {
-	testVal := "a"
-	testCases := []struct {
-		desc            string
-		count           int
-		expectedLengths []int
-	}{
-		{
-			desc:            "0 parameter should return nil",
-			count:           0,
-			expectedLengths: []int(nil),
-		},
-		{
-			desc:            "1 parameter should return 1 array of 1 element",
-			count:           1,
-			expectedLengths: []int{1},
-		},
-		{
-			desc:            "99 parameters should return 1 array of 99 elements",
-			count:           99,
-			expectedLengths: []int{99},
-		},
-		{
-			desc:            "100 parameters should return 1 array of 100 elements",
-			count:           100,
-			expectedLengths: []int{100},
-		},
-		{
-			desc:            "101 parameters should return 1 array of 100 elements and 1 array of 1 element",
-			count:           101,
-			expectedLengths: []int{100, 1},
-		},
-		{
-			desc:            "199 parameters should return 1 array of 100 elements and 1 array of 99 elements",
-			count:           199,
-			expectedLengths: []int{100, 99},
-		},
-		{
-			desc:            "200 parameters should return 2 arrays of 100 elements each",
-			count:           200,
-			expectedLengths: []int{100, 100},
-		},
-		{
-			desc:            "201 parameters should return 2 arrays of 100 elements each and 1 array of 1 element",
-			count:           201,
-			expectedLengths: []int{100, 100, 1},
-		},
-		{
-			desc:            "555 parameters should return 5 arrays of 100 elements each and 1 array of 55 elements",
-			count:           555,
-			expectedLengths: []int{100, 100, 100, 100, 100, 55},
-		},
-		{
-			desc:            "1001 parameters should return 10 arrays of 100 elements each and 1 array of 1 element",
-			count:           1001,
-			expectedLengths: []int{100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 1},
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			var tasks []*string
-			for v := 0; v < test.count; v++ {
-				tasks = append(tasks, &testVal)
-			}
-
-			out := chunkedTaskArns(tasks)
-			var outCount []int
-
-			for _, el := range out {
-				outCount = append(outCount, len(el))
-			}
-
-			assert.Equal(t, test.expectedLengths, outCount, "Chunking %d elements", test.count)
 		})
 	}
 }

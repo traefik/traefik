@@ -322,42 +322,6 @@ The `consul` provider contains the configuration.
   rule = "Path:/test"
 ```
 
-## Enable Basic authentication in an entry point
-
-With two user/pass:
-
-- `test`:`test`
-- `test2`:`test2`
-
-Passwords are encoded in MD5: you can use `htpasswd` to generate them.
-
-```toml
-defaultEntryPoints = ["http"]
-
-[entryPoints]
-  [entryPoints.http]
-  address = ":80"
-  [entryPoints.http.auth.basic]
-  users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
-```
-
-## Pass Authenticated user to application via headers
-
-Providing an authentication method as described above, it is possible to pass the user to the application
-via a configurable header value.
-
-```toml
-defaultEntryPoints = ["http"]
-
-[entryPoints]
-  [entryPoints.http]
-  address = ":80"
-  [entryPoints.http.auth]
-    headerField = "X-WebAuth-User"
-    [entryPoints.http.auth.basic]
-    users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
-```
-
 ## Override the Traefik HTTP server idleTimeout and/or throttle configurations from re-loading too quickly
 
 ```toml

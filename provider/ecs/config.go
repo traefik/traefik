@@ -87,6 +87,14 @@ func (p *Provider) filterInstance(i ecsInstance) bool {
 		return false
 	}
 
+	constraintTags := label.GetSliceStringValue(i.TraefikLabels, label.TraefikTags)
+	if ok, failingConstraint := p.MatchConstraints(constraintTags); !ok {
+		if failingConstraint != nil {
+			log.Debugf("Filtering ecs instance pruned by constraint %s (%s) (constraint = %q)", i.Name, i.ID, failingConstraint.String())
+		}
+		return false
+	}
+
 	return true
 }
 

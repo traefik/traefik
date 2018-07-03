@@ -9,11 +9,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
 	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/platform/config/env"
 )
 
 const cloudXNSBaseURL = "https://www.cloudxns.net/api2/"
@@ -28,9 +28,12 @@ type DNSProvider struct {
 // Credentials must be passed in the environment variables: CLOUDXNS_API_KEY
 // and CLOUDXNS_SECRET_KEY.
 func NewDNSProvider() (*DNSProvider, error) {
-	apiKey := os.Getenv("CLOUDXNS_API_KEY")
-	secretKey := os.Getenv("CLOUDXNS_SECRET_KEY")
-	return NewDNSProviderCredentials(apiKey, secretKey)
+	values, err := env.Get("CLOUDXNS_API_KEY", "CLOUDXNS_SECRET_KEY")
+	if err != nil {
+		return nil, fmt.Errorf("CloudXNS: %v", err)
+	}
+
+	return NewDNSProviderCredentials(values["CLOUDXNS_API_KEY"], values["CLOUDXNS_SECRET_KEY"])
 }
 
 // NewDNSProviderCredentials uses the supplied credentials to return a
@@ -47,33 +50,33 @@ func NewDNSProviderCredentials(apiKey, secretKey string) (*DNSProvider, error) {
 }
 
 // Present creates a TXT record to fulfil the dns-01 challenge.
-func (c *DNSProvider) Present(domain, token, keyAuth string) error {
+func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
-	zoneID, err := c.getHostedZoneID(fqdn)
+	zoneID, err := d.getHostedZoneID(fqdn)
 	if err != nil {
 		return err
 	}
 
-	return c.addTxtRecord(zoneID, fqdn, value, ttl)
+	return d.addTxtRecord(zoneID, fqdn, value, ttl)
 }
 
 // CleanUp removes the TXT record matching the specified parameters.
-func (c *DNSProvider) CleanUp(domain, token, keyAuth string) error {
+func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
-	zoneID, err := c.getHostedZoneID(fqdn)
+	zoneID, err := d.getHostedZoneID(fqdn)
 	if err != nil {
 		return err
 	}
 
-	recordID, err := c.findTxtRecord(zoneID, fqdn)
+	recordID, err := d.findTxtRecord(zoneID, fqdn)
 	if err != nil {
 		return err
 	}
 
-	return c.delTxtRecord(recordID, zoneID)
+	return d.delTxtRecord(recordID, zoneID)
 }
 
-func (c *DNSProvider) getHostedZoneID(fqdn string) (string, error) {
+func (d *DNSProvider) getHostedZoneID(fqdn string) (string, error) {
 	type Data struct {
 		ID     string `json:"id"`
 		Domain string `json:"domain"`
@@ -84,7 +87,7 @@ func (c *DNSProvider) getHostedZoneID(fqdn string) (string, error) {
 		return "", err
 	}
 
-	result, err := c.makeRequest("GET", "domain", nil)
+	result, err := d.makeRequest(http.MethodGet, "domain", nil)
 	if err != nil {
 		return "", err
 	}
@@ -104,8 +107,8 @@ func (c *DNSProvider) getHostedZoneID(fqdn string) (string, error) {
 	return "", fmt.Errorf("zone %s not found in cloudxns for domain %s", authZone, fqdn)
 }
 
-func (c *DNSProvider) findTxtRecord(zoneID, fqdn string) (string, error) {
-	result, err := c.makeRequest("GET", fmt.Sprintf("record/%s?host_id=0&offset=0&row_num=2000", zoneID), nil)
+func (d *DNSProvider) findTxtRecord(zoneID, fqdn string) (string, error) {
+	result, err := d.makeRequest(http.MethodGet, fmt.Sprintf("record/%s?host_id=0&offset=0&row_num=2000", zoneID), nil)
 	if err != nil {
 		return "", err
 	}
@@ -125,7 +128,7 @@ func (c *DNSProvider) findTxtRecord(zoneID, fqdn string) (string, error) {
 	return "", fmt.Errorf("no existing record found for %s", fqdn)
 }
 
-func (c *DNSProvider) addTxtRecord(zoneID, fqdn, value string, ttl int) error {
+func (d *DNSProvider) addTxtRecord(zoneID, fqdn, value string, ttl int) error {
 	id, err := strconv.Atoi(zoneID)
 	if err != nil {
 		return err
@@ -145,21 +148,21 @@ func (c *DNSProvider) addTxtRecord(zoneID, fqdn, value string, ttl int) error {
 		return err
 	}
 
-	_, err = c.makeRequest("POST", "record", body)
+	_, err = d.makeRequest(http.MethodPost, "record", body)
 	return err
 }
 
-func (c *DNSProvider) delTxtRecord(recordID, zoneID string) error {
-	_, err := c.makeRequest("DELETE", fmt.Sprintf("record/%s/%s", recordID, zoneID), nil)
+func (d *DNSProvider) delTxtRecord(recordID, zoneID string) error {
+	_, err := d.makeRequest(http.MethodDelete, fmt.Sprintf("record/%s/%s", recordID, zoneID), nil)
 	return err
 }
 
-func (c *DNSProvider) hmac(url, date, body string) string {
-	sum := md5.Sum([]byte(c.apiKey + url + body + date + c.secretKey))
+func (d *DNSProvider) hmac(url, date, body string) string {
+	sum := md5.Sum([]byte(d.apiKey + url + body + date + d.secretKey))
 	return hex.EncodeToString(sum[:])
 }
 
-func (c *DNSProvider) makeRequest(method, uri string, body []byte) (json.RawMessage, error) {
+func (d *DNSProvider) makeRequest(method, uri string, body []byte) (json.RawMessage, error) {
 	type APIResponse struct {
 		Code    int             `json:"code"`
 		Message string          `json:"message"`
@@ -174,9 +177,9 @@ func (c *DNSProvider) makeRequest(method, uri string, body []byte) (json.RawMess
 
 	requestDate := time.Now().Format(time.RFC1123Z)
 
-	req.Header.Set("API-KEY", c.apiKey)
+	req.Header.Set("API-KEY", d.apiKey)
 	req.Header.Set("API-REQUEST-DATE", requestDate)
-	req.Header.Set("API-HMAC", c.hmac(url, requestDate, string(body)))
+	req.Header.Set("API-HMAC", d.hmac(url, requestDate, string(body)))
 	req.Header.Set("API-FORMAT", "json")
 
 	resp, err := acme.HTTPClient.Do(req)
