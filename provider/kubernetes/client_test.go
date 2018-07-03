@@ -11,30 +11,31 @@ import (
 
 func TestTranslateNotFoundError(t *testing.T) {
 	testCases := []struct {
-		err            error
 		desc           string
+		err            error
 		expectedExists bool
 		expectedError  error
 	}{
 		{
-			err:            kubeerror.NewNotFound(schema.GroupResource{}, "foo"),
 			desc:           "kubernetes not found error",
+			err:            kubeerror.NewNotFound(schema.GroupResource{}, "foo"),
 			expectedExists: false,
 			expectedError:  nil,
 		},
 		{
-			err:            nil,
 			desc:           "nil error",
+			err:            nil,
 			expectedExists: true,
 			expectedError:  nil,
 		},
 		{
-			err:            fmt.Errorf("bar error"),
 			desc:           "not a kubernetes not found error",
+			err:            fmt.Errorf("bar error"),
 			expectedExists: false,
 			expectedError:  fmt.Errorf("bar error"),
 		},
 	}
+
 	for _, testCase := range testCases {
 		test := testCase
 		t.Run(test.desc, func(t *testing.T) {
