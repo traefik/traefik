@@ -221,6 +221,134 @@ func TestLoadIngresses(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+func TestLoadGlobalIngressWithPortNumbers(t *testing.T) {
+	ingresses := []*extensionsv1beta1.Ingress{
+		buildIngress(
+			iNamespace("testing"),
+			iSpecBackends(iSpecBackend(iIngressBackend("service1", intstr.FromInt(80)))),
+		),
+	}
+
+	services := []*corev1.Service{
+		buildService(
+			sName("service1"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sPorts(sPort(80, ""))),
+		),
+	}
+
+	endpoints := []*corev1.Endpoints{
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service1"),
+			eUID("1"),
+			subset(
+				eAddresses(eAddress("10.10.0.1")),
+				ePorts(ePort(8080, ""))),
+		),
+	}
+
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		endpoints: endpoints,
+		watchChan: watchChan,
+	}
+	provider := Provider{}
+
+	actual, err := provider.loadIngresses(client)
+	require.NoError(t, err, "error loading ingresses")
+
+	expected := buildConfiguration(
+		backends(
+			backend("global-default-backend",
+				lbMethod("wrr"),
+				servers(
+					server("http://10.10.0.1:8080", weight(1)),
+				),
+			),
+		),
+		frontends(
+			frontend("global-default-backend",
+				frontendName("global-default-frontend"),
+				passHostHeader(),
+				routes(
+					route("/", "PathPrefix:/"),
+				),
+			),
+		),
+	)
+	assert.Equal(t, expected, actual)
+}
+
+func TestLoadGlobalIngressWithHttpsPortNames(t *testing.T) {
+	ingresses := []*extensionsv1beta1.Ingress{
+		buildIngress(
+			iNamespace("testing"),
+			iSpecBackends(iSpecBackend(iIngressBackend("service1", intstr.FromString("https-global")))),
+		),
+	}
+
+	services := []*corev1.Service{
+		buildService(
+			sName("service1"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sPorts(sPort(8443, "https-global"))),
+		),
+	}
+
+	endpoints := []*corev1.Endpoints{
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service1"),
+			eUID("1"),
+			subset(
+				eAddresses(eAddress("10.10.0.1")),
+				ePorts(ePort(8080, ""))),
+		),
+	}
+
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		endpoints: endpoints,
+		watchChan: watchChan,
+	}
+	provider := Provider{}
+
+	actual, err := provider.loadIngresses(client)
+	require.NoError(t, err, "error loading ingresses")
+
+	expected := buildConfiguration(
+		backends(
+			backend("global-default-backend",
+				lbMethod("wrr"),
+				servers(
+					server("https://10.10.0.1:8080", weight(1)),
+				),
+			),
+		),
+		frontends(
+			frontend("global-default-backend",
+				frontendName("global-default-frontend"),
+				passHostHeader(),
+				routes(
+					route("/", "PathPrefix:/"),
+				),
+			),
+		),
+	)
+	assert.Equal(t, expected, actual)
+}
+
 func TestRuleType(t *testing.T) {
 	tests := []struct {
 		desc             string
@@ -1557,8 +1685,13 @@ func TestKubeAPIErrors(t *testing.T) {
 
 			provider := Provider{}
 
-			if _, err := provider.loadIngresses(client); err != apiErr {
-				t.Errorf("Got error %v, wanted error %v", err, apiErr)
+			if _, err := provider.loadIngresses(client); err != nil {
+				if client.apiServiceError != nil {
+					assert.EqualError(t, err, "failed kube api call")
+				}
+				if client.apiEndpointsError != nil {
+					assert.EqualError(t, err, "failed kube api call")
+				}
 			}
 		})
 	}

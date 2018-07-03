@@ -324,3 +324,25 @@ More information are available in the  [User Guide](/user-guide/kubernetes/#add-
 !!! note
     Only TLS certificates provided by users can be stored in Kubernetes Secrets.
     [Let's Encrypt](https://letsencrypt.org) certificates cannot be managed in Kubernets Secrets yet.
+
+### Global Default Backend Ingresses
+
+Ingresses can be created that look like the following:
+
+```yaml
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: cheese
+spec:
+  backend:
+    serviceName: stilton
+    servicePort: 80
+```
+
+This ingress follows the [Global Default Backend](https://kubernetes.io/docs/concepts/services-networking/ingress/#the-ingress-resource) property of ingresses.
+This will allow users to create a "default backend" that will match all unmatched requests.
+
+!!! note
+    Due to Træfik's use of priorities, you may have to set this ingress priority lower than other ingresses in your environment, to avoid this global ingress from satisfying requests that _could_ match other ingresses.
+    To do this, use the `traefik.ingress.kubernetes.io/priority` annotation (as seen in [General Annotations](/configuration/backends/kubernetes/#general-annotations)) on your ingresses accordingly.
