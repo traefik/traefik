@@ -262,7 +262,7 @@ func (s *Server) buildForwarder(entryPointName string, entryPoint *configuration
 	return fwd, nil
 }
 
-func buildServerRoute(serverEntryPoint *serverEntryPoint, frontendName string, frontend *types.Frontend, hostResolver *hostresolver.HostResolver) (*types.ServerRoute, error) {
+func buildServerRoute(serverEntryPoint *serverEntryPoint, frontendName string, frontend *types.Frontend, hostResolver *hostresolver.Resolver) (*types.ServerRoute, error) {
 	serverRoute := &types.ServerRoute{Route: serverEntryPoint.httpRouter.GetHandler().NewRoute().Name(frontendName)}
 
 	priority := 0
@@ -582,12 +582,12 @@ func sortedFrontendNamesForConfig(configuration *types.Configuration) []string {
 	return keys
 }
 
-func buildHostResolver(globalConfig configuration.GlobalConfiguration) *hostresolver.HostResolver {
+func buildHostResolver(globalConfig configuration.GlobalConfiguration) *hostresolver.Resolver {
 	if globalConfig.HostResolver != nil {
-		return &hostresolver.HostResolver{
-			Enabled:      globalConfig.HostResolver.CnameFlattening,
-			ResolvConfig: globalConfig.HostResolver.ResolvConfig,
-			ResolvDepth:  globalConfig.HostResolver.ResolvDepth,
+		return &hostresolver.Resolver{
+			CnameFlattening: globalConfig.HostResolver.CnameFlattening,
+			ResolvConfig:    globalConfig.HostResolver.ResolvConfig,
+			ResolvDepth:     globalConfig.HostResolver.ResolvDepth,
 		}
 	}
 	return nil

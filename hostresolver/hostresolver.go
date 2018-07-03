@@ -1,9 +1,9 @@
 package hostresolver
 
 import (
+	"fmt"
 	"net"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -12,83 +12,110 @@ import (
 	"github.com/patrickmn/go-cache"
 )
 
-// HostResolver used for host resolver
-type HostResolver struct {
-	Enabled      bool
-	Cache        *cache.Cache
-	ResolvConfig string
-	ResolvDepth  int
-}
-
-// CNAMEResolv used to store CNAME result
-type CNAMEResolv struct {
-	TTL    int
+type cnameResolv struct {
+	TTL    time.Duration
 	Record string
 }
 
+type byTTL []*cnameResolv
+
+func (a byTTL) Len() int           { return len(a) }
+func (a byTTL) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a byTTL) Less(i, j int) bool { return a[i].TTL > a[j].TTL }
+
+// Resolver used for host resolver
+type Resolver struct {
+	CnameFlattening bool
+	ResolvConfig    string
+	ResolvDepth     int
+	cache           *cache.Cache
+}
+
 // CNAMEFlatten check if CNAME record exists, flatten if possible
-func (hr *HostResolver) CNAMEFlatten(host string) (string, string) {
-	var result []string
-	result = append(result, host)
-	request := host
-	if hr.Cache == nil {
-		hr.Cache = cache.New(30*time.Minute, 5*time.Minute)
+func (hr *Resolver) CNAMEFlatten(host string) (string, string) {
+	if hr.cache == nil {
+		hr.cache = cache.New(30*time.Minute, 5*time.Minute)
 	}
-	rst, found := hr.Cache.Get(host)
+
+	result := []string{host}
+	request := host
+
+	value, found := hr.cache.Get(host)
 	if found {
-		result = strings.Split(rst.(string), ",")
+		result = strings.Split(value.(string), ",")
 	} else {
 		var cacheDuration = 0 * time.Second
-		for i := 0; i < hr.ResolvDepth; i++ {
-			r := hr.cnameResolve(request)
-			if r != nil {
-				result = append(result, r.Record)
-				if i == 0 {
-					cacheDuration = time.Duration(r.TTL) * time.Second
-				}
-				request = r.Record
-			} else {
+
+		for depth := 0; depth < hr.ResolvDepth; depth++ {
+			resolv, err := cnameResolve(request, hr.ResolvConfig)
+			if err != nil {
+				log.Error(err)
 				break
 			}
+			if resolv == nil {
+				break
+			}
+
+			result = append(result, resolv.Record)
+			if depth == 0 {
+				cacheDuration = resolv.TTL
+			}
+			request = resolv.Record
 		}
-		hr.Cache.Add(host, strings.Join(result, ","), cacheDuration)
+
+		hr.cache.Add(host, strings.Join(result, ","), cacheDuration)
 	}
+
 	return result[0], result[len(result)-1]
 }
 
-// CNAMEResolve resolves CNAME if exists, and return with the highest TTL
-func (hr *HostResolver) cnameResolve(host string) *CNAMEResolv {
-	config, err := dns.ClientConfigFromFile(hr.ResolvConfig)
+// cnameResolve resolves CNAME if exists, and return with the highest TTL
+func cnameResolve(host string, resolvPath string) (*cnameResolv, error) {
+	config, err := dns.ClientConfigFromFile(resolvPath)
 	if err != nil {
-		log.Errorf("Invalid resolver configuration file")
-		return nil
+		return nil, fmt.Errorf("invalid resolver configuration file: %s", resolvPath)
 	}
-	c := dns.Client{Timeout: 30 * time.Second}
-	c.Timeout = 30 * time.Second
+
+	client := &dns.Client{Timeout: 30 * time.Second}
+
 	m := &dns.Msg{}
 	m.SetQuestion(dns.Fqdn(host), dns.TypeCNAME)
-	var result []*CNAMEResolv
-	for i := 0; i < len(config.Servers); i++ {
-		r, _, err := c.Exchange(m, net.JoinHostPort(config.Servers[i], config.Port))
+
+	var result []*cnameResolv
+	for _, server := range config.Servers {
+		tempRecord, err := getRecord(client, m, server, config.Port)
 		if err != nil {
-			log.Errorf("Failed to resolve host %s with server %s", host, config.Servers[i])
+			log.Errorf("Failed to resolve host %s: %v", host, err)
 			continue
 		}
-		if r != nil && len(r.Answer) > 0 {
-			temp := strings.Fields(r.Answer[0].String())
-			ttl, _ := strconv.Atoi(temp[1])
-			tempRecord := &CNAMEResolv{
-				TTL:    ttl,
-				Record: strings.TrimSuffix(strings.TrimSpace(temp[len(temp)-1]), "."),
-			}
-			result = append(result, tempRecord)
-		}
+		result = append(result, tempRecord)
 	}
-	if len(result) > 0 {
-		sort.Slice(result, func(i, j int) bool {
-			return result[i].TTL > result[j].TTL
-		})
-		return result[0]
+
+	if len(result) <= 0 {
+		return nil, nil
 	}
-	return nil
+
+	sort.Sort(byTTL(result))
+	return result[0], nil
+}
+
+func getRecord(client *dns.Client, msg *dns.Msg, server string, port string) (*cnameResolv, error) {
+	resp, _, err := client.Exchange(msg, net.JoinHostPort(server, port))
+	if err != nil {
+		return nil, fmt.Errorf("exchange error for server %s: %v", server, err)
+	}
+
+	if resp == nil || len(resp.Answer) == 0 {
+		return nil, fmt.Errorf("empty answer for server %s", server)
+	}
+
+	rr, ok := resp.Answer[0].(*dns.CNAME)
+	if !ok {
+		return nil, fmt.Errorf("invalid response type for server %s", server)
+	}
+
+	return &cnameResolv{
+		TTL:    time.Duration(rr.Hdr.Ttl) * time.Second,
+		Record: strings.TrimSuffix(rr.Target, "."),
+	}, nil
 }

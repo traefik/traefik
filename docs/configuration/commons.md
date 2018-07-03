@@ -427,20 +427,22 @@ idleTimeout = "360s"
 #
 # Optional
 # Default : false
+#
 cnameFlattening = true
 
 # resolvConf is dns resolving configuration file, the default is /etc/resolv.conf
 #
 # Optional
 # Default : "/etc/resolv.conf"
-resolvConf = "/etc/resolv.conf"
+#
+# resolvConf = "/etc/resolv.conf"
 
 # resolvDepth is the maximum CNAME recursive lookup
 #
 # Optional
 # Default : 5
-resolvDepth = 5
-
+#
+# resolvDepth = 5
 ```
 
 - To allow serving secure https request and generate the SSL using ACME while `cnameFlattening` is active. 

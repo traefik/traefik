@@ -20,7 +20,7 @@ import (
 type Rules struct {
 	Route        *types.ServerRoute
 	err          error
-	HostResolver *hostresolver.HostResolver
+	HostResolver *hostresolver.Resolver
 }
 
 func (r *Rules) host(hosts ...string) *mux.Route {
@@ -29,19 +29,22 @@ func (r *Rules) host(hosts ...string) *mux.Route {
 		if err != nil {
 			reqHost = req.Host
 		}
-		if r.HostResolver != nil && r.HostResolver.Enabled {
+
+		if r.HostResolver != nil && r.HostResolver.CnameFlattening {
 			reqH, flatH := r.HostResolver.CNAMEFlatten(types.CanonicalDomain(reqHost))
 			for _, host := range hosts {
-				if types.CanonicalDomain(reqH) == types.CanonicalDomain(host) || types.CanonicalDomain(flatH) == types.CanonicalDomain(host) {
+				if types.CanonicalDomain(reqH) == types.CanonicalDomain(host) ||
+					types.CanonicalDomain(flatH) == types.CanonicalDomain(host) {
 					return true
 				}
 				log.Debugf("CNAMEFlattening: request %s which resolved to %s, is not matched to route %s", reqH, flatH, host)
 			}
-		} else {
-			for _, host := range hosts {
-				if types.CanonicalDomain(reqHost) == types.CanonicalDomain(host) {
-					return true
-				}
+			return false
+		}
+
+		for _, host := range hosts {
+			if types.CanonicalDomain(reqHost) == types.CanonicalDomain(host) {
+				return true
 			}
 		}
 		return false
