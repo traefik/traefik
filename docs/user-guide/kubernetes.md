@@ -921,7 +921,7 @@ A few conditions must hold for service weights to be applied correctly:
 
 - The associated service backends must share the same path and host.
 - The total percentage shared across all service backends must yield 100% (see the section on [omitting the final service](#omitting-the-final-service), however).
-- The percentage values are interpreted as floating point numbers to a supported precision as defined in the [configuration details](/configuration/backends/kubernetes).
+- The percentage values are interpreted as floating point numbers to a supported precision as defined in the [annotation documentation](/configuration/backends/kubernetes#general-annotations).
 
 ### Omitting the Final Service
 
