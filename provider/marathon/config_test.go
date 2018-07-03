@@ -370,8 +370,8 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel(label.TraefikBackendBufferingMemRequestBodyBytes, "2097152"),
 					withLabel(label.TraefikBackendBufferingRetryExpression, "IsNetworkError() && Attempts() <= 2"),
 
+					withLabel(label.TraefikFrontendAuthBasic, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 					withLabel(label.TraefikFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
-					withLabel(label.TraefikFrontendAuthBasicUsersFile, ".htpasswd"),
 					withLabel(label.TraefikFrontendAuthBasicUsersFile, ".htpasswd"),
 					withLabel(label.TraefikFrontendAuthDigestUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 					withLabel(label.TraefikFrontendAuthDigestUsersFile, ".htpasswd"),
