@@ -51,7 +51,6 @@ func TestBuildConfiguration(t *testing.T) {
 						},
 					},
 					PassHostHeader: true,
-					BasicAuth:      []string{},
 					EntryPoints:    []string{},
 				},
 			},
@@ -84,7 +83,6 @@ func TestBuildConfiguration(t *testing.T) {
 						},
 					},
 					PassHostHeader: true,
-					BasicAuth:      []string{},
 					EntryPoints:    []string{},
 				},
 			},
@@ -110,7 +108,6 @@ func TestBuildConfiguration(t *testing.T) {
 						},
 					},
 					PassHostHeader: true,
-					BasicAuth:      []string{},
 					EntryPoints:    []string{},
 				},
 			},
@@ -143,7 +140,6 @@ func TestBuildConfiguration(t *testing.T) {
 						},
 					},
 					PassHostHeader: true,
-					BasicAuth:      []string{},
 					EntryPoints:    []string{},
 				},
 			},
@@ -155,6 +151,188 @@ func TestBuildConfiguration(t *testing.T) {
 							Weight: label.DefaultWeight,
 						},
 					},
+				},
+			},
+		},
+		{
+			desc: "with basic auth",
+			applications: withApplications(
+				application(
+					appID("/app"),
+					appPorts(80),
+					withLabel(label.TraefikFrontendAuthHeaderField, "X-WebAuth-User"),
+					withLabel(label.TraefikFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+					withLabel(label.TraefikFrontendAuthBasicUsersFile, ".htpasswd"),
+					withTasks(localhostTask(taskPorts(80))),
+				)),
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-app": {
+					Backend: "backend-app",
+					Routes: map[string]types.Route{
+						"route-host-app": {
+							Rule: "Host:app.marathon.localhost",
+						},
+					},
+					Auth: &types.Auth{
+						HeaderField: "X-WebAuth-User",
+						Basic: &types.Basic{
+							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							UsersFile: ".htpasswd",
+						},
+					},
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-app": {
+					Servers: map[string]types.Server{
+						"server-app-taskID": {
+							URL:    "http://localhost:80",
+							Weight: label.DefaultWeight,
+						},
+					},
+					CircuitBreaker: nil,
+				},
+			},
+		},
+		{
+			desc: "with basic auth with backward compatibility",
+			applications: withApplications(
+				application(
+					appID("/app"),
+					appPorts(80),
+					withLabel(label.TraefikFrontendAuthHeaderField, "X-WebAuth-User"),
+					withLabel(label.TraefikFrontendAuthBasic, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+					withTasks(localhostTask(taskPorts(80))),
+				)),
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-app": {
+					Backend: "backend-app",
+					Routes: map[string]types.Route{
+						"route-host-app": {
+							Rule: "Host:app.marathon.localhost",
+						},
+					},
+					Auth: &types.Auth{
+						HeaderField: "X-WebAuth-User",
+						Basic: &types.Basic{
+							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+						},
+					},
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-app": {
+					Servers: map[string]types.Server{
+						"server-app-taskID": {
+							URL:    "http://localhost:80",
+							Weight: label.DefaultWeight,
+						},
+					},
+					CircuitBreaker: nil,
+				},
+			},
+		},
+		{
+			desc: "with digest auth",
+			applications: withApplications(
+				application(
+					appID("/app"),
+					appPorts(80),
+					withLabel(label.TraefikFrontendAuthHeaderField, "X-WebAuth-User"),
+					withLabel(label.TraefikFrontendAuthDigestUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+					withLabel(label.TraefikFrontendAuthDigestUsersFile, ".htpasswd"),
+					withTasks(localhostTask(taskPorts(80))),
+				)),
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-app": {
+					Backend: "backend-app",
+					Routes: map[string]types.Route{
+						"route-host-app": {
+							Rule: "Host:app.marathon.localhost",
+						},
+					},
+					Auth: &types.Auth{
+						HeaderField: "X-WebAuth-User",
+						Digest: &types.Digest{
+							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							UsersFile: ".htpasswd",
+						},
+					},
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-app": {
+					Servers: map[string]types.Server{
+						"server-app-taskID": {
+							URL:    "http://localhost:80",
+							Weight: label.DefaultWeight,
+						},
+					},
+					CircuitBreaker: nil,
+				},
+			},
+		},
+		{
+			desc: "with forward auth",
+			applications: withApplications(
+				application(
+					appID("/app"),
+					appPorts(80),
+					withLabel(label.TraefikFrontendAuthHeaderField, "X-WebAuth-User"),
+					withLabel(label.TraefikFrontendAuthForwardAddress, "auth.server"),
+					withLabel(label.TraefikFrontendAuthForwardTrustForwardHeader, "true"),
+					withLabel(label.TraefikFrontendAuthForwardTLSCa, "ca.crt"),
+					withLabel(label.TraefikFrontendAuthForwardTLSCaOptional, "true"),
+					withLabel(label.TraefikFrontendAuthForwardTLSCert, "server.crt"),
+					withLabel(label.TraefikFrontendAuthForwardTLSKey, "server.key"),
+					withLabel(label.TraefikFrontendAuthForwardTLSInsecureSkipVerify, "true"),
+
+					withTasks(localhostTask(taskPorts(80))),
+				)),
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-app": {
+					Backend: "backend-app",
+					Routes: map[string]types.Route{
+						"route-host-app": {
+							Rule: "Host:app.marathon.localhost",
+						},
+					},
+					Auth: &types.Auth{
+						HeaderField: "X-WebAuth-User",
+						Forward: &types.Forward{
+							Address:            "auth.server",
+							TrustForwardHeader: true,
+							TLS: &types.ClientTLS{
+								CA:                 "ca.crt",
+								CAOptional:         true,
+								InsecureSkipVerify: true,
+								Cert:               "server.crt",
+								Key:                "server.key",
+							},
+						},
+					},
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-app": {
+					Servers: map[string]types.Server{
+						"server-app-taskID": {
+							URL:    "http://localhost:80",
+							Weight: label.DefaultWeight,
+						},
+					},
+					CircuitBreaker: nil,
 				},
 			},
 		},
@@ -192,7 +370,20 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel(label.TraefikBackendBufferingMemRequestBodyBytes, "2097152"),
 					withLabel(label.TraefikBackendBufferingRetryExpression, "IsNetworkError() && Attempts() <= 2"),
 
-					withLabel(label.TraefikFrontendAuthBasic, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+					withLabel(label.TraefikFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+					withLabel(label.TraefikFrontendAuthBasicUsersFile, ".htpasswd"),
+					withLabel(label.TraefikFrontendAuthBasicUsersFile, ".htpasswd"),
+					withLabel(label.TraefikFrontendAuthDigestUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+					withLabel(label.TraefikFrontendAuthDigestUsersFile, ".htpasswd"),
+					withLabel(label.TraefikFrontendAuthForwardAddress, "auth.server"),
+					withLabel(label.TraefikFrontendAuthForwardTrustForwardHeader, "true"),
+					withLabel(label.TraefikFrontendAuthForwardTLSCa, "ca.crt"),
+					withLabel(label.TraefikFrontendAuthForwardTLSCaOptional, "true"),
+					withLabel(label.TraefikFrontendAuthForwardTLSCert, "server.crt"),
+					withLabel(label.TraefikFrontendAuthForwardTLSKey, "server.key"),
+					withLabel(label.TraefikFrontendAuthForwardTLSInsecureSkipVerify, "true"),
+					withLabel(label.TraefikFrontendAuthHeaderField, "X-WebAuth-User"),
+
 					withLabel(label.TraefikFrontendEntryPoints, "http,https"),
 					withLabel(label.TraefikFrontendPassHostHeader, "true"),
 					withLabel(label.TraefikFrontendPassTLSCert, "true"),
@@ -258,9 +449,13 @@ func TestBuildConfiguration(t *testing.T) {
 					PassHostHeader: true,
 					PassTLSCert:    true,
 					Priority:       666,
-					BasicAuth: []string{
-						"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-						"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+					Auth: &types.Auth{
+						HeaderField: "X-WebAuth-User",
+						Basic: &types.Basic{
+							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							UsersFile: ".htpasswd",
+						},
 					},
 					WhiteList: &types.WhiteList{
 						SourceRange:      []string{"10.10.10.10"},
@@ -424,7 +619,6 @@ func TestBuildConfiguration(t *testing.T) {
 						},
 					},
 					PassHostHeader: true,
-					BasicAuth:      []string{},
 				},
 			},
 			expectedBackends: map[string]*types.Backend{
@@ -495,7 +689,6 @@ func TestBuildConfigurationSegments(t *testing.T) {
 						},
 					},
 					PassHostHeader: true,
-					BasicAuth:      []string{},
 					EntryPoints:    []string{},
 				},
 				"frontend-app-service-admin": {
@@ -506,7 +699,6 @@ func TestBuildConfigurationSegments(t *testing.T) {
 						},
 					},
 					PassHostHeader: true,
-					BasicAuth:      []string{},
 					EntryPoints:    []string{},
 				},
 			},
@@ -633,9 +825,13 @@ func TestBuildConfigurationSegments(t *testing.T) {
 					PassHostHeader: true,
 					PassTLSCert:    true,
 					Priority:       666,
-					BasicAuth: []string{
-						"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-						"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+					Auth: &types.Auth{
+						//HeaderField: "X-WebAuth-User",
+						Basic: &types.Basic{
+							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							//UsersFile: ".htpasswd",
+						},
 					},
 					WhiteList: &types.WhiteList{
 						SourceRange:      []string{"10.10.10.10"},
