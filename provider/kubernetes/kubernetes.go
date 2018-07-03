@@ -280,7 +280,8 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 				service, exists, err := k8sClient.GetService(i.Namespace, pa.Backend.ServiceName)
 				if err != nil {
-					return nil, fmt.Errorf("error while retrieving service information from k8s API %s/%s: %v", i.Namespace, pa.Backend.ServiceName, err)
+					log.Errorf("Error while retrieving service information from k8s API %s/%s: %v", i.Namespace, pa.Backend.ServiceName, err)
+					return nil, err
 				}
 
 				if !exists {
@@ -409,15 +410,15 @@ func (p *Provider) loadConfig(templateObjects types.Configuration) *types.Config
 	return configuration
 }
 
-func (p *Provider) addGlobalBackend(k8sClient Client, i *extensionsv1beta1.Ingress, templateObjects *types.Configuration) error {
+func (p *Provider) addGlobalBackend(cl Client, i *extensionsv1beta1.Ingress, templateObjects *types.Configuration) error {
 	// Ensure that we are not duplicating the frontend
 	if _, exists := templateObjects.Frontends[defaultFrontendName]; exists {
-		return errors.New("duplicate frontend: global-default-backend")
+		return errors.New("duplicate frontend: " + defaultFrontendName)
 	}
 
 	// Ensure we are not duplicating the backend
 	if _, exists := templateObjects.Backends[defaultBackendName]; exists {
-		return errors.New("duplicate backend: global-default-backend")
+		return errors.New("duplicate backend: " + defaultBackendName)
 	}
 
 	templateObjects.Backends[defaultBackendName] = &types.Backend{
@@ -427,7 +428,7 @@ func (p *Provider) addGlobalBackend(k8sClient Client, i *extensionsv1beta1.Ingre
 		},
 	}
 
-	service, exists, err := k8sClient.GetService(i.Namespace, i.Spec.Backend.ServiceName)
+	service, exists, err := cl.GetService(i.Namespace, i.Spec.Backend.ServiceName)
 	if err != nil {
 		return fmt.Errorf("error while retrieving service information from k8s API %s/%s: %v", i.Namespace, i.Spec.Backend.ServiceName, err)
 	}
@@ -440,7 +441,7 @@ func (p *Provider) addGlobalBackend(k8sClient Client, i *extensionsv1beta1.Ingre
 	templateObjects.Backends[defaultBackendName].MaxConn = getMaxConn(service)
 	templateObjects.Backends[defaultBackendName].Buffering = getBuffering(service)
 
-	endpoints, exists, err := k8sClient.GetEndpoints(service.Namespace, service.Name)
+	endpoints, exists, err := cl.GetEndpoints(service.Namespace, service.Name)
 	if err != nil {
 		return fmt.Errorf("error retrieving endpoint information from k8s API %s/%s: %v", service.Namespace, service.Name, err)
 	}

@@ -344,4 +344,4 @@ This will allow users to create a "default backend" that will match all unmatche
 
 !!! note
     Due to Træfik's use of priorities, you may have to set this ingress priority lower than other ingresses in your environment, to avoid this global ingress from satisfying requests that _could_ match other ingresses.
-    To do this, use the `traefik.ingress.kubernetes.io/priority` annotation (as seen in the General Annotations table above) on your ingresses accordingly.
+    To do this, use the `traefik.ingress.kubernetes.io/priority` annotation (as seen in [General Annotations](/configuration/backends/kubernetes/#general-annotations)) on your ingresses accordingly.
