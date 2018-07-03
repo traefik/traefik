@@ -56,7 +56,6 @@ func TestBuildConfiguration(t *testing.T) {
 							},
 						},
 						PassHostHeader: true,
-						BasicAuth:      []string{},
 					},
 				},
 			},
@@ -103,7 +102,216 @@ func TestBuildConfiguration(t *testing.T) {
 							},
 						},
 						PassHostHeader: true,
-						BasicAuth:      []string{},
+					},
+				},
+			},
+		},
+		{
+			desc: "config parsed successfully with basic auth labels",
+			instances: []ecsInstance{
+				{
+					Name: "instance",
+					ID:   "1",
+					containerDefinition: &ecs.ContainerDefinition{
+						DockerLabels: map[string]*string{
+							label.TraefikFrontendAuthBasicUsers:     aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+							label.TraefikFrontendAuthBasicUsersFile: aws.String(".htpasswd"),
+							label.TraefikFrontendAuthHeaderField:    aws.String("X-WebAuth-User"),
+						}},
+					machine: &machine{
+						state:     ec2.InstanceStateNameRunning,
+						privateIP: "10.0.0.1",
+						port:      1337,
+					},
+				},
+			},
+			expected: &types.Configuration{
+				Backends: map[string]*types.Backend{
+					"backend-instance": {
+						Servers: map[string]types.Server{
+							"server-instance-1": {
+								URL:    "http://10.0.0.1:1337",
+								Weight: label.DefaultWeight,
+							}},
+					},
+				},
+				Frontends: map[string]*types.Frontend{
+					"frontend-instance": {
+						EntryPoints: []string{},
+						Backend:     "backend-instance",
+						Routes: map[string]types.Route{
+							"route-frontend-instance": {
+								Rule: "Host:instance.",
+							},
+						},
+						Auth: &types.Auth{
+							HeaderField: "X-WebAuth-User",
+							Basic: &types.Basic{
+								Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+								UsersFile: ".htpasswd",
+							},
+						},
+						PassHostHeader: true,
+					},
+				},
+			},
+		},
+		{
+			desc: "config parsed successfully with basic auth (backward compatibility) labels",
+			instances: []ecsInstance{
+				{
+					Name: "instance",
+					ID:   "1",
+					containerDefinition: &ecs.ContainerDefinition{
+						DockerLabels: map[string]*string{
+							label.TraefikFrontendAuthBasic: aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+						}},
+					machine: &machine{
+						state:     ec2.InstanceStateNameRunning,
+						privateIP: "10.0.0.1",
+						port:      1337,
+					},
+				},
+			},
+			expected: &types.Configuration{
+				Backends: map[string]*types.Backend{
+					"backend-instance": {
+						Servers: map[string]types.Server{
+							"server-instance-1": {
+								URL:    "http://10.0.0.1:1337",
+								Weight: label.DefaultWeight,
+							}},
+					},
+				},
+				Frontends: map[string]*types.Frontend{
+					"frontend-instance": {
+						EntryPoints: []string{},
+						Backend:     "backend-instance",
+						Routes: map[string]types.Route{
+							"route-frontend-instance": {
+								Rule: "Host:instance.",
+							},
+						},
+						Auth: &types.Auth{
+							Basic: &types.Basic{
+								Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							},
+						},
+						PassHostHeader: true,
+					},
+				},
+			},
+		},
+		{
+			desc: "config parsed successfully with digest auth labels",
+			instances: []ecsInstance{
+				{
+					Name: "instance",
+					ID:   "1",
+					containerDefinition: &ecs.ContainerDefinition{
+						DockerLabels: map[string]*string{
+							label.TraefikFrontendAuthDigestUsers:     aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+							label.TraefikFrontendAuthDigestUsersFile: aws.String(".htpasswd"),
+							label.TraefikFrontendAuthHeaderField:     aws.String("X-WebAuth-User"),
+						}},
+					machine: &machine{
+						state:     ec2.InstanceStateNameRunning,
+						privateIP: "10.0.0.1",
+						port:      1337,
+					},
+				},
+			},
+			expected: &types.Configuration{
+				Backends: map[string]*types.Backend{
+					"backend-instance": {
+						Servers: map[string]types.Server{
+							"server-instance-1": {
+								URL:    "http://10.0.0.1:1337",
+								Weight: label.DefaultWeight,
+							}},
+					},
+				},
+				Frontends: map[string]*types.Frontend{
+					"frontend-instance": {
+						EntryPoints: []string{},
+						Backend:     "backend-instance",
+						Routes: map[string]types.Route{
+							"route-frontend-instance": {
+								Rule: "Host:instance.",
+							},
+						},
+						Auth: &types.Auth{
+							HeaderField: "X-WebAuth-User",
+							Digest: &types.Digest{
+								Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+								UsersFile: ".htpasswd",
+							},
+						},
+						PassHostHeader: true,
+					},
+				},
+			},
+		},
+		{
+			desc: "config parsed successfully with forward auth labels",
+			instances: []ecsInstance{
+				{
+					Name: "instance",
+					ID:   "1",
+					containerDefinition: &ecs.ContainerDefinition{
+						DockerLabels: map[string]*string{
+							label.TraefikFrontendAuthForwardAddress:               aws.String("auth.server"),
+							label.TraefikFrontendAuthForwardTrustForwardHeader:    aws.String("true"),
+							label.TraefikFrontendAuthForwardTLSCa:                 aws.String("ca.crt"),
+							label.TraefikFrontendAuthForwardTLSCaOptional:         aws.String("true"),
+							label.TraefikFrontendAuthForwardTLSCert:               aws.String("server.crt"),
+							label.TraefikFrontendAuthForwardTLSKey:                aws.String("server.key"),
+							label.TraefikFrontendAuthForwardTLSInsecureSkipVerify: aws.String("true"), label.TraefikFrontendAuthHeaderField: aws.String("X-WebAuth-User"),
+						}},
+					machine: &machine{
+						state:     ec2.InstanceStateNameRunning,
+						privateIP: "10.0.0.1",
+						port:      1337,
+					},
+				},
+			},
+			expected: &types.Configuration{
+				Backends: map[string]*types.Backend{
+					"backend-instance": {
+						Servers: map[string]types.Server{
+							"server-instance-1": {
+								URL:    "http://10.0.0.1:1337",
+								Weight: label.DefaultWeight,
+							}},
+					},
+				},
+				Frontends: map[string]*types.Frontend{
+					"frontend-instance": {
+						EntryPoints: []string{},
+						Backend:     "backend-instance",
+						Routes: map[string]types.Route{
+							"route-frontend-instance": {
+								Rule: "Host:instance.",
+							},
+						},
+						Auth: &types.Auth{
+							HeaderField: "X-WebAuth-User",
+							Forward: &types.Forward{
+								Address:            "auth.server",
+								TrustForwardHeader: true,
+								TLS: &types.ClientTLS{
+									CA:                 "ca.crt",
+									CAOptional:         true,
+									InsecureSkipVerify: true,
+									Cert:               "server.crt",
+									Key:                "server.key",
+								},
+							},
+						},
+						PassHostHeader: true,
 					},
 				},
 			},
@@ -141,7 +349,20 @@ func TestBuildConfiguration(t *testing.T) {
 							label.TraefikBackendBufferingMemRequestBodyBytes:     aws.String("2097152"),
 							label.TraefikBackendBufferingRetryExpression:         aws.String("IsNetworkError() && Attempts() <= 2"),
 
-							label.TraefikFrontendAuthBasic:                 aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+							label.TraefikFrontendAuthBasic:                        aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+							label.TraefikFrontendAuthBasicUsers:                   aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+							label.TraefikFrontendAuthBasicUsersFile:               aws.String(".htpasswd"),
+							label.TraefikFrontendAuthDigestUsers:                  aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+							label.TraefikFrontendAuthDigestUsersFile:              aws.String(".htpasswd"),
+							label.TraefikFrontendAuthForwardAddress:               aws.String("auth.server"),
+							label.TraefikFrontendAuthForwardTrustForwardHeader:    aws.String("true"),
+							label.TraefikFrontendAuthForwardTLSCa:                 aws.String("ca.crt"),
+							label.TraefikFrontendAuthForwardTLSCaOptional:         aws.String("true"),
+							label.TraefikFrontendAuthForwardTLSCert:               aws.String("server.crt"),
+							label.TraefikFrontendAuthForwardTLSKey:                aws.String("server.key"),
+							label.TraefikFrontendAuthForwardTLSInsecureSkipVerify: aws.String("true"),
+							label.TraefikFrontendAuthHeaderField:                  aws.String("X-WebAuth-User"),
+
 							label.TraefikFrontendEntryPoints:               aws.String("http,https"),
 							label.TraefikFrontendPassHostHeader:            aws.String("true"),
 							label.TraefikFrontendPassTLSCert:               aws.String("true"),
@@ -257,9 +478,13 @@ func TestBuildConfiguration(t *testing.T) {
 						PassHostHeader: true,
 						PassTLSCert:    true,
 						Priority:       666,
-						BasicAuth: []string{
-							"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-							"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						Auth: &types.Auth{
+							HeaderField: "X-WebAuth-User",
+							Basic: &types.Basic{
+								Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+								UsersFile: ".htpasswd",
+							},
 						},
 						WhiteList: &types.WhiteList{
 							SourceRange:      []string{"10.10.10.10"},

@@ -46,7 +46,8 @@ func (p *Provider) buildConfigurationV2(instances []ecsInstance) (*types.Configu
 		"getPassHostHeader": label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getPassTLSCert":    label.GetFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getPriority":       label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
-		"getBasicAuth":      label.GetFuncSliceString(label.TraefikFrontendAuthBasic),
+		"getBasicAuth":      label.GetFuncSliceString(label.TraefikFrontendAuthBasic), // Deprecated
+		"getAuth":           label.GetAuth,
 		"getEntryPoints":    label.GetFuncSliceString(label.TraefikFrontendEntryPoints),
 		"getRedirect":       label.GetRedirect,
 		"getErrorPages":     label.GetErrorPages,
