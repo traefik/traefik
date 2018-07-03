@@ -22,7 +22,6 @@ import (
 	"github.com/containous/traefik/log"
 	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
 	"github.com/eapache/channels"
@@ -57,7 +56,6 @@ type ACME struct {
 	ACMELogging           bool                        `description:"Enable debug logging of ACME actions."`
 	OverrideCertificates  bool                        `description:"Enable to override certificates in key-value store when using storeconfig"`
 	client                *acme.Client
-	defaultCertificate    *tls.Certificate
 	store                 cluster.Store
 	challengeHTTPProvider *challengeHTTPProvider
 	challengeTLSProvider  *challengeTLSProvider
@@ -75,14 +73,6 @@ func (a *ACME) init() error {
 	} else {
 		legolog.Logger = fmtlog.New(ioutil.Discard, "", 0)
 	}
-
-	// no certificates in TLS config, so we add a default one
-	cert, err := generate.DefaultCertificate()
-	if err != nil {
-		return err
-	}
-
-	a.defaultCertificate = cert
 
 	a.jobs = channels.NewInfiniteChannel()
 	return nil
@@ -131,7 +121,6 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 	a.dynamicCerts = certs
 	a.challengeTLSProvider = &challengeTLSProvider{store: a.store}
 
-	tlsConfig.Certificates = append(tlsConfig.Certificates, *a.defaultCertificate)
 	tlsConfig.GetCertificate = a.getCertificate
 	a.TLSConfig = tlsConfig
 

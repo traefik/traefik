@@ -21,6 +21,7 @@ import (
 	"github.com/containous/traefik/rules"
 	"github.com/containous/traefik/safe"
 	traefiktls "github.com/containous/traefik/tls"
+	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
 	"github.com/eapache/channels"
 	"github.com/sirupsen/logrus"
@@ -579,6 +580,11 @@ func (s *Server) buildServerEntryPoints() map[string]*serverEntryPoint {
 				if err != nil {
 				}
 				serverEntryPoints[entryPointName].certs.DefaultCertificate = &cert
+			} else {
+				cert, err := generate.DefaultCertificate()
+				if err != nil {
+				}
+				serverEntryPoints[entryPointName].certs.DefaultCertificate = cert
 			}
 			if len(entryPoint.Configuration.TLS.Certificates) > 0 {
 				config, _ := entryPoint.Configuration.TLS.Certificates.CreateTLSConfig(entryPointName)

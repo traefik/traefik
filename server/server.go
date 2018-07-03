@@ -333,15 +333,6 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 		return nil, err
 	}
 
-	if tlsOption.DefaultCertificate != nil {
-		cert, err := tls.LoadX509KeyPair(tlsOption.DefaultCertificate.CertFile.String(), tlsOption.DefaultCertificate.KeyFile.String())
-		if err != nil {
-			return nil, fmt.Errorf("could not load default certificate: %v", err)
-		}
-
-		config.Certificates = append([]tls.Certificate{cert}, config.Certificates...)
-	}
-
 	s.serverEntryPoints[entryPointName].certs.DynamicCerts.Set(make(map[string]*tls.Certificate))
 
 	// ensure http2 enabled
@@ -393,17 +384,18 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 		config.GetCertificate = s.serverEntryPoints[entryPointName].getCertificate
 	}
 
-	if len(config.Certificates) == 0 {
-		return nil, fmt.Errorf("no certificates found for TLS entrypoint %s", entryPointName)
+	if len(config.Certificates) != 0 {
+		// BuildNameToCertificate parses the CommonName and SubjectAlternateName fields
+		// in each certificate and populates the config.NameToCertificate map.
+		config.BuildNameToCertificate()
+
+		if s.entryPoints[entryPointName].CertificateStore != nil {
+			s.entryPoints[entryPointName].CertificateStore.StaticCerts.Set(config.NameToCertificate)
+		}
 	}
 
-	// BuildNameToCertificate parses the CommonName and SubjectAlternateName fields
-	// in each certificate and populates the config.NameToCertificate map.
-	config.BuildNameToCertificate()
-
-	if s.entryPoints[entryPointName].CertificateStore != nil {
-		s.entryPoints[entryPointName].CertificateStore.StaticCerts.Set(config.NameToCertificate)
-	}
+	// Remove certs from the TLS config object
+	config.Certificates = make([]tls.Certificate, 0)
 
 	// Set the minimum TLS version if set in the config TOML
 	if minConst, exists := traefiktls.MinVersion[s.entryPoints[entryPointName].Configuration.TLS.MinVersion]; exists {
