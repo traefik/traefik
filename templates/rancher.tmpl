@@ -116,7 +116,7 @@
       {{end}}
     {{end}}
 
-  {{ $whitelist := getWhiteList $service.SegmentLabels }}
+    {{ $whitelist := getWhiteList $service.SegmentLabels }}
     {{if $whitelist }}
     [frontends."frontend-{{ $frontendName }}".whiteList]
       sourceRange = [{{range $whitelist.SourceRange }}

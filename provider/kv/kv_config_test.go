@@ -24,79 +24,79 @@ func TestProviderBuildConfiguration(t *testing.T) {
 		kvPairs  []*store.KVPair
 		expected *types.Configuration
 	}{
-		//{
-		//	desc: "name with dot",
-		//	kvPairs: filler("traefik",
-		//		frontend("frontend.with.dot",
-		//			withPair("backend", "backend.with.dot.too"),
-		//			withPair("routes/route.with.dot/rule", "Host:test.localhost")),
-		//		backend("backend.with.dot.too",
-		//			withPair("servers/server.with.dot/url", "http://172.17.0.2:80"),
-		//			withPair("servers/server.with.dot/weight", strconv.Itoa(label.DefaultWeight)),
-		//			withPair("servers/server.with.dot.without.url/weight", strconv.Itoa(label.DefaultWeight))),
-		//	),
-		//	expected: &types.Configuration{
-		//		Backends: map[string]*types.Backend{
-		//			"backend.with.dot.too": {
-		//				LoadBalancer: &types.LoadBalancer{Method: label.DefaultBackendLoadBalancerMethod},
-		//				Servers: map[string]types.Server{
-		//					"server.with.dot": {
-		//						URL:    "http://172.17.0.2:80",
-		//						Weight: label.DefaultWeight,
-		//					},
-		//				},
-		//			},
-		//		},
-		//		Frontends: map[string]*types.Frontend{
-		//			"frontend.with.dot": {
-		//				Backend:        "backend.with.dot.too",
-		//				PassHostHeader: true,
-		//				EntryPoints:    []string{},
-		//				Routes: map[string]types.Route{
-		//					"route.with.dot": {
-		//						Rule: "Host:test.localhost",
-		//					},
-		//				},
-		//			},
-		//		},
-		//	},
-		//},
-		//{
-		//	desc: "basic auth",
-		//	kvPairs: filler("traefik",
-		//		frontend("frontend",
-		//			withPair(pathFrontendBackend, "backend"),
-		//			withPair(pathFrontendAuthHeaderField, "X-WebAuth-User"),
-		//			withList(pathFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
-		//			withPair(pathFrontendAuthBasicUsersFile, ".htpasswd"),
-		//		),
-		//		backend("backend"),
-		//	),
-		//	expected: &types.Configuration{
-		//		Backends: map[string]*types.Backend{
-		//			"backend": {
-		//				LoadBalancer: &types.LoadBalancer{
-		//					Method: "wrr",
-		//				},
-		//			},
-		//		},
-		//		Frontends: map[string]*types.Frontend{
-		//			"frontend": {
-		//				Backend:        "backend",
-		//				PassHostHeader: true,
-		//				EntryPoints:    []string{},
-		//				Auth: &types.Auth{
-		//					HeaderField: "X-WebAuth-User",
-		//					Basic: &types.Basic{
-		//						Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-		//							"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
-		//						UsersFile: ".htpasswd",
-		//					},
-		//				},
-		//			},
-		//		},
-		//	},
-		//},
+		{
+			desc: "name with dot",
+			kvPairs: filler("traefik",
+				frontend("frontend.with.dot",
+					withPair("backend", "backend.with.dot.too"),
+					withPair("routes/route.with.dot/rule", "Host:test.localhost")),
+				backend("backend.with.dot.too",
+					withPair("servers/server.with.dot/url", "http://172.17.0.2:80"),
+					withPair("servers/server.with.dot/weight", strconv.Itoa(label.DefaultWeight)),
+					withPair("servers/server.with.dot.without.url/weight", strconv.Itoa(label.DefaultWeight))),
+			),
+			expected: &types.Configuration{
+				Backends: map[string]*types.Backend{
+					"backend.with.dot.too": {
+						LoadBalancer: &types.LoadBalancer{Method: label.DefaultBackendLoadBalancerMethod},
+						Servers: map[string]types.Server{
+							"server.with.dot": {
+								URL:    "http://172.17.0.2:80",
+								Weight: label.DefaultWeight,
+							},
+						},
+					},
+				},
+				Frontends: map[string]*types.Frontend{
+					"frontend.with.dot": {
+						Backend:        "backend.with.dot.too",
+						PassHostHeader: true,
+						EntryPoints:    []string{},
+						Routes: map[string]types.Route{
+							"route.with.dot": {
+								Rule: "Host:test.localhost",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "basic auth",
+			kvPairs: filler("traefik",
+				frontend("frontend",
+					withPair(pathFrontendBackend, "backend"),
+					withPair(pathFrontendAuthHeaderField, "X-WebAuth-User"),
+					withList(pathFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+					withPair(pathFrontendAuthBasicUsersFile, ".htpasswd"),
+				),
+				backend("backend"),
+			),
+			expected: &types.Configuration{
+				Backends: map[string]*types.Backend{
+					"backend": {
+						LoadBalancer: &types.LoadBalancer{
+							Method: "wrr",
+						},
+					},
+				},
+				Frontends: map[string]*types.Frontend{
+					"frontend": {
+						Backend:        "backend",
+						PassHostHeader: true,
+						EntryPoints:    []string{},
+						Auth: &types.Auth{
+							HeaderField: "X-WebAuth-User",
+							Basic: &types.Basic{
+								Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+								UsersFile: ".htpasswd",
+							},
+						},
+					},
+				},
+			},
+		},
 		{
 			desc: "basic auth (backward compatibility)",
 			kvPairs: filler("traefik",

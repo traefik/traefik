@@ -62,22 +62,23 @@ func GetRedirect(labels map[string]string) *types.Redirect {
 
 // GetAuth Create auth from labels
 func GetAuth(labels map[string]string) *types.Auth {
-	if HasPrefix(labels, TraefikFrontendAuth) {
-		auth := &types.Auth{
-			HeaderField: GetStringValue(labels, TraefikFrontendAuthHeaderField, ""),
-		}
-
-		if HasPrefix(labels, TraefikFrontendAuthBasic) {
-			auth.Basic = getAuthBasic(labels)
-		} else if HasPrefix(labels, TraefikFrontendAuthDigest) {
-			auth.Digest = getAuthDigest(labels)
-		} else if HasPrefix(labels, TraefikFrontendAuthForward) {
-			auth.Forward = getAuthForward(labels)
-		}
-
-		return auth
+	if !HasPrefix(labels, TraefikFrontendAuth) {
+		return nil
 	}
-	return nil
+
+	auth := &types.Auth{
+		HeaderField: GetStringValue(labels, TraefikFrontendAuthHeaderField, ""),
+	}
+
+	if HasPrefix(labels, TraefikFrontendAuthBasic) {
+		auth.Basic = getAuthBasic(labels)
+	} else if HasPrefix(labels, TraefikFrontendAuthDigest) {
+		auth.Digest = getAuthDigest(labels)
+	} else if HasPrefix(labels, TraefikFrontendAuthForward) {
+		auth.Forward = getAuthForward(labels)
+	}
+
+	return auth
 }
 
 // getAuthBasic Create Basic Auth from labels

@@ -115,8 +115,7 @@
       {{end}}
     {{end}}
 
-
-  {{ $whitelist := getWhiteList $instance.TraefikLabels }}
+    {{ $whitelist := getWhiteList $instance.TraefikLabels }}
     {{if $whitelist }}
     [frontends."frontend-{{ $serviceName }}".whiteList]
       sourceRange = [{{range $whitelist.SourceRange }}

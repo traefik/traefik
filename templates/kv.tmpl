@@ -115,9 +115,7 @@
       {{end}}
     {{end}}
 
-
-
-  {{ $whitelist := getWhiteList $frontend }}
+    {{ $whitelist := getWhiteList $frontend }}
     {{if $whitelist }}
     [frontends."{{ $frontendName }}".whiteList]
       sourceRange = [{{range $whitelist.SourceRange }}

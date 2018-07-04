@@ -376,7 +376,6 @@ func (p *Provider) hasDeprecatedBasicAuth(rootPath string) bool {
 
 // GetAuth Create auth from labels
 func (p *Provider) getAuth(rootPath string) *types.Auth {
-
 	hasDeprecatedBasicAuth := p.hasDeprecatedBasicAuth(rootPath)
 	if len(p.getList(rootPath, pathFrontendAuth)) > 0 || hasDeprecatedBasicAuth {
 		auth := &types.Auth{
@@ -413,7 +412,6 @@ func (p *Provider) getAuthBasic(rootPath string) *types.Basic {
 	return basicAuth
 }
 
-//
 // getAuthDigest Create Digest Auth from labels
 func (p *Provider) getAuthDigest(rootPath string) *types.Digest {
 	return &types.Digest{
@@ -429,7 +427,7 @@ func (p *Provider) getAuthForward(rootPath string) *types.Forward {
 		TrustForwardHeader: p.getBool(false, rootPath, pathFrontendAuthForwardTrustForwardHeader),
 	}
 
-	//TLS configuration
+	// TLS configuration
 	if len(p.getList(rootPath, pathFrontendAuthForwardTLS)) > 0 {
 		forwardAuth.TLS = &types.ClientTLS{
 			CA:                 p.get("", rootPath, pathFrontendAuthForwardTLSCa),

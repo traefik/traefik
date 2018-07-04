@@ -996,8 +996,7 @@ var _templatesEcsTmpl = []byte(`[backends]
       {{end}}
     {{end}}
 
-
-  {{ $whitelist := getWhiteList $instance.TraefikLabels }}
+    {{ $whitelist := getWhiteList $instance.TraefikLabels }}
     {{if $whitelist }}
     [frontends."frontend-{{ $serviceName }}".whiteList]
       sourceRange = [{{range $whitelist.SourceRange }}
@@ -1490,9 +1489,7 @@ var _templatesKvTmpl = []byte(`[backends]
       {{end}}
     {{end}}
 
-
-
-  {{ $whitelist := getWhiteList $frontend }}
+    {{ $whitelist := getWhiteList $frontend }}
     {{if $whitelist }}
     [frontends."{{ $frontendName }}".whiteList]
       sourceRange = [{{range $whitelist.SourceRange }}
@@ -1832,7 +1829,7 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
       {{end}}
     {{end}}
 
-  {{ $whitelist := getWhiteList $app.SegmentLabels }}
+    {{ $whitelist := getWhiteList $app.SegmentLabels }}
     {{if $whitelist }}
     [frontends."{{ $frontendName }}".whiteList]
       sourceRange = [{{range $whitelist.SourceRange }}
@@ -2115,10 +2112,8 @@ var _templatesMesosTmpl = []byte(`[backends]
         usersFile = "{{ $auth.Digest.UsersFile }}"
       {{end}}
     {{end}}
-
-
-
-  {{ $whitelist := getWhiteList $app.TraefikLabels }}
+          
+    {{ $whitelist := getWhiteList $app.TraefikLabels }}
     {{if $whitelist }}
     [frontends."frontend-{{ $frontendName }}".whiteList]
       sourceRange = [{{range $whitelist.SourceRange }}
@@ -2455,7 +2450,7 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
       {{end}}
     {{end}}
 
-  {{ $whitelist := getWhiteList $service.SegmentLabels }}
+    {{ $whitelist := getWhiteList $service.SegmentLabels }}
     {{if $whitelist }}
     [frontends."frontend-{{ $frontendName }}".whiteList]
       sourceRange = [{{range $whitelist.SourceRange }}

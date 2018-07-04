@@ -117,10 +117,8 @@
         usersFile = "{{ $auth.Digest.UsersFile }}"
       {{end}}
     {{end}}
-
-
-
-  {{ $whitelist := getWhiteList $app.TraefikLabels }}
+          
+    {{ $whitelist := getWhiteList $app.TraefikLabels }}
     {{if $whitelist }}
     [frontends."frontend-{{ $frontendName }}".whiteList]
       sourceRange = [{{range $whitelist.SourceRange }}
