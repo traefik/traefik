@@ -1449,11 +1449,50 @@ var _templatesKvTmpl = []byte(`[backends]
       "{{.}}",
       {{end}}]
 
-    basicAuth = [{{range getBasicAuth $frontend }}
-      "{{.}}",
-      {{end}}]
+    {{ $auth := getAuth $frontend }}
+    {{if $auth }}
+    [frontends.{{ $frontendName }}.auth]
+      headerField = "{{ $auth.HeaderField }}"
 
-    {{ $whitelist := getWhiteList $frontend }}
+      {{if $auth.Forward }}
+      [frontends.{{ $frontendName }}.auth.forward]
+        address = "{{ $auth.Forward.Address }}"
+        trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
+
+        {{if $auth.Forward.TLS }}
+        [frontends.{{ $frontendName }}.auth.forward.tls]
+          ca = "{{ $auth.Forward.TLS.CA }}"
+          caOptional = {{ $auth.Forward.TLS.CAOptional }}
+          cert = "{{ $auth.Forward.TLS.Cert }}"
+          key = "{{ $auth.Forward.TLS.Key }}"
+          insecureSkipVerify = {{ $auth.Forward.TLS.InsecureSkipVerify }}
+        {{end}}
+      {{end}}
+
+      {{if $auth.Basic }}
+      [frontends.{{ $frontendName }}.auth.basic]
+        {{if $auth.Basic.Users }}
+        users = [{{range $auth.Basic.Users }}
+          "{{.}}",
+          {{end}}]
+        {{end}}
+        usersFile = "{{ $auth.Basic.UsersFile }}"
+      {{end}}
+
+      {{if $auth.Digest }}
+      [frontends.{{ $frontendName }}.auth.digest]
+        {{if $auth.Digest.Users }}
+        users = [{{range $auth.Digest.Users }}
+          "{{.}}",
+          {{end}}]
+        {{end}}
+        usersFile = "{{ $auth.Digest.UsersFile }}"
+      {{end}}
+    {{end}}
+
+
+
+  {{ $whitelist := getWhiteList $frontend }}
     {{if $whitelist }}
     [frontends."{{ $frontendName }}".whiteList]
       sourceRange = [{{range $whitelist.SourceRange }}

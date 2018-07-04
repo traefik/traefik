@@ -24,38 +24,188 @@ func TestProviderBuildConfiguration(t *testing.T) {
 		kvPairs  []*store.KVPair
 		expected *types.Configuration
 	}{
+		//{
+		//	desc: "name with dot",
+		//	kvPairs: filler("traefik",
+		//		frontend("frontend.with.dot",
+		//			withPair("backend", "backend.with.dot.too"),
+		//			withPair("routes/route.with.dot/rule", "Host:test.localhost")),
+		//		backend("backend.with.dot.too",
+		//			withPair("servers/server.with.dot/url", "http://172.17.0.2:80"),
+		//			withPair("servers/server.with.dot/weight", strconv.Itoa(label.DefaultWeight)),
+		//			withPair("servers/server.with.dot.without.url/weight", strconv.Itoa(label.DefaultWeight))),
+		//	),
+		//	expected: &types.Configuration{
+		//		Backends: map[string]*types.Backend{
+		//			"backend.with.dot.too": {
+		//				LoadBalancer: &types.LoadBalancer{Method: label.DefaultBackendLoadBalancerMethod},
+		//				Servers: map[string]types.Server{
+		//					"server.with.dot": {
+		//						URL:    "http://172.17.0.2:80",
+		//						Weight: label.DefaultWeight,
+		//					},
+		//				},
+		//			},
+		//		},
+		//		Frontends: map[string]*types.Frontend{
+		//			"frontend.with.dot": {
+		//				Backend:        "backend.with.dot.too",
+		//				PassHostHeader: true,
+		//				EntryPoints:    []string{},
+		//				Routes: map[string]types.Route{
+		//					"route.with.dot": {
+		//						Rule: "Host:test.localhost",
+		//					},
+		//				},
+		//			},
+		//		},
+		//	},
+		//},
+		//{
+		//	desc: "basic auth",
+		//	kvPairs: filler("traefik",
+		//		frontend("frontend",
+		//			withPair(pathFrontendBackend, "backend"),
+		//			withPair(pathFrontendAuthHeaderField, "X-WebAuth-User"),
+		//			withList(pathFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+		//			withPair(pathFrontendAuthBasicUsersFile, ".htpasswd"),
+		//		),
+		//		backend("backend"),
+		//	),
+		//	expected: &types.Configuration{
+		//		Backends: map[string]*types.Backend{
+		//			"backend": {
+		//				LoadBalancer: &types.LoadBalancer{
+		//					Method: "wrr",
+		//				},
+		//			},
+		//		},
+		//		Frontends: map[string]*types.Frontend{
+		//			"frontend": {
+		//				Backend:        "backend",
+		//				PassHostHeader: true,
+		//				EntryPoints:    []string{},
+		//				Auth: &types.Auth{
+		//					HeaderField: "X-WebAuth-User",
+		//					Basic: &types.Basic{
+		//						Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+		//							"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+		//						UsersFile: ".htpasswd",
+		//					},
+		//				},
+		//			},
+		//		},
+		//	},
+		//},
 		{
-			desc: "name with dot",
+			desc: "basic auth (backward compatibility)",
 			kvPairs: filler("traefik",
-				frontend("frontend.with.dot",
-					withPair("backend", "backend.with.dot.too"),
-					withPair("routes/route.with.dot/rule", "Host:test.localhost")),
-				backend("backend.with.dot.too",
-					withPair("servers/server.with.dot/url", "http://172.17.0.2:80"),
-					withPair("servers/server.with.dot/weight", strconv.Itoa(label.DefaultWeight)),
-					withPair("servers/server.with.dot.without.url/weight", strconv.Itoa(label.DefaultWeight))),
+				frontend("frontend",
+					withPair(pathFrontendBackend, "backend"),
+					withList(pathFrontendBasicAuth, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+				),
+				backend("backend"),
 			),
 			expected: &types.Configuration{
 				Backends: map[string]*types.Backend{
-					"backend.with.dot.too": {
-						LoadBalancer: &types.LoadBalancer{Method: label.DefaultBackendLoadBalancerMethod},
-						Servers: map[string]types.Server{
-							"server.with.dot": {
-								URL:    "http://172.17.0.2:80",
-								Weight: label.DefaultWeight,
-							},
+					"backend": {
+						LoadBalancer: &types.LoadBalancer{
+							Method: "wrr",
 						},
 					},
 				},
 				Frontends: map[string]*types.Frontend{
-					"frontend.with.dot": {
-						Backend:        "backend.with.dot.too",
+					"frontend": {
+						Backend:        "backend",
 						PassHostHeader: true,
 						EntryPoints:    []string{},
-						BasicAuth:      []string{},
-						Routes: map[string]types.Route{
-							"route.with.dot": {
-								Rule: "Host:test.localhost",
+						Auth: &types.Auth{
+							Basic: &types.Basic{
+								Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "digest auth",
+			kvPairs: filler("traefik",
+				frontend("frontend",
+					withPair(pathFrontendBackend, "backend"),
+					withPair(pathFrontendAuthHeaderField, "X-WebAuth-User"),
+					withList(pathFrontendAuthDigestUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+					withPair(pathFrontendAuthDigestUsersFile, ".htpasswd"),
+				),
+				backend("backend"),
+			),
+			expected: &types.Configuration{
+				Backends: map[string]*types.Backend{
+					"backend": {
+						LoadBalancer: &types.LoadBalancer{
+							Method: "wrr",
+						},
+					},
+				},
+				Frontends: map[string]*types.Frontend{
+					"frontend": {
+						Backend:        "backend",
+						PassHostHeader: true,
+						EntryPoints:    []string{},
+						Auth: &types.Auth{
+							HeaderField: "X-WebAuth-User",
+							Digest: &types.Digest{
+								Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+								UsersFile: ".htpasswd",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "forward auth",
+			kvPairs: filler("traefik",
+				frontend("frontend",
+					withPair(pathFrontendBackend, "backend"),
+					withPair(pathFrontendAuthHeaderField, "X-WebAuth-User"),
+					withPair(pathFrontendAuthForwardAddress, "auth.server"),
+					withPair(pathFrontendAuthForwardTrustForwardHeader, "true"),
+					withPair(pathFrontendAuthForwardTLSCa, "ca.crt"),
+					withPair(pathFrontendAuthForwardTLSCaOptional, "true"),
+					withPair(pathFrontendAuthForwardTLSCert, "server.crt"),
+					withPair(pathFrontendAuthForwardTLSKey, "server.key"),
+					withPair(pathFrontendAuthForwardTLSInsecureSkipVerify, "true"),
+				),
+				backend("backend"),
+			),
+			expected: &types.Configuration{
+				Backends: map[string]*types.Backend{
+					"backend": {
+						LoadBalancer: &types.LoadBalancer{
+							Method: "wrr",
+						},
+					},
+				},
+				Frontends: map[string]*types.Frontend{
+					"frontend": {
+						Backend:        "backend",
+						PassHostHeader: true,
+						EntryPoints:    []string{},
+						Auth: &types.Auth{
+							HeaderField: "X-WebAuth-User",
+							Forward: &types.Forward{
+								Address:            "auth.server",
+								TrustForwardHeader: true,
+								TLS: &types.ClientTLS{
+									CA:                 "ca.crt",
+									CAOptional:         true,
+									InsecureSkipVerify: true,
+									Cert:               "server.crt",
+									Key:                "server.key",
+								},
 							},
 						},
 					},
@@ -96,7 +246,21 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					withList(pathFrontendEntryPoints, "http", "https"),
 					withList(pathFrontendWhiteListSourceRange, "1.1.1.1/24", "1234:abcd::42/32"),
 					withPair(pathFrontendWhiteListUseXForwardedFor, "true"),
+
 					withList(pathFrontendBasicAuth, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+					withList(pathFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+					withPair(pathFrontendAuthBasicUsersFile, ".htpasswd"),
+					withList(pathFrontendAuthDigestUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+					withPair(pathFrontendAuthDigestUsersFile, ".htpasswd"),
+					withPair(pathFrontendAuthForwardAddress, "auth.server"),
+					withPair(pathFrontendAuthForwardTrustForwardHeader, "true"),
+					withPair(pathFrontendAuthForwardTLSCa, "ca.crt"),
+					withPair(pathFrontendAuthForwardTLSCaOptional, "true"),
+					withPair(pathFrontendAuthForwardTLSCert, "server.crt"),
+					withPair(pathFrontendAuthForwardTLSKey, "server.key"),
+					withPair(pathFrontendAuthForwardTLSInsecureSkipVerify, "true"),
+					withPair(pathFrontendAuthHeaderField, "X-WebAuth-User"),
+
 					withPair(pathFrontendRedirectEntryPoint, "https"),
 					withPair(pathFrontendRedirectRegex, "nope"),
 					withPair(pathFrontendRedirectReplacement, "nope"),
@@ -200,7 +364,14 @@ func TestProviderBuildConfiguration(t *testing.T) {
 							SourceRange:      []string{"1.1.1.1/24", "1234:abcd::42/32"},
 							UseXForwardedFor: true,
 						},
-						BasicAuth: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+						Auth: &types.Auth{
+							HeaderField: "X-WebAuth-User",
+							Basic: &types.Basic{
+								Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+								UsersFile: ".htpasswd",
+							},
+						},
 						Redirect: &types.Redirect{
 							EntryPoint: "https",
 							Permanent:  true,
@@ -1933,6 +2104,166 @@ func TestProviderGetTLSes(t *testing.T) {
 			p := newProviderMock(test.kvPairs)
 
 			result := p.getTLSSection(prefix)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestProviderGetAuth(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		rootPath string
+		kvPairs  []*store.KVPair
+		expected *types.Auth
+	}{
+		{
+			desc:     "should return nil when no data",
+			expected: nil,
+		},
+		{
+			desc:     "should return a valid basic auth",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withList(pathFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+					withPair(pathFrontendAuthBasicUsersFile, ".htpasswd"),
+					withPair(pathFrontendAuthHeaderField, "X-WebAuth-User"))),
+			expected: &types.Auth{
+				HeaderField: "X-WebAuth-User",
+				Basic: &types.Basic{
+					Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+						"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+					UsersFile: ".htpasswd",
+				},
+			},
+		},
+		{
+			desc:     "should return a valid basic auth (backward compatibility)",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendBasicAuth, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+				)),
+			expected: &types.Auth{
+				Basic: &types.Basic{
+					Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+						"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+				},
+			},
+		},
+		{
+			desc:     "should return a valid digest auth",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withList(pathFrontendAuthDigestUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+					withPair(pathFrontendAuthDigestUsersFile, ".htpasswd"),
+					withPair(pathFrontendAuthHeaderField, "X-WebAuth-User"),
+				)),
+			expected: &types.Auth{
+				HeaderField: "X-WebAuth-User",
+				Digest: &types.Digest{
+					Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+						"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+					UsersFile: ".htpasswd",
+				},
+			},
+		},
+		{
+			desc:     "should return a valid forward auth",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendAuthForwardAddress, "auth.server"),
+					withPair(pathFrontendAuthForwardTrustForwardHeader, "true"),
+					withPair(pathFrontendAuthForwardTLSCa, "ca.crt"),
+					withPair(pathFrontendAuthForwardTLSCaOptional, "true"),
+					withPair(pathFrontendAuthForwardTLSCert, "server.crt"),
+					withPair(pathFrontendAuthForwardTLSKey, "server.key"),
+					withPair(pathFrontendAuthForwardTLSInsecureSkipVerify, "true"),
+					withPair(pathFrontendAuthHeaderField, "X-WebAuth-User"),
+				)),
+			expected: &types.Auth{
+				HeaderField: "X-WebAuth-User",
+				Forward: &types.Forward{
+					Address:            "auth.server",
+					TrustForwardHeader: true,
+					TLS: &types.ClientTLS{
+						CA:                 "ca.crt",
+						CAOptional:         true,
+						InsecureSkipVerify: true,
+						Cert:               "server.crt",
+						Key:                "server.key",
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := newProviderMock(test.kvPairs)
+
+			result := p.getAuth(test.rootPath)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestProviderHasDeprecatedBasicAuth(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		rootPath string
+		kvPairs  []*store.KVPair
+		expected bool
+	}{
+		{
+			desc:     "should return nil when no data",
+			expected: false,
+		},
+		{
+			desc:     "should return a valid basic auth",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withList(pathFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+				)),
+			expected: false,
+		},
+		{
+			desc:     "should return a valid basic auth",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withList(pathFrontendBasicAuth, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+				)),
+			expected: true,
+		},
+		{
+			desc:     "should return a valid basic auth",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withList(pathFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+					withList(pathFrontendBasicAuth, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+				)),
+			expected: true,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := newProviderMock(test.kvPairs)
+
+			result := p.hasDeprecatedBasicAuth(test.rootPath)
 
 			assert.Equal(t, test.expected, result)
 		})

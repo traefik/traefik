@@ -46,7 +46,8 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getPassHostHeader": p.getPassHostHeader(),
 		"getPassTLSCert":    p.getFuncBool(pathFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getEntryPoints":    p.getFuncList(pathFrontendEntryPoints),
-		"getBasicAuth":      p.getFuncList(pathFrontendBasicAuth),
+		"getBasicAuth":      p.getFuncList(pathFrontendBasicAuth), // Deprecated
+		"getAuth":           p.getAuth,
 		"getRoutes":         p.getRoutes,
 		"getRedirect":       p.getRedirect,
 		"getErrorPages":     p.getErrorPages,
@@ -366,6 +367,80 @@ func (p *Provider) getTLSSection(prefix string) []*tls.Configuration {
 	}
 
 	return tlsSection
+}
+
+// hasDeprecatedBasicAuth check if the frontend basic auth use the deprecated configuration
+func (p *Provider) hasDeprecatedBasicAuth(rootPath string) bool {
+	return len(p.getList(rootPath, pathFrontendBasicAuth)) > 0
+}
+
+// GetAuth Create auth from labels
+func (p *Provider) getAuth(rootPath string) *types.Auth {
+
+	hasDeprecatedBasicAuth := p.hasDeprecatedBasicAuth(rootPath)
+	if len(p.getList(rootPath, pathFrontendAuth)) > 0 || hasDeprecatedBasicAuth {
+		auth := &types.Auth{
+			HeaderField: p.get("", rootPath, pathFrontendAuthHeaderField),
+		}
+
+		if len(p.getList(rootPath, pathFrontendAuthBasic)) > 0 || hasDeprecatedBasicAuth {
+			auth.Basic = p.getAuthBasic(rootPath)
+		} else if len(p.getList(rootPath, pathFrontendAuthDigest)) > 0 {
+			auth.Digest = p.getAuthDigest(rootPath)
+		} else if len(p.getList(rootPath, pathFrontendAuthForward)) > 0 {
+			auth.Forward = p.getAuthForward(rootPath)
+		}
+
+		return auth
+	}
+	return nil
+}
+
+// getAuthBasic Create git sBasic Auth from labels
+func (p *Provider) getAuthBasic(rootPath string) *types.Basic {
+	basicAuth := &types.Basic{
+		UsersFile: p.get("", rootPath, pathFrontendAuthBasicUsersFile),
+	}
+
+	// backward compatibility
+	if p.hasDeprecatedBasicAuth(rootPath) {
+		basicAuth.Users = p.getList(rootPath, pathFrontendBasicAuth)
+		log.Warnf("Deprecated configuration found: %s. Please use %s.", pathFrontendBasicAuth, pathFrontendAuthBasic)
+	} else {
+		basicAuth.Users = p.getList(rootPath, pathFrontendAuthBasicUsers)
+	}
+
+	return basicAuth
+}
+
+//
+// getAuthDigest Create Digest Auth from labels
+func (p *Provider) getAuthDigest(rootPath string) *types.Digest {
+	return &types.Digest{
+		Users:     p.getList(rootPath, pathFrontendAuthDigestUsers),
+		UsersFile: p.get("", rootPath, pathFrontendAuthDigestUsersFile),
+	}
+}
+
+// getAuthForward Create Forward Auth from labels
+func (p *Provider) getAuthForward(rootPath string) *types.Forward {
+	forwardAuth := &types.Forward{
+		Address:            p.get("", rootPath, pathFrontendAuthForwardAddress),
+		TrustForwardHeader: p.getBool(false, rootPath, pathFrontendAuthForwardTrustForwardHeader),
+	}
+
+	//TLS configuration
+	if len(p.getList(rootPath, pathFrontendAuthForwardTLS)) > 0 {
+		forwardAuth.TLS = &types.ClientTLS{
+			CA:                 p.get("", rootPath, pathFrontendAuthForwardTLSCa),
+			CAOptional:         p.getBool(false, rootPath, pathFrontendAuthForwardTLSCaOptional),
+			Cert:               p.get("", rootPath, pathFrontendAuthForwardTLSCert),
+			InsecureSkipVerify: p.getBool(false, rootPath, pathFrontendAuthForwardTLSInsecureSkipVerify),
+			Key:                p.get("", rootPath, pathFrontendAuthForwardTLSKey),
+		}
+	}
+
+	return forwardAuth
 }
 
 func (p *Provider) getRoutes(rootPath string) map[string]types.Route {
