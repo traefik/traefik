@@ -242,11 +242,8 @@ func (c *clientImpl) UpdateIngressStatus(namespace, name, ip, hostname string) e
 
 // GetNamespaces returns namespaces with the configured labelselector.
 func (c *clientImpl) GetNamespaces() (*corev1.NamespaceList, error) {
-	item, err := c.clientset.CoreV1().Namespaces().List(metav1.ListOptions{LabelSelector: c.namespaceLabelSelector.String()})
-	if err != nil {
-		return nil, err
-	}
-	return item, nil
+	return c.clientset.CoreV1().Namespaces().List(metav1.ListOptions{LabelSelector: c.namespaceLabelSelector.String()})
+
 }
 
 // GetService returns the named service from the configured namespace.
