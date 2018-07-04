@@ -5,6 +5,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/BurntSushi/ty/fun"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/containous/traefik/log"
@@ -17,11 +18,12 @@ import (
 func (p *Provider) buildConfigurationV1(instances []ecsInstance) (*types.Configuration, error) {
 	services := make(map[string][]ecsInstance)
 	for _, instance := range instances {
+		backendName := getBackendNameV1(instance)
 		if p.filterInstanceV1(instance) {
-			if serviceInstances, ok := services[instance.Name]; ok {
-				services[instance.Name] = append(serviceInstances, instance)
+			if serviceInstances, ok := services[backendName]; ok {
+				services[backendName] = append(serviceInstances, instance)
 			} else {
-				services[instance.Name] = []ecsInstance{instance}
+				services[backendName] = []ecsInstance{instance}
 			}
 		}
 	}
@@ -42,7 +44,7 @@ func (p *Provider) buildConfigurationV1(instances []ecsInstance) (*types.Configu
 		"getHealthCheckInterval":  getFuncFirstStringValueV1(label.TraefikBackendHealthCheckInterval, ""),
 
 		// Frontend functions
-		"filterFrontends":   filterFrontends,
+		"filterFrontends":   filterFrontendsV1,
 		"getFrontendRule":   p.getFrontendRule,
 		"getPassHostHeader": getFuncBoolValueV1(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getPassTLSCert":    getFuncBoolValueV1(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
@@ -58,6 +60,26 @@ func (p *Provider) buildConfigurationV1(instances []ecsInstance) (*types.Configu
 	})
 }
 
+// Deprecated
+func getBackendNameV1(i ecsInstance) string {
+	return getStringValueV1(i, label.TraefikBackend, i.Name)
+}
+
+// Deprecated
+func filterFrontendsV1(instances []ecsInstance) []ecsInstance {
+	byName := make(map[string]struct{})
+
+	return fun.Filter(func(i ecsInstance) bool {
+		backendName := getBackendName(i)
+		_, found := byName[backendName]
+		if !found {
+			byName[backendName] = struct{}{}
+		}
+		return !found
+	}, instances).([]ecsInstance)
+}
+
+// Deprecated
 func (p *Provider) filterInstanceV1(i ecsInstance) bool {
 	if i.machine == nil {
 		log.Debug("Filtering ecs instance with nil machine")

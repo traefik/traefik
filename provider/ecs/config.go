@@ -128,9 +128,10 @@ func filterFrontends(instances []ecsInstance) []ecsInstance {
 	byName := make(map[string]struct{})
 
 	return fun.Filter(func(i ecsInstance) bool {
-		_, found := byName[getBackendName(i)]
+		backendName := getBackendName(i)
+		_, found := byName[backendName]
 		if !found {
-			byName[getBackendName(i)] = struct{}{}
+			byName[backendName] = struct{}{}
 		}
 		return !found
 	}, instances).([]ecsInstance)

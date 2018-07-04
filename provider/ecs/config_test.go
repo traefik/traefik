@@ -349,7 +349,7 @@ func TestBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "Canary deployment",
+			desc: "Containers with same backend name",
 			instances: []ecsInstance{
 				{
 					Name: "testing-instance-v1",
