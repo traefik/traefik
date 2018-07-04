@@ -47,16 +47,16 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 					PassHostHeader: true,
 					EntryPoints:    []string{"http", "https"},
 					Routes: map[string]types.Route{
-						"route-frontend-foo-foo-sauternes": {
+						"route-frontend-sauternes-foo-sauternes": {
 							Rule: "Host:foo.docker.localhost",
 						},
 					},
 				},
 			},
 			expectedBackends: map[string]*types.Backend{
-				"backend-foo-foo-sauternes": {
+				"backend-foo-sauternes": {
 					Servers: map[string]types.Server{
-						"server-sauternes-foo-0": {
+						"server-foo-863563a2e23c95502862016417ee95ea": {
 							URL:    "http://127.0.0.1:2503",
 							Weight: label.DefaultWeight,
 						},
@@ -84,10 +84,15 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 				),
 			},
 			expectedFrontends: map[string]*types.Frontend{
-				"frontend-foo-foo-sauternes": {
-					Backend:        "backend-foo-foo-sauternes",
+				"frontend-sauternes-foo-sauternes": {
+					Backend:        "backend-foo-sauternes",
 					PassHostHeader: true,
 					EntryPoints:    []string{"http", "https"},
+					Routes: map[string]types.Route{
+						"route-frontend-sauternes-foo-sauternes": {
+							Rule: "Host:foo.docker.localhost",
+						},
+					},
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{
@@ -96,17 +101,12 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 							UsersFile: ".htpasswd",
 						},
 					},
-					Routes: map[string]types.Route{
-						"route-frontend-foo-foo-sauternes": {
-							Rule: "Host:foo.docker.localhost",
-						},
-					},
 				},
 			},
 			expectedBackends: map[string]*types.Backend{
-				"backend-foo-foo-sauternes": {
+				"backend-foo-sauternes": {
 					Servers: map[string]types.Server{
-						"server-sauternes-foo-0": {
+						"server-foo-863563a2e23c95502862016417ee95ea": {
 							URL:    "http://127.0.0.1:2503",
 							Weight: label.DefaultWeight,
 						},
@@ -121,10 +121,9 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 				containerJSON(
 					name("foo"),
 					labels(map[string]string{
-						"traefik.sauternes.port":                                          "2503",
-						"traefik.sauternes.frontend.entryPoints":                          "http,https",
-						label.Prefix + "sauternes." + label.SuffixFrontendAuthHeaderField: "X-WebAuth-User",
-						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasic:       "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						"traefik.sauternes.port":                                    "2503",
+						"traefik.sauternes.frontend.entryPoints":                    "http,https",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasic: "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 					}),
 					ports(nat.PortMap{
 						"80/tcp": {},
@@ -133,28 +132,27 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 				),
 			},
 			expectedFrontends: map[string]*types.Frontend{
-				"frontend-foo-foo-sauternes": {
-					Backend:        "backend-foo-foo-sauternes",
+				"frontend-sauternes-foo-sauternes": {
+					Backend:        "backend-foo-sauternes",
 					PassHostHeader: true,
 					EntryPoints:    []string{"http", "https"},
+					Routes: map[string]types.Route{
+						"route-frontend-sauternes-foo-sauternes": {
+							Rule: "Host:foo.docker.localhost",
+						},
+					},
 					Auth: &types.Auth{
-						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 						},
 					},
-					Routes: map[string]types.Route{
-						"route-frontend-foo-foo-sauternes": {
-							Rule: "Host:foo.docker.localhost",
-						},
-					},
 				},
 			},
 			expectedBackends: map[string]*types.Backend{
-				"backend-foo-foo-sauternes": {
+				"backend-foo-sauternes": {
 					Servers: map[string]types.Server{
-						"server-sauternes-foo-0": {
+						"server-foo-863563a2e23c95502862016417ee95ea": {
 							URL:    "http://127.0.0.1:2503",
 							Weight: label.DefaultWeight,
 						},
@@ -182,10 +180,15 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 				),
 			},
 			expectedFrontends: map[string]*types.Frontend{
-				"frontend-foo-foo-sauternes": {
-					Backend:        "backend-foo-foo-sauternes",
+				"frontend-sauternes-foo-sauternes": {
+					Backend:        "backend-foo-sauternes",
 					PassHostHeader: true,
 					EntryPoints:    []string{"http", "https"},
+					Routes: map[string]types.Route{
+						"route-frontend-sauternes-foo-sauternes": {
+							Rule: "Host:foo.docker.localhost",
+						},
+					},
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Digest: &types.Digest{
@@ -194,17 +197,12 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 							UsersFile: ".htpasswd",
 						},
 					},
-					Routes: map[string]types.Route{
-						"route-frontend-foo-foo-sauternes": {
-							Rule: "Host:foo.docker.localhost",
-						},
-					},
 				},
 			},
 			expectedBackends: map[string]*types.Backend{
-				"backend-foo-foo-sauternes": {
+				"backend-foo-sauternes": {
 					Servers: map[string]types.Server{
-						"server-sauternes-foo-0": {
+						"server-foo-863563a2e23c95502862016417ee95ea": {
 							URL:    "http://127.0.0.1:2503",
 							Weight: label.DefaultWeight,
 						},
@@ -237,10 +235,15 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 				),
 			},
 			expectedFrontends: map[string]*types.Frontend{
-				"frontend-foo-foo-sauternes": {
-					Backend:        "backend-foo-foo-sauternes",
+				"frontend-sauternes-foo-sauternes": {
+					Backend:        "backend-foo-sauternes",
 					PassHostHeader: true,
 					EntryPoints:    []string{"http", "https"},
+					Routes: map[string]types.Route{
+						"route-frontend-sauternes-foo-sauternes": {
+							Rule: "Host:foo.docker.localhost",
+						},
+					},
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Forward: &types.Forward{
@@ -253,11 +256,6 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 								Key:                "server.key",
 								InsecureSkipVerify: true,
 							},
-						},
-					},
-					Routes: map[string]types.Route{
-						"route-frontend-sauternes-foo-sauternes": {
-							Rule: "Host:foo.docker.localhost",
 						},
 					},
 				},
@@ -589,7 +587,6 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 					PassHostHeader: true,
 					Priority:       5000,
 					EntryPoints:    []string{"http", "https"},
-					BasicAuth:      []string{},
 					Redirect: &types.Redirect{
 						EntryPoint: "https",
 					},
@@ -604,7 +601,6 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 					PassHostHeader: true,
 					Priority:       3000,
 					EntryPoints:    []string{"http", "https"},
-					BasicAuth:      []string{},
 					Redirect: &types.Redirect{
 						EntryPoint: "https",
 					},
@@ -661,7 +657,6 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 					PassHostHeader: true,
 					Priority:       5000,
 					EntryPoints:    []string{"http", "https"},
-					BasicAuth:      []string{},
 					Redirect: &types.Redirect{
 						EntryPoint: "https",
 					},
@@ -676,7 +671,6 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 					PassHostHeader: true,
 					Priority:       3000,
 					EntryPoints:    []string{"http", "https"},
-					BasicAuth:      []string{},
 					Redirect: &types.Redirect{
 						EntryPoint: "https",
 					},

@@ -100,7 +100,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-test": {
 					Servers: map[string]types.Server{
-						"server-test": {
+						"server-test-842895ca2aca17f6ee36ddb2f621194d": {
 							URL:    "http://127.0.0.1:80",
 							Weight: label.DefaultWeight,
 						},
@@ -144,7 +144,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-test": {
 					Servers: map[string]types.Server{
-						"server-test": {
+						"server-test-842895ca2aca17f6ee36ddb2f621194d": {
 							URL:    "http://127.0.0.1:80",
 							Weight: label.DefaultWeight,
 						},
@@ -190,7 +190,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-test": {
 					Servers: map[string]types.Server{
-						"server-test": {
+						"server-test-842895ca2aca17f6ee36ddb2f621194d": {
 							URL:    "http://127.0.0.1:80",
 							Weight: label.DefaultWeight,
 						},
@@ -247,7 +247,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-test": {
 					Servers: map[string]types.Server{
-						"server-test": {
+						"server-test-842895ca2aca17f6ee36ddb2f621194d": {
 							URL:    "http://127.0.0.1:80",
 							Weight: label.DefaultWeight,
 						},

@@ -606,7 +606,7 @@ func TestBuildConfiguration(t *testing.T) {
 							label.TraefikBackendBufferingMemRequestBodyBytes:     aws.String("2097152"),
 							label.TraefikBackendBufferingRetryExpression:         aws.String("IsNetworkError() && Attempts() <= 2"),
 
-							label.TraefikFrontendAuthBasic:                 aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+							label.TraefikFrontendAuthBasicUsers:            aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 							label.TraefikFrontendEntryPoints:               aws.String("http,https"),
 							label.TraefikFrontendPassHostHeader:            aws.String("true"),
 							label.TraefikFrontendPassTLSCert:               aws.String("true"),
@@ -813,9 +813,11 @@ func TestBuildConfiguration(t *testing.T) {
 						PassHostHeader: true,
 						PassTLSCert:    true,
 						Priority:       666,
-						BasicAuth: []string{
-							"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-							"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						Auth: &types.Auth{
+							Basic: &types.Basic{
+								Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							},
 						},
 						WhiteList: &types.WhiteList{
 							SourceRange:      []string{"10.10.10.10"},
