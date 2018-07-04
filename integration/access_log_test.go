@@ -102,7 +102,7 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontend(c *check.C) {
 			formatOnly:   false,
 			code:         "401",
 			user:         "-",
-			frontendName: "Basic Auth for frontend-Host-frontend-auth-docker-local",
+			frontendName: "Auth for frontend-Host-frontend-auth-docker-local",
 			backendURL:   "/",
 		},
 	}
