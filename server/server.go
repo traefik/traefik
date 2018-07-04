@@ -283,11 +283,14 @@ func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tl
 	if bestCertificate != nil {
 		return bestCertificate, nil
 	}
-	// Check for local IP address matches
-	connAddr := strings.Split(clientHello.Conn.LocalAddr().String(), ":")
-	bestCertificate = s.certs.GetBestCertificate(strings.TrimSpace(connAddr[0]))
-	if bestCertificate != nil {
-		return bestCertificate, nil
+
+	if len(domainToCheck) == 0 {
+		// If no ServerName is provided, Check for local IP address matches
+		connAddr := strings.Split(clientHello.Conn.LocalAddr().String(), ":")
+		bestCertificate = s.certs.GetBestCertificate(strings.TrimSpace(connAddr[0]))
+		if bestCertificate != nil {
+			return bestCertificate, nil
+		}
 	}
 
 	if s.tlsALPNGetter != nil {
