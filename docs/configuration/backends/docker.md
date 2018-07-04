@@ -235,18 +235,19 @@ Labels can be used on containers to override default behavior.
 | `traefik.backend.loadbalancer.swarm=true`                  | Use Swarm's inbuilt load balancer (only relevant under Swarm Mode).                                                                                                                                                       |
 | `traefik.backend.maxconn.amount=10`                        | Set a maximum number of connections to the backend.<br>Must be used in conjunction with the below label to take effect.                                                                                                   |
 | `traefik.backend.maxconn.extractorfunc=client.ip`          | Set the function to be used against the request to determine what to limit maximum connections to the backend by.<br>Must be used in conjunction with the above label to take effect.                                     |
-| `traefik.frontend.auth.basic=EXPR`                         | Sets basic authentication for that frontend in CSV format: `User:Hash,User:Hash` [2] (DEPRECATED)                                                                                                                         |
-| `traefik.frontend.auth.basic.users=EXPR`                   | Sets basic authentication for that frontend in CSV format: `User:Hash,User:Hash` [2]                                                                                                                                      |
-| `traefik.frontend.auth.basic.usersfile=PATH`               | Sets basic authentication with an external file with PATH; if users and usersFile are provided, the two are merged, with external file contents having precedence.                                                        |
-| `traefik.frontend.auth.digest.users=EXPR`                  | Sets digest authentication for that frontend in CSV format: `User:Hash,User:Hash` [2]                                                                                                                                     |
-| `traefik.frontend.auth.digest.usersfile=PATH`              | Sets digest authentication with an external file with PATH; if users and usersFile are provided, the two are merged, with external file contents having precedence.                                                       |
-| `traefik.frontend.auth.forward.address=URL`                | Forward to the authentication server URL                                                                                                                                                                                  |
-| `traefik.frontend.auth.forward.tls.ca=PATH`                | Set the Certificate Authority (CA) for the TLS connection with the authentication server.                                                                                                                                 |
-| `traefik.frontend.auth.forward.tls.caOptional=true`        | Authorize connection with certificates not signed by a specified Certificate Authority (CA)                                                                                                                               |
-| `traefik.frontend.auth.forward.tls.cert=PATH`              | Set the Certificate for the TLS connection with the authentication server.                                                                                                                                |
-| `traefik.frontend.auth.forward.tls.insecureSkipVerify=true`| Set the Certificate for the TLS connection with the authentication server.                                                                                                                                |
-| `traefik.frontend.auth.forward.tls.key=PATH`               | Authorize connection with certificates not signed by a specified Certificate Authority (CA)                                                                                                                                |
-| `traefik.frontend.auth.forward.trustForwardHeader=true`    | Trust existing X-Forwarded-* headers. Useful with another reverse proxy in front of Traefik.                                                                                                                              |
+| `traefik.frontend.auth.basic=EXPR`                         | Sets basic authentication for that frontend in CSV format: `User:Hash,User:Hash` [2] (DEPRECATED).                                                                                                                        |
+| `traefik.frontend.auth.basic.users=EXPR`                   | Sets basic authentication for that frontend in CSV format: `User:Hash,User:Hash` [2].                                                                                                                                     |
+| `traefik.frontend.auth.basic.usersfile=/path/.htpasswd`    | Sets basic authentication with an external file; if users and usersFile are provided, the two are merged, with external file contents having precedence.[3]                                                               |
+| `traefik.frontend.auth.digest.users=EXPR`                  | Sets digest authentication for that frontend in CSV format: `User:Realm:Hash,User:Realm:Hash`.                                                                                                                            |
+| `traefik.frontend.auth.digest.usersfile=/path/.htdigest`   | Sets digest authentication with an external file; if users and usersFile are provided, the two are merged, with external file contents having precedence.[4]                                                              |
+| `traefik.frontend.auth.forward.address=https://example.com`| The URL of the authentication server.                                                                                                                                                                                     |
+| `traefik.frontend.auth.forward.tls.ca=/path/ca.pem`        | Set the Certificate Authority (CA) for the TLS connection with the authentication server.                                                                                                                                 |
+| `traefik.frontend.auth.forward.tls.caOptional=true`        | Check the certificates if present but do not force to be signed by a specified Certificate Authority (CA).                                                                                                                |
+| `traefik.frontend.auth.forward.tls.cert=/path/server.pem`  | Set the Certificate for the TLS connection with the authentication server.                                                                                                                                                |
+| `traefik.frontend.auth.forward.tls.insecureSkipVerify=true`| If set to true invalid SSL certificates are accepted.                                                                                                                                                                     |
+| `traefik.frontend.auth.forward.tls.key=/path/server.key`   | Set the Certificate for the TLS connection with the authentication server.                                                                                                                                                |
+| `traefik.frontend.auth.forward.trustForwardHeader=true`    | Trust X-Forwarded-* headers.                                                                                                                                                                                              |
+| `traefik.frontend.auth.headerField=X-WebAuth-User`         | Pass Authenticated user to application via headers.                                                                                                                                                                       |
 | `traefik.frontend.entryPoints=http,https`                  | Assign this frontend to entry points `http` and `https`.<br>Overrides `defaultEntryPoints`                                                                                                                                |
 | `traefik.frontend.errors.<name>.backend=NAME`              | See [custom error pages](/configuration/commons/#custom-error-pages) section.                                                                                                                                             |
 | `traefik.frontend.errors.<name>.query=PATH`                | See [custom error pages](/configuration/commons/#custom-error-pages) section.                                                                                                                                             |
@@ -271,9 +272,17 @@ If a container is linked to several networks, be sure to set the proper network 
 For instance when deploying docker `stack` from compose files, the compose defined networks will be prefixed with the `stack` name.
 Or if your service references external network use it's name instead.
 
-[2] `traefik.frontend.auth.basic=EXPR`:
-To create `user:password` pair, it's possible to use this command `echo $(htpasswd -nb user password) | sed -e s/\\$/\\$\\$/g`.
+[2] `traefik.frontend.auth.basic=EXPR` or `traefik.frontend.auth.basic.users=EXPR `:  
+To create `user:password` pair, it's possible to use this command:  
+`echo $(htpasswd -nb user password) | sed -e s/\\$/\\$\\$/g`.  
 The result will be `user:$$apr1$$9Cv/OMGj$$ZomWQzuQbL.3TRCS81A1g/`, note additional symbol `$` makes escaping.
+
+[3] `traefik.frontend.auth.basic.usersFile=.htpasswd`:
+To create the .htpasswd file, it's possible to use this command `htpasswd -c .htpasswd user`.
+
+[4] `traefik.frontend.auth.digest.usersFile=.htdigest`:
+To create the .htdigest file, it's possible to use this command `htdigest -c .htdigest user realm`.
+
 
 #### Custom Headers
 
