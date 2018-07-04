@@ -886,21 +886,21 @@ func TestGetPort(t *testing.T) {
 			desc:     "Container label should provide exposed port",
 			expected: "6536",
 			instanceInfo: simpleEcsInstanceDynamicPorts(map[string]*string{
-				label.TraefikContainerPort: aws.String("8080"),
+				label.TraefikPort: aws.String("8080"),
 			}),
 		},
 		{
 			desc:     "Wrong port container label should provide default exposed port",
-			expected: "6535",
+			expected: "9000",
 			instanceInfo: simpleEcsInstanceDynamicPorts(map[string]*string{
-				label.TraefikContainerPort: aws.String("9000"),
+				label.TraefikPort: aws.String("9000"),
 			}),
 		},
 		{
 			desc:     "Invalid port container label should provide default exposed port",
 			expected: "6535",
 			instanceInfo: simpleEcsInstanceDynamicPorts(map[string]*string{
-				label.TraefikContainerPort: aws.String("foo"),
+				label.TraefikPort: aws.String("foo"),
 			}),
 		},
 	}

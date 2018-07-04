@@ -119,13 +119,14 @@ func getHost(i ecsInstance) string {
 
 func getPort(i ecsInstance) string {
 	if value := label.GetStringValue(i.TraefikLabels, label.TraefikPort, ""); len(value) > 0 {
-		return value
-	}
-	if value := label.GetStringValue(i.TraefikLabels, label.TraefikContainerPort, ""); len(value) > 0 {
-		for _, mapping := range i.machine.ports {
-			if port, err := strconv.ParseInt(value, 10, 64); err == nil && port == mapping.containerPort {
-				return strconv.FormatInt(mapping.hostPort, 10)
+		port, err := strconv.ParseInt(value, 10, 64)
+		if err == nil {
+			for _, mapping := range i.machine.ports {
+				if port == mapping.hostPort || port == mapping.containerPort {
+					return strconv.FormatInt(mapping.hostPort, 10)
+				}
 			}
+			return value
 		}
 	}
 	return strconv.FormatInt(i.machine.ports[0].hostPort, 10)
