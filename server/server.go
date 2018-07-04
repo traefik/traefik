@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
+	"strings"
 	"sync"
 	"time"
 
@@ -282,6 +283,12 @@ func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tl
 	if bestCertificate != nil {
 		return bestCertificate, nil
 	}
+	// Check for local IP address matches
+	connAddr := strings.Split(clientHello.Conn.LocalAddr().String(), ":")
+	bestCertificate = s.certs.GetBestCertificate(strings.TrimSpace(connAddr[0]))
+	if bestCertificate != nil {
+		return bestCertificate, nil
+	}
 
 	if s.tlsALPNGetter != nil {
 		cert, err := s.tlsALPNGetter(domainToCheck)
@@ -298,6 +305,7 @@ func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tl
 		// Only check for an onDemandCert if there is a domain name
 		return s.onDemandListener(domainToCheck)
 	}
+
 	if s.certs.SniStrict {
 		return nil, fmt.Errorf("strict SNI enabled - No certificate found for domain: %q, closing connection", domainToCheck)
 	}
@@ -388,10 +396,11 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 	if len(config.Certificates) != 0 {
 		// BuildNameToCertificate parses the CommonName and SubjectAlternateName fields
 		// in each certificate and populates the config.NameToCertificate map.
-		config.BuildNameToCertificate()
+
+		certMap := s.buildNameOrIPToCertificate(config.Certificates)
 
 		if s.entryPoints[entryPointName].CertificateStore != nil {
-			s.entryPoints[entryPointName].CertificateStore.StaticCerts.Set(config.NameToCertificate)
+			s.entryPoints[entryPointName].CertificateStore.StaticCerts.Set(certMap)
 		}
 	}
 
@@ -593,4 +602,25 @@ func stopMetricsClients() {
 	metrics.StopDatadog()
 	metrics.StopStatsd()
 	metrics.StopInfluxDB()
+}
+
+func (s *Server) buildNameOrIPToCertificate(certs []tls.Certificate) map[string]*tls.Certificate {
+	certMap := make(map[string]*tls.Certificate)
+	for i := range certs {
+		cert := &certs[i]
+		x509Cert, err := x509.ParseCertificate(cert.Certificate[0])
+		if err != nil {
+			continue
+		}
+		if len(x509Cert.Subject.CommonName) > 0 {
+			certMap[x509Cert.Subject.CommonName] = cert
+		}
+		for _, san := range x509Cert.DNSNames {
+			certMap[san] = cert
+		}
+		for _, ipSan := range x509Cert.IPAddresses {
+			certMap[ipSan.String()] = cert
+		}
+	}
+	return certMap
 }
