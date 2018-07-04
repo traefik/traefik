@@ -294,7 +294,8 @@ func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tl
 		}
 	}
 
-	if s.onDemandListener != nil {
+	if s.onDemandListener != nil && len(domainToCheck) > 0 {
+		// Only check for an onDemandCert if there is a domain name
 		return s.onDemandListener(domainToCheck)
 	}
 	if s.certs.SniStrict {
