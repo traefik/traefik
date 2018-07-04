@@ -32,9 +32,7 @@ func TestBuildConfiguration(t *testing.T) {
 					machine: &machine{
 						state:     ec2.InstanceStateNameRunning,
 						privateIP: "10.0.0.1",
-						ports: []portMapping{
-							{hostPort: 1337},
-						},
+						ports:     []portMapping{{hostPort: 1337}},
 					},
 				},
 			},
@@ -77,9 +75,7 @@ func TestBuildConfiguration(t *testing.T) {
 					machine: &machine{
 						state:     ec2.InstanceStateNameRunning,
 						privateIP: "10.0.0.1",
-						ports: []portMapping{
-							{hostPort: 1337},
-						},
+						ports:     []portMapping{{hostPort: 1337}},
 					},
 				},
 			},
@@ -199,9 +195,7 @@ func TestBuildConfiguration(t *testing.T) {
 					machine: &machine{
 						state:     ec2.InstanceStateNameRunning,
 						privateIP: "10.0.0.1",
-						ports: []portMapping{
-							{hostPort: 1337},
-						},
+						ports:     []portMapping{{hostPort: 1337}},
 					},
 				},
 			},
@@ -1014,9 +1008,7 @@ func makeEcsInstance(containerDef *ecs.ContainerDefinition) ecsInstance {
 		machine: &machine{
 			state:     ec2.InstanceStateNameRunning,
 			privateIP: "10.0.0.0",
-			ports: []portMapping{
-				{hostPort: 1337},
-			},
+			ports:     []portMapping{{hostPort: 1337}},
 		},
 	}
 
@@ -1032,9 +1024,7 @@ func simpleEcsInstance(labels map[string]*string) ecsInstance {
 		Name:         aws.String("http"),
 		DockerLabels: labels,
 	})
-	instance.machine.ports = []portMapping{
-		{hostPort: 80},
-	}
+	instance.machine.ports = []portMapping{{hostPort: 80}}
 	return instance
 }
 
@@ -1053,8 +1043,14 @@ func simpleEcsInstanceDynamicPorts(labels map[string]*string) ecsInstance {
 		DockerLabels: labels,
 	})
 	instance.machine.ports = []portMapping{
-		{containerPort: 80, hostPort: 6535},
-		{containerPort: 8080, hostPort: 6536},
+		{
+			containerPort: 80,
+			hostPort:      6535,
+		},
+		{
+			containerPort: 8080,
+			hostPort:      6536,
+		},
 	}
 	return instance
 }

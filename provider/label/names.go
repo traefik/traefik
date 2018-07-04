@@ -4,7 +4,6 @@ package label
 const (
 	Prefix                                         = "traefik."
 	SuffixBackend                                  = "backend"
-	SuffixContainerPort                            = "containerPort"
 	SuffixDomain                                   = "domain"
 	SuffixEnable                                   = "enable"
 	SuffixPort                                     = "port"

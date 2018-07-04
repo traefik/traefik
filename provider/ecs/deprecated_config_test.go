@@ -30,9 +30,7 @@ func TestBuildConfigurationV1(t *testing.T) {
 					machine: &machine{
 						state:     ec2.InstanceStateNameRunning,
 						privateIP: "10.0.0.1",
-						ports: []portMapping{
-							{hostPort: 1337},
-						},
+						ports:     []portMapping{{hostPort: 1337}},
 					},
 				},
 			},
@@ -78,9 +76,7 @@ func TestBuildConfigurationV1(t *testing.T) {
 					machine: &machine{
 						state:     ec2.InstanceStateNameRunning,
 						privateIP: "10.0.0.1",
-						ports: []portMapping{
-							{hostPort: 1337},
-						},
+						ports:     []portMapping{{hostPort: 1337}},
 					},
 				},
 			},
@@ -146,9 +142,7 @@ func TestBuildConfigurationV1(t *testing.T) {
 					machine: &machine{
 						state:     ec2.InstanceStateNameRunning,
 						privateIP: "10.0.0.1",
-						ports: []portMapping{
-							{hostPort: 1337},
-						},
+						ports:     []portMapping{{hostPort: 1337}},
 					},
 				},
 			},

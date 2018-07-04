@@ -208,8 +208,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 	} else if p.Cluster != "" {
 		// TODO: Deprecated configuration - Need to be removed in the future
 		clusters = Clusters{p.Cluster}
-		log.Warn("Deprecated configuration found: ecs.cluster " +
-			"Please use ecs.clusters instead.")
+		log.Warn("Deprecated configuration found: ecs.cluster. Please use ecs.clusters instead.")
 	} else {
 		clusters = p.Clusters
 	}
@@ -285,15 +284,13 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 
 				var mach *machine
 				if aws.StringValue(task.LaunchType) == ecs.LaunchTypeFargate {
-					ports := []portMapping{}
-					if len(containerDefinition.PortMappings) > 0 {
-						for _, mapping := range containerDefinition.PortMappings {
-							if mapping != nil {
-								ports = append(ports, portMapping{
-									hostPort:      aws.Int64Value(mapping.HostPort),
-									containerPort: aws.Int64Value(mapping.ContainerPort),
-								})
-							}
+					var ports []portMapping
+					for _, mapping := range containerDefinition.PortMappings {
+						if mapping != nil {
+							ports = append(ports, portMapping{
+								hostPort:      aws.Int64Value(mapping.HostPort),
+								containerPort: aws.Int64Value(mapping.ContainerPort),
+							})
 						}
 					}
 					mach = &machine{
@@ -302,15 +299,13 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 						state:     aws.StringValue(task.LastStatus),
 					}
 				} else {
-					ports := []portMapping{}
-					if len(container.NetworkBindings) > 0 {
-						for _, mapping := range container.NetworkBindings {
-							if mapping != nil {
-								ports = append(ports, portMapping{
-									hostPort:      aws.Int64Value(mapping.HostPort),
-									containerPort: aws.Int64Value(mapping.ContainerPort),
-								})
-							}
+					var ports []portMapping
+					for _, mapping := range container.NetworkBindings {
+						if mapping != nil {
+							ports = append(ports, portMapping{
+								hostPort:      aws.Int64Value(mapping.HostPort),
+								containerPort: aws.Int64Value(mapping.ContainerPort),
+							})
 						}
 					}
 					mach = &machine{
