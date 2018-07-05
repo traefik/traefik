@@ -60,8 +60,8 @@ func (s *Server) loadConfiguration(configMsg types.ConfigMessage) {
 				log.Debugf("Certificates not added to non-TLS entryPoint %s.", newServerEntryPointName)
 			}
 		} else {
-			s.serverEntryPoints[newServerEntryPointName].certs.StaticCerts.Set(newServerEntryPoint.certs.StaticCerts.Get())
 			s.serverEntryPoints[newServerEntryPointName].certs.DynamicCerts.Set(newServerEntryPoint.certs.DynamicCerts.Get())
+			s.serverEntryPoints[newServerEntryPointName].certs.ResetCache()
 		}
 		log.Infof("Server configuration reloaded on %s", s.serverEntryPoints[newServerEntryPointName].httpServer.Addr)
 	}
@@ -125,7 +125,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 	for serverEntryPointName, serverEntryPoint := range serverEntryPoints {
 		serverEntryPoint.httpRouter.GetHandler().SortRoutes()
 		if _, exists := entryPointsCertificates[serverEntryPointName]; exists {
-			serverEntryPoint.certs.StaticCerts.Set(entryPointsCertificates[serverEntryPointName])
+			serverEntryPoint.certs.DynamicCerts.Set(entryPointsCertificates[serverEntryPointName])
 		}
 	}
 
