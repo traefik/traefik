@@ -826,11 +826,9 @@ func TestBuildConfigurationSegments(t *testing.T) {
 					PassTLSCert:    true,
 					Priority:       666,
 					Auth: &types.Auth{
-						//HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
-							//UsersFile: ".htpasswd",
 						},
 					},
 					WhiteList: &types.WhiteList{
