@@ -154,7 +154,7 @@ func (p *Provider) watch(configurationChan chan<- types.ConfigMessage, stop chan
 	defer close(stopCh)
 	defer close(watchCh)
 
-	go func() {
+	safe.Go(func() {
 		for index := range watchCh {
 			log.Debug("List of services changed")
 			nodes, err := p.getNodes(index)
@@ -167,7 +167,7 @@ func (p *Provider) watch(configurationChan chan<- types.ConfigMessage, stop chan
 				Configuration: configuration,
 			}
 		}
-	}()
+	})
 
 	for {
 		select {
