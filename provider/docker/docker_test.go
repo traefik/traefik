@@ -97,10 +97,10 @@ func TestStreamerListenerSuccessfulReturn(t *testing.T) {
 	}()
 
 	msgEvents := []eventtypes.Message{
-		eventtypes.Message{
+		{
 			ID: "ASDF",
 		},
-		eventtypes.Message{
+		{
 			ID: "QWERTY",
 		},
 	}
