@@ -12,6 +12,7 @@ import (
 	"github.com/containous/mux"
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/healthcheck"
+	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/rules"
 	th "github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/tls"
@@ -385,6 +386,7 @@ func TestServerMultipleFrontendRules(t *testing.T) {
 			router := mux.NewRouter()
 			route := router.NewRoute()
 			serverRoute := &types.ServerRoute{Route: route}
+			reqHostMid := middlewares.NewReqHostMiddleware()
 			rls := &rules.Rules{Route: serverRoute}
 
 			expression := test.expression
@@ -395,7 +397,10 @@ func TestServerMultipleFrontendRules(t *testing.T) {
 			}
 
 			request := th.MustNewRequest(http.MethodGet, test.requestURL, nil)
-			routeMatch := routeResult.Match(request, &mux.RouteMatch{Route: routeResult})
+			var routeMatch bool
+			reqHostMid.ServeHTTP(nil, request, func(w http.ResponseWriter, r *http.Request) {
+				routeMatch = routeResult.Match(r, &mux.RouteMatch{Route: routeResult})
+			})
 
 			if !routeMatch {
 				t.Fatalf("Rule %s doesn't match", expression)

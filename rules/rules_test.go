@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/containous/mux"
+	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
@@ -15,6 +16,7 @@ import (
 func TestParseOneRule(t *testing.T) {
 	router := mux.NewRouter()
 	route := router.NewRoute()
+	reqHostMid := middlewares.NewReqHostMiddleware()
 	serverRoute := &types.ServerRoute{Route: route}
 	rules := &Rules{Route: serverRoute}
 
@@ -23,7 +25,10 @@ func TestParseOneRule(t *testing.T) {
 	require.NoError(t, err, "Error while building route for %s", expression)
 
 	request := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar", nil)
-	routeMatch := routeResult.Match(request, &mux.RouteMatch{Route: routeResult})
+	var routeMatch bool
+	reqHostMid.ServeHTTP(nil, request, func(w http.ResponseWriter, r *http.Request) {
+		routeMatch = routeResult.Match(r, &mux.RouteMatch{Route: routeResult})
+	})
 
 	assert.True(t, routeMatch, "Rule %s don't match.", expression)
 }
@@ -32,6 +37,7 @@ func TestParseTwoRules(t *testing.T) {
 	router := mux.NewRouter()
 	route := router.NewRoute()
 	serverRoute := &types.ServerRoute{Route: route}
+	reqHostMid := middlewares.NewReqHostMiddleware()
 	rules := &Rules{Route: serverRoute}
 
 	expression := "Host: Foo.Bar ; Path:/FOObar"
@@ -40,12 +46,17 @@ func TestParseTwoRules(t *testing.T) {
 	require.NoError(t, err, "Error while building route for %s.", expression)
 
 	request := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/foobar", nil)
-	routeMatch := routeResult.Match(request, &mux.RouteMatch{Route: routeResult})
+	var routeMatch bool
+	reqHostMid.ServeHTTP(nil, request, func(w http.ResponseWriter, r *http.Request) {
+		routeMatch = routeResult.Match(r, &mux.RouteMatch{Route: routeResult})
+	})
 
 	assert.False(t, routeMatch, "Rule %s don't match.", expression)
 
 	request = testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/FOObar", nil)
-	routeMatch = routeResult.Match(request, &mux.RouteMatch{Route: routeResult})
+	reqHostMid.ServeHTTP(nil, request, func(w http.ResponseWriter, r *http.Request) {
+		routeMatch = routeResult.Match(r, &mux.RouteMatch{Route: routeResult})
+	})
 
 	assert.True(t, routeMatch, "Rule %s don't match.", expression)
 }

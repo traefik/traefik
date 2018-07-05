@@ -3,7 +3,6 @@ package rules
 import (
 	"errors"
 	"fmt"
-	"net"
 	"net/http"
 	"reflect"
 	"sort"
@@ -13,6 +12,7 @@ import (
 	"github.com/containous/mux"
 	"github.com/containous/traefik/hostresolver"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/types"
 )
 
@@ -24,17 +24,20 @@ type Rules struct {
 }
 
 func (r *Rules) host(hosts ...string) *mux.Route {
-	return r.Route.Route.MatcherFunc(func(req *http.Request, route *mux.RouteMatch) bool {
-		reqHost, _, err := net.SplitHostPort(req.Host)
-		if err != nil {
-			reqHost = req.Host
-		}
+	for i, host := range hosts {
+		hosts[i] = types.CanonicalDomain(host)
+	}
 
+	return r.Route.Route.MatcherFunc(func(req *http.Request, route *mux.RouteMatch) bool {
+		reqHost, ok := middlewares.GetCannonHost(req.Context())
+		if !ok {
+			return false
+		}
 		if r.HostResolver != nil && r.HostResolver.CnameFlattening {
-			reqH, flatH := r.HostResolver.CNAMEFlatten(types.CanonicalDomain(reqHost))
+			reqH, flatH := r.HostResolver.CNAMEFlatten(reqHost)
 			for _, host := range hosts {
-				if types.CanonicalDomain(reqH) == types.CanonicalDomain(host) ||
-					types.CanonicalDomain(flatH) == types.CanonicalDomain(host) {
+				if types.CanonicalDomain(reqH) == host ||
+					types.CanonicalDomain(flatH) == host {
 					return true
 				}
 				log.Debugf("CNAMEFlattening: request %s which resolved to %s, is not matched to route %s", reqH, flatH, host)
@@ -43,7 +46,7 @@ func (r *Rules) host(hosts ...string) *mux.Route {
 		}
 
 		for _, host := range hosts {
-			if types.CanonicalDomain(reqHost) == types.CanonicalDomain(host) {
+			if reqHost == host {
 				return true
 			}
 		}
