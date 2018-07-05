@@ -386,9 +386,6 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 	}
 
 	if len(config.Certificates) != 0 {
-		// BuildNameToCertificate parses the CommonName and SubjectAlternateName fields
-		// in each certificate and populates the config.NameToCertificate map.
-
 		certMap := s.buildNameOrIPToCertificate(config.Certificates)
 
 		if s.entryPoints[entryPointName].CertificateStore != nil {
