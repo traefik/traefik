@@ -1,7 +1,6 @@
 package consulcatalog
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -155,14 +154,8 @@ func (p *Provider) watch(configurationChan chan<- types.ConfigMessage, stop chan
 	defer close(stopCh)
 	defer close(watchCh)
 
-	for {
-		select {
-		case <-stop:
-			return nil
-		case index, ok := <-watchCh:
-			if !ok {
-				return errors.New("consul service list nil")
-			}
+	go func() {
+		for index := range watchCh {
 			log.Debug("List of services changed")
 			nodes, err := p.getNodes(index)
 			if err != nil {
@@ -173,6 +166,13 @@ func (p *Provider) watch(configurationChan chan<- types.ConfigMessage, stop chan
 				ProviderName:  "consul_catalog",
 				Configuration: configuration,
 			}
+		}
+	}()
+
+	for {
+		select {
+		case <-stop:
+			return nil
 		case err := <-errorCh:
 			return err
 		}
