@@ -266,10 +266,11 @@ Here is the toml configuration we would like to store in the store :
   backend = "backend1"
   passHostHeader = true
   priority = 10
-  basicAuth = [
-    "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-    "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-  ]
+      [frontends.frontend2.auth.basic]
+      users = [
+        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+        "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+      ]
   entrypoints = ["https"] # overrides defaultEntryPoints
     [frontends.frontend2.routes.test_1]
     rule = "Host:{subdomain:[a-z]+}.localhost"
@@ -334,8 +335,8 @@ And there, the same dynamic configuration in a KV Store (using `prefix = "traefi
 | `/traefik/frontends/frontend2/backend`             | `backend1`                                    |
 | `/traefik/frontends/frontend2/passhostheader`      | `true`                                        |
 | `/traefik/frontends/frontend2/priority`            | `10`                                          |
-| `/traefik/frontends/frontend2/basicauth/0`         | `test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/`  |
-| `/traefik/frontends/frontend2/basicauth/1`         | `test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0` |
+| `/traefik/frontends/frontend2/auth/basic/users/0`  | `test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/`  |
+| `/traefik/frontends/frontend2/auth/basic/users/1`  | `test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0` |
 | `/traefik/frontends/frontend2/entrypoints`         | `http,https`                                  |
 | `/traefik/frontends/frontend2/routes/test_2/rule`  | `PathPrefix:/test`                            |
 
