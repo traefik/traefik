@@ -2,10 +2,12 @@ package tls
 
 import (
 	"crypto/tls"
+	"net"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
 	"github.com/patrickmn/go-cache"
 )
@@ -53,8 +55,11 @@ func (c CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) *
 	domainToCheck := strings.ToLower(strings.TrimSpace(clientHello.ServerName))
 	if len(domainToCheck) == 0 {
 		// If no ServerName is provided, Check for local IP address matches
-		connAddr := strings.Split(clientHello.Conn.LocalAddr().String(), ":")
-		domainToCheck = strings.TrimSpace(connAddr[0])
+		host, _, err := net.SplitHostPort(clientHello.Conn.LocalAddr().String())
+		if err != nil {
+			log.Debugf("Could not split host/port: %v", err)
+		}
+		domainToCheck = strings.TrimSpace(host)
 	}
 
 	if cert, ok := c.CertCache.Get(domainToCheck); ok {
