@@ -126,6 +126,9 @@ func TestStreamerListenerSuccessfulReturn(t *testing.T) {
 			t.Fatal("expected", event.ID, "got", c.msgEvents[i].ID)
 		}
 	}
+
+	dockerClient.AssertExpectations(t)
+	dockerClient.AssertNumberOfCalls(t, "Events", 1)
 }
 
 func TestStreamerListenerErrorReturn(t *testing.T) {
@@ -179,4 +182,87 @@ func TestStreamerListenerErrorReturn(t *testing.T) {
 	if listenRetVal == nil || listenRetVal != errEvent {
 		t.Fatal("expected", errEvent, "got", listenRetVal)
 	}
+
+	dockerClient.AssertExpectations(t)
+	dockerClient.AssertNumberOfCalls(t, "Events", 1)
+}
+
+func TestSwarmEventsCapabilitiesReturnTrue(t *testing.T) {
+	ctx := context.Background()
+
+	dockerClient := &mocks.APIClient{}
+
+	serverVersion := dockertypes.Version{
+		APIVersion: "1.29",
+	}
+
+	dockerClient.On(
+		"ServerVersion",
+		ctx,
+	).Once().Return(serverVersion, nil)
+
+	cap, err := swarmEventsCapabilities(ctx, dockerClient)
+	if err != nil {
+		t.Fatal("expected", nil, "got", err)
+	}
+
+	if !cap {
+		t.Fatal("expected", true, "got", cap)
+	}
+
+	dockerClient.AssertExpectations(t)
+	dockerClient.AssertNumberOfCalls(t, "ServerVersion", 1)
+}
+
+func TestSwarmEventsCapabilitiesReturnFalse(t *testing.T) {
+	ctx := context.Background()
+
+	dockerClient := &mocks.APIClient{}
+
+	serverVersion := dockertypes.Version{
+		APIVersion: "1.28",
+	}
+
+	dockerClient.On(
+		"ServerVersion",
+		ctx,
+	).Once().Return(serverVersion, nil)
+
+	cap, err := swarmEventsCapabilities(ctx, dockerClient)
+	if err != nil {
+		t.Fatal("expected", nil, "got", err)
+	}
+
+	if cap {
+		t.Fatal("expected", false, "got", cap)
+	}
+
+	dockerClient.AssertExpectations(t)
+	dockerClient.AssertNumberOfCalls(t, "ServerVersion", 1)
+}
+
+func TestSwarmEventsCapabilitiesReturnError(t *testing.T) {
+	ctx := context.Background()
+
+	dockerClient := &mocks.APIClient{}
+
+	serverVersion := dockertypes.Version{}
+
+	serverVersionErr := fmt.Errorf("All your error are belong to us")
+	dockerClient.On(
+		"ServerVersion",
+		ctx,
+	).Once().Return(serverVersion, serverVersionErr)
+
+	cap, err := swarmEventsCapabilities(ctx, dockerClient)
+	if err == nil {
+		t.Fatal("expected", serverVersionErr, "got", nil)
+	}
+
+	if cap {
+		t.Fatal("expected", false, "got", cap)
+	}
+
+	dockerClient.AssertExpectations(t)
+	dockerClient.AssertNumberOfCalls(t, "ServerVersion", 1)
 }

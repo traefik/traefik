@@ -40,16 +40,21 @@ type listener interface {
 	Listen(context.Context, chan<- types.ConfigMessage, func(context.Context, eventtypes.Message, chan<- types.ConfigMessage)) error
 }
 
+func newTickerListener() *tickerListener {
+	return &tickerListener{
+		ticker: time.NewTicker(SwarmDefaultWatchTime),
+	}
+}
+
 type tickerListener struct {
 	ticker *time.Ticker
 }
 
+// Listen creates a ticker that polls periodically from the Docker Swarm daemon.
+// Refreshes the service backend list on every poll.
+// Default poll timer value is defined by the SwarmDefaultWatchTime constant.
 func (t *tickerListener) Listen(ctx context.Context, configurationChan chan<- types.ConfigMessage, callbackFunc func(context.Context, eventtypes.Message, chan<- types.ConfigMessage)) error {
 	log.Debug("Docker events listener: Starting up the Ticker listener...")
-
-	if t.ticker == nil {
-		t.ticker = time.NewTicker(SwarmDefaultWatchTime)
-	}
 
 	for {
 		select {
@@ -61,10 +66,18 @@ func (t *tickerListener) Listen(ctx context.Context, configurationChan chan<- ty
 	}
 }
 
+func newStreamerListener(dockerClient client.APIClient) *streamerListener {
+	return &streamerListener{
+		dockerClient: dockerClient,
+	}
+}
+
 type streamerListener struct {
 	dockerClient client.APIClient
 }
 
+// Listen creates a live event streamer with the Docker Swarm daemon.
+// Refreshes the service backend list on every service swarm event.
 func (s *streamerListener) Listen(ctx context.Context, configurationChan chan<- types.ConfigMessage, callbackFunc func(context.Context, eventtypes.Message, chan<- types.ConfigMessage)) error {
 	log.Debug("Docker events listener: Starting up the Streamer listener...")
 
@@ -232,18 +245,38 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				if p.SwarmMode {
 					errChan := make(chan error)
 					pool.Go(func(stop chan bool) {
-						//watchCtx, cancel := context.WithCancel(ctx)
-						//defer cancel()
-
 						defer close(errChan)
 
-						// TODO: Create listener
+						watchCtx, cancel := context.WithCancel(ctx)
+						defer cancel()
+
+						swarmEventsCap, err := swarmEventsCapabilities(watchCtx, dockerClient)
+						if err != nil {
+							log.Errorf("Unable to retrieve Docker Swarm event listener capabilities, error %s", err.Error())
+
+							errChan <- err
+							return
+						}
+
+						var l listener
+						if swarmEventsCap {
+							l = newStreamerListener(dockerClient)
+						} else {
+							l = newTickerListener()
+						}
+
+						if err := l.Listen(watchCtx, configurationChan, p.eventCallback); err != nil {
+							log.Errorf("Error while listening/polling Docker Swarm events, error %s", err.Error())
+
+							errChan <- err
+							return
+						}
 					})
+
 					if err, ok := <-errChan; ok {
 						return err
 					}
 					// channel closed
-
 				} else {
 					watchCtx, cancel := context.WithCancel(ctx)
 					defer cancel()
@@ -512,14 +545,13 @@ func listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerD
 		return nil, err
 	}
 
-	serverVersion, err := dockerClient.ServerVersion(ctx)
+	swarmEventsCap, err := swarmEventsCapabilities(ctx, dockerClient)
 	if err != nil {
 		return nil, err
 	}
 
 	networkListArgs := filters.NewArgs()
-	// https://docs.docker.com/engine/api/v1.29/#tag/Network (Docker 17.06)
-	if versions.GreaterThanOrEqualTo(serverVersion.APIVersion, "1.29") {
+	if swarmEventsCap {
 		networkListArgs.Add("scope", "swarm")
 	} else {
 		networkListArgs.Add("driver", "overlay")
@@ -699,4 +731,20 @@ func getService(ctx context.Context, dockerClient client.APIClient, serviceID st
 	}
 
 	return services[0], nil
+}
+
+func swarmEventsCapabilities(ctx context.Context, dockerClient client.APIClient) (bool, error) {
+	res := false
+
+	serverVersion, err := dockerClient.ServerVersion(ctx)
+	if err != nil {
+		return res, err
+	}
+
+	// https://docs.docker.com/engine/api/v1.29/#tag/Network (Docker 17.06)
+	if versions.GreaterThanOrEqualTo(serverVersion.APIVersion, "1.29") {
+		res = true
+	}
+
+	return res, nil
 }
