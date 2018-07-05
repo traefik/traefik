@@ -397,7 +397,7 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 	}
 
 	// Remove certs from the TLS config object
-	config.Certificates = make([]tls.Certificate, 0)
+	config.Certificates = []tls.Certificate{}
 
 	// Set the minimum TLS version if set in the config TOML
 	if minConst, exists := traefiktls.MinVersion[s.entryPoints[entryPointName].Configuration.TLS.MinVersion]; exists {
