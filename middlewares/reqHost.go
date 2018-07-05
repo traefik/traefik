@@ -11,13 +11,15 @@ import (
 
 var reqHostKey struct{}
 
-type reqHostMiddleware struct{}
+// ReqHostMiddleware is the struct for the middleware that adds the CanonicalDomain of the requst Host into a context for later use.
+type ReqHostMiddleware struct{}
 
-func NewReqHostMiddleware() *reqHostMiddleware {
-	return &reqHostMiddleware{}
+// NewReqHostMiddleware is a middleware that adds the CanonicalDomain of the requst Host into a context for later use.
+func NewReqHostMiddleware() *ReqHostMiddleware {
+	return &ReqHostMiddleware{}
 }
 
-func (rhm *reqHostMiddleware) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+func (rhm *ReqHostMiddleware) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	reqHost := r.Host
 	if strings.IndexByte(reqHost, ':') >= 0 {
 		var err error
@@ -32,7 +34,7 @@ func (rhm *reqHostMiddleware) ServeHTTP(rw http.ResponseWriter, r *http.Request,
 	}
 }
 
-// Pluck the cannonized host key from the requst of a context that was put through the middleware
+// GetCannonHost plucks the cannonized host key from the requst of a context that was put through the middleware
 func GetCannonHost(ctx context.Context) (string, bool) {
 	val, ok := ctx.Value(reqHostKey).(string)
 	return val, ok
