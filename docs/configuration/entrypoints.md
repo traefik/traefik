@@ -111,6 +111,9 @@ TLS:/my/path/foo.cert,/my/path/foo.key;/my/path/goo.cert,/my/path/goo.key;/my/pa
 TLS
 TLS.MinVersion:VersionTLS11
 TLS.CipherSuites:TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384
+TLS.SniStrict:true
+TLS.DefaultCertificate.Cert:path/to/foo.cert
+TLS.DefaultCertificate.Key:path/to/foo.key
 CA:car
 CA.Optional:true
 Redirect.EntryPoint:https
