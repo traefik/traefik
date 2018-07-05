@@ -374,7 +374,7 @@ func (p *Provider) hasDeprecatedBasicAuth(rootPath string) bool {
 	return len(p.getList(rootPath, pathFrontendBasicAuth)) > 0
 }
 
-// GetAuth Create auth from labels
+// GetAuth Create auth from path
 func (p *Provider) getAuth(rootPath string) *types.Auth {
 	hasDeprecatedBasicAuth := p.hasDeprecatedBasicAuth(rootPath)
 	if len(p.getList(rootPath, pathFrontendAuth)) > 0 || hasDeprecatedBasicAuth {
@@ -395,7 +395,7 @@ func (p *Provider) getAuth(rootPath string) *types.Auth {
 	return nil
 }
 
-// getAuthBasic Create git sBasic Auth from labels
+// getAuthBasic Create Basic Auth from path
 func (p *Provider) getAuthBasic(rootPath string) *types.Basic {
 	basicAuth := &types.Basic{
 		UsersFile: p.get("", rootPath, pathFrontendAuthBasicUsersFile),
@@ -412,7 +412,7 @@ func (p *Provider) getAuthBasic(rootPath string) *types.Basic {
 	return basicAuth
 }
 
-// getAuthDigest Create Digest Auth from labels
+// getAuthDigest Create Digest Auth from path
 func (p *Provider) getAuthDigest(rootPath string) *types.Digest {
 	return &types.Digest{
 		Users:     p.getList(rootPath, pathFrontendAuthDigestUsers),
@@ -420,7 +420,7 @@ func (p *Provider) getAuthDigest(rootPath string) *types.Digest {
 	}
 }
 
-// getAuthForward Create Forward Auth from labels
+// getAuthForward Create Forward Auth from path
 func (p *Provider) getAuthForward(rootPath string) *types.Forward {
 	forwardAuth := &types.Forward{
 		Address:            p.get("", rootPath, pathFrontendAuthForwardAddress),
