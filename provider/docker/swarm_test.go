@@ -84,7 +84,7 @@ func TestListTasks(t *testing.T) {
 			t.Parallel()
 			dockerData := parseService(test.service, test.networks)
 			dockerClient := &fakeTasksClient{tasks: test.tasks}
-			taskDockerData, _ := listTasks(context.Background(), dockerClient, test.service.ID, dockerData, test.networks, test.isGlobalSVC)
+			taskDockerData, _ := listAndParseTasks(context.Background(), dockerClient, test.service.ID, dockerData, test.networks, test.isGlobalSVC)
 
 			if len(test.expectedTasks) != len(taskDockerData) {
 				t.Errorf("expected tasks %v, got %v", spew.Sdump(test.expectedTasks), spew.Sdump(taskDockerData))

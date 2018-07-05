@@ -14,7 +14,6 @@ import (
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
-	"github.com/containous/traefik/provider/docker/event"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
@@ -32,115 +31,66 @@ import (
 const (
 	// SwarmAPIVersion is a constant holding the version of the Provider API traefik will use
 	SwarmAPIVersion = "1.24"
+
+	// SwarmDefaultWatchTime is the duration of the interval when polling docker
+	SwarmDefaultWatchTime = 15 * time.Second
 )
 
-// EventCallback is a callback that the event listener executes on every incoming event.
-type EventCallback struct {
-	ListAndUpdateServicesFunc func() error
-	ListTasksFunc             func(eventtypes.Message) ([]swarmtypes.Task, error)
-	GetServiceFunc            func(string) (swarmtypes.Service, error)
-	SleepFunc                 func()
-	ExecutionFinishedChan     chan bool
+type listener interface {
+	Listen(context.Context, chan<- types.ConfigMessage, func(context.Context, eventtypes.Message, chan<- types.ConfigMessage)) error
 }
 
-// Execute executes the callback logic.
-func (c *EventCallback) Execute(msg eventtypes.Message) {
-	log.Debugf("Docker events callback function executed with payload: %#v", msg)
+type tickerListener struct {
+	ticker *time.Ticker
+}
 
-	if msg.Actor.ID == "" {
-		c.ListAndUpdateServicesFunc()
+func (t *tickerListener) Listen(ctx context.Context, configurationChan chan<- types.ConfigMessage, callbackFunc func(context.Context, eventtypes.Message, chan<- types.ConfigMessage)) error {
+	log.Debug("Docker events listener: Starting up the Ticker listener...")
 
-		return
+	if t.ticker == nil {
+		t.ticker = time.NewTicker(SwarmDefaultWatchTime)
 	}
 
-	service, err := c.GetServiceFunc(msg.Actor.ID)
-	if err != nil {
-		// TODO: How should we treat this kind of an error?
-		return
-	}
-
-	if service.Spec.Mode.Global == nil && service.Spec.Mode.Replicated == nil {
-		log.Error("Service has no specified mode! This should never happen...")
-
-		return
-	}
-
-	if service.Spec.Mode.Global != nil {
-		// TODO: For now we just execute the SleepFunc() if it's a global service,
-		// since we don't know how many tasks should be expected (unless we list the nodes, etc. - but there might also be a race condition).
-		log.Info("Service is in global mode. Executing the SleepFunc() and crossing our fingers we won't run into any race conditions...")
-		c.SleepFunc()
-	}
-
-	taskList, err := c.ListTasksFunc(msg)
-	if err != nil {
-		// TODO: How should we treat this kind of an error?
-		return
-	}
-
-	retry := false
-	// Retry if there are no tasks found.
-	if len(taskList) == 0 {
-		log.Infof("No tasks for service %s found! Retrying...", service.ID)
-
-		retry = true
-	}
-
-	if service.Spec.Mode.Replicated != nil {
-		if service.Spec.Mode.Replicated.Replicas == nil {
-			log.Error("Service is in replicated mode, but no replicas are defined! This should never happen...")
-
-			return
-		}
-
-		// Retry if the service is in replicated mode and the list of tasks is shorter than the number of replicas.
-		// We don't need to retry if the number of services is longer than the number of replicas. That means the service is being scaled in.
-		numberOfReplicas := int(*service.Spec.Mode.Replicated.Replicas)
-		if len(taskList) < numberOfReplicas {
-			log.Infof("Task list length for service %s is %d, expected it to be %d. Retrying...", service.ID, len(taskList), numberOfReplicas)
-
-			retry = true
+	for {
+		select {
+		case <-t.ticker.C:
+			go callbackFunc(ctx, eventtypes.Message{}, configurationChan)
+		case <-ctx.Done():
+			return nil
 		}
 	}
+}
 
-TaskLoop:
-	for _, task := range taskList {
-		log.Debugf("State of task %s: %s", task.ID, task.Status.State)
+type streamerListener struct {
+	dockerClient client.APIClient
+}
 
-		if task.Status.State != swarmtypes.TaskStateRunning {
-			switch task.Status.State {
-			case
-				swarmtypes.TaskStateNew,
-				swarmtypes.TaskStatePending,
-				swarmtypes.TaskStateAssigned,
-				swarmtypes.TaskStateAccepted,
-				swarmtypes.TaskStatePreparing,
-				swarmtypes.TaskStateStarting:
-				retry = true
+func (s *streamerListener) Listen(ctx context.Context, configurationChan chan<- types.ConfigMessage, callbackFunc func(context.Context, eventtypes.Message, chan<- types.ConfigMessage)) error {
+	log.Debug("Docker events listener: Starting up the Streamer listener...")
 
-				break TaskLoop
-			}
+	eventsMsgChan, eventsErrChan := s.dockerClient.Events(
+		ctx,
+		dockertypes.EventsOptions{
+			Filters: filters.NewArgs(
+				filters.Arg("scope", "swarm"),
+				filters.Arg("type", "service"),
+			),
+		},
+	)
+
+	for {
+		select {
+		case evt := <-eventsMsgChan:
+			log.Debugf("Docker events Streamer listener: Incoming event: %#v", evt)
+
+			go callbackFunc(ctx, evt, configurationChan)
+		case evtErr := <-eventsErrChan:
+			log.Errorf("Docker events listener: Events error, %s", evtErr.Error())
+
+			return evtErr
+		case <-ctx.Done():
+			return nil
 		}
-	}
-
-	if !retry {
-		log.Debug("Callback task state check: Updating routing configuration if needed...")
-
-		c.ListAndUpdateServicesFunc()
-
-		if c.ExecutionFinishedChan != nil {
-			c.ExecutionFinishedChan <- true
-		}
-	} else {
-		// We should only reach this place when new tasks are being created.
-		// Therefore, sleeping here shouldn't affect the graceful scale down.
-		log.Debug("Callback task state check: Retrying in 1 second...")
-
-		// Execute the SleepFunc() between retries.
-		c.SleepFunc()
-
-		log.Debug("Callback task state check: Retrying...")
-		go c.Execute(msg)
 	}
 }
 
@@ -157,6 +107,7 @@ type Provider struct {
 	SwarmMode             bool             `description:"Use Docker on Swarm Mode" export:"true"`
 	EventHandlers         []Event          `description:"Event handlers with callback support" export:"true"`
 	Network               string           `description:"Default Docker network used" export:"true"`
+	dockerClient          client.APIClient
 }
 
 // Init the provider
@@ -193,6 +144,10 @@ type networkData struct {
 }
 
 func (p *Provider) createClient() (client.APIClient, error) {
+	if p.dockerClient != nil {
+		return p.dockerClient, nil
+	}
+
 	var httpClient *http.Client
 
 	if p.TLS != nil {
@@ -226,7 +181,10 @@ func (p *Provider) createClient() (client.APIClient, error) {
 		apiVersion = DockerAPIVersion
 	}
 
-	return client.NewClient(p.Endpoint, apiVersion, httpClient, httpHeaders)
+	var err error
+	p.dockerClient, err = client.NewClient(p.Endpoint, apiVersion, httpClient, httpHeaders)
+
+	return p.dockerClient, err
 }
 
 // Provide allows the docker provider to provide configurations to traefik
@@ -274,90 +232,12 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				if p.SwarmMode {
 					errChan := make(chan error)
 					pool.Go(func(stop chan bool) {
-						watchCtx, cancel := context.WithCancel(ctx)
-						defer cancel()
+						//watchCtx, cancel := context.WithCancel(ctx)
+						//defer cancel()
 
 						defer close(errChan)
 
-						callback := &EventCallback{
-							ListAndUpdateServicesFunc: func() error {
-								err := p.listAndUpdateServices(watchCtx, dockerClient, configurationChan)
-								if err != nil {
-									log.Errorf("Failed to list services for docker, error %s", err)
-
-									return err
-								}
-
-								return nil
-							},
-							ListTasksFunc: func(msg eventtypes.Message) ([]swarmtypes.Task, error) {
-								taskList, err := dockerClient.TaskList(
-									watchCtx,
-									dockertypes.TaskListOptions{
-										Filters: filters.NewArgs(
-											filters.Arg("service", msg.Actor.ID),
-											filters.Arg("desired-state", "running"),
-										),
-									},
-								)
-								if err != nil {
-									log.Errorf("Failed to list tasks for service %s, error %s", msg.Actor.ID, err)
-
-									return []swarmtypes.Task{}, err
-								}
-
-								return taskList, nil
-							},
-							GetServiceFunc: func(id string) (swarmtypes.Service, error) {
-								services, err := dockerClient.ServiceList(
-									watchCtx,
-									dockertypes.ServiceListOptions{
-										Filters: filters.NewArgs(
-											filters.Arg("id", id),
-										),
-									},
-								)
-								if err != nil {
-									log.Errorf("Failed to list services, error %s", err.Error())
-
-									return swarmtypes.Service{}, err
-								}
-
-								if len(services) != 1 {
-									err = fmt.Errorf("Failed to find service with id %s", id)
-									log.Error(err.Error())
-
-									return swarmtypes.Service{}, err
-								}
-
-								return services[0], nil
-							},
-							SleepFunc: func() {
-								// Sleep for 1 second.
-								time.Sleep(1 * time.Second)
-							},
-						}
-
-						listener, err := event.NewListener(
-							dockerClient,
-							dockertypes.EventsOptions{
-								Filters: filters.NewArgs(
-									filters.Arg("scope", "swarm"),
-									filters.Arg("type", "service"),
-								),
-							},
-							stop,
-							errChan,
-							callback,
-						)
-						if err != nil {
-							log.Errorf("Unable to create a new event listener, error %s", err.Error())
-							errChan <- err
-							return
-						}
-
-						// Blocking.
-						listener.Start()
+						// TODO: Create listener
 					})
 					if err, ok := <-errChan; ok {
 						return err
@@ -443,6 +323,113 @@ func (p *Provider) listAndUpdateServices(ctx context.Context, dockerClient clien
 	}
 
 	return nil
+}
+
+func (p *Provider) eventCallback(ctx context.Context, msg eventtypes.Message, configurationChan chan<- types.ConfigMessage) {
+	dockerClient, err := p.createClient()
+	if err != nil {
+		return
+	}
+
+	log.Debugf("Docker event callback function executed with payload: %#v", msg)
+
+	if msg.Actor.ID == "" {
+		if err := p.listAndUpdateServices(ctx, dockerClient, configurationChan); err != nil {
+			log.Error(err.Error())
+		}
+
+		return
+	}
+
+	service, err := getService(ctx, dockerClient, msg.Actor.ID)
+	if err != nil {
+		// TODO: How should we treat this kind of an error?
+		log.Error(err.Error())
+
+		return
+	}
+
+	if service.Spec.Mode.Global == nil && service.Spec.Mode.Replicated == nil {
+		log.Error("Service has no specified mode! This should never happen...")
+
+		return
+	}
+
+	if service.Spec.Mode.Global != nil {
+		// TODO: For now we just sleep for 1 second if it's a global service,
+		// since we don't know how many tasks should be expected (unless we list the nodes, etc. - but there might also be a race condition).
+		log.Info("Service is in global mode. Sleep for 1 second and cross our fingers we won't run into any race conditions...")
+		time.Sleep(1 * time.Second)
+	}
+
+	taskList, err := listTasks(ctx, dockerClient, service.ID, "running")
+	if err != nil {
+		// TODO: How should we treat this kind of an error?
+		log.Error(err.Error())
+
+		return
+	}
+
+	retry := false
+	// Retry if there are no tasks found.
+	if len(taskList) == 0 {
+		log.Infof("No tasks for service %s found! Retrying...", service.ID)
+
+		retry = true
+	}
+
+	if service.Spec.Mode.Replicated != nil {
+		if service.Spec.Mode.Replicated.Replicas == nil {
+			log.Error("Service is in replicated mode, but no replicas are defined! This should never happen...")
+
+			return
+		}
+
+		// Retry if the service is in replicated mode and the list of tasks is shorter than the number of replicas.
+		// We don't need to retry if the number of services is longer than the number of replicas. That means the service is being scaled in.
+		numberOfReplicas := int(*service.Spec.Mode.Replicated.Replicas)
+		if len(taskList) < numberOfReplicas {
+			log.Infof("Task list length for service %s is %d, expected it to be %d. Retrying...", service.ID, len(taskList), numberOfReplicas)
+
+			retry = true
+		}
+	}
+
+TaskLoop:
+	for _, task := range taskList {
+		log.Debugf("State of task %s: %s", task.ID, task.Status.State)
+
+		if task.Status.State != swarmtypes.TaskStateRunning {
+			switch task.Status.State {
+			case
+				swarmtypes.TaskStateNew,
+				swarmtypes.TaskStatePending,
+				swarmtypes.TaskStateAssigned,
+				swarmtypes.TaskStateAccepted,
+				swarmtypes.TaskStatePreparing,
+				swarmtypes.TaskStateStarting:
+				retry = true
+
+				break TaskLoop
+			}
+		}
+	}
+
+	if !retry {
+		log.Debug("Event callback: Updating routing configuration if needed...")
+
+		p.listAndUpdateServices(ctx, dockerClient, configurationChan)
+	} else {
+		// We should only reach this place when new tasks are being created.
+		// Therefore, sleeping here shouldn't affect the graceful scale down.
+		log.Debug("Callback task state check: Retrying in 1 second...")
+
+		// Sleep for 1 second between retries.
+		time.Sleep(1 * time.Second)
+
+		log.Debug("Event callback: Retrying...")
+		go p.eventCallback(ctx, msg, configurationChan)
+	}
 }
 
 func listContainers(ctx context.Context, dockerClient client.ContainerAPIClient) ([]dockerData, error) {
@@ -564,7 +551,7 @@ func listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerD
 			}
 		} else {
 			isGlobalSvc := service.Spec.Mode.Global != nil
-			dockerDataListTasks, err = listTasks(ctx, dockerClient, service.ID, dData, networkMap, isGlobalSvc)
+			dockerDataListTasks, err = listAndParseTasks(ctx, dockerClient, service.ID, dData, networkMap, isGlobalSvc)
 			if err != nil {
 				log.Warnf("No tasks found for service %s, error %s", service.Spec.Name, err.Error())
 			} else {
@@ -615,13 +602,21 @@ func parseService(service swarmtypes.Service, networkMap map[string]*dockertypes
 	return dData
 }
 
-func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID string,
-	serviceDockerData dockerData, networkMap map[string]*dockertypes.NetworkResource, isGlobalSvc bool) ([]dockerData, error) {
-	serviceIDFilter := filters.NewArgs()
-	serviceIDFilter.Add("service", serviceID)
-	serviceIDFilter.Add("desired-state", "running")
+func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID, desiredState string) ([]swarmtypes.Task, error) {
+	return dockerClient.TaskList(
+		ctx,
+		dockertypes.TaskListOptions{
+			Filters: filters.NewArgs(
+				filters.Arg("service", serviceID),
+				filters.Arg("desired-state", desiredState),
+			),
+		},
+	)
+}
 
-	taskList, err := dockerClient.TaskList(ctx, dockertypes.TaskListOptions{Filters: serviceIDFilter})
+func listAndParseTasks(ctx context.Context, dockerClient client.APIClient, serviceID string,
+	serviceDockerData dockerData, networkMap map[string]*dockertypes.NetworkResource, isGlobalSvc bool) ([]dockerData, error) {
+	taskList, err := listTasks(ctx, dockerClient, serviceID, "running")
 	if err != nil {
 		return nil, err
 	}
@@ -684,4 +679,24 @@ func parseTasks(task swarmtypes.Task, serviceDockerData dockerData,
 		}
 	}
 	return dData
+}
+
+func getService(ctx context.Context, dockerClient client.APIClient, serviceID string) (swarmtypes.Service, error) {
+	services, err := dockerClient.ServiceList(
+		ctx,
+		dockertypes.ServiceListOptions{
+			Filters: filters.NewArgs(
+				filters.Arg("id", serviceID),
+			),
+		},
+	)
+	if err != nil {
+		return swarmtypes.Service{}, err
+	}
+
+	if len(services) != 1 {
+		return swarmtypes.Service{}, fmt.Errorf("Failed to find service with id %s", serviceID)
+	}
+
+	return services[0], nil
 }
