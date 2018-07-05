@@ -164,7 +164,19 @@ Labels can be used on task containers to override default behavior:
 | `traefik.backend.loadbalancer.sticky=true`                 | Enable backend sticky sessions (DEPRECATED)                                                                                                                                                                               |
 | `traefik.backend.maxconn.amount=10`                        | Set a maximum number of connections to the backend.<br>Must be used in conjunction with the below label to take effect.                                                                                                   |
 | `traefik.backend.maxconn.extractorfunc=client.ip`          | Set the function to be used against the request to determine what to limit maximum connections to the backend by.<br>Must be used in conjunction with the above label to take effect.                                     |
-| `traefik.frontend.auth.basic=EXPR`                         | Sets basic authentication for that frontend in CSV format: `User:Hash,User:Hash`                                                                                                                                          |
+| `traefik.frontend.auth.basic=EXPR`                         | Sets basic authentication to this frontend in CSV format: `User:Hash,User:Hash`(DEPRECATED).                                                                                                                              |
+| `traefik.frontend.auth.basic.users=EXPR`                   | Sets basic authentication to this frontend in CSV format: `User:Hash,User:Hash`.                                                                                                                                          |
+| `traefik.frontend.auth.basic.usersfile=/path/.htpasswd`    | Sets basic authentication with an external file; if users and usersFile are provided, both are merged, with external file contents having precedence.                                                                     |
+| `traefik.frontend.auth.digest.users=EXPR`                  | Sets digest authentication to this frontend in CSV format: `User:Realm:Hash,User:Realm:Hash`.                                                                                                                             |
+| `traefik.frontend.auth.digest.usersfile=/path/.htdigest`   | Sets digest authentication with an external file; if users and usersFile are provided, both are merged, with external file contents having precedence.                                                                    |
+| `traefik.frontend.auth.forward.address=https://example.com`| The URL of the authentication server.                                                                                                                                                                                     |
+| `traefik.frontend.auth.forward.tls.ca=/path/ca.pem`        | Set the Certificate Authority (CA) for the TLS connection with the authentication server.                                                                                                                                 |
+| `traefik.frontend.auth.forward.tls.caOptional=true`        | Check the certificates if present but do not force to be signed by a specified Certificate Authority (CA).                                                                                                                |
+| `traefik.frontend.auth.forward.tls.cert=/path/server.pem`  | Set the Certificate for the TLS connection with the authentication server.                                                                                                                                                |
+| `traefik.frontend.auth.forward.tls.insecureSkipVerify=true`| If set to true invalid SSL certificates are accepted.                                                                                                                                                                     |
+| `traefik.frontend.auth.forward.tls.key=/path/server.key`   | Set the Certificate for the TLS connection with the authentication server.                                                                                                                                                |
+| `traefik.frontend.auth.forward.trustForwardHeader=true`    | Trust X-Forwarded-* headers.                                                                                                                                                                                              |
+| `traefik.frontend.auth.headerField=X-WebAuth-User`         | Pass Authenticated user to application via headers.                                                                                                                                                                       |
 | `traefik.frontend.entryPoints=http,https`                  | Assign this frontend to entry points `http` and `https`.<br>Overrides `defaultEntryPoints`                                                                                                                                |
 | `traefik.frontend.errors.<name>.backend=NAME`              | See [custom error pages](/configuration/commons/#custom-error-pages) section.                                                                                                                                             |
 | `traefik.frontend.errors.<name>.query=PATH`                | See [custom error pages](/configuration/commons/#custom-error-pages) section.                                                                                                                                             |
@@ -176,9 +188,9 @@ Labels can be used on task containers to override default behavior:
 | `traefik.frontend.rateLimit.rateSet.<name>.period=6`       | See [rate limiting](/configuration/commons/#rate-limiting) section.                                                                                                                                                       |
 | `traefik.frontend.rateLimit.rateSet.<name>.average=6`      | See [rate limiting](/configuration/commons/#rate-limiting) section.                                                                                                                                                       |
 | `traefik.frontend.rateLimit.rateSet.<name>.burst=6`        | See [rate limiting](/configuration/commons/#rate-limiting) section.                                                                                                                                                       |
-| `traefik.frontend.redirect.entryPoint=https`               | Enables Redirect to another entryPoint for that frontend (e.g. HTTPS)                                                                                                                                                     |
-| `traefik.frontend.redirect.regex=^http://localhost/(.*)`   | Redirect to another URL for that frontend.<br>Must be set with `traefik.frontend.redirect.replacement`.                                                                                                                   |
-| `traefik.frontend.redirect.replacement=http://mydomain/$1` | Redirect to another URL for that frontend.<br>Must be set with `traefik.frontend.redirect.regex`.                                                                                                                         |
+| `traefik.frontend.redirect.entryPoint=https`               | Enables Redirect to another entryPoint to this frontend (e.g. HTTPS)                                                                                                                                                      |
+| `traefik.frontend.redirect.regex=^http://localhost/(.*)`   | Redirect to another URL to this frontend.<br>Must be set with `traefik.frontend.redirect.replacement`.                                                                                                                    |
+| `traefik.frontend.redirect.replacement=http://mydomain/$1` | Redirect to another URL to this frontend.<br>Must be set with `traefik.frontend.redirect.regex`.                                                                                                                          |
 | `traefik.frontend.redirect.permanent=true`                 | Return 301 instead of 302.                                                                                                                                                                                                |
 | `traefik.frontend.rule=EXPR`                               | Override the default frontend rule. Default: `Host:{service_name}.{stack_name}.{domain}`.                                                                                                                                 |
 | `traefik.frontend.whiteList.sourceRange=RANGE`             | List of IP-Ranges which are allowed to access.<br>An unset or empty list allows all Source-IPs to access.<br>If one of the Net-Specifications are invalid, the whole list is invalid and allows all Source-IPs to access. |
@@ -224,32 +236,44 @@ You can define as many segments as ports exposed in a container.
 
 Segment labels override the default behavior.
 
-| Label                                                                     | Description                                                 |
-|---------------------------------------------------------------------------|-------------------------------------------------------------|
-| `traefik.<segment_name>.backend=BACKEND`                                  | Same as `traefik.backend`                                   |
-| `traefik.<segment_name>.domain=DOMAIN`                                    | Same as `traefik.domain`                                    |
-| `traefik.<segment_name>.port=PORT`                                        | Same as `traefik.port`                                      |
-| `traefik.<segment_name>.protocol=http`                                    | Same as `traefik.protocol`                                  |
-| `traefik.<segment_name>.weight=10`                                        | Same as `traefik.weight`                                    |
-| `traefik.<segment_name>.frontend.auth.basic=EXPR`                         | Same as `traefik.frontend.auth.basic`                       |
-| `traefik.<segment_name>.frontend.entryPoints=https`                       | Same as `traefik.frontend.entryPoints`                      |
-| `traefik.<segment_name>.frontend.errors.<name>.backend=NAME`              | Same as `traefik.frontend.errors.<name>.backend`            |
-| `traefik.<segment_name>.frontend.errors.<name>.query=PATH`                | Same as `traefik.frontend.errors.<name>.query`              |
-| `traefik.<segment_name>.frontend.errors.<name>.status=RANGE`              | Same as `traefik.frontend.errors.<name>.status`             |
-| `traefik.<segment_name>.frontend.passHostHeader=true`                     | Same as `traefik.frontend.passHostHeader`                   |
-| `traefik.<segment_name>.frontend.passTLSCert=true`                        | Same as `traefik.frontend.passTLSCert`                      |
-| `traefik.<segment_name>.frontend.priority=10`                             | Same as `traefik.frontend.priority`                         |
-| `traefik.<segment_name>.frontend.rateLimit.extractorFunc=EXP`             | Same as `traefik.frontend.rateLimit.extractorFunc`          |
-| `traefik.<segment_name>.frontend.rateLimit.rateSet.<name>.period=6`       | Same as `traefik.frontend.rateLimit.rateSet.<name>.period`  |
-| `traefik.<segment_name>.frontend.rateLimit.rateSet.<name>.average=6`      | Same as `traefik.frontend.rateLimit.rateSet.<name>.average` |
-| `traefik.<segment_name>.frontend.rateLimit.rateSet.<name>.burst=6`        | Same as `traefik.frontend.rateLimit.rateSet.<name>.burst`   |
-| `traefik.<segment_name>.frontend.redirect.entryPoint=https`               | Same as `traefik.frontend.redirect.entryPoint`              |
-| `traefik.<segment_name>.frontend.redirect.regex=^http://localhost/(.*)`   | Same as `traefik.frontend.redirect.regex`                   |
-| `traefik.<segment_name>.frontend.redirect.replacement=http://mydomain/$1` | Same as `traefik.frontend.redirect.replacement`             |
-| `traefik.<segment_name>.frontend.redirect.permanent=true`                 | Same as `traefik.frontend.redirect.permanent`               |
-| `traefik.<segment_name>.frontend.rule=EXP`                                | Same as `traefik.frontend.rule`                             |
-| `traefik.<segment_name>.frontend.whiteList.sourceRange=RANGE`             | Same as `traefik.frontend.whiteList.sourceRange`            |
-| `traefik.<segment_name>.frontend.whiteList.useXForwardedFor=true`         | Same as `traefik.frontend.whiteList.useXForwardedFor`       |
+| Label                                                                     | Description                                                   |
+|---------------------------------------------------------------------------|-------------------------------------------------------------  |
+| `traefik.<segment_name>.backend=BACKEND`                                  | Same as `traefik.backend`                                     |
+| `traefik.<segment_name>.domain=DOMAIN`                                    | Same as `traefik.domain`                                      |
+| `traefik.<segment_name>.port=PORT`                                        | Same as `traefik.port`                                        |
+| `traefik.<segment_name>.protocol=http`                                    | Same as `traefik.protocol`                                    |
+| `traefik.<segment_name>.weight=10`                                        | Same as `traefik.weight`                                      |
+| `traefik.<segment_name>.frontend.auth.basic=EXPR`                         | Same as `traefik.frontend.auth.basic`                         |
+| `traefik.<segment_name>.frontend.auth.basic.users=EXPR`                   | Same as `traefik.frontend.auth.basic.users`                   |
+| `traefik.<segment_name>.frontend.auth.basic.usersfile=/path/.htpasswd`    | Same as `traefik.frontend.auth.basic.usersfile`               |
+| `traefik.<segment_name>.frontend.auth.digest.users=EXPR`                  | Same as `traefik.frontend.auth.digest.users`                  |
+| `traefik.<segment_name>.frontend.auth.digest.usersfile=/path/.htdigest`   | Same as `traefik.frontend.auth.digest.usersfile`              |
+| `traefik.<segment_name>.frontend.auth.forward.address=https://example.com`| Same as `traefik.frontend.auth.forward.address`               |
+| `traefik.<segment_name>.frontend.auth.forward.tls.ca=/path/ca.pem`        | Same as `traefik.frontend.auth.forward.tls.ca`                |
+| `traefik.<segment_name>.frontend.auth.forward.tls.caOptional=true`        | Same as `traefik.frontend.auth.forward.tls.caOptional`        |
+| `traefik.<segment_name>.frontend.auth.forward.tls.cert=/path/server.pem`  | Same as `traefik.frontend.auth.forward.tls.cert`              |
+| `traefik.<segment_name>.frontend.auth.forward.tls.insecureSkipVerify=true`| Same as `traefik.frontend.auth.forward.tls.insecureSkipVerify`|
+| `traefik.<segment_name>.frontend.auth.forward.tls.key=/path/server.key`   | Same as `traefik.frontend.auth.forward.tls.key`               |
+| `traefik.<segment_name>.frontend.auth.forward.trustForwardHeader=true`    | Same as `traefik.frontend.auth.forward.trustForwardHeader`    |
+| `traefik.<segment_name>.frontend.auth.headerField=X-WebAuth-User`         | Same as `traefik.frontend.auth.headerField`                   |
+| `traefik.<segment_name>.frontend.entryPoints=https`                       | Same as `traefik.frontend.entryPoints`                        |
+| `traefik.<segment_name>.frontend.errors.<name>.backend=NAME`              | Same as `traefik.frontend.errors.<name>.backend`              |
+| `traefik.<segment_name>.frontend.errors.<name>.query=PATH`                | Same as `traefik.frontend.errors.<name>.query`                |
+| `traefik.<segment_name>.frontend.errors.<name>.status=RANGE`              | Same as `traefik.frontend.errors.<name>.status`               |
+| `traefik.<segment_name>.frontend.passHostHeader=true`                     | Same as `traefik.frontend.passHostHeader`                     |
+| `traefik.<segment_name>.frontend.passTLSCert=true`                        | Same as `traefik.frontend.passTLSCert`                        |
+| `traefik.<segment_name>.frontend.priority=10`                             | Same as `traefik.frontend.priority`                           |
+| `traefik.<segment_name>.frontend.rateLimit.extractorFunc=EXP`             | Same as `traefik.frontend.rateLimit.extractorFunc`            |
+| `traefik.<segment_name>.frontend.rateLimit.rateSet.<name>.period=6`       | Same as `traefik.frontend.rateLimit.rateSet.<name>.period`    |
+| `traefik.<segment_name>.frontend.rateLimit.rateSet.<name>.average=6`      | Same as `traefik.frontend.rateLimit.rateSet.<name>.average`   |
+| `traefik.<segment_name>.frontend.rateLimit.rateSet.<name>.burst=6`        | Same as `traefik.frontend.rateLimit.rateSet.<name>.burst`     |
+| `traefik.<segment_name>.frontend.redirect.entryPoint=https`               | Same as `traefik.frontend.redirect.entryPoint`                |
+| `traefik.<segment_name>.frontend.redirect.regex=^http://localhost/(.*)`   | Same as `traefik.frontend.redirect.regex`                     |
+| `traefik.<segment_name>.frontend.redirect.replacement=http://mydomain/$1` | Same as `traefik.frontend.redirect.replacement`               |
+| `traefik.<segment_name>.frontend.redirect.permanent=true`                 | Same as `traefik.frontend.redirect.permanent`                 |
+| `traefik.<segment_name>.frontend.rule=EXP`                                | Same as `traefik.frontend.rule`                               |
+| `traefik.<segment_name>.frontend.whiteList.sourceRange=RANGE`             | Same as `traefik.frontend.whiteList.sourceRange`              |
+| `traefik.<segment_name>.frontend.whiteList.useXForwardedFor=true`         | Same as `traefik.frontend.whiteList.useXForwardedFor`         |
 
 #### Custom Headers
 
