@@ -216,12 +216,12 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
       headerField = "{{ $auth.HeaderField }}"
 
       {{if $auth.Forward }}
-      [frontends.frontend-{{ $service.ServiceName }}.auth.forward]
+      [frontends."frontend-{{ $service.ServiceName }}".auth.forward]
         address = "{{ $auth.Forward.Address }}"
         trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
 
         {{if $auth.Forward.TLS }}
-        [frontends.frontend-{{ $service.ServiceName }}.auth.forward.tls]
+        [frontends."frontend-{{ $service.ServiceName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
           cert = "{{ $auth.Forward.TLS.Cert }}"
@@ -231,7 +231,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
       {{end}}
 
       {{if $auth.Basic }}
-      [frontends.frontend-{{ $service.ServiceName }}.auth.basic]
+      [frontends."frontend-{{ $service.ServiceName }}".auth.basic]
         {{if $auth.Basic.Users }}
         users = [{{range $auth.Basic.Users }}
           "{{.}}",
@@ -241,7 +241,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
       {{end}}
 
       {{if $auth.Digest }}
-      [frontends.frontend-{{ $service.ServiceName }}.auth.digest]
+      [frontends."frontend-{{ $service.ServiceName }}".auth.digest]
         {{if $auth.Digest.Users }}
         users = [{{range $auth.Digest.Users }}
           "{{.}}",
@@ -663,12 +663,12 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
       headerField = "{{ $auth.HeaderField }}"
 
       {{if $auth.Forward }}
-      [frontends.frontend-{{ $frontendName }}.auth.forward]
+      [frontends."frontend-{{ $frontendName }}".auth.forward]
         address = "{{ $auth.Forward.Address }}"
         trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
 
         {{if $auth.Forward.TLS }}
-        [frontends.frontend-{{ $frontendName }}.auth.forward.tls]
+        [frontends."frontend-{{ $frontendName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
           cert = "{{ $auth.Forward.TLS.Cert }}"
@@ -678,7 +678,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
       {{end}}
 
       {{if $auth.Basic }}
-      [frontends.frontend-{{ $frontendName }}.auth.basic]
+      [frontends."frontend-{{ $frontendName }}".auth.basic]
         {{if $auth.Basic.Users }}
         users = [{{range $auth.Basic.Users }}
           "{{.}}",
@@ -688,7 +688,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
       {{end}}
 
       {{if $auth.Digest }}
-      [frontends.frontend-{{ $frontendName }}.auth.digest]
+      [frontends."frontend-{{ $frontendName }}".auth.digest]
         {{if $auth.Digest.Users }}
         users = [{{range $auth.Digest.Users }}
           "{{.}}",
@@ -961,12 +961,12 @@ var _templatesEcsTmpl = []byte(`[backends]
       headerField = "{{ $auth.HeaderField }}"
 
       {{if $auth.Forward }}
-      [frontends.frontend-{{ $serviceName }}.auth.forward]
+      [frontends."frontend-{{ $serviceName }}".auth.forward]
         address = "{{ $auth.Forward.Address }}"
         trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
 
         {{if $auth.Forward.TLS }}
-        [frontends.frontend-{{ $serviceName }}.auth.forward.tls]
+        [frontends."frontend-{{ $serviceName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
           cert = "{{ $auth.Forward.TLS.Cert }}"
@@ -976,7 +976,7 @@ var _templatesEcsTmpl = []byte(`[backends]
       {{end}}
 
       {{if $auth.Basic }}
-      [frontends.frontend-{{ $serviceName }}.auth.basic]
+      [frontends."frontend-{{ $serviceName }}".auth.basic]
         {{if $auth.Basic.Users }}
         users = [{{range $auth.Basic.Users }}
           "{{.}}",
@@ -986,7 +986,7 @@ var _templatesEcsTmpl = []byte(`[backends]
       {{end}}
 
       {{if $auth.Digest }}
-      [frontends.frontend-{{ $serviceName }}.auth.digest]
+      [frontends."frontend-{{ $serviceName }}".auth.digest]
         {{if $auth.Digest.Users }}
         users = [{{range $auth.Digest.Users }}
          "{{.}}",
@@ -1450,16 +1450,16 @@ var _templatesKvTmpl = []byte(`[backends]
 
     {{ $auth := getAuth $frontend }}
     {{if $auth }}
-    [frontends.{{ $frontendName }}.auth]
+    [frontends."{{ $frontendName }}".auth]
       headerField = "{{ $auth.HeaderField }}"
 
       {{if $auth.Forward }}
-      [frontends.{{ $frontendName }}.auth.forward]
+      [frontends."{{ $frontendName }}".auth.forward]
         address = "{{ $auth.Forward.Address }}"
         trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
 
         {{if $auth.Forward.TLS }}
-        [frontends.{{ $frontendName }}.auth.forward.tls]
+        [frontends."{{ $frontendName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
           cert = "{{ $auth.Forward.TLS.Cert }}"
@@ -1469,7 +1469,7 @@ var _templatesKvTmpl = []byte(`[backends]
       {{end}}
 
       {{if $auth.Basic }}
-      [frontends.{{ $frontendName }}.auth.basic]
+      [frontends."{{ $frontendName }}".auth.basic]
         {{if $auth.Basic.Users }}
         users = [{{range $auth.Basic.Users }}
           "{{.}}",
@@ -1479,7 +1479,7 @@ var _templatesKvTmpl = []byte(`[backends]
       {{end}}
 
       {{if $auth.Digest }}
-      [frontends.{{ $frontendName }}.auth.digest]
+      [frontends."{{ $frontendName }}".auth.digest]
         {{if $auth.Digest.Users }}
         users = [{{range $auth.Digest.Users }}
           "{{.}}",
@@ -1790,16 +1790,16 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
 
     {{ $auth := getAuth $app.SegmentLabels }}
     {{if $auth }}
-    [frontends.{{ $frontendName }}.auth]
+    [frontends."{{ $frontendName }}".auth]
       headerField = "{{ $auth.HeaderField }}"
 
       {{if $auth.Forward }}
-      [frontends.{{ $frontendName }}.auth.forward]
+      [frontends."{{ $frontendName }}".auth.forward]
         address = "{{ $auth.Forward.Address }}"
         trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
 
         {{if $auth.Forward.TLS }}
-        [frontends.{{ $frontendName }}.auth.forward.tls]
+        [frontends."{{ $frontendName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
           cert = "{{ $auth.Forward.TLS.Cert }}"
@@ -1809,7 +1809,7 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
       {{end}}
 
       {{if $auth.Basic }}
-      [frontends.{{ $frontendName }}.auth.basic]
+      [frontends."{{ $frontendName }}".auth.basic]
         {{if $auth.Basic.Users }}
         users = [{{range $auth.Basic.Users }}
           "{{.}}",
@@ -1819,7 +1819,7 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
       {{end}}
 
       {{if $auth.Digest }}
-      [frontends.{{ $frontendName }}.auth.digest]
+      [frontends."{{ $frontendName }}".auth.digest]
         {{if $auth.Digest.Users }}
         users = [{{range $auth.Digest.Users }}
           "{{.}}",
@@ -2078,12 +2078,12 @@ var _templatesMesosTmpl = []byte(`[backends]
       headerField = "{{ $auth.HeaderField }}"
 
       {{if $auth.Forward }}
-      [frontends.frontend-{{ $frontendName }}.auth.forward]
+      [frontends."frontend-{{ $frontendName }}".auth.forward]
         address = "{{ $auth.Forward.Address }}"
         trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
 
         {{if $auth.Forward.TLS }}
-        [frontends.frontend-{{ $frontendName }}.auth.forward.tls]
+        [frontends."frontend-{{ $frontendName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
           cert = "{{ $auth.Forward.TLS.Cert }}"
@@ -2093,7 +2093,7 @@ var _templatesMesosTmpl = []byte(`[backends]
       {{end}}
 
       {{if $auth.Basic }}
-      [frontends.frontend-{{ $frontendName }}.auth.basic]
+      [frontends."frontend-{{ $frontendName }}".auth.basic]
         {{if $auth.Basic.Users }}
         users = [{{range $auth.Basic.Users }}
           "{{.}}",
@@ -2103,7 +2103,7 @@ var _templatesMesosTmpl = []byte(`[backends]
       {{end}}
 
       {{if $auth.Digest }}
-      [frontends.frontend-{{ $frontendName }}.auth.digest]
+      [frontends."frontend-{{ $frontendName }}".auth.digest]
         {{if $auth.Digest.Users }}
         users = [{{range $auth.Digest.Users }}
           "{{.}}",
@@ -2415,12 +2415,12 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
       headerField = "{{ $auth.HeaderField }}"
 
       {{if $auth.Forward }}
-      [frontends.frontend-{{ $frontendName }}.auth.forward]
+      [frontends."frontend-{{ $frontendName }}".auth.forward]
         address = "{{ $auth.Forward.Address }}"
         trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
 
         {{if $auth.Forward.TLS }}
-        [frontends.frontend-{{ $frontendName }}.auth.forward.tls]
+        [frontends."frontend-{{ $frontendName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
           cert = "{{ $auth.Forward.TLS.Cert }}"
@@ -2430,7 +2430,7 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
       {{end}}
 
       {{if $auth.Basic }}
-      [frontends.frontend-{{ $frontendName }}.auth.basic]
+      [frontends."frontend-{{ $frontendName }}".auth.basic]
         {{if $auth.Basic.Users }}
         users = [{{range $auth.Basic.Users }}
           "{{.}}",
@@ -2440,7 +2440,7 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
       {{end}}
 
       {{if $auth.Digest }}
-      [frontends.frontend-{{ $frontendName }}.auth.digest]
+      [frontends."frontend-{{ $frontendName }}".auth.digest]
         {{if $auth.Digest.Users }}
         users = [{{range $auth.Digest.Users }}
           "{{.}}",

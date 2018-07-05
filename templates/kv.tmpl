@@ -76,16 +76,16 @@
 
     {{ $auth := getAuth $frontend }}
     {{if $auth }}
-    [frontends.{{ $frontendName }}.auth]
+    [frontends."{{ $frontendName }}".auth]
       headerField = "{{ $auth.HeaderField }}"
 
       {{if $auth.Forward }}
-      [frontends.{{ $frontendName }}.auth.forward]
+      [frontends."{{ $frontendName }}".auth.forward]
         address = "{{ $auth.Forward.Address }}"
         trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
 
         {{if $auth.Forward.TLS }}
-        [frontends.{{ $frontendName }}.auth.forward.tls]
+        [frontends."{{ $frontendName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
           cert = "{{ $auth.Forward.TLS.Cert }}"
@@ -95,7 +95,7 @@
       {{end}}
 
       {{if $auth.Basic }}
-      [frontends.{{ $frontendName }}.auth.basic]
+      [frontends."{{ $frontendName }}".auth.basic]
         {{if $auth.Basic.Users }}
         users = [{{range $auth.Basic.Users }}
           "{{.}}",
@@ -105,7 +105,7 @@
       {{end}}
 
       {{if $auth.Digest }}
-      [frontends.{{ $frontendName }}.auth.digest]
+      [frontends."{{ $frontendName }}".auth.digest]
         {{if $auth.Digest.Users }}
         users = [{{range $auth.Digest.Users }}
           "{{.}}",
