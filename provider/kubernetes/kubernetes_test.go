@@ -351,7 +351,7 @@ func TestLoadGlobalIngressWithHttpsPortNames(t *testing.T) {
 }
 
 func TestRuleType(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc             string
 		ingressRuleType  string
 		frontendRuleType string
@@ -378,7 +378,7 @@ func TestRuleType(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
@@ -423,7 +423,7 @@ func TestRuleType(t *testing.T) {
 }
 
 func TestRuleFails(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc                      string
 		ruletypeAnnotation        string
 		requestModifierAnnotation string
@@ -452,7 +452,7 @@ func TestRuleFails(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
@@ -476,7 +476,7 @@ func TestRuleFails(t *testing.T) {
 }
 
 func TestModifierType(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc                      string
 		requestModifierAnnotation string
 		expectedModifierRule      string
@@ -518,7 +518,7 @@ func TestModifierType(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
@@ -569,7 +569,7 @@ func TestModifierType(t *testing.T) {
 }
 
 func TestModifierFails(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc                      string
 		requestModifierAnnotation string
 	}{
@@ -591,7 +591,7 @@ func TestModifierFails(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
@@ -2285,7 +2285,7 @@ func TestLoadIngressesForwardAuthWithTLSSecret(t *testing.T) {
 }
 
 func TestLoadIngressesForwardAuthWithTLSSecretFailures(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc       string
 		secretName string
 		certName   string
@@ -2379,7 +2379,7 @@ func TestLoadIngressesForwardAuthWithTLSSecretFailures(t *testing.T) {
 		),
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
@@ -2555,7 +2555,7 @@ func TestGetTLS(t *testing.T) {
 		),
 	)
 
-	tests := []struct {
+	testCases := []struct {
 		desc      string
 		ingress   *extensionsv1beta1.Ingress
 		client    Client
@@ -2705,7 +2705,7 @@ func TestGetTLS(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
