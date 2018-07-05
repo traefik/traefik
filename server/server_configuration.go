@@ -19,7 +19,6 @@ import (
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/middlewares/pipelining"
 	"github.com/containous/traefik/rules"
-	"github.com/containous/traefik/safe"
 	traefiktls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
@@ -562,14 +561,10 @@ func (s *Server) buildServerEntryPoints() map[string]*serverEntryPoint {
 			tlsALPNGetter:    entryPoint.TLSALPNGetter,
 		}
 
-		serverEntryPoints[entryPointName].certs = &traefiktls.CertificateStore{
-			StaticCerts:  &safe.Safe{},
-			DynamicCerts: &safe.Safe{},
-		}
-
 		if entryPoint.CertificateStore != nil {
-			serverEntryPoints[entryPointName].certs.StaticCerts = entryPoint.CertificateStore.StaticCerts
-			serverEntryPoints[entryPointName].certs.DynamicCerts = entryPoint.CertificateStore.DynamicCerts
+			serverEntryPoints[entryPointName].certs = entryPoint.CertificateStore
+		} else {
+			serverEntryPoints[entryPointName].certs = traefiktls.NewCertificateStore()
 		}
 
 		if entryPoint.Configuration.TLS != nil {

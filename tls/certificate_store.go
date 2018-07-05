@@ -19,6 +19,15 @@ type CertificateStore struct {
 	SniStrict          bool
 }
 
+// NewCertificateStore create a store for dynamic and static certificates
+func NewCertificateStore() *CertificateStore {
+	return &CertificateStore{
+		StaticCerts:  &safe.Safe{},
+		DynamicCerts: &safe.Safe{},
+		CertCache:    cache.New(1*time.Hour, 10*time.Minute),
+	}
+}
+
 // GetAllDomains return a slice with all the certificate domain
 func (c CertificateStore) GetAllDomains() []string {
 	var allCerts []string
@@ -40,9 +49,12 @@ func (c CertificateStore) GetAllDomains() []string {
 }
 
 // GetBestCertificate returns the best match certificate, and caches the response
-func (c CertificateStore) GetBestCertificate(domainToCheck string) *tls.Certificate {
-	if c.CertCache == nil {
-		c.CertCache = cache.New(1*time.Hour, 10*time.Minute)
+func (c CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) *tls.Certificate {
+	domainToCheck := strings.ToLower(strings.TrimSpace(clientHello.ServerName))
+	if len(domainToCheck) == 0 {
+		// If no ServerName is provided, Check for local IP address matches
+		connAddr := strings.Split(clientHello.Conn.LocalAddr().String(), ":")
+		domainToCheck = strings.TrimSpace(connAddr[0])
 	}
 
 	if cert, ok := c.CertCache.Get(domainToCheck); ok {
@@ -93,7 +105,9 @@ func (c CertificateStore) ContainsCertificates() bool {
 
 // ResetCache clears the cache in the store
 func (c CertificateStore) ResetCache() {
-	c.CertCache.Flush()
+	if c.CertCache != nil {
+		c.CertCache.Flush()
+	}
 }
 
 // MatchDomain return true if a domain match the cert domain

@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/containous/traefik/safe"
+	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -89,22 +91,31 @@ func TestGetBestCertificate(t *testing.T) {
 				require.NoError(t, err)
 				staticMap[test.staticCert] = cert
 			}
+
 			if test.dynamicCert != "" {
 				cert, err := loadTestCert(test.dynamicCert)
 				require.NoError(t, err)
 				dynamicMap[test.dynamicCert] = cert
 			}
-			store := CertificateStore{
+
+			store := &CertificateStore{
 				DynamicCerts: safe.New(dynamicMap),
 				StaticCerts:  safe.New(staticMap),
+				CertCache:    cache.New(1*time.Hour, 10*time.Minute),
 			}
+
 			var expected *tls.Certificate
 			if test.expectedCert != "" {
 				cert, err := loadTestCert(test.expectedCert)
 				require.NoError(t, err)
 				expected = cert
 			}
-			actual := store.GetBestCertificate(test.domainToCheck)
+
+			clientHello := &tls.ClientHelloInfo{
+				ServerName: test.domainToCheck,
+			}
+
+			actual := store.GetBestCertificate(clientHello)
 			assert.Equal(t, expected, actual)
 		})
 	}

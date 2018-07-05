@@ -15,7 +15,6 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
-	"strings"
 	"sync"
 	"time"
 
@@ -276,39 +275,27 @@ func (s *Server) AddListener(listener func(types.Configuration)) {
 
 // getCertificate allows to customize tlsConfig.GetCertificate behaviour to get the certificates inserted dynamically
 func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
+	bestCertificate := s.certs.GetBestCertificate(clientHello)
+	if bestCertificate != nil {
+		return bestCertificate, nil
+	}
+
 	domainToCheck := types.CanonicalDomain(clientHello.ServerName)
 
-	var bestCertificate *tls.Certificate
-
-	if len(domainToCheck) == 0 {
-		// If no ServerName is provided, Check for local IP address matches
-		connAddr := strings.Split(clientHello.Conn.LocalAddr().String(), ":")
-		bestCertificate = s.certs.GetBestCertificate(strings.TrimSpace(connAddr[0]))
-		if bestCertificate != nil {
-			return bestCertificate, nil
-		}
-	} else {
-		bestCertificate = s.certs.GetBestCertificate(domainToCheck)
-
-		if bestCertificate != nil {
-			return bestCertificate, nil
+	if s.tlsALPNGetter != nil {
+		cert, err := s.tlsALPNGetter(domainToCheck)
+		if err != nil {
+			return nil, err
 		}
 
-		if s.tlsALPNGetter != nil {
-			cert, err := s.tlsALPNGetter(domainToCheck)
-			if err != nil {
-				return nil, err
-			}
-
-			if cert != nil {
-				return cert, nil
-			}
+		if cert != nil {
+			return cert, nil
 		}
+	}
 
-		if s.onDemandListener != nil {
-			// Only check for an onDemandCert if there is a domain name
-			return s.onDemandListener(domainToCheck)
-		}
+	if s.onDemandListener != nil && len(domainToCheck) > 0 {
+		// Only check for an onDemandCert if there is a domain name
+		return s.onDemandListener(domainToCheck)
 	}
 
 	if s.certs.SniStrict {
