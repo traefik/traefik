@@ -135,7 +135,12 @@ This will give more flexibility in cloud/dynamic environments.
 
 You can configure Traefik to watch for namespaces that have a particular label and value set.
 This will allow you to dynamically manage which namespaces Traefik watches without having to statically define them, or restart Traefik.
-This setting will be ignored if you provide a static list of namespaces to watch (via the `namespaces` label selector).
+This setting will be ignored if you provide a static list of namespaces to watch (via the `namespaces` option).
+
+!!! note
+    Please note that by enabling the namespace label selector, Traefik may take longer to process ingresses when watching a new namespace with a large amount of objects, or a large number of new namespaces.
+    This is due to the fact that Traefik has to create new watchers for objects in the new namespaces, to allow for dynamic updates.
+    If you are concerned about performance in a large environment, it is advisable to provide a static list of namespaces to watch (via the `namespaces` option).
 
 ### TLS communication between Traefik and backend pods
 
