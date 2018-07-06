@@ -29,7 +29,7 @@ func (r *Rules) host(hosts ...string) *mux.Route {
 	}
 
 	return r.Route.Route.MatcherFunc(func(req *http.Request, route *mux.RouteMatch) bool {
-		reqHost, ok := middlewares.GetCannonHost(req.Context())
+		reqHost, ok := middlewares.GetCanonHost(req.Context())
 		if !ok {
 			return false
 		}

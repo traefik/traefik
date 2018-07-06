@@ -173,7 +173,7 @@ func (s *Server) buildServerEntryPointMiddlewares(serverEntryPointName string, s
 	}
 
 	// ReqHost Cannonizer
-	serverMiddlewares = append(serverMiddlewares, middlewares.NewReqHostMiddleware())
+	serverMiddlewares = append(serverMiddlewares, &middlewares.ReqHost{})
 	return serverMiddlewares, nil
 }
 
