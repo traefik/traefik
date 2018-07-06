@@ -48,7 +48,8 @@ func (p *Provider) buildConfigurationV2(applications *marathon.Applications) *ty
 		"getPassTLSCert":       label.GetFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getPriority":          label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
 		"getEntryPoints":       label.GetFuncSliceString(label.TraefikFrontendEntryPoints),
-		"getBasicAuth":         label.GetFuncSliceString(label.TraefikFrontendAuthBasic),
+		"getBasicAuth":         label.GetFuncSliceString(label.TraefikFrontendAuthBasic), // Deprecated
+		"getAuth":              label.GetAuth,
 		"getRedirect":          label.GetRedirect,
 		"getErrorPages":        label.GetErrorPages,
 		"getRateLimit":         label.GetRateLimit,

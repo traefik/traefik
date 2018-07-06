@@ -720,3 +720,79 @@ func TestProviderGetErrorPages(t *testing.T) {
 		})
 	}
 }
+
+func TestGetAuth(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		labels   map[string]string
+		expected *types.Auth
+	}{
+		{
+			desc:     "should return nil when no tags",
+			labels:   map[string]string{},
+			expected: nil,
+		},
+		{
+			desc: "should return a basic auth",
+			labels: map[string]string{
+				TraefikFrontendAuthHeaderField:    "myHeaderField",
+				TraefikFrontendAuthBasicUsers:     "user:pwd,user2:pwd2",
+				TraefikFrontendAuthBasicUsersFile: "myUsersFile",
+			},
+			expected: &types.Auth{
+				HeaderField: "myHeaderField",
+				Basic:       &types.Basic{UsersFile: "myUsersFile", Users: []string{"user:pwd", "user2:pwd2"}},
+			},
+		},
+		{
+			desc: "should return a digest auth",
+			labels: map[string]string{
+				TraefikFrontendAuthHeaderField:     "myHeaderField",
+				TraefikFrontendAuthDigestUsers:     "user:pwd,user2:pwd2",
+				TraefikFrontendAuthDigestUsersFile: "myUsersFile",
+			},
+			expected: &types.Auth{
+				HeaderField: "myHeaderField",
+				Digest:      &types.Digest{UsersFile: "myUsersFile", Users: []string{"user:pwd", "user2:pwd2"}},
+			},
+		},
+		{
+			desc: "should return a forward auth",
+			labels: map[string]string{
+				TraefikFrontendAuthHeaderField:                  "myHeaderField",
+				TraefikFrontendAuthForwardAddress:               "myAddress",
+				TraefikFrontendAuthForwardTrustForwardHeader:    "true",
+				TraefikFrontendAuthForwardTLSCa:                 "ca.crt",
+				TraefikFrontendAuthForwardTLSCaOptional:         "true",
+				TraefikFrontendAuthForwardTLSInsecureSkipVerify: "true",
+				TraefikFrontendAuthForwardTLSKey:                "myKey",
+				TraefikFrontendAuthForwardTLSCert:               "myCert",
+			},
+			expected: &types.Auth{
+				HeaderField: "myHeaderField",
+				Forward: &types.Forward{
+					TrustForwardHeader: true,
+					Address:            "myAddress",
+					TLS: &types.ClientTLS{
+						InsecureSkipVerify: true,
+						CA:                 "ca.crt",
+						CAOptional:         true,
+						Key:                "myKey",
+						Cert:               "myCert",
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := GetAuth(test.labels)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}

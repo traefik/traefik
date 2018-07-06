@@ -74,9 +74,46 @@
       "{{.}}",
       {{end}}]
 
-    basicAuth = [{{range getBasicAuth $instance.TraefikLabels }}
-      "{{.}}",
-      {{end}}]
+    {{ $auth := getAuth $instance.TraefikLabels }}
+    {{if $auth }}
+    [frontends."frontend-{{ $serviceName }}".auth]
+      headerField = "{{ $auth.HeaderField }}"
+
+      {{if $auth.Forward }}
+      [frontends."frontend-{{ $serviceName }}".auth.forward]
+        address = "{{ $auth.Forward.Address }}"
+        trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
+
+        {{if $auth.Forward.TLS }}
+        [frontends."frontend-{{ $serviceName }}".auth.forward.tls]
+          ca = "{{ $auth.Forward.TLS.CA }}"
+          caOptional = {{ $auth.Forward.TLS.CAOptional }}
+          cert = "{{ $auth.Forward.TLS.Cert }}"
+          key = "{{ $auth.Forward.TLS.Key }}"
+          insecureSkipVerify = {{ $auth.Forward.TLS.InsecureSkipVerify }}
+        {{end}}
+      {{end}}
+
+      {{if $auth.Basic }}
+      [frontends."frontend-{{ $serviceName }}".auth.basic]
+        {{if $auth.Basic.Users }}
+        users = [{{range $auth.Basic.Users }}
+          "{{.}}",
+          {{end}}]
+        {{end}}
+        usersFile = "{{ $auth.Basic.UsersFile }}"
+      {{end}}
+
+      {{if $auth.Digest }}
+      [frontends."frontend-{{ $serviceName }}".auth.digest]
+        {{if $auth.Digest.Users }}
+        users = [{{range $auth.Digest.Users }}
+         "{{.}}",
+          {{end}}]
+        {{end}}
+        usersFile = "{{ $auth.Digest.UsersFile }}"
+      {{end}}
+    {{end}}
 
     {{ $whitelist := getWhiteList $instance.TraefikLabels }}
     {{if $whitelist }}
