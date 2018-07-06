@@ -29,10 +29,11 @@ func (r *Rules) host(hosts ...string) *mux.Route {
 	}
 
 	return r.Route.Route.MatcherFunc(func(req *http.Request, route *mux.RouteMatch) bool {
-		reqHost, ok := middlewares.GetCanonHost(req.Context())
-		if !ok {
+		reqHost := middlewares.GetCanonizedHost(req.Context())
+		if len(reqHost) == 0 {
 			return false
 		}
+
 		if r.HostResolver != nil && r.HostResolver.CnameFlattening {
 			reqH, flatH := r.HostResolver.CNAMEFlatten(reqHost)
 			for _, host := range hosts {

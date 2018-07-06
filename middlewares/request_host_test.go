@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestReqHostParseHost(t *testing.T) {
+func TestRequestHostParseHost(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		host     string

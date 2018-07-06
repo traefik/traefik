@@ -386,7 +386,7 @@ func TestServerMultipleFrontendRules(t *testing.T) {
 			router := mux.NewRouter()
 			route := router.NewRoute()
 			serverRoute := &types.ServerRoute{Route: route}
-			reqHostMid := &middlewares.ReqHost{}
+			reqHostMid := &middlewares.RequestHost{}
 			rls := &rules.Rules{Route: serverRoute}
 
 			expression := test.expression

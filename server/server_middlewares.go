@@ -172,8 +172,9 @@ func (s *Server) buildServerEntryPointMiddlewares(serverEntryPointName string, s
 		serverMiddlewares = append(serverMiddlewares, s.wrapNegroniHandlerWithAccessLog(ipWhitelistMiddleware, fmt.Sprintf("ipwhitelister for entrypoint %s", serverEntryPointName)))
 	}
 
-	// ReqHost Cannonizer
-	serverMiddlewares = append(serverMiddlewares, &middlewares.ReqHost{})
+	// RequestHost Cannonizer
+	serverMiddlewares = append(serverMiddlewares, &middlewares.RequestHost{})
+
 	return serverMiddlewares, nil
 }
 

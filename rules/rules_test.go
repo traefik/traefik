@@ -16,7 +16,7 @@ import (
 func TestParseOneRule(t *testing.T) {
 	router := mux.NewRouter()
 	route := router.NewRoute()
-	reqHostMid := &middlewares.ReqHost{}
+	reqHostMid := &middlewares.RequestHost{}
 	serverRoute := &types.ServerRoute{Route: route}
 	rules := &Rules{Route: serverRoute}
 
@@ -37,7 +37,7 @@ func TestParseTwoRules(t *testing.T) {
 	router := mux.NewRouter()
 	route := router.NewRoute()
 	serverRoute := &types.ServerRoute{Route: route}
-	reqHostMid := &middlewares.ReqHost{}
+	reqHostMid := &middlewares.RequestHost{}
 	rules := &Rules{Route: serverRoute}
 
 	expression := "Host: Foo.Bar ; Path:/FOObar"
