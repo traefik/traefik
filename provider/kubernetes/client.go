@@ -141,6 +141,7 @@ func (c *clientImpl) WatchAll(namespaces Namespaces, stopCh <-chan struct{}, eve
 	eventHandler := c.newResourceEventHandler(eventsChan)
 
 	var namespacesToWatch []string
+
 	namespaceList, err := c.getNamespaces()
 	if err != nil {
 		return fmt.Errorf("could not list namespaces: %v", err)
@@ -209,7 +210,7 @@ func (c *clientImpl) GetIngresses() []*extensionsv1beta1.Ingress {
 
 // UpdateIngressStatus updates an Ingress with a provided status.
 func (c *clientImpl) UpdateIngressStatus(namespace, name, ip, hostname string) error {
-	ing, err := c.factories[c.lookupNamespace(namespace)].Extensions().V1beta1().Ingresses().Lister().Ingresses(namespace).Get(name)
+	ing, err := c.factories[namespace].Extensions().V1beta1().Ingresses().Lister().Ingresses(namespace).Get(name)
 	if err != nil {
 		return fmt.Errorf("failed to get ingress %s/%s: %v", namespace, name, err)
 	}
@@ -239,36 +240,23 @@ func (c *clientImpl) getNamespaces() (*corev1.NamespaceList, error) {
 
 // GetService returns the named service from the configured namespace.
 func (c *clientImpl) GetService(namespace, name string) (*corev1.Service, bool, error) {
-	service, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Services().Lister().Services(namespace).Get(name)
+	service, err := c.factories[namespace].Core().V1().Services().Lister().Services(namespace).Get(name)
 	exist, err := translateNotFoundError(err)
 	return service, exist, err
 }
 
 // GetEndpoints returns the named endpoints from the configured namespace.
 func (c *clientImpl) GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error) {
-	endpoint, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Endpoints().Lister().Endpoints(namespace).Get(name)
+	endpoint, err := c.factories[namespace].Core().V1().Endpoints().Lister().Endpoints(namespace).Get(name)
 	exist, err := translateNotFoundError(err)
 	return endpoint, exist, err
 }
 
 // GetSecret returns the named secret from the configured namespace.
 func (c *clientImpl) GetSecret(namespace, name string) (*corev1.Secret, bool, error) {
-	secret, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Secrets().Lister().Secrets(namespace).Get(name)
+	secret, err := c.factories[namespace].Core().V1().Secrets().Lister().Secrets(namespace).Get(name)
 	exist, err := translateNotFoundError(err)
 	return secret, exist, err
-}
-
-// lookupNamespace returns the lookup namespace key for the given namespace.
-// When listening on all namespaces, it returns the client-go identifier ("")
-// for all-namespaces. Otherwise, it returns the given namespace.
-// The distinction is necessary because we index all informers on the special
-// identifier iff all-namespaces are requested but receive specific namespace
-// identifiers from the Kubernetes API, so we have to bridge this gap.
-func (c *clientImpl) lookupNamespace(ns string) string {
-	if c.isNamespaceAll {
-		return metav1.NamespaceAll
-	}
-	return ns
 }
 
 func (c *clientImpl) newResourceEventHandler(events chan<- interface{}) cache.ResourceEventHandler {
