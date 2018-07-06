@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares"
 )
 
@@ -37,4 +38,5 @@ func (eh *RecordingErrorHandler) ServeHTTP(w http.ResponseWriter, req *http.Requ
 
 	w.WriteHeader(statusCode)
 	w.Write([]byte(http.StatusText(statusCode)))
+	log.Debugf("'%d %s' caused by: %v", statusCode, http.StatusText(statusCode), err)
 }
