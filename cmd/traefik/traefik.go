@@ -209,10 +209,7 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 				entryPoint.OnDemandListener = acmeprovider.ListenRequest
 			}
 
-			entryPoint.CertificateStore = &traefiktls.CertificateStore{
-				DynamicCerts: &safe.Safe{},
-				StaticCerts:  &safe.Safe{},
-			}
+			entryPoint.CertificateStore = traefiktls.NewCertificateStore()
 			acmeprovider.SetCertificateStore(entryPoint.CertificateStore)
 
 		}

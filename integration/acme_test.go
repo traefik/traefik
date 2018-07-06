@@ -272,8 +272,6 @@ func (s *AcmeSuite) TestHTTP01OnDemand(c *check.C) {
 }
 
 func (s *AcmeSuite) TestHTTP01OnDemandStaticCertificatesWithWildcard(c *check.C) {
-	// FIXME flaky
-	c.Skip("Flaky behavior will be fixed in the next PR")
 	testCase := acmeTestCase{
 		traefikConfFilePath: "fixtures/acme/acme_tls.toml",
 		template: templateModel{

@@ -247,6 +247,17 @@ func makeEntryPointTLS(result map[string]string) (*tls.TLS, error) {
 		if len(result["tls_ciphersuites"]) > 0 {
 			configTLS.CipherSuites = strings.Split(result["tls_ciphersuites"], ",")
 		}
+
+		if len(result["tls_snistrict"]) > 0 {
+			configTLS.SniStrict = toBool(result, "tls_snistrict")
+		}
+
+		if len(result["tls_defaultcertificate_cert"]) > 0 && len(result["tls_defaultcertificate_key"]) > 0 {
+			configTLS.DefaultCertificate = &tls.Certificate{
+				CertFile: tls.FileOrContent(result["tls_defaultcertificate_cert"]),
+				KeyFile:  tls.FileOrContent(result["tls_defaultcertificate_key"]),
+			}
+		}
 	}
 
 	return configTLS, nil

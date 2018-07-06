@@ -19,8 +19,8 @@ import (
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/middlewares/pipelining"
 	"github.com/containous/traefik/rules"
-	"github.com/containous/traefik/safe"
 	traefiktls "github.com/containous/traefik/tls"
+	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
 	"github.com/eapache/channels"
 	"github.com/sirupsen/logrus"
@@ -55,11 +55,12 @@ func (s *Server) loadConfiguration(configMsg types.ConfigMessage) {
 		s.serverEntryPoints[newServerEntryPointName].httpRouter.UpdateHandler(newServerEntryPoint.httpRouter.GetHandler())
 
 		if s.entryPoints[newServerEntryPointName].Configuration.TLS == nil {
-			if newServerEntryPoint.certs.Get() != nil {
+			if newServerEntryPoint.certs.ContainsCertificates() {
 				log.Debugf("Certificates not added to non-TLS entryPoint %s.", newServerEntryPointName)
 			}
 		} else {
-			s.serverEntryPoints[newServerEntryPointName].certs.Set(newServerEntryPoint.certs.Get())
+			s.serverEntryPoints[newServerEntryPointName].certs.DynamicCerts.Set(newServerEntryPoint.certs.DynamicCerts.Get())
+			s.serverEntryPoints[newServerEntryPointName].certs.ResetCache()
 		}
 		log.Infof("Server configuration reloaded on %s", s.serverEntryPoints[newServerEntryPointName].httpServer.Addr)
 	}
@@ -123,7 +124,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 	for serverEntryPointName, serverEntryPoint := range serverEntryPoints {
 		serverEntryPoint.httpRouter.GetHandler().SortRoutes()
 		if _, exists := entryPointsCertificates[serverEntryPointName]; exists {
-			serverEntryPoint.certs.Set(entryPointsCertificates[serverEntryPointName])
+			serverEntryPoint.certs.DynamicCerts.Set(entryPointsCertificates[serverEntryPointName])
 		}
 	}
 
@@ -559,10 +560,33 @@ func (s *Server) buildServerEntryPoints() map[string]*serverEntryPoint {
 			onDemandListener: entryPoint.OnDemandListener,
 			tlsALPNGetter:    entryPoint.TLSALPNGetter,
 		}
+
 		if entryPoint.CertificateStore != nil {
-			serverEntryPoints[entryPointName].certs = entryPoint.CertificateStore.DynamicCerts
+			serverEntryPoints[entryPointName].certs = entryPoint.CertificateStore
 		} else {
-			serverEntryPoints[entryPointName].certs = &safe.Safe{}
+			serverEntryPoints[entryPointName].certs = traefiktls.NewCertificateStore()
+		}
+
+		if entryPoint.Configuration.TLS != nil {
+			serverEntryPoints[entryPointName].certs.SniStrict = entryPoint.Configuration.TLS.SniStrict
+
+			if entryPoint.Configuration.TLS.DefaultCertificate != nil {
+				cert, err := tls.LoadX509KeyPair(entryPoint.Configuration.TLS.DefaultCertificate.CertFile.String(), entryPoint.Configuration.TLS.DefaultCertificate.KeyFile.String())
+				if err != nil {
+				}
+				serverEntryPoints[entryPointName].certs.DefaultCertificate = &cert
+			} else {
+				cert, err := generate.DefaultCertificate()
+				if err != nil {
+				}
+				serverEntryPoints[entryPointName].certs.DefaultCertificate = cert
+			}
+			if len(entryPoint.Configuration.TLS.Certificates) > 0 {
+				config, _ := entryPoint.Configuration.TLS.Certificates.CreateTLSConfig(entryPointName)
+				certMap := s.buildNameOrIPToCertificate(config.Certificates)
+				serverEntryPoints[entryPointName].certs.StaticCerts.Set(certMap)
+
+			}
 		}
 	}
 	return serverEntryPoints
