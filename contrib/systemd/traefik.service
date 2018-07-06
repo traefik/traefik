@@ -2,6 +2,8 @@
 Description=Traefik
 
 [Service]
+User=traefik
+Group=traefik
 Type=notify
 ExecStart=/usr/bin/traefik --configFile=/etc/traefik.toml
 Restart=always
