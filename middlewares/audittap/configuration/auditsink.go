@@ -49,10 +49,12 @@ type AuditSink struct {
 	ProxyingFor              string         `json:"proxyingFor,omitempty" description:"Defines the style of auditing event required. e.g API, RATE"`
 	AuditSource              string         `json:"auditSource,omitempty" description:"Value to use for auditSource in audit message"`
 	AuditType                string         `json:"auditType,omitempty" description:"Value to use for auditType in audit message"`
+	ForwardXRequestID        bool           `json:"forwardXrequestId" description:"Forward an existing X-Request-ID header if present"`
 	EncryptSecret            string         `json:"encryptSecret,omitempty" description:"Key for encrypting failed events. If present events will be AES encrypted"`
 	MaxAuditLength           string         `json:"maxAuditLength,omitempty" description:"The allowed maximum size of an audit event (units are allowed, eg. 32K)"`
 	MaxPayloadContentsLength string         `json:"maxPayloadContentsLength,omitempty" description:"The allowed maximum combined size of audit requestPayload.contents and responsePayload.contents (units are allowed, eg. 32K)"`
 	MaskValue                string         `json:"maskValue,omitempty" description:"The value to be used when obfuscating fields. Default is #########"`
+	RequestIDLabel           string         `json:"requestIdLabel,omitempty" description:"Additional prefix value to be added to the X-Request-ID header after any 's' prefix"`
 	MaskFields               MaskFields     `json:"maskFields,omitempty" description:"Names of payload fields whose values should be obfuscated"`
 	HeaderMappings           HeaderMappings `json:"headerMappings,omitempty" description:"Configuration of dynamic audit fields whose value is sourced form a header"`
 }

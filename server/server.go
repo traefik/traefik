@@ -31,6 +31,7 @@ import (
 	"github.com/containous/traefik/middlewares/accesslog"
 	"github.com/containous/traefik/middlewares/audittap"
 	"github.com/containous/traefik/middlewares/audittap/audittypes"
+	atconf "github.com/containous/traefik/middlewares/audittap/configuration"
 	"github.com/containous/traefik/middlewares/audittap/streams"
 	at "github.com/containous/traefik/middlewares/audittap/types"
 	mauth "github.com/containous/traefik/middlewares/auth"
@@ -307,7 +308,7 @@ func (s *Server) startHTTPServers() {
 }
 
 func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServerEntryPoint *serverEntryPoint) *serverEntryPoint {
-	serverMiddlewares := []negroni.Handler{headers.NewHeaders(), middlewares.NegroniRecoverHandler()}
+	serverMiddlewares := []negroni.Handler{makeHandler(s.globalConfiguration.AuditSink), middlewares.NegroniRecoverHandler()}
 	serverInternalMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler()}
 
 	if s.tracingMiddleware.IsEnabled() {
@@ -1642,4 +1643,11 @@ func (s *Server) initialiseAuditStreams() {
 	} else {
 		log.Warn("No audit sink info")
 	}
+}
+
+func makeHandler(conf *atconf.AuditSink) *headers.Handler {
+	if conf != nil {
+		return headers.NewHeaders(conf.ForwardXRequestID, conf.RequestIDLabel)
+	}
+	return headers.NewHeaders(false, "")
 }
