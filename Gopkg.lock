@@ -540,7 +540,7 @@
 [[projects]]
   name = "github.com/gambol99/go-marathon"
   packages = ["."]
-  revision = "03b46169666c53b9cc953b875ac5714e5103e064"
+  revision = "99a156b96fb2f9dbe6465affa51bbdccdd37174d"
 
 [[projects]]
   name = "github.com/ghodss/yaml"

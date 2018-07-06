@@ -56,14 +56,16 @@ type Port struct {
 
 // Application is the definition for an application in marathon
 type Application struct {
-	ID          string      `json:"id,omitempty"`
-	Cmd         *string     `json:"cmd,omitempty"`
-	Args        *[]string   `json:"args,omitempty"`
-	Constraints *[][]string `json:"constraints,omitempty"`
-	Container   *Container  `json:"container,omitempty"`
-	CPUs        float64     `json:"cpus,omitempty"`
-	GPUs        *float64    `json:"gpus,omitempty"`
-	Disk        *float64    `json:"disk,omitempty"`
+	ID          string        `json:"id,omitempty"`
+	Cmd         *string       `json:"cmd,omitempty"`
+	Args        *[]string     `json:"args,omitempty"`
+	Constraints *[][]string   `json:"constraints,omitempty"`
+	Container   *Container    `json:"container,omitempty"`
+	CPUs        float64       `json:"cpus,omitempty"`
+	GPUs        *float64      `json:"gpus,omitempty"`
+	Disk        *float64      `json:"disk,omitempty"`
+	Networks    *[]PodNetwork `json:"networks,omitempty"`
+
 	// Contains non-secret environment variables. Secrets environment variables are part of the Secrets map.
 	Env                        *map[string]string  `json:"-"`
 	Executor                   *string             `json:"executor,omitempty"`
@@ -495,7 +497,10 @@ func (r *Application) CheckHTTP(path string, port, interval int) (*Application, 
 	// step: get the port index
 	portIndex, err := r.Container.Docker.ServicePortIndex(port)
 	if err != nil {
-		return nil, err
+		portIndex, err = r.Container.ServicePortIndex(port)
+		if err != nil {
+			return nil, err
+		}
 	}
 	health := NewDefaultHealthCheck()
 	health.IntervalSeconds = interval
@@ -518,7 +523,10 @@ func (r *Application) CheckTCP(port, interval int) (*Application, error) {
 	// step: get the port index
 	portIndex, err := r.Container.Docker.ServicePortIndex(port)
 	if err != nil {
-		return nil, err
+		portIndex, err = r.Container.ServicePortIndex(port)
+		if err != nil {
+			return nil, err
+		}
 	}
 	health := NewDefaultHealthCheck()
 	health.Protocol = "TCP"
@@ -810,24 +818,7 @@ func (r *marathonClient) CreateApplication(application *Application) (*Applicati
 //		name:		the id of the application
 //		timeout:	a duration of time to wait for an application to deploy
 func (r *marathonClient) WaitOnApplication(name string, timeout time.Duration) error {
-	if r.appExistAndRunning(name) {
-		return nil
-	}
-
-	timeoutTimer := time.After(timeout)
-	ticker := time.NewTicker(r.config.PollingWaitTime)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-timeoutTimer:
-			return ErrTimeoutError
-		case <-ticker.C:
-			if r.appExistAndRunning(name) {
-				return nil
-			}
-		}
-	}
+	return r.wait(name, timeout, r.appExistAndRunning)
 }
 
 func (r *marathonClient) appExistAndRunning(name string) bool {
@@ -972,4 +963,23 @@ func (d *Discovery) AddPort(port Port) *Discovery {
 	ports = append(ports, port)
 	d.Ports = &ports
 	return d
+}
+
+// EmptyNetworks explicitly empties networks
+func (r *Application) EmptyNetworks() *Application {
+	r.Networks = &[]PodNetwork{}
+	return r
+}
+
+// SetNetwork sets the networking mode
+func (r *Application) SetNetwork(name string, mode PodNetworkMode) *Application {
+	if r.Networks == nil {
+		r.EmptyNetworks()
+	}
+
+	network := PodNetwork{Name: name, Mode: mode}
+	networks := *r.Networks
+	networks = append(networks, network)
+	r.Networks = &networks
+	return r
 }

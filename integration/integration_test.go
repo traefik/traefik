@@ -55,6 +55,7 @@ func init() {
 		check.Suite(&HTTPSSuite{})
 		check.Suite(&LogRotationSuite{})
 		check.Suite(&MarathonSuite{})
+		check.Suite(&MarathonSuite15{})
 		check.Suite(&MesosSuite{})
 		check.Suite(&RateLimitSuite{})
 		check.Suite(&RetrySuite{})

@@ -21,44 +21,34 @@ import (
 	"fmt"
 )
 
-// Alias aliases the Application struct so that it will be marshaled/unmarshaled automatically
-type Alias Application
+// PodAlias aliases the Pod struct so that it will be marshaled/unmarshaled automatically
+type PodAlias Pod
 
-// TmpEnvSecret holds the secret values deserialized from the environment variables field
-type TmpEnvSecret struct {
-	Secret string `json:"secret,omitempty"`
-}
-
-// TmpSecret holds the deserialized secrets field in a Marathon application configuration
-type TmpSecret struct {
-	Source string `json:"source,omitempty"`
-}
-
-// UnmarshalJSON unmarshals the given Application JSON as expected except for environment variables and secrets.
-// Environment varialbes are stored in the Env field. Secrets, including the environment variable part,
+// UnmarshalJSON unmarshals the given Pod JSON as expected except for environment variables and secrets.
+// Environment variables are stored in the Env field. Secrets, including the environment variable part,
 // are stored in the Secrets field.
-func (app *Application) UnmarshalJSON(b []byte) error {
+func (p *Pod) UnmarshalJSON(b []byte) error {
 	aux := &struct {
-		*Alias
-		Env     map[string]interface{} `json:"env"`
+		*PodAlias
+		Env     map[string]interface{} `json:"environment"`
 		Secrets map[string]TmpSecret   `json:"secrets"`
 	}{
-		Alias: (*Alias)(app),
+		PodAlias: (*PodAlias)(p),
 	}
 	if err := json.Unmarshal(b, aux); err != nil {
-		return fmt.Errorf("malformed application definition %v", err)
+		return fmt.Errorf("malformed pod definition %v", err)
 	}
-	env := &map[string]string{}
-	secrets := &map[string]Secret{}
+	env := map[string]string{}
+	secrets := map[string]Secret{}
 
 	for envName, genericEnvValue := range aux.Env {
 		switch envValOrSecret := genericEnvValue.(type) {
 		case string:
-			(*env)[envName] = envValOrSecret
+			env[envName] = envValOrSecret
 		case map[string]interface{}:
 			for secret, secretStore := range envValOrSecret {
 				if secStore, ok := secretStore.(string); ok && secret == "secret" {
-					(*secrets)[secStore] = Secret{EnvVar: envName}
+					secrets[secStore] = Secret{EnvVar: envName}
 					break
 				}
 				return fmt.Errorf("unexpected secret field %v of value type %T", secret, envValOrSecret[secret])
@@ -67,40 +57,44 @@ func (app *Application) UnmarshalJSON(b []byte) error {
 			return fmt.Errorf("unexpected environment variable type %T", envValOrSecret)
 		}
 	}
-	app.Env = env
+	p.Env = env
 	for k, v := range aux.Secrets {
-		tmp := (*secrets)[k]
+		tmp := secrets[k]
 		tmp.Source = v.Source
-		(*secrets)[k] = tmp
+		secrets[k] = tmp
 	}
-	app.Secrets = secrets
+	p.Secrets = secrets
 	return nil
 }
 
-// MarshalJSON marshals the given Application as expected except for environment variables and secrets,
+// MarshalJSON marshals the given Pod as expected except for environment variables and secrets,
 // which are marshaled from specialized structs.  The environment variable piece of the secrets and other
 // normal environment variables are combined and marshaled to the env field.  The secrets and the related
 // source are marshaled into the secrets field.
-func (app *Application) MarshalJSON() ([]byte, error) {
+func (p *Pod) MarshalJSON() ([]byte, error) {
 	env := make(map[string]interface{})
 	secrets := make(map[string]TmpSecret)
 
-	if app.Env != nil {
-		for k, v := range *app.Env {
+	if p.Env != nil {
+		for k, v := range p.Env {
 			env[string(k)] = string(v)
 		}
 	}
-	if app.Secrets != nil {
-		for k, v := range *app.Secrets {
-			env[v.EnvVar] = TmpEnvSecret{Secret: k}
+	if p.Secrets != nil {
+		for k, v := range p.Secrets {
+			// Only add it to the root level pod environment if it's used
+			// Otherwise it's likely in one of the container environments
+			if v.EnvVar != "" {
+				env[v.EnvVar] = TmpEnvSecret{Secret: k}
+			}
 			secrets[k] = TmpSecret{v.Source}
 		}
 	}
 	aux := &struct {
-		*Alias
-		Env     map[string]interface{} `json:"env,omitempty"`
+		*PodAlias
+		Env     map[string]interface{} `json:"environment,omitempty"`
 		Secrets map[string]TmpSecret   `json:"secrets,omitempty"`
-	}{Alias: (*Alias)(app), Env: env, Secrets: secrets}
+	}{PodAlias: (*PodAlias)(p), Env: env, Secrets: secrets}
 
 	return json.Marshal(aux)
 }

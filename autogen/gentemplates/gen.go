@@ -762,7 +762,7 @@ var _templatesEcsV1Tmpl = []byte(`[backends]
     {{end}}
 
     {{range $index, $i := $instances }}
-    [backends."backend-{{ $i.Name }}".servers."server-{{ $i.Name }}{{ $i.ID }}"]
+    [backends."backend-{{ $serviceName }}".servers."server-{{ $i.Name }}{{ $i.ID }}"]
       url = "{{ getProtocol $i }}://{{ getHost $i }}:{{ getPort $i }}"
       weight = {{ getWeight $i }}
     {{end}}

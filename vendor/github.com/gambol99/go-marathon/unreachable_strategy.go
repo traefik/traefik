@@ -21,6 +21,7 @@ import (
 	"fmt"
 )
 
+// UnreachableStrategyAbsenceReasonDisabled signifies the reason of disabled unreachable strategy
 const UnreachableStrategyAbsenceReasonDisabled = "disabled"
 
 // UnreachableStrategy is the unreachable strategy applied to an application.

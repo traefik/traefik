@@ -30,7 +30,7 @@ func TestBuildConfigurationV1(t *testing.T) {
 					machine: &machine{
 						state:     ec2.InstanceStateNameRunning,
 						privateIP: "10.0.0.1",
-						port:      1337,
+						ports:     []portMapping{{hostPort: 1337}},
 					},
 				},
 			},
@@ -76,7 +76,7 @@ func TestBuildConfigurationV1(t *testing.T) {
 					machine: &machine{
 						state:     ec2.InstanceStateNameRunning,
 						privateIP: "10.0.0.1",
-						port:      1337,
+						ports:     []portMapping{{hostPort: 1337}},
 					},
 				},
 			},
@@ -142,13 +142,13 @@ func TestBuildConfigurationV1(t *testing.T) {
 					machine: &machine{
 						state:     ec2.InstanceStateNameRunning,
 						privateIP: "10.0.0.1",
-						port:      1337,
+						ports:     []portMapping{{hostPort: 1337}},
 					},
 				},
 			},
 			expected: &types.Configuration{
 				Backends: map[string]*types.Backend{
-					"backend-testing-instance": {
+					"backend-foobar": {
 						Servers: map[string]types.Server{
 							"server-testing-instance6": {
 								URL:    "https://10.0.0.1:666",
@@ -169,14 +169,124 @@ func TestBuildConfigurationV1(t *testing.T) {
 					},
 				},
 				Frontends: map[string]*types.Frontend{
-					"frontend-testing-instance": {
+					"frontend-foobar": {
 						EntryPoints: []string{
 							"http",
 							"https",
 						},
-						Backend: "backend-testing-instance",
+						Backend: "backend-foobar",
 						Routes: map[string]types.Route{
-							"route-frontend-testing-instance": {
+							"route-frontend-foobar": {
+								Rule: "Host:traefik.io",
+							},
+						},
+						PassHostHeader: true,
+						Priority:       666,
+						BasicAuth: []string{
+							"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+							"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						},
+					},
+				},
+			},
+		}, {
+			desc: "Containers with same backend name",
+			instances: []ecsInstance{
+				{
+					Name: "testing-instance",
+					ID:   "6",
+					containerDefinition: &ecs.ContainerDefinition{
+						DockerLabels: map[string]*string{
+							label.TraefikPort:     aws.String("666"),
+							label.TraefikProtocol: aws.String("https"),
+							label.TraefikWeight:   aws.String("12"),
+
+							label.TraefikBackend: aws.String("foobar"),
+
+							label.TraefikBackendHealthCheckPath:                  aws.String("/health"),
+							label.TraefikBackendHealthCheckInterval:              aws.String("6"),
+							label.TraefikBackendLoadBalancerMethod:               aws.String("drr"),
+							label.TraefikBackendLoadBalancerSticky:               aws.String("true"),
+							label.TraefikBackendLoadBalancerStickiness:           aws.String("true"),
+							label.TraefikBackendLoadBalancerStickinessCookieName: aws.String("chocolate"),
+
+							label.TraefikFrontendAuthBasic:      aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+							label.TraefikFrontendEntryPoints:    aws.String("http,https"),
+							label.TraefikFrontendPassHostHeader: aws.String("true"),
+							label.TraefikFrontendPriority:       aws.String("666"),
+							label.TraefikFrontendRule:           aws.String("Host:traefik.io"),
+						}},
+					machine: &machine{
+						state:     ec2.InstanceStateNameRunning,
+						privateIP: "10.0.0.1",
+						ports:     []portMapping{{hostPort: 1337}},
+					},
+				}, {
+					Name: "testing-instance-v2",
+					ID:   "6",
+					containerDefinition: &ecs.ContainerDefinition{
+						DockerLabels: map[string]*string{
+							label.TraefikPort:     aws.String("555"),
+							label.TraefikProtocol: aws.String("https"),
+							label.TraefikWeight:   aws.String("12"),
+
+							label.TraefikBackend: aws.String("foobar"),
+
+							label.TraefikBackendHealthCheckPath:                  aws.String("/health"),
+							label.TraefikBackendHealthCheckInterval:              aws.String("6"),
+							label.TraefikBackendLoadBalancerMethod:               aws.String("drr"),
+							label.TraefikBackendLoadBalancerSticky:               aws.String("true"),
+							label.TraefikBackendLoadBalancerStickiness:           aws.String("true"),
+							label.TraefikBackendLoadBalancerStickinessCookieName: aws.String("chocolate"),
+
+							label.TraefikFrontendAuthBasic:      aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+							label.TraefikFrontendEntryPoints:    aws.String("http,https"),
+							label.TraefikFrontendPassHostHeader: aws.String("true"),
+							label.TraefikFrontendPriority:       aws.String("666"),
+							label.TraefikFrontendRule:           aws.String("Host:traefik.io"),
+						}},
+					machine: &machine{
+						state:     ec2.InstanceStateNameRunning,
+						privateIP: "10.0.0.2",
+						ports:     []portMapping{{hostPort: 1337}},
+					},
+				},
+			},
+			expected: &types.Configuration{
+				Backends: map[string]*types.Backend{
+					"backend-foobar": {
+						Servers: map[string]types.Server{
+							"server-testing-instance6": {
+								URL:    "https://10.0.0.1:666",
+								Weight: 12,
+							},
+							"server-testing-instance-v26": {
+								URL:    "https://10.0.0.2:555",
+								Weight: 12,
+							},
+						},
+						LoadBalancer: &types.LoadBalancer{
+							Method: "drr",
+							Sticky: true,
+							Stickiness: &types.Stickiness{
+								CookieName: "chocolate",
+							},
+						},
+						HealthCheck: &types.HealthCheck{
+							Path:     "/health",
+							Interval: "6",
+						},
+					},
+				},
+				Frontends: map[string]*types.Frontend{
+					"frontend-foobar": {
+						EntryPoints: []string{
+							"http",
+							"https",
+						},
+						Backend: "backend-foobar",
+						Routes: map[string]types.Route{
+							"route-frontend-foobar": {
 								Rule: "Host:traefik.io",
 							},
 						},
