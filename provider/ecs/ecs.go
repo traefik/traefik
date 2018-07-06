@@ -257,7 +257,6 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 		if err != nil {
 			return nil, err
 		}
-
 		for key, task := range tasks {
 
 			containerInstance := ec2Instances[aws.StringValue(task.ContainerInstanceArn)]
@@ -291,11 +290,24 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 					}
 				} else {
 					var hostPort int64
-					if len(container.NetworkBindings) > 0 && container.NetworkBindings[0] != nil {
+					var privateIP string
+					if len(container.NetworkInterfaces) > 0 {
+						if len(containerDefinition.PortMappings) > 0 && containerDefinition.PortMappings[0] != nil {
+							hostPort = aws.Int64Value(containerDefinition.PortMappings[0].HostPort)
+							privateIP = aws.StringValue(container.NetworkInterfaces[0].PrivateIpv4Address)
+						}
+					} else if len(container.NetworkBindings) > 0 && container.NetworkBindings[0] != nil {
 						hostPort = aws.Int64Value(container.NetworkBindings[0].HostPort)
+						privateIP = aws.StringValue(containerInstance.PrivateIpAddress)
+					}
+
+					if hostPort == 0 || privateIP == "" {
+						log.Errorf("Error while retrieving ecs server metadata. Task: %s. HostPort: %s. PrivateIP: %s",
+							task, hostPort, privateIP)
+						continue
 					}
 					mach = &machine{
-						privateIP: aws.StringValue(containerInstance.PrivateIpAddress),
+						privateIP: privateIP,
 						port:      hostPort,
 						state:     aws.StringValue(containerInstance.State.Name),
 					}
