@@ -19,7 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func TestNamespaceRefresh() {
+func TestNamespaceRefresh(t *testing.T) {
 
 }
 
@@ -3041,7 +3041,7 @@ func TestProviderNewK8sInClusterClientFailLabelSel(t *testing.T) {
 	os.Setenv("KUBERNETES_SERVICE_PORT", "443")
 	defer os.Clearenv()
 	_, err := p.newK8sClient("%", "%")
-	assert.EqualError(t, err, "invalid ingress label selector: \"%\"")
+	assert.Error(t, err)
 }
 
 func TestProviderNewK8sOutOfClusterClient(t *testing.T) {

@@ -5,7 +5,8 @@ import (
 	"github.com/containous/traefik/safe"
 )
 
-type KubernetesWatcher struct {
+// Watcher contains the channels required to interface with kubernetes
+type Watcher struct {
 	EventsChan    chan interface{}
 	NamespaceChan chan interface{}
 	ErrChan       chan error
@@ -15,8 +16,9 @@ type KubernetesWatcher struct {
 	namespaces    Namespaces
 }
 
-func NewKubernetesWatcher(namespaces Namespaces, client Client) *KubernetesWatcher {
-	return &KubernetesWatcher{
+// NewWatcher returns an initialized watcher
+func NewWatcher(namespaces Namespaces, client Client) *Watcher {
+	return &Watcher{
 		EventsChan:    make(chan interface{}),
 		NamespaceChan: make(chan interface{}),
 		ErrChan:       make(chan error),
@@ -27,29 +29,30 @@ func NewKubernetesWatcher(namespaces Namespaces, client Client) *KubernetesWatch
 	}
 }
 
-func (k *KubernetesWatcher) Watch() {
-	err := k.k8sClient.WatchNamespaces(k.namespaces, k.stopChan, k.NamespaceChan)
+// Watch contains the main watch loop
+func (w *Watcher) Watch() {
+	err := w.k8sClient.WatchNamespaces(w.namespaces, w.stopChan, w.NamespaceChan)
 	if err != nil {
 		log.Errorf("Error watching kubernetes namespace events: %s", err)
-		k.ErrChan <- err
+		w.ErrChan <- err
 		return
 	}
 
 	safe.Go(func() {
 		for {
 			stopWatch := make(chan struct{}, 1)
-			err = k.k8sClient.WatchAll(k.namespaces, stopWatch, k.EventsChan)
+			err = w.k8sClient.WatchAll(w.namespaces, stopWatch, w.EventsChan)
 			if err != nil {
 				log.Errorf("Error watching kubernetes namespace events: %s", err)
-				k.ErrChan <- err
+				w.ErrChan <- err
 				close(stopWatch)
 				return
 			}
 			select {
-			case <-k.stopChan:
+			case <-w.stopChan:
 				close(stopWatch)
 				return
-			case <-k.refreshChan:
+			case <-w.refreshChan:
 				close(stopWatch)
 			}
 		}
@@ -57,14 +60,16 @@ func (k *KubernetesWatcher) Watch() {
 
 }
 
-func (k *KubernetesWatcher) Refresh() {
-	k.refreshChan <- struct{}{}
+// Refresh sends a message to the refresh chan
+func (w *Watcher) Refresh() {
+	w.refreshChan <- struct{}{}
 }
 
-func (k *KubernetesWatcher) Stop() {
-	close(k.stopChan)
-	close(k.EventsChan)
-	close(k.NamespaceChan)
-	close(k.refreshChan)
-	close(k.ErrChan)
+// Stop closes all contained chans
+func (w *Watcher) Stop() {
+	close(w.stopChan)
+	close(w.EventsChan)
+	close(w.NamespaceChan)
+	close(w.refreshChan)
+	close(w.ErrChan)
 }

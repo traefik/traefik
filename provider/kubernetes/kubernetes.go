@@ -122,7 +122,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 	pool.Go(func(stop chan bool) {
 		operation := func() error {
-			k8sWatcher := NewKubernetesWatcher(p.Namespaces, k8sClient)
+			k8sWatcher := NewWatcher(p.Namespaces, k8sClient)
 			k8sWatcher.Watch()
 			for {
 				select {
