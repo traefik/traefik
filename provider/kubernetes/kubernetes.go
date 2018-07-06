@@ -71,7 +71,7 @@ type Provider struct {
 func (p *Provider) newK8sClient(ingressLabelSelector, namespaceLabelSelector string) (Client, error) {
 	ingLabelSel, err := labels.Parse(ingressLabelSelector)
 	if err != nil {
-		return nil, fmt.Errorf("invalid ingress label selector: %q", ingressLabelSelector)
+		return nil, fmt.Errorf("invalid ingress label selector %q: %v", ingressLabelSelector, err)
 	}
 
 	nsLabelSel, err := labels.Parse(namespaceLabelSelector)
@@ -113,7 +113,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		return err
 	}
 
-	log.Debugf("Using Ingress label selector: %q and Namespace label selector: %q", p.LabelSelector, p.NamespaceLabelSelector)
+	log.Debugf("Using Ingress label selector %q and Namespace label selector %q", p.LabelSelector, p.NamespaceLabelSelector)
 	k8sClient, err := p.newK8sClient(p.LabelSelector, p.NamespaceLabelSelector)
 	if err != nil {
 		return err

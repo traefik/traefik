@@ -47,7 +47,6 @@ type Client interface {
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
 	UpdateIngressStatus(namespace, name, ip, hostname string) error
-	GetNamespaces() (*corev1.NamespaceList, error)
 }
 
 type clientImpl struct {
@@ -131,6 +130,7 @@ func (c *clientImpl) WatchNamespaces(namespaces Namespaces, stopCh <-chan struct
 		} else {
 			// namespacelabels are being used: watch all namespaces for events and use them to get namespaces to watch.
 			c.namespaceFactory.Start(stopCh)
+			c.namespaceFactory.WaitForCacheSync(stopCh)
 		}
 	}
 	return nil
@@ -141,13 +141,13 @@ func (c *clientImpl) WatchAll(namespaces Namespaces, stopCh <-chan struct{}, eve
 	eventHandler := c.newResourceEventHandler(eventsChan)
 
 	var namespacesToWatch []string
-	namespaceList, err := c.GetNamespaces()
+	namespaceList, err := c.getNamespaces()
 	if err != nil {
 		return fmt.Errorf("could not list namespaces: %v", err)
 	}
 
 	for _, item := range namespaceList.Items {
-		log.Debugf("Adding found namespace: %q to namespace list", item.ObjectMeta.Name)
+		log.Debugf("Adding found namespace %q to namespace list", item.ObjectMeta.Name)
 		namespacesToWatch = append(namespacesToWatch, item.ObjectMeta.Name)
 	}
 
@@ -185,7 +185,7 @@ func (c *clientImpl) WatchAll(namespaces Namespaces, stopCh <-chan struct{}, eve
 
 // GetIngresses returns all Ingresses for observed namespaces in the cluster.
 func (c *clientImpl) GetIngresses() []*extensionsv1beta1.Ingress {
-	namespaceList, err := c.GetNamespaces()
+	namespaceList, err := c.getNamespaces()
 	if err != nil {
 		log.Errorf("could not list namespaces: %v", err)
 		return nil
@@ -233,7 +233,7 @@ func (c *clientImpl) UpdateIngressStatus(namespace, name, ip, hostname string) e
 }
 
 // GetNamespaces returns namespaces with the configured labelselector.
-func (c *clientImpl) GetNamespaces() (*corev1.NamespaceList, error) {
+func (c *clientImpl) getNamespaces() (*corev1.NamespaceList, error) {
 	return c.clientset.CoreV1().Namespaces().List(metav1.ListOptions{LabelSelector: c.namespaceLabelSelector.String()})
 }
 
