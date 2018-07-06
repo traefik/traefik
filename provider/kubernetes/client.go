@@ -140,28 +140,18 @@ func (c *clientImpl) WatchNamespaces(namespaces Namespaces, stopCh <-chan struct
 func (c *clientImpl) WatchAll(namespaces Namespaces, stopCh <-chan struct{}, eventsChan chan<- interface{}) error {
 	eventHandler := c.newResourceEventHandler(eventsChan)
 
-	// If no namespaces are specified
-	if len(namespaces) == 0 {
-		// If no namespacelabels are specified
-		if c.namespaceLabelSelector.Empty() {
-			namespaces = Namespaces{metav1.NamespaceAll}
-		} else {
-			// namespacelabels are being used, get all namespaces being watched
-			namespaceList, err := c.GetNamespaces()
-			if err != nil {
-				return fmt.Errorf("could not list namespaces: %v", err)
-			}
-
-			log.Debugf("Current Namespace List: %+v", namespaceList)
-
-			for _, item := range namespaceList.Items {
-				log.Debugf("Adding found namespace: %q to namespace list", item.ObjectMeta.Name)
-				namespaces = append(namespaces, item.ObjectMeta.Name)
-			}
-		}
+	var namespacesToWatch []string
+	namespaceList, err := c.GetNamespaces()
+	if err != nil {
+		return fmt.Errorf("could not list namespaces: %v", err)
 	}
 
-	for _, ns := range namespaces {
+	for _, item := range namespaceList.Items {
+		log.Debugf("Adding found namespace: %q to namespace list", item.ObjectMeta.Name)
+		namespacesToWatch = append(namespacesToWatch, item.ObjectMeta.Name)
+	}
+
+	for _, ns := range namespacesToWatch {
 		factory := informers.NewFilteredSharedInformerFactory(c.clientset, resyncPeriod, ns, nil)
 		factory.Extensions().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
 		factory.Core().V1().Services().Informer().AddEventHandler(eventHandler)
@@ -169,11 +159,11 @@ func (c *clientImpl) WatchAll(namespaces Namespaces, stopCh <-chan struct{}, eve
 		c.factories[ns] = factory
 	}
 
-	for _, ns := range namespaces {
+	for _, ns := range namespacesToWatch {
 		c.factories[ns].Start(stopCh)
 	}
 
-	for _, ns := range namespaces {
+	for _, ns := range namespacesToWatch {
 		for t, ok := range c.factories[ns].WaitForCacheSync(stopCh) {
 			if !ok {
 				return fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
@@ -185,7 +175,7 @@ func (c *clientImpl) WatchAll(namespaces Namespaces, stopCh <-chan struct{}, eve
 	// users having granted RBAC permissions for this object.
 	// https://github.com/containous/traefik/issues/1784 should improve the
 	// situation here in the future.
-	for _, ns := range namespaces {
+	for _, ns := range namespacesToWatch {
 		c.factories[ns].Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
 		c.factories[ns].Start(stopCh)
 	}
