@@ -40,8 +40,8 @@ func (reh *resourceEventHandler) OnDelete(obj interface{}) {
 // WatchAll starts the watch of the Provider resources and updates the stores.
 // The stores can then be accessed via the Get* functions.
 type Client interface {
-	WatchAll(namespaces Namespaces, stopCh <-chan struct{}) (<-chan interface{}, error)
-	WatchNamespaces(namespaces Namespaces, stopCh <-chan struct{}) (<-chan interface{}, error)
+	WatchAll(namespaces Namespaces, stopCh <-chan struct{}, eventsChan chan<- interface{}) error
+	WatchNamespaces(namespaces Namespaces, stopCh <-chan struct{}, namespaceChan chan<- interface{}) error
 	GetIngresses() []*extensionsv1beta1.Ingress
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
@@ -116,9 +116,8 @@ func createClientFromConfig(c *rest.Config) (*clientImpl, error) {
 }
 
 // WatchNamespaces starts a controller to watch for namespace events.
-func (c *clientImpl) WatchNamespaces(namespaces Namespaces, stopCh <-chan struct{}) (<-chan interface{}, error) {
-	eventCh := make(chan interface{}, 1)
-	eventHandler := c.newResourceEventHandler(eventCh)
+func (c *clientImpl) WatchNamespaces(namespaces Namespaces, stopCh <-chan struct{}, namespaceChan chan<- interface{}) error {
+	eventHandler := c.newResourceEventHandler(namespaceChan)
 
 	c.namespaceFactory = informers.NewSharedInformerFactory(c.clientset, resyncPeriod)
 	c.namespaceFactory.Core().V1().Namespaces().Informer().AddEventHandler(eventHandler)
@@ -134,14 +133,12 @@ func (c *clientImpl) WatchNamespaces(namespaces Namespaces, stopCh <-chan struct
 			c.namespaceFactory.Start(stopCh)
 		}
 	}
-
-	return eventCh, nil
+	return nil
 }
 
 // WatchAll starts namespace-specific controllers for all relevant kinds.
-func (c *clientImpl) WatchAll(namespaces Namespaces, stopCh <-chan struct{}) (<-chan interface{}, error) {
-	eventCh := make(chan interface{}, 1)
-	eventHandler := c.newResourceEventHandler(eventCh)
+func (c *clientImpl) WatchAll(namespaces Namespaces, stopCh <-chan struct{}, eventsChan chan<- interface{}) error {
+	eventHandler := c.newResourceEventHandler(eventsChan)
 
 	// If no namespaces are specified
 	if len(namespaces) == 0 {
@@ -152,7 +149,7 @@ func (c *clientImpl) WatchAll(namespaces Namespaces, stopCh <-chan struct{}) (<-
 			// namespacelabels are being used, get all namespaces being watched
 			namespaceList, err := c.GetNamespaces()
 			if err != nil {
-				return eventCh, fmt.Errorf("could not list namespaces: %v", err)
+				return fmt.Errorf("could not list namespaces: %v", err)
 			}
 
 			log.Debugf("Current Namespace List: %+v", namespaceList)
@@ -179,7 +176,7 @@ func (c *clientImpl) WatchAll(namespaces Namespaces, stopCh <-chan struct{}) (<-
 	for _, ns := range namespaces {
 		for t, ok := range c.factories[ns].WaitForCacheSync(stopCh) {
 			if !ok {
-				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
+				return fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
 			}
 		}
 	}
@@ -193,7 +190,7 @@ func (c *clientImpl) WatchAll(namespaces Namespaces, stopCh <-chan struct{}) (<-
 		c.factories[ns].Start(stopCh)
 	}
 
-	return eventCh, nil
+	return nil
 }
 
 // GetIngresses returns all Ingresses for observed namespaces in the cluster.

@@ -122,18 +122,33 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 	pool.Go(func(stop chan bool) {
 		operation := func() error {
+			k8sWatcher := NewKubernetesWatcher(p.Namespaces, k8sClient)
+			k8sWatcher.Watch()
 			for {
-				err := p.watch(k8sClient, configurationChan)
-				if err != nil {
-					log.Errorf("Error watching kubernetes events: %v", err)
-					timer := time.NewTimer(1 * time.Second)
-					// Don't retry on a stop message, return nil.
-					select {
-					case <-timer.C:
+				select {
+				case event := <-k8sWatcher.EventsChan:
+					templateObjects, err := p.loadIngresses(k8sClient)
+					if err != nil {
 						return err
-					case <-stop:
-						return nil
 					}
+
+					if reflect.DeepEqual(p.lastConfiguration.Get(), templateObjects) {
+						log.Debugf("Skipping Kubernetes event kind %T", event)
+					} else {
+						p.lastConfiguration.Set(templateObjects)
+						configurationChan <- types.ConfigMessage{
+							ProviderName:  "kubernetes",
+							Configuration: p.loadConfig(*templateObjects),
+						}
+					}
+				case <-k8sWatcher.NamespaceChan:
+					k8sWatcher.Refresh()
+				case err := <-k8sWatcher.ErrChan:
+					log.Errorf("Error watching kubernetes events: %v", err)
+					return err
+				case <-stop:
+					k8sWatcher.Stop()
+					return nil
 				}
 			}
 		}
@@ -146,63 +161,6 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		}
 	})
 	return nil
-}
-
-func (p *Provider) watch(k8sClient Client, configurationChan chan<- types.ConfigMessage) error {
-	// This controller watches the events channel, and allows the client watches to be restarted if needed
-	stopWatchNS := make(chan struct{}, 1)
-	defer close(stopWatchNS)
-
-	namespaceChan, err := k8sClient.WatchNamespaces(p.Namespaces, stopWatchNS)
-	if err != nil {
-		log.Errorf("Error watching kubernetes namespace events: %s", err)
-		return err
-	}
-
-	for {
-		//	Start watching the namespaced content
-		err := p.watchNamespaceContent(k8sClient, configurationChan, namespaceChan)
-		if err != nil {
-			return fmt.Errorf("error watching namespaced content: %v", err)
-		}
-	}
-}
-
-func (p *Provider) watchNamespaceContent(k8sClient Client, configurationChan chan<- types.ConfigMessage, namespaceChan <-chan interface{}) error {
-	// This controller watches the namespaced content
-	stopWatch := make(chan struct{}, 1)
-	defer close(stopWatch)
-
-	eventsChan, err := k8sClient.WatchAll(p.Namespaces, stopWatch)
-	if err != nil {
-		log.Errorf("Error watching kubernetes namespaced events: %s", err)
-		return err
-	}
-
-	for {
-		// Watch for events from eventsChan and namespaceChan
-		select {
-		case event := <-eventsChan:
-			templateObjects, err := p.loadIngresses(k8sClient)
-			if err != nil {
-				return err
-			}
-
-			if reflect.DeepEqual(p.lastConfiguration.Get(), templateObjects) {
-				log.Debugf("Skipping Kubernetes event kind %T", event)
-			} else {
-				p.lastConfiguration.Set(templateObjects)
-				configurationChan <- types.ConfigMessage{
-					ProviderName:  "kubernetes",
-					Configuration: p.loadConfig(*templateObjects),
-				}
-			}
-
-		case <-namespaceChan:
-			// namespace event received, retrigger watch all
-			return nil
-		}
-	}
 }
 
 func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error) {
