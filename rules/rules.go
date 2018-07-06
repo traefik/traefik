@@ -25,7 +25,7 @@ type Rules struct {
 
 func (r *Rules) host(hosts ...string) *mux.Route {
 	for i, host := range hosts {
-		hosts[i] = types.CanonicalDomain(host)
+		hosts[i] = strings.ToLower(host)
 	}
 
 	return r.Route.Route.MatcherFunc(func(req *http.Request, route *mux.RouteMatch) bool {
@@ -37,8 +37,7 @@ func (r *Rules) host(hosts ...string) *mux.Route {
 		if r.HostResolver != nil && r.HostResolver.CnameFlattening {
 			reqH, flatH := r.HostResolver.CNAMEFlatten(reqHost)
 			for _, host := range hosts {
-				if types.CanonicalDomain(reqH) == host ||
-					types.CanonicalDomain(flatH) == host {
+				if strings.EqualFold(reqH, host) || strings.EqualFold(flatH, host) {
 					return true
 				}
 				log.Debugf("CNAMEFlattening: request %s which resolved to %s, is not matched to route %s", reqH, flatH, host)
@@ -58,7 +57,7 @@ func (r *Rules) host(hosts ...string) *mux.Route {
 func (r *Rules) hostRegexp(hosts ...string) *mux.Route {
 	router := r.Route.Route.Subrouter()
 	for _, host := range hosts {
-		router.Host(types.CanonicalDomain(host))
+		router.Host(strings.ToLower(host))
 	}
 	return r.Route.Route
 }
@@ -66,7 +65,7 @@ func (r *Rules) hostRegexp(hosts ...string) *mux.Route {
 func (r *Rules) path(paths ...string) *mux.Route {
 	router := r.Route.Route.Subrouter()
 	for _, path := range paths {
-		router.Path(strings.TrimSpace(path))
+		router.Path(path)
 	}
 	return r.Route.Route
 }
@@ -80,14 +79,13 @@ func (r *Rules) pathPrefix(paths ...string) *mux.Route {
 }
 
 func buildPath(path string, router *mux.Router) {
-	cleanPath := strings.TrimSpace(path)
 	// {} are used to define a regex pattern in http://www.gorillatoolkit.org/pkg/mux.
 	// if we find a { in the path, that means we use regex, then the gorilla/mux implementation is chosen
 	// otherwise, we use a lightweight implementation
-	if strings.Contains(cleanPath, "{") {
-		router.PathPrefix(cleanPath)
+	if strings.Contains(path, "{") {
+		router.PathPrefix(path)
 	} else {
-		m := &prefixMatcher{prefix: cleanPath}
+		m := &prefixMatcher{prefix: path}
 		router.NewRoute().MatcherFunc(m.Match)
 	}
 }
@@ -121,7 +119,7 @@ func (r *Rules) pathStripRegex(paths ...string) *mux.Route {
 	r.Route.StripPrefixesRegex = paths
 	router := r.Route.Route.Subrouter()
 	for _, path := range paths {
-		router.Path(strings.TrimSpace(path))
+		router.Path(path)
 	}
 	return r.Route.Route
 }
@@ -162,7 +160,7 @@ func (r *Rules) pathPrefixStripRegex(paths ...string) *mux.Route {
 	r.Route.StripPrefixesRegex = paths
 	router := r.Route.Route.Subrouter()
 	for _, path := range paths {
-		router.PathPrefix(strings.TrimSpace(path))
+		router.PathPrefix(path)
 	}
 	return r.Route.Route
 }
@@ -301,5 +299,5 @@ func (r *Rules) ParseDomains(expression string) ([]string, error) {
 		return nil, fmt.Errorf("error parsing domains: %v", err)
 	}
 
-	return fun.Map(types.CanonicalDomain, domains).([]string), nil
+	return fun.Map(strings.ToLower, domains).([]string), nil
 }
