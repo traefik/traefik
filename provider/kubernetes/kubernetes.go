@@ -582,8 +582,6 @@ func parseRequestModifier(requestModifier, ruleType string) (string, error) {
 			return "", fmt.Errorf("cannot use '%s: %s' and '%s: %s', as this leads to rule duplication, and unintended behavior",
 				annotationKubernetesRuleType, ruleTypeReplacePath, annotationKubernetesRequestModifier, modifier)
 		}
-	case "":
-		return "", errors.New("cannot use empty rule")
 	default:
 		return "", fmt.Errorf("cannot use non-modifier rule: %q", modifier)
 	}

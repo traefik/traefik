@@ -450,6 +450,10 @@ func TestRuleFails(t *testing.T) {
 			ruletypeAnnotation:        "ReplacePath",
 			requestModifierAnnotation: "ReplacePathRegex:/foo /bar",
 		},
+		{
+			desc:               "Empty Rule",
+			ruletypeAnnotation: " : /bar",
+		},
 	}
 
 	for _, test := range testCases {
