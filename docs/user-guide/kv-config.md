@@ -85,9 +85,9 @@ defaultEntryPoints = ["http", "https"]
       certFile = """-----BEGIN CERTIFICATE-----
                       <cert file content>
                       -----END CERTIFICATE-----"""
-      keyFile = """-----BEGIN CERTIFICATE-----
+      keyFile = """-----BEGIN PRIVATE KEY-----
                       <key file content>
-                      -----END CERTIFICATE-----"""
+                      -----END PRIVATE KEY-----"""
     [entryPoints.other-https]
     address = ":4443"
       [entryPoints.other-https.tls]
