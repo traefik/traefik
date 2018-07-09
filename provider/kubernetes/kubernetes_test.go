@@ -45,6 +45,11 @@ func TestLoadIngresses(t *testing.T) {
 						onePath(iBackend("service6", intstr.FromInt(80))),
 					),
 				),
+				iRule(iHost("*.service7"),
+					iPaths(
+						onePath(iBackend("service7", intstr.FromInt(80))),
+					),
+				),
 			),
 		),
 	}
@@ -105,6 +110,14 @@ func TestLoadIngresses(t *testing.T) {
 				clusterIP("10.0.0.6"),
 				sPorts(sPort(80, ""))),
 		),
+		buildService(
+			sName("service7"),
+			sNamespace("testing"),
+			sUID("7"),
+			sSpec(
+				clusterIP("10.0.0.7"),
+				sPorts(sPort(80, ""))),
+		),
 	}
 
 	endpoints := []*corev1.Endpoints{
@@ -142,6 +155,14 @@ func TestLoadIngresses(t *testing.T) {
 			eUID("6"),
 			subset(
 				eAddresses(eAddressWithTargetRef("http://10.15.0.3:80", "10.15.0.3")),
+				ePorts(ePort(80, ""))),
+		),
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service7"),
+			eUID("7"),
+			subset(
+				eAddresses(eAddress("10.10.0.7")),
 				ePorts(ePort(80, ""))),
 		),
 	}
@@ -191,6 +212,12 @@ func TestLoadIngresses(t *testing.T) {
 					server("http://10.15.0.3:80", weight(1)),
 				),
 			),
+			backend("*.service7",
+				lbMethod("wrr"),
+				servers(
+					server("http://10.10.0.7:80", weight(1)),
+				),
+			),
 		),
 		frontends(
 			frontend("foo/bar",
@@ -216,6 +243,10 @@ func TestLoadIngresses(t *testing.T) {
 			frontend("service6",
 				passHostHeader(),
 				routes(route("service6", "Host:service6")),
+			),
+			frontend("*.service7",
+				passHostHeader(),
+				routes(route("*.service7", "HostRegexp:{subdomain:[A-Za-z0-9-_]+}.service7")),
 			),
 		),
 	)
@@ -592,6 +623,10 @@ func TestModifierFails(t *testing.T) {
 		{
 			desc: "Request modifier using unknown rule",
 			requestModifierAnnotation: "Foo: /bar",
+		},
+		{
+			desc: "Missing Rule",
+			requestModifierAnnotation: " : /bar",
 		},
 	}
 

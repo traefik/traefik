@@ -521,8 +521,6 @@ func getRuleForPath(pa extensionsv1beta1.HTTPIngressPath, i *extensionsv1beta1.I
 	case ruleTypePath, ruleTypePathPrefix, ruleTypePathStrip, ruleTypePathPrefixStrip:
 	case ruleTypeReplacePath:
 		log.Warnf("Using %s as %s will be deprecated in the future. Please use the %s annotation instead", ruleType, annotationKubernetesRuleType, annotationKubernetesRequestModifier)
-	case "":
-		return "", errors.New("cannot use empty rule")
 	default:
 		return "", fmt.Errorf("cannot use non-matcher rule: %q", ruleType)
 	}
@@ -582,6 +580,8 @@ func parseRequestModifier(requestModifier, ruleType string) (string, error) {
 			return "", fmt.Errorf("cannot use '%s: %s' and '%s: %s', as this leads to rule duplication, and unintended behavior",
 				annotationKubernetesRuleType, ruleTypeReplacePath, annotationKubernetesRequestModifier, modifier)
 		}
+	case "":
+		return "", errors.New("cannot use empty rule")
 	default:
 		return "", fmt.Errorf("cannot use non-modifier rule: %q", modifier)
 	}
