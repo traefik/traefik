@@ -3135,3 +3135,87 @@ func TestProviderNewK8sOutOfClusterClient(t *testing.T) {
 	_, err := p.newK8sClient("")
 	assert.NoError(t, err)
 }
+
+func TestAddGlobalBackendDuplicateFailures(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		previousConfig *types.Configuration
+		err            string
+	}{
+		{
+			desc: "Duplicate Frontend",
+			previousConfig: buildConfiguration(
+				frontends(
+					frontend("global-default-backend",
+						frontendName("global-default-frontend"),
+						passHostHeader(),
+						routes(
+							route("/", "PathPrefix:/"),
+						),
+					),
+				),
+			),
+			err: "duplicate frontend: global-default-frontend",
+		},
+		{
+			desc: "Duplicate Backend",
+			previousConfig: buildConfiguration(
+				backends(
+					backend("global-default-backend",
+						lbMethod("wrr"),
+						servers(
+							server("http://10.10.0.1:8080", weight(1)),
+						),
+					),
+				)),
+			err: "duplicate backend: global-default-backend",
+		},
+	}
+	ingresses := []*extensionsv1beta1.Ingress{
+		buildIngress(
+			iNamespace("testing"),
+			iSpecBackends(iSpecBackend(iIngressBackend("service1", intstr.FromInt(80)))),
+		),
+	}
+
+	services := []*corev1.Service{
+		buildService(
+			sName("service1"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sPorts(sPort(80, ""))),
+		),
+	}
+
+	endpoints := []*corev1.Endpoints{
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service1"),
+			eUID("1"),
+			subset(
+				eAddresses(eAddress("10.10.0.1")),
+				ePorts(ePort(8080, ""))),
+		),
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			watchChan := make(chan interface{})
+			client := clientMock{
+				ingresses: ingresses,
+				services:  services,
+				endpoints: endpoints,
+				watchChan: watchChan,
+			}
+			provider := Provider{}
+
+			err := provider.addGlobalBackend(client, ingresses[0], test.previousConfig)
+			assert.EqualError(t, err, test.err)
+		})
+	}
+}
