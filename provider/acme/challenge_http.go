@@ -1,7 +1,6 @@
 package acme
 
 import (
-	"fmt"
 	"net"
 	"net/http"
 	"time"
@@ -21,43 +20,12 @@ type challengeHTTP struct {
 
 // Present presents a challenge to obtain new ACME certificate
 func (c *challengeHTTP) Present(domain, token, keyAuth string) error {
-	httpChallenges, err := c.Store.GetHTTPChallenges()
-	if err != nil {
-		return fmt.Errorf("unable to get HTTPChallenges : %s", err)
-	}
-
-	if httpChallenges == nil {
-		httpChallenges = map[string]map[string][]byte{}
-	}
-
-	if _, ok := httpChallenges[token]; !ok {
-		httpChallenges[token] = map[string][]byte{}
-	}
-
-	httpChallenges[token][domain] = []byte(keyAuth)
-
-	return c.Store.SaveHTTPChallenges(httpChallenges)
+	return c.Store.SetHTTPChallengeToken(token, domain, []byte(keyAuth))
 }
 
 // CleanUp cleans the challenges when certificate is obtained
 func (c *challengeHTTP) CleanUp(domain, token, keyAuth string) error {
-	httpChallenges, err := c.Store.GetHTTPChallenges()
-	if err != nil {
-		return fmt.Errorf("unable to get HTTPChallenges : %s", err)
-	}
-
-	log.Debugf("Challenge CleanUp for domain %s", domain)
-
-	if _, ok := httpChallenges[token]; ok {
-		if _, domainOk := httpChallenges[token][domain]; domainOk {
-			delete(httpChallenges[token], domain)
-		}
-		if len(httpChallenges[token]) == 0 {
-			delete(httpChallenges, token)
-		}
-		return c.Store.SaveHTTPChallenges(httpChallenges)
-	}
-	return nil
+	return c.Store.RemoveHTTPChallengeToken(token, domain)
 }
 
 // Timeout calculates the maximum of time allowed to resolved an ACME challenge
@@ -70,16 +38,9 @@ func getTokenValue(token, domain string, store Store) []byte {
 	var result []byte
 
 	operation := func() error {
-		httpChallenges, err := store.GetHTTPChallenges()
-		if err != nil {
-			return fmt.Errorf("HTTPChallenges not available : %s", err)
-		}
-
-		var ok bool
-		if result, ok = httpChallenges[token][domain]; !ok {
-			return fmt.Errorf("cannot find challenge for token %v", token)
-		}
-		return nil
+		var err error
+		result, err = store.GetHTTPChallengeToken(token, domain)
+		return err
 	}
 
 	notify := func(err error, time time.Duration) {
