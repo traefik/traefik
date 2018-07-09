@@ -3236,5 +3236,76 @@ func TestAddGlobalBackendServiceAPIError(t *testing.T) {
 	}
 	provider := Provider{}
 	err := provider.addGlobalBackend(client, ingresses, config)
-	assert.NoError(t, err)
+	assert.Error(t, err)
+}
+
+func TestAddGlobalBackendEndpointMissing(t *testing.T) {
+
+	ingresses := buildIngress(
+		iNamespace("testing"),
+		iSpecBackends(iSpecBackend(iIngressBackend("service", intstr.FromInt(80)))),
+	)
+
+	services := []*corev1.Service{
+		buildService(
+			sName("service"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sPorts(sPort(80, "")),
+			),
+		),
+	}
+
+	config := buildConfiguration(
+		frontends(),
+		backends(),
+	)
+	watchChan := make(chan interface{})
+	client := clientMock{
+		services:  services,
+		watchChan: watchChan,
+	}
+	provider := Provider{}
+
+	err := provider.addGlobalBackend(client, ingresses, config)
+	assert.Error(t, err)
+}
+
+func TestAddGlobalBackendEndpointAPIError(t *testing.T) {
+
+	ingresses := buildIngress(
+		iNamespace("testing"),
+		iSpecBackends(iSpecBackend(iIngressBackend("service", intstr.FromInt(80)))),
+	)
+
+	config := buildConfiguration(
+		frontends(),
+		backends(),
+	)
+
+	services := []*corev1.Service{
+		buildService(
+			sName("service"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sPorts(sPort(80, "")),
+			),
+		),
+	}
+
+	apiErr := errors.New("failed kube api call")
+
+	watchChan := make(chan interface{})
+	client := clientMock{
+		apiEndpointsError: apiErr,
+		services:          services,
+		watchChan:         watchChan,
+	}
+	provider := Provider{}
+	err := provider.addGlobalBackend(client, ingresses, config)
+	assert.Error(t, err)
 }
