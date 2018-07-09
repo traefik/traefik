@@ -92,17 +92,16 @@ func (p ProviderAggregator) Init(_ types.Constraints) error {
 // Provide call the provide method of every providers
 func (p ProviderAggregator) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	for _, p := range p.providers {
-		providerType := reflect.TypeOf(p)
 		jsonConf, err := json.Marshal(p)
 		if err != nil {
-			log.Debugf("Unable to marshal provider conf %v with error: %v", providerType, err)
+			log.Debugf("Unable to marshal provider conf %T with error: %v", p, err)
 		}
-		log.Infof("Starting provider %v %s", providerType, jsonConf)
+		log.Infof("Starting provider %T %s", p, jsonConf)
 		currentProvider := p
 		safe.Go(func() {
 			err := currentProvider.Provide(configurationChan, pool)
 			if err != nil {
-				log.Errorf("Error starting provider %v: %s", providerType, err)
+				log.Errorf("Error starting provider %T: %s", p, err)
 			}
 		})
 	}

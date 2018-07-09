@@ -110,7 +110,7 @@ func (p *Provider) ListenRequest(domain string) (*tls.Certificate, error) {
 	return &certificate, err
 }
 
-// Init for compatibily reason the BaseProvider implements an empty Init
+// Init for compatibility reason the BaseProvider implements an empty Init
 func (p *Provider) Init(_ types.Constraints) error {
 	acme.UserAgent = fmt.Sprintf("containous-traefik/%s", version.Version)
 	if p.ACMELogging {

@@ -33,7 +33,7 @@ type BaseProvider struct {
 	DebugLogGeneratedTemplate bool              `description:"Enable debug logging of generated configuration template." export:"true"`
 }
 
-// Init for compatibily reason the BaseProvider implements an empty Init
+// Init for compatibility reason the BaseProvider implements an empty Init
 func (p *BaseProvider) Init(constraints types.Constraints) error {
 	p.Constraints = append(p.Constraints, constraints...)
 	return nil
