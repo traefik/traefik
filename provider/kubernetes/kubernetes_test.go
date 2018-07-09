@@ -3171,34 +3171,11 @@ func TestAddGlobalBackendDuplicateFailures(t *testing.T) {
 			err: "duplicate backend: global-default-backend",
 		},
 	}
-	ingresses := []*extensionsv1beta1.Ingress{
-		buildIngress(
-			iNamespace("testing"),
-			iSpecBackends(iSpecBackend(iIngressBackend("service1", intstr.FromInt(80)))),
-		),
-	}
 
-	services := []*corev1.Service{
-		buildService(
-			sName("service1"),
-			sNamespace("testing"),
-			sUID("1"),
-			sSpec(
-				clusterIP("10.0.0.1"),
-				sPorts(sPort(80, ""))),
-		),
-	}
-
-	endpoints := []*corev1.Endpoints{
-		buildEndpoint(
-			eNamespace("testing"),
-			eName("service1"),
-			eUID("1"),
-			subset(
-				eAddresses(eAddress("10.10.0.1")),
-				ePorts(ePort(8080, ""))),
-		),
-	}
+	ingress := buildIngress(
+		iNamespace("testing"),
+		iSpecBackends(iSpecBackend(iIngressBackend("service1", intstr.FromInt(80)))),
+	)
 
 	for _, test := range testCases {
 		test := test
@@ -3207,15 +3184,57 @@ func TestAddGlobalBackendDuplicateFailures(t *testing.T) {
 
 			watchChan := make(chan interface{})
 			client := clientMock{
-				ingresses: ingresses,
-				services:  services,
-				endpoints: endpoints,
 				watchChan: watchChan,
 			}
 			provider := Provider{}
 
-			err := provider.addGlobalBackend(client, ingresses[0], test.previousConfig)
+			err := provider.addGlobalBackend(client, ingress, test.previousConfig)
 			assert.EqualError(t, err, test.err)
 		})
 	}
+}
+
+func TestAddGlobalBackendServiceMissing(t *testing.T) {
+
+	ingresses := buildIngress(
+		iNamespace("testing"),
+		iSpecBackends(iSpecBackend(iIngressBackend("service1", intstr.FromInt(80)))),
+	)
+
+	config := buildConfiguration(
+		frontends(),
+		backends(),
+	)
+	watchChan := make(chan interface{})
+	client := clientMock{
+		watchChan: watchChan,
+	}
+	provider := Provider{}
+
+	err := provider.addGlobalBackend(client, ingresses, config)
+	assert.Error(t, err)
+}
+
+func TestAddGlobalBackendServiceAPIError(t *testing.T) {
+
+	ingresses := buildIngress(
+		iNamespace("testing"),
+		iSpecBackends(iSpecBackend(iIngressBackend("service1", intstr.FromInt(80)))),
+	)
+
+	config := buildConfiguration(
+		frontends(),
+		backends(),
+	)
+
+	apiErr := errors.New("failed kube api call")
+
+	watchChan := make(chan interface{})
+	client := clientMock{
+		apiServiceError: apiErr,
+		watchChan:       watchChan,
+	}
+	provider := Provider{}
+	err := provider.addGlobalBackend(client, ingresses, config)
+	assert.NoError(t, err)
 }
