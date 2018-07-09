@@ -1371,7 +1371,7 @@ rateset:
 			frontend("rewrite/api",
 				passHostHeader(),
 				routes(
-					route("/api", "PathPrefix:/api;ReplacePath:/"),
+					route("/api", "PathPrefix:/api;ReplacePathRegex: ^/api/(.*) /$1"),
 					route("rewrite", "Host:rewrite")),
 			),
 			frontend("error-pages/errorpages",
