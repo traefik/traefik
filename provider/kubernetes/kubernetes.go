@@ -100,12 +100,6 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		return err
 	}
 
-	// We require that IngressClasses start with `traefik` to reduce chances of
-	// conflict with other Ingress Providers
-	if len(p.IngressClass) > 0 && !strings.HasPrefix(p.IngressClass, traefikDefaultIngressClass) {
-		return fmt.Errorf("value for IngressClass has to be empty or start with the prefix %q, instead found %q", traefikDefaultIngressClass, p.IngressClass)
-	}
-
 	log.Debugf("Using Ingress label selector: %q", p.LabelSelector)
 	k8sClient, err := p.newK8sClient(p.LabelSelector)
 	if err != nil {
@@ -288,12 +282,11 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 						if service.Spec.Type == "ExternalName" {
 							url := protocol + "://" + service.Spec.ExternalName
-							name := url
 							if port.Port != 443 && port.Port != 80 {
 								url = fmt.Sprintf("%s:%d", url, port.Port)
 							}
 
-							templateObjects.Backends[baseName].Servers[name] = types.Server{
+							templateObjects.Backends[baseName].Servers[url] = types.Server{
 								URL:    url,
 								Weight: label.DefaultWeight,
 							}
