@@ -175,7 +175,7 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 	log.Debugf("Global configuration loaded %s", string(jsonConf))
 	if acme.IsEnabled() {
 		store := acme.NewLocalStore(acme.Get().Storage)
-		acme.Get().Store = &store
+		acme.Get().Store = store
 	}
 	svr := server.NewServer(*globalConfiguration, configuration.NewProviderAggregator(globalConfiguration))
 	if acme.IsEnabled() && acme.Get().OnHostRule {
