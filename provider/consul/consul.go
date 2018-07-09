@@ -18,15 +18,21 @@ type Provider struct {
 	kv.Provider `mapstructure:",squash" export:"true"`
 }
 
-// Provide allows the consul provider to provide configurations to traefik
-// using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
+// Init the provider
+func (p *Provider) Init(constraints types.Constraints) error {
+	p.Provider.Init(constraints)
 	store, err := p.CreateStore()
 	if err != nil {
 		return fmt.Errorf("failed to Connect to KV store: %v", err)
 	}
 	p.SetKVClient(store)
-	return p.Provider.Provide(configurationChan, pool, constraints)
+	return nil
+}
+
+// Provide allows the consul provider to provide configurations to traefik
+// using the given configuration channel.
+func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
+	return p.Provider.Provide(configurationChan, pool)
 }
 
 // CreateStore creates the KV store

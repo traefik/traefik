@@ -22,9 +22,7 @@ type MetadataConfiguration struct {
 	Prefix       string `description:"Prefix used for accessing the Rancher metadata service"`
 }
 
-func (p *Provider) metadataProvide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
-	p.Constraints = append(p.Constraints, constraints...)
-
+func (p *Provider) metadataProvide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	metadataServiceURL := fmt.Sprintf("http://rancher-metadata.rancher.internal/%s", p.Metadata.Prefix)
 
 	safe.Go(func() {

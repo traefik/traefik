@@ -19,54 +19,64 @@ type ProviderAggregator struct {
 func NewProviderAggregator(gc *GlobalConfiguration) ProviderAggregator {
 	provider := ProviderAggregator{}
 	if gc.Docker != nil {
-		provider.providers = append(provider.providers, gc.Docker)
+		provider.initAndAddProvider(gc.Docker, gc.Constraints)
 	}
 	if gc.Marathon != nil {
-		provider.providers = append(provider.providers, gc.Marathon)
+		provider.initAndAddProvider(gc.Marathon, gc.Constraints)
 	}
 	if gc.File != nil {
-		provider.providers = append(provider.providers, gc.File)
+		provider.initAndAddProvider(gc.File, gc.Constraints)
 	}
 	if gc.Rest != nil {
-		provider.providers = append(provider.providers, gc.Rest)
+		provider.initAndAddProvider(gc.Rest, gc.Constraints)
 	}
 	if gc.Consul != nil {
-		provider.providers = append(provider.providers, gc.Consul)
+		provider.initAndAddProvider(gc.Consul, gc.Constraints)
 	}
 	if gc.ConsulCatalog != nil {
-		provider.providers = append(provider.providers, gc.ConsulCatalog)
+		provider.initAndAddProvider(gc.ConsulCatalog, gc.Constraints)
 	}
 	if gc.Etcd != nil {
-		provider.providers = append(provider.providers, gc.Etcd)
+		provider.initAndAddProvider(gc.Etcd, gc.Constraints)
 	}
 	if gc.Zookeeper != nil {
-		provider.providers = append(provider.providers, gc.Zookeeper)
+		provider.initAndAddProvider(gc.Zookeeper, gc.Constraints)
 	}
 	if gc.Boltdb != nil {
-		provider.providers = append(provider.providers, gc.Boltdb)
+		provider.initAndAddProvider(gc.Boltdb, gc.Constraints)
 	}
 	if gc.Kubernetes != nil {
-		provider.providers = append(provider.providers, gc.Kubernetes)
+		provider.initAndAddProvider(gc.Kubernetes, gc.Constraints)
 	}
 	if gc.Mesos != nil {
-		provider.providers = append(provider.providers, gc.Mesos)
+		provider.initAndAddProvider(gc.Mesos, gc.Constraints)
 	}
 	if gc.Eureka != nil {
-		provider.providers = append(provider.providers, gc.Eureka)
+		provider.initAndAddProvider(gc.Eureka, gc.Constraints)
 	}
 	if gc.ECS != nil {
-		provider.providers = append(provider.providers, gc.ECS)
+		provider.initAndAddProvider(gc.ECS, gc.Constraints)
 	}
 	if gc.Rancher != nil {
-		provider.providers = append(provider.providers, gc.Rancher)
+		provider.initAndAddProvider(gc.Rancher, gc.Constraints)
 	}
 	if gc.DynamoDB != nil {
-		provider.providers = append(provider.providers, gc.DynamoDB)
+		provider.initAndAddProvider(gc.DynamoDB, gc.Constraints)
 	}
 	if gc.ServiceFabric != nil {
-		provider.providers = append(provider.providers, gc.ServiceFabric)
+		provider.initAndAddProvider(gc.ServiceFabric, gc.Constraints)
 	}
 	return provider
+}
+
+func (p *ProviderAggregator) initAndAddProvider(provider provider.Provider, constraint types.Constraints) {
+	err := provider.Init(constraint)
+	if err != nil {
+		providerType := reflect.TypeOf(provider)
+		log.Errorf("Error initializing provider %v: %v", providerType, err)
+	} else {
+		p.AddProvider(provider)
+	}
 }
 
 // AddProvider add a provider in the providers map
@@ -74,8 +84,13 @@ func (p *ProviderAggregator) AddProvider(provider provider.Provider) {
 	p.providers = append(p.providers, provider)
 }
 
+// Init the provider
+func (p ProviderAggregator) Init(_ types.Constraints) error {
+	return nil
+}
+
 // Provide call the provide method of every providers
-func (p ProviderAggregator) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
+func (p ProviderAggregator) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	for _, p := range p.providers {
 		providerType := reflect.TypeOf(p)
 		jsonConf, err := json.Marshal(p)
@@ -85,7 +100,7 @@ func (p ProviderAggregator) Provide(configurationChan chan<- types.ConfigMessage
 		log.Infof("Starting provider %v %s", providerType, jsonConf)
 		currentProvider := p
 		safe.Go(func() {
-			err := currentProvider.Provide(configurationChan, pool, constraints)
+			err := currentProvider.Provide(configurationChan, pool)
 			if err != nil {
 				log.Errorf("Error starting provider %v: %s", providerType, err)
 			}

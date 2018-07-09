@@ -37,6 +37,12 @@ type dynamoClient struct {
 	db dynamodbiface.DynamoDBAPI
 }
 
+// Init the provider
+func (p *Provider) Init(constraints types.Constraints) error {
+	p.BaseProvider.Init(constraints)
+	return nil
+}
+
 // createClient configures aws credentials and creates a dynamoClient
 func (p *Provider) createClient() (*dynamoClient, error) {
 	log.Info("Creating Provider client...")
@@ -145,9 +151,7 @@ func (p *Provider) buildConfiguration(client *dynamoClient) (*types.Configuratio
 
 // Provide provides the configuration to traefik via the configuration channel
 // if watch is enabled it polls dynamodb
-func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
-	log.Debugf("Providing Provider...")
-	p.Constraints = append(p.Constraints, constraints...)
+func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	handleCanceled := func(ctx context.Context, err error) error {
 		if ctx.Err() == context.Canceled || err == context.Canceled {
 			return nil

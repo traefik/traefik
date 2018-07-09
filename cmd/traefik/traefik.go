@@ -184,7 +184,13 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 
 	acmeprovider := globalConfiguration.InitACMEProvider()
 	if acmeprovider != nil {
-		providerAggregator.AddProvider(acmeprovider)
+		err := acmeprovider.Init(nil)
+		if err != nil {
+			acmeprovider = nil
+			log.Errorf("Error initializing provider ACME: %v", err)
+		} else {
+			providerAggregator.AddProvider(acmeprovider)
+		}
 	}
 
 	entryPoints := map[string]server.EntryPoint{}

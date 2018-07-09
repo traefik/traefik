@@ -316,7 +316,7 @@ func (s *Server) startProvider() {
 	log.Infof("Starting provider %v %s", providerType, jsonConf)
 	currentProvider := s.provider
 	safe.Go(func() {
-		err := currentProvider.Provide(s.configurationChan, s.routinesPool, s.globalConfiguration.Constraints)
+		err := currentProvider.Provide(s.configurationChan, s.routinesPool)
 		if err != nil {
 			log.Errorf("Error starting provider %v: %s", providerType, err)
 		}

@@ -76,7 +76,7 @@ func getDefaultEndpoint(instance replicaInstance) string {
 	id, data := instance.GetReplicaData()
 	endpoint, err := getReplicaDefaultEndpoint(data)
 	if err != nil {
-		log.Warnf("No default endpoint for replica %s in service %s endpointData: %s", id, data.Address)
+		log.Warnf("No default endpoint for replica %s in service %s endpointData: %s", id, data.Address, err)
 		return ""
 	}
 	return endpoint

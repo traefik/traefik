@@ -65,6 +65,12 @@ type awsClient struct {
 	ec2 *ec2.EC2
 }
 
+// Init the provider
+func (p *Provider) Init(constraints types.Constraints) error {
+	p.BaseProvider.Init(constraints)
+	return nil
+}
+
 func (p *Provider) createClient() (*awsClient, error) {
 	sess, err := session.NewSession()
 	if err != nil {
@@ -110,9 +116,7 @@ func (p *Provider) createClient() (*awsClient, error) {
 
 // Provide allows the ecs provider to provide configurations to traefik
 // using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
-	p.Constraints = append(p.Constraints, constraints...)
-
+func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	handleCanceled := func(ctx context.Context, err error) error {
 		if ctx.Err() == context.Canceled || err == context.Canceled {
 			return nil

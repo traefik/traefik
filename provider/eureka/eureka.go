@@ -22,9 +22,15 @@ type Provider struct {
 	RefreshSeconds        flaeg.Duration `description:"Override default configuration time between refresh" export:"true"`
 }
 
+// Init the provider
+func (p *Provider) Init(constraints types.Constraints) error {
+	p.BaseProvider.Init(constraints)
+	return nil
+}
+
 // Provide allows the eureka provider to provide configurations to traefik
 // using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, _ types.Constraints) error {
+func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	eureka.GetLogger().SetOutput(ioutil.Discard)
 
 	operation := func() error {

@@ -21,6 +21,11 @@ type Provider struct {
 
 var templatesRenderer = render.New(render.Options{Directory: "nowhere"})
 
+// Init the provider
+func (p *Provider) Init(_ types.Constraints) error {
+	return nil
+}
+
 // AddRoutes add rest provider routes on a router
 func (p *Provider) AddRoutes(systemRouter *mux.Router) {
 	systemRouter.
@@ -57,7 +62,7 @@ func (p *Provider) AddRoutes(systemRouter *mux.Router) {
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, _ types.Constraints) error {
+func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	p.configurationChan = configurationChan
 	return nil
 }

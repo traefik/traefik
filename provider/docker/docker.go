@@ -48,6 +48,12 @@ type Provider struct {
 	Network               string           `description:"Default Docker network used" export:"true"`
 }
 
+// Init the provider
+func (p *Provider) Init(constraints types.Constraints) error {
+	p.BaseProvider.Init(constraints)
+	return nil
+}
+
 // dockerData holds the need data to the Provider p
 type dockerData struct {
 	ServiceName     string
@@ -115,8 +121,7 @@ func (p *Provider) createClient() (client.APIClient, error) {
 
 // Provide allows the docker provider to provide configurations to traefik
 // using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
-	p.Constraints = append(p.Constraints, constraints...)
+func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	// TODO register this routine in pool, and watch for stop channel
 	safe.Go(func() {
 		operation := func() error {
