@@ -258,7 +258,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						Routes:         make(map[string]types.Route),
 						Priority:       priority,
 						WhiteList:      getWhiteList(i),
-						Redirect:       getFrontendRedirect(i),
+						Redirect:       getFrontendRedirect(i, baseName, pa.Path),
 						EntryPoints:    entryPoints,
 						Headers:        getHeader(i),
 						Errors:         getErrorPages(i),
@@ -500,7 +500,7 @@ func (p *Provider) addGlobalBackend(cl Client, i *extensionsv1beta1.Ingress, tem
 		Routes:         make(map[string]types.Route),
 		Priority:       priority,
 		WhiteList:      getWhiteList(i),
-		Redirect:       getFrontendRedirect(i),
+		Redirect:       getFrontendRedirect(i, defaultFrontendName, "/"),
 		EntryPoints:    entryPoints,
 		Headers:        getHeader(i),
 		Errors:         getErrorPages(i),
@@ -531,25 +531,12 @@ func getRuleForPath(pa extensionsv1beta1.HTTPIngressPath, i *extensionsv1beta1.I
 
 	rules := []string{ruleType + ":" + pa.Path}
 
-	var pathReplaceAnnotation string
-	if ruleType == ruleTypeReplacePath {
-		pathReplaceAnnotation = annotationKubernetesRuleType
-	}
-
 	if rewriteTarget := getStringValue(i.Annotations, annotationKubernetesRewriteTarget, ""); rewriteTarget != "" {
-		if pathReplaceAnnotation != "" {
-			return "", fmt.Errorf("rewrite-target must not be used together with annotation %q", pathReplaceAnnotation)
+		if ruleType == ruleTypeReplacePath {
+			return "", fmt.Errorf("rewrite-target must not be used together with annotation %q", annotationKubernetesRuleType)
 		}
 		rewriteTargetRule := fmt.Sprintf("ReplacePathRegex: ^%s/(.*) %s/$1", pa.Path, strings.TrimRight(rewriteTarget, "/"))
 		rules = append(rules, rewriteTargetRule)
-		pathReplaceAnnotation = annotationKubernetesRewriteTarget
-	}
-
-	if rootPath := getStringValue(i.Annotations, annotationKubernetesAppRoot, ""); rootPath != "" && pa.Path == "/" {
-		if pathReplaceAnnotation != "" {
-			return "", fmt.Errorf("app-root must not be used together with annotation %q", pathReplaceAnnotation)
-		}
-		rules = append(rules, ruleTypeReplacePath+":"+rootPath)
 	}
 
 	if requestModifier := getStringValue(i.Annotations, annotationKubernetesRequestModifier, ""); requestModifier != "" {
@@ -859,8 +846,16 @@ func loadAuthTLSSecret(namespace, secretName string, k8sClient Client) (string, 
 	return getCertificateBlocks(secret, namespace, secretName)
 }
 
-func getFrontendRedirect(i *extensionsv1beta1.Ingress) *types.Redirect {
+func getFrontendRedirect(i *extensionsv1beta1.Ingress, baseName, path string) *types.Redirect {
 	permanent := getBoolValue(i.Annotations, annotationKubernetesRedirectPermanent, false)
+
+	if appRoot := getStringValue(i.Annotations, annotationKubernetesAppRoot, ""); appRoot != "" && path == "/" {
+		return &types.Redirect{
+			Regex:       baseName,
+			Replacement: fmt.Sprintf("%s/%s", strings.TrimRight(baseName, "/"), strings.TrimLeft(appRoot, "/")),
+			Permanent:   permanent,
+		}
+	}
 
 	redirectEntryPoint := getStringValue(i.Annotations, annotationKubernetesRedirectEntryPoint, "")
 	if len(redirectEntryPoint) > 0 {
