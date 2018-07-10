@@ -152,16 +152,28 @@ func (c *Certificate) AppendCertificates(certs map[string]map[string]*tls.Certif
 
 	parsedCert, _ := x509.ParseCertificate(tlsCert.Certificate[0])
 
-	certKey := parsedCert.Subject.CommonName
+	var SANs []string
+	if parsedCert.Subject.CommonName != "" {
+		SANs = append(SANs, parsedCert.Subject.CommonName)
+	}
 	if parsedCert.DNSNames != nil {
 		sort.Strings(parsedCert.DNSNames)
 		for _, dnsName := range parsedCert.DNSNames {
 			if dnsName != parsedCert.Subject.CommonName {
-				certKey += fmt.Sprintf(",%s", dnsName)
+				SANs = append(SANs, dnsName)
 			}
 		}
 
 	}
+	if parsedCert.IPAddresses != nil {
+		for _, ip := range parsedCert.IPAddresses {
+			if ip.String() != parsedCert.Subject.CommonName {
+				SANs = append(SANs, ip.String())
+			}
+		}
+
+	}
+	certKey := strings.Join(SANs, ",")
 
 	certExists := false
 	if certs[ep] == nil {

@@ -4,6 +4,8 @@ import (
 	"io"
 	"net"
 	"net/http"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type ErrorHandler interface {
@@ -28,6 +30,7 @@ func (e *StdHandler) ServeHTTP(w http.ResponseWriter, req *http.Request, err err
 	}
 	w.WriteHeader(statusCode)
 	w.Write([]byte(http.StatusText(statusCode)))
+	log.Debugf("'%d %s' caused by: %v", statusCode, http.StatusText(statusCode), err)
 }
 
 type ErrorHandlerFunc func(http.ResponseWriter, *http.Request, error)

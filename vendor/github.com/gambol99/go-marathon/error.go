@@ -42,6 +42,8 @@ const (
 	ErrCodeServer
 	// ErrCodeUnknown specifies an unknown error.
 	ErrCodeUnknown
+	// ErrCodeMethodNotAllowed specifies a 405 Method Not Allowed.
+	ErrCodeMethodNotAllowed
 )
 
 // InvalidEndpointError indicates a endpoint error in the marathon urls
@@ -82,6 +84,8 @@ func NewAPIError(code int, content []byte) error {
 		errDef = &simpleErrDef{code: ErrCodeForbidden}
 	case code == http.StatusNotFound:
 		errDef = &simpleErrDef{code: ErrCodeNotFound}
+	case code == http.StatusMethodNotAllowed:
+		errDef = &simpleErrDef{code: ErrCodeMethodNotAllowed}
 	case code == http.StatusConflict:
 		errDef = &conflictDef{}
 	case code == 422:

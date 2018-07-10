@@ -215,9 +215,7 @@ func generatePrivateKey(keyType KeyType) (crypto.PrivateKey, error) {
 
 func generateCsr(privateKey crypto.PrivateKey, domain string, san []string, mustStaple bool) ([]byte, error) {
 	template := x509.CertificateRequest{
-		Subject: pkix.Name{
-			CommonName: domain,
-		},
+		Subject: pkix.Name{CommonName: domain},
 	}
 
 	if len(san) > 0 {
@@ -303,8 +301,8 @@ func getCertExpiration(cert []byte) (time.Time, error) {
 	return pCert.NotAfter, nil
 }
 
-func generatePemCert(privKey *rsa.PrivateKey, domain string) ([]byte, error) {
-	derBytes, err := generateDerCert(privKey, time.Time{}, domain)
+func generatePemCert(privKey *rsa.PrivateKey, domain string, extensions []pkix.Extension) ([]byte, error) {
+	derBytes, err := generateDerCert(privKey, time.Time{}, domain, extensions)
 	if err != nil {
 		return nil, err
 	}
@@ -312,7 +310,7 @@ func generatePemCert(privKey *rsa.PrivateKey, domain string) ([]byte, error) {
 	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes}), nil
 }
 
-func generateDerCert(privKey *rsa.PrivateKey, expiration time.Time, domain string) ([]byte, error) {
+func generateDerCert(privKey *rsa.PrivateKey, expiration time.Time, domain string, extensions []pkix.Extension) ([]byte, error) {
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
@@ -334,6 +332,7 @@ func generateDerCert(privKey *rsa.PrivateKey, expiration time.Time, domain strin
 		KeyUsage:              x509.KeyUsageKeyEncipherment,
 		BasicConstraintsValid: true,
 		DNSNames:              []string{domain},
+		ExtraExtensions:       extensions,
 	}
 
 	return x509.CreateCertificate(rand.Reader, &template, &template, &privKey.PublicKey, privKey)

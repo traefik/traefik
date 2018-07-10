@@ -67,12 +67,6 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 	}
 	defer forwardResponse.Body.Close()
 
-	// Pass the forward response's body and selected header if it
-	// returned a 200 response.
-	if forwardResponse.StatusCode == http.StatusOK {
-		r.Header.Set("X-Request-Context", forwardResponse.Header.Get("X-Request-Context"))
-		r.Header.Set("X-User-Context", forwardResponse.Header.Get("X-User-Context"))
-	}
 	// Pass the forward response's body and selected headers if it
 	// didn't return a response within the range of [200, 300).
 	if forwardResponse.StatusCode < http.StatusOK || forwardResponse.StatusCode >= http.StatusMultipleChoices {
@@ -100,8 +94,8 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 		return
 	}
 
-	for _, header := range config.AuthResponseHeaders {
-		r.Header.Set(header.As, forwardResponse.Header.Get(header.Name))
+	for _, headerName := range config.AuthResponseHeaders {
+		r.Header.Set(headerName, forwardResponse.Header.Get(headerName))
 	}
 
 	r.RequestURI = r.URL.RequestURI()

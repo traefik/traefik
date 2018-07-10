@@ -147,11 +147,21 @@ func (p *Provider) getFrontendRuleV1(application marathon.Application, serviceNa
 
 // Deprecated
 func (p *Provider) getBackendServerV1(task marathon.Task, application marathon.Application) string {
-	if application.IPAddressPerTask == nil || p.ForceTaskHostname {
+	networks := application.Networks
+	var hostFlag bool
+
+	if networks == nil {
+		hostFlag = application.IPAddressPerTask == nil
+	} else {
+		hostFlag = (*networks)[0].Mode != marathon.ContainerNetworkMode
+	}
+
+	if hostFlag || p.ForceTaskHostname {
 		return task.Host
 	}
 
 	numTaskIPAddresses := len(task.IPAddresses)
+
 	switch numTaskIPAddresses {
 	case 0:
 		log.Errorf("Missing IP address for Marathon application %s on task %s", application.ID, task.ID)

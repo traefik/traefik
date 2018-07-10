@@ -156,7 +156,7 @@ func (c *CircuitBreaker) activateFallback(w http.ResponseWriter, req *http.Reque
 
 func (c *CircuitBreaker) serve(w http.ResponseWriter, req *http.Request) {
 	start := c.clock.UtcNow()
-	p := utils.NewSimpleProxyWriter(w)
+	p := utils.NewProxyWriter(w)
 
 	c.next.ServeHTTP(p, req)
 

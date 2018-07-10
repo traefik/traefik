@@ -82,7 +82,7 @@ func HasBody() ResponseCondition {
 		}
 
 		if len(body) == 0 {
-			return errors.New("Response doesn't have body content")
+			return errors.New("response doesn't have body content")
 		}
 		return nil
 	}

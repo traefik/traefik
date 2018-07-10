@@ -46,7 +46,8 @@ func (p *Provider) buildConfigurationV2(instances []ecsInstance) (*types.Configu
 		"getPassHostHeader": label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getPassTLSCert":    label.GetFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getPriority":       label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
-		"getBasicAuth":      label.GetFuncSliceString(label.TraefikFrontendAuthBasic),
+		"getBasicAuth":      label.GetFuncSliceString(label.TraefikFrontendAuthBasic), // Deprecated
+		"getAuth":           label.GetAuth,
 		"getEntryPoints":    label.GetFuncSliceString(label.TraefikFrontendEntryPoints),
 		"getRedirect":       label.GetRedirect,
 		"getErrorPages":     label.GetErrorPages,
@@ -68,7 +69,7 @@ func (p *Provider) filterInstance(i ecsInstance) bool {
 		return false
 	}
 
-	if labelPort := label.GetStringValue(i.TraefikLabels, label.TraefikPort, ""); i.machine.port == 0 && labelPort == "" {
+	if labelPort := label.GetStringValue(i.TraefikLabels, label.TraefikPort, ""); len(i.machine.ports) == 0 && labelPort == "" {
 		log.Debugf("Filtering ecs instance without port %s (%s)", i.Name, i.ID)
 		return false
 	}
@@ -85,6 +86,14 @@ func (p *Provider) filterInstance(i ecsInstance) bool {
 
 	if !isEnabled(i, p.ExposedByDefault) {
 		log.Debugf("Filtering disabled ecs instance %s (%s)", i.Name, i.ID)
+		return false
+	}
+
+	constraintTags := label.GetSliceStringValue(i.TraefikLabels, label.TraefikTags)
+	if ok, failingConstraint := p.MatchConstraints(constraintTags); !ok {
+		if failingConstraint != nil {
+			log.Debugf("Filtering ecs instance pruned by constraint %s (%s) (constraint = %q)", i.Name, i.ID, failingConstraint.String())
+		}
 		return false
 	}
 
@@ -111,18 +120,27 @@ func getHost(i ecsInstance) string {
 
 func getPort(i ecsInstance) string {
 	if value := label.GetStringValue(i.TraefikLabels, label.TraefikPort, ""); len(value) > 0 {
-		return value
+		port, err := strconv.ParseInt(value, 10, 64)
+		if err == nil {
+			for _, mapping := range i.machine.ports {
+				if port == mapping.hostPort || port == mapping.containerPort {
+					return strconv.FormatInt(mapping.hostPort, 10)
+				}
+			}
+			return value
+		}
 	}
-	return strconv.FormatInt(i.machine.port, 10)
+	return strconv.FormatInt(i.machine.ports[0].hostPort, 10)
 }
 
 func filterFrontends(instances []ecsInstance) []ecsInstance {
 	byName := make(map[string]struct{})
 
 	return fun.Filter(func(i ecsInstance) bool {
-		_, found := byName[getBackendName(i)]
+		backendName := getBackendName(i)
+		_, found := byName[backendName]
 		if !found {
-			byName[getBackendName(i)] = struct{}{}
+			byName[backendName] = struct{}{}
 		}
 		return !found
 	}, instances).([]ecsInstance)

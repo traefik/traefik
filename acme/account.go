@@ -187,7 +187,7 @@ func (dc *DomainsCertificates) removeDuplicates() {
 }
 
 func (dc *DomainsCertificates) removeEmpty() {
-	certs := []*DomainsCertificate{}
+	var certs []*DomainsCertificate
 	for _, cert := range dc.Certs {
 		if cert.Certificate != nil && len(cert.Certificate.Certificate) > 0 && len(cert.Certificate.PrivateKey) > 0 {
 			certs = append(certs, cert)

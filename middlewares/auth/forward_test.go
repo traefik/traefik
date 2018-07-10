@@ -36,9 +36,8 @@ func TestForwardAuthFail(t *testing.T) {
 	ts := httptest.NewServer(n)
 	defer ts.Close()
 
-	client := &http.Client{}
 	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
-	res, err := client.Do(req)
+	res, err := http.DefaultClient.Do(req)
 	assert.NoError(t, err, "there should be no error")
 	assert.Equal(t, http.StatusForbidden, res.StatusCode, "they should be equal")
 
@@ -50,25 +49,22 @@ func TestForwardAuthFail(t *testing.T) {
 func TestForwardAuthSuccess(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Auth-User", "user@example.com")
+		w.Header().Set("X-Auth-Secret", "secret")
 		fmt.Fprintln(w, "Success")
 	}))
 	defer server.Close()
 
 	middleware, err := NewAuthenticator(&types.Auth{
 		Forward: &types.Forward{
-			Address: server.URL,
-			AuthResponseHeaders: map[string]*types.AuthResponseHeader{
-				"user": {
-					Name: "X-Auth-User",
-					As:   "X-Authenticated-User",
-				},
-			},
+			Address:             server.URL,
+			AuthResponseHeaders: []string{"X-Auth-User"},
 		},
 	}, &tracing.Tracing{})
 	assert.NoError(t, err, "there should be no error")
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, "user@example.com", r.Header.Get("X-Authenticated-User"), "they should be equal")
+		assert.Equal(t, "user@example.com", r.Header.Get("X-Auth-User"))
+		assert.Empty(t, r.Header.Get("X-Auth-Secret"))
 		fmt.Fprintln(w, "traefik")
 	})
 	n := negroni.New(middleware)
@@ -76,9 +72,8 @@ func TestForwardAuthSuccess(t *testing.T) {
 	ts := httptest.NewServer(n)
 	defer ts.Close()
 
-	client := &http.Client{}
 	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
-	res, err := client.Do(req)
+	res, err := http.DefaultClient.Do(req)
 	assert.NoError(t, err, "there should be no error")
 	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
 

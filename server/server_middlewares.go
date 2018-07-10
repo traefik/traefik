@@ -108,7 +108,18 @@ func (s *Server) buildMiddlewares(frontendName string, frontend *types.Frontend,
 		middle = append(middle, handler)
 	}
 
-	return middle, buildModifyResponse(secureMiddleware, headerMiddleware, forwa), postConfig, nil
+	// Authentication
+	if frontend.Auth != nil {
+		authMiddleware, err := mauth.NewAuthenticator(frontend.Auth, s.tracingMiddleware)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+
+		handler := s.wrapNegroniHandlerWithAccessLog(authMiddleware, fmt.Sprintf("Auth for %s", frontendName))
+		middle = append(middle, handler)
+	}
+
+	return middle, buildModifyResponse(secureMiddleware, headerMiddleware), postConfig, nil
 }
 
 func (s *Server) buildServerEntryPointMiddlewares(serverEntryPointName string, serverEntryPoint *serverEntryPoint) ([]negroni.Handler, error) {
@@ -160,6 +171,9 @@ func (s *Server) buildServerEntryPointMiddlewares(serverEntryPointName string, s
 	if ipWhitelistMiddleware != nil {
 		serverMiddlewares = append(serverMiddlewares, s.wrapNegroniHandlerWithAccessLog(ipWhitelistMiddleware, fmt.Sprintf("ipwhitelister for entrypoint %s", serverEntryPointName)))
 	}
+
+	// RequestHost Cannonizer
+	serverMiddlewares = append(serverMiddlewares, &middlewares.RequestHost{})
 
 	return serverMiddlewares, nil
 }

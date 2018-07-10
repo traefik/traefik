@@ -9,6 +9,7 @@ import (
 type Registry interface {
 	// IsEnabled shows whether metrics instrumentation is enabled.
 	IsEnabled() bool
+
 	// server metrics
 	ConfigReloadsCounter() metrics.Counter
 	ConfigReloadsFailureCounter() metrics.Counter
@@ -38,18 +39,18 @@ func NewVoidRegistry() Registry {
 // It handles the case when a registry hasn't registered some metric and returns nil.
 // This allows for feature imparity between the different metric implementations.
 func NewMultiRegistry(registries []Registry) Registry {
-	configReloadsCounter := []metrics.Counter{}
-	configReloadsFailureCounter := []metrics.Counter{}
-	lastConfigReloadSuccessGauge := []metrics.Gauge{}
-	lastConfigReloadFailureGauge := []metrics.Gauge{}
-	entrypointReqsCounter := []metrics.Counter{}
-	entrypointReqDurationHistogram := []metrics.Histogram{}
-	entrypointOpenConnsGauge := []metrics.Gauge{}
-	backendReqsCounter := []metrics.Counter{}
-	backendReqDurationHistogram := []metrics.Histogram{}
-	backendOpenConnsGauge := []metrics.Gauge{}
-	backendRetriesCounter := []metrics.Counter{}
-	backendServerUpGauge := []metrics.Gauge{}
+	var configReloadsCounter []metrics.Counter
+	var configReloadsFailureCounter []metrics.Counter
+	var lastConfigReloadSuccessGauge []metrics.Gauge
+	var lastConfigReloadFailureGauge []metrics.Gauge
+	var entrypointReqsCounter []metrics.Counter
+	var entrypointReqDurationHistogram []metrics.Histogram
+	var entrypointOpenConnsGauge []metrics.Gauge
+	var backendReqsCounter []metrics.Counter
+	var backendReqDurationHistogram []metrics.Histogram
+	var backendOpenConnsGauge []metrics.Gauge
+	var backendRetriesCounter []metrics.Counter
+	var backendServerUpGauge []metrics.Gauge
 
 	for _, r := range registries {
 		if r.ConfigReloadsCounter() != nil {

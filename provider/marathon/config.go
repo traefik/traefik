@@ -48,7 +48,8 @@ func (p *Provider) buildConfigurationV2(applications *marathon.Applications) *ty
 		"getPassTLSCert":       label.GetFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getPriority":          label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
 		"getEntryPoints":       label.GetFuncSliceString(label.TraefikFrontendEntryPoints),
-		"getBasicAuth":         label.GetFuncSliceString(label.TraefikFrontendAuthBasic),
+		"getBasicAuth":         label.GetFuncSliceString(label.TraefikFrontendAuthBasic), // Deprecated
+		"getAuth":              label.GetAuth,
 		"getRedirect":          label.GetRedirect,
 		"getErrorPages":        label.GetErrorPages,
 		"getRateLimit":         label.GetRateLimit,
@@ -347,7 +348,16 @@ func (p *Provider) getServer(app appData, task marathon.Task) (string, *types.Se
 }
 
 func (p *Provider) getServerHost(task marathon.Task, app appData) (string, error) {
-	if app.IPAddressPerTask == nil || p.ForceTaskHostname {
+	networks := app.Networks
+	var hostFlag bool
+
+	if networks == nil {
+		hostFlag = app.IPAddressPerTask == nil
+	} else {
+		hostFlag = (*networks)[0].Mode != marathon.ContainerNetworkMode
+	}
+
+	if hostFlag || p.ForceTaskHostname {
 		if len(task.Host) == 0 {
 			return "", fmt.Errorf("host is undefined for task %q app %q", task.ID, app.ID)
 		}

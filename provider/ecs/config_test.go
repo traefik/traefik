@@ -32,7 +32,7 @@ func TestBuildConfiguration(t *testing.T) {
 					machine: &machine{
 						state:     ec2.InstanceStateNameRunning,
 						privateIP: "10.0.0.1",
-						port:      1337,
+						ports:     []portMapping{{hostPort: 1337}},
 					},
 				},
 			},
@@ -56,7 +56,6 @@ func TestBuildConfiguration(t *testing.T) {
 							},
 						},
 						PassHostHeader: true,
-						BasicAuth:      []string{},
 					},
 				},
 			},
@@ -75,7 +74,7 @@ func TestBuildConfiguration(t *testing.T) {
 					machine: &machine{
 						state:     ec2.InstanceStateNameRunning,
 						privateIP: "10.0.0.1",
-						port:      1337,
+						ports:     []portMapping{{hostPort: 1337}},
 					},
 				},
 			},
@@ -103,7 +102,216 @@ func TestBuildConfiguration(t *testing.T) {
 							},
 						},
 						PassHostHeader: true,
-						BasicAuth:      []string{},
+					},
+				},
+			},
+		},
+		{
+			desc: "config parsed successfully with basic auth labels",
+			instances: []ecsInstance{
+				{
+					Name: "instance",
+					ID:   "1",
+					containerDefinition: &ecs.ContainerDefinition{
+						DockerLabels: map[string]*string{
+							label.TraefikFrontendAuthBasicUsers:     aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+							label.TraefikFrontendAuthBasicUsersFile: aws.String(".htpasswd"),
+							label.TraefikFrontendAuthHeaderField:    aws.String("X-WebAuth-User"),
+						}},
+					machine: &machine{
+						state:     ec2.InstanceStateNameRunning,
+						privateIP: "10.0.0.1",
+						ports:     []portMapping{{hostPort: 1337}},
+					},
+				},
+			},
+			expected: &types.Configuration{
+				Backends: map[string]*types.Backend{
+					"backend-instance": {
+						Servers: map[string]types.Server{
+							"server-instance-1": {
+								URL:    "http://10.0.0.1:1337",
+								Weight: label.DefaultWeight,
+							}},
+					},
+				},
+				Frontends: map[string]*types.Frontend{
+					"frontend-instance": {
+						EntryPoints: []string{},
+						Backend:     "backend-instance",
+						Routes: map[string]types.Route{
+							"route-frontend-instance": {
+								Rule: "Host:instance.",
+							},
+						},
+						Auth: &types.Auth{
+							HeaderField: "X-WebAuth-User",
+							Basic: &types.Basic{
+								Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+								UsersFile: ".htpasswd",
+							},
+						},
+						PassHostHeader: true,
+					},
+				},
+			},
+		},
+		{
+			desc: "config parsed successfully with basic auth (backward compatibility) labels",
+			instances: []ecsInstance{
+				{
+					Name: "instance",
+					ID:   "1",
+					containerDefinition: &ecs.ContainerDefinition{
+						DockerLabels: map[string]*string{
+							label.TraefikFrontendAuthBasic: aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+						}},
+					machine: &machine{
+						state:     ec2.InstanceStateNameRunning,
+						privateIP: "10.0.0.1",
+						ports:     []portMapping{{hostPort: 1337}},
+					},
+				},
+			},
+			expected: &types.Configuration{
+				Backends: map[string]*types.Backend{
+					"backend-instance": {
+						Servers: map[string]types.Server{
+							"server-instance-1": {
+								URL:    "http://10.0.0.1:1337",
+								Weight: label.DefaultWeight,
+							}},
+					},
+				},
+				Frontends: map[string]*types.Frontend{
+					"frontend-instance": {
+						EntryPoints: []string{},
+						Backend:     "backend-instance",
+						Routes: map[string]types.Route{
+							"route-frontend-instance": {
+								Rule: "Host:instance.",
+							},
+						},
+						Auth: &types.Auth{
+							Basic: &types.Basic{
+								Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							},
+						},
+						PassHostHeader: true,
+					},
+				},
+			},
+		},
+		{
+			desc: "config parsed successfully with digest auth labels",
+			instances: []ecsInstance{
+				{
+					Name: "instance",
+					ID:   "1",
+					containerDefinition: &ecs.ContainerDefinition{
+						DockerLabels: map[string]*string{
+							label.TraefikFrontendAuthDigestUsers:     aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+							label.TraefikFrontendAuthDigestUsersFile: aws.String(".htpasswd"),
+							label.TraefikFrontendAuthHeaderField:     aws.String("X-WebAuth-User"),
+						}},
+					machine: &machine{
+						state:     ec2.InstanceStateNameRunning,
+						privateIP: "10.0.0.1",
+						ports:     []portMapping{{hostPort: 1337}},
+					},
+				},
+			},
+			expected: &types.Configuration{
+				Backends: map[string]*types.Backend{
+					"backend-instance": {
+						Servers: map[string]types.Server{
+							"server-instance-1": {
+								URL:    "http://10.0.0.1:1337",
+								Weight: label.DefaultWeight,
+							}},
+					},
+				},
+				Frontends: map[string]*types.Frontend{
+					"frontend-instance": {
+						EntryPoints: []string{},
+						Backend:     "backend-instance",
+						Routes: map[string]types.Route{
+							"route-frontend-instance": {
+								Rule: "Host:instance.",
+							},
+						},
+						Auth: &types.Auth{
+							HeaderField: "X-WebAuth-User",
+							Digest: &types.Digest{
+								Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+								UsersFile: ".htpasswd",
+							},
+						},
+						PassHostHeader: true,
+					},
+				},
+			},
+		},
+		{
+			desc: "config parsed successfully with forward auth labels",
+			instances: []ecsInstance{
+				{
+					Name: "instance",
+					ID:   "1",
+					containerDefinition: &ecs.ContainerDefinition{
+						DockerLabels: map[string]*string{
+							label.TraefikFrontendAuthForwardAddress:               aws.String("auth.server"),
+							label.TraefikFrontendAuthForwardTrustForwardHeader:    aws.String("true"),
+							label.TraefikFrontendAuthForwardTLSCa:                 aws.String("ca.crt"),
+							label.TraefikFrontendAuthForwardTLSCaOptional:         aws.String("true"),
+							label.TraefikFrontendAuthForwardTLSCert:               aws.String("server.crt"),
+							label.TraefikFrontendAuthForwardTLSKey:                aws.String("server.key"),
+							label.TraefikFrontendAuthForwardTLSInsecureSkipVerify: aws.String("true"), label.TraefikFrontendAuthHeaderField: aws.String("X-WebAuth-User"),
+						}},
+					machine: &machine{
+						state:     ec2.InstanceStateNameRunning,
+						privateIP: "10.0.0.1",
+						ports:     []portMapping{{hostPort: 1337}},
+					},
+				},
+			},
+			expected: &types.Configuration{
+				Backends: map[string]*types.Backend{
+					"backend-instance": {
+						Servers: map[string]types.Server{
+							"server-instance-1": {
+								URL:    "http://10.0.0.1:1337",
+								Weight: label.DefaultWeight,
+							}},
+					},
+				},
+				Frontends: map[string]*types.Frontend{
+					"frontend-instance": {
+						EntryPoints: []string{},
+						Backend:     "backend-instance",
+						Routes: map[string]types.Route{
+							"route-frontend-instance": {
+								Rule: "Host:instance.",
+							},
+						},
+						Auth: &types.Auth{
+							HeaderField: "X-WebAuth-User",
+							Forward: &types.Forward{
+								Address:            "auth.server",
+								TrustForwardHeader: true,
+								TLS: &types.ClientTLS{
+									CA:                 "ca.crt",
+									CAOptional:         true,
+									InsecureSkipVerify: true,
+									Cert:               "server.crt",
+									Key:                "server.key",
+								},
+							},
+						},
+						PassHostHeader: true,
 					},
 				},
 			},
@@ -141,7 +349,20 @@ func TestBuildConfiguration(t *testing.T) {
 							label.TraefikBackendBufferingMemRequestBodyBytes:     aws.String("2097152"),
 							label.TraefikBackendBufferingRetryExpression:         aws.String("IsNetworkError() && Attempts() <= 2"),
 
-							label.TraefikFrontendAuthBasic:                 aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+							label.TraefikFrontendAuthBasic:                        aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+							label.TraefikFrontendAuthBasicUsers:                   aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+							label.TraefikFrontendAuthBasicUsersFile:               aws.String(".htpasswd"),
+							label.TraefikFrontendAuthDigestUsers:                  aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+							label.TraefikFrontendAuthDigestUsersFile:              aws.String(".htpasswd"),
+							label.TraefikFrontendAuthForwardAddress:               aws.String("auth.server"),
+							label.TraefikFrontendAuthForwardTrustForwardHeader:    aws.String("true"),
+							label.TraefikFrontendAuthForwardTLSCa:                 aws.String("ca.crt"),
+							label.TraefikFrontendAuthForwardTLSCaOptional:         aws.String("true"),
+							label.TraefikFrontendAuthForwardTLSCert:               aws.String("server.crt"),
+							label.TraefikFrontendAuthForwardTLSKey:                aws.String("server.key"),
+							label.TraefikFrontendAuthForwardTLSInsecureSkipVerify: aws.String("true"),
+							label.TraefikFrontendAuthHeaderField:                  aws.String("X-WebAuth-User"),
+
 							label.TraefikFrontendEntryPoints:               aws.String("http,https"),
 							label.TraefikFrontendPassHostHeader:            aws.String("true"),
 							label.TraefikFrontendPassTLSCert:               aws.String("true"),
@@ -195,7 +416,7 @@ func TestBuildConfiguration(t *testing.T) {
 					machine: &machine{
 						state:     ec2.InstanceStateNameRunning,
 						privateIP: "10.0.0.1",
-						port:      1337,
+						ports:     []portMapping{{hostPort: 1337}},
 					},
 				},
 			},
@@ -257,9 +478,13 @@ func TestBuildConfiguration(t *testing.T) {
 						PassHostHeader: true,
 						PassTLSCert:    true,
 						Priority:       666,
-						BasicAuth: []string{
-							"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-							"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						Auth: &types.Auth{
+							HeaderField: "X-WebAuth-User",
+							Basic: &types.Basic{
+								Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+								UsersFile: ".htpasswd",
+							},
 						},
 						WhiteList: &types.WhiteList{
 							SourceRange:      []string{"10.10.10.10"},
@@ -349,7 +574,7 @@ func TestBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "Canary deployment",
+			desc: "Containers with same backend name",
 			instances: []ecsInstance{
 				{
 					Name: "testing-instance-v1",
@@ -381,7 +606,7 @@ func TestBuildConfiguration(t *testing.T) {
 							label.TraefikBackendBufferingMemRequestBodyBytes:     aws.String("2097152"),
 							label.TraefikBackendBufferingRetryExpression:         aws.String("IsNetworkError() && Attempts() <= 2"),
 
-							label.TraefikFrontendAuthBasic:                 aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+							label.TraefikFrontendAuthBasicUsers:            aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 							label.TraefikFrontendEntryPoints:               aws.String("http,https"),
 							label.TraefikFrontendPassHostHeader:            aws.String("true"),
 							label.TraefikFrontendPassTLSCert:               aws.String("true"),
@@ -435,7 +660,7 @@ func TestBuildConfiguration(t *testing.T) {
 					machine: &machine{
 						state:     ec2.InstanceStateNameRunning,
 						privateIP: "10.0.0.1",
-						port:      1337,
+						ports:     []portMapping{{hostPort: 1337}},
 					},
 				},
 				{
@@ -522,7 +747,7 @@ func TestBuildConfiguration(t *testing.T) {
 					machine: &machine{
 						state:     ec2.InstanceStateNameRunning,
 						privateIP: "10.2.2.1",
-						port:      1337,
+						ports:     []portMapping{{hostPort: 1337}},
 					},
 				},
 			},
@@ -588,9 +813,11 @@ func TestBuildConfiguration(t *testing.T) {
 						PassHostHeader: true,
 						PassTLSCert:    true,
 						Priority:       666,
-						BasicAuth: []string{
-							"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-							"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						Auth: &types.Auth{
+							Basic: &types.Basic{
+								Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							},
 						},
 						WhiteList: &types.WhiteList{
 							SourceRange:      []string{"10.10.10.10"},
@@ -703,6 +930,7 @@ func TestFilterInstance(t *testing.T) {
 		instanceInfo     ecsInstance
 		exposedByDefault bool
 		expected         bool
+		constrain        bool
 	}{
 		{
 			desc:             "Instance without enable label and exposed by default enabled should be not filtered",
@@ -786,6 +1014,24 @@ func TestFilterInstance(t *testing.T) {
 			exposedByDefault: true,
 			expected:         true,
 		},
+		{
+			desc: "Instance with failing constraint should be filtered",
+			instanceInfo: simpleEcsInstance(map[string]*string{
+				label.TraefikTags: aws.String("private"),
+			}),
+			exposedByDefault: true,
+			expected:         false,
+			constrain:        true,
+		},
+		{
+			desc: "Instance with passing constraint should not be filtered",
+			instanceInfo: simpleEcsInstance(map[string]*string{
+				label.TraefikTags: aws.String("public"),
+			}),
+			exposedByDefault: true,
+			expected:         true,
+			constrain:        true,
+		},
 	}
 
 	for _, test := range testCases {
@@ -796,90 +1042,14 @@ func TestFilterInstance(t *testing.T) {
 			prov := &Provider{
 				ExposedByDefault: test.exposedByDefault,
 			}
+			if test.constrain {
+				constraints := types.Constraints{}
+				assert.NoError(t, constraints.Set("tag==public"))
+				prov.Constraints = constraints
+			}
 
 			actual := prov.filterInstance(test.instanceInfo)
 			assert.Equal(t, test.expected, actual)
-		})
-	}
-}
-
-func TestChunkedTaskArns(t *testing.T) {
-	testVal := "a"
-	testCases := []struct {
-		desc            string
-		count           int
-		expectedLengths []int
-	}{
-		{
-			desc:            "0 parameter should return nil",
-			count:           0,
-			expectedLengths: []int(nil),
-		},
-		{
-			desc:            "1 parameter should return 1 array of 1 element",
-			count:           1,
-			expectedLengths: []int{1},
-		},
-		{
-			desc:            "99 parameters should return 1 array of 99 elements",
-			count:           99,
-			expectedLengths: []int{99},
-		},
-		{
-			desc:            "100 parameters should return 1 array of 100 elements",
-			count:           100,
-			expectedLengths: []int{100},
-		},
-		{
-			desc:            "101 parameters should return 1 array of 100 elements and 1 array of 1 element",
-			count:           101,
-			expectedLengths: []int{100, 1},
-		},
-		{
-			desc:            "199 parameters should return 1 array of 100 elements and 1 array of 99 elements",
-			count:           199,
-			expectedLengths: []int{100, 99},
-		},
-		{
-			desc:            "200 parameters should return 2 arrays of 100 elements each",
-			count:           200,
-			expectedLengths: []int{100, 100},
-		},
-		{
-			desc:            "201 parameters should return 2 arrays of 100 elements each and 1 array of 1 element",
-			count:           201,
-			expectedLengths: []int{100, 100, 1},
-		},
-		{
-			desc:            "555 parameters should return 5 arrays of 100 elements each and 1 array of 55 elements",
-			count:           555,
-			expectedLengths: []int{100, 100, 100, 100, 100, 55},
-		},
-		{
-			desc:            "1001 parameters should return 10 arrays of 100 elements each and 1 array of 1 element",
-			count:           1001,
-			expectedLengths: []int{100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 1},
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			var tasks []*string
-			for v := 0; v < test.count; v++ {
-				tasks = append(tasks, &testVal)
-			}
-
-			out := chunkedTaskArns(tasks)
-			var outCount []int
-
-			for _, el := range out {
-				outCount = append(outCount, len(el))
-			}
-
-			assert.Equal(t, test.expectedLengths, outCount, "Chunking %d elements", test.count)
 		})
 	}
 }
@@ -931,6 +1101,27 @@ func TestGetPort(t *testing.T) {
 			expected: "80",
 			instanceInfo: simpleEcsInstanceNoNetwork(map[string]*string{
 				label.TraefikPort: aws.String("80"),
+			}),
+		},
+		{
+			desc:     "Container label should provide exposed port",
+			expected: "6536",
+			instanceInfo: simpleEcsInstanceDynamicPorts(map[string]*string{
+				label.TraefikPort: aws.String("8080"),
+			}),
+		},
+		{
+			desc:     "Wrong port container label should provide default exposed port",
+			expected: "9000",
+			instanceInfo: simpleEcsInstanceDynamicPorts(map[string]*string{
+				label.TraefikPort: aws.String("9000"),
+			}),
+		},
+		{
+			desc:     "Invalid port container label should provide default exposed port",
+			expected: "6535",
+			instanceInfo: simpleEcsInstanceDynamicPorts(map[string]*string{
+				label.TraefikPort: aws.String("foo"),
 			}),
 		},
 	}
@@ -1044,7 +1235,7 @@ func makeEcsInstance(containerDef *ecs.ContainerDefinition) ecsInstance {
 		machine: &machine{
 			state:     ec2.InstanceStateNameRunning,
 			privateIP: "10.0.0.0",
-			port:      1337,
+			ports:     []portMapping{{hostPort: 1337}},
 		},
 	}
 
@@ -1060,7 +1251,7 @@ func simpleEcsInstance(labels map[string]*string) ecsInstance {
 		Name:         aws.String("http"),
 		DockerLabels: labels,
 	})
-	instance.machine.port = 80
+	instance.machine.ports = []portMapping{{hostPort: 80}}
 	return instance
 }
 
@@ -1069,7 +1260,25 @@ func simpleEcsInstanceNoNetwork(labels map[string]*string) ecsInstance {
 		Name:         aws.String("http"),
 		DockerLabels: labels,
 	})
-	instance.machine.port = 0
+	instance.machine.ports = []portMapping{}
+	return instance
+}
+
+func simpleEcsInstanceDynamicPorts(labels map[string]*string) ecsInstance {
+	instance := makeEcsInstance(&ecs.ContainerDefinition{
+		Name:         aws.String("http"),
+		DockerLabels: labels,
+	})
+	instance.machine.ports = []portMapping{
+		{
+			containerPort: 80,
+			hostPort:      6535,
+		},
+		{
+			containerPort: 8080,
+			hostPort:      6536,
+		},
+	}
 	return instance
 }
 

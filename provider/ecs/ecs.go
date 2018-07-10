@@ -48,11 +48,16 @@ type ecsInstance struct {
 	TraefikLabels       map[string]string
 }
 
+type portMapping struct {
+	containerPort int64
+	hostPort      int64
+}
+
 type machine struct {
 	name      string
 	state     string
 	privateIP string
-	port      int64
+	ports     []portMapping
 }
 
 type awsClient struct {
@@ -203,8 +208,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 	} else if p.Cluster != "" {
 		// TODO: Deprecated configuration - Need to be removed in the future
 		clusters = Clusters{p.Cluster}
-		log.Warn("Deprecated configuration found: ecs.cluster " +
-			"Please use ecs.clusters instead.")
+		log.Warn("Deprecated configuration found: ecs.cluster. Please use ecs.clusters instead.")
 	} else {
 		clusters = p.Clusters
 	}
@@ -227,7 +231,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 					Cluster: &c,
 				})
 				if err != nil {
-					log.Errorf("Unable to describe tasks for %s", page.TaskArns)
+					log.Errorf("Unable to describe tasks for %v", page.TaskArns)
 				} else {
 					for _, t := range resp.Tasks {
 						tasks[aws.StringValue(t.TaskArn)] = t
@@ -279,13 +283,18 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 
 				var mach *machine
 				if aws.StringValue(task.LaunchType) == ecs.LaunchTypeFargate {
-					var hostPort int64
-					if len(containerDefinition.PortMappings) > 0 && containerDefinition.PortMappings[0] != nil {
-						hostPort = aws.Int64Value(containerDefinition.PortMappings[0].HostPort)
+					var ports []portMapping
+					for _, mapping := range containerDefinition.PortMappings {
+						if mapping != nil {
+							ports = append(ports, portMapping{
+								hostPort:      aws.Int64Value(mapping.HostPort),
+								containerPort: aws.Int64Value(mapping.ContainerPort),
+							})
+						}
 					}
 					mach = &machine{
 						privateIP: aws.StringValue(container.NetworkInterfaces[0].PrivateIpv4Address),
-						port:      hostPort,
+						ports:     ports,
 						state:     aws.StringValue(task.LastStatus),
 					}
 				} else {
@@ -296,8 +305,15 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 							hostPort = aws.Int64Value(containerDefinition.PortMappings[0].HostPort)
 							privateIP = aws.StringValue(container.NetworkInterfaces[0].PrivateIpv4Address)
 						}
-					} else if len(container.NetworkBindings) > 0 && container.NetworkBindings[0] != nil {
-						hostPort = aws.Int64Value(container.NetworkBindings[0].HostPort)
+					} else {
+						var ports []portMapping
+						for _, mapping := range container.NetworkBindings {
+							if mapping != nil {
+								ports = append(ports, portMapping{
+									hostPort:      aws.Int64Value(mapping.HostPort),
+									containerPort: aws.Int64Value(mapping.ContainerPort),
+								})
+							}
 						privateIP = aws.StringValue(containerInstance.PrivateIpAddress)
 					}
 
@@ -308,7 +324,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 					}
 					mach = &machine{
 						privateIP: privateIP,
-						port:      hostPort,
+						ports:     ports,
 						state:     aws.StringValue(containerInstance.State.Name),
 					}
 				}
@@ -407,20 +423,4 @@ func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types
 	}
 
 	return p.buildConfiguration(instances)
-}
-
-// Provider expects no more than 100 parameters be passed to a DescribeTask call; thus, pack
-// each string into an array capped at 100 elements
-func chunkedTaskArns(tasks []*string) [][]*string {
-	var chunkedTasks [][]*string
-	for i := 0; i < len(tasks); i += 100 {
-		var sliceEnd int
-		if i+100 < len(tasks) {
-			sliceEnd = i + 100
-		} else {
-			sliceEnd = len(tasks)
-		}
-		chunkedTasks = append(chunkedTasks, tasks[i:sliceEnd])
-	}
-	return chunkedTasks
 }

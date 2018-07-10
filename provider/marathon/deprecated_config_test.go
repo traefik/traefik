@@ -784,9 +784,80 @@ func TestGetServersV1(t *testing.T) {
 			expected: nil,
 		},
 		{
-			desc: "with 3 tasks",
+			desc: "with 3 tasks and hosts set",
+			application: application(
+				withTasks(
+					task(ipAddresses("1.1.1.1"), host("2.2.2.2"), withTaskID("A"), taskPorts(80)),
+					task(ipAddresses("1.1.1.2"), host("2.2.2.2"), withTaskID("B"), taskPorts(81)),
+					task(ipAddresses("1.1.1.3"), host("2.2.2.2"), withTaskID("C"), taskPorts(82))),
+			),
+			expected: map[string]types.Server{
+				"server-A": {
+					URL:    "http://2.2.2.2:80",
+					Weight: label.DefaultWeight,
+				},
+				"server-B": {
+					URL:    "http://2.2.2.2:81",
+					Weight: label.DefaultWeight,
+				},
+				"server-C": {
+					URL:    "http://2.2.2.2:82",
+					Weight: label.DefaultWeight,
+				},
+			},
+		},
+		{
+			desc: "with 3 tasks and ipAddrPerTask set",
 			application: application(
 				ipAddrPerTask(80),
+				withTasks(
+					task(ipAddresses("1.1.1.1"), withTaskID("A"), taskPorts(80)),
+					task(ipAddresses("1.1.1.2"), withTaskID("B"), taskPorts(80)),
+					task(ipAddresses("1.1.1.3"), withTaskID("C"), taskPorts(80))),
+			),
+			expected: map[string]types.Server{
+				"server-A": {
+					URL:    "http://1.1.1.1:80",
+					Weight: label.DefaultWeight,
+				},
+				"server-B": {
+					URL:    "http://1.1.1.2:80",
+					Weight: label.DefaultWeight,
+				},
+				"server-C": {
+					URL:    "http://1.1.1.3:80",
+					Weight: label.DefaultWeight,
+				},
+			},
+		},
+		{
+			desc: "with 3 tasks and bridge network",
+			application: application(
+				bridgeNetwork(),
+				withTasks(
+					task(ipAddresses("1.1.1.1"), host("2.2.2.2"), withTaskID("A"), taskPorts(80)),
+					task(ipAddresses("1.1.1.2"), host("2.2.2.2"), withTaskID("B"), taskPorts(81)),
+					task(ipAddresses("1.1.1.3"), host("2.2.2.2"), withTaskID("C"), taskPorts(82))),
+			),
+			expected: map[string]types.Server{
+				"server-A": {
+					URL:    "http://2.2.2.2:80",
+					Weight: label.DefaultWeight,
+				},
+				"server-B": {
+					URL:    "http://2.2.2.2:81",
+					Weight: label.DefaultWeight,
+				},
+				"server-C": {
+					URL:    "http://2.2.2.2:82",
+					Weight: label.DefaultWeight,
+				},
+			},
+		},
+		{
+			desc: "with 3 tasks and cni set",
+			application: application(
+				containerNetwork(),
 				withTasks(
 					task(ipAddresses("1.1.1.1"), withTaskID("A"), taskPorts(80)),
 					task(ipAddresses("1.1.1.2"), withTaskID("B"), taskPorts(80)),
@@ -813,14 +884,12 @@ func TestGetServersV1(t *testing.T) {
 
 	for _, test := range testCases {
 		test := test
-		if test.desc == "should return nil when all hosts are empty" {
-			t.Run(test.desc, func(t *testing.T) {
-				t.Parallel()
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 
-				actual := p.getServersV1(test.application, test.segmentName)
+			actual := p.getServersV1(test.application, test.segmentName)
 
-				assert.Equal(t, test.expected, actual)
-			})
-		}
+			assert.Equal(t, test.expected, actual)
+		})
 	}
 }

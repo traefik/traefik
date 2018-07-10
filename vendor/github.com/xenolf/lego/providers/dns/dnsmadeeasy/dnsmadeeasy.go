@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/platform/config/env"
 )
 
 // DNSProvider is an implementation of the acme.ChallengeProvider interface that uses
@@ -23,6 +24,7 @@ type DNSProvider struct {
 	baseURL   string
 	apiKey    string
 	apiSecret string
+	client    *http.Client
 }
 
 // Domain holds the DNSMadeEasy API representation of a Domain
@@ -45,20 +47,19 @@ type Record struct {
 // Credentials must be passed in the environment variables: DNSMADEEASY_API_KEY
 // and DNSMADEEASY_API_SECRET.
 func NewDNSProvider() (*DNSProvider, error) {
-	dnsmadeeasyAPIKey := os.Getenv("DNSMADEEASY_API_KEY")
-	dnsmadeeasyAPISecret := os.Getenv("DNSMADEEASY_API_SECRET")
-	dnsmadeeasySandbox := os.Getenv("DNSMADEEASY_SANDBOX")
+	values, err := env.Get("DNSMADEEASY_API_KEY", "DNSMADEEASY_API_SECRET")
+	if err != nil {
+		return nil, fmt.Errorf("DNSMadeEasy: %v", err)
+	}
 
 	var baseURL string
-
-	sandbox, _ := strconv.ParseBool(dnsmadeeasySandbox)
-	if sandbox {
+	if sandbox, _ := strconv.ParseBool(os.Getenv("DNSMADEEASY_SANDBOX")); sandbox {
 		baseURL = "https://api.sandbox.dnsmadeeasy.com/V2.0"
 	} else {
 		baseURL = "https://api.dnsmadeeasy.com/V2.0"
 	}
 
-	return NewDNSProviderCredentials(baseURL, dnsmadeeasyAPIKey, dnsmadeeasyAPISecret)
+	return NewDNSProviderCredentials(baseURL, values["DNSMADEEASY_API_KEY"], values["DNSMADEEASY_API_SECRET"])
 }
 
 // NewDNSProviderCredentials uses the supplied credentials to return a
@@ -68,10 +69,19 @@ func NewDNSProviderCredentials(baseURL, apiKey, apiSecret string) (*DNSProvider,
 		return nil, fmt.Errorf("DNS Made Easy credentials missing")
 	}
 
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{
+		Transport: transport,
+		Timeout:   10 * time.Second,
+	}
+
 	return &DNSProvider{
 		baseURL:   baseURL,
 		apiKey:    apiKey,
 		apiSecret: apiSecret,
+		client:    client,
 	}, nil
 }
 
@@ -135,7 +145,7 @@ func (d *DNSProvider) getDomain(authZone string) (*Domain, error) {
 	domainName := authZone[0 : len(authZone)-1]
 	resource := fmt.Sprintf("%s%s", "/dns/managed/name?domainname=", domainName)
 
-	resp, err := d.sendRequest("GET", resource, nil)
+	resp, err := d.sendRequest(http.MethodGet, resource, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +163,7 @@ func (d *DNSProvider) getDomain(authZone string) (*Domain, error) {
 func (d *DNSProvider) getRecords(domain *Domain, recordName, recordType string) (*[]Record, error) {
 	resource := fmt.Sprintf("%s/%d/%s%s%s%s", "/dns/managed", domain.ID, "records?recordName=", recordName, "&type=", recordType)
 
-	resp, err := d.sendRequest("GET", resource, nil)
+	resp, err := d.sendRequest(http.MethodGet, resource, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +185,7 @@ func (d *DNSProvider) getRecords(domain *Domain, recordName, recordType string) 
 func (d *DNSProvider) createRecord(domain *Domain, record *Record) error {
 	url := fmt.Sprintf("%s/%d/%s", "/dns/managed", domain.ID, "records")
 
-	resp, err := d.sendRequest("POST", url, record)
+	resp, err := d.sendRequest(http.MethodPost, url, record)
 	if err != nil {
 		return err
 	}
@@ -187,7 +197,7 @@ func (d *DNSProvider) createRecord(domain *Domain, record *Record) error {
 func (d *DNSProvider) deleteRecord(record Record) error {
 	resource := fmt.Sprintf("%s/%d/%s/%d", "/dns/managed", record.SourceID, "records", record.ID)
 
-	resp, err := d.sendRequest("DELETE", resource, nil)
+	resp, err := d.sendRequest(http.MethodDelete, resource, nil)
 	if err != nil {
 		return err
 	}
@@ -217,14 +227,7 @@ func (d *DNSProvider) sendRequest(method, resource string, payload interface{}) 
 	req.Header.Set("accept", "application/json")
 	req.Header.Set("content-type", "application/json")
 
-	transport := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{
-		Transport: transport,
-		Timeout:   10 * time.Second,
-	}
-	resp, err := client.Do(req)
+	resp, err := d.client.Do(req)
 	if err != nil {
 		return nil, err
 	}

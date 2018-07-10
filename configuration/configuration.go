@@ -104,6 +104,7 @@ type GlobalConfiguration struct {
 	API                       *api.Handler            `description:"Enable api/dashboard" export:"true"`
 	Metrics                   *types.Metrics          `description:"Enable a metrics exporter" export:"true"`
 	Ping                      *ping.Handler           `description:"Enable ping" export:"true"`
+	HostResolver              *HostResolverConfig     `description:"Enable CNAME Flattening" export:"true"`
 }
 
 // WebCompatibility is a configuration to handle compatibility with deprecated web provider options
@@ -360,6 +361,16 @@ func (gc *GlobalConfiguration) initACMEProvider() {
 			gc.ACME.HTTPChallenge = nil
 		}
 
+		if gc.ACME.DNSChallenge != nil && gc.ACME.TLSChallenge != nil {
+			log.Warn("Unable to use DNS challenge and TLS challenge at the same time. Fallback to DNS challenge.")
+			gc.ACME.TLSChallenge = nil
+		}
+
+		if gc.ACME.HTTPChallenge != nil && gc.ACME.TLSChallenge != nil {
+			log.Warn("Unable to use HTTP challenge and TLS challenge at the same time. Fallback to TLS challenge.")
+			gc.ACME.HTTPChallenge = nil
+		}
+
 		// TODO: to remove in the future
 		if len(gc.ACME.StorageFile) > 0 && len(gc.ACME.Storage) == 0 {
 			log.Warn("ACME.StorageFile is deprecated, use ACME.Storage instead")
@@ -392,6 +403,7 @@ func (gc *GlobalConfiguration) InitACMEProvider() *acmeprovider.Provider {
 				Storage:       gc.ACME.Storage,
 				HTTPChallenge: gc.ACME.HTTPChallenge,
 				DNSChallenge:  gc.ACME.DNSChallenge,
+				TLSChallenge:  gc.ACME.TLSChallenge,
 				Domains:       gc.ACME.Domains,
 				ACMELogging:   gc.ACME.ACMELogging,
 				CAServer:      gc.ACME.CAServer,
@@ -399,7 +411,7 @@ func (gc *GlobalConfiguration) InitACMEProvider() *acmeprovider.Provider {
 			}
 
 			store := acmeprovider.NewLocalStore(provider.Storage)
-			provider.Store = &store
+			provider.Store = store
 			acme.ConvertToNewFormat(provider.Storage)
 			gc.ACME = nil
 			return provider
@@ -507,4 +519,11 @@ type ForwardingTimeouts struct {
 type LifeCycle struct {
 	RequestAcceptGraceTimeout flaeg.Duration `description:"Duration to keep accepting requests before Traefik initiates the graceful shutdown procedure"`
 	GraceTimeOut              flaeg.Duration `description:"Duration to give active requests a chance to finish before Traefik stops"`
+}
+
+// HostResolverConfig contain configuration for CNAME Flattening
+type HostResolverConfig struct {
+	CnameFlattening bool   `description:"A flag to enable/disable CNAME flattening" export:"true"`
+	ResolvConfig    string `description:"resolv.conf used for DNS resolving" export:"true"`
+	ResolvDepth     int    `description:"The maximal depth of DNS recursive resolving" export:"true"`
 }

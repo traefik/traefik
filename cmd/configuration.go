@@ -108,6 +108,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultConsulCatalog.Constraints = types.Constraints{}
 	defaultConsulCatalog.Prefix = "traefik"
 	defaultConsulCatalog.FrontEndRule = "Host:{{.ServiceName}}.{{.Domain}}"
+	defaultConsulCatalog.Stale = false
 
 	// default Etcd
 	var defaultEtcd etcd.Provider
@@ -268,6 +269,12 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		},
 	}
 
+	defaultResolver := configuration.HostResolverConfig{
+		CnameFlattening: false,
+		ResolvConfig:    "/etc/resolv.conf",
+		ResolvDepth:     5,
+	}
+
 	defaultConfiguration := configuration.GlobalConfiguration{
 		Docker:             &defaultDocker,
 		File:               &defaultFile,
@@ -296,6 +303,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		API:                &defaultAPI,
 		Metrics:            &defaultMetrics,
 		Tracing:            &defaultTracing,
+		HostResolver:       &defaultResolver,
 	}
 
 	return &TraefikConfiguration{

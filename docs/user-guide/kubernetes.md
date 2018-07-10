@@ -332,7 +332,8 @@ spec:
   selector:
     k8s-app: traefik-ingress-lb
   ports:
-  - port: 80
+  - name: web
+    port: 80
     targetPort: 8080
 ---
 apiVersion: extensions/v1beta1
@@ -340,16 +341,15 @@ kind: Ingress
 metadata:
   name: traefik-web-ui
   namespace: kube-system
-  annotations:
-    kubernetes.io/ingress.class: traefik
 spec:
   rules:
   - host: traefik-ui.minikube
     http:
       paths:
-      - backend:
+      - path: /
+        backend:
           serviceName: traefik-web-ui
-          servicePort: 80
+          servicePort: web
 ```
 
 [examples/k8s/ui.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/ui.yaml)
@@ -875,6 +875,89 @@ For instance, it is conceivable to have one Deployment deal with internal and an
 For such cases, it is advisable to classify Ingress objects through a label and configure the `labelSelector` option per each Træfik Deployment accordingly.
 To stick with the internal/external example above, all Ingress objects meant for internal traffic could receive a `traffic-type: internal` label while objects designated for external traffic receive a `traffic-type: external` label.
 The label selectors on the Træfik Deployments would then be `traffic-type=internal` and `traffic-type=external`, respectively.
+
+## Traffic Splitting
+
+It is possible to split Ingress traffic in a fine-grained manner between multiple deployments using _service weights_.
+
+One canonical use case is canary releases where a deployment representing a newer release is to receive an initially small but ever-increasing fraction of the requests over time.
+The way this can be done in Træfik is to specify a percentage of requests that should go into each deployment.
+
+For instance, say that an application `my-app` runs in version 1.
+A newer version 2 is about to be released, but confidence in the robustness and reliability of new version running in production can only be gained gradually.
+Thus, a new deployment `my-app-canary` is created and scaled to a replica count that suffices for a 1% traffic share.
+Along with it, a Service object is created as usual.
+
+The Ingress specification would look like this:
+
+```yaml
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    traefik.ingress.kubernetes.io/service-weights: |
+      my-app: 99%
+      my-app-canary: 1%
+  name: my-app
+spec:
+  rules:
+  - http:
+      paths:
+      - backend:
+          serviceName: my-app
+          servicePort: 80
+        path: /
+      - backend:
+          serviceName: my-app-canary
+          servicePort: 80
+        path: /
+```
+
+Take note of the `traefik.ingress.kubernetes.io/service-weights` annotation: It specifies the distribution of requests among the referenced backend services, `my-app` and `my-app-canary`.
+With this definition, Træfik will route 99% of the requests to the pods backed by the `my-app` deployment, and 1% to those backed by `my-app-canary`.
+Over time, the ratio may slowly shift towards the canary deployment until it is deemed to replace the previous main application, in steps such as 5%/95%, 10%/90%, 50%/50%, and finally 100%/0%.
+
+A few conditions must hold for service weights to be applied correctly:
+
+- The associated service backends must share the same path and host.
+- The total percentage shared across all service backends must yield 100% (see the section on [omitting the final service](#omitting-the-final-service), however).
+- The percentage values are interpreted as floating point numbers to a supported precision as defined in the [annotation documentation](/configuration/backends/kubernetes#general-annotations).
+
+### Omitting the Final Service
+
+When specifying service weights, it is possible to omit exactly one service for convenience reasons.
+
+For instance, the following definition shows how to split requests in a scenario where a canary release is accompanied by a baseline deployment for easier metrics comparison or automated canary analysis:
+
+```yaml
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    traefik.ingress.kubernetes.io/service-weights: |
+      my-app-canary: 10%
+      my-app-baseline: 10%
+  name: app
+spec:
+  rules:
+  - http:
+      paths:
+      - backend:
+          serviceName: my-app-canary
+          servicePort: 80
+        path: /
+      - backend:
+          serviceName: my-app-baseline
+          servicePort: 80
+        path: /
+      - backend:
+          serviceName: my-app-main
+          servicePort: 80
+        path: /
+```
+
+This configuration assigns 80% of traffic to `my-app-main` automatically, thus freeing the user from having to complete percentage values manually.
+This becomes handy when increasing shares for canary releases continuously.
 
 ## Production advice
 
