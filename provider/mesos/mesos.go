@@ -40,8 +40,7 @@ type Provider struct {
 
 // Init the provider
 func (p *Provider) Init(constraints types.Constraints) error {
-	p.BaseProvider.Init(constraints)
-	return nil
+	return p.BaseProvider.Init(constraints)
 }
 
 // Provide allows the mesos provider to provide configurations to traefik

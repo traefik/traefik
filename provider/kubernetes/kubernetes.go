@@ -97,8 +97,7 @@ func (p *Provider) newK8sClient(ingressLabelSelector string) (Client, error) {
 
 // Init the provider
 func (p *Provider) Init(constraints types.Constraints) error {
-	p.BaseProvider.Init(constraints)
-	return nil
+	return p.BaseProvider.Init(constraints)
 }
 
 // Provide allows the k8s provider to provide configurations to traefik

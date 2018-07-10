@@ -67,8 +67,7 @@ type awsClient struct {
 
 // Init the provider
 func (p *Provider) Init(constraints types.Constraints) error {
-	p.BaseProvider.Init(constraints)
-	return nil
+	return p.BaseProvider.Init(constraints)
 }
 
 func (p *Provider) createClient() (*awsClient, error) {
