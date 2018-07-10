@@ -45,6 +45,11 @@ func TestLoadIngresses(t *testing.T) {
 						onePath(iBackend("service6", intstr.FromInt(80))),
 					),
 				),
+				iRule(iHost("*.service7"),
+					iPaths(
+						onePath(iBackend("service7", intstr.FromInt(80))),
+					),
+				),
 			),
 		),
 	}
@@ -105,6 +110,14 @@ func TestLoadIngresses(t *testing.T) {
 				clusterIP("10.0.0.6"),
 				sPorts(sPort(80, ""))),
 		),
+		buildService(
+			sName("service7"),
+			sNamespace("testing"),
+			sUID("7"),
+			sSpec(
+				clusterIP("10.0.0.7"),
+				sPorts(sPort(80, ""))),
+		),
 	}
 
 	endpoints := []*corev1.Endpoints{
@@ -142,6 +155,14 @@ func TestLoadIngresses(t *testing.T) {
 			eUID("6"),
 			subset(
 				eAddresses(eAddressWithTargetRef("http://10.15.0.3:80", "10.15.0.3")),
+				ePorts(ePort(80, ""))),
+		),
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service7"),
+			eUID("7"),
+			subset(
+				eAddresses(eAddress("10.10.0.7")),
 				ePorts(ePort(80, ""))),
 		),
 	}
@@ -191,6 +212,12 @@ func TestLoadIngresses(t *testing.T) {
 					server("http://10.15.0.3:80", weight(1)),
 				),
 			),
+			backend("*.service7",
+				lbMethod("wrr"),
+				servers(
+					server("http://10.10.0.7:80", weight(1)),
+				),
+			),
 		),
 		frontends(
 			frontend("foo/bar",
@@ -216,6 +243,10 @@ func TestLoadIngresses(t *testing.T) {
 			frontend("service6",
 				passHostHeader(),
 				routes(route("service6", "Host:service6")),
+			),
+			frontend("*.service7",
+				passHostHeader(),
+				routes(route("*.service7", "HostRegexp:{subdomain:[A-Za-z0-9-_]+}.service7")),
 			),
 		),
 	)
@@ -450,6 +481,10 @@ func TestRuleFails(t *testing.T) {
 			ruletypeAnnotation:        "ReplacePath",
 			requestModifierAnnotation: "ReplacePathRegex:/foo /bar",
 		},
+		{
+			desc:               "Empty Rule",
+			ruletypeAnnotation: " : /bar",
+		},
 	}
 
 	for _, test := range testCases {
@@ -588,6 +623,10 @@ func TestModifierFails(t *testing.T) {
 		{
 			desc: "Request modifier using unknown rule",
 			requestModifierAnnotation: "Foo: /bar",
+		},
+		{
+			desc: "Missing Rule",
+			requestModifierAnnotation: " : /bar",
 		},
 	}
 
@@ -3095,4 +3134,174 @@ func TestProviderNewK8sOutOfClusterClient(t *testing.T) {
 	p.Endpoint = "localhost"
 	_, err := p.newK8sClient("")
 	assert.NoError(t, err)
+}
+
+func TestAddGlobalBackendDuplicateFailures(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		previousConfig *types.Configuration
+		err            string
+	}{
+		{
+			desc: "Duplicate Frontend",
+			previousConfig: buildConfiguration(
+				frontends(
+					frontend("global-default-backend",
+						frontendName("global-default-frontend"),
+						passHostHeader(),
+						routes(
+							route("/", "PathPrefix:/"),
+						),
+					),
+				),
+			),
+			err: "duplicate frontend: global-default-frontend",
+		},
+		{
+			desc: "Duplicate Backend",
+			previousConfig: buildConfiguration(
+				backends(
+					backend("global-default-backend",
+						lbMethod("wrr"),
+						servers(
+							server("http://10.10.0.1:8080", weight(1)),
+						),
+					),
+				)),
+			err: "duplicate backend: global-default-backend",
+		},
+	}
+
+	ingress := buildIngress(
+		iNamespace("testing"),
+		iSpecBackends(iSpecBackend(iIngressBackend("service1", intstr.FromInt(80)))),
+	)
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			watchChan := make(chan interface{})
+			client := clientMock{
+				watchChan: watchChan,
+			}
+			provider := Provider{}
+
+			err := provider.addGlobalBackend(client, ingress, test.previousConfig)
+			assert.EqualError(t, err, test.err)
+		})
+	}
+}
+
+func TestAddGlobalBackendServiceMissing(t *testing.T) {
+	ingresses := buildIngress(
+		iNamespace("testing"),
+		iSpecBackends(iSpecBackend(iIngressBackend("service1", intstr.FromInt(80)))),
+	)
+
+	config := buildConfiguration(
+		frontends(),
+		backends(),
+	)
+	watchChan := make(chan interface{})
+	client := clientMock{
+		watchChan: watchChan,
+	}
+	provider := Provider{}
+
+	err := provider.addGlobalBackend(client, ingresses, config)
+	assert.Error(t, err)
+}
+
+func TestAddGlobalBackendServiceAPIError(t *testing.T) {
+	ingresses := buildIngress(
+		iNamespace("testing"),
+		iSpecBackends(iSpecBackend(iIngressBackend("service1", intstr.FromInt(80)))),
+	)
+
+	config := buildConfiguration(
+		frontends(),
+		backends(),
+	)
+
+	apiErr := errors.New("failed kube api call")
+
+	watchChan := make(chan interface{})
+	client := clientMock{
+		apiServiceError: apiErr,
+		watchChan:       watchChan,
+	}
+	provider := Provider{}
+	err := provider.addGlobalBackend(client, ingresses, config)
+	assert.Error(t, err)
+}
+
+func TestAddGlobalBackendEndpointMissing(t *testing.T) {
+	ingresses := buildIngress(
+		iNamespace("testing"),
+		iSpecBackends(iSpecBackend(iIngressBackend("service", intstr.FromInt(80)))),
+	)
+
+	services := []*corev1.Service{
+		buildService(
+			sName("service"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sPorts(sPort(80, "")),
+			),
+		),
+	}
+
+	config := buildConfiguration(
+		frontends(),
+		backends(),
+	)
+	watchChan := make(chan interface{})
+	client := clientMock{
+		services:  services,
+		watchChan: watchChan,
+	}
+	provider := Provider{}
+
+	err := provider.addGlobalBackend(client, ingresses, config)
+	assert.Error(t, err)
+}
+
+func TestAddGlobalBackendEndpointAPIError(t *testing.T) {
+	ingresses := buildIngress(
+		iNamespace("testing"),
+		iSpecBackends(iSpecBackend(iIngressBackend("service", intstr.FromInt(80)))),
+	)
+
+	config := buildConfiguration(
+		frontends(),
+		backends(),
+	)
+
+	services := []*corev1.Service{
+		buildService(
+			sName("service"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sPorts(sPort(80, "")),
+			),
+		),
+	}
+
+	apiErr := errors.New("failed kube api call")
+
+	watchChan := make(chan interface{})
+	client := clientMock{
+		apiEndpointsError: apiErr,
+		services:          services,
+		watchChan:         watchChan,
+	}
+	provider := Provider{}
+	err := provider.addGlobalBackend(client, ingresses, config)
+	assert.Error(t, err)
 }

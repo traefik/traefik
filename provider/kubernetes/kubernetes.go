@@ -521,8 +521,6 @@ func getRuleForPath(pa extensionsv1beta1.HTTPIngressPath, i *extensionsv1beta1.I
 	case ruleTypePath, ruleTypePathPrefix, ruleTypePathStrip, ruleTypePathPrefixStrip:
 	case ruleTypeReplacePath:
 		log.Warnf("Using %s as %s will be deprecated in the future. Please use the %s annotation instead", ruleType, annotationKubernetesRuleType, annotationKubernetesRequestModifier)
-	case "":
-		return "", errors.New("cannot use empty rule")
 	default:
 		return "", fmt.Errorf("cannot use non-matcher rule: %q", ruleType)
 	}
