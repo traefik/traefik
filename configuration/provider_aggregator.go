@@ -101,7 +101,7 @@ func (p ProviderAggregator) Provide(configurationChan chan<- types.ConfigMessage
 		safe.Go(func() {
 			err := currentProvider.Provide(configurationChan, pool)
 			if err != nil {
-				log.Errorf("Error starting provider %T: %s", p, err)
+				log.Errorf("Error starting provider %T: %v", p, err)
 			}
 		})
 	}
