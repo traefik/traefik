@@ -91,7 +91,10 @@ func (a nodeSorter) Less(i int, j int) bool {
 
 // Init the provider
 func (p *Provider) Init(constraints types.Constraints) error {
-	p.BaseProvider.Init(constraints)
+	err := p.BaseProvider.Init(constraints)
+	if err != nil {
+		return err
+	}
 	client, err := p.createClient()
 	if err != nil {
 		return err

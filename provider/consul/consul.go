@@ -20,7 +20,10 @@ type Provider struct {
 
 // Init the provider
 func (p *Provider) Init(constraints types.Constraints) error {
-	p.Provider.Init(constraints)
+	err := p.Provider.Init(constraints)
+	if err != nil {
+		return err
+	}
 	store, err := p.CreateStore()
 	if err != nil {
 		return fmt.Errorf("failed to Connect to KV store: %v", err)
