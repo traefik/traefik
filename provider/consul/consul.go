@@ -24,10 +24,12 @@ func (p *Provider) Init(constraints types.Constraints) error {
 	if err != nil {
 		return err
 	}
+
 	store, err := p.CreateStore()
 	if err != nil {
 		return fmt.Errorf("failed to Connect to KV store: %v", err)
 	}
+
 	p.SetKVClient(store)
 	return nil
 }

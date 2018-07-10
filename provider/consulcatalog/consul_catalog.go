@@ -95,6 +95,7 @@ func (p *Provider) Init(constraints types.Constraints) error {
 	if err != nil {
 		return err
 	}
+
 	client, err := p.createClient()
 	if err != nil {
 		return err

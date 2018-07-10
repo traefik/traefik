@@ -75,6 +75,7 @@ func (p *Provider) createClient() (*awsClient, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	ec2meta := ec2metadata.New(sess)
 	if p.Region == "" {
 		log.Infoln("No EC2 region provided, querying instance metadata endpoint...")
