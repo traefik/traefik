@@ -184,12 +184,10 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 
 	acmeprovider := globalConfiguration.InitACMEProvider()
 	if acmeprovider != nil {
-		err := acmeprovider.Init(nil)
+		err := providerAggregator.AddProvider(acmeprovider)
 		if err != nil {
-			acmeprovider = nil
 			log.Errorf("Error initializing provider ACME: %v", err)
-		} else {
-			providerAggregator.AddProvider(acmeprovider)
+			acmeprovider = nil
 		}
 	}
 
