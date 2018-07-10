@@ -2,7 +2,6 @@ package configuration
 
 import (
 	"encoding/json"
-	"reflect"
 
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
@@ -72,8 +71,7 @@ func NewProviderAggregator(gc *GlobalConfiguration) ProviderAggregator {
 func (p *ProviderAggregator) initAndAddProvider(provider provider.Provider, constraint types.Constraints) {
 	err := provider.Init(constraint)
 	if err != nil {
-		providerType := reflect.TypeOf(provider)
-		log.Errorf("Error initializing provider %v: %v", providerType, err)
+		log.Errorf("Error initializing provider %T: %v", provider, err)
 	} else {
 		p.AddProvider(provider)
 	}
