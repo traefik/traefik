@@ -311,6 +311,8 @@ func buildModifyResponse(secure *secure.Secure, header *middlewares.HeaderStruct
 				return err
 			}
 		}
+		res.Header.Del("X-User-Context")
+		res.Header.Del("X-Request-Context")
 		return nil
 	}
 }
