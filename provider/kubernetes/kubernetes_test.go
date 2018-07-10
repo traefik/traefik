@@ -1470,8 +1470,9 @@ rateset:
 			),
 			frontend("root/",
 				passHostHeader(),
+				redirectRegex("root/", "root/root"),
 				routes(
-					route("/", "PathPrefix:/;ReplacePath:/root"),
+					route("/", "PathPrefix:/"),
 					route("root", "Host:root"),
 				),
 			),
