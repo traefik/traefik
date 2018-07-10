@@ -9,7 +9,7 @@
   [entryPoints.http]
     address = ":80"
     compress = true
-
+    removeHeaders = ["X-Custom-Header", "X-Custom-Header-2"]
     [entryPoints.http.whitelist]
       sourceRange = ["10.42.0.0/16", "152.89.1.33/32", "afed:be44::/16"]
       useXForwardedFor = true
@@ -107,6 +107,7 @@ traefik:
 ```ini
 Name:foo
 Address::80
+RemoveHeaders:["X-Custom-Header"]
 TLS:/my/path/foo.cert,/my/path/foo.key;/my/path/goo.cert,/my/path/goo.key;/my/path/hoo.cert,/my/path/hoo.key
 TLS
 TLS.MinVersion:VersionTLS11
@@ -472,6 +473,17 @@ Only IPs in `trustedIPs` will lead to remote client address replacement: you sho
       # Default: false
       #
       # insecure = true
+```
+
+## Remove Headers
+
+Remove custom headers from the response.
+
+```toml
+[entryPoints]
+  [entryPoints.http]
+    address = ":80"
+    removeHeaders = ["X-Custom-Header", "X-Custom-Header-2"]
 ```
 
 ## Forwarded Header
