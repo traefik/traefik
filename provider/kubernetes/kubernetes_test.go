@@ -3195,7 +3195,6 @@ func TestAddGlobalBackendDuplicateFailures(t *testing.T) {
 }
 
 func TestAddGlobalBackendServiceMissing(t *testing.T) {
-
 	ingresses := buildIngress(
 		iNamespace("testing"),
 		iSpecBackends(iSpecBackend(iIngressBackend("service1", intstr.FromInt(80)))),
@@ -3216,7 +3215,6 @@ func TestAddGlobalBackendServiceMissing(t *testing.T) {
 }
 
 func TestAddGlobalBackendServiceAPIError(t *testing.T) {
-
 	ingresses := buildIngress(
 		iNamespace("testing"),
 		iSpecBackends(iSpecBackend(iIngressBackend("service1", intstr.FromInt(80)))),
@@ -3240,7 +3238,6 @@ func TestAddGlobalBackendServiceAPIError(t *testing.T) {
 }
 
 func TestAddGlobalBackendEndpointMissing(t *testing.T) {
-
 	ingresses := buildIngress(
 		iNamespace("testing"),
 		iSpecBackends(iSpecBackend(iIngressBackend("service", intstr.FromInt(80)))),
@@ -3274,7 +3271,6 @@ func TestAddGlobalBackendEndpointMissing(t *testing.T) {
 }
 
 func TestAddGlobalBackendEndpointAPIError(t *testing.T) {
-
 	ingresses := buildIngress(
 		iNamespace("testing"),
 		iSpecBackends(iSpecBackend(iIngressBackend("service", intstr.FromInt(80)))),
