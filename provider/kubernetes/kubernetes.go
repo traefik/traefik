@@ -851,7 +851,7 @@ func getFrontendRedirect(i *extensionsv1beta1.Ingress, baseName, path string) *t
 
 	if appRoot := getStringValue(i.Annotations, annotationKubernetesAppRoot, ""); appRoot != "" && path == "/" {
 		return &types.Redirect{
-			Regex:       baseName,
+			Regex:       fmt.Sprintf("%s$", baseName),
 			Replacement: fmt.Sprintf("%s/%s", strings.TrimRight(baseName, "/"), strings.TrimLeft(appRoot, "/")),
 			Permanent:   permanent,
 		}
