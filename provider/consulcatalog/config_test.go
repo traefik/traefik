@@ -116,6 +116,69 @@ func TestProviderBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
+			desc: "Should build config who contains two frontends and one backend",
+			nodes: []catalogUpdate{
+				{
+					Service: &serviceUpdate{
+						ServiceName: "test",
+						Attributes: []string{
+							label.Prefix + "enable=true",
+							label.Prefix + "frontends.1.rule=Host:test.localhost;Path:/1",
+							label.Prefix + "frontends.2.rule=Host:test.localhost;Path:/2",
+						},
+					},
+					Nodes: []*api.ServiceEntry{
+						{
+							Service: &api.AgentService{
+								Service: "test",
+								Address: "127.0.0.1",
+								Port:    80,
+								Tags: []string{},
+							},
+							Node: &api.Node{
+								Node:    "localhost",
+								Address: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-test-1": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					Routes: map[string]types.Route{
+						"route-host-test": {
+							Rule: "Host:test.localhost;Path:/1",
+						},
+					},
+					EntryPoints: []string{},
+					BasicAuth: []string{},
+				},
+				"frontend-test-2": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					Routes: map[string]types.Route{
+						"route-host-test": {
+							Rule: "Host:test.localhost;Path:/2",
+						},
+					},
+					EntryPoints: []string{},
+					BasicAuth: []string{},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test": {
+					Servers: map[string]types.Server{
+						"test-0-tSENtxSjfmsLj6aquOuGESU8lgI": {
+							URL:    "http://127.0.0.1:80",
+							Weight: 1,
+						},
+					},
+				},
+			},
+		},
+		{
 			desc: "when all labels are set",
 			nodes: []catalogUpdate{
 				{
@@ -755,7 +818,7 @@ func TestProviderGetFrontendRule(t *testing.T) {
 			labels := tagsToNeutralLabels(test.service.Attributes, p.Prefix)
 			test.service.TraefikLabels = labels
 
-			actual := p.getFrontendRule(test.service)
+			actual := p.getFrontendRule(test.service, test.service.TraefikLabels)
 			assert.Equal(t, test.expected, actual)
 		})
 	}

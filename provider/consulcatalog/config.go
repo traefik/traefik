@@ -20,9 +20,13 @@ import (
 
 func (p *Provider) buildConfigurationV2(catalog []catalogUpdate) *types.Configuration {
 	var funcMap = template.FuncMap{
-		"getAttribute": p.getAttribute,
-		"getTag":       getTag,
-		"hasTag":       hasTag,
+		"getAttribute":     p.getAttribute,
+		"getTag":           getTag,
+		"hasTag":           hasTag,
+		"getChildrenNames": getChildrenNames,
+		"hasTree":          hasTree,
+		"getPrefixedName":  p.getPrefixedName,
+		"getFrontendMap":   getFrontendMap,
 
 		// Backend functions
 		"getNodeBackendName":    getNodeBackendName,
@@ -79,8 +83,8 @@ func (p *Provider) buildConfigurationV2(catalog []catalogUpdate) *types.Configur
 
 // Specific functions
 
-func (p *Provider) getFrontendRule(service serviceUpdate) string {
-	customFrontendRule := label.GetStringValue(service.TraefikLabels, label.TraefikFrontendRule, "")
+func (p *Provider) getFrontendRule(service serviceUpdate, labels map[string]string) string {
+	customFrontendRule := label.GetStringValue(labels, label.TraefikFrontendRule, "")
 	if customFrontendRule == "" {
 		customFrontendRule = p.FrontEndRule
 	}
@@ -238,6 +242,22 @@ func hasTag(name string, tags []string) bool {
 	return false
 }
 
+func hasTree(name string, tags map[string]string) bool {
+	lowerName := strings.ToLower(name)
+	log.Debugf("hasTree: Got called for %s %s", name, tags)
+
+	for tag := range tags {
+		lowerTag := strings.ToLower(tag)
+
+		if strings.HasPrefix(lowerTag, lowerName+".") {
+			log.Debugf("hasTree: Found %s", name)
+			return true
+		}
+	}
+	log.Debugf("hasTree: Did not find %s", name)
+	return false
+}
+
 func getTag(name string, tags []string, defaultValue string) string {
 	lowerName := strings.ToLower(name)
 
@@ -258,4 +278,45 @@ func getTag(name string, tags []string, defaultValue string) string {
 		}
 	}
 	return defaultValue
+}
+
+func getChildrenNames(name string, tags map[string]string) []string {
+	children := make([]string, 0)
+	lowerName := strings.ToLower(name)
+	log.Debugf("getChildrenNames: Getting tree for %s from %s", name, tags)
+
+	for tag := range tags {
+		lowerTag := strings.ToLower(tag)
+
+		if strings.HasPrefix(lowerTag, lowerName+".") {
+			log.Debugf("getChildrenNames: Found %s in %s", lowerName, lowerTag)
+			// name.child.key=value -> ["name", "child.key=value"]
+			result := strings.SplitN(lowerTag, lowerName+".", 2)
+
+			if len(result) == 2 {
+				// child.key=value -> ["child", "key=value"]
+				// child=value -> ["child=value"]
+				log.Debugf("getChildrenNames: 1 -> %s", result)
+				child := strings.SplitN(result[1], ".", 2)[0]
+				log.Debugf("getChildrenNames: 2 -> %s", child)
+				child = strings.Split(child, "=")[0]
+				log.Debugf("getChildrenNames: Adding %s for %s in %s", child, lowerName, lowerTag)
+				children = append(children, child)
+			}
+		}
+	}
+	return children
+}
+
+func getFrontendMap(name string, tags map[string]string) map[string]string {
+	// generates a new $service.TraefikLabels for a specific frontend
+	log.Debugf("getFrontendMap: rewriting map for %s on %s", name, tags)
+	result := make(map[string]string)
+	//map[traefik.frontends.test1.rule:Host:www.cloud.integration.qa-mp.so;Path:/identity,/account/login.html traefik.enable:true traefik.frontends.test2.rule:Host:www.cloud.integration.qa-mp.so;Path:/identity,/account/login.html]
+	for key, value := range tags {
+		// strip `name` from key
+		result[strings.Replace(key, "frontends."+name, "frontend", 1)] = value
+	}
+	log.Debugf("getFrontendMap: result: %s", result)
+	return result
 }

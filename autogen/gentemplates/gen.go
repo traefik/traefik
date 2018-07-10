@@ -199,6 +199,129 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
 [frontends]
 {{range $service := .Services}}
 
+{{ $frontendTree := getPrefixedName "frontends" }}
+{{if hasTree $frontendTree $service.TraefikLabels }}
+  {{range $child := getChildrenNames $frontendTree $service.TraefikLabels }}
+  {{ $frontendLabels := getFrontendMap $child $service.TraefikLabels }}
+
+  [frontends."frontend-{{ $service.ServiceName }}-{{ $child }}"]
+    backend = "backend-{{ getServiceBackendName $service }}"
+    priority = {{ getPriority $frontendLabels }}
+    passHostHeader = {{ getPassHostHeader $frontendLabels }}
+    passTLSCert = {{ getPassTLSCert $frontendLabels }}
+
+    entryPoints = [{{range getFrontEndEntryPoints $frontendLabels }}
+      "{{.}}",
+      {{end}}]
+
+    basicAuth = [{{range getBasicAuth $frontendLabels }}
+      "{{.}}",
+      {{end}}]
+
+    {{ $whitelist := getWhiteList $frontendLabels }}
+    {{if $whitelist }}
+    [frontends."frontend-{{ $service.ServiceName }}-{{ $child }}".whiteList]
+      sourceRange = [{{range $whitelist.SourceRange }}
+        "{{.}}",
+        {{end}}]
+      useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
+    {{end}}
+
+    {{ $redirect := getRedirect $frontendLabels }}
+    {{if $redirect }}
+    [frontends."frontend-{{ $service.ServiceName }}-{{ $child }}".redirect]
+      entryPoint = "{{ $redirect.EntryPoint }}"
+      regex = "{{ $redirect.Regex }}"
+      replacement = "{{ $redirect.Replacement }}"
+      permanent = {{ $redirect.Permanent }}
+    {{end}}
+
+    {{ $errorPages := getErrorPages $frontendLabels }}
+    {{if $errorPages }}
+    [frontends."frontend-{{ $service.ServiceName }}-{{ $child }}".errors]
+      {{range $pageName, $page := $errorPages }}
+      [frontends."frontend-{{ $service.ServiceName }}-{{ $child }}".errors."{{ $pageName }}"]
+        status = [{{range $page.Status }}
+          "{{.}}",
+          {{end}}]
+        backend = "backend-{{ $page.Backend }}"
+        query = "{{ $page.Query }}"
+      {{end}}
+    {{end}}
+
+    {{ $rateLimit := getRateLimit $frontendLabels }}
+    {{if $rateLimit }}
+    [frontends."frontend-{{ $service.ServiceName }}-{{ $child }}".rateLimit]
+      extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
+      [frontends."frontend-{{ $service.ServiceName }}-{{ $child }}".rateLimit.rateSet]
+        {{ range $limitName, $limit := $rateLimit.RateSet }}
+        [frontends."frontend-{{ $service.ServiceName }}-{{ $child }}".rateLimit.rateSet."{{ $limitName }}"]
+          period = "{{ $limit.Period }}"
+          average = {{ $limit.Average }}
+          burst = {{ $limit.Burst }}
+        {{end}}
+    {{end}}
+
+    {{ $headers := getHeaders $frontendLabels }}
+    {{if $headers }}
+    [frontends."frontend-{{ $service.ServiceName }}-{{ $child }}".headers]
+      SSLRedirect = {{ $headers.SSLRedirect }}
+      SSLTemporaryRedirect = {{ $headers.SSLTemporaryRedirect }}
+      SSLHost = "{{ $headers.SSLHost }}"
+      SSLForceHost = {{ $headers.SSLForceHost }}
+      STSSeconds = {{ $headers.STSSeconds }}
+      STSIncludeSubdomains = {{ $headers.STSIncludeSubdomains }}
+      STSPreload = {{ $headers.STSPreload }}
+      ForceSTSHeader = {{ $headers.ForceSTSHeader }}
+      FrameDeny = {{ $headers.FrameDeny }}
+      CustomFrameOptionsValue = "{{ $headers.CustomFrameOptionsValue }}"
+      ContentTypeNosniff = {{ $headers.ContentTypeNosniff }}
+      BrowserXSSFilter = {{ $headers.BrowserXSSFilter }}
+      CustomBrowserXSSValue = "{{ $headers.CustomBrowserXSSValue }}"
+      ContentSecurityPolicy = "{{ $headers.ContentSecurityPolicy }}"
+      PublicKey = "{{ $headers.PublicKey }}"
+      ReferrerPolicy = "{{ $headers.ReferrerPolicy }}"
+      IsDevelopment = {{ $headers.IsDevelopment }}
+
+      {{if $headers.AllowedHosts }}
+      AllowedHosts = [{{range $headers.AllowedHosts }}
+        "{{.}}",
+        {{end}}]
+      {{end}}
+
+      {{if $headers.HostsProxyHeaders }}
+      HostsProxyHeaders = [{{range $headers.HostsProxyHeaders }}
+        "{{.}}",
+        {{end}}]
+      {{end}}
+
+      {{if $headers.CustomRequestHeaders }}
+      [frontends."frontend-{{ $service.ServiceName }}-{{ $child }}".headers.customRequestHeaders]
+        {{range $k, $v := $headers.CustomRequestHeaders }}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
+
+      {{if $headers.CustomResponseHeaders }}
+      [frontends."frontend-{{ $service.ServiceName }}-{{ $child }}".headers.customResponseHeaders]
+        {{range $k, $v := $headers.CustomResponseHeaders }}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
+
+      {{if $headers.SSLProxyHeaders }}
+      [frontends."frontend-{{ $service.ServiceName }}-{{ $child }}".headers.SSLProxyHeaders]
+        {{range $k, $v := $headers.SSLProxyHeaders}}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
+    {{end}}
+
+    [frontends."frontend-{{ $service.ServiceName }}-{{ $child }}".routes."route-host-{{ $service.ServiceName }}"]
+      rule = "{{ getFrontendRule $service $frontendLabels}}"
+
+  {{end}}
+{{else}}
   [frontends."frontend-{{ $service.ServiceName }}"]
     backend = "backend-{{ getServiceBackendName $service }}"
     priority = {{ getPriority $service.TraefikLabels }}
@@ -313,8 +436,8 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
     {{end}}
 
     [frontends."frontend-{{ $service.ServiceName }}".routes."route-host-{{ $service.ServiceName }}"]
-      rule = "{{ getFrontendRule $service }}"
-
+      rule = "{{ getFrontendRule $service $service.TraefikLabels }}"
+{{end}}
 {{end}}
 `)
 
