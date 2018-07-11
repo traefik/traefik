@@ -1,4 +1,4 @@
-.PHONY: all
+.PHONY: all docs-verify docs clear-site docs-build
 
 TRAEFIK_ENVS := \
 	-e OS_ARCH_ARG \
@@ -22,6 +22,7 @@ REPONAME := $(shell echo $(REPO) | tr '[:upper:]' '[:lower:]')
 TRAEFIK_IMAGE := $(if $(REPONAME),$(REPONAME),"containous/traefik")
 INTEGRATION_OPTS := $(if $(MAKE_DOCKER_HOST),-e "DOCKER_HOST=$(MAKE_DOCKER_HOST)", -e "TEST_CONTAINER=1" -v "/var/run/docker.sock:/var/run/docker.sock")
 TRAEFIK_DOC_IMAGE := traefik-docs
+TRAEFIK_DOC_VERIFY_IMAGE := $(TRAEFIK_DOC_IMAGE)-verify
 
 DOCKER_BUILD_ARGS := $(if $(DOCKER_VERSION), "--build-arg=DOCKER_VERSION=$(DOCKER_VERSION)",)
 DOCKER_RUN_OPTS := $(TRAEFIK_ENVS) $(TRAEFIK_MOUNT) "$(TRAEFIK_DEV_IMAGE)"
@@ -94,11 +95,23 @@ image-dirty: binary ## build a docker traefik image
 image: clear-static binary ## clean up static directory and build a docker traefik image
 	docker build -t $(TRAEFIK_IMAGE) .
 
+docs-image:
+	docker build -t $(TRAEFIK_DOC_IMAGE) -f docs.Dockerfile .
+
 docs: docs-image
 	docker run  $(DOCKER_RUN_DOC_OPTS) $(TRAEFIK_DOC_IMAGE) mkdocs serve
 
-docs-image:
-	docker build -t $(TRAEFIK_DOC_IMAGE) -f docs.Dockerfile .
+docs-build: site
+
+docs-verify: site
+	docker build -t $(TRAEFIK_DOC_VERIFY_IMAGE) ./script/docs-verify-docker-image ## Build Validator image
+	docker run --rm -v $(CURDIR):/app $(TRAEFIK_DOC_VERIFY_IMAGE) ## Check for dead links and w3c compliance
+
+site: docs-image
+	docker run  $(DOCKER_RUN_DOC_OPTS) $(TRAEFIK_DOC_IMAGE) mkdocs build
+
+clear-site:
+	rm -rf $(CURDIR)/site
 
 clear-static:
 	rm -rf static
