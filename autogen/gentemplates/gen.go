@@ -201,7 +201,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
 
 {{ $frontendTree := getPrefixedName "frontends" }}
 {{if hasTree $frontendTree $service.TraefikLabels }}
-  {{range $child := getChildrenNames $frontendTree $service.TraefikLabels }}
+  {{range $child := getChildNames $frontendTree $service.TraefikLabels }}
   {{ $frontendLabels := getFrontendMap $child $service.TraefikLabels }}
 
   [frontends."frontend-{{ $service.ServiceName }}-{{ $child }}"]

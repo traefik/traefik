@@ -23,10 +23,9 @@ func (p *Provider) buildConfigurationV2(catalog []catalogUpdate) *types.Configur
 		"getAttribute":     p.getAttribute,
 		"getTag":           getTag,
 		"hasTag":           hasTag,
-		"getChildrenNames": getChildrenNames,
+		"getChildNames":    getChildNames,
 		"hasTree":          hasTree,
 		"getPrefixedName":  p.getPrefixedName,
-		"getFrontendMap":   getFrontendMap,
 
 		// Backend functions
 		"getNodeBackendName":    getNodeBackendName,
@@ -52,6 +51,7 @@ func (p *Provider) buildConfigurationV2(catalog []catalogUpdate) *types.Configur
 		"getErrorPages":          label.GetErrorPages,
 		"getRateLimit":           label.GetRateLimit,
 		"getHeaders":             label.GetHeaders,
+		"getFrontendMap":         getFrontendMap,
 	}
 
 	var allNodes []*api.ServiceEntry
@@ -242,22 +242,6 @@ func hasTag(name string, tags []string) bool {
 	return false
 }
 
-func hasTree(name string, tags map[string]string) bool {
-	lowerName := strings.ToLower(name)
-	log.Debugf("hasTree: Got called for %s %s", name, tags)
-
-	for tag := range tags {
-		lowerTag := strings.ToLower(tag)
-
-		if strings.HasPrefix(lowerTag, lowerName+".") {
-			log.Debugf("hasTree: Found %s", name)
-			return true
-		}
-	}
-	log.Debugf("hasTree: Did not find %s", name)
-	return false
-}
-
 func getTag(name string, tags []string, defaultValue string) string {
 	lowerName := strings.ToLower(name)
 
@@ -280,27 +264,38 @@ func getTag(name string, tags []string, defaultValue string) string {
 	return defaultValue
 }
 
-func getChildrenNames(name string, tags map[string]string) []string {
-	children := make([]string, 0)
+func hasTree(name string, tags map[string]string) bool {
+	// checks if a set of tags contains a particular tree with children
 	lowerName := strings.ToLower(name)
-	log.Debugf("getChildrenNames: Getting tree for %s from %s", name, tags)
 
 	for tag := range tags {
 		lowerTag := strings.ToLower(tag)
 
 		if strings.HasPrefix(lowerTag, lowerName+".") {
-			log.Debugf("getChildrenNames: Found %s in %s", lowerName, lowerTag)
+			return true
+		}
+	}
+	return false
+}
+
+func getChildNames(name string, tags map[string]string) []string {
+	// gets the names of the children in a tree:
+	// a.b, a.b.c=1 => "c"
+	children := make([]string, 0)
+	lowerName := strings.ToLower(name)
+
+	for tag := range tags {
+		lowerTag := strings.ToLower(tag)
+
+		if strings.HasPrefix(lowerTag, lowerName+".") {
 			// name.child.key=value -> ["name", "child.key=value"]
 			result := strings.SplitN(lowerTag, lowerName+".", 2)
 
 			if len(result) == 2 {
-				// child.key=value -> ["child", "key=value"]
-				// child=value -> ["child=value"]
-				log.Debugf("getChildrenNames: 1 -> %s", result)
+				// child.key=value -> ["child", "key=value"] or
+				//   child=value -> ["child=value"]
 				child := strings.SplitN(result[1], ".", 2)[0]
-				log.Debugf("getChildrenNames: 2 -> %s", child)
 				child = strings.Split(child, "=")[0]
-				log.Debugf("getChildrenNames: Adding %s for %s in %s", child, lowerName, lowerTag)
 				children = append(children, child)
 			}
 		}
@@ -309,14 +304,13 @@ func getChildrenNames(name string, tags map[string]string) []string {
 }
 
 func getFrontendMap(name string, tags map[string]string) map[string]string {
-	// generates a new $service.TraefikLabels for a specific frontend
-	log.Debugf("getFrontendMap: rewriting map for %s on %s", name, tags)
+	// Generates a new $service.TraefikLabels for a specific frontend
+	// This is a hack to trick other functions into thinking this
+	//  `<prefix>.frontends.name` is actually `<prefix>.frontend`
 	result := make(map[string]string)
-	//map[traefik.frontends.test1.rule:Host:www.cloud.integration.qa-mp.so;Path:/identity,/account/login.html traefik.enable:true traefik.frontends.test2.rule:Host:www.cloud.integration.qa-mp.so;Path:/identity,/account/login.html]
 	for key, value := range tags {
 		// strip `name` from key
 		result[strings.Replace(key, "frontends."+name, "frontend", 1)] = value
 	}
-	log.Debugf("getFrontendMap: result: %s", result)
 	return result
 }
