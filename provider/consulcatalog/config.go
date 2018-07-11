@@ -41,7 +41,8 @@ func (p *Provider) buildConfigurationV2(catalog []catalogUpdate) *types.Configur
 
 		// Frontend functions
 		"getFrontendRule":        p.getFrontendRule,
-		"getBasicAuth":           label.GetFuncSliceString(label.TraefikFrontendAuthBasic),
+		"getBasicAuth":           label.GetFuncSliceString(label.TraefikFrontendAuthBasic), // Deprecated
+		"getAuth":                label.GetAuth,
 		"getFrontEndEntryPoints": label.GetFuncSliceString(label.TraefikFrontendEntryPoints),
 		"getPriority":            label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
 		"getPassHostHeader":      label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),

@@ -764,7 +764,6 @@
   version = "v1.3.7"
 
 [[projects]]
-  branch = "master"
   name = "github.com/jjcollinge/servicefabric"
   packages = ["."]
   revision = "8eebe170fa1ba25d3dfb928b3f86a7313b13b9fe"
@@ -1250,7 +1249,7 @@
     "roundrobin",
     "utils"
   ]
-  revision = "c2414f4542f085363f490048da2fbec5e4537eb6"
+  revision = "adbef6bedf021985587c3c18c9d4b84b2d78f67c"
 
 [[projects]]
   name = "github.com/vulcand/predicate"
@@ -1739,6 +1738,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "53d03fd81596d9560d751bc1102615990a91b0779cff079784a9a1c6641bd503"
+  inputs-digest = "a3429eccf578f09c7c521a32f81df1af5f0a24cb8c9702b7b768f3db34153216"
   solver-name = "gps-cdcl"
   solver-version = 1
