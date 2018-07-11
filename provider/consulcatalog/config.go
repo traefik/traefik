@@ -20,12 +20,12 @@ import (
 
 func (p *Provider) buildConfigurationV2(catalog []catalogUpdate) *types.Configuration {
 	var funcMap = template.FuncMap{
-		"getAttribute":     p.getAttribute,
-		"getTag":           getTag,
-		"hasTag":           hasTag,
-		"getChildNames":    getChildNames,
-		"hasTree":          hasTree,
-		"getPrefixedName":  p.getPrefixedName,
+		"getAttribute":    p.getAttribute,
+		"getTag":          getTag,
+		"hasTag":          hasTag,
+		"getChildNames":   getChildNames,
+		"hasTree":         hasTree,
+		"getPrefixedName": p.getPrefixedName,
 
 		// Backend functions
 		"getNodeBackendName":    getNodeBackendName,
