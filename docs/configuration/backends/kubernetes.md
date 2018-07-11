@@ -205,8 +205,9 @@ retryexpression: IsNetworkError() && Attempts() <= 2
 
 <4> `traefik.ingress.kubernetes.io/app-root`:
 Non-root paths will not be affected by this annotation and handled normally.
-This annotation may not be combined with the `ReplacePath` rule type or any other annotation leveraging that rule type.
-Trying to do so leads to an error and the corresponding Ingress object being ignored.
+This annotation may not be combined with other redirect annotations.
+Trying to do so will result in the other redirects being ignored.
+This annotation can be used in combination with `traefik.ingress.kubernetes.io/redirect-permanent` to configure whether the `app-root` redirect is a 301 or a 302.
 
 <5> `traefik.ingress.kubernetes.io/service-weights`:
 Service weights enable to split traffic across multiple backing services in a fine-grained manner.
