@@ -104,6 +104,20 @@
     #
     protocol = "udp"
 
+    # InfluxDB's username
+    #
+    # Optional
+    # Default: "" (no username)
+    #
+    username = ""
+
+    # InfluxDB's password
+    #
+    # Optional
+    # Default: "" (no password)
+    #
+    password = ""
+
     # InfluxDB push interval
     #
     # Optional
