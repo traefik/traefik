@@ -8,7 +8,7 @@ import (
 	"github.com/vulcand/oxy/utils"
 )
 
-// Rewriter is responsible for removing hop-by-hop headers and setting forwarding headers
+// HeaderRewriter is responsible for removing hop-by-hop headers and setting forwarding headers
 type HeaderRewriter struct {
 	TrustForwardHeader bool
 	Hostname           string
@@ -19,6 +19,7 @@ func ipv6fix(clientIP string) string {
 	return strings.Split(clientIP, "%")[0]
 }
 
+// Rewrite rewrite request headers
 func (rw *HeaderRewriter) Rewrite(req *http.Request) {
 	if !rw.TrustForwardHeader {
 		utils.RemoveHeaders(req.Header, XHeaders...)

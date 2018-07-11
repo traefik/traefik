@@ -8,6 +8,7 @@ import (
 
 type ratioOptSetter func(r *RatioCounter) error
 
+// RatioClock sets a clock
 func RatioClock(clock timetools.TimeProvider) ratioOptSetter {
 	return func(r *RatioCounter) error {
 		r.clock = clock
@@ -22,6 +23,7 @@ type RatioCounter struct {
 	b     *RollingCounter
 }
 
+// NewRatioCounter creates a new RatioCounter
 func NewRatioCounter(buckets int, resolution time.Duration, options ...ratioOptSetter) (*RatioCounter, error) {
 	rc := &RatioCounter{}
 
@@ -50,39 +52,48 @@ func NewRatioCounter(buckets int, resolution time.Duration, options ...ratioOptS
 	return rc, nil
 }
 
+// Reset reset the counter
 func (r *RatioCounter) Reset() {
 	r.a.Reset()
 	r.b.Reset()
 }
 
+// IsReady returns true if the counter is ready
 func (r *RatioCounter) IsReady() bool {
 	return r.a.countedBuckets+r.b.countedBuckets >= len(r.a.values)
 }
 
+// CountA gets count A
 func (r *RatioCounter) CountA() int64 {
 	return r.a.Count()
 }
 
+// CountB gets count B
 func (r *RatioCounter) CountB() int64 {
 	return r.b.Count()
 }
 
+// Resolution gets resolution
 func (r *RatioCounter) Resolution() time.Duration {
 	return r.a.Resolution()
 }
 
+// Buckets gets buckets
 func (r *RatioCounter) Buckets() int {
 	return r.a.Buckets()
 }
 
+// WindowSize gets windows size
 func (r *RatioCounter) WindowSize() time.Duration {
 	return r.a.WindowSize()
 }
 
+// ProcessedCount gets processed count
 func (r *RatioCounter) ProcessedCount() int64 {
 	return r.CountA() + r.CountB()
 }
 
+// Ratio gets ratio
 func (r *RatioCounter) Ratio() float64 {
 	a := r.a.Count()
 	b := r.b.Count()
@@ -93,28 +104,34 @@ func (r *RatioCounter) Ratio() float64 {
 	return float64(a) / float64(a+b)
 }
 
+// IncA increment counter A
 func (r *RatioCounter) IncA(v int) {
 	r.a.Inc(v)
 }
 
+// IncB increment counter B
 func (r *RatioCounter) IncB(v int) {
 	r.b.Inc(v)
 }
 
+// TestMeter a test meter
 type TestMeter struct {
 	Rate       float64
 	NotReady   bool
 	WindowSize time.Duration
 }
 
+// GetWindowSize gets windows size
 func (tm *TestMeter) GetWindowSize() time.Duration {
 	return tm.WindowSize
 }
 
+// IsReady returns true if the meter is ready
 func (tm *TestMeter) IsReady() bool {
 	return !tm.NotReady
 }
 
+// GetRate gets rate
 func (tm *TestMeter) GetRate() float64 {
 	return tm.Rate
 }
