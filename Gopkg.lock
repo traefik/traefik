@@ -9,6 +9,12 @@
 
 [[projects]]
   branch = "master"
+  name = "code.cloudfoundry.org/clock"
+  packages = ["."]
+  revision = "02e53af36e6c978af692887ed449b74026d76fec"
+
+[[projects]]
+  branch = "master"
   name = "github.com/ArthurHlt/go-eureka-client"
   packages = ["eureka"]
   revision = "9d0a49cbd39aa3634ae1977e9f519a262b10adaf"
@@ -79,6 +85,11 @@
   name = "github.com/Masterminds/sprig"
   packages = ["."]
   revision = "e039e20e500c2c025d9145be375e27cf42a94174"
+
+[[projects]]
+  name = "github.com/Microsoft/ApplicationInsights-Go"
+  packages = ["appinsights"]
+  revision = "98ac7ca026c26818888600ea0d966987aa56f043"
 
 [[projects]]
   name = "github.com/Microsoft/go-winio"
@@ -265,10 +276,10 @@
   version = "v3.1.1"
 
 [[projects]]
+  branch = "init-provider"
   name = "github.com/containous/traefik-extra-service-fabric"
   packages = ["."]
-  revision = "08668650856571f3529bde394a36a5c9cf16a991"
-  version = "v1.2.0"
+  revision = "eb4d5cf161b3213bf45be611dc1f56e8b2161e46"
 
 [[projects]]
   name = "github.com/coreos/bbolt"
@@ -764,6 +775,13 @@
   version = "v1.3.7"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/jjcollinge/logrus-appinsights"
+  packages = ["."]
+  revision = "9b66602d496a139e4722bdde32f0f1ac1c12d4a8"
+
+[[projects]]
+  branch = "master"
   name = "github.com/jjcollinge/servicefabric"
   packages = ["."]
   revision = "8eebe170fa1ba25d3dfb928b3f86a7313b13b9fe"
@@ -1738,6 +1756,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a3429eccf578f09c7c521a32f81df1af5f0a24cb8c9702b7b768f3db34153216"
+  inputs-digest = "c228c6029e36e15b6c74bdfa587ee0fa39787af0dc0d4047752d80ee2fb690c1"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -110,14 +110,45 @@ func (p *Provider) ListenRequest(domain string) (*tls.Certificate, error) {
 	return &certificate, err
 }
 
+// Init for compatibility reason the BaseProvider implements an empty Init
+func (p *Provider) Init(_ types.Constraints) error {
+	acme.UserAgent = fmt.Sprintf("containous-traefik/%s", version.Version)
+	if p.ACMELogging {
+		legolog.Logger = fmtlog.New(log.WriterLevel(logrus.InfoLevel), "legolog: ", 0)
+	} else {
+		legolog.Logger = fmtlog.New(ioutil.Discard, "", 0)
+	}
+
+	if p.Store == nil {
+		return errors.New("no store found for the ACME provider")
+	}
+
+	var err error
+	p.account, err = p.Store.GetAccount()
+	if err != nil {
+		return fmt.Errorf("unable to get ACME account : %v", err)
+	}
+
+	// Reset Account if caServer changed, thus registration URI can be updated
+	if p.account != nil && p.account.Registration != nil && !strings.HasPrefix(p.account.Registration.URI, p.CAServer) {
+		p.account = nil
+	}
+
+	p.certificates, err = p.Store.GetCertificates()
+	if err != nil {
+		return fmt.Errorf("unable to get ACME certificates : %v", err)
+	}
+
+	return nil
+}
+
 // Provide allows the file provider to provide configurations to traefik
 // using the given Configuration channel.
-func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
+func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	p.pool = pool
-	err := p.init()
-	if err != nil {
-		return err
-	}
+
+	p.watchCertificate()
+	p.watchNewDomains()
 
 	p.configurationChan = configurationChan
 	p.refreshCertificates()
@@ -146,40 +177,6 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 			}
 		}
 	})
-
-	return nil
-}
-
-func (p *Provider) init() error {
-	acme.UserAgent = fmt.Sprintf("containous-traefik/%s", version.Version)
-	if p.ACMELogging {
-		legolog.Logger = fmtlog.New(log.WriterLevel(logrus.InfoLevel), "legolog: ", 0)
-	} else {
-		legolog.Logger = fmtlog.New(ioutil.Discard, "", 0)
-	}
-
-	if p.Store == nil {
-		return errors.New("no store found for the ACME provider")
-	}
-
-	var err error
-	p.account, err = p.Store.GetAccount()
-	if err != nil {
-		return fmt.Errorf("unable to get ACME account : %v", err)
-	}
-
-	// Reset Account if caServer changed, thus registration URI can be updated
-	if p.account != nil && p.account.Registration != nil && !strings.HasPrefix(p.account.Registration.URI, p.CAServer) {
-		p.account = nil
-	}
-
-	p.certificates, err = p.Store.GetCertificates()
-	if err != nil {
-		return fmt.Errorf("unable to get ACME certificates : %v", err)
-	}
-
-	p.watchCertificate()
-	p.watchNewDomains()
 
 	return nil
 }
