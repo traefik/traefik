@@ -737,7 +737,10 @@ func getBasicAuthConfig(i *extensionsv1beta1.Ingress, k8sClient Client) (*types.
 		return nil, err
 	}
 
-	return &types.Basic{Users: credentials}, nil
+	return &types.Basic{
+		Users:        credentials,
+		RemoveHeader: getBoolValue(i.Annotations, annotationKubernetesAuthRemoveHeader, false),
+	}, nil
 }
 
 func getDigestAuthConfig(i *extensionsv1beta1.Ingress, k8sClient Client) (*types.Digest, error) {
@@ -746,7 +749,9 @@ func getDigestAuthConfig(i *extensionsv1beta1.Ingress, k8sClient Client) (*types
 		return nil, err
 	}
 
-	return &types.Digest{Users: credentials}, nil
+	return &types.Digest{Users: credentials,
+		RemoveHeader: getBoolValue(i.Annotations, annotationKubernetesAuthRemoveHeader, false),
+	}, nil
 }
 
 func getAuthCredentials(i *extensionsv1beta1.Ingress, k8sClient Client) ([]string, error) {
