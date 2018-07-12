@@ -274,11 +274,6 @@ func (s *Server) AddListener(listener func(types.Configuration)) {
 
 // getCertificate allows to customize tlsConfig.GetCertificate behaviour to get the certificates inserted dynamically
 func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-	bestCertificate := s.certs.GetBestCertificate(clientHello)
-	if bestCertificate != nil {
-		return bestCertificate, nil
-	}
-
 	domainToCheck := types.CanonicalDomain(clientHello.ServerName)
 
 	if s.tlsALPNGetter != nil {
@@ -290,6 +285,11 @@ func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tl
 		if cert != nil {
 			return cert, nil
 		}
+	}
+
+	bestCertificate := s.certs.GetBestCertificate(clientHello)
+	if bestCertificate != nil {
+		return bestCertificate, nil
 	}
 
 	if s.onDemandListener != nil && len(domainToCheck) > 0 {
