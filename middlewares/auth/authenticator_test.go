@@ -187,3 +187,64 @@ func TestBasicAuthUserHeader(t *testing.T) {
 	assert.NoError(t, err, "there should be no error")
 	assert.Equal(t, "traefik\n", string(body), "they should be equal")
 }
+
+func TestBasicAuthHeaderRemoved(t *testing.T) {
+	middleware, err := NewAuthenticator(&types.Auth{
+		Basic: &types.Basic{
+			RemoveHeader: true,
+			Users:        []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
+		},
+	}, &tracing.Tracing{})
+	assert.NoError(t, err, "there should be no error")
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Empty(t, r.Header.Get("Authorization"))
+		fmt.Fprintln(w, "traefik")
+	})
+	n := negroni.New(middleware)
+	n.UseHandler(handler)
+	ts := httptest.NewServer(n)
+	defer ts.Close()
+
+	client := &http.Client{}
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	req.SetBasicAuth("test", "test")
+	res, err := client.Do(req)
+	assert.NoError(t, err, "there should be no error")
+
+	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
+
+	body, err := ioutil.ReadAll(res.Body)
+	assert.NoError(t, err, "there should be no error")
+	assert.Equal(t, "traefik\n", string(body), "they should be equal")
+}
+
+func TestBasicAuthHeaderPresent(t *testing.T) {
+	middleware, err := NewAuthenticator(&types.Auth{
+		Basic: &types.Basic{
+			Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
+		},
+	}, &tracing.Tracing{})
+	assert.NoError(t, err, "there should be no error")
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.NotEmpty(t, r.Header.Get("Authorization"))
+		fmt.Fprintln(w, "traefik")
+	})
+	n := negroni.New(middleware)
+	n.UseHandler(handler)
+	ts := httptest.NewServer(n)
+	defer ts.Close()
+
+	client := &http.Client{}
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	req.SetBasicAuth("test", "test")
+	res, err := client.Do(req)
+	assert.NoError(t, err, "there should be no error")
+
+	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
+
+	body, err := ioutil.ReadAll(res.Body)
+	assert.NoError(t, err, "there should be no error")
+	assert.Equal(t, "traefik\n", string(body), "they should be equal")
+}

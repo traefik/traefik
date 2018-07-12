@@ -39,6 +39,7 @@
 
     [entryPoints.http.auth]
       headerField = "X-WebAuth-User"
+      removeHeader = true
       [entryPoints.http.auth.basic]
         users = [
           "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
@@ -275,15 +276,16 @@ Users can be specified directly in the TOML file, or indirectly by referencing a
   usersFile = "/path/to/.htpasswd"
 ```
 
-Optionally, you can pass authenticated user to application via headers
+Optionally, you can pass authenticated user to application via headers and remove the Authorization header
 
 ```toml
 [entryPoints]
   [entryPoints.http]
   address = ":80"
   [entryPoints.http.auth]
-    headerField = "X-WebAuth-User" # <--
+    headerField = "X-WebAuth-User" # <-- header for the authenticated user
     [entryPoints.http.auth.basic]
+    removeHeader = true # <-- remove the Authorization header
     users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
 ```
 
@@ -304,7 +306,7 @@ Users can be specified directly in the TOML file, or indirectly by referencing a
   usersFile = "/path/to/.htdigest"
 ```
 
-Optionally, you can pass authenticated user to application via headers
+Optionally, you can pass authenticated user to application via headers and remove the Authorization header
 
 ```toml
 [entryPoints]
@@ -313,6 +315,7 @@ Optionally, you can pass authenticated user to application via headers
   [entryPoints.http.auth]
     headerField = "X-WebAuth-User" # <--
     [entryPoints.http.auth.digest]
+    removeHeader = true # <-- remove the Authorization header
     users = ["test:traefik:a2688e031edb4be6a3797f3882655c05", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
 ```
 

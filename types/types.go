@@ -401,14 +401,16 @@ type Users []string
 
 // Basic HTTP basic authentication
 type Basic struct {
-	Users     `mapstructure:","`
-	UsersFile string
+	Users        `mapstructure:","`
+	UsersFile    string
+	RemoveHeader bool
 }
 
 // Digest HTTP authentication
 type Digest struct {
-	Users     `mapstructure:","`
-	UsersFile string
+	Users        `mapstructure:","`
+	UsersFile    string
+	RemoveHeader bool
 }
 
 // Forward authentication
