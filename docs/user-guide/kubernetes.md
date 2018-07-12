@@ -373,7 +373,7 @@ We should now be able to visit [traefik-ui.minikube](http://traefik-ui.minikube)
 
 !!! note
     For this example to work you need a TLS entrypoint. You don't have to provide a TLS certificate at this point.
-    For more details see [here](/configuration/entrypoints/).
+    For more details see [here](/docs/basics.md#entrypoints).
 
 To setup an HTTPS-protected ingress, you can leverage the TLS feature of the ingress resource.
 
@@ -421,7 +421,7 @@ If there are any errors while loading the TLS section of an ingress, the whole i
 
 ## Basic Authentication
 
-It's possible to protect access to Træfik through basic authentication. (See the [Kubernetes Ingress](/configuration/backends/kubernetes) configuration page for syntactical details and restrictions.)
+It's possible to protect access to Træfik through basic authentication. (See the [Kubernetes Ingress](/docs/basics.md#backends) configuration page for syntactical details and restrictions.)
 
 ### Creating the Secret
 
@@ -626,7 +626,7 @@ spec:
 ```
 
 !!! note
-    We also set a [circuit breaker expression](/basics/#backends) for one of the backends by setting the `traefik.backend.circuitbreaker` annotation on the service.
+    We also set a [circuit breaker expression](/docs/basics.md#circuit-breakers) for one of the backends by setting the `traefik.backend.circuitbreaker` annotation on the service.
 
 [examples/k8s/cheese-services.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/cheese-services.yaml)
 
