@@ -735,25 +735,27 @@ func TestGetAuth(t *testing.T) {
 		{
 			desc: "should return a basic auth",
 			labels: map[string]string{
-				TraefikFrontendAuthHeaderField:    "myHeaderField",
-				TraefikFrontendAuthBasicUsers:     "user:pwd,user2:pwd2",
-				TraefikFrontendAuthBasicUsersFile: "myUsersFile",
+				TraefikFrontendAuthHeaderField:       "myHeaderField",
+				TraefikFrontendAuthBasicUsers:        "user:pwd,user2:pwd2",
+				TraefikFrontendAuthBasicUsersFile:    "myUsersFile",
+				TraefikFrontendAuthBasicRemoveHeader: "true",
 			},
 			expected: &types.Auth{
 				HeaderField: "myHeaderField",
-				Basic:       &types.Basic{UsersFile: "myUsersFile", Users: []string{"user:pwd", "user2:pwd2"}},
+				Basic:       &types.Basic{UsersFile: "myUsersFile", Users: []string{"user:pwd", "user2:pwd2"}, RemoveHeader: true},
 			},
 		},
 		{
 			desc: "should return a digest auth",
 			labels: map[string]string{
-				TraefikFrontendAuthHeaderField:     "myHeaderField",
-				TraefikFrontendAuthDigestUsers:     "user:pwd,user2:pwd2",
-				TraefikFrontendAuthDigestUsersFile: "myUsersFile",
+				TraefikFrontendAuthDigestRemoveHeader: "true",
+				TraefikFrontendAuthHeaderField:        "myHeaderField",
+				TraefikFrontendAuthDigestUsers:        "user:pwd,user2:pwd2",
+				TraefikFrontendAuthDigestUsersFile:    "myUsersFile",
 			},
 			expected: &types.Auth{
 				HeaderField: "myHeaderField",
-				Digest:      &types.Digest{UsersFile: "myUsersFile", Users: []string{"user:pwd", "user2:pwd2"}},
+				Digest:      &types.Digest{UsersFile: "myUsersFile", Users: []string{"user:pwd", "user2:pwd2"}, RemoveHeader: true},
 			},
 		},
 		{
