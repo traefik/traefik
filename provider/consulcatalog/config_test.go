@@ -188,6 +188,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						ServiceName: "test",
 						Attributes: []string{
 							"random.foo=bar",
+							label.TraefikFrontendAuthDigestRemoveHeader + "=true",
 							label.TraefikFrontendAuthDigestUsers + "=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 							label.TraefikFrontendAuthDigestUsersFile + "=.htpasswd",
 						},
@@ -224,6 +225,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					},
 					Auth: &types.Auth{
 						Digest: &types.Digest{
+							RemoveHeader: true,
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 							UsersFile: ".htpasswd",
@@ -348,8 +350,10 @@ func TestProviderBuildConfiguration(t *testing.T) {
 							label.TraefikBackendBufferingRetryExpression + "=IsNetworkError() && Attempts() <= 2",
 
 							label.TraefikFrontendAuthBasic + "=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+							label.TraefikFrontendAuthBasicRemoveHeader + "=true",
 							label.TraefikFrontendAuthBasicUsers + "=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 							label.TraefikFrontendAuthBasicUsersFile + "=.htpasswd",
+							label.TraefikFrontendAuthDigestRemoveHeader + "=true",
 							label.TraefikFrontendAuthDigestUsers + "=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 							label.TraefikFrontendAuthDigestUsersFile + "=.htpasswd",
 							label.TraefikFrontendAuthForwardAddress + "=auth.server",
@@ -464,6 +468,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{
+							RemoveHeader: true,
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 							UsersFile: ".htpasswd",
