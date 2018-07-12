@@ -55,6 +55,20 @@ type serviceUpdate struct {
 	TraefikLabels map[string]string
 }
 
+type serviceFrontend struct {
+	ServiceName   string
+	FrontendName  string
+	BackendName   string
+	Attributes    []string
+	TraefikLabels map[string]string
+}
+
+type frontendSegment struct {
+	Name  string
+	Labels map[string]string
+}
+
+
 type catalogUpdate struct {
 	Service *serviceUpdate
 	Nodes   []*api.ServiceEntry
@@ -550,4 +564,57 @@ func (p *Provider) getConstraintTags(tags []string) []string {
 	}
 
 	return values
+}
+
+func (p *Provider) generateFrontends(service *serviceUpdate) []*serviceFrontend {
+	frontends := make([]*serviceFrontend, 0)
+
+	// to support <prefix>.frontend.xxx
+	frontends = append(frontends, &serviceFrontend{
+		ServiceName: service.ServiceName,
+		FrontendName: service.ServiceName,
+		BackendName: getServiceBackendName(service),
+		Attributes: service.Attributes,
+		TraefikLabels: service.TraefikLabels,
+	})
+
+	// loop over children of <prefix>.frontends.*
+	for _, frontend := range getSegments(p.Prefix + ".frontends", p.Prefix, service.TraefikLabels) {
+		frontends = append(frontends, &serviceFrontend{
+			ServiceName: service.ServiceName,
+			FrontendName: service.ServiceName + "-" + frontend.Name,
+			BackendName: getServiceBackendName(service),
+			Attributes: service.Attributes,
+			TraefikLabels: frontend.Labels,
+		})
+	}
+	return frontends
+}
+
+func getSegments(path string, prefix string, tree map[string]string) []*frontendSegment {
+	segments := make([]*frontendSegment, 0)
+
+	// FIXME: do this more efficient..
+	// find segment names
+	segmentNames := make([]string, 0)
+	for key := range tree {
+		if strings.HasPrefix(key, path + ".") {
+			segmentNames = append(segmentNames, strings.SplitN(strings.TrimPrefix(key, path + "."), ".", 2)[0])
+		}
+	}
+
+	// get labels for each segment found
+	for _, segment := range segmentNames {
+		labels := make(map[string]string)
+		for key, value := range tree {
+			if strings.HasPrefix(key, path + "." + segment) {
+				labels[prefix + ".frontend" + strings.TrimPrefix(key, path + "." + segment)] = value
+			}
+		}
+		segments = append(segments, &frontendSegment{
+			Name:segment,
+			Labels: labels,
+		})
+	}
+	return segments
 }

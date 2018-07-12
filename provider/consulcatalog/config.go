@@ -20,12 +20,9 @@ import (
 
 func (p *Provider) buildConfigurationV2(catalog []catalogUpdate) *types.Configuration {
 	var funcMap = template.FuncMap{
-		"getAttribute":    p.getAttribute,
-		"getTag":          getTag,
-		"hasTag":          hasTag,
-		"getChildNames":   getChildNames,
-		"hasTree":         hasTree,
-		"getPrefixedName": p.getPrefixedName,
+		"getAttribute": p.getAttribute,
+		"getTag":       getTag,
+		"hasTag":       hasTag,
 
 		// Backend functions
 		"getNodeBackendName":    getNodeBackendName,
@@ -52,14 +49,16 @@ func (p *Provider) buildConfigurationV2(catalog []catalogUpdate) *types.Configur
 		"getErrorPages":          label.GetErrorPages,
 		"getRateLimit":           label.GetRateLimit,
 		"getHeaders":             label.GetHeaders,
-		"getFrontendMap":         getFrontendMap,
 	}
 
 	var allNodes []*api.ServiceEntry
 	var services []*serviceUpdate
+	var frontends []*serviceFrontend
+
 	for _, info := range catalog {
 		if len(info.Nodes) > 0 {
 			services = append(services, info.Service)
+			frontends = append(frontends, p.generateFrontends(info.Service)...)
 			allNodes = append(allNodes, info.Nodes...)
 		}
 	}
@@ -68,9 +67,11 @@ func (p *Provider) buildConfigurationV2(catalog []catalogUpdate) *types.Configur
 
 	templateObjects := struct {
 		Services []*serviceUpdate
+		Frontends []*serviceFrontend
 		Nodes    []*api.ServiceEntry
 	}{
 		Services: services,
+		Frontends: frontends,
 		Nodes:    allNodes,
 	}
 
@@ -84,8 +85,8 @@ func (p *Provider) buildConfigurationV2(catalog []catalogUpdate) *types.Configur
 
 // Specific functions
 
-func (p *Provider) getFrontendRule(service serviceUpdate, labels map[string]string) string {
-	customFrontendRule := label.GetStringValue(labels, label.TraefikFrontendRule, "")
+func (p *Provider) getFrontendRule(service serviceFrontend) string {
+	customFrontendRule := label.GetStringValue(service.TraefikLabels, label.TraefikFrontendRule, "")
 	if customFrontendRule == "" {
 		customFrontendRule = p.FrontEndRule
 	}
@@ -263,55 +264,4 @@ func getTag(name string, tags []string, defaultValue string) string {
 		}
 	}
 	return defaultValue
-}
-
-func hasTree(name string, tags map[string]string) bool {
-	// checks if a set of tags contains a particular tree with children
-	lowerName := strings.ToLower(name)
-
-	for tag := range tags {
-		lowerTag := strings.ToLower(tag)
-
-		if strings.HasPrefix(lowerTag, lowerName+".") {
-			return true
-		}
-	}
-	return false
-}
-
-func getChildNames(name string, tags map[string]string) []string {
-	// gets the names of the children in a tree:
-	// a.b, a.b.c=1 => "c"
-	children := make([]string, 0)
-	lowerName := strings.ToLower(name)
-
-	for tag := range tags {
-		lowerTag := strings.ToLower(tag)
-
-		if strings.HasPrefix(lowerTag, lowerName+".") {
-			// name.child.key=value -> ["name", "child.key=value"]
-			result := strings.SplitN(lowerTag, lowerName+".", 2)
-
-			if len(result) == 2 {
-				// child.key=value -> ["child", "key=value"] or
-				//   child=value -> ["child=value"]
-				child := strings.SplitN(result[1], ".", 2)[0]
-				child = strings.Split(child, "=")[0]
-				children = append(children, child)
-			}
-		}
-	}
-	return children
-}
-
-func getFrontendMap(name string, tags map[string]string) map[string]string {
-	// Generates a new $service.TraefikLabels for a specific frontend
-	// This is a hack to trick other functions into thinking this
-	//  `<prefix>.frontends.name` is actually `<prefix>.frontend`
-	result := make(map[string]string)
-	for key, value := range tags {
-		// strip `name` from key
-		result[strings.Replace(key, "frontends."+name, "frontend", 1)] = value
-	}
-	return result
 }
