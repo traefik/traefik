@@ -1,4 +1,4 @@
-.PHONY: all docs-verify docs clear-site docs-build
+.PHONY: all docs-verify docs docs-clean docs-build
 
 TRAEFIK_ENVS := \
 	-e OS_ARCH_ARG \
@@ -110,7 +110,7 @@ docs-verify: site
 site: docs-image
 	docker run  $(DOCKER_RUN_DOC_OPTS) $(TRAEFIK_DOC_IMAGE) mkdocs build
 
-clear-site:
+docs-clean:
 	rm -rf $(CURDIR)/site
 
 clear-static:

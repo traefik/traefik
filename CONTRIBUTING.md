@@ -160,9 +160,12 @@ Integration tests must be run from the `integration/` directory and require the 
 
 The [documentation site](http://docs.traefik.io/) is built with [mkdocs](http://mkdocs.org/)
 
-### Method 1: `Docker` and `make`
+### Building Documentation
 
-You can test documentation using the `docs` target.
+#### Method 1: `Docker` and `make`
+
+You can build the documentation and serve it locally
+with livereloading, using the `docs` target:
 
 ```bash
 $ make docs
@@ -177,11 +180,19 @@ docker run  --rm -v /home/user/go/github/containous/traefik:/mkdocs -p 8000:8000
 
 And go to [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
-### Method 2: `mkdocs`
+If you only want to build the documentation without serving it locally,
+you can use the following command:
+
+```bash
+$ make docs-build
+...
+```
+
+#### Method 2: `mkdocs`
 
 First make sure you have python and pip installed
 
-```shell
+```bash
 $ python --version
 Python 2.7.2
 $ pip --version
@@ -190,22 +201,44 @@ pip 1.5.2
 
 Then install mkdocs with pip
 
-```shell
+```bash
 pip install --user -r requirements.txt
 ```
 
-To test documentation locally run `mkdocs serve` in the root directory, this should start a server locally to preview your changes.
+To build documentation locally and serve it locally,
+run `mkdocs serve` in the root directory,
+this should start a server locally to preview your changes.
 
-```shell
+```bash
 $ mkdocs serve
 INFO    -  Building documentation...
-WARNING -  Config value: 'theme'. Warning: The theme 'united' will be removed in an upcoming MkDocs release. See http://www.mkdocs.org/about/release-notes/ for more details
 INFO    -  Cleaning site directory
 [I 160505 22:31:24 server:281] Serving on http://127.0.0.1:8000
 [I 160505 22:31:24 handlers:59] Start watching changes
 [I 160505 22:31:24 handlers:61] Start detecting changes
 ```
 
+### Verify Documentation
+
+You can verify that the documentation meets some expectations,
+as checking for dead links, html markup validity.
+
+```bash
+$ make docs-verify
+docker build -t traefik-docs-verify ./script/docs-verify-docker-image ## Build Validator image
+...
+docker run --rm -v /home/travis/build/containous/traefik:/app traefik-docs-verify ## Check for dead links and w3c compliance
+=== Checking HTML content...
+Running ["HtmlCheck", "ImageCheck", "ScriptCheck", "LinkCheck"] on /app/site/basics/index.html on *.html...
+```
+
+If you recently changed the documentation,
+do not forget to clean it to have it rebuilt:
+
+```bash
+$ make docs-clean docs-verify
+...
+```
 
 ## How to Write a Good Issue
 
