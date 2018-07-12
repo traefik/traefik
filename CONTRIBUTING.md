@@ -164,8 +164,7 @@ The [documentation site](http://docs.traefik.io/) is built with [mkdocs](http://
 
 #### Method 1: `Docker` and `make`
 
-You can build the documentation and serve it locally
-with livereloading, using the `docs` target:
+You can build the documentation and serve it locally with livereloading, using the `docs` target:
 
 ```bash
 $ make docs
@@ -180,8 +179,7 @@ docker run  --rm -v /home/user/go/github/containous/traefik:/mkdocs -p 8000:8000
 
 And go to [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
-If you only want to build the documentation without serving it locally,
-you can use the following command:
+If you only want to build the documentation without serving it locally, you can use the following command:
 
 ```bash
 $ make docs-build
@@ -220,8 +218,7 @@ INFO    -  Cleaning site directory
 
 ### Verify Documentation
 
-You can verify that the documentation meets some expectations,
-as checking for dead links, html markup validity.
+You can verify that the documentation meets some expectations, as checking for dead links, html markup validity.
 
 ```bash
 $ make docs-verify
@@ -232,8 +229,7 @@ docker run --rm -v /home/travis/build/containous/traefik:/app traefik-docs-verif
 Running ["HtmlCheck", "ImageCheck", "ScriptCheck", "LinkCheck"] on /app/site/basics/index.html on *.html...
 ```
 
-If you recently changed the documentation,
-do not forget to clean it to have it rebuilt:
+If you recently changed the documentation, do not forget to clean it to have it rebuilt:
 
 ```bash
 $ make docs-clean docs-verify
