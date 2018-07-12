@@ -30,7 +30,7 @@ Following is the order by which Traefik tries to identify the port (the first on
 
 ## Applications with multiple ports
 
-Some Marathon applications may expose multiple ports. Traefik supports creating one so-called _service_ per port using [specific labels](/configuration/backends/marathon#service-level).
+Some Marathon applications may expose multiple ports. Traefik supports creating one so-called _segment_ per port using [segment labels](/configuration/backends/marathon#applications-with-multiple-ports-segment-labels).
 
 For instance, assume that a Marathon application exposes a web API on port 80 and an admin interface on port 8080. It would then be possible to make each service available by specifying the following Marathon labels:
 

@@ -30,7 +30,7 @@
   debug = true
 ```
 
-For more customization, see [entry points](/configuration/entrypoints/) documentation and [examples](/user-guide/examples/#ping-health-check).
+For more customization, see [entry points](/configuration/entrypoints/) documentation and the examples below.
 
 ## Web UI
 
