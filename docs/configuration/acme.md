@@ -371,7 +371,7 @@ For example, the rule `Host:test1.traefik.io,test2.traefik.io` will request a ce
 
 !!! warning
     `onHostRule` option can not be used to generate wildcard certificates.
-    Refer to [wildcard generation](/configuration/acme/#wildcard-domain) for further information.
+    Refer to [wildcard generation](/configuration/acme/#wildcard-domains) for further information.
 
 ### `storage`
 
