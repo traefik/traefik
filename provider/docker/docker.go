@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/cenk/backoff"
@@ -37,7 +38,7 @@ const (
 )
 
 type listener interface {
-	Listen(context.Context, chan<- types.ConfigMessage, func(context.Context, eventtypes.Message, chan<- types.ConfigMessage)) error
+	listen(*safe.Pool, chan<- types.ConfigMessage, func(eventtypes.Message, chan<- types.ConfigMessage) error) error
 }
 
 func newTickerListener() *tickerListener {
@@ -50,17 +51,20 @@ type tickerListener struct {
 	ticker *time.Ticker
 }
 
-// Listen creates a ticker that polls periodically from the Docker Swarm daemon.
+// listen creates a ticker that polls periodically from the Docker Swarm daemon.
 // Refreshes the service backend list on every poll.
 // Default poll timer value is defined by the SwarmDefaultWatchTime constant.
-func (t *tickerListener) Listen(ctx context.Context, configurationChan chan<- types.ConfigMessage, callbackFunc func(context.Context, eventtypes.Message, chan<- types.ConfigMessage)) error {
+func (t *tickerListener) listen(pool *safe.Pool, configurationChan chan<- types.ConfigMessage, callbackFunc func(eventtypes.Message, chan<- types.ConfigMessage) error) error {
 	log.Debug("Docker events listener: Starting up the Ticker listener...")
-
 	for {
 		select {
 		case <-t.ticker.C:
-			go callbackFunc(ctx, eventtypes.Message{}, configurationChan)
-		case <-ctx.Done():
+			err := callbackFunc(eventtypes.Message{}, configurationChan)
+			if err != nil {
+				log.Errorf("Docker ticker listener: Callback error: %v", err)
+			}
+		case <-pool.Ctx().Done():
+			pool.Cleanup()
 			return nil
 		}
 	}
@@ -76,17 +80,17 @@ type streamerListener struct {
 	dockerClient client.APIClient
 }
 
-// Listen creates a live event streamer with the Docker Swarm daemon.
+// listen creates a live event streamer with the Docker Swarm daemon.
 // Refreshes the service backend list on every service swarm event.
-func (s *streamerListener) Listen(ctx context.Context, configurationChan chan<- types.ConfigMessage, callbackFunc func(context.Context, eventtypes.Message, chan<- types.ConfigMessage)) error {
+func (s *streamerListener) listen(pool *safe.Pool, configurationChan chan<- types.ConfigMessage, callbackFunc func(eventtypes.Message, chan<- types.ConfigMessage) error) error {
 	log.Debug("Docker events listener: Starting up the Streamer listener...")
 
 	eventsMsgChan, eventsErrChan := s.dockerClient.Events(
-		ctx,
+		pool.Ctx(),
 		dockertypes.EventsOptions{
 			Filters: filters.NewArgs(
 				filters.Arg("scope", "swarm"),
-				filters.Arg("type", "service"),
+				filters.Arg("type", eventtypes.ServiceEventType),
 			),
 		},
 	)
@@ -94,14 +98,18 @@ func (s *streamerListener) Listen(ctx context.Context, configurationChan chan<- 
 	for {
 		select {
 		case evt := <-eventsMsgChan:
-			log.Debugf("Docker events Streamer listener: Incoming event: %#v", evt)
-
-			go callbackFunc(ctx, evt, configurationChan)
+			err := callbackFunc(evt, configurationChan)
+			if err != nil {
+				log.Errorf("Docker events listener: Callback error: %v", err)
+			}
 		case evtErr := <-eventsErrChan:
-			log.Errorf("Docker events listener: Events error, %s", evtErr.Error())
-
+			pool.Cleanup()
+			if evtErr != nil {
+				log.Errorf("Docker events listener: Events error: %v", evtErr)
+			}
 			return evtErr
-		case <-ctx.Done():
+		case <-pool.Ctx().Done():
+			pool.Cleanup()
 			return nil
 		}
 	}
@@ -118,9 +126,9 @@ type Provider struct {
 	ExposedByDefault      bool             `description:"Expose containers by default" export:"true"`
 	UseBindPortIP         bool             `description:"Use the ip address from the bound port, rather than from the inner network" export:"true"`
 	SwarmMode             bool             `description:"Use Docker on Swarm Mode" export:"true"`
-	EventHandlers         []Event          `description:"Event handlers with callback support" export:"true"`
 	Network               string           `description:"Default Docker network used" export:"true"`
 	dockerClient          client.APIClient
+	swarmPool             *safe.Pool
 }
 
 // Init the provider
@@ -196,40 +204,39 @@ func (p *Provider) createClient() (client.APIClient, error) {
 
 	var err error
 	p.dockerClient, err = client.NewClient(p.Endpoint, apiVersion, httpClient, httpHeaders)
-
 	return p.dockerClient, err
 }
 
 // Provide allows the docker provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
-	// TODO register this routine in pool, and watch for stop channel
-	safe.Go(func() {
+
+	pool.GoCtx(func(ctx context.Context) {
 		operation := func() error {
 			var err error
-
-			dockerClient, err := p.createClient()
+			p.dockerClient, err = p.createClient()
 			if err != nil {
 				log.Errorf("Failed to create a client for docker, error: %s", err)
 				return err
 			}
 
-			ctx := context.Background()
-			serverVersion, err := dockerClient.ServerVersion(ctx)
+			serverVersion, err := p.dockerClient.ServerVersion(ctx)
 			if err != nil {
 				log.Errorf("Failed to retrieve information of the docker client and server host: %s", err)
 				return err
 			}
+
 			log.Debugf("Provider connection established with docker %s (API %s)", serverVersion.Version, serverVersion.APIVersion)
 			var dockerDataList []dockerData
 			if p.SwarmMode {
-				dockerDataList, err = listServices(ctx, dockerClient)
+				p.swarmPool = safe.NewPool(ctx)
+				dockerDataList, err = listServices(ctx, p.dockerClient)
 				if err != nil {
 					log.Errorf("Failed to list services for docker swarm mode, error %s", err)
 					return err
 				}
 			} else {
-				dockerDataList, err = listContainers(ctx, dockerClient)
+				dockerDataList, err = listContainers(ctx, p.dockerClient)
 				if err != nil {
 					log.Errorf("Failed to list containers for docker, error %s", err)
 					return err
@@ -242,86 +249,82 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				Configuration: configuration,
 			}
 			if p.Watch {
-				if p.SwarmMode {
-					errChan := make(chan error)
-					pool.Go(func(stop chan bool) {
-						defer close(errChan)
-
-						watchCtx, cancel := context.WithCancel(ctx)
-						defer cancel()
-
-						swarmEventsCap, err := swarmEventsCapabilities(watchCtx, dockerClient)
+				errChan := make(chan error)
+				defer close(errChan)
+				pool.GoCtx(func(ctx context.Context) {
+					if p.SwarmMode {
+						swarmEventsCap, err := swarmEventsCapabilities(ctx, p.dockerClient)
 						if err != nil {
-							log.Errorf("Unable to retrieve Docker Swarm event listener capabilities, error %s", err.Error())
-
+							log.Errorf("Unable to retrieve Docker Swarm event listener capabilities: %v", err)
 							errChan <- err
 							return
 						}
 
 						var l listener
 						if swarmEventsCap {
-							l = newStreamerListener(dockerClient)
+							l = newStreamerListener(p.dockerClient)
 						} else {
 							l = newTickerListener()
 						}
 
-						if err := l.Listen(watchCtx, configurationChan, p.eventCallback); err != nil {
-							log.Errorf("Error while listening/polling Docker Swarm events, error %s", err.Error())
+						safe.Go(func() {
+							if err := l.listen(p.swarmPool, configurationChan, p.eventCallback); err != nil {
+								log.Errorf("Error while listening/polling Docker Swarm events: %v", err)
+								errChan <- err
+								return
+							}
+						})
+					} else {
+						watchCtx, cancel := context.WithCancel(ctx)
+						defer cancel()
 
-							errChan <- err
-							return
+						f := filters.NewArgs()
+						f.Add("type", "container")
+						options := dockertypes.EventsOptions{
+							Filters: f,
 						}
-					})
 
-					if err, ok := <-errChan; ok {
-						return err
-					}
-					// channel closed
-				} else {
-					watchCtx, cancel := context.WithCancel(ctx)
-					defer cancel()
-
-					f := filters.NewArgs()
-					f.Add("type", "container")
-					options := dockertypes.EventsOptions{
-						Filters: f,
-					}
-
-					startStopHandle := func(m eventtypes.Message) {
-						log.Debugf("Provider event received %+v", m)
-						containers, err := listContainers(watchCtx, dockerClient)
-						if err != nil {
-							log.Errorf("Failed to list containers for docker, error %s", err)
-							// Call cancel to get out of the monitor
-							cancel()
-							return
+						startStopHandle := func(m eventtypes.Message) {
+							log.Debugf("Provider event received %+v", m)
+							containers, err := listContainers(watchCtx, p.dockerClient)
+							if err != nil {
+								log.Errorf("Failed to list containers for docker, error %s", err)
+								// Call cancel to get out of the monitor
+								cancel()
+								return
+							}
+							configuration := p.buildConfiguration(containers)
+							if configuration != nil {
+								configurationChan <- types.ConfigMessage{
+									ProviderName:  "docker",
+									Configuration: configuration,
+								}
+							}
 						}
-						configuration := p.buildConfiguration(containers)
-						if configuration != nil {
-							configurationChan <- types.ConfigMessage{
-								ProviderName:  "docker",
-								Configuration: configuration,
+
+						eventMessagesChan, eventErrChan := p.dockerClient.Events(watchCtx, options)
+						for {
+							select {
+							case event := <-eventMessagesChan:
+								if event.Action == "start" ||
+									event.Action == "die" ||
+									strings.HasPrefix(event.Action, "health_status") {
+									startStopHandle(event)
+								}
+							case err := <-eventErrChan:
+								if err == io.EOF {
+									log.Debug("Provider event stream closed")
+								}
+								errChan <- err
 							}
 						}
 					}
-
-					eventsc, errc := dockerClient.Events(watchCtx, options)
-					for {
-						select {
-						case event := <-eventsc:
-							if event.Action == "start" ||
-								event.Action == "die" ||
-								strings.HasPrefix(event.Action, "health_status") {
-								startStopHandle(event)
-							}
-						case err := <-errc:
-							if err == io.EOF {
-								log.Debug("Provider event stream closed")
-							}
-
-							return err
-						}
-					}
+				})
+				select {
+				case err := <-errChan:
+					return err
+				case <-pool.Ctx().Done():
+					return nil
 				}
 			}
 			return nil
@@ -339,15 +342,12 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 }
 
 func (p *Provider) listAndUpdateServices(ctx context.Context, dockerClient client.APIClient, configurationChan chan<- types.ConfigMessage) error {
-	log.Debug("listAndUpdateServices called!")
 	services, err := listServices(ctx, dockerClient)
 	if err != nil {
 		return err
 	}
-	log.Debugf("Services found! %#v", services)
 
 	configuration := p.buildConfiguration(services)
-	log.Debugf("Configuration built: %#v", configuration)
 	if configuration != nil {
 		configurationChan <- types.ConfigMessage{
 			ProviderName:  "docker",
@@ -358,34 +358,96 @@ func (p *Provider) listAndUpdateServices(ctx context.Context, dockerClient clien
 	return nil
 }
 
-func (p *Provider) eventCallback(ctx context.Context, msg eventtypes.Message, configurationChan chan<- types.ConfigMessage) {
+func (p *Provider) eventCallback(msg eventtypes.Message, configurationChan chan<- types.ConfigMessage) error {
 	dockerClient, err := p.createClient()
 	if err != nil {
-		return
+		return err
 	}
 
-	log.Debugf("Docker event callback function executed with payload: %#v", msg)
+	p.swarmPool.GoCtx(func(ctx context.Context) {
+		myTimer := &time.Timer{}
+		lock := sync.RWMutex{}
+		stopRoutine := false
+		retryChan := make(chan bool)
 
-	if msg.Actor.ID == "" {
-		if err := p.listAndUpdateServices(ctx, dockerClient, configurationChan); err != nil {
-			log.Error(err.Error())
+		safe.Go(func() {
+			p.listCheckAndUpdateServices(ctx, msg, configurationChan, dockerClient, retryChan)
+		})
+
+		for {
+			select {
+			case <-ctx.Done():
+				lock.Lock()
+				stopRoutine = true
+				lock.Unlock()
+				return
+			case <-myTimer.C:
+				safe.Go(func() {
+					p.listCheckAndUpdateServices(ctx, msg, configurationChan, dockerClient, retryChan)
+				})
+			case retry := <-retryChan:
+				if !retry {
+					return
+				}
+				lock.RLock()
+				if !stopRoutine {
+					lock.RUnlock()
+					// Sleep for 1 second between retries.
+					log.Debug("Event callback: Retrying in 1 second...")
+					myTimer = time.NewTimer(1 * time.Second)
+				} else {
+					lock.RUnlock()
+					return
+				}
+			}
 		}
+	})
+	return nil
+}
 
+func (p *Provider) listCheckAndUpdateServices(ctx context.Context, msg eventtypes.Message, configurationChan chan<- types.ConfigMessage, dockerClient client.APIClient, retryChan chan<- bool) {
+	if len(msg.Actor.ID) == 0 {
+		err := p.listAndUpdateServices(ctx, dockerClient, configurationChan)
+		if err != nil {
+			log.Errorf("Unable to list and update services for empty message: %v", err)
+		}
+		retryChan <- false
 		return
 	}
 
-	service, err := getService(ctx, dockerClient, msg.Actor.ID)
+	retry, err := checkServiceContent(ctx, dockerClient, msg.Actor.ID)
 	if err != nil {
-		// TODO: How should we treat this kind of an error?
-		log.Error(err.Error())
-
+		log.Errorf("Unable to check services: %v", err)
+		retryChan <- false
 		return
+	}
+
+	if retry {
+		retryChan <- true
+		return
+	}
+
+	err = p.listAndUpdateServices(ctx, dockerClient, configurationChan)
+	if err != nil {
+		log.Errorf("Unable to list and update services: %v", err)
+	}
+	retryChan <- false
+	return
+
+}
+
+func checkServiceContent(ctx context.Context, dockerClient client.APIClient, actorID string) (bool, error) {
+	service, err := getService(ctx, dockerClient, actorID)
+	if err != nil {
+		return false, err
+	}
+
+	if service == nil {
+		return false, nil
 	}
 
 	if service.Spec.Mode.Global == nil && service.Spec.Mode.Replicated == nil {
-		log.Error("Service has no specified mode! This should never happen...")
-
-		return
+		return false, fmt.Errorf("service %s mode is not valid", service.ID)
 	}
 
 	if service.Spec.Mode.Global != nil {
@@ -395,43 +457,49 @@ func (p *Provider) eventCallback(ctx context.Context, msg eventtypes.Message, co
 		time.Sleep(1 * time.Second)
 	}
 
-	taskList, err := listTasks(ctx, dockerClient, service.ID, "running")
+	taskList, err := listTasks(ctx, dockerClient, service.ID, string(swarmtypes.TaskStateRunning))
 	if err != nil {
-		// TODO: How should we treat this kind of an error?
-		log.Error(err.Error())
-
-		return
+		return false, fmt.Errorf("unable to list tasks for service %q: %v", service.ID, err)
 	}
 
-	retry := false
+	// Check if the task list size is correct
+	retry, err := checkTaskListLength(taskList, service)
+	if err != nil {
+		return false, fmt.Errorf("unable to check tasks list length for service %q: %v", service.ID, err)
+	}
+	if retry {
+		return true, nil
+	}
+	// Check all the service tasks state
+	return checkTaskListState(taskList), nil
+}
+
+func checkTaskListLength(taskList []swarmtypes.Task, service *swarmtypes.Service) (bool, error) {
 	// Retry if there are no tasks found.
 	if len(taskList) == 0 {
-		log.Infof("No tasks for service %s found! Retrying...", service.ID)
-
-		retry = true
+		log.Debugf("No tasks for service %s found! Retrying...", service.ID)
+		return true, nil
 	}
 
 	if service.Spec.Mode.Replicated != nil {
 		if service.Spec.Mode.Replicated.Replicas == nil {
-			log.Error("Service is in replicated mode, but no replicas are defined! This should never happen...")
-
-			return
+			return false, fmt.Errorf("service %s is in replicated mode, but no replicas are defined", service.ID)
 		}
 
 		// Retry if the service is in replicated mode and the list of tasks is shorter than the number of replicas.
 		// We don't need to retry if the number of services is longer than the number of replicas. That means the service is being scaled in.
 		numberOfReplicas := int(*service.Spec.Mode.Replicated.Replicas)
 		if len(taskList) < numberOfReplicas {
-			log.Infof("Task list length for service %s is %d, expected it to be %d. Retrying...", service.ID, len(taskList), numberOfReplicas)
-
-			retry = true
+			log.Debugf("Task list length for service %s is %d, expected it to be %d. Retrying...", service.ID, len(taskList), numberOfReplicas)
+			return true, nil
 		}
 	}
 
-TaskLoop:
-	for _, task := range taskList {
-		log.Debugf("State of task %s: %s", task.ID, task.Status.State)
+	return false, nil
+}
 
+func checkTaskListState(taskList []swarmtypes.Task) bool {
+	for _, task := range taskList {
 		if task.Status.State != swarmtypes.TaskStateRunning {
 			switch task.Status.State {
 			case
@@ -441,28 +509,11 @@ TaskLoop:
 				swarmtypes.TaskStateAccepted,
 				swarmtypes.TaskStatePreparing,
 				swarmtypes.TaskStateStarting:
-				retry = true
-
-				break TaskLoop
+				return true
 			}
 		}
 	}
-
-	if !retry {
-		log.Debug("Event callback: Updating routing configuration if needed...")
-
-		p.listAndUpdateServices(ctx, dockerClient, configurationChan)
-	} else {
-		// We should only reach this place when new tasks are being created.
-		// Therefore, sleeping here shouldn't affect the graceful scale down.
-		log.Debug("Callback task state check: Retrying in 1 second...")
-
-		// Sleep for 1 second between retries.
-		time.Sleep(1 * time.Second)
-
-		log.Debug("Event callback: Retrying...")
-		go p.eventCallback(ctx, msg, configurationChan)
-	}
+	return false
 }
 
 func listContainers(ctx context.Context, dockerClient client.ContainerAPIClient) ([]dockerData, error) {
@@ -540,7 +591,6 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 
 func listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerData, error) {
 	serviceList, err := dockerClient.ServiceList(ctx, dockertypes.ServiceListOptions{})
-	log.Debugf("Service list: %#v", serviceList)
 	if err != nil {
 		return nil, err
 	}
@@ -559,7 +609,7 @@ func listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerD
 
 	networkList, err := dockerClient.NetworkList(ctx, dockertypes.NetworkListOptions{Filters: networkListArgs})
 	if err != nil {
-		log.Debugf("Failed to network inspect on client for docker, error: %s", err)
+		log.Debugf("Failed to network inspect on client for docker: %v", err)
 		return nil, err
 	}
 
@@ -585,9 +635,8 @@ func listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerD
 			isGlobalSvc := service.Spec.Mode.Global != nil
 			dockerDataListTasks, err = listAndParseTasks(ctx, dockerClient, service.ID, dData, networkMap, isGlobalSvc)
 			if err != nil {
-				log.Warnf("No tasks found for service %s, error %s", service.Spec.Name, err.Error())
+				log.Warnf("No tasks found for service %s: %v", service.Spec.Name, err)
 			} else {
-				log.Debugf("Tasks for service %s: %#v", service.Spec.Name, dockerDataListTasks)
 				dockerDataList = append(dockerDataList, dockerDataListTasks...)
 			}
 		}
@@ -648,22 +697,22 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID, de
 
 func listAndParseTasks(ctx context.Context, dockerClient client.APIClient, serviceID string,
 	serviceDockerData dockerData, networkMap map[string]*dockertypes.NetworkResource, isGlobalSvc bool) ([]dockerData, error) {
-	taskList, err := listTasks(ctx, dockerClient, serviceID, "running")
+	desiredState := swarmtypes.TaskStateRunning
+	taskList, err := listTasks(ctx, dockerClient, serviceID, string(desiredState))
 	if err != nil {
 		return nil, err
 	}
 
 	var dockerDataList []dockerData
 	for _, task := range taskList {
-		if task.Status.State != swarmtypes.TaskStateRunning {
+		if task.Status.State != desiredState {
 			log.Warnf(
 				"Task %s is not in the desired state (current state: %s, desired state: %s, service: %s)",
 				task.ID,
 				task.Status.State,
-				swarmtypes.TaskStateRunning,
+				desiredState,
 				serviceID,
 			)
-
 			continue
 		}
 		dData := parseTasks(task, serviceDockerData, networkMap, isGlobalSvc)
@@ -713,7 +762,7 @@ func parseTasks(task swarmtypes.Task, serviceDockerData dockerData,
 	return dData
 }
 
-func getService(ctx context.Context, dockerClient client.APIClient, serviceID string) (swarmtypes.Service, error) {
+func getService(ctx context.Context, dockerClient client.APIClient, serviceID string) (*swarmtypes.Service, error) {
 	services, err := dockerClient.ServiceList(
 		ctx,
 		dockertypes.ServiceListOptions{
@@ -723,28 +772,31 @@ func getService(ctx context.Context, dockerClient client.APIClient, serviceID st
 		},
 	)
 	if err != nil {
-		return swarmtypes.Service{}, err
+		return nil, err
 	}
 
-	if len(services) != 1 {
-		return swarmtypes.Service{}, fmt.Errorf("Failed to find service with id %s", serviceID)
+	if len(services) == 0 {
+		return nil, nil
 	}
 
-	return services[0], nil
+	if len(services) > 1 {
+		return nil, fmt.Errorf("too many services found for id %q: %d instead of 1", serviceID, len(services))
+	}
+
+	return &services[0], nil
 }
 
+// swarmEventsCapabilities checks the docker API version to adapt the provider behavior
+// in function of the capalities allowed by the version
 func swarmEventsCapabilities(ctx context.Context, dockerClient client.APIClient) (bool, error) {
 	res := false
-
 	serverVersion, err := dockerClient.ServerVersion(ctx)
 	if err != nil {
 		return res, err
 	}
-
 	// https://docs.docker.com/engine/api/v1.29/#tag/Network (Docker 17.06)
 	if versions.GreaterThanOrEqualTo(serverVersion.APIVersion, "1.29") {
 		res = true
 	}
-
 	return res, nil
 }

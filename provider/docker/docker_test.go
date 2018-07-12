@@ -3,13 +3,15 @@ package docker
 import (
 	"context"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/containous/traefik/provider/docker/mocks"
+	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	dockertypes "github.com/docker/docker/api/types"
 	eventtypes "github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
-	"testing"
-	"time"
 )
 
 type testEventCallback struct {
@@ -17,9 +19,10 @@ type testEventCallback struct {
 	msgEvents []eventtypes.Message
 }
 
-func (tec *testEventCallback) callback(ctx context.Context, msgEvent eventtypes.Message, configurationChan chan<- types.ConfigMessage) {
+func (tec *testEventCallback) callback(msgEvent eventtypes.Message, configurationChan chan<- types.ConfigMessage) error {
 	tec.callCount++
 	tec.msgEvents = append(tec.msgEvents, msgEvent)
+	return nil
 }
 
 func TestTickerListener(t *testing.T) {
@@ -39,7 +42,8 @@ func TestTickerListener(t *testing.T) {
 
 	var listenRetVal error
 	go func() {
-		listenRetVal = l.Listen(ctx, configurationChan, c.callback)
+		pool := safe.NewPool(ctx)
+		listenRetVal = l.listen(pool, configurationChan, c.callback)
 	}()
 
 	time.Sleep(1200 * time.Millisecond)
@@ -57,6 +61,7 @@ func TestTickerListener(t *testing.T) {
 func TestStreamerListenerSuccessfulReturn(t *testing.T) {
 	mainCtx := context.Background()
 	ctx, cancel := context.WithCancel(mainCtx)
+	pool := safe.NewPool(ctx)
 
 	dockerClient := &mocks.APIClient{}
 
@@ -71,7 +76,7 @@ func TestStreamerListenerSuccessfulReturn(t *testing.T) {
 
 	dockerClient.On(
 		"Events",
-		ctx,
+		pool.Ctx(),
 		dockertypes.EventsOptions{
 			Filters: filters.NewArgs(
 				filters.Arg("scope", "swarm"),
@@ -93,7 +98,7 @@ func TestStreamerListenerSuccessfulReturn(t *testing.T) {
 
 	var listenRetVal error
 	go func() {
-		listenRetVal = l.Listen(ctx, configurationChan, c.callback)
+		listenRetVal = l.listen(pool, configurationChan, c.callback)
 	}()
 
 	msgEvents := []eventtypes.Message{
@@ -135,6 +140,7 @@ func TestStreamerListenerErrorReturn(t *testing.T) {
 	mainCtx := context.Background()
 	ctx, cancel := context.WithCancel(mainCtx)
 	defer cancel()
+	pool := safe.NewPool(ctx)
 
 	dockerClient := &mocks.APIClient{}
 
@@ -149,7 +155,7 @@ func TestStreamerListenerErrorReturn(t *testing.T) {
 
 	dockerClient.On(
 		"Events",
-		ctx,
+		pool.Ctx(),
 		dockertypes.EventsOptions{
 			Filters: filters.NewArgs(
 				filters.Arg("scope", "swarm"),
@@ -171,7 +177,7 @@ func TestStreamerListenerErrorReturn(t *testing.T) {
 
 	listenRetValChan := make(chan error)
 	go func() {
-		listenRetValChan <- l.Listen(ctx, configurationChan, c.callback)
+		listenRetValChan <- l.listen(pool, configurationChan, c.callback)
 	}()
 
 	errEvent := fmt.Errorf("All your error are belong to us")

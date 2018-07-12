@@ -206,14 +206,14 @@ func (s *DockerSuite) TestDockerContainersWithOneMissingLabels(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-// TestDockerContainersWithServiceLabels allows cheking the labels behavior
+// TestDockerContainersWithSegmentLabels allows checking the labels behavior
 // Use service label if defined and compete information with container labels.
-func (s *DockerSuite) TestDockerContainersWithServiceLabels(c *check.C) {
+func (s *DockerSuite) TestDockerContainersWithSegmentLabels(c *check.C) {
 	file := s.adaptFileForHost(c, "fixtures/docker/simple.toml")
 	defer os.Remove(file)
 	// Start a container with some labels
 	labels := map[string]string{
-		label.Prefix + "servicename.frontend.rule": "Host:my.super.host",
+		label.Prefix + "segmentName.frontend.rule": "Host:my.super.host",
 		label.TraefikFrontendRule:                  "Host:my.wrong.host",
 		label.TraefikPort:                          "2375",
 	}
