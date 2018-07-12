@@ -96,6 +96,7 @@
 
       {{if $auth.Basic }}
       [frontends."frontend-{{ $serviceName }}".auth.basic]
+        removeHeader = {{ $auth.Basic.RemoveHeader }}
         {{if $auth.Basic.Users }}
         users = [{{range $auth.Basic.Users }}
           "{{.}}",
@@ -106,6 +107,7 @@
 
       {{if $auth.Digest }}
       [frontends."frontend-{{ $serviceName }}".auth.digest]
+        removeHeader = {{ $auth.Digest.RemoveHeader }}
         {{if $auth.Digest.Users }}
         users = [{{range $auth.Digest.Users }}
          "{{.}}",
