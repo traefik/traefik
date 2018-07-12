@@ -234,13 +234,13 @@ func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificat
 	domain := types.CanonicalDomain(clientHello.ServerName)
 	account := a.store.Get().(*Account)
 
-	if providedCertificate := a.getProvidedCertificate(domain); providedCertificate != nil {
-		return providedCertificate, nil
-	}
-
 	if challengeCert, ok := a.challengeTLSProvider.getCertificate(domain); ok {
 		log.Debugf("ACME got challenge %s", domain)
 		return challengeCert, nil
+	}
+
+	if providedCertificate := a.getProvidedCertificate(domain); providedCertificate != nil {
+		return providedCertificate, nil
 	}
 
 	if domainCert, ok := account.DomainsCertificate.getCertificateForDomain(domain); ok {
