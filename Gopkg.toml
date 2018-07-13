@@ -66,7 +66,7 @@
 
 [[constraint]]
   name = "github.com/containous/traefik-extra-service-fabric"
-  branch = "init-provider"
+  version = "1.3.0"
 
 [[constraint]]
   name = "github.com/coreos/go-systemd"
