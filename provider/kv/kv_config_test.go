@@ -62,13 +62,12 @@ func TestProviderBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "basic auth",
+			desc: "basic auth Users",
 			kvPairs: filler("traefik",
 				frontend("frontend",
 					withPair(pathFrontendBackend, "backend"),
 					withPair(pathFrontendAuthHeaderField, "X-WebAuth-User"),
 					withList(pathFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
-					withPair(pathFrontendAuthBasicUsersFile, ".htpasswd"),
 				),
 				backend("backend"),
 			),
@@ -90,6 +89,38 @@ func TestProviderBuildConfiguration(t *testing.T) {
 							Basic: &types.Basic{
 								Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "basic auth UsersFile",
+			kvPairs: filler("traefik",
+				frontend("frontend",
+					withPair(pathFrontendBackend, "backend"),
+					withPair(pathFrontendAuthHeaderField, "X-WebAuth-User"),
+					withPair(pathFrontendAuthBasicUsersFile, ".htpasswd"),
+				),
+				backend("backend"),
+			),
+			expected: &types.Configuration{
+				Backends: map[string]*types.Backend{
+					"backend": {
+						LoadBalancer: &types.LoadBalancer{
+							Method: "wrr",
+						},
+					},
+				},
+				Frontends: map[string]*types.Frontend{
+					"frontend": {
+						Backend:        "backend",
+						PassHostHeader: true,
+						EntryPoints:    []string{},
+						Auth: &types.Auth{
+							HeaderField: "X-WebAuth-User",
+							Basic: &types.Basic{
 								UsersFile: ".htpasswd",
 							},
 						},
