@@ -377,16 +377,16 @@ func (p *Provider) hasDeprecatedBasicAuth(rootPath string) bool {
 // GetAuth Create auth from path
 func (p *Provider) getAuth(rootPath string) *types.Auth {
 	hasDeprecatedBasicAuth := p.hasDeprecatedBasicAuth(rootPath)
-	if len(p.getList(rootPath, pathFrontendAuth)) > 0 || hasDeprecatedBasicAuth {
+	if p.hasPrefix(rootPath, pathFrontendAuth) || hasDeprecatedBasicAuth {
 		auth := &types.Auth{
 			HeaderField: p.get("", rootPath, pathFrontendAuthHeaderField),
 		}
 
-		if len(p.getList(rootPath, pathFrontendAuthBasic)) > 0 || hasDeprecatedBasicAuth {
+		if p.hasPrefix(rootPath, pathFrontendAuthBasic) || hasDeprecatedBasicAuth {
 			auth.Basic = p.getAuthBasic(rootPath)
-		} else if len(p.getList(rootPath, pathFrontendAuthDigest)) > 0 {
+		} else if p.hasPrefix(rootPath, pathFrontendAuthDigest) {
 			auth.Digest = p.getAuthDigest(rootPath)
-		} else if len(p.getList(rootPath, pathFrontendAuthForward)) > 0 {
+		} else if p.hasPrefix(rootPath, pathFrontendAuthForward) {
 			auth.Forward = p.getAuthForward(rootPath)
 		}
 
@@ -586,6 +586,21 @@ func (p *Provider) getBool(defaultValue bool, keyParts ...string) bool {
 func (p *Provider) has(keyParts ...string) bool {
 	value := p.get("", keyParts...)
 	return len(value) > 0
+}
+
+func (p *Provider) hasPrefix(keyParts ...string) bool {
+	baseKey := strings.Join(keyParts, "")
+	if !strings.HasSuffix(baseKey, "/") {
+		baseKey += "/"
+	}
+
+	listKeys, err := p.kvClient.List(baseKey, nil)
+	if err != nil {
+		log.Debugf("Cannot list keys under %q: %v", baseKey, err)
+		return false
+	}
+
+	return len(listKeys) > 0
 }
 
 func (p *Provider) getInt(defaultValue int, keyParts ...string) int {
