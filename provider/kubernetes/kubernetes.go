@@ -95,9 +95,14 @@ func (p *Provider) newK8sClient(ingressLabelSelector string) (Client, error) {
 	return cl, err
 }
 
+// Init the provider
+func (p *Provider) Init(constraints types.Constraints) error {
+	return p.BaseProvider.Init(constraints)
+}
+
 // Provide allows the k8s provider to provide configurations to traefik
 // using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
+func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	// Tell glog (used by client-go) to log into STDERR. Otherwise, we risk
 	// certain kinds of API errors getting logged into a directory not
 	// available in a `FROM scratch` Docker container, causing glog to abort
@@ -112,7 +117,6 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	if err != nil {
 		return err
 	}
-	p.Constraints = append(p.Constraints, constraints...)
 
 	pool.Go(func(stop chan bool) {
 		operation := func() error {
@@ -521,8 +525,6 @@ func getRuleForPath(pa extensionsv1beta1.HTTPIngressPath, i *extensionsv1beta1.I
 	case ruleTypePath, ruleTypePathPrefix, ruleTypePathStrip, ruleTypePathPrefixStrip:
 	case ruleTypeReplacePath:
 		log.Warnf("Using %s as %s will be deprecated in the future. Please use the %s annotation instead", ruleType, annotationKubernetesRuleType, annotationKubernetesRequestModifier)
-	case "":
-		return "", errors.New("cannot use empty rule")
 	default:
 		return "", fmt.Errorf("cannot use non-matcher rule: %q", ruleType)
 	}
@@ -538,7 +540,8 @@ func getRuleForPath(pa extensionsv1beta1.HTTPIngressPath, i *extensionsv1beta1.I
 		if pathReplaceAnnotation != "" {
 			return "", fmt.Errorf("rewrite-target must not be used together with annotation %q", pathReplaceAnnotation)
 		}
-		rules = append(rules, ruleTypeReplacePath+":"+rewriteTarget)
+		rewriteTargetRule := fmt.Sprintf("ReplacePathRegex: ^%s/(.*) %s/$1", pa.Path, strings.TrimRight(rewriteTarget, "/"))
+		rules = append(rules, rewriteTargetRule)
 		pathReplaceAnnotation = annotationKubernetesRewriteTarget
 	}
 

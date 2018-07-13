@@ -14,7 +14,6 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
-	"reflect"
 	"sync"
 	"time"
 
@@ -308,17 +307,16 @@ func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tl
 
 func (s *Server) startProvider() {
 	// start providers
-	providerType := reflect.TypeOf(s.provider)
 	jsonConf, err := json.Marshal(s.provider)
 	if err != nil {
-		log.Debugf("Unable to marshal provider conf %v with error: %v", providerType, err)
+		log.Debugf("Unable to marshal provider conf %T with error: %v", s.provider, err)
 	}
-	log.Infof("Starting provider %v %s", providerType, jsonConf)
+	log.Infof("Starting provider %T %s", s.provider, jsonConf)
 	currentProvider := s.provider
 	safe.Go(func() {
-		err := currentProvider.Provide(s.configurationChan, s.routinesPool, s.globalConfiguration.Constraints)
+		err := currentProvider.Provide(s.configurationChan, s.routinesPool)
 		if err != nil {
-			log.Errorf("Error starting provider %v: %s", providerType, err)
+			log.Errorf("Error starting provider %T: %s", s.provider, err)
 		}
 	})
 }

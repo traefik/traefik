@@ -455,13 +455,15 @@ type Statsd struct {
 	PushInterval string `description:"StatsD push interval" export:"true"`
 }
 
-// InfluxDB contains address and metrics pushing interval configuration
+// InfluxDB contains address, login and metrics pushing interval configuration
 type InfluxDB struct {
 	Address         string `description:"InfluxDB address"`
 	Protocol        string `description:"InfluxDB address protocol (udp or http)"`
 	PushInterval    string `description:"InfluxDB push interval" export:"true"`
 	Database        string `description:"InfluxDB database used when protocol is http" export:"true"`
 	RetentionPolicy string `description:"InfluxDB retention policy used when protocol is http" export:"true"`
+	Username        string `description:"InfluxDB username (only with http)" export:"true"`
+	Password        string `description:"InfluxDB password (only with http)" export:"true"`
 }
 
 // Buckets holds Prometheus Buckets

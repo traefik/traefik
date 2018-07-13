@@ -1,5 +1,21 @@
 # Change Log
 
+## [v1.6.5](https://github.com/containous/traefik/tree/v1.6.5) (2018-07-09)
+[All Commits](https://github.com/containous/traefik/compare/v1.6.4...v1.6.5)
+
+**Bug fixes:**
+- **[acme]** Add a mutex on local store for HTTPChallenges ([#3579](https://github.com/containous/traefik/pull/3579) by [Juliens](https://github.com/Juliens))
+- **[consulcatalog]** Split the error handling from Consul Catalog (deadlock) ([#3560](https://github.com/containous/traefik/pull/3560) by [ortz](https://github.com/ortz))
+- **[docker]** segment labels: multiple frontends for one backend. ([#3511](https://github.com/containous/traefik/pull/3511) by [ldez](https://github.com/ldez))
+- **[kv]** Better support on same prefix at the same level in the KV ([#3532](https://github.com/containous/traefik/pull/3532) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[logs]** Add logs when error is generated in error handler ([#3567](https://github.com/containous/traefik/pull/3567) by [Juliens](https://github.com/Juliens))
+- **[middleware]** Create middleware to be able to handle HTTP pipelining correctly ([#3513](https://github.com/containous/traefik/pull/3513) by [mmatur](https://github.com/mmatur))
+
+**Documentation:**
+- **[acme]** The gandiv5 provider works with wildcard ([#3506](https://github.com/containous/traefik/pull/3506) by [manu5801](https://github.com/manu5801))
+- **[kv]** Update keyFile first/last line comment in kv-config.md ([#3558](https://github.com/containous/traefik/pull/3558) by [madnight](https://github.com/madnight))
+- Minor formatting issue in user-guide ([#3546](https://github.com/containous/traefik/pull/3546) by [Vanuan](https://github.com/Vanuan))
+
 ## [v1.7.0-rc1](https://github.com/containous/traefik/tree/v1.7.0-rc1) (2018-07-09)
 [All Commits](https://github.com/containous/traefik/compare/v1.6.0-rc1...v1.7.0-rc1)
 

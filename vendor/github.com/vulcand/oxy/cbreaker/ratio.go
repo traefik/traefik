@@ -19,13 +19,17 @@ type ratioController struct {
 	tm       timetools.TimeProvider
 	allowed  int
 	denied   int
+
+	log *log.Logger
 }
 
-func newRatioController(tm timetools.TimeProvider, rampUp time.Duration) *ratioController {
+func newRatioController(tm timetools.TimeProvider, rampUp time.Duration, log *log.Logger) *ratioController {
 	return &ratioController{
 		duration: rampUp,
 		tm:       tm,
 		start:    tm.UtcNow(),
+
+		log: log,
 	}
 }
 
@@ -34,17 +38,17 @@ func (r *ratioController) String() string {
 }
 
 func (r *ratioController) allowRequest() bool {
-	log.Debugf("%v", r)
+	r.log.Debugf("%v", r)
 	t := r.targetRatio()
 	// This condition answers the question - would we satisfy the target ratio if we allow this request?
 	e := r.computeRatio(r.allowed+1, r.denied)
 	if e < t {
 		r.allowed++
-		log.Debugf("%v allowed", r)
+		r.log.Debugf("%v allowed", r)
 		return true
 	}
 	r.denied++
-	log.Debugf("%v denied", r)
+	r.log.Debugf("%v denied", r)
 	return false
 }
 
