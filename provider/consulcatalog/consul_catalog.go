@@ -604,15 +604,15 @@ func getSegments(path string, prefix string, tree map[string]string) []*frontend
 
 	// FIXME: do this more efficient..
 	// find segment names
-	segmentNames := make([]string, 0)
+	segmentNames := make(map[string]bool)
 	for key := range tree {
 		if strings.HasPrefix(key, path+".") {
-			segmentNames = append(segmentNames, strings.SplitN(strings.TrimPrefix(key, path+"."), ".", 2)[0])
+			segmentNames[strings.SplitN(strings.TrimPrefix(key, path+"."), ".", 2)[0]] = true
 		}
 	}
 
 	// get labels for each segment found
-	for _, segment := range segmentNames {
+	for segment := range segmentNames {
 		labels := make(map[string]string)
 		for key, value := range tree {
 			if strings.HasPrefix(key, path+"."+segment) {
