@@ -64,10 +64,9 @@ type serviceFrontend struct {
 }
 
 type frontendSegment struct {
-	Name  string
+	Name   string
 	Labels map[string]string
 }
-
 
 type catalogUpdate struct {
 	Service *serviceUpdate
@@ -580,20 +579,20 @@ func (p *Provider) generateFrontends(service *serviceUpdate) []*serviceFrontend 
 
 	// to support <prefix>.frontend.xxx
 	frontends = append(frontends, &serviceFrontend{
-		ServiceName: service.ServiceName,
-		FrontendName: service.ServiceName,
-		BackendName: getServiceBackendName(service),
-		Attributes: service.Attributes,
+		ServiceName:   service.ServiceName,
+		FrontendName:  service.ServiceName,
+		BackendName:   getServiceBackendName(service),
+		Attributes:    service.Attributes,
 		TraefikLabels: service.TraefikLabels,
 	})
 
 	// loop over children of <prefix>.frontends.*
-	for _, frontend := range getSegments(p.Prefix + ".frontends", p.Prefix, service.TraefikLabels) {
+	for _, frontend := range getSegments(p.Prefix+".frontends", p.Prefix, service.TraefikLabels) {
 		frontends = append(frontends, &serviceFrontend{
-			ServiceName: service.ServiceName,
-			FrontendName: service.ServiceName + "-" + frontend.Name,
-			BackendName: getServiceBackendName(service),
-			Attributes: service.Attributes,
+			ServiceName:   service.ServiceName,
+			FrontendName:  service.ServiceName + "-" + frontend.Name,
+			BackendName:   getServiceBackendName(service),
+			Attributes:    service.Attributes,
 			TraefikLabels: frontend.Labels,
 		})
 	}
@@ -607,8 +606,8 @@ func getSegments(path string, prefix string, tree map[string]string) []*frontend
 	// find segment names
 	segmentNames := make([]string, 0)
 	for key := range tree {
-		if strings.HasPrefix(key, path + ".") {
-			segmentNames = append(segmentNames, strings.SplitN(strings.TrimPrefix(key, path + "."), ".", 2)[0])
+		if strings.HasPrefix(key, path+".") {
+			segmentNames = append(segmentNames, strings.SplitN(strings.TrimPrefix(key, path+"."), ".", 2)[0])
 		}
 	}
 
@@ -616,12 +615,12 @@ func getSegments(path string, prefix string, tree map[string]string) []*frontend
 	for _, segment := range segmentNames {
 		labels := make(map[string]string)
 		for key, value := range tree {
-			if strings.HasPrefix(key, path + "." + segment) {
-				labels[prefix + ".frontend" + strings.TrimPrefix(key, path + "." + segment)] = value
+			if strings.HasPrefix(key, path+"."+segment) {
+				labels[prefix+".frontend"+strings.TrimPrefix(key, path+"."+segment)] = value
 			}
 		}
 		segments = append(segments, &frontendSegment{
-			Name:segment,
+			Name:   segment,
 			Labels: labels,
 		})
 	}
