@@ -398,7 +398,8 @@ func (p *Provider) getAuth(rootPath string) *types.Auth {
 // getAuthBasic Create Basic Auth from path
 func (p *Provider) getAuthBasic(rootPath string) *types.Basic {
 	basicAuth := &types.Basic{
-		UsersFile: p.get("", rootPath, pathFrontendAuthBasicUsersFile),
+		UsersFile:    p.get("", rootPath, pathFrontendAuthBasicUsersFile),
+		RemoveHeader: p.getBool(false, rootPath, pathFrontendAuthBasicRemoveHeader),
 	}
 
 	// backward compatibility
@@ -415,8 +416,9 @@ func (p *Provider) getAuthBasic(rootPath string) *types.Basic {
 // getAuthDigest Create Digest Auth from path
 func (p *Provider) getAuthDigest(rootPath string) *types.Digest {
 	return &types.Digest{
-		Users:     p.getList(rootPath, pathFrontendAuthDigestUsers),
-		UsersFile: p.get("", rootPath, pathFrontendAuthDigestUsersFile),
+		Users:        p.getList(rootPath, pathFrontendAuthDigestUsers),
+		UsersFile:    p.get("", rootPath, pathFrontendAuthDigestUsersFile),
+		RemoveHeader: p.getBool(false, rootPath, pathFrontendAuthDigestRemoveHeader),
 	}
 }
 
