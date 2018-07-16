@@ -390,10 +390,10 @@ type Cluster struct {
 
 // Auth holds authentication configuration (BASIC, DIGEST, users)
 type Auth struct {
-	Basic       *Basic   `export:"true"`
-	Digest      *Digest  `export:"true"`
-	Forward     *Forward `export:"true"`
-	HeaderField string   `export:"true"`
+	Basic       *Basic   `json:"basic,omitempty" export:"true"`
+	Digest      *Digest  `json:"digest,omitempty" export:"true"`
+	Forward     *Forward `json:"forward,omitempty" export:"true"`
+	HeaderField string   `json:"headerField,omitempty" export:"true"`
 }
 
 // Users authentication users
@@ -401,24 +401,24 @@ type Users []string
 
 // Basic HTTP basic authentication
 type Basic struct {
-	Users        `mapstructure:","`
-	UsersFile    string
-	RemoveHeader bool
+	Users        `json:"users,omitempty" mapstructure:","`
+	UsersFile    string `json:"usersFile,omitempty"`
+	RemoveHeader bool   `json:"removeHeader,omitempty"`
 }
 
 // Digest HTTP authentication
 type Digest struct {
-	Users        `mapstructure:","`
-	UsersFile    string
-	RemoveHeader bool
+	Users        `json:"users,omitempty" mapstructure:","`
+	UsersFile    string `json:"usersFile,omitempty"`
+	RemoveHeader bool   `json:"removeHeader,omitempty"`
 }
 
 // Forward authentication
 type Forward struct {
-	Address             string     `description:"Authentication server address"`
-	TLS                 *ClientTLS `description:"Enable TLS support" export:"true"`
-	TrustForwardHeader  bool       `description:"Trust X-Forwarded-* headers" export:"true"`
-	AuthResponseHeaders []string   `description:"Headers to be forwarded from auth response"`
+	Address             string     `description:"Authentication server address" json:"address,omitempty"`
+	TLS                 *ClientTLS `description:"Enable TLS support" json:"tls,omitempty" export:"true"`
+	TrustForwardHeader  bool       `description:"Trust X-Forwarded-* headers" json:"trustForwardHeader,omitempty" export:"true"`
+	AuthResponseHeaders []string   `description:"Headers to be forwarded from auth response" json:"authResponseHeaders,omitempty"`
 }
 
 // CanonicalDomain returns a lower case domain with trim space
@@ -501,11 +501,11 @@ func (b *Buckets) SetValue(val interface{}) {
 // ClientTLS holds TLS specific configurations as client
 // CA, Cert and Key can be either path or file contents
 type ClientTLS struct {
-	CA                 string `description:"TLS CA"`
-	CAOptional         bool   `description:"TLS CA.Optional"`
-	Cert               string `description:"TLS cert"`
-	Key                string `description:"TLS key"`
-	InsecureSkipVerify bool   `description:"TLS insecure skip verify"`
+	CA                 string `description:"TLS CA" json:"ca,omitempty"`
+	CAOptional         bool   `description:"TLS CA.Optional" json:"caOptional,omitempty"`
+	Cert               string `description:"TLS cert" json:"cert,omitempty"`
+	Key                string `description:"TLS key" json:"key,omitempty"`
+	InsecureSkipVerify bool   `description:"TLS insecure skip verify" json:"insecureSkipVerify,omitempty"`
 }
 
 // CreateTLSConfig creates a TLS config from ClientTLS structures
