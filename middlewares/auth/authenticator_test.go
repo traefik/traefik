@@ -12,6 +12,7 @@ import (
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/urfave/negroni"
 )
 
@@ -51,13 +52,16 @@ func TestAuthUsersFromFile(t *testing.T) {
 		t.Run(test.authType, func(t *testing.T) {
 			t.Parallel()
 			usersFile, err := ioutil.TempFile("", "auth-users")
-			assert.NoError(t, err, "there should be no error")
+			require.NoError(t, err)
 			defer os.Remove(usersFile.Name())
+
 			_, err = usersFile.Write([]byte(test.usersStr))
-			assert.NoError(t, err, "there should be no error")
+			require.NoError(t, err)
+
 			users, err := test.parserFunc(usersFile.Name())
-			assert.NoError(t, err, "there should be no error")
+			require.NoError(t, err)
 			assert.Equal(t, 2, len(users), "they should be equal")
+
 			_, ok := users[test.userKeys[0]]
 			assert.True(t, ok, "user test should be found")
 			_, ok = users[test.userKeys[1]]
@@ -79,7 +83,7 @@ func TestBasicAuthFail(t *testing.T) {
 			Users: []string{"test:test"},
 		},
 	}, &tracing.Tracing{})
-	assert.NoError(t, err, "there should be no error")
+	require.NoError(t, err)
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "traefik")
@@ -93,7 +97,7 @@ func TestBasicAuthFail(t *testing.T) {
 	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 	req.SetBasicAuth("test", "test")
 	res, err := client.Do(req)
-	assert.NoError(t, err, "there should be no error")
+	require.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "they should be equal")
 }
 
@@ -103,7 +107,7 @@ func TestBasicAuthSuccess(t *testing.T) {
 			Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
 		},
 	}, &tracing.Tracing{})
-	assert.NoError(t, err, "there should be no error")
+	require.NoError(t, err)
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "traefik")
@@ -117,11 +121,11 @@ func TestBasicAuthSuccess(t *testing.T) {
 	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 	req.SetBasicAuth("test", "test")
 	res, err := client.Do(req)
-	assert.NoError(t, err, "there should be no error")
+	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
 
 	body, err := ioutil.ReadAll(res.Body)
-	assert.NoError(t, err, "there should be no error")
+	require.NoError(t, err)
 	assert.Equal(t, "traefik\n", string(body), "they should be equal")
 }
 
@@ -138,7 +142,7 @@ func TestDigestAuthFail(t *testing.T) {
 			Users: []string{"test:traefik:test"},
 		},
 	}, &tracing.Tracing{})
-	assert.NoError(t, err, "there should be no error")
+	require.NoError(t, err)
 	assert.NotNil(t, authMiddleware, "this should not be nil")
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -153,7 +157,7 @@ func TestDigestAuthFail(t *testing.T) {
 	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 	req.SetBasicAuth("test", "test")
 	res, err := client.Do(req)
-	assert.NoError(t, err, "there should be no error")
+	require.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "they should be equal")
 }
 
@@ -164,7 +168,7 @@ func TestBasicAuthUserHeader(t *testing.T) {
 		},
 		HeaderField: "X-Webauth-User",
 	}, &tracing.Tracing{})
-	assert.NoError(t, err, "there should be no error")
+	require.NoError(t, err)
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "test", r.Header["X-Webauth-User"][0], "auth user should be set")
@@ -179,12 +183,12 @@ func TestBasicAuthUserHeader(t *testing.T) {
 	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 	req.SetBasicAuth("test", "test")
 	res, err := client.Do(req)
-	assert.NoError(t, err, "there should be no error")
+	require.NoError(t, err)
 
 	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
 
 	body, err := ioutil.ReadAll(res.Body)
-	assert.NoError(t, err, "there should be no error")
+	require.NoError(t, err)
 	assert.Equal(t, "traefik\n", string(body), "they should be equal")
 }
 
@@ -195,7 +199,7 @@ func TestBasicAuthHeaderRemoved(t *testing.T) {
 			Users:        []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
 		},
 	}, &tracing.Tracing{})
-	assert.NoError(t, err, "there should be no error")
+	require.NoError(t, err)
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Empty(t, r.Header.Get(authorizationHeader))
@@ -210,12 +214,12 @@ func TestBasicAuthHeaderRemoved(t *testing.T) {
 	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 	req.SetBasicAuth("test", "test")
 	res, err := client.Do(req)
-	assert.NoError(t, err, "there should be no error")
+	require.NoError(t, err)
 
 	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
 
 	body, err := ioutil.ReadAll(res.Body)
-	assert.NoError(t, err, "there should be no error")
+	require.NoError(t, err)
 	assert.Equal(t, "traefik\n", string(body), "they should be equal")
 }
 
@@ -225,7 +229,7 @@ func TestBasicAuthHeaderPresent(t *testing.T) {
 			Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
 		},
 	}, &tracing.Tracing{})
-	assert.NoError(t, err, "there should be no error")
+	require.NoError(t, err)
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.NotEmpty(t, r.Header.Get(authorizationHeader))
@@ -240,11 +244,11 @@ func TestBasicAuthHeaderPresent(t *testing.T) {
 	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 	req.SetBasicAuth("test", "test")
 	res, err := client.Do(req)
-	assert.NoError(t, err, "there should be no error")
+	require.NoError(t, err)
 
 	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
 
 	body, err := ioutil.ReadAll(res.Body)
-	assert.NoError(t, err, "there should be no error")
+	require.NoError(t, err)
 	assert.Equal(t, "traefik\n", string(body), "they should be equal")
 }
