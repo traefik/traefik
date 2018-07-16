@@ -78,7 +78,7 @@ func TestChunkIDs(t *testing.T) {
 			}
 
 			var outCount []int
-			for _, el := range provider.chunkedIDs(IDs) {
+			for _, el := range provider.chunkIDs(IDs) {
 				outCount = append(outCount, len(el))
 			}
 

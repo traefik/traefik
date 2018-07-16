@@ -417,8 +417,8 @@ func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types
 	return p.buildConfiguration(instances)
 }
 
-// ECS expects no more than 100 parameters be passed to a API call; thus, pack
-// each string into an array capped at 100 elements
+// chunkIDs ECS expects no more than 100 parameters be passed to a API call;
+// thus, pack each string into an array capped at 100 elements
 func (p *Provider) chunkIDs(ids []*string) [][]*string {
 	var chuncked [][]*string
 	for i := 0; i < len(ids); i += 100 {
