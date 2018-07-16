@@ -159,7 +159,7 @@ func TestHtmlResponseFiltered(t *testing.T) {
 
 	respBody := "NotAtAllRealHTML"
 	respHdrs := http.Header{}
-	respHdrs.Set("Content-Type", "text/html")
+	respHdrs.Set("Content-Type", "text/html;more-stuff")
 	respInfo := types.ResponseInfo{200, 101, []byte(respBody), 2048}
 
 	spec := &AuditSpecification{}

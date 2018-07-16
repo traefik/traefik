@@ -180,7 +180,7 @@ func detailFromResponse(respInfo types.ResponseInfo, headers types.DataMap) type
 	m[responseContentType] = ct
 	m[responseBodyLen] = len(respInfo.Entity)
 
-	if ct == "text/html" {
+	if strings.HasPrefix(ct, "text/html") {
 		m[responseBody] = "<HTML>...</HTML>"
 	} else {
 		m[responseBody] = strings.TrimSpace(string(respInfo.Entity))
