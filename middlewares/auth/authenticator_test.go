@@ -198,7 +198,7 @@ func TestBasicAuthHeaderRemoved(t *testing.T) {
 	assert.NoError(t, err, "there should be no error")
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Empty(t, r.Header.Get("Authorization"))
+		assert.Empty(t, r.Header.Get(authorizationHeader))
 		fmt.Fprintln(w, "traefik")
 	})
 	n := negroni.New(middleware)
@@ -228,7 +228,7 @@ func TestBasicAuthHeaderPresent(t *testing.T) {
 	assert.NoError(t, err, "there should be no error")
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.NotEmpty(t, r.Header.Get("Authorization"))
+		assert.NotEmpty(t, r.Header.Get(authorizationHeader))
 		fmt.Fprintln(w, "traefik")
 	})
 	n := negroni.New(middleware)
