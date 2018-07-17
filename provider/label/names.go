@@ -37,9 +37,11 @@ const (
 	SuffixFrontend                                  = "frontend"
 	SuffixFrontendAuth                              = SuffixFrontend + ".auth"
 	SuffixFrontendAuthBasic                         = SuffixFrontendAuth + ".basic"
+	SuffixFrontendAuthBasicRemoveHeader             = SuffixFrontendAuthBasic + ".removeHeader"
 	SuffixFrontendAuthBasicUsers                    = SuffixFrontendAuthBasic + ".users"
 	SuffixFrontendAuthBasicUsersFile                = SuffixFrontendAuthBasic + ".usersFile"
 	SuffixFrontendAuthDigest                        = SuffixFrontendAuth + ".digest"
+	SuffixFrontendAuthDigestRemoveHeader            = SuffixFrontendAuthDigest + ".removeHeader"
 	SuffixFrontendAuthDigestUsers                   = SuffixFrontendAuthDigest + ".users"
 	SuffixFrontendAuthDigestUsersFile               = SuffixFrontendAuthDigest + ".usersFile"
 	SuffixFrontendAuthForward                       = SuffixFrontendAuth + ".forward"
@@ -123,9 +125,11 @@ const (
 	TraefikFrontend                                 = Prefix + SuffixFrontend
 	TraefikFrontendAuth                             = Prefix + SuffixFrontendAuth
 	TraefikFrontendAuthBasic                        = Prefix + SuffixFrontendAuthBasic
+	TraefikFrontendAuthBasicRemoveHeader            = Prefix + SuffixFrontendAuthBasicRemoveHeader
 	TraefikFrontendAuthBasicUsers                   = Prefix + SuffixFrontendAuthBasicUsers
 	TraefikFrontendAuthBasicUsersFile               = Prefix + SuffixFrontendAuthBasicUsersFile
 	TraefikFrontendAuthDigest                       = Prefix + SuffixFrontendAuthDigest
+	TraefikFrontendAuthDigestRemoveHeader           = Prefix + SuffixFrontendAuthDigestRemoveHeader
 	TraefikFrontendAuthDigestUsers                  = Prefix + SuffixFrontendAuthDigestUsers
 	TraefikFrontendAuthDigestUsersFile              = Prefix + SuffixFrontendAuthDigestUsersFile
 	TraefikFrontendAuthForward                      = Prefix + SuffixFrontendAuthForward

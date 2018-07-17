@@ -65,12 +65,14 @@ Træfik can be configured with a file.
     [frontends.frontend1.auth]
       headerField = "X-WebAuth-User"
       [frontends.frontend1.auth.basic]
+        removeHeader = true
         users = [
           "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
           "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
         ]
         usersFile = "/path/to/.htpasswd"
       [frontends.frontend1.auth.digest]
+        removeHeader = true
         users = [
           "test:traefik:a2688e031edb4be6a3797f3882655c05",
           "test2:traefik:518845800f9e2bfb1f1f740ec24f074e",

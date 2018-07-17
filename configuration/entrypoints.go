@@ -106,14 +106,16 @@ func makeEntryPointAuth(result map[string]string) *types.Auth {
 	var basic *types.Basic
 	if v, ok := result["auth_basic_users"]; ok {
 		basic = &types.Basic{
-			Users: strings.Split(v, ","),
+			Users:        strings.Split(v, ","),
+			RemoveHeader: toBool(result, "auth_basic_removeheader"),
 		}
 	}
 
 	var digest *types.Digest
 	if v, ok := result["auth_digest_users"]; ok {
 		digest = &types.Digest{
-			Users: strings.Split(v, ","),
+			Users:        strings.Split(v, ","),
+			RemoveHeader: toBool(result, "auth_digest_removeheader"),
 		}
 	}
 
