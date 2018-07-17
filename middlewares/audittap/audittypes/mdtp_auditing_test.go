@@ -76,6 +76,24 @@ func TestMdtpAuditEvent(t *testing.T) {
 	assert.Equal(t, "rep-54321", ev.Tags["Akamai-Reputation"])
 }
 
+func TestDeviceIDCanComeFromHeader(t *testing.T) {
+
+	types.TheClock = T0
+
+	ev := &MdtpAuditEvent{}
+	req := httptest.NewRequest("POST", "http://my-mdtp-app.public.mdtp/some/resource?p1=v1", nil)
+	req.Header.Set("DeviceId", "my-great-device")
+
+	spec := &AuditSpecification{}
+	ev.AppendRequest(req, spec)
+
+	assert.NotEmpty(t, ev.EventID)
+	assert.Equal(t, "my-mdtp-app", ev.AuditSource)
+	assert.Equal(t, "RequestReceived", ev.AuditType)
+
+	assert.Equal(t, "my-great-device", ev.Detail.GetString("deviceID"))
+}
+
 func TestMdtpMappedAuditFieldsAppliedJustAtRequest(t *testing.T) {
 
 	ev := &MdtpAuditEvent{}

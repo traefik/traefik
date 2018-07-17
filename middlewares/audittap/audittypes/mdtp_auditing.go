@@ -207,7 +207,7 @@ func extractDeviceFingerprint(req *http.Request) (string, error) {
 }
 
 func extractDeviceID(req *http.Request, headers types.DataMap) string {
-	deviceID := headers.GetString("deviceID")
+	deviceID := headers.GetString("deviceid")
 	if deviceID == "" {
 		if cookie, err := req.Cookie("mdtpdi"); err == nil {
 			deviceID = cookie.Value
