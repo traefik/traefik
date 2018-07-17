@@ -347,19 +347,21 @@ func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, cl
 		}
 	}
 
-	resp, err := client.ecs.DescribeContainerInstancesWithContext(ctx, &ecs.DescribeContainerInstancesInput{
-		ContainerInstances: containerInstancesArns,
-		Cluster:            clusterName,
-	})
+	for _, arns := range p.chunkIDs(containerInstancesArns) {
+		resp, err := client.ecs.DescribeContainerInstancesWithContext(ctx, &ecs.DescribeContainerInstancesInput{
+			ContainerInstances: arns,
+			Cluster:            clusterName,
+		})
 
-	if err != nil {
-		log.Errorf("Unable to describe container instances: %s", err)
-		return nil, err
-	}
+		if err != nil {
+			log.Errorf("Unable to describe container instances: %v", err)
+			return nil, err
+		}
 
-	for _, container := range resp.ContainerInstances {
-		instanceIds[aws.StringValue(container.Ec2InstanceId)] = aws.StringValue(container.ContainerInstanceArn)
-		instanceArns = append(instanceArns, container.Ec2InstanceId)
+		for _, container := range resp.ContainerInstances {
+			instanceIds[aws.StringValue(container.Ec2InstanceId)] = aws.StringValue(container.ContainerInstanceArn)
+			instanceArns = append(instanceArns, container.Ec2InstanceId)
+		}
 	}
 
 	if len(instanceArns) > 0 {
@@ -368,7 +370,7 @@ func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, cl
 				InstanceIds: ids,
 			}
 
-			err = client.ec2.DescribeInstancesPagesWithContext(ctx, input, func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
+			err := client.ec2.DescribeInstancesPagesWithContext(ctx, input, func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
 				if len(page.Reservations) > 0 {
 					for _, r := range page.Reservations {
 						for _, i := range r.Instances {
