@@ -347,42 +347,46 @@ func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, cl
 		}
 	}
 
-	resp, err := client.ecs.DescribeContainerInstancesWithContext(ctx, &ecs.DescribeContainerInstancesInput{
-		ContainerInstances: containerInstancesArns,
-		Cluster:            clusterName,
-	})
-
-	if err != nil {
-		log.Errorf("Unable to describe container instances: %s", err)
-		return nil, err
-	}
-
-	for _, container := range resp.ContainerInstances {
-		instanceIds[aws.StringValue(container.Ec2InstanceId)] = aws.StringValue(container.ContainerInstanceArn)
-		instanceArns = append(instanceArns, container.Ec2InstanceId)
-	}
-
-	if len(instanceArns) > 0 {
-		input := &ec2.DescribeInstancesInput{
-			InstanceIds: instanceArns,
-		}
-
-		err = client.ec2.DescribeInstancesPagesWithContext(ctx, input, func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
-			if len(page.Reservations) > 0 {
-				for _, r := range page.Reservations {
-					for _, i := range r.Instances {
-						if i.InstanceId != nil {
-							ec2Instances[instanceIds[aws.StringValue(i.InstanceId)]] = i
-						}
-					}
-				}
-			}
-			return !lastPage
+	for _, arns := range p.chunkIDs(containerInstancesArns) {
+		resp, err := client.ecs.DescribeContainerInstancesWithContext(ctx, &ecs.DescribeContainerInstancesInput{
+			ContainerInstances: arns,
+			Cluster:            clusterName,
 		})
 
 		if err != nil {
-			log.Errorf("Unable to describe instances: %s", err)
+			log.Errorf("Unable to describe container instances: %v", err)
 			return nil, err
+		}
+
+		for _, container := range resp.ContainerInstances {
+			instanceIds[aws.StringValue(container.Ec2InstanceId)] = aws.StringValue(container.ContainerInstanceArn)
+			instanceArns = append(instanceArns, container.Ec2InstanceId)
+		}
+	}
+
+	if len(instanceArns) > 0 {
+		for _, ids := range p.chunkIDs(instanceArns) {
+			input := &ec2.DescribeInstancesInput{
+				InstanceIds: ids,
+			}
+
+			err := client.ec2.DescribeInstancesPagesWithContext(ctx, input, func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
+				if len(page.Reservations) > 0 {
+					for _, r := range page.Reservations {
+						for _, i := range r.Instances {
+							if i.InstanceId != nil {
+								ec2Instances[instanceIds[aws.StringValue(i.InstanceId)]] = i
+							}
+						}
+					}
+				}
+				return !lastPage
+			})
+
+			if err != nil {
+				log.Errorf("Unable to describe instances [%s]: %v", err)
+				return nil, err
+			}
 		}
 	}
 
@@ -413,4 +417,20 @@ func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types
 	}
 
 	return p.buildConfiguration(instances)
+}
+
+// chunkIDs ECS expects no more than 100 parameters be passed to a API call;
+// thus, pack each string into an array capped at 100 elements
+func (p *Provider) chunkIDs(ids []*string) [][]*string {
+	var chuncked [][]*string
+	for i := 0; i < len(ids); i += 100 {
+		sliceEnd := -1
+		if i+100 < len(ids) {
+			sliceEnd = i + 100
+		} else {
+			sliceEnd = len(ids)
+		}
+		chuncked = append(chuncked, ids[i:sliceEnd])
+	}
+	return chuncked
 }
