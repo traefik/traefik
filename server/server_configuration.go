@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"reflect"
 	"sort"
@@ -245,6 +246,15 @@ func (s *Server) buildForwarder(entryPointName string, entryPoint *configuration
 		forward.Rewriter(rewriter),
 		forward.ResponseModifier(responseModifier),
 		forward.BufferPool(s.bufferPool),
+		forward.WebsocketConnectionClosedHook(func(req *http.Request, conn net.Conn) {
+			server := req.Context().Value(http.ServerContextKey).(*http.Server)
+			if server != nil {
+				connState := server.ConnState
+				if connState != nil {
+					connState(conn, http.StateClosed)
+				}
+			}
+		}),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error creating forwarder for frontend %s: %v", frontendName, err)
