@@ -33,7 +33,7 @@ func (p *Provider) buildConfigurationV2(containersInspected []dockerData) *types
 		"getDomain":        label.GetFuncString(label.TraefikDomain, p.Domain),
 
 		// Backend functions
-		"getIPAddress":      p.getDeprecatedIPAddress,
+		"getIPAddress":      p.getDeprecatedIPAddress, // TODO: Should we expose getIPPort instead?
 		"getServers":        p.getServers,
 		"getMaxConn":        label.GetMaxConn,
 		"getHealthCheck":    label.GetHealthCheck,
@@ -334,7 +334,6 @@ func (p *Provider) getPortBinding(container dockerData) (*nat.PortBinding, error
 	return nil, fmt.Errorf("unable to find the external IP:Port for the container %q", container.Name)
 }
 
-// TODO: Should we expose it (instead of getIPAddress) in the template?
 func (p *Provider) getIPPort(container dockerData) (string, string, error) {
 	var ip, port string
 
