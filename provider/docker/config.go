@@ -197,7 +197,6 @@ func (p *Provider) getFrontendRule(container dockerData, segmentLabels map[strin
 	return ""
 }
 
-//TODO: Should we expose getIPPort instead in the template?
 func (p Provider) getIPAddress(container dockerData) string {
 	if value := label.GetStringValue(container.Labels, labelDockerNetwork, p.Network); value != "" {
 		networkSettings := container.NetworkSettings
@@ -334,6 +333,7 @@ func (p *Provider) getPortBinding(container dockerData) (*nat.PortBinding, error
 	return nil, fmt.Errorf("unable to find the external IP:Port for the container %q", container.Name)
 }
 
+//TODO: Should we expose it (instead of getIPAddress) in the template?
 func (p *Provider) getIPPort(container dockerData) (string, string, error) {
 	var ip, port string
 
@@ -371,13 +371,15 @@ func (p *Provider) getServers(containers []dockerData) map[string]types.Server {
 			continue
 		}
 
-		protocol := label.GetStringValue(container.SegmentLabels, label.TraefikProtocol, label.DefaultProtocol)
-		serverURL := fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(ip, port))
-		serverName := getServerName(container.Name, serverURL)
-
 		if servers == nil {
 			servers = make(map[string]types.Server)
 		}
+
+		protocol := label.GetStringValue(container.SegmentLabels, label.TraefikProtocol, label.DefaultProtocol)
+
+		serverURL := fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(ip, port))
+
+		serverName := getServerName(container.Name, serverURL)
 		if _, exist := servers[serverName]; exist {
 			log.Debugf("Skipping server %q with the same URL.", serverName)
 			continue
