@@ -321,7 +321,7 @@ func (p *Provider) getPortBinding(container dockerData) (*nat.PortBinding, error
 		}
 	}
 
-	return nil, fmt.Errorf("Unable to find the external IP:Port for the container %q", container.Name)
+	return nil, fmt.Errorf("unable to find the external IP:Port for the container %q", container.Name)
 }
 
 func (p *Provider) getIPPort(container dockerData) (string, string, error) {
