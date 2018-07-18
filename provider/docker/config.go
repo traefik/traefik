@@ -33,7 +33,7 @@ func (p *Provider) buildConfigurationV2(containersInspected []dockerData) *types
 		"getDomain":        label.GetFuncString(label.TraefikDomain, p.Domain),
 
 		// Backend functions
-		"getIPAddress":      p.getIPAddress,
+		"getIPAddress":      p.getDeprecatedIPAddress,
 		"getServers":        p.getServers,
 		"getMaxConn":        label.GetMaxConn,
 		"getHealthCheck":    label.GetHealthCheck,
@@ -197,6 +197,7 @@ func (p *Provider) getFrontendRule(container dockerData, segmentLabels map[strin
 	return ""
 }
 
+//TODO: Should we expose getIPPort instead in the template?
 func (p Provider) getIPAddress(container dockerData) string {
 	if value := label.GetStringValue(container.Labels, labelDockerNetwork, p.Network); value != "" {
 		networkSettings := container.NetworkSettings
@@ -241,6 +242,15 @@ func (p Provider) getIPAddress(container dockerData) string {
 
 	log.Warnf("Unable to find the IP address for the container %q.", container.Name)
 	return ""
+}
+
+func (p *Provider) getDeprecatedIPAddress(container dockerData) string {
+	ip, _, err := p.getIPPort(container)
+	if err != nil {
+		log.Warn(err)
+		return ""
+	}
+	return ip
 }
 
 // Escape beginning slash "/", convert all others to dash "-", and convert underscores "_" to dash "-"
