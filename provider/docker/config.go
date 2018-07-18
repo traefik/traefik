@@ -321,7 +321,7 @@ func (p *Provider) getPortBinding(container dockerData) (nat.PortBinding, error)
 		}
 	}
 
-	return nat.PortBinding{HostIP: "", HostPort: ""}, fmt.Errorf("Unable to find the port binding for the %q container: the server is ignored", container.Name)
+	return nat.PortBinding{HostIP: "", HostPort: ""}, fmt.Errorf("Unable to find the external IP:Port for the container %q", container.Name)
 }
 
 func (p *Provider) getServers(containers []dockerData) map[string]types.Server {
@@ -333,18 +333,23 @@ func (p *Provider) getServers(containers []dockerData) map[string]types.Server {
 		if p.UseBindPortIP {
 			portBinding, err := p.getPortBinding(container)
 			if err != nil {
-				log.Warn(err)
+				log.Warnf("Unable to find a binding for the container %q: ignoring server", container.Name)
 				continue
 			}
-			ip = portBinding.HostIP
-			port = portBinding.HostPort
+			if portBinding.HostIP != "0.0.0.0" {
+				ip = portBinding.HostIP
+				port = portBinding.HostPort
+			} else {
+				log.Warnf("Cannot determine the IP address (got 0.0.0.0) for the container %q: ignoring server", container.Name)
+				continue
+			}
 		} else {
 			ip = p.getIPAddress(container)
 			port = getPort(container)
 		}
 
 		if len(ip) == 0 {
-			log.Warnf("Unable to find the IP address for the container %q: the server is ignored.", container.Name)
+			log.Warnf("Unable to find the IP address for the container %q: the server is ignored", container.Name)
 			continue
 		}
 
