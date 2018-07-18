@@ -355,8 +355,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
     [frontends."frontend-{{ $service.FrontendName }}".routes."route-host-{{ $service.FrontendName }}"]
       rule = "{{ getFrontendRule $service }}"
 
-{{end}}
-`)
+{{end}}`)
 
 func templatesConsul_catalogTmplBytes() ([]byte, error) {
 	return _templatesConsul_catalogTmpl, nil
