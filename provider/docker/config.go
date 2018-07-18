@@ -243,6 +243,7 @@ func (p Provider) getIPAddress(container dockerData) string {
 	return ""
 }
 
+//Deprecated: Please use getIPPort instead
 func (p *Provider) getDeprecatedIPAddress(container dockerData) string {
 	ip, _, err := p.getIPPort(container)
 	if err != nil {
