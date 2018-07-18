@@ -321,7 +321,7 @@ func (p *Provider) getPortBinding(container dockerData) (nat.PortBinding, error)
 		}
 	}
 
-	return nat.PortBinding{HostIP: "", HostPort: ""}, fmt.Errorf("Unable to find the port binding for the %q container: the server is ignored.", container.Name)
+	return nat.PortBinding{HostIP: "", HostPort: ""}, fmt.Errorf("Unable to find the port binding for the %q container: the server is ignored", container.Name)
 }
 
 func (p *Provider) getServers(containers []dockerData) map[string]types.Server {
