@@ -316,7 +316,7 @@ func (p *Provider) getPortBinding(container dockerData) *nat.PortBinding {
 	for netPort, portBindings := range container.NetworkSettings.Ports {
 		if strings.EqualFold(string(netPort), port+"/TCP") || strings.EqualFold(string(netPort), port+"/UDP") {
 			for _, p := range portBindings {
-				return p, nil
+				return &p
 			}
 		}
 	}
@@ -324,34 +324,40 @@ func (p *Provider) getPortBinding(container dockerData) *nat.PortBinding {
 	return nil
 }
 
+func (p *Provider) getIPPort(container dockerData) (string, string, error) {
+	var ip, port string
+
+	if p.UseBindPortIP {
+		portBinding := p.getPortBinding(container)
+		if portBinding == nil {
+			return "", "", fmt.Errorf("unable to find a binding for the container %q: ignoring server", container.Name)
+		}
+
+		if portBinding.HostIP == "0.0.0.0" {
+			return "", "", fmt.Errorf("cannot determine the IP address (got 0.0.0.0) for the container %q: ignoring server", container.Name)
+		}
+
+		ip = portBinding.HostIP
+		port = portBinding.HostPort
+
+	} else {
+		ip = p.getIPAddress(container)
+		port = getPort(container)
+	}
+
+	if len(ip) == 0 {
+		return "", "", fmt.Errorf("unable to find the IP address for the container %q: the server is ignored", container.Name)
+	}
+	return ip, port, nil
+}
+
 func (p *Provider) getServers(containers []dockerData) map[string]types.Server {
 	var servers map[string]types.Server
 
 	for _, container := range containers {
-		var ip, port string
-
-		if p.UseBindPortIP {
-			portBinding := p.getPortBinding(container)
-			if portBinding == nil {
-				log.Warnf("unable to find a binding for the container %q: ignoring server", container.Name)
-				continue
-			}
-
-			if portBinding.HostIP == "0.0.0.0" {
-				log.Warnf("cannot determine the IP address (got 0.0.0.0) for the container %q: ignoring server", container.Name)
-				continue
-			}
-
-			ip = portBinding.HostIP
-			port = portBinding.HostPort
-
-		} else {
-			ip = p.getIPAddress(container)
-			port = getPort(container)
-		}
-
-		if len(ip) == 0 {
-			log.Warnf("Unable to find the IP address for the container %q: the server is ignored", container.Name)
+		ip, port, err := p.getIPPort(container)
+		if err != nil {
+			log.Warn(err)
 			continue
 		}
 
