@@ -155,7 +155,7 @@ The following general annotations are applicable on the Ingress object:
 | `traefik.ingress.kubernetes.io/redirect-replacement: http://mydomain/$1`        | Redirect to another URL for that frontend. Must be set with `traefik.ingress.kubernetes.io/redirect-regex`.       |
 | `traefik.ingress.kubernetes.io/rewrite-target: /users`                          | Replaces each matched Ingress path with the specified one, and adds the old path to the `X-Replaced-Path` header. |
 | `traefik.ingress.kubernetes.io/rule-type: PathPrefixStrip`                      | Override the default frontend rule type. Only path related matchers can be used [(`Path`, `PathPrefix`, `PathStrip`, `PathPrefixStrip`)](/basics/#path-matcher-usage-guidelines). Note: ReplacePath is deprecated in this annotation, use the `traefik.ingress.kubernetes.io/request-modifier` annotation instead. Default: `PathPrefix`.                                                                                 |
-| `traefik.ingress.kubernetes.io/request-modifier: AddPath: /users`               | Add a [request modifier](/basics/#modifiers) to the backend request.                                                                                                  |
+| `traefik.ingress.kubernetes.io/request-modifier: AddPrefix: /users`               | Add a [request modifier](/basics/#modifiers) to the backend request.                                                                                                  |
 | `traefik.ingress.kubernetes.io/whitelist-source-range: "1.2.3.0/24, fe80::/16"` | A comma-separated list of IP ranges permitted for access (6).                                                     |
 | `ingress.kubernetes.io/whitelist-x-forwarded-for: "true"`                       | Use `X-Forwarded-For` header as valid source of IP for the white list.                                            |
 | `traefik.ingress.kubernetes.io/app-root: "/index.html"`                         | Redirects all requests for `/` to the defined path. (4)                                                           |
@@ -205,8 +205,9 @@ retryexpression: IsNetworkError() && Attempts() <= 2
 
 <4> `traefik.ingress.kubernetes.io/app-root`:
 Non-root paths will not be affected by this annotation and handled normally.
-This annotation may not be combined with the `ReplacePath` rule type or any other annotation leveraging that rule type.
-Trying to do so leads to an error and the corresponding Ingress object being ignored.
+This annotation may not be combined with other redirect annotations.
+Trying to do so will result in the other redirects being ignored.
+This annotation can be used in combination with `traefik.ingress.kubernetes.io/redirect-permanent` to configure whether the `app-root` redirect is a 301 or a 302.
 
 <5> `traefik.ingress.kubernetes.io/service-weights`:
 Service weights enable to split traffic across multiple backing services in a fine-grained manner.
@@ -303,6 +304,7 @@ The source of the authentication is a Secret object that contains the credential
 |----------------------------------------------------------------------|-------|--------|---------|-------------------------------------------------------------------------------------------------------------|
 | `ingress.kubernetes.io/auth-type: basic`                             |   x   |   x    |    x    | Contains the authentication type: `basic`, `digest`, `forward`.                                             |
 | `ingress.kubernetes.io/auth-secret: mysecret`                        |   x   |   x    |         | Name of Secret containing the username and password with access to the paths defined in the Ingress object. |
+| `ingress.kubernetes.io/auth-remove-header: true`                     |   x   |   x    |         | If set to `true` removes the `Authorization` header.                                                        |
 | `ingress.kubernetes.io/auth-header-field: X-WebAuth-User`            |   x   |   x    |         | Pass Authenticated user to application via headers.                                                         |
 | `ingress.kubernetes.io/auth-url: https://example.com`                |       |        |    x    | [The URL of the authentication server](/configuration/entrypoints/#forward-authentication).                 |
 | `ingress.kubernetes.io/auth-trust-headers: false`                    |       |        |    x    | Trust `X-Forwarded-*` headers.                                                                              |

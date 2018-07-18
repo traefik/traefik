@@ -232,6 +232,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
 
       {{if $auth.Basic }}
       [frontends."frontend-{{ $service.FrontendName }}".auth.basic]
+        removeHeader = {{ $auth.Basic.RemoveHeader }}
         {{if $auth.Basic.Users }}
         users = [{{range $auth.Basic.Users }}
           "{{.}}",
@@ -242,6 +243,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
 
       {{if $auth.Digest }}
       [frontends."frontend-{{ $service.FrontendName }}".auth.digest]
+        removeHeader = {{ $auth.Digest.RemoveHeader }}
         {{if $auth.Digest.Users }}
         users = [{{range $auth.Digest.Users }}
           "{{.}}",
@@ -679,6 +681,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
 
       {{if $auth.Basic }}
       [frontends."frontend-{{ $frontendName }}".auth.basic]
+        removeHeader = {{ $auth.Basic.RemoveHeader }}
         {{if $auth.Basic.Users }}
         users = [{{range $auth.Basic.Users }}
           "{{.}}",
@@ -689,6 +692,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
 
       {{if $auth.Digest }}
       [frontends."frontend-{{ $frontendName }}".auth.digest]
+        removeHeader = {{ $auth.Digest.RemoveHeader }}
         {{if $auth.Digest.Users }}
         users = [{{range $auth.Digest.Users }}
           "{{.}}",
@@ -977,6 +981,7 @@ var _templatesEcsTmpl = []byte(`[backends]
 
       {{if $auth.Basic }}
       [frontends."frontend-{{ $serviceName }}".auth.basic]
+        removeHeader = {{ $auth.Basic.RemoveHeader }}
         {{if $auth.Basic.Users }}
         users = [{{range $auth.Basic.Users }}
           "{{.}}",
@@ -987,6 +992,7 @@ var _templatesEcsTmpl = []byte(`[backends]
 
       {{if $auth.Digest }}
       [frontends."frontend-{{ $serviceName }}".auth.digest]
+        removeHeader = {{ $auth.Digest.RemoveHeader }}
         {{if $auth.Digest.Users }}
         users = [{{range $auth.Digest.Users }}
          "{{.}}",
@@ -1217,6 +1223,7 @@ var _templatesKubernetesTmpl = []byte(`[backends]
 
       {{if $frontend.Auth.Basic }}
       [frontends."{{ $frontendName }}".auth.basic]
+        removeHeader = {{$frontend.Auth.Basic.RemoveHeader}}
         users = [{{range $frontend.Auth.Basic.Users }}
           "{{.}}",
           {{end}}]
@@ -1224,6 +1231,7 @@ var _templatesKubernetesTmpl = []byte(`[backends]
 
       {{if $frontend.Auth.Digest }}
       [frontends."{{ $frontendName }}".auth.digest]
+        removeHeader = {{$frontend.Auth.Digest.RemoveHeader}}
         users = [{{range $frontend.Auth.Digest.Users }}
           "{{.}}",
           {{end}}]
@@ -1466,6 +1474,7 @@ var _templatesKvTmpl = []byte(`[backends]
 
       {{if $auth.Basic }}
       [frontends."{{ $frontendName }}".auth.basic]
+        removeHeader = {{ $auth.Basic.RemoveHeader }}
         {{if $auth.Basic.Users }}
         users = [{{range $auth.Basic.Users }}
           "{{.}}",
@@ -1476,6 +1485,7 @@ var _templatesKvTmpl = []byte(`[backends]
 
       {{if $auth.Digest }}
       [frontends."{{ $frontendName }}".auth.digest]
+        removeHeader = {{ $auth.Digest.RemoveHeader }}
         {{if $auth.Digest.Users }}
         users = [{{range $auth.Digest.Users }}
           "{{.}}",
@@ -1806,6 +1816,7 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
 
       {{if $auth.Basic }}
       [frontends."{{ $frontendName }}".auth.basic]
+        removeHeader = {{ $auth.Basic.RemoveHeader }}
         {{if $auth.Basic.Users }}
         users = [{{range $auth.Basic.Users }}
           "{{.}}",
@@ -1816,6 +1827,7 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
 
       {{if $auth.Digest }}
       [frontends."{{ $frontendName }}".auth.digest]
+        removeHeader = {{ $auth.Digest.RemoveHeader }}
         {{if $auth.Digest.Users }}
         users = [{{range $auth.Digest.Users }}
           "{{.}}",
@@ -2090,6 +2102,7 @@ var _templatesMesosTmpl = []byte(`[backends]
 
       {{if $auth.Basic }}
       [frontends."frontend-{{ $frontendName }}".auth.basic]
+        removeHeader = {{ $auth.Basic.RemoveHeader}}
         {{if $auth.Basic.Users }}
         users = [{{range $auth.Basic.Users }}
           "{{.}}",
@@ -2100,6 +2113,7 @@ var _templatesMesosTmpl = []byte(`[backends]
 
       {{if $auth.Digest }}
       [frontends."frontend-{{ $frontendName }}".auth.digest]
+        removeHeader = {{ $auth.Digest.RemoveHeader}}
         {{if $auth.Digest.Users }}
         users = [{{range $auth.Digest.Users }}
           "{{.}}",
@@ -2427,6 +2441,7 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
 
       {{if $auth.Basic }}
       [frontends."frontend-{{ $frontendName }}".auth.basic]
+        removeHeader = {{ $auth.Basic.RemoveHeader }}
         {{if $auth.Basic.Users }}
         users = [{{range $auth.Basic.Users }}
           "{{.}}",
@@ -2437,6 +2452,7 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
 
       {{if $auth.Digest }}
       [frontends."frontend-{{ $frontendName }}".auth.digest]
+        removeHeader = {{ $auth.Digest.RemoveHeader }}
         {{if $auth.Digest.Users }}
         users = [{{range $auth.Digest.Users }}
           "{{.}}",

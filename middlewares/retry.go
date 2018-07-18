@@ -137,7 +137,7 @@ func (rr *retryResponseWriterWithoutCloseNotify) WriteHeader(code int) {
 	if rr.ShouldRetry() && code == http.StatusServiceUnavailable {
 		// We get a 503 HTTP Status Code when there is no backend server in the pool
 		// to which the request could be sent.  Also, note that rr.ShouldRetry()
-		// will never return true in case there was a connetion established to
+		// will never return true in case there was a connection established to
 		// the backend server and so we can be sure that the 503 was produced
 		// inside Traefik already and we don't have to retry in this cases.
 		rr.DisableRetries()

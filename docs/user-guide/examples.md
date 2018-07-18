@@ -223,7 +223,7 @@ These variables have to be set on the machine/container that host Træfik.
 
 These variables are described [in this section](/configuration/acme/#provider).
 
-More information about wildcard certificates are available [in this section](/configuration/acme/#wildcard-domain).
+More information about wildcard certificates are available [in this section](/configuration/acme/#wildcard-domains).
 
 ### onHostRule option and provided certificates (with HTTP challenge)
 

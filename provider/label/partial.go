@@ -84,7 +84,8 @@ func GetAuth(labels map[string]string) *types.Auth {
 // getAuthBasic Create Basic Auth from labels
 func getAuthBasic(labels map[string]string) *types.Basic {
 	basicAuth := &types.Basic{
-		UsersFile: GetStringValue(labels, TraefikFrontendAuthBasicUsersFile, ""),
+		UsersFile:    GetStringValue(labels, TraefikFrontendAuthBasicUsersFile, ""),
+		RemoveHeader: GetBoolValue(labels, TraefikFrontendAuthBasicRemoveHeader, false),
 	}
 
 	// backward compatibility
@@ -101,8 +102,9 @@ func getAuthBasic(labels map[string]string) *types.Basic {
 // getAuthDigest Create Digest Auth from labels
 func getAuthDigest(labels map[string]string) *types.Digest {
 	return &types.Digest{
-		Users:     GetSliceStringValue(labels, TraefikFrontendAuthDigestUsers),
-		UsersFile: GetStringValue(labels, TraefikFrontendAuthDigestUsersFile, ""),
+		Users:        GetSliceStringValue(labels, TraefikFrontendAuthDigestUsers),
+		UsersFile:    GetStringValue(labels, TraefikFrontendAuthDigestUsersFile, ""),
+		RemoveHeader: GetBoolValue(labels, TraefikFrontendAuthDigestRemoveHeader, false),
 	}
 }
 

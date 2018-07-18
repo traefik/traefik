@@ -1470,8 +1470,9 @@ rateset:
 			),
 			frontend("root/",
 				passHostHeader(),
+				redirectRegex("root/$", "root/root"),
 				routes(
-					route("/", "PathPrefix:/;ReplacePath:/root"),
+					route("/", "PathPrefix:/"),
 					route("root", "Host:root"),
 				),
 			),
@@ -2047,6 +2048,7 @@ func TestLoadIngressesBasicAuth(t *testing.T) {
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesAuthType, "basic"),
 			iAnnotation(annotationKubernetesAuthSecret, "mySecret"),
+			iAnnotation(annotationKubernetesAuthRemoveHeader, "true"),
 			iRules(
 				iRule(
 					iHost("basic"),
@@ -2095,8 +2097,9 @@ func TestLoadIngressesBasicAuth(t *testing.T) {
 
 	actual = provider.loadConfig(*actual)
 	require.NotNil(t, actual)
-	got := actual.Frontends["basic/auth"].Auth.Basic.Users
-	assert.Equal(t, types.Users{"myUser:myEncodedPW"}, got)
+	actualBasicAuth := actual.Frontends["basic/auth"].Auth.Basic
+	assert.Equal(t, types.Users{"myUser:myEncodedPW"}, actualBasicAuth.Users)
+	assert.True(t, actualBasicAuth.RemoveHeader, "Bad RemoveHeader flag")
 }
 
 func TestLoadIngressesForwardAuth(t *testing.T) {

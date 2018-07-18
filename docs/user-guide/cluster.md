@@ -26,7 +26,7 @@ If this instance fails, another manager will be automatically elected.
 
 ## Træfik cluster and Let's Encrypt
 
-**In cluster mode, ACME certificates have to be stored in [a KV Store entry](/configuration/acme/#storage-kv-entry).**
+**In cluster mode, ACME certificates have to be stored in [a KV Store entry](/configuration/acme/#as-a-key-value-store-entry).**
 
 Thanks to the Træfik cluster mode algorithm (based on [the Raft Consensus Algorithm](https://raft.github.io/)), only one instance will contact Let's encrypt to solve the challenges.
 

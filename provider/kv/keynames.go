@@ -37,9 +37,11 @@ const (
 	pathFrontendBasicAuth                        = "/basicauth" // Deprecated
 	pathFrontendAuth                             = "/auth/"
 	pathFrontendAuthBasic                        = pathFrontendAuth + "basic/"
+	pathFrontendAuthBasicRemoveHeader            = pathFrontendAuthBasic + "removeheader"
 	pathFrontendAuthBasicUsers                   = pathFrontendAuthBasic + "users"
 	pathFrontendAuthBasicUsersFile               = pathFrontendAuthBasic + "usersfile"
 	pathFrontendAuthDigest                       = pathFrontendAuth + "digest/"
+	pathFrontendAuthDigestRemoveHeader           = pathFrontendAuthDigest + "removeheader"
 	pathFrontendAuthDigestUsers                  = pathFrontendAuthDigest + "users"
 	pathFrontendAuthDigestUsersFile              = pathFrontendAuthDigest + "usersfile"
 	pathFrontendAuthForward                      = pathFrontendAuth + "forward/"

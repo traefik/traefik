@@ -27,6 +27,10 @@ defaultEntryPoints = ["http", "https"]
     entryPoint = "{{ .Acme.HTTPChallenge.EntryPoint }}"
   {{end}}
 
+  {{if .Acme.TLSChallenge }}
+  [acme.tlsChallenge]
+  {{end}}
+
   {{range .Acme.Domains}}
   [[acme.domains]]
     main = "{{ .Main }}"

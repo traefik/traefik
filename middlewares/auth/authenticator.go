@@ -26,6 +26,10 @@ type tracingAuthenticator struct {
 	clientSpanKind bool
 }
 
+const (
+	authorizationHeader = "Authorization"
+)
+
 // NewAuthenticator builds a new Authenticator given a config
 func NewAuthenticator(authConfig *types.Auth, tracingMiddleware *tracing.Tracing) (*Authenticator, error) {
 	if authConfig == nil {
@@ -86,6 +90,10 @@ func createAuthDigestHandler(digestAuth *goauth.DigestAuth, authConfig *types.Au
 			if authConfig.HeaderField != "" {
 				r.Header[authConfig.HeaderField] = []string{username}
 			}
+			if authConfig.Digest.RemoveHeader {
+				log.Debugf("Remove the Authorization header from the Digest auth")
+				r.Header.Del(authorizationHeader)
+			}
 			next.ServeHTTP(w, r)
 		}
 	})
@@ -100,6 +108,10 @@ func createAuthBasicHandler(basicAuth *goauth.BasicAuth, authConfig *types.Auth)
 			r.URL.User = url.User(username)
 			if authConfig.HeaderField != "" {
 				r.Header[authConfig.HeaderField] = []string{username}
+			}
+			if authConfig.Basic.RemoveHeader {
+				log.Debugf("Remove the Authorization header from the Basic auth")
+				r.Header.Del(authorizationHeader)
 			}
 			next.ServeHTTP(w, r)
 		}

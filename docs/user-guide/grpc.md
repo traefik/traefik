@@ -45,9 +45,7 @@ We don't need specific configuration to use gRPC in Træfik, we just need to use
 
 This section explains how to use Traefik as reverse proxy for gRPC application with self-signed certificates.
 
-<p align="center">
-<img src="/img/grpc.svg" alt="gRPC architecture" title="gRPC architecture" />
-</p>
+![gRPC architecture](/img/grpc.svg)
 
 ### gRPC Server certificate
 

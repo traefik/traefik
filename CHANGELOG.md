@@ -1,5 +1,27 @@
 # Change Log
 
+## [v1.7.0-rc2](https://github.com/containous/traefik/tree/v1.7.0-rc2) (2018-07-17)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.0-rc1...v1.7.0-rc2)
+
+
+**Bug fixes:**
+- **[acme,provider]** Create init method on provider interface ([#3580](https://github.com/containous/traefik/pull/3580) by [Juliens](https://github.com/Juliens))
+- **[acme]** Serve TLS-Challenge certificate in first ([#3605](https://github.com/containous/traefik/pull/3605) by [nmengin](https://github.com/nmengin))
+- **[api,authentication,webui]** Auth section in web UI.  ([#3628](https://github.com/containous/traefik/pull/3628) by [ldez](https://github.com/ldez))
+- **[authentication,middleware,provider]** Don&#39;t pass the Authorization header to the backends ([#3606](https://github.com/containous/traefik/pull/3606) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[ecs]** Fix 400 bad request on  AWS ECS API ([#3629](https://github.com/containous/traefik/pull/3629) by [mmatur](https://github.com/mmatur))
+- **[k8s]** Fix rewrite-target Annotation behavior ([#3582](https://github.com/containous/traefik/pull/3582) by [dtomcej](https://github.com/dtomcej))
+- **[k8s]** Correct App-Root kubernetes behavior ([#3592](https://github.com/containous/traefik/pull/3592) by [dtomcej](https://github.com/dtomcej))
+- **[k8s]** Add more K8s Unit Tests ([#3583](https://github.com/containous/traefik/pull/3583) by [dtomcej](https://github.com/dtomcej))
+- **[kv]** KV and authentication ([#3615](https://github.com/containous/traefik/pull/3615) by [ldez](https://github.com/ldez))
+- **[middleware]** Send &#39;Retry-After&#39; to comply with RFC6585. ([#3593](https://github.com/containous/traefik/pull/3593) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[k8s]** Correct Modifier in Kubernetes Documentation ([#3610](https://github.com/containous/traefik/pull/3610) by [dtomcej](https://github.com/dtomcej))
+
+**Misc:**
+- Merge v1.6.5 into v1.7 ([#3595](https://github.com/containous/traefik/pull/3595) by [ldez](https://github.com/ldez))
+
 ## [v1.6.5](https://github.com/containous/traefik/tree/v1.6.5) (2018-07-09)
 [All Commits](https://github.com/containous/traefik/compare/v1.6.4...v1.6.5)
 
