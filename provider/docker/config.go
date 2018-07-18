@@ -311,7 +311,7 @@ func getPort(container dockerData) string {
 	return ""
 }
 
-func (p *Provider) getPortBinding(container dockerData) (nat.PortBinding, error) {
+func (p *Provider) getPortBinding(container dockerData) *nat.PortBinding {
 	port := getPort(container)
 	for netPort, portBindings := range container.NetworkSettings.Ports {
 		if strings.EqualFold(string(netPort), port+"/TCP") || strings.EqualFold(string(netPort), port+"/UDP") {
@@ -321,7 +321,7 @@ func (p *Provider) getPortBinding(container dockerData) (nat.PortBinding, error)
 		}
 	}
 
-	return nat.PortBinding{HostIP: "", HostPort: ""}, fmt.Errorf("Unable to find the external IP:Port for the container %q", container.Name)
+	return nil
 }
 
 func (p *Provider) getServers(containers []dockerData) map[string]types.Server {
@@ -331,18 +331,20 @@ func (p *Provider) getServers(containers []dockerData) map[string]types.Server {
 		var ip, port string
 
 		if p.UseBindPortIP {
-			portBinding, err := p.getPortBinding(container)
-			if err != nil {
-				log.Warnf("Unable to find a binding for the container %q: ignoring server", container.Name)
+			portBinding := p.getPortBinding(container)
+			if portBinding == nil {
+				log.Warnf("unable to find a binding for the container %q: ignoring server", container.Name)
 				continue
 			}
-			if portBinding.HostIP != "0.0.0.0" {
-				ip = portBinding.HostIP
-				port = portBinding.HostPort
-			} else {
-				log.Warnf("Cannot determine the IP address (got 0.0.0.0) for the container %q: ignoring server", container.Name)
+
+			if portBinding.HostIP == "0.0.0.0" {
+				log.Warnf("cannot determine the IP address (got 0.0.0.0) for the container %q: ignoring server", container.Name)
 				continue
 			}
+
+			ip = portBinding.HostIP
+			port = portBinding.HostPort
+
 		} else {
 			ip = p.getIPAddress(container)
 			port = getPort(container)
@@ -354,18 +356,17 @@ func (p *Provider) getServers(containers []dockerData) map[string]types.Server {
 		}
 
 		protocol := label.GetStringValue(container.SegmentLabels, label.TraefikProtocol, label.DefaultProtocol)
-
 		serverURL := fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(ip, port))
-
 		serverName := getServerName(container.Name, serverURL)
+
+		if servers == nil {
+			servers = make(map[string]types.Server)
+		}
 		if _, exist := servers[serverName]; exist {
 			log.Debugf("Skipping server %q with the same URL.", serverName)
 			continue
 		}
 
-		if servers == nil {
-			servers = make(map[string]types.Server)
-		}
 		servers[serverName] = types.Server{
 			URL:    serverURL,
 			Weight: label.GetIntValue(container.SegmentLabels, label.TraefikWeight, label.DefaultWeight),
