@@ -311,25 +311,25 @@ func getPort(container dockerData) string {
 	return ""
 }
 
-func (p *Provider) getPortBinding(container dockerData) *nat.PortBinding {
+func (p *Provider) getPortBinding(container dockerData) (*nat.PortBinding, error) {
 	port := getPort(container)
 	for netPort, portBindings := range container.NetworkSettings.Ports {
 		if strings.EqualFold(string(netPort), port+"/TCP") || strings.EqualFold(string(netPort), port+"/UDP") {
 			for _, p := range portBindings {
-				return &p
+				return &p, nil
 			}
 		}
 	}
 
-	return nil
+	return nil, fmt.Errorf("Unable to find the external IP:Port for the container %q", container.Name)
 }
 
 func (p *Provider) getIPPort(container dockerData) (string, string, error) {
 	var ip, port string
 
 	if p.UseBindPortIP {
-		portBinding := p.getPortBinding(container)
-		if portBinding == nil {
+		portBinding, err := p.getPortBinding(container)
+		if err != nil {
 			return "", "", fmt.Errorf("unable to find a binding for the container %q: ignoring server", container.Name)
 		}
 
