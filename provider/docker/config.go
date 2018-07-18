@@ -312,7 +312,7 @@ func getPort(container dockerData) string {
 }
 
 func (p *Provider) getPortBinding (container dockerData) (nat.PortBinding, error) {
-	port := getPortV1(container)
+	port := getPort(container)
 	for netPort, portBindings := range container.NetworkSettings.Ports {
 		if strings.EqualFold(string(netPort), port+"/TCP") || strings.EqualFold(string(netPort), port+"/UDP") {
 			for _, p := range portBindings {
