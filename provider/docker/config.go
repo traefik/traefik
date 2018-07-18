@@ -235,17 +235,6 @@ func (p Provider) getIPAddress(container dockerData) string {
 		return p.getIPAddress(parseContainer(containerInspected))
 	}
 
-	if p.UseBindPortIP {
-		port := getPortV1(container)
-		for netPort, portBindings := range container.NetworkSettings.Ports {
-			if string(netPort) == port+"/TCP" || string(netPort) == port+"/UDP" {
-				for _, p := range portBindings {
-					return p.HostIP
-				}
-			}
-		}
-	}
-
 	for _, network := range container.NetworkSettings.Networks {
 		return network.Addr
 	}
@@ -322,22 +311,45 @@ func getPort(container dockerData) string {
 	return ""
 }
 
+func (p *Provider) getPortBinding (container dockerData) (nat.PortBinding, error) {
+	port := getPortV1(container)
+	for netPort, portBindings := range container.NetworkSettings.Ports {
+		if strings.EqualFold(string(netPort), port+"/TCP") || strings.EqualFold(string(netPort), port+"/UDP") {
+			for _, p := range portBindings {
+				return p, nil
+			}
+		}
+	}
+
+	return nat.PortBinding{HostIP: "", HostPort: ""}, fmt.Errorf(
+		"Unable to find the port binding for the %q container: the server is ignored.", container.Name)
+}
+
 func (p *Provider) getServers(containers []dockerData) map[string]types.Server {
 	var servers map[string]types.Server
 
 	for _, container := range containers {
-		ip := p.getIPAddress(container)
+		var ip, port string
+
+		if p.UseBindPortIP {
+			portBinding, err := p.getPortBinding(container)
+			if err != nil {
+				log.Warn(err)
+				continue
+			}
+			ip = portBinding.HostIP
+			port = portBinding.HostPort
+		} else {
+			ip = p.getIPAddress(container)
+			port = getPort(container)
+		}
+
 		if len(ip) == 0 {
 			log.Warnf("Unable to find the IP address for the container %q: the server is ignored.", container.Name)
 			continue
 		}
 
-		if servers == nil {
-			servers = make(map[string]types.Server)
-		}
-
 		protocol := label.GetStringValue(container.SegmentLabels, label.TraefikProtocol, label.DefaultProtocol)
-		port := getPort(container)
 
 		serverURL := fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(ip, port))
 
@@ -347,6 +359,9 @@ func (p *Provider) getServers(containers []dockerData) map[string]types.Server {
 			continue
 		}
 
+		if servers == nil {
+			servers = make(map[string]types.Server)
+		}
 		servers[serverName] = types.Server{
 			URL:    serverURL,
 			Weight: label.GetIntValue(container.SegmentLabels, label.TraefikWeight, label.DefaultWeight),
