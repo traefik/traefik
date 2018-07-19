@@ -555,7 +555,7 @@ func TestBuildConfiguration(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actualConfig := p.buildConfigurationV2(test.tasks)
+			actualConfig := p.buildConfiguration(test.tasks)
 
 			require.NotNil(t, actualConfig)
 			assert.Equal(t, test.expectedBackends, actualConfig.Backends)
@@ -909,7 +909,7 @@ func TestBuildConfigurationSegments(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actualConfig := p.buildConfigurationV2(test.tasks)
+			actualConfig := p.buildConfiguration(test.tasks)
 
 			require.NotNil(t, actualConfig)
 			assert.Equal(t, test.expectedBackends, actualConfig.Backends)

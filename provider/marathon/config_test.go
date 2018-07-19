@@ -655,7 +655,7 @@ func TestBuildConfiguration(t *testing.T) {
 				ExposedByDefault: true,
 			}
 
-			actualConfig := p.buildConfigurationV2(test.applications)
+			actualConfig := p.buildConfiguration(test.applications)
 
 			assert.NotNil(t, actualConfig)
 			assert.Equal(t, test.expectedBackends, actualConfig.Backends)
@@ -988,7 +988,7 @@ func TestBuildConfigurationSegments(t *testing.T) {
 				ExposedByDefault: true,
 			}
 
-			actualConfig := p.buildConfigurationV2(test.applications)
+			actualConfig := p.buildConfiguration(test.applications)
 
 			assert.NotNil(t, actualConfig)
 			assert.Equal(t, test.expectedBackends, actualConfig.Backends)
