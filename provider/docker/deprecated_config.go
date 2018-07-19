@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"context"
 	"math"
 	"strconv"
 	"text/template"
@@ -19,10 +20,10 @@ func (p *Provider) buildConfigurationV1(containersInspected []dockerData) *types
 		"isBackendLBSwarm": isBackendLBSwarm,
 
 		// Backend functions
-		"getDeprecatedIPAddress": p.getDeprecatedIPAddress,
-		"getPort":                getPortV1,
-		"getWeight":              getFuncIntLabelV1(label.TraefikWeight, label.DefaultWeight),
-		"getProtocol":            getFuncStringLabelV1(label.TraefikProtocol, label.DefaultProtocol),
+		"getIPAddress": p.getIPAddressV1,
+		"getPort":      getPortV1,
+		"getWeight":    getFuncIntLabelV1(label.TraefikWeight, label.DefaultWeight),
+		"getProtocol":  getFuncStringLabelV1(label.TraefikProtocol, label.DefaultProtocol),
 
 		"hasCircuitBreakerLabel":      hasFuncV1(label.TraefikBackendCircuitBreakerExpression),
 		"getCircuitBreakerExpression": getFuncStringLabelV1(label.TraefikBackendCircuitBreakerExpression, label.DefaultCircuitBreakerExpression),
@@ -201,4 +202,61 @@ func (p Provider) containerFilterV1(container dockerData) bool {
 	}
 
 	return true
+}
+
+func (p Provider) getIPAddressV1(container dockerData) string {
+	if value := label.GetStringValue(container.Labels, labelDockerNetwork, p.Network); value != "" {
+		networkSettings := container.NetworkSettings
+		if networkSettings.Networks != nil {
+			network := networkSettings.Networks[value]
+			if network != nil {
+				return network.Addr
+			}
+
+			log.Warnf("Could not find network named '%s' for container '%s'! Maybe you're missing the project's prefix in the label? Defaulting to first available network.", value, container.Name)
+		}
+	}
+
+	if container.NetworkSettings.NetworkMode.IsHost() {
+		if container.Node != nil {
+			if container.Node.IPAddress != "" {
+				return container.Node.IPAddress
+			}
+		}
+		return "127.0.0.1"
+	}
+
+	if container.NetworkSettings.NetworkMode.IsContainer() {
+		dockerClient, err := p.createClient()
+		if err != nil {
+			log.Warnf("Unable to get IP address for container %s, error: %s", container.Name, err)
+			return ""
+		}
+
+		connectedContainer := container.NetworkSettings.NetworkMode.ConnectedContainer()
+		containerInspected, err := dockerClient.ContainerInspect(context.Background(), connectedContainer)
+		if err != nil {
+			log.Warnf("Unable to get IP address for container %s : Failed to inspect container ID %s, error: %s", container.Name, connectedContainer, err)
+			return ""
+		}
+		return p.getIPAddress(parseContainer(containerInspected))
+	}
+
+	if p.UseBindPortIP {
+		port := getPortV1(container)
+		for netPort, portBindings := range container.NetworkSettings.Ports {
+			if string(netPort) == port+"/TCP" || string(netPort) == port+"/UDP" {
+				for _, p := range portBindings {
+					return p.HostIP
+				}
+			}
+		}
+	}
+
+	for _, network := range container.NetworkSettings.Networks {
+		return network.Addr
+	}
+
+	log.Warnf("Unable to find the IP address for the container %q.", container.Name)
+	return ""
 }
