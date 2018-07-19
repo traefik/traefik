@@ -27,7 +27,7 @@ func TestAppendCommonRequestFields(t *testing.T) {
 	req.Header.Set("Session-ID", "S123")
 	req.Header.Set("Akamai-Test-Hdr", "Ak999")
 
-	returned := appendCommonRequestFields(ev, req)
+	appendCommonRequestFields(ev, NewRequestContext(req))
 
 	assert.NotEmpty(t, ev.EventID)
 	assert.Equal(t, "2001-09-09T01:46:40.000Z", ev.GeneratedAt)
@@ -44,8 +44,6 @@ func TestAppendCommonRequestFields(t *testing.T) {
 	assert.Empty(t, ev.ResponseStatus)
 	assert.Nil(t, ev.ResponseHeaders)
 	assert.Nil(t, ev.ResponsePayload)
-	assert.Len(t, returned, 7)
-	assert.Equal(t, "202.2.202.2", returned.GetString("x-source"))
 }
 
 func TestAppendCommonResponseFields(t *testing.T) {
@@ -191,10 +189,10 @@ func TestAuditObfuscateUrlEncoded(t *testing.T) {
 func TestAuditExclusion(t *testing.T) {
 
 	excludes := []*configuration.FilterOption{
-		&configuration.FilterOption{HeaderName: "Host", Contains: []string{"aaaignorehost1bbb", "hostignore"}},
-		&configuration.FilterOption{HeaderName: "Path", StartsWith: []string{"/excludeme", "/someotherpath"}},
-		&configuration.FilterOption{HeaderName: "Hdr1", Contains: []string{"abcdefg", "drv1"}},
-		&configuration.FilterOption{HeaderName: "Hdr2", Contains: []string{"tauditm"}},
+		{HeaderName: "Host", Contains: []string{"aaaignorehost1bbb", "hostignore"}},
+		{HeaderName: "Path", StartsWith: []string{"/excludeme", "/someotherpath"}},
+		{HeaderName: "Hdr1", Contains: []string{"abcdefg", "drv1"}},
+		{HeaderName: "Hdr2", Contains: []string{"tauditm"}},
 	}
 
 	spec := &AuditSpecification{
@@ -203,25 +201,25 @@ func TestAuditExclusion(t *testing.T) {
 
 	excHost := NewRequestContext(httptest.NewRequest("", "/pathsegment?d=1&e=2", nil))
 	excHost.Req.Host = "abchostignoredef.somedomain"
-	assert.False(t, ShouldAudit(spec, excHost))
+	assert.False(t, ShouldAudit(excHost, spec))
 
 	excPath := NewRequestContext(httptest.NewRequest("", "/excludeme?d=1&e=2", nil))
-	assert.False(t, ShouldAudit(spec, excPath))
+	assert.False(t, ShouldAudit(excPath, spec))
 
 	req1 := httptest.NewRequest("", "/pathsegment?d=1&e=2", nil)
 	req1.Header.Set("Hdr1", "xdrv1z")
 	excHdr1 := NewRequestContext(req1)
-	assert.False(t, ShouldAudit(spec, excHdr1))
+	assert.False(t, ShouldAudit(excHdr1, spec))
 
 	req2 := httptest.NewRequest("", "/pathsegment?d=1&e=2", nil)
 	req2.Header.Set("Hdr2", "don'tauditme")
 	excHdr2 := NewRequestContext(req2)
-	assert.False(t, ShouldAudit(spec, excHdr2))
+	assert.False(t, ShouldAudit(excHdr2, spec))
 
 	incReq := httptest.NewRequest("", "/includeme?d=1&e=2", nil)
 	incReq.Header.Set("Hdr1", "bcdef")
 	incHdr1 := NewRequestContext(incReq)
-	assert.True(t, ShouldAudit(spec, incHdr1))
+	assert.True(t, ShouldAudit(incHdr1, spec))
 }
 func TestSatisfiesFilter(t *testing.T) {
 	assert.True(t, satisfiesFilter("beginWithThis", &configuration.FilterOption{HeaderName: "x", StartsWith: []string{"begin"}}))

@@ -472,7 +472,7 @@ func benchWithPayload(b *testing.B, payloadKbs int) {
 	for i := 0; i < b.N; i++ {
 		event := &RATEAuditEvent{}
 		spec := &AuditSpecification{}
-		event.AppendRequest(req, spec)
+		event.AppendRequest(NewRequestContext(req), spec)
 	}
 }
 

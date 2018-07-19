@@ -39,7 +39,7 @@ func TestMdtpAuditEvent(t *testing.T) {
 	respInfo := types.ResponseInfo{200, 101, []byte(respBody), 2048}
 
 	spec := &AuditSpecification{}
-	ev.AppendRequest(req, spec)
+	ev.AppendRequest(NewRequestContext(req), spec)
 	ev.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.NotEmpty(t, ev.EventID)
@@ -85,7 +85,7 @@ func TestDeviceIDCanComeFromHeader(t *testing.T) {
 	req.Header.Set("DeviceId", "my-great-device")
 
 	spec := &AuditSpecification{}
-	ev.AppendRequest(req, spec)
+	ev.AppendRequest(NewRequestContext(req), spec)
 
 	assert.NotEmpty(t, ev.EventID)
 	assert.Equal(t, "my-mdtp-app", ev.AuditSource)
@@ -112,7 +112,7 @@ func TestMdtpMappedAuditFieldsAppliedJustAtRequest(t *testing.T) {
 		"tags":   HeaderMapping{"GatewayToken": "Gateway-Token"},
 	}
 	spec := &AuditSpecification{HeaderMappings: mappings}
-	ev.AppendRequest(req, spec)
+	ev.AppendRequest(NewRequestContext(req), spec)
 	ev.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.Equal(t, "SomeGatewayToken", ev.Tags["GatewayToken"])
@@ -135,7 +135,7 @@ func TestRequestPayloadObfuscatedForFormContentType(t *testing.T) {
 	obfuscate := AuditObfuscation{MaskFields: []string{"password", "authKey"}, MaskValue: "@@@"}
 	spec := &AuditSpecification{AuditObfuscation: obfuscate}
 	expectedBody := "say=Hi&password=@@@&authKey=@@@&to=Dave"
-	ev.AppendRequest(req, spec)
+	ev.AppendRequest(NewRequestContext(req), spec)
 	ev.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.EqualValues(t, len(reqBody), ev.Detail.Get(requestBodyLen))
@@ -161,7 +161,7 @@ func TestPayloadsNotObfuscated(t *testing.T) {
 
 	obfuscate := AuditObfuscation{MaskFields: []string{"password", "authKey"}, MaskValue: "@@@"}
 	spec := &AuditSpecification{AuditObfuscation: obfuscate}
-	ev.AppendRequest(req, spec)
+	ev.AppendRequest(NewRequestContext(req), spec)
 	ev.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.EqualValues(t, len(reqBody), ev.Detail.Get(requestBodyLen))
@@ -181,7 +181,7 @@ func TestHtmlResponseFiltered(t *testing.T) {
 	respInfo := types.ResponseInfo{200, 101, []byte(respBody), 2048}
 
 	spec := &AuditSpecification{}
-	ev.AppendRequest(req, spec)
+	ev.AppendRequest(NewRequestContext(req), spec)
 	ev.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.EqualValues(t, len(respBody), ev.Detail.Get(responseBodyLen))

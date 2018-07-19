@@ -6,7 +6,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 
@@ -54,15 +53,14 @@ type contentExtractor interface {
 }
 
 // AppendRequest appends information about the request to the audit event
-func (ev *RATEAuditEvent) AppendRequest(req *http.Request, auditSpec *AuditSpecification) {
-	appendCommonRequestFields(&ev.AuditEvent, req)
-	appendMessageContent(ev, req)
+func (ev *RATEAuditEvent) AppendRequest(ctx *RequestContext, auditSpec *AuditSpecification) {
+	appendCommonRequestFields(&ev.AuditEvent, ctx)
+	appendMessageContent(ev, ctx)
 }
 
-func appendMessageContent(ev *RATEAuditEvent, req *http.Request) {
+func appendMessageContent(ev *RATEAuditEvent, ctx *RequestContext) {
 
-	body, _, err := copyRequestBody(req)
-	url, err := url.ParseRequestURI(req.RequestURI)
+	body, _, err := copyRequestBody(ctx.Req)
 
 	if err != nil {
 		log.Errorf("Error reading request body: %v", err)
@@ -73,7 +71,7 @@ func appendMessageContent(ev *RATEAuditEvent, req *http.Request) {
 		var extractor contentExtractor
 		switch root.Name.Local {
 		case "GovTalkMessage":
-			extractor, err = gtmGetMessageParts(decoder, url.Path, bytes.NewReader(body))
+			extractor, err = gtmGetMessageParts(decoder, ctx.Path, bytes.NewReader(body))
 		case "ChRISEnvelope":
 			extractor, err = ceGetMessageParts(decoder)
 		default:

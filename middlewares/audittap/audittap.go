@@ -127,7 +127,7 @@ func (tap *AuditTap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	var auditer audittypes.Auditer
 	ctx := audittypes.NewRequestContext(req)
-	shouldAudit := audittypes.ShouldAudit(&tap.AuditSpecification, ctx)
+	shouldAudit := audittypes.ShouldAudit(ctx, &tap.AuditSpecification)
 
 	log.Debugf("Should audit is %t for Host:%s URI:%s Headers:%v", shouldAudit, req.Host, req.RequestURI, req.Header)
 
@@ -140,7 +140,7 @@ func (tap *AuditTap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		case "mdtp":
 			auditer = audittypes.NewMdtpAuditEvent()
 		}
-		auditer.AppendRequest(req, &tap.AuditSpecification)
+		auditer.AppendRequest(ctx, &tap.AuditSpecification)
 	}
 
 	ww := NewAuditResponseWriter(rw, tap.MaxEntityLength)

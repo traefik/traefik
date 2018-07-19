@@ -35,7 +35,7 @@ func TestRateAuditEvent(t *testing.T) {
 
 	event := &RATEAuditEvent{}
 	spec := &AuditSpecification{}
-	event.AppendRequest(req, spec)
+	event.AppendRequest(NewRequestContext(req), spec)
 	event.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.Equal(t, "HMRC-VAT-DEC-TMSG", event.AuditType)
@@ -98,7 +98,7 @@ func TestChrisRateAuditEvent(t *testing.T) {
 
 	event := &RATEAuditEvent{}
 	spec := &AuditSpecification{}
-	event.AppendRequest(req, spec)
+	event.AppendRequest(NewRequestContext(req), spec)
 	event.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.Equal(t, "HMRC-PAYE-RTI-EPS", event.AuditType)
@@ -167,7 +167,7 @@ func TestWillHandleUnknownXml(t *testing.T) {
 
 	event := &RATEAuditEvent{}
 	spec := &AuditSpecification{}
-	event.AppendRequest(req, spec)
+	event.AppendRequest(NewRequestContext(req), spec)
 	event.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.Equal(t, "UnclassifiedRequest", event.AuditType)
@@ -296,7 +296,7 @@ func TestProcessingSkippedForTestInLive(t *testing.T) {
 
 	event := &RATEAuditEvent{}
 	spec := &AuditSpecification{}
-	event.AppendRequest(req, spec)
+	event.AppendRequest(NewRequestContext(req), spec)
 	event.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.Equal(t, "HMRC-SA-SA100-TIL", event.AuditType)

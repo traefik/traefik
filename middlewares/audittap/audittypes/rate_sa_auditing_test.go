@@ -27,7 +27,7 @@ func TestRateSaInfoIgnoresNonSubmission(t *testing.T) {
 
 	event := &RATEAuditEvent{}
 	spec := &AuditSpecification{}
-	event.AppendRequest(req, spec)
+	event.AppendRequest(NewRequestContext(req), spec)
 	event.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.Equal(t, "HMRC-SA-SA100-ATT", event.AuditType)
@@ -49,7 +49,7 @@ func TestRateSA100AuditEvent(t *testing.T) {
 
 	event := &RATEAuditEvent{}
 	spec := &AuditSpecification{}
-	event.AppendRequest(req, spec)
+	event.AppendRequest(NewRequestContext(req), spec)
 	event.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.Equal(t, "HMRC-SA-SA100-ATT", event.AuditType)
@@ -77,7 +77,7 @@ func TestRateSA100AuditEventIsRepayment(t *testing.T) {
 
 	event := &RATEAuditEvent{}
 	spec := &AuditSpecification{}
-	event.AppendRequest(req, spec)
+	event.AppendRequest(NewRequestContext(req), spec)
 	event.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.Equal(t, "HMRC-SA-SA100-TMSG", event.AuditType)
@@ -163,7 +163,7 @@ func TestRateSA800AuditEvent(t *testing.T) {
 
 	event := &RATEAuditEvent{}
 	spec := &AuditSpecification{}
-	event.AppendRequest(req, spec)
+	event.AppendRequest(NewRequestContext(req), spec)
 	event.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.Equal(t, "HMRC-SA-SA800-ATT-TMSG", event.AuditType)
@@ -191,7 +191,7 @@ func TestRateSA900AuditEvent(t *testing.T) {
 
 	event := &RATEAuditEvent{}
 	spec := &AuditSpecification{}
-	event.AppendRequest(req, spec)
+	event.AppendRequest(NewRequestContext(req), spec)
 	event.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.Equal(t, "HMRC-SA-SA900-ATT-TMSG", event.AuditType)
@@ -218,7 +218,7 @@ func TestRateSA900AuditEventIsRepayment(t *testing.T) {
 
 	event := &RATEAuditEvent{}
 	spec := &AuditSpecification{}
-	event.AppendRequest(req, spec)
+	event.AppendRequest(NewRequestContext(req), spec)
 	event.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.Equal(t, "HMRC-SA-SA900", event.AuditType)

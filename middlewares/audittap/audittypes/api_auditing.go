@@ -14,10 +14,10 @@ type APIAuditEvent struct {
 }
 
 // AppendRequest appends information about the request to the audit event
-func (ev *APIAuditEvent) AppendRequest(req *http.Request, auditSpec *AuditSpecification) {
-	reqHeaders := appendCommonRequestFields(&ev.AuditEvent, req)
-	ev.AuthorisationToken = reqHeaders.GetString("authorization")
-	if body, _, err := copyRequestBody(req); err == nil {
+func (ev *APIAuditEvent) AppendRequest(ctx *RequestContext, auditSpec *AuditSpecification) {
+	appendCommonRequestFields(&ev.AuditEvent, ctx)
+	ev.AuthorisationToken = ctx.FlatHeaders.GetString("authorization")
+	if body, _, err := copyRequestBody(ctx.Req); err == nil {
 		ev.addRequestPayloadContents(string(body))
 	}
 }

@@ -33,7 +33,7 @@ func TestApiAuditEvent(t *testing.T) {
 	respInfo := types.ResponseInfo{404, 101, responseBody, 2048}
 
 	spec := &AuditSpecification{}
-	ev.AppendRequest(req, spec)
+	ev.AppendRequest(NewRequestContext(req), spec)
 	ev.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.Equal(t, "POST", ev.Method)

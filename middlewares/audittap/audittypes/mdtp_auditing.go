@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
-	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -39,9 +38,9 @@ type MdtpAuditEvent struct {
 }
 
 // AppendRequest appends information about the request to the audit event
-func (ev *MdtpAuditEvent) AppendRequest(req *http.Request, auditSpec *AuditSpecification) {
+func (ev *MdtpAuditEvent) AppendRequest(ctx *RequestContext, auditSpec *AuditSpecification) {
 
-	ev.AuditSource = deriveAuditSource(req.Host)
+	ev.AuditSource = deriveAuditSource(ctx.Req.Host)
 	ev.AuditType = "RequestReceived"
 	ev.EventID = uuid.NewV4().String()
 	ev.GeneratedAt = types.TheClock.Now().UTC().Format("2006-01-02T15:04:05.000Z07:00")
@@ -54,16 +53,8 @@ func (ev *MdtpAuditEvent) AppendRequest(req *http.Request, auditSpec *AuditSpeci
 		ev.Tags = types.DataMap{}
 	}
 
-	hdr := ahttp.NewHeaders(req.Header).SimplifyCookies()
-	flatHdr := hdr.Flatten()
-
-	clientHeaders, requestHeaders := hdr.ClientAndRequestHeaders()
-	ev.ClientHeaders = clientHeaders
-	ev.RequestHeaders = requestHeaders
-
-	url, _ := url.ParseRequestURI(req.RequestURI)
-	ev.Detail.AddAll(detailFromRequest(req, url, flatHdr, auditSpec))
-	ev.Tags.AddAll(tagsFromRequest(req, url, flatHdr, auditSpec))
+	ev.Detail.AddAll(detailFromRequest(ctx, auditSpec))
+	ev.Tags.AddAll(tagsFromRequest(ctx, auditSpec))
 }
 
 // AppendResponse appends information about the response to the audit event
@@ -119,29 +110,29 @@ func deriveAuditSource(s string) string {
 	return auditSource
 }
 
-func detailFromRequest(req *http.Request, url *url.URL, headers types.DataMap, spec *AuditSpecification) types.DataMap {
+func detailFromRequest(ctx *RequestContext, spec *AuditSpecification) types.DataMap {
 	m := types.DataMap{}
 
-	m["Authorization"] = headers.GetString("authorization")
-	m["deviceID"] = extractDeviceID(req, headers)
-	m["host"] = req.Host
-	m["input"] = fmt.Sprintf("Request to %s", url.Path)
-	m["ipAddress"] = headers.GetString("x-forwarded-for")
-	m["method"] = req.Method
+	m["Authorization"] = ctx.FlatHeaders.GetString("authorization")
+	m["deviceID"] = extractDeviceID(ctx)
+	m["host"] = ctx.Req.Host
+	m["input"] = fmt.Sprintf("Request to %s", ctx.Path)
+	m["ipAddress"] = ctx.FlatHeaders.GetString("x-forwarded-for")
+	m["method"] = ctx.Req.Method
 	m["port"] = ""
-	m["queryString"] = url.RawQuery
-	m["referrer"] = req.Referer()
-	m["surrogate"] = headers.GetString("surrogate")
-	m["token"] = headers.GetString("token")
-	m["userAgentString"] = headers.GetString("user-agent")
+	m["queryString"] = ctx.RawQuery
+	m["referrer"] = ctx.Req.Referer()
+	m["surrogate"] = ctx.FlatHeaders.GetString("surrogate")
+	m["token"] = ctx.FlatHeaders.GetString("token")
+	m["userAgentString"] = ctx.FlatHeaders.GetString("user-agent")
 
-	if df, err := extractDeviceFingerprint(req); err == nil {
+	if df, err := extractDeviceFingerprint(ctx); err == nil {
 		m["deviceFingerprint"] = df
 	}
 
-	ct := headers.GetString("content-type")
+	ct := ctx.FlatHeaders.GetString("content-type")
 	m[requestContentType] = ct
-	if body, _, err := copyRequestBody(req); err == nil {
+	if body, _, err := copyRequestBody(ctx.Req); err == nil {
 		m[requestBodyLen] = len(body)
 		// Obfuscation only applies to form requests
 		if ct == "application/x-www-form-urlencoded" && &spec.AuditObfuscation != nil {
@@ -153,21 +144,21 @@ func detailFromRequest(req *http.Request, url *url.URL, headers types.DataMap, s
 		}
 	}
 
-	m.AddAll(extractAdditionalHeaders(headers, "detail", spec.HeaderMappings))
+	m.AddAll(extractAdditionalHeaders(ctx.FlatHeaders, "detail", spec.HeaderMappings))
 
 	return m
 }
 
-func tagsFromRequest(req *http.Request, url *url.URL, headers types.DataMap, spec *AuditSpecification) types.DataMap {
+func tagsFromRequest(ctx *RequestContext, spec *AuditSpecification) types.DataMap {
 	m := types.DataMap{}
-	m["X-Request-ID"] = headers.GetString("x-request-id")
-	m["X-Session-ID"] = headers.GetString("x-session-id")
-	m["clientIP"] = headers.GetString("true-client-ip")
-	m["clientPort"] = headers.GetString("true-client-port")
-	m["path"] = url.Path
-	m["transactionName"] = url.RequestURI()
-	m["Akamai-Reputation"] = headers.GetString("akamai-reputation")
-	m.AddAll(extractAdditionalHeaders(headers, "tags", spec.HeaderMappings))
+	m["X-Request-ID"] = ctx.FlatHeaders.GetString("x-request-id")
+	m["X-Session-ID"] = ctx.FlatHeaders.GetString("x-session-id")
+	m["clientIP"] = ctx.FlatHeaders.GetString("true-client-ip")
+	m["clientPort"] = ctx.FlatHeaders.GetString("true-client-port")
+	m["path"] = ctx.Path
+	m["transactionName"] = ctx.RequestURI()
+	m["Akamai-Reputation"] = ctx.FlatHeaders.GetString("akamai-reputation")
+	m.AddAll(extractAdditionalHeaders(ctx.FlatHeaders, "tags", spec.HeaderMappings))
 	return m
 }
 
@@ -194,8 +185,8 @@ func tagsFromResponse(respInfo types.ResponseInfo, headers types.DataMap) types.
 	return m
 }
 
-func extractDeviceFingerprint(req *http.Request) (string, error) {
-	df, err := req.Cookie("mdtpdf")
+func extractDeviceFingerprint(ctx *RequestContext) (string, error) {
+	df, err := ctx.Req.Cookie("mdtpdf")
 	if err != nil {
 		return "", err
 	}
@@ -206,10 +197,10 @@ func extractDeviceFingerprint(req *http.Request) (string, error) {
 	return string(decoded), nil
 }
 
-func extractDeviceID(req *http.Request, headers types.DataMap) string {
-	deviceID := headers.GetString("deviceid")
+func extractDeviceID(ctx *RequestContext) string {
+	deviceID := ctx.FlatHeaders.GetString("deviceid")
 	if deviceID == "" {
-		if cookie, err := req.Cookie("mdtpdi"); err == nil {
+		if cookie, err := ctx.Req.Cookie("mdtpdi"); err == nil {
 			deviceID = cookie.Value
 		}
 	}

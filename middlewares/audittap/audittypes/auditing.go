@@ -81,13 +81,14 @@ type AuditStream interface {
 type RequestContext struct {
 	Req *http.Request
 	*url.URL
-	*ahttp.Headers
+	FlatHeaders    types.DataMap
 	ClientHeaders  types.DataMap
 	RequestHeaders types.DataMap
 }
 
 // NewRequestContext creates a new requestContext
 func NewRequestContext(r *http.Request) *RequestContext {
+
 	hdr := ahttp.NewHeaders(r.Header).SimplifyCookies()
 
 	// Need to create a URL from the RequestURI, because the URL in the request is overwritten
@@ -99,7 +100,7 @@ func NewRequestContext(r *http.Request) *RequestContext {
 	return &RequestContext{
 		Req:            r,
 		URL:            u,
-		Headers:        &hdr,
+		FlatHeaders:    hdr.Flatten(),
 		ClientHeaders:  clientHeaders,
 		RequestHeaders: requestHeaders,
 	}
@@ -107,7 +108,7 @@ func NewRequestContext(r *http.Request) *RequestContext {
 
 // Auditer is a type that audits information from a HTTP request and response
 type Auditer interface {
-	AppendRequest(req *http.Request, auditSpec *AuditSpecification)
+	AppendRequest(ctx *RequestContext, auditSpec *AuditSpecification)
 	AppendResponse(responseHeaders http.Header, resp types.ResponseInfo, auditSpec *AuditSpecification)
 	// EnforceConstraints ensures the audit event complies with rules for the audit type
 	// returns true if audit event is valid for auditing
@@ -115,20 +116,12 @@ type Auditer interface {
 	types.Encodeable
 }
 
-func appendCommonRequestFields(ev *AuditEvent, req *http.Request) types.DataMap {
-	hdr := ahttp.NewHeaders(req.Header).SimplifyCookies()
-
-	// Need to create a URL from the RequestURI, because the URL in the request is overwritten
-	// by oxy'tap RoundRobin and loses Path and RawQuery
-	u, _ := url.ParseRequestURI(req.RequestURI)
-
-	clientHeaders, requestHeaders := hdr.ClientAndRequestHeaders()
-	flatHdr := hdr.Flatten()
+func appendCommonRequestFields(ev *AuditEvent, ctx *RequestContext) {
 
 	requestPayload := types.DataMap{}
-	requestPayload["length"] = req.ContentLength
+	requestPayload["length"] = ctx.Req.ContentLength
 
-	var requestContentType = flatHdr.GetString("content-type")
+	var requestContentType = ctx.FlatHeaders.GetString("content-type")
 
 	if requestContentType != "" {
 		requestPayload["type"] = requestContentType
@@ -137,21 +130,19 @@ func appendCommonRequestFields(ev *AuditEvent, req *http.Request) types.DataMap 
 	ev.EventID = uuid.NewV4().String()
 	ev.GeneratedAt = types.TheClock.Now().UTC().Format("2006-01-02T15:04:05.000Z07:00")
 	ev.Version = "1"
-	ev.RequestID = flatHdr.GetString("x-request-id")
-	ev.Method = req.Method
-	ev.Path = u.Path
-	ev.QueryString = u.RawQuery
-	ev.ClientIP = flatHdr.GetString("true-client-ip")
-	ev.ClientPort = flatHdr.GetString("true-client-port")
-	ev.ReceivingIP = flatHdr.GetString("x-source")
-	ev.ClientHeaders = clientHeaders
-	ev.RequestHeaders = requestHeaders
+	ev.RequestID = ctx.FlatHeaders.GetString("x-request-id")
+	ev.Method = ctx.Req.Method
+	ev.Path = ctx.Path
+	ev.QueryString = ctx.RawQuery
+	ev.ClientIP = ctx.FlatHeaders.GetString("true-client-ip")
+	ev.ClientPort = ctx.FlatHeaders.GetString("true-client-port")
+	ev.ReceivingIP = ctx.FlatHeaders.GetString("x-source")
+	ev.ClientHeaders = ctx.ClientHeaders
+	ev.RequestHeaders = ctx.RequestHeaders
 	ev.RequestPayload = requestPayload
 	ev.ResponseHeaders = nil
 	ev.ResponseStatus = ""
 	ev.ResponsePayload = nil
-
-	return flatHdr
 }
 
 func appendCommonResponseFields(ev *AuditEvent, responseHeaders http.Header, info types.ResponseInfo) types.DataMap {
@@ -230,7 +221,7 @@ func copyRequestBody(req *http.Request) ([]byte, int, error) {
 }
 
 // ShouldAudit asserts if request metadata matches specified exclusions from config
-func ShouldAudit(spec *AuditSpecification, rc *RequestContext) bool {
+func ShouldAudit(rc *RequestContext, spec *AuditSpecification) bool {
 
 	for _, exc := range spec.Exclusions {
 		lcHdr := strings.ToLower(exc.HeaderName)
