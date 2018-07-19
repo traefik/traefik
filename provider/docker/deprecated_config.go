@@ -4,6 +4,7 @@ import (
 	"context"
 	"math"
 	"strconv"
+	"strings"
 	"text/template"
 
 	"github.com/BurntSushi/ty/fun"
@@ -245,7 +246,7 @@ func (p Provider) getIPAddressV1(container dockerData) string {
 	if p.UseBindPortIP {
 		port := getPortV1(container)
 		for netPort, portBindings := range container.NetworkSettings.Ports {
-			if string(netPort) == port+"/TCP" || string(netPort) == port+"/UDP" {
+			if strings.EqualFold(string(netPort), port+"/TCP") || strings.EqualFold(string(netPort), port+"/UDP") {
 				for _, p := range portBindings {
 					return p.HostIP
 				}
