@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-// Exclusion excludes a request from auditing if the http header contains any of the specified values
-type Exclusion struct {
+// FilterOption excludes a request from auditing if the http header contains any of the specified values
+type FilterOption struct {
 	HeaderName string   `json:"headerName,omitempty" description:"Request header name to evaluate"`
 	Contains   []string `json:"contains,omitempty" description:"Substring values to exclude"`
 	EndsWith   []string `json:"endsWith,omitempty" description:"End of string values to exclude"`
@@ -16,12 +16,12 @@ type Exclusion struct {
 }
 
 // Enabled states whether any exclusion filters are specified
-func (e *Exclusion) Enabled() bool {
+func (e *FilterOption) Enabled() bool {
 	return len(e.Contains) > 0 || len(e.EndsWith) > 0 || len(e.StartsWith) > 0
 }
 
-// Exclusions is a container type for Exclusion
-type Exclusions map[string]*Exclusion
+// Exclusions is a container type for exclude filters
+type Exclusions map[string]*FilterOption
 
 // MaskFields specifies fields whose values should be obfuscated
 type MaskFields []string

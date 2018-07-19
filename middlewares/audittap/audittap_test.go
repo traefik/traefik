@@ -92,79 +92,6 @@ func TestMdtpProxyingFor(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestAuditExclusion(t *testing.T) {
-
-	atypes.TheClock = T0
-	capture := &noopAuditStream{}
-	excludes := make(configuration.Exclusions)
-
-	excludes["Ex1"] = &configuration.Exclusion{HeaderName: "Host", Contains: []string{"aaaignorehost1bbb", "hostignore"}}
-	excludes["Ex2"] = &configuration.Exclusion{HeaderName: "Path", StartsWith: []string{"/excludeme", "/someotherpath"}}
-
-	excludes["Ex3"] = &configuration.Exclusion{HeaderName: "Hdr1", Contains: []string{"abcdefg", "drv1"}}
-	excludes["Ex4"] = &configuration.Exclusion{HeaderName: "Hdr2", Contains: []string{"tauditm"}}
-
-	cfg := &configuration.AuditSink{
-		ProxyingFor: "api",
-		AuditSource: "as1",
-		AuditType:   "at1",
-		Exclusions:  excludes,
-	}
-
-	tap, err := NewAuditTap(cfg, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
-	assert.NoError(t, err)
-	tap.AuditStreams = []audittypes.AuditStream{capture}
-
-	excHost := httptest.NewRequest("", "/pathsegment?d=1&e=2", nil)
-	excHost.Host = "abchostignoredef.somedomain"
-	tap.ServeHTTP(httptest.NewRecorder(), excHost)
-
-	excPath := httptest.NewRequest("", "/excludeme?d=1&e=2", nil)
-	tap.ServeHTTP(httptest.NewRecorder(), excPath)
-
-	excHdr1 := httptest.NewRequest("", "/pathsegment?d=1&e=2", nil)
-	excHdr1.Header.Set("Hdr1", "xdrv1z")
-	tap.ServeHTTP(httptest.NewRecorder(), excHdr1)
-
-	excHdr2 := httptest.NewRequest("", "/pathsegment?d=1&e=2", nil)
-	excHdr2.Header.Set("Hdr2", "don'tauditme")
-	tap.ServeHTTP(httptest.NewRecorder(), excHdr2)
-
-	incReq := httptest.NewRequest("", "/includeme?d=1&e=2", nil)
-	incReq.Header.Set("Hdr1", "bcdef")
-	tap.ServeHTTP(httptest.NewRecorder(), incReq)
-
-	assert.Equal(t, 1, len(capture.events))
-	if apiAudit, err := toAPIAudit(capture.events[0]); err == nil {
-		assert.Equal(t, "as1", apiAudit.AuditSource)
-		assert.Equal(t, "at1", apiAudit.AuditType)
-		assert.Equal(t, "/includeme", apiAudit.Path)
-	} else {
-		assert.Fail(t, "Audit is not an Api Audit")
-	}
-
-}
-
-func TestShouldExclude(t *testing.T) {
-	assert.True(t, shouldExclude("beginWithThis", &configuration.Exclusion{HeaderName: "x", StartsWith: []string{"begin"}}))
-	assert.True(t, shouldExclude("endWithThat", &configuration.Exclusion{HeaderName: "x", EndsWith: []string{"That"}}))
-	assert.True(t, shouldExclude("ithasthatthing", &configuration.Exclusion{HeaderName: "x", Contains: []string{"hasthat"}}))
-
-	assert.False(t, shouldExclude("bcd", &configuration.Exclusion{HeaderName: "x", StartsWith: []string{"abc"}}))
-	assert.False(t, shouldExclude("bcd", &configuration.Exclusion{HeaderName: "x", EndsWith: []string{"def"}}))
-	assert.False(t, shouldExclude("bcd", &configuration.Exclusion{HeaderName: "x", Contains: []string{"abcde"}}))
-}
-
-func TestShouldExcludeMatch(t *testing.T) {
-
-	mdtpURLPattern := "http(s)?:\\/\\/.*\\.(service|mdtp)($|[:\\/])"
-	assert.True(t, shouldExclude("beginWithThis", &configuration.Exclusion{HeaderName: "x", Matches: []string{"^begin.*"}}))
-	assert.True(t, shouldExclude("http://auth.service/auth/authority", &configuration.Exclusion{HeaderName: "x", Matches: []string{mdtpURLPattern}}))
-
-	assert.False(t, shouldExclude("abcdx", &configuration.Exclusion{HeaderName: "x", Matches: []string{"abcde"}}))
-	assert.False(t, shouldExclude("http://auth.com/auth/authority", &configuration.Exclusion{HeaderName: "x", Matches: []string{mdtpURLPattern}}))
-}
-
 func TestAuditConstraintDefaults(t *testing.T) {
 	capture := &noopAuditStream{}
 	tap, err := NewAuditTap(&configuration.AuditSink{ProxyingFor: "Rate"}, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
@@ -217,6 +144,43 @@ func TestEnforceConstraintsFailDropsAudit(t *testing.T) {
 	tap.ServeHTTP(httptest.NewRecorder(), req)
 
 	assert.Equal(t, 0, len(capture.events))
+}
+
+func TestAuditExclusion(t *testing.T) {
+
+	capture := &noopAuditStream{}
+
+	excludes := configuration.Exclusions{
+		"Ex1": &configuration.FilterOption{HeaderName: "Host", Contains: []string{"aaaignorehost1bbb", "hostignore"}},
+	}
+
+	cfg := &configuration.AuditSink{
+		ProxyingFor: "api",
+		AuditSource: "as1",
+		AuditType:   "at1",
+		Exclusions:  excludes,
+	}
+
+	tap, err := NewAuditTap(cfg, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
+	assert.NoError(t, err)
+	tap.AuditStreams = []audittypes.AuditStream{capture}
+
+	excReq := httptest.NewRequest("", "/pathsegment?d=1&e=2", nil)
+	excReq.Host = "abchostignoredef.somedomain"
+	tap.ServeHTTP(httptest.NewRecorder(), excReq)
+
+	incReq := httptest.NewRequest("", "/includeme?d=1&e=2", nil)
+	incReq.Host = "iamok.somedomain"
+	tap.ServeHTTP(httptest.NewRecorder(), incReq)
+
+	assert.Equal(t, 1, len(capture.events))
+	if apiAudit, err := toAPIAudit(capture.events[0]); err == nil {
+		assert.Equal(t, "as1", apiAudit.AuditSource)
+		assert.Equal(t, "at1", apiAudit.AuditType)
+		assert.Equal(t, "/includeme", apiAudit.Path)
+	} else {
+		assert.Fail(t, "Audit is not an Api Audit")
+	}
 }
 
 // simpleHandler replies to the request with the specified error message and HTTP code.

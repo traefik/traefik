@@ -8,9 +8,11 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 
 	"strconv"
 
+	"github.com/containous/traefik/middlewares/audittap/configuration"
 	ahttp "github.com/containous/traefik/middlewares/audittap/http"
 	"github.com/containous/traefik/middlewares/audittap/types"
 	"github.com/satori/go.uuid"
@@ -66,12 +68,41 @@ type AuditSpecification struct {
 	AuditConstraints
 	AuditObfuscation
 	HeaderMappings
+	Exclusions []*configuration.FilterOption
 }
 
 // AuditStream describes a type to which audit events can be sent.
 type AuditStream interface {
 	io.Closer
 	Audit(encoder types.Encoded) error
+}
+
+// RequestContext wraps a HTTP requests and exposes useful metadatfor the request
+type RequestContext struct {
+	Req *http.Request
+	*url.URL
+	*ahttp.Headers
+	ClientHeaders  types.DataMap
+	RequestHeaders types.DataMap
+}
+
+// NewRequestContext creates a new requestContext
+func NewRequestContext(r *http.Request) *RequestContext {
+	hdr := ahttp.NewHeaders(r.Header).SimplifyCookies()
+
+	// Need to create a URL from the RequestURI, because the URL in the request is overwritten
+	// by oxy'tap RoundRobin and loses Path and RawQuery
+	u, _ := url.ParseRequestURI(r.RequestURI)
+
+	clientHeaders, requestHeaders := hdr.ClientAndRequestHeaders()
+
+	return &RequestContext{
+		Req:            r,
+		URL:            u,
+		Headers:        &hdr,
+		ClientHeaders:  clientHeaders,
+		RequestHeaders: requestHeaders,
+	}
 }
 
 // Auditer is a type that audits information from a HTTP request and response
@@ -196,4 +227,56 @@ func copyRequestBody(req *http.Request) ([]byte, int, error) {
 		return buf, len(buf), nil
 	}
 	return nil, 0, err
+}
+
+// ShouldAudit asserts if request metadata matches specified exclusions from config
+func ShouldAudit(spec *AuditSpecification, rc *RequestContext) bool {
+
+	for _, exc := range spec.Exclusions {
+		lcHdr := strings.ToLower(exc.HeaderName)
+		// Get host or path direct from request
+		if (lcHdr == "host" || lcHdr == "requesthost") && satisfiesFilter(rc.Req.Host, exc) {
+			return false
+		} else if lcHdr == "path" || lcHdr == "requestpath" {
+			if satisfiesFilter(rc.URL.Path, exc) {
+				return false
+			}
+		} else if satisfiesFilter(rc.Req.Header.Get(exc.HeaderName), exc) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func satisfiesFilter(v string, opt *configuration.FilterOption) bool {
+	return matchesTerm(v, opt.StartsWith, strings.HasPrefix) ||
+		matchesTerm(v, opt.EndsWith, strings.HasSuffix) ||
+		matchesTerm(v, opt.Contains, strings.Contains) ||
+		matchesRegex(v, opt.Matches)
+}
+
+func matchesTerm(v string, terms []string, fn func(string, string) bool) bool {
+	if v != "" {
+		for _, x := range terms {
+			if fn(v, x) {
+				return true
+			}
+		}
+
+	}
+	return false
+}
+
+// TODO: Do paths need to be precompiled
+func matchesRegex(v string, expressions []string) bool {
+	if v != "" {
+		for _, pattern := range expressions {
+			if matched, err := regexp.Match(pattern, []byte(v)); err == nil && matched {
+				return true
+			}
+		}
+
+	}
+	return false
 }

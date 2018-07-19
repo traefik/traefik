@@ -3,12 +3,9 @@ package audittap
 import (
 	"fmt"
 	"net/http"
-	"regexp"
 	"strconv"
 	"strings"
 	"unicode"
-
-	"net/url"
 
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares/audittap/audittypes"
@@ -27,7 +24,6 @@ type AuditConfig struct {
 	AuditSource string
 	AuditType   string
 	ProxyingFor string
-	Exclusions  []*configuration.Exclusion
 	audittypes.AuditSpecification
 }
 
@@ -87,7 +83,7 @@ func NewAuditTap(config *configuration.AuditSink, streams []audittypes.AuditStre
 		}
 	}
 
-	exclusions := []*configuration.Exclusion{}
+	exclusions := []*configuration.FilterOption{}
 	for _, exc := range config.Exclusions {
 		if exc.Enabled() {
 			exclusions = append(exclusions, exc)
@@ -115,13 +111,13 @@ func NewAuditTap(config *configuration.AuditSink, streams []audittypes.AuditStre
 		AuditConstraints: constraints,
 		AuditObfuscation: obfuscate,
 		HeaderMappings:   dynamicFields,
+		Exclusions:       exclusions,
 	}
 
 	ac := AuditConfig{
 		AuditSource:        config.AuditSource,
 		AuditType:          config.AuditType,
 		ProxyingFor:        config.ProxyingFor,
-		Exclusions:         exclusions,
 		AuditSpecification: auditSpec,
 	}
 	return &AuditTap{ac, streams, backend, int(th), next}, nil
@@ -130,11 +126,12 @@ func NewAuditTap(config *configuration.AuditSink, streams []audittypes.AuditStre
 func (tap *AuditTap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	var auditer audittypes.Auditer
-	excludeAudit := isExcluded(tap.Exclusions, req)
+	ctx := audittypes.NewRequestContext(req)
+	shouldAudit := audittypes.ShouldAudit(&tap.AuditSpecification, ctx)
 
-	log.Debugf("Exclude audit is %t for Host:%s URI:%s Headers:%v", excludeAudit, req.Host, req.RequestURI, req.Header)
+	log.Debugf("Should audit is %t for Host:%s URI:%s Headers:%v", shouldAudit, req.Host, req.RequestURI, req.Header)
 
-	if !excludeAudit {
+	if shouldAudit {
 		switch strings.ToLower(tap.ProxyingFor) {
 		case "api":
 			auditer = audittypes.NewAPIAuditEvent(tap.AuditSource, tap.AuditType)
@@ -149,7 +146,7 @@ func (tap *AuditTap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	ww := NewAuditResponseWriter(rw, tap.MaxEntityLength)
 	tap.next.ServeHTTP(ww, req)
 
-	if !excludeAudit {
+	if shouldAudit {
 		auditer.AppendResponse(ww.Header(), ww.GetResponseInfo(), &tap.AuditSpecification)
 		if auditer.EnforceConstraints(tap.AuditSpecification.AuditConstraints) {
 			tap.submitAudit(auditer)
@@ -170,58 +167,6 @@ func (tap *AuditTap) submitAudit(auditer audittypes.Auditer) error {
 		log.Errorf("Dropping audit event. Length %d exceeds limit %d", enc.Length(), tap.AuditConstraints.MaxAuditLength)
 	}
 	return nil
-}
-
-// isExcluded asserts if request metadata matches specified exclusions from config
-func isExcluded(exclusions []*configuration.Exclusion, req *http.Request) bool {
-
-	for _, exc := range exclusions {
-		lcHdr := strings.ToLower(exc.HeaderName)
-		// Get host or path direct from request
-		if (lcHdr == "host" || lcHdr == "requesthost") && shouldExclude(req.Host, exc) {
-			return true
-		} else if lcHdr == "path" || lcHdr == "requestpath" {
-			if url, err := url.ParseRequestURI(req.RequestURI); err == nil && shouldExclude(url.Path, exc) {
-				return true
-			}
-		} else if shouldExclude(req.Header.Get(exc.HeaderName), exc) {
-			return true
-		}
-	}
-
-	return false
-}
-
-func shouldExclude(v string, exc *configuration.Exclusion) bool {
-	return excludeValue(v, exc.StartsWith, strings.HasPrefix) ||
-		excludeValue(v, exc.EndsWith, strings.HasSuffix) ||
-		excludeValue(v, exc.Contains, strings.Contains) ||
-		excludeMatch(v, exc.Matches)
-}
-
-func excludeValue(v string, exclusions []string, fn func(string, string) bool) bool {
-	if v != "" {
-		for _, x := range exclusions {
-			if fn(v, x) {
-				return true
-			}
-		}
-
-	}
-	return false
-}
-
-// TODO: Do paths need to be precompiled
-func excludeMatch(v string, expressions []string) bool {
-	if v != "" {
-		for _, pattern := range expressions {
-			if matched, err := regexp.Match(pattern, []byte(v)); err == nil && matched {
-				return true
-			}
-		}
-
-	}
-	return false
 }
 
 // asSI parses a string for its number. Suffixes are allowed that loosely follow SI rules: K, Ki, M, Mi.

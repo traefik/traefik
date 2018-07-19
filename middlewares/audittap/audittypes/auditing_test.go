@@ -8,6 +8,7 @@ import (
 
 	"strconv"
 
+	"github.com/containous/traefik/middlewares/audittap/configuration"
 	"github.com/containous/traefik/middlewares/audittap/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -185,6 +186,61 @@ func TestAuditObfuscateUrlEncoded(t *testing.T) {
 	masked, err = obs.ObfuscateURLEncoded([]byte("x1=aefaef&d1=dere%20e&x1=wdawdwwd&d2=ziefjef&x1=brerber"))
 	assert.NoError(t, err)
 	assert.Equal(t, "x1=@++@&d1=dere%20e&x1=@++@&d2=ziefjef&x1=@++@", string(masked))
+}
+
+func TestAuditExclusion(t *testing.T) {
+
+	excludes := []*configuration.FilterOption{
+		&configuration.FilterOption{HeaderName: "Host", Contains: []string{"aaaignorehost1bbb", "hostignore"}},
+		&configuration.FilterOption{HeaderName: "Path", StartsWith: []string{"/excludeme", "/someotherpath"}},
+		&configuration.FilterOption{HeaderName: "Hdr1", Contains: []string{"abcdefg", "drv1"}},
+		&configuration.FilterOption{HeaderName: "Hdr2", Contains: []string{"tauditm"}},
+	}
+
+	spec := &AuditSpecification{
+		Exclusions: excludes,
+	}
+
+	excHost := NewRequestContext(httptest.NewRequest("", "/pathsegment?d=1&e=2", nil))
+	excHost.Req.Host = "abchostignoredef.somedomain"
+	assert.False(t, ShouldAudit(spec, excHost))
+
+	excPath := NewRequestContext(httptest.NewRequest("", "/excludeme?d=1&e=2", nil))
+	assert.False(t, ShouldAudit(spec, excPath))
+
+	req1 := httptest.NewRequest("", "/pathsegment?d=1&e=2", nil)
+	req1.Header.Set("Hdr1", "xdrv1z")
+	excHdr1 := NewRequestContext(req1)
+	assert.False(t, ShouldAudit(spec, excHdr1))
+
+	req2 := httptest.NewRequest("", "/pathsegment?d=1&e=2", nil)
+	req2.Header.Set("Hdr2", "don'tauditme")
+	excHdr2 := NewRequestContext(req2)
+	assert.False(t, ShouldAudit(spec, excHdr2))
+
+	incReq := httptest.NewRequest("", "/includeme?d=1&e=2", nil)
+	incReq.Header.Set("Hdr1", "bcdef")
+	incHdr1 := NewRequestContext(incReq)
+	assert.True(t, ShouldAudit(spec, incHdr1))
+}
+func TestSatisfiesFilter(t *testing.T) {
+	assert.True(t, satisfiesFilter("beginWithThis", &configuration.FilterOption{HeaderName: "x", StartsWith: []string{"begin"}}))
+	assert.True(t, satisfiesFilter("endWithThat", &configuration.FilterOption{HeaderName: "x", EndsWith: []string{"That"}}))
+	assert.True(t, satisfiesFilter("ithasthatthing", &configuration.FilterOption{HeaderName: "x", Contains: []string{"hasthat"}}))
+
+	assert.False(t, satisfiesFilter("bcd", &configuration.FilterOption{HeaderName: "x", StartsWith: []string{"abc"}}))
+	assert.False(t, satisfiesFilter("bcd", &configuration.FilterOption{HeaderName: "x", EndsWith: []string{"def"}}))
+	assert.False(t, satisfiesFilter("bcd", &configuration.FilterOption{HeaderName: "x", Contains: []string{"abcde"}}))
+}
+
+func TestShouldSatisfyFilterRegex(t *testing.T) {
+
+	mdtpURLPattern := "http(s)?:\\/\\/.*\\.(service|mdtp)($|[:\\/])"
+	assert.True(t, satisfiesFilter("beginWithThis", &configuration.FilterOption{HeaderName: "x", Matches: []string{"^begin.*"}}))
+	assert.True(t, satisfiesFilter("http://auth.service/auth/authority", &configuration.FilterOption{HeaderName: "x", Matches: []string{mdtpURLPattern}}))
+
+	assert.False(t, satisfiesFilter("abcdx", &configuration.FilterOption{HeaderName: "x", Matches: []string{"abcde"}}))
+	assert.False(t, satisfiesFilter("http://auth.com/auth/authority", &configuration.FilterOption{HeaderName: "x", Matches: []string{mdtpURLPattern}}))
 }
 
 type fixedClock time.Time
