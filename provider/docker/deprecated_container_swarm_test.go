@@ -667,7 +667,7 @@ func TestSwarmGetIPAddressV1(t *testing.T) {
 				SwarmMode: true,
 			}
 
-			actual := provider.getIPAddress(dData)
+			actual := provider.getDeprecatedIPAddress(dData)
 			if actual != test.expected {
 				t.Errorf("expected %q, got %q", test.expected, actual)
 			}
