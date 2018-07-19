@@ -222,7 +222,7 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration, provider p
 	return server
 }
 
-//Start starts the server.
+// Start starts the server.
 func (s *Server) Start() {
 	s.startHTTPServers()
 	s.startLeadership()
@@ -525,10 +525,10 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 
 	serverEntryPoint.hijackConnectionTracker = newHijackConnectionTracker()
 	serverEntryPoint.httpServer.ConnState = func(conn net.Conn, state http.ConnState) {
-		if state == http.StateHijacked {
+		switch state {
+		case http.StateHijacked:
 			serverEntryPoint.hijackConnectionTracker.AddHijackedConnection(conn)
-		}
-		if state == http.StateClosed {
+		case http.StateClosed:
 			serverEntryPoint.hijackConnectionTracker.RemoveHijackedConnection(conn)
 		}
 	}
