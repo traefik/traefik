@@ -63,6 +63,7 @@ const (
 	annotationKubernetesPublicKey               = "ingress.kubernetes.io/public-key"
 	annotationKubernetesReferrerPolicy          = "ingress.kubernetes.io/referrer-policy"
 	annotationKubernetesIsDevelopment           = "ingress.kubernetes.io/is-development"
+	annotationKubernetesProtocol                = "ingress.kubernetes.io/protocol"
 )
 
 // TODO [breaking] remove label support

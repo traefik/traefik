@@ -312,6 +312,8 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 							protocol = "https"
 						}
 
+						protocol = getStringValue(i.Annotations, annotationKubernetesProtocol, protocol)
+
 						if service.Spec.Type == "ExternalName" {
 							url := protocol + "://" + service.Spec.ExternalName
 							if port.Port != 443 && port.Port != 80 {

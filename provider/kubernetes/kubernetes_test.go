@@ -1224,6 +1224,15 @@ rateset:
 					iPaths(onePath(iPath("/customheaders"), iBackend("service1", intstr.FromInt(80))))),
 			),
 		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesProtocol, "h2c"),
+			iRules(
+				iRule(
+					iHost("protocol"),
+					iPaths(onePath(iPath("/"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
 	}
 
 	services := []*corev1.Service{
@@ -1350,6 +1359,12 @@ rateset:
 			),
 			backend("root2/",
 				servers(),
+				lbMethod("wrr"),
+			),
+			backend("protocol/",
+				servers(
+					server("h2c://example.com", weight(1)),
+					server("h2c://example.com", weight(1))),
 				lbMethod("wrr"),
 			),
 		),
@@ -1481,6 +1496,13 @@ rateset:
 				routes(
 					route("/root1", "PathPrefix:/root1"),
 					route("root", "Host:root"),
+				),
+			),
+			frontend("protocol/",
+				passHostHeader(),
+				routes(
+					route("/", "PathPrefix:/"),
+					route("protocol", "Host:protocol"),
 				),
 			),
 		),

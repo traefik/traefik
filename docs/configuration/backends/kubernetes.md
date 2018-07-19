@@ -159,7 +159,8 @@ The following general annotations are applicable on the Ingress object:
 | `traefik.ingress.kubernetes.io/whitelist-source-range: "1.2.3.0/24, fe80::/16"` | A comma-separated list of IP ranges permitted for access (6).                                                     |
 | `ingress.kubernetes.io/whitelist-x-forwarded-for: "true"`                       | Use `X-Forwarded-For` header as valid source of IP for the white list.                                            |
 | `traefik.ingress.kubernetes.io/app-root: "/index.html"`                         | Redirects all requests for `/` to the defined path. (4)                                                           |
-| `traefik.ingress.kubernetes.io/service-weights: <YML>`                          | Set ingress backend weights specified as percentage or decimal numbers in YAML. (5)                               |
+| `traefik.ingress.kubernetes.io/service-weights: <YML>`                          | Set ingress backend weights specified as percentage or decimal numbers in YAML. (5)            
+| `ingress.kubernetes.io/protocol: <NAME>`                                        | Set the protocol Traefik will use to communicate with pods 
 
 
 <1> `traefik.ingress.kubernetes.io/error-pages` example:
@@ -256,7 +257,7 @@ The following annotations are applicable on the Service object associated with a
 | `traefik.ingress.kubernetes.io/load-balancer-method: drr`                | Override the default `wrr` load balancer algorithm.                                                                                                                                   |
 | `traefik.ingress.kubernetes.io/max-conn-amount: 10`                      | Set a maximum number of connections to the backend.<br>Must be used in conjunction with the below label to take effect.                                                               |
 | `traefik.ingress.kubernetes.io/max-conn-extractor-func: client.ip`       | Set the function to be used against the request to determine what to limit maximum connections to the backend by.<br>Must be used in conjunction with the above label to take effect. |
-| `traefik.ingress.kubernetes.io/session-cookie-name: <NAME>`              | Manually set the cookie name for sticky sessions.                                                                                                                                     |
+| `traefik.ingress.kubernetes.io/session-cookie-name: <NAME>`              | Manually set the cookie name for sticky sessions.                                                                                                                                     | 
 
 !!! note
     `traefik.ingress.kubernetes.io/` and `ingress.kubernetes.io/` are supported prefixes.
