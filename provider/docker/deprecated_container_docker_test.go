@@ -898,7 +898,7 @@ func TestDockerGetIPAddressV1(t *testing.T) {
 			t.Parallel()
 			dData := parseContainer(test.container)
 			provider := &Provider{}
-			actual := provider.getIPAddress(dData)
+			actual := provider.getDeprecatedIPAddress(dData)
 			if actual != test.expected {
 				t.Errorf("expected %q, got %q", test.expected, actual)
 			}
