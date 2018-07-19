@@ -1293,7 +1293,7 @@ func TestDockerGetIPAddress(t *testing.T) {
 	}
 }
 
-func TestName(t *testing.T) {
+func TestDockerGetIPPort(t *testing.T) {
 	testCases := []struct {
 		desc         string
 		container    docker.ContainerJSON
