@@ -1287,8 +1287,169 @@ func TestDockerGetIPAddress(t *testing.T) {
 				Network: "webnet",
 			}
 
-			actual := provider.getIPAddress(dData)
+			actual := provider.getDeprecatedIPAddress(dData)
 			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestDockerGetIPPort(t *testing.T) {
+	testCases := []struct {
+		desc         string
+		container    docker.ContainerJSON
+		ip, port     string
+		expectsError bool
+	}{
+		{
+			desc: "label traefik.port not set, binding with ip:port should create a route to the bound ip:port",
+			container: containerJSON(
+				ports(nat.PortMap{
+					"80/tcp": []nat.PortBinding{
+						{
+							HostIP:   "1.2.3.4",
+							HostPort: "8081",
+						},
+					},
+				}),
+				withNetwork("testnet", ipv4("10.11.12.13"))),
+			ip:   "1.2.3.4",
+			port: "8081",
+		},
+		{
+			desc: "label traefik.port set, multiple bindings on different ports, uses the label to select the correct (first) binding",
+			container: containerJSON(
+				labels(map[string]string{
+					label.TraefikPort: "80",
+				}),
+				ports(nat.PortMap{
+					"80/tcp": []nat.PortBinding{
+						{
+							HostIP:   "1.2.3.4",
+							HostPort: "8081",
+						},
+					},
+					"443/tcp": []nat.PortBinding{
+						{
+							HostIP:   "5.6.7.8",
+							HostPort: "8082",
+						},
+					},
+				}),
+				withNetwork("testnet", ipv4("10.11.12.13"))),
+			ip:   "1.2.3.4",
+			port: "8081",
+		},
+		{
+			desc: "label traefik.port set, multiple bindings on different ports, uses the label to select the correct (second) binding",
+			container: containerJSON(
+				labels(map[string]string{
+					label.TraefikPort: "443",
+				}),
+				ports(nat.PortMap{
+					"80/tcp": []nat.PortBinding{
+						{
+							HostIP:   "1.2.3.4",
+							HostPort: "8081",
+						},
+					},
+					"443/tcp": []nat.PortBinding{
+						{
+							HostIP:   "5.6.7.8",
+							HostPort: "8082",
+						},
+					},
+				}),
+				withNetwork("testnet", ipv4("10.11.12.13"))),
+			ip:   "5.6.7.8",
+			port: "8082",
+		},
+		{
+			desc: "label traefik.port set, single binding with ip:port for the label, creates the route",
+			container: containerJSON(
+				labels(map[string]string{
+					label.TraefikPort: "443",
+				}),
+				ports(nat.PortMap{
+					"443/tcp": []nat.PortBinding{
+						{
+							HostIP:   "5.6.7.8",
+							HostPort: "8082",
+						},
+					},
+				}),
+				withNetwork("testnet", ipv4("10.11.12.13"))),
+			ip:   "5.6.7.8",
+			port: "8082",
+		},
+		{
+			desc: "label traefik.port not set, single binding with port only, server ignored",
+			container: containerJSON(
+				ports(nat.PortMap{
+					"80/tcp": []nat.PortBinding{
+						{
+							HostPort: "8082",
+						},
+					},
+				}),
+				withNetwork("testnet", ipv4("10.11.12.13"))),
+			expectsError: true,
+		},
+		{
+			desc: "label traefik.port not set, no binding, server ignored",
+			container: containerJSON(
+				withNetwork("testnet", ipv4("10.11.12.13"))),
+			expectsError: true,
+		},
+		{
+			desc: "label traefik.port set, no binding on the corresponding port, server ignored",
+			container: containerJSON(
+				labels(map[string]string{
+					label.TraefikPort: "80",
+				}),
+				ports(nat.PortMap{
+					"443/tcp": []nat.PortBinding{
+						{
+							HostIP:   "5.6.7.8",
+							HostPort: "8082",
+						},
+					},
+				}),
+				withNetwork("testnet", ipv4("10.11.12.13"))),
+			expectsError: true,
+		},
+		{
+			desc: "label traefik.port set, no binding, server ignored",
+			container: containerJSON(
+				labels(map[string]string{
+					label.TraefikPort: "80",
+				}),
+				withNetwork("testnet", ipv4("10.11.12.13"))),
+			expectsError: true,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			dData := parseContainer(test.container)
+			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
+			dData.SegmentLabels = segmentProperties[""]
+
+			provider := &Provider{
+				Network:       "webnet",
+				UseBindPortIP: true,
+			}
+
+			actualIP, actualPort, actualError := provider.getIPPort(dData)
+			if test.expectsError {
+				require.Error(t, actualError)
+			} else {
+				require.NoError(t, actualError)
+			}
+			assert.Equal(t, test.ip, actualIP)
+			assert.Equal(t, test.port, actualPort)
 		})
 	}
 }
