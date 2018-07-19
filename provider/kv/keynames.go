@@ -28,7 +28,6 @@ const (
 	pathFrontends                         = "/frontends/"
 	pathFrontendBackend                   = "/backend"
 	pathFrontendPriority                  = "/priority"
-	pathFrontendPassHostHeaderDeprecated  = "/passHostHeader" // Deprecated
 	pathFrontendPassHostHeader            = "/passhostheader"
 	pathFrontendPassTLSCert               = "/passtlscert"
 	pathFrontendWhiteListSourceRange      = "/whitelist/sourcerange"

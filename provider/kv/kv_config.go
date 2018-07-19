@@ -43,7 +43,7 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		// Frontend functions
 		"getBackendName":    p.getFuncString(pathFrontendBackend, ""),
 		"getPriority":       p.getFuncInt(pathFrontendPriority, label.DefaultFrontendPriority),
-		"getPassHostHeader": p.getPassHostHeader(),
+		"getPassHostHeader": p.getFuncBool(pathFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getPassTLSCert":    p.getFuncBool(pathFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getEntryPoints":    p.getFuncList(pathFrontendEntryPoints),
 		"getBasicAuth":      p.getFuncList(pathFrontendBasicAuth), // Deprecated
@@ -79,24 +79,6 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 	}
 
 	return configuration
-}
-
-// Deprecated
-func (p *Provider) getPassHostHeader() func(rootPath string) bool {
-	return func(rootPath string) bool {
-		rawValue := p.get("", rootPath, pathFrontendPassHostHeader)
-
-		if len(rawValue) > 0 {
-			value, err := strconv.ParseBool(rawValue)
-			if err != nil {
-				log.Errorf("Invalid value for %s %s: %s", rootPath, pathFrontendPassHostHeader, rawValue)
-				return label.DefaultPassHostHeader
-			}
-			return value
-		}
-
-		return p.getBool(label.DefaultPassHostHeader, rootPath, pathFrontendPassHostHeaderDeprecated)
-	}
 }
 
 // Deprecated
