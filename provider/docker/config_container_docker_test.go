@@ -1287,7 +1287,7 @@ func TestDockerGetIPAddress(t *testing.T) {
 				Network: "webnet",
 			}
 
-			actual := provider.getIPAddress(dData)
+			actual := provider.getDeprecatedIPAddress(dData)
 			assert.Equal(t, test.expected, actual)
 		})
 	}

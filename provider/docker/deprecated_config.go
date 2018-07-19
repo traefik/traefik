@@ -19,10 +19,10 @@ func (p *Provider) buildConfigurationV1(containersInspected []dockerData) *types
 		"isBackendLBSwarm": isBackendLBSwarm,
 
 		// Backend functions
-		"getIPAddress": p.getIPAddress,
-		"getPort":      getPortV1,
-		"getWeight":    getFuncIntLabelV1(label.TraefikWeight, label.DefaultWeight),
-		"getProtocol":  getFuncStringLabelV1(label.TraefikProtocol, label.DefaultProtocol),
+		"getDeprecatedIPAddress": p.getDeprecatedIPAddress,
+		"getPort":                getPortV1,
+		"getWeight":              getFuncIntLabelV1(label.TraefikWeight, label.DefaultWeight),
+		"getProtocol":            getFuncStringLabelV1(label.TraefikProtocol, label.DefaultProtocol),
 
 		"hasCircuitBreakerLabel":      hasFuncV1(label.TraefikBackendCircuitBreakerExpression),
 		"getCircuitBreakerExpression": getFuncStringLabelV1(label.TraefikBackendCircuitBreakerExpression, label.DefaultCircuitBreakerExpression),

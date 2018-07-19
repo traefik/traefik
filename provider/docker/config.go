@@ -33,13 +33,13 @@ func (p *Provider) buildConfigurationV2(containersInspected []dockerData) *types
 		"getDomain":        label.GetFuncString(label.TraefikDomain, p.Domain),
 
 		// Backend functions
-		"getIPAddress":      p.getDeprecatedIPAddress, // TODO: Should we expose getIPPort instead?
-		"getServers":        p.getServers,
-		"getMaxConn":        label.GetMaxConn,
-		"getHealthCheck":    label.GetHealthCheck,
-		"getBuffering":      label.GetBuffering,
-		"getCircuitBreaker": label.GetCircuitBreaker,
-		"getLoadBalancer":   label.GetLoadBalancer,
+		"getDeprecatedIPAddress": p.getDeprecatedIPAddress, // TODO: Should we expose getIPPort instead?
+		"getServers":             p.getServers,
+		"getMaxConn":             label.GetMaxConn,
+		"getHealthCheck":         label.GetHealthCheck,
+		"getBuffering":           label.GetBuffering,
+		"getCircuitBreaker":      label.GetCircuitBreaker,
+		"getLoadBalancer":        label.GetLoadBalancer,
 
 		// Frontend functions
 		"getBackendName":    getBackendName,
