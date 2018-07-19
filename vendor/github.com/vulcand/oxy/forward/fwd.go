@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
@@ -126,6 +127,14 @@ func StateListener(stateListener UrlForwardingStateListener) optSetter {
 	}
 }
 
+// WebsocketConnectionClosedHook defines a hook called when websocket connection is closed
+func WebsocketConnectionClosedHook(hook func(req *http.Request, conn net.Conn)) optSetter {
+	return func(f *Forwarder) error {
+		f.httpForwarder.websocketConnectionClosedHook = hook
+		return nil
+	}
+}
+
 // ResponseModifier defines a response modifier for the HTTP forwarder
 func ResponseModifier(responseModifier func(*http.Response) error) optSetter {
 	return func(f *Forwarder) error {
@@ -188,7 +197,8 @@ type httpForwarder struct {
 
 	log OxyLogger
 
-	bufferPool httputil.BufferPool
+	bufferPool                    httputil.BufferPool
+	websocketConnectionClosedHook func(req *http.Request, conn net.Conn)
 }
 
 const defaultFlushInterval = time.Duration(100) * time.Millisecond
@@ -374,8 +384,13 @@ func (f *httpForwarder) serveWebSocket(w http.ResponseWriter, req *http.Request,
 		log.Errorf("vulcand/oxy/forward/websocket: Error while upgrading connection : %v", err)
 		return
 	}
-	defer underlyingConn.Close()
-	defer targetConn.Close()
+	defer func() {
+		underlyingConn.Close()
+		targetConn.Close()
+		if f.websocketConnectionClosedHook != nil {
+			f.websocketConnectionClosedHook(req, underlyingConn.UnderlyingConn())
+		}
+	}()
 
 	errClient := make(chan error, 1)
 	errBackend := make(chan error, 1)
