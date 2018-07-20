@@ -221,6 +221,42 @@ func TestAuditExclusion(t *testing.T) {
 	incHdr1 := NewRequestContext(incReq)
 	assert.True(t, ShouldAudit(incHdr1, spec))
 }
+
+func TestAuditInclusion(t *testing.T) {
+
+	includes := []*Filter{
+		{Source: "Host", Contains: []string{"somehostname", "hostinc"}},
+		{Source: "Path", StartsWith: []string{"/includeme", "/someotherpath"}},
+		{Source: "Hdr1", Contains: []string{"abcdefg", "drv1"}},
+		{Source: "Hdr2", Contains: []string{"auditme"}},
+	}
+
+	spec := &AuditSpecification{
+		Inclusions: includes,
+	}
+
+	incHost := NewRequestContext(httptest.NewRequest("", "/pathsegment?d=1&e=2", nil))
+	incHost.Req.Host = "abchostincdef.somedomain"
+	assert.True(t, ShouldAudit(incHost, spec))
+
+	incPath := NewRequestContext(httptest.NewRequest("", "/includeme?d=1&e=2", nil))
+	assert.True(t, ShouldAudit(incPath, spec))
+
+	req1 := httptest.NewRequest("", "/pathsegment?d=1&e=2", nil)
+	req1.Header.Set("Hdr1", "xdrv1z")
+	incHdr1 := NewRequestContext(req1)
+	assert.True(t, ShouldAudit(incHdr1, spec))
+
+	req2 := httptest.NewRequest("", "/pathsegment?d=1&e=2", nil)
+	req2.Header.Set("Hdr2", "auditme")
+	incHdr2 := NewRequestContext(req2)
+	assert.True(t, ShouldAudit(incHdr2, spec))
+
+	excReq := httptest.NewRequest("", "/excludeme?d=1&e=2", nil)
+	excReq.Header.Set("Hdr1", "bcdef")
+	excHdr1 := NewRequestContext(excReq)
+	assert.False(t, ShouldAudit(excHdr1, spec))
+}
 func TestSatisfiesFilter(t *testing.T) {
 	assert.True(t, filterSatisfies(Filter{Source: "x", StartsWith: []string{"begin"}}, "beginWithThis"))
 	assert.True(t, filterSatisfies(Filter{Source: "x", EndsWith: []string{"That"}}, "endWithThat"))
@@ -242,7 +278,7 @@ func TestShouldSatisfyFilterRegex(t *testing.T) {
 }
 
 func filterSatisfies(f Filter, s string) bool {
-	return f.SatisfiedBy(s)
+	return f.satisfiedBy(s)
 }
 
 type fixedClock time.Time

@@ -76,6 +76,7 @@ type AuditSpecification struct {
 	AuditConstraints
 	AuditObfuscation
 	HeaderMappings
+	Inclusions []*Filter
 	Exclusions []*Filter
 }
 
@@ -231,16 +232,20 @@ func copyRequestBody(req *http.Request) ([]byte, int, error) {
 // ShouldAudit asserts if request metadata matches specified exclusions from config
 func ShouldAudit(rc *RequestContext, spec *AuditSpecification) bool {
 
+	include := false
+	for _, inc := range spec.Inclusions {
+		if rc.satisfiesFilter(inc) {
+			include = true
+			break
+		}
+	}
+
+	if !include && len(spec.Inclusions) > 0 {
+		return false
+	}
+
 	for _, exc := range spec.Exclusions {
-		lcHdr := strings.ToLower(exc.Source)
-		// Get host or path direct from request
-		if (lcHdr == "host" || lcHdr == "requesthost") && exc.SatisfiedBy(rc.Req.Host) {
-			return false
-		} else if lcHdr == "path" || lcHdr == "requestpath" {
-			if exc.SatisfiedBy(rc.URL.Path) {
-				return false
-			}
-		} else if exc.SatisfiedBy(rc.Req.Header.Get(exc.Source)) {
+		if rc.satisfiesFilter(exc) {
 			return false
 		}
 	}
@@ -248,8 +253,23 @@ func ShouldAudit(rc *RequestContext, spec *AuditSpecification) bool {
 	return true
 }
 
+func (rc *RequestContext) satisfiesFilter(filter *Filter) bool {
+	lcHdr := strings.ToLower(filter.Source)
+	// Get host or path direct from request
+	if (lcHdr == "host" || lcHdr == "requesthost") && filter.satisfiedBy(rc.Req.Host) {
+		return true
+	} else if lcHdr == "path" || lcHdr == "requestpath" {
+		if filter.satisfiedBy(rc.URL.Path) {
+			return true
+		}
+	} else if filter.satisfiedBy(rc.Req.Header.Get(filter.Source)) {
+		return true
+	}
+	return false
+}
+
 // SatisfiedBy checks if this filter satisfies the supplied value
-func (f *Filter) SatisfiedBy(s string) bool {
+func (f *Filter) satisfiedBy(s string) bool {
 	return matchesTerm(s, f.StartsWith, strings.HasPrefix) ||
 		matchesTerm(s, f.EndsWith, strings.HasSuffix) ||
 		matchesTerm(s, f.Contains, strings.Contains) ||

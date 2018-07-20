@@ -89,6 +89,11 @@ func NewAuditTap(config *configuration.AuditSink, streams []audittypes.AuditStre
 		return nil, fmt.Errorf("Failed to construct audit exclusion filter %v", err)
 	}
 
+	inclusions, err := optionsToFilters(config.Inclusions)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to construct audit exclusion filter %v", err)
+	}
+
 	obfuscate := audittypes.AuditObfuscation{}
 	obfuscate.MaskFields = config.MaskFields
 	if len(obfuscate.MaskFields) > 0 {
@@ -111,6 +116,7 @@ func NewAuditTap(config *configuration.AuditSink, streams []audittypes.AuditStre
 		AuditObfuscation: obfuscate,
 		HeaderMappings:   dynamicFields,
 		Exclusions:       exclusions,
+		Inclusions:       inclusions,
 	}
 
 	ac := AuditConfig{
