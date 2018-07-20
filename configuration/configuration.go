@@ -11,6 +11,7 @@ import (
 	"github.com/containous/traefik/api"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares/tracing"
+	"github.com/containous/traefik/middlewares/tracing/datadog"
 	"github.com/containous/traefik/middlewares/tracing/jaeger"
 	"github.com/containous/traefik/middlewares/tracing/zipkin"
 	"github.com/containous/traefik/ping"
@@ -344,6 +345,18 @@ func (gc *GlobalConfiguration) initTracing() {
 			if gc.Tracing.Jaeger != nil {
 				log.Warn("Jaeger configuration will be ignored")
 				gc.Tracing.Jaeger = nil
+			}
+		case datadog.Name:
+			if gc.Tracing.DataDog == nil {
+				gc.Tracing.DataDog = &datadog.Config{
+					LocalAgentHostPort: "localhost:8126",
+					GlobalTag:          "",
+					Debug:              false,
+				}
+			}
+			if gc.Tracing.DataDog != nil {
+				log.Warn("DataDog configuration will be ignored")
+				gc.Tracing.DataDog = nil
 			}
 		default:
 			log.Warnf("Unknown tracer %q", gc.Tracing.Backend)
