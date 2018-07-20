@@ -94,6 +94,11 @@ func NewAuditTap(config *configuration.AuditSink, streams []audittypes.AuditStre
 		return nil, fmt.Errorf("Failed to construct audit exclusion filter %v", err)
 	}
 
+	reqBodyFilters, err := optionsToFilters(config.RequestBodyCaptures)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to construct request body filter %v", err)
+	}
+
 	obfuscate := audittypes.AuditObfuscation{}
 	obfuscate.MaskFields = config.MaskFields
 	if len(obfuscate.MaskFields) > 0 {
@@ -112,11 +117,12 @@ func NewAuditTap(config *configuration.AuditSink, streams []audittypes.AuditStre
 	constraints := audittypes.AuditConstraints{MaxAuditLength: maxAudit, MaxPayloadContentsLength: maxPayload}
 
 	auditSpec := audittypes.AuditSpecification{
-		AuditConstraints: constraints,
-		AuditObfuscation: obfuscate,
-		HeaderMappings:   dynamicFields,
-		Exclusions:       exclusions,
-		Inclusions:       inclusions,
+		AuditConstraints:    constraints,
+		AuditObfuscation:    obfuscate,
+		HeaderMappings:      dynamicFields,
+		Exclusions:          exclusions,
+		Inclusions:          inclusions,
+		RequestBodyCaptures: reqBodyFilters,
 	}
 
 	ac := AuditConfig{

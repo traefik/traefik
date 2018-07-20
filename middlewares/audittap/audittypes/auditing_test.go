@@ -257,6 +257,32 @@ func TestAuditInclusion(t *testing.T) {
 	excHdr1 := NewRequestContext(excReq)
 	assert.False(t, ShouldAudit(excHdr1, spec))
 }
+
+func TestShouldCaptureRequestBody(t *testing.T) {
+
+	filters := []*Filter{
+		{Source: "Host", Contains: []string{"somehostname", "hostinc"}},
+		{Source: "Host", Matches: []*regexp.Regexp{
+			regexp.MustCompile(".*\\.public.mdtp"),
+			regexp.MustCompile(".*\\.random\\.com")}},
+	}
+
+	spec := &AuditSpecification{
+		RequestBodyCaptures: filters,
+	}
+
+	hostinc := NewRequestContext(httptest.NewRequest("", "/pathsegment?d=1&e=2", nil))
+	hostinc.Req.Host = "abchostincdef.somedomain"
+	assert.True(t, ShouldCaptureRequestBody(hostinc, spec))
+
+	mdtppub := NewRequestContext(httptest.NewRequest("", "/pathsegment?d=1&e=2", nil))
+	mdtppub.Req.Host = "someapp.public.mdtp"
+	assert.True(t, ShouldCaptureRequestBody(hostinc, spec))
+
+	mdtpprotect := NewRequestContext(httptest.NewRequest("", "/pathsegment?d=1&e=2", nil))
+	mdtpprotect.Req.Host = "someapp.protected.mdtp"
+	assert.False(t, ShouldCaptureRequestBody(mdtpprotect, spec))
+}
 func TestSatisfiesFilter(t *testing.T) {
 	assert.True(t, filterSatisfies(Filter{Source: "x", StartsWith: []string{"begin"}}, "beginWithThis"))
 	assert.True(t, filterSatisfies(Filter{Source: "x", EndsWith: []string{"That"}}, "endWithThat"))

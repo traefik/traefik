@@ -42,7 +42,16 @@ An example follows
     field1 = "header-1"
     [auditSink.headerMappings.tags]
     field2 = "header-2"    
+  [auditSink.requestBodyCaptures]
+    [auditSink.requestBodyCaptures.c1]
+    headerName = "RequestHost"
+    matches = [".*\\.public\\.mdtp"]
+    [auditSink.requestBodyCaptures.c2]
+    headerName = "RequestHost"
+    endsWith = ["-frontend"]      
 ```
+
+requestBodyCaptures
 
 The properties are as follow:
 
@@ -60,11 +69,12 @@ The properties are as follow:
 * auditSink.inclusions.incname (optional): include for auditing if header matches condition
 * auditSink.exclusions.excname (optional): exclude for auditing if header matches condition
 * headerMappings: dynamic extraction of headers into a section of the audit event
+* requestBodyCaptures: include request body in the audit
 
 ### Notes
 maskFields / maskValue behaviour varies depending on the proxyingFor style. Currently this is only applied for proxyingFor=MDTP in which case the masking is only applied for request/response payloads whose content type is _application/x-www-form-urlencoded_.
 
-headerMappings are applied by the MDTP audit tap
+headerMappings, requestBodyCaptures are currently only applied by the MDTP audit tap
 
 inclusions/exclusions filters control request auditing based on the header name when the header satisfies any of the specified values. Matching condition can be
     * contains
@@ -73,3 +83,4 @@ inclusions/exclusions filters control request auditing based on the header name 
     * matches (a regex pattern)
 
 Inclusions are applied prior to exclusions. So if inclusions are specified then at least 1 condition must be satisfied by the request before any exclusions will be evaluated.
+ 

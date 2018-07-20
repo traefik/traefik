@@ -76,8 +76,9 @@ type AuditSpecification struct {
 	AuditConstraints
 	AuditObfuscation
 	HeaderMappings
-	Inclusions []*Filter
-	Exclusions []*Filter
+	Inclusions          []*Filter
+	Exclusions          []*Filter
+	RequestBodyCaptures []*Filter
 }
 
 // AuditStream describes a type to which audit events can be sent.
@@ -251,6 +252,18 @@ func ShouldAudit(rc *RequestContext, spec *AuditSpecification) bool {
 	}
 
 	return true
+}
+
+// ShouldCaptureRequestBody evaluates the host against the frontend host filters
+func ShouldCaptureRequestBody(rc *RequestContext, spec *AuditSpecification) bool {
+	isFrontend := false
+	for _, inc := range spec.RequestBodyCaptures {
+		if rc.satisfiesFilter(inc) {
+			isFrontend = true
+			break
+		}
+	}
+	return isFrontend
 }
 
 func (rc *RequestContext) satisfiesFilter(filter *Filter) bool {

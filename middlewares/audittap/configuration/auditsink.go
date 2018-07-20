@@ -26,6 +26,9 @@ type Exclusions map[string]*FilterOption
 // Inclusions is a container type for include filters
 type Inclusions map[string]*FilterOption
 
+// RequestBodyCaptures is a container type for request body capture filters
+type RequestBodyCaptures map[string]*FilterOption
+
 // MaskFields specifies fields whose values should be obfuscated
 type MaskFields []string
 
@@ -39,28 +42,29 @@ type HeaderMappings map[string]FieldHeaderMapping
 
 // AuditSink holds AuditSink configuration
 type AuditSink struct {
-	Inclusions               Inclusions     `json:"inclusions,omitempty"`
-	Exclusions               Exclusions     `json:"exclusions,omitempty"`
-	Type                     string         `json:"type,omitempty" description:"The type of sink: File/HTTP/Kafka/AMQP/Blackhole"`
-	ClientID                 string         `json:"clientId,omitempty" description:"Identifier to be used for the sink client"`
-	ClientVersion            string         `json:"clientVersion,omitempty" description:"Version info to identify the sink client"`
-	Endpoint                 string         `json:"endpoint,omitempty" description:"Endpoint for audit tap. e.g. url for HTTP/Kafka/AMQP or filename for File"`
-	Destination              string         `json:"destination,omitempty" description:"For Kafka the topic, AMQP the exchange etc."`
-	MaxEntityLength          string         `json:"maxEntityLength,omitempty" description:"MaxEntityLength truncates entities (bodies) longer than this (units are allowed, eg. 32KiB)"`
-	NumProducers             int            `json:"numProducers,omitempty" description:"The number of concurrent producers which can send messages to the endpoint"`
-	ChannelLength            int            `json:"channelLength,omitempty" description:"Size of the in-memory message channel.  Used as a buffer in case of Producer failure"`
-	DiskStorePath            string         `json:"diskStorePath,omitempty" description:"Directory path for disk-backed persistent audit message queue"`
-	ProxyingFor              string         `json:"proxyingFor,omitempty" description:"Defines the style of auditing event required. e.g API, RATE"`
-	AuditSource              string         `json:"auditSource,omitempty" description:"Value to use for auditSource in audit message"`
-	AuditType                string         `json:"auditType,omitempty" description:"Value to use for auditType in audit message"`
-	ForwardXRequestID        bool           `json:"forwardXrequestId" description:"Forward an existing X-Request-ID header if present"`
-	EncryptSecret            string         `json:"encryptSecret,omitempty" description:"Key for encrypting failed events. If present events will be AES encrypted"`
-	MaxAuditLength           string         `json:"maxAuditLength,omitempty" description:"The allowed maximum size of an audit event (units are allowed, eg. 32K)"`
-	MaxPayloadContentsLength string         `json:"maxPayloadContentsLength,omitempty" description:"The allowed maximum combined size of audit requestPayload.contents and responsePayload.contents (units are allowed, eg. 32K)"`
-	MaskValue                string         `json:"maskValue,omitempty" description:"The value to be used when obfuscating fields. Default is #########"`
-	RequestIDLabel           string         `json:"requestIdLabel,omitempty" description:"Additional prefix value to be added to the X-Request-ID header after any 's' prefix"`
-	MaskFields               MaskFields     `json:"maskFields,omitempty" description:"Names of payload fields whose values should be obfuscated"`
-	HeaderMappings           HeaderMappings `json:"headerMappings,omitempty" description:"Configuration of dynamic audit fields whose value is sourced form a header"`
+	Inclusions               Inclusions          `json:"inclusions,omitempty"`
+	Exclusions               Exclusions          `json:"exclusions,omitempty"`
+	RequestBodyCaptures      RequestBodyCaptures `json:"requestBodyCaptures,omitempty" description:"Filter to specify when to capture request body. MDTP only"`
+	Type                     string              `json:"type,omitempty" description:"The type of sink: File/HTTP/Kafka/AMQP/Blackhole"`
+	ClientID                 string              `json:"clientId,omitempty" description:"Identifier to be used for the sink client"`
+	ClientVersion            string              `json:"clientVersion,omitempty" description:"Version info to identify the sink client"`
+	Endpoint                 string              `json:"endpoint,omitempty" description:"Endpoint for audit tap. e.g. url for HTTP/Kafka/AMQP or filename for File"`
+	Destination              string              `json:"destination,omitempty" description:"For Kafka the topic, AMQP the exchange etc."`
+	MaxEntityLength          string              `json:"maxEntityLength,omitempty" description:"MaxEntityLength truncates entities (bodies) longer than this (units are allowed, eg. 32KiB)"`
+	NumProducers             int                 `json:"numProducers,omitempty" description:"The number of concurrent producers which can send messages to the endpoint"`
+	ChannelLength            int                 `json:"channelLength,omitempty" description:"Size of the in-memory message channel.  Used as a buffer in case of Producer failure"`
+	DiskStorePath            string              `json:"diskStorePath,omitempty" description:"Directory path for disk-backed persistent audit message queue"`
+	ProxyingFor              string              `json:"proxyingFor,omitempty" description:"Defines the style of auditing event required. e.g API, RATE"`
+	AuditSource              string              `json:"auditSource,omitempty" description:"Value to use for auditSource in audit message"`
+	AuditType                string              `json:"auditType,omitempty" description:"Value to use for auditType in audit message"`
+	ForwardXRequestID        bool                `json:"forwardXrequestId" description:"Forward an existing X-Request-ID header if present"`
+	EncryptSecret            string              `json:"encryptSecret,omitempty" description:"Key for encrypting failed events. If present events will be AES encrypted"`
+	MaxAuditLength           string              `json:"maxAuditLength,omitempty" description:"The allowed maximum size of an audit event (units are allowed, eg. 32K)"`
+	MaxPayloadContentsLength string              `json:"maxPayloadContentsLength,omitempty" description:"The allowed maximum combined size of audit requestPayload.contents and responsePayload.contents (units are allowed, eg. 32K)"`
+	MaskValue                string              `json:"maskValue,omitempty" description:"The value to be used when obfuscating fields. Default is #########"`
+	RequestIDLabel           string              `json:"requestIdLabel,omitempty" description:"Additional prefix value to be added to the X-Request-ID header after any 's' prefix"`
+	MaskFields               MaskFields          `json:"maskFields,omitempty" description:"Names of payload fields whose values should be obfuscated"`
+	HeaderMappings           HeaderMappings      `json:"headerMappings,omitempty" description:"Configuration of dynamic audit fields whose value is sourced form a header"`
 }
 
 // Set adds strings elem into the the parser
