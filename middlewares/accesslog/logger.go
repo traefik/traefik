@@ -167,7 +167,6 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 	core[RequestMethod] = req.Method
 	core[RequestPath] = urlCopyString
 	core[RequestProtocol] = req.Proto
-	core[RequestLine] = fmt.Sprintf("%s %s %s", req.Method, urlCopyString, req.Proto)
 
 	core[ClientAddr] = req.RemoteAddr
 	core[ClientHost], core[ClientPort] = silentSplitHostPort(req.RemoteAddr)
@@ -262,7 +261,6 @@ func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestR
 	core[Duration] = totalDuration
 
 	if l.keepAccessLog(crw.Status(), retryAttempts, totalDuration) {
-		core[DownstreamStatusLine] = fmt.Sprintf("%03d %s", crw.Status(), http.StatusText(crw.Status()))
 		core[DownstreamContentSize] = crw.Size()
 		if original, ok := core[OriginContentSize]; ok {
 			o64 := original.(int64)
