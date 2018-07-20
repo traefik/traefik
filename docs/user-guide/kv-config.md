@@ -370,10 +370,6 @@ As a result, it may be possible for Træfik to read an intermediate configuratio
 To solve this problem, Træfik supports a special key called `/traefik/alias`.
 If set, Træfik use the value as an alternative key prefix.
 
-!!! note
-    The field `useAPIV3` allows using Etcd V3 API which should support updating multiple keys atomically with Etcd.
-    Etcd API V2 is deprecated and, in the future, Træfik will support API V3 by default.
-
 Given the key structure below, Træfik will use the `http://172.17.0.2:80` as its only backend (frontend keys have been omitted for brevity).
 
 | Key                                                                     | Value                       |
