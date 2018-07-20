@@ -44,7 +44,7 @@ type HeaderMappings map[string]FieldHeaderMapping
 type AuditSink struct {
 	Inclusions               Inclusions          `json:"inclusions,omitempty"`
 	Exclusions               Exclusions          `json:"exclusions,omitempty"`
-	RequestBodyCaptures      RequestBodyCaptures `json:"requestBodyCaptures,omitempty" description:"Filter to specify when to capture request body. MDTP only"`
+	RequestBodyCaptures      RequestBodyCaptures `json:"requestBodyCaptures,omitempty"`
 	Type                     string              `json:"type,omitempty" description:"The type of sink: File/HTTP/Kafka/AMQP/Blackhole"`
 	ClientID                 string              `json:"clientId,omitempty" description:"Identifier to be used for the sink client"`
 	ClientVersion            string              `json:"clientVersion,omitempty" description:"Version info to identify the sink client"`

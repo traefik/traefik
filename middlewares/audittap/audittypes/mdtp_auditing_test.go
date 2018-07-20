@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -38,7 +39,7 @@ func TestMdtpAuditEvent(t *testing.T) {
 	respHdrs.Set("Location", "nowherespecific")
 	respInfo := types.ResponseInfo{200, 101, []byte(respBody), 2048}
 
-	spec := &AuditSpecification{}
+	spec := makeAuditSpec()
 	ev.AppendRequest(NewRequestContext(req), spec)
 	ev.AppendResponse(respHdrs, respInfo, spec)
 
@@ -133,7 +134,9 @@ func TestRequestPayloadObfuscatedForFormContentType(t *testing.T) {
 	respInfo := types.ResponseInfo{200, 101, []byte(respBody), 2048}
 
 	obfuscate := AuditObfuscation{MaskFields: []string{"password", "authKey"}, MaskValue: "@@@"}
-	spec := &AuditSpecification{AuditObfuscation: obfuscate}
+	spec := makeAuditSpec()
+	spec.AuditObfuscation = obfuscate
+
 	expectedBody := "say=Hi&password=@@@&authKey=@@@&to=Dave"
 	ev.AppendRequest(NewRequestContext(req), spec)
 	ev.AppendResponse(respHdrs, respInfo, spec)
@@ -160,7 +163,9 @@ func TestPayloadsNotObfuscated(t *testing.T) {
 	respInfo := types.ResponseInfo{200, 101, []byte(respBody), 2048}
 
 	obfuscate := AuditObfuscation{MaskFields: []string{"password", "authKey"}, MaskValue: "@@@"}
-	spec := &AuditSpecification{AuditObfuscation: obfuscate}
+	spec := makeAuditSpec()
+	spec.AuditObfuscation = obfuscate
+
 	ev.AppendRequest(NewRequestContext(req), spec)
 	ev.AppendResponse(respHdrs, respInfo, spec)
 
@@ -258,4 +263,10 @@ func TestAuditSourceDerivation(t *testing.T) {
 	assert.Equal(t, "my-app", deriveAuditSource("  my-app.service  "))
 	assert.Equal(t, "my-app", deriveAuditSource("my-app.protected.mdtp"))
 	assert.Equal(t, "my-app", deriveAuditSource("my-app.public.mdtp"))
+}
+
+func makeAuditSpec() *AuditSpecification {
+	return &AuditSpecification{
+		RequestBodyCaptures: []*Filter{{Source: "Host", Matches: []*regexp.Regexp{regexp.MustCompile(".*")}}},
+	}
 }

@@ -132,15 +132,17 @@ func detailFromRequest(ctx *RequestContext, spec *AuditSpecification) types.Data
 
 	ct := ctx.FlatHeaders.GetString("content-type")
 	m[requestContentType] = ct
-	if body, _, err := copyRequestBody(ctx.Req); err == nil {
-		m[requestBodyLen] = len(body)
-		// Obfuscation only applies to form requests
-		if ct == "application/x-www-form-urlencoded" && &spec.AuditObfuscation != nil {
-			if sanitised, err := spec.AuditObfuscation.ObfuscateURLEncoded(body); err == nil {
-				m[requestBody] = strings.TrimSpace(string(sanitised))
+	if ShouldCaptureRequestBody(ctx, spec) {
+		if body, _, err := copyRequestBody(ctx.Req); err == nil {
+			m[requestBodyLen] = len(body)
+			// Obfuscation only applies to form requests
+			if ct == "application/x-www-form-urlencoded" && &spec.AuditObfuscation != nil {
+				if sanitised, err := spec.AuditObfuscation.ObfuscateURLEncoded(body); err == nil {
+					m[requestBody] = strings.TrimSpace(string(sanitised))
+				}
+			} else {
+				m[requestBody] = strings.TrimSpace(string(body))
 			}
-		} else {
-			m[requestBody] = strings.TrimSpace(string(body))
 		}
 	}
 
