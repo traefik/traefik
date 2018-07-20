@@ -56,12 +56,6 @@ Træfik can be configured with a file.
     passTLSCert = true
     priority = 42
 
-    # Use frontends.frontend1.auth.basic below instead
-    basicAuth = [
-      "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-      "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-    ]
-
     [frontends.frontend1.auth]
       headerField = "X-WebAuth-User"
       [frontends.frontend1.auth.basic]

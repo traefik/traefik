@@ -265,7 +265,10 @@ func TestServerGenericFrontendAuthFail(t *testing.T) {
 				"frontend": {
 					EntryPoints: []string{"http"},
 					Backend:     "backend",
-					BasicAuth:   []string{""},
+					Auth: &types.Auth{
+						Basic: &types.Basic{
+							Users: []string{""},
+						}},
 				},
 			},
 			Backends: map[string]*types.Backend{
