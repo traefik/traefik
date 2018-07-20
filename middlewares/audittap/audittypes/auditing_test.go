@@ -3,12 +3,12 @@ package audittypes
 import (
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"testing"
 	"time"
 
 	"strconv"
 
-	"github.com/containous/traefik/middlewares/audittap/configuration"
 	"github.com/containous/traefik/middlewares/audittap/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -188,11 +188,11 @@ func TestAuditObfuscateUrlEncoded(t *testing.T) {
 
 func TestAuditExclusion(t *testing.T) {
 
-	excludes := []*configuration.FilterOption{
-		{HeaderName: "Host", Contains: []string{"aaaignorehost1bbb", "hostignore"}},
-		{HeaderName: "Path", StartsWith: []string{"/excludeme", "/someotherpath"}},
-		{HeaderName: "Hdr1", Contains: []string{"abcdefg", "drv1"}},
-		{HeaderName: "Hdr2", Contains: []string{"tauditm"}},
+	excludes := []*Filter{
+		{Source: "Host", Contains: []string{"aaaignorehost1bbb", "hostignore"}},
+		{Source: "Path", StartsWith: []string{"/excludeme", "/someotherpath"}},
+		{Source: "Hdr1", Contains: []string{"abcdefg", "drv1"}},
+		{Source: "Hdr2", Contains: []string{"tauditm"}},
 	}
 
 	spec := &AuditSpecification{
@@ -222,23 +222,27 @@ func TestAuditExclusion(t *testing.T) {
 	assert.True(t, ShouldAudit(incHdr1, spec))
 }
 func TestSatisfiesFilter(t *testing.T) {
-	assert.True(t, satisfiesFilter("beginWithThis", &configuration.FilterOption{HeaderName: "x", StartsWith: []string{"begin"}}))
-	assert.True(t, satisfiesFilter("endWithThat", &configuration.FilterOption{HeaderName: "x", EndsWith: []string{"That"}}))
-	assert.True(t, satisfiesFilter("ithasthatthing", &configuration.FilterOption{HeaderName: "x", Contains: []string{"hasthat"}}))
+	assert.True(t, filterSatisfies(Filter{Source: "x", StartsWith: []string{"begin"}}, "beginWithThis"))
+	assert.True(t, filterSatisfies(Filter{Source: "x", EndsWith: []string{"That"}}, "endWithThat"))
+	assert.True(t, filterSatisfies(Filter{Source: "x", Contains: []string{"hasthat"}}, "ithasthatthing"))
 
-	assert.False(t, satisfiesFilter("bcd", &configuration.FilterOption{HeaderName: "x", StartsWith: []string{"abc"}}))
-	assert.False(t, satisfiesFilter("bcd", &configuration.FilterOption{HeaderName: "x", EndsWith: []string{"def"}}))
-	assert.False(t, satisfiesFilter("bcd", &configuration.FilterOption{HeaderName: "x", Contains: []string{"abcde"}}))
+	assert.False(t, filterSatisfies(Filter{Source: "x", StartsWith: []string{"abc"}}, "bcd"))
+	assert.False(t, filterSatisfies(Filter{Source: "x", EndsWith: []string{"def"}}, "bcd"))
+	assert.False(t, filterSatisfies(Filter{Source: "x", Contains: []string{"abcde"}}, "bcd"))
 }
 
 func TestShouldSatisfyFilterRegex(t *testing.T) {
 
-	mdtpURLPattern := "http(s)?:\\/\\/.*\\.(service|mdtp)($|[:\\/])"
-	assert.True(t, satisfiesFilter("beginWithThis", &configuration.FilterOption{HeaderName: "x", Matches: []string{"^begin.*"}}))
-	assert.True(t, satisfiesFilter("http://auth.service/auth/authority", &configuration.FilterOption{HeaderName: "x", Matches: []string{mdtpURLPattern}}))
+	mdtpURLPattern := regexp.MustCompile("http(s)?:\\/\\/.*\\.(service|mdtp)($|[:\\/])")
+	assert.True(t, filterSatisfies(Filter{Source: "x", Matches: []*regexp.Regexp{regexp.MustCompile("^begin.*")}}, "beginWithThis"))
+	assert.True(t, filterSatisfies(Filter{Source: "x", Matches: []*regexp.Regexp{mdtpURLPattern}}, "http://auth.service/auth/authority"))
 
-	assert.False(t, satisfiesFilter("abcdx", &configuration.FilterOption{HeaderName: "x", Matches: []string{"abcde"}}))
-	assert.False(t, satisfiesFilter("http://auth.com/auth/authority", &configuration.FilterOption{HeaderName: "x", Matches: []string{mdtpURLPattern}}))
+	assert.False(t, filterSatisfies(Filter{Source: "x", Matches: []*regexp.Regexp{regexp.MustCompile("abcde")}}, "abcdx"))
+	assert.False(t, filterSatisfies(Filter{Source: "x", Matches: []*regexp.Regexp{mdtpURLPattern}}, "http://auth.com/auth/authority"))
+}
+
+func filterSatisfies(f Filter, s string) bool {
+	return f.SatisfiedBy(s)
 }
 
 type fixedClock time.Time

@@ -3,6 +3,7 @@ package audittap
 import (
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"unicode"
@@ -83,11 +84,9 @@ func NewAuditTap(config *configuration.AuditSink, streams []audittypes.AuditStre
 		}
 	}
 
-	exclusions := []*configuration.FilterOption{}
-	for _, exc := range config.Exclusions {
-		if exc.Enabled() {
-			exclusions = append(exclusions, exc)
-		}
+	exclusions, err := optionsToFilters(config.Exclusions)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to construct audit exclusion filter %v", err)
 	}
 
 	obfuscate := audittypes.AuditObfuscation{}
@@ -167,6 +166,39 @@ func (tap *AuditTap) submitAudit(auditer audittypes.Auditer) error {
 		log.Errorf("Dropping audit event. Length %d exceeds limit %d", enc.Length(), tap.AuditConstraints.MaxAuditLength)
 	}
 	return nil
+}
+
+func optionsToFilters(opts map[string]*configuration.FilterOption) ([]*audittypes.Filter, error) {
+	exclusions := []*audittypes.Filter{}
+	for _, exc := range opts {
+		if exc.Enabled() {
+			filter, err := makeFilter(exc)
+			if err != nil {
+				return nil, err
+			}
+			exclusions = append(exclusions, filter)
+		}
+	}
+	return exclusions, nil
+}
+
+func makeFilter(opt *configuration.FilterOption) (*audittypes.Filter, error) {
+	expressions := []*regexp.Regexp{}
+	for _, pattern := range opt.Matches {
+		exp, err := regexp.Compile(pattern)
+		if err != nil {
+			return nil, err
+		}
+		expressions = append(expressions, exp)
+	}
+	f := &audittypes.Filter{
+		Source:     opt.HeaderName,
+		StartsWith: opt.StartsWith,
+		EndsWith:   opt.EndsWith,
+		Contains:   opt.Contains,
+		Matches:    expressions,
+	}
+	return f, nil
 }
 
 // asSI parses a string for its number. Suffixes are allowed that loosely follow SI rules: K, Ki, M, Mi.

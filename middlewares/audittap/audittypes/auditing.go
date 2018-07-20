@@ -12,7 +12,6 @@ import (
 
 	"strconv"
 
-	"github.com/containous/traefik/middlewares/audittap/configuration"
 	ahttp "github.com/containous/traefik/middlewares/audittap/http"
 	"github.com/containous/traefik/middlewares/audittap/types"
 	"github.com/satori/go.uuid"
@@ -63,12 +62,21 @@ type HeaderMapping map[string]string
 // HeaderMappings defines the dynamic mappings to be applied for a section of an audit event.
 type HeaderMappings map[string]HeaderMapping
 
+// Filter defines filter conditions
+type Filter struct {
+	Source     string
+	Contains   []string
+	EndsWith   []string
+	StartsWith []string
+	Matches    []*regexp.Regexp
+}
+
 // AuditSpecification groups together configuration used to define the structure of audit events.
 type AuditSpecification struct {
 	AuditConstraints
 	AuditObfuscation
 	HeaderMappings
-	Exclusions []*configuration.FilterOption
+	Exclusions []*Filter
 }
 
 // AuditStream describes a type to which audit events can be sent.
@@ -224,15 +232,15 @@ func copyRequestBody(req *http.Request) ([]byte, int, error) {
 func ShouldAudit(rc *RequestContext, spec *AuditSpecification) bool {
 
 	for _, exc := range spec.Exclusions {
-		lcHdr := strings.ToLower(exc.HeaderName)
+		lcHdr := strings.ToLower(exc.Source)
 		// Get host or path direct from request
-		if (lcHdr == "host" || lcHdr == "requesthost") && satisfiesFilter(rc.Req.Host, exc) {
+		if (lcHdr == "host" || lcHdr == "requesthost") && exc.SatisfiedBy(rc.Req.Host) {
 			return false
 		} else if lcHdr == "path" || lcHdr == "requestpath" {
-			if satisfiesFilter(rc.URL.Path, exc) {
+			if exc.SatisfiedBy(rc.URL.Path) {
 				return false
 			}
-		} else if satisfiesFilter(rc.Req.Header.Get(exc.HeaderName), exc) {
+		} else if exc.SatisfiedBy(rc.Req.Header.Get(exc.Source)) {
 			return false
 		}
 	}
@@ -240,11 +248,12 @@ func ShouldAudit(rc *RequestContext, spec *AuditSpecification) bool {
 	return true
 }
 
-func satisfiesFilter(v string, opt *configuration.FilterOption) bool {
-	return matchesTerm(v, opt.StartsWith, strings.HasPrefix) ||
-		matchesTerm(v, opt.EndsWith, strings.HasSuffix) ||
-		matchesTerm(v, opt.Contains, strings.Contains) ||
-		matchesRegex(v, opt.Matches)
+// SatisfiedBy checks if this filter satisfies the supplied value
+func (f *Filter) SatisfiedBy(s string) bool {
+	return matchesTerm(s, f.StartsWith, strings.HasPrefix) ||
+		matchesTerm(s, f.EndsWith, strings.HasSuffix) ||
+		matchesTerm(s, f.Contains, strings.Contains) ||
+		matchesRegex(s, f.Matches)
 }
 
 func matchesTerm(v string, terms []string, fn func(string, string) bool) bool {
@@ -259,11 +268,10 @@ func matchesTerm(v string, terms []string, fn func(string, string) bool) bool {
 	return false
 }
 
-// TODO: Do paths need to be precompiled
-func matchesRegex(v string, expressions []string) bool {
+func matchesRegex(v string, expressions []*regexp.Regexp) bool {
 	if v != "" {
-		for _, pattern := range expressions {
-			if matched, err := regexp.Match(pattern, []byte(v)); err == nil && matched {
+		for _, re := range expressions {
+			if re.Match([]byte(v)) {
 				return true
 			}
 		}

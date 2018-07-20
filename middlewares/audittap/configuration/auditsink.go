@@ -17,11 +17,14 @@ type FilterOption struct {
 
 // Enabled states whether any exclusion filters are specified
 func (e *FilterOption) Enabled() bool {
-	return len(e.Contains) > 0 || len(e.EndsWith) > 0 || len(e.StartsWith) > 0
+	return len(e.Contains) > 0 || len(e.EndsWith) > 0 || len(e.StartsWith) > 0 || len(e.Matches) > 0
 }
 
 // Exclusions is a container type for exclude filters
 type Exclusions map[string]*FilterOption
+
+// Inclusions is a container type for include filters
+type Inclusions map[string]*FilterOption
 
 // MaskFields specifies fields whose values should be obfuscated
 type MaskFields []string
@@ -36,6 +39,7 @@ type HeaderMappings map[string]FieldHeaderMapping
 
 // AuditSink holds AuditSink configuration
 type AuditSink struct {
+	Inclusions               Inclusions     `json:"inclusions,omitempty"`
 	Exclusions               Exclusions     `json:"exclusions,omitempty"`
 	Type                     string         `json:"type,omitempty" description:"The type of sink: File/HTTP/Kafka/AMQP/Blackhole"`
 	ClientID                 string         `json:"clientId,omitempty" description:"Identifier to be used for the sink client"`
