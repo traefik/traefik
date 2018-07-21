@@ -43,6 +43,8 @@ const (
 	traefikDefaultIngressClass = "traefik"
 	defaultBackendName         = "global-default-backend"
 	defaultFrontendName        = "global-default-frontend"
+	allowedProtocolHTTPS       = "https"
+	allowedProtocolH2C         = "h2c"
 )
 
 // IngressEndpoint holds the endpoint information for the Kubernetes provider
@@ -312,7 +314,14 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 							protocol = "https"
 						}
 
-						protocol = getStringValue(i.Annotations, annotationKubernetesProtocol, protocol)
+						switch getStringValue(i.Annotations, annotationKubernetesProtocol, protocol) {
+						case allowedProtocolHTTPS:
+							protocol = allowedProtocolHTTPS
+						case allowedProtocolH2C:
+							protocol = allowedProtocolH2C
+						default:
+							protocol = label.DefaultProtocol
+						}
 
 						if service.Spec.Type == "ExternalName" {
 							url := protocol + "://" + service.Spec.ExternalName
@@ -1030,4 +1039,9 @@ func getRateLimit(i *extensionsv1beta1.Ingress) *types.RateLimit {
 	}
 
 	return rateLimit
+}
+
+func getProtocol(i *extensionsv1beta1.Ingress) string {
+
+	return label.DefaultProtocol
 }

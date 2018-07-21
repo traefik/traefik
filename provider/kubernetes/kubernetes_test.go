@@ -1230,7 +1230,16 @@ rateset:
 			iRules(
 				iRule(
 					iHost("protocol"),
-					iPaths(onePath(iPath("/"), iBackend("service1", intstr.FromInt(80))))),
+					iPaths(onePath(iPath("/valid"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesProtocol, "foobar"),
+			iRules(
+				iRule(
+					iHost("protocol"),
+					iPaths(onePath(iPath("/notvalid"), iBackend("service1", intstr.FromInt(80))))),
 			),
 		),
 	}
@@ -1361,10 +1370,16 @@ rateset:
 				servers(),
 				lbMethod("wrr"),
 			),
-			backend("protocol/",
+			backend("protocol/valid",
 				servers(
 					server("h2c://example.com", weight(1)),
 					server("h2c://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
+			backend("protocol/notvalid",
+				servers(
+					server("http://example.com", weight(1)),
+					server("http://example.com", weight(1))),
 				lbMethod("wrr"),
 			),
 		),
@@ -1498,10 +1513,17 @@ rateset:
 					route("root", "Host:root"),
 				),
 			),
-			frontend("protocol/",
+			frontend("protocol/valid",
 				passHostHeader(),
 				routes(
-					route("/", "PathPrefix:/"),
+					route("/valid", "PathPrefix:/valid"),
+					route("protocol", "Host:protocol"),
+				),
+			),
+			frontend("protocol/notvalid",
+				passHostHeader(),
+				routes(
+					route("/notvalid", "PathPrefix:/notvalid"),
 					route("protocol", "Host:protocol"),
 				),
 			),
