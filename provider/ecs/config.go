@@ -16,7 +16,7 @@ import (
 )
 
 // buildConfiguration fills the config template with the given instances
-func (p *Provider) buildConfigurationV2(instances []ecsInstance) (*types.Configuration, error) {
+func (p *Provider) buildConfiguration(instances []ecsInstance) (*types.Configuration, error) {
 	services := make(map[string][]ecsInstance)
 	for _, instance := range instances {
 		backendName := getBackendName(instance)
