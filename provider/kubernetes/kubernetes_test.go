@@ -1242,6 +1242,23 @@ rateset:
 					iPaths(onePath(iPath("/notvalid"), iBackend("service1", intstr.FromInt(80))))),
 			),
 		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesProtocol, "http"),
+			iRules(
+				iRule(
+					iHost("protocol"),
+					iPaths(onePath(iPath("/missmatch"), iBackend("serviceHTTPS", intstr.FromInt(443))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iRules(
+				iRule(
+					iHost("protocol"),
+					iPaths(onePath(iPath("/noAnnotation"), iBackend("serviceHTTPS", intstr.FromInt(443))))),
+			),
+		),
 	}
 
 	services := []*corev1.Service{
@@ -1262,6 +1279,16 @@ rateset:
 			sSpec(
 				clusterIP("10.0.0.2"),
 				sPorts(sPort(802, ""))),
+		),
+		buildService(
+			sName("serviceHTTPS"),
+			sNamespace("testing"),
+			sUID("2"),
+			sSpec(
+				clusterIP("10.0.0.3"),
+				sType("ExternalName"),
+				sExternalName("example.com"),
+				sPorts(sPort(443, "https"))),
 		),
 	}
 
@@ -1377,9 +1404,19 @@ rateset:
 				lbMethod("wrr"),
 			),
 			backend("protocol/notvalid",
+				servers(),
+				lbMethod("wrr"),
+			),
+			backend("protocol/missmatch",
 				servers(
 					server("http://example.com", weight(1)),
 					server("http://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
+			backend("protocol/noAnnotation",
+				servers(
+					server("https://example.com", weight(1)),
+					server("https://example.com", weight(1))),
 				lbMethod("wrr"),
 			),
 		),
@@ -1524,6 +1561,20 @@ rateset:
 				passHostHeader(),
 				routes(
 					route("/notvalid", "PathPrefix:/notvalid"),
+					route("protocol", "Host:protocol"),
+				),
+			),
+			frontend("protocol/missmatch",
+				passHostHeader(),
+				routes(
+					route("/missmatch", "PathPrefix:/missmatch"),
+					route("protocol", "Host:protocol"),
+				),
+			),
+			frontend("protocol/noAnnotation",
+				passHostHeader(),
+				routes(
+					route("/noAnnotation", "PathPrefix:/noAnnotation"),
 					route("protocol", "Host:protocol"),
 				),
 			),

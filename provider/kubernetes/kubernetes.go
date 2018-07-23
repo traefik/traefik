@@ -319,8 +319,11 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 							protocol = allowedProtocolHTTPS
 						case allowedProtocolH2C:
 							protocol = allowedProtocolH2C
-						default:
+						case label.DefaultProtocol:
 							protocol = label.DefaultProtocol
+						default:
+							log.Errorf("Invalid protocol %s specified for Ingress %s - skipping", getStringValue(i.Annotations, annotationKubernetesProtocol, protocol), i.Name)
+							continue
 						}
 
 						if service.Spec.Type == "ExternalName" {
@@ -1039,9 +1042,4 @@ func getRateLimit(i *extensionsv1beta1.Ingress) *types.RateLimit {
 	}
 
 	return rateLimit
-}
-
-func getProtocol(i *extensionsv1beta1.Ingress) string {
-
-	return label.DefaultProtocol
 }
