@@ -115,13 +115,13 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	}
 
 	// Look for existing records.
-	list, err := d.client.ResourceRecordSets.List(d.project, zone).Name(fqdn).Type("TXT").Do()
+	existing, err := d.findTxtRecords(zone, fqdn)
 	if err != nil {
 		return err
 	}
-	if len(list.Rrsets) > 0 {
+	if len(existing) > 0 {
 		// Attempt to delete the existing records when adding our new one.
-		change.Deletions = list.Rrsets
+		change.Deletions = existing
 	}
 
 	chg, err := d.client.Changes.Create(d.project, zone, change).Do()
@@ -156,16 +156,12 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 		return err
 	}
 
-	for _, rec := range records {
-		change := &dns.Change{
-			Deletions: []*dns.ResourceRecordSet{rec},
-		}
-		_, err = d.client.Changes.Create(d.project, zone, change).Do()
-		if err != nil {
-			return err
-		}
+	if len(records) == 0 {
+		return nil
 	}
-	return nil
+
+	_, err = d.client.Changes.Create(d.project, zone, &dns.Change{Deletions: records}).Do()
+	return err
 }
 
 // Timeout customizes the timeout values used by the ACME package for checking
@@ -198,17 +194,10 @@ func (d *DNSProvider) getHostedZone(domain string) (string, error) {
 
 func (d *DNSProvider) findTxtRecords(zone, fqdn string) ([]*dns.ResourceRecordSet, error) {
 
-	recs, err := d.client.ResourceRecordSets.List(d.project, zone).Do()
+	recs, err := d.client.ResourceRecordSets.List(d.project, zone).Name(fqdn).Type("TXT").Do()
 	if err != nil {
 		return nil, err
 	}
 
-	var found []*dns.ResourceRecordSet
-	for _, r := range recs.Rrsets {
-		if r.Type == "TXT" && r.Name == fqdn {
-			found = append(found, r)
-		}
-	}
-
-	return found, nil
+	return recs.Rrsets, nil
 }

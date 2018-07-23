@@ -5,6 +5,7 @@ package ns1
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/xenolf/lego/acme"
@@ -75,12 +76,30 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 }
 
 func (d *DNSProvider) getHostedZone(domain string) (*dns.Zone, error) {
-	zone, _, err := d.client.Zones.Get(domain)
+	authZone, err := getAuthZone(domain)
+	if err != nil {
+		return nil, err
+	}
+
+	zone, _, err := d.client.Zones.Get(authZone)
 	if err != nil {
 		return nil, err
 	}
 
 	return zone, nil
+}
+
+func getAuthZone(fqdn string) (string, error) {
+	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	if err != nil {
+		return "", err
+	}
+
+	if strings.HasSuffix(authZone, ".") {
+		authZone = authZone[:len(authZone)-len(".")]
+	}
+
+	return authZone, err
 }
 
 func (d *DNSProvider) newTxtRecord(zone *dns.Zone, fqdn, value string, ttl int) *dns.Record {
