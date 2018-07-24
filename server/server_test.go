@@ -46,27 +46,6 @@ func TestPrepareServerTimeouts(t *testing.T) {
 			expectedReadTimeout:  time.Duration(0 * time.Second),
 			expectedWriteTimeout: time.Duration(0 * time.Second),
 		},
-		{
-			desc: "deprecated IdleTimeout configured",
-			globalConfig: configuration.GlobalConfiguration{
-				IdleTimeout: flaeg.Duration(45 * time.Second),
-			},
-			expectedIdleTimeout:  time.Duration(45 * time.Second),
-			expectedReadTimeout:  time.Duration(0 * time.Second),
-			expectedWriteTimeout: time.Duration(0 * time.Second),
-		},
-		{
-			desc: "deprecated and new IdleTimeout configured",
-			globalConfig: configuration.GlobalConfiguration{
-				IdleTimeout: flaeg.Duration(45 * time.Second),
-				RespondingTimeouts: &configuration.RespondingTimeouts{
-					IdleTimeout: flaeg.Duration(80 * time.Second),
-				},
-			},
-			expectedIdleTimeout:  time.Duration(45 * time.Second),
-			expectedReadTimeout:  time.Duration(0 * time.Second),
-			expectedWriteTimeout: time.Duration(0 * time.Second),
-		},
 	}
 
 	for _, test := range testCases {

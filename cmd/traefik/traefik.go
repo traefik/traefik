@@ -287,11 +287,7 @@ func configureLogging(globalConfiguration *configuration.GlobalConfiguration) {
 	}
 	log.SetLevel(level)
 
-	// configure log output file
-	logFile := globalConfiguration.TraefikLogsFile
-	if len(logFile) > 0 {
-		log.Warn("top-level traefikLogsFile has been deprecated -- please use traefiklog.filepath")
-	}
+	var logFile string
 	if globalConfiguration.TraefikLog != nil && len(globalConfiguration.TraefikLog.FilePath) > 0 {
 		logFile = globalConfiguration.TraefikLog.FilePath
 	}

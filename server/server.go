@@ -207,10 +207,6 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration, provider p
 		server.leadership = cluster.NewLeadership(server.routinesPool.Ctx(), globalConfiguration.Cluster)
 	}
 
-	if globalConfiguration.AccessLogsFile != "" {
-		globalConfiguration.AccessLog = &types.AccessLog{FilePath: globalConfiguration.AccessLogsFile, Format: accesslog.CommonFormat}
-	}
-
 	if globalConfiguration.AccessLog != nil {
 		var err error
 		server.accessLoggerMiddleware, err = accesslog.NewLogHandler(globalConfiguration.AccessLog)
@@ -411,12 +407,6 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 
 	// ensure http2 enabled
 	config.NextProtos = []string{"h2", "http/1.1", acme.ACMETLS1Protocol}
-
-	if len(tlsOption.ClientCAFiles) > 0 {
-		log.Warnf("Deprecated configuration found during TLS configuration creation: %s. Please use %s (which allows to make the CA Files optional).", "tls.ClientCAFiles", "tls.ClientCA.files")
-		tlsOption.ClientCA.Files = tlsOption.ClientCAFiles
-		tlsOption.ClientCA.Optional = false
-	}
 
 	if len(tlsOption.ClientCA.Files) > 0 {
 		pool := x509.NewCertPool()
@@ -627,11 +617,7 @@ func buildServerTimeouts(globalConfig configuration.GlobalConfiguration) (readTi
 		writeTimeout = time.Duration(globalConfig.RespondingTimeouts.WriteTimeout)
 	}
 
-	// Prefer legacy idle timeout parameter for backwards compatibility reasons
-	if globalConfig.IdleTimeout > 0 {
-		idleTimeout = time.Duration(globalConfig.IdleTimeout)
-		log.Warn("top-level idle timeout configuration has been deprecated -- please use responding timeouts")
-	} else if globalConfig.RespondingTimeouts != nil {
+	if globalConfig.RespondingTimeouts != nil {
 		idleTimeout = time.Duration(globalConfig.RespondingTimeouts.IdleTimeout)
 	} else {
 		idleTimeout = configuration.DefaultIdleTimeout

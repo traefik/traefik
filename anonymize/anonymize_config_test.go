@@ -35,12 +35,10 @@ func TestDo_globalConfiguration(t *testing.T) {
 
 	config.Debug = true
 	config.CheckNewVersion = true
-	config.AccessLogsFile = "AccessLogsFile"
 	config.AccessLog = &types.AccessLog{
 		FilePath: "AccessLog FilePath",
 		Format:   "AccessLog Format",
 	}
-	config.TraefikLogsFile = "TraefikLogsFile"
 	config.LogLevel = "LogLevel"
 	config.EntryPoints = configuration.EntryPoints{
 		"foo": {
@@ -412,7 +410,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 		ExposedByDefault:     true,
 		RefreshSeconds:       666,
 		Clusters:             ecs.Clusters{"ecs Clusters 1", "ecs Clusters 2", "ecs Clusters 3"},
-		Cluster:              "ecs Cluster",
 		AutoDiscoverClusters: true,
 		Region:               "ecs Region",
 		AccessKeyID:          "ecs AccessKeyID",

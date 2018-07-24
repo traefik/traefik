@@ -286,8 +286,6 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 func NewTraefikConfiguration() *TraefikConfiguration {
 	return &TraefikConfiguration{
 		GlobalConfiguration: configuration.GlobalConfiguration{
-			AccessLogsFile:            "",
-			TraefikLogsFile:           "",
 			EntryPoints:               map[string]*configuration.EntryPoint{},
 			Constraints:               types.Constraints{},
 			DefaultEntryPoints:        []string{"http"},

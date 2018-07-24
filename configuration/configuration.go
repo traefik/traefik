@@ -59,13 +59,10 @@ const (
 // It's populated from the traefik configuration file passed as an argument to the binary.
 type GlobalConfiguration struct {
 	LifeCycle                 *LifeCycle        `description:"Timeouts influencing the server life cycle" export:"true"`
-	GraceTimeOut              flaeg.Duration    `short:"g" description:"(Deprecated) Duration to give active requests a chance to finish before Traefik stops" export:"true"` // Deprecated
 	Debug                     bool              `short:"d" description:"Enable debug mode" export:"true"`
 	CheckNewVersion           bool              `description:"Periodically check if a new version has been released" export:"true"`
 	SendAnonymousUsage        bool              `description:"send periodically anonymous usage statistics" export:"true"`
-	AccessLogsFile            string            `description:"(Deprecated) Access logs file" export:"true"` // Deprecated
 	AccessLog                 *types.AccessLog  `description:"Access log settings" export:"true"`
-	TraefikLogsFile           string            `description:"(Deprecated) Traefik logs file. Stdout is used when omitted or empty" export:"true"` // Deprecated
 	TraefikLog                *types.TraefikLog `description:"Traefik log settings" export:"true"`
 	Tracing                   *tracing.Tracing  `description:"OpenTracing configuration" export:"true"`
 	LogLevel                  string            `short:"l" description:"Log level" export:"true"`
@@ -76,7 +73,6 @@ type GlobalConfiguration struct {
 	DefaultEntryPoints        DefaultEntryPoints      `description:"Entrypoints to be used by frontends that do not specify any entrypoint" export:"true"`
 	ProvidersThrottleDuration parse.Duration          `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time." export:"true"`
 	MaxIdleConnsPerHost       int                     `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used" export:"true"`
-	IdleTimeout               flaeg.Duration          `description:"(Deprecated) maximum amount of time an idle (keep-alive) connection will remain idle before closing itself." export:"true"` // Deprecated
 	InsecureSkipVerify        bool                    `description:"Disable SSL certificate verification" export:"true"`
 	RootCAs                   tls.RootCAs             `description:"Add cert file for self-signed certificate"`
 	Retry                     *Retry                  `description:"Enable retry sending request if network error" export:"true"`
@@ -149,12 +145,6 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 		gc.LifeCycle = &LifeCycle{}
 	}
 
-	// Prefer legacy grace timeout parameter for backwards compatibility reasons.
-	if gc.GraceTimeOut > 0 {
-		log.Warn("top-level grace period configuration has been deprecated -- please use lifecycle grace period")
-		gc.LifeCycle.GraceTimeOut = gc.GraceTimeOut
-	}
-
 	if gc.Docker != nil {
 		if len(gc.Docker.Filename) != 0 && gc.Docker.TemplateVersion != 2 {
 			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
@@ -179,13 +169,6 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 			gc.Mesos.TemplateVersion = 1
 		} else {
 			gc.Mesos.TemplateVersion = 2
-		}
-	}
-
-	if gc.Eureka != nil {
-		if gc.Eureka.Delay != 0 {
-			log.Warn("Delay has been deprecated -- please use RefreshSeconds")
-			gc.Eureka.RefreshSeconds = gc.Eureka.Delay
 		}
 	}
 
@@ -301,12 +284,6 @@ func (gc *GlobalConfiguration) initACMEProvider() {
 		if gc.ACME.HTTPChallenge != nil && gc.ACME.TLSChallenge != nil {
 			log.Warn("Unable to use HTTP challenge and TLS challenge at the same time. Fallback to TLS challenge.")
 			gc.ACME.HTTPChallenge = nil
-		}
-
-		// TODO: to remove in the future
-		if len(gc.ACME.StorageFile) > 0 && len(gc.ACME.Storage) == 0 {
-			log.Warn("ACME.StorageFile is deprecated, use ACME.Storage instead")
-			gc.ACME.Storage = gc.ACME.StorageFile
 		}
 
 		if len(gc.ACME.DNSProvider) > 0 {
