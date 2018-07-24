@@ -237,10 +237,10 @@ If you need to add or remove TLS certificates while Traefik is started, Dynamic 
 TLS Mutual Authentication can be `optional` or not.
 If it's `optional`, Træfik will authorize connection with certificates not signed by a specified Certificate Authority (CA).
 Otherwise, Træfik will only accept clients that present a certificate signed by a specified Certificate Authority (CA).
-`ClientCAFiles` can be configured with multiple `CA:s` in the same file or use multiple files containing one or several `CA:s`.
+`ClientCA.files` can be configured with multiple `CA:s` in the same file or use multiple files containing one or several `CA:s`.
 The `CA:s` has to be in PEM format.
 
-By default, `ClientCAFiles` is not optional, all clients will be required to present a valid cert.
+By default, `ClientCA.files` is not optional, all clients will be required to present a valid cert.
 The requirement will apply to all server certs in the entrypoint.
 
 In the example below both `snitest.com` and `snitest.org` will require client certs
@@ -260,10 +260,6 @@ In the example below both `snitest.com` and `snitest.org` will require client ce
     certFile = "integration/fixtures/https/snitest.org.cert"
     keyFile = "integration/fixtures/https/snitest.org.key"
 ```
-
-!!! note
-    The deprecated argument `ClientCAFiles` allows adding Client CA files which are mandatory.
-    If this parameter exists, the new ones are not checked.
 
 ## Authentication
 

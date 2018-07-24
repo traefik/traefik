@@ -12,12 +12,6 @@ Træfik can be configured to use Amazon ECS as a provider.
 # Enable ECS Provider.
 [ecs]
 
-# ECS Cluster Name.
-#
-# DEPRECATED - Please use `clusters`.
-#
-cluster = "default"
-
 # ECS Clusters Name.
 #
 # Optional
