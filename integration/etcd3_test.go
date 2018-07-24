@@ -532,8 +532,11 @@ func (s *Etcd3Suite) TestSNIDynamicTlsConfig(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
+	// wait 4 seconds to be sure that the etcd3 config as been watch by træfik
+	time.Sleep(4 * time.Second)
+
 	// wait for Træfik
-	err = try.GetRequest("http://127.0.0.1:8081/api/providers", 60*time.Second, try.BodyContains(string("MIIEpQIBAAKCAQEA1RducBK6EiFDv3TYB8ZcrfKWRVaSfHzWicO3J5WdST9oS7h")))
+	err = try.GetRequest("http://127.0.0.1:8081/api/providers", 60*time.Second, try.BodyContains("etcdv3"))
 	c.Assert(err, checker.IsNil)
 
 	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
@@ -562,8 +565,11 @@ func (s *Etcd3Suite) TestSNIDynamicTlsConfig(c *check.C) {
 	})
 	c.Assert(err, checker.IsNil)
 
+	// wait 4 seconds to be sure that the etcd3 config as been watch by træfik
+	time.Sleep(4 * time.Second)
+
 	// waiting for Træfik to pull configuration
-	err = try.GetRequest("http://127.0.0.1:8081/api/providers", 30*time.Second, try.BodyContains("MIIEogIBAAKCAQEAvG9kL+vF57+MICehzbqcQAUlAOSl5r"))
+	err = try.GetRequest("http://127.0.0.1:8081/api/providers", 30*time.Second, try.BodyContains("etcdv3"))
 	c.Assert(err, checker.IsNil)
 
 	req, err = http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
@@ -646,8 +652,11 @@ func (s *Etcd3Suite) TestDeleteSNIDynamicTlsConfig(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
+	// wait 4 seconds to be sure that the etcd3 config as been watch by træfik
+	time.Sleep(4 * time.Second)
+
 	// wait for Træfik
-	err = try.GetRequest(traefikWebEtcdURL+"api/providers", 60*time.Second, try.BodyContains(string("MIIEpQIBAAKCAQEA1RducBK6EiFDv3TYB8ZcrfKWRVaSfHzWicO3J5WdST9oS7h")))
+	err = try.GetRequest(traefikWebEtcdURL+"api/providers", 60*time.Second, try.BodyContains(string("etcdv3")))
 	c.Assert(err, checker.IsNil)
 
 	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
@@ -668,8 +677,11 @@ func (s *Etcd3Suite) TestDeleteSNIDynamicTlsConfig(c *check.C) {
 		c.Assert(err, checker.IsNil)
 	}
 
+	// wait 4 seconds to be sure that the consul confg as been watch by træfik
+	time.Sleep(4 * time.Second)
+
 	// waiting for Træfik to pull configuration
-	err = try.GetRequest(traefikWebEtcdURL+"api/providers", 30*time.Second, try.BodyNotContains("MIIEpQIBAAKCAQEA1RducBK6EiFDv3TYB8ZcrfKWRVaSfHzWicO3J5WdST9oS7h"))
+	err = try.GetRequest(traefikWebEtcdURL+"api/providers", 30*time.Second, try.BodyContains("etcdv3"))
 	c.Assert(err, checker.IsNil)
 
 	req, err = http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
