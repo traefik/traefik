@@ -1,12 +1,12 @@
 package ecs
 
 import (
-	"testing"
+	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/ecs"
+	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/containous/traefik/provider/label"
-	"github.com/aws/aws-sdk-go/service/ecs"
+	"testing"
 )
 
 func TestSegmentBuildConfiguration(t *testing.T) {
@@ -17,24 +17,24 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 		expectedBackends  map[string]*types.Backend
 	}{
 		{
-			desc:              "when container 2 container-ports",
-			instanceInfo:      ecsInstance{
-					Name: "foo-http",
-					ID:   "123456789abc",
-					containerDefinition: &ecs.ContainerDefinition{},
-					machine: &machine{
-						state:     ec2.InstanceStateNameRunning,
-						privateIP: "10.0.0.1",
-						ports:     []portMapping{
-							{hostPort: 12354, containerPort: 8000},  // service1
-							{hostPort: 45678, containerPort: 8001},  // service2
-						},
-					},
-					TraefikLabels: map[string]string{
-						"traefik.service1.port": "8000",
-						"traefik.service2.port": "8001",
+			desc: "when container 2 container-ports",
+			instanceInfo: ecsInstance{
+				Name:                "foo-http",
+				ID:                  "123456789abc",
+				containerDefinition: &ecs.ContainerDefinition{},
+				machine: &machine{
+					state:     ec2.InstanceStateNameRunning,
+					privateIP: "10.0.0.1",
+					ports: []portMapping{
+						{hostPort: 12354, containerPort: 8000}, // service1
+						{hostPort: 45678, containerPort: 8001}, // service2
 					},
 				},
+				TraefikLabels: map[string]string{
+					"traefik.service1.port": "8000",
+					"traefik.service2.port": "8001",
+				},
+			},
 			expectedFrontends: map[string]*types.Frontend{
 				"frontend-foo-http-service1": {
 					Backend:        "backend-foo-http-service1",
@@ -78,7 +78,6 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 				},
 			},
 		},
-
 	}
 
 	for _, test := range testCases {
