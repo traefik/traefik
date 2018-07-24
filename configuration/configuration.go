@@ -145,59 +145,7 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 		gc.LifeCycle = &LifeCycle{}
 	}
 
-	if gc.Docker != nil {
-		if len(gc.Docker.Filename) != 0 && gc.Docker.TemplateVersion != 2 {
-			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
-			gc.Docker.TemplateVersion = 1
-		} else {
-			gc.Docker.TemplateVersion = 2
-		}
-	}
-
-	if gc.Marathon != nil {
-		if len(gc.Marathon.Filename) != 0 && gc.Marathon.TemplateVersion != 2 {
-			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
-			gc.Marathon.TemplateVersion = 1
-		} else {
-			gc.Marathon.TemplateVersion = 2
-		}
-	}
-
-	if gc.Mesos != nil {
-		if len(gc.Mesos.Filename) != 0 && gc.Mesos.TemplateVersion != 2 {
-			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
-			gc.Mesos.TemplateVersion = 1
-		} else {
-			gc.Mesos.TemplateVersion = 2
-		}
-	}
-
-	if gc.ECS != nil {
-		if len(gc.ECS.Filename) != 0 && gc.ECS.TemplateVersion != 2 {
-			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
-			gc.ECS.TemplateVersion = 1
-		} else {
-			gc.ECS.TemplateVersion = 2
-		}
-	}
-
-	if gc.ConsulCatalog != nil {
-		if len(gc.ConsulCatalog.Filename) != 0 && gc.ConsulCatalog.TemplateVersion != 2 {
-			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
-			gc.ConsulCatalog.TemplateVersion = 1
-		} else {
-			gc.ConsulCatalog.TemplateVersion = 2
-		}
-	}
-
 	if gc.Rancher != nil {
-		if len(gc.Rancher.Filename) != 0 && gc.Rancher.TemplateVersion != 2 {
-			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
-			gc.Rancher.TemplateVersion = 1
-		} else {
-			gc.Rancher.TemplateVersion = 2
-		}
-
 		// Ensure backwards compatibility for now
 		if len(gc.Rancher.AccessKey) > 0 ||
 			len(gc.Rancher.Endpoint) > 0 ||
