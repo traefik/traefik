@@ -9,6 +9,7 @@ import (
 	fmtlog "log"
 	"net"
 	"net/http"
+	"net/url"
 	"reflect"
 	"strings"
 	"time"
@@ -183,8 +184,19 @@ func (a *ACME) leadershipListener(elected bool) error {
 		account := object.(*Account)
 		account.Init()
 		// Reset Account values if caServer changed, thus registration URI can be updated
-		if account != nil && account.Registration != nil && !strings.HasPrefix(account.Registration.URI, a.CAServer) {
-			account.reset()
+		if account != nil && account.Registration != nil {
+			aru, err := url.Parse(account.Registration.URI)
+			if err != nil {
+				log.Error("Unable to parse account.Registration URL")
+			}
+			cau, err := url.Parse(a.CAServer)
+			if err != nil {
+				log.Error("Unable to parse CAServer URL")
+			}
+			if strings.Compare(cau.Hostname(), aru.Hostname()) != 0 {
+				log.Error("Account does not match the current CAServer")
+				account.reset()
+			}
 		}
 
 		var needRegister bool

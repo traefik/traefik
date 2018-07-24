@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	fmtlog "log"
+	"net/url"
 	"reflect"
 	"strings"
 	"sync"
@@ -130,8 +131,19 @@ func (p *Provider) Init(_ types.Constraints) error {
 	}
 
 	// Reset Account if caServer changed, thus registration URI can be updated
-	if p.account != nil && p.account.Registration != nil && !strings.HasPrefix(p.account.Registration.URI, p.CAServer) {
-		p.account = nil
+	if p.account != nil && p.account.Registration != nil {
+		aru, err := url.Parse(p.account.Registration.URI)
+		if err != nil {
+			log.Error("Unable to parse account.Registration URL")
+		}
+		cau, err := url.Parse(p.CAServer)
+		if err != nil {
+			log.Error("Unable to parse CAServer URL")
+		}
+		if strings.Compare(cau.Hostname(), aru.Hostname()) != 0 {
+			log.Error("Account does not match the current CAServer")
+			p.account = nil
+		}
 	}
 
 	p.certificates, err = p.Store.GetCertificates()
