@@ -187,14 +187,14 @@ func (a *ACME) leadershipListener(elected bool) error {
 		if account != nil && account.Registration != nil {
 			aru, err := url.Parse(account.Registration.URI)
 			if err != nil {
-				log.Error("Unable to parse account.Registration URL")
+				return fmt.Errorf("Unable to parse account.Registration URL : %v", err)
 			}
 			cau, err := url.Parse(a.CAServer)
 			if err != nil {
-				log.Error("Unable to parse CAServer URL")
+				return fmt.Errorf("Unable to parse CAServer URL : %v", err)
 			}
 			if strings.Compare(cau.Hostname(), aru.Hostname()) != 0 {
-				log.Error("Account does not match the current CAServer")
+				log.Info("Account URI does not match the current CAServer. The account will be reset")
 				account.reset()
 			}
 		}
