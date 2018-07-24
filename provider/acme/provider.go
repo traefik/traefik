@@ -144,13 +144,13 @@ func (p *Provider) Init(_ types.Constraints) error {
 	return nil
 }
 
-func isAccountMatchingCaServer(accountUri string, serverUri string) bool {
-	aru, err := url.Parse(accountUri)
+func isAccountMatchingCaServer(accountURI string, serverURI string) bool {
+	aru, err := url.Parse(accountURI)
 	if err != nil {
 		log.Infof("Unable to parse account.Registration URL : %v", err)
 		return false
 	}
-	cau, err := url.Parse(serverUri)
+	cau, err := url.Parse(serverURI)
 	if err != nil {
 		log.Infof("Unable to parse CAServer URL : %v", err)
 		return false
