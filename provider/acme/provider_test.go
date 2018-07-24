@@ -429,3 +429,72 @@ func TestDeleteUnnecessaryDomains(t *testing.T) {
 		})
 	}
 }
+
+func TestIsAccountMatchingCaServer(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		accountURI string
+		serverURI  string
+		expected   bool
+	}{
+		{
+			desc:       "acme staging with matching account",
+			accountURI: "https://acme-staging-v02.api.letsencrypt.org/acme/acct/1234567",
+			serverURI:  "https://acme-staging-v02.api.letsencrypt.org/acme/directory",
+			expected:   true,
+		},
+		{
+			desc:       "acme production with matching account",
+			accountURI: "https://acme-v02.api.letsencrypt.org/acme/acct/1234567",
+			serverURI:  "https://acme-v02.api.letsencrypt.org/acme/directory",
+			expected:   true,
+		},
+		{
+			desc:       "http only acme with matching account",
+			accountURI: "http://acme.api.letsencrypt.org/acme/acct/1234567",
+			serverURI:  "http://acme.api.letsencrypt.org/acme/directory",
+			expected:   true,
+		},
+		{
+			desc:       "different subdomains for account and server",
+			accountURI: "https://test1.example.org/acme/acct/1234567",
+			serverURI:  "https://test2.example.org/acme/directory",
+			expected:   false,
+		},
+		{
+			desc:       "different domains for account and server",
+			accountURI: "https://test.example1.org/acme/acct/1234567",
+			serverURI:  "https://test.example2.org/acme/directory",
+			expected:   false,
+		},
+		{
+			desc:       "different tld for account and server",
+			accountURI: "https://test.example.com/acme/acct/1234567",
+			serverURI:  "https://test.example.org/acme/directory",
+			expected:   false,
+		},
+		{
+			desc:       "malformed account url",
+			accountURI: "/test.example.com/acme/acct/1234567",
+			serverURI:  "https://test.example.com/acme/directory",
+			expected:   false,
+		},
+		{
+			desc:       "malformed server url",
+			accountURI: "https://test.example.com/acme/acct/1234567",
+			serverURI:  "/test.example.com/acme/directory",
+			expected:   false,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := isAccountMatchingCaServer(test.accountURI, test.serverURI)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}

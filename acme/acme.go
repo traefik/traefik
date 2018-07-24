@@ -243,7 +243,7 @@ func isAccountMatchingCaServer(accountURI string, serverURI string) bool {
 		log.Infof("Unable to parse CAServer URL : %v", err)
 		return false
 	}
-	return strings.Compare(cau.Hostname(), aru.Hostname()) != 0
+	return cau.Hostname() == aru.Hostname()
 }
 
 func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
