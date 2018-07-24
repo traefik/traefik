@@ -25,7 +25,7 @@ const (
 	labelDockerComposeService     = "com.docker.compose.service"
 )
 
-func (p *Provider) buildConfigurationV2(containersInspected []dockerData) *types.Configuration {
+func (p *Provider) buildConfiguration(containersInspected []dockerData) *types.Configuration {
 	dockerFuncMap := template.FuncMap{
 		"getLabelValue":    label.GetStringValue,
 		"getSubDomain":     getSubDomain,

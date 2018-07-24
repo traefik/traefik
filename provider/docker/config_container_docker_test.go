@@ -713,7 +713,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 				ExposedByDefault: true,
 				Network:          "webnet",
 			}
-			actualConfig := provider.buildConfigurationV2(dockerDataList)
+			actualConfig := provider.buildConfiguration(dockerDataList)
 			require.NotNil(t, actualConfig, "actualConfig")
 
 			assert.EqualValues(t, test.expectedBackends, actualConfig.Backends)

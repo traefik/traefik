@@ -18,7 +18,7 @@ import (
 	"github.com/hashicorp/consul/api"
 )
 
-func (p *Provider) buildConfigurationV2(catalog []catalogUpdate) *types.Configuration {
+func (p *Provider) buildConfiguration(catalog []catalogUpdate) *types.Configuration {
 	var funcMap = template.FuncMap{
 		"getAttribute": p.getAttribute,
 		"getTag":       getTag,
@@ -199,7 +199,8 @@ func getServerName(node *api.ServiceEntry, index int) string {
 }
 
 func (p *Provider) getWeight(tags []string) int {
-	weight := p.getIntAttribute(label.SuffixWeight, tags, label.DefaultWeight)
+	labels := tagsToNeutralLabels(tags, p.Prefix)
+	weight := label.GetIntValue(labels, p.getPrefixedName(label.SuffixWeight), label.DefaultWeight)
 
 	// Deprecated
 	deprecatedWeightTag := "backend." + label.SuffixWeight
@@ -207,7 +208,7 @@ func (p *Provider) getWeight(tags []string) int {
 		log.Warnf("Deprecated configuration found: %s. Please use %s.",
 			p.getPrefixedName(deprecatedWeightTag), p.getPrefixedName(label.SuffixWeight))
 
-		weight = p.getIntAttribute(deprecatedWeightTag, tags, label.DefaultWeight)
+		weight = label.GetIntValue(labels, p.getPrefixedName(deprecatedWeightTag), label.DefaultWeight)
 	}
 
 	return weight

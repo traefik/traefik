@@ -782,7 +782,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 
 			nodes := fakeLoadTraefikLabelsSlice(test.nodes, p.Prefix)
 
-			actualConfig := p.buildConfigurationV2(nodes)
+			actualConfig := p.buildConfiguration(nodes)
 			assert.NotNil(t, actualConfig)
 			assert.Equal(t, test.expectedBackends, actualConfig.Backends)
 			assert.Equal(t, test.expectedFrontends, actualConfig.Frontends)
