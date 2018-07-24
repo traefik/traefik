@@ -53,6 +53,9 @@ func (ev *MdtpAuditEvent) AppendRequest(ctx *RequestContext, auditSpec *AuditSpe
 		ev.Tags = types.DataMap{}
 	}
 
+	ev.ClientHeaders = ctx.ClientHeaders
+	ev.RequestHeaders = ctx.RequestHeaders
+
 	ev.Detail.AddAll(detailFromRequest(ctx, auditSpec))
 	ev.Tags.AddAll(tagsFromRequest(ctx, auditSpec))
 }

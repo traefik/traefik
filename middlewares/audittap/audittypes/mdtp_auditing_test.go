@@ -47,6 +47,8 @@ func TestMdtpAuditEvent(t *testing.T) {
 	assert.Equal(t, "my-mdtp-app", ev.AuditSource)
 	assert.Equal(t, "RequestReceived", ev.AuditType)
 	assert.NotEmpty(t, ev.GeneratedAt)
+	assert.NotEmpty(t, ev.ClientHeaders)
+	assert.NotEmpty(t, ev.RequestHeaders)
 
 	assert.Equal(t, "POST", ev.Detail.GetString("method"))
 	assert.Equal(t, "/some/resource", ev.Tags.GetString("path"))
