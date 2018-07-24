@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/abronan/valkeyrie/store"
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
@@ -432,12 +432,12 @@ func TestProviderBuildConfiguration(t *testing.T) {
 								"foo": {
 									Average: 6,
 									Burst:   12,
-									Period:  flaeg.Duration(18 * time.Second),
+									Period:  parse.Duration(18 * time.Second),
 								},
 								"bar": {
 									Average: 3,
 									Burst:   6,
-									Period:  flaeg.Duration(9 * time.Second),
+									Period:  parse.Duration(9 * time.Second),
 								},
 							},
 						},
@@ -1474,12 +1474,12 @@ func TestProviderGetRateLimit(t *testing.T) {
 					"foo": {
 						Average: 6,
 						Burst:   12,
-						Period:  flaeg.Duration(18 * time.Second),
+						Period:  parse.Duration(18 * time.Second),
 					},
 					"bar": {
 						Average: 3,
 						Burst:   6,
-						Period:  flaeg.Duration(9 * time.Second),
+						Period:  parse.Duration(9 * time.Second),
 					},
 				},
 			},

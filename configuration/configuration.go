@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik-extra-service-fabric"
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/api"
@@ -498,27 +498,27 @@ type Retry struct {
 
 // HealthCheckConfig contains health check configuration parameters.
 type HealthCheckConfig struct {
-	Interval flaeg.Duration `description:"Default periodicity of enabled health checks" export:"true"`
+	Interval parse.Duration `description:"Default periodicity of enabled health checks" export:"true"`
 }
 
 // RespondingTimeouts contains timeout configurations for incoming requests to the Traefik instance.
 type RespondingTimeouts struct {
-	ReadTimeout  flaeg.Duration `description:"ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set" export:"true"`
-	WriteTimeout flaeg.Duration `description:"WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set" export:"true"`
-	IdleTimeout  flaeg.Duration `description:"IdleTimeout is the maximum amount duration an idle (keep-alive) connection will remain idle before closing itself. Defaults to 180 seconds. If zero, no timeout is set" export:"true"`
+	ReadTimeout  parse.Duration `description:"ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set" export:"true"`
+	WriteTimeout parse.Duration `description:"WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set" export:"true"`
+	IdleTimeout  parse.Duration `description:"IdleTimeout is the maximum amount duration an idle (keep-alive) connection will remain idle before closing itself. Defaults to 180 seconds. If zero, no timeout is set" export:"true"`
 }
 
 // ForwardingTimeouts contains timeout configurations for forwarding requests to the backend servers.
 type ForwardingTimeouts struct {
-	DialTimeout           flaeg.Duration `description:"The amount of time to wait until a connection to a backend server can be established. Defaults to 30 seconds. If zero, no timeout exists" export:"true"`
-	ResponseHeaderTimeout flaeg.Duration `description:"The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists" export:"true"`
+	DialTimeout           parse.Duration `description:"The amount of time to wait until a connection to a backend server can be established. Defaults to 30 seconds. If zero, no timeout exists" export:"true"`
+	ResponseHeaderTimeout parse.Duration `description:"The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists" export:"true"`
 }
 
 // LifeCycle contains configurations relevant to the lifecycle (such as the
 // shutdown phase) of Traefik.
 type LifeCycle struct {
-	RequestAcceptGraceTimeout flaeg.Duration `description:"Duration to keep accepting requests before Traefik initiates the graceful shutdown procedure"`
-	GraceTimeOut              flaeg.Duration `description:"Duration to give active requests a chance to finish before Traefik stops"`
+	RequestAcceptGraceTimeout parse.Duration `description:"Duration to keep accepting requests before Traefik initiates the graceful shutdown procedure"`
+	GraceTimeOut              parse.Duration `description:"Duration to give active requests a chance to finish before Traefik stops"`
 }
 
 // HostResolverConfig contain configuration for CNAME Flattening

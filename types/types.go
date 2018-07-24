@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/abronan/valkeyrie/store"
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/log"
 	traefiktls "github.com/containous/traefik/tls"
@@ -108,7 +108,7 @@ type ErrorPage struct {
 
 // Rate holds a rate limiting configuration for a specific time period
 type Rate struct {
-	Period  flaeg.Duration `json:"period,omitempty"`
+	Period  parse.Duration `json:"period,omitempty"`
 	Average int64          `json:"average,omitempty"`
 	Burst   int64          `json:"burst,omitempty"`
 }

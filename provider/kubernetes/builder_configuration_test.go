@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
@@ -378,7 +378,7 @@ func limitBurst(burst int64) func(*types.Rate) {
 
 func limitPeriod(period time.Duration) func(*types.Rate) {
 	return func(rate *types.Rate) {
-		rate.Period = flaeg.Duration(period)
+		rate.Period = parse.Duration(period)
 	}
 }
 

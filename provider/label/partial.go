@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
 )
@@ -218,7 +218,7 @@ func ParseRateSets(labels map[string]string, labelPrefix string, labelRegex *reg
 
 			switch submatch[2] {
 			case "period":
-				var d flaeg.Duration
+				var d parse.Duration
 				err := d.Set(rawValue)
 				if err != nil {
 					log.Errorf("Unable to parse %q: %q. %v", lblName, rawValue, err)

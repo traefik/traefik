@@ -2,9 +2,7 @@ package configuration
 
 import (
 	"testing"
-	"time"
 
-	"github.com/containous/flaeg"
 	"github.com/containous/traefik/middlewares/tracing"
 	"github.com/containous/traefik/middlewares/tracing/jaeger"
 	"github.com/containous/traefik/middlewares/tracing/zipkin"

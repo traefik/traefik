@@ -11,7 +11,7 @@ import (
 
 	"github.com/BurntSushi/ty/fun"
 	"github.com/abronan/valkeyrie/store"
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/tls"
@@ -180,7 +180,7 @@ func (p *Provider) getRateLimit(rootPath string) *types.RateLimit {
 
 		rawPeriod := p.get("", pathLimits+pathFrontendRateLimitPeriod)
 
-		var period flaeg.Duration
+		var period parse.Duration
 		err := period.Set(rawPeriod)
 		if err != nil {
 			log.Errorf("Invalid %q value: %q", pathLimits+pathFrontendRateLimitPeriod, rawPeriod)

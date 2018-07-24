@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/provider"
@@ -33,7 +33,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 
 	config := &configuration.GlobalConfiguration{}
 
-	config.GraceTimeOut = flaeg.Duration(666 * time.Second)
 	config.Debug = true
 	config.CheckNewVersion = true
 	config.AccessLogsFile = "AccessLogsFile"
@@ -177,25 +176,24 @@ func TestDo_globalConfiguration(t *testing.T) {
 		},
 	}
 	config.DefaultEntryPoints = configuration.DefaultEntryPoints{"DefaultEntryPoints 1", "DefaultEntryPoints 2", "DefaultEntryPoints 3"}
-	config.ProvidersThrottleDuration = flaeg.Duration(666 * time.Second)
+	config.ProvidersThrottleDuration = parse.Duration(666 * time.Second)
 	config.MaxIdleConnsPerHost = 666
-	config.IdleTimeout = flaeg.Duration(666 * time.Second)
 	config.InsecureSkipVerify = true
 	config.RootCAs = traefiktls.RootCAs{"RootCAs 1", "RootCAs 2", "RootCAs 3"}
 	config.Retry = &configuration.Retry{
 		Attempts: 666,
 	}
 	config.HealthCheck = &configuration.HealthCheckConfig{
-		Interval: flaeg.Duration(666 * time.Second),
+		Interval: parse.Duration(666 * time.Second),
 	}
 	config.RespondingTimeouts = &configuration.RespondingTimeouts{
-		ReadTimeout:  flaeg.Duration(666 * time.Second),
-		WriteTimeout: flaeg.Duration(666 * time.Second),
-		IdleTimeout:  flaeg.Duration(666 * time.Second),
+		ReadTimeout:  parse.Duration(666 * time.Second),
+		WriteTimeout: parse.Duration(666 * time.Second),
+		IdleTimeout:  parse.Duration(666 * time.Second),
 	}
 	config.ForwardingTimeouts = &configuration.ForwardingTimeouts{
-		DialTimeout:           flaeg.Duration(666 * time.Second),
-		ResponseHeaderTimeout: flaeg.Duration(666 * time.Second),
+		DialTimeout:           parse.Duration(666 * time.Second),
+		ResponseHeaderTimeout: parse.Duration(666 * time.Second),
 	}
 	config.Docker = &docker.Provider{
 		BaseProvider: provider.BaseProvider{
@@ -324,8 +322,8 @@ func TestDo_globalConfiguration(t *testing.T) {
 			Key:                "marathon Key",
 			InsecureSkipVerify: true,
 		},
-		DialerTimeout:     flaeg.Duration(666 * time.Second),
-		KeepAlive:         flaeg.Duration(666 * time.Second),
+		DialerTimeout:     parse.Duration(666 * time.Second),
+		KeepAlive:         parse.Duration(666 * time.Second),
 		ForceTaskHostname: true,
 		Basic: &marathon.Basic{
 			HTTPBasicAuthUser: "marathon HTTPBasicAuthUser",
@@ -433,8 +431,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 			DebugLogGeneratedTemplate: true,
 		},
 		Endpoint:       "eureka Endpoint",
-		Delay:          flaeg.Duration(30 * time.Second),
-		RefreshSeconds: flaeg.Duration(30 * time.Second),
+		RefreshSeconds: parse.Duration(30 * time.Second),
 	}
 	config.ECS = &ecs.Provider{
 		BaseProvider: provider.BaseProvider{
