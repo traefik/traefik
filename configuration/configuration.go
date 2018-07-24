@@ -74,7 +74,7 @@ type GlobalConfiguration struct {
 	Constraints               types.Constraints       `description:"Filter services by constraint, matching with service tags" export:"true"`
 	ACME                      *acme.ACME              `description:"Enable ACME (Let's Encrypt): automatic SSL" export:"true"`
 	DefaultEntryPoints        DefaultEntryPoints      `description:"Entrypoints to be used by frontends that do not specify any entrypoint" export:"true"`
-	ProvidersThrottleDuration flaeg.Duration          `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time." export:"true"`
+	ProvidersThrottleDuration parse.Duration          `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time." export:"true"`
 	MaxIdleConnsPerHost       int                     `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used" export:"true"`
 	IdleTimeout               flaeg.Duration          `description:"(Deprecated) maximum amount of time an idle (keep-alive) connection will remain idle before closing itself." export:"true"` // Deprecated
 	InsecureSkipVerify        bool                    `description:"Disable SSL certificate verification" export:"true"`
@@ -83,7 +83,6 @@ type GlobalConfiguration struct {
 	HealthCheck               *HealthCheckConfig      `description:"Health check parameters" export:"true"`
 	RespondingTimeouts        *RespondingTimeouts     `description:"Timeouts for incoming requests to the Traefik instance" export:"true"`
 	ForwardingTimeouts        *ForwardingTimeouts     `description:"Timeouts for requests forwarded to the backend servers" export:"true"`
-	AllowMinWeightZero        bool                    `description:"Allow weight to take 0 as minimum real value." export:"true"`         // Deprecated
 	Web                       *WebCompatibility       `description:"(Deprecated) Enable Web backend with default settings" export:"true"` // Deprecated
 	Docker                    *docker.Provider        `description:"Enable Docker backend with default settings" export:"true"`
 	File                      *file.Provider          `description:"Enable File backend with default settings" export:"true"`

@@ -195,18 +195,7 @@ func getServerName(node *api.ServiceEntry, index int) string {
 
 func (p *Provider) getWeight(tags []string) int {
 	labels := tagsToNeutralLabels(tags, p.Prefix)
-	weight := label.GetIntValue(labels, p.getPrefixedName(label.SuffixWeight), label.DefaultWeight)
-
-	// Deprecated
-	deprecatedWeightTag := "backend." + label.SuffixWeight
-	if p.hasAttribute(deprecatedWeightTag, tags) {
-		log.Warnf("Deprecated configuration found: %s. Please use %s.",
-			p.getPrefixedName(deprecatedWeightTag), p.getPrefixedName(label.SuffixWeight))
-
-		weight = label.GetIntValue(labels, p.getPrefixedName(deprecatedWeightTag), label.DefaultWeight)
-	}
-
-	return weight
+	return label.GetIntValue(labels, p.getPrefixedName(label.SuffixWeight), label.DefaultWeight)
 }
 
 // Base functions

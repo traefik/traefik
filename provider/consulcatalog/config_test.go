@@ -68,7 +68,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 								Port:    80,
 								Tags: []string{
 									"random.foo=bar",
-									label.Prefix + "backend.weight=42", // Deprecated label
+									label.TraefikWeight + "=42",
 									label.TraefikFrontendPassHostHeader + "=true",
 									label.TraefikProtocol + "=https",
 								},
@@ -102,7 +102,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-test": {
 					Servers: map[string]types.Server{
-						"test-0-us4-27hAOu2ARV7nNrmv6GoKlcA": {
+						"test-0-ecTTsmX1vPktQQrl53WhNDy-HEg": {
 							URL:    "https://127.0.0.1:80",
 							Weight: 42,
 						},
@@ -139,7 +139,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 								Port:    80,
 								Tags: []string{
 									"random.foo=bar",
-									label.Prefix + "backend.weight=42", // Deprecated label
+									label.TraefikWeight + "=42",
 									label.TraefikFrontendPassHostHeader + "=true",
 									label.TraefikProtocol + "=https",
 								},
@@ -173,14 +173,15 @@ func TestProviderBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-test": {
 					Servers: map[string]types.Server{
-						"test-0-us4-27hAOu2ARV7nNrmv6GoKlcA": {
+						"test-0-ecTTsmX1vPktQQrl53WhNDy-HEg": {
 							URL:    "https://127.0.0.1:80",
 							Weight: 42,
 						},
 					},
 				},
 			},
-		}, {
+		},
+		{
 			desc: "Should build config with a digest auth",
 			nodes: []catalogUpdate{
 				{
@@ -201,7 +202,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 								Port:    80,
 								Tags: []string{
 									"random.foo=bar",
-									label.Prefix + "backend.weight=42", // Deprecated label
+									label.TraefikWeight + "=42",
 									label.TraefikFrontendPassHostHeader + "=true",
 									label.TraefikProtocol + "=https",
 								},
@@ -237,7 +238,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-test": {
 					Servers: map[string]types.Server{
-						"test-0-us4-27hAOu2ARV7nNrmv6GoKlcA": {
+						"test-0-ecTTsmX1vPktQQrl53WhNDy-HEg": {
 							URL:    "https://127.0.0.1:80",
 							Weight: 42,
 						},
@@ -271,7 +272,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 								Port:    80,
 								Tags: []string{
 									"random.foo=bar",
-									label.Prefix + "backend.weight=42", // Deprecated label
+									label.TraefikWeight + "=42",
 									label.TraefikFrontendPassHostHeader + "=true",
 									label.TraefikProtocol + "=https",
 								},
@@ -313,7 +314,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-test": {
 					Servers: map[string]types.Server{
-						"test-0-us4-27hAOu2ARV7nNrmv6GoKlcA": {
+						"test-0-ecTTsmX1vPktQQrl53WhNDy-HEg": {
 							URL:    "https://127.0.0.1:80",
 							Weight: 42,
 						},
@@ -626,7 +627,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 								Port:    80,
 								Tags: []string{
 									"random.foo=bar",
-									label.Prefix + "backend.weight=42", // Deprecated label
+									label.TraefikWeight + "=42",
 									label.TraefikFrontendPassHostHeader + "=true",
 									label.TraefikProtocol + "=https",
 								},
@@ -643,7 +644,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 								Port:    80,
 								Tags: []string{
 									"random.foo=bar",
-									label.Prefix + "backend.weight=42", // Deprecated label
+									label.TraefikWeight + "=42",
 									label.TraefikFrontendPassHostHeader + "=true",
 									label.TraefikProtocol + "=https",
 								},
@@ -677,11 +678,11 @@ func TestProviderBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-test": {
 					Servers: map[string]types.Server{
-						"test-0-us4-27hAOu2ARV7nNrmv6GoKlcA": {
+						"test-0-ecTTsmX1vPktQQrl53WhNDy-HEg": {
 							URL:    "https://127.0.0.1:80",
 							Weight: 42,
 						},
-						"test-1-Gh4zrXo5flAAz1A8LAEHm1-TSnE": {
+						"test-1-9tI2Ud3Vkl4T4B6bAIWV0vFjEIg": {
 							URL:    "https://[::1]:80",
 							Weight: 42,
 						},
