@@ -250,7 +250,6 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultConfiguration := configuration.GlobalConfiguration{
 		Docker:             &defaultDocker,
 		File:               &defaultFile,
-		Web:                &defaultWeb,
 		Rest:               &defaultRest,
 		Marathon:           &defaultMarathon,
 		Consul:             &defaultConsul,

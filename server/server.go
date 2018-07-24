@@ -21,7 +21,6 @@ import (
 	"github.com/containous/mux"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/configuration"
-	"github.com/containous/traefik/configuration/router"
 	"github.com/containous/traefik/h2c"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/metrics"
@@ -612,12 +611,8 @@ func (s *Server) buildInternalRouter(entryPointName string) *mux.Router {
 		entryPoint.InternalRouter.AddRoutes(internalMuxRouter)
 
 		if s.globalConfiguration.API != nil && s.globalConfiguration.API.EntryPoint == entryPointName && s.leadership != nil {
-			if s.globalConfiguration.Web != nil && s.globalConfiguration.Web.Path != "" {
-				rt := router.WithPrefix{Router: s.leadership, PathPrefix: s.globalConfiguration.Web.Path}
-				rt.AddRoutes(internalMuxRouter)
-			} else {
-				s.leadership.AddRoutes(internalMuxRouter)
-			}
+			s.leadership.AddRoutes(internalMuxRouter)
+
 		}
 	}
 

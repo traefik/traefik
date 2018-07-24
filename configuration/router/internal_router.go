@@ -60,13 +60,8 @@ func NewInternalRouterAggregator(globalConfiguration configuration.GlobalConfigu
 	}
 
 	realRouterWithMiddleware := WithMiddleware{router: &routerWithPrefixAndMiddleware, routerMiddlewares: serverMiddlewares}
-	if globalConfiguration.Web != nil && globalConfiguration.Web.Path != "" {
-		router.AddRouter(&WithPrefix{PathPrefix: globalConfiguration.Web.Path, Router: &routerWithPrefix})
-		router.AddRouter(&WithPrefix{PathPrefix: globalConfiguration.Web.Path, Router: &realRouterWithMiddleware})
-	} else {
-		router.AddRouter(&routerWithPrefix)
-		router.AddRouter(&realRouterWithMiddleware)
-	}
+	router.AddRouter(&routerWithPrefix)
+	router.AddRouter(&realRouterWithMiddleware)
 
 	return &router
 }

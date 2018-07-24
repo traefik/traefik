@@ -247,50 +247,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 		},
 		Directory: "file Directory",
 	}
-	config.Web = &configuration.WebCompatibility{
-		Address:  "web Address",
-		CertFile: "web CertFile",
-		KeyFile:  "web KeyFile",
-		ReadOnly: true,
-		Statistics: &types.Statistics{
-			RecentErrors: 666,
-		},
-		Metrics: &types.Metrics{
-			Prometheus: &types.Prometheus{
-				Buckets: types.Buckets{6.5, 6.6, 6.7},
-			},
-			Datadog: &types.Datadog{
-				Address:      "Datadog Address",
-				PushInterval: "Datadog PushInterval",
-			},
-			StatsD: &types.Statsd{
-				Address:      "StatsD Address",
-				PushInterval: "StatsD PushInterval",
-			},
-		},
-		Path: "web Path",
-		Auth: &types.Auth{
-			Basic: &types.Basic{
-				UsersFile: "web Basic UsersFile",
-				Users:     types.Users{"web Basic Users 1", "web Basic Users 2", "web Basic Users 3"},
-			},
-			Digest: &types.Digest{
-				UsersFile: "web Digest UsersFile",
-				Users:     types.Users{"web Digest Users 1", "web Digest Users 2", "web Digest Users 3"},
-			},
-			Forward: &types.Forward{
-				Address: "web Address",
-				TLS: &types.ClientTLS{
-					CA:                 "web CA",
-					Cert:               "web Cert",
-					Key:                "web Key",
-					InsecureSkipVerify: true,
-				},
-				TrustForwardHeader: true,
-			},
-		},
-		Debug: true,
-	}
 	config.Marathon = &marathon.Provider{
 		BaseProvider: provider.BaseProvider{
 			Watch:    true,
