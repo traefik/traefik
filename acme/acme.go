@@ -184,19 +184,9 @@ func (a *ACME) leadershipListener(elected bool) error {
 		account := object.(*Account)
 		account.Init()
 		// Reset Account values if caServer changed, thus registration URI can be updated
-		if account != nil && account.Registration != nil {
-			aru, err := url.Parse(account.Registration.URI)
-			if err != nil {
-				return fmt.Errorf("Unable to parse account.Registration URL : %v", err)
-			}
-			cau, err := url.Parse(a.CAServer)
-			if err != nil {
-				return fmt.Errorf("Unable to parse CAServer URL : %v", err)
-			}
-			if strings.Compare(cau.Hostname(), aru.Hostname()) != 0 {
-				log.Info("Account URI does not match the current CAServer. The account will be reset")
-				account.reset()
-			}
+		if account != nil && account.Registration != nil && isAccountMatchingCaServer(account.Registration.URI, a.CAServer) {
+			log.Info("Account URI does not match the current CAServer. The account will be reset")
+			account.reset()
 		}
 
 		var needRegister bool
@@ -240,6 +230,20 @@ func (a *ACME) leadershipListener(elected bool) error {
 		a.runJobs()
 	}
 	return nil
+}
+
+func isAccountMatchingCaServer(accountUri string, serverUri string) bool {
+	aru, err := url.Parse(accountUri)
+	if err != nil {
+		log.Infof("Unable to parse account.Registration URL : %v", err)
+		return false
+	}
+	cau, err := url.Parse(serverUri)
+	if err != nil {
+		log.Infof("Unable to parse CAServer URL : %v", err)
+		return false
+	}
+	return strings.Compare(cau.Hostname(), aru.Hostname()) != 0
 }
 
 func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {

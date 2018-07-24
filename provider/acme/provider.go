@@ -131,19 +131,9 @@ func (p *Provider) Init(_ types.Constraints) error {
 	}
 
 	// Reset Account if caServer changed, thus registration URI can be updated
-	if p.account != nil && p.account.Registration != nil {
-		aru, err := url.Parse(p.account.Registration.URI)
-		if err != nil {
-			return fmt.Errorf("Unable to parse account.Registration URL : %v", err)
-		}
-		cau, err := url.Parse(p.CAServer)
-		if err != nil {
-			return fmt.Errorf("Unable to parse CAServer URL : %v", err)
-		}
-		if strings.Compare(cau.Hostname(), aru.Hostname()) != 0 {
-			log.Info("Account URI does not match the current CAServer. The account will be reset")
-			p.account = nil
-		}
+	if p.account != nil && p.account.Registration != nil && isAccountMatchingCaServer(p.account.Registration.URI, p.CAServer) {
+		log.Info("Account URI does not match the current CAServer. The account will be reset")
+		p.account = nil
 	}
 
 	p.certificates, err = p.Store.GetCertificates()
@@ -152,6 +142,20 @@ func (p *Provider) Init(_ types.Constraints) error {
 	}
 
 	return nil
+}
+
+func isAccountMatchingCaServer(accountUri string, serverUri string) bool {
+	aru, err := url.Parse(accountUri)
+	if err != nil {
+		log.Infof("Unable to parse account.Registration URL : %v", err)
+		return false
+	}
+	cau, err := url.Parse(serverUri)
+	if err != nil {
+		log.Infof("Unable to parse CAServer URL : %v", err)
+		return false
+	}
+	return strings.Compare(cau.Hostname(), aru.Hostname()) != 0
 }
 
 // Provide allows the file provider to provide configurations to traefik
