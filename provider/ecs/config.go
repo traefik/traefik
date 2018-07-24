@@ -19,12 +19,18 @@ import (
 func (p *Provider) buildConfiguration(instances []ecsInstance) (*types.Configuration, error) {
 	services := make(map[string][]ecsInstance)
 	for _, instance := range instances {
-		backendName := getBackendName(instance)
-		if p.filterInstance(instance) {
-			if serviceInstances, ok := services[backendName]; ok {
-				services[backendName] = append(serviceInstances, instance)
-			} else {
-				services[backendName] = []ecsInstance{instance}
+		segmentProperties := label.ExtractTraefikLabels(instance.TraefikLabels)
+		for segmentName, labels := range segmentProperties {
+			instance.SegmentLabels = labels
+			instance.SegmentName = segmentName
+
+			backendName := getBackendName(instance)
+			if p.filterInstance(instance) {
+				if serviceInstances, ok := services[backendName]; ok {
+					services[backendName] = append(serviceInstances, instance)
+				} else {
+					services[backendName] = []ecsInstance{instance}
+				}
 			}
 		}
 	}
@@ -101,14 +107,22 @@ func (p *Provider) filterInstance(i ecsInstance) bool {
 }
 
 func getBackendName(i ecsInstance) string {
+	if len(i.SegmentName) > 0 {
+		return provider.Normalize(i.Name + "-" + i.SegmentName)
+	}
+
 	if value := label.GetStringValue(i.TraefikLabels, label.TraefikBackend, ""); len(value) > 0 {
-		return value
+		return provider.Normalize(value)
 	}
 	return i.Name
 }
 
 func (p *Provider) getFrontendRule(i ecsInstance) string {
-	domain := label.GetStringValue(i.TraefikLabels, label.TraefikDomain, p.Domain)
+	if value := label.GetStringValue(i.SegmentLabels, label.TraefikFrontendRule, ""); len(value) != 0 {
+		return value
+	}
+
+	domain := label.GetStringValue(i.SegmentLabels, label.TraefikDomain, p.Domain)
 	defaultRule := "Host:" + strings.ToLower(strings.Replace(i.Name, "_", "-", -1)) + "." + domain
 
 	return label.GetStringValue(i.TraefikLabels, label.TraefikFrontendRule, defaultRule)
@@ -119,6 +133,17 @@ func getHost(i ecsInstance) string {
 }
 
 func getPort(i ecsInstance) string {
+	if value := label.GetStringValue(i.SegmentLabels, label.TraefikPort, ""); len(value) != 0 {
+		port, err := strconv.ParseInt(value, 10, 64)
+		if err == nil {
+			for _, mapping := range i.machine.ports {
+				if port == mapping.hostPort || port == mapping.containerPort {
+					return strconv.FormatInt(mapping.hostPort, 10)
+				}
+			}
+		}
+	}
+
 	if value := label.GetStringValue(i.TraefikLabels, label.TraefikPort, ""); len(value) > 0 {
 		port, err := strconv.ParseInt(value, 10, 64)
 		if err == nil {
@@ -154,11 +179,14 @@ func getServers(instances []ecsInstance) map[string]types.Server {
 			servers = make(map[string]types.Server)
 		}
 
-		protocol := label.GetStringValue(instance.TraefikLabels, label.TraefikProtocol, label.DefaultProtocol)
+		protocol := label.GetStringValue(instance.SegmentLabels, label.TraefikProtocol, label.DefaultProtocol)
 		host := getHost(instance)
 		port := getPort(instance)
 
 		serverName := provider.Normalize(fmt.Sprintf("server-%s-%s", instance.Name, instance.ID))
+		if len(instance.SegmentName) > 0 {
+			serverName = provider.Normalize(fmt.Sprintf("server-%s-%s-%s", instance.Name, instance.ID, instance.SegmentName))
+		}
 		servers[serverName] = types.Server{
 			URL:    fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(host, port)),
 			Weight: label.GetIntValue(instance.TraefikLabels, label.TraefikWeight, label.DefaultWeight),
