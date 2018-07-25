@@ -29,6 +29,9 @@ type Inclusions map[string]*FilterOption
 // RequestBodyCaptures is a container type for request body capture filters
 type RequestBodyCaptures map[string]*FilterOption
 
+// RequestBodyIgnores is a container type for request body capture filters
+type RequestBodyIgnores map[string]*FilterOption
+
 // MaskFields specifies fields whose values should be obfuscated
 type MaskFields []string
 
@@ -45,6 +48,7 @@ type AuditSink struct {
 	Inclusions               Inclusions          `json:"inclusions,omitempty"`
 	Exclusions               Exclusions          `json:"exclusions,omitempty"`
 	RequestBodyCaptures      RequestBodyCaptures `json:"requestBodyCaptures,omitempty"`
+	RequestBodyIgnores       RequestBodyIgnores  `json:"requestBodyIgnores,omitempty"`
 	Type                     string              `json:"type,omitempty" description:"The type of sink: File/HTTP/Kafka/AMQP/Blackhole"`
 	ClientID                 string              `json:"clientId,omitempty" description:"Identifier to be used for the sink client"`
 	ClientVersion            string              `json:"clientVersion,omitempty" description:"Version info to identify the sink client"`

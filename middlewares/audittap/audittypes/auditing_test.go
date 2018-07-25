@@ -283,6 +283,29 @@ func TestShouldCaptureRequestBody(t *testing.T) {
 	mdtpprotect.Req.Host = "someapp.protected.mdtp"
 	assert.False(t, ShouldCaptureRequestBody(mdtpprotect, spec))
 }
+
+func TestShouldIgnoreRequestBody(t *testing.T) {
+
+	captures := []*Filter{
+		{Source: "Host", Contains: []string{"somehostname", "hostinc"}},
+	}
+	ignores := []*Filter{
+		{Source: "Path", Contains: []string{"ignorepath"}},
+	}
+
+	spec := &AuditSpecification{
+		RequestBodyCaptures: captures,
+		RequestBodyIgnores:  ignores,
+	}
+
+	req1 := NewRequestContext(httptest.NewRequest("", "/pathsegment?d=1&e=2", nil))
+	req1.Req.Host = "abchostincdef.somedomain"
+	assert.True(t, ShouldCaptureRequestBody(req1, spec))
+
+	req2 := NewRequestContext(httptest.NewRequest("", "/aaaignorepathbbb?d=1&e=2", nil))
+	req2.Req.Host = "abchostincdef.somedomain"
+	assert.False(t, ShouldCaptureRequestBody(req2, spec))
+}
 func TestSatisfiesFilter(t *testing.T) {
 	assert.True(t, filterSatisfies(Filter{Source: "x", StartsWith: []string{"begin"}}, "beginWithThis"))
 	assert.True(t, filterSatisfies(Filter{Source: "x", EndsWith: []string{"That"}}, "endWithThat"))
