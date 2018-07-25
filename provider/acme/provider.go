@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/BurntSushi/ty/fun"
+	"github.com/cenk/backoff"
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/rules"
@@ -74,6 +75,8 @@ type Certificate struct {
 type DNSChallenge struct {
 	Provider         string         `description:"Use a DNS-01 based challenge provider rather than HTTPS."`
 	DelayBeforeCheck flaeg.Duration `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."`
+	preCheckTimeout  time.Duration
+	preCheckInterval time.Duration
 }
 
 // HTTPChallenge contains HTTP challenge Configuration
@@ -262,6 +265,17 @@ func (p *Provider) getClient() (*acme.Client, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		// Set the precheck timeout into the DNSChallenge provider
+		switch provider := provider.(type) {
+		case acme.ChallengeProviderTimeout:
+			p.DNSChallenge.preCheckTimeout, p.DNSChallenge.preCheckInterval = provider.Timeout()
+		default:
+			// Same default values than LEGO
+			p.DNSChallenge.preCheckTimeout = 60 * time.Second
+			p.DNSChallenge.preCheckInterval = 2 * time.Second
+		}
+
 	} else if p.HTTPChallenge != nil && len(p.HTTPChallenge.EntryPoint) > 0 {
 		log.Debug("Using HTTP Challenge provider.")
 
@@ -361,13 +375,20 @@ func (p *Provider) resolveCertificate(domain types.Domain, domainFromConfigurati
 		return nil, fmt.Errorf("cannot get ACME client %v", err)
 	}
 
+	var certificate *acme.CertificateResource
 	bundle := true
-
-	certificate, err := client.ObtainCertificate(uncheckedDomains, bundle, nil, OSCPMustStaple)
-	if err != nil {
-		return nil, fmt.Errorf("cannot obtain certificates: %+v", err)
+	if p.useBackOffToObtainCertificate(uncheckedDomains) {
+		certificate, err = obtainCertificateWithBackOff(domains, client, p.DNSChallenge.preCheckTimeout, p.DNSChallenge.preCheckInterval, bundle)
+	} else {
+		certificate, err = client.ObtainCertificate(domains, bundle, nil, OSCPMustStaple)
 	}
 
+	if err != nil {
+		return nil, fmt.Errorf("unable to generate a certificate for the domains %v: %v", uncheckedDomains, err)
+	}
+	if certificate == nil {
+		return nil, fmt.Errorf("domains %v do not generate a certificate", uncheckedDomains)
+	}
 	if len(certificate.Certificate) == 0 || len(certificate.PrivateKey) == 0 {
 		return nil, fmt.Errorf("domains %v generate certificate with no value: %v", uncheckedDomains, certificate)
 	}
@@ -380,6 +401,53 @@ func (p *Provider) resolveCertificate(domain types.Domain, domainFromConfigurati
 		domain = types.Domain{Main: uncheckedDomains[0]}
 	}
 	p.addCertificateForDomain(domain, certificate.Certificate, certificate.PrivateKey)
+
+	return certificate, nil
+}
+
+func (p *Provider) useBackOffToObtainCertificate(domains []string) bool {
+	// Check if we can use a backoff only if we use the DNS Challenge and if is there are at least 2 domains to check
+	if p.DNSChallenge != nil && len(domains) > 1 {
+		rootDomain := ""
+		for i := 0; i < len(domains); i++ {
+			// Search a wildcard domain if not already found
+			if len(rootDomain) == 0 && strings.HasPrefix(domains[i], "*.") {
+				rootDomain = strings.TrimPrefix(domains[i], "*.")
+				// Restart to the first indfex to check id the root domain of the wildcard domain exists
+				i = 0
+			} else if len(rootDomain) > 0 && rootDomain == domains[i] {
+				// If the domains list contains a wildcard domain and its root domain, we can use a backOff to obtain the certificate
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func obtainCertificateWithBackOff(domains []string, client *acme.Client, timeout, interval time.Duration, bundle bool) (*acme.CertificateResource, error) {
+	var certificate *acme.CertificateResource
+	var err error
+
+	operation := func() error {
+		certificate, err = client.ObtainCertificate(domains, bundle, nil, OSCPMustStaple)
+		return err
+	}
+
+	notify := func(err error, time time.Duration) {
+		log.Errorf("Error obtaining certificate retrying in %s", time)
+	}
+
+	ebo := backoff.NewExponentialBackOff()
+	// Give the time to LEGO to try to solve the challenge twice
+	ebo.MaxElapsedTime = 2 * timeout
+	ebo.MaxInterval = interval
+
+	err = backoff.RetryNotify(safe.OperationWithRecover(operation), ebo, notify)
+	if err != nil {
+		log.Errorf("Error obtaining certificate: %v", err)
+		return nil, err
+	}
 
 	return certificate, nil
 }
