@@ -317,6 +317,12 @@
   version = "v14"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/cpu/goacmedns"
+  packages = ["."]
+  revision = "565ecf2a84df654865cc102705ac160a3b04fc01"
+
+[[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
@@ -1299,6 +1305,7 @@
     "log",
     "platform/config/env",
     "providers/dns",
+    "providers/dns/acmedns",
     "providers/dns/auroradns",
     "providers/dns/azure",
     "providers/dns/bluecat",
@@ -1334,7 +1341,7 @@
     "providers/dns/vegadns",
     "providers/dns/vultr"
   ]
-  revision = "e0d512138c43e3f056a41cd7a5beff662ec130d3"
+  revision = "8b6701514cc0a6285a327908f3f9ce05bcacbffd"
 
 [[projects]]
   branch = "master"

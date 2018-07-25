@@ -18,6 +18,7 @@ find "${PATH_TO_SITE}" -type f -not -path "/app/site/theme/*" \
 | xargs -0 -r -P "${NUMBER_OF_CPUS}" -I '{}' \
   htmlproofer \
   --check-html \
+  --only_4xx \
   --alt_ignore="/traefik.logo.png/" \
   --url-ignore "/localhost:/,/127.0.0.1:/,/fonts.gstatic.com/,/.minikube/,/github.com\/containous\/traefik\/*edit*/,/github.com\/containous\/traefik\/$/" \
   '{}'
