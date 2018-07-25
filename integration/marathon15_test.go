@@ -118,7 +118,7 @@ func (s *MarathonSuite15) TestConfigurationUpdate(c *check.C) {
 		CPU(0.1).
 		Memory(32).
 		EmptyNetworks().
-		AddLabel(label.GetServiceLabel(label.TraefikFrontendRule, "app"), "PathPrefix:/app")
+		AddLabel(label.Prefix+"app"+label.TraefikFrontendRule, "PathPrefix:/app")
 	app.Container.
 		Expose(80).
 		Docker.

@@ -36,60 +36,6 @@ func FindSegmentSubmatch(name string) []string {
 	return matches
 }
 
-// ExtractServicePropertiesP Extract services labels
-// Deprecated
-func ExtractServicePropertiesP(labels *map[string]string) SegmentProperties {
-	if labels == nil {
-		return make(SegmentProperties)
-	}
-	return ExtractServiceProperties(*labels)
-}
-
-// ExtractServiceProperties Extract services labels
-// Deprecated
-func ExtractServiceProperties(labels map[string]string) SegmentProperties {
-	v := make(SegmentProperties)
-
-	for name, value := range labels {
-		matches := FindSegmentSubmatch(name)
-		if matches == nil {
-			continue
-		}
-
-		var segmentName string
-		var propertyName string
-		for i, name := range SegmentPropertiesRegexp.SubexpNames() {
-			// the group 0 is anonymous because it's always the root expression
-			if i != 0 {
-				if name == "segment_name" {
-					segmentName = matches[i]
-				} else if name == "property_name" {
-					propertyName = matches[i]
-				}
-			}
-		}
-
-		if _, ok := v[segmentName]; !ok {
-			v[segmentName] = make(SegmentPropertyValues)
-		}
-		v[segmentName][propertyName] = value
-	}
-
-	return v
-}
-
-// GetServiceLabel converts a key value of Label*, given a serviceName,
-// into a pattern <LabelPrefix>.<serviceName>.<property>
-// i.e. For LabelFrontendRule and serviceName=app it will return "traefik.app.frontend.rule"
-// Deprecated
-func GetServiceLabel(labelName, serviceName string) string {
-	if len(serviceName) > 0 {
-		property := strings.TrimPrefix(labelName, Prefix)
-		return Prefix + serviceName + "." + property
-	}
-	return labelName
-}
-
 // ExtractTraefikLabels transform labels to segment labels
 func ExtractTraefikLabels(originLabels map[string]string) SegmentProperties {
 	allLabels := make(SegmentProperties)
