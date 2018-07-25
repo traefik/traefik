@@ -29,8 +29,8 @@ func (p *Provider) buildConfiguration(catalog []catalogUpdate) *types.Configurat
 		"getServiceBackendName": getServiceBackendName,
 		"getBackendAddress":     getBackendAddress,
 		"getServerName":         getServerName,
-		"getCircuitBreaker":     getCircuitBreaker,
-		"getLoadBalancer":       getLoadBalancer,
+		"getCircuitBreaker":     label.GetCircuitBreaker,
+		"getLoadBalancer":       label.GetLoadBalancer,
 		"getMaxConn":            label.GetMaxConn,
 		"getHealthCheck":        label.GetHealthCheck,
 		"getBuffering":          label.GetBuffering,
@@ -133,32 +133,6 @@ func (p *Provider) setupFrontEndRuleTemplate() {
 }
 
 // Specific functions
-
-// Only for compatibility
-// Deprecated
-func getLoadBalancer(labels map[string]string) *types.LoadBalancer {
-	if v, ok := labels[label.TraefikBackendLoadBalancer]; ok {
-		log.Warnf("Deprecated configuration found: %s. Please use %s.", label.TraefikBackendLoadBalancer, label.TraefikBackendLoadBalancerMethod)
-		if !label.Has(labels, label.TraefikBackendLoadBalancerMethod) {
-			labels[label.TraefikBackendLoadBalancerMethod] = v
-		}
-	}
-
-	return label.GetLoadBalancer(labels)
-}
-
-// Only for compatibility
-// Deprecated
-func getCircuitBreaker(labels map[string]string) *types.CircuitBreaker {
-	if v, ok := labels[label.TraefikBackendCircuitBreaker]; ok {
-		log.Warnf("Deprecated configuration found: %s. Please use %s.", label.TraefikBackendCircuitBreaker, label.TraefikBackendCircuitBreakerExpression)
-		if !label.Has(labels, label.TraefikBackendCircuitBreakerExpression) {
-			labels[label.TraefikBackendCircuitBreakerExpression] = v
-		}
-	}
-
-	return label.GetCircuitBreaker(labels)
-}
 
 func getServiceBackendName(service *serviceUpdate) string {
 	return strings.ToLower(service.ServiceName)
