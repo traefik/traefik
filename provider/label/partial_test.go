@@ -254,13 +254,11 @@ func TestGetLoadBalancer(t *testing.T) {
 			desc: "should return a struct when labels are set",
 			labels: map[string]string{
 				TraefikBackendLoadBalancerMethod:               "drr",
-				TraefikBackendLoadBalancerSticky:               "true",
 				TraefikBackendLoadBalancerStickiness:           "true",
 				TraefikBackendLoadBalancerStickinessCookieName: "foo",
 			},
 			expected: &types.LoadBalancer{
 				Method: "drr",
-				Sticky: true,
 				Stickiness: &types.Stickiness{
 					CookieName: "foo",
 				},
@@ -270,12 +268,10 @@ func TestGetLoadBalancer(t *testing.T) {
 			desc: "should return a nil Stickiness when Stickiness is not set",
 			labels: map[string]string{
 				TraefikBackendLoadBalancerMethod:               "drr",
-				TraefikBackendLoadBalancerSticky:               "true",
 				TraefikBackendLoadBalancerStickinessCookieName: "foo",
 			},
 			expected: &types.LoadBalancer{
 				Method:     "drr",
-				Sticky:     true,
 				Stickiness: nil,
 			},
 		},

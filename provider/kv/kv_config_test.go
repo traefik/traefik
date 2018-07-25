@@ -253,7 +253,6 @@ func TestProviderBuildConfiguration(t *testing.T) {
 				backend("backend1",
 					withPair(pathBackendCircuitBreakerExpression, label.DefaultCircuitBreakerExpression),
 					withPair(pathBackendLoadBalancerMethod, "drr"),
-					withPair(pathBackendLoadBalancerSticky, "true"),
 					withPair(pathBackendLoadBalancerStickiness, "true"),
 					withPair(pathBackendLoadBalancerStickinessCookieName, "tomate"),
 					withPair(pathBackendHealthCheckScheme, "http"),
@@ -362,7 +361,6 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						},
 						LoadBalancer: &types.LoadBalancer{
 							Method: "drr",
-							Sticky: true,
 							Stickiness: &types.Stickiness{
 								CookieName: "tomate",
 							},
@@ -1244,7 +1242,7 @@ func TestProviderHasStickinessLabel(t *testing.T) {
 				},
 			}
 
-			actual := p.hasStickinessLabel(test.rootPath)
+			actual := p.getLoadBalancer(test.rootPath).Stickiness != nil
 
 			if actual != test.expected {
 				t.Fatalf("expected %v, got %v", test.expected, actual)
@@ -1794,12 +1792,10 @@ func TestProviderGetLoadBalancer(t *testing.T) {
 			kvPairs: filler("traefik",
 				backend("foo",
 					withPair(pathBackendLoadBalancerMethod, "drr"),
-					withPair(pathBackendLoadBalancerSticky, "true"),
 					withPair(pathBackendLoadBalancerStickiness, "true"),
 					withPair(pathBackendLoadBalancerStickinessCookieName, "aubergine"))),
 			expected: &types.LoadBalancer{
 				Method: "drr",
-				Sticky: true,
 				Stickiness: &types.Stickiness{
 					CookieName: "aubergine",
 				},
@@ -1821,17 +1817,6 @@ func TestProviderGetLoadBalancer(t *testing.T) {
 					withPair(pathBackendLoadBalancerMethod, "drr"))),
 			expected: &types.LoadBalancer{
 				Method: "drr",
-			},
-		},
-		{
-			desc:     "when sticky is set",
-			rootPath: "traefik/backends/foo",
-			kvPairs: filler("traefik",
-				backend("foo",
-					withPair(pathBackendLoadBalancerSticky, "true"))),
-			expected: &types.LoadBalancer{
-				Method: "wrr",
-				Sticky: true,
 			},
 		},
 		{

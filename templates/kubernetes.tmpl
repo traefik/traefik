@@ -10,7 +10,6 @@
 
     [backends."{{ $backendName }}".loadBalancer]
       method = "{{ $backend.LoadBalancer.Method }}"
-      sticky = {{ $backend.LoadBalancer.Sticky }}
       {{if $backend.LoadBalancer.Stickiness }}
       [backends."{{ $backendName }}".loadBalancer.stickiness]
         cookieName = "{{ $backend.LoadBalancer.Stickiness.CookieName }}"

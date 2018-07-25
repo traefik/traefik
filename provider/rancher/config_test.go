@@ -48,7 +48,6 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						label.TraefikBackendHealthCheckHostname:              "foo.com",
 						label.TraefikBackendHealthCheckHeaders:               "Foo:bar || Bar:foo",
 						label.TraefikBackendLoadBalancerMethod:               "drr",
-						label.TraefikBackendLoadBalancerSticky:               "true",
 						label.TraefikBackendLoadBalancerStickiness:           "true",
 						label.TraefikBackendLoadBalancerStickinessCookieName: "chocolate",
 						label.TraefikBackendMaxConnAmount:                    "666",
@@ -252,7 +251,6 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					},
 					LoadBalancer: &types.LoadBalancer{
 						Method: "drr",
-						Sticky: true,
 						Stickiness: &types.Stickiness{
 							CookieName: "chocolate",
 						},

@@ -10,7 +10,6 @@ const (
 	pathBackendHealthCheckHostname              = "/healthcheck/hostname"
 	pathBackendHealthCheckHeaders               = "/healthcheck/headers/"
 	pathBackendLoadBalancerMethod               = "/loadbalancer/method"
-	pathBackendLoadBalancerSticky               = "/loadbalancer/sticky"
 	pathBackendLoadBalancerStickiness           = "/loadbalancer/stickiness"
 	pathBackendLoadBalancerStickinessCookieName = "/loadbalancer/stickiness/cookiename"
 	pathBackendMaxConnAmount                    = "/maxconn/amount"

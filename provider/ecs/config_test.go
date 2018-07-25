@@ -342,7 +342,6 @@ func TestBuildConfiguration(t *testing.T) {
 							label.TraefikBackendHealthCheckHostname:              aws.String("foo.com"),
 							label.TraefikBackendHealthCheckHeaders:               aws.String("Foo:bar || Bar:foo"),
 							label.TraefikBackendLoadBalancerMethod:               aws.String("drr"),
-							label.TraefikBackendLoadBalancerSticky:               aws.String("true"),
 							label.TraefikBackendLoadBalancerStickiness:           aws.String("true"),
 							label.TraefikBackendLoadBalancerStickinessCookieName: aws.String("chocolate"),
 							label.TraefikBackendMaxConnAmount:                    aws.String("666"),
@@ -440,7 +439,6 @@ func TestBuildConfiguration(t *testing.T) {
 						},
 						LoadBalancer: &types.LoadBalancer{
 							Method: "drr",
-							Sticky: true,
 							Stickiness: &types.Stickiness{
 								CookieName: "chocolate",
 							},
@@ -602,7 +600,6 @@ func TestBuildConfiguration(t *testing.T) {
 							label.TraefikBackendHealthCheckHostname:              aws.String("foo.com"),
 							label.TraefikBackendHealthCheckHeaders:               aws.String("Foo:bar || Bar:foo"),
 							label.TraefikBackendLoadBalancerMethod:               aws.String("drr"),
-							label.TraefikBackendLoadBalancerSticky:               aws.String("true"),
 							label.TraefikBackendLoadBalancerStickiness:           aws.String("true"),
 							label.TraefikBackendLoadBalancerStickinessCookieName: aws.String("chocolate"),
 							label.TraefikBackendMaxConnAmount:                    aws.String("666"),
@@ -689,7 +686,6 @@ func TestBuildConfiguration(t *testing.T) {
 							label.TraefikBackendHealthCheckHostname:              aws.String("bar.com"),
 							label.TraefikBackendHealthCheckHeaders:               aws.String("Foo:bar || Bar:foo"),
 							label.TraefikBackendLoadBalancerMethod:               aws.String("drr"),
-							label.TraefikBackendLoadBalancerSticky:               aws.String("true"),
 							label.TraefikBackendLoadBalancerStickiness:           aws.String("true"),
 							label.TraefikBackendLoadBalancerStickinessCookieName: aws.String("chocolate"),
 							label.TraefikBackendMaxConnAmount:                    aws.String("666"),
@@ -776,7 +772,6 @@ func TestBuildConfiguration(t *testing.T) {
 						},
 						LoadBalancer: &types.LoadBalancer{
 							Method: "drr",
-							Sticky: true,
 							Stickiness: &types.Stickiness{
 								CookieName: "chocolate",
 							},

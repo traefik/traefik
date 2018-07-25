@@ -363,7 +363,6 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel(label.TraefikBackendHealthCheckHeaders, "Foo:bar || Bar:foo"),
 
 					withLabel(label.TraefikBackendLoadBalancerMethod, "drr"),
-					withLabel(label.TraefikBackendLoadBalancerSticky, "true"),
 					withLabel(label.TraefikBackendLoadBalancerStickiness, "true"),
 					withLabel(label.TraefikBackendLoadBalancerStickinessCookieName, "chocolate"),
 					withLabel(label.TraefikBackendMaxConnAmount, "666"),
@@ -560,7 +559,6 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 					LoadBalancer: &types.LoadBalancer{
 						Method: "drr",
-						Sticky: true,
 						Stickiness: &types.Stickiness{
 							CookieName: "chocolate",
 						},
@@ -751,7 +749,6 @@ func TestBuildConfigurationSegments(t *testing.T) {
 					withLabel(label.TraefikBackendHealthCheckPort, "880"),
 					withLabel(label.TraefikBackendHealthCheckInterval, "6"),
 					withLabel(label.TraefikBackendLoadBalancerMethod, "drr"),
-					withLabel(label.TraefikBackendLoadBalancerSticky, "true"),
 					withLabel(label.TraefikBackendLoadBalancerStickiness, "true"),
 					withLabel(label.TraefikBackendLoadBalancerStickinessCookieName, "chocolate"),
 					withLabel(label.TraefikBackendMaxConnAmount, "666"),
@@ -952,7 +949,6 @@ func TestBuildConfigurationSegments(t *testing.T) {
 					},
 					LoadBalancer: &types.LoadBalancer{
 						Method: "drr",
-						Sticky: true,
 						Stickiness: &types.Stickiness{
 							CookieName: "chocolate",
 						},

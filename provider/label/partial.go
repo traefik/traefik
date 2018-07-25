@@ -354,7 +354,6 @@ func GetLoadBalancer(labels map[string]string) *types.LoadBalancer {
 
 	lb := &types.LoadBalancer{
 		Method: method,
-		Sticky: getSticky(labels),
 	}
 
 	if GetBoolValue(labels, TraefikBackendLoadBalancerStickiness, false) {
@@ -363,15 +362,4 @@ func GetLoadBalancer(labels map[string]string) *types.LoadBalancer {
 	}
 
 	return lb
-}
-
-// TODO: Deprecated
-// replaced by Stickiness
-// Deprecated
-func getSticky(labels map[string]string) bool {
-	if Has(labels, TraefikBackendLoadBalancerSticky) {
-		log.Warnf("Deprecated configuration found: %s. Please use %s.", TraefikBackendLoadBalancerSticky, TraefikBackendLoadBalancerStickiness)
-	}
-
-	return GetBoolValue(labels, TraefikBackendLoadBalancerSticky, false)
 }

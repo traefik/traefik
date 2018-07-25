@@ -39,7 +39,6 @@ type MaxConn struct {
 // LoadBalancer holds load balancing configuration.
 type LoadBalancer struct {
 	Method     string      `json:"method,omitempty"`
-	Sticky     bool        `json:"sticky,omitempty"` // Deprecated: use Stickiness instead
 	Stickiness *Stickiness `json:"stickiness,omitempty"`
 }
 

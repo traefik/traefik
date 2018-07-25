@@ -77,12 +77,12 @@ func lbMethod(method string) func(*types.Backend) {
 	}
 }
 
-func lbSticky() func(*types.Backend) {
+func lbStickiness() func(*types.Backend) {
 	return func(b *types.Backend) {
 		if b.LoadBalancer == nil {
 			b.LoadBalancer = &types.LoadBalancer{}
 		}
-		b.LoadBalancer.Sticky = true
+		b.LoadBalancer.Stickiness = &types.Stickiness{}
 	}
 }
 

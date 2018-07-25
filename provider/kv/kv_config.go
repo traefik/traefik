@@ -56,15 +56,12 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getWhiteList":      p.getWhiteList,
 
 		// Backend functions
-		"getServers":              p.getServers,
-		"getCircuitBreaker":       p.getCircuitBreaker,
-		"getLoadBalancer":         p.getLoadBalancer,
-		"getMaxConn":              p.getMaxConn,
-		"getHealthCheck":          p.getHealthCheck,
-		"getBuffering":            p.getBuffering,
-		"getSticky":               p.getSticky,               // Deprecated [breaking]
-		"hasStickinessLabel":      p.hasStickinessLabel,      // Deprecated [breaking]
-		"getStickinessCookieName": p.getStickinessCookieName, // Deprecated [breaking]
+		"getServers":        p.getServers,
+		"getCircuitBreaker": p.getCircuitBreaker,
+		"getLoadBalancer":   p.getLoadBalancer,
+		"getMaxConn":        p.getMaxConn,
+		"getHealthCheck":    p.getHealthCheck,
+		"getBuffering":      p.getBuffering,
 	}
 
 	configuration, err := p.GetConfiguration("templates/kv.tmpl", KvFuncMap, templateObjects)
@@ -79,33 +76,6 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 	}
 
 	return configuration
-}
-
-// Deprecated
-func (p *Provider) getSticky(rootPath string) bool {
-	stickyValue := p.get("", rootPath, pathBackendLoadBalancerSticky)
-	if len(stickyValue) > 0 {
-		log.Warnf("Deprecated configuration found: %s. Please use %s.", pathBackendLoadBalancerSticky, pathBackendLoadBalancerStickiness)
-	} else {
-		return false
-	}
-
-	sticky, err := strconv.ParseBool(stickyValue)
-	if err != nil {
-		log.Warnf("Invalid %s value: %s.", pathBackendLoadBalancerSticky, stickyValue)
-	}
-
-	return sticky
-}
-
-// Deprecated
-func (p *Provider) hasStickinessLabel(rootPath string) bool {
-	return p.getBool(false, rootPath, pathBackendLoadBalancerStickiness)
-}
-
-// Deprecated
-func (p *Provider) getStickinessCookieName(rootPath string) string {
-	return p.get("", rootPath, pathBackendLoadBalancerStickinessCookieName)
 }
 
 func (p *Provider) getWhiteList(rootPath string) *types.WhiteList {
@@ -238,7 +208,6 @@ func (p *Provider) getHeaders(rootPath string) *types.Headers {
 func (p *Provider) getLoadBalancer(rootPath string) *types.LoadBalancer {
 	lb := &types.LoadBalancer{
 		Method: p.get(label.DefaultBackendLoadBalancerMethod, rootPath, pathBackendLoadBalancerMethod),
-		Sticky: p.getSticky(rootPath),
 	}
 
 	if p.getBool(false, rootPath, pathBackendLoadBalancerStickiness) {
