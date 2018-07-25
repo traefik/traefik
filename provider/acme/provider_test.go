@@ -475,14 +475,20 @@ func TestIsAccountMatchingCaServer(t *testing.T) {
 		},
 		{
 			desc:       "malformed account url",
-			accountURI: "/test.example.com/acme/acct/1234567",
+			accountURI: "//|\\/test.example.com/acme/acct/1234567",
 			serverURI:  "https://test.example.com/acme/directory",
 			expected:   false,
 		},
 		{
 			desc:       "malformed server url",
 			accountURI: "https://test.example.com/acme/acct/1234567",
-			serverURI:  "/test.example.com/acme/directory",
+			serverURI:  "//|\\/test.example.com/acme/directory",
+			expected:   false,
+		},
+		{
+			desc:       "malformed server and account url",
+			accountURI: "//|\\/test.example.com/acme/acct/1234567",
+			serverURI:  "//|\\/test.example.com/acme/directory",
 			expected:   false,
 		},
 	}

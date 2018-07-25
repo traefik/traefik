@@ -131,7 +131,7 @@ func (p *Provider) Init(_ types.Constraints) error {
 	}
 
 	// Reset Account if caServer changed, thus registration URI can be updated
-	if p.account != nil && p.account.Registration != nil && isAccountMatchingCaServer(p.account.Registration.URI, p.CAServer) {
+	if p.account != nil && p.account.Registration != nil && !isAccountMatchingCaServer(p.account.Registration.URI, p.CAServer) {
 		log.Info("Account URI does not match the current CAServer. The account will be reset")
 		p.account = nil
 	}

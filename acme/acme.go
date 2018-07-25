@@ -184,7 +184,7 @@ func (a *ACME) leadershipListener(elected bool) error {
 		account := object.(*Account)
 		account.Init()
 		// Reset Account values if caServer changed, thus registration URI can be updated
-		if account != nil && account.Registration != nil && isAccountMatchingCaServer(account.Registration.URI, a.CAServer) {
+		if account != nil && account.Registration != nil && !isAccountMatchingCaServer(account.Registration.URI, a.CAServer) {
 			log.Info("Account URI does not match the current CAServer. The account will be reset")
 			account.reset()
 		}
