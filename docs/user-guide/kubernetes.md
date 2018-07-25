@@ -17,7 +17,7 @@ The config files used in this guide can be found in the [examples directory](htt
 
 ### Role Based Access Control configuration (Kubernetes 1.6+ only)
 
-Kubernetes introduces [Role Based Access Control (RBAC)](https://kubernetes.io/docs/admin/authorization/rbac/) in 1.6+ to allow fine-grained control of Kubernetes resources and API.
+Kubernetes introduces [Role Based Access Control (RBAC)](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) in 1.6+ to allow fine-grained control of Kubernetes resources and API.
 
 If your cluster is configured with RBAC, you will need to authorize Træfik to use the Kubernetes API. There are two ways to set up the proper permission: Via namespace-specific RoleBindings or a single, global ClusterRoleBinding.
 
