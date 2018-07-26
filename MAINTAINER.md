@@ -14,13 +14,22 @@
 * Marco Jantke [@marco-jantke](https://github.com/marco-jantke)
 * Michaël Matur [@mmatur](https://github.com/mmatur)
 
+## Contributions Daily Meeting
+
+* 3 Maintainers should attend to a Contributions Daily Meeting where we sort and label new issues, and review Pull Requests
+* Every pull request should be checked during the Contributions Daily Meeting
+   * Even if it’s already assigned
+   * Even PR labelled with `contributor/waiting-for-corrections` or `contributor/waiting-for-feedback`
+* Modifying an issue (labels, assignees, milestone) is only possible during the Contributions Daily Meeting, or by an assigned maintainer
 
 ## PR review process:
 
 * The status `needs-design-review` is only used in complex/heavy/tricky PRs.
-* From `1` to `2`: 1 design LGTM in comment, by a senior maintainer, if needed.
-* From `2` to `3`: 3 LGTM by any maintainer.
+* From `status/1-needs-design-review` to `status/2-needs-review`: 1 design LGTM in comment, by a senior maintainer, if needed.
+* From `status/2-needs-review` to `status/3-needs-merge`: 3 LGTM by any maintainer.
 * If needed, a specific maintainer familiar with a particular domain can be requested for the review.
+* If a PR has been implemented in pair programming, one LGTM can be automatically added
+* Amending someone else's pull request is authorized only in emergency, if a rebase is needed, or if the initial contributor is silent
 
 We use [PRM](https://github.com/ldez/prm) to manage locally pull requests.
 
