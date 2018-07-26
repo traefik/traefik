@@ -591,7 +591,7 @@ func (s *ConsulSuite) TestSNIDynamicTlsConfig(c *check.C) {
 	req.Header.Set("Host", tr1.TLSClientConfig.ServerName)
 	req.Header.Set("Accept", "*/*")
 
-	err = try.RequestWithTransport(req, 30*time.Second, tr1, try.HasCn("snitest.com"))
+	err = try.RequestWithTransport(req, 30*time.Second, tr1, try.HasCn(tr1.TLSClientConfig.ServerName))
 	c.Assert(err, checker.IsNil)
 
 	// now we configure the second keypair in consul and the request for host "snitest.org" will use the second keypair
@@ -613,6 +613,6 @@ func (s *ConsulSuite) TestSNIDynamicTlsConfig(c *check.C) {
 	req.Header.Set("Host", tr2.TLSClientConfig.ServerName)
 	req.Header.Set("Accept", "*/*")
 
-	err = try.RequestWithTransport(req, 30*time.Second, tr2, try.HasCn("snitest.org"))
+	err = try.RequestWithTransport(req, 30*time.Second, tr2, try.HasCn(tr2.TLSClientConfig.ServerName))
 	c.Assert(err, checker.IsNil)
 }
