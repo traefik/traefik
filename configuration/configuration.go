@@ -189,6 +189,8 @@ func (gc *GlobalConfiguration) initTracing() {
 					SamplingType:       "const",
 					SamplingParam:      1.0,
 					LocalAgentHostPort: "127.0.0.1:6831",
+					Propagation:        "jaeger",
+					Gen128Bit:          false,
 				}
 			}
 			if gc.Tracing.Zipkin != nil {
