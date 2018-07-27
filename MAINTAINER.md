@@ -28,7 +28,7 @@
 * From `status/1-needs-design-review` to `status/2-needs-review`: 1 design LGTM in comment, by a senior maintainer, if needed.
 * From `status/2-needs-review` to `status/3-needs-merge`: 3 LGTM by any maintainer.
 * If needed, a specific maintainer familiar with a particular domain can be requested for the review.
-* If a PR has been implemented in pair programming, one LGTM can be automatically added
+* If a PR has been implemented in pair programming, one peer's LGTM goes into the review for free
 * Amending someone else's pull request is authorized only in emergency, if a rebase is needed, or if the initial contributor is silent
 
 We use [PRM](https://github.com/ldez/prm) to manage locally pull requests.
