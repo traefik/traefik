@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/containous/mux"
@@ -43,6 +44,7 @@ func (s *StripPrefixRegex) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if r.URL.RawPath != "" {
 			r.URL.RawPath = r.URL.RawPath[len(prefix.Path):]
 		}
+		r = r.WithContext(context.WithValue(r.Context(), StripPrefixKey, prefix.Path))
 		r.Header.Add(ForwardedPrefixHeader, prefix.Path)
 		r.RequestURI = r.URL.RequestURI()
 		s.Handler.ServeHTTP(w, r)
