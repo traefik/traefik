@@ -16,7 +16,7 @@
 
 ## Contributions Daily Meeting
 
-* 3 Maintainers should attend to a Contributions Daily Meeting where we sort and label new issues, and review Pull Requests
+* 3 Maintainers should attend to a Contributions Daily Meeting where we sort and label new issues ([is:issue label:status/0-needs-triage](https://github.com/containous/traefik/issues?utf8=%E2%9C%93&q=is%3Aissue+label%3Astatus%2F0-needs-triage+)), and review every Pull Requests
 * Every pull request should be checked during the Contributions Daily Meeting
    * Even if it’s already assigned
    * Even PR labelled with `contributor/waiting-for-corrections` or `contributor/waiting-for-feedback`
