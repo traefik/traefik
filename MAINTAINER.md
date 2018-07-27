@@ -20,6 +20,7 @@
 * Every pull request should be checked during the Contributions Daily Meeting
    * Even if it’s already assigned
    * Even PR labelled with `contributor/waiting-for-corrections` or `contributor/waiting-for-feedback`
+* Issues labeled with `priority/P0` and `priority/P1` should be assigned.
 * Modifying an issue (labels, assignees, milestone) is only possible during the Contributions Daily Meeting, or by an assigned maintainer
 
 ## PR review process:
@@ -139,18 +140,20 @@ If we open/look an issue/PR, we must add a `kind/*`, an `area/*` and a `status/*
 * `area/websocket`: WebSocket related.
 * `area/webui`: Web UI related.
 
-### Priority
+### Issues Priority
 
-* `priority/P0`: needs hot fix. **(only for issue)**
-* `priority/P1`: need to be fixed in next release. **(only for issue)**
-* `priority/P2`: need to be fixed in the future. **(only for issue)**
-* `priority/P3`: maybe. **(only for issue)**
+* `priority/P0`: needs hot fix.
+* `priority/P1`: need to be fixed in next release.
+* `priority/P2`: need to be fixed in the future.
+* `priority/P3`: maybe.
 
 ### PR size
 
-* `size/S`: small PR. **(only for PR)** _[bot only]_
-* `size/M`: medium PR. **(only for PR)** _[bot only]_
-* `size/L`: Large PR. **(only for PR)** _[bot only]_
+_Automatically set by a bot_
+
+* `size/S`: small PR.
+* `size/M`: medium PR.
+* `size/L`: Large PR.
 
 ### Status - Workflow
 
