@@ -145,7 +145,7 @@ func (s *HealthCheckSuite) doTestMultipleEntrypoints(c *check.C, fixture string)
 		_, err = client.Do(statusInternalServerErrorReq)
 		c.Assert(err, checker.IsNil)
 	}
-	//
+
 	// Verify no backend service is available due to failing health checks
 	err = try.Request(frontendHealthReq, 3*time.Second, try.StatusCodeIs(http.StatusServiceUnavailable))
 	c.Assert(err, checker.IsNil)
