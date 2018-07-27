@@ -22,12 +22,13 @@ func (t *Tracing) NewEntryPoint(name string) negroni.Handler {
 }
 
 func (e *entryPointMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	opNameFunc := func(r *http.Request) string {
-		return fmt.Sprintf("Entrypoint %s %s", e.entryPoint, r.Host)
-	}
+	//opNameFunc := func(r *http.Request) string {
+	//	return fmt.Sprintf("Entrypoint %s %s", e.entryPoint, r.Host)
+	//}
+	opNameFunc := generateEntryPointSpanName
 
 	ctx, _ := e.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
-	span := e.StartSpan(opNameFunc(r), ext.RPCServerOption(ctx))
+	span := e.StartSpan(opNameFunc(r, e.entryPoint, e.SpanNameLimit), ext.RPCServerOption(ctx))
 	ext.Component.Set(span, e.ServiceName)
 	LogRequest(span, r)
 	ext.SpanKindRPCServer.Set(span)
@@ -39,4 +40,20 @@ func (e *entryPointMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request,
 
 	LogResponseCode(span, recorder.Status())
 	span.Finish()
+}
+
+func generateEntryPointSpanName(r *http.Request, entryPoint string, spanLimit int) string {
+	name := fmt.Sprintf("Entrypoint %s %s", entryPoint, r.Host)
+
+	if len(name) > spanLimit {
+		if spanLimit < EntryPointMagicNumber {
+			log.Warnf("SpanNameLimit is set to be less then required static number of characters, defaulting to %d + 3", EntryPointMagicNumber)
+			spanLimit = EntryPointMagicNumber + 3
+		}
+		hash := ComputeHash(name)
+		limit := (spanLimit - EntryPointMagicNumber) / 2
+		name = fmt.Sprintf("Entrypoint %s %s %s", TruncateString(entryPoint, limit), TruncateString(r.Host, limit), hash)
+	}
+
+	return name
 }

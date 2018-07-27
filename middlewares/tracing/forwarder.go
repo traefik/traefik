@@ -23,7 +23,7 @@ func (t *Tracing) NewForwarderMiddleware(frontend, backend string) negroni.Handl
 		Tracing:  t,
 		frontend: frontend,
 		backend:  backend,
-		opName:   fmt.Sprintf("forward %s/%s", frontend, backend),
+		opName:   generateForwardSpanName(frontend, backend, t.SpanNameLimit),
 	}
 }
 
@@ -43,4 +43,20 @@ func (f *forwarderMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, 
 	next(recorder, r)
 
 	LogResponseCode(span, recorder.Status())
+}
+
+func generateForwardSpanName(frontend, backend string, spanLimit int) string {
+	name := fmt.Sprintf("forward %s/%s", frontend, backend)
+
+	if len(name) > spanLimit {
+		if spanLimit < ForwardMagicNumber {
+			log.Warnf("SpanNameLimit is set to be less then required static number of characters, defaulting to %d + 3", ForwardMagicNumber)
+			spanLimit = ForwardMagicNumber + 3
+		}
+		hash := ComputeHash(name)
+		limit := (spanLimit - ForwardMagicNumber) / 2
+		name = fmt.Sprintf("forward %s/%s/%s", TruncateString(frontend, limit), TruncateString(backend, limit), hash)
+	}
+
+	return name
 }

@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 
+	"crypto/sha256"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares/tracing/datadog"
 	"github.com/containous/traefik/middlewares/tracing/jaeger"
@@ -13,13 +14,23 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 )
 
+// ForwardMagicNumber defines the number of static characters in the Forwarding Span Trace name - 8 chars for 'forward ' + 8 chars for hash + 2 chars for '_'
+const ForwardMagicNumber = 18
+
+// EntryPointMagicNumber defines the number of static characters in the Entrypoint Span Trace name - 11 chars for 'Entrypoint ' + 8 chars for hash + 2 chars for '_'
+const EntryPointMagicNumber = 21
+
+// TraceNameHashLength defines the number of characters to use from the head of the generated hash
+const TraceNameHashLength = 8
+
 // Tracing middleware
 type Tracing struct {
-	Backend     string          `description:"Selects the tracking backend ('jaeger','zipkin', 'datadog')." export:"true"`
-	ServiceName string          `description:"Set the name for this service" export:"true"`
-	Jaeger      *jaeger.Config  `description:"Settings for jaeger"`
-	Zipkin      *zipkin.Config  `description:"Settings for zipkin"`
-	DataDog     *datadog.Config `description:"Settings for DataDog"`
+	Backend       string          `description:"Selects the tracking backend ('jaeger','zipkin', 'datadog')." export:"true"`
+	ServiceName   string          `description:"Set the name for this service" export:"true"`
+	SpanNameLimit int             `description:"Set the maximum character limit for Span names (default 100)" export:"true"`
+	Jaeger        *jaeger.Config  `description:"Settings for jaeger"`
+	Zipkin        *zipkin.Config  `description:"Settings for zipkin"`
+	DataDog       *datadog.Config `description:"Settings for DataDog"`
 
 	tracer opentracing.Tracer
 	closer io.Closer
@@ -159,4 +170,29 @@ func SetErrorAndWarnLog(r *http.Request, format string, args ...interface{}) {
 	SetError(r)
 	log.Warnf(format, args...)
 	LogEventf(r, format, args...)
+}
+
+// TruncateString reduces the length of the 'str' argument to 'num' - 3 and adds a '...' suffix to the tail
+func TruncateString(str string, num int) string {
+	text := str
+	if len(str) > num {
+		if num > 3 {
+			num -= 3
+		}
+		text = str[0:num] + "..."
+	}
+	return text
+}
+
+// ComputeHash returns the first TraceNameHashLength character of the sha256 hash for 'name' argument
+func ComputeHash(name string) string {
+	data := []byte(name)
+	hash := sha256.New()
+	_, err := hash.Write(data)
+	if err != nil {
+		// Impossible case
+		log.Errorf("Fail to create Span name hash for %s: %v", name, err)
+	}
+
+	return fmt.Sprintf("%x", hash.Sum(nil))[:TraceNameHashLength]
 }
