@@ -797,6 +797,30 @@ func (s *HTTPSSuite) TestEntrypointHttpsRedirectAndPathModification(c *check.C) 
 			sourceURL:   "http://127.0.0.1:8888/wtf/foo",
 			expectedURL: "https://test.com:8443/wtf/foo",
 		},
+		{
+			desc:        "Stripped URL Regex redirect",
+			host:        "foo.com",
+			sourceURL:   "http://127.0.0.1:8888/api",
+			expectedURL: "https://foo.com:8443/api",
+		},
+		{
+			desc:        "Stripped URL Regex with trailing slash redirect",
+			host:        "foo.com",
+			sourceURL:   "http://127.0.0.1:8888/api/",
+			expectedURL: "https://foo.com:8443/api/",
+		},
+		{
+			desc:        "Stripped URL Regex with path redirect",
+			host:        "foo.com",
+			sourceURL:   "http://127.0.0.1:8888/api/bacon",
+			expectedURL: "https://foo.com:8443/api/bacon",
+		},
+		{
+			desc:        "Stripped URL Regex with path and trailing slash redirect",
+			host:        "foo.com",
+			sourceURL:   "http://127.0.0.1:8888/api/bacon/",
+			expectedURL: "https://foo.com:8443/api/bacon/",
+		},
 	}
 
 	for _, test := range testCases {

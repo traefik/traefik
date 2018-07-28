@@ -40,10 +40,12 @@ func (s *StripPrefixRegex) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		trailingSlash := r.URL.Path == prefix.Path+"/"
 		r.URL.Path = r.URL.Path[len(prefix.Path):]
 		if r.URL.RawPath != "" {
 			r.URL.RawPath = r.URL.RawPath[len(prefix.Path):]
 		}
+		r = r.WithContext(context.WithValue(r.Context(), StripPrefixSlashKey, trailingSlash))
 		r = r.WithContext(context.WithValue(r.Context(), StripPrefixKey, prefix.Path))
 		r.Header.Add(ForwardedPrefixHeader, prefix.Path)
 		r.RequestURI = r.URL.RequestURI()

@@ -30,3 +30,7 @@ defaultEntryPoints = ["http", "https"]
   backend = "backend1"
     [frontends.frontend2.routes.test_1]
     rule = "Host: test.com; AddPrefix: /foo"
+  [frontends.frontend3]
+  backend = "backend1"
+    [frontends.frontend3.routes.test_1]
+    rule = "Host: foo.com; PathPrefixStripRegex: /{id:[a-z]+}"
