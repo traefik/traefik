@@ -121,6 +121,7 @@ If we open/look an issue/PR, we must add a `kind/*`, an `area/*` and a `status/*
 * `area/logs`: Traefik logs related.
 * `area/middleware`: Middleware related.
 * `area/middleware/metrics`: Metrics related. (Prometheus, StatsD, ...)
+* `area/middleware/tracing`: Tracing related. (Jaeger, Zipkin, ...)
 * `area/oxy`: Oxy related.
 * `area/provider`: related to all providers.
 * `area/provider/boltdb`: Boltd DB related.
@@ -131,10 +132,14 @@ If we open/look an issue/PR, we must add a `kind/*`, an `area/*` and a `status/*
 * `area/provider/eureka`: Eureka related.
 * `area/provider/file`: file provider related.
 * `area/provider/k8s`: Kubernetes related.
+* `area/provider/kv`: KV related.
 * `area/provider/marathon`: Marathon related.
 * `area/provider/mesos`: Mesos related.
 * `area/provider/rancher`: Rancher related.
+* `area/provider/servicefabric`: Azure service fabric related.
 * `area/provider/zk`: Zoo Keeper related.
+* `area/rules`: Rules related.
+* `area/server`: Server related.
 * `area/sticky-session`: Sticky session related.
 * `area/tls`: TLS related.
 * `area/websocket`: WebSocket related.
