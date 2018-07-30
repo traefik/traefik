@@ -768,6 +768,12 @@ func (s *HTTPSSuite) TestEntrypointHttpsRedirectAndPathModification(c *check.C) 
 			expectedURL: "https://example.com:8443/api/",
 		},
 		{
+			desc:        "Stripped URL with double trailing slash redirect",
+			host:        "example.com",
+			sourceURL:   "http://127.0.0.1:8888/api//",
+			expectedURL: "https://example.com:8443/api//",
+		},
+		{
 			desc:        "Stripped URL with path redirect",
 			host:        "example.com",
 			sourceURL:   "http://127.0.0.1:8888/api/bacon",
@@ -778,6 +784,24 @@ func (s *HTTPSSuite) TestEntrypointHttpsRedirectAndPathModification(c *check.C) 
 			host:        "example.com",
 			sourceURL:   "http://127.0.0.1:8888/api/bacon/",
 			expectedURL: "https://example.com:8443/api/bacon/",
+		},
+		{
+			desc:        "Stripped URL with path and double trailing slash redirect",
+			host:        "example.com",
+			sourceURL:   "http://127.0.0.1:8888/api/bacon//",
+			expectedURL: "https://example.com:8443/api/bacon//",
+		},
+		{
+			desc:        "Root Path with redirect",
+			host:        "test.com",
+			sourceURL:   "http://127.0.0.1:8888/",
+			expectedURL: "https://test.com:8443/",
+		},
+		{
+			desc:        "Root Path with double trailing slash redirect",
+			host:        "test.com",
+			sourceURL:   "http://127.0.0.1:8888//",
+			expectedURL: "https://test.com:8443//",
 		},
 		{
 			desc:        "AddPrefix with redirect",
