@@ -48,7 +48,7 @@ func (f *forwarderMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, 
 func generateForwardSpanName(frontend, backend string, spanLimit int) string {
 	name := fmt.Sprintf("forward %s/%s", frontend, backend)
 
-	if len(name) > spanLimit {
+	if spanLimit > 0 && len(name) > spanLimit {
 		if spanLimit < ForwardMagicNumber {
 			log.Warnf("SpanNameLimit is set to be less then required static number of characters, defaulting to %d + 3", ForwardMagicNumber)
 			spanLimit = ForwardMagicNumber + 3

@@ -45,7 +45,7 @@ func (e *entryPointMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request,
 func generateEntryPointSpanName(r *http.Request, entryPoint string, spanLimit int) string {
 	name := fmt.Sprintf("Entrypoint %s %s", entryPoint, r.Host)
 
-	if len(name) > spanLimit {
+	if spanLimit > 0 && len(name) > spanLimit {
 		if spanLimit < EntryPointMagicNumber {
 			log.Warnf("SpanNameLimit is set to be less then required static number of characters, defaulting to %d + 3", EntryPointMagicNumber)
 			spanLimit = EntryPointMagicNumber + 3

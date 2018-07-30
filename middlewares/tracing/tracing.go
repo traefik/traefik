@@ -27,7 +27,7 @@ const TraceNameHashLength = 8
 type Tracing struct {
 	Backend       string          `description:"Selects the tracking backend ('jaeger','zipkin', 'datadog')." export:"true"`
 	ServiceName   string          `description:"Set the name for this service" export:"true"`
-	SpanNameLimit int             `description:"Set the maximum character limit for Span names (default 100)" export:"true"`
+	SpanNameLimit int             `description:"Set the maximum character limit for Span names (default 0 = no limit)" export:"true"`
 	Jaeger        *jaeger.Config  `description:"Settings for jaeger"`
 	Zipkin        *zipkin.Config  `description:"Settings for zipkin"`
 	DataDog       *datadog.Config `description:"Settings for DataDog"`

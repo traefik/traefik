@@ -221,7 +221,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultTracing := tracing.Tracing{
 		Backend:       "jaeger",
 		ServiceName:   "traefik",
-		SpanNameLimit: 100,
+		SpanNameLimit: 0,
 		Jaeger: &jaeger.Config{
 			SamplingServerURL:  "http://localhost:5778/sampling",
 			SamplingType:       "const",

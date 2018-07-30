@@ -45,6 +45,9 @@ func (n MockSpan) Tracer() opentracing.Tracer                             { retu
 func (n MockSpan) LogEvent(event string)                                  {}
 func (n MockSpan) LogEventWithPayload(event string, payload interface{})  {}
 func (n MockSpan) Log(data opentracing.LogData)                           {}
+func (n MockSpan) Reset() {
+	defaultMockSpan.Tags = make(map[string]interface{})
+}
 
 // StartSpan belongs to the Tracer interface.
 func (n MockTracer) StartSpan(operationName string, opts ...opentracing.StartSpanOption) opentracing.Span {

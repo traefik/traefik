@@ -45,14 +45,42 @@ func Test_entryPointMiddleware_ServeHTTP(t *testing.T) {
 					want["http.host"] = "www.test.com"
 
 					got := defaultMockSpan.Tags
-					assert.Equal(t, got, want, "ServeHTTP() = %+v want %+v", got, want)
-					assert.Equal(t, defaultMockSpan.OpName, "Entrypoint te... ww... 39b97e58")
+					assert.Equal(t, want, got, "ServeHTTP() = %+v want %+v", got, want)
+					assert.Equal(t, "Entrypoint te... ww... 39b97e58", defaultMockSpan.OpName)
+				},
+			},
+		},
+		{
+			desc: "no truncation test",
+			fields: fields{
+				entryPoint: "test",
+				Tracing: &Tracing{
+					SpanNameLimit: 0,
+					tracer:        defaultMockTracer,
+				},
+			},
+			args: args{
+				w: httptest.NewRecorder(),
+				r: httptest.NewRequest("GET", "http://www.test.com", nil),
+				next: func(http.ResponseWriter, *http.Request) {
+					// Asserts go here...
+					want := make(map[string]interface{})
+					want["span.kind"] = ext.SpanKindRPCServerEnum
+					want["http.method"] = "GET"
+					want["component"] = ""
+					want["http.url"] = "http://www.test.com"
+					want["http.host"] = "www.test.com"
+
+					got := defaultMockSpan.Tags
+					assert.Equal(t, want, got, "ServeHTTP() = %+v want %+v", got, want)
+					assert.Equal(t, "Entrypoint test www.test.com", defaultMockSpan.OpName)
 				},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
+			defaultMockSpan.Reset()
 			e := &entryPointMiddleware{
 				entryPoint: tt.fields.entryPoint,
 				Tracing:    tt.fields.Tracing,
