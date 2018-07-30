@@ -22,9 +22,6 @@ func (t *Tracing) NewEntryPoint(name string) negroni.Handler {
 }
 
 func (e *entryPointMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	//opNameFunc := func(r *http.Request) string {
-	//	return fmt.Sprintf("Entrypoint %s %s", e.entryPoint, r.Host)
-	//}
 	opNameFunc := generateEntryPointSpanName
 
 	ctx, _ := e.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))

@@ -1,14 +1,15 @@
 package tracing
 
 import (
-	"github.com/opentracing/opentracing-go/ext"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/opentracing/opentracing-go/ext"
+	"github.com/stretchr/testify/assert"
 )
 
-func Test_entryPointMiddleware_ServeHTTP(t *testing.T) {
+func TestEntryPointMiddlewareServeHTTP(t *testing.T) {
 	type fields struct {
 		entryPoint string
 		Tracing    *Tracing
@@ -18,7 +19,8 @@ func Test_entryPointMiddleware_ServeHTTP(t *testing.T) {
 		r    *http.Request
 		next http.HandlerFunc
 	}
-	tests := []struct {
+
+	testCases := []struct {
 		desc   string
 		fields fields
 		args   args
@@ -78,14 +80,16 @@ func Test_entryPointMiddleware_ServeHTTP(t *testing.T) {
 			},
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
 			defaultMockSpan.Reset()
 			e := &entryPointMiddleware{
-				entryPoint: tt.fields.entryPoint,
-				Tracing:    tt.fields.Tracing,
+				entryPoint: test.fields.entryPoint,
+				Tracing:    test.fields.Tracing,
 			}
-			e.ServeHTTP(tt.args.w, tt.args.r, tt.args.next)
+
+			e.ServeHTTP(test.args.w, test.args.r, test.args.next)
 		})
 	}
 }

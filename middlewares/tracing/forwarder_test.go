@@ -5,11 +5,12 @@ import (
 	"testing"
 )
 
-func TestTracing_NewForwarderMiddleware(t *testing.T) {
+func TestTracingNewForwarderMiddleware(t *testing.T) {
 	trace := &Tracing{
 		SpanNameLimit: 101,
 	}
-	tests := []struct {
+
+	testCases := []struct {
 		desc     string
 		frontend string
 		backend  string
@@ -38,15 +39,18 @@ func TestTracing_NewForwarderMiddleware(t *testing.T) {
 			tracer:   trace,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
 			want := &forwarderMiddleware{
 				Tracing:  trace,
-				frontend: tt.frontend,
-				backend:  tt.backend,
-				opName:   tt.name,
+				frontend: test.frontend,
+				backend:  test.backend,
+				opName:   test.name,
 			}
-			if got := tt.tracer.NewForwarderMiddleware(tt.frontend, tt.backend); !reflect.DeepEqual(got, want) || len(want.opName) > trace.SpanNameLimit {
+			if got := test.tracer.NewForwarderMiddleware(test.frontend, test.backend); !reflect.DeepEqual(got, want) || len(want.opName) > trace.SpanNameLimit {
 				t.Errorf("Tracing.NewForwarderMiddleware() = %+v, want %+v", got, want)
 			}
 		})

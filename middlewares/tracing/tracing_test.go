@@ -1,9 +1,10 @@
 package tracing
 
 import (
+	"testing"
+
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
-	"testing"
 )
 
 type MockTracer struct {
@@ -66,7 +67,7 @@ func (n MockTracer) Extract(format interface{}, carrier interface{}) (opentracin
 }
 
 func TestTruncateString(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc  string
 		text  string
 		limit int
@@ -91,17 +92,19 @@ func TestTruncateString(t *testing.T) {
 			want:  "some-service-100.slug.namespace.envi...",
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			if got := TruncateString(tt.text, tt.limit); got != tt.want || len(got) > tt.limit {
-				t.Errorf("TruncateString() = %v, want %v - limit %v, length %v", got, tt.want, tt.limit, len(got))
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			if got := TruncateString(test.text, test.limit); got != test.want || len(got) > test.limit {
+				t.Errorf("TruncateString() = %v, want %v - limit %v, length %v", got, test.want, test.limit, len(got))
 			}
 		})
 	}
 }
 
 func TestComputeHash(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc string
 		text string
 		want string
@@ -117,10 +120,12 @@ func TestComputeHash(t *testing.T) {
 			want: "f9b0078b",
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			if got := ComputeHash(tt.text); got != tt.want {
-				t.Errorf("ComputeHash() = %v, want %v", got, tt.want)
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			if got := ComputeHash(test.text); got != test.want {
+				t.Errorf("ComputeHash() = %v, want %v", got, test.want)
 			}
 		})
 	}
