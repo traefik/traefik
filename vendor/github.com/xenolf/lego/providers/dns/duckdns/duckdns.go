@@ -30,26 +30,32 @@ func NewDNSProvider() (*DNSProvider, error) {
 
 // NewDNSProviderCredentials uses the supplied credentials to return a
 // DNSProvider instance configured for http://duckdns.org .
-func NewDNSProviderCredentials(duckdnsToken string) (*DNSProvider, error) {
-	if duckdnsToken == "" {
+func NewDNSProviderCredentials(token string) (*DNSProvider, error) {
+	if token == "" {
 		return nil, errors.New("DuckDNS: credentials missing")
 	}
 
-	return &DNSProvider{token: duckdnsToken}, nil
+	return &DNSProvider{token: token}, nil
 }
 
-// makeDuckdnsURL creates a url to clear the set or unset the TXT record.
-// txt == "" will clear the TXT record.
-func makeDuckdnsURL(domain, token, txt string) string {
-	requestBase := fmt.Sprintf("https://www.duckdns.org/update?domains=%s&token=%s", domain, token)
-	if txt == "" {
-		return requestBase + "&clear=true"
-	}
-	return requestBase + "&txt=" + txt
+// Present creates a TXT record to fulfil the dns-01 challenge.
+func (d *DNSProvider) Present(domain, token, keyAuth string) error {
+	_, txtRecord, _ := acme.DNS01Record(domain, keyAuth)
+	return updateTxtRecord(domain, d.token, txtRecord, false)
 }
 
-func issueDuckdnsRequest(url string) error {
-	response, err := acme.HTTPClient.Get(url)
+// CleanUp clears DuckDNS TXT record
+func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
+	return updateTxtRecord(domain, d.token, "", true)
+}
+
+// updateTxtRecord Update the domains TXT record
+// To update the TXT record we just need to make one simple get request.
+// In DuckDNS you only have one TXT record shared with the domain and all sub domains.
+func updateTxtRecord(domain, token, txt string, clear bool) error {
+	u := fmt.Sprintf("https://www.duckdns.org/update?domains=%s&token=%s&clear=%t&txt=%s", domain, token, clear, txt)
+
+	response, err := acme.HTTPClient.Get(u)
 	if err != nil {
 		return err
 	}
@@ -59,26 +65,10 @@ func issueDuckdnsRequest(url string) error {
 	if err != nil {
 		return err
 	}
+
 	body := string(bodyBytes)
 	if body != "OK" {
-		return fmt.Errorf("Request to change TXT record for duckdns returned the following result (%s) this does not match expectation (OK) used url [%s]", body, url)
+		return fmt.Errorf("request to change TXT record for DuckDNS returned the following result (%s) this does not match expectation (OK) used url [%s]", body, u)
 	}
 	return nil
-}
-
-// Present creates a TXT record to fulfil the dns-01 challenge.
-// In duckdns you only have one TXT record shared with
-// the domain and all sub domains.
-//
-// To update the TXT record we just need to make one simple get request.
-func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	_, txtRecord, _ := acme.DNS01Record(domain, keyAuth)
-	url := makeDuckdnsURL(domain, d.token, txtRecord)
-	return issueDuckdnsRequest(url)
-}
-
-// CleanUp clears duckdns TXT record
-func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	url := makeDuckdnsURL(domain, d.token, "")
-	return issueDuckdnsRequest(url)
 }
