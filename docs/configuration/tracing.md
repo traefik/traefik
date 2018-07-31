@@ -22,6 +22,13 @@ Træfik supports two backends: Jaeger and Zipkin.
   # Default: "traefik"
   #
   serviceName = "traefik"
+    
+  # Span name limit allows for name truncation in case of very long Frontend/Backend names
+  # This can prevent certain tracing providers to drop traces that exceed their length limits
+  #
+  # Default: 0 - no truncation will occur
+  # 
+  spanNameLimit = 0
 
   [tracing.jaeger]
     # Sampling Server URL is the address of jaeger-agent's HTTP sampling server
@@ -72,6 +79,13 @@ Træfik supports two backends: Jaeger and Zipkin.
   # Default: "traefik"
   #
   serviceName = "traefik"
+    
+  # Span name limit allows for name truncation in case of very long Frontend/Backend names
+  # This can prevent certain tracing providers to drop traces that exceed their length limits
+  #
+  # Default: 0 - no truncation will occur
+  # 
+  spanNameLimit = 150
 
   [tracing.zipkin]
     # Zipking HTTP endpoint used to send data
@@ -115,6 +129,13 @@ Træfik supports two backends: Jaeger and Zipkin.
   # Default: "traefik"
   #
   serviceName = "traefik"
+  
+  # Span name limit allows for name truncation in case of very long Frontend/Backend names
+  # This can prevent certain tracing providers to drop traces that exceed their length limits
+  #
+  # Default: 0 - no truncation will occur
+  # 
+  spanNameLimit = 100
 
   [tracing.datadog]
     # Local Agent Host Port instructs reporter to send spans to datadog-tracing-agent at this address
