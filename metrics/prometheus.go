@@ -197,16 +197,6 @@ type prometheusState struct {
 	state         map[string]*collector
 }
 
-// reset is a utility method for unit testing. It should be called after each
-// test run that changes promState internally in order to avoid dependencies
-// between unit tests.
-func (ps *prometheusState) reset() {
-	ps.collectors = make(chan *collector)
-	ps.describers = []func(ch chan<- *stdprometheus.Desc){}
-	ps.dynamicConfig = newDynamicConfig()
-	ps.state = make(map[string]*collector)
-}
-
 func (ps *prometheusState) SetDynamicConfig(dynamicConfig *dynamicConfig) {
 	ps.mtx.Lock()
 	defer ps.mtx.Unlock()
