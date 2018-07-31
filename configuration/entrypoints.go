@@ -17,9 +17,13 @@ type EntryPoint struct {
 	Auth                 *types.Auth       `export:"true"`
 	WhitelistSourceRange []string          // Deprecated
 	WhiteList            *types.WhiteList  `export:"true"`
-	Compress             bool              `export:"true"`
+	Compress             *Compress         `export:"true"`
 	ProxyProtocol        *ProxyProtocol    `export:"true"`
 	ForwardedHeaders     *ForwardedHeaders `export:"true"`
+}
+
+// Compress contains compress configuration
+type Compress struct {
 }
 
 // ProxyProtocol contains Proxy-Protocol configuration
@@ -69,7 +73,10 @@ func (ep *EntryPoints) Set(value string) error {
 		whiteListSourceRange = strings.Split(result["whitelistsourcerange"], ",")
 	}
 
-	compress := toBool(result, "compress")
+	var compress *Compress
+	if len(result["compress"]) > 0 {
+		compress = &Compress{}
+	}
 
 	configTLS, err := makeEntryPointTLS(result)
 	if err != nil {
