@@ -731,3 +731,134 @@ func modifyCertificateConfFileContent(c *check.C, certFileName, confFileName, en
 		c.Assert(err, checker.IsNil)
 	}
 }
+
+func (s *HTTPSSuite) TestEntrypointHttpsRedirectAndPathModification(c *check.C) {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/https_redirect.toml"))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 500*time.Millisecond, try.BodyContains("Host: example.com"))
+	c.Assert(err, checker.IsNil)
+
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	testCases := []struct {
+		desc        string
+		host        string
+		sourceURL   string
+		expectedURL string
+	}{
+		{
+			desc:        "Stripped URL redirect",
+			host:        "example.com",
+			sourceURL:   "http://127.0.0.1:8888/api",
+			expectedURL: "https://example.com:8443/api",
+		},
+		{
+			desc:        "Stripped URL with trailing slash redirect",
+			host:        "example.com",
+			sourceURL:   "http://127.0.0.1:8888/api/",
+			expectedURL: "https://example.com:8443/api/",
+		},
+		{
+			desc:        "Stripped URL with double trailing slash redirect",
+			host:        "example.com",
+			sourceURL:   "http://127.0.0.1:8888/api//",
+			expectedURL: "https://example.com:8443/api//",
+		},
+		{
+			desc:        "Stripped URL with path redirect",
+			host:        "example.com",
+			sourceURL:   "http://127.0.0.1:8888/api/bacon",
+			expectedURL: "https://example.com:8443/api/bacon",
+		},
+		{
+			desc:        "Stripped URL with path and trailing slash redirect",
+			host:        "example.com",
+			sourceURL:   "http://127.0.0.1:8888/api/bacon/",
+			expectedURL: "https://example.com:8443/api/bacon/",
+		},
+		{
+			desc:        "Stripped URL with path and double trailing slash redirect",
+			host:        "example.com",
+			sourceURL:   "http://127.0.0.1:8888/api/bacon//",
+			expectedURL: "https://example.com:8443/api/bacon//",
+		},
+		{
+			desc:        "Root Path with redirect",
+			host:        "test.com",
+			sourceURL:   "http://127.0.0.1:8888/",
+			expectedURL: "https://test.com:8443/",
+		},
+		{
+			desc:        "Root Path with double trailing slash redirect",
+			host:        "test.com",
+			sourceURL:   "http://127.0.0.1:8888//",
+			expectedURL: "https://test.com:8443//",
+		},
+		{
+			desc:        "AddPrefix with redirect",
+			host:        "test.com",
+			sourceURL:   "http://127.0.0.1:8888/wtf",
+			expectedURL: "https://test.com:8443/wtf",
+		},
+		{
+			desc:        "AddPrefix with trailing slash redirect",
+			host:        "test.com",
+			sourceURL:   "http://127.0.0.1:8888/wtf/",
+			expectedURL: "https://test.com:8443/wtf/",
+		},
+		{
+			desc:        "AddPrefix with matching path segment redirect",
+			host:        "test.com",
+			sourceURL:   "http://127.0.0.1:8888/wtf/foo",
+			expectedURL: "https://test.com:8443/wtf/foo",
+		},
+		{
+			desc:        "Stripped URL Regex redirect",
+			host:        "foo.com",
+			sourceURL:   "http://127.0.0.1:8888/api",
+			expectedURL: "https://foo.com:8443/api",
+		},
+		{
+			desc:        "Stripped URL Regex with trailing slash redirect",
+			host:        "foo.com",
+			sourceURL:   "http://127.0.0.1:8888/api/",
+			expectedURL: "https://foo.com:8443/api/",
+		},
+		{
+			desc:        "Stripped URL Regex with path redirect",
+			host:        "foo.com",
+			sourceURL:   "http://127.0.0.1:8888/api/bacon",
+			expectedURL: "https://foo.com:8443/api/bacon",
+		},
+		{
+			desc:        "Stripped URL Regex with path and trailing slash redirect",
+			host:        "foo.com",
+			sourceURL:   "http://127.0.0.1:8888/api/bacon/",
+			expectedURL: "https://foo.com:8443/api/bacon/",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		req, err := http.NewRequest("GET", test.sourceURL, nil)
+		c.Assert(err, checker.IsNil)
+		req.Host = test.host
+
+		resp, err := client.Do(req)
+		c.Assert(err, checker.IsNil)
+		defer resp.Body.Close()
+
+		location := resp.Header.Get("Location")
+		c.Assert(location, checker.Equals, test.expectedURL)
+	}
+}
