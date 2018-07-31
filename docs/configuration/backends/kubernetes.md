@@ -43,6 +43,14 @@ See also [Kubernetes user guide](/user-guide/kubernetes).
 #
 # namespaces = ["default", "production"]
 
+# Namespace label selector to filter namespaces that should be watched.
+# This label selector is ignored if a static list of namespaces is provided in the `namespaces` option above.
+#
+# Optional
+# Default: empty (watch all namespaces).
+#
+# namespaceLabelSelector = "label = value"
+
 # Ingress label selector to filter Ingress objects that should be processed.
 #
 # Optional
@@ -122,6 +130,17 @@ See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-
 You can configure a static hostname or IP address that Traefik will add to the status section of Ingress objects that it manages.
 If you prefer, you can provide a service, which traefik will copy the status spec from.
 This will give more flexibility in cloud/dynamic environments.
+
+### `namespaceLabelSelector`
+
+You can configure Traefik to watch for namespaces that have a particular label and value set.
+This will allow you to dynamically manage which namespaces Traefik watches without having to statically define them, or restart Traefik.
+This setting will be ignored if you provide a static list of namespaces to watch (via the `namespaces` option).
+
+!!! note
+    Please note that by enabling the namespace label selector, Traefik may take longer to process ingresses when watching a new namespace with a large amount of objects, or a large number of new namespaces.
+    This is due to the fact that Traefik has to create new watchers for objects in the new namespaces, to allow for dynamic updates.
+    If you are concerned about performance in a large environment, it is advisable to provide a static list of namespaces to watch (via the `namespaces` option).
 
 ### TLS communication between Traefik and backend pods
 

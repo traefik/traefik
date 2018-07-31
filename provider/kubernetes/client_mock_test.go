@@ -6,20 +6,26 @@ import (
 )
 
 type clientMock struct {
-	ingresses []*extensionsv1beta1.Ingress
-	services  []*corev1.Service
-	secrets   []*corev1.Secret
-	endpoints []*corev1.Endpoints
-	watchChan chan interface{}
+	ingresses  []*extensionsv1beta1.Ingress
+	services   []*corev1.Service
+	secrets    []*corev1.Secret
+	endpoints  []*corev1.Endpoints
+	namespaces *corev1.NamespaceList
 
 	apiServiceError       error
 	apiSecretError        error
 	apiEndpointsError     error
 	apiIngressStatusError error
+	eventsChan            chan interface{}
+	namespaceChan         chan interface{}
 }
 
 func (c clientMock) GetIngresses() []*extensionsv1beta1.Ingress {
 	return c.ingresses
+}
+
+func (c clientMock) GetNamespaces() (*corev1.NamespaceList, error) {
+	return c.namespaces, nil
 }
 
 func (c clientMock) GetService(namespace, name string) (*corev1.Service, bool, error) {
@@ -62,10 +68,14 @@ func (c clientMock) GetSecret(namespace, name string) (*corev1.Secret, bool, err
 	return nil, false, nil
 }
 
-func (c clientMock) WatchAll(namespaces Namespaces, stopCh <-chan struct{}) (<-chan interface{}, error) {
-	return c.watchChan, nil
+func (c clientMock) WatchAll(namespaces Namespaces, stopCh <-chan struct{}, eventsChan chan<- interface{}) error {
+	return nil
 }
 
 func (c clientMock) UpdateIngressStatus(namespace, name, ip, hostname string) error {
 	return c.apiIngressStatusError
+}
+
+func (c clientMock) WatchNamespaces(namespaces Namespaces, stopCh <-chan struct{}, namespaceChan chan<- interface{}) error {
+	return nil
 }

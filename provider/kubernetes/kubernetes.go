@@ -62,17 +62,22 @@ type Provider struct {
 	EnablePassTLSCert      bool             `description:"Kubernetes enable Pass TLS Client Certs" export:"true"`
 	Namespaces             Namespaces       `description:"Kubernetes namespaces" export:"true"`
 	LabelSelector          string           `description:"Kubernetes Ingress label selector to use" export:"true"`
+	NamespaceLabelSelector string           `description:"Kubernetes Ingress namespace label selector to use" export:"true"`
 	IngressClass           string           `description:"Value of kubernetes.io/ingress.class annotation to watch for" export:"true"`
 	IngressEndpoint        *IngressEndpoint `description:"Kubernetes Ingress Endpoint"`
 	lastConfiguration      safe.Safe
 }
 
-func (p *Provider) newK8sClient(ingressLabelSelector string) (Client, error) {
+func (p *Provider) newK8sClient(ingressLabelSelector, namespaceLabelSelector string) (Client, error) {
 	ingLabelSel, err := labels.Parse(ingressLabelSelector)
 	if err != nil {
-		return nil, fmt.Errorf("invalid ingress label selector: %q", ingressLabelSelector)
+		return nil, fmt.Errorf("invalid ingress label selector %q: %v", ingressLabelSelector, err)
 	}
-	log.Infof("ingress label selector is: %q", ingLabelSel)
+
+	nsLabelSel, err := labels.Parse(namespaceLabelSelector)
+	if err != nil {
+		return nil, fmt.Errorf("invalid namespace label selector %q: %v", namespaceLabelSelector, err)
+	}
 
 	withEndpoint := ""
 	if p.Endpoint != "" {
@@ -90,6 +95,7 @@ func (p *Provider) newK8sClient(ingressLabelSelector string) (Client, error) {
 
 	if err == nil {
 		cl.ingressLabelSelector = ingLabelSel
+		cl.namespaceLabelSelector = nsLabelSel
 	}
 
 	return cl, err
@@ -112,54 +118,44 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		return err
 	}
 
-	log.Debugf("Using Ingress label selector: %q", p.LabelSelector)
-	k8sClient, err := p.newK8sClient(p.LabelSelector)
+	log.Debugf("Using Ingress label selector %q and Namespace label selector %q", p.LabelSelector, p.NamespaceLabelSelector)
+	k8sClient, err := p.newK8sClient(p.LabelSelector, p.NamespaceLabelSelector)
 	if err != nil {
 		return err
 	}
 
 	pool.Go(func(stop chan bool) {
 		operation := func() error {
+			k8sWatcher := NewWatcher(p.Namespaces, k8sClient)
+			k8sWatcher.Watch()
 			for {
-				stopWatch := make(chan struct{}, 1)
-				defer close(stopWatch)
-				eventsChan, err := k8sClient.WatchAll(p.Namespaces, stopWatch)
-				if err != nil {
-					log.Errorf("Error watching kubernetes events: %v", err)
-					timer := time.NewTimer(1 * time.Second)
-					select {
-					case <-timer.C:
+				select {
+				case event := <-k8sWatcher.EventsChan:
+					templateObjects, err := p.loadIngresses(k8sClient)
+					if err != nil {
 						return err
-					case <-stop:
-						return nil
 					}
-				}
-				for {
-					select {
-					case <-stop:
-						return nil
-					case event := <-eventsChan:
-						log.Debugf("Received Kubernetes event kind %T", event)
 
-						templateObjects, err := p.loadIngresses(k8sClient)
-						if err != nil {
-							return err
-						}
-
-						if reflect.DeepEqual(p.lastConfiguration.Get(), templateObjects) {
-							log.Debugf("Skipping Kubernetes event kind %T", event)
-						} else {
-							p.lastConfiguration.Set(templateObjects)
-							configurationChan <- types.ConfigMessage{
-								ProviderName:  "kubernetes",
-								Configuration: p.loadConfig(*templateObjects),
-							}
+					if reflect.DeepEqual(p.lastConfiguration.Get(), templateObjects) {
+						log.Debugf("Skipping Kubernetes event kind %T", event)
+					} else {
+						p.lastConfiguration.Set(templateObjects)
+						configurationChan <- types.ConfigMessage{
+							ProviderName:  "kubernetes",
+							Configuration: p.loadConfig(*templateObjects),
 						}
 					}
+				case <-k8sWatcher.NamespaceChan:
+					k8sWatcher.Refresh()
+				case err := <-k8sWatcher.ErrChan:
+					log.Errorf("Error watching kubernetes events: %v", err)
+					return err
+				case <-stop:
+					k8sWatcher.Stop()
+					return nil
 				}
 			}
 		}
-
 		notify := func(err error, time time.Duration) {
 			log.Errorf("Provider connection error: %s; retrying in %s", err, time)
 		}
@@ -168,7 +164,6 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 			log.Errorf("Cannot connect to Provider: %s", err)
 		}
 	})
-
 	return nil
 }
 

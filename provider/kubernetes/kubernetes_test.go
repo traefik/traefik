@@ -19,6 +19,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
+func TestNamespaceRefresh(t *testing.T) {
+
+}
+
 func TestLoadIngresses(t *testing.T) {
 	ingresses := []*extensionsv1beta1.Ingress{
 		buildIngress(
@@ -167,12 +171,10 @@ func TestLoadIngresses(t *testing.T) {
 		),
 	}
 
-	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
 		endpoints: endpoints,
-		watchChan: watchChan,
 	}
 	provider := Provider{}
 
@@ -283,12 +285,10 @@ func TestLoadGlobalIngressWithPortNumbers(t *testing.T) {
 		),
 	}
 
-	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
 		endpoints: endpoints,
-		watchChan: watchChan,
 	}
 	provider := Provider{}
 
@@ -347,12 +347,10 @@ func TestLoadGlobalIngressWithHttpsPortNames(t *testing.T) {
 		),
 	}
 
-	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
 		endpoints: endpoints,
-		watchChan: watchChan,
 	}
 	provider := Provider{}
 
@@ -431,11 +429,9 @@ func TestRuleType(t *testing.T) {
 				sSpec(sPorts(sPort(801, "http"))),
 			)
 
-			watchChan := make(chan interface{})
 			client := clientMock{
 				ingresses: []*extensionsv1beta1.Ingress{ingress},
 				services:  []*corev1.Service{service},
-				watchChan: watchChan,
 			}
 			provider := Provider{DisablePassHostHeaders: true}
 
@@ -575,11 +571,9 @@ func TestModifierType(t *testing.T) {
 				sSpec(sPorts(sPort(801, "http"))),
 			)
 
-			watchChan := make(chan interface{})
 			client := clientMock{
 				ingresses: []*extensionsv1beta1.Ingress{ingress},
 				services:  []*corev1.Service{service},
-				watchChan: watchChan,
 			}
 
 			provider := Provider{DisablePassHostHeaders: true}
@@ -672,11 +666,9 @@ func TestGetPassHostHeader(t *testing.T) {
 		),
 	}
 
-	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
-		watchChan: watchChan,
 	}
 	provider := Provider{DisablePassHostHeaders: true}
 
@@ -716,11 +708,9 @@ func TestGetPassTLSCert(t *testing.T) {
 		),
 	}
 
-	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
-		watchChan: watchChan,
 	}
 	provider := Provider{EnablePassTLSCert: true}
 
@@ -770,11 +760,9 @@ func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
 		),
 	}
 
-	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
-		watchChan: watchChan,
 	}
 	provider := Provider{}
 
@@ -812,11 +800,9 @@ func TestHostlessIngress(t *testing.T) {
 		),
 	}
 
-	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
-		watchChan: watchChan,
 	}
 	provider := Provider{DisablePassHostHeaders: true}
 
@@ -947,12 +933,10 @@ retryexpression: IsNetworkError() && Attempts() <= 2
 		),
 	}
 
-	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
 		endpoints: endpoints,
-		watchChan: watchChan,
 	}
 	provider := Provider{}
 
@@ -1258,12 +1242,10 @@ rateset:
 		},
 	}
 
-	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
 		secrets:   secrets,
-		watchChan: watchChan,
 	}
 	provider := Provider{}
 
@@ -1569,12 +1551,10 @@ func TestIngressClassAnnotation(t *testing.T) {
 		),
 	}
 
-	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
 		endpoints: endpoints,
-		watchChan: watchChan,
 	}
 
 	testCases := []struct {
@@ -1712,12 +1692,10 @@ func TestPriorityHeaderValue(t *testing.T) {
 	}
 
 	var endpoints []*corev1.Endpoints
-	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
 		endpoints: endpoints,
-		watchChan: watchChan,
 	}
 	provider := Provider{}
 
@@ -1771,11 +1749,9 @@ func TestInvalidPassTLSCertValue(t *testing.T) {
 		),
 	}
 
-	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
-		watchChan: watchChan,
 	}
 	provider := Provider{}
 
@@ -1828,11 +1804,9 @@ func TestInvalidPassHostHeaderValue(t *testing.T) {
 		),
 	}
 
-	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
-		watchChan: watchChan,
 	}
 	provider := Provider{}
 
@@ -1882,7 +1856,6 @@ func TestKubeAPIErrors(t *testing.T) {
 		),
 	}
 
-	watchChan := make(chan interface{})
 	apiErr := errors.New("failed kube api call")
 
 	testCases := []struct {
@@ -1908,7 +1881,6 @@ func TestKubeAPIErrors(t *testing.T) {
 			client := clientMock{
 				ingresses:         ingresses,
 				services:          services,
-				watchChan:         watchChan,
 				apiServiceError:   tc.apiServiceErr,
 				apiEndpointsError: tc.apiEndpointsErr,
 			}
@@ -1991,12 +1963,10 @@ func TestMissingResources(t *testing.T) {
 		),
 	}
 
-	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
 		endpoints: endpoints,
-		watchChan: watchChan,
 	}
 
 	provider := Provider{}
@@ -2082,13 +2052,11 @@ func TestLoadIngressesBasicAuth(t *testing.T) {
 	}}
 
 	var endpoints []*corev1.Endpoints
-	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
 		secrets:   secrets,
 		endpoints: endpoints,
-		watchChan: watchChan,
 	}
 	provider := Provider{}
 
@@ -2140,12 +2108,10 @@ func TestLoadIngressesForwardAuth(t *testing.T) {
 		),
 	}
 
-	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
 		endpoints: endpoints,
-		watchChan: watchChan,
 	}
 	provider := Provider{}
 
@@ -2211,12 +2177,10 @@ func TestLoadIngressesForwardAuthMissingURL(t *testing.T) {
 		),
 	}
 
-	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
 		endpoints: endpoints,
-		watchChan: watchChan,
 	}
 	provider := Provider{}
 
@@ -2286,13 +2250,11 @@ func TestLoadIngressesForwardAuthWithTLSSecret(t *testing.T) {
 		),
 	}
 
-	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
 		endpoints: endpoints,
 		secrets:   secrets,
-		watchChan: watchChan,
 	}
 	provider := Provider{}
 
@@ -2438,13 +2400,11 @@ func TestLoadIngressesForwardAuthWithTLSSecretFailures(t *testing.T) {
 				},
 			}}
 
-			watchChan := make(chan interface{})
 			client := clientMock{
 				ingresses: ingresses,
 				services:  services,
 				endpoints: endpoints,
 				secrets:   secrets,
-				watchChan: watchChan,
 			}
 			provider := Provider{}
 
@@ -2531,13 +2491,11 @@ func TestTLSSecretLoad(t *testing.T) {
 		},
 	}
 	var endpoints []*corev1.Endpoints
-	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
 		secrets:   secrets,
 		endpoints: endpoints,
-		watchChan: watchChan,
 	}
 	provider := Provider{}
 	actual, err := provider.loadIngresses(client)
@@ -2812,12 +2770,10 @@ func TestMultiPortServices(t *testing.T) {
 		),
 	}
 
-	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
 		endpoints: endpoints,
-		watchChan: watchChan,
 	}
 	provider := Provider{}
 
@@ -3064,12 +3020,10 @@ service1: 10%
 		),
 	}
 
-	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
 		endpoints: endpoints,
-		watchChan: watchChan,
 	}
 	provider := Provider{}
 
@@ -3119,7 +3073,7 @@ func TestProviderNewK8sInClusterClient(t *testing.T) {
 	os.Setenv("KUBERNETES_SERVICE_HOST", "localhost")
 	os.Setenv("KUBERNETES_SERVICE_PORT", "443")
 	defer os.Clearenv()
-	_, err := p.newK8sClient("")
+	_, err := p.newK8sClient("", "")
 	assert.EqualError(t, err, "failed to create in-cluster configuration: open /var/run/secrets/kubernetes.io/serviceaccount/token: no such file or directory")
 }
 
@@ -3128,14 +3082,14 @@ func TestProviderNewK8sInClusterClientFailLabelSel(t *testing.T) {
 	os.Setenv("KUBERNETES_SERVICE_HOST", "localhost")
 	os.Setenv("KUBERNETES_SERVICE_PORT", "443")
 	defer os.Clearenv()
-	_, err := p.newK8sClient("%")
-	assert.EqualError(t, err, "invalid ingress label selector: \"%\"")
+	_, err := p.newK8sClient("%", "%")
+	assert.Error(t, err)
 }
 
 func TestProviderNewK8sOutOfClusterClient(t *testing.T) {
 	p := Provider{}
 	p.Endpoint = "localhost"
-	_, err := p.newK8sClient("")
+	_, err := p.newK8sClient("", "")
 	assert.NoError(t, err)
 }
 
