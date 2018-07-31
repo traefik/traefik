@@ -314,15 +314,13 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 							protocol = "https"
 						}
 
-						switch getStringValue(i.Annotations, annotationKubernetesProtocol, protocol) {
+						protocol = getStringValue(i.Annotations, annotationKubernetesProtocol, protocol)
+						switch protocol {
 						case allowedProtocolHTTPS:
-							protocol = allowedProtocolHTTPS
 						case allowedProtocolH2C:
-							protocol = allowedProtocolH2C
 						case label.DefaultProtocol:
-							protocol = label.DefaultProtocol
 						default:
-							log.Errorf("Invalid protocol %s specified for Ingress %s - skipping", getStringValue(i.Annotations, annotationKubernetesProtocol, protocol), i.Name)
+							log.Errorf("Invalid protocol %s/%s specified for Ingress %s - skipping", annotationKubernetesProtocol, i.Namespace, i.Name)
 							continue
 						}
 
