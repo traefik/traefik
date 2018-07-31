@@ -453,8 +453,8 @@ kubectl create secret generic mysecret --from-file auth --namespace=monitoring
 
 C. Attach the following annotations to the Ingress object:
 
-- `ingress.kubernetes.io/auth-type: "basic"`
-- `ingress.kubernetes.io/auth-secret: "mysecret"`
+- `traefik.ingress.kubernetes.io/auth-type: "basic"`
+- `traefik.ingress.kubernetes.io/auth-secret: "mysecret"`
 
 They specify basic authentication and reference the Secret `mysecret` containing the credentials.
 
@@ -468,8 +468,8 @@ metadata:
  namespace: monitoring
  annotations:
    kubernetes.io/ingress.class: traefik
-   ingress.kubernetes.io/auth-type: "basic"
-   ingress.kubernetes.io/auth-secret: "mysecret"
+   traefik.ingress.kubernetes.io/auth-type: "basic"
+   traefik.ingress.kubernetes.io/auth-secret: "mysecret"
 spec:
  rules:
  - host: dashboard.prometheus.example.com
