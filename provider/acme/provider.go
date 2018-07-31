@@ -266,14 +266,13 @@ func (p *Provider) getClient() (*acme.Client, error) {
 			return nil, err
 		}
 
+		// Same default values than LEGO
+		p.DNSChallenge.preCheckTimeout = 60 * time.Second
+		p.DNSChallenge.preCheckInterval = 2 * time.Second
+
 		// Set the precheck timeout into the DNSChallenge provider
-		switch provider := provider.(type) {
-		case acme.ChallengeProviderTimeout:
-			p.DNSChallenge.preCheckTimeout, p.DNSChallenge.preCheckInterval = provider.Timeout()
-		default:
-			// Same default values than LEGO
-			p.DNSChallenge.preCheckTimeout = 60 * time.Second
-			p.DNSChallenge.preCheckInterval = 2 * time.Second
+		if challengeProviderTimeout, ok := provider.(acme.ChallengeProviderTimeout); ok {
+			p.DNSChallenge.preCheckTimeout, p.DNSChallenge.preCheckInterval = challengeProviderTimeout.Timeout()
 		}
 
 	} else if p.HTTPChallenge != nil && len(p.HTTPChallenge.EntryPoint) > 0 {
@@ -377,8 +376,8 @@ func (p *Provider) resolveCertificate(domain types.Domain, domainFromConfigurati
 
 	var certificate *acme.CertificateResource
 	bundle := true
-	if p.useBackOffToObtainCertificate(uncheckedDomains) {
-		certificate, err = obtainCertificateWithBackOff(domains, client, p.DNSChallenge.preCheckTimeout, p.DNSChallenge.preCheckInterval, bundle)
+	if p.useCertificateWithRetry(uncheckedDomains) {
+		certificate, err = obtainCertificateWithRetry(domains, client, p.DNSChallenge.preCheckTimeout, p.DNSChallenge.preCheckInterval, bundle)
 	} else {
 		certificate, err = client.ObtainCertificate(domains, bundle, nil, OSCPMustStaple)
 	}
@@ -405,19 +404,25 @@ func (p *Provider) resolveCertificate(domain types.Domain, domainFromConfigurati
 	return certificate, nil
 }
 
-func (p *Provider) useBackOffToObtainCertificate(domains []string) bool {
-	// Check if we can use a backoff only if we use the DNS Challenge and if is there are at least 2 domains to check
+func (p *Provider) useCertificateWithRetry(domains []string) bool {
+	// Check if we can use the retry mechanism only if we use the DNS Challenge and if is there are at least 2 domains to check
 	if p.DNSChallenge != nil && len(domains) > 1 {
 		rootDomain := ""
-		for i := 0; i < len(domains); i++ {
+		for _, searchWildcardDomain := range domains {
 			// Search a wildcard domain if not already found
-			if len(rootDomain) == 0 && strings.HasPrefix(domains[i], "*.") {
-				rootDomain = strings.TrimPrefix(domains[i], "*.")
-				// Restart to the first indfex to check id the root domain of the wildcard domain exists
-				i = 0
-			} else if len(rootDomain) > 0 && rootDomain == domains[i] {
-				// If the domains list contains a wildcard domain and its root domain, we can use a backOff to obtain the certificate
-				return true
+			if len(rootDomain) == 0 && strings.HasPrefix(searchWildcardDomain, "*.") {
+				rootDomain = strings.TrimPrefix(searchWildcardDomain, "*.")
+				if len(rootDomain) > 0 {
+					// Look for a root domain which matches the wildcard domain
+					for _, searchRootDomain := range domains {
+						if rootDomain == searchRootDomain {
+							// If the domains list contains a wildcard domain and its root domain, we can use the retry mechanism to obtain the certificate
+							return true
+						}
+					}
+				}
+				// There is only one wildcard domain in the slice, if its root domain has not been found, the retry mechanism does not have to be used
+				return false
 			}
 		}
 	}
@@ -425,7 +430,7 @@ func (p *Provider) useBackOffToObtainCertificate(domains []string) bool {
 	return false
 }
 
-func obtainCertificateWithBackOff(domains []string, client *acme.Client, timeout, interval time.Duration, bundle bool) (*acme.CertificateResource, error) {
+func obtainCertificateWithRetry(domains []string, client *acme.Client, timeout, interval time.Duration, bundle bool) (*acme.CertificateResource, error) {
 	var certificate *acme.CertificateResource
 	var err error
 
@@ -438,12 +443,13 @@ func obtainCertificateWithBackOff(domains []string, client *acme.Client, timeout
 		log.Errorf("Error obtaining certificate retrying in %s", time)
 	}
 
+	// Define a retry backOff to let LEGO tries twice to obtain a certificate for both wildcard and root domain
 	ebo := backoff.NewExponentialBackOff()
-	// Give the time to LEGO to try to solve the challenge twice
 	ebo.MaxElapsedTime = 2 * timeout
 	ebo.MaxInterval = interval
+	rbo := backoff.WithMaxRetries(ebo, 2)
 
-	err = backoff.RetryNotify(safe.OperationWithRecover(operation), ebo, notify)
+	err = backoff.RetryNotify(safe.OperationWithRecover(operation), rbo, notify)
 	if err != nil {
 		log.Errorf("Error obtaining certificate: %v", err)
 		return nil, err

@@ -557,7 +557,7 @@ func TestUseBackOffToObtainCertificate(t *testing.T) {
 
 			acmeProvider := Provider{Configuration: &Configuration{DNSChallenge: test.dnsChallenge}}
 
-			actualResponse := acmeProvider.useBackOffToObtainCertificate(test.domains)
+			actualResponse := acmeProvider.useCertificateWithRetry(test.domains)
 			assert.Equal(t, test.expectedResponse, actualResponse, "unexpected response to use backOff")
 		})
 	}
