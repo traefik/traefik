@@ -535,7 +535,7 @@ func getRuleForPath(pa extensionsv1beta1.HTTPIngressPath, i *extensionsv1beta1.I
 		if ruleType == ruleTypeReplacePath {
 			return "", fmt.Errorf("rewrite-target must not be used together with annotation %q", annotationKubernetesRuleType)
 		}
-		rewriteTargetRule := fmt.Sprintf("ReplacePathRegex: ^%s/(.*) %s/$1", pa.Path, strings.TrimRight(rewriteTarget, "/"))
+		rewriteTargetRule := fmt.Sprintf("ReplacePathRegex: ^%s(.*) %s$1", pa.Path, strings.TrimRight(rewriteTarget, "/"))
 		rules = append(rules, rewriteTargetRule)
 	}
 
