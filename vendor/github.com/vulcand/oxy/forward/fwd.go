@@ -395,6 +395,15 @@ func (f *httpForwarder) serveWebSocket(w http.ResponseWriter, req *http.Request,
 	errClient := make(chan error, 1)
 	errBackend := make(chan error, 1)
 	replicateWebsocketConn := func(dst, src *websocket.Conn, errc chan error) {
+
+		src.SetPingHandler(func(data string) error {
+			return dst.WriteMessage(websocket.PingMessage, []byte(data))
+		})
+
+		src.SetPongHandler(func(data string) error {
+			return dst.WriteMessage(websocket.PongMessage, []byte(data))
+		})
+
 		for {
 			msgType, msg, err := src.ReadMessage()
 
