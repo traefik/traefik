@@ -1,11 +1,11 @@
 package tracing
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"net/http"
 
-	"crypto/sha256"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares/tracing/datadog"
 	"github.com/containous/traefik/middlewares/tracing/jaeger"
@@ -14,11 +14,11 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 )
 
-// ForwardMagicNumber defines the number of static characters in the Forwarding Span Trace name - 8 chars for 'forward ' + 8 chars for hash + 2 chars for '_'
-const ForwardMagicNumber = 18
+// ForwardMaxLengthNumber defines the number of static characters in the Forwarding Span Trace name - 8 chars for 'forward ' + 8 chars for hash + 2 chars for '_'
+const ForwardMaxLengthNumber = 18
 
-// EntryPointMagicNumber defines the number of static characters in the Entrypoint Span Trace name - 11 chars for 'Entrypoint ' + 8 chars for hash + 2 chars for '_'
-const EntryPointMagicNumber = 21
+// EntryPointMaxLengthNumber defines the number of static characters in the Entrypoint Span Trace name - 11 chars for 'Entrypoint ' + 8 chars for hash + 2 chars for '_'
+const EntryPointMaxLengthNumber = 21
 
 // TraceNameHashLength defines the number of characters to use from the head of the generated hash
 const TraceNameHashLength = 8

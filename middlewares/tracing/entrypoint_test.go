@@ -10,86 +10,66 @@ import (
 )
 
 func TestEntryPointMiddlewareServeHTTP(t *testing.T) {
-	type fields struct {
-		entryPoint string
-		Tracing    *Tracing
-	}
-	type args struct {
-		w    http.ResponseWriter
-		r    *http.Request
-		next http.HandlerFunc
-	}
-
 	testCases := []struct {
-		desc   string
-		fields fields
-		args   args
+		desc         string
+		entryPoint   string
+		tracing      *Tracing
+		expectedTags map[string]interface{}
+		expectedName string
 	}{
 		{
-			desc: "basic test",
-			fields: fields{
-				entryPoint: "test",
-				Tracing: &Tracing{
-					SpanNameLimit: 25,
-					tracer:        defaultMockTracer,
-				},
+			desc:       "basic test",
+			entryPoint: "test",
+			tracing: &Tracing{
+				SpanNameLimit: 25,
+				tracer:        &MockTracer{Span: &MockSpan{Tags: make(map[string]interface{})}},
 			},
-			args: args{
-				w: httptest.NewRecorder(),
-				r: httptest.NewRequest("GET", "http://www.test.com", nil),
-				next: func(http.ResponseWriter, *http.Request) {
-					// Asserts go here...
-					want := make(map[string]interface{})
-					want["span.kind"] = ext.SpanKindRPCServerEnum
-					want["http.method"] = "GET"
-					want["component"] = ""
-					want["http.url"] = "http://www.test.com"
-					want["http.host"] = "www.test.com"
-
-					got := defaultMockSpan.Tags
-					assert.Equal(t, want, got, "ServeHTTP() = %+v want %+v", got, want)
-					assert.Equal(t, "Entrypoint te... ww... 39b97e58", defaultMockSpan.OpName)
-				},
+			expectedTags: map[string]interface{}{
+				"span.kind":   ext.SpanKindRPCServerEnum,
+				"http.method": "GET",
+				"component":   "",
+				"http.url":    "http://www.test.com",
+				"http.host":   "www.test.com",
 			},
+			expectedName: "Entrypoint te... ww... 39b97e58",
 		},
 		{
-			desc: "no truncation test",
-			fields: fields{
-				entryPoint: "test",
-				Tracing: &Tracing{
-					SpanNameLimit: 0,
-					tracer:        defaultMockTracer,
-				},
+			desc:       "no truncation test",
+			entryPoint: "test",
+			tracing: &Tracing{
+				SpanNameLimit: 0,
+				tracer:        &MockTracer{Span: &MockSpan{Tags: make(map[string]interface{})}},
 			},
-			args: args{
-				w: httptest.NewRecorder(),
-				r: httptest.NewRequest("GET", "http://www.test.com", nil),
-				next: func(http.ResponseWriter, *http.Request) {
-					// Asserts go here...
-					want := make(map[string]interface{})
-					want["span.kind"] = ext.SpanKindRPCServerEnum
-					want["http.method"] = "GET"
-					want["component"] = ""
-					want["http.url"] = "http://www.test.com"
-					want["http.host"] = "www.test.com"
-
-					got := defaultMockSpan.Tags
-					assert.Equal(t, want, got, "ServeHTTP() = %+v want %+v", got, want)
-					assert.Equal(t, "Entrypoint test www.test.com", defaultMockSpan.OpName)
-				},
+			expectedTags: map[string]interface{}{
+				"span.kind":   ext.SpanKindRPCServerEnum,
+				"http.method": "GET",
+				"component":   "",
+				"http.url":    "http://www.test.com",
+				"http.host":   "www.test.com",
 			},
+			expectedName: "Entrypoint test www.test.com",
 		},
 	}
 
 	for _, test := range testCases {
+		test := test
 		t.Run(test.desc, func(t *testing.T) {
-			defaultMockSpan.Reset()
+			t.Parallel()
+
 			e := &entryPointMiddleware{
-				entryPoint: test.fields.entryPoint,
-				Tracing:    test.fields.Tracing,
+				entryPoint: test.entryPoint,
+				Tracing:    test.tracing,
 			}
 
-			e.ServeHTTP(test.args.w, test.args.r, test.args.next)
+			next := func(http.ResponseWriter, *http.Request) {
+				span := test.tracing.tracer.(*MockTracer).Span
+
+				actual := span.Tags
+				assert.Equal(t, test.expectedTags, actual)
+				assert.Equal(t, test.expectedName, span.OpName)
+			}
+
+			e.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", "http://www.test.com", nil), next)
 		})
 	}
 }

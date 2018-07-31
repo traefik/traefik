@@ -49,12 +49,12 @@ func generateForwardSpanName(frontend, backend string, spanLimit int) string {
 	name := fmt.Sprintf("forward %s/%s", frontend, backend)
 
 	if spanLimit > 0 && len(name) > spanLimit {
-		if spanLimit < ForwardMagicNumber {
-			log.Warnf("SpanNameLimit is set to be less then required static number of characters, defaulting to %d + 3", ForwardMagicNumber)
-			spanLimit = ForwardMagicNumber + 3
+		if spanLimit < ForwardMaxLengthNumber {
+			log.Warnf("SpanNameLimit is set to be less then required static number of characters, defaulting to %d + 3", ForwardMaxLengthNumber)
+			spanLimit = ForwardMaxLengthNumber + 3
 		}
 		hash := ComputeHash(name)
-		limit := (spanLimit - ForwardMagicNumber) / 2
+		limit := (spanLimit - ForwardMaxLengthNumber) / 2
 		name = fmt.Sprintf("forward %s/%s/%s", TruncateString(frontend, limit), TruncateString(backend, limit), hash)
 	}
 
