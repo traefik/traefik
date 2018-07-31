@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	fmtlog "log"
+	"net/url"
 	"reflect"
 	"strings"
 	"sync"
@@ -130,7 +131,8 @@ func (p *Provider) Init(_ types.Constraints) error {
 	}
 
 	// Reset Account if caServer changed, thus registration URI can be updated
-	if p.account != nil && p.account.Registration != nil && !strings.HasPrefix(p.account.Registration.URI, p.CAServer) {
+	if p.account != nil && p.account.Registration != nil && !isAccountMatchingCaServer(p.account.Registration.URI, p.CAServer) {
+		log.Info("Account URI does not match the current CAServer. The account will be reset")
 		p.account = nil
 	}
 
@@ -140,6 +142,20 @@ func (p *Provider) Init(_ types.Constraints) error {
 	}
 
 	return nil
+}
+
+func isAccountMatchingCaServer(accountURI string, serverURI string) bool {
+	aru, err := url.Parse(accountURI)
+	if err != nil {
+		log.Infof("Unable to parse account.Registration URL : %v", err)
+		return false
+	}
+	cau, err := url.Parse(serverURI)
+	if err != nil {
+		log.Infof("Unable to parse CAServer URL : %v", err)
+		return false
+	}
+	return cau.Hostname() == aru.Hostname()
 }
 
 // Provide allows the file provider to provide configurations to traefik
