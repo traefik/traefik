@@ -10,6 +10,13 @@ import (
 )
 
 func TestEntryPointMiddlewareServeHTTP(t *testing.T) {
+	expectedTags := map[string]interface{}{
+		"span.kind":   ext.SpanKindRPCServerEnum,
+		"http.method": "GET",
+		"component":   "",
+		"http.url":    "http://www.test.com",
+		"http.host":   "www.test.com",
+	}
 	testCases := []struct {
 		desc         string
 		entryPoint   string
@@ -18,36 +25,23 @@ func TestEntryPointMiddlewareServeHTTP(t *testing.T) {
 		expectedName string
 	}{
 		{
-			desc:       "basic test",
-			entryPoint: "test",
-			tracing: &Tracing{
-				SpanNameLimit: 25,
-				tracer:        &MockTracer{Span: &MockSpan{Tags: make(map[string]interface{})}},
-			},
-			expectedTags: map[string]interface{}{
-				"span.kind":   ext.SpanKindRPCServerEnum,
-				"http.method": "GET",
-				"component":   "",
-				"http.url":    "http://www.test.com",
-				"http.host":   "www.test.com",
-			},
-			expectedName: "Entrypoint te... ww... 39b97e58",
-		},
-		{
 			desc:       "no truncation test",
 			entryPoint: "test",
 			tracing: &Tracing{
 				SpanNameLimit: 0,
 				tracer:        &MockTracer{Span: &MockSpan{Tags: make(map[string]interface{})}},
 			},
-			expectedTags: map[string]interface{}{
-				"span.kind":   ext.SpanKindRPCServerEnum,
-				"http.method": "GET",
-				"component":   "",
-				"http.url":    "http://www.test.com",
-				"http.host":   "www.test.com",
-			},
+			expectedTags: expectedTags,
 			expectedName: "Entrypoint test www.test.com",
+		}, {
+			desc:       "basic test",
+			entryPoint: "test",
+			tracing: &Tracing{
+				SpanNameLimit: 25,
+				tracer:        &MockTracer{Span: &MockSpan{Tags: make(map[string]interface{})}},
+			},
+			expectedTags: expectedTags,
+			expectedName: "Entrypoint te... ww... 39b97e58",
 		},
 	}
 
@@ -69,7 +63,7 @@ func TestEntryPointMiddlewareServeHTTP(t *testing.T) {
 				assert.Equal(t, test.expectedName, span.OpName)
 			}
 
-			e.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", "http://www.test.com", nil), next)
+			e.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "http://www.test.com", nil), next)
 		})
 	}
 }

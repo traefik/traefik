@@ -45,12 +45,13 @@ func (f *forwarderMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, 
 	LogResponseCode(span, recorder.Status())
 }
 
+// generateForwardSpanName will return a Span name of an appropriate lenth based on the 'spanLimit' argument.  If needed, it will be truncated, but will not be less than 21 characters
 func generateForwardSpanName(frontend, backend string, spanLimit int) string {
 	name := fmt.Sprintf("forward %s/%s", frontend, backend)
 
 	if spanLimit > 0 && len(name) > spanLimit {
 		if spanLimit < ForwardMaxLengthNumber {
-			log.Warnf("SpanNameLimit is set to be less then required static number of characters, defaulting to %d + 3", ForwardMaxLengthNumber)
+			log.Warnf("SpanNameLimit is set to be less than required static number of characters, defaulting to %d + 3", ForwardMaxLengthNumber)
 			spanLimit = ForwardMaxLengthNumber + 3
 		}
 		hash := ComputeHash(name)

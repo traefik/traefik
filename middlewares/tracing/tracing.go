@@ -14,13 +14,13 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 )
 
-// ForwardMaxLengthNumber defines the number of static characters in the Forwarding Span Trace name - 8 chars for 'forward ' + 8 chars for hash + 2 chars for '_'
+// ForwardMaxLengthNumber defines the number of static characters in the Forwarding Span Trace name : 8 chars for 'forward ' + 8 chars for hash + 2 chars for '_'.
 const ForwardMaxLengthNumber = 18
 
-// EntryPointMaxLengthNumber defines the number of static characters in the Entrypoint Span Trace name - 11 chars for 'Entrypoint ' + 8 chars for hash + 2 chars for '_'
+// EntryPointMaxLengthNumber defines the number of static characters in the Entrypoint Span Trace name : 11 chars for 'Entrypoint ' + 8 chars for hash + 2 chars for '_'.
 const EntryPointMaxLengthNumber = 21
 
-// TraceNameHashLength defines the number of characters to use from the head of the generated hash
+// TraceNameHashLength defines the number of characters to use from the head of the generated hash.
 const TraceNameHashLength = 8
 
 // Tracing middleware
@@ -158,21 +158,21 @@ func SetError(r *http.Request) {
 	}
 }
 
-// SetErrorAndDebugLog flags the span associated with this request as in error and create a debug log
+// SetErrorAndDebugLog flags the span associated with this request as in error and create a debug log.
 func SetErrorAndDebugLog(r *http.Request, format string, args ...interface{}) {
 	SetError(r)
 	log.Debugf(format, args...)
 	LogEventf(r, format, args...)
 }
 
-// SetErrorAndWarnLog flags the span associated with this request as in error and create a debug log
+// SetErrorAndWarnLog flags the span associated with this request as in error and create a debug log.
 func SetErrorAndWarnLog(r *http.Request, format string, args ...interface{}) {
 	SetError(r)
 	log.Warnf(format, args...)
 	LogEventf(r, format, args...)
 }
 
-// TruncateString reduces the length of the 'str' argument to 'num' - 3 and adds a '...' suffix to the tail
+// TruncateString reduces the length of the 'str' argument to 'num' - 3 and adds a '...' suffix to the tail.
 func TruncateString(str string, num int) string {
 	text := str
 	if len(str) > num {
@@ -184,12 +184,11 @@ func TruncateString(str string, num int) string {
 	return text
 }
 
-// ComputeHash returns the first TraceNameHashLength character of the sha256 hash for 'name' argument
+// ComputeHash returns the first TraceNameHashLength character of the sha256 hash for 'name' argument.
 func ComputeHash(name string) string {
 	data := []byte(name)
 	hash := sha256.New()
-	_, err := hash.Write(data)
-	if err != nil {
+	if _, err := hash.Write(data); err != nil {
 		// Impossible case
 		log.Errorf("Fail to create Span name hash for %s: %v", name, err)
 	}

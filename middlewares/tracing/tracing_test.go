@@ -70,16 +70,16 @@ func TestTruncateString(t *testing.T) {
 		expected string
 	}{
 		{
-			desc:     "basic truncate with limit 10",
-			text:     "some very long pice of text",
-			limit:    10,
-			expected: "some ve...",
-		},
-		{
 			desc:     "short text less than limit 10",
 			text:     "short",
 			limit:    10,
 			expected: "short",
+		},
+		{
+			desc:     "basic truncate with limit 10",
+			text:     "some very long pice of text",
+			limit:    10,
+			expected: "some ve...",
 		},
 		{
 			desc:     "truncate long FQDN to 39 chars",

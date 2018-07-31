@@ -15,22 +15,6 @@ func TestTracingNewForwarderMiddleware(t *testing.T) {
 		expected *forwarderMiddleware
 	}{
 		{
-			desc: "Simple Forward Tracer with truncation and hashing",
-			tracer: &Tracing{
-				SpanNameLimit: 101,
-			},
-			frontend: "some-service-100.slug.namespace.environment.domain.tld",
-			backend:  "some-service-100.slug.namespace.environment.domain.tld",
-			expected: &forwarderMiddleware{
-				Tracing: &Tracing{
-					SpanNameLimit: 101,
-				},
-				frontend: "some-service-100.slug.namespace.environment.domain.tld",
-				backend:  "some-service-100.slug.namespace.environment.domain.tld",
-				opName:   "forward some-service-100.slug.namespace.enviro.../some-service-100.slug.namespace.enviro.../bc4a0d48",
-			},
-		},
-		{
 			desc: "Simple Forward Tracer without truncation and hashing",
 			tracer: &Tracing{
 				SpanNameLimit: 101,
@@ -44,6 +28,21 @@ func TestTracingNewForwarderMiddleware(t *testing.T) {
 				frontend: "some-service.domain.tld",
 				backend:  "some-service.domain.tld",
 				opName:   "forward some-service.domain.tld/some-service.domain.tld",
+			},
+		}, {
+			desc: "Simple Forward Tracer with truncation and hashing",
+			tracer: &Tracing{
+				SpanNameLimit: 101,
+			},
+			frontend: "some-service-100.slug.namespace.environment.domain.tld",
+			backend:  "some-service-100.slug.namespace.environment.domain.tld",
+			expected: &forwarderMiddleware{
+				Tracing: &Tracing{
+					SpanNameLimit: 101,
+				},
+				frontend: "some-service-100.slug.namespace.environment.domain.tld",
+				backend:  "some-service-100.slug.namespace.environment.domain.tld",
+				opName:   "forward some-service-100.slug.namespace.enviro.../some-service-100.slug.namespace.enviro.../bc4a0d48",
 			},
 		},
 		{
