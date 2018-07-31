@@ -94,7 +94,7 @@ func TestTruncateString(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actual := TruncateString(test.text, test.limit)
+			actual := truncateString(test.text, test.limit)
 
 			assert.Equal(t, test.expected, actual)
 			assert.True(t, len(actual) <= test.limit)
@@ -125,7 +125,7 @@ func TestComputeHash(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actual := ComputeHash(test.text)
+			actual := computeHash(test.text)
 
 			assert.Equal(t, test.expected, actual)
 		})

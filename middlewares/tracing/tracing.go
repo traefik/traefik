@@ -172,8 +172,8 @@ func SetErrorAndWarnLog(r *http.Request, format string, args ...interface{}) {
 	LogEventf(r, format, args...)
 }
 
-// TruncateString reduces the length of the 'str' argument to 'num' - 3 and adds a '...' suffix to the tail.
-func TruncateString(str string, num int) string {
+// truncateString reduces the length of the 'str' argument to 'num' - 3 and adds a '...' suffix to the tail.
+func truncateString(str string, num int) string {
 	text := str
 	if len(str) > num {
 		if num > 3 {
@@ -184,8 +184,8 @@ func TruncateString(str string, num int) string {
 	return text
 }
 
-// ComputeHash returns the first TraceNameHashLength character of the sha256 hash for 'name' argument.
-func ComputeHash(name string) string {
+// computeHash returns the first TraceNameHashLength character of the sha256 hash for 'name' argument.
+func computeHash(name string) string {
 	data := []byte(name)
 	hash := sha256.New()
 	if _, err := hash.Write(data); err != nil {

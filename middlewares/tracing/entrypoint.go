@@ -48,9 +48,9 @@ func generateEntryPointSpanName(r *http.Request, entryPoint string, spanLimit in
 			log.Warnf("SpanNameLimit is set to be less than required static number of characters, defaulting to %d + 3", EntryPointMaxLengthNumber)
 			spanLimit = EntryPointMaxLengthNumber + 3
 		}
-		hash := ComputeHash(name)
+		hash := computeHash(name)
 		limit := (spanLimit - EntryPointMaxLengthNumber) / 2
-		name = fmt.Sprintf("Entrypoint %s %s %s", TruncateString(entryPoint, limit), TruncateString(r.Host, limit), hash)
+		name = fmt.Sprintf("Entrypoint %s %s %s", truncateString(entryPoint, limit), truncateString(r.Host, limit), hash)
 	}
 
 	return name
