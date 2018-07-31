@@ -43,6 +43,8 @@ const (
 	traefikDefaultIngressClass = "traefik"
 	defaultBackendName         = "global-default-backend"
 	defaultFrontendName        = "global-default-frontend"
+	allowedProtocolHTTPS       = "https"
+	allowedProtocolH2C         = "h2c"
 )
 
 // IngressEndpoint holds the endpoint information for the Kubernetes provider
@@ -310,6 +312,16 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					if equalPorts(port, pa.Backend.ServicePort) {
 						if port.Port == 443 || strings.HasPrefix(port.Name, "https") {
 							protocol = "https"
+						}
+
+						protocol = getStringValue(i.Annotations, annotationKubernetesProtocol, protocol)
+						switch protocol {
+						case allowedProtocolHTTPS:
+						case allowedProtocolH2C:
+						case label.DefaultProtocol:
+						default:
+							log.Errorf("Invalid protocol %s/%s specified for Ingress %s - skipping", annotationKubernetesProtocol, i.Namespace, i.Name)
+							continue
 						}
 
 						if service.Spec.Type == "ExternalName" {

@@ -1224,6 +1224,41 @@ rateset:
 					iPaths(onePath(iPath("/customheaders"), iBackend("service1", intstr.FromInt(80))))),
 			),
 		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesProtocol, "h2c"),
+			iRules(
+				iRule(
+					iHost("protocol"),
+					iPaths(onePath(iPath("/valid"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesProtocol, "foobar"),
+			iRules(
+				iRule(
+					iHost("protocol"),
+					iPaths(onePath(iPath("/notvalid"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesProtocol, "http"),
+			iRules(
+				iRule(
+					iHost("protocol"),
+					iPaths(onePath(iPath("/missmatch"), iBackend("serviceHTTPS", intstr.FromInt(443))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iRules(
+				iRule(
+					iHost("protocol"),
+					iPaths(onePath(iPath("/noAnnotation"), iBackend("serviceHTTPS", intstr.FromInt(443))))),
+			),
+		),
 	}
 
 	services := []*corev1.Service{
@@ -1244,6 +1279,16 @@ rateset:
 			sSpec(
 				clusterIP("10.0.0.2"),
 				sPorts(sPort(802, ""))),
+		),
+		buildService(
+			sName("serviceHTTPS"),
+			sNamespace("testing"),
+			sUID("2"),
+			sSpec(
+				clusterIP("10.0.0.3"),
+				sType("ExternalName"),
+				sExternalName("example.com"),
+				sPorts(sPort(443, "https"))),
 		),
 	}
 
@@ -1350,6 +1395,28 @@ rateset:
 			),
 			backend("root2/",
 				servers(),
+				lbMethod("wrr"),
+			),
+			backend("protocol/valid",
+				servers(
+					server("h2c://example.com", weight(1)),
+					server("h2c://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
+			backend("protocol/notvalid",
+				servers(),
+				lbMethod("wrr"),
+			),
+			backend("protocol/missmatch",
+				servers(
+					server("http://example.com", weight(1)),
+					server("http://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
+			backend("protocol/noAnnotation",
+				servers(
+					server("https://example.com", weight(1)),
+					server("https://example.com", weight(1))),
 				lbMethod("wrr"),
 			),
 		),
@@ -1481,6 +1548,34 @@ rateset:
 				routes(
 					route("/root1", "PathPrefix:/root1"),
 					route("root", "Host:root"),
+				),
+			),
+			frontend("protocol/valid",
+				passHostHeader(),
+				routes(
+					route("/valid", "PathPrefix:/valid"),
+					route("protocol", "Host:protocol"),
+				),
+			),
+			frontend("protocol/notvalid",
+				passHostHeader(),
+				routes(
+					route("/notvalid", "PathPrefix:/notvalid"),
+					route("protocol", "Host:protocol"),
+				),
+			),
+			frontend("protocol/missmatch",
+				passHostHeader(),
+				routes(
+					route("/missmatch", "PathPrefix:/missmatch"),
+					route("protocol", "Host:protocol"),
+				),
+			),
+			frontend("protocol/noAnnotation",
+				passHostHeader(),
+				routes(
+					route("/noAnnotation", "PathPrefix:/noAnnotation"),
+					route("protocol", "Host:protocol"),
 				),
 			),
 		),

@@ -159,7 +159,8 @@ The following general annotations are applicable on the Ingress object:
 | `traefik.ingress.kubernetes.io/whitelist-source-range: "1.2.3.0/24, fe80::/16"` | A comma-separated list of IP ranges permitted for access (6).                                                     |
 | `ingress.kubernetes.io/whitelist-x-forwarded-for: "true"`                       | Use `X-Forwarded-For` header as valid source of IP for the white list.                                            |
 | `traefik.ingress.kubernetes.io/app-root: "/index.html"`                         | Redirects all requests for `/` to the defined path. (4)                                                           |
-| `traefik.ingress.kubernetes.io/service-weights: <YML>`                          | Set ingress backend weights specified as percentage or decimal numbers in YAML. (5)                               |
+| `traefik.ingress.kubernetes.io/service-weights: <YML>`                          | Set ingress backend weights specified as percentage or decimal numbers in YAML. (5)            
+| `ingress.kubernetes.io/protocol: <NAME>`                                        | Set the protocol Traefik will use to communicate with pods.
 
 
 <1> `traefik.ingress.kubernetes.io/error-pages` example:
