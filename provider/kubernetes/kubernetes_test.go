@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
@@ -867,8 +866,7 @@ func TestServiceAnnotations(t *testing.T) {
 			sName("service2"),
 			sNamespace("testing"),
 			sUID("2"),
-			sAnnotation(annotationKubernetesCircuitBreakerExpression, ""),
-			sAnnotation(label.TraefikBackendLoadBalancerSticky, "true"),
+			sAnnotation(annotationKubernetesAffinity, "true"),
 			sSpec(
 				clusterIP("10.0.0.2"),
 				sPorts(sPort(802, ""))),
@@ -972,7 +970,7 @@ retryexpression: IsNetworkError() && Attempts() <= 2
 				servers(
 					server("http://10.15.0.1:8080", weight(1)),
 					server("http://10.15.0.2:8080", weight(1))),
-				lbMethod("wrr"), lbSticky(),
+				lbMethod("wrr"), lbStickiness(),
 			),
 			backend("baz",
 				servers(

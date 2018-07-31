@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	"github.com/mesosphere/mesos-dns/records/state"
@@ -487,12 +487,12 @@ func TestBuildConfiguration(t *testing.T) {
 						ExtractorFunc: "client.ip",
 						RateSet: map[string]*types.Rate{
 							"foo": {
-								Period:  flaeg.Duration(6 * time.Second),
+								Period:  parse.Duration(6 * time.Second),
 								Average: 12,
 								Burst:   18,
 							},
 							"bar": {
-								Period:  flaeg.Duration(3 * time.Second),
+								Period:  parse.Duration(3 * time.Second),
 								Average: 6,
 								Burst:   9,
 							},
@@ -668,7 +668,6 @@ func TestBuildConfigurationSegments(t *testing.T) {
 					withLabel(label.TraefikBackendHealthCheckHostname, "foo.com"),
 					withLabel(label.TraefikBackendHealthCheckHeaders, "Foo:bar || Bar:foo"),
 					withLabel(label.TraefikBackendLoadBalancerMethod, "drr"),
-					withLabel(label.TraefikBackendLoadBalancerSticky, "true"),
 					withLabel(label.TraefikBackendLoadBalancerStickiness, "true"),
 					withLabel(label.TraefikBackendLoadBalancerStickinessCookieName, "chocolate"),
 					withLabel(label.TraefikBackendMaxConnAmount, "666"),
@@ -841,12 +840,12 @@ func TestBuildConfigurationSegments(t *testing.T) {
 					RateLimit: &types.RateLimit{
 						RateSet: map[string]*types.Rate{
 							"bar": {
-								Period:  flaeg.Duration(3 * time.Second),
+								Period:  parse.Duration(3 * time.Second),
 								Average: 6,
 								Burst:   9,
 							},
 							"foo": {
-								Period:  flaeg.Duration(6 * time.Second),
+								Period:  parse.Duration(6 * time.Second),
 								Average: 12,
 								Burst:   18,
 							},
@@ -872,7 +871,6 @@ func TestBuildConfigurationSegments(t *testing.T) {
 					},
 					LoadBalancer: &types.LoadBalancer{
 						Method: "drr",
-						Sticky: true,
 						Stickiness: &types.Stickiness{
 							CookieName: "chocolate",
 						},

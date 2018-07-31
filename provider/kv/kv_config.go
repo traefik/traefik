@@ -11,7 +11,7 @@ import (
 
 	"github.com/BurntSushi/ty/fun"
 	"github.com/abronan/valkeyrie/store"
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/tls"
@@ -43,7 +43,7 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		// Frontend functions
 		"getBackendName":    p.getFuncString(pathFrontendBackend, ""),
 		"getPriority":       p.getFuncInt(pathFrontendPriority, label.DefaultFrontendPriority),
-		"getPassHostHeader": p.getPassHostHeader(),
+		"getPassHostHeader": p.getFuncBool(pathFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getPassTLSCert":    p.getFuncBool(pathFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getEntryPoints":    p.getFuncList(pathFrontendEntryPoints),
 		"getBasicAuth":      p.getFuncList(pathFrontendBasicAuth), // Deprecated
@@ -56,15 +56,12 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getWhiteList":      p.getWhiteList,
 
 		// Backend functions
-		"getServers":              p.getServers,
-		"getCircuitBreaker":       p.getCircuitBreaker,
-		"getLoadBalancer":         p.getLoadBalancer,
-		"getMaxConn":              p.getMaxConn,
-		"getHealthCheck":          p.getHealthCheck,
-		"getBuffering":            p.getBuffering,
-		"getSticky":               p.getSticky,               // Deprecated [breaking]
-		"hasStickinessLabel":      p.hasStickinessLabel,      // Deprecated [breaking]
-		"getStickinessCookieName": p.getStickinessCookieName, // Deprecated [breaking]
+		"getServers":        p.getServers,
+		"getCircuitBreaker": p.getCircuitBreaker,
+		"getLoadBalancer":   p.getLoadBalancer,
+		"getMaxConn":        p.getMaxConn,
+		"getHealthCheck":    p.getHealthCheck,
+		"getBuffering":      p.getBuffering,
 	}
 
 	configuration, err := p.GetConfiguration("templates/kv.tmpl", KvFuncMap, templateObjects)
@@ -79,51 +76,6 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 	}
 
 	return configuration
-}
-
-// Deprecated
-func (p *Provider) getPassHostHeader() func(rootPath string) bool {
-	return func(rootPath string) bool {
-		rawValue := p.get("", rootPath, pathFrontendPassHostHeader)
-
-		if len(rawValue) > 0 {
-			value, err := strconv.ParseBool(rawValue)
-			if err != nil {
-				log.Errorf("Invalid value for %s %s: %s", rootPath, pathFrontendPassHostHeader, rawValue)
-				return label.DefaultPassHostHeader
-			}
-			return value
-		}
-
-		return p.getBool(label.DefaultPassHostHeader, rootPath, pathFrontendPassHostHeaderDeprecated)
-	}
-}
-
-// Deprecated
-func (p *Provider) getSticky(rootPath string) bool {
-	stickyValue := p.get("", rootPath, pathBackendLoadBalancerSticky)
-	if len(stickyValue) > 0 {
-		log.Warnf("Deprecated configuration found: %s. Please use %s.", pathBackendLoadBalancerSticky, pathBackendLoadBalancerStickiness)
-	} else {
-		return false
-	}
-
-	sticky, err := strconv.ParseBool(stickyValue)
-	if err != nil {
-		log.Warnf("Invalid %s value: %s.", pathBackendLoadBalancerSticky, stickyValue)
-	}
-
-	return sticky
-}
-
-// Deprecated
-func (p *Provider) hasStickinessLabel(rootPath string) bool {
-	return p.getBool(false, rootPath, pathBackendLoadBalancerStickiness)
-}
-
-// Deprecated
-func (p *Provider) getStickinessCookieName(rootPath string) string {
-	return p.get("", rootPath, pathBackendLoadBalancerStickinessCookieName)
 }
 
 func (p *Provider) getWhiteList(rootPath string) *types.WhiteList {
@@ -198,7 +150,7 @@ func (p *Provider) getRateLimit(rootPath string) *types.RateLimit {
 
 		rawPeriod := p.get("", pathLimits+pathFrontendRateLimitPeriod)
 
-		var period flaeg.Duration
+		var period parse.Duration
 		err := period.Set(rawPeriod)
 		if err != nil {
 			log.Errorf("Invalid %q value: %q", pathLimits+pathFrontendRateLimitPeriod, rawPeriod)
@@ -256,7 +208,6 @@ func (p *Provider) getHeaders(rootPath string) *types.Headers {
 func (p *Provider) getLoadBalancer(rootPath string) *types.LoadBalancer {
 	lb := &types.LoadBalancer{
 		Method: p.get(label.DefaultBackendLoadBalancerMethod, rootPath, pathBackendLoadBalancerMethod),
-		Sticky: p.getSticky(rootPath),
 	}
 
 	if p.getBool(false, rootPath, pathBackendLoadBalancerStickiness) {

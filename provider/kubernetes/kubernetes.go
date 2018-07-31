@@ -921,11 +921,6 @@ func getLoadBalancer(service *corev1.Service) *types.LoadBalancer {
 		loadBalancer.Method = "drr"
 	}
 
-	if sticky := service.Annotations[label.TraefikBackendLoadBalancerSticky]; len(sticky) > 0 {
-		log.Warnf("Deprecated configuration found: %s. Please use %s.", label.TraefikBackendLoadBalancerSticky, annotationKubernetesAffinity)
-		loadBalancer.Sticky = strings.EqualFold(strings.TrimSpace(sticky), "true")
-	}
-
 	if stickiness := getStickiness(service); stickiness != nil {
 		loadBalancer.Stickiness = stickiness
 	}

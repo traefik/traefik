@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/BurntSushi/ty/fun"
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/rules"
 	"github.com/containous/traefik/safe"
@@ -72,7 +72,7 @@ type Certificate struct {
 // DNSChallenge contains DNS challenge Configuration
 type DNSChallenge struct {
 	Provider         string         `description:"Use a DNS-01 based challenge provider rather than HTTPS."`
-	DelayBeforeCheck flaeg.Duration `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."`
+	DelayBeforeCheck parse.Duration `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."`
 }
 
 // HTTPChallenge contains HTTP challenge Configuration
@@ -368,7 +368,7 @@ func (p *Provider) resolveCertificate(domain types.Domain, domainFromConfigurati
 	return certificate, nil
 }
 
-func dnsOverrideDelay(delay flaeg.Duration) error {
+func dnsOverrideDelay(delay parse.Duration) error {
 	if delay == 0 {
 		return nil
 	}
