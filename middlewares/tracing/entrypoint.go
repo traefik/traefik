@@ -39,7 +39,7 @@ func (e *entryPointMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request,
 	span.Finish()
 }
 
-// generateEntryPointSpanName will return a Span name of an appropriate lenth based on the 'spanLimit' argument.  If needed, it will be truncated, but will not be less than 24 characters
+// generateEntryPointSpanName will return a Span name of an appropriate lenth based on the 'spanLimit' argument.  If needed, it will be truncated, but will not be less than 24 characters.
 func generateEntryPointSpanName(r *http.Request, entryPoint string, spanLimit int) string {
 	name := fmt.Sprintf("Entrypoint %s %s", entryPoint, r.Host)
 

@@ -24,6 +24,7 @@ Træfik supports two backends: Jaeger and Zipkin.
   serviceName = "traefik"
     
   # Span name limit allows for name truncation in case of very long Frontend/Backend names
+  # This can prevent certain tracing providers to drop traces that exceed their length limits
   #
   # Default: 0 - no truncation will occur
   # 
@@ -80,6 +81,7 @@ Træfik supports two backends: Jaeger and Zipkin.
   serviceName = "traefik"
     
   # Span name limit allows for name truncation in case of very long Frontend/Backend names
+  # This can prevent certain tracing providers to drop traces that exceed their length limits
   #
   # Default: 0 - no truncation will occur
   # 
@@ -129,6 +131,7 @@ Træfik supports two backends: Jaeger and Zipkin.
   serviceName = "traefik"
   
   # Span name limit allows for name truncation in case of very long Frontend/Backend names
+  # This can prevent certain tracing providers to drop traces that exceed their length limits
   #
   # Default: 0 - no truncation will occur
   # 
