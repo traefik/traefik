@@ -13,6 +13,16 @@ import (
 	dto "github.com/prometheus/client_model/go"
 )
 
+// reset is a utility method for unit testing. It should be called after each
+// test run that changes promState internally in order to avoid dependencies
+// between unit tests.
+func (ps *prometheusState) reset() {
+	ps.collectors = make(chan *collector)
+	ps.describers = []func(ch chan<- *prometheus.Desc){}
+	ps.dynamicConfig = newDynamicConfig()
+	ps.state = make(map[string]*collector)
+}
+
 func TestPrometheus(t *testing.T) {
 	// Reset state of global promState.
 	defer promState.reset()
