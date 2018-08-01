@@ -17,6 +17,7 @@ func TestEntryPointMiddlewareServeHTTP(t *testing.T) {
 		"http.url":    "http://www.test.com",
 		"http.host":   "www.test.com",
 	}
+
 	testCases := []struct {
 		desc         string
 		entryPoint   string
