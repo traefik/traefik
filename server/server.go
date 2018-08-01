@@ -343,7 +343,7 @@ func (s *Server) AddListener(listener func(types.Configuration)) {
 	s.configurationListeners = append(s.configurationListeners, listener)
 }
 
-// getCertificate allows to customize tlsConfig.GetCertificate behaviour to get the certificates inserted dynamically
+// getCertificate allows to customize tlsConfig.GetCertificate behavior to get the certificates inserted dynamically
 func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	domainToCheck := types.CanonicalDomain(clientHello.ServerName)
 
@@ -498,7 +498,7 @@ func (s *Server) startServer(serverEntryPoint *serverEntryPoint) {
 }
 
 func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServerEntryPoint *serverEntryPoint) *serverEntryPoint {
-	serverMiddlewares, err := s.buildServerEntryPointMiddlewares(newServerEntryPointName, newServerEntryPoint)
+	serverMiddlewares, err := s.buildServerEntryPointMiddlewares(newServerEntryPointName)
 	if err != nil {
 		log.Fatal("Error preparing server: ", err)
 	}

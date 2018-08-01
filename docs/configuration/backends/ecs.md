@@ -126,9 +126,9 @@ Træfik needs the following policy to read ECS information:
 }
 ```
 
-## Labels: overriding default behaviour
+## Labels: overriding default behavior
 
-Labels can be used on task containers to override default behaviour:
+Labels can be used on task containers to override default behavior:
 
 | Label                                                      | Description                                                                                                                                                                                                                   |
 |------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

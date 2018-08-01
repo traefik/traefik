@@ -328,7 +328,7 @@ It is not possible to request a double wildcard certificate for a domain (for ex
 Due to ACME limitation it is not possible to define wildcards in SANs (alternative domains). Thus, the wildcard domain has to be defined as a main domain.
 Most likely the root domain should receive a certificate too, so it needs to be specified as SAN and 2 `DNS-01` challenges are executed.
 In this case the generated DNS TXT record for both domains is the same.
-Eventhough this behaviour is [DNS RFC](https://community.letsencrypt.org/t/wildcard-issuance-two-txt-records-for-the-same-name/54528/2) compliant, it can lead to problems as all DNS providers keep DNS records cached for a certain time (TTL) and this TTL can be superior to the challenge timeout making the `DNS-01` challenge fail.
+Eventhough this behavior is [DNS RFC](https://community.letsencrypt.org/t/wildcard-issuance-two-txt-records-for-the-same-name/54528/2) compliant, it can lead to problems as all DNS providers keep DNS records cached for a certain time (TTL) and this TTL can be superior to the challenge timeout making the `DNS-01` challenge fail.
 The Træfik ACME client library [LEGO](https://github.com/xenolf/lego) supports some but not all DNS providers to work around this issue.
 The [`provider` table](/configuration/acme/#provider) indicates if they allow generating certificates for a wildcard domain and its root domain.
 

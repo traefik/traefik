@@ -9,6 +9,7 @@ import (
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/api"
 	"github.com/containous/traefik/configuration"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/ping"
 	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/safe"
@@ -104,20 +105,35 @@ func TestWithMiddleware(t *testing.T) {
 	router := WithMiddleware{
 		router: MockInternalRouterFunc(func(systemRouter *mux.Router) {
 			systemRouter.Handle("/test", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.Write([]byte("router"))
+				_, err := w.Write([]byte("router"))
+				if err != nil {
+					log.Error(err)
+				}
 			}))
 		}),
 		routerMiddlewares: []negroni.Handler{
 			negroni.HandlerFunc(func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-				rw.Write([]byte("before middleware1|"))
+				_, err := rw.Write([]byte("before middleware1|"))
+				if err != nil {
+					log.Error(err)
+				}
 				next.ServeHTTP(rw, r)
-				rw.Write([]byte("|after middleware1"))
+				_, err = rw.Write([]byte("|after middleware1"))
+				if err != nil {
+					log.Error(err)
+				}
 
 			}),
 			negroni.HandlerFunc(func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-				rw.Write([]byte("before middleware2|"))
+				_, err := rw.Write([]byte("before middleware2|"))
+				if err != nil {
+					log.Error(err)
+				}
 				next.ServeHTTP(rw, r)
-				rw.Write([]byte("|after middleware2"))
+				_, err = rw.Write([]byte("|after middleware2"))
+				if err != nil {
+					log.Error(err)
+				}
 			}),
 		},
 	}

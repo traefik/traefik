@@ -233,7 +233,7 @@ func (s *datastoreTransaction) Commit(object Object) error {
 	}
 	err = s.kv.StoreConfig(s.Datastore.meta)
 	if err != nil {
-		return fmt.Errorf("StoreConfig error: %s", err)
+		return fmt.Errorf("storeConfig error: %s", err)
 	}
 
 	err = s.remoteLock.Unlock()

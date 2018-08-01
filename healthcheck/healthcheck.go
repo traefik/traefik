@@ -130,30 +130,36 @@ func (hc *HealthCheck) execute(ctx context.Context, backend *BackendConfig) {
 func (hc *HealthCheck) checkBackend(backend *BackendConfig) {
 	enabledURLs := backend.LB.Servers()
 	var newDisabledURLs []*url.URL
-	for _, url := range backend.disabledURLs {
+	for _, u := range backend.disabledURLs {
 		serverUpMetricValue := float64(0)
-		if err := checkHealth(url, backend); err == nil {
-			log.Warnf("Health check up: Returning to server list. Backend: %q URL: %q", backend.name, url.String())
-			backend.LB.UpsertServer(url, roundrobin.Weight(1))
+		if err := checkHealth(u, backend); err == nil {
+			log.Warnf("Health check up: Returning to server list. Backend: %q URL: %q", backend.name, u.String())
+			err := backend.LB.UpsertServer(u, roundrobin.Weight(1))
+			if err != nil {
+				log.Error(err)
+			}
 			serverUpMetricValue = 1
 		} else {
-			log.Warnf("Health check still failing. Backend: %q URL: %q Reason: %s", backend.name, url.String(), err)
-			newDisabledURLs = append(newDisabledURLs, url)
+			log.Warnf("Health check still failing. Backend: %q URL: %q Reason: %s", backend.name, u.String(), err)
+			newDisabledURLs = append(newDisabledURLs, u)
 		}
-		labelValues := []string{"backend", backend.name, "url", url.String()}
+		labelValues := []string{"backend", backend.name, "url", u.String()}
 		hc.metrics.BackendServerUpGauge().With(labelValues...).Set(serverUpMetricValue)
 	}
 	backend.disabledURLs = newDisabledURLs
 
-	for _, url := range enabledURLs {
+	for _, u := range enabledURLs {
 		serverUpMetricValue := float64(1)
-		if err := checkHealth(url, backend); err != nil {
-			log.Warnf("Health check failed: Remove from server list. Backend: %q URL: %q Reason: %s", backend.name, url.String(), err)
-			backend.LB.RemoveServer(url)
-			backend.disabledURLs = append(backend.disabledURLs, url)
+		if err := checkHealth(u, backend); err != nil {
+			log.Warnf("Health check failed: Remove from server list. Backend: %q URL: %q Reason: %s", backend.name, u.String(), err)
+			err := backend.LB.RemoveServer(u)
+			if err != nil {
+				log.Error(err)
+			}
+			backend.disabledURLs = append(backend.disabledURLs, u)
 			serverUpMetricValue = 0
 		}
-		labelValues := []string{"backend", backend.name, "url", url.String()}
+		labelValues := []string{"backend", backend.name, "url", u.String()}
 		hc.metrics.BackendServerUpGauge().With(labelValues...).Set(serverUpMetricValue)
 	}
 }

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/containous/traefik/integration/try"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares/accesslog"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
@@ -324,13 +325,19 @@ func digestParts(resp *http.Response) map[string]string {
 
 func getMD5(data string) string {
 	digest := md5.New()
-	digest.Write([]byte(data))
+	_, err := digest.Write([]byte(data))
+	if err != nil {
+		log.Error(err)
+	}
 	return fmt.Sprintf("%x", digest.Sum(nil))
 }
 
 func getCnonce() string {
 	b := make([]byte, 8)
-	io.ReadFull(rand.Reader, b)
+	_, err := io.ReadFull(rand.Reader, b)
+	if err != nil {
+		log.Error(err)
+	}
 	return fmt.Sprintf("%x", b)[:16]
 }
 

@@ -158,7 +158,10 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 
-	roundrobin.SetDefaultWeight(0)
+	err := roundrobin.SetDefaultWeight(0)
+	if err != nil {
+		log.Error(err)
+	}
 
 	globalConfiguration.SetEffectiveConfiguration(configFile)
 	globalConfiguration.ValidateConfiguration()

@@ -13,6 +13,7 @@ import (
 
 	"github.com/containous/traefik/integration/helloworld"
 	"github.com/containous/traefik/integration/try"
+	"github.com/containous/traefik/log"
 	"github.com/go-check/check"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -47,7 +48,11 @@ func (s *myserver) StreamExample(in *helloworld.StreamExampleRequest, server hel
 	for i := range data {
 		data[i] = randCharset[rand.Intn(len(randCharset))]
 	}
-	server.Send(&helloworld.StreamExampleReply{Data: string(data)})
+	err := server.Send(&helloworld.StreamExampleReply{Data: string(data)})
+	if err != nil {
+		log.Error(err)
+	}
+
 	<-s.stopStreamExample
 	return nil
 }

@@ -530,7 +530,8 @@ func (s *ConsulCatalogSuite) TestRetryWithConsulServer(c *check.C) {
 
 	// Scale consul to 1
 	s.composeProject.Scale(c, "consul", 1)
-	s.waitToElectConsulLeader()
+	err = s.waitToElectConsulLeader()
+	c.Assert(err, checker.IsNil)
 
 	whoami := s.composeProject.Container(c, "whoami1")
 	// Register service
@@ -576,7 +577,8 @@ func (s *ConsulCatalogSuite) TestServiceWithMultipleHealthCheck(c *check.C) {
 
 	// Scale consul to 1
 	s.composeProject.Scale(c, "consul", 1)
-	s.waitToElectConsulLeader()
+	err = s.waitToElectConsulLeader()
+	c.Assert(err, checker.IsNil)
 
 	whoami := s.composeProject.Container(c, "whoami1")
 	// Register service

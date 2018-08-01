@@ -165,7 +165,7 @@ func (s *Server) loadFrontendConfig(
 		if backendsHandlers[entryPointName+providerName+frontendHash] == nil {
 			log.Debugf("Creating backend %s", frontend.Backend)
 
-			handlers, responseModifier, postConfig, err := s.buildMiddlewares(frontendName, frontend, config.Backends, entryPointName, entryPoint, providerName)
+			handlers, responseModifier, postConfig, err := s.buildMiddlewares(frontendName, frontend, config.Backends, entryPointName, providerName)
 			if err != nil {
 				return nil, err
 			}
@@ -566,11 +566,15 @@ func (s *Server) buildServerEntryPoints() map[string]*serverEntryPoint {
 			if entryPoint.Configuration.TLS.DefaultCertificate != nil {
 				cert, err := tls.LoadX509KeyPair(entryPoint.Configuration.TLS.DefaultCertificate.CertFile.String(), entryPoint.Configuration.TLS.DefaultCertificate.KeyFile.String())
 				if err != nil {
+					log.Error(err)
+					continue
 				}
 				serverEntryPoints[entryPointName].certs.DefaultCertificate = &cert
 			} else {
 				cert, err := generate.DefaultCertificate()
 				if err != nil {
+					log.Error(err)
+					continue
 				}
 				serverEntryPoints[entryPointName].certs.DefaultCertificate = cert
 			}
