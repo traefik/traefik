@@ -53,7 +53,6 @@ type portMapping struct {
 }
 
 type machine struct {
-	name      string
 	state     string
 	privateIP string
 	ports     []portMapping
@@ -108,8 +107,8 @@ func (p *Provider) createClient() (*awsClient, error) {
 	}
 
 	return &awsClient{
-		ecs.New(sess, cfg),
-		ec2.New(sess, cfg),
+		ecs: ecs.New(sess, cfg),
+		ec2: ec2.New(sess, cfg),
 	}, nil
 }
 
@@ -419,7 +418,7 @@ func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types
 func (p *Provider) chunkIDs(ids []*string) [][]*string {
 	var chuncked [][]*string
 	for i := 0; i < len(ids); i += 100 {
-		sliceEnd := -1
+		var sliceEnd int
 		if i+100 < len(ids) {
 			sliceEnd = i + 100
 		} else {

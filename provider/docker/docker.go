@@ -97,7 +97,9 @@ func (p *Provider) createClient() (client.APIClient, error) {
 		if err != nil {
 			return nil, err
 		}
-		sockets.ConfigureTransport(tr, hostURL.Scheme, hostURL.Host)
+		if err := sockets.ConfigureTransport(tr, hostURL.Scheme, hostURL.Host); err != nil {
+			return nil, err
+		}
 
 		httpClient = &http.Client{
 			Transport: tr,
