@@ -79,7 +79,7 @@ func setupPebbleRootCA() (*http.Transport, error) {
 }
 
 func (s *AcmeSuite) SetUpSuite(c *check.C) {
-	s.createComposeProject(c, "peddle")
+	s.createComposeProject(c, "pebble")
 	s.composeProject.Start(c)
 
 	s.fakeDNSServer = startFakeDNSServer()
@@ -91,7 +91,7 @@ func (s *AcmeSuite) SetUpSuite(c *check.C) {
 		c.Fatal(err)
 	}
 
-	// wait for peddle
+	// wait for pebble
 	req := testhelpers.MustNewRequest(http.MethodGet, s.getAcmeURL(), nil)
 
 	client := &http.Client{
