@@ -51,6 +51,18 @@ Træfik supports two backends: Jaeger and Zipkin.
     # Default: "127.0.0.1:6831"
     #
     localAgentHostPort = "127.0.0.1:6831"
+   
+    # Generate 128-bit trace IDs, compatible with OpenCensus
+    #
+    # Default: false
+    gen128Bit = true
+   
+    # Set the propagation header type. This can be either:
+    #   - "jaeger", jaeger's default trace header.
+    #   - "b3", compatible with OpenZipkin
+    #
+    # Default: "jaeger"
+    propagation = "jaeger"
 ```
 
 !!! warning
