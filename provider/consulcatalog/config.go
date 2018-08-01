@@ -174,10 +174,6 @@ func (p *Provider) getWeight(tags []string) int {
 
 // Base functions
 
-func (p *Provider) hasAttribute(name string, tags []string) bool {
-	return hasTag(p.getPrefixedName(name), tags)
-}
-
 func (p *Provider) getAttribute(name string, tags []string, defaultValue string) string {
 	return getTag(p.getPrefixedName(name), tags, defaultValue)
 }

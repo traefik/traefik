@@ -16,8 +16,6 @@ import (
 	"github.com/gambol99/go-marathon"
 )
 
-const defaultService = ""
-
 type appData struct {
 	marathon.Application
 	SegmentLabels map[string]string
