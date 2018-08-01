@@ -14,7 +14,6 @@ COPY package.json $WEBUI_DIR/
 COPY yarn.lock $WEBUI_DIR/
 
 WORKDIR $WEBUI_DIR
-RUN npm set progress=false
 RUN yarn install
 
 COPY . $WEBUI_DIR/
