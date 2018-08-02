@@ -269,10 +269,10 @@ func (partial *partialGovTalkMessage) populateEnrolments(ev *RATEAuditEvent) {
 }
 
 func (partial *partialGovTalkMessage) populateMessageSpecificInfo(ev *RATEAuditEvent) {
-	partial.populateSelfAssessmentData(ev)
+	partial.populateDetails(ev)
 }
 
-func (partial *partialGovTalkMessage) populateSelfAssessmentData(ev *RATEAuditEvent) {
+func (partial *partialGovTalkMessage) populateDetails(ev *RATEAuditEvent) {
 	if auditsRequestPayloadContents(ev.AuditType) && partial.Message != nil {
 		if ev.RequestPayload == nil {
 			ev.RequestPayload = types.DataMap{}
