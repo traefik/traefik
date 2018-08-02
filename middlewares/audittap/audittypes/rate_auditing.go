@@ -269,10 +269,10 @@ func (partial *partialGovTalkMessage) populateEnrolments(ev *RATEAuditEvent) {
 }
 
 func (partial *partialGovTalkMessage) populateMessageSpecificInfo(ev *RATEAuditEvent) {
-	partial.populateSelfAssessmentData(ev)
+	partial.populateDetails(ev)
 }
 
-func (partial *partialGovTalkMessage) populateSelfAssessmentData(ev *RATEAuditEvent) {
+func (partial *partialGovTalkMessage) populateDetails(ev *RATEAuditEvent) {
 	if auditsRequestPayloadContents(ev.AuditType) && partial.Message != nil {
 		if ev.RequestPayload == nil {
 			ev.RequestPayload = types.DataMap{}
@@ -315,7 +315,7 @@ func (partial *partialGovTalkMessage) populateSelfAssessmentData(ev *RATEAuditEv
 }
 
 func auditsRequestPayloadContents(auditType string) bool {
-	return strings.HasPrefix(auditType, "HMRC-SA-") || strings.HasPrefix(auditType, "HMRC-VAT-")
+	return strings.HasPrefix(auditType, "HMRC-SA-") || strings.HasPrefix(auditType, "HMRC-VAT-") || strings.HasPrefix(auditType, "HMRC-CT-")
 }
 
 func extractMoneyValue(doc *etree.Document, path etree.Path) (float64, error) {

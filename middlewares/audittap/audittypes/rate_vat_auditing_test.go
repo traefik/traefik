@@ -82,7 +82,7 @@ func TestRateVATAuditEventIsNotRepayment(t *testing.T) {
 	}
 	event := &RATEAuditEvent{}
 	event.AuditType = "HMRC-VAT-TMSG"
-	gtm.populateSelfAssessmentData(event)
+	gtm.populateDetails(event)
 
 	assert.Equal(t, "false", event.Detail.IsRepayment)
 }
@@ -107,7 +107,7 @@ func TestRateVATAuditEventIsRepaymentWhenEmpty(t *testing.T) {
 	}
 	event := &RATEAuditEvent{}
 	event.AuditType = "HMRC-VAT-TMSG"
-	gtm.populateSelfAssessmentData(event)
+	gtm.populateDetails(event)
 
 	assert.Equal(t, "false", event.Detail.IsRepayment)
 }
@@ -132,7 +132,7 @@ func TestRateVATAuditEventIsRepaymentOmitted(t *testing.T) {
 	}
 	event := &RATEAuditEvent{}
 	event.AuditType = "HMRC-VAT-TMSG"
-	gtm.populateSelfAssessmentData(event)
+	gtm.populateDetails(event)
 
 	assert.Equal(t, "false", event.Detail.IsRepayment)
 }

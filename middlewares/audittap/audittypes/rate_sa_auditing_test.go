@@ -112,7 +112,7 @@ func TestRateSA100AuditEventIsRepaymentWhenEmpty(t *testing.T) {
 	}
 	event := &RATEAuditEvent{}
 	event.AuditType = "HMRC-SA-SA100"
-	gtm.populateSelfAssessmentData(event)
+	gtm.populateDetails(event)
 
 	assert.Equal(t, "false", event.Detail.IsRepayment)
 }
@@ -143,7 +143,7 @@ func TestRateSA100AuditEventIsRepaymentOmitted(t *testing.T) {
 	}
 	event := &RATEAuditEvent{}
 	event.AuditType = "HMRC-SA-SA100"
-	gtm.populateSelfAssessmentData(event)
+	gtm.populateDetails(event)
 
 	assert.Equal(t, "", event.Detail.IsRepayment)
 }
@@ -252,7 +252,7 @@ func TestRateSA900AuditEventIsRepaymentWhenEmpty(t *testing.T) {
 	}
 	event := &RATEAuditEvent{}
 	event.AuditType = "HMRC-SA-SA900"
-	gtm.populateSelfAssessmentData(event)
+	gtm.populateDetails(event)
 
 	assert.Equal(t, "false", event.Detail.IsRepayment)
 }
@@ -279,7 +279,7 @@ func TestRateSA900AuditEventIsRepaymentOmitted(t *testing.T) {
 	}
 	event := &RATEAuditEvent{}
 	event.AuditType = "HMRC-SA-SA900"
-	gtm.populateSelfAssessmentData(event)
+	gtm.populateDetails(event)
 
 	assert.Equal(t, "", event.Detail.IsRepayment)
 }
@@ -308,7 +308,7 @@ func TestRateSARemovesAttachmentContent(t *testing.T) {
 	}
 	event := &RATEAuditEvent{}
 	event.AuditType = "HMRC-SA-SA900"
-	gtm.populateSelfAssessmentData(event)
+	gtm.populateDetails(event)
 	contents := event.RequestPayload.GetString("contents")
 	assert.Contains(t, contents, "AttachedFiles")
 	assert.Contains(t, contents, "<Attachment att=\"1\" size=\"999\"></Attachment>")
