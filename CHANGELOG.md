@@ -1,5 +1,34 @@
 # Change Log
 
+## [v1.7.0-rc3](https://github.com/containous/traefik/tree/v1.7.0-rc3) (2018-08-01)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.0-rc2...v1.7.0-rc3)
+
+**Enhancements:**
+- **[consul,etcd,tls]** Improve TLS integration tests ([#3679](https://github.com/containous/traefik/pull/3679) by [mmatur](https://github.com/mmatur))
+- **[k8s]** Add possibility to set a protocol ([#3648](https://github.com/containous/traefik/pull/3648) by [SantoDE](https://github.com/SantoDE))
+
+**Bug fixes:**
+- **[acme]** Fix acme account deletion without provider change ([#3664](https://github.com/containous/traefik/pull/3664) by [zyclonite](https://github.com/zyclonite))
+- **[acme]** Update lego ([#3659](https://github.com/containous/traefik/pull/3659) by [mmatur](https://github.com/mmatur))
+- **[acme]** Fix ACME certificate for wildcard and root domains ([#3675](https://github.com/containous/traefik/pull/3675) by [nmengin](https://github.com/nmengin))
+- **[api]** Remove TLS in API ([#3665](https://github.com/containous/traefik/pull/3665) by [mmatur](https://github.com/mmatur))
+- **[docker]** Uses both binded HostIP and HostPort when useBindPortIP=true ([#3638](https://github.com/containous/traefik/pull/3638) by [geraldcroes](https://github.com/geraldcroes))
+- **[k8s]** Fix Rewrite-target regex ([#3699](https://github.com/containous/traefik/pull/3699) by [dtomcej](https://github.com/dtomcej))
+- **[middleware]** Correct Entrypoint Redirect with Stripped or Added Path ([#3631](https://github.com/containous/traefik/pull/3631) by [dtomcej](https://github.com/dtomcej))
+- **[tracing]** Added default configuration for DataDog APM Tracer ([#3655](https://github.com/containous/traefik/pull/3655) by [aantono](https://github.com/aantono))
+- **[tracing]** Added support for Trace name truncation for traces ([#3689](https://github.com/containous/traefik/pull/3689) by [aantono](https://github.com/aantono))
+- **[websocket]** Handle shutdown of Hijacked connections ([#3636](https://github.com/containous/traefik/pull/3636) by [Juliens](https://github.com/Juliens))
+- H2C: Remove buggy line in init to make verbose switch working ([#3701](https://github.com/containous/traefik/pull/3701) by [dduportal](https://github.com/dduportal))
+- Updating oxy dependency ([#3700](https://github.com/containous/traefik/pull/3700) by [crholm](https://github.com/crholm))
+
+**Documentation:**
+- **[acme]** Update Namecheap status ([#3604](https://github.com/containous/traefik/pull/3604) by [stoinov](https://github.com/stoinov))
+- **[acme]** Fix some DNS provider link ([#3639](https://github.com/containous/traefik/pull/3639) by [ldez](https://github.com/ldez))
+- **[docker]** Fix style in examples/quickstart ([#3705](https://github.com/containous/traefik/pull/3705) by [korigod](https://github.com/korigod))
+- **[k8s]** Add traefik prefix to k8s annotations ([#3682](https://github.com/containous/traefik/pull/3682) by [zifeo](https://github.com/zifeo))
+- **[middleware,tracing]** Fix missing tracing backend in documentation ([#3706](https://github.com/containous/traefik/pull/3706) by [mmatur](https://github.com/mmatur))
+- Replace unrendered emoji ([#3690](https://github.com/containous/traefik/pull/3690) by [korigod](https://github.com/korigod))
+
 ## [v1.7.0-rc2](https://github.com/containous/traefik/tree/v1.7.0-rc2) (2018-07-17)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.0-rc1...v1.7.0-rc2)
 

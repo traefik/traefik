@@ -532,21 +532,14 @@ func (s *Etcd3Suite) TestSNIDynamicTlsConfig(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	// wait for Træfik
-	err = try.GetRequest("http://127.0.0.1:8081/api/providers", 60*time.Second, try.BodyContains(string("MIIEpQIBAAKCAQEA1RducBK6EiFDv3TYB8ZcrfKWRVaSfHzWicO3J5WdST9oS7h")))
-	c.Assert(err, checker.IsNil)
-
 	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
 	c.Assert(err, checker.IsNil)
-	client := &http.Client{Transport: tr1}
 	req.Host = tr1.TLSClientConfig.ServerName
 	req.Header.Set("Host", tr1.TLSClientConfig.ServerName)
 	req.Header.Set("Accept", "*/*")
-	var resp *http.Response
-	resp, err = client.Do(req)
+
+	err = try.RequestWithTransport(req, 30*time.Second, tr1, try.HasCn(tr1.TLSClientConfig.ServerName))
 	c.Assert(err, checker.IsNil)
-	cn := resp.TLS.PeerCertificates[0].Subject.CommonName
-	c.Assert(cn, checker.Equals, "snitest.com")
 
 	// now we configure the second keypair in etcd and the request for host "snitest.org" will use the second keypair
 
@@ -562,20 +555,14 @@ func (s *Etcd3Suite) TestSNIDynamicTlsConfig(c *check.C) {
 	})
 	c.Assert(err, checker.IsNil)
 
-	// waiting for Træfik to pull configuration
-	err = try.GetRequest("http://127.0.0.1:8081/api/providers", 30*time.Second, try.BodyContains("MIIEogIBAAKCAQEAvG9kL+vF57+MICehzbqcQAUlAOSl5r"))
-	c.Assert(err, checker.IsNil)
-
 	req, err = http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
 	c.Assert(err, checker.IsNil)
-	client = &http.Client{Transport: tr2}
 	req.Host = tr2.TLSClientConfig.ServerName
 	req.Header.Set("Host", tr2.TLSClientConfig.ServerName)
 	req.Header.Set("Accept", "*/*")
-	resp, err = client.Do(req)
+
+	err = try.RequestWithTransport(req, 30*time.Second, tr2, try.HasCn(tr2.TLSClientConfig.ServerName))
 	c.Assert(err, checker.IsNil)
-	cn = resp.TLS.PeerCertificates[0].Subject.CommonName
-	c.Assert(cn, checker.Equals, "snitest.org")
 }
 
 func (s *Etcd3Suite) TestDeleteSNIDynamicTlsConfig(c *check.C) {
@@ -646,21 +633,14 @@ func (s *Etcd3Suite) TestDeleteSNIDynamicTlsConfig(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	// wait for Træfik
-	err = try.GetRequest(traefikWebEtcdURL+"api/providers", 60*time.Second, try.BodyContains(string("MIIEpQIBAAKCAQEA1RducBK6EiFDv3TYB8ZcrfKWRVaSfHzWicO3J5WdST9oS7h")))
-	c.Assert(err, checker.IsNil)
-
 	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
 	c.Assert(err, checker.IsNil)
-	client := &http.Client{Transport: tr1}
 	req.Host = tr1.TLSClientConfig.ServerName
 	req.Header.Set("Host", tr1.TLSClientConfig.ServerName)
 	req.Header.Set("Accept", "*/*")
-	var resp *http.Response
-	resp, err = client.Do(req)
+
+	err = try.RequestWithTransport(req, 30*time.Second, tr1, try.HasCn(tr1.TLSClientConfig.ServerName))
 	c.Assert(err, checker.IsNil)
-	cn := resp.TLS.PeerCertificates[0].Subject.CommonName
-	c.Assert(cn, checker.Equals, "snitest.com")
 
 	// now we delete the tls cert/key pairs,so the endpoint show use default cert/key pair
 	for key := range tlsconfigure1 {
@@ -668,18 +648,12 @@ func (s *Etcd3Suite) TestDeleteSNIDynamicTlsConfig(c *check.C) {
 		c.Assert(err, checker.IsNil)
 	}
 
-	// waiting for Træfik to pull configuration
-	err = try.GetRequest(traefikWebEtcdURL+"api/providers", 30*time.Second, try.BodyNotContains("MIIEpQIBAAKCAQEA1RducBK6EiFDv3TYB8ZcrfKWRVaSfHzWicO3J5WdST9oS7h"))
-	c.Assert(err, checker.IsNil)
-
 	req, err = http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
 	c.Assert(err, checker.IsNil)
-	client = &http.Client{Transport: tr1}
 	req.Host = tr1.TLSClientConfig.ServerName
 	req.Header.Set("Host", tr1.TLSClientConfig.ServerName)
 	req.Header.Set("Accept", "*/*")
-	resp, err = client.Do(req)
+
+	err = try.RequestWithTransport(req, 30*time.Second, tr1, try.HasCn("TRAEFIK DEFAULT CERT"))
 	c.Assert(err, checker.IsNil)
-	cn = resp.TLS.PeerCertificates[0].Subject.CommonName
-	c.Assert(cn, checker.Equals, "TRAEFIK DEFAULT CERT")
 }

@@ -2,7 +2,7 @@
 [backends]
   [backends.backend2]
     [backends.backend2.servers.server1]
-    url = "http://172.17.0.2:80"
+    url = "http://172.17.0.123:80"
     weight = 1
 
 [frontends]

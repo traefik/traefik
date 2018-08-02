@@ -11,6 +11,7 @@ import (
 	"github.com/containous/traefik/api"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares/tracing"
+	"github.com/containous/traefik/middlewares/tracing/datadog"
 	"github.com/containous/traefik/middlewares/tracing/jaeger"
 	"github.com/containous/traefik/middlewares/tracing/zipkin"
 	"github.com/containous/traefik/ping"
@@ -197,6 +198,10 @@ func (gc *GlobalConfiguration) initTracing() {
 				log.Warn("Zipkin configuration will be ignored")
 				gc.Tracing.Zipkin = nil
 			}
+			if gc.Tracing.DataDog != nil {
+				log.Warn("DataDog configuration will be ignored")
+				gc.Tracing.DataDog = nil
+			}
 		case zipkin.Name:
 			if gc.Tracing.Zipkin == nil {
 				gc.Tracing.Zipkin = &zipkin.Config{
@@ -205,6 +210,26 @@ func (gc *GlobalConfiguration) initTracing() {
 					ID128Bit:     true,
 					Debug:        false,
 				}
+			}
+			if gc.Tracing.Jaeger != nil {
+				log.Warn("Jaeger configuration will be ignored")
+				gc.Tracing.Jaeger = nil
+			}
+			if gc.Tracing.DataDog != nil {
+				log.Warn("DataDog configuration will be ignored")
+				gc.Tracing.DataDog = nil
+			}
+		case datadog.Name:
+			if gc.Tracing.DataDog == nil {
+				gc.Tracing.DataDog = &datadog.Config{
+					LocalAgentHostPort: "localhost:8126",
+					GlobalTag:          "",
+					Debug:              false,
+				}
+			}
+			if gc.Tracing.Zipkin != nil {
+				log.Warn("Zipkin configuration will be ignored")
+				gc.Tracing.Zipkin = nil
 			}
 			if gc.Tracing.Jaeger != nil {
 				log.Warn("Jaeger configuration will be ignored")

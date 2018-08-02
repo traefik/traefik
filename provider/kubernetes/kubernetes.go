@@ -43,6 +43,8 @@ const (
 	traefikDefaultIngressClass = "traefik"
 	defaultBackendName         = "global-default-backend"
 	defaultFrontendName        = "global-default-frontend"
+	allowedProtocolHTTPS       = "https"
+	allowedProtocolH2C         = "h2c"
 )
 
 // IngressEndpoint holds the endpoint information for the Kubernetes provider
@@ -312,6 +314,16 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 							protocol = "https"
 						}
 
+						protocol = getStringValue(i.Annotations, annotationKubernetesProtocol, protocol)
+						switch protocol {
+						case allowedProtocolHTTPS:
+						case allowedProtocolH2C:
+						case label.DefaultProtocol:
+						default:
+							log.Errorf("Invalid protocol %s/%s specified for Ingress %s - skipping", annotationKubernetesProtocol, i.Namespace, i.Name)
+							continue
+						}
+
 						if service.Spec.Type == "ExternalName" {
 							url := protocol + "://" + service.Spec.ExternalName
 							if port.Port != 443 && port.Port != 80 {
@@ -535,7 +547,7 @@ func getRuleForPath(pa extensionsv1beta1.HTTPIngressPath, i *extensionsv1beta1.I
 		if ruleType == ruleTypeReplacePath {
 			return "", fmt.Errorf("rewrite-target must not be used together with annotation %q", annotationKubernetesRuleType)
 		}
-		rewriteTargetRule := fmt.Sprintf("ReplacePathRegex: ^%s/(.*) %s/$1", pa.Path, strings.TrimRight(rewriteTarget, "/"))
+		rewriteTargetRule := fmt.Sprintf("ReplacePathRegex: ^%s(.*) %s$1", pa.Path, strings.TrimRight(rewriteTarget, "/"))
 		rules = append(rules, rewriteTargetRule)
 	}
 
