@@ -158,7 +158,7 @@ func (s *Server) buildServerEntryPointMiddlewares(serverEntryPointName string, s
 		serverMiddlewares = append(serverMiddlewares, s.wrapNegroniHandlerWithAccessLog(authMiddleware, fmt.Sprintf("Auth for entrypoint %s", serverEntryPointName)))
 	}
 
-	if s.entryPoints[serverEntryPointName].Configuration.Compress {
+	if s.entryPoints[serverEntryPointName].Configuration.Compress != nil {
 		serverMiddlewares = append(serverMiddlewares, &middlewares.Compress{})
 	}
 

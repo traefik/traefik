@@ -9,7 +9,7 @@ import (
 	"github.com/containous/traefik/log"
 )
 
-// Compress is a middleware that allows redirection
+// Compress is a middleware that allows to compress the response
 type Compress struct{}
 
 // ServeHTTP is a function used by Negroni

@@ -278,7 +278,7 @@ func TestEntryPoints_Set(t *testing.T) {
 					},
 					UseXForwardedFor: true,
 				},
-				Compress: true,
+				Compress: &Compress{},
 				ProxyProtocol: &ProxyProtocol{
 					Insecure:   false,
 					TrustedIPs: []string{"192.168.0.1"},
@@ -380,7 +380,7 @@ func TestEntryPoints_Set(t *testing.T) {
 					"152.89.1.33/32",
 					"afed:be44::/16",
 				},
-				Compress: true,
+				Compress: &Compress{},
 				ProxyProtocol: &ProxyProtocol{
 					Insecure:   false,
 					TrustedIPs: []string{"192.168.0.1"},
@@ -462,7 +462,7 @@ func TestEntryPoints_Set(t *testing.T) {
 			expression:             "Name:foo Compress:on",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
-				Compress:         true,
+				Compress:         &Compress{},
 				ForwardedHeaders: &ForwardedHeaders{Insecure: true},
 			},
 		},
@@ -471,7 +471,7 @@ func TestEntryPoints_Set(t *testing.T) {
 			expression:             "Name:foo Compress:true",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
-				Compress:         true,
+				Compress:         &Compress{},
 				ForwardedHeaders: &ForwardedHeaders{Insecure: true},
 			},
 		},
