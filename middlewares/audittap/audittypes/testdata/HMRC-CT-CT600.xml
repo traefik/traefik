@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GovTalkMessage xmlns="http://www.govtalk.gov.uk/CM/envelope">
+	<EnvelopeVersion>2.0</EnvelopeVersion>
+	<Header>
+		<MessageDetails>
+			<Class>HMRC-CT-CT600</Class>
+			<Qualifier>request</Qualifier>
+			<Function>submit</Function>
+			<TransactionID>1A002180711</TransactionID>
+			<AuditID>A1002180711</AuditID>
+			<CorrelationID>998C7D7DF2134835A332FAB2EB1914F3</CorrelationID>
+			<ResponseEndPoint>HMCE-SERVICE-ENDPOINT-EXTRA-1</ResponseEndPoint>
+			<GatewayTest>0</GatewayTest>
+			<GatewayTimestamp>2015-11-18T08:53:23.970</GatewayTimestamp>
+		</MessageDetails>
+		<SenderDetails>
+			<IDAuthentication>
+				<SenderID>0000001663017753</SenderID>
+				<Authentication>
+					<Method>clear</Method>
+					<Role>principal</Role>
+					<Value>**********</Value>
+				</Authentication>
+			</IDAuthentication>
+			<X509Certificate/>
+			<EmailAddress>aa@aa.com</EmailAddress>
+		</SenderDetails>
+	</Header>
+	<GovTalkDetails>
+		<Keys>
+			<Key Type='SA'>SA554433</Key>
+			<Key Type='VATRegNo'>VAT443322</Key>
+		</Keys>
+		<TargetDetails>
+			<Organisation>DecisionSoft Ltd.</Organisation>
+		</TargetDetails>
+		<GatewayValidation>
+			<Processed>yes</Processed>
+			<Result>pass</Result>
+		</GatewayValidation>
+		<ChannelRouting>
+			<Channel>
+				<URI>http://www.decisionsoft.com/9876</URI>
+				<Product>X-Meta</Product>
+				<Version>2.02</Version>
+			</Channel>
+			<ID Type='main'>Channel 1</ID>
+			<Timestamp>2009-03-17T02:58:41</Timestamp>
+		</ChannelRouting>
+		<GatewayAdditions>
+			<Submitter xmlns="http://www.govtalk.gov.uk/gateway/submitterdetails">
+				<AgentDetails>
+					<AuthenticationType>1</AuthenticationType>
+					<AgentGroupCode>AGT334455</AgentGroupCode>
+					<AgentEnrolments>
+						<Enrolment>
+							<ServiceName>SERV_AGT1</ServiceName>
+							<Identifiers>
+								<Identifier IdentifierType="AGT1_ID1">XXYY1111</Identifier>
+								<Identifier IdentifierType="AGT1_ID2">XXYY2222</Identifier>
+							</Identifiers>
+						</Enrolment>
+						<Enrolment>
+							<ServiceName>SERV_AGT2</ServiceName>
+							<Identifiers>
+								<Identifier IdentifierType="AGT2_ID1">TTYY1111</Identifier>
+								<Identifier IdentifierType="AGT2_ID2">TTYY2222</Identifier>
+							</Identifiers>
+						</Enrolment>
+					</AgentEnrolments>
+				</AgentDetails>
+				<SubmitterDetails>
+					<RegistrationCategory>Individual</RegistrationCategory>
+					<UserType>Principal</UserType>
+					<CredentialRole>User</CredentialRole>
+					<CredentialIdentifier>0000001663017753</CredentialIdentifier>
+				</SubmitterDetails>
+			</Submitter>
+		</GatewayAdditions>
+	</GovTalkDetails>
+	<Body>
+		<IRenvelope xmlns="http://www.govtalk.gov.uk/taxation/vat/vatdeclaration/2">
+			<IRheader>
+				<Keys>
+					<Key Type="UTR">8596148860</Key>
+				</Keys>
+				<PeriodEnd>2011-12-31</PeriodEnd>
+				<DefaultCurrency>GBP</DefaultCurrency>
+				<Manifest>
+					<Contains>
+						<Reference>
+							<Namespace>http://www.govtalk.gov.uk/taxation/CT/3</Namespace>
+							<SchemaVersion>2004-v2.00</SchemaVersion>
+							<TopElementName>CompanyTaxReturn</TopElementName>
+						</Reference>
+					</Contains>
+				</Manifest>
+				<IRmark Type="generic">Enter relevant IRmark here</IRmark>
+				<Sender>Company</Sender>
+			</IRheader>
+			<CompanyTaxReturn ReturnType="new">
+				<CompanyInformation>
+					<CompanyName>Simple Company</CompanyName>
+					<!--  Will need to match the CH number in the accounts  -->
+					<RegistrationNumber>12345678</RegistrationNumber>
+					<!--
+                    Reference will need to match the UTR used in the keys and the reference in the computations
+                   -->
+					<Reference>8596148860</Reference>
+					<CompanyType>6</CompanyType>
+					<!--
+                    Period covered To date will need to match the End period date in accounts
+                   -->
+					<PeriodCovered>
+						<From>2011-01-01</From>
+						<To>2011-12-31</To>
+					</PeriodCovered>
+				</CompanyInformation>
+				<ReturnInfoSummary>
+					<Accounts>
+						<NoAccountsReason>Company in liquidation</NoAccountsReason>
+					</Accounts>
+					<Computations>
+						<NoComputationsReason>Company in liquidation</NoComputationsReason>
+					</Computations>
+				</ReturnInfoSummary>
+				<CompanyTaxCalculation>
+					<Income>
+						<TradingAndProfessional>
+							<Profits>100000.00</Profits>
+							<NetProfits>100000.00</NetProfits>
+						</TradingAndProfessional>
+						<NonTradingLoanProfitsAndGains>200.00</NonTradingLoanProfitsAndGains>
+					</Income>
+					<ProfitsBeforeOtherDeductions>100200.00</ProfitsBeforeOtherDeductions>
+					<ChargesAndReliefs>
+						<ProfitsBeforeCharges>100200.00</ProfitsBeforeCharges>
+					</ChargesAndReliefs>
+					<ChargeableProfits>100200.00</ChargeableProfits>
+					<TaxCalculation>
+						<AssociatedCompanies>
+							<ThisPeriod>2</ThisPeriod>
+						</AssociatedCompanies>
+						<StartingOrSmallCompaniesRate>yes</StartingOrSmallCompaniesRate>
+					</TaxCalculation>
+					<CorporationTaxChargeable>
+						<FinancialYearOne>
+							<Year>2010</Year>
+							<Details>
+								<Profit>24707.00</Profit>
+								<TaxRate>28.00</TaxRate>
+								<Tax>6917.96</Tax>
+							</Details>
+						</FinancialYearOne>
+						<FinancialYearTwo>
+							<Year>2011</Year>
+							<Details>
+								<Profit>75493.00</Profit>
+								<TaxRate>26.00</TaxRate>
+								<Tax>19628.18</Tax>
+							</Details>
+						</FinancialYearTwo>
+					</CorporationTaxChargeable>
+					<TotalChargeableCorporationTax>26546.14</TotalChargeableCorporationTax>
+					<FurtherTaxCalculations>
+						<MarginalRateRelief>6243.45</MarginalRateRelief>
+						<CTNetOfMRR>20302.69</CTNetOfMRR>
+					</FurtherTaxCalculations>
+					<NetCorporationTaxChargeable>20302.69</NetCorporationTaxChargeable>
+					<NetCorporationTaxLiability>20302.69</NetCorporationTaxLiability>
+					<TaxChargeable>20302.69</TaxChargeable>
+					<TaxPayable>20302.69</TaxPayable>
+				</CompanyTaxCalculation>
+				<OverpaymentsAndRepayments>
+					<SmallRepayments>
+						<NoRepayments20OrLess>yes</NoRepayments20OrLess>
+					</SmallRepayments>
+				</OverpaymentsAndRepayments>
+				<Declaration>
+					<AcceptDeclaration>yes</AcceptDeclaration>
+					<Name>Test</Name>
+					<Status>Test</Status>
+				</Declaration>
+			</CompanyTaxReturn>
+		</IRenvelope>
+	</Body>
+</GovTalkMessage>

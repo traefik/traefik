@@ -315,7 +315,7 @@ func (partial *partialGovTalkMessage) populateDetails(ev *RATEAuditEvent) {
 }
 
 func auditsRequestPayloadContents(auditType string) bool {
-	return strings.HasPrefix(auditType, "HMRC-SA-") || strings.HasPrefix(auditType, "HMRC-VAT-")
+	return strings.HasPrefix(auditType, "HMRC-SA-") || strings.HasPrefix(auditType, "HMRC-VAT-") || strings.HasPrefix(auditType, "HMRC-CT-")
 }
 
 func extractMoneyValue(doc *etree.Document, path etree.Path) (float64, error) {
