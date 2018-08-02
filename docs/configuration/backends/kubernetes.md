@@ -108,7 +108,7 @@ The endpoint may be specified to override the environment variable values inside
 
 When the environment variables are not found, Traefik will try to connect to the Kubernetes API server with an external-cluster client.
 In this case, the endpoint is required.
-Specifically, it may be set to the URL used by `kubectl proxy` to connect to a Kubernetes cluster using the granted autentication and authorization of the associated kubeconfig.
+Specifically, it may be set to the URL used by `kubectl proxy` to connect to a Kubernetes cluster using the granted authentication and authorization of the associated kubeconfig.
 
 ### `labelselector`
 
