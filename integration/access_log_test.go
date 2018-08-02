@@ -325,8 +325,7 @@ func digestParts(resp *http.Response) map[string]string {
 
 func getMD5(data string) string {
 	digest := md5.New()
-	_, err := digest.Write([]byte(data))
-	if err != nil {
+	if _, err := digest.Write([]byte(data)); err != nil {
 		log.Error(err)
 	}
 	return fmt.Sprintf("%x", digest.Sum(nil))
@@ -334,8 +333,7 @@ func getMD5(data string) string {
 
 func getCnonce() string {
 	b := make([]byte, 8)
-	_, err := io.ReadFull(rand.Reader, b)
-	if err != nil {
+	if _, err := io.ReadFull(rand.Reader, b); err != nil {
 		log.Error(err)
 	}
 	return fmt.Sprintf("%x", b)[:16]

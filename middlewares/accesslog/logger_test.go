@@ -627,8 +627,7 @@ func doLogging(t *testing.T, config *types.AccessLog) {
 }
 
 func logWriterTestHandlerFunc(rw http.ResponseWriter, r *http.Request) {
-	_, err := rw.Write([]byte(testContent))
-	if err != nil {
+	if _, err := rw.Write([]byte(testContent)); err != nil {
 		log.Error(err)
 	}
 

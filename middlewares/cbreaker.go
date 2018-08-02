@@ -28,8 +28,8 @@ func NewCircuitBreakerOptions(expression string) cbreaker.CircuitBreakerOption {
 		tracing.LogEventf(r, "blocked by circuit-breaker (%q)", expression)
 
 		w.WriteHeader(http.StatusServiceUnavailable)
-		_, err := w.Write([]byte(http.StatusText(http.StatusServiceUnavailable)))
-		if err != nil {
+
+		if _, err := w.Write([]byte(http.StatusText(http.StatusServiceUnavailable))); err != nil {
 			log.Error(err)
 		}
 	}))

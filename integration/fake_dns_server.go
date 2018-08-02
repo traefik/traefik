@@ -93,8 +93,7 @@ func (s *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	auth.Minttl = 1
 	m.Ns = append(m.Ns, auth)
 
-	err := w.WriteMsg(m)
-	if err != nil {
+	if err := w.WriteMsg(m); err != nil {
 		log.Fatalf("Failed to write message %v", err)
 	}
 }

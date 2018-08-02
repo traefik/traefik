@@ -158,8 +158,7 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 
-	err := roundrobin.SetDefaultWeight(0)
-	if err != nil {
+	if err := roundrobin.SetDefaultWeight(0); err != nil {
 		log.Error(err)
 	}
 
@@ -185,8 +184,8 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 
 	acmeprovider := globalConfiguration.InitACMEProvider()
 	if acmeprovider != nil {
-		err := providerAggregator.AddProvider(acmeprovider)
-		if err != nil {
+
+		if err := providerAggregator.AddProvider(acmeprovider); err != nil {
 			log.Errorf("Error initializing provider ACME: %v", err)
 			acmeprovider = nil
 		}

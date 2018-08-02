@@ -134,8 +134,7 @@ func (hc *HealthCheck) checkBackend(backend *BackendConfig) {
 		serverUpMetricValue := float64(0)
 		if err := checkHealth(u, backend); err == nil {
 			log.Warnf("Health check up: Returning to server list. Backend: %q URL: %q", backend.name, u.String())
-			err := backend.LB.UpsertServer(u, roundrobin.Weight(1))
-			if err != nil {
+			if err := backend.LB.UpsertServer(u, roundrobin.Weight(1)); err != nil {
 				log.Error(err)
 			}
 			serverUpMetricValue = 1
@@ -152,8 +151,7 @@ func (hc *HealthCheck) checkBackend(backend *BackendConfig) {
 		serverUpMetricValue := float64(1)
 		if err := checkHealth(u, backend); err != nil {
 			log.Warnf("Health check failed: Remove from server list. Backend: %q URL: %q Reason: %s", backend.name, u.String(), err)
-			err := backend.LB.RemoveServer(u)
-			if err != nil {
+			if err := backend.LB.RemoveServer(u); err != nil {
 				log.Error(err)
 			}
 			backend.disabledURLs = append(backend.disabledURLs, u)

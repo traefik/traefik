@@ -23,8 +23,7 @@ func TestKvWatchTree(t *testing.T) {
 
 	configChan := make(chan types.ConfigMessage)
 	go func() {
-		err := provider.watchKv(configChan, "prefix", make(chan bool, 1))
-		if err != nil {
+		if err := provider.watchKv(configChan, "prefix", make(chan bool, 1)); err != nil {
 			log.Error(err)
 		}
 	}()

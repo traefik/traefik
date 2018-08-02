@@ -105,33 +105,33 @@ func TestWithMiddleware(t *testing.T) {
 	router := WithMiddleware{
 		router: MockInternalRouterFunc(func(systemRouter *mux.Router) {
 			systemRouter.Handle("/test", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				_, err := w.Write([]byte("router"))
-				if err != nil {
+
+				if _, err := w.Write([]byte("router")); err != nil {
 					log.Error(err)
 				}
 			}))
 		}),
 		routerMiddlewares: []negroni.Handler{
 			negroni.HandlerFunc(func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-				_, err := rw.Write([]byte("before middleware1|"))
-				if err != nil {
+				if _, err := rw.Write([]byte("before middleware1|")); err != nil {
 					log.Error(err)
 				}
+
 				next.ServeHTTP(rw, r)
-				_, err = rw.Write([]byte("|after middleware1"))
-				if err != nil {
+
+				if _, err := rw.Write([]byte("|after middleware1")); err != nil {
 					log.Error(err)
 				}
 
 			}),
 			negroni.HandlerFunc(func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-				_, err := rw.Write([]byte("before middleware2|"))
-				if err != nil {
+				if _, err := rw.Write([]byte("before middleware2|")); err != nil {
 					log.Error(err)
 				}
+
 				next.ServeHTTP(rw, r)
-				_, err = rw.Write([]byte("|after middleware2"))
-				if err != nil {
+
+				if _, err := rw.Write([]byte("|after middleware2")); err != nil {
 					log.Error(err)
 				}
 			}),

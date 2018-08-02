@@ -48,8 +48,8 @@ func (s *myserver) StreamExample(in *helloworld.StreamExampleRequest, server hel
 	for i := range data {
 		data[i] = randCharset[rand.Intn(len(randCharset))]
 	}
-	err := server.Send(&helloworld.StreamExampleReply{Data: string(data)})
-	if err != nil {
+
+	if err := server.Send(&helloworld.StreamExampleReply{Data: string(data)}); err != nil {
 		log.Error(err)
 	}
 

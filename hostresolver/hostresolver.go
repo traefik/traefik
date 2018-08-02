@@ -63,8 +63,7 @@ func (hr *Resolver) CNAMEFlatten(host string) (string, string) {
 			request = resolv.Record
 		}
 
-		err := hr.cache.Add(host, strings.Join(result, ","), cacheDuration)
-		if err != nil {
+		if err := hr.cache.Add(host, strings.Join(result, ","), cacheDuration); err != nil {
 			log.Error(err)
 		}
 	}
