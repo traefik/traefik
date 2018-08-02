@@ -33,7 +33,6 @@ type Provider struct {
 
 	// Provider lookup parameters
 	Clusters             Clusters `description:"ECS Clusters name"`
-	Cluster              string   `description:"deprecated - ECS Cluster name"` // deprecated
 	AutoDiscoverClusters bool     `description:"Auto discover cluster" export:"true"`
 	Region               string   `description:"The AWS region to use for requests" export:"true"`
 	AccessKeyID          string   `description:"The AWS credentials access key to use for making requests"`
@@ -54,7 +53,6 @@ type portMapping struct {
 }
 
 type machine struct {
-	name      string
 	state     string
 	privateIP string
 	ports     []portMapping
@@ -109,8 +107,8 @@ func (p *Provider) createClient() (*awsClient, error) {
 	}
 
 	return &awsClient{
-		ecs.New(sess, cfg),
-		ec2.New(sess, cfg),
+		ecs: ecs.New(sess, cfg),
+		ec2: ec2.New(sess, cfg),
 	}, nil
 }
 
@@ -209,10 +207,6 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 		for _, cArn := range clustersArn {
 			clusters = append(clusters, *cArn)
 		}
-	} else if p.Cluster != "" {
-		// TODO: Deprecated configuration - Need to be removed in the future
-		clusters = Clusters{p.Cluster}
-		log.Warn("Deprecated configuration found: ecs.cluster. Please use ecs.clusters instead.")
 	} else {
 		clusters = p.Clusters
 	}
@@ -424,7 +418,7 @@ func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types
 func (p *Provider) chunkIDs(ids []*string) [][]*string {
 	var chuncked [][]*string
 	for i := 0; i < len(ids); i += 100 {
-		sliceEnd := -1
+		var sliceEnd int
 		if i+100 < len(ids) {
 			sliceEnd = i + 100
 		} else {

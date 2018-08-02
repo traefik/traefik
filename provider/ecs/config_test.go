@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ecs"
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
@@ -342,7 +342,6 @@ func TestBuildConfiguration(t *testing.T) {
 							label.TraefikBackendHealthCheckHostname:              aws.String("foo.com"),
 							label.TraefikBackendHealthCheckHeaders:               aws.String("Foo:bar || Bar:foo"),
 							label.TraefikBackendLoadBalancerMethod:               aws.String("drr"),
-							label.TraefikBackendLoadBalancerSticky:               aws.String("true"),
 							label.TraefikBackendLoadBalancerStickiness:           aws.String("true"),
 							label.TraefikBackendLoadBalancerStickinessCookieName: aws.String("chocolate"),
 							label.TraefikBackendMaxConnAmount:                    aws.String("666"),
@@ -440,7 +439,6 @@ func TestBuildConfiguration(t *testing.T) {
 						},
 						LoadBalancer: &types.LoadBalancer{
 							Method: "drr",
-							Sticky: true,
 							Stickiness: &types.Stickiness{
 								CookieName: "chocolate",
 							},
@@ -558,12 +556,12 @@ func TestBuildConfiguration(t *testing.T) {
 						RateLimit: &types.RateLimit{
 							RateSet: map[string]*types.Rate{
 								"bar": {
-									Period:  flaeg.Duration(3 * time.Second),
+									Period:  parse.Duration(3 * time.Second),
 									Average: 6,
 									Burst:   9,
 								},
 								"foo": {
-									Period:  flaeg.Duration(6 * time.Second),
+									Period:  parse.Duration(6 * time.Second),
 									Average: 12,
 									Burst:   18,
 								},
@@ -602,7 +600,6 @@ func TestBuildConfiguration(t *testing.T) {
 							label.TraefikBackendHealthCheckHostname:              aws.String("foo.com"),
 							label.TraefikBackendHealthCheckHeaders:               aws.String("Foo:bar || Bar:foo"),
 							label.TraefikBackendLoadBalancerMethod:               aws.String("drr"),
-							label.TraefikBackendLoadBalancerSticky:               aws.String("true"),
 							label.TraefikBackendLoadBalancerStickiness:           aws.String("true"),
 							label.TraefikBackendLoadBalancerStickinessCookieName: aws.String("chocolate"),
 							label.TraefikBackendMaxConnAmount:                    aws.String("666"),
@@ -689,7 +686,6 @@ func TestBuildConfiguration(t *testing.T) {
 							label.TraefikBackendHealthCheckHostname:              aws.String("bar.com"),
 							label.TraefikBackendHealthCheckHeaders:               aws.String("Foo:bar || Bar:foo"),
 							label.TraefikBackendLoadBalancerMethod:               aws.String("drr"),
-							label.TraefikBackendLoadBalancerSticky:               aws.String("true"),
 							label.TraefikBackendLoadBalancerStickiness:           aws.String("true"),
 							label.TraefikBackendLoadBalancerStickinessCookieName: aws.String("chocolate"),
 							label.TraefikBackendMaxConnAmount:                    aws.String("666"),
@@ -776,7 +772,6 @@ func TestBuildConfiguration(t *testing.T) {
 						},
 						LoadBalancer: &types.LoadBalancer{
 							Method: "drr",
-							Sticky: true,
 							Stickiness: &types.Stickiness{
 								CookieName: "chocolate",
 							},
@@ -891,12 +886,12 @@ func TestBuildConfiguration(t *testing.T) {
 						RateLimit: &types.RateLimit{
 							RateSet: map[string]*types.Rate{
 								"bar": {
-									Period:  flaeg.Duration(3 * time.Second),
+									Period:  parse.Duration(3 * time.Second),
 									Average: 6,
 									Burst:   9,
 								},
 								"foo": {
-									Period:  flaeg.Duration(6 * time.Second),
+									Period:  parse.Duration(6 * time.Second),
 									Average: 12,
 									Burst:   18,
 								},

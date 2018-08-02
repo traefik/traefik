@@ -6,7 +6,7 @@ import (
 
 	"github.com/ArthurHlt/go-eureka-client/eureka"
 	"github.com/cenk/backoff"
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
@@ -18,8 +18,7 @@ import (
 type Provider struct {
 	provider.BaseProvider `mapstructure:",squash" export:"true"`
 	Endpoint              string         `description:"Eureka server endpoint"`
-	Delay                 flaeg.Duration `description:"Override default configuration time between refresh (Deprecated)" export:"true"` // Deprecated
-	RefreshSeconds        flaeg.Duration `description:"Override default configuration time between refresh" export:"true"`
+	RefreshSeconds        parse.Duration `description:"Override default configuration time between refresh" export:"true"`
 }
 
 // Init the provider

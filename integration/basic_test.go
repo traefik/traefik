@@ -252,63 +252,6 @@ func (s *SimpleSuite) TestNoAuthOnPing(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *SimpleSuite) TestWebCompatibilityWithoutPath(c *check.C) {
-
-	s.createComposeProject(c, "base")
-	s.composeProject.Start(c)
-
-	cmd, output := s.traefikCmd("--defaultEntryPoints=http", "--entryPoints=Name:http Address::8000", "--web", "--debug", "--docker")
-	defer output(c)
-
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
-
-	// TODO validate : run on 80
-	// Expected a 404 as we did not configure anything
-	err = try.GetRequest("http://127.0.0.1:8000/test", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api", 1*time.Second, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("PathPrefix"))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
-}
-
-func (s *SimpleSuite) TestWebCompatibilityWithPath(c *check.C) {
-
-	s.createComposeProject(c, "base")
-	s.composeProject.Start(c)
-
-	cmd, output := s.traefikCmd("--defaultEntryPoints=http", "--entryPoints=Name:http Address::8000", "--web.path=/test", "--debug", "--docker")
-	defer output(c)
-
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
-
-	// TODO validate : run on 80
-	// Expected a 404 as we did not configure anything
-	err = try.GetRequest("http://127.0.0.1:8000/notfound", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8080/test/api", 1*time.Second, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8080/test/ping", 1*time.Second, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8080/test/api/providers", 1*time.Second, try.BodyContains("PathPrefix"))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
-}
-
 func (s *SimpleSuite) TestDefaultEntrypointHTTP(c *check.C) {
 
 	s.createComposeProject(c, "base")
@@ -352,7 +295,7 @@ func (s *SimpleSuite) TestMetricsPrometheusDefaultEntrypoint(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
-	cmd, output := s.traefikCmd("--defaultEntryPoints=http", "--entryPoints=Name:http Address::8000", "--web", "--web.metrics.prometheus.buckets=0.1,0.3,1.2,5.0", "--docker", "--debug")
+	cmd, output := s.traefikCmd("--defaultEntryPoints=http", "--entryPoints=Name:http Address::8000", "--api", "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0", "--docker", "--debug")
 	defer output(c)
 
 	err := cmd.Start()

@@ -89,7 +89,6 @@ pages:
     - 'Ping': 'configuration/ping.md'
     - 'Metrics': 'configuration/metrics.md'
     - 'Tracing': 'configuration/tracing.md'
-    - 'Web (Deprecated)': 'configuration/backends/web.md'
   - User Guides:
     - 'Configuration Examples': 'user-guide/examples.md'
     - 'Swarm Mode Cluster': 'user-guide/swarm-mode.md'

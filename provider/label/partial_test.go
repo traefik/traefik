@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -93,12 +93,12 @@ func TestParseRateSets(t *testing.T) {
 			},
 			expected: map[string]*types.Rate{
 				"foo": {
-					Period:  flaeg.Duration(6 * time.Second),
+					Period:  parse.Duration(6 * time.Second),
 					Average: 12,
 					Burst:   18,
 				},
 				"bar": {
-					Period:  flaeg.Duration(3 * time.Second),
+					Period:  parse.Duration(3 * time.Second),
 					Average: 6,
 					Burst:   9,
 				},
@@ -254,13 +254,11 @@ func TestGetLoadBalancer(t *testing.T) {
 			desc: "should return a struct when labels are set",
 			labels: map[string]string{
 				TraefikBackendLoadBalancerMethod:               "drr",
-				TraefikBackendLoadBalancerSticky:               "true",
 				TraefikBackendLoadBalancerStickiness:           "true",
 				TraefikBackendLoadBalancerStickinessCookieName: "foo",
 			},
 			expected: &types.LoadBalancer{
 				Method: "drr",
-				Sticky: true,
 				Stickiness: &types.Stickiness{
 					CookieName: "foo",
 				},
@@ -270,12 +268,10 @@ func TestGetLoadBalancer(t *testing.T) {
 			desc: "should return a nil Stickiness when Stickiness is not set",
 			labels: map[string]string{
 				TraefikBackendLoadBalancerMethod:               "drr",
-				TraefikBackendLoadBalancerSticky:               "true",
 				TraefikBackendLoadBalancerStickinessCookieName: "foo",
 			},
 			expected: &types.LoadBalancer{
 				Method:     "drr",
-				Sticky:     true,
 				Stickiness: nil,
 			},
 		},
@@ -550,12 +546,12 @@ func TestGetRateLimit(t *testing.T) {
 				ExtractorFunc: "client.ip",
 				RateSet: map[string]*types.Rate{
 					"foo": {
-						Period:  flaeg.Duration(6 * time.Second),
+						Period:  parse.Duration(6 * time.Second),
 						Average: 12,
 						Burst:   18,
 					},
 					"bar": {
-						Period:  flaeg.Duration(3 * time.Second),
+						Period:  parse.Duration(3 * time.Second),
 						Average: 6,
 						Burst:   9,
 					},

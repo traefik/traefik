@@ -79,7 +79,7 @@ func (p *Provider) createClient() (*dynamoClient, error) {
 	}
 
 	return &dynamoClient{
-		dynamodb.New(sess, cfg),
+		db: dynamodb.New(sess, cfg),
 	}, nil
 }
 

@@ -158,9 +158,7 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 
-	if globalConfiguration.AllowMinWeightZero {
-		roundrobin.SetDefaultWeight(0)
-	}
+	roundrobin.SetDefaultWeight(0)
 
 	globalConfiguration.SetEffectiveConfiguration(configFile)
 	globalConfiguration.ValidateConfiguration()
@@ -289,11 +287,7 @@ func configureLogging(globalConfiguration *configuration.GlobalConfiguration) {
 	}
 	log.SetLevel(level)
 
-	// configure log output file
-	logFile := globalConfiguration.TraefikLogsFile
-	if len(logFile) > 0 {
-		log.Warn("top-level traefikLogsFile has been deprecated -- please use traefiklog.filepath")
-	}
+	var logFile string
 	if globalConfiguration.TraefikLog != nil && len(globalConfiguration.TraefikLog.FilePath) > 0 {
 		logFile = globalConfiguration.TraefikLog.FilePath
 	}

@@ -10,7 +10,6 @@ const (
 	pathBackendHealthCheckHostname              = "/healthcheck/hostname"
 	pathBackendHealthCheckHeaders               = "/healthcheck/headers/"
 	pathBackendLoadBalancerMethod               = "/loadbalancer/method"
-	pathBackendLoadBalancerSticky               = "/loadbalancer/sticky"
 	pathBackendLoadBalancerStickiness           = "/loadbalancer/stickiness"
 	pathBackendLoadBalancerStickinessCookieName = "/loadbalancer/stickiness/cookiename"
 	pathBackendMaxConnAmount                    = "/maxconn/amount"
@@ -28,7 +27,6 @@ const (
 	pathFrontends                         = "/frontends/"
 	pathFrontendBackend                   = "/backend"
 	pathFrontendPriority                  = "/priority"
-	pathFrontendPassHostHeaderDeprecated  = "/passHostHeader" // Deprecated
 	pathFrontendPassHostHeader            = "/passhostheader"
 	pathFrontendPassTLSCert               = "/passtlscert"
 	pathFrontendWhiteListSourceRange      = "/whitelist/sourcerange"

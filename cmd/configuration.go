@@ -3,7 +3,7 @@ package cmd
 import (
 	"time"
 
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik-extra-service-fabric"
 	"github.com/containous/traefik/api"
 	"github.com/containous/traefik/configuration"
@@ -55,44 +55,16 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	var defaultRest rest.Provider
 	defaultRest.EntryPoint = configuration.DefaultInternalEntryPointName
 
-	// TODO: Deprecated - Web provider, use REST provider instead
-	var defaultWeb configuration.WebCompatibility
-	defaultWeb.Address = ":8080"
-	defaultWeb.Statistics = &types.Statistics{
-		RecentErrors: 10,
-	}
-
-	// TODO: Deprecated - default Metrics
-	defaultWeb.Metrics = &types.Metrics{
-		Prometheus: &types.Prometheus{
-			Buckets:    types.Buckets{0.1, 0.3, 1.2, 5},
-			EntryPoint: configuration.DefaultInternalEntryPointName,
-		},
-		Datadog: &types.Datadog{
-			Address:      "localhost:8125",
-			PushInterval: "10s",
-		},
-		StatsD: &types.Statsd{
-			Address:      "localhost:8125",
-			PushInterval: "10s",
-		},
-		InfluxDB: &types.InfluxDB{
-			Address:      "localhost:8089",
-			Protocol:     "udp",
-			PushInterval: "10s",
-		},
-	}
-
 	// default Marathon
 	var defaultMarathon marathon.Provider
 	defaultMarathon.Watch = true
 	defaultMarathon.Endpoint = "http://127.0.0.1:8080"
 	defaultMarathon.ExposedByDefault = true
 	defaultMarathon.Constraints = types.Constraints{}
-	defaultMarathon.DialerTimeout = flaeg.Duration(5 * time.Second)
-	defaultMarathon.ResponseHeaderTimeout = flaeg.Duration(60 * time.Second)
-	defaultMarathon.TLSHandshakeTimeout = flaeg.Duration(5 * time.Second)
-	defaultMarathon.KeepAlive = flaeg.Duration(10 * time.Second)
+	defaultMarathon.DialerTimeout = parse.Duration(5 * time.Second)
+	defaultMarathon.ResponseHeaderTimeout = parse.Duration(60 * time.Second)
+	defaultMarathon.TLSHandshakeTimeout = parse.Duration(5 * time.Second)
+	defaultMarathon.KeepAlive = parse.Duration(10 * time.Second)
 
 	// default Consul
 	var defaultConsul consul.Provider
@@ -170,7 +142,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 
 	// default Eureka
 	var defaultEureka eureka.Provider
-	defaultEureka.RefreshSeconds = flaeg.Duration(30 * time.Second)
+	defaultEureka.RefreshSeconds = parse.Duration(30 * time.Second)
 
 	// default ServiceFabric
 	var defaultServiceFabric servicefabric.Provider
@@ -203,17 +175,17 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 
 	// default HealthCheckConfig
 	healthCheck := configuration.HealthCheckConfig{
-		Interval: flaeg.Duration(configuration.DefaultHealthCheckInterval),
+		Interval: parse.Duration(configuration.DefaultHealthCheckInterval),
 	}
 
 	// default RespondingTimeouts
 	respondingTimeouts := configuration.RespondingTimeouts{
-		IdleTimeout: flaeg.Duration(configuration.DefaultIdleTimeout),
+		IdleTimeout: parse.Duration(configuration.DefaultIdleTimeout),
 	}
 
 	// default ForwardingTimeouts
 	forwardingTimeouts := configuration.ForwardingTimeouts{
-		DialTimeout: flaeg.Duration(configuration.DefaultDialTimeout),
+		DialTimeout: parse.Duration(configuration.DefaultDialTimeout),
 	}
 
 	// default Tracing
@@ -225,6 +197,8 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 			SamplingType:       "const",
 			SamplingParam:      1.0,
 			LocalAgentHostPort: "127.0.0.1:6831",
+			Propagation:        "jaeger",
+			Gen128Bit:          false,
 		},
 		Zipkin: &zipkin.Config{
 			HTTPEndpoint: "http://localhost:9411/api/v1/spans",
@@ -236,7 +210,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 
 	// default LifeCycle
 	defaultLifeCycle := configuration.LifeCycle{
-		GraceTimeOut: flaeg.Duration(configuration.DefaultGraceTimeout),
+		GraceTimeOut: parse.Duration(configuration.DefaultGraceTimeout),
 	}
 
 	// default ApiConfiguration
@@ -278,7 +252,6 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultConfiguration := configuration.GlobalConfiguration{
 		Docker:             &defaultDocker,
 		File:               &defaultFile,
-		Web:                &defaultWeb,
 		Rest:               &defaultRest,
 		Marathon:           &defaultMarathon,
 		Consul:             &defaultConsul,
@@ -315,19 +288,16 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 func NewTraefikConfiguration() *TraefikConfiguration {
 	return &TraefikConfiguration{
 		GlobalConfiguration: configuration.GlobalConfiguration{
-			AccessLogsFile:            "",
-			TraefikLogsFile:           "",
 			EntryPoints:               map[string]*configuration.EntryPoint{},
 			Constraints:               types.Constraints{},
 			DefaultEntryPoints:        []string{"http"},
-			ProvidersThrottleDuration: flaeg.Duration(2 * time.Second),
+			ProvidersThrottleDuration: parse.Duration(2 * time.Second),
 			MaxIdleConnsPerHost:       200,
-			IdleTimeout:               flaeg.Duration(0),
 			HealthCheck: &configuration.HealthCheckConfig{
-				Interval: flaeg.Duration(configuration.DefaultHealthCheckInterval),
+				Interval: parse.Duration(configuration.DefaultHealthCheckInterval),
 			},
 			LifeCycle: &configuration.LifeCycle{
-				GraceTimeOut: flaeg.Duration(configuration.DefaultGraceTimeout),
+				GraceTimeOut: parse.Duration(configuration.DefaultGraceTimeout),
 			},
 			CheckNewVersion: true,
 		},

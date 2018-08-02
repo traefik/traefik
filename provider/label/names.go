@@ -23,7 +23,6 @@ const (
 	SuffixBackendHealthCheckHeaders                 = "backend.healthcheck.headers"
 	SuffixBackendLoadBalancer                       = "backend.loadbalancer"
 	SuffixBackendLoadBalancerMethod                 = SuffixBackendLoadBalancer + ".method"
-	SuffixBackendLoadBalancerSticky                 = SuffixBackendLoadBalancer + ".sticky"
 	SuffixBackendLoadBalancerStickiness             = SuffixBackendLoadBalancer + ".stickiness"
 	SuffixBackendLoadBalancerStickinessCookieName   = SuffixBackendLoadBalancer + ".stickiness.cookieName"
 	SuffixBackendMaxConnAmount                      = "backend.maxconn.amount"
@@ -111,7 +110,6 @@ const (
 	TraefikBackendHealthCheckHeaders                = Prefix + SuffixBackendHealthCheckHeaders
 	TraefikBackendLoadBalancer                      = Prefix + SuffixBackendLoadBalancer
 	TraefikBackendLoadBalancerMethod                = Prefix + SuffixBackendLoadBalancerMethod
-	TraefikBackendLoadBalancerSticky                = Prefix + SuffixBackendLoadBalancerSticky
 	TraefikBackendLoadBalancerStickiness            = Prefix + SuffixBackendLoadBalancerStickiness
 	TraefikBackendLoadBalancerStickinessCookieName  = Prefix + SuffixBackendLoadBalancerStickinessCookieName
 	TraefikBackendMaxConnAmount                     = Prefix + SuffixBackendMaxConnAmount

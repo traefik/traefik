@@ -29,7 +29,6 @@ type BaseProvider struct {
 	Filename                  string            `description:"Override default configuration template. For advanced users :)" export:"true"`
 	Constraints               types.Constraints `description:"Filter services by constraint, matching with Traefik tags." export:"true"`
 	Trace                     bool              `description:"Display additional provider logs (if available)." export:"true"`
-	TemplateVersion           int               `description:"Template version." export:"true"`
 	DebugLogGeneratedTemplate bool              `description:"Enable debug logging of generated configuration template." export:"true"`
 }
 

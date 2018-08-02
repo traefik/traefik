@@ -68,7 +68,6 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
   {{if $loadBalancer }}
   [backends."backend-{{ $backendName }}".loadBalancer]
     method = "{{ $loadBalancer.Method }}"
-    sticky = {{ $loadBalancer.Sticky }}
     {{if $loadBalancer.Stickiness }}
     [backends."backend-{{ $backendName }}".loadBalancer.stickiness]
       cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
@@ -308,7 +307,6 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
   {{if $loadBalancer }}
     [backends."backend-{{ $backendName }}".loadBalancer]
       method = "{{ $loadBalancer.Method }}"
-      sticky = {{ $loadBalancer.Sticky }}
       {{if $loadBalancer.Stickiness }}
       [backends."backend-{{ $backendName }}".loadBalancer.stickiness]
         cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
@@ -548,7 +546,6 @@ var _templatesEcsTmpl = []byte(`[backends]
   {{if $loadBalancer }}
   [backends."backend-{{ $serviceName }}".loadBalancer]
     method = "{{ $loadBalancer.Method }}"
-    sticky = {{ $loadBalancer.Sticky }}
     {{if $loadBalancer.Stickiness }}
     [backends."backend-{{ $serviceName }}".loadBalancer.stickiness]
       cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
@@ -826,7 +823,6 @@ var _templatesKubernetesTmpl = []byte(`[backends]
 
     [backends."{{ $backendName }}".loadBalancer]
       method = "{{ $backend.LoadBalancer.Method }}"
-      sticky = {{ $backend.LoadBalancer.Sticky }}
       {{if $backend.LoadBalancer.Stickiness }}
       [backends."{{ $backendName }}".loadBalancer.stickiness]
         cookieName = "{{ $backend.LoadBalancer.Stickiness.CookieName }}"
@@ -1041,7 +1037,6 @@ var _templatesKvTmpl = []byte(`[backends]
   {{if $loadBalancer }}
     [backends."{{ $backendName }}".loadBalancer]
       method = "{{ $loadBalancer.Method }}"
-      sticky = {{ $loadBalancer.Sticky }}
       {{if $loadBalancer.Stickiness }}
       [backends."{{ $backendName }}".loadBalancer.stickiness]
         cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
@@ -1298,7 +1293,6 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
     {{if $loadBalancer }}
     [backends."{{ $backendName }}".loadBalancer]
       method = "{{ $loadBalancer.Method }}"
-      sticky = {{ $loadBalancer.Sticky }}
       {{if $loadBalancer.Stickiness }}
       [backends."{{ $backendName }}".loadBalancer.stickiness]
         cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
@@ -1540,7 +1534,6 @@ var _templatesMesosTmpl = []byte(`[backends]
   {{if $loadBalancer }}
     [backends."backend-{{ $backendName }}".loadBalancer]
       method = "{{ $loadBalancer.Method }}"
-      sticky = {{ $loadBalancer.Sticky }}
       {{if $loadBalancer.Stickiness }}
       [backends."backend-{{ $backendName }}".loadBalancer.stickiness]
         cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
@@ -1805,7 +1798,6 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
   {{if $loadBalancer }}
     [backends."backend-{{ $backendName }}".loadBalancer]
       method = "{{ $loadBalancer.Method }}"
-      sticky = {{ $loadBalancer.Sticky }}
       {{if $loadBalancer.Stickiness }}
       [backends."backend-{{ $backendName }}".loadBalancer.stickiness]
         cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"

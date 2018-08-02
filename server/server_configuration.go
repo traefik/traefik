@@ -385,31 +385,14 @@ func (s *Server) filterEntryPoints(entryPoints []string) ([]string, []string) {
 func configureBackends(backends map[string]*types.Backend) {
 	for backendName := range backends {
 		backend := backends[backendName]
-		if backend.LoadBalancer != nil && backend.LoadBalancer.Sticky {
-			log.Warnf("Deprecated configuration found: %s. Please use %s.", "backend.LoadBalancer.Sticky", "backend.LoadBalancer.Stickiness")
-		}
 
 		_, err := types.NewLoadBalancerMethod(backend.LoadBalancer)
-		if err == nil {
-			if backend.LoadBalancer != nil && backend.LoadBalancer.Stickiness == nil && backend.LoadBalancer.Sticky {
-				backend.LoadBalancer.Stickiness = &types.Stickiness{
-					CookieName: "_TRAEFIK_BACKEND",
-				}
-			}
-		} else {
+		if err != nil {
 			log.Debugf("Backend %s: %v", backendName, err)
 
 			var stickiness *types.Stickiness
 			if backend.LoadBalancer != nil {
-				if backend.LoadBalancer.Stickiness == nil {
-					if backend.LoadBalancer.Sticky {
-						stickiness = &types.Stickiness{
-							CookieName: "_TRAEFIK_BACKEND",
-						}
-					}
-				} else {
-					stickiness = backend.LoadBalancer.Stickiness
-				}
+				stickiness = backend.LoadBalancer.Stickiness
 			}
 			backend.LoadBalancer = &types.LoadBalancer{
 				Method:     "wrr",
