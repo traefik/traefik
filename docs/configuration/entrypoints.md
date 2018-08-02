@@ -13,7 +13,7 @@ defaultEntryPoints = ["http", "https"]
 [entryPoints]
   [entryPoints.http]
     address = ":80"
-    compress = true
+    [entryPoints.http.compress]
 
     [entryPoints.http.whitelist]
       sourceRange = ["10.42.0.0/16", "152.89.1.33/32", "afed:be44::/16"]
@@ -453,7 +453,7 @@ To enable compression support using gzip format.
 [entryPoints]
   [entryPoints.http]
   address = ":80"
-  compress = true
+  [entryPoints.http.compress]
 ```
 
 Responses are compressed when:
