@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/containous/mux"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/go-kit/kit/metrics"
@@ -61,6 +62,16 @@ func (h PrometheusHandler) AddRoutes(router *mux.Router) {
 // RegisterPrometheus registers all Prometheus metrics.
 // It must be called only once and failing to register the metrics will lead to a panic.
 func RegisterPrometheus(config *types.Prometheus) Registry {
+	standardRegistry := initStandardRegistry(config)
+
+	if !registerPromState() {
+		return nil
+	}
+
+	return standardRegistry
+}
+
+func initStandardRegistry(config *types.Prometheus) Registry {
 	buckets := []float64{0.1, 0.3, 1.2, 5.0}
 	if config.Buckets != nil {
 		buckets = config.Buckets
@@ -137,7 +148,6 @@ func RegisterPrometheus(config *types.Prometheus) Registry {
 		backendRetries.cv.Describe,
 		backendServerUp.gv.Describe,
 	}
-	stdprometheus.MustRegister(promState)
 
 	return &standardRegistry{
 		enabled:                        true,
@@ -154,6 +164,19 @@ func RegisterPrometheus(config *types.Prometheus) Registry {
 		backendRetriesCounter:          backendRetries,
 		backendServerUpGauge:           backendServerUp,
 	}
+}
+
+func registerPromState() bool {
+	err := stdprometheus.Register(promState)
+	if err != nil {
+		if _, ok := err.(stdprometheus.AlreadyRegisteredError); ok {
+			log.Debugln("Prometheus collector already registered.")
+		} else {
+			log.Errorf("Unable to register Traefik to Prometheus: %v", err)
+			return false
+		}
+	}
+	return true
 }
 
 // OnConfigurationUpdate receives the current configuration from Traefik.
