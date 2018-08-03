@@ -652,8 +652,11 @@ func registerMetricClients(metricsConfig *types.Metrics) metrics.Registry {
 
 	var registries []metrics.Registry
 	if metricsConfig.Prometheus != nil {
-		registries = append(registries, metrics.RegisterPrometheus(metricsConfig.Prometheus))
-		log.Debug("Configured Prometheus metrics")
+		prometheusRegister := metrics.RegisterPrometheus(metricsConfig.Prometheus)
+		if prometheusRegister != nil {
+			registries = append(registries, prometheusRegister)
+			log.Debug("Configured Prometheus metrics")
+		}
 	}
 	if metricsConfig.Datadog != nil {
 		registries = append(registries, metrics.RegisterDatadog(metricsConfig.Datadog))
