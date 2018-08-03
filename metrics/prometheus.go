@@ -167,13 +167,12 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 }
 
 func registerPromState() bool {
-	err := stdprometheus.Register(promState)
-	if err != nil {
+	if err := stdprometheus.Register(promState); err != nil {
 		if _, ok := err.(stdprometheus.AlreadyRegisteredError); !ok {
 			log.Errorf("Unable to register Traefik to Prometheus: %v", err)
 			return false
 		}
-		log.Debugln("Prometheus collector already registered.")
+		log.Debug("Prometheus collector already registered.")
 	}
 	return true
 }
