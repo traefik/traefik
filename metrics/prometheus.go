@@ -16,25 +16,31 @@ import (
 )
 
 const (
-	metricNamePrefix = "traefik_"
+	// MetricNamePrefix prefix of all metric names
+	MetricNamePrefix = "traefik_"
 
 	// server meta information
-	configReloadsTotalName         = metricNamePrefix + "config_reloads_total"
-	configReloadsFailuresTotalName = metricNamePrefix + "config_reloads_failure_total"
-	configLastReloadSuccessName    = metricNamePrefix + "config_last_reload_success"
-	configLastReloadFailureName    = metricNamePrefix + "config_last_reload_failure"
+	metricConfigPrefix             = MetricNamePrefix + "config_"
+	configReloadsTotalName         = metricConfigPrefix + "reloads_total"
+	configReloadsFailuresTotalName = metricConfigPrefix + "reloads_failure_total"
+	configLastReloadSuccessName    = metricConfigPrefix + "last_reload_success"
+	configLastReloadFailureName    = metricConfigPrefix + "last_reload_failure"
 
 	// entrypoint
-	entrypointReqsTotalName   = metricNamePrefix + "entrypoint_requests_total"
-	entrypointReqDurationName = metricNamePrefix + "entrypoint_request_duration_seconds"
-	entrypointOpenConnsName   = metricNamePrefix + "entrypoint_open_connections"
+	metricEntryPointPrefix    = MetricNamePrefix + "entrypoint_"
+	entrypointReqsTotalName   = metricEntryPointPrefix + "requests_total"
+	entrypointReqDurationName = metricEntryPointPrefix + "request_duration_seconds"
+	entrypointOpenConnsName   = metricEntryPointPrefix + "open_connections"
 
-	// backend level
-	backendReqsTotalName    = metricNamePrefix + "backend_requests_total"
-	backendReqDurationName  = metricNamePrefix + "backend_request_duration_seconds"
-	backendOpenConnsName    = metricNamePrefix + "backend_open_connections"
-	backendRetriesTotalName = metricNamePrefix + "backend_retries_total"
-	backendServerUpName     = metricNamePrefix + "backend_server_up"
+	// backend level.
+
+	// MetricBackendPrefix prefix of all backend metric names
+	MetricBackendPrefix     = MetricNamePrefix + "backend_"
+	backendReqsTotalName    = MetricBackendPrefix + "requests_total"
+	backendReqDurationName  = MetricBackendPrefix + "request_duration_seconds"
+	backendOpenConnsName    = MetricBackendPrefix + "open_connections"
+	backendRetriesTotalName = MetricBackendPrefix + "retries_total"
+	backendServerUpName     = MetricBackendPrefix + "server_up"
 )
 
 // promState holds all metric state internally and acts as the only Collector we register for Prometheus.
