@@ -17,14 +17,15 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-const (
-	// Services IP addresses fixed in the configuration
-	ipEtcd     = "172.18.0.2"
-	ipWhoami01 = "172.18.0.3"
-	ipWhoami02 = "172.18.0.4"
-	ipWhoami03 = "172.18.0.5"
-	ipWhoami04 = "172.18.0.6"
+var (
+	ipEtcd     string
+	ipWhoami01 string
+	ipWhoami02 string
+	ipWhoami03 string
+	ipWhoami04 string
+)
 
+const (
 	traefikEtcdURL    = "http://127.0.0.1:8000/"
 	traefikWebEtcdURL = "http://127.0.0.1:8081/"
 )
@@ -35,9 +36,26 @@ type Etcd3Suite struct {
 	kv store.Store
 }
 
+func (s *Etcd3Suite) getIPAddress(c *check.C, service string) string {
+	var ip string
+	for _, value := range s.composeProject.Container(c, service).NetworkSettings.Networks {
+		if len(value.IPAddress) > 0 {
+			ip = value.IPAddress
+			break
+		}
+	}
+	return ip
+}
+
 func (s *Etcd3Suite) SetUpTest(c *check.C) {
 	s.createComposeProject(c, "etcd3")
 	s.composeProject.Start(c)
+
+	ipWhoami01 = s.getIPAddress(c, "whoami1")
+	ipWhoami02 = s.getIPAddress(c, "whoami2")
+	ipWhoami03 = s.getIPAddress(c, "whoami3")
+	ipWhoami04 = s.getIPAddress(c, "whoami4")
+	ipEtcd = s.getIPAddress(c, "etcd")
 
 	etcdv3.Register()
 	url := ipEtcd + ":2379"
