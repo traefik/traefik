@@ -66,6 +66,71 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
+			desc: "pass ssl client cert",
+			containers: []docker.ContainerJSON{
+				containerJSON(
+					name("foo"),
+					labels(map[string]string{
+						"traefik.sauternes.port":                                                                    "2503",
+						"traefik.sauternes.frontend.entryPoints":                                                    "http,https",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertPem:                      "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosNotAfter:            "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosNotBefore:           "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSans:                "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectCommonName:   "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectCountry:      "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectLocality:     "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectOrganization: "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectProvince:     "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectSerialNumber: "true",
+					}),
+					ports(nat.PortMap{
+						"80/tcp": {},
+					}),
+					withNetwork("bridge", ipv4("127.0.0.1")),
+				),
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-sauternes-foo-sauternes": {
+					Backend:        "backend-foo-sauternes",
+					PassHostHeader: true,
+					EntryPoints:    []string{"http", "https"},
+					Routes: map[string]types.Route{
+						"route-frontend-sauternes-foo-sauternes": {
+							Rule: "Host:foo.docker.localhost",
+						},
+					},
+					PassSSLClientCert: &types.SSLClientHeaders{
+						PEM: true,
+						Infos: &types.SSLClientCertificateInfos{
+							NotBefore: true,
+							Sans:      true,
+							NotAfter:  true,
+							Subject: &types.SSLCLientCertificateSubjectInfos{
+								CommonName:   true,
+								Country:      true,
+								Locality:     true,
+								Organization: true,
+								Province:     true,
+								SerialNumber: true,
+							},
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-foo-sauternes": {
+					Servers: map[string]types.Server{
+						"server-foo-863563a2e23c95502862016417ee95ea": {
+							URL:    "http://127.0.0.1:2503",
+							Weight: label.DefaultWeight,
+						},
+					},
+					CircuitBreaker: nil,
+				},
+			},
+		},
+		{
 			desc: "auth basic",
 			containers: []docker.ContainerJSON{
 				containerJSON(
@@ -286,6 +351,17 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 						label.Prefix + "sauternes." + label.SuffixProtocol: "https",
 						label.Prefix + "sauternes." + label.SuffixWeight:   "12",
 
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertPem:                      "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosNotAfter:            "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosNotBefore:           "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSans:                "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectCommonName:   "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectCountry:      "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectLocality:     "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectOrganization: "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectProvince:     "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectSerialNumber: "true",
+
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicRemoveHeader:            "true",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicUsers:                   "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicUsersFile:               ".htpasswd",
@@ -367,6 +443,22 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 					PassHostHeader: true,
 					PassTLSCert:    true,
 					Priority:       666,
+					PassSSLClientCert: &types.SSLClientHeaders{
+						PEM: true,
+						Infos: &types.SSLClientCertificateInfos{
+							NotBefore: true,
+							Sans:      true,
+							NotAfter:  true,
+							Subject: &types.SSLCLientCertificateSubjectInfos{
+								CommonName:   true,
+								Country:      true,
+								Locality:     true,
+								Organization: true,
+								Province:     true,
+								SerialNumber: true,
+							},
+						},
+					},
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{
