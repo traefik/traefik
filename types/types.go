@@ -182,7 +182,8 @@ type Frontend struct {
 	Backend              string                `json:"backend,omitempty"`
 	Routes               map[string]Route      `json:"routes,omitempty" hash:"ignore"`
 	PassHostHeader       bool                  `json:"passHostHeader,omitempty"`
-	PassTLSCert          bool                  `json:"passTLSCert,omitempty"`
+	PassTLSCert          bool                  `json:"passTLSCert,omitempty"` // Deprecated use PassSSLClientCert instead
+	PassSSLClientCert    *SSLClientHeaders     `json:"passSSLClientCert,omitempty"`
 	Priority             int                   `json:"priority"`
 	BasicAuth            []string              `json:"basicAuth"`                      // Deprecated
 	WhitelistSourceRange []string              `json:"whitelistSourceRange,omitempty"` // Deprecated
@@ -610,4 +611,28 @@ func (h HTTPCodeRanges) Contains(statusCode int) bool {
 		}
 	}
 	return false
+}
+
+// SSLClientHeaders holds the ssl client cert headers configuration.
+type SSLClientHeaders struct {
+	PEM   bool                       `description:"Enable header with escaped client pem" json:"pem"`
+	Infos *SSLClientCertificateInfos `description:"Enable header with configured client cert infos" json:"infos,omitempty"`
+}
+
+// SSLClientCertificateInfos holds the client ssl certificate infos configuration
+type SSLClientCertificateInfos struct {
+	NotAfter  bool                              `description:"Add NotAfter info in header" json:"notAfter"`
+	NotBefore bool                              `description:"Add NotBefore info in header" json:"notBefore"`
+	Subject   *SSLCLientCertificateSubjectInfos `description:"Add Subject info in header" json:"subject,omitempty"`
+	Sans      bool                              `description:"Add Sans info in header" json:"sans"`
+}
+
+// SSLCLientCertificateSubjectInfos holds the client ssl certificate subject infos configuration
+type SSLCLientCertificateSubjectInfos struct {
+	Country      bool `description:"Add Country info in header" json:"country"`
+	Province     bool `description:"Add Province info in header" json:"province"`
+	Locality     bool `description:"Add Locality info in header" json:"locality"`
+	Organization bool `description:"Add Organization info in header" json:"organization"`
+	CommonName   bool `description:"Add CommonName info in header" json:"commonName"`
+	SerialNumber bool `description:"Add SerialNumber info in header" json:"serialNumber"`
 }

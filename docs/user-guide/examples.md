@@ -311,7 +311,6 @@ The `consul` provider contains the configuration.
   [frontends.frontend2]
   backend = "backend1"
   passHostHeader = true
-  passTLSCert = true
   entrypoints = ["https"] # overrides defaultEntryPoints
     [frontends.frontend2.routes.test_1]
     rule = "Host:{subdomain:[a-z]+}.localhost"
