@@ -60,6 +60,39 @@ func GetRedirect(labels map[string]string) *types.Redirect {
 	return nil
 }
 
+// GetSSLClientCert create ssl client header configuration from labels
+func GetSSLClientCert(labels map[string]string) *types.SSLClientHeaders {
+	if !HasPrefix(labels, TraefikFrontendPassSSLClientCert) {
+		return nil
+	}
+
+	sslClientHeaders := &types.SSLClientHeaders{
+		PEM: GetBoolValue(labels, TraefikFrontendPassSSLClientCertPem, false),
+	}
+
+	if HasPrefix(labels, TraefikFrontendPassSSLClientCertInfos) {
+		infos := &types.SSLClientCertificateInfos{
+			NotAfter:  GetBoolValue(labels, TraefikFrontendPassSSLClientCertInfosNotAfter, false),
+			NotBefore: GetBoolValue(labels, TraefikFrontendPassSSLClientCertInfosNotBefore, false),
+			Sans:      GetBoolValue(labels, TraefikFrontendPassSSLClientCertInfosSans, false),
+		}
+
+		if HasPrefix(labels, TraefikFrontendPassSSLClientCertInfosSubject) {
+			subject := &types.SSLCLientCertificateSubjectInfos{
+				CommonName:   GetBoolValue(labels, TraefikFrontendPassSSLClientCertInfosSubjectCommonName, false),
+				Country:      GetBoolValue(labels, TraefikFrontendPassSSLClientCertInfosSubjectCountry, false),
+				Locality:     GetBoolValue(labels, TraefikFrontendPassSSLClientCertInfosSubjectLocality, false),
+				Organization: GetBoolValue(labels, TraefikFrontendPassSSLClientCertInfosSubjectOrganization, false),
+				Province:     GetBoolValue(labels, TraefikFrontendPassSSLClientCertInfosSubjectProvince, false),
+				SerialNumber: GetBoolValue(labels, TraefikFrontendPassSSLClientCertInfosSubjectSerialNumber, false),
+			}
+			infos.Subject = subject
+		}
+		sslClientHeaders.Infos = infos
+	}
+	return sslClientHeaders
+}
+
 // GetAuth Create auth from labels
 func GetAuth(labels map[string]string) *types.Auth {
 	if !HasPrefix(labels, TraefikFrontendAuth) {

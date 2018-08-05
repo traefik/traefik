@@ -798,3 +798,178 @@ func TestGetAuth(t *testing.T) {
 		})
 	}
 }
+func TestGetPassSSLClientCert(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		labels   map[string]string
+		expected *types.SSLClientHeaders
+	}{
+		{
+			desc:     "should return nil when no tags",
+			labels:   map[string]string{},
+			expected: nil,
+		},
+		{
+			desc: "should return sllClientHeaders with true pem flag",
+			labels: map[string]string{
+				TraefikFrontendPassSSLClientCertPem: "true",
+			},
+			expected: &types.SSLClientHeaders{
+				PEM: true,
+			},
+		},
+		{
+			desc: "should return sllClientHeaders with infos and NotAfter true",
+			labels: map[string]string{
+				TraefikFrontendPassSSLClientCertInfosNotAfter: "true",
+			},
+			expected: &types.SSLClientHeaders{
+				Infos: &types.SSLClientCertificateInfos{
+					NotAfter: true,
+				},
+			},
+		},
+		{
+			desc: "should return sllClientHeaders with infos and NotBefore true",
+			labels: map[string]string{
+				TraefikFrontendPassSSLClientCertInfosNotBefore: "true",
+			},
+			expected: &types.SSLClientHeaders{
+				Infos: &types.SSLClientCertificateInfos{
+					NotBefore: true,
+				},
+			},
+		},
+		{
+			desc: "should return sllClientHeaders with infos and sans true",
+			labels: map[string]string{
+				TraefikFrontendPassSSLClientCertInfosSans: "true",
+			},
+			expected: &types.SSLClientHeaders{
+				Infos: &types.SSLClientCertificateInfos{
+					Sans: true,
+				},
+			},
+		},
+		{
+			desc: "should return sllClientHeaders with infos and subject with commonName true",
+			labels: map[string]string{
+				TraefikFrontendPassSSLClientCertInfosSubjectCommonName: "true",
+			},
+			expected: &types.SSLClientHeaders{
+				Infos: &types.SSLClientCertificateInfos{
+					Subject: &types.SSLCLientCertificateSubjectInfos{
+						CommonName: true,
+					},
+				},
+			},
+		},
+		{
+			desc: "should return sllClientHeaders with infos and subject with country true",
+			labels: map[string]string{
+				TraefikFrontendPassSSLClientCertInfosSubjectCountry: "true",
+			},
+			expected: &types.SSLClientHeaders{
+				Infos: &types.SSLClientCertificateInfos{
+					Subject: &types.SSLCLientCertificateSubjectInfos{
+						Country: true,
+					},
+				},
+			},
+		},
+		{
+			desc: "should return sllClientHeaders with infos and subject with locality true",
+			labels: map[string]string{
+				TraefikFrontendPassSSLClientCertInfosSubjectLocality: "true",
+			},
+			expected: &types.SSLClientHeaders{
+				Infos: &types.SSLClientCertificateInfos{
+					Subject: &types.SSLCLientCertificateSubjectInfos{
+						Locality: true,
+					},
+				},
+			},
+		},
+		{
+			desc: "should return sllClientHeaders with infos and subject with organization true",
+			labels: map[string]string{
+				TraefikFrontendPassSSLClientCertInfosSubjectOrganization: "true",
+			},
+			expected: &types.SSLClientHeaders{
+				Infos: &types.SSLClientCertificateInfos{
+					Subject: &types.SSLCLientCertificateSubjectInfos{
+						Organization: true,
+					},
+				},
+			},
+		},
+		{
+			desc: "should return sllClientHeaders with infos and subject with province true",
+			labels: map[string]string{
+				TraefikFrontendPassSSLClientCertInfosSubjectProvince: "true",
+			},
+			expected: &types.SSLClientHeaders{
+				Infos: &types.SSLClientCertificateInfos{
+					Subject: &types.SSLCLientCertificateSubjectInfos{
+						Province: true,
+					},
+				},
+			},
+		},
+		{
+			desc: "should return sllClientHeaders with infos and subject with serialNumber true",
+			labels: map[string]string{
+				TraefikFrontendPassSSLClientCertInfosSubjectSerialNumber: "true",
+			},
+			expected: &types.SSLClientHeaders{
+				Infos: &types.SSLClientCertificateInfos{
+					Subject: &types.SSLCLientCertificateSubjectInfos{
+						SerialNumber: true,
+					},
+				},
+			},
+		},
+		{
+			desc: "should return sllClientHeaders with all infos",
+			labels: map[string]string{
+				TraefikFrontendPassSSLClientCertPem:                      "true",
+				TraefikFrontendPassSSLClientCertInfosNotAfter:            "true",
+				TraefikFrontendPassSSLClientCertInfosNotBefore:           "true",
+				TraefikFrontendPassSSLClientCertInfosSans:                "true",
+				TraefikFrontendPassSSLClientCertInfosSubjectCommonName:   "true",
+				TraefikFrontendPassSSLClientCertInfosSubjectCountry:      "true",
+				TraefikFrontendPassSSLClientCertInfosSubjectLocality:     "true",
+				TraefikFrontendPassSSLClientCertInfosSubjectOrganization: "true",
+				TraefikFrontendPassSSLClientCertInfosSubjectProvince:     "true",
+				TraefikFrontendPassSSLClientCertInfosSubjectSerialNumber: "true",
+			},
+			expected: &types.SSLClientHeaders{
+				PEM: true,
+				Infos: &types.SSLClientCertificateInfos{
+					Sans:      true,
+					NotBefore: true,
+					NotAfter:  true,
+					Subject: &types.SSLCLientCertificateSubjectInfos{
+						Province:     true,
+						Organization: true,
+						Locality:     true,
+						Country:      true,
+						CommonName:   true,
+						SerialNumber: true,
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := GetSSLClientCert(test.labels)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
