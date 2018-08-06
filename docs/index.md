@@ -138,7 +138,7 @@ IP: 172.27.0.3
 Run more instances of your `whoami` service with the following command:
 
 ```shell
-docker-compose up -d --scale whoami=2
+docker-compose scale whoami=2
 ```
 
 Go back to your browser ([http://localhost:8080](http://localhost:8080)) and see that Træfik has automatically detected the new instance of the container.
