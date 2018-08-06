@@ -202,6 +202,9 @@ func (a *ACME) leadershipListener(elected bool) error {
 			}
 
 			needRegister = true
+		} else if len(account.KeyType) == 0 {
+			// Set the KeyType if not already defined in the account
+			account.KeyType = acmeprovider.GetKeyType(a.KeyType)
 		}
 
 		a.client, err = a.buildACMEClient(account)

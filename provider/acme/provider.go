@@ -309,6 +309,12 @@ func (p *Provider) initAccount() (*Account, error) {
 			return nil, err
 		}
 	}
+
+	// Set the KeyType if not already defined in the account
+	if len(p.account.KeyType) == 0 {
+		p.account.KeyType = GetKeyType(p.KeyType)
+	}
+
 	return p.account, nil
 }
 
