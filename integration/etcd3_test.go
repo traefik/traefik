@@ -47,7 +47,7 @@ func (s *Etcd3Suite) getIPAddress(c *check.C, service string) string {
 	return ip
 }
 
-func (s *Etcd3Suite) SetUpTest(c *check.C) {
+func (s *Etcd3Suite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "etcd3")
 	s.composeProject.Start(c)
 
@@ -80,13 +80,16 @@ func (s *Etcd3Suite) SetUpTest(c *check.C) {
 }
 
 func (s *Etcd3Suite) TearDownTest(c *check.C) {
+	// Delete all Traefik keys from ETCD
+	s.kv.DeleteTree("/traefik")
+}
+
+func (s *Etcd3Suite) TearDownSuite(c *check.C) {
 	// shutdown and delete compose project
 	if s.composeProject != nil {
 		s.composeProject.Stop(c)
 	}
 }
-
-func (s *Etcd3Suite) TearDownSuite(c *check.C) {}
 
 func (s *Etcd3Suite) TestSimpleConfiguration(c *check.C) {
 	file := s.adaptFile(c, "fixtures/etcd/simple.toml", struct {
