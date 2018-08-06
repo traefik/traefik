@@ -241,7 +241,7 @@ func (c *clientImpl) newResourceEventHandler(events chan<- interface{}) cache.Re
 
 // eventHandlerFunc will pass the obj on to the events channel or drop it.
 // This is so passing the events along won't block in the case of high volume.
-// The events are only used for signalling anyway so dropping a few is ok.
+// The events are only used for signaling anyway so dropping a few is ok.
 func eventHandlerFunc(events chan<- interface{}, obj interface{}) {
 	select {
 	case events <- obj:

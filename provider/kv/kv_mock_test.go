@@ -44,7 +44,7 @@ func newKvClientMock(kvPairs []*store.KVPair, err error) *Mock {
 }
 
 func (s *Mock) Put(key string, value []byte, opts *store.WriteOptions) error {
-	return errors.New("Put not supported")
+	return errors.New("put not supported")
 }
 
 func (s *Mock) Get(key string, options *store.ReadOptions) (*store.KVPair, error) {
@@ -60,7 +60,7 @@ func (s *Mock) Get(key string, options *store.ReadOptions) (*store.KVPair, error
 }
 
 func (s *Mock) Delete(key string) error {
-	return errors.New("Delete not supported")
+	return errors.New("delete not supported")
 }
 
 // Exists mock
@@ -78,7 +78,7 @@ func (s *Mock) Exists(key string, options *store.ReadOptions) (bool, error) {
 
 // Watch mock
 func (s *Mock) Watch(key string, stopCh <-chan struct{}, options *store.ReadOptions) (<-chan *store.KVPair, error) {
-	return nil, errors.New("Watch not supported")
+	return nil, errors.New("watch not supported")
 }
 
 // WatchTree mock

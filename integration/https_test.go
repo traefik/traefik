@@ -708,7 +708,10 @@ func modifyCertificateConfFileContent(c *check.C, certFileName, confFileName, en
 	defer func() {
 		f.Close()
 	}()
-	f.Truncate(0)
+
+	err = f.Truncate(0)
+	c.Assert(err, checker.IsNil)
+
 	// If certificate file is not provided, just truncate the configuration file
 	if len(certFileName) > 0 {
 		tlsConf := types.Configuration{

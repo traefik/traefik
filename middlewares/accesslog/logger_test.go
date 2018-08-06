@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/containous/flaeg/parse"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -626,7 +627,10 @@ func doLogging(t *testing.T, config *types.AccessLog) {
 }
 
 func logWriterTestHandlerFunc(rw http.ResponseWriter, r *http.Request) {
-	rw.Write([]byte(testContent))
+	if _, err := rw.Write([]byte(testContent)); err != nil {
+		log.Error(err)
+	}
+
 	rw.WriteHeader(testStatus)
 
 	logDataTable := GetLogDataTable(r)

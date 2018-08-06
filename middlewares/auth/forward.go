@@ -90,7 +90,10 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 
 		tracing.LogResponseCode(tracing.GetSpan(r), forwardResponse.StatusCode)
 		w.WriteHeader(forwardResponse.StatusCode)
-		w.Write(body)
+
+		if _, err = w.Write(body); err != nil {
+			log.Error(err)
+		}
 		return
 	}
 

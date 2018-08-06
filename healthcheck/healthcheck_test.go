@@ -94,7 +94,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			// The context is passed to the health check and canonically cancelled by
+			// The context is passed to the health check and canonically canceled by
 			// the test server once all expected requests have been received.
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()

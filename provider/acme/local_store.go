@@ -188,7 +188,7 @@ func (s *LocalStore) SetHTTPChallengeToken(token, domain string, keyAuth []byte)
 		s.storedData.HTTPChallenges[token] = map[string][]byte{}
 	}
 
-	s.storedData.HTTPChallenges[token][domain] = []byte(keyAuth)
+	s.storedData.HTTPChallenges[token][domain] = keyAuth
 	return nil
 }
 

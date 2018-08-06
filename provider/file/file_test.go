@@ -241,11 +241,15 @@ func TestProvideWithWatch(t *testing.T) {
 			}
 
 			if len(test.fileContent) > 0 {
-				ioutil.WriteFile(provider.Filename, []byte(test.fileContent), 0755)
+				if err := ioutil.WriteFile(provider.Filename, []byte(test.fileContent), 0755); err != nil {
+					t.Error(err)
+				}
 			}
 
 			if len(test.traefikFileContent) > 0 {
-				ioutil.WriteFile(provider.TraefikFile, []byte(test.traefikFileContent), 0755)
+				if err := ioutil.WriteFile(provider.TraefikFile, []byte(test.traefikFileContent), 0755); err != nil {
+					t.Error(err)
+				}
 			}
 
 			if len(test.directoryContent) > 0 {

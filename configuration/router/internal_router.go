@@ -79,7 +79,9 @@ func (wm *WithMiddleware) AddRoutes(systemRouter *mux.Router) {
 	wm.router.AddRoutes(realRouter)
 
 	if len(wm.routerMiddlewares) > 0 {
-		realRouter.Walk(wrapRoute(wm.routerMiddlewares))
+		if err := realRouter.Walk(wrapRoute(wm.routerMiddlewares)); err != nil {
+			log.Error(err)
+		}
 	}
 }
 

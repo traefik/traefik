@@ -218,7 +218,8 @@ func TestHandlerOldWay(t *testing.T) {
 			require.NoError(t, err)
 			errorPageHandler.FallbackURL = "http://localhost"
 
-			errorPageHandler.PostLoad(test.errorPageForwarder)
+			err = errorPageHandler.PostLoad(test.errorPageForwarder)
+			require.NoError(t, err)
 
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(test.backendCode)

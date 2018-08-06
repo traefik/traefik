@@ -26,10 +26,10 @@ const (
 	DataTableKey key = "LogDataTable"
 
 	// CommonFormat is the common logging format (CLF)
-	CommonFormat = "common"
+	CommonFormat string = "common"
 
 	// JSONFormat is the JSON logging format
-	JSONFormat = "json"
+	JSONFormat string = "json"
 )
 
 type logHandlerParams struct {

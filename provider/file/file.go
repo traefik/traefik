@@ -76,7 +76,7 @@ func (p *Provider) BuildConfiguration() (*types.Configuration, error) {
 		return p.loadFileConfig(p.TraefikFile, false)
 	}
 
-	return nil, errors.New("Error using file configuration backend, no filename defined")
+	return nil, errors.New("error using file configuration backend, no filename defined")
 }
 
 func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationChan chan<- types.ConfigMessage, callback func(chan<- types.ConfigMessage, fsnotify.Event)) error {

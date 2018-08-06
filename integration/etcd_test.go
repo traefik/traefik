@@ -411,8 +411,9 @@ func (s *EtcdSuite) TestCommandStoreConfig(c *check.C) {
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 
-	// wait for Træfik finish without error
-	cmd.Wait()
+	// wait for traefik finish without error
+	err = cmd.Wait()
+	c.Assert(err, checker.IsNil)
 
 	// CHECK
 	checkmap := map[string]string{

@@ -35,16 +35,16 @@ func TestPrepareServerTimeouts(t *testing.T) {
 					WriteTimeout: parse.Duration(14 * time.Second),
 				},
 			},
-			expectedIdleTimeout:  time.Duration(10 * time.Second),
-			expectedReadTimeout:  time.Duration(12 * time.Second),
-			expectedWriteTimeout: time.Duration(14 * time.Second),
+			expectedIdleTimeout:  10 * time.Second,
+			expectedReadTimeout:  12 * time.Second,
+			expectedWriteTimeout: 14 * time.Second,
 		},
 		{
 			desc:                 "using defaults",
 			globalConfig:         configuration.GlobalConfiguration{},
-			expectedIdleTimeout:  time.Duration(180 * time.Second),
-			expectedReadTimeout:  time.Duration(0 * time.Second),
-			expectedWriteTimeout: time.Duration(0 * time.Second),
+			expectedIdleTimeout:  180 * time.Second,
+			expectedReadTimeout:  0 * time.Second,
+			expectedWriteTimeout: 0 * time.Second,
 		},
 	}
 
@@ -106,7 +106,7 @@ func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
 			case config := <-server.configurationValidatedChan:
 				// set the current configuration
 				// this is usually done in the processing part of the published configuration
-				// so we have to emulate the behaviour here
+				// so we have to emulate the behavior here
 				currentConfigurations := server.currentConfigurations.Get().(types.Configurations)
 				currentConfigurations[config.ProviderName] = config.Configuration
 				server.currentConfigurations.Set(currentConfigurations)

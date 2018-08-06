@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/containous/traefik/testhelpers"
+	"github.com/stretchr/testify/assert"
 	"github.com/vulcand/oxy/forward"
 	"github.com/vulcand/oxy/roundrobin"
 )
@@ -91,11 +92,13 @@ func TestRetry(t *testing.T) {
 				// See: https://stackoverflow.com/questions/528538/non-routable-ip-address/18436928#18436928
 				// We only use the port specification here because the URL is used as identifier
 				// in the load balancer and using the exact same URL would not add a new server.
-				loadBalancer.UpsertServer(testhelpers.MustParseURL("http://192.0.2.0:" + string(basePort+i)))
+				err = loadBalancer.UpsertServer(testhelpers.MustParseURL("http://192.0.2.0:" + string(basePort+i)))
+				assert.NoError(t, err)
 			}
 
 			// add the functioning server to the end of the load balancer list
-			loadBalancer.UpsertServer(testhelpers.MustParseURL(backendServer.URL))
+			err = loadBalancer.UpsertServer(testhelpers.MustParseURL(backendServer.URL))
+			assert.NoError(t, err)
 
 			retryListener := &countingRetryListener{}
 			retry := NewRetry(tc.maxRequestAttempts, loadBalancer, retryListener)
