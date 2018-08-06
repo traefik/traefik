@@ -90,6 +90,22 @@ type serverEntryPoint struct {
 	onDemandListener func(string) (*tls.Certificate, error)
 }
 
+// tcpKeepAliveListener sets TCP keep-alive timeouts on accepted
+// connections.
+type tcpKeepAliveListener struct {
+	*net.TCPListener
+}
+
+func (ln tcpKeepAliveListener) Accept() (net.Conn, error) {
+	tc, err := ln.AcceptTCP()
+	if err != nil {
+		return nil, err
+	}
+	tc.SetKeepAlive(true)
+	tc.SetKeepAlivePeriod(3 * time.Minute)
+	return tc, nil
+}
+
 // NewServer returns an initialized Server.
 func NewServer(globalConfiguration configuration.GlobalConfiguration, provider provider.Provider) *Server {
 	server := new(Server)
@@ -802,6 +818,8 @@ func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.
 		log.Error("Error opening listener ", err)
 		return nil, nil, err
 	}
+
+	listener = tcpKeepAliveListener{listener.(*net.TCPListener)}
 
 	if entryPoint.ProxyProtocol != nil {
 		IPs, err := whitelist.NewIP(entryPoint.ProxyProtocol.TrustedIPs, entryPoint.ProxyProtocol.Insecure, false)
