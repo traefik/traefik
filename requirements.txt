@@ -1,3 +1,3 @@
 mkdocs>=0.16.1,<0.17.0
-pymdown-extensions>=1.4
-mkdocs-bootswatch>=0.4.0
+pymdown-extensions==1.4
+mkdocs-bootswatch==0.4.0
