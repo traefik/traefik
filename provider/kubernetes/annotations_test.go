@@ -30,14 +30,6 @@ func TestGetAnnotationName(t *testing.T) {
 			},
 			expected: label.Prefix + annotationKubernetesPreserveHost,
 		},
-		{
-			desc: "with label",
-			name: annotationKubernetesPreserveHost,
-			annotations: map[string]string{
-				label.TraefikFrontendPassHostHeader: "true",
-			},
-			expected: label.TraefikFrontendPassHostHeader,
-		},
 	}
 
 	for _, test := range testCases {

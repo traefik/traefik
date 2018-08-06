@@ -161,7 +161,6 @@ func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
 				"frontend": {
 					EntryPoints: []string{"http"},
 					Backend:     "backend",
-					BasicAuth:   []string{""},
 				},
 			},
 			Backends: map[string]*types.Backend{
@@ -248,7 +247,11 @@ func TestReuseBackend(t *testing.T) {
 					th.WithFrontendName("frontend1"),
 					th.WithEntryPoints("http"),
 					th.WithRoutes(th.WithRoute("/unauthorized", "Path: /unauthorized")),
-					th.WithBasicAuth("foo", "bar")),
+					th.WithFrontEndAuth(&types.Auth{
+						Basic: &types.Basic{
+							Users: []string{"foo:bar"},
+						},
+					})),
 			),
 			th.WithBackends(th.WithBackendNew("backend",
 				th.WithLBMethod("wrr"),

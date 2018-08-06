@@ -32,7 +32,6 @@ const (
 	pathFrontendWhiteListSourceRange      = "/whitelist/sourcerange"
 	pathFrontendWhiteListUseXForwardedFor = "/whitelist/usexforwardedfor"
 
-	pathFrontendBasicAuth                        = "/basicauth" // Deprecated
 	pathFrontendAuth                             = "/auth/"
 	pathFrontendAuthBasic                        = pathFrontendAuth + "basic/"
 	pathFrontendAuthBasicRemoveHeader            = pathFrontendAuthBasic + "removeheader"

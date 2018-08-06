@@ -66,22 +66,6 @@ const (
 	annotationKubernetesProtocol                = "ingress.kubernetes.io/protocol"
 )
 
-// TODO [breaking] remove label support
-var compatibilityMapping = map[string]string{
-	annotationKubernetesPreserveHost:             "traefik.frontend.passHostHeader",
-	annotationKubernetesPassTLSCert:              "traefik.frontend.passTLSCert",
-	annotationKubernetesFrontendEntryPoints:      "traefik.frontend.entryPoints",
-	annotationKubernetesPriority:                 "traefik.frontend.priority",
-	annotationKubernetesCircuitBreakerExpression: "traefik.backend.circuitbreaker",
-	annotationKubernetesLoadBalancerMethod:       "traefik.backend.loadbalancer.method",
-	annotationKubernetesAffinity:                 "traefik.backend.loadbalancer.stickiness",
-	annotationKubernetesSessionCookieName:        "traefik.backend.loadbalancer.stickiness.cookieName",
-	annotationKubernetesRuleType:                 "traefik.frontend.rule.type",
-	annotationKubernetesRedirectEntryPoint:       "traefik.frontend.redirect.entrypoint",
-	annotationKubernetesRedirectRegex:            "traefik.frontend.redirect.regex",
-	annotationKubernetesRedirectReplacement:      "traefik.frontend.redirect.replacement",
-}
-
 func getAnnotationName(annotations map[string]string, name string) string {
 	if _, ok := annotations[name]; ok {
 		return name
@@ -89,13 +73,6 @@ func getAnnotationName(annotations map[string]string, name string) string {
 
 	if _, ok := annotations[label.Prefix+name]; ok {
 		return label.Prefix + name
-	}
-
-	// TODO [breaking] remove label support
-	if lbl, compat := compatibilityMapping[name]; compat {
-		if _, ok := annotations[lbl]; ok {
-			return lbl
-		}
 	}
 
 	return name

@@ -62,6 +62,10 @@ debug = true
   [frontends.frontend3]
     passHostHeader = true
     backend = "backend3"
-    basicAuth = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
+    [frontends.frontend3.auth.basic]
+      users = [
+        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+        "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+      ]
     [frontends.frontend3.routes.test_auth]
       rule = "Path:/auth"

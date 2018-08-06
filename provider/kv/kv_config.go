@@ -46,7 +46,6 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getPassHostHeader": p.getFuncBool(pathFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getPassTLSCert":    p.getFuncBool(pathFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getEntryPoints":    p.getFuncList(pathFrontendEntryPoints),
-		"getBasicAuth":      p.getFuncList(pathFrontendBasicAuth), // Deprecated
 		"getAuth":           p.getAuth,
 		"getRoutes":         p.getRoutes,
 		"getRedirect":       p.getRedirect,
@@ -320,20 +319,14 @@ func (p *Provider) getTLSSection(prefix string) []*tls.Configuration {
 	return tlsSection
 }
 
-// hasDeprecatedBasicAuth check if the frontend basic auth use the deprecated configuration
-func (p *Provider) hasDeprecatedBasicAuth(rootPath string) bool {
-	return len(p.getList(rootPath, pathFrontendBasicAuth)) > 0
-}
-
 // GetAuth Create auth from path
 func (p *Provider) getAuth(rootPath string) *types.Auth {
-	hasDeprecatedBasicAuth := p.hasDeprecatedBasicAuth(rootPath)
-	if p.hasPrefix(rootPath, pathFrontendAuth) || hasDeprecatedBasicAuth {
+	if p.hasPrefix(rootPath, pathFrontendAuth) {
 		auth := &types.Auth{
 			HeaderField: p.get("", rootPath, pathFrontendAuthHeaderField),
 		}
 
-		if p.hasPrefix(rootPath, pathFrontendAuthBasic) || hasDeprecatedBasicAuth {
+		if p.hasPrefix(rootPath, pathFrontendAuthBasic) {
 			auth.Basic = p.getAuthBasic(rootPath)
 		} else if p.hasPrefix(rootPath, pathFrontendAuthDigest) {
 			auth.Digest = p.getAuthDigest(rootPath)
@@ -348,20 +341,11 @@ func (p *Provider) getAuth(rootPath string) *types.Auth {
 
 // getAuthBasic Create Basic Auth from path
 func (p *Provider) getAuthBasic(rootPath string) *types.Basic {
-	basicAuth := &types.Basic{
+	return &types.Basic{
 		UsersFile:    p.get("", rootPath, pathFrontendAuthBasicUsersFile),
 		RemoveHeader: p.getBool(false, rootPath, pathFrontendAuthBasicRemoveHeader),
+		Users:        p.getList(rootPath, pathFrontendAuthBasicUsers),
 	}
-
-	// backward compatibility
-	if p.hasDeprecatedBasicAuth(rootPath) {
-		basicAuth.Users = p.getList(rootPath, pathFrontendBasicAuth)
-		log.Warnf("Deprecated configuration found: %s. Please use %s.", pathFrontendBasicAuth, pathFrontendAuthBasic)
-	} else {
-		basicAuth.Users = p.getList(rootPath, pathFrontendAuthBasicUsers)
-	}
-
-	return basicAuth
 }
 
 // getAuthDigest Create Digest Auth from path

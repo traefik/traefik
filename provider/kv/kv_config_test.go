@@ -131,38 +131,6 @@ func TestProviderBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "basic auth (backward compatibility)",
-			kvPairs: filler("traefik",
-				frontend("frontend",
-					withPair(pathFrontendBackend, "backend"),
-					withList(pathFrontendBasicAuth, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
-				),
-				backend("backend"),
-			),
-			expected: &types.Configuration{
-				Backends: map[string]*types.Backend{
-					"backend": {
-						LoadBalancer: &types.LoadBalancer{
-							Method: "wrr",
-						},
-					},
-				},
-				Frontends: map[string]*types.Frontend{
-					"frontend": {
-						Backend:        "backend",
-						PassHostHeader: true,
-						EntryPoints:    []string{},
-						Auth: &types.Auth{
-							Basic: &types.Basic{
-								Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
 			desc: "digest auth",
 			kvPairs: filler("traefik",
 				frontend("frontend",
@@ -281,7 +249,6 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					withList(pathFrontendWhiteListSourceRange, "1.1.1.1/24", "1234:abcd::42/32"),
 					withPair(pathFrontendWhiteListUseXForwardedFor, "true"),
 
-					withList(pathFrontendBasicAuth, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 					withPair(pathFrontendAuthBasicRemoveHeader, "true"),
 					withList(pathFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 					withPair(pathFrontendAuthBasicUsersFile, ".htpasswd"),
@@ -2164,20 +2131,6 @@ func TestProviderGetAuth(t *testing.T) {
 			},
 		},
 		{
-			desc:     "should return a valid basic auth (backward compatibility)",
-			rootPath: "traefik/frontends/foo",
-			kvPairs: filler("traefik",
-				frontend("foo",
-					withPair(pathFrontendBasicAuth, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
-				)),
-			expected: &types.Auth{
-				Basic: &types.Basic{
-					Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-						"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
-				},
-			},
-		},
-		{
 			desc:     "should return a valid digest auth",
 			rootPath: "traefik/frontends/foo",
 			kvPairs: filler("traefik",
@@ -2234,61 +2187,6 @@ func TestProviderGetAuth(t *testing.T) {
 			p := newProviderMock(test.kvPairs)
 
 			result := p.getAuth(test.rootPath)
-
-			assert.Equal(t, test.expected, result)
-		})
-	}
-}
-
-func TestProviderHasDeprecatedBasicAuth(t *testing.T) {
-	testCases := []struct {
-		desc     string
-		rootPath string
-		kvPairs  []*store.KVPair
-		expected bool
-	}{
-		{
-			desc:     "should return nil when no data",
-			expected: false,
-		},
-		{
-			desc:     "should return a valid basic auth",
-			rootPath: "traefik/frontends/foo",
-			kvPairs: filler("traefik",
-				frontend("foo",
-					withList(pathFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
-				)),
-			expected: false,
-		},
-		{
-			desc:     "should return a valid basic auth",
-			rootPath: "traefik/frontends/foo",
-			kvPairs: filler("traefik",
-				frontend("foo",
-					withList(pathFrontendBasicAuth, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
-				)),
-			expected: true,
-		},
-		{
-			desc:     "should return a valid basic auth",
-			rootPath: "traefik/frontends/foo",
-			kvPairs: filler("traefik",
-				frontend("foo",
-					withList(pathFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
-					withList(pathFrontendBasicAuth, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
-				)),
-			expected: true,
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			p := newProviderMock(test.kvPairs)
-
-			result := p.hasDeprecatedBasicAuth(test.rootPath)
 
 			assert.Equal(t, test.expected, result)
 		})

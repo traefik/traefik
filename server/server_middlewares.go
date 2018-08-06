@@ -95,19 +95,6 @@ func (s *Server) buildMiddlewares(frontendName string, frontend *types.Frontend,
 		middle = append(middle, handler)
 	}
 
-	// Basic auth
-	if len(frontend.BasicAuth) > 0 {
-		log.Debugf("Adding basic authentication for frontend %s", frontendName)
-
-		authMiddleware, err := s.buildBasicAuthMiddleware(frontend.BasicAuth)
-		if err != nil {
-			return nil, nil, nil, err
-		}
-
-		handler := s.wrapNegroniHandlerWithAccessLog(authMiddleware, fmt.Sprintf("Basic Auth for %s", frontendName))
-		middle = append(middle, handler)
-	}
-
 	// Authentication
 	if frontend.Auth != nil {
 		authMiddleware, err := mauth.NewAuthenticator(frontend.Auth, s.tracingMiddleware)
