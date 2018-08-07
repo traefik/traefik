@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -751,114 +752,92 @@ func (s *HTTPSSuite) TestEntrypointHttpsRedirectAndPathModification(c *check.C) 
 
 	testCases := []struct {
 		desc        string
-		host        string
+		host        []string
 		sourceURL   string
 		expectedURL string
 	}{
 		{
 			desc:        "Stripped URL redirect",
-			host:        "example.com",
+			host:        []string{"example.com", "foo.com", "bar.com"},
 			sourceURL:   "http://127.0.0.1:8888/api",
-			expectedURL: "https://example.com:8443/api",
+			expectedURL: "https://<HOST>:8443/api",
 		},
 		{
 			desc:        "Stripped URL with trailing slash redirect",
-			host:        "example.com",
+			host:        []string{"example.com", "example2.com", "foo.com", "foo2.com", "bar.com", "bar2.com"},
 			sourceURL:   "http://127.0.0.1:8888/api/",
-			expectedURL: "https://example.com:8443/api/",
+			expectedURL: "https://<HOST>:8443/api/",
 		},
 		{
 			desc:        "Stripped URL with double trailing slash redirect",
-			host:        "example.com",
+			host:        []string{"example.com", "example2.com", "foo.com", "foo2.com", "bar.com", "bar2.com"},
 			sourceURL:   "http://127.0.0.1:8888/api//",
-			expectedURL: "https://example.com:8443/api//",
+			expectedURL: "https://<HOST>:8443/api//",
 		},
 		{
 			desc:        "Stripped URL with path redirect",
-			host:        "example.com",
+			host:        []string{"example.com", "example2.com", "foo.com", "foo2.com", "bar.com", "bar2.com"},
 			sourceURL:   "http://127.0.0.1:8888/api/bacon",
-			expectedURL: "https://example.com:8443/api/bacon",
+			expectedURL: "https://<HOST>:8443/api/bacon",
 		},
 		{
 			desc:        "Stripped URL with path and trailing slash redirect",
-			host:        "example.com",
+			host:        []string{"example.com", "example2.com", "foo.com", "foo2.com", "bar.com", "bar2.com"},
 			sourceURL:   "http://127.0.0.1:8888/api/bacon/",
-			expectedURL: "https://example.com:8443/api/bacon/",
+			expectedURL: "https://<HOST>:8443/api/bacon/",
 		},
 		{
 			desc:        "Stripped URL with path and double trailing slash redirect",
-			host:        "example.com",
+			host:        []string{"example.com", "example2.com", "foo.com", "foo2.com", "bar.com", "bar2.com"},
 			sourceURL:   "http://127.0.0.1:8888/api/bacon//",
-			expectedURL: "https://example.com:8443/api/bacon//",
+			expectedURL: "https://<HOST>:8443/api/bacon//",
 		},
 		{
 			desc:        "Root Path with redirect",
-			host:        "test.com",
+			host:        []string{"test.com", "test2.com"},
 			sourceURL:   "http://127.0.0.1:8888/",
-			expectedURL: "https://test.com:8443/",
+			expectedURL: "https://<HOST>:8443/",
 		},
 		{
 			desc:        "Root Path with double trailing slash redirect",
-			host:        "test.com",
+			host:        []string{"test.com", "test2.com"},
 			sourceURL:   "http://127.0.0.1:8888//",
-			expectedURL: "https://test.com:8443//",
+			expectedURL: "https://<HOST>:8443//",
 		},
 		{
 			desc:        "AddPrefix with redirect",
-			host:        "test.com",
+			host:        []string{"test.com", "test2.com"},
 			sourceURL:   "http://127.0.0.1:8888/wtf",
-			expectedURL: "https://test.com:8443/wtf",
+			expectedURL: "https://<HOST>:8443/wtf",
 		},
 		{
 			desc:        "AddPrefix with trailing slash redirect",
-			host:        "test.com",
+			host:        []string{"test.com", "test2.com"},
 			sourceURL:   "http://127.0.0.1:8888/wtf/",
-			expectedURL: "https://test.com:8443/wtf/",
+			expectedURL: "https://<HOST>:8443/wtf/",
 		},
 		{
 			desc:        "AddPrefix with matching path segment redirect",
-			host:        "test.com",
+			host:        []string{"test.com", "test2.com"},
 			sourceURL:   "http://127.0.0.1:8888/wtf/foo",
-			expectedURL: "https://test.com:8443/wtf/foo",
-		},
-		{
-			desc:        "Stripped URL Regex redirect",
-			host:        "foo.com",
-			sourceURL:   "http://127.0.0.1:8888/api",
-			expectedURL: "https://foo.com:8443/api",
-		},
-		{
-			desc:        "Stripped URL Regex with trailing slash redirect",
-			host:        "foo.com",
-			sourceURL:   "http://127.0.0.1:8888/api/",
-			expectedURL: "https://foo.com:8443/api/",
-		},
-		{
-			desc:        "Stripped URL Regex with path redirect",
-			host:        "foo.com",
-			sourceURL:   "http://127.0.0.1:8888/api/bacon",
-			expectedURL: "https://foo.com:8443/api/bacon",
-		},
-		{
-			desc:        "Stripped URL Regex with path and trailing slash redirect",
-			host:        "foo.com",
-			sourceURL:   "http://127.0.0.1:8888/api/bacon/",
-			expectedURL: "https://foo.com:8443/api/bacon/",
+			expectedURL: "https://<HOST>:8443/wtf/foo",
 		},
 	}
 
 	for _, test := range testCases {
-		test := test
+		for _, subtest := range test.host {
+			req, err := http.NewRequest("GET", test.sourceURL, nil)
+			c.Assert(err, checker.IsNil)
+			req.Host = subtest
 
-		req, err := http.NewRequest("GET", test.sourceURL, nil)
-		c.Assert(err, checker.IsNil)
-		req.Host = test.host
+			resp, err := client.Do(req)
+			c.Assert(err, checker.IsNil)
+			defer resp.Body.Close()
 
-		resp, err := client.Do(req)
-		c.Assert(err, checker.IsNil)
-		defer resp.Body.Close()
+			location := resp.Header.Get("Location")
+			expected := strings.Replace(test.expectedURL, "<HOST>", subtest, 1)
 
-		location := resp.Header.Get("Location")
-		c.Assert(location, checker.Equals, test.expectedURL)
+			c.Assert(location, checker.Equals, expected)
+		}
 	}
 }
