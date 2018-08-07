@@ -13,7 +13,6 @@ import (
 	"github.com/abronan/valkeyrie/store/etcd/v3"
 	"github.com/containous/traefik/integration/try"
 	"github.com/go-check/check"
-
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -26,6 +25,13 @@ var (
 )
 
 const (
+	// Services IP addresses fixed in the configuration
+	ipEtcdDefault     = "172.18.0.2"
+	ipWhoami01Default = "172.18.0.3"
+	ipWhoami02Default = "172.18.0.4"
+	ipWhoami03Default = "172.18.0.5"
+	ipWhoami04Default = "172.18.0.6"
+
 	traefikEtcdURL    = "http://127.0.0.1:8000/"
 	traefikWebEtcdURL = "http://127.0.0.1:8081/"
 )
@@ -36,7 +42,7 @@ type Etcd3Suite struct {
 	kv store.Store
 }
 
-func (s *Etcd3Suite) getIPAddress(c *check.C, service string) string {
+func (s *Etcd3Suite) getIPAddress(c *check.C, service, defaultIP string) string {
 	var ip string
 	for _, value := range s.composeProject.Container(c, service).NetworkSettings.Networks {
 		if len(value.IPAddress) > 0 {
@@ -44,6 +50,11 @@ func (s *Etcd3Suite) getIPAddress(c *check.C, service string) string {
 			break
 		}
 	}
+
+	if len(ip) == 0 {
+		return defaultIP
+	}
+
 	return ip
 }
 
@@ -51,11 +62,11 @@ func (s *Etcd3Suite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "etcd3")
 	s.composeProject.Start(c)
 
-	ipWhoami01 = s.getIPAddress(c, "whoami1")
-	ipWhoami02 = s.getIPAddress(c, "whoami2")
-	ipWhoami03 = s.getIPAddress(c, "whoami3")
-	ipWhoami04 = s.getIPAddress(c, "whoami4")
-	ipEtcd = s.getIPAddress(c, "etcd")
+	ipWhoami01 = s.getIPAddress(c, "whoami1", ipWhoami01Default)
+	ipWhoami02 = s.getIPAddress(c, "whoami2", ipWhoami02Default)
+	ipWhoami03 = s.getIPAddress(c, "whoami3", ipWhoami03Default)
+	ipWhoami04 = s.getIPAddress(c, "whoami4", ipWhoami04Default)
+	ipEtcd = s.getIPAddress(c, "etcd", ipEtcdDefault)
 
 	etcdv3.Register()
 	url := ipEtcd + ":2379"
