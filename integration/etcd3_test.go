@@ -16,24 +16,17 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
+const (
+	traefikEtcdURL    = "http://127.0.0.1:8000/"
+	traefikWebEtcdURL = "http://127.0.0.1:8081/"
+)
+
 var (
 	ipEtcd     string
 	ipWhoami01 string
 	ipWhoami02 string
 	ipWhoami03 string
 	ipWhoami04 string
-)
-
-const (
-	// Services IP addresses fixed in the configuration
-	ipEtcdDefault     = "172.18.0.2"
-	ipWhoami01Default = "172.18.0.3"
-	ipWhoami02Default = "172.18.0.4"
-	ipWhoami03Default = "172.18.0.5"
-	ipWhoami04Default = "172.18.0.6"
-
-	traefikEtcdURL    = "http://127.0.0.1:8000/"
-	traefikWebEtcdURL = "http://127.0.0.1:8081/"
 )
 
 // Etcd test suites (using libcompose)
@@ -62,11 +55,11 @@ func (s *Etcd3Suite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "etcd3")
 	s.composeProject.Start(c)
 
-	ipWhoami01 = s.getIPAddress(c, "whoami1", ipWhoami01Default)
-	ipWhoami02 = s.getIPAddress(c, "whoami2", ipWhoami02Default)
-	ipWhoami03 = s.getIPAddress(c, "whoami3", ipWhoami03Default)
-	ipWhoami04 = s.getIPAddress(c, "whoami4", ipWhoami04Default)
-	ipEtcd = s.getIPAddress(c, "etcd", ipEtcdDefault)
+	ipEtcd = s.getIPAddress(c, "etcd", "172.18.0.2")
+	ipWhoami01 = s.getIPAddress(c, "whoami1", "172.18.0.3")
+	ipWhoami02 = s.getIPAddress(c, "whoami2", "172.18.0.4")
+	ipWhoami03 = s.getIPAddress(c, "whoami3", "172.18.0.5")
+	ipWhoami04 = s.getIPAddress(c, "whoami4", "172.18.0.6")
 
 	etcdv3.Register()
 	url := ipEtcd + ":2379"
