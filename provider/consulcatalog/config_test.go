@@ -121,6 +121,80 @@ func TestProviderBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
+			desc: "Should build config which contains three frontends and one backend",
+			nodes: []catalogUpdate{
+				{
+					Service: &serviceUpdate{
+						ServiceName: "test",
+						Attributes: []string{
+							"random.foo=bar",
+							label.Prefix + "frontend.rule=Host:A",
+							label.Prefix + "frontends.test1.rule=Host:B",
+							label.Prefix + "frontends.test2.rule=Host:C",
+						},
+					},
+					Nodes: []*api.ServiceEntry{
+						{
+							Service: &api.AgentService{
+								Service: "test",
+								Address: "127.0.0.1",
+								Port:    80,
+								Tags: []string{
+									"random.foo=bar",
+								},
+							},
+							Node: &api.Node{
+								Node:    "localhost",
+								Address: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-test": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					Routes: map[string]types.Route{
+						"route-host-test": {
+							Rule: "Host:A",
+						},
+					},
+					EntryPoints: []string{},
+				},
+				"frontend-test-test1": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					Routes: map[string]types.Route{
+						"route-host-test-test1": {
+							Rule: "Host:B",
+						},
+					},
+					EntryPoints: []string{},
+				},
+				"frontend-test-test2": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					Routes: map[string]types.Route{
+						"route-host-test-test2": {
+							Rule: "Host:C",
+						},
+					},
+					EntryPoints: []string{},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test": {
+					Servers: map[string]types.Server{
+						"test-0-O0Tnh-SwzY69M6SurTKP3wNKkzI": {
+							URL:    "http://127.0.0.1:80",
+							Weight: 1,
+						},
+					},
+				},
+			},
+		},
+		{
 			desc: "Should build config with a basic auth with a backward compatibility",
 			nodes: []catalogUpdate{
 				{
@@ -985,7 +1059,7 @@ func TestProviderGetFrontendRule(t *testing.T) {
 			labels := tagsToNeutralLabels(test.service.Attributes, p.Prefix)
 			test.service.TraefikLabels = labels
 
-			actual := p.getFrontendRule(test.service)
+			actual := p.getFrontendRule(*p.generateFrontends(&test.service)[0])
 			assert.Equal(t, test.expected, actual)
 		})
 	}

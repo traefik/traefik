@@ -53,9 +53,12 @@ func (p *Provider) buildConfiguration(catalog []catalogUpdate) *types.Configurat
 
 	var allNodes []*api.ServiceEntry
 	var services []*serviceUpdate
+	var frontends []*serviceFrontend
+
 	for _, info := range catalog {
 		if len(info.Nodes) > 0 {
 			services = append(services, info.Service)
+			frontends = append(frontends, p.generateFrontends(info.Service)...)
 			allNodes = append(allNodes, info.Nodes...)
 		}
 	}
@@ -63,11 +66,13 @@ func (p *Provider) buildConfiguration(catalog []catalogUpdate) *types.Configurat
 	sort.Sort(nodeSorter(allNodes))
 
 	templateObjects := struct {
-		Services []*serviceUpdate
-		Nodes    []*api.ServiceEntry
+		Services  []*serviceUpdate
+		Frontends []*serviceFrontend
+		Nodes     []*api.ServiceEntry
 	}{
-		Services: services,
-		Nodes:    allNodes,
+		Services:  services,
+		Frontends: frontends,
+		Nodes:     allNodes,
 	}
 
 	configuration, err := p.GetConfiguration("templates/consul_catalog.tmpl", funcMap, templateObjects)
@@ -80,7 +85,7 @@ func (p *Provider) buildConfiguration(catalog []catalogUpdate) *types.Configurat
 
 // Specific functions
 
-func (p *Provider) getFrontendRule(service serviceUpdate) string {
+func (p *Provider) getFrontendRule(service serviceFrontend) string {
 	customFrontendRule := label.GetStringValue(service.TraefikLabels, label.TraefikFrontendRule, "")
 	if customFrontendRule == "" {
 		customFrontendRule = p.FrontEndRule

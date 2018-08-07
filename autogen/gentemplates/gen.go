@@ -117,10 +117,10 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
 {{end}}
 
 [frontends]
-{{range $service := .Services}}
+{{range $service := .Frontends}}
 
-  [frontends."frontend-{{ $service.ServiceName }}"]
-    backend = "backend-{{ getServiceBackendName $service }}"
+  [frontends."frontend-{{ $service.FrontendName }}"]
+    backend = "backend-{{ $service.BackendName }}"
     priority = {{ getPriority $service.TraefikLabels }}
     passHostHeader = {{ getPassHostHeader $service.TraefikLabels }}
     passTLSCert = {{ getPassTLSCert $service.TraefikLabels }}
@@ -132,16 +132,16 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
     {{ $auth := getAuth $service.TraefikLabels }}
 
     {{if $auth }}
-    [frontends."frontend-{{ $service.ServiceName }}".auth]
+    [frontends."frontend-{{ $service.FrontendName }}".auth]
       headerField = "{{ $auth.HeaderField }}"
 
       {{if $auth.Forward }}
-      [frontends."frontend-{{ $service.ServiceName }}".auth.forward]
+      [frontends."frontend-{{ $service.FrontendName }}".auth.forward]
         address = "{{ $auth.Forward.Address }}"
         trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
 
         {{if $auth.Forward.TLS }}
-        [frontends."frontend-{{ $service.ServiceName }}".auth.forward.tls]
+        [frontends."frontend-{{ $service.FrontendName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
           cert = "{{ $auth.Forward.TLS.Cert }}"
@@ -151,7 +151,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
       {{end}}
 
       {{if $auth.Basic }}
-      [frontends."frontend-{{ $service.ServiceName }}".auth.basic]
+      [frontends."frontend-{{ $service.FrontendName }}".auth.basic]
         removeHeader = {{ $auth.Basic.RemoveHeader }}
         {{if $auth.Basic.Users }}
         users = [{{range $auth.Basic.Users }}
@@ -162,7 +162,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
       {{end}}
 
       {{if $auth.Digest }}
-      [frontends."frontend-{{ $service.ServiceName }}".auth.digest]
+      [frontends."frontend-{{ $service.FrontendName }}".auth.digest]
         removeHeader = {{ $auth.Digest.RemoveHeader }}
         {{if $auth.Digest.Users }}
         users = [{{range $auth.Digest.Users }}
@@ -175,7 +175,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
 
     {{ $whitelist := getWhiteList $service.TraefikLabels }}
     {{if $whitelist }}
-    [frontends."frontend-{{ $service.ServiceName }}".whiteList]
+    [frontends."frontend-{{ $service.FrontendName }}".whiteList]
       sourceRange = [{{range $whitelist.SourceRange }}
         "{{.}}",
         {{end}}]
@@ -184,7 +184,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
 
     {{ $redirect := getRedirect $service.TraefikLabels }}
     {{if $redirect }}
-    [frontends."frontend-{{ $service.ServiceName }}".redirect]
+    [frontends."frontend-{{ $service.FrontendName }}".redirect]
       entryPoint = "{{ $redirect.EntryPoint }}"
       regex = "{{ $redirect.Regex }}"
       replacement = "{{ $redirect.Replacement }}"
@@ -193,9 +193,9 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
 
     {{ $errorPages := getErrorPages $service.TraefikLabels }}
     {{if $errorPages }}
-    [frontends."frontend-{{ $service.ServiceName }}".errors]
+    [frontends."frontend-{{ $service.FrontendName }}".errors]
       {{range $pageName, $page := $errorPages }}
-      [frontends."frontend-{{ $service.ServiceName }}".errors."{{ $pageName }}"]
+      [frontends."frontend-{{ $service.FrontendName }}".errors."{{ $pageName }}"]
         status = [{{range $page.Status }}
           "{{.}}",
           {{end}}]
@@ -206,11 +206,11 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
 
     {{ $rateLimit := getRateLimit $service.TraefikLabels }}
     {{if $rateLimit }}
-    [frontends."frontend-{{ $service.ServiceName }}".rateLimit]
+    [frontends."frontend-{{ $service.FrontendName }}".rateLimit]
       extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
-      [frontends."frontend-{{ $service.ServiceName }}".rateLimit.rateSet]
+      [frontends."frontend-{{ $service.FrontendName }}".rateLimit.rateSet]
         {{ range $limitName, $limit := $rateLimit.RateSet }}
-        [frontends."frontend-{{ $service.ServiceName }}".rateLimit.rateSet."{{ $limitName }}"]
+        [frontends."frontend-{{ $service.FrontendName }}".rateLimit.rateSet."{{ $limitName }}"]
           period = "{{ $limit.Period }}"
           average = {{ $limit.Average }}
           burst = {{ $limit.Burst }}
@@ -219,7 +219,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
 
     {{ $headers := getHeaders $service.TraefikLabels }}
     {{if $headers }}
-    [frontends."frontend-{{ $service.ServiceName }}".headers]
+    [frontends."frontend-{{ $service.FrontendName }}".headers]
       SSLRedirect = {{ $headers.SSLRedirect }}
       SSLTemporaryRedirect = {{ $headers.SSLTemporaryRedirect }}
       SSLHost = "{{ $headers.SSLHost }}"
@@ -251,32 +251,31 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
       {{end}}
 
       {{if $headers.CustomRequestHeaders }}
-      [frontends."frontend-{{ $service.ServiceName }}".headers.customRequestHeaders]
+      [frontends."frontend-{{ $service.FrontendName }}".headers.customRequestHeaders]
         {{range $k, $v := $headers.CustomRequestHeaders }}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
 
       {{if $headers.CustomResponseHeaders }}
-      [frontends."frontend-{{ $service.ServiceName }}".headers.customResponseHeaders]
+      [frontends."frontend-{{ $service.FrontendName }}".headers.customResponseHeaders]
         {{range $k, $v := $headers.CustomResponseHeaders }}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
 
       {{if $headers.SSLProxyHeaders }}
-      [frontends."frontend-{{ $service.ServiceName }}".headers.SSLProxyHeaders]
+      [frontends."frontend-{{ $service.FrontendName }}".headers.SSLProxyHeaders]
         {{range $k, $v := $headers.SSLProxyHeaders}}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
     {{end}}
 
-    [frontends."frontend-{{ $service.ServiceName }}".routes."route-host-{{ $service.ServiceName }}"]
+    [frontends."frontend-{{ $service.FrontendName }}".routes."route-host-{{ $service.FrontendName }}"]
       rule = "{{ getFrontendRule $service }}"
 
-{{end}}
-`)
+{{end}}`)
 
 func templatesConsul_catalogTmplBytes() ([]byte, error) {
 	return _templatesConsul_catalogTmpl, nil
