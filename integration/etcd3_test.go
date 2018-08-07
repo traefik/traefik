@@ -13,20 +13,20 @@ import (
 	"github.com/abronan/valkeyrie/store/etcd/v3"
 	"github.com/containous/traefik/integration/try"
 	"github.com/go-check/check"
-
 	checker "github.com/vdemeester/shakers"
 )
 
 const (
-	// Services IP addresses fixed in the configuration
-	ipEtcd     = "172.18.0.2"
-	ipWhoami01 = "172.18.0.3"
-	ipWhoami02 = "172.18.0.4"
-	ipWhoami03 = "172.18.0.5"
-	ipWhoami04 = "172.18.0.6"
-
 	traefikEtcdURL    = "http://127.0.0.1:8000/"
 	traefikWebEtcdURL = "http://127.0.0.1:8081/"
+)
+
+var (
+	ipEtcd     string
+	ipWhoami01 string
+	ipWhoami02 string
+	ipWhoami03 string
+	ipWhoami04 string
 )
 
 // Etcd test suites (using libcompose)
@@ -35,9 +35,31 @@ type Etcd3Suite struct {
 	kv store.Store
 }
 
-func (s *Etcd3Suite) SetUpTest(c *check.C) {
+func (s *Etcd3Suite) getIPAddress(c *check.C, service, defaultIP string) string {
+	var ip string
+	for _, value := range s.composeProject.Container(c, service).NetworkSettings.Networks {
+		if len(value.IPAddress) > 0 {
+			ip = value.IPAddress
+			break
+		}
+	}
+
+	if len(ip) == 0 {
+		return defaultIP
+	}
+
+	return ip
+}
+
+func (s *Etcd3Suite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "etcd3")
 	s.composeProject.Start(c)
+
+	ipEtcd = s.getIPAddress(c, "etcd", "172.18.0.2")
+	ipWhoami01 = s.getIPAddress(c, "whoami1", "172.18.0.3")
+	ipWhoami02 = s.getIPAddress(c, "whoami2", "172.18.0.4")
+	ipWhoami03 = s.getIPAddress(c, "whoami3", "172.18.0.5")
+	ipWhoami04 = s.getIPAddress(c, "whoami4", "172.18.0.6")
 
 	etcdv3.Register()
 	url := ipEtcd + ":2379"
@@ -49,7 +71,7 @@ func (s *Etcd3Suite) SetUpTest(c *check.C) {
 		},
 	)
 	if err != nil {
-		c.Fatal("Cannot create store etcd")
+		c.Fatalf("Cannot create store etcd %v", err)
 	}
 	s.kv = kv
 
@@ -62,21 +84,22 @@ func (s *Etcd3Suite) SetUpTest(c *check.C) {
 }
 
 func (s *Etcd3Suite) TearDownTest(c *check.C) {
+	// Delete all Traefik keys from ETCD
+	s.kv.DeleteTree("/traefik")
+}
+
+func (s *Etcd3Suite) TearDownSuite(c *check.C) {
 	// shutdown and delete compose project
 	if s.composeProject != nil {
 		s.composeProject.Stop(c)
 	}
 }
 
-func (s *Etcd3Suite) TearDownSuite(c *check.C) {}
-
 func (s *Etcd3Suite) TestSimpleConfiguration(c *check.C) {
 	file := s.adaptFile(c, "fixtures/etcd/simple.toml", struct {
 		EtcdHost string
-		UseAPIV3 bool
 	}{
 		ipEtcd,
-		true,
 	})
 	defer os.Remove(file)
 
@@ -95,10 +118,8 @@ func (s *Etcd3Suite) TestSimpleConfiguration(c *check.C) {
 func (s *Etcd3Suite) TestNominalConfiguration(c *check.C) {
 	file := s.adaptFile(c, "fixtures/etcd/simple.toml", struct {
 		EtcdHost string
-		UseAPIV3 bool
 	}{
 		ipEtcd,
-		true,
 	})
 	defer os.Remove(file)
 
@@ -219,8 +240,7 @@ func (s *Etcd3Suite) TestGlobalConfiguration(c *check.C) {
 	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/simple_web.toml"),
 		"--etcd",
-		"--etcd.endpoint="+ipEtcd+":4001",
-		"--etcd.useAPIV3=true")
+		"--etcd.endpoint="+ipEtcd+":4001")
 	defer display(c)
 	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
@@ -294,8 +314,7 @@ func (s *Etcd3Suite) TestCertificatesContentWithSNIConfigHandshake(c *check.C) {
 	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/simple_web.toml"),
 		"--etcd",
-		"--etcd.endpoint="+ipEtcd+":4001",
-		"--etcd.useAPIV3=true")
+		"--etcd.endpoint="+ipEtcd+":4001")
 	defer display(c)
 
 	// Copy the contents of the certificate files into ETCD
@@ -397,8 +416,7 @@ func (s *Etcd3Suite) TestCommandStoreConfig(c *check.C) {
 	cmd, display := s.traefikCmd(
 		"storeconfig",
 		withConfigFile("fixtures/simple_web.toml"),
-		"--etcd.endpoint="+ipEtcd+":4001",
-		"--etcd.useAPIV3=true")
+		"--etcd.endpoint="+ipEtcd+":4001")
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
@@ -433,8 +451,7 @@ func (s *Etcd3Suite) TestSNIDynamicTlsConfig(c *check.C) {
 	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/etcd/simple_https.toml"),
 		"--etcd",
-		"--etcd.endpoint="+ipEtcd+":4001",
-		"--etcd.useAPIV3=true")
+		"--etcd.endpoint="+ipEtcd+":4001")
 	defer display(c)
 
 	snitestComCert, err := ioutil.ReadFile("fixtures/https/snitest.com.cert")
@@ -571,8 +588,7 @@ func (s *Etcd3Suite) TestDeleteSNIDynamicTlsConfig(c *check.C) {
 	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/etcd/simple_https.toml"),
 		"--etcd",
-		"--etcd.endpoint="+ipEtcd+":4001",
-		"--etcd.useAPIV3=true")
+		"--etcd.endpoint="+ipEtcd+":4001")
 	defer display(c)
 
 	// prepare to config

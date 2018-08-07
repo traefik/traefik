@@ -152,7 +152,6 @@
     "store",
     "store/boltdb",
     "store/consul",
-    "store/etcd/v2",
     "store/etcd/v3",
     "store/zookeeper"
   ]
@@ -290,25 +289,15 @@
   name = "github.com/coreos/etcd"
   packages = [
     "auth/authpb",
-    "client",
     "clientv3",
     "clientv3/concurrency",
     "etcdserver/api/v3rpc/rpctypes",
     "etcdserver/etcdserverpb",
     "mvcc/mvccpb",
-    "pkg/pathutil",
-    "pkg/srv",
-    "pkg/types",
-    "version"
+    "pkg/types"
   ]
   revision = "70c8726202dd91e482fb4029fd14af1d4ed1d5af"
   version = "v3.3.5"
-
-[[projects]]
-  name = "github.com/coreos/go-semver"
-  packages = ["semver"]
-  revision = "8ab6407b697782a06568d4b7f1db25550ec2e4c6"
-  version = "v0.2.0"
 
 [[projects]]
   name = "github.com/coreos/go-systemd"
@@ -1239,12 +1228,6 @@
   version = "v1.5.0"
 
 [[projects]]
-  name = "github.com/ugorji/go"
-  packages = ["codec"]
-  revision = "b4c50a2b199d93b13dc15e78929cfb23bfdf21ab"
-  version = "v1.1.1"
-
-[[projects]]
   name = "github.com/unrolled/render"
   packages = ["."]
   revision = "50716a0a853771bb36bfce61a45cdefdb98c2e6e"
@@ -1769,6 +1752,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0b453fff40221eb9d779eeb4ad75fc076e8cbd93c1ecf058f4b9411d4afddf68"
+  inputs-digest = "8eb11befb583dfb89320dd7b7aea9e54b40e0523e60e66ed418788394b873d44"
   solver-name = "gps-cdcl"
   solver-version = 1

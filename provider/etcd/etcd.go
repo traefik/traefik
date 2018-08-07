@@ -4,9 +4,7 @@ import (
 	"fmt"
 
 	"github.com/abronan/valkeyrie/store"
-	"github.com/abronan/valkeyrie/store/etcd/v2"
 	"github.com/abronan/valkeyrie/store/etcd/v3"
-	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/provider/kv"
 	"github.com/containous/traefik/safe"
@@ -18,7 +16,6 @@ var _ provider.Provider = (*Provider)(nil)
 // Provider holds configurations of the provider.
 type Provider struct {
 	kv.Provider `mapstructure:",squash" export:"true"`
-	UseAPIV3    bool `description:"Use ETCD API V3" export:"true"`
 }
 
 // Init the provider
@@ -45,14 +42,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 // CreateStore creates the KV store
 func (p *Provider) CreateStore() (store.Store, error) {
-	if p.UseAPIV3 {
-		etcdv3.Register()
-		p.SetStoreType(store.ETCDV3)
-	} else {
-		// TODO: Deprecated
-		log.Warn("The ETCD API V2 is deprecated. Please use API V3 instead")
-		etcd.Register()
-		p.SetStoreType(store.ETCD)
-	}
+	etcdv3.Register()
+	p.SetStoreType(store.ETCDV3)
 	return p.Provider.CreateStore()
 }
