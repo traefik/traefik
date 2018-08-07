@@ -741,7 +741,7 @@ func (s *HTTPSSuite) TestEntrypointHttpsRedirectAndPathModification(c *check.C) 
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 500*time.Millisecond, try.BodyContains("Host: example.com"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1000*time.Millisecond, try.BodyContains("Host: example.com"))
 	c.Assert(err, checker.IsNil)
 
 	client := &http.Client{

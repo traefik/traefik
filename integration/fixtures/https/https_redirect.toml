@@ -58,3 +58,13 @@ defaultEntryPoints = ["http", "https"]
   backend = "backend1"
     [frontends.frontend8.routes.test_1]
     rule = "Host: bar2.com; ReplacePathRegex: /api/ /"
+
+   [frontends.frontend9]
+  backend = "backend1"
+    [frontends.frontend9.routes.test_1]
+    rule = "Host: pow.com; ReplacePath: /api"
+   [frontends.frontend10]
+  backend = "backend1"
+    [frontends.frontend10.routes.test_1]
+    rule = "Host: pow2.com; ReplacePath: /api/"
+
