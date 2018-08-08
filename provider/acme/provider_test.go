@@ -8,6 +8,7 @@ import (
 	traefiktls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/xenolf/lego/acme"
 )
 
 func TestGetUncheckedCertificates(t *testing.T) {
@@ -559,6 +560,85 @@ func TestUseBackOffToObtainCertificate(t *testing.T) {
 
 			actualResponse := acmeProvider.useCertificateWithRetry(test.domains)
 			assert.Equal(t, test.expectedResponse, actualResponse, "unexpected response to use backOff")
+		})
+	}
+}
+
+func TestInitAccount(t *testing.T) {
+	testCases := []struct {
+		desc            string
+		account         *Account
+		email           string
+		keyType         string
+		expectedAccount *Account
+	}{
+		{
+			desc: "Existing account with all information",
+			account: &Account{
+				Email:   "foo@foo.net",
+				KeyType: acme.EC256,
+			},
+			expectedAccount: &Account{
+				Email:   "foo@foo.net",
+				KeyType: acme.EC256,
+			},
+		},
+		{
+			desc:    "Account nil",
+			email:   "foo@foo.net",
+			keyType: "EC256",
+			expectedAccount: &Account{
+				Email:   "foo@foo.net",
+				KeyType: acme.EC256,
+			},
+		},
+		{
+			desc: "Existing account with no email",
+			account: &Account{
+				KeyType: acme.RSA4096,
+			},
+			email:   "foo@foo.net",
+			keyType: "EC256",
+			expectedAccount: &Account{
+				Email:   "foo@foo.net",
+				KeyType: acme.EC256,
+			},
+		},
+		{
+			desc: "Existing account with no key type",
+			account: &Account{
+				Email: "foo@foo.net",
+			},
+			email:   "bar@foo.net",
+			keyType: "EC256",
+			expectedAccount: &Account{
+				Email:   "foo@foo.net",
+				KeyType: acme.EC256,
+			},
+		},
+		{
+			desc: "Existing account and provider with no key type",
+			account: &Account{
+				Email: "foo@foo.net",
+			},
+			email: "bar@foo.net",
+			expectedAccount: &Account{
+				Email:   "foo@foo.net",
+				KeyType: acme.RSA4096,
+			},
+		},
+	}
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			acmeProvider := Provider{account: test.account, Configuration: &Configuration{Email: test.email, KeyType: test.keyType}}
+
+			actualAccount, err := acmeProvider.initAccount()
+			assert.Nil(t, err, "Init account in error")
+			assert.Equal(t, test.expectedAccount.Email, actualAccount.Email, "unexpected email account")
+			assert.Equal(t, test.expectedAccount.KeyType, actualAccount.KeyType, "unexpected keyType account")
 		})
 	}
 }
