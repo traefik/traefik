@@ -245,16 +245,17 @@ There are some significant differences between using Deployments and DaemonSets:
     command line, surround the variable with parenthesis to defer expansion,
     as explained in the official Kubernetes documentation:
     [Define a Command and Arguments for a Container -> Use environment variables to define arguments](https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#use-environment-variables-to-define-arguments).
-    Example to set the log level with an environment variable:
-    ```yaml
-    env:
-    - name: CUSTOM_LOG_LEVEL
-      value: DEBUG
-    args:
-    - --api
-    - --kubernetes
-    - --logLevel=$(CUSTOM_LOG_LEVEL)
-    ```
+
+    Examples where `CUSTOM_LOG_LEVEL` is the environment variable providing
+    the log level:
+
+    `args:`
+
+    `- --logLevel=$(CUSTOM_LOG_LEVEL)`
+
+    or with the "array of strings" usage instead of the YAML list:
+
+    `args: ["--logLevel=$(CUSTOM_LOG_LEVEL)"]`
 
 ### Check the Pods
 
