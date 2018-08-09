@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/BurntSushi/ty/fun"
@@ -40,27 +41,29 @@ var (
 // ACME allows to connect to lets encrypt and retrieve certs
 // Deprecated Please use provider/acme/Provider
 type ACME struct {
-	Email                 string                      `description:"Email address used for registration"`
-	Domains               []types.Domain              `description:"SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='main.net,san1.net,san2.net'"`
-	Storage               string                      `description:"File or key used for certificates storage."`
-	StorageFile           string                      // Deprecated
-	OnDemand              bool                        `description:"(Deprecated) Enable on demand certificate generation. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."` // Deprecated
-	OnHostRule            bool                        `description:"Enable certificate generation on frontends Host rules."`
-	CAServer              string                      `description:"CA server to use."`
-	EntryPoint            string                      `description:"Entrypoint to proxy acme challenge to."`
-	DNSChallenge          *acmeprovider.DNSChallenge  `description:"Activate DNS-01 Challenge"`
-	HTTPChallenge         *acmeprovider.HTTPChallenge `description:"Activate HTTP-01 Challenge"`
-	DNSProvider           string                      `description:"(Deprecated) Activate DNS-01 Challenge"`                                                                    // Deprecated
-	DelayDontCheckDNS     flaeg.Duration              `description:"(Deprecated) Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."` // Deprecated
-	ACMELogging           bool                        `description:"Enable debug logging of ACME actions."`
-	client                *acme.Client
-	defaultCertificate    *tls.Certificate
-	store                 cluster.Store
-	challengeHTTPProvider *challengeHTTPProvider
-	checkOnDemandDomain   func(domain string) bool
-	jobs                  *channels.InfiniteChannel
-	TLSConfig             *tls.Config `description:"TLS config in case wildcard certs are used"`
-	dynamicCerts          *safe.Safe
+	Email                        string                      `description:"Email address used for registration"`
+	Domains                      []types.Domain              `description:"SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='main.net,san1.net,san2.net'"`
+	Storage                      string                      `description:"File or key used for certificates storage."`
+	StorageFile                  string                      // Deprecated
+	OnDemand                     bool                        `description:"(Deprecated) Enable on demand certificate generation. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."` // Deprecated
+	OnHostRule                   bool                        `description:"Enable certificate generation on frontends Host rules."`
+	CAServer                     string                      `description:"CA server to use."`
+	EntryPoint                   string                      `description:"Entrypoint to proxy acme challenge to."`
+	DNSChallenge                 *acmeprovider.DNSChallenge  `description:"Activate DNS-01 Challenge"`
+	HTTPChallenge                *acmeprovider.HTTPChallenge `description:"Activate HTTP-01 Challenge"`
+	DNSProvider                  string                      `description:"(Deprecated) Activate DNS-01 Challenge"`                                                                    // Deprecated
+	DelayDontCheckDNS            flaeg.Duration              `description:"(Deprecated) Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."` // Deprecated
+	ACMELogging                  bool                        `description:"Enable debug logging of ACME actions."`
+	client                       *acme.Client
+	defaultCertificate           *tls.Certificate
+	store                        cluster.Store
+	challengeHTTPProvider        *challengeHTTPProvider
+	checkOnDemandDomain          func(domain string) bool
+	jobs                         *channels.InfiniteChannel
+	TLSConfig                    *tls.Config `description:"TLS config in case wildcard certs are used"`
+	dynamicCerts                 *safe.Safe
+	currentlyResolvedDomains     map[string]struct{}
+	currentlyResolvedDomainMutex sync.Mutex
 }
 
 func (a *ACME) init() error {
@@ -81,6 +84,10 @@ func (a *ACME) init() error {
 	a.defaultCertificate = cert
 
 	a.jobs = channels.NewInfiniteChannel()
+
+	// Init the currently resolved domain map
+	a.currentlyResolvedDomains = make(map[string]struct{})
+
 	return nil
 }
 
@@ -502,6 +509,15 @@ func (a *ACME) LoadCertificateForDomains(domains []string) {
 		if len(uncheckedDomains) == 0 {
 			return
 		}
+
+		defer func() {
+			a.currentlyResolvedDomainMutex.Lock()
+			defer a.currentlyResolvedDomainMutex.Unlock()
+			for _, domain := range uncheckedDomains {
+				delete(a.currentlyResolvedDomains, domain)
+			}
+		}()
+
 		certificate, err := a.getDomainsCertificates(uncheckedDomains)
 		if err != nil {
 			log.Errorf("Error getting ACME certificates %+v : %v", uncheckedDomains, err)
@@ -568,6 +584,9 @@ func searchProvidedCertificateForDomains(domain string, certs map[string]*tls.Ce
 // Get provided certificate which check a domains list (Main and SANs)
 // from static and dynamic provided certificates
 func (a *ACME) getUncheckedDomains(domains []string, account *Account) []string {
+	a.currentlyResolvedDomainMutex.Lock()
+	defer a.currentlyResolvedDomainMutex.Unlock()
+
 	log.Debugf("Looking for provided certificate to validate %s...", domains)
 	allCerts := make(map[string]*tls.Certificate)
 
@@ -590,6 +609,13 @@ func (a *ACME) getUncheckedDomains(domains []string, account *Account) []string 
 		}
 	}
 
+	// Get currently resolved domains
+	for domain := range a.currentlyResolvedDomains {
+		if _, ok := allCerts[domain]; !ok {
+			allCerts[domain] = &tls.Certificate{}
+		}
+	}
+
 	// Get Configuration Domains
 	for i := 0; i < len(a.Domains); i++ {
 		allCerts[a.Domains[i].Main] = &tls.Certificate{}
@@ -598,7 +624,14 @@ func (a *ACME) getUncheckedDomains(domains []string, account *Account) []string 
 		}
 	}
 
-	return searchUncheckedDomains(domains, allCerts)
+	uncheckedDomains := searchUncheckedDomains(domains, allCerts)
+
+	// Add unchecked domains to the list of domains currently resolved
+	for _, domain := range uncheckedDomains {
+		a.currentlyResolvedDomains[domain] = struct{}{}
+	}
+
+	return uncheckedDomains
 }
 
 func searchUncheckedDomains(domains []string, certs map[string]*tls.Certificate) []string {

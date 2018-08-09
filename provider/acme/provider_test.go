@@ -23,12 +23,13 @@ func TestGetUncheckedCertificates(t *testing.T) {
 	domainSafe.Set(domainMap)
 
 	testCases := []struct {
-		desc             string
-		dynamicCerts     *safe.Safe
-		staticCerts      map[string]*tls.Certificate
-		acmeCertificates []*Certificate
-		domains          []string
-		expectedDomains  []string
+		desc                     string
+		dynamicCerts             *safe.Safe
+		staticCerts              map[string]*tls.Certificate
+		currentlyResolvedDomains map[string]struct{}
+		acmeCertificates         []*Certificate
+		domains                  []string
+		expectedDomains          []string
 	}{
 		{
 			desc:            "wildcard to generate",
@@ -138,17 +139,55 @@ func TestGetUncheckedCertificates(t *testing.T) {
 			},
 			expectedDomains: []string{"traefik.wtf"},
 		},
+		{
+			desc:    "all domains already managed by ACME",
+			domains: []string{"traefik.wtf", "foo.traefik.wtf"},
+			currentlyResolvedDomains: map[string]struct{}{
+				"traefik.wtf":     {},
+				"foo.traefik.wtf": {},
+			},
+			expectedDomains: []string{},
+		},
+		{
+			desc:    "one domain already managed by ACME",
+			domains: []string{"traefik.wtf", "foo.traefik.wtf"},
+			currentlyResolvedDomains: map[string]struct{}{
+				"traefik.wtf": {},
+			},
+			expectedDomains: []string{"foo.traefik.wtf"},
+		},
+		{
+			desc:    "wildcard domain already managed by ACME checks the domains",
+			domains: []string{"bar.traefik.wtf", "foo.traefik.wtf"},
+			currentlyResolvedDomains: map[string]struct{}{
+				"*.traefik.wtf": {},
+			},
+			expectedDomains: []string{},
+		},
+		{
+			desc:    "wildcard domain already managed by ACME checks domains and another domain checks one other domain, one domain still unchecked",
+			domains: []string{"traefik.wtf", "bar.traefik.wtf", "foo.traefik.wtf", "acme.wtf"},
+			currentlyResolvedDomains: map[string]struct{}{
+				"*.traefik.wtf": {},
+				"traefik.wtf":   {},
+			},
+			expectedDomains: []string{"acme.wtf"},
+		},
 	}
 
 	for _, test := range testCases {
 		test := test
+		if test.currentlyResolvedDomains == nil {
+			test.currentlyResolvedDomains = make(map[string]struct{})
+		}
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
 			acmeProvider := Provider{
-				dynamicCerts: test.dynamicCerts,
-				staticCerts:  test.staticCerts,
-				certificates: test.acmeCertificates,
+				dynamicCerts:             test.dynamicCerts,
+				staticCerts:              test.staticCerts,
+				certificates:             test.acmeCertificates,
+				currentlyResolvedDomains: test.currentlyResolvedDomains,
 			}
 
 			domains := acmeProvider.getUncheckedDomains(test.domains, false)
