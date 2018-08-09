@@ -239,6 +239,23 @@ There are some significant differences between using Deployments and DaemonSets:
 - The DaemonSet automatically scales to all nodes that meets a specific selector and guarantees to fill nodes one at a time.
     Rolling updates are fully supported from Kubernetes 1.7 for DaemonSets as well.
 
+
+!!! note
+    If you want to pass environment variables (or secrets) to Traefik's
+    command line, surround the variable with parenthesis to defer expansion,
+    as explained in the official Kubernetes documentation:
+    [Define a Command and Arguments for a Container -> Use environment variables to define arguments](https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#use-environment-variables-to-define-arguments).
+    Example to set the log level with an environment variable:
+    ```yaml
+    env:
+    - name: CUSTOM_LOG_LEVEL
+      value: DEBUG
+    args:
+    - --api
+    - --kubernetes
+    - --logLevel=$(CUSTOM_LOG_LEVEL)
+    ```
+
 ### Check the Pods
 
 Now lets check if our command was successful.
