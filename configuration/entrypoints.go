@@ -20,6 +20,7 @@ type EntryPoint struct {
 	Compress             *Compress         `export:"true"`
 	ProxyProtocol        *ProxyProtocol    `export:"true"`
 	ForwardedHeaders     *ForwardedHeaders `export:"true"`
+	RemoveHeaders        []string          `export:"true"`
 }
 
 // Compress contains compress configuration
@@ -69,8 +70,13 @@ func (ep *EntryPoints) Set(value string) error {
 	result := parseEntryPointsConfiguration(value)
 
 	var whiteListSourceRange []string
+	var removeHeaders []string
 	if len(result["whitelistsourcerange"]) > 0 {
 		whiteListSourceRange = strings.Split(result["whitelistsourcerange"], ",")
+	}
+
+	if len(result["removeheaders"]) > 0 {
+		removeHeaders = strings.Split(result["removeheaders"], ",")
 	}
 
 	var compress *Compress
@@ -78,7 +84,7 @@ func (ep *EntryPoints) Set(value string) error {
 		compress = &Compress{}
 	}
 
-	configTLS, err := makeEntryPointTLS(result)
+  configTLS, err := makeEntryPointTLS(result)
 	if err != nil {
 		return err
 	}
@@ -93,6 +99,7 @@ func (ep *EntryPoints) Set(value string) error {
 		WhiteList:            makeWhiteList(result),
 		ProxyProtocol:        makeEntryPointProxyProtocol(result),
 		ForwardedHeaders:     makeEntryPointForwardedHeaders(result),
+		HeHeaders:        removeHeaders,
 	}
 
 	return nil

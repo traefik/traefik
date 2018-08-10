@@ -192,6 +192,7 @@ func TestEntryPoints_Set(t *testing.T) {
 				"Redirect.Permanent:true " +
 				"Compress:true " +
 				"ProxyProtocol.TrustedIPs:192.168.0.1 " +
+				"RemoveHeaders:X-Header-Remove1,X-Header-Remove2 " +
 				"ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24 " +
 				"Auth.Basic.Users:test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0 " +
 				"Auth.Basic.RemoveHeader:true " +
@@ -270,6 +271,10 @@ func TestEntryPoints_Set(t *testing.T) {
 					"152.89.1.33/32",
 					"afed:be44::/16",
 				},
+				RemoveHeaders: []string{
+					"X-Header-Remove1",
+					"X-Header-Remove2",
+				},
 				WhiteList: &types.WhiteList{
 					SourceRange: []string{
 						"10.42.0.0/16",
@@ -309,6 +314,7 @@ func TestEntryPoints_Set(t *testing.T) {
 				"compress:true " +
 				"whiteListSourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16 " +
 				"proxyProtocol.TrustedIPs:192.168.0.1 " +
+				"removeHeaders:X-Header-Remove1,X-Header-Remove2 " +
 				"forwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24 " +
 				"auth.basic.users:test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0 " +
 				"auth.digest.users:test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e " +
@@ -379,6 +385,10 @@ func TestEntryPoints_Set(t *testing.T) {
 					"10.42.0.0/16",
 					"152.89.1.33/32",
 					"afed:be44::/16",
+				},
+				RemoveHeaders: []string{
+					"X-Header-Remove1",
+					"X-Header-Remove2",
 				},
 				Compress: &Compress{},
 				ProxyProtocol: &ProxyProtocol{

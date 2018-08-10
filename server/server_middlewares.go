@@ -103,7 +103,7 @@ func (s *Server) buildMiddlewares(frontendName string, frontend *types.Frontend,
 		middle = append(middle, handler)
 	}
 
-	return middle, buildModifyResponse(secureMiddleware, headerMiddleware), postConfig, nil
+	return middle, buildModifyResponse(secureMiddleware, headerMiddleware, entryPoint.RemoveHeaders), postConfig, nil
 }
 
 func (s *Server) buildServerEntryPointMiddlewares(serverEntryPointName string) ([]negroni.Handler, error) {
@@ -296,7 +296,7 @@ func (s *Server) wrapHTTPHandlerWithAccessLog(handler http.Handler, frontendName
 	return handler
 }
 
-func buildModifyResponse(secure *secure.Secure, header *middlewares.HeaderStruct) func(res *http.Response) error {
+func buildModifyResponse(secure *secure.Secure, header *middlewares.HeaderStruct, removeHeaders []string) func(res *http.Response) error {
 	return func(res *http.Response) error {
 		if secure != nil {
 			if err := secure.ModifyResponseHeaders(res); err != nil {
@@ -307,6 +307,11 @@ func buildModifyResponse(secure *secure.Secure, header *middlewares.HeaderStruct
 		if header != nil {
 			if err := header.ModifyResponseHeaders(res); err != nil {
 				return err
+			}
+		}
+		if removeHeaders != nil {
+			for _, headerToRemove := range removeHeaders {
+				res.Header.Del(headerToRemove)
 			}
 		}
 		return nil
