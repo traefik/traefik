@@ -265,7 +265,7 @@ func TestEntryPoints_Set(t *testing.T) {
 				},
 				RemoveHeaders: []string{
 					"X-Header-Remove1",
-					"X-Header-Remove1",
+					"X-Header-Remove2",
 				},
 				WhiteList: &types.WhiteList{
 					SourceRange: []string{
@@ -380,7 +380,7 @@ func TestEntryPoints_Set(t *testing.T) {
 				},
 				RemoveHeaders: []string{
 					"X-Header-Remove1",
-					"X-Header-Remove1",
+					"X-Header-Remove2",
 				},
 				Compress: true,
 				ProxyProtocol: &ProxyProtocol{
