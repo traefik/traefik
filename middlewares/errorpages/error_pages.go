@@ -103,7 +103,10 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.
 
 			utils.CopyHeaders(w.Header(), recorderErrorPage.Header())
 			w.WriteHeader(recorder.GetCode())
-			w.Write(recorderErrorPage.GetBody().Bytes())
+
+			if _, err = w.Write(recorderErrorPage.GetBody().Bytes()); err != nil {
+				log.Error(err)
+			}
 			return
 		}
 	}

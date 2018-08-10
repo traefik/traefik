@@ -10,7 +10,6 @@ const (
 	pathBackendHealthCheckHostname              = "/healthcheck/hostname"
 	pathBackendHealthCheckHeaders               = "/healthcheck/headers/"
 	pathBackendLoadBalancerMethod               = "/loadbalancer/method"
-	pathBackendLoadBalancerSticky               = "/loadbalancer/sticky"
 	pathBackendLoadBalancerStickiness           = "/loadbalancer/stickiness"
 	pathBackendLoadBalancerStickinessCookieName = "/loadbalancer/stickiness/cookiename"
 	pathBackendMaxConnAmount                    = "/maxconn/amount"
@@ -28,18 +27,18 @@ const (
 	pathFrontends                         = "/frontends/"
 	pathFrontendBackend                   = "/backend"
 	pathFrontendPriority                  = "/priority"
-	pathFrontendPassHostHeaderDeprecated  = "/passHostHeader" // Deprecated
 	pathFrontendPassHostHeader            = "/passhostheader"
 	pathFrontendPassTLSCert               = "/passtlscert"
 	pathFrontendWhiteListSourceRange      = "/whitelist/sourcerange"
 	pathFrontendWhiteListUseXForwardedFor = "/whitelist/usexforwardedfor"
 
-	pathFrontendBasicAuth                        = "/basicauth" // Deprecated
 	pathFrontendAuth                             = "/auth/"
 	pathFrontendAuthBasic                        = pathFrontendAuth + "basic/"
+	pathFrontendAuthBasicRemoveHeader            = pathFrontendAuthBasic + "removeheader"
 	pathFrontendAuthBasicUsers                   = pathFrontendAuthBasic + "users"
 	pathFrontendAuthBasicUsersFile               = pathFrontendAuthBasic + "usersfile"
 	pathFrontendAuthDigest                       = pathFrontendAuth + "digest/"
+	pathFrontendAuthDigestRemoveHeader           = pathFrontendAuthDigest + "removeheader"
 	pathFrontendAuthDigestUsers                  = pathFrontendAuthDigest + "users"
 	pathFrontendAuthDigestUsersFile              = pathFrontendAuthDigest + "usersfile"
 	pathFrontendAuthForward                      = pathFrontendAuth + "forward/"

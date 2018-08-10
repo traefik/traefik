@@ -1,0 +1,10 @@
+pebble:
+  image: letsencrypt/pebble:2018-07-27
+  command: pebble --dnsserver ${DOCKER_HOST_IP}:5053
+  ports:
+    - 14000:14000
+  environment:
+    # https://github.com/letsencrypt/pebble#testing-at-full-speed
+    - PEBBLE_VA_NOSLEEP=1
+    # https://github.com/letsencrypt/pebble#invalid-anti-replay-nonce-errors
+    - PEBBLE_WFE_NONCEREJECT=0

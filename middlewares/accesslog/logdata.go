@@ -40,8 +40,6 @@ const (
 	RequestPath = "RequestPath"
 	// RequestProtocol is the map key used for the version of HTTP requested.
 	RequestProtocol = "RequestProtocol"
-	// RequestLine is the original request line
-	RequestLine = "RequestLine"
 	// RequestContentSize is the map key used for the number of bytes in the request entity (a.k.a. body) sent by the client.
 	RequestContentSize = "RequestContentSize"
 	// RequestRefererHeader is the Referer header in the request
@@ -55,14 +53,8 @@ const (
 	// OriginStatus is the map key used for the HTTP status code returned by the origin server.
 	// If the request was handled by this Traefik instance (e.g. with a redirect), then this value will be absent.
 	OriginStatus = "OriginStatus"
-	// OriginStatusLine is the map key used for the HTTP status code and corresponding descriptive string.
-	// If the request was handled by this Traefik instance (e.g. with a redirect), then this value will be absent.
-	// Note that the actual message string might be different to what is reported here, depending on server behaviour.
-	OriginStatusLine = "OriginStatusLine"
 	// DownstreamStatus is the map key used for the HTTP status code returned to the client.
 	DownstreamStatus = "DownstreamStatus"
-	// DownstreamStatusLine is the map key used for the HTTP status line returned to the client.
-	DownstreamStatusLine = "DownstreamStatusLine"
 	// DownstreamContentSize is the map key used for the number of bytes in the response entity returned to the client.
 	// This is in addition to the "Content-Length" header, which may be present in the origin response.
 	DownstreamContentSize = "DownstreamContentSize"
@@ -110,9 +102,6 @@ func init() {
 	allCoreKeys[BackendAddr] = struct{}{}
 	allCoreKeys[ClientAddr] = struct{}{}
 	allCoreKeys[RequestAddr] = struct{}{}
-	allCoreKeys[RequestLine] = struct{}{}
-	allCoreKeys[OriginStatusLine] = struct{}{}
-	allCoreKeys[DownstreamStatusLine] = struct{}{}
 	allCoreKeys[GzipRatio] = struct{}{}
 	allCoreKeys[StartLocal] = struct{}{}
 	allCoreKeys[Overhead] = struct{}{}

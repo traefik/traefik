@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/healthcheck"
@@ -90,7 +90,7 @@ func TestServerLoadConfigHealthCheckOptions(t *testing.T) {
 		for _, healthCheck := range healthChecks {
 			t.Run(fmt.Sprintf("%s/hc=%t", lbMethod, healthCheck != nil), func(t *testing.T) {
 				globalConfig := configuration.GlobalConfiguration{
-					HealthCheck: &configuration.HealthCheckConfig{Interval: flaeg.Duration(5 * time.Second)},
+					HealthCheck: &configuration.HealthCheckConfig{Interval: parse.Duration(5 * time.Second)},
 				}
 				entryPoints := map[string]EntryPoint{
 					"http": {
@@ -161,7 +161,6 @@ func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
 				"frontend": {
 					EntryPoints: []string{"http"},
 					Backend:     "backend",
-					BasicAuth:   []string{""},
 				},
 			},
 			Backends: map[string]*types.Backend{
@@ -248,7 +247,11 @@ func TestReuseBackend(t *testing.T) {
 					th.WithFrontendName("frontend1"),
 					th.WithEntryPoints("http"),
 					th.WithRoutes(th.WithRoute("/unauthorized", "Path: /unauthorized")),
-					th.WithBasicAuth("foo", "bar")),
+					th.WithFrontEndAuth(&types.Auth{
+						Basic: &types.Basic{
+							Users: []string{"foo:bar"},
+						},
+					})),
 			),
 			th.WithBackends(th.WithBackendNew("backend",
 				th.WithLBMethod("wrr"),
@@ -482,7 +485,7 @@ func TestServerBuildHealthCheckOptions(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			opts := buildHealthCheckOptions(lb, "backend", test.hc, &configuration.HealthCheckConfig{Interval: flaeg.Duration(globalInterval)})
+			opts := buildHealthCheckOptions(lb, "backend", test.hc, &configuration.HealthCheckConfig{Interval: parse.Duration(globalInterval)})
 			assert.Equal(t, test.expectedOpts, opts, "health check options")
 		})
 	}

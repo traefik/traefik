@@ -33,7 +33,9 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 				"ProxyProtocol.TrustedIPs:192.168.0.1 " +
 				"ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24 " +
 				"Auth.Basic.Users:test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0 " +
+				"Auth.Basic.RemoveHeader:true " +
 				"Auth.Digest.Users:test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e " +
+				"Auth.Digest.RemoveHeader:true " +
 				"Auth.HeaderField:X-WebAuth-User " +
 				"Auth.Forward.Address:https://authserver.com/auth " +
 				"Auth.Forward.AuthResponseHeaders:X-Auth,X-Test,X-Secret " +
@@ -49,7 +51,9 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 			expectedResult: map[string]string{
 				"address":                             ":8000",
 				"auth_basic_users":                    "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+				"auth_basic_removeheader":             "true",
 				"auth_digest_users":                   "test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e",
+				"auth_digest_removeheader":            "true",
 				"auth_forward_address":                "https://authserver.com/auth",
 				"auth_forward_authresponseheaders":    "X-Auth,X-Test,X-Secret",
 				"auth_forward_tls_ca":                 "path/to/local.crt",
@@ -191,7 +195,9 @@ func TestEntryPoints_Set(t *testing.T) {
 				"RemoveHeaders:X-Header-Remove1,X-Header-Remove2 " +
 				"ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24 " +
 				"Auth.Basic.Users:test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0 " +
+				"Auth.Basic.RemoveHeader:true " +
 				"Auth.Digest.Users:test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e " +
+				"Auth.Digest.RemoveHeader:true " +
 				"Auth.HeaderField:X-WebAuth-User " +
 				"Auth.Forward.Address:https://authserver.com/auth " +
 				"Auth.Forward.AuthResponseHeaders:X-Auth,X-Test,X-Secret " +
@@ -233,12 +239,14 @@ func TestEntryPoints_Set(t *testing.T) {
 				},
 				Auth: &types.Auth{
 					Basic: &types.Basic{
+						RemoveHeader: true,
 						Users: types.Users{
 							"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 							"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						},
 					},
 					Digest: &types.Digest{
+						RemoveHeader: true,
 						Users: types.Users{
 							"test:traefik:a2688e031edb4be6a3797f3882655c05",
 							"test2:traefik:518845800f9e2bfb1f1f740ec24f074e",
@@ -275,7 +283,7 @@ func TestEntryPoints_Set(t *testing.T) {
 					},
 					UseXForwardedFor: true,
 				},
-				Compress: true,
+				Compress: &Compress{},
 				ProxyProtocol: &ProxyProtocol{
 					Insecure:   false,
 					TrustedIPs: []string{"192.168.0.1"},
@@ -382,7 +390,7 @@ func TestEntryPoints_Set(t *testing.T) {
 					"X-Header-Remove1",
 					"X-Header-Remove2",
 				},
-				Compress: true,
+				Compress: &Compress{},
 				ProxyProtocol: &ProxyProtocol{
 					Insecure:   false,
 					TrustedIPs: []string{"192.168.0.1"},
@@ -464,7 +472,7 @@ func TestEntryPoints_Set(t *testing.T) {
 			expression:             "Name:foo Compress:on",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
-				Compress:         true,
+				Compress:         &Compress{},
 				ForwardedHeaders: &ForwardedHeaders{Insecure: true},
 			},
 		},
@@ -473,7 +481,7 @@ func TestEntryPoints_Set(t *testing.T) {
 			expression:             "Name:foo Compress:true",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
-				Compress:         true,
+				Compress:         &Compress{},
 				ForwardedHeaders: &ForwardedHeaders{Insecure: true},
 			},
 		},

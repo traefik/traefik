@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"reflect"
 	"sort"
@@ -164,7 +165,7 @@ func (s *Server) loadFrontendConfig(
 		if backendsHandlers[entryPointName+providerName+frontendHash] == nil {
 			log.Debugf("Creating backend %s", frontend.Backend)
 
-			handlers, responseModifier, postConfig, err := s.buildMiddlewares(frontendName, frontend, config.Backends, entryPointName, entryPoint, providerName)
+			handlers, responseModifier, postConfig, err := s.buildMiddlewares(frontendName, frontend, config.Backends, entryPointName, providerName)
 			if err != nil {
 				return nil, err
 			}
@@ -245,6 +246,15 @@ func (s *Server) buildForwarder(entryPointName string, entryPoint *configuration
 		forward.Rewriter(rewriter),
 		forward.ResponseModifier(responseModifier),
 		forward.BufferPool(s.bufferPool),
+		forward.WebsocketConnectionClosedHook(func(req *http.Request, conn net.Conn) {
+			server := req.Context().Value(http.ServerContextKey).(*http.Server)
+			if server != nil {
+				connState := server.ConnState
+				if connState != nil {
+					connState(conn, http.StateClosed)
+				}
+			}
+		}),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error creating forwarder for frontend %s: %v", frontendName, err)
@@ -375,31 +385,14 @@ func (s *Server) filterEntryPoints(entryPoints []string) ([]string, []string) {
 func configureBackends(backends map[string]*types.Backend) {
 	for backendName := range backends {
 		backend := backends[backendName]
-		if backend.LoadBalancer != nil && backend.LoadBalancer.Sticky {
-			log.Warnf("Deprecated configuration found: %s. Please use %s.", "backend.LoadBalancer.Sticky", "backend.LoadBalancer.Stickiness")
-		}
 
 		_, err := types.NewLoadBalancerMethod(backend.LoadBalancer)
-		if err == nil {
-			if backend.LoadBalancer != nil && backend.LoadBalancer.Stickiness == nil && backend.LoadBalancer.Sticky {
-				backend.LoadBalancer.Stickiness = &types.Stickiness{
-					CookieName: "_TRAEFIK_BACKEND",
-				}
-			}
-		} else {
+		if err != nil {
 			log.Debugf("Backend %s: %v", backendName, err)
 
 			var stickiness *types.Stickiness
 			if backend.LoadBalancer != nil {
-				if backend.LoadBalancer.Stickiness == nil {
-					if backend.LoadBalancer.Sticky {
-						stickiness = &types.Stickiness{
-							CookieName: "_TRAEFIK_BACKEND",
-						}
-					}
-				} else {
-					stickiness = backend.LoadBalancer.Stickiness
-				}
+				stickiness = backend.LoadBalancer.Stickiness
 			}
 			backend.LoadBalancer = &types.LoadBalancer{
 				Method:     "wrr",
@@ -573,11 +566,15 @@ func (s *Server) buildServerEntryPoints() map[string]*serverEntryPoint {
 			if entryPoint.Configuration.TLS.DefaultCertificate != nil {
 				cert, err := tls.LoadX509KeyPair(entryPoint.Configuration.TLS.DefaultCertificate.CertFile.String(), entryPoint.Configuration.TLS.DefaultCertificate.KeyFile.String())
 				if err != nil {
+					log.Error(err)
+					continue
 				}
 				serverEntryPoints[entryPointName].certs.DefaultCertificate = &cert
 			} else {
 				cert, err := generate.DefaultCertificate()
 				if err != nil {
+					log.Error(err)
+					continue
 				}
 				serverEntryPoints[entryPointName].certs.DefaultCertificate = cert
 			}

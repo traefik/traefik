@@ -15,8 +15,9 @@ type Store interface {
 	GetCertificates() ([]*Certificate, error)
 	SaveCertificates([]*Certificate) error
 
-	GetHTTPChallenges() (map[string]map[string][]byte, error)
-	SaveHTTPChallenges(map[string]map[string][]byte) error
+	GetHTTPChallengeToken(token, domain string) ([]byte, error)
+	SetHTTPChallengeToken(token, domain string, keyAuth []byte) error
+	RemoveHTTPChallengeToken(token, domain string) error
 
 	AddTLSChallenge(domain string, cert *Certificate) error
 	GetTLSChallenge(domain string) (*Certificate, error)

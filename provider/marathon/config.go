@@ -16,8 +16,6 @@ import (
 	"github.com/gambol99/go-marathon"
 )
 
-const defaultService = ""
-
 type appData struct {
 	marathon.Application
 	SegmentLabels map[string]string
@@ -25,7 +23,7 @@ type appData struct {
 	LinkedApps    []*appData
 }
 
-func (p *Provider) buildConfigurationV2(applications *marathon.Applications) *types.Configuration {
+func (p *Provider) buildConfiguration(applications *marathon.Applications) *types.Configuration {
 	var MarathonFuncMap = template.FuncMap{
 		"getDomain":      label.GetFuncString(label.TraefikDomain, p.Domain), // see https://github.com/containous/traefik/pull/1693
 		"getSubDomain":   p.getSubDomain,                                     // see https://github.com/containous/traefik/pull/1693

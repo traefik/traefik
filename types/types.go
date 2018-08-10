@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/abronan/valkeyrie/store"
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/log"
 	traefiktls "github.com/containous/traefik/tls"
@@ -39,7 +39,6 @@ type MaxConn struct {
 // LoadBalancer holds load balancing configuration.
 type LoadBalancer struct {
 	Method     string      `json:"method,omitempty"`
-	Sticky     bool        `json:"sticky,omitempty"` // Deprecated: use Stickiness instead
 	Stickiness *Stickiness `json:"stickiness,omitempty"`
 }
 
@@ -108,7 +107,7 @@ type ErrorPage struct {
 
 // Rate holds a rate limiting configuration for a specific time period
 type Rate struct {
-	Period  flaeg.Duration `json:"period,omitempty"`
+	Period  parse.Duration `json:"period,omitempty"`
 	Average int64          `json:"average,omitempty"`
 	Burst   int64          `json:"burst,omitempty"`
 }
@@ -184,7 +183,6 @@ type Frontend struct {
 	PassHostHeader       bool                  `json:"passHostHeader,omitempty"`
 	PassTLSCert          bool                  `json:"passTLSCert,omitempty"`
 	Priority             int                   `json:"priority"`
-	BasicAuth            []string              `json:"basicAuth"`                      // Deprecated
 	WhitelistSourceRange []string              `json:"whitelistSourceRange,omitempty"` // Deprecated
 	WhiteList            *WhiteList            `json:"whiteList,omitempty"`
 	Headers              *Headers              `json:"headers,omitempty"`
@@ -254,7 +252,7 @@ type Configurations map[string]*Configuration
 type Configuration struct {
 	Backends  map[string]*Backend         `json:"backends,omitempty"`
 	Frontends map[string]*Frontend        `json:"frontends,omitempty"`
-	TLS       []*traefiktls.Configuration `json:"tls,omitempty"`
+	TLS       []*traefiktls.Configuration `json:"-"`
 }
 
 // ConfigMessage hold configuration information exchanged between parts of traefik.
@@ -390,10 +388,10 @@ type Cluster struct {
 
 // Auth holds authentication configuration (BASIC, DIGEST, users)
 type Auth struct {
-	Basic       *Basic   `export:"true"`
-	Digest      *Digest  `export:"true"`
-	Forward     *Forward `export:"true"`
-	HeaderField string   `export:"true"`
+	Basic       *Basic   `json:"basic,omitempty" export:"true"`
+	Digest      *Digest  `json:"digest,omitempty" export:"true"`
+	Forward     *Forward `json:"forward,omitempty" export:"true"`
+	HeaderField string   `json:"headerField,omitempty" export:"true"`
 }
 
 // Users authentication users
@@ -401,22 +399,24 @@ type Users []string
 
 // Basic HTTP basic authentication
 type Basic struct {
-	Users     `mapstructure:","`
-	UsersFile string
+	Users        `json:"users,omitempty" mapstructure:","`
+	UsersFile    string `json:"usersFile,omitempty"`
+	RemoveHeader bool   `json:"removeHeader,omitempty"`
 }
 
 // Digest HTTP authentication
 type Digest struct {
-	Users     `mapstructure:","`
-	UsersFile string
+	Users        `json:"users,omitempty" mapstructure:","`
+	UsersFile    string `json:"usersFile,omitempty"`
+	RemoveHeader bool   `json:"removeHeader,omitempty"`
 }
 
 // Forward authentication
 type Forward struct {
-	Address             string     `description:"Authentication server address"`
-	TLS                 *ClientTLS `description:"Enable TLS support" export:"true"`
-	TrustForwardHeader  bool       `description:"Trust X-Forwarded-* headers" export:"true"`
-	AuthResponseHeaders []string   `description:"Headers to be forwarded from auth response"`
+	Address             string     `description:"Authentication server address" json:"address,omitempty"`
+	TLS                 *ClientTLS `description:"Enable TLS support" json:"tls,omitempty" export:"true"`
+	TrustForwardHeader  bool       `description:"Trust X-Forwarded-* headers" json:"trustForwardHeader,omitempty" export:"true"`
+	AuthResponseHeaders []string   `description:"Headers to be forwarded from auth response" json:"authResponseHeaders,omitempty"`
 }
 
 // CanonicalDomain returns a lower case domain with trim space
@@ -455,13 +455,15 @@ type Statsd struct {
 	PushInterval string `description:"StatsD push interval" export:"true"`
 }
 
-// InfluxDB contains address and metrics pushing interval configuration
+// InfluxDB contains address, login and metrics pushing interval configuration
 type InfluxDB struct {
 	Address         string `description:"InfluxDB address"`
 	Protocol        string `description:"InfluxDB address protocol (udp or http)"`
 	PushInterval    string `description:"InfluxDB push interval" export:"true"`
 	Database        string `description:"InfluxDB database used when protocol is http" export:"true"`
 	RetentionPolicy string `description:"InfluxDB retention policy used when protocol is http" export:"true"`
+	Username        string `description:"InfluxDB username (only with http)" export:"true"`
+	Password        string `description:"InfluxDB password (only with http)" export:"true"`
 }
 
 // Buckets holds Prometheus Buckets
@@ -499,11 +501,11 @@ func (b *Buckets) SetValue(val interface{}) {
 // ClientTLS holds TLS specific configurations as client
 // CA, Cert and Key can be either path or file contents
 type ClientTLS struct {
-	CA                 string `description:"TLS CA"`
-	CAOptional         bool   `description:"TLS CA.Optional"`
-	Cert               string `description:"TLS cert"`
-	Key                string `description:"TLS key"`
-	InsecureSkipVerify bool   `description:"TLS insecure skip verify"`
+	CA                 string `description:"TLS CA" json:"ca,omitempty"`
+	CAOptional         bool   `description:"TLS CA.Optional" json:"caOptional,omitempty"`
+	Cert               string `description:"TLS cert" json:"cert,omitempty"`
+	Key                string `description:"TLS key" json:"key,omitempty"`
+	InsecureSkipVerify bool   `description:"TLS insecure skip verify" json:"insecureSkipVerify,omitempty"`
 }
 
 // CreateTLSConfig creates a TLS config from ClientTLS structures

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/abronan/valkeyrie/store"
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
@@ -62,12 +62,47 @@ func TestProviderBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "basic auth",
+			desc: "basic auth Users",
 			kvPairs: filler("traefik",
 				frontend("frontend",
 					withPair(pathFrontendBackend, "backend"),
 					withPair(pathFrontendAuthHeaderField, "X-WebAuth-User"),
+					withPair(pathFrontendAuthBasicRemoveHeader, "true"),
 					withList(pathFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+				),
+				backend("backend"),
+			),
+			expected: &types.Configuration{
+				Backends: map[string]*types.Backend{
+					"backend": {
+						LoadBalancer: &types.LoadBalancer{
+							Method: "wrr",
+						},
+					},
+				},
+				Frontends: map[string]*types.Frontend{
+					"frontend": {
+						Backend:        "backend",
+						PassHostHeader: true,
+						EntryPoints:    []string{},
+						Auth: &types.Auth{
+							HeaderField: "X-WebAuth-User",
+							Basic: &types.Basic{
+								RemoveHeader: true,
+								Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "basic auth UsersFile",
+			kvPairs: filler("traefik",
+				frontend("frontend",
+					withPair(pathFrontendBackend, "backend"),
+					withPair(pathFrontendAuthHeaderField, "X-WebAuth-User"),
 					withPair(pathFrontendAuthBasicUsersFile, ".htpasswd"),
 				),
 				backend("backend"),
@@ -88,41 +123,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						Auth: &types.Auth{
 							HeaderField: "X-WebAuth-User",
 							Basic: &types.Basic{
-								Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 								UsersFile: ".htpasswd",
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			desc: "basic auth (backward compatibility)",
-			kvPairs: filler("traefik",
-				frontend("frontend",
-					withPair(pathFrontendBackend, "backend"),
-					withList(pathFrontendBasicAuth, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
-				),
-				backend("backend"),
-			),
-			expected: &types.Configuration{
-				Backends: map[string]*types.Backend{
-					"backend": {
-						LoadBalancer: &types.LoadBalancer{
-							Method: "wrr",
-						},
-					},
-				},
-				Frontends: map[string]*types.Frontend{
-					"frontend": {
-						Backend:        "backend",
-						PassHostHeader: true,
-						EntryPoints:    []string{},
-						Auth: &types.Auth{
-							Basic: &types.Basic{
-								Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 							},
 						},
 					},
@@ -135,6 +136,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 				frontend("frontend",
 					withPair(pathFrontendBackend, "backend"),
 					withPair(pathFrontendAuthHeaderField, "X-WebAuth-User"),
+					withPair(pathFrontendAuthDigestRemoveHeader, "true"),
 					withList(pathFrontendAuthDigestUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 					withPair(pathFrontendAuthDigestUsersFile, ".htpasswd"),
 				),
@@ -156,6 +158,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						Auth: &types.Auth{
 							HeaderField: "X-WebAuth-User",
 							Digest: &types.Digest{
+								RemoveHeader: true,
 								Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 								UsersFile: ".htpasswd",
@@ -218,7 +221,6 @@ func TestProviderBuildConfiguration(t *testing.T) {
 				backend("backend1",
 					withPair(pathBackendCircuitBreakerExpression, label.DefaultCircuitBreakerExpression),
 					withPair(pathBackendLoadBalancerMethod, "drr"),
-					withPair(pathBackendLoadBalancerSticky, "true"),
 					withPair(pathBackendLoadBalancerStickiness, "true"),
 					withPair(pathBackendLoadBalancerStickinessCookieName, "tomate"),
 					withPair(pathBackendHealthCheckScheme, "http"),
@@ -247,9 +249,10 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					withList(pathFrontendWhiteListSourceRange, "1.1.1.1/24", "1234:abcd::42/32"),
 					withPair(pathFrontendWhiteListUseXForwardedFor, "true"),
 
-					withList(pathFrontendBasicAuth, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+					withPair(pathFrontendAuthBasicRemoveHeader, "true"),
 					withList(pathFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 					withPair(pathFrontendAuthBasicUsersFile, ".htpasswd"),
+					withPair(pathFrontendAuthDigestRemoveHeader, "true"),
 					withList(pathFrontendAuthDigestUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 					withPair(pathFrontendAuthDigestUsersFile, ".htpasswd"),
 					withPair(pathFrontendAuthForwardAddress, "auth.server"),
@@ -325,7 +328,6 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						},
 						LoadBalancer: &types.LoadBalancer{
 							Method: "drr",
-							Sticky: true,
 							Stickiness: &types.Stickiness{
 								CookieName: "tomate",
 							},
@@ -367,6 +369,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						Auth: &types.Auth{
 							HeaderField: "X-WebAuth-User",
 							Basic: &types.Basic{
+								RemoveHeader: true,
 								Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 								UsersFile: ".htpasswd",
@@ -394,12 +397,12 @@ func TestProviderBuildConfiguration(t *testing.T) {
 								"foo": {
 									Average: 6,
 									Burst:   12,
-									Period:  flaeg.Duration(18 * time.Second),
+									Period:  parse.Duration(18 * time.Second),
 								},
 								"bar": {
 									Average: 3,
 									Burst:   6,
-									Period:  flaeg.Duration(9 * time.Second),
+									Period:  parse.Duration(9 * time.Second),
 								},
 							},
 						},
@@ -1206,7 +1209,7 @@ func TestProviderHasStickinessLabel(t *testing.T) {
 				},
 			}
 
-			actual := p.hasStickinessLabel(test.rootPath)
+			actual := p.getLoadBalancer(test.rootPath).Stickiness != nil
 
 			if actual != test.expected {
 				t.Fatalf("expected %v, got %v", test.expected, actual)
@@ -1436,12 +1439,12 @@ func TestProviderGetRateLimit(t *testing.T) {
 					"foo": {
 						Average: 6,
 						Burst:   12,
-						Period:  flaeg.Duration(18 * time.Second),
+						Period:  parse.Duration(18 * time.Second),
 					},
 					"bar": {
 						Average: 3,
 						Burst:   6,
-						Period:  flaeg.Duration(9 * time.Second),
+						Period:  parse.Duration(9 * time.Second),
 					},
 				},
 			},
@@ -1756,12 +1759,10 @@ func TestProviderGetLoadBalancer(t *testing.T) {
 			kvPairs: filler("traefik",
 				backend("foo",
 					withPair(pathBackendLoadBalancerMethod, "drr"),
-					withPair(pathBackendLoadBalancerSticky, "true"),
 					withPair(pathBackendLoadBalancerStickiness, "true"),
 					withPair(pathBackendLoadBalancerStickinessCookieName, "aubergine"))),
 			expected: &types.LoadBalancer{
 				Method: "drr",
-				Sticky: true,
 				Stickiness: &types.Stickiness{
 					CookieName: "aubergine",
 				},
@@ -1783,17 +1784,6 @@ func TestProviderGetLoadBalancer(t *testing.T) {
 					withPair(pathBackendLoadBalancerMethod, "drr"))),
 			expected: &types.LoadBalancer{
 				Method: "drr",
-			},
-		},
-		{
-			desc:     "when sticky is set",
-			rootPath: "traefik/backends/foo",
-			kvPairs: filler("traefik",
-				backend("foo",
-					withPair(pathBackendLoadBalancerSticky, "true"))),
-			expected: &types.LoadBalancer{
-				Method: "wrr",
-				Sticky: true,
 			},
 		},
 		{
@@ -2126,29 +2116,17 @@ func TestProviderGetAuth(t *testing.T) {
 			rootPath: "traefik/frontends/foo",
 			kvPairs: filler("traefik",
 				frontend("foo",
+					withPair(pathFrontendAuthBasicRemoveHeader, "true"),
 					withList(pathFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 					withPair(pathFrontendAuthBasicUsersFile, ".htpasswd"),
 					withPair(pathFrontendAuthHeaderField, "X-WebAuth-User"))),
 			expected: &types.Auth{
 				HeaderField: "X-WebAuth-User",
 				Basic: &types.Basic{
+					RemoveHeader: true,
 					Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 						"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 					UsersFile: ".htpasswd",
-				},
-			},
-		},
-		{
-			desc:     "should return a valid basic auth (backward compatibility)",
-			rootPath: "traefik/frontends/foo",
-			kvPairs: filler("traefik",
-				frontend("foo",
-					withPair(pathFrontendBasicAuth, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
-				)),
-			expected: &types.Auth{
-				Basic: &types.Basic{
-					Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-						"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 				},
 			},
 		},
@@ -2209,61 +2187,6 @@ func TestProviderGetAuth(t *testing.T) {
 			p := newProviderMock(test.kvPairs)
 
 			result := p.getAuth(test.rootPath)
-
-			assert.Equal(t, test.expected, result)
-		})
-	}
-}
-
-func TestProviderHasDeprecatedBasicAuth(t *testing.T) {
-	testCases := []struct {
-		desc     string
-		rootPath string
-		kvPairs  []*store.KVPair
-		expected bool
-	}{
-		{
-			desc:     "should return nil when no data",
-			expected: false,
-		},
-		{
-			desc:     "should return a valid basic auth",
-			rootPath: "traefik/frontends/foo",
-			kvPairs: filler("traefik",
-				frontend("foo",
-					withList(pathFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
-				)),
-			expected: false,
-		},
-		{
-			desc:     "should return a valid basic auth",
-			rootPath: "traefik/frontends/foo",
-			kvPairs: filler("traefik",
-				frontend("foo",
-					withList(pathFrontendBasicAuth, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
-				)),
-			expected: true,
-		},
-		{
-			desc:     "should return a valid basic auth",
-			rootPath: "traefik/frontends/foo",
-			kvPairs: filler("traefik",
-				frontend("foo",
-					withList(pathFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
-					withList(pathFrontendBasicAuth, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
-				)),
-			expected: true,
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			p := newProviderMock(test.kvPairs)
-
-			result := p.hasDeprecatedBasicAuth(test.rootPath)
 
 			assert.Equal(t, test.expected, result)
 		})

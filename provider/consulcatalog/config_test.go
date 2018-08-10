@@ -5,7 +5,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	"github.com/hashicorp/consul/api"
@@ -68,7 +68,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 								Port:    80,
 								Tags: []string{
 									"random.foo=bar",
-									label.Prefix + "backend.weight=42", // Deprecated label
+									label.TraefikWeight + "=42",
 									label.TraefikFrontendPassHostHeader + "=true",
 									label.TraefikProtocol + "=https",
 								},
@@ -102,7 +102,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-test": {
 					Servers: map[string]types.Server{
-						"test-0-us4-27hAOu2ARV7nNrmv6GoKlcA": {
+						"test-0-ecTTsmX1vPktQQrl53WhNDy-HEg": {
 							URL:    "https://127.0.0.1:80",
 							Weight: 42,
 						},
@@ -139,7 +139,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 								Port:    80,
 								Tags: []string{
 									"random.foo=bar",
-									label.Prefix + "backend.weight=42", // Deprecated label
+									label.TraefikWeight + "=42",
 									label.TraefikFrontendPassHostHeader + "=true",
 									label.TraefikProtocol + "=https",
 								},
@@ -173,14 +173,15 @@ func TestProviderBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-test": {
 					Servers: map[string]types.Server{
-						"test-0-us4-27hAOu2ARV7nNrmv6GoKlcA": {
+						"test-0-ecTTsmX1vPktQQrl53WhNDy-HEg": {
 							URL:    "https://127.0.0.1:80",
 							Weight: 42,
 						},
 					},
 				},
 			},
-		}, {
+		},
+		{
 			desc: "Should build config with a digest auth",
 			nodes: []catalogUpdate{
 				{
@@ -188,6 +189,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						ServiceName: "test",
 						Attributes: []string{
 							"random.foo=bar",
+							label.TraefikFrontendAuthDigestRemoveHeader + "=true",
 							label.TraefikFrontendAuthDigestUsers + "=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 							label.TraefikFrontendAuthDigestUsersFile + "=.htpasswd",
 						},
@@ -200,7 +202,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 								Port:    80,
 								Tags: []string{
 									"random.foo=bar",
-									label.Prefix + "backend.weight=42", // Deprecated label
+									label.TraefikWeight + "=42",
 									label.TraefikFrontendPassHostHeader + "=true",
 									label.TraefikProtocol + "=https",
 								},
@@ -224,6 +226,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					},
 					Auth: &types.Auth{
 						Digest: &types.Digest{
+							RemoveHeader: true,
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 							UsersFile: ".htpasswd",
@@ -235,7 +238,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-test": {
 					Servers: map[string]types.Server{
-						"test-0-us4-27hAOu2ARV7nNrmv6GoKlcA": {
+						"test-0-ecTTsmX1vPktQQrl53WhNDy-HEg": {
 							URL:    "https://127.0.0.1:80",
 							Weight: 42,
 						},
@@ -269,7 +272,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 								Port:    80,
 								Tags: []string{
 									"random.foo=bar",
-									label.Prefix + "backend.weight=42", // Deprecated label
+									label.TraefikWeight + "=42",
 									label.TraefikFrontendPassHostHeader + "=true",
 									label.TraefikProtocol + "=https",
 								},
@@ -311,7 +314,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-test": {
 					Servers: map[string]types.Server{
-						"test-0-us4-27hAOu2ARV7nNrmv6GoKlcA": {
+						"test-0-ecTTsmX1vPktQQrl53WhNDy-HEg": {
 							URL:    "https://127.0.0.1:80",
 							Weight: 42,
 						},
@@ -336,7 +339,6 @@ func TestProviderBuildConfiguration(t *testing.T) {
 							label.TraefikBackendHealthCheckHostname + "=foo.com",
 							label.TraefikBackendHealthCheckHeaders + "=Foo:bar || Bar:foo",
 							label.TraefikBackendLoadBalancerMethod + "=drr",
-							label.TraefikBackendLoadBalancerSticky + "=true",
 							label.TraefikBackendLoadBalancerStickiness + "=true",
 							label.TraefikBackendLoadBalancerStickinessCookieName + "=chocolate",
 							label.TraefikBackendMaxConnAmount + "=666",
@@ -348,8 +350,10 @@ func TestProviderBuildConfiguration(t *testing.T) {
 							label.TraefikBackendBufferingRetryExpression + "=IsNetworkError() && Attempts() <= 2",
 
 							label.TraefikFrontendAuthBasic + "=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+							label.TraefikFrontendAuthBasicRemoveHeader + "=true",
 							label.TraefikFrontendAuthBasicUsers + "=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 							label.TraefikFrontendAuthBasicUsersFile + "=.htpasswd",
+							label.TraefikFrontendAuthDigestRemoveHeader + "=true",
 							label.TraefikFrontendAuthDigestUsers + "=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 							label.TraefikFrontendAuthDigestUsersFile + "=.htpasswd",
 							label.TraefikFrontendAuthForwardAddress + "=auth.server",
@@ -464,6 +468,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{
+							RemoveHeader: true,
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 							UsersFile: ".htpasswd",
@@ -532,12 +537,12 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						ExtractorFunc: "client.ip",
 						RateSet: map[string]*types.Rate{
 							"foo": {
-								Period:  flaeg.Duration(6 * time.Second),
+								Period:  parse.Duration(6 * time.Second),
 								Average: 12,
 								Burst:   18,
 							},
 							"bar": {
-								Period:  flaeg.Duration(3 * time.Second),
+								Period:  parse.Duration(3 * time.Second),
 								Average: 6,
 								Burst:   9,
 							},
@@ -568,7 +573,6 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					},
 					LoadBalancer: &types.LoadBalancer{
 						Method: "drr",
-						Sticky: true,
 						Stickiness: &types.Stickiness{
 							CookieName: "chocolate",
 						},
@@ -621,7 +625,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 								Port:    80,
 								Tags: []string{
 									"random.foo=bar",
-									label.Prefix + "backend.weight=42", // Deprecated label
+									label.TraefikWeight + "=42",
 									label.TraefikFrontendPassHostHeader + "=true",
 									label.TraefikProtocol + "=https",
 								},
@@ -638,7 +642,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 								Port:    80,
 								Tags: []string{
 									"random.foo=bar",
-									label.Prefix + "backend.weight=42", // Deprecated label
+									label.TraefikWeight + "=42",
 									label.TraefikFrontendPassHostHeader + "=true",
 									label.TraefikProtocol + "=https",
 								},
@@ -672,11 +676,11 @@ func TestProviderBuildConfiguration(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-test": {
 					Servers: map[string]types.Server{
-						"test-0-us4-27hAOu2ARV7nNrmv6GoKlcA": {
+						"test-0-ecTTsmX1vPktQQrl53WhNDy-HEg": {
 							URL:    "https://127.0.0.1:80",
 							Weight: 42,
 						},
-						"test-1-Gh4zrXo5flAAz1A8LAEHm1-TSnE": {
+						"test-1-9tI2Ud3Vkl4T4B6bAIWV0vFjEIg": {
 							URL:    "https://[::1]:80",
 							Weight: 42,
 						},
@@ -703,7 +707,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 
 			nodes := fakeLoadTraefikLabelsSlice(test.nodes, p.Prefix)
 
-			actualConfig := p.buildConfigurationV2(nodes)
+			actualConfig := p.buildConfiguration(nodes)
 			assert.NotNil(t, actualConfig)
 			assert.Equal(t, test.expectedBackends, actualConfig.Backends)
 			assert.Equal(t, test.expectedFrontends, actualConfig.Frontends)

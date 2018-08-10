@@ -15,7 +15,6 @@
   {{if $loadBalancer }}
     [backends."backend-{{ $backendName }}".loadBalancer]
       method = "{{ $loadBalancer.Method }}"
-      sticky = {{ $loadBalancer.Sticky }}
       {{if $loadBalancer.Stickiness }}
       [backends."backend-{{ $backendName }}".loadBalancer.stickiness]
         cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
@@ -99,6 +98,7 @@
 
       {{if $auth.Basic }}
       [frontends."frontend-{{ $frontendName }}".auth.basic]
+        removeHeader = {{ $auth.Basic.RemoveHeader}}
         {{if $auth.Basic.Users }}
         users = [{{range $auth.Basic.Users }}
           "{{.}}",
@@ -109,6 +109,7 @@
 
       {{if $auth.Digest }}
       [frontends."frontend-{{ $frontendName }}".auth.digest]
+        removeHeader = {{ $auth.Digest.RemoveHeader}}
         {{if $auth.Digest.Users }}
         users = [{{range $auth.Digest.Users }}
           "{{.}}",

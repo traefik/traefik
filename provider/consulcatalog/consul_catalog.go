@@ -1,7 +1,6 @@
 package consulcatalog
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -90,18 +89,27 @@ func (a nodeSorter) Less(i int, j int) bool {
 	return lEntry.Service.Port < rEntry.Service.Port
 }
 
-// Provide allows the consul catalog provider to provide configurations to traefik
-// using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
+// Init the provider
+func (p *Provider) Init(constraints types.Constraints) error {
+	err := p.BaseProvider.Init(constraints)
+	if err != nil {
+		return err
+	}
+
 	client, err := p.createClient()
 	if err != nil {
 		return err
 	}
 
 	p.client = client
-	p.Constraints = append(p.Constraints, constraints...)
 	p.setupFrontEndRuleTemplate()
 
+	return nil
+}
+
+// Provide allows the consul catalog provider to provide configurations to traefik
+// using the given configuration channel.
+func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	pool.Go(func(stop chan bool) {
 		notify := func(err error, time time.Duration) {
 			log.Errorf("Consul connection error %+v, retrying in %s", err, time)
@@ -156,14 +164,8 @@ func (p *Provider) watch(configurationChan chan<- types.ConfigMessage, stop chan
 	defer close(stopCh)
 	defer close(watchCh)
 
-	for {
-		select {
-		case <-stop:
-			return nil
-		case index, ok := <-watchCh:
-			if !ok {
-				return errors.New("consul service list nil")
-			}
+	safe.Go(func() {
+		for index := range watchCh {
 			log.Debug("List of services changed")
 			nodes, err := p.getNodes(index)
 			if err != nil {
@@ -174,6 +176,13 @@ func (p *Provider) watch(configurationChan chan<- types.ConfigMessage, stop chan
 				ProviderName:  "consul_catalog",
 				Configuration: configuration,
 			}
+		}
+	})
+
+	for {
+		select {
+		case <-stop:
+			return nil
 		case err := <-errorCh:
 			return err
 		}

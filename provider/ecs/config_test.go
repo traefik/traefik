@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ecs"
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
@@ -114,9 +114,10 @@ func TestBuildConfiguration(t *testing.T) {
 					ID:   "1",
 					containerDefinition: &ecs.ContainerDefinition{
 						DockerLabels: map[string]*string{
-							label.TraefikFrontendAuthBasicUsers:     aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
-							label.TraefikFrontendAuthBasicUsersFile: aws.String(".htpasswd"),
-							label.TraefikFrontendAuthHeaderField:    aws.String("X-WebAuth-User"),
+							label.TraefikFrontendAuthBasicUsers:        aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+							label.TraefikFrontendAuthBasicUsersFile:    aws.String(".htpasswd"),
+							label.TraefikFrontendAuthBasicRemoveHeader: aws.String("true"),
+							label.TraefikFrontendAuthHeaderField:       aws.String("X-WebAuth-User"),
 						}},
 					machine: &machine{
 						state:     ec2.InstanceStateNameRunning,
@@ -147,6 +148,7 @@ func TestBuildConfiguration(t *testing.T) {
 						Auth: &types.Auth{
 							HeaderField: "X-WebAuth-User",
 							Basic: &types.Basic{
+								RemoveHeader: true,
 								Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 								UsersFile: ".htpasswd",
@@ -212,9 +214,10 @@ func TestBuildConfiguration(t *testing.T) {
 					ID:   "1",
 					containerDefinition: &ecs.ContainerDefinition{
 						DockerLabels: map[string]*string{
-							label.TraefikFrontendAuthDigestUsers:     aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
-							label.TraefikFrontendAuthDigestUsersFile: aws.String(".htpasswd"),
-							label.TraefikFrontendAuthHeaderField:     aws.String("X-WebAuth-User"),
+							label.TraefikFrontendAuthDigestRemoveHeader: aws.String("true"),
+							label.TraefikFrontendAuthDigestUsers:        aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+							label.TraefikFrontendAuthDigestUsersFile:    aws.String(".htpasswd"),
+							label.TraefikFrontendAuthHeaderField:        aws.String("X-WebAuth-User"),
 						}},
 					machine: &machine{
 						state:     ec2.InstanceStateNameRunning,
@@ -245,6 +248,7 @@ func TestBuildConfiguration(t *testing.T) {
 						Auth: &types.Auth{
 							HeaderField: "X-WebAuth-User",
 							Digest: &types.Digest{
+								RemoveHeader: true,
 								Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 								UsersFile: ".htpasswd",
@@ -338,7 +342,6 @@ func TestBuildConfiguration(t *testing.T) {
 							label.TraefikBackendHealthCheckHostname:              aws.String("foo.com"),
 							label.TraefikBackendHealthCheckHeaders:               aws.String("Foo:bar || Bar:foo"),
 							label.TraefikBackendLoadBalancerMethod:               aws.String("drr"),
-							label.TraefikBackendLoadBalancerSticky:               aws.String("true"),
 							label.TraefikBackendLoadBalancerStickiness:           aws.String("true"),
 							label.TraefikBackendLoadBalancerStickinessCookieName: aws.String("chocolate"),
 							label.TraefikBackendMaxConnAmount:                    aws.String("666"),
@@ -350,8 +353,10 @@ func TestBuildConfiguration(t *testing.T) {
 							label.TraefikBackendBufferingRetryExpression:         aws.String("IsNetworkError() && Attempts() <= 2"),
 
 							label.TraefikFrontendAuthBasic:                        aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+							label.TraefikFrontendAuthBasicRemoveHeader:            aws.String("true"),
 							label.TraefikFrontendAuthBasicUsers:                   aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 							label.TraefikFrontendAuthBasicUsersFile:               aws.String(".htpasswd"),
+							label.TraefikFrontendAuthDigestRemoveHeader:           aws.String("true"),
 							label.TraefikFrontendAuthDigestUsers:                  aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 							label.TraefikFrontendAuthDigestUsersFile:              aws.String(".htpasswd"),
 							label.TraefikFrontendAuthForwardAddress:               aws.String("auth.server"),
@@ -434,7 +439,6 @@ func TestBuildConfiguration(t *testing.T) {
 						},
 						LoadBalancer: &types.LoadBalancer{
 							Method: "drr",
-							Sticky: true,
 							Stickiness: &types.Stickiness{
 								CookieName: "chocolate",
 							},
@@ -481,6 +485,7 @@ func TestBuildConfiguration(t *testing.T) {
 						Auth: &types.Auth{
 							HeaderField: "X-WebAuth-User",
 							Basic: &types.Basic{
+								RemoveHeader: true,
 								Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 								UsersFile: ".htpasswd",
@@ -551,12 +556,12 @@ func TestBuildConfiguration(t *testing.T) {
 						RateLimit: &types.RateLimit{
 							RateSet: map[string]*types.Rate{
 								"bar": {
-									Period:  flaeg.Duration(3 * time.Second),
+									Period:  parse.Duration(3 * time.Second),
 									Average: 6,
 									Burst:   9,
 								},
 								"foo": {
-									Period:  flaeg.Duration(6 * time.Second),
+									Period:  parse.Duration(6 * time.Second),
 									Average: 12,
 									Burst:   18,
 								},
@@ -595,7 +600,6 @@ func TestBuildConfiguration(t *testing.T) {
 							label.TraefikBackendHealthCheckHostname:              aws.String("foo.com"),
 							label.TraefikBackendHealthCheckHeaders:               aws.String("Foo:bar || Bar:foo"),
 							label.TraefikBackendLoadBalancerMethod:               aws.String("drr"),
-							label.TraefikBackendLoadBalancerSticky:               aws.String("true"),
 							label.TraefikBackendLoadBalancerStickiness:           aws.String("true"),
 							label.TraefikBackendLoadBalancerStickinessCookieName: aws.String("chocolate"),
 							label.TraefikBackendMaxConnAmount:                    aws.String("666"),
@@ -682,7 +686,6 @@ func TestBuildConfiguration(t *testing.T) {
 							label.TraefikBackendHealthCheckHostname:              aws.String("bar.com"),
 							label.TraefikBackendHealthCheckHeaders:               aws.String("Foo:bar || Bar:foo"),
 							label.TraefikBackendLoadBalancerMethod:               aws.String("drr"),
-							label.TraefikBackendLoadBalancerSticky:               aws.String("true"),
 							label.TraefikBackendLoadBalancerStickiness:           aws.String("true"),
 							label.TraefikBackendLoadBalancerStickinessCookieName: aws.String("chocolate"),
 							label.TraefikBackendMaxConnAmount:                    aws.String("666"),
@@ -769,7 +772,6 @@ func TestBuildConfiguration(t *testing.T) {
 						},
 						LoadBalancer: &types.LoadBalancer{
 							Method: "drr",
-							Sticky: true,
 							Stickiness: &types.Stickiness{
 								CookieName: "chocolate",
 							},
@@ -884,12 +886,12 @@ func TestBuildConfiguration(t *testing.T) {
 						RateLimit: &types.RateLimit{
 							RateSet: map[string]*types.Rate{
 								"bar": {
-									Period:  flaeg.Duration(3 * time.Second),
+									Period:  parse.Duration(3 * time.Second),
 									Average: 6,
 									Burst:   9,
 								},
 								"foo": {
-									Period:  flaeg.Duration(6 * time.Second),
+									Period:  parse.Duration(6 * time.Second),
 									Average: 12,
 									Burst:   18,
 								},
@@ -1132,82 +1134,6 @@ func TestGetPort(t *testing.T) {
 			t.Parallel()
 
 			actual := getPort(test.instanceInfo)
-			assert.Equal(t, test.expected, actual)
-		})
-	}
-}
-
-func TestGetFuncStringValue(t *testing.T) {
-	testCases := []struct {
-		desc         string
-		expected     string
-		instanceInfo ecsInstance
-	}{
-		{
-			desc:         "Protocol label is not set should return a string equals to http",
-			expected:     "http",
-			instanceInfo: simpleEcsInstance(map[string]*string{}),
-		},
-		{
-			desc:     "Protocol label is set to http should return a string equals to http",
-			expected: "http",
-			instanceInfo: simpleEcsInstance(map[string]*string{
-				label.TraefikProtocol: aws.String("http"),
-			}),
-		},
-		{
-			desc:     "Protocol label is set to https should return a string equals to https",
-			expected: "https",
-			instanceInfo: simpleEcsInstance(map[string]*string{
-				label.TraefikProtocol: aws.String("https"),
-			}),
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			actual := getFuncStringValueV1(label.TraefikProtocol, label.DefaultProtocol)(test.instanceInfo)
-			assert.Equal(t, test.expected, actual)
-		})
-	}
-}
-
-func TestGetFuncSliceString(t *testing.T) {
-	testCases := []struct {
-		desc         string
-		expected     []string
-		instanceInfo ecsInstance
-	}{
-		{
-			desc:         "Frontend entrypoints label not set should return empty array",
-			expected:     nil,
-			instanceInfo: simpleEcsInstance(map[string]*string{}),
-		},
-		{
-			desc:     "Frontend entrypoints label set to http should return a string array of 1 element",
-			expected: []string{"http"},
-			instanceInfo: simpleEcsInstance(map[string]*string{
-				label.TraefikFrontendEntryPoints: aws.String("http"),
-			}),
-		},
-		{
-			desc:     "Frontend entrypoints label set to http,https should return a string array of 2 elements",
-			expected: []string{"http", "https"},
-			instanceInfo: simpleEcsInstance(map[string]*string{
-				label.TraefikFrontendEntryPoints: aws.String("http,https"),
-			}),
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			actual := getFuncSliceStringV1(label.TraefikFrontendEntryPoints)(test.instanceInfo)
 			assert.Equal(t, test.expected, actual)
 		})
 	}

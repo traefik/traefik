@@ -46,12 +46,9 @@ func (s *DynamoDBSuite) SetUpSuite(c *check.C) {
 	}
 	var sess *session.Session
 	err := try.Do(60*time.Second, func() error {
-		_, err := session.NewSession(config)
-		if err != nil {
-			return err
-		}
-		sess = session.New(config)
-		return nil
+		var err error
+		sess, err = session.NewSession(config)
+		return err
 	})
 	c.Assert(err, checker.IsNil)
 	svc := dynamodb.New(sess)

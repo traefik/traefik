@@ -232,7 +232,7 @@ Finally but not unimportantly, we tell Træfik to route **to** port `9000`, sinc
 `Service labels` allow managing many routes for the same container.
 
 When both `container labels` and `service labels` are defined, `container labels` are just used as default values for missing `service labels` but no frontend/backend are going to be defined only with these labels.
-Obviously, labels `traefik.frontend.rule` and `traefik.port` described above, will only be used to complete information set in `service labels` during the container frontends/bakends creation.
+Obviously, labels `traefik.frontend.rule` and `traefik.port` described above, will only be used to complete information set in `service labels` during the container frontends/backends creation.
 
 In the example, two service names are defined : `basic` and `admin`.
 They allow creating two frontends and two backends.

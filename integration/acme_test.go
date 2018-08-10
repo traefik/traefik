@@ -79,7 +79,7 @@ func setupPebbleRootCA() (*http.Transport, error) {
 }
 
 func (s *AcmeSuite) SetUpSuite(c *check.C) {
-	s.createComposeProject(c, "peddle")
+	s.createComposeProject(c, "pebble")
 	s.composeProject.Start(c)
 
 	s.fakeDNSServer = startFakeDNSServer()
@@ -91,7 +91,7 @@ func (s *AcmeSuite) SetUpSuite(c *check.C) {
 		c.Fatal(err)
 	}
 
-	// wait for peddle
+	// wait for pebble
 	req := testhelpers.MustNewRequest(http.MethodGet, s.getAcmeURL(), nil)
 
 	client := &http.Client{
@@ -122,7 +122,7 @@ func (s *AcmeSuite) TearDownSuite(c *check.C) {
 
 func (s *AcmeSuite) TestHTTP01DomainsAtStart(c *check.C) {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme-base.toml",
+		traefikConfFilePath: "fixtures/acme/acme_base.toml",
 		template: templateModel{
 			Acme: acme.Configuration{
 				HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "http"},
@@ -140,7 +140,7 @@ func (s *AcmeSuite) TestHTTP01DomainsAtStart(c *check.C) {
 
 func (s *AcmeSuite) TestHTTP01DomainsInSANAtStart(c *check.C) {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme-base.toml",
+		traefikConfFilePath: "fixtures/acme/acme_base.toml",
 		template: templateModel{
 			Acme: acme.Configuration{
 				HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "http"},
@@ -159,7 +159,7 @@ func (s *AcmeSuite) TestHTTP01DomainsInSANAtStart(c *check.C) {
 
 func (s *AcmeSuite) TestHTTP01OnHostRule(c *check.C) {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme-base.toml",
+		traefikConfFilePath: "fixtures/acme/acme_base.toml",
 		template: templateModel{
 			Acme: acme.Configuration{
 				HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "http"},
@@ -175,7 +175,7 @@ func (s *AcmeSuite) TestHTTP01OnHostRule(c *check.C) {
 
 func (s *AcmeSuite) TestHTTP01OnHostRuleECDSA(c *check.C) {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme-base.toml",
+		traefikConfFilePath: "fixtures/acme/acme_base.toml",
 		template: templateModel{
 			Acme: acme.Configuration{
 				HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "http"},
@@ -192,7 +192,7 @@ func (s *AcmeSuite) TestHTTP01OnHostRuleECDSA(c *check.C) {
 
 func (s *AcmeSuite) TestHTTP01OnHostRuleInvalidAlgo(c *check.C) {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme-base.toml",
+		traefikConfFilePath: "fixtures/acme/acme_base.toml",
 		template: templateModel{
 			Acme: acme.Configuration{
 				HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "http"},
@@ -257,7 +257,7 @@ func (s *AcmeSuite) TestHTTP01OnHostRuleDynamicCertificatesWithWildcard(c *check
 
 func (s *AcmeSuite) TestHTTP01OnDemand(c *check.C) {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme-base.toml",
+		traefikConfFilePath: "fixtures/acme/acme_base.toml",
 		template: templateModel{
 			Acme: acme.Configuration{
 				HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "http"},
@@ -305,7 +305,7 @@ func (s *AcmeSuite) TestHTTP01OnDemandDynamicCertificatesWithWildcard(c *check.C
 
 func (s *AcmeSuite) TestTLSALPN01OnHostRule(c *check.C) {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme-base.toml",
+		traefikConfFilePath: "fixtures/acme/acme_base.toml",
 		template: templateModel{
 			Acme: acme.Configuration{
 				TLSChallenge: &acme.TLSChallenge{},
@@ -321,7 +321,7 @@ func (s *AcmeSuite) TestTLSALPN01OnHostRule(c *check.C) {
 
 func (s *AcmeSuite) TestTLSALPN01OnDemand(c *check.C) {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme-base.toml",
+		traefikConfFilePath: "fixtures/acme/acme_base.toml",
 		template: templateModel{
 			Acme: acme.Configuration{
 				TLSChallenge: &acme.TLSChallenge{},
@@ -337,7 +337,7 @@ func (s *AcmeSuite) TestTLSALPN01OnDemand(c *check.C) {
 
 func (s *AcmeSuite) TestTLSALPN01DomainsAtStart(c *check.C) {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme-base.toml",
+		traefikConfFilePath: "fixtures/acme/acme_base.toml",
 		template: templateModel{
 			Acme: acme.Configuration{
 				TLSChallenge: &acme.TLSChallenge{},
@@ -355,7 +355,7 @@ func (s *AcmeSuite) TestTLSALPN01DomainsAtStart(c *check.C) {
 
 func (s *AcmeSuite) TestTLSALPN01DomainsInSANAtStart(c *check.C) {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme-base.toml",
+		traefikConfFilePath: "fixtures/acme/acme_base.toml",
 		template: templateModel{
 			Acme: acme.Configuration{
 				TLSChallenge: &acme.TLSChallenge{},
@@ -372,9 +372,27 @@ func (s *AcmeSuite) TestTLSALPN01DomainsInSANAtStart(c *check.C) {
 	s.retrieveAcmeCertificate(c, testCase)
 }
 
+func (s *AcmeSuite) TestTLSALPN01DomainsWithProvidedWildcardDomainAtStart(c *check.C) {
+	testCase := acmeTestCase{
+		traefikConfFilePath: "fixtures/acme/acme_tls.toml",
+		template: templateModel{
+			Acme: acme.Configuration{
+				TLSChallenge: &acme.TLSChallenge{},
+				Domains: types.Domains{types.Domain{
+					Main: "traefik.acme.wtf",
+				}},
+			},
+		},
+		expectedCommonName: "traefik.acme.wtf",
+		expectedAlgorithm:  x509.RSA,
+	}
+
+	s.retrieveAcmeCertificate(c, testCase)
+}
+
 // Test Let's encrypt down
 func (s *AcmeSuite) TestNoValidLetsEncryptServer(c *check.C) {
-	file := s.adaptFile(c, "fixtures/acme/acme-base.toml", templateModel{
+	file := s.adaptFile(c, "fixtures/acme/acme_base.toml", templateModel{
 		Acme: acme.Configuration{
 			CAServer:      "http://wrongurl:4001/directory",
 			HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "http"},

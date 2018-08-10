@@ -3,7 +3,7 @@
 </p>
 
 [![Build Status SemaphoreCI](https://semaphoreci.com/api/v1/containous/traefik/branches/master/shields_badge.svg)](https://semaphoreci.com/containous/traefik)
-[![Docs](https://img.shields.io/badge/docs-current-brightgreen.svg)](https://docs.traefik.io)
+[![Docs](https://img.shields.io/badge/docs-current-brightgreen.svg)](/)
 [![Go Report Card](https://goreportcard.com/badge/github.com/containous/traefik)](https://goreportcard.com/report/github.com/containous/traefik)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/containous/traefik/blob/master/LICENSE.md)
 [![Join the chat at https://slack.traefik.io](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://slack.traefik.io)
@@ -44,7 +44,7 @@ _(But if you'd rather configure some of your routes manually, Træfik supports t
 - Keeps access logs (JSON, CLF)
 - Fast
 - Exposes a Rest API
-- Packaged as a single binary file (made with :heart: with go) and available as a [tiny](https://microbadger.com/images/traefik) [official](https://hub.docker.com/r/_/traefik/) docker image
+- Packaged as a single binary file (made with ❤️ with go) and available as a [tiny](https://microbadger.com/images/traefik) [official](https://hub.docker.com/r/_/traefik/) docker image
 
 
 ## Supported Providers
@@ -138,7 +138,7 @@ IP: 172.27.0.3
 Run more instances of your `whoami` service with the following command:
 
 ```shell
-docker-compose up -d --scale whoami=2
+docker-compose scale whoami=2
 ```
 
 Go back to your browser ([http://localhost:8080](http://localhost:8080)) and see that Træfik has automatically detected the new instance of the container.

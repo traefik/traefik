@@ -158,8 +158,8 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 
-	if globalConfiguration.AllowMinWeightZero {
-		roundrobin.SetDefaultWeight(0)
+	if err := roundrobin.SetDefaultWeight(0); err != nil {
+		log.Error(err)
 	}
 
 	globalConfiguration.SetEffectiveConfiguration(configFile)
@@ -184,7 +184,11 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 
 	acmeprovider := globalConfiguration.InitACMEProvider()
 	if acmeprovider != nil {
-		providerAggregator.AddProvider(acmeprovider)
+
+		if err := providerAggregator.AddProvider(acmeprovider); err != nil {
+			log.Errorf("Error initializing provider ACME: %v", err)
+			acmeprovider = nil
+		}
 	}
 
 	entryPoints := map[string]server.EntryPoint{}
@@ -285,11 +289,7 @@ func configureLogging(globalConfiguration *configuration.GlobalConfiguration) {
 	}
 	log.SetLevel(level)
 
-	// configure log output file
-	logFile := globalConfiguration.TraefikLogsFile
-	if len(logFile) > 0 {
-		log.Warn("top-level traefikLogsFile has been deprecated -- please use traefiklog.filepath")
-	}
+	var logFile string
 	if globalConfiguration.TraefikLog != nil && len(globalConfiguration.TraefikLog.FilePath) > 0 {
 		logFile = globalConfiguration.TraefikLog.FilePath
 	}

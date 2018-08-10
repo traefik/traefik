@@ -66,8 +66,6 @@ func Do(globalConfiguration configuration.GlobalConfiguration) (*http.Response, 
 		client.Transport = tr
 	}
 	path := "/"
-	if globalConfiguration.Web != nil {
-		path = globalConfiguration.Web.Path
-	}
+
 	return client.Head(protocol + "://" + pingEntryPoint.Address + path + "ping")
 }

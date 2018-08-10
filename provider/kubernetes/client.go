@@ -161,9 +161,7 @@ func (c *clientImpl) GetIngresses() []*extensionsv1beta1.Ingress {
 		if err != nil {
 			log.Errorf("Failed to list ingresses in namespace %s: %s", ns, err)
 		}
-		for _, ing := range ings {
-			result = append(result, ing)
-		}
+		result = append(result, ings...)
 	}
 	return result
 }
@@ -237,13 +235,13 @@ func (c *clientImpl) newResourceEventHandler(events chan<- interface{}) cache.Re
 			}
 			return true
 		},
-		Handler: &resourceEventHandler{events},
+		Handler: &resourceEventHandler{ev: events},
 	}
 }
 
 // eventHandlerFunc will pass the obj on to the events channel or drop it.
 // This is so passing the events along won't block in the case of high volume.
-// The events are only used for signalling anyway so dropping a few is ok.
+// The events are only used for signaling anyway so dropping a few is ok.
 func eventHandlerFunc(events chan<- interface{}, obj interface{}) {
 	select {
 	case events <- obj:

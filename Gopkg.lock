@@ -9,6 +9,12 @@
 
 [[projects]]
   branch = "master"
+  name = "code.cloudfoundry.org/clock"
+  packages = ["."]
+  revision = "02e53af36e6c978af692887ed449b74026d76fec"
+
+[[projects]]
+  branch = "master"
   name = "github.com/ArthurHlt/go-eureka-client"
   packages = ["eureka"]
   revision = "9d0a49cbd39aa3634ae1977e9f519a262b10adaf"
@@ -81,6 +87,11 @@
   revision = "e039e20e500c2c025d9145be375e27cf42a94174"
 
 [[projects]]
+  name = "github.com/Microsoft/ApplicationInsights-Go"
+  packages = ["appinsights"]
+  revision = "98ac7ca026c26818888600ea0d966987aa56f043"
+
+[[projects]]
   name = "github.com/Microsoft/go-winio"
   packages = ["."]
   revision = "f533f7a102197536779ea3a8cb881d639e21ec5a"
@@ -141,7 +152,6 @@
     "store",
     "store/boltdb",
     "store/consul",
-    "store/etcd/v2",
     "store/etcd/v3",
     "store/zookeeper"
   ]
@@ -267,8 +277,8 @@
 [[projects]]
   name = "github.com/containous/traefik-extra-service-fabric"
   packages = ["."]
-  revision = "08668650856571f3529bde394a36a5c9cf16a991"
-  version = "v1.2.0"
+  revision = "6e90a9eef2ac9d320e55d6e994d169673a8d8b0f"
+  version = "v1.3.0"
 
 [[projects]]
   name = "github.com/coreos/bbolt"
@@ -279,31 +289,27 @@
   name = "github.com/coreos/etcd"
   packages = [
     "auth/authpb",
-    "client",
     "clientv3",
     "clientv3/concurrency",
     "etcdserver/api/v3rpc/rpctypes",
     "etcdserver/etcdserverpb",
     "mvcc/mvccpb",
-    "pkg/pathutil",
-    "pkg/srv",
-    "pkg/types",
-    "version"
+    "pkg/types"
   ]
   revision = "70c8726202dd91e482fb4029fd14af1d4ed1d5af"
   version = "v3.3.5"
-
-[[projects]]
-  name = "github.com/coreos/go-semver"
-  packages = ["semver"]
-  revision = "8ab6407b697782a06568d4b7f1db25550ec2e4c6"
-  version = "v0.2.0"
 
 [[projects]]
   name = "github.com/coreos/go-systemd"
   packages = ["daemon"]
   revision = "48702e0da86bd25e76cfef347e2adeb434a0d0a6"
   version = "v14"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/cpu/goacmedns"
+  packages = ["."]
+  revision = "565ecf2a84df654865cc102705ac160a3b04fc01"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -764,6 +770,12 @@
   version = "v1.3.7"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/jjcollinge/logrus-appinsights"
+  packages = ["."]
+  revision = "9b66602d496a139e4722bdde32f0f1ac1c12d4a8"
+
+[[projects]]
   name = "github.com/jjcollinge/servicefabric"
   packages = ["."]
   revision = "8eebe170fa1ba25d3dfb928b3f86a7313b13b9fe"
@@ -1190,29 +1202,30 @@
   packages = [
     ".",
     "config",
+    "internal/baggage",
+    "internal/baggage/remote",
     "internal/spanlog",
+    "internal/throttler",
+    "internal/throttler/remote",
     "log",
     "rpcmetrics",
+    "thrift",
     "thrift-gen/agent",
+    "thrift-gen/baggage",
     "thrift-gen/jaeger",
     "thrift-gen/sampling",
     "thrift-gen/zipkincore",
-    "utils"
+    "utils",
+    "zipkin"
   ]
-  revision = "3e3870040def0ebdaf65a003863fa64f5cb26139"
-  version = "v2.9.0"
+  revision = "b043381d944715b469fd6b37addfd30145ca1758"
+  version = "v2.14.0"
 
 [[projects]]
   name = "github.com/uber/jaeger-lib"
   packages = ["metrics"]
-  revision = "3b2a9ad2a045881ab7a0f81d465be54c8292ee4f"
-  version = "v1.1.0"
-
-[[projects]]
-  name = "github.com/ugorji/go"
-  packages = ["codec"]
-  revision = "b4c50a2b199d93b13dc15e78929cfb23bfdf21ab"
-  version = "v1.1.1"
+  revision = "ed3a127ec5fef7ae9ea95b01b542c47fbd999ce5"
+  version = "v1.5.0"
 
 [[projects]]
   name = "github.com/unrolled/render"
@@ -1249,7 +1262,7 @@
     "roundrobin",
     "utils"
   ]
-  revision = "adbef6bedf021985587c3c18c9d4b84b2d78f67c"
+  revision = "fb889e801a26e7e18ef36322ac72a07157f8cc1f"
 
 [[projects]]
   name = "github.com/vulcand/predicate"
@@ -1282,6 +1295,7 @@
     "log",
     "platform/config/env",
     "providers/dns",
+    "providers/dns/acmedns",
     "providers/dns/auroradns",
     "providers/dns/azure",
     "providers/dns/bluecat",
@@ -1317,7 +1331,7 @@
     "providers/dns/vegadns",
     "providers/dns/vultr"
   ]
-  revision = "e0d512138c43e3f056a41cd7a5beff662ec130d3"
+  revision = "8b6701514cc0a6285a327908f3f9ce05bcacbffd"
 
 [[projects]]
   branch = "master"
@@ -1738,6 +1752,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a3429eccf578f09c7c521a32f81df1af5f0a24cb8c9702b7b768f3db34153216"
+  inputs-digest = "8eb11befb583dfb89320dd7b7aea9e54b40e0523e60e66ed418788394b873d44"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -27,9 +27,14 @@ type Provider struct {
 	TraefikFile           string
 }
 
+// Init the provider
+func (p *Provider) Init(constraints types.Constraints) error {
+	return p.BaseProvider.Init(constraints)
+}
+
 // Provide allows the file provider to provide configurations to traefik
 // using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
+func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	configuration, err := p.BuildConfiguration()
 
 	if err != nil {
@@ -71,7 +76,7 @@ func (p *Provider) BuildConfiguration() (*types.Configuration, error) {
 		return p.loadFileConfig(p.TraefikFile, false)
 	}
 
-	return nil, errors.New("Error using file configuration backend, no filename defined")
+	return nil, errors.New("error using file configuration backend, no filename defined")
 }
 
 func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationChan chan<- types.ConfigMessage, callback func(chan<- types.ConfigMessage, fsnotify.Event)) error {

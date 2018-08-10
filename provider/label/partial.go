@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
 )
@@ -84,7 +84,8 @@ func GetAuth(labels map[string]string) *types.Auth {
 // getAuthBasic Create Basic Auth from labels
 func getAuthBasic(labels map[string]string) *types.Basic {
 	basicAuth := &types.Basic{
-		UsersFile: GetStringValue(labels, TraefikFrontendAuthBasicUsersFile, ""),
+		UsersFile:    GetStringValue(labels, TraefikFrontendAuthBasicUsersFile, ""),
+		RemoveHeader: GetBoolValue(labels, TraefikFrontendAuthBasicRemoveHeader, false),
 	}
 
 	// backward compatibility
@@ -101,8 +102,9 @@ func getAuthBasic(labels map[string]string) *types.Basic {
 // getAuthDigest Create Digest Auth from labels
 func getAuthDigest(labels map[string]string) *types.Digest {
 	return &types.Digest{
-		Users:     GetSliceStringValue(labels, TraefikFrontendAuthDigestUsers),
-		UsersFile: GetStringValue(labels, TraefikFrontendAuthDigestUsersFile, ""),
+		Users:        GetSliceStringValue(labels, TraefikFrontendAuthDigestUsers),
+		UsersFile:    GetStringValue(labels, TraefikFrontendAuthDigestUsersFile, ""),
+		RemoveHeader: GetBoolValue(labels, TraefikFrontendAuthDigestRemoveHeader, false),
 	}
 }
 
@@ -216,7 +218,7 @@ func ParseRateSets(labels map[string]string, labelPrefix string, labelRegex *reg
 
 			switch submatch[2] {
 			case "period":
-				var d flaeg.Duration
+				var d parse.Duration
 				err := d.Set(rawValue)
 				if err != nil {
 					log.Errorf("Unable to parse %q: %q. %v", lblName, rawValue, err)
@@ -352,7 +354,6 @@ func GetLoadBalancer(labels map[string]string) *types.LoadBalancer {
 
 	lb := &types.LoadBalancer{
 		Method: method,
-		Sticky: getSticky(labels),
 	}
 
 	if GetBoolValue(labels, TraefikBackendLoadBalancerStickiness, false) {
@@ -361,15 +362,4 @@ func GetLoadBalancer(labels map[string]string) *types.LoadBalancer {
 	}
 
 	return lb
-}
-
-// TODO: Deprecated
-// replaced by Stickiness
-// Deprecated
-func getSticky(labels map[string]string) bool {
-	if Has(labels, TraefikBackendLoadBalancerSticky) {
-		log.Warnf("Deprecated configuration found: %s. Please use %s.", TraefikBackendLoadBalancerSticky, TraefikBackendLoadBalancerStickiness)
-	}
-
-	return GetBoolValue(labels, TraefikBackendLoadBalancerSticky, false)
 }

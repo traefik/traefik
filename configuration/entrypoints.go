@@ -17,10 +17,14 @@ type EntryPoint struct {
 	Auth                 *types.Auth       `export:"true"`
 	WhitelistSourceRange []string          // Deprecated
 	WhiteList            *types.WhiteList  `export:"true"`
-	Compress             bool              `export:"true"`
+	Compress             *Compress         `export:"true"`
 	ProxyProtocol        *ProxyProtocol    `export:"true"`
 	ForwardedHeaders     *ForwardedHeaders `export:"true"`
 	RemoveHeaders        []string          `export:"true"`
+}
+
+// Compress contains compress configuration
+type Compress struct {
 }
 
 // ProxyProtocol contains Proxy-Protocol configuration
@@ -75,9 +79,12 @@ func (ep *EntryPoints) Set(value string) error {
 		removeHeaders = strings.Split(result["removeheaders"], ",")
 	}
 
-	compress := toBool(result, "compress")
+	var compress *Compress
+	if len(result["compress"]) > 0 {
+		compress = &Compress{}
+	}
 
-	configTLS, err := makeEntryPointTLS(result)
+  configTLS, err := makeEntryPointTLS(result)
 	if err != nil {
 		return err
 	}
@@ -92,7 +99,7 @@ func (ep *EntryPoints) Set(value string) error {
 		WhiteList:            makeWhiteList(result),
 		ProxyProtocol:        makeEntryPointProxyProtocol(result),
 		ForwardedHeaders:     makeEntryPointForwardedHeaders(result),
-		RemoveHeaders:        removeHeaders,
+		HeHeaders:        removeHeaders,
 	}
 
 	return nil
@@ -113,14 +120,16 @@ func makeEntryPointAuth(result map[string]string) *types.Auth {
 	var basic *types.Basic
 	if v, ok := result["auth_basic_users"]; ok {
 		basic = &types.Basic{
-			Users: strings.Split(v, ","),
+			Users:        strings.Split(v, ","),
+			RemoveHeader: toBool(result, "auth_basic_removeheader"),
 		}
 	}
 
 	var digest *types.Digest
 	if v, ok := result["auth_digest_users"]; ok {
 		digest = &types.Digest{
-			Users: strings.Split(v, ","),
+			Users:        strings.Split(v, ","),
+			RemoveHeader: toBool(result, "auth_digest_removeheader"),
 		}
 	}
 

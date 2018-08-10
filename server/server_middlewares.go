@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/middlewares/accesslog"
@@ -22,9 +21,7 @@ type handlerPostConfig func(backendsHandlers map[string]http.Handler) error
 type modifyResponse func(*http.Response) error
 
 func (s *Server) buildMiddlewares(frontendName string, frontend *types.Frontend,
-	backends map[string]*types.Backend,
-	entryPointName string, entryPoint *configuration.EntryPoint,
-	providerName string) ([]negroni.Handler, modifyResponse, handlerPostConfig, error) {
+	backends map[string]*types.Backend, entryPointName string, providerName string) ([]negroni.Handler, modifyResponse, handlerPostConfig, error) {
 
 	var middle []negroni.Handler
 	var postConfig handlerPostConfig
@@ -95,19 +92,6 @@ func (s *Server) buildMiddlewares(frontendName string, frontend *types.Frontend,
 		middle = append(middle, handler)
 	}
 
-	// Basic auth
-	if len(frontend.BasicAuth) > 0 {
-		log.Debugf("Adding basic authentication for frontend %s", frontendName)
-
-		authMiddleware, err := s.buildBasicAuthMiddleware(frontend.BasicAuth)
-		if err != nil {
-			return nil, nil, nil, err
-		}
-
-		handler := s.wrapNegroniHandlerWithAccessLog(authMiddleware, fmt.Sprintf("Basic Auth for %s", frontendName))
-		middle = append(middle, handler)
-	}
-
 	// Authentication
 	if frontend.Auth != nil {
 		authMiddleware, err := mauth.NewAuthenticator(frontend.Auth, s.tracingMiddleware)
@@ -122,7 +106,7 @@ func (s *Server) buildMiddlewares(frontendName string, frontend *types.Frontend,
 	return middle, buildModifyResponse(secureMiddleware, headerMiddleware, entryPoint.RemoveHeaders), postConfig, nil
 }
 
-func (s *Server) buildServerEntryPointMiddlewares(serverEntryPointName string, serverEntryPoint *serverEntryPoint) ([]negroni.Handler, error) {
+func (s *Server) buildServerEntryPointMiddlewares(serverEntryPointName string) ([]negroni.Handler, error) {
 	serverMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler()}
 
 	if s.tracingMiddleware.IsEnabled() {
@@ -158,7 +142,7 @@ func (s *Server) buildServerEntryPointMiddlewares(serverEntryPointName string, s
 		serverMiddlewares = append(serverMiddlewares, s.wrapNegroniHandlerWithAccessLog(authMiddleware, fmt.Sprintf("Auth for entrypoint %s", serverEntryPointName)))
 	}
 
-	if s.entryPoints[serverEntryPointName].Configuration.Compress {
+	if s.entryPoints[serverEntryPointName].Configuration.Compress != nil {
 		serverMiddlewares = append(serverMiddlewares, &middlewares.Compress{})
 	}
 

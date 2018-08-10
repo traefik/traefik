@@ -157,7 +157,9 @@ func (w *influxDBWriter) Write(bp influxdb.BatchPoints) error {
 func (w *influxDBWriter) initWriteClient() (influxdb.Client, error) {
 	if w.config.Protocol == "http" {
 		return influxdb.NewHTTPClient(influxdb.HTTPConfig{
-			Addr: w.config.Address,
+			Addr:     w.config.Address,
+			Username: w.config.Username,
+			Password: w.config.Password,
 		})
 	}
 

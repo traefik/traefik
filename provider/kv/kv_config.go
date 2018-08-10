@@ -11,7 +11,7 @@ import (
 
 	"github.com/BurntSushi/ty/fun"
 	"github.com/abronan/valkeyrie/store"
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/tls"
@@ -43,10 +43,9 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		// Frontend functions
 		"getBackendName":    p.getFuncString(pathFrontendBackend, ""),
 		"getPriority":       p.getFuncInt(pathFrontendPriority, label.DefaultFrontendPriority),
-		"getPassHostHeader": p.getPassHostHeader(),
+		"getPassHostHeader": p.getFuncBool(pathFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getPassTLSCert":    p.getFuncBool(pathFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getEntryPoints":    p.getFuncList(pathFrontendEntryPoints),
-		"getBasicAuth":      p.getFuncList(pathFrontendBasicAuth), // Deprecated
 		"getAuth":           p.getAuth,
 		"getRoutes":         p.getRoutes,
 		"getRedirect":       p.getRedirect,
@@ -56,15 +55,12 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getWhiteList":      p.getWhiteList,
 
 		// Backend functions
-		"getServers":              p.getServers,
-		"getCircuitBreaker":       p.getCircuitBreaker,
-		"getLoadBalancer":         p.getLoadBalancer,
-		"getMaxConn":              p.getMaxConn,
-		"getHealthCheck":          p.getHealthCheck,
-		"getBuffering":            p.getBuffering,
-		"getSticky":               p.getSticky,               // Deprecated [breaking]
-		"hasStickinessLabel":      p.hasStickinessLabel,      // Deprecated [breaking]
-		"getStickinessCookieName": p.getStickinessCookieName, // Deprecated [breaking]
+		"getServers":        p.getServers,
+		"getCircuitBreaker": p.getCircuitBreaker,
+		"getLoadBalancer":   p.getLoadBalancer,
+		"getMaxConn":        p.getMaxConn,
+		"getHealthCheck":    p.getHealthCheck,
+		"getBuffering":      p.getBuffering,
 	}
 
 	configuration, err := p.GetConfiguration("templates/kv.tmpl", KvFuncMap, templateObjects)
@@ -79,51 +75,6 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 	}
 
 	return configuration
-}
-
-// Deprecated
-func (p *Provider) getPassHostHeader() func(rootPath string) bool {
-	return func(rootPath string) bool {
-		rawValue := p.get("", rootPath, pathFrontendPassHostHeader)
-
-		if len(rawValue) > 0 {
-			value, err := strconv.ParseBool(rawValue)
-			if err != nil {
-				log.Errorf("Invalid value for %s %s: %s", rootPath, pathFrontendPassHostHeader, rawValue)
-				return label.DefaultPassHostHeader
-			}
-			return value
-		}
-
-		return p.getBool(label.DefaultPassHostHeader, rootPath, pathFrontendPassHostHeaderDeprecated)
-	}
-}
-
-// Deprecated
-func (p *Provider) getSticky(rootPath string) bool {
-	stickyValue := p.get("", rootPath, pathBackendLoadBalancerSticky)
-	if len(stickyValue) > 0 {
-		log.Warnf("Deprecated configuration found: %s. Please use %s.", pathBackendLoadBalancerSticky, pathBackendLoadBalancerStickiness)
-	} else {
-		return false
-	}
-
-	sticky, err := strconv.ParseBool(stickyValue)
-	if err != nil {
-		log.Warnf("Invalid %s value: %s.", pathBackendLoadBalancerSticky, stickyValue)
-	}
-
-	return sticky
-}
-
-// Deprecated
-func (p *Provider) hasStickinessLabel(rootPath string) bool {
-	return p.getBool(false, rootPath, pathBackendLoadBalancerStickiness)
-}
-
-// Deprecated
-func (p *Provider) getStickinessCookieName(rootPath string) string {
-	return p.get("", rootPath, pathBackendLoadBalancerStickinessCookieName)
 }
 
 func (p *Provider) getWhiteList(rootPath string) *types.WhiteList {
@@ -198,7 +149,7 @@ func (p *Provider) getRateLimit(rootPath string) *types.RateLimit {
 
 		rawPeriod := p.get("", pathLimits+pathFrontendRateLimitPeriod)
 
-		var period flaeg.Duration
+		var period parse.Duration
 		err := period.Set(rawPeriod)
 		if err != nil {
 			log.Errorf("Invalid %q value: %q", pathLimits+pathFrontendRateLimitPeriod, rawPeriod)
@@ -256,7 +207,6 @@ func (p *Provider) getHeaders(rootPath string) *types.Headers {
 func (p *Provider) getLoadBalancer(rootPath string) *types.LoadBalancer {
 	lb := &types.LoadBalancer{
 		Method: p.get(label.DefaultBackendLoadBalancerMethod, rootPath, pathBackendLoadBalancerMethod),
-		Sticky: p.getSticky(rootPath),
 	}
 
 	if p.getBool(false, rootPath, pathBackendLoadBalancerStickiness) {
@@ -369,24 +319,18 @@ func (p *Provider) getTLSSection(prefix string) []*tls.Configuration {
 	return tlsSection
 }
 
-// hasDeprecatedBasicAuth check if the frontend basic auth use the deprecated configuration
-func (p *Provider) hasDeprecatedBasicAuth(rootPath string) bool {
-	return len(p.getList(rootPath, pathFrontendBasicAuth)) > 0
-}
-
 // GetAuth Create auth from path
 func (p *Provider) getAuth(rootPath string) *types.Auth {
-	hasDeprecatedBasicAuth := p.hasDeprecatedBasicAuth(rootPath)
-	if len(p.getList(rootPath, pathFrontendAuth)) > 0 || hasDeprecatedBasicAuth {
+	if p.hasPrefix(rootPath, pathFrontendAuth) {
 		auth := &types.Auth{
 			HeaderField: p.get("", rootPath, pathFrontendAuthHeaderField),
 		}
 
-		if len(p.getList(rootPath, pathFrontendAuthBasic)) > 0 || hasDeprecatedBasicAuth {
+		if p.hasPrefix(rootPath, pathFrontendAuthBasic) {
 			auth.Basic = p.getAuthBasic(rootPath)
-		} else if len(p.getList(rootPath, pathFrontendAuthDigest)) > 0 {
+		} else if p.hasPrefix(rootPath, pathFrontendAuthDigest) {
 			auth.Digest = p.getAuthDigest(rootPath)
-		} else if len(p.getList(rootPath, pathFrontendAuthForward)) > 0 {
+		} else if p.hasPrefix(rootPath, pathFrontendAuthForward) {
 			auth.Forward = p.getAuthForward(rootPath)
 		}
 
@@ -397,26 +341,19 @@ func (p *Provider) getAuth(rootPath string) *types.Auth {
 
 // getAuthBasic Create Basic Auth from path
 func (p *Provider) getAuthBasic(rootPath string) *types.Basic {
-	basicAuth := &types.Basic{
-		UsersFile: p.get("", rootPath, pathFrontendAuthBasicUsersFile),
+	return &types.Basic{
+		UsersFile:    p.get("", rootPath, pathFrontendAuthBasicUsersFile),
+		RemoveHeader: p.getBool(false, rootPath, pathFrontendAuthBasicRemoveHeader),
+		Users:        p.getList(rootPath, pathFrontendAuthBasicUsers),
 	}
-
-	// backward compatibility
-	if p.hasDeprecatedBasicAuth(rootPath) {
-		basicAuth.Users = p.getList(rootPath, pathFrontendBasicAuth)
-		log.Warnf("Deprecated configuration found: %s. Please use %s.", pathFrontendBasicAuth, pathFrontendAuthBasic)
-	} else {
-		basicAuth.Users = p.getList(rootPath, pathFrontendAuthBasicUsers)
-	}
-
-	return basicAuth
 }
 
 // getAuthDigest Create Digest Auth from path
 func (p *Provider) getAuthDigest(rootPath string) *types.Digest {
 	return &types.Digest{
-		Users:     p.getList(rootPath, pathFrontendAuthDigestUsers),
-		UsersFile: p.get("", rootPath, pathFrontendAuthDigestUsersFile),
+		Users:        p.getList(rootPath, pathFrontendAuthDigestUsers),
+		UsersFile:    p.get("", rootPath, pathFrontendAuthDigestUsersFile),
+		RemoveHeader: p.getBool(false, rootPath, pathFrontendAuthDigestRemoveHeader),
 	}
 }
 
@@ -586,6 +523,21 @@ func (p *Provider) getBool(defaultValue bool, keyParts ...string) bool {
 func (p *Provider) has(keyParts ...string) bool {
 	value := p.get("", keyParts...)
 	return len(value) > 0
+}
+
+func (p *Provider) hasPrefix(keyParts ...string) bool {
+	baseKey := strings.Join(keyParts, "")
+	if !strings.HasSuffix(baseKey, "/") {
+		baseKey += "/"
+	}
+
+	listKeys, err := p.kvClient.List(baseKey, nil)
+	if err != nil {
+		log.Debugf("Cannot list keys under %q: %v", baseKey, err)
+		return false
+	}
+
+	return len(listKeys) > 0
 }
 
 func (p *Provider) getInt(defaultValue int, keyParts ...string) int {

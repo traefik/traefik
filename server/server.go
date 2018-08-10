@@ -14,7 +14,6 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
-	"reflect"
 	"sync"
 	"time"
 
@@ -22,7 +21,6 @@ import (
 	"github.com/containous/mux"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/configuration"
-	"github.com/containous/traefik/configuration/router"
 	"github.com/containous/traefik/h2c"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/metrics"
@@ -40,6 +38,59 @@ import (
 )
 
 var httpServerLogger = stdlog.New(log.WriterLevel(logrus.DebugLevel), "", 0)
+
+func newHijackConnectionTracker() *hijackConnectionTracker {
+	return &hijackConnectionTracker{
+		conns: make(map[net.Conn]struct{}),
+	}
+}
+
+type hijackConnectionTracker struct {
+	conns map[net.Conn]struct{}
+	lock  sync.RWMutex
+}
+
+// AddHijackedConnection add a connection in the tracked connections list
+func (h *hijackConnectionTracker) AddHijackedConnection(conn net.Conn) {
+	h.lock.Lock()
+	defer h.lock.Unlock()
+	h.conns[conn] = struct{}{}
+}
+
+// RemoveHijackedConnection remove a connection from the tracked connections list
+func (h *hijackConnectionTracker) RemoveHijackedConnection(conn net.Conn) {
+	h.lock.Lock()
+	defer h.lock.Unlock()
+	delete(h.conns, conn)
+}
+
+// Shutdown wait for the connection closing
+func (h *hijackConnectionTracker) Shutdown(ctx context.Context) error {
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		h.lock.RLock()
+		if len(h.conns) == 0 {
+			return nil
+		}
+		h.lock.RUnlock()
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+		}
+	}
+}
+
+// Close close all the connections in the tracked connections list
+func (h *hijackConnectionTracker) Close() {
+	for conn := range h.conns {
+		if err := conn.Close(); err != nil {
+			log.Errorf("Error while closing Hijacked conn: %v", err)
+		}
+		delete(h.conns, conn)
+	}
+}
 
 // Server is the reverse-proxy/load-balancer engine
 type Server struct {
@@ -75,12 +126,41 @@ type EntryPoint struct {
 type serverEntryPoints map[string]*serverEntryPoint
 
 type serverEntryPoint struct {
-	httpServer       *h2c.Server
-	listener         net.Listener
-	httpRouter       *middlewares.HandlerSwitcher
-	certs            *traefiktls.CertificateStore
-	onDemandListener func(string) (*tls.Certificate, error)
-	tlsALPNGetter    func(string) (*tls.Certificate, error)
+	httpServer              *h2c.Server
+	listener                net.Listener
+	httpRouter              *middlewares.HandlerSwitcher
+	certs                   *traefiktls.CertificateStore
+	onDemandListener        func(string) (*tls.Certificate, error)
+	tlsALPNGetter           func(string) (*tls.Certificate, error)
+	hijackConnectionTracker *hijackConnectionTracker
+}
+
+func (s serverEntryPoint) Shutdown(ctx context.Context) {
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := s.httpServer.Shutdown(ctx); err != nil {
+			if ctx.Err() == context.DeadlineExceeded {
+				log.Debugf("Wait server shutdown is over due to: %s", err)
+				err = s.httpServer.Close()
+				if err != nil {
+					log.Error(err)
+				}
+			}
+		}
+	}()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := s.hijackConnectionTracker.Shutdown(ctx); err != nil {
+			if ctx.Err() == context.DeadlineExceeded {
+				log.Debugf("Wait hijack connection is over due to: %s", err)
+				s.hijackConnectionTracker.Close()
+			}
+		}
+	}()
+	wg.Wait()
 }
 
 // NewServer returns an initialized Server.
@@ -125,10 +205,6 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration, provider p
 	if globalConfiguration.Cluster != nil {
 		// leadership creation if cluster mode
 		server.leadership = cluster.NewLeadership(server.routinesPool.Ctx(), globalConfiguration.Cluster)
-	}
-
-	if globalConfiguration.AccessLogsFile != "" {
-		globalConfiguration.AccessLog = &types.AccessLog{FilePath: globalConfiguration.AccessLogsFile, Format: accesslog.CommonFormat}
 	}
 
 	if globalConfiguration.AccessLog != nil {
@@ -188,13 +264,7 @@ func (s *Server) Stop() {
 			graceTimeOut := time.Duration(s.globalConfiguration.LifeCycle.GraceTimeOut)
 			ctx, cancel := context.WithTimeout(context.Background(), graceTimeOut)
 			log.Debugf("Waiting %s seconds before killing connections on entrypoint %s...", graceTimeOut, serverEntryPointName)
-			if err := serverEntryPoint.httpServer.Shutdown(ctx); err != nil {
-				log.Debugf("Wait is over due to: %s", err)
-				err = serverEntryPoint.httpServer.Close()
-				if err != nil {
-					log.Error(err)
-				}
-			}
+			serverEntryPoint.Shutdown(ctx)
 			cancel()
 			log.Debugf("Entrypoint %s closed", serverEntryPointName)
 		}(sepn, sep)
@@ -273,13 +343,8 @@ func (s *Server) AddListener(listener func(types.Configuration)) {
 	s.configurationListeners = append(s.configurationListeners, listener)
 }
 
-// getCertificate allows to customize tlsConfig.GetCertificate behaviour to get the certificates inserted dynamically
+// getCertificate allows to customize tlsConfig.GetCertificate behavior to get the certificates inserted dynamically
 func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-	bestCertificate := s.certs.GetBestCertificate(clientHello)
-	if bestCertificate != nil {
-		return bestCertificate, nil
-	}
-
 	domainToCheck := types.CanonicalDomain(clientHello.ServerName)
 
 	if s.tlsALPNGetter != nil {
@@ -291,6 +356,11 @@ func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tl
 		if cert != nil {
 			return cert, nil
 		}
+	}
+
+	bestCertificate := s.certs.GetBestCertificate(clientHello)
+	if bestCertificate != nil {
+		return bestCertificate, nil
 	}
 
 	if s.onDemandListener != nil && len(domainToCheck) > 0 {
@@ -308,17 +378,16 @@ func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tl
 
 func (s *Server) startProvider() {
 	// start providers
-	providerType := reflect.TypeOf(s.provider)
 	jsonConf, err := json.Marshal(s.provider)
 	if err != nil {
-		log.Debugf("Unable to marshal provider conf %v with error: %v", providerType, err)
+		log.Debugf("Unable to marshal provider conf %T with error: %v", s.provider, err)
 	}
-	log.Infof("Starting provider %v %s", providerType, jsonConf)
+	log.Infof("Starting provider %T %s", s.provider, jsonConf)
 	currentProvider := s.provider
 	safe.Go(func() {
-		err := currentProvider.Provide(s.configurationChan, s.routinesPool, s.globalConfiguration.Constraints)
+		err := currentProvider.Provide(s.configurationChan, s.routinesPool)
 		if err != nil {
-			log.Errorf("Error starting provider %v: %s", providerType, err)
+			log.Errorf("Error starting provider %T: %s", s.provider, err)
 		}
 	})
 }
@@ -338,12 +407,6 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 
 	// ensure http2 enabled
 	config.NextProtos = []string{"h2", "http/1.1", acme.ACMETLS1Protocol}
-
-	if len(tlsOption.ClientCAFiles) > 0 {
-		log.Warnf("Deprecated configuration found during TLS configuration creation: %s. Please use %s (which allows to make the CA Files optional).", "tls.ClientCAFiles", "tls.ClientCA.files")
-		tlsOption.ClientCA.Files = tlsOption.ClientCAFiles
-		tlsOption.ClientCA.Optional = false
-	}
 
 	if len(tlsOption.ClientCA.Files) > 0 {
 		pool := x509.NewCertPool()
@@ -435,7 +498,7 @@ func (s *Server) startServer(serverEntryPoint *serverEntryPoint) {
 }
 
 func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServerEntryPoint *serverEntryPoint) *serverEntryPoint {
-	serverMiddlewares, err := s.buildServerEntryPointMiddlewares(newServerEntryPointName, newServerEntryPoint)
+	serverMiddlewares, err := s.buildServerEntryPointMiddlewares(newServerEntryPointName)
 	if err != nil {
 		log.Fatal("Error preparing server: ", err)
 	}
@@ -448,6 +511,16 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 	serverEntryPoint := s.serverEntryPoints[newServerEntryPointName]
 	serverEntryPoint.httpServer = newSrv
 	serverEntryPoint.listener = listener
+
+	serverEntryPoint.hijackConnectionTracker = newHijackConnectionTracker()
+	serverEntryPoint.httpServer.ConnState = func(conn net.Conn, state http.ConnState) {
+		switch state {
+		case http.StateHijacked:
+			serverEntryPoint.hijackConnectionTracker.AddHijackedConnection(conn)
+		case http.StateClosed:
+			serverEntryPoint.hijackConnectionTracker.RemoveHijackedConnection(conn)
+		}
+	}
 
 	return serverEntryPoint
 }
@@ -528,12 +601,8 @@ func (s *Server) buildInternalRouter(entryPointName string) *mux.Router {
 		entryPoint.InternalRouter.AddRoutes(internalMuxRouter)
 
 		if s.globalConfiguration.API != nil && s.globalConfiguration.API.EntryPoint == entryPointName && s.leadership != nil {
-			if s.globalConfiguration.Web != nil && s.globalConfiguration.Web.Path != "" {
-				rt := router.WithPrefix{Router: s.leadership, PathPrefix: s.globalConfiguration.Web.Path}
-				rt.AddRoutes(internalMuxRouter)
-			} else {
-				s.leadership.AddRoutes(internalMuxRouter)
-			}
+			s.leadership.AddRoutes(internalMuxRouter)
+
 		}
 	}
 
@@ -548,11 +617,7 @@ func buildServerTimeouts(globalConfig configuration.GlobalConfiguration) (readTi
 		writeTimeout = time.Duration(globalConfig.RespondingTimeouts.WriteTimeout)
 	}
 
-	// Prefer legacy idle timeout parameter for backwards compatibility reasons
-	if globalConfig.IdleTimeout > 0 {
-		idleTimeout = time.Duration(globalConfig.IdleTimeout)
-		log.Warn("top-level idle timeout configuration has been deprecated -- please use responding timeouts")
-	} else if globalConfig.RespondingTimeouts != nil {
+	if globalConfig.RespondingTimeouts != nil {
 		idleTimeout = time.Duration(globalConfig.RespondingTimeouts.IdleTimeout)
 	} else {
 		idleTimeout = configuration.DefaultIdleTimeout
@@ -568,8 +633,11 @@ func registerMetricClients(metricsConfig *types.Metrics) metrics.Registry {
 
 	var registries []metrics.Registry
 	if metricsConfig.Prometheus != nil {
-		registries = append(registries, metrics.RegisterPrometheus(metricsConfig.Prometheus))
-		log.Debug("Configured Prometheus metrics")
+		prometheusRegister := metrics.RegisterPrometheus(metricsConfig.Prometheus)
+		if prometheusRegister != nil {
+			registries = append(registries, prometheusRegister)
+			log.Debug("Configured Prometheus metrics")
+		}
 	}
 	if metricsConfig.Datadog != nil {
 		registries = append(registries, metrics.RegisterDatadog(metricsConfig.Datadog))

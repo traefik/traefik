@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	docker "github.com/docker/docker/api/types"
@@ -99,9 +99,10 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 				swarmService(
 					serviceName("test"),
 					serviceLabels(map[string]string{
-						label.TraefikPort:                       "80",
-						label.TraefikFrontendAuthBasicUsers:     "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						label.TraefikFrontendAuthBasicUsersFile: ".htpasswd",
+						label.TraefikPort:                          "80",
+						label.TraefikFrontendAuthBasicUsers:        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendAuthBasicUsersFile:    ".htpasswd",
+						label.TraefikFrontendAuthBasicRemoveHeader: "true",
 					}),
 					withEndpointSpec(modeVIP),
 					withEndpoint(virtualIP("1", "127.0.0.1/24")),
@@ -114,6 +115,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 					EntryPoints:    []string{},
 					Auth: &types.Auth{
 						Basic: &types.Basic{
+							RemoveHeader: true,
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 							UsersFile: ".htpasswd",
@@ -195,9 +197,10 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 				swarmService(
 					serviceName("test"),
 					serviceLabels(map[string]string{
-						label.TraefikPort:                        "80",
-						label.TraefikFrontendAuthDigestUsers:     "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						label.TraefikFrontendAuthDigestUsersFile: ".htpasswd",
+						label.TraefikPort:                           "80",
+						label.TraefikFrontendAuthDigestUsers:        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendAuthDigestUsersFile:    ".htpasswd",
+						label.TraefikFrontendAuthDigestRemoveHeader: "true",
 					}),
 					withEndpointSpec(modeVIP),
 					withEndpoint(virtualIP("1", "127.0.0.1/24")),
@@ -210,6 +213,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 					EntryPoints:    []string{},
 					Auth: &types.Auth{
 						Digest: &types.Digest{
+							RemoveHeader: true,
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 							UsersFile: ".htpasswd",
@@ -318,7 +322,6 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						label.TraefikBackendHealthCheckHostname:              "foo.com",
 						label.TraefikBackendHealthCheckHeaders:               "Foo:bar || Bar:foo",
 						label.TraefikBackendLoadBalancerMethod:               "drr",
-						label.TraefikBackendLoadBalancerSticky:               "true",
 						label.TraefikBackendLoadBalancerStickiness:           "true",
 						label.TraefikBackendLoadBalancerStickinessCookieName: "chocolate",
 						label.TraefikBackendMaxConnAmount:                    "666",
@@ -329,8 +332,10 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						label.TraefikBackendBufferingMemRequestBodyBytes:     "2097152",
 						label.TraefikBackendBufferingRetryExpression:         "IsNetworkError() && Attempts() <= 2",
 
+						label.TraefikFrontendAuthBasicRemoveHeader:            "true",
 						label.TraefikFrontendAuthBasicUsers:                   "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.TraefikFrontendAuthBasicUsersFile:               ".htpasswd",
+						label.TraefikFrontendAuthDigestRemoveHeader:           "true",
 						label.TraefikFrontendAuthDigestUsers:                  "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.TraefikFrontendAuthDigestUsersFile:              ".htpasswd",
 						label.TraefikFrontendAuthForwardAddress:               "auth.server",
@@ -414,6 +419,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{
+							RemoveHeader: true,
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 							UsersFile: ".htpasswd",
@@ -480,12 +486,12 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						ExtractorFunc: "client.ip",
 						RateSet: map[string]*types.Rate{
 							"foo": {
-								Period:  flaeg.Duration(6 * time.Second),
+								Period:  parse.Duration(6 * time.Second),
 								Average: 12,
 								Burst:   18,
 							},
 							"bar": {
-								Period:  flaeg.Duration(3 * time.Second),
+								Period:  parse.Duration(3 * time.Second),
 								Average: 6,
 								Burst:   9,
 							},
@@ -511,7 +517,6 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 					},
 					LoadBalancer: &types.LoadBalancer{
 						Method: "drr",
-						Sticky: true,
 						Stickiness: &types.Stickiness{
 							CookieName: "chocolate",
 						},
@@ -564,7 +569,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 				SwarmMode:        true,
 			}
 
-			actualConfig := provider.buildConfigurationV2(dockerDataList)
+			actualConfig := provider.buildConfiguration(dockerDataList)
 			require.NotNil(t, actualConfig, "actualConfig")
 
 			assert.EqualValues(t, test.expectedBackends, actualConfig.Backends)
@@ -926,7 +931,7 @@ func TestSwarmGetIPAddress(t *testing.T) {
 			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
 			dData.SegmentLabels = segmentProperties[""]
 
-			actual := provider.getIPAddress(dData)
+			actual := provider.getDeprecatedIPAddress(dData)
 			assert.Equal(t, test.expected, actual)
 		})
 	}

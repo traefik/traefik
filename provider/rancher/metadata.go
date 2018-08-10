@@ -22,9 +22,7 @@ type MetadataConfiguration struct {
 	Prefix       string `description:"Prefix used for accessing the Rancher metadata service"`
 }
 
-func (p *Provider) metadataProvide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
-	p.Constraints = append(p.Constraints, constraints...)
-
+func (p *Provider) metadataProvide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	metadataServiceURL := fmt.Sprintf("http://rancher-metadata.rancher.internal/%s", p.Metadata.Prefix)
 
 	safe.Go(func() {
@@ -111,7 +109,7 @@ func (p *Provider) longPoll(client rancher.Client, updateConfiguration func(stri
 
 	// Holds the connection until there is either a change in the metadata
 	// repository or `p.RefreshSeconds` has elapsed. Long polling should be
-	// favoured for the most accurate configuration updates.
+	// favored for the most accurate configuration updates.
 	safe.Go(func() {
 		client.OnChange(p.RefreshSeconds, updateConfiguration)
 	})

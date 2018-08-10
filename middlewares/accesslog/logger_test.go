@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/containous/flaeg/parse"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -198,9 +199,7 @@ func TestLoggerJSON(t *testing.T) {
 				RequestPath:            assertString(testPath),
 				RequestProtocol:        assertString(testProto),
 				RequestPort:            assertString("-"),
-				RequestLine:            assertString(fmt.Sprintf("%s %s %s", testMethod, testPath, testProto)),
 				DownstreamStatus:       assertFloat64(float64(testStatus)),
-				DownstreamStatusLine:   assertString(fmt.Sprintf("%d ", testStatus)),
 				DownstreamContentSize:  assertFloat64(float64(len(testContent))),
 				OriginContentSize:      assertFloat64(float64(len(testContent))),
 				OriginStatus:           assertFloat64(float64(testStatus)),
@@ -628,7 +627,10 @@ func doLogging(t *testing.T, config *types.AccessLog) {
 }
 
 func logWriterTestHandlerFunc(rw http.ResponseWriter, r *http.Request) {
-	rw.Write([]byte(testContent))
+	if _, err := rw.Write([]byte(testContent)); err != nil {
+		log.Error(err)
+	}
+
 	rw.WriteHeader(testStatus)
 
 	logDataTable := GetLogDataTable(r)

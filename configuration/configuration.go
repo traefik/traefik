@@ -5,12 +5,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik-extra-service-fabric"
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/api"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares/tracing"
+	"github.com/containous/traefik/middlewares/tracing/datadog"
 	"github.com/containous/traefik/middlewares/tracing/jaeger"
 	"github.com/containous/traefik/middlewares/tracing/zipkin"
 	"github.com/containous/traefik/ping"
@@ -58,33 +59,27 @@ const (
 // GlobalConfiguration holds global configuration (with providers, etc.).
 // It's populated from the traefik configuration file passed as an argument to the binary.
 type GlobalConfiguration struct {
-	LifeCycle                 *LifeCycle              `description:"Timeouts influencing the server life cycle" export:"true"`
-	GraceTimeOut              flaeg.Duration          `short:"g" description:"(Deprecated) Duration to give active requests a chance to finish before Traefik stops" export:"true"` // Deprecated
-	Debug                     bool                    `short:"d" description:"Enable debug mode" export:"true"`
-	CheckNewVersion           bool                    `description:"Periodically check if a new version has been released" export:"true"`
-	SendAnonymousUsage        bool                    `description:"send periodically anonymous usage statistics" export:"true"`
-	AccessLogsFile            string                  `description:"(Deprecated) Access logs file" export:"true"` // Deprecated
-	AccessLog                 *types.AccessLog        `description:"Access log settings" export:"true"`
-	TraefikLogsFile           string                  `description:"(Deprecated) Traefik logs file. Stdout is used when omitted or empty" export:"true"` // Deprecated
-	TraefikLog                *types.TraefikLog       `description:"Traefik log settings" export:"true"`
-	Tracing                   *tracing.Tracing        `description:"OpenTracing configuration" export:"true"`
-	LogLevel                  string                  `short:"l" description:"Log level" export:"true"`
-	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key;prod/traefik.crt,prod/traefik.key'" export:"true"`
-	Cluster                   *types.Cluster          `description:"Enable clustering" export:"true"`
+	LifeCycle                 *LifeCycle        `description:"Timeouts influencing the server life cycle" export:"true"`
+	Debug                     bool              `short:"d" description:"Enable debug mode" export:"true"`
+	CheckNewVersion           bool              `description:"Periodically check if a new version has been released" export:"true"`
+	SendAnonymousUsage        bool              `description:"send periodically anonymous usage statistics" export:"true"`
+	AccessLog                 *types.AccessLog  `description:"Access log settings" export:"true"`
+	TraefikLog                *types.TraefikLog `description:"Traefik log settings" export:"true"`
+	Tracing                   *tracing.Tracing  `description:"OpenTracing configuration" export:"true"`
+	LogLevel                  string            `short:"l" description:"Log level" export:"true"`
+	EntryPoints               EntryPoints       `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key;prod/traefik.crt,prod/traefik.key'" export:"true"`
+	Cluster                   *types.Cluster
 	Constraints               types.Constraints       `description:"Filter services by constraint, matching with service tags" export:"true"`
 	ACME                      *acme.ACME              `description:"Enable ACME (Let's Encrypt): automatic SSL" export:"true"`
 	DefaultEntryPoints        DefaultEntryPoints      `description:"Entrypoints to be used by frontends that do not specify any entrypoint" export:"true"`
-	ProvidersThrottleDuration flaeg.Duration          `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time." export:"true"`
+	ProvidersThrottleDuration parse.Duration          `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time." export:"true"`
 	MaxIdleConnsPerHost       int                     `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used" export:"true"`
-	IdleTimeout               flaeg.Duration          `description:"(Deprecated) maximum amount of time an idle (keep-alive) connection will remain idle before closing itself." export:"true"` // Deprecated
 	InsecureSkipVerify        bool                    `description:"Disable SSL certificate verification" export:"true"`
 	RootCAs                   tls.RootCAs             `description:"Add cert file for self-signed certificate"`
 	Retry                     *Retry                  `description:"Enable retry sending request if network error" export:"true"`
 	HealthCheck               *HealthCheckConfig      `description:"Health check parameters" export:"true"`
 	RespondingTimeouts        *RespondingTimeouts     `description:"Timeouts for incoming requests to the Traefik instance" export:"true"`
 	ForwardingTimeouts        *ForwardingTimeouts     `description:"Timeouts for requests forwarded to the backend servers" export:"true"`
-	AllowMinWeightZero        bool                    `description:"Allow weight to take 0 as minimum real value." export:"true"`         // Deprecated
-	Web                       *WebCompatibility       `description:"(Deprecated) Enable Web backend with default settings" export:"true"` // Deprecated
 	Docker                    *docker.Provider        `description:"Enable Docker backend with default settings" export:"true"`
 	File                      *file.Provider          `description:"Enable File backend with default settings" export:"true"`
 	Marathon                  *marathon.Provider      `description:"Enable Marathon backend with default settings" export:"true"`
@@ -107,66 +102,6 @@ type GlobalConfiguration struct {
 	HostResolver              *HostResolverConfig     `description:"Enable CNAME Flattening" export:"true"`
 }
 
-// WebCompatibility is a configuration to handle compatibility with deprecated web provider options
-type WebCompatibility struct {
-	Address    string            `description:"(Deprecated) Web administration port" export:"true"`
-	CertFile   string            `description:"(Deprecated) SSL certificate" export:"true"`
-	KeyFile    string            `description:"(Deprecated) SSL certificate" export:"true"`
-	ReadOnly   bool              `description:"(Deprecated) Enable read only API" export:"true"`
-	Statistics *types.Statistics `description:"(Deprecated) Enable more detailed statistics" export:"true"`
-	Metrics    *types.Metrics    `description:"(Deprecated) Enable a metrics exporter" export:"true"`
-	Path       string            `description:"(Deprecated) Root path for dashboard and API" export:"true"`
-	Auth       *types.Auth       `export:"true"`
-	Debug      bool              `export:"true"`
-}
-
-func (gc *GlobalConfiguration) handleWebDeprecation() {
-	if gc.Web != nil {
-		log.Warn("web provider configuration is deprecated, you should use these options : api, rest provider, ping and metrics")
-
-		if gc.API != nil || gc.Metrics != nil || gc.Ping != nil || gc.Rest != nil {
-			log.Warn("web option is ignored if you use it with one of these options : api, rest provider, ping or metrics")
-			return
-		}
-		gc.EntryPoints[DefaultInternalEntryPointName] = &EntryPoint{
-			Address: gc.Web.Address,
-			Auth:    gc.Web.Auth,
-		}
-		if gc.Web.CertFile != "" {
-			gc.EntryPoints[DefaultInternalEntryPointName].TLS = &tls.TLS{
-				Certificates: []tls.Certificate{
-					{
-						CertFile: tls.FileOrContent(gc.Web.CertFile),
-						KeyFile:  tls.FileOrContent(gc.Web.KeyFile),
-					},
-				},
-			}
-		}
-
-		if gc.API == nil {
-			gc.API = &api.Handler{
-				EntryPoint: DefaultInternalEntryPointName,
-				Statistics: gc.Web.Statistics,
-				Dashboard:  true,
-			}
-		}
-
-		if gc.Ping == nil {
-			gc.Ping = &ping.Handler{
-				EntryPoint: DefaultInternalEntryPointName,
-			}
-		}
-
-		if gc.Metrics == nil {
-			gc.Metrics = gc.Web.Metrics
-		}
-
-		if !gc.Debug {
-			gc.Debug = gc.Web.Debug
-		}
-	}
-}
-
 // SetEffectiveConfiguration adds missing configuration parameters derived from existing ones.
 // It also takes care of maintaining backwards compatibility.
 func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
@@ -177,8 +112,6 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 		}}
 		gc.DefaultEntryPoints = []string{"http"}
 	}
-
-	gc.handleWebDeprecation()
 
 	if (gc.API != nil && gc.API.EntryPoint == DefaultInternalEntryPointName) ||
 		(gc.Ping != nil && gc.Ping.EntryPoint == DefaultInternalEntryPointName) ||
@@ -213,72 +146,7 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 		gc.LifeCycle = &LifeCycle{}
 	}
 
-	// Prefer legacy grace timeout parameter for backwards compatibility reasons.
-	if gc.GraceTimeOut > 0 {
-		log.Warn("top-level grace period configuration has been deprecated -- please use lifecycle grace period")
-		gc.LifeCycle.GraceTimeOut = gc.GraceTimeOut
-	}
-
-	if gc.Docker != nil {
-		if len(gc.Docker.Filename) != 0 && gc.Docker.TemplateVersion != 2 {
-			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
-			gc.Docker.TemplateVersion = 1
-		} else {
-			gc.Docker.TemplateVersion = 2
-		}
-	}
-
-	if gc.Marathon != nil {
-		if len(gc.Marathon.Filename) != 0 && gc.Marathon.TemplateVersion != 2 {
-			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
-			gc.Marathon.TemplateVersion = 1
-		} else {
-			gc.Marathon.TemplateVersion = 2
-		}
-	}
-
-	if gc.Mesos != nil {
-		if len(gc.Mesos.Filename) != 0 && gc.Mesos.TemplateVersion != 2 {
-			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
-			gc.Mesos.TemplateVersion = 1
-		} else {
-			gc.Mesos.TemplateVersion = 2
-		}
-	}
-
-	if gc.Eureka != nil {
-		if gc.Eureka.Delay != 0 {
-			log.Warn("Delay has been deprecated -- please use RefreshSeconds")
-			gc.Eureka.RefreshSeconds = gc.Eureka.Delay
-		}
-	}
-
-	if gc.ECS != nil {
-		if len(gc.ECS.Filename) != 0 && gc.ECS.TemplateVersion != 2 {
-			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
-			gc.ECS.TemplateVersion = 1
-		} else {
-			gc.ECS.TemplateVersion = 2
-		}
-	}
-
-	if gc.ConsulCatalog != nil {
-		if len(gc.ConsulCatalog.Filename) != 0 && gc.ConsulCatalog.TemplateVersion != 2 {
-			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
-			gc.ConsulCatalog.TemplateVersion = 1
-		} else {
-			gc.ConsulCatalog.TemplateVersion = 2
-		}
-	}
-
 	if gc.Rancher != nil {
-		if len(gc.Rancher.Filename) != 0 && gc.Rancher.TemplateVersion != 2 {
-			log.Warn("Template version 1 is deprecated, please use version 2, see TemplateVersion.")
-			gc.Rancher.TemplateVersion = 1
-		} else {
-			gc.Rancher.TemplateVersion = 2
-		}
-
 		// Ensure backwards compatibility for now
 		if len(gc.Rancher.AccessKey) > 0 ||
 			len(gc.Rancher.Endpoint) > 0 ||
@@ -304,10 +172,6 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 		gc.API.Debug = gc.Debug
 	}
 
-	if gc.Web != nil && (gc.Web.Path == "" || !strings.HasSuffix(gc.Web.Path, "/")) {
-		gc.Web.Path += "/"
-	}
-
 	if gc.File != nil {
 		gc.File.TraefikFile = configFile
 	}
@@ -326,11 +190,17 @@ func (gc *GlobalConfiguration) initTracing() {
 					SamplingType:       "const",
 					SamplingParam:      1.0,
 					LocalAgentHostPort: "127.0.0.1:6831",
+					Propagation:        "jaeger",
+					Gen128Bit:          false,
 				}
 			}
 			if gc.Tracing.Zipkin != nil {
 				log.Warn("Zipkin configuration will be ignored")
 				gc.Tracing.Zipkin = nil
+			}
+			if gc.Tracing.DataDog != nil {
+				log.Warn("DataDog configuration will be ignored")
+				gc.Tracing.DataDog = nil
 			}
 		case zipkin.Name:
 			if gc.Tracing.Zipkin == nil {
@@ -340,6 +210,26 @@ func (gc *GlobalConfiguration) initTracing() {
 					ID128Bit:     true,
 					Debug:        false,
 				}
+			}
+			if gc.Tracing.Jaeger != nil {
+				log.Warn("Jaeger configuration will be ignored")
+				gc.Tracing.Jaeger = nil
+			}
+			if gc.Tracing.DataDog != nil {
+				log.Warn("DataDog configuration will be ignored")
+				gc.Tracing.DataDog = nil
+			}
+		case datadog.Name:
+			if gc.Tracing.DataDog == nil {
+				gc.Tracing.DataDog = &datadog.Config{
+					LocalAgentHostPort: "localhost:8126",
+					GlobalTag:          "",
+					Debug:              false,
+				}
+			}
+			if gc.Tracing.Zipkin != nil {
+				log.Warn("Zipkin configuration will be ignored")
+				gc.Tracing.Zipkin = nil
 			}
 			if gc.Tracing.Jaeger != nil {
 				log.Warn("Jaeger configuration will be ignored")
@@ -369,12 +259,6 @@ func (gc *GlobalConfiguration) initACMEProvider() {
 		if gc.ACME.HTTPChallenge != nil && gc.ACME.TLSChallenge != nil {
 			log.Warn("Unable to use HTTP challenge and TLS challenge at the same time. Fallback to TLS challenge.")
 			gc.ACME.HTTPChallenge = nil
-		}
-
-		// TODO: to remove in the future
-		if len(gc.ACME.StorageFile) > 0 && len(gc.ACME.Storage) == 0 {
-			log.Warn("ACME.StorageFile is deprecated, use ACME.Storage instead")
-			gc.ACME.Storage = gc.ACME.StorageFile
 		}
 
 		if len(gc.ACME.DNSProvider) > 0 {
@@ -498,27 +382,27 @@ type Retry struct {
 
 // HealthCheckConfig contains health check configuration parameters.
 type HealthCheckConfig struct {
-	Interval flaeg.Duration `description:"Default periodicity of enabled health checks" export:"true"`
+	Interval parse.Duration `description:"Default periodicity of enabled health checks" export:"true"`
 }
 
 // RespondingTimeouts contains timeout configurations for incoming requests to the Traefik instance.
 type RespondingTimeouts struct {
-	ReadTimeout  flaeg.Duration `description:"ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set" export:"true"`
-	WriteTimeout flaeg.Duration `description:"WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set" export:"true"`
-	IdleTimeout  flaeg.Duration `description:"IdleTimeout is the maximum amount duration an idle (keep-alive) connection will remain idle before closing itself. Defaults to 180 seconds. If zero, no timeout is set" export:"true"`
+	ReadTimeout  parse.Duration `description:"ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set" export:"true"`
+	WriteTimeout parse.Duration `description:"WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set" export:"true"`
+	IdleTimeout  parse.Duration `description:"IdleTimeout is the maximum amount duration an idle (keep-alive) connection will remain idle before closing itself. Defaults to 180 seconds. If zero, no timeout is set" export:"true"`
 }
 
 // ForwardingTimeouts contains timeout configurations for forwarding requests to the backend servers.
 type ForwardingTimeouts struct {
-	DialTimeout           flaeg.Duration `description:"The amount of time to wait until a connection to a backend server can be established. Defaults to 30 seconds. If zero, no timeout exists" export:"true"`
-	ResponseHeaderTimeout flaeg.Duration `description:"The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists" export:"true"`
+	DialTimeout           parse.Duration `description:"The amount of time to wait until a connection to a backend server can be established. Defaults to 30 seconds. If zero, no timeout exists" export:"true"`
+	ResponseHeaderTimeout parse.Duration `description:"The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists" export:"true"`
 }
 
 // LifeCycle contains configurations relevant to the lifecycle (such as the
 // shutdown phase) of Traefik.
 type LifeCycle struct {
-	RequestAcceptGraceTimeout flaeg.Duration `description:"Duration to keep accepting requests before Traefik initiates the graceful shutdown procedure"`
-	GraceTimeOut              flaeg.Duration `description:"Duration to give active requests a chance to finish before Traefik stops"`
+	RequestAcceptGraceTimeout parse.Duration `description:"Duration to keep accepting requests before Traefik initiates the graceful shutdown procedure"`
+	GraceTimeOut              parse.Duration `description:"Duration to give active requests a chance to finish before Traefik stops"`
 }
 
 // HostResolverConfig contain configuration for CNAME Flattening

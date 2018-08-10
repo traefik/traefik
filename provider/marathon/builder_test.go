@@ -95,12 +95,6 @@ func containerNetwork() func(*marathon.Application) {
 	}
 }
 
-func hostNetwork() func(*marathon.Application) {
-	return func(app *marathon.Application) {
-		app.SetNetwork("host", marathon.HostNetworkMode)
-	}
-}
-
 func ipAddrPerTask(port int) func(*marathon.Application) {
 	return func(app *marathon.Application) {
 		p := marathon.Port{

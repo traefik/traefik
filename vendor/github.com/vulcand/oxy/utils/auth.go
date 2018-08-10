@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// BasicAuth basic auth information
 type BasicAuth struct {
 	Username string
 	Password string
@@ -16,6 +17,7 @@ func (ba *BasicAuth) String() string {
 	return fmt.Sprintf("Basic %s", encoded)
 }
 
+// ParseAuthHeader creates a new BasicAuth from header values
 func ParseAuthHeader(header string) (*BasicAuth, error) {
 	values := strings.Fields(header)
 	if len(values) != 2 {

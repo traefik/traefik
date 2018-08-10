@@ -23,7 +23,6 @@ const (
 	SuffixBackendHealthCheckHeaders                 = "backend.healthcheck.headers"
 	SuffixBackendLoadBalancer                       = "backend.loadbalancer"
 	SuffixBackendLoadBalancerMethod                 = SuffixBackendLoadBalancer + ".method"
-	SuffixBackendLoadBalancerSticky                 = SuffixBackendLoadBalancer + ".sticky"
 	SuffixBackendLoadBalancerStickiness             = SuffixBackendLoadBalancer + ".stickiness"
 	SuffixBackendLoadBalancerStickinessCookieName   = SuffixBackendLoadBalancer + ".stickiness.cookieName"
 	SuffixBackendMaxConnAmount                      = "backend.maxconn.amount"
@@ -37,9 +36,11 @@ const (
 	SuffixFrontend                                  = "frontend"
 	SuffixFrontendAuth                              = SuffixFrontend + ".auth"
 	SuffixFrontendAuthBasic                         = SuffixFrontendAuth + ".basic"
+	SuffixFrontendAuthBasicRemoveHeader             = SuffixFrontendAuthBasic + ".removeHeader"
 	SuffixFrontendAuthBasicUsers                    = SuffixFrontendAuthBasic + ".users"
 	SuffixFrontendAuthBasicUsersFile                = SuffixFrontendAuthBasic + ".usersFile"
 	SuffixFrontendAuthDigest                        = SuffixFrontendAuth + ".digest"
+	SuffixFrontendAuthDigestRemoveHeader            = SuffixFrontendAuthDigest + ".removeHeader"
 	SuffixFrontendAuthDigestUsers                   = SuffixFrontendAuthDigest + ".users"
 	SuffixFrontendAuthDigestUsersFile               = SuffixFrontendAuthDigest + ".usersFile"
 	SuffixFrontendAuthForward                       = SuffixFrontendAuth + ".forward"
@@ -109,7 +110,6 @@ const (
 	TraefikBackendHealthCheckHeaders                = Prefix + SuffixBackendHealthCheckHeaders
 	TraefikBackendLoadBalancer                      = Prefix + SuffixBackendLoadBalancer
 	TraefikBackendLoadBalancerMethod                = Prefix + SuffixBackendLoadBalancerMethod
-	TraefikBackendLoadBalancerSticky                = Prefix + SuffixBackendLoadBalancerSticky
 	TraefikBackendLoadBalancerStickiness            = Prefix + SuffixBackendLoadBalancerStickiness
 	TraefikBackendLoadBalancerStickinessCookieName  = Prefix + SuffixBackendLoadBalancerStickinessCookieName
 	TraefikBackendMaxConnAmount                     = Prefix + SuffixBackendMaxConnAmount
@@ -123,9 +123,11 @@ const (
 	TraefikFrontend                                 = Prefix + SuffixFrontend
 	TraefikFrontendAuth                             = Prefix + SuffixFrontendAuth
 	TraefikFrontendAuthBasic                        = Prefix + SuffixFrontendAuthBasic
+	TraefikFrontendAuthBasicRemoveHeader            = Prefix + SuffixFrontendAuthBasicRemoveHeader
 	TraefikFrontendAuthBasicUsers                   = Prefix + SuffixFrontendAuthBasicUsers
 	TraefikFrontendAuthBasicUsersFile               = Prefix + SuffixFrontendAuthBasicUsersFile
 	TraefikFrontendAuthDigest                       = Prefix + SuffixFrontendAuthDigest
+	TraefikFrontendAuthDigestRemoveHeader           = Prefix + SuffixFrontendAuthDigestRemoveHeader
 	TraefikFrontendAuthDigestUsers                  = Prefix + SuffixFrontendAuthDigestUsers
 	TraefikFrontendAuthDigestUsersFile              = Prefix + SuffixFrontendAuthDigestUsersFile
 	TraefikFrontendAuthForward                      = Prefix + SuffixFrontendAuthForward

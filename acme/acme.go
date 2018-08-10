@@ -9,6 +9,7 @@ import (
 	fmtlog "log"
 	"net"
 	"net/http"
+	"net/url"
 	"reflect"
 	"strings"
 	"time"
@@ -183,7 +184,8 @@ func (a *ACME) leadershipListener(elected bool) error {
 		account := object.(*Account)
 		account.Init()
 		// Reset Account values if caServer changed, thus registration URI can be updated
-		if account != nil && account.Registration != nil && !strings.HasPrefix(account.Registration.URI, a.CAServer) {
+		if account != nil && account.Registration != nil && !isAccountMatchingCaServer(account.Registration.URI, a.CAServer) {
+			log.Info("Account URI does not match the current CAServer. The account will be reset")
 			account.reset()
 		}
 
@@ -230,17 +232,31 @@ func (a *ACME) leadershipListener(elected bool) error {
 	return nil
 }
 
+func isAccountMatchingCaServer(accountURI string, serverURI string) bool {
+	aru, err := url.Parse(accountURI)
+	if err != nil {
+		log.Infof("Unable to parse account.Registration URL : %v", err)
+		return false
+	}
+	cau, err := url.Parse(serverURI)
+	if err != nil {
+		log.Infof("Unable to parse CAServer URL : %v", err)
+		return false
+	}
+	return cau.Hostname() == aru.Hostname()
+}
+
 func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	domain := types.CanonicalDomain(clientHello.ServerName)
 	account := a.store.Get().(*Account)
 
-	if providedCertificate := a.getProvidedCertificate(domain); providedCertificate != nil {
-		return providedCertificate, nil
-	}
-
 	if challengeCert, ok := a.challengeTLSProvider.getCertificate(domain); ok {
 		log.Debugf("ACME got challenge %s", domain)
 		return challengeCert, nil
+	}
+
+	if providedCertificate := a.getProvidedCertificate(domain); providedCertificate != nil {
+		return providedCertificate, nil
 	}
 
 	if domainCert, ok := account.DomainsCertificate.getCertificateForDomain(domain); ok {

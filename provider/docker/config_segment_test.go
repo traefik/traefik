@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	docker "github.com/docker/docker/api/types"
@@ -71,11 +71,12 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 				containerJSON(
 					name("foo"),
 					labels(map[string]string{
-						"traefik.sauternes.port":                                             "2503",
-						"traefik.sauternes.frontend.entryPoints":                             "http,https",
-						label.Prefix + "sauternes." + label.SuffixFrontendAuthHeaderField:    "X-WebAuth-User",
-						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicUsers:     "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicUsersFile: ".htpasswd",
+						"traefik.sauternes.port":                                                "2503",
+						"traefik.sauternes.frontend.entryPoints":                                "http,https",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthHeaderField:       "X-WebAuth-User",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicUsers:        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicUsersFile:    ".htpasswd",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicRemoveHeader: "true",
 					}),
 					ports(nat.PortMap{
 						"80/tcp": {},
@@ -96,6 +97,7 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{
+							RemoveHeader: true,
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 							UsersFile: ".htpasswd",
@@ -167,11 +169,12 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 				containerJSON(
 					name("foo"),
 					labels(map[string]string{
-						"traefik.sauternes.port":                                              "2503",
-						"traefik.sauternes.frontend.entryPoints":                              "http,https",
-						label.Prefix + "sauternes." + label.SuffixFrontendAuthHeaderField:     "X-WebAuth-User",
-						label.Prefix + "sauternes." + label.SuffixFrontendAuthDigestUsers:     "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						label.Prefix + "sauternes." + label.SuffixFrontendAuthDigestUsersFile: ".htpasswd",
+						"traefik.sauternes.port":                                                 "2503",
+						"traefik.sauternes.frontend.entryPoints":                                 "http,https",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthHeaderField:        "X-WebAuth-User",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthDigestUsers:        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthDigestUsersFile:    ".htpasswd",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthDigestRemoveHeader: "true",
 					}),
 					ports(nat.PortMap{
 						"80/tcp": {},
@@ -192,6 +195,7 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Digest: &types.Digest{
+							RemoveHeader: true,
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 							UsersFile: ".htpasswd",
@@ -282,8 +286,10 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 						label.Prefix + "sauternes." + label.SuffixProtocol: "https",
 						label.Prefix + "sauternes." + label.SuffixWeight:   "12",
 
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicRemoveHeader:            "true",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicUsers:                   "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicUsersFile:               ".htpasswd",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthDigestRemoveHeader:           "true",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthDigestUsers:                  "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthDigestUsersFile:              ".htpasswd",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthForwardAddress:               "auth.server",
@@ -364,6 +370,7 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{
+							RemoveHeader: true,
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 							UsersFile: ".htpasswd",
@@ -430,12 +437,12 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 						ExtractorFunc: "client.ip",
 						RateSet: map[string]*types.Rate{
 							"foo": {
-								Period:  flaeg.Duration(6 * time.Second),
+								Period:  parse.Duration(6 * time.Second),
 								Average: 12,
 								Burst:   18,
 							},
 							"bar": {
-								Period:  flaeg.Duration(3 * time.Second),
+								Period:  parse.Duration(3 * time.Second),
 								Average: 6,
 								Burst:   9,
 							},
@@ -714,7 +721,7 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 				dockerDataList = append(dockerDataList, dData)
 			}
 
-			actualConfig := provider.buildConfigurationV2(dockerDataList)
+			actualConfig := provider.buildConfiguration(dockerDataList)
 			require.NotNil(t, actualConfig, "actualConfig")
 
 			assert.EqualValues(t, test.expectedBackends, actualConfig.Backends)

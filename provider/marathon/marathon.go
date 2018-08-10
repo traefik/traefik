@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/cenk/backoff"
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
@@ -55,10 +55,10 @@ type Provider struct {
 	MarathonLBCompatibility   bool             `description:"Add compatibility with marathon-lb labels" export:"true"`
 	FilterMarathonConstraints bool             `description:"Enable use of Marathon constraints in constraint filtering" export:"true"`
 	TLS                       *types.ClientTLS `description:"Enable TLS support" export:"true"`
-	DialerTimeout             flaeg.Duration   `description:"Set a dialer timeout for Marathon" export:"true"`
-	ResponseHeaderTimeout     flaeg.Duration   `description:"Set a response header timeout for Marathon" export:"true"`
-	TLSHandshakeTimeout       flaeg.Duration   `description:"Set a TLS handhsake timeout for Marathon" export:"true"`
-	KeepAlive                 flaeg.Duration   `description:"Set a TCP Keep Alive time in seconds" export:"true"`
+	DialerTimeout             parse.Duration   `description:"Set a dialer timeout for Marathon" export:"true"`
+	ResponseHeaderTimeout     parse.Duration   `description:"Set a response header timeout for Marathon" export:"true"`
+	TLSHandshakeTimeout       parse.Duration   `description:"Set a TLS handhsake timeout for Marathon" export:"true"`
+	KeepAlive                 parse.Duration   `description:"Set a TCP Keep Alive time in seconds" export:"true"`
 	ForceTaskHostname         bool             `description:"Force to use the task's hostname." export:"true"`
 	Basic                     *Basic           `description:"Enable basic authentication" export:"true"`
 	RespectReadinessChecks    bool             `description:"Filter out tasks with non-successful readiness checks during deployments" export:"true"`
@@ -72,10 +72,14 @@ type Basic struct {
 	HTTPBasicPassword string `description:"Basic authentication Password"`
 }
 
+// Init the provider
+func (p *Provider) Init(constraints types.Constraints) error {
+	return p.BaseProvider.Init(constraints)
+}
+
 // Provide allows the marathon provider to provide configurations to traefik
 // using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
-	p.Constraints = append(p.Constraints, constraints...)
+func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	operation := func() error {
 		config := marathon.NewDefaultConfig()
 		config.URL = p.Endpoint

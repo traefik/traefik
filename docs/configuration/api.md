@@ -21,7 +21,7 @@
 
   # Enable debug mode.
   # This will install HTTP handlers to expose Go expvars under /debug/vars and
-  # pprof profiling data under /debug/pprof.
+  # pprof profiling data under /debug/pprof/.
   # Additionally, the log level will be set to DEBUG.
   #
   # Optional
@@ -30,7 +30,7 @@
   debug = true
 ```
 
-For more customization, see [entry points](/configuration/entrypoints/) documentation and [examples](/user-guide/examples/#ping-health-check).
+For more customization, see [entry points](/configuration/entrypoints/) documentation and the examples below.
 
 ## Web UI
 

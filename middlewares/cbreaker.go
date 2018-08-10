@@ -3,6 +3,7 @@ package middlewares
 import (
 	"net/http"
 
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares/tracing"
 	"github.com/vulcand/oxy/cbreaker"
 )
@@ -27,7 +28,10 @@ func NewCircuitBreakerOptions(expression string) cbreaker.CircuitBreakerOption {
 		tracing.LogEventf(r, "blocked by circuit-breaker (%q)", expression)
 
 		w.WriteHeader(http.StatusServiceUnavailable)
-		w.Write([]byte(http.StatusText(http.StatusServiceUnavailable)))
+
+		if _, err := w.Write([]byte(http.StatusText(http.StatusServiceUnavailable))); err != nil {
+			log.Error(err)
+		}
 	}))
 }
 

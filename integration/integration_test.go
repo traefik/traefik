@@ -45,7 +45,6 @@ func init() {
 		check.Suite(&DockerComposeSuite{})
 		check.Suite(&DockerSuite{})
 		check.Suite(&DynamoDBSuite{})
-		check.Suite(&EtcdSuite{})
 		check.Suite(&ErrorPagesSuite{})
 		check.Suite(&EurekaSuite{})
 		check.Suite(&FileSuite{})

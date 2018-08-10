@@ -5,11 +5,16 @@
 ### TOML
 
 ```toml
+defaultEntryPoints = ["http", "https"]
+
+# ...
+# ...
+
 [entryPoints]
   [entryPoints.http]
     address = ":80"
-    compress = true
     removeHeaders = ["X-Custom-Header", "X-Custom-Header-2"]
+    [entryPoints.http.compress]
     [entryPoints.http.whitelist]
       sourceRange = ["10.42.0.0/16", "152.89.1.33/32", "afed:be44::/16"]
       useXForwardedFor = true
@@ -40,12 +45,14 @@
     [entryPoints.http.auth]
       headerField = "X-WebAuth-User"
       [entryPoints.http.auth.basic]
+        removeHeader = true
         users = [
           "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
           "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
         ]
         usersFile = "/path/to/.htpasswd"
       [entryPoints.http.auth.digest]
+        removeHeader = true
         users = [
           "test:traefik:a2688e031edb4be6a3797f3882655c05",
           "test2:traefik:518845800f9e2bfb1f1f740ec24f074e",
@@ -128,7 +135,9 @@ ProxyProtocol.TrustedIPs:192.168.0.1
 ProxyProtocol.Insecure:true
 ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24
 Auth.Basic.Users:test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0
+Auth.Basic.Removeheader:true
 Auth.Digest.Users:test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e
+Auth.Digest.Removeheader:true
 Auth.HeaderField:X-WebAuth-User
 Auth.Forward.Address:https://authserver.com/auth
 Auth.Forward.AuthResponseHeaders:X-Auth,X-Test,X-Secret
@@ -229,10 +238,10 @@ If you need to add or remove TLS certificates while Traefik is started, Dynamic 
 TLS Mutual Authentication can be `optional` or not.
 If it's `optional`, Træfik will authorize connection with certificates not signed by a specified Certificate Authority (CA).
 Otherwise, Træfik will only accept clients that present a certificate signed by a specified Certificate Authority (CA).
-`ClientCAFiles` can be configured with multiple `CA:s` in the same file or use multiple files containing one or several `CA:s`.
+`ClientCA.files` can be configured with multiple `CA:s` in the same file or use multiple files containing one or several `CA:s`.
 The `CA:s` has to be in PEM format.
 
-By default, `ClientCAFiles` is not optional, all clients will be required to present a valid cert.
+By default, `ClientCA.files` is not optional, all clients will be required to present a valid cert.
 The requirement will apply to all server certs in the entrypoint.
 
 In the example below both `snitest.com` and `snitest.org` will require client certs
@@ -253,10 +262,6 @@ In the example below both `snitest.com` and `snitest.org` will require client ce
     keyFile = "integration/fixtures/https/snitest.org.key"
 ```
 
-!!! note
-    The deprecated argument `ClientCAFiles` allows adding Client CA files which are mandatory.
-    If this parameter exists, the new ones are not checked.
-
 ## Authentication
 
 ### Basic Authentication
@@ -276,15 +281,29 @@ Users can be specified directly in the TOML file, or indirectly by referencing a
   usersFile = "/path/to/.htpasswd"
 ```
 
-Optionally, you can pass authenticated user to application via headers
+Optionally, you can:
+
+- pass authenticated user to application via headers
 
 ```toml
 [entryPoints]
   [entryPoints.http]
   address = ":80"
   [entryPoints.http.auth]
-    headerField = "X-WebAuth-User" # <--
+    headerField = "X-WebAuth-User" # <-- header for the authenticated user
     [entryPoints.http.auth.basic]
+    users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
+```
+
+- remove the Authorization header
+
+```toml
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+  [entryPoints.http.auth]
+    [entryPoints.http.auth.basic]
+    removeHeader = true # <-- remove the Authorization header
     users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
 ```
 
@@ -305,15 +324,29 @@ Users can be specified directly in the TOML file, or indirectly by referencing a
   usersFile = "/path/to/.htdigest"
 ```
 
-Optionally, you can pass authenticated user to application via headers
+Optionally, you can!
+
+- pass authenticated user to application via headers.
 
 ```toml
 [entryPoints]
   [entryPoints.http]
   address = ":80"
   [entryPoints.http.auth]
-    headerField = "X-WebAuth-User" # <--
+    headerField = "X-WebAuth-User" # <-- header for the authenticated user
     [entryPoints.http.auth.digest]
+    users = ["test:traefik:a2688e031edb4be6a3797f3882655c05", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
+```
+
+- remove the Authorization header.
+
+```toml
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+  [entryPoints.http.auth]
+    [entryPoints.http.auth.digest]
+    removeHeader = true # <-- remove the Authorization header
     users = ["test:traefik:a2688e031edb4be6a3797f3882655c05", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
 ```
 
@@ -421,7 +454,7 @@ To enable compression support using gzip format.
 [entryPoints]
   [entryPoints.http]
   address = ":80"
-  compress = true
+  [entryPoints.http.compress]
 ```
 
 Responses are compressed when:

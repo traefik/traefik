@@ -1,0 +1,30 @@
+[linters-settings]
+
+  [linters-settings.govet]
+    check-shadowing = true
+
+  [linters-settings.golint]
+    min-confidence = 0.0
+
+  [linters-settings.gocyclo]
+    min-complexity = 22.0
+
+  [linters-settings.maligned]
+    suggest-new = true
+
+  [linters-settings.goconst]
+    min-len = 2.0
+    min-occurrences = 2.0
+
+  [linters-settings.misspell]
+    locale = "US"
+
+[linters]
+  enable-all = true
+  disable = [
+      "maligned",
+      "lll",
+      "gas",
+      "dupl",
+      "prealloc"
+  ]

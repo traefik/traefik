@@ -21,7 +21,7 @@ type taskData struct {
 	SegmentName   string
 }
 
-func (p *Provider) buildConfigurationV2(tasks []state.Task) *types.Configuration {
+func (p *Provider) buildConfiguration(tasks []state.Task) *types.Configuration {
 	var mesosFuncMap = template.FuncMap{
 		"getDomain":           label.GetFuncString(label.TraefikDomain, p.Domain),
 		"getSubDomain":        p.getSubDomain,

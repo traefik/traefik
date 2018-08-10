@@ -2,6 +2,7 @@ package acme
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"regexp"
@@ -154,14 +155,60 @@ func (s *LocalStore) SaveCertificates(certificates []*Certificate) error {
 	return nil
 }
 
-// GetHTTPChallenges returns ACME HTTP Challenges list
-func (s *LocalStore) GetHTTPChallenges() (map[string]map[string][]byte, error) {
-	return s.storedData.HTTPChallenges, nil
+// GetHTTPChallengeToken Get the http challenge token from the store
+func (s *LocalStore) GetHTTPChallengeToken(token, domain string) ([]byte, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	if s.storedData.HTTPChallenges == nil {
+		s.storedData.HTTPChallenges = map[string]map[string][]byte{}
+	}
+
+	if _, ok := s.storedData.HTTPChallenges[token]; !ok {
+		return nil, fmt.Errorf("cannot find challenge for token %v", token)
+	}
+
+	result, ok := s.storedData.HTTPChallenges[token][domain]
+	if !ok {
+		return nil, fmt.Errorf("cannot find challenge for token %v", token)
+	}
+	return result, nil
 }
 
-// SaveHTTPChallenges stores ACME HTTP Challenges list
-func (s *LocalStore) SaveHTTPChallenges(httpChallenges map[string]map[string][]byte) error {
-	s.storedData.HTTPChallenges = httpChallenges
+// SetHTTPChallengeToken Set the http challenge token in the store
+func (s *LocalStore) SetHTTPChallengeToken(token, domain string, keyAuth []byte) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	if s.storedData.HTTPChallenges == nil {
+		s.storedData.HTTPChallenges = map[string]map[string][]byte{}
+	}
+
+	if _, ok := s.storedData.HTTPChallenges[token]; !ok {
+		s.storedData.HTTPChallenges[token] = map[string][]byte{}
+	}
+
+	s.storedData.HTTPChallenges[token][domain] = keyAuth
+	return nil
+}
+
+// RemoveHTTPChallengeToken Remove the http challenge token in the store
+func (s *LocalStore) RemoveHTTPChallengeToken(token, domain string) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	if s.storedData.HTTPChallenges == nil {
+		return nil
+	}
+
+	if _, ok := s.storedData.HTTPChallenges[token]; ok {
+		if _, domainOk := s.storedData.HTTPChallenges[token][domain]; domainOk {
+			delete(s.storedData.HTTPChallenges[token], domain)
+		}
+		if len(s.storedData.HTTPChallenges[token]) == 0 {
+			delete(s.storedData.HTTPChallenges, token)
+		}
+	}
 	return nil
 }
 

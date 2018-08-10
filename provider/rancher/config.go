@@ -14,7 +14,7 @@ import (
 	"github.com/containous/traefik/types"
 )
 
-func (p *Provider) buildConfigurationV2(services []rancherData) *types.Configuration {
+func (p *Provider) buildConfiguration(services []rancherData) *types.Configuration {
 	var RancherFuncMap = template.FuncMap{
 		"getLabelValue": label.GetStringValue,
 		"getDomain":     label.GetFuncString(label.TraefikDomain, p.Domain),

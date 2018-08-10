@@ -33,7 +33,6 @@ type Provider struct {
 
 	// Provider lookup parameters
 	Clusters             Clusters `description:"ECS Clusters name"`
-	Cluster              string   `description:"deprecated - ECS Cluster name"` // deprecated
 	AutoDiscoverClusters bool     `description:"Auto discover cluster" export:"true"`
 	Region               string   `description:"The AWS region to use for requests" export:"true"`
 	AccessKeyID          string   `description:"The AWS credentials access key to use for making requests"`
@@ -54,7 +53,6 @@ type portMapping struct {
 }
 
 type machine struct {
-	name      string
 	state     string
 	privateIP string
 	ports     []portMapping
@@ -65,11 +63,17 @@ type awsClient struct {
 	ec2 *ec2.EC2
 }
 
+// Init the provider
+func (p *Provider) Init(constraints types.Constraints) error {
+	return p.BaseProvider.Init(constraints)
+}
+
 func (p *Provider) createClient() (*awsClient, error) {
 	sess, err := session.NewSession()
 	if err != nil {
 		return nil, err
 	}
+
 	ec2meta := ec2metadata.New(sess)
 	if p.Region == "" {
 		log.Infoln("No EC2 region provided, querying instance metadata endpoint...")
@@ -103,16 +107,14 @@ func (p *Provider) createClient() (*awsClient, error) {
 	}
 
 	return &awsClient{
-		ecs.New(sess, cfg),
-		ec2.New(sess, cfg),
+		ecs: ecs.New(sess, cfg),
+		ec2: ec2.New(sess, cfg),
 	}, nil
 }
 
 // Provide allows the ecs provider to provide configurations to traefik
 // using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
-	p.Constraints = append(p.Constraints, constraints...)
-
+func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	handleCanceled := func(ctx context.Context, err error) error {
 		if ctx.Err() == context.Canceled || err == context.Canceled {
 			return nil
@@ -205,10 +207,6 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 		for _, cArn := range clustersArn {
 			clusters = append(clusters, *cArn)
 		}
-	} else if p.Cluster != "" {
-		// TODO: Deprecated configuration - Need to be removed in the future
-		clusters = Clusters{p.Cluster}
-		log.Warn("Deprecated configuration found: ecs.cluster. Please use ecs.clusters instead.")
 	} else {
 		clusters = p.Clusters
 	}
@@ -343,42 +341,46 @@ func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, cl
 		}
 	}
 
-	resp, err := client.ecs.DescribeContainerInstancesWithContext(ctx, &ecs.DescribeContainerInstancesInput{
-		ContainerInstances: containerInstancesArns,
-		Cluster:            clusterName,
-	})
-
-	if err != nil {
-		log.Errorf("Unable to describe container instances: %s", err)
-		return nil, err
-	}
-
-	for _, container := range resp.ContainerInstances {
-		instanceIds[aws.StringValue(container.Ec2InstanceId)] = aws.StringValue(container.ContainerInstanceArn)
-		instanceArns = append(instanceArns, container.Ec2InstanceId)
-	}
-
-	if len(instanceArns) > 0 {
-		input := &ec2.DescribeInstancesInput{
-			InstanceIds: instanceArns,
-		}
-
-		err = client.ec2.DescribeInstancesPagesWithContext(ctx, input, func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
-			if len(page.Reservations) > 0 {
-				for _, r := range page.Reservations {
-					for _, i := range r.Instances {
-						if i.InstanceId != nil {
-							ec2Instances[instanceIds[aws.StringValue(i.InstanceId)]] = i
-						}
-					}
-				}
-			}
-			return !lastPage
+	for _, arns := range p.chunkIDs(containerInstancesArns) {
+		resp, err := client.ecs.DescribeContainerInstancesWithContext(ctx, &ecs.DescribeContainerInstancesInput{
+			ContainerInstances: arns,
+			Cluster:            clusterName,
 		})
 
 		if err != nil {
-			log.Errorf("Unable to describe instances: %s", err)
+			log.Errorf("Unable to describe container instances: %v", err)
 			return nil, err
+		}
+
+		for _, container := range resp.ContainerInstances {
+			instanceIds[aws.StringValue(container.Ec2InstanceId)] = aws.StringValue(container.ContainerInstanceArn)
+			instanceArns = append(instanceArns, container.Ec2InstanceId)
+		}
+	}
+
+	if len(instanceArns) > 0 {
+		for _, ids := range p.chunkIDs(instanceArns) {
+			input := &ec2.DescribeInstancesInput{
+				InstanceIds: ids,
+			}
+
+			err := client.ec2.DescribeInstancesPagesWithContext(ctx, input, func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
+				if len(page.Reservations) > 0 {
+					for _, r := range page.Reservations {
+						for _, i := range r.Instances {
+							if i.InstanceId != nil {
+								ec2Instances[instanceIds[aws.StringValue(i.InstanceId)]] = i
+							}
+						}
+					}
+				}
+				return !lastPage
+			})
+
+			if err != nil {
+				log.Errorf("Unable to describe instances [%s]: %v", err)
+				return nil, err
+			}
 		}
 	}
 
@@ -409,4 +411,20 @@ func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types
 	}
 
 	return p.buildConfiguration(instances)
+}
+
+// chunkIDs ECS expects no more than 100 parameters be passed to a API call;
+// thus, pack each string into an array capped at 100 elements
+func (p *Provider) chunkIDs(ids []*string) [][]*string {
+	var chuncked [][]*string
+	for i := 0; i < len(ids); i += 100 {
+		var sliceEnd int
+		if i+100 < len(ids) {
+			sliceEnd = i + 100
+		} else {
+			sliceEnd = len(ids)
+		}
+		chuncked = append(chuncked, ids[i:sliceEnd])
+	}
+	return chuncked
 }
