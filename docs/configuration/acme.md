@@ -102,29 +102,23 @@ entryPoint = "https"
 #
 # KeyType = "RSA4096"
 
-# Domains list.
-# Only domains defined here can generate wildcard certificates.
-#
-# [[acme.domains]]
-#   main = "local1.com"
-#   sans = ["test1.local1.com", "test2.local1.com"]
-# [[acme.domains]]
-#   main = "local2.com"
-# [[acme.domains]]
-#   main = "*.local3.com"
-#   sans = ["local3.com", "test1.test1.local3.com"]
-
-# Use a HTTP-01 ACME challenge.
+# Use a TLS-ALPN-01 ACME challenge.
 #
 # Optional (but recommended)
 #
-[acme.httpChallenge]
+[acme.tlsChallenge]
+
+# Use a HTTP-01 ACME challenge.
+#
+# Optional
+#
+# [acme.httpChallenge]
 
   # EntryPoint to use for the HTTP-01 challenges.
   #
   # Required
   #
-  entryPoint = "http"
+  # entryPoint = "http"
 
 # Use a DNS-01 ACME challenge rather than HTTP-01 challenge.
 # Note: mandatory for wildcard certificate generation.
@@ -147,6 +141,18 @@ entryPoint = "https"
   # Default: 0
   #
   # delayBeforeCheck = 0
+
+# Domains list.
+# Only domains defined here can generate wildcard certificates.
+#
+# [[acme.domains]]
+#   main = "local1.com"
+#   sans = ["test1.local1.com", "test2.local1.com"]
+# [[acme.domains]]
+#   main = "local2.com"
+# [[acme.domains]]
+#   main = "*.local3.com"
+#   sans = ["local3.com", "test1.test1.local3.com"]
 ```
 
 ### `caServer`
@@ -164,7 +170,7 @@ caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
 
 ### ACME Challenge
 
-#### TLS Challenge
+#### `tlsChallenge`
 
 Use the `TLS-ALPN-01` challenge to generate and renew ACME certificates by provisioning a TLS certificate.
 
