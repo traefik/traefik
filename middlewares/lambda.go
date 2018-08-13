@@ -13,6 +13,7 @@ import (
 	"github.com/containous/traefik/middlewares/tracing"
 	"io/ioutil"
 	"net/http"
+	"reflect"
 )
 
 // Lambda
@@ -72,6 +73,20 @@ func (l *Lambda) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 	req, resp := svc.InvokeRequest(input)
 	err = req.Send()
+	originalRW := rw
+	ok := false
+	rwField := reflect.Indirect(reflect.ValueOf(rw)).FieldByName("RW")
+
+	if rwField.IsValid() {
+		originalRW, ok = rwField.Interface().(retryResponseWriter)
+	}
+	if !ok {
+		originalRW, ok = rw.(retryResponseWriter)
+	}
+	if ok {
+		originalRW.(retryResponseWriter).DisableRetries()
+	}
+
 	if err != nil {
 
 		/*			switch aerr.Code() {

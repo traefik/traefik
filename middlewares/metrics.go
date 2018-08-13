@@ -86,6 +86,11 @@ func isWebsocketRequest(req *http.Request) bool {
 	return containsHeader(req, "Connection", "upgrade") && containsHeader(req, "Upgrade", "websocket")
 }
 
+// isWebsocketRequest determines if the specified HTTP request is a websocket handshake request.
+func isLambdaRequest(req *http.Request) bool {
+	return req.URL.Scheme == "lambda"
+}
+
 // isSSERequest determines if the specified HTTP request is a request for an event subscription.
 func isSSERequest(req *http.Request) bool {
 	return containsHeader(req, "Accept", "text/event-stream")
