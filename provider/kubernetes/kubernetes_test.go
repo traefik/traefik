@@ -1849,13 +1849,13 @@ func TestPriorityHeaderValue(t *testing.T) {
 
 	expected := buildConfiguration(
 		backends(
-			backend("foo/bar",
+			backend("1337-foo/bar",
 				servers(server("http://example.com", weight(1))),
 				lbMethod("wrr"),
 			),
 		),
 		frontends(
-			frontend("foo/bar",
+			frontend("1337-foo/bar",
 				passHostHeader(),
 				priority(1337),
 				routes(

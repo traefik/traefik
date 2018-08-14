@@ -224,7 +224,12 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 			}
 
 			for _, pa := range r.HTTP.Paths {
+				priority := getIntValue(i.Annotations, annotationKubernetesPriority, 0)
 				baseName := r.Host + pa.Path
+				if priority > 0 {
+					baseName = strconv.Itoa(priority) + "-" + baseName
+				}
+
 				if _, exists := templateObjects.Backends[baseName]; !exists {
 					templateObjects.Backends[baseName] = &types.Backend{
 						Servers: make(map[string]types.Server),
@@ -250,7 +255,6 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 					passHostHeader := getBoolValue(i.Annotations, annotationKubernetesPreserveHost, !p.DisablePassHostHeaders)
 					passTLSCert := getBoolValue(i.Annotations, annotationKubernetesPassTLSCert, p.EnablePassTLSCert)
-					priority := getIntValue(i.Annotations, annotationKubernetesPriority, 0)
 					entryPoints := getSliceStringValue(i.Annotations, annotationKubernetesFrontendEntryPoints)
 
 					templateObjects.Frontends[baseName] = &types.Frontend{
