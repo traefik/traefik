@@ -883,7 +883,19 @@ func getFrontendRedirect(i *extensionsv1beta1.Ingress, baseName, path string) *t
 	}
 
 	redirectRegex := getStringValue(i.Annotations, annotationKubernetesRedirectRegex, "")
+	_, err := strconv.Unquote(`"` + redirectRegex + `"`)
+	if err != nil {
+		log.Debugf("Skipping Redirect on Ingress %s/%s due to invalid regex: %s", i.Namespace, i.Name, redirectRegex)
+		return nil
+	}
+
 	redirectReplacement := getStringValue(i.Annotations, annotationKubernetesRedirectReplacement, "")
+	_, err = strconv.Unquote(`"` + redirectReplacement + `"`)
+	if err != nil {
+		log.Debugf("Skipping Redirect on Ingress %s/%s due to invalid replacement: %q", i.Namespace, i.Name, redirectRegex)
+		return nil
+	}
+
 	if len(redirectRegex) > 0 && len(redirectReplacement) > 0 {
 		return &types.Redirect{
 			Regex:       redirectRegex,
