@@ -65,11 +65,11 @@ func (p *Provider) buildConfiguration(catalog []catalogUpdate) *types.Configurat
 	sort.Sort(nodeSorter(allNodes))
 
 	templateObjects := struct {
-		Services  []*serviceUpdate
-		Nodes     []*api.ServiceEntry
+		Services []*serviceUpdate
+		Nodes    []*api.ServiceEntry
 	}{
-		Services:  services,
-		Nodes:     allNodes,
+		Services: services,
+		Nodes:    allNodes,
 	}
 
 	configuration, err := p.GetConfiguration("templates/consul_catalog.tmpl", funcMap, templateObjects)
