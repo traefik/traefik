@@ -4,9 +4,11 @@
 package forward
 
 import (
+	"bytes"
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -309,17 +311,17 @@ func (f *httpForwarder) modifyRequest(outReq *http.Request, target *url.URL) {
 	outReq.URL.RawQuery = u.RawQuery
 	outReq.RequestURI = "" // Outgoing request should not have RequestURI
 
-	// Do not pass client Host header unless optsetter PassHostHeader is set.
-	if !f.passHost {
-		outReq.Host = target.Host
-	}
-
 	outReq.Proto = "HTTP/1.1"
 	outReq.ProtoMajor = 1
 	outReq.ProtoMinor = 1
 
 	if f.rewriter != nil {
 		f.rewriter.Rewrite(outReq)
+	}
+
+	// Do not pass client Host header unless optsetter PassHostHeader is set.
+	if !f.passHost {
+		outReq.Host = target.Host
 	}
 }
 
@@ -396,16 +398,28 @@ func (f *httpForwarder) serveWebSocket(w http.ResponseWriter, req *http.Request,
 	errBackend := make(chan error, 1)
 	replicateWebsocketConn := func(dst, src *websocket.Conn, errc chan error) {
 
+		forward := func(messageType int, reader io.Reader) error {
+			writer, err := dst.NextWriter(messageType)
+			if err != nil {
+				return err
+			}
+			_, err = io.Copy(writer, reader)
+			if err != nil {
+				return err
+			}
+			return writer.Close()
+		}
+
 		src.SetPingHandler(func(data string) error {
-			return dst.WriteMessage(websocket.PingMessage, []byte(data))
+			return forward(websocket.PingMessage, bytes.NewReader([]byte(data)))
 		})
 
 		src.SetPongHandler(func(data string) error {
-			return dst.WriteMessage(websocket.PongMessage, []byte(data))
+			return forward(websocket.PongMessage, bytes.NewReader([]byte(data)))
 		})
 
 		for {
-			msgType, msg, err := src.ReadMessage()
+			msgType, reader, err := src.NextReader()
 
 			if err != nil {
 				m := websocket.FormatCloseMessage(websocket.CloseNormalClosure, fmt.Sprintf("%v", err))
@@ -423,11 +437,11 @@ func (f *httpForwarder) serveWebSocket(w http.ResponseWriter, req *http.Request,
 				}
 				errc <- err
 				if m != nil {
-					dst.WriteMessage(websocket.CloseMessage, m)
+					forward(websocket.CloseMessage, bytes.NewReader([]byte(m)))
 				}
 				break
 			}
-			err = dst.WriteMessage(msgType, msg)
+			err = forward(msgType, reader)
 			if err != nil {
 				errc <- err
 				break
