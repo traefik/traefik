@@ -53,11 +53,10 @@ func (p *Provider) buildConfiguration(catalog []catalogUpdate) *types.Configurat
 
 	var allNodes []*api.ServiceEntry
 	var services []*serviceUpdate
-	var frontends []*serviceUpdate
 
 	for _, info := range catalog {
 		if len(info.Nodes) > 0 {
-			services = append(frontends, p.generateFrontends(info.Service)...)
+			services = append(services, p.generateFrontends(info.Service)...)
 			allNodes = append(allNodes, info.Nodes...)
 		}
 	}
