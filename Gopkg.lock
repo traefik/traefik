@@ -1272,7 +1272,7 @@
     "roundrobin",
     "utils"
   ]
-  revision = "fb889e801a26e7e18ef36322ac72a07157f8cc1f"
+  revision = "885e42fe04d8e0efa6c18facad4e0fc5757cde9b"
 
 [[projects]]
   name = "github.com/vulcand/predicate"
@@ -1762,6 +1762,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "2b7ffb1d01d8a14224fcc9964900fb5a39fbf38cfacba45f49b931136e4fee9b"
+  inputs-digest = "b75bf0ae5b8c1ae1ba578fe5a58dfc4cd4270e02f5ea3b9f0d5a92972a36e9b2"
   solver-name = "gps-cdcl"
   solver-version = 1
