@@ -576,8 +576,8 @@ func (p *Provider) generateFrontends(service *serviceUpdate) []*serviceUpdate {
 		ServiceName:   service.ServiceName,
 		Attributes:    service.Attributes,
 		TraefikLabels: service.TraefikLabels,
-        FrontendName:  service.ServiceName,
-        BackendName:   getServiceBackendName(service),
+		FrontendName:  service.ServiceName,
+		BackendName:   getServiceBackendName(service),
 	})
 
 	// loop over children of <prefix>.frontends.*

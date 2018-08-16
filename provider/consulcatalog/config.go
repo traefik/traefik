@@ -84,8 +84,8 @@ func (p *Provider) buildConfiguration(catalog []catalogUpdate) *types.Configurat
 }
 
 // Specific functions
-func (p *Provider) getFrontendRule(service serviceUpdate) string {
 
+func (p *Provider) getFrontendRule(service serviceUpdate) string {
 	customFrontendRule := label.GetStringValue(service.TraefikLabels, label.TraefikFrontendRule, "")
 	if customFrontendRule == "" {
 		customFrontendRule = p.FrontEndRule
