@@ -52,19 +52,19 @@ type Configuration struct {
 // Provider holds configurations of the provider.
 type Provider struct {
 	*Configuration
-	Store                        Store
-	certificates                 []*Certificate
-	account                      *Account
-	client                       *acme.Client
-	certsChan                    chan *Certificate
-	configurationChan            chan<- types.ConfigMessage
-	dynamicCerts                 *safe.Safe
-	staticCerts                  map[string]*tls.Certificate
-	clientMutex                  sync.Mutex
-	configFromListenerChan       chan types.Configuration
-	pool                         *safe.Pool
-	currentlyResolvedDomains     map[string]struct{}
-	currentlyResolvedDomainMutex sync.Mutex
+	Store                  Store
+	certificates           []*Certificate
+	account                *Account
+	client                 *acme.Client
+	certsChan              chan *Certificate
+	configurationChan      chan<- types.ConfigMessage
+	dynamicCerts           *safe.Safe
+	staticCerts            map[string]*tls.Certificate
+	clientMutex            sync.Mutex
+	configFromListenerChan chan types.Configuration
+	pool                   *safe.Pool
+	resolvingDomains       map[string]struct{}
+	resolvingDomainsMutex  sync.RWMutex
 }
 
 // Certificate is a struct which contains all data needed from an ACME certificate
@@ -130,7 +130,7 @@ func (p *Provider) init() error {
 	}
 
 	// Init the currently resolved domain map
-	p.currentlyResolvedDomains = make(map[string]struct{})
+	p.resolvingDomains = make(map[string]struct{})
 
 	p.watchCertificate()
 	p.watchNewDomains()
@@ -231,13 +231,8 @@ func (p *Provider) resolveCertificate(domain types.Domain, domainFromConfigurati
 		return nil, nil
 	}
 
-	defer func() {
-		p.currentlyResolvedDomainMutex.Lock()
-		defer p.currentlyResolvedDomainMutex.Unlock()
-		for _, domain := range uncheckedDomains {
-			delete(p.currentlyResolvedDomains, domain)
-		}
-	}()
+	p.addResolvingDomains(uncheckedDomains)
+	defer p.removeResolvingDomains(uncheckedDomains)
 
 	log.Debugf("Loading ACME certificates %+v...", uncheckedDomains)
 	client, err := p.getClient()
@@ -265,6 +260,24 @@ func (p *Provider) resolveCertificate(domain types.Domain, domainFromConfigurati
 	p.addCertificateForDomain(domain, certificate.Certificate, certificate.PrivateKey)
 
 	return certificate, nil
+}
+
+func (p *Provider) removeResolvingDomains(resolvingDomains []string) {
+	p.resolvingDomainsMutex.Lock()
+	defer p.resolvingDomainsMutex.Unlock()
+
+	for _, domain := range resolvingDomains {
+		delete(p.resolvingDomains, domain)
+	}
+}
+
+func (p *Provider) addResolvingDomains(resolvingDomains []string) {
+	p.resolvingDomainsMutex.Lock()
+	defer p.resolvingDomainsMutex.Unlock()
+
+	for _, domain := range resolvingDomains {
+		p.resolvingDomains[domain] = struct{}{}
+	}
 }
 
 func (p *Provider) getClient() (*acme.Client, error) {
@@ -516,8 +529,8 @@ func (p *Provider) AddRoutes(router *mux.Router) {
 // Get provided certificate which check a domains list (Main and SANs)
 // from static and dynamic provided certificates
 func (p *Provider) getUncheckedDomains(domainsToCheck []string, checkConfigurationDomains bool) []string {
-	p.currentlyResolvedDomainMutex.Lock()
-	defer p.currentlyResolvedDomainMutex.Unlock()
+	p.resolvingDomainsMutex.RLock()
+	defer p.resolvingDomainsMutex.RUnlock()
 
 	log.Debugf("Looking for provided certificate(s) to validate %q...", domainsToCheck)
 	var allCerts []string
@@ -540,7 +553,7 @@ func (p *Provider) getUncheckedDomains(domainsToCheck []string, checkConfigurati
 	}
 
 	// Get currently resolved domains
-	for domain := range p.currentlyResolvedDomains {
+	for domain := range p.resolvingDomains {
 		allCerts = append(allCerts, domain)
 	}
 
@@ -551,14 +564,7 @@ func (p *Provider) getUncheckedDomains(domainsToCheck []string, checkConfigurati
 		}
 	}
 
-	uncheckedDomains := searchUncheckedDomains(domainsToCheck, allCerts)
-
-	// Add unchecked domains to the list of domains currently resolved
-	for _, domain := range uncheckedDomains {
-		p.currentlyResolvedDomains[domain] = struct{}{}
-	}
-
-	return uncheckedDomains
+	return searchUncheckedDomains(domainsToCheck, allCerts)
 }
 
 func searchUncheckedDomains(domainsToCheck []string, existentDomains []string) []string {

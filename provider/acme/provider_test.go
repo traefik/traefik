@@ -23,13 +23,13 @@ func TestGetUncheckedCertificates(t *testing.T) {
 	domainSafe.Set(domainMap)
 
 	testCases := []struct {
-		desc                     string
-		dynamicCerts             *safe.Safe
-		staticCerts              map[string]*tls.Certificate
-		currentlyResolvedDomains map[string]struct{}
-		acmeCertificates         []*Certificate
-		domains                  []string
-		expectedDomains          []string
+		desc             string
+		dynamicCerts     *safe.Safe
+		staticCerts      map[string]*tls.Certificate
+		resolvingDomains map[string]struct{}
+		acmeCertificates []*Certificate
+		domains          []string
+		expectedDomains  []string
 	}{
 		{
 			desc:            "wildcard to generate",
@@ -142,7 +142,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 		{
 			desc:    "all domains already managed by ACME",
 			domains: []string{"traefik.wtf", "foo.traefik.wtf"},
-			currentlyResolvedDomains: map[string]struct{}{
+			resolvingDomains: map[string]struct{}{
 				"traefik.wtf":     {},
 				"foo.traefik.wtf": {},
 			},
@@ -151,7 +151,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 		{
 			desc:    "one domain already managed by ACME",
 			domains: []string{"traefik.wtf", "foo.traefik.wtf"},
-			currentlyResolvedDomains: map[string]struct{}{
+			resolvingDomains: map[string]struct{}{
 				"traefik.wtf": {},
 			},
 			expectedDomains: []string{"foo.traefik.wtf"},
@@ -159,7 +159,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 		{
 			desc:    "wildcard domain already managed by ACME checks the domains",
 			domains: []string{"bar.traefik.wtf", "foo.traefik.wtf"},
-			currentlyResolvedDomains: map[string]struct{}{
+			resolvingDomains: map[string]struct{}{
 				"*.traefik.wtf": {},
 			},
 			expectedDomains: []string{},
@@ -167,7 +167,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 		{
 			desc:    "wildcard domain already managed by ACME checks domains and another domain checks one other domain, one domain still unchecked",
 			domains: []string{"traefik.wtf", "bar.traefik.wtf", "foo.traefik.wtf", "acme.wtf"},
-			currentlyResolvedDomains: map[string]struct{}{
+			resolvingDomains: map[string]struct{}{
 				"*.traefik.wtf": {},
 				"traefik.wtf":   {},
 			},
@@ -177,17 +177,17 @@ func TestGetUncheckedCertificates(t *testing.T) {
 
 	for _, test := range testCases {
 		test := test
-		if test.currentlyResolvedDomains == nil {
-			test.currentlyResolvedDomains = make(map[string]struct{})
+		if test.resolvingDomains == nil {
+			test.resolvingDomains = make(map[string]struct{})
 		}
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
 			acmeProvider := Provider{
-				dynamicCerts:             test.dynamicCerts,
-				staticCerts:              test.staticCerts,
-				certificates:             test.acmeCertificates,
-				currentlyResolvedDomains: test.currentlyResolvedDomains,
+				dynamicCerts:     test.dynamicCerts,
+				staticCerts:      test.staticCerts,
+				certificates:     test.acmeCertificates,
+				resolvingDomains: test.resolvingDomains,
 			}
 
 			domains := acmeProvider.getUncheckedDomains(test.domains, false)

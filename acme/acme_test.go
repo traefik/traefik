@@ -334,7 +334,7 @@ func TestAcme_getUncheckedCertificates(t *testing.T) {
 	dm := make(map[string]struct{})
 	dm["*.traefik.wtf"] = struct{}{}
 
-	a := ACME{TLSConfig: &tls.Config{NameToCertificate: mm}, currentlyResolvedDomains: dm}
+	a := ACME{TLSConfig: &tls.Config{NameToCertificate: mm}, resolvingDomains: dm}
 
 	domains := []string{"traefik.containo.us", "trae.containo.us", "foo.traefik.wtf"}
 	uncheckedDomains := a.getUncheckedDomains(domains, nil)
