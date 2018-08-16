@@ -152,12 +152,12 @@ Additional settings can be defined using Consul Catalog tags.
 | `<prefix>.frontend.whiteList.useXForwardedFor=true`         | Uses `X-Forwarded-For` header as valid source of IP for the white list.                                                                                                                                                       |
 
 ### Multiple frontends for a single service
-If you need to support multiple frontends for a service, for example when having multiple Rules that can't be combined, specify them as follows:
+If you need to support multiple frontends for a service, for example when having multiple `rules` that can't be combined, specify them as follows:
 
-    `<prefix>`.frontends.`<name>`.rule
+    <prefix>.frontends.A.rule=Host:A:PathPrefix:/A
+    <prefix>.frontends.B.rule=Host:B:PathPrefix:/
 
-Name here is an arbitrary name, just like it is in other backends. You can use any setting that applies to frontend from the table above, instead of `rule`.
-Please note that when using this, the `<prefix>`.frontend.* is ignored.
+`A` and `B` here are just arbitrary names, they can be anything. You can use any setting that applies to `<prefix>.frontend` from the table above.
 
 ### Custom Headers
 
