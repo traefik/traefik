@@ -1060,7 +1060,7 @@ func TestProviderGetFrontendRule(t *testing.T) {
 			labels := tagsToNeutralLabels(test.service.Attributes, p.Prefix)
 			test.service.TraefikLabels = labels
 
-			actual := p.getFrontendRule(*p.generateFrontends(&test.service)[0])
+			actual := p.getFrontendRule(test.service)
 			assert.Equal(t, test.expected, actual)
 		})
 	}

@@ -84,9 +84,20 @@ func (p *Provider) buildConfiguration(catalog []catalogUpdate) *types.Configurat
 }
 
 // Specific functions
+func (p *Provider) getFrontendRule(service interface{}) string {
+	var serviceObject serviceUpdate
+	switch service.(type) {
+	case serviceUpdate:
+		serviceObject = service.(serviceUpdate)
+	case *serviceUpdate:
+		serviceObject = *service.(*serviceUpdate)
+	case serviceFrontend:
+		serviceObject = service.(serviceFrontend).serviceUpdate
+	case *serviceFrontend:
+		serviceObject = service.(*serviceFrontend).serviceUpdate
+	}
 
-func (p *Provider) getFrontendRule(service serviceFrontend) string {
-	customFrontendRule := label.GetStringValue(service.TraefikLabels, label.TraefikFrontendRule, "")
+	customFrontendRule := label.GetStringValue(serviceObject.TraefikLabels, label.TraefikFrontendRule, "")
 	if customFrontendRule == "" {
 		customFrontendRule = p.FrontEndRule
 	}
@@ -103,9 +114,9 @@ func (p *Provider) getFrontendRule(service serviceFrontend) string {
 		Domain      string
 		Attributes  []string
 	}{
-		ServiceName: service.ServiceName,
+		ServiceName: serviceObject.ServiceName,
 		Domain:      p.Domain,
-		Attributes:  service.Attributes,
+		Attributes:  serviceObject.Attributes,
 	}
 
 	var buffer bytes.Buffer
