@@ -53,7 +53,7 @@ func (p *Provider) buildConfiguration(catalog []catalogUpdate) *types.Configurat
 
 	var allNodes []*api.ServiceEntry
 	var services []*serviceUpdate
-	var frontends []*serviceFrontend
+	var frontends []*serviceUpdate
 
 	for _, info := range catalog {
 		if len(info.Nodes) > 0 {
@@ -67,7 +67,7 @@ func (p *Provider) buildConfiguration(catalog []catalogUpdate) *types.Configurat
 
 	templateObjects := struct {
 		Services  []*serviceUpdate
-		Frontends []*serviceFrontend
+		Frontends []*serviceUpdate
 		Nodes     []*api.ServiceEntry
 	}{
 		Services:  services,
@@ -84,20 +84,9 @@ func (p *Provider) buildConfiguration(catalog []catalogUpdate) *types.Configurat
 }
 
 // Specific functions
-func (p *Provider) getFrontendRule(service interface{}) string {
-	var serviceObject serviceUpdate
-	switch service.(type) {
-	case serviceUpdate:
-		serviceObject = service.(serviceUpdate)
-	case *serviceUpdate:
-		serviceObject = *service.(*serviceUpdate)
-	case serviceFrontend:
-		serviceObject = service.(serviceFrontend).serviceUpdate
-	case *serviceFrontend:
-		serviceObject = service.(*serviceFrontend).serviceUpdate
-	}
+func (p *Provider) getFrontendRule(service serviceUpdate) string {
 
-	customFrontendRule := label.GetStringValue(serviceObject.TraefikLabels, label.TraefikFrontendRule, "")
+	customFrontendRule := label.GetStringValue(service.TraefikLabels, label.TraefikFrontendRule, "")
 	if customFrontendRule == "" {
 		customFrontendRule = p.FrontEndRule
 	}
@@ -114,9 +103,9 @@ func (p *Provider) getFrontendRule(service interface{}) string {
 		Domain      string
 		Attributes  []string
 	}{
-		ServiceName: serviceObject.ServiceName,
+		ServiceName: service.ServiceName,
 		Domain:      p.Domain,
-		Attributes:  serviceObject.Attributes,
+		Attributes:  service.Attributes,
 	}
 
 	var buffer bytes.Buffer

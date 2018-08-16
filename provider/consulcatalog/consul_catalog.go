@@ -53,10 +53,6 @@ type serviceUpdate struct {
 	ServiceName   string
 	Attributes    []string
 	TraefikLabels map[string]string
-}
-
-type serviceFrontend struct {
-	serviceUpdate
 	FrontendName  string
 	BackendName   string
 }
@@ -572,29 +568,26 @@ func (p *Provider) getConstraintTags(tags []string) []string {
 	return values
 }
 
-func (p *Provider) generateFrontends(service *serviceUpdate) []*serviceFrontend {
-	frontends := make([]*serviceFrontend, 0)
+func (p *Provider) generateFrontends(service *serviceUpdate) []*serviceUpdate {
+	frontends := make([]*serviceUpdate, 0)
 
 	// to support <prefix>.frontend.xxx
-	s := serviceUpdate{
+	frontends = append(frontends, &serviceUpdate{
 		ServiceName:   service.ServiceName,
 		Attributes:    service.Attributes,
 		TraefikLabels: service.TraefikLabels,
-	}
-
-	frontends = append(frontends, &serviceFrontend{
-		s, service.ServiceName, getServiceBackendName(service),
+        FrontendName:  service.ServiceName,
+        BackendName:   getServiceBackendName(service),
 	})
 
 	// loop over children of <prefix>.frontends.*
 	for _, frontend := range getSegments(p.Prefix+".frontends", p.Prefix, service.TraefikLabels) {
-		s := serviceUpdate{
+		frontends = append(frontends, &serviceUpdate{
 			ServiceName:   service.ServiceName,
 			Attributes:    service.Attributes,
 			TraefikLabels: frontend.Labels,
-		}
-		frontends = append(frontends, &serviceFrontend{
-			s, service.ServiceName + "-" + frontend.Name, getServiceBackendName(service),
+			FrontendName:  service.ServiceName + "-" + frontend.Name,
+			BackendName:   getServiceBackendName(service),
 		})
 	}
 	return frontends
