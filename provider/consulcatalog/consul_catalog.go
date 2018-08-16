@@ -50,11 +50,10 @@ type Service struct {
 }
 
 type serviceUpdate struct {
-	ServiceName   string
-	Attributes    []string
-	TraefikLabels map[string]string
-	FrontendName  string
-	BackendName   string
+	ServiceName       string
+	ParentServiceName string
+	Attributes        []string
+	TraefikLabels     map[string]string
 }
 
 type frontendSegment struct {
@@ -573,21 +572,19 @@ func (p *Provider) generateFrontends(service *serviceUpdate) []*serviceUpdate {
 
 	// to support <prefix>.frontend.xxx
 	frontends = append(frontends, &serviceUpdate{
-		ServiceName:   service.ServiceName,
-		Attributes:    service.Attributes,
-		TraefikLabels: service.TraefikLabels,
-		FrontendName:  service.ServiceName,
-		BackendName:   getServiceBackendName(service),
+		ServiceName:       service.ServiceName,
+		ParentServiceName: service.ServiceName,
+		Attributes:        service.Attributes,
+		TraefikLabels:     service.TraefikLabels,
 	})
 
 	// loop over children of <prefix>.frontends.*
 	for _, frontend := range getSegments(p.Prefix+".frontends", p.Prefix, service.TraefikLabels) {
 		frontends = append(frontends, &serviceUpdate{
-			ServiceName:   service.ServiceName,
-			Attributes:    service.Attributes,
-			TraefikLabels: frontend.Labels,
-			FrontendName:  service.ServiceName + "-" + frontend.Name,
-			BackendName:   getServiceBackendName(service),
+			ServiceName:       service.ServiceName + "-" + frontend.Name,
+			ParentServiceName: service.ServiceName,
+			Attributes:        service.Attributes,
+			TraefikLabels:     frontend.Labels,
 		})
 	}
 	return frontends

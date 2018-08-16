@@ -163,7 +163,7 @@ func getCircuitBreaker(labels map[string]string) *types.CircuitBreaker {
 }
 
 func getServiceBackendName(service *serviceUpdate) string {
-	return strings.ToLower(service.ServiceName)
+	return strings.ToLower(service.ParentServiceName)
 }
 
 func getNodeBackendName(node *api.ServiceEntry) string {

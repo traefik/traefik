@@ -64,8 +64,8 @@
 [frontends]
 {{range $service := .Services}}
 
-  [frontends."frontend-{{ $service.FrontendName }}"]
-    backend = "backend-{{ $service.BackendName }}"
+  [frontends."frontend-{{ $service.ServiceName }}"]
+    backend = "backend-{{ getServiceBackendName $service }}"
     priority = {{ getPriority $service.TraefikLabels }}
     passHostHeader = {{ getPassHostHeader $service.TraefikLabels }}
     passTLSCert = {{ getPassTLSCert $service.TraefikLabels }}
@@ -77,16 +77,16 @@
     {{ $auth := getAuth $service.TraefikLabels }}
 
     {{if $auth }}
-    [frontends."frontend-{{ $service.FrontendName }}".auth]
+    [frontends."frontend-{{ $service.ServiceName }}".auth]
       headerField = "{{ $auth.HeaderField }}"
 
       {{if $auth.Forward }}
-      [frontends."frontend-{{ $service.FrontendName }}".auth.forward]
+      [frontends."frontend-{{ $service.ServiceName }}".auth.forward]
         address = "{{ $auth.Forward.Address }}"
         trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
 
         {{if $auth.Forward.TLS }}
-        [frontends."frontend-{{ $service.FrontendName }}".auth.forward.tls]
+        [frontends."frontend-{{ $service.ServiceName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
           cert = "{{ $auth.Forward.TLS.Cert }}"
@@ -96,7 +96,7 @@
       {{end}}
 
       {{if $auth.Basic }}
-      [frontends."frontend-{{ $service.FrontendName }}".auth.basic]
+      [frontends."frontend-{{ $service.ServiceName }}".auth.basic]
         removeHeader = {{ $auth.Basic.RemoveHeader }}
         {{if $auth.Basic.Users }}
         users = [{{range $auth.Basic.Users }}
@@ -107,7 +107,7 @@
       {{end}}
 
       {{if $auth.Digest }}
-      [frontends."frontend-{{ $service.FrontendName }}".auth.digest]
+      [frontends."frontend-{{ $service.ServiceName }}".auth.digest]
         removeHeader = {{ $auth.Digest.RemoveHeader }}
         {{if $auth.Digest.Users }}
         users = [{{range $auth.Digest.Users }}
@@ -120,7 +120,7 @@
 
     {{ $whitelist := getWhiteList $service.TraefikLabels }}
     {{if $whitelist }}
-    [frontends."frontend-{{ $service.FrontendName }}".whiteList]
+    [frontends."frontend-{{ $service.ServiceName }}".whiteList]
       sourceRange = [{{range $whitelist.SourceRange }}
         "{{.}}",
         {{end}}]
@@ -129,7 +129,7 @@
 
     {{ $redirect := getRedirect $service.TraefikLabels }}
     {{if $redirect }}
-    [frontends."frontend-{{ $service.FrontendName }}".redirect]
+    [frontends."frontend-{{ $service.ServiceName }}".redirect]
       entryPoint = "{{ $redirect.EntryPoint }}"
       regex = "{{ $redirect.Regex }}"
       replacement = "{{ $redirect.Replacement }}"
@@ -138,9 +138,9 @@
 
     {{ $errorPages := getErrorPages $service.TraefikLabels }}
     {{if $errorPages }}
-    [frontends."frontend-{{ $service.FrontendName }}".errors]
+    [frontends."frontend-{{ $service.ServiceName }}".errors]
       {{range $pageName, $page := $errorPages }}
-      [frontends."frontend-{{ $service.FrontendName }}".errors."{{ $pageName }}"]
+      [frontends."frontend-{{ $service.ServiceName }}".errors."{{ $pageName }}"]
         status = [{{range $page.Status }}
           "{{.}}",
           {{end}}]
@@ -151,11 +151,11 @@
 
     {{ $rateLimit := getRateLimit $service.TraefikLabels }}
     {{if $rateLimit }}
-    [frontends."frontend-{{ $service.FrontendName }}".rateLimit]
+    [frontends."frontend-{{ $service.ServiceName }}".rateLimit]
       extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
-      [frontends."frontend-{{ $service.FrontendName }}".rateLimit.rateSet]
+      [frontends."frontend-{{ $service.ServiceName }}".rateLimit.rateSet]
         {{ range $limitName, $limit := $rateLimit.RateSet }}
-        [frontends."frontend-{{ $service.FrontendName }}".rateLimit.rateSet."{{ $limitName }}"]
+        [frontends."frontend-{{ $service.ServiceName }}".rateLimit.rateSet."{{ $limitName }}"]
           period = "{{ $limit.Period }}"
           average = {{ $limit.Average }}
           burst = {{ $limit.Burst }}
@@ -164,7 +164,7 @@
 
     {{ $headers := getHeaders $service.TraefikLabels }}
     {{if $headers }}
-    [frontends."frontend-{{ $service.FrontendName }}".headers]
+    [frontends."frontend-{{ $service.ServiceName }}".headers]
       SSLRedirect = {{ $headers.SSLRedirect }}
       SSLTemporaryRedirect = {{ $headers.SSLTemporaryRedirect }}
       SSLHost = "{{ $headers.SSLHost }}"
@@ -196,28 +196,28 @@
       {{end}}
 
       {{if $headers.CustomRequestHeaders }}
-      [frontends."frontend-{{ $service.FrontendName }}".headers.customRequestHeaders]
+      [frontends."frontend-{{ $service.ServiceName }}".headers.customRequestHeaders]
         {{range $k, $v := $headers.CustomRequestHeaders }}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
 
       {{if $headers.CustomResponseHeaders }}
-      [frontends."frontend-{{ $service.FrontendName }}".headers.customResponseHeaders]
+      [frontends."frontend-{{ $service.ServiceName }}".headers.customResponseHeaders]
         {{range $k, $v := $headers.CustomResponseHeaders }}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
 
       {{if $headers.SSLProxyHeaders }}
-      [frontends."frontend-{{ $service.FrontendName }}".headers.SSLProxyHeaders]
+      [frontends."frontend-{{ $service.ServiceName }}".headers.SSLProxyHeaders]
         {{range $k, $v := $headers.SSLProxyHeaders}}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
     {{end}}
 
-    [frontends."frontend-{{ $service.FrontendName }}".routes."route-host-{{ $service.FrontendName }}"]
+    [frontends."frontend-{{ $service.ServiceName }}".routes."route-host-{{ $service.ServiceName }}"]
       rule = "{{ getFrontendRule $service }}"
 
 {{end}}
