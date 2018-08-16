@@ -57,8 +57,7 @@ func (p *Provider) buildConfiguration(catalog []catalogUpdate) *types.Configurat
 
 	for _, info := range catalog {
 		if len(info.Nodes) > 0 {
-			services = append(services, info.Service)
-			frontends = append(frontends, p.generateFrontends(info.Service)...)
+			services = append(frontends, p.generateFrontends(info.Service)...)
 			allNodes = append(allNodes, info.Nodes...)
 		}
 	}
@@ -67,11 +66,9 @@ func (p *Provider) buildConfiguration(catalog []catalogUpdate) *types.Configurat
 
 	templateObjects := struct {
 		Services  []*serviceUpdate
-		Frontends []*serviceUpdate
 		Nodes     []*api.ServiceEntry
 	}{
 		Services:  services,
-		Frontends: frontends,
 		Nodes:     allNodes,
 	}
 
