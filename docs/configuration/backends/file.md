@@ -85,7 +85,9 @@ Træfik can be configured with a file.
 
     [frontends.frontend1.whiteList]
       sourceRange = ["10.42.0.0/16", "152.89.1.33/32", "afed:be44::/16"]
-      useXForwardedFor = true
+      [frontends.frontend1.whiteList.IPStrategy]
+        depth = 6
+        excludedIPs = ["152.89.1.33/32", "afed:be44::/16"]
 
     [frontends.frontend1.routes]
       [frontends.frontend1.routes.route0]

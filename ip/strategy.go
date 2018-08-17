@@ -49,13 +49,14 @@ func (s *CheckerStrategy) GetIP(req *http.Request) string {
 	if s.Checker == nil {
 		return ""
 	}
+
 	xff := req.Header.Get(xForwardedFor)
 	xffs := strings.Split(xff, ",")
+
 	for i := len(xffs) - 1; i >= 0; i-- {
 		if contain, _ := s.Checker.Contains(xffs[i]); !contain {
 			return xffs[i]
 		}
 	}
-
 	return ""
 }

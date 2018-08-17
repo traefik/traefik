@@ -254,7 +254,6 @@ func (s *SimpleSuite) TestNoAuthOnPing(c *check.C) {
 }
 
 func (s *SimpleSuite) TestDefaultEntrypointHTTP(c *check.C) {
-
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
@@ -273,7 +272,6 @@ func (s *SimpleSuite) TestDefaultEntrypointHTTP(c *check.C) {
 }
 
 func (s *SimpleSuite) TestWithUnexistingEntrypoint(c *check.C) {
-
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
@@ -292,7 +290,6 @@ func (s *SimpleSuite) TestWithUnexistingEntrypoint(c *check.C) {
 }
 
 func (s *SimpleSuite) TestMetricsPrometheusDefaultEntrypoint(c *check.C) {
-
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
@@ -314,15 +311,16 @@ func (s *SimpleSuite) TestMetricsPrometheusDefaultEntrypoint(c *check.C) {
 }
 
 func (s *SimpleSuite) TestMultipleProviderSameBackendName(c *check.C) {
-
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
+
 	ipWhoami01 := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
 	ipWhoami02 := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
 	file := s.adaptFile(c, "fixtures/multiple_provider.toml", struct{ IP string }{
 		IP: ipWhoami02,
 	})
 	defer os.Remove(file)
+
 	cmd, output := s.traefikCmd(withConfigFile(file))
 	defer output(c)
 
@@ -342,7 +340,6 @@ func (s *SimpleSuite) TestMultipleProviderSameBackendName(c *check.C) {
 }
 
 func (s *SimpleSuite) TestIPStrategyWhitelist(c *check.C) {
-
 	s.createComposeProject(c, "whitelist")
 	s.composeProject.Start(c)
 

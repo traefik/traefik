@@ -19,7 +19,7 @@ func NewChecker(trustedIPs []string) (*Checker, error) {
 		return nil, errors.New("no trusted IPs provided")
 	}
 
-	checker := Checker{}
+	checker := &Checker{}
 
 	for _, ipMask := range trustedIPs {
 		if ipAddr := net.ParseIP(ipMask); ipAddr != nil {
@@ -33,7 +33,7 @@ func NewChecker(trustedIPs []string) (*Checker, error) {
 		}
 	}
 
-	return &checker, nil
+	return checker, nil
 }
 
 // IsAuthorized checks if provided request is authorized by the trusted IPs
