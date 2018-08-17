@@ -1,15 +1,14 @@
 package consulcatalog
 
 import (
-	"testing"
-	"text/template"
-	"time"
-
-	"github.com/containous/flaeg"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	"github.com/hashicorp/consul/api"
 	"github.com/stretchr/testify/assert"
+	"testing"
+	"text/template"
+	"github.com/containous/flaeg"
+	"time"
 )
 
 func TestProviderBuildConfiguration(t *testing.T) {
@@ -128,9 +127,8 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						ServiceName: "test",
 						Attributes: []string{
 							"random.foo=bar",
-							label.Prefix + "frontend.rule=Host:A",
-							label.Prefix + "frontends.test1.rule=Host:B",
-							label.Prefix + "frontends.test2.rule=Host:C",
+							label.Prefix + "test1.frontend.rule=Host:B",
+							label.Prefix + "test2.frontend.rule=Host:C",
 						},
 					},
 					Nodes: []*api.ServiceEntry{
@@ -152,16 +150,6 @@ func TestProviderBuildConfiguration(t *testing.T) {
 				},
 			},
 			expectedFrontends: map[string]*types.Frontend{
-				"frontend-test": {
-					Backend:        "backend-test",
-					PassHostHeader: true,
-					Routes: map[string]types.Route{
-						"route-host-test": {
-							Rule: "Host:A",
-						},
-					},
-					EntryPoints: []string{},
-				},
 				"frontend-test-test1": {
 					Backend:        "backend-test",
 					PassHostHeader: true,

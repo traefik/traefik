@@ -56,7 +56,19 @@ func (p *Provider) buildConfiguration(catalog []catalogUpdate) *types.Configurat
 
 	for _, info := range catalog {
 		if len(info.Nodes) > 0 {
-			services = append(services, p.generateFrontends(info.Service)...)
+			segments := label.ExtractTraefikLabels(info.Service.TraefikLabels)
+			for segment, segmentLabels := range segments {
+				serviceName := info.Service.ServiceName
+				if segment != "" {
+					serviceName = info.Service.ServiceName + "-" + segment
+				}
+				services = append(services, &serviceUpdate{
+					ServiceName:       serviceName,
+					ParentServiceName: info.Service.ServiceName,
+					Attributes:        info.Service.Attributes,
+					TraefikLabels:     segmentLabels,
+				})
+			}
 			allNodes = append(allNodes, info.Nodes...)
 		}
 	}
@@ -162,7 +174,10 @@ func getCircuitBreaker(labels map[string]string) *types.CircuitBreaker {
 }
 
 func getServiceBackendName(service *serviceUpdate) string {
-	return strings.ToLower(service.ParentServiceName)
+	if service.ParentServiceName != "" {
+		return strings.ToLower(service.ParentServiceName)
+	}
+	return strings.ToLower(service.ServiceName)
 }
 
 func getNodeBackendName(node *api.ServiceEntry) string {
