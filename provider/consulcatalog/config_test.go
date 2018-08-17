@@ -1,13 +1,13 @@
 package consulcatalog
 
 import (
+	"github.com/containous/flaeg"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	"github.com/hashicorp/consul/api"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"text/template"
-	"github.com/containous/flaeg"
 	"time"
 )
 
