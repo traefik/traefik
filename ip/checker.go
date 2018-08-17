@@ -32,6 +32,7 @@ func NewChecker(trustedIPs []string) (*Checker, error) {
 			checker.authorizedIPsNet = append(checker.authorizedIPsNet, ipAddr)
 		}
 	}
+
 	return &checker, nil
 }
 
@@ -62,6 +63,7 @@ func (ip *Checker) Contains(addr string) (bool, error) {
 	if len(addr) <= 0 {
 		return false, errors.New("empty IP address")
 	}
+
 	ipAddr, err := parseIP(addr)
 	if err != nil {
 		return false, fmt.Errorf("unable to parse address: %s: %s", addr, err)

@@ -411,6 +411,7 @@ func (s *SimpleSuite) TestIPStrategyWhitelist(c *check.C) {
 		req.Header.Set("X-Forwarded-For", test.xForwardedFor)
 		req.Host = test.host
 		req.RequestURI = ""
+
 		err = try.Request(req, 1*time.Second, try.StatusCodeIs(test.expectedStatusCode))
 		if err != nil {
 			c.Fatalf("Error while %s: %v", test.desc, err)

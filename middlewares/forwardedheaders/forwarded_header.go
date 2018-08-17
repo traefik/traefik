@@ -37,8 +37,7 @@ func (x *XForwarded) isTrustedIP(ip string) bool {
 	if x.ipChecker == nil {
 		return false
 	}
-	err := x.ipChecker.IsAuthorized(ip)
-	return err == nil
+	return x.ipChecker.IsAuthorized(ip) == nil
 }
 
 func (x *XForwarded) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {

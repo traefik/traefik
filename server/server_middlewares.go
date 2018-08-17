@@ -291,6 +291,7 @@ func buildIPWhiteLister(whiteList *types.WhiteList, ipStrategy *types.IPStrategy
 	if err != nil {
 		return nil, err
 	}
+
 	return middlewares.NewIPWhiteLister(whiteList.SourceRange, strategy)
 }
 

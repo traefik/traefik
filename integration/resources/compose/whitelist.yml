@@ -1,5 +1,5 @@
 noOverrideWhitelist:
-  image: emilevauge/whoami
+  image: containous/whoami
   labels:
     - traefik.enable=true
     - traefik.port=80
@@ -7,7 +7,7 @@ noOverrideWhitelist:
     - traefik.frontend.whiteList.sourceRange=8.8.8.8
 
 overrideIPStrategyRemoteAddrWhitelist:
-  image: emilevauge/whoami
+  image: containous/whoami
   labels:
     - traefik.enable=true
     - traefik.port=80
@@ -16,7 +16,7 @@ overrideIPStrategyRemoteAddrWhitelist:
     - traefik.frontend.whiteList.ipStrategy=true
 
 overrideIPStrategyDepthWhitelist:
-  image: emilevauge/whoami
+  image: containous/whoami
   labels:
   - traefik.enable=true
   - traefik.port=80
@@ -25,7 +25,7 @@ overrideIPStrategyDepthWhitelist:
   - traefik.frontend.whiteList.ipStrategy.depth=3
 
 overrideIPStrategyExcludedIPsWhitelist:
-  image: emilevauge/whoami
+  image: containous/whoami
   labels:
   - traefik.enable=true
   - traefik.port=80

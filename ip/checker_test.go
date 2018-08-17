@@ -48,7 +48,7 @@ func TestIsAuthorized(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
 		desc                  string
 		trustedIPs            []string
 		expectedAuthorizedIPs []*net.IPNet
@@ -110,10 +110,11 @@ func TestNew(t *testing.T) {
 		},
 	}
 
-	for _, test := range cases {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			ipChecker, err := NewChecker(test.trustedIPs)
 			if test.errMessage != "" {
 				require.EqualError(t, err, test.errMessage)
@@ -130,7 +131,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestContainsIsAllowed(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
 		desc       string
 		trustedIPs []string
 		passIPs    []string
@@ -281,7 +282,7 @@ func TestContainsIsAllowed(t *testing.T) {
 		},
 	}
 
-	for _, test := range cases {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()

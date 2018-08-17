@@ -9,6 +9,5 @@ defaultEntryPoints = ["http"]
   [entryPoints.http.ClientIPStrategy]
     depth=2
 
-
 [api]
 [docker]

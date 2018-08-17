@@ -20,10 +20,12 @@ func NewInternalRouterAggregator(globalConfiguration configuration.GlobalConfigu
 		if globalConfiguration.EntryPoints[entryPointName].WhiteList.IPStrategy != nil {
 			ipStrategy = globalConfiguration.EntryPoints[entryPointName].WhiteList.IPStrategy
 		}
+
 		strategy, err := ipStrategy.Get()
 		if err != nil {
 			log.Fatalf("Error creating whitelist middleware: %s", err)
 		}
+
 		ipWhitelistMiddleware, err := middlewares.NewIPWhiteLister(globalConfiguration.EntryPoints[entryPointName].WhiteList.SourceRange, strategy)
 		if err != nil {
 			log.Fatalf("Error creating whitelist middleware: %s", err)

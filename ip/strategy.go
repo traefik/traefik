@@ -56,5 +56,6 @@ func (s *CheckerStrategy) GetIP(req *http.Request) string {
 			return xffs[i]
 		}
 	}
+
 	return ""
 }
