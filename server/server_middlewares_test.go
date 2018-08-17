@@ -36,8 +36,10 @@ func TestServerEntryPointWhitelistConfig(t *testing.T) {
 			desc: "whitelist middleware should be added if configured on entrypoint",
 			entrypoint: &configuration.EntryPoint{
 				Address: ":0",
-				WhitelistSourceRange: []string{
-					"127.0.0.1/32",
+				WhiteList: &types.WhiteList{
+					SourceRange: []string{
+						"127.0.0.1/32",
+					},
 				},
 				ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true},
 			},
@@ -97,44 +99,15 @@ func TestBuildIPWhiteLister(t *testing.T) {
 			errMessage:           "",
 		},
 		{
-			desc: "whitelists configured (deprecated)",
-			whitelistSourceRange: []string{
-				"1.2.3.4/24",
-				"fe80::/16",
-			},
-			middlewareConfigured: true,
-			errMessage:           "",
-		},
-		{
-			desc: "invalid whitelists configured (deprecated)",
-			whitelistSourceRange: []string{
-				"foo",
-			},
-			middlewareConfigured: false,
-			errMessage:           "parsing CIDR whitelist [foo]: parsing CIDR white list <nil>: invalid CIDR address: foo",
-		},
-		{
 			desc: "whitelists configured",
 			whiteList: &types.WhiteList{
 				SourceRange: []string{
 					"1.2.3.4/24",
 					"fe80::/16",
 				},
-				UseXForwardedFor: false,
 			},
 			middlewareConfigured: true,
 			errMessage:           "",
-		},
-		{
-			desc: "invalid whitelists configured (deprecated)",
-			whiteList: &types.WhiteList{
-				SourceRange: []string{
-					"foo",
-				},
-				UseXForwardedFor: false,
-			},
-			middlewareConfigured: false,
-			errMessage:           "parsing CIDR whitelist [foo]: parsing CIDR white list <nil>: invalid CIDR address: foo",
 		},
 	}
 
@@ -143,7 +116,7 @@ func TestBuildIPWhiteLister(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			middleware, err := buildIPWhiteLister(test.whiteList, test.whitelistSourceRange)
+			middleware, err := buildIPWhiteLister(test.whiteList, nil)
 
 			if test.errMessage != "" {
 				require.EqualError(t, err, test.errMessage)
@@ -258,6 +231,11 @@ func TestServerGenericFrontendAuthFail(t *testing.T) {
 			"http": &configuration.EntryPoint{ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true}},
 		},
 	}
+	entryPoints := map[string]EntryPoint{
+		"http": {
+			Configuration: globalConfig.EntryPoints["http"],
+		},
+	}
 
 	dynamicConfigs := types.Configurations{
 		"config": &types.Configuration{
@@ -286,7 +264,7 @@ func TestServerGenericFrontendAuthFail(t *testing.T) {
 		},
 	}
 
-	srv := NewServer(globalConfig, nil, nil)
+	srv := NewServer(globalConfig, nil, entryPoints)
 
 	_, err := srv.loadConfig(dynamicConfigs, globalConfig)
 	require.NoError(t, err)

@@ -257,13 +257,29 @@ func fwdAuthTLS(cert, key string, insecure bool) func(*types.Forward) {
 	}
 }
 
-func whiteList(useXFF bool, ranges ...string) func(*types.Frontend) {
+func whiteListRange(ranges ...string) func(*types.WhiteList) {
+	return func(wl *types.WhiteList) {
+		wl.SourceRange = ranges
+	}
+}
+
+func whiteListIPStrategy(depth int, excludedIPs ...string) func(*types.WhiteList) {
+	return func(wl *types.WhiteList) {
+		wl.IPStrategy = &types.IPStrategy{
+			Depth:       depth,
+			ExcludedIPs: excludedIPs,
+		}
+	}
+}
+
+func whiteList(opts ...func(*types.WhiteList)) func(*types.Frontend) {
 	return func(f *types.Frontend) {
 		if f.WhiteList == nil {
 			f.WhiteList = &types.WhiteList{}
 		}
-		f.WhiteList.UseXForwardedFor = useXFF
-		f.WhiteList.SourceRange = ranges
+		for _, opt := range opts {
+			opt(f.WhiteList)
+		}
 	}
 }
 

@@ -122,7 +122,13 @@
       sourceRange = [{{range $whitelist.SourceRange }}
         "{{.}}",
         {{end}}]
-      useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
+      {{if $whitelist.IPStrategy }}
+      [frontends."{{ $frontendName }}".whiteList.IPStrategy]
+        depth = {{ $whitelist.IPStrategy.Depth }}
+        excludedIPs = [{{range $whitelist.IPStrategy.ExcludedIPs }}
+          "{{.}}",
+          {{end}}]
+      {{end}}
     {{end}}
 
     {{ $redirect := getRedirect $frontend }}

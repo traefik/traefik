@@ -86,10 +86,11 @@ const (
 	SuffixFrontendRedirectReplacement               = "frontend.redirect.replacement"
 	SuffixFrontendRedirectPermanent                 = "frontend.redirect.permanent"
 	SuffixFrontendRule                              = "frontend.rule"
-	SuffixFrontendWhitelistSourceRange              = "frontend.whitelistSourceRange" // Deprecated
 	SuffixFrontendWhiteList                         = "frontend.whiteList."
 	SuffixFrontendWhiteListSourceRange              = SuffixFrontendWhiteList + "sourceRange"
-	SuffixFrontendWhiteListUseXForwardedFor         = SuffixFrontendWhiteList + "useXForwardedFor"
+	SuffixFrontendWhiteListIPStrategy               = SuffixFrontendWhiteList + "ipStrategy"
+	SuffixFrontendWhiteListIPStrategyDepth          = SuffixFrontendWhiteListIPStrategy + ".depth"
+	SuffixFrontendWhiteListIPStrategyExcludedIPS    = SuffixFrontendWhiteListIPStrategy + ".excludedIPs"
 	TraefikDomain                                   = Prefix + SuffixDomain
 	TraefikEnable                                   = Prefix + SuffixEnable
 	TraefikPort                                     = Prefix + SuffixPort
@@ -150,9 +151,10 @@ const (
 	TraefikFrontendRedirectReplacement              = Prefix + SuffixFrontendRedirectReplacement
 	TraefikFrontendRedirectPermanent                = Prefix + SuffixFrontendRedirectPermanent
 	TraefikFrontendRule                             = Prefix + SuffixFrontendRule
-	TraefikFrontendWhitelistSourceRange             = Prefix + SuffixFrontendWhitelistSourceRange // Deprecated
 	TraefikFrontendWhiteListSourceRange             = Prefix + SuffixFrontendWhiteListSourceRange
-	TraefikFrontendWhiteListUseXForwardedFor        = Prefix + SuffixFrontendWhiteListUseXForwardedFor
+	TraefikFrontendWhiteListIPStrategy              = Prefix + SuffixFrontendWhiteListIPStrategy
+	TraefikFrontendWhiteListIPStrategyDepth         = Prefix + SuffixFrontendWhiteListIPStrategyDepth
+	TraefikFrontendWhiteListIPStrategyExcludedIPS   = Prefix + SuffixFrontendWhiteListIPStrategyExcludedIPS
 	TraefikFrontendRequestHeaders                   = Prefix + SuffixFrontendRequestHeaders
 	TraefikFrontendResponseHeaders                  = Prefix + SuffixFrontendResponseHeaders
 	TraefikFrontendAllowedHosts                     = Prefix + SuffixFrontendHeadersAllowedHosts

@@ -399,7 +399,8 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel(label.TraefikFrontendRedirectPermanent, "true"),
 					withLabel(label.TraefikFrontendRule, "Host:traefik.io"),
 					withLabel(label.TraefikFrontendWhiteListSourceRange, "10.10.10.10"),
-					withLabel(label.TraefikFrontendWhiteListUseXForwardedFor, "true"),
+					withLabel(label.TraefikFrontendWhiteListIPStrategyExcludedIPS, "10.10.10.10,10.10.10.11"),
+					withLabel(label.TraefikFrontendWhiteListIPStrategyDepth, "5"),
 
 					withLabel(label.TraefikFrontendRequestHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
 					withLabel(label.TraefikFrontendResponseHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
@@ -464,8 +465,11 @@ func TestBuildConfiguration(t *testing.T) {
 						},
 					},
 					WhiteList: &types.WhiteList{
-						SourceRange:      []string{"10.10.10.10"},
-						UseXForwardedFor: true,
+						SourceRange: []string{"10.10.10.10"},
+						IPStrategy: &types.IPStrategy{
+							Depth:       5,
+							ExcludedIPs: []string{"10.10.10.10", "10.10.10.11"},
+						},
 					},
 					Headers: &types.Headers{
 						CustomRequestHeaders: map[string]string{
@@ -789,7 +793,6 @@ func TestBuildConfigurationSegments(t *testing.T) {
 					withSegmentLabel(label.TraefikFrontendRedirectPermanent, "true", "containous"),
 					withSegmentLabel(label.TraefikFrontendRule, "Host:traefik.io", "containous"),
 					withSegmentLabel(label.TraefikFrontendWhiteListSourceRange, "10.10.10.10", "containous"),
-					withSegmentLabel(label.TraefikFrontendWhiteListUseXForwardedFor, "true", "containous"),
 
 					withSegmentLabel(label.TraefikFrontendRequestHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8", "containous"),
 					withSegmentLabel(label.TraefikFrontendResponseHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8", "containous"),
@@ -854,8 +857,7 @@ func TestBuildConfigurationSegments(t *testing.T) {
 						},
 					},
 					WhiteList: &types.WhiteList{
-						SourceRange:      []string{"10.10.10.10"},
-						UseXForwardedFor: true,
+						SourceRange: []string{"10.10.10.10"},
 					},
 					Headers: &types.Headers{
 						CustomRequestHeaders: map[string]string{

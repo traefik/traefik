@@ -1080,11 +1080,22 @@ func TestIngressAnnotations(t *testing.T) {
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesWhiteListSourceRange, "1.1.1.1/24, 1234:abcd::42/32"),
-			iAnnotation(annotationKubernetesWhiteListUseXForwardedFor, "true"),
+			iAnnotation(annotationKubernetesWhiteListIPStrategyExcludedIPs, "1.1.1.1/24, 1234:abcd::42/32"),
+			iAnnotation(annotationKubernetesWhiteListIPStrategyDepth, "5"),
 			iRules(
 				iRule(
 					iHost("test"),
 					iPaths(onePath(iPath("/whitelist-source-range"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesWhiteListSourceRange, "1.1.1.1/24, 1234:abcd::42/32"),
+			iAnnotation(annotationKubernetesWhiteListIPStrategy, "true"),
+			iRules(
+				iRule(
+					iHost("test"),
+					iPaths(onePath(iPath("/whitelist-remote-addr"), iBackend("service1", intstr.FromInt(80))))),
 			),
 		),
 		buildIngress(
@@ -1357,6 +1368,12 @@ rateset:
 					server("http://example.com", weight(1))),
 				lbMethod("wrr"),
 			),
+			backend("test/whitelist-remote-addr",
+				servers(
+					server("http://example.com", weight(1)),
+					server("http://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
 			backend("rewrite/api",
 				servers(
 					server("http://example.com", weight(1)),
@@ -1467,9 +1484,20 @@ rateset:
 			),
 			frontend("test/whitelist-source-range",
 				passHostHeader(),
-				whiteList(true, "1.1.1.1/24", "1234:abcd::42/32"),
+				whiteList(
+					whiteListRange("1.1.1.1/24", "1234:abcd::42/32"),
+					whiteListIPStrategy(5, "1.1.1.1/24", "1234:abcd::42/32")),
 				routes(
 					route("/whitelist-source-range", "PathPrefix:/whitelist-source-range"),
+					route("test", "Host:test")),
+			),
+			frontend("test/whitelist-remote-addr",
+				passHostHeader(),
+				whiteList(
+					whiteListRange("1.1.1.1/24", "1234:abcd::42/32"),
+					whiteListIPStrategy(0)),
+				routes(
+					route("/whitelist-remote-addr", "PathPrefix:/whitelist-remote-addr"),
 					route("test", "Host:test")),
 			),
 			frontend("rewrite/api",

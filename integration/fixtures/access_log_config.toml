@@ -17,7 +17,8 @@ checkNewVersion = false
       entryPoint = "http"
   [entryPoints.httpWhitelistReject]
     address = ":8002"
-    whiteListSourceRange = ["8.8.8.8/32"]
+  [entryPoints.httpWhitelistReject.whiteList]
+    SourceRange = ["8.8.8.8/32"]
   [entryPoints.httpAuth]
     address = ":8004"
     [entryPoints.httpAuth.auth.basic]

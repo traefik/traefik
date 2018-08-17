@@ -375,7 +375,8 @@ func TestProviderBuildConfiguration(t *testing.T) {
 							label.TraefikFrontendRedirectPermanent + "=true",
 							label.TraefikFrontendRule + "=Host:traefik.io",
 							label.TraefikFrontendWhiteListSourceRange + "=10.10.10.10",
-							label.TraefikFrontendWhiteListUseXForwardedFor + "=true",
+							label.TraefikFrontendWhiteListIPStrategyExcludedIPS + "=10.10.10.10,10.10.10.11",
+							label.TraefikFrontendWhiteListIPStrategyDepth + "=5",
 
 							label.TraefikFrontendRequestHeaders + "=Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
 							label.TraefikFrontendResponseHeaders + "=Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
@@ -478,7 +479,10 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						SourceRange: []string{
 							"10.10.10.10",
 						},
-						UseXForwardedFor: true,
+						IPStrategy: &types.IPStrategy{
+							Depth:       5,
+							ExcludedIPs: []string{"10.10.10.10", "10.10.10.11"},
+						},
 					},
 					Headers: &types.Headers{
 						CustomRequestHeaders: map[string]string{

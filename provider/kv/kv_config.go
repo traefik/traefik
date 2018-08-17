@@ -80,14 +80,29 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 func (p *Provider) getWhiteList(rootPath string) *types.WhiteList {
 	ranges := p.getList(rootPath, pathFrontendWhiteListSourceRange)
 
-	if len(ranges) > 0 {
-		return &types.WhiteList{
-			SourceRange:      ranges,
-			UseXForwardedFor: p.getBool(false, rootPath, pathFrontendWhiteListUseXForwardedFor),
-		}
+	if len(ranges) == 0 {
+		return nil
 	}
 
-	return nil
+	return &types.WhiteList{
+		SourceRange: ranges,
+		IPStrategy:  p.getIPStrategy(rootPath),
+	}
+}
+
+func (p *Provider) getIPStrategy(rootPath string) *types.IPStrategy {
+	ipStrategy := p.getBool(false, rootPath, pathFrontendWhiteListIPStrategy)
+	depth := p.getInt(0, rootPath, pathFrontendWhiteListIPStrategyDepth)
+	excludedIPs := p.getList(rootPath, pathFrontendWhiteListIPStrategyExcludedIPs)
+
+	if depth == 0 && len(excludedIPs) == 0 && !ipStrategy {
+		return nil
+	}
+
+	return &types.IPStrategy{
+		Depth:       depth,
+		ExcludedIPs: excludedIPs,
+	}
 }
 
 func (p *Provider) getRedirect(rootPath string) *types.Redirect {

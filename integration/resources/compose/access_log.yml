@@ -102,6 +102,6 @@ frontendWhitelist:
     - traefik.enable=true
     - traefik.port=80
     - traefik.backend=backend3
-    - traefik.frontend.whitelistSourceRange=8.8.8.8/32
+    - traefik.frontend.whiteList.sourceRange=8.8.8.8/32
     - traefik.frontend.entryPoints=http
     - traefik.frontend.rule=Host:frontend.whitelist.docker.local

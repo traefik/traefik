@@ -13,28 +13,30 @@ import (
 
 // GetWhiteList Create white list from labels
 func GetWhiteList(labels map[string]string) *types.WhiteList {
-	if Has(labels, TraefikFrontendWhitelistSourceRange) {
-		log.Warnf("Deprecated configuration found: %s. Please use %s.", TraefikFrontendWhitelistSourceRange, TraefikFrontendWhiteListSourceRange)
-	}
-
 	ranges := GetSliceStringValue(labels, TraefikFrontendWhiteListSourceRange)
-	if len(ranges) > 0 {
-		return &types.WhiteList{
-			SourceRange:      ranges,
-			UseXForwardedFor: GetBoolValue(labels, TraefikFrontendWhiteListUseXForwardedFor, false),
-		}
+	if len(ranges) == 0 {
+		return nil
 	}
 
-	// TODO: Deprecated
-	values := GetSliceStringValue(labels, TraefikFrontendWhitelistSourceRange)
-	if len(values) > 0 {
-		return &types.WhiteList{
-			SourceRange:      values,
-			UseXForwardedFor: false,
-		}
+	return &types.WhiteList{
+		SourceRange: ranges,
+		IPStrategy:  getIPStrategy(labels),
+	}
+}
+
+func getIPStrategy(labels map[string]string) *types.IPStrategy {
+	ipStrategy := GetBoolValue(labels, TraefikFrontendWhiteListIPStrategy, false)
+	depth := GetIntValue(labels, TraefikFrontendWhiteListIPStrategyDepth, 0)
+	excludedIPs := GetSliceStringValue(labels, TraefikFrontendWhiteListIPStrategyExcludedIPS)
+
+	if depth == 0 && len(excludedIPs) == 0 && !ipStrategy {
+		return nil
 	}
 
-	return nil
+	return &types.IPStrategy{
+		Depth:       depth,
+		ExcludedIPs: excludedIPs,
+	}
 }
 
 // GetRedirect Create redirect from labels

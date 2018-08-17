@@ -301,17 +301,18 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthForwardTLSInsecureSkipVerify: "true",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthHeaderField:                  "X-WebAuth-User",
 
-						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasic:                 "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						label.Prefix + "sauternes." + label.SuffixFrontendEntryPoints:               "http,https",
-						label.Prefix + "sauternes." + label.SuffixFrontendPassHostHeader:            "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSCert:               "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendPriority:                  "666",
-						label.Prefix + "sauternes." + label.SuffixFrontendRedirectEntryPoint:        "https",
-						label.Prefix + "sauternes." + label.SuffixFrontendRedirectRegex:             "nope",
-						label.Prefix + "sauternes." + label.SuffixFrontendRedirectReplacement:       "nope",
-						label.Prefix + "sauternes." + label.SuffixFrontendRedirectPermanent:         "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendWhiteListSourceRange:      "10.10.10.10",
-						label.Prefix + "sauternes." + label.SuffixFrontendWhiteListUseXForwardedFor: "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasic:                      "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.Prefix + "sauternes." + label.SuffixFrontendEntryPoints:                    "http,https",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassHostHeader:                 "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSCert:                    "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPriority:                       "666",
+						label.Prefix + "sauternes." + label.SuffixFrontendRedirectEntryPoint:             "https",
+						label.Prefix + "sauternes." + label.SuffixFrontendRedirectRegex:                  "nope",
+						label.Prefix + "sauternes." + label.SuffixFrontendRedirectReplacement:            "nope",
+						label.Prefix + "sauternes." + label.SuffixFrontendRedirectPermanent:              "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendWhiteListSourceRange:           "10.10.10.10",
+						label.Prefix + "sauternes." + label.SuffixFrontendWhiteListIPStrategyExcludedIPS: "10.10.10.10,10.10.10.11",
+						label.Prefix + "sauternes." + label.SuffixFrontendWhiteListIPStrategyDepth:       "5",
 
 						label.Prefix + "sauternes." + label.SuffixFrontendRequestHeaders:                 "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
 						label.Prefix + "sauternes." + label.SuffixFrontendResponseHeaders:                "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
@@ -377,8 +378,11 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 						},
 					},
 					WhiteList: &types.WhiteList{
-						SourceRange:      []string{"10.10.10.10"},
-						UseXForwardedFor: true,
+						SourceRange: []string{"10.10.10.10"},
+						IPStrategy: &types.IPStrategy{
+							Depth:       5,
+							ExcludedIPs: []string{"10.10.10.10", "10.10.10.11"},
+						},
 					},
 					Headers: &types.Headers{
 						CustomRequestHeaders: map[string]string{

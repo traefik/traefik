@@ -902,8 +902,23 @@ func getWhiteList(i *extensionsv1beta1.Ingress) *types.WhiteList {
 	}
 
 	return &types.WhiteList{
-		SourceRange:      ranges,
-		UseXForwardedFor: getBoolValue(i.Annotations, annotationKubernetesWhiteListUseXForwardedFor, false),
+		SourceRange: ranges,
+		IPStrategy:  getIPStrategy(i.Annotations),
+	}
+}
+
+func getIPStrategy(annotations map[string]string) *types.IPStrategy {
+	ipStrategy := getBoolValue(annotations, annotationKubernetesWhiteListIPStrategy, false)
+	depth := getIntValue(annotations, annotationKubernetesWhiteListIPStrategyDepth, 0)
+	excludedIPs := getSliceStringValue(annotations, annotationKubernetesWhiteListIPStrategyExcludedIPs)
+
+	if depth == 0 && len(excludedIPs) == 0 && !ipStrategy {
+		return nil
+	}
+
+	return &types.IPStrategy{
+		Depth:       depth,
+		ExcludedIPs: excludedIPs,
 	}
 }
 

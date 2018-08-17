@@ -14,6 +14,7 @@ import (
 	"github.com/abronan/valkeyrie/store"
 	"github.com/containous/flaeg/parse"
 	"github.com/containous/mux"
+	"github.com/containous/traefik/ip"
 	"github.com/containous/traefik/log"
 	traefiktls "github.com/containous/traefik/tls"
 	"github.com/mitchellh/hashstructure"
@@ -63,8 +64,8 @@ type Buffering struct {
 
 // WhiteList contains white list configuration.
 type WhiteList struct {
-	SourceRange      []string `json:"sourceRange,omitempty"`
-	UseXForwardedFor bool     `json:"useXForwardedFor,omitempty" export:"true"`
+	SourceRange []string    `json:"sourceRange,omitempty"`
+	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty"`
 }
 
 // HealthCheck holds HealthCheck configuration
@@ -177,19 +178,18 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 
 // Frontend holds frontend configuration.
 type Frontend struct {
-	EntryPoints          []string              `json:"entryPoints,omitempty" hash:"ignore"`
-	Backend              string                `json:"backend,omitempty"`
-	Routes               map[string]Route      `json:"routes,omitempty" hash:"ignore"`
-	PassHostHeader       bool                  `json:"passHostHeader,omitempty"`
-	PassTLSCert          bool                  `json:"passTLSCert,omitempty"`
-	Priority             int                   `json:"priority"`
-	WhitelistSourceRange []string              `json:"whitelistSourceRange,omitempty"` // Deprecated
-	WhiteList            *WhiteList            `json:"whiteList,omitempty"`
-	Headers              *Headers              `json:"headers,omitempty"`
-	Errors               map[string]*ErrorPage `json:"errors,omitempty"`
-	RateLimit            *RateLimit            `json:"ratelimit,omitempty"`
-	Redirect             *Redirect             `json:"redirect,omitempty"`
-	Auth                 *Auth                 `json:"auth,omitempty"`
+	EntryPoints    []string              `json:"entryPoints,omitempty" hash:"ignore"`
+	Backend        string                `json:"backend,omitempty"`
+	Routes         map[string]Route      `json:"routes,omitempty" hash:"ignore"`
+	PassHostHeader bool                  `json:"passHostHeader,omitempty"`
+	PassTLSCert    bool                  `json:"passTLSCert,omitempty"`
+	Priority       int                   `json:"priority"`
+	WhiteList      *WhiteList            `json:"whiteList,omitempty"`
+	Headers        *Headers              `json:"headers,omitempty"`
+	Errors         map[string]*ErrorPage `json:"errors,omitempty"`
+	RateLimit      *RateLimit            `json:"ratelimit,omitempty"`
+	Redirect       *Redirect             `json:"redirect,omitempty"`
+	Auth           *Auth                 `json:"auth,omitempty"`
 }
 
 // Hash returns the hash value of a Frontend struct.
@@ -610,4 +610,35 @@ func (h HTTPCodeRanges) Contains(statusCode int) bool {
 		}
 	}
 	return false
+}
+
+// IPStrategy Configuration to choose the IP selection strategy.
+type IPStrategy struct {
+	Depth       int      `json:"depth,omitempty" export:"true"`
+	ExcludedIPs []string `json:"excludedIPs,omitempty"`
+}
+
+// Get an IP selection strategy
+// if nil return the RemoteAddr strategy
+// else return a stragegy base on the configuration using the X-Forwarded-For Header.
+// Depth override the ExcludedIPs
+func (s *IPStrategy) Get() (ip.Strategy, error) {
+	if s == nil {
+		return &ip.RemoteAddrStrategy{}, nil
+	}
+	if s.Depth > 0 {
+		return &ip.DepthStrategy{
+			Depth: s.Depth,
+		}, nil
+	}
+	if len(s.ExcludedIPs) > 0 {
+		checker, err := ip.NewChecker(s.ExcludedIPs)
+		if err != nil {
+			return nil, err
+		}
+		return &ip.CheckerStrategy{
+			Checker: checker,
+		}, nil
+	}
+	return &ip.RemoteAddrStrategy{}, nil
 }
