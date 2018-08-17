@@ -50,9 +50,10 @@ type Service struct {
 }
 
 type serviceUpdate struct {
-	ServiceName   string
-	Attributes    []string
-	TraefikLabels map[string]string
+	ServiceName       string
+	ParentServiceName string
+	Attributes        []string
+	TraefikLabels     map[string]string
 }
 
 type catalogUpdate struct {

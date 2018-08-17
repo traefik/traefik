@@ -121,6 +121,69 @@ func TestProviderBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
+			desc: "Should build config which contains three frontends and one backend",
+			nodes: []catalogUpdate{
+				{
+					Service: &serviceUpdate{
+						ServiceName: "test",
+						Attributes: []string{
+							"random.foo=bar",
+							label.Prefix + "test1.frontend.rule=Host:B",
+							label.Prefix + "test2.frontend.rule=Host:C",
+						},
+					},
+					Nodes: []*api.ServiceEntry{
+						{
+							Service: &api.AgentService{
+								Service: "test",
+								Address: "127.0.0.1",
+								Port:    80,
+								Tags: []string{
+									"random.foo=bar",
+								},
+							},
+							Node: &api.Node{
+								Node:    "localhost",
+								Address: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-test-test1": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					Routes: map[string]types.Route{
+						"route-host-test-test1": {
+							Rule: "Host:B",
+						},
+					},
+					EntryPoints: []string{},
+				},
+				"frontend-test-test2": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					Routes: map[string]types.Route{
+						"route-host-test-test2": {
+							Rule: "Host:C",
+						},
+					},
+					EntryPoints: []string{},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test": {
+					Servers: map[string]types.Server{
+						"test-0-O0Tnh-SwzY69M6SurTKP3wNKkzI": {
+							URL:    "http://127.0.0.1:80",
+							Weight: 1,
+						},
+					},
+				},
+			},
+		},
+		{
 			desc: "Should build config with a basic auth with a backward compatibility",
 			nodes: []catalogUpdate{
 				{
