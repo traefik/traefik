@@ -9,6 +9,7 @@ import (
 
 type rcOptSetter func(*RollingCounter) error
 
+// CounterClock defines a counter clock
 func CounterClock(c timetools.TimeProvider) rcOptSetter {
 	return func(r *RollingCounter) error {
 		r.clock = c
@@ -16,7 +17,7 @@ func CounterClock(c timetools.TimeProvider) rcOptSetter {
 	}
 }
 
-// Calculates in memory failure rate of an endpoint using rolling window of a predefined size
+// RollingCounter Calculates in memory failure rate of an endpoint using rolling window of a predefined size
 type RollingCounter struct {
 	clock          timetools.TimeProvider
 	resolution     time.Duration
@@ -57,11 +58,13 @@ func NewCounter(buckets int, resolution time.Duration, options ...rcOptSetter) (
 	return rc, nil
 }
 
+// Append append a counter
 func (c *RollingCounter) Append(o *RollingCounter) error {
 	c.Inc(int(o.Count()))
 	return nil
 }
 
+// Clone clone a counter
 func (c *RollingCounter) Clone() *RollingCounter {
 	c.cleanup()
 	other := &RollingCounter{
@@ -75,6 +78,7 @@ func (c *RollingCounter) Clone() *RollingCounter {
 	return other
 }
 
+// Reset reset a counter
 func (c *RollingCounter) Reset() {
 	c.lastBucket = -1
 	c.countedBuckets = 0
@@ -84,27 +88,33 @@ func (c *RollingCounter) Reset() {
 	}
 }
 
+// CountedBuckets gets counted buckets
 func (c *RollingCounter) CountedBuckets() int {
 	return c.countedBuckets
 }
 
+// Count counts
 func (c *RollingCounter) Count() int64 {
 	c.cleanup()
 	return c.sum()
 }
 
+// Resolution gets resolution
 func (c *RollingCounter) Resolution() time.Duration {
 	return c.resolution
 }
 
+// Buckets gets buckets
 func (c *RollingCounter) Buckets() int {
 	return len(c.values)
 }
 
+// WindowSize gets windows size
 func (c *RollingCounter) WindowSize() time.Duration {
 	return time.Duration(len(c.values)) * c.resolution
 }
 
+// Inc increment counter
 func (c *RollingCounter) Inc(v int) {
 	c.cleanup()
 	c.incBucketValue(v)

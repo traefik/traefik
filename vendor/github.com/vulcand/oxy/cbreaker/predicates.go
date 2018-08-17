@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/vulcand/predicate"
 )
 
@@ -50,7 +49,7 @@ func latencyAtQuantile(quantile float64) toInt {
 	return func(c *CircuitBreaker) int {
 		h, err := c.metrics.LatencyHistogram()
 		if err != nil {
-			log.Errorf("Failed to get latency histogram, for %v error: %v", c, err)
+			c.log.Errorf("Failed to get latency histogram, for %v error: %v", c, err)
 			return 0
 		}
 		return int(h.LatencyAtQuantile(quantile) / time.Millisecond)
