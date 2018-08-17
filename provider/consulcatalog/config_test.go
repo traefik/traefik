@@ -1,14 +1,15 @@
 package consulcatalog
 
 import (
+	"testing"
+	"text/template"
+	"time"
+
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	"github.com/hashicorp/consul/api"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"text/template"
-	"time"
 )
 
 func TestProviderBuildConfiguration(t *testing.T) {
