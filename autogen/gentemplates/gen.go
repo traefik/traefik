@@ -179,7 +179,13 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
       sourceRange = [{{range $whitelist.SourceRange }}
         "{{.}}",
         {{end}}]
-      useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
+      {{if $whitelist.IPStrategy }}
+      [frontends."frontend-{{ $service.ServiceName }}".whiteList.IPStrategy]
+        depth = {{ $whitelist.IPStrategy.Depth }}
+        excludedIPs = [{{range $whitelist.IPStrategy.ExcludedIPs }}
+          "{{.}}",
+          {{end}}]
+      {{end}}
     {{end}}
 
     {{ $redirect := getRedirect $service.TraefikLabels }}
@@ -418,7 +424,13 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
       sourceRange = [{{range $whitelist.SourceRange }}
         "{{.}}",
         {{end}}]
-      useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
+      {{if $whitelist.IPStrategy }}
+      [frontends."frontend-{{ $frontendName }}".whiteList.IPStrategy]
+        depth = {{ $whitelist.IPStrategy.Depth }}
+        excludedIPs = [{{range $whitelist.IPStrategy.ExcludedIPs }}
+          "{{.}}",
+          {{end}}]
+      {{end}}
     {{end}}
 
     {{ $redirect := getRedirect $container.SegmentLabels }}
@@ -657,7 +669,13 @@ var _templatesEcsTmpl = []byte(`[backends]
       sourceRange = [{{range $whitelist.SourceRange }}
         "{{.}}",
         {{end}}]
-      useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
+      {{if $whitelist.IPStrategy }}
+      [frontends."frontend-{{ $serviceName }}".whiteList.IPStrategy]
+        depth = {{ $whitelist.IPStrategy.Depth }}
+        excludedIPs = [{{range $whitelist.IPStrategy.ExcludedIPs }}
+          "{{.}}",
+          {{end}}]
+      {{end}}
     {{end}}
 
     {{ $redirect := getRedirect $instance.TraefikLabels }}
@@ -904,10 +922,16 @@ var _templatesKubernetesTmpl = []byte(`[backends]
 
     {{if $frontend.WhiteList }}
     [frontends."{{ $frontendName }}".whiteList]
-      sourceRange = [{{range $frontend.WhiteList.SourceRange }}
+      sourceRange = [{{range $frontend.Whitelist.SourceRange }}
         "{{.}}",
         {{end}}]
-      useXForwardedFor = {{ $frontend.WhiteList.UseXForwardedFor }}
+      {{if $frontend.Whitelist.IPStrategy }}
+      [frontends."{{ $frontendName }}".whiteList.IPStrategy]
+        depth = {{ $frontend.Whitelist.IPStrategy.Depth }}
+        excludedIPs = [{{range $frontend.Whitelist.IPStrategy.ExcludedIPs }}
+          "{{.}}",
+          {{end}}]
+      {{end}}
     {{end}}
 
     {{if $frontend.Redirect }}
@@ -1148,7 +1172,13 @@ var _templatesKvTmpl = []byte(`[backends]
       sourceRange = [{{range $whitelist.SourceRange }}
         "{{.}}",
         {{end}}]
-      useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
+      {{if $whitelist.IPStrategy }}
+      [frontends."{{ $frontendName }}".whiteList.IPStrategy]
+        depth = {{ $whitelist.IPStrategy.Depth }}
+        excludedIPs = [{{range $whitelist.IPStrategy.ExcludedIPs }}
+          "{{.}}",
+          {{end}}]
+      {{end}}
     {{end}}
 
     {{ $redirect := getRedirect $frontend }}
@@ -1404,7 +1434,13 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
       sourceRange = [{{range $whitelist.SourceRange }}
         "{{.}}",
         {{end}}]
-      useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
+      {{if $whitelist.IPStrategy }}
+      [frontends."{{ $frontendName }}".whiteList.IPStrategy]
+        depth = {{ $whitelist.IPStrategy.Depth }}
+        excludedIPs = [{{range $whitelist.IPStrategy.ExcludedIPs }}
+          "{{.}}",
+          {{end}}]
+      {{end}}
     {{end}}
 
     {{ $redirect := getRedirect $app.SegmentLabels }}
@@ -1645,7 +1681,13 @@ var _templatesMesosTmpl = []byte(`[backends]
       sourceRange = [{{range $whitelist.SourceRange }}
         "{{.}}",
         {{end}}]
-      useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
+      {{if $whitelist.IPStrategy }}
+      [frontends."frontend-{{ $frontendName }}".whiteList.IPStrategy]
+        depth = {{ $whitelist.IPStrategy.Depth }}
+        excludedIPs = [{{range $whitelist.IPStrategy.ExcludedIPs }}
+          "{{.}}",
+          {{end}}]
+      {{end}}
     {{end}}
 
     {{ $redirect := getRedirect $app.TraefikLabels }}
@@ -1908,7 +1950,13 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
       sourceRange = [{{range $whitelist.SourceRange }}
         "{{.}}",
         {{end}}]
-      useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
+      {{if $whitelist.IPStrategy }}
+      [frontends."frontend-{{ $frontendName }}".whiteList.IPStrategy]
+        depth = {{ $whitelist.IPStrategy.Depth }}
+        excludedIPs = [{{range $whitelist.IPStrategy.ExcludedIPs }}
+          "{{.}}",
+          {{end}}]
+      {{end}}
     {{end}}
 
     {{ $redirect := getRedirect $service.SegmentLabels }}
