@@ -151,6 +151,16 @@ Additional settings can be defined using Consul Catalog tags.
 | `<prefix>.frontend.whiteList.sourceRange=RANGE`             | Sets a list of IP-Ranges which are allowed to access.<br>An unset or empty list allows all Source-IPs to access. If one of the Net-Specifications are invalid, the whole list is invalid and allows all Source-IPs to access. |
 | `<prefix>.frontend.whiteList.useXForwardedFor=true`         | Uses `X-Forwarded-For` header as valid source of IP for the white list.                                                                                                                                                       |
 
+### Multiple frontends for a single service (segment labels)
+If you need to support multiple frontends for a service, for example when having multiple `rules` that can't be combined, 
+specify them using segments:
+
+    <prefix>.A.frontend.rule=Host:A:PathPrefix:/A
+    <prefix>.B.frontend.rule=Host:B:PathPrefix:/
+
+`A` and `B` here are the segment names, they can be anything. You can use any setting that applies to `<prefix>.frontend` from the table above.
+Segment labels override the default behavior.
+
 ### Custom Headers
 
 !!! note
