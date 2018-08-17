@@ -9,6 +9,7 @@ import (
 	"github.com/containous/traefik/middlewares/accesslog"
 	mauth "github.com/containous/traefik/middlewares/auth"
 	"github.com/containous/traefik/middlewares/errorpages"
+	"github.com/containous/traefik/middlewares/forwardedheaders"
 	"github.com/containous/traefik/middlewares/redirect"
 	"github.com/containous/traefik/types"
 	thoas_stats "github.com/thoas/stats"
@@ -146,9 +147,17 @@ func (s *Server) buildServerEntryPointMiddlewares(serverEntryPointName string) (
 		serverMiddlewares = append(serverMiddlewares, &middlewares.Compress{})
 	}
 
-	ipWhitelistMiddleware, err := buildIPWhiteLister(
-		s.entryPoints[serverEntryPointName].Configuration.WhiteList,
-		s.entryPoints[serverEntryPointName].Configuration.WhitelistSourceRange)
+	if s.entryPoints[serverEntryPointName].Configuration.ForwardedHeaders != nil {
+		xForwardedMiddleware, err := forwardedheaders.NewXforwarded(
+			s.entryPoints[serverEntryPointName].Configuration.ForwardedHeaders.Insecure,
+			s.entryPoints[serverEntryPointName].Configuration.ForwardedHeaders.TrustedIPs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create xforwarded headers middleware: %v", err)
+		}
+		serverMiddlewares = append(serverMiddlewares, xForwardedMiddleware)
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ip whitelist middleware: %v", err)
 	}

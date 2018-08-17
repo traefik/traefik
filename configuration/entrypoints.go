@@ -191,8 +191,7 @@ func makeEntryPointProxyProtocol(result map[string]string) *ProxyProtocol {
 }
 
 func makeEntryPointForwardedHeaders(result map[string]string) *ForwardedHeaders {
-	// TODO must be changed to false by default in the next breaking version.
-	forwardedHeaders := &ForwardedHeaders{Insecure: true}
+	forwardedHeaders := &ForwardedHeaders{}
 	if _, ok := result["forwardedheaders_insecure"]; ok {
 		forwardedHeaders.Insecure = toBool(result, "forwardedheaders_insecure")
 	}

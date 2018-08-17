@@ -233,17 +233,11 @@ func (s *Server) buildForwarder(entryPointName string, entryPoint *configuration
 		return nil, fmt.Errorf("failed to create RoundTripper for frontend %s: %v", frontendName, err)
 	}
 
-	rewriter, err := NewHeaderRewriter(entryPoint.ForwardedHeaders.TrustedIPs, entryPoint.ForwardedHeaders.Insecure)
-	if err != nil {
-		return nil, fmt.Errorf("error creating rewriter for frontend %s: %v", frontendName, err)
-	}
-
 	var fwd http.Handler
 	fwd, err = forward.New(
 		forward.Stream(true),
 		forward.PassHostHeader(frontend.PassHostHeader),
 		forward.RoundTripper(roundTripper),
-		forward.Rewriter(rewriter),
 		forward.ResponseModifier(responseModifier),
 		forward.BufferPool(s.bufferPool),
 		forward.WebsocketConnectionClosedHook(func(req *http.Request, conn net.Conn) {
