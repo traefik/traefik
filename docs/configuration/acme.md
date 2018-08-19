@@ -421,6 +421,8 @@ storage = "traefik/acme/account"
 
 Because KV stores (like Consul) have limited entry size the certificates list is compressed before it is saved as KV store entry.
 
+If using [storeconfig](/user-guide/kv-config/#store-configuration-in-key-value-store), consider using `acme.overrideCertificates = true` to create the `acme/account` and `acme/lock` keys required for certificate storage.
+
 !!! note
     It is possible to store up to approximately 100 ACME certificates in Consul.
 
