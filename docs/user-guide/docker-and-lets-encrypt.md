@@ -1,4 +1,4 @@
-# Docker & Traefik
+# Let's Encrypt & Docker
 
 In this use case, we want to use Træfik as a _layer-7_ load balancer with SSL termination for a set of micro-services used to run a web application.
 
