@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/BurntSushi/ty/fun"
@@ -61,6 +62,8 @@ type ACME struct {
 	jobs                  *channels.InfiniteChannel
 	TLSConfig             *tls.Config `description:"TLS config in case wildcard certs are used"`
 	dynamicCerts          *safe.Safe
+	resolvingDomains      map[string]struct{}
+	resolvingDomainsMutex sync.RWMutex
 }
 
 func (a *ACME) init() error {
@@ -81,6 +84,10 @@ func (a *ACME) init() error {
 	a.defaultCertificate = cert
 
 	a.jobs = channels.NewInfiniteChannel()
+
+	// Init the currently resolved domain map
+	a.resolvingDomains = make(map[string]struct{})
+
 	return nil
 }
 
@@ -502,6 +509,10 @@ func (a *ACME) LoadCertificateForDomains(domains []string) {
 		if len(uncheckedDomains) == 0 {
 			return
 		}
+
+		a.addResolvingDomains(uncheckedDomains)
+		defer a.removeResolvingDomains(uncheckedDomains)
+
 		certificate, err := a.getDomainsCertificates(uncheckedDomains)
 		if err != nil {
 			log.Errorf("Error getting ACME certificates %+v : %v", uncheckedDomains, err)
@@ -530,6 +541,24 @@ func (a *ACME) LoadCertificateForDomains(domains []string) {
 			log.Errorf("Error Saving ACME account %+v: %v", account, err)
 			return
 		}
+	}
+}
+
+func (a *ACME) addResolvingDomains(resolvingDomains []string) {
+	a.resolvingDomainsMutex.Lock()
+	defer a.resolvingDomainsMutex.Unlock()
+
+	for _, domain := range resolvingDomains {
+		a.resolvingDomains[domain] = struct{}{}
+	}
+}
+
+func (a *ACME) removeResolvingDomains(resolvingDomains []string) {
+	a.resolvingDomainsMutex.Lock()
+	defer a.resolvingDomainsMutex.Unlock()
+
+	for _, domain := range resolvingDomains {
+		delete(a.resolvingDomains, domain)
 	}
 }
 
@@ -568,6 +597,9 @@ func searchProvidedCertificateForDomains(domain string, certs map[string]*tls.Ce
 // Get provided certificate which check a domains list (Main and SANs)
 // from static and dynamic provided certificates
 func (a *ACME) getUncheckedDomains(domains []string, account *Account) []string {
+	a.resolvingDomainsMutex.RLock()
+	defer a.resolvingDomainsMutex.RUnlock()
+
 	log.Debugf("Looking for provided certificate to validate %s...", domains)
 	allCerts := make(map[string]*tls.Certificate)
 
@@ -587,6 +619,13 @@ func (a *ACME) getUncheckedDomains(domains []string, account *Account) []string 
 	if account != nil {
 		for domains, certificate := range account.DomainsCertificate.toDomainsMap() {
 			allCerts[domains] = certificate
+		}
+	}
+
+	// Get currently resolved domains
+	for domain := range a.resolvingDomains {
+		if _, ok := allCerts[domain]; !ok {
+			allCerts[domain] = &tls.Certificate{}
 		}
 	}
 
