@@ -17,8 +17,8 @@ theme:
   favicon: img/traefik.icon.png
   logo: img/traefik.logo.png
   palette:
-    primary: 'blue'
-    accent: 'light blue'
+    primary: 'cyan'
+    accent: 'cyan'
   feature:
     tabs: false
   i18n:
