@@ -4,6 +4,9 @@
 
 ```toml
 # API definition
+# Warning: Enabling API will expose Træfik's configuration and secret.
+# It is not recommended in production,
+# unless secured by authentication and authorizations
 [api]
   # Name of the related entry point
   #
@@ -12,7 +15,7 @@
   #
   entryPoint = "traefik"
 
-  # Enabled Dashboard
+  # Enable Dashboard
   #
   # Optional
   # Default: true
@@ -37,6 +40,14 @@ For more customization, see [entry points](/configuration/entrypoints/) document
 ![Web UI Providers](/img/web.frontend.png)
 
 ![Web UI Health](/img/traefik-health.png)
+
+## Security
+
+Enabling the API will expose all configuration elements,
+including secret.
+
+It is not recommended in production,
+unless secured by authentication and authorizations.
 
 ## API
 
