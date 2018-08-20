@@ -4,7 +4,7 @@
 
 ```toml
 # API definition
-# Warning: Enabling API will expose Træfik's configuration and secret.
+# Warning: Enabling API will expose Træfik's configuration.
 # It is not recommended in production,
 # unless secured by authentication and authorizations
 [api]
@@ -44,7 +44,7 @@ For more customization, see [entry points](/configuration/entrypoints/) document
 ## Security
 
 Enabling the API will expose all configuration elements,
-including secret.
+including sensitive data.
 
 It is not recommended in production,
 unless secured by authentication and authorizations.
