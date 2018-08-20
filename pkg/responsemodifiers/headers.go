@@ -4,46 +4,43 @@ import (
 	"net/http"
 
 	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/middlewares/headers"
 	"github.com/unrolled/secure"
 )
 
-func buildHeaders(headers *config.Headers) func(*http.Response) error {
+func buildHeaders(hdrs *config.Headers) func(*http.Response) error {
 	opt := secure.Options{
-		BrowserXssFilter:        headers.BrowserXSSFilter,
-		ContentTypeNosniff:      headers.ContentTypeNosniff,
-		ForceSTSHeader:          headers.ForceSTSHeader,
-		FrameDeny:               headers.FrameDeny,
-		IsDevelopment:           headers.IsDevelopment,
-		SSLRedirect:             headers.SSLRedirect,
-		SSLForceHost:            headers.SSLForceHost,
-		SSLTemporaryRedirect:    headers.SSLTemporaryRedirect,
-		STSIncludeSubdomains:    headers.STSIncludeSubdomains,
-		STSPreload:              headers.STSPreload,
-		ContentSecurityPolicy:   headers.ContentSecurityPolicy,
-		CustomBrowserXssValue:   headers.CustomBrowserXSSValue,
-		CustomFrameOptionsValue: headers.CustomFrameOptionsValue,
-		PublicKey:               headers.PublicKey,
-		ReferrerPolicy:          headers.ReferrerPolicy,
-		SSLHost:                 headers.SSLHost,
-		AllowedHosts:            headers.AllowedHosts,
-		HostsProxyHeaders:       headers.HostsProxyHeaders,
-		SSLProxyHeaders:         headers.SSLProxyHeaders,
-		STSSeconds:              headers.STSSeconds,
+		BrowserXssFilter:        hdrs.BrowserXSSFilter,
+		ContentTypeNosniff:      hdrs.ContentTypeNosniff,
+		ForceSTSHeader:          hdrs.ForceSTSHeader,
+		FrameDeny:               hdrs.FrameDeny,
+		IsDevelopment:           hdrs.IsDevelopment,
+		SSLRedirect:             hdrs.SSLRedirect,
+		SSLForceHost:            hdrs.SSLForceHost,
+		SSLTemporaryRedirect:    hdrs.SSLTemporaryRedirect,
+		STSIncludeSubdomains:    hdrs.STSIncludeSubdomains,
+		STSPreload:              hdrs.STSPreload,
+		ContentSecurityPolicy:   hdrs.ContentSecurityPolicy,
+		CustomBrowserXssValue:   hdrs.CustomBrowserXSSValue,
+		CustomFrameOptionsValue: hdrs.CustomFrameOptionsValue,
+		PublicKey:               hdrs.PublicKey,
+		ReferrerPolicy:          hdrs.ReferrerPolicy,
+		SSLHost:                 hdrs.SSLHost,
+		AllowedHosts:            hdrs.AllowedHosts,
+		HostsProxyHeaders:       hdrs.HostsProxyHeaders,
+		SSLProxyHeaders:         hdrs.SSLProxyHeaders,
+		STSSeconds:              hdrs.STSSeconds,
 	}
 
 	return func(resp *http.Response) error {
-		if headers.HasCustomHeadersDefined() {
-			// Loop through Custom response headers
-			for header, value := range headers.CustomResponseHeaders {
-				if value == "" {
-					resp.Header.Del(header)
-				} else {
-					resp.Header.Set(header, value)
-				}
+		if hdrs.HasCustomHeadersDefined() || hdrs.HasCorsHeadersDefined() {
+			err := headers.NewHeader(nil, *hdrs).ModifyResponseHeaders(resp)
+			if err != nil {
+				return err
 			}
 		}
 
-		if headers.HasSecureHeadersDefined() {
+		if hdrs.HasSecureHeadersDefined() {
 			err := secure.New(opt).ModifyResponseHeaders(resp)
 			if err != nil {
 				return err

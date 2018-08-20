@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"reflect"
 	"strings"
 
 	"github.com/abronan/valkeyrie/store"
@@ -123,6 +124,62 @@ func StatusCodeIs(status int) ResponseCondition {
 		}
 		return nil
 	}
+}
+
+// HasHeader returns a retry condition function.
+// The condition returns an error if the response does not have a header set.
+func HasHeader(header string) ResponseCondition {
+	return func(res *http.Response) error {
+		if _, ok := res.Header[header]; !ok {
+			return errors.New("response doesn't contain header: " + header)
+		}
+		return nil
+	}
+}
+
+// HasHeaderValue returns a retry condition function.
+// The condition returns an error if the response does not have a header set, and a value for that header.
+// Has an option to test for an exact header match only, not just contains.
+func HasHeaderValue(header, value string, exactMatch bool) ResponseCondition {
+	return func(res *http.Response) error {
+		if _, ok := res.Header[header]; !ok {
+			return errors.New("response doesn't contain header: " + header)
+		}
+
+		matchFound := false
+		for _, hdr := range res.Header[header] {
+			if value != hdr && exactMatch {
+				return fmt.Errorf("got header %s with value %s, wanted %s", header, hdr, value)
+			}
+			if value == hdr {
+				matchFound = true
+			}
+		}
+
+		if !matchFound {
+			return fmt.Errorf("response doesn't contain header %s with value %s", header, value)
+		}
+		return nil
+	}
+}
+
+// HasHeaderStruct returns a retry condition function.
+// The condition returns an error if the response does contain the headers set, and matching contents.
+func HasHeaderStruct(header http.Header) ResponseCondition {
+	return func(res *http.Response) error {
+		for key := range header {
+			if _, ok := res.Header[key]; ok {
+				//Header exists in the response, test it.
+				eq := reflect.DeepEqual(header[key], res.Header[key])
+				if !eq {
+					return fmt.Errorf("for header %s got values %v, wanted %v", key, res.Header[key], header[key])
+				}
+
+			}
+		}
+		return nil
+	}
+
 }
 
 // DoCondition is a retry condition function.

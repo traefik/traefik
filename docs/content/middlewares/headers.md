@@ -14,11 +14,22 @@ The Headers middleware can manage the requests/responses headers.
 Add the `X-Script-Name` header to the proxied request and the `X-Custom-Response-Header` to the response
 
 ```yaml tab="Docker"
-a-container:
-image: a-container-image 
 labels:
-- "traefik.http.middlewares.testHeader.Headers.CustomRequestHeaders.X-Script-Name=test",
-- "traefik.http.middlewares.testHeader.Headers.CustomResponseHeaders.X-Custom-Response-Header=True",
+- "traefik.http.middlewares.testHeader.Headers.CustomRequestHeaders.X-Script-Name=test"
+- "traefik.http.middlewares.testHeader.Headers.CustomResponseHeaders.X-Custom-Response-Header=True"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: testHeader
+spec:
+  headers:
+    CustomRequestHeaders:
+      X-Script-Name: "test"
+    CustomResponseHeaders:
+      X-Custom-Response-Header: "True"
 ```
 
 ```toml tab="File"
@@ -34,51 +45,101 @@ labels:
 
 `X-Script-Name` header added to the proxied request, the `X-Custom-Request-Header` header removed from the request, and the `X-Custom-Response-Header` header removed from the response.
 
-??? example "File"
+```yaml tab="Docker"
+labels:
+  - "traefik.http.middlewares.testHeader.Headers.CustomRequestHeaders.X-Script-Name=test"
+  - "traefik.http.middlewares.testHeader.Headers.CustomResponseHeaders.X-Custom-Response-Header=True"
+```
 
-    ```toml    
-    [http.middlewares]
-      [http.middlewares.testHeader.headers]
-        [http.middlewares.testHeader.headers.CustomRequestHeaders]
-            X-Script-Name = "test"
-        [http.middlewares.testHeader.headers.CustomResponseHeaders]
-            X-Custom-Response-Header = "True"
-    ```
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: testHeader
+spec:
+  headers:
+    CustomRequestHeaders:
+      X-Script-Name: "test"
+    CustomResponseHeaders:
+      X-Custom-Response-Header: "True"
+```
 
-??? example "Docker"
-
-    ```yml
-    a-container:
-          image: a-container-image 
-            labels:
-              - "traefik.http.middlewares.testHeader.Headers.CustomRequestHeaders.X-Script-Name=test",
-              - "traefik.http.middlewares.testHeader.Headers.CustomResponseHeaders.X-Custom-Response-Header=True",
-    ```
+```toml tab="File"    
+[http.middlewares]
+  [http.middlewares.testHeader.headers]
+    [http.middlewares.testHeader.headers.CustomRequestHeaders]
+        X-Script-Name = "test"
+    [http.middlewares.testHeader.headers.CustomResponseHeaders]
+        X-Custom-Response-Header = "True"
+```
 
 ### Using Security Headers
 
 Security related headers (HSTS headers, SSL redirection, Browser XSS filter, etc) can be added and configured per frontend in a similar manner to the custom headers above.
 This functionality allows for some easy security features to quickly be set.
 
-??? example "File"
+```yaml tab="Docker"
+labels:
+  - "traefik.http.middlewares.testHeader.Headers.FrameDeny=true"
+  - "traefik.http.middlewares.testHeader.Headers.SSLRedirect=true"
+```
 
-    ```toml    
-    [http.middlewares]
-      [http.middlewares.testHeader.headers]
-        FrameDeny = true
-        SSLRedirect = true
-    ```
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: testHeader
+spec:
+  headers:
+    FrameDeny: "true"
+    SSLRedirect: "true"
+```
 
-??? example "Docker"
+```toml tab="File"    
+[http.middlewares]
+  [http.middlewares.testHeader.headers]
+    FrameDeny = true
+    SSLRedirect = true
+```
 
-    ```yml
-    a-container:
-          image: a-container-image 
-            labels:
-              - "traefik.http.middlewares.testHeader.Headers.FrameDeny=true",
-              - "traefik.http.middlewares.testHeader.Headers.SSLRedirect=true",
-    ```
-       
+### CORS Headers
+
+CORS (Cross-Origin Resource Sharing) headers can be added and configured per frontend in a similar manner to the custom headers above.
+This functionality allows for more advanced security features to quickly be set.
+
+```yaml tab="Docker"
+labels:
+  - "traefik.http.middlewares.testHeader.Headers.AccessControlAllowMethods=GET,OPTIONS,PUT"
+  - "traefik.http.middlewares.testHeader.Headers.AccessControlAllowOrigin=origin-list-or-null"
+  - "traefik.http.middlewares.testHeader.Headers.AccessControlMaxAge=100"
+  - "traefik.http.middlewares.testHeader.Headers.AddVaryHeader=true"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: testHeader
+spec:
+  headers:
+    AccessControlAllowMethods:
+      - "GET"
+      - "OPTIONS"
+      - "PUT"
+    AccessControlAllowOrigin: "origin-list-or-null"
+    AccessControlMaxAge: 100
+    AddVaryHeader: "true"
+```
+
+```toml tab="File"    
+[http.middlewares]
+  [http.middlewares.testHeader.headers]
+    AccessControlAllowMethods= ["GET", "OPTIONS", "PUT"]
+    AccessControlAllowOrigin = "origin-list-or-null"
+    AccessControlMaxAge = 100
+    AddVaryHeader = true
+```
+
 ## Configuration Options
 
 ### General
@@ -92,6 +153,42 @@ This functionality allows for some easy security features to quickly be set.
 ### customRequestHeaders
 
 The `customRequestHeaders` option lists the Header names and values to apply to the request.
+
+### customResponseHeaders
+
+The `customResponseHeaders` option lists the Header names and values to apply to the response.
+
+### accessControlAllowCredentials
+
+The `accessControlAllowCredentials` indicates whether the request can include user credentials.
+
+### accessControlAllowHeaders
+
+The `accessControlAllowHeaders` indicates which header field names can be used as part of the request.
+
+### accessControlAllowMethods
+
+The  `accessControlAllowMethods` indicates which methods can be used during requests.
+
+### accessControlAllowOrigin
+
+The `accessControlAllowOrigin` indicates whether a resource can be shared by returning different values. The three options for this value are:
+
+- `origin-list-or-null`
+- `*`
+- `null`
+
+### accessControlExposeHeaders
+
+The `accessControlExposeHeaders` indicates which headers are safe to expose to the api of a CORS API specification.
+
+### accessControlMaxAge
+
+The `accessControlMaxAge` indicates how long a preflight request can be cached.
+
+### addVaryHeader
+
+The `addVaryHeader` is used in conjunction with `accessControlAllowOrigin` to determine whether the vary header should be added or modified to demonstrate that server responses can differ beased on the value of the origin header.
 
 ### allowedHosts 
 

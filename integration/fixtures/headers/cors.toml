@@ -1,0 +1,28 @@
+
+[entrypoints]
+  [entrypoints.web]
+    address = ":8000"
+
+[log]
+logLevel = "DEBUG"
+
+[providers]
+   [providers.file]
+
+[http.routers]
+  [http.routers.router1]
+    rule = "Host(`test.localhost`)"
+    service = "service1"
+
+[http.middlewares]
+  [http.middlewares.cors.Headers]
+    AccessControlAllowMethods= ["GET", "OPTIONS", "PUT"]
+    AccessControlAllowOrigin = "origin-list-or-null"
+    AccessControlMaxAge = 100
+    AddVaryHeader = true
+
+[http.services]
+  [http.services.service1.loadbalancer]
+    [[http.services.service1.loadbalancer.servers]]
+      url = "http://172.17.0.2:80"
+      weight = 1

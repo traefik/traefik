@@ -126,6 +126,21 @@ type Headers struct {
 	CustomRequestHeaders  map[string]string `json:"customRequestHeaders,omitempty"`
 	CustomResponseHeaders map[string]string `json:"customResponseHeaders,omitempty"`
 
+	// AccessControlAllowCredentials is only valid if true. false is ignored.
+	AccessControlAllowCredentials bool `json:"AccessControlAllowCredentials,omitempty"`
+	// AccessControlAllowHeaders must be used in response to a preflight request with Access-Control-Request-Headers set.
+	AccessControlAllowHeaders []string `json:"AccessControlAllowHeaders,omitempty"`
+	// AccessControlAllowMethods must be used in response to a preflight request with Access-Control-Request-Method set.
+	AccessControlAllowMethods []string `json:"AccessControlAllowMethods,omitempty"`
+	// AccessControlAllowOrigin Can be "origin-list-or-null" or "*". From (https://www.w3.org/TR/cors/#access-control-allow-origin-response-header)
+	AccessControlAllowOrigin string `json:"AccessControlAllowOrigin,omitempty"`
+	// AccessControlExposeHeaders sets valid headers for the response.
+	AccessControlExposeHeaders []string `json:"AccessControlExposeHeaders,omitempty"`
+	// AccessControlMaxAge sets the time that a preflight request may be cached.
+	AccessControlMaxAge int64 `json:"AccessControlMaxAge,omitempty"`
+	// AddVaryHeader controls if the Vary header is automatically added/updated when the AccessControlAllowOrigin is set.
+	AddVaryHeader bool `json:"AddVaryHeader,omitempty"`
+
 	AllowedHosts            []string          `json:"allowedHosts,omitempty"`
 	HostsProxyHeaders       []string          `json:"hostsProxyHeaders,omitempty"`
 	SSLRedirect             bool              `json:"sslRedirect,omitempty"`
@@ -152,6 +167,17 @@ type Headers struct {
 func (h *Headers) HasCustomHeadersDefined() bool {
 	return h != nil && (len(h.CustomResponseHeaders) != 0 ||
 		len(h.CustomRequestHeaders) != 0)
+}
+
+// HasCorsHeadersDefined checks to see if any of the cors header elements have been set
+func (h *Headers) HasCorsHeadersDefined() bool {
+	return h != nil && (h.AccessControlAllowCredentials ||
+		len(h.AccessControlAllowHeaders) != 0 ||
+		len(h.AccessControlAllowMethods) != 0 ||
+		h.AccessControlAllowOrigin != "" ||
+		len(h.AccessControlExposeHeaders) != 0 ||
+		h.AccessControlMaxAge != 0 ||
+		h.AddVaryHeader)
 }
 
 // HasSecureHeadersDefined checks to see if any of the secure header elements have been set
