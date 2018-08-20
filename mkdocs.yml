@@ -21,9 +21,6 @@ theme:
     accent: 'light blue'
   feature:
     tabs: false
-  palette:
-    primary: 'cyan'
-    accent: 'cyan'
   i18n:
     prev: 'Previous'
     next: 'Next'
