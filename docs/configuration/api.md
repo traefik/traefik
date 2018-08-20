@@ -49,7 +49,13 @@ including secret.
 It is not recommended in production,
 unless secured by authentication and authorizations.
 
-A good and sane default is to enable [Basic Authentication](#authentication).
+A good sane default (but not exhaustive) set of recommendations
+would be to apply the following protection mechanism:
+
+* _At application level:_ enabling HTTP [Basic Authentication](#authentication)
+* _At transport level:_ NOT exposing publicly the API's port,
+keeping it restricted over internal networks
+(restricted networks as in https://en.wikipedia.org/wiki/Principle_of_least_privilege).
 
 ## API
 
