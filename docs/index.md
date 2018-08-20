@@ -206,5 +206,5 @@ docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/etc/traefik/traefik.to
  
 ## Security
 
-We want to keep Traefik safe for everyone.
-If you've discovered a security vulnerability in Traefik, we appreciate your help in disclosing it to us in a responsible manner, using [this form](https://security.traefik.io).
+We want to keep Træfik safe for everyone.
+If you've discovered a security vulnerability in Træfik, we appreciate your help in disclosing it to us in a responsible manner, using [this form](https://security.traefik.io).
