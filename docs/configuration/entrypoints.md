@@ -102,12 +102,6 @@ traefik:
         - --defaultentrypoints=powpow
         - "--entryPoints=Name:powpow Address::42 Compress:true"
 ```
-or
-```yaml
-traefik:
-    image: traefik
-    command: --defaultentrypoints=powpow --entryPoints='Name:powpow Address::42 Compress:true'
-```
 
 #### All available options:
 
