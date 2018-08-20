@@ -49,6 +49,8 @@ including secret.
 It is not recommended in production,
 unless secured by authentication and authorizations.
 
+A good and sane default is to enable [Basic Authentication](#authentication).
+
 ## API
 
 | Path                                                            | Method           | Description                               |
