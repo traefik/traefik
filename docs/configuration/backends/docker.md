@@ -19,7 +19,7 @@ Træfik can be configured to use Docker as a provider.
 #
 endpoint = "unix:///var/run/docker.sock"
 
-# Default domain used.
+# Default base domain used for the frontend rules.
 # Can be overridden by setting the "traefik.domain" label on a container.
 #
 # Required
@@ -110,7 +110,7 @@ To enable constraints see [provider-specific constraints section](/configuration
 #
 endpoint = "tcp://127.0.0.1:2375"
 
-# Default domain used.
+# Default base domain used for the frontend rules.
 # Can be overridden by setting the "traefik.domain" label on a services.
 #
 # Optional
@@ -210,7 +210,7 @@ Labels can be used on containers to override default behavior.
 | Label                                                      | Description                                                                                                                                                                                                                      |
 |------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `traefik.docker.network`                                   | Overrides the default docker network to use for connections to the container. [1]                                                                                                                                                |
-| `traefik.domain`                                           | Sets the default domain for the frontend rules.                                                                                                                                                                                  |
+| `traefik.domain`                                           | Sets the default base domain for the frontend rules. For more information, check the [Container Labels section's of the user guide "Let's Encrypt & Docker"](/user-guide/docker-and-lets-encrypt/#container-labels)                                                                                                                                                                                   |
 | `traefik.enable=false`                                     | Disables this container in Træfik.                                                                                                                                                                                               |
 | `traefik.port=80`                                          | Registers this port. Useful when the container exposes multiples ports.                                                                                                                                                          |
 | `traefik.protocol=https`                                   | Overrides the default `http` protocol                                                                                                                                                                                            |
