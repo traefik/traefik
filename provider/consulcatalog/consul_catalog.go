@@ -50,9 +50,15 @@ type Service struct {
 }
 
 type serviceUpdate struct {
-	ServiceName   string
-	Attributes    []string
-	TraefikLabels map[string]string
+	ServiceName       string
+	ParentServiceName string
+	Attributes        []string
+	TraefikLabels     map[string]string
+}
+
+type frontendSegment struct {
+	Name   string
+	Labels map[string]string
 }
 
 type catalogUpdate struct {
@@ -559,4 +565,50 @@ func (p *Provider) getConstraintTags(tags []string) []string {
 	}
 
 	return values
+}
+
+func (p *Provider) generateFrontends(service *serviceUpdate) []*serviceUpdate {
+	frontends := make([]*serviceUpdate, 0)
+	// to support <prefix>.frontend.xxx
+	frontends = append(frontends, &serviceUpdate{
+		ServiceName:       service.ServiceName,
+		ParentServiceName: service.ServiceName,
+		Attributes:        service.Attributes,
+		TraefikLabels:     service.TraefikLabels,
+	})
+	// loop over children of <prefix>.frontends.*
+	for _, frontend := range getSegments(p.Prefix+".frontends", p.Prefix, service.TraefikLabels) {
+		frontends = append(frontends, &serviceUpdate{
+			ServiceName:       service.ServiceName + "-" + frontend.Name,
+			ParentServiceName: service.ServiceName,
+			Attributes:        service.Attributes,
+			TraefikLabels:     frontend.Labels,
+		})
+	}
+	return frontends
+}
+func getSegments(path string, prefix string, tree map[string]string) []*frontendSegment {
+	segments := make([]*frontendSegment, 0)
+	// FIXME: do this more efficient..
+	// find segment names
+	segmentNames := make(map[string]bool)
+	for key := range tree {
+		if strings.HasPrefix(key, path+".") {
+			segmentNames[strings.SplitN(strings.TrimPrefix(key, path+"."), ".", 2)[0]] = true
+		}
+	}
+	// get labels for each segment found
+	for segment := range segmentNames {
+		labels := make(map[string]string)
+		for key, value := range tree {
+			if strings.HasPrefix(key, path+"."+segment) {
+				labels[prefix+".frontend"+strings.TrimPrefix(key, path+"."+segment)] = value
+			}
+		}
+		segments = append(segments, &frontendSegment{
+			Name:   segment,
+			Labels: labels,
+		})
+	}
+	return segments
 }
