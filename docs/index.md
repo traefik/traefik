@@ -203,3 +203,8 @@ Using the tiny Docker image:
 ```shell
 docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/etc/traefik/traefik.toml traefik
 ```
+ 
+## Security
+
+We want to keep Traefik safe for everyone.
+If you've discovered a security vulnerability in Traefik, we appreciate your help in disclosing it to us in a responsible manner, using [this form](https://security.traefik.io).
