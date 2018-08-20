@@ -1,5 +1,23 @@
 # Change Log
 
+## [v1.6.6](https://github.com/containous/traefik/tree/v1.6.6) (2018-08-20)
+[All Commits](https://github.com/containous/traefik/compare/v1.6.5...v1.6.6)
+
+**Bug fixes:**
+- **[acme]** Avoid duplicated ACME resolution ([#3751](https://github.com/containous/traefik/pull/3751) by [nmengin](https://github.com/nmengin))
+- **[api]** Remove TLS in API ([#3788](https://github.com/containous/traefik/pull/3788) by [Juliens](https://github.com/Juliens))
+- **[cluster]** Remove unusable `--cluster` flag ([#3616](https://github.com/containous/traefik/pull/3616) by [dtomcej](https://github.com/dtomcej))
+- **[ecs]** Fix bad condition in ECS provider ([#3609](https://github.com/containous/traefik/pull/3609) by [mmatur](https://github.com/mmatur))
+- Set keepalive on TCP socket so idleTimeout works ([#3740](https://github.com/containous/traefik/pull/3740) by [ajardan](https://github.com/ajardan))
+
+**Documentation:**
+- A tiny rewording on the documentation API&#39;s page ([#3794](https://github.com/containous/traefik/pull/3794) by [dduportal](https://github.com/dduportal))
+- Adding warnings and solution about the configuration exposure ([#3790](https://github.com/containous/traefik/pull/3790) by [dduportal](https://github.com/dduportal))
+- Fix path to the debug pprof API ([#3608](https://github.com/containous/traefik/pull/3608) by [multani](https://github.com/multani))
+
+**Misc:**
+- **[oxy,websocket]** Update oxy dependency ([#3777](https://github.com/containous/traefik/pull/3777) by [Juliens](https://github.com/Juliens))
+
 ## [v1.6.5](https://github.com/containous/traefik/tree/v1.6.5) (2018-07-09)
 [All Commits](https://github.com/containous/traefik/compare/v1.6.4...v1.6.5)
 
