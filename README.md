@@ -164,6 +164,11 @@ Each version is supported until the next one is released (e.g. 1.1.x will be sup
 
 We use [Semantic Versioning](http://semver.org/)
 
+## Mailing lists
+
+- General announcements, new releases: mail at news+subscribe@traefik.io or on [the online viewer](https://groups.google.com/a/traefik.io/forum/#!forum/news)
+- Security announcements: mail at security+subscribe@traefik.io or on [the online viewer](https://groups.google.com/a/traefik.io/forum/#!forum/security).
+
 ## Credits
 
 Kudos to [Peka](http://peka.byethost11.com/photoblog/) for his awesome work on the logo ![logo](docs/img/traefik.icon.png).
