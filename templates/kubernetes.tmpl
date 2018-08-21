@@ -81,8 +81,8 @@
           trustForwardHeader = {{ $frontend.Auth.Forward.TrustForwardHeader }}
           {{if $frontend.Auth.Forward.TLS }}
           [frontends."{{ $frontendName }}".auth.forward.tls]
-            cert = "{{ $frontend.Auth.Forward.TLS.Cert }}"
-            key = "{{ $frontend.Auth.Forward.TLS.Key }}"
+            cert = """{{ $frontend.Auth.Forward.TLS.Cert }}"""
+            key = """{{ $frontend.Auth.Forward.TLS.Key }}"""
             insecureSkipVerify = {{ $frontend.Auth.Forward.TLS.InsecureSkipVerify }}
           {{end}}
       {{end}}
