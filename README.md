@@ -164,13 +164,6 @@ Each version is supported until the next one is released (e.g. 1.1.x will be sup
 
 We use [Semantic Versioning](http://semver.org/)
 
-## Plumbing
-
-- [Oxy](https://github.com/vulcand/oxy): an awesome proxy library made by Mailgun folks
-- [Gorilla mux](https://github.com/gorilla/mux): famous request router
-- [Negroni](https://github.com/urfave/negroni): web middlewares made simple
-- [Lego](https://github.com/xenolf/lego): the best [Let's Encrypt](https://letsencrypt.org) library in go
-
 ## Credits
 
 Kudos to [Peka](http://peka.byethost11.com/photoblog/) for his awesome work on the logo ![logo](docs/img/traefik.icon.png).
