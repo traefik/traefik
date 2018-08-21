@@ -28,6 +28,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 		desc             string
 		dynamicCerts     *safe.Safe
 		staticCerts      *safe.Safe
+		resolvingDomains map[string]struct{}
 		acmeCertificates []*Certificate
 		domains          []string
 		expectedDomains  []string
@@ -140,6 +141,40 @@ func TestGetUncheckedCertificates(t *testing.T) {
 			},
 			expectedDomains: []string{"traefik.wtf"},
 		},
+		{
+			desc:    "all domains already managed by ACME",
+			domains: []string{"traefik.wtf", "foo.traefik.wtf"},
+			resolvingDomains: map[string]struct{}{
+				"traefik.wtf":     {},
+				"foo.traefik.wtf": {},
+			},
+			expectedDomains: []string{},
+		},
+		{
+			desc:    "one domain already managed by ACME",
+			domains: []string{"traefik.wtf", "foo.traefik.wtf"},
+			resolvingDomains: map[string]struct{}{
+				"traefik.wtf": {},
+			},
+			expectedDomains: []string{"foo.traefik.wtf"},
+		},
+		{
+			desc:    "wildcard domain already managed by ACME checks the domains",
+			domains: []string{"bar.traefik.wtf", "foo.traefik.wtf"},
+			resolvingDomains: map[string]struct{}{
+				"*.traefik.wtf": {},
+			},
+			expectedDomains: []string{},
+		},
+		{
+			desc:    "wildcard domain already managed by ACME checks domains and another domain checks one other domain, one domain still unchecked",
+			domains: []string{"traefik.wtf", "bar.traefik.wtf", "foo.traefik.wtf", "acme.wtf"},
+			resolvingDomains: map[string]struct{}{
+				"*.traefik.wtf": {},
+				"traefik.wtf":   {},
+			},
+			expectedDomains: []string{"acme.wtf"},
+		},
 	}
 
 	for _, test := range testCases {
@@ -147,12 +182,17 @@ func TestGetUncheckedCertificates(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
+			if test.resolvingDomains == nil {
+				test.resolvingDomains = make(map[string]struct{})
+			}
+
 			acmeProvider := Provider{
 				certificateStore: &traefiktls.CertificateStore{
 					DynamicCerts: test.dynamicCerts,
 					StaticCerts:  test.staticCerts,
 				},
-				certificates: test.acmeCertificates,
+				certificates:     test.acmeCertificates,
+				resolvingDomains: test.resolvingDomains,
 			}
 
 			domains := acmeProvider.getUncheckedDomains(test.domains, false)

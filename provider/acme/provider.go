@@ -62,6 +62,8 @@ type Provider struct {
 	clientMutex            sync.Mutex
 	configFromListenerChan chan types.Configuration
 	pool                   *safe.Pool
+	resolvingDomains       map[string]struct{}
+	resolvingDomainsMutex  sync.RWMutex
 }
 
 // Certificate is a struct which contains all data needed from an ACME certificate
@@ -143,6 +145,9 @@ func (p *Provider) Init(_ types.Constraints) error {
 	if err != nil {
 		return fmt.Errorf("unable to get ACME certificates : %v", err)
 	}
+
+	// Init the currently resolved domain map
+	p.resolvingDomains = make(map[string]struct{})
 
 	return nil
 }
@@ -373,6 +378,9 @@ func (p *Provider) resolveCertificate(domain types.Domain, domainFromConfigurati
 		return nil, nil
 	}
 
+	p.addResolvingDomains(uncheckedDomains)
+	defer p.removeResolvingDomains(uncheckedDomains)
+
 	log.Debugf("Loading ACME certificates %+v...", uncheckedDomains)
 
 	client, err := p.getClient()
@@ -408,6 +416,24 @@ func (p *Provider) resolveCertificate(domain types.Domain, domainFromConfigurati
 	p.addCertificateForDomain(domain, certificate.Certificate, certificate.PrivateKey)
 
 	return certificate, nil
+}
+
+func (p *Provider) removeResolvingDomains(resolvingDomains []string) {
+	p.resolvingDomainsMutex.Lock()
+	defer p.resolvingDomainsMutex.Unlock()
+
+	for _, domain := range resolvingDomains {
+		delete(p.resolvingDomains, domain)
+	}
+}
+
+func (p *Provider) addResolvingDomains(resolvingDomains []string) {
+	p.resolvingDomainsMutex.Lock()
+	defer p.resolvingDomainsMutex.Unlock()
+
+	for _, domain := range resolvingDomains {
+		p.resolvingDomains[domain] = struct{}{}
+	}
 }
 
 func (p *Provider) useCertificateWithRetry(domains []string) bool {
@@ -636,6 +662,9 @@ func (p *Provider) renewCertificates() {
 // Get provided certificate which check a domains list (Main and SANs)
 // from static and dynamic provided certificates
 func (p *Provider) getUncheckedDomains(domainsToCheck []string, checkConfigurationDomains bool) []string {
+	p.resolvingDomainsMutex.RLock()
+	defer p.resolvingDomainsMutex.RUnlock()
+
 	log.Debugf("Looking for provided certificate(s) to validate %q...", domainsToCheck)
 
 	allDomains := p.certificateStore.GetAllDomains()
@@ -643,6 +672,11 @@ func (p *Provider) getUncheckedDomains(domainsToCheck []string, checkConfigurati
 	// Get ACME certificates
 	for _, certificate := range p.certificates {
 		allDomains = append(allDomains, strings.Join(certificate.Domain.ToStrArray(), ","))
+	}
+
+	// Get currently resolved domains
+	for domain := range p.resolvingDomains {
+		allDomains = append(allDomains, domain)
 	}
 
 	// Get Configuration Domains
@@ -664,7 +698,7 @@ func searchUncheckedDomains(domainsToCheck []string, existentDomains []string) [
 	}
 
 	if len(uncheckedDomains) == 0 {
-		log.Debugf("No ACME certificate to generate for domains %q.", domainsToCheck)
+		log.Debugf("No ACME certificate generation required for domains %q.", domainsToCheck)
 	} else {
 		log.Debugf("Domains %q need ACME certificates generation for domains %q.", domainsToCheck, strings.Join(uncheckedDomains, ","))
 	}

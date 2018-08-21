@@ -86,6 +86,10 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock # So that Traefik can listen to the Docker events
 ```
 
+!!! warning
+    Enabling the Web UI with the `--api` flag might exposes configuration elements. You can read more about this on the [API/Dashboard's Security section](/configuration/api#security).
+
+
 **That's it. Now you can launch Træfik!**
 
 Start your `reverse-proxy` with the following command:
@@ -199,3 +203,8 @@ Using the tiny Docker image:
 ```shell
 docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/etc/traefik/traefik.toml traefik
 ```
+ 
+## Security
+
+We want to keep Træfik safe for everyone.
+If you've discovered a security vulnerability in Træfik, we appreciate your help in disclosing it to us in a responsible manner, using [this form](https://security.traefik.io).

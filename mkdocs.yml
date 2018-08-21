@@ -17,13 +17,10 @@ theme:
   favicon: img/traefik.icon.png
   logo: img/traefik.logo.png
   palette:
-    primary: 'blue'
-    accent: 'light blue'
-  feature:
-    tabs: false
-  palette:
     primary: 'cyan'
     accent: 'cyan'
+  feature:
+    tabs: false
   i18n:
     prev: 'Previous'
     next: 'Next'
