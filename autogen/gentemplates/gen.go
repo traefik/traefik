@@ -224,8 +224,8 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
         [frontends."frontend-{{ $service.ServiceName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
-          cert = "{{ $auth.Forward.TLS.Cert }}"
-          key = "{{ $auth.Forward.TLS.Key }}"
+          cert = """{{ $auth.Forward.TLS.Cert }}"""
+          key = """{{ $auth.Forward.TLS.Key }}"""
           insecureSkipVerify = {{ $auth.Forward.TLS.InsecureSkipVerify }}
         {{end}}
       {{end}}
@@ -673,8 +673,8 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
         [frontends."frontend-{{ $frontendName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
-          cert = "{{ $auth.Forward.TLS.Cert }}"
-          key = "{{ $auth.Forward.TLS.Key }}"
+          cert = """{{ $auth.Forward.TLS.Cert }}"""
+          key = """{{ $auth.Forward.TLS.Key }}"""
           insecureSkipVerify = {{ $auth.Forward.TLS.InsecureSkipVerify }}
         {{end}}
       {{end}}
@@ -973,8 +973,8 @@ var _templatesEcsTmpl = []byte(`[backends]
         [frontends."frontend-{{ $serviceName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
-          cert = "{{ $auth.Forward.TLS.Cert }}"
-          key = "{{ $auth.Forward.TLS.Key }}"
+          cert = """{{ $auth.Forward.TLS.Cert }}"""
+          key = """{{ $auth.Forward.TLS.Key }}"""
           insecureSkipVerify = {{ $auth.Forward.TLS.InsecureSkipVerify }}
         {{end}}
       {{end}}
@@ -1246,8 +1246,8 @@ var _templatesKubernetesTmpl = []byte(`[backends]
           trustForwardHeader = {{ $frontend.Auth.Forward.TrustForwardHeader }}
           {{if $frontend.Auth.Forward.TLS }}
           [frontends."{{ $frontendName }}".auth.forward.tls]
-            cert = "{{ $frontend.Auth.Forward.TLS.Cert }}"
-            key = "{{ $frontend.Auth.Forward.TLS.Key }}"
+            cert = """{{ $frontend.Auth.Forward.TLS.Cert }}"""
+            key = """{{ $frontend.Auth.Forward.TLS.Key }}"""
             insecureSkipVerify = {{ $frontend.Auth.Forward.TLS.InsecureSkipVerify }}
           {{end}}
       {{end}}
@@ -1466,8 +1466,8 @@ var _templatesKvTmpl = []byte(`[backends]
         [frontends."{{ $frontendName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
-          cert = "{{ $auth.Forward.TLS.Cert }}"
-          key = "{{ $auth.Forward.TLS.Key }}"
+          cert = """{{ $auth.Forward.TLS.Cert }}"""
+          key = """{{ $auth.Forward.TLS.Key }}"""
           insecureSkipVerify = {{ $auth.Forward.TLS.InsecureSkipVerify }}
         {{end}}
       {{end}}
@@ -1808,8 +1808,8 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
         [frontends."{{ $frontendName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
-          cert = "{{ $auth.Forward.TLS.Cert }}"
-          key = "{{ $auth.Forward.TLS.Key }}"
+          cert = """{{ $auth.Forward.TLS.Cert }}"""
+          key = """{{ $auth.Forward.TLS.Key }}"""
           insecureSkipVerify = {{ $auth.Forward.TLS.InsecureSkipVerify }}
         {{end}}
       {{end}}
@@ -2094,8 +2094,8 @@ var _templatesMesosTmpl = []byte(`[backends]
         [frontends."frontend-{{ $frontendName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
-          cert = "{{ $auth.Forward.TLS.Cert }}"
-          key = "{{ $auth.Forward.TLS.Key }}"
+          cert = """{{ $auth.Forward.TLS.Cert }}"""
+          key = """{{ $auth.Forward.TLS.Key }}"""
           insecureSkipVerify = {{ $auth.Forward.TLS.InsecureSkipVerify }}
         {{end}}
       {{end}}
@@ -2433,8 +2433,8 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
         [frontends."frontend-{{ $frontendName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
-          cert = "{{ $auth.Forward.TLS.Cert }}"
-          key = "{{ $auth.Forward.TLS.Key }}"
+          cert = """{{ $auth.Forward.TLS.Cert }}"""
+          key = """{{ $auth.Forward.TLS.Key }}"""
           insecureSkipVerify = {{ $auth.Forward.TLS.InsecureSkipVerify }}
         {{end}}
       {{end}}
