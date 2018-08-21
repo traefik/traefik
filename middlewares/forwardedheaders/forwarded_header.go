@@ -41,10 +41,8 @@ func (x *XForwarded) isTrustedIP(ip string) bool {
 }
 
 func (x *XForwarded) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	if !x.insecure {
-		if !x.isTrustedIP(r.RemoteAddr) {
-			utils.RemoveHeaders(r.Header, forward.XHeaders...)
-		}
+	if !x.insecure && !x.isTrustedIP(r.RemoteAddr) {
+		utils.RemoveHeaders(r.Header, forward.XHeaders...)
 	}
 
 	// If there is a next, call it.

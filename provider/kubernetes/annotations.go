@@ -19,7 +19,7 @@ const (
 	annotationKubernetesRewriteTarget                  = "ingress.kubernetes.io/rewrite-target"
 	annotationKubernetesWhiteListSourceRange           = "ingress.kubernetes.io/whitelist-source-range"
 	annotationKubernetesWhiteListIPStrategy            = "ingress.kubernetes.io/whitelist-ipstrategy"
-	annotationKubernetesWhiteListIPStrategyDepth       = "ingress.kubernetes.io/whitelist-iptrategy-depth"
+	annotationKubernetesWhiteListIPStrategyDepth       = "ingress.kubernetes.io/whitelist-ipstrategy-depth"
 	annotationKubernetesWhiteListIPStrategyExcludedIPs = "ingress.kubernetes.io/whitelist-ipstrategy-excluded-ips"
 	annotationKubernetesPreserveHost                   = "ingress.kubernetes.io/preserve-host"
 	annotationKubernetesPassTLSCert                    = "ingress.kubernetes.io/pass-tls-cert"
