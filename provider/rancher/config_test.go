@@ -59,6 +59,17 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						label.TraefikBackendBufferingMemRequestBodyBytes:     "2097152",
 						label.TraefikBackendBufferingRetryExpression:         "IsNetworkError() && Attempts() <= 2",
 
+						label.TraefikFrontendPassSSLClientCertPem:                      "true",
+						label.TraefikFrontendPassSSLClientCertInfosNotBefore:           "true",
+						label.TraefikFrontendPassSSLClientCertInfosNotAfter:            "true",
+						label.TraefikFrontendPassSSLClientCertInfosSans:                "true",
+						label.TraefikFrontendPassSSLClientCertInfosSubjectCommonName:   "true",
+						label.TraefikFrontendPassSSLClientCertInfosSubjectCountry:      "true",
+						label.TraefikFrontendPassSSLClientCertInfosSubjectLocality:     "true",
+						label.TraefikFrontendPassSSLClientCertInfosSubjectOrganization: "true",
+						label.TraefikFrontendPassSSLClientCertInfosSubjectProvince:     "true",
+						label.TraefikFrontendPassSSLClientCertInfosSubjectSerialNumber: "true",
+
 						label.TraefikFrontendAuthBasic:                        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.TraefikFrontendAuthBasicRemoveHeader:            "true",
 						label.TraefikFrontendAuthBasicUsers:                   "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
@@ -144,6 +155,22 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					PassHostHeader: true,
 					PassTLSCert:    true,
 					Priority:       666,
+					PassSSLClientCert: &types.SSLClientHeaders{
+						PEM: true,
+						Infos: &types.SSLClientCertificateInfos{
+							NotBefore: true,
+							Sans:      true,
+							NotAfter:  true,
+							Subject: &types.SSLCLientCertificateSubjectInfos{
+								CommonName:   true,
+								Country:      true,
+								Locality:     true,
+								Organization: true,
+								Province:     true,
+								SerialNumber: true,
+							},
+						},
+					},
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{
@@ -291,6 +318,17 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						label.Prefix + "sauternes." + label.SuffixProtocol: "https",
 						label.Prefix + "sauternes." + label.SuffixWeight:   "12",
 
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertPem:                      "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosNotAfter:            "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosNotBefore:           "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSans:                "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectCommonName:   "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectCountry:      "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectLocality:     "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectOrganization: "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectProvince:     "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectSerialNumber: "true",
+
 						label.Prefix + "sauternes." + label.SuffixFrontendRule:                             "Host:traefik.wtf",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicRemoveHeader:            "true",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicUsers:                   "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
@@ -372,6 +410,22 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					PassHostHeader: true,
 					PassTLSCert:    true,
 					Priority:       666,
+					PassSSLClientCert: &types.SSLClientHeaders{
+						PEM: true,
+						Infos: &types.SSLClientCertificateInfos{
+							NotBefore: true,
+							Sans:      true,
+							NotAfter:  true,
+							Subject: &types.SSLCLientCertificateSubjectInfos{
+								CommonName:   true,
+								Country:      true,
+								Locality:     true,
+								Organization: true,
+								Province:     true,
+								SerialNumber: true,
+							},
+						},
+					},
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{
