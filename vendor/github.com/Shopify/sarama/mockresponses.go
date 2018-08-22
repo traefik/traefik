@@ -68,9 +68,10 @@ func (mc *MockSequence) For(reqBody versionedDecoder) (res encoder) {
 
 // MockMetadataResponse is a `MetadataResponse` builder.
 type MockMetadataResponse struct {
-	leaders map[string]map[int32]int32
-	brokers map[string]int32
-	t       TestReporter
+	controllerID int32
+	leaders      map[string]map[int32]int32
+	brokers      map[string]int32
+	t            TestReporter
 }
 
 func NewMockMetadataResponse(t TestReporter) *MockMetadataResponse {
@@ -96,9 +97,17 @@ func (mmr *MockMetadataResponse) SetBroker(addr string, brokerID int32) *MockMet
 	return mmr
 }
 
+func (mmr *MockMetadataResponse) SetController(brokerID int32) *MockMetadataResponse {
+	mmr.controllerID = brokerID
+	return mmr
+}
+
 func (mmr *MockMetadataResponse) For(reqBody versionedDecoder) encoder {
 	metadataRequest := reqBody.(*MetadataRequest)
-	metadataResponse := &MetadataResponse{}
+	metadataResponse := &MetadataResponse{
+		Version:      metadataRequest.version(),
+		ControllerID: mmr.controllerID,
+	}
 	for addr, brokerID := range mmr.brokers {
 		metadataResponse.AddBroker(addr, brokerID)
 	}
@@ -317,6 +326,60 @@ func (mr *MockConsumerMetadataResponse) For(reqBody versionedDecoder) encoder {
 	group := req.ConsumerGroup
 	res := &ConsumerMetadataResponse{}
 	v := mr.coordinators[group]
+	switch v := v.(type) {
+	case *MockBroker:
+		res.Coordinator = &Broker{id: v.BrokerID(), addr: v.Addr()}
+	case KError:
+		res.Err = v
+	}
+	return res
+}
+
+// MockFindCoordinatorResponse is a `FindCoordinatorResponse` builder.
+type MockFindCoordinatorResponse struct {
+	groupCoordinators map[string]interface{}
+	transCoordinators map[string]interface{}
+	t                 TestReporter
+}
+
+func NewMockFindCoordinatorResponse(t TestReporter) *MockFindCoordinatorResponse {
+	return &MockFindCoordinatorResponse{
+		groupCoordinators: make(map[string]interface{}),
+		transCoordinators: make(map[string]interface{}),
+		t:                 t,
+	}
+}
+
+func (mr *MockFindCoordinatorResponse) SetCoordinator(coordinatorType CoordinatorType, group string, broker *MockBroker) *MockFindCoordinatorResponse {
+	switch coordinatorType {
+	case CoordinatorGroup:
+		mr.groupCoordinators[group] = broker
+	case CoordinatorTransaction:
+		mr.transCoordinators[group] = broker
+	}
+	return mr
+}
+
+func (mr *MockFindCoordinatorResponse) SetError(coordinatorType CoordinatorType, group string, kerror KError) *MockFindCoordinatorResponse {
+	switch coordinatorType {
+	case CoordinatorGroup:
+		mr.groupCoordinators[group] = kerror
+	case CoordinatorTransaction:
+		mr.transCoordinators[group] = kerror
+	}
+	return mr
+}
+
+func (mr *MockFindCoordinatorResponse) For(reqBody versionedDecoder) encoder {
+	req := reqBody.(*FindCoordinatorRequest)
+	res := &FindCoordinatorResponse{}
+	var v interface{}
+	switch req.CoordinatorType {
+	case CoordinatorGroup:
+		v = mr.groupCoordinators[req.CoordinatorKey]
+	case CoordinatorTransaction:
+		v = mr.transCoordinators[req.CoordinatorKey]
+	}
 	switch v := v.(type) {
 	case *MockBroker:
 		res.Coordinator = &Broker{id: v.BrokerID(), addr: v.Addr()}

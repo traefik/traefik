@@ -8,7 +8,7 @@ import (
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
-	acme "github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
 )
 
 func dnsOverrideDelay(delay flaeg.Duration) error {
@@ -34,15 +34,9 @@ func getTokenValue(token, domain string, store Store) []byte {
 	var result []byte
 
 	operation := func() error {
-		var ok bool
-		httpChallenges, err := store.GetHTTPChallenges()
-		if err != nil {
-			return fmt.Errorf("HTTPChallenges not available : %s", err)
-		}
-		if result, ok = httpChallenges[token][domain]; !ok {
-			return fmt.Errorf("cannot find challenge for token %v", token)
-		}
-		return nil
+		var err error
+		result, err = store.GetHTTPChallengeToken(token, domain)
+		return err
 	}
 
 	notify := func(err error, time time.Duration) {
@@ -60,40 +54,9 @@ func getTokenValue(token, domain string, store Store) []byte {
 }
 
 func presentHTTPChallenge(domain, token, keyAuth string, store Store) error {
-	httpChallenges, err := store.GetHTTPChallenges()
-	if err != nil {
-		return fmt.Errorf("unable to get HTTPChallenges : %s", err)
-	}
-
-	if httpChallenges == nil {
-		httpChallenges = map[string]map[string][]byte{}
-	}
-
-	if _, ok := httpChallenges[token]; !ok {
-		httpChallenges[token] = map[string][]byte{}
-	}
-
-	httpChallenges[token][domain] = []byte(keyAuth)
-
-	return store.SaveHTTPChallenges(httpChallenges)
+	return store.SetHTTPChallengeToken(token, domain, []byte(keyAuth))
 }
 
 func cleanUpHTTPChallenge(domain, token string, store Store) error {
-	httpChallenges, err := store.GetHTTPChallenges()
-	if err != nil {
-		return fmt.Errorf("unable to get HTTPChallenges : %s", err)
-	}
-
-	log.Debugf("Challenge CleanUp for domain %s", domain)
-
-	if _, ok := httpChallenges[token]; ok {
-		if _, domainOk := httpChallenges[token][domain]; domainOk {
-			delete(httpChallenges[token], domain)
-		}
-		if len(httpChallenges[token]) == 0 {
-			delete(httpChallenges, token)
-		}
-		return store.SaveHTTPChallenges(httpChallenges)
-	}
-	return nil
+	return store.RemoveHTTPChallengeToken(token, domain)
 }

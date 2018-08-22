@@ -44,7 +44,7 @@ func (h *headerRewriter) Rewrite(req *http.Request) {
 
 	err := h.ips.IsAuthorized(req)
 	if err != nil {
-		log.Error(err)
+		log.Debug(err)
 		h.secureRewriter.Rewrite(req)
 		return
 	}

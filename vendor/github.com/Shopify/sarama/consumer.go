@@ -310,6 +310,7 @@ type partitionConsumer struct {
 
 	trigger, dying chan none
 	responseResult error
+	closeOnce      sync.Once
 
 	fetchSize int32
 	offset    int64
@@ -412,7 +413,9 @@ func (child *partitionConsumer) AsyncClose() {
 	// the dispatcher to exit its loop, which removes it from the consumer then closes its 'messages' and
 	// 'errors' channel (alternatively, if the child is already at the dispatcher for some reason, that will
 	// also just close itself)
-	close(child.dying)
+	child.closeOnce.Do(func() {
+		close(child.dying)
+	})
 }
 
 func (child *partitionConsumer) Close() error {
@@ -461,7 +464,6 @@ feederLoop:
 						child.messages <- msg
 					}
 					child.broker.input <- child
-					expiryTicker.Stop()
 					continue feederLoop
 				} else {
 					// current message has not been sent, return to select
@@ -482,9 +484,6 @@ feederLoop:
 
 func (child *partitionConsumer) parseMessages(msgSet *MessageSet) ([]*ConsumerMessage, error) {
 	var messages []*ConsumerMessage
-	var incomplete bool
-	prelude := true
-
 	for _, msgBlock := range msgSet.Messages {
 		for _, msg := range msgBlock.Messages() {
 			offset := msg.Offset
@@ -492,29 +491,22 @@ func (child *partitionConsumer) parseMessages(msgSet *MessageSet) ([]*ConsumerMe
 				baseOffset := msgBlock.Offset - msgBlock.Messages()[len(msgBlock.Messages())-1].Offset
 				offset += baseOffset
 			}
-			if prelude && offset < child.offset {
+			if offset < child.offset {
 				continue
 			}
-			prelude = false
-
-			if offset >= child.offset {
-				messages = append(messages, &ConsumerMessage{
-					Topic:          child.topic,
-					Partition:      child.partition,
-					Key:            msg.Msg.Key,
-					Value:          msg.Msg.Value,
-					Offset:         offset,
-					Timestamp:      msg.Msg.Timestamp,
-					BlockTimestamp: msgBlock.Msg.Timestamp,
-				})
-				child.offset = offset + 1
-			} else {
-				incomplete = true
-			}
+			messages = append(messages, &ConsumerMessage{
+				Topic:          child.topic,
+				Partition:      child.partition,
+				Key:            msg.Msg.Key,
+				Value:          msg.Msg.Value,
+				Offset:         offset,
+				Timestamp:      msg.Msg.Timestamp,
+				BlockTimestamp: msgBlock.Msg.Timestamp,
+			})
+			child.offset = offset + 1
 		}
 	}
-
-	if incomplete || len(messages) == 0 {
+	if len(messages) == 0 {
 		return nil, ErrIncompleteResponse
 	}
 	return messages, nil
@@ -522,42 +514,25 @@ func (child *partitionConsumer) parseMessages(msgSet *MessageSet) ([]*ConsumerMe
 
 func (child *partitionConsumer) parseRecords(batch *RecordBatch) ([]*ConsumerMessage, error) {
 	var messages []*ConsumerMessage
-	var incomplete bool
-	prelude := true
-	originalOffset := child.offset
-
 	for _, rec := range batch.Records {
 		offset := batch.FirstOffset + rec.OffsetDelta
-		if prelude && offset < child.offset {
+		if offset < child.offset {
 			continue
 		}
-		prelude = false
-
-		if offset >= child.offset {
-			messages = append(messages, &ConsumerMessage{
-				Topic:     child.topic,
-				Partition: child.partition,
-				Key:       rec.Key,
-				Value:     rec.Value,
-				Offset:    offset,
-				Timestamp: batch.FirstTimestamp.Add(rec.TimestampDelta),
-				Headers:   rec.Headers,
-			})
-			child.offset = offset + 1
-		} else {
-			incomplete = true
-		}
+		messages = append(messages, &ConsumerMessage{
+			Topic:     child.topic,
+			Partition: child.partition,
+			Key:       rec.Key,
+			Value:     rec.Value,
+			Offset:    offset,
+			Timestamp: batch.FirstTimestamp.Add(rec.TimestampDelta),
+			Headers:   rec.Headers,
+		})
+		child.offset = offset + 1
 	}
-
-	if incomplete {
+	if len(messages) == 0 {
 		return nil, ErrIncompleteResponse
 	}
-
-	child.offset = batch.FirstOffset + int64(batch.LastOffsetDelta) + 1
-	if child.offset <= originalOffset {
-		return nil, ErrConsumerOffsetNotAdvanced
-	}
-
 	return messages, nil
 }
 
@@ -610,14 +585,14 @@ func (child *partitionConsumer) parseResponse(response *FetchResponse) ([]*Consu
 
 		switch records.recordsType {
 		case legacyRecords:
-			messageSetMessages, err := child.parseMessages(records.msgSet)
+			messageSetMessages, err := child.parseMessages(records.MsgSet)
 			if err != nil {
 				return nil, err
 			}
 
 			messages = append(messages, messageSetMessages...)
 		case defaultRecords:
-			recordBatchMessages, err := child.parseRecords(records.recordBatch)
+			recordBatchMessages, err := child.parseRecords(records.RecordBatch)
 			if err != nil {
 				return nil, err
 			}

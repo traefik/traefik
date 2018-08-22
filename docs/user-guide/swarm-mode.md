@@ -102,7 +102,7 @@ Let's explain this command:
 | `--mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock` | we bind mount the docker socket where Træfik is scheduled to be able to speak to the daemon.   |
 | `--network traefik-net`                                                     | we attach the Træfik service (and thus the underlying container) to the `traefik-net` network. |
 | `--docker`                                                                  | enable docker provider, and `--docker.swarmMode` to enable the swarm mode on Træfik.            |
-| `--api                                                                      | activate the webUI on port 8080                                                                |
+| `--api`                                                                      | activate the webUI on port 8080                                                                |
 
 
 ## Deploy your apps

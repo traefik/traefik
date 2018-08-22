@@ -42,7 +42,7 @@ _(But if you'd rather configure some of your routes manually, Træfik supports t
 - Websocket, HTTP/2, GRPC ready
 - Provides metrics (Rest, Prometheus, Datadog, Statsd, InfluxDB)
 - Keeps access logs (JSON, CLF)
-- [Fast](/benchmarks) ... which is nice
+- Fast
 - Exposes a Rest API
 - Packaged as a single binary file (made with :heart: with go) and available as a [tiny](https://microbadger.com/images/traefik) [official](https://hub.docker.com/r/_/traefik/) docker image
 
@@ -85,6 +85,10 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock # So that Traefik can listen to the Docker events
 ```
+
+!!! warning
+    Enabling the Web UI with the `--api` flag might exposes configuration elements. You can read more about this on the [API/Dashboard's Security section](/configuration/api#security).
+
 
 **That's it. Now you can launch Træfik!**
 

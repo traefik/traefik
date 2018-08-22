@@ -205,7 +205,7 @@ func getFuncFirstStringValueV1(labelName string, defaultValue string) func(insta
 // Deprecated
 func getFuncFirstBoolValueV1(labelName string, defaultValue bool) func(instances []ecsInstance) bool {
 	return func(instances []ecsInstance) bool {
-		if len(instances) < 0 {
+		if len(instances) == 0 {
 			return defaultValue
 		}
 		return getBoolValueV1(instances[0], labelName, defaultValue)

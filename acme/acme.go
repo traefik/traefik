@@ -9,9 +9,9 @@ import (
 	fmtlog "log"
 	"net"
 	"net/http"
-	"os"
 	"reflect"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/BurntSushi/ty/fun"
@@ -25,8 +25,11 @@ import (
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
+	"github.com/containous/traefik/version"
 	"github.com/eapache/channels"
-	acme "github.com/xenolf/lego/acmev2"
+	"github.com/sirupsen/logrus"
+	"github.com/xenolf/lego/acme"
+	legolog "github.com/xenolf/lego/log"
 	"github.com/xenolf/lego/providers/dns"
 )
 
@@ -42,7 +45,7 @@ type ACME struct {
 	Domains               []types.Domain              `description:"SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='main.net,san1.net,san2.net'"`
 	Storage               string                      `description:"File or key used for certificates storage."`
 	StorageFile           string                      // Deprecated
-	OnDemand              bool                        `description:"(Deprecated) Enable on demand certificate generation. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."` //deprecated
+	OnDemand              bool                        `description:"(Deprecated) Enable on demand certificate generation. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."` // Deprecated
 	OnHostRule            bool                        `description:"Enable certificate generation on frontends Host rules."`
 	CAServer              string                      `description:"CA server to use."`
 	EntryPoint            string                      `description:"Entrypoint to proxy acme challenge to."`
@@ -59,22 +62,32 @@ type ACME struct {
 	jobs                  *channels.InfiniteChannel
 	TLSConfig             *tls.Config `description:"TLS config in case wildcard certs are used"`
 	dynamicCerts          *safe.Safe
+	resolvingDomains      map[string]struct{}
+	resolvingDomainsMutex sync.RWMutex
 }
 
 func (a *ACME) init() error {
+	acme.UserAgent = fmt.Sprintf("containous-traefik/%s", version.Version)
+
 	if a.ACMELogging {
-		acme.Logger = fmtlog.New(os.Stderr, "legolog: ", fmtlog.LstdFlags)
+		legolog.Logger = fmtlog.New(log.WriterLevel(logrus.DebugLevel), "legolog: ", 0)
 	} else {
-		acme.Logger = fmtlog.New(ioutil.Discard, "", 0)
+		legolog.Logger = fmtlog.New(ioutil.Discard, "", 0)
 	}
+
 	// no certificates in TLS config, so we add a default one
 	cert, err := generate.DefaultCertificate()
 	if err != nil {
 		return err
 	}
+
 	a.defaultCertificate = cert
 
 	a.jobs = channels.NewInfiniteChannel()
+
+	// Init the currently resolved domain map
+	a.resolvingDomains = make(map[string]struct{})
+
 	return nil
 }
 
@@ -178,6 +191,10 @@ func (a *ACME) leadershipListener(elected bool) error {
 
 		account := object.(*Account)
 		account.Init()
+		// Reset Account values if caServer changed, thus registration URI can be updated
+		if account != nil && account.Registration != nil && !strings.HasPrefix(account.Registration.URI, a.CAServer) {
+			account.reset()
+		}
 
 		var needRegister bool
 		if account == nil || len(account.Email) == 0 {
@@ -492,6 +509,10 @@ func (a *ACME) LoadCertificateForDomains(domains []string) {
 		if len(uncheckedDomains) == 0 {
 			return
 		}
+
+		a.addResolvingDomains(uncheckedDomains)
+		defer a.removeResolvingDomains(uncheckedDomains)
+
 		certificate, err := a.getDomainsCertificates(uncheckedDomains)
 		if err != nil {
 			log.Errorf("Error getting ACME certificates %+v : %v", uncheckedDomains, err)
@@ -520,6 +541,24 @@ func (a *ACME) LoadCertificateForDomains(domains []string) {
 			log.Errorf("Error Saving ACME account %+v: %v", account, err)
 			return
 		}
+	}
+}
+
+func (a *ACME) addResolvingDomains(resolvingDomains []string) {
+	a.resolvingDomainsMutex.Lock()
+	defer a.resolvingDomainsMutex.Unlock()
+
+	for _, domain := range resolvingDomains {
+		a.resolvingDomains[domain] = struct{}{}
+	}
+}
+
+func (a *ACME) removeResolvingDomains(resolvingDomains []string) {
+	a.resolvingDomainsMutex.Lock()
+	defer a.resolvingDomainsMutex.Unlock()
+
+	for _, domain := range resolvingDomains {
+		delete(a.resolvingDomains, domain)
 	}
 }
 
@@ -558,6 +597,9 @@ func searchProvidedCertificateForDomains(domain string, certs map[string]*tls.Ce
 // Get provided certificate which check a domains list (Main and SANs)
 // from static and dynamic provided certificates
 func (a *ACME) getUncheckedDomains(domains []string, account *Account) []string {
+	a.resolvingDomainsMutex.RLock()
+	defer a.resolvingDomainsMutex.RUnlock()
+
 	log.Debugf("Looking for provided certificate to validate %s...", domains)
 	allCerts := make(map[string]*tls.Certificate)
 
@@ -577,6 +619,13 @@ func (a *ACME) getUncheckedDomains(domains []string, account *Account) []string 
 	if account != nil {
 		for domains, certificate := range account.DomainsCertificate.toDomainsMap() {
 			allCerts[domains] = certificate
+		}
+	}
+
+	// Get currently resolved domains
+	for domain := range a.resolvingDomains {
+		if _, ok := allCerts[domain]; !ok {
+			allCerts[domain] = &tls.Certificate{}
 		}
 	}
 

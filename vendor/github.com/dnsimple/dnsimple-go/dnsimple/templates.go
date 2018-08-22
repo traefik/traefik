@@ -14,9 +14,9 @@ type TemplatesService struct {
 
 // Template represents a Template in DNSimple.
 type Template struct {
-	ID          int    `json:"id,omitempty"`
+	ID          int64  `json:"id,omitempty"`
 	SID         string `json:"sid,omitempty"`
-	AccountID   int    `json:"account_id,omitempty"`
+	AccountID   int64  `json:"account_id,omitempty"`
 	Name        string `json:"name,omitempty"`
 	Description string `json:"description,omitempty"`
 	CreatedAt   string `json:"created_at,omitempty"`

@@ -7,6 +7,7 @@ import (
 	"github.com/vulcand/predicate"
 )
 
+// IsValidExpression check if it's a valid expression
 func IsValidExpression(expr string) bool {
 	_, err := parseExpression(expr)
 	return err == nil

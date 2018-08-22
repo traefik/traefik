@@ -14,8 +14,8 @@ type ContactsService struct {
 
 // Contact represents a Contact in DNSimple.
 type Contact struct {
-	ID            int    `json:"id,omitempty"`
-	AccountID     int    `json:"account_id,omitempty"`
+	ID            int64  `json:"id,omitempty"`
+	AccountID     int64  `json:"account_id,omitempty"`
 	Label         string `json:"label,omitempty"`
 	FirstName     string `json:"first_name,omitempty"`
 	LastName      string `json:"last_name,omitempty"`
@@ -34,7 +34,7 @@ type Contact struct {
 	UpdatedAt     string `json:"updated_at,omitempty"`
 }
 
-func contactPath(accountID string, contactID int) (path string) {
+func contactPath(accountID string, contactID int64) (path string) {
 	path = fmt.Sprintf("/%v/contacts", accountID)
 	if contactID != 0 {
 		path += fmt.Sprintf("/%v", contactID)
@@ -94,7 +94,7 @@ func (s *ContactsService) CreateContact(accountID string, contactAttributes Cont
 // GetContact fetches a contact.
 //
 // See https://developer.dnsimple.com/v2/contacts/#get
-func (s *ContactsService) GetContact(accountID string, contactID int) (*contactResponse, error) {
+func (s *ContactsService) GetContact(accountID string, contactID int64) (*contactResponse, error) {
 	path := versioned(contactPath(accountID, contactID))
 	contactResponse := &contactResponse{}
 
@@ -110,7 +110,7 @@ func (s *ContactsService) GetContact(accountID string, contactID int) (*contactR
 // UpdateContact updates a contact.
 //
 // See https://developer.dnsimple.com/v2/contacts/#update
-func (s *ContactsService) UpdateContact(accountID string, contactID int, contactAttributes Contact) (*contactResponse, error) {
+func (s *ContactsService) UpdateContact(accountID string, contactID int64, contactAttributes Contact) (*contactResponse, error) {
 	path := versioned(contactPath(accountID, contactID))
 	contactResponse := &contactResponse{}
 
@@ -126,7 +126,7 @@ func (s *ContactsService) UpdateContact(accountID string, contactID int, contact
 // DeleteContact PERMANENTLY deletes a contact from the account.
 //
 // See https://developer.dnsimple.com/v2/contacts/#delete
-func (s *ContactsService) DeleteContact(accountID string, contactID int) (*contactResponse, error) {
+func (s *ContactsService) DeleteContact(accountID string, contactID int64) (*contactResponse, error) {
 	path := versioned(contactPath(accountID, contactID))
 	contactResponse := &contactResponse{}
 

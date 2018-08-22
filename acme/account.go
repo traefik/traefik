@@ -8,14 +8,16 @@ import (
 	"crypto/x509"
 	"fmt"
 	"reflect"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/containous/traefik/log"
+	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/types"
-	acme "github.com/xenolf/lego/acmev2"
+	"github.com/xenolf/lego/acme"
 )
 
 // Account is used to store lets encrypt registration info
@@ -40,6 +42,11 @@ func (a *Account) Init() error {
 	err := a.DomainsCertificate.Init()
 	if err != nil {
 		return err
+	}
+
+	err = a.RemoveAccountV1Values()
+	if err != nil {
+		log.Errorf("Unable to remove ACME Account V1 values during account initialization: %v", err)
 	}
 
 	for _, cert := range a.ChallengeCerts {
@@ -103,6 +110,29 @@ func (a *Account) GetPrivateKey() crypto.PrivateKey {
 	return nil
 }
 
+// RemoveAccountV1Values removes ACME account V1 values
+func (a *Account) RemoveAccountV1Values() error {
+	// Check if ACME Account is in ACME V1 format
+	if a.Registration != nil {
+		isOldRegistration, err := regexp.MatchString(acmeprovider.RegistrationURLPathV1Regexp, a.Registration.URI)
+		if err != nil {
+			return err
+		}
+
+		if isOldRegistration {
+			a.reset()
+		}
+	}
+	return nil
+}
+
+func (a *Account) reset() {
+	log.Debug("Reset ACME account object.")
+	a.Email = ""
+	a.Registration = nil
+	a.PrivateKey = nil
+}
+
 // Certificate is used to store certificate info
 type Certificate struct {
 	Domain        string
@@ -152,10 +182,22 @@ func (dc *DomainsCertificates) removeDuplicates() {
 	}
 }
 
+func (dc *DomainsCertificates) removeEmpty() {
+	certs := []*DomainsCertificate{}
+	for _, cert := range dc.Certs {
+		if cert.Certificate != nil && len(cert.Certificate.Certificate) > 0 && len(cert.Certificate.PrivateKey) > 0 {
+			certs = append(certs, cert)
+		}
+	}
+	dc.Certs = certs
+}
+
 // Init DomainsCertificates
 func (dc *DomainsCertificates) Init() error {
 	dc.lock.Lock()
 	defer dc.lock.Unlock()
+
+	dc.removeEmpty()
 
 	for _, domainsCertificate := range dc.Certs {
 		tlsCert, err := tls.X509KeyPair(domainsCertificate.Certificate.Certificate, domainsCertificate.Certificate.PrivateKey)

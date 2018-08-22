@@ -109,7 +109,7 @@ func (r *OffsetRequest) requiredVersion() KafkaVersion {
 	case 1:
 		return V0_10_1_0
 	default:
-		return minVersion
+		return MinVersion
 	}
 }
 

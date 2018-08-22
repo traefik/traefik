@@ -152,7 +152,7 @@ func (r *ProduceResponse) requiredVersion() KafkaVersion {
 	case 3:
 		return V0_11_0_0
 	default:
-		return minVersion
+		return MinVersion
 	}
 }
 

@@ -81,9 +81,11 @@ For namespaced restrictions, one RoleBinding is required per watched namespace a
 It is possible to use Træfik with a [Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) or a [DaemonSet](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) object,
  whereas both options have their own pros and cons:
 
-- The scalability is much better when using a Deployment, because you will have a Single-Pod-per-Node model when using the DaemonSet.
-- It is possible to exclusively run a Service on a dedicated set of machines using taints and tolerations with a DaemonSet.
-- On the other hand the DaemonSet allows you to access any Node directly on Port 80 and 443, where you have to setup a [Service](https://kubernetes.io/docs/concepts/services-networking/service/) object with a Deployment.
+- The scalability can be much better when using a Deployment, because you will have a Single-Pod-per-Node model when using a DaemonSet, whereas you may need less replicas based on your environment when using a Deployment.
+- DaemonSets automatically scale to new nodes, when the nodes join the cluster, whereas Deployment pods are only scheduled on new nodes if required.
+- DaemonSets ensure that only one replica of pods run on any single node. Deployments require affinity settings if you want to ensure that two pods don't end up on the same node.
+- DaemonSets can be run with the `NET_BIND_SERVICE` capability, which will allow it to bind to port 80/443/etc on each host. This will allow bypassing the kube-proxy, and reduce traffic hops. Note that this is against the Kubernetes Best Practices [Guidelines](https://kubernetes.io/docs/concepts/configuration/overview/#services), and raises the potential for scheduling/scaling issues. Despite potential issues, this remains the choice for most ingress controllers.
+- If you are unsure which to choose, start with the Daemonset.
 
 The Deployment objects looks like this:
 
@@ -118,6 +120,11 @@ spec:
       containers:
       - image: traefik
         name: traefik-ingress-lb
+        ports:
+        - name: http
+          containerPort: 80
+        - name: admin
+          containerPort: 8080
         args:
         - --api
         - --kubernetes
@@ -172,7 +179,6 @@ spec:
     spec:
       serviceAccountName: traefik-ingress-controller
       terminationGracePeriodSeconds: 60
-      hostNetwork: true
       containers:
       - image: traefik
         name: traefik-ingress-lb
@@ -208,10 +214,12 @@ spec:
     - protocol: TCP
       port: 8080
       name: admin
-  type: NodePort
 ```
 
 [examples/k8s/traefik-ds.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/traefik-ds.yaml)
+
+!!! note
+    This will create a Daemonset that uses privileged ports 80/8080 on the host. This may not work on all providers, but illustrates the static (non-NodePort) hostPort binding. The `traefik-ingress-service` can still be used inside the cluster to access the DaemonSet pods.
 
 To deploy Træfik to your cluster start by submitting one of the YAML files to the cluster with `kubectl`:
 
@@ -293,7 +301,21 @@ Install the Træfik chart by:
 ```shell
 helm install stable/traefik
 ```
+Install the Træfik chart using a values.yaml file.
 
+```shell
+helm install --values values.yaml stable/traefik
+```
+
+```yaml
+dashboard:
+  enabled: true
+  domain: traefik-ui.minikube
+kubernetes:
+  namespaces:
+    - default
+    - kube-system
+```
 For more information, check out [the documentation](https://github.com/kubernetes/charts/tree/master/stable/traefik).
 
 ## Submitting an Ingress to the Cluster

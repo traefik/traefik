@@ -2,11 +2,12 @@ package otc
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var fakeOTCUserName = "test"
@@ -15,12 +16,14 @@ var fakeOTCDomainName = "test"
 var fakeOTCProjectName = "test"
 var fakeOTCToken = "62244bc21da68d03ebac94e6636ff01f"
 
+// DNSMock mock
 type DNSMock struct {
 	t      *testing.T
 	Server *httptest.Server
 	Mux    *http.ServeMux
 }
 
+// NewDNSMock create a new DNSMock
 func NewDNSMock(t *testing.T) *DNSMock {
 	return &DNSMock{
 		t: t,
@@ -38,6 +41,7 @@ func (m *DNSMock) ShutdownServer() {
 	m.Server.Close()
 }
 
+// HandleAuthSuccessfully Handle auth successfully
 func (m *DNSMock) HandleAuthSuccessfully() {
 	m.Mux.HandleFunc("/v3/auth/token", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Subject-Token", fakeOTCToken)
@@ -64,6 +68,7 @@ func (m *DNSMock) HandleAuthSuccessfully() {
 	})
 }
 
+// HandleListZonesSuccessfully Handle list zones successfully
 func (m *DNSMock) HandleListZonesSuccessfully() {
 	m.Mux.HandleFunc("/v2/zones", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `{
@@ -79,6 +84,7 @@ func (m *DNSMock) HandleListZonesSuccessfully() {
 	})
 }
 
+// HandleListZonesEmpty Handle list zones empty
 func (m *DNSMock) HandleListZonesEmpty() {
 	m.Mux.HandleFunc("/v2/zones", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `{
@@ -93,6 +99,7 @@ func (m *DNSMock) HandleListZonesEmpty() {
 	})
 }
 
+// HandleDeleteRecordsetsSuccessfully Handle delete recordsets successfully
 func (m *DNSMock) HandleDeleteRecordsetsSuccessfully() {
 	m.Mux.HandleFunc("/v2/zones/123123/recordsets/321321", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `{
@@ -107,6 +114,7 @@ func (m *DNSMock) HandleDeleteRecordsetsSuccessfully() {
 	})
 }
 
+// HandleListRecordsetsEmpty Handle list recordsets empty
 func (m *DNSMock) HandleListRecordsetsEmpty() {
 	m.Mux.HandleFunc("/v2/zones/123123/recordsets", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `{
@@ -118,6 +126,8 @@ func (m *DNSMock) HandleListRecordsetsEmpty() {
 		assert.Equal(m.t, r.URL.RawQuery, "type=TXT&name=_acme-challenge.example.com.")
 	})
 }
+
+// HandleListRecordsetsSuccessfully Handle list recordsets successfully
 func (m *DNSMock) HandleListRecordsetsSuccessfully() {
 	m.Mux.HandleFunc("/v2/zones/123123/recordsets", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" {

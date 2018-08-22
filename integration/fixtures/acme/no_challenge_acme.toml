@@ -17,6 +17,7 @@ email = "test@traefik.io"
 storage = "/tmp/acme.json"
 entryPoint = "https"
 onHostRule = true
+acmeLogging = true
 caServer = "http://{{.BoulderHost}}:4001/directory"
 # No challenge defined
 

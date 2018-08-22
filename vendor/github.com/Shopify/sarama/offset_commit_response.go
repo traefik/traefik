@@ -81,5 +81,5 @@ func (r *OffsetCommitResponse) version() int16 {
 }
 
 func (r *OffsetCommitResponse) requiredVersion() KafkaVersion {
-	return minVersion
+	return MinVersion
 }

@@ -115,7 +115,7 @@ func (r *OffsetFetchResponse) version() int16 {
 }
 
 func (r *OffsetFetchResponse) requiredVersion() KafkaVersion {
-	return minVersion
+	return MinVersion
 }
 
 func (r *OffsetFetchResponse) GetBlock(topic string, partition int32) *OffsetFetchResponseBlock {

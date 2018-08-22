@@ -41,6 +41,14 @@ var ErrMessageTooLarge = errors.New("kafka: message is larger than Consumer.Fetc
 // a RecordBatch.
 var ErrConsumerOffsetNotAdvanced = errors.New("kafka: consumer offset was not advanced after a RecordBatch")
 
+// ErrControllerNotAvailable is returned when server didn't give correct controller id. May be kafka server's version
+// is lower than 0.10.0.0.
+var ErrControllerNotAvailable = errors.New("kafka: controller is not available")
+
+// ErrNoTopicsToUpdateMetadata is returned when Meta.Full is set to false but no specific topics were found to update
+// the metadata.
+var ErrNoTopicsToUpdateMetadata = errors.New("kafka: no specific topics to update metadata")
+
 // PacketEncodingError is returned from a failure while encoding a Kafka packet. This can happen, for example,
 // if you try to encode a string over 2^15 characters in length, since Kafka's encoding rules do not permit that.
 type PacketEncodingError struct {

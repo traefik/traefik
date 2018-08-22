@@ -59,10 +59,11 @@ func (ps *produceSet) add(msg *ProducerMessage) error {
 	if set == nil {
 		if ps.parent.conf.Version.IsAtLeast(V0_11_0_0) {
 			batch := &RecordBatch{
-				FirstTimestamp: timestamp,
-				Version:        2,
-				ProducerID:     -1, /* No producer id */
-				Codec:          ps.parent.conf.Producer.Compression,
+				FirstTimestamp:   timestamp,
+				Version:          2,
+				ProducerID:       -1, /* No producer id */
+				Codec:            ps.parent.conf.Producer.Compression,
+				CompressionLevel: ps.parent.conf.Producer.CompressionLevel,
 			}
 			set = &partitionSet{recordsToSend: newDefaultRecords(batch)}
 			size = recordBatchOverhead
@@ -79,7 +80,7 @@ func (ps *produceSet) add(msg *ProducerMessage) error {
 		rec := &Record{
 			Key:            key,
 			Value:          val,
-			TimestampDelta: timestamp.Sub(set.recordsToSend.recordBatch.FirstTimestamp),
+			TimestampDelta: timestamp.Sub(set.recordsToSend.RecordBatch.FirstTimestamp),
 		}
 		size += len(key) + len(val)
 		if len(msg.Headers) > 0 {
@@ -89,14 +90,14 @@ func (ps *produceSet) add(msg *ProducerMessage) error {
 				size += len(rec.Headers[i].Key) + len(rec.Headers[i].Value) + 2*binary.MaxVarintLen32
 			}
 		}
-		set.recordsToSend.recordBatch.addRecord(rec)
+		set.recordsToSend.RecordBatch.addRecord(rec)
 	} else {
 		msgToSend := &Message{Codec: CompressionNone, Key: key, Value: val}
 		if ps.parent.conf.Version.IsAtLeast(V0_10_0_0) {
 			msgToSend.Timestamp = timestamp
 			msgToSend.Version = 1
 		}
-		set.recordsToSend.msgSet.addMessage(msgToSend)
+		set.recordsToSend.MsgSet.addMessage(msgToSend)
 		size = producerMessageOverhead + len(key) + len(val)
 	}
 
@@ -122,7 +123,14 @@ func (ps *produceSet) buildRequest() *ProduceRequest {
 	for topic, partitionSet := range ps.msgs {
 		for partition, set := range partitionSet {
 			if req.Version >= 3 {
-				rb := set.recordsToSend.recordBatch
+				// If the API version we're hitting is 3 or greater, we need to calculate
+				// offsets for each record in the batch relative to FirstOffset.
+				// Additionally, we must set LastOffsetDelta to the value of the last offset
+				// in the batch. Since the OffsetDelta of the first record is 0, we know that the
+				// final record of any batch will have an offset of (# of records in batch) - 1.
+				// (See https://cwiki.apache.org/confluence/display/KAFKA/A+Guide+To+The+Kafka+Protocol#AGuideToTheKafkaProtocol-Messagesets
+				//  under the RecordBatch section for details.)
+				rb := set.recordsToSend.RecordBatch
 				if len(rb.Records) > 0 {
 					rb.LastOffsetDelta = int32(len(rb.Records) - 1)
 					for i, record := range rb.Records {
@@ -134,7 +142,7 @@ func (ps *produceSet) buildRequest() *ProduceRequest {
 				continue
 			}
 			if ps.parent.conf.Producer.Compression == CompressionNone {
-				req.AddSet(topic, partition, set.recordsToSend.msgSet)
+				req.AddSet(topic, partition, set.recordsToSend.MsgSet)
 			} else {
 				// When compression is enabled, the entire set for each partition is compressed
 				// and sent as the payload of a single fake "message" with the appropriate codec
@@ -147,24 +155,25 @@ func (ps *produceSet) buildRequest() *ProduceRequest {
 					// recompressing the message set.
 					// (See https://cwiki.apache.org/confluence/display/KAFKA/KIP-31+-+Move+to+relative+offsets+in+compressed+message+sets
 					// for details on relative offsets.)
-					for i, msg := range set.recordsToSend.msgSet.Messages {
+					for i, msg := range set.recordsToSend.MsgSet.Messages {
 						msg.Offset = int64(i)
 					}
 				}
-				payload, err := encode(set.recordsToSend.msgSet, ps.parent.conf.MetricRegistry)
+				payload, err := encode(set.recordsToSend.MsgSet, ps.parent.conf.MetricRegistry)
 				if err != nil {
 					Logger.Println(err) // if this happens, it's basically our fault.
 					panic(err)
 				}
 				compMsg := &Message{
-					Codec: ps.parent.conf.Producer.Compression,
-					Key:   nil,
-					Value: payload,
-					Set:   set.recordsToSend.msgSet, // Provide the underlying message set for accurate metrics
+					Codec:            ps.parent.conf.Producer.Compression,
+					CompressionLevel: ps.parent.conf.Producer.CompressionLevel,
+					Key:              nil,
+					Value:            payload,
+					Set:              set.recordsToSend.MsgSet, // Provide the underlying message set for accurate metrics
 				}
 				if ps.parent.conf.Version.IsAtLeast(V0_10_0_0) {
 					compMsg.Version = 1
-					compMsg.Timestamp = set.recordsToSend.msgSet.Messages[0].Msg.Timestamp
+					compMsg.Timestamp = set.recordsToSend.MsgSet.Messages[0].Msg.Timestamp
 				}
 				req.AddMessage(topic, partition, compMsg)
 			}

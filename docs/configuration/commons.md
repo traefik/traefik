@@ -18,7 +18,7 @@
 
 # Enable debug mode.
 # This will install HTTP handlers to expose Go expvars under /debug/vars and
-# pprof profiling data under /debug/pprof.
+# pprof profiling data under /debug/pprof/.
 # The log level will be set to DEBUG unless `logLevel` is specified.
 #
 # Optional

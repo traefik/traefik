@@ -280,7 +280,7 @@ func (r *FetchResponse) requiredVersion() KafkaVersion {
 	case 4:
 		return V0_11_0_0
 	default:
-		return minVersion
+		return MinVersion
 	}
 }
 
@@ -353,7 +353,7 @@ func (r *FetchResponse) AddMessage(topic string, partition int32, key, value Enc
 		records := newLegacyRecords(&MessageSet{})
 		frb.RecordsSet = []*Records{&records}
 	}
-	set := frb.RecordsSet[0].msgSet
+	set := frb.RecordsSet[0].MsgSet
 	set.Messages = append(set.Messages, msgBlock)
 }
 
@@ -365,7 +365,7 @@ func (r *FetchResponse) AddRecord(topic string, partition int32, key, value Enco
 		records := newDefaultRecords(&RecordBatch{Version: 2})
 		frb.RecordsSet = []*Records{&records}
 	}
-	batch := frb.RecordsSet[0].recordBatch
+	batch := frb.RecordsSet[0].RecordBatch
 	batch.addRecord(rec)
 }
 
@@ -375,7 +375,7 @@ func (r *FetchResponse) SetLastOffsetDelta(topic string, partition int32, offset
 		records := newDefaultRecords(&RecordBatch{Version: 2})
 		frb.RecordsSet = []*Records{&records}
 	}
-	batch := frb.RecordsSet[0].recordBatch
+	batch := frb.RecordsSet[0].RecordBatch
 	batch.LastOffsetDelta = offset
 }
 

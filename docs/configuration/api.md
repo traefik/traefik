@@ -4,6 +4,9 @@
 
 ```toml
 # API definition
+# Warning: Enabling API will expose Træfik's configuration.
+# It is not recommended in production,
+# unless secured by authentication and authorizations
 [api]
   # Name of the related entry point
   #
@@ -12,7 +15,7 @@
   #
   entryPoint = "traefik"
 
-  # Enabled Dashboard
+  # Enable Dashboard
   #
   # Optional
   # Default: true
@@ -21,7 +24,7 @@
 
   # Enable debug mode.
   # This will install HTTP handlers to expose Go expvars under /debug/vars and
-  # pprof profiling data under /debug/pprof.
+  # pprof profiling data under /debug/pprof/.
   # Additionally, the log level will be set to DEBUG.
   #
   # Optional
@@ -37,6 +40,22 @@ For more customization, see [entry points](/configuration/entrypoints/) document
 ![Web UI Providers](/img/web.frontend.png)
 
 ![Web UI Health](/img/traefik-health.png)
+
+## Security
+
+Enabling the API will expose all configuration elements,
+including sensitive data.
+
+It is not recommended in production,
+unless secured by authentication and authorizations.
+
+A good sane default (but not exhaustive) set of recommendations
+would be to apply the following protection mechanism:
+
+* _At application level:_ enabling HTTP [Basic Authentication](#authentication)
+* _At transport level:_ NOT exposing publicly the API's port,
+keeping it restricted over internal networks
+(restricted networks as in https://en.wikipedia.org/wiki/Principle_of_least_privilege).
 
 ## API
 

@@ -24,13 +24,28 @@ const (
 	CompressionLZ4    CompressionCodec = 3
 )
 
+func (cc CompressionCodec) String() string {
+	return []string{
+		"none",
+		"gzip",
+		"snappy",
+		"lz4",
+	}[int(cc)]
+}
+
+// CompressionLevelDefault is the constant to use in CompressionLevel
+// to have the default compression level for any codec. The value is picked
+// that we don't use any existing compression levels.
+const CompressionLevelDefault = -1000
+
 type Message struct {
-	Codec     CompressionCodec // codec used to compress the message contents
-	Key       []byte           // the message key, may be nil
-	Value     []byte           // the message contents
-	Set       *MessageSet      // the message set a message might wrap
-	Version   int8             // v1 requires Kafka 0.10
-	Timestamp time.Time        // the timestamp of the message (version 1+ only)
+	Codec            CompressionCodec // codec used to compress the message contents
+	CompressionLevel int              // compression level
+	Key              []byte           // the message key, may be nil
+	Value            []byte           // the message contents
+	Set              *MessageSet      // the message set a message might wrap
+	Version          int8             // v1 requires Kafka 0.10
+	Timestamp        time.Time        // the timestamp of the message (version 1+ only)
 
 	compressedCache []byte
 	compressedSize  int // used for computing the compression ratio metrics
@@ -66,7 +81,15 @@ func (m *Message) encode(pe packetEncoder) error {
 			payload = m.Value
 		case CompressionGZIP:
 			var buf bytes.Buffer
-			writer := gzip.NewWriter(&buf)
+			var writer *gzip.Writer
+			if m.CompressionLevel != CompressionLevelDefault {
+				writer, err = gzip.NewWriterLevel(&buf, m.CompressionLevel)
+				if err != nil {
+					return err
+				}
+			} else {
+				writer = gzip.NewWriter(&buf)
+			}
 			if _, err = writer.Write(m.Value); err != nil {
 				return err
 			}

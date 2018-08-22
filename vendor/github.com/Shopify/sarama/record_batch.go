@@ -40,6 +40,7 @@ type RecordBatch struct {
 	PartitionLeaderEpoch  int32
 	Version               int8
 	Codec                 CompressionCodec
+	CompressionLevel      int
 	Control               bool
 	LastOffsetDelta       int32
 	FirstTimestamp        time.Time
@@ -219,7 +220,15 @@ func (b *RecordBatch) encodeRecords(pe packetEncoder) error {
 		b.compressedRecords = raw
 	case CompressionGZIP:
 		var buf bytes.Buffer
-		writer := gzip.NewWriter(&buf)
+		var writer *gzip.Writer
+		if b.CompressionLevel != CompressionLevelDefault {
+			writer, err = gzip.NewWriterLevel(&buf, b.CompressionLevel)
+			if err != nil {
+				return err
+			}
+		} else {
+			writer = gzip.NewWriter(&buf)
+		}
 		if _, err := writer.Write(raw); err != nil {
 			return err
 		}

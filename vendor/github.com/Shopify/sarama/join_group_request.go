@@ -25,8 +25,10 @@ func (p *GroupProtocol) encode(pe packetEncoder) (err error) {
 }
 
 type JoinGroupRequest struct {
+	Version               int16
 	GroupId               string
 	SessionTimeout        int32
+	RebalanceTimeout      int32
 	MemberId              string
 	ProtocolType          string
 	GroupProtocols        map[string][]byte // deprecated; use OrderedGroupProtocols
@@ -38,6 +40,9 @@ func (r *JoinGroupRequest) encode(pe packetEncoder) error {
 		return err
 	}
 	pe.putInt32(r.SessionTimeout)
+	if r.Version >= 1 {
+		pe.putInt32(r.RebalanceTimeout)
+	}
 	if err := pe.putString(r.MemberId); err != nil {
 		return err
 	}
@@ -76,12 +81,20 @@ func (r *JoinGroupRequest) encode(pe packetEncoder) error {
 }
 
 func (r *JoinGroupRequest) decode(pd packetDecoder, version int16) (err error) {
+	r.Version = version
+
 	if r.GroupId, err = pd.getString(); err != nil {
 		return
 	}
 
 	if r.SessionTimeout, err = pd.getInt32(); err != nil {
 		return
+	}
+
+	if version >= 1 {
+		if r.RebalanceTimeout, err = pd.getInt32(); err != nil {
+			return err
+		}
 	}
 
 	if r.MemberId, err = pd.getString(); err != nil {
@@ -118,11 +131,18 @@ func (r *JoinGroupRequest) key() int16 {
 }
 
 func (r *JoinGroupRequest) version() int16 {
-	return 0
+	return r.Version
 }
 
 func (r *JoinGroupRequest) requiredVersion() KafkaVersion {
-	return V0_9_0_0
+	switch r.Version {
+	case 2:
+		return V0_11_0_0
+	case 1:
+		return V0_10_1_0
+	default:
+		return V0_9_0_0
+	}
 }
 
 func (r *JoinGroupRequest) AddGroupProtocol(name string, metadata []byte) {

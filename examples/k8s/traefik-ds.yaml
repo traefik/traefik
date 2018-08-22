@@ -21,7 +21,6 @@ spec:
     spec:
       serviceAccountName: traefik-ingress-controller
       terminationGracePeriodSeconds: 60
-      hostNetwork: true
       containers:
       - image: traefik
         name: traefik-ingress-lb
@@ -31,6 +30,7 @@ spec:
           hostPort: 80
         - name: admin
           containerPort: 8080
+          hostport: 8080
         securityContext:
           capabilities:
             drop:
@@ -57,4 +57,3 @@ spec:
     - protocol: TCP
       port: 8080
       name: admin
-  type: NodePort
