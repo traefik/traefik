@@ -7,7 +7,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/containous/traefik)](https://goreportcard.com/report/github.com/containous/traefik)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/containous/traefik/blob/master/LICENSE.md)
 [![Join the chat at https://slack.traefik.io](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://slack.traefik.io)
-[![Twitter](https://img.shields.io/twitter/follow/traefikproxy.svg?style=social)](https://twitter.com/intent/follow?screen_name=traefikproxy)
+[![Twitter](https://img.shields.io/twitter/follow/traefik.svg?style=social)](https://twitter.com/intent/follow?screen_name=traefik)
 
 
 Træfik is a modern HTTP reverse proxy and load balancer that makes deploying microservices easy.
@@ -205,6 +205,17 @@ docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/etc/traefik/traefik.to
 ```
  
 ## Security
+
+### Security Advisories
+
+We strongly advise you to join our mailing list to be aware of the latest announcements from our security team. You can subscribe sending a mail to security+subscribe@traefik.io or on [the online viewer](https://groups.google.com/a/traefik.io/forum/#!forum/security).
+
+### CVE
+
+Reported vulnerabilities can be found on 
+[cve.mitre.org](https://cve.mitre.org/cgi-bin/cvekey.cgi?keyword=traefik).
+
+### Report a Vulnerability
 
 We want to keep Træfik safe for everyone.
 If you've discovered a security vulnerability in Træfik, we appreciate your help in disclosing it to us in a responsible manner, using [this form](https://security.traefik.io).
