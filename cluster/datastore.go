@@ -19,7 +19,7 @@ import (
 // Metadata stores Object plus metadata
 type Metadata struct {
 	object Object
-	Object []byte
+	Object string
 	Lock   string
 }
 
@@ -30,8 +30,10 @@ func NewMetadata(object Object) *Metadata {
 
 // Marshall marshalls object
 func (m *Metadata) Marshall() error {
+	var byteArray []byte
 	var err error
-	m.Object, err = json.Marshal(m.object)
+	byteArray, err = json.Marshal(m.object)
+	m.Object = string(byteArray)
 	return err
 }
 
@@ -39,7 +41,7 @@ func (m *Metadata) unmarshall() error {
 	if len(m.Object) == 0 {
 		return nil
 	}
-	return json.Unmarshal(m.Object, m.object)
+	return json.Unmarshal([]byte(m.Object), m.object)
 }
 
 // Listener is called when Object has been changed in KV store
