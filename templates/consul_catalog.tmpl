@@ -74,8 +74,30 @@
       "{{.}}",
       {{end}}]
 
-    {{ $auth := getAuth $service.TraefikLabels }}
+    {{ $sslClientCert := getPassSSLClientCert $service.TraefikLabels }}
+    {{if $sslClientCert }}
+    [frontends."frontend-{{ $service.ServiceName }}".passSSLClientCert]
+      pem = {{ $sslClientCert.PEM }}
+      {{ $infos := $sslClientCert.Infos }}
+      {{if $infos }}
+      [frontends."frontend-{{ $service.ServiceName }}".passSSLClientCert.infos]
+        notAfter = {{ $infos.NotAfter   }}
+        notBefore = {{ $infos.NotBefore }}
+        sans = {{ $infos.Sans }}
+        {{ $subject := $infos.Subject }}
+        {{if $subject }}
+        [frontends."frontend-{{ $service.ServiceName }}".passSSLClientCert.infos.subject]
+          country = {{ $subject.Country }}
+          province = {{ $subject.Province }}
+          locality = {{ $subject.Locality }}
+          organization = {{ $subject.Organization }}
+          commonName = {{ $subject.CommonName }}
+          serialNumber = {{ $subject.SerialNumber }}
+        {{end}}
+      {{end}}
+    {{end}}
 
+    {{ $auth := getAuth $service.TraefikLabels }}
     {{if $auth }}
     [frontends."frontend-{{ $service.ServiceName }}".auth]
       headerField = "{{ $auth.HeaderField }}"
