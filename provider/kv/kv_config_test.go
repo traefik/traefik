@@ -277,6 +277,18 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					withPair(pathFrontendBackend, "backend1"),
 					withPair(pathFrontendPriority, "6"),
 					withPair(pathFrontendPassHostHeader, "false"),
+
+					withPair(pathFrontendPassSSLClientCertPem, "true"),
+					withPair(pathFrontendPassSSLClientCertInfosNotBefore, "true"),
+					withPair(pathFrontendPassSSLClientCertInfosNotAfter, "true"),
+					withPair(pathFrontendPassSSLClientCertInfosSans, "true"),
+					withPair(pathFrontendPassSSLClientCertInfosSubjectCommonName, "true"),
+					withPair(pathFrontendPassSSLClientCertInfosSubjectCountry, "true"),
+					withPair(pathFrontendPassSSLClientCertInfosSubjectLocality, "true"),
+					withPair(pathFrontendPassSSLClientCertInfosSubjectOrganization, "true"),
+					withPair(pathFrontendPassSSLClientCertInfosSubjectProvince, "true"),
+					withPair(pathFrontendPassSSLClientCertInfosSubjectSerialNumber, "true"),
+
 					withPair(pathFrontendPassTLSCert, "true"),
 					withList(pathFrontendEntryPoints, "http", "https"),
 					withList(pathFrontendWhiteListSourceRange, "1.1.1.1/24", "1234:abcd::42/32"),
@@ -400,6 +412,22 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						WhiteList: &types.WhiteList{
 							SourceRange:      []string{"1.1.1.1/24", "1234:abcd::42/32"},
 							UseXForwardedFor: true,
+						},
+						PassSSLClientCert: &types.SSLClientHeaders{
+							PEM: true,
+							Infos: &types.SSLClientCertificateInfos{
+								NotBefore: true,
+								Sans:      true,
+								NotAfter:  true,
+								Subject: &types.SSLCLientCertificateSubjectInfos{
+									CommonName:   true,
+									Country:      true,
+									Locality:     true,
+									Organization: true,
+									Province:     true,
+									SerialNumber: true,
+								},
+							},
 						},
 						Auth: &types.Auth{
 							HeaderField: "X-WebAuth-User",

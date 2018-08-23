@@ -41,19 +41,20 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getTLSSection": p.getTLSSection,
 
 		// Frontend functions
-		"getBackendName":    p.getFuncString(pathFrontendBackend, ""),
-		"getPriority":       p.getFuncInt(pathFrontendPriority, label.DefaultFrontendPriority),
-		"getPassHostHeader": p.getPassHostHeader(),
-		"getPassTLSCert":    p.getFuncBool(pathFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getEntryPoints":    p.getFuncList(pathFrontendEntryPoints),
-		"getBasicAuth":      p.getFuncList(pathFrontendBasicAuth), // Deprecated
-		"getAuth":           p.getAuth,
-		"getRoutes":         p.getRoutes,
-		"getRedirect":       p.getRedirect,
-		"getErrorPages":     p.getErrorPages,
-		"getRateLimit":      p.getRateLimit,
-		"getHeaders":        p.getHeaders,
-		"getWhiteList":      p.getWhiteList,
+		"getBackendName":       p.getFuncString(pathFrontendBackend, ""),
+		"getPriority":          p.getFuncInt(pathFrontendPriority, label.DefaultFrontendPriority),
+		"getPassHostHeader":    p.getPassHostHeader(),
+		"getPassTLSCert":       p.getFuncBool(pathFrontendPassTLSCert, label.DefaultPassTLSCert),
+		"getPassSSLClientCert": p.getSSLClientCert,
+		"getEntryPoints":       p.getFuncList(pathFrontendEntryPoints),
+		"getBasicAuth":         p.getFuncList(pathFrontendBasicAuth), // Deprecated
+		"getAuth":              p.getAuth,
+		"getRoutes":            p.getRoutes,
+		"getRedirect":          p.getRedirect,
+		"getErrorPages":        p.getErrorPages,
+		"getRateLimit":         p.getRateLimit,
+		"getHeaders":           p.getHeaders,
+		"getWhiteList":         p.getWhiteList,
 
 		// Backend functions
 		"getServers":              p.getServers,
@@ -367,6 +368,39 @@ func (p *Provider) getTLSSection(prefix string) []*tls.Configuration {
 	}
 
 	return tlsSection
+}
+
+// GetSSLClientCert create ssl client header configuration from labels
+func (p *Provider) getSSLClientCert(rootPath string) *types.SSLClientHeaders {
+	if !p.hasPrefix(rootPath, pathFrontendPassSSLClientCert) {
+		return nil
+	}
+
+	sslClientHeaders := &types.SSLClientHeaders{
+		PEM: p.getBool(false, rootPath, pathFrontendPassSSLClientCertPem),
+	}
+
+	if p.hasPrefix(rootPath, pathFrontendPassSSLClientCertInfos) {
+		infos := &types.SSLClientCertificateInfos{
+			NotAfter:  p.getBool(false, rootPath, pathFrontendPassSSLClientCertInfosNotAfter),
+			NotBefore: p.getBool(false, rootPath, pathFrontendPassSSLClientCertInfosNotBefore),
+			Sans:      p.getBool(false, rootPath, pathFrontendPassSSLClientCertInfosSans),
+		}
+
+		if p.hasPrefix(rootPath, pathFrontendPassSSLClientCertInfosSubject) {
+			subject := &types.SSLCLientCertificateSubjectInfos{
+				CommonName:   p.getBool(false, rootPath, pathFrontendPassSSLClientCertInfosSubjectCommonName),
+				Country:      p.getBool(false, rootPath, pathFrontendPassSSLClientCertInfosSubjectCountry),
+				Locality:     p.getBool(false, rootPath, pathFrontendPassSSLClientCertInfosSubjectLocality),
+				Organization: p.getBool(false, rootPath, pathFrontendPassSSLClientCertInfosSubjectOrganization),
+				Province:     p.getBool(false, rootPath, pathFrontendPassSSLClientCertInfosSubjectProvince),
+				SerialNumber: p.getBool(false, rootPath, pathFrontendPassSSLClientCertInfosSubjectSerialNumber),
+			}
+			infos.Subject = subject
+		}
+		sslClientHeaders.Infos = infos
+	}
+	return sslClientHeaders
 }
 
 // hasDeprecatedBasicAuth check if the frontend basic auth use the deprecated configuration
