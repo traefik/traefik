@@ -234,7 +234,8 @@ func makeEntryPointTLS(result map[string]string) (*tls.TLS, error) {
 
 	if configTLS != nil {
 		if len(result["ca"]) > 0 {
-			files := strings.Split(result["ca"], ",")
+			files := tls.FilesOrContents{}
+			files.Set(result["ca"])
 			optional := toBool(result, "ca_optional")
 			configTLS.ClientCA = tls.ClientCA{
 				Files:    files,

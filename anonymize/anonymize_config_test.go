@@ -54,7 +54,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 					{CertFile: "CertFile 2", KeyFile: "KeyFile 2"},
 				},
 				ClientCA: traefiktls.ClientCA{
-					Files:    []string{"foo ClientCAFiles 1", "foo ClientCAFiles 2", "foo ClientCAFiles 3"},
+					Files:    traefiktls.FilesOrContents{"foo ClientCAFiles 1", "foo ClientCAFiles 2", "foo ClientCAFiles 3"},
 					Optional: false,
 				},
 			},
@@ -99,7 +99,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 					{CertFile: "CertFile 2", KeyFile: "KeyFile 2"},
 				},
 				ClientCA: traefiktls.ClientCA{
-					Files:    []string{"fii ClientCAFiles 1", "fii ClientCAFiles 2", "fii ClientCAFiles 3"},
+					Files:    traefiktls.FilesOrContents{"fii ClientCAFiles 1", "fii ClientCAFiles 2", "fii ClientCAFiles 3"},
 					Optional: false,
 				},
 			},
@@ -181,7 +181,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 	config.MaxIdleConnsPerHost = 666
 	config.IdleTimeout = flaeg.Duration(666 * time.Second)
 	config.InsecureSkipVerify = true
-	config.RootCAs = traefiktls.RootCAs{"RootCAs 1", "RootCAs 2", "RootCAs 3"}
+	config.RootCAs = traefiktls.FilesOrContents{"RootCAs 1", "RootCAs 2", "RootCAs 3"}
 	config.Retry = &configuration.Retry{
 		Attempts: 666,
 	}

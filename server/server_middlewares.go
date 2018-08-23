@@ -120,7 +120,7 @@ func (s *Server) buildMiddlewares(frontendName string, frontend *types.Frontend,
 	}
 
 	// SSLClientHeaders
-	sslClientHeadersMiddleware := middlewares.NewSSLClientHeadersFromStruct(frontend)
+	sslClientHeadersMiddleware := middlewares.NewSSLClientHeaders(frontend)
 	if sslClientHeadersMiddleware != nil {
 		log.Debugf("Adding SSLClientHeaders middleware for frontend %s", frontendName)
 

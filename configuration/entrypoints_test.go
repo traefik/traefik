@@ -226,7 +226,7 @@ func TestEntryPoints_Set(t *testing.T) {
 						},
 					},
 					ClientCA: tls.ClientCA{
-						Files:    []string{"car"},
+						Files:    tls.FilesOrContents{"car"},
 						Optional: true,
 					},
 				},
@@ -338,7 +338,7 @@ func TestEntryPoints_Set(t *testing.T) {
 						},
 					},
 					ClientCA: tls.ClientCA{
-						Files:    []string{"car"},
+						Files:    tls.FilesOrContents{"car"},
 						Optional: true,
 					},
 				},

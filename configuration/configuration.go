@@ -79,7 +79,7 @@ type GlobalConfiguration struct {
 	MaxIdleConnsPerHost       int                     `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used" export:"true"`
 	IdleTimeout               flaeg.Duration          `description:"(Deprecated) maximum amount of time an idle (keep-alive) connection will remain idle before closing itself." export:"true"` // Deprecated
 	InsecureSkipVerify        bool                    `description:"Disable SSL certificate verification" export:"true"`
-	RootCAs                   tls.RootCAs             `description:"Add cert file for self-signed certificate"`
+	RootCAs                   tls.FilesOrContents     `description:"Add cert file for self-signed certificate"`
 	Retry                     *Retry                  `description:"Enable retry sending request if network error" export:"true"`
 	HealthCheck               *HealthCheckConfig      `description:"Health check parameters" export:"true"`
 	RespondingTimeouts        *RespondingTimeouts     `description:"Timeouts for incoming requests to the Traefik instance" export:"true"`
