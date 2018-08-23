@@ -77,7 +77,30 @@
       "{{.}}",
       {{end}}]
 
-    {{ $auth := getAuth $app.SegmentLabels }}
+    {{ $sslClientCert := getPassSSLClientCert $app.SegmentLabels }}
+    {{if $sslClientCert }}
+    [frontends."{{ $frontendName }}".passSSLClientCert]
+      pem = {{ $sslClientCert.PEM }}
+      {{ $infos := $sslClientCert.Infos }}
+      {{if $infos }}
+      [frontends."{{ $frontendName }}".passSSLClientCert.infos]
+        notAfter = {{ $infos.NotAfter   }}
+        notBefore = {{ $infos.NotBefore }}
+        sans = {{ $infos.Sans }}
+        {{ $subject := $infos.Subject }}
+        {{if $subject }}
+        [frontends."{{ $frontendName }}".passSSLClientCert.infos.subject]
+          country = {{ $subject.Country }}
+          province = {{ $subject.Province }}
+          locality = {{ $subject.Locality }}
+          organization = {{ $subject.Organization }}
+          commonName = {{ $subject.CommonName }}
+          serialNumber = {{ $subject.SerialNumber }}
+        {{end}}
+      {{end}}
+    {{end}}
+
+  {{ $auth := getAuth $app.SegmentLabels }}
     {{if $auth }}
     [frontends."{{ $frontendName }}".auth]
       headerField = "{{ $auth.HeaderField }}"
