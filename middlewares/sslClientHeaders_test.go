@@ -272,7 +272,7 @@ func TestSslClientheadersWithPEM(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		sslClientheaders := NewSSLClientHeadersFromStruct(&types.Frontend{PassSSLClientCert: test.sslClientCertHeaders})
+		sslClientheaders := NewSSLClientHeaders(&types.Frontend{PassSSLClientCert: test.sslClientCertHeaders})
 
 		res := httptest.NewRecorder()
 		req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
@@ -467,7 +467,7 @@ func TestSslClientheadersWithCertInfos(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		sslClientHeaders := NewSSLClientHeadersFromStruct(&types.Frontend{PassSSLClientCert: test.sslClientCertHeaders})
+		sslClientHeaders := NewSSLClientHeaders(&types.Frontend{PassSSLClientCert: test.sslClientCertHeaders})
 
 		res := httptest.NewRecorder()
 		req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
@@ -789,7 +789,7 @@ func TestNewSSLClientHeadersFromStruct(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			require.Equal(t, test.expected, NewSSLClientHeadersFromStruct(test.frontend))
+			require.Equal(t, test.expected, NewSSLClientHeaders(test.frontend))
 		})
 	}
 

@@ -68,8 +68,8 @@ func newSSLClientInfos(infos *types.SSLClientCertificateInfos) *SSLClientCertifi
 	}
 }
 
-// NewSSLClientHeadersFromStruct constructs a new SSLClientHeaders instance from supplied frontend header struct.
-func NewSSLClientHeadersFromStruct(frontend *types.Frontend) *SSLClientHeaders {
+// NewSSLClientHeaders constructs a new SSLClientHeaders instance from supplied frontend header struct.
+func NewSSLClientHeaders(frontend *types.Frontend) *SSLClientHeaders {
 	if frontend == nil {
 		return nil
 	}

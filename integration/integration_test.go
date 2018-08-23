@@ -60,6 +60,7 @@ func init() {
 		check.Suite(&RateLimitSuite{})
 		check.Suite(&RetrySuite{})
 		check.Suite(&SimpleSuite{})
+		check.Suite(&SSLClientHeadersSuite{})
 		check.Suite(&TimeoutSuite{})
 		check.Suite(&TracingSuite{})
 		check.Suite(&WebsocketSuite{})
