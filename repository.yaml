@@ -1,7 +1,7 @@
 leakDetectionExemptions:
   - ruleId: 'ip_addresses'
-    filePaths: 
-      # from upstream 
+    filePaths:
+      # from upstream
       - '/mkdocs.yml'
       - '/docs/basics.md'
       - '/docs/configuration/api.md'
@@ -21,7 +21,7 @@ leakDetectionExemptions:
       - '/middlewares/tracing/zipkin/zipkin.go'
       - '/configuration/entrypoints_test.go'
       - '/CONTRIBUTING.md'
-      - '/whitelist/ip_test.go' 
+      - '/whitelist/ip_test.go'
       - '/examples/quickstart/README.md'
       - '/examples/acme/docker-compose.yml'
       - '/examples/compose-consul.yml'
@@ -34,8 +34,8 @@ leakDetectionExemptions:
       - '/integration/etcd3_test.go'
       - '/integration/resources/compose/consul_catalog.yml'
       - '/integration/resources/compose/marathon.yml'
-      - '/integration/resources/compose/etcd3.yml'   
-      - '/integration/resources/compose/access_log.yml'   
+      - '/integration/resources/compose/etcd3.yml'
+      - '/integration/resources/compose/access_log.yml'
       - '/integration/resources/compose/boulder.yml'
       - '/integration/resources/haproxy/haproxy.cfg'
       - '/integration/resources/haproxy/haproxy.cfg'
@@ -74,6 +74,7 @@ leakDetectionExemptions:
       - '/vendor/github.com/aws/aws-sdk-go/aws/endpoints/decode.go'
       - '/vendor/github.com/coreos/etcd/pkg/types/urlsmap.go'
       - '/vendor/github.com/Shopify/sarama/config.go'
+      - '/vendor/github.com/Shopify/sarama/errors.go'
       - '/vendor/github.com/Shopify/sarama/produce_request.go'
       - '/vendor/github.com/Shopify/sarama/produce_request.go'
       - '/vendor/github.com/ogier/pflag/ipmask.go'
@@ -88,7 +89,7 @@ leakDetectionExemptions:
       - '/vendor/github.com/openzipkin/zipkin-go-opentracing/zipkin-recorder.go'
       - '/vendor/github.com/miekg/dns/doc.go'
       - '/vendor/github.com/miekg/dns/msg.go'
-      - '/vendor/github.com/mesosphere/mesos-dns/records/config.go' 
+      - '/vendor/github.com/mesosphere/mesos-dns/records/config.go'
       - '/vendor/github.com/mesosphere/mesos-dns/records/generator.go'
       - '/vendor/github.com/Azure/go-autorest/autorest/adal/token.go'
       - '/vendor/github.com/unrolled/render/doc.go'
@@ -102,7 +103,7 @@ leakDetectionExemptions:
       - '/vendor/golang.org/x/net/ipv4/doc.go'
       - '/server/header_rewriter_test.go'
       - '/server/server_test.go'
-      
+
       # our modifications
       - '/middlewares/audittap/audittypes/rate_auditing_test.go'
       - '/middlewares/audittap/audittypes/mdtp_auditing_test.go'
@@ -129,6 +130,8 @@ leakDetectionExemptions:
       - '/server/server_test.go'
       - '/middlewares/tracing/zipkin/zipkin.go'
       - '/provider/kubernetes/kubernetes_test.go'
+      - '/docs/user-guide/kv-config.md'
+
 
   - ruleId: 'aws_2'
     filePaths:
