@@ -31,20 +31,21 @@ func (p *Provider) buildConfigurationV2(instances []ecsInstance) (*types.Configu
 		"getServers":        getServers,
 
 		// Frontend functions
-		"filterFrontends":   filterFrontends,
-		"getFrontendRule":   p.getFrontendRule,
-		"getFrontendName":   p.getFrontendName,
-		"getPassHostHeader": label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
-		"getPassTLSCert":    label.GetFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getPriority":       label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
-		"getBasicAuth":      label.GetFuncSliceString(label.TraefikFrontendAuthBasic), // Deprecated
-		"getAuth":           label.GetAuth,
-		"getEntryPoints":    label.GetFuncSliceString(label.TraefikFrontendEntryPoints),
-		"getRedirect":       label.GetRedirect,
-		"getErrorPages":     label.GetErrorPages,
-		"getRateLimit":      label.GetRateLimit,
-		"getHeaders":        label.GetHeaders,
-		"getWhiteList":      label.GetWhiteList,
+		"filterFrontends":      filterFrontends,
+		"getFrontendRule":      p.getFrontendRule,
+		"getFrontendName":      p.getFrontendName,
+		"getPassHostHeader":    label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
+		"getPassTLSCert":       label.GetFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
+		"getPassSSLClientCert": label.GetSSLClientCert,
+		"getPriority":          label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
+		"getBasicAuth":         label.GetFuncSliceString(label.TraefikFrontendAuthBasic), // Deprecated
+		"getAuth":              label.GetAuth,
+		"getEntryPoints":       label.GetFuncSliceString(label.TraefikFrontendEntryPoints),
+		"getRedirect":          label.GetRedirect,
+		"getErrorPages":        label.GetErrorPages,
+		"getRateLimit":         label.GetRateLimit,
+		"getHeaders":           label.GetHeaders,
+		"getWhiteList":         label.GetWhiteList,
 	}
 
 	services := make(map[string][]ecsInstance)
