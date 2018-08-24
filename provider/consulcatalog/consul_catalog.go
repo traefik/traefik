@@ -576,6 +576,7 @@ func (p *Provider) generateFrontends(service *serviceUpdate) []*serviceUpdate {
 		Attributes:        service.Attributes,
 		TraefikLabels:     service.TraefikLabels,
 	})
+
 	// loop over children of <prefix>.frontends.*
 	for _, frontend := range getSegments(p.Prefix+".frontends", p.Prefix, service.TraefikLabels) {
 		frontends = append(frontends, &serviceUpdate{
@@ -585,11 +586,11 @@ func (p *Provider) generateFrontends(service *serviceUpdate) []*serviceUpdate {
 			TraefikLabels:     frontend.Labels,
 		})
 	}
+
 	return frontends
 }
 func getSegments(path string, prefix string, tree map[string]string) []*frontendSegment {
 	segments := make([]*frontendSegment, 0)
-	// FIXME: do this more efficient..
 	// find segment names
 	segmentNames := make(map[string]bool)
 	for key := range tree {
@@ -597,6 +598,7 @@ func getSegments(path string, prefix string, tree map[string]string) []*frontend
 			segmentNames[strings.SplitN(strings.TrimPrefix(key, path+"."), ".", 2)[0]] = true
 		}
 	}
+
 	// get labels for each segment found
 	for segment := range segmentNames {
 		labels := make(map[string]string)
@@ -610,5 +612,6 @@ func getSegments(path string, prefix string, tree map[string]string) []*frontend
 			Labels: labels,
 		})
 	}
+
 	return segments
 }
