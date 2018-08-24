@@ -227,7 +227,7 @@ func TestRateSA900AuditEventIsRepayment(t *testing.T) {
 
 }
 
-func TestRateSA900AuditEventIsRepaymentWhenEmpty(t *testing.T) {
+func TestRateSA900AuditEventIsNotRepaymentWhenEmpty(t *testing.T) {
 
 	types.TheClock = T0
 	x := `	
@@ -238,7 +238,7 @@ func TestRateSA900AuditEventIsRepaymentWhenEmpty(t *testing.T) {
 			<TrustEstate>
 				<TaxCalculation>
 					<ClaimRepaymentForNextYear />
-					<RepaymentForNextYear />
+					<DueBeforePaymentsOnAccount  />
 				</TaxCalculation>
 			</TrustEstate>
 		</SAtrust>

@@ -207,7 +207,7 @@ var gtmUserType = etree.MustCompilePath("./GovTalkDetails/GatewayAdditions/Submi
 // SA Specific Data
 var gtmSa110Repayment = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/MTR/SA110/SelfAssessment/TotalTaxEtcDue")
 var gtmSa900Claim = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/SAtrust/TrustEstate/TaxCalculation/ClaimRepaymentForNextYear")
-var gtmSa900Repayment = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/SAtrust/TrustEstate/TaxCalculation/RepaymentForNextYear")
+var gtmSa900Repayment = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/SAtrust/TrustEstate/TaxCalculation/DueBeforePaymentsOnAccount")
 var gtmVatReclaimedInputs = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/VATDeclarationRequest/VATReclaimedOnInputs")
 var gtmVatTotal = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/VATDeclarationRequest/TotalVAT")
 
@@ -299,11 +299,10 @@ func (partial *partialGovTalkMessage) populateDetails(ev *RATEAuditEvent) {
 
 			if claim != nil && amount != nil {
 				if amount, err := strconv.ParseFloat(amount.Text(), 64); err == nil {
-					ev.Detail.IsRepayment = strconv.FormatBool(strings.ToLower(strings.TrimSpace(claim.Text())) == "yes" && amount > 0.00)
+					ev.Detail.IsRepayment = strconv.FormatBool(strings.ToLower(strings.TrimSpace(claim.Text())) == "yes" && amount < 0.00)
 				} else {
 					ev.Detail.IsRepayment = "false"
 				}
-
 			}
 		}
 		if strings.HasPrefix(ev.AuditType, "HMRC-VAT") {

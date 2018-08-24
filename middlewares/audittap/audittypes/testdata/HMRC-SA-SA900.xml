@@ -403,7 +403,7 @@
 					</TrustNonResident>
 					<TaxCalculation>
 						<CalculateOwnTax>yes</CalculateOwnTax>
-						<DueBeforePaymentsOnAccount>9999999999.99</DueBeforePaymentsOnAccount>
+						<DueBeforePaymentsOnAccount>-100.01</DueBeforePaymentsOnAccount>
 						<DueForEarlierYears>9999999999.99</DueForEarlierYears>
 						<CalculatedTaxOverpaid>yes</CalculatedTaxOverpaid>
 						<AmountOverpaid>9999999999.99</AmountOverpaid>
