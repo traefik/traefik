@@ -94,22 +94,22 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "when pass ssl client cert configuration",
+			desc: "when pass tls client cert configuration",
 			services: []swarm.Service{
 				swarmService(
 					serviceName("test"),
 					serviceLabels(map[string]string{
 						label.TraefikPort:                                              "80",
-						label.TraefikFrontendPassSSLClientCertPem:                      "true",
-						label.TraefikFrontendPassSSLClientCertInfosNotBefore:           "true",
-						label.TraefikFrontendPassSSLClientCertInfosNotAfter:            "true",
-						label.TraefikFrontendPassSSLClientCertInfosSans:                "true",
-						label.TraefikFrontendPassSSLClientCertInfosSubjectCommonName:   "true",
-						label.TraefikFrontendPassSSLClientCertInfosSubjectCountry:      "true",
-						label.TraefikFrontendPassSSLClientCertInfosSubjectLocality:     "true",
-						label.TraefikFrontendPassSSLClientCertInfosSubjectOrganization: "true",
-						label.TraefikFrontendPassSSLClientCertInfosSubjectProvince:     "true",
-						label.TraefikFrontendPassSSLClientCertInfosSubjectSerialNumber: "true",
+						label.TraefikFrontendPassTLSClientCertPem:                      "true",
+						label.TraefikFrontendPassTLSClientCertInfosNotBefore:           "true",
+						label.TraefikFrontendPassTLSClientCertInfosNotAfter:            "true",
+						label.TraefikFrontendPassTLSClientCertInfosSans:                "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectCommonName:   "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectCountry:      "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectLocality:     "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectOrganization: "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectProvince:     "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectSerialNumber: "true",
 					}),
 					withEndpointSpec(modeVIP),
 					withEndpoint(virtualIP("1", "127.0.0.1/24")),
@@ -120,13 +120,13 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 					Backend:        "backend-test",
 					PassHostHeader: true,
 					EntryPoints:    []string{},
-					PassSSLClientCert: &types.SSLClientHeaders{
+					PassTLSClientCert: &types.TLSClientHeaders{
 						PEM: true,
-						Infos: &types.SSLClientCertificateInfos{
+						Infos: &types.TLSClientCertificateInfos{
 							NotBefore: true,
 							Sans:      true,
 							NotAfter:  true,
-							Subject: &types.SSLCLientCertificateSubjectInfos{
+							Subject: &types.TLSCLientCertificateSubjectInfos{
 								CommonName:   true,
 								Country:      true,
 								Locality:     true,

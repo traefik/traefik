@@ -13,19 +13,19 @@ import (
 	"github.com/containous/traefik/types"
 )
 
-const xForwardedSSLClientCert = "X-Forwarded-Ssl-Client-Cert"
-const xForwardedSSLClientCertInfos = "X-Forwarded-Ssl-Client-Cert-Infos"
+const xForwardedTLSClientCert = "X-Forwarded-Tls-Client-Cert"
+const xForwardedTLSClientCertInfos = "X-Forwarded-Tls-Client-Cert-Infos"
 
-// SSLClientCertificateInfos is a struct for specifying the configuration for the sslClientHeaders middleware.
-type SSLClientCertificateInfos struct {
+// TLSClientCertificateInfos is a struct for specifying the configuration for the tlsClientHeaders middleware.
+type TLSClientCertificateInfos struct {
 	NotAfter  bool
 	NotBefore bool
-	Subject   *SSLCLientCertificateSubjectInfos
+	Subject   *TLSCLientCertificateSubjectInfos
 	Sans      bool
 }
 
-// SSLCLientCertificateSubjectInfos contains the configuration for the certificate subject infos.
-type SSLCLientCertificateSubjectInfos struct {
+// TLSCLientCertificateSubjectInfos contains the configuration for the certificate subject infos.
+type TLSCLientCertificateSubjectInfos struct {
 	Country      bool
 	Province     bool
 	Locality     bool
@@ -34,18 +34,18 @@ type SSLCLientCertificateSubjectInfos struct {
 	SerialNumber bool
 }
 
-// SSLClientHeaders is a middleware that helps setup a few tls infos features.
-type SSLClientHeaders struct {
+// TLSClientHeaders is a middleware that helps setup a few tls infos features.
+type TLSClientHeaders struct {
 	PEM   bool                       // pass the sanitized pem to the backend in a specific header
-	Infos *SSLClientCertificateInfos // pass selected informations from the client certificate
+	Infos *TLSClientCertificateInfos // pass selected informations from the client certificate
 }
 
-func newSSLCLientCertificateSubjectInfos(infos *types.SSLCLientCertificateSubjectInfos) *SSLCLientCertificateSubjectInfos {
+func newTLSCLientCertificateSubjectInfos(infos *types.TLSCLientCertificateSubjectInfos) *TLSCLientCertificateSubjectInfos {
 	if infos == nil {
 		return nil
 	}
 
-	return &SSLCLientCertificateSubjectInfos{
+	return &TLSCLientCertificateSubjectInfos{
 		SerialNumber: infos.SerialNumber,
 		CommonName:   infos.CommonName,
 		Country:      infos.Country,
@@ -55,41 +55,41 @@ func newSSLCLientCertificateSubjectInfos(infos *types.SSLCLientCertificateSubjec
 	}
 }
 
-func newSSLClientInfos(infos *types.SSLClientCertificateInfos) *SSLClientCertificateInfos {
+func newTLSClientInfos(infos *types.TLSClientCertificateInfos) *TLSClientCertificateInfos {
 	if infos == nil {
 		return nil
 	}
 
-	return &SSLClientCertificateInfos{
+	return &TLSClientCertificateInfos{
 		NotBefore: infos.NotBefore,
 		NotAfter:  infos.NotAfter,
 		Sans:      infos.Sans,
-		Subject:   newSSLCLientCertificateSubjectInfos(infos.Subject),
+		Subject:   newTLSCLientCertificateSubjectInfos(infos.Subject),
 	}
 }
 
-// NewSSLClientHeaders constructs a new SSLClientHeaders instance from supplied frontend header struct.
-func NewSSLClientHeaders(frontend *types.Frontend) *SSLClientHeaders {
+// NewTLSClientHeaders constructs a new TLSClientHeaders instance from supplied frontend header struct.
+func NewTLSClientHeaders(frontend *types.Frontend) *TLSClientHeaders {
 	if frontend == nil {
 		return nil
 	}
 
 	var pem bool
-	var infos *SSLClientCertificateInfos
+	var infos *TLSClientCertificateInfos
 
-	if frontend.PassSSLClientCert != nil {
-		conf := frontend.PassSSLClientCert
+	if frontend.PassTLSClientCert != nil {
+		conf := frontend.PassTLSClientCert
 		pem = conf.PEM
-		infos = newSSLClientInfos(conf.Infos)
+		infos = newTLSClientInfos(conf.Infos)
 	}
 
-	return &SSLClientHeaders{
+	return &TLSClientHeaders{
 		PEM:   pem,
 		Infos: infos,
 	}
 }
 
-func (s *SSLClientHeaders) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+func (s *TLSClientHeaders) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	s.ModifyRequestHeaders(r)
 	// If there is a next, call it.
 	if next != nil {
@@ -119,8 +119,8 @@ func extractCertificate(cert *x509.Certificate) string {
 	return sanitize(certPEM)
 }
 
-// getXForwardedSSLClientCert Build a string with the client certificates
-func getXForwardedSSLClientCert(certs []*x509.Certificate) string {
+// getXForwardedTLSClientCert Build a string with the client certificates
+func getXForwardedTLSClientCert(certs []*x509.Certificate) string {
 	var headerValues []string
 
 	for _, peerCert := range certs {
@@ -154,7 +154,7 @@ func getSANs(cert *x509.Certificate) []string {
 }
 
 // getSubjectInfos extract the requested informations from the certificate subject
-func (s *SSLClientHeaders) getSubjectInfos(cs *pkix.Name) string {
+func (s *TLSClientHeaders) getSubjectInfos(cs *pkix.Name) string {
 	var subject string
 
 	if s.Infos != nil && s.Infos.Subject != nil {
@@ -190,9 +190,9 @@ func (s *SSLClientHeaders) getSubjectInfos(cs *pkix.Name) string {
 	return subject
 }
 
-// getXForwardedSSLClientCertInfos Build a string with the wanted client certificates informations
+// getXForwardedTLSClientCertInfos Build a string with the wanted client certificates informations
 // like Subject="C=%s,ST=%s,L=%s,O=%s,CN=%s",NB=%d,NA=%d,SAN=%s;
-func (s *SSLClientHeaders) getXForwardedSSLClientCertInfos(certs []*x509.Certificate) string {
+func (s *TLSClientHeaders) getXForwardedTLSClientCertInfos(certs []*x509.Certificate) string {
 	var headerValues []string
 
 	for _, peerCert := range certs {
@@ -231,10 +231,10 @@ func (s *SSLClientHeaders) getXForwardedSSLClientCertInfos(certs []*x509.Certifi
 }
 
 // ModifyRequestHeaders set the wanted headers with the certificates informations
-func (s *SSLClientHeaders) ModifyRequestHeaders(r *http.Request) {
+func (s *TLSClientHeaders) ModifyRequestHeaders(r *http.Request) {
 	if s.PEM {
 		if r.TLS != nil && len(r.TLS.PeerCertificates) > 0 {
-			r.Header.Set(xForwardedSSLClientCert, getXForwardedSSLClientCert(r.TLS.PeerCertificates))
+			r.Header.Set(xForwardedTLSClientCert, getXForwardedTLSClientCert(r.TLS.PeerCertificates))
 		} else {
 			log.Warn("Try to extract certificate on a request without TLS")
 		}
@@ -242,8 +242,8 @@ func (s *SSLClientHeaders) ModifyRequestHeaders(r *http.Request) {
 
 	if s.Infos != nil {
 		if r.TLS != nil && len(r.TLS.PeerCertificates) > 0 {
-			headerContent := s.getXForwardedSSLClientCertInfos(r.TLS.PeerCertificates)
-			r.Header.Set(xForwardedSSLClientCertInfos, url.QueryEscape(headerContent))
+			headerContent := s.getXForwardedTLSClientCertInfos(r.TLS.PeerCertificates)
+			r.Header.Set(xForwardedTLSClientCertInfos, url.QueryEscape(headerContent))
 		} else {
 			log.Warn("Try to extract certificate on a request without TLS")
 		}

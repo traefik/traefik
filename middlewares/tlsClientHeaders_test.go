@@ -182,7 +182,7 @@ func buildTLSWith(certContents []string) *tls.ConnectionState {
 	return &tls.ConnectionState{PeerCertificates: peerCertificates}
 }
 
-var myPassSSLClientCustomHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+var myPassTLSClientCustomHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("bar"))
 })
 
@@ -233,11 +233,11 @@ jECvgAY7Nfd9mZ1KtyNaW31is+kag7NsvjxU/kM=`),
 
 }
 
-func TestSslClientheadersWithPEM(t *testing.T) {
+func TestTlsClientheadersWithPEM(t *testing.T) {
 	testCases := []struct {
 		desc                 string
 		certContents         []string // set the request TLS attribute if defined
-		sslClientCertHeaders *types.SSLClientHeaders
+		tlsClientCertHeaders *types.TLSClientHeaders
 		expectedHeader       string
 	}{
 		{
@@ -249,30 +249,30 @@ func TestSslClientheadersWithPEM(t *testing.T) {
 		},
 		{
 			desc:                 "No TLS, with pem option true",
-			sslClientCertHeaders: &types.SSLClientHeaders{PEM: true},
+			tlsClientCertHeaders: &types.TLSClientHeaders{PEM: true},
 		},
 		{
 			desc:                 "TLS with simple certificate, with pem option true",
 			certContents:         []string{minimalCert},
-			sslClientCertHeaders: &types.SSLClientHeaders{PEM: true},
+			tlsClientCertHeaders: &types.TLSClientHeaders{PEM: true},
 			expectedHeader:       getCleanCertContents([]string{minimalCert}),
 		},
 		{
 			desc:                 "TLS with complete certificate, with pem option true",
 			certContents:         []string{completeCert},
-			sslClientCertHeaders: &types.SSLClientHeaders{PEM: true},
+			tlsClientCertHeaders: &types.TLSClientHeaders{PEM: true},
 			expectedHeader:       getCleanCertContents([]string{completeCert}),
 		},
 		{
 			desc:                 "TLS with two certificate, with pem option true",
 			certContents:         []string{minimalCert, completeCert},
-			sslClientCertHeaders: &types.SSLClientHeaders{PEM: true},
+			tlsClientCertHeaders: &types.TLSClientHeaders{PEM: true},
 			expectedHeader:       getCleanCertContents([]string{minimalCert, completeCert}),
 		},
 	}
 
 	for _, test := range testCases {
-		sslClientheaders := NewSSLClientHeaders(&types.Frontend{PassSSLClientCert: test.sslClientCertHeaders})
+		tlsClientHeaders := NewTLSClientHeaders(&types.Frontend{PassTLSClientCert: test.tlsClientCertHeaders})
 
 		res := httptest.NewRecorder()
 		req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
@@ -281,7 +281,7 @@ func TestSslClientheadersWithPEM(t *testing.T) {
 			req.TLS = buildTLSWith(test.certContents)
 		}
 
-		sslClientheaders.ServeHTTP(res, req, myPassSSLClientCustomHandler)
+		tlsClientHeaders.ServeHTTP(res, req, myPassTLSClientCustomHandler)
 
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
@@ -291,11 +291,11 @@ func TestSslClientheadersWithPEM(t *testing.T) {
 			require.Equal(t, "bar", res.Body.String(), "Should be the expected body")
 
 			if test.expectedHeader != "" {
-				require.Equal(t, getCleanCertContents(test.certContents), req.Header.Get(xForwardedSSLClientCert), "The request header should contain the cleaned certificate")
+				require.Equal(t, getCleanCertContents(test.certContents), req.Header.Get(xForwardedTLSClientCert), "The request header should contain the cleaned certificate")
 			} else {
-				require.Empty(t, req.Header.Get(xForwardedSSLClientCert))
+				require.Empty(t, req.Header.Get(xForwardedTLSClientCert))
 			}
-			require.Empty(t, res.Header().Get(xForwardedSSLClientCert), "The response header should be always empty")
+			require.Empty(t, res.Header().Get(xForwardedTLSClientCert), "The response header should be always empty")
 		})
 	}
 
@@ -350,13 +350,13 @@ func TestGetSans(t *testing.T) {
 
 }
 
-func TestSslClientheadersWithCertInfos(t *testing.T) {
+func TestTlsClientheadersWithCertInfos(t *testing.T) {
 	minimalCertAllInfos := `Subject="C=FR,ST=Some-State,O=Internet Widgits Pty Ltd",NB=1531902496,NA=1534494496,SAN=`
 	completeCertAllInfos := `Subject="C=FR,ST=SomeState,L=Toulouse,O=Cheese,CN=*.cheese.org",NB=1531900816,NA=1563436816,SAN=*.cheese.org,*.cheese.net,cheese.in,test@cheese.org,test@cheese.net,10.0.1.0,10.0.1.2`
 	testCases := []struct {
 		desc                 string
 		certContents         []string // set the request TLS attribute if defined
-		sslClientCertHeaders *types.SSLClientHeaders
+		tlsClientCertHeaders *types.TLSClientHeaders
 		expectedHeader       string
 	}{
 		{
@@ -368,9 +368,9 @@ func TestSslClientheadersWithCertInfos(t *testing.T) {
 		},
 		{
 			desc: "No TLS, with pem option true",
-			sslClientCertHeaders: &types.SSLClientHeaders{
-				Infos: &types.SSLClientCertificateInfos{
-					Subject: &types.SSLCLientCertificateSubjectInfos{
+			tlsClientCertHeaders: &types.TLSClientHeaders{
+				Infos: &types.TLSClientCertificateInfos{
+					Subject: &types.TLSCLientCertificateSubjectInfos{
 						CommonName:   true,
 						Organization: true,
 						Locality:     true,
@@ -383,21 +383,21 @@ func TestSslClientheadersWithCertInfos(t *testing.T) {
 		},
 		{
 			desc: "No TLS, with pem option true with no flag",
-			sslClientCertHeaders: &types.SSLClientHeaders{
+			tlsClientCertHeaders: &types.TLSClientHeaders{
 				PEM: false,
-				Infos: &types.SSLClientCertificateInfos{
-					Subject: &types.SSLCLientCertificateSubjectInfos{},
+				Infos: &types.TLSClientCertificateInfos{
+					Subject: &types.TLSCLientCertificateSubjectInfos{},
 				},
 			},
 		},
 		{
 			desc:         "TLS with simple certificate, with all infos",
 			certContents: []string{minimalCert},
-			sslClientCertHeaders: &types.SSLClientHeaders{
-				Infos: &types.SSLClientCertificateInfos{
+			tlsClientCertHeaders: &types.TLSClientHeaders{
+				Infos: &types.TLSClientCertificateInfos{
 					NotAfter:  true,
 					NotBefore: true,
-					Subject: &types.SSLCLientCertificateSubjectInfos{
+					Subject: &types.TLSCLientCertificateSubjectInfos{
 						CommonName:   true,
 						Organization: true,
 						Locality:     true,
@@ -413,10 +413,10 @@ func TestSslClientheadersWithCertInfos(t *testing.T) {
 		{
 			desc:         "TLS with simple certificate, with some infos",
 			certContents: []string{minimalCert},
-			sslClientCertHeaders: &types.SSLClientHeaders{
-				Infos: &types.SSLClientCertificateInfos{
+			tlsClientCertHeaders: &types.TLSClientHeaders{
+				Infos: &types.TLSClientCertificateInfos{
 					NotAfter: true,
-					Subject: &types.SSLCLientCertificateSubjectInfos{
+					Subject: &types.TLSCLientCertificateSubjectInfos{
 						Organization: true,
 					},
 					Sans: true,
@@ -427,11 +427,11 @@ func TestSslClientheadersWithCertInfos(t *testing.T) {
 		{
 			desc:         "TLS with complete certificate, with all infos",
 			certContents: []string{completeCert},
-			sslClientCertHeaders: &types.SSLClientHeaders{
-				Infos: &types.SSLClientCertificateInfos{
+			tlsClientCertHeaders: &types.TLSClientHeaders{
+				Infos: &types.TLSClientCertificateInfos{
 					NotAfter:  true,
 					NotBefore: true,
-					Subject: &types.SSLCLientCertificateSubjectInfos{
+					Subject: &types.TLSCLientCertificateSubjectInfos{
 						CommonName:   true,
 						Organization: true,
 						Locality:     true,
@@ -447,11 +447,11 @@ func TestSslClientheadersWithCertInfos(t *testing.T) {
 		{
 			desc:         "TLS with 2 certificates, with all infos",
 			certContents: []string{minimalCert, completeCert},
-			sslClientCertHeaders: &types.SSLClientHeaders{
-				Infos: &types.SSLClientCertificateInfos{
+			tlsClientCertHeaders: &types.TLSClientHeaders{
+				Infos: &types.TLSClientCertificateInfos{
 					NotAfter:  true,
 					NotBefore: true,
-					Subject: &types.SSLCLientCertificateSubjectInfos{
+					Subject: &types.TLSCLientCertificateSubjectInfos{
 						CommonName:   true,
 						Organization: true,
 						Locality:     true,
@@ -467,7 +467,7 @@ func TestSslClientheadersWithCertInfos(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		sslClientHeaders := NewSSLClientHeaders(&types.Frontend{PassSSLClientCert: test.sslClientCertHeaders})
+		tlsClientHeaders := NewTLSClientHeaders(&types.Frontend{PassTLSClientCert: test.tlsClientCertHeaders})
 
 		res := httptest.NewRecorder()
 		req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
@@ -476,7 +476,7 @@ func TestSslClientheadersWithCertInfos(t *testing.T) {
 			req.TLS = buildTLSWith(test.certContents)
 		}
 
-		sslClientHeaders.ServeHTTP(res, req, myPassSSLClientCustomHandler)
+		tlsClientHeaders.ServeHTTP(res, req, myPassTLSClientCustomHandler)
 
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
@@ -486,21 +486,21 @@ func TestSslClientheadersWithCertInfos(t *testing.T) {
 			require.Equal(t, "bar", res.Body.String(), "Should be the expected body")
 
 			if test.expectedHeader != "" {
-				require.Equal(t, test.expectedHeader, req.Header.Get(xForwardedSSLClientCertInfos), "The request header should contain the cleaned certificate")
+				require.Equal(t, test.expectedHeader, req.Header.Get(xForwardedTLSClientCertInfos), "The request header should contain the cleaned certificate")
 			} else {
-				require.Empty(t, req.Header.Get(xForwardedSSLClientCertInfos))
+				require.Empty(t, req.Header.Get(xForwardedTLSClientCertInfos))
 			}
-			require.Empty(t, res.Header().Get(xForwardedSSLClientCertInfos), "The response header should be always empty")
+			require.Empty(t, res.Header().Get(xForwardedTLSClientCertInfos), "The response header should be always empty")
 		})
 	}
 
 }
 
-func TestNewSSLClientHeadersFromStruct(t *testing.T) {
+func TestNewTLSClientHeadersFromStruct(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		frontend *types.Frontend
-		expected *SSLClientHeaders
+		expected *TLSClientHeaders
 	}{
 		{
 			desc: "Without frontend",
@@ -508,56 +508,56 @@ func TestNewSSLClientHeadersFromStruct(t *testing.T) {
 		{
 			desc:     "frontend without the option",
 			frontend: &types.Frontend{},
-			expected: &SSLClientHeaders{},
+			expected: &TLSClientHeaders{},
 		},
 		{
 			desc: "frontend with the pem set false",
 			frontend: &types.Frontend{
-				PassSSLClientCert: &types.SSLClientHeaders{
+				PassTLSClientCert: &types.TLSClientHeaders{
 					PEM: false,
 				},
 			},
-			expected: &SSLClientHeaders{PEM: false},
+			expected: &TLSClientHeaders{PEM: false},
 		},
 		{
 			desc: "frontend with the pem set true",
 			frontend: &types.Frontend{
-				PassSSLClientCert: &types.SSLClientHeaders{
+				PassTLSClientCert: &types.TLSClientHeaders{
 					PEM: true,
 				},
 			},
-			expected: &SSLClientHeaders{PEM: true},
+			expected: &TLSClientHeaders{PEM: true},
 		},
 		{
 			desc: "frontend with the Infos with no flag",
 			frontend: &types.Frontend{
-				PassSSLClientCert: &types.SSLClientHeaders{
-					Infos: &types.SSLClientCertificateInfos{
+				PassTLSClientCert: &types.TLSClientHeaders{
+					Infos: &types.TLSClientCertificateInfos{
 						NotAfter:  false,
 						NotBefore: false,
 						Sans:      false,
 					},
 				},
 			},
-			expected: &SSLClientHeaders{
+			expected: &TLSClientHeaders{
 				PEM:   false,
-				Infos: &SSLClientCertificateInfos{},
+				Infos: &TLSClientCertificateInfos{},
 			},
 		},
 		{
 			desc: "frontend with the Infos basic",
 			frontend: &types.Frontend{
-				PassSSLClientCert: &types.SSLClientHeaders{
-					Infos: &types.SSLClientCertificateInfos{
+				PassTLSClientCert: &types.TLSClientHeaders{
+					Infos: &types.TLSClientCertificateInfos{
 						NotAfter:  true,
 						NotBefore: true,
 						Sans:      true,
 					},
 				},
 			},
-			expected: &SSLClientHeaders{
+			expected: &TLSClientHeaders{
 				PEM: false,
-				Infos: &SSLClientCertificateInfos{
+				Infos: &TLSClientCertificateInfos{
 					NotBefore: true,
 					NotAfter:  true,
 					Sans:      true,
@@ -567,15 +567,15 @@ func TestNewSSLClientHeadersFromStruct(t *testing.T) {
 		{
 			desc: "frontend with the Infos NotAfter",
 			frontend: &types.Frontend{
-				PassSSLClientCert: &types.SSLClientHeaders{
-					Infos: &types.SSLClientCertificateInfos{
+				PassTLSClientCert: &types.TLSClientHeaders{
+					Infos: &types.TLSClientCertificateInfos{
 						NotAfter: true,
 					},
 				},
 			},
-			expected: &SSLClientHeaders{
+			expected: &TLSClientHeaders{
 				PEM: false,
-				Infos: &SSLClientCertificateInfos{
+				Infos: &TLSClientCertificateInfos{
 					NotAfter: true,
 				},
 			},
@@ -583,15 +583,15 @@ func TestNewSSLClientHeadersFromStruct(t *testing.T) {
 		{
 			desc: "frontend with the Infos NotBefore",
 			frontend: &types.Frontend{
-				PassSSLClientCert: &types.SSLClientHeaders{
-					Infos: &types.SSLClientCertificateInfos{
+				PassTLSClientCert: &types.TLSClientHeaders{
+					Infos: &types.TLSClientCertificateInfos{
 						NotBefore: true,
 					},
 				},
 			},
-			expected: &SSLClientHeaders{
+			expected: &TLSClientHeaders{
 				PEM: false,
-				Infos: &SSLClientCertificateInfos{
+				Infos: &TLSClientCertificateInfos{
 					NotBefore: true,
 				},
 			},
@@ -599,15 +599,15 @@ func TestNewSSLClientHeadersFromStruct(t *testing.T) {
 		{
 			desc: "frontend with the Infos Sans",
 			frontend: &types.Frontend{
-				PassSSLClientCert: &types.SSLClientHeaders{
-					Infos: &types.SSLClientCertificateInfos{
+				PassTLSClientCert: &types.TLSClientHeaders{
+					Infos: &types.TLSClientCertificateInfos{
 						Sans: true,
 					},
 				},
 			},
-			expected: &SSLClientHeaders{
+			expected: &TLSClientHeaders{
 				PEM: false,
-				Infos: &SSLClientCertificateInfos{
+				Infos: &TLSClientCertificateInfos{
 					Sans: true,
 				},
 			},
@@ -615,18 +615,18 @@ func TestNewSSLClientHeadersFromStruct(t *testing.T) {
 		{
 			desc: "frontend with the Infos Subject Organization",
 			frontend: &types.Frontend{
-				PassSSLClientCert: &types.SSLClientHeaders{
-					Infos: &types.SSLClientCertificateInfos{
-						Subject: &types.SSLCLientCertificateSubjectInfos{
+				PassTLSClientCert: &types.TLSClientHeaders{
+					Infos: &types.TLSClientCertificateInfos{
+						Subject: &types.TLSCLientCertificateSubjectInfos{
 							Organization: true,
 						},
 					},
 				},
 			},
-			expected: &SSLClientHeaders{
+			expected: &TLSClientHeaders{
 				PEM: false,
-				Infos: &SSLClientCertificateInfos{
-					Subject: &SSLCLientCertificateSubjectInfos{
+				Infos: &TLSClientCertificateInfos{
+					Subject: &TLSCLientCertificateSubjectInfos{
 						Organization: true,
 					},
 				},
@@ -635,18 +635,18 @@ func TestNewSSLClientHeadersFromStruct(t *testing.T) {
 		{
 			desc: "frontend with the Infos Subject Country",
 			frontend: &types.Frontend{
-				PassSSLClientCert: &types.SSLClientHeaders{
-					Infos: &types.SSLClientCertificateInfos{
-						Subject: &types.SSLCLientCertificateSubjectInfos{
+				PassTLSClientCert: &types.TLSClientHeaders{
+					Infos: &types.TLSClientCertificateInfos{
+						Subject: &types.TLSCLientCertificateSubjectInfos{
 							Country: true,
 						},
 					},
 				},
 			},
-			expected: &SSLClientHeaders{
+			expected: &TLSClientHeaders{
 				PEM: false,
-				Infos: &SSLClientCertificateInfos{
-					Subject: &SSLCLientCertificateSubjectInfos{
+				Infos: &TLSClientCertificateInfos{
+					Subject: &TLSCLientCertificateSubjectInfos{
 						Country: true,
 					},
 				},
@@ -655,18 +655,18 @@ func TestNewSSLClientHeadersFromStruct(t *testing.T) {
 		{
 			desc: "frontend with the Infos Subject SerialNumber",
 			frontend: &types.Frontend{
-				PassSSLClientCert: &types.SSLClientHeaders{
-					Infos: &types.SSLClientCertificateInfos{
-						Subject: &types.SSLCLientCertificateSubjectInfos{
+				PassTLSClientCert: &types.TLSClientHeaders{
+					Infos: &types.TLSClientCertificateInfos{
+						Subject: &types.TLSCLientCertificateSubjectInfos{
 							SerialNumber: true,
 						},
 					},
 				},
 			},
-			expected: &SSLClientHeaders{
+			expected: &TLSClientHeaders{
 				PEM: false,
-				Infos: &SSLClientCertificateInfos{
-					Subject: &SSLCLientCertificateSubjectInfos{
+				Infos: &TLSClientCertificateInfos{
+					Subject: &TLSCLientCertificateSubjectInfos{
 						SerialNumber: true,
 					},
 				},
@@ -675,18 +675,18 @@ func TestNewSSLClientHeadersFromStruct(t *testing.T) {
 		{
 			desc: "frontend with the Infos Subject Province",
 			frontend: &types.Frontend{
-				PassSSLClientCert: &types.SSLClientHeaders{
-					Infos: &types.SSLClientCertificateInfos{
-						Subject: &types.SSLCLientCertificateSubjectInfos{
+				PassTLSClientCert: &types.TLSClientHeaders{
+					Infos: &types.TLSClientCertificateInfos{
+						Subject: &types.TLSCLientCertificateSubjectInfos{
 							Province: true,
 						},
 					},
 				},
 			},
-			expected: &SSLClientHeaders{
+			expected: &TLSClientHeaders{
 				PEM: false,
-				Infos: &SSLClientCertificateInfos{
-					Subject: &SSLCLientCertificateSubjectInfos{
+				Infos: &TLSClientCertificateInfos{
+					Subject: &TLSCLientCertificateSubjectInfos{
 						Province: true,
 					},
 				},
@@ -695,18 +695,18 @@ func TestNewSSLClientHeadersFromStruct(t *testing.T) {
 		{
 			desc: "frontend with the Infos Subject Locality",
 			frontend: &types.Frontend{
-				PassSSLClientCert: &types.SSLClientHeaders{
-					Infos: &types.SSLClientCertificateInfos{
-						Subject: &types.SSLCLientCertificateSubjectInfos{
+				PassTLSClientCert: &types.TLSClientHeaders{
+					Infos: &types.TLSClientCertificateInfos{
+						Subject: &types.TLSCLientCertificateSubjectInfos{
 							Locality: true,
 						},
 					},
 				},
 			},
-			expected: &SSLClientHeaders{
+			expected: &TLSClientHeaders{
 				PEM: false,
-				Infos: &SSLClientCertificateInfos{
-					Subject: &SSLCLientCertificateSubjectInfos{
+				Infos: &TLSClientCertificateInfos{
+					Subject: &TLSCLientCertificateSubjectInfos{
 						Locality: true,
 					},
 				},
@@ -715,18 +715,18 @@ func TestNewSSLClientHeadersFromStruct(t *testing.T) {
 		{
 			desc: "frontend with the Infos Subject CommonName",
 			frontend: &types.Frontend{
-				PassSSLClientCert: &types.SSLClientHeaders{
-					Infos: &types.SSLClientCertificateInfos{
-						Subject: &types.SSLCLientCertificateSubjectInfos{
+				PassTLSClientCert: &types.TLSClientHeaders{
+					Infos: &types.TLSClientCertificateInfos{
+						Subject: &types.TLSCLientCertificateSubjectInfos{
 							CommonName: true,
 						},
 					},
 				},
 			},
-			expected: &SSLClientHeaders{
+			expected: &TLSClientHeaders{
 				PEM: false,
-				Infos: &SSLClientCertificateInfos{
-					Subject: &SSLCLientCertificateSubjectInfos{
+				Infos: &TLSClientCertificateInfos{
+					Subject: &TLSCLientCertificateSubjectInfos{
 						CommonName: true,
 					},
 				},
@@ -735,15 +735,15 @@ func TestNewSSLClientHeadersFromStruct(t *testing.T) {
 		{
 			desc: "frontend with the Infos NotBefore",
 			frontend: &types.Frontend{
-				PassSSLClientCert: &types.SSLClientHeaders{
-					Infos: &types.SSLClientCertificateInfos{
+				PassTLSClientCert: &types.TLSClientHeaders{
+					Infos: &types.TLSClientCertificateInfos{
 						Sans: true,
 					},
 				},
 			},
-			expected: &SSLClientHeaders{
+			expected: &TLSClientHeaders{
 				PEM: false,
-				Infos: &SSLClientCertificateInfos{
+				Infos: &TLSClientCertificateInfos{
 					Sans: true,
 				},
 			},
@@ -751,11 +751,11 @@ func TestNewSSLClientHeadersFromStruct(t *testing.T) {
 		{
 			desc: "frontend with the Infos all",
 			frontend: &types.Frontend{
-				PassSSLClientCert: &types.SSLClientHeaders{
-					Infos: &types.SSLClientCertificateInfos{
+				PassTLSClientCert: &types.TLSClientHeaders{
+					Infos: &types.TLSClientCertificateInfos{
 						NotAfter:  true,
 						NotBefore: true,
-						Subject: &types.SSLCLientCertificateSubjectInfos{
+						Subject: &types.TLSCLientCertificateSubjectInfos{
 							CommonName:   true,
 							Country:      true,
 							Locality:     true,
@@ -767,13 +767,13 @@ func TestNewSSLClientHeadersFromStruct(t *testing.T) {
 					},
 				},
 			},
-			expected: &SSLClientHeaders{
+			expected: &TLSClientHeaders{
 				PEM: false,
-				Infos: &SSLClientCertificateInfos{
+				Infos: &TLSClientCertificateInfos{
 					NotBefore: true,
 					NotAfter:  true,
 					Sans:      true,
-					Subject: &SSLCLientCertificateSubjectInfos{
+					Subject: &TLSCLientCertificateSubjectInfos{
 						Province:     true,
 						Organization: true,
 						Locality:     true,
@@ -789,7 +789,7 @@ func TestNewSSLClientHeadersFromStruct(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			require.Equal(t, test.expected, NewSSLClientHeaders(test.frontend))
+			require.Equal(t, test.expected, NewTLSClientHeaders(test.frontend))
 		})
 	}
 

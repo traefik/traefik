@@ -66,23 +66,23 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "pass ssl client cert",
+			desc: "pass tls client cert",
 			containers: []docker.ContainerJSON{
 				containerJSON(
 					name("foo"),
 					labels(map[string]string{
 						"traefik.sauternes.port":                                                                    "2503",
 						"traefik.sauternes.frontend.entryPoints":                                                    "http,https",
-						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertPem:                      "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosNotAfter:            "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosNotBefore:           "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSans:                "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectCommonName:   "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectCountry:      "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectLocality:     "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectOrganization: "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectProvince:     "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectSerialNumber: "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertPem:                      "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosNotAfter:            "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosNotBefore:           "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSans:                "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSubjectCommonName:   "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSubjectCountry:      "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSubjectLocality:     "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSubjectOrganization: "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSubjectProvince:     "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSubjectSerialNumber: "true",
 					}),
 					ports(nat.PortMap{
 						"80/tcp": {},
@@ -100,13 +100,13 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 							Rule: "Host:foo.docker.localhost",
 						},
 					},
-					PassSSLClientCert: &types.SSLClientHeaders{
+					PassTLSClientCert: &types.TLSClientHeaders{
 						PEM: true,
-						Infos: &types.SSLClientCertificateInfos{
+						Infos: &types.TLSClientCertificateInfos{
 							NotBefore: true,
 							Sans:      true,
 							NotAfter:  true,
-							Subject: &types.SSLCLientCertificateSubjectInfos{
+							Subject: &types.TLSCLientCertificateSubjectInfos{
 								CommonName:   true,
 								Country:      true,
 								Locality:     true,
@@ -351,16 +351,16 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 						label.Prefix + "sauternes." + label.SuffixProtocol: "https",
 						label.Prefix + "sauternes." + label.SuffixWeight:   "12",
 
-						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertPem:                      "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosNotAfter:            "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosNotBefore:           "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSans:                "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectCommonName:   "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectCountry:      "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectLocality:     "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectOrganization: "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectProvince:     "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendPassSSLClientCertInfosSubjectSerialNumber: "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertPem:                      "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosNotAfter:            "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosNotBefore:           "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSans:                "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSubjectCommonName:   "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSubjectCountry:      "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSubjectLocality:     "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSubjectOrganization: "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSubjectProvince:     "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSubjectSerialNumber: "true",
 
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicRemoveHeader:            "true",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicUsers:                   "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
@@ -443,13 +443,13 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 					PassHostHeader: true,
 					PassTLSCert:    true,
 					Priority:       666,
-					PassSSLClientCert: &types.SSLClientHeaders{
+					PassTLSClientCert: &types.TLSClientHeaders{
 						PEM: true,
-						Infos: &types.SSLClientCertificateInfos{
+						Infos: &types.TLSClientCertificateInfos{
 							NotBefore: true,
 							Sans:      true,
 							NotAfter:  true,
-							Subject: &types.SSLCLientCertificateSubjectInfos{
+							Subject: &types.TLSCLientCertificateSubjectInfos{
 								CommonName:   true,
 								Country:      true,
 								Locality:     true,

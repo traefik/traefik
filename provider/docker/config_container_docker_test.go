@@ -112,21 +112,21 @@ func TestDockerBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "when pass ssl client certificate",
+			desc: "when pass tls client certificate",
 			containers: []docker.ContainerJSON{
 				containerJSON(
 					name("test"),
 					labels(map[string]string{
-						label.TraefikFrontendPassSSLClientCertPem:                      "true",
-						label.TraefikFrontendPassSSLClientCertInfosNotBefore:           "true",
-						label.TraefikFrontendPassSSLClientCertInfosNotAfter:            "true",
-						label.TraefikFrontendPassSSLClientCertInfosSans:                "true",
-						label.TraefikFrontendPassSSLClientCertInfosSubjectCommonName:   "true",
-						label.TraefikFrontendPassSSLClientCertInfosSubjectCountry:      "true",
-						label.TraefikFrontendPassSSLClientCertInfosSubjectLocality:     "true",
-						label.TraefikFrontendPassSSLClientCertInfosSubjectOrganization: "true",
-						label.TraefikFrontendPassSSLClientCertInfosSubjectProvince:     "true",
-						label.TraefikFrontendPassSSLClientCertInfosSubjectSerialNumber: "true",
+						label.TraefikFrontendPassTLSClientCertPem:                      "true",
+						label.TraefikFrontendPassTLSClientCertInfosNotBefore:           "true",
+						label.TraefikFrontendPassTLSClientCertInfosNotAfter:            "true",
+						label.TraefikFrontendPassTLSClientCertInfosSans:                "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectCommonName:   "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectCountry:      "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectLocality:     "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectOrganization: "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectProvince:     "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectSerialNumber: "true",
 					}),
 					ports(nat.PortMap{
 						"80/tcp": {},
@@ -139,13 +139,13 @@ func TestDockerBuildConfiguration(t *testing.T) {
 					Backend:        "backend-test",
 					PassHostHeader: true,
 					EntryPoints:    []string{},
-					PassSSLClientCert: &types.SSLClientHeaders{
+					PassTLSClientCert: &types.TLSClientHeaders{
 						PEM: true,
-						Infos: &types.SSLClientCertificateInfos{
+						Infos: &types.TLSClientCertificateInfos{
 							NotBefore: true,
 							Sans:      true,
 							NotAfter:  true,
-							Subject: &types.SSLCLientCertificateSubjectInfos{
+							Subject: &types.TLSCLientCertificateSubjectInfos{
 								CommonName:   true,
 								Country:      true,
 								Locality:     true,
@@ -451,16 +451,16 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						label.TraefikBackendBufferingMemRequestBodyBytes:     "2097152",
 						label.TraefikBackendBufferingRetryExpression:         "IsNetworkError() && Attempts() <= 2",
 
-						label.TraefikFrontendPassSSLClientCertPem:                      "true",
-						label.TraefikFrontendPassSSLClientCertInfosNotBefore:           "true",
-						label.TraefikFrontendPassSSLClientCertInfosNotAfter:            "true",
-						label.TraefikFrontendPassSSLClientCertInfosSans:                "true",
-						label.TraefikFrontendPassSSLClientCertInfosSubjectCommonName:   "true",
-						label.TraefikFrontendPassSSLClientCertInfosSubjectCountry:      "true",
-						label.TraefikFrontendPassSSLClientCertInfosSubjectLocality:     "true",
-						label.TraefikFrontendPassSSLClientCertInfosSubjectOrganization: "true",
-						label.TraefikFrontendPassSSLClientCertInfosSubjectProvince:     "true",
-						label.TraefikFrontendPassSSLClientCertInfosSubjectSerialNumber: "true",
+						label.TraefikFrontendPassTLSClientCertPem:                      "true",
+						label.TraefikFrontendPassTLSClientCertInfosNotBefore:           "true",
+						label.TraefikFrontendPassTLSClientCertInfosNotAfter:            "true",
+						label.TraefikFrontendPassTLSClientCertInfosSans:                "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectCommonName:   "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectCountry:      "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectLocality:     "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectOrganization: "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectProvince:     "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectSerialNumber: "true",
 
 						label.TraefikFrontendAuthBasic:                        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.TraefikFrontendAuthBasicRemoveHeader:            "true",
@@ -549,13 +549,13 @@ func TestDockerBuildConfiguration(t *testing.T) {
 					PassHostHeader: true,
 					PassTLSCert:    true,
 					Priority:       666,
-					PassSSLClientCert: &types.SSLClientHeaders{
+					PassTLSClientCert: &types.TLSClientHeaders{
 						PEM: true,
-						Infos: &types.SSLClientCertificateInfos{
+						Infos: &types.TLSClientCertificateInfos{
 							NotBefore: true,
 							Sans:      true,
 							NotAfter:  true,
-							Subject: &types.SSLCLientCertificateSubjectInfos{
+							Subject: &types.TLSCLientCertificateSubjectInfos{
 								CommonName:   true,
 								Country:      true,
 								Locality:     true,

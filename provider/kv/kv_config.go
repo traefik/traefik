@@ -45,7 +45,7 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getPriority":          p.getFuncInt(pathFrontendPriority, label.DefaultFrontendPriority),
 		"getPassHostHeader":    p.getPassHostHeader(),
 		"getPassTLSCert":       p.getFuncBool(pathFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getPassSSLClientCert": p.getSSLClientCert,
+		"getPassTLSClientCert": p.getTLSClientCert,
 		"getEntryPoints":       p.getFuncList(pathFrontendEntryPoints),
 		"getBasicAuth":         p.getFuncList(pathFrontendBasicAuth), // Deprecated
 		"getAuth":              p.getAuth,
@@ -370,37 +370,37 @@ func (p *Provider) getTLSSection(prefix string) []*tls.Configuration {
 	return tlsSection
 }
 
-// GetSSLClientCert create ssl client header configuration from labels
-func (p *Provider) getSSLClientCert(rootPath string) *types.SSLClientHeaders {
-	if !p.hasPrefix(rootPath, pathFrontendPassSSLClientCert) {
+// GetTLSClientCert create tls client header configuration from labels
+func (p *Provider) getTLSClientCert(rootPath string) *types.TLSClientHeaders {
+	if !p.hasPrefix(rootPath, pathFrontendPassTLSClientCert) {
 		return nil
 	}
 
-	sslClientHeaders := &types.SSLClientHeaders{
-		PEM: p.getBool(false, rootPath, pathFrontendPassSSLClientCertPem),
+	tlsClientHeaders := &types.TLSClientHeaders{
+		PEM: p.getBool(false, rootPath, pathFrontendPassTLSClientCertPem),
 	}
 
-	if p.hasPrefix(rootPath, pathFrontendPassSSLClientCertInfos) {
-		infos := &types.SSLClientCertificateInfos{
-			NotAfter:  p.getBool(false, rootPath, pathFrontendPassSSLClientCertInfosNotAfter),
-			NotBefore: p.getBool(false, rootPath, pathFrontendPassSSLClientCertInfosNotBefore),
-			Sans:      p.getBool(false, rootPath, pathFrontendPassSSLClientCertInfosSans),
+	if p.hasPrefix(rootPath, pathFrontendPassTLSClientCertInfos) {
+		infos := &types.TLSClientCertificateInfos{
+			NotAfter:  p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosNotAfter),
+			NotBefore: p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosNotBefore),
+			Sans:      p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSans),
 		}
 
-		if p.hasPrefix(rootPath, pathFrontendPassSSLClientCertInfosSubject) {
-			subject := &types.SSLCLientCertificateSubjectInfos{
-				CommonName:   p.getBool(false, rootPath, pathFrontendPassSSLClientCertInfosSubjectCommonName),
-				Country:      p.getBool(false, rootPath, pathFrontendPassSSLClientCertInfosSubjectCountry),
-				Locality:     p.getBool(false, rootPath, pathFrontendPassSSLClientCertInfosSubjectLocality),
-				Organization: p.getBool(false, rootPath, pathFrontendPassSSLClientCertInfosSubjectOrganization),
-				Province:     p.getBool(false, rootPath, pathFrontendPassSSLClientCertInfosSubjectProvince),
-				SerialNumber: p.getBool(false, rootPath, pathFrontendPassSSLClientCertInfosSubjectSerialNumber),
+		if p.hasPrefix(rootPath, pathFrontendPassTLSClientCertInfosSubject) {
+			subject := &types.TLSCLientCertificateSubjectInfos{
+				CommonName:   p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectCommonName),
+				Country:      p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectCountry),
+				Locality:     p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectLocality),
+				Organization: p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectOrganization),
+				Province:     p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectProvince),
+				SerialNumber: p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectSerialNumber),
 			}
 			infos.Subject = subject
 		}
-		sslClientHeaders.Infos = infos
+		tlsClientHeaders.Infos = infos
 	}
-	return sslClientHeaders
+	return tlsClientHeaders
 }
 
 // hasDeprecatedBasicAuth check if the frontend basic auth use the deprecated configuration

@@ -330,16 +330,16 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel(label.TraefikBackendBufferingMemRequestBodyBytes, "2097152"),
 					withLabel(label.TraefikBackendBufferingRetryExpression, "IsNetworkError() && Attempts() <= 2"),
 
-					withLabel(label.TraefikFrontendPassSSLClientCertPem, "true"),
-					withLabel(label.TraefikFrontendPassSSLClientCertInfosNotBefore, "true"),
-					withLabel(label.TraefikFrontendPassSSLClientCertInfosNotAfter, "true"),
-					withLabel(label.TraefikFrontendPassSSLClientCertInfosSans, "true"),
-					withLabel(label.TraefikFrontendPassSSLClientCertInfosSubjectCommonName, "true"),
-					withLabel(label.TraefikFrontendPassSSLClientCertInfosSubjectCountry, "true"),
-					withLabel(label.TraefikFrontendPassSSLClientCertInfosSubjectLocality, "true"),
-					withLabel(label.TraefikFrontendPassSSLClientCertInfosSubjectOrganization, "true"),
-					withLabel(label.TraefikFrontendPassSSLClientCertInfosSubjectProvince, "true"),
-					withLabel(label.TraefikFrontendPassSSLClientCertInfosSubjectSerialNumber, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertPem, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosNotBefore, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosNotAfter, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosSans, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectCommonName, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectCountry, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectLocality, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectOrganization, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectProvince, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectSerialNumber, "true"),
 
 					withLabel(label.TraefikFrontendAuthBasic, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 					withLabel(label.TraefikFrontendAuthBasicRemoveHeader, "true"),
@@ -428,13 +428,13 @@ func TestBuildConfiguration(t *testing.T) {
 					PassHostHeader: true,
 					PassTLSCert:    true,
 					Priority:       666,
-					PassSSLClientCert: &types.SSLClientHeaders{
+					PassTLSClientCert: &types.TLSClientHeaders{
 						PEM: true,
-						Infos: &types.SSLClientCertificateInfos{
+						Infos: &types.TLSClientCertificateInfos{
 							NotBefore: true,
 							Sans:      true,
 							NotAfter:  true,
-							Subject: &types.SSLCLientCertificateSubjectInfos{
+							Subject: &types.TLSCLientCertificateSubjectInfos{
 								CommonName:   true,
 								Country:      true,
 								Locality:     true,
@@ -711,16 +711,16 @@ func TestBuildConfigurationSegments(t *testing.T) {
 					withSegmentLabel(label.TraefikProtocol, "https", "containous"),
 					withSegmentLabel(label.TraefikWeight, "12", "containous"),
 
-					withSegmentLabel(label.TraefikFrontendPassSSLClientCertPem, "true", "containous"),
-					withSegmentLabel(label.TraefikFrontendPassSSLClientCertInfosNotBefore, "true", "containous"),
-					withSegmentLabel(label.TraefikFrontendPassSSLClientCertInfosNotAfter, "true", "containous"),
-					withSegmentLabel(label.TraefikFrontendPassSSLClientCertInfosSans, "true", "containous"),
-					withSegmentLabel(label.TraefikFrontendPassSSLClientCertInfosSubjectCommonName, "true", "containous"),
-					withSegmentLabel(label.TraefikFrontendPassSSLClientCertInfosSubjectCountry, "true", "containous"),
-					withSegmentLabel(label.TraefikFrontendPassSSLClientCertInfosSubjectLocality, "true", "containous"),
-					withSegmentLabel(label.TraefikFrontendPassSSLClientCertInfosSubjectOrganization, "true", "containous"),
-					withSegmentLabel(label.TraefikFrontendPassSSLClientCertInfosSubjectProvince, "true", "containous"),
-					withSegmentLabel(label.TraefikFrontendPassSSLClientCertInfosSubjectSerialNumber, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertPem, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosNotBefore, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosNotAfter, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosSans, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectCommonName, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectCountry, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectLocality, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectOrganization, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectProvince, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectSerialNumber, "true", "containous"),
 
 					withSegmentLabel(label.TraefikFrontendAuthBasic, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0", "containous"),
 					withSegmentLabel(label.TraefikFrontendAuthBasicRemoveHeader, "true", "containous"),
@@ -804,13 +804,13 @@ func TestBuildConfigurationSegments(t *testing.T) {
 					PassHostHeader: true,
 					PassTLSCert:    true,
 					Priority:       666,
-					PassSSLClientCert: &types.SSLClientHeaders{
+					PassTLSClientCert: &types.TLSClientHeaders{
 						PEM: true,
-						Infos: &types.SSLClientCertificateInfos{
+						Infos: &types.TLSClientCertificateInfos{
 							NotBefore: true,
 							Sans:      true,
 							NotAfter:  true,
-							Subject: &types.SSLCLientCertificateSubjectInfos{
+							Subject: &types.TLSCLientCertificateSubjectInfos{
 								CommonName:   true,
 								Country:      true,
 								Locality:     true,

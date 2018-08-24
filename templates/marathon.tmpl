@@ -77,19 +77,19 @@
       "{{.}}",
       {{end}}]
 
-    {{ $sslClientCert := getPassSSLClientCert $app.SegmentLabels }}
-    {{if $sslClientCert }}
-    [frontends."{{ $frontendName }}".passSSLClientCert]
-      pem = {{ $sslClientCert.PEM }}
-      {{ $infos := $sslClientCert.Infos }}
+    {{ $tlsClientCert := getPassTLSClientCert $app.SegmentLabels }}
+    {{if $tlsClientCert }}
+    [frontends."{{ $frontendName }}".passTLSClientCert]
+      pem = {{ $tlsClientCert.PEM }}
+      {{ $infos := $tlsClientCert.Infos }}
       {{if $infos }}
-      [frontends."{{ $frontendName }}".passSSLClientCert.infos]
+      [frontends."{{ $frontendName }}".passTLSClientCert.infos]
         notAfter = {{ $infos.NotAfter   }}
         notBefore = {{ $infos.NotBefore }}
         sans = {{ $infos.Sans }}
         {{ $subject := $infos.Subject }}
         {{if $subject }}
-        [frontends."{{ $frontendName }}".passSSLClientCert.infos.subject]
+        [frontends."{{ $frontendName }}".passTLSClientCert.infos.subject]
           country = {{ $subject.Country }}
           province = {{ $subject.Province }}
           locality = {{ $subject.Locality }}

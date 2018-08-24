@@ -357,16 +357,16 @@ func TestBuildConfiguration(t *testing.T) {
 						label.TraefikBackendBufferingMemRequestBodyBytes:     aws.String("2097152"),
 						label.TraefikBackendBufferingRetryExpression:         aws.String("IsNetworkError() && Attempts() <= 2"),
 
-						label.TraefikFrontendPassSSLClientCertPem:                      aws.String("true"),
-						label.TraefikFrontendPassSSLClientCertInfosNotBefore:           aws.String("true"),
-						label.TraefikFrontendPassSSLClientCertInfosNotAfter:            aws.String("true"),
-						label.TraefikFrontendPassSSLClientCertInfosSans:                aws.String("true"),
-						label.TraefikFrontendPassSSLClientCertInfosSubjectCommonName:   aws.String("true"),
-						label.TraefikFrontendPassSSLClientCertInfosSubjectCountry:      aws.String("true"),
-						label.TraefikFrontendPassSSLClientCertInfosSubjectLocality:     aws.String("true"),
-						label.TraefikFrontendPassSSLClientCertInfosSubjectOrganization: aws.String("true"),
-						label.TraefikFrontendPassSSLClientCertInfosSubjectProvince:     aws.String("true"),
-						label.TraefikFrontendPassSSLClientCertInfosSubjectSerialNumber: aws.String("true"),
+						label.TraefikFrontendPassTLSClientCertPem:                      aws.String("true"),
+						label.TraefikFrontendPassTLSClientCertInfosNotBefore:           aws.String("true"),
+						label.TraefikFrontendPassTLSClientCertInfosNotAfter:            aws.String("true"),
+						label.TraefikFrontendPassTLSClientCertInfosSans:                aws.String("true"),
+						label.TraefikFrontendPassTLSClientCertInfosSubjectCommonName:   aws.String("true"),
+						label.TraefikFrontendPassTLSClientCertInfosSubjectCountry:      aws.String("true"),
+						label.TraefikFrontendPassTLSClientCertInfosSubjectLocality:     aws.String("true"),
+						label.TraefikFrontendPassTLSClientCertInfosSubjectOrganization: aws.String("true"),
+						label.TraefikFrontendPassTLSClientCertInfosSubjectProvince:     aws.String("true"),
+						label.TraefikFrontendPassTLSClientCertInfosSubjectSerialNumber: aws.String("true"),
 
 						label.TraefikFrontendAuthBasic:                        aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 						label.TraefikFrontendAuthBasicRemoveHeader:            aws.String("true"),
@@ -501,13 +501,13 @@ func TestBuildConfiguration(t *testing.T) {
 						PassHostHeader: true,
 						PassTLSCert:    true,
 						Priority:       666,
-						PassSSLClientCert: &types.SSLClientHeaders{
+						PassTLSClientCert: &types.TLSClientHeaders{
 							PEM: true,
-							Infos: &types.SSLClientCertificateInfos{
+							Infos: &types.TLSClientCertificateInfos{
 								NotBefore: true,
 								Sans:      true,
 								NotAfter:  true,
-								Subject: &types.SSLCLientCertificateSubjectInfos{
+								Subject: &types.TLSCLientCertificateSubjectInfos{
 									CommonName:   true,
 									Country:      true,
 									Locality:     true,
