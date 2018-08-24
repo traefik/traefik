@@ -22,6 +22,7 @@ import (
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/h2c"
+	"github.com/containous/traefik/ip"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"
@@ -31,7 +32,6 @@ import (
 	"github.com/containous/traefik/safe"
 	traefiktls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
-	"github.com/containous/traefik/whitelist"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
 	"github.com/xenolf/lego/acme"
@@ -552,7 +552,7 @@ func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.
 	if entryPoint.ProxyProtocol != nil {
 		listener, err = buildProxyProtocolListener(entryPoint, listener)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, fmt.Errorf("error creating proxy protocol listener: %v", err)
 		}
 	}
 
@@ -572,23 +572,32 @@ func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.
 }
 
 func buildProxyProtocolListener(entryPoint *configuration.EntryPoint, listener net.Listener) (net.Listener, error) {
-	IPs, err := whitelist.NewIP(entryPoint.ProxyProtocol.TrustedIPs, entryPoint.ProxyProtocol.Insecure, false)
-	if err != nil {
-		return nil, fmt.Errorf("error creating whitelist: %s", err)
+	var sourceCheck func(addr net.Addr) (bool, error)
+	if entryPoint.ProxyProtocol.Insecure {
+		sourceCheck = func(_ net.Addr) (bool, error) {
+			return true, nil
+		}
+	} else {
+		checker, err := ip.NewChecker(entryPoint.ProxyProtocol.TrustedIPs)
+		if err != nil {
+			return nil, err
+		}
+
+		sourceCheck = func(addr net.Addr) (bool, error) {
+			ipAddr, ok := addr.(*net.TCPAddr)
+			if !ok {
+				return false, fmt.Errorf("type error %v", addr)
+			}
+
+			return checker.ContainsIP(ipAddr.IP), nil
+		}
 	}
 
 	log.Infof("Enabling ProxyProtocol for trusted IPs %v", entryPoint.ProxyProtocol.TrustedIPs)
 
 	return &proxyproto.Listener{
-		Listener: listener,
-		SourceCheck: func(addr net.Addr) (bool, error) {
-			ip, ok := addr.(*net.TCPAddr)
-			if !ok {
-				return false, fmt.Errorf("type error %v", addr)
-			}
-
-			return IPs.ContainsIP(ip.IP), nil
-		},
+		Listener:    listener,
+		SourceCheck: sourceCheck,
 	}, nil
 }
 

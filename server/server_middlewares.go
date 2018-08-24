@@ -9,6 +9,7 @@ import (
 	"github.com/containous/traefik/middlewares/accesslog"
 	mauth "github.com/containous/traefik/middlewares/auth"
 	"github.com/containous/traefik/middlewares/errorpages"
+	"github.com/containous/traefik/middlewares/forwardedheaders"
 	"github.com/containous/traefik/middlewares/redirect"
 	"github.com/containous/traefik/types"
 	thoas_stats "github.com/thoas/stats"
@@ -47,7 +48,7 @@ func (s *Server) buildMiddlewares(frontendName string, frontend *types.Frontend,
 	}
 
 	// Whitelist
-	ipWhitelistMiddleware, err := buildIPWhiteLister(frontend.WhiteList, frontend.WhitelistSourceRange)
+	ipWhitelistMiddleware, err := buildIPWhiteLister(frontend.WhiteList, s.entryPoints[entryPointName].Configuration.ClientIPStrategy)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("error creating IP Whitelister: %s", err)
 	}
@@ -146,9 +147,18 @@ func (s *Server) buildServerEntryPointMiddlewares(serverEntryPointName string) (
 		serverMiddlewares = append(serverMiddlewares, &middlewares.Compress{})
 	}
 
-	ipWhitelistMiddleware, err := buildIPWhiteLister(
-		s.entryPoints[serverEntryPointName].Configuration.WhiteList,
-		s.entryPoints[serverEntryPointName].Configuration.WhitelistSourceRange)
+	if s.entryPoints[serverEntryPointName].Configuration.ForwardedHeaders != nil {
+		xForwardedMiddleware, err := forwardedheaders.NewXforwarded(
+			s.entryPoints[serverEntryPointName].Configuration.ForwardedHeaders.Insecure,
+			s.entryPoints[serverEntryPointName].Configuration.ForwardedHeaders.TrustedIPs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create xforwarded headers middleware: %v", err)
+		}
+		serverMiddlewares = append(serverMiddlewares, xForwardedMiddleware)
+	}
+
+	ipWhitelistMiddleware, err := buildIPWhiteLister(s.entryPoints[serverEntryPointName].Configuration.WhiteList, s.entryPoints[serverEntryPointName].Configuration.ClientIPStrategy)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ip whitelist middleware: %v", err)
 	}
@@ -268,14 +278,21 @@ func (s *Server) buildRedirectHandler(srcEntryPointName string, opt *types.Redir
 	return redirection, nil
 }
 
-func buildIPWhiteLister(whiteList *types.WhiteList, wlRange []string) (*middlewares.IPWhiteLister, error) {
-	if whiteList != nil &&
-		len(whiteList.SourceRange) > 0 {
-		return middlewares.NewIPWhiteLister(whiteList.SourceRange, whiteList.UseXForwardedFor)
-	} else if len(wlRange) > 0 {
-		return middlewares.NewIPWhiteLister(wlRange, false)
+func buildIPWhiteLister(whiteList *types.WhiteList, ipStrategy *types.IPStrategy) (*middlewares.IPWhiteLister, error) {
+	if whiteList == nil {
+		return nil, nil
 	}
-	return nil, nil
+
+	if whiteList.IPStrategy != nil {
+		ipStrategy = whiteList.IPStrategy
+	}
+
+	strategy, err := ipStrategy.Get()
+	if err != nil {
+		return nil, err
+	}
+
+	return middlewares.NewIPWhiteLister(whiteList.SourceRange, strategy)
 }
 
 func (s *Server) wrapNegroniHandlerWithAccessLog(handler negroni.Handler, frontendName string) negroni.Handler {

@@ -216,6 +216,39 @@ func TestProviderBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
+			desc: "forward auth",
+			kvPairs: filler("traefik",
+				frontend("frontend",
+					withPair(pathFrontendBackend, "backend"),
+					withList(pathFrontendWhiteListSourceRange, "1.1.1.1/24", "1234:abcd::42/32"),
+					withPair(pathFrontendWhiteListIPStrategy, "true"),
+				),
+				backend("backend"),
+			),
+			expected: &types.Configuration{
+				Backends: map[string]*types.Backend{
+					"backend": {
+						LoadBalancer: &types.LoadBalancer{
+							Method: "wrr",
+						},
+					},
+				},
+				Frontends: map[string]*types.Frontend{
+					"frontend": {
+						Backend:        "backend",
+						PassHostHeader: true,
+						EntryPoints:    []string{},
+						WhiteList: &types.WhiteList{
+							SourceRange: []string{"1.1.1.1/24", "1234:abcd::42/32"},
+							IPStrategy: &types.IPStrategy{
+								ExcludedIPs: []string{},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			desc: "all parameters",
 			kvPairs: filler("traefik",
 				backend("backend1",
@@ -247,7 +280,8 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					withPair(pathFrontendPassTLSCert, "true"),
 					withList(pathFrontendEntryPoints, "http", "https"),
 					withList(pathFrontendWhiteListSourceRange, "1.1.1.1/24", "1234:abcd::42/32"),
-					withPair(pathFrontendWhiteListUseXForwardedFor, "true"),
+					withPair(pathFrontendWhiteListIPStrategyDepth, "5"),
+					withList(pathFrontendWhiteListIPStrategyExcludedIPs, "1.1.1.1/24", "1234:abcd::42/32"),
 
 					withPair(pathFrontendAuthBasicRemoveHeader, "true"),
 					withList(pathFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
@@ -363,8 +397,11 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						Backend:     "backend1",
 						PassTLSCert: true,
 						WhiteList: &types.WhiteList{
-							SourceRange:      []string{"1.1.1.1/24", "1234:abcd::42/32"},
-							UseXForwardedFor: true,
+							SourceRange: []string{"1.1.1.1/24", "1234:abcd::42/32"},
+							IPStrategy: &types.IPStrategy{
+								Depth:       5,
+								ExcludedIPs: []string{"1.1.1.1/24", "1234:abcd::42/32"},
+							},
 						},
 						Auth: &types.Auth{
 							HeaderField: "X-WebAuth-User",
@@ -1240,30 +1277,7 @@ func TestWhiteList(t *testing.T) {
 				SourceRange: []string{
 					"10.10.10.10",
 				},
-				UseXForwardedFor: false,
 			},
-		},
-		{
-			desc:     "should return a struct when range and UseXForwardedFor",
-			rootPath: "traefik/frontends/foo",
-			kvPairs: filler("traefik",
-				frontend("foo",
-					withPair(pathFrontendWhiteListSourceRange, "10.10.10.10"),
-					withPair(pathFrontendWhiteListUseXForwardedFor, "true"))),
-			expected: &types.WhiteList{
-				SourceRange: []string{
-					"10.10.10.10",
-				},
-				UseXForwardedFor: true,
-			},
-		},
-		{
-			desc:     "should return nil when only UseXForwardedFor",
-			rootPath: "traefik/frontends/foo",
-			kvPairs: filler("traefik",
-				frontend("foo",
-					withPair(pathFrontendWhiteListUseXForwardedFor, "true"))),
-			expected: nil,
 		},
 	}
 

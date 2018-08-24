@@ -1,0 +1,34 @@
+noOverrideWhitelist:
+  image: containous/whoami
+  labels:
+    - traefik.enable=true
+    - traefik.port=80
+    - traefik.frontend.rule=Host:no.override.whitelist.docker.local
+    - traefik.frontend.whiteList.sourceRange=8.8.8.8
+
+overrideIPStrategyRemoteAddrWhitelist:
+  image: containous/whoami
+  labels:
+    - traefik.enable=true
+    - traefik.port=80
+    - traefik.frontend.rule=Host:override.remoteaddr.whitelist.docker.local
+    - traefik.frontend.whiteList.sourceRange=8.8.8.8
+    - traefik.frontend.whiteList.ipStrategy=true
+
+overrideIPStrategyDepthWhitelist:
+  image: containous/whoami
+  labels:
+  - traefik.enable=true
+  - traefik.port=80
+  - traefik.frontend.rule=Host:override.depth.whitelist.docker.local
+  - traefik.frontend.whiteList.sourceRange=8.8.8.8
+  - traefik.frontend.whiteList.ipStrategy.depth=3
+
+overrideIPStrategyExcludedIPsWhitelist:
+  image: containous/whoami
+  labels:
+  - traefik.enable=true
+  - traefik.port=80
+  - traefik.frontend.rule=Host:override.excludedips.whitelist.docker.local
+  - traefik.frontend.whiteList.sourceRange=8.8.8.8
+  - traefik.frontend.whiteList.ipStrategy.excludedIPs=10.0.0.1,10.0.0.2

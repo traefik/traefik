@@ -74,17 +74,18 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendAuthForwardTLSInsecureSkipVerify: "true",
 						label.TraefikFrontendAuthHeaderField:                  "X-WebAuth-User",
 
-						label.TraefikFrontendEntryPoints:               "http,https",
-						label.TraefikFrontendPassHostHeader:            "true",
-						label.TraefikFrontendPassTLSCert:               "true",
-						label.TraefikFrontendPriority:                  "666",
-						label.TraefikFrontendRedirectEntryPoint:        "https",
-						label.TraefikFrontendRedirectRegex:             "nope",
-						label.TraefikFrontendRedirectReplacement:       "nope",
-						label.TraefikFrontendRedirectPermanent:         "true",
-						label.TraefikFrontendRule:                      "Host:traefik.io",
-						label.TraefikFrontendWhiteListSourceRange:      "10.10.10.10",
-						label.TraefikFrontendWhiteListUseXForwardedFor: "true",
+						label.TraefikFrontendEntryPoints:                    "http,https",
+						label.TraefikFrontendPassHostHeader:                 "true",
+						label.TraefikFrontendPassTLSCert:                    "true",
+						label.TraefikFrontendPriority:                       "666",
+						label.TraefikFrontendRedirectEntryPoint:             "https",
+						label.TraefikFrontendRedirectRegex:                  "nope",
+						label.TraefikFrontendRedirectReplacement:            "nope",
+						label.TraefikFrontendRedirectPermanent:              "true",
+						label.TraefikFrontendRule:                           "Host:traefik.io",
+						label.TraefikFrontendWhiteListSourceRange:           "10.10.10.10",
+						label.TraefikFrontendWhiteListIPStrategyExcludedIPS: "10.10.10.10,10.10.10.11",
+						label.TraefikFrontendWhiteListIPStrategyDepth:       "5",
 
 						label.TraefikFrontendRequestHeaders:          "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
 						label.TraefikFrontendResponseHeaders:         "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
@@ -156,7 +157,10 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						SourceRange: []string{
 							"10.10.10.10",
 						},
-						UseXForwardedFor: true,
+						IPStrategy: &types.IPStrategy{
+							Depth:       5,
+							ExcludedIPs: []string{"10.10.10.10", "10.10.10.11"},
+						},
 					},
 					Headers: &types.Headers{
 						CustomRequestHeaders: map[string]string{
@@ -305,16 +309,15 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthForwardTLSInsecureSkipVerify: "true",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthHeaderField:                  "X-WebAuth-User",
 
-						label.Prefix + "sauternes." + label.SuffixFrontendEntryPoints:               "http,https",
-						label.Prefix + "sauternes." + label.SuffixFrontendPassHostHeader:            "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSCert:               "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendPriority:                  "666",
-						label.Prefix + "sauternes." + label.SuffixFrontendRedirectEntryPoint:        "https",
-						label.Prefix + "sauternes." + label.SuffixFrontendRedirectRegex:             "nope",
-						label.Prefix + "sauternes." + label.SuffixFrontendRedirectReplacement:       "nope",
-						label.Prefix + "sauternes." + label.SuffixFrontendRedirectPermanent:         "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendWhiteListSourceRange:      "10.10.10.10",
-						label.Prefix + "sauternes." + label.SuffixFrontendWhiteListUseXForwardedFor: "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendEntryPoints:          "http,https",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassHostHeader:       "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSCert:          "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPriority:             "666",
+						label.Prefix + "sauternes." + label.SuffixFrontendRedirectEntryPoint:   "https",
+						label.Prefix + "sauternes." + label.SuffixFrontendRedirectRegex:        "nope",
+						label.Prefix + "sauternes." + label.SuffixFrontendRedirectReplacement:  "nope",
+						label.Prefix + "sauternes." + label.SuffixFrontendRedirectPermanent:    "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendWhiteListSourceRange: "10.10.10.10",
 
 						label.Prefix + "sauternes." + label.SuffixFrontendRequestHeaders:                 "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
 						label.Prefix + "sauternes." + label.SuffixFrontendResponseHeaders:                "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
@@ -383,7 +386,6 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						SourceRange: []string{
 							"10.10.10.10",
 						},
-						UseXForwardedFor: true,
 					},
 					Headers: &types.Headers{
 						CustomRequestHeaders: map[string]string{

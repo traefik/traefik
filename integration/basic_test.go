@@ -3,6 +3,7 @@ package integration
 import (
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"strings"
 	"syscall"
@@ -253,7 +254,6 @@ func (s *SimpleSuite) TestNoAuthOnPing(c *check.C) {
 }
 
 func (s *SimpleSuite) TestDefaultEntrypointHTTP(c *check.C) {
-
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
@@ -272,7 +272,6 @@ func (s *SimpleSuite) TestDefaultEntrypointHTTP(c *check.C) {
 }
 
 func (s *SimpleSuite) TestWithUnexistingEntrypoint(c *check.C) {
-
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
@@ -291,7 +290,6 @@ func (s *SimpleSuite) TestWithUnexistingEntrypoint(c *check.C) {
 }
 
 func (s *SimpleSuite) TestMetricsPrometheusDefaultEntrypoint(c *check.C) {
-
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
@@ -313,15 +311,16 @@ func (s *SimpleSuite) TestMetricsPrometheusDefaultEntrypoint(c *check.C) {
 }
 
 func (s *SimpleSuite) TestMultipleProviderSameBackendName(c *check.C) {
-
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
+
 	ipWhoami01 := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
 	ipWhoami02 := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
 	file := s.adaptFile(c, "fixtures/multiple_provider.toml", struct{ IP string }{
 		IP: ipWhoami02,
 	})
 	defer os.Remove(file)
+
 	cmd, output := s.traefikCmd(withConfigFile(file))
 	defer output(c)
 
@@ -338,4 +337,81 @@ func (s *SimpleSuite) TestMultipleProviderSameBackendName(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/file", 1*time.Second, try.BodyContains(ipWhoami02))
 	c.Assert(err, checker.IsNil)
 
+}
+
+func (s *SimpleSuite) TestIPStrategyWhitelist(c *check.C) {
+	s.createComposeProject(c, "whitelist")
+	s.composeProject.Start(c)
+
+	cmd, output := s.traefikCmd(withConfigFile("fixtures/simple_whitelist.toml"))
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("override"))
+	c.Assert(err, checker.IsNil)
+
+	testCases := []struct {
+		desc               string
+		xForwardedFor      string
+		host               string
+		expectedStatusCode int
+	}{
+		{
+			desc:               "default client ip strategy accept",
+			xForwardedFor:      "8.8.8.8,127.0.0.1",
+			host:               "no.override.whitelist.docker.local",
+			expectedStatusCode: 200,
+		},
+		{
+			desc:               "default client ip strategy reject",
+			xForwardedFor:      "8.8.8.10,127.0.0.1",
+			host:               "no.override.whitelist.docker.local",
+			expectedStatusCode: 403,
+		},
+		{
+			desc:               "override remote addr reject",
+			xForwardedFor:      "8.8.8.8,8.8.8.8",
+			host:               "override.remoteaddr.whitelist.docker.local",
+			expectedStatusCode: 403,
+		},
+		{
+			desc:               "override depth accept",
+			xForwardedFor:      "8.8.8.8,10.0.0.1,127.0.0.1",
+			host:               "override.depth.whitelist.docker.local",
+			expectedStatusCode: 200,
+		},
+		{
+			desc:               "override depth reject",
+			xForwardedFor:      "10.0.0.1,8.8.8.8,127.0.0.1",
+			host:               "override.depth.whitelist.docker.local",
+			expectedStatusCode: 403,
+		},
+		{
+			desc:               "override excludedIPs reject",
+			xForwardedFor:      "10.0.0.3,10.0.0.1,10.0.0.2",
+			host:               "override.excludedips.whitelist.docker.local",
+			expectedStatusCode: 403,
+		},
+		{
+			desc:               "override excludedIPs accept",
+			xForwardedFor:      "8.8.8.8,10.0.0.1,10.0.0.2",
+			host:               "override.excludedips.whitelist.docker.local",
+			expectedStatusCode: 200,
+		},
+	}
+
+	for _, test := range testCases {
+		req := httptest.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+		req.Header.Set("X-Forwarded-For", test.xForwardedFor)
+		req.Host = test.host
+		req.RequestURI = ""
+
+		err = try.Request(req, 1*time.Second, try.StatusCodeIs(test.expectedStatusCode))
+		if err != nil {
+			c.Fatalf("Error while %s: %v", test.desc, err)
+		}
+	}
 }

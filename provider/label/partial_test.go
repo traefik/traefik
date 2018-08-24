@@ -135,18 +135,6 @@ func TestWhiteList(t *testing.T) {
 			expected: nil,
 		},
 		{
-			desc: "should return a struct when deprecated label",
-			labels: map[string]string{
-				TraefikFrontendWhitelistSourceRange: "10.10.10.10",
-			},
-			expected: &types.WhiteList{
-				SourceRange: []string{
-					"10.10.10.10",
-				},
-				UseXForwardedFor: false,
-			},
-		},
-		{
 			desc: "should return a struct when only range",
 			labels: map[string]string{
 				TraefikFrontendWhiteListSourceRange: "10.10.10.10",
@@ -155,42 +143,75 @@ func TestWhiteList(t *testing.T) {
 				SourceRange: []string{
 					"10.10.10.10",
 				},
-				UseXForwardedFor: false,
 			},
 		},
 		{
-			desc: "should return a struct when range and UseXForwardedFor",
+			desc: "should return a struct with ip strategy depth",
 			labels: map[string]string{
-				TraefikFrontendWhiteListSourceRange:      "10.10.10.10",
-				TraefikFrontendWhiteListUseXForwardedFor: "true",
+				TraefikFrontendWhiteListSourceRange:     "10.10.10.10",
+				TraefikFrontendWhiteListIPStrategyDepth: "5",
 			},
 			expected: &types.WhiteList{
 				SourceRange: []string{
 					"10.10.10.10",
 				},
-				UseXForwardedFor: true,
+				IPStrategy: &types.IPStrategy{
+					Depth: 5,
+				},
 			},
 		},
 		{
-			desc: "should return a struct when mix deprecated label and new labels",
+			desc: "should return a struct with ip strategy depth and excluded ips",
 			labels: map[string]string{
-				TraefikFrontendWhitelistSourceRange:      "20.20.20.20",
-				TraefikFrontendWhiteListSourceRange:      "10.10.10.10",
-				TraefikFrontendWhiteListUseXForwardedFor: "true",
+				TraefikFrontendWhiteListSourceRange:           "10.10.10.10",
+				TraefikFrontendWhiteListIPStrategyDepth:       "5",
+				TraefikFrontendWhiteListIPStrategyExcludedIPS: "10.10.10.10,10.10.10.11",
 			},
 			expected: &types.WhiteList{
 				SourceRange: []string{
 					"10.10.10.10",
 				},
-				UseXForwardedFor: true,
+				IPStrategy: &types.IPStrategy{
+					Depth: 5,
+					ExcludedIPs: []string{
+						"10.10.10.10",
+						"10.10.10.11",
+					},
+				},
 			},
 		},
 		{
-			desc: "should return nil when only UseXForwardedFor",
+			desc: "should return a struct with ip strategy (remoteAddr) with no depth and no excludedIPs",
 			labels: map[string]string{
-				TraefikFrontendWhiteListUseXForwardedFor: "true",
+				TraefikFrontendWhiteListSourceRange: "10.10.10.10",
+				TraefikFrontendWhiteListIPStrategy:  "true",
 			},
-			expected: nil,
+			expected: &types.WhiteList{
+				SourceRange: []string{
+					"10.10.10.10",
+				},
+				IPStrategy: &types.IPStrategy{
+					Depth:       0,
+					ExcludedIPs: nil,
+				},
+			},
+		},
+		{
+			desc: "should return a struct with ip strategy with depth",
+			labels: map[string]string{
+				TraefikFrontendWhiteListSourceRange:     "10.10.10.10",
+				TraefikFrontendWhiteListIPStrategy:      "true",
+				TraefikFrontendWhiteListIPStrategyDepth: "5",
+			},
+			expected: &types.WhiteList{
+				SourceRange: []string{
+					"10.10.10.10",
+				},
+				IPStrategy: &types.IPStrategy{
+					Depth:       5,
+					ExcludedIPs: nil,
+				},
+			},
 		},
 	}
 

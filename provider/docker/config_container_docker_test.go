@@ -403,17 +403,18 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendAuthForwardTLSInsecureSkipVerify: "true",
 						label.TraefikFrontendAuthHeaderField:                  "X-WebAuth-User",
 
-						label.TraefikFrontendEntryPoints:               "http,https",
-						label.TraefikFrontendPassHostHeader:            "true",
-						label.TraefikFrontendPassTLSCert:               "true",
-						label.TraefikFrontendPriority:                  "666",
-						label.TraefikFrontendRedirectEntryPoint:        "https",
-						label.TraefikFrontendRedirectRegex:             "nope",
-						label.TraefikFrontendRedirectReplacement:       "nope",
-						label.TraefikFrontendRedirectPermanent:         "true",
-						label.TraefikFrontendRule:                      "Host:traefik.io",
-						label.TraefikFrontendWhiteListSourceRange:      "10.10.10.10",
-						label.TraefikFrontendWhiteListUseXForwardedFor: "true",
+						label.TraefikFrontendEntryPoints:                    "http,https",
+						label.TraefikFrontendPassHostHeader:                 "true",
+						label.TraefikFrontendPassTLSCert:                    "true",
+						label.TraefikFrontendPriority:                       "666",
+						label.TraefikFrontendRedirectEntryPoint:             "https",
+						label.TraefikFrontendRedirectRegex:                  "nope",
+						label.TraefikFrontendRedirectReplacement:            "nope",
+						label.TraefikFrontendRedirectPermanent:              "true",
+						label.TraefikFrontendRule:                           "Host:traefik.io",
+						label.TraefikFrontendWhiteListSourceRange:           "10.10.10.10",
+						label.TraefikFrontendWhiteListIPStrategyExcludedIPS: "10.10.10.10,10.10.10.11",
+						label.TraefikFrontendWhiteListIPStrategyDepth:       "5",
 
 						label.TraefikFrontendRequestHeaders:          "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
 						label.TraefikFrontendResponseHeaders:         "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
@@ -484,8 +485,11 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						},
 					},
 					WhiteList: &types.WhiteList{
-						SourceRange:      []string{"10.10.10.10"},
-						UseXForwardedFor: true,
+						SourceRange: []string{"10.10.10.10"},
+						IPStrategy: &types.IPStrategy{
+							Depth:       5,
+							ExcludedIPs: []string{"10.10.10.10", "10.10.10.11"},
+						},
 					},
 					Headers: &types.Headers{
 						CustomRequestHeaders: map[string]string{
