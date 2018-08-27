@@ -1006,19 +1006,19 @@ var _templatesEcsTmpl = []byte(`[backends]
       "{{.}}",
       {{end}}]
 
-    {{ $tlsClientCert := getPassTLSClientCert $instance.TraefikLabels }}
+    {{ $tlsClientCert := getPassTLSClientCert $instance.SegmentLabels }}
     {{if $tlsClientCert }}
-    [frontends."frontend-{{ $serviceName }}".passTLSClientCert]
+    [frontends."frontend-{{ $frontendName }}".passTLSClientCert]
       pem = {{ $tlsClientCert.PEM }}
       {{ $infos := $tlsClientCert.Infos }}
       {{if $infos }}
-      [frontends."frontend-{{ $serviceName }}".passTLSClientCert.infos]
+      [frontends."frontend-{{ $frontendName }}".passTLSClientCert.infos]
         notAfter = {{ $infos.NotAfter   }}
         notBefore = {{ $infos.NotBefore }}
         sans = {{ $infos.Sans }}
         {{ $subject := $infos.Subject }}
         {{if $subject }}
-        [frontends."frontend-{{ $serviceName }}".passTLSClientCert.infos.subject]
+        [frontends."frontend-{{ $frontendName }}".passTLSClientCert.infos.subject]
           country = {{ $subject.Country }}
           province = {{ $subject.Province }}
           locality = {{ $subject.Locality }}
