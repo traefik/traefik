@@ -69,12 +69,6 @@ func (rw *HeaderRewriter) Rewrite(req *http.Request) {
 	if rw.Hostname != "" {
 		req.Header.Set(XForwardedServer, rw.Hostname)
 	}
-
-	if !IsWebsocketRequest(req) {
-		// Remove hop-by-hop headers to the backend.  Especially important is "Connection" because we want a persistent
-		// connection, regardless of what the client sent to us.
-		utils.RemoveHeaders(req.Header, HopHeaders...)
-	}
 }
 
 func forwardedPort(req *http.Request) string {
