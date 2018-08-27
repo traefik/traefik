@@ -41,11 +41,8 @@ func (retry *Retry) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	attempts := 1
 	for {
 		attemptsExhausted := attempts >= retry.attempts
-		// Websocket requests can't be retried at this point in time.
-		// This is due to the fact that gorilla/websocket doesn't use the request
-		// context and so we don't get httptrace information.
-		// Websocket clients should however retry on their own anyway.
-		shouldRetry := !attemptsExhausted && !isWebsocketRequest(r)
+
+		shouldRetry := !attemptsExhausted
 		retryResponseWriter := newRetryResponseWriter(rw, shouldRetry)
 
 		// Disable retries when the backend already received request data
