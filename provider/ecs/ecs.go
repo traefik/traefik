@@ -46,6 +46,8 @@ type ecsInstance struct {
 	containerDefinition *ecs.ContainerDefinition
 	machine             *machine
 	TraefikLabels       map[string]string
+	SegmentLabels       map[string]string
+	SegmentName         string
 }
 
 type portMapping struct {
