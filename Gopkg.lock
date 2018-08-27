@@ -706,7 +706,7 @@
   branch = "master"
   name = "github.com/gorilla/websocket"
   packages = ["."]
-  revision = "eb925808374e5ca90c83401a40d711dc08c0c0f6"
+  revision = "66b9c49e59c6c48f0ffce28c2d8b8a5678502c6d"
 
 [[projects]]
   name = "github.com/gravitational/trace"
@@ -1272,7 +1272,7 @@
     "roundrobin",
     "utils"
   ]
-  revision = "885e42fe04d8e0efa6c18facad4e0fc5757cde9b"
+  revision = "f6bbeac6d5c4c06f88ba07ed42983ff36a5b407e"
 
 [[projects]]
   name = "github.com/vulcand/predicate"
