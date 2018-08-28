@@ -226,6 +226,65 @@ func TestRateSA900AuditEventIsRepayment(t *testing.T) {
 	assert.Equal(t, "true", event.Detail.IsRepayment)
 
 }
+func TestRateSA900AuditEventIsNotRepaymentWhenAmountZero(t *testing.T) {
+
+	types.TheClock = T0
+	x := `	
+	<GovTalkMessage>
+	<Body>
+	<IRenvelope>
+		<SAtrust>
+			<TrustEstate>
+				<TaxCalculation>
+					<ClaimRepaymentForNextYear>yes</ClaimRepaymentForNextYear>
+					<DueBeforePaymentsOnAccount>0.00</DueBeforePaymentsOnAccount>
+				</TaxCalculation>
+			</TrustEstate>
+		</SAtrust>
+	</IRenvelope>
+	</Body>	
+	</GovTalkMessage>
+	`
+	gtm, err := makePartialGtmWithBody(x)
+	if err != nil {
+		t.Fatal(err)
+	}
+	event := &RATEAuditEvent{}
+	event.AuditType = "HMRC-SA-SA900"
+	gtm.populateDetails(event)
+
+	assert.Equal(t, "false", event.Detail.IsRepayment)
+}
+
+func TestRateSA900AuditEventIsNotRepaymentWhenGtZero(t *testing.T) {
+
+	types.TheClock = T0
+	x := `	
+	<GovTalkMessage>
+	<Body>
+	<IRenvelope>
+		<SAtrust>
+			<TrustEstate>
+				<TaxCalculation>
+					<ClaimRepaymentForNextYear>yes</ClaimRepaymentForNextYear>
+					<DueBeforePaymentsOnAccount>0.01</DueBeforePaymentsOnAccount>
+				</TaxCalculation>
+			</TrustEstate>
+		</SAtrust>
+	</IRenvelope>
+	</Body>	
+	</GovTalkMessage>
+	`
+	gtm, err := makePartialGtmWithBody(x)
+	if err != nil {
+		t.Fatal(err)
+	}
+	event := &RATEAuditEvent{}
+	event.AuditType = "HMRC-SA-SA900"
+	gtm.populateDetails(event)
+
+	assert.Equal(t, "false", event.Detail.IsRepayment)
+}
 
 func TestRateSA900AuditEventIsNotRepaymentWhenEmpty(t *testing.T) {
 
@@ -239,6 +298,64 @@ func TestRateSA900AuditEventIsNotRepaymentWhenEmpty(t *testing.T) {
 				<TaxCalculation>
 					<ClaimRepaymentForNextYear />
 					<DueBeforePaymentsOnAccount  />
+				</TaxCalculation>
+			</TrustEstate>
+		</SAtrust>
+	</IRenvelope>
+	</Body>	
+	</GovTalkMessage>
+	`
+	gtm, err := makePartialGtmWithBody(x)
+	if err != nil {
+		t.Fatal(err)
+	}
+	event := &RATEAuditEvent{}
+	event.AuditType = "HMRC-SA-SA900"
+	gtm.populateDetails(event)
+
+	assert.Equal(t, "false", event.Detail.IsRepayment)
+}
+
+func TestRateSA900AuditEventIsNotRepaymentWhenClaimMissing(t *testing.T) {
+
+	types.TheClock = T0
+	x := `	
+	<GovTalkMessage>
+	<Body>
+	<IRenvelope>
+		<SAtrust>
+			<TrustEstate>
+				<TaxCalculation>					
+					<DueBeforePaymentsOnAccount>-123.45</DueBeforePaymentsOnAccount>
+				</TaxCalculation>
+			</TrustEstate>
+		</SAtrust>
+	</IRenvelope>
+	</Body>	
+	</GovTalkMessage>
+	`
+	gtm, err := makePartialGtmWithBody(x)
+	if err != nil {
+		t.Fatal(err)
+	}
+	event := &RATEAuditEvent{}
+	event.AuditType = "HMRC-SA-SA900"
+	gtm.populateDetails(event)
+
+	assert.Equal(t, "false", event.Detail.IsRepayment)
+}
+
+func TestRateSA900AuditEventIsNotRepaymentWhenDueBeforeMissing(t *testing.T) {
+
+	types.TheClock = T0
+	x := `	
+	<GovTalkMessage>
+	<Body>
+	<IRenvelope>
+		<SAtrust>
+			<TrustEstate>
+				<TaxCalculation>					
+					<ClaimRepaymentForNextYear>yes</ClaimRepaymentForNextYear>
 				</TaxCalculation>
 			</TrustEstate>
 		</SAtrust>

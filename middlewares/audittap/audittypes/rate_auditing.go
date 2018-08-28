@@ -297,12 +297,16 @@ func (partial *partialGovTalkMessage) populateDetails(ev *RATEAuditEvent) {
 			claim := partial.Message.FindElementPath(gtmSa900Claim)
 			amount := partial.Message.FindElementPath(gtmSa900Repayment)
 
+			ev.Detail.IsRepayment = "false"
+
 			if claim != nil && amount != nil {
 				if amount, err := strconv.ParseFloat(amount.Text(), 64); err == nil {
 					ev.Detail.IsRepayment = strconv.FormatBool(strings.ToLower(strings.TrimSpace(claim.Text())) == "yes" && amount < 0.00)
-				} else {
-					ev.Detail.IsRepayment = "false"
 				}
+			}
+
+			if claim == nil && amount == nil {
+				ev.Detail.IsRepayment = ""
 			}
 		}
 		if strings.HasPrefix(ev.AuditType, "HMRC-VAT") {
