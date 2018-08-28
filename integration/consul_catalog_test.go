@@ -676,3 +676,49 @@ func (s *ConsulCatalogSuite) TestMaintenanceMode(c *check.C) {
 	err = try.Request(req, 10*time.Second, try.StatusCodeIs(http.StatusOK), try.HasBody())
 	c.Assert(err, checker.IsNil)
 }
+
+func (s *ConsulCatalogSuite) TestMultipleFrontendRule(c *check.C) {
+	cmd, display := s.traefikCmd(
+		withConfigFile("fixtures/consul_catalog/simple.toml"),
+		"--consulCatalog",
+		"--consulCatalog.endpoint="+s.consulIP+":8500",
+		"--consulCatalog.domain=consul.localhost")
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// Wait for Traefik to turn ready.
+	err = try.GetRequest("http://127.0.0.1:8000/", 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	c.Assert(err, checker.IsNil)
+
+	whoami := s.composeProject.Container(c, "whoami1")
+
+	err = s.registerService("test", whoami.NetworkSettings.IPAddress, 80,
+		[]string{
+			"traefik.frontends.service1.rule=Host:whoami1.consul.localhost",
+			"traefik.frontends.service2.rule=Host:whoami2.consul.localhost",
+		})
+	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
+
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "test.consul.localhost"
+
+	err = try.Request(req, 10*time.Second, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "whoami1.consul.localhost"
+
+	err = try.Request(req, 10*time.Second, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "whoami2.consul.localhost"
+
+	err = try.Request(req, 10*time.Second, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	c.Assert(err, checker.IsNil)
+}

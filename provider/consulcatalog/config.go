@@ -55,7 +55,7 @@ func (p *Provider) buildConfiguration(catalog []catalogUpdate) *types.Configurat
 	var services []*serviceUpdate
 	for _, info := range catalog {
 		if len(info.Nodes) > 0 {
-			services = append(services, info.Service)
+			services = append(services, p.generateFrontends(info.Service)...)
 			allNodes = append(allNodes, info.Nodes...)
 		}
 	}
@@ -135,6 +135,9 @@ func (p *Provider) setupFrontEndRuleTemplate() {
 // Specific functions
 
 func getServiceBackendName(service *serviceUpdate) string {
+	if service.ParentServiceName != "" {
+		return strings.ToLower(service.ParentServiceName)
+	}
 	return strings.ToLower(service.ServiceName)
 }
 

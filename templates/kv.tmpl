@@ -87,8 +87,8 @@
         [frontends."{{ $frontendName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
-          cert = "{{ $auth.Forward.TLS.Cert }}"
-          key = "{{ $auth.Forward.TLS.Key }}"
+          cert = """{{ $auth.Forward.TLS.Cert }}"""
+          key = """{{ $auth.Forward.TLS.Key }}"""
           insecureSkipVerify = {{ $auth.Forward.TLS.InsecureSkipVerify }}
         {{end}}
       {{end}}

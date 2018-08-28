@@ -190,7 +190,7 @@ Labels can be used on task containers to override default behavior:
 | `traefik.frontend.whiteList.sourceRange=RANGE`                    | Sets a list of IP-Ranges which are allowed to access.<br>An unset or empty list allows all Source-IPs to access. If one of the Net-Specifications are invalid, the whole list is invalid and allows all Source-IPs to access. |
 | `traefik.frontend.whiteList.ipStrategy=true`                      | Uses the default IPStrategy.<br>Can be used when there is an existing `clientIPStrategy` but you want the remote address for whitelisting.                                                                                    |
 | `traefik.frontend.whiteList.ipStrategy.depth=5`                   | See [whitelist](/configuration/entrypoints/#white-listing)                                                                                                                                                                    |
-| `traefik.frontend.whiteList.ipStrategy.excludedIPs=127.0.0.1  `   | See [whitelist](/configuration/entrypoints/#white-listing)                                                                                                                                                                    |
+| `traefik.frontend.whiteList.ipStrategy.excludedIPs=127.0.0.1`     | See [whitelist](/configuration/entrypoints/#white-listing)                                                                                                                                                                    |
 
 ### Custom Headers
 
@@ -223,3 +223,88 @@ Labels can be used on task containers to override default behavior:
 | `traefik.frontend.headers.STSSeconds=315360000`          | Sets the max-age of the STS header.                                                                                                                                                                 |
 | `traefik.frontend.headers.STSIncludeSubdomains=true`     | Adds the `IncludeSubdomains` section of the STS  header.                                                                                                                                            |
 | `traefik.frontend.headers.STSPreload=true`               | Adds the preload flag to the STS  header.                                                                                                                                                           |
+
+### Containers with Multiple Ports (segment labels)
+
+Segment labels are used to define routes to an application exposing multiple ports.
+A segment is a group of labels that apply to a port exposed by an application.
+You can define as many segments as ports exposed in an application.
+
+Segment labels override the default behavior.
+
+| Label                                                                        | Description                                                    |
+|------------------------------------------------------------------------------|----------------------------------------------------------------|
+| `traefik.<segment_name>.backend=BACKEND`                                     | Same as `traefik.backend`                                      |
+| `traefik.<segment_name>.domain=DOMAIN`                                       | Same as `traefik.domain`                                       |
+| `traefik.<segment_name>.port=PORT`                                           | Same as `traefik.port`                                         |
+| `traefik.<segment_name>.protocol=http`                                       | Same as `traefik.protocol`                                     |
+| `traefik.<segment_name>.weight=10`                                           | Same as `traefik.weight`                                       |
+| `traefik.<segment_name>.frontend.auth.basic=EXPR`                            | Same as `traefik.frontend.auth.basic`                          |
+| `traefik.<segment_name>.frontend.auth.basic.removeHeader=true`               | Same as `traefik.frontend.auth.basic.removeHeader`             |
+| `traefik.<segment_name>.frontend.auth.basic.users=EXPR`                      | Same as `traefik.frontend.auth.basic.users`                    |
+| `traefik.<segment_name>.frontend.auth.basic.usersFile=/path/.htpasswd`       | Same as `traefik.frontend.auth.basic.usersFile`                |
+| `traefik.<segment_name>.frontend.auth.digest.removeHeader=true`              | Same as `traefik.frontend.auth.digest.removeHeader`            |
+| `traefik.<segment_name>.frontend.auth.digest.users=EXPR`                     | Same as `traefik.frontend.auth.digest.users`                   |
+| `traefik.<segment_name>.frontend.auth.digest.usersFile=/path/.htdigest`      | Same as `traefik.frontend.auth.digest.usersFile`               |
+| `traefik.<segment_name>.frontend.auth.forward.address=https://example.com`   | Same as `traefik.frontend.auth.forward.address`                |
+| `traefik.<segment_name>.frontend.auth.forward.tls.ca=/path/ca.pem`           | Same as `traefik.frontend.auth.forward.tls.ca`                 |
+| `traefik.<segment_name>.frontend.auth.forward.tls.caOptional=true`           | Same as `traefik.frontend.auth.forward.tls.caOptional`         |
+| `traefik.<segment_name>.frontend.auth.forward.tls.cert=/path/server.pem`     | Same as `traefik.frontend.auth.forward.tls.cert`               |
+| `traefik.<segment_name>.frontend.auth.forward.tls.insecureSkipVerify=true`   | Same as `traefik.frontend.auth.forward.tls.insecureSkipVerify` |
+| `traefik.<segment_name>.frontend.auth.forward.tls.key=/path/server.key`      | Same as `traefik.frontend.auth.forward.tls.key`                |
+| `traefik.<segment_name>.frontend.auth.forward.trustForwardHeader=true`       | Same as `traefik.frontend.auth.forward.trustForwardHeader`     |
+| `traefik.<segment_name>.frontend.auth.headerField=X-WebAuth-User`            | Same as `traefik.frontend.auth.headerField`                    |
+| `traefik.<segment_name>.frontend.auth.removeHeader=true`                     | Same as `traefik.frontend.auth.removeHeader`                   |
+| `traefik.<segment_name>.frontend.entryPoints=https`                          | Same as `traefik.frontend.entryPoints`                         |
+| `traefik.<segment_name>.frontend.errors.<name>.backend=NAME`                 | Same as `traefik.frontend.errors.<name>.backend`               |
+| `traefik.<segment_name>.frontend.errors.<name>.query=PATH`                   | Same as `traefik.frontend.errors.<name>.query`                 |
+| `traefik.<segment_name>.frontend.errors.<name>.status=RANGE`                 | Same as `traefik.frontend.errors.<name>.status`                |
+| `traefik.<segment_name>.frontend.passHostHeader=true`                        | Same as `traefik.frontend.passHostHeader`                      |
+| `traefik.<segment_name>.frontend.passTLSCert=true`                           | Same as `traefik.frontend.passTLSCert`                         |
+| `traefik.<segment_name>.frontend.priority=10`                                | Same as `traefik.frontend.priority`                            |
+| `traefik.<segment_name>.frontend.rateLimit.extractorFunc=EXP`                | Same as `traefik.frontend.rateLimit.extractorFunc`             |
+| `traefik.<segment_name>.frontend.rateLimit.rateSet.<name>.period=6`          | Same as `traefik.frontend.rateLimit.rateSet.<name>.period`     |
+| `traefik.<segment_name>.frontend.rateLimit.rateSet.<name>.average=6`         | Same as `traefik.frontend.rateLimit.rateSet.<name>.average`    |
+| `traefik.<segment_name>.frontend.rateLimit.rateSet.<name>.burst=6`           | Same as `traefik.frontend.rateLimit.rateSet.<name>.burst`      |
+| `traefik.<segment_name>.frontend.redirect.entryPoint=https`                  | Same as `traefik.frontend.redirect.entryPoint`                 |
+| `traefik.<segment_name>.frontend.redirect.regex=^http://localhost/(.*)`      | Same as `traefik.frontend.redirect.regex`                      |
+| `traefik.<segment_name>.frontend.redirect.replacement=http://mydomain/$1`    | Same as `traefik.frontend.redirect.replacement`                |
+| `traefik.<segment_name>.frontend.redirect.permanent=true`                    | Same as `traefik.frontend.redirect.permanent`                  |
+| `traefik.<segment_name>.frontend.rule=EXP`                                   | Same as `traefik.frontend.rule`                                |
+| `traefik.<segment_name>.frontend.whiteList.sourceRange=RANGE`                | Same as `traefik.frontend.whiteList.sourceRange`               |
+| `traefik.<segment_name>.frontend.whiteList.useXForwardedFor=true`            | Same as `traefik.frontend.whiteList.useXForwardedFor`          |
+| `traefik.<segment_name>.frontend.whiteList.ipStrategy=true`                  | Same as `traefik.frontend.whiteList.ipStrategy`                |
+| `traefik.<segment_name>.frontend.whiteList.ipStrategy.depth=5`               | Same as `traefik.frontend.whiteList.ipStrategy.depth`          |
+| `traefik.<segment_name>.frontend.whiteList.ipStrategy.excludedIPs=127.0.0.1` | Same as `traefik.frontend.whiteList.ipStrategy.excludedIPs`    |
+
+#### Custom Headers
+
+| Label                                                                | Description                                              |
+|----------------------------------------------------------------------|----------------------------------------------------------|
+| `traefik.<segment_name>.frontend.headers.customRequestHeaders=EXPR ` | Same as `traefik.frontend.headers.customRequestHeaders`  |
+| `traefik.<segment_name>.frontend.headers.customResponseHeaders=EXPR` | Same as `traefik.frontend.headers.customResponseHeaders` |
+
+#### Security Headers
+
+| Label                                                                   | Description                                                  |
+|-------------------------------------------------------------------------|--------------------------------------------------------------|
+| `traefik.<segment_name>.frontend.headers.allowedHosts=EXPR`             | Same as `traefik.frontend.headers.allowedHosts`              |
+| `traefik.<segment_name>.frontend.headers.browserXSSFilter=true`         | Same as `traefik.frontend.headers.browserXSSFilter`          |
+| `traefik.<segment_name>.frontend.headers.contentSecurityPolicy=VALUE`   | Same as `traefik.frontend.headers.contentSecurityPolicy`     |
+| `traefik.<segment_name>.frontend.headers.contentTypeNosniff=true`       | Same as `traefik.frontend.headers.contentTypeNosniff`        |
+| `traefik.<segment_name>.frontend.headers.customBrowserXSSValue=VALUE`   | Same as `traefik.frontend.headers.customBrowserXSSValue`     |
+| `traefik.<segment_name>.frontend.headers.customFrameOptionsValue=VALUE` | Same as `traefik.frontend.headers.customFrameOptionsValue`   |
+| `traefik.<segment_name>.frontend.headers.forceSTSHeader=false`          | Same as `traefik.frontend.headers.forceSTSHeader`            |
+| `traefik.<segment_name>.frontend.headers.frameDeny=false`               | Same as `traefik.frontend.headers.frameDeny`                 |
+| `traefik.<segment_name>.frontend.headers.hostsProxyHeaders=EXPR`        | Same as `traefik.frontend.headers.hostsProxyHeaders`         |
+| `traefik.<segment_name>.frontend.headers.isDevelopment=false`           | Same as `traefik.frontend.headers.isDevelopment`             |
+| `traefik.<segment_name>.frontend.headers.publicKey=VALUE`               | Same as `traefik.frontend.headers.publicKey`                 |
+| `traefik.<segment_name>.frontend.headers.referrerPolicy=VALUE`          | Same as `traefik.frontend.headers.referrerPolicy`            |
+| `traefik.<segment_name>.frontend.headers.SSLRedirect=true`              | Same as `traefik.frontend.headers.SSLRedirect`               |
+| `traefik.<segment_name>.frontend.headers.SSLTemporaryRedirect=true`     | Same as `traefik.frontend.headers.SSLTemporaryRedirect`      |
+| `traefik.<segment_name>.frontend.headers.SSLHost=HOST`                  | Same as `traefik.frontend.headers.SSLHost`                   |
+| `traefik.<segment_name>.frontend.headers.SSLForceHost=true`             | Same as `traefik.frontend.headers.SSLForceHost`              |
+| `traefik.<segment_name>.frontend.headers.SSLProxyHeaders=EXPR`          | Same as `traefik.frontend.headers.SSLProxyHeaders=EXPR`      |
+| `traefik.<segment_name>.frontend.headers.STSSeconds=315360000`          | Same as `traefik.frontend.headers.STSSeconds=315360000`      |
+| `traefik.<segment_name>.frontend.headers.STSIncludeSubdomains=true`     | Same as `traefik.frontend.headers.STSIncludeSubdomains=true` |
+| `traefik.<segment_name>.frontend.headers.STSPreload=true`               | Same as `traefik.frontend.headers.STSPreload=true`           |

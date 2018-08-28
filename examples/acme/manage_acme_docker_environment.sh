@@ -50,7 +50,7 @@ start_boulder() {
 # Script usage
 show_usage() {
     echo
-    echo "USAGE : manage_acme_docker_environment.sh [--start|--stop|--restart]"
+    echo "USAGE : manage_acme_docker_environment.sh [--dev|--start|--stop|--restart]"
     echo
 }
 

@@ -78,7 +78,7 @@ func (d *Datastore) watchChanges() error {
 	stopCh := make(chan struct{})
 	kvCh, err := d.kv.Watch(d.lockKey, stopCh, nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("error while watching key %s: %v", d.lockKey, err)
 	}
 	safe.Go(func() {
 		ctx, cancel := context.WithCancel(d.ctx)

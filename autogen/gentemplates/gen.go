@@ -144,8 +144,8 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
         [frontends."frontend-{{ $service.ServiceName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
-          cert = "{{ $auth.Forward.TLS.Cert }}"
-          key = "{{ $auth.Forward.TLS.Key }}"
+          cert = """{{ $auth.Forward.TLS.Cert }}"""
+          key = """{{ $auth.Forward.TLS.Key }}"""
           insecureSkipVerify = {{ $auth.Forward.TLS.InsecureSkipVerify }}
         {{end}}
       {{end}}
@@ -389,8 +389,8 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
         [frontends."frontend-{{ $frontendName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
-          cert = "{{ $auth.Forward.TLS.Cert }}"
-          key = "{{ $auth.Forward.TLS.Key }}"
+          cert = """{{ $auth.Forward.TLS.Cert }}"""
+          key = """{{ $auth.Forward.TLS.Key }}"""
           insecureSkipVerify = {{ $auth.Forward.TLS.InsecureSkipVerify }}
         {{end}}
       {{end}}
@@ -549,13 +549,13 @@ var _templatesEcsTmpl = []byte(`[backends]
 {{range $serviceName, $instances := .Services }}
   {{ $firstInstance := index $instances 0 }}
 
-  {{ $circuitBreaker := getCircuitBreaker $firstInstance.TraefikLabels }}
+  {{ $circuitBreaker := getCircuitBreaker $firstInstance.SegmentLabels }}
   {{if $circuitBreaker }}
   [backends."backend-{{ $serviceName }}".circuitBreaker]
     expression = "{{ $circuitBreaker.Expression }}"
   {{end}}
 
-  {{ $loadBalancer := getLoadBalancer $firstInstance.TraefikLabels }}
+  {{ $loadBalancer := getLoadBalancer $firstInstance.SegmentLabels }}
   {{if $loadBalancer }}
   [backends."backend-{{ $serviceName }}".loadBalancer]
     method = "{{ $loadBalancer.Method }}"
@@ -565,14 +565,14 @@ var _templatesEcsTmpl = []byte(`[backends]
     {{end}}
   {{end}}
 
-  {{ $maxConn := getMaxConn $firstInstance.TraefikLabels }}
+  {{ $maxConn := getMaxConn $firstInstance.SegmentLabels }}
   {{if $maxConn }}
   [backends."backend-{{ $serviceName }}".maxConn]
     extractorFunc = "{{ $maxConn.ExtractorFunc }}"
     amount = {{ $maxConn.Amount }}
   {{end}}
 
-  {{ $healthCheck := getHealthCheck $firstInstance.TraefikLabels }}
+  {{ $healthCheck := getHealthCheck $firstInstance.SegmentLabels }}
   {{if $healthCheck }}
   [backends."backend-{{ $serviceName }}".healthCheck]
     scheme = "{{ $healthCheck.Scheme }}"
@@ -588,7 +588,7 @@ var _templatesEcsTmpl = []byte(`[backends]
     {{end}}
   {{end}}
 
-  {{ $buffering := getBuffering $firstInstance.TraefikLabels }}
+  {{ $buffering := getBuffering $firstInstance.SegmentLabels }}
   {{if $buffering }}
   [backends."backend-{{ $serviceName }}".buffering]
     maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
@@ -610,38 +610,40 @@ var _templatesEcsTmpl = []byte(`[backends]
 {{range $serviceName, $instances := .Services }}
 {{range $instance := filterFrontends $instances }}
 
-  [frontends."frontend-{{ $serviceName }}"]
-    backend = "backend-{{ $serviceName }}"
-    priority = {{ getPriority $instance.TraefikLabels }}
-    passHostHeader = {{ getPassHostHeader $instance.TraefikLabels }}
-    passTLSCert = {{ getPassTLSCert $instance.TraefikLabels }}
+  {{ $frontendName := getFrontendName $instance }}
 
-    entryPoints = [{{range getEntryPoints $instance.TraefikLabels }}
+  [frontends."frontend-{{ $frontendName }}"]
+    backend = "backend-{{ $serviceName }}"
+    priority = {{ getPriority $instance.SegmentLabels }}
+    passHostHeader = {{ getPassHostHeader $instance.SegmentLabels }}
+    passTLSCert = {{ getPassTLSCert $instance.SegmentLabels }}
+
+    entryPoints = [{{range getEntryPoints $instance.SegmentLabels }}
       "{{.}}",
       {{end}}]
 
-    {{ $auth := getAuth $instance.TraefikLabels }}
+    {{ $auth := getAuth $instance.SegmentLabels }}
     {{if $auth }}
-    [frontends."frontend-{{ $serviceName }}".auth]
+    [frontends."frontend-{{ $frontendName }}".auth]
       headerField = "{{ $auth.HeaderField }}"
 
       {{if $auth.Forward }}
-      [frontends."frontend-{{ $serviceName }}".auth.forward]
+      [frontends."frontend-{{ $frontendName }}".auth.forward]
         address = "{{ $auth.Forward.Address }}"
         trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
 
         {{if $auth.Forward.TLS }}
-        [frontends."frontend-{{ $serviceName }}".auth.forward.tls]
+        [frontends."frontend-{{ $frontendName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
-          cert = "{{ $auth.Forward.TLS.Cert }}"
-          key = "{{ $auth.Forward.TLS.Key }}"
+          cert = """{{ $auth.Forward.TLS.Cert }}"""
+          key = """{{ $auth.Forward.TLS.Key }}"""
           insecureSkipVerify = {{ $auth.Forward.TLS.InsecureSkipVerify }}
         {{end}}
       {{end}}
 
       {{if $auth.Basic }}
-      [frontends."frontend-{{ $serviceName }}".auth.basic]
+      [frontends."frontend-{{ $frontendName }}".auth.basic]
         removeHeader = {{ $auth.Basic.RemoveHeader }}
         {{if $auth.Basic.Users }}
         users = [{{range $auth.Basic.Users }}
@@ -652,7 +654,7 @@ var _templatesEcsTmpl = []byte(`[backends]
       {{end}}
 
       {{if $auth.Digest }}
-      [frontends."frontend-{{ $serviceName }}".auth.digest]
+      [frontends."frontend-{{ $frontendName }}".auth.digest]
         removeHeader = {{ $auth.Digest.RemoveHeader }}
         {{if $auth.Digest.Users }}
         users = [{{range $auth.Digest.Users }}
@@ -663,14 +665,14 @@ var _templatesEcsTmpl = []byte(`[backends]
       {{end}}
     {{end}}
 
-    {{ $whitelist := getWhiteList $instance.TraefikLabels }}
+    {{ $whitelist := getWhiteList $instance.SegmentLabels }}
     {{if $whitelist }}
-    [frontends."frontend-{{ $serviceName }}".whiteList]
+    [frontends."frontend-{{ $frontendName }}".whiteList]
       sourceRange = [{{range $whitelist.SourceRange }}
         "{{.}}",
         {{end}}]
       {{if $whitelist.IPStrategy }}
-      [frontends."frontend-{{ $serviceName }}".whiteList.IPStrategy]
+      [frontends."frontend-{{ $frontendName }}".whiteList.IPStrategy]
         depth = {{ $whitelist.IPStrategy.Depth }}
         excludedIPs = [{{range $whitelist.IPStrategy.ExcludedIPs }}
           "{{.}}",
@@ -678,20 +680,20 @@ var _templatesEcsTmpl = []byte(`[backends]
       {{end}}
     {{end}}
 
-    {{ $redirect := getRedirect $instance.TraefikLabels }}
+    {{ $redirect := getRedirect $instance.SegmentLabels }}
     {{if $redirect }}
-    [frontends."frontend-{{ $serviceName }}".redirect]
+    [frontends."frontend-{{ $frontendName }}".redirect]
       entryPoint = "{{ $redirect.EntryPoint }}"
       regex = "{{ $redirect.Regex }}"
       replacement = "{{ $redirect.Replacement }}"
       permanent = {{ $redirect.Permanent }}
     {{end}}
 
-    {{ $errorPages := getErrorPages $instance.TraefikLabels }}
+    {{ $errorPages := getErrorPages $instance.SegmentLabels }}
     {{if $errorPages }}
-    [frontends."frontend-{{ $serviceName }}".errors]
+    [frontends."frontend-{{ $frontendName }}".errors]
       {{range $pageName, $page := $errorPages }}
-      [frontends."frontend-{{ $serviceName }}".errors."{{ $pageName }}"]
+      [frontends."frontend-{{ $frontendName }}".errors."{{ $pageName }}"]
         status = [{{range $page.Status }}
           "{{.}}",
           {{end}}]
@@ -700,22 +702,22 @@ var _templatesEcsTmpl = []byte(`[backends]
       {{end}}
     {{end}}
 
-    {{ $rateLimit := getRateLimit $instance.TraefikLabels }}
+    {{ $rateLimit := getRateLimit $instance.SegmentLabels }}
     {{if $rateLimit }}
-    [frontends."frontend-{{ $serviceName }}".rateLimit]
+    [frontends."frontend-{{ $frontendName }}".rateLimit]
       extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
-      [frontends."frontend-{{ $serviceName }}".rateLimit.rateSet]
+      [frontends."frontend-{{ $frontendName }}".rateLimit.rateSet]
         {{ range $limitName, $limit := $rateLimit.RateSet }}
-        [frontends."frontend-{{ $serviceName }}".rateLimit.rateSet."{{ $limitName }}"]
+        [frontends."frontend-{{ $frontendName }}".rateLimit.rateSet."{{ $limitName }}"]
           period = "{{ $limit.Period }}"
           average = {{ $limit.Average }}
           burst = {{ $limit.Burst }}
         {{end}}
     {{end}}
 
-    {{ $headers := getHeaders $instance.TraefikLabels }}
+    {{ $headers := getHeaders $instance.SegmentLabels }}
     {{if $headers }}
-    [frontends."frontend-{{ $serviceName }}".headers]
+    [frontends."frontend-{{ $frontendName }}".headers]
       SSLRedirect = {{ $headers.SSLRedirect }}
       SSLTemporaryRedirect = {{ $headers.SSLTemporaryRedirect }}
       SSLHost = "{{ $headers.SSLHost }}"
@@ -747,28 +749,28 @@ var _templatesEcsTmpl = []byte(`[backends]
       {{end}}
 
       {{if $headers.CustomRequestHeaders }}
-      [frontends."frontend-{{ $serviceName }}".headers.customRequestHeaders]
+      [frontends."frontend-{{ $frontendName }}".headers.customRequestHeaders]
         {{range $k, $v := $headers.CustomRequestHeaders }}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
 
       {{if $headers.CustomResponseHeaders }}
-      [frontends."frontend-{{ $serviceName }}".headers.customResponseHeaders]
+      [frontends."frontend-{{ $frontendName }}".headers.customResponseHeaders]
         {{range $k, $v := $headers.CustomResponseHeaders }}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
 
       {{if $headers.SSLProxyHeaders }}
-      [frontends."frontend-{{ $serviceName }}".headers.SSLProxyHeaders]
+      [frontends."frontend-{{ $frontendName }}".headers.SSLProxyHeaders]
         {{range $k, $v := $headers.SSLProxyHeaders }}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
     {{end}}
 
-    [frontends."frontend-{{ $serviceName }}".routes."route-frontend-{{ $serviceName }}"]
+    [frontends."frontend-{{ $frontendName }}".routes."route-frontend-{{ $frontendName }}"]
       rule = "{{ getFrontendRule $instance }}"
 
 {{end}}
@@ -912,8 +914,8 @@ var _templatesKubernetesTmpl = []byte(`[backends]
           trustForwardHeader = {{ $frontend.Auth.Forward.TrustForwardHeader }}
           {{if $frontend.Auth.Forward.TLS }}
           [frontends."{{ $frontendName }}".auth.forward.tls]
-            cert = "{{ $frontend.Auth.Forward.TLS.Cert }}"
-            key = "{{ $frontend.Auth.Forward.TLS.Key }}"
+            cert = """{{ $frontend.Auth.Forward.TLS.Cert }}"""
+            key = """{{ $frontend.Auth.Forward.TLS.Key }}"""
             insecureSkipVerify = {{ $frontend.Auth.Forward.TLS.InsecureSkipVerify }}
           {{end}}
       {{end}}
@@ -1137,8 +1139,8 @@ var _templatesKvTmpl = []byte(`[backends]
         [frontends."{{ $frontendName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
-          cert = "{{ $auth.Forward.TLS.Cert }}"
-          key = "{{ $auth.Forward.TLS.Key }}"
+          cert = """{{ $auth.Forward.TLS.Cert }}"""
+          key = """{{ $auth.Forward.TLS.Key }}"""
           insecureSkipVerify = {{ $auth.Forward.TLS.InsecureSkipVerify }}
         {{end}}
       {{end}}
@@ -1399,8 +1401,8 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
         [frontends."{{ $frontendName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
-          cert = "{{ $auth.Forward.TLS.Cert }}"
-          key = "{{ $auth.Forward.TLS.Key }}"
+          cert = """{{ $auth.Forward.TLS.Cert }}"""
+          key = """{{ $auth.Forward.TLS.Key }}"""
           insecureSkipVerify = {{ $auth.Forward.TLS.InsecureSkipVerify }}
         {{end}}
       {{end}}
@@ -1646,8 +1648,8 @@ var _templatesMesosTmpl = []byte(`[backends]
         [frontends."frontend-{{ $frontendName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
-          cert = "{{ $auth.Forward.TLS.Cert }}"
-          key = "{{ $auth.Forward.TLS.Key }}"
+          cert = """{{ $auth.Forward.TLS.Cert }}"""
+          key = """{{ $auth.Forward.TLS.Key }}"""
           insecureSkipVerify = {{ $auth.Forward.TLS.InsecureSkipVerify }}
         {{end}}
       {{end}}
@@ -1915,8 +1917,8 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
         [frontends."frontend-{{ $frontendName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
-          cert = "{{ $auth.Forward.TLS.Cert }}"
-          key = "{{ $auth.Forward.TLS.Key }}"
+          cert = """{{ $auth.Forward.TLS.Cert }}"""
+          key = """{{ $auth.Forward.TLS.Key }}"""
           insecureSkipVerify = {{ $auth.Forward.TLS.InsecureSkipVerify }}
         {{end}}
       {{end}}

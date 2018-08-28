@@ -88,25 +88,19 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 
 	if stripPrefix, stripPrefixOk := req.Context().Value(middlewares.StripPrefixKey).(string); stripPrefixOk {
 		if len(stripPrefix) > 0 {
-			tempPath := parsedURL.Path
 			parsedURL.Path = stripPrefix
-			if len(tempPath) > 0 && tempPath != "/" {
-				parsedURL.Path = stripPrefix + tempPath
-			}
-
-			if trailingSlash, trailingSlashOk := req.Context().Value(middlewares.StripPrefixSlashKey).(bool); trailingSlashOk {
-				if trailingSlash {
-					if !strings.HasSuffix(parsedURL.Path, "/") {
-						parsedURL.Path = fmt.Sprintf("%s/", parsedURL.Path)
-					}
-				}
-			}
 		}
 	}
 
 	if addPrefix, addPrefixOk := req.Context().Value(middlewares.AddPrefixKey).(string); addPrefixOk {
 		if len(addPrefix) > 0 {
 			parsedURL.Path = strings.Replace(parsedURL.Path, addPrefix, "", 1)
+		}
+	}
+
+	if replacePath, replacePathOk := req.Context().Value(middlewares.ReplacePathKey).(string); replacePathOk {
+		if len(replacePath) > 0 {
+			parsedURL.Path = replacePath
 		}
 	}
 

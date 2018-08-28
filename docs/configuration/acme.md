@@ -102,29 +102,23 @@ entryPoint = "https"
 #
 # KeyType = "RSA4096"
 
-# Domains list.
-# Only domains defined here can generate wildcard certificates.
-#
-# [[acme.domains]]
-#   main = "local1.com"
-#   sans = ["test1.local1.com", "test2.local1.com"]
-# [[acme.domains]]
-#   main = "local2.com"
-# [[acme.domains]]
-#   main = "*.local3.com"
-#   sans = ["local3.com", "test1.test1.local3.com"]
-
-# Use a HTTP-01 ACME challenge.
+# Use a TLS-ALPN-01 ACME challenge.
 #
 # Optional (but recommended)
 #
-[acme.httpChallenge]
+[acme.tlsChallenge]
+
+# Use a HTTP-01 ACME challenge.
+#
+# Optional
+#
+# [acme.httpChallenge]
 
   # EntryPoint to use for the HTTP-01 challenges.
   #
   # Required
   #
-  entryPoint = "http"
+  # entryPoint = "http"
 
 # Use a DNS-01 ACME challenge rather than HTTP-01 challenge.
 # Note: mandatory for wildcard certificate generation.
@@ -147,6 +141,18 @@ entryPoint = "https"
   # Default: 0
   #
   # delayBeforeCheck = 0
+
+# Domains list.
+# Only domains defined here can generate wildcard certificates.
+#
+# [[acme.domains]]
+#   main = "local1.com"
+#   sans = ["test1.local1.com", "test2.local1.com"]
+# [[acme.domains]]
+#   main = "local2.com"
+# [[acme.domains]]
+#   main = "*.local3.com"
+#   sans = ["local3.com", "test1.test1.local3.com"]
 ```
 
 ### `caServer`
@@ -164,7 +170,7 @@ caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
 
 ### ACME Challenge
 
-#### TLS Challenge
+#### `tlsChallenge`
 
 Use the `TLS-ALPN-01` challenge to generate and renew ACME certificates by provisioning a TLS certificate.
 
@@ -245,44 +251,43 @@ Useful if internal networks block external DNS queries.
 
 Here is a list of supported `provider`s, that can automate the DNS verification, along with the required environment variables and their [wildcard & root domain support](/configuration/acme/#wildcard-domains) for each. Do not hesitate to complete it.
 
-| Provider Name                                          | Provider Code  | Environment Variables                                                                                                       | Wildcard & Root Domain Support |
-|--------------------------------------------------------|----------------|-----------------------------------------------------------------------------------------------------------------------------|--------------------------------|
-| [Auroradns](https://www.pcextreme.com/aurora/dns)      | `auroradns`    | `AURORA_USER_ID`, `AURORA_KEY`, `AURORA_ENDPOINT`                                                                           | Not tested yet                 |
-| [Azure](https://azure.microsoft.com/services/dns/)     | `azure`        | `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_SUBSCRIPTION_ID`, `AZURE_TENANT_ID`, `AZURE_RESOURCE_GROUP`                | Not tested yet                 |
-| [Blue Cat](https://www.bluecatnetworks.com/)           | `bluecat`      | `BLUECAT_SERVER_URL`, `BLUECAT_USER_NAME`, `BLUECAT_PASSWORD`, `BLUECAT_CONFIG_NAME`, `BLUECAT_DNS_VIEW`                    | Not tested yet                 |
-| [Cloudflare](https://www.cloudflare.com)               | `cloudflare`   | `CLOUDFLARE_EMAIL`, `CLOUDFLARE_API_KEY` - The `Global API Key` needs to be used, not the `Origin CA Key`                   | YES                            |
-| [CloudXNS](https://www.cloudxns.net)                   | `cloudxns`     | `CLOUDXNS_API_KEY`, `CLOUDXNS_SECRET_KEY`                                                                                   | Not tested yet                 |
-| [DigitalOcean](https://www.digitalocean.com)           | `digitalocean` | `DO_AUTH_TOKEN`                                                                                                             | YES                            |
-| [DNSimple](https://dnsimple.com)                       | `dnsimple`     | `DNSIMPLE_OAUTH_TOKEN`, `DNSIMPLE_BASE_URL`                                                                                 | Not tested yet                 |
-| [DNS Made Easy](https://dnsmadeeasy.com)               | `dnsmadeeasy`  | `DNSMADEEASY_API_KEY`, `DNSMADEEASY_API_SECRET`, `DNSMADEEASY_SANDBOX`                                                      | Not tested yet                 |
-| [DNSPod](http://www.dnspod.net/)                       | `dnspod`       | `DNSPOD_API_KEY`                                                                                                            | Not tested yet                 |
-| [Duck DNS](https://www.duckdns.org/)                   | `duckdns`      | `DUCKDNS_TOKEN`                                                                                                             | Not tested yet                 |
-| [Dyn](https://dyn.com)                                 | `dyn`          | `DYN_CUSTOMER_NAME`, `DYN_USER_NAME`, `DYN_PASSWORD`                                                                        | Not tested yet                 |
-| External Program                                       | `exec`         | `EXEC_PATH`                                                                                                                 | Not tested yet                 |
-| [Exoscale](https://www.exoscale.ch)                    | `exoscale`     | `EXOSCALE_API_KEY`, `EXOSCALE_API_SECRET`, `EXOSCALE_ENDPOINT`                                                              | YES                            |
-| [Fast DNS](https://www.akamai.com/)                    | `fastdns`      | `AKAMAI_CLIENT_TOKEN`,  `AKAMAI_CLIENT_SECRET`,  `AKAMAI_ACCESS_TOKEN`                                                      | Not tested yet                 |
-| [Gandi](https://www.gandi.net)                         | `gandi`        | `GANDI_API_KEY`                                                                                                             | Not tested yet                 |
-| [Gandi V5](http://doc.livedns.gandi.net)               | `gandiv5`      | `GANDIV5_API_KEY`                                                                                                           | YES                            |
-| [Glesys](https://glesys.com/)                          | `glesys`       | `GLESYS_API_USER`, `GLESYS_API_KEY`, `GLESYS_DOMAIN`                                                                        | Not tested yet                 |
-| [GoDaddy](https://godaddy.com/domains)                 | `godaddy`      | `GODADDY_API_KEY`, `GODADDY_API_SECRET`                                                                                     | Not tested yet                 |
-| [Google Cloud DNS](https://cloud.google.com/dns/docs/) | `gcloud`       | `GCE_PROJECT`, `GCE_SERVICE_ACCOUNT_FILE`                                                                                   | YES                            |
-| [Lightsail](https://aws.amazon.com/lightsail/)         | `lightsail`    | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `DNS_ZONE`                                                                    | Not tested yet                 |
-| [Linode](https://www.linode.com)                       | `linode`       | `LINODE_API_KEY`                                                                                                            | Not tested yet                 |
-| manual                                                 | -              | none, but you need to run Træfik interactively, turn on `acmeLogging` to see instructions and press <kbd>Enter</kbd>.       | YES                            |
-| [Namecheap](https://www.namecheap.com)                 | `namecheap`    | `NAMECHEAP_API_USER`, `NAMECHEAP_API_KEY`                                                                                   | YES                 |
-| [name.com](https://www.name.com/)                      | `namedotcom`   | `NAMECOM_USERNAME`, `NAMECOM_API_TOKEN`, `NAMECOM_SERVER`                                                                   | Not tested yet                 |
-| [NIFCloud](https://cloud.nifty.com/service/dns.htm)    | `nifcloud`     | `NIFCLOUD_ACCESS_KEY_ID`, `NIFCLOUD_SECRET_ACCESS_KEY`                                                                      | Not tested yet                 |
-| [Ns1](https://ns1.com/)                                | `ns1`          | `NS1_API_KEY`                                                                                                               | Not tested yet                 |
-| [Open Telekom Cloud](https://cloud.telekom.de)     | `otc`          | `OTC_DOMAIN_NAME`, `OTC_USER_NAME`, `OTC_PASSWORD`, `OTC_PROJECT_NAME`, `OTC_IDENTITY_ENDPOINT`                             | Not tested yet                 |
-| [OVH](https://www.ovh.com)                             | `ovh`          | `OVH_ENDPOINT`, `OVH_APPLICATION_KEY`, `OVH_APPLICATION_SECRET`, `OVH_CONSUMER_KEY`                                         | YES                            |
-| [PowerDNS](https://www.powerdns.com)                   | `pdns`         | `PDNS_API_KEY`, `PDNS_API_URL`                                                                                              | Not tested yet                 |
-| [Rackspace](https://www.rackspace.com/cloud/dns)       | `rackspace`    | `RACKSPACE_USER`, `RACKSPACE_API_KEY`                                                                                       | Not tested yet                 |
-| [RFC2136](https://tools.ietf.org/html/rfc2136)         | `rfc2136`      | `RFC2136_TSIG_KEY`, `RFC2136_TSIG_SECRET`, `RFC2136_TSIG_ALGORITHM`, `RFC2136_NAMESERVER`                                   | Not tested yet                 |
-| [Route 53](https://aws.amazon.com/route53/)            | `route53`      | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_HOSTED_ZONE_ID` or a configured user/instance IAM profile. | YES                            |
-| [Sakura Cloud](https://cloud.sakura.ad.jp/)            | `sakuracloud`  | `SAKURACLOUD_ACCESS_TOKEN`, `SAKURACLOUD_ACCESS_TOKEN_SECRET`                                                               | Not tested yet                 |
-| [VegaDNS](https://github.com/shupp/VegaDNS-API)        | `vegadns`      | `SECRET_VEGADNS_KEY`, `SECRET_VEGADNS_SECRET`, `VEGADNS_URL`                                                                | Not tested yet                 |
-| [VULTR](https://www.vultr.com)                         | `vultr`        | `VULTR_API_KEY`                                                                                                             | Not tested yet                 |
-
+| Provider Name                                          | Provider Code  | Environment Variables                                                                                                           | Wildcard & Root Domain Support |
+|--------------------------------------------------------|----------------|---------------------------------------------------------------------------------------------------------------------------------|--------------------------------|
+| [Auroradns](https://www.pcextreme.com/aurora/dns)      | `auroradns`    | `AURORA_USER_ID`, `AURORA_KEY`, `AURORA_ENDPOINT`                                                                               | Not tested yet                 |
+| [Azure](https://azure.microsoft.com/services/dns/)     | `azure`        | `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_SUBSCRIPTION_ID`, `AZURE_TENANT_ID`, `AZURE_RESOURCE_GROUP`                    | Not tested yet                 |
+| [Blue Cat](https://www.bluecatnetworks.com/)           | `bluecat`      | `BLUECAT_SERVER_URL`, `BLUECAT_USER_NAME`, `BLUECAT_PASSWORD`, `BLUECAT_CONFIG_NAME`, `BLUECAT_DNS_VIEW`                        | Not tested yet                 |
+| [Cloudflare](https://www.cloudflare.com)               | `cloudflare`   | `CLOUDFLARE_EMAIL`, `CLOUDFLARE_API_KEY` - The `Global API Key` needs to be used, not the `Origin CA Key`                       | YES                            |
+| [CloudXNS](https://www.cloudxns.net)                   | `cloudxns`     | `CLOUDXNS_API_KEY`, `CLOUDXNS_SECRET_KEY`                                                                                       | Not tested yet                 |
+| [DigitalOcean](https://www.digitalocean.com)           | `digitalocean` | `DO_AUTH_TOKEN`                                                                                                                 | YES                            |
+| [DNSimple](https://dnsimple.com)                       | `dnsimple`     | `DNSIMPLE_OAUTH_TOKEN`, `DNSIMPLE_BASE_URL`                                                                                     | Not tested yet                 |
+| [DNS Made Easy](https://dnsmadeeasy.com)               | `dnsmadeeasy`  | `DNSMADEEASY_API_KEY`, `DNSMADEEASY_API_SECRET`, `DNSMADEEASY_SANDBOX`                                                          | Not tested yet                 |
+| [DNSPod](http://www.dnspod.net/)                       | `dnspod`       | `DNSPOD_API_KEY`                                                                                                                | Not tested yet                 |
+| [Duck DNS](https://www.duckdns.org/)                   | `duckdns`      | `DUCKDNS_TOKEN`                                                                                                                 | Not tested yet                 |
+| [Dyn](https://dyn.com)                                 | `dyn`          | `DYN_CUSTOMER_NAME`, `DYN_USER_NAME`, `DYN_PASSWORD`                                                                            | Not tested yet                 |
+| External Program                                       | `exec`         | `EXEC_PATH`                                                                                                                     | Not tested yet                 |
+| [Exoscale](https://www.exoscale.ch)                    | `exoscale`     | `EXOSCALE_API_KEY`, `EXOSCALE_API_SECRET`, `EXOSCALE_ENDPOINT`                                                                  | YES                            |
+| [Fast DNS](https://www.akamai.com/)                    | `fastdns`      | `AKAMAI_CLIENT_TOKEN`,  `AKAMAI_CLIENT_SECRET`,  `AKAMAI_ACCESS_TOKEN`                                                          | Not tested yet                 |
+| [Gandi](https://www.gandi.net)                         | `gandi`        | `GANDI_API_KEY`                                                                                                                 | Not tested yet                 |
+| [Gandi V5](http://doc.livedns.gandi.net)               | `gandiv5`      | `GANDIV5_API_KEY`                                                                                                               | YES                            |
+| [Glesys](https://glesys.com/)                          | `glesys`       | `GLESYS_API_USER`, `GLESYS_API_KEY`, `GLESYS_DOMAIN`                                                                            | Not tested yet                 |
+| [GoDaddy](https://godaddy.com/domains)                 | `godaddy`      | `GODADDY_API_KEY`, `GODADDY_API_SECRET`                                                                                         | Not tested yet                 |
+| [Google Cloud DNS](https://cloud.google.com/dns/docs/) | `gcloud`       | `GCE_PROJECT`, `GCE_SERVICE_ACCOUNT_FILE`                                                                                       | YES                            |
+| [Lightsail](https://aws.amazon.com/lightsail/)         | `lightsail`    | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `DNS_ZONE`                                                                        | Not tested yet                 |
+| [Linode](https://www.linode.com)                       | `linode`       | `LINODE_API_KEY`                                                                                                                | Not tested yet                 |
+| manual                                                 | -              | none, but you need to run Træfik interactively, turn on `acmeLogging` to see instructions and press <kbd>Enter</kbd>.           | YES                            |
+| [Namecheap](https://www.namecheap.com)                 | `namecheap`    | `NAMECHEAP_API_USER`, `NAMECHEAP_API_KEY`                                                                                       | YES                            |
+| [name.com](https://www.name.com/)                      | `namedotcom`   | `NAMECOM_USERNAME`, `NAMECOM_API_TOKEN`, `NAMECOM_SERVER`                                                                       | Not tested yet                 |
+| [NIFCloud](https://cloud.nifty.com/service/dns.htm)    | `nifcloud`     | `NIFCLOUD_ACCESS_KEY_ID`, `NIFCLOUD_SECRET_ACCESS_KEY`                                                                          | Not tested yet                 |
+| [Ns1](https://ns1.com/)                                | `ns1`          | `NS1_API_KEY`                                                                                                                   | Not tested yet                 |
+| [Open Telekom Cloud](https://cloud.telekom.de)         | `otc`          | `OTC_DOMAIN_NAME`, `OTC_USER_NAME`, `OTC_PASSWORD`, `OTC_PROJECT_NAME`, `OTC_IDENTITY_ENDPOINT`                                 | Not tested yet                 |
+| [OVH](https://www.ovh.com)                             | `ovh`          | `OVH_ENDPOINT`, `OVH_APPLICATION_KEY`, `OVH_APPLICATION_SECRET`, `OVH_CONSUMER_KEY`                                             | YES                            |
+| [PowerDNS](https://www.powerdns.com)                   | `pdns`         | `PDNS_API_KEY`, `PDNS_API_URL`                                                                                                  | Not tested yet                 |
+| [Rackspace](https://www.rackspace.com/cloud/dns)       | `rackspace`    | `RACKSPACE_USER`, `RACKSPACE_API_KEY`                                                                                           | Not tested yet                 |
+| [RFC2136](https://tools.ietf.org/html/rfc2136)         | `rfc2136`      | `RFC2136_TSIG_KEY`, `RFC2136_TSIG_SECRET`, `RFC2136_TSIG_ALGORITHM`, `RFC2136_NAMESERVER`                                       | Not tested yet                 |
+| [Route 53](https://aws.amazon.com/route53/)            | `route53`      | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `[AWS_REGION]`, `[AWS_HOSTED_ZONE_ID]` or a configured user/instance IAM profile. | YES                            |
+| [Sakura Cloud](https://cloud.sakura.ad.jp/)            | `sakuracloud`  | `SAKURACLOUD_ACCESS_TOKEN`, `SAKURACLOUD_ACCESS_TOKEN_SECRET`                                                                   | Not tested yet                 |
+| [VegaDNS](https://github.com/shupp/VegaDNS-API)        | `vegadns`      | `SECRET_VEGADNS_KEY`, `SECRET_VEGADNS_SECRET`, `VEGADNS_URL`                                                                    | Not tested yet                 |
+| [VULTR](https://www.vultr.com)                         | `vultr`        | `VULTR_API_KEY`                                                                                                                 | Not tested yet                 |
 
 ### `domains`
 

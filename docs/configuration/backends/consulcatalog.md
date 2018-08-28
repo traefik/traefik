@@ -152,6 +152,17 @@ Additional settings can be defined using Consul Catalog tags.
 | `<prefix>.frontend.whiteList.ipStrategy.depth=5`                   | See [whitelist](/configuration/entrypoints/#white-listing)                                                                                                                                                                    |
 | `<prefix>.frontend.whiteList.ipStrategy.excludedIPs=127.0.0.1`     | See [whitelist](/configuration/entrypoints/#white-listing)                                                                                                                                                                    |
 
+### Multiple frontends for a single service
+
+If you need to support multiple frontends for a service, for example when having multiple `rules` that can't be combined, specify them as follows:
+
+```
+<prefix>.frontends.A.rule=Host:A:PathPrefix:/A
+<prefix>.frontends.B.rule=Host:B:PathPrefix:/
+```
+
+`A` and `B` here are just arbitrary names, they can be anything. You can use any setting that applies to `<prefix>.frontend` from the table above.
+
 ### Custom Headers
 
 !!! note

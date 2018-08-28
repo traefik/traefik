@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"context"
 	"net/http"
 	"regexp"
 	"strings"
@@ -30,6 +31,7 @@ func NewReplacePathRegexHandler(regex string, replacement string, handler http.H
 
 func (s *ReplacePathRegex) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if s.Regexp != nil && len(s.Replacement) > 0 && s.Regexp.MatchString(r.URL.Path) {
+		r = r.WithContext(context.WithValue(r.Context(), ReplacePathKey, r.URL.Path))
 		r.Header.Add(ReplacedPathHeader, r.URL.Path)
 		r.URL.Path = s.Regexp.ReplaceAllString(r.URL.Path, s.Replacement)
 		r.RequestURI = r.URL.RequestURI()

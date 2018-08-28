@@ -19,7 +19,7 @@ Træfik can be configured to use Docker as a provider.
 #
 endpoint = "unix:///var/run/docker.sock"
 
-# Default domain used.
+# Default base domain used for the frontend rules.
 # Can be overridden by setting the "traefik.domain" label on a container.
 #
 # Required
@@ -110,7 +110,7 @@ To enable constraints see [provider-specific constraints section](/configuration
 #
 endpoint = "tcp://127.0.0.1:2375"
 
-# Default domain used.
+# Default base domain used for the frontend rules.
 # Can be overridden by setting the "traefik.domain" label on a services.
 #
 # Optional
@@ -210,7 +210,7 @@ Labels can be used on containers to override default behavior.
 | Label                                                             | Description                                                                                                                                                                                                                      |
 |-------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `traefik.docker.network`                                          | Overrides the default docker network to use for connections to the container. [1]                                                                                                                                                |
-| `traefik.domain`                                                  | Sets the default domain for the frontend rules.                                                                                                                                                                                  |
+| `traefik.domain`                                                  | Sets the default base domain for the frontend rules. For more information, check the [Container Labels section's of the user guide "Let's Encrypt & Docker"](/user-guide/docker-and-lets-encrypt/#container-labels)              |
 | `traefik.enable=false`                                            | Disables this container in Træfik.                                                                                                                                                                                               |
 | `traefik.port=80`                                                 | Registers this port. Useful when the container exposes multiples ports.                                                                                                                                                          |
 | `traefik.protocol=https`                                          | Overrides the default `http` protocol                                                                                                                                                                                            |
@@ -237,10 +237,10 @@ Labels can be used on containers to override default behavior.
 | `traefik.frontend.auth.basic=EXPR`                                | Sets the basic authentication to this frontend in CSV format: `User:Hash,User:Hash` [2] (DEPRECATED).                                                                                                                            |
 | `traefik.frontend.auth.basic.removeHeader=true`                   | If set to `true`, removes the `Authorization` header.                                                                                                                                                                            |
 | `traefik.frontend.auth.basic.users=EXPR`                          | Sets the basic authentication to this frontend in CSV format: `User:Hash,User:Hash` [2].                                                                                                                                         |
-| `traefik.frontend.auth.basic.usersfile=/path/.htpasswd`           | Sets the basic authentication with an external file; if users and usersFile are provided, both are merged, with external file contents having precedence.                                                                        |
+| `traefik.frontend.auth.basic.usersFile=/path/.htpasswd`           | Sets the basic authentication with an external file; if users and usersFile are provided, both are merged, with external file contents having precedence.                                                                        |
 | `traefik.frontend.auth.digest.removeHeader=true`                  | If set to `true`, removes the `Authorization` header.                                                                                                                                                                            |
 | `traefik.frontend.auth.digest.users=EXPR`                         | Sets the digest authentication to this frontend in CSV format: `User:Realm:Hash,User:Realm:Hash`.                                                                                                                                |
-| `traefik.frontend.auth.digest.usersfile=/path/.htdigest`          | Sets the digest authentication with an external file; if users and usersFile are provided, both are merged, with external file contents having precedence.                                                                       |
+| `traefik.frontend.auth.digest.usersFile=/path/.htdigest`          | Sets the digest authentication with an external file; if users and usersFile are provided, both are merged, with external file contents having precedence.                                                                       |
 | `traefik.frontend.auth.forward.address=https://example.com`       | Sets the URL of the authentication server.                                                                                                                                                                                       |
 | `traefik.frontend.auth.forward.tls.ca=/path/ca.pem`               | Sets the Certificate Authority (CA) for the TLS connection with the authentication server.                                                                                                                                       |
 | `traefik.frontend.auth.forward.tls.caOptional=true`               | Checks the certificates if present but do not force to be signed by a specified Certificate Authority (CA).                                                                                                                      |
@@ -330,10 +330,10 @@ Segment labels override the default behavior.
 | `traefik.<segment_name>.frontend.auth.basic=EXPR`                            | Same as `traefik.frontend.auth.basic`                          |
 | `traefik.<segment_name>.frontend.auth.basic.removeHeader=true`               | Same as `traefik.frontend.auth.basic.removeHeader`             |
 | `traefik.<segment_name>.frontend.auth.basic.users=EXPR`                      | Same as `traefik.frontend.auth.basic.users`                    |
-| `traefik.<segment_name>.frontend.auth.basic.usersfile=/path/.htpasswd`       | Same as `traefik.frontend.auth.basic.usersfile`                |
+| `traefik.<segment_name>.frontend.auth.basic.usersFile=/path/.htpasswd`       | Same as `traefik.frontend.auth.basic.usersFile`                |
 | `traefik.<segment_name>.frontend.auth.digest.removeHeader=true`              | Same as `traefik.frontend.auth.digest.removeHeader`            |
 | `traefik.<segment_name>.frontend.auth.digest.users=EXPR`                     | Same as `traefik.frontend.auth.digest.users`                   |
-| `traefik.<segment_name>.frontend.auth.digest.usersfile=/path/.htdigest`      | Same as `traefik.frontend.auth.digest.usersfile`               |
+| `traefik.<segment_name>.frontend.auth.digest.usersFile=/path/.htdigest`      | Same as `traefik.frontend.auth.digest.usersFile`               |
 | `traefik.<segment_name>.frontend.auth.forward.address=https://example.com`   | Same as `traefik.frontend.auth.forward.address`                |
 | `traefik.<segment_name>.frontend.auth.forward.tls.ca=/path/ca.pem`           | Same as `traefik.frontend.auth.forward.tls.ca`                 |
 | `traefik.<segment_name>.frontend.auth.forward.tls.caOptional=true`           | Same as `traefik.frontend.auth.forward.tls.caOptional`         |

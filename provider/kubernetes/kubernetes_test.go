@@ -740,6 +740,34 @@ func TestGetPassTLSCert(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+func TestInvalidRedirectAnnotation(t *testing.T) {
+	ingresses := []*extensionsv1beta1.Ingress{
+		buildIngress(iNamespace("awesome"),
+			iAnnotation(annotationKubernetesRedirectRegex, `bad\.regex`),
+			iAnnotation(annotationKubernetesRedirectReplacement, "test"),
+			iRules(iRule(
+				iHost("foo"),
+				iPaths(onePath(iPath("/bar"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(iNamespace("awesome"),
+			iAnnotation(annotationKubernetesRedirectRegex, `test`),
+			iAnnotation(annotationKubernetesRedirectReplacement, `bad\.replacement`),
+			iRules(iRule(
+				iHost("foo"),
+				iPaths(onePath(iPath("/bar"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+	}
+
+	for _, ingress := range ingresses {
+		actual := getFrontendRedirect(ingress, "test", "/")
+		var expected *types.Redirect
+
+		assert.Equal(t, expected, actual)
+	}
+}
+
 func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
 	ingresses := []*extensionsv1beta1.Ingress{
 		buildIngress(iNamespace("awesome"),
@@ -1847,13 +1875,13 @@ func TestPriorityHeaderValue(t *testing.T) {
 
 	expected := buildConfiguration(
 		backends(
-			backend("foo/bar",
+			backend("1337-foo/bar",
 				servers(server("http://example.com", weight(1))),
 				lbMethod("wrr"),
 			),
 		),
 		frontends(
-			frontend("foo/bar",
+			frontend("1337-foo/bar",
 				passHostHeader(),
 				priority(1337),
 				routes(

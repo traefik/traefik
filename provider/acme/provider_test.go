@@ -8,6 +8,7 @@ import (
 	traefiktls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/xenolf/lego/acme"
 )
 
 func TestGetUncheckedCertificates(t *testing.T) {
@@ -27,6 +28,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 		desc             string
 		dynamicCerts     *safe.Safe
 		staticCerts      *safe.Safe
+		resolvingDomains map[string]struct{}
 		acmeCertificates []*Certificate
 		domains          []string
 		expectedDomains  []string
@@ -139,6 +141,40 @@ func TestGetUncheckedCertificates(t *testing.T) {
 			},
 			expectedDomains: []string{"traefik.wtf"},
 		},
+		{
+			desc:    "all domains already managed by ACME",
+			domains: []string{"traefik.wtf", "foo.traefik.wtf"},
+			resolvingDomains: map[string]struct{}{
+				"traefik.wtf":     {},
+				"foo.traefik.wtf": {},
+			},
+			expectedDomains: []string{},
+		},
+		{
+			desc:    "one domain already managed by ACME",
+			domains: []string{"traefik.wtf", "foo.traefik.wtf"},
+			resolvingDomains: map[string]struct{}{
+				"traefik.wtf": {},
+			},
+			expectedDomains: []string{"foo.traefik.wtf"},
+		},
+		{
+			desc:    "wildcard domain already managed by ACME checks the domains",
+			domains: []string{"bar.traefik.wtf", "foo.traefik.wtf"},
+			resolvingDomains: map[string]struct{}{
+				"*.traefik.wtf": {},
+			},
+			expectedDomains: []string{},
+		},
+		{
+			desc:    "wildcard domain already managed by ACME checks domains and another domain checks one other domain, one domain still unchecked",
+			domains: []string{"traefik.wtf", "bar.traefik.wtf", "foo.traefik.wtf", "acme.wtf"},
+			resolvingDomains: map[string]struct{}{
+				"*.traefik.wtf": {},
+				"traefik.wtf":   {},
+			},
+			expectedDomains: []string{"acme.wtf"},
+		},
 	}
 
 	for _, test := range testCases {
@@ -146,12 +182,17 @@ func TestGetUncheckedCertificates(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
+			if test.resolvingDomains == nil {
+				test.resolvingDomains = make(map[string]struct{})
+			}
+
 			acmeProvider := Provider{
 				certificateStore: &traefiktls.CertificateStore{
 					DynamicCerts: test.dynamicCerts,
 					StaticCerts:  test.staticCerts,
 				},
-				certificates: test.acmeCertificates,
+				certificates:     test.acmeCertificates,
+				resolvingDomains: test.resolvingDomains,
 			}
 
 			domains := acmeProvider.getUncheckedDomains(test.domains, false)
@@ -559,6 +600,85 @@ func TestUseBackOffToObtainCertificate(t *testing.T) {
 
 			actualResponse := acmeProvider.useCertificateWithRetry(test.domains)
 			assert.Equal(t, test.expectedResponse, actualResponse, "unexpected response to use backOff")
+		})
+	}
+}
+
+func TestInitAccount(t *testing.T) {
+	testCases := []struct {
+		desc            string
+		account         *Account
+		email           string
+		keyType         string
+		expectedAccount *Account
+	}{
+		{
+			desc: "Existing account with all information",
+			account: &Account{
+				Email:   "foo@foo.net",
+				KeyType: acme.EC256,
+			},
+			expectedAccount: &Account{
+				Email:   "foo@foo.net",
+				KeyType: acme.EC256,
+			},
+		},
+		{
+			desc:    "Account nil",
+			email:   "foo@foo.net",
+			keyType: "EC256",
+			expectedAccount: &Account{
+				Email:   "foo@foo.net",
+				KeyType: acme.EC256,
+			},
+		},
+		{
+			desc: "Existing account with no email",
+			account: &Account{
+				KeyType: acme.RSA4096,
+			},
+			email:   "foo@foo.net",
+			keyType: "EC256",
+			expectedAccount: &Account{
+				Email:   "foo@foo.net",
+				KeyType: acme.EC256,
+			},
+		},
+		{
+			desc: "Existing account with no key type",
+			account: &Account{
+				Email: "foo@foo.net",
+			},
+			email:   "bar@foo.net",
+			keyType: "EC256",
+			expectedAccount: &Account{
+				Email:   "foo@foo.net",
+				KeyType: acme.EC256,
+			},
+		},
+		{
+			desc: "Existing account and provider with no key type",
+			account: &Account{
+				Email: "foo@foo.net",
+			},
+			email: "bar@foo.net",
+			expectedAccount: &Account{
+				Email:   "foo@foo.net",
+				KeyType: acme.RSA4096,
+			},
+		},
+	}
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			acmeProvider := Provider{account: test.account, Configuration: &Configuration{Email: test.email, KeyType: test.keyType}}
+
+			actualAccount, err := acmeProvider.initAccount()
+			assert.Nil(t, err, "Init account in error")
+			assert.Equal(t, test.expectedAccount.Email, actualAccount.Email, "unexpected email account")
+			assert.Equal(t, test.expectedAccount.KeyType, actualAccount.KeyType, "unexpected keyType account")
 		})
 	}
 }

@@ -62,3 +62,13 @@ for OS in ${OS_PLATFORM_ARG[@]}; do
       done
   done
 done
+
+# Build ppc64le binaries
+OS_PLATFORM_ARG=(linux)
+OS_ARCH_ARG=(ppc64le)
+for OS in ${OS_PLATFORM_ARG[@]}; do
+  for ARCH in ${OS_ARCH_ARG[@]}; do
+    echo "Building binary for ${OS}/${ARCH}..."
+    GOARCH=${ARCH} GOOS=${OS} CGO_ENABLED=0 ${GO_BUILD_CMD} "${GO_BUILD_OPT}" -o "dist/traefik_${OS}-${ARCH}" ./cmd/traefik/
+  done
+done

@@ -122,40 +122,36 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 	pool.Go(func(stop chan bool) {
 		operation := func() error {
-			for {
-				stopWatch := make(chan struct{}, 1)
-				defer close(stopWatch)
-				eventsChan, err := k8sClient.WatchAll(p.Namespaces, stopWatch)
-				if err != nil {
-					log.Errorf("Error watching kubernetes events: %v", err)
-					timer := time.NewTimer(1 * time.Second)
-					select {
-					case <-timer.C:
-						return err
-					case <-stop:
-						return nil
-					}
+			stopWatch := make(chan struct{}, 1)
+			defer close(stopWatch)
+			eventsChan, err := k8sClient.WatchAll(p.Namespaces, stopWatch)
+			if err != nil {
+				log.Errorf("Error watching kubernetes events: %v", err)
+				timer := time.NewTimer(1 * time.Second)
+				select {
+				case <-timer.C:
+					return err
+				case <-stop:
+					return nil
 				}
-				for {
-					select {
-					case <-stop:
-						return nil
-					case event := <-eventsChan:
-						log.Debugf("Received Kubernetes event kind %T", event)
-
-						templateObjects, err := p.loadIngresses(k8sClient)
-						if err != nil {
-							return err
-						}
-
-						if reflect.DeepEqual(p.lastConfiguration.Get(), templateObjects) {
-							log.Debugf("Skipping Kubernetes event kind %T", event)
-						} else {
-							p.lastConfiguration.Set(templateObjects)
-							configurationChan <- types.ConfigMessage{
-								ProviderName:  "kubernetes",
-								Configuration: p.loadConfig(*templateObjects),
-							}
+			}
+			for {
+				select {
+				case <-stop:
+					return nil
+				case event := <-eventsChan:
+					log.Debugf("Received Kubernetes event kind %T", event)
+					templateObjects, err := p.loadIngresses(k8sClient)
+					if err != nil {
+						return err
+					}
+					if reflect.DeepEqual(p.lastConfiguration.Get(), templateObjects) {
+						log.Debugf("Skipping Kubernetes event kind %T", event)
+					} else {
+						p.lastConfiguration.Set(templateObjects)
+						configurationChan <- types.ConfigMessage{
+							ProviderName:  "kubernetes",
+							Configuration: p.loadConfig(*templateObjects),
 						}
 					}
 				}
@@ -224,7 +220,12 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 			}
 
 			for _, pa := range r.HTTP.Paths {
+				priority := getIntValue(i.Annotations, annotationKubernetesPriority, 0)
 				baseName := r.Host + pa.Path
+				if priority > 0 {
+					baseName = strconv.Itoa(priority) + "-" + baseName
+				}
+
 				if _, exists := templateObjects.Backends[baseName]; !exists {
 					templateObjects.Backends[baseName] = &types.Backend{
 						Servers: make(map[string]types.Server),
@@ -250,7 +251,6 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 					passHostHeader := getBoolValue(i.Annotations, annotationKubernetesPreserveHost, !p.DisablePassHostHeaders)
 					passTLSCert := getBoolValue(i.Annotations, annotationKubernetesPassTLSCert, p.EnablePassTLSCert)
-					priority := getIntValue(i.Annotations, annotationKubernetesPriority, 0)
 					entryPoints := getSliceStringValue(i.Annotations, annotationKubernetesFrontendEntryPoints)
 
 					templateObjects.Frontends[baseName] = &types.Frontend{
@@ -883,7 +883,19 @@ func getFrontendRedirect(i *extensionsv1beta1.Ingress, baseName, path string) *t
 	}
 
 	redirectRegex := getStringValue(i.Annotations, annotationKubernetesRedirectRegex, "")
+	_, err := strconv.Unquote(`"` + redirectRegex + `"`)
+	if err != nil {
+		log.Debugf("Skipping Redirect on Ingress %s/%s due to invalid regex: %s", i.Namespace, i.Name, redirectRegex)
+		return nil
+	}
+
 	redirectReplacement := getStringValue(i.Annotations, annotationKubernetesRedirectReplacement, "")
+	_, err = strconv.Unquote(`"` + redirectReplacement + `"`)
+	if err != nil {
+		log.Debugf("Skipping Redirect on Ingress %s/%s due to invalid replacement: %q", i.Namespace, i.Name, redirectRegex)
+		return nil
+	}
+
 	if len(redirectRegex) > 0 && len(redirectReplacement) > 0 {
 		return &types.Redirect{
 			Regex:       redirectRegex,

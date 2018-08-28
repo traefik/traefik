@@ -1,6 +1,8 @@
 package ecs
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"net"
 	"strconv"
@@ -17,18 +19,6 @@ import (
 
 // buildConfiguration fills the config template with the given instances
 func (p *Provider) buildConfiguration(instances []ecsInstance) (*types.Configuration, error) {
-	services := make(map[string][]ecsInstance)
-	for _, instance := range instances {
-		backendName := getBackendName(instance)
-		if p.filterInstance(instance) {
-			if serviceInstances, ok := services[backendName]; ok {
-				services[backendName] = append(serviceInstances, instance)
-			} else {
-				services[backendName] = []ecsInstance{instance}
-			}
-		}
-	}
-
 	var ecsFuncMap = template.FuncMap{
 		// Backend functions
 		"getHost":           getHost,
@@ -43,6 +33,7 @@ func (p *Provider) buildConfiguration(instances []ecsInstance) (*types.Configura
 		// Frontend functions
 		"filterFrontends":   filterFrontends,
 		"getFrontendRule":   p.getFrontendRule,
+		"getFrontendName":   p.getFrontendName,
 		"getPassHostHeader": label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getPassTLSCert":    label.GetFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getPriority":       label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
@@ -54,6 +45,25 @@ func (p *Provider) buildConfiguration(instances []ecsInstance) (*types.Configura
 		"getRateLimit":      label.GetRateLimit,
 		"getHeaders":        label.GetHeaders,
 		"getWhiteList":      label.GetWhiteList,
+	}
+
+	services := make(map[string][]ecsInstance)
+	for _, instance := range instances {
+		segmentProperties := label.ExtractTraefikLabels(instance.TraefikLabels)
+
+		for segmentName, labels := range segmentProperties {
+			instance.SegmentLabels = labels
+			instance.SegmentName = segmentName
+
+			backendName := getBackendName(instance)
+			if p.filterInstance(instance) {
+				if serviceInstances, ok := services[backendName]; ok {
+					services[backendName] = append(serviceInstances, instance)
+				} else {
+					services[backendName] = []ecsInstance{instance}
+				}
+			}
+		}
 	}
 
 	return p.GetConfiguration("templates/ecs.tmpl", ecsFuncMap, struct {
@@ -101,17 +111,47 @@ func (p *Provider) filterInstance(i ecsInstance) bool {
 }
 
 func getBackendName(i ecsInstance) string {
-	if value := label.GetStringValue(i.TraefikLabels, label.TraefikBackend, ""); len(value) > 0 {
-		return value
+	if len(i.SegmentName) > 0 {
+		return getSegmentBackendName(i)
 	}
-	return i.Name
+
+	return getDefaultBackendName(i)
+}
+
+func getSegmentBackendName(i ecsInstance) string {
+	if value := label.GetStringValue(i.SegmentLabels, label.TraefikBackend, ""); len(value) > 0 {
+		return provider.Normalize(i.Name + "-" + value)
+	}
+
+	return provider.Normalize(i.Name + "-" + i.SegmentName)
+}
+
+func getDefaultBackendName(i ecsInstance) string {
+	if value := label.GetStringValue(i.SegmentLabels, label.TraefikBackend, ""); len(value) != 0 {
+		return provider.Normalize(value)
+	}
+
+	return provider.Normalize(i.Name)
 }
 
 func (p *Provider) getFrontendRule(i ecsInstance) string {
-	domain := label.GetStringValue(i.TraefikLabels, label.TraefikDomain, p.Domain)
+	if value := label.GetStringValue(i.SegmentLabels, label.TraefikFrontendRule, ""); len(value) != 0 {
+		return value
+	}
+
+	domain := label.GetStringValue(i.SegmentLabels, label.TraefikDomain, p.Domain)
 	defaultRule := "Host:" + strings.ToLower(strings.Replace(i.Name, "_", "-", -1)) + "." + domain
 
 	return label.GetStringValue(i.TraefikLabels, label.TraefikFrontendRule, defaultRule)
+}
+
+func (p *Provider) getFrontendName(instance ecsInstance) string {
+	name := getBackendName(instance)
+	if len(instance.SegmentName) > 0 {
+		name = instance.SegmentName + "-" + name
+	}
+
+	return provider.Normalize(name)
 }
 
 func getHost(i ecsInstance) string {
@@ -119,7 +159,13 @@ func getHost(i ecsInstance) string {
 }
 
 func getPort(i ecsInstance) string {
-	if value := label.GetStringValue(i.TraefikLabels, label.TraefikPort, ""); len(value) > 0 {
+	value := label.GetStringValue(i.SegmentLabels, label.TraefikPort, "")
+
+	if len(value) == 0 {
+		value = label.GetStringValue(i.TraefikLabels, label.TraefikPort, "")
+	}
+
+	if len(value) > 0 {
 		port, err := strconv.ParseInt(value, 10, 64)
 		if err == nil {
 			for _, mapping := range i.machine.ports {
@@ -138,6 +184,10 @@ func filterFrontends(instances []ecsInstance) []ecsInstance {
 
 	return fun.Filter(func(i ecsInstance) bool {
 		backendName := getBackendName(i)
+		if len(i.SegmentName) > 0 {
+			backendName = backendName + "-" + i.SegmentName
+		}
+
 		_, found := byName[backendName]
 		if !found {
 			byName[backendName] = struct{}{}
@@ -154,14 +204,21 @@ func getServers(instances []ecsInstance) map[string]types.Server {
 			servers = make(map[string]types.Server)
 		}
 
-		protocol := label.GetStringValue(instance.TraefikLabels, label.TraefikProtocol, label.DefaultProtocol)
+		protocol := label.GetStringValue(instance.SegmentLabels, label.TraefikProtocol, label.DefaultProtocol)
 		host := getHost(instance)
 		port := getPort(instance)
 
-		serverName := provider.Normalize(fmt.Sprintf("server-%s-%s", instance.Name, instance.ID))
+		serverURL := fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(host, port))
+		serverName := getServerName(instance, serverURL)
+
+		if _, exist := servers[serverName]; exist {
+			log.Debugf("Skipping server %q with the same URL.", serverName)
+			continue
+		}
+
 		servers[serverName] = types.Server{
-			URL:    fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(host, port)),
-			Weight: label.GetIntValue(instance.TraefikLabels, label.TraefikWeight, label.DefaultWeight),
+			URL:    serverURL,
+			Weight: label.GetIntValue(instance.SegmentLabels, label.TraefikWeight, label.DefaultWeight),
 		}
 	}
 
@@ -170,4 +227,19 @@ func getServers(instances []ecsInstance) map[string]types.Server {
 
 func isEnabled(i ecsInstance, exposedByDefault bool) bool {
 	return label.GetBoolValue(i.TraefikLabels, label.TraefikEnable, exposedByDefault)
+}
+
+func getServerName(instance ecsInstance, url string) string {
+	hash := md5.New()
+	_, err := hash.Write([]byte(url))
+	if err != nil {
+		// Impossible case
+		log.Errorf("Fail to hash server URL %q", url)
+	}
+
+	if len(instance.SegmentName) > 0 {
+		return provider.Normalize(fmt.Sprintf("server-%s-%s-%s", instance.Name, instance.ID, hex.EncodeToString(hash.Sum(nil))))
+	}
+
+	return provider.Normalize(fmt.Sprintf("server-%s-%s", instance.Name, instance.ID))
 }

@@ -1,4 +1,4 @@
-# Docker & Traefik
+# Let's Encrypt & Docker
 
 In this use case, we want to use Træfik as a _layer-7_ load balancer with SSL termination for a set of micro-services used to run a web application.
 
@@ -8,7 +8,7 @@ In addition, we want to use Let's Encrypt to automatically generate and renew SS
 
 ## Setting Up
 
-In order for this to work, you'll need a server with a public IP address, with Docker installed on it.
+In order for this to work, you'll need a server with a public IP address, with Docker and docker-compose installed on it.
 
 In this example, we're using the fictitious domain _my-awesome-app.org_.
 

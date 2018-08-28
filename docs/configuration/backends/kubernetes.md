@@ -127,7 +127,13 @@ This will give more flexibility in cloud/dynamic environments.
 
 Traefik automatically requests endpoint information based on the service provided in the ingress spec.
 Although traefik will connect directly to the endpoints (pods), it still checks the service port to see if TLS communication is required.
-If the service port defined in the ingress spec is 443, then the backend communication protocol is assumed to be TLS, and will connect via TLS automatically.
+
+There are 2 ways to configure Traefik to use https to communicate with backend pods:
+
+1. If the service port defined in the ingress spec is 443 (note that you can still use `targetPort` to use a different port on your pod).
+2. If the service port defined in the ingress spec has a name that starts with `https` (such as `https-api`, `https-web` or just `https`).
+
+If either of those configuration options exist, then the backend communication protocol is assumed to be TLS, and will connect via TLS automatically.
 
 !!! note
     Please note that by enabling TLS communication between traefik and your pods, you will have to have trusted certificates that have the proper trust chain and IP subject name.
