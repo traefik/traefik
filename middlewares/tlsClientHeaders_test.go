@@ -179,6 +179,7 @@ func buildTLSWith(certContents []string) *tls.ConnectionState {
 	for _, certContent := range certContents {
 		peerCertificates = append(peerCertificates, getCertificate(certContent))
 	}
+
 	return &tls.ConnectionState{PeerCertificates: peerCertificates}
 }
 
@@ -223,10 +224,10 @@ jECvgAY7Nfd9mZ1KtyNaW31is+kag7NsvjxU/kM=`),
 	}
 
 	for _, test := range testCases {
-
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			require.Equal(t, test.expected, sanitize(test.toSanitize), "The sanitized certificates should be equal")
 		})
 	}
@@ -332,9 +333,9 @@ func TestGetSans(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-
 		sans := getSANs(test.cert)
 		test := test
+
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -353,6 +354,7 @@ func TestGetSans(t *testing.T) {
 func TestTlsClientheadersWithCertInfos(t *testing.T) {
 	minimalCertAllInfos := `Subject="C=FR,ST=Some-State,O=Internet Widgits Pty Ltd",NB=1531902496,NA=1534494496,SAN=`
 	completeCertAllInfos := `Subject="C=FR,ST=SomeState,L=Toulouse,O=Cheese,CN=*.cheese.org",NB=1531900816,NA=1563436816,SAN=*.cheese.org,*.cheese.net,cheese.in,test@cheese.org,test@cheese.net,10.0.1.0,10.0.1.2`
+
 	testCases := []struct {
 		desc                 string
 		certContents         []string // set the request TLS attribute if defined
@@ -789,6 +791,7 @@ func TestNewTLSClientHeadersFromStruct(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			require.Equal(t, test.expected, NewTLSClientHeaders(test.frontend))
 		})
 	}

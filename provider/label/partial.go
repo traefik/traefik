@@ -60,7 +60,7 @@ func GetRedirect(labels map[string]string) *types.Redirect {
 	return nil
 }
 
-// GetTLSClientCert create tls client header configuration from labels
+// GetTLSClientCert create TLS client header configuration from labels
 func GetTLSClientCert(labels map[string]string) *types.TLSClientHeaders {
 	if !HasPrefix(labels, TraefikFrontendPassTLSClientCert) {
 		return nil

@@ -313,7 +313,6 @@ func createClientTLSConfig(entryPointName string, tlsOption *traefiktls.TLS) (*t
 	if len(tlsOption.ClientCA.Files) > 0 {
 		pool := x509.NewCertPool()
 		for _, caFile := range tlsOption.ClientCA.Files {
-
 			data, err := caFile.Read()
 			if err != nil {
 				return nil, err

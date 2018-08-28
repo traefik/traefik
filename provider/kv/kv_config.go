@@ -370,7 +370,7 @@ func (p *Provider) getTLSSection(prefix string) []*tls.Configuration {
 	return tlsSection
 }
 
-// GetTLSClientCert create tls client header configuration from labels
+// getTLSClientCert create TLS client header configuration from labels
 func (p *Provider) getTLSClientCert(rootPath string) *types.TLSClientHeaders {
 	if !p.hasPrefix(rootPath, pathFrontendPassTLSClientCert) {
 		return nil

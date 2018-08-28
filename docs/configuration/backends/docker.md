@@ -19,7 +19,7 @@ Træfik can be configured to use Docker as a provider.
 #
 endpoint = "unix:///var/run/docker.sock"
 
-# Default domain used.
+# Default base domain used for the frontend rules.
 # Can be overridden by setting the "traefik.domain" label on a container.
 #
 # Required

@@ -613,13 +613,13 @@ func (h HTTPCodeRanges) Contains(statusCode int) bool {
 	return false
 }
 
-// TLSClientHeaders holds the tls client cert headers configuration.
+// TLSClientHeaders holds the TLS client cert headers configuration.
 type TLSClientHeaders struct {
 	PEM   bool                       `description:"Enable header with escaped client pem" json:"pem"`
 	Infos *TLSClientCertificateInfos `description:"Enable header with configured client cert infos" json:"infos,omitempty"`
 }
 
-// TLSClientCertificateInfos holds the client tls certificate infos configuration
+// TLSClientCertificateInfos holds the client TLS certificate infos configuration
 type TLSClientCertificateInfos struct {
 	NotAfter  bool                              `description:"Add NotAfter info in header" json:"notAfter"`
 	NotBefore bool                              `description:"Add NotBefore info in header" json:"notBefore"`
@@ -627,7 +627,7 @@ type TLSClientCertificateInfos struct {
 	Sans      bool                              `description:"Add Sans info in header" json:"sans"`
 }
 
-// TLSCLientCertificateSubjectInfos holds the client tls certificate subject infos configuration
+// TLSCLientCertificateSubjectInfos holds the client TLS certificate subject infos configuration
 type TLSCLientCertificateSubjectInfos struct {
 	Country      bool `description:"Add Country info in header" json:"country"`
 	Province     bool `description:"Add Province info in header" json:"province"`
