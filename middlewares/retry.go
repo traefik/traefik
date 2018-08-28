@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"bufio"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -147,7 +148,11 @@ func (rr *retryResponseWriterWithoutCloseNotify) WriteHeader(code int) {
 }
 
 func (rr *retryResponseWriterWithoutCloseNotify) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	return rr.responseWriter.(http.Hijacker).Hijack()
+	hijacker, ok := rr.responseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, fmt.Errorf("%T is not a http.Hijacker", rr.responseWriter)
+	}
+	return hijacker.Hijack()
 }
 
 func (rr *retryResponseWriterWithoutCloseNotify) Flush() {
