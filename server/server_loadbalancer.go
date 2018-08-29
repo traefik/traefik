@@ -5,7 +5,6 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -280,7 +279,7 @@ func createHTTPTransport(globalConfiguration configuration.GlobalConfiguration) 
 	return transport, nil
 }
 
-func createRootCACertPool(rootCAs traefiktls.RootCAs) *x509.CertPool {
+func createRootCACertPool(rootCAs traefiktls.FilesOrContents) *x509.CertPool {
 	roots := x509.NewCertPool()
 
 	for _, cert := range rootCAs {
@@ -314,7 +313,7 @@ func createClientTLSConfig(entryPointName string, tlsOption *traefiktls.TLS) (*t
 	if len(tlsOption.ClientCA.Files) > 0 {
 		pool := x509.NewCertPool()
 		for _, caFile := range tlsOption.ClientCA.Files {
-			data, err := ioutil.ReadFile(caFile)
+			data, err := caFile.Read()
 			if err != nil {
 				return nil, err
 			}

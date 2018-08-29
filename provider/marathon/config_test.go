@@ -374,6 +374,17 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel(label.TraefikBackendBufferingMemRequestBodyBytes, "2097152"),
 					withLabel(label.TraefikBackendBufferingRetryExpression, "IsNetworkError() && Attempts() <= 2"),
 
+					withLabel(label.TraefikFrontendPassTLSClientCertPem, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosNotBefore, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosNotAfter, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosSans, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectCommonName, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectCountry, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectLocality, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectOrganization, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectProvince, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectSerialNumber, "true"),
+
 					withLabel(label.TraefikFrontendAuthBasic, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 					withLabel(label.TraefikFrontendAuthBasicRemoveHeader, "true"),
 					withLabel(label.TraefikFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
@@ -401,7 +412,6 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel(label.TraefikFrontendRule, "Host:traefik.io"),
 					withLabel(label.TraefikFrontendWhiteListSourceRange, "10.10.10.10"),
 					withLabel(label.TraefikFrontendWhiteListUseXForwardedFor, "true"),
-
 					withLabel(label.TraefikFrontendRequestHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
 					withLabel(label.TraefikFrontendResponseHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
 					withLabel(label.TraefikFrontendSSLProxyHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
@@ -455,6 +465,22 @@ func TestBuildConfiguration(t *testing.T) {
 					PassHostHeader: true,
 					PassTLSCert:    true,
 					Priority:       666,
+					PassTLSClientCert: &types.TLSClientHeaders{
+						PEM: true,
+						Infos: &types.TLSClientCertificateInfos{
+							NotBefore: true,
+							Sans:      true,
+							NotAfter:  true,
+							Subject: &types.TLSCLientCertificateSubjectInfos{
+								CommonName:   true,
+								Country:      true,
+								Locality:     true,
+								Organization: true,
+								Province:     true,
+								SerialNumber: true,
+							},
+						},
+					},
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{
@@ -766,6 +792,17 @@ func TestBuildConfigurationSegments(t *testing.T) {
 					withSegmentLabel(label.TraefikProtocol, "https", "containous"),
 					withSegmentLabel(label.TraefikWeight, "12", "containous"),
 
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertPem, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosNotBefore, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosNotAfter, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosSans, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectCommonName, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectCountry, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectLocality, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectOrganization, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectProvince, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectSerialNumber, "true", "containous"),
+
 					withSegmentLabel(label.TraefikFrontendAuthBasic, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0", "containous"),
 					withSegmentLabel(label.TraefikFrontendAuthBasicRemoveHeader, "true", "containous"),
 					withSegmentLabel(label.TraefikFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0", "containous"),
@@ -847,6 +884,22 @@ func TestBuildConfigurationSegments(t *testing.T) {
 					PassHostHeader: true,
 					PassTLSCert:    true,
 					Priority:       666,
+					PassTLSClientCert: &types.TLSClientHeaders{
+						PEM: true,
+						Infos: &types.TLSClientCertificateInfos{
+							NotBefore: true,
+							Sans:      true,
+							NotAfter:  true,
+							Subject: &types.TLSCLientCertificateSubjectInfos{
+								CommonName:   true,
+								Country:      true,
+								Locality:     true,
+								Organization: true,
+								Province:     true,
+								SerialNumber: true,
+							},
+						},
+					},
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{

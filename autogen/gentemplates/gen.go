@@ -209,8 +209,30 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
       "{{.}}",
       {{end}}]
 
-    {{ $auth := getAuth $service.TraefikLabels }}
+    {{ $tlsClientCert := getPassTLSClientCert $service.TraefikLabels }}
+    {{if $tlsClientCert }}
+    [frontends."frontend-{{ $service.ServiceName }}".passTLSClientCert]
+      pem = {{ $tlsClientCert.PEM }}
+      {{ $infos := $tlsClientCert.Infos }}
+      {{if $infos }}
+      [frontends."frontend-{{ $service.ServiceName }}".passTLSClientCert.infos]
+        notAfter = {{ $infos.NotAfter   }}
+        notBefore = {{ $infos.NotBefore }}
+        sans = {{ $infos.Sans }}
+        {{ $subject := $infos.Subject }}
+        {{if $subject }}
+        [frontends."frontend-{{ $service.ServiceName }}".passTLSClientCert.infos.subject]
+          country = {{ $subject.Country }}
+          province = {{ $subject.Province }}
+          locality = {{ $subject.Locality }}
+          organization = {{ $subject.Organization }}
+          commonName = {{ $subject.CommonName }}
+          serialNumber = {{ $subject.SerialNumber }}
+        {{end}}
+      {{end}}
+    {{end}}
 
+    {{ $auth := getAuth $service.TraefikLabels }}
     {{if $auth }}
     [frontends."frontend-{{ $service.ServiceName }}".auth]
       headerField = "{{ $auth.HeaderField }}"
@@ -659,6 +681,29 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
       "{{.}}",
       {{end}}]
 
+    {{ $tlsClientCert := getPassTLSClientCert $container.SegmentLabels }}
+    {{if $tlsClientCert }}
+    [frontends."frontend-{{ $frontendName }}".passTLSClientCert]
+      pem = {{ $tlsClientCert.PEM }}
+      {{ $infos := $tlsClientCert.Infos }}
+      {{if $infos }}
+      [frontends."frontend-{{ $frontendName }}".passTLSClientCert.infos]
+        notAfter = {{ $infos.NotAfter   }}
+        notBefore = {{ $infos.NotBefore }}
+        sans = {{ $infos.Sans }}
+        {{ $subject := $infos.Subject }}
+        {{if $subject }}
+        [frontends."frontend-{{ $frontendName }}".passTLSClientCert.infos.subject]
+          country = {{ $subject.Country }}
+          province = {{ $subject.Province }}
+          locality = {{ $subject.Locality }}
+          organization = {{ $subject.Organization }}
+          commonName = {{ $subject.CommonName }}
+          serialNumber = {{ $subject.SerialNumber }}
+        {{end}}
+      {{end}}
+    {{end}}
+
     {{ $auth := getAuth $container.SegmentLabels }}
     {{if $auth }}
     [frontends."frontend-{{ $frontendName }}".auth]
@@ -960,6 +1005,29 @@ var _templatesEcsTmpl = []byte(`[backends]
     entryPoints = [{{range getEntryPoints $instance.SegmentLabels }}
       "{{.}}",
       {{end}}]
+
+    {{ $tlsClientCert := getPassTLSClientCert $instance.SegmentLabels }}
+    {{if $tlsClientCert }}
+    [frontends."frontend-{{ $frontendName }}".passTLSClientCert]
+      pem = {{ $tlsClientCert.PEM }}
+      {{ $infos := $tlsClientCert.Infos }}
+      {{if $infos }}
+      [frontends."frontend-{{ $frontendName }}".passTLSClientCert.infos]
+        notAfter = {{ $infos.NotAfter   }}
+        notBefore = {{ $infos.NotBefore }}
+        sans = {{ $infos.Sans }}
+        {{ $subject := $infos.Subject }}
+        {{if $subject }}
+        [frontends."frontend-{{ $frontendName }}".passTLSClientCert.infos.subject]
+          country = {{ $subject.Country }}
+          province = {{ $subject.Province }}
+          locality = {{ $subject.Locality }}
+          organization = {{ $subject.Organization }}
+          commonName = {{ $subject.CommonName }}
+          serialNumber = {{ $subject.SerialNumber }}
+        {{end}}
+      {{end}}
+    {{end}}
 
     {{ $auth := getAuth $instance.SegmentLabels }}
     {{if $auth }}
@@ -1454,6 +1522,29 @@ var _templatesKvTmpl = []byte(`[backends]
       "{{.}}",
       {{end}}]
 
+    {{ $tlsClientCert := getPassTLSClientCert $frontend }}
+    {{if $tlsClientCert }}
+    [frontends."{{ $frontendName }}".passTLSClientCert]
+      pem = {{ $tlsClientCert.PEM }}
+      {{ $infos := $tlsClientCert.Infos }}
+      {{if $infos }}
+      [frontends."{{ $frontendName }}".passTLSClientCert.infos]
+        notAfter = {{ $infos.NotAfter   }}
+        notBefore = {{ $infos.NotBefore }}
+        sans = {{ $infos.Sans }}
+        {{ $subject := $infos.Subject }}
+        {{if $subject }}
+        [frontends."{{ $frontendName }}".passTLSClientCert.infos.subject]
+          country = {{ $subject.Country }}
+          province = {{ $subject.Province }}
+          locality = {{ $subject.Locality }}
+          organization = {{ $subject.Organization }}
+          commonName = {{ $subject.CommonName }}
+          serialNumber = {{ $subject.SerialNumber }}
+        {{end}}
+      {{end}}
+    {{end}}
+
     {{ $auth := getAuth $frontend }}
     {{if $auth }}
     [frontends."{{ $frontendName }}".auth]
@@ -1796,7 +1887,30 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
       "{{.}}",
       {{end}}]
 
-    {{ $auth := getAuth $app.SegmentLabels }}
+    {{ $tlsClientCert := getPassTLSClientCert $app.SegmentLabels }}
+    {{if $tlsClientCert }}
+    [frontends."{{ $frontendName }}".passTLSClientCert]
+      pem = {{ $tlsClientCert.PEM }}
+      {{ $infos := $tlsClientCert.Infos }}
+      {{if $infos }}
+      [frontends."{{ $frontendName }}".passTLSClientCert.infos]
+        notAfter = {{ $infos.NotAfter   }}
+        notBefore = {{ $infos.NotBefore }}
+        sans = {{ $infos.Sans }}
+        {{ $subject := $infos.Subject }}
+        {{if $subject }}
+        [frontends."{{ $frontendName }}".passTLSClientCert.infos.subject]
+          country = {{ $subject.Country }}
+          province = {{ $subject.Province }}
+          locality = {{ $subject.Locality }}
+          organization = {{ $subject.Organization }}
+          commonName = {{ $subject.CommonName }}
+          serialNumber = {{ $subject.SerialNumber }}
+        {{end}}
+      {{end}}
+    {{end}}
+
+  {{ $auth := getAuth $app.SegmentLabels }}
     {{if $auth }}
     [frontends."{{ $frontendName }}".auth]
       headerField = "{{ $auth.HeaderField }}"
@@ -2081,6 +2195,29 @@ var _templatesMesosTmpl = []byte(`[backends]
     entryPoints = [{{range getEntryPoints $app.TraefikLabels }}
       "{{.}}",
       {{end}}]
+
+    {{ $tlsClientCert := getPassTLSClientCert $app.TraefikLabels }}
+    {{if $tlsClientCert }}
+    [frontends."frontend-{{ $frontendName }}".passTLSClientCert]
+      pem = {{ $tlsClientCert.PEM }}
+      {{ $infos := $tlsClientCert.Infos }}
+      {{if $infos }}
+      [frontends."frontend-{{ $frontendName }}".passTLSClientCert.infos]
+        notAfter = {{ $infos.NotAfter   }}
+        notBefore = {{ $infos.NotBefore }}
+        sans = {{ $infos.Sans }}
+        {{ $subject := $infos.Subject }}
+        {{if $subject }}
+        [frontends."frontend-{{ $frontendName }}".passTLSClientCert.infos.subject]
+          country = {{ $subject.Country }}
+          province = {{ $subject.Province }}
+          locality = {{ $subject.Locality }}
+          organization = {{ $subject.Organization }}
+          commonName = {{ $subject.CommonName }}
+          serialNumber = {{ $subject.SerialNumber }}
+        {{end}}
+      {{end}}
+    {{end}}
 
     {{ $auth := getAuth $app.TraefikLabels }}
     {{if $auth }}
@@ -2420,6 +2557,29 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
     entryPoints = [{{range getEntryPoints $service.SegmentLabels }}
       "{{.}}",
       {{end}}]
+
+    {{ $tlsClientCert := getPassTLSClientCert $service.SegmentLabels }}
+    {{if $tlsClientCert }}
+    [frontends."frontend-{{ $frontendName }}".passTLSClientCert]
+      pem = {{ $tlsClientCert.PEM }}
+      {{ $infos := $tlsClientCert.Infos }}
+      {{if $infos }}
+      [frontends."frontend-{{ $frontendName }}".passTLSClientCert.infos]
+        notAfter = {{ $infos.NotAfter   }}
+        notBefore = {{ $infos.NotBefore }}
+        sans = {{ $infos.Sans }}
+        {{ $subject := $infos.Subject }}
+        {{if $subject }}
+        [frontends."frontend-{{ $frontendName }}".passTLSClientCert.infos.subject]
+          country = {{ $subject.Country }}
+          province = {{ $subject.Province }}
+          locality = {{ $subject.Locality }}
+          organization = {{ $subject.Organization }}
+          commonName = {{ $subject.CommonName }}
+          serialNumber = {{ $subject.SerialNumber }}
+        {{end}}
+      {{end}}
+    {{end}}
 
     {{ $auth := getAuth $service.SegmentLabels }}
     {{if $auth }}
