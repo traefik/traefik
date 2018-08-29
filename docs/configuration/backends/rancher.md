@@ -12,7 +12,7 @@ Træfik can be configured to use Rancher as a provider.
 # Enable Rancher Provider.
 [rancher]
 
-# Default domain used.
+# Default base domain used for the frontend rules.
 # Can be overridden by setting the "traefik.domain" label on an service.
 #
 # Required
@@ -140,7 +140,7 @@ Labels can be used on task containers to override default behavior:
 
 | Label                                                               | Description                                                                                                                                                                                                                      |
 |---------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `traefik.domain`                                                    | Sets the default domain for the frontend rules.                                                                                                                                                                                  |
+| `traefik.domain`                                                    | Sets the default base domain for the frontend rules.                                                                                                                                                                                  |
 | `traefik.enable=false`                                              | Disables this container in Træfik.                                                                                                                                                                                               |
 | `traefik.port=80`                                                   | Registers this port. Useful when the container exposes multiple ports.                                                                                                                                                           |
 | `traefik.protocol=https`                                            | Overrides the default `http` protocol.                                                                                                                                                                                           |

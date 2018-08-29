@@ -31,7 +31,7 @@ endpoint = "http://127.0.0.1:8080"
 #
 watch = true
 
-# Default domain used.
+# Default base domain used for the frontend rules.
 # Can be overridden by setting the "traefik.domain" label on an application.
 #
 # Required
@@ -195,7 +195,7 @@ The following labels can be defined on Marathon applications. They adjust the be
 
 | Label                                                               | Description                                                                                                                                                                                                                   |
 |---------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `traefik.domain`                                                    | Sets the default domain used for the frontend rules.                                                                                                                                                                          |
+| `traefik.domain`                                                    | Sets the default base domain used for the frontend rules.                                                                                                                                                                          |
 | `traefik.enable=false`                                              | Disables this container in Træfik.                                                                                                                                                                                            |
 | `traefik.port=80`                                                   | Registers this port. Useful when the container exposes multiples ports.                                                                                                                                                       |
 | `traefik.portIndex=1`                                               | Registers port by index in the application's ports array. Useful when the application exposes multiple ports.                                                                                                                 |

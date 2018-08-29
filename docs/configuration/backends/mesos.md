@@ -27,7 +27,7 @@ endpoint = "http://127.0.0.1:8080"
 #
 watch = true
 
-# Default domain used.
+# Default base domain used for the frontend rules.
 # Can be overridden by setting the "traefik.domain" label on an application.
 #
 # Required
@@ -108,7 +108,7 @@ The following labels can be defined on Mesos tasks. They adjust the behavior for
 
 | Label                                                               | Description                                                                                                                                                                                                                   |
 |---------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `traefik.domain`                                                    | Sets the default domain for the frontend rules.                                                                                                                                                                               |
+| `traefik.domain`                                                    | Sets the default base domain for the frontend rules.                                                                                                                                                                               |
 | `traefik.enable=false`                                              | Disables this container in Træfik.                                                                                                                                                                                            |
 | `traefik.port=80`                                                   | Registers this port. Useful when the application exposes multiple ports.                                                                                                                                                      |
 | `traefik.portName=web`                                              | Registers port by name in the application's ports array. Useful when the application exposes multiple ports.                                                                                                                  |
