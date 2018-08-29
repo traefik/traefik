@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"bufio"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -41,11 +42,8 @@ func (retry *Retry) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	attempts := 1
 	for {
 		attemptsExhausted := attempts >= retry.attempts
-		// Websocket requests can't be retried at this point in time.
-		// This is due to the fact that gorilla/websocket doesn't use the request
-		// context and so we don't get httptrace information.
-		// Websocket clients should however retry on their own anyway.
-		shouldRetry := !attemptsExhausted && !isWebsocketRequest(r)
+
+		shouldRetry := !attemptsExhausted
 		retryResponseWriter := newRetryResponseWriter(rw, shouldRetry)
 
 		// Disable retries when the backend already received request data
@@ -150,7 +148,11 @@ func (rr *retryResponseWriterWithoutCloseNotify) WriteHeader(code int) {
 }
 
 func (rr *retryResponseWriterWithoutCloseNotify) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	return rr.responseWriter.(http.Hijacker).Hijack()
+	hijacker, ok := rr.responseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, fmt.Errorf("%T is not a http.Hijacker", rr.responseWriter)
+	}
+	return hijacker.Hijack()
 }
 
 func (rr *retryResponseWriterWithoutCloseNotify) Flush() {
