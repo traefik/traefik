@@ -6,6 +6,7 @@ import (
 
 	"github.com/containous/traefik/log"
 	"github.com/opentracing/opentracing-go/ext"
+	jaeger "github.com/uber/jaeger-client-go"
 	"github.com/urfave/negroni"
 )
 
@@ -36,6 +37,7 @@ func (f *forwarderMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, 
 	ext.HTTPUrl.Set(span, fmt.Sprintf("%s%s", r.URL.String(), r.RequestURI))
 	span.SetTag("http.host", r.Host)
 
+	r.Header.Del(jaeger.TracerStateHeaderName)
 	InjectRequestHeaders(r)
 
 	recorder := newStatusCodeRecoder(w, 200)
