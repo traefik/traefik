@@ -32,7 +32,7 @@ clusters = ["default"]
 #
 watch = true
 
-# Default domain used.
+# Default base domain used for the frontend rules.
 # Can be overridden by setting the "traefik.domain" label.
 #
 # Optional
@@ -138,7 +138,7 @@ Labels can be used on task containers to override default behaviour:
 
 | Label                                                               | Description                                                                                                                                                                                                                   |
 |---------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `traefik.domain`                                                    | Sets the default domain for frontend rules.                                                                                                                                                                                   |
+| `traefik.domain`                                                    | Sets the default base domain for frontend rules.                                                                                                                                                                                   |
 | `traefik.enable=false`                                              | Disables this container in Træfik.                                                                                                                                                                                            |
 | `traefik.port=80`                                                   | Overrides the default `port` value. Overrides `NetworkBindings` from Docker Container                                                                                                                                         |
 | `traefik.protocol=https`                                            | Overrides the default `http` protocol                                                                                                                                                                                         |

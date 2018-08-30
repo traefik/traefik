@@ -31,7 +31,7 @@ exposedByDefault = false
 #
 stale = false
 
-# Default domain used.
+# Default base domain used for the frontend rules.
 #
 # Optional
 #
@@ -210,7 +210,7 @@ If you need to support multiple frontends for a service, for example when having
 | `<prefix>.frontend.headers.STSIncludeSubdomains=true`     | Adds the `IncludeSubdomains` section of the STS  header.                                                                                                                                            |
 | `<prefix>.frontend.headers.STSPreload=true`               | Adds the preload flag to the STS  header.                                                                                                                                                           |
 
-	
+
 ### Examples
 
 If you want that Træfik uses Consul tags correctly you need to defined them like that:
