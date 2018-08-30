@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"reflect"
 	"sort"
@@ -13,15 +14,17 @@ import (
 	"github.com/containous/mux"
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/healthcheck"
+	"github.com/containous/traefik/hostresolver"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/middlewares/pipelining"
 	"github.com/containous/traefik/rules"
-	"github.com/containous/traefik/safe"
 	traefiktls "github.com/containous/traefik/tls"
+	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
 	"github.com/eapache/channels"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
 	"github.com/vulcand/oxy/forward"
 )
@@ -53,11 +56,12 @@ func (s *Server) loadConfiguration(configMsg types.ConfigMessage) {
 		s.serverEntryPoints[newServerEntryPointName].httpRouter.UpdateHandler(newServerEntryPoint.httpRouter.GetHandler())
 
 		if s.entryPoints[newServerEntryPointName].Configuration.TLS == nil {
-			if newServerEntryPoint.certs.Get() != nil {
+			if newServerEntryPoint.certs.ContainsCertificates() {
 				log.Debugf("Certificates not added to non-TLS entryPoint %s.", newServerEntryPointName)
 			}
 		} else {
-			s.serverEntryPoints[newServerEntryPointName].certs.Set(newServerEntryPoint.certs.Get())
+			s.serverEntryPoints[newServerEntryPointName].certs.DynamicCerts.Set(newServerEntryPoint.certs.DynamicCerts.Get())
+			s.serverEntryPoints[newServerEntryPointName].certs.ResetCache()
 		}
 		log.Infof("Server configuration reloaded on %s", s.serverEntryPoints[newServerEntryPointName].httpServer.Addr)
 	}
@@ -121,7 +125,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 	for serverEntryPointName, serverEntryPoint := range serverEntryPoints {
 		serverEntryPoint.httpRouter.GetHandler().SortRoutes()
 		if _, exists := entryPointsCertificates[serverEntryPointName]; exists {
-			serverEntryPoint.certs.Set(entryPointsCertificates[serverEntryPointName])
+			serverEntryPoint.certs.DynamicCerts.Set(entryPointsCertificates[serverEntryPointName])
 		}
 	}
 
@@ -135,6 +139,7 @@ func (s *Server) loadFrontendConfig(
 ) ([]handlerPostConfig, error) {
 
 	frontend := config.Frontends[frontendName]
+	hostResolver := buildHostResolver(s.globalConfiguration)
 
 	if len(frontend.EntryPoints) == 0 {
 		return nil, fmt.Errorf("no entrypoint defined for frontend %s", frontendName)
@@ -160,7 +165,7 @@ func (s *Server) loadFrontendConfig(
 		if backendsHandlers[entryPointName+providerName+frontendHash] == nil {
 			log.Debugf("Creating backend %s", frontend.Backend)
 
-			handlers, responseModifier, postConfig, err := s.buildMiddlewares(frontendName, frontend, config.Backends, entryPointName, entryPoint, providerName)
+			handlers, responseModifier, postConfig, err := s.buildMiddlewares(frontendName, frontend, config.Backends, entryPointName, providerName)
 			if err != nil {
 				return nil, err
 			}
@@ -201,7 +206,7 @@ func (s *Server) loadFrontendConfig(
 				frontend.Backend, entryPointName, providerName, frontendName, frontendHash)
 		}
 
-		serverRoute, err := buildServerRoute(serverEntryPoints[entryPointName], frontendName, frontend)
+		serverRoute, err := buildServerRoute(serverEntryPoints[entryPointName], frontendName, frontend, hostResolver)
 		if err != nil {
 			return nil, err
 		}
@@ -228,19 +233,22 @@ func (s *Server) buildForwarder(entryPointName string, entryPoint *configuration
 		return nil, fmt.Errorf("failed to create RoundTripper for frontend %s: %v", frontendName, err)
 	}
 
-	rewriter, err := NewHeaderRewriter(entryPoint.ForwardedHeaders.TrustedIPs, entryPoint.ForwardedHeaders.Insecure)
-	if err != nil {
-		return nil, fmt.Errorf("error creating rewriter for frontend %s: %v", frontendName, err)
-	}
-
 	var fwd http.Handler
 	fwd, err = forward.New(
 		forward.Stream(true),
 		forward.PassHostHeader(frontend.PassHostHeader),
 		forward.RoundTripper(roundTripper),
-		forward.Rewriter(rewriter),
 		forward.ResponseModifier(responseModifier),
 		forward.BufferPool(s.bufferPool),
+		forward.WebsocketConnectionClosedHook(func(req *http.Request, conn net.Conn) {
+			server := req.Context().Value(http.ServerContextKey).(*http.Server)
+			if server != nil {
+				connState := server.ConnState
+				if connState != nil {
+					connState(conn, http.StateClosed)
+				}
+			}
+		}),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error creating forwarder for frontend %s: %v", frontendName, err)
@@ -260,12 +268,12 @@ func (s *Server) buildForwarder(entryPointName string, entryPoint *configuration
 	return fwd, nil
 }
 
-func buildServerRoute(serverEntryPoint *serverEntryPoint, frontendName string, frontend *types.Frontend) (*types.ServerRoute, error) {
+func buildServerRoute(serverEntryPoint *serverEntryPoint, frontendName string, frontend *types.Frontend, hostResolver *hostresolver.Resolver) (*types.ServerRoute, error) {
 	serverRoute := &types.ServerRoute{Route: serverEntryPoint.httpRouter.GetHandler().NewRoute().Name(frontendName)}
 
 	priority := 0
 	for routeName, route := range frontend.Routes {
-		rls := rules.Rules{Route: serverRoute}
+		rls := rules.Rules{Route: serverRoute, HostResolver: hostResolver}
 		newRoute, err := rls.Parse(route.Rule)
 		if err != nil {
 			return nil, fmt.Errorf("error creating route for frontend %s: %v", frontendName, err)
@@ -291,9 +299,10 @@ func (s *Server) preLoadConfiguration(configMsg types.ConfigMessage) {
 	s.defaultConfigurationValues(configMsg.Configuration)
 	currentConfigurations := s.currentConfigurations.Get().(types.Configurations)
 
-	jsonConf, _ := json.Marshal(configMsg.Configuration)
-
-	log.Debugf("Configuration received from provider %s: %s", configMsg.ProviderName, string(jsonConf))
+	if log.GetLevel() == logrus.DebugLevel {
+		jsonConf, _ := json.Marshal(configMsg.Configuration)
+		log.Debugf("Configuration received from provider %s: %s", configMsg.ProviderName, string(jsonConf))
+	}
 
 	if configMsg.Configuration == nil || configMsg.Configuration.Backends == nil && configMsg.Configuration.Frontends == nil && configMsg.Configuration.TLS == nil {
 		log.Infof("Skipping empty Configuration for provider %s", configMsg.ProviderName)
@@ -370,31 +379,14 @@ func (s *Server) filterEntryPoints(entryPoints []string) ([]string, []string) {
 func configureBackends(backends map[string]*types.Backend) {
 	for backendName := range backends {
 		backend := backends[backendName]
-		if backend.LoadBalancer != nil && backend.LoadBalancer.Sticky {
-			log.Warnf("Deprecated configuration found: %s. Please use %s.", "backend.LoadBalancer.Sticky", "backend.LoadBalancer.Stickiness")
-		}
 
 		_, err := types.NewLoadBalancerMethod(backend.LoadBalancer)
-		if err == nil {
-			if backend.LoadBalancer != nil && backend.LoadBalancer.Stickiness == nil && backend.LoadBalancer.Sticky {
-				backend.LoadBalancer.Stickiness = &types.Stickiness{
-					CookieName: "_TRAEFIK_BACKEND",
-				}
-			}
-		} else {
+		if err != nil {
 			log.Debugf("Backend %s: %v", backendName, err)
 
 			var stickiness *types.Stickiness
 			if backend.LoadBalancer != nil {
-				if backend.LoadBalancer.Stickiness == nil {
-					if backend.LoadBalancer.Sticky {
-						stickiness = &types.Stickiness{
-							CookieName: "_TRAEFIK_BACKEND",
-						}
-					}
-				} else {
-					stickiness = backend.LoadBalancer.Stickiness
-				}
+				stickiness = backend.LoadBalancer.Stickiness
 			}
 			backend.LoadBalancer = &types.LoadBalancer{
 				Method:     "wrr",
@@ -553,11 +545,39 @@ func (s *Server) buildServerEntryPoints() map[string]*serverEntryPoint {
 		serverEntryPoints[entryPointName] = &serverEntryPoint{
 			httpRouter:       middlewares.NewHandlerSwitcher(s.buildDefaultHTTPRouter()),
 			onDemandListener: entryPoint.OnDemandListener,
+			tlsALPNGetter:    entryPoint.TLSALPNGetter,
 		}
+
 		if entryPoint.CertificateStore != nil {
-			serverEntryPoints[entryPointName].certs = entryPoint.CertificateStore.DynamicCerts
+			serverEntryPoints[entryPointName].certs = entryPoint.CertificateStore
 		} else {
-			serverEntryPoints[entryPointName].certs = &safe.Safe{}
+			serverEntryPoints[entryPointName].certs = traefiktls.NewCertificateStore()
+		}
+
+		if entryPoint.Configuration.TLS != nil {
+			serverEntryPoints[entryPointName].certs.SniStrict = entryPoint.Configuration.TLS.SniStrict
+
+			if entryPoint.Configuration.TLS.DefaultCertificate != nil {
+				cert, err := tls.LoadX509KeyPair(entryPoint.Configuration.TLS.DefaultCertificate.CertFile.String(), entryPoint.Configuration.TLS.DefaultCertificate.KeyFile.String())
+				if err != nil {
+					log.Error(err)
+					continue
+				}
+				serverEntryPoints[entryPointName].certs.DefaultCertificate = &cert
+			} else {
+				cert, err := generate.DefaultCertificate()
+				if err != nil {
+					log.Error(err)
+					continue
+				}
+				serverEntryPoints[entryPointName].certs.DefaultCertificate = cert
+			}
+			if len(entryPoint.Configuration.TLS.Certificates) > 0 {
+				config, _ := entryPoint.Configuration.TLS.Certificates.CreateTLSConfig(entryPointName)
+				certMap := s.buildNameOrIPToCertificate(config.Certificates)
+				serverEntryPoints[entryPointName].certs.StaticCerts.Set(certMap)
+
+			}
 		}
 	}
 	return serverEntryPoints
@@ -578,4 +598,15 @@ func sortedFrontendNamesForConfig(configuration *types.Configuration) []string {
 	}
 	sort.Strings(keys)
 	return keys
+}
+
+func buildHostResolver(globalConfig configuration.GlobalConfiguration) *hostresolver.Resolver {
+	if globalConfig.HostResolver != nil {
+		return &hostresolver.Resolver{
+			CnameFlattening: globalConfig.HostResolver.CnameFlattening,
+			ResolvConfig:    globalConfig.HostResolver.ResolvConfig,
+			ResolvDepth:     globalConfig.HostResolver.ResolvDepth,
+		}
+	}
+	return nil
 }

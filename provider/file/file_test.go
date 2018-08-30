@@ -198,7 +198,7 @@ func TestProvideWithoutWatch(t *testing.T) {
 			configChan := make(chan types.ConfigMessage)
 
 			go func() {
-				err := provider.Provide(configChan, safe.NewPool(context.Background()), types.Constraints{})
+				err := provider.Provide(configChan, safe.NewPool(context.Background()))
 				assert.NoError(t, err)
 			}()
 
@@ -226,7 +226,7 @@ func TestProvideWithWatch(t *testing.T) {
 			configChan := make(chan types.ConfigMessage)
 
 			go func() {
-				err := provider.Provide(configChan, safe.NewPool(context.Background()), types.Constraints{})
+				err := provider.Provide(configChan, safe.NewPool(context.Background()))
 				assert.NoError(t, err)
 			}()
 
@@ -241,11 +241,15 @@ func TestProvideWithWatch(t *testing.T) {
 			}
 
 			if len(test.fileContent) > 0 {
-				ioutil.WriteFile(provider.Filename, []byte(test.fileContent), 0755)
+				if err := ioutil.WriteFile(provider.Filename, []byte(test.fileContent), 0755); err != nil {
+					t.Error(err)
+				}
 			}
 
 			if len(test.traefikFileContent) > 0 {
-				ioutil.WriteFile(provider.TraefikFile, []byte(test.traefikFileContent), 0755)
+				if err := ioutil.WriteFile(provider.TraefikFile, []byte(test.traefikFileContent), 0755); err != nil {
+					t.Error(err)
+				}
 			}
 
 			if len(test.directoryContent) > 0 {
@@ -276,7 +280,7 @@ func TestErrorWhenEmptyConfig(t *testing.T) {
 	configChan := make(chan types.ConfigMessage)
 	errorChan := make(chan struct{})
 	go func() {
-		err := provider.Provide(configChan, safe.NewPool(context.Background()), types.Constraints{})
+		err := provider.Provide(configChan, safe.NewPool(context.Background()))
 		assert.Error(t, err)
 		close(errorChan)
 	}()

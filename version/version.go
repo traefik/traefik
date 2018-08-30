@@ -41,7 +41,10 @@ func (v Handler) AddRoutes(router *mux.Router) {
 				Version:  Version,
 				Codename: Codename,
 			}
-			templatesRenderer.JSON(response, http.StatusOK, v)
+
+			if err := templatesRenderer.JSON(response, http.StatusOK, v); err != nil {
+				log.Error(err)
+			}
 		})
 }
 

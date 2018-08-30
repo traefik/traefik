@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/containous/traefik/integration/try"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares/accesslog"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
@@ -102,7 +103,7 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontend(c *check.C) {
 			formatOnly:   false,
 			code:         "401",
 			user:         "-",
-			frontendName: "Basic Auth for frontend-Host-frontend-auth-docker-local",
+			frontendName: "Auth for frontend-Host-frontend-auth-docker-local",
 			backendURL:   "/",
 		},
 	}
@@ -324,13 +325,17 @@ func digestParts(resp *http.Response) map[string]string {
 
 func getMD5(data string) string {
 	digest := md5.New()
-	digest.Write([]byte(data))
+	if _, err := digest.Write([]byte(data)); err != nil {
+		log.Error(err)
+	}
 	return fmt.Sprintf("%x", digest.Sum(nil))
 }
 
 func getCnonce() string {
 	b := make([]byte, 8)
-	io.ReadFull(rand.Reader, b)
+	if _, err := io.ReadFull(rand.Reader, b); err != nil {
+		log.Error(err)
+	}
 	return fmt.Sprintf("%x", b)[:16]
 }
 

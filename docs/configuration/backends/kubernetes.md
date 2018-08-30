@@ -108,7 +108,7 @@ The endpoint may be specified to override the environment variable values inside
 
 When the environment variables are not found, Traefik will try to connect to the Kubernetes API server with an external-cluster client.
 In this case, the endpoint is required.
-Specifically, it may be set to the URL used by `kubectl proxy` to connect to a Kubernetes cluster using the granted autentication and authorization of the associated kubeconfig.
+Specifically, it may be set to the URL used by `kubectl proxy` to connect to a Kubernetes cluster using the granted authentication and authorization of the associated kubeconfig.
 
 ### `labelselector`
 
@@ -127,7 +127,13 @@ This will give more flexibility in cloud/dynamic environments.
 
 Traefik automatically requests endpoint information based on the service provided in the ingress spec.
 Although traefik will connect directly to the endpoints (pods), it still checks the service port to see if TLS communication is required.
-If the service port defined in the ingress spec is 443, then the backend communication protocol is assumed to be TLS, and will connect via TLS automatically.
+
+There are 2 ways to configure Traefik to use https to communicate with backend pods:
+
+1. If the service port defined in the ingress spec is 443 (note that you can still use `targetPort` to use a different port on your pod).
+2. If the service port defined in the ingress spec has a name that starts with `https` (such as `https-api`, `https-web` or just `https`).
+
+If either of those configuration options exist, then the backend communication protocol is assumed to be TLS, and will connect via TLS automatically.
 
 !!! note
     Please note that by enabling TLS communication between traefik and your pods, you will have to have trusted certificates that have the proper trust chain and IP subject name.
@@ -140,25 +146,29 @@ If the service port defined in the ingress spec is 443, then the backend communi
 
 The following general annotations are applicable on the Ingress object:
 
-| Annotation                                                                      | Description                                                                                                                                     |
-|---------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| `traefik.ingress.kubernetes.io/buffering: <YML>`                                | (3) See [buffering](/configuration/commons/#buffering) section.                                                                                 |
-| `traefik.ingress.kubernetes.io/error-pages: <YML>`                              | (1) See [custom error pages](/configuration/commons/#custom-error-pages) section.                                                               |
-| `traefik.ingress.kubernetes.io/frontend-entry-points: http,https`               | Override the default frontend endpoints.                                                                                                        |
-| `traefik.ingress.kubernetes.io/pass-tls-cert: "true"`                           | Override the default frontend PassTLSCert value. Default: `false`.                                                                              |
-| `traefik.ingress.kubernetes.io/preserve-host: "true"`                           | Forward client `Host` header to the backend.                                                                                                    |
-| `traefik.ingress.kubernetes.io/priority: "3"`                                   | Override the default frontend rule priority.                                                                                                    |
-| `traefik.ingress.kubernetes.io/rate-limit: <YML>`                               | (2) See [rate limiting](/configuration/commons/#rate-limiting) section.                                                                         |
-| `traefik.ingress.kubernetes.io/redirect-entry-point: https`                     | Enables Redirect to another entryPoint for that frontend (e.g. HTTPS).                                                                          |
-| `traefik.ingress.kubernetes.io/redirect-permanent: "true"`                      | Return 301 instead of 302.                                                                                                                      |
-| `traefik.ingress.kubernetes.io/redirect-regex: ^http://localhost/(.*)`          | Redirect to another URL for that frontend. Must be set with `traefik.ingress.kubernetes.io/redirect-replacement`.                               |
-| `traefik.ingress.kubernetes.io/redirect-replacement: http://mydomain/$1`        | Redirect to another URL for that frontend. Must be set with `traefik.ingress.kubernetes.io/redirect-regex`.                                     |
-| `traefik.ingress.kubernetes.io/rewrite-target: /users`                          | Replaces each matched Ingress path with the specified one, and adds the old path to the `X-Replaced-Path` header.                               |
-| `traefik.ingress.kubernetes.io/rule-type: PathPrefixStrip`                      | Override the default frontend rule type. Default: `PathPrefix`.                                                                                 |
-| `traefik.ingress.kubernetes.io/whitelist-source-range: "1.2.3.0/24, fe80::/16"` | A comma-separated list of IP ranges permitted for access (6).                                                                                       |
-| `ingress.kubernetes.io/whitelist-x-forwarded-for: "true"`                       | Use `X-Forwarded-For` header as valid source of IP for the white list.                                                                          |
-| `traefik.ingress.kubernetes.io/app-root: "/index.html"`                         | Redirects all requests for `/` to the defined path. (4)                                                                                         |
-| `traefik.ingress.kubernetes.io/service-weights: <YML>`                          | Set ingress backend weights specified as percentage or decimal numbers in YAML. (5)                                                    |
+| Annotation                                                                      | Description                                                                                                                                                                                                                                                                                                                               |
+|---------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `traefik.ingress.kubernetes.io/buffering: <YML>`                                | (3) See [buffering](/configuration/commons/#buffering) section.                                                                                                                                                                                                                                                                           |
+| `traefik.ingress.kubernetes.io/error-pages: <YML>`                              | (1) See [custom error pages](/configuration/commons/#custom-error-pages) section.                                                                                                                                                                                                                                                         |
+| `traefik.ingress.kubernetes.io/frontend-entry-points: http,https`               | Override the default frontend endpoints.                                                                                                                                                                                                                                                                                                  |
+| `traefik.ingress.kubernetes.io/pass-tls-cert: "true"`                           | Override the default frontend PassTLSCert value. Default: `false`.                                                                                                                                                                                                                                                                        |
+| `traefik.ingress.kubernetes.io/preserve-host: "true"`                           | Forward client `Host` header to the backend.                                                                                                                                                                                                                                                                                              |
+| `traefik.ingress.kubernetes.io/priority: "3"`                                   | Override the default frontend rule priority.                                                                                                                                                                                                                                                                                              |
+| `traefik.ingress.kubernetes.io/rate-limit: <YML>`                               | (2) See [rate limiting](/configuration/commons/#rate-limiting) section.                                                                                                                                                                                                                                                                   |
+| `traefik.ingress.kubernetes.io/redirect-entry-point: https`                     | Enables Redirect to another entryPoint for that frontend (e.g. HTTPS).                                                                                                                                                                                                                                                                    |
+| `traefik.ingress.kubernetes.io/redirect-permanent: "true"`                      | Return 301 instead of 302.                                                                                                                                                                                                                                                                                                                |
+| `traefik.ingress.kubernetes.io/redirect-regex: ^http://localhost/(.*)`          | Redirect to another URL for that frontend. Must be set with `traefik.ingress.kubernetes.io/redirect-replacement`.                                                                                                                                                                                                                         |
+| `traefik.ingress.kubernetes.io/redirect-replacement: http://mydomain/$1`        | Redirect to another URL for that frontend. Must be set with `traefik.ingress.kubernetes.io/redirect-regex`.                                                                                                                                                                                                                               |
+| `traefik.ingress.kubernetes.io/rewrite-target: /users`                          | Replaces each matched Ingress path with the specified one, and adds the old path to the `X-Replaced-Path` header.                                                                                                                                                                                                                         |
+| `traefik.ingress.kubernetes.io/rule-type: PathPrefixStrip`                      | Override the default frontend rule type. Only path related matchers can be used [(`Path`, `PathPrefix`, `PathStrip`, `PathPrefixStrip`)](/basics/#path-matcher-usage-guidelines). Note: ReplacePath is deprecated in this annotation, use the `traefik.ingress.kubernetes.io/request-modifier` annotation instead. Default: `PathPrefix`. |
+| `traefik.ingress.kubernetes.io/request-modifier: AddPrefix: /users`             | Add a [request modifier](/basics/#modifiers) to the backend request.                                                                                                                                                                                                                                                                      |
+| `traefik.ingress.kubernetes.io/whitelist-source-range: "1.2.3.0/24, fe80::/16"` | A comma-separated list of IP ranges permitted for access (6).                                                                                                                                                                                                                                                                             |
+| `traefik.ingress.kubernetes.io/whiteList-ipstrategy=true`                       | Uses the default IPStrategy.<br>Can be used when there is an existing `clientIPStrategy` but you want the remote address for whitelisting.                                                                                                                                                                                                |
+| `traefik.ingress.kubernetes.io/whiteList-ipstrategy-depth=5`                    | See [whitelist](/configuration/entrypoints/#white-listing)                                                                                                                                                                                                                                                                                |
+| `traefik.ingress.kubernetes.io/whiteList-ipstrategy-excludedIPs=127.0.0. 1`     | See [whitelist](/configuration/entrypoints/#white-listing)                                                                                                                                                                                                                                                                                |
+| `traefik.ingress.kubernetes.io/app-root: "/index.html"`                         | Redirects all requests for `/` to the defined path. (4)                                                                                                                                                                                                                                                                                   |
+| `traefik.ingress.kubernetes.io/service-weights: <YML>`                          | Set ingress backend weights specified as percentage or decimal numbers in YAML. (5)                                                                                                                                                                                                                                                       |
+| `ingress.kubernetes.io/protocol: <NAME>`                                        | Set the protocol Traefik will use to communicate with pods.                                                                                                                                                                                                                                                                               |
 
 
 <1> `traefik.ingress.kubernetes.io/error-pages` example:
@@ -204,12 +214,12 @@ retryexpression: IsNetworkError() && Attempts() <= 2
 
 <4> `traefik.ingress.kubernetes.io/app-root`:
 Non-root paths will not be affected by this annotation and handled normally.
-This annotation may not be combined with the `ReplacePath` rule type or any other annotation leveraging that rule type.
-Trying to do so leads to an error and the corresponding Ingress object being ignored.
+This annotation may not be combined with other redirect annotations.
+Trying to do so will result in the other redirects being ignored.
+This annotation can be used in combination with `traefik.ingress.kubernetes.io/redirect-permanent` to configure whether the `app-root` redirect is a 301 or a 302.
 
 <5> `traefik.ingress.kubernetes.io/service-weights`:
 Service weights enable to split traffic across multiple backing services in a fine-grained manner.
-A canonical use case are canary releases where a new deployment starts to receive a small percentage of traffic (e.g., 1%) and steadily increases over time as confidence in the new deployment improves.
 
 Example:
 
@@ -234,6 +244,8 @@ For each path definition, this annotation will fail if:
 - the sum of backend weights exceeds 100% or
 - the sum of backend weights is less than 100% without one or more omitted backends
 
+See also the [user guide section traffic splitting](/user-guide/kubernetes/#traffic-splitting).
+
 <6> `traefik.ingress.kubernetes.io/whitelist-source-range`:
 All source IPs are permitted if the list is empty or a single range is ill-formatted.
 Please note, you may have to set `service.spec.externalTrafficPolicy` to the value `Local` to preserve the source IP of the request for filtering.
@@ -247,11 +259,10 @@ The following annotations are applicable on the Service object associated with a
 
 | Annotation                                                               | Description                                                                                                                                                                           |
 |--------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `traefik.backend.loadbalancer.sticky: "true"`                            | Enable backend sticky sessions (DEPRECATED).                                                                                                                                          |
 | `traefik.ingress.kubernetes.io/affinity: "true"`                         | Enable backend sticky sessions.                                                                                                                                                       |
 | `traefik.ingress.kubernetes.io/circuit-breaker-expression: <expression>` | Set the circuit breaker expression for the backend.                                                                                                                                   |
 | `traefik.ingress.kubernetes.io/load-balancer-method: drr`                | Override the default `wrr` load balancer algorithm.                                                                                                                                   |
-| `traefik.ingress.kubernetes.io/max-conn-amount: 10`                      | Set a maximum number of connections to the backend.<br>Must be used in conjunction with the below label to take effect.                                                               |
+| `traefik.ingress.kubernetes.io/max-conn-amount: "10"`                      | Set a maximum number of connections to the backend.<br>Must be used in conjunction with the below label to take effect.                                                               |
 | `traefik.ingress.kubernetes.io/max-conn-extractor-func: client.ip`       | Set the function to be used against the request to determine what to limit maximum connections to the backend by.<br>Must be used in conjunction with the above label to take effect. |
 | `traefik.ingress.kubernetes.io/session-cookie-name: <NAME>`              | Manually set the cookie name for sticky sessions.                                                                                                                                     |
 
@@ -297,14 +308,21 @@ The following security annotations are applicable on the Ingress object:
 Additional authentication annotations can be added to the Ingress object.
 The source of the authentication is a Secret object that contains the credentials.
 
-| Annotation                                    | Description                                                                                                 |
-|-----------------------------------------------|-------------------------------------------------------------------------------------------------------------|
-| `ingress.kubernetes.io/auth-type: basic`      | Contains the authentication type. The only permitted type is `basic`.                                       |
-| `ingress.kubernetes.io/auth-secret: mysecret` | Name of Secret containing the username and password with access to the paths defined in the Ingress object. |
+| Annotation                                                           | basic | digest | forward | Description                                                                                                 |
+|----------------------------------------------------------------------|-------|--------|---------|-------------------------------------------------------------------------------------------------------------|
+| `ingress.kubernetes.io/auth-type: basic`                             |   x   |   x    |    x    | Contains the authentication type: `basic`, `digest`, `forward`.                                             |
+| `ingress.kubernetes.io/auth-secret: mysecret`                        |   x   |   x    |         | Name of Secret containing the username and password with access to the paths defined in the Ingress object. |
+| `ingress.kubernetes.io/auth-remove-header: true`                     |   x   |   x    |         | If set to `true` removes the `Authorization` header.                                                        |
+| `ingress.kubernetes.io/auth-header-field: X-WebAuth-User`            |   x   |   x    |         | Pass Authenticated user to application via headers.                                                         |
+| `ingress.kubernetes.io/auth-url: https://example.com`                |       |        |    x    | [The URL of the authentication server](/configuration/entrypoints/#forward-authentication).                 |
+| `ingress.kubernetes.io/auth-trust-headers: false`                    |       |        |    x    | Trust `X-Forwarded-*` headers.                                                                              |
+| `ingress.kubernetes.io/auth-response-headers: X-Auth-User, X-Secret` |       |        |    x    | Copy headers from the authentication server to the request.                                                 |
+| `ingress.kubernetes.io/auth-tls-secret: secret`                      |       |        |    x    | Name of Secret containing the certificate and key for the forward auth.                                     |
+| `ingress.kubernetes.io/auth-tls-insecure`                            |       |        |    x    | If set to `true` invalid SSL certificates are accepted.                                                     |
 
 The secret must be created in the same namespace as the Ingress object.
 
-The following limitations hold:
+The following limitations hold for basic/digest auth:
 
 - The realm is not configurable; the only supported (and default) value is `traefik`.
 - The Secret must contain a single file only.
@@ -317,3 +335,25 @@ More information are available in the  [User Guide](/user-guide/kubernetes/#add-
 !!! note
     Only TLS certificates provided by users can be stored in Kubernetes Secrets.
     [Let's Encrypt](https://letsencrypt.org) certificates cannot be managed in Kubernets Secrets yet.
+
+### Global Default Backend Ingresses
+
+Ingresses can be created that look like the following:
+
+```yaml
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: cheese
+spec:
+  backend:
+    serviceName: stilton
+    servicePort: 80
+```
+
+This ingress follows the [Global Default Backend](https://kubernetes.io/docs/concepts/services-networking/ingress/#the-ingress-resource) property of ingresses.
+This will allow users to create a "default backend" that will match all unmatched requests.
+
+!!! note
+    Due to Træfik's use of priorities, you may have to set this ingress priority lower than other ingresses in your environment, to avoid this global ingress from satisfying requests that _could_ match other ingresses.
+    To do this, use the `traefik.ingress.kubernetes.io/priority` annotation (as seen in [General Annotations](/configuration/backends/kubernetes/#general-annotations)) on your ingresses accordingly.

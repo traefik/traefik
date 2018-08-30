@@ -8,12 +8,14 @@ import (
 	"time"
 
 	"github.com/cenk/backoff"
+	"github.com/containous/flaeg"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
+	"github.com/jjcollinge/logrus-appinsights"
 	sf "github.com/jjcollinge/servicefabric"
 )
 
@@ -31,13 +33,22 @@ type Provider struct {
 	provider.BaseProvider `mapstructure:",squash"`
 	ClusterManagementURL  string           `description:"Service Fabric API endpoint"`
 	APIVersion            string           `description:"Service Fabric API version" export:"true"`
-	RefreshSeconds        int              `description:"Polling interval (in seconds)" export:"true"`
+	RefreshSeconds        flaeg.Duration   `description:"Polling interval (in seconds)" export:"true"`
 	TLS                   *types.ClientTLS `description:"Enable TLS support" export:"true"`
+	AppInsightsClientName string           `description:"The client name, Identifies the cloud instance"`
+	AppInsightsKey        string           `description:"Application Insights Instrumentation Key"`
+	AppInsightsBatchSize  int              `description:"Number of trace lines per batch, optional"`
+	AppInsightsInterval   flaeg.Duration   `description:"The interval for sending data to Application Insights, optional"`
+	sfClient              sfClient
 }
 
-// Provide allows the ServiceFabric provider to provide configurations to traefik
-// using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
+// Init the provider
+func (p *Provider) Init(constraints types.Constraints) error {
+	err := p.BaseProvider.Init(constraints)
+	if err != nil {
+		return err
+	}
+
 	if p.APIVersion == "" {
 		p.APIVersion = sf.DefaultAPIVersion
 	}
@@ -47,19 +58,34 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		return err
 	}
 
-	sfClient, err := sf.NewClient(http.DefaultClient, p.ClusterManagementURL, p.APIVersion, tlsConfig)
+	p.sfClient, err = sf.NewClient(http.DefaultClient, p.ClusterManagementURL, p.APIVersion, tlsConfig)
 	if err != nil {
 		return err
 	}
 
 	if p.RefreshSeconds <= 0 {
-		p.RefreshSeconds = 10
+		p.RefreshSeconds = flaeg.Duration(10 * time.Second)
 	}
 
-	return p.updateConfig(configurationChan, pool, sfClient, time.Duration(p.RefreshSeconds)*time.Second)
+	if p.AppInsightsClientName != "" && p.AppInsightsKey != "" {
+		if p.AppInsightsBatchSize == 0 {
+			p.AppInsightsBatchSize = 10
+		}
+		if p.AppInsightsInterval == 0 {
+			p.AppInsightsInterval = flaeg.Duration(5 * time.Second)
+		}
+		createAppInsightsHook(p.AppInsightsClientName, p.AppInsightsKey, p.AppInsightsBatchSize, p.AppInsightsInterval)
+	}
+	return nil
 }
 
-func (p *Provider) updateConfig(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, sfClient sfClient, pollInterval time.Duration) error {
+// Provide allows the ServiceFabric provider to provide configurations to traefik
+// using the given configuration channel.
+func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
+	return p.updateConfig(configurationChan, pool, time.Duration(p.RefreshSeconds))
+}
+
+func (p *Provider) updateConfig(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, pollInterval time.Duration) error {
 	pool.Go(func(stop chan bool) {
 		operation := func() error {
 			ticker := time.NewTicker(pollInterval)
@@ -74,7 +100,7 @@ func (p *Provider) updateConfig(configurationChan chan<- types.ConfigMessage, po
 					log.Info("Checking service fabric config")
 				}
 
-				configuration, err := p.getConfiguration(sfClient)
+				configuration, err := p.getConfiguration()
 				if err != nil {
 					return err
 				}
@@ -98,8 +124,8 @@ func (p *Provider) updateConfig(configurationChan chan<- types.ConfigMessage, po
 	return nil
 }
 
-func (p *Provider) getConfiguration(sfClient sfClient) (*types.Configuration, error) {
-	services, err := getClusterServices(sfClient)
+func (p *Provider) getConfiguration() (*types.Configuration, error) {
+	services, err := getClusterServices(p.sfClient)
 	if err != nil {
 		return nil, err
 	}
@@ -262,4 +288,19 @@ func getLabels(sfClient sfClient, service *sf.ServiceItem, app *sf.ApplicationIt
 		}
 	}
 	return labels, nil
+}
+
+func createAppInsightsHook(appInsightsClientName string, instrumentationKey string, maxBatchSize int, interval flaeg.Duration) {
+	hook, err := logrus_appinsights.New(appInsightsClientName, logrus_appinsights.Config{
+		InstrumentationKey: instrumentationKey,
+		MaxBatchSize:       maxBatchSize,            // optional
+		MaxBatchInterval:   time.Duration(interval), // optional
+	})
+	if err != nil || hook == nil {
+		panic(err)
+	}
+
+	// ignore fields
+	hook.AddIgnore("private")
+	log.AddHook(hook)
 }

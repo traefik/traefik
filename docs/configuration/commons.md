@@ -3,22 +3,9 @@
 ## Main Section
 
 ```toml
-# DEPRECATED - for general usage instruction see [lifeCycle.graceTimeOut].
-#
-# If both the deprecated option and the new one are given, the deprecated one
-# takes precedence.
-# A value of zero is equivalent to omitting the parameter, causing
-# [lifeCycle.graceTimeOut] to be effective. Pass zero to the new option in
-# order to disable the grace period.
-#
-# Optional
-# Default: "0s"
-#
-# graceTimeOut = "10s"
-
 # Enable debug mode.
 # This will install HTTP handlers to expose Go expvars under /debug/vars and
-# pprof profiling data under /debug/pprof.
+# pprof profiling data under /debug/pprof/.
 # The log level will be set to DEBUG unless `logLevel` is specified.
 #
 # Optional
@@ -69,21 +56,7 @@
 # Default: ["http"]
 #
 # defaultEntryPoints = ["http", "https"]
-
-# Allow the use of 0 as server weight.
-# - false: a weight 0 means internally a weight of 1.
-# - true: a weight 0 means internally a weight of 0 (a server with a weight of 0 is removed from the available servers).
-#
-# Optional
-# Default: false
-#
-# AllowMinWeightZero = true
 ```
-
-- `graceTimeOut`: Duration to give active requests a chance to finish before Traefik stops.  
-Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
-If no units are provided, the value is parsed assuming seconds.  
-**Note:** in this time frame no new requests are accepted.
 
 - `providersThrottleDuration`: Providers throttle duration: minimum duration in seconds between 2 events from providers before applying a new configuration.
 It avoids unnecessary reloads if multiples events are sent in a short amount of time.  
@@ -393,36 +366,45 @@ If zero, no timeout exists.
 Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
 If no units are provided, the value is parsed assuming seconds.
 
+## Host Resolver
 
-### Idle Timeout (deprecated)
-
-Use [respondingTimeouts](/configuration/commons/#responding-timeouts) instead of `idleTimeout`.
-In the case both settings are configured, the deprecated option will be overwritten.
-
-`idleTimeout` is the maximum amount of time an idle (keep-alive) connection will remain idle before closing itself.
-This is set to enforce closing of stale client connections.
-
-Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
-If no units are provided, the value is parsed assuming seconds.
+`hostResolver` are used for request host matching process.
 
 ```toml
-# idleTimeout
-#
-# DEPRECATED - see [respondingTimeouts] section.
+[hostResolver]
+
+# cnameFlattening is a trigger to flatten request host, assuming it is a CNAME record
 #
 # Optional
-# Default: "180s"
+# Default : false
 #
-idleTimeout = "360s"
+cnameFlattening = true
+
+# resolvConf is dns resolving configuration file, the default is /etc/resolv.conf
+#
+# Optional
+# Default : "/etc/resolv.conf"
+#
+# resolvConf = "/etc/resolv.conf"
+
+# resolvDepth is the maximum CNAME recursive lookup
+#
+# Optional
+# Default : 5
+#
+# resolvDepth = 5
 ```
 
+- To allow serving secure https request and generate the SSL using ACME while `cnameFlattening` is active. 
+The `acme` configuration for `HTTP-01` challenge and `onDemand` is mandatory. 
+Refer to [ACME configuration](/configuration/acme) for more information.
 
 ## Override Default Configuration Template
 
 !!! warning
     For advanced users only.
 
-Supported by all providers except: File Provider, Web Provider and DynamoDB Provider.
+Supported by all providers except: File Provider, Rest Provider and DynamoDB Provider.
 
 ```toml
 [provider_name]

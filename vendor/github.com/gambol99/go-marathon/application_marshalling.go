@@ -61,7 +61,7 @@ func (app *Application) UnmarshalJSON(b []byte) error {
 					(*secrets)[secStore] = Secret{EnvVar: envName}
 					break
 				}
-				return fmt.Errorf("unexpected secret field %v or value type %T", secret, envValOrSecret[secret])
+				return fmt.Errorf("unexpected secret field %v of value type %T", secret, envValOrSecret[secret])
 			}
 		default:
 			return fmt.Errorf("unexpected environment variable type %T", envValOrSecret)

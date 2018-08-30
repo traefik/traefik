@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
@@ -77,12 +77,12 @@ func lbMethod(method string) func(*types.Backend) {
 	}
 }
 
-func lbSticky() func(*types.Backend) {
+func lbStickiness() func(*types.Backend) {
 	return func(b *types.Backend) {
 		if b.LoadBalancer == nil {
 			b.LoadBalancer = &types.LoadBalancer{}
 		}
-		b.LoadBalancer.Sticky = true
+		b.LoadBalancer.Stickiness = &types.Stickiness{}
 	}
 }
 
@@ -208,19 +208,78 @@ func entryPoints(eps ...string) func(*types.Frontend) {
 	}
 }
 
-func basicAuth(auth ...string) func(*types.Frontend) {
+// Deprecated
+func basicAuthDeprecated(auth ...string) func(*types.Frontend) {
 	return func(f *types.Frontend) {
-		f.BasicAuth = auth
+		f.Auth = &types.Auth{Basic: &types.Basic{Users: auth}}
 	}
 }
 
-func whiteList(useXFF bool, ranges ...string) func(*types.Frontend) {
+func auth(opt func(*types.Auth)) func(*types.Frontend) {
+	return func(f *types.Frontend) {
+		auth := &types.Auth{}
+		opt(auth)
+		f.Auth = auth
+	}
+}
+
+func basicAuth(users ...string) func(*types.Auth) {
+	return func(a *types.Auth) {
+		a.Basic = &types.Basic{Users: users}
+	}
+}
+
+func forwardAuth(forwardURL string, opts ...func(*types.Forward)) func(*types.Auth) {
+	return func(a *types.Auth) {
+		fwd := &types.Forward{Address: forwardURL}
+		for _, opt := range opts {
+			opt(fwd)
+		}
+		a.Forward = fwd
+	}
+}
+
+func fwdAuthResponseHeaders(headers ...string) func(*types.Forward) {
+	return func(f *types.Forward) {
+		f.AuthResponseHeaders = headers
+	}
+}
+
+func fwdTrustForwardHeader() func(*types.Forward) {
+	return func(f *types.Forward) {
+		f.TrustForwardHeader = true
+	}
+}
+
+func fwdAuthTLS(cert, key string, insecure bool) func(*types.Forward) {
+	return func(f *types.Forward) {
+		f.TLS = &types.ClientTLS{Cert: cert, Key: key, InsecureSkipVerify: insecure}
+	}
+}
+
+func whiteListRange(ranges ...string) func(*types.WhiteList) {
+	return func(wl *types.WhiteList) {
+		wl.SourceRange = ranges
+	}
+}
+
+func whiteListIPStrategy(depth int, excludedIPs ...string) func(*types.WhiteList) {
+	return func(wl *types.WhiteList) {
+		wl.IPStrategy = &types.IPStrategy{
+			Depth:       depth,
+			ExcludedIPs: excludedIPs,
+		}
+	}
+}
+
+func whiteList(opts ...func(*types.WhiteList)) func(*types.Frontend) {
 	return func(f *types.Frontend) {
 		if f.WhiteList == nil {
 			f.WhiteList = &types.WhiteList{}
 		}
-		f.WhiteList.UseXForwardedFor = useXFF
-		f.WhiteList.SourceRange = ranges
+		for _, opt := range opts {
+			opt(f.WhiteList)
+		}
 	}
 }
 
@@ -335,7 +394,7 @@ func limitBurst(burst int64) func(*types.Rate) {
 
 func limitPeriod(period time.Duration) func(*types.Rate) {
 	return func(rate *types.Rate) {
-		rate.Period = flaeg.Duration(period)
+		rate.Period = parse.Duration(period)
 	}
 }
 

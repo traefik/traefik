@@ -1,0 +1,13 @@
+logLevel = "DEBUG"
+defaultEntryPoints = ["http"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":8000"
+  [entryPoints.http.ForwardedHeaders]
+    insecure=true
+  [entryPoints.http.ClientIPStrategy]
+    depth=2
+
+[api]
+[docker]

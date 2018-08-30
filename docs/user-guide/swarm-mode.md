@@ -121,7 +121,6 @@ docker-machine ssh manager "docker service create \
 	--name whoami1 \
 	--label traefik.port=80 \
 	--network traefik-net \
-	--label traefik.backend.loadbalancer.sticky=true \
 	emilevauge/whoami"
 ```
 
@@ -330,4 +329,4 @@ X-Forwarded-Proto: http
 X-Forwarded-Server: 77fc29c69fe4
 ```
 
-![](https://i.giphy.com/ujUdrdpX7Ok5W.gif)
+![GIF Magica](https://i.giphy.com/ujUdrdpX7Ok5W.gif)

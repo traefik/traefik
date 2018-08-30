@@ -8,7 +8,7 @@ import (
 	"github.com/vulcand/oxy/utils"
 )
 
-// Rewriter is responsible for removing hop-by-hop headers and setting forwarding headers
+// HeaderRewriter is responsible for removing hop-by-hop headers and setting forwarding headers
 type HeaderRewriter struct {
 	TrustForwardHeader bool
 	Hostname           string
@@ -19,6 +19,7 @@ func ipv6fix(clientIP string) string {
 	return strings.Split(clientIP, "%")[0]
 }
 
+// Rewrite rewrite request headers
 func (rw *HeaderRewriter) Rewrite(req *http.Request) {
 	if !rw.TrustForwardHeader {
 		utils.RemoveHeaders(req.Header, XHeaders...)
@@ -68,12 +69,6 @@ func (rw *HeaderRewriter) Rewrite(req *http.Request) {
 	if rw.Hostname != "" {
 		req.Header.Set(XForwardedServer, rw.Hostname)
 	}
-
-	if !IsWebsocketRequest(req) {
-		// Remove hop-by-hop headers to the backend.  Especially important is "Connection" because we want a persistent
-		// connection, regardless of what the client sent to us.
-		utils.RemoveHeaders(req.Header, HopHeaders...)
-	}
 }
 
 func forwardedPort(req *http.Request) string {
@@ -83,6 +78,10 @@ func forwardedPort(req *http.Request) string {
 
 	if _, port, err := net.SplitHostPort(req.Host); err == nil && port != "" {
 		return port
+	}
+
+	if req.Header.Get(XForwardedProto) == "https" || req.Header.Get(XForwardedProto) == "wss" {
+		return "443"
 	}
 
 	if req.TLS != nil {

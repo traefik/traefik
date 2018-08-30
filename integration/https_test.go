@@ -66,7 +66,7 @@ func (s *HTTPSSuite) TestWithSNIConfigRoute(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 500*time.Millisecond, try.BodyContains("Host:snitest.org"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("Host:snitest.org"))
 	c.Assert(err, checker.IsNil)
 
 	backend1 := startTestServer("9010", http.StatusNoContent)
@@ -92,27 +92,184 @@ func (s *HTTPSSuite) TestWithSNIConfigRoute(c *check.C) {
 		},
 	}
 
-	client := &http.Client{Transport: tr1}
 	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
 	c.Assert(err, checker.IsNil)
-	req.Host = "snitest.com"
-	req.Header.Set("Host", "snitest.com")
+	req.Host = tr1.TLSClientConfig.ServerName
+	req.Header.Set("Host", tr1.TLSClientConfig.ServerName)
 	req.Header.Set("Accept", "*/*")
-	resp, err := client.Do(req)
-	c.Assert(err, checker.IsNil)
-	// Expected a 204 (from backend1)
-	c.Assert(resp.StatusCode, checker.Equals, http.StatusNoContent)
 
-	client = &http.Client{Transport: tr2}
+	err = try.RequestWithTransport(req, 30*time.Second, tr1, try.HasCn(tr1.TLSClientConfig.ServerName), try.StatusCodeIs(http.StatusNoContent))
+	c.Assert(err, checker.IsNil)
+
 	req, err = http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
 	c.Assert(err, checker.IsNil)
-	req.Host = "snitest.org"
-	req.Header.Set("Host", "snitest.org")
+	req.Host = tr2.TLSClientConfig.ServerName
+	req.Header.Set("Host", tr2.TLSClientConfig.ServerName)
 	req.Header.Set("Accept", "*/*")
-	resp, err = client.Do(req)
+
+	err = try.RequestWithTransport(req, 30*time.Second, tr2, try.HasCn(tr2.TLSClientConfig.ServerName), try.StatusCodeIs(http.StatusResetContent))
 	c.Assert(err, checker.IsNil)
-	// Expected a 205 (from backend2)
-	c.Assert(resp.StatusCode, checker.Equals, http.StatusResetContent)
+}
+
+// TestWithSNIStrictNotMatchedRequest involves a client sending a SNI hostname of
+// "snitest.org", which does not match the CN of 'snitest.com.crt'. The test
+// verifies that traefik closes the connection.
+func (s *HTTPSSuite) TestWithSNIStrictNotMatchedRequest(c *check.C) {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/https_sni_strict.toml"))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 500*time.Millisecond, try.BodyContains("Host:snitest.com"))
+	c.Assert(err, checker.IsNil)
+
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+		ServerName:         "snitest.org",
+		NextProtos:         []string{"h2", "http/1.1"},
+	}
+	// Connection with no matching certificate should fail
+	_, err = tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
+	c.Assert(err, checker.NotNil, check.Commentf("failed to connect to server"))
+}
+
+// TestWithDefaultCertificate involves a client sending a SNI hostname of
+// "snitest.org", which does not match the CN of 'snitest.com.crt'. The test
+// verifies that traefik returns the default certificate.
+func (s *HTTPSSuite) TestWithDefaultCertificate(c *check.C) {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/https_sni_default_cert.toml"))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 500*time.Millisecond, try.BodyContains("Host:snitest.com"))
+	c.Assert(err, checker.IsNil)
+
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+		ServerName:         "snitest.org",
+		NextProtos:         []string{"h2", "http/1.1"},
+	}
+	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
+	c.Assert(err, checker.IsNil, check.Commentf("failed to connect to server"))
+
+	defer conn.Close()
+	err = conn.Handshake()
+	c.Assert(err, checker.IsNil, check.Commentf("TLS handshake error"))
+
+	cs := conn.ConnectionState()
+	err = cs.PeerCertificates[0].VerifyHostname("snitest.com")
+	c.Assert(err, checker.IsNil, check.Commentf("certificate did not serve correct default certificate"))
+
+	proto := cs.NegotiatedProtocol
+	c.Assert(proto, checker.Equals, "h2")
+}
+
+// TestWithDefaultCertificateNoSNI involves a client sending a request with no ServerName
+// which does not match the CN of 'snitest.com.crt'. The test
+// verifies that traefik returns the default certificate.
+func (s *HTTPSSuite) TestWithDefaultCertificateNoSNI(c *check.C) {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/https_sni_default_cert.toml"))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 500*time.Millisecond, try.BodyContains("Host:snitest.com"))
+	c.Assert(err, checker.IsNil)
+
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+		NextProtos:         []string{"h2", "http/1.1"},
+	}
+	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
+	c.Assert(err, checker.IsNil, check.Commentf("failed to connect to server"))
+
+	defer conn.Close()
+	err = conn.Handshake()
+	c.Assert(err, checker.IsNil, check.Commentf("TLS handshake error"))
+
+	cs := conn.ConnectionState()
+	err = cs.PeerCertificates[0].VerifyHostname("snitest.com")
+	c.Assert(err, checker.IsNil, check.Commentf("certificate did not serve correct default certificate"))
+
+	proto := cs.NegotiatedProtocol
+	c.Assert(proto, checker.Equals, "h2")
+}
+
+// TestWithOverlappingCertificate involves a client sending a SNI hostname of
+// "www.snitest.com", which matches the CN of two static certificates:
+// 'wildcard.snitest.com.crt', and `www.snitest.com.crt`. The test
+// verifies that traefik returns the non-wildcard certificate.
+func (s *HTTPSSuite) TestWithOverlappingStaticCertificate(c *check.C) {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/https_sni_default_cert.toml"))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 500*time.Millisecond, try.BodyContains("Host:snitest.com"))
+	c.Assert(err, checker.IsNil)
+
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+		ServerName:         "www.snitest.com",
+		NextProtos:         []string{"h2", "http/1.1"},
+	}
+	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
+	c.Assert(err, checker.IsNil, check.Commentf("failed to connect to server"))
+
+	defer conn.Close()
+	err = conn.Handshake()
+	c.Assert(err, checker.IsNil, check.Commentf("TLS handshake error"))
+
+	cs := conn.ConnectionState()
+	err = cs.PeerCertificates[0].VerifyHostname("www.snitest.com")
+	c.Assert(err, checker.IsNil, check.Commentf("certificate did not serve correct default certificate"))
+
+	proto := cs.NegotiatedProtocol
+	c.Assert(proto, checker.Equals, "h2")
+}
+
+// TestWithOverlappingCertificate involves a client sending a SNI hostname of
+// "www.snitest.com", which matches the CN of two dynamic certificates:
+// 'wildcard.snitest.com.crt', and `www.snitest.com.crt`. The test
+// verifies that traefik returns the non-wildcard certificate.
+func (s *HTTPSSuite) TestWithOverlappingDynamicCertificate(c *check.C) {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/dynamic_https_sni_default_cert.toml"))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 500*time.Millisecond, try.BodyContains("Host:snitest.com"))
+	c.Assert(err, checker.IsNil)
+
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+		ServerName:         "www.snitest.com",
+		NextProtos:         []string{"h2", "http/1.1"},
+	}
+	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
+	c.Assert(err, checker.IsNil, check.Commentf("failed to connect to server"))
+
+	defer conn.Close()
+	err = conn.Handshake()
+	c.Assert(err, checker.IsNil, check.Commentf("TLS handshake error"))
+
+	cs := conn.ConnectionState()
+	err = cs.PeerCertificates[0].VerifyHostname("www.snitest.com")
+	c.Assert(err, checker.IsNil, check.Commentf("certificate did not serve correct default certificate"))
+
+	proto := cs.NegotiatedProtocol
+	c.Assert(proto, checker.Equals, "h2")
 }
 
 // TestWithClientCertificateAuthentication
@@ -400,28 +557,25 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithNoChange(c *check.C) {
 	err = try.GetRequest(backend2.URL, 500*time.Millisecond, try.StatusCodeIs(http.StatusResetContent))
 	c.Assert(err, checker.IsNil)
 
-	client := &http.Client{Transport: tr1}
 	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = tr1.TLSClientConfig.ServerName
 	req.Header.Set("Host", tr1.TLSClientConfig.ServerName)
 	req.Header.Set("Accept", "*/*")
-	resp, err := client.Do(req)
-	c.Assert(err, checker.IsNil)
-	// snitest.org certificate must be used yet
-	c.Assert(resp.TLS.PeerCertificates[0].Subject.CommonName, check.Equals, tr1.TLSClientConfig.ServerName)
-	// Expected a 204 (from backend1)
-	c.Assert(resp.StatusCode, checker.Equals, http.StatusResetContent)
 
-	client = &http.Client{Transport: tr2}
+	// snitest.org certificate must be used yet && Expected a 204 (from backend1)
+	err = try.RequestWithTransport(req, 30*time.Second, tr1, try.HasCn(tr1.TLSClientConfig.ServerName), try.StatusCodeIs(http.StatusResetContent))
+	c.Assert(err, checker.IsNil)
+
+	req, err = http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
+	c.Assert(err, checker.IsNil)
 	req.Host = tr2.TLSClientConfig.ServerName
 	req.Header.Set("Host", tr2.TLSClientConfig.ServerName)
-	resp, err = client.Do(req)
+	req.Header.Set("Accept", "*/*")
+
+	// snitest.com certificate does not exist, default certificate has to be used && Expected a 205 (from backend2)
+	err = try.RequestWithTransport(req, 30*time.Second, tr2, try.HasCn("TRAEFIK DEFAULT CERT"), try.StatusCodeIs(http.StatusNoContent))
 	c.Assert(err, checker.IsNil)
-	// snitest.com certificate does not exist, default certificate has to be used
-	c.Assert(resp.TLS.PeerCertificates[0].Subject.CommonName, checker.Not(check.Equals), tr2.TLSClientConfig.ServerName)
-	// Expected a 205 (from backend2)
-	c.Assert(resp.StatusCode, checker.Equals, http.StatusNoContent)
 }
 
 // TestWithSNIDynamicConfigRouteWithChange involves a client sending HTTPS requests with
@@ -472,57 +626,26 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithChange(c *check.C) {
 	err = try.GetRequest(backend2.URL, 500*time.Millisecond, try.StatusCodeIs(http.StatusResetContent))
 	c.Assert(err, checker.IsNil)
 
+	// Change certificates configuration file content
+	modifyCertificateConfFileContent(c, tr1.TLSClientConfig.ServerName, dynamicConfFileName, "https")
+
 	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
-	client := &http.Client{Transport: tr1}
+	c.Assert(err, checker.IsNil)
 	req.Host = tr1.TLSClientConfig.ServerName
 	req.Header.Set("Host", tr1.TLSClientConfig.ServerName)
 	req.Header.Set("Accept", "*/*")
 
-	// Change certificates configuration file content
-	modifyCertificateConfFileContent(c, tr1.TLSClientConfig.ServerName, dynamicConfFileName, "https")
-	var resp *http.Response
-	err = try.Do(30*time.Second, func() error {
-		resp, err = client.Do(req)
-
-		// /!\ If connection is not closed, SSLHandshake will only be done during the first trial /!\
-		req.Close = true
-
-		if err != nil {
-			return err
-		}
-
-		cn := resp.TLS.PeerCertificates[0].Subject.CommonName
-		if cn != tr1.TLSClientConfig.ServerName {
-			return fmt.Errorf("domain %s found in place of %s", cn, tr1.TLSClientConfig.ServerName)
-		}
-
-		return nil
-	})
+	err = try.RequestWithTransport(req, 30*time.Second, tr1, try.HasCn(tr1.TLSClientConfig.ServerName), try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
-	c.Assert(resp.StatusCode, checker.Equals, http.StatusNotFound)
-	client = &http.Client{Transport: tr2}
+
+	req, err = http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
+	c.Assert(err, checker.IsNil)
 	req.Host = tr2.TLSClientConfig.ServerName
 	req.Header.Set("Host", tr2.TLSClientConfig.ServerName)
+	req.Header.Set("Accept", "*/*")
 
-	err = try.Do(60*time.Second, func() error {
-		resp, err = client.Do(req)
-
-		// /!\ If connection is not closed, SSLHandshake will only be done during the first trial /!\
-		req.Close = true
-
-		if err != nil {
-			return err
-		}
-
-		cn := resp.TLS.PeerCertificates[0].Subject.CommonName
-		if cn == tr2.TLSClientConfig.ServerName {
-			return fmt.Errorf("domain %s found in place of default one", tr2.TLSClientConfig.ServerName)
-		}
-
-		return nil
-	})
+	err = try.RequestWithTransport(req, 30*time.Second, tr2, try.HasCn("TRAEFIK DEFAULT CERT"), try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
-	c.Assert(resp.StatusCode, checker.Equals, http.StatusNotFound)
 }
 
 // TestWithSNIDynamicConfigRouteWithTlsConfigurationDeletion involves a client sending HTTPS requests with
@@ -564,53 +687,19 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithTlsConfigurationDeletion(c
 	c.Assert(err, checker.IsNil)
 
 	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
-	client := &http.Client{Transport: tr2}
+	c.Assert(err, checker.IsNil)
 	req.Host = tr2.TLSClientConfig.ServerName
 	req.Header.Set("Host", tr2.TLSClientConfig.ServerName)
 	req.Header.Set("Accept", "*/*")
 
-	var resp *http.Response
-	err = try.Do(30*time.Second, func() error {
-		resp, err = client.Do(req)
-
-		// /!\ If connection is not closed, SSLHandshake will only be done during the first trial /!\
-		req.Close = true
-
-		if err != nil {
-			return err
-		}
-
-		cn := resp.TLS.PeerCertificates[0].Subject.CommonName
-		if cn != tr2.TLSClientConfig.ServerName {
-			return fmt.Errorf("domain %s found in place of %s", cn, tr2.TLSClientConfig.ServerName)
-		}
-
-		return nil
-	})
+	err = try.RequestWithTransport(req, 30*time.Second, tr2, try.HasCn(tr2.TLSClientConfig.ServerName), try.StatusCodeIs(http.StatusResetContent))
 	c.Assert(err, checker.IsNil)
-	c.Assert(resp.StatusCode, checker.Equals, http.StatusResetContent)
+
 	// Change certificates configuration file content
 	modifyCertificateConfFileContent(c, "", dynamicConfFileName, "https02")
 
-	err = try.Do(60*time.Second, func() error {
-		resp, err = client.Do(req)
-
-		// /!\ If connection is not closed, SSLHandshake will only be done during the first trial /!\
-		req.Close = true
-
-		if err != nil {
-			return err
-		}
-
-		cn := resp.TLS.PeerCertificates[0].Subject.CommonName
-		if cn == tr2.TLSClientConfig.ServerName {
-			return fmt.Errorf("domain %s found instead of the default one", tr2.TLSClientConfig.ServerName)
-		}
-
-		return nil
-	})
+	err = try.RequestWithTransport(req, 30*time.Second, tr2, try.HasCn("TRAEFIK DEFAULT CERT"), try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
-	c.Assert(resp.StatusCode, checker.Equals, http.StatusNotFound)
 }
 
 // modifyCertificateConfFileContent replaces the content of a HTTPS configuration file.
@@ -620,7 +709,10 @@ func modifyCertificateConfFileContent(c *check.C, certFileName, confFileName, en
 	defer func() {
 		f.Close()
 	}()
-	f.Truncate(0)
+
+	err = f.Truncate(0)
+	c.Assert(err, checker.IsNil)
+
 	// If certificate file is not provided, just truncate the configuration file
 	if len(certFileName) > 0 {
 		tlsConf := types.Configuration{
@@ -641,5 +733,103 @@ func modifyCertificateConfFileContent(c *check.C, certFileName, confFileName, en
 
 		_, err = f.Write(confBuffer.Bytes())
 		c.Assert(err, checker.IsNil)
+	}
+}
+
+func (s *HTTPSSuite) TestEntrypointHttpsRedirectAndPathModification(c *check.C) {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/https_redirect.toml"))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1000*time.Millisecond, try.BodyContains("Host: example.com"))
+	c.Assert(err, checker.IsNil)
+
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	testCases := []struct {
+		desc  string
+		hosts []string
+		path  string
+	}{
+		{
+			desc:  "Stripped URL redirect",
+			hosts: []string{"example.com", "foo.com", "bar.com"},
+			path:  "/api",
+		},
+		{
+			desc:  "Stripped URL with trailing slash redirect",
+			hosts: []string{"example.com", "example2.com", "foo.com", "foo2.com", "bar.com", "bar2.com"},
+			path:  "/api/",
+		},
+		{
+			desc:  "Stripped URL with double trailing slash redirect",
+			hosts: []string{"example.com", "example2.com", "foo.com", "foo2.com", "bar.com", "bar2.com"},
+			path:  "/api//",
+		},
+		{
+			desc:  "Stripped URL with path redirect",
+			hosts: []string{"example.com", "example2.com", "foo.com", "foo2.com", "bar.com", "bar2.com"},
+			path:  "/api/bacon",
+		},
+		{
+			desc:  "Stripped URL with path and trailing slash redirect",
+			hosts: []string{"example.com", "example2.com", "foo.com", "foo2.com", "bar.com", "bar2.com"},
+			path:  "/api/bacon/",
+		},
+		{
+			desc:  "Stripped URL with path and double trailing slash redirect",
+			hosts: []string{"example.com", "example2.com", "foo.com", "foo2.com", "bar.com", "bar2.com"},
+			path:  "/api/bacon//",
+		},
+		{
+			desc:  "Root Path with redirect",
+			hosts: []string{"test.com", "test2.com", "pow.com", "pow2.com"},
+			path:  "/",
+		},
+		{
+			desc:  "Root Path with double trailing slash redirect",
+			hosts: []string{"test.com", "test2.com", "pow.com", "pow2.com"},
+			path:  "//",
+		},
+		{
+			desc:  "Path modify with redirect",
+			hosts: []string{"test.com", "test2.com", "pow.com", "pow2.com"},
+			path:  "/wtf",
+		},
+		{
+			desc:  "Path modify with trailing slash redirect",
+			hosts: []string{"test.com", "test2.com", "pow.com", "pow2.com"},
+			path:  "/wtf/",
+		},
+		{
+			desc:  "Path modify with matching path segment redirect",
+			hosts: []string{"test.com", "test2.com", "pow.com", "pow2.com"},
+			path:  "/wtf/foo",
+		},
+	}
+
+	for _, test := range testCases {
+		sourceURL := fmt.Sprintf("http://127.0.0.1:8888%s", test.path)
+		for _, host := range test.hosts {
+			req, err := http.NewRequest("GET", sourceURL, nil)
+			c.Assert(err, checker.IsNil)
+			req.Host = host
+
+			resp, err := client.Do(req)
+			c.Assert(err, checker.IsNil)
+			defer resp.Body.Close()
+
+			location := resp.Header.Get("Location")
+			expected := fmt.Sprintf("https://%s:8443%s", host, test.path)
+
+			c.Assert(location, checker.Equals, expected)
+		}
 	}
 }

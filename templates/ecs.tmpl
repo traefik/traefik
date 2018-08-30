@@ -2,31 +2,30 @@
 {{range $serviceName, $instances := .Services }}
   {{ $firstInstance := index $instances 0 }}
 
-  {{ $circuitBreaker := getCircuitBreaker $firstInstance.TraefikLabels }}
+  {{ $circuitBreaker := getCircuitBreaker $firstInstance.SegmentLabels }}
   {{if $circuitBreaker }}
   [backends."backend-{{ $serviceName }}".circuitBreaker]
     expression = "{{ $circuitBreaker.Expression }}"
   {{end}}
 
-  {{ $loadBalancer := getLoadBalancer $firstInstance.TraefikLabels }}
+  {{ $loadBalancer := getLoadBalancer $firstInstance.SegmentLabels }}
   {{if $loadBalancer }}
   [backends."backend-{{ $serviceName }}".loadBalancer]
     method = "{{ $loadBalancer.Method }}"
-    sticky = {{ $loadBalancer.Sticky }}
     {{if $loadBalancer.Stickiness }}
     [backends."backend-{{ $serviceName }}".loadBalancer.stickiness]
       cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
     {{end}}
   {{end}}
 
-  {{ $maxConn := getMaxConn $firstInstance.TraefikLabels }}
+  {{ $maxConn := getMaxConn $firstInstance.SegmentLabels }}
   {{if $maxConn }}
   [backends."backend-{{ $serviceName }}".maxConn]
     extractorFunc = "{{ $maxConn.ExtractorFunc }}"
     amount = {{ $maxConn.Amount }}
   {{end}}
 
-  {{ $healthCheck := getHealthCheck $firstInstance.TraefikLabels }}
+  {{ $healthCheck := getHealthCheck $firstInstance.SegmentLabels }}
   {{if $healthCheck }}
   [backends."backend-{{ $serviceName }}".healthCheck]
     scheme = "{{ $healthCheck.Scheme }}"
@@ -42,7 +41,7 @@
     {{end}}
   {{end}}
 
-  {{ $buffering := getBuffering $firstInstance.TraefikLabels }}
+  {{ $buffering := getBuffering $firstInstance.SegmentLabels }}
   {{if $buffering }}
   [backends."backend-{{ $serviceName }}".buffering]
     maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
@@ -64,43 +63,90 @@
 {{range $serviceName, $instances := .Services }}
 {{range $instance := filterFrontends $instances }}
 
-  [frontends."frontend-{{ $serviceName }}"]
+  {{ $frontendName := getFrontendName $instance }}
+
+  [frontends."frontend-{{ $frontendName }}"]
     backend = "backend-{{ $serviceName }}"
-    priority = {{ getPriority $instance.TraefikLabels }}
-    passHostHeader = {{ getPassHostHeader $instance.TraefikLabels }}
-    passTLSCert = {{ getPassTLSCert $instance.TraefikLabels }}
+    priority = {{ getPriority $instance.SegmentLabels }}
+    passHostHeader = {{ getPassHostHeader $instance.SegmentLabels }}
+    passTLSCert = {{ getPassTLSCert $instance.SegmentLabels }}
 
-    entryPoints = [{{range getEntryPoints $instance.TraefikLabels }}
+    entryPoints = [{{range getEntryPoints $instance.SegmentLabels }}
       "{{.}}",
       {{end}}]
 
-    basicAuth = [{{range getBasicAuth $instance.TraefikLabels }}
-      "{{.}}",
-      {{end}}]
+    {{ $auth := getAuth $instance.SegmentLabels }}
+    {{if $auth }}
+    [frontends."frontend-{{ $frontendName }}".auth]
+      headerField = "{{ $auth.HeaderField }}"
 
-    {{ $whitelist := getWhiteList $instance.TraefikLabels }}
+      {{if $auth.Forward }}
+      [frontends."frontend-{{ $frontendName }}".auth.forward]
+        address = "{{ $auth.Forward.Address }}"
+        trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
+
+        {{if $auth.Forward.TLS }}
+        [frontends."frontend-{{ $frontendName }}".auth.forward.tls]
+          ca = "{{ $auth.Forward.TLS.CA }}"
+          caOptional = {{ $auth.Forward.TLS.CAOptional }}
+          cert = """{{ $auth.Forward.TLS.Cert }}"""
+          key = """{{ $auth.Forward.TLS.Key }}"""
+          insecureSkipVerify = {{ $auth.Forward.TLS.InsecureSkipVerify }}
+        {{end}}
+      {{end}}
+
+      {{if $auth.Basic }}
+      [frontends."frontend-{{ $frontendName }}".auth.basic]
+        removeHeader = {{ $auth.Basic.RemoveHeader }}
+        {{if $auth.Basic.Users }}
+        users = [{{range $auth.Basic.Users }}
+          "{{.}}",
+          {{end}}]
+        {{end}}
+        usersFile = "{{ $auth.Basic.UsersFile }}"
+      {{end}}
+
+      {{if $auth.Digest }}
+      [frontends."frontend-{{ $frontendName }}".auth.digest]
+        removeHeader = {{ $auth.Digest.RemoveHeader }}
+        {{if $auth.Digest.Users }}
+        users = [{{range $auth.Digest.Users }}
+         "{{.}}",
+          {{end}}]
+        {{end}}
+        usersFile = "{{ $auth.Digest.UsersFile }}"
+      {{end}}
+    {{end}}
+
+    {{ $whitelist := getWhiteList $instance.SegmentLabels }}
     {{if $whitelist }}
-    [frontends."frontend-{{ $serviceName }}".whiteList]
+    [frontends."frontend-{{ $frontendName }}".whiteList]
       sourceRange = [{{range $whitelist.SourceRange }}
         "{{.}}",
         {{end}}]
-      useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
+      {{if $whitelist.IPStrategy }}
+      [frontends."frontend-{{ $frontendName }}".whiteList.IPStrategy]
+        depth = {{ $whitelist.IPStrategy.Depth }}
+        excludedIPs = [{{range $whitelist.IPStrategy.ExcludedIPs }}
+          "{{.}}",
+          {{end}}]
+      {{end}}
     {{end}}
 
-    {{ $redirect := getRedirect $instance.TraefikLabels }}
+    {{ $redirect := getRedirect $instance.SegmentLabels }}
     {{if $redirect }}
-    [frontends."frontend-{{ $serviceName }}".redirect]
+    [frontends."frontend-{{ $frontendName }}".redirect]
       entryPoint = "{{ $redirect.EntryPoint }}"
       regex = "{{ $redirect.Regex }}"
       replacement = "{{ $redirect.Replacement }}"
       permanent = {{ $redirect.Permanent }}
     {{end}}
 
-    {{ $errorPages := getErrorPages $instance.TraefikLabels }}
+    {{ $errorPages := getErrorPages $instance.SegmentLabels }}
     {{if $errorPages }}
-    [frontends."frontend-{{ $serviceName }}".errors]
+    [frontends."frontend-{{ $frontendName }}".errors]
       {{range $pageName, $page := $errorPages }}
-      [frontends."frontend-{{ $serviceName }}".errors."{{ $pageName }}"]
+      [frontends."frontend-{{ $frontendName }}".errors."{{ $pageName }}"]
         status = [{{range $page.Status }}
           "{{.}}",
           {{end}}]
@@ -109,22 +155,22 @@
       {{end}}
     {{end}}
 
-    {{ $rateLimit := getRateLimit $instance.TraefikLabels }}
+    {{ $rateLimit := getRateLimit $instance.SegmentLabels }}
     {{if $rateLimit }}
-    [frontends."frontend-{{ $serviceName }}".rateLimit]
+    [frontends."frontend-{{ $frontendName }}".rateLimit]
       extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
-      [frontends."frontend-{{ $serviceName }}".rateLimit.rateSet]
+      [frontends."frontend-{{ $frontendName }}".rateLimit.rateSet]
         {{ range $limitName, $limit := $rateLimit.RateSet }}
-        [frontends."frontend-{{ $serviceName }}".rateLimit.rateSet."{{ $limitName }}"]
+        [frontends."frontend-{{ $frontendName }}".rateLimit.rateSet."{{ $limitName }}"]
           period = "{{ $limit.Period }}"
           average = {{ $limit.Average }}
           burst = {{ $limit.Burst }}
         {{end}}
     {{end}}
 
-    {{ $headers := getHeaders $instance.TraefikLabels }}
+    {{ $headers := getHeaders $instance.SegmentLabels }}
     {{if $headers }}
-    [frontends."frontend-{{ $serviceName }}".headers]
+    [frontends."frontend-{{ $frontendName }}".headers]
       SSLRedirect = {{ $headers.SSLRedirect }}
       SSLTemporaryRedirect = {{ $headers.SSLTemporaryRedirect }}
       SSLHost = "{{ $headers.SSLHost }}"
@@ -156,28 +202,28 @@
       {{end}}
 
       {{if $headers.CustomRequestHeaders }}
-      [frontends."frontend-{{ $serviceName }}".headers.customRequestHeaders]
+      [frontends."frontend-{{ $frontendName }}".headers.customRequestHeaders]
         {{range $k, $v := $headers.CustomRequestHeaders }}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
 
       {{if $headers.CustomResponseHeaders }}
-      [frontends."frontend-{{ $serviceName }}".headers.customResponseHeaders]
+      [frontends."frontend-{{ $frontendName }}".headers.customResponseHeaders]
         {{range $k, $v := $headers.CustomResponseHeaders }}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
 
       {{if $headers.SSLProxyHeaders }}
-      [frontends."frontend-{{ $serviceName }}".headers.SSLProxyHeaders]
+      [frontends."frontend-{{ $frontendName }}".headers.SSLProxyHeaders]
         {{range $k, $v := $headers.SSLProxyHeaders }}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
     {{end}}
 
-    [frontends."frontend-{{ $serviceName }}".routes."route-frontend-{{ $serviceName }}"]
+    [frontends."frontend-{{ $frontendName }}".routes."route-frontend-{{ $frontendName }}"]
       rule = "{{ getFrontendRule $instance }}"
 
 {{end}}

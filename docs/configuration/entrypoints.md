@@ -5,15 +5,26 @@
 ### TOML
 
 ```toml
+defaultEntryPoints = ["http", "https"]
+
+# ...
+# ...
+
 [entryPoints]
   [entryPoints.http]
     address = ":80"
-    compress = true
+    [entryPoints.http.compress]
+    
+    [entryPoints.http.clientIPStrategy]
+      depth = 5
+      excludedIPs = ["127.0.0.1/32", "192.168.1.7"]
 
     [entryPoints.http.whitelist]
       sourceRange = ["10.42.0.0/16", "152.89.1.33/32", "afed:be44::/16"]
-      useXForwardedFor = true
-
+      [entryPoints.http.whitelist.IPStrategy]
+        depth = 5
+        excludedIPs = ["127.0.0.1/32", "192.168.1.7"]
+          
     [entryPoints.http.tls]
       minVersion = "VersionTLS12"
       cipherSuites = [
@@ -40,12 +51,14 @@
     [entryPoints.http.auth]
       headerField = "X-WebAuth-User"
       [entryPoints.http.auth.basic]
+        removeHeader = true
         users = [
           "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
           "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
         ]
         usersFile = "/path/to/.htpasswd"
       [entryPoints.http.auth.digest]
+        removeHeader = true
         users = [
           "test:traefik:a2688e031edb4be6a3797f3882655c05",
           "test2:traefik:518845800f9e2bfb1f1f740ec24f074e",
@@ -54,14 +67,13 @@
       [entryPoints.http.auth.forward]
         address = "https://authserver.com/auth"
         trustForwardHeader = true
+        authResponseHeaders = ["X-Auth-User"]
         [entryPoints.http.auth.forward.tls]
-          ca =  [ "path/to/local.crt"]
+          ca = "path/to/local.crt"
           caOptional = true
           cert = "path/to/foo.cert"
           key = "path/to/foo.key"
           insecureSkipVerify = true
-        [entryPoints.http.auth.forward]
-          authResponseHeaders = ["X-Auth-User"]
 
     [entryPoints.http.proxyProtocol]
       insecure = true
@@ -69,6 +81,7 @@
 
     [entryPoints.http.forwardedHeaders]
       trustedIPs = ["10.10.10.1", "10.10.10.2"]
+      insecure = false
 
   [entryPoints.https]
     # ...
@@ -112,6 +125,9 @@ TLS:/my/path/foo.cert,/my/path/foo.key;/my/path/goo.cert,/my/path/goo.key;/my/pa
 TLS
 TLS.MinVersion:VersionTLS11
 TLS.CipherSuites:TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384
+TLS.SniStrict:true
+TLS.DefaultCertificate.Cert:path/to/foo.cert
+TLS.DefaultCertificate.Key:path/to/foo.key
 CA:car
 CA.Optional:true
 Redirect.EntryPoint:https
@@ -120,12 +136,15 @@ Redirect.Replacement:http://mydomain/$1
 Redirect.Permanent:true
 Compress:true
 WhiteList.SourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16
-WhiteList.UseXForwardedFor:true
+WhiteList.IPStrategy.depth:3
+WhiteList.IPStrategy.ExcludedIPs:10.0.0.3/24,20.0.0.3/24
 ProxyProtocol.TrustedIPs:192.168.0.1
 ProxyProtocol.Insecure:true
 ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24
 Auth.Basic.Users:test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0
+Auth.Basic.Removeheader:true
 Auth.Digest.Users:test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e
+Auth.Digest.Removeheader:true
 Auth.HeaderField:X-WebAuth-User
 Auth.Forward.Address:https://authserver.com/auth
 Auth.Forward.AuthResponseHeaders:X-Auth,X-Test,X-Secret
@@ -213,7 +232,7 @@ Define an entrypoint with SNI support.
 ```
 
 !!! note
-    If an empty TLS configuration is done, default self-signed certificates are generated.
+    If an empty TLS configuration is provided, default self-signed certificates are generated.
 
 
 ### Dynamic Certificates
@@ -226,10 +245,10 @@ If you need to add or remove TLS certificates while Traefik is started, Dynamic 
 TLS Mutual Authentication can be `optional` or not.
 If it's `optional`, Træfik will authorize connection with certificates not signed by a specified Certificate Authority (CA).
 Otherwise, Træfik will only accept clients that present a certificate signed by a specified Certificate Authority (CA).
-`ClientCAFiles` can be configured with multiple `CA:s` in the same file or use multiple files containing one or several `CA:s`.
+`ClientCA.files` can be configured with multiple `CA:s` in the same file or use multiple files containing one or several `CA:s`.
 The `CA:s` has to be in PEM format.
 
-By default, `ClientCAFiles` is not optional, all clients will be required to present a valid cert.
+By default, `ClientCA.files` is not optional, all clients will be required to present a valid cert.
 The requirement will apply to all server certs in the entrypoint.
 
 In the example below both `snitest.com` and `snitest.org` will require client certs
@@ -250,10 +269,6 @@ In the example below both `snitest.com` and `snitest.org` will require client ce
     keyFile = "integration/fixtures/https/snitest.org.key"
 ```
 
-!!! note
-    The deprecated argument `ClientCAFiles` allows adding Client CA files which are mandatory.
-    If this parameter exists, the new ones are not checked.
-
 ## Authentication
 
 ### Basic Authentication
@@ -273,6 +288,32 @@ Users can be specified directly in the TOML file, or indirectly by referencing a
   usersFile = "/path/to/.htpasswd"
 ```
 
+Optionally, you can:
+
+- pass authenticated user to application via headers
+
+```toml
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+  [entryPoints.http.auth]
+    headerField = "X-WebAuth-User" # <-- header for the authenticated user
+    [entryPoints.http.auth.basic]
+    users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
+```
+
+- remove the Authorization header
+
+```toml
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+  [entryPoints.http.auth]
+    [entryPoints.http.auth.basic]
+    removeHeader = true # <-- remove the Authorization header
+    users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
+```
+
 ### Digest Authentication
 
 You can use `htdigest` to generate them.
@@ -288,6 +329,32 @@ Users can be specified directly in the TOML file, or indirectly by referencing a
   [entryPoints.http.auth.digest]
   users = ["test:traefik:a2688e031edb4be6a3797f3882655c05", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
   usersFile = "/path/to/.htdigest"
+```
+
+Optionally, you can!
+
+- pass authenticated user to application via headers.
+
+```toml
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+  [entryPoints.http.auth]
+    headerField = "X-WebAuth-User" # <-- header for the authenticated user
+    [entryPoints.http.auth.digest]
+    users = ["test:traefik:a2688e031edb4be6a3797f3882655c05", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
+```
+
+- remove the Authorization header.
+
+```toml
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+  [entryPoints.http.auth]
+    [entryPoints.http.auth.digest]
+    removeHeader = true # <-- remove the Authorization header
+    users = ["test:traefik:a2688e031edb4be6a3797f3882655c05", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
 ```
 
 ### Forward Authentication
@@ -313,17 +380,21 @@ Otherwise, the response from the authentication server is returned.
     #
     trustForwardHeader = true
 
-    # Copy headers from the authentication server to the request
-    [entryPoints.http.auth.forward]
-    authResponseHeaders = ["X-Auth-User", "X-Secret"]
-
-    # Enable forward auth TLS connection.
+    # Copy headers from the authentication server to the request.
     #
     # Optional
     #
-    [entryPoints.http.auth.forward.tls]
-    cert = "authserver.crt"
-    key = "authserver.key"
+    authResponseHeaders = ["X-Auth-User", "X-Secret"]
+
+      # Enable forward auth TLS connection.
+      #
+      # Optional
+      #
+      [entryPoints.http.auth.forward.tls]
+      ca = "path/to/local.crt"
+      caOptional = true
+      cert = "path/to/foo.cert"
+      key = "path/to/foo.key"
 ```
 
 ## Specify Minimum TLS Version
@@ -348,6 +419,40 @@ To specify an https entry point with a minimum TLS version, and specifying an ar
       keyFile = "integration/fixtures/https/snitest.org.key"
 ```
 
+## Strict SNI Checking
+
+To enable strict SNI checking, so that connections cannot be made if a matching certificate does not exist.
+
+```toml
+[entryPoints]
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+    sniStrict = true
+      [[entryPoints.https.tls.certificates]]
+      certFile = "integration/fixtures/https/snitest.com.cert"
+      keyFile = "integration/fixtures/https/snitest.com.key"
+```
+
+## Default Certificate
+
+To enable a default certificate to serve, so that connections without SNI or without a matching domain will be served this certificate.
+
+```toml
+[entryPoints]
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+    [entryPoints.https.tls.defaultCertificate]
+      certFile = "integration/fixtures/https/snitest.com.cert"
+      keyFile = "integration/fixtures/https/snitest.com.key"
+```
+
+!!! note
+    There can only be one `defaultCertificate` set per entrypoint.
+    Use a single set of square brackets `[ ]`, instead of the two needed for normal certificates.
+    If no default certificate is provided, a self-signed certificate will be generated by Traefik, and used instead.
+
 ## Compression
 
 To enable compression support using gzip format.
@@ -356,7 +461,7 @@ To enable compression support using gzip format.
 [entryPoints]
   [entryPoints.http]
   address = ":80"
-  compress = true
+  [entryPoints.http.compress]
 ```
 
 Responses are compressed when:
@@ -367,7 +472,9 @@ Responses are compressed when:
 
 ## White Listing
 
-To enable IP white listing at the entry point level.
+Træfik supports whitelisting to accept or refuse requests based on the client IP.
+
+The following example enables IP white listing and accepts requests from client IPs defined in `sourceRange`.
 
 ```toml
 [entryPoints]
@@ -376,8 +483,96 @@ To enable IP white listing at the entry point level.
 
     [entryPoints.http.whiteList]
       sourceRange = ["127.0.0.1/32", "192.168.1.7"]
-      # useXForwardedFor = true
+      # [entryPoints.http.whiteList.IPStrategy]
+      # Override the clientIPStrategy
 ```
+
+By default, Træfik uses the client IP (see [ClientIPStrategy](/configuration/entrypoints/#clientipstrategy)) for the whitelisting.
+
+If you want to use another IP than the one determined by `ClientIPStrategy` for the whitelisting, you can define the `IPStrategy` option:
+
+```toml
+[entryPoints]
+  [entryPoints.http.clientIPStrategy]
+    depth = 4
+  [entryPoints.http]
+    address = ":80"
+
+    [entryPoints.http.whiteList]
+      sourceRange = ["127.0.0.1/32", "192.168.1.7"]
+      [entryPoints.http.whiteList.IPStrategy]
+      depth = 2
+```
+
+In the above example, if the value of the `X-Forwarded-For` header was `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` then the client IP would be `"10.0.0.1"` (`clientIPStrategy.depth=4`) but the IP used for the whitelisting would be `"12.0.0.1"` (`whitelist.IPStrategy.depth=2`).
+
+## ClientIPStrategy
+
+The `clientIPStrategy` defines how you want Træfik to determine the client IP (used for whitelisting for example).
+
+There are several option available:
+
+### Depth
+
+This option uses the `X-Forwarded-For` header and takes the IP located at the `depth` position (starting from the right).
+```toml
+[entryPoints]
+  [entryPoints.http]
+    address = ":80"
+
+    [entryPoints.http.clientIPStrategy]
+```
+ 
+```toml
+[entryPoints]
+  [entryPoints.http]
+    address = ":80"
+
+    [entryPoints.http.clientIPStrategy]
+      depth = 5
+```
+
+!!! note
+    - If `depth` is greater than the total number of IPs in `X-Forwarded-For`, then clientIP will be empty.
+    - If `depth` is lesser than or equal to 0, then the option is ignored.
+
+Examples:
+  
+| `X-Forwarded-For`                       | `depth` | clientIP     |
+|-----------------------------------------|---------|--------------|
+| `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `1`     | `"13.0.0.1"` |
+| `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `3`     | `"11.0.0.1"` |
+| `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `5`     | `""`         |
+  
+### Excluded IPs
+
+Træfik will scan the `X-Forwarded-For` header (from the right) and pick the first IP not in the `excludedIPs` list.
+
+```toml
+[entryPoints]
+  [entryPoints.http]
+    address = ":80"
+
+    [entryPoints.http.clientIPStrategy]
+      excludedIPs = ["127.0.0.1/32", "192.168.1.7"]
+```
+
+!!! note
+    If `depth` is specified, `excludedIPs` is ignored.
+   
+Examples:
+
+| `X-Forwarded-For`                       | `excludedIPs`         | clientIP     |
+|-----------------------------------------|-----------------------|--------------|
+| `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `"12.0.0.1,13.0.0.1"` | `"11.0.0.1"` |
+| `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `"15.0.0.1,13.0.0.1"` | `"12.0.0.1"` |
+| `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `"10.0.0.1,13.0.0.1"` | `"12.0.0.1"` |
+| `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `"15.0.0.1,16.0.0.1"` | `"13.0.0.1"` |
+| `"10.0.0.1,11.0.0.1"`                   | `"10.0.0.1,11.0.0.1"` | `""`         |
+
+### Default
+
+If there are no `depth` or `excludedIPs`, then the client IP is the IP of the computer that initiated the connection with the Træfik server (the remote address).
 
 ## ProxyProtocol
 
@@ -427,4 +622,12 @@ Only IPs in `trustedIPs` will be authorized to trust the client forwarded header
       # Default: []
       #
       trustedIPs = ["127.0.0.1/32", "192.168.1.7"]
+      
+      # Insecure mode
+      #
+      # Optional
+      # Default: false
+      #
+      # insecure = true
+
 ```

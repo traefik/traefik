@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	"github.com/mesosphere/mesos-dns/records/state"
@@ -65,7 +65,6 @@ func TestBuildConfiguration(t *testing.T) {
 				"frontend-ID1": {
 					Backend:        "backend-name1",
 					EntryPoints:    []string{},
-					BasicAuth:      []string{},
 					PassHostHeader: true,
 					Routes: map[string]types.Route{
 						"route-host-ID1": {
@@ -76,7 +75,6 @@ func TestBuildConfiguration(t *testing.T) {
 				"frontend-ID3": {
 					Backend:        "backend-name2",
 					EntryPoints:    []string{},
-					BasicAuth:      []string{},
 					PassHostHeader: true,
 					Routes: map[string]types.Route{
 						"route-host-ID3": {
@@ -113,6 +111,197 @@ func TestBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
+			desc: "With basic auth",
+			tasks: []state.Task{
+				// App 1
+				aTask("ID1",
+					withIP("10.10.10.10"),
+					withInfo("name1",
+						withPorts(withPort("TCP", 80, "WEB"))),
+					withStatus(withHealthy(true), withState("TASK_RUNNING")),
+					withLabel(label.TraefikFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+					withLabel(label.TraefikFrontendAuthBasicUsersFile, ".htpasswd"),
+					withLabel(label.TraefikFrontendAuthBasicRemoveHeader, "true"),
+					withLabel(label.TraefikFrontendAuthHeaderField, "X-WebAuth-User"),
+				),
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-ID1": {
+					Backend:        "backend-name1",
+					EntryPoints:    []string{},
+					PassHostHeader: true,
+					Routes: map[string]types.Route{
+						"route-host-ID1": {
+							Rule: "Host:name1.mesos.localhost",
+						},
+					},
+					Auth: &types.Auth{
+						HeaderField: "X-WebAuth-User",
+						Basic: &types.Basic{
+							RemoveHeader: true,
+							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							UsersFile: ".htpasswd",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-name1": {
+					Servers: map[string]types.Server{
+						"server-ID1": {
+							URL:    "http://10.10.10.10:80",
+							Weight: label.DefaultWeight,
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "With basic auth (backward compatibility)",
+			tasks: []state.Task{
+				// App 1
+				aTask("ID1",
+					withIP("10.10.10.10"),
+					withInfo("name1",
+						withPorts(withPort("TCP", 80, "WEB"))),
+					withStatus(withHealthy(true), withState("TASK_RUNNING")),
+					withLabel(label.TraefikFrontendAuthBasic, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+				),
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-ID1": {
+					Backend:        "backend-name1",
+					EntryPoints:    []string{},
+					PassHostHeader: true,
+					Routes: map[string]types.Route{
+						"route-host-ID1": {
+							Rule: "Host:name1.mesos.localhost",
+						},
+					},
+					Auth: &types.Auth{
+						Basic: &types.Basic{
+							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-name1": {
+					Servers: map[string]types.Server{
+						"server-ID1": {
+							URL:    "http://10.10.10.10:80",
+							Weight: label.DefaultWeight,
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "With digest auth",
+			tasks: []state.Task{
+				// App 1
+				aTask("ID1",
+					withIP("10.10.10.10"),
+					withInfo("name1",
+						withPorts(withPort("TCP", 80, "WEB"))),
+					withStatus(withHealthy(true), withState("TASK_RUNNING")),
+					withLabel(label.TraefikFrontendAuthDigestRemoveHeader, "true"),
+					withLabel(label.TraefikFrontendAuthDigestUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+					withLabel(label.TraefikFrontendAuthDigestUsersFile, ".htpasswd"),
+					withLabel(label.TraefikFrontendAuthHeaderField, "X-WebAuth-User"),
+				),
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-ID1": {
+					Backend:        "backend-name1",
+					EntryPoints:    []string{},
+					PassHostHeader: true,
+					Routes: map[string]types.Route{
+						"route-host-ID1": {
+							Rule: "Host:name1.mesos.localhost",
+						},
+					},
+					Auth: &types.Auth{
+						HeaderField: "X-WebAuth-User",
+						Digest: &types.Digest{
+							RemoveHeader: true,
+							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							UsersFile: ".htpasswd",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-name1": {
+					Servers: map[string]types.Server{
+						"server-ID1": {
+							URL:    "http://10.10.10.10:80",
+							Weight: label.DefaultWeight,
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "With Forward auth",
+			tasks: []state.Task{
+				// App 1
+				aTask("ID1",
+					withIP("10.10.10.10"),
+					withInfo("name1",
+						withPorts(withPort("TCP", 80, "WEB"))),
+					withStatus(withHealthy(true), withState("TASK_RUNNING")),
+					withLabel(label.TraefikFrontendAuthForwardAddress, "auth.server"),
+					withLabel(label.TraefikFrontendAuthForwardTrustForwardHeader, "true"),
+					withLabel(label.TraefikFrontendAuthForwardTLSCa, "ca.crt"),
+					withLabel(label.TraefikFrontendAuthForwardTLSCaOptional, "true"),
+					withLabel(label.TraefikFrontendAuthForwardTLSCert, "server.crt"),
+					withLabel(label.TraefikFrontendAuthForwardTLSKey, "server.key"),
+					withLabel(label.TraefikFrontendAuthForwardTLSInsecureSkipVerify, "true"),
+					withLabel(label.TraefikFrontendAuthHeaderField, "X-WebAuth-User"),
+				),
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-ID1": {
+					Backend:        "backend-name1",
+					EntryPoints:    []string{},
+					PassHostHeader: true,
+					Routes: map[string]types.Route{
+						"route-host-ID1": {
+							Rule: "Host:name1.mesos.localhost",
+						},
+					},
+					Auth: &types.Auth{
+						HeaderField: "X-WebAuth-User",
+						Forward: &types.Forward{
+							Address:            "auth.server",
+							TrustForwardHeader: true,
+							TLS: &types.ClientTLS{
+								CA:                 "ca.crt",
+								CAOptional:         true,
+								InsecureSkipVerify: true,
+								Cert:               "server.crt",
+								Key:                "server.key",
+							},
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-name1": {
+					Servers: map[string]types.Server{
+						"server-ID1": {
+							URL:    "http://10.10.10.10:80",
+							Weight: label.DefaultWeight,
+						},
+					},
+				},
+			},
+		},
+		{
 			desc: "with all labels",
 			tasks: []state.Task{
 				aTask("ID1",
@@ -142,6 +331,21 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel(label.TraefikBackendBufferingRetryExpression, "IsNetworkError() && Attempts() <= 2"),
 
 					withLabel(label.TraefikFrontendAuthBasic, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+					withLabel(label.TraefikFrontendAuthBasicRemoveHeader, "true"),
+					withLabel(label.TraefikFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+					withLabel(label.TraefikFrontendAuthBasicUsersFile, ".htpasswd"),
+					withLabel(label.TraefikFrontendAuthDigestRemoveHeader, "true"),
+					withLabel(label.TraefikFrontendAuthDigestUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+					withLabel(label.TraefikFrontendAuthDigestUsersFile, ".htpasswd"),
+					withLabel(label.TraefikFrontendAuthForwardAddress, "auth.server"),
+					withLabel(label.TraefikFrontendAuthForwardTrustForwardHeader, "true"),
+					withLabel(label.TraefikFrontendAuthForwardTLSCa, "ca.crt"),
+					withLabel(label.TraefikFrontendAuthForwardTLSCaOptional, "true"),
+					withLabel(label.TraefikFrontendAuthForwardTLSCert, "server.crt"),
+					withLabel(label.TraefikFrontendAuthForwardTLSKey, "server.key"),
+					withLabel(label.TraefikFrontendAuthForwardTLSInsecureSkipVerify, "true"),
+					withLabel(label.TraefikFrontendAuthHeaderField, "X-WebAuth-User"),
+
 					withLabel(label.TraefikFrontendEntryPoints, "http,https"),
 					withLabel(label.TraefikFrontendPassHostHeader, "true"),
 					withLabel(label.TraefikFrontendPassTLSCert, "true"),
@@ -152,7 +356,8 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel(label.TraefikFrontendRedirectPermanent, "true"),
 					withLabel(label.TraefikFrontendRule, "Host:traefik.io"),
 					withLabel(label.TraefikFrontendWhiteListSourceRange, "10.10.10.10"),
-					withLabel(label.TraefikFrontendWhiteListUseXForwardedFor, "true"),
+					withLabel(label.TraefikFrontendWhiteListIPStrategyExcludedIPS, "10.10.10.10,10.10.10.11"),
+					withLabel(label.TraefikFrontendWhiteListIPStrategyDepth, "5"),
 
 					withLabel(label.TraefikFrontendRequestHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type:application/json; charset=utf-8"),
 					withLabel(label.TraefikFrontendResponseHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type:application/json; charset=utf-8"),
@@ -213,13 +418,21 @@ func TestBuildConfiguration(t *testing.T) {
 					PassHostHeader: true,
 					PassTLSCert:    true,
 					Priority:       666,
-					BasicAuth: []string{
-						"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-						"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+					Auth: &types.Auth{
+						HeaderField: "X-WebAuth-User",
+						Basic: &types.Basic{
+							RemoveHeader: true,
+							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							UsersFile: ".htpasswd",
+						},
 					},
 					WhiteList: &types.WhiteList{
-						SourceRange:      []string{"10.10.10.10"},
-						UseXForwardedFor: true,
+						SourceRange: []string{"10.10.10.10"},
+						IPStrategy: &types.IPStrategy{
+							Depth:       5,
+							ExcludedIPs: []string{"10.10.10.10", "10.10.10.11"},
+						},
 					},
 					Headers: &types.Headers{
 						CustomRequestHeaders: map[string]string{
@@ -278,12 +491,12 @@ func TestBuildConfiguration(t *testing.T) {
 						ExtractorFunc: "client.ip",
 						RateSet: map[string]*types.Rate{
 							"foo": {
-								Period:  flaeg.Duration(6 * time.Second),
+								Period:  parse.Duration(6 * time.Second),
 								Average: 12,
 								Burst:   18,
 							},
 							"bar": {
-								Period:  flaeg.Duration(3 * time.Second),
+								Period:  parse.Duration(3 * time.Second),
 								Average: 6,
 								Burst:   9,
 							},
@@ -346,7 +559,7 @@ func TestBuildConfiguration(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actualConfig := p.buildConfigurationV2(test.tasks)
+			actualConfig := p.buildConfiguration(test.tasks)
 
 			require.NotNil(t, actualConfig)
 			assert.Equal(t, test.expectedBackends, actualConfig.Backends)
@@ -398,7 +611,6 @@ func TestBuildConfigurationSegments(t *testing.T) {
 						},
 					},
 					PassHostHeader: true,
-					BasicAuth:      []string{},
 					EntryPoints:    []string{},
 				},
 				"frontend-app-taskID-service-admin": {
@@ -409,7 +621,6 @@ func TestBuildConfigurationSegments(t *testing.T) {
 						},
 					},
 					PassHostHeader: true,
-					BasicAuth:      []string{},
 					EntryPoints:    []string{},
 				},
 			},
@@ -461,7 +672,6 @@ func TestBuildConfigurationSegments(t *testing.T) {
 					withLabel(label.TraefikBackendHealthCheckHostname, "foo.com"),
 					withLabel(label.TraefikBackendHealthCheckHeaders, "Foo:bar || Bar:foo"),
 					withLabel(label.TraefikBackendLoadBalancerMethod, "drr"),
-					withLabel(label.TraefikBackendLoadBalancerSticky, "true"),
 					withLabel(label.TraefikBackendLoadBalancerStickiness, "true"),
 					withLabel(label.TraefikBackendLoadBalancerStickinessCookieName, "chocolate"),
 					withLabel(label.TraefikBackendMaxConnAmount, "666"),
@@ -478,6 +688,21 @@ func TestBuildConfigurationSegments(t *testing.T) {
 					withSegmentLabel(label.TraefikWeight, "12", "containous"),
 
 					withSegmentLabel(label.TraefikFrontendAuthBasic, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0", "containous"),
+					withSegmentLabel(label.TraefikFrontendAuthBasicRemoveHeader, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0", "containous"),
+					withSegmentLabel(label.TraefikFrontendAuthBasicUsersFile, ".htpasswd", "containous"),
+					withSegmentLabel(label.TraefikFrontendAuthDigestRemoveHeader, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendAuthDigestUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0", "containous"),
+					withSegmentLabel(label.TraefikFrontendAuthDigestUsersFile, ".htpasswd", "containous"),
+					withSegmentLabel(label.TraefikFrontendAuthForwardAddress, "auth.server", "containous"),
+					withSegmentLabel(label.TraefikFrontendAuthForwardTrustForwardHeader, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendAuthForwardTLSCa, "ca.crt", "containous"),
+					withSegmentLabel(label.TraefikFrontendAuthForwardTLSCaOptional, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendAuthForwardTLSCert, "server.crt", "containous"),
+					withSegmentLabel(label.TraefikFrontendAuthForwardTLSKey, "server.key", "containous"),
+					withSegmentLabel(label.TraefikFrontendAuthForwardTLSInsecureSkipVerify, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendAuthHeaderField, "X-WebAuth-User", "containous"),
+
 					withSegmentLabel(label.TraefikFrontendEntryPoints, "http,https", "containous"),
 					withSegmentLabel(label.TraefikFrontendPassHostHeader, "true", "containous"),
 					withSegmentLabel(label.TraefikFrontendPassTLSCert, "true", "containous"),
@@ -488,7 +713,6 @@ func TestBuildConfigurationSegments(t *testing.T) {
 					withSegmentLabel(label.TraefikFrontendRedirectPermanent, "true", "containous"),
 					withSegmentLabel(label.TraefikFrontendRule, "Host:traefik.io", "containous"),
 					withSegmentLabel(label.TraefikFrontendWhiteListSourceRange, "10.10.10.10", "containous"),
-					withSegmentLabel(label.TraefikFrontendWhiteListUseXForwardedFor, "true", "containous"),
 
 					withSegmentLabel(label.TraefikFrontendRequestHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8", "containous"),
 					withSegmentLabel(label.TraefikFrontendResponseHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8", "containous"),
@@ -544,13 +768,18 @@ func TestBuildConfigurationSegments(t *testing.T) {
 					PassHostHeader: true,
 					PassTLSCert:    true,
 					Priority:       666,
-					BasicAuth: []string{
-						"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-						"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+					Auth: &types.Auth{
+						HeaderField: "X-WebAuth-User",
+						Basic: &types.Basic{
+							RemoveHeader: true,
+							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							UsersFile: ".htpasswd",
+						},
 					},
+
 					WhiteList: &types.WhiteList{
-						SourceRange:      []string{"10.10.10.10"},
-						UseXForwardedFor: true,
+						SourceRange: []string{"10.10.10.10"},
 					},
 					Headers: &types.Headers{
 						CustomRequestHeaders: map[string]string{
@@ -613,12 +842,12 @@ func TestBuildConfigurationSegments(t *testing.T) {
 					RateLimit: &types.RateLimit{
 						RateSet: map[string]*types.Rate{
 							"bar": {
-								Period:  flaeg.Duration(3 * time.Second),
+								Period:  parse.Duration(3 * time.Second),
 								Average: 6,
 								Burst:   9,
 							},
 							"foo": {
-								Period:  flaeg.Duration(6 * time.Second),
+								Period:  parse.Duration(6 * time.Second),
 								Average: 12,
 								Burst:   18,
 							},
@@ -644,7 +873,6 @@ func TestBuildConfigurationSegments(t *testing.T) {
 					},
 					LoadBalancer: &types.LoadBalancer{
 						Method: "drr",
-						Sticky: true,
 						Stickiness: &types.Stickiness{
 							CookieName: "chocolate",
 						},
@@ -681,7 +909,7 @@ func TestBuildConfigurationSegments(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actualConfig := p.buildConfigurationV2(test.tasks)
+			actualConfig := p.buildConfiguration(test.tasks)
 
 			require.NotNil(t, actualConfig)
 			assert.Equal(t, test.expectedBackends, actualConfig.Backends)

@@ -13,20 +13,20 @@ import (
 	"github.com/abronan/valkeyrie/store/etcd/v3"
 	"github.com/containous/traefik/integration/try"
 	"github.com/go-check/check"
-
 	checker "github.com/vdemeester/shakers"
 )
 
 const (
-	// Services IP addresses fixed in the configuration
-	ipEtcd     = "172.18.0.2"
-	ipWhoami01 = "172.18.0.3"
-	ipWhoami02 = "172.18.0.4"
-	ipWhoami03 = "172.18.0.5"
-	ipWhoami04 = "172.18.0.6"
-
 	traefikEtcdURL    = "http://127.0.0.1:8000/"
 	traefikWebEtcdURL = "http://127.0.0.1:8081/"
+)
+
+var (
+	ipEtcd     string
+	ipWhoami01 string
+	ipWhoami02 string
+	ipWhoami03 string
+	ipWhoami04 string
 )
 
 // Etcd test suites (using libcompose)
@@ -35,9 +35,31 @@ type Etcd3Suite struct {
 	kv store.Store
 }
 
-func (s *Etcd3Suite) SetUpTest(c *check.C) {
+func (s *Etcd3Suite) getIPAddress(c *check.C, service, defaultIP string) string {
+	var ip string
+	for _, value := range s.composeProject.Container(c, service).NetworkSettings.Networks {
+		if len(value.IPAddress) > 0 {
+			ip = value.IPAddress
+			break
+		}
+	}
+
+	if len(ip) == 0 {
+		return defaultIP
+	}
+
+	return ip
+}
+
+func (s *Etcd3Suite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "etcd3")
 	s.composeProject.Start(c)
+
+	ipEtcd = s.getIPAddress(c, "etcd", "172.18.0.2")
+	ipWhoami01 = s.getIPAddress(c, "whoami1", "172.18.0.3")
+	ipWhoami02 = s.getIPAddress(c, "whoami2", "172.18.0.4")
+	ipWhoami03 = s.getIPAddress(c, "whoami3", "172.18.0.5")
+	ipWhoami04 = s.getIPAddress(c, "whoami4", "172.18.0.6")
 
 	etcdv3.Register()
 	url := ipEtcd + ":2379"
@@ -49,7 +71,7 @@ func (s *Etcd3Suite) SetUpTest(c *check.C) {
 		},
 	)
 	if err != nil {
-		c.Fatal("Cannot create store etcd")
+		c.Fatalf("Cannot create store etcd %v", err)
 	}
 	s.kv = kv
 
@@ -62,21 +84,22 @@ func (s *Etcd3Suite) SetUpTest(c *check.C) {
 }
 
 func (s *Etcd3Suite) TearDownTest(c *check.C) {
+	// Delete all Traefik keys from ETCD
+	s.kv.DeleteTree("/traefik")
+}
+
+func (s *Etcd3Suite) TearDownSuite(c *check.C) {
 	// shutdown and delete compose project
 	if s.composeProject != nil {
 		s.composeProject.Stop(c)
 	}
 }
 
-func (s *Etcd3Suite) TearDownSuite(c *check.C) {}
-
 func (s *Etcd3Suite) TestSimpleConfiguration(c *check.C) {
 	file := s.adaptFile(c, "fixtures/etcd/simple.toml", struct {
 		EtcdHost string
-		UseAPIV3 bool
 	}{
 		ipEtcd,
-		true,
 	})
 	defer os.Remove(file)
 
@@ -95,10 +118,8 @@ func (s *Etcd3Suite) TestSimpleConfiguration(c *check.C) {
 func (s *Etcd3Suite) TestNominalConfiguration(c *check.C) {
 	file := s.adaptFile(c, "fixtures/etcd/simple.toml", struct {
 		EtcdHost string
-		UseAPIV3 bool
 	}{
 		ipEtcd,
-		true,
 	})
 	defer os.Remove(file)
 
@@ -219,8 +240,7 @@ func (s *Etcd3Suite) TestGlobalConfiguration(c *check.C) {
 	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/simple_web.toml"),
 		"--etcd",
-		"--etcd.endpoint="+ipEtcd+":4001",
-		"--etcd.useAPIV3=true")
+		"--etcd.endpoint="+ipEtcd+":4001")
 	defer display(c)
 	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
@@ -280,7 +300,7 @@ func (s *Etcd3Suite) TestGlobalConfiguration(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, try.BodyContains("Path:/test"))
 	c.Assert(err, checker.IsNil)
 
-	//check
+	// check
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8001/", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = "test.localhost"
@@ -294,11 +314,10 @@ func (s *Etcd3Suite) TestCertificatesContentWithSNIConfigHandshake(c *check.C) {
 	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/simple_web.toml"),
 		"--etcd",
-		"--etcd.endpoint="+ipEtcd+":4001",
-		"--etcd.useAPIV3=true")
+		"--etcd.endpoint="+ipEtcd+":4001")
 	defer display(c)
 
-	//Copy the contents of the certificate files into ETCD
+	// Copy the contents of the certificate files into ETCD
 	snitestComCert, err := ioutil.ReadFile("fixtures/https/snitest.com.cert")
 	c.Assert(err, checker.IsNil)
 	snitestComKey, err := ioutil.ReadFile("fixtures/https/snitest.com.key")
@@ -376,7 +395,7 @@ func (s *Etcd3Suite) TestCertificatesContentWithSNIConfigHandshake(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, try.BodyContains("Host:snitest.org"))
 	c.Assert(err, checker.IsNil)
 
-	//check
+	// check
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
 		ServerName:         "snitest.com",
@@ -397,16 +416,16 @@ func (s *Etcd3Suite) TestCommandStoreConfig(c *check.C) {
 	cmd, display := s.traefikCmd(
 		"storeconfig",
 		withConfigFile("fixtures/simple_web.toml"),
-		"--etcd.endpoint="+ipEtcd+":4001",
-		"--etcd.useAPIV3=true")
+		"--etcd.endpoint="+ipEtcd+":4001")
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 
 	// wait for traefik finish without error
-	cmd.Wait()
+	err = cmd.Wait()
+	c.Assert(err, checker.IsNil)
 
-	//CHECK
+	// CHECK
 	checkmap := map[string]string{
 		"/traefik/loglevel":                 "DEBUG",
 		"/traefik/defaultentrypoints/0":     "http",
@@ -432,8 +451,7 @@ func (s *Etcd3Suite) TestSNIDynamicTlsConfig(c *check.C) {
 	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/etcd/simple_https.toml"),
 		"--etcd",
-		"--etcd.endpoint="+ipEtcd+":4001",
-		"--etcd.useAPIV3=true")
+		"--etcd.endpoint="+ipEtcd+":4001")
 	defer display(c)
 
 	snitestComCert, err := ioutil.ReadFile("fixtures/https/snitest.com.cert")
@@ -532,21 +550,14 @@ func (s *Etcd3Suite) TestSNIDynamicTlsConfig(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	// wait for Træfik
-	err = try.GetRequest("http://127.0.0.1:8081/api/providers", 60*time.Second, try.BodyContains(string("MIIEpQIBAAKCAQEA1RducBK6EiFDv3TYB8ZcrfKWRVaSfHzWicO3J5WdST9oS7h")))
-	c.Assert(err, checker.IsNil)
-
 	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
 	c.Assert(err, checker.IsNil)
-	client := &http.Client{Transport: tr1}
 	req.Host = tr1.TLSClientConfig.ServerName
 	req.Header.Set("Host", tr1.TLSClientConfig.ServerName)
 	req.Header.Set("Accept", "*/*")
-	var resp *http.Response
-	resp, err = client.Do(req)
+
+	err = try.RequestWithTransport(req, 30*time.Second, tr1, try.HasCn(tr1.TLSClientConfig.ServerName))
 	c.Assert(err, checker.IsNil)
-	cn := resp.TLS.PeerCertificates[0].Subject.CommonName
-	c.Assert(cn, checker.Equals, "snitest.com")
 
 	// now we configure the second keypair in etcd and the request for host "snitest.org" will use the second keypair
 
@@ -562,20 +573,14 @@ func (s *Etcd3Suite) TestSNIDynamicTlsConfig(c *check.C) {
 	})
 	c.Assert(err, checker.IsNil)
 
-	// waiting for Træfik to pull configuration
-	err = try.GetRequest("http://127.0.0.1:8081/api/providers", 30*time.Second, try.BodyContains("MIIEogIBAAKCAQEAvG9kL+vF57+MICehzbqcQAUlAOSl5r"))
-	c.Assert(err, checker.IsNil)
-
 	req, err = http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
 	c.Assert(err, checker.IsNil)
-	client = &http.Client{Transport: tr2}
 	req.Host = tr2.TLSClientConfig.ServerName
 	req.Header.Set("Host", tr2.TLSClientConfig.ServerName)
 	req.Header.Set("Accept", "*/*")
-	resp, err = client.Do(req)
+
+	err = try.RequestWithTransport(req, 30*time.Second, tr2, try.HasCn(tr2.TLSClientConfig.ServerName))
 	c.Assert(err, checker.IsNil)
-	cn = resp.TLS.PeerCertificates[0].Subject.CommonName
-	c.Assert(cn, checker.Equals, "snitest.org")
 }
 
 func (s *Etcd3Suite) TestDeleteSNIDynamicTlsConfig(c *check.C) {
@@ -583,8 +588,7 @@ func (s *Etcd3Suite) TestDeleteSNIDynamicTlsConfig(c *check.C) {
 	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/etcd/simple_https.toml"),
 		"--etcd",
-		"--etcd.endpoint="+ipEtcd+":4001",
-		"--etcd.useAPIV3=true")
+		"--etcd.endpoint="+ipEtcd+":4001")
 	defer display(c)
 
 	// prepare to config
@@ -646,21 +650,14 @@ func (s *Etcd3Suite) TestDeleteSNIDynamicTlsConfig(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	// wait for Træfik
-	err = try.GetRequest(traefikWebEtcdURL+"api/providers", 60*time.Second, try.BodyContains(string("MIIEpQIBAAKCAQEA1RducBK6EiFDv3TYB8ZcrfKWRVaSfHzWicO3J5WdST9oS7h")))
-	c.Assert(err, checker.IsNil)
-
 	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
 	c.Assert(err, checker.IsNil)
-	client := &http.Client{Transport: tr1}
 	req.Host = tr1.TLSClientConfig.ServerName
 	req.Header.Set("Host", tr1.TLSClientConfig.ServerName)
 	req.Header.Set("Accept", "*/*")
-	var resp *http.Response
-	resp, err = client.Do(req)
+
+	err = try.RequestWithTransport(req, 30*time.Second, tr1, try.HasCn(tr1.TLSClientConfig.ServerName))
 	c.Assert(err, checker.IsNil)
-	cn := resp.TLS.PeerCertificates[0].Subject.CommonName
-	c.Assert(cn, checker.Equals, "snitest.com")
 
 	// now we delete the tls cert/key pairs,so the endpoint show use default cert/key pair
 	for key := range tlsconfigure1 {
@@ -668,18 +665,12 @@ func (s *Etcd3Suite) TestDeleteSNIDynamicTlsConfig(c *check.C) {
 		c.Assert(err, checker.IsNil)
 	}
 
-	// waiting for Træfik to pull configuration
-	err = try.GetRequest(traefikWebEtcdURL+"api/providers", 30*time.Second, try.BodyNotContains("MIIEpQIBAAKCAQEA1RducBK6EiFDv3TYB8ZcrfKWRVaSfHzWicO3J5WdST9oS7h"))
-	c.Assert(err, checker.IsNil)
-
 	req, err = http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
 	c.Assert(err, checker.IsNil)
-	client = &http.Client{Transport: tr1}
 	req.Host = tr1.TLSClientConfig.ServerName
 	req.Header.Set("Host", tr1.TLSClientConfig.ServerName)
 	req.Header.Set("Accept", "*/*")
-	resp, err = client.Do(req)
+
+	err = try.RequestWithTransport(req, 30*time.Second, tr1, try.HasCn("TRAEFIK DEFAULT CERT"))
 	c.Assert(err, checker.IsNil)
-	cn = resp.TLS.PeerCertificates[0].Subject.CommonName
-	c.Assert(cn, checker.Equals, "TRAEFIK DEFAULT CERT")
 }

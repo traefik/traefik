@@ -8,10 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/healthcheck"
+	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/rules"
 	th "github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/tls"
@@ -89,7 +90,7 @@ func TestServerLoadConfigHealthCheckOptions(t *testing.T) {
 		for _, healthCheck := range healthChecks {
 			t.Run(fmt.Sprintf("%s/hc=%t", lbMethod, healthCheck != nil), func(t *testing.T) {
 				globalConfig := configuration.GlobalConfiguration{
-					HealthCheck: &configuration.HealthCheckConfig{Interval: flaeg.Duration(5 * time.Second)},
+					HealthCheck: &configuration.HealthCheckConfig{Interval: parse.Duration(5 * time.Second)},
 				}
 				entryPoints := map[string]EntryPoint{
 					"http": {
@@ -160,7 +161,6 @@ func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
 				"frontend": {
 					EntryPoints: []string{"http"},
 					Backend:     "backend",
-					BasicAuth:   []string{""},
 				},
 			},
 			Backends: map[string]*types.Backend{
@@ -215,7 +215,7 @@ func TestServerLoadCertificateWithDefaultEntryPoint(t *testing.T) {
 	srv := NewServer(globalConfig, nil, entryPoints)
 	if mapEntryPoints, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
 		t.Fatalf("got error: %s", err)
-	} else if mapEntryPoints["https"].certs.Get() == nil {
+	} else if !mapEntryPoints["https"].certs.ContainsCertificates() {
 		t.Fatal("got error: https entryPoint must have TLS certificates.")
 	}
 }
@@ -247,7 +247,11 @@ func TestReuseBackend(t *testing.T) {
 					th.WithFrontendName("frontend1"),
 					th.WithEntryPoints("http"),
 					th.WithRoutes(th.WithRoute("/unauthorized", "Path: /unauthorized")),
-					th.WithBasicAuth("foo", "bar")),
+					th.WithFrontEndAuth(&types.Auth{
+						Basic: &types.Basic{
+							Users: []string{"foo:bar"},
+						},
+					})),
 			),
 			th.WithBackends(th.WithBackendNew("backend",
 				th.WithLBMethod("wrr"),
@@ -385,6 +389,7 @@ func TestServerMultipleFrontendRules(t *testing.T) {
 			router := mux.NewRouter()
 			route := router.NewRoute()
 			serverRoute := &types.ServerRoute{Route: route}
+			reqHostMid := &middlewares.RequestHost{}
 			rls := &rules.Rules{Route: serverRoute}
 
 			expression := test.expression
@@ -395,7 +400,10 @@ func TestServerMultipleFrontendRules(t *testing.T) {
 			}
 
 			request := th.MustNewRequest(http.MethodGet, test.requestURL, nil)
-			routeMatch := routeResult.Match(request, &mux.RouteMatch{Route: routeResult})
+			var routeMatch bool
+			reqHostMid.ServeHTTP(nil, request, func(w http.ResponseWriter, r *http.Request) {
+				routeMatch = routeResult.Match(r, &mux.RouteMatch{Route: routeResult})
+			})
 
 			if !routeMatch {
 				t.Fatalf("Rule %s doesn't match", expression)
@@ -477,7 +485,7 @@ func TestServerBuildHealthCheckOptions(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			opts := buildHealthCheckOptions(lb, "backend", test.hc, &configuration.HealthCheckConfig{Interval: flaeg.Duration(globalInterval)})
+			opts := buildHealthCheckOptions(lb, "backend", test.hc, &configuration.HealthCheckConfig{Interval: parse.Duration(globalInterval)})
 			assert.Equal(t, test.expectedOpts, opts, "health check options")
 		})
 	}

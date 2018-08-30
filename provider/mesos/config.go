@@ -21,7 +21,7 @@ type taskData struct {
 	SegmentName   string
 }
 
-func (p *Provider) buildConfigurationV2(tasks []state.Task) *types.Configuration {
+func (p *Provider) buildConfiguration(tasks []state.Task) *types.Configuration {
 	var mesosFuncMap = template.FuncMap{
 		"getDomain":           label.GetFuncString(label.TraefikDomain, p.Domain),
 		"getSubDomain":        p.getSubDomain,
@@ -43,7 +43,8 @@ func (p *Provider) buildConfigurationV2(tasks []state.Task) *types.Configuration
 		"getSegmentNameSuffix": getSegmentNameSuffix,
 		"getFrontEndName":      getFrontendName,
 		"getEntryPoints":       label.GetFuncSliceString(label.TraefikFrontendEntryPoints),
-		"getBasicAuth":         label.GetFuncSliceString(label.TraefikFrontendAuthBasic),
+		"getBasicAuth":         label.GetFuncSliceString(label.TraefikFrontendAuthBasic), // Deprecated
+		"getAuth":              label.GetAuth,
 		"getPriority":          label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
 		"getPassHostHeader":    label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getPassTLSCert":       label.GetFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),

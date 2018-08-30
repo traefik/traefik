@@ -9,12 +9,12 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/platform/config/env"
 )
 
 // Gandi API reference:       http://doc.rpc.gandi.net/index.html
@@ -44,25 +44,31 @@ type DNSProvider struct {
 	inProgressFQDNs     map[string]inProgressInfo
 	inProgressAuthZones map[string]struct{}
 	inProgressMu        sync.Mutex
+	client              *http.Client
 }
 
 // NewDNSProvider returns a DNSProvider instance configured for Gandi.
 // Credentials must be passed in the environment variable: GANDI_API_KEY.
 func NewDNSProvider() (*DNSProvider, error) {
-	apiKey := os.Getenv("GANDI_API_KEY")
-	return NewDNSProviderCredentials(apiKey)
+	values, err := env.Get("GANDI_API_KEY")
+	if err != nil {
+		return nil, fmt.Errorf("GandiDNS: %v", err)
+	}
+
+	return NewDNSProviderCredentials(values["GANDI_API_KEY"])
 }
 
 // NewDNSProviderCredentials uses the supplied credentials to return a
 // DNSProvider instance configured for Gandi.
 func NewDNSProviderCredentials(apiKey string) (*DNSProvider, error) {
 	if apiKey == "" {
-		return nil, fmt.Errorf("No Gandi API Key given")
+		return nil, fmt.Errorf("no Gandi API Key given")
 	}
 	return &DNSProvider{
 		apiKey:              apiKey,
 		inProgressFQDNs:     make(map[string]inProgressInfo),
 		inProgressAuthZones: make(map[string]struct{}),
+		client:              &http.Client{Timeout: 60 * time.Second},
 	}, nil
 }
 
@@ -269,10 +275,8 @@ func (e rpcError) Error() string {
 		"Gandi DNS: RPC Error: (%d) %s", e.faultCode, e.faultString)
 }
 
-func httpPost(url string, bodyType string, body io.Reader) ([]byte, error) {
-	client := http.Client{Timeout: 60 * time.Second}
-
-	resp, err := client.Post(url, bodyType, body)
+func (d *DNSProvider) httpPost(url string, bodyType string, body io.Reader) ([]byte, error) {
+	resp, err := d.client.Post(url, bodyType, body)
 	if err != nil {
 		return nil, fmt.Errorf("Gandi DNS: HTTP Post Error: %v", err)
 	}
@@ -290,7 +294,7 @@ func httpPost(url string, bodyType string, body io.Reader) ([]byte, error) {
 // marshalling the data given in the call argument to XML and sending
 // that via HTTP Post to Gandi. The response is then unmarshalled into
 // the resp argument.
-func rpcCall(call *methodCall, resp response) error {
+func (d *DNSProvider) rpcCall(call *methodCall, resp response) error {
 	// marshal
 	b, err := xml.MarshalIndent(call, "", "  ")
 	if err != nil {
@@ -299,7 +303,7 @@ func rpcCall(call *methodCall, resp response) error {
 
 	// post
 	b = append([]byte(`<?xml version="1.0"?>`+"\n"), b...)
-	respBody, err := httpPost(endpoint, "text/xml", bytes.NewReader(b))
+	respBody, err := d.httpPost(endpoint, "text/xml", bytes.NewReader(b))
 	if err != nil {
 		return err
 	}
@@ -320,7 +324,7 @@ func rpcCall(call *methodCall, resp response) error {
 
 func (d *DNSProvider) getZoneID(domain string) (int, error) {
 	resp := &responseStruct{}
-	err := rpcCall(&methodCall{
+	err := d.rpcCall(&methodCall{
 		MethodName: "domain.info",
 		Params: []param{
 			paramString{Value: d.apiKey},
@@ -347,7 +351,7 @@ func (d *DNSProvider) getZoneID(domain string) (int, error) {
 
 func (d *DNSProvider) cloneZone(zoneID int, name string) (int, error) {
 	resp := &responseStruct{}
-	err := rpcCall(&methodCall{
+	err := d.rpcCall(&methodCall{
 		MethodName: "domain.zone.clone",
 		Params: []param{
 			paramString{Value: d.apiKey},
@@ -381,7 +385,7 @@ func (d *DNSProvider) cloneZone(zoneID int, name string) (int, error) {
 
 func (d *DNSProvider) newZoneVersion(zoneID int) (int, error) {
 	resp := &responseInt{}
-	err := rpcCall(&methodCall{
+	err := d.rpcCall(&methodCall{
 		MethodName: "domain.zone.version.new",
 		Params: []param{
 			paramString{Value: d.apiKey},
@@ -400,7 +404,7 @@ func (d *DNSProvider) newZoneVersion(zoneID int) (int, error) {
 
 func (d *DNSProvider) addTXTRecord(zoneID int, version int, name string, value string, ttl int) error {
 	resp := &responseStruct{}
-	err := rpcCall(&methodCall{
+	err := d.rpcCall(&methodCall{
 		MethodName: "domain.zone.record.add",
 		Params: []param{
 			paramString{Value: d.apiKey},
@@ -429,7 +433,7 @@ func (d *DNSProvider) addTXTRecord(zoneID int, version int, name string, value s
 
 func (d *DNSProvider) setZoneVersion(zoneID int, version int) error {
 	resp := &responseBool{}
-	err := rpcCall(&methodCall{
+	err := d.rpcCall(&methodCall{
 		MethodName: "domain.zone.version.set",
 		Params: []param{
 			paramString{Value: d.apiKey},
@@ -449,7 +453,7 @@ func (d *DNSProvider) setZoneVersion(zoneID int, version int) error {
 
 func (d *DNSProvider) setZone(domain string, zoneID int) error {
 	resp := &responseStruct{}
-	err := rpcCall(&methodCall{
+	err := d.rpcCall(&methodCall{
 		MethodName: "domain.zone.set",
 		Params: []param{
 			paramString{Value: d.apiKey},
@@ -477,7 +481,7 @@ func (d *DNSProvider) setZone(domain string, zoneID int) error {
 
 func (d *DNSProvider) deleteZone(zoneID int) error {
 	resp := &responseBool{}
-	err := rpcCall(&methodCall{
+	err := d.rpcCall(&methodCall{
 		MethodName: "domain.zone.delete",
 		Params: []param{
 			paramString{Value: d.apiKey},

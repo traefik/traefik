@@ -16,9 +16,17 @@ func NewInternalRouterAggregator(globalConfiguration configuration.GlobalConfigu
 	var serverMiddlewares []negroni.Handler
 
 	if globalConfiguration.EntryPoints[entryPointName].WhiteList != nil {
-		ipWhitelistMiddleware, err := middlewares.NewIPWhiteLister(
-			globalConfiguration.EntryPoints[entryPointName].WhiteList.SourceRange,
-			globalConfiguration.EntryPoints[entryPointName].WhiteList.UseXForwardedFor)
+		ipStrategy := globalConfiguration.EntryPoints[entryPointName].ClientIPStrategy
+		if globalConfiguration.EntryPoints[entryPointName].WhiteList.IPStrategy != nil {
+			ipStrategy = globalConfiguration.EntryPoints[entryPointName].WhiteList.IPStrategy
+		}
+
+		strategy, err := ipStrategy.Get()
+		if err != nil {
+			log.Fatalf("Error creating whitelist middleware: %s", err)
+		}
+
+		ipWhitelistMiddleware, err := middlewares.NewIPWhiteLister(globalConfiguration.EntryPoints[entryPointName].WhiteList.SourceRange, strategy)
 		if err != nil {
 			log.Fatalf("Error creating whitelist middleware: %s", err)
 		}
@@ -60,13 +68,8 @@ func NewInternalRouterAggregator(globalConfiguration configuration.GlobalConfigu
 	}
 
 	realRouterWithMiddleware := WithMiddleware{router: &routerWithPrefixAndMiddleware, routerMiddlewares: serverMiddlewares}
-	if globalConfiguration.Web != nil && globalConfiguration.Web.Path != "" {
-		router.AddRouter(&WithPrefix{PathPrefix: globalConfiguration.Web.Path, Router: &routerWithPrefix})
-		router.AddRouter(&WithPrefix{PathPrefix: globalConfiguration.Web.Path, Router: &realRouterWithMiddleware})
-	} else {
-		router.AddRouter(&routerWithPrefix)
-		router.AddRouter(&realRouterWithMiddleware)
-	}
+	router.AddRouter(&routerWithPrefix)
+	router.AddRouter(&realRouterWithMiddleware)
 
 	return &router
 }
@@ -84,7 +87,9 @@ func (wm *WithMiddleware) AddRoutes(systemRouter *mux.Router) {
 	wm.router.AddRoutes(realRouter)
 
 	if len(wm.routerMiddlewares) > 0 {
-		realRouter.Walk(wrapRoute(wm.routerMiddlewares))
+		if err := realRouter.Walk(wrapRoute(wm.routerMiddlewares)); err != nil {
+			log.Error(err)
+		}
 	}
 }
 

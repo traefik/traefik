@@ -49,7 +49,8 @@ func TestModifyResponseHeaders(t *testing.T) {
 	res := httptest.NewRecorder()
 	res.HeaderMap.Add("X-Custom-Response-Header", "test_response")
 
-	header.ModifyResponseHeaders(res.Result())
+	err := header.ModifyResponseHeaders(res.Result())
+	assert.NoError(t, err)
 
 	assert.Equal(t, http.StatusOK, res.Code, "Status not OK")
 	assert.Equal(t, "test_response", res.Header().Get("X-Custom-Response-Header"), "Did not get expected header")
@@ -57,7 +58,8 @@ func TestModifyResponseHeaders(t *testing.T) {
 	res = httptest.NewRecorder()
 	res.HeaderMap.Add("X-Custom-Response-Header", "")
 
-	header.ModifyResponseHeaders(res.Result())
+	err = header.ModifyResponseHeaders(res.Result())
+	assert.NoError(t, err)
 
 	assert.Equal(t, http.StatusOK, res.Code, "Status not OK")
 	assert.Equal(t, "", res.Header().Get("X-Custom-Response-Header"), "Did not get expected header")
@@ -65,7 +67,8 @@ func TestModifyResponseHeaders(t *testing.T) {
 	res = httptest.NewRecorder()
 	res.HeaderMap.Add("X-Custom-Response-Header", "test_override")
 
-	header.ModifyResponseHeaders(res.Result())
+	err = header.ModifyResponseHeaders(res.Result())
+	assert.NoError(t, err)
 
 	assert.Equal(t, http.StatusOK, res.Code, "Status not OK")
 	assert.Equal(t, "test_override", res.Header().Get("X-Custom-Response-Header"), "Did not get expected header")

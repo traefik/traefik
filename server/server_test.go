@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/middlewares"
@@ -30,42 +30,21 @@ func TestPrepareServerTimeouts(t *testing.T) {
 			desc: "full configuration",
 			globalConfig: configuration.GlobalConfiguration{
 				RespondingTimeouts: &configuration.RespondingTimeouts{
-					IdleTimeout:  flaeg.Duration(10 * time.Second),
-					ReadTimeout:  flaeg.Duration(12 * time.Second),
-					WriteTimeout: flaeg.Duration(14 * time.Second),
+					IdleTimeout:  parse.Duration(10 * time.Second),
+					ReadTimeout:  parse.Duration(12 * time.Second),
+					WriteTimeout: parse.Duration(14 * time.Second),
 				},
 			},
-			expectedIdleTimeout:  time.Duration(10 * time.Second),
-			expectedReadTimeout:  time.Duration(12 * time.Second),
-			expectedWriteTimeout: time.Duration(14 * time.Second),
+			expectedIdleTimeout:  10 * time.Second,
+			expectedReadTimeout:  12 * time.Second,
+			expectedWriteTimeout: 14 * time.Second,
 		},
 		{
 			desc:                 "using defaults",
 			globalConfig:         configuration.GlobalConfiguration{},
-			expectedIdleTimeout:  time.Duration(180 * time.Second),
-			expectedReadTimeout:  time.Duration(0 * time.Second),
-			expectedWriteTimeout: time.Duration(0 * time.Second),
-		},
-		{
-			desc: "deprecated IdleTimeout configured",
-			globalConfig: configuration.GlobalConfiguration{
-				IdleTimeout: flaeg.Duration(45 * time.Second),
-			},
-			expectedIdleTimeout:  time.Duration(45 * time.Second),
-			expectedReadTimeout:  time.Duration(0 * time.Second),
-			expectedWriteTimeout: time.Duration(0 * time.Second),
-		},
-		{
-			desc: "deprecated and new IdleTimeout configured",
-			globalConfig: configuration.GlobalConfiguration{
-				IdleTimeout: flaeg.Duration(45 * time.Second),
-				RespondingTimeouts: &configuration.RespondingTimeouts{
-					IdleTimeout: flaeg.Duration(80 * time.Second),
-				},
-			},
-			expectedIdleTimeout:  time.Duration(45 * time.Second),
-			expectedReadTimeout:  time.Duration(0 * time.Second),
-			expectedWriteTimeout: time.Duration(0 * time.Second),
+			expectedIdleTimeout:  180 * time.Second,
+			expectedReadTimeout:  0 * time.Second,
+			expectedWriteTimeout: 0 * time.Second,
 		},
 	}
 
@@ -127,7 +106,7 @@ func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
 			case config := <-server.configurationValidatedChan:
 				// set the current configuration
 				// this is usually done in the processing part of the published configuration
-				// so we have to emulate the behaviour here
+				// so we have to emulate the behavior here
 				currentConfigurations := server.currentConfigurations.Get().(types.Configurations)
 				currentConfigurations[config.ProviderName] = config.Configuration
 				server.currentConfigurations.Set(currentConfigurations)
@@ -212,7 +191,7 @@ func setupListenProvider(throttleDuration time.Duration) (server *Server, stop c
 		EntryPoints: configuration.EntryPoints{
 			"http": &configuration.EntryPoint{},
 		},
-		ProvidersThrottleDuration: flaeg.Duration(throttleDuration),
+		ProvidersThrottleDuration: parse.Duration(throttleDuration),
 	}
 
 	server = NewServer(globalConfig, nil, nil)

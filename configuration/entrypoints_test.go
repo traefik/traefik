@@ -33,7 +33,9 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 				"ProxyProtocol.TrustedIPs:192.168.0.1 " +
 				"ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24 " +
 				"Auth.Basic.Users:test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0 " +
+				"Auth.Basic.RemoveHeader:true " +
 				"Auth.Digest.Users:test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e " +
+				"Auth.Digest.RemoveHeader:true " +
 				"Auth.HeaderField:X-WebAuth-User " +
 				"Auth.Forward.Address:https://authserver.com/auth " +
 				"Auth.Forward.AuthResponseHeaders:X-Auth,X-Test,X-Secret " +
@@ -43,13 +45,17 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 				"Auth.Forward.TLS.Cert:path/to/foo.cert " +
 				"Auth.Forward.TLS.Key:path/to/foo.key " +
 				"Auth.Forward.TLS.InsecureSkipVerify:true " +
-				"WhiteListSourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16 " +
-				"whiteList.sourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16 " +
-				"whiteList.useXForwardedFor:true ",
+				"WhiteList.SourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16 " +
+				"WhiteList.IPStrategy.depth:3 " +
+				"WhiteList.IPStrategy.ExcludedIPs:10.0.0.3/24,20.0.0.3/24 " +
+				"ClientIPStrategy.depth:3 " +
+				"ClientIPStrategy.ExcludedIPs:10.0.0.3/24,20.0.0.3/24 ",
 			expectedResult: map[string]string{
 				"address":                             ":8000",
 				"auth_basic_users":                    "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+				"auth_basic_removeheader":             "true",
 				"auth_digest_users":                   "test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e",
+				"auth_digest_removeheader":            "true",
 				"auth_forward_address":                "https://authserver.com/auth",
 				"auth_forward_authresponseheaders":    "X-Auth,X-Test,X-Secret",
 				"auth_forward_tls_ca":                 "path/to/local.crt",
@@ -69,13 +75,15 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 				"redirect_permanent":       "true",
 				"redirect_regex":           "http://localhost/(.*)",
 				"redirect_replacement":     "http://mydomain/$1",
-				"tls":                        "goo,gii",
-				"tls_acme":                   "TLS",
-				"tls_ciphersuites":           "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
-				"tls_minversion":             "VersionTLS11",
-				"whitelistsourcerange":       "10.42.0.0/16,152.89.1.33/32,afed:be44::/16",
-				"whitelist_sourcerange":      "10.42.0.0/16,152.89.1.33/32,afed:be44::/16",
-				"whitelist_usexforwardedfor": "true",
+				"tls":                              "goo,gii",
+				"tls_acme":                         "TLS",
+				"tls_ciphersuites":                 "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+				"tls_minversion":                   "VersionTLS11",
+				"whitelist_sourcerange":            "10.42.0.0/16,152.89.1.33/32,afed:be44::/16",
+				"whitelist_ipstrategy_depth":       "3",
+				"whitelist_ipstrategy_excludedips": "10.0.0.3/24,20.0.0.3/24",
+				"clientipstrategy_depth":           "3",
+				"clientipstrategy_excludedips":     "10.0.0.3/24,20.0.0.3/24",
 			},
 		},
 		{
@@ -190,7 +198,9 @@ func TestEntryPoints_Set(t *testing.T) {
 				"ProxyProtocol.TrustedIPs:192.168.0.1 " +
 				"ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24 " +
 				"Auth.Basic.Users:test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0 " +
+				"Auth.Basic.RemoveHeader:true " +
 				"Auth.Digest.Users:test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e " +
+				"Auth.Digest.RemoveHeader:true " +
 				"Auth.HeaderField:X-WebAuth-User " +
 				"Auth.Forward.Address:https://authserver.com/auth " +
 				"Auth.Forward.AuthResponseHeaders:X-Auth,X-Test,X-Secret " +
@@ -200,9 +210,11 @@ func TestEntryPoints_Set(t *testing.T) {
 				"Auth.Forward.TLS.Cert:path/to/foo.cert " +
 				"Auth.Forward.TLS.Key:path/to/foo.key " +
 				"Auth.Forward.TLS.InsecureSkipVerify:true " +
-				"WhiteListSourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16 " +
-				"whiteList.sourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16 " +
-				"whiteList.useXForwardedFor:true ",
+				"WhiteList.SourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16 " +
+				"WhiteList.IPStrategy.depth:3 " +
+				"WhiteList.IPStrategy.ExcludedIPs:10.0.0.3/24,20.0.0.3/24 " +
+				"ClientIPStrategy.depth:3 " +
+				"ClientIPStrategy.ExcludedIPs:10.0.0.3/24,20.0.0.3/24 ",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
 				Address: ":8000",
@@ -232,12 +244,14 @@ func TestEntryPoints_Set(t *testing.T) {
 				},
 				Auth: &types.Auth{
 					Basic: &types.Basic{
+						RemoveHeader: true,
 						Users: types.Users{
 							"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 							"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						},
 					},
 					Digest: &types.Digest{
+						RemoveHeader: true,
 						Users: types.Users{
 							"test:traefik:a2688e031edb4be6a3797f3882655c05",
 							"test2:traefik:518845800f9e2bfb1f1f740ec24f074e",
@@ -257,20 +271,21 @@ func TestEntryPoints_Set(t *testing.T) {
 					},
 					HeaderField: "X-WebAuth-User",
 				},
-				WhitelistSourceRange: []string{
-					"10.42.0.0/16",
-					"152.89.1.33/32",
-					"afed:be44::/16",
-				},
 				WhiteList: &types.WhiteList{
 					SourceRange: []string{
 						"10.42.0.0/16",
 						"152.89.1.33/32",
 						"afed:be44::/16",
 					},
-					UseXForwardedFor: true,
+					IPStrategy: &types.IPStrategy{
+						Depth: 3,
+						ExcludedIPs: []string{
+							"10.0.0.3/24",
+							"20.0.0.3/24",
+						},
+					},
 				},
-				Compress: true,
+				Compress: &Compress{},
 				ProxyProtocol: &ProxyProtocol{
 					Insecure:   false,
 					TrustedIPs: []string{"192.168.0.1"},
@@ -278,6 +293,13 @@ func TestEntryPoints_Set(t *testing.T) {
 				ForwardedHeaders: &ForwardedHeaders{
 					Insecure: false,
 					TrustedIPs: []string{
+						"10.0.0.3/24",
+						"20.0.0.3/24",
+					},
+				},
+				ClientIPStrategy: &types.IPStrategy{
+					Depth: 3,
+					ExcludedIPs: []string{
 						"10.0.0.3/24",
 						"20.0.0.3/24",
 					},
@@ -299,7 +321,7 @@ func TestEntryPoints_Set(t *testing.T) {
 				"redirect.replacement:http://mydomain/$1 " +
 				"redirect.permanent:true " +
 				"compress:true " +
-				"whiteListSourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16 " +
+				"whiteList.sourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16 " +
 				"proxyProtocol.TrustedIPs:192.168.0.1 " +
 				"forwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24 " +
 				"auth.basic.users:test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0 " +
@@ -367,12 +389,14 @@ func TestEntryPoints_Set(t *testing.T) {
 					},
 					HeaderField: "X-WebAuth-User",
 				},
-				WhitelistSourceRange: []string{
-					"10.42.0.0/16",
-					"152.89.1.33/32",
-					"afed:be44::/16",
+				WhiteList: &types.WhiteList{
+					SourceRange: []string{
+						"10.42.0.0/16",
+						"152.89.1.33/32",
+						"afed:be44::/16",
+					},
 				},
-				Compress: true,
+				Compress: &Compress{},
 				ProxyProtocol: &ProxyProtocol{
 					Insecure:   false,
 					TrustedIPs: []string{"192.168.0.1"},
@@ -391,12 +415,12 @@ func TestEntryPoints_Set(t *testing.T) {
 			expression:             "Name:foo",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
-				ForwardedHeaders: &ForwardedHeaders{Insecure: true},
+				ForwardedHeaders: &ForwardedHeaders{Insecure: false},
 			},
 		},
 		{
 			name:                   "ForwardedHeaders insecure true",
-			expression:             "Name:foo ForwardedHeaders.Insecure:true",
+			expression:             "Name:foo ForwardedHeaders.insecure:true",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
 				ForwardedHeaders: &ForwardedHeaders{Insecure: true},
@@ -404,7 +428,7 @@ func TestEntryPoints_Set(t *testing.T) {
 		},
 		{
 			name:                   "ForwardedHeaders insecure false",
-			expression:             "Name:foo ForwardedHeaders.Insecure:false",
+			expression:             "Name:foo ForwardedHeaders.insecure:false",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
 				ForwardedHeaders: &ForwardedHeaders{Insecure: false},
@@ -422,19 +446,19 @@ func TestEntryPoints_Set(t *testing.T) {
 		},
 		{
 			name:                   "ProxyProtocol insecure true",
-			expression:             "Name:foo ProxyProtocol.Insecure:true",
+			expression:             "Name:foo ProxyProtocol.insecure:true",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
-				ForwardedHeaders: &ForwardedHeaders{Insecure: true},
+				ForwardedHeaders: &ForwardedHeaders{},
 				ProxyProtocol:    &ProxyProtocol{Insecure: true},
 			},
 		},
 		{
 			name:                   "ProxyProtocol insecure false",
-			expression:             "Name:foo ProxyProtocol.Insecure:false",
+			expression:             "Name:foo ProxyProtocol.insecure:false",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
-				ForwardedHeaders: &ForwardedHeaders{Insecure: true},
+				ForwardedHeaders: &ForwardedHeaders{},
 				ProxyProtocol:    &ProxyProtocol{},
 			},
 		},
@@ -443,7 +467,7 @@ func TestEntryPoints_Set(t *testing.T) {
 			expression:             "Name:foo ProxyProtocol.TrustedIPs:10.0.0.3/24,20.0.0.3/24",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
-				ForwardedHeaders: &ForwardedHeaders{Insecure: true},
+				ForwardedHeaders: &ForwardedHeaders{},
 				ProxyProtocol: &ProxyProtocol{
 					TrustedIPs: []string{"10.0.0.3/24", "20.0.0.3/24"},
 				},
@@ -454,8 +478,8 @@ func TestEntryPoints_Set(t *testing.T) {
 			expression:             "Name:foo Compress:on",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
-				Compress:         true,
-				ForwardedHeaders: &ForwardedHeaders{Insecure: true},
+				Compress:         &Compress{},
+				ForwardedHeaders: &ForwardedHeaders{},
 			},
 		},
 		{
@@ -463,8 +487,8 @@ func TestEntryPoints_Set(t *testing.T) {
 			expression:             "Name:foo Compress:true",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
-				Compress:         true,
-				ForwardedHeaders: &ForwardedHeaders{Insecure: true},
+				Compress:         &Compress{},
+				ForwardedHeaders: &ForwardedHeaders{},
 			},
 		},
 	}

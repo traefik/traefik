@@ -7,11 +7,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
 	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/platform/config/env"
 )
 
 var dynBaseURL = "https://api.dynect.net/REST"
@@ -37,16 +37,19 @@ type DNSProvider struct {
 	userName     string
 	password     string
 	token        string
+	client       *http.Client
 }
 
 // NewDNSProvider returns a DNSProvider instance configured for Dyn DNS.
 // Credentials must be passed in the environment variables: DYN_CUSTOMER_NAME,
 // DYN_USER_NAME and DYN_PASSWORD.
 func NewDNSProvider() (*DNSProvider, error) {
-	customerName := os.Getenv("DYN_CUSTOMER_NAME")
-	userName := os.Getenv("DYN_USER_NAME")
-	password := os.Getenv("DYN_PASSWORD")
-	return NewDNSProviderCredentials(customerName, userName, password)
+	values, err := env.Get("DYN_CUSTOMER_NAME", "DYN_USER_NAME", "DYN_PASSWORD")
+	if err != nil {
+		return nil, fmt.Errorf("DynDNS: %v", err)
+	}
+
+	return NewDNSProviderCredentials(values["DYN_CUSTOMER_NAME"], values["DYN_USER_NAME"], values["DYN_PASSWORD"])
 }
 
 // NewDNSProviderCredentials uses the supplied credentials to return a
@@ -60,6 +63,7 @@ func NewDNSProviderCredentials(customerName, userName, password string) (*DNSPro
 		customerName: customerName,
 		userName:     userName,
 		password:     password,
+		client:       &http.Client{Timeout: 10 * time.Second},
 	}, nil
 }
 
@@ -80,8 +84,7 @@ func (d *DNSProvider) sendRequest(method, resource string, payload interface{}) 
 		req.Header.Set("Auth-Token", d.token)
 	}
 
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Do(req)
+	resp, err := d.client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +130,7 @@ func (d *DNSProvider) login() error {
 	}
 
 	payload := &creds{Customer: d.customerName, User: d.userName, Pass: d.password}
-	dynRes, err := d.sendRequest("POST", "Session", payload)
+	dynRes, err := d.sendRequest(http.MethodPost, "Session", payload)
 	if err != nil {
 		return err
 	}
@@ -151,15 +154,14 @@ func (d *DNSProvider) logout() error {
 	}
 
 	url := fmt.Sprintf("%s/Session", dynBaseURL)
-	req, err := http.NewRequest("DELETE", url, nil)
+	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Auth-Token", d.token)
 
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Do(req)
+	resp, err := d.client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -196,7 +198,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	}
 
 	resource := fmt.Sprintf("TXTRecord/%s/%s/", authZone, fqdn)
-	_, err = d.sendRequest("POST", resource, data)
+	_, err = d.sendRequest(http.MethodPost, resource, data)
 	if err != nil {
 		return err
 	}
@@ -218,7 +220,7 @@ func (d *DNSProvider) publish(zone, notes string) error {
 	pub := &publish{Publish: true, Notes: notes}
 	resource := fmt.Sprintf("Zone/%s/", zone)
 
-	_, err := d.sendRequest("PUT", resource, pub)
+	_, err := d.sendRequest(http.MethodPut, resource, pub)
 	return err
 }
 
@@ -238,15 +240,16 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 
 	resource := fmt.Sprintf("TXTRecord/%s/%s/", authZone, fqdn)
 	url := fmt.Sprintf("%s/%s", dynBaseURL, resource)
-	req, err := http.NewRequest("DELETE", url, nil)
+
+	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
 		return err
 	}
+
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Auth-Token", d.token)
 
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Do(req)
+	resp, err := d.client.Do(req)
 	if err != nil {
 		return err
 	}

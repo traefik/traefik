@@ -228,7 +228,7 @@ func (s *Server) getRoundTripper(entryPointName string, passTLSCert bool, tls *t
 // For the settings that can't be configured in Traefik it uses the default http.Transport settings.
 // An exception to this is the MaxIdleConns setting as we only provide the option MaxIdleConnsPerHost
 // in Traefik at this point in time. Setting this value to the default of 100 could lead to confusing
-// behaviour and backwards compatibility issues.
+// behavior and backwards compatibility issues.
 func createHTTPTransport(globalConfiguration configuration.GlobalConfiguration) (*http.Transport, error) {
 	dialer := &net.Dialer{
 		Timeout:   configuration.DefaultDialTimeout,
@@ -303,12 +303,6 @@ func createClientTLSConfig(entryPointName string, tlsOption *traefiktls.TLS) (*t
 	config, err := tlsOption.Certificates.CreateTLSConfig(entryPointName)
 	if err != nil {
 		return nil, err
-	}
-
-	if len(tlsOption.ClientCAFiles) > 0 {
-		log.Warnf("Deprecated configuration found during client TLS configuration creation: %s. Please use %s (which allows to make the CA Files optional).", "tls.ClientCAFiles", "tls.ClientCA.files")
-		tlsOption.ClientCA.Files = tlsOption.ClientCAFiles
-		tlsOption.ClientCA.Optional = false
 	}
 
 	if len(tlsOption.ClientCA.Files) > 0 {

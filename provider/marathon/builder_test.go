@@ -83,6 +83,18 @@ func portDefinition(port int) func(*marathon.Application) {
 	}
 }
 
+func bridgeNetwork() func(*marathon.Application) {
+	return func(app *marathon.Application) {
+		app.SetNetwork("bridge", marathon.BridgeNetworkMode)
+	}
+}
+
+func containerNetwork() func(*marathon.Application) {
+	return func(app *marathon.Application) {
+		app.SetNetwork("cni", marathon.ContainerNetworkMode)
+	}
+}
+
 func ipAddrPerTask(port int) func(*marathon.Application) {
 	return func(app *marathon.Application) {
 		p := marathon.Port{

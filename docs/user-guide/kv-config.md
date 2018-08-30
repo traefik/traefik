@@ -56,7 +56,7 @@ whoami4:
 
 ### Upload the configuration in the Key-value store
 
-We should now fill the store with the Træfik global configuration, as we do with a [TOML file configuration](/toml).  
+We should now fill the store with the Træfik global configuration.  
 To do that, we can send the Key-value pairs via [curl commands](https://www.consul.io/intro/getting-started/kv.html) or via the [Web UI](https://www.consul.io/intro/getting-started/ui.html).
 
 Fortunately, Træfik allows automation of this process using the `storeconfig` subcommand.  
@@ -85,9 +85,9 @@ defaultEntryPoints = ["http", "https"]
       certFile = """-----BEGIN CERTIFICATE-----
                       <cert file content>
                       -----END CERTIFICATE-----"""
-      keyFile = """-----BEGIN CERTIFICATE-----
+      keyFile = """-----BEGIN PRIVATE KEY-----
                       <key file content>
-                      -----END CERTIFICATE-----"""
+                      -----END PRIVATE KEY-----"""
     [entryPoints.other-https]
     address = ":4443"
       [entryPoints.other-https.tls]
@@ -266,10 +266,11 @@ Here is the toml configuration we would like to store in the store :
   backend = "backend1"
   passHostHeader = true
   priority = 10
-  basicAuth = [
-    "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-    "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-  ]
+      [frontends.frontend2.auth.basic]
+      users = [
+        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+        "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+      ]
   entrypoints = ["https"] # overrides defaultEntryPoints
     [frontends.frontend2.routes.test_1]
     rule = "Host:{subdomain:[a-z]+}.localhost"
@@ -334,8 +335,8 @@ And there, the same dynamic configuration in a KV Store (using `prefix = "traefi
 | `/traefik/frontends/frontend2/backend`             | `backend1`                                    |
 | `/traefik/frontends/frontend2/passhostheader`      | `true`                                        |
 | `/traefik/frontends/frontend2/priority`            | `10`                                          |
-| `/traefik/frontends/frontend2/basicauth/0`         | `test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/`  |
-| `/traefik/frontends/frontend2/basicauth/1`         | `test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0` |
+| `/traefik/frontends/frontend2/auth/basic/users/0`  | `test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/`  |
+| `/traefik/frontends/frontend2/auth/basic/users/1`  | `test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0` |
 | `/traefik/frontends/frontend2/entrypoints`         | `http,https`                                  |
 | `/traefik/frontends/frontend2/routes/test_2/rule`  | `PathPrefix:/test`                            |
 
@@ -368,10 +369,6 @@ The [Etcd](https://github.com/coreos/etcd/issues/860) and [Consul](https://githu
 As a result, it may be possible for Træfik to read an intermediate configuration state despite judicious use of the `--providersThrottleDuration` flag.  
 To solve this problem, Træfik supports a special key called `/traefik/alias`.
 If set, Træfik use the value as an alternative key prefix.
-
-!!! note
-    The field `useAPIV3` allows using Etcd V3 API which should support updating multiple keys atomically with Etcd.
-    Etcd API V2 is deprecated and, in the future, Træfik will support API V3 by default.
 
 Given the key structure below, Træfik will use the `http://172.17.0.2:80` as its only backend (frontend keys have been omitted for brevity).
 
@@ -444,4 +441,4 @@ Then remove the line `storageFile = "acme.json"` from your TOML config file.
 
 That's it!
 
-![](https://i.giphy.com/ujUdrdpX7Ok5W.gif)
+![GIF Magica](https://i.giphy.com/ujUdrdpX7Ok5W.gif)

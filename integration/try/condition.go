@@ -82,8 +82,33 @@ func HasBody() ResponseCondition {
 		}
 
 		if len(body) == 0 {
-			return errors.New("Response doesn't have body content")
+			return errors.New("response doesn't have body content")
 		}
+		return nil
+	}
+}
+
+// HasCn returns a retry condition function.
+// The condition returns an error if the cn is not correct.
+func HasCn(cn string) ResponseCondition {
+	return func(res *http.Response) error {
+		if res.TLS == nil {
+			return errors.New("response doesn't have TLS")
+		}
+
+		if len(res.TLS.PeerCertificates) == 0 {
+			return errors.New("response TLS doesn't have peer certificates")
+		}
+
+		if res.TLS.PeerCertificates[0] == nil {
+			return errors.New("first peer certificate is nil")
+		}
+
+		commonName := res.TLS.PeerCertificates[0].Subject.CommonName
+		if cn != commonName {
+			return fmt.Errorf("common name don't match: %s != %s", cn, commonName)
+		}
+
 		return nil
 	}
 }

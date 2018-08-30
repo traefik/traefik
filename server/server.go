@@ -14,8 +14,6 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
-	"reflect"
-	"strings"
 	"sync"
 	"time"
 
@@ -23,8 +21,8 @@ import (
 	"github.com/containous/mux"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/configuration"
-	"github.com/containous/traefik/configuration/router"
 	"github.com/containous/traefik/h2c"
+	"github.com/containous/traefik/ip"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"
@@ -34,12 +32,65 @@ import (
 	"github.com/containous/traefik/safe"
 	traefiktls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
-	"github.com/containous/traefik/whitelist"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
+	"github.com/xenolf/lego/acme"
 )
 
 var httpServerLogger = stdlog.New(log.WriterLevel(logrus.DebugLevel), "", 0)
+
+func newHijackConnectionTracker() *hijackConnectionTracker {
+	return &hijackConnectionTracker{
+		conns: make(map[net.Conn]struct{}),
+	}
+}
+
+type hijackConnectionTracker struct {
+	conns map[net.Conn]struct{}
+	lock  sync.RWMutex
+}
+
+// AddHijackedConnection add a connection in the tracked connections list
+func (h *hijackConnectionTracker) AddHijackedConnection(conn net.Conn) {
+	h.lock.Lock()
+	defer h.lock.Unlock()
+	h.conns[conn] = struct{}{}
+}
+
+// RemoveHijackedConnection remove a connection from the tracked connections list
+func (h *hijackConnectionTracker) RemoveHijackedConnection(conn net.Conn) {
+	h.lock.Lock()
+	defer h.lock.Unlock()
+	delete(h.conns, conn)
+}
+
+// Shutdown wait for the connection closing
+func (h *hijackConnectionTracker) Shutdown(ctx context.Context) error {
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		h.lock.RLock()
+		if len(h.conns) == 0 {
+			return nil
+		}
+		h.lock.RUnlock()
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+		}
+	}
+}
+
+// Close close all the connections in the tracked connections list
+func (h *hijackConnectionTracker) Close() {
+	for conn := range h.conns {
+		if err := conn.Close(); err != nil {
+			log.Errorf("Error while closing Hijacked conn: %v", err)
+		}
+		delete(h.conns, conn)
+	}
+}
 
 // Server is the reverse-proxy/load-balancer engine
 type Server struct {
@@ -68,17 +119,64 @@ type EntryPoint struct {
 	InternalRouter   types.InternalRouter
 	Configuration    *configuration.EntryPoint
 	OnDemandListener func(string) (*tls.Certificate, error)
+	TLSALPNGetter    func(string) (*tls.Certificate, error)
 	CertificateStore *traefiktls.CertificateStore
 }
 
 type serverEntryPoints map[string]*serverEntryPoint
 
 type serverEntryPoint struct {
-	httpServer       *h2c.Server
-	listener         net.Listener
-	httpRouter       *middlewares.HandlerSwitcher
-	certs            *safe.Safe
-	onDemandListener func(string) (*tls.Certificate, error)
+	httpServer              *h2c.Server
+	listener                net.Listener
+	httpRouter              *middlewares.HandlerSwitcher
+	certs                   *traefiktls.CertificateStore
+	onDemandListener        func(string) (*tls.Certificate, error)
+	tlsALPNGetter           func(string) (*tls.Certificate, error)
+	hijackConnectionTracker *hijackConnectionTracker
+}
+
+func (s serverEntryPoint) Shutdown(ctx context.Context) {
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := s.httpServer.Shutdown(ctx); err != nil {
+			if ctx.Err() == context.DeadlineExceeded {
+				log.Debugf("Wait server shutdown is over due to: %s", err)
+				err = s.httpServer.Close()
+				if err != nil {
+					log.Error(err)
+				}
+			}
+		}
+	}()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := s.hijackConnectionTracker.Shutdown(ctx); err != nil {
+			if ctx.Err() == context.DeadlineExceeded {
+				log.Debugf("Wait hijack connection is over due to: %s", err)
+				s.hijackConnectionTracker.Close()
+			}
+		}
+	}()
+	wg.Wait()
+}
+
+// tcpKeepAliveListener sets TCP keep-alive timeouts on accepted
+// connections.
+type tcpKeepAliveListener struct {
+	*net.TCPListener
+}
+
+func (ln tcpKeepAliveListener) Accept() (net.Conn, error) {
+	tc, err := ln.AcceptTCP()
+	if err != nil {
+		return nil, err
+	}
+	tc.SetKeepAlive(true)
+	tc.SetKeepAlivePeriod(3 * time.Minute)
+	return tc, nil
 }
 
 // NewServer returns an initialized Server.
@@ -123,10 +221,6 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration, provider p
 	if globalConfiguration.Cluster != nil {
 		// leadership creation if cluster mode
 		server.leadership = cluster.NewLeadership(server.routinesPool.Ctx(), globalConfiguration.Cluster)
-	}
-
-	if globalConfiguration.AccessLogsFile != "" {
-		globalConfiguration.AccessLog = &types.AccessLog{FilePath: globalConfiguration.AccessLogsFile, Format: accesslog.CommonFormat}
 	}
 
 	if globalConfiguration.AccessLog != nil {
@@ -186,13 +280,7 @@ func (s *Server) Stop() {
 			graceTimeOut := time.Duration(s.globalConfiguration.LifeCycle.GraceTimeOut)
 			ctx, cancel := context.WithTimeout(context.Background(), graceTimeOut)
 			log.Debugf("Waiting %s seconds before killing connections on entrypoint %s...", graceTimeOut, serverEntryPointName)
-			if err := serverEntryPoint.httpServer.Shutdown(ctx); err != nil {
-				log.Debugf("Wait is over due to: %s", err)
-				err = serverEntryPoint.httpServer.Close()
-				if err != nil {
-					log.Error(err)
-				}
-			}
+			serverEntryPoint.Shutdown(ctx)
 			cancel()
 			log.Debugf("Entrypoint %s closed", serverEntryPointName)
 		}(sepn, sep)
@@ -271,38 +359,51 @@ func (s *Server) AddListener(listener func(types.Configuration)) {
 	s.configurationListeners = append(s.configurationListeners, listener)
 }
 
-// getCertificate allows to customize tlsConfig.GetCertificate behaviour to get the certificates inserted dynamically
+// getCertificate allows to customize tlsConfig.GetCertificate behavior to get the certificates inserted dynamically
 func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	domainToCheck := types.CanonicalDomain(clientHello.ServerName)
-	if s.certs.Get() != nil {
-		for domains, cert := range s.certs.Get().(map[string]*tls.Certificate) {
-			for _, certDomain := range strings.Split(domains, ",") {
-				if types.MatchDomain(domainToCheck, certDomain) {
-					return cert, nil
-				}
-			}
+
+	if s.tlsALPNGetter != nil {
+		cert, err := s.tlsALPNGetter(domainToCheck)
+		if err != nil {
+			return nil, err
 		}
-		log.Debugf("No certificate provided dynamically can check the domain %q, a per default certificate will be used.", domainToCheck)
+
+		if cert != nil {
+			return cert, nil
+		}
 	}
-	if s.onDemandListener != nil {
+
+	bestCertificate := s.certs.GetBestCertificate(clientHello)
+	if bestCertificate != nil {
+		return bestCertificate, nil
+	}
+
+	if s.onDemandListener != nil && len(domainToCheck) > 0 {
+		// Only check for an onDemandCert if there is a domain name
 		return s.onDemandListener(domainToCheck)
 	}
-	return nil, nil
+
+	if s.certs.SniStrict {
+		return nil, fmt.Errorf("strict SNI enabled - No certificate found for domain: %q, closing connection", domainToCheck)
+	}
+
+	log.Debugf("Serving default cert for request: %q", domainToCheck)
+	return s.certs.DefaultCertificate, nil
 }
 
 func (s *Server) startProvider() {
 	// start providers
-	providerType := reflect.TypeOf(s.provider)
 	jsonConf, err := json.Marshal(s.provider)
 	if err != nil {
-		log.Debugf("Unable to marshal provider conf %v with error: %v", providerType, err)
+		log.Debugf("Unable to marshal provider conf %T with error: %v", s.provider, err)
 	}
-	log.Infof("Starting provider %v %s", providerType, jsonConf)
+	log.Infof("Starting provider %T %s", s.provider, jsonConf)
 	currentProvider := s.provider
 	safe.Go(func() {
-		err := currentProvider.Provide(s.configurationChan, s.routinesPool, s.globalConfiguration.Constraints)
+		err := currentProvider.Provide(s.configurationChan, s.routinesPool)
 		if err != nil {
-			log.Errorf("Error starting provider %v: %s", providerType, err)
+			log.Errorf("Error starting provider %T: %s", s.provider, err)
 		}
 	})
 }
@@ -318,15 +419,11 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 		return nil, err
 	}
 
-	s.serverEntryPoints[entryPointName].certs.Set(make(map[string]*tls.Certificate))
-	// ensure http2 enabled
-	config.NextProtos = []string{"h2", "http/1.1"}
+	s.serverEntryPoints[entryPointName].certs.DynamicCerts.Set(make(map[string]*tls.Certificate))
 
-	if len(tlsOption.ClientCAFiles) > 0 {
-		log.Warnf("Deprecated configuration found during TLS configuration creation: %s. Please use %s (which allows to make the CA Files optional).", "tls.ClientCAFiles", "tls.ClientCA.files")
-		tlsOption.ClientCA.Files = tlsOption.ClientCAFiles
-		tlsOption.ClientCA.Optional = false
-	}
+	// ensure http2 enabled
+	config.NextProtos = []string{"h2", "http/1.1", acme.ACMETLS1Protocol}
+
 	if len(tlsOption.ClientCA.Files) > 0 {
 		pool := x509.NewCertPool()
 		for _, caFile := range tlsOption.ClientCA.Files {
@@ -358,7 +455,7 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 				return false
 			}
 
-			err := s.globalConfiguration.ACME.CreateClusterConfig(s.leadership, config, s.serverEntryPoints[entryPointName].certs, checkOnDemandDomain)
+			err := s.globalConfiguration.ACME.CreateClusterConfig(s.leadership, config, s.serverEntryPoints[entryPointName].certs.DynamicCerts, checkOnDemandDomain)
 			if err != nil {
 				return nil, err
 			}
@@ -367,17 +464,16 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 		config.GetCertificate = s.serverEntryPoints[entryPointName].getCertificate
 	}
 
-	if len(config.Certificates) == 0 {
-		return nil, fmt.Errorf("no certificates found for TLS entrypoint %s", entryPointName)
+	if len(config.Certificates) != 0 {
+		certMap := s.buildNameOrIPToCertificate(config.Certificates)
+
+		if s.entryPoints[entryPointName].CertificateStore != nil {
+			s.entryPoints[entryPointName].CertificateStore.StaticCerts.Set(certMap)
+		}
 	}
 
-	// BuildNameToCertificate parses the CommonName and SubjectAlternateName fields
-	// in each certificate and populates the config.NameToCertificate map.
-	config.BuildNameToCertificate()
-
-	if s.entryPoints[entryPointName].CertificateStore != nil {
-		s.entryPoints[entryPointName].CertificateStore.StaticCerts.Set(config.NameToCertificate)
-	}
+	// Remove certs from the TLS config object
+	config.Certificates = []tls.Certificate{}
 
 	// Set the minimum TLS version if set in the config TOML
 	if minConst, exists := traefiktls.MinVersion[s.entryPoints[entryPointName].Configuration.TLS.MinVersion]; exists {
@@ -418,7 +514,7 @@ func (s *Server) startServer(serverEntryPoint *serverEntryPoint) {
 }
 
 func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServerEntryPoint *serverEntryPoint) *serverEntryPoint {
-	serverMiddlewares, err := s.buildServerEntryPointMiddlewares(newServerEntryPointName, newServerEntryPoint)
+	serverMiddlewares, err := s.buildServerEntryPointMiddlewares(newServerEntryPointName)
 	if err != nil {
 		log.Fatal("Error preparing server: ", err)
 	}
@@ -431,6 +527,16 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 	serverEntryPoint := s.serverEntryPoints[newServerEntryPointName]
 	serverEntryPoint.httpServer = newSrv
 	serverEntryPoint.listener = listener
+
+	serverEntryPoint.hijackConnectionTracker = newHijackConnectionTracker()
+	serverEntryPoint.httpServer.ConnState = func(conn net.Conn, state http.ConnState) {
+		switch state {
+		case http.StateHijacked:
+			serverEntryPoint.hijackConnectionTracker.AddHijackedConnection(conn)
+		case http.StateClosed:
+			serverEntryPoint.hijackConnectionTracker.RemoveHijackedConnection(conn)
+		}
+	}
 
 	return serverEntryPoint
 }
@@ -459,10 +565,12 @@ func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.
 		return nil, nil, fmt.Errorf("error opening listener: %v", err)
 	}
 
+	listener = tcpKeepAliveListener{listener.(*net.TCPListener)}
+
 	if entryPoint.ProxyProtocol != nil {
 		listener, err = buildProxyProtocolListener(entryPoint, listener)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, fmt.Errorf("error creating proxy protocol listener: %v", err)
 		}
 	}
 
@@ -482,23 +590,32 @@ func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.
 }
 
 func buildProxyProtocolListener(entryPoint *configuration.EntryPoint, listener net.Listener) (net.Listener, error) {
-	IPs, err := whitelist.NewIP(entryPoint.ProxyProtocol.TrustedIPs, entryPoint.ProxyProtocol.Insecure, false)
-	if err != nil {
-		return nil, fmt.Errorf("error creating whitelist: %s", err)
+	var sourceCheck func(addr net.Addr) (bool, error)
+	if entryPoint.ProxyProtocol.Insecure {
+		sourceCheck = func(_ net.Addr) (bool, error) {
+			return true, nil
+		}
+	} else {
+		checker, err := ip.NewChecker(entryPoint.ProxyProtocol.TrustedIPs)
+		if err != nil {
+			return nil, err
+		}
+
+		sourceCheck = func(addr net.Addr) (bool, error) {
+			ipAddr, ok := addr.(*net.TCPAddr)
+			if !ok {
+				return false, fmt.Errorf("type error %v", addr)
+			}
+
+			return checker.ContainsIP(ipAddr.IP), nil
+		}
 	}
 
 	log.Infof("Enabling ProxyProtocol for trusted IPs %v", entryPoint.ProxyProtocol.TrustedIPs)
 
 	return &proxyproto.Listener{
-		Listener: listener,
-		SourceCheck: func(addr net.Addr) (bool, error) {
-			ip, ok := addr.(*net.TCPAddr)
-			if !ok {
-				return false, fmt.Errorf("type error %v", addr)
-			}
-
-			return IPs.ContainsIP(ip.IP), nil
-		},
+		Listener:    listener,
+		SourceCheck: sourceCheck,
 	}, nil
 }
 
@@ -511,12 +628,8 @@ func (s *Server) buildInternalRouter(entryPointName string) *mux.Router {
 		entryPoint.InternalRouter.AddRoutes(internalMuxRouter)
 
 		if s.globalConfiguration.API != nil && s.globalConfiguration.API.EntryPoint == entryPointName && s.leadership != nil {
-			if s.globalConfiguration.Web != nil && s.globalConfiguration.Web.Path != "" {
-				rt := router.WithPrefix{Router: s.leadership, PathPrefix: s.globalConfiguration.Web.Path}
-				rt.AddRoutes(internalMuxRouter)
-			} else {
-				s.leadership.AddRoutes(internalMuxRouter)
-			}
+			s.leadership.AddRoutes(internalMuxRouter)
+
 		}
 	}
 
@@ -531,11 +644,7 @@ func buildServerTimeouts(globalConfig configuration.GlobalConfiguration) (readTi
 		writeTimeout = time.Duration(globalConfig.RespondingTimeouts.WriteTimeout)
 	}
 
-	// Prefer legacy idle timeout parameter for backwards compatibility reasons
-	if globalConfig.IdleTimeout > 0 {
-		idleTimeout = time.Duration(globalConfig.IdleTimeout)
-		log.Warn("top-level idle timeout configuration has been deprecated -- please use responding timeouts")
-	} else if globalConfig.RespondingTimeouts != nil {
+	if globalConfig.RespondingTimeouts != nil {
 		idleTimeout = time.Duration(globalConfig.RespondingTimeouts.IdleTimeout)
 	} else {
 		idleTimeout = configuration.DefaultIdleTimeout
@@ -551,8 +660,11 @@ func registerMetricClients(metricsConfig *types.Metrics) metrics.Registry {
 
 	var registries []metrics.Registry
 	if metricsConfig.Prometheus != nil {
-		registries = append(registries, metrics.RegisterPrometheus(metricsConfig.Prometheus))
-		log.Debug("Configured Prometheus metrics")
+		prometheusRegister := metrics.RegisterPrometheus(metricsConfig.Prometheus)
+		if prometheusRegister != nil {
+			registries = append(registries, prometheusRegister)
+			log.Debug("Configured Prometheus metrics")
+		}
 	}
 	if metricsConfig.Datadog != nil {
 		registries = append(registries, metrics.RegisterDatadog(metricsConfig.Datadog))
@@ -574,4 +686,25 @@ func stopMetricsClients() {
 	metrics.StopDatadog()
 	metrics.StopStatsd()
 	metrics.StopInfluxDB()
+}
+
+func (s *Server) buildNameOrIPToCertificate(certs []tls.Certificate) map[string]*tls.Certificate {
+	certMap := make(map[string]*tls.Certificate)
+	for i := range certs {
+		cert := &certs[i]
+		x509Cert, err := x509.ParseCertificate(cert.Certificate[0])
+		if err != nil {
+			continue
+		}
+		if len(x509Cert.Subject.CommonName) > 0 {
+			certMap[x509Cert.Subject.CommonName] = cert
+		}
+		for _, san := range x509Cert.DNSNames {
+			certMap[san] = cert
+		}
+		for _, ipSan := range x509Cert.IPAddresses {
+			certMap[ipSan.String()] = cert
+		}
+	}
+	return certMap
 }

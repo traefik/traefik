@@ -501,7 +501,7 @@ func (s *ConsulCatalogSuite) TestRefreshConfigPortChange(c *check.C) {
 }
 
 func (s *ConsulCatalogSuite) TestRetryWithConsulServer(c *check.C) {
-	//Scale consul to 0 to be able to start traefik before and test retry
+	// Scale consul to 0 to be able to start traefik before and test retry
 	s.composeProject.Scale(c, "consul", 0)
 
 	cmd, display := s.traefikCmd(
@@ -530,7 +530,8 @@ func (s *ConsulCatalogSuite) TestRetryWithConsulServer(c *check.C) {
 
 	// Scale consul to 1
 	s.composeProject.Scale(c, "consul", 1)
-	s.waitToElectConsulLeader()
+	err = s.waitToElectConsulLeader()
+	c.Assert(err, checker.IsNil)
 
 	whoami := s.composeProject.Container(c, "whoami1")
 	// Register service
@@ -547,7 +548,7 @@ func (s *ConsulCatalogSuite) TestRetryWithConsulServer(c *check.C) {
 }
 
 func (s *ConsulCatalogSuite) TestServiceWithMultipleHealthCheck(c *check.C) {
-	//Scale consul to 0 to be able to start traefik before and test retry
+	// Scale consul to 0 to be able to start traefik before and test retry
 	s.composeProject.Scale(c, "consul", 0)
 
 	cmd, display := s.traefikCmd(
@@ -576,7 +577,8 @@ func (s *ConsulCatalogSuite) TestServiceWithMultipleHealthCheck(c *check.C) {
 
 	// Scale consul to 1
 	s.composeProject.Scale(c, "consul", 1)
-	s.waitToElectConsulLeader()
+	err = s.waitToElectConsulLeader()
+	c.Assert(err, checker.IsNil)
 
 	whoami := s.composeProject.Container(c, "whoami1")
 	// Register service
@@ -670,6 +672,52 @@ func (s *ConsulCatalogSuite) TestMaintenanceMode(c *check.C) {
 	// Disable node maintenance mode
 	err = s.consulDisableNodeMaintenance()
 	c.Assert(err, checker.IsNil)
+
+	err = try.Request(req, 10*time.Second, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *ConsulCatalogSuite) TestMultipleFrontendRule(c *check.C) {
+	cmd, display := s.traefikCmd(
+		withConfigFile("fixtures/consul_catalog/simple.toml"),
+		"--consulCatalog",
+		"--consulCatalog.endpoint="+s.consulIP+":8500",
+		"--consulCatalog.domain=consul.localhost")
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// Wait for Traefik to turn ready.
+	err = try.GetRequest("http://127.0.0.1:8000/", 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	c.Assert(err, checker.IsNil)
+
+	whoami := s.composeProject.Container(c, "whoami1")
+
+	err = s.registerService("test", whoami.NetworkSettings.IPAddress, 80,
+		[]string{
+			"traefik.frontends.service1.rule=Host:whoami1.consul.localhost",
+			"traefik.frontends.service2.rule=Host:whoami2.consul.localhost",
+		})
+	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
+
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "test.consul.localhost"
+
+	err = try.Request(req, 10*time.Second, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "whoami1.consul.localhost"
+
+	err = try.Request(req, 10*time.Second, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "whoami2.consul.localhost"
 
 	err = try.Request(req, 10*time.Second, try.StatusCodeIs(http.StatusOK), try.HasBody())
 	c.Assert(err, checker.IsNil)

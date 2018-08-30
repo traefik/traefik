@@ -51,13 +51,18 @@ func (r rancherData) String() string {
 	return fmt.Sprintf("{name:%s, labels:%v, containers: %v, health: %s, state: %s}", r.Name, r.Labels, r.Containers, r.Health, r.State)
 }
 
+// Init the provider
+func (p *Provider) Init(constraints types.Constraints) error {
+	return p.BaseProvider.Init(constraints)
+}
+
 // Provide allows either the Rancher API or metadata service provider to
 // seed configuration into Traefik using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
+func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	if p.Metadata == nil {
-		return p.apiProvide(configurationChan, pool, constraints)
+		return p.apiProvide(configurationChan, pool)
 	}
-	return p.metadataProvide(configurationChan, pool, constraints)
+	return p.metadataProvide(configurationChan, pool)
 }
 
 func containerFilter(name, healthState, state string) bool {

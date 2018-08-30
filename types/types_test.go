@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/containous/traefik/ip"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestHeaders_ShouldReturnFalseWhenNotHasCustomHeadersDefined(t *testing.T) {
@@ -133,6 +135,52 @@ func TestHTTPCodeRanges_Contains(t *testing.T) {
 			assert.NoError(t, err)
 
 			assert.Equal(t, test.contains, httpCodeRanges.Contains(test.statusCode))
+		})
+	}
+}
+
+func TestIPStrategy_Get(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		ipStrategy *IPStrategy
+		expected   ip.Strategy
+	}{
+		{
+			desc:     "IPStrategy is nil",
+			expected: &ip.RemoteAddrStrategy{},
+		},
+		{
+			desc:       "IPStrategy is not nil but with no values",
+			ipStrategy: &IPStrategy{},
+			expected:   &ip.RemoteAddrStrategy{},
+		},
+		{
+			desc:       "IPStrategy with Depth",
+			ipStrategy: &IPStrategy{Depth: 3},
+			expected:   &ip.DepthStrategy{},
+		},
+		{
+			desc:       "IPStrategy with ExcludedIPs",
+			ipStrategy: &IPStrategy{ExcludedIPs: []string{"10.0.0.1"}},
+			expected:   &ip.CheckerStrategy{},
+		},
+		{
+			desc:       "IPStrategy with ExcludedIPs and Depth",
+			ipStrategy: &IPStrategy{Depth: 4, ExcludedIPs: []string{"10.0.0.1"}},
+			expected:   &ip.DepthStrategy{},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			strategy, err := test.ipStrategy.Get()
+			require.NoError(t, err)
+
+			assert.IsType(t, test.expected, strategy)
+
 		})
 	}
 }

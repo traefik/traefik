@@ -61,9 +61,6 @@ func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
 		c.Assert(err, checker.IsNil)
 	}
 
-	// Waiting for Traefik healthcheck
-	try.Sleep(2 * time.Second)
-
 	// Verify no backend service is available due to failing health checks
 	err = try.Request(frontendHealthReq, 3*time.Second, try.StatusCodeIs(http.StatusServiceUnavailable))
 	c.Assert(err, checker.IsNil)
@@ -139,15 +136,25 @@ func (s *HealthCheckSuite) doTestMultipleEntrypoints(c *check.C, fixture string)
 	err = try.Request(frontendHealthReq, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 
-	// Set one whoami health to 500
+	// Set the both whoami health to 500
 	client := &http.Client{}
-	statusInternalServerErrorReq, err := http.NewRequest(http.MethodPost, "http://"+s.whoami1IP+"/health", bytes.NewBuffer([]byte("500")))
-	c.Assert(err, checker.IsNil)
-	_, err = client.Do(statusInternalServerErrorReq)
+	whoamiHosts := []string{s.whoami1IP, s.whoami2IP}
+	for _, whoami := range whoamiHosts {
+		statusInternalServerErrorReq, err := http.NewRequest(http.MethodPost, "http://"+whoami+"/health", bytes.NewBuffer([]byte("500")))
+		c.Assert(err, checker.IsNil)
+		_, err = client.Do(statusInternalServerErrorReq)
+		c.Assert(err, checker.IsNil)
+	}
+
+	// Verify no backend service is available due to failing health checks
+	err = try.Request(frontendHealthReq, 3*time.Second, try.StatusCodeIs(http.StatusServiceUnavailable))
 	c.Assert(err, checker.IsNil)
 
-	// Waiting for Traefik healthcheck
-	try.Sleep(2 * time.Second)
+	// reactivate the whoami2
+	statusInternalServerOkReq, err := http.NewRequest(http.MethodPost, "http://"+s.whoami2IP+"/health", bytes.NewBuffer([]byte("200")))
+	c.Assert(err, checker.IsNil)
+	_, err = client.Do(statusInternalServerOkReq)
+	c.Assert(err, checker.IsNil)
 
 	frontend1Req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	c.Assert(err, checker.IsNil)
@@ -159,11 +166,11 @@ func (s *HealthCheckSuite) doTestMultipleEntrypoints(c *check.C, fixture string)
 
 	// Check if whoami1 never responds
 	err = try.Request(frontend2Req, 2*time.Second, try.BodyContains(s.whoami1IP))
-	c.Assert(err, checker.Not(checker.IsNil))
+	c.Assert(err, checker.NotNil)
 
 	// Check if whoami1 never responds
 	err = try.Request(frontend1Req, 2*time.Second, try.BodyContains(s.whoami1IP))
-	c.Assert(err, checker.Not(checker.IsNil))
+	c.Assert(err, checker.NotNil)
 }
 
 func (s *HealthCheckSuite) TestPortOverload(c *check.C) {
@@ -194,7 +201,7 @@ func (s *HealthCheckSuite) TestPortOverload(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	frontendHealthReq.Host = "test.localhost"
 
-	//We test bad gateway because we use an invalid port for the backend
+	// We test bad gateway because we use an invalid port for the backend
 	err = try.Request(frontendHealthReq, 500*time.Millisecond, try.StatusCodeIs(http.StatusBadGateway))
 	c.Assert(err, checker.IsNil)
 
@@ -203,9 +210,6 @@ func (s *HealthCheckSuite) TestPortOverload(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	_, err = client.Do(statusInternalServerErrorReq)
 	c.Assert(err, checker.IsNil)
-
-	// Waiting for Traefik healthcheck
-	try.Sleep(2 * time.Second)
 
 	// Verify no backend service is available due to failing health checks
 	err = try.Request(frontendHealthReq, 3*time.Second, try.StatusCodeIs(http.StatusServiceUnavailable))

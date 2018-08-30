@@ -449,15 +449,6 @@ If not, a new backend will be assigned.
     #  cookieName = "my_cookie"
 ```
 
-The deprecated way:
-
-```toml
-[backends]
-  [backends.backend1]
-    [backends.backend1.loadbalancer]
-      sticky = true
-```
-
 #### Health Check
 
 A health check can be configured in order to remove a backend from LB rotation as long as it keeps returning HTTP status codes other than `2xx` or `3xx` to HTTP GET requests periodically carried out by Traefik.  

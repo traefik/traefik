@@ -6,35 +6,37 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
 )
 
 // GetWhiteList Create white list from labels
 func GetWhiteList(labels map[string]string) *types.WhiteList {
-	if Has(labels, TraefikFrontendWhitelistSourceRange) {
-		log.Warnf("Deprecated configuration found: %s. Please use %s.", TraefikFrontendWhitelistSourceRange, TraefikFrontendWhiteListSourceRange)
-	}
-
 	ranges := GetSliceStringValue(labels, TraefikFrontendWhiteListSourceRange)
-	if len(ranges) > 0 {
-		return &types.WhiteList{
-			SourceRange:      ranges,
-			UseXForwardedFor: GetBoolValue(labels, TraefikFrontendWhiteListUseXForwardedFor, false),
-		}
+	if len(ranges) == 0 {
+		return nil
 	}
 
-	// TODO: Deprecated
-	values := GetSliceStringValue(labels, TraefikFrontendWhitelistSourceRange)
-	if len(values) > 0 {
-		return &types.WhiteList{
-			SourceRange:      values,
-			UseXForwardedFor: false,
-		}
+	return &types.WhiteList{
+		SourceRange: ranges,
+		IPStrategy:  getIPStrategy(labels),
+	}
+}
+
+func getIPStrategy(labels map[string]string) *types.IPStrategy {
+	ipStrategy := GetBoolValue(labels, TraefikFrontendWhiteListIPStrategy, false)
+	depth := GetIntValue(labels, TraefikFrontendWhiteListIPStrategyDepth, 0)
+	excludedIPs := GetSliceStringValue(labels, TraefikFrontendWhiteListIPStrategyExcludedIPS)
+
+	if depth == 0 && len(excludedIPs) == 0 && !ipStrategy {
+		return nil
 	}
 
-	return nil
+	return &types.IPStrategy{
+		Depth:       depth,
+		ExcludedIPs: excludedIPs,
+	}
 }
 
 // GetRedirect Create redirect from labels
@@ -58,6 +60,75 @@ func GetRedirect(labels map[string]string) *types.Redirect {
 	}
 
 	return nil
+}
+
+// GetAuth Create auth from labels
+func GetAuth(labels map[string]string) *types.Auth {
+	if !HasPrefix(labels, TraefikFrontendAuth) {
+		return nil
+	}
+
+	auth := &types.Auth{
+		HeaderField: GetStringValue(labels, TraefikFrontendAuthHeaderField, ""),
+	}
+
+	if HasPrefix(labels, TraefikFrontendAuthBasic) {
+		auth.Basic = getAuthBasic(labels)
+	} else if HasPrefix(labels, TraefikFrontendAuthDigest) {
+		auth.Digest = getAuthDigest(labels)
+	} else if HasPrefix(labels, TraefikFrontendAuthForward) {
+		auth.Forward = getAuthForward(labels)
+	}
+
+	return auth
+}
+
+// getAuthBasic Create Basic Auth from labels
+func getAuthBasic(labels map[string]string) *types.Basic {
+	basicAuth := &types.Basic{
+		UsersFile:    GetStringValue(labels, TraefikFrontendAuthBasicUsersFile, ""),
+		RemoveHeader: GetBoolValue(labels, TraefikFrontendAuthBasicRemoveHeader, false),
+	}
+
+	// backward compatibility
+	if Has(labels, TraefikFrontendAuthBasic) {
+		basicAuth.Users = GetSliceStringValue(labels, TraefikFrontendAuthBasic)
+		log.Warnf("Deprecated configuration found: %s. Please use %s.", TraefikFrontendAuthBasic, TraefikFrontendAuthBasicUsers)
+	} else {
+		basicAuth.Users = GetSliceStringValue(labels, TraefikFrontendAuthBasicUsers)
+	}
+
+	return basicAuth
+}
+
+// getAuthDigest Create Digest Auth from labels
+func getAuthDigest(labels map[string]string) *types.Digest {
+	return &types.Digest{
+		Users:        GetSliceStringValue(labels, TraefikFrontendAuthDigestUsers),
+		UsersFile:    GetStringValue(labels, TraefikFrontendAuthDigestUsersFile, ""),
+		RemoveHeader: GetBoolValue(labels, TraefikFrontendAuthDigestRemoveHeader, false),
+	}
+}
+
+// getAuthForward Create Forward Auth from labels
+func getAuthForward(labels map[string]string) *types.Forward {
+	forwardAuth := &types.Forward{
+		Address:            GetStringValue(labels, TraefikFrontendAuthForwardAddress, ""),
+		TrustForwardHeader: GetBoolValue(labels, TraefikFrontendAuthForwardTrustForwardHeader, false),
+	}
+
+	// TLS configuration
+	if HasPrefix(labels, TraefikFrontendAuthForwardTLS) {
+		forwardAuth.TLS = &types.ClientTLS{
+			CA:                 GetStringValue(labels, TraefikFrontendAuthForwardTLSCa, ""),
+			CAOptional:         GetBoolValue(labels, TraefikFrontendAuthForwardTLSCaOptional, false),
+			Cert:               GetStringValue(labels, TraefikFrontendAuthForwardTLSCert, ""),
+			InsecureSkipVerify: GetBoolValue(labels, TraefikFrontendAuthForwardTLSInsecureSkipVerify, false),
+			Key:                GetStringValue(labels, TraefikFrontendAuthForwardTLSKey, ""),
+		}
+	}
+
+	return forwardAuth
 }
 
 // GetErrorPages Create error pages from labels
@@ -149,7 +220,7 @@ func ParseRateSets(labels map[string]string, labelPrefix string, labelRegex *reg
 
 			switch submatch[2] {
 			case "period":
-				var d flaeg.Duration
+				var d parse.Duration
 				err := d.Set(rawValue)
 				if err != nil {
 					log.Errorf("Unable to parse %q: %q. %v", lblName, rawValue, err)
@@ -285,7 +356,6 @@ func GetLoadBalancer(labels map[string]string) *types.LoadBalancer {
 
 	lb := &types.LoadBalancer{
 		Method: method,
-		Sticky: getSticky(labels),
 	}
 
 	if GetBoolValue(labels, TraefikBackendLoadBalancerStickiness, false) {
@@ -294,15 +364,4 @@ func GetLoadBalancer(labels map[string]string) *types.LoadBalancer {
 	}
 
 	return lb
-}
-
-// TODO: Deprecated
-// replaced by Stickiness
-// Deprecated
-func getSticky(labels map[string]string) bool {
-	if Has(labels, TraefikBackendLoadBalancerSticky) {
-		log.Warnf("Deprecated configuration found: %s. Please use %s.", TraefikBackendLoadBalancerSticky, TraefikBackendLoadBalancerStickiness)
-	}
-
-	return GetBoolValue(labels, TraefikBackendLoadBalancerSticky, false)
 }

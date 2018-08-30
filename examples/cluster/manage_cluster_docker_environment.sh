@@ -88,8 +88,7 @@ start_storeconfig_etcd3() {
         [etcd]
         endpoint = "10.0.1.12:2379"
         watch = true
-        prefix = "/traefik"
-        useAPIV3 = true' >> $basedir/traefik.toml
+        prefix = "/traefik"' >> $basedir/traefik.toml
     up_environment storeconfig
     rm -f $basedir/traefik.toml
     waiting_counter=5
@@ -178,7 +177,7 @@ main() {
                 case $2 in
                     "--etcd3")
                         echo "USE ETCD V3 AS KV STORE"
-                        export TRAEFIK_CMD="--etcd --etcd.endpoint=10.0.1.12:2379 --etcd.useAPIV3=true"
+                        export TRAEFIK_CMD="--etcd --etcd.endpoint=10.0.1.12:2379"
                         start_boulder && \
                         start_etcd3 && \
                         start_storeconfig_etcd3 && \

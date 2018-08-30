@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/middlewares/accesslog"
 	mauth "github.com/containous/traefik/middlewares/auth"
 	"github.com/containous/traefik/middlewares/errorpages"
+	"github.com/containous/traefik/middlewares/forwardedheaders"
 	"github.com/containous/traefik/middlewares/redirect"
 	"github.com/containous/traefik/types"
 	thoas_stats "github.com/thoas/stats"
@@ -22,9 +22,7 @@ type handlerPostConfig func(backendsHandlers map[string]http.Handler) error
 type modifyResponse func(*http.Response) error
 
 func (s *Server) buildMiddlewares(frontendName string, frontend *types.Frontend,
-	backends map[string]*types.Backend,
-	entryPointName string, entryPoint *configuration.EntryPoint,
-	providerName string) ([]negroni.Handler, modifyResponse, handlerPostConfig, error) {
+	backends map[string]*types.Backend, entryPointName string, providerName string) ([]negroni.Handler, modifyResponse, handlerPostConfig, error) {
 
 	var middle []negroni.Handler
 	var postConfig handlerPostConfig
@@ -50,7 +48,7 @@ func (s *Server) buildMiddlewares(frontendName string, frontend *types.Frontend,
 	}
 
 	// Whitelist
-	ipWhitelistMiddleware, err := buildIPWhiteLister(frontend.WhiteList, frontend.WhitelistSourceRange)
+	ipWhitelistMiddleware, err := buildIPWhiteLister(frontend.WhiteList, s.entryPoints[entryPointName].Configuration.ClientIPStrategy)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("error creating IP Whitelister: %s", err)
 	}
@@ -95,23 +93,21 @@ func (s *Server) buildMiddlewares(frontendName string, frontend *types.Frontend,
 		middle = append(middle, handler)
 	}
 
-	// Basic auth
-	if len(frontend.BasicAuth) > 0 {
-		log.Debugf("Adding basic authentication for frontend %s", frontendName)
-
-		authMiddleware, err := s.buildBasicAuthMiddleware(frontend.BasicAuth)
+	// Authentication
+	if frontend.Auth != nil {
+		authMiddleware, err := mauth.NewAuthenticator(frontend.Auth, s.tracingMiddleware)
 		if err != nil {
 			return nil, nil, nil, err
 		}
 
-		handler := s.wrapNegroniHandlerWithAccessLog(authMiddleware, fmt.Sprintf("Basic Auth for %s", frontendName))
+		handler := s.wrapNegroniHandlerWithAccessLog(authMiddleware, fmt.Sprintf("Auth for %s", frontendName))
 		middle = append(middle, handler)
 	}
 
 	return middle, buildModifyResponse(secureMiddleware, headerMiddleware), postConfig, nil
 }
 
-func (s *Server) buildServerEntryPointMiddlewares(serverEntryPointName string, serverEntryPoint *serverEntryPoint) ([]negroni.Handler, error) {
+func (s *Server) buildServerEntryPointMiddlewares(serverEntryPointName string) ([]negroni.Handler, error) {
 	serverMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler()}
 
 	if s.tracingMiddleware.IsEnabled() {
@@ -147,19 +143,31 @@ func (s *Server) buildServerEntryPointMiddlewares(serverEntryPointName string, s
 		serverMiddlewares = append(serverMiddlewares, s.wrapNegroniHandlerWithAccessLog(authMiddleware, fmt.Sprintf("Auth for entrypoint %s", serverEntryPointName)))
 	}
 
-	if s.entryPoints[serverEntryPointName].Configuration.Compress {
+	if s.entryPoints[serverEntryPointName].Configuration.Compress != nil {
 		serverMiddlewares = append(serverMiddlewares, &middlewares.Compress{})
 	}
 
-	ipWhitelistMiddleware, err := buildIPWhiteLister(
-		s.entryPoints[serverEntryPointName].Configuration.WhiteList,
-		s.entryPoints[serverEntryPointName].Configuration.WhitelistSourceRange)
+	if s.entryPoints[serverEntryPointName].Configuration.ForwardedHeaders != nil {
+		xForwardedMiddleware, err := forwardedheaders.NewXforwarded(
+			s.entryPoints[serverEntryPointName].Configuration.ForwardedHeaders.Insecure,
+			s.entryPoints[serverEntryPointName].Configuration.ForwardedHeaders.TrustedIPs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create xforwarded headers middleware: %v", err)
+		}
+		serverMiddlewares = append(serverMiddlewares, xForwardedMiddleware)
+	}
+
+	ipWhitelistMiddleware, err := buildIPWhiteLister(s.entryPoints[serverEntryPointName].Configuration.WhiteList, s.entryPoints[serverEntryPointName].Configuration.ClientIPStrategy)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ip whitelist middleware: %v", err)
 	}
 	if ipWhitelistMiddleware != nil {
 		serverMiddlewares = append(serverMiddlewares, s.wrapNegroniHandlerWithAccessLog(ipWhitelistMiddleware, fmt.Sprintf("ipwhitelister for entrypoint %s", serverEntryPointName)))
 	}
+
+	// RequestHost Cannonizer
+	serverMiddlewares = append(serverMiddlewares, &middlewares.RequestHost{})
 
 	return serverMiddlewares, nil
 }
@@ -270,14 +278,21 @@ func (s *Server) buildRedirectHandler(srcEntryPointName string, opt *types.Redir
 	return redirection, nil
 }
 
-func buildIPWhiteLister(whiteList *types.WhiteList, wlRange []string) (*middlewares.IPWhiteLister, error) {
-	if whiteList != nil &&
-		len(whiteList.SourceRange) > 0 {
-		return middlewares.NewIPWhiteLister(whiteList.SourceRange, whiteList.UseXForwardedFor)
-	} else if len(wlRange) > 0 {
-		return middlewares.NewIPWhiteLister(wlRange, false)
+func buildIPWhiteLister(whiteList *types.WhiteList, ipStrategy *types.IPStrategy) (*middlewares.IPWhiteLister, error) {
+	if whiteList == nil {
+		return nil, nil
 	}
-	return nil, nil
+
+	if whiteList.IPStrategy != nil {
+		ipStrategy = whiteList.IPStrategy
+	}
+
+	strategy, err := ipStrategy.Get()
+	if err != nil {
+		return nil, err
+	}
+
+	return middlewares.NewIPWhiteLister(whiteList.SourceRange, strategy)
 }
 
 func (s *Server) wrapNegroniHandlerWithAccessLog(handler negroni.Handler, frontendName string) negroni.Handler {
