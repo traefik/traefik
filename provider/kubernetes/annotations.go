@@ -42,6 +42,7 @@ const (
 	annotationKubernetesAppRoot                        = "ingress.kubernetes.io/app-root"
 	annotationKubernetesServiceWeights                 = "ingress.kubernetes.io/service-weights"
 	annotationKubernetesRequestModifier                = "ingress.kubernetes.io/request-modifier"
+	annotationKubernetesCnameFlattening                = "ingress.kubernetes.io/cname-flattening"
 
 	annotationKubernetesSSLForceHost            = "ingress.kubernetes.io/ssl-force-host"
 	annotationKubernetesSSLRedirect             = "ingress.kubernetes.io/ssl-redirect"

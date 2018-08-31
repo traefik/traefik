@@ -374,6 +374,8 @@ If no units are provided, the value is parsed assuming seconds.
 [hostResolver]
 
 # cnameFlattening is a trigger to flatten request host, assuming it is a CNAME record
+# If enabled, it will try check for all routes. 
+# For specific route configuration, use specific provider label.
 #
 # Optional
 # Default : false

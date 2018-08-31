@@ -1059,6 +1059,7 @@ func TestIngressAnnotations(t *testing.T) {
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesPreserveHost, "true"),
+			iAnnotation(annotationKubernetesCnameFlattening, "true"),
 			iAnnotation(annotationKubernetesIngressClass, traefikDefaultRealm),
 			iRules(
 				iRule(
@@ -1471,6 +1472,7 @@ rateset:
 			),
 			frontend("other/stuff",
 				passHostHeader(),
+				cnameFlattening(),
 				routes(
 					route("/stuff", "PathPrefix:/stuff"),
 					route("other", "Host:other")),

@@ -46,6 +46,7 @@
     priority = {{ $frontend.Priority }}
     passHostHeader = {{ $frontend.PassHostHeader }}
     passTLSCert = {{ $frontend.PassTLSCert }}
+    cnameFlattening = {{ $frontend.CnameFlattening }}
 
     entryPoints = [{{range $frontend.EntryPoints }}
       "{{.}}",

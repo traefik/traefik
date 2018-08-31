@@ -66,6 +66,7 @@ type Provider struct {
 	LabelSelector          string           `description:"Kubernetes Ingress label selector to use" export:"true"`
 	IngressClass           string           `description:"Value of kubernetes.io/ingress.class annotation to watch for" export:"true"`
 	IngressEndpoint        *IngressEndpoint `description:"Kubernetes Ingress Endpoint"`
+	EnableCnameFlattening  bool             `description:"Kubernetes enable CnameFlattening"`
 	lastConfiguration      safe.Safe
 }
 
@@ -252,20 +253,22 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					passHostHeader := getBoolValue(i.Annotations, annotationKubernetesPreserveHost, !p.DisablePassHostHeaders)
 					passTLSCert := getBoolValue(i.Annotations, annotationKubernetesPassTLSCert, p.EnablePassTLSCert)
 					entryPoints := getSliceStringValue(i.Annotations, annotationKubernetesFrontendEntryPoints)
+					cnameFlattening := getBoolValue(i.Annotations, annotationKubernetesCnameFlattening, p.EnableCnameFlattening)
 
 					templateObjects.Frontends[baseName] = &types.Frontend{
-						Backend:        baseName,
-						PassHostHeader: passHostHeader,
-						PassTLSCert:    passTLSCert,
-						Routes:         make(map[string]types.Route),
-						Priority:       priority,
-						WhiteList:      getWhiteList(i),
-						Redirect:       getFrontendRedirect(i, baseName, pa.Path),
-						EntryPoints:    entryPoints,
-						Headers:        getHeader(i),
-						Errors:         getErrorPages(i),
-						RateLimit:      getRateLimit(i),
-						Auth:           auth,
+						Backend:         baseName,
+						PassHostHeader:  passHostHeader,
+						PassTLSCert:     passTLSCert,
+						Routes:          make(map[string]types.Route),
+						Priority:        priority,
+						WhiteList:       getWhiteList(i),
+						Redirect:        getFrontendRedirect(i, baseName, pa.Path),
+						EntryPoints:     entryPoints,
+						Headers:         getHeader(i),
+						Errors:          getErrorPages(i),
+						RateLimit:       getRateLimit(i),
+						Auth:            auth,
+						CnameFlattening: cnameFlattening,
 					}
 				}
 
@@ -504,19 +507,21 @@ func (p *Provider) addGlobalBackend(cl Client, i *extensionsv1beta1.Ingress, tem
 	passTLSCert := getBoolValue(i.Annotations, annotationKubernetesPassTLSCert, p.EnablePassTLSCert)
 	priority := getIntValue(i.Annotations, annotationKubernetesPriority, 0)
 	entryPoints := getSliceStringValue(i.Annotations, annotationKubernetesFrontendEntryPoints)
+	cnameFlattening := getBoolValue(i.Annotations, annotationKubernetesCnameFlattening, p.EnableCnameFlattening)
 
 	templateObjects.Frontends[defaultFrontendName] = &types.Frontend{
-		Backend:        defaultBackendName,
-		PassHostHeader: passHostHeader,
-		PassTLSCert:    passTLSCert,
-		Routes:         make(map[string]types.Route),
-		Priority:       priority,
-		WhiteList:      getWhiteList(i),
-		Redirect:       getFrontendRedirect(i, defaultFrontendName, "/"),
-		EntryPoints:    entryPoints,
-		Headers:        getHeader(i),
-		Errors:         getErrorPages(i),
-		RateLimit:      getRateLimit(i),
+		Backend:         defaultBackendName,
+		PassHostHeader:  passHostHeader,
+		PassTLSCert:     passTLSCert,
+		Routes:          make(map[string]types.Route),
+		Priority:        priority,
+		WhiteList:       getWhiteList(i),
+		Redirect:        getFrontendRedirect(i, defaultFrontendName, "/"),
+		EntryPoints:     entryPoints,
+		Headers:         getHeader(i),
+		Errors:          getErrorPages(i),
+		RateLimit:       getRateLimit(i),
+		CnameFlattening: cnameFlattening,
 	}
 
 	templateObjects.Frontends[defaultFrontendName].Routes["/"] = types.Route{

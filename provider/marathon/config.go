@@ -53,6 +53,7 @@ func (p *Provider) buildConfiguration(applications *marathon.Applications) *type
 		"getRateLimit":         label.GetRateLimit,
 		"getHeaders":           label.GetHeaders,
 		"getWhiteList":         label.GetWhiteList,
+		"getCnameFlattening":   label.GetFuncBool(label.TraefikFrontendCnameFlattening, label.DefaultFrontendCnameFlattening),
 	}
 
 	apps := make(map[string]*appData)

@@ -336,6 +336,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					withPair(pathFrontendContentTypeNosniff, "true"),
 					withPair(pathFrontendBrowserXSSFilter, "true"),
 					withPair(pathFrontendIsDevelopment, "true"),
+					withPair(pathCnameFlattening, "true"),
 
 					withPair("routes/route1/rule", "Host:test.localhost"),
 					withPair("routes/route2/rule", "Path:/foo")),
@@ -392,10 +393,11 @@ func TestProviderBuildConfiguration(t *testing.T) {
 				},
 				Frontends: map[string]*types.Frontend{
 					"frontend1": {
-						Priority:    6,
-						EntryPoints: []string{"http", "https"},
-						Backend:     "backend1",
-						PassTLSCert: true,
+						Priority:        6,
+						EntryPoints:     []string{"http", "https"},
+						Backend:         "backend1",
+						PassTLSCert:     true,
+						CnameFlattening: true,
 						WhiteList: &types.WhiteList{
 							SourceRange: []string{"1.1.1.1/24", "1234:abcd::42/32"},
 							IPStrategy: &types.IPStrategy{

@@ -49,6 +49,7 @@ func (p *Provider) buildConfiguration(catalog []catalogUpdate) *types.Configurat
 		"getErrorPages":          label.GetErrorPages,
 		"getRateLimit":           label.GetRateLimit,
 		"getHeaders":             label.GetHeaders,
+		"getCnameFlattening":     label.GetFuncBool(label.TraefikFrontendCnameFlattening, label.DefaultFrontendCnameFlattening),
 	}
 
 	var allNodes []*api.ServiceEntry

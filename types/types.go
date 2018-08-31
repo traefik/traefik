@@ -178,18 +178,19 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 
 // Frontend holds frontend configuration.
 type Frontend struct {
-	EntryPoints    []string              `json:"entryPoints,omitempty" hash:"ignore"`
-	Backend        string                `json:"backend,omitempty"`
-	Routes         map[string]Route      `json:"routes,omitempty" hash:"ignore"`
-	PassHostHeader bool                  `json:"passHostHeader,omitempty"`
-	PassTLSCert    bool                  `json:"passTLSCert,omitempty"`
-	Priority       int                   `json:"priority"`
-	WhiteList      *WhiteList            `json:"whiteList,omitempty"`
-	Headers        *Headers              `json:"headers,omitempty"`
-	Errors         map[string]*ErrorPage `json:"errors,omitempty"`
-	RateLimit      *RateLimit            `json:"ratelimit,omitempty"`
-	Redirect       *Redirect             `json:"redirect,omitempty"`
-	Auth           *Auth                 `json:"auth,omitempty"`
+	EntryPoints     []string              `json:"entryPoints,omitempty" hash:"ignore"`
+	Backend         string                `json:"backend,omitempty"`
+	Routes          map[string]Route      `json:"routes,omitempty" hash:"ignore"`
+	PassHostHeader  bool                  `json:"passHostHeader,omitempty"`
+	PassTLSCert     bool                  `json:"passTLSCert,omitempty"`
+	Priority        int                   `json:"priority"`
+	WhiteList       *WhiteList            `json:"whiteList,omitempty"`
+	Headers         *Headers              `json:"headers,omitempty"`
+	Errors          map[string]*ErrorPage `json:"errors,omitempty"`
+	RateLimit       *RateLimit            `json:"ratelimit,omitempty"`
+	Redirect        *Redirect             `json:"redirect,omitempty"`
+	Auth            *Auth                 `json:"auth,omitempty"`
+	CnameFlattening bool                  `json:"cnameFlattening,omitempty"`
 }
 
 // Hash returns the hash value of a Frontend struct.

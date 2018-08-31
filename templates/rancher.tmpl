@@ -69,6 +69,7 @@
     priority = {{ getPriority $service.SegmentLabels }}
     passHostHeader = {{ getPassHostHeader $service.SegmentLabels }}
     passTLSCert = {{ getPassTLSCert $service.SegmentLabels }}
+    cnameFlattening = {{ getCnameFlattening $service.SegmentLabels }}
 
     entryPoints = [{{range getEntryPoints $service.SegmentLabels }}
       "{{.}}",

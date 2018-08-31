@@ -42,19 +42,20 @@ func (p *Provider) buildConfiguration(containersInspected []dockerData) *types.C
 		"getLoadBalancer":   label.GetLoadBalancer,
 
 		// Frontend functions
-		"getBackendName":    getBackendName,
-		"getPriority":       label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
-		"getPassHostHeader": label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
-		"getPassTLSCert":    label.GetFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getEntryPoints":    label.GetFuncSliceString(label.TraefikFrontendEntryPoints),
-		"getBasicAuth":      label.GetFuncSliceString(label.TraefikFrontendAuthBasic), // Deprecated
-		"getAuth":           label.GetAuth,
-		"getFrontendRule":   p.getFrontendRule,
-		"getRedirect":       label.GetRedirect,
-		"getErrorPages":     label.GetErrorPages,
-		"getRateLimit":      label.GetRateLimit,
-		"getHeaders":        label.GetHeaders,
-		"getWhiteList":      label.GetWhiteList,
+		"getBackendName":     getBackendName,
+		"getPriority":        label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
+		"getPassHostHeader":  label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
+		"getPassTLSCert":     label.GetFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
+		"getEntryPoints":     label.GetFuncSliceString(label.TraefikFrontendEntryPoints),
+		"getBasicAuth":       label.GetFuncSliceString(label.TraefikFrontendAuthBasic), // Deprecated
+		"getAuth":            label.GetAuth,
+		"getFrontendRule":    p.getFrontendRule,
+		"getRedirect":        label.GetRedirect,
+		"getErrorPages":      label.GetErrorPages,
+		"getRateLimit":       label.GetRateLimit,
+		"getHeaders":         label.GetHeaders,
+		"getWhiteList":       label.GetWhiteList,
+		"getCnameFlattening": label.GetFuncBool(label.TraefikFrontendCnameFlattening, label.DefaultFrontendCnameFlattening),
 	}
 
 	// filter containers

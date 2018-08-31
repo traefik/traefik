@@ -439,6 +439,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 							label.TraefikFrontendAuthForwardTLSInsecureSkipVerify + "=true",
 							label.TraefikFrontendAuthHeaderField + "=X-WebAuth-User",
 
+							label.TraefikFrontendCnameFlattening + "=true",
 							label.TraefikFrontendEntryPoints + "=http,https",
 							label.TraefikFrontendPassHostHeader + "=true",
 							label.TraefikFrontendPassTLSCert + "=true",
@@ -537,9 +538,10 @@ func TestProviderBuildConfiguration(t *testing.T) {
 							Rule: "Host:traefik.io",
 						},
 					},
-					PassHostHeader: true,
-					PassTLSCert:    true,
-					Priority:       666,
+					PassHostHeader:  true,
+					PassTLSCert:     true,
+					Priority:        666,
+					CnameFlattening: true,
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{

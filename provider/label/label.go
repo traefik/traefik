@@ -22,6 +22,7 @@ const (
 	DefaultPassHostHeader                          = true
 	DefaultPassTLSCert                             = false
 	DefaultFrontendPriority                        = 0
+	DefaultFrontendCnameFlattening                 = false
 	DefaultCircuitBreakerExpression                = "NetworkErrorRatio() > 1"
 	DefaultBackendLoadBalancerMethod               = "wrr"
 	DefaultBackendMaxconnExtractorFunc             = "request.host"

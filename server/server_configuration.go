@@ -273,7 +273,7 @@ func buildServerRoute(serverEntryPoint *serverEntryPoint, frontendName string, f
 
 	priority := 0
 	for routeName, route := range frontend.Routes {
-		rls := rules.Rules{Route: serverRoute, HostResolver: hostResolver}
+		rls := rules.Rules{Route: serverRoute, HostResolver: hostResolver, CnameFlattening: frontend.CnameFlattening}
 		newRoute, err := rls.Parse(route.Rule)
 		if err != nil {
 			return nil, fmt.Errorf("error creating route for frontend %s: %v", frontendName, err)
