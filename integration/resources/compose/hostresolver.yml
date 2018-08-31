@@ -6,3 +6,14 @@ server1:
     - traefik.backend=backend1
     - traefik.frontend.entryPoints=http
     - traefik.frontend.rule=Host:github.com
+    - traefik.frontend.cnameFlattening=true
+
+server2:
+  image: emilevauge/whoami
+  labels:
+    - traefik.enable=true
+    - traefik.port=80
+    - traefik.backend=backend1
+    - traefik.frontend.entryPoints=http
+    - traefik.frontend.rule=Host:gitlab.com
+    - traefik.frontend.cnameFlattening=false

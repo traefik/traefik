@@ -29,6 +29,7 @@ const (
 	pathFrontendPriority                       = "/priority"
 	pathFrontendPassHostHeader                 = "/passhostheader"
 	pathFrontendPassTLSCert                    = "/passtlscert"
+	pathCnameFlattening                        = "/cnameflattening"
 	pathFrontendWhiteListSourceRange           = "/whitelist/sourcerange"
 	pathFrontendWhiteListIPStrategy            = "/whitelist/ipstrategy"
 	pathFrontendWhiteListIPStrategyDepth       = pathFrontendWhiteListIPStrategy + "/depth"

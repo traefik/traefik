@@ -70,6 +70,7 @@
     priority = {{ getPriority $instance.SegmentLabels }}
     passHostHeader = {{ getPassHostHeader $instance.SegmentLabels }}
     passTLSCert = {{ getPassTLSCert $instance.SegmentLabels }}
+    cnameFlattening = {{ getCnameFlattening $instance.SegmentLabels }}
 
     entryPoints = [{{range getEntryPoints $instance.SegmentLabels }}
       "{{.}}",

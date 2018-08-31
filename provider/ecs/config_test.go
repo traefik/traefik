@@ -372,6 +372,7 @@ func TestBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendAuthForwardTLSInsecureSkipVerify: aws.String("true"),
 						label.TraefikFrontendAuthHeaderField:                  aws.String("X-WebAuth-User"),
 
+						label.TraefikFrontendCnameFlattening:                aws.String("true"),
 						label.TraefikFrontendEntryPoints:                    aws.String("http,https"),
 						label.TraefikFrontendPassHostHeader:                 aws.String("true"),
 						label.TraefikFrontendPassTLSCert:                    aws.String("true"),
@@ -486,9 +487,10 @@ func TestBuildConfiguration(t *testing.T) {
 								Rule: "Host:traefik.io",
 							},
 						},
-						PassHostHeader: true,
-						PassTLSCert:    true,
-						Priority:       666,
+						PassHostHeader:  true,
+						PassTLSCert:     true,
+						Priority:        666,
+						CnameFlattening: true,
 						Auth: &types.Auth{
 							HeaderField: "X-WebAuth-User",
 							Basic: &types.Basic{

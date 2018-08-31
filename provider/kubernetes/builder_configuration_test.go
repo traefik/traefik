@@ -202,6 +202,12 @@ func passHostHeader() func(*types.Frontend) {
 	}
 }
 
+func cnameFlattening() func(*types.Frontend) {
+	return func(f *types.Frontend) {
+		f.CnameFlattening = true
+	}
+}
+
 func entryPoints(eps ...string) func(*types.Frontend) {
 	return func(f *types.Frontend) {
 		f.EntryPoints = eps

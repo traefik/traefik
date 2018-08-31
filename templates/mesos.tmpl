@@ -71,6 +71,7 @@
     priority = {{ getPriority $app.TraefikLabels }}
     passHostHeader = {{ getPassHostHeader $app.TraefikLabels }}
     passTLSCert = {{ getPassTLSCert $app.TraefikLabels }}
+    cnameFlattening = {{ getCnameFlattening $app.TraefikLabels }}
 
     entryPoints = [{{range getEntryPoints $app.TraefikLabels }}
       "{{.}}",

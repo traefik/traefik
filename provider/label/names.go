@@ -53,6 +53,7 @@ const (
 	SuffixFrontendAuthForwardTLSKey                 = SuffixFrontendAuthForwardTLS + ".key"
 	SuffixFrontendAuthForwardTrustForwardHeader     = SuffixFrontendAuthForward + ".trustForwardHeader"
 	SuffixFrontendAuthHeaderField                   = SuffixFrontendAuth + ".headerField"
+	SuffixFrontendCnameFlattening                   = "frontend.cnameFlattening"
 	SuffixFrontendEntryPoints                       = "frontend.entryPoints"
 	SuffixFrontendHeaders                           = "frontend.headers."
 	SuffixFrontendRequestHeaders                    = SuffixFrontendHeaders + "customRequestHeaders"
@@ -141,6 +142,7 @@ const (
 	TraefikFrontendAuthForwardTLSKey                = Prefix + SuffixFrontendAuthForwardTLSKey
 	TraefikFrontendAuthForwardTrustForwardHeader    = Prefix + SuffixFrontendAuthForwardTrustForwardHeader
 	TraefikFrontendAuthHeaderField                  = Prefix + SuffixFrontendAuthHeaderField
+	TraefikFrontendCnameFlattening                  = Prefix + SuffixFrontendCnameFlattening
 	TraefikFrontendEntryPoints                      = Prefix + SuffixFrontendEntryPoints
 	TraefikFrontendPassHostHeader                   = Prefix + SuffixFrontendPassHostHeader
 	TraefikFrontendPassTLSCert                      = Prefix + SuffixFrontendPassTLSCert

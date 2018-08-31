@@ -18,9 +18,10 @@ import (
 
 // Rules holds rule parsing and configuration
 type Rules struct {
-	Route        *types.ServerRoute
-	err          error
-	HostResolver *hostresolver.Resolver
+	Route           *types.ServerRoute
+	err             error
+	HostResolver    *hostresolver.Resolver
+	CnameFlattening bool
 }
 
 func (r *Rules) host(hosts ...string) *mux.Route {
@@ -34,7 +35,7 @@ func (r *Rules) host(hosts ...string) *mux.Route {
 			return false
 		}
 
-		if r.HostResolver != nil && r.HostResolver.CnameFlattening {
+		if r.HostResolver != nil && (r.HostResolver.CnameFlattening || r.CnameFlattening) {
 			reqH, flatH := r.HostResolver.CNAMEFlatten(reqHost)
 			for _, host := range hosts {
 				if strings.EqualFold(reqH, host) || strings.EqualFold(flatH, host) {

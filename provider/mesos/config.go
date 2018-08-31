@@ -54,6 +54,7 @@ func (p *Provider) buildConfiguration(tasks []state.Task) *types.Configuration {
 		"getRateLimit":         label.GetRateLimit,
 		"getHeaders":           label.GetHeaders,
 		"getWhiteList":         label.GetWhiteList,
+		"getCnameFlattening":   label.GetFuncBool(label.TraefikFrontendCnameFlattening, label.DefaultFrontendCnameFlattening),
 	}
 
 	appsTasks := p.filterTasks(tasks)

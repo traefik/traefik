@@ -124,6 +124,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
     priority = {{ getPriority $service.TraefikLabels }}
     passHostHeader = {{ getPassHostHeader $service.TraefikLabels }}
     passTLSCert = {{ getPassTLSCert $service.TraefikLabels }}
+    cnameFlattening = {{ getCnameFlattening $service.TraefikLabels }}
 
     entryPoints = [{{range getFrontEndEntryPoints $service.TraefikLabels }}
       "{{.}}",
@@ -370,6 +371,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
     priority = {{ getPriority $container.SegmentLabels }}
     passHostHeader = {{ getPassHostHeader $container.SegmentLabels }}
     passTLSCert = {{ getPassTLSCert $container.SegmentLabels }}
+    cnameFlattening = {{ getCnameFlattening $container.SegmentLabels }}
 
     entryPoints = [{{range getEntryPoints $container.SegmentLabels }}
       "{{.}}",
@@ -617,6 +619,7 @@ var _templatesEcsTmpl = []byte(`[backends]
     priority = {{ getPriority $instance.SegmentLabels }}
     passHostHeader = {{ getPassHostHeader $instance.SegmentLabels }}
     passTLSCert = {{ getPassTLSCert $instance.SegmentLabels }}
+    cnameFlattening = {{ getCnameFlattening $instance.SegmentLabels }}
 
     entryPoints = [{{range getEntryPoints $instance.SegmentLabels }}
       "{{.}}",
@@ -880,6 +883,7 @@ var _templatesKubernetesTmpl = []byte(`[backends]
     priority = {{ $frontend.Priority }}
     passHostHeader = {{ $frontend.PassHostHeader }}
     passTLSCert = {{ $frontend.PassTLSCert }}
+    cnameFlattening = {{ $frontend.CnameFlattening }}
 
     entryPoints = [{{range $frontend.EntryPoints }}
       "{{.}}",
@@ -1120,6 +1124,7 @@ var _templatesKvTmpl = []byte(`[backends]
     priority = {{ getPriority $frontend }}
     passHostHeader = {{ getPassHostHeader $frontend }}
     passTLSCert = {{ getPassTLSCert $frontend }}
+    cnameFlattening = {{ getCnameFlattening $frontend }}
 
     entryPoints = [{{range getEntryPoints $frontend }}
       "{{.}}",
@@ -1382,6 +1387,7 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
     priority = {{ getPriority $app.SegmentLabels }}
     passHostHeader = {{ getPassHostHeader $app.SegmentLabels }}
     passTLSCert = {{ getPassTLSCert $app.SegmentLabels }}
+    cnameFlattening = {{ getCnameFlattening $app.SegmentLabels }}
 
     entryPoints = [{{range getEntryPoints $app.SegmentLabels }}
       "{{.}}",
@@ -1629,6 +1635,7 @@ var _templatesMesosTmpl = []byte(`[backends]
     priority = {{ getPriority $app.TraefikLabels }}
     passHostHeader = {{ getPassHostHeader $app.TraefikLabels }}
     passTLSCert = {{ getPassTLSCert $app.TraefikLabels }}
+    cnameFlattening = {{ getCnameFlattening $app.TraefikLabels }}
 
     entryPoints = [{{range getEntryPoints $app.TraefikLabels }}
       "{{.}}",
@@ -1898,6 +1905,7 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
     priority = {{ getPriority $service.SegmentLabels }}
     passHostHeader = {{ getPassHostHeader $service.SegmentLabels }}
     passTLSCert = {{ getPassTLSCert $service.SegmentLabels }}
+    cnameFlattening = {{ getCnameFlattening $service.SegmentLabels }}
 
     entryPoints = [{{range getEntryPoints $service.SegmentLabels }}
       "{{.}}",
