@@ -295,8 +295,10 @@ func TestRateSA900AuditEventIsNotRepaymentWhenEmpty(t *testing.T) {
 	<IRenvelope>
 		<SAtrust>
 			<TrustEstate>
+				<ClaimRepayment>
+					<Claim />
+				<ClaimRepayment>
 				<TaxCalculation>
-					<ClaimRepaymentForNextYear />
 					<DueBeforePaymentsOnAccount  />
 				</TaxCalculation>
 			</TrustEstate>
@@ -354,9 +356,9 @@ func TestRateSA900AuditEventIsNotRepaymentWhenDueBeforeMissing(t *testing.T) {
 	<IRenvelope>
 		<SAtrust>
 			<TrustEstate>
-				<TaxCalculation>					
-					<ClaimRepaymentForNextYear>yes</ClaimRepaymentForNextYear>
-				</TaxCalculation>
+				<ClaimRepayment>					
+					<Claim>yes</Claim>
+				</ClaimRepayment>
 			</TrustEstate>
 		</SAtrust>
 	</IRenvelope>

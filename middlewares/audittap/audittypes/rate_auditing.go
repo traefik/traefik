@@ -206,7 +206,7 @@ var gtmUserType = etree.MustCompilePath("./GovTalkDetails/GatewayAdditions/Submi
 
 // SA Specific Data
 var gtmSa110Repayment = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/MTR/SA110/SelfAssessment/TotalTaxEtcDue")
-var gtmSa900Claim = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/SAtrust/TrustEstate/TaxCalculation/ClaimRepaymentForNextYear")
+var gtmSa900Claim = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/SAtrust/TrustEstate/ClaimRepayment/Claim")
 var gtmSa900Repayment = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/SAtrust/TrustEstate/TaxCalculation/DueBeforePaymentsOnAccount")
 var gtmVatReclaimedInputs = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/VATDeclarationRequest/VATReclaimedOnInputs")
 var gtmVatTotal = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/VATDeclarationRequest/TotalVAT")
