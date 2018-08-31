@@ -85,13 +85,13 @@ func Run(kv *staert.KvSource, traefikConfiguration *cmd.TraefikConfiguration) fu
 				}
 			}
 
-			storageExists, err := storageExists(kv, traefikConfiguration.GlobalConfiguration.ACME.Storage)
+			accountInitialized, err := keyExists(kv, traefikConfiguration.GlobalConfiguration.ACME.Storage)
 			if err != nil {
 				return err
 			}
 
 			// Check to see if ACME account object is already in kv store
-			if traefikConfiguration.GlobalConfiguration.ACME.OverrideCertificates || !storageExists {
+			if traefikConfiguration.GlobalConfiguration.ACME.OverrideCertificates || !accountInitialized {
 
 				// Store the ACME Account into the KV Store
 				// Certificates in KV Store will be overridden
@@ -119,7 +119,7 @@ func Run(kv *staert.KvSource, traefikConfiguration *cmd.TraefikConfiguration) fu
 	}
 }
 
-func storageExists(source *staert.KvSource, key string) (bool, error) {
+func keyExists(source *staert.KvSource, key string) (bool, error) {
 	list, err := source.List(key, nil)
 	if err != nil {
 		return false, err
