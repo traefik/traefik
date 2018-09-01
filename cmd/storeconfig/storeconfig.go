@@ -124,6 +124,7 @@ func keyExists(source *staert.KvSource, key string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	
 	return len(list) > 0, nil
 }
 
