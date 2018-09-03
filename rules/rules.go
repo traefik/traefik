@@ -268,18 +268,29 @@ func (r *Rules) Parse(expression string) (*mux.Route, error) {
 }
 
 // ParseDomains parses rules expressions and returns domains
-func (r *Rules) ParseDomains(expression string) ([]string, error) {
+func (r *Rules) ParseDomains(expression string) (bool, []string, error) {
 	var domains []string
+	isHostRule := false
 
 	err := r.parseRules(expression, func(functionName string, function interface{}, arguments []string) error {
 		if functionName == "Host" {
+			isHostRule = true
 			domains = append(domains, arguments...)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error parsing domains: %v", err)
+		return isHostRule, nil, fmt.Errorf("error parsing domains: %v", err)
 	}
 
-	return fun.Map(types.CanonicalDomain, domains).([]string), nil
+	canonicalDomains := fun.Map(types.CanonicalDomain, domains).([]string)
+	domains = []string{}
+
+	for _, domain := range canonicalDomains {
+		if len(domain) > 0 {
+			domains = append(domains, domain)
+		}
+	}
+
+	return isHostRule, domains, nil
 }

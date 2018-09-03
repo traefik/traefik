@@ -673,10 +673,17 @@ func (s *Server) postLoadConfiguration() {
 				if acmeEnabled {
 					for _, route := range frontend.Routes {
 						rules := rules.Rules{}
-						domains, err := rules.ParseDomains(route.Rule)
+						isHostRule, domains, err := rules.ParseDomains(route.Rule)
 						if err != nil {
 							log.Errorf("Error parsing domains: %v", err)
-						} else {
+							continue
+						}
+
+						if isHostRule {
+							if len(domains) == 0 {
+								log.Errorf("Host rule detected into %s but no domain parsed.", route.Rule)
+								continue
+							}
 							s.globalConfiguration.ACME.LoadCertificateForDomains(domains)
 						}
 					}
