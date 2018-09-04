@@ -248,7 +248,9 @@ func (s *Server) Start() {
 		s.listenConfigurations(stop)
 	})
 	s.startProvider()
-	go s.listenSignals()
+	s.routinesPool.Go(func(stop chan bool) {
+		s.listenSignals(stop)
+	})
 }
 
 // StartWithContext starts the server and Stop/Close it when context is Done
