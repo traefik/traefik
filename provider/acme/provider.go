@@ -174,19 +174,14 @@ func (p *Provider) watchNewDomains() {
 				for _, frontend := range config.Frontends {
 					for _, route := range frontend.Routes {
 						domainRules := rules.Rules{}
-						isHostRule, domains, err := domainRules.ParseDomains(route.Rule)
+						domains, err := domainRules.ParseDomains(route.Rule)
 						if err != nil {
 							log.Errorf("Error parsing domains in provider ACME: %v", err)
 							continue
 						}
 
-						if isHostRule && len(domains) == 0 {
-							log.Errorf("Host rule detected into %s but no domain parsed in provider ACME.", route.Rule)
-							continue
-						}
-
 						if len(domains) == 0 {
-							log.Debugf("No domain parsed in rule %q", route.Rule)
+							log.Debugf("No domain parsed in rule %q in provider ACME", route.Rule)
 							continue
 						}
 

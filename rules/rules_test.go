@@ -54,40 +54,38 @@ func TestParseDomains(t *testing.T) {
 	rules := &Rules{}
 
 	tests := []struct {
-		description      string
-		expression       string
-		domain           []string
-		hostRuleExpected bool
+		description   string
+		expression    string
+		domain        []string
+		errorExpected bool
 	}{
 		{
-			description:      "Many host rules",
-			expression:       "Host:foo.bar,test.bar",
-			domain:           []string{"foo.bar", "test.bar"},
-			hostRuleExpected: true,
+			description:   "Many host rules",
+			expression:    "Host:foo.bar,test.bar",
+			domain:        []string{"foo.bar", "test.bar"},
+			errorExpected: false,
 		},
 		{
-			description:      "No host rule",
-			expression:       "Path:/test",
-			domain:           []string{},
-			hostRuleExpected: false,
+			description:   "No host rule",
+			expression:    "Path:/test",
+			errorExpected: false,
 		},
 		{
-			description:      "Host rule and another rule",
-			expression:       "Host:foo.bar;Path:/test",
-			domain:           []string{"foo.bar"},
-			hostRuleExpected: true,
+			description:   "Host rule and another rule",
+			expression:    "Host:foo.bar;Path:/test",
+			domain:        []string{"foo.bar"},
+			errorExpected: false,
 		},
 		{
-			description:      "Host rule to trim and another rule",
-			expression:       "Host: Foo.Bar ;Path:/test",
-			domain:           []string{"foo.bar"},
-			hostRuleExpected: true,
+			description:   "Host rule to trim and another rule",
+			expression:    "Host: Foo.Bar ;Path:/test",
+			domain:        []string{"foo.bar"},
+			errorExpected: false,
 		},
 		{
-			description:      "Host rule with no domain",
-			expression:       "Host: ;Path:/test",
-			domain:           []string{},
-			hostRuleExpected: true,
+			description:   "Host rule with no domain",
+			expression:    "Host: ;Path:/test",
+			errorExpected: true,
 		},
 	}
 
@@ -96,9 +94,14 @@ func TestParseDomains(t *testing.T) {
 		t.Run(test.expression, func(t *testing.T) {
 			t.Parallel()
 
-			isHostRule, domains, err := rules.ParseDomains(test.expression)
-			require.NoError(t, err, "%s: Error while parsing domain.", test.expression)
-			assert.EqualValues(t, test.hostRuleExpected, isHostRule, "%s: Error parsing rules from expression.", test.expression)
+			domains, err := rules.ParseDomains(test.expression)
+
+			if test.errorExpected {
+				require.Errorf(t, err, "unable to parse correctly the domains in the Host rule from %q", test.expression)
+			} else {
+				require.NoError(t, err, "%s: Error while parsing domain.", test.expression)
+			}
+
 			assert.EqualValues(t, test.domain, domains, "%s: Error parsing domains from expression.", test.expression)
 		})
 	}
