@@ -181,7 +181,7 @@ func (p *Provider) watchNewDomains() {
 						}
 
 						if len(domains) == 0 {
-							log.Debugf("No domain parsed in rule %q", route.Rule)
+							log.Debugf("No domain parsed in rule %q in provider ACME", route.Rule)
 							continue
 						}
 
