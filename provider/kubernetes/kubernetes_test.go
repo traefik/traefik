@@ -1519,6 +1519,13 @@ rateset:
 					route("/whitelist-source-range", "PathPrefix:/whitelist-source-range"),
 					route("test", "Host:test")),
 			),
+			frontend("root2/",
+				passHostHeader(),
+				redirectRegex("root2/$", "root2/root2"),
+				routes(
+					route("/", "PathPrefix:/;ReplacePathRegex: ^/(.*) /abc$1"),
+					route("root2", "Host:root2")),
+			),
 			frontend("test/whitelist-remote-addr",
 				passHostHeader(),
 				whiteList(
