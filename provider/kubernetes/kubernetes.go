@@ -242,7 +242,10 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					continue
 				}
 
-				if _, exists := templateObjects.Frontends[baseName]; !exists {
+				var frontend *types.Frontend
+				if fe, exists := templateObjects.Frontends[baseName]; exists {
+					frontend = fe
+				} else {
 					auth, err := getAuthConfig(i, k8sClient)
 					if err != nil {
 						log.Errorf("Failed to retrieve auth configuration for ingress %s/%s: %s", i.Namespace, i.Name, err)
@@ -253,7 +256,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					passTLSCert := getBoolValue(i.Annotations, annotationKubernetesPassTLSCert, p.EnablePassTLSCert)
 					entryPoints := getSliceStringValue(i.Annotations, annotationKubernetesFrontendEntryPoints)
 
-					templateObjects.Frontends[baseName] = &types.Frontend{
+					frontend = &types.Frontend{
 						Backend:        baseName,
 						PassHostHeader: passHostHeader,
 						PassTLSCert:    passTLSCert,
@@ -269,26 +272,6 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					}
 				}
 
-				if len(r.Host) > 0 {
-					if _, exists := templateObjects.Frontends[baseName].Routes[r.Host]; !exists {
-						templateObjects.Frontends[baseName].Routes[r.Host] = types.Route{
-							Rule: getRuleForHost(r.Host),
-						}
-					}
-				}
-
-				rule, err := getRuleForPath(pa, i)
-				if err != nil {
-					log.Errorf("Failed to get rule for ingress %s/%s: %s", i.Namespace, i.Name, err)
-					delete(templateObjects.Frontends, baseName)
-					continue
-				}
-				if rule != "" {
-					templateObjects.Frontends[baseName].Routes[pa.Path] = types.Route{
-						Rule: rule,
-					}
-				}
-
 				service, exists, err := k8sClient.GetService(i.Namespace, pa.Backend.ServiceName)
 				if err != nil {
 					log.Errorf("Error while retrieving service information from k8s API %s/%s: %v", i.Namespace, pa.Backend.ServiceName, err)
@@ -297,10 +280,30 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 				if !exists {
 					log.Errorf("Service not found for %s/%s", i.Namespace, pa.Backend.ServiceName)
-					delete(templateObjects.Frontends, baseName)
 					continue
 				}
 
+				rule, err := getRuleForPath(pa, i)
+				if err != nil {
+					log.Errorf("Failed to get rule for ingress %s/%s: %s", i.Namespace, i.Name, err)
+					continue
+				}
+
+				if rule != "" {
+					frontend.Routes[pa.Path] = types.Route{
+						Rule: rule,
+					}
+				}
+
+				if len(r.Host) > 0 {
+					if _, exists := frontend.Routes[r.Host]; !exists {
+						frontend.Routes[r.Host] = types.Route{
+							Rule: getRuleForHost(r.Host),
+						}
+					}
+				}
+
+				templateObjects.Frontends[baseName] = frontend
 				templateObjects.Backends[baseName].CircuitBreaker = getCircuitBreaker(service)
 				templateObjects.Backends[baseName].LoadBalancer = getLoadBalancer(service)
 				templateObjects.Backends[baseName].MaxConn = getMaxConn(service)
