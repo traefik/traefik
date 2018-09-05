@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/middlewares/tracing/jaeger"
 	"github.com/opentracing/opentracing-go/ext"
 	jaegerClient "github.com/uber/jaeger-client-go"
-	"github.com/containous/traefik/middlewares/tracing/jaeger"
 	"github.com/urfave/negroni"
 )
 
