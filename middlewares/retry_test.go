@@ -1,91 +1,158 @@
 package middlewares
 
 import (
-	"context"
-	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/containous/traefik/testhelpers"
+	"github.com/stretchr/testify/assert"
+	"github.com/vulcand/oxy/forward"
+	"github.com/vulcand/oxy/roundrobin"
 )
 
 func TestRetry(t *testing.T) {
 	testCases := []struct {
-		failAtCalls    []int
-		attempts       int
-		responseStatus int
-		listener       *countingRetryListener
-		retriedCount   int
+		desc                        string
+		maxRequestAttempts          int
+		wantRetryAttempts           int
+		wantResponseStatus          int
+		amountFaultyEndpoints       int
+		isWebsocketHandshakeRequest bool
 	}{
 		{
-			failAtCalls:    []int{1, 2},
-			attempts:       3,
-			responseStatus: http.StatusOK,
-			listener:       &countingRetryListener{},
-			retriedCount:   2,
+			desc:                  "no retry on success",
+			maxRequestAttempts:    1,
+			wantRetryAttempts:     0,
+			wantResponseStatus:    http.StatusOK,
+			amountFaultyEndpoints: 0,
 		},
 		{
-			failAtCalls:    []int{1, 2},
-			attempts:       2,
-			responseStatus: http.StatusBadGateway,
-			listener:       &countingRetryListener{},
-			retriedCount:   1,
+			desc:                  "no retry when max request attempts is one",
+			maxRequestAttempts:    1,
+			wantRetryAttempts:     0,
+			wantResponseStatus:    http.StatusInternalServerError,
+			amountFaultyEndpoints: 1,
+		},
+		{
+			desc:                  "one retry when one server is faulty",
+			maxRequestAttempts:    2,
+			wantRetryAttempts:     1,
+			wantResponseStatus:    http.StatusOK,
+			amountFaultyEndpoints: 1,
+		},
+		{
+			desc:                  "two retries when two servers are faulty",
+			maxRequestAttempts:    3,
+			wantRetryAttempts:     2,
+			wantResponseStatus:    http.StatusOK,
+			amountFaultyEndpoints: 2,
+		},
+		{
+			desc:                  "max attempts exhausted delivers the 5xx response",
+			maxRequestAttempts:    3,
+			wantRetryAttempts:     2,
+			wantResponseStatus:    http.StatusInternalServerError,
+			amountFaultyEndpoints: 3,
+		},
+		{
+			desc:                        "websocket request should not be retried",
+			maxRequestAttempts:          3,
+			wantRetryAttempts:           0,
+			wantResponseStatus:          http.StatusBadGateway,
+			amountFaultyEndpoints:       1,
+			isWebsocketHandshakeRequest: true,
 		},
 	}
 
-	for _, tc := range testCases {
-		// bind tc locally
-		tc := tc
-		tcName := fmt.Sprintf("FailAtCalls(%v) RetryAttempts(%v)", tc.failAtCalls, tc.attempts)
+	backendServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+		rw.Write([]byte("OK"))
+	}))
 
-		t.Run(tcName, func(t *testing.T) {
+	forwarder, err := forward.New()
+	if err != nil {
+		t.Fatalf("Error creating forwarder: %s", err)
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+
+		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
 
-			var httpHandler http.Handler = &networkFailingHTTPHandler{failAtCalls: tc.failAtCalls, netErrorRecorder: &DefaultNetErrorRecorder{}}
-			httpHandler = NewRetry(tc.attempts, httpHandler, tc.listener)
+			loadBalancer, err := roundrobin.New(forwarder)
+			if err != nil {
+				t.Fatalf("Error creating load balancer: %s", err)
+			}
+
+			basePort := 33444
+			for i := 0; i < tc.amountFaultyEndpoints; i++ {
+				// 192.0.2.0 is a non-routable IP for testing purposes.
+				// See: https://stackoverflow.com/questions/528538/non-routable-ip-address/18436928#18436928
+				// We only use the port specification here because the URL is used as identifier
+				// in the load balancer and using the exact same URL would not add a new server.
+				err = loadBalancer.UpsertServer(testhelpers.MustParseURL("http://192.0.2.0:" + string(basePort+i)))
+				assert.NoError(t, err)
+			}
+
+			// add the functioning server to the end of the load balancer list
+			err = loadBalancer.UpsertServer(testhelpers.MustParseURL(backendServer.URL))
+			assert.NoError(t, err)
+
+			retryListener := &countingRetryListener{}
+			retry := NewRetry(tc.maxRequestAttempts, loadBalancer, retryListener)
 
 			recorder := httptest.NewRecorder()
-			req, err := http.NewRequest(http.MethodGet, "http://localhost:3000/ok", ioutil.NopCloser(nil))
-			if err != nil {
-				t.Fatalf("could not create request: %+v", err)
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:3000/ok", nil)
+
+			if tc.isWebsocketHandshakeRequest {
+				req.Header.Add("Connection", "Upgrade")
+				req.Header.Add("Upgrade", "websocket")
 			}
 
-			httpHandler.ServeHTTP(recorder, req)
+			retry.ServeHTTP(recorder, req)
 
-			if tc.responseStatus != recorder.Code {
-				t.Errorf("wrong status code %d, want %d", recorder.Code, tc.responseStatus)
+			if tc.wantResponseStatus != recorder.Code {
+				t.Errorf("got status code %d, want %d", recorder.Code, tc.wantResponseStatus)
 			}
-			if tc.retriedCount != tc.listener.timesCalled {
-				t.Errorf("RetryListener called %d times, want %d times", tc.listener.timesCalled, tc.retriedCount)
+			if tc.wantRetryAttempts != retryListener.timesCalled {
+				t.Errorf("retry listener called %d time(s), want %d time(s)", retryListener.timesCalled, tc.wantRetryAttempts)
 			}
 		})
 	}
 }
 
-func TestDefaultNetErrorRecorderSuccess(t *testing.T) {
-	boolNetErrorOccurred := false
-	recorder := DefaultNetErrorRecorder{}
-	recorder.Record(context.WithValue(context.Background(), defaultNetErrCtxKey, &boolNetErrorOccurred))
-	if !boolNetErrorOccurred {
-		t.Errorf("got %v after recording net error, wanted %v", boolNetErrorOccurred, true)
+func TestRetryEmptyServerList(t *testing.T) {
+	forwarder, err := forward.New()
+	if err != nil {
+		t.Fatalf("Error creating forwarder: %s", err)
 	}
-}
 
-func TestDefaultNetErrorRecorderInvalidValueType(t *testing.T) {
-	stringNetErrorOccured := "nonsense"
-	recorder := DefaultNetErrorRecorder{}
-	recorder.Record(context.WithValue(context.Background(), defaultNetErrCtxKey, &stringNetErrorOccured))
-	if stringNetErrorOccured != "nonsense" {
-		t.Errorf("got %v after recording net error, wanted %v", stringNetErrorOccured, "nonsense")
+	loadBalancer, err := roundrobin.New(forwarder)
+	if err != nil {
+		t.Fatalf("Error creating load balancer: %s", err)
 	}
-}
 
-func TestDefaultNetErrorRecorderNilValue(t *testing.T) {
-	nilNetErrorOccured := interface{}(nil)
-	recorder := DefaultNetErrorRecorder{}
-	recorder.Record(context.WithValue(context.Background(), defaultNetErrCtxKey, &nilNetErrorOccured))
-	if nilNetErrorOccured != interface{}(nil) {
-		t.Errorf("got %v after recording net error, wanted %v", nilNetErrorOccured, interface{}(nil))
+	// The EmptyBackendHandler middleware ensures that there is a 503
+	// response status set when there is no backend server in the pool.
+	next := NewEmptyBackendHandler(loadBalancer)
+
+	retryListener := &countingRetryListener{}
+	retry := NewRetry(3, next, retryListener)
+
+	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "http://localhost:3000/ok", nil)
+
+	retry.ServeHTTP(recorder, req)
+
+	const wantResponseStatus = http.StatusServiceUnavailable
+	if wantResponseStatus != recorder.Code {
+		t.Errorf("got status code %d, want %d", recorder.Code, wantResponseStatus)
+	}
+	const wantRetryAttempts = 0
+	if wantRetryAttempts != retryListener.timesCalled {
+		t.Errorf("retry listener called %d time(s), want %d time(s)", retryListener.timesCalled, wantRetryAttempts)
 	}
 }
 
@@ -99,31 +166,9 @@ func TestRetryListeners(t *testing.T) {
 	for _, retryListener := range retryListeners {
 		listener := retryListener.(*countingRetryListener)
 		if listener.timesCalled != 2 {
-			t.Errorf("retry listener was called %d times, want %d", listener.timesCalled, 2)
+			t.Errorf("retry listener was called %d time(s), want %d time(s)", listener.timesCalled, 2)
 		}
 	}
-}
-
-// networkFailingHTTPHandler is an http.Handler implementation you can use to test retries.
-type networkFailingHTTPHandler struct {
-	netErrorRecorder NetErrorRecorder
-	failAtCalls      []int
-	callNumber       int
-}
-
-func (handler *networkFailingHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	handler.callNumber++
-
-	for _, failAtCall := range handler.failAtCalls {
-		if handler.callNumber == failAtCall {
-			handler.netErrorRecorder.Record(r.Context())
-
-			w.WriteHeader(http.StatusBadGateway)
-			return
-		}
-	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 // countingRetryListener is a RetryListener implementation to count the times the Retried fn is called.

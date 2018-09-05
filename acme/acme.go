@@ -9,6 +9,7 @@ import (
 	fmtlog "log"
 	"net"
 	"net/http"
+	"net/url"
 	"reflect"
 	"strings"
 	"sync"
@@ -23,7 +24,6 @@ import (
 	"github.com/containous/traefik/log"
 	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
 	"github.com/eapache/channels"
@@ -49,15 +49,18 @@ type ACME struct {
 	OnHostRule            bool                        `description:"Enable certificate generation on frontends Host rules."`
 	CAServer              string                      `description:"CA server to use."`
 	EntryPoint            string                      `description:"Entrypoint to proxy acme challenge to."`
+	KeyType               string                      `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'. Default to 'RSA4096'"`
 	DNSChallenge          *acmeprovider.DNSChallenge  `description:"Activate DNS-01 Challenge"`
 	HTTPChallenge         *acmeprovider.HTTPChallenge `description:"Activate HTTP-01 Challenge"`
+	TLSChallenge          *acmeprovider.TLSChallenge  `description:"Activate TLS-ALPN-01 Challenge"`
 	DNSProvider           string                      `description:"(Deprecated) Activate DNS-01 Challenge"`                                                                    // Deprecated
 	DelayDontCheckDNS     flaeg.Duration              `description:"(Deprecated) Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."` // Deprecated
 	ACMELogging           bool                        `description:"Enable debug logging of ACME actions."`
+	OverrideCertificates  bool                        `description:"Enable to override certificates in key-value store when using storeconfig"`
 	client                *acme.Client
-	defaultCertificate    *tls.Certificate
 	store                 cluster.Store
 	challengeHTTPProvider *challengeHTTPProvider
+	challengeTLSProvider  *challengeTLSProvider
 	checkOnDemandDomain   func(domain string) bool
 	jobs                  *channels.InfiniteChannel
 	TLSConfig             *tls.Config `description:"TLS config in case wildcard certs are used"`
@@ -70,18 +73,10 @@ func (a *ACME) init() error {
 	acme.UserAgent = fmt.Sprintf("containous-traefik/%s", version.Version)
 
 	if a.ACMELogging {
-		legolog.Logger = fmtlog.New(log.WriterLevel(logrus.DebugLevel), "legolog: ", 0)
+		legolog.Logger = fmtlog.New(log.WriterLevel(logrus.InfoLevel), "legolog: ", 0)
 	} else {
 		legolog.Logger = fmtlog.New(ioutil.Discard, "", 0)
 	}
-
-	// no certificates in TLS config, so we add a default one
-	cert, err := generate.DefaultCertificate()
-	if err != nil {
-		return err
-	}
-
-	a.defaultCertificate = cert
 
 	a.jobs = channels.NewInfiniteChannel()
 
@@ -125,14 +120,18 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 	if err != nil {
 		return err
 	}
+
 	if len(a.Storage) == 0 {
-		return errors.New("Empty Store, please provide a key for certs storage")
+		return errors.New("empty Store, please provide a key for certs storage")
 	}
+
 	a.checkOnDemandDomain = checkOnDemandDomain
 	a.dynamicCerts = certs
-	tlsConfig.Certificates = append(tlsConfig.Certificates, *a.defaultCertificate)
+	a.challengeTLSProvider = &challengeTLSProvider{store: a.store}
+
 	tlsConfig.GetCertificate = a.getCertificate
 	a.TLSConfig = tlsConfig
+
 	listener := func(object cluster.Object) error {
 		account := object.(*Account)
 		account.Init()
@@ -192,7 +191,8 @@ func (a *ACME) leadershipListener(elected bool) error {
 		account := object.(*Account)
 		account.Init()
 		// Reset Account values if caServer changed, thus registration URI can be updated
-		if account != nil && account.Registration != nil && !strings.HasPrefix(account.Registration.URI, a.CAServer) {
+		if account != nil && account.Registration != nil && !isAccountMatchingCaServer(account.Registration.URI, a.CAServer) {
+			log.Info("Account URI does not match the current CAServer. The account will be reset")
 			account.reset()
 		}
 
@@ -203,12 +203,15 @@ func (a *ACME) leadershipListener(elected bool) error {
 				domainsCerts = account.DomainsCertificate
 			}
 
-			account, err = NewAccount(a.Email, domainsCerts.Certs)
+			account, err = NewAccount(a.Email, domainsCerts.Certs, a.KeyType)
 			if err != nil {
 				return err
 			}
 
 			needRegister = true
+		} else if len(account.KeyType) == 0 {
+			// Set the KeyType if not already defined in the account
+			account.KeyType = acmeprovider.GetKeyType(a.KeyType)
 		}
 
 		a.client, err = a.buildACMEClient(account)
@@ -239,9 +242,28 @@ func (a *ACME) leadershipListener(elected bool) error {
 	return nil
 }
 
+func isAccountMatchingCaServer(accountURI string, serverURI string) bool {
+	aru, err := url.Parse(accountURI)
+	if err != nil {
+		log.Infof("Unable to parse account.Registration URL : %v", err)
+		return false
+	}
+	cau, err := url.Parse(serverURI)
+	if err != nil {
+		log.Infof("Unable to parse CAServer URL : %v", err)
+		return false
+	}
+	return cau.Hostname() == aru.Hostname()
+}
+
 func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	domain := types.CanonicalDomain(clientHello.ServerName)
 	account := a.store.Get().(*Account)
+
+	if challengeCert, ok := a.challengeTLSProvider.getCertificate(domain); ok {
+		log.Debugf("ACME got challenge %s", domain)
+		return challengeCert, nil
+	}
 
 	if providedCertificate := a.getProvidedCertificate(domain); providedCertificate != nil {
 		return providedCertificate, nil
@@ -251,12 +273,14 @@ func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificat
 		log.Debugf("ACME got domain cert %s", domain)
 		return domainCert.tlsCert, nil
 	}
+
 	if a.OnDemand {
 		if a.checkOnDemandDomain != nil && !a.checkOnDemandDomain(domain) {
 			return nil, nil
 		}
 		return a.loadCertificateOnDemand(clientHello)
 	}
+
 	log.Debugf("No certificate found or generated for %s", domain)
 	return nil, nil
 }
@@ -412,11 +436,13 @@ func (a *ACME) buildACMEClient(account *Account) (*acme.Client, error) {
 	if len(a.CAServer) > 0 {
 		caServer = a.CAServer
 	}
-	client, err := acme.NewClient(caServer, account, acme.RSA4096)
+
+	client, err := acme.NewClient(caServer, account, account.KeyType)
 	if err != nil {
 		return nil, err
 	}
 
+	// DNS challenge
 	if a.DNSChallenge != nil && len(a.DNSChallenge.Provider) > 0 {
 		log.Debugf("Using DNS Challenge provider: %s", a.DNSChallenge.Provider)
 
@@ -431,21 +457,30 @@ func (a *ACME) buildACMEClient(account *Account) (*acme.Client, error) {
 			return nil, err
 		}
 
-		client.ExcludeChallenges([]acme.Challenge{acme.HTTP01})
+		client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.TLSALPN01})
 		err = client.SetChallengeProvider(acme.DNS01, provider)
-	} else if a.HTTPChallenge != nil && len(a.HTTPChallenge.EntryPoint) > 0 {
-		log.Debug("Using HTTP Challenge provider.")
-		client.ExcludeChallenges([]acme.Challenge{acme.DNS01})
-		a.challengeHTTPProvider = &challengeHTTPProvider{store: a.store}
-		err = client.SetChallengeProvider(acme.HTTP01, a.challengeHTTPProvider)
-	} else {
-		return nil, errors.New("ACME challenge not specified, please select HTTP or DNS Challenge")
+		return client, err
 	}
 
-	if err != nil {
-		return nil, err
+	// HTTP challenge
+	if a.HTTPChallenge != nil && len(a.HTTPChallenge.EntryPoint) > 0 {
+		log.Debug("Using HTTP Challenge provider.")
+
+		client.ExcludeChallenges([]acme.Challenge{acme.DNS01, acme.TLSALPN01})
+		a.challengeHTTPProvider = &challengeHTTPProvider{store: a.store}
+		err = client.SetChallengeProvider(acme.HTTP01, a.challengeHTTPProvider)
+		return client, err
 	}
-	return client, nil
+
+	// TLS Challenge
+	if a.TLSChallenge != nil {
+		log.Debug("Using TLS Challenge provider.")
+		client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.DNS01})
+		err = client.SetChallengeProvider(acme.TLSALPN01, a.challengeTLSProvider)
+		return client, err
+	}
+
+	return nil, errors.New("ACME challenge not specified, please select TLS or HTTP or DNS Challenge")
 }
 
 func (a *ACME) loadCertificateOnDemand(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
@@ -663,7 +698,6 @@ func (a *ACME) getDomainsCertificates(domains []string) (*Certificate, error) {
 
 	certificate, err := a.client.ObtainCertificate(domains, bundle, nil, OSCPMustStaple)
 	if err != nil {
-		log.Error(err)
 		return nil, fmt.Errorf("cannot obtain certificates: %+v", err)
 	}
 

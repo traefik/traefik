@@ -47,16 +47,23 @@ func subset(opts ...func(*corev1.EndpointSubset)) func(*corev1.Endpoints) {
 
 func eAddresses(opts ...func(*corev1.EndpointAddress)) func(*corev1.EndpointSubset) {
 	return func(subset *corev1.EndpointSubset) {
-		a := &corev1.EndpointAddress{}
 		for _, opt := range opts {
+			a := &corev1.EndpointAddress{}
 			opt(a)
+			subset.Addresses = append(subset.Addresses, *a)
 		}
-		subset.Addresses = append(subset.Addresses, *a)
 	}
 }
 
 func eAddress(ip string) func(*corev1.EndpointAddress) {
 	return func(address *corev1.EndpointAddress) {
+		address.IP = ip
+	}
+}
+
+func eAddressWithTargetRef(targetRef, ip string) func(*corev1.EndpointAddress) {
+	return func(address *corev1.EndpointAddress) {
+		address.TargetRef = &corev1.ObjectReference{Name: targetRef}
 		address.IP = ip
 	}
 }

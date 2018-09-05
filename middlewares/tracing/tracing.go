@@ -1,23 +1,36 @@
 package tracing
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/middlewares/tracing/datadog"
 	"github.com/containous/traefik/middlewares/tracing/jaeger"
 	"github.com/containous/traefik/middlewares/tracing/zipkin"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 )
 
+// ForwardMaxLengthNumber defines the number of static characters in the Forwarding Span Trace name : 8 chars for 'forward ' + 8 chars for hash + 2 chars for '_'.
+const ForwardMaxLengthNumber = 18
+
+// EntryPointMaxLengthNumber defines the number of static characters in the Entrypoint Span Trace name : 11 chars for 'Entrypoint ' + 8 chars for hash + 2 chars for '_'.
+const EntryPointMaxLengthNumber = 21
+
+// TraceNameHashLength defines the number of characters to use from the head of the generated hash.
+const TraceNameHashLength = 8
+
 // Tracing middleware
 type Tracing struct {
-	Backend     string         `description:"Selects the tracking backend ('jaeger','zipkin')." export:"true"`
-	ServiceName string         `description:"Set the name for this service" export:"true"`
-	Jaeger      *jaeger.Config `description:"Settings for jaeger"`
-	Zipkin      *zipkin.Config `description:"Settings for zipkin"`
+	Backend       string          `description:"Selects the tracking backend ('jaeger','zipkin', 'datadog')." export:"true"`
+	ServiceName   string          `description:"Set the name for this service" export:"true"`
+	SpanNameLimit int             `description:"Set the maximum character limit for Span names (default 0 = no limit)" export:"true"`
+	Jaeger        *jaeger.Config  `description:"Settings for jaeger"`
+	Zipkin        *zipkin.Config  `description:"Settings for zipkin"`
+	DataDog       *datadog.Config `description:"Settings for DataDog"`
 
 	tracer opentracing.Tracer
 	closer io.Closer
@@ -52,6 +65,8 @@ func (t *Tracing) Setup() {
 		t.tracer, t.closer, err = t.Jaeger.Setup(t.ServiceName)
 	case zipkin.Name:
 		t.tracer, t.closer, err = t.Zipkin.Setup(t.ServiceName)
+	case datadog.Name:
+		t.tracer, t.closer, err = t.DataDog.Setup(t.ServiceName)
 	default:
 		log.Warnf("Unknown tracer %q", t.Backend)
 		return
@@ -143,16 +158,40 @@ func SetError(r *http.Request) {
 	}
 }
 
-// SetErrorAndDebugLog flags the span associated with this request as in error and create a debug log
+// SetErrorAndDebugLog flags the span associated with this request as in error and create a debug log.
 func SetErrorAndDebugLog(r *http.Request, format string, args ...interface{}) {
 	SetError(r)
 	log.Debugf(format, args...)
 	LogEventf(r, format, args...)
 }
 
-// SetErrorAndWarnLog flags the span associated with this request as in error and create a debug log
+// SetErrorAndWarnLog flags the span associated with this request as in error and create a debug log.
 func SetErrorAndWarnLog(r *http.Request, format string, args ...interface{}) {
 	SetError(r)
 	log.Warnf(format, args...)
 	LogEventf(r, format, args...)
+}
+
+// truncateString reduces the length of the 'str' argument to 'num' - 3 and adds a '...' suffix to the tail.
+func truncateString(str string, num int) string {
+	text := str
+	if len(str) > num {
+		if num > 3 {
+			num -= 3
+		}
+		text = str[0:num] + "..."
+	}
+	return text
+}
+
+// computeHash returns the first TraceNameHashLength character of the sha256 hash for 'name' argument.
+func computeHash(name string) string {
+	data := []byte(name)
+	hash := sha256.New()
+	if _, err := hash.Write(data); err != nil {
+		// Impossible case
+		log.Errorf("Fail to create Span name hash for %s: %v", name, err)
+	}
+
+	return fmt.Sprintf("%x", hash.Sum(nil))[:TraceNameHashLength]
 }

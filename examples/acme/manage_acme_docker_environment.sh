@@ -9,7 +9,7 @@ readonly doc_file=$basedir"/docker-compose.yml"
 down_environment() {
     echo "STOP Docker environment"
     ! docker-compose -f $doc_file down -v &>/dev/null && \
-        echo "[ERROR] Impossible to stop the Docker environment" && exit 11
+        echo "[ERROR] Unable to stop the Docker environment" && exit 11
 }
 
 # Create and start Docker-compose environment or subpart of its services (if services are listed)
@@ -17,7 +17,7 @@ down_environment() {
 up_environment() {
     echo "START Docker environment"
     ! docker-compose -f $doc_file up -d $@ &>/dev/null && \
-        echo "[ERROR] Impossible to start Docker environment" && exit 21
+        echo "[ERROR] Unable to start Docker environment" && exit 21
 }
 
 # Init the environment : get IP address and create needed files
@@ -40,7 +40,7 @@ start_boulder() {
         sleep 5
         let waiting_counter-=1
         if [[ $waiting_counter -eq 0 ]]; then
-            echo "[ERROR] Impossible to start boulder container in the allowed time, the Docker environment will be stopped"
+            echo "[ERROR] Unable to start boulder container in the allowed time, the Docker environment will be stopped"
             down_environment
             exit 41
         fi

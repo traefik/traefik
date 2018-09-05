@@ -45,6 +45,12 @@ type Provider struct {
 	ExposedByDefault      bool             `description:"Expose containers by default" export:"true"`
 	UseBindPortIP         bool             `description:"Use the ip address from the bound port, rather than from the inner network" export:"true"`
 	SwarmMode             bool             `description:"Use Docker on Swarm Mode" export:"true"`
+	Network               string           `description:"Default Docker network used" export:"true"`
+}
+
+// Init the provider
+func (p *Provider) Init(constraints types.Constraints) error {
+	return p.BaseProvider.Init(constraints)
 }
 
 // dockerData holds the need data to the Provider p
@@ -91,7 +97,9 @@ func (p *Provider) createClient() (client.APIClient, error) {
 		if err != nil {
 			return nil, err
 		}
-		sockets.ConfigureTransport(tr, hostURL.Scheme, hostURL.Host)
+		if err := sockets.ConfigureTransport(tr, hostURL.Scheme, hostURL.Host); err != nil {
+			return nil, err
+		}
 
 		httpClient = &http.Client{
 			Transport: tr,
@@ -114,8 +122,7 @@ func (p *Provider) createClient() (client.APIClient, error) {
 
 // Provide allows the docker provider to provide configurations to traefik
 // using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
-	p.Constraints = append(p.Constraints, constraints...)
+func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	// TODO register this routine in pool, and watch for stop channel
 	safe.Go(func() {
 		operation := func() error {

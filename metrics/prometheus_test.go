@@ -11,7 +11,91 @@ import (
 	"github.com/containous/traefik/types"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
+	"github.com/stretchr/testify/assert"
 )
+
+func TestRegisterPromState(t *testing.T) {
+	// Reset state of global promState.
+	defer promState.reset()
+
+	testCases := []struct {
+		desc                 string
+		prometheusSlice      []*types.Prometheus
+		initPromState        bool
+		unregisterPromState  bool
+		expectedNbRegistries int
+	}{
+		{
+			desc:                 "Register once",
+			prometheusSlice:      []*types.Prometheus{{}},
+			expectedNbRegistries: 1,
+			initPromState:        true,
+		},
+		{
+			desc:                 "Register once with no promState init",
+			prometheusSlice:      []*types.Prometheus{{}},
+			expectedNbRegistries: 0,
+		},
+		{
+			desc:                 "Register twice",
+			prometheusSlice:      []*types.Prometheus{{}, {}},
+			expectedNbRegistries: 2,
+			initPromState:        true,
+		},
+		{
+			desc:                 "Register twice with no promstate init",
+			prometheusSlice:      []*types.Prometheus{{}, {}},
+			expectedNbRegistries: 0,
+		},
+		{
+			desc:                 "Register twice with unregister",
+			prometheusSlice:      []*types.Prometheus{{}, {}},
+			unregisterPromState:  true,
+			expectedNbRegistries: 2,
+			initPromState:        true,
+		},
+		{
+			desc:                 "Register twice with unregister but no promstate init",
+			prometheusSlice:      []*types.Prometheus{{}, {}},
+			unregisterPromState:  true,
+			expectedNbRegistries: 0,
+		},
+	}
+
+	for _, test := range testCases {
+		actualNbRegistries := 0
+		for _, prom := range test.prometheusSlice {
+			if test.initPromState {
+				initStandardRegistry(prom)
+			}
+
+			promReg := registerPromState()
+			if promReg != false {
+				actualNbRegistries++
+			}
+
+			if test.unregisterPromState {
+				prometheus.Unregister(promState)
+			}
+
+			promState.reset()
+		}
+
+		prometheus.Unregister(promState)
+
+		assert.Equal(t, test.expectedNbRegistries, actualNbRegistries)
+	}
+}
+
+// reset is a utility method for unit testing. It should be called after each
+// test run that changes promState internally in order to avoid dependencies
+// between unit tests.
+func (ps *prometheusState) reset() {
+	ps.collectors = make(chan *collector)
+	ps.describers = []func(ch chan<- *prometheus.Desc){}
+	ps.dynamicConfig = newDynamicConfig()
+	ps.state = make(map[string]*collector)
+}
 
 func TestPrometheus(t *testing.T) {
 	// Reset state of global promState.

@@ -7,7 +7,7 @@ package websocket
 import (
 	"bufio"
 	"errors"
-	"net"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -33,10 +33,23 @@ type Upgrader struct {
 	// or received.
 	ReadBufferSize, WriteBufferSize int
 
+	// WriteBufferPool is a pool of buffers for write operations. If the value
+	// is not set, then write buffers are allocated to the connection for the
+	// lifetime of the connection.
+	//
+	// A pool is most useful when the application has a modest volume of writes
+	// across a large number of connections.
+	//
+	// Applications should use a single pool for each unique value of
+	// WriteBufferSize.
+	WriteBufferPool BufferPool
+
 	// Subprotocols specifies the server's supported protocols in order of
-	// preference. If this field is set, then the Upgrade method negotiates a
+	// preference. If this field is not nil, then the Upgrade method negotiates a
 	// subprotocol by selecting the first match in this list with a protocol
-	// requested by the client.
+	// requested by the client. If there's no match, then no protocol is
+	// negotiated (the Sec-Websocket-Protocol header is not included in the
+	// handshake response).
 	Subprotocols []string
 
 	// Error specifies the function for generating HTTP error responses. If Error
@@ -103,7 +116,7 @@ func (u *Upgrader) selectSubprotocol(r *http.Request, responseHeader http.Header
 //
 // The responseHeader is included in the response to the client's upgrade
 // request. Use the responseHeader to specify cookies (Set-Cookie) and the
-// application negotiated subprotocol (Sec-Websocket-Protocol).
+// application negotiated subprotocol (Sec-WebSocket-Protocol).
 //
 // If the upgrade fails, then Upgrade replies to the client with an HTTP error
 // response.
@@ -127,7 +140,7 @@ func (u *Upgrader) Upgrade(w http.ResponseWriter, r *http.Request, responseHeade
 	}
 
 	if _, ok := responseHeader["Sec-Websocket-Extensions"]; ok {
-		return u.returnError(w, r, http.StatusInternalServerError, "websocket: application specific 'Sec-Websocket-Extensions' headers are unsupported")
+		return u.returnError(w, r, http.StatusInternalServerError, "websocket: application specific 'Sec-WebSocket-Extensions' headers are unsupported")
 	}
 
 	checkOrigin := u.CheckOrigin
@@ -140,7 +153,7 @@ func (u *Upgrader) Upgrade(w http.ResponseWriter, r *http.Request, responseHeade
 
 	challengeKey := r.Header.Get("Sec-Websocket-Key")
 	if challengeKey == "" {
-		return u.returnError(w, r, http.StatusBadRequest, "websocket: not a websocket handshake: `Sec-Websocket-Key' header is missing or blank")
+		return u.returnError(w, r, http.StatusBadRequest, "websocket: not a websocket handshake: `Sec-WebSocket-Key' header is missing or blank")
 	}
 
 	subprotocol := u.selectSubprotocol(r, responseHeader)
@@ -157,17 +170,12 @@ func (u *Upgrader) Upgrade(w http.ResponseWriter, r *http.Request, responseHeade
 		}
 	}
 
-	var (
-		netConn net.Conn
-		err     error
-	)
-
 	h, ok := w.(http.Hijacker)
 	if !ok {
 		return u.returnError(w, r, http.StatusInternalServerError, "websocket: response does not implement http.Hijacker")
 	}
 	var brw *bufio.ReadWriter
-	netConn, brw, err = h.Hijack()
+	netConn, brw, err := h.Hijack()
 	if err != nil {
 		return u.returnError(w, r, http.StatusInternalServerError, err.Error())
 	}
@@ -177,7 +185,21 @@ func (u *Upgrader) Upgrade(w http.ResponseWriter, r *http.Request, responseHeade
 		return nil, errors.New("websocket: client sent data before handshake is complete")
 	}
 
-	c := newConnBRW(netConn, true, u.ReadBufferSize, u.WriteBufferSize, brw)
+	var br *bufio.Reader
+	if u.ReadBufferSize == 0 && bufioReaderSize(netConn, brw.Reader) > 256 {
+		// Reuse hijacked buffered reader as connection reader.
+		br = brw.Reader
+	}
+
+	buf := bufioWriterBuffer(netConn, brw.Writer)
+
+	var writeBuf []byte
+	if u.WriteBufferPool == nil && u.WriteBufferSize == 0 && len(buf) >= maxFrameHeaderSize+256 {
+		// Reuse hijacked write buffer as connection buffer.
+		writeBuf = buf
+	}
+
+	c := newConn(netConn, true, u.ReadBufferSize, u.WriteBufferSize, u.WriteBufferPool, br, writeBuf)
 	c.subprotocol = subprotocol
 
 	if compress {
@@ -185,17 +207,23 @@ func (u *Upgrader) Upgrade(w http.ResponseWriter, r *http.Request, responseHeade
 		c.newDecompressionReader = decompressNoContextTakeover
 	}
 
-	p := c.writeBuf[:0]
+	// Use larger of hijacked buffer and connection write buffer for header.
+	p := buf
+	if len(c.writeBuf) > len(p) {
+		p = c.writeBuf
+	}
+	p = p[:0]
+
 	p = append(p, "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: "...)
 	p = append(p, computeAcceptKey(challengeKey)...)
 	p = append(p, "\r\n"...)
 	if c.subprotocol != "" {
-		p = append(p, "Sec-Websocket-Protocol: "...)
+		p = append(p, "Sec-WebSocket-Protocol: "...)
 		p = append(p, c.subprotocol...)
 		p = append(p, "\r\n"...)
 	}
 	if compress {
-		p = append(p, "Sec-Websocket-Extensions: permessage-deflate; server_no_context_takeover; client_no_context_takeover\r\n"...)
+		p = append(p, "Sec-WebSocket-Extensions: permessage-deflate; server_no_context_takeover; client_no_context_takeover\r\n"...)
 	}
 	for k, vs := range responseHeader {
 		if k == "Sec-Websocket-Protocol" {
@@ -295,4 +323,41 @@ func Subprotocols(r *http.Request) []string {
 func IsWebSocketUpgrade(r *http.Request) bool {
 	return tokenListContainsValue(r.Header, "Connection", "upgrade") &&
 		tokenListContainsValue(r.Header, "Upgrade", "websocket")
+}
+
+// bufioReaderSize size returns the size of a bufio.Reader.
+func bufioReaderSize(originalReader io.Reader, br *bufio.Reader) int {
+	// This code assumes that peek on a reset reader returns
+	// bufio.Reader.buf[:0].
+	// TODO: Use bufio.Reader.Size() after Go 1.10
+	br.Reset(originalReader)
+	if p, err := br.Peek(0); err == nil {
+		return cap(p)
+	}
+	return 0
+}
+
+// writeHook is an io.Writer that records the last slice passed to it vio
+// io.Writer.Write.
+type writeHook struct {
+	p []byte
+}
+
+func (wh *writeHook) Write(p []byte) (int, error) {
+	wh.p = p
+	return len(p), nil
+}
+
+// bufioWriterBuffer grabs the buffer from a bufio.Writer.
+func bufioWriterBuffer(originalWriter io.Writer, bw *bufio.Writer) []byte {
+	// This code assumes that bufio.Writer.buf[:1] is passed to the
+	// bufio.Writer's underlying writer.
+	var wh writeHook
+	bw.Reset(&wh)
+	bw.WriteByte(0)
+	bw.Flush()
+
+	bw.Reset(originalWriter)
+
+	return wh.p[:cap(wh.p)]
 }

@@ -1,0 +1,55 @@
+zookeeper:
+  image: zookeeper:3.4.10
+
+mesos-master:
+  links:
+    - zookeeper
+  image: mesosphere/mesos-master:1.4.1
+  # Uncomment published ports for interactive debugging.
+  # ports:
+  #   - "5050:5050"
+  environment:
+    - MESOS_HOSTNAME=mesos-master
+    - MESOS_CLUSTER=local
+    - MESOS_REGISTRY=in_memory
+    - MESOS_LOG_DIR=/var/log
+    - MESOS_WORK_DIR=/var/lib/mesos
+    - MESOS_ZK=zk://zookeeper:2181/mesos
+
+mesos-slave:
+  links:
+    - zookeeper
+    - mesos-master
+  image: mesosphere/mesos-slave-dind:0.4.0_mesos-1.4.1_docker-17.05.0_ubuntu-16.04.3
+  privileged: true
+  # Uncomment published ports for interactive debugging.
+  # ports:
+  #   - "5051:5051"
+  environment:
+    - MESOS_HOSTNAME=mesos-slave
+    - MESOS_CONTAINERIZERS=docker,mesos
+    - MESOS_ISOLATOR=cgroups/cpu,cgroups/mem
+    - MESOS_LOG_DIR=/var/log
+    - MESOS_MASTER=zk://zookeeper:2181/mesos
+    - MESOS_PORT=5051
+    - MESOS_WORK_DIR=/var/lib/mesos
+    - MESOS_EXECUTOR_REGISTRATION_TIMEOUT=5mins
+    - MESOS_EXECUTOR_SHUTDOWN_GRACE_PERIOD=90secs
+    - MESOS_DOCKER_STOP_TIMEOUT=60secs
+    - MESOS_RESOURCES=cpus:2;mem:2048;disk:20480;ports(*):[12000-12999]
+    - MESOS_SYSTEMD_ENABLE_SUPPORT=false
+
+marathon:
+  links:
+    - zookeeper
+    - mesos-master
+    - mesos-slave
+  image: mesosphere/marathon:v1.5.9
+  # Uncomment published ports for interactive debugging.
+  # ports:
+  #   - "8080:8080"
+  extra_hosts:
+    - "mesos-slave:172.17.0.1"
+  environment:
+    - MARATHON_ZK=zk://zookeeper:2181/marathon
+    - MARATHON_MASTER=zk://zookeeper:2181/mesos

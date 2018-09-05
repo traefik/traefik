@@ -162,7 +162,7 @@ func (r *marathonClient) registerCallbackSubscription() error {
 	return nil
 }
 
-// registerSSESubscription starts a go routine that continously tries to
+// registerSSESubscription starts a go routine that continuously tries to
 // connect to the SSE stream and to process the received events. To establish
 // the connection it tries the active cluster members until no more member is
 // active. When this happens it will retry to get a connection every 5 seconds.

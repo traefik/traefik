@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/abronan/valkeyrie/store"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
 )
 
@@ -22,7 +23,9 @@ func TestKvWatchTree(t *testing.T) {
 
 	configChan := make(chan types.ConfigMessage)
 	go func() {
-		provider.watchKv(configChan, "prefix", make(chan bool, 1))
+		if err := provider.watchKv(configChan, "prefix", make(chan bool, 1)); err != nil {
+			log.Error(err)
+		}
 	}()
 
 	select {

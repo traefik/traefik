@@ -10,7 +10,6 @@
 
     [backends."{{ $backendName }}".loadBalancer]
       method = "{{ $backend.LoadBalancer.Method }}"
-      sticky = {{ $backend.LoadBalancer.Sticky }}
       {{if $backend.LoadBalancer.Stickiness }}
       [backends."{{ $backendName }}".loadBalancer.stickiness]
         cookieName = "{{ $backend.LoadBalancer.Stickiness.CookieName }}"
@@ -52,16 +51,55 @@
       "{{.}}",
       {{end}}]
 
-    basicAuth = [{{range $frontend.BasicAuth }}
-      "{{.}}",
-      {{end}}]
+    {{if $frontend.Auth }}
+    [frontends."{{ $frontendName }}".auth]
+      headerField = "X-WebAuth-User"
+
+      {{if $frontend.Auth.Basic }}
+      [frontends."{{ $frontendName }}".auth.basic]
+        removeHeader = {{$frontend.Auth.Basic.RemoveHeader}}
+        users = [{{range $frontend.Auth.Basic.Users }}
+          "{{.}}",
+          {{end}}]
+      {{end}}
+
+      {{if $frontend.Auth.Digest }}
+      [frontends."{{ $frontendName }}".auth.digest]
+        removeHeader = {{$frontend.Auth.Digest.RemoveHeader}}
+        users = [{{range $frontend.Auth.Digest.Users }}
+          "{{.}}",
+          {{end}}]
+      {{end}}
+
+      {{if $frontend.Auth.Forward }}
+        [frontends."{{ $frontendName }}".auth.forward]
+          address = "{{ $frontend.Auth.Forward.Address }}"
+          authResponseHeaders = [{{range $frontend.Auth.Forward.AuthResponseHeaders }}
+            "{{.}}",
+            {{end}}]
+          trustForwardHeader = {{ $frontend.Auth.Forward.TrustForwardHeader }}
+          {{if $frontend.Auth.Forward.TLS }}
+          [frontends."{{ $frontendName }}".auth.forward.tls]
+            cert = """{{ $frontend.Auth.Forward.TLS.Cert }}"""
+            key = """{{ $frontend.Auth.Forward.TLS.Key }}"""
+            insecureSkipVerify = {{ $frontend.Auth.Forward.TLS.InsecureSkipVerify }}
+          {{end}}
+      {{end}}
+
+    {{end}}
 
     {{if $frontend.WhiteList }}
     [frontends."{{ $frontendName }}".whiteList]
-      sourceRange = [{{range $frontend.WhiteList.SourceRange }}
+      sourceRange = [{{range $frontend.Whitelist.SourceRange }}
         "{{.}}",
         {{end}}]
-      useXForwardedFor = {{ $frontend.WhiteList.UseXForwardedFor }}
+      {{if $frontend.Whitelist.IPStrategy }}
+      [frontends."{{ $frontendName }}".whiteList.IPStrategy]
+        depth = {{ $frontend.Whitelist.IPStrategy.Depth }}
+        excludedIPs = [{{range $frontend.Whitelist.IPStrategy.ExcludedIPs }}
+          "{{.}}",
+          {{end}}]
+      {{end}}
     {{end}}
 
     {{if $frontend.Redirect }}
@@ -101,6 +139,7 @@
     SSLRedirect = {{ $frontend.Headers.SSLRedirect }}
     SSLTemporaryRedirect = {{ $frontend.Headers.SSLTemporaryRedirect }}
     SSLHost = "{{ $frontend.Headers.SSLHost }}"
+    SSLForceHost = {{ $frontend.Headers.SSLForceHost }}
     STSSeconds = {{ $frontend.Headers.STSSeconds }}
     STSIncludeSubdomains = {{ $frontend.Headers.STSIncludeSubdomains }}
     STSPreload = {{ $frontend.Headers.STSPreload }}

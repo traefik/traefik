@@ -223,7 +223,7 @@ These variables have to be set on the machine/container that host Træfik.
 
 These variables are described [in this section](/configuration/acme/#provider).
 
-More information about wildcard certificates are available [in this section](/configuration/acme/#wildcard-domain).
+More information about wildcard certificates are available [in this section](/configuration/acme/#wildcard-domains).
 
 ### onHostRule option and provided certificates (with HTTP challenge)
 
@@ -320,42 +320,6 @@ The `consul` provider contains the configuration.
   entrypoints = ["http", "https"] # overrides defaultEntryPoints
   backend = "backend2"
   rule = "Path:/test"
-```
-
-## Enable Basic authentication in an entry point
-
-With two user/pass:
-
-- `test`:`test`
-- `test2`:`test2`
-
-Passwords are encoded in MD5: you can use `htpasswd` to generate them.
-
-```toml
-defaultEntryPoints = ["http"]
-
-[entryPoints]
-  [entryPoints.http]
-  address = ":80"
-  [entryPoints.http.auth.basic]
-  users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
-```
-
-## Pass Authenticated user to application via headers
-
-Providing an authentication method as described above, it is possible to pass the user to the application
-via a configurable header value.
-
-```toml
-defaultEntryPoints = ["http"]
-
-[entryPoints]
-  [entryPoints.http]
-  address = ":80"
-  [entryPoints.http.auth]
-    headerField = "X-WebAuth-User"
-    [entryPoints.http.auth.basic]
-    users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
 ```
 
 ## Override the Traefik HTTP server idleTimeout and/or throttle configurations from re-loading too quickly

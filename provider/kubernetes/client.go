@@ -9,6 +9,7 @@ import (
 	"github.com/containous/traefik/log"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	kubeerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/informers"
@@ -44,6 +45,7 @@ type Client interface {
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
+	UpdateIngressStatus(namespace, name, ip, hostname string) error
 }
 
 type clientImpl struct {
@@ -159,41 +161,55 @@ func (c *clientImpl) GetIngresses() []*extensionsv1beta1.Ingress {
 		if err != nil {
 			log.Errorf("Failed to list ingresses in namespace %s: %s", ns, err)
 		}
-		for _, ing := range ings {
-			result = append(result, ing)
-		}
+		result = append(result, ings...)
 	}
 	return result
 }
 
+// UpdateIngressStatus updates an Ingress with a provided status.
+func (c *clientImpl) UpdateIngressStatus(namespace, name, ip, hostname string) error {
+	ing, err := c.factories[c.lookupNamespace(namespace)].Extensions().V1beta1().Ingresses().Lister().Ingresses(namespace).Get(name)
+	if err != nil {
+		return fmt.Errorf("failed to get ingress %s/%s: %v", namespace, name, err)
+	}
+
+	if len(ing.Status.LoadBalancer.Ingress) > 0 {
+		if ing.Status.LoadBalancer.Ingress[0].Hostname == hostname && ing.Status.LoadBalancer.Ingress[0].IP == ip {
+			// If status is already set, skip update
+			log.Debugf("Skipping status update on ingress %s/%s", ing.Namespace, ing.Name)
+			return nil
+		}
+	}
+	ingCopy := ing.DeepCopy()
+	ingCopy.Status = extensionsv1beta1.IngressStatus{LoadBalancer: corev1.LoadBalancerStatus{Ingress: []corev1.LoadBalancerIngress{{IP: ip, Hostname: hostname}}}}
+
+	_, err = c.clientset.ExtensionsV1beta1().Ingresses(ingCopy.Namespace).UpdateStatus(ingCopy)
+	if err != nil {
+		return fmt.Errorf("failed to update ingress status %s/%s: %v", namespace, name, err)
+	}
+	log.Infof("Updated status on ingress %s/%s", namespace, name)
+	return nil
+}
+
 // GetService returns the named service from the given namespace.
 func (c *clientImpl) GetService(namespace, name string) (*corev1.Service, bool, error) {
-	var service *corev1.Service
-	item, exists, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Services().Informer().GetStore().GetByKey(namespace + "/" + name)
-	if item != nil {
-		service = item.(*corev1.Service)
-	}
-	return service, exists, err
+	service, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Services().Lister().Services(namespace).Get(name)
+	exist, err := translateNotFoundError(err)
+	return service, exist, err
 }
 
 // GetEndpoints returns the named endpoints from the given namespace.
 func (c *clientImpl) GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error) {
-	var endpoint *corev1.Endpoints
-	item, exists, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Endpoints().Informer().GetStore().GetByKey(namespace + "/" + name)
-	if item != nil {
-		endpoint = item.(*corev1.Endpoints)
-	}
-	return endpoint, exists, err
+	endpoint, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Endpoints().Lister().Endpoints(namespace).Get(name)
+	exist, err := translateNotFoundError(err)
+	return endpoint, exist, err
 }
 
 // GetSecret returns the named secret from the given namespace.
 func (c *clientImpl) GetSecret(namespace, name string) (*corev1.Secret, bool, error) {
-	var secret *corev1.Secret
-	item, exists, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Secrets().Informer().GetStore().GetByKey(namespace + "/" + name)
-	if err == nil && item != nil {
-		secret = item.(*corev1.Secret)
-	}
-	return secret, exists, err
+	secret, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Secrets().Lister().Secrets(namespace).Get(name)
+	exist, err := translateNotFoundError(err)
+	return secret, exist, err
 }
 
 // lookupNamespace returns the lookup namespace key for the given namespace.
@@ -219,16 +235,25 @@ func (c *clientImpl) newResourceEventHandler(events chan<- interface{}) cache.Re
 			}
 			return true
 		},
-		Handler: &resourceEventHandler{events},
+		Handler: &resourceEventHandler{ev: events},
 	}
 }
 
 // eventHandlerFunc will pass the obj on to the events channel or drop it.
 // This is so passing the events along won't block in the case of high volume.
-// The events are only used for signalling anyway so dropping a few is ok.
+// The events are only used for signaling anyway so dropping a few is ok.
 func eventHandlerFunc(events chan<- interface{}, obj interface{}) {
 	select {
 	case events <- obj:
 	default:
 	}
+}
+
+// translateNotFoundError will translate a "not found" error to a boolean return
+// value which indicates if the resource exists and a nil error.
+func translateNotFoundError(err error) (bool, error) {
+	if kubeerror.IsNotFound(err) {
+		return false, nil
+	}
+	return err == nil, err
 }

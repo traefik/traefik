@@ -46,14 +46,14 @@ func (p *Pool) Ctx() context.Context {
 	return p.baseCtx
 }
 
-//AddGoCtx adds a recoverable goroutine with a context without starting it
+// AddGoCtx adds a recoverable goroutine with a context without starting it
 func (p *Pool) AddGoCtx(goroutine routineCtx) {
 	p.lock.Lock()
 	p.routinesCtx = append(p.routinesCtx, goroutine)
 	p.lock.Unlock()
 }
 
-//GoCtx starts a recoverable goroutine with a context
+// GoCtx starts a recoverable goroutine with a context
 func (p *Pool) GoCtx(goroutine routineCtx) {
 	p.lock.Lock()
 	p.routinesCtx = append(p.routinesCtx, goroutine)
@@ -154,7 +154,7 @@ func OperationWithRecover(operation backoff.Operation) backoff.Operation {
 		defer func() {
 			if res := recover(); res != nil {
 				defaultRecoverGoroutine(res)
-				err = fmt.Errorf("Panic in operation: %s", err)
+				err = fmt.Errorf("panic in operation: %s", err)
 			}
 		}()
 		return operation()

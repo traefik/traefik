@@ -42,6 +42,33 @@ func iRules(opts ...func(*extensionsv1beta1.IngressSpec)) func(*extensionsv1beta
 	}
 }
 
+func iSpecBackends(opts ...func(*extensionsv1beta1.IngressSpec)) func(*extensionsv1beta1.Ingress) {
+	return func(i *extensionsv1beta1.Ingress) {
+		s := &extensionsv1beta1.IngressSpec{}
+		for _, opt := range opts {
+			opt(s)
+		}
+		i.Spec = *s
+	}
+}
+
+func iSpecBackend(opts ...func(*extensionsv1beta1.IngressBackend)) func(*extensionsv1beta1.IngressSpec) {
+	return func(s *extensionsv1beta1.IngressSpec) {
+		p := &extensionsv1beta1.IngressBackend{}
+		for _, opt := range opts {
+			opt(p)
+		}
+		s.Backend = p
+	}
+}
+
+func iIngressBackend(name string, port intstr.IntOrString) func(*extensionsv1beta1.IngressBackend) {
+	return func(p *extensionsv1beta1.IngressBackend) {
+		p.ServiceName = name
+		p.ServicePort = port
+	}
+}
+
 func iRule(opts ...func(*extensionsv1beta1.IngressRule)) func(*extensionsv1beta1.IngressSpec) {
 	return func(spec *extensionsv1beta1.IngressSpec) {
 		r := &extensionsv1beta1.IngressRule{}

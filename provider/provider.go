@@ -19,7 +19,8 @@ import (
 type Provider interface {
 	// Provide allows the provider to provide configurations to traefik
 	// using the given configuration channel.
-	Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error
+	Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error
+	Init(constraints types.Constraints) error
 }
 
 // BaseProvider should be inherited by providers
@@ -28,8 +29,13 @@ type BaseProvider struct {
 	Filename                  string            `description:"Override default configuration template. For advanced users :)" export:"true"`
 	Constraints               types.Constraints `description:"Filter services by constraint, matching with Traefik tags." export:"true"`
 	Trace                     bool              `description:"Display additional provider logs (if available)." export:"true"`
-	TemplateVersion           int               `description:"Template version." export:"true"`
 	DebugLogGeneratedTemplate bool              `description:"Enable debug logging of generated configuration template." export:"true"`
+}
+
+// Init for compatibility reason the BaseProvider implements an empty Init
+func (p *BaseProvider) Init(constraints types.Constraints) error {
+	p.Constraints = append(p.Constraints, constraints...)
+	return nil
 }
 
 // MatchConstraints must match with EVERY single constraint

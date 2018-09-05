@@ -13,7 +13,6 @@ logLevel = "DEBUG"
   endpoint = "{{.EtcdHost}}:2379"
   prefix = "/traefik"
   watch = true
-  useAPIV3 = {{.UseAPIV3}}
 
 [api]
   entryPoint = "api"

@@ -45,12 +45,36 @@ func sAnnotation(name string, value string) func(*corev1.Service) {
 }
 
 func sSpec(opts ...func(*corev1.ServiceSpec)) func(*corev1.Service) {
-	return func(i *corev1.Service) {
+	return func(s *corev1.Service) {
 		spec := &corev1.ServiceSpec{}
 		for _, opt := range opts {
 			opt(spec)
 		}
-		i.Spec = *spec
+		s.Spec = *spec
+	}
+}
+
+func sLoadBalancerStatus(opts ...func(*corev1.LoadBalancerStatus)) func(service *corev1.Service) {
+	return func(s *corev1.Service) {
+		loadBalancer := &corev1.LoadBalancerStatus{}
+		for _, opt := range opts {
+			if opt != nil {
+				opt(loadBalancer)
+			}
+		}
+		s.Status = corev1.ServiceStatus{
+			LoadBalancer: *loadBalancer,
+		}
+	}
+}
+
+func sLoadBalancerIngress(ip string, hostname string) func(*corev1.LoadBalancerStatus) {
+	return func(status *corev1.LoadBalancerStatus) {
+		ingress := corev1.LoadBalancerIngress{
+			IP:       ip,
+			Hostname: hostname,
+		}
+		status.Ingress = append(status.Ingress, ingress)
 	}
 }
 
@@ -105,11 +129,11 @@ func TestBuildService(t *testing.T) {
 	assert.EqualValues(t, sampleService1(), actual1)
 
 	actual2 := buildService(
-		sName("service3"),
+		sName("service2"),
 		sNamespace("testing"),
-		sUID("3"),
+		sUID("2"),
 		sSpec(
-			clusterIP("10.0.0.3"),
+			clusterIP("10.0.0.2"),
 			sType("ExternalName"),
 			sExternalName("example.com"),
 			sPorts(
@@ -120,6 +144,23 @@ func TestBuildService(t *testing.T) {
 	)
 
 	assert.EqualValues(t, sampleService2(), actual2)
+
+	actual3 := buildService(
+		sName("service3"),
+		sNamespace("testing"),
+		sUID("3"),
+		sSpec(
+			clusterIP("10.0.0.3"),
+			sType("ExternalName"),
+			sExternalName("example.com"),
+			sPorts(
+				sPort(8080, "http"),
+				sPort(8443, "https"),
+			),
+		),
+	)
+
+	assert.EqualValues(t, sampleService3(), actual3)
 }
 
 func sampleService1() *corev1.Service {
@@ -143,6 +184,31 @@ func sampleService1() *corev1.Service {
 func sampleService2() *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
+			Name:      "service2",
+			UID:       "2",
+			Namespace: "testing",
+		},
+		Spec: corev1.ServiceSpec{
+			ClusterIP:    "10.0.0.2",
+			Type:         "ExternalName",
+			ExternalName: "example.com",
+			Ports: []corev1.ServicePort{
+				{
+					Name: "http",
+					Port: 80,
+				},
+				{
+					Name: "https",
+					Port: 443,
+				},
+			},
+		},
+	}
+}
+
+func sampleService3() *corev1.Service {
+	return &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      "service3",
 			UID:       "3",
 			Namespace: "testing",
@@ -154,11 +220,11 @@ func sampleService2() *corev1.Service {
 			Ports: []corev1.ServicePort{
 				{
 					Name: "http",
-					Port: 80,
+					Port: 8080,
 				},
 				{
 					Name: "https",
-					Port: 443,
+					Port: 8443,
 				},
 			},
 		},

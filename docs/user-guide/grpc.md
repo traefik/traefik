@@ -1,15 +1,53 @@
-# gRPC example
+# gRPC examples
+
+## With HTTP (h2c)
+
+This section explains how to use Traefik as reverse proxy for gRPC application.
+
+### Træfik configuration
+
+At last, we configure our Træfik instance to use both self-signed certificates.
+
+```toml
+defaultEntryPoints = ["https"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+    [entryPoints.http]
+
+[api]
+
+[file]
+
+[backends]
+  [backends.backend1]
+    [backends.backend1.servers.server1]
+    # Access on backend with h2c
+    url = "h2c://backend.local:8080"
+
+
+[frontends]
+  [frontends.frontend1]
+  backend = "backend1"
+    [frontends.frontend1.routes.test_1]
+    rule = "Host:frontend.local"
+```
+
+!!! warning
+    For provider with label, you will have to specify the `traefik.protocol=h2c`
+
+### Conclusion
+
+We don't need specific configuration to use gRPC in Træfik, we just need to use `h2c` protocol, or use HTTPS communications to have HTTP2 with the backend.
+
+## With HTTPS
 
 This section explains how to use Traefik as reverse proxy for gRPC application with self-signed certificates.
 
-!!! warning
-    As gRPC needs HTTP2, we need HTTPS certificates on both gRPC Server and Træfik.
+![gRPC architecture](/img/grpc.svg)
 
-<p align="center">
-<img src="/img/grpc.svg" alt="gRPC architecture" title="gRPC architecture" />
-</p>
-
-## gRPC Server certificate
+### gRPC Server certificate
 
 In order to secure the gRPC server, we generate a self-signed certificate for backend url:
 
@@ -23,7 +61,7 @@ That will prompt for information, the important answer is:
 Common Name (e.g. server FQDN or YOUR name) []: backend.local
 ```
 
-## gRPC Client certificate
+### gRPC Client certificate
 
 Generate your self-signed certificate for frontend url:
 
@@ -37,7 +75,7 @@ with
 Common Name (e.g. server FQDN or YOUR name) []: frontend.local
 ```
 
-## Træfik configuration
+### Træfik configuration
 
 At last, we configure our Træfik instance to use both self-signed certificates.
 
@@ -78,13 +116,9 @@ rootCAs = [ "./backend.cert" ]
 !!! warning
     With some backends, the server URLs use the IP, so you may need to configure `insecureSkipVerify` instead of the `rootCAS` to activate HTTPS without hostname verification.
 
-## Conclusion
+### A gRPC example in go (modify for https)
 
-We don't need specific configuration to use gRPC in Træfik, we just need to be careful that all the exchanges (between client and Træfik, and between Træfik and backend) are HTTPS communications because gRPC uses HTTP2.
-
-## A gRPC example in go
-
-We will use the gRPC greeter example in [grpc-go](https://github.com/grpc/grpc-go/tree/master/examples/helloworld)
+We use the gRPC greeter example in [grpc-go](https://github.com/grpc/grpc-go/tree/master/examples/helloworld)
 
 !!! warning
     In order to use this gRPC example, we need to modify it to use HTTPS
@@ -147,4 +181,3 @@ r, err := client.SayHello(context.Background(), &pb.HelloRequest{Name: name})
 
 // ...
 ```
-

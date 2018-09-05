@@ -31,6 +31,7 @@ type Provider struct {
 	provider.BaseProvider `mapstructure:",squash" export:"true"`
 	Endpoint              string           `description:"Consul server endpoint"`
 	Domain                string           `description:"Default domain used"`
+	Stale                 bool             `description:"Use stale consistency for catalog reads" export:"true"`
 	ExposedByDefault      bool             `description:"Expose Consul services by default" export:"true"`
 	Prefix                string           `description:"Prefix used for Consul catalog tags" export:"true"`
 	FrontEndRule          string           `description:"Frontend rule used for Consul services" export:"true"`
@@ -49,9 +50,15 @@ type Service struct {
 }
 
 type serviceUpdate struct {
-	ServiceName   string
-	Attributes    []string
-	TraefikLabels map[string]string
+	ServiceName       string
+	ParentServiceName string
+	Attributes        []string
+	TraefikLabels     map[string]string
+}
+
+type frontendSegment struct {
+	Name   string
+	Labels map[string]string
 }
 
 type catalogUpdate struct {
@@ -88,18 +95,27 @@ func (a nodeSorter) Less(i int, j int) bool {
 	return lEntry.Service.Port < rEntry.Service.Port
 }
 
-// Provide allows the consul catalog provider to provide configurations to traefik
-// using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
+// Init the provider
+func (p *Provider) Init(constraints types.Constraints) error {
+	err := p.BaseProvider.Init(constraints)
+	if err != nil {
+		return err
+	}
+
 	client, err := p.createClient()
 	if err != nil {
 		return err
 	}
 
 	p.client = client
-	p.Constraints = append(p.Constraints, constraints...)
 	p.setupFrontEndRuleTemplate()
 
+	return nil
+}
+
+// Provide allows the consul catalog provider to provide configurations to traefik
+// using the given configuration channel.
+func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	pool.Go(func(stop chan bool) {
 		notify := func(err error, time time.Duration) {
 			log.Errorf("Consul connection error %+v, retrying in %s", err, time)
@@ -186,7 +202,7 @@ func (p *Provider) watchCatalogServices(stopCh <-chan struct{}, watchCh chan<- m
 		// variable to hold previous state
 		var flashback map[string]Service
 
-		options := &api.QueryOptions{WaitTime: DefaultWatchWaitTime}
+		options := &api.QueryOptions{WaitTime: DefaultWatchWaitTime, AllowStale: p.Stale}
 
 		for {
 			select {
@@ -211,7 +227,7 @@ func (p *Provider) watchCatalogServices(stopCh <-chan struct{}, watchCh chan<- m
 			if data != nil {
 				current := make(map[string]Service)
 				for key, value := range data {
-					nodes, _, err := catalog.Service(key, "", &api.QueryOptions{})
+					nodes, _, err := catalog.Service(key, "", &api.QueryOptions{AllowStale: p.Stale})
 					if err != nil {
 						log.Errorf("Failed to get detail of service %s: %v", key, err)
 						notifyError(err)
@@ -259,7 +275,7 @@ func (p *Provider) watchHealthState(stopCh <-chan struct{}, watchCh chan<- map[s
 		var flashback map[string][]string
 		var flashbackMaintenance []string
 
-		options := &api.QueryOptions{WaitTime: DefaultWatchWaitTime}
+		options := &api.QueryOptions{WaitTime: DefaultWatchWaitTime, AllowStale: p.Stale}
 
 		for {
 			select {
@@ -305,7 +321,7 @@ func (p *Provider) watchHealthState(stopCh <-chan struct{}, watchCh chan<- map[s
 			options.WaitIndex = meta.LastIndex
 
 			// The response should be unified with watchCatalogServices
-			data, _, err := catalog.Services(&api.QueryOptions{})
+			data, _, err := catalog.Services(&api.QueryOptions{AllowStale: p.Stale})
 			if err != nil {
 				log.Errorf("Failed to list services: %v", err)
 				notifyError(err)
@@ -473,7 +489,7 @@ func getServiceAddresses(services []*api.CatalogService) []string {
 
 func (p *Provider) healthyNodes(service string) (catalogUpdate, error) {
 	health := p.client.Health()
-	data, _, err := health.Service(service, "", true, &api.QueryOptions{})
+	data, _, err := health.Service(service, "", true, &api.QueryOptions{AllowStale: p.Stale})
 	if err != nil {
 		log.WithError(err).Errorf("Failed to fetch details of %s", service)
 		return catalogUpdate{}, err
@@ -549,4 +565,53 @@ func (p *Provider) getConstraintTags(tags []string) []string {
 	}
 
 	return values
+}
+
+func (p *Provider) generateFrontends(service *serviceUpdate) []*serviceUpdate {
+	frontends := make([]*serviceUpdate, 0)
+	// to support <prefix>.frontend.xxx
+	frontends = append(frontends, &serviceUpdate{
+		ServiceName:       service.ServiceName,
+		ParentServiceName: service.ServiceName,
+		Attributes:        service.Attributes,
+		TraefikLabels:     service.TraefikLabels,
+	})
+
+	// loop over children of <prefix>.frontends.*
+	for _, frontend := range getSegments(p.Prefix+".frontends", p.Prefix, service.TraefikLabels) {
+		frontends = append(frontends, &serviceUpdate{
+			ServiceName:       service.ServiceName + "-" + frontend.Name,
+			ParentServiceName: service.ServiceName,
+			Attributes:        service.Attributes,
+			TraefikLabels:     frontend.Labels,
+		})
+	}
+
+	return frontends
+}
+func getSegments(path string, prefix string, tree map[string]string) []*frontendSegment {
+	segments := make([]*frontendSegment, 0)
+	// find segment names
+	segmentNames := make(map[string]bool)
+	for key := range tree {
+		if strings.HasPrefix(key, path+".") {
+			segmentNames[strings.SplitN(strings.TrimPrefix(key, path+"."), ".", 2)[0]] = true
+		}
+	}
+
+	// get labels for each segment found
+	for segment := range segmentNames {
+		labels := make(map[string]string)
+		for key, value := range tree {
+			if strings.HasPrefix(key, path+"."+segment) {
+				labels[prefix+".frontend"+strings.TrimPrefix(key, path+"."+segment)] = value
+			}
+		}
+		segments = append(segments, &frontendSegment{
+			Name:   segment,
+			Labels: labels,
+		})
+	}
+
+	return segments
 }

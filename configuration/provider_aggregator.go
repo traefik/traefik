@@ -2,94 +2,110 @@ package configuration
 
 import (
 	"encoding/json"
-	"reflect"
 
-	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
-	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 )
 
-type providerAggregator struct {
-	providers []provider.Provider
+// ProviderAggregator aggregate providers
+type ProviderAggregator struct {
+	providers   []provider.Provider
+	constraints types.Constraints
 }
 
 // NewProviderAggregator return an aggregate of all the providers configured in GlobalConfiguration
-func NewProviderAggregator(gc *GlobalConfiguration) provider.Provider {
-	provider := providerAggregator{}
+func NewProviderAggregator(gc *GlobalConfiguration) ProviderAggregator {
+	provider := ProviderAggregator{
+		constraints: gc.Constraints,
+	}
 	if gc.Docker != nil {
-		provider.providers = append(provider.providers, gc.Docker)
+		provider.quietAddProvider(gc.Docker)
 	}
 	if gc.Marathon != nil {
-		provider.providers = append(provider.providers, gc.Marathon)
+		provider.quietAddProvider(gc.Marathon)
 	}
 	if gc.File != nil {
-		provider.providers = append(provider.providers, gc.File)
+		provider.quietAddProvider(gc.File)
 	}
 	if gc.Rest != nil {
-		provider.providers = append(provider.providers, gc.Rest)
+		provider.quietAddProvider(gc.Rest)
 	}
 	if gc.Consul != nil {
-		provider.providers = append(provider.providers, gc.Consul)
+		provider.quietAddProvider(gc.Consul)
 	}
 	if gc.ConsulCatalog != nil {
-		provider.providers = append(provider.providers, gc.ConsulCatalog)
+		provider.quietAddProvider(gc.ConsulCatalog)
 	}
 	if gc.Etcd != nil {
-		provider.providers = append(provider.providers, gc.Etcd)
+		provider.quietAddProvider(gc.Etcd)
 	}
 	if gc.Zookeeper != nil {
-		provider.providers = append(provider.providers, gc.Zookeeper)
+		provider.quietAddProvider(gc.Zookeeper)
 	}
 	if gc.Boltdb != nil {
-		provider.providers = append(provider.providers, gc.Boltdb)
+		provider.quietAddProvider(gc.Boltdb)
 	}
 	if gc.Kubernetes != nil {
-		provider.providers = append(provider.providers, gc.Kubernetes)
+		provider.quietAddProvider(gc.Kubernetes)
 	}
 	if gc.Mesos != nil {
-		provider.providers = append(provider.providers, gc.Mesos)
+		provider.quietAddProvider(gc.Mesos)
 	}
 	if gc.Eureka != nil {
-		provider.providers = append(provider.providers, gc.Eureka)
+		provider.quietAddProvider(gc.Eureka)
 	}
 	if gc.ECS != nil {
-		provider.providers = append(provider.providers, gc.ECS)
+		provider.quietAddProvider(gc.ECS)
 	}
 	if gc.Rancher != nil {
-		provider.providers = append(provider.providers, gc.Rancher)
+		provider.quietAddProvider(gc.Rancher)
 	}
 	if gc.DynamoDB != nil {
-		provider.providers = append(provider.providers, gc.DynamoDB)
+		provider.quietAddProvider(gc.DynamoDB)
 	}
 	if gc.ServiceFabric != nil {
-		provider.providers = append(provider.providers, gc.ServiceFabric)
-	}
-	if acmeprovider.IsEnabled() {
-		provider.providers = append(provider.providers, acmeprovider.Get())
-		acme.ConvertToNewFormat(acmeprovider.Get().Storage)
-	}
-	if len(provider.providers) == 1 {
-		return provider.providers[0]
+		provider.quietAddProvider(gc.ServiceFabric)
 	}
 	return provider
 }
 
-func (p providerAggregator) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
+func (p *ProviderAggregator) quietAddProvider(provider provider.Provider) {
+	err := p.AddProvider(provider)
+	if err != nil {
+		log.Errorf("Error initializing provider %T: %v", provider, err)
+	}
+}
+
+// AddProvider add a provider in the providers map
+func (p *ProviderAggregator) AddProvider(provider provider.Provider) error {
+	err := provider.Init(p.constraints)
+	if err != nil {
+		return err
+	}
+	p.providers = append(p.providers, provider)
+	return nil
+}
+
+// Init the provider
+func (p ProviderAggregator) Init(_ types.Constraints) error {
+	return nil
+}
+
+// Provide call the provide method of every providers
+func (p ProviderAggregator) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	for _, p := range p.providers {
-		providerType := reflect.TypeOf(p)
 		jsonConf, err := json.Marshal(p)
 		if err != nil {
-			log.Debugf("Unable to marshal provider conf %v with error: %v", providerType, err)
+			log.Debugf("Unable to marshal provider conf %T with error: %v", p, err)
 		}
-		log.Infof("Starting provider %v %s", providerType, jsonConf)
+		log.Infof("Starting provider %T %s", p, jsonConf)
 		currentProvider := p
 		safe.Go(func() {
-			err := currentProvider.Provide(configurationChan, pool, constraints)
+			err := currentProvider.Provide(configurationChan, pool)
 			if err != nil {
-				log.Errorf("Error starting provider %v: %s", providerType, err)
+				log.Errorf("Error starting provider %T: %v", p, err)
 			}
 		})
 	}

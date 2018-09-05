@@ -1,0 +1,16 @@
+logLevel = "DEBUG"
+defaultEntryPoints = ["http"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":8000"
+
+[api]
+
+[docker]
+exposedByDefault = false
+domain = "docker.local"
+watch = true
+
+[hostResolver]
+cnameFlattening = true

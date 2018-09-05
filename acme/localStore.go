@@ -94,6 +94,7 @@ func ConvertToNewFormat(fileName string) {
 				PrivateKey:   account.PrivateKey,
 				Registration: account.Registration,
 				Email:        account.Email,
+				KeyType:      account.KeyType,
 			}
 
 			var newCertificates []*acme.Certificate
@@ -148,6 +149,7 @@ func FromNewToOldFormat(fileName string) (*Account, error) {
 			PrivateKey:         storeAccount.PrivateKey,
 			Registration:       storeAccount.Registration,
 			DomainsCertificate: DomainsCertificates{},
+			KeyType:            storeAccount.KeyType,
 		}
 	}
 

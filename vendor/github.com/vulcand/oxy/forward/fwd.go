@@ -259,6 +259,8 @@ func New(setters ...optSetter) (*Forwarder, error) {
 		errorHandler: f.errHandler,
 	}
 
+	f.postConfig()
+
 	return f, nil
 }
 
@@ -342,7 +344,7 @@ func (f *httpForwarder) serveWebSocket(w http.ResponseWriter, req *http.Request,
 		// WebSocket is only in http/1.1
 		dialer.TLSClientConfig.NextProtos = []string{"http/1.1"}
 	}
-	targetConn, resp, err := dialer.Dial(outReq.URL.String(), outReq.Header)
+	targetConn, resp, err := dialer.DialContext(outReq.Context(), outReq.URL.String(), outReq.Header)
 	if err != nil {
 		if resp == nil {
 			ctx.errHandler.ServeHTTP(w, req, err)

@@ -9,10 +9,10 @@ import (
 	"github.com/containous/traefik/log"
 )
 
-// Compress is a middleware that allows redirection
+// Compress is a middleware that allows to compress the response
 type Compress struct{}
 
-// ServerHTTP is a function used by Negroni
+// ServeHTTP is a function used by Negroni
 func (c *Compress) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	contentType := r.Header.Get("Content-Type")
 	if strings.HasPrefix(contentType, "application/grpc") {

@@ -18,6 +18,7 @@ logLevel = "INFO"
   [accessLog.filters]
     statusCodes = ["200", "300-302"]
     retryAttempts = true
+    minDuration = "10ms"
 
   [accessLog.fields]
     defaultMode = "keep"
@@ -46,6 +47,7 @@ For more information about the CLI, see the documentation about [Traefik command
 --accessLog.format="json"
 --accessLog.filters.statusCodes="200,300-302"
 --accessLog.filters.retryAttempts="true"
+--accessLog.filters.minDuration="10ms"
 --accessLog.fields.defaultMode="keep"
 --accessLog.fields.names="Username=drop Hostname=drop"
 --accessLog.fields.headers.defaultMode="keep"
@@ -68,23 +70,6 @@ To write JSON format logs, specify `json` as the format:
 [traefikLog]
   filePath = "/path/to/traefik.log"
   format   = "json"
-```
-
-
-Deprecated way (before 1.4):
-
-!!! danger "DEPRECATED"
-    `traefikLogsFile` is deprecated, use [traefikLog](/configuration/logs/#traefik-logs) instead.
-
-```toml
-# Traefik logs file
-# If not defined, logs to stdout
-#
-# DEPRECATED - see [traefikLog] lower down
-# In case both traefikLogsFile and traefikLog.filePath are specified, the latter will take precedence.
-# Optional
-#
-traefikLogsFile = "log/traefik.log"
 ```
 
 To customize the log level:
@@ -124,6 +109,20 @@ filePath = "/path/to/access.log"
 format = "json"
 ```
 
+To write the logs in async, specify `bufferingSize` as the format (must be >0):
+```toml
+[accessLog]
+filePath = "/path/to/access.log"
+# Buffering Size
+#
+# Optional
+# Default: 0
+#
+# Number of access log lines to process in a buffered way.
+#
+bufferingSize = 100
+```
+
 To filter logs you can specify a set of filters which are logically "OR-connected". Thus, specifying multiple filters will keep more access logs than specifying only one:
 ```toml
 [accessLog]
@@ -132,19 +131,26 @@ format = "json"
 
   [accessLog.filters]
 
-  # statusCodes keep access logs with status codes in the specified range
+  # statusCodes: keep access logs with status codes in the specified range
   #
   # Optional
   # Default: []
   #
   statusCodes = ["200", "300-302"]
 
-  # retryAttempts keep access logs when at least one retry happened
+  # retryAttempts: keep access logs when at least one retry happened
   #
   # Optional
   # Default: false
   #
   retryAttempts = true
+
+  # minDuration: keep access logs when request took longer than the specified duration
+  #
+  # Optional
+  # Default: 0
+  #
+  minDuration = "10ms"
 ```
 
 To customize logs format:
@@ -228,19 +234,6 @@ RequestCount
 GzipRatio
 Overhead
 RetryAttempts
-```
-
-Deprecated way (before 1.4):
-
-!!! danger "DEPRECATED"
-    `accessLogsFile` is deprecated, use [accessLog](/configuration/logs/#access-logs) instead.
-
-```toml
-# Access logs file
-#
-# DEPRECATED - see [accessLog]
-#
-accessLogsFile = "log/access.log"
 ```
 
 ## Log Rotation

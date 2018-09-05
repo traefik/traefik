@@ -32,7 +32,7 @@ type Item struct {
 	Application Application `json:"app"`
 }
 
-// Delay cotains the application postpone infomation
+// Delay cotains the application postpone information
 type Delay struct {
 	Overdue         bool `json:"overdue"`
 	TimeLeftSeconds int  `json:"timeLeftSeconds"`

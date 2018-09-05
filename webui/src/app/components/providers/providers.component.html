@@ -161,12 +161,85 @@
                       </div>
                     </div>
 
-                    <div *ngIf="p.basicAuth && p.basicAuth.length">
+                    <div *ngIf="p.auth">
                       <hr/>
                       <div class="section-line">
-                        <h2 class="section-line-header">Basic Authentication</h2>
-                        <div class="tags padding-5-10">
-                          <span class="tag is-info" *ngFor="let auth of p.basicAuth">{{ auth }}</span>
+                        <div *ngIf="p.auth.basic && (p.auth.basic.users || p.auth.basic.usersFile )">
+                          <h2 class="section-line-header">Basic Authentication</h2>
+                          <table class="table is-fullwidth is-hoverable">
+                            <tbody>
+                            <tr *ngIf="p.auth.basic.usersFile">
+                              <td><span class="has-text-grey-light">Users File</span></td>
+                              <td><span class="has-text-grey">{{ p.auth.basic.usersFile }}</span></td>
+                            </tr>
+                            <tr *ngIf="p.auth.headerField">
+                              <td><span class="has-text-grey-light">Header Field</span></td>
+                              <td><span class="has-text-grey">{{ p.auth.headerField }}</span></td>
+                            </tr>
+                            <tr>
+                              <td><span class="has-text-grey-light">Remove Auth Header</span></td>
+                              <td><span class="has-text-grey">{{ !!p.auth.basic.removeHeader }}</span></td>
+                            </tr>
+                            <tr *ngIf="p.auth.basic.users?.length">
+                              <td><span class="has-text-grey-light">Users</span></td>
+                              <td>
+                                <div *ngFor="let user of p.auth.basic.users" class="padding-5-10">
+                                  <code class="has-text-grey">{{ user }}</code>
+                                </div>
+                              </td>
+                            </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <div *ngIf="p.auth.digest && (p.auth.digest.users || p.auth.digest.usersFile )">
+                          <h2 class="section-line-header">Digest Authentication</h2>
+                          <table class="table is-fullwidth is-hoverable">
+                            <tbody>
+                            <tr *ngIf="p.auth.digest.usersFile">
+                              <td><span class="has-text-grey-light">Users File</span></td>
+                              <td><span class="has-text-grey">{{ p.auth.digest.usersFile }}</span></td>
+                            </tr>
+                            <tr *ngIf="p.auth.headerField">
+                              <td><span class="has-text-grey-light">Header Field</span></td>
+                              <td><span class="has-text-grey">{{ p.auth.headerField }}</span></td>
+                            </tr>
+                            <tr>
+                              <td><span class="has-text-grey-light">Remove Auth Header</span></td>
+                              <td><span class="has-text-grey">{{ !!p.auth.digest.removeHeader }}</span></td>
+                            </tr>
+                            <tr *ngIf="p.auth.digest.users?.length">
+                              <td><span class="has-text-grey-light">Users</span></td>
+                              <td>
+                                <div *ngFor="let user of p.auth.digest.users" class="padding-5-10">
+                                  <code class="has-text-grey">{{ user }}</code>
+                                </div>
+                              </td>
+                            </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <div *ngIf="p.auth.forward && p.auth.forward.address">
+                          <h2 class="section-line-header">Forward Authentication</h2>
+                          <table class="table is-fullwidth is-hoverable">
+                          <tbody>
+                            <tr>
+                            <td><span class="has-text-grey-light">Address</span></td>
+                          <td><span class="has-text-grey">{{ p.auth.forward.address }}</span></td>
+                            </tr>
+                            <tr>
+                            <td><span class="has-text-grey-light">Trust Forward Header</span></td>
+                          <td><span class="has-text-grey">{{ p.auth.forward.trustForwardHeader }}</span></td>
+                            </tr>
+                            <tr *ngIf="p.auth.forward.authResponseHeaders?.length">
+                            <td><span class="has-text-grey-light">Response Headers</span></td>
+                              <td>
+                                <div *ngFor="let respHeader of p.auth.forward.authResponseHeaders">
+                                  <span class="has-text-grey">{{ respHeader }}</span>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                          </table>
                         </div>
                       </div>
                     </div>
@@ -301,6 +374,10 @@
                                 <tr *ngIf="p.headers.sslHost">
                                   <td><span class="has-text-grey">SSL Host</span></td>
                                   <td><span class="has-text-grey">{{ p.headers.sslHost }}</span></td>
+                                </tr>
+                                <tr *ngIf="p.headers.sslForceHost">
+                                  <td><span class="has-text-grey">SSL Host</span></td>
+                                  <td><span class="has-text-grey">{{ p.headers.sslForceHost }}</span></td>
                                 </tr>
                                 <tr *ngIf="p.headers.sslRedirect">
                                   <td><span class="has-text-grey">SSL Redirect</span></td>
@@ -514,16 +591,22 @@
                                 <span class="tag is-info">{{ p.healthCheck.path }}</span>
                               </div>
                             </div>
+                            <div class="control" *ngIf="p.healthCheck.interval">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">Interval</span>
+                                <span class="tag is-info">{{ p.healthCheck.interval }}</span>
+                              </div>
+                            </div>
                             <div class="control" *ngIf="p.healthCheck.port">
                               <div class="tags has-addons">
                                 <span class="tag is-light">Port</span>
                                 <span class="tag is-info">{{ p.healthCheck.port }}</span>
                               </div>
                             </div>
-                            <div class="control" *ngIf="p.healthCheck.interval">
+                            <div class="control" *ngIf="p.healthCheck.scheme">
                               <div class="tags has-addons">
-                                <span class="tag is-light">Interval</span>
-                                <span class="tag is-info">{{ p.healthCheck.interval }}</span>
+                                <span class="tag is-light">Scheme</span>
+                                <span class="tag is-info">{{ p.healthCheck.scheme }}</span>
                               </div>
                             </div>
                             <div class="control" *ngIf="p.healthCheck.hostname">

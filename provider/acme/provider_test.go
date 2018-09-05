@@ -5,8 +5,10 @@ import (
 	"testing"
 
 	"github.com/containous/traefik/safe"
+	traefiktls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/xenolf/lego/acme"
 )
 
 func TestGetUncheckedCertificates(t *testing.T) {
@@ -25,7 +27,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 	testCases := []struct {
 		desc             string
 		dynamicCerts     *safe.Safe
-		staticCerts      map[string]*tls.Certificate
+		staticCerts      *safe.Safe
 		resolvingDomains map[string]struct{}
 		acmeCertificates []*Certificate
 		domains          []string
@@ -45,7 +47,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 		{
 			desc:            "wildcard already exists in static certificates",
 			domains:         []string{"*.traefik.wtf"},
-			staticCerts:     wildcardMap,
+			staticCerts:     wildcardSafe,
 			expectedDomains: nil,
 		},
 		{
@@ -72,7 +74,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 		{
 			desc:            "domain CN already exists in static certificates and SANs to generate",
 			domains:         []string{"traefik.wtf", "foo.traefik.wtf"},
-			staticCerts:     domainMap,
+			staticCerts:     domainSafe,
 			expectedDomains: []string{"foo.traefik.wtf"},
 		},
 		{
@@ -94,7 +96,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 		{
 			desc:            "domain already exists in static certificates",
 			domains:         []string{"traefik.wtf"},
-			staticCerts:     domainMap,
+			staticCerts:     domainSafe,
 			expectedDomains: nil,
 		},
 		{
@@ -116,7 +118,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 		{
 			desc:            "domain matched by wildcard in static certificates",
 			domains:         []string{"who.traefik.wtf", "foo.traefik.wtf"},
-			staticCerts:     wildcardMap,
+			staticCerts:     wildcardSafe,
 			expectedDomains: nil,
 		},
 		{
@@ -177,15 +179,18 @@ func TestGetUncheckedCertificates(t *testing.T) {
 
 	for _, test := range testCases {
 		test := test
-		if test.resolvingDomains == nil {
-			test.resolvingDomains = make(map[string]struct{})
-		}
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
+			if test.resolvingDomains == nil {
+				test.resolvingDomains = make(map[string]struct{})
+			}
+
 			acmeProvider := Provider{
-				dynamicCerts:     test.dynamicCerts,
-				staticCerts:      test.staticCerts,
+				certificateStore: &traefiktls.CertificateStore{
+					DynamicCerts: test.dynamicCerts,
+					StaticCerts:  test.staticCerts,
+				},
 				certificates:     test.acmeCertificates,
 				resolvingDomains: test.resolvingDomains,
 			}
@@ -462,6 +467,218 @@ func TestDeleteUnnecessaryDomains(t *testing.T) {
 
 			acmeProvider.deleteUnnecessaryDomains()
 			assert.Equal(t, test.expectedDomains, acmeProvider.Domains, "unexpected domain")
+		})
+	}
+}
+
+func TestIsAccountMatchingCaServer(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		accountURI string
+		serverURI  string
+		expected   bool
+	}{
+		{
+			desc:       "acme staging with matching account",
+			accountURI: "https://acme-staging-v02.api.letsencrypt.org/acme/acct/1234567",
+			serverURI:  "https://acme-staging-v02.api.letsencrypt.org/acme/directory",
+			expected:   true,
+		},
+		{
+			desc:       "acme production with matching account",
+			accountURI: "https://acme-v02.api.letsencrypt.org/acme/acct/1234567",
+			serverURI:  "https://acme-v02.api.letsencrypt.org/acme/directory",
+			expected:   true,
+		},
+		{
+			desc:       "http only acme with matching account",
+			accountURI: "http://acme.api.letsencrypt.org/acme/acct/1234567",
+			serverURI:  "http://acme.api.letsencrypt.org/acme/directory",
+			expected:   true,
+		},
+		{
+			desc:       "different subdomains for account and server",
+			accountURI: "https://test1.example.org/acme/acct/1234567",
+			serverURI:  "https://test2.example.org/acme/directory",
+			expected:   false,
+		},
+		{
+			desc:       "different domains for account and server",
+			accountURI: "https://test.example1.org/acme/acct/1234567",
+			serverURI:  "https://test.example2.org/acme/directory",
+			expected:   false,
+		},
+		{
+			desc:       "different tld for account and server",
+			accountURI: "https://test.example.com/acme/acct/1234567",
+			serverURI:  "https://test.example.org/acme/directory",
+			expected:   false,
+		},
+		{
+			desc:       "malformed account url",
+			accountURI: "//|\\/test.example.com/acme/acct/1234567",
+			serverURI:  "https://test.example.com/acme/directory",
+			expected:   false,
+		},
+		{
+			desc:       "malformed server url",
+			accountURI: "https://test.example.com/acme/acct/1234567",
+			serverURI:  "//|\\/test.example.com/acme/directory",
+			expected:   false,
+		},
+		{
+			desc:       "malformed server and account url",
+			accountURI: "//|\\/test.example.com/acme/acct/1234567",
+			serverURI:  "//|\\/test.example.com/acme/directory",
+			expected:   false,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := isAccountMatchingCaServer(test.accountURI, test.serverURI)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestUseBackOffToObtainCertificate(t *testing.T) {
+	testCases := []struct {
+		desc             string
+		domains          []string
+		dnsChallenge     *DNSChallenge
+		expectedResponse bool
+	}{
+		{
+			desc:             "only one single domain",
+			domains:          []string{"acme.wtf"},
+			dnsChallenge:     &DNSChallenge{},
+			expectedResponse: false,
+		},
+		{
+			desc:             "only one wildcard domain",
+			domains:          []string{"*.acme.wtf"},
+			dnsChallenge:     &DNSChallenge{},
+			expectedResponse: false,
+		},
+		{
+			desc:             "wildcard domain with no root domain",
+			domains:          []string{"*.acme.wtf", "foo.acme.wtf", "bar.acme.wtf", "foo.bar"},
+			dnsChallenge:     &DNSChallenge{},
+			expectedResponse: false,
+		},
+		{
+			desc:             "wildcard and root domain",
+			domains:          []string{"*.acme.wtf", "foo.acme.wtf", "bar.acme.wtf", "acme.wtf"},
+			dnsChallenge:     &DNSChallenge{},
+			expectedResponse: true,
+		},
+		{
+			desc:             "wildcard and root domain but no DNS challenge",
+			domains:          []string{"*.acme.wtf", "acme.wtf"},
+			dnsChallenge:     nil,
+			expectedResponse: false,
+		},
+		{
+			desc:             "two wildcard domains (must never happen)",
+			domains:          []string{"*.acme.wtf", "*.bar.foo"},
+			dnsChallenge:     nil,
+			expectedResponse: false,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			acmeProvider := Provider{Configuration: &Configuration{DNSChallenge: test.dnsChallenge}}
+
+			actualResponse := acmeProvider.useCertificateWithRetry(test.domains)
+			assert.Equal(t, test.expectedResponse, actualResponse, "unexpected response to use backOff")
+		})
+	}
+}
+
+func TestInitAccount(t *testing.T) {
+	testCases := []struct {
+		desc            string
+		account         *Account
+		email           string
+		keyType         string
+		expectedAccount *Account
+	}{
+		{
+			desc: "Existing account with all information",
+			account: &Account{
+				Email:   "foo@foo.net",
+				KeyType: acme.EC256,
+			},
+			expectedAccount: &Account{
+				Email:   "foo@foo.net",
+				KeyType: acme.EC256,
+			},
+		},
+		{
+			desc:    "Account nil",
+			email:   "foo@foo.net",
+			keyType: "EC256",
+			expectedAccount: &Account{
+				Email:   "foo@foo.net",
+				KeyType: acme.EC256,
+			},
+		},
+		{
+			desc: "Existing account with no email",
+			account: &Account{
+				KeyType: acme.RSA4096,
+			},
+			email:   "foo@foo.net",
+			keyType: "EC256",
+			expectedAccount: &Account{
+				Email:   "foo@foo.net",
+				KeyType: acme.EC256,
+			},
+		},
+		{
+			desc: "Existing account with no key type",
+			account: &Account{
+				Email: "foo@foo.net",
+			},
+			email:   "bar@foo.net",
+			keyType: "EC256",
+			expectedAccount: &Account{
+				Email:   "foo@foo.net",
+				KeyType: acme.EC256,
+			},
+		},
+		{
+			desc: "Existing account and provider with no key type",
+			account: &Account{
+				Email: "foo@foo.net",
+			},
+			email: "bar@foo.net",
+			expectedAccount: &Account{
+				Email:   "foo@foo.net",
+				KeyType: acme.RSA4096,
+			},
+		},
+	}
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			acmeProvider := Provider{account: test.account, Configuration: &Configuration{Email: test.email, KeyType: test.keyType}}
+
+			actualAccount, err := acmeProvider.initAccount()
+			assert.Nil(t, err, "Init account in error")
+			assert.Equal(t, test.expectedAccount.Email, actualAccount.Email, "unexpected email account")
+			assert.Equal(t, test.expectedAccount.KeyType, actualAccount.KeyType, "unexpected keyType account")
 		})
 	}
 }

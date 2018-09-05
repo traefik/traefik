@@ -17,13 +17,10 @@ theme:
   favicon: img/traefik.icon.png
   logo: img/traefik.logo.png
   palette:
-    primary: 'blue'
-    accent: 'light blue'
-  feature:
-    tabs: false
-  palette:
     primary: 'cyan'
     accent: 'cyan'
+  feature:
+    tabs: false
   i18n:
     prev: 'Previous'
     next: 'Next'
@@ -43,9 +40,9 @@ google_analytics:
 #    - type: 'stack-overflow'
 #      link: 'https://stackoverflow.com/questions/tagged/traefik'
 #    - type: 'slack'
-#      link: 'https://traefik.herokuapp.com'
+#      link: 'https://slack.traefik.io'
 #    - type: 'twitter'
-#      link: 'https://twitter.com/traefikproxy'
+#      link: 'https://twitter.com/traefik'
 
 extra_css:
   - theme/styles/extra.css
@@ -89,7 +86,6 @@ pages:
     - 'Ping': 'configuration/ping.md'
     - 'Metrics': 'configuration/metrics.md'
     - 'Tracing': 'configuration/tracing.md'
-    - 'Web (Deprecated)': 'configuration/backends/web.md'
   - User Guides:
     - 'Configuration Examples': 'user-guide/examples.md'
     - 'Swarm Mode Cluster': 'user-guide/swarm-mode.md'

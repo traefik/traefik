@@ -24,7 +24,7 @@ import (
 
 var _ provider.Provider = (*Provider)(nil)
 
-//Provider holds configuration of the provider.
+// Provider holds configuration of the provider.
 type Provider struct {
 	provider.BaseProvider
 	Endpoint           string `description:"Mesos server endpoint. You can also specify multiple endpoint for Mesos"`
@@ -38,9 +38,14 @@ type Provider struct {
 	Masters            []string
 }
 
+// Init the provider
+func (p *Provider) Init(constraints types.Constraints) error {
+	return p.BaseProvider.Init(constraints)
+}
+
 // Provide allows the mesos provider to provide configurations to traefik
 // using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
+func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	operation := func() error {
 
 		// initialize logging

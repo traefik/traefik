@@ -78,7 +78,7 @@ func (d *Datastore) watchChanges() error {
 	stopCh := make(chan struct{})
 	kvCh, err := d.kv.Watch(d.lockKey, stopCh, nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("error while watching key %s: %v", d.lockKey, err)
 	}
 	safe.Go(func() {
 		ctx, cancel := context.WithCancel(d.ctx)
@@ -152,7 +152,7 @@ func (d *Datastore) Begin() (Transaction, Object, error) {
 	operation := func() error {
 		meta := d.get()
 		if meta.Lock != id {
-			return fmt.Errorf("Object lock value: expected %s, got %s", id, meta.Lock)
+			return fmt.Errorf("object lock value: expected %s, got %s", id, meta.Lock)
 		}
 		return nil
 	}
@@ -167,7 +167,7 @@ func (d *Datastore) Begin() (Transaction, Object, error) {
 	ebo.MaxElapsedTime = 60 * time.Second
 	err = backoff.RetryNotify(safe.OperationWithRecover(operation), ebo, notify)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Datastore cannot sync: %v", err)
+		return nil, nil, fmt.Errorf("datastore cannot sync: %v", err)
 	}
 
 	// we synced with KV store, we can now return Setter
@@ -224,21 +224,21 @@ func (s *datastoreTransaction) Commit(object Object) error {
 	s.localLock.Lock()
 	defer s.localLock.Unlock()
 	if s.dirty {
-		return fmt.Errorf("Transaction already used, please begin a new one")
+		return fmt.Errorf("transaction already used, please begin a new one")
 	}
 	s.Datastore.meta.object = object
 	err := s.Datastore.meta.Marshall()
 	if err != nil {
-		return fmt.Errorf("Marshall error: %s", err)
+		return fmt.Errorf("marshall error: %s", err)
 	}
 	err = s.kv.StoreConfig(s.Datastore.meta)
 	if err != nil {
-		return fmt.Errorf("StoreConfig error: %s", err)
+		return fmt.Errorf("storeConfig error: %s", err)
 	}
 
 	err = s.remoteLock.Unlock()
 	if err != nil {
-		return fmt.Errorf("Unlock error: %s", err)
+		return fmt.Errorf("unlock error: %s", err)
 	}
 
 	s.dirty = true

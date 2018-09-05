@@ -24,6 +24,7 @@ const (
 	marathonAPIEventStream  = marathonAPIVersion + "/events"
 	marathonAPISubscription = marathonAPIVersion + "/eventSubscriptions"
 	marathonAPIApps         = marathonAPIVersion + "/apps"
+	marathonAPIPods         = marathonAPIVersion + "/pods"
 	marathonAPITasks        = marathonAPIVersion + "/tasks"
 	marathonAPIDeployments  = marathonAPIVersion + "/deployments"
 	marathonAPIGroups       = marathonAPIVersion + "/groups"

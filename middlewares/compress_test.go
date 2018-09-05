@@ -29,7 +29,8 @@ func TestShouldCompressWhenNoContentEncodingHeader(t *testing.T) {
 
 	baseBody := generateBytes(gziphandler.DefaultMinSize)
 	next := func(rw http.ResponseWriter, r *http.Request) {
-		rw.Write(baseBody)
+		_, err := rw.Write(baseBody)
+		assert.NoError(t, err)
 	}
 
 	rw := httptest.NewRecorder()

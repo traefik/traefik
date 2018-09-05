@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -93,12 +93,12 @@ func TestParseRateSets(t *testing.T) {
 			},
 			expected: map[string]*types.Rate{
 				"foo": {
-					Period:  flaeg.Duration(6 * time.Second),
+					Period:  parse.Duration(6 * time.Second),
 					Average: 12,
 					Burst:   18,
 				},
 				"bar": {
-					Period:  flaeg.Duration(3 * time.Second),
+					Period:  parse.Duration(3 * time.Second),
 					Average: 6,
 					Burst:   9,
 				},
@@ -135,18 +135,6 @@ func TestWhiteList(t *testing.T) {
 			expected: nil,
 		},
 		{
-			desc: "should return a struct when deprecated label",
-			labels: map[string]string{
-				TraefikFrontendWhitelistSourceRange: "10.10.10.10",
-			},
-			expected: &types.WhiteList{
-				SourceRange: []string{
-					"10.10.10.10",
-				},
-				UseXForwardedFor: false,
-			},
-		},
-		{
 			desc: "should return a struct when only range",
 			labels: map[string]string{
 				TraefikFrontendWhiteListSourceRange: "10.10.10.10",
@@ -155,42 +143,75 @@ func TestWhiteList(t *testing.T) {
 				SourceRange: []string{
 					"10.10.10.10",
 				},
-				UseXForwardedFor: false,
 			},
 		},
 		{
-			desc: "should return a struct when range and UseXForwardedFor",
+			desc: "should return a struct with ip strategy depth",
 			labels: map[string]string{
-				TraefikFrontendWhiteListSourceRange:      "10.10.10.10",
-				TraefikFrontendWhiteListUseXForwardedFor: "true",
+				TraefikFrontendWhiteListSourceRange:     "10.10.10.10",
+				TraefikFrontendWhiteListIPStrategyDepth: "5",
 			},
 			expected: &types.WhiteList{
 				SourceRange: []string{
 					"10.10.10.10",
 				},
-				UseXForwardedFor: true,
+				IPStrategy: &types.IPStrategy{
+					Depth: 5,
+				},
 			},
 		},
 		{
-			desc: "should return a struct when mix deprecated label and new labels",
+			desc: "should return a struct with ip strategy depth and excluded ips",
 			labels: map[string]string{
-				TraefikFrontendWhitelistSourceRange:      "20.20.20.20",
-				TraefikFrontendWhiteListSourceRange:      "10.10.10.10",
-				TraefikFrontendWhiteListUseXForwardedFor: "true",
+				TraefikFrontendWhiteListSourceRange:           "10.10.10.10",
+				TraefikFrontendWhiteListIPStrategyDepth:       "5",
+				TraefikFrontendWhiteListIPStrategyExcludedIPS: "10.10.10.10,10.10.10.11",
 			},
 			expected: &types.WhiteList{
 				SourceRange: []string{
 					"10.10.10.10",
 				},
-				UseXForwardedFor: true,
+				IPStrategy: &types.IPStrategy{
+					Depth: 5,
+					ExcludedIPs: []string{
+						"10.10.10.10",
+						"10.10.10.11",
+					},
+				},
 			},
 		},
 		{
-			desc: "should return nil when only UseXForwardedFor",
+			desc: "should return a struct with ip strategy (remoteAddr) with no depth and no excludedIPs",
 			labels: map[string]string{
-				TraefikFrontendWhiteListUseXForwardedFor: "true",
+				TraefikFrontendWhiteListSourceRange: "10.10.10.10",
+				TraefikFrontendWhiteListIPStrategy:  "true",
 			},
-			expected: nil,
+			expected: &types.WhiteList{
+				SourceRange: []string{
+					"10.10.10.10",
+				},
+				IPStrategy: &types.IPStrategy{
+					Depth:       0,
+					ExcludedIPs: nil,
+				},
+			},
+		},
+		{
+			desc: "should return a struct with ip strategy with depth",
+			labels: map[string]string{
+				TraefikFrontendWhiteListSourceRange:     "10.10.10.10",
+				TraefikFrontendWhiteListIPStrategy:      "true",
+				TraefikFrontendWhiteListIPStrategyDepth: "5",
+			},
+			expected: &types.WhiteList{
+				SourceRange: []string{
+					"10.10.10.10",
+				},
+				IPStrategy: &types.IPStrategy{
+					Depth:       5,
+					ExcludedIPs: nil,
+				},
+			},
 		},
 	}
 
@@ -254,13 +275,11 @@ func TestGetLoadBalancer(t *testing.T) {
 			desc: "should return a struct when labels are set",
 			labels: map[string]string{
 				TraefikBackendLoadBalancerMethod:               "drr",
-				TraefikBackendLoadBalancerSticky:               "true",
 				TraefikBackendLoadBalancerStickiness:           "true",
 				TraefikBackendLoadBalancerStickinessCookieName: "foo",
 			},
 			expected: &types.LoadBalancer{
 				Method: "drr",
-				Sticky: true,
 				Stickiness: &types.Stickiness{
 					CookieName: "foo",
 				},
@@ -270,12 +289,10 @@ func TestGetLoadBalancer(t *testing.T) {
 			desc: "should return a nil Stickiness when Stickiness is not set",
 			labels: map[string]string{
 				TraefikBackendLoadBalancerMethod:               "drr",
-				TraefikBackendLoadBalancerSticky:               "true",
 				TraefikBackendLoadBalancerStickinessCookieName: "foo",
 			},
 			expected: &types.LoadBalancer{
 				Method:     "drr",
-				Sticky:     true,
 				Stickiness: nil,
 			},
 		},
@@ -371,11 +388,20 @@ func TestGetHealthCheck(t *testing.T) {
 				TraefikBackendHealthCheckPath:     "/health",
 				TraefikBackendHealthCheckPort:     "80",
 				TraefikBackendHealthCheckInterval: "6",
+				TraefikBackendHealthCheckHeaders:  "Foo:bar || Goo:bir",
+				TraefikBackendHealthCheckHostname: "traefik",
+				TraefikBackendHealthCheckScheme:   "http",
 			},
 			expected: &types.HealthCheck{
+				Scheme:   "http",
 				Path:     "/health",
 				Port:     80,
 				Interval: "6",
+				Hostname: "traefik",
+				Headers: map[string]string{
+					"Foo": "bar",
+					"Goo": "bir",
+				},
 			},
 		},
 	}
@@ -541,12 +567,12 @@ func TestGetRateLimit(t *testing.T) {
 				ExtractorFunc: "client.ip",
 				RateSet: map[string]*types.Rate{
 					"foo": {
-						Period:  flaeg.Duration(6 * time.Second),
+						Period:  parse.Duration(6 * time.Second),
 						Average: 12,
 						Burst:   18,
 					},
 					"bar": {
-						Period:  flaeg.Duration(3 * time.Second),
+						Period:  parse.Duration(3 * time.Second),
 						Average: 6,
 						Burst:   9,
 					},
@@ -606,6 +632,7 @@ func TestGetHeaders(t *testing.T) {
 				TraefikFrontendCustomBrowserXSSValue:   "foo",
 				TraefikFrontendSTSSeconds:              "666",
 				TraefikFrontendSSLRedirect:             "true",
+				TraefikFrontendSSLForceHost:            "true",
 				TraefikFrontendSSLTemporaryRedirect:    "true",
 				TraefikFrontendSTSIncludeSubdomains:    "true",
 				TraefikFrontendSTSPreload:              "true",
@@ -637,6 +664,7 @@ func TestGetHeaders(t *testing.T) {
 				ReferrerPolicy:          "foo",
 				CustomBrowserXSSValue:   "foo",
 				STSSeconds:              666,
+				SSLForceHost:            true,
 				SSLRedirect:             true,
 				SSLTemporaryRedirect:    true,
 				STSIncludeSubdomains:    true,
@@ -704,6 +732,84 @@ func TestProviderGetErrorPages(t *testing.T) {
 			t.Parallel()
 
 			result := GetErrorPages(test.labels)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestGetAuth(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		labels   map[string]string
+		expected *types.Auth
+	}{
+		{
+			desc:     "should return nil when no tags",
+			labels:   map[string]string{},
+			expected: nil,
+		},
+		{
+			desc: "should return a basic auth",
+			labels: map[string]string{
+				TraefikFrontendAuthHeaderField:       "myHeaderField",
+				TraefikFrontendAuthBasicUsers:        "user:pwd,user2:pwd2",
+				TraefikFrontendAuthBasicUsersFile:    "myUsersFile",
+				TraefikFrontendAuthBasicRemoveHeader: "true",
+			},
+			expected: &types.Auth{
+				HeaderField: "myHeaderField",
+				Basic:       &types.Basic{UsersFile: "myUsersFile", Users: []string{"user:pwd", "user2:pwd2"}, RemoveHeader: true},
+			},
+		},
+		{
+			desc: "should return a digest auth",
+			labels: map[string]string{
+				TraefikFrontendAuthDigestRemoveHeader: "true",
+				TraefikFrontendAuthHeaderField:        "myHeaderField",
+				TraefikFrontendAuthDigestUsers:        "user:pwd,user2:pwd2",
+				TraefikFrontendAuthDigestUsersFile:    "myUsersFile",
+			},
+			expected: &types.Auth{
+				HeaderField: "myHeaderField",
+				Digest:      &types.Digest{UsersFile: "myUsersFile", Users: []string{"user:pwd", "user2:pwd2"}, RemoveHeader: true},
+			},
+		},
+		{
+			desc: "should return a forward auth",
+			labels: map[string]string{
+				TraefikFrontendAuthHeaderField:                  "myHeaderField",
+				TraefikFrontendAuthForwardAddress:               "myAddress",
+				TraefikFrontendAuthForwardTrustForwardHeader:    "true",
+				TraefikFrontendAuthForwardTLSCa:                 "ca.crt",
+				TraefikFrontendAuthForwardTLSCaOptional:         "true",
+				TraefikFrontendAuthForwardTLSInsecureSkipVerify: "true",
+				TraefikFrontendAuthForwardTLSKey:                "myKey",
+				TraefikFrontendAuthForwardTLSCert:               "myCert",
+			},
+			expected: &types.Auth{
+				HeaderField: "myHeaderField",
+				Forward: &types.Forward{
+					TrustForwardHeader: true,
+					Address:            "myAddress",
+					TLS: &types.ClientTLS{
+						InsecureSkipVerify: true,
+						CA:                 "ca.crt",
+						CAOptional:         true,
+						Key:                "myKey",
+						Cert:               "myCert",
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := GetAuth(test.labels)
 
 			assert.Equal(t, test.expected, result)
 		})

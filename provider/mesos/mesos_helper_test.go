@@ -1,8 +1,10 @@
 package mesos
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/containous/traefik/provider/label"
 	"github.com/mesosphere/mesos-dns/records/state"
 	"github.com/stretchr/testify/assert"
 )
@@ -35,7 +37,7 @@ func TestBuilder(t *testing.T) {
 		DiscoveryInfo: state.DiscoveryInfo{
 			Name: "name1",
 			Labels: struct {
-				Labels []state.Label "json:\"labels\""
+				Labels []state.Label `json:"labels"`
 			}{},
 			Ports: state.Ports{DiscoveryPorts: []state.DiscoveryPort{
 				{Protocol: "TCP", Number: 80, Name: "p"},
@@ -48,12 +50,29 @@ func TestBuilder(t *testing.T) {
 	assert.Equal(t, expected, result)
 }
 
-func aTaskData(id string, ops ...func(*state.Task)) taskData {
+func aTaskData(id, segment string, ops ...func(*state.Task)) taskData {
 	ts := &state.Task{ID: id}
 	for _, op := range ops {
 		op(ts)
 	}
-	return taskData{Task: *ts, TraefikLabels: extractLabels(*ts)}
+	lbls := label.ExtractTraefikLabels(extractLabels(*ts))
+	if len(lbls[segment]) > 0 {
+		return taskData{Task: *ts, TraefikLabels: lbls[segment], SegmentName: segment}
+	}
+	return taskData{Task: *ts, TraefikLabels: lbls[""], SegmentName: segment}
+}
+
+func segmentedTaskData(segments []string, ts state.Task) []taskData {
+	var td []taskData
+	lbls := label.ExtractTraefikLabels(extractLabels(ts))
+	for _, s := range segments {
+		if l, ok := lbls[s]; !ok {
+			td = append(td, taskData{Task: ts, TraefikLabels: lbls[""], SegmentName: s})
+		} else {
+			td = append(td, taskData{Task: ts, TraefikLabels: l, SegmentName: s})
+		}
+	}
+	return td
 }
 
 func aTask(id string, ops ...func(*state.Task)) state.Task {
@@ -144,6 +163,18 @@ func withState(st string) func(*state.Status) {
 func withLabel(key, value string) func(*state.Task) {
 	return func(task *state.Task) {
 		lbl := state.Label{Key: key, Value: value}
+		task.Labels = append(task.Labels, lbl)
+	}
+}
+
+func withSegmentLabel(key, value, segmentName string) func(*state.Task) {
+	if len(segmentName) == 0 {
+		panic("segmentName can not be empty")
+	}
+
+	property := strings.TrimPrefix(key, label.Prefix)
+	return func(task *state.Task) {
+		lbl := state.Label{Key: label.Prefix + segmentName + "." + property, Value: value}
 		task.Labels = append(task.Labels, lbl)
 	}
 }

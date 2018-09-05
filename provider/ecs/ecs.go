@@ -10,7 +10,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
-	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ecs"
@@ -34,7 +33,6 @@ type Provider struct {
 
 	// Provider lookup parameters
 	Clusters             Clusters `description:"ECS Clusters name"`
-	Cluster              string   `description:"deprecated - ECS Cluster name"` // deprecated
 	AutoDiscoverClusters bool     `description:"Auto discover cluster" export:"true"`
 	Region               string   `description:"The AWS region to use for requests" export:"true"`
 	AccessKeyID          string   `description:"The AWS credentials access key to use for making requests"`
@@ -44,12 +42,22 @@ type Provider struct {
 type ecsInstance struct {
 	Name                string
 	ID                  string
-	task                *ecs.Task
-	taskDefinition      *ecs.TaskDefinition
-	container           *ecs.Container
 	containerDefinition *ecs.ContainerDefinition
-	machine             *ec2.Instance
+	machine             *machine
 	TraefikLabels       map[string]string
+	SegmentLabels       map[string]string
+	SegmentName         string
+}
+
+type portMapping struct {
+	containerPort int64
+	hostPort      int64
+}
+
+type machine struct {
+	state     string
+	privateIP string
+	ports     []portMapping
 }
 
 type awsClient struct {
@@ -57,11 +65,17 @@ type awsClient struct {
 	ec2 *ec2.EC2
 }
 
+// Init the provider
+func (p *Provider) Init(constraints types.Constraints) error {
+	return p.BaseProvider.Init(constraints)
+}
+
 func (p *Provider) createClient() (*awsClient, error) {
 	sess, err := session.NewSession()
 	if err != nil {
 		return nil, err
 	}
+
 	ec2meta := ec2metadata.New(sess)
 	if p.Region == "" {
 		log.Infoln("No EC2 region provided, querying instance metadata endpoint...")
@@ -95,16 +109,14 @@ func (p *Provider) createClient() (*awsClient, error) {
 	}
 
 	return &awsClient{
-		ecs.New(sess, cfg),
-		ec2.New(sess, cfg),
+		ecs: ecs.New(sess, cfg),
+		ec2: ec2.New(sess, cfg),
 	}, nil
 }
 
 // Provide allows the ecs provider to provide configurations to traefik
 // using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
-	p.Constraints = append(p.Constraints, constraints...)
-
+func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	handleCanceled := func(ctx context.Context, err error) error {
 		if ctx.Err() == context.Canceled || err == context.Canceled {
 			return nil
@@ -171,11 +183,6 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	return nil
 }
 
-func wrapAws(ctx context.Context, req *request.Request) error {
-	req.HTTPRequest = req.HTTPRequest.WithContext(ctx)
-	return req.Send()
-}
-
 // Find all running Provider tasks in a cluster, also collect the task definitions (for docker labels)
 // and the EC2 instance data
 func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsInstance, error) {
@@ -202,11 +209,6 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 		for _, cArn := range clustersArn {
 			clusters = append(clusters, *cArn)
 		}
-	} else if p.Cluster != "" {
-		// TODO: Deprecated configuration - Need to be removed in the future
-		clusters = Clusters{p.Cluster}
-		log.Warn("Deprecated configuration found: ecs.cluster " +
-			"Please use ecs.clusters instead.")
 	} else {
 		clusters = p.Clusters
 	}
@@ -217,94 +219,107 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 
 	for _, c := range clusters {
 
-		req, _ := client.ecs.ListTasksRequest(&ecs.ListTasksInput{
+		input := &ecs.ListTasksInput{
 			Cluster:       &c,
 			DesiredStatus: aws.String(ecs.DesiredStatusRunning),
+		}
+		tasks := make(map[string]*ecs.Task)
+		err := client.ecs.ListTasksPagesWithContext(ctx, input, func(page *ecs.ListTasksOutput, lastPage bool) bool {
+			if len(page.TaskArns) > 0 {
+				resp, err := client.ecs.DescribeTasksWithContext(ctx, &ecs.DescribeTasksInput{
+					Tasks:   page.TaskArns,
+					Cluster: &c,
+				})
+				if err != nil {
+					log.Errorf("Unable to describe tasks for %v", page.TaskArns)
+				} else {
+					for _, t := range resp.Tasks {
+						tasks[aws.StringValue(t.TaskArn)] = t
+					}
+				}
+			}
+			return !lastPage
 		})
 
-		var taskArns []*string
-
-		for ; req != nil; req = req.NextPage() {
-			if err := wrapAws(ctx, req); err != nil {
-				return nil, err
-			}
-
-			taskArns = append(taskArns, req.Data.(*ecs.ListTasksOutput).TaskArns...)
+		if err != nil {
+			log.Error("Unable to list tasks")
+			return nil, err
 		}
 
 		// Skip to the next cluster if there are no tasks found on
 		// this cluster.
-		if len(taskArns) == 0 {
+		if len(tasks) == 0 {
 			continue
 		}
 
-		chunkedTaskArns := chunkedTaskArns(taskArns)
-		var tasks []*ecs.Task
-
-		for _, arns := range chunkedTaskArns {
-			req, taskResp := client.ecs.DescribeTasksRequest(&ecs.DescribeTasksInput{
-				Tasks:   arns,
-				Cluster: &c,
-			})
-
-			if err := wrapAws(ctx, req); err != nil {
-				return nil, err
-			}
-			tasks = append(tasks, taskResp.Tasks...)
-
-		}
-
-		containerInstanceArns := make([]*string, 0)
-		byContainerInstance := make(map[string]int)
-
-		taskDefinitionArns := make([]*string, 0)
-		byTaskDefinition := make(map[string]int)
-
-		for _, task := range tasks {
-			if _, found := byContainerInstance[aws.StringValue(task.ContainerInstanceArn)]; !found {
-				byContainerInstance[aws.StringValue(task.ContainerInstanceArn)] = len(containerInstanceArns)
-				containerInstanceArns = append(containerInstanceArns, task.ContainerInstanceArn)
-			}
-			if _, found := byTaskDefinition[aws.StringValue(task.TaskDefinitionArn)]; !found {
-				byTaskDefinition[aws.StringValue(task.TaskDefinitionArn)] = len(taskDefinitionArns)
-				taskDefinitionArns = append(taskDefinitionArns, task.TaskDefinitionArn)
-			}
-		}
-
-		machines, err := p.lookupEc2Instances(ctx, client, &c, containerInstanceArns)
+		ec2Instances, err := p.lookupEc2Instances(ctx, client, &c, tasks)
 		if err != nil {
 			return nil, err
 		}
 
-		taskDefinitions, err := p.lookupTaskDefinitions(ctx, client, taskDefinitionArns)
+		taskDefinitions, err := p.lookupTaskDefinitions(ctx, client, tasks)
 		if err != nil {
 			return nil, err
 		}
 
-		for _, task := range tasks {
+		for key, task := range tasks {
 
-			machineIdx := byContainerInstance[aws.StringValue(task.ContainerInstanceArn)]
-			taskDefIdx := byTaskDefinition[aws.StringValue(task.TaskDefinitionArn)]
+			containerInstance := ec2Instances[aws.StringValue(task.ContainerInstanceArn)]
+			taskDef := taskDefinitions[key]
 
 			for _, container := range task.Containers {
 
-				taskDefinition := taskDefinitions[taskDefIdx]
 				var containerDefinition *ecs.ContainerDefinition
-				for _, def := range taskDefinition.ContainerDefinitions {
+				for _, def := range taskDef.ContainerDefinitions {
 					if aws.StringValue(container.Name) == aws.StringValue(def.Name) {
 						containerDefinition = def
 						break
 					}
 				}
 
+				if containerDefinition == nil {
+					log.Debugf("Unable to find container definition for %s", aws.StringValue(container.Name))
+					continue
+				}
+
+				var mach *machine
+				if aws.StringValue(task.LaunchType) == ecs.LaunchTypeFargate {
+					var ports []portMapping
+					for _, mapping := range containerDefinition.PortMappings {
+						if mapping != nil {
+							ports = append(ports, portMapping{
+								hostPort:      aws.Int64Value(mapping.HostPort),
+								containerPort: aws.Int64Value(mapping.ContainerPort),
+							})
+						}
+					}
+					mach = &machine{
+						privateIP: aws.StringValue(container.NetworkInterfaces[0].PrivateIpv4Address),
+						ports:     ports,
+						state:     aws.StringValue(task.LastStatus),
+					}
+				} else {
+					var ports []portMapping
+					for _, mapping := range container.NetworkBindings {
+						if mapping != nil {
+							ports = append(ports, portMapping{
+								hostPort:      aws.Int64Value(mapping.HostPort),
+								containerPort: aws.Int64Value(mapping.ContainerPort),
+							})
+						}
+					}
+					mach = &machine{
+						privateIP: aws.StringValue(containerInstance.PrivateIpAddress),
+						ports:     ports,
+						state:     aws.StringValue(containerInstance.State.Name),
+					}
+				}
+
 				instances = append(instances, ecsInstance{
 					Name:                fmt.Sprintf("%s-%s", strings.Replace(aws.StringValue(task.Group), ":", "-", 1), *container.Name),
-					ID:                  (aws.StringValue(task.TaskArn))[len(aws.StringValue(task.TaskArn))-12:],
-					task:                task,
-					taskDefinition:      taskDefinition,
-					container:           container,
+					ID:                  key[len(key)-12:],
 					containerDefinition: containerDefinition,
-					machine:             machines[machineIdx],
+					machine:             mach,
 					TraefikLabels:       aws.StringValueMap(containerDefinition.DockerLabels),
 				})
 			}
@@ -314,68 +329,81 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 	return instances, nil
 }
 
-func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, clusterName *string, containerArns []*string) ([]*ec2.Instance, error) {
+func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, clusterName *string, ecsDatas map[string]*ecs.Task) (map[string]*ec2.Instance, error) {
 
-	order := make(map[string]int)
-	instanceIds := make([]*string, len(containerArns))
-	instances := make([]*ec2.Instance, len(containerArns))
-	for i, arn := range containerArns {
-		order[aws.StringValue(arn)] = i
-	}
+	instanceIds := make(map[string]string)
+	ec2Instances := make(map[string]*ec2.Instance)
 
-	req, _ := client.ecs.DescribeContainerInstancesRequest(&ecs.DescribeContainerInstancesInput{
-		ContainerInstances: containerArns,
-		Cluster:            clusterName,
-	})
+	var containerInstancesArns []*string
+	var instanceArns []*string
 
-	for ; req != nil; req = req.NextPage() {
-		if err := wrapAws(ctx, req); err != nil {
-			return nil, err
-		}
-
-		containerResp := req.Data.(*ecs.DescribeContainerInstancesOutput)
-		for i, container := range containerResp.ContainerInstances {
-			order[aws.StringValue(container.Ec2InstanceId)] = order[aws.StringValue(container.ContainerInstanceArn)]
-			instanceIds[i] = container.Ec2InstanceId
+	for _, task := range ecsDatas {
+		if task.ContainerInstanceArn != nil {
+			containerInstancesArns = append(containerInstancesArns, task.ContainerInstanceArn)
 		}
 	}
 
-	req, _ = client.ec2.DescribeInstancesRequest(&ec2.DescribeInstancesInput{
-		InstanceIds: instanceIds,
-	})
+	for _, arns := range p.chunkIDs(containerInstancesArns) {
+		resp, err := client.ecs.DescribeContainerInstancesWithContext(ctx, &ecs.DescribeContainerInstancesInput{
+			ContainerInstances: arns,
+			Cluster:            clusterName,
+		})
 
-	for ; req != nil; req = req.NextPage() {
-		if err := wrapAws(ctx, req); err != nil {
+		if err != nil {
+			log.Errorf("Unable to describe container instances: %v", err)
 			return nil, err
 		}
 
-		instancesResp := req.Data.(*ec2.DescribeInstancesOutput)
-		for _, r := range instancesResp.Reservations {
-			for _, i := range r.Instances {
-				if i.InstanceId != nil {
-					instances[order[aws.StringValue(i.InstanceId)]] = i
+		for _, container := range resp.ContainerInstances {
+			instanceIds[aws.StringValue(container.Ec2InstanceId)] = aws.StringValue(container.ContainerInstanceArn)
+			instanceArns = append(instanceArns, container.Ec2InstanceId)
+		}
+	}
+
+	if len(instanceArns) > 0 {
+		for _, ids := range p.chunkIDs(instanceArns) {
+			input := &ec2.DescribeInstancesInput{
+				InstanceIds: ids,
+			}
+
+			err := client.ec2.DescribeInstancesPagesWithContext(ctx, input, func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
+				if len(page.Reservations) > 0 {
+					for _, r := range page.Reservations {
+						for _, i := range r.Instances {
+							if i.InstanceId != nil {
+								ec2Instances[instanceIds[aws.StringValue(i.InstanceId)]] = i
+							}
+						}
+					}
 				}
+				return !lastPage
+			})
+
+			if err != nil {
+				log.Errorf("Unable to describe instances [%s]: %v", err)
+				return nil, err
 			}
 		}
 	}
-	return instances, nil
+
+	return ec2Instances, nil
 }
 
-func (p *Provider) lookupTaskDefinitions(ctx context.Context, client *awsClient, taskDefArns []*string) ([]*ecs.TaskDefinition, error) {
-	taskDefinitions := make([]*ecs.TaskDefinition, len(taskDefArns))
-	for i, arn := range taskDefArns {
-
-		req, resp := client.ecs.DescribeTaskDefinitionRequest(&ecs.DescribeTaskDefinitionInput{
-			TaskDefinition: arn,
+func (p *Provider) lookupTaskDefinitions(ctx context.Context, client *awsClient, taskDefArns map[string]*ecs.Task) (map[string]*ecs.TaskDefinition, error) {
+	taskDef := make(map[string]*ecs.TaskDefinition)
+	for arn, task := range taskDefArns {
+		resp, err := client.ecs.DescribeTaskDefinitionWithContext(ctx, &ecs.DescribeTaskDefinitionInput{
+			TaskDefinition: task.TaskDefinitionArn,
 		})
 
-		if err := wrapAws(ctx, req); err != nil {
+		if err != nil {
+			log.Errorf("Unable to describe task definition: %s", err)
 			return nil, err
 		}
 
-		taskDefinitions[i] = resp.TaskDefinition
+		taskDef[arn] = resp.TaskDefinition
 	}
-	return taskDefinitions, nil
+	return taskDef, nil
 }
 
 func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types.Configuration, error) {
@@ -387,18 +415,18 @@ func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types
 	return p.buildConfiguration(instances)
 }
 
-// Provider expects no more than 100 parameters be passed to a DescribeTask call; thus, pack
-// each string into an array capped at 100 elements
-func chunkedTaskArns(tasks []*string) [][]*string {
-	var chunkedTasks [][]*string
-	for i := 0; i < len(tasks); i += 100 {
+// chunkIDs ECS expects no more than 100 parameters be passed to a API call;
+// thus, pack each string into an array capped at 100 elements
+func (p *Provider) chunkIDs(ids []*string) [][]*string {
+	var chuncked [][]*string
+	for i := 0; i < len(ids); i += 100 {
 		var sliceEnd int
-		if i+100 < len(tasks) {
+		if i+100 < len(ids) {
 			sliceEnd = i + 100
 		} else {
-			sliceEnd = len(tasks)
+			sliceEnd = len(ids)
 		}
-		chunkedTasks = append(chunkedTasks, tasks[i:sliceEnd])
+		chuncked = append(chuncked, ids[i:sliceEnd])
 	}
-	return chunkedTasks
+	return chuncked
 }

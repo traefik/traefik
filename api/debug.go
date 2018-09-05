@@ -38,6 +38,8 @@ func (g DebugHandler) AddRoutes(router *mux.Router) {
 			fmt.Fprint(w, "\n}\n")
 		})
 
+	runtime.SetBlockProfileRate(1)
+	runtime.SetMutexProfileFraction(5)
 	router.Methods(http.MethodGet).PathPrefix("/debug/pprof/cmdline").HandlerFunc(pprof.Cmdline)
 	router.Methods(http.MethodGet).PathPrefix("/debug/pprof/profile").HandlerFunc(pprof.Profile)
 	router.Methods(http.MethodGet).PathPrefix("/debug/pprof/symbol").HandlerFunc(pprof.Symbol)

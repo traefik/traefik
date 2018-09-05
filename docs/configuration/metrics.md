@@ -97,12 +97,47 @@
     #
     address = "localhost:8089"
 
+    # InfluxDB's address protocol (udp or http)
+    #
+    # Required
+    # Default: "udp"
+    #
+    protocol = "udp"
+
+    # InfluxDB's username
+    #
+    # Optional
+    # Default: "" (no username)
+    #
+    username = ""
+
+    # InfluxDB's password
+    #
+    # Optional
+    # Default: "" (no password)
+    #
+    password = ""
+
     # InfluxDB push interval
     #
     # Optional
     # Default: "10s"
     #
     pushinterval = "10s"
+
+    # InfluxDB database used when protocol is http
+    #
+    # Optional
+    # Default: ""
+    #
+    database = ""
+
+    # InfluxDB retention policy used when protocol is http
+    #
+    # Optional
+    # Default: ""
+    #
+    retentionpolicy = ""
 
   # ...
 ```

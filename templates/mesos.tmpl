@@ -15,7 +15,6 @@
   {{if $loadBalancer }}
     [backends."backend-{{ $backendName }}".loadBalancer]
       method = "{{ $loadBalancer.Method }}"
-      sticky = {{ $loadBalancer.Sticky }}
       {{if $loadBalancer.Stickiness }}
       [backends."backend-{{ $backendName }}".loadBalancer.stickiness]
         cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
@@ -32,9 +31,17 @@
   {{ $healthCheck := getHealthCheck $app.TraefikLabels }}
   {{if $healthCheck }}
   [backends."backend-{{ $backendName }}".healthCheck]
+    scheme = "{{ $healthCheck.Scheme }}"
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+    hostname = "{{ $healthCheck.Hostname }}"
+    {{if $healthCheck.Headers }}
+    [backends."backend-{{ $backendName }}".healthCheck.headers]
+      {{range $k, $v := $healthCheck.Headers }}
+      {{$k}} = "{{$v}}"
+      {{end}}
+    {{end}}
   {{end}}
 
   {{ $buffering := getBuffering $app.TraefikLabels }}
@@ -69,17 +76,62 @@
       "{{.}}",
       {{end}}]
 
-    basicAuth = [{{range getBasicAuth $app.TraefikLabels }}
-      "{{.}}",
-      {{end}}]
+    {{ $auth := getAuth $app.TraefikLabels }}
+    {{if $auth }}
+    [frontends."frontend-{{ $frontendName }}".auth]
+      headerField = "{{ $auth.HeaderField }}"
 
+      {{if $auth.Forward }}
+      [frontends."frontend-{{ $frontendName }}".auth.forward]
+        address = "{{ $auth.Forward.Address }}"
+        trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
+
+        {{if $auth.Forward.TLS }}
+        [frontends."frontend-{{ $frontendName }}".auth.forward.tls]
+          ca = "{{ $auth.Forward.TLS.CA }}"
+          caOptional = {{ $auth.Forward.TLS.CAOptional }}
+          cert = """{{ $auth.Forward.TLS.Cert }}"""
+          key = """{{ $auth.Forward.TLS.Key }}"""
+          insecureSkipVerify = {{ $auth.Forward.TLS.InsecureSkipVerify }}
+        {{end}}
+      {{end}}
+
+      {{if $auth.Basic }}
+      [frontends."frontend-{{ $frontendName }}".auth.basic]
+        removeHeader = {{ $auth.Basic.RemoveHeader}}
+        {{if $auth.Basic.Users }}
+        users = [{{range $auth.Basic.Users }}
+          "{{.}}",
+          {{end}}]
+        {{end}}
+        usersFile = "{{ $auth.Basic.UsersFile }}"
+      {{end}}
+
+      {{if $auth.Digest }}
+      [frontends."frontend-{{ $frontendName }}".auth.digest]
+        removeHeader = {{ $auth.Digest.RemoveHeader}}
+        {{if $auth.Digest.Users }}
+        users = [{{range $auth.Digest.Users }}
+          "{{.}}",
+          {{end}}]
+        {{end}}
+        usersFile = "{{ $auth.Digest.UsersFile }}"
+      {{end}}
+    {{end}}
+          
     {{ $whitelist := getWhiteList $app.TraefikLabels }}
     {{if $whitelist }}
     [frontends."frontend-{{ $frontendName }}".whiteList]
       sourceRange = [{{range $whitelist.SourceRange }}
         "{{.}}",
         {{end}}]
-      useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
+      {{if $whitelist.IPStrategy }}
+      [frontends."frontend-{{ $frontendName }}".whiteList.IPStrategy]
+        depth = {{ $whitelist.IPStrategy.Depth }}
+        excludedIPs = [{{range $whitelist.IPStrategy.ExcludedIPs }}
+          "{{.}}",
+          {{end}}]
+      {{end}}
     {{end}}
 
     {{ $redirect := getRedirect $app.TraefikLabels }}
@@ -123,6 +175,7 @@
       SSLRedirect = {{ $headers.SSLRedirect }}
       SSLTemporaryRedirect = {{ $headers.SSLTemporaryRedirect }}
       SSLHost = "{{ $headers.SSLHost }}"
+      SSLForceHost = {{ $headers.SSLForceHost }}
       STSSeconds = {{ $headers.STSSeconds }}
       STSIncludeSubdomains = {{ $headers.STSIncludeSubdomains }}
       STSPreload = {{ $headers.STSPreload }}

@@ -178,4 +178,4 @@ X-Forwarded-Proto: http
 X-Forwarded-Server: 8fbc39271b4c
 ```
 
-![](https://i.giphy.com/ujUdrdpX7Ok5W.gif)
+![GIF Magica](https://i.giphy.com/ujUdrdpX7Ok5W.gif)

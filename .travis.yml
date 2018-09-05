@@ -11,11 +11,12 @@ env:
   global:
     - REPO: $TRAVIS_REPO_SLUG
     - VERSION: $TRAVIS_TAG
-    - CODENAME: tetedemoine
+    - CODENAME: maroilles
     - N_MAKE_JOBS: 2
 
 script:
 - echo "Skipping tests... (Tests are executed on SemaphoreCI)"
+- if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then make docs-verify; fi
 
 before_deploy:
   - >

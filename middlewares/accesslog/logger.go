@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
 	"github.com/sirupsen/logrus"
@@ -25,11 +26,17 @@ const (
 	DataTableKey key = "LogDataTable"
 
 	// CommonFormat is the common logging format (CLF)
-	CommonFormat = "common"
+	CommonFormat string = "common"
 
 	// JSONFormat is the JSON logging format
-	JSONFormat = "json"
+	JSONFormat string = "json"
 )
+
+type logHandlerParams struct {
+	logDataTable *LogData
+	crr          *captureRequestReader
+	crw          *captureResponseWriter
+}
 
 // LogHandler will write each request and its response to the access log.
 type LogHandler struct {
@@ -38,6 +45,8 @@ type LogHandler struct {
 	file           *os.File
 	mu             sync.Mutex
 	httpCodeRanges types.HTTPCodeRanges
+	logHandlerChan chan logHandlerParams
+	wg             sync.WaitGroup
 }
 
 // NewLogHandler creates a new LogHandler
@@ -50,6 +59,7 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 		}
 		file = f
 	}
+	logHandlerChan := make(chan logHandlerParams, config.BufferingSize)
 
 	var formatter logrus.Formatter
 
@@ -70,9 +80,10 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 	}
 
 	logHandler := &LogHandler{
-		config: config,
-		logger: logger,
-		file:   file,
+		config:         config,
+		logger:         logger,
+		file:           file,
+		logHandlerChan: logHandlerChan,
 	}
 
 	if config.Filters != nil {
@@ -81,6 +92,16 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 		} else {
 			logHandler.httpCodeRanges = httpCodeRanges
 		}
+	}
+
+	if config.BufferingSize > 0 {
+		logHandler.wg.Add(1)
+		go func() {
+			defer logHandler.wg.Done()
+			for handlerParams := range logHandler.logHandlerChan {
+				logHandler.logTheRoundTrip(handlerParams.logDataTable, handlerParams.crr, handlerParams.crw)
+			}
+		}()
 	}
 
 	return logHandler, nil
@@ -146,7 +167,6 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 	core[RequestMethod] = req.Method
 	core[RequestPath] = urlCopyString
 	core[RequestProtocol] = req.Proto
-	core[RequestLine] = fmt.Sprintf("%s %s %s", req.Method, urlCopyString, req.Proto)
 
 	core[ClientAddr] = req.RemoteAddr
 	core[ClientHost], core[ClientPort] = silentSplitHostPort(req.RemoteAddr)
@@ -162,11 +182,22 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 	core[ClientUsername] = usernameIfPresent(reqWithDataTable.URL)
 
 	logDataTable.DownstreamResponse = crw.Header()
-	l.logTheRoundTrip(logDataTable, crr, crw)
+
+	if l.config.BufferingSize > 0 {
+		l.logHandlerChan <- logHandlerParams{
+			logDataTable: logDataTable,
+			crr:          crr,
+			crw:          crw,
+		}
+	} else {
+		l.logTheRoundTrip(logDataTable, crr, crw)
+	}
 }
 
-// Close closes the Logger (i.e. the file etc).
+// Close closes the Logger (i.e. the file, drain logHandlerChan, etc).
 func (l *LogHandler) Close() error {
+	close(l.logHandlerChan)
+	l.wg.Wait()
 	return l.file.Close()
 }
 
@@ -225,8 +256,11 @@ func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestR
 
 	core[DownstreamStatus] = crw.Status()
 
-	if l.keepAccessLog(crw.Status(), retryAttempts) {
-		core[DownstreamStatusLine] = fmt.Sprintf("%03d %s", crw.Status(), http.StatusText(crw.Status()))
+	// n.b. take care to perform time arithmetic using UTC to avoid errors at DST boundaries
+	totalDuration := time.Now().UTC().Sub(core[StartUTC].(time.Time))
+	core[Duration] = totalDuration
+
+	if l.keepAccessLog(crw.Status(), retryAttempts, totalDuration) {
 		core[DownstreamContentSize] = crw.Size()
 		if original, ok := core[OriginContentSize]; ok {
 			o64 := original.(int64)
@@ -235,12 +269,9 @@ func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestR
 			}
 		}
 
-		// n.b. take care to perform time arithmetic using UTC to avoid errors at DST boundaries
-		total := time.Now().UTC().Sub(core[StartUTC].(time.Time))
-		core[Duration] = total
-		core[Overhead] = total
+		core[Overhead] = totalDuration
 		if origin, ok := core[OriginDuration]; ok {
-			core[Overhead] = total - origin.(time.Duration)
+			core[Overhead] = totalDuration - origin.(time.Duration)
 		}
 
 		fields := logrus.Fields{}
@@ -272,13 +303,13 @@ func (l *LogHandler) redactHeaders(headers http.Header, fields logrus.Fields, pr
 	}
 }
 
-func (l *LogHandler) keepAccessLog(statusCode, retryAttempts int) bool {
+func (l *LogHandler) keepAccessLog(statusCode, retryAttempts int, duration time.Duration) bool {
 	if l.config.Filters == nil {
 		// no filters were specified
 		return true
 	}
 
-	if len(l.httpCodeRanges) == 0 && !l.config.Filters.RetryAttempts {
+	if len(l.httpCodeRanges) == 0 && !l.config.Filters.RetryAttempts && l.config.Filters.MinDuration == 0 {
 		// empty filters were specified, e.g. by passing --accessLog.filters only (without other filter options)
 		return true
 	}
@@ -288,6 +319,10 @@ func (l *LogHandler) keepAccessLog(statusCode, retryAttempts int) bool {
 	}
 
 	if l.config.Filters.RetryAttempts && retryAttempts > 0 {
+		return true
+	}
+
+	if l.config.Filters.MinDuration > 0 && (parse.Duration(duration) > l.config.Filters.MinDuration) {
 		return true
 	}
 

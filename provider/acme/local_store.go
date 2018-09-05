@@ -31,7 +31,10 @@ func NewLocalStore(filename string) *LocalStore {
 
 func (s *LocalStore) get() (*StoredData, error) {
 	if s.storedData == nil {
-		s.storedData = &StoredData{HTTPChallenges: make(map[string]map[string][]byte)}
+		s.storedData = &StoredData{
+			HTTPChallenges: make(map[string]map[string][]byte),
+			TLSChallenges:  make(map[string]*Certificate),
+		}
 
 		hasData, err := CheckFile(s.filename)
 		if err != nil {
@@ -185,7 +188,7 @@ func (s *LocalStore) SetHTTPChallengeToken(token, domain string, keyAuth []byte)
 		s.storedData.HTTPChallenges[token] = map[string][]byte{}
 	}
 
-	s.storedData.HTTPChallenges[token][domain] = []byte(keyAuth)
+	s.storedData.HTTPChallenges[token][domain] = keyAuth
 	return nil
 }
 
@@ -206,5 +209,43 @@ func (s *LocalStore) RemoveHTTPChallengeToken(token, domain string) error {
 			delete(s.storedData.HTTPChallenges, token)
 		}
 	}
+	return nil
+}
+
+// AddTLSChallenge Add a certificate to the ACME TLS-ALPN-01 certificates storage
+func (s *LocalStore) AddTLSChallenge(domain string, cert *Certificate) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	if s.storedData.TLSChallenges == nil {
+		s.storedData.TLSChallenges = make(map[string]*Certificate)
+	}
+
+	s.storedData.TLSChallenges[domain] = cert
+	return nil
+}
+
+// GetTLSChallenge Get a certificate from the ACME TLS-ALPN-01 certificates storage
+func (s *LocalStore) GetTLSChallenge(domain string) (*Certificate, error) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	if s.storedData.TLSChallenges == nil {
+		s.storedData.TLSChallenges = make(map[string]*Certificate)
+	}
+
+	return s.storedData.TLSChallenges[domain], nil
+}
+
+// RemoveTLSChallenge Remove a certificate from the ACME TLS-ALPN-01 certificates storage
+func (s *LocalStore) RemoveTLSChallenge(domain string) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	if s.storedData.TLSChallenges == nil {
+		return nil
+	}
+
+	delete(s.storedData.TLSChallenges, domain)
 	return nil
 }

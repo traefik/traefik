@@ -15,10 +15,10 @@
 package concurrency
 
 import (
+	"context"
 	"time"
 
 	v3 "github.com/coreos/etcd/clientv3"
-	"golang.org/x/net/context"
 )
 
 const defaultSessionTTL = 60
@@ -53,6 +53,7 @@ func NewSession(client *v3.Client, opts ...SessionOption) (*Session, error) {
 	ctx, cancel := context.WithCancel(ops.ctx)
 	keepAlive, err := client.KeepAlive(ctx, id)
 	if err != nil || keepAlive == nil {
+		cancel()
 		return nil, err
 	}
 

@@ -14,6 +14,7 @@ import (
 	"github.com/cenk/backoff"
 	"github.com/containous/flaeg"
 	"github.com/containous/staert"
+	"github.com/containous/traefik/autogen/genstatic"
 	"github.com/containous/traefik/cmd"
 	"github.com/containous/traefik/cmd/bug"
 	"github.com/containous/traefik/cmd/healthcheck"
@@ -21,9 +22,9 @@ import (
 	cmdVersion "github.com/containous/traefik/cmd/version"
 	"github.com/containous/traefik/collector"
 	"github.com/containous/traefik/configuration"
+	"github.com/containous/traefik/configuration/router"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/provider/ecs"
 	"github.com/containous/traefik/provider/kubernetes"
 	"github.com/containous/traefik/safe"
@@ -33,6 +34,7 @@ import (
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
 	"github.com/coreos/go-systemd/daemon"
+	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/ogier/pflag"
 	"github.com/sirupsen/logrus"
 	"github.com/vulcand/oxy/roundrobin"
@@ -156,12 +158,16 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 
-	if globalConfiguration.AllowMinWeightZero {
-		roundrobin.SetDefaultWeight(0)
+	if err := roundrobin.SetDefaultWeight(0); err != nil {
+		log.Error(err)
 	}
 
 	globalConfiguration.SetEffectiveConfiguration(configFile)
 	globalConfiguration.ValidateConfiguration()
+
+	if globalConfiguration.API != nil && globalConfiguration.API.Dashboard {
+		globalConfiguration.API.DashboardAssets = &assetfs.AssetFS{Asset: genstatic.Asset, AssetInfo: genstatic.AssetInfo, AssetDir: genstatic.AssetDir, Prefix: "static"}
+	}
 
 	jsonConf, _ := json.Marshal(globalConfiguration)
 	log.Infof("Traefik version %s built on %s", version.Version, version.BuildDate)
@@ -173,16 +179,60 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 	stats(globalConfiguration)
 
 	log.Debugf("Global configuration loaded %s", string(jsonConf))
-	if acme.IsEnabled() {
-		store := acme.NewLocalStore(acme.Get().Storage)
-		acme.Get().Store = store
+
+	providerAggregator := configuration.NewProviderAggregator(globalConfiguration)
+
+	acmeprovider := globalConfiguration.InitACMEProvider()
+	if acmeprovider != nil {
+
+		if err := providerAggregator.AddProvider(acmeprovider); err != nil {
+			log.Errorf("Error initializing provider ACME: %v", err)
+			acmeprovider = nil
+		}
 	}
-	svr := server.NewServer(*globalConfiguration, configuration.NewProviderAggregator(globalConfiguration))
-	if acme.IsEnabled() && acme.Get().OnHostRule {
-		acme.Get().SetConfigListenerChan(make(chan types.Configuration))
-		svr.AddListener(acme.Get().ListenConfiguration)
+
+	entryPoints := map[string]server.EntryPoint{}
+	for entryPointName, config := range globalConfiguration.EntryPoints {
+
+		entryPoint := server.EntryPoint{
+			Configuration: config,
+		}
+
+		internalRouter := router.NewInternalRouterAggregator(*globalConfiguration, entryPointName)
+		if acmeprovider != nil {
+			if acmeprovider.HTTPChallenge != nil && acmeprovider.HTTPChallenge.EntryPoint == entryPointName {
+				internalRouter.AddRouter(acmeprovider)
+			}
+
+			// TLS ALPN 01
+			if acmeprovider.HTTPChallenge == nil && acmeprovider.DNSChallenge == nil && acmeprovider.TLSChallenge != nil {
+				entryPoint.TLSALPNGetter = acmeprovider.GetTLSALPNCertificate
+			}
+
+			if acmeprovider.EntryPoint == entryPointName && acmeprovider.OnDemand {
+				entryPoint.OnDemandListener = acmeprovider.ListenRequest
+			}
+
+			entryPoint.CertificateStore = traefiktls.NewCertificateStore()
+			acmeprovider.SetCertificateStore(entryPoint.CertificateStore)
+
+		}
+
+		entryPoint.InternalRouter = internalRouter
+		entryPoints[entryPointName] = entryPoint
+	}
+
+	svr := server.NewServer(*globalConfiguration, providerAggregator, entryPoints)
+	if acmeprovider != nil && acmeprovider.OnHostRule {
+		acmeprovider.SetConfigListenerChan(make(chan types.Configuration))
+		svr.AddListener(acmeprovider.ListenConfiguration)
 	}
 	ctx := cmd.ContextWithSignal(context.Background())
+
+	if globalConfiguration.Ping != nil {
+		globalConfiguration.Ping.WithContext(ctx)
+	}
+
 	svr.StartWithContext(ctx)
 	defer svr.Close()
 
@@ -239,11 +289,7 @@ func configureLogging(globalConfiguration *configuration.GlobalConfiguration) {
 	}
 	log.SetLevel(level)
 
-	// configure log output file
-	logFile := globalConfiguration.TraefikLogsFile
-	if len(logFile) > 0 {
-		log.Warn("top-level traefikLogsFile has been deprecated -- please use traefiklog.filepath")
-	}
+	var logFile string
 	if globalConfiguration.TraefikLog != nil && len(globalConfiguration.TraefikLog.FilePath) > 0 {
 		logFile = globalConfiguration.TraefikLog.FilePath
 	}

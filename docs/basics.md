@@ -345,16 +345,22 @@ Here is an example of backends and servers definition:
   [backends.backend2]
     # ...
     [backends.backend2.servers.server1]
-    url = "http://172.17.0.4:80"
+    url = "https://172.17.0.4:443"
     weight = 1
     [backends.backend2.servers.server2]
-    url = "http://172.17.0.5:80"
+    url = "https://172.17.0.5:443"
     weight = 2
+  [backends.backend3]
+    # ...
+    [backends.backend3.servers.server1]
+    url = "h2c://172.17.0.6:80"
+    weight = 1
 ```
 
 - Two backends are defined: `backend1` and `backend2`
-- `backend1` will forward the traffic to two servers: `http://172.17.0.2:80"` with weight `10` and `http://172.17.0.3:80` with weight `1`.
-- `backend2` will forward the traffic to two servers: `http://172.17.0.4:80"` with weight `1` and `http://172.17.0.5:80` with weight `2`.
+- `backend1` will forward the traffic to two servers: `172.17.0.2:80` with weight `10` and `172.17.0.3:80` with weight `1`.
+- `backend2` will forward the traffic to two servers: `172.17.0.4:443` with weight `1` and `172.17.0.5:443` with weight `2` both using TLS.
+- `backend3` will forward the traffic to: `172.17.0.6:80` with weight `1` using HTTP2 without TLS.
 
 #### Load-balancing
 
@@ -443,24 +449,14 @@ If not, a new backend will be assigned.
     #  cookieName = "my_cookie"
 ```
 
-The deprecated way:
-
-```toml
-[backends]
-  [backends.backend1]
-    [backends.backend1.loadbalancer]
-      sticky = true
-```
-
 #### Health Check
 
-A health check can be configured in order to remove a backend from LB rotation as long as it keeps returning HTTP status codes other than `200 OK` to HTTP GET requests periodically carried out by Traefik.  
+A health check can be configured in order to remove a backend from LB rotation as long as it keeps returning HTTP status codes other than `2xx` or `3xx` to HTTP GET requests periodically carried out by Traefik.  
 The check is defined by a path appended to the backend URL and an interval (given in a format understood by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration)) specifying how often the health check should be executed (the default being 30 seconds).
 Each backend must respond to the health check within 5 seconds.  
 By default, the port of the backend server is used, however, this may be overridden.
 
-A recovering backend returning 200 OK responses again is being returned to the
-LB rotation pool.
+A recovering backend returning `2xx` or `3xx` responses again is being returned to the LB rotation pool.
 
 For example:
 ```toml
@@ -471,7 +467,7 @@ For example:
     interval = "10s"
 ```
 
-To use a different port for the healthcheck:
+To use a different port for the health check:
 ```toml
 [backends]
   [backends.backend1]
@@ -479,6 +475,31 @@ To use a different port for the healthcheck:
     path = "/health"
     interval = "10s"
     port = 8080
+```
+
+
+To use a different scheme for the health check:
+```toml
+[backends]
+  [backends.backend1]
+    [backends.backend1.healthcheck]
+    path = "/health"
+    interval = "10s"
+    scheme = "http"
+```
+
+Additional http headers and hostname to health check request can be specified, for instance:
+```toml
+[backends]
+  [backends.backend1]
+    [backends.backend1.healthcheck]
+    path = "/health"
+    interval = "10s"
+    hostname = "myhost.com"
+    port = 8080
+      [backends.backend1.healthcheck.headers]
+      My-Custom-Header = "foo"
+      My-Header = "bar"
 ```
 
 ## Configuration

@@ -2,6 +2,7 @@ package configuration
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/containous/traefik/log"
@@ -11,16 +12,19 @@ import (
 
 // EntryPoint holds an entry point configuration of the reverse proxy (ip, port, TLS...)
 type EntryPoint struct {
-	Address              string
-	TLS                  *tls.TLS          `export:"true"`
-	Redirect             *types.Redirect   `export:"true"`
-	Auth                 *types.Auth       `export:"true"`
-	WhitelistSourceRange []string          // Deprecated
-	WhiteList            *types.WhiteList  `export:"true"`
-	Compress             bool              `export:"true"`
-	ProxyProtocol        *ProxyProtocol    `export:"true"`
-	ForwardedHeaders     *ForwardedHeaders `export:"true"`
+	Address          string
+	TLS              *tls.TLS          `export:"true"`
+	Redirect         *types.Redirect   `export:"true"`
+	Auth             *types.Auth       `export:"true"`
+	WhiteList        *types.WhiteList  `export:"true"`
+	Compress         *Compress         `export:"true"`
+	ProxyProtocol    *ProxyProtocol    `export:"true"`
+	ForwardedHeaders *ForwardedHeaders `export:"true"`
+	ClientIPStrategy *types.IPStrategy `export:"true"`
 }
+
+// Compress contains compress configuration
+type Compress struct{}
 
 // ProxyProtocol contains Proxy-Protocol configuration
 type ProxyProtocol struct {
@@ -64,12 +68,10 @@ func (ep *EntryPoints) Type() string {
 func (ep *EntryPoints) Set(value string) error {
 	result := parseEntryPointsConfiguration(value)
 
-	var whiteListSourceRange []string
-	if len(result["whitelistsourcerange"]) > 0 {
-		whiteListSourceRange = strings.Split(result["whitelistsourcerange"], ",")
+	var compress *Compress
+	if len(result["compress"]) > 0 {
+		compress = &Compress{}
 	}
-
-	compress := toBool(result, "compress")
 
 	configTLS, err := makeEntryPointTLS(result)
 	if err != nil {
@@ -77,43 +79,58 @@ func (ep *EntryPoints) Set(value string) error {
 	}
 
 	(*ep)[result["name"]] = &EntryPoint{
-		Address:              result["address"],
-		TLS:                  configTLS,
-		Auth:                 makeEntryPointAuth(result),
-		Redirect:             makeEntryPointRedirect(result),
-		Compress:             compress,
-		WhitelistSourceRange: whiteListSourceRange,
-		WhiteList:            makeWhiteList(result),
-		ProxyProtocol:        makeEntryPointProxyProtocol(result),
-		ForwardedHeaders:     makeEntryPointForwardedHeaders(result),
+		Address:          result["address"],
+		TLS:              configTLS,
+		Auth:             makeEntryPointAuth(result),
+		Redirect:         makeEntryPointRedirect(result),
+		Compress:         compress,
+		WhiteList:        makeWhiteList(result),
+		ProxyProtocol:    makeEntryPointProxyProtocol(result),
+		ForwardedHeaders: makeEntryPointForwardedHeaders(result),
+		ClientIPStrategy: makeIPStrategy("clientipstrategy", result),
 	}
 
 	return nil
 }
 
 func makeWhiteList(result map[string]string) *types.WhiteList {
-	var wl *types.WhiteList
 	if rawRange, ok := result["whitelist_sourcerange"]; ok {
-		wl = &types.WhiteList{
-			SourceRange:      strings.Split(rawRange, ","),
-			UseXForwardedFor: toBool(result, "whitelist_usexforwardedfor"),
+		return &types.WhiteList{
+			SourceRange: strings.Split(rawRange, ","),
+			IPStrategy:  makeIPStrategy("whitelist_ipstrategy", result),
 		}
 	}
-	return wl
+	return nil
+}
+
+func makeIPStrategy(prefix string, result map[string]string) *types.IPStrategy {
+	depth := toInt(result, prefix+"_depth")
+	excludedIPs := result[prefix+"_excludedips"]
+
+	if depth == 0 && len(excludedIPs) == 0 {
+		return nil
+	}
+
+	return &types.IPStrategy{
+		Depth:       depth,
+		ExcludedIPs: strings.Split(excludedIPs, ","),
+	}
 }
 
 func makeEntryPointAuth(result map[string]string) *types.Auth {
 	var basic *types.Basic
 	if v, ok := result["auth_basic_users"]; ok {
 		basic = &types.Basic{
-			Users: strings.Split(v, ","),
+			Users:        strings.Split(v, ","),
+			RemoveHeader: toBool(result, "auth_basic_removeheader"),
 		}
 	}
 
 	var digest *types.Digest
 	if v, ok := result["auth_digest_users"]; ok {
 		digest = &types.Digest{
-			Users: strings.Split(v, ","),
+			Users:        strings.Split(v, ","),
+			RemoveHeader: toBool(result, "auth_digest_removeheader"),
 		}
 	}
 
@@ -135,10 +152,16 @@ func makeEntryPointAuth(result map[string]string) *types.Auth {
 			}
 		}
 
+		var authResponseHeaders []string
+		if v, ok := result["auth_forward_authresponseheaders"]; ok {
+			authResponseHeaders = strings.Split(v, ",")
+		}
+
 		forward = &types.Forward{
-			Address:            address,
-			TLS:                clientTLS,
-			TrustForwardHeader: toBool(result, "auth_forward_trustforwardheader"),
+			Address:             address,
+			TLS:                 clientTLS,
+			TrustForwardHeader:  toBool(result, "auth_forward_trustforwardheader"),
+			AuthResponseHeaders: authResponseHeaders,
 		}
 	}
 
@@ -169,15 +192,14 @@ func makeEntryPointProxyProtocol(result map[string]string) *ProxyProtocol {
 	}
 
 	if proxyProtocol != nil && proxyProtocol.Insecure {
-		log.Warn("ProxyProtocol.Insecure:true is dangerous. Please use 'ProxyProtocol.TrustedIPs:IPs' and remove 'ProxyProtocol.Insecure:true'")
+		log.Warn("ProxyProtocol.insecure:true is dangerous. Please use 'ProxyProtocol.TrustedIPs:IPs' and remove 'ProxyProtocol.insecure:true'")
 	}
 
 	return proxyProtocol
 }
 
 func makeEntryPointForwardedHeaders(result map[string]string) *ForwardedHeaders {
-	// TODO must be changed to false by default in the next breaking version.
-	forwardedHeaders := &ForwardedHeaders{Insecure: true}
+	forwardedHeaders := &ForwardedHeaders{}
 	if _, ok := result["forwardedheaders_insecure"]; ok {
 		forwardedHeaders.Insecure = toBool(result, "forwardedheaders_insecure")
 	}
@@ -224,12 +246,33 @@ func makeEntryPointTLS(result map[string]string) (*tls.TLS, error) {
 		}
 	}
 
-	if len(result["ca"]) > 0 {
-		files := strings.Split(result["ca"], ",")
-		optional := toBool(result, "ca_optional")
-		configTLS.ClientCA = tls.ClientCA{
-			Files:    files,
-			Optional: optional,
+	if configTLS != nil {
+		if len(result["ca"]) > 0 {
+			files := strings.Split(result["ca"], ",")
+			optional := toBool(result, "ca_optional")
+			configTLS.ClientCA = tls.ClientCA{
+				Files:    files,
+				Optional: optional,
+			}
+		}
+
+		if len(result["tls_minversion"]) > 0 {
+			configTLS.MinVersion = result["tls_minversion"]
+		}
+
+		if len(result["tls_ciphersuites"]) > 0 {
+			configTLS.CipherSuites = strings.Split(result["tls_ciphersuites"], ",")
+		}
+
+		if len(result["tls_snistrict"]) > 0 {
+			configTLS.SniStrict = toBool(result, "tls_snistrict")
+		}
+
+		if len(result["tls_defaultcertificate_cert"]) > 0 && len(result["tls_defaultcertificate_key"]) > 0 {
+			configTLS.DefaultCertificate = &tls.Certificate{
+				CertFile: tls.FileOrContent(result["tls_defaultcertificate_cert"]),
+				KeyFile:  tls.FileOrContent(result["tls_defaultcertificate_key"]),
+			}
 		}
 	}
 
@@ -263,4 +306,15 @@ func toBool(conf map[string]string, key string) bool {
 			strings.EqualFold(val, "on")
 	}
 	return false
+}
+
+func toInt(conf map[string]string, key string) int {
+	if val, ok := conf[key]; ok {
+		intVal, err := strconv.Atoi(val)
+		if err != nil {
+			return 0
+		}
+		return intVal
+	}
+	return 0
 }

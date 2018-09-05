@@ -3,6 +3,8 @@ package types
 import (
 	"fmt"
 	"strings"
+
+	"github.com/containous/flaeg/parse"
 )
 
 const (
@@ -22,16 +24,18 @@ type TraefikLog struct {
 
 // AccessLog holds the configuration settings for the access logger (middlewares/accesslog).
 type AccessLog struct {
-	FilePath string            `json:"file,omitempty" description:"Access log file path. Stdout is used when omitted or empty" export:"true"`
-	Format   string            `json:"format,omitempty" description:"Access log format: json | common" export:"true"`
-	Filters  *AccessLogFilters `json:"filters,omitempty" description:"Access log filters, used to keep only specific access logs" export:"true"`
-	Fields   *AccessLogFields  `json:"fields,omitempty" description:"AccessLogFields" export:"true"`
+	FilePath      string            `json:"file,omitempty" description:"Access log file path. Stdout is used when omitted or empty" export:"true"`
+	Format        string            `json:"format,omitempty" description:"Access log format: json | common" export:"true"`
+	Filters       *AccessLogFilters `json:"filters,omitempty" description:"Access log filters, used to keep only specific access logs" export:"true"`
+	Fields        *AccessLogFields  `json:"fields,omitempty" description:"AccessLogFields" export:"true"`
+	BufferingSize int64             `json:"bufferingSize,omitempty" description:"Number of access log lines to process in a buffered way. Default 0." export:"true"`
 }
 
 // AccessLogFilters holds filters configuration
 type AccessLogFilters struct {
-	StatusCodes   StatusCodes `json:"statusCodes,omitempty" description:"Keep access logs with status codes in the specified range" export:"true"`
-	RetryAttempts bool        `json:"retryAttempts,omitempty" description:"Keep access logs when at least one retry happened" export:"true"`
+	StatusCodes   StatusCodes    `json:"statusCodes,omitempty" description:"Keep access logs with status codes in the specified range" export:"true"`
+	RetryAttempts bool           `json:"retryAttempts,omitempty" description:"Keep access logs when at least one retry happened" export:"true"`
+	MinDuration   parse.Duration `json:"duration,omitempty" description:"Keep access logs when request took longer than the specified duration" export:"true"`
 }
 
 // FieldHeaders holds configuration for access log headers

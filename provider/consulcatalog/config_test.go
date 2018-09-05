@@ -3,7 +3,9 @@ package consulcatalog
 import (
 	"testing"
 	"text/template"
+	"time"
 
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	"github.com/hashicorp/consul/api"
@@ -55,7 +57,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 							label.TraefikBackendCircuitBreakerExpression + "=NetworkErrorRatio() > 0.5",
 							label.TraefikBackendMaxConnAmount + "=1000",
 							label.TraefikBackendMaxConnExtractorFunc + "=client.ip",
-							label.TraefikFrontendAuthBasic + "=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+							label.TraefikFrontendAuthBasicUsers + "=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						},
 					},
 					Nodes: []*api.ServiceEntry{
@@ -66,7 +68,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 								Port:    80,
 								Tags: []string{
 									"random.foo=bar",
-									label.Prefix + "backend.weight=42", // Deprecated label
+									label.TraefikWeight + "=42",
 									label.TraefikFrontendPassHostHeader + "=true",
 									label.TraefikProtocol + "=https",
 								},
@@ -88,14 +90,19 @@ func TestProviderBuildConfiguration(t *testing.T) {
 							Rule: "Host:test.localhost",
 						},
 					},
+					Auth: &types.Auth{
+						Basic: &types.Basic{
+							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+						},
+					},
 					EntryPoints: []string{},
-					BasicAuth:   []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 				},
 			},
 			expectedBackends: map[string]*types.Backend{
 				"backend-test": {
 					Servers: map[string]types.Server{
-						"test-0-us4-27hAOu2ARV7nNrmv6GoKlcA": {
+						"test-0-ecTTsmX1vPktQQrl53WhNDy-HEg": {
 							URL:    "https://127.0.0.1:80",
 							Weight: 42,
 						},
@@ -114,6 +121,566 @@ func TestProviderBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
+			desc: "Should build config which contains three frontends and one backend",
+			nodes: []catalogUpdate{
+				{
+					Service: &serviceUpdate{
+						ServiceName: "test",
+						Attributes: []string{
+							"random.foo=bar",
+							label.Prefix + "frontend.rule=Host:A",
+							label.Prefix + "frontends.test1.rule=Host:B",
+							label.Prefix + "frontends.test2.rule=Host:C",
+						},
+					},
+					Nodes: []*api.ServiceEntry{
+						{
+							Service: &api.AgentService{
+								Service: "test",
+								Address: "127.0.0.1",
+								Port:    80,
+								Tags: []string{
+									"random.foo=bar",
+								},
+							},
+							Node: &api.Node{
+								Node:    "localhost",
+								Address: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-test": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					Routes: map[string]types.Route{
+						"route-host-test": {
+							Rule: "Host:A",
+						},
+					},
+					EntryPoints: []string{},
+				},
+				"frontend-test-test1": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					Routes: map[string]types.Route{
+						"route-host-test-test1": {
+							Rule: "Host:B",
+						},
+					},
+					EntryPoints: []string{},
+				},
+				"frontend-test-test2": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					Routes: map[string]types.Route{
+						"route-host-test-test2": {
+							Rule: "Host:C",
+						},
+					},
+					EntryPoints: []string{},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test": {
+					Servers: map[string]types.Server{
+						"test-0-O0Tnh-SwzY69M6SurTKP3wNKkzI": {
+							URL:    "http://127.0.0.1:80",
+							Weight: 1,
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "Should build config with a basic auth with a backward compatibility",
+			nodes: []catalogUpdate{
+				{
+					Service: &serviceUpdate{
+						ServiceName: "test",
+						Attributes: []string{
+							"random.foo=bar",
+							label.TraefikFrontendAuthBasicUsers + "=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						},
+					},
+					Nodes: []*api.ServiceEntry{
+						{
+							Service: &api.AgentService{
+								Service: "test",
+								Address: "127.0.0.1",
+								Port:    80,
+								Tags: []string{
+									"random.foo=bar",
+									label.TraefikWeight + "=42",
+									label.TraefikFrontendPassHostHeader + "=true",
+									label.TraefikProtocol + "=https",
+								},
+							},
+							Node: &api.Node{
+								Node:    "localhost",
+								Address: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-test": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					Routes: map[string]types.Route{
+						"route-host-test": {
+							Rule: "Host:test.localhost",
+						},
+					},
+					Auth: &types.Auth{
+						Basic: &types.Basic{
+							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+						},
+					},
+					EntryPoints: []string{},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test": {
+					Servers: map[string]types.Server{
+						"test-0-ecTTsmX1vPktQQrl53WhNDy-HEg": {
+							URL:    "https://127.0.0.1:80",
+							Weight: 42,
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "Should build config with a digest auth",
+			nodes: []catalogUpdate{
+				{
+					Service: &serviceUpdate{
+						ServiceName: "test",
+						Attributes: []string{
+							"random.foo=bar",
+							label.TraefikFrontendAuthDigestRemoveHeader + "=true",
+							label.TraefikFrontendAuthDigestUsers + "=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+							label.TraefikFrontendAuthDigestUsersFile + "=.htpasswd",
+						},
+					},
+					Nodes: []*api.ServiceEntry{
+						{
+							Service: &api.AgentService{
+								Service: "test",
+								Address: "127.0.0.1",
+								Port:    80,
+								Tags: []string{
+									"random.foo=bar",
+									label.TraefikWeight + "=42",
+									label.TraefikFrontendPassHostHeader + "=true",
+									label.TraefikProtocol + "=https",
+								},
+							},
+							Node: &api.Node{
+								Node:    "localhost",
+								Address: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-test": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					Routes: map[string]types.Route{
+						"route-host-test": {
+							Rule: "Host:test.localhost",
+						},
+					},
+					Auth: &types.Auth{
+						Digest: &types.Digest{
+							RemoveHeader: true,
+							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							UsersFile: ".htpasswd",
+						},
+					},
+					EntryPoints: []string{},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test": {
+					Servers: map[string]types.Server{
+						"test-0-ecTTsmX1vPktQQrl53WhNDy-HEg": {
+							URL:    "https://127.0.0.1:80",
+							Weight: 42,
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "Should build config with a forward auth",
+			nodes: []catalogUpdate{
+				{
+					Service: &serviceUpdate{
+						ServiceName: "test",
+						Attributes: []string{
+							"random.foo=bar",
+							label.TraefikFrontendAuthForwardAddress + "=auth.server",
+							label.TraefikFrontendAuthForwardTrustForwardHeader + "=true",
+							label.TraefikFrontendAuthForwardTLSCa + "=ca.crt",
+							label.TraefikFrontendAuthForwardTLSCaOptional + "=true",
+							label.TraefikFrontendAuthForwardTLSCert + "=server.crt",
+							label.TraefikFrontendAuthForwardTLSKey + "=server.key",
+							label.TraefikFrontendAuthForwardTLSInsecureSkipVerify + "=true",
+							label.TraefikFrontendAuthHeaderField + "=X-WebAuth-User",
+						},
+					},
+					Nodes: []*api.ServiceEntry{
+						{
+							Service: &api.AgentService{
+								Service: "test",
+								Address: "127.0.0.1",
+								Port:    80,
+								Tags: []string{
+									"random.foo=bar",
+									label.TraefikWeight + "=42",
+									label.TraefikFrontendPassHostHeader + "=true",
+									label.TraefikProtocol + "=https",
+								},
+							},
+							Node: &api.Node{
+								Node:    "localhost",
+								Address: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-test": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					Routes: map[string]types.Route{
+						"route-host-test": {
+							Rule: "Host:test.localhost",
+						},
+					},
+					Auth: &types.Auth{
+						HeaderField: "X-WebAuth-User",
+						Forward: &types.Forward{
+							Address:            "auth.server",
+							TrustForwardHeader: true,
+							TLS: &types.ClientTLS{
+								CA:                 "ca.crt",
+								CAOptional:         true,
+								InsecureSkipVerify: true,
+								Cert:               "server.crt",
+								Key:                "server.key",
+							},
+						},
+					},
+					EntryPoints: []string{},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test": {
+					Servers: map[string]types.Server{
+						"test-0-ecTTsmX1vPktQQrl53WhNDy-HEg": {
+							URL:    "https://127.0.0.1:80",
+							Weight: 42,
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "when all labels are set",
+			nodes: []catalogUpdate{
+				{
+					Service: &serviceUpdate{
+						ServiceName: "test",
+						Attributes: []string{
+							label.TraefikBackend + "=foobar",
+
+							label.TraefikBackendCircuitBreakerExpression + "=NetworkErrorRatio() > 0.5",
+							label.TraefikBackendHealthCheckPath + "=/health",
+							label.TraefikBackendHealthCheckScheme + "=http",
+							label.TraefikBackendHealthCheckPort + "=880",
+							label.TraefikBackendHealthCheckInterval + "=6",
+							label.TraefikBackendHealthCheckHostname + "=foo.com",
+							label.TraefikBackendHealthCheckHeaders + "=Foo:bar || Bar:foo",
+							label.TraefikBackendLoadBalancerMethod + "=drr",
+							label.TraefikBackendLoadBalancerStickiness + "=true",
+							label.TraefikBackendLoadBalancerStickinessCookieName + "=chocolate",
+							label.TraefikBackendMaxConnAmount + "=666",
+							label.TraefikBackendMaxConnExtractorFunc + "=client.ip",
+							label.TraefikBackendBufferingMaxResponseBodyBytes + "=10485760",
+							label.TraefikBackendBufferingMemResponseBodyBytes + "=2097152",
+							label.TraefikBackendBufferingMaxRequestBodyBytes + "=10485760",
+							label.TraefikBackendBufferingMemRequestBodyBytes + "=2097152",
+							label.TraefikBackendBufferingRetryExpression + "=IsNetworkError() && Attempts() <= 2",
+
+							label.TraefikFrontendAuthBasic + "=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+							label.TraefikFrontendAuthBasicRemoveHeader + "=true",
+							label.TraefikFrontendAuthBasicUsers + "=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+							label.TraefikFrontendAuthBasicUsersFile + "=.htpasswd",
+							label.TraefikFrontendAuthDigestRemoveHeader + "=true",
+							label.TraefikFrontendAuthDigestUsers + "=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+							label.TraefikFrontendAuthDigestUsersFile + "=.htpasswd",
+							label.TraefikFrontendAuthForwardAddress + "=auth.server",
+							label.TraefikFrontendAuthForwardTrustForwardHeader + "=true",
+							label.TraefikFrontendAuthForwardTLSCa + "=ca.crt",
+							label.TraefikFrontendAuthForwardTLSCaOptional + "=true",
+							label.TraefikFrontendAuthForwardTLSCert + "=server.crt",
+							label.TraefikFrontendAuthForwardTLSKey + "=server.key",
+							label.TraefikFrontendAuthForwardTLSInsecureSkipVerify + "=true",
+							label.TraefikFrontendAuthHeaderField + "=X-WebAuth-User",
+
+							label.TraefikFrontendEntryPoints + "=http,https",
+							label.TraefikFrontendPassHostHeader + "=true",
+							label.TraefikFrontendPassTLSCert + "=true",
+							label.TraefikFrontendPriority + "=666",
+							label.TraefikFrontendRedirectEntryPoint + "=https",
+							label.TraefikFrontendRedirectRegex + "=nope",
+							label.TraefikFrontendRedirectReplacement + "=nope",
+							label.TraefikFrontendRedirectPermanent + "=true",
+							label.TraefikFrontendRule + "=Host:traefik.io",
+							label.TraefikFrontendWhiteListSourceRange + "=10.10.10.10",
+							label.TraefikFrontendWhiteListIPStrategyExcludedIPS + "=10.10.10.10,10.10.10.11",
+							label.TraefikFrontendWhiteListIPStrategyDepth + "=5",
+
+							label.TraefikFrontendRequestHeaders + "=Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
+							label.TraefikFrontendResponseHeaders + "=Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
+							label.TraefikFrontendSSLProxyHeaders + "=Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
+							label.TraefikFrontendAllowedHosts + "=foo,bar,bor",
+							label.TraefikFrontendHostsProxyHeaders + "=foo,bar,bor",
+							label.TraefikFrontendSSLHost + "=foo",
+							label.TraefikFrontendCustomFrameOptionsValue + "=foo",
+							label.TraefikFrontendContentSecurityPolicy + "=foo",
+							label.TraefikFrontendPublicKey + "=foo",
+							label.TraefikFrontendReferrerPolicy + "=foo",
+							label.TraefikFrontendCustomBrowserXSSValue + "=foo",
+							label.TraefikFrontendSTSSeconds + "=666",
+							label.TraefikFrontendSSLForceHost + "=true",
+							label.TraefikFrontendSSLRedirect + "=true",
+							label.TraefikFrontendSSLTemporaryRedirect + "=true",
+							label.TraefikFrontendSTSIncludeSubdomains + "=true",
+							label.TraefikFrontendSTSPreload + "=true",
+							label.TraefikFrontendForceSTSHeader + "=true",
+							label.TraefikFrontendFrameDeny + "=true",
+							label.TraefikFrontendContentTypeNosniff + "=true",
+							label.TraefikFrontendBrowserXSSFilter + "=true",
+							label.TraefikFrontendIsDevelopment + "=true",
+
+							label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageStatus + "=404",
+							label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageBackend + "=foobar",
+							label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageQuery + "=foo_query",
+							label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageStatus + "=500,600",
+							label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageBackend + "=foobar",
+							label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageQuery + "=bar_query",
+
+							label.TraefikFrontendRateLimitExtractorFunc + "=client.ip",
+							label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitPeriod + "=6",
+							label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitAverage + "=12",
+							label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitBurst + "=18",
+							label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitPeriod + "=3",
+							label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitAverage + "=6",
+							label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitBurst + "=9",
+						},
+					},
+					Nodes: []*api.ServiceEntry{
+						{
+							Service: &api.AgentService{
+								Service: "test",
+								Address: "10.0.0.1",
+								Port:    80,
+								Tags: []string{
+									label.TraefikProtocol + "=https",
+									label.TraefikWeight + "=12",
+								},
+							},
+							Node: &api.Node{
+								Node:    "localhost",
+								Address: "127.0.0.1",
+							},
+						},
+						{
+							Service: &api.AgentService{
+								Service: "test",
+								Address: "10.0.0.2",
+								Port:    80,
+								Tags: []string{
+									label.TraefikProtocol + "=https",
+									label.TraefikWeight + "=12",
+								},
+							},
+							Node: &api.Node{
+								Node:    "localhost",
+								Address: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-test": {
+					EntryPoints: []string{
+						"http",
+						"https",
+					},
+					Backend: "backend-test",
+					Routes: map[string]types.Route{
+						"route-host-test": {
+							Rule: "Host:traefik.io",
+						},
+					},
+					PassHostHeader: true,
+					PassTLSCert:    true,
+					Priority:       666,
+					Auth: &types.Auth{
+						HeaderField: "X-WebAuth-User",
+						Basic: &types.Basic{
+							RemoveHeader: true,
+							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							UsersFile: ".htpasswd",
+						},
+					},
+					WhiteList: &types.WhiteList{
+						SourceRange: []string{
+							"10.10.10.10",
+						},
+						IPStrategy: &types.IPStrategy{
+							Depth:       5,
+							ExcludedIPs: []string{"10.10.10.10", "10.10.10.11"},
+						},
+					},
+					Headers: &types.Headers{
+						CustomRequestHeaders: map[string]string{
+							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+							"Content-Type":                 "application/json; charset=utf-8",
+						},
+						CustomResponseHeaders: map[string]string{
+							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+							"Content-Type":                 "application/json; charset=utf-8",
+						},
+						AllowedHosts: []string{
+							"foo",
+							"bar",
+							"bor",
+						},
+						HostsProxyHeaders: []string{
+							"foo",
+							"bar",
+							"bor",
+						},
+						SSLRedirect:          true,
+						SSLTemporaryRedirect: true,
+						SSLForceHost:         true,
+						SSLHost:              "foo",
+						SSLProxyHeaders: map[string]string{
+							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+							"Content-Type":                 "application/json; charset=utf-8",
+						},
+						STSSeconds:              666,
+						STSIncludeSubdomains:    true,
+						STSPreload:              true,
+						ForceSTSHeader:          true,
+						FrameDeny:               true,
+						CustomFrameOptionsValue: "foo",
+						ContentTypeNosniff:      true,
+						BrowserXSSFilter:        true,
+						CustomBrowserXSSValue:   "foo",
+						ContentSecurityPolicy:   "foo",
+						PublicKey:               "foo",
+						ReferrerPolicy:          "foo",
+						IsDevelopment:           true,
+					},
+					Errors: map[string]*types.ErrorPage{
+						"foo": {
+							Status:  []string{"404"},
+							Query:   "foo_query",
+							Backend: "backend-foobar",
+						},
+						"bar": {
+							Status:  []string{"500", "600"},
+							Query:   "bar_query",
+							Backend: "backend-foobar",
+						},
+					},
+					RateLimit: &types.RateLimit{
+						ExtractorFunc: "client.ip",
+						RateSet: map[string]*types.Rate{
+							"foo": {
+								Period:  parse.Duration(6 * time.Second),
+								Average: 12,
+								Burst:   18,
+							},
+							"bar": {
+								Period:  parse.Duration(3 * time.Second),
+								Average: 6,
+								Burst:   9,
+							},
+						},
+					},
+					Redirect: &types.Redirect{
+						EntryPoint:  "https",
+						Regex:       "",
+						Replacement: "",
+						Permanent:   true,
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test": {
+					Servers: map[string]types.Server{
+						"test-0-N753CZ-JEP1SmRf5Wfe6S3-RuM": {
+							URL:    "https://10.0.0.1:80",
+							Weight: 12,
+						},
+						"test-1-u4RAIw2K4-PDJh41dqqB4kM2wy0": {
+							URL:    "https://10.0.0.2:80",
+							Weight: 12,
+						},
+					},
+					CircuitBreaker: &types.CircuitBreaker{
+						Expression: "NetworkErrorRatio() > 0.5",
+					},
+					LoadBalancer: &types.LoadBalancer{
+						Method: "drr",
+						Stickiness: &types.Stickiness{
+							CookieName: "chocolate",
+						},
+					},
+					MaxConn: &types.MaxConn{
+						Amount:        666,
+						ExtractorFunc: "client.ip",
+					},
+					HealthCheck: &types.HealthCheck{
+						Scheme:   "http",
+						Path:     "/health",
+						Port:     880,
+						Interval: "6",
+						Hostname: "foo.com",
+						Headers: map[string]string{
+							"Foo": "bar",
+							"Bar": "foo",
+						},
+					},
+					Buffering: &types.Buffering{
+						MaxResponseBodyBytes: 10485760,
+						MemResponseBodyBytes: 2097152,
+						MaxRequestBodyBytes:  10485760,
+						MemRequestBodyBytes:  2097152,
+						RetryExpression:      "IsNetworkError() && Attempts() <= 2",
+					},
+				},
+			},
+		},
+		{
 			desc: "Should build config containing one frontend, one IPv4 and one IPv6 backend",
 			nodes: []catalogUpdate{
 				{
@@ -125,7 +692,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 							label.TraefikBackendCircuitBreakerExpression + "=NetworkErrorRatio() > 0.5",
 							label.TraefikBackendMaxConnAmount + "=1000",
 							label.TraefikBackendMaxConnExtractorFunc + "=client.ip",
-							label.TraefikFrontendAuthBasic + "=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+							label.TraefikFrontendAuthBasicUsers + "=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						},
 					},
 					Nodes: []*api.ServiceEntry{
@@ -136,7 +703,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 								Port:    80,
 								Tags: []string{
 									"random.foo=bar",
-									label.Prefix + "backend.weight=42", // Deprecated label
+									label.TraefikWeight + "=42",
 									label.TraefikFrontendPassHostHeader + "=true",
 									label.TraefikProtocol + "=https",
 								},
@@ -153,7 +720,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 								Port:    80,
 								Tags: []string{
 									"random.foo=bar",
-									label.Prefix + "backend.weight=42", // Deprecated label
+									label.TraefikWeight + "=42",
 									label.TraefikFrontendPassHostHeader + "=true",
 									label.TraefikProtocol + "=https",
 								},
@@ -175,18 +742,23 @@ func TestProviderBuildConfiguration(t *testing.T) {
 							Rule: "Host:test.localhost",
 						},
 					},
+					Auth: &types.Auth{
+						Basic: &types.Basic{
+							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+						},
+					},
 					EntryPoints: []string{},
-					BasicAuth:   []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 				},
 			},
 			expectedBackends: map[string]*types.Backend{
 				"backend-test": {
 					Servers: map[string]types.Server{
-						"test-0-us4-27hAOu2ARV7nNrmv6GoKlcA": {
+						"test-0-ecTTsmX1vPktQQrl53WhNDy-HEg": {
 							URL:    "https://127.0.0.1:80",
 							Weight: 42,
 						},
-						"test-1-Gh4zrXo5flAAz1A8LAEHm1-TSnE": {
+						"test-1-9tI2Ud3Vkl4T4B6bAIWV0vFjEIg": {
 							URL:    "https://[::1]:80",
 							Weight: 42,
 						},
@@ -213,7 +785,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 
 			nodes := fakeLoadTraefikLabelsSlice(test.nodes, p.Prefix)
 
-			actualConfig := p.buildConfigurationV2(nodes)
+			actualConfig := p.buildConfiguration(nodes)
 			assert.NotNil(t, actualConfig)
 			assert.Equal(t, test.expectedBackends, actualConfig.Backends)
 			assert.Equal(t, test.expectedFrontends, actualConfig.Frontends)

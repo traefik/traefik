@@ -1,0 +1,70 @@
+logLevel = "DEBUG"
+
+defaultEntryPoints = ["http", "https"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":8888"
+  [entryPoints.http.redirect]
+  entryPoint = "https"
+  [entryPoints.https]
+  address = ":8443"
+    [entryPoints.https.tls]
+
+[api]
+
+[file]
+
+[backends]
+  [backends.backend1]
+    [backends.backend1.servers.server1]
+    url = "http://127.0.0.1:80"
+    weight = 1
+
+[frontends]
+
+  [frontends.frontend1]
+  backend = "backend1"
+    [frontends.frontend1.routes.test_1]
+    rule = "Host: example.com; PathPrefixStrip: /api"
+ [frontends.frontend2]
+  backend = "backend1"
+    [frontends.frontend2.routes.test_1]
+    rule = "Host: example2.com; PathPrefixStrip: /api/"
+
+  [frontends.frontend3]
+  backend = "backend1"
+    [frontends.frontend3.routes.test_1]
+    rule = "Host: test.com; AddPrefix: /foo"
+  [frontends.frontend4]
+  backend = "backend1"
+    [frontends.frontend4.routes.test_1]
+    rule = "Host: test2.com; AddPrefix: /foo/"
+
+  [frontends.frontend5]
+  backend = "backend1"
+    [frontends.frontend5.routes.test_1]
+    rule = "Host: foo.com; PathPrefixStripRegex: /{id:[a-z]+}"
+  [frontends.frontend6]
+  backend = "backend1"
+    [frontends.frontend6.routes.test_1]
+    rule = "Host: foo2.com; PathPrefixStripRegex: /{id:[a-z]+}/"
+
+   [frontends.frontend7]
+  backend = "backend1"
+    [frontends.frontend7.routes.test_1]
+    rule = "Host: bar.com; ReplacePathRegex: /api /"
+   [frontends.frontend8]
+  backend = "backend1"
+    [frontends.frontend8.routes.test_1]
+    rule = "Host: bar2.com; ReplacePathRegex: /api/ /"
+
+   [frontends.frontend9]
+  backend = "backend1"
+    [frontends.frontend9.routes.test_1]
+    rule = "Host: pow.com; ReplacePath: /api"
+   [frontends.frontend10]
+  backend = "backend1"
+    [frontends.frontend10.routes.test_1]
+    rule = "Host: pow2.com; ReplacePath: /api/"
+

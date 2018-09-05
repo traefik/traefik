@@ -282,7 +282,7 @@ func (s *ConsulSuite) TestGlobalConfiguration(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, try.BodyContains("Path:/test"))
 	c.Assert(err, checker.IsNil)
 
-	//check
+	// check
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8001/", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = "test.localhost"
@@ -469,7 +469,7 @@ func datastoreContains(datastore *cluster.Datastore, expectedValue string) func(
 	return func() error {
 		kvStruct := datastore.Get().(*TestStruct)
 		if kvStruct.String != expectedValue {
-			return fmt.Errorf("Got %s, wanted %s", kvStruct.String, expectedValue)
+			return fmt.Errorf("got %s, wanted %s", kvStruct.String, expectedValue)
 		}
 		return nil
 	}
@@ -591,7 +591,7 @@ func (s *ConsulSuite) TestSNIDynamicTlsConfig(c *check.C) {
 	req.Header.Set("Host", tr1.TLSClientConfig.ServerName)
 	req.Header.Set("Accept", "*/*")
 
-	err = try.RequestWithTransport(req, 30*time.Second, tr1, try.HasCn("snitest.com"))
+	err = try.RequestWithTransport(req, 30*time.Second, tr1, try.HasCn(tr1.TLSClientConfig.ServerName))
 	c.Assert(err, checker.IsNil)
 
 	// now we configure the second keypair in consul and the request for host "snitest.org" will use the second keypair
@@ -613,6 +613,6 @@ func (s *ConsulSuite) TestSNIDynamicTlsConfig(c *check.C) {
 	req.Header.Set("Host", tr2.TLSClientConfig.ServerName)
 	req.Header.Set("Accept", "*/*")
 
-	err = try.RequestWithTransport(req, 30*time.Second, tr2, try.HasCn("snitest.org"))
+	err = try.RequestWithTransport(req, 30*time.Second, tr2, try.HasCn(tr2.TLSClientConfig.ServerName))
 	c.Assert(err, checker.IsNil)
 }

@@ -23,9 +23,10 @@ import (
 
 // Container is the definition for a container type in marathon
 type Container struct {
-	Type    string    `json:"type,omitempty"`
-	Docker  *Docker   `json:"docker,omitempty"`
-	Volumes *[]Volume `json:"volumes,omitempty"`
+	Type         string         `json:"type,omitempty"`
+	Docker       *Docker        `json:"docker,omitempty"`
+	Volumes      *[]Volume      `json:"volumes,omitempty"`
+	PortMappings *[]PortMapping `json:"portMappings,omitempty"`
 }
 
 // PortMapping is the portmapping structure between container and mesos
@@ -36,6 +37,7 @@ type PortMapping struct {
 	Name          string             `json:"name,omitempty"`
 	ServicePort   int                `json:"servicePort,omitempty"`
 	Protocol      string             `json:"protocol,omitempty"`
+	NetworkNames  *[]string          `json:"networkNames,omitempty"`
 }
 
 // Parameters is the parameters to pass to the docker client when creating the container
@@ -53,11 +55,15 @@ type Volume struct {
 	Persistent    *PersistentVolume `json:"persistent,omitempty"`
 }
 
+// PersistentVolumeType is the a persistent docker volume to be mounted
 type PersistentVolumeType string
 
 const (
-	PersistentVolumeTypeRoot  PersistentVolumeType = "root"
-	PersistentVolumeTypePath  PersistentVolumeType = "path"
+	// PersistentVolumeTypeRoot is the root path of the persistent volume
+	PersistentVolumeTypeRoot PersistentVolumeType = "root"
+	// PersistentVolumeTypePath is the mount path of the persistent volume
+	PersistentVolumeTypePath PersistentVolumeType = "path"
+	// PersistentVolumeTypeMount is the mount type of the persistent volume
 	PersistentVolumeTypeMount PersistentVolumeType = "mount"
 )
 
@@ -257,6 +263,19 @@ func (docker *Docker) Host() *Docker {
 
 // Expose sets the container to expose the following TCP ports
 //		ports:			the TCP ports the container is exposing
+func (container *Container) Expose(ports ...int) *Container {
+	for _, port := range ports {
+		container.ExposePort(PortMapping{
+			ContainerPort: port,
+			HostPort:      0,
+			ServicePort:   0,
+			Protocol:      "tcp"})
+	}
+	return container
+}
+
+// Expose sets the container to expose the following TCP ports
+//		ports:			the TCP ports the container is exposing
 func (docker *Docker) Expose(ports ...int) *Docker {
 	for _, port := range ports {
 		docker.ExposePort(PortMapping{
@@ -266,6 +285,19 @@ func (docker *Docker) Expose(ports ...int) *Docker {
 			Protocol:      "tcp"})
 	}
 	return docker
+}
+
+// ExposeUDP sets the container to expose the following UDP ports
+//		ports:			the UDP ports the container is exposing
+func (container *Container) ExposeUDP(ports ...int) *Container {
+	for _, port := range ports {
+		container.ExposePort(PortMapping{
+			ContainerPort: port,
+			HostPort:      0,
+			ServicePort:   0,
+			Protocol:      "udp"})
+	}
+	return container
 }
 
 // ExposeUDP sets the container to expose the following UDP ports
@@ -282,6 +314,19 @@ func (docker *Docker) ExposeUDP(ports ...int) *Docker {
 }
 
 // ExposePort exposes an port in the container
+func (container *Container) ExposePort(portMapping PortMapping) *Container {
+	if container.PortMappings == nil {
+		container.EmptyPortMappings()
+	}
+
+	portMappings := *container.PortMappings
+	portMappings = append(portMappings, portMapping)
+	container.PortMappings = &portMappings
+
+	return container
+}
+
+// ExposePort exposes an port in the container
 func (docker *Docker) ExposePort(portMapping PortMapping) *Docker {
 	if docker.PortMappings == nil {
 		docker.EmptyPortMappings()
@@ -292,6 +337,14 @@ func (docker *Docker) ExposePort(portMapping PortMapping) *Docker {
 	docker.PortMappings = &portMappings
 
 	return docker
+}
+
+// EmptyPortMappings explicitly empties the port mappings -- use this if you need to empty
+// port mappings of an application that already has port mappings set (setting port mappings to nil will
+// keep the current value)
+func (container *Container) EmptyPortMappings() *Container {
+	container.PortMappings = &[]PortMapping{}
+	return container
 }
 
 // EmptyPortMappings explicitly empties the port mappings -- use this if you need to empty
@@ -351,6 +404,24 @@ func (docker *Docker) EmptyParameters() *Docker {
 
 // ServicePortIndex finds the service port index of the exposed port
 //		port:			the port you are looking for
+func (container *Container) ServicePortIndex(port int) (int, error) {
+	if container.PortMappings == nil || len(*container.PortMappings) == 0 {
+		return 0, errors.New("The container does not contain any port mappings to search")
+	}
+
+	// step: iterate and find the port
+	for index, containerPort := range *container.PortMappings {
+		if containerPort.ContainerPort == port {
+			return index, nil
+		}
+	}
+
+	// step: we didn't find the port in the mappings
+	return 0, fmt.Errorf("The container port %d was not found in the container port mappings", port)
+}
+
+// ServicePortIndex finds the service port index of the exposed port
+//		port:			the port you are looking for
 func (docker *Docker) ServicePortIndex(port int) (int, error) {
 	if docker.PortMappings == nil || len(*docker.PortMappings) == 0 {
 		return 0, errors.New("The docker does not contain any port mappings to search")
@@ -364,5 +435,25 @@ func (docker *Docker) ServicePortIndex(port int) (int, error) {
 	}
 
 	// step: we didn't find the port in the mappings
-	return 0, fmt.Errorf("The container port required was not found in the container port mappings")
+	return 0, fmt.Errorf("The docker port %d was not found in the container port mappings", port)
+}
+
+// AddNetwork adds a network name to a PortMapping
+//		name:	the name of the network
+func (p *PortMapping) AddNetwork(name string) *PortMapping {
+	if p.NetworkNames == nil {
+		p.EmptyNetworkNames()
+	}
+	networks := *p.NetworkNames
+	networks = append(networks, name)
+	p.NetworkNames = &networks
+	return p
+}
+
+// EmptyNetworkNames explicitly empties the network names -- use this if you need to empty
+// the network names of a port mapping that already has network names set
+func (p *PortMapping) EmptyNetworkNames() *PortMapping {
+	p.NetworkNames = &[]string{}
+
+	return p
 }

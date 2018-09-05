@@ -1,6 +1,6 @@
 package middlewares
 
-//Middleware based on https://github.com/unrolled/secure
+// Middleware based on https://github.com/unrolled/secure
 
 import (
 	"net/http"

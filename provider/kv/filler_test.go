@@ -2,6 +2,7 @@ package kv
 
 import (
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -81,7 +82,18 @@ func withPair(key string, value string) func(map[string]string) {
 	}
 }
 
-func withErrorPage(name string, backend, query, status string) func(map[string]string) {
+func withList(key string, values ...string) func(map[string]string) {
+	return func(pairs map[string]string) {
+		if len(key) == 0 {
+			return
+		}
+		for i, value := range values {
+			pairs[key+"/"+strconv.Itoa(i)] = value
+		}
+	}
+}
+
+func withErrorPage(name string, backend string, query string, statuses ...string) func(map[string]string) {
 	return func(pairs map[string]string) {
 		if len(name) == 0 {
 			return
@@ -89,7 +101,7 @@ func withErrorPage(name string, backend, query, status string) func(map[string]s
 
 		withPair(pathFrontendErrorPages+name+pathFrontendErrorPagesBackend, backend)(pairs)
 		withPair(pathFrontendErrorPages+name+pathFrontendErrorPagesQuery, query)(pairs)
-		withPair(pathFrontendErrorPages+name+pathFrontendErrorPagesStatus, status)(pairs)
+		withList(pathFrontendErrorPages+name+pathFrontendErrorPagesStatus, statuses...)(pairs)
 	}
 }
 
@@ -125,11 +137,14 @@ func TestFiller(t *testing.T) {
 		{Key: "traefik/frontends/frontend.with.dot/errors/bar", Value: []byte("")},
 		{Key: "traefik/frontends/frontend.with.dot/errors/bar/backend", Value: []byte("error")},
 		{Key: "traefik/frontends/frontend.with.dot/errors/bar/query", Value: []byte("/test2")},
-		{Key: "traefik/frontends/frontend.with.dot/errors/bar/status", Value: []byte("400-405")},
+		{Key: "traefik/frontends/frontend.with.dot/errors/bar/status", Value: []byte("")},
+		{Key: "traefik/frontends/frontend.with.dot/errors/bar/status/0", Value: []byte("400-405")},
 		{Key: "traefik/frontends/frontend.with.dot/errors/foo", Value: []byte("")},
 		{Key: "traefik/frontends/frontend.with.dot/errors/foo/backend", Value: []byte("error")},
 		{Key: "traefik/frontends/frontend.with.dot/errors/foo/query", Value: []byte("/test1")},
-		{Key: "traefik/frontends/frontend.with.dot/errors/foo/status", Value: []byte("500-501, 503-599")},
+		{Key: "traefik/frontends/frontend.with.dot/errors/foo/status", Value: []byte("")},
+		{Key: "traefik/frontends/frontend.with.dot/errors/foo/status/0", Value: []byte("500-501")},
+		{Key: "traefik/frontends/frontend.with.dot/errors/foo/status/1", Value: []byte("503-599")},
 		{Key: "traefik/frontends/frontend.with.dot/ratelimit", Value: []byte("")},
 		{Key: "traefik/frontends/frontend.with.dot/ratelimit/extractorfunc", Value: []byte("client.ip")},
 		{Key: "traefik/frontends/frontend.with.dot/ratelimit/rateset", Value: []byte("")},
@@ -150,7 +165,7 @@ func TestFiller(t *testing.T) {
 		frontend("frontend.with.dot",
 			withPair("backend", "backend.with.dot.too"),
 			withPair("routes/route.with.dot/rule", "Host:test.localhost"),
-			withErrorPage("foo", "error", "/test1", "500-501, 503-599"),
+			withErrorPage("foo", "error", "/test1", "500-501", "503-599"),
 			withErrorPage("bar", "error", "/test2", "400-405"),
 			withRateLimit("client.ip",
 				withLimit("foo", "6", "12", "18"),
@@ -168,10 +183,10 @@ func TestFiller(t *testing.T) {
 			withPair("routes/route.with.dot/rule", "Host:test.localhost"),
 			withPair("errors/foo/backend", "error"),
 			withPair("errors/foo/query", "/test1"),
-			withPair("errors/foo/status", "500-501, 503-599"),
+			withList("errors/foo/status", "500-501", "503-599"),
 			withPair("errors/bar/backend", "error"),
 			withPair("errors/bar/query", "/test2"),
-			withPair("errors/bar/status", "400-405"),
+			withList("errors/bar/status", "400-405"),
 			withPair("ratelimit/extractorfunc", "client.ip"),
 			withPair("ratelimit/rateset/foo/average", "6"),
 			withPair("ratelimit/rateset/foo/burst", "12"),
