@@ -3263,6 +3263,91 @@ service1: 10%
 	assert.Equal(t, expected, actual, "error loading percentage weight annotation")
 }
 
+func TestDivergingIngressDefinitions(t *testing.T) {
+	ingresses := []*extensionsv1beta1.Ingress{
+		buildIngress(
+			iNamespace("testing"),
+			iRules(
+				iRule(
+					iHost("host-a"),
+					iPaths(
+						onePath(iBackend("service1", intstr.FromString("80"))),
+					)),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iRules(
+				iRule(
+					iHost("host-a"),
+					iPaths(
+						onePath(iBackend("missing", intstr.FromString("80"))),
+					)),
+			),
+		),
+	}
+
+	services := []*corev1.Service{
+		buildService(
+			sName("service1"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sPorts(sPort(80, "")),
+			),
+		),
+	}
+
+	endpoints := []*corev1.Endpoints{
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service1"),
+			eUID("1"),
+			subset(
+				eAddresses(
+					eAddress("10.10.0.1"),
+					eAddress("10.10.0.2"),
+				),
+				ePorts(ePort(80, "")),
+			),
+		),
+	}
+
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		endpoints: endpoints,
+		watchChan: watchChan,
+	}
+	provider := Provider{}
+
+	actual, err := provider.loadIngresses(client)
+	require.NoError(t, err, "error loading ingresses")
+
+	expected := buildConfiguration(
+		backends(
+			backend("host-a",
+				servers(
+					server("http://10.10.0.1:80", weight(1)),
+					server("http://10.10.0.2:80", weight(1)),
+				),
+				lbMethod("wrr"),
+			),
+		),
+		frontends(
+			frontend("host-a",
+				passHostHeader(),
+				routes(
+					route("host-a", "Host:host-a")),
+			),
+		),
+	)
+
+	assert.Equal(t, expected, actual, "error merging multiple backends")
+}
+
 func TestProviderNewK8sInClusterClient(t *testing.T) {
 	p := Provider{}
 	os.Setenv("KUBERNETES_SERVICE_HOST", "localhost")
