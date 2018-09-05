@@ -128,7 +128,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 func detectMasters(zk string, masters []string) <-chan []string {
 	changed := make(chan []string, 1)
 	if zk != "" {
-		log.Debugf("Starting master detector for ZK ", zk)
+		log.Debugf("Starting master detector for ZK %s", zk)
 		if md, err := detector.New(zk); err != nil {
 			log.Errorf("Failed to create master detector: %v", err)
 		} else if err := md.Detect(detect.NewMasters(masters, changed)); err != nil {

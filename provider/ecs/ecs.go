@@ -386,7 +386,7 @@ func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, cl
 			})
 
 			if err != nil {
-				log.Errorf("Unable to describe instances [%s]: %v", err)
+				log.Errorf("Unable to describe instances: %v", err)
 				return nil, err
 			}
 		}

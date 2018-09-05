@@ -45,7 +45,7 @@ func (wl *IPWhiteLister) handle(w http.ResponseWriter, r *http.Request, next htt
 		return
 	}
 
-	tracing.SetErrorAndDebugLog(r, "request %+v matched white list %s - passing", r, wl.whiteLister)
+	tracing.SetErrorAndDebugLog(r, "request %+v matched white list %v - passing", r, wl.whiteLister)
 	next.ServeHTTP(w, r)
 }
 
