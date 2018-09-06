@@ -447,8 +447,10 @@ func (s *Server) throttleProviderConfigReload(throttle time.Duration, publish ch
 			case <-stop:
 				return
 			case nextConfig := <-ring.Out():
-				publish <- nextConfig.(types.ConfigMessage)
-				time.Sleep(throttle)
+				if config, ok := nextConfig.(types.ConfigMessage); ok {
+					publish <- config
+					time.Sleep(throttle)
+				}
 			}
 		}
 	})
