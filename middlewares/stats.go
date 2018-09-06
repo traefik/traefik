@@ -121,6 +121,7 @@ func (s *StatsRecorder) ServeHTTP(w http.ResponseWriter, r *http.Request, next h
 
 // Data returns a copy of the statistics that have been gathered.
 func (s *StatsRecorder) Data() *Stats {
+
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
@@ -129,6 +130,8 @@ func (s *StatsRecorder) Data() *Stats {
 	copy(recentErrors, s.recentErrors)
 
 	backendRequests := make(map[string]int64)
+	s.backendReqMutex.RLock()
+	defer s.backendReqMutex.RUnlock() // Defers execute LIFO
 	for k, v := range s.BackendRequests {
 		backendRequests[k] = v
 	}
@@ -190,8 +193,6 @@ func (s *StatsRecorder) ConnStateChange(conn net.Conn, newState http.ConnState) 
 }
 
 func (s *StatsRecorder) incTotalRequestsForBackend(r *http.Request) {
-	s.backendReqMutex.Lock()
-	defer s.backendReqMutex.Unlock()
 
 	var backendName, backendAddr interface{}
 	var ok bool
@@ -212,5 +213,7 @@ func (s *StatsRecorder) incTotalRequestsForBackend(r *http.Request) {
 
 	statName := fmt.Sprintf("%s_%s", backendName, backendAddr.(string))
 
+	s.backendReqMutex.Lock()
+	defer s.backendReqMutex.Unlock()
 	s.BackendRequests[statName]++
 }
