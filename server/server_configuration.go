@@ -424,8 +424,10 @@ func (s *Server) throttleProviderConfigReload(throttle time.Duration, publish ch
 			case <-stop:
 				return
 			case nextConfig := <-ring.Out():
-				publish <- nextConfig.(types.ConfigMessage)
-				time.Sleep(throttle)
+				if config, ok := nextConfig.(types.ConfigMessage); ok {
+					publish <- config
+					time.Sleep(throttle)
+				}
 			}
 		}
 	})
@@ -515,6 +517,8 @@ func (s *Server) postLoadConfiguration() {
 						domains, err := rls.ParseDomains(route.Rule)
 						if err != nil {
 							log.Errorf("Error parsing domains: %v", err)
+						} else if len(domains) == 0 {
+							log.Debugf("No domain parsed in rule %q", route.Rule)
 						} else {
 							s.globalConfiguration.ACME.LoadCertificateForDomains(domains)
 						}

@@ -85,8 +85,13 @@ func Run(kv *staert.KvSource, traefikConfiguration *cmd.TraefikConfiguration) fu
 				}
 			}
 
+			accountInitialized, err := keyExists(kv, traefikConfiguration.GlobalConfiguration.ACME.Storage)
+			if err != nil {
+				return err
+			}
+
 			// Check to see if ACME account object is already in kv store
-			if traefikConfiguration.GlobalConfiguration.ACME.OverrideCertificates {
+			if traefikConfiguration.GlobalConfiguration.ACME.OverrideCertificates || !accountInitialized {
 
 				// Store the ACME Account into the KV Store
 				// Certificates in KV Store will be overridden
@@ -112,6 +117,15 @@ func Run(kv *staert.KvSource, traefikConfiguration *cmd.TraefikConfiguration) fu
 		}
 		return nil
 	}
+}
+
+func keyExists(source *staert.KvSource, key string) (bool, error) {
+	list, err := source.List(key, nil)
+	if err != nil {
+		return false, err
+	}
+
+	return len(list) > 0, nil
 }
 
 // migrateACMEData allows migrating data from acme.json file to KV store in function of the file format

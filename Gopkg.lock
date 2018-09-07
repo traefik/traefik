@@ -1263,7 +1263,7 @@
     "roundrobin",
     "utils"
   ]
-  revision = "f6bbeac6d5c4c06f88ba07ed42983ff36a5b407e"
+  revision = "77148e9694210e5f5610328f1cd7cf65583014c2"
 
 [[projects]]
   name = "github.com/vulcand/predicate"

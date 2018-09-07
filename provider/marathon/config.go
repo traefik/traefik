@@ -44,6 +44,7 @@ func (p *Provider) buildConfiguration(applications *marathon.Applications) *type
 		"getFrontendName":      p.getFrontendName,
 		"getPassHostHeader":    label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getPassTLSCert":       label.GetFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
+		"getPassTLSClientCert": label.GetTLSClientCert,
 		"getPriority":          label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
 		"getEntryPoints":       label.GetFuncSliceString(label.TraefikFrontendEntryPoints),
 		"getBasicAuth":         label.GetFuncSliceString(label.TraefikFrontendAuthBasic), // Deprecated

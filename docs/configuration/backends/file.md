@@ -53,9 +53,24 @@ Træfik can be configured with a file.
     entryPoints = ["http", "https"]
     backend = "backend1"
     passHostHeader = true
-    passTLSCert = true
     priority = 42
 
+    [frontends.frontend1.passTLSClientCert]
+        # Pass the escaped pem in a `X-Forwarded-Ssl-Client-Cert` header
+        pem = true
+        # Pass the escaped client cert infos selected below in a `X-Forwarded-Ssl-Client-Cert-Infos` header
+        # The unescaped header is like `Subject="C=%s,ST=%s,L=%s,O=%s,CN=%s",NB=%d,NA=%d,SAN=%s`
+        # It there is more than one certificates, their are separated by a `;`
+        [frontends.frontend-server.passTLSClientCert.infos]
+            notBefore = true
+            notAfter = true
+            [frontends.frontend-server.passTLSClientCert.infos.subject]
+                country = true
+                province = true
+                locality = true
+                organization = true
+                commonName = true
+                serialNumber = true
     [frontends.frontend1.auth]
       headerField = "X-WebAuth-User"
       [frontends.frontend1.auth.basic]

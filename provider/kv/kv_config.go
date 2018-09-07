@@ -41,18 +41,19 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getTLSSection": p.getTLSSection,
 
 		// Frontend functions
-		"getBackendName":    p.getFuncString(pathFrontendBackend, ""),
-		"getPriority":       p.getFuncInt(pathFrontendPriority, label.DefaultFrontendPriority),
-		"getPassHostHeader": p.getFuncBool(pathFrontendPassHostHeader, label.DefaultPassHostHeader),
-		"getPassTLSCert":    p.getFuncBool(pathFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getEntryPoints":    p.getFuncList(pathFrontendEntryPoints),
-		"getAuth":           p.getAuth,
-		"getRoutes":         p.getRoutes,
-		"getRedirect":       p.getRedirect,
-		"getErrorPages":     p.getErrorPages,
-		"getRateLimit":      p.getRateLimit,
-		"getHeaders":        p.getHeaders,
-		"getWhiteList":      p.getWhiteList,
+		"getBackendName":       p.getFuncString(pathFrontendBackend, ""),
+		"getPriority":          p.getFuncInt(pathFrontendPriority, label.DefaultFrontendPriority),
+		"getPassHostHeader":    p.getFuncBool(pathFrontendPassHostHeader, label.DefaultPassHostHeader),
+		"getPassTLSCert":       p.getFuncBool(pathFrontendPassTLSCert, label.DefaultPassTLSCert),
+		"getPassTLSClientCert": p.getTLSClientCert,
+		"getEntryPoints":       p.getFuncList(pathFrontendEntryPoints),
+		"getAuth":              p.getAuth,
+		"getRoutes":            p.getRoutes,
+		"getRedirect":          p.getRedirect,
+		"getErrorPages":        p.getErrorPages,
+		"getRateLimit":         p.getRateLimit,
+		"getHeaders":           p.getHeaders,
+		"getWhiteList":         p.getWhiteList,
 
 		// Backend functions
 		"getServers":        p.getServers,
@@ -332,6 +333,39 @@ func (p *Provider) getTLSSection(prefix string) []*tls.Configuration {
 	}
 
 	return tlsSection
+}
+
+// getTLSClientCert create TLS client header configuration from labels
+func (p *Provider) getTLSClientCert(rootPath string) *types.TLSClientHeaders {
+	if !p.hasPrefix(rootPath, pathFrontendPassTLSClientCert) {
+		return nil
+	}
+
+	tlsClientHeaders := &types.TLSClientHeaders{
+		PEM: p.getBool(false, rootPath, pathFrontendPassTLSClientCertPem),
+	}
+
+	if p.hasPrefix(rootPath, pathFrontendPassTLSClientCertInfos) {
+		infos := &types.TLSClientCertificateInfos{
+			NotAfter:  p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosNotAfter),
+			NotBefore: p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosNotBefore),
+			Sans:      p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSans),
+		}
+
+		if p.hasPrefix(rootPath, pathFrontendPassTLSClientCertInfosSubject) {
+			subject := &types.TLSCLientCertificateSubjectInfos{
+				CommonName:   p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectCommonName),
+				Country:      p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectCountry),
+				Locality:     p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectLocality),
+				Organization: p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectOrganization),
+				Province:     p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectProvince),
+				SerialNumber: p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectSerialNumber),
+			}
+			infos.Subject = subject
+		}
+		tlsClientHeaders.Infos = infos
+	}
+	return tlsClientHeaders
 }
 
 // GetAuth Create auth from path

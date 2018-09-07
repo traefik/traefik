@@ -34,7 +34,7 @@ func Test_createReport(t *testing.T) {
 			File: &file.Provider{
 				Directory: "BAR",
 			},
-			RootCAs: tls.RootCAs{"fllf"},
+			RootCAs: tls.FilesOrContents{"fllf"},
 		},
 	}
 

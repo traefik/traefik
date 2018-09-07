@@ -104,6 +104,15 @@ func (s *Server) buildMiddlewares(frontendName string, frontend *types.Frontend,
 		middle = append(middle, handler)
 	}
 
+	// TLSClientHeaders
+	tlsClientHeadersMiddleware := middlewares.NewTLSClientHeaders(frontend)
+	if tlsClientHeadersMiddleware != nil {
+		log.Debugf("Adding TLSClientHeaders middleware for frontend %s", frontendName)
+
+		handler := s.tracingMiddleware.NewNegroniHandlerWrapper("TLSClientHeaders", tlsClientHeadersMiddleware, false)
+		middle = append(middle, handler)
+	}
+
 	return middle, buildModifyResponse(secureMiddleware, headerMiddleware), postConfig, nil
 }
 
