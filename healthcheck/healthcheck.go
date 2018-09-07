@@ -118,7 +118,7 @@ func (hc *HealthCheck) execute(ctx context.Context, backend *BackendConfig) {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Debug("Stopping current health check goroutines of backend: %s", backend.name)
+			log.Debugf("Stopping current health check goroutines of backend: %s", backend.name)
 			return
 		case <-ticker.C:
 			log.Debugf("Refreshing health check for backend: %s", backend.name)

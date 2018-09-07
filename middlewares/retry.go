@@ -126,7 +126,7 @@ func (rr *retryResponseWriterWithoutCloseNotify) Header() http.Header {
 
 func (rr *retryResponseWriterWithoutCloseNotify) Write(buf []byte) (int, error) {
 	if rr.ShouldRetry() {
-		return 0, nil
+		return len(buf), nil
 	}
 	return rr.responseWriter.Write(buf)
 }

@@ -743,7 +743,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 
 func TestProviderServiceFilter(t *testing.T) {
 	provider := &Provider{
-		Domain: "rancher.localhost",
+		Domain:                    "rancher.localhost",
 		EnableServiceHealthFilter: true,
 	}
 
