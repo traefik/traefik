@@ -540,6 +540,8 @@ func (s *Server) postLoadConfiguration() {
 						domains, err := rls.ParseDomains(route.Rule)
 						if err != nil {
 							log.Errorf("Error parsing domains: %v", err)
+						} else if len(domains) == 0 {
+							log.Debugf("No domain parsed in rule %q", route.Rule)
 						} else {
 							s.globalConfiguration.ACME.LoadCertificateForDomains(domains)
 						}
