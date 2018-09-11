@@ -8,10 +8,10 @@ defaultEntryPoints = ["http", "https"]
   [entryPoints.https]
   address = "{{ .PortHTTPS }}"
     [entryPoints.https.tls]
-  [entryPoints.foo]
+  [entryPoints.traefik]
   address = ":9000"
-    [entryPoints.foo.tls]
-      [[entryPoints.foo.tls.certificates]]
+    [entryPoints.traefik.tls]
+      [[entryPoints.traefik.tls.certificates]]
       certFile = "fixtures/acme/ssl/wildcard.crt"
       keyFile = "fixtures/acme/ssl/wildcard.key"
 

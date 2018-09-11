@@ -215,7 +215,7 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 
 			entryPoint.CertificateStore = traefiktls.NewCertificateStore()
 			acmeprovider.SetCertificateStore(entryPoint.CertificateStore)
-
+			log.Errorf("Setting Acme Certificate store from Entrypoint: %s", entryPointName)
 		}
 
 		entryPoint.InternalRouter = internalRouter
