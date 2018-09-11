@@ -200,7 +200,7 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 
 		internalRouter := router.NewInternalRouterAggregator(*globalConfiguration, entryPointName)
 		if acmeprovider != nil {
-			if acmeprovider.HTTPChallenge != nil && acmeprovider.HTTPChallenge.EntryPoint == entryPointName {
+			if acmeprovider.HTTPChallenge != nil && entryPointName == acmeprovider.HTTPChallenge.EntryPoint {
 				internalRouter.AddRouter(acmeprovider)
 			}
 
@@ -209,13 +209,15 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 				entryPoint.TLSALPNGetter = acmeprovider.GetTLSALPNCertificate
 			}
 
-			if acmeprovider.EntryPoint == entryPointName && acmeprovider.OnDemand {
+			if entryPointName == acmeprovider.EntryPoint && acmeprovider.OnDemand {
 				entryPoint.OnDemandListener = acmeprovider.ListenRequest
 			}
 
-			entryPoint.CertificateStore = traefiktls.NewCertificateStore()
-			acmeprovider.SetCertificateStore(entryPoint.CertificateStore)
-			log.Errorf("Setting Acme Certificate store from Entrypoint: %s", entryPointName)
+			if entryPointName == acmeprovider.EntryPoint {
+				entryPoint.CertificateStore = traefiktls.NewCertificateStore()
+				acmeprovider.SetCertificateStore(entryPoint.CertificateStore)
+				log.Debugf("Setting Acme Certificate store from Entrypoint: %s", entryPointName)
+			}
 		}
 
 		entryPoint.InternalRouter = internalRouter
