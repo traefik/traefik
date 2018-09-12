@@ -204,13 +204,6 @@ var gtmIdentifiers = etree.MustCompilePath("./GovTalkDetails/Keys/Key")
 var gtmRole = etree.MustCompilePath("./GovTalkDetails/GatewayAdditions/Submitter/SubmitterDetails/CredentialRole")
 var gtmUserType = etree.MustCompilePath("./GovTalkDetails/GatewayAdditions/Submitter/SubmitterDetails/RegistrationCategory")
 
-// SA Specific Data
-var gtmSa110Repayment = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/MTR/SA110/SelfAssessment/TotalTaxEtcDue")
-var gtmSa900Claim = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/SAtrust/TrustEstate/ClaimRepayment/Claim")
-var gtmSa900Repayment = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/SAtrust/TrustEstate/TaxCalculation/DueBeforePaymentsOnAccount")
-var gtmVatReclaimedInputs = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/VATDeclarationRequest/VATReclaimedOnInputs")
-var gtmVatTotal = etree.MustCompilePath("./GovTalkMessage/Body/IRenvelope/VATDeclarationRequest/TotalVAT")
-
 func (partial *partialGovTalkMessage) populateAuditEvent(ae *AuditEvent) {
 	extractIfPresent(partial.Header, gtmClass, &ae.AuditType)
 }
@@ -281,38 +274,6 @@ func (partial *partialGovTalkMessage) populateDetails(ev *RATEAuditEvent) {
 		if msg, err := partial.Message.WriteToString(); err == nil {
 			trimmed := strings.TrimSpace(msg)
 			ev.addRequestPayloadContents(trimmed)
-		}
-
-		if strings.HasPrefix(ev.AuditType, "HMRC-SA-SA100") {
-			if el := partial.Message.FindElementPath(gtmSa110Repayment); el != nil {
-				if amount, err := strconv.ParseFloat(el.Text(), 64); err == nil {
-					ev.Detail.IsRepayment = strconv.FormatBool(amount < 0.00)
-				} else {
-					ev.Detail.IsRepayment = "false"
-				}
-
-			}
-		}
-		if strings.HasPrefix(ev.AuditType, "HMRC-SA-SA900") {
-			claim := partial.Message.FindElementPath(gtmSa900Claim)
-			amount := partial.Message.FindElementPath(gtmSa900Repayment)
-
-			ev.Detail.IsRepayment = "false"
-
-			if claim != nil && amount != nil {
-				if amount, err := strconv.ParseFloat(amount.Text(), 64); err == nil {
-					ev.Detail.IsRepayment = strconv.FormatBool(strings.ToLower(strings.TrimSpace(claim.Text())) == "yes" && amount < 0.00)
-				}
-			}
-
-			if claim == nil && amount == nil {
-				ev.Detail.IsRepayment = ""
-			}
-		}
-		if strings.HasPrefix(ev.AuditType, "HMRC-VAT") {
-			totalVat, _ := extractMoneyValue(partial.Message, gtmVatTotal)
-			reclaimed, _ := extractMoneyValue(partial.Message, gtmVatReclaimedInputs)
-			ev.Detail.IsRepayment = strconv.FormatBool((totalVat - reclaimed) < 0.00)
 		}
 	}
 }
