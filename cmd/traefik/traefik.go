@@ -198,6 +198,10 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 			Configuration: config,
 		}
 
+		if config.TLS != nil {
+			entryPoint.CertificateStore = traefiktls.NewCertificateStore()
+		}
+
 		internalRouter := router.NewInternalRouterAggregator(*globalConfiguration, entryPointName)
 		if acmeprovider != nil {
 			if acmeprovider.HTTPChallenge != nil && entryPointName == acmeprovider.HTTPChallenge.EntryPoint {
@@ -214,7 +218,6 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 			}
 
 			if entryPointName == acmeprovider.EntryPoint {
-				entryPoint.CertificateStore = traefiktls.NewCertificateStore()
 				acmeprovider.SetCertificateStore(entryPoint.CertificateStore)
 				log.Debugf("Setting Acme Certificate store from Entrypoint: %s", entryPointName)
 			}
