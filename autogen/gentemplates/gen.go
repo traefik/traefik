@@ -1476,14 +1476,14 @@ var _templatesKvTmpl = []byte(`[backends]
 
   {{ $healthCheck := getHealthCheck $backend }}
   {{if $healthCheck }}
-  [backends.{{ $backendName }}.healthCheck]
+  [backends."{{ $backendName }}".healthCheck]
     scheme = "{{ $healthCheck.Scheme }}"
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
     hostname = "{{ $healthCheck.Hostname }}"
     {{if $healthCheck.Headers }}
-    [backends.{{ $backendName }}.healthCheck.headers]
+    [backends."{{ $backendName }}".healthCheck.headers]
       {{range $k, $v := $healthCheck.Headers }}
       {{$k}} = "{{$v}}"
       {{end}}
@@ -1492,7 +1492,7 @@ var _templatesKvTmpl = []byte(`[backends]
 
   {{ $buffering := getBuffering $backend }}
   {{if $buffering }}
-  [backends.{{ $backendName }}.buffering]
+  [backends."{{ $backendName }}".buffering]
     maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
     memRequestBodyBytes = {{ $buffering.MemRequestBodyBytes }}
     maxResponseBodyBytes = {{ $buffering.MaxResponseBodyBytes }}
