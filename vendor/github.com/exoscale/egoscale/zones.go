@@ -1,60 +1,94 @@
 package egoscale
 
-import "net"
+import (
+	"fmt"
+	"net"
+)
 
 // Zone represents a data center
+//
+// TODO: represent correctly the capacity field.
 type Zone struct {
-	ID                    string            `json:"id"`
-	AllocationState       string            `json:"allocationstate,omitempty"`
-	Capacity              string            `json:"capacity,omitempty"`
-	Description           string            `json:"description,omitempty"`
-	DhcpProvider          string            `json:"dhcpprovider,omitempty"`
-	DisplayText           string            `json:"displaytext,omitempty"`
-	DNS1                  net.IP            `json:"dns1,omitempty"`
-	DNS2                  net.IP            `json:"dns2,omitempty"`
-	Domain                string            `json:"domain,omitempty"`
-	DomainID              string            `json:"domainid,omitempty"`
-	DomainName            string            `json:"domainname,omitempty"`
-	GuestCidrAddress      string            `json:"guestcidraddress,omitempty"`
-	InternalDNS1          net.IP            `json:"internaldns1,omitempty"`
-	InternalDNS2          net.IP            `json:"internaldns2,omitempty"`
-	IP6DNS1               net.IP            `json:"ip6dns1,omitempty"`
-	IP6DNS2               net.IP            `json:"ip6dns2,omitempty"`
-	LocalStorageEnabled   bool              `json:"localstorageenabled,omitempty"`
-	Name                  string            `json:"name,omitempty"`
-	NetworkType           string            `json:"networktype,omitempty"`
-	ResourceDetails       map[string]string `json:"resourcedetails,omitempty"`
-	SecurityGroupsEnabled bool              `json:"securitygroupsenabled,omitempty"`
-	Vlan                  string            `json:"vlan,omitempty"`
-	ZoneToken             string            `json:"zonetoken,omitempty"`
-	Tags                  []ResourceTag     `json:"tags,omitempty"`
+	AllocationState       string            `json:"allocationstate,omitempty" doc:"the allocation state of the cluster"`
+	Description           string            `json:"description,omitempty" doc:"Zone description"`
+	DhcpProvider          string            `json:"dhcpprovider,omitempty" doc:"the dhcp Provider for the Zone"`
+	DisplayText           string            `json:"displaytext,omitempty" doc:"the display text of the zone"`
+	DNS1                  net.IP            `json:"dns1,omitempty" doc:"the first DNS for the Zone"`
+	DNS2                  net.IP            `json:"dns2,omitempty" doc:"the second DNS for the Zone"`
+	Domain                string            `json:"domain,omitempty" doc:"Network domain name for the networks in the zone"`
+	DomainID              *UUID             `json:"domainid,omitempty" doc:"the UUID of the containing domain, null for public zones"`
+	DomainName            string            `json:"domainname,omitempty" doc:"the name of the containing domain, null for public zones"`
+	GuestCIDRAddress      *CIDR             `json:"guestcidraddress,omitempty" doc:"the guest CIDR address for the Zone"`
+	ID                    *UUID             `json:"id,omitempty" doc:"Zone id"`
+	InternalDNS1          net.IP            `json:"internaldns1,omitempty" doc:"the first internal DNS for the Zone"`
+	InternalDNS2          net.IP            `json:"internaldns2,omitempty" doc:"the second internal DNS for the Zone"`
+	IP6DNS1               net.IP            `json:"ip6dns1,omitempty" doc:"the first IPv6 DNS for the Zone"`
+	IP6DNS2               net.IP            `json:"ip6dns2,omitempty" doc:"the second IPv6 DNS for the Zone"`
+	LocalStorageEnabled   *bool             `json:"localstorageenabled,omitempty" doc:"true if local storage offering enabled, false otherwise"`
+	Name                  string            `json:"name,omitempty" doc:"Zone name"`
+	NetworkType           string            `json:"networktype,omitempty" doc:"the network type of the zone; can be Basic or Advanced"`
+	ResourceDetails       map[string]string `json:"resourcedetails,omitempty" doc:"Meta data associated with the zone (key/value pairs)"`
+	SecurityGroupsEnabled *bool             `json:"securitygroupsenabled,omitempty" doc:"true if security groups support is enabled, false otherwise"`
+	Tags                  []ResourceTag     `json:"tags,omitempty" doc:"the list of resource tags associated with zone."`
+	Vlan                  string            `json:"vlan,omitempty" doc:"the vlan range of the zone"`
+	ZoneToken             string            `json:"zonetoken,omitempty" doc:"Zone Token"`
+}
+
+// ListRequest builds the ListZones request
+func (zone Zone) ListRequest() (ListCommand, error) {
+	req := &ListZones{
+		DomainID: zone.DomainID,
+		ID:       zone.ID,
+		Name:     zone.Name,
+	}
+
+	return req, nil
 }
 
 // ListZones represents a query for zones
-//
-// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/listZones.html
 type ListZones struct {
-	Available      bool          `json:"available,omitempty"`
-	DomainID       string        `json:"domainid,omitempty"`
-	ID             string        `json:"id,omitempty"`
-	Keyword        string        `json:"keyword,omitempty"`
-	Name           string        `json:"name,omitempty"`
+	Available      *bool         `json:"available,omitempty" doc:"true if you want to retrieve all available Zones. False if you only want to return the Zones from which you have at least one VM. Default is false."`
+	DomainID       *UUID         `json:"domainid,omitempty" doc:"the ID of the domain associated with the zone"`
+	ID             *UUID         `json:"id,omitempty" doc:"the ID of the zone"`
+	Keyword        string        `json:"keyword,omitempty" doc:"List by keyword"`
+	Name           string        `json:"name,omitempty" doc:"the name of the zone"`
 	Page           int           `json:"page,omitempty"`
 	PageSize       int           `json:"pagesize,omitempty"`
-	ShowCapacities bool          `json:"showcapacities,omitempty"`
-	Tags           []ResourceTag `json:"tags,omitempty"`
-}
-
-func (*ListZones) name() string {
-	return "listZones"
-}
-
-func (*ListZones) response() interface{} {
-	return new(ListZonesResponse)
+	ShowCapacities *bool         `json:"showcapacities,omitempty" doc:"flag to display the capacity of the zones"`
+	Tags           []ResourceTag `json:"tags,omitempty" doc:"List zones by resource tags (key/value pairs)"`
+	_              bool          `name:"listZones" description:"Lists zones"`
 }
 
 // ListZonesResponse represents a list of zones
 type ListZonesResponse struct {
 	Count int    `json:"count"`
 	Zone  []Zone `json:"zone"`
+}
+
+func (ListZones) response() interface{} {
+	return new(ListZonesResponse)
+}
+
+// SetPage sets the current page
+func (ls *ListZones) SetPage(page int) {
+	ls.Page = page
+}
+
+// SetPageSize sets the page size
+func (ls *ListZones) SetPageSize(pageSize int) {
+	ls.PageSize = pageSize
+}
+
+func (ListZones) each(resp interface{}, callback IterateItemFunc) {
+	zones, ok := resp.(*ListZonesResponse)
+	if !ok {
+		callback(nil, fmt.Errorf("wrong type. ListZonesResponse was expected, got %T", resp))
+		return
+	}
+
+	for i := range zones.Zone {
+		if !callback(&zones.Zone[i], nil) {
+			break
+		}
+	}
 }
