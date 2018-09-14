@@ -395,11 +395,11 @@ func (s *AcmeSuite) TestTLSALPN01DomainsWithProvidedWildcardDomainAtStart(c *che
 			Acme: acme.Configuration{
 				TLSChallenge: &acme.TLSChallenge{},
 				Domains: types.Domains{types.Domain{
-					Main: "traefik.acme.wtf",
+					Main: acmeDomain,
 				}},
 			},
 		},
-		expectedCommonName: "traefik.acme.wtf",
+		expectedCommonName: wildcardDomain,
 		expectedAlgorithm:  x509.RSA,
 	}
 
