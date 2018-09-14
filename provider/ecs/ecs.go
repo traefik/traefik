@@ -167,10 +167,10 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 			return nil
 		}
 
-		notify := func(err error, time time.Duration) {
-			log.Errorf("Provider connection error %+v, retrying in %s", err, time)
-		}
-		err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
+		//notify := func(err error, time time.Duration) {
+		//	log.Errorf("Provider connection error %+v, retrying in %s", err, time)
+		//}
+		err := backoff.Retry(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()))
 		if err != nil {
 			log.Errorf("Cannot connect to Provider api %+v", err)
 		}
@@ -406,7 +406,9 @@ func (p *Provider) lookupTaskDefinitions(ctx context.Context, client *awsClient,
 		})
 
 		if err != nil {
-			log.Errorf("Unable to describe task definition: %s", err)
+			if !strings.Contains(err.Error(), "ThrottlingException") {
+				log.Errorf("Unable to describe task definition: %s", err)
+			}
 			return nil, err
 		}
 
