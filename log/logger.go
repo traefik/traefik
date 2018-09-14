@@ -10,8 +10,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// Logger allows overriding the logrus logger behavior
+type Logger interface {
+	logrus.FieldLogger
+	WriterLevel(logrus.Level) *io.PipeWriter
+}
+
 var (
-	logger      *logrus.Entry
+	logger      Logger
 	logFilePath string
 	logFile     *os.File
 )
@@ -39,6 +45,11 @@ func SetFormatter(formatter logrus.Formatter) {
 // SetLevel sets the standard logger level.
 func SetLevel(level logrus.Level) {
 	logrus.SetLevel(level)
+}
+
+// SetLogger sets the logger.
+func SetLogger(l Logger) {
+	logger = l
 }
 
 // GetLevel returns the standard logger level.
