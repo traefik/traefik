@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/platform/config/env"
 )
 
 // Config is used to configure the creation of the DNSProvider
@@ -29,11 +30,13 @@ type Config struct {
 
 // NewDefaultConfig returns a default configuration for the DNSProvider
 func NewDefaultConfig() *Config {
+	propagationMins := env.GetOrDefaultInt("AWS_PROPAGATION_TIMEOUT", 2)
+	intervalSecs := env.GetOrDefaultInt("AWS_POLLING_INTERVAL", 4)
 	return &Config{
-		MaxRetries:         5,
-		TTL:                10,
-		PropagationTimeout: time.Minute * 2,
-		PollingInterval:    time.Second * 4,
+		MaxRetries:         env.GetOrDefaultInt("AWS_MAX_RETRIES", 5),
+		TTL:                env.GetOrDefaultInt("AWS_TTL", 10),
+		PropagationTimeout: time.Second * time.Duration(propagationMins),
+		PollingInterval:    time.Second * time.Duration(intervalSecs),
 		HostedZoneID:       os.Getenv("AWS_HOSTED_ZONE_ID"),
 	}
 }
