@@ -94,6 +94,72 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
+			desc: "when pass tls client cert configuration",
+			services: []swarm.Service{
+				swarmService(
+					serviceName("test"),
+					serviceLabels(map[string]string{
+						label.TraefikPort:                                              "80",
+						label.TraefikFrontendPassTLSClientCertPem:                      "true",
+						label.TraefikFrontendPassTLSClientCertInfosNotBefore:           "true",
+						label.TraefikFrontendPassTLSClientCertInfosNotAfter:            "true",
+						label.TraefikFrontendPassTLSClientCertInfosSans:                "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectCommonName:   "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectCountry:      "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectLocality:     "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectOrganization: "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectProvince:     "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectSerialNumber: "true",
+					}),
+					withEndpointSpec(modeVIP),
+					withEndpoint(virtualIP("1", "127.0.0.1/24")),
+				),
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-Host-test-docker-localhost-0": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					PassTLSClientCert: &types.TLSClientHeaders{
+						PEM: true,
+						Infos: &types.TLSClientCertificateInfos{
+							NotBefore: true,
+							Sans:      true,
+							NotAfter:  true,
+							Subject: &types.TLSCLientCertificateSubjectInfos{
+								CommonName:   true,
+								Country:      true,
+								Locality:     true,
+								Organization: true,
+								Province:     true,
+								SerialNumber: true,
+							},
+						},
+					},
+					Routes: map[string]types.Route{
+						"route-frontend-Host-test-docker-localhost-0": {
+							Rule: "Host:test.docker.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test": {
+					Servers: map[string]types.Server{
+						"server-test-842895ca2aca17f6ee36ddb2f621194d": {
+							URL:    "http://127.0.0.1:80",
+							Weight: label.DefaultWeight,
+						},
+					},
+				},
+			},
+			networks: map[string]*docker.NetworkResource{
+				"1": {
+					Name: "foo",
+				},
+			},
+		},
+		{
 			desc: "when frontend basic auth configuration",
 			services: []swarm.Service{
 				swarmService(

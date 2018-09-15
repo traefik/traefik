@@ -75,7 +75,7 @@ type GlobalConfiguration struct {
 	ProvidersThrottleDuration parse.Duration          `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time." export:"true"`
 	MaxIdleConnsPerHost       int                     `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used" export:"true"`
 	InsecureSkipVerify        bool                    `description:"Disable SSL certificate verification" export:"true"`
-	RootCAs                   tls.RootCAs             `description:"Add cert file for self-signed certificate"`
+	RootCAs                   tls.FilesOrContents     `description:"Add cert file for self-signed certificate"`
 	Retry                     *Retry                  `description:"Enable retry sending request if network error" export:"true"`
 	HealthCheck               *HealthCheckConfig      `description:"Health check parameters" export:"true"`
 	RespondingTimeouts        *RespondingTimeouts     `description:"Timeouts for incoming requests to the Traefik instance" export:"true"`

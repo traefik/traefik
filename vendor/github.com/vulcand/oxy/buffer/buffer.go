@@ -383,7 +383,14 @@ func (b *bufferWriter) Header() http.Header {
 }
 
 func (b *bufferWriter) Write(buf []byte) (int, error) {
-	return b.buffer.Write(buf)
+	length, err := b.buffer.Write(buf)
+	if err != nil {
+		// Since go1.11 (https://github.com/golang/go/commit/8f38f28222abccc505b9a1992deecfe3e2cb85de)
+		// if the writer returns an error, the reverse proxy panics
+		b.log.Error(err)
+		length = len(buf)
+	}
+	return length, nil
 }
 
 // WriteHeader sets rw.Code.
@@ -410,7 +417,7 @@ func (b *bufferWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 		return conn, rw, err
 	}
 	b.log.Warningf("Upstream ResponseWriter of type %v does not implement http.Hijacker. Returning dummy channel.", reflect.TypeOf(b.responseWriter))
-	return nil, nil, fmt.Errorf("The response writer that was wrapped in this proxy, does not implement http.Hijacker. It is of type: %v", reflect.TypeOf(b.responseWriter))
+	return nil, nil, fmt.Errorf("the response writer wrapped in this proxy does not implement http.Hijacker. Its type is: %v”", reflect.TypeOf(b.responseWriter))
 }
 
 // SizeErrHandler Size error handler

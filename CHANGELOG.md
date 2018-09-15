@@ -1,5 +1,44 @@
 # Change Log
 
+## [v1.7.0-rc4](https://github.com/containous/traefik/tree/v1.7.0-rc4) (2018-09-07)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.0-rc3...v1.7.0-rc4)
+
+**Enhancements:**
+- **[acme]** Use official Pebble Image. ([#3708](https://github.com/containous/traefik/pull/3708) by [ldez](https://github.com/ldez))
+- **[consulcatalog]** Multiple frontends for consulcatalog ([#3796](https://github.com/containous/traefik/pull/3796) by [hsmade](https://github.com/hsmade))
+- **[ecs]** Add segment support for ECS  ([#3817](https://github.com/containous/traefik/pull/3817) by [mmatur](https://github.com/mmatur))
+- **[k8s]** Remove unnecessary loop ([#3799](https://github.com/containous/traefik/pull/3799) by [ZloyDyadka](https://github.com/ZloyDyadka))
+- **[middleware,consulcatalog,docker,ecs,kv,marathon,mesos,rancher]** Pass the TLS Cert infos in headers ([#3826](https://github.com/containous/traefik/pull/3826) by [jbdoumenjou](https://github.com/jbdoumenjou))
+
+**Bug fixes:**
+- **[acme,cluster]** StoreConfig always initializes the account if it is missing ([#3844](https://github.com/containous/traefik/pull/3844) by [geraldcroes](https://github.com/geraldcroes))
+- **[acme]** Set a keyType to ACME if the account is stored with no KeyType ([#3733](https://github.com/containous/traefik/pull/3733) by [nmengin](https://github.com/nmengin))
+- **[authentication,consulcatalog,docker,ecs,k8s,kv,marathon,mesos,rancher]** Auth Forward with certificates in templates. ([#3804](https://github.com/containous/traefik/pull/3804) by [ldez](https://github.com/ldez))
+- **[k8s]** Prevent unparsable strings from being rendered in the Kubernetes template ([#3753](https://github.com/containous/traefik/pull/3753) by [dtomcej](https://github.com/dtomcej))
+- **[k8s]** Don&#39;t merge kubernetes ingresses when priority is set ([#3743](https://github.com/containous/traefik/pull/3743) by [dtomcej](https://github.com/dtomcej))
+- **[kv]** Include missing key in error message for KV store ([#3779](https://github.com/containous/traefik/pull/3779) by [camelpunch](https://github.com/camelpunch))
+- **[metrics]** Avoid a panic during Prometheus registering ([#3717](https://github.com/containous/traefik/pull/3717) by [nmengin](https://github.com/nmengin))
+- **[middleware,websocket]** Enable retry on websocket ([#3825](https://github.com/containous/traefik/pull/3825) by [Juliens](https://github.com/Juliens))
+- **[middleware]** Extend https redirection tests, and fix incorrect behavior ([#3742](https://github.com/containous/traefik/pull/3742) by [dtomcej](https://github.com/dtomcej))
+- **[oxy]** Handle Te header when http2 ([#3824](https://github.com/containous/traefik/pull/3824) by [Juliens](https://github.com/Juliens))
+- **[server]** Avoid goroutine leak in server ([#3851](https://github.com/containous/traefik/pull/3851) by [nmengin](https://github.com/nmengin))
+
+**Documentation:**
+- **[acme]** Fix documentation for route53 acme provider ([#3811](https://github.com/containous/traefik/pull/3811) by [A-Shleifman](https://github.com/A-Shleifman))
+- **[acme]** Update ACME documentation about TLS-ALPN challenge ([#3756](https://github.com/containous/traefik/pull/3756) by [ldez](https://github.com/ldez))
+- **[docker]** Change syntax in quick start guide ([#3726](https://github.com/containous/traefik/pull/3726) by [trotro](https://github.com/trotro))
+- **[docker]** Improve the wording in the documentation for Docker and fix title for Docker User Guide ([#3797](https://github.com/containous/traefik/pull/3797) by [dduportal](https://github.com/dduportal))
+- **[docker]** Typo in docker-and-lets-encrypt.md ([#3724](https://github.com/containous/traefik/pull/3724) by [A-Shleifman](https://github.com/A-Shleifman))
+- **[k8s]** Update kubernetes docs to reflect https options ([#3807](https://github.com/containous/traefik/pull/3807) by [dtomcej](https://github.com/dtomcej))
+- **[k8s]** Update kubernetes.md ([#3719](https://github.com/containous/traefik/pull/3719) by [kmaris](https://github.com/kmaris))
+- **[k8s]** Improve Connection Limit Kubernetes Documentation ([#3711](https://github.com/containous/traefik/pull/3711) by [dtomcej](https://github.com/dtomcej))
+- **[provider]** Typo in auth labels. ([#3730](https://github.com/containous/traefik/pull/3730) by [ldez](https://github.com/ldez))
+- **[tracing]** Simple documentation grammar update in tracing ([#3720](https://github.com/containous/traefik/pull/3720) by [loadstar81](https://github.com/loadstar81))
+- Make the &#34;base domain&#34; on all providers ([#3835](https://github.com/containous/traefik/pull/3835) by [dduportal](https://github.com/dduportal))
+
+**Misc:**
+- Merge v1.6.6 into v1.7 ([#3802](https://github.com/containous/traefik/pull/3802) by [ldez](https://github.com/ldez))
+
 ## [v1.6.6](https://github.com/containous/traefik/tree/v1.6.6) (2018-08-20)
 [All Commits](https://github.com/containous/traefik/compare/v1.6.5...v1.6.6)
 

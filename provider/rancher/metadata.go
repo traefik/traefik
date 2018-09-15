@@ -29,7 +29,7 @@ func (p *Provider) metadataProvide(configurationChan chan<- types.ConfigMessage,
 		operation := func() error {
 			client, err := rancher.NewClientAndWait(metadataServiceURL)
 			if err != nil {
-				log.Errorln("Failed to create Rancher metadata service client: %s", err)
+				log.Errorf("Failed to create Rancher metadata service client: %v", err)
 				return err
 			}
 
@@ -38,7 +38,7 @@ func (p *Provider) metadataProvide(configurationChan chan<- types.ConfigMessage,
 
 				stacks, err := client.GetStacks()
 				if err != nil {
-					log.Errorf("Failed to query Rancher metadata service: %s", err)
+					log.Errorf("Failed to query Rancher metadata service: %v", err)
 					return
 				}
 

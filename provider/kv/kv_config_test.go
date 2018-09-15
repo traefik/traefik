@@ -277,6 +277,18 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					withPair(pathFrontendBackend, "backend1"),
 					withPair(pathFrontendPriority, "6"),
 					withPair(pathFrontendPassHostHeader, "false"),
+
+					withPair(pathFrontendPassTLSClientCertPem, "true"),
+					withPair(pathFrontendPassTLSClientCertInfosNotBefore, "true"),
+					withPair(pathFrontendPassTLSClientCertInfosNotAfter, "true"),
+					withPair(pathFrontendPassTLSClientCertInfosSans, "true"),
+					withPair(pathFrontendPassTLSClientCertInfosSubjectCommonName, "true"),
+					withPair(pathFrontendPassTLSClientCertInfosSubjectCountry, "true"),
+					withPair(pathFrontendPassTLSClientCertInfosSubjectLocality, "true"),
+					withPair(pathFrontendPassTLSClientCertInfosSubjectOrganization, "true"),
+					withPair(pathFrontendPassTLSClientCertInfosSubjectProvince, "true"),
+					withPair(pathFrontendPassTLSClientCertInfosSubjectSerialNumber, "true"),
+
 					withPair(pathFrontendPassTLSCert, "true"),
 					withList(pathFrontendEntryPoints, "http", "https"),
 					withList(pathFrontendWhiteListSourceRange, "1.1.1.1/24", "1234:abcd::42/32"),
@@ -401,6 +413,22 @@ func TestProviderBuildConfiguration(t *testing.T) {
 							IPStrategy: &types.IPStrategy{
 								Depth:       5,
 								ExcludedIPs: []string{"1.1.1.1/24", "1234:abcd::42/32"},
+							},
+						},
+						PassTLSClientCert: &types.TLSClientHeaders{
+							PEM: true,
+							Infos: &types.TLSClientCertificateInfos{
+								NotBefore: true,
+								Sans:      true,
+								NotAfter:  true,
+								Subject: &types.TLSCLientCertificateSubjectInfos{
+									CommonName:   true,
+									Country:      true,
+									Locality:     true,
+									Organization: true,
+									Province:     true,
+									SerialNumber: true,
+								},
 							},
 						},
 						Auth: &types.Auth{

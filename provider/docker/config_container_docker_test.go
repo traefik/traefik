@@ -112,6 +112,69 @@ func TestDockerBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
+			desc: "when pass tls client certificate",
+			containers: []docker.ContainerJSON{
+				containerJSON(
+					name("test"),
+					labels(map[string]string{
+						label.TraefikFrontendPassTLSClientCertPem:                      "true",
+						label.TraefikFrontendPassTLSClientCertInfosNotBefore:           "true",
+						label.TraefikFrontendPassTLSClientCertInfosNotAfter:            "true",
+						label.TraefikFrontendPassTLSClientCertInfosSans:                "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectCommonName:   "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectCountry:      "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectLocality:     "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectOrganization: "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectProvince:     "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectSerialNumber: "true",
+					}),
+					ports(nat.PortMap{
+						"80/tcp": {},
+					}),
+					withNetwork("bridge", ipv4("127.0.0.1")),
+				),
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-Host-test-docker-localhost-0": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					PassTLSClientCert: &types.TLSClientHeaders{
+						PEM: true,
+						Infos: &types.TLSClientCertificateInfos{
+							NotBefore: true,
+							Sans:      true,
+							NotAfter:  true,
+							Subject: &types.TLSCLientCertificateSubjectInfos{
+								CommonName:   true,
+								Country:      true,
+								Locality:     true,
+								Organization: true,
+								Province:     true,
+								SerialNumber: true,
+							},
+						},
+					},
+					Routes: map[string]types.Route{
+						"route-frontend-Host-test-docker-localhost-0": {
+							Rule: "Host:test.docker.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test": {
+					Servers: map[string]types.Server{
+						"server-test-842895ca2aca17f6ee36ddb2f621194d": {
+							URL:    "http://127.0.0.1:80",
+							Weight: label.DefaultWeight,
+						},
+					},
+					CircuitBreaker: nil,
+				},
+			},
+		},
+		{
 			desc: "when frontend basic auth backward compatibility",
 			containers: []docker.ContainerJSON{
 				containerJSON(
@@ -387,6 +450,17 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						label.TraefikBackendBufferingMemRequestBodyBytes:     "2097152",
 						label.TraefikBackendBufferingRetryExpression:         "IsNetworkError() && Attempts() <= 2",
 
+						label.TraefikFrontendPassTLSClientCertPem:                      "true",
+						label.TraefikFrontendPassTLSClientCertInfosNotBefore:           "true",
+						label.TraefikFrontendPassTLSClientCertInfosNotAfter:            "true",
+						label.TraefikFrontendPassTLSClientCertInfosSans:                "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectCommonName:   "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectCountry:      "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectLocality:     "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectOrganization: "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectProvince:     "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectSerialNumber: "true",
+
 						label.TraefikFrontendAuthBasic:                        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.TraefikFrontendAuthBasicRemoveHeader:            "true",
 						label.TraefikFrontendAuthBasicUsers:                   "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
@@ -475,6 +549,22 @@ func TestDockerBuildConfiguration(t *testing.T) {
 					PassHostHeader: true,
 					PassTLSCert:    true,
 					Priority:       666,
+					PassTLSClientCert: &types.TLSClientHeaders{
+						PEM: true,
+						Infos: &types.TLSClientCertificateInfos{
+							NotBefore: true,
+							Sans:      true,
+							NotAfter:  true,
+							Subject: &types.TLSCLientCertificateSubjectInfos{
+								CommonName:   true,
+								Country:      true,
+								Locality:     true,
+								Organization: true,
+								Province:     true,
+								SerialNumber: true,
+							},
+						},
+					},
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{

@@ -16,7 +16,7 @@ const (
 // ClientCA defines traefik CA files for a entryPoint
 // and it indicates if they are mandatory or have just to be analyzed if provided
 type ClientCA struct {
-	Files    []string
+	Files    FilesOrContents
 	Optional bool
 }
 
@@ -30,8 +30,8 @@ type TLS struct {
 	SniStrict          bool `export:"true"`
 }
 
-// RootCAs hold the CA we want to have in root
-type RootCAs []FileOrContent
+// FilesOrContents hold the CA we want to have in root
+type FilesOrContents []FileOrContent
 
 // Configuration allows mapping a TLS certificate to a list of entrypoints
 type Configuration struct {
@@ -41,7 +41,7 @@ type Configuration struct {
 
 // String is the method to format the flag's value, part of the flag.Value interface.
 // The String method's output will be used in diagnostics.
-func (r *RootCAs) String() string {
+func (r *FilesOrContents) String() string {
 	sliceOfString := make([]string, len([]FileOrContent(*r)))
 	for key, value := range *r {
 		sliceOfString[key] = value.String()
@@ -52,30 +52,30 @@ func (r *RootCAs) String() string {
 // Set is the method to set the flag value, part of the flag.Value interface.
 // Set's argument is a string to be parsed to set the flag.
 // It's a comma-separated list, so we split it.
-func (r *RootCAs) Set(value string) error {
-	rootCAs := strings.Split(value, ",")
-	if len(rootCAs) == 0 {
-		return fmt.Errorf("bad RootCAs format: %s", value)
+func (r *FilesOrContents) Set(value string) error {
+	filesOrContents := strings.Split(value, ",")
+	if len(filesOrContents) == 0 {
+		return fmt.Errorf("bad FilesOrContents format: %s", value)
 	}
-	for _, rootCA := range rootCAs {
-		*r = append(*r, FileOrContent(rootCA))
+	for _, fileOrContent := range filesOrContents {
+		*r = append(*r, FileOrContent(fileOrContent))
 	}
 	return nil
 }
 
-// Get return the RootCAs list
-func (r *RootCAs) Get() interface{} {
+// Get return the FilesOrContents list
+func (r *FilesOrContents) Get() interface{} {
 	return *r
 }
 
-// SetValue sets the RootCAs with val
-func (r *RootCAs) SetValue(val interface{}) {
-	*r = val.(RootCAs)
+// SetValue sets the FilesOrContents with val
+func (r *FilesOrContents) SetValue(val interface{}) {
+	*r = val.(FilesOrContents)
 }
 
 // Type is type of the struct
-func (r *RootCAs) Type() string {
-	return "rootcas"
+func (r *FilesOrContents) Type() string {
+	return "filesorcontents"
 }
 
 // SortTLSPerEntryPoints converts TLS configuration sorted by Certificates into TLS configuration sorted by EntryPoints

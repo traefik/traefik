@@ -6,7 +6,6 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	stdlog "log"
 	"net"
 	"net/http"
@@ -244,7 +243,9 @@ func (s *Server) Start() {
 		s.listenConfigurations(stop)
 	})
 	s.startProvider()
-	go s.listenSignals()
+	s.routinesPool.Go(func(stop chan bool) {
+		s.listenSignals(stop)
+	})
 }
 
 // StartWithContext starts the server and Stop/Close it when context is Done
@@ -427,7 +428,7 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 	if len(tlsOption.ClientCA.Files) > 0 {
 		pool := x509.NewCertPool()
 		for _, caFile := range tlsOption.ClientCA.Files {
-			data, err := ioutil.ReadFile(caFile)
+			data, err := caFile.Read()
 			if err != nil {
 				return nil, err
 			}
