@@ -435,6 +435,41 @@
                       </div>
                     </div>
 
+                    <!-- details.ratelimit-->
+                    <div *ngIf="p.ratelimit">
+                      <hr>
+                      <div class="section-line">
+                        <div class="columns">
+                          <div class="column is-3">
+                            <h2 class="section-line-header">Rate Limiting</h2>
+                          </div>
+                          <div class="column is-9">
+                            <div class="control">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">Extractor Function</span>
+                                <span class="tag is-info">{{ p.ratelimit.extractorFunc }}</span>
+                              </div>
+                            </div>
+                            <table class="table is-fullwidth is-hoverable table-fixed">
+                              <thead>
+                                <td>Rateset</td>
+                                <td>Period</td>
+                                <td>Average</td>
+                                <td>Burst</td>
+                              </thead>
+                              <tbody>
+                                <tr *ngFor="let rateset of p.ratelimit.rateset">
+                                  <td>{{rateset.id}}</td>
+                                  <td>{{rateset.period | humanreadable}}</td>
+                                  <td>{{rateset.average}}</td>
+                                  <td>{{rateset.burst}}</td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                 </div>
