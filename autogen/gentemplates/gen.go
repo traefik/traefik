@@ -110,8 +110,8 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
 
 {{end}}
 {{range $index, $node := .Nodes}}
-  {{ $server := getServer $node }}
-  [backends."backend-{{ getNodeBackendName $node }}".servers."{{ getServerName $node $index }}"]
+  {{ $server := getServer ($node.ServiceEntry) }}
+  [backends."backend-{{ $node.BackendName }}".servers."{{ getServerName ($node.ServiceEntry) $index }}"]
     url = "{{ $server.URL }}"
     weight = {{ $server.Weight }}
 

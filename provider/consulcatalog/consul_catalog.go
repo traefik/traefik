@@ -66,7 +66,7 @@ type catalogUpdate struct {
 	Nodes   []*api.ServiceEntry
 }
 
-type nodeSorter []*api.ServiceEntry
+type nodeSorter []serverItem
 
 func (a nodeSorter) Len() int {
 	return len(a)
@@ -77,8 +77,8 @@ func (a nodeSorter) Swap(i int, j int) {
 }
 
 func (a nodeSorter) Less(i int, j int) bool {
-	lEntry := a[i]
-	rEntry := a[j]
+	lEntry := a[i].ServiceEntry
+	rEntry := a[j].ServiceEntry
 
 	ls := strings.ToLower(lEntry.Service.Service)
 	lr := strings.ToLower(rEntry.Service.Service)
@@ -371,10 +371,7 @@ func (p *Provider) getNodes(index map[string][]string) ([]catalogUpdate, error) 
 			if err != nil {
 				return nil, err
 			}
-			// healthy.Nodes can be empty if constraints do not match, without throwing error
-			if healthy.Service != nil && len(healthy.Nodes) > 0 {
-				nodes = append(nodes, healthy)
-			}
+			nodes = append(nodes, healthy...)
 		}
 	}
 	return nodes, nil
@@ -487,36 +484,39 @@ func getServiceAddresses(services []*api.CatalogService) []string {
 	return serviceAddresses
 }
 
-func (p *Provider) healthyNodes(service string) (catalogUpdate, error) {
+func (p *Provider) healthyNodes(service string) ([]catalogUpdate, error) {
 	health := p.client.Health()
 	data, _, err := health.Service(service, "", true, &api.QueryOptions{AllowStale: p.Stale})
 	if err != nil {
 		log.WithError(err).Errorf("Failed to fetch details of %s", service)
-		return catalogUpdate{}, err
+		return nil, err
 	}
 
 	nodes := fun.Filter(func(node *api.ServiceEntry) bool {
 		return p.nodeFilter(service, node)
 	}, data).([]*api.ServiceEntry)
 
-	// Merge tags of nodes matching constraints, in a single slice.
-	tags := fun.Foldl(func(node *api.ServiceEntry, set []string) []string {
-		return fun.Keys(fun.Union(
-			fun.Set(set),
-			fun.Set(node.Service.Tags),
-		).(map[string]bool)).([]string)
-	}, []string{}, nodes).([]string)
+	nodeGroups := map[string][]*api.ServiceEntry{}
+	for _, node := range nodes {
+		groupId := tagsToGroupId(node.Service.Tags, p.Prefix)
+		nodeGroups[groupId] = append(nodeGroups[groupId], node)
+	}
 
-	labels := tagsToNeutralLabels(tags, p.Prefix)
+	var backends []catalogUpdate
+	for groupId, nodes := range nodeGroups {
+		tags := tagsWithPrefix(nodes[0].Service.Tags, p.Prefix)
+		labels := tagsToNeutralLabels(tags, p.Prefix)
+		backends = append(backends, catalogUpdate{
+			Service: &serviceUpdate{
+				ServiceName:   fmt.Sprintf("%s-%s", service, groupId),
+				Attributes:    tags,
+				TraefikLabels: labels,
+			},
+			Nodes: nodes,
+		})
+	}
 
-	return catalogUpdate{
-		Service: &serviceUpdate{
-			ServiceName:   service,
-			Attributes:    tags,
-			TraefikLabels: labels,
-		},
-		Nodes: nodes,
-	}, nil
+	return backends, nil
 }
 
 func (p *Provider) nodeFilter(service string, node *api.ServiceEntry) bool {

@@ -12,185 +12,227 @@ import (
 func TestNodeSorter(t *testing.T) {
 	testCases := []struct {
 		desc     string
-		nodes    []*api.ServiceEntry
-		expected []*api.ServiceEntry
+		nodes    []serverItem
+		expected []serverItem
 	}{
 		{
 			desc:     "Should sort nothing",
-			nodes:    []*api.ServiceEntry{},
-			expected: []*api.ServiceEntry{},
+			nodes:    []serverItem{},
+			expected: []serverItem{},
 		},
 		{
 			desc: "Should sort by node address",
-			nodes: []*api.ServiceEntry{
+			nodes: []serverItem{
 				{
-					Service: &api.AgentService{
-						Service: "foo",
-						Address: "127.0.0.1",
-						Port:    80,
-					},
-					Node: &api.Node{
-						Node:    "localhost",
-						Address: "127.0.0.1",
+					BackendName: "foo",
+					ServiceEntry: &api.ServiceEntry{
+						Service: &api.AgentService{
+							Service: "foo",
+							Address: "127.0.0.1",
+							Port:    80,
+						},
+						Node: &api.Node{
+							Node:    "localhost",
+							Address: "127.0.0.1",
+						},
 					},
 				},
 			},
-			expected: []*api.ServiceEntry{
+			expected: []serverItem{
 				{
-					Service: &api.AgentService{
-						Service: "foo",
-						Address: "127.0.0.1",
-						Port:    80,
-					},
-					Node: &api.Node{
-						Node:    "localhost",
-						Address: "127.0.0.1",
+					BackendName: "foo",
+					ServiceEntry: &api.ServiceEntry{
+						Service: &api.AgentService{
+							Service: "foo",
+							Address: "127.0.0.1",
+							Port:    80,
+						},
+						Node: &api.Node{
+							Node:    "localhost",
+							Address: "127.0.0.1",
+						},
 					},
 				},
 			},
 		},
 		{
 			desc: "Should sort by service name",
-			nodes: []*api.ServiceEntry{
+			nodes: []serverItem{
 				{
-					Service: &api.AgentService{
-						Service: "foo",
-						Address: "127.0.0.2",
-						Port:    80,
-					},
-					Node: &api.Node{
-						Node:    "localhost",
-						Address: "127.0.0.2",
+					BackendName: "foo",
+					ServiceEntry: &api.ServiceEntry{
+						Service: &api.AgentService{
+							Service: "foo",
+							Address: "127.0.0.2",
+							Port:    80,
+						},
+						Node: &api.Node{
+							Node:    "localhost",
+							Address: "127.0.0.2",
+						},
 					},
 				},
 				{
-					Service: &api.AgentService{
-						Service: "bar",
-						Address: "127.0.0.2",
-						Port:    81,
-					},
-					Node: &api.Node{
-						Node:    "localhost",
-						Address: "127.0.0.2",
-					},
-				},
-				{
-					Service: &api.AgentService{
-						Service: "foo",
-						Address: "127.0.0.1",
-						Port:    80,
-					},
-					Node: &api.Node{
-						Node:    "localhost",
-						Address: "127.0.0.1",
+					BackendName: "foo",
+					ServiceEntry: &api.ServiceEntry{
+						Service: &api.AgentService{
+							Service: "bar",
+							Address: "127.0.0.2",
+							Port:    81,
+						},
+						Node: &api.Node{
+							Node:    "localhost",
+							Address: "127.0.0.2",
+						},
 					},
 				},
 				{
-					Service: &api.AgentService{
-						Service: "bar",
-						Address: "127.0.0.2",
-						Port:    80,
+					BackendName: "foo",
+					ServiceEntry: &api.ServiceEntry{
+						Service: &api.AgentService{
+							Service: "foo",
+							Address: "127.0.0.1",
+							Port:    80,
+						},
+						Node: &api.Node{
+							Node:    "localhost",
+							Address: "127.0.0.1",
+						},
 					},
-					Node: &api.Node{
-						Node:    "localhost",
-						Address: "127.0.0.2",
+				},
+				{
+					BackendName: "foo",
+					ServiceEntry: &api.ServiceEntry{
+						Service: &api.AgentService{
+							Service: "bar",
+							Address: "127.0.0.2",
+							Port:    80,
+						},
+						Node: &api.Node{
+							Node:    "localhost",
+							Address: "127.0.0.2",
+						},
 					},
 				},
 			},
-			expected: []*api.ServiceEntry{
+			expected: []serverItem{
 				{
-					Service: &api.AgentService{
-						Service: "bar",
-						Address: "127.0.0.2",
-						Port:    80,
-					},
-					Node: &api.Node{
-						Node:    "localhost",
-						Address: "127.0.0.2",
+					BackendName: "foo",
+					ServiceEntry: &api.ServiceEntry{
+						Service: &api.AgentService{
+							Service: "bar",
+							Address: "127.0.0.2",
+							Port:    80,
+						},
+						Node: &api.Node{
+							Node:    "localhost",
+							Address: "127.0.0.2",
+						},
 					},
 				},
 				{
-					Service: &api.AgentService{
-						Service: "bar",
-						Address: "127.0.0.2",
-						Port:    81,
-					},
-					Node: &api.Node{
-						Node:    "localhost",
-						Address: "127.0.0.2",
-					},
-				},
-				{
-					Service: &api.AgentService{
-						Service: "foo",
-						Address: "127.0.0.1",
-						Port:    80,
-					},
-					Node: &api.Node{
-						Node:    "localhost",
-						Address: "127.0.0.1",
+					BackendName: "foo",
+					ServiceEntry: &api.ServiceEntry{
+						Service: &api.AgentService{
+							Service: "bar",
+							Address: "127.0.0.2",
+							Port:    81,
+						},
+						Node: &api.Node{
+							Node:    "localhost",
+							Address: "127.0.0.2",
+						},
 					},
 				},
 				{
-					Service: &api.AgentService{
-						Service: "foo",
-						Address: "127.0.0.2",
-						Port:    80,
+					BackendName: "foo",
+					ServiceEntry: &api.ServiceEntry{
+						Service: &api.AgentService{
+							Service: "foo",
+							Address: "127.0.0.1",
+							Port:    80,
+						},
+						Node: &api.Node{
+							Node:    "localhost",
+							Address: "127.0.0.1",
+						},
 					},
-					Node: &api.Node{
-						Node:    "localhost",
-						Address: "127.0.0.2",
+				},
+				{
+					BackendName: "foo",
+					ServiceEntry: &api.ServiceEntry{
+						Service: &api.AgentService{
+							Service: "foo",
+							Address: "127.0.0.2",
+							Port:    80,
+						},
+						Node: &api.Node{
+							Node:    "localhost",
+							Address: "127.0.0.2",
+						},
 					},
 				},
 			},
 		},
 		{
 			desc: "Should sort by node address",
-			nodes: []*api.ServiceEntry{
+			nodes: []serverItem{
 				{
-					Service: &api.AgentService{
-						Service: "foo",
-						Address: "",
-						Port:    80,
-					},
-					Node: &api.Node{
-						Node:    "localhost",
-						Address: "127.0.0.2",
+					BackendName: "foo",
+					ServiceEntry: &api.ServiceEntry{
+						Service: &api.AgentService{
+							Service: "foo",
+							Address: "",
+							Port:    80,
+						},
+						Node: &api.Node{
+							Node:    "localhost",
+							Address: "127.0.0.2",
+						},
 					},
 				},
 				{
-					Service: &api.AgentService{
-						Service: "foo",
-						Address: "",
-						Port:    80,
-					},
-					Node: &api.Node{
-						Node:    "localhost",
-						Address: "127.0.0.1",
+					BackendName: "foo",
+					ServiceEntry: &api.ServiceEntry{
+						Service: &api.AgentService{
+							Service: "foo",
+							Address: "",
+							Port:    80,
+						},
+						Node: &api.Node{
+							Node:    "localhost",
+							Address: "127.0.0.1",
+						},
 					},
 				},
 			},
-			expected: []*api.ServiceEntry{
+			expected: []serverItem{
 				{
-					Service: &api.AgentService{
-						Service: "foo",
-						Address: "",
-						Port:    80,
-					},
-					Node: &api.Node{
-						Node:    "localhost",
-						Address: "127.0.0.1",
+					BackendName: "foo",
+					ServiceEntry: &api.ServiceEntry{
+						Service: &api.AgentService{
+							Service: "foo",
+							Address: "",
+							Port:    80,
+						},
+						Node: &api.Node{
+							Node:    "localhost",
+							Address: "127.0.0.1",
+						},
 					},
 				},
 				{
-					Service: &api.AgentService{
-						Service: "foo",
-						Address: "",
-						Port:    80,
-					},
-					Node: &api.Node{
-						Node:    "localhost",
-						Address: "127.0.0.2",
+					BackendName: "foo",
+					ServiceEntry: &api.ServiceEntry{
+						Service: &api.AgentService{
+							Service: "foo",
+							Address: "",
+							Port:    80,
+						},
+						Node: &api.Node{
+							Node:    "localhost",
+							Address: "127.0.0.2",
+						},
 					},
 				},
 			},
