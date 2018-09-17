@@ -698,6 +698,10 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithTlsConfigurationDeletion(c
 	// Change certificates configuration file content
 	modifyCertificateConfFileContent(c, "", dynamicConfFileName, "https02")
 
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("\"file\":{}"))
+	c.Assert(err, checker.IsNil)
+
 	err = try.RequestWithTransport(req, 30*time.Second, tr2, try.HasCn("TRAEFIK DEFAULT CERT"), try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
 }
@@ -709,7 +713,9 @@ func modifyCertificateConfFileContent(c *check.C, certFileName, confFileName, en
 	defer func() {
 		f.Close()
 	}()
-	f.Truncate(0)
+	err = f.Truncate(0)
+	c.Assert(err, checker.IsNil)
+
 	// If certificate file is not provided, just truncate the configuration file
 	if len(certFileName) > 0 {
 		tlsConf := types.Configuration{
