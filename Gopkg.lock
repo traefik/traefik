@@ -1352,6 +1352,7 @@
     "providers/dns/gcloud",
     "providers/dns/glesys",
     "providers/dns/godaddy",
+    "providers/dns/hostingde",
     "providers/dns/iij",
     "providers/dns/lightsail",
     "providers/dns/linode",
@@ -1370,7 +1371,7 @@
     "providers/dns/vegadns",
     "providers/dns/vultr"
   ]
-  revision = "ad34a85dada244c4e4a50d71963a90ea70736033"
+  revision = "83e2300e01226dcb006946873ca5434291fb16ef"
 
 [[projects]]
   branch = "master"

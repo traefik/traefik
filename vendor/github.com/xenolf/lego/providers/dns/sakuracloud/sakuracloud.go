@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/sacloud/libsacloud/api"
 	"github.com/sacloud/libsacloud/sacloud"
@@ -14,8 +15,27 @@ import (
 	"github.com/xenolf/lego/platform/config/env"
 )
 
+// Config is used to configure the creation of the DNSProvider
+type Config struct {
+	Token              string
+	Secret             string
+	PropagationTimeout time.Duration
+	PollingInterval    time.Duration
+	TTL                int
+}
+
+// NewDefaultConfig returns a default configuration for the DNSProvider
+func NewDefaultConfig() *Config {
+	return &Config{
+		TTL:                env.GetOrDefaultInt("SAKURACLOUD_TTL", 120),
+		PropagationTimeout: env.GetOrDefaultSecond("SAKURACLOUD_PROPAGATION_TIMEOUT", acme.DefaultPropagationTimeout),
+		PollingInterval:    env.GetOrDefaultSecond("SAKURACLOUD_POLLING_INTERVAL", acme.DefaultPollingInterval),
+	}
+}
+
 // DNSProvider is an implementation of the acme.ChallengeProvider interface.
 type DNSProvider struct {
+	config *Config
 	client *api.Client
 }
 
@@ -24,23 +44,42 @@ type DNSProvider struct {
 func NewDNSProvider() (*DNSProvider, error) {
 	values, err := env.Get("SAKURACLOUD_ACCESS_TOKEN", "SAKURACLOUD_ACCESS_TOKEN_SECRET")
 	if err != nil {
-		return nil, fmt.Errorf("SakuraCloud: %v", err)
+		return nil, fmt.Errorf("sakuracloud: %v", err)
 	}
 
-	return NewDNSProviderCredentials(values["SAKURACLOUD_ACCESS_TOKEN"], values["SAKURACLOUD_ACCESS_TOKEN_SECRET"])
+	config := NewDefaultConfig()
+	config.Token = values["SAKURACLOUD_ACCESS_TOKEN"]
+	config.Secret = values["SAKURACLOUD_ACCESS_TOKEN_SECRET"]
+
+	return NewDNSProviderConfig(config)
 }
 
-// NewDNSProviderCredentials uses the supplied credentials to return a
-// DNSProvider instance configured for sakuracloud.
+// NewDNSProviderCredentials uses the supplied credentials
+// to return a DNSProvider instance configured for sakuracloud.
+// Deprecated
 func NewDNSProviderCredentials(token, secret string) (*DNSProvider, error) {
-	if token == "" {
-		return nil, errors.New("SakuraCloud AccessToken is missing")
-	}
-	if secret == "" {
-		return nil, errors.New("SakuraCloud AccessSecret is missing")
+	config := NewDefaultConfig()
+	config.Token = token
+	config.Secret = secret
+
+	return NewDNSProviderConfig(config)
+}
+
+// NewDNSProviderConfig return a DNSProvider instance configured for GleSYS.
+func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
+	if config == nil {
+		return nil, errors.New("sakuracloud: the configuration of the DNS provider is nil")
 	}
 
-	client := api.NewClient(token, secret, "tk1a")
+	if config.Token == "" {
+		return nil, errors.New("sakuracloud: AccessToken is missing")
+	}
+
+	if config.Secret == "" {
+		return nil, errors.New("sakuracloud: AccessSecret is missing")
+	}
+
+	client := api.NewClient(config.Token, config.Secret, "tk1a")
 	client.UserAgent = acme.UserAgent
 
 	return &DNSProvider{client: client}, nil
@@ -48,19 +87,19 @@ func NewDNSProviderCredentials(token, secret string) (*DNSProvider, error) {
 
 // Present creates a TXT record to fulfil the dns-01 challenge.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
+	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
 
 	zone, err := d.getHostedZone(domain)
 	if err != nil {
-		return err
+		return fmt.Errorf("sakuracloud: %v", err)
 	}
 
 	name := d.extractRecordName(fqdn, zone.Name)
 
-	zone.AddRecord(zone.CreateNewRecord(name, "TXT", value, ttl))
+	zone.AddRecord(zone.CreateNewRecord(name, "TXT", value, d.config.TTL))
 	_, err = d.client.GetDNSAPI().Update(zone.ID, zone)
 	if err != nil {
-		return fmt.Errorf("SakuraCloud API call failed: %v", err)
+		return fmt.Errorf("sakuracloud: API call failed: %v", err)
 	}
 
 	return nil
@@ -72,12 +111,12 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 
 	zone, err := d.getHostedZone(domain)
 	if err != nil {
-		return err
+		return fmt.Errorf("sakuracloud: %v", err)
 	}
 
 	records, err := d.findTxtRecords(fqdn, zone)
 	if err != nil {
-		return err
+		return fmt.Errorf("sakuracloud: %v", err)
 	}
 
 	for _, record := range records {
@@ -92,10 +131,16 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 
 	_, err = d.client.GetDNSAPI().Update(zone.ID, zone)
 	if err != nil {
-		return fmt.Errorf("SakuraCloud API call failed: %v", err)
+		return fmt.Errorf("sakuracloud: API call failed: %v", err)
 	}
 
 	return nil
+}
+
+// Timeout returns the timeout and interval to use when checking for DNS propagation.
+// Adjusting here to cope with spikes in propagation times.
+func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
+	return d.config.PropagationTimeout, d.config.PollingInterval
 }
 
 func (d *DNSProvider) getHostedZone(domain string) (*sacloud.DNS, error) {
@@ -111,7 +156,7 @@ func (d *DNSProvider) getHostedZone(domain string) (*sacloud.DNS, error) {
 		if notFound, ok := err.(api.Error); ok && notFound.ResponseCode() == http.StatusNotFound {
 			return nil, fmt.Errorf("zone %s not found on SakuraCloud DNS: %v", zoneName, err)
 		}
-		return nil, fmt.Errorf("SakuraCloud API call failed: %v", err)
+		return nil, fmt.Errorf("API call failed: %v", err)
 	}
 
 	for _, zone := range res.CommonServiceDNSItems {
@@ -120,7 +165,7 @@ func (d *DNSProvider) getHostedZone(domain string) (*sacloud.DNS, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("zone %s not found on SakuraCloud DNS", zoneName)
+	return nil, fmt.Errorf("zone %s not found", zoneName)
 }
 
 func (d *DNSProvider) findTxtRecords(fqdn string, zone *sacloud.DNS) ([]sacloud.DNSRecordSet, error) {

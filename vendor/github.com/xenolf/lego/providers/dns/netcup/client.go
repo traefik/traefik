@@ -6,12 +6,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/xenolf/lego/acme"
 )
 
-// netcupBaseURL for reaching the jSON-based API-Endpoint of netcup
-const netcupBaseURL = "https://ccp.netcup.net/run/webservice/servers/endpoint.php?JSON"
+// defaultBaseURL for reaching the jSON-based API-Endpoint of netcup
+const defaultBaseURL = "https://ccp.netcup.net/run/webservice/servers/endpoint.php?JSON"
 
 // success response status
 const success = "success"
@@ -80,6 +81,7 @@ type DNSRecord struct {
 	Destination  string `json:"destination"`
 	DeleteRecord bool   `json:"deleterecord,omitempty"`
 	State        string `json:"state,omitempty"`
+	TTL          int    `json:"ttl,omitempty"`
 }
 
 // ResponseMsg as specified in netcup WSDL
@@ -119,21 +121,20 @@ type Client struct {
 	customerNumber string
 	apiKey         string
 	apiPassword    string
-	client         *http.Client
+	HTTPClient     *http.Client
+	BaseURL        string
 }
 
 // NewClient creates a netcup DNS client
-func NewClient(httpClient *http.Client, customerNumber string, apiKey string, apiPassword string) *Client {
-	client := http.DefaultClient
-	if httpClient != nil {
-		client = httpClient
-	}
-
+func NewClient(customerNumber string, apiKey string, apiPassword string) *Client {
 	return &Client{
 		customerNumber: customerNumber,
 		apiKey:         apiKey,
 		apiPassword:    apiPassword,
-		client:         client,
+		BaseURL:        defaultBaseURL,
+		HTTPClient: &http.Client{
+			Timeout: 10 * time.Second,
+		},
 	}
 }
 
@@ -153,17 +154,17 @@ func (c *Client) Login() (string, error) {
 
 	response, err := c.sendRequest(payload)
 	if err != nil {
-		return "", fmt.Errorf("netcup: error sending request to DNS-API, %v", err)
+		return "", fmt.Errorf("error sending request to DNS-API, %v", err)
 	}
 
 	var r ResponseMsg
 
 	err = json.Unmarshal(response, &r)
 	if err != nil {
-		return "", fmt.Errorf("netcup: error decoding response of DNS-API, %v", err)
+		return "", fmt.Errorf("error decoding response of DNS-API, %v", err)
 	}
 	if r.Status != success {
-		return "", fmt.Errorf("netcup: error logging into DNS-API, %v", r.LongMessage)
+		return "", fmt.Errorf("error logging into DNS-API, %v", r.LongMessage)
 	}
 	return r.ResponseData.APISessionID, nil
 }
@@ -183,18 +184,18 @@ func (c *Client) Logout(sessionID string) error {
 
 	response, err := c.sendRequest(payload)
 	if err != nil {
-		return fmt.Errorf("netcup: error logging out of DNS-API: %v", err)
+		return fmt.Errorf("error logging out of DNS-API: %v", err)
 	}
 
 	var r LogoutResponseMsg
 
 	err = json.Unmarshal(response, &r)
 	if err != nil {
-		return fmt.Errorf("netcup: error logging out of DNS-API: %v", err)
+		return fmt.Errorf("error logging out of DNS-API: %v", err)
 	}
 
 	if r.Status != success {
-		return fmt.Errorf("netcup: error logging out of DNS-API: %v", r.ShortMessage)
+		return fmt.Errorf("error logging out of DNS-API: %v", r.ShortMessage)
 	}
 	return nil
 }
@@ -216,18 +217,18 @@ func (c *Client) UpdateDNSRecord(sessionID, domainName string, record DNSRecord)
 
 	response, err := c.sendRequest(payload)
 	if err != nil {
-		return fmt.Errorf("netcup: %v", err)
+		return err
 	}
 
 	var r ResponseMsg
 
 	err = json.Unmarshal(response, &r)
 	if err != nil {
-		return fmt.Errorf("netcup: %v", err)
+		return err
 	}
 
 	if r.Status != success {
-		return fmt.Errorf("netcup: %s: %+v", r.ShortMessage, r)
+		return fmt.Errorf("%s: %+v", r.ShortMessage, r)
 	}
 	return nil
 }
@@ -249,18 +250,18 @@ func (c *Client) GetDNSRecords(hostname, apiSessionID string) ([]DNSRecord, erro
 
 	response, err := c.sendRequest(payload)
 	if err != nil {
-		return nil, fmt.Errorf("netcup: %v", err)
+		return nil, err
 	}
 
 	var r ResponseMsg
 
 	err = json.Unmarshal(response, &r)
 	if err != nil {
-		return nil, fmt.Errorf("netcup: %v", err)
+		return nil, err
 	}
 
 	if r.Status != success {
-		return nil, fmt.Errorf("netcup: %s", r.ShortMessage)
+		return nil, fmt.Errorf("%s", r.ShortMessage)
 	}
 	return r.ResponseData.DNSRecords, nil
 
@@ -271,30 +272,30 @@ func (c *Client) GetDNSRecords(hostname, apiSessionID string) ([]DNSRecord, erro
 func (c *Client) sendRequest(payload interface{}) ([]byte, error) {
 	body, err := json.Marshal(payload)
 	if err != nil {
-		return nil, fmt.Errorf("netcup: %v", err)
+		return nil, err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, netcupBaseURL, bytes.NewReader(body))
+	req, err := http.NewRequest(http.MethodPost, c.BaseURL, bytes.NewReader(body))
 	if err != nil {
-		return nil, fmt.Errorf("netcup: %v", err)
+		return nil, err
 	}
 	req.Close = true
 
 	req.Header.Set("content-type", "application/json")
 	req.Header.Set("User-Agent", acme.UserAgent)
 
-	resp, err := c.client.Do(req)
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("netcup: %v", err)
+		return nil, err
 	}
 
 	if resp.StatusCode > 299 {
-		return nil, fmt.Errorf("netcup: API request failed with HTTP Status code %d", resp.StatusCode)
+		return nil, fmt.Errorf("API request failed with HTTP Status code %d", resp.StatusCode)
 	}
 
 	body, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("netcup: read of response body failed, %v", err)
+		return nil, fmt.Errorf("read of response body failed, %v", err)
 	}
 	defer resp.Body.Close()
 
@@ -310,11 +311,11 @@ func GetDNSRecordIdx(records []DNSRecord, record DNSRecord) (int, error) {
 			return index, nil
 		}
 	}
-	return -1, fmt.Errorf("netcup: no DNS Record found")
+	return -1, fmt.Errorf("no DNS Record found")
 }
 
 // CreateTxtRecord uses the supplied values to return a DNSRecord of type TXT for the dns-01 challenge
-func CreateTxtRecord(hostname, value string) DNSRecord {
+func CreateTxtRecord(hostname, value string, ttl int) DNSRecord {
 	return DNSRecord{
 		ID:           0,
 		Hostname:     hostname,
@@ -323,5 +324,6 @@ func CreateTxtRecord(hostname, value string) DNSRecord {
 		Destination:  value,
 		DeleteRecord: false,
 		State:        "",
+		TTL:          ttl,
 	}
 }

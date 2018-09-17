@@ -6,15 +6,36 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/http"
+	"time"
 
 	"github.com/xenolf/lego/acme"
 	"github.com/xenolf/lego/platform/config/env"
 )
 
+// Config is used to configure the creation of the DNSProvider
+type Config struct {
+	Token              string
+	PropagationTimeout time.Duration
+	PollingInterval    time.Duration
+	HTTPClient         *http.Client
+}
+
+// NewDefaultConfig returns a default configuration for the DNSProvider
+func NewDefaultConfig() *Config {
+	client := acme.HTTPClient
+	client.Timeout = env.GetOrDefaultSecond("DUCKDNS_HTTP_TIMEOUT", 30*time.Second)
+
+	return &Config{
+		PropagationTimeout: env.GetOrDefaultSecond("DUCKDNS_PROPAGATION_TIMEOUT", acme.DefaultPropagationTimeout),
+		PollingInterval:    env.GetOrDefaultSecond("DUCKDNS_POLLING_INTERVAL", acme.DefaultPollingInterval),
+		HTTPClient:         &client,
+	}
+}
+
 // DNSProvider adds and removes the record for the DNS challenge
 type DNSProvider struct {
-	// The api token
-	token string
+	config *Config
 }
 
 // NewDNSProvider returns a new DNS provider using
@@ -22,31 +43,53 @@ type DNSProvider struct {
 func NewDNSProvider() (*DNSProvider, error) {
 	values, err := env.Get("DUCKDNS_TOKEN")
 	if err != nil {
-		return nil, fmt.Errorf("DuckDNS: %v", err)
+		return nil, fmt.Errorf("duckdns: %v", err)
 	}
 
-	return NewDNSProviderCredentials(values["DUCKDNS_TOKEN"])
+	config := NewDefaultConfig()
+	config.Token = values["DUCKDNS_TOKEN"]
+
+	return NewDNSProviderConfig(config)
 }
 
-// NewDNSProviderCredentials uses the supplied credentials to return a
-// DNSProvider instance configured for http://duckdns.org .
+// NewDNSProviderCredentials uses the supplied credentials
+// to return a DNSProvider instance configured for http://duckdns.org
+// Deprecated
 func NewDNSProviderCredentials(token string) (*DNSProvider, error) {
-	if token == "" {
-		return nil, errors.New("DuckDNS: credentials missing")
+	config := NewDefaultConfig()
+	config.Token = token
+
+	return NewDNSProviderConfig(config)
+}
+
+// NewDNSProviderConfig return a DNSProvider instance configured for DuckDNS.
+func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
+	if config == nil {
+		return nil, errors.New("duckdns: the configuration of the DNS provider is nil")
 	}
 
-	return &DNSProvider{token: token}, nil
+	if config.Token == "" {
+		return nil, errors.New("duckdns: credentials missing")
+	}
+
+	return &DNSProvider{config: config}, nil
 }
 
 // Present creates a TXT record to fulfil the dns-01 challenge.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	_, txtRecord, _ := acme.DNS01Record(domain, keyAuth)
-	return updateTxtRecord(domain, d.token, txtRecord, false)
+	return updateTxtRecord(domain, d.config.Token, txtRecord, false)
 }
 
 // CleanUp clears DuckDNS TXT record
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	return updateTxtRecord(domain, d.token, "", true)
+	return updateTxtRecord(domain, d.config.Token, "", true)
+}
+
+// Timeout returns the timeout and interval to use when checking for DNS propagation.
+// Adjusting here to cope with spikes in propagation times.
+func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
+	return d.config.PropagationTimeout, d.config.PollingInterval
 }
 
 // updateTxtRecord Update the domains TXT record

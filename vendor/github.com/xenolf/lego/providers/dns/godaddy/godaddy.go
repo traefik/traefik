@@ -4,6 +4,7 @@ package godaddy
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -15,46 +16,83 @@ import (
 	"github.com/xenolf/lego/platform/config/env"
 )
 
-// GoDaddyAPIURL represents the API endpoint to call.
-const apiURL = "https://api.godaddy.com"
+const (
+	// defaultBaseURL represents the API endpoint to call.
+	defaultBaseURL = "https://api.godaddy.com"
+	minTTL         = 600
+)
+
+// Config is used to configure the creation of the DNSProvider
+type Config struct {
+	APIKey             string
+	APISecret          string
+	PropagationTimeout time.Duration
+	PollingInterval    time.Duration
+	TTL                int
+	HTTPClient         *http.Client
+}
+
+// NewDefaultConfig returns a default configuration for the DNSProvider
+func NewDefaultConfig() *Config {
+	return &Config{
+		TTL:                env.GetOrDefaultInt("GODADDY_TTL", minTTL),
+		PropagationTimeout: env.GetOrDefaultSecond("GODADDY_PROPAGATION_TIMEOUT", 120*time.Second),
+		PollingInterval:    env.GetOrDefaultSecond("GODADDY_POLLING_INTERVAL", 2*time.Second),
+		HTTPClient: &http.Client{
+			Timeout: env.GetOrDefaultSecond("GODADDY_HTTP_TIMEOUT", 30*time.Second),
+		},
+	}
+}
 
 // DNSProvider is an implementation of the acme.ChallengeProvider interface
 type DNSProvider struct {
-	apiKey    string
-	apiSecret string
-	client    *http.Client
+	config *Config
 }
 
 // NewDNSProvider returns a DNSProvider instance configured for godaddy.
-// Credentials must be passed in the environment variables: GODADDY_API_KEY
-// and GODADDY_API_SECRET.
+// Credentials must be passed in the environment variables:
+// GODADDY_API_KEY and GODADDY_API_SECRET.
 func NewDNSProvider() (*DNSProvider, error) {
 	values, err := env.Get("GODADDY_API_KEY", "GODADDY_API_SECRET")
 	if err != nil {
-		return nil, fmt.Errorf("GoDaddy: %v", err)
+		return nil, fmt.Errorf("godaddy: %v", err)
 	}
 
-	return NewDNSProviderCredentials(values["GODADDY_API_KEY"], values["GODADDY_API_SECRET"])
+	config := NewDefaultConfig()
+	config.APIKey = values["GODADDY_API_KEY"]
+	config.APISecret = values["GODADDY_API_SECRET"]
+
+	return NewDNSProviderConfig(config)
 }
 
-// NewDNSProviderCredentials uses the supplied credentials to return a
-// DNSProvider instance configured for godaddy.
+// NewDNSProviderCredentials uses the supplied credentials
+// to return a DNSProvider instance configured for godaddy.
+// Deprecated
 func NewDNSProviderCredentials(apiKey, apiSecret string) (*DNSProvider, error) {
-	if apiKey == "" || apiSecret == "" {
-		return nil, fmt.Errorf("GoDaddy credentials missing")
+	config := NewDefaultConfig()
+	config.APIKey = apiKey
+	config.APISecret = apiSecret
+
+	return NewDNSProviderConfig(config)
+}
+
+// NewDNSProviderConfig return a DNSProvider instance configured for godaddy.
+func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
+	if config == nil {
+		return nil, errors.New("godaddy: the configuration of the DNS provider is nil")
 	}
 
-	return &DNSProvider{
-		apiKey:    apiKey,
-		apiSecret: apiSecret,
-		client:    &http.Client{Timeout: 30 * time.Second},
-	}, nil
+	if config.APIKey == "" || config.APISecret == "" {
+		return nil, fmt.Errorf("godaddy: credentials missing")
+	}
+
+	return &DNSProvider{config: config}, nil
 }
 
 // Timeout returns the timeout and interval to use when checking for DNS
 // propagation. Adjusting here to cope with spikes in propagation times.
 func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
-	return 120 * time.Second, 2 * time.Second
+	return d.config.PropagationTimeout, d.config.PollingInterval
 }
 
 func (d *DNSProvider) extractRecordName(fqdn, domain string) string {
@@ -67,14 +105,14 @@ func (d *DNSProvider) extractRecordName(fqdn, domain string) string {
 
 // Present creates a TXT record to fulfil the dns-01 challenge
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
+	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
 	domainZone, err := d.getZone(fqdn)
 	if err != nil {
 		return err
 	}
 
-	if ttl < 600 {
-		ttl = 600
+	if d.config.TTL < minTTL {
+		d.config.TTL = minTTL
 	}
 
 	recordName := d.extractRecordName(fqdn, domainZone)
@@ -83,7 +121,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 			Type: "TXT",
 			Name: recordName,
 			Data: value,
-			TTL:  ttl,
+			TTL:  d.config.TTL,
 		},
 	}
 
@@ -141,16 +179,16 @@ func (d *DNSProvider) getZone(fqdn string) (string, error) {
 }
 
 func (d *DNSProvider) makeRequest(method, uri string, body io.Reader) (*http.Response, error) {
-	req, err := http.NewRequest(method, fmt.Sprintf("%s%s", apiURL, uri), body)
+	req, err := http.NewRequest(method, fmt.Sprintf("%s%s", defaultBaseURL, uri), body)
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("sso-key %s:%s", d.apiKey, d.apiSecret))
+	req.Header.Set("Authorization", fmt.Sprintf("sso-key %s:%s", d.config.APIKey, d.config.APISecret))
 
-	return d.client.Do(req)
+	return d.config.HTTPClient.Do(req)
 }
 
 // DNSRecord a DNS record

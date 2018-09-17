@@ -3,6 +3,7 @@ package iij
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,9 +15,21 @@ import (
 
 // Config is used to configure the creation of the DNSProvider
 type Config struct {
-	AccessKey     string
-	SecretKey     string
-	DoServiceCode string
+	AccessKey          string
+	SecretKey          string
+	DoServiceCode      string
+	PropagationTimeout time.Duration
+	PollingInterval    time.Duration
+	TTL                int
+}
+
+// NewDefaultConfig returns a default configuration for the DNSProvider
+func NewDefaultConfig() *Config {
+	return &Config{
+		TTL:                env.GetOrDefaultInt("IIJ_TTL", 300),
+		PropagationTimeout: env.GetOrDefaultSecond("IIJ_PROPAGATION_TIMEOUT", 2*time.Minute),
+		PollingInterval:    env.GetOrDefaultSecond("IIJ_POLLING_INTERVAL", 4*time.Second),
+	}
 }
 
 // DNSProvider implements the acme.ChallengeProvider interface
@@ -29,19 +42,24 @@ type DNSProvider struct {
 func NewDNSProvider() (*DNSProvider, error) {
 	values, err := env.Get("IIJ_API_ACCESS_KEY", "IIJ_API_SECRET_KEY", "IIJ_DO_SERVICE_CODE")
 	if err != nil {
-		return nil, fmt.Errorf("IIJ: %v", err)
+		return nil, fmt.Errorf("iij: %v", err)
 	}
 
-	return NewDNSProviderConfig(&Config{
-		AccessKey:     values["IIJ_API_ACCESS_KEY"],
-		SecretKey:     values["IIJ_API_SECRET_KEY"],
-		DoServiceCode: values["IIJ_DO_SERVICE_CODE"],
-	})
+	config := NewDefaultConfig()
+	config.AccessKey = values["IIJ_API_ACCESS_KEY"]
+	config.SecretKey = values["IIJ_API_SECRET_KEY"]
+	config.DoServiceCode = values["IIJ_DO_SERVICE_CODE"]
+
+	return NewDNSProviderConfig(config)
 }
 
-// NewDNSProviderConfig takes a given config ans returns a custom configured
-// DNSProvider instance
+// NewDNSProviderConfig takes a given config
+// and returns a custom configured DNSProvider instance
 func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
+	if config.SecretKey == "" || config.AccessKey == "" || config.DoServiceCode == "" {
+		return nil, fmt.Errorf("iij: credentials missing")
+	}
+
 	return &DNSProvider{
 		api:    doapi.NewAPI(config.AccessKey, config.SecretKey),
 		config: config,
@@ -49,24 +67,28 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 }
 
 // Timeout returns the timeout and interval to use when checking for DNS propagation.
-func (p *DNSProvider) Timeout() (timeout, interval time.Duration) {
-	return time.Minute * 2, time.Second * 4
+func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
+	return d.config.PropagationTimeout, d.config.PollingInterval
 }
 
 // Present creates a TXT record using the specified parameters
-func (p *DNSProvider) Present(domain, token, keyAuth string) error {
+func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	_, value, _ := acme.DNS01Record(domain, keyAuth)
-	return p.addTxtRecord(domain, value)
+
+	err := d.addTxtRecord(domain, value)
+	return fmt.Errorf("iij: %v", err)
 }
 
 // CleanUp removes the TXT record matching the specified parameters
-func (p *DNSProvider) CleanUp(domain, token, keyAuth string) error {
+func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	_, value, _ := acme.DNS01Record(domain, keyAuth)
-	return p.deleteTxtRecord(domain, value)
+
+	err := d.deleteTxtRecord(domain, value)
+	return fmt.Errorf("iij: %v", err)
 }
 
-func (p *DNSProvider) addTxtRecord(domain, value string) error {
-	zones, err := p.listZones()
+func (d *DNSProvider) addTxtRecord(domain, value string) error {
+	zones, err := d.listZones()
 	if err != nil {
 		return err
 	}
@@ -77,25 +99,25 @@ func (p *DNSProvider) addTxtRecord(domain, value string) error {
 	}
 
 	request := protocol.RecordAdd{
-		DoServiceCode: p.config.DoServiceCode,
+		DoServiceCode: d.config.DoServiceCode,
 		ZoneName:      zone,
 		Owner:         owner,
-		TTL:           "300",
+		TTL:           strconv.Itoa(d.config.TTL),
 		RecordType:    "TXT",
 		RData:         value,
 	}
 
 	response := &protocol.RecordAddResponse{}
 
-	if err := doapi.Call(*p.api, request, response); err != nil {
+	if err := doapi.Call(*d.api, request, response); err != nil {
 		return err
 	}
 
-	return p.commit()
+	return d.commit()
 }
 
-func (p *DNSProvider) deleteTxtRecord(domain, value string) error {
-	zones, err := p.listZones()
+func (d *DNSProvider) deleteTxtRecord(domain, value string) error {
+	zones, err := d.listZones()
 	if err != nil {
 		return err
 	}
@@ -105,45 +127,45 @@ func (p *DNSProvider) deleteTxtRecord(domain, value string) error {
 		return err
 	}
 
-	id, err := p.findTxtRecord(owner, zone, value)
+	id, err := d.findTxtRecord(owner, zone, value)
 	if err != nil {
 		return err
 	}
 
 	request := protocol.RecordDelete{
-		DoServiceCode: p.config.DoServiceCode,
+		DoServiceCode: d.config.DoServiceCode,
 		ZoneName:      zone,
 		RecordID:      id,
 	}
 
 	response := &protocol.RecordDeleteResponse{}
 
-	if err := doapi.Call(*p.api, request, response); err != nil {
+	if err := doapi.Call(*d.api, request, response); err != nil {
 		return err
 	}
 
-	return p.commit()
+	return d.commit()
 }
 
-func (p *DNSProvider) commit() error {
+func (d *DNSProvider) commit() error {
 	request := protocol.Commit{
-		DoServiceCode: p.config.DoServiceCode,
+		DoServiceCode: d.config.DoServiceCode,
 	}
 
 	response := &protocol.CommitResponse{}
 
-	return doapi.Call(*p.api, request, response)
+	return doapi.Call(*d.api, request, response)
 }
 
-func (p *DNSProvider) findTxtRecord(owner, zone, value string) (string, error) {
+func (d *DNSProvider) findTxtRecord(owner, zone, value string) (string, error) {
 	request := protocol.RecordListGet{
-		DoServiceCode: p.config.DoServiceCode,
+		DoServiceCode: d.config.DoServiceCode,
 		ZoneName:      zone,
 	}
 
 	response := &protocol.RecordListGetResponse{}
 
-	if err := doapi.Call(*p.api, request, response); err != nil {
+	if err := doapi.Call(*d.api, request, response); err != nil {
 		return "", err
 	}
 
@@ -162,14 +184,14 @@ func (p *DNSProvider) findTxtRecord(owner, zone, value string) (string, error) {
 	return id, nil
 }
 
-func (p *DNSProvider) listZones() ([]string, error) {
+func (d *DNSProvider) listZones() ([]string, error) {
 	request := protocol.ZoneListGet{
-		DoServiceCode: p.config.DoServiceCode,
+		DoServiceCode: d.config.DoServiceCode,
 	}
 
 	response := &protocol.ZoneListGetResponse{}
 
-	if err := doapi.Call(*p.api, request, response); err != nil {
+	if err := doapi.Call(*d.api, request, response); err != nil {
 		return nil, err
 	}
 
