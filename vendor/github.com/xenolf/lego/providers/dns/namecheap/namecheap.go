@@ -4,10 +4,12 @@ package namecheap
 
 import (
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -29,84 +31,175 @@ import (
 //    address as a form or query string value. This code uses a namecheap
 //    service to query the client's IP address.
 
-var (
-	debug          = false
+const (
 	defaultBaseURL = "https://api.namecheap.com/xml.response"
 	getIPURL       = "https://dynamicdns.park-your-domain.com/getip"
 )
 
+// A challenge represents all the data needed to specify a dns-01 challenge
+// to lets-encrypt.
+type challenge struct {
+	domain   string
+	key      string
+	keyFqdn  string
+	keyValue string
+	tld      string
+	sld      string
+	host     string
+}
+
+// Config is used to configure the creation of the DNSProvider
+type Config struct {
+	Debug              bool
+	BaseURL            string
+	APIUser            string
+	APIKey             string
+	ClientIP           string
+	PropagationTimeout time.Duration
+	PollingInterval    time.Duration
+	TTL                int
+	HTTPClient         *http.Client
+}
+
+// NewDefaultConfig returns a default configuration for the DNSProvider
+func NewDefaultConfig() *Config {
+	return &Config{
+		BaseURL:            defaultBaseURL,
+		Debug:              env.GetOrDefaultBool("NAMECHEAP_DEBUG", false),
+		TTL:                env.GetOrDefaultInt("NAMECHEAP_TTL", 120),
+		PropagationTimeout: env.GetOrDefaultSecond("NAMECHEAP_PROPAGATION_TIMEOUT", 60*time.Minute),
+		PollingInterval:    env.GetOrDefaultSecond("NAMECHEAP_POLLING_INTERVAL", 15*time.Second),
+		HTTPClient: &http.Client{
+			Timeout: env.GetOrDefaultSecond("NAMECHEAP_HTTP_TIMEOUT", 60*time.Second),
+		},
+	}
+}
+
 // DNSProvider is an implementation of the ChallengeProviderTimeout interface
 // that uses Namecheap's tool API to manage TXT records for a domain.
 type DNSProvider struct {
-	baseURL  string
-	apiUser  string
-	apiKey   string
-	clientIP string
-	client   *http.Client
+	config *Config
 }
 
 // NewDNSProvider returns a DNSProvider instance configured for namecheap.
-// Credentials must be passed in the environment variables: NAMECHEAP_API_USER
-// and NAMECHEAP_API_KEY.
+// Credentials must be passed in the environment variables:
+// NAMECHEAP_API_USER and NAMECHEAP_API_KEY.
 func NewDNSProvider() (*DNSProvider, error) {
 	values, err := env.Get("NAMECHEAP_API_USER", "NAMECHEAP_API_KEY")
 	if err != nil {
-		return nil, fmt.Errorf("NameCheap: %v", err)
+		return nil, fmt.Errorf("namecheap: %v", err)
 	}
 
-	return NewDNSProviderCredentials(values["NAMECHEAP_API_USER"], values["NAMECHEAP_API_KEY"])
+	config := NewDefaultConfig()
+	config.APIUser = values["NAMECHEAP_API_USER"]
+	config.APIKey = values["NAMECHEAP_API_KEY"]
+
+	return NewDNSProviderConfig(config)
 }
 
-// NewDNSProviderCredentials uses the supplied credentials to return a
-// DNSProvider instance configured for namecheap.
+// NewDNSProviderCredentials uses the supplied credentials
+// to return a DNSProvider instance configured for namecheap.
+// Deprecated
 func NewDNSProviderCredentials(apiUser, apiKey string) (*DNSProvider, error) {
-	if apiUser == "" || apiKey == "" {
-		return nil, fmt.Errorf("Namecheap credentials missing")
-	}
+	config := NewDefaultConfig()
+	config.APIUser = apiUser
+	config.APIKey = apiKey
 
-	client := &http.Client{Timeout: 60 * time.Second}
-
-	clientIP, err := getClientIP(client)
-	if err != nil {
-		return nil, err
-	}
-
-	return &DNSProvider{
-		baseURL:  defaultBaseURL,
-		apiUser:  apiUser,
-		apiKey:   apiKey,
-		clientIP: clientIP,
-		client:   client,
-	}, nil
+	return NewDNSProviderConfig(config)
 }
 
-// Timeout returns the timeout and interval to use when checking for DNS
-// propagation. Namecheap can sometimes take a long time to complete an
-// update, so wait up to 60 minutes for the update to propagate.
+// NewDNSProviderConfig return a DNSProvider instance configured for namecheap.
+func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
+	if config == nil {
+		return nil, errors.New("namecheap: the configuration of the DNS provider is nil")
+	}
+
+	if config.APIUser == "" || config.APIKey == "" {
+		return nil, fmt.Errorf("namecheap: credentials missing")
+	}
+
+	if len(config.ClientIP) == 0 {
+		clientIP, err := getClientIP(config.HTTPClient, config.Debug)
+		if err != nil {
+			return nil, fmt.Errorf("namecheap: %v", err)
+		}
+		config.ClientIP = clientIP
+	}
+
+	return &DNSProvider{config: config}, nil
+}
+
+// Timeout returns the timeout and interval to use when checking for DNS propagation.
+// Namecheap can sometimes take a long time to complete an update, so wait up to 60 minutes for the update to propagate.
 func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
-	return 60 * time.Minute, 15 * time.Second
+	return d.config.PropagationTimeout, d.config.PollingInterval
 }
 
-// host describes a DNS record returned by the Namecheap DNS gethosts API.
-// Namecheap uses the term "host" to refer to all DNS records that include
-// a host field (A, AAAA, CNAME, NS, TXT, URL).
-type host struct {
-	Type    string `xml:",attr"`
-	Name    string `xml:",attr"`
-	Address string `xml:",attr"`
-	MXPref  string `xml:",attr"`
-	TTL     string `xml:",attr"`
+// Present installs a TXT record for the DNS challenge.
+func (d *DNSProvider) Present(domain, token, keyAuth string) error {
+	tlds, err := d.getTLDs()
+	if err != nil {
+		return fmt.Errorf("namecheap: %v", err)
+	}
+
+	ch, err := newChallenge(domain, keyAuth, tlds)
+	if err != nil {
+		return fmt.Errorf("namecheap: %v", err)
+	}
+
+	hosts, err := d.getHosts(ch)
+	if err != nil {
+		return fmt.Errorf("namecheap: %v", err)
+	}
+
+	d.addChallengeRecord(ch, &hosts)
+
+	if d.config.Debug {
+		for _, h := range hosts {
+			log.Printf(
+				"%-5.5s %-30.30s %-6s %-70.70s\n",
+				h.Type, h.Name, h.TTL, h.Address)
+		}
+	}
+
+	err = d.setHosts(ch, hosts)
+	if err != nil {
+		return fmt.Errorf("namecheap: %v", err)
+	}
+	return nil
 }
 
-// apierror describes an error record in a namecheap API response.
-type apierror struct {
-	Number      int    `xml:",attr"`
-	Description string `xml:",innerxml"`
+// CleanUp removes a TXT record used for a previous DNS challenge.
+func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
+	tlds, err := d.getTLDs()
+	if err != nil {
+		return fmt.Errorf("namecheap: %v", err)
+	}
+
+	ch, err := newChallenge(domain, keyAuth, tlds)
+	if err != nil {
+		return fmt.Errorf("namecheap: %v", err)
+	}
+
+	hosts, err := d.getHosts(ch)
+	if err != nil {
+		return fmt.Errorf("namecheap: %v", err)
+	}
+
+	if removed := d.removeChallengeRecord(ch, &hosts); !removed {
+		return nil
+	}
+
+	err = d.setHosts(ch, hosts)
+	if err != nil {
+		return fmt.Errorf("namecheap: %v", err)
+	}
+	return nil
 }
 
-// getClientIP returns the client's public IP address. It uses namecheap's
-// IP discovery service to perform the lookup.
-func getClientIP(client *http.Client) (addr string, err error) {
+// getClientIP returns the client's public IP address.
+// It uses namecheap's IP discovery service to perform the lookup.
+func getClientIP(client *http.Client, debug bool) (addr string, err error) {
 	resp, err := client.Get(getIPURL)
 	if err != nil {
 		return "", err
@@ -122,18 +215,6 @@ func getClientIP(client *http.Client) (addr string, err error) {
 		log.Println("Client IP:", string(clientIP))
 	}
 	return string(clientIP), nil
-}
-
-// A challenge represents all the data needed to specify a dns-01 challenge
-// to lets-encrypt.
-type challenge struct {
-	domain   string
-	key      string
-	keyFqdn  string
-	keyValue string
-	tld      string
-	sld      string
-	host     string
 }
 
 // newChallenge builds a challenge record from a domain name, a challenge
@@ -178,11 +259,11 @@ func newChallenge(domain, keyAuth string, tlds map[string]string) (*challenge, e
 // setGlobalParams adds the namecheap global parameters to the provided url
 // Values record.
 func (d *DNSProvider) setGlobalParams(v *url.Values, cmd string) {
-	v.Set("ApiUser", d.apiUser)
-	v.Set("ApiKey", d.apiKey)
-	v.Set("UserName", d.apiUser)
-	v.Set("ClientIp", d.clientIP)
+	v.Set("ApiUser", d.config.APIUser)
+	v.Set("ApiKey", d.config.APIKey)
+	v.Set("UserName", d.config.APIUser)
 	v.Set("Command", cmd)
+	v.Set("ClientIp", d.config.ClientIP)
 }
 
 // getTLDs requests the list of available TLDs from namecheap.
@@ -190,10 +271,13 @@ func (d *DNSProvider) getTLDs() (tlds map[string]string, err error) {
 	values := make(url.Values)
 	d.setGlobalParams(&values, "namecheap.domains.getTldList")
 
-	reqURL, _ := url.Parse(d.baseURL)
+	reqURL, err := url.Parse(d.config.BaseURL)
+	if err != nil {
+		return nil, err
+	}
 	reqURL.RawQuery = values.Encode()
 
-	resp, err := d.client.Get(reqURL.String())
+	resp, err := d.config.HTTPClient.Get(reqURL.String())
 	if err != nil {
 		return nil, err
 	}
@@ -208,21 +292,12 @@ func (d *DNSProvider) getTLDs() (tlds map[string]string, err error) {
 		return nil, err
 	}
 
-	type GetTldsResponse struct {
-		XMLName xml.Name   `xml:"ApiResponse"`
-		Errors  []apierror `xml:"Errors>Error"`
-		Result  []struct {
-			Name string `xml:",attr"`
-		} `xml:"CommandResponse>Tlds>Tld"`
-	}
-
-	var gtr GetTldsResponse
+	var gtr getTldsResponse
 	if err := xml.Unmarshal(body, &gtr); err != nil {
 		return nil, err
 	}
 	if len(gtr.Errors) > 0 {
-		return nil, fmt.Errorf("Namecheap error: %s [%d]",
-			gtr.Errors[0].Description, gtr.Errors[0].Number)
+		return nil, fmt.Errorf("%s [%d]", gtr.Errors[0].Description, gtr.Errors[0].Number)
 	}
 
 	tlds = make(map[string]string)
@@ -236,13 +311,17 @@ func (d *DNSProvider) getTLDs() (tlds map[string]string, err error) {
 func (d *DNSProvider) getHosts(ch *challenge) (hosts []host, err error) {
 	values := make(url.Values)
 	d.setGlobalParams(&values, "namecheap.domains.dns.getHosts")
+
 	values.Set("SLD", ch.sld)
 	values.Set("TLD", ch.tld)
 
-	reqURL, _ := url.Parse(d.baseURL)
+	reqURL, err := url.Parse(d.config.BaseURL)
+	if err != nil {
+		return nil, err
+	}
 	reqURL.RawQuery = values.Encode()
 
-	resp, err := d.client.Get(reqURL.String())
+	resp, err := d.config.HTTPClient.Get(reqURL.String())
 	if err != nil {
 		return nil, err
 	}
@@ -257,20 +336,12 @@ func (d *DNSProvider) getHosts(ch *challenge) (hosts []host, err error) {
 		return nil, err
 	}
 
-	type GetHostsResponse struct {
-		XMLName xml.Name   `xml:"ApiResponse"`
-		Status  string     `xml:"Status,attr"`
-		Errors  []apierror `xml:"Errors>Error"`
-		Hosts   []host     `xml:"CommandResponse>DomainDNSGetHostsResult>host"`
-	}
-
-	var ghr GetHostsResponse
+	var ghr getHostsResponse
 	if err = xml.Unmarshal(body, &ghr); err != nil {
 		return nil, err
 	}
 	if len(ghr.Errors) > 0 {
-		return nil, fmt.Errorf("Namecheap error: %s [%d]",
-			ghr.Errors[0].Description, ghr.Errors[0].Number)
+		return nil, fmt.Errorf("%s [%d]", ghr.Errors[0].Description, ghr.Errors[0].Number)
 	}
 
 	return ghr.Hosts, nil
@@ -280,6 +351,7 @@ func (d *DNSProvider) getHosts(ch *challenge) (hosts []host, err error) {
 func (d *DNSProvider) setHosts(ch *challenge, hosts []host) error {
 	values := make(url.Values)
 	d.setGlobalParams(&values, "namecheap.domains.dns.setHosts")
+
 	values.Set("SLD", ch.sld)
 	values.Set("TLD", ch.tld)
 
@@ -292,7 +364,7 @@ func (d *DNSProvider) setHosts(ch *challenge, hosts []host) error {
 		values.Add("TTL"+ind, h.TTL)
 	}
 
-	resp, err := d.client.PostForm(d.baseURL, values)
+	resp, err := d.config.HTTPClient.PostForm(d.config.BaseURL, values)
 	if err != nil {
 		return err
 	}
@@ -307,25 +379,15 @@ func (d *DNSProvider) setHosts(ch *challenge, hosts []host) error {
 		return err
 	}
 
-	type SetHostsResponse struct {
-		XMLName xml.Name   `xml:"ApiResponse"`
-		Status  string     `xml:"Status,attr"`
-		Errors  []apierror `xml:"Errors>Error"`
-		Result  struct {
-			IsSuccess string `xml:",attr"`
-		} `xml:"CommandResponse>DomainDNSSetHostsResult"`
-	}
-
-	var shr SetHostsResponse
+	var shr setHostsResponse
 	if err := xml.Unmarshal(body, &shr); err != nil {
 		return err
 	}
 	if len(shr.Errors) > 0 {
-		return fmt.Errorf("Namecheap error: %s [%d]",
-			shr.Errors[0].Description, shr.Errors[0].Number)
+		return fmt.Errorf("%s [%d]", shr.Errors[0].Description, shr.Errors[0].Number)
 	}
 	if shr.Result.IsSuccess != "true" {
-		return fmt.Errorf("Namecheap setHosts failed")
+		return fmt.Errorf("setHosts failed")
 	}
 
 	return nil
@@ -339,7 +401,7 @@ func (d *DNSProvider) addChallengeRecord(ch *challenge, hosts *[]host) {
 		Type:    "TXT",
 		Address: ch.keyValue,
 		MXPref:  "10",
-		TTL:     "120",
+		TTL:     strconv.Itoa(d.config.TTL),
 	}
 
 	// If there's already a TXT record with the same name, replace it.
@@ -366,58 +428,4 @@ func (d *DNSProvider) removeChallengeRecord(ch *challenge, hosts *[]host) bool {
 	}
 
 	return false
-}
-
-// Present installs a TXT record for the DNS challenge.
-func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	tlds, err := d.getTLDs()
-	if err != nil {
-		return err
-	}
-
-	ch, err := newChallenge(domain, keyAuth, tlds)
-	if err != nil {
-		return err
-	}
-
-	hosts, err := d.getHosts(ch)
-	if err != nil {
-		return err
-	}
-
-	d.addChallengeRecord(ch, &hosts)
-
-	if debug {
-		for _, h := range hosts {
-			log.Printf(
-				"%-5.5s %-30.30s %-6s %-70.70s\n",
-				h.Type, h.Name, h.TTL, h.Address)
-		}
-	}
-
-	return d.setHosts(ch, hosts)
-}
-
-// CleanUp removes a TXT record used for a previous DNS challenge.
-func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	tlds, err := d.getTLDs()
-	if err != nil {
-		return err
-	}
-
-	ch, err := newChallenge(domain, keyAuth, tlds)
-	if err != nil {
-		return err
-	}
-
-	hosts, err := d.getHosts(ch)
-	if err != nil {
-		return err
-	}
-
-	if removed := d.removeChallengeRecord(ch, &hosts); !removed {
-		return nil
-	}
-
-	return d.setHosts(ch, hosts)
 }

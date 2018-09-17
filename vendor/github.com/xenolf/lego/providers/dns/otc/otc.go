@@ -5,27 +5,70 @@ package otc
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/xenolf/lego/acme"
 	"github.com/xenolf/lego/platform/config/env"
 )
 
+const defaultIdentityEndpoint = "https://iam.eu-de.otc.t-systems.com:443/v3/auth/tokens"
+
+// minTTL 300 is otc minimum value for ttl
+const minTTL = 300
+
+// Config is used to configure the creation of the DNSProvider
+type Config struct {
+	IdentityEndpoint   string
+	DomainName         string
+	ProjectName        string
+	UserName           string
+	Password           string
+	PropagationTimeout time.Duration
+	PollingInterval    time.Duration
+	TTL                int
+	HTTPClient         *http.Client
+}
+
+// NewDefaultConfig returns a default configuration for the DNSProvider
+func NewDefaultConfig() *Config {
+	return &Config{
+		IdentityEndpoint:   env.GetOrDefaultString("OTC_IDENTITY_ENDPOINT", defaultIdentityEndpoint),
+		PropagationTimeout: env.GetOrDefaultSecond("OTC_PROPAGATION_TIMEOUT", acme.DefaultPropagationTimeout),
+		PollingInterval:    env.GetOrDefaultSecond("OTC_POLLING_INTERVAL", acme.DefaultPollingInterval),
+		TTL:                env.GetOrDefaultInt("OTC_TTL", minTTL),
+		HTTPClient: &http.Client{
+			Timeout: env.GetOrDefaultSecond("OTC_HTTP_TIMEOUT", 10*time.Second),
+			Transport: &http.Transport{
+				Proxy: http.ProxyFromEnvironment,
+				DialContext: (&net.Dialer{
+					Timeout:   30 * time.Second,
+					KeepAlive: 30 * time.Second,
+					DualStack: true,
+				}).DialContext,
+				MaxIdleConns:          100,
+				IdleConnTimeout:       90 * time.Second,
+				TLSHandshakeTimeout:   10 * time.Second,
+				ExpectContinueTimeout: 1 * time.Second,
+
+				// Workaround for keep alive bug in otc api
+				DisableKeepAlives: true,
+			},
+		},
+	}
+}
+
 // DNSProvider is an implementation of the acme.ChallengeProvider interface that uses
 // OTC's Managed DNS API to manage TXT records for a domain.
 type DNSProvider struct {
-	identityEndpoint string
-	otcBaseURL       string
-	domainName       string
-	projectName      string
-	userName         string
-	password         string
-	token            string
+	config  *Config
+	baseURL string
+	token   string
 }
 
 // NewDNSProvider returns a DNSProvider instance configured for OTC DNS.
@@ -34,41 +77,129 @@ type DNSProvider struct {
 func NewDNSProvider() (*DNSProvider, error) {
 	values, err := env.Get("OTC_DOMAIN_NAME", "OTC_USER_NAME", "OTC_PASSWORD", "OTC_PROJECT_NAME")
 	if err != nil {
-		return nil, fmt.Errorf("OTC: %v", err)
+		return nil, fmt.Errorf("otc: %v", err)
 	}
 
-	return NewDNSProviderCredentials(
-		values["OTC_DOMAIN_NAME"],
-		values["OTC_USER_NAME"],
-		values["OTC_PASSWORD"],
-		values["OTC_PROJECT_NAME"],
-		os.Getenv("OTC_IDENTITY_ENDPOINT"),
-	)
+	config := NewDefaultConfig()
+	config.DomainName = values["OTC_DOMAIN_NAME"]
+	config.UserName = values["OTC_USER_NAME"]
+	config.Password = values["OTC_PASSWORD"]
+	config.ProjectName = values["OTC_PROJECT_NAME"]
+
+	return NewDNSProviderConfig(config)
 }
 
-// NewDNSProviderCredentials uses the supplied credentials to return a
-// DNSProvider instance configured for OTC DNS.
+// NewDNSProviderCredentials uses the supplied credentials
+// to return a DNSProvider instance configured for OTC DNS.
+// Deprecated
 func NewDNSProviderCredentials(domainName, userName, password, projectName, identityEndpoint string) (*DNSProvider, error) {
-	if domainName == "" || userName == "" || password == "" || projectName == "" {
-		return nil, fmt.Errorf("OTC credentials missing")
-	}
+	config := NewDefaultConfig()
+	config.IdentityEndpoint = identityEndpoint
+	config.DomainName = domainName
+	config.UserName = userName
+	config.Password = password
+	config.ProjectName = projectName
 
-	if identityEndpoint == "" {
-		identityEndpoint = "https://iam.eu-de.otc.t-systems.com:443/v3/auth/tokens"
-	}
-
-	return &DNSProvider{
-		identityEndpoint: identityEndpoint,
-		domainName:       domainName,
-		userName:         userName,
-		password:         password,
-		projectName:      projectName,
-	}, nil
+	return NewDNSProviderConfig(config)
 }
 
-// SendRequest send request
-func (d *DNSProvider) SendRequest(method, resource string, payload interface{}) (io.Reader, error) {
-	url := fmt.Sprintf("%s/%s", d.otcBaseURL, resource)
+// NewDNSProviderConfig return a DNSProvider instance configured for OTC DNS.
+func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
+	if config == nil {
+		return nil, errors.New("otc: the configuration of the DNS provider is nil")
+	}
+
+	if config.DomainName == "" || config.UserName == "" || config.Password == "" || config.ProjectName == "" {
+		return nil, fmt.Errorf("otc: credentials missing")
+	}
+
+	if config.IdentityEndpoint == "" {
+		config.IdentityEndpoint = defaultIdentityEndpoint
+	}
+
+	return &DNSProvider{config: config}, nil
+}
+
+// Present creates a TXT record using the specified parameters
+func (d *DNSProvider) Present(domain, token, keyAuth string) error {
+	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+
+	if d.config.TTL < minTTL {
+		d.config.TTL = minTTL
+	}
+
+	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	if err != nil {
+		return fmt.Errorf("otc: %v", err)
+	}
+
+	err = d.login()
+	if err != nil {
+		return fmt.Errorf("otc: %v", err)
+	}
+
+	zoneID, err := d.getZoneID(authZone)
+	if err != nil {
+		return fmt.Errorf("otc: unable to get zone: %s", err)
+	}
+
+	resource := fmt.Sprintf("zones/%s/recordsets", zoneID)
+
+	r1 := &recordset{
+		Name:        fqdn,
+		Description: "Added TXT record for ACME dns-01 challenge using lego client",
+		Type:        "TXT",
+		TTL:         d.config.TTL,
+		Records:     []string{fmt.Sprintf("\"%s\"", value)},
+	}
+
+	_, err = d.sendRequest(http.MethodPost, resource, r1)
+	if err != nil {
+		return fmt.Errorf("otc: %v", err)
+	}
+	return nil
+}
+
+// CleanUp removes the TXT record matching the specified parameters
+func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
+	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+
+	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	if err != nil {
+		return fmt.Errorf("otc: %v", err)
+	}
+
+	err = d.login()
+	if err != nil {
+		return fmt.Errorf("otc: %v", err)
+	}
+
+	zoneID, err := d.getZoneID(authZone)
+	if err != nil {
+		return fmt.Errorf("otc: %v", err)
+	}
+
+	recordID, err := d.getRecordSetID(zoneID, fqdn)
+	if err != nil {
+		return fmt.Errorf("otc: unable go get record %s for zone %s: %s", fqdn, domain, err)
+	}
+
+	err = d.deleteRecordSet(zoneID, recordID)
+	if err != nil {
+		return fmt.Errorf("otc: %v", err)
+	}
+	return nil
+}
+
+// Timeout returns the timeout and interval to use when checking for DNS propagation.
+// Adjusting here to cope with spikes in propagation times.
+func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
+	return d.config.PropagationTimeout, d.config.PollingInterval
+}
+
+// sendRequest send request
+func (d *DNSProvider) sendRequest(method, resource string, payload interface{}) (io.Reader, error) {
+	url := fmt.Sprintf("%s/%s", d.baseURL, resource)
 
 	body, err := json.Marshal(payload)
 	if err != nil {
@@ -84,15 +215,7 @@ func (d *DNSProvider) SendRequest(method, resource string, payload interface{}) 
 		req.Header.Set("X-Auth-Token", d.token)
 	}
 
-	// Workaround for keep alive bug in otc api
-	tr := http.DefaultTransport.(*http.Transport)
-	tr.DisableKeepAlives = true
-
-	client := &http.Client{
-		Timeout:   10 * time.Second,
-		Transport: tr,
-	}
-	resp, err := client.Do(req)
+	resp, err := d.config.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -111,42 +234,11 @@ func (d *DNSProvider) SendRequest(method, resource string, payload interface{}) 
 }
 
 func (d *DNSProvider) loginRequest() error {
-	type nameResponse struct {
-		Name string `json:"name"`
-	}
-
-	type userResponse struct {
-		Name     string       `json:"name"`
-		Password string       `json:"password"`
-		Domain   nameResponse `json:"domain"`
-	}
-
-	type passwordResponse struct {
-		User userResponse `json:"user"`
-	}
-	type identityResponse struct {
-		Methods  []string         `json:"methods"`
-		Password passwordResponse `json:"password"`
-	}
-
-	type scopeResponse struct {
-		Project nameResponse `json:"project"`
-	}
-
-	type authResponse struct {
-		Identity identityResponse `json:"identity"`
-		Scope    scopeResponse    `json:"scope"`
-	}
-
-	type loginResponse struct {
-		Auth authResponse `json:"auth"`
-	}
-
 	userResp := userResponse{
-		Name:     d.userName,
-		Password: d.password,
+		Name:     d.config.UserName,
+		Password: d.config.Password,
 		Domain: nameResponse{
-			Name: d.domainName,
+			Name: d.config.DomainName,
 		},
 	}
 
@@ -160,7 +252,7 @@ func (d *DNSProvider) loginRequest() error {
 			},
 			Scope: scopeResponse{
 				Project: nameResponse{
-					Name: d.projectName,
+					Name: d.config.ProjectName,
 				},
 			},
 		},
@@ -170,13 +262,14 @@ func (d *DNSProvider) loginRequest() error {
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequest(http.MethodPost, d.identityEndpoint, bytes.NewReader(body))
+
+	req, err := http.NewRequest(http.MethodPost, d.config.IdentityEndpoint, bytes.NewReader(body))
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: d.config.HTTPClient.Timeout}
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
@@ -193,16 +286,6 @@ func (d *DNSProvider) loginRequest() error {
 		return fmt.Errorf("unable to get auth token")
 	}
 
-	type endpointResponse struct {
-		Token struct {
-			Catalog []struct {
-				Type      string `json:"type"`
-				Endpoints []struct {
-					URL string `json:"url"`
-				} `json:"endpoints"`
-			} `json:"catalog"`
-		} `json:"token"`
-	}
 	var endpointResp endpointResponse
 
 	err = json.NewDecoder(resp.Body).Decode(&endpointResp)
@@ -213,13 +296,13 @@ func (d *DNSProvider) loginRequest() error {
 	for _, v := range endpointResp.Token.Catalog {
 		if v.Type == "dns" {
 			for _, endpoint := range v.Endpoints {
-				d.otcBaseURL = fmt.Sprintf("%s/v2", endpoint.URL)
+				d.baseURL = fmt.Sprintf("%s/v2", endpoint.URL)
 				continue
 			}
 		}
 	}
 
-	if d.otcBaseURL == "" {
+	if d.baseURL == "" {
 		return fmt.Errorf("unable to get dns endpoint")
 	}
 
@@ -233,16 +316,8 @@ func (d *DNSProvider) login() error {
 }
 
 func (d *DNSProvider) getZoneID(zone string) (string, error) {
-	type zoneItem struct {
-		ID string `json:"id"`
-	}
-
-	type zonesResponse struct {
-		Zones []zoneItem `json:"zones"`
-	}
-
 	resource := fmt.Sprintf("zones?name=%s", zone)
-	resp, err := d.SendRequest(http.MethodGet, resource, nil)
+	resp, err := d.sendRequest(http.MethodGet, resource, nil)
 	if err != nil {
 		return "", err
 	}
@@ -269,16 +344,8 @@ func (d *DNSProvider) getZoneID(zone string) (string, error) {
 }
 
 func (d *DNSProvider) getRecordSetID(zoneID string, fqdn string) (string, error) {
-	type recordSet struct {
-		ID string `json:"id"`
-	}
-
-	type recordSetsResponse struct {
-		RecordSets []recordSet `json:"recordsets"`
-	}
-
 	resource := fmt.Sprintf("zones/%s/recordsets?type=TXT&name=%s", zoneID, fqdn)
-	resp, err := d.SendRequest(http.MethodGet, resource, nil)
+	resp, err := d.sendRequest(http.MethodGet, resource, nil)
 	if err != nil {
 		return "", err
 	}
@@ -307,77 +374,6 @@ func (d *DNSProvider) getRecordSetID(zoneID string, fqdn string) (string, error)
 func (d *DNSProvider) deleteRecordSet(zoneID, recordID string) error {
 	resource := fmt.Sprintf("zones/%s/recordsets/%s", zoneID, recordID)
 
-	_, err := d.SendRequest(http.MethodDelete, resource, nil)
+	_, err := d.sendRequest(http.MethodDelete, resource, nil)
 	return err
-}
-
-// Present creates a TXT record using the specified parameters
-func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
-
-	if ttl < 300 {
-		ttl = 300 // 300 is otc minimum value for ttl
-	}
-
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
-	if err != nil {
-		return err
-	}
-
-	err = d.login()
-	if err != nil {
-		return err
-	}
-
-	zoneID, err := d.getZoneID(authZone)
-	if err != nil {
-		return fmt.Errorf("unable to get zone: %s", err)
-	}
-
-	resource := fmt.Sprintf("zones/%s/recordsets", zoneID)
-
-	type recordset struct {
-		Name        string   `json:"name"`
-		Description string   `json:"description"`
-		Type        string   `json:"type"`
-		TTL         int      `json:"ttl"`
-		Records     []string `json:"records"`
-	}
-
-	r1 := &recordset{
-		Name:        fqdn,
-		Description: "Added TXT record for ACME dns-01 challenge using lego client",
-		Type:        "TXT",
-		TTL:         ttl,
-		Records:     []string{fmt.Sprintf("\"%s\"", value)},
-	}
-	_, err = d.SendRequest(http.MethodPost, resource, r1)
-	return err
-}
-
-// CleanUp removes the TXT record matching the specified parameters
-func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
-
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
-	if err != nil {
-		return err
-	}
-
-	err = d.login()
-	if err != nil {
-		return err
-	}
-
-	zoneID, err := d.getZoneID(authZone)
-	if err != nil {
-		return err
-	}
-
-	recordID, err := d.getRecordSetID(zoneID, fqdn)
-	if err != nil {
-		return fmt.Errorf("unable go get record %s for zone %s: %s", fqdn, domain, err)
-	}
-
-	return d.deleteRecordSet(zoneID, recordID)
 }

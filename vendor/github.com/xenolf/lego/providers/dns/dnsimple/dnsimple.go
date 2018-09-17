@@ -3,17 +3,39 @@
 package dnsimple
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/dnsimple/dnsimple-go/dnsimple"
 	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/platform/config/env"
 )
+
+// Config is used to configure the creation of the DNSProvider
+type Config struct {
+	AccessToken        string
+	BaseURL            string
+	PropagationTimeout time.Duration
+	PollingInterval    time.Duration
+	TTL                int
+}
+
+// NewDefaultConfig returns a default configuration for the DNSProvider
+func NewDefaultConfig() *Config {
+	return &Config{
+		TTL:                env.GetOrDefaultInt("DNSIMPLE_TTL", 120),
+		PropagationTimeout: env.GetOrDefaultSecond("DNSIMPLE_PROPAGATION_TIMEOUT", acme.DefaultPropagationTimeout),
+		PollingInterval:    env.GetOrDefaultSecond("DNSIMPLE_POLLING_INTERVAL", acme.DefaultPollingInterval),
+	}
+}
 
 // DNSProvider is an implementation of the acme.ChallengeProvider interface.
 type DNSProvider struct {
+	config *Config
 	client *dnsimple.Client
 }
 
@@ -22,24 +44,39 @@ type DNSProvider struct {
 //
 // See: https://developer.dnsimple.com/v2/#authentication
 func NewDNSProvider() (*DNSProvider, error) {
-	accessToken := os.Getenv("DNSIMPLE_OAUTH_TOKEN")
-	baseURL := os.Getenv("DNSIMPLE_BASE_URL")
+	config := NewDefaultConfig()
+	config.AccessToken = os.Getenv("DNSIMPLE_OAUTH_TOKEN")
+	config.BaseURL = os.Getenv("DNSIMPLE_BASE_URL")
 
-	return NewDNSProviderCredentials(accessToken, baseURL)
+	return NewDNSProviderConfig(config)
 }
 
-// NewDNSProviderCredentials uses the supplied credentials to return a
-// DNSProvider instance configured for dnsimple.
+// NewDNSProviderCredentials uses the supplied credentials
+// to return a DNSProvider instance configured for DNSimple.
+// Deprecated
 func NewDNSProviderCredentials(accessToken, baseURL string) (*DNSProvider, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("DNSimple OAuth token is missing")
+	config := NewDefaultConfig()
+	config.AccessToken = accessToken
+	config.BaseURL = baseURL
+
+	return NewDNSProviderConfig(config)
+}
+
+// NewDNSProviderConfig return a DNSProvider instance configured for DNSimple.
+func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
+	if config == nil {
+		return nil, errors.New("dnsimple: the configuration of the DNS provider is nil")
 	}
 
-	client := dnsimple.NewClient(dnsimple.NewOauthTokenCredentials(accessToken))
-	client.UserAgent = "lego"
+	if config.AccessToken == "" {
+		return nil, fmt.Errorf("dnsimple: OAuth token is missing")
+	}
 
-	if baseURL != "" {
-		client.BaseURL = baseURL
+	client := dnsimple.NewClient(dnsimple.NewOauthTokenCredentials(config.AccessToken))
+	client.UserAgent = acme.UserAgent
+
+	if config.BaseURL != "" {
+		client.BaseURL = config.BaseURL
 	}
 
 	return &DNSProvider{client: client}, nil
@@ -47,10 +84,9 @@ func NewDNSProviderCredentials(accessToken, baseURL string) (*DNSProvider, error
 
 // Present creates a TXT record to fulfil the dns-01 challenge.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
+	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
 
 	zoneName, err := d.getHostedZone(domain)
-
 	if err != nil {
 		return err
 	}
@@ -60,10 +96,10 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 		return err
 	}
 
-	recordAttributes := d.newTxtRecord(zoneName, fqdn, value, ttl)
-	_, err = d.client.Zones.CreateRecord(accountID, zoneName, *recordAttributes)
+	recordAttributes := d.newTxtRecord(zoneName, fqdn, value, d.config.TTL)
+	_, err = d.client.Zones.CreateRecord(accountID, zoneName, recordAttributes)
 	if err != nil {
-		return fmt.Errorf("DNSimple API call failed: %v", err)
+		return fmt.Errorf("API call failed: %v", err)
 	}
 
 	return nil
@@ -93,6 +129,12 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	return nil
 }
 
+// Timeout returns the timeout and interval to use when checking for DNS propagation.
+// Adjusting here to cope with spikes in propagation times.
+func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
+	return d.config.PropagationTimeout, d.config.PollingInterval
+}
+
 func (d *DNSProvider) getHostedZone(domain string) (string, error) {
 	authZone, err := acme.FindZoneByFqdn(acme.ToFqdn(domain), acme.RecursiveNameservers)
 	if err != nil {
@@ -108,7 +150,7 @@ func (d *DNSProvider) getHostedZone(domain string) (string, error) {
 
 	zones, err := d.client.Zones.ListZones(accountID, &dnsimple.ZoneListOptions{NameLike: zoneName})
 	if err != nil {
-		return "", fmt.Errorf("DNSimple API call failed: %v", err)
+		return "", fmt.Errorf("API call failed: %v", err)
 	}
 
 	var hostedZone dnsimple.Zone
@@ -140,16 +182,16 @@ func (d *DNSProvider) findTxtRecords(domain, fqdn string) ([]dnsimple.ZoneRecord
 
 	result, err := d.client.Zones.ListRecords(accountID, zoneName, &dnsimple.ZoneRecordListOptions{Name: recordName, Type: "TXT", ListOptions: dnsimple.ListOptions{}})
 	if err != nil {
-		return []dnsimple.ZoneRecord{}, fmt.Errorf("DNSimple API call has failed: %v", err)
+		return []dnsimple.ZoneRecord{}, fmt.Errorf("API call has failed: %v", err)
 	}
 
 	return result.Data, nil
 }
 
-func (d *DNSProvider) newTxtRecord(zoneName, fqdn, value string, ttl int) *dnsimple.ZoneRecord {
+func (d *DNSProvider) newTxtRecord(zoneName, fqdn, value string, ttl int) dnsimple.ZoneRecord {
 	name := d.extractRecordName(fqdn, zoneName)
 
-	return &dnsimple.ZoneRecord{
+	return dnsimple.ZoneRecord{
 		Type:    "TXT",
 		Name:    name,
 		Content: value,
@@ -172,7 +214,7 @@ func (d *DNSProvider) getAccountID() (string, error) {
 	}
 
 	if whoamiResponse.Data.Account == nil {
-		return "", fmt.Errorf("DNSimple user tokens are not supported, please use an account token")
+		return "", fmt.Errorf("user tokens are not supported, please use an account token")
 	}
 
 	return strconv.FormatInt(whoamiResponse.Data.Account.ID, 10), nil

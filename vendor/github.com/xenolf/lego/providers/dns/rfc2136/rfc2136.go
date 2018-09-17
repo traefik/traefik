@@ -3,6 +3,7 @@
 package rfc2136
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -11,16 +12,37 @@ import (
 
 	"github.com/miekg/dns"
 	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/platform/config/env"
 )
+
+const defaultTimeout = 60 * time.Second
+
+// Config is used to configure the creation of the DNSProvider
+type Config struct {
+	Nameserver         string
+	TSIGAlgorithm      string
+	TSIGKey            string
+	TSIGSecret         string
+	PropagationTimeout time.Duration
+	PollingInterval    time.Duration
+	TTL                int
+}
+
+// NewDefaultConfig returns a default configuration for the DNSProvider
+func NewDefaultConfig() *Config {
+	return &Config{
+		TSIGAlgorithm: env.GetOrDefaultString("RFC2136_TSIG_ALGORITHM", dns.HmacMD5),
+		TTL:           env.GetOrDefaultInt("RFC2136_TTL", 120),
+		PropagationTimeout: env.GetOrDefaultSecond("RFC2136_PROPAGATION_TIMEOUT",
+			env.GetOrDefaultSecond("RFC2136_TIMEOUT", 60*time.Second)),
+		PollingInterval: env.GetOrDefaultSecond("RFC2136_POLLING_INTERVAL", 2*time.Second),
+	}
+}
 
 // DNSProvider is an implementation of the acme.ChallengeProvider interface that
 // uses dynamic DNS updates (RFC 2136) to create TXT records on a nameserver.
 type DNSProvider struct {
-	nameserver    string
-	tsigAlgorithm string
-	tsigKey       string
-	tsigSecret    string
-	timeout       time.Duration
+	config *Config
 }
 
 // NewDNSProvider returns a DNSProvider instance configured for rfc2136
@@ -33,81 +55,110 @@ type DNSProvider struct {
 // RFC2136_TIMEOUT: DNS propagation timeout in time.ParseDuration format. (60s)
 // To disable TSIG authentication, leave the RFC2136_TSIG* variables unset.
 func NewDNSProvider() (*DNSProvider, error) {
-	nameserver := os.Getenv("RFC2136_NAMESERVER")
-	tsigAlgorithm := os.Getenv("RFC2136_TSIG_ALGORITHM")
-	tsigKey := os.Getenv("RFC2136_TSIG_KEY")
-	tsigSecret := os.Getenv("RFC2136_TSIG_SECRET")
-	timeout := os.Getenv("RFC2136_TIMEOUT")
+	values, err := env.Get("RFC2136_NAMESERVER")
+	if err != nil {
+		return nil, fmt.Errorf("rfc2136: %v", err)
+	}
 
-	return NewDNSProviderCredentials(nameserver, tsigAlgorithm, tsigKey, tsigSecret, timeout)
+	config := NewDefaultConfig()
+	config.Nameserver = values["RFC2136_NAMESERVER"]
+	config.TSIGKey = os.Getenv("RFC2136_TSIG_KEY")
+	config.TSIGSecret = os.Getenv("RFC2136_TSIG_SECRET")
+
+	return NewDNSProviderConfig(config)
 }
 
-// NewDNSProviderCredentials uses the supplied credentials to return a
-// DNSProvider instance configured for rfc2136 dynamic update. To disable TSIG
-// authentication, leave the TSIG parameters as empty strings.
+// NewDNSProviderCredentials uses the supplied credentials
+// to return a DNSProvider instance configured for rfc2136 dynamic update.
+// To disable TSIG authentication, leave the TSIG parameters as empty strings.
 // nameserver must be a network address in the form "host" or "host:port".
-func NewDNSProviderCredentials(nameserver, tsigAlgorithm, tsigKey, tsigSecret, timeout string) (*DNSProvider, error) {
-	if nameserver == "" {
-		return nil, fmt.Errorf("RFC2136 nameserver missing")
-	}
+// Deprecated
+func NewDNSProviderCredentials(nameserver, tsigAlgorithm, tsigKey, tsigSecret, rawTimeout string) (*DNSProvider, error) {
+	config := NewDefaultConfig()
+	config.Nameserver = nameserver
+	config.TSIGAlgorithm = tsigAlgorithm
+	config.TSIGKey = tsigKey
+	config.TSIGSecret = tsigSecret
 
-	// Append the default DNS port if none is specified.
-	if _, _, err := net.SplitHostPort(nameserver); err != nil {
-		if strings.Contains(err.Error(), "missing port") {
-			nameserver = net.JoinHostPort(nameserver, "53")
-		} else {
-			return nil, err
-		}
-	}
-
-	d := &DNSProvider{nameserver: nameserver}
-
-	if tsigAlgorithm == "" {
-		tsigAlgorithm = dns.HmacMD5
-	}
-	d.tsigAlgorithm = tsigAlgorithm
-
-	if len(tsigKey) > 0 && len(tsigSecret) > 0 {
-		d.tsigKey = tsigKey
-		d.tsigSecret = tsigSecret
-	}
-
-	if timeout == "" {
-		d.timeout = 60 * time.Second
-	} else {
-		t, err := time.ParseDuration(timeout)
+	timeout := defaultTimeout
+	if rawTimeout != "" {
+		t, err := time.ParseDuration(rawTimeout)
 		if err != nil {
 			return nil, err
 		} else if t < 0 {
-			return nil, fmt.Errorf("invalid/negative RFC2136_TIMEOUT: %v", timeout)
+			return nil, fmt.Errorf("rfc2136: invalid/negative RFC2136_TIMEOUT: %v", rawTimeout)
 		} else {
-			d.timeout = t
+			timeout = t
+		}
+	}
+	config.PropagationTimeout = timeout
+
+	return NewDNSProviderConfig(config)
+}
+
+// NewDNSProviderConfig return a DNSProvider instance configured for rfc2136.
+func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
+	if config == nil {
+		return nil, errors.New("rfc2136: the configuration of the DNS provider is nil")
+	}
+
+	if config.Nameserver == "" {
+		return nil, fmt.Errorf("rfc2136: nameserver missing")
+	}
+
+	if config.TSIGAlgorithm == "" {
+		config.TSIGAlgorithm = dns.HmacMD5
+	}
+
+	// Append the default DNS port if none is specified.
+	if _, _, err := net.SplitHostPort(config.Nameserver); err != nil {
+		if strings.Contains(err.Error(), "missing port") {
+			config.Nameserver = net.JoinHostPort(config.Nameserver, "53")
+		} else {
+			return nil, fmt.Errorf("rfc2136: %v", err)
 		}
 	}
 
-	return d, nil
+	if len(config.TSIGKey) == 0 && len(config.TSIGSecret) > 0 ||
+		len(config.TSIGKey) > 0 && len(config.TSIGSecret) == 0 {
+		config.TSIGKey = ""
+		config.TSIGSecret = ""
+	}
+
+	return &DNSProvider{config: config}, nil
 }
 
-// Timeout Returns the timeout configured with RFC2136_TIMEOUT, or 60s.
+// Timeout returns the timeout and interval to use when checking for DNS propagation.
+// Adjusting here to cope with spikes in propagation times.
 func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
-	return d.timeout, 2 * time.Second
+	return d.config.PropagationTimeout, d.config.PollingInterval
 }
 
 // Present creates a TXT record using the specified parameters
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
-	return d.changeRecord("INSERT", fqdn, value, ttl)
+	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+
+	err := d.changeRecord("INSERT", fqdn, value, d.config.TTL)
+	if err != nil {
+		return fmt.Errorf("rfc2136: %v", err)
+	}
+	return nil
 }
 
 // CleanUp removes the TXT record matching the specified parameters
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
-	return d.changeRecord("REMOVE", fqdn, value, ttl)
+	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+
+	err := d.changeRecord("REMOVE", fqdn, value, d.config.TTL)
+	if err != nil {
+		return fmt.Errorf("rfc2136: %v", err)
+	}
+	return nil
 }
 
 func (d *DNSProvider) changeRecord(action, fqdn, value string, ttl int) error {
 	// Find the zone for the given fqdn
-	zone, err := acme.FindZoneByFqdn(fqdn, []string{d.nameserver})
+	zone, err := acme.FindZoneByFqdn(fqdn, []string{d.config.Nameserver})
 	if err != nil {
 		return err
 	}
@@ -135,14 +186,15 @@ func (d *DNSProvider) changeRecord(action, fqdn, value string, ttl int) error {
 	// Setup client
 	c := new(dns.Client)
 	c.SingleInflight = true
+
 	// TSIG authentication / msg signing
-	if len(d.tsigKey) > 0 && len(d.tsigSecret) > 0 {
-		m.SetTsig(dns.Fqdn(d.tsigKey), d.tsigAlgorithm, 300, time.Now().Unix())
-		c.TsigSecret = map[string]string{dns.Fqdn(d.tsigKey): d.tsigSecret}
+	if len(d.config.TSIGKey) > 0 && len(d.config.TSIGSecret) > 0 {
+		m.SetTsig(dns.Fqdn(d.config.TSIGKey), d.config.TSIGAlgorithm, 300, time.Now().Unix())
+		c.TsigSecret = map[string]string{dns.Fqdn(d.config.TSIGKey): d.config.TSIGSecret}
 	}
 
 	// Send the query
-	reply, _, err := c.Exchange(m, d.nameserver)
+	reply, _, err := c.Exchange(m, d.config.Nameserver)
 	if err != nil {
 		return fmt.Errorf("DNS update failed: %v", err)
 	}
