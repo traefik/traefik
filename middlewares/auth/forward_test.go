@@ -7,14 +7,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/vulcand/oxy/forward"
-
 	"github.com/containous/traefik/middlewares/tracing"
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/negroni"
+	"github.com/vulcand/oxy/forward"
 )
 
 func TestForwardAuthFail(t *testing.T) {
@@ -124,7 +123,7 @@ func TestForwardAuthRedirect(t *testing.T) {
 	assert.NotEmpty(t, string(body), "there should be something in the body")
 }
 
-func TestForwardAuthRemoveHopHyHopHeaders(t *testing.T) {
+func TestForwardAuthRemoveHopByHopHeaders(t *testing.T) {
 	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		headers := w.Header()
 		for _, header := range forward.HopHeaders {
