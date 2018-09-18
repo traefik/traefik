@@ -371,7 +371,9 @@ deploy:
 
 Something more tricky using `regex`.
 
-In this case a slash is added to `siteexample.io/portainer` and redirect to `siteexample.io/portainer/`. For more details: https://github.com/containous/traefik/issues/563 
+In this case a slash is added to `siteexample.io/portainer` and redirect to `siteexample.io/portainer/`. For more details: https://github.com/containous/traefik/issues/563
+
+The double sign `$$` are variables managed by the docker compose file ([documentation](https://docs.docker.com/compose/compose-file/#variable-substitution)). 
 
 ```
 portainer:
