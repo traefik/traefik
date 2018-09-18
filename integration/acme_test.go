@@ -287,6 +287,22 @@ func (s *AcmeSuite) TestHTTP01OnDemandStaticCertificatesWithWildcard(c *check.C)
 	s.retrieveAcmeCertificate(c, testCase)
 }
 
+func (s *AcmeSuite) TestHTTP01OnDemandStaticCertificatesWithWildcardMultipleEntrypoints(c *check.C) {
+	testCase := acmeTestCase{
+		traefikConfFilePath: "fixtures/acme/acme_tls_multiple_entrypoints.toml",
+		template: templateModel{
+			Acme: acme.Configuration{
+				HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "http"},
+				OnDemand:      true,
+			},
+		},
+		expectedCommonName: acmeDomain,
+		expectedAlgorithm:  x509.RSA,
+	}
+
+	s.retrieveAcmeCertificate(c, testCase)
+}
+
 func (s *AcmeSuite) TestHTTP01OnDemandDynamicCertificatesWithWildcard(c *check.C) {
 	testCase := acmeTestCase{
 		traefikConfFilePath: "fixtures/acme/acme_tls_dynamic.toml",
@@ -379,11 +395,11 @@ func (s *AcmeSuite) TestTLSALPN01DomainsWithProvidedWildcardDomainAtStart(c *che
 			Acme: acme.Configuration{
 				TLSChallenge: &acme.TLSChallenge{},
 				Domains: types.Domains{types.Domain{
-					Main: "traefik.acme.wtf",
+					Main: acmeDomain,
 				}},
 			},
 		},
-		expectedCommonName: "traefik.acme.wtf",
+		expectedCommonName: wildcardDomain,
 		expectedAlgorithm:  x509.RSA,
 	}
 
