@@ -283,8 +283,12 @@ func (gc *GlobalConfiguration) InitACMEProvider() *acmeprovider.Provider {
 				EntryPoint:    gc.ACME.EntryPoint,
 			}
 
-			store := acmeprovider.NewLocalStore(provider.Storage)
-			provider.Store = store
+			if gc.ACME.Kubernetes != nil {
+				provider.Store = acmeprovider.NewKubernetesStore(gc.ACME.Kubernetes.Namespace)
+			} else {
+				provider.Store = acmeprovider.NewLocalStore(provider.Storage)
+			}
+
 			acme.ConvertToNewFormat(provider.Storage)
 			gc.ACME = nil
 			return provider
