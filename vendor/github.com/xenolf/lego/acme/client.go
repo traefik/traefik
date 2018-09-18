@@ -41,6 +41,17 @@ type solver interface {
 	Solve(challenge challenge, domain string) error
 }
 
+// Interface for challenges like dns, where we can set a record in advance for ALL challenges.
+// This saves quite a bit of time vs creating the records and solving them serially.
+type presolver interface {
+	PreSolve(challenge challenge, domain string) error
+}
+
+// Interface for challenges like dns, where we can solve all the challenges before to delete them.
+type cleanup interface {
+	CleanUp(challenge challenge, domain string) error
+}
+
 type validateFunc func(j *jws, domain, uri string, chlng challenge) error
 
 // Client is the user-friendy way to ACME
@@ -374,8 +385,10 @@ DNSNames:
 		}
 	}
 
-	// Add the CSR to the certificate so that it can be used for renewals.
-	cert.CSR = pemEncode(&csr)
+	if cert != nil {
+		// Add the CSR to the certificate so that it can be used for renewals.
+		cert.CSR = pemEncode(&csr)
+	}
 
 	// do not return an empty failures map, because
 	// it would still be a non-nil error value
@@ -548,29 +561,75 @@ func (c *Client) createOrderForIdentifiers(domains []string) (orderResource, err
 	return orderRes, nil
 }
 
+// an authz with the solver we have chosen and the index of the challenge associated with it
+type selectedAuthSolver struct {
+	authz          authorization
+	challengeIndex int
+	solver         solver
+}
+
 // Looks through the challenge combinations to find a solvable match.
 // Then solves the challenges in series and returns.
 func (c *Client) solveChallengeForAuthz(authorizations []authorization) error {
 	failures := make(ObtainError)
 
-	// loop through the resources, basically through the domains.
+	authSolvers := []*selectedAuthSolver{}
+
+	// loop through the resources, basically through the domains. First pass just selects a solver for each authz.
 	for _, authz := range authorizations {
 		if authz.Status == "valid" {
 			// Boulder might recycle recent validated authz (see issue #267)
 			log.Infof("[%s] acme: Authorization already valid; skipping challenge", authz.Identifier.Value)
 			continue
 		}
-
-		// no solvers - no solving
 		if i, solver := c.chooseSolver(authz, authz.Identifier.Value); solver != nil {
-			err := solver.Solve(authz.Challenges[i], authz.Identifier.Value)
-			if err != nil {
-				//c.disableAuthz(authz.Identifier)
+			authSolvers = append(authSolvers, &selectedAuthSolver{
+				authz:          authz,
+				challengeIndex: i,
+				solver:         solver,
+			})
+		} else {
+			failures[authz.Identifier.Value] = fmt.Errorf("[%s] acme: Could not determine solvers", authz.Identifier.Value)
+		}
+	}
+
+	// for all valid presolvers, first submit the challenges so they have max time to propigate
+	for _, item := range authSolvers {
+		authz := item.authz
+		i := item.challengeIndex
+		if presolver, ok := item.solver.(presolver); ok {
+			if err := presolver.PreSolve(authz.Challenges[i], authz.Identifier.Value); err != nil {
 				failures[authz.Identifier.Value] = err
 			}
-		} else {
-			//c.disableAuthz(authz)
-			failures[authz.Identifier.Value] = fmt.Errorf("[%s] acme: Could not determine solvers", authz.Identifier.Value)
+		}
+	}
+
+	defer func() {
+		// clean all created TXT records
+		for _, item := range authSolvers {
+			if cleanup, ok := item.solver.(cleanup); ok {
+				if failures[item.authz.Identifier.Value] != nil {
+					// already failed in previous loop
+					continue
+				}
+				err := cleanup.CleanUp(item.authz.Challenges[item.challengeIndex], item.authz.Identifier.Value)
+				if err != nil {
+					log.Warnf("Error cleaning up %s: %v ", item.authz.Identifier.Value, err)
+				}
+			}
+		}
+	}()
+
+	// finally solve all challenges for real
+	for _, item := range authSolvers {
+		authz := item.authz
+		i := item.challengeIndex
+		if failures[authz.Identifier.Value] != nil {
+			// already failed in previous loop
+			continue
+		}
+		if err := item.solver.Solve(authz.Challenges[i], authz.Identifier.Value); err != nil {
+			failures[authz.Identifier.Value] = err
 		}
 	}
 

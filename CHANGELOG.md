@@ -1,5 +1,19 @@
 # Change Log
 
+## [v1.7.0-rc5](https://github.com/containous/traefik/tree/v1.7.0-rc5) (2018-09-18)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.0-rc4...v1.7.0-rc5)
+
+**Bug fixes:**
+- **[acme]** Ensure only certificates from ACME enabled entrypoint are used ([#3880](https://github.com/containous/traefik/pull/3880) by [dtomcej](https://github.com/dtomcej))
+- **[acme]** Fix LEGO update ([#3895](https://github.com/containous/traefik/pull/3895) by [ldez](https://github.com/ldez))
+- **[acme]** Bump LEGO version ([#3888](https://github.com/containous/traefik/pull/3888) by [ldez](https://github.com/ldez))
+- **[authentication,middleware]** Remove hop-by-hop headers from forward auth response ([#3900](https://github.com/containous/traefik/pull/3900) by [stffabi](https://github.com/stffabi))
+- **[kv]** Add missing quotes around backendName in kv template ([#3885](https://github.com/containous/traefik/pull/3885) by [NatMarchand](https://github.com/NatMarchand))
+- **[logs]** Add interface to Træfik logger ([#3889](https://github.com/containous/traefik/pull/3889) by [nmengin](https://github.com/nmengin))
+- **[middleware,tracing]** Fix tracing duplicated headers ([#3878](https://github.com/containous/traefik/pull/3878) by [mmatur](https://github.com/mmatur))
+- **[middleware]** Fix error pages ([#3894](https://github.com/containous/traefik/pull/3894) by [Juliens](https://github.com/Juliens))
+- **[server]** Avoid panic during stop ([#3898](https://github.com/containous/traefik/pull/3898) by [nmengin](https://github.com/nmengin))
+
 ## [v1.7.0-rc4](https://github.com/containous/traefik/tree/v1.7.0-rc4) (2018-09-07)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.0-rc3...v1.7.0-rc4)
 

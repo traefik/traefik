@@ -15,9 +15,9 @@ import (
 )
 
 const (
-	defaultEndpoint = "https://dns.api.cloud.nifty.com"
-	apiVersion      = "2012-12-12N2013-12-16"
-	xmlNs           = "https://route53.amazonaws.com/doc/2012-12-12/"
+	defaultBaseURL = "https://dns.api.cloud.nifty.com"
+	apiVersion     = "2012-12-12N2013-12-16"
+	xmlNs          = "https://route53.amazonaws.com/doc/2012-12-12/"
 )
 
 // ChangeResourceRecordSetsRequest is a complex type that contains change information for the resource record set.
@@ -88,31 +88,27 @@ type ChangeInfo struct {
 	SubmittedAt string `xml:"SubmittedAt"`
 }
 
-func newClient(httpClient *http.Client, accessKey string, secretKey string, endpoint string) *Client {
-	client := http.DefaultClient
-	if httpClient != nil {
-		client = httpClient
-	}
-
+// NewClient Creates a new client of NIFCLOUD DNS
+func NewClient(accessKey string, secretKey string) *Client {
 	return &Client{
-		accessKey: accessKey,
-		secretKey: secretKey,
-		endpoint:  endpoint,
-		client:    client,
+		accessKey:  accessKey,
+		secretKey:  secretKey,
+		BaseURL:    defaultBaseURL,
+		HTTPClient: &http.Client{},
 	}
 }
 
 // Client client of NIFCLOUD DNS
 type Client struct {
-	accessKey string
-	secretKey string
-	endpoint  string
-	client    *http.Client
+	accessKey  string
+	secretKey  string
+	BaseURL    string
+	HTTPClient *http.Client
 }
 
 // ChangeResourceRecordSets Call ChangeResourceRecordSets API and return response.
 func (c *Client) ChangeResourceRecordSets(hostedZoneID string, input ChangeResourceRecordSetsRequest) (*ChangeResourceRecordSetsResponse, error) {
-	requestURL := fmt.Sprintf("%s/%s/hostedzone/%s/rrset", c.endpoint, apiVersion, hostedZoneID)
+	requestURL := fmt.Sprintf("%s/%s/hostedzone/%s/rrset", c.BaseURL, apiVersion, hostedZoneID)
 
 	body := &bytes.Buffer{}
 	body.Write([]byte(xml.Header))
@@ -133,7 +129,7 @@ func (c *Client) ChangeResourceRecordSets(hostedZoneID string, input ChangeResou
 		return nil, fmt.Errorf("an error occurred during the creation of the signature: %v", err)
 	}
 
-	res, err := c.client.Do(req)
+	res, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +160,7 @@ func (c *Client) ChangeResourceRecordSets(hostedZoneID string, input ChangeResou
 
 // GetChange Call GetChange API and return response.
 func (c *Client) GetChange(statusID string) (*GetChangeResponse, error) {
-	requestURL := fmt.Sprintf("%s/%s/change/%s", c.endpoint, apiVersion, statusID)
+	requestURL := fmt.Sprintf("%s/%s/change/%s", c.BaseURL, apiVersion, statusID)
 
 	req, err := http.NewRequest(http.MethodGet, requestURL, nil)
 	if err != nil {
@@ -176,7 +172,7 @@ func (c *Client) GetChange(statusID string) (*GetChangeResponse, error) {
 		return nil, fmt.Errorf("an error occurred during the creation of the signature: %v", err)
 	}
 
-	res, err := c.client.Do(req)
+	res, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

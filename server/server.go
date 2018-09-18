@@ -136,29 +136,35 @@ type serverEntryPoint struct {
 
 func (s serverEntryPoint) Shutdown(ctx context.Context) {
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := s.httpServer.Shutdown(ctx); err != nil {
-			if ctx.Err() == context.DeadlineExceeded {
-				log.Debugf("Wait server shutdown is over due to: %s", err)
-				err = s.httpServer.Close()
-				if err != nil {
-					log.Error(err)
+	if s.httpServer != nil {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := s.httpServer.Shutdown(ctx); err != nil {
+				if ctx.Err() == context.DeadlineExceeded {
+					log.Debugf("Wait server shutdown is over due to: %s", err)
+					err = s.httpServer.Close()
+					if err != nil {
+						log.Error(err)
+					}
 				}
 			}
-		}
-	}()
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := s.hijackConnectionTracker.Shutdown(ctx); err != nil {
-			if ctx.Err() == context.DeadlineExceeded {
-				log.Debugf("Wait hijack connection is over due to: %s", err)
-				s.hijackConnectionTracker.Close()
+		}()
+	}
+
+	if s.hijackConnectionTracker != nil {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := s.hijackConnectionTracker.Shutdown(ctx); err != nil {
+				if ctx.Err() == context.DeadlineExceeded {
+					log.Debugf("Wait hijack connection is over due to: %s", err)
+					s.hijackConnectionTracker.Close()
+				}
 			}
-		}
-	}()
+		}()
+	}
+
 	wg.Wait()
 }
 

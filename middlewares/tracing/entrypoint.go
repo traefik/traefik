@@ -24,7 +24,7 @@ func (t *Tracing) NewEntryPoint(name string) negroni.Handler {
 func (e *entryPointMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	opNameFunc := generateEntryPointSpanName
 
-	ctx, _ := e.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
+	ctx, _ := e.Extract(opentracing.HTTPHeaders, HTTPHeadersCarrier(r.Header))
 	span := e.StartSpan(opNameFunc(r, e.entryPoint, e.SpanNameLimit), ext.RPCServerOption(ctx))
 	ext.Component.Set(span, e.ServiceName)
 	LogRequest(span, r)

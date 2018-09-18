@@ -169,6 +169,23 @@
   version = "v0.6.0"
 
 [[projects]]
+  name = "github.com/aliyun/alibaba-cloud-sdk-go"
+  packages = [
+    "sdk",
+    "sdk/auth",
+    "sdk/auth/credentials",
+    "sdk/auth/signers",
+    "sdk/endpoints",
+    "sdk/errors",
+    "sdk/requests",
+    "sdk/responses",
+    "sdk/utils",
+    "services/alidns"
+  ]
+  revision = "cad214d7d71fba7883fcf3b7e550ba782c15b400"
+  version = "1.27.7"
+
+[[projects]]
   name = "github.com/aokoli/goutils"
   packages = ["."]
   revision = "3391d3790d23d03408670993e957e8f408993c34"
@@ -529,8 +546,8 @@
 [[projects]]
   name = "github.com/exoscale/egoscale"
   packages = ["."]
-  revision = "e4fedc381fbddb7fef4d7060388a726c6de37c88"
-  version = "v0.9.7"
+  revision = "d8dfca6802ad5c1a5300e52fa68067e791322035"
+  version = "v0.11.4"
 
 [[projects]]
   name = "github.com/fatih/color"
@@ -752,6 +769,15 @@
   name = "github.com/huandu/xstrings"
   packages = ["."]
   revision = "3959339b333561bf62a38b424fd41517c2c90f40"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/iij/doapi"
+  packages = [
+    ".",
+    "protocol"
+  ]
+  revision = "8803795a9b7b938fa88ddbd63a77893beee14cd8"
 
 [[projects]]
   name = "github.com/imdario/mergo"
@@ -1131,8 +1157,8 @@
 [[projects]]
   name = "github.com/satori/go.uuid"
   packages = ["."]
-  revision = "879c5887cd475cd7864858769793b2ceb0d44feb"
-  version = "v1.1.0"
+  revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
+  version = "v1.2.0"
 
 [[projects]]
   name = "github.com/sirupsen/logrus"
@@ -1297,6 +1323,7 @@
     "platform/config/env",
     "providers/dns",
     "providers/dns/acmedns",
+    "providers/dns/alidns",
     "providers/dns/auroradns",
     "providers/dns/azure",
     "providers/dns/bluecat",
@@ -1316,10 +1343,13 @@
     "providers/dns/gcloud",
     "providers/dns/glesys",
     "providers/dns/godaddy",
+    "providers/dns/hostingde",
+    "providers/dns/iij",
     "providers/dns/lightsail",
     "providers/dns/linode",
     "providers/dns/namecheap",
     "providers/dns/namedotcom",
+    "providers/dns/netcup",
     "providers/dns/nifcloud",
     "providers/dns/ns1",
     "providers/dns/otc",
@@ -1332,7 +1362,7 @@
     "providers/dns/vegadns",
     "providers/dns/vultr"
   ]
-  revision = "8b6701514cc0a6285a327908f3f9ce05bcacbffd"
+  revision = "83e2300e01226dcb006946873ca5434291fb16ef"
 
 [[projects]]
   branch = "master"

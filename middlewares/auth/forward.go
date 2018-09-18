@@ -73,6 +73,7 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 		log.Debugf("Remote error %s. StatusCode: %d", config.Address, forwardResponse.StatusCode)
 
 		utils.CopyHeaders(w.Header(), forwardResponse.Header)
+		utils.RemoveHeaders(w.Header(), forward.HopHeaders...)
 
 		// Grab the location header, if any.
 		redirectURL, err := forwardResponse.Location()

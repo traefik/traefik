@@ -704,34 +704,31 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithTlsConfigurationDeletion(c
 
 // modifyCertificateConfFileContent replaces the content of a HTTPS configuration file.
 func modifyCertificateConfFileContent(c *check.C, certFileName, confFileName, entryPoint string) {
-	f, err := os.OpenFile("./"+confFileName, os.O_WRONLY, os.ModeExclusive)
+	file, err := os.OpenFile("./"+confFileName, os.O_WRONLY, os.ModeExclusive)
 	c.Assert(err, checker.IsNil)
 	defer func() {
-		f.Close()
+		file.Close()
 	}()
-
-	err = f.Truncate(0)
+	err = file.Truncate(0)
 	c.Assert(err, checker.IsNil)
 
 	// If certificate file is not provided, just truncate the configuration file
 	if len(certFileName) > 0 {
 		tlsConf := types.Configuration{
-			TLS: []*traefiktls.Configuration{
-				{
-					Certificate: &traefiktls.Certificate{
-						CertFile: traefiktls.FileOrContent("fixtures/https/" + certFileName + ".cert"),
-						KeyFile:  traefiktls.FileOrContent("fixtures/https/" + certFileName + ".key"),
-					},
-					EntryPoints: []string{entryPoint},
+			TLS: []*traefiktls.Configuration{{
+				Certificate: &traefiktls.Certificate{
+					CertFile: traefiktls.FileOrContent("fixtures/https/" + certFileName + ".cert"),
+					KeyFile:  traefiktls.FileOrContent("fixtures/https/" + certFileName + ".key"),
 				},
-			},
+				EntryPoints: []string{entryPoint},
+			}},
 		}
+
 		var confBuffer bytes.Buffer
-		e := toml.NewEncoder(&confBuffer)
-		err := e.Encode(tlsConf)
+		err := toml.NewEncoder(&confBuffer).Encode(tlsConf)
 		c.Assert(err, checker.IsNil)
 
-		_, err = f.Write(confBuffer.Bytes())
+		_, err = file.Write(confBuffer.Bytes())
 		c.Assert(err, checker.IsNil)
 	}
 }

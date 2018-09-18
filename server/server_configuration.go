@@ -184,6 +184,11 @@ func (s *Server) loadFrontendConfig(
 				return nil, err
 			}
 
+			// Handler used by error pages
+			if backendsHandlers[entryPointName+providerName+frontend.Backend] == nil {
+				backendsHandlers[entryPointName+providerName+frontend.Backend] = lb
+			}
+
 			if healthCheckConfig != nil {
 				backendsHealthCheck[entryPointName+providerName+frontendHash] = healthCheckConfig
 			}

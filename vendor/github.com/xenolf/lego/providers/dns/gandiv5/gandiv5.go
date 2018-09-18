@@ -5,6 +5,7 @@ package gandiv5
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -18,15 +19,15 @@ import (
 
 // Gandi API reference:       http://doc.livedns.gandi.net/
 
-var (
-	// endpoint is the Gandi API endpoint used by Present and
-	// CleanUp. It is overridden during tests.
-	endpoint = "https://dns.api.gandi.net/api/v5"
-
-	// findZoneByFqdn determines the DNS zone of an fqdn. It is overridden
-	// during tests.
-	findZoneByFqdn = acme.FindZoneByFqdn
+const (
+	// defaultBaseURL endpoint is the Gandi API endpoint used by Present and CleanUp.
+	defaultBaseURL = "https://dns.api.gandi.net/api/v5"
+	minTTL         = 300
 )
+
+// findZoneByFqdn determines the DNS zone of an fqdn.
+// It is overridden during tests.
+var findZoneByFqdn = acme.FindZoneByFqdn
 
 // inProgressInfo contains information about an in-progress challenge
 type inProgressInfo struct {
@@ -34,14 +35,35 @@ type inProgressInfo struct {
 	authZone  string
 }
 
+// Config is used to configure the creation of the DNSProvider
+type Config struct {
+	BaseURL            string
+	APIKey             string
+	PropagationTimeout time.Duration
+	PollingInterval    time.Duration
+	TTL                int
+	HTTPClient         *http.Client
+}
+
+// NewDefaultConfig returns a default configuration for the DNSProvider
+func NewDefaultConfig() *Config {
+	return &Config{
+		TTL:                env.GetOrDefaultInt("GANDIV5_TTL", minTTL),
+		PropagationTimeout: env.GetOrDefaultSecond("GANDIV5_PROPAGATION_TIMEOUT", 20*time.Minute),
+		PollingInterval:    env.GetOrDefaultSecond("GANDIV5_POLLING_INTERVAL", 20*time.Second),
+		HTTPClient: &http.Client{
+			Timeout: env.GetOrDefaultSecond("GANDIV5_HTTP_TIMEOUT", 10*time.Second),
+		},
+	}
+}
+
 // DNSProvider is an implementation of the
 // acme.ChallengeProviderTimeout interface that uses Gandi's LiveDNS
 // API to manage TXT records for a domain.
 type DNSProvider struct {
-	apiKey          string
+	config          *Config
 	inProgressFQDNs map[string]inProgressInfo
 	inProgressMu    sync.Mutex
-	client          *http.Client
 }
 
 // NewDNSProvider returns a DNSProvider instance configured for Gandi.
@@ -49,43 +71,63 @@ type DNSProvider struct {
 func NewDNSProvider() (*DNSProvider, error) {
 	values, err := env.Get("GANDIV5_API_KEY")
 	if err != nil {
-		return nil, fmt.Errorf("GandiDNS: %v", err)
+		return nil, fmt.Errorf("gandi: %v", err)
 	}
 
-	return NewDNSProviderCredentials(values["GANDIV5_API_KEY"])
+	config := NewDefaultConfig()
+	config.APIKey = values["GANDIV5_API_KEY"]
+
+	return NewDNSProviderConfig(config)
 }
 
-// NewDNSProviderCredentials uses the supplied credentials to return a
-// DNSProvider instance configured for Gandi.
+// NewDNSProviderCredentials uses the supplied credentials
+// to return a DNSProvider instance configured for Gandi.
+// Deprecated
 func NewDNSProviderCredentials(apiKey string) (*DNSProvider, error) {
-	if apiKey == "" {
-		return nil, fmt.Errorf("Gandi DNS: No Gandi API Key given")
+	config := NewDefaultConfig()
+	config.APIKey = apiKey
+
+	return NewDNSProviderConfig(config)
+}
+
+// NewDNSProviderConfig return a DNSProvider instance configured for Gandi.
+func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
+	if config == nil {
+		return nil, errors.New("gandiv5: the configuration of the DNS provider is nil")
 	}
+
+	if config.APIKey == "" {
+		return nil, fmt.Errorf("gandiv5: no API Key given")
+	}
+
+	if config.BaseURL == "" {
+		config.BaseURL = defaultBaseURL
+	}
+
 	return &DNSProvider{
-		apiKey:          apiKey,
+		config:          config,
 		inProgressFQDNs: make(map[string]inProgressInfo),
-		client:          &http.Client{Timeout: 10 * time.Second},
 	}, nil
 }
 
 // Present creates a TXT record using the specified parameters.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
-	if ttl < 300 {
-		ttl = 300 // 300 is gandi minimum value for ttl
+	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+
+	if d.config.TTL < minTTL {
+		d.config.TTL = minTTL // 300 is gandi minimum value for ttl
 	}
 
 	// find authZone
 	authZone, err := findZoneByFqdn(fqdn, acme.RecursiveNameservers)
 	if err != nil {
-		return fmt.Errorf("Gandi DNS: findZoneByFqdn failure: %v", err)
+		return fmt.Errorf("gandiv5: findZoneByFqdn failure: %v", err)
 	}
 
 	// determine name of TXT record
 	if !strings.HasSuffix(
 		strings.ToLower(fqdn), strings.ToLower("."+authZone)) {
-		return fmt.Errorf(
-			"Gandi DNS: unexpected authZone %s for fqdn %s", authZone, fqdn)
+		return fmt.Errorf("gandiv5: unexpected authZone %s for fqdn %s", authZone, fqdn)
 	}
 	name := fqdn[:len(fqdn)-len("."+authZone)]
 
@@ -95,7 +137,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	defer d.inProgressMu.Unlock()
 
 	// add TXT record into authZone
-	err = d.addTXTRecord(acme.UnFqdn(authZone), name, value, ttl)
+	err = d.addTXTRecord(acme.UnFqdn(authZone), name, value, d.config.TTL)
 	if err != nil {
 		return err
 	}
@@ -125,37 +167,47 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	delete(d.inProgressFQDNs, fqdn)
 
 	// delete TXT record from authZone
-	return d.deleteTXTRecord(acme.UnFqdn(authZone), fieldName)
+	err := d.deleteTXTRecord(acme.UnFqdn(authZone), fieldName)
+	if err != nil {
+		return fmt.Errorf("gandiv5: %v", err)
+	}
+	return nil
 }
 
 // Timeout returns the values (20*time.Minute, 20*time.Second) which
 // are used by the acme package as timeout and check interval values
 // when checking for DNS record propagation with Gandi.
 func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
-	return 20 * time.Minute, 20 * time.Second
+	return d.config.PropagationTimeout, d.config.PollingInterval
 }
 
-// types for JSON method calls and parameters
+// functions to perform API actions
 
-type addFieldRequest struct {
-	RRSetTTL    int      `json:"rrset_ttl"`
-	RRSetValues []string `json:"rrset_values"`
+func (d *DNSProvider) addTXTRecord(domain string, name string, value string, ttl int) error {
+	target := fmt.Sprintf("domains/%s/records/%s/TXT", domain, name)
+	response, err := d.sendRequest(http.MethodPut, target, addFieldRequest{
+		RRSetTTL:    ttl,
+		RRSetValues: []string{value},
+	})
+	if response != nil {
+		log.Infof("gandiv5: %s", response.Message)
+	}
+	return err
 }
 
-type deleteFieldRequest struct {
-	Delete bool `json:"delete"`
+func (d *DNSProvider) deleteTXTRecord(domain string, name string) error {
+	target := fmt.Sprintf("domains/%s/records/%s/TXT", domain, name)
+	response, err := d.sendRequest(http.MethodDelete, target, deleteFieldRequest{
+		Delete: true,
+	})
+	if response != nil && response.Message == "" {
+		log.Infof("gandiv5: Zone record deleted")
+	}
+	return err
 }
-
-// types for JSON responses
-
-type responseStruct struct {
-	Message string `json:"message"`
-}
-
-// POSTing/Marshalling/Unmarshalling
 
 func (d *DNSProvider) sendRequest(method string, resource string, payload interface{}) (*responseStruct, error) {
-	url := fmt.Sprintf("%s/%s", endpoint, resource)
+	url := fmt.Sprintf("%s/%s", d.config.BaseURL, resource)
 
 	body, err := json.Marshal(payload)
 	if err != nil {
@@ -168,19 +220,20 @@ func (d *DNSProvider) sendRequest(method string, resource string, payload interf
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	if len(d.apiKey) > 0 {
-		req.Header.Set("X-Api-Key", d.apiKey)
+	if len(d.config.APIKey) > 0 {
+		req.Header.Set("X-Api-Key", d.config.APIKey)
 	}
 
-	resp, err := d.client.Do(req)
+	resp, err := d.config.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("Gandi DNS: request failed with HTTP status code %d", resp.StatusCode)
+		return nil, fmt.Errorf("request failed with HTTP status code %d", resp.StatusCode)
 	}
+
 	var response responseStruct
 	err = json.NewDecoder(resp.Body).Decode(&response)
 	if err != nil && method != http.MethodDelete {
@@ -188,29 +241,4 @@ func (d *DNSProvider) sendRequest(method string, resource string, payload interf
 	}
 
 	return &response, nil
-}
-
-// functions to perform API actions
-
-func (d *DNSProvider) addTXTRecord(domain string, name string, value string, ttl int) error {
-	target := fmt.Sprintf("domains/%s/records/%s/TXT", domain, name)
-	response, err := d.sendRequest(http.MethodPut, target, addFieldRequest{
-		RRSetTTL:    ttl,
-		RRSetValues: []string{value},
-	})
-	if response != nil {
-		log.Infof("Gandi DNS: %s", response.Message)
-	}
-	return err
-}
-
-func (d *DNSProvider) deleteTXTRecord(domain string, name string) error {
-	target := fmt.Sprintf("domains/%s/records/%s/TXT", domain, name)
-	response, err := d.sendRequest(http.MethodDelete, target, deleteFieldRequest{
-		Delete: true,
-	})
-	if response != nil && response.Message == "" {
-		log.Infof("Gandi DNS: Zone record deleted")
-	}
-	return err
 }

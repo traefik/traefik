@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/platform/config/env"
 )
 
 // Config is used to configure the creation of the DNSProvider
@@ -30,10 +31,10 @@ type Config struct {
 // NewDefaultConfig returns a default configuration for the DNSProvider
 func NewDefaultConfig() *Config {
 	return &Config{
-		MaxRetries:         5,
-		TTL:                10,
-		PropagationTimeout: time.Minute * 2,
-		PollingInterval:    time.Second * 4,
+		MaxRetries:         env.GetOrDefaultInt("AWS_MAX_RETRIES", 5),
+		TTL:                env.GetOrDefaultInt("AWS_TTL", 10),
+		PropagationTimeout: env.GetOrDefaultSecond("AWS_PROPAGATION_TIMEOUT", 2*time.Minute),
+		PollingInterval:    env.GetOrDefaultSecond("AWS_POLLING_INTERVAL", 4*time.Second),
 		HostedZoneID:       os.Getenv("AWS_HOSTED_ZONE_ID"),
 	}
 }
@@ -88,20 +89,20 @@ func NewDNSProvider() (*DNSProvider, error) {
 // DNSProvider instance
 func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 	if config == nil {
-		return nil, errors.New("the configuration of the Route53 DNS provider is nil")
+		return nil, errors.New("route53: the configuration of the Route53 DNS provider is nil")
 	}
 
 	r := customRetryer{}
 	r.NumMaxRetries = config.MaxRetries
 	sessionCfg := request.WithRetryer(aws.NewConfig(), r)
-	session, err := session.NewSessionWithOptions(session.Options{Config: *sessionCfg})
+	sess, err := session.NewSessionWithOptions(session.Options{Config: *sessionCfg})
 	if err != nil {
 		return nil, err
 	}
-	client := route53.New(session)
+	cl := route53.New(sess)
 
 	return &DNSProvider{
-		client: client,
+		client: cl,
 		config: config,
 	}, nil
 }
@@ -115,15 +116,23 @@ func (r *DNSProvider) Timeout() (timeout, interval time.Duration) {
 // Present creates a TXT record using the specified parameters
 func (r *DNSProvider) Present(domain, token, keyAuth string) error {
 	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
-	value = `"` + value + `"`
-	return r.changeRecord("UPSERT", fqdn, value, r.config.TTL)
+
+	err := r.changeRecord("UPSERT", fqdn, `"`+value+`"`, r.config.TTL)
+	if err != nil {
+		return fmt.Errorf("route53: %v", err)
+	}
+	return nil
 }
 
 // CleanUp removes the TXT record matching the specified parameters
 func (r *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
-	value = `"` + value + `"`
-	return r.changeRecord("DELETE", fqdn, value, r.config.TTL)
+
+	err := r.changeRecord("DELETE", fqdn, `"`+value+`"`, r.config.TTL)
+	if err != nil {
+		return fmt.Errorf("route53: %v", err)
+	}
+	return nil
 }
 
 func (r *DNSProvider) changeRecord(action, fqdn, value string, ttl int) error {
@@ -148,7 +157,7 @@ func (r *DNSProvider) changeRecord(action, fqdn, value string, ttl int) error {
 
 	resp, err := r.client.ChangeResourceRecordSets(reqParams)
 	if err != nil {
-		return fmt.Errorf("failed to change Route 53 record set: %v", err)
+		return fmt.Errorf("failed to change record set: %v", err)
 	}
 
 	statusID := resp.ChangeInfo.Id
@@ -159,7 +168,7 @@ func (r *DNSProvider) changeRecord(action, fqdn, value string, ttl int) error {
 		}
 		resp, err := r.client.GetChange(reqParams)
 		if err != nil {
-			return false, fmt.Errorf("failed to query Route 53 change status: %v", err)
+			return false, fmt.Errorf("failed to query change status: %v", err)
 		}
 		if aws.StringValue(resp.ChangeInfo.Status) == route53.ChangeStatusInsync {
 			return true, nil
@@ -197,7 +206,7 @@ func (r *DNSProvider) getHostedZoneID(fqdn string) (string, error) {
 	}
 
 	if len(hostedZoneID) == 0 {
-		return "", fmt.Errorf("zone %s not found in Route 53 for domain %s", authZone, fqdn)
+		return "", fmt.Errorf("zone %s not found for domain %s", authZone, fqdn)
 	}
 
 	if strings.HasPrefix(hostedZoneID, "/hostedzone/") {
