@@ -475,6 +475,9 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 		case http.StateClosed:
 			serverEntryPoint.hijackConnectionTracker.RemoveHijackedConnection(conn)
 		}
+		if s.globalConfiguration.API != nil && s.globalConfiguration.API.StatsRecorder != nil {
+			s.globalConfiguration.API.StatsRecorder.ConnStateChange(conn, state)
+		}
 	}
 
 	return serverEntryPoint
@@ -938,12 +941,6 @@ func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.
 		}
 	}
 
-	var connStateListener func(net.Conn, http.ConnState)
-
-	if (s.globalConfiguration.API) != nil {
-		connStateListener = newConnChangeListener(s.globalConfiguration.API.StatsRecorder)
-	}
-
 	return &http.Server{
 			Addr:         entryPoint.Address,
 			Handler:      internalMuxRouter,
@@ -952,7 +949,6 @@ func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.
 			WriteTimeout: writeTimeout,
 			IdleTimeout:  idleTimeout,
 			ErrorLog:     httpServerLogger,
-			ConnState:    connStateListener,
 		},
 		listener,
 		nil
@@ -1734,14 +1730,6 @@ func buildModifyResponse(secure *secure.Secure, header *middlewares.HeaderStruct
 			}
 		}
 		return nil
-	}
-}
-
-func newConnChangeListener(sr *middlewares.StatsRecorder) func(net.Conn, http.ConnState) {
-	return func(conn net.Conn, newState http.ConnState) {
-		if sr != nil {
-			sr.ConnStateChange(conn, newState)
-		}
 	}
 }
 
