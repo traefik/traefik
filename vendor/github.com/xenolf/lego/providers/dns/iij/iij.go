@@ -76,7 +76,10 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	_, value, _ := acme.DNS01Record(domain, keyAuth)
 
 	err := d.addTxtRecord(domain, value)
-	return fmt.Errorf("iij: %v", err)
+	if err != nil {
+		return fmt.Errorf("iij: %v", err)
+	}
+	return nil
 }
 
 // CleanUp removes the TXT record matching the specified parameters
@@ -84,7 +87,10 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	_, value, _ := acme.DNS01Record(domain, keyAuth)
 
 	err := d.deleteTxtRecord(domain, value)
-	return fmt.Errorf("iij: %v", err)
+	if err != nil {
+		return fmt.Errorf("iij: %v", err)
+	}
+	return nil
 }
 
 func (d *DNSProvider) addTxtRecord(domain, value string) error {
