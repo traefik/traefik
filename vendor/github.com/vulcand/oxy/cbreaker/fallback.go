@@ -51,7 +51,7 @@ func (f *ResponseFallback) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(f.r.StatusCode)
 	_, err := w.Write(f.r.Body)
 	if err != nil {
-		log.Errorf("vulcand/oxy/fallback/response: failed to write response, err: %v", err)
+		f.log.Errorf("vulcand/oxy/fallback/response: failed to write response, err: %v", err)
 	}
 }
 
@@ -100,6 +100,6 @@ func (f *RedirectFallback) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusFound)
 	_, err := w.Write([]byte(http.StatusText(http.StatusFound)))
 	if err != nil {
-		log.Errorf("vulcand/oxy/fallback/redirect: failed to write response, err: %v", err)
+		f.log.Errorf("vulcand/oxy/fallback/redirect: failed to write response, err: %v", err)
 	}
 }
