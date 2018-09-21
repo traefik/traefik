@@ -127,7 +127,10 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	}
 
 	_, err = rsc.CreateOrUpdate(ctx, d.config.ResourceGroup, zone, relative, dns.TXT, rec, "", "")
-	return fmt.Errorf("azure: %v", err)
+	if err != nil {
+		return fmt.Errorf("azure: %v", err)
+	}
+	return nil
 }
 
 // CleanUp removes the TXT record matching the specified parameters
@@ -150,7 +153,10 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	rsc.Authorizer = autorest.NewBearerAuthorizer(spt)
 
 	_, err = rsc.Delete(ctx, d.config.ResourceGroup, zone, relative, dns.TXT, "")
-	return fmt.Errorf("azure: %v", err)
+	if err != nil {
+		return fmt.Errorf("azure: %v", err)
+	}
+	return nil
 }
 
 // Checks that azure has a zone for this domain name.
