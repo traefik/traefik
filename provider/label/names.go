@@ -37,6 +37,7 @@ const (
 	SuffixFrontend                                           = "frontend"
 	SuffixFrontendAuth                                       = SuffixFrontend + ".auth"
 	SuffixFrontendAuthBasic                                  = SuffixFrontendAuth + ".basic"
+	SuffixFrontendAuthBasicRealm                             = SuffixFrontendAuthBasic + ".realm"
 	SuffixFrontendAuthBasicRemoveHeader                      = SuffixFrontendAuthBasic + ".removeHeader"
 	SuffixFrontendAuthBasicUsers                             = SuffixFrontendAuthBasic + ".users"
 	SuffixFrontendAuthBasicUsersFile                         = SuffixFrontendAuthBasic + ".usersFile"
@@ -139,6 +140,7 @@ const (
 	TraefikFrontend                                          = Prefix + SuffixFrontend
 	TraefikFrontendAuth                                      = Prefix + SuffixFrontendAuth
 	TraefikFrontendAuthBasic                                 = Prefix + SuffixFrontendAuthBasic
+	TraefikFrontendAuthBasicRealm                            = Prefix + SuffixFrontendAuthBasicRealm
 	TraefikFrontendAuthBasicRemoveHeader                     = Prefix + SuffixFrontendAuthBasicRemoveHeader
 	TraefikFrontendAuthBasicUsers                            = Prefix + SuffixFrontendAuthBasicUsers
 	TraefikFrontendAuthBasicUsersFile                        = Prefix + SuffixFrontendAuthBasicUsersFile

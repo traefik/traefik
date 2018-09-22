@@ -401,6 +401,7 @@ type Users []string
 
 // Basic HTTP basic authentication
 type Basic struct {
+	Realm        string `json:"realm,omitempty"`
 	Users        `json:"users,omitempty" mapstructure:","`
 	UsersFile    string `json:"usersFile,omitempty"`
 	RemoveHeader bool   `json:"removeHeader,omitempty"`
