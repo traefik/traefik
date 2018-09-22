@@ -30,6 +30,9 @@ const (
 
 	// DefaultPollingInterval default polling interval
 	DefaultPollingInterval = 2 * time.Second
+
+	// DefaultTTL default TTL
+	DefaultTTL = 120
 )
 
 var defaultNameservers = []string{
@@ -67,7 +70,7 @@ func DNS01Record(domain, keyAuth string) (fqdn string, value string, ttl int) {
 	keyAuthShaBytes := sha256.Sum256([]byte(keyAuth))
 	// base64URL encoding without padding
 	value = base64.RawURLEncoding.EncodeToString(keyAuthShaBytes[:sha256.Size])
-	ttl = 120
+	ttl = DefaultTTL
 	fqdn = fmt.Sprintf("_acme-challenge.%s.", domain)
 	return
 }
@@ -149,6 +152,7 @@ func checkDNSPropagation(fqdn, value string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
 	if r.Rcode == dns.RcodeSuccess {
 		// If we see a CNAME here then use the alias
 		for _, rr := range r.Answer {

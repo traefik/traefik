@@ -85,7 +85,7 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
 
-	zone, err := d.getHostedZone(domain)
+	zone, err := d.getHostedZone(fqdn)
 	if err != nil {
 		return fmt.Errorf("ns1: %v", err)
 	}
@@ -93,7 +93,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	record := d.newTxtRecord(zone, fqdn, value, d.config.TTL)
 	_, err = d.client.Records.Create(record)
 	if err != nil && err != rest.ErrRecordExists {
-		return fmt.Errorf("ns1: %v", err)
+		return fmt.Errorf("ns1: failed to create record [zone: %q, fqdn: %q]: %v", zone.Zone, fqdn, err)
 	}
 
 	return nil
@@ -103,14 +103,14 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
 
-	zone, err := d.getHostedZone(domain)
+	zone, err := d.getHostedZone(fqdn)
 	if err != nil {
 		return fmt.Errorf("ns1: %v", err)
 	}
 
 	name := acme.UnFqdn(fqdn)
 	_, err = d.client.Records.Delete(zone.Zone, name, "TXT")
-	return fmt.Errorf("ns1: %v", err)
+	return fmt.Errorf("ns1: failed to delete record [zone: %q, domain: %q]: %v", zone.Zone, name, err)
 }
 
 // Timeout returns the timeout and interval to use when checking for DNS propagation.
@@ -119,15 +119,15 @@ func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 	return d.config.PropagationTimeout, d.config.PollingInterval
 }
 
-func (d *DNSProvider) getHostedZone(domain string) (*dns.Zone, error) {
-	authZone, err := getAuthZone(domain)
+func (d *DNSProvider) getHostedZone(fqdn string) (*dns.Zone, error) {
+	authZone, err := getAuthZone(fqdn)
 	if err != nil {
-		return nil, fmt.Errorf("ns1: %v", err)
+		return nil, fmt.Errorf("failed to extract auth zone from fqdn %q: %v", fqdn, err)
 	}
 
 	zone, _, err := d.client.Zones.Get(authZone)
 	if err != nil {
-		return nil, fmt.Errorf("ns1: %v", err)
+		return nil, fmt.Errorf("failed to get zone [authZone: %q, fqdn: %q]: %v", authZone, fqdn, err)
 	}
 
 	return zone, nil
@@ -139,11 +139,7 @@ func getAuthZone(fqdn string) (string, error) {
 		return "", err
 	}
 
-	if strings.HasSuffix(authZone, ".") {
-		authZone = authZone[:len(authZone)-len(".")]
-	}
-
-	return authZone, err
+	return strings.TrimSuffix(authZone, "."), nil
 }
 
 func (d *DNSProvider) newTxtRecord(zone *dns.Zone, fqdn, value string, ttl int) *dns.Record {

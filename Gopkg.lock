@@ -1371,7 +1371,7 @@
     "providers/dns/vegadns",
     "providers/dns/vultr"
   ]
-  revision = "83e2300e01226dcb006946873ca5434291fb16ef"
+  revision = "621237d07213aa6dead90bdf6fd46251220fa669"
 
 [[projects]]
   branch = "master"
