@@ -349,17 +349,17 @@ func (f *httpForwarder) serveWebSocket(w http.ResponseWriter, req *http.Request,
 		if resp == nil {
 			ctx.errHandler.ServeHTTP(w, req, err)
 		} else {
-			log.Errorf("vulcand/oxy/forward/websocket: Error dialing %q: %v with resp: %d %s", outReq.Host, err, resp.StatusCode, resp.Status)
+			f.log.Errorf("vulcand/oxy/forward/websocket: Error dialing %q: %v with resp: %d %s", outReq.Host, err, resp.StatusCode, resp.Status)
 			hijacker, ok := w.(http.Hijacker)
 			if !ok {
-				log.Errorf("vulcand/oxy/forward/websocket: %s can not be hijack", reflect.TypeOf(w))
+				f.log.Errorf("vulcand/oxy/forward/websocket: %s can not be hijack", reflect.TypeOf(w))
 				ctx.errHandler.ServeHTTP(w, req, err)
 				return
 			}
 
 			conn, _, errHijack := hijacker.Hijack()
 			if errHijack != nil {
-				log.Errorf("vulcand/oxy/forward/websocket: Failed to hijack responseWriter")
+				f.log.Errorf("vulcand/oxy/forward/websocket: Failed to hijack responseWriter")
 				ctx.errHandler.ServeHTTP(w, req, errHijack)
 				return
 			}
@@ -367,7 +367,7 @@ func (f *httpForwarder) serveWebSocket(w http.ResponseWriter, req *http.Request,
 
 			errWrite := resp.Write(conn)
 			if errWrite != nil {
-				log.Errorf("vulcand/oxy/forward/websocket: Failed to forward response")
+				f.log.Errorf("vulcand/oxy/forward/websocket: Failed to forward response")
 				ctx.errHandler.ServeHTTP(w, req, errWrite)
 				return
 			}
@@ -385,7 +385,7 @@ func (f *httpForwarder) serveWebSocket(w http.ResponseWriter, req *http.Request,
 
 	underlyingConn, err := upgrader.Upgrade(w, req, resp.Header)
 	if err != nil {
-		log.Errorf("vulcand/oxy/forward/websocket: Error while upgrading connection : %v", err)
+		f.log.Errorf("vulcand/oxy/forward/websocket: Error while upgrading connection : %v", err)
 		return
 	}
 	defer func() {
