@@ -45,7 +45,7 @@ func (p *Provider) buildConfigurationV1(instances []ecsInstance) (*types.Configu
 
 		// Frontend functions
 		"filterFrontends":   filterFrontendsV1,
-		"getFrontendRule":   p.getFrontendRule,
+		"getFrontendRule":   p.getFrontendRuleV1,
 		"getPassHostHeader": getFuncBoolValueV1(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getPassTLSCert":    getFuncBoolValueV1(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getPriority":       getFuncIntValueV1(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
@@ -70,13 +70,21 @@ func filterFrontendsV1(instances []ecsInstance) []ecsInstance {
 	byName := make(map[string]struct{})
 
 	return fun.Filter(func(i ecsInstance) bool {
-		backendName := getBackendName(i)
+		backendName := getBackendNameV1(i)
 		_, found := byName[backendName]
 		if !found {
 			byName[backendName] = struct{}{}
 		}
 		return !found
 	}, instances).([]ecsInstance)
+}
+
+// Deprecated
+func (p *Provider) getFrontendRuleV1(i ecsInstance) string {
+	domain := label.GetStringValue(i.TraefikLabels, label.TraefikDomain, p.Domain)
+	defaultRule := "Host:" + strings.ToLower(strings.Replace(i.Name, "_", "-", -1)) + "." + domain
+
+	return label.GetStringValue(i.TraefikLabels, label.TraefikFrontendRule, defaultRule)
 }
 
 // Deprecated
@@ -228,7 +236,7 @@ func getFuncFirstStringValueV1(labelName string, defaultValue string) func(insta
 // Deprecated
 func getFuncFirstBoolValueV1(labelName string, defaultValue bool) func(instances []ecsInstance) bool {
 	return func(instances []ecsInstance) bool {
-		if len(instances) < 0 {
+		if len(instances) == 0 {
 			return defaultValue
 		}
 		return getBoolValueV1(instances[0], labelName, defaultValue)

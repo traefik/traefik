@@ -6,15 +6,36 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/http"
+	"time"
 
 	"github.com/xenolf/lego/acme"
 	"github.com/xenolf/lego/platform/config/env"
 )
 
+// Config is used to configure the creation of the DNSProvider
+type Config struct {
+	Token              string
+	PropagationTimeout time.Duration
+	PollingInterval    time.Duration
+	HTTPClient         *http.Client
+}
+
+// NewDefaultConfig returns a default configuration for the DNSProvider
+func NewDefaultConfig() *Config {
+	client := acme.HTTPClient
+	client.Timeout = env.GetOrDefaultSecond("DUCKDNS_HTTP_TIMEOUT", 30*time.Second)
+
+	return &Config{
+		PropagationTimeout: env.GetOrDefaultSecond("DUCKDNS_PROPAGATION_TIMEOUT", acme.DefaultPropagationTimeout),
+		PollingInterval:    env.GetOrDefaultSecond("DUCKDNS_POLLING_INTERVAL", acme.DefaultPollingInterval),
+		HTTPClient:         &client,
+	}
+}
+
 // DNSProvider adds and removes the record for the DNS challenge
 type DNSProvider struct {
-	// The api token
-	token string
+	config *Config
 }
 
 // NewDNSProvider returns a new DNS provider using
@@ -22,34 +43,62 @@ type DNSProvider struct {
 func NewDNSProvider() (*DNSProvider, error) {
 	values, err := env.Get("DUCKDNS_TOKEN")
 	if err != nil {
-		return nil, fmt.Errorf("DuckDNS: %v", err)
+		return nil, fmt.Errorf("duckdns: %v", err)
 	}
 
-	return NewDNSProviderCredentials(values["DUCKDNS_TOKEN"])
+	config := NewDefaultConfig()
+	config.Token = values["DUCKDNS_TOKEN"]
+
+	return NewDNSProviderConfig(config)
 }
 
-// NewDNSProviderCredentials uses the supplied credentials to return a
-// DNSProvider instance configured for http://duckdns.org .
-func NewDNSProviderCredentials(duckdnsToken string) (*DNSProvider, error) {
-	if duckdnsToken == "" {
-		return nil, errors.New("DuckDNS: credentials missing")
+// NewDNSProviderCredentials uses the supplied credentials
+// to return a DNSProvider instance configured for http://duckdns.org
+// Deprecated
+func NewDNSProviderCredentials(token string) (*DNSProvider, error) {
+	config := NewDefaultConfig()
+	config.Token = token
+
+	return NewDNSProviderConfig(config)
+}
+
+// NewDNSProviderConfig return a DNSProvider instance configured for DuckDNS.
+func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
+	if config == nil {
+		return nil, errors.New("duckdns: the configuration of the DNS provider is nil")
 	}
 
-	return &DNSProvider{token: duckdnsToken}, nil
-}
-
-// makeDuckdnsURL creates a url to clear the set or unset the TXT record.
-// txt == "" will clear the TXT record.
-func makeDuckdnsURL(domain, token, txt string) string {
-	requestBase := fmt.Sprintf("https://www.duckdns.org/update?domains=%s&token=%s", domain, token)
-	if txt == "" {
-		return requestBase + "&clear=true"
+	if config.Token == "" {
+		return nil, errors.New("duckdns: credentials missing")
 	}
-	return requestBase + "&txt=" + txt
+
+	return &DNSProvider{config: config}, nil
 }
 
-func issueDuckdnsRequest(url string) error {
-	response, err := acme.HTTPClient.Get(url)
+// Present creates a TXT record to fulfil the dns-01 challenge.
+func (d *DNSProvider) Present(domain, token, keyAuth string) error {
+	_, txtRecord, _ := acme.DNS01Record(domain, keyAuth)
+	return updateTxtRecord(domain, d.config.Token, txtRecord, false)
+}
+
+// CleanUp clears DuckDNS TXT record
+func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
+	return updateTxtRecord(domain, d.config.Token, "", true)
+}
+
+// Timeout returns the timeout and interval to use when checking for DNS propagation.
+// Adjusting here to cope with spikes in propagation times.
+func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
+	return d.config.PropagationTimeout, d.config.PollingInterval
+}
+
+// updateTxtRecord Update the domains TXT record
+// To update the TXT record we just need to make one simple get request.
+// In DuckDNS you only have one TXT record shared with the domain and all sub domains.
+func updateTxtRecord(domain, token, txt string, clear bool) error {
+	u := fmt.Sprintf("https://www.duckdns.org/update?domains=%s&token=%s&clear=%t&txt=%s", domain, token, clear, txt)
+
+	response, err := acme.HTTPClient.Get(u)
 	if err != nil {
 		return err
 	}
@@ -59,26 +108,10 @@ func issueDuckdnsRequest(url string) error {
 	if err != nil {
 		return err
 	}
+
 	body := string(bodyBytes)
 	if body != "OK" {
-		return fmt.Errorf("Request to change TXT record for duckdns returned the following result (%s) this does not match expectation (OK) used url [%s]", body, url)
+		return fmt.Errorf("request to change TXT record for DuckDNS returned the following result (%s) this does not match expectation (OK) used url [%s]", body, u)
 	}
 	return nil
-}
-
-// Present creates a TXT record to fulfil the dns-01 challenge.
-// In duckdns you only have one TXT record shared with
-// the domain and all sub domains.
-//
-// To update the TXT record we just need to make one simple get request.
-func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	_, txtRecord, _ := acme.DNS01Record(domain, keyAuth)
-	url := makeDuckdnsURL(domain, d.token, txtRecord)
-	return issueDuckdnsRequest(url)
-}
-
-// CleanUp clears duckdns TXT record
-func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	url := makeDuckdnsURL(domain, d.token, "")
-	return issueDuckdnsRequest(url)
 }

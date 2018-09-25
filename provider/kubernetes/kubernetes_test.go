@@ -45,6 +45,11 @@ func TestLoadIngresses(t *testing.T) {
 						onePath(iBackend("service6", intstr.FromInt(80))),
 					),
 				),
+				iRule(iHost("*.service7"),
+					iPaths(
+						onePath(iBackend("service7", intstr.FromInt(80))),
+					),
+				),
 			),
 		),
 	}
@@ -105,6 +110,14 @@ func TestLoadIngresses(t *testing.T) {
 				clusterIP("10.0.0.6"),
 				sPorts(sPort(80, ""))),
 		),
+		buildService(
+			sName("service7"),
+			sNamespace("testing"),
+			sUID("7"),
+			sSpec(
+				clusterIP("10.0.0.7"),
+				sPorts(sPort(80, ""))),
+		),
 	}
 
 	endpoints := []*corev1.Endpoints{
@@ -142,6 +155,14 @@ func TestLoadIngresses(t *testing.T) {
 			eUID("6"),
 			subset(
 				eAddresses(eAddressWithTargetRef("http://10.15.0.3:80", "10.15.0.3")),
+				ePorts(ePort(80, ""))),
+		),
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service7"),
+			eUID("7"),
+			subset(
+				eAddresses(eAddress("10.10.0.7")),
 				ePorts(ePort(80, ""))),
 		),
 	}
@@ -191,6 +212,12 @@ func TestLoadIngresses(t *testing.T) {
 					server("http://10.15.0.3:80", weight(1)),
 				),
 			),
+			backend("*.service7",
+				lbMethod("wrr"),
+				servers(
+					server("http://10.10.0.7:80", weight(1)),
+				),
+			),
 		),
 		frontends(
 			frontend("foo/bar",
@@ -216,6 +243,10 @@ func TestLoadIngresses(t *testing.T) {
 			frontend("service6",
 				passHostHeader(),
 				routes(route("service6", "Host:service6")),
+			),
+			frontend("*.service7",
+				passHostHeader(),
+				routes(route("*.service7", "HostRegexp:{subdomain:[A-Za-z0-9-_]+}.service7")),
 			),
 		),
 	)
@@ -450,6 +481,10 @@ func TestRuleFails(t *testing.T) {
 			ruletypeAnnotation:        "ReplacePath",
 			requestModifierAnnotation: "ReplacePathRegex:/foo /bar",
 		},
+		{
+			desc:               "Empty Rule",
+			ruletypeAnnotation: " : /bar",
+		},
 	}
 
 	for _, test := range testCases {
@@ -482,37 +517,37 @@ func TestModifierType(t *testing.T) {
 		expectedModifierRule      string
 	}{
 		{
-			desc: "Request modifier annotation missing",
+			desc:                      "Request modifier annotation missing",
 			requestModifierAnnotation: "",
 			expectedModifierRule:      "",
 		},
 		{
-			desc: "AddPrefix modifier annotation",
+			desc:                      "AddPrefix modifier annotation",
 			requestModifierAnnotation: " AddPrefix: /foo",
 			expectedModifierRule:      "AddPrefix:/foo",
 		},
 		{
-			desc: "ReplacePath modifier annotation",
+			desc:                      "ReplacePath modifier annotation",
 			requestModifierAnnotation: " ReplacePath: /foo",
 			expectedModifierRule:      "ReplacePath:/foo",
 		},
 		{
-			desc: "ReplacePathRegex modifier annotation",
+			desc:                      "ReplacePathRegex modifier annotation",
 			requestModifierAnnotation: " ReplacePathRegex: /foo /bar",
 			expectedModifierRule:      "ReplacePathRegex:/foo /bar",
 		},
 		{
-			desc: "AddPrefix modifier annotation",
+			desc:                      "AddPrefix modifier annotation",
 			requestModifierAnnotation: "AddPrefix:/foo",
 			expectedModifierRule:      "AddPrefix:/foo",
 		},
 		{
-			desc: "ReplacePath modifier annotation",
+			desc:                      "ReplacePath modifier annotation",
 			requestModifierAnnotation: "ReplacePath:/foo",
 			expectedModifierRule:      "ReplacePath:/foo",
 		},
 		{
-			desc: "ReplacePathRegex modifier annotation",
+			desc:                      "ReplacePathRegex modifier annotation",
 			requestModifierAnnotation: "ReplacePathRegex:/foo /bar",
 			expectedModifierRule:      "ReplacePathRegex:/foo /bar",
 		},
@@ -574,20 +609,24 @@ func TestModifierFails(t *testing.T) {
 		requestModifierAnnotation string
 	}{
 		{
-			desc: "Request modifier missing part of annotation",
+			desc:                      "Request modifier missing part of annotation",
 			requestModifierAnnotation: "AddPrefix: ",
 		},
 		{
-			desc: "Request modifier full of spaces annotation",
+			desc:                      "Request modifier full of spaces annotation",
 			requestModifierAnnotation: "    ",
 		},
 		{
-			desc: "Request modifier missing both parts of annotation",
+			desc:                      "Request modifier missing both parts of annotation",
 			requestModifierAnnotation: "  :  ",
 		},
 		{
-			desc: "Request modifier using unknown rule",
+			desc:                      "Request modifier using unknown rule",
 			requestModifierAnnotation: "Foo: /bar",
+		},
+		{
+			desc:                      "Missing Rule",
+			requestModifierAnnotation: " : /bar",
 		},
 	}
 
@@ -700,6 +739,34 @@ func TestGetPassTLSCert(t *testing.T) {
 	)
 
 	assert.Equal(t, expected, actual)
+}
+
+func TestInvalidRedirectAnnotation(t *testing.T) {
+	ingresses := []*extensionsv1beta1.Ingress{
+		buildIngress(iNamespace("awesome"),
+			iAnnotation(annotationKubernetesRedirectRegex, `bad\.regex`),
+			iAnnotation(annotationKubernetesRedirectReplacement, "test"),
+			iRules(iRule(
+				iHost("foo"),
+				iPaths(onePath(iPath("/bar"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(iNamespace("awesome"),
+			iAnnotation(annotationKubernetesRedirectRegex, `test`),
+			iAnnotation(annotationKubernetesRedirectReplacement, `bad\.replacement`),
+			iRules(iRule(
+				iHost("foo"),
+				iPaths(onePath(iPath("/bar"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+	}
+
+	for _, ingress := range ingresses {
+		actual := getFrontendRedirect(ingress, "test", "/")
+		var expected *types.Redirect
+
+		assert.Equal(t, expected, actual)
+	}
 }
 
 func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
@@ -1185,6 +1252,41 @@ rateset:
 					iPaths(onePath(iPath("/customheaders"), iBackend("service1", intstr.FromInt(80))))),
 			),
 		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesProtocol, "h2c"),
+			iRules(
+				iRule(
+					iHost("protocol"),
+					iPaths(onePath(iPath("/valid"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesProtocol, "foobar"),
+			iRules(
+				iRule(
+					iHost("protocol"),
+					iPaths(onePath(iPath("/notvalid"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesProtocol, "http"),
+			iRules(
+				iRule(
+					iHost("protocol"),
+					iPaths(onePath(iPath("/missmatch"), iBackend("serviceHTTPS", intstr.FromInt(443))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iRules(
+				iRule(
+					iHost("protocol"),
+					iPaths(onePath(iPath("/noAnnotation"), iBackend("serviceHTTPS", intstr.FromInt(443))))),
+			),
+		),
 	}
 
 	services := []*corev1.Service{
@@ -1205,6 +1307,16 @@ rateset:
 			sSpec(
 				clusterIP("10.0.0.2"),
 				sPorts(sPort(802, ""))),
+		),
+		buildService(
+			sName("serviceHTTPS"),
+			sNamespace("testing"),
+			sUID("2"),
+			sSpec(
+				clusterIP("10.0.0.3"),
+				sType("ExternalName"),
+				sExternalName("example.com"),
+				sPorts(sPort(443, "https"))),
 		),
 	}
 
@@ -1313,6 +1425,28 @@ rateset:
 				servers(),
 				lbMethod("wrr"),
 			),
+			backend("protocol/valid",
+				servers(
+					server("h2c://example.com", weight(1)),
+					server("h2c://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
+			backend("protocol/notvalid",
+				servers(),
+				lbMethod("wrr"),
+			),
+			backend("protocol/missmatch",
+				servers(
+					server("http://example.com", weight(1)),
+					server("http://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
+			backend("protocol/noAnnotation",
+				servers(
+					server("https://example.com", weight(1)),
+					server("https://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
 		),
 		frontends(
 			frontend("foo/bar",
@@ -1371,7 +1505,7 @@ rateset:
 			frontend("rewrite/api",
 				passHostHeader(),
 				routes(
-					route("/api", "PathPrefix:/api;ReplacePath:/"),
+					route("/api", "PathPrefix:/api;ReplacePathRegex: ^/api(.*) $1"),
 					route("rewrite", "Host:rewrite")),
 			),
 			frontend("error-pages/errorpages",
@@ -1431,8 +1565,9 @@ rateset:
 			),
 			frontend("root/",
 				passHostHeader(),
+				redirectRegex("root/$", "root/root"),
 				routes(
-					route("/", "PathPrefix:/;ReplacePath:/root"),
+					route("/", "PathPrefix:/"),
 					route("root", "Host:root"),
 				),
 			),
@@ -1441,6 +1576,34 @@ rateset:
 				routes(
 					route("/root1", "PathPrefix:/root1"),
 					route("root", "Host:root"),
+				),
+			),
+			frontend("protocol/valid",
+				passHostHeader(),
+				routes(
+					route("/valid", "PathPrefix:/valid"),
+					route("protocol", "Host:protocol"),
+				),
+			),
+			frontend("protocol/notvalid",
+				passHostHeader(),
+				routes(
+					route("/notvalid", "PathPrefix:/notvalid"),
+					route("protocol", "Host:protocol"),
+				),
+			),
+			frontend("protocol/missmatch",
+				passHostHeader(),
+				routes(
+					route("/missmatch", "PathPrefix:/missmatch"),
+					route("protocol", "Host:protocol"),
+				),
+			),
+			frontend("protocol/noAnnotation",
+				passHostHeader(),
+				routes(
+					route("/noAnnotation", "PathPrefix:/noAnnotation"),
+					route("protocol", "Host:protocol"),
 				),
 			),
 		),
@@ -1686,13 +1849,13 @@ func TestPriorityHeaderValue(t *testing.T) {
 
 	expected := buildConfiguration(
 		backends(
-			backend("foo/bar",
+			backend("1337-foo/bar",
 				servers(server("http://example.com", weight(1))),
 				lbMethod("wrr"),
 			),
 		),
 		frontends(
-			frontend("foo/bar",
+			frontend("1337-foo/bar",
 				passHostHeader(),
 				priority(1337),
 				routes(
@@ -2008,6 +2171,7 @@ func TestLoadIngressesBasicAuth(t *testing.T) {
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesAuthType, "basic"),
 			iAnnotation(annotationKubernetesAuthSecret, "mySecret"),
+			iAnnotation(annotationKubernetesAuthRemoveHeader, "true"),
 			iRules(
 				iRule(
 					iHost("basic"),
@@ -2056,8 +2220,9 @@ func TestLoadIngressesBasicAuth(t *testing.T) {
 
 	actual = provider.loadConfig(*actual)
 	require.NotNil(t, actual)
-	got := actual.Frontends["basic/auth"].Auth.Basic.Users
-	assert.Equal(t, types.Users{"myUser:myEncodedPW"}, got)
+	actualBasicAuth := actual.Frontends["basic/auth"].Auth.Basic
+	assert.Equal(t, types.Users{"myUser:myEncodedPW"}, actualBasicAuth.Users)
+	assert.True(t, actualBasicAuth.RemoveHeader, "Bad RemoveHeader flag")
 }
 
 func TestLoadIngressesForwardAuth(t *testing.T) {
@@ -3095,4 +3260,174 @@ func TestProviderNewK8sOutOfClusterClient(t *testing.T) {
 	p.Endpoint = "localhost"
 	_, err := p.newK8sClient("")
 	assert.NoError(t, err)
+}
+
+func TestAddGlobalBackendDuplicateFailures(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		previousConfig *types.Configuration
+		err            string
+	}{
+		{
+			desc: "Duplicate Frontend",
+			previousConfig: buildConfiguration(
+				frontends(
+					frontend("global-default-backend",
+						frontendName("global-default-frontend"),
+						passHostHeader(),
+						routes(
+							route("/", "PathPrefix:/"),
+						),
+					),
+				),
+			),
+			err: "duplicate frontend: global-default-frontend",
+		},
+		{
+			desc: "Duplicate Backend",
+			previousConfig: buildConfiguration(
+				backends(
+					backend("global-default-backend",
+						lbMethod("wrr"),
+						servers(
+							server("http://10.10.0.1:8080", weight(1)),
+						),
+					),
+				)),
+			err: "duplicate backend: global-default-backend",
+		},
+	}
+
+	ingress := buildIngress(
+		iNamespace("testing"),
+		iSpecBackends(iSpecBackend(iIngressBackend("service1", intstr.FromInt(80)))),
+	)
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			watchChan := make(chan interface{})
+			client := clientMock{
+				watchChan: watchChan,
+			}
+			provider := Provider{}
+
+			err := provider.addGlobalBackend(client, ingress, test.previousConfig)
+			assert.EqualError(t, err, test.err)
+		})
+	}
+}
+
+func TestAddGlobalBackendServiceMissing(t *testing.T) {
+	ingresses := buildIngress(
+		iNamespace("testing"),
+		iSpecBackends(iSpecBackend(iIngressBackend("service1", intstr.FromInt(80)))),
+	)
+
+	config := buildConfiguration(
+		frontends(),
+		backends(),
+	)
+	watchChan := make(chan interface{})
+	client := clientMock{
+		watchChan: watchChan,
+	}
+	provider := Provider{}
+
+	err := provider.addGlobalBackend(client, ingresses, config)
+	assert.Error(t, err)
+}
+
+func TestAddGlobalBackendServiceAPIError(t *testing.T) {
+	ingresses := buildIngress(
+		iNamespace("testing"),
+		iSpecBackends(iSpecBackend(iIngressBackend("service1", intstr.FromInt(80)))),
+	)
+
+	config := buildConfiguration(
+		frontends(),
+		backends(),
+	)
+
+	apiErr := errors.New("failed kube api call")
+
+	watchChan := make(chan interface{})
+	client := clientMock{
+		apiServiceError: apiErr,
+		watchChan:       watchChan,
+	}
+	provider := Provider{}
+	err := provider.addGlobalBackend(client, ingresses, config)
+	assert.Error(t, err)
+}
+
+func TestAddGlobalBackendEndpointMissing(t *testing.T) {
+	ingresses := buildIngress(
+		iNamespace("testing"),
+		iSpecBackends(iSpecBackend(iIngressBackend("service", intstr.FromInt(80)))),
+	)
+
+	services := []*corev1.Service{
+		buildService(
+			sName("service"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sPorts(sPort(80, "")),
+			),
+		),
+	}
+
+	config := buildConfiguration(
+		frontends(),
+		backends(),
+	)
+	watchChan := make(chan interface{})
+	client := clientMock{
+		services:  services,
+		watchChan: watchChan,
+	}
+	provider := Provider{}
+
+	err := provider.addGlobalBackend(client, ingresses, config)
+	assert.Error(t, err)
+}
+
+func TestAddGlobalBackendEndpointAPIError(t *testing.T) {
+	ingresses := buildIngress(
+		iNamespace("testing"),
+		iSpecBackends(iSpecBackend(iIngressBackend("service", intstr.FromInt(80)))),
+	)
+
+	config := buildConfiguration(
+		frontends(),
+		backends(),
+	)
+
+	services := []*corev1.Service{
+		buildService(
+			sName("service"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sPorts(sPort(80, "")),
+			),
+		),
+	}
+
+	apiErr := errors.New("failed kube api call")
+
+	watchChan := make(chan interface{})
+	client := clientMock{
+		apiEndpointsError: apiErr,
+		services:          services,
+		watchChan:         watchChan,
+	}
+	provider := Provider{}
+	err := provider.addGlobalBackend(client, ingresses, config)
+	assert.Error(t, err)
 }

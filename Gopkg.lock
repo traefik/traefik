@@ -9,6 +9,12 @@
 
 [[projects]]
   branch = "master"
+  name = "code.cloudfoundry.org/clock"
+  packages = ["."]
+  revision = "02e53af36e6c978af692887ed449b74026d76fec"
+
+[[projects]]
+  branch = "master"
   name = "github.com/ArthurHlt/go-eureka-client"
   packages = ["eureka"]
   revision = "9d0a49cbd39aa3634ae1977e9f519a262b10adaf"
@@ -79,6 +85,11 @@
   name = "github.com/Masterminds/sprig"
   packages = ["."]
   revision = "e039e20e500c2c025d9145be375e27cf42a94174"
+
+[[projects]]
+  name = "github.com/Microsoft/ApplicationInsights-Go"
+  packages = ["appinsights"]
+  revision = "98ac7ca026c26818888600ea0d966987aa56f043"
 
 [[projects]]
   name = "github.com/Microsoft/go-winio"
@@ -157,6 +168,23 @@
   ]
   revision = "a494eba1efa1f38338393727dff63389a6a66534"
   version = "v0.6.0"
+
+[[projects]]
+  name = "github.com/aliyun/alibaba-cloud-sdk-go"
+  packages = [
+    "sdk",
+    "sdk/auth",
+    "sdk/auth/credentials",
+    "sdk/auth/signers",
+    "sdk/endpoints",
+    "sdk/errors",
+    "sdk/requests",
+    "sdk/responses",
+    "sdk/utils",
+    "services/alidns"
+  ]
+  revision = "cad214d7d71fba7883fcf3b7e550ba782c15b400"
+  version = "1.27.7"
 
 [[projects]]
   name = "github.com/aokoli/goutils"
@@ -268,8 +296,8 @@
 [[projects]]
   name = "github.com/containous/traefik-extra-service-fabric"
   packages = ["."]
-  revision = "08668650856571f3529bde394a36a5c9cf16a991"
-  version = "v1.2.0"
+  revision = "6e90a9eef2ac9d320e55d6e994d169673a8d8b0f"
+  version = "v1.3.0"
 
 [[projects]]
   name = "github.com/coreos/bbolt"
@@ -305,6 +333,12 @@
   packages = ["daemon"]
   revision = "48702e0da86bd25e76cfef347e2adeb434a0d0a6"
   version = "v14"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/cpu/goacmedns"
+  packages = ["."]
+  revision = "565ecf2a84df654865cc102705ac160a3b04fc01"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -524,8 +558,8 @@
 [[projects]]
   name = "github.com/exoscale/egoscale"
   packages = ["."]
-  revision = "e4fedc381fbddb7fef4d7060388a726c6de37c88"
-  version = "v0.9.7"
+  revision = "d8dfca6802ad5c1a5300e52fa68067e791322035"
+  version = "v0.11.4"
 
 [[projects]]
   name = "github.com/fatih/color"
@@ -690,7 +724,7 @@
   branch = "master"
   name = "github.com/gorilla/websocket"
   packages = ["."]
-  revision = "eb925808374e5ca90c83401a40d711dc08c0c0f6"
+  revision = "66b9c49e59c6c48f0ffce28c2d8b8a5678502c6d"
 
 [[projects]]
   name = "github.com/gravitational/trace"
@@ -749,6 +783,15 @@
   revision = "3959339b333561bf62a38b424fd41517c2c90f40"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/iij/doapi"
+  packages = [
+    ".",
+    "protocol"
+  ]
+  revision = "8803795a9b7b938fa88ddbd63a77893beee14cd8"
+
+[[projects]]
   name = "github.com/imdario/mergo"
   packages = ["."]
   revision = "7fe0c75c13abdee74b09fcacef5ea1c6bba6a874"
@@ -763,6 +806,12 @@
   ]
   revision = "2d474a3089bcfce6b472779be9470a1f0ef3d5e4"
   version = "v1.3.7"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/jjcollinge/logrus-appinsights"
+  packages = ["."]
+  revision = "9b66602d496a139e4722bdde32f0f1ac1c12d4a8"
 
 [[projects]]
   name = "github.com/jjcollinge/servicefabric"
@@ -1119,8 +1168,8 @@
 [[projects]]
   name = "github.com/satori/go.uuid"
   packages = ["."]
-  revision = "879c5887cd475cd7864858769793b2ceb0d44feb"
-  version = "v1.1.0"
+  revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
+  version = "v1.2.0"
 
 [[projects]]
   name = "github.com/sirupsen/logrus"
@@ -1250,7 +1299,7 @@
     "roundrobin",
     "utils"
   ]
-  revision = "adbef6bedf021985587c3c18c9d4b84b2d78f67c"
+  revision = "fe51048067db50958154cd4040da878b10002a3a"
 
 [[projects]]
   name = "github.com/vulcand/predicate"
@@ -1283,6 +1332,8 @@
     "log",
     "platform/config/env",
     "providers/dns",
+    "providers/dns/acmedns",
+    "providers/dns/alidns",
     "providers/dns/auroradns",
     "providers/dns/azure",
     "providers/dns/bluecat",
@@ -1302,10 +1353,13 @@
     "providers/dns/gcloud",
     "providers/dns/glesys",
     "providers/dns/godaddy",
+    "providers/dns/hostingde",
+    "providers/dns/iij",
     "providers/dns/lightsail",
     "providers/dns/linode",
     "providers/dns/namecheap",
     "providers/dns/namedotcom",
+    "providers/dns/netcup",
     "providers/dns/nifcloud",
     "providers/dns/ns1",
     "providers/dns/otc",
@@ -1318,7 +1372,7 @@
     "providers/dns/vegadns",
     "providers/dns/vultr"
   ]
-  revision = "e0d512138c43e3f056a41cd7a5beff662ec130d3"
+  revision = "621237d07213aa6dead90bdf6fd46251220fa669"
 
 [[projects]]
   branch = "master"
@@ -1739,7 +1793,7 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a3429eccf578f09c7c521a32f81df1af5f0a24cb8c9702b7b768f3db34153216"
+  inputs-digest = "b75bf0ae5b8c1ae1ba578fe5a58dfc4cd4270e02f5ea3b9f0d5a92972a36e9b2"
   solver-name = "gps-cdcl"
   solver-version = 1
   

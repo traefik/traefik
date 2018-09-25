@@ -122,7 +122,7 @@ In order to use regular expressions with Host and Path matchers, you must declar
     The variable has no special meaning; however, it is required by the [gorilla/mux](https://github.com/gorilla/mux) dependency which embeds the regular expression and defines the syntax.
 
 You can optionally enable `passHostHeader` to forward client `Host` header to the backend.
-You can also optionally enable `passTLSCert` to forward TLS Client certificates to the backend.
+You can also optionally configure the `passTLSClientCert` option to pass the Client certificates to the backend in a specific header.
 
 ##### Path Matcher Usage Guidelines
 
@@ -157,7 +157,8 @@ Here is an example of frontends definition:
   [frontends.frontend2]
   backend = "backend1"
   passHostHeader = true
-  passTLSCert = true
+  [frontends.frontend2.passTLSClientCert]
+    pem = true
   priority = 10
   entrypoints = ["https"] # overrides defaultEntryPoints
     [frontends.frontend2.routes.test_1]

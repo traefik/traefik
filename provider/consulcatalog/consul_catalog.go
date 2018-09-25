@@ -1,7 +1,6 @@
 package consulcatalog
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -51,9 +50,15 @@ type Service struct {
 }
 
 type serviceUpdate struct {
-	ServiceName   string
-	Attributes    []string
-	TraefikLabels map[string]string
+	ServiceName       string
+	ParentServiceName string
+	Attributes        []string
+	TraefikLabels     map[string]string
+}
+
+type frontendSegment struct {
+	Name   string
+	Labels map[string]string
 }
 
 type catalogUpdate struct {
@@ -90,18 +95,27 @@ func (a nodeSorter) Less(i int, j int) bool {
 	return lEntry.Service.Port < rEntry.Service.Port
 }
 
-// Provide allows the consul catalog provider to provide configurations to traefik
-// using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
+// Init the provider
+func (p *Provider) Init(constraints types.Constraints) error {
+	err := p.BaseProvider.Init(constraints)
+	if err != nil {
+		return err
+	}
+
 	client, err := p.createClient()
 	if err != nil {
 		return err
 	}
 
 	p.client = client
-	p.Constraints = append(p.Constraints, constraints...)
 	p.setupFrontEndRuleTemplate()
 
+	return nil
+}
+
+// Provide allows the consul catalog provider to provide configurations to traefik
+// using the given configuration channel.
+func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	pool.Go(func(stop chan bool) {
 		notify := func(err error, time time.Duration) {
 			log.Errorf("Consul connection error %+v, retrying in %s", err, time)
@@ -156,14 +170,8 @@ func (p *Provider) watch(configurationChan chan<- types.ConfigMessage, stop chan
 	defer close(stopCh)
 	defer close(watchCh)
 
-	for {
-		select {
-		case <-stop:
-			return nil
-		case index, ok := <-watchCh:
-			if !ok {
-				return errors.New("consul service list nil")
-			}
+	safe.Go(func() {
+		for index := range watchCh {
 			log.Debug("List of services changed")
 			nodes, err := p.getNodes(index)
 			if err != nil {
@@ -174,6 +182,13 @@ func (p *Provider) watch(configurationChan chan<- types.ConfigMessage, stop chan
 				ProviderName:  "consul_catalog",
 				Configuration: configuration,
 			}
+		}
+	})
+
+	for {
+		select {
+		case <-stop:
+			return nil
 		case err := <-errorCh:
 			return err
 		}
@@ -550,4 +565,53 @@ func (p *Provider) getConstraintTags(tags []string) []string {
 	}
 
 	return values
+}
+
+func (p *Provider) generateFrontends(service *serviceUpdate) []*serviceUpdate {
+	frontends := make([]*serviceUpdate, 0)
+	// to support <prefix>.frontend.xxx
+	frontends = append(frontends, &serviceUpdate{
+		ServiceName:       service.ServiceName,
+		ParentServiceName: service.ServiceName,
+		Attributes:        service.Attributes,
+		TraefikLabels:     service.TraefikLabels,
+	})
+
+	// loop over children of <prefix>.frontends.*
+	for _, frontend := range getSegments(p.Prefix+".frontends", p.Prefix, service.TraefikLabels) {
+		frontends = append(frontends, &serviceUpdate{
+			ServiceName:       service.ServiceName + "-" + frontend.Name,
+			ParentServiceName: service.ServiceName,
+			Attributes:        service.Attributes,
+			TraefikLabels:     frontend.Labels,
+		})
+	}
+
+	return frontends
+}
+func getSegments(path string, prefix string, tree map[string]string) []*frontendSegment {
+	segments := make([]*frontendSegment, 0)
+	// find segment names
+	segmentNames := make(map[string]bool)
+	for key := range tree {
+		if strings.HasPrefix(key, path+".") {
+			segmentNames[strings.SplitN(strings.TrimPrefix(key, path+"."), ".", 2)[0]] = true
+		}
+	}
+
+	// get labels for each segment found
+	for segment := range segmentNames {
+		labels := make(map[string]string)
+		for key, value := range tree {
+			if strings.HasPrefix(key, path+"."+segment) {
+				labels[prefix+".frontend"+strings.TrimPrefix(key, path+"."+segment)] = value
+			}
+		}
+		segments = append(segments, &frontendSegment{
+			Name:   segment,
+			Labels: labels,
+		})
+	}
+
+	return segments
 }

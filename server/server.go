@@ -6,7 +6,6 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	stdlog "log"
 	"net"
 	"net/http"
@@ -14,7 +13,6 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
-	"reflect"
 	"sync"
 	"time"
 
@@ -40,6 +38,59 @@ import (
 )
 
 var httpServerLogger = stdlog.New(log.WriterLevel(logrus.DebugLevel), "", 0)
+
+func newHijackConnectionTracker() *hijackConnectionTracker {
+	return &hijackConnectionTracker{
+		conns: make(map[net.Conn]struct{}),
+	}
+}
+
+type hijackConnectionTracker struct {
+	conns map[net.Conn]struct{}
+	lock  sync.RWMutex
+}
+
+// AddHijackedConnection add a connection in the tracked connections list
+func (h *hijackConnectionTracker) AddHijackedConnection(conn net.Conn) {
+	h.lock.Lock()
+	defer h.lock.Unlock()
+	h.conns[conn] = struct{}{}
+}
+
+// RemoveHijackedConnection remove a connection from the tracked connections list
+func (h *hijackConnectionTracker) RemoveHijackedConnection(conn net.Conn) {
+	h.lock.Lock()
+	defer h.lock.Unlock()
+	delete(h.conns, conn)
+}
+
+// Shutdown wait for the connection closing
+func (h *hijackConnectionTracker) Shutdown(ctx context.Context) error {
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		h.lock.RLock()
+		if len(h.conns) == 0 {
+			return nil
+		}
+		h.lock.RUnlock()
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+		}
+	}
+}
+
+// Close close all the connections in the tracked connections list
+func (h *hijackConnectionTracker) Close() {
+	for conn := range h.conns {
+		if err := conn.Close(); err != nil {
+			log.Errorf("Error while closing Hijacked conn: %v", err)
+		}
+		delete(h.conns, conn)
+	}
+}
 
 // Server is the reverse-proxy/load-balancer engine
 type Server struct {
@@ -75,12 +126,63 @@ type EntryPoint struct {
 type serverEntryPoints map[string]*serverEntryPoint
 
 type serverEntryPoint struct {
-	httpServer       *h2c.Server
-	listener         net.Listener
-	httpRouter       *middlewares.HandlerSwitcher
-	certs            *traefiktls.CertificateStore
-	onDemandListener func(string) (*tls.Certificate, error)
-	tlsALPNGetter    func(string) (*tls.Certificate, error)
+	httpServer              *h2c.Server
+	listener                net.Listener
+	httpRouter              *middlewares.HandlerSwitcher
+	certs                   *traefiktls.CertificateStore
+	onDemandListener        func(string) (*tls.Certificate, error)
+	tlsALPNGetter           func(string) (*tls.Certificate, error)
+	hijackConnectionTracker *hijackConnectionTracker
+}
+
+func (s serverEntryPoint) Shutdown(ctx context.Context) {
+	var wg sync.WaitGroup
+	if s.httpServer != nil {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := s.httpServer.Shutdown(ctx); err != nil {
+				if ctx.Err() == context.DeadlineExceeded {
+					log.Debugf("Wait server shutdown is over due to: %s", err)
+					err = s.httpServer.Close()
+					if err != nil {
+						log.Error(err)
+					}
+				}
+			}
+		}()
+	}
+
+	if s.hijackConnectionTracker != nil {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := s.hijackConnectionTracker.Shutdown(ctx); err != nil {
+				if ctx.Err() == context.DeadlineExceeded {
+					log.Debugf("Wait hijack connection is over due to: %s", err)
+					s.hijackConnectionTracker.Close()
+				}
+			}
+		}()
+	}
+
+	wg.Wait()
+}
+
+// tcpKeepAliveListener sets TCP keep-alive timeouts on accepted
+// connections.
+type tcpKeepAliveListener struct {
+	*net.TCPListener
+}
+
+func (ln tcpKeepAliveListener) Accept() (net.Conn, error) {
+	tc, err := ln.AcceptTCP()
+	if err != nil {
+		return nil, err
+	}
+	tc.SetKeepAlive(true)
+	tc.SetKeepAlivePeriod(3 * time.Minute)
+	return tc, nil
 }
 
 // NewServer returns an initialized Server.
@@ -152,7 +254,9 @@ func (s *Server) Start() {
 		s.listenConfigurations(stop)
 	})
 	s.startProvider()
-	go s.listenSignals()
+	s.routinesPool.Go(func(stop chan bool) {
+		s.listenSignals(stop)
+	})
 }
 
 // StartWithContext starts the server and Stop/Close it when context is Done
@@ -188,13 +292,7 @@ func (s *Server) Stop() {
 			graceTimeOut := time.Duration(s.globalConfiguration.LifeCycle.GraceTimeOut)
 			ctx, cancel := context.WithTimeout(context.Background(), graceTimeOut)
 			log.Debugf("Waiting %s seconds before killing connections on entrypoint %s...", graceTimeOut, serverEntryPointName)
-			if err := serverEntryPoint.httpServer.Shutdown(ctx); err != nil {
-				log.Debugf("Wait is over due to: %s", err)
-				err = serverEntryPoint.httpServer.Close()
-				if err != nil {
-					log.Error(err)
-				}
-			}
+			serverEntryPoint.Shutdown(ctx)
 			cancel()
 			log.Debugf("Entrypoint %s closed", serverEntryPointName)
 		}(sepn, sep)
@@ -275,11 +373,6 @@ func (s *Server) AddListener(listener func(types.Configuration)) {
 
 // getCertificate allows to customize tlsConfig.GetCertificate behaviour to get the certificates inserted dynamically
 func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-	bestCertificate := s.certs.GetBestCertificate(clientHello)
-	if bestCertificate != nil {
-		return bestCertificate, nil
-	}
-
 	domainToCheck := types.CanonicalDomain(clientHello.ServerName)
 
 	if s.tlsALPNGetter != nil {
@@ -291,6 +384,11 @@ func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tl
 		if cert != nil {
 			return cert, nil
 		}
+	}
+
+	bestCertificate := s.certs.GetBestCertificate(clientHello)
+	if bestCertificate != nil {
+		return bestCertificate, nil
 	}
 
 	if s.onDemandListener != nil && len(domainToCheck) > 0 {
@@ -308,17 +406,16 @@ func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tl
 
 func (s *Server) startProvider() {
 	// start providers
-	providerType := reflect.TypeOf(s.provider)
 	jsonConf, err := json.Marshal(s.provider)
 	if err != nil {
-		log.Debugf("Unable to marshal provider conf %v with error: %v", providerType, err)
+		log.Debugf("Unable to marshal provider conf %T with error: %v", s.provider, err)
 	}
-	log.Infof("Starting provider %v %s", providerType, jsonConf)
+	log.Infof("Starting provider %T %s", s.provider, jsonConf)
 	currentProvider := s.provider
 	safe.Go(func() {
-		err := currentProvider.Provide(s.configurationChan, s.routinesPool, s.globalConfiguration.Constraints)
+		err := currentProvider.Provide(s.configurationChan, s.routinesPool)
 		if err != nil {
-			log.Errorf("Error starting provider %v: %s", providerType, err)
+			log.Errorf("Error starting provider %T: %s", s.provider, err)
 		}
 	})
 }
@@ -348,7 +445,7 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 	if len(tlsOption.ClientCA.Files) > 0 {
 		pool := x509.NewCertPool()
 		for _, caFile := range tlsOption.ClientCA.Files {
-			data, err := ioutil.ReadFile(caFile)
+			data, err := caFile.Read()
 			if err != nil {
 				return nil, err
 			}
@@ -449,6 +546,16 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 	serverEntryPoint.httpServer = newSrv
 	serverEntryPoint.listener = listener
 
+	serverEntryPoint.hijackConnectionTracker = newHijackConnectionTracker()
+	serverEntryPoint.httpServer.ConnState = func(conn net.Conn, state http.ConnState) {
+		switch state {
+		case http.StateHijacked:
+			serverEntryPoint.hijackConnectionTracker.AddHijackedConnection(conn)
+		case http.StateClosed:
+			serverEntryPoint.hijackConnectionTracker.RemoveHijackedConnection(conn)
+		}
+	}
+
 	return serverEntryPoint
 }
 
@@ -475,6 +582,8 @@ func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.
 	if err != nil {
 		return nil, nil, fmt.Errorf("error opening listener: %v", err)
 	}
+
+	listener = tcpKeepAliveListener{listener.(*net.TCPListener)}
 
 	if entryPoint.ProxyProtocol != nil {
 		listener, err = buildProxyProtocolListener(entryPoint, listener)
@@ -568,8 +677,11 @@ func registerMetricClients(metricsConfig *types.Metrics) metrics.Registry {
 
 	var registries []metrics.Registry
 	if metricsConfig.Prometheus != nil {
-		registries = append(registries, metrics.RegisterPrometheus(metricsConfig.Prometheus))
-		log.Debug("Configured Prometheus metrics")
+		prometheusRegister := metrics.RegisterPrometheus(metricsConfig.Prometheus)
+		if prometheusRegister != nil {
+			registries = append(registries, prometheusRegister)
+			log.Debug("Configured Prometheus metrics")
+		}
 	}
 	if metricsConfig.Datadog != nil {
 		registries = append(registries, metrics.RegisterDatadog(metricsConfig.Datadog))

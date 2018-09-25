@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"bufio"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -41,11 +42,8 @@ func (retry *Retry) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	attempts := 1
 	for {
 		attemptsExhausted := attempts >= retry.attempts
-		// Websocket requests can't be retried at this point in time.
-		// This is due to the fact that gorilla/websocket doesn't use the request
-		// context and so we don't get httptrace information.
-		// Websocket clients should however retry on their own anyway.
-		shouldRetry := !attemptsExhausted && !isWebsocketRequest(r)
+
+		shouldRetry := !attemptsExhausted
 		retryResponseWriter := newRetryResponseWriter(rw, shouldRetry)
 
 		// Disable retries when the backend already received request data
@@ -128,7 +126,7 @@ func (rr *retryResponseWriterWithoutCloseNotify) Header() http.Header {
 
 func (rr *retryResponseWriterWithoutCloseNotify) Write(buf []byte) (int, error) {
 	if rr.ShouldRetry() {
-		return 0, nil
+		return len(buf), nil
 	}
 	return rr.responseWriter.Write(buf)
 }
@@ -137,7 +135,7 @@ func (rr *retryResponseWriterWithoutCloseNotify) WriteHeader(code int) {
 	if rr.ShouldRetry() && code == http.StatusServiceUnavailable {
 		// We get a 503 HTTP Status Code when there is no backend server in the pool
 		// to which the request could be sent.  Also, note that rr.ShouldRetry()
-		// will never return true in case there was a connetion established to
+		// will never return true in case there was a connection established to
 		// the backend server and so we can be sure that the 503 was produced
 		// inside Traefik already and we don't have to retry in this cases.
 		rr.DisableRetries()
@@ -150,7 +148,11 @@ func (rr *retryResponseWriterWithoutCloseNotify) WriteHeader(code int) {
 }
 
 func (rr *retryResponseWriterWithoutCloseNotify) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	return rr.responseWriter.(http.Hijacker).Hijack()
+	hijacker, ok := rr.responseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, fmt.Errorf("%T is not a http.Hijacker", rr.responseWriter)
+	}
+	return hijacker.Hijack()
 }
 
 func (rr *retryResponseWriterWithoutCloseNotify) Flush() {

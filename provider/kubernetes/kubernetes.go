@@ -43,6 +43,8 @@ const (
 	traefikDefaultIngressClass = "traefik"
 	defaultBackendName         = "global-default-backend"
 	defaultFrontendName        = "global-default-frontend"
+	allowedProtocolHTTPS       = "https"
+	allowedProtocolH2C         = "h2c"
 )
 
 // IngressEndpoint holds the endpoint information for the Kubernetes provider
@@ -95,9 +97,14 @@ func (p *Provider) newK8sClient(ingressLabelSelector string) (Client, error) {
 	return cl, err
 }
 
+// Init the provider
+func (p *Provider) Init(constraints types.Constraints) error {
+	return p.BaseProvider.Init(constraints)
+}
+
 // Provide allows the k8s provider to provide configurations to traefik
 // using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
+func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	// Tell glog (used by client-go) to log into STDERR. Otherwise, we risk
 	// certain kinds of API errors getting logged into a directory not
 	// available in a `FROM scratch` Docker container, causing glog to abort
@@ -112,44 +119,39 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	if err != nil {
 		return err
 	}
-	p.Constraints = append(p.Constraints, constraints...)
 
 	pool.Go(func(stop chan bool) {
 		operation := func() error {
-			for {
-				stopWatch := make(chan struct{}, 1)
-				defer close(stopWatch)
-				eventsChan, err := k8sClient.WatchAll(p.Namespaces, stopWatch)
-				if err != nil {
-					log.Errorf("Error watching kubernetes events: %v", err)
-					timer := time.NewTimer(1 * time.Second)
-					select {
-					case <-timer.C:
-						return err
-					case <-stop:
-						return nil
-					}
+			stopWatch := make(chan struct{}, 1)
+			defer close(stopWatch)
+			eventsChan, err := k8sClient.WatchAll(p.Namespaces, stopWatch)
+			if err != nil {
+				log.Errorf("Error watching kubernetes events: %v", err)
+				timer := time.NewTimer(1 * time.Second)
+				select {
+				case <-timer.C:
+					return err
+				case <-stop:
+					return nil
 				}
-				for {
-					select {
-					case <-stop:
-						return nil
-					case event := <-eventsChan:
-						log.Debugf("Received Kubernetes event kind %T", event)
-
-						templateObjects, err := p.loadIngresses(k8sClient)
-						if err != nil {
-							return err
-						}
-
-						if reflect.DeepEqual(p.lastConfiguration.Get(), templateObjects) {
-							log.Debugf("Skipping Kubernetes event kind %T", event)
-						} else {
-							p.lastConfiguration.Set(templateObjects)
-							configurationChan <- types.ConfigMessage{
-								ProviderName:  "kubernetes",
-								Configuration: p.loadConfig(*templateObjects),
-							}
+			}
+			for {
+				select {
+				case <-stop:
+					return nil
+				case event := <-eventsChan:
+					log.Debugf("Received Kubernetes event kind %T", event)
+					templateObjects, err := p.loadIngresses(k8sClient)
+					if err != nil {
+						return err
+					}
+					if reflect.DeepEqual(p.lastConfiguration.Get(), templateObjects) {
+						log.Debugf("Skipping Kubernetes event kind %T", event)
+					} else {
+						p.lastConfiguration.Set(templateObjects)
+						configurationChan <- types.ConfigMessage{
+							ProviderName:  "kubernetes",
+							Configuration: p.loadConfig(*templateObjects),
 						}
 					}
 				}
@@ -218,7 +220,12 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 			}
 
 			for _, pa := range r.HTTP.Paths {
+				priority := getIntValue(i.Annotations, annotationKubernetesPriority, 0)
 				baseName := r.Host + pa.Path
+				if priority > 0 {
+					baseName = strconv.Itoa(priority) + "-" + baseName
+				}
+
 				if _, exists := templateObjects.Backends[baseName]; !exists {
 					templateObjects.Backends[baseName] = &types.Backend{
 						Servers: make(map[string]types.Server),
@@ -244,7 +251,6 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 					passHostHeader := getBoolValue(i.Annotations, annotationKubernetesPreserveHost, !p.DisablePassHostHeaders)
 					passTLSCert := getBoolValue(i.Annotations, annotationKubernetesPassTLSCert, p.EnablePassTLSCert)
-					priority := getIntValue(i.Annotations, annotationKubernetesPriority, 0)
 					entryPoints := getSliceStringValue(i.Annotations, annotationKubernetesFrontendEntryPoints)
 
 					templateObjects.Frontends[baseName] = &types.Frontend{
@@ -254,7 +260,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						Routes:         make(map[string]types.Route),
 						Priority:       priority,
 						WhiteList:      getWhiteList(i),
-						Redirect:       getFrontendRedirect(i),
+						Redirect:       getFrontendRedirect(i, baseName, pa.Path),
 						EntryPoints:    entryPoints,
 						Headers:        getHeader(i),
 						Errors:         getErrorPages(i),
@@ -306,6 +312,16 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					if equalPorts(port, pa.Backend.ServicePort) {
 						if port.Port == 443 || strings.HasPrefix(port.Name, "https") {
 							protocol = "https"
+						}
+
+						protocol = getStringValue(i.Annotations, annotationKubernetesProtocol, protocol)
+						switch protocol {
+						case allowedProtocolHTTPS:
+						case allowedProtocolH2C:
+						case label.DefaultProtocol:
+						default:
+							log.Errorf("Invalid protocol %s/%s specified for Ingress %s - skipping", annotationKubernetesProtocol, i.Namespace, i.Name)
+							continue
 						}
 
 						if service.Spec.Type == "ExternalName" {
@@ -496,7 +512,7 @@ func (p *Provider) addGlobalBackend(cl Client, i *extensionsv1beta1.Ingress, tem
 		Routes:         make(map[string]types.Route),
 		Priority:       priority,
 		WhiteList:      getWhiteList(i),
-		Redirect:       getFrontendRedirect(i),
+		Redirect:       getFrontendRedirect(i, defaultFrontendName, "/"),
 		EntryPoints:    entryPoints,
 		Headers:        getHeader(i),
 		Errors:         getErrorPages(i),
@@ -521,32 +537,18 @@ func getRuleForPath(pa extensionsv1beta1.HTTPIngressPath, i *extensionsv1beta1.I
 	case ruleTypePath, ruleTypePathPrefix, ruleTypePathStrip, ruleTypePathPrefixStrip:
 	case ruleTypeReplacePath:
 		log.Warnf("Using %s as %s will be deprecated in the future. Please use the %s annotation instead", ruleType, annotationKubernetesRuleType, annotationKubernetesRequestModifier)
-	case "":
-		return "", errors.New("cannot use empty rule")
 	default:
 		return "", fmt.Errorf("cannot use non-matcher rule: %q", ruleType)
 	}
 
 	rules := []string{ruleType + ":" + pa.Path}
 
-	var pathReplaceAnnotation string
-	if ruleType == ruleTypeReplacePath {
-		pathReplaceAnnotation = annotationKubernetesRuleType
-	}
-
 	if rewriteTarget := getStringValue(i.Annotations, annotationKubernetesRewriteTarget, ""); rewriteTarget != "" {
-		if pathReplaceAnnotation != "" {
-			return "", fmt.Errorf("rewrite-target must not be used together with annotation %q", pathReplaceAnnotation)
+		if ruleType == ruleTypeReplacePath {
+			return "", fmt.Errorf("rewrite-target must not be used together with annotation %q", annotationKubernetesRuleType)
 		}
-		rules = append(rules, ruleTypeReplacePath+":"+rewriteTarget)
-		pathReplaceAnnotation = annotationKubernetesRewriteTarget
-	}
-
-	if rootPath := getStringValue(i.Annotations, annotationKubernetesAppRoot, ""); rootPath != "" && pa.Path == "/" {
-		if pathReplaceAnnotation != "" {
-			return "", fmt.Errorf("app-root must not be used together with annotation %q", pathReplaceAnnotation)
-		}
-		rules = append(rules, ruleTypeReplacePath+":"+rootPath)
+		rewriteTargetRule := fmt.Sprintf("ReplacePathRegex: ^%s(.*) %s$1", pa.Path, strings.TrimRight(rewriteTarget, "/"))
+		rules = append(rules, rewriteTargetRule)
 	}
 
 	if requestModifier := getStringValue(i.Annotations, annotationKubernetesRequestModifier, ""); requestModifier != "" {
@@ -747,7 +749,10 @@ func getBasicAuthConfig(i *extensionsv1beta1.Ingress, k8sClient Client) (*types.
 		return nil, err
 	}
 
-	return &types.Basic{Users: credentials}, nil
+	return &types.Basic{
+		Users:        credentials,
+		RemoveHeader: getBoolValue(i.Annotations, annotationKubernetesAuthRemoveHeader, false),
+	}, nil
 }
 
 func getDigestAuthConfig(i *extensionsv1beta1.Ingress, k8sClient Client) (*types.Digest, error) {
@@ -756,7 +761,9 @@ func getDigestAuthConfig(i *extensionsv1beta1.Ingress, k8sClient Client) (*types
 		return nil, err
 	}
 
-	return &types.Digest{Users: credentials}, nil
+	return &types.Digest{Users: credentials,
+		RemoveHeader: getBoolValue(i.Annotations, annotationKubernetesAuthRemoveHeader, false),
+	}, nil
 }
 
 func getAuthCredentials(i *extensionsv1beta1.Ingress, k8sClient Client) ([]string, error) {
@@ -856,8 +863,16 @@ func loadAuthTLSSecret(namespace, secretName string, k8sClient Client) (string, 
 	return getCertificateBlocks(secret, namespace, secretName)
 }
 
-func getFrontendRedirect(i *extensionsv1beta1.Ingress) *types.Redirect {
+func getFrontendRedirect(i *extensionsv1beta1.Ingress, baseName, path string) *types.Redirect {
 	permanent := getBoolValue(i.Annotations, annotationKubernetesRedirectPermanent, false)
+
+	if appRoot := getStringValue(i.Annotations, annotationKubernetesAppRoot, ""); appRoot != "" && path == "/" {
+		return &types.Redirect{
+			Regex:       fmt.Sprintf("%s$", baseName),
+			Replacement: fmt.Sprintf("%s/%s", strings.TrimRight(baseName, "/"), strings.TrimLeft(appRoot, "/")),
+			Permanent:   permanent,
+		}
+	}
 
 	redirectEntryPoint := getStringValue(i.Annotations, annotationKubernetesRedirectEntryPoint, "")
 	if len(redirectEntryPoint) > 0 {
@@ -868,7 +883,19 @@ func getFrontendRedirect(i *extensionsv1beta1.Ingress) *types.Redirect {
 	}
 
 	redirectRegex := getStringValue(i.Annotations, annotationKubernetesRedirectRegex, "")
+	_, err := strconv.Unquote(`"` + redirectRegex + `"`)
+	if err != nil {
+		log.Debugf("Skipping Redirect on Ingress %s/%s due to invalid regex: %s", i.Namespace, i.Name, redirectRegex)
+		return nil
+	}
+
 	redirectReplacement := getStringValue(i.Annotations, annotationKubernetesRedirectReplacement, "")
+	_, err = strconv.Unquote(`"` + redirectReplacement + `"`)
+	if err != nil {
+		log.Debugf("Skipping Redirect on Ingress %s/%s due to invalid replacement: %q", i.Namespace, i.Name, redirectRegex)
+		return nil
+	}
+
 	if len(redirectRegex) > 0 && len(redirectReplacement) > 0 {
 		return &types.Redirect{
 			Regex:       redirectRegex,

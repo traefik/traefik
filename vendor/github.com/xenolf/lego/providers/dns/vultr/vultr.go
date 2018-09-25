@@ -4,16 +4,46 @@
 package vultr
 
 import (
+	"crypto/tls"
+	"errors"
 	"fmt"
+	"net/http"
 	"strings"
+	"time"
 
 	vultr "github.com/JamesClonk/vultr/lib"
 	"github.com/xenolf/lego/acme"
 	"github.com/xenolf/lego/platform/config/env"
 )
 
+// Config is used to configure the creation of the DNSProvider
+type Config struct {
+	APIKey             string
+	PropagationTimeout time.Duration
+	PollingInterval    time.Duration
+	TTL                int
+	HTTPClient         *http.Client
+}
+
+// NewDefaultConfig returns a default configuration for the DNSProvider
+func NewDefaultConfig() *Config {
+	return &Config{
+		TTL:                env.GetOrDefaultInt("VULTR_TTL", 120),
+		PropagationTimeout: env.GetOrDefaultSecond("VULTR_PROPAGATION_TIMEOUT", acme.DefaultPropagationTimeout),
+		PollingInterval:    env.GetOrDefaultSecond("VULTR_POLLING_INTERVAL", acme.DefaultPollingInterval),
+		HTTPClient: &http.Client{
+			Timeout: env.GetOrDefaultSecond("VULTR_HTTP_TIMEOUT", 0),
+			// from Vultr Client
+			Transport: &http.Transport{
+				TLSNextProto: make(map[string]func(string, *tls.Conn) http.RoundTripper),
+			},
+		},
+	}
+}
+
 // DNSProvider is an implementation of the acme.ChallengeProvider interface.
 type DNSProvider struct {
+	config *Config
 	client *vultr.Client
 }
 
@@ -22,36 +52,58 @@ type DNSProvider struct {
 func NewDNSProvider() (*DNSProvider, error) {
 	values, err := env.Get("VULTR_API_KEY")
 	if err != nil {
-		return nil, fmt.Errorf("Vultr: %v", err)
+		return nil, fmt.Errorf("vultr: %v", err)
 	}
 
-	return NewDNSProviderCredentials(values["VULTR_API_KEY"])
+	config := NewDefaultConfig()
+	config.APIKey = values["VULTR_API_KEY"]
+
+	return NewDNSProviderConfig(config)
 }
 
-// NewDNSProviderCredentials uses the supplied credentials to return a DNSProvider
-// instance configured for Vultr.
+// NewDNSProviderCredentials uses the supplied credentials
+// to return a DNSProvider instance configured for Vultr.
+// Deprecated
 func NewDNSProviderCredentials(apiKey string) (*DNSProvider, error) {
-	if apiKey == "" {
-		return nil, fmt.Errorf("Vultr credentials missing")
+	config := NewDefaultConfig()
+	config.APIKey = apiKey
+
+	return NewDNSProviderConfig(config)
+}
+
+// NewDNSProviderConfig return a DNSProvider instance configured for Vultr.
+func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
+	if config == nil {
+		return nil, errors.New("vultr: the configuration of the DNS provider is nil")
 	}
 
-	return &DNSProvider{client: vultr.NewClient(apiKey, nil)}, nil
+	if config.APIKey == "" {
+		return nil, fmt.Errorf("vultr: credentials missing")
+	}
+
+	options := &vultr.Options{
+		HTTPClient: config.HTTPClient,
+		UserAgent:  acme.UserAgent,
+	}
+	client := vultr.NewClient(config.APIKey, options)
+
+	return &DNSProvider{client: client, config: config}, nil
 }
 
 // Present creates a TXT record to fulfil the DNS-01 challenge.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
+	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
 
 	zoneDomain, err := d.getHostedZone(domain)
 	if err != nil {
-		return err
+		return fmt.Errorf("vultr: %v", err)
 	}
 
 	name := d.extractRecordName(fqdn, zoneDomain)
 
-	err = d.client.CreateDNSRecord(zoneDomain, name, "TXT", `"`+value+`"`, 0, ttl)
+	err = d.client.CreateDNSRecord(zoneDomain, name, "TXT", `"`+value+`"`, 0, d.config.TTL)
 	if err != nil {
-		return fmt.Errorf("Vultr API call failed: %v", err)
+		return fmt.Errorf("vultr: API call failed: %v", err)
 	}
 
 	return nil
@@ -63,22 +115,34 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 
 	zoneDomain, records, err := d.findTxtRecords(domain, fqdn)
 	if err != nil {
-		return err
+		return fmt.Errorf("vultr: %v", err)
 	}
 
+	var allErr []string
 	for _, rec := range records {
 		err := d.client.DeleteDNSRecord(zoneDomain, rec.RecordID)
 		if err != nil {
-			return err
+			allErr = append(allErr, err.Error())
 		}
 	}
+
+	if len(allErr) > 0 {
+		return errors.New(strings.Join(allErr, ": "))
+	}
+
 	return nil
+}
+
+// Timeout returns the timeout and interval to use when checking for DNS propagation.
+// Adjusting here to cope with spikes in propagation times.
+func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
+	return d.config.PropagationTimeout, d.config.PollingInterval
 }
 
 func (d *DNSProvider) getHostedZone(domain string) (string, error) {
 	domains, err := d.client.GetDNSDomains()
 	if err != nil {
-		return "", fmt.Errorf("Vultr API call failed: %v", err)
+		return "", fmt.Errorf("API call failed: %v", err)
 	}
 
 	var hostedDomain vultr.DNSDomain
@@ -90,7 +154,7 @@ func (d *DNSProvider) getHostedZone(domain string) (string, error) {
 		}
 	}
 	if hostedDomain.Domain == "" {
-		return "", fmt.Errorf("No matching Vultr domain found for domain %s", domain)
+		return "", fmt.Errorf("no matching Vultr domain found for domain %s", domain)
 	}
 
 	return hostedDomain.Domain, nil
@@ -105,7 +169,7 @@ func (d *DNSProvider) findTxtRecords(domain, fqdn string) (string, []vultr.DNSRe
 	var records []vultr.DNSRecord
 	result, err := d.client.GetDNSRecords(zoneDomain)
 	if err != nil {
-		return "", records, fmt.Errorf("Vultr API call has failed: %v", err)
+		return "", records, fmt.Errorf("API call has failed: %v", err)
 	}
 
 	recordName := d.extractRecordName(fqdn, zoneDomain)

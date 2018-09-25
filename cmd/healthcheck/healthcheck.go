@@ -20,7 +20,7 @@ func NewCmd(traefikConfiguration *cmd.TraefikConfiguration, traefikPointersConfi
 		Description:           `Calls traefik /ping to check health (web provider must be enabled)`,
 		Config:                traefikConfiguration,
 		DefaultPointersConfig: traefikPointersConfiguration,
-		Run: runCmd(traefikConfiguration),
+		Run:                   runCmd(traefikConfiguration),
 		Metadata: map[string]string{
 			"parseAllSources": "true",
 		},

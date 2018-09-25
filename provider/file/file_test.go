@@ -198,7 +198,7 @@ func TestProvideWithoutWatch(t *testing.T) {
 			configChan := make(chan types.ConfigMessage)
 
 			go func() {
-				err := provider.Provide(configChan, safe.NewPool(context.Background()), types.Constraints{})
+				err := provider.Provide(configChan, safe.NewPool(context.Background()))
 				assert.NoError(t, err)
 			}()
 
@@ -226,7 +226,7 @@ func TestProvideWithWatch(t *testing.T) {
 			configChan := make(chan types.ConfigMessage)
 
 			go func() {
-				err := provider.Provide(configChan, safe.NewPool(context.Background()), types.Constraints{})
+				err := provider.Provide(configChan, safe.NewPool(context.Background()))
 				assert.NoError(t, err)
 			}()
 
@@ -276,7 +276,7 @@ func TestErrorWhenEmptyConfig(t *testing.T) {
 	configChan := make(chan types.ConfigMessage)
 	errorChan := make(chan struct{})
 	go func() {
-		err := provider.Provide(configChan, safe.NewPool(context.Background()), types.Constraints{})
+		err := provider.Provide(configChan, safe.NewPool(context.Background()))
 		assert.Error(t, err)
 		close(errorChan)
 	}()

@@ -9,6 +9,7 @@ import (
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/middlewares/accesslog"
 	"github.com/containous/traefik/middlewares/tracing"
+	"github.com/containous/traefik/middlewares/tracing/datadog"
 	"github.com/containous/traefik/middlewares/tracing/jaeger"
 	"github.com/containous/traefik/middlewares/tracing/zipkin"
 	"github.com/containous/traefik/ping"
@@ -218,8 +219,9 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 
 	// default Tracing
 	defaultTracing := tracing.Tracing{
-		Backend:     "jaeger",
-		ServiceName: "traefik",
+		Backend:       "jaeger",
+		ServiceName:   "traefik",
+		SpanNameLimit: 0,
 		Jaeger: &jaeger.Config{
 			SamplingServerURL:  "http://localhost:5778/sampling",
 			SamplingType:       "const",
@@ -231,6 +233,11 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 			SameSpan:     false,
 			ID128Bit:     true,
 			Debug:        false,
+		},
+		DataDog: &datadog.Config{
+			LocalAgentHostPort: "localhost:8126",
+			GlobalTag:          "",
+			Debug:              false,
 		},
 	}
 

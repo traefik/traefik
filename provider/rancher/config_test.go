@@ -59,9 +59,22 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						label.TraefikBackendBufferingMemRequestBodyBytes:     "2097152",
 						label.TraefikBackendBufferingRetryExpression:         "IsNetworkError() && Attempts() <= 2",
 
+						label.TraefikFrontendPassTLSClientCertPem:                      "true",
+						label.TraefikFrontendPassTLSClientCertInfosNotBefore:           "true",
+						label.TraefikFrontendPassTLSClientCertInfosNotAfter:            "true",
+						label.TraefikFrontendPassTLSClientCertInfosSans:                "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectCommonName:   "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectCountry:      "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectLocality:     "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectOrganization: "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectProvince:     "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectSerialNumber: "true",
+
 						label.TraefikFrontendAuthBasic:                        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendAuthBasicRemoveHeader:            "true",
 						label.TraefikFrontendAuthBasicUsers:                   "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.TraefikFrontendAuthBasicUsersFile:               ".htpasswd",
+						label.TraefikFrontendAuthDigestRemoveHeader:           "true",
 						label.TraefikFrontendAuthDigestUsers:                  "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.TraefikFrontendAuthDigestUsersFile:              ".htpasswd",
 						label.TraefikFrontendAuthForwardAddress:               "auth.server",
@@ -142,9 +155,26 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					PassHostHeader: true,
 					PassTLSCert:    true,
 					Priority:       666,
+					PassTLSClientCert: &types.TLSClientHeaders{
+						PEM: true,
+						Infos: &types.TLSClientCertificateInfos{
+							NotBefore: true,
+							Sans:      true,
+							NotAfter:  true,
+							Subject: &types.TLSCLientCertificateSubjectInfos{
+								CommonName:   true,
+								Country:      true,
+								Locality:     true,
+								Organization: true,
+								Province:     true,
+								SerialNumber: true,
+							},
+						},
+					},
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{
+							RemoveHeader: true,
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 							UsersFile: ".htpasswd",
@@ -288,9 +318,22 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						label.Prefix + "sauternes." + label.SuffixProtocol: "https",
 						label.Prefix + "sauternes." + label.SuffixWeight:   "12",
 
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertPem:                      "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosNotAfter:            "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosNotBefore:           "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSans:                "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSubjectCommonName:   "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSubjectCountry:      "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSubjectLocality:     "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSubjectOrganization: "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSubjectProvince:     "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSubjectSerialNumber: "true",
+
 						label.Prefix + "sauternes." + label.SuffixFrontendRule:                             "Host:traefik.wtf",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicRemoveHeader:            "true",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicUsers:                   "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicUsersFile:               ".htpasswd",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthDigestRemoveHeader:           "true",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthDigestUsers:                  "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthDigestUsersFile:              ".htpasswd",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthForwardAddress:               "auth.server",
@@ -367,9 +410,26 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					PassHostHeader: true,
 					PassTLSCert:    true,
 					Priority:       666,
+					PassTLSClientCert: &types.TLSClientHeaders{
+						PEM: true,
+						Infos: &types.TLSClientCertificateInfos{
+							NotBefore: true,
+							Sans:      true,
+							NotAfter:  true,
+							Subject: &types.TLSCLientCertificateSubjectInfos{
+								CommonName:   true,
+								Country:      true,
+								Locality:     true,
+								Organization: true,
+								Province:     true,
+								SerialNumber: true,
+							},
+						},
+					},
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{
+							RemoveHeader: true,
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 							UsersFile: ".htpasswd",
@@ -564,9 +624,10 @@ func TestProviderBuildConfiguration(t *testing.T) {
 				{
 					Name: "test/service",
 					Labels: map[string]string{
-						label.TraefikPort:                        "80",
-						label.TraefikFrontendAuthDigestUsers:     "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						label.TraefikFrontendAuthDigestUsersFile: ".htpasswd",
+						label.TraefikPort:                           "80",
+						label.TraefikFrontendAuthDigestUsers:        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendAuthDigestUsersFile:    ".htpasswd",
+						label.TraefikFrontendAuthDigestRemoveHeader: "true",
 					},
 					Health:     "healthy",
 					Containers: []string{"127.0.0.1"},
@@ -579,6 +640,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					EntryPoints:    []string{},
 					Auth: &types.Auth{
 						Digest: &types.Digest{
+							RemoveHeader: true,
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 							UsersFile: ".htpasswd",
@@ -681,7 +743,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 
 func TestProviderServiceFilter(t *testing.T) {
 	provider := &Provider{
-		Domain: "rancher.localhost",
+		Domain:                    "rancher.localhost",
 		EnableServiceHealthFilter: true,
 	}
 

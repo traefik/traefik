@@ -2,11 +2,11 @@ package ratelimit
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/mailgun/timetools"
-	"sort"
 )
 
 // TokenBucketSet represents a set of TokenBucket covering different time periods.
@@ -16,7 +16,7 @@ type TokenBucketSet struct {
 	clock     timetools.TimeProvider
 }
 
-// newTokenBucketSet creates a `TokenBucketSet` from the specified `rates`.
+// NewTokenBucketSet creates a `TokenBucketSet` from the specified `rates`.
 func NewTokenBucketSet(rates *RateSet, clock timetools.TimeProvider) *TokenBucketSet {
 	tbs := new(TokenBucketSet)
 	tbs.clock = clock
@@ -54,9 +54,10 @@ func (tbs *TokenBucketSet) Update(rates *RateSet) {
 	}
 }
 
+// Consume consume tokens
 func (tbs *TokenBucketSet) Consume(tokens int64) (time.Duration, error) {
 	var maxDelay time.Duration = UndefinedDelay
-	var firstErr error = nil
+	var firstErr error
 	for _, tokenBucket := range tbs.buckets {
 		// We keep calling `Consume` even after a error is returned for one of
 		// buckets because that allows us to simplify the rollback procedure,
@@ -80,6 +81,7 @@ func (tbs *TokenBucketSet) Consume(tokens int64) (time.Duration, error) {
 	return maxDelay, firstErr
 }
 
+// GetMaxPeriod returns the max period
 func (tbs *TokenBucketSet) GetMaxPeriod() time.Duration {
 	return tbs.maxPeriod
 }

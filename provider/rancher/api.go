@@ -55,8 +55,7 @@ func getenv(key, fallback string) string {
 	return value
 }
 
-func (p *Provider) apiProvide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
-	p.Constraints = append(p.Constraints, constraints...)
+func (p *Provider) apiProvide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 
 	if p.API == nil {
 		p.API = &APIConfiguration{}

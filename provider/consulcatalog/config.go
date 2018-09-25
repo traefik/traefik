@@ -44,6 +44,7 @@ func (p *Provider) buildConfigurationV2(catalog []catalogUpdate) *types.Configur
 		"getPriority":            label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
 		"getPassHostHeader":      label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getPassTLSCert":         label.GetFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
+		"getPassTLSClientCert":   label.GetTLSClientCert,
 		"getWhiteList":           label.GetWhiteList,
 		"getRedirect":            label.GetRedirect,
 		"getErrorPages":          label.GetErrorPages,
@@ -55,7 +56,7 @@ func (p *Provider) buildConfigurationV2(catalog []catalogUpdate) *types.Configur
 	var services []*serviceUpdate
 	for _, info := range catalog {
 		if len(info.Nodes) > 0 {
-			services = append(services, info.Service)
+			services = append(services, p.generateFrontends(info.Service)...)
 			allNodes = append(allNodes, info.Nodes...)
 		}
 	}
@@ -161,6 +162,9 @@ func getCircuitBreaker(labels map[string]string) *types.CircuitBreaker {
 }
 
 func getServiceBackendName(service *serviceUpdate) string {
+	if service.ParentServiceName != "" {
+		return strings.ToLower(service.ParentServiceName)
+	}
 	return strings.ToLower(service.ServiceName)
 }
 

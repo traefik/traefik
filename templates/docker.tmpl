@@ -75,6 +75,29 @@
       "{{.}}",
       {{end}}]
 
+    {{ $tlsClientCert := getPassTLSClientCert $container.SegmentLabels }}
+    {{if $tlsClientCert }}
+    [frontends."frontend-{{ $frontendName }}".passTLSClientCert]
+      pem = {{ $tlsClientCert.PEM }}
+      {{ $infos := $tlsClientCert.Infos }}
+      {{if $infos }}
+      [frontends."frontend-{{ $frontendName }}".passTLSClientCert.infos]
+        notAfter = {{ $infos.NotAfter   }}
+        notBefore = {{ $infos.NotBefore }}
+        sans = {{ $infos.Sans }}
+        {{ $subject := $infos.Subject }}
+        {{if $subject }}
+        [frontends."frontend-{{ $frontendName }}".passTLSClientCert.infos.subject]
+          country = {{ $subject.Country }}
+          province = {{ $subject.Province }}
+          locality = {{ $subject.Locality }}
+          organization = {{ $subject.Organization }}
+          commonName = {{ $subject.CommonName }}
+          serialNumber = {{ $subject.SerialNumber }}
+        {{end}}
+      {{end}}
+    {{end}}
+
     {{ $auth := getAuth $container.SegmentLabels }}
     {{if $auth }}
     [frontends."frontend-{{ $frontendName }}".auth]
@@ -89,14 +112,15 @@
         [frontends."frontend-{{ $frontendName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
-          cert = "{{ $auth.Forward.TLS.Cert }}"
-          key = "{{ $auth.Forward.TLS.Key }}"
+          cert = """{{ $auth.Forward.TLS.Cert }}"""
+          key = """{{ $auth.Forward.TLS.Key }}"""
           insecureSkipVerify = {{ $auth.Forward.TLS.InsecureSkipVerify }}
         {{end}}
       {{end}}
 
       {{if $auth.Basic }}
       [frontends."frontend-{{ $frontendName }}".auth.basic]
+        removeHeader = {{ $auth.Basic.RemoveHeader }}
         {{if $auth.Basic.Users }}
         users = [{{range $auth.Basic.Users }}
           "{{.}}",
@@ -107,6 +131,7 @@
 
       {{if $auth.Digest }}
       [frontends."frontend-{{ $frontendName }}".auth.digest]
+        removeHeader = {{ $auth.Digest.RemoveHeader }}
         {{if $auth.Digest.Users }}
         users = [{{range $auth.Digest.Users }}
           "{{.}}",

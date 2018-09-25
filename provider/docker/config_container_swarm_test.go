@@ -94,14 +94,81 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
+			desc: "when pass tls client cert configuration",
+			services: []swarm.Service{
+				swarmService(
+					serviceName("test"),
+					serviceLabels(map[string]string{
+						label.TraefikPort:                                              "80",
+						label.TraefikFrontendPassTLSClientCertPem:                      "true",
+						label.TraefikFrontendPassTLSClientCertInfosNotBefore:           "true",
+						label.TraefikFrontendPassTLSClientCertInfosNotAfter:            "true",
+						label.TraefikFrontendPassTLSClientCertInfosSans:                "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectCommonName:   "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectCountry:      "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectLocality:     "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectOrganization: "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectProvince:     "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectSerialNumber: "true",
+					}),
+					withEndpointSpec(modeVIP),
+					withEndpoint(virtualIP("1", "127.0.0.1/24")),
+				),
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-Host-test-docker-localhost-0": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					PassTLSClientCert: &types.TLSClientHeaders{
+						PEM: true,
+						Infos: &types.TLSClientCertificateInfos{
+							NotBefore: true,
+							Sans:      true,
+							NotAfter:  true,
+							Subject: &types.TLSCLientCertificateSubjectInfos{
+								CommonName:   true,
+								Country:      true,
+								Locality:     true,
+								Organization: true,
+								Province:     true,
+								SerialNumber: true,
+							},
+						},
+					},
+					Routes: map[string]types.Route{
+						"route-frontend-Host-test-docker-localhost-0": {
+							Rule: "Host:test.docker.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test": {
+					Servers: map[string]types.Server{
+						"server-test-842895ca2aca17f6ee36ddb2f621194d": {
+							URL:    "http://127.0.0.1:80",
+							Weight: label.DefaultWeight,
+						},
+					},
+				},
+			},
+			networks: map[string]*docker.NetworkResource{
+				"1": {
+					Name: "foo",
+				},
+			},
+		},
+		{
 			desc: "when frontend basic auth configuration",
 			services: []swarm.Service{
 				swarmService(
 					serviceName("test"),
 					serviceLabels(map[string]string{
-						label.TraefikPort:                       "80",
-						label.TraefikFrontendAuthBasicUsers:     "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						label.TraefikFrontendAuthBasicUsersFile: ".htpasswd",
+						label.TraefikPort:                          "80",
+						label.TraefikFrontendAuthBasicUsers:        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendAuthBasicUsersFile:    ".htpasswd",
+						label.TraefikFrontendAuthBasicRemoveHeader: "true",
 					}),
 					withEndpointSpec(modeVIP),
 					withEndpoint(virtualIP("1", "127.0.0.1/24")),
@@ -114,6 +181,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 					EntryPoints:    []string{},
 					Auth: &types.Auth{
 						Basic: &types.Basic{
+							RemoveHeader: true,
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 							UsersFile: ".htpasswd",
@@ -195,9 +263,10 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 				swarmService(
 					serviceName("test"),
 					serviceLabels(map[string]string{
-						label.TraefikPort:                        "80",
-						label.TraefikFrontendAuthDigestUsers:     "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						label.TraefikFrontendAuthDigestUsersFile: ".htpasswd",
+						label.TraefikPort:                           "80",
+						label.TraefikFrontendAuthDigestUsers:        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendAuthDigestUsersFile:    ".htpasswd",
+						label.TraefikFrontendAuthDigestRemoveHeader: "true",
 					}),
 					withEndpointSpec(modeVIP),
 					withEndpoint(virtualIP("1", "127.0.0.1/24")),
@@ -210,6 +279,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 					EntryPoints:    []string{},
 					Auth: &types.Auth{
 						Digest: &types.Digest{
+							RemoveHeader: true,
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 							UsersFile: ".htpasswd",
@@ -329,8 +399,10 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						label.TraefikBackendBufferingMemRequestBodyBytes:     "2097152",
 						label.TraefikBackendBufferingRetryExpression:         "IsNetworkError() && Attempts() <= 2",
 
+						label.TraefikFrontendAuthBasicRemoveHeader:            "true",
 						label.TraefikFrontendAuthBasicUsers:                   "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.TraefikFrontendAuthBasicUsersFile:               ".htpasswd",
+						label.TraefikFrontendAuthDigestRemoveHeader:           "true",
 						label.TraefikFrontendAuthDigestUsers:                  "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.TraefikFrontendAuthDigestUsersFile:              ".htpasswd",
 						label.TraefikFrontendAuthForwardAddress:               "auth.server",
@@ -414,6 +486,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{
+							RemoveHeader: true,
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 							UsersFile: ".htpasswd",
@@ -926,7 +999,7 @@ func TestSwarmGetIPAddress(t *testing.T) {
 			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
 			dData.SegmentLabels = segmentProperties[""]
 
-			actual := provider.getIPAddress(dData)
+			actual := provider.getDeprecatedIPAddress(dData)
 			assert.Equal(t, test.expected, actual)
 		})
 	}

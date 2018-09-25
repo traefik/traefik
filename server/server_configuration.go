@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"reflect"
 	"sort"
@@ -184,6 +185,11 @@ func (s *Server) loadFrontendConfig(
 				return nil, err
 			}
 
+			// Handler used by error pages
+			if backendsHandlers[entryPointName+providerName+frontend.Backend] == nil {
+				backendsHandlers[entryPointName+providerName+frontend.Backend] = lb
+			}
+
 			if healthCheckConfig != nil {
 				backendsHealthCheck[entryPointName+providerName+frontendHash] = healthCheckConfig
 			}
@@ -269,6 +275,15 @@ func (s *Server) buildForwarder(entryPointName string, entryPoint *configuration
 			forward.Rewriter(rewriter),
 			forward.ResponseModifier(responseModifier),
 			forward.BufferPool(s.bufferPool),
+			forward.WebsocketConnectionClosedHook(func(req *http.Request, conn net.Conn) {
+				server := req.Context().Value(http.ServerContextKey).(*http.Server)
+				if server != nil {
+					connState := server.ConnState
+					if connState != nil {
+						connState(conn, http.StateClosed)
+					}
+				}
+			}),
 		)
 	}
 	if err != nil {
@@ -462,8 +477,10 @@ func (s *Server) throttleProviderConfigReload(throttle time.Duration, publish ch
 			case <-stop:
 				return
 			case nextConfig := <-ring.Out():
-				publish <- nextConfig.(types.ConfigMessage)
-				time.Sleep(throttle)
+				if config, ok := nextConfig.(types.ConfigMessage); ok {
+					publish <- config
+					time.Sleep(throttle)
+				}
 			}
 		}
 	})
@@ -553,6 +570,8 @@ func (s *Server) postLoadConfiguration() {
 						domains, err := rls.ParseDomains(route.Rule)
 						if err != nil {
 							log.Errorf("Error parsing domains: %v", err)
+						} else if len(domains) == 0 {
+							log.Debugf("No domain parsed in rule %q", route.Rule)
 						} else {
 							s.globalConfiguration.ACME.LoadCertificateForDomains(domains)
 						}

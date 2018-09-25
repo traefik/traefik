@@ -331,9 +331,12 @@ func TestAcme_getUncheckedCertificates(t *testing.T) {
 	mm["*.containo.us"] = &tls.Certificate{}
 	mm["traefik.acme.io"] = &tls.Certificate{}
 
-	a := ACME{TLSConfig: &tls.Config{NameToCertificate: mm}}
+	dm := make(map[string]struct{})
+	dm["*.traefik.wtf"] = struct{}{}
 
-	domains := []string{"traefik.containo.us", "trae.containo.us"}
+	a := ACME{TLSConfig: &tls.Config{NameToCertificate: mm}, resolvingDomains: dm}
+
+	domains := []string{"traefik.containo.us", "trae.containo.us", "foo.traefik.wtf"}
 	uncheckedDomains := a.getUncheckedDomains(domains, nil)
 	assert.Empty(t, uncheckedDomains)
 	domains = []string{"traefik.acme.io", "trae.acme.io"}
@@ -351,6 +354,9 @@ func TestAcme_getUncheckedCertificates(t *testing.T) {
 	account := Account{DomainsCertificate: domainsCertificates}
 	uncheckedDomains = a.getUncheckedDomains(domains, &account)
 	assert.Empty(t, uncheckedDomains)
+	domains = []string{"traefik.containo.us", "trae.containo.us", "traefik.wtf"}
+	uncheckedDomains = a.getUncheckedDomains(domains, nil)
+	assert.Len(t, uncheckedDomains, 1)
 }
 
 func TestAcme_getProvidedCertificate(t *testing.T) {

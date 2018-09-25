@@ -38,7 +38,6 @@ func init() {
 	if strings.Contains(e, "http2debug=1") || strings.Contains(e, "http2debug=2") {
 		http2VerboseLogs = true
 	}
-	http2VerboseLogs = true
 }
 
 // Server implements net.Handler and enables h2c. Users who want h2c just need

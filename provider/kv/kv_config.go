@@ -41,19 +41,20 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getTLSSection": p.getTLSSection,
 
 		// Frontend functions
-		"getBackendName":    p.getFuncString(pathFrontendBackend, ""),
-		"getPriority":       p.getFuncInt(pathFrontendPriority, label.DefaultFrontendPriority),
-		"getPassHostHeader": p.getPassHostHeader(),
-		"getPassTLSCert":    p.getFuncBool(pathFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getEntryPoints":    p.getFuncList(pathFrontendEntryPoints),
-		"getBasicAuth":      p.getFuncList(pathFrontendBasicAuth), // Deprecated
-		"getAuth":           p.getAuth,
-		"getRoutes":         p.getRoutes,
-		"getRedirect":       p.getRedirect,
-		"getErrorPages":     p.getErrorPages,
-		"getRateLimit":      p.getRateLimit,
-		"getHeaders":        p.getHeaders,
-		"getWhiteList":      p.getWhiteList,
+		"getBackendName":       p.getFuncString(pathFrontendBackend, ""),
+		"getPriority":          p.getFuncInt(pathFrontendPriority, label.DefaultFrontendPriority),
+		"getPassHostHeader":    p.getPassHostHeader(),
+		"getPassTLSCert":       p.getFuncBool(pathFrontendPassTLSCert, label.DefaultPassTLSCert),
+		"getPassTLSClientCert": p.getTLSClientCert,
+		"getEntryPoints":       p.getFuncList(pathFrontendEntryPoints),
+		"getBasicAuth":         p.getFuncList(pathFrontendBasicAuth), // Deprecated
+		"getAuth":              p.getAuth,
+		"getRoutes":            p.getRoutes,
+		"getRedirect":          p.getRedirect,
+		"getErrorPages":        p.getErrorPages,
+		"getRateLimit":         p.getRateLimit,
+		"getHeaders":           p.getHeaders,
+		"getWhiteList":         p.getWhiteList,
 
 		// Backend functions
 		"getServers":              p.getServers,
@@ -369,6 +370,39 @@ func (p *Provider) getTLSSection(prefix string) []*tls.Configuration {
 	return tlsSection
 }
 
+// getTLSClientCert create TLS client header configuration from labels
+func (p *Provider) getTLSClientCert(rootPath string) *types.TLSClientHeaders {
+	if !p.hasPrefix(rootPath, pathFrontendPassTLSClientCert) {
+		return nil
+	}
+
+	tlsClientHeaders := &types.TLSClientHeaders{
+		PEM: p.getBool(false, rootPath, pathFrontendPassTLSClientCertPem),
+	}
+
+	if p.hasPrefix(rootPath, pathFrontendPassTLSClientCertInfos) {
+		infos := &types.TLSClientCertificateInfos{
+			NotAfter:  p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosNotAfter),
+			NotBefore: p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosNotBefore),
+			Sans:      p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSans),
+		}
+
+		if p.hasPrefix(rootPath, pathFrontendPassTLSClientCertInfosSubject) {
+			subject := &types.TLSCLientCertificateSubjectInfos{
+				CommonName:   p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectCommonName),
+				Country:      p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectCountry),
+				Locality:     p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectLocality),
+				Organization: p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectOrganization),
+				Province:     p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectProvince),
+				SerialNumber: p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectSerialNumber),
+			}
+			infos.Subject = subject
+		}
+		tlsClientHeaders.Infos = infos
+	}
+	return tlsClientHeaders
+}
+
 // hasDeprecatedBasicAuth check if the frontend basic auth use the deprecated configuration
 func (p *Provider) hasDeprecatedBasicAuth(rootPath string) bool {
 	return len(p.getList(rootPath, pathFrontendBasicAuth)) > 0
@@ -377,16 +411,16 @@ func (p *Provider) hasDeprecatedBasicAuth(rootPath string) bool {
 // GetAuth Create auth from path
 func (p *Provider) getAuth(rootPath string) *types.Auth {
 	hasDeprecatedBasicAuth := p.hasDeprecatedBasicAuth(rootPath)
-	if len(p.getList(rootPath, pathFrontendAuth)) > 0 || hasDeprecatedBasicAuth {
+	if p.hasPrefix(rootPath, pathFrontendAuth) || hasDeprecatedBasicAuth {
 		auth := &types.Auth{
 			HeaderField: p.get("", rootPath, pathFrontendAuthHeaderField),
 		}
 
-		if len(p.getList(rootPath, pathFrontendAuthBasic)) > 0 || hasDeprecatedBasicAuth {
+		if p.hasPrefix(rootPath, pathFrontendAuthBasic) || hasDeprecatedBasicAuth {
 			auth.Basic = p.getAuthBasic(rootPath)
-		} else if len(p.getList(rootPath, pathFrontendAuthDigest)) > 0 {
+		} else if p.hasPrefix(rootPath, pathFrontendAuthDigest) {
 			auth.Digest = p.getAuthDigest(rootPath)
-		} else if len(p.getList(rootPath, pathFrontendAuthForward)) > 0 {
+		} else if p.hasPrefix(rootPath, pathFrontendAuthForward) {
 			auth.Forward = p.getAuthForward(rootPath)
 		}
 
@@ -398,7 +432,8 @@ func (p *Provider) getAuth(rootPath string) *types.Auth {
 // getAuthBasic Create Basic Auth from path
 func (p *Provider) getAuthBasic(rootPath string) *types.Basic {
 	basicAuth := &types.Basic{
-		UsersFile: p.get("", rootPath, pathFrontendAuthBasicUsersFile),
+		UsersFile:    p.get("", rootPath, pathFrontendAuthBasicUsersFile),
+		RemoveHeader: p.getBool(false, rootPath, pathFrontendAuthBasicRemoveHeader),
 	}
 
 	// backward compatibility
@@ -415,8 +450,9 @@ func (p *Provider) getAuthBasic(rootPath string) *types.Basic {
 // getAuthDigest Create Digest Auth from path
 func (p *Provider) getAuthDigest(rootPath string) *types.Digest {
 	return &types.Digest{
-		Users:     p.getList(rootPath, pathFrontendAuthDigestUsers),
-		UsersFile: p.get("", rootPath, pathFrontendAuthDigestUsersFile),
+		Users:        p.getList(rootPath, pathFrontendAuthDigestUsers),
+		UsersFile:    p.get("", rootPath, pathFrontendAuthDigestUsersFile),
+		RemoveHeader: p.getBool(false, rootPath, pathFrontendAuthDigestRemoveHeader),
 	}
 }
 
@@ -586,6 +622,21 @@ func (p *Provider) getBool(defaultValue bool, keyParts ...string) bool {
 func (p *Provider) has(keyParts ...string) bool {
 	value := p.get("", keyParts...)
 	return len(value) > 0
+}
+
+func (p *Provider) hasPrefix(keyParts ...string) bool {
+	baseKey := strings.Join(keyParts, "")
+	if !strings.HasSuffix(baseKey, "/") {
+		baseKey += "/"
+	}
+
+	listKeys, err := p.kvClient.List(baseKey, nil)
+	if err != nil {
+		log.Debugf("Cannot list keys under %q: %v", baseKey, err)
+		return false
+	}
+
+	return len(listKeys) > 0
 }
 
 func (p *Provider) getInt(defaultValue int, keyParts ...string) int {

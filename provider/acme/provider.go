@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	fmtlog "log"
+	"net/url"
 	"reflect"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/BurntSushi/ty/fun"
+	"github.com/cenk/backoff"
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/rules"
@@ -60,6 +62,8 @@ type Provider struct {
 	clientMutex            sync.Mutex
 	configFromListenerChan chan types.Configuration
 	pool                   *safe.Pool
+	resolvingDomains       map[string]struct{}
+	resolvingDomainsMutex  sync.RWMutex
 }
 
 // Certificate is a struct which contains all data needed from an ACME certificate
@@ -73,6 +77,8 @@ type Certificate struct {
 type DNSChallenge struct {
 	Provider         string         `description:"Use a DNS-01 based challenge provider rather than HTTPS."`
 	DelayBeforeCheck flaeg.Duration `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."`
+	preCheckTimeout  time.Duration
+	preCheckInterval time.Duration
 }
 
 // HTTPChallenge contains HTTP challenge Configuration
@@ -110,14 +116,63 @@ func (p *Provider) ListenRequest(domain string) (*tls.Certificate, error) {
 	return &certificate, err
 }
 
+// Init for compatibility reason the BaseProvider implements an empty Init
+func (p *Provider) Init(_ types.Constraints) error {
+	acme.UserAgent = fmt.Sprintf("containous-traefik/%s", version.Version)
+	if p.ACMELogging {
+		legolog.Logger = fmtlog.New(log.WriterLevel(logrus.InfoLevel), "legolog: ", 0)
+	} else {
+		legolog.Logger = fmtlog.New(ioutil.Discard, "", 0)
+	}
+
+	if p.Store == nil {
+		return errors.New("no store found for the ACME provider")
+	}
+
+	var err error
+	p.account, err = p.Store.GetAccount()
+	if err != nil {
+		return fmt.Errorf("unable to get ACME account : %v", err)
+	}
+
+	// Reset Account if caServer changed, thus registration URI can be updated
+	if p.account != nil && p.account.Registration != nil && !isAccountMatchingCaServer(p.account.Registration.URI, p.CAServer) {
+		log.Info("Account URI does not match the current CAServer. The account will be reset")
+		p.account = nil
+	}
+
+	p.certificates, err = p.Store.GetCertificates()
+	if err != nil {
+		return fmt.Errorf("unable to get ACME certificates : %v", err)
+	}
+
+	// Init the currently resolved domain map
+	p.resolvingDomains = make(map[string]struct{})
+
+	return nil
+}
+
+func isAccountMatchingCaServer(accountURI string, serverURI string) bool {
+	aru, err := url.Parse(accountURI)
+	if err != nil {
+		log.Infof("Unable to parse account.Registration URL : %v", err)
+		return false
+	}
+	cau, err := url.Parse(serverURI)
+	if err != nil {
+		log.Infof("Unable to parse CAServer URL : %v", err)
+		return false
+	}
+	return cau.Hostname() == aru.Hostname()
+}
+
 // Provide allows the file provider to provide configurations to traefik
 // using the given Configuration channel.
-func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
+func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	p.pool = pool
-	err := p.init()
-	if err != nil {
-		return err
-	}
+
+	p.watchCertificate()
+	p.watchNewDomains()
 
 	p.configurationChan = configurationChan
 	p.refreshCertificates()
@@ -146,40 +201,6 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 			}
 		}
 	})
-
-	return nil
-}
-
-func (p *Provider) init() error {
-	acme.UserAgent = fmt.Sprintf("containous-traefik/%s", version.Version)
-	if p.ACMELogging {
-		legolog.Logger = fmtlog.New(log.WriterLevel(logrus.InfoLevel), "legolog: ", 0)
-	} else {
-		legolog.Logger = fmtlog.New(ioutil.Discard, "", 0)
-	}
-
-	if p.Store == nil {
-		return errors.New("no store found for the ACME provider")
-	}
-
-	var err error
-	p.account, err = p.Store.GetAccount()
-	if err != nil {
-		return fmt.Errorf("unable to get ACME account : %v", err)
-	}
-
-	// Reset Account if caServer changed, thus registration URI can be updated
-	if p.account != nil && p.account.Registration != nil && !strings.HasPrefix(p.account.Registration.URI, p.CAServer) {
-		p.account = nil
-	}
-
-	p.certificates, err = p.Store.GetCertificates()
-	if err != nil {
-		return fmt.Errorf("unable to get ACME certificates : %v", err)
-	}
-
-	p.watchCertificate()
-	p.watchNewDomains()
 
 	return nil
 }
@@ -249,6 +270,16 @@ func (p *Provider) getClient() (*acme.Client, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		// Same default values than LEGO
+		p.DNSChallenge.preCheckTimeout = 60 * time.Second
+		p.DNSChallenge.preCheckInterval = 2 * time.Second
+
+		// Set the precheck timeout into the DNSChallenge provider
+		if challengeProviderTimeout, ok := provider.(acme.ChallengeProviderTimeout); ok {
+			p.DNSChallenge.preCheckTimeout, p.DNSChallenge.preCheckInterval = challengeProviderTimeout.Timeout()
+		}
+
 	} else if p.HTTPChallenge != nil && len(p.HTTPChallenge.EntryPoint) > 0 {
 		log.Debug("Using HTTP Challenge provider.")
 
@@ -283,6 +314,12 @@ func (p *Provider) initAccount() (*Account, error) {
 			return nil, err
 		}
 	}
+
+	// Set the KeyType if not already defined in the account
+	if len(p.account.KeyType) == 0 {
+		p.account.KeyType = GetKeyType(p.KeyType)
+	}
+
 	return p.account, nil
 }
 
@@ -301,7 +338,7 @@ func (p *Provider) watchNewDomains() {
 						}
 
 						if len(domains) == 0 {
-							log.Debugf("No domain parsed in rule %q", route.Rule)
+							log.Debugf("No domain parsed in rule %q in provider ACME", route.Rule)
 							continue
 						}
 
@@ -341,6 +378,9 @@ func (p *Provider) resolveCertificate(domain types.Domain, domainFromConfigurati
 		return nil, nil
 	}
 
+	p.addResolvingDomains(uncheckedDomains)
+	defer p.removeResolvingDomains(uncheckedDomains)
+
 	log.Debugf("Loading ACME certificates %+v...", uncheckedDomains)
 
 	client, err := p.getClient()
@@ -348,13 +388,20 @@ func (p *Provider) resolveCertificate(domain types.Domain, domainFromConfigurati
 		return nil, fmt.Errorf("cannot get ACME client %v", err)
 	}
 
+	var certificate *acme.CertificateResource
 	bundle := true
-
-	certificate, err := client.ObtainCertificate(uncheckedDomains, bundle, nil, OSCPMustStaple)
-	if err != nil {
-		return nil, fmt.Errorf("cannot obtain certificates: %+v", err)
+	if p.useCertificateWithRetry(uncheckedDomains) {
+		certificate, err = obtainCertificateWithRetry(domains, client, p.DNSChallenge.preCheckTimeout, p.DNSChallenge.preCheckInterval, bundle)
+	} else {
+		certificate, err = client.ObtainCertificate(domains, bundle, nil, OSCPMustStaple)
 	}
 
+	if err != nil {
+		return nil, fmt.Errorf("unable to generate a certificate for the domains %v: %v", uncheckedDomains, err)
+	}
+	if certificate == nil {
+		return nil, fmt.Errorf("domains %v do not generate a certificate", uncheckedDomains)
+	}
 	if len(certificate.Certificate) == 0 || len(certificate.PrivateKey) == 0 {
 		return nil, fmt.Errorf("domains %v generate certificate with no value: %v", uncheckedDomains, certificate)
 	}
@@ -367,6 +414,78 @@ func (p *Provider) resolveCertificate(domain types.Domain, domainFromConfigurati
 		domain = types.Domain{Main: uncheckedDomains[0]}
 	}
 	p.addCertificateForDomain(domain, certificate.Certificate, certificate.PrivateKey)
+
+	return certificate, nil
+}
+
+func (p *Provider) removeResolvingDomains(resolvingDomains []string) {
+	p.resolvingDomainsMutex.Lock()
+	defer p.resolvingDomainsMutex.Unlock()
+
+	for _, domain := range resolvingDomains {
+		delete(p.resolvingDomains, domain)
+	}
+}
+
+func (p *Provider) addResolvingDomains(resolvingDomains []string) {
+	p.resolvingDomainsMutex.Lock()
+	defer p.resolvingDomainsMutex.Unlock()
+
+	for _, domain := range resolvingDomains {
+		p.resolvingDomains[domain] = struct{}{}
+	}
+}
+
+func (p *Provider) useCertificateWithRetry(domains []string) bool {
+	// Check if we can use the retry mechanism only if we use the DNS Challenge and if is there are at least 2 domains to check
+	if p.DNSChallenge != nil && len(domains) > 1 {
+		rootDomain := ""
+		for _, searchWildcardDomain := range domains {
+			// Search a wildcard domain if not already found
+			if len(rootDomain) == 0 && strings.HasPrefix(searchWildcardDomain, "*.") {
+				rootDomain = strings.TrimPrefix(searchWildcardDomain, "*.")
+				if len(rootDomain) > 0 {
+					// Look for a root domain which matches the wildcard domain
+					for _, searchRootDomain := range domains {
+						if rootDomain == searchRootDomain {
+							// If the domains list contains a wildcard domain and its root domain, we can use the retry mechanism to obtain the certificate
+							return true
+						}
+					}
+				}
+				// There is only one wildcard domain in the slice, if its root domain has not been found, the retry mechanism does not have to be used
+				return false
+			}
+		}
+	}
+
+	return false
+}
+
+func obtainCertificateWithRetry(domains []string, client *acme.Client, timeout, interval time.Duration, bundle bool) (*acme.CertificateResource, error) {
+	var certificate *acme.CertificateResource
+	var err error
+
+	operation := func() error {
+		certificate, err = client.ObtainCertificate(domains, bundle, nil, OSCPMustStaple)
+		return err
+	}
+
+	notify := func(err error, time time.Duration) {
+		log.Errorf("Error obtaining certificate retrying in %s", time)
+	}
+
+	// Define a retry backOff to let LEGO tries twice to obtain a certificate for both wildcard and root domain
+	ebo := backoff.NewExponentialBackOff()
+	ebo.MaxElapsedTime = 2 * timeout
+	ebo.MaxInterval = interval
+	rbo := backoff.WithMaxRetries(ebo, 2)
+
+	err = backoff.RetryNotify(safe.OperationWithRecover(operation), rbo, notify)
+	if err != nil {
+		log.Errorf("Error obtaining certificate: %v", err)
+		return nil, err
+	}
 
 	return certificate, nil
 }
@@ -543,6 +662,9 @@ func (p *Provider) renewCertificates() {
 // Get provided certificate which check a domains list (Main and SANs)
 // from static and dynamic provided certificates
 func (p *Provider) getUncheckedDomains(domainsToCheck []string, checkConfigurationDomains bool) []string {
+	p.resolvingDomainsMutex.RLock()
+	defer p.resolvingDomainsMutex.RUnlock()
+
 	log.Debugf("Looking for provided certificate(s) to validate %q...", domainsToCheck)
 
 	allDomains := p.certificateStore.GetAllDomains()
@@ -550,6 +672,11 @@ func (p *Provider) getUncheckedDomains(domainsToCheck []string, checkConfigurati
 	// Get ACME certificates
 	for _, certificate := range p.certificates {
 		allDomains = append(allDomains, strings.Join(certificate.Domain.ToStrArray(), ","))
+	}
+
+	// Get currently resolved domains
+	for domain := range p.resolvingDomains {
+		allDomains = append(allDomains, domain)
 	}
 
 	// Get Configuration Domains
@@ -571,7 +698,7 @@ func searchUncheckedDomains(domainsToCheck []string, existentDomains []string) [
 	}
 
 	if len(uncheckedDomains) == 0 {
-		log.Debugf("No ACME certificate to generate for domains %q.", domainsToCheck)
+		log.Debugf("No ACME certificate generation required for domains %q.", domainsToCheck)
 	} else {
 		log.Debugf("Domains %q need ACME certificates generation for domains %q.", domainsToCheck, strings.Join(uncheckedDomains, ","))
 	}

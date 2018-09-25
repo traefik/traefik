@@ -56,7 +56,7 @@ whoami4:
 
 ### Upload the configuration in the Key-value store
 
-We should now fill the store with the Træfik global configuration, as we do with a [TOML file configuration](/toml).  
+We should now fill the store with the Træfik global configuration.  
 To do that, we can send the Key-value pairs via [curl commands](https://www.consul.io/intro/getting-started/kv.html) or via the [Web UI](https://www.consul.io/intro/getting-started/ui.html).
 
 Fortunately, Træfik allows automation of this process using the `storeconfig` subcommand.  
@@ -85,9 +85,9 @@ defaultEntryPoints = ["http", "https"]
       certFile = """-----BEGIN CERTIFICATE-----
                       <cert file content>
                       -----END CERTIFICATE-----"""
-      keyFile = """-----BEGIN CERTIFICATE-----
+      keyFile = """-----BEGIN PRIVATE KEY-----
                       <key file content>
-                      -----END CERTIFICATE-----"""
+                      -----END PRIVATE KEY-----"""
     [entryPoints.other-https]
     address = ":4443"
       [entryPoints.other-https.tls]
@@ -445,4 +445,4 @@ Then remove the line `storageFile = "acme.json"` from your TOML config file.
 
 That's it!
 
-![](https://i.giphy.com/ujUdrdpX7Ok5W.gif)
+![GIF Magica](https://i.giphy.com/ujUdrdpX7Ok5W.gif)

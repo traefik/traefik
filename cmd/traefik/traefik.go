@@ -66,7 +66,7 @@ Complete documentation is available at https://traefik.io`,
 	// add custom parsers
 	f.AddParser(reflect.TypeOf(configuration.EntryPoints{}), &configuration.EntryPoints{})
 	f.AddParser(reflect.TypeOf(configuration.DefaultEntryPoints{}), &configuration.DefaultEntryPoints{})
-	f.AddParser(reflect.TypeOf(traefiktls.RootCAs{}), &traefiktls.RootCAs{})
+	f.AddParser(reflect.TypeOf(traefiktls.FilesOrContents{}), &traefiktls.FilesOrContents{})
 	f.AddParser(reflect.TypeOf(types.Constraints{}), &types.Constraints{})
 	f.AddParser(reflect.TypeOf(kubernetes.Namespaces{}), &kubernetes.Namespaces{})
 	f.AddParser(reflect.TypeOf(ecs.Clusters{}), &ecs.Clusters{})
@@ -184,7 +184,11 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 
 	acmeprovider := globalConfiguration.InitACMEProvider()
 	if acmeprovider != nil {
-		providerAggregator.AddProvider(acmeprovider)
+		err := providerAggregator.AddProvider(acmeprovider)
+		if err != nil {
+			log.Errorf("Error initializing provider ACME: %v", err)
+			acmeprovider = nil
+		}
 	}
 
 	entryPoints := map[string]server.EntryPoint{}
@@ -196,22 +200,24 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 
 		internalRouter := router.NewInternalRouterAggregator(*globalConfiguration, entryPointName)
 		if acmeprovider != nil {
-			if acmeprovider.HTTPChallenge != nil && acmeprovider.HTTPChallenge.EntryPoint == entryPointName {
+			if acmeprovider.HTTPChallenge != nil && entryPointName == acmeprovider.HTTPChallenge.EntryPoint {
 				internalRouter.AddRouter(acmeprovider)
 			}
 
 			// TLS ALPN 01
-			if acmeprovider.HTTPChallenge == nil && acmeprovider.DNSChallenge == nil && acmeprovider.TLSChallenge != nil {
+			if acmeprovider.TLSChallenge != nil && acmeprovider.HTTPChallenge == nil && acmeprovider.DNSChallenge == nil {
 				entryPoint.TLSALPNGetter = acmeprovider.GetTLSALPNCertificate
 			}
 
-			if acmeprovider.EntryPoint == entryPointName && acmeprovider.OnDemand {
+			if acmeprovider.OnDemand && entryPointName == acmeprovider.EntryPoint {
 				entryPoint.OnDemandListener = acmeprovider.ListenRequest
 			}
 
-			entryPoint.CertificateStore = traefiktls.NewCertificateStore()
-			acmeprovider.SetCertificateStore(entryPoint.CertificateStore)
-
+			if entryPointName == acmeprovider.EntryPoint {
+				entryPoint.CertificateStore = traefiktls.NewCertificateStore()
+				acmeprovider.SetCertificateStore(entryPoint.CertificateStore)
+				log.Debugf("Setting Acme Certificate store from Entrypoint: %s", entryPointName)
+			}
 		}
 
 		entryPoint.InternalRouter = internalRouter

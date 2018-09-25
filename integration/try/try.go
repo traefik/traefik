@@ -31,7 +31,7 @@ func Sleep(d time.Duration) {
 // response body needs to be closed or not. Callers are expected to close on
 // their own if the function returns a nil error.
 func Response(req *http.Request, timeout time.Duration) (*http.Response, error) {
-	return doTryRequest(req, timeout)
+	return doTryRequest(req, timeout, nil)
 }
 
 // ResponseUntilStatusCode is like Request, but returns the response for further
@@ -40,7 +40,7 @@ func Response(req *http.Request, timeout time.Duration) (*http.Response, error) 
 // response body needs to be closed or not. Callers are expected to close on
 // their own if the function returns a nil error.
 func ResponseUntilStatusCode(req *http.Request, timeout time.Duration, statusCode int) (*http.Response, error) {
-	return doTryRequest(req, timeout, StatusCodeIs(statusCode))
+	return doTryRequest(req, timeout, nil, StatusCodeIs(statusCode))
 }
 
 // GetRequest is like Do, but runs a request against the given URL and applies
@@ -48,7 +48,7 @@ func ResponseUntilStatusCode(req *http.Request, timeout time.Duration, statusCod
 // ResponseCondition may be nil, in which case only the request against the URL must
 // succeed.
 func GetRequest(url string, timeout time.Duration, conditions ...ResponseCondition) error {
-	resp, err := doTryGet(url, timeout, conditions...)
+	resp, err := doTryGet(url, timeout, nil, conditions...)
 
 	if resp != nil && resp.Body != nil {
 		defer resp.Body.Close()
@@ -62,7 +62,21 @@ func GetRequest(url string, timeout time.Duration, conditions ...ResponseConditi
 // ResponseCondition may be nil, in which case only the request against the URL must
 // succeed.
 func Request(req *http.Request, timeout time.Duration, conditions ...ResponseCondition) error {
-	resp, err := doTryRequest(req, timeout, conditions...)
+	resp, err := doTryRequest(req, timeout, nil, conditions...)
+
+	if resp != nil && resp.Body != nil {
+		defer resp.Body.Close()
+	}
+
+	return err
+}
+
+// RequestWithTransport is like Do, but runs a request against the given URL and applies
+// the condition on the response.
+// ResponseCondition may be nil, in which case only the request against the URL must
+// succeed.
+func RequestWithTransport(req *http.Request, timeout time.Duration, transport *http.Transport, conditions ...ResponseCondition) error {
+	resp, err := doTryRequest(req, timeout, transport, conditions...)
 
 	if resp != nil && resp.Body != nil {
 		defer resp.Body.Close()
@@ -112,24 +126,27 @@ func Do(timeout time.Duration, operation DoCondition) error {
 	}
 }
 
-func doTryGet(url string, timeout time.Duration, conditions ...ResponseCondition) (*http.Response, error) {
+func doTryGet(url string, timeout time.Duration, transport *http.Transport, conditions ...ResponseCondition) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return doTryRequest(req, timeout, conditions...)
+	return doTryRequest(req, timeout, transport, conditions...)
 }
 
-func doTryRequest(request *http.Request, timeout time.Duration, conditions ...ResponseCondition) (*http.Response, error) {
-	return doRequest(Do, timeout, request, conditions...)
+func doTryRequest(request *http.Request, timeout time.Duration, transport *http.Transport, conditions ...ResponseCondition) (*http.Response, error) {
+	return doRequest(Do, timeout, request, transport, conditions...)
 }
 
-func doRequest(action timedAction, timeout time.Duration, request *http.Request, conditions ...ResponseCondition) (*http.Response, error) {
+func doRequest(action timedAction, timeout time.Duration, request *http.Request, transport *http.Transport, conditions ...ResponseCondition) (*http.Response, error) {
 	var resp *http.Response
 	return resp, action(timeout, func() error {
 		var err error
 		client := http.DefaultClient
+		if transport != nil {
+			client.Transport = transport
+		}
 
 		resp, err = client.Do(request)
 		if err != nil {

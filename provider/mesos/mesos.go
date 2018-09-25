@@ -38,9 +38,14 @@ type Provider struct {
 	Masters            []string
 }
 
+// Init the provider
+func (p *Provider) Init(constraints types.Constraints) error {
+	return p.BaseProvider.Init(constraints)
+}
+
 // Provide allows the mesos provider to provide configurations to traefik
 // using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
+func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	operation := func() error {
 
 		// initialize logging
@@ -123,7 +128,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 func detectMasters(zk string, masters []string) <-chan []string {
 	changed := make(chan []string, 1)
 	if zk != "" {
-		log.Debugf("Starting master detector for ZK ", zk)
+		log.Debugf("Starting master detector for ZK %s", zk)
 		if md, err := detector.New(zk); err != nil {
 			log.Errorf("Failed to create master detector: %v", err)
 		} else if err := md.Detect(detect.NewMasters(masters, changed)); err != nil {

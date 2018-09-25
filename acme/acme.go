@@ -9,8 +9,10 @@ import (
 	fmtlog "log"
 	"net"
 	"net/http"
+	"net/url"
 	"reflect"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/BurntSushi/ty/fun"
@@ -63,6 +65,8 @@ type ACME struct {
 	jobs                  *channels.InfiniteChannel
 	TLSConfig             *tls.Config `description:"TLS config in case wildcard certs are used"`
 	dynamicCerts          *safe.Safe
+	resolvingDomains      map[string]struct{}
+	resolvingDomainsMutex sync.RWMutex
 }
 
 func (a *ACME) init() error {
@@ -75,6 +79,10 @@ func (a *ACME) init() error {
 	}
 
 	a.jobs = channels.NewInfiniteChannel()
+
+	// Init the currently resolved domain map
+	a.resolvingDomains = make(map[string]struct{})
+
 	return nil
 }
 
@@ -183,7 +191,8 @@ func (a *ACME) leadershipListener(elected bool) error {
 		account := object.(*Account)
 		account.Init()
 		// Reset Account values if caServer changed, thus registration URI can be updated
-		if account != nil && account.Registration != nil && !strings.HasPrefix(account.Registration.URI, a.CAServer) {
+		if account != nil && account.Registration != nil && !isAccountMatchingCaServer(account.Registration.URI, a.CAServer) {
+			log.Info("Account URI does not match the current CAServer. The account will be reset")
 			account.reset()
 		}
 
@@ -200,6 +209,9 @@ func (a *ACME) leadershipListener(elected bool) error {
 			}
 
 			needRegister = true
+		} else if len(account.KeyType) == 0 {
+			// Set the KeyType if not already defined in the account
+			account.KeyType = acmeprovider.GetKeyType(a.KeyType)
 		}
 
 		a.client, err = a.buildACMEClient(account)
@@ -230,17 +242,31 @@ func (a *ACME) leadershipListener(elected bool) error {
 	return nil
 }
 
+func isAccountMatchingCaServer(accountURI string, serverURI string) bool {
+	aru, err := url.Parse(accountURI)
+	if err != nil {
+		log.Infof("Unable to parse account.Registration URL : %v", err)
+		return false
+	}
+	cau, err := url.Parse(serverURI)
+	if err != nil {
+		log.Infof("Unable to parse CAServer URL : %v", err)
+		return false
+	}
+	return cau.Hostname() == aru.Hostname()
+}
+
 func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	domain := types.CanonicalDomain(clientHello.ServerName)
 	account := a.store.Get().(*Account)
 
-	if providedCertificate := a.getProvidedCertificate(domain); providedCertificate != nil {
-		return providedCertificate, nil
-	}
-
 	if challengeCert, ok := a.challengeTLSProvider.getCertificate(domain); ok {
 		log.Debugf("ACME got challenge %s", domain)
 		return challengeCert, nil
+	}
+
+	if providedCertificate := a.getProvidedCertificate(domain); providedCertificate != nil {
+		return providedCertificate, nil
 	}
 
 	if domainCert, ok := account.DomainsCertificate.getCertificateForDomain(domain); ok {
@@ -518,6 +544,10 @@ func (a *ACME) LoadCertificateForDomains(domains []string) {
 		if len(uncheckedDomains) == 0 {
 			return
 		}
+
+		a.addResolvingDomains(uncheckedDomains)
+		defer a.removeResolvingDomains(uncheckedDomains)
+
 		certificate, err := a.getDomainsCertificates(uncheckedDomains)
 		if err != nil {
 			log.Errorf("Error getting ACME certificates %+v : %v", uncheckedDomains, err)
@@ -546,6 +576,24 @@ func (a *ACME) LoadCertificateForDomains(domains []string) {
 			log.Errorf("Error Saving ACME account %+v: %v", account, err)
 			return
 		}
+	}
+}
+
+func (a *ACME) addResolvingDomains(resolvingDomains []string) {
+	a.resolvingDomainsMutex.Lock()
+	defer a.resolvingDomainsMutex.Unlock()
+
+	for _, domain := range resolvingDomains {
+		a.resolvingDomains[domain] = struct{}{}
+	}
+}
+
+func (a *ACME) removeResolvingDomains(resolvingDomains []string) {
+	a.resolvingDomainsMutex.Lock()
+	defer a.resolvingDomainsMutex.Unlock()
+
+	for _, domain := range resolvingDomains {
+		delete(a.resolvingDomains, domain)
 	}
 }
 
@@ -584,6 +632,9 @@ func searchProvidedCertificateForDomains(domain string, certs map[string]*tls.Ce
 // Get provided certificate which check a domains list (Main and SANs)
 // from static and dynamic provided certificates
 func (a *ACME) getUncheckedDomains(domains []string, account *Account) []string {
+	a.resolvingDomainsMutex.RLock()
+	defer a.resolvingDomainsMutex.RUnlock()
+
 	log.Debugf("Looking for provided certificate to validate %s...", domains)
 	allCerts := make(map[string]*tls.Certificate)
 
@@ -603,6 +654,13 @@ func (a *ACME) getUncheckedDomains(domains []string, account *Account) []string 
 	if account != nil {
 		for domains, certificate := range account.DomainsCertificate.toDomainsMap() {
 			allCerts[domains] = certificate
+		}
+	}
+
+	// Get currently resolved domains
+	for domain := range a.resolvingDomains {
+		if _, ok := allCerts[domain]; !ok {
+			allCerts[domain] = &tls.Certificate{}
 		}
 	}
 

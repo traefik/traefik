@@ -28,14 +28,14 @@
 
   {{ $healthCheck := getHealthCheck $backend }}
   {{if $healthCheck }}
-  [backends.{{ $backendName }}.healthCheck]
+  [backends."{{ $backendName }}".healthCheck]
     scheme = "{{ $healthCheck.Scheme }}"
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
     hostname = "{{ $healthCheck.Hostname }}"
     {{if $healthCheck.Headers }}
-    [backends.{{ $backendName }}.healthCheck.headers]
+    [backends."{{ $backendName }}".healthCheck.headers]
       {{range $k, $v := $healthCheck.Headers }}
       {{$k}} = "{{$v}}"
       {{end}}
@@ -44,7 +44,7 @@
 
   {{ $buffering := getBuffering $backend }}
   {{if $buffering }}
-  [backends.{{ $backendName }}.buffering]
+  [backends."{{ $backendName }}".buffering]
     maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
     memRequestBodyBytes = {{ $buffering.MemRequestBodyBytes }}
     maxResponseBodyBytes = {{ $buffering.MaxResponseBodyBytes }}
@@ -74,6 +74,29 @@
       "{{.}}",
       {{end}}]
 
+    {{ $tlsClientCert := getPassTLSClientCert $frontend }}
+    {{if $tlsClientCert }}
+    [frontends."{{ $frontendName }}".passTLSClientCert]
+      pem = {{ $tlsClientCert.PEM }}
+      {{ $infos := $tlsClientCert.Infos }}
+      {{if $infos }}
+      [frontends."{{ $frontendName }}".passTLSClientCert.infos]
+        notAfter = {{ $infos.NotAfter   }}
+        notBefore = {{ $infos.NotBefore }}
+        sans = {{ $infos.Sans }}
+        {{ $subject := $infos.Subject }}
+        {{if $subject }}
+        [frontends."{{ $frontendName }}".passTLSClientCert.infos.subject]
+          country = {{ $subject.Country }}
+          province = {{ $subject.Province }}
+          locality = {{ $subject.Locality }}
+          organization = {{ $subject.Organization }}
+          commonName = {{ $subject.CommonName }}
+          serialNumber = {{ $subject.SerialNumber }}
+        {{end}}
+      {{end}}
+    {{end}}
+
     {{ $auth := getAuth $frontend }}
     {{if $auth }}
     [frontends."{{ $frontendName }}".auth]
@@ -88,14 +111,15 @@
         [frontends."{{ $frontendName }}".auth.forward.tls]
           ca = "{{ $auth.Forward.TLS.CA }}"
           caOptional = {{ $auth.Forward.TLS.CAOptional }}
-          cert = "{{ $auth.Forward.TLS.Cert }}"
-          key = "{{ $auth.Forward.TLS.Key }}"
+          cert = """{{ $auth.Forward.TLS.Cert }}"""
+          key = """{{ $auth.Forward.TLS.Key }}"""
           insecureSkipVerify = {{ $auth.Forward.TLS.InsecureSkipVerify }}
         {{end}}
       {{end}}
 
       {{if $auth.Basic }}
       [frontends."{{ $frontendName }}".auth.basic]
+        removeHeader = {{ $auth.Basic.RemoveHeader }}
         {{if $auth.Basic.Users }}
         users = [{{range $auth.Basic.Users }}
           "{{.}}",
@@ -106,6 +130,7 @@
 
       {{if $auth.Digest }}
       [frontends."{{ $frontendName }}".auth.digest]
+        removeHeader = {{ $auth.Digest.RemoveHeader }}
         {{if $auth.Digest.Users }}
         users = [{{range $auth.Digest.Users }}
           "{{.}}",

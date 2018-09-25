@@ -223,7 +223,7 @@ These variables have to be set on the machine/container that host Træfik.
 
 These variables are described [in this section](/configuration/acme/#provider).
 
-More information about wildcard certificates are available [in this section](/configuration/acme/#wildcard-domain).
+More information about wildcard certificates are available [in this section](/configuration/acme/#wildcard-domains).
 
 ### onHostRule option and provided certificates (with HTTP challenge)
 
@@ -311,7 +311,6 @@ The `consul` provider contains the configuration.
   [frontends.frontend2]
   backend = "backend1"
   passHostHeader = true
-  passTLSCert = true
   entrypoints = ["https"] # overrides defaultEntryPoints
     [frontends.frontend2.routes.test_1]
     rule = "Host:{subdomain:[a-z]+}.localhost"

@@ -97,8 +97,7 @@ func (p *Provider) watchKv(configurationChan chan<- types.ConfigMessage, prefix 
 }
 
 // Provide provides the configuration to traefik via the configuration channel
-func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
-	p.Constraints = append(p.Constraints, constraints...)
+func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	operation := func() error {
 		if _, err := p.kvClient.Exists(p.Prefix+"/qmslkjdfmqlskdjfmqlksjazçueznbvbwzlkajzebvkwjdcqmlsfj", nil); err != nil {
 			return fmt.Errorf("failed to test KV store connection: %v", err)

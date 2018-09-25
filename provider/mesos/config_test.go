@@ -121,6 +121,7 @@ func TestBuildConfiguration(t *testing.T) {
 					withStatus(withHealthy(true), withState("TASK_RUNNING")),
 					withLabel(label.TraefikFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 					withLabel(label.TraefikFrontendAuthBasicUsersFile, ".htpasswd"),
+					withLabel(label.TraefikFrontendAuthBasicRemoveHeader, "true"),
 					withLabel(label.TraefikFrontendAuthHeaderField, "X-WebAuth-User"),
 				),
 			},
@@ -137,6 +138,7 @@ func TestBuildConfiguration(t *testing.T) {
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{
+							RemoveHeader: true,
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 							UsersFile: ".htpasswd",
@@ -205,6 +207,7 @@ func TestBuildConfiguration(t *testing.T) {
 					withInfo("name1",
 						withPorts(withPort("TCP", 80, "WEB"))),
 					withStatus(withHealthy(true), withState("TASK_RUNNING")),
+					withLabel(label.TraefikFrontendAuthDigestRemoveHeader, "true"),
 					withLabel(label.TraefikFrontendAuthDigestUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 					withLabel(label.TraefikFrontendAuthDigestUsersFile, ".htpasswd"),
 					withLabel(label.TraefikFrontendAuthHeaderField, "X-WebAuth-User"),
@@ -223,6 +226,7 @@ func TestBuildConfiguration(t *testing.T) {
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Digest: &types.Digest{
+							RemoveHeader: true,
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 							UsersFile: ".htpasswd",
@@ -326,9 +330,22 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel(label.TraefikBackendBufferingMemRequestBodyBytes, "2097152"),
 					withLabel(label.TraefikBackendBufferingRetryExpression, "IsNetworkError() && Attempts() <= 2"),
 
+					withLabel(label.TraefikFrontendPassTLSClientCertPem, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosNotBefore, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosNotAfter, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosSans, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectCommonName, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectCountry, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectLocality, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectOrganization, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectProvince, "true"),
+					withLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectSerialNumber, "true"),
+
 					withLabel(label.TraefikFrontendAuthBasic, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+					withLabel(label.TraefikFrontendAuthBasicRemoveHeader, "true"),
 					withLabel(label.TraefikFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 					withLabel(label.TraefikFrontendAuthBasicUsersFile, ".htpasswd"),
+					withLabel(label.TraefikFrontendAuthDigestRemoveHeader, "true"),
 					withLabel(label.TraefikFrontendAuthDigestUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 					withLabel(label.TraefikFrontendAuthDigestUsersFile, ".htpasswd"),
 					withLabel(label.TraefikFrontendAuthForwardAddress, "auth.server"),
@@ -411,9 +428,26 @@ func TestBuildConfiguration(t *testing.T) {
 					PassHostHeader: true,
 					PassTLSCert:    true,
 					Priority:       666,
+					PassTLSClientCert: &types.TLSClientHeaders{
+						PEM: true,
+						Infos: &types.TLSClientCertificateInfos{
+							NotBefore: true,
+							Sans:      true,
+							NotAfter:  true,
+							Subject: &types.TLSCLientCertificateSubjectInfos{
+								CommonName:   true,
+								Country:      true,
+								Locality:     true,
+								Organization: true,
+								Province:     true,
+								SerialNumber: true,
+							},
+						},
+					},
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{
+							RemoveHeader: true,
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 							UsersFile: ".htpasswd",
@@ -677,9 +711,22 @@ func TestBuildConfigurationSegments(t *testing.T) {
 					withSegmentLabel(label.TraefikProtocol, "https", "containous"),
 					withSegmentLabel(label.TraefikWeight, "12", "containous"),
 
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertPem, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosNotBefore, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosNotAfter, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosSans, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectCommonName, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectCountry, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectLocality, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectOrganization, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectProvince, "true", "containous"),
+					withSegmentLabel(label.TraefikFrontendPassTLSClientCertInfosSubjectSerialNumber, "true", "containous"),
+
 					withSegmentLabel(label.TraefikFrontendAuthBasic, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0", "containous"),
+					withSegmentLabel(label.TraefikFrontendAuthBasicRemoveHeader, "true", "containous"),
 					withSegmentLabel(label.TraefikFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0", "containous"),
 					withSegmentLabel(label.TraefikFrontendAuthBasicUsersFile, ".htpasswd", "containous"),
+					withSegmentLabel(label.TraefikFrontendAuthDigestRemoveHeader, "true", "containous"),
 					withSegmentLabel(label.TraefikFrontendAuthDigestUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0", "containous"),
 					withSegmentLabel(label.TraefikFrontendAuthDigestUsersFile, ".htpasswd", "containous"),
 					withSegmentLabel(label.TraefikFrontendAuthForwardAddress, "auth.server", "containous"),
@@ -757,9 +804,26 @@ func TestBuildConfigurationSegments(t *testing.T) {
 					PassHostHeader: true,
 					PassTLSCert:    true,
 					Priority:       666,
+					PassTLSClientCert: &types.TLSClientHeaders{
+						PEM: true,
+						Infos: &types.TLSClientCertificateInfos{
+							NotBefore: true,
+							Sans:      true,
+							NotAfter:  true,
+							Subject: &types.TLSCLientCertificateSubjectInfos{
+								CommonName:   true,
+								Country:      true,
+								Locality:     true,
+								Organization: true,
+								Province:     true,
+								SerialNumber: true,
+							},
+						},
+					},
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{
+							RemoveHeader: true,
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 							UsersFile: ".htpasswd",

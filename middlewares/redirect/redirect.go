@@ -11,6 +11,7 @@ import (
 	"text/template"
 
 	"github.com/containous/traefik/configuration"
+	"github.com/containous/traefik/middlewares"
 	"github.com/urfave/negroni"
 	"github.com/vulcand/oxy/utils"
 )
@@ -83,6 +84,24 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 	if err != nil {
 		h.errHandler.ServeHTTP(rw, req, err)
 		return
+	}
+
+	if stripPrefix, stripPrefixOk := req.Context().Value(middlewares.StripPrefixKey).(string); stripPrefixOk {
+		if len(stripPrefix) > 0 {
+			parsedURL.Path = stripPrefix
+		}
+	}
+
+	if addPrefix, addPrefixOk := req.Context().Value(middlewares.AddPrefixKey).(string); addPrefixOk {
+		if len(addPrefix) > 0 {
+			parsedURL.Path = strings.Replace(parsedURL.Path, addPrefix, "", 1)
+		}
+	}
+
+	if replacePath, replacePathOk := req.Context().Value(middlewares.ReplacePathKey).(string); replacePathOk {
+		if len(replacePath) > 0 {
+			parsedURL.Path = replacePath
+		}
 	}
 
 	if newURL != oldURL {

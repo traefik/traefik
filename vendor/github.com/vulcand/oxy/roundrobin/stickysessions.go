@@ -1,4 +1,3 @@
-// package stickysession is a mixin for load balancers that implements layer 7 (http cookie) session affinity
 package roundrobin
 
 import (
@@ -6,12 +5,14 @@ import (
 	"net/url"
 )
 
+// StickySession is a mixin for load balancers that implements layer 7 (http cookie) session affinity
 type StickySession struct {
 	cookieName string
 }
 
+// NewStickySession creates a new StickySession
 func NewStickySession(cookieName string) *StickySession {
-	return &StickySession{cookieName}
+	return &StickySession{cookieName: cookieName}
 }
 
 // GetBackend returns the backend URL stored in the sticky cookie, iff the backend is still in the valid list of servers.
@@ -32,11 +33,11 @@ func (s *StickySession) GetBackend(req *http.Request, servers []*url.URL) (*url.
 
 	if s.isBackendAlive(serverURL, servers) {
 		return serverURL, true, nil
-	} else {
-		return nil, false, nil
 	}
+	return nil, false, nil
 }
 
+// StickBackend creates and sets the cookie
 func (s *StickySession) StickBackend(backend *url.URL, w *http.ResponseWriter) {
 	cookie := &http.Cookie{Name: s.cookieName, Value: backend.String(), Path: "/"}
 	http.SetCookie(*w, cookie)
