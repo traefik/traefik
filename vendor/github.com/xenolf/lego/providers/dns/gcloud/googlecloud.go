@@ -131,25 +131,32 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 		return fmt.Errorf("googlecloud: %v", err)
 	}
 
+	// Look for existing records.
+	existing, err := d.findTxtRecords(zone, fqdn)
+	if err != nil {
+		return fmt.Errorf("googlecloud: %v", err)
+	}
+
 	rec := &dns.ResourceRecordSet{
 		Name:    fqdn,
 		Rrdatas: []string{value},
 		Ttl:     int64(d.config.TTL),
 		Type:    "TXT",
 	}
-	change := &dns.Change{
-		Additions: []*dns.ResourceRecordSet{rec},
-	}
 
-	// Look for existing records.
-	existing, err := d.findTxtRecords(zone, fqdn)
-	if err != nil {
-		return fmt.Errorf("googlecloud: %v", err)
-	}
+	change := &dns.Change{}
+
 	if len(existing) > 0 {
 		// Attempt to delete the existing records when adding our new one.
 		change.Deletions = existing
+
+		// Append existing TXT record data to the new TXT record data
+		for _, value := range existing {
+			rec.Rrdatas = append(rec.Rrdatas, value.Rrdatas...)
+		}
 	}
+
+	change.Additions = []*dns.ResourceRecordSet{rec}
 
 	chg, err := d.client.Changes.Create(d.config.Project, zone, change).Do()
 	if err != nil {
@@ -188,7 +195,10 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	}
 
 	_, err = d.client.Changes.Create(d.config.Project, zone, &dns.Change{Deletions: records}).Do()
-	return fmt.Errorf("googlecloud: %v", err)
+	if err != nil {
+		return fmt.Errorf("googlecloud: %v", err)
+	}
+	return nil
 }
 
 // Timeout customizes the timeout values used by the ACME package for checking

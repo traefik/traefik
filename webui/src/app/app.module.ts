@@ -13,6 +13,7 @@ import { ProvidersComponent } from './components/providers/providers.component';
 import { LetDirective } from './directives/let.directive';
 import { BackendFilterPipe } from './pipes/backend.filter.pipe';
 import { FrontendFilterPipe } from './pipes/frontend.filter.pipe';
+import { HumanReadableFilterPipe } from './pipes/humanreadable.filter.pipe';
 import { KeysPipe } from './pipes/keys.pipe';
 import { ApiService } from './services/api.service';
 import { WindowService } from './services/window.service';
@@ -28,6 +29,7 @@ import { WindowService } from './services/window.service';
     KeysPipe,
     FrontendFilterPipe,
     BackendFilterPipe,
+    HumanReadableFilterPipe,
     LetDirective
   ],
   imports: [

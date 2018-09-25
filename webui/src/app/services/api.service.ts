@@ -67,6 +67,9 @@ export class ApiService {
               frontend.headers.customResponseHeaders = this.toHeaderArray(frontend.headers.customResponseHeaders);
               frontend.headers.sslProxyHeaders = this.toHeaderArray(frontend.headers.sslProxyHeaders);
             }
+            if (frontend.ratelimit && frontend.ratelimit.rateset) {
+              frontend.ratelimit.rateset = this.toArray(frontend.ratelimit.rateset, 'id');
+            }
             return frontend;
           });
 
