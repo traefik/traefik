@@ -593,7 +593,7 @@ func (c *Client) solveChallengeForAuthz(authorizations []authorization) error {
 		}
 	}
 
-	// for all valid presolvers, first submit the challenges so they have max time to propigate
+	// for all valid presolvers, first submit the challenges so they have max time to propagate
 	for _, item := range authSolvers {
 		authz := item.authz
 		i := item.challengeIndex

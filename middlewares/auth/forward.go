@@ -108,6 +108,7 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 
 func writeHeader(req *http.Request, forwardReq *http.Request, trustForwardHeader bool) {
 	utils.CopyHeaders(forwardReq.Header, req.Header)
+	utils.RemoveHeaders(forwardReq.Header, forward.HopHeaders...)
 
 	if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
 		if trustForwardHeader {
