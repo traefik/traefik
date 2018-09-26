@@ -130,7 +130,7 @@ type Auditer interface {
 func appendCommonRequestFields(ev *AuditEvent, ctx *RequestContext) {
 
 	requestPayload := types.DataMap{}
-	requestPayload["length"] = ctx.Req.ContentLength
+	requestPayload[keyPayloadLength] = int(ctx.Req.ContentLength)
 
 	var requestContentType = ctx.FlatHeaders.GetString("content-type")
 

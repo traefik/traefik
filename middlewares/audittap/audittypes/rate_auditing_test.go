@@ -51,7 +51,7 @@ func TestRateAuditEvent(t *testing.T) {
 	assert.Equal(t, types.DataMap{"session-id": "S123", "request-id": "R123"}, event.ClientHeaders)
 	assert.Equal(t, types.DataMap{"akamai-test-hdr": "Ak999"}, event.RequestHeaders)
 
-	payloadLen, _ := event.RequestPayload.Get("length").(int64)
+	payloadLen := event.RequestPayload.Get(keyPayloadLength)
 	assert.EqualValues(t, len(vatDecl), payloadLen)
 
 	assert.Equal(t, "998C7D7DF2134835A332FAB2EB1914F3", event.Detail.CorrelationID)
@@ -114,7 +114,7 @@ func TestChrisRateAuditEvent(t *testing.T) {
 	assert.Equal(t, types.DataMap{"session-id": "S123", "request-id": "R123"}, event.ClientHeaders)
 	assert.Equal(t, types.DataMap{"akamai-test-hdr": "Ak999"}, event.RequestHeaders)
 
-	payloadLen, _ := event.RequestPayload.Get("length").(int64)
+	payloadLen := event.RequestPayload[keyPayloadLength]
 	assert.EqualValues(t, len(chrisPayeDecl), payloadLen)
 
 	assert.Equal(t, "AAAAZZZZCORRID", event.Detail.CorrelationID)
@@ -182,7 +182,7 @@ func TestWillHandleUnknownXml(t *testing.T) {
 	assert.Equal(t, "2001-09-09T01:46:40.000Z", event.GeneratedAt)
 	assert.Equal(t, types.DataMap{"session-id": "S123", "request-id": "R123"}, event.ClientHeaders)
 	assert.Equal(t, types.DataMap{"akamai-test-hdr": "Ak999"}, event.RequestHeaders)
-	payloadLen, _ := event.RequestPayload.Get("length").(int64)
+	payloadLen := event.RequestPayload[keyPayloadLength]
 	assert.EqualValues(t, len(xbytes), payloadLen)
 
 	assert.Equal(t, RATEAuditDetail{}, event.Detail)

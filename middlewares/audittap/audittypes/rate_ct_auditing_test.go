@@ -31,7 +31,7 @@ func TestRateCTInfoIgnoresNonSubmission(t *testing.T) {
 	event.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.Equal(t, "HMRC-CT-CT600", event.AuditType)
-	assert.Equal(t, types.DataMap{}, event.RequestPayload.GetDataMap("contents"))
+	assert.Equal(t, types.DataMap{}, event.RequestPayload.GetDataMap(keyPayloadContents))
 }
 
 func TestRateCTAuditEvent(t *testing.T) {
@@ -45,7 +45,7 @@ func TestRateCTAuditEvent(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "/submission?qq=zz", bytes.NewReader([]byte(ctDecl)))
 	respHdrs := http.Header{}
-	respInfo := types.ResponseInfo{}
+	respInfo := types.ResponseInfo{Entity: ([]byte("<SomeCtRespPayload />"))}
 
 	event := &RATEAuditEvent{}
 	spec := &AuditSpecification{}
@@ -54,10 +54,11 @@ func TestRateCTAuditEvent(t *testing.T) {
 
 	assert.Equal(t, "HMRC-CT-CT600", event.AuditType)
 	assert.NotEmpty(t, event.RequestPayload)
-	ctData := event.RequestPayload.GetString("contents")
+	ctData := event.RequestPayload.GetString(keyPayloadContents)
 	assert.True(t, strings.HasPrefix(ctData, "<?xml version=\"1.0\" encoding=\"UTF-8\"?><GovTalkMessage"))
 	assert.Contains(t, ctData, "<Key Type=\"UTR\">8596148860</Key>")
 	assert.Contains(t, ctData, "<TaxPayable>20302.69</TaxPayable>")
+	assert.Equal(t, "<SomeCtRespPayload />", event.ResponsePayload.GetString(keyPayloadContents))
 }
 
 func TestRateCTRemovesAttachmentContent(t *testing.T) {
@@ -85,7 +86,7 @@ func TestRateCTRemovesAttachmentContent(t *testing.T) {
 	event := &RATEAuditEvent{}
 	event.AuditType = "HMRC-CT-CT600"
 	gtm.populateDetails(event)
-	contents := event.RequestPayload.GetString("contents")
+	contents := event.RequestPayload.GetString(keyPayloadContents)
 	assert.Contains(t, contents, "AttachedFiles")
 	assert.Contains(t, contents, "<Attachment att=\"1\" size=\"999\"></Attachment>")
 	assert.Contains(t, contents, "<Attachment att=\"2\" size=\"123\"></Attachment>")

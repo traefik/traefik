@@ -23,7 +23,7 @@ func TestRateSaInfoIgnoresNonSubmission(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "/notasubmission?qq=zz", bytes.NewReader([]byte(sa100Decl)))
 	respHdrs := http.Header{}
-	respInfo := types.ResponseInfo{}
+	respInfo := types.ResponseInfo{Entity: ([]byte("<ShouldNotInclude>"))}
 
 	event := &RATEAuditEvent{}
 	spec := &AuditSpecification{}
@@ -31,7 +31,8 @@ func TestRateSaInfoIgnoresNonSubmission(t *testing.T) {
 	event.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.Equal(t, "HMRC-SA-SA100-ATT", event.AuditType)
-	assert.Equal(t, types.DataMap{}, event.RequestPayload.GetDataMap("contents"))
+	assert.Equal(t, types.DataMap{}, event.RequestPayload.GetDataMap(keyPayloadContents))
+	assert.Equal(t, types.DataMap{}, event.ResponsePayload.GetDataMap(keyPayloadContents))
 }
 
 func TestRateSA100AuditEvent(t *testing.T) {
@@ -45,7 +46,7 @@ func TestRateSA100AuditEvent(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "/submission?qq=zz", bytes.NewReader([]byte(sa100Decl)))
 	respHdrs := http.Header{}
-	respInfo := types.ResponseInfo{}
+	respInfo := types.ResponseInfo{Entity: ([]byte("<ShouldInclude />"))}
 
 	event := &RATEAuditEvent{}
 	spec := &AuditSpecification{}
@@ -54,11 +55,12 @@ func TestRateSA100AuditEvent(t *testing.T) {
 
 	assert.Equal(t, "HMRC-SA-SA100-ATT", event.AuditType)
 	assert.NotEmpty(t, event.RequestPayload)
-	saData := event.RequestPayload.GetString("contents")
+	saData := event.RequestPayload.GetString(keyPayloadContents)
 	assert.True(t, strings.HasPrefix(saData, "<?xml version=\"1.0\"?><GovTalkMessage"))
 	assert.Contains(t, saData, "<NationalInsuranceNumber>GY001093A")
 	assert.Contains(t, saData, "AttachedFiles")
 	assert.Contains(t, saData, "<Attachment FileFormat=\"pdf\" Filename=\"tubemap.pdf\" Description=\"TubeMap\" Size=\"315001\"></Attachment>")
+	assert.Equal(t, "<ShouldInclude />", event.ResponsePayload.GetString(keyPayloadContents))
 }
 
 func TestRateSA800AuditEvent(t *testing.T) {
@@ -72,7 +74,7 @@ func TestRateSA800AuditEvent(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "/submission?qq=zz", bytes.NewBuffer([]byte(sa800Decl)))
 	respHdrs := http.Header{}
-	respInfo := types.ResponseInfo{}
+	respInfo := types.ResponseInfo{Entity: ([]byte("<ShouldInclude />"))}
 
 	event := &RATEAuditEvent{}
 	spec := &AuditSpecification{}
@@ -81,11 +83,12 @@ func TestRateSA800AuditEvent(t *testing.T) {
 
 	assert.Equal(t, "HMRC-SA-SA800-ATT-TMSG", event.AuditType)
 	assert.NotEmpty(t, event.RequestPayload)
-	saData := event.RequestPayload.GetString("contents")
+	saData := event.RequestPayload.GetString(keyPayloadContents)
 	assert.True(t, strings.HasPrefix(saData, "<GovTalkMessage"))
 	assert.Contains(t, saData, "PartnershipName>ABCDEFGHIJKLMNOPQRSTUVWXYZ123456")
 	assert.Contains(t, saData, "<Attachment FileFormat=\"pdf\" Filename=\"POSATT035small1.pdf\" Size=\"12345\" Description=\"small attachment 1\"></Attachment>")
 	assert.Contains(t, saData, "<Attachment FileFormat=\"pdf\" Filename=\"POSATT035small2.pdf\" Size=\"100\" Description=\"small attachment 2\"></Attachment>")
+	assert.Equal(t, "<ShouldInclude />", event.ResponsePayload.GetString(keyPayloadContents))
 }
 
 func TestRateSA900AuditEvent(t *testing.T) {
@@ -99,7 +102,7 @@ func TestRateSA900AuditEvent(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "/submission?qq=zz", bytes.NewBuffer([]byte(sa900Decl)))
 	respHdrs := http.Header{}
-	respInfo := types.ResponseInfo{}
+	respInfo := types.ResponseInfo{Entity: ([]byte("<ShouldInclude />"))}
 
 	event := &RATEAuditEvent{}
 	spec := &AuditSpecification{}
@@ -108,10 +111,11 @@ func TestRateSA900AuditEvent(t *testing.T) {
 
 	assert.Equal(t, "HMRC-SA-SA900-ATT-TMSG", event.AuditType)
 	assert.NotEmpty(t, event.RequestPayload)
-	saData := event.RequestPayload.GetString("contents")
+	saData := event.RequestPayload.GetString(keyPayloadContents)
 	assert.True(t, strings.HasPrefix(saData, "<GovTalkMessage"))
 	assert.Contains(t, saData, "TrustName>Cap Trust")
 	assert.Contains(t, saData, "Attachment")
+	assert.Equal(t, "<ShouldInclude />", event.ResponsePayload.GetString(keyPayloadContents))
 }
 
 func TestRateSARemovesAttachmentContent(t *testing.T) {
@@ -139,7 +143,7 @@ func TestRateSARemovesAttachmentContent(t *testing.T) {
 	event := &RATEAuditEvent{}
 	event.AuditType = "HMRC-SA-SA900"
 	gtm.populateDetails(event)
-	contents := event.RequestPayload.GetString("contents")
+	contents := event.RequestPayload.GetString(keyPayloadContents)
 	assert.Contains(t, contents, "AttachedFiles")
 	assert.Contains(t, contents, "<Attachment att=\"1\" size=\"999\"></Attachment>")
 	assert.Contains(t, contents, "<Attachment att=\"2\" size=\"123\"></Attachment>")

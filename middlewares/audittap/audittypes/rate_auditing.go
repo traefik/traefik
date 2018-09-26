@@ -105,6 +105,9 @@ func (ev *RATEAuditEvent) AppendResponse(responseHeaders http.Header, respInfo t
 	// Avoid the processing for test messages
 	if !strings.HasSuffix(ev.AuditType, TestInLive) {
 		appendCommonResponseFields(&ev.AuditEvent, responseHeaders, respInfo)
+		if len(ev.RequestPayload.GetString(keyPayloadContents)) > 0 {
+			ev.addResponsePayloadContents(strings.TrimSpace(string(respInfo.Entity)))
+		}
 	}
 }
 

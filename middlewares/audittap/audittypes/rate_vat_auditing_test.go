@@ -31,7 +31,7 @@ func TestRateVATInfoIgnoresNonSubmission(t *testing.T) {
 	event.AppendResponse(respHdrs, respInfo, spec)
 
 	assert.Equal(t, "HMRC-VAT-DEC-TMSG", event.AuditType)
-	assert.Equal(t, types.DataMap{}, event.RequestPayload.GetDataMap("contents"))
+	assert.Equal(t, types.DataMap{}, event.RequestPayload.GetDataMap(keyPayloadContents))
 }
 
 func TestRateVATAuditEvent(t *testing.T) {
@@ -45,7 +45,7 @@ func TestRateVATAuditEvent(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "/submission?qq=zz", bytes.NewReader([]byte(vatDecl)))
 	respHdrs := http.Header{}
-	respInfo := types.ResponseInfo{}
+	respInfo := types.ResponseInfo{Entity: ([]byte("<SomeVatRespPayload />"))}
 
 	event := &RATEAuditEvent{}
 	spec := &AuditSpecification{}
@@ -54,8 +54,9 @@ func TestRateVATAuditEvent(t *testing.T) {
 
 	assert.Equal(t, "HMRC-VAT-DEC-TMSG", event.AuditType)
 	assert.NotEmpty(t, event.RequestPayload)
-	vatData := event.RequestPayload.GetString("contents")
+	vatData := event.RequestPayload.GetString(keyPayloadContents)
 	assert.True(t, strings.HasPrefix(vatData, "<?xml version=\"1.0\" encoding=\"UTF-8\"?><GovTalkMessage"))
 	assert.Contains(t, vatData, "<VATDueOnECAcquisitions>13.12</VATDueOnECAcquisitions>")
 	assert.Contains(t, vatData, "<Key Type=\"VATRegNo\">999947314</Key>")
+	assert.Equal(t, "<SomeVatRespPayload />", event.ResponsePayload.GetString(keyPayloadContents))
 }
