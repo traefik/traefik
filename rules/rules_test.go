@@ -195,6 +195,17 @@ func TestHostRegexp(t *testing.T) {
 				"http://barcom":      false,
 			},
 		},
+		{
+			desc:    "uppercased hostnames in request",
+			hostExp: "{dummy:[A-Za-z-]+\\.bar\\.com}",
+			urls: map[string]bool{
+				"http://FOO.bar.com": true,
+				"http://foo.bar.com": true,
+				"http://fooubar.com": false,
+				"http://barucom":     false,
+				"http://barcom":      false,
+			},
+		},
 	}
 
 	for _, test := range testCases {
