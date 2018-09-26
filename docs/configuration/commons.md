@@ -241,19 +241,23 @@ Example configuration:
 # Enable custom health check options.
 [healthcheck]
 
-# Set the default health check interval.
+# Set the default health check interval and timeout.
 #
 # Optional
 # Default: "30s"
 #
 # interval = "30s"
+# timeout = "5s"
 ```
 
-- `interval` set the default health check interval.  
-Will only be effective if health check paths are defined.  
-Given provider-specific support, the value may be overridden on a per-backend basis.  
-Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).  
+- `interval` sets the default health check interval.
+- `timeout` sets the default health check request timeout.
+
+These options will only be effective if health check paths are defined.
+Given provider-specific support, the value may be overridden on a per-backend basis.
+Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
 If no units are provided, the value is parsed assuming seconds.
+**Note:** the interval must be greater than the timeout. If configuration doesn't reflect this, the interval will be set to timeout + 1 second.
 
 ## Life Cycle
 

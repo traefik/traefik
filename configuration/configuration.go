@@ -42,6 +42,9 @@ const (
 	// DefaultHealthCheckInterval is the default health check interval.
 	DefaultHealthCheckInterval = 30 * time.Second
 
+	// DefaultHealthCheckTimeout is the default health check request timeout.
+	DefaultHealthCheckTimeout = 5 * time.Second
+
 	// DefaultDialTimeout when connecting to a backend server.
 	DefaultDialTimeout = 30 * time.Second
 
@@ -372,6 +375,7 @@ type Retry struct {
 // HealthCheckConfig contains health check configuration parameters.
 type HealthCheckConfig struct {
 	Interval parse.Duration `description:"Default periodicity of enabled health checks" export:"true"`
+	Timeout  parse.Duration `description:"Default request timeout of enabled health checks" export:"true"`
 }
 
 // RespondingTimeouts contains timeout configurations for incoming requests to the Traefik instance.

@@ -632,6 +632,12 @@
                                 <span class="tag is-info">{{ p.healthCheck.interval }}</span>
                               </div>
                             </div>
+                            <div class="control" *ngIf="p.healthCheck.timeout">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">Timeout</span>
+                                <span class="tag is-info">{{ p.healthCheck.timeout }}</span>
+                              </div>
+                            </div>
                             <div class="control" *ngIf="p.healthCheck.port">
                               <div class="tags has-addons">
                                 <span class="tag is-light">Port</span>

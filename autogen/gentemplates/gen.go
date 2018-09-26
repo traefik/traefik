@@ -88,6 +88,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+    timeout = "{{ $healthCheck.Timeout }}"
     hostname = "{{ $healthCheck.Hostname }}"
     {{if $healthCheck.Headers }}
     [backends."backend-{{ $backendName }}".healthCheck.headers]
@@ -356,6 +357,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+    timeout = "{{ $healthCheck.Timeout }}"
     hostname = "{{ $healthCheck.Hostname }}"
     {{if $healthCheck.Headers }}
     [backends."backend-{{ $backendName }}".healthCheck.headers]
@@ -624,6 +626,7 @@ var _templatesEcsTmpl = []byte(`[backends]
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+    timeout = "{{ $healthCheck.Timeout }}"
     hostname = "{{ $healthCheck.Hostname }}"
     {{if $healthCheck.Headers }}
     [backends."backend-{{ $serviceName }}".healthCheck.headers]
@@ -1152,6 +1155,7 @@ var _templatesKvTmpl = []byte(`[backends]
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+    timeout = "{{ $healthCheck.Timeout }}"
     hostname = "{{ $healthCheck.Hostname }}"
     {{if $healthCheck.Headers }}
     [backends."{{ $backendName }}".healthCheck.headers]
@@ -1437,6 +1441,7 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
       path = "{{ $healthCheck.Path }}"
       port = {{ $healthCheck.Port }}
       interval = "{{ $healthCheck.Interval }}"
+      timeout = "{{ $healthCheck.Timeout }}"
       hostname = "{{ $healthCheck.Hostname }}"
       {{if $healthCheck.Headers }}
       [backends.{{ $backendName }}.healthCheck.headers]
@@ -1707,6 +1712,7 @@ var _templatesMesosTmpl = []byte(`[backends]
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+    timeout = "{{ $healthCheck.Timeout }}"
     hostname = "{{ $healthCheck.Hostname }}"
     {{if $healthCheck.Headers }}
     [backends."backend-{{ $backendName }}".healthCheck.headers]
@@ -2000,6 +2006,7 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+    timeout = "{{ $healthCheck.Timeout }}"
     hostname = "{{ $healthCheck.Hostname }}"
     {{if $healthCheck.Headers }}
     [backends."backend-{{ $backendName }}".healthCheck.headers]

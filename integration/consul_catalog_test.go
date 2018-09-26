@@ -83,6 +83,7 @@ func (s *ConsulCatalogSuite) registerAgentService(name string, address string, p
 		healthCheck = &api.AgentServiceCheck{
 			HTTP:     "http://" + address,
 			Interval: "10s",
+			Timeout:  "3s",
 		}
 	} else {
 		healthCheck = nil

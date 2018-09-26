@@ -7,6 +7,7 @@ const (
 	pathBackendHealthCheckPath                  = "/healthcheck/path"
 	pathBackendHealthCheckPort                  = "/healthcheck/port"
 	pathBackendHealthCheckInterval              = "/healthcheck/interval"
+	pathBackendHealthCheckTimeout               = "/healthcheck/timeout"
 	pathBackendHealthCheckHostname              = "/healthcheck/hostname"
 	pathBackendHealthCheckHeaders               = "/healthcheck/headers/"
 	pathBackendLoadBalancerMethod               = "/loadbalancer/method"
