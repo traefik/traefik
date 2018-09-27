@@ -74,6 +74,7 @@ type HealthCheck struct {
 	Path     string            `json:"path,omitempty"`
 	Port     int               `json:"port,omitempty"`
 	Interval string            `json:"interval,omitempty"`
+	Timeout  string            `json:"timeout,omitempty"`
 	Hostname string            `json:"hostname,omitempty"`
 	Headers  map[string]string `json:"headers,omitempty"`
 }

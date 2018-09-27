@@ -15,7 +15,8 @@ import (
 	"github.com/vulcand/oxy/roundrobin"
 )
 
-const healthCheckInterval = 100 * time.Millisecond
+const healthCheckInterval = 200 * time.Millisecond
+const healthCheckTimeout = 100 * time.Millisecond
 
 type testHandler struct {
 	done           func()
@@ -105,6 +106,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 			backend := NewBackendConfig(Options{
 				Path:     "/path",
 				Interval: healthCheckInterval,
+				Timeout:  healthCheckTimeout,
 				LB:       lb,
 			}, "backendName")
 
