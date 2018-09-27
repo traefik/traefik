@@ -108,6 +108,11 @@ logLevel = "ERROR"
 Access logs are written when `[accessLog]` is defined.
 By default it will write to stdout and produce logs in the textual Common Log Format (CLF), extended with additional fields.
 
+Default access log format
+```
+ClientHost - ClientUsername [Timestamp] "RequestMethod RequestPath RequestProtocol" OriginStatus OriginContentSize "RequestReferer" "RequestUserAgent" RequestCount "FrontendName" "BackendURL" ElapsedMillisecondsms\n
+```
+
 To enable access logs using the default settings just add the `[accessLog]` entry:
 ```toml
 [accessLog]
