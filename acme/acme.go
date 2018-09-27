@@ -127,7 +127,6 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 
 	a.checkOnDemandDomain = checkOnDemandDomain
 	a.dynamicCerts = certs
-	a.challengeTLSProvider = &challengeTLSProvider{store: a.store}
 
 	tlsConfig.GetCertificate = a.getCertificate
 	a.TLSConfig = tlsConfig
@@ -157,6 +156,7 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 	}
 
 	a.store = datastore
+	a.challengeTLSProvider = &challengeTLSProvider{store: a.store}
 
 	ticker := time.NewTicker(24 * time.Hour)
 	leadership.Pool.AddGoCtx(func(ctx context.Context) {
