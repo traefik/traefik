@@ -1,5 +1,14 @@
 # Change Log
 
+## [v1.7.1](https://github.com/containous/traefik/tree/v1.7.1) (2018-09-28)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.0...v1.7.1)
+
+**Bug fixes:**
+- **[acme,cluster]** Don&#39;t remove static certs from config when cluster mode ([#3946](https://github.com/containous/traefik/pull/3946) by [Juliens](https://github.com/Juliens))
+- **[acme]** Fix TLS ALPN cluster mode. ([#3934](https://github.com/containous/traefik/pull/3934) by [ldez](https://github.com/ldez))
+- **[acme]** Don&#39;t challenge ACME when host rule on another entry point ([#3923](https://github.com/containous/traefik/pull/3923) by [Juliens](https://github.com/Juliens))
+- **[tls]** Use the first static certificate as a fallback when no default is given ([#3948](https://github.com/containous/traefik/pull/3948) by [Juliens](https://github.com/Juliens))
+
 ## [v1.7.0](https://github.com/containous/traefik/tree/v1.7.0) (2018-09-24)
 [Commits](https://github.com/containous/traefik/compare/v1.7.0-rc1...v1.7.0)
 [Commits pre RC](https://github.com/containous/traefik/compare/v1.6.0-rc1...v1.7.0-rc1)
