@@ -315,13 +315,13 @@ func (s *EtcdSuite) TestCertificatesContentWithSNIConfigHandshake(c *check.C) {
 	snitestOrgKey, err := ioutil.ReadFile("fixtures/https/snitest.org.key")
 	c.Assert(err, checker.IsNil)
 
-	globalConfig := map[string]string{
-		"/traefik/entrypoints/https/address":                     ":4443",
-		"/traefik/entrypoints/https/tls/certificates/0/certfile": string(snitestComCert),
-		"/traefik/entrypoints/https/tls/certificates/0/keyfile":  string(snitestComKey),
-		"/traefik/entrypoints/https/tls/certificates/1/certfile": string(snitestOrgCert),
-		"/traefik/entrypoints/https/tls/certificates/1/keyfile":  string(snitestOrgKey),
-		"/traefik/defaultentrypoints/0":                          "https",
+	globalConfig := map[string][]byte{
+		"/traefik/entrypoints/https/address":                     []byte(":4443"),
+		"/traefik/entrypoints/https/tls/certificates/0/certfile": snitestComCert,
+		"/traefik/entrypoints/https/tls/certificates/0/keyfile":  snitestComKey,
+		"/traefik/entrypoints/https/tls/certificates/1/certfile": snitestOrgCert,
+		"/traefik/entrypoints/https/tls/certificates/1/keyfile":  snitestOrgKey,
+		"/traefik/defaultentrypoints/0":                          []byte("https"),
 	}
 
 	backend1 := map[string]string{
@@ -351,7 +351,7 @@ func (s *EtcdSuite) TestCertificatesContentWithSNIConfigHandshake(c *check.C) {
 		"/traefik/frontends/frontend2/routes/test_2/rule": "Host:snitest.org",
 	}
 	for key, value := range globalConfig {
-		err := s.kv.Put(key, []byte(value), nil)
+		err := s.kv.Put(key, value, nil)
 		c.Assert(err, checker.IsNil)
 	}
 	for key, value := range backend1 {
