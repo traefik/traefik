@@ -170,7 +170,7 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 	jsonConf, err := json.Marshal(globalConfiguration)
 	if err != nil {
 		log.Error(err)
-		log.Debugf("Global configuration loaded [struct] %+v", globalConfiguration)
+		log.Debugf("Global configuration loaded [struct] %#v", globalConfiguration)
 	} else {
 		log.Debugf("Global configuration loaded %s", string(jsonConf))
 	}
