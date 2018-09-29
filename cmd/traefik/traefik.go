@@ -165,20 +165,25 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 	globalConfiguration.SetEffectiveConfiguration(configFile)
 	globalConfiguration.ValidateConfiguration()
 
+	log.Infof("Traefik version %s built on %s", version.Version, version.BuildDate)
+
+	jsonConf, err := json.Marshal(globalConfiguration)
+	if err != nil {
+		log.Error(err)
+		log.Debugf("Global configuration loaded [struct] %+v", globalConfiguration)
+	} else {
+		log.Debugf("Global configuration loaded %s", string(jsonConf))
+	}
+
 	if globalConfiguration.API != nil && globalConfiguration.API.Dashboard {
 		globalConfiguration.API.DashboardAssets = &assetfs.AssetFS{Asset: genstatic.Asset, AssetInfo: genstatic.AssetInfo, AssetDir: genstatic.AssetDir, Prefix: "static"}
 	}
-
-	jsonConf, _ := json.Marshal(globalConfiguration)
-	log.Infof("Traefik version %s built on %s", version.Version, version.BuildDate)
 
 	if globalConfiguration.CheckNewVersion {
 		checkNewVersion()
 	}
 
 	stats(globalConfiguration)
-
-	log.Debugf("Global configuration loaded %s", string(jsonConf))
 
 	providerAggregator := configuration.NewProviderAggregator(globalConfiguration)
 
