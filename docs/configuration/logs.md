@@ -60,12 +60,14 @@ For more information about the CLI, see the documentation about [Traefik command
 By default the Traefik log is written to stdout in text format.
 
 To write the logs into a log file specify the `filePath`:
+
 ```toml
 [traefikLog]
   filePath = "/path/to/traefik.log"
 ```
 
 To write JSON format logs, specify `json` as the format:
+
 ```toml
 [traefikLog]
   filePath = "/path/to/traefik.log"
@@ -90,6 +92,7 @@ traefikLogsFile = "log/traefik.log"
 ```
 
 To customize the log level:
+
 ```toml
 # Log level
 #
@@ -109,17 +112,20 @@ Access logs are written when `[accessLog]` is defined.
 By default it will write to stdout and produce logs in the textual Common Log Format (CLF), extended with additional fields.
 
 To enable access logs using the default settings just add the `[accessLog]` entry:
+
 ```toml
 [accessLog]
 ```
 
 To write the logs into a log file specify the `filePath`:
+
 ```toml
 [accessLog]
 filePath = "/path/to/access.log"
 ```
 
 To write JSON format logs, specify `json` as the format:
+
 ```toml
 [accessLog]
 filePath = "/path/to/access.log"
@@ -127,6 +133,7 @@ format = "json"
 ```
 
 To write the logs in async, specify `bufferingSize` as the format (must be >0):
+
 ```toml
 [accessLog]
 filePath = "/path/to/access.log"
@@ -141,6 +148,7 @@ bufferingSize = 100
 ```
 
 To filter logs you can specify a set of filters which are logically "OR-connected". Thus, specifying multiple filters will keep more access logs than specifying only one:
+
 ```toml
 [accessLog]
 filePath = "/path/to/access.log"
@@ -171,6 +179,7 @@ format = "json"
 ```
 
 To customize logs format:
+
 ```toml
 [accessLog]
 filePath = "/path/to/access.log"
@@ -218,7 +227,8 @@ format = "json"
       # ...
 ```
 
-#### List of all available fields
+
+### List of all available fields
 
 ```ini
 StartUTC
@@ -265,6 +275,15 @@ Deprecated way (before 1.4):
 #
 accessLogsFile = "log/access.log"
 ```
+
+### CLF - Common Log Format
+
+By default, Træfik use the CLF (`common`) as access log format.
+
+```html
+<remote_IP_address> - <client_user_name_if_available> [<timestamp>] "<request_method> <request_path> <request_protocol>" <origin_server_HTTP_status> <origin_server_content_size> "<request_referrer>" "<request_user_agent>" <number_of_requests_received_since_Traefik_started> "<Traefik_frontend_name>" "<Traefik_backend_URL>" <request_duration_in_ms>ms 
+```
+
 
 ## Log Rotation
 
