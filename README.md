@@ -23,14 +23,12 @@ Pointing Træfik at your orchestrator should be the _only_ configuration step yo
 **[Supported backends](#supported-backends)** .
 **[Quickstart](#quickstart)** .
 **[Web UI](#web-ui)** .
-**[Test it](#test-it)** .
 **[Documentation](#documentation)** .
 
 . **[Support](#support)** .
 **[Release cycle](#release-cycle)** .
 **[Contributing](#contributing)** .
 **[Maintainers](#maintainers)** .
-**[Plumbing](#plumbing)** .
 **[Credits](#credits)** .
 
 ---
