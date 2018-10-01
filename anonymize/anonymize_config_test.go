@@ -2,12 +2,15 @@ package anonymize
 
 import (
 	"crypto/tls"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/acme"
+	"github.com/containous/traefik/api"
 	"github.com/containous/traefik/configuration"
+	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/provider"
 	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/provider/boltdb"
@@ -25,8 +28,11 @@ import (
 	"github.com/containous/traefik/provider/mesos"
 	"github.com/containous/traefik/provider/rancher"
 	"github.com/containous/traefik/provider/zk"
+	"github.com/containous/traefik/safe"
 	traefiktls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
+	"github.com/elazarl/go-bindata-assetfs"
+	"github.com/thoas/stats"
 )
 
 func TestDo_globalConfiguration(t *testing.T) {
@@ -187,6 +193,35 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 	config.HealthCheck = &configuration.HealthCheckConfig{
 		Interval: flaeg.Duration(666 * time.Second),
+	}
+	config.API = &api.Handler{
+		EntryPoint:            "traefik",
+		Dashboard:             true,
+		Debug:                 true,
+		CurrentConfigurations: &safe.Safe{},
+		Statistics: &types.Statistics{
+			RecentErrors: 666,
+		},
+		Stats: &stats.Stats{
+			Uptime:              time.Now(),
+			Pid:                 666,
+			ResponseCounts:      map[string]int{"foo": 1},
+			TotalResponseCounts: map[string]int{"bar": 1},
+			TotalResponseTime:   time.Now(),
+		},
+		StatsRecorder: &middlewares.StatsRecorder{},
+		DashboardAssets: &assetfs.AssetFS{
+			Asset: func(path string) ([]byte, error) {
+				return nil, nil
+			},
+			AssetDir: func(path string) ([]string, error) {
+				return nil, nil
+			},
+			AssetInfo: func(path string) (os.FileInfo, error) {
+				return nil, nil
+			},
+			Prefix: "fii",
+		},
 	}
 	config.RespondingTimeouts = &configuration.RespondingTimeouts{
 		ReadTimeout:  flaeg.Duration(666 * time.Second),
