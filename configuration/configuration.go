@@ -201,6 +201,7 @@ func (gc *GlobalConfiguration) initTracing() {
 					SameSpan:     false,
 					ID128Bit:     true,
 					Debug:        false,
+					SampleRate:   1.0,
 				}
 			}
 			if gc.Tracing.Jaeger != nil {
