@@ -462,21 +462,19 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 		}
 	}
 
-	if s.globalConfiguration.ACME != nil {
-		if entryPointName == s.globalConfiguration.ACME.EntryPoint {
-			checkOnDemandDomain := func(domain string) bool {
-				routeMatch := &mux.RouteMatch{}
-				match := router.GetHandler().Match(&http.Request{URL: &url.URL{}, Host: domain}, routeMatch)
-				if match && routeMatch.Route != nil {
-					return true
-				}
-				return false
+	if s.globalConfiguration.ACME != nil && entryPointName == s.globalConfiguration.ACME.EntryPoint {
+		checkOnDemandDomain := func(domain string) bool {
+			routeMatch := &mux.RouteMatch{}
+			match := router.GetHandler().Match(&http.Request{URL: &url.URL{}, Host: domain}, routeMatch)
+			if match && routeMatch.Route != nil {
+				return true
 			}
+			return false
+		}
 
-			err := s.globalConfiguration.ACME.CreateClusterConfig(s.leadership, config, s.serverEntryPoints[entryPointName].certs.DynamicCerts, checkOnDemandDomain)
-			if err != nil {
-				return nil, err
-			}
+		err := s.globalConfiguration.ACME.CreateClusterConfig(s.leadership, config, s.serverEntryPoints[entryPointName].certs.DynamicCerts, checkOnDemandDomain)
+		if err != nil {
+			return nil, err
 		}
 	} else {
 		config.GetCertificate = s.serverEntryPoints[entryPointName].getCertificate
