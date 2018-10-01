@@ -35,6 +35,8 @@ Pointing Træfik at your orchestrator should be the _only_ configuration step yo
 
 ---
 
+:construction: As stated in [our latest 1.7 release note](https://blog.containo.us/traefik-1-7-yet-another-slice-of-awesomeness-2a9c99737889#782d), a major overhaul is currently occuring on the [master](https://github.com/containous/traefik/tree/master) branch. It will remain in constant evolution and prone to change with little notice.
+
 ## Overview
 
 Imagine that you have deployed a bunch of microservices with the help of an orchestrator (like Swarm or Kubernetes) or a service registry (like etcd or consul).
