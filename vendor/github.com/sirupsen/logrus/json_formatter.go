@@ -1,6 +1,7 @@
 package logrus
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 )
@@ -33,6 +34,9 @@ type JSONFormatter struct {
 	// DisableTimestamp allows disabling automatic timestamps in output
 	DisableTimestamp bool
 
+	// DataKey allows users to put all the log entry parameters into a nested dictionary at a given key.
+	DataKey string
+
 	// FieldMap allows users to customize the names of keys for default fields.
 	// As an example:
 	// formatter := &JSONFormatter{
@@ -43,6 +47,9 @@ type JSONFormatter struct {
 	//    },
 	// }
 	FieldMap FieldMap
+
+	// PrettyPrint will indent all json logs
+	PrettyPrint bool
 }
 
 // Format renders a single log entry
@@ -58,7 +65,14 @@ func (f *JSONFormatter) Format(entry *Entry) ([]byte, error) {
 			data[k] = v
 		}
 	}
-	prefixFieldClashes(data)
+
+	if f.DataKey != "" {
+		newData := make(Fields, 4)
+		newData[f.DataKey] = data
+		data = newData
+	}
+
+	prefixFieldClashes(data, f.FieldMap)
 
 	timestampFormat := f.TimestampFormat
 	if timestampFormat == "" {
@@ -71,9 +85,20 @@ func (f *JSONFormatter) Format(entry *Entry) ([]byte, error) {
 	data[f.FieldMap.resolve(FieldKeyMsg)] = entry.Message
 	data[f.FieldMap.resolve(FieldKeyLevel)] = entry.Level.String()
 
-	serialized, err := json.Marshal(data)
-	if err != nil {
+	var b *bytes.Buffer
+	if entry.Buffer != nil {
+		b = entry.Buffer
+	} else {
+		b = &bytes.Buffer{}
+	}
+
+	encoder := json.NewEncoder(b)
+	if f.PrettyPrint {
+		encoder.SetIndent("", "  ")
+	}
+	if err := encoder.Encode(data); err != nil {
 		return nil, fmt.Errorf("Failed to marshal fields to JSON, %v", err)
 	}
-	return append(serialized, '\n'), nil
+
+	return b.Bytes(), nil
 }
