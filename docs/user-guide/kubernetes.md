@@ -772,7 +772,7 @@ spec:
 Træfik will now look for cheddar service endpoints (ports on healthy pods) in both the cheese and the default namespace. Deploying cheddar into the cheese namespace and afterwards shutting down cheddar in the default namespace is enough to migrate the traffic.
 
 !!! note
-   The kubernetes documentation does not specify this merging behavior. The reference nginx implementation has undefined behavior: If two ingress objects define the same host/port then one of them will randomly win on reload.
+   The kubernetes documentation does not specify this merging behavior.
 
 !!! note
    Merging ingress definitions can cause problems if the annotations differ or if the services handle requests differently. Be careful and extra cautious when running multiple overlapping ingress definitions.
