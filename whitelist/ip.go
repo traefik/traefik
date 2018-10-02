@@ -63,7 +63,8 @@ func (ip *IP) IsAuthorized(req *http.Request) error {
 			for _, xFF := range xFFs {
 				xffs := strings.Split(xFF, ",")
 				for _, xff := range xffs {
-					ok, err := ip.contains(parseHost(xff))
+					xffTrimmed := strings.TrimSpace(xff)
+					ok, err := ip.contains(parseHost(xffTrimmed))
 					if err != nil {
 						return err
 					}
@@ -72,7 +73,7 @@ func (ip *IP) IsAuthorized(req *http.Request) error {
 						return nil
 					}
 
-					invalidMatches = append(invalidMatches, xff)
+					invalidMatches = append(invalidMatches, xffTrimmed)
 				}
 			}
 		}

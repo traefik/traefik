@@ -32,7 +32,7 @@ func TestIsAuthorized(t *testing.T) {
 			whiteList:           []string{"1.2.3.4/24"},
 			allowXForwardedFor:  true,
 			remoteAddr:          "10.2.3.1:123",
-			xForwardedForValues: []string{"1.2.3.1, 10.2.3.1"},
+			xForwardedForValues: []string{"10.2.3.1, 1.2.3.1"},
 			authorized:          true,
 		},
 		{
