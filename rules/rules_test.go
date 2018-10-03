@@ -218,11 +218,17 @@ func TestHostRegexp(t *testing.T) {
 	}
 }
 
-type fakeHandler struct {
-	name string
-}
+func TestParseInvalidSyntax(t *testing.T) {
+	router := mux.NewRouter()
+	router.StrictSlash(true)
 
-func (h *fakeHandler) ServeHTTP(http.ResponseWriter, *http.Request) {}
+	rules := &Rules{Route: &types.ServerRoute{Route: router.NewRoute()}}
+	expression01 := "Path: /path1;Query:param_one=true, /path2"
+
+	routeFoo, err := rules.Parse(expression01)
+	require.Error(t, err)
+	assert.Nil(t, routeFoo)
+}
 
 func TestPathPrefix(t *testing.T) {
 	testCases := []struct {
@@ -287,3 +293,9 @@ func TestPathPrefix(t *testing.T) {
 		})
 	}
 }
+
+type fakeHandler struct {
+	name string
+}
+
+func (h *fakeHandler) ServeHTTP(http.ResponseWriter, *http.Request) {}
