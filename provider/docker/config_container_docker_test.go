@@ -1473,8 +1473,9 @@ func TestDockerGetIPPort(t *testing.T) {
 			port: "8082",
 		},
 		{
-			desc: "label traefik.port not set, single binding with port only, server ignored",
+			desc: "label traefik.port not set, single binding with port only, falling back on the container's IP/Port",
 			container: containerJSON(
+				withNetwork("testnet", ipv4("10.11.12.13")),
 				ports(nat.PortMap{
 					"80/tcp": []nat.PortBinding{
 						{
@@ -1482,17 +1483,22 @@ func TestDockerGetIPPort(t *testing.T) {
 						},
 					},
 				}),
-				withNetwork("testnet", ipv4("10.11.12.13"))),
-			expectsError: true,
+			),
+			ip:   "10.11.12.13",
+			port: "80",
 		},
 		{
-			desc: "label traefik.port not set, no binding, server ignored",
+			desc: "label traefik.port not set, no binding, falling back on the container's IP/Port",
 			container: containerJSON(
+				ports(nat.PortMap{
+					"8080/tcp": {},
+				}),
 				withNetwork("testnet", ipv4("10.11.12.13"))),
-			expectsError: true,
+			ip:   "10.11.12.13",
+			port: "8080",
 		},
 		{
-			desc: "label traefik.port set, no binding on the corresponding port, server ignored",
+			desc: "label traefik.port set, no binding on the corresponding port, falling back on the container's IP/Port set",
 			container: containerJSON(
 				labels(map[string]string{
 					label.TraefikPort: "80",
@@ -1506,16 +1512,18 @@ func TestDockerGetIPPort(t *testing.T) {
 					},
 				}),
 				withNetwork("testnet", ipv4("10.11.12.13"))),
-			expectsError: true,
+			ip:   "10.11.12.13",
+			port: "80",
 		},
 		{
-			desc: "label traefik.port set, no binding, server ignored",
+			desc: "label traefik.port set, no binding, falling back on the container's IP/traefik.port",
 			container: containerJSON(
 				labels(map[string]string{
 					label.TraefikPort: "80",
 				}),
 				withNetwork("testnet", ipv4("10.11.12.13"))),
-			expectsError: true,
+			ip:   "10.11.12.13",
+			port: "80",
 		},
 	}
 
@@ -1529,7 +1537,7 @@ func TestDockerGetIPPort(t *testing.T) {
 			dData.SegmentLabels = segmentProperties[""]
 
 			provider := &Provider{
-				Network:       "webnet",
+				Network:       "testnet",
 				UseBindPortIP: true,
 			}
 
