@@ -320,6 +320,68 @@ func TestProviderBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
+			desc: "Should build config with a forward auth",
+			nodes: []catalogUpdate{
+				{
+					Service: &serviceUpdate{
+						ServiceName: "test",
+						Attributes: []string{
+							"random.foo=bar",
+							label.TraefikFrontendAuthForwardAddress + "=auth.server",
+							label.TraefikFrontendAuthForwardAuthResponseHeaders + "=X-Auth-User",
+						},
+					},
+					Nodes: []*api.ServiceEntry{
+						{
+							Service: &api.AgentService{
+								Service: "test",
+								Address: "127.0.0.1",
+								Port:    80,
+								Tags: []string{
+									"random.foo=bar",
+									label.Prefix + "backend.weight=42", // Deprecated label
+									label.TraefikFrontendPassHostHeader + "=true",
+									label.TraefikProtocol + "=https",
+								},
+							},
+							Node: &api.Node{
+								Node:    "localhost",
+								Address: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-test": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					Routes: map[string]types.Route{
+						"route-host-test": {
+							Rule: "Host:test.localhost",
+						},
+					},
+					Auth: &types.Auth{
+						Forward: &types.Forward{
+							Address:             "auth.server",
+							AuthResponseHeaders: []string{"X-Auth-User"},
+						},
+					},
+					EntryPoints: []string{},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test": {
+					Servers: map[string]types.Server{
+						"test-0-us4-27hAOu2ARV7nNrmv6GoKlcA": {
+							URL:    "https://127.0.0.1:80",
+							Weight: 42,
+						},
+					},
+				},
+			},
+		},
+		{
 			desc: "when all labels are set",
 			nodes: []catalogUpdate{
 				{
@@ -366,6 +428,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 							label.TraefikFrontendAuthDigestUsers + "=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 							label.TraefikFrontendAuthDigestUsersFile + "=.htpasswd",
 							label.TraefikFrontendAuthForwardAddress + "=auth.server",
+							label.TraefikFrontendAuthForwardAuthResponseHeaders + "=X-Auth-User,X-Auth-Token",
 							label.TraefikFrontendAuthForwardTrustForwardHeader + "=true",
 							label.TraefikFrontendAuthForwardTLSCa + "=ca.crt",
 							label.TraefikFrontendAuthForwardTLSCaOptional + "=true",
