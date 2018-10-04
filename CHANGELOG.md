@@ -1,5 +1,23 @@
 # Change Log
 
+## [v1.7.2](https://github.com/containous/traefik/tree/v1.7.2) (2018-10-04)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.1...v1.7.2)
+
+**Bug fixes:**
+- **[acme,cluster,kv]** TLS, ACME, cluster and several entrypoints. ([#3962](https://github.com/containous/traefik/pull/3962) by [ldez](https://github.com/ldez))
+- **[cluster,kv]** Correctly initialize kv store if storage key missing ([#3958](https://github.com/containous/traefik/pull/3958) by [jfrabaute](https://github.com/jfrabaute))
+- **[cluster,kv]** Return an error if kv store CA cert is invalid ([#3956](https://github.com/containous/traefik/pull/3956) by [jfrabaute](https://github.com/jfrabaute))
+- **[file]** Do not Errorf during file watcher verification test loop. ([#3938](https://github.com/containous/traefik/pull/3938) by [timoreimann](https://github.com/timoreimann))
+- **[k8s]** Add Template-ability check to Kubernetes API Fields ([#3964](https://github.com/containous/traefik/pull/3964) by [dtomcej](https://github.com/dtomcej))
+- **[logs]** Colored logs on windows. ([#3966](https://github.com/containous/traefik/pull/3966) by [ldez](https://github.com/ldez))
+- **[middleware]** Whitelist log for deprecated configuration. ([#3963](https://github.com/containous/traefik/pull/3963) by [ldez](https://github.com/ldez))
+- **[middleware]** Trimming whitespace in XFF for IP whitelisting ([#3971](https://github.com/containous/traefik/pull/3971) by [olmoser](https://github.com/olmoser))
+- **[rules]** Rule parsing error. ([#3976](https://github.com/containous/traefik/pull/3976) by [ldez](https://github.com/ldez))
+- Global configuration log at start ([#3954](https://github.com/containous/traefik/pull/3954) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[logs]** Document the default accessLog format ([#3942](https://github.com/containous/traefik/pull/3942) by [dfredell](https://github.com/dfredell))
+
 ## [v1.7.1](https://github.com/containous/traefik/tree/v1.7.1) (2018-09-28)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.0...v1.7.1)
 
