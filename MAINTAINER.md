@@ -13,6 +13,9 @@
 * Nicolas Mengin [@nmengin](https://github.com/nmengin)
 * Marco Jantke [@marco-jantke](https://github.com/marco-jantke)
 * Michaël Matur [@mmatur](https://github.com/mmatur)
+* Gérald Croës [@geraldcroes](https://github.com/geraldcroes)
+* Jean-Baptiste Doumenjou [@jbdoumenjou](https://github.com/jbdoumenjou)
+* Damien Duportal [@dduportal](https://github.com/dduportal)
 
 ## Contributions Daily Meeting
 
