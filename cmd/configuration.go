@@ -208,6 +208,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 			SameSpan:     false,
 			ID128Bit:     true,
 			Debug:        false,
+			SampleRate:   1.0,
 		},
 		DataDog: &datadog.Config{
 			LocalAgentHostPort: "localhost:8126",
