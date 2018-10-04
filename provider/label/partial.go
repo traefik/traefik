@@ -119,6 +119,7 @@ func GetAuth(labels map[string]string) *types.Auth {
 // getAuthBasic Create Basic Auth from labels
 func getAuthBasic(labels map[string]string) *types.Basic {
 	basicAuth := &types.Basic{
+		Realm:        GetStringValue(labels, TraefikFrontendAuthBasicRealm, ""),
 		UsersFile:    GetStringValue(labels, TraefikFrontendAuthBasicUsersFile, ""),
 		RemoveHeader: GetBoolValue(labels, TraefikFrontendAuthBasicRemoveHeader, false),
 	}

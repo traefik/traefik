@@ -167,6 +167,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 					serviceLabels(map[string]string{
 						label.TraefikPort:                          "80",
 						label.TraefikFrontendAuthBasicUsers:        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendAuthBasicRealm:        "myRealm",
 						label.TraefikFrontendAuthBasicUsersFile:    ".htpasswd",
 						label.TraefikFrontendAuthBasicRemoveHeader: "true",
 					}),
@@ -181,6 +182,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 					EntryPoints:    []string{},
 					Auth: &types.Auth{
 						Basic: &types.Basic{
+							Realm:        "myRealm",
 							RemoveHeader: true,
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
@@ -400,6 +402,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						label.TraefikBackendBufferingRetryExpression:         "IsNetworkError() && Attempts() <= 2",
 
 						label.TraefikFrontendAuthBasicRemoveHeader:            "true",
+						label.TraefikFrontendAuthBasicRealm:                   "myRealm",
 						label.TraefikFrontendAuthBasicUsers:                   "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.TraefikFrontendAuthBasicUsersFile:               ".htpasswd",
 						label.TraefikFrontendAuthDigestRemoveHeader:           "true",
@@ -487,6 +490,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{
+							Realm:        "myRealm",
 							RemoveHeader: true,
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},

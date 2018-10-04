@@ -121,6 +121,7 @@ func makeEntryPointAuth(result map[string]string) *types.Auth {
 	var basic *types.Basic
 	if v, ok := result["auth_basic_users"]; ok {
 		basic = &types.Basic{
+			Realm:        result["auth_basic_realm"],
 			Users:        strings.Split(v, ","),
 			RemoveHeader: toBool(result, "auth_basic_removeheader"),
 		}

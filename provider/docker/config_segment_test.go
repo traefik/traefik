@@ -139,6 +139,7 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 						"traefik.sauternes.port":                                                "2503",
 						"traefik.sauternes.frontend.entryPoints":                                "http,https",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthHeaderField:       "X-WebAuth-User",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicRealm:        "myRealm",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicUsers:        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicUsersFile:    ".htpasswd",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicRemoveHeader: "true",
@@ -163,6 +164,7 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{
 							RemoveHeader: true,
+							Realm:        "myRealm",
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 							UsersFile: ".htpasswd",
@@ -363,6 +365,7 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSubjectSerialNumber: "true",
 
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicRemoveHeader:            "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicRealm:                   "myRealm",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicUsers:                   "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasicUsersFile:               ".htpasswd",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthDigestRemoveHeader:           "true",
@@ -464,6 +467,7 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{
 							RemoveHeader: true,
+							Realm:        "myRealm",
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 							UsersFile: ".htpasswd",

@@ -72,6 +72,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendAuthBasicUsers:        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.TraefikFrontendAuthBasicUsersFile:    ".htpasswd",
 						label.TraefikFrontendAuthBasicRemoveHeader: "true",
+						label.TraefikFrontendAuthBasicRealm:        "myRealm",
 					}),
 					ports(nat.PortMap{
 						"80/tcp": {},
@@ -87,6 +88,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 					Auth: &types.Auth{
 						Basic: &types.Basic{
 							RemoveHeader: true,
+							Realm:        "myRealm",
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 							UsersFile: ".htpasswd",
@@ -463,6 +465,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendPassTLSClientCertInfosSubjectSerialNumber: "true",
 
 						label.TraefikFrontendAuthBasic:                        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendAuthBasicRealm:                   "myRealm",
 						label.TraefikFrontendAuthBasicRemoveHeader:            "true",
 						label.TraefikFrontendAuthBasicUsers:                   "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.TraefikFrontendAuthBasicUsersFile:               ".htpasswd",
@@ -569,6 +572,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{
+							Realm:        "myRealm",
 							RemoveHeader: true,
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},

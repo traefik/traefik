@@ -756,13 +756,14 @@ func TestGetAuth(t *testing.T) {
 			desc: "should return a basic auth",
 			labels: map[string]string{
 				TraefikFrontendAuthHeaderField:       "myHeaderField",
+				TraefikFrontendAuthBasicRealm:        "myRealm",
 				TraefikFrontendAuthBasicUsers:        "user:pwd,user2:pwd2",
 				TraefikFrontendAuthBasicUsersFile:    "myUsersFile",
 				TraefikFrontendAuthBasicRemoveHeader: "true",
 			},
 			expected: &types.Auth{
 				HeaderField: "myHeaderField",
-				Basic:       &types.Basic{UsersFile: "myUsersFile", Users: []string{"user:pwd", "user2:pwd2"}, RemoveHeader: true},
+				Basic:       &types.Basic{UsersFile: "myUsersFile", Users: []string{"user:pwd", "user2:pwd2"}, RemoveHeader: true, Realm: "myRealm"},
 			},
 		},
 		{
