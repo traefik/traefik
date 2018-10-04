@@ -33,6 +33,7 @@
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+    timeout = "{{ $healthCheck.Timeout }}"
     hostname = "{{ $healthCheck.Hostname }}"
     {{if $healthCheck.Headers }}
     [backends."backend-{{ $backendName }}".healthCheck.headers]

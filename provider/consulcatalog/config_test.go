@@ -410,6 +410,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 							label.TraefikBackendHealthCheckScheme + "=http",
 							label.TraefikBackendHealthCheckPort + "=880",
 							label.TraefikBackendHealthCheckInterval + "=6",
+							label.TraefikBackendHealthCheckTimeout + "=3",
 							label.TraefikBackendHealthCheckHostname + "=foo.com",
 							label.TraefikBackendHealthCheckHeaders + "=Foo:bar || Bar:foo",
 							label.TraefikBackendLoadBalancerMethod + "=drr",
@@ -691,6 +692,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						Path:     "/health",
 						Port:     880,
 						Interval: "6",
+						Timeout:  "3",
 						Hostname: "foo.com",
 						Headers: map[string]string{
 							"Foo": "bar",

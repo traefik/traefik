@@ -19,6 +19,7 @@ const (
 	SuffixBackendHealthCheckPath                             = "backend.healthcheck.path"
 	SuffixBackendHealthCheckPort                             = "backend.healthcheck.port"
 	SuffixBackendHealthCheckInterval                         = "backend.healthcheck.interval"
+	SuffixBackendHealthCheckTimeout                          = "backend.healthcheck.timeout"
 	SuffixBackendHealthCheckHostname                         = "backend.healthcheck.hostname"
 	SuffixBackendHealthCheckHeaders                          = "backend.healthcheck.headers"
 	SuffixBackendLoadBalancer                                = "backend.loadbalancer"
@@ -120,6 +121,7 @@ const (
 	TraefikBackendHealthCheckPath                            = Prefix + SuffixBackendHealthCheckPath
 	TraefikBackendHealthCheckPort                            = Prefix + SuffixBackendHealthCheckPort
 	TraefikBackendHealthCheckInterval                        = Prefix + SuffixBackendHealthCheckInterval
+	TraefikBackendHealthCheckTimeout                         = Prefix + SuffixBackendHealthCheckTimeout
 	TraefikBackendHealthCheckHostname                        = Prefix + SuffixBackendHealthCheckHostname
 	TraefikBackendHealthCheckHeaders                         = Prefix + SuffixBackendHealthCheckHeaders
 	TraefikBackendLoadBalancer                               = Prefix + SuffixBackendLoadBalancer

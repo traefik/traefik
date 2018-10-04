@@ -359,6 +359,7 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel(label.TraefikBackendHealthCheckPath, "/health"),
 					withLabel(label.TraefikBackendHealthCheckPort, "880"),
 					withLabel(label.TraefikBackendHealthCheckInterval, "6"),
+					withLabel(label.TraefikBackendHealthCheckTimeout, "3"),
 					withLabel(label.TraefikBackendHealthCheckHostname, "foo.com"),
 					withLabel(label.TraefikBackendHealthCheckHeaders, "Foo:bar || Bar:foo"),
 
@@ -603,6 +604,7 @@ func TestBuildConfiguration(t *testing.T) {
 						Path:     "/health",
 						Port:     880,
 						Interval: "6",
+						Timeout:  "3",
 						Hostname: "foo.com",
 						Headers: map[string]string{
 							"Foo": "bar",
@@ -779,6 +781,7 @@ func TestBuildConfigurationSegments(t *testing.T) {
 					withLabel(label.TraefikBackendHealthCheckPath, "/health"),
 					withLabel(label.TraefikBackendHealthCheckPort, "880"),
 					withLabel(label.TraefikBackendHealthCheckInterval, "6"),
+					withLabel(label.TraefikBackendHealthCheckTimeout, "3"),
 					withLabel(label.TraefikBackendLoadBalancerMethod, "drr"),
 					withLabel(label.TraefikBackendLoadBalancerStickiness, "true"),
 					withLabel(label.TraefikBackendLoadBalancerStickinessCookieName, "chocolate"),
@@ -1017,6 +1020,7 @@ func TestBuildConfigurationSegments(t *testing.T) {
 						Path:     "/health",
 						Port:     880,
 						Interval: "6",
+						Timeout:  "3",
 					},
 					Buffering: &types.Buffering{
 						MaxResponseBodyBytes: 10485760,

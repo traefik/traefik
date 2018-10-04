@@ -452,9 +452,11 @@ If not, a new backend will be assigned.
 
 #### Health Check
 
-A health check can be configured in order to remove a backend from LB rotation as long as it keeps returning HTTP status codes other than `2xx` or `3xx` to HTTP GET requests periodically carried out by Traefik.  
-The check is defined by a path appended to the backend URL and an interval (given in a format understood by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration)) specifying how often the health check should be executed (the default being 30 seconds).
-Each backend must respond to the health check within 5 seconds.  
+A health check can be configured in order to remove a backend from LB rotation as long as it keeps returning HTTP status codes other than `2xx` or `3xx` to HTTP GET requests periodically carried out by Traefik.
+The check is defined by a path appended to the backend URL and an interval specifying how often the health check should be executed (the default being 30 seconds.)
+Each backend must respond to the health check within a timeout duration (the default being 5 seconds.)
+Interval and timeout are to be given in a format understood by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration).
+The interval must be greater than the timeout. If configuration doesn't reflect this, the interval will be set to timeout + 1 second.
 By default, the port of the backend server is used, however, this may be overridden.
 
 A recovering backend returning `2xx` or `3xx` responses again is being returned to the LB rotation pool.
@@ -466,6 +468,7 @@ For example:
     [backends.backend1.healthcheck]
     path = "/health"
     interval = "10s"
+    timeout = "3s"
 ```
 
 To use a different port for the health check:
@@ -475,6 +478,7 @@ To use a different port for the health check:
     [backends.backend1.healthcheck]
     path = "/health"
     interval = "10s"
+    timeout = "3s"
     port = 8080
 ```
 
@@ -486,6 +490,7 @@ To use a different scheme for the health check:
     [backends.backend1.healthcheck]
     path = "/health"
     interval = "10s"
+    timeout = "3s"
     scheme = "http"
 ```
 
@@ -496,6 +501,7 @@ Additional http headers and hostname to health check request can be specified, f
     [backends.backend1.healthcheck]
     path = "/health"
     interval = "10s"
+    timeout = "3s"
     hostname = "myhost.com"
     port = 8080
       [backends.backend1.healthcheck.headers]

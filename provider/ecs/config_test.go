@@ -68,7 +68,8 @@ func TestBuildConfiguration(t *testing.T) {
 					ID("1"),
 					dockerLabels(map[string]*string{
 						label.TraefikBackendHealthCheckPath:     aws.String("/health"),
-						label.TraefikBackendHealthCheckInterval: aws.String("1s"),
+						label.TraefikBackendHealthCheckInterval: aws.String("6s"),
+						label.TraefikBackendHealthCheckTimeout:  aws.String("3s"),
 					}),
 					iMachine(
 						mState(ec2.InstanceStateNameRunning),
@@ -84,7 +85,8 @@ func TestBuildConfiguration(t *testing.T) {
 					"backend-instance": {
 						HealthCheck: &types.HealthCheck{
 							Path:     "/health",
-							Interval: "1s",
+							Interval: "6s",
+							Timeout:  "3s",
 						},
 						Servers: map[string]types.Server{
 							"server-instance-1": {
@@ -343,6 +345,7 @@ func TestBuildConfiguration(t *testing.T) {
 						label.TraefikBackendHealthCheckPath:                  aws.String("/health"),
 						label.TraefikBackendHealthCheckPort:                  aws.String("880"),
 						label.TraefikBackendHealthCheckInterval:              aws.String("6"),
+						label.TraefikBackendHealthCheckTimeout:               aws.String("3"),
 						label.TraefikBackendHealthCheckHostname:              aws.String("foo.com"),
 						label.TraefikBackendHealthCheckHeaders:               aws.String("Foo:bar || Bar:foo"),
 						label.TraefikBackendLoadBalancerMethod:               aws.String("drr"),
@@ -470,6 +473,7 @@ func TestBuildConfiguration(t *testing.T) {
 							Path:     "/health",
 							Port:     880,
 							Interval: "6",
+							Timeout:  "3",
 							Hostname: "foo.com",
 							Headers: map[string]string{
 								"Foo": "bar",
@@ -633,6 +637,7 @@ func TestBuildConfiguration(t *testing.T) {
 						label.TraefikBackendHealthCheckPath:                  aws.String("/health"),
 						label.TraefikBackendHealthCheckPort:                  aws.String("880"),
 						label.TraefikBackendHealthCheckInterval:              aws.String("6"),
+						label.TraefikBackendHealthCheckTimeout:               aws.String("3"),
 						label.TraefikBackendHealthCheckHostname:              aws.String("foo.com"),
 						label.TraefikBackendHealthCheckHeaders:               aws.String("Foo:bar || Bar:foo"),
 						label.TraefikBackendLoadBalancerMethod:               aws.String("drr"),
@@ -719,6 +724,7 @@ func TestBuildConfiguration(t *testing.T) {
 						label.TraefikBackendHealthCheckPath:                  aws.String("/health"),
 						label.TraefikBackendHealthCheckPort:                  aws.String("880"),
 						label.TraefikBackendHealthCheckInterval:              aws.String("6"),
+						label.TraefikBackendHealthCheckTimeout:               aws.String("3"),
 						label.TraefikBackendHealthCheckHostname:              aws.String("bar.com"),
 						label.TraefikBackendHealthCheckHeaders:               aws.String("Foo:bar || Bar:foo"),
 						label.TraefikBackendLoadBalancerMethod:               aws.String("drr"),
@@ -822,6 +828,7 @@ func TestBuildConfiguration(t *testing.T) {
 							Path:     "/health",
 							Port:     880,
 							Interval: "6",
+							Timeout:  "3",
 							Hostname: "foo.com",
 							Headers: map[string]string{
 								"Foo": "bar",

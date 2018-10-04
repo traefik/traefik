@@ -90,7 +90,10 @@ func TestServerLoadConfigHealthCheckOptions(t *testing.T) {
 		for _, healthCheck := range healthChecks {
 			t.Run(fmt.Sprintf("%s/hc=%t", lbMethod, healthCheck != nil), func(t *testing.T) {
 				globalConfig := configuration.GlobalConfiguration{
-					HealthCheck: &configuration.HealthCheckConfig{Interval: parse.Duration(5 * time.Second)},
+					HealthCheck: &configuration.HealthCheckConfig{
+						Interval: parse.Duration(5 * time.Second),
+						Timeout:  parse.Duration(3 * time.Second),
+					},
 				}
 				entryPoints := map[string]EntryPoint{
 					"http": {
@@ -424,6 +427,7 @@ func TestServerMultipleFrontendRules(t *testing.T) {
 func TestServerBuildHealthCheckOptions(t *testing.T) {
 	lb := &testLoadBalancer{}
 	globalInterval := 15 * time.Second
+	globalTimeout := 3 * time.Second
 
 	testCases := []struct {
 		desc         string
@@ -452,6 +456,7 @@ func TestServerBuildHealthCheckOptions(t *testing.T) {
 				Path:     "/path",
 				Interval: globalInterval,
 				LB:       lb,
+				Timeout:  3 * time.Second,
 			},
 		},
 		{
@@ -464,6 +469,7 @@ func TestServerBuildHealthCheckOptions(t *testing.T) {
 				Path:     "/path",
 				Interval: globalInterval,
 				LB:       lb,
+				Timeout:  3 * time.Second,
 			},
 		},
 		{
@@ -476,6 +482,49 @@ func TestServerBuildHealthCheckOptions(t *testing.T) {
 				Path:     "/path",
 				Interval: 5 * time.Minute,
 				LB:       lb,
+				Timeout:  3 * time.Second,
+			},
+		},
+		{
+			desc: "unparseable timeout",
+			hc: &types.HealthCheck{
+				Path:     "/path",
+				Interval: "15s",
+				Timeout:  "unparseable",
+			},
+			expectedOpts: &healthcheck.Options{
+				Path:     "/path",
+				Interval: globalInterval,
+				Timeout:  globalTimeout,
+				LB:       lb,
+			},
+		},
+		{
+			desc: "sub-zero timeout",
+			hc: &types.HealthCheck{
+				Path:     "/path",
+				Interval: "15s",
+				Timeout:  "-42s",
+			},
+			expectedOpts: &healthcheck.Options{
+				Path:     "/path",
+				Interval: globalInterval,
+				Timeout:  globalTimeout,
+				LB:       lb,
+			},
+		},
+		{
+			desc: "parseable timeout",
+			hc: &types.HealthCheck{
+				Path:     "/path",
+				Interval: "15s",
+				Timeout:  "10s",
+			},
+			expectedOpts: &healthcheck.Options{
+				Path:     "/path",
+				Interval: globalInterval,
+				Timeout:  10 * time.Second,
+				LB:       lb,
 			},
 		},
 	}
@@ -485,7 +534,10 @@ func TestServerBuildHealthCheckOptions(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			opts := buildHealthCheckOptions(lb, "backend", test.hc, &configuration.HealthCheckConfig{Interval: parse.Duration(globalInterval)})
+			opts := buildHealthCheckOptions(lb, "backend", test.hc, &configuration.HealthCheckConfig{
+				Interval: parse.Duration(globalInterval),
+				Timeout:  parse.Duration(globalTimeout),
+			})
 			assert.Equal(t, test.expectedOpts, opts, "health check options")
 		})
 	}
