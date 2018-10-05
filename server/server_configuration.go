@@ -567,16 +567,16 @@ func (s *Server) buildServerEntryPoints() map[string]*serverEntryPoint {
 			serverEntryPoints[entryPointName].certs.SniStrict = entryPoint.Configuration.TLS.SniStrict
 
 			if entryPoint.Configuration.TLS.DefaultCertificate != nil {
-				cert, err := tls.LoadX509KeyPair(entryPoint.Configuration.TLS.DefaultCertificate.CertFile.String(), entryPoint.Configuration.TLS.DefaultCertificate.KeyFile.String())
+				cert, err := buildDefaultCertificate(entryPoint.Configuration.TLS.DefaultCertificate)
 				if err != nil {
 					log.Error(err)
 					continue
 				}
-				serverEntryPoints[entryPointName].certs.DefaultCertificate = &cert
+				serverEntryPoints[entryPointName].certs.DefaultCertificate = cert
 			} else {
 				cert, err := generate.DefaultCertificate()
 				if err != nil {
-					log.Error(err)
+					log.Errorf("failed to generate default certificate: %v", err)
 					continue
 				}
 				serverEntryPoints[entryPointName].certs.DefaultCertificate = cert
@@ -590,6 +590,24 @@ func (s *Server) buildServerEntryPoints() map[string]*serverEntryPoint {
 		}
 	}
 	return serverEntryPoints
+}
+
+func buildDefaultCertificate(defaultCertificate *traefiktls.Certificate) (*tls.Certificate, error) {
+	certFile, err := defaultCertificate.CertFile.Read()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get cert file content: %v", err)
+	}
+
+	keyFile, err := defaultCertificate.KeyFile.Read()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get key file content: %v", err)
+	}
+
+	cert, err := tls.X509KeyPair(certFile, keyFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load X509 key pair: %v", err)
+	}
+	return &cert, nil
 }
 
 func (s *Server) buildDefaultHTTPRouter() *mux.Router {

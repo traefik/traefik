@@ -179,8 +179,11 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 	}
 
 	for _, i := range ingresses {
-		annotationIngressClass := getAnnotationName(i.Annotations, annotationKubernetesIngressClass)
-		ingressClass := i.Annotations[annotationIngressClass]
+		ingressClass, err := getStringSafeValue(i.Annotations, annotationKubernetesIngressClass, "")
+		if err != nil {
+			log.Errorf("Misconfigured ingress class for ingress %s/%s: %v", i.Namespace, i.Name, err)
+			continue
+		}
 
 		if !p.shouldProcessIngress(ingressClass) {
 			continue
@@ -221,6 +224,19 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 			for _, pa := range r.HTTP.Paths {
 				priority := getIntValue(i.Annotations, annotationKubernetesPriority, 0)
+
+				err := templateSafeString(r.Host)
+				if err != nil {
+					log.Errorf("failed to validate host %q for ingress %s/%s: %v", r.Host, i.Namespace, i.Name, err)
+					continue
+				}
+
+				err = templateSafeString(pa.Path)
+				if err != nil {
+					log.Errorf("failed to validate path %q for ingress %s/%s: %v", pa.Path, i.Namespace, i.Name, err)
+					continue
+				}
+
 				baseName := r.Host + pa.Path
 				if priority > 0 {
 					baseName = strconv.Itoa(priority) + "-" + baseName
@@ -882,15 +898,13 @@ func getFrontendRedirect(i *extensionsv1beta1.Ingress, baseName, path string) *t
 		}
 	}
 
-	redirectRegex := getStringValue(i.Annotations, annotationKubernetesRedirectRegex, "")
-	_, err := strconv.Unquote(`"` + redirectRegex + `"`)
+	redirectRegex, err := getStringSafeValue(i.Annotations, annotationKubernetesRedirectRegex, "")
 	if err != nil {
 		log.Debugf("Skipping Redirect on Ingress %s/%s due to invalid regex: %s", i.Namespace, i.Name, redirectRegex)
 		return nil
 	}
 
-	redirectReplacement := getStringValue(i.Annotations, annotationKubernetesRedirectReplacement, "")
-	_, err = strconv.Unquote(`"` + redirectReplacement + `"`)
+	redirectReplacement, err := getStringSafeValue(i.Annotations, annotationKubernetesRedirectReplacement, "")
 	if err != nil {
 		log.Debugf("Skipping Redirect on Ingress %s/%s due to invalid replacement: %q", i.Namespace, i.Name, redirectRegex)
 		return nil
@@ -1062,4 +1076,9 @@ func getRateLimit(i *extensionsv1beta1.Ingress) *types.RateLimit {
 	}
 
 	return rateLimit
+}
+
+func templateSafeString(value string) error {
+	_, err := strconv.Unquote(`"` + value + `"`)
+	return err
 }

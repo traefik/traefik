@@ -131,6 +131,11 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 		if entryPoint.ForwardedHeaders == nil {
 			entryPoint.ForwardedHeaders = &ForwardedHeaders{}
 		}
+
+		if entryPoint.TLS != nil && entryPoint.TLS.DefaultCertificate == nil && len(entryPoint.TLS.Certificates) > 0 {
+			log.Infof("No tls.defaultCertificate given for %s: using the first item in tls.certificates as a fallback.", entryPointName)
+			entryPoint.TLS.DefaultCertificate = &entryPoint.TLS.Certificates[0]
+		}
 	}
 
 	// Make sure LifeCycle isn't nil to spare nil checks elsewhere.
