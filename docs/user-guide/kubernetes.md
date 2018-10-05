@@ -742,6 +742,45 @@ You should now be able to visit the websites in your browser.
 - [cheeses.minikube/cheddar](http://cheeses.minikube/cheddar/)
 - [cheeses.minikube/wensleydale](http://cheeses.minikube/wensleydale/)
 
+## Multiple Ingress Definitions for the Same Host (or Host+Path)
+
+Træfik will merge multiple Ingress definitions for the same host/path pair into one definition.
+
+Let's say the number of cheese services is growing.
+It is now time to move the cheese services to a dedicated cheese namespace to simplify the managements of cheese and non-cheese services.
+
+Simply deploy a new Ingress Object with the same host an path into the cheese namespace:
+
+```yaml
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: cheese
+  namespace: cheese
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.frontend.rule.type: PathPrefixStrip
+spec:
+  rules:
+  - host: cheese.minikube
+    http:
+      paths:
+      - path: /cheddar
+        backend:
+          serviceName: cheddar
+          servicePort: http
+```
+
+Træfik will now look for cheddar service endpoints (ports on healthy pods) in both the cheese and the default namespace.
+Deploying cheddar into the cheese namespace and afterwards shutting down cheddar in the default namespace is enough to migrate the traffic.
+
+!!! note
+   The kubernetes documentation does not specify this merging behavior.
+
+!!! note
+   Merging ingress definitions can cause problems if the annotations differ or if the services handle requests differently.
+   Be careful and extra cautious when running multiple overlapping ingress definitions.
+
 ## Specifying Routing Priorities
 
 Sometimes you need to specify priority for ingress routes, especially when handling wildcard routes.
