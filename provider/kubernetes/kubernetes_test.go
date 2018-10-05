@@ -1571,6 +1571,14 @@ rateset:
 					route("root", "Host:root"),
 				),
 			),
+			frontend("root2/",
+				passHostHeader(),
+				redirectRegex("root2/$", "root2/root2"),
+				routes(
+					route("/", "PathPrefix:/;ReplacePathRegex: ^/(.*) /abc$1"),
+					route("root2", "Host:root2"),
+				),
+			),
 			frontend("root/root1",
 				passHostHeader(),
 				routes(
