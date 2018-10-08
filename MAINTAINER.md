@@ -140,6 +140,7 @@ If we open/look an issue/PR, we must add a `kind/*`, an `area/*` and a `status/*
 * `area/provider/mesos`: Mesos related.
 * `area/provider/rancher`: Rancher related.
 * `area/provider/servicefabric`: Azure service fabric related.
+* `area/provider/snapd`: Snapd related.
 * `area/provider/zk`: Zoo Keeper related.
 * `area/rules`: Rules related.
 * `area/server`: Server related.

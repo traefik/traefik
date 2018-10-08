@@ -10,6 +10,7 @@
 // templates/mesos.tmpl
 // templates/notFound.tmpl
 // templates/rancher.tmpl
+// templates/snapd.tmpl
 // DO NOT EDIT!
 
 package gentemplates
@@ -2240,6 +2241,277 @@ func templatesRancherTmpl() (*asset, error) {
 	return a, nil
 }
 
+var _templatesSnapdTmpl = []byte(`{{$backendServers := .Servers}}
+[backends]
+{{range $backendName, $servers := .Servers}}
+{{ $backend := index $servers 0 }}
+
+  {{ $circuitBreaker := getCircuitBreaker $backend.SegmentProperties }}
+  {{if $circuitBreaker }}
+  [backends."backend-{{ $backendName }}".circuitBreaker]
+    expression = "{{ $circuitBreaker.Expression }}"
+  {{end}}
+
+  {{ $loadBalancer := getLoadBalancer $backend.SegmentProperties }}
+  {{if $loadBalancer }}
+    [backends."backend-{{ $backendName }}".loadBalancer]
+      method = "{{ $loadBalancer.Method }}"
+      {{if $loadBalancer.Stickiness }}
+      [backends."backend-{{ $backendName }}".loadBalancer.stickiness]
+        cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
+      {{end}}
+  {{end}}
+
+  {{ $maxConn := getMaxConn $backend.SegmentProperties }}
+  {{if $maxConn }}
+  [backends."backend-{{ $backendName }}".maxConn]
+    extractorFunc = "{{ $maxConn.ExtractorFunc }}"
+    amount = {{ $maxConn.Amount }}
+  {{end}}
+
+  {{ $healthCheck := getHealthCheck $backend.SegmentProperties }}
+  {{if $healthCheck }}
+  [backends."backend-{{ $backendName }}".healthCheck]
+    scheme = "{{ $healthCheck.Scheme }}"
+    path = "{{ $healthCheck.Path }}"
+    port = {{ $healthCheck.Port }}
+    interval = "{{ $healthCheck.Interval }}"
+    timeout = "{{ $healthCheck.Timeout }}"
+    hostname = "{{ $healthCheck.Hostname }}"
+    {{if $healthCheck.Headers }}
+    [backends."backend-{{ $backendName }}".healthCheck.headers]
+      {{range $k, $v := $healthCheck.Headers }}
+      {{$k}} = "{{$v}}"
+      {{end}}
+    {{end}}
+  {{end}}
+
+  {{ $buffering := getBuffering $backend.SegmentProperties }}
+  {{if $buffering }}
+  [backends."backend-{{ $backendName }}".buffering]
+    maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
+    memRequestBodyBytes = {{ $buffering.MemRequestBodyBytes }}
+    maxResponseBodyBytes = {{ $buffering.MaxResponseBodyBytes }}
+    memResponseBodyBytes = {{ $buffering.MemResponseBodyBytes }}
+    retryExpression = "{{ $buffering.RetryExpression }}"
+  {{end}}
+
+  {{range $serverName, $server := getServers $servers }}
+  [backends."backend-{{ $backendName }}".servers."{{ $serverName }}"]
+    url = "{{ $server.URL }}"
+    weight = {{ $server.Weight }}
+  {{end}}
+
+{{end}}
+
+[frontends]
+{{range $frontendName, $snaps := .Frontends }}
+  {{ $snap := index $snaps 0 }}
+
+  [frontends."frontend-{{ $frontendName }}"]
+    backend = "backend-{{ getBackendName $snap }}"
+    priority = {{ getPriority $snap.SegmentProperties }}
+    passHostHeader = {{ getPassHostHeader $snap.SegmentProperties }}
+    passTLSCert = {{ getPassTLSCert $snap.SegmentProperties }}
+
+    entryPoints = [{{range getEntryPoints $snap.SegmentProperties }}
+      "{{.}}",
+      {{end}}]
+
+    {{ $tlsClientCert := getPassTLSClientCert $snap.SegmentProperties }}
+    {{if $tlsClientCert }}
+    [frontends."frontend-{{ $frontendName }}".passTLSClientCert]
+      pem = {{ $tlsClientCert.PEM }}
+      {{ $infos := $tlsClientCert.Infos }}
+      {{if $infos }}
+      [frontends."frontend-{{ $frontendName }}".passTLSClientCert.infos]
+        notAfter = {{ $infos.NotAfter   }}
+        notBefore = {{ $infos.NotBefore }}
+        sans = {{ $infos.Sans }}
+        {{ $subject := $infos.Subject }}
+        {{if $subject }}
+        [frontends."frontend-{{ $frontendName }}".passTLSClientCert.infos.subject]
+          country = {{ $subject.Country }}
+          province = {{ $subject.Province }}
+          locality = {{ $subject.Locality }}
+          organization = {{ $subject.Organization }}
+          commonName = {{ $subject.CommonName }}
+          serialNumber = {{ $subject.SerialNumber }}
+        {{end}}
+      {{end}}
+    {{end}}
+
+    {{ $auth := getAuth $snap.SegmentProperties }}
+    {{if $auth }}
+    [frontends."frontend-{{ $frontendName }}".auth]
+      headerField = "{{ $auth.HeaderField }}"
+
+      {{if $auth.Forward }}
+      [frontends."frontend-{{ $frontendName }}".auth.forward]
+        address = "{{ $auth.Forward.Address }}"
+        trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
+
+        {{if $auth.Forward.TLS }}
+        [frontends."frontend-{{ $frontendName }}".auth.forward.tls]
+          ca = "{{ $auth.Forward.TLS.CA }}"
+          caOptional = {{ $auth.Forward.TLS.CAOptional }}
+          cert = """{{ $auth.Forward.TLS.Cert }}"""
+          key = """{{ $auth.Forward.TLS.Key }}"""
+          insecureSkipVerify = {{ $auth.Forward.TLS.InsecureSkipVerify }}
+        {{end}}
+      {{end}}
+
+      {{if $auth.Basic }}
+      [frontends."frontend-{{ $frontendName }}".auth.basic]
+        realm = "{{ $auth.Basic.Realm }}"
+        removeHeader = {{ $auth.Basic.RemoveHeader }}
+        {{if $auth.Basic.Users }}
+        users = [{{range $auth.Basic.Users }}
+          "{{.}}",
+          {{end}}]
+        {{end}}
+        usersFile = "{{ $auth.Basic.UsersFile }}"
+      {{end}}
+
+      {{if $auth.Digest }}
+      [frontends."frontend-{{ $frontendName }}".auth.digest]
+        removeHeader = {{ $auth.Digest.RemoveHeader }}
+        {{if $auth.Digest.Users }}
+        users = [{{range $auth.Digest.Users }}
+          "{{.}}",
+          {{end}}]
+        {{end}}
+        usersFile = "{{ $auth.Digest.UsersFile }}"
+      {{end}}
+    {{end}}
+
+    {{ $whitelist := getWhiteList $snap.SegmentProperties }}
+    {{if $whitelist }}
+    [frontends."frontend-{{ $frontendName }}".whiteList]
+      sourceRange = [{{range $whitelist.SourceRange }}
+        "{{.}}",
+        {{end}}]
+      {{if $whitelist.IPStrategy }}
+      [frontends."frontend-{{ $frontendName }}".whiteList.IPStrategy]
+        depth = {{ $whitelist.IPStrategy.Depth }}
+        excludedIPs = [{{range $whitelist.IPStrategy.ExcludedIPs }}
+          "{{.}}",
+          {{end}}]
+      {{end}}
+    {{end}}
+
+    {{ $redirect := getRedirect $snap.SegmentProperties }}
+    {{if $redirect }}
+    [frontends."frontend-{{ $frontendName }}".redirect]
+      entryPoint = "{{ $redirect.EntryPoint }}"
+      regex = "{{ $redirect.Regex }}"
+      replacement = "{{ $redirect.Replacement }}"
+      permanent = {{ $redirect.Permanent }}
+    {{end}}
+
+    {{ $errorPages := getErrorPages $snap.SegmentProperties }}
+    {{if $errorPages }}
+    [frontends."frontend-{{ $frontendName }}".errors]
+      {{range $pageName, $page := $errorPages }}
+      [frontends."frontend-{{ $frontendName }}".errors."{{ $pageName }}"]
+        status = [{{range $page.Status }}
+          "{{.}}",
+          {{end}}]
+        backend = "backend-{{ $page.Backend }}"
+        query = "{{ $page.Query }}"
+      {{end}}
+    {{end}}
+
+    {{ $rateLimit := getRateLimit $snap.SegmentProperties }}
+    {{if $rateLimit }}
+    [frontends."frontend-{{ $frontendName }}".rateLimit]
+      extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
+      [frontends."frontend-{{ $frontendName }}".rateLimit.rateSet]
+        {{ range $limitName, $limit := $rateLimit.RateSet }}
+        [frontends."frontend-{{ $frontendName }}".rateLimit.rateSet."{{ $limitName }}"]
+          period = "{{ $limit.Period }}"
+          average = {{ $limit.Average }}
+          burst = {{ $limit.Burst }}
+        {{end}}
+    {{end}}
+
+    {{ $headers := getHeaders $snap.SegmentProperties }}
+    {{if $headers }}
+    [frontends."frontend-{{ $frontendName }}".headers]
+      SSLRedirect = {{ $headers.SSLRedirect }}
+      SSLTemporaryRedirect = {{ $headers.SSLTemporaryRedirect }}
+      SSLHost = "{{ $headers.SSLHost }}"
+      SSLForceHost = {{ $headers.SSLForceHost }}
+      STSSeconds = {{ $headers.STSSeconds }}
+      STSIncludeSubdomains = {{ $headers.STSIncludeSubdomains }}
+      STSPreload = {{ $headers.STSPreload }}
+      ForceSTSHeader = {{ $headers.ForceSTSHeader }}
+      FrameDeny = {{ $headers.FrameDeny }}
+      CustomFrameOptionsValue = "{{ $headers.CustomFrameOptionsValue }}"
+      ContentTypeNosniff = {{ $headers.ContentTypeNosniff }}
+      BrowserXSSFilter = {{ $headers.BrowserXSSFilter }}
+      ContentSecurityPolicy = "{{ $headers.ContentSecurityPolicy }}"
+      CustomBrowserXSSValue = "{{ $headers.CustomBrowserXSSValue }}"
+      PublicKey = "{{ $headers.PublicKey }}"
+      ReferrerPolicy = "{{ $headers.ReferrerPolicy }}"
+      IsDevelopment = {{ $headers.IsDevelopment }}
+
+      {{if $headers.AllowedHosts }}
+      AllowedHosts = [{{range $headers.AllowedHosts }}
+        "{{.}}",
+        {{end}}]
+      {{end}}
+
+      {{if $headers.HostsProxyHeaders }}
+      HostsProxyHeaders = [{{range $headers.HostsProxyHeaders }}
+        "{{.}}",
+        {{end}}]
+      {{end}}
+
+      {{if $headers.CustomRequestHeaders }}
+      [frontends."frontend-{{ $frontendName }}".headers.customRequestHeaders]
+        {{range $k, $v := $headers.CustomRequestHeaders }}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
+
+      {{if $headers.CustomResponseHeaders }}
+      [frontends."frontend-{{ $frontendName }}".headers.customResponseHeaders]
+        {{range $k, $v := $headers.CustomResponseHeaders }}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
+
+      {{if $headers.SSLProxyHeaders }}
+      [frontends."frontend-{{ $frontendName }}".headers.SSLProxyHeaders]
+        {{range $k, $v := $headers.SSLProxyHeaders }}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
+
+    {{end}}
+
+    [frontends."frontend-{{ $frontendName }}".routes."route-frontend-{{ $frontendName }}"]
+      rule = "{{ getFrontendRule $snap $snap.SegmentProperties }}"
+
+{{end}}
+`)
+
+func templatesSnapdTmplBytes() ([]byte, error) {
+	return _templatesSnapdTmpl, nil
+}
+
+func templatesSnapdTmpl() (*asset, error) {
+	bytes, err := templatesSnapdTmplBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "templates/snapd.tmpl", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
 // Asset loads and returns the asset for the given name.
 // It returns an error if the asset could not be found or
 // could not be loaded.
@@ -2302,6 +2574,7 @@ var _bindata = map[string]func() (*asset, error){
 	"templates/mesos.tmpl":          templatesMesosTmpl,
 	"templates/notFound.tmpl":       templatesNotfoundTmpl,
 	"templates/rancher.tmpl":        templatesRancherTmpl,
+	"templates/snapd.tmpl":          templatesSnapdTmpl,
 }
 
 // AssetDir returns the file names below a certain
@@ -2356,6 +2629,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"mesos.tmpl":          {templatesMesosTmpl, map[string]*bintree{}},
 		"notFound.tmpl":       {templatesNotfoundTmpl, map[string]*bintree{}},
 		"rancher.tmpl":        {templatesRancherTmpl, map[string]*bintree{}},
+		"snapd.tmpl":          {templatesSnapdTmpl, map[string]*bintree{}},
 	}},
 }}
 

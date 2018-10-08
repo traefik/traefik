@@ -27,6 +27,7 @@ import (
 	"github.com/containous/traefik/provider/marathon"
 	"github.com/containous/traefik/provider/mesos"
 	"github.com/containous/traefik/provider/rancher"
+	"github.com/containous/traefik/provider/snapd"
 	"github.com/containous/traefik/provider/zk"
 	"github.com/containous/traefik/safe"
 	traefiktls "github.com/containous/traefik/tls"
@@ -649,6 +650,29 @@ func TestDo_globalConfiguration(t *testing.T) {
 			Username: "consul Username",
 			Password: "consul Password",
 		},
+	}
+	config.Snapd = &snapd.Provider{
+		BaseProvider: provider.BaseProvider{
+			Watch:    true,
+			Filename: "snapd Filename",
+			Constraints: types.Constraints{
+				{
+					Key:       "snapd Constraints Key 1",
+					Regex:     "snapd Constraints Regex 2",
+					MustMatch: true,
+				},
+				{
+					Key:       "snapd Constraints Key 1",
+					Regex:     "snapd Constraints Regex 2",
+					MustMatch: true,
+				},
+			},
+			Trace:                     true,
+			DebugLogGeneratedTemplate: true,
+		},
+		Endpoint:         "snapd Endpoint",
+		Domain:           "snapd Domain",
+		ExposedByDefault: false,
 	}
 
 	cleanJSON, err := Do(config, true)

@@ -82,6 +82,7 @@ _(But if you'd rather configure some of your routes manually, Træfik supports t
 - [Amazon DynamoDB](https://docs.traefik.io/configuration/backends/dynamodb)
 - [File](https://docs.traefik.io/configuration/backends/file)
 - [Rest](https://docs.traefik.io/configuration/backends/rest)
+- [Snapd](https://docs.traefik.io/configuration/backends/snapd)
 
 ## Quickstart
 
