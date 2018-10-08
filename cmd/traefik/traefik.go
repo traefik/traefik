@@ -187,11 +187,13 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 
 	providerAggregator := configuration.NewProviderAggregator(globalConfiguration)
 
-	acmeprovider := globalConfiguration.InitACMEProvider()
-	if acmeprovider != nil {
-		err := providerAggregator.AddProvider(acmeprovider)
+	acmeprovider, err := globalConfiguration.InitACMEProvider()
+	if err != nil {
+		log.Errorf("Unable to initialize ACME provider: %v", err)
+	} else if acmeprovider != nil {
+		err = providerAggregator.AddProvider(acmeprovider)
 		if err != nil {
-			log.Errorf("Error initializing provider ACME: %v", err)
+			log.Errorf("Unable to add ACME provider to the providers list: %v", err)
 			acmeprovider = nil
 		}
 	}
