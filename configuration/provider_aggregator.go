@@ -68,6 +68,9 @@ func NewProviderAggregator(gc *GlobalConfiguration) ProviderAggregator {
 	if gc.ServiceFabric != nil {
 		provider.quietAddProvider(gc.ServiceFabric)
 	}
+	if gc.Snapd != nil {
+		provider.quietAddProvider(gc.Snapd)
+	}
 	return provider
 }
 

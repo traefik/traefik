@@ -1,0 +1,22 @@
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: snappy
+Source: https://github.com/snapcore/snapd
+
+Files: *
+Copyright: Copyright (C) 2014,2015 Canonical, Ltd.
+License: GPL-3
+ This program is free software: you can redistribute it and/or modify it
+ under the terms of the the GNU General Public License version 3, as
+ published by the Free Software Foundation.
+ .
+ This program is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranties of
+ MERCHANTABILITY, SATISFACTORY QUALITY or FITNESS FOR A PARTICULAR
+ PURPOSE.  See the applicable version of the GNU Lesser General Public
+ License for more details.
+ .
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ .
+ On Debian systems, the complete text of the GNU General Public License
+ can be found in `/usr/share/common-licenses/GPL-3'

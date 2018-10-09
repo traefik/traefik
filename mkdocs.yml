@@ -82,6 +82,7 @@ pages:
     - 'Rancher': 'configuration/backends/rancher.md'
     - 'Rest': 'configuration/backends/rest.md'
     - 'Azure Service Fabric': 'configuration/backends/servicefabric.md'
+    - 'Snapd': 'configuration/backends/snapd.md'
     - 'Zookeeper': 'configuration/backends/zookeeper.md'
     - 'Ping': 'configuration/ping.md'
     - 'Metrics': 'configuration/metrics.md'

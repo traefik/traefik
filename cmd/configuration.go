@@ -27,6 +27,7 @@ import (
 	"github.com/containous/traefik/provider/mesos"
 	"github.com/containous/traefik/provider/rancher"
 	"github.com/containous/traefik/provider/rest"
+	"github.com/containous/traefik/provider/snapd"
 	"github.com/containous/traefik/provider/zk"
 	"github.com/containous/traefik/types"
 	sf "github.com/jjcollinge/servicefabric"
@@ -149,6 +150,12 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	var defaultServiceFabric servicefabric.Provider
 	defaultServiceFabric.APIVersion = sf.DefaultAPIVersion
 	defaultServiceFabric.RefreshSeconds = 10
+
+	// default Snapd
+	var defaultSnapd snapd.Provider
+	defaultSnapd.Watch = true
+	defaultSnapd.ExposedByDefault = true
+	defaultSnapd.Endpoint = "" // defaults to "/run/snapd.socket"
 
 	// default Ping
 	var defaultPing = ping.Handler{
@@ -273,6 +280,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		ECS:                &defaultECS,
 		Rancher:            &defaultRancher,
 		Eureka:             &defaultEureka,
+		Snapd:              &defaultSnapd,
 		DynamoDB:           &defaultDynamoDB,
 		Retry:              &configuration.Retry{},
 		HealthCheck:        &healthCheck,
