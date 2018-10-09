@@ -33,7 +33,24 @@ func (s *ReplacePathRegex) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if s.Regexp != nil && len(s.Replacement) > 0 && s.Regexp.MatchString(r.URL.Path) {
 		r = r.WithContext(context.WithValue(r.Context(), ReplacePathKey, r.URL.Path))
 		r.Header.Add(ReplacedPathHeader, r.URL.Path)
-		r.URL.Path = s.Regexp.ReplaceAllString(r.URL.Path, s.Replacement)
+		if strings.Contains(s.Replacement, "?") {
+			replacement := s.Regexp.ReplaceAllString(r.URL.Path, s.Replacement)
+			const queryPlaceHolder = "%{QUERY_STRING}"
+			if strings.Contains(replacement, queryPlaceHolder) {
+				qs := ""
+				if len(r.URL.RawQuery) > 0 {
+					qs = r.URL.RawQuery
+				}
+				replacement = strings.Replace(replacement, queryPlaceHolder, qs, -1)
+			}
+			if u, err := r.URL.Parse(replacement); err != nil {
+				log.Errorf("bad replacement %s: %s", replacement, err)
+			} else {
+				r.URL = u
+			}
+		} else {
+			r.URL.Path = s.Regexp.ReplaceAllString(r.URL.Path, s.Replacement)
+		}
 		r.RequestURI = r.URL.RequestURI()
 	}
 	s.Handler.ServeHTTP(w, r)

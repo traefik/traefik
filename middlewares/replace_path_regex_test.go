@@ -16,6 +16,7 @@ func TestReplacePathRegex(t *testing.T) {
 		regex          string
 		expectedPath   string
 		expectedHeader string
+		expectedURI    string // if left unset, same as expectedPath
 	}{
 		{
 			desc:           "simple regex",
@@ -48,6 +49,24 @@ func TestReplacePathRegex(t *testing.T) {
 			regex:        `^(?err)/invalid/regexp/([^/]+)$`,
 			expectedPath: "/invalid/regexp/test",
 		},
+		{
+			desc:           "add query param",
+			path:           "/foo/123/bar/345",
+			replacement:    "/newpath?foo=$1&bar=$2",
+			regex:          `^/foo/([0-9]+)/bar/([0-9]+)$`,
+			expectedPath:   "/newpath",
+			expectedHeader: "/foo/123/bar/345",
+			expectedURI:    "/newpath?foo=123&bar=345",
+		},
+		{
+			desc:           "append query param",
+			path:           "/foo/123/bar/345?keep=yes",
+			replacement:    "/newpath?foo=$1&%{QUERY_STRING}&bar=$2",
+			regex:          `^/foo/([0-9]+)/bar/([0-9]+)$`,
+			expectedPath:   "/newpath",
+			expectedHeader: "/foo/123/bar/345",
+			expectedURI:    "/newpath?foo=123&keep=yes&bar=345",
+		},
 	}
 
 	for _, test := range testCases {
@@ -55,14 +74,14 @@ func TestReplacePathRegex(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			var actualPath, actualHeader, requestURI string
+			var actualPath, actualHeader, actualURI string
 			handler := NewReplacePathRegexHandler(
 				test.regex,
 				test.replacement,
 				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					actualPath = r.URL.Path
 					actualHeader = r.Header.Get(ReplacedPathHeader)
-					requestURI = r.RequestURI
+					actualURI = r.RequestURI
 				}),
 			)
 
@@ -73,7 +92,13 @@ func TestReplacePathRegex(t *testing.T) {
 			assert.Equal(t, test.expectedPath, actualPath, "Unexpected path.")
 			assert.Equal(t, test.expectedHeader, actualHeader, "Unexpected '%s' header.", ReplacedPathHeader)
 			if test.expectedHeader != "" {
-				assert.Equal(t, actualPath, requestURI, "Unexpected request URI.")
+				var expected string
+				if test.expectedURI == "" {
+					expected = test.expectedPath
+				} else {
+					expected = test.expectedURI
+				}
+				assert.Equal(t, expected, actualURI, "Unexpected request URI.")
 			}
 		})
 	}
