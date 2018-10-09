@@ -11,7 +11,7 @@ docs_dir: 'content'
 
 theme:
   name: 'material'
-  custom_dir: 'docs/theme'
+  custom_dir: 'theme'
   language: en
   include_sidebar: true
   favicon: img/traefik.icon.png
@@ -45,12 +45,12 @@ google_analytics:
 #      link: 'https://twitter.com/traefik'
 
 extra_css:
-  - theme/styles/extra.css
-  - theme/styles/atom-one-light.css
+  - assets/styles/extra.css
+  - assets/styles/atom-one-light.css
 
 extra_javascript:
-  - theme/js/hljs/highlight.pack.js
-  - theme/js/extra.js
+  - assets/js/hljs/highlight.pack.js
+  - assets/js/extra.js
 
 markdown_extensions:
   - admonition
