@@ -41,7 +41,7 @@ func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, try.BodyContains("Host:test.localhost"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 60*time.Second, try.BodyContains("Host:test.localhost"))
 	c.Assert(err, checker.IsNil)
 
 	frontendHealthReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/health", nil)
@@ -117,7 +117,7 @@ func (s *HealthCheckSuite) doTestMultipleEntrypoints(c *check.C, fixture string)
 	defer cmd.Process.Kill()
 
 	// Wait for traefik
-	err = try.GetRequest("http://localhost:8080/api/providers", 60*time.Second, try.BodyContains("Host:test.localhost"))
+	err = try.GetRequest("http://localhost:8080/api/providers/file/routers", 60*time.Second, try.BodyContains("Host:test.localhost"))
 	c.Assert(err, checker.IsNil)
 
 	// Check entrypoint http1
@@ -147,7 +147,7 @@ func (s *HealthCheckSuite) doTestMultipleEntrypoints(c *check.C, fixture string)
 	}
 
 	// Verify no backend service is available due to failing health checks
-	err = try.Request(frontendHealthReq, 3*time.Second, try.StatusCodeIs(http.StatusServiceUnavailable))
+	err = try.Request(frontendHealthReq, 5*time.Second, try.StatusCodeIs(http.StatusServiceUnavailable))
 	c.Assert(err, checker.IsNil)
 
 	// reactivate the whoami2
@@ -194,7 +194,7 @@ func (s *HealthCheckSuite) TestPortOverload(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 10*time.Second, try.BodyContains("Host:test.localhost"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 10*time.Second, try.BodyContains("Host:test.localhost"))
 	c.Assert(err, checker.IsNil)
 
 	frontendHealthReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/health", nil)

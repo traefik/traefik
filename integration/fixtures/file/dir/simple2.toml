@@ -1,12 +1,10 @@
-# rules
-[backends]
-  [backends.backend2]
-    [backends.backend2.servers.server1]
-    url = "http://172.17.0.123:80"
-    weight = 1
-
-[frontends]
-  [frontends.frontend2]
-  backend = "backend2"
-    [frontends.frontend2.routes.test_2]
+[routers]
+  [routers.router2]
     rule = "Path:/test2"
+    service = "service2"
+
+[services]
+  [services.service2.loadbalancer]
+    [[services.service2.loadbalancer.servers]]
+      url = "http://172.17.0.123:80"
+      weight = 1

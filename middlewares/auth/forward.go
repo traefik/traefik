@@ -1,25 +1,68 @@
 package auth
 
 import (
+	"context"
+	"crypto/tls"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"strings"
 
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/middlewares/tracing"
-	"github.com/containous/traefik/types"
+	"github.com/containous/traefik/config"
+	"github.com/containous/traefik/middlewares"
+	"github.com/containous/traefik/tracing"
+	"github.com/opentracing/opentracing-go/ext"
 	"github.com/vulcand/oxy/forward"
 	"github.com/vulcand/oxy/utils"
 )
 
 const (
-	xForwardedURI    = "X-Forwarded-Uri"
-	xForwardedMethod = "X-Forwarded-Method"
+	xForwardedURI     = "X-Forwarded-Uri"
+	xForwardedMethod  = "X-Forwarded-Method"
+	forwardedTypeName = "ForwardedAuthType"
 )
 
-// Forward the authentication to a external server
-func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+type forwardAuth struct {
+	address             string
+	authResponseHeaders []string
+	next                http.Handler
+	name                string
+	tlsConfig           *tls.Config
+	trustForwardHeader  bool
+}
+
+// NewForward creates a forward auth middleware.
+func NewForward(ctx context.Context, next http.Handler, config config.ForwardAuth, name string) (http.Handler, error) {
+	middlewares.GetLogger(ctx, name, forwardedTypeName).Debug("Creating middleware")
+
+	fa := &forwardAuth{
+		address:             config.Address,
+		authResponseHeaders: config.AuthResponseHeaders,
+		next:                next,
+		name:                name,
+		trustForwardHeader:  config.TrustForwardHeader,
+	}
+
+	if config.TLS != nil {
+		tlsConfig, err := config.TLS.CreateTLSConfig()
+		if err != nil {
+			return nil, err
+		}
+
+		fa.tlsConfig = tlsConfig
+	}
+
+	return fa, nil
+}
+
+func (fa *forwardAuth) GetTracingInformation() (string, ext.SpanKindEnum) {
+	return fa.name, ext.SpanKindRPCClientEnum
+}
+
+func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	logger := middlewares.GetLogger(req.Context(), fa.name, forwardedTypeName)
+
 	// Ensure our request client does not follow redirects
 	httpClient := http.Client{
 		CheckRedirect: func(r *http.Request, via []*http.Request) error {
@@ -27,42 +70,44 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 		},
 	}
 
-	if config.TLS != nil {
-		tlsConfig, err := config.TLS.CreateTLSConfig()
-		if err != nil {
-			tracing.SetErrorAndDebugLog(r, "Unable to configure TLS to call %s. Cause %s", config.Address, err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
+	if fa.tlsConfig != nil {
 		httpClient.Transport = &http.Transport{
-			TLSClientConfig: tlsConfig,
+			TLSClientConfig: fa.tlsConfig,
 		}
 	}
 
-	forwardReq, err := http.NewRequest(http.MethodGet, config.Address, http.NoBody)
-	tracing.LogRequest(tracing.GetSpan(r), forwardReq)
+	forwardReq, err := http.NewRequest(http.MethodGet, fa.address, nil)
+	tracing.LogRequest(tracing.GetSpan(req), forwardReq)
 	if err != nil {
-		tracing.SetErrorAndDebugLog(r, "Error calling %s. Cause %s", config.Address, err)
-		w.WriteHeader(http.StatusInternalServerError)
+		logMessage := fmt.Sprintf("Error calling %s. Cause %s", fa.address, err)
+		logger.Debug(logMessage)
+		tracing.SetErrorWithEvent(req, logMessage)
+
+		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	writeHeader(r, forwardReq, config.TrustForwardHeader)
+	writeHeader(req, forwardReq, fa.trustForwardHeader)
 
 	tracing.InjectRequestHeaders(forwardReq)
 
 	forwardResponse, forwardErr := httpClient.Do(forwardReq)
 	if forwardErr != nil {
-		tracing.SetErrorAndDebugLog(r, "Error calling %s. Cause: %s", config.Address, forwardErr)
-		w.WriteHeader(http.StatusInternalServerError)
+		logMessage := fmt.Sprintf("Error calling %s. Cause: %s", fa.address, forwardErr)
+		logger.Debug(logMessage)
+		tracing.SetErrorWithEvent(req, logMessage)
+
+		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	body, readError := ioutil.ReadAll(forwardResponse.Body)
 	if readError != nil {
-		tracing.SetErrorAndDebugLog(r, "Error reading body %s. Cause: %s", config.Address, readError)
-		w.WriteHeader(http.StatusInternalServerError)
+		logMessage := fmt.Sprintf("Error reading body %s. Cause: %s", fa.address, readError)
+		logger.Debug(logMessage)
+		tracing.SetErrorWithEvent(req, logMessage)
+
+		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	defer forwardResponse.Body.Close()
@@ -70,40 +115,43 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 	// Pass the forward response's body and selected headers if it
 	// didn't return a response within the range of [200, 300).
 	if forwardResponse.StatusCode < http.StatusOK || forwardResponse.StatusCode >= http.StatusMultipleChoices {
-		log.Debugf("Remote error %s. StatusCode: %d", config.Address, forwardResponse.StatusCode)
+		logger.Debugf("Remote error %s. StatusCode: %d", fa.address, forwardResponse.StatusCode)
 
-		utils.CopyHeaders(w.Header(), forwardResponse.Header)
-		utils.RemoveHeaders(w.Header(), forward.HopHeaders...)
+		utils.CopyHeaders(rw.Header(), forwardResponse.Header)
+		utils.RemoveHeaders(rw.Header(), forward.HopHeaders...)
 
 		// Grab the location header, if any.
 		redirectURL, err := forwardResponse.Location()
 
 		if err != nil {
 			if err != http.ErrNoLocation {
-				tracing.SetErrorAndDebugLog(r, "Error reading response location header %s. Cause: %s", config.Address, err)
-				w.WriteHeader(http.StatusInternalServerError)
+				logMessage := fmt.Sprintf("Error reading response location header %s. Cause: %s", fa.address, err)
+				logger.Debug(logMessage)
+				tracing.SetErrorWithEvent(req, logMessage)
+
+				rw.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 		} else if redirectURL.String() != "" {
 			// Set the location in our response if one was sent back.
-			w.Header().Set("Location", redirectURL.String())
+			rw.Header().Set("Location", redirectURL.String())
 		}
 
-		tracing.LogResponseCode(tracing.GetSpan(r), forwardResponse.StatusCode)
-		w.WriteHeader(forwardResponse.StatusCode)
+		tracing.LogResponseCode(tracing.GetSpan(req), forwardResponse.StatusCode)
+		rw.WriteHeader(forwardResponse.StatusCode)
 
-		if _, err = w.Write(body); err != nil {
-			log.Error(err)
+		if _, err = rw.Write(body); err != nil {
+			logger.Error(err)
 		}
 		return
 	}
 
-	for _, headerName := range config.AuthResponseHeaders {
-		r.Header.Set(headerName, forwardResponse.Header.Get(headerName))
+	for _, headerName := range fa.authResponseHeaders {
+		req.Header.Set(headerName, forwardResponse.Header.Get(headerName))
 	}
 
-	r.RequestURI = r.URL.RequestURI()
-	next(w, r)
+	req.RequestURI = req.URL.RequestURI()
+	fa.next.ServeHTTP(rw, req)
 }
 
 func writeHeader(req *http.Request, forwardReq *http.Request, trustForwardHeader bool) {

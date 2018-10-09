@@ -8,16 +8,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// default format for time presentation
+// default format for time presentation.
 const (
 	commonLogTimeFormat = "02/Jan/2006:15:04:05 -0700"
 	defaultValue        = "-"
 )
 
-// CommonLogFormatter provides formatting in the Traefik common log format
+// CommonLogFormatter provides formatting in the Traefik common log format.
 type CommonLogFormatter struct{}
 
-// Format formats the log entry in the Traefik common log format
+// Format formats the log entry in the Traefik common log format.
 func (f *CommonLogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	b := &bytes.Buffer{}
 
@@ -43,8 +43,8 @@ func (f *CommonLogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 		toLog(entry.Data, "request_Referer", `"-"`, true),
 		toLog(entry.Data, "request_User-Agent", `"-"`, true),
 		toLog(entry.Data, RequestCount, defaultValue, true),
-		toLog(entry.Data, FrontendName, defaultValue, true),
-		toLog(entry.Data, BackendURL, defaultValue, true),
+		toLog(entry.Data, RouterName, defaultValue, true),
+		toLog(entry.Data, ServiceURL, defaultValue, true),
 		elapsedMillis)
 
 	return b.Bytes(), err
@@ -70,6 +70,7 @@ func toLog(fields logrus.Fields, key string, defaultValue string, quoted bool) i
 	return defaultValue
 
 }
+
 func toLogEntry(s string, defaultValue string, quote bool) string {
 	if len(s) == 0 {
 		return defaultValue

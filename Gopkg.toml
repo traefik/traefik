@@ -19,6 +19,11 @@
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 
+[prune]
+  non-go = true
+  go-tests = true
+  unused-packages = true
+
 [[constraint]]
   branch = "master"
   name = "github.com/ArthurHlt/go-eureka-client"
@@ -61,12 +66,16 @@
   name = "github.com/containous/mux"
 
 [[constraint]]
+  branch = "containous-fork"
+  name = "github.com/containous/alice"
+
+[[constraint]]
   name = "github.com/containous/staert"
   version = "3.1.1"
 
-[[constraint]]
-  name = "github.com/containous/traefik-extra-service-fabric"
-  version = "1.3.0"
+#[[constraint]]
+#  name = "github.com/containous/traefik-extra-service-fabric"
+#  version = "1.3.0"
 
 [[constraint]]
   name = "github.com/coreos/go-systemd"
@@ -111,9 +120,9 @@
   name = "github.com/influxdata/influxdb"
   version = "1.3.7"
 
-[[constraint]]
-  branch = "master"
-  name = "github.com/jjcollinge/servicefabric"
+#[[constraint]]
+#  branch = "master"
+#  name = "github.com/jjcollinge/servicefabric"
 
 [[constraint]]
   branch = "master"
@@ -251,11 +260,6 @@
 [[override]]
   branch = "master"
   name = "github.com/miekg/dns"
-
-[prune]
-  non-go = true
-  go-tests = true
-  unused-packages = true
 
 [[constraint]]
   name = "github.com/patrickmn/go-cache"

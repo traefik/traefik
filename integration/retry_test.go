@@ -31,7 +31,7 @@ func (s *RetrySuite) TestRetry(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, try.BodyContains("PathPrefix:/"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 60*time.Second, try.BodyContains("PathPrefix:/"))
 	c.Assert(err, checker.IsNil)
 
 	// This simulates a DialTimeout when connecting to the backend server.
@@ -53,7 +53,7 @@ func (s *RetrySuite) TestRetryWebsocket(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, try.BodyContains("PathPrefix:/"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 60*time.Second, try.BodyContains("PathPrefix:/"))
 	c.Assert(err, checker.IsNil)
 
 	// This simulates a DialTimeout when connecting to the backend server.

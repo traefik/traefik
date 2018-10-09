@@ -8,9 +8,10 @@ import (
 	"github.com/containous/mux"
 )
 
-// Handler expose ping routes
+// Handler expose ping routes.
 type Handler struct {
-	EntryPoint  string `description:"Ping entryPoint" export:"true"`
+	EntryPoint  string   `description:"Ping entryPoint" export:"true"`
+	Middlewares []string `description:"Middleware list" export:"true"`
 	terminating bool
 }
 
@@ -22,8 +23,8 @@ func (h *Handler) WithContext(ctx context.Context) {
 	}()
 }
 
-// AddRoutes add ping routes on a router
-func (h *Handler) AddRoutes(router *mux.Router) {
+// Append adds ping routes on a router.
+func (h *Handler) Append(router *mux.Router) {
 	router.Methods(http.MethodGet, http.MethodHead).Path("/ping").
 		HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 			statusCode := http.StatusOK

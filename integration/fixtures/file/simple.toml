@@ -2,39 +2,41 @@ defaultEntryPoints = ["http"]
 
 [entryPoints]
   [entryPoints.http]
-  address = ":8000"
+    address = ":8000"
 
 logLevel = "DEBUG"
 
 [file]
 
-# rules
-[backends]
-  [backends.backend1]
-    [backends.backend1.circuitbreaker]
-      expression = "NetworkErrorRatio() > 0.5"
-    [backends.backend1.servers.server1]
-    url = "http://172.17.0.2:80"
-    weight = 10
-    [backends.backend1.servers.server2]
-    url = "http://172.17.0.3:80"
-    weight = 1
-  [backends.backend2]
-    [backends.backend2.LoadBalancer]
-      method = "drr"
-    [backends.backend2.servers.server1]
-    url = "http://172.17.0.4:80"
-    weight = 1
-    [backends.backend2.servers.server2]
-    url = "http://172.17.0.5:80"
-    weight = 2
-
-[frontends]
-  [frontends.frontend1]
-  backend = "backend2"
-    [frontends.frontend1.routes.test_1]
+[routers]
+  [routers.router1]
     rule = "Host:test.localhost"
-  [frontends.frontend2]
-  backend = "backend1"
-    [frontends.frontend2.routes.test_2]
+    service = "service2"
+
+  [routers.router2]
     rule = "Path:/test"
+    middlewares = ["circuitbreaker"]
+    service = "service1"
+
+[middlewares]
+  [middlewares.circuitbreaker.circuitbreaker]
+    expression = "NetworkErrorRatio() > 0.5"
+
+[services]
+  [services.service1.loadbalancer]
+    [[services.service1.loadbalancer.servers]]
+      url = "http://172.17.0.2:80"
+      weight = 10
+    [[services.service1.loadbalancer.servers]]
+      url = "http://172.17.0.3:80"
+      weight = 1
+
+  [services.service2]
+    [services.service2.loadbalancer]
+      method = "drr"
+      [[services.service2.loadbalancer.servers]]
+        url = "http://172.17.0.4:80"
+        weight = 1
+      [[services.service2.loadbalancer.servers]]
+        url = "http://172.17.0.5:80"
+        weight = 2

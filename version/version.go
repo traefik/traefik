@@ -30,8 +30,8 @@ var (
 	})
 )
 
-// AddRoutes add version routes on a router
-func (v Handler) AddRoutes(router *mux.Router) {
+// Append adds version routes on a router.
+func (v Handler) Append(router *mux.Router) {
 	router.Methods(http.MethodGet).Path("/api/version").
 		HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 			v := struct {

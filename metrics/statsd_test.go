@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"context"
 	"net/http"
 	"testing"
 	"time"
@@ -14,7 +15,7 @@ func TestStatsD(t *testing.T) {
 	// This is needed to make sure that UDP Listener listens for data a bit longer, otherwise it will quit after a millisecond
 	udp.Timeout = 5 * time.Second
 
-	statsdRegistry := RegisterStatsd(&types.Statsd{Address: ":18125", PushInterval: "1s"})
+	statsdRegistry := RegisterStatsd(context.Background(), &types.Statsd{Address: ":18125", PushInterval: "1s"})
 	defer StopStatsd()
 
 	if !statsdRegistry.IsEnabled() {

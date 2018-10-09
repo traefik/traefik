@@ -5,13 +5,13 @@ import (
 	"strings"
 )
 
-// Domain holds a domain name with SANs
+// Domain holds a domain name with SANs.
 type Domain struct {
 	Main string
 	SANs []string
 }
 
-// ToStrArray convert a domain into an array of strings
+// ToStrArray convert a domain into an array of strings.
 func (d *Domain) ToStrArray() []string {
 	var domains []string
 	if len(d.Main) > 0 {
@@ -20,7 +20,7 @@ func (d *Domain) ToStrArray() []string {
 	return append(domains, d.SANs...)
 }
 
-// Set sets a domains from an array of strings
+// Set sets a domains from an array of strings.
 func (d *Domain) Set(domains []string) {
 	if len(domains) > 0 {
 		d.Main = domains[0]
@@ -28,7 +28,7 @@ func (d *Domain) Set(domains []string) {
 	}
 }
 
-// Domains parse []Domain
+// Domains parse []Domain.
 type Domains []Domain
 
 // Set []Domain
@@ -55,10 +55,10 @@ func (ds *Domains) Set(str string) error {
 	return nil
 }
 
-// Get []Domain
+// Get []Domain.
 func (ds *Domains) Get() interface{} { return []Domain(*ds) }
 
-// String returns []Domain in string
+// String returns []Domain in string.
 func (ds *Domains) String() string { return fmt.Sprintf("%+v", *ds) }
 
 // SetValue sets []Domain into the parser
@@ -66,7 +66,7 @@ func (ds *Domains) SetValue(val interface{}) {
 	*ds = val.([]Domain)
 }
 
-// MatchDomain return true if a domain match the cert domain
+// MatchDomain returns true if a domain match the cert domain.
 func MatchDomain(domain string, certDomain string) bool {
 	if domain == certDomain {
 		return true
@@ -85,4 +85,9 @@ func MatchDomain(domain string, certDomain string) bool {
 		}
 	}
 	return false
+}
+
+// CanonicalDomain returns a lower case domain with trim space.
+func CanonicalDomain(domain string) string {
+	return strings.ToLower(strings.TrimSpace(domain))
 }

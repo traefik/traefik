@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -19,7 +20,7 @@ func TestInfluxDB(t *testing.T) {
 	// This is needed to make sure that UDP Listener listens for data a bit longer, otherwise it will quit after a millisecond
 	udp.Timeout = 5 * time.Second
 
-	influxDBRegistry := RegisterInfluxDB(&types.InfluxDB{Address: ":8089", PushInterval: "1s"})
+	influxDBRegistry := RegisterInfluxDB(context.Background(), &types.InfluxDB{Address: ":8089", PushInterval: "1s"})
 	defer StopInfluxDB()
 
 	if !influxDBRegistry.IsEnabled() {
@@ -79,7 +80,7 @@ func TestInfluxDBHTTP(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	influxDBRegistry := RegisterInfluxDB(&types.InfluxDB{Address: ts.URL, Protocol: "http", PushInterval: "1s", Database: "test", RetentionPolicy: "autogen"})
+	influxDBRegistry := RegisterInfluxDB(context.Background(), &types.InfluxDB{Address: ts.URL, Protocol: "http", PushInterval: "1s", Database: "test", RetentionPolicy: "autogen"})
 	defer StopInfluxDB()
 
 	if !influxDBRegistry.IsEnabled() {

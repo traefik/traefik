@@ -13,16 +13,17 @@ logLevel = "DEBUG"
   requestAcceptGraceTimeout = "10s"
 
 [file]
-[backends]
-  [backends.backend]
-    [backends.backend.servers.server]
-    url = "{{.Server}}"
-    weight = 1
+[Routers]
+  [Routers.router]
+    Service = "service"
+    Rule = "Path:/service"
 
-[frontends]
-  [frontends.frontend]
-  backend = "backend"
-    [frontends.frontend.routes.service]
-    rule = "Path:/service"
+[Services]
+  [Services.service]
+    [Services.service.LoadBalancer]
+
+      [[Services.service.LoadBalancer.Servers]]
+        URL = "{{.Server}}"
+        Weight = 1
 
 [ping]

@@ -10,9 +10,8 @@ import (
 
 	"github.com/containous/mux"
 	"github.com/containous/traefik/hostresolver"
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/middlewares"
-	"github.com/containous/traefik/types"
+	"github.com/containous/traefik/old/middlewares"
+	"github.com/containous/traefik/old/types"
 )
 
 // Rules holds rule parsing and configuration
@@ -39,7 +38,8 @@ func (r *Rules) host(hosts ...string) *mux.Route {
 				if strings.EqualFold(reqH, host) || strings.EqualFold(flatH, host) {
 					return true
 				}
-				log.Debugf("CNAMEFlattening: request %s which resolved to %s, is not matched to route %s", reqH, flatH, host)
+				// FIXME
+				//log.Debugf("CNAMEFlattening: request %s which resolved to %s, is not matched to route %s", reqH, flatH, host)
 			}
 			return false
 		}

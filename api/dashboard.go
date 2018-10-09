@@ -13,10 +13,10 @@ type DashboardHandler struct {
 	Assets *assetfs.AssetFS
 }
 
-// AddRoutes add dashboard routes on a router
-func (g DashboardHandler) AddRoutes(router *mux.Router) {
+// Append add dashboard routes on a router
+func (g DashboardHandler) Append(router *mux.Router) {
 	if g.Assets == nil {
-		log.Error("No assets for dashboard")
+		log.WithoutContext().Error("No assets for dashboard")
 		return
 	}
 

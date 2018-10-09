@@ -15,15 +15,15 @@ insecureSkipVerify=true
 
 [file]
 
-[backends]
-  [backends.backend1]
-    [backends.backend1.servers.server1]
-    url = "{{ .WebsocketServer }}"
-    weight = 1
+[Routers]
+  [Routers.router1]
+    Service = "service1"
+    Rule = "Path:/echo,/ws"
 
-[frontends]
-  [frontends.frontend1]
-  backend = "backend1"
-  passHostHeader = true
-    [frontends.frontend1.routes.test_1]
-    rule = "Path:/echo,/ws"
+[Services]
+  [Services.service1]
+    [Services.service1.LoadBalancer]
+      PassHostHeader = true
+      [[Services.service1.LoadBalancer.Servers]]
+        URL = "{{ .WebsocketServer }}"
+        Weight = 1

@@ -22,12 +22,11 @@ import (
 	"github.com/containous/staert"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/log"
-	acmeprovider "github.com/containous/traefik/provider/acme"
+	acmeprovider "github.com/containous/traefik/old/provider/acme"
+	"github.com/containous/traefik/old/types"
 	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
 	"github.com/eapache/channels"
-	"github.com/sirupsen/logrus"
 	"github.com/xenolf/lego/acme"
 	legolog "github.com/xenolf/lego/log"
 	"github.com/xenolf/lego/providers/dns"
@@ -53,8 +52,6 @@ type ACME struct {
 	DNSChallenge          *acmeprovider.DNSChallenge  `description:"Activate DNS-01 Challenge"`
 	HTTPChallenge         *acmeprovider.HTTPChallenge `description:"Activate HTTP-01 Challenge"`
 	TLSChallenge          *acmeprovider.TLSChallenge  `description:"Activate TLS-ALPN-01 Challenge"`
-	DNSProvider           string                      `description:"(Deprecated) Activate DNS-01 Challenge"`                                                                    // Deprecated
-	DelayDontCheckDNS     flaeg.Duration              `description:"(Deprecated) Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."` // Deprecated
 	ACMELogging           bool                        `description:"Enable debug logging of ACME actions."`
 	OverrideCertificates  bool                        `description:"Enable to override certificates in key-value store when using storeconfig"`
 	client                *acme.Client
@@ -73,7 +70,7 @@ func (a *ACME) init() error {
 	acme.UserAgent = fmt.Sprintf("containous-traefik/%s", version.Version)
 
 	if a.ACMELogging {
-		legolog.Logger = fmtlog.New(log.WriterLevel(logrus.InfoLevel), "legolog: ", 0)
+		legolog.Logger = log.WithoutContext()
 	} else {
 		legolog.Logger = fmtlog.New(ioutil.Discard, "", 0)
 	}
@@ -744,7 +741,7 @@ func (a *ACME) getValidDomains(domains []string, wildcardAllowed bool) ([]string
 			return nil, fmt.Errorf("unable to generate a wildcard certificate for domain %q from a 'Host' rule", strings.Join(domains, ","))
 		}
 
-		if a.DNSChallenge == nil && len(a.DNSProvider) == 0 {
+		if a.DNSChallenge == nil {
 			return nil, fmt.Errorf("unable to generate a wildcard certificate for domain %q : ACME needs a DNSChallenge", strings.Join(domains, ","))
 		}
 		if strings.HasPrefix(domains[0], "*.*") {

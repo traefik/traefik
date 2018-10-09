@@ -3,22 +3,23 @@ defaultEntryPoints = ["http"]
 
 [entryPoints]
   [entryPoints.http]
-  address = ":8000"
+    address = ":8000"
     [entryPoints.http.proxyProtocol]
-    trustedIPs = ["{{.HaproxyIP}}"]
+      trustedIPs = ["{{.HaproxyIP}}"]
 
 [api]
 
 [file]
 
-[backends]
-  [backends.backend1]
-    [backends.backend1.servers.server1]
-    url = "http://{{.WhoamiIP}}"
-    weight = 1
+[Routers]
+  [Routers.router1]
+    Service = "service1"
+    Rule = "Path:/whoami"
 
-[frontends]
-  [frontends.frontend1]
-  backend = "backend1"
-    [frontends.frontend1.routes.test_1]
-    rule = "Path:/whoami"
+[Services]
+  [Services.service1]
+    [Services.service1.LoadBalancer]
+
+      [[Services.service1.LoadBalancer.Servers]]
+        URL = "http://{{.WhoamiIP}}"
+        Weight = 1

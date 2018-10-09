@@ -8,8 +8,8 @@ import (
 	"github.com/cenk/backoff"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/old/types"
 	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/types"
 	"github.com/docker/leadership"
 	"github.com/unrolled/render"
 )

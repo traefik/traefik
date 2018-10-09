@@ -1,155 +1,154 @@
 package testhelpers
 
 import (
-	"github.com/containous/traefik/provider"
-	"github.com/containous/traefik/types"
+	"github.com/containous/traefik/config"
 )
 
 // BuildConfiguration is a helper to create a configuration.
-func BuildConfiguration(dynamicConfigBuilders ...func(*types.Configuration)) *types.Configuration {
-	config := &types.Configuration{}
+func BuildConfiguration(dynamicConfigBuilders ...func(*config.Configuration)) *config.Configuration {
+	conf := &config.Configuration{}
 	for _, build := range dynamicConfigBuilders {
-		build(config)
+		build(conf)
 	}
-	return config
+	return conf
 }
 
-// -- Backend
-
-// WithBackends is a helper to create a configuration
-func WithBackends(opts ...func(*types.Backend) string) func(*types.Configuration) {
-	return func(c *types.Configuration) {
-		c.Backends = make(map[string]*types.Backend)
+// WithRouters is a helper to create a configuration.
+func WithRouters(opts ...func(*config.Router) string) func(*config.Configuration) {
+	return func(c *config.Configuration) {
+		c.Routers = make(map[string]*config.Router)
 		for _, opt := range opts {
-			b := &types.Backend{}
+			b := &config.Router{}
 			name := opt(b)
-			c.Backends[name] = b
+			c.Routers[name] = b
 		}
 	}
 }
 
-// WithBackendNew is a helper to create a configuration
-func WithBackendNew(name string, opts ...func(*types.Backend)) func(*types.Backend) string {
-	return func(b *types.Backend) string {
+// WithRouter is a helper to create a configuration.
+func WithRouter(routerName string, opts ...func(*config.Router)) func(*config.Router) string {
+	return func(r *config.Router) string {
 		for _, opt := range opts {
-			opt(b)
+			opt(r)
+		}
+		return routerName
+	}
+}
+
+// WithRouterMiddlewares is a helper to create a configuration.
+func WithRouterMiddlewares(middlewaresName ...string) func(*config.Router) {
+	return func(r *config.Router) {
+		r.Middlewares = middlewaresName
+	}
+}
+
+// WithServiceName is a helper to create a configuration.
+func WithServiceName(serviceName string) func(*config.Router) {
+	return func(r *config.Router) {
+		r.Service = serviceName
+	}
+}
+
+// WithLoadBalancerServices is a helper to create a configuration.
+func WithLoadBalancerServices(opts ...func(service *config.LoadBalancerService) string) func(*config.Configuration) {
+	return func(c *config.Configuration) {
+		c.Services = make(map[string]*config.Service)
+		for _, opt := range opts {
+			b := &config.LoadBalancerService{}
+			name := opt(b)
+			c.Services[name] = &config.Service{
+				LoadBalancer: b,
+			}
+		}
+	}
+}
+
+// WithService is a helper to create a configuration.
+func WithService(name string, opts ...func(*config.LoadBalancerService)) func(*config.LoadBalancerService) string {
+	return func(r *config.LoadBalancerService) string {
+		for _, opt := range opts {
+			opt(r)
 		}
 		return name
 	}
 }
 
-// WithServersNew is a helper to create a configuration
-func WithServersNew(opts ...func(*types.Server) string) func(*types.Backend) {
-	return func(b *types.Backend) {
-		b.Servers = make(map[string]types.Server)
+// WithMiddlewares is a helper to create a configuration.
+func WithMiddlewares(opts ...func(*config.Middleware) string) func(*config.Configuration) {
+	return func(c *config.Configuration) {
+		c.Middlewares = make(map[string]*config.Middleware)
 		for _, opt := range opts {
-			s := &types.Server{Weight: 1}
-			name := opt(s)
-			b.Servers[name] = *s
+			b := &config.Middleware{}
+			name := opt(b)
+			c.Middlewares[name] = b
 		}
 	}
 }
 
-// WithServerNew is a helper to create a configuration
-func WithServerNew(url string, opts ...func(*types.Server)) func(*types.Server) string {
-	return func(s *types.Server) string {
+// WithMiddleware is a helper to create a configuration.
+func WithMiddleware(name string, opts ...func(*config.Middleware)) func(*config.Middleware) string {
+	return func(r *config.Middleware) string {
 		for _, opt := range opts {
-			opt(s)
+			opt(r)
 		}
-		s.URL = url
-		return provider.Normalize(url)
+		return name
 	}
 }
 
-// WithLBMethod is a helper to create a configuration
-func WithLBMethod(method string) func(*types.Backend) {
-	return func(b *types.Backend) {
-		if b.LoadBalancer == nil {
-			b.LoadBalancer = &types.LoadBalancer{}
-		}
-		b.LoadBalancer.Method = method
+// WithBasicAuth is a helper to create a configuration.
+func WithBasicAuth(auth *config.BasicAuth) func(*config.Middleware) {
+	return func(r *config.Middleware) {
+		r.BasicAuth = auth
 	}
 }
 
-// -- Frontend
-
-// WithFrontends is a helper to create a configuration
-func WithFrontends(opts ...func(*types.Frontend) string) func(*types.Configuration) {
-	return func(c *types.Configuration) {
-		c.Frontends = make(map[string]*types.Frontend)
-		for _, opt := range opts {
-			f := &types.Frontend{}
-			name := opt(f)
-			c.Frontends[name] = f
-		}
-	}
-}
-
-// WithFrontend is a helper to create a configuration
-func WithFrontend(backend string, opts ...func(*types.Frontend)) func(*types.Frontend) string {
-	return func(f *types.Frontend) string {
-		for _, opt := range opts {
-			opt(f)
-		}
-
-		// related the function WithFrontendName
-		name := f.Backend
-		f.Backend = backend
-		if len(name) > 0 {
-			return name
-		}
-		return backend
-	}
-}
-
-// WithFrontendName is a helper to create a configuration
-func WithFrontendName(name string) func(*types.Frontend) {
-	return func(f *types.Frontend) {
-		// store temporary the frontend name into the backend name
-		f.Backend = name
-	}
-}
-
-// WithEntryPoints is a helper to create a configuration
-func WithEntryPoints(eps ...string) func(*types.Frontend) {
-	return func(f *types.Frontend) {
+// WithEntryPoints is a helper to create a configuration.
+func WithEntryPoints(eps ...string) func(*config.Router) {
+	return func(f *config.Router) {
 		f.EntryPoints = eps
 	}
 }
 
-// WithRoutes is a helper to create a configuration
-func WithRoutes(opts ...func(*types.Route) string) func(*types.Frontend) {
-	return func(f *types.Frontend) {
-		f.Routes = make(map[string]types.Route)
+// WithRule is a helper to create a configuration.
+func WithRule(rule string) func(*config.Router) {
+	return func(f *config.Router) {
+		f.Rule = rule
+	}
+}
+
+// WithServers is a helper to create a configuration.
+func WithServers(opts ...func(*config.Server)) func(*config.LoadBalancerService) {
+	return func(b *config.LoadBalancerService) {
 		for _, opt := range opts {
-			s := &types.Route{}
-			name := opt(s)
-			f.Routes[name] = *s
+			server := config.Server{Weight: 1}
+			opt(&server)
+			b.Servers = append(b.Servers, server)
 		}
 	}
 }
 
-// WithRoute is a helper to create a configuration
-func WithRoute(name string, rule string) func(*types.Route) string {
-	return func(r *types.Route) string {
-		r.Rule = rule
-		return name
-	}
-}
-
-// WithFrontEndAuth is a helper to create a configuration
-func WithFrontEndAuth(auth *types.Auth) func(*types.Frontend) {
-	return func(fe *types.Frontend) {
-		fe.Auth = auth
-	}
-}
-
-// WithLBSticky is a helper to create a configuration
-func WithLBSticky(cookieName string) func(*types.Backend) {
-	return func(b *types.Backend) {
-		if b.LoadBalancer == nil {
-			b.LoadBalancer = &types.LoadBalancer{}
+// WithServer is a helper to create a configuration.
+func WithServer(url string, opts ...func(*config.Server)) func(*config.Server) {
+	return func(s *config.Server) {
+		for _, opt := range opts {
+			opt(s)
 		}
-		b.LoadBalancer.Stickiness = &types.Stickiness{CookieName: cookieName}
+		s.URL = url
+	}
+}
+
+// WithLBMethod is a helper to create a configuration.
+func WithLBMethod(method string) func(*config.LoadBalancerService) {
+	return func(b *config.LoadBalancerService) {
+		b.Method = method
+	}
+}
+
+// WithStickiness is a helper to create a configuration.
+func WithStickiness(cookieName string) func(*config.LoadBalancerService) {
+	return func(b *config.LoadBalancerService) {
+		b.Stickiness = &config.Stickiness{
+			CookieName: cookieName,
+		}
 	}
 }

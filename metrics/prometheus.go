@@ -1,12 +1,14 @@
 package metrics
 
 import (
+	"context"
 	"net/http"
 	"sort"
 	"strings"
 	"sync"
 
 	"github.com/containous/mux"
+	"github.com/containous/traefik/config"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
@@ -60,17 +62,17 @@ var promState = newPrometheusState()
 // PrometheusHandler exposes Prometheus routes.
 type PrometheusHandler struct{}
 
-// AddRoutes adds Prometheus routes on a router.
-func (h PrometheusHandler) AddRoutes(router *mux.Router) {
+// Append adds Prometheus routes on a router.
+func (h PrometheusHandler) Append(router *mux.Router) {
 	router.Methods(http.MethodGet).Path("/metrics").Handler(promhttp.Handler())
 }
 
 // RegisterPrometheus registers all Prometheus metrics.
 // It must be called only once and failing to register the metrics will lead to a panic.
-func RegisterPrometheus(config *types.Prometheus) Registry {
+func RegisterPrometheus(ctx context.Context, config *types.Prometheus) Registry {
 	standardRegistry := initStandardRegistry(config)
 
-	if !registerPromState() {
+	if !registerPromState(ctx) {
 		return nil
 	}
 
@@ -172,13 +174,14 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 	}
 }
 
-func registerPromState() bool {
+func registerPromState(ctx context.Context) bool {
 	if err := stdprometheus.Register(promState); err != nil {
+		logger := log.FromContext(ctx)
 		if _, ok := err.(stdprometheus.AlreadyRegisteredError); !ok {
-			log.Errorf("Unable to register Traefik to Prometheus: %v", err)
+			logger.Errorf("Unable to register Traefik to Prometheus: %v", err)
 			return false
 		}
-		log.Debug("Prometheus collector already registered.")
+		logger.Debug("Prometheus collector already registered.")
 	}
 	return true
 }
@@ -186,23 +189,24 @@ func registerPromState() bool {
 // OnConfigurationUpdate receives the current configuration from Traefik.
 // It then converts the configuration to the optimized package internal format
 // and sets it to the promState.
-func OnConfigurationUpdate(configurations types.Configurations) {
+func OnConfigurationUpdate(configurations config.Configurations) {
 	dynamicConfig := newDynamicConfig()
 
-	for _, config := range configurations {
-		for _, frontend := range config.Frontends {
-			for _, entrypointName := range frontend.EntryPoints {
-				dynamicConfig.entrypoints[entrypointName] = true
-			}
-		}
-
-		for backendName, backend := range config.Backends {
-			dynamicConfig.backends[backendName] = make(map[string]bool)
-			for _, server := range backend.Servers {
-				dynamicConfig.backends[backendName][server.URL] = true
-			}
-		}
-	}
+	// FIXME metrics
+	// for _, config := range configurations {
+	// 	for _, frontend := range config.Frontends {
+	// 		for _, entrypointName := range frontend.EntryPoints {
+	// 			dynamicConfig.entrypoints[entrypointName] = true
+	// 		}
+	// 	}
+	//
+	// 	for backendName, backend := range config.Backends {
+	// 		dynamicConfig.backends[backendName] = make(map[string]bool)
+	// 		for _, server := range backend.Servers {
+	// 			dynamicConfig.backends[backendName][server.URL] = true
+	// 		}
+	// 	}
+	// }
 
 	promState.SetDynamicConfig(dynamicConfig)
 }

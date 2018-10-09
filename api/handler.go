@@ -1,252 +1,304 @@
 package api
 
 import (
+	"io"
 	"net/http"
 
 	"github.com/containous/mux"
+	"github.com/containous/traefik/config"
 	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
 	"github.com/elazarl/go-bindata-assetfs"
-	thoas_stats "github.com/thoas/stats"
+	thoasstats "github.com/thoas/stats"
 	"github.com/unrolled/render"
 )
 
+// ResourceIdentifier a resource identifier
+type ResourceIdentifier struct {
+	ID   string `json:"id"`
+	Path string `json:"path"`
+}
+
+// ProviderRepresentation a provider with resource identifiers
+type ProviderRepresentation struct {
+	Routers     []ResourceIdentifier `json:"routers,omitempty"`
+	Middlewares []ResourceIdentifier `json:"middlewares,omitempty"`
+	Services    []ResourceIdentifier `json:"services,omitempty"`
+}
+
+// RouterRepresentation extended version of a router configuration with an ID
+type RouterRepresentation struct {
+	*config.Router
+	ID string `json:"id"`
+}
+
+// MiddlewareRepresentation extended version of a middleware configuration with an ID
+type MiddlewareRepresentation struct {
+	*config.Middleware
+	ID string `json:"id"`
+}
+
+// ServiceRepresentation extended version of a service configuration with an ID
+type ServiceRepresentation struct {
+	*config.Service
+	ID string `json:"id"`
+}
+
 // Handler expose api routes
 type Handler struct {
-	EntryPoint            string `description:"EntryPoint" export:"true"`
-	Dashboard             bool   `description:"Activate dashboard" export:"true"`
-	Debug                 bool   `export:"true"`
+	EntryPoint            string
+	Dashboard             bool
+	Debug                 bool
 	CurrentConfigurations *safe.Safe
-	Statistics            *types.Statistics          `description:"Enable more detailed statistics" export:"true"`
-	Stats                 *thoas_stats.Stats         `json:"-"`
-	StatsRecorder         *middlewares.StatsRecorder `json:"-"`
-	DashboardAssets       *assetfs.AssetFS           `json:"-"`
+	Statistics            *types.Statistics
+	Stats                 *thoasstats.Stats
+	// StatsRecorder         *middlewares.StatsRecorder // FIXME stats
+	DashboardAssets *assetfs.AssetFS
 }
 
-var (
-	templatesRenderer = render.New(render.Options{
-		Directory: "nowhere",
-	})
-)
+var templateRenderer jsonRenderer = render.New(render.Options{Directory: "nowhere"})
 
-// AddRoutes add api routes on a router
-func (p Handler) AddRoutes(router *mux.Router) {
+type jsonRenderer interface {
+	JSON(w io.Writer, status int, v interface{}) error
+}
+
+// Append add api routes on a router
+func (p Handler) Append(router *mux.Router) {
 	if p.Debug {
-		DebugHandler{}.AddRoutes(router)
+		DebugHandler{}.Append(router)
 	}
 
-	router.Methods(http.MethodGet).Path("/api").HandlerFunc(p.getConfigHandler)
-	router.Methods(http.MethodGet).Path("/api/providers").HandlerFunc(p.getConfigHandler)
+	router.Methods(http.MethodGet).Path("/api/providers").HandlerFunc(p.getProvidersHandler)
 	router.Methods(http.MethodGet).Path("/api/providers/{provider}").HandlerFunc(p.getProviderHandler)
-	router.Methods(http.MethodGet).Path("/api/providers/{provider}/backends").HandlerFunc(p.getBackendsHandler)
-	router.Methods(http.MethodGet).Path("/api/providers/{provider}/backends/{backend}").HandlerFunc(p.getBackendHandler)
-	router.Methods(http.MethodGet).Path("/api/providers/{provider}/backends/{backend}/servers").HandlerFunc(p.getServersHandler)
-	router.Methods(http.MethodGet).Path("/api/providers/{provider}/backends/{backend}/servers/{server}").HandlerFunc(p.getServerHandler)
-	router.Methods(http.MethodGet).Path("/api/providers/{provider}/frontends").HandlerFunc(p.getFrontendsHandler)
-	router.Methods(http.MethodGet).Path("/api/providers/{provider}/frontends/{frontend}").HandlerFunc(p.getFrontendHandler)
-	router.Methods(http.MethodGet).Path("/api/providers/{provider}/frontends/{frontend}/routes").HandlerFunc(p.getRoutesHandler)
-	router.Methods(http.MethodGet).Path("/api/providers/{provider}/frontends/{frontend}/routes/{route}").HandlerFunc(p.getRouteHandler)
+	router.Methods(http.MethodGet).Path("/api/providers/{provider}/routers").HandlerFunc(p.getRoutersHandler)
+	router.Methods(http.MethodGet).Path("/api/providers/{provider}/routers/{router}").HandlerFunc(p.getRouterHandler)
+	router.Methods(http.MethodGet).Path("/api/providers/{provider}/middlewares").HandlerFunc(p.getMiddlewaresHandler)
+	router.Methods(http.MethodGet).Path("/api/providers/{provider}/middlewares/{middleware}").HandlerFunc(p.getMiddlewareHandler)
+	router.Methods(http.MethodGet).Path("/api/providers/{provider}/services").HandlerFunc(p.getServicesHandler)
+	router.Methods(http.MethodGet).Path("/api/providers/{provider}/services/{service}").HandlerFunc(p.getServiceHandler)
 
+	// FIXME stats
 	// health route
-	router.Methods(http.MethodGet).Path("/health").HandlerFunc(p.getHealthHandler)
+	//router.Methods(http.MethodGet).Path("/health").HandlerFunc(p.getHealthHandler)
 
-	version.Handler{}.AddRoutes(router)
+	version.Handler{}.Append(router)
 
 	if p.Dashboard {
-		DashboardHandler{Assets: p.DashboardAssets}.AddRoutes(router)
+		DashboardHandler{Assets: p.DashboardAssets}.Append(router)
 	}
 }
 
-func getProviderIDFromVars(vars map[string]string) string {
-	providerID := vars["provider"]
-	// TODO: Deprecated
-	if providerID == "rest" {
-		providerID = "web"
+func (p Handler) getProvidersHandler(rw http.ResponseWriter, request *http.Request) {
+	// FIXME handle currentConfiguration
+	if p.CurrentConfigurations != nil {
+		currentConfigurations, ok := p.CurrentConfigurations.Get().(config.Configurations)
+		if !ok {
+			rw.WriteHeader(http.StatusOK)
+			return
+		}
+
+		var providers []ResourceIdentifier
+		for name := range currentConfigurations {
+			providers = append(providers, ResourceIdentifier{
+				ID:   name,
+				Path: "/api/providers/" + name,
+			})
+		}
+
+		err := templateRenderer.JSON(rw, http.StatusOK, providers)
+		if err != nil {
+			log.FromContext(request.Context()).Error(err)
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		}
 	}
-	return providerID
 }
 
-func (p Handler) getConfigHandler(response http.ResponseWriter, request *http.Request) {
-	currentConfigurations := p.CurrentConfigurations.Get().(types.Configurations)
-	err := templatesRenderer.JSON(response, http.StatusOK, currentConfigurations)
+func (p Handler) getProviderHandler(rw http.ResponseWriter, request *http.Request) {
+	providerID := mux.Vars(request)["provider"]
+
+	currentConfigurations := p.CurrentConfigurations.Get().(config.Configurations)
+
+	provider, ok := currentConfigurations[providerID]
+	if !ok {
+		http.NotFound(rw, request)
+		return
+	}
+
+	var routers []ResourceIdentifier
+	for name := range provider.Routers {
+		routers = append(routers, ResourceIdentifier{
+			ID:   name,
+			Path: "/api/providers/" + providerID + "/routers",
+		})
+	}
+
+	var services []ResourceIdentifier
+	for name := range provider.Services {
+		services = append(services, ResourceIdentifier{
+			ID:   name,
+			Path: "/api/providers/" + providerID + "/services",
+		})
+	}
+
+	var middlewares []ResourceIdentifier
+	for name := range provider.Middlewares {
+		middlewares = append(middlewares, ResourceIdentifier{
+			ID:   name,
+			Path: "/api/providers/" + providerID + "/middlewares",
+		})
+	}
+
+	providers := ProviderRepresentation{Routers: routers, Middlewares: middlewares, Services: services}
+
+	err := templateRenderer.JSON(rw, http.StatusOK, providers)
 	if err != nil {
-		log.Error(err)
+		log.FromContext(request.Context()).Error(err)
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
 
-func (p Handler) getProviderHandler(response http.ResponseWriter, request *http.Request) {
-	providerID := getProviderIDFromVars(mux.Vars(request))
+func (p Handler) getRoutersHandler(rw http.ResponseWriter, request *http.Request) {
+	providerID := mux.Vars(request)["provider"]
 
-	currentConfigurations := p.CurrentConfigurations.Get().(types.Configurations)
-	if provider, ok := currentConfigurations[providerID]; ok {
-		err := templatesRenderer.JSON(response, http.StatusOK, provider)
-		if err != nil {
-			log.Error(err)
-		}
-	} else {
-		http.NotFound(response, request)
+	currentConfigurations := p.CurrentConfigurations.Get().(config.Configurations)
+
+	provider, ok := currentConfigurations[providerID]
+	if !ok {
+		http.NotFound(rw, request)
+		return
 	}
-}
 
-func (p Handler) getBackendsHandler(response http.ResponseWriter, request *http.Request) {
-	providerID := getProviderIDFromVars(mux.Vars(request))
-
-	currentConfigurations := p.CurrentConfigurations.Get().(types.Configurations)
-	if provider, ok := currentConfigurations[providerID]; ok {
-		err := templatesRenderer.JSON(response, http.StatusOK, provider.Backends)
-		if err != nil {
-			log.Error(err)
-		}
-	} else {
-		http.NotFound(response, request)
+	var routers []RouterRepresentation
+	for name, router := range provider.Routers {
+		routers = append(routers, RouterRepresentation{Router: router, ID: name})
 	}
-}
 
-func (p Handler) getBackendHandler(response http.ResponseWriter, request *http.Request) {
-	vars := mux.Vars(request)
-	providerID := getProviderIDFromVars(vars)
-	backendID := vars["backend"]
-
-	currentConfigurations := p.CurrentConfigurations.Get().(types.Configurations)
-	if provider, ok := currentConfigurations[providerID]; ok {
-		if backend, ok := provider.Backends[backendID]; ok {
-			err := templatesRenderer.JSON(response, http.StatusOK, backend)
-			if err != nil {
-				log.Error(err)
-			}
-			return
-		}
-	}
-	http.NotFound(response, request)
-}
-
-func (p Handler) getServersHandler(response http.ResponseWriter, request *http.Request) {
-	vars := mux.Vars(request)
-	providerID := getProviderIDFromVars(vars)
-	backendID := vars["backend"]
-
-	currentConfigurations := p.CurrentConfigurations.Get().(types.Configurations)
-	if provider, ok := currentConfigurations[providerID]; ok {
-		if backend, ok := provider.Backends[backendID]; ok {
-			err := templatesRenderer.JSON(response, http.StatusOK, backend.Servers)
-			if err != nil {
-				log.Error(err)
-			}
-			return
-		}
-	}
-	http.NotFound(response, request)
-}
-
-func (p Handler) getServerHandler(response http.ResponseWriter, request *http.Request) {
-	vars := mux.Vars(request)
-	providerID := getProviderIDFromVars(vars)
-	backendID := vars["backend"]
-	serverID := vars["server"]
-
-	currentConfigurations := p.CurrentConfigurations.Get().(types.Configurations)
-	if provider, ok := currentConfigurations[providerID]; ok {
-		if backend, ok := provider.Backends[backendID]; ok {
-			if server, ok := backend.Servers[serverID]; ok {
-				err := templatesRenderer.JSON(response, http.StatusOK, server)
-				if err != nil {
-					log.Error(err)
-				}
-				return
-			}
-		}
-	}
-	http.NotFound(response, request)
-}
-
-func (p Handler) getFrontendsHandler(response http.ResponseWriter, request *http.Request) {
-	providerID := getProviderIDFromVars(mux.Vars(request))
-
-	currentConfigurations := p.CurrentConfigurations.Get().(types.Configurations)
-	if provider, ok := currentConfigurations[providerID]; ok {
-		err := templatesRenderer.JSON(response, http.StatusOK, provider.Frontends)
-		if err != nil {
-			log.Error(err)
-		}
-	} else {
-		http.NotFound(response, request)
-	}
-}
-
-func (p Handler) getFrontendHandler(response http.ResponseWriter, request *http.Request) {
-	vars := mux.Vars(request)
-	providerID := getProviderIDFromVars(vars)
-	frontendID := vars["frontend"]
-
-	currentConfigurations := p.CurrentConfigurations.Get().(types.Configurations)
-	if provider, ok := currentConfigurations[providerID]; ok {
-		if frontend, ok := provider.Frontends[frontendID]; ok {
-			err := templatesRenderer.JSON(response, http.StatusOK, frontend)
-			if err != nil {
-				log.Error(err)
-			}
-			return
-		}
-	}
-	http.NotFound(response, request)
-}
-
-func (p Handler) getRoutesHandler(response http.ResponseWriter, request *http.Request) {
-	vars := mux.Vars(request)
-	providerID := getProviderIDFromVars(vars)
-	frontendID := vars["frontend"]
-
-	currentConfigurations := p.CurrentConfigurations.Get().(types.Configurations)
-	if provider, ok := currentConfigurations[providerID]; ok {
-		if frontend, ok := provider.Frontends[frontendID]; ok {
-			err := templatesRenderer.JSON(response, http.StatusOK, frontend.Routes)
-			if err != nil {
-				log.Error(err)
-			}
-			return
-		}
-	}
-	http.NotFound(response, request)
-}
-
-func (p Handler) getRouteHandler(response http.ResponseWriter, request *http.Request) {
-	vars := mux.Vars(request)
-	providerID := getProviderIDFromVars(vars)
-	frontendID := vars["frontend"]
-	routeID := vars["route"]
-
-	currentConfigurations := p.CurrentConfigurations.Get().(types.Configurations)
-	if provider, ok := currentConfigurations[providerID]; ok {
-		if frontend, ok := provider.Frontends[frontendID]; ok {
-			if route, ok := frontend.Routes[routeID]; ok {
-				err := templatesRenderer.JSON(response, http.StatusOK, route)
-				if err != nil {
-					log.Error(err)
-				}
-				return
-			}
-		}
-	}
-	http.NotFound(response, request)
-}
-
-// healthResponse combines data returned by thoas/stats with statistics (if
-// they are enabled).
-type healthResponse struct {
-	*thoas_stats.Data
-	*middlewares.Stats
-}
-
-func (p *Handler) getHealthHandler(response http.ResponseWriter, request *http.Request) {
-	health := &healthResponse{Data: p.Stats.Data()}
-	if p.StatsRecorder != nil {
-		health.Stats = p.StatsRecorder.Data()
-	}
-	err := templatesRenderer.JSON(response, http.StatusOK, health)
+	err := templateRenderer.JSON(rw, http.StatusOK, routers)
 	if err != nil {
-		log.Error(err)
+		log.FromContext(request.Context()).Error(err)
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (p Handler) getRouterHandler(rw http.ResponseWriter, request *http.Request) {
+	providerID := mux.Vars(request)["provider"]
+	routerID := mux.Vars(request)["router"]
+
+	currentConfigurations := p.CurrentConfigurations.Get().(config.Configurations)
+
+	provider, ok := currentConfigurations[providerID]
+	if !ok {
+		http.NotFound(rw, request)
+		return
+	}
+
+	router, ok := provider.Routers[routerID]
+	if !ok {
+		http.NotFound(rw, request)
+		return
+	}
+
+	err := templateRenderer.JSON(rw, http.StatusOK, router)
+	if err != nil {
+		log.FromContext(request.Context()).Error(err)
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (p Handler) getMiddlewaresHandler(rw http.ResponseWriter, request *http.Request) {
+	providerID := mux.Vars(request)["provider"]
+
+	currentConfigurations := p.CurrentConfigurations.Get().(config.Configurations)
+
+	provider, ok := currentConfigurations[providerID]
+	if !ok {
+		http.NotFound(rw, request)
+		return
+	}
+
+	var middlewares []MiddlewareRepresentation
+	for name, middleware := range provider.Middlewares {
+		middlewares = append(middlewares, MiddlewareRepresentation{Middleware: middleware, ID: name})
+	}
+
+	err := templateRenderer.JSON(rw, http.StatusOK, middlewares)
+	if err != nil {
+		log.FromContext(request.Context()).Error(err)
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (p Handler) getMiddlewareHandler(rw http.ResponseWriter, request *http.Request) {
+	providerID := mux.Vars(request)["provider"]
+	middlewareID := mux.Vars(request)["middleware"]
+
+	currentConfigurations := p.CurrentConfigurations.Get().(config.Configurations)
+
+	provider, ok := currentConfigurations[providerID]
+	if !ok {
+		http.NotFound(rw, request)
+		return
+	}
+
+	middleware, ok := provider.Middlewares[middlewareID]
+	if !ok {
+		http.NotFound(rw, request)
+		return
+	}
+
+	err := templateRenderer.JSON(rw, http.StatusOK, middleware)
+	if err != nil {
+		log.FromContext(request.Context()).Error(err)
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (p Handler) getServicesHandler(rw http.ResponseWriter, request *http.Request) {
+	providerID := mux.Vars(request)["provider"]
+
+	currentConfigurations := p.CurrentConfigurations.Get().(config.Configurations)
+
+	provider, ok := currentConfigurations[providerID]
+	if !ok {
+		http.NotFound(rw, request)
+		return
+	}
+
+	var services []ServiceRepresentation
+	for name, service := range provider.Services {
+		services = append(services, ServiceRepresentation{Service: service, ID: name})
+	}
+
+	err := templateRenderer.JSON(rw, http.StatusOK, services)
+	if err != nil {
+		log.FromContext(request.Context()).Error(err)
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (p Handler) getServiceHandler(rw http.ResponseWriter, request *http.Request) {
+	providerID := mux.Vars(request)["provider"]
+	serviceID := mux.Vars(request)["service"]
+
+	currentConfigurations := p.CurrentConfigurations.Get().(config.Configurations)
+
+	provider, ok := currentConfigurations[providerID]
+	if !ok {
+		http.NotFound(rw, request)
+		return
+	}
+
+	service, ok := provider.Services[serviceID]
+	if !ok {
+		http.NotFound(rw, request)
+		return
+	}
+
+	err := templateRenderer.JSON(rw, http.StatusOK, service)
+	if err != nil {
+		log.FromContext(request.Context()).Error(err)
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
 	}
 }

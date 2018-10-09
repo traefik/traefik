@@ -24,7 +24,7 @@ func (s *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 		fakeDNS = "127.0.0.1"
 	}
 	for _, q := range r.Question {
-		log.Printf("Query -- [%s] %s", q.Name, dns.TypeToString[q.Qtype])
+		log.Infof("Query -- [%s] %s", q.Name, dns.TypeToString[q.Qtype])
 
 		switch q.Qtype {
 		case dns.TypeA:

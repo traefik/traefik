@@ -11,7 +11,8 @@ import (
 )
 
 func init() {
-	expvar.Publish("Goroutines", expvar.Func(goroutines))
+	// FIXME Goroutines2 -> Goroutines
+	expvar.Publish("Goroutines2", expvar.Func(goroutines))
 }
 
 func goroutines() interface{} {
@@ -21,8 +22,8 @@ func goroutines() interface{} {
 // DebugHandler expose debug routes
 type DebugHandler struct{}
 
-// AddRoutes add debug routes on a router
-func (g DebugHandler) AddRoutes(router *mux.Router) {
+// Append add debug routes on a router
+func (g DebugHandler) Append(router *mux.Router) {
 	router.Methods(http.MethodGet).Path("/debug/vars").
 		HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Set("Content-Type", "application/json; charset=utf-8")

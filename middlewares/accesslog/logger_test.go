@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/containous/flaeg/parse"
-	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,8 +23,8 @@ import (
 var (
 	logFileNameSuffix       = "/traefik/logger/test.log"
 	testContent             = "Hello, World"
-	testBackendName         = "http://127.0.0.1/testBackend"
-	testFrontendName        = "testFrontend"
+	testServiceName         = "http://127.0.0.1/testService"
+	testRouterName          = "testRouter"
 	testStatus              = 123
 	testContentSize   int64 = 12
 	testHostname            = "TestHost"
@@ -50,7 +49,7 @@ func TestLogRotation(t *testing.T) {
 	rotatedFileName := fileName + ".rotated"
 
 	config := &types.AccessLog{FilePath: fileName, Format: CommonFormat}
-	logHandler, err := NewLogHandler(config)
+	logHandler, err := NewHandler(config)
 	if err != nil {
 		t.Fatalf("Error creating new log handler: %s", err)
 	}
@@ -129,7 +128,7 @@ func TestLoggerCLF(t *testing.T) {
 	logData, err := ioutil.ReadFile(logFilePath)
 	require.NoError(t, err)
 
-	expectedLog := ` TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 1 "testFrontend" "http://127.0.0.1/testBackend" 1ms`
+	expectedLog := ` TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 1 "testRouter" "http://127.0.0.1/testService" 1ms`
 	assertValidLogData(t, expectedLog, logData)
 }
 
@@ -144,7 +143,7 @@ func TestAsyncLoggerCLF(t *testing.T) {
 	logData, err := ioutil.ReadFile(logFilePath)
 	require.NoError(t, err)
 
-	expectedLog := ` TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 1 "testFrontend" "http://127.0.0.1/testBackend" 1ms`
+	expectedLog := ` TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 1 "testRouter" "http://127.0.0.1/testService" 1ms`
 	assertValidLogData(t, expectedLog, logData)
 }
 
@@ -156,11 +155,11 @@ func assertString(exp string) func(t *testing.T, actual interface{}) {
 	}
 }
 
-func assertNotEqual(exp string) func(t *testing.T, actual interface{}) {
+func assertNotEmpty() func(t *testing.T, actual interface{}) {
 	return func(t *testing.T, actual interface{}) {
 		t.Helper()
 
-		assert.NotEqual(t, exp, actual)
+		assert.NotEqual(t, "", actual)
 	}
 }
 
@@ -205,8 +204,8 @@ func TestLoggerJSON(t *testing.T) {
 				OriginStatus:              assertFloat64(float64(testStatus)),
 				RequestRefererHeader:      assertString(testReferer),
 				RequestUserAgentHeader:    assertString(testUserAgent),
-				FrontendName:              assertString(testFrontendName),
-				BackendURL:                assertString(testBackendName),
+				RouterName:                assertString(testRouterName),
+				ServiceURL:                assertString(testServiceName),
 				ClientUsername:            assertString(testUsername),
 				ClientHost:                assertString(testHostname),
 				ClientPort:                assertString(fmt.Sprintf("%d", testPort)),
@@ -218,9 +217,9 @@ func TestLoggerJSON(t *testing.T) {
 				Duration:                  assertFloat64NotZero(),
 				Overhead:                  assertFloat64NotZero(),
 				RetryAttempts:             assertFloat64(float64(testRetryAttempts)),
-				"time":                    assertNotEqual(""),
-				"StartLocal":              assertNotEqual(""),
-				"StartUTC":                assertNotEqual(""),
+				"time":                    assertNotEmpty(),
+				"StartLocal":              assertNotEmpty(),
+				"StartUTC":                assertNotEmpty(),
 			},
 		},
 		{
@@ -235,7 +234,7 @@ func TestLoggerJSON(t *testing.T) {
 			expected: map[string]func(t *testing.T, value interface{}){
 				"level":                   assertString("info"),
 				"msg":                     assertString(""),
-				"time":                    assertNotEqual(""),
+				"time":                    assertNotEmpty(),
 				"downstream_Content-Type": assertString("text/plain; charset=utf-8"),
 				RequestRefererHeader:      assertString(testReferer),
 				RequestUserAgentHeader:    assertString(testUserAgent),
@@ -256,7 +255,7 @@ func TestLoggerJSON(t *testing.T) {
 			expected: map[string]func(t *testing.T, value interface{}){
 				"level": assertString("info"),
 				"msg":   assertString(""),
-				"time":  assertNotEqual(""),
+				"time":  assertNotEmpty(),
 			},
 		},
 		{
@@ -274,7 +273,7 @@ func TestLoggerJSON(t *testing.T) {
 			expected: map[string]func(t *testing.T, value interface{}){
 				"level":                   assertString("info"),
 				"msg":                     assertString(""),
-				"time":                    assertNotEqual(""),
+				"time":                    assertNotEmpty(),
 				"downstream_Content-Type": assertString("REDACTED"),
 				RequestRefererHeader:      assertString("REDACTED"),
 				RequestUserAgentHeader:    assertString("REDACTED"),
@@ -302,7 +301,7 @@ func TestLoggerJSON(t *testing.T) {
 				RequestHost:          assertString(testHostname),
 				"level":              assertString("info"),
 				"msg":                assertString(""),
-				"time":               assertNotEqual(""),
+				"time":               assertNotEmpty(),
 				RequestRefererHeader: assertString(testReferer),
 			},
 		},
@@ -349,7 +348,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 				FilePath: "",
 				Format:   CommonFormat,
 			},
-			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
+			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testRouter" "http://127.0.0.1/testService" 1ms`,
 		},
 		{
 			desc: "default config with empty filters",
@@ -358,7 +357,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 				Format:   CommonFormat,
 				Filters:  &types.AccessLogFilters{},
 			},
-			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
+			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testRouter" "http://127.0.0.1/testService" 1ms`,
 		},
 		{
 			desc: "Status code filter not matching",
@@ -380,7 +379,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 					StatusCodes: []string{"123"},
 				},
 			},
-			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
+			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testRouter" "http://127.0.0.1/testService" 1ms`,
 		},
 		{
 			desc: "Duration filter not matching",
@@ -402,7 +401,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 					MinDuration: parse.Duration(1 * time.Millisecond),
 				},
 			},
-			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
+			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testRouter" "http://127.0.0.1/testService" 1ms`,
 		},
 		{
 			desc: "Retry attempts filter matching",
@@ -413,7 +412,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 					RetryAttempts: true,
 				},
 			},
-			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
+			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testRouter" "http://127.0.0.1/testService" 1ms`,
 		},
 		{
 			desc: "Default mode keep",
@@ -424,7 +423,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 					DefaultMode: "keep",
 				},
 			},
-			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
+			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testRouter" "http://127.0.0.1/testService" 1ms`,
 		},
 		{
 			desc: "Default mode keep with override",
@@ -438,7 +437,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 					},
 				},
 			},
-			expectedLog: `- - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
+			expectedLog: `- - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testRouter" "http://127.0.0.1/testService" 1ms`,
 		},
 		{
 			desc: "Default mode drop",
@@ -572,8 +571,8 @@ func assertValidLogData(t *testing.T, expected string, logData []byte) {
 	assert.Equal(t, resultExpected[RequestRefererHeader], result[RequestRefererHeader], formatErrMessage)
 	assert.Equal(t, resultExpected[RequestUserAgentHeader], result[RequestUserAgentHeader], formatErrMessage)
 	assert.Regexp(t, regexp.MustCompile("[0-9]*"), result[RequestCount], formatErrMessage)
-	assert.Equal(t, resultExpected[FrontendName], result[FrontendName], formatErrMessage)
-	assert.Equal(t, resultExpected[BackendURL], result[BackendURL], formatErrMessage)
+	assert.Equal(t, resultExpected[RouterName], result[RouterName], formatErrMessage)
+	assert.Equal(t, resultExpected[ServiceURL], result[ServiceURL], formatErrMessage)
 	assert.Regexp(t, regexp.MustCompile("[0-9]*ms"), result[Duration], formatErrMessage)
 }
 
@@ -599,7 +598,7 @@ func createTempDir(t *testing.T, prefix string) string {
 }
 
 func doLogging(t *testing.T, config *types.AccessLog) {
-	logger, err := NewLogHandler(config)
+	logger, err := NewHandler(config)
 	require.NoError(t, err)
 	defer logger.Close()
 
@@ -618,6 +617,7 @@ func doLogging(t *testing.T, config *types.AccessLog) {
 		Method:     testMethod,
 		RemoteAddr: fmt.Sprintf("%s:%d", testHostname, testPort),
 		URL: &url.URL{
+			User: url.UserPassword(testUsername, ""),
 			Path: testPath,
 		},
 	}
@@ -627,18 +627,23 @@ func doLogging(t *testing.T, config *types.AccessLog) {
 
 func logWriterTestHandlerFunc(rw http.ResponseWriter, r *http.Request) {
 	if _, err := rw.Write([]byte(testContent)); err != nil {
-		log.Error(err)
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	logData := GetLogData(r)
+	if logData != nil {
+		logData.Core[RouterName] = testRouterName
+		logData.Core[ServiceURL] = testServiceName
+		logData.Core[OriginStatus] = testStatus
+		logData.Core[OriginContentSize] = testContentSize
+		logData.Core[RetryAttempts] = testRetryAttempts
+		logData.Core[StartUTC] = testStart.UTC()
+		logData.Core[StartLocal] = testStart.Local()
+	} else {
+		http.Error(rw, "LogData is nil", http.StatusInternalServerError)
+		return
 	}
 
 	rw.WriteHeader(testStatus)
-
-	logDataTable := GetLogDataTable(r)
-	logDataTable.Core[FrontendName] = testFrontendName
-	logDataTable.Core[BackendURL] = testBackendName
-	logDataTable.Core[OriginStatus] = testStatus
-	logDataTable.Core[OriginContentSize] = testContentSize
-	logDataTable.Core[RetryAttempts] = testRetryAttempts
-	logDataTable.Core[StartUTC] = testStart.UTC()
-	logDataTable.Core[StartLocal] = testStart.Local()
-	logDataTable.Core[ClientUsername] = testUsername
 }

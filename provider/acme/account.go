@@ -1,6 +1,7 @@
 package acme
 
 import (
+	"context"
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
@@ -24,8 +25,8 @@ const (
 )
 
 // NewAccount creates an account
-func NewAccount(email string, keyTypeValue string) (*Account, error) {
-	keyType := GetKeyType(keyTypeValue)
+func NewAccount(ctx context.Context, email string, keyTypeValue string) (*Account, error) {
+	keyType := GetKeyType(ctx, keyTypeValue)
 
 	// Create a user. New accounts need an email and private key to start
 	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
@@ -52,16 +53,20 @@ func (a *Account) GetRegistration() *acme.RegistrationResource {
 
 // GetPrivateKey returns private key
 func (a *Account) GetPrivateKey() crypto.PrivateKey {
-	if privateKey, err := x509.ParsePKCS1PrivateKey(a.PrivateKey); err == nil {
-		return privateKey
+	privateKey, err := x509.ParsePKCS1PrivateKey(a.PrivateKey)
+	if err != nil {
+		log.WithoutContext().WithField(log.ProviderName, "acme").
+			Errorf("Cannot unmarshal private key %+v: %v", a.PrivateKey, err)
+		return nil
 	}
 
-	log.Errorf("Cannot unmarshal private key %+v", a.PrivateKey)
-	return nil
+	return privateKey
 }
 
 // GetKeyType used to determine which algo to used
-func GetKeyType(value string) acme.KeyType {
+func GetKeyType(ctx context.Context, value string) acme.KeyType {
+	logger := log.FromContext(ctx)
+
 	switch value {
 	case "EC256":
 		return acme.EC256
@@ -74,10 +79,10 @@ func GetKeyType(value string) acme.KeyType {
 	case "RSA8192":
 		return acme.RSA8192
 	case "":
-		log.Infof("The key type is empty. Use default key type %v.", acme.RSA4096)
+		logger.Infof("The key type is empty. Use default key type %v.", acme.RSA4096)
 		return acme.RSA4096
 	default:
-		log.Infof("Unable to determine key type value %q. Use default key type %v.", value, acme.RSA4096)
+		logger.Infof("Unable to determine the key type value %q: falling back on %v.", value, acme.RSA4096)
 		return acme.RSA4096
 	}
 }

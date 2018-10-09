@@ -1,66 +1,68 @@
 package tracing
 
 import (
+	"context"
 	"net/http"
 
-	"github.com/urfave/negroni"
+	"github.com/containous/alice"
+	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/tracing"
+	"github.com/opentracing/opentracing-go/ext"
 )
 
-// NewNegroniHandlerWrapper return a negroni.Handler struct
-func (t *Tracing) NewNegroniHandlerWrapper(name string, handler negroni.Handler, clientSpanKind bool) negroni.Handler {
-	if t.IsEnabled() && handler != nil {
-		return &NegroniHandlerWrapper{
-			name:           name,
-			next:           handler,
-			clientSpanKind: clientSpanKind,
+// Tracable embeds tracing information.
+type Tracable interface {
+	GetTracingInformation() (name string, spanKind ext.SpanKindEnum)
+}
+
+// Wrap adds tracability to an alice.Constructor.
+func Wrap(ctx context.Context, constructor alice.Constructor) alice.Constructor {
+	return func(next http.Handler) (http.Handler, error) {
+		if constructor == nil {
+			return nil, nil
 		}
-	}
-	return handler
-}
-
-// NewHTTPHandlerWrapper return a http.Handler struct
-func (t *Tracing) NewHTTPHandlerWrapper(name string, handler http.Handler, clientSpanKind bool) http.Handler {
-	if t.IsEnabled() && handler != nil {
-		return &HTTPHandlerWrapper{
-			name:           name,
-			handler:        handler,
-			clientSpanKind: clientSpanKind,
+		handler, err := constructor(next)
+		if err != nil {
+			return nil, err
 		}
+
+		if tracableHandler, ok := handler.(Tracable); ok {
+			name, spanKind := tracableHandler.GetTracingInformation()
+			log.FromContext(ctx).WithField(log.MiddlewareName, name).Debug("Adding tracing to middleware")
+			return NewWrapper(handler, name, spanKind), nil
+		}
+		return handler, nil
 	}
-	return handler
 }
 
-// NegroniHandlerWrapper is used to wrap negroni handler middleware
-type NegroniHandlerWrapper struct {
-	name           string
-	next           negroni.Handler
-	clientSpanKind bool
+// NewWrapper returns a http.Handler struct
+func NewWrapper(next http.Handler, name string, spanKind ext.SpanKindEnum) http.Handler {
+	return &Wrapper{
+		next:     next,
+		name:     name,
+		spanKind: spanKind,
+	}
 }
 
-func (t *NegroniHandlerWrapper) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+// Wrapper is used to wrap http handler middleware.
+type Wrapper struct {
+	next     http.Handler
+	name     string
+	spanKind ext.SpanKindEnum
+}
+
+func (w *Wrapper) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	_, err := tracing.FromContext(req.Context())
+	if err != nil {
+		w.next.ServeHTTP(rw, req)
+		return
+	}
+
 	var finish func()
-	_, r, finish = StartSpan(r, t.name, t.clientSpanKind)
+	_, req, finish = tracing.StartSpan(req, w.name, w.spanKind)
 	defer finish()
 
-	if t.next != nil {
-		t.next.ServeHTTP(rw, r, next)
+	if w.next != nil {
+		w.next.ServeHTTP(rw, req)
 	}
-}
-
-// HTTPHandlerWrapper is used to wrap http handler middleware
-type HTTPHandlerWrapper struct {
-	name           string
-	handler        http.Handler
-	clientSpanKind bool
-}
-
-func (t *HTTPHandlerWrapper) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	var finish func()
-	_, r, finish = StartSpan(r, t.name, t.clientSpanKind)
-	defer finish()
-
-	if t.handler != nil {
-		t.handler.ServeHTTP(rw, r)
-	}
-
 }

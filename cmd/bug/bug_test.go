@@ -5,10 +5,10 @@ import (
 
 	"github.com/containous/traefik/anonymize"
 	"github.com/containous/traefik/cmd"
-	"github.com/containous/traefik/configuration"
-	"github.com/containous/traefik/provider/file"
+	"github.com/containous/traefik/old/configuration"
+	"github.com/containous/traefik/old/provider/file"
+	"github.com/containous/traefik/old/types"
 	"github.com/containous/traefik/tls"
-	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 )
 

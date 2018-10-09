@@ -114,7 +114,7 @@ func initH2CWithPriorKnowledge(w http.ResponseWriter) (net.Conn, error) {
 
 	conn.Close()
 	if http2VerboseLogs {
-		log.Printf(
+		log.Infof(
 			"Missing the request body portion of the client preface. Wanted: %v Got: %v",
 			[]byte(expectedBody),
 			buf[0:n],

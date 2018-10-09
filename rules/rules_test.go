@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/containous/mux"
-	"github.com/containous/traefik/middlewares"
+	"github.com/containous/traefik/old/middlewares"
+	"github.com/containous/traefik/old/types"
 	"github.com/containous/traefik/testhelpers"
-	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -117,7 +117,7 @@ func TestParseDomains(t *testing.T) {
 	}
 }
 
-func TestPriorites(t *testing.T) {
+func TestPriorities(t *testing.T) {
 	router := mux.NewRouter()
 	router.StrictSlash(true)
 
@@ -253,7 +253,6 @@ func TestHostRegexp(t *testing.T) {
 
 func TestParseInvalidSyntax(t *testing.T) {
 	router := mux.NewRouter()
-	router.StrictSlash(true)
 
 	rules := &Rules{Route: &types.ServerRoute{Route: router.NewRoute()}}
 	expression01 := "Path: /path1;Query:param_one=true, /path2"

@@ -1,3 +1,10 @@
+[run]
+  deadline = "5m"
+
+  skip-files = [
+    "^old/.*",
+  ]
+
 [linters-settings]
 
   [linters-settings.govet]
@@ -13,8 +20,8 @@
     suggest-new = true
 
   [linters-settings.goconst]
-    min-len = 2.0
-    min-occurrences = 2.0
+    min-len = 3.0
+    min-occurrences = 3.0
 
   [linters-settings.misspell]
     locale = "US"
@@ -22,9 +29,19 @@
 [linters]
   enable-all = true
   disable = [
-      "maligned",
-      "lll",
-      "gas",
-      "dupl",
-      "prealloc"
+    "maligned",
+    "lll",
+    "gas",
+    "dupl",
+    "prealloc",
+  ]
+
+[issues]
+  max-per-linter = 0
+  max-same = 0
+  exclude = [
+    "(.+) is deprecated:",
+    "cyclomatic complexity (\\d+) of func `\\(\\*Builder\\)\\.buildConstructor` is high", #alt/server/middleware/middlewares.go
+    "`logger` can be `github.com/containous/traefik/vendor/github.com/stretchr/testify/assert.TestingT`", # alt/middlewares/recovery/recovery.go:
+    "`fn` can be `net/http.Handler`", # alt/server/alice/chain.go
   ]

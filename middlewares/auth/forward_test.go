@@ -1,50 +1,49 @@
 package auth
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/containous/traefik/middlewares/tracing"
+	"github.com/containous/traefik/config"
 	"github.com/containous/traefik/testhelpers"
-	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/urfave/negroni"
 	"github.com/vulcand/oxy/forward"
 )
 
 func TestForwardAuthFail(t *testing.T) {
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "traefik")
+	})
+
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 	}))
 	defer server.Close()
 
-	middleware, err := NewAuthenticator(&types.Auth{
-		Forward: &types.Forward{
-			Address: server.URL,
-		},
-	}, &tracing.Tracing{})
-	assert.NoError(t, err, "there should be no error")
+	middleware, err := NewForward(context.Background(), next, config.ForwardAuth{
+		Address: server.URL,
+	}, "authTest")
+	require.NoError(t, err)
 
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "traefik")
-	})
-	n := negroni.New(middleware)
-	n.UseHandler(handler)
-	ts := httptest.NewServer(n)
+	ts := httptest.NewServer(middleware)
 	defer ts.Close()
 
 	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 	res, err := http.DefaultClient.Do(req)
-	assert.NoError(t, err, "there should be no error")
-	assert.Equal(t, http.StatusForbidden, res.StatusCode, "they should be equal")
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusForbidden, res.StatusCode)
 
 	body, err := ioutil.ReadAll(res.Body)
-	assert.NoError(t, err, "there should be no error")
-	assert.Equal(t, "Forbidden\n", string(body), "they should be equal")
+	require.NoError(t, err)
+	err = res.Body.Close()
+	require.NoError(t, err)
+
+	assert.Equal(t, "Forbidden\n", string(body))
 }
 
 func TestForwardAuthSuccess(t *testing.T) {
@@ -55,32 +54,32 @@ func TestForwardAuthSuccess(t *testing.T) {
 	}))
 	defer server.Close()
 
-	middleware, err := NewAuthenticator(&types.Auth{
-		Forward: &types.Forward{
-			Address:             server.URL,
-			AuthResponseHeaders: []string{"X-Auth-User"},
-		},
-	}, &tracing.Tracing{})
-	assert.NoError(t, err, "there should be no error")
-
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "user@example.com", r.Header.Get("X-Auth-User"))
 		assert.Empty(t, r.Header.Get("X-Auth-Secret"))
 		fmt.Fprintln(w, "traefik")
 	})
-	n := negroni.New(middleware)
-	n.UseHandler(handler)
-	ts := httptest.NewServer(n)
+
+	auth := config.ForwardAuth{
+		Address:             server.URL,
+		AuthResponseHeaders: []string{"X-Auth-User"},
+	}
+	middleware, err := NewForward(context.Background(), next, auth, "authTest")
+	require.NoError(t, err)
+
+	ts := httptest.NewServer(middleware)
 	defer ts.Close()
 
 	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 	res, err := http.DefaultClient.Do(req)
-	assert.NoError(t, err, "there should be no error")
-	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
 
 	body, err := ioutil.ReadAll(res.Body)
-	assert.NoError(t, err, "there should be no error")
-	assert.Equal(t, "traefik\n", string(body), "they should be equal")
+	require.NoError(t, err)
+	err = res.Body.Close()
+	require.NoError(t, err)
+	assert.Equal(t, "traefik\n", string(body))
 }
 
 func TestForwardAuthRedirect(t *testing.T) {
@@ -89,19 +88,17 @@ func TestForwardAuthRedirect(t *testing.T) {
 	}))
 	defer authTs.Close()
 
-	authMiddleware, err := NewAuthenticator(&types.Auth{
-		Forward: &types.Forward{
-			Address: authTs.URL,
-		},
-	}, &tracing.Tracing{})
-	assert.NoError(t, err, "there should be no error")
-
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "traefik")
 	})
-	n := negroni.New(authMiddleware)
-	n.UseHandler(handler)
-	ts := httptest.NewServer(n)
+
+	auth := config.ForwardAuth{
+		Address: authTs.URL,
+	}
+	authMiddleware, err := NewForward(context.Background(), next, auth, "authTest")
+	require.NoError(t, err)
+
+	ts := httptest.NewServer(authMiddleware)
 	defer ts.Close()
 
 	client := &http.Client{
@@ -109,18 +106,23 @@ func TestForwardAuthRedirect(t *testing.T) {
 			return http.ErrUseLastResponse
 		},
 	}
+
 	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+
 	res, err := client.Do(req)
-	assert.NoError(t, err, "there should be no error")
-	assert.Equal(t, http.StatusFound, res.StatusCode, "they should be equal")
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusFound, res.StatusCode)
 
 	location, err := res.Location()
-	assert.NoError(t, err, "there should be no error")
-	assert.Equal(t, "http://example.com/redirect-test", location.String(), "they should be equal")
+	require.NoError(t, err)
+	assert.Equal(t, "http://example.com/redirect-test", location.String())
 
 	body, err := ioutil.ReadAll(res.Body)
-	assert.NoError(t, err, "there should be no error")
-	assert.NotEmpty(t, string(body), "there should be something in the body")
+	require.NoError(t, err)
+	err = res.Body.Close()
+	require.NoError(t, err)
+	assert.NotEmpty(t, string(body))
 }
 
 func TestForwardAuthRemoveHopByHopHeaders(t *testing.T) {
@@ -138,19 +140,17 @@ func TestForwardAuthRemoveHopByHopHeaders(t *testing.T) {
 	}))
 	defer authTs.Close()
 
-	authMiddleware, err := NewAuthenticator(&types.Auth{
-		Forward: &types.Forward{
-			Address: authTs.URL,
-		},
-	}, &tracing.Tracing{})
-	assert.NoError(t, err, "there should be no error")
-
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "traefik")
 	})
-	n := negroni.New(authMiddleware)
-	n.UseHandler(handler)
-	ts := httptest.NewServer(n)
+	auth := config.ForwardAuth{
+		Address: authTs.URL,
+	}
+	authMiddleware, err := NewForward(context.Background(), next, auth, "authTest")
+
+	assert.NoError(t, err, "there should be no error")
+
+	ts := httptest.NewServer(authMiddleware)
 	defer ts.Close()
 
 	client := &http.Client{
@@ -185,30 +185,28 @@ func TestForwardAuthFailResponseHeaders(t *testing.T) {
 	}))
 	defer authTs.Close()
 
-	authMiddleware, err := NewAuthenticator(&types.Auth{
-		Forward: &types.Forward{
-			Address: authTs.URL,
-		},
-	}, &tracing.Tracing{})
-	assert.NoError(t, err, "there should be no error")
-
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "traefik")
 	})
-	n := negroni.New(authMiddleware)
-	n.UseHandler(handler)
-	ts := httptest.NewServer(n)
+
+	auth := config.ForwardAuth{
+		Address: authTs.URL,
+	}
+	authMiddleware, err := NewForward(context.Background(), next, auth, "authTest")
+	require.NoError(t, err)
+
+	ts := httptest.NewServer(authMiddleware)
 	defer ts.Close()
 
 	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
-	client := &http.Client{}
-	res, err := client.Do(req)
-	assert.NoError(t, err, "there should be no error")
-	assert.Equal(t, http.StatusForbidden, res.StatusCode, "they should be equal")
+
+	res, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusForbidden, res.StatusCode)
 
 	require.Len(t, res.Cookies(), 1)
 	for _, cookie := range res.Cookies() {
-		assert.Equal(t, "testing", cookie.Value, "they should be equal")
+		assert.Equal(t, "testing", cookie.Value)
 	}
 
 	expectedHeaders := http.Header{
@@ -225,8 +223,11 @@ func TestForwardAuthFailResponseHeaders(t *testing.T) {
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
-	assert.NoError(t, err, "there should be no error")
-	assert.Equal(t, "Forbidden\n", string(body), "they should be equal")
+	require.NoError(t, err)
+	err = res.Body.Close()
+	require.NoError(t, err)
+
+	assert.Equal(t, "Forbidden\n", string(body))
 }
 
 func Test_writeHeader(t *testing.T) {

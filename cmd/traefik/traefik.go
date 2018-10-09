@@ -21,17 +21,20 @@ import (
 	"github.com/containous/traefik/cmd/storeconfig"
 	cmdVersion "github.com/containous/traefik/cmd/version"
 	"github.com/containous/traefik/collector"
-	"github.com/containous/traefik/configuration"
-	"github.com/containous/traefik/configuration/router"
+	"github.com/containous/traefik/config"
+	"github.com/containous/traefik/config/static"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/provider/ecs"
-	"github.com/containous/traefik/provider/kubernetes"
+	"github.com/containous/traefik/old/configuration"
+	"github.com/containous/traefik/old/provider/ecs"
+	"github.com/containous/traefik/old/provider/kubernetes"
+	"github.com/containous/traefik/old/types"
+	"github.com/containous/traefik/provider/aggregator"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/server"
+	"github.com/containous/traefik/server/router"
 	"github.com/containous/traefik/server/uuid"
 	traefiktls "github.com/containous/traefik/tls"
-	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
 	"github.com/coreos/go-systemd/daemon"
 	"github.com/elazarl/go-bindata-assetfs"
@@ -186,7 +189,7 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 
 	stats(globalConfiguration)
 
-	providerAggregator := configuration.NewProviderAggregator(globalConfiguration)
+	providerAggregator := aggregator.NewProviderAggregator(static.ConvertStaticConf(*globalConfiguration))
 
 	acmeProvider, err := globalConfiguration.InitACMEProvider()
 	if err != nil {
@@ -199,18 +202,15 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 	}
 
 	entryPoints := map[string]server.EntryPoint{}
+	staticConf := static.ConvertStaticConf(*globalConfiguration)
 	for entryPointName, config := range globalConfiguration.EntryPoints {
-
+		factory := router.NewRouteAppenderFactory(staticConf, entryPointName, acmeProvider)
 		entryPoint := server.EntryPoint{
-			Configuration: config,
+			RouteAppenderFactory: factory,
+			Configuration:        config,
 		}
 
-		internalRouter := router.NewInternalRouterAggregator(*globalConfiguration, entryPointName)
 		if acmeProvider != nil {
-			if acmeProvider.HTTPChallenge != nil && entryPointName == acmeProvider.HTTPChallenge.EntryPoint {
-				internalRouter.AddRouter(acmeProvider)
-			}
-
 			// TLS ALPN 01
 			if acmeProvider.TLSChallenge != nil && acmeProvider.HTTPChallenge == nil && acmeProvider.DNSChallenge == nil {
 				entryPoint.TLSALPNGetter = acmeProvider.GetTLSALPNCertificate
@@ -227,19 +227,19 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 			}
 		}
 
-		entryPoint.InternalRouter = internalRouter
 		entryPoints[entryPointName] = entryPoint
 	}
 
 	svr := server.NewServer(*globalConfiguration, providerAggregator, entryPoints)
+
 	if acmeProvider != nil && acmeProvider.OnHostRule {
-		acmeProvider.SetConfigListenerChan(make(chan types.Configuration))
+		acmeProvider.SetConfigListenerChan(make(chan config.Configuration))
 		svr.AddListener(acmeProvider.ListenConfiguration)
 	}
 	ctx := cmd.ContextWithSignal(context.Background())
 
-	if globalConfiguration.Ping != nil {
-		globalConfiguration.Ping.WithContext(ctx)
+	if staticConf.Ping != nil {
+		staticConf.Ping.WithContext(ctx)
 	}
 
 	svr.StartWithContext(ctx)

@@ -9,34 +9,35 @@ import (
 	stdlog "log"
 	"net"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
 	"os"
 	"os/signal"
 	"sync"
 	"time"
 
 	"github.com/armon/go-proxyproto"
-	"github.com/containous/mux"
 	"github.com/containous/traefik/cluster"
-	"github.com/containous/traefik/configuration"
+	"github.com/containous/traefik/config"
+	"github.com/containous/traefik/config/static"
 	"github.com/containous/traefik/h2c"
 	"github.com/containous/traefik/ip"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/middlewares/accesslog"
-	"github.com/containous/traefik/middlewares/tracing"
+	"github.com/containous/traefik/middlewares/requestdecorator"
+	"github.com/containous/traefik/old/configuration"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
+	"github.com/containous/traefik/server/middleware"
 	traefiktls "github.com/containous/traefik/tls"
+	"github.com/containous/traefik/tracing"
+	"github.com/containous/traefik/tracing/datadog"
+	"github.com/containous/traefik/tracing/jaeger"
+	"github.com/containous/traefik/tracing/zipkin"
 	"github.com/containous/traefik/types"
 	"github.com/sirupsen/logrus"
-	"github.com/urfave/negroni"
 	"github.com/xenolf/lego/acme"
 )
-
-var httpServerLogger = stdlog.New(log.WriterLevel(logrus.DebugLevel), "", 0)
 
 func newHijackConnectionTracker() *hijackConnectionTracker {
 	return &hijackConnectionTracker{
@@ -85,7 +86,7 @@ func (h *hijackConnectionTracker) Shutdown(ctx context.Context) error {
 func (h *hijackConnectionTracker) Close() {
 	for conn := range h.conns {
 		if err := conn.Close(); err != nil {
-			log.Errorf("Error while closing Hijacked conn: %v", err)
+			log.WithoutContext().Errorf("Error while closing Hijacked connection: %v", err)
 		}
 		delete(h.conns, conn)
 	}
@@ -93,33 +94,38 @@ func (h *hijackConnectionTracker) Close() {
 
 // Server is the reverse-proxy/load-balancer engine
 type Server struct {
-	serverEntryPoints             serverEntryPoints
-	configurationChan             chan types.ConfigMessage
-	configurationValidatedChan    chan types.ConfigMessage
-	signals                       chan os.Signal
-	stopChan                      chan bool
-	currentConfigurations         safe.Safe
-	providerConfigUpdateMap       map[string]chan types.ConfigMessage
-	globalConfiguration           configuration.GlobalConfiguration
-	accessLoggerMiddleware        *accesslog.LogHandler
-	tracingMiddleware             *tracing.Tracing
-	routinesPool                  *safe.Pool
-	leadership                    *cluster.Leadership
-	defaultForwardingRoundTripper http.RoundTripper
-	metricsRegistry               metrics.Registry
-	provider                      provider.Provider
-	configurationListeners        []func(types.Configuration)
-	entryPoints                   map[string]EntryPoint
-	bufferPool                    httputil.BufferPool
+	serverEntryPoints          serverEntryPoints
+	configurationChan          chan config.Message
+	configurationValidatedChan chan config.Message
+	signals                    chan os.Signal
+	stopChan                   chan bool
+	currentConfigurations      safe.Safe
+	providerConfigUpdateMap    map[string]chan config.Message
+	globalConfiguration        configuration.GlobalConfiguration
+	accessLoggerMiddleware     *accesslog.Handler
+	tracer                     *tracing.Tracing
+	routinesPool               *safe.Pool
+	leadership                 *cluster.Leadership
+	defaultRoundTripper        http.RoundTripper
+	metricsRegistry            metrics.Registry
+	provider                   provider.Provider
+	configurationListeners     []func(config.Configuration)
+	entryPoints                map[string]EntryPoint
+	requestDecorator           *requestdecorator.RequestDecorator
+}
+
+// RouteAppenderFactory the route appender factory interface
+type RouteAppenderFactory interface {
+	NewAppender(ctx context.Context, middlewaresBuilder *middleware.Builder, currentConfigurations *safe.Safe) types.RouteAppender
 }
 
 // EntryPoint entryPoint information (configuration + internalRouter)
 type EntryPoint struct {
-	InternalRouter   types.InternalRouter
-	Configuration    *configuration.EntryPoint
-	OnDemandListener func(string) (*tls.Certificate, error)
-	TLSALPNGetter    func(string) (*tls.Certificate, error)
-	CertificateStore *traefiktls.CertificateStore
+	RouteAppenderFactory RouteAppenderFactory
+	Configuration        *configuration.EntryPoint
+	OnDemandListener     func(string) (*tls.Certificate, error)
+	TLSALPNGetter        func(string) (*tls.Certificate, error)
+	CertificateStore     *traefiktls.CertificateStore
 }
 
 type serverEntryPoints map[string]*serverEntryPoint
@@ -142,10 +148,11 @@ func (s serverEntryPoint) Shutdown(ctx context.Context) {
 			defer wg.Done()
 			if err := s.httpServer.Shutdown(ctx); err != nil {
 				if ctx.Err() == context.DeadlineExceeded {
-					log.Debugf("Wait server shutdown is over due to: %s", err)
+					logger := log.FromContext(ctx)
+					logger.Debugf("Wait server shutdown is over due to: %s", err)
 					err = s.httpServer.Close()
 					if err != nil {
-						log.Error(err)
+						logger.Error(err)
 					}
 				}
 			}
@@ -158,7 +165,8 @@ func (s serverEntryPoint) Shutdown(ctx context.Context) {
 			defer wg.Done()
 			if err := s.hijackConnectionTracker.Shutdown(ctx); err != nil {
 				if ctx.Err() == context.DeadlineExceeded {
-					log.Debugf("Wait hijack connection is over due to: %s", err)
+					logger := log.FromContext(ctx)
+					logger.Debugf("Wait hijack connection is over due to: %s", err)
 					s.hijackConnectionTracker.Close()
 				}
 			}
@@ -179,9 +187,30 @@ func (ln tcpKeepAliveListener) Accept() (net.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	tc.SetKeepAlive(true)
-	tc.SetKeepAlivePeriod(3 * time.Minute)
+
+	if err = tc.SetKeepAlive(true); err != nil {
+		return nil, err
+	}
+
+	if err = tc.SetKeepAlivePeriod(3 * time.Minute); err != nil {
+		return nil, err
+	}
+
 	return tc, nil
+}
+
+func setupTracing(conf *static.Tracing) tracing.TrackingBackend {
+	switch conf.Backend {
+	case jaeger.Name:
+		return conf.Jaeger
+	case zipkin.Name:
+		return conf.Zipkin
+	case datadog.Name:
+		return conf.DataDog
+	default:
+		log.WithoutContext().Warnf("Could not initialize tracing: unknown tracer %q", conf.Backend)
+		return nil
+	}
 }
 
 // NewServer returns an initialized Server.
@@ -192,36 +221,41 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration, provider p
 	server.provider = provider
 	server.globalConfiguration = globalConfiguration
 	server.serverEntryPoints = make(map[string]*serverEntryPoint)
-	server.configurationChan = make(chan types.ConfigMessage, 100)
-	server.configurationValidatedChan = make(chan types.ConfigMessage, 100)
+	server.configurationChan = make(chan config.Message, 100)
+	server.configurationValidatedChan = make(chan config.Message, 100)
 	server.signals = make(chan os.Signal, 1)
 	server.stopChan = make(chan bool, 1)
 	server.configureSignals()
-	currentConfigurations := make(types.Configurations)
+	currentConfigurations := make(config.Configurations)
 	server.currentConfigurations.Set(currentConfigurations)
-	server.providerConfigUpdateMap = make(map[string]chan types.ConfigMessage)
+	server.providerConfigUpdateMap = make(map[string]chan config.Message)
+
+	transport, err := createHTTPTransport(globalConfiguration)
+	if err != nil {
+		log.WithoutContext().Error(err)
+		server.defaultRoundTripper = http.DefaultTransport
+	} else {
+		server.defaultRoundTripper = transport
+	}
 
 	if server.globalConfiguration.API != nil {
 		server.globalConfiguration.API.CurrentConfigurations = &server.currentConfigurations
 	}
 
-	server.bufferPool = newBufferPool()
-
 	server.routinesPool = safe.NewPool(context.Background())
 
-	transport, err := createHTTPTransport(globalConfiguration)
-	if err != nil {
-		log.Errorf("failed to create HTTP transport: %v", err)
+	if globalConfiguration.Tracing != nil {
+		trackingBackend := setupTracing(static.ConvertTracing(globalConfiguration.Tracing))
+		var err error
+		server.tracer, err = tracing.NewTracing(globalConfiguration.Tracing.ServiceName, globalConfiguration.Tracing.SpanNameLimit, trackingBackend)
+		if err != nil {
+			log.WithoutContext().Warnf("Unable to create tracer: %v", err)
+		}
 	}
 
-	server.defaultForwardingRoundTripper = transport
+	server.requestDecorator = requestdecorator.New(static.ConvertHostResolverConfig(globalConfiguration.HostResolver))
 
-	server.tracingMiddleware = globalConfiguration.Tracing
-	if server.tracingMiddleware != nil && server.tracingMiddleware.Backend != "" {
-		server.tracingMiddleware.Setup()
-	}
-
-	server.metricsRegistry = registerMetricClients(globalConfiguration.Metrics)
+	server.metricsRegistry = registerMetricClients(static.ConvertMetrics(globalConfiguration.Metrics))
 
 	if globalConfiguration.Cluster != nil {
 		// leadership creation if cluster mode
@@ -230,9 +264,9 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration, provider p
 
 	if globalConfiguration.AccessLog != nil {
 		var err error
-		server.accessLoggerMiddleware, err = accesslog.NewLogHandler(globalConfiguration.AccessLog)
+		server.accessLoggerMiddleware, err = accesslog.NewHandler(static.ConvertAccessLog(globalConfiguration.AccessLog))
 		if err != nil {
-			log.Warnf("Unable to create log handler: %s", err)
+			log.WithoutContext().Warnf("Unable to create access logger : %v", err)
 		}
 	}
 	return server
@@ -259,13 +293,16 @@ func (s *Server) StartWithContext(ctx context.Context) {
 	go func() {
 		defer s.Close()
 		<-ctx.Done()
-		log.Info("I have to go...")
+		logger := log.FromContext(ctx)
+		logger.Info("I have to go...")
+
 		reqAcceptGraceTimeOut := time.Duration(s.globalConfiguration.LifeCycle.RequestAcceptGraceTimeout)
 		if reqAcceptGraceTimeOut > 0 {
-			log.Infof("Waiting %s for incoming requests to cease", reqAcceptGraceTimeOut)
+			logger.Infof("Waiting %s for incoming requests to cease", reqAcceptGraceTimeOut)
 			time.Sleep(reqAcceptGraceTimeOut)
 		}
-		log.Info("Stopping server gracefully")
+
+		logger.Info("Stopping server gracefully")
 		s.Stop()
 	}()
 	s.Start()
@@ -278,18 +315,23 @@ func (s *Server) Wait() {
 
 // Stop stops the server
 func (s *Server) Stop() {
-	defer log.Info("Server stopped")
+	defer log.WithoutContext().Info("Server stopped")
+
 	var wg sync.WaitGroup
 	for sepn, sep := range s.serverEntryPoints {
 		wg.Add(1)
 		go func(serverEntryPointName string, serverEntryPoint *serverEntryPoint) {
 			defer wg.Done()
+			logger := log.WithoutContext().WithField(log.EntryPointName, serverEntryPointName)
+
 			graceTimeOut := time.Duration(s.globalConfiguration.LifeCycle.GraceTimeOut)
 			ctx, cancel := context.WithTimeout(context.Background(), graceTimeOut)
-			log.Debugf("Waiting %s seconds before killing connections on entrypoint %s...", graceTimeOut, serverEntryPointName)
+			logger.Debugf("Waiting %s seconds before killing connections on entrypoint %s...", graceTimeOut, serverEntryPointName)
+
 			serverEntryPoint.Shutdown(ctx)
 			cancel()
-			log.Debugf("Entrypoint %s closed", serverEntryPointName)
+
+			logger.Debugf("Entry point %s closed", serverEntryPointName)
 		}(sepn, sep)
 	}
 	wg.Wait()
@@ -307,6 +349,7 @@ func (s *Server) Close() {
 			panic("Timeout while stopping traefik, killing instance ✝")
 		}
 	}(ctx)
+
 	stopMetricsClients()
 	s.stopLeadership()
 	s.routinesPool.Cleanup()
@@ -315,11 +358,17 @@ func (s *Server) Close() {
 	signal.Stop(s.signals)
 	close(s.signals)
 	close(s.stopChan)
+
 	if s.accessLoggerMiddleware != nil {
 		if err := s.accessLoggerMiddleware.Close(); err != nil {
-			log.Errorf("Error closing access log file: %s", err)
+			log.WithoutContext().Errorf("Could not close the access log file: %s", err)
 		}
 	}
+
+	if s.tracer != nil {
+		s.tracer.Close()
+	}
+
 	cancel()
 }
 
@@ -339,8 +388,9 @@ func (s *Server) startHTTPServers() {
 	s.serverEntryPoints = s.buildServerEntryPoints()
 
 	for newServerEntryPointName, newServerEntryPoint := range s.serverEntryPoints {
-		serverEntryPoint := s.setupServerEntryPoint(newServerEntryPointName, newServerEntryPoint)
-		go s.startServer(serverEntryPoint)
+		ctx := log.With(context.Background(), log.Str(log.EntryPointName, newServerEntryPointName))
+		serverEntryPoint := s.setupServerEntryPoint(ctx, newServerEntryPointName, newServerEntryPoint)
+		go s.startServer(ctx, serverEntryPoint)
 	}
 }
 
@@ -359,9 +409,9 @@ func (s *Server) listenProviders(stop chan bool) {
 }
 
 // AddListener adds a new listener function used when new configuration is provided
-func (s *Server) AddListener(listener func(types.Configuration)) {
+func (s *Server) AddListener(listener func(config.Configuration)) {
 	if s.configurationListeners == nil {
-		s.configurationListeners = make([]func(types.Configuration), 0)
+		s.configurationListeners = make([]func(config.Configuration), 0)
 	}
 	s.configurationListeners = append(s.configurationListeners, listener)
 }
@@ -395,22 +445,23 @@ func (s *serverEntryPoint) getCertificate(clientHello *tls.ClientHelloInfo) (*tl
 		return nil, fmt.Errorf("strict SNI enabled - No certificate found for domain: %q, closing connection", domainToCheck)
 	}
 
-	log.Debugf("Serving default cert for request: %q", domainToCheck)
+	log.WithoutContext().Debugf("Serving default certificate for request: %q", domainToCheck)
 	return s.certs.DefaultCertificate, nil
 }
 
 func (s *Server) startProvider() {
-	// start providers
 	jsonConf, err := json.Marshal(s.provider)
 	if err != nil {
-		log.Debugf("Unable to marshal provider conf %T with error: %v", s.provider, err)
+		log.WithoutContext().Debugf("Unable to marshal provider configuration %T: %v", s.provider, err)
 	}
-	log.Infof("Starting provider %T %s", s.provider, jsonConf)
+
+	log.WithoutContext().Infof("Starting provider %T %s", s.provider, jsonConf)
 	currentProvider := s.provider
+
 	safe.Go(func() {
 		err := currentProvider.Provide(s.configurationChan, s.routinesPool)
 		if err != nil {
-			log.Errorf("Error starting provider %T: %s", s.provider, err)
+			log.WithoutContext().Errorf("Error starting provider %T: %s", s.provider, err)
 		}
 	})
 }
@@ -421,7 +472,7 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 		return nil, nil
 	}
 
-	config, err := tlsOption.Certificates.CreateTLSConfig(entryPointName)
+	conf, err := tlsOption.Certificates.CreateTLSConfig(entryPointName)
 	if err != nil {
 		return nil, err
 	}
@@ -429,7 +480,7 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 	s.serverEntryPoints[entryPointName].certs.DynamicCerts.Set(make(map[string]*tls.Certificate))
 
 	// ensure http2 enabled
-	config.NextProtos = []string{"h2", "http/1.1", acme.ACMETLS1Protocol}
+	conf.NextProtos = []string{"h2", "http/1.1", acme.ACMETLS1Protocol}
 
 	if len(tlsOption.ClientCA.Files) > 0 {
 		pool := x509.NewCertPool()
@@ -443,55 +494,59 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 				return nil, fmt.Errorf("invalid certificate(s) in %s", caFile)
 			}
 		}
-		config.ClientCAs = pool
+		conf.ClientCAs = pool
 		if tlsOption.ClientCA.Optional {
-			config.ClientAuth = tls.VerifyClientCertIfGiven
+			conf.ClientAuth = tls.VerifyClientCertIfGiven
 		} else {
-			config.ClientAuth = tls.RequireAndVerifyClientCert
+			conf.ClientAuth = tls.RequireAndVerifyClientCert
 		}
 	}
 
-	if s.globalConfiguration.ACME != nil && entryPointName == s.globalConfiguration.ACME.EntryPoint {
-		checkOnDemandDomain := func(domain string) bool {
-			routeMatch := &mux.RouteMatch{}
-			match := router.GetHandler().Match(&http.Request{URL: &url.URL{}, Host: domain}, routeMatch)
-			if match && routeMatch.Route != nil {
-				return true
-			}
-			return false
-		}
-
-		err := s.globalConfiguration.ACME.CreateClusterConfig(s.leadership, config, s.serverEntryPoints[entryPointName].certs.DynamicCerts, checkOnDemandDomain)
-		if err != nil {
-			return nil, err
-		}
+	// FIXME onDemand
+	if s.globalConfiguration.ACME != nil {
+		// if entryPointName == s.globalConfiguration.ACME.EntryPoint {
+		// 	checkOnDemandDomain := func(domain string) bool {
+		// 		routeMatch := &mux.RouteMatch{}
+		// 		match := router.GetHandler().Match(&http.Request{URL: &url.URL{}, Host: domain}, routeMatch)
+		// 		if match && routeMatch.Route != nil {
+		// 			return true
+		// 		}
+		// 		return false
+		// 	}
+		//
+		// 	err := s.globalConfiguration.ACME.CreateClusterConfig(s.leadership, config, s.serverEntryPoints[entryPointName].certs.DynamicCerts, checkOnDemandDomain)
+		// 	if err != nil {
+		// 		return nil, err
+		// 	}
+		// }
 	} else {
-		config.GetCertificate = s.serverEntryPoints[entryPointName].getCertificate
-		if len(config.Certificates) != 0 {
-			certMap := s.buildNameOrIPToCertificate(config.Certificates)
-
-			if s.entryPoints[entryPointName].CertificateStore != nil {
-				s.entryPoints[entryPointName].CertificateStore.StaticCerts.Set(certMap)
-			}
-		}
-
-		// Remove certs from the TLS config object
-		config.Certificates = []tls.Certificate{}
+		conf.GetCertificate = s.serverEntryPoints[entryPointName].getCertificate
 	}
+
+	if len(conf.Certificates) != 0 {
+		certMap := s.buildNameOrIPToCertificate(conf.Certificates)
+
+		if s.entryPoints[entryPointName].CertificateStore != nil {
+			s.entryPoints[entryPointName].CertificateStore.StaticCerts.Set(certMap)
+		}
+	}
+
+	// Remove certs from the TLS config object
+	conf.Certificates = []tls.Certificate{}
 
 	// Set the minimum TLS version if set in the config TOML
-	if minConst, exists := traefiktls.MinVersion[s.entryPoints[entryPointName].Configuration.TLS.MinVersion]; exists {
-		config.PreferServerCipherSuites = true
-		config.MinVersion = minConst
+	if minConst, exists := traefiktls.MinVersion[tlsOption.MinVersion]; exists {
+		conf.PreferServerCipherSuites = true
+		conf.MinVersion = minConst
 	}
 
 	// Set the list of CipherSuites if set in the config TOML
-	if s.entryPoints[entryPointName].Configuration.TLS.CipherSuites != nil {
-		// if our list of CipherSuites is defined in the entrypoint config, we can re-initilize the suites list as empty
-		config.CipherSuites = make([]uint16, 0)
-		for _, cipher := range s.entryPoints[entryPointName].Configuration.TLS.CipherSuites {
+	if tlsOption.CipherSuites != nil {
+		// if our list of CipherSuites is defined in the entryPoint config, we can re-initialize the suites list as empty
+		conf.CipherSuites = make([]uint16, 0)
+		for _, cipher := range tlsOption.CipherSuites {
 			if cipherConst, exists := traefiktls.CipherSuites[cipher]; exists {
-				config.CipherSuites = append(config.CipherSuites, cipherConst)
+				conf.CipherSuites = append(conf.CipherSuites, cipherConst)
 			} else {
 				// CipherSuite listed in the toml does not exist in our listed
 				return nil, fmt.Errorf("invalid CipherSuite: %s", cipher)
@@ -499,11 +554,12 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 		}
 	}
 
-	return config, nil
+	return conf, nil
 }
 
-func (s *Server) startServer(serverEntryPoint *serverEntryPoint) {
-	log.Infof("Starting server on %s", serverEntryPoint.httpServer.Addr)
+func (s *Server) startServer(ctx context.Context, serverEntryPoint *serverEntryPoint) {
+	logger := log.FromContext(ctx)
+	logger.Infof("Starting server on %s", serverEntryPoint.httpServer.Addr)
 
 	var err error
 	if serverEntryPoint.httpServer.TLSConfig != nil {
@@ -513,19 +569,14 @@ func (s *Server) startServer(serverEntryPoint *serverEntryPoint) {
 	}
 
 	if err != http.ErrServerClosed {
-		log.Error("Error creating server: ", err)
+		logger.Error("Cannot create server: %v", err)
 	}
 }
 
-func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServerEntryPoint *serverEntryPoint) *serverEntryPoint {
-	serverMiddlewares, err := s.buildServerEntryPointMiddlewares(newServerEntryPointName)
+func (s *Server) setupServerEntryPoint(ctx context.Context, newServerEntryPointName string, newServerEntryPoint *serverEntryPoint) *serverEntryPoint {
+	newSrv, listener, err := s.prepareServer(ctx, newServerEntryPointName, s.entryPoints[newServerEntryPointName].Configuration, newServerEntryPoint.httpRouter)
 	if err != nil {
-		log.Fatal("Error preparing server: ", err)
-	}
-
-	newSrv, listener, err := s.prepareServer(newServerEntryPointName, s.entryPoints[newServerEntryPointName].Configuration, newServerEntryPoint.httpRouter, serverMiddlewares)
-	if err != nil {
-		log.Fatal("Error preparing server: ", err)
+		log.FromContext(ctx).Fatalf("Error preparing server: %v", err)
 	}
 
 	serverEntryPoint := s.serverEntryPoints[newServerEntryPointName]
@@ -545,19 +596,15 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 	return serverEntryPoint
 }
 
-func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.EntryPoint, router *middlewares.HandlerSwitcher, middlewares []negroni.Handler) (*h2c.Server, net.Listener, error) {
+func (s *Server) prepareServer(ctx context.Context, entryPointName string, entryPoint *configuration.EntryPoint, router *middlewares.HandlerSwitcher) (*h2c.Server, net.Listener, error) {
+	logger := log.FromContext(ctx)
+
 	readTimeout, writeTimeout, idleTimeout := buildServerTimeouts(s.globalConfiguration)
-	log.Infof("Preparing server %s %+v with readTimeout=%s writeTimeout=%s idleTimeout=%s", entryPointName, entryPoint, readTimeout, writeTimeout, idleTimeout)
-
-	// middlewares
-	n := negroni.New()
-	for _, middleware := range middlewares {
-		n.Use(middleware)
-	}
-	n.UseHandler(router)
-
-	internalMuxRouter := s.buildInternalRouter(entryPointName)
-	internalMuxRouter.NotFoundHandler = n
+	logger.
+		WithField("readTimeout", readTimeout).
+		WithField("writeTimeout", writeTimeout).
+		WithField("idleTimeout", idleTimeout).
+		Infof("Preparing server %+v", entryPoint)
 
 	tlsConfig, err := s.createTLSConfig(entryPointName, entryPoint.TLS, router)
 	if err != nil {
@@ -572,16 +619,18 @@ func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.
 	listener = tcpKeepAliveListener{listener.(*net.TCPListener)}
 
 	if entryPoint.ProxyProtocol != nil {
-		listener, err = buildProxyProtocolListener(entryPoint, listener)
+		listener, err = buildProxyProtocolListener(ctx, entryPoint, listener)
 		if err != nil {
 			return nil, nil, fmt.Errorf("error creating proxy protocol listener: %v", err)
 		}
 	}
 
+	httpServerLogger := stdlog.New(logger.WriterLevel(logrus.DebugLevel), "", 0)
+
 	return &h2c.Server{
 			Server: &http.Server{
 				Addr:         entryPoint.Address,
-				Handler:      internalMuxRouter,
+				Handler:      router,
 				TLSConfig:    tlsConfig,
 				ReadTimeout:  readTimeout,
 				WriteTimeout: writeTimeout,
@@ -593,7 +642,7 @@ func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.
 		nil
 }
 
-func buildProxyProtocolListener(entryPoint *configuration.EntryPoint, listener net.Listener) (net.Listener, error) {
+func buildProxyProtocolListener(ctx context.Context, entryPoint *configuration.EntryPoint, listener net.Listener) (net.Listener, error) {
 	var sourceCheck func(addr net.Addr) (bool, error)
 	if entryPoint.ProxyProtocol.Insecure {
 		sourceCheck = func(_ net.Addr) (bool, error) {
@@ -615,29 +664,12 @@ func buildProxyProtocolListener(entryPoint *configuration.EntryPoint, listener n
 		}
 	}
 
-	log.Infof("Enabling ProxyProtocol for trusted IPs %v", entryPoint.ProxyProtocol.TrustedIPs)
+	log.FromContext(ctx).Infof("Enabling ProxyProtocol for trusted IPs %v", entryPoint.ProxyProtocol.TrustedIPs)
 
 	return &proxyproto.Listener{
 		Listener:    listener,
 		SourceCheck: sourceCheck,
 	}, nil
-}
-
-func (s *Server) buildInternalRouter(entryPointName string) *mux.Router {
-	internalMuxRouter := mux.NewRouter()
-	internalMuxRouter.StrictSlash(!s.globalConfiguration.KeepTrailingSlash)
-	internalMuxRouter.SkipClean(true)
-
-	if entryPoint, ok := s.entryPoints[entryPointName]; ok && entryPoint.InternalRouter != nil {
-		entryPoint.InternalRouter.AddRoutes(internalMuxRouter)
-
-		if s.globalConfiguration.API != nil && s.globalConfiguration.API.EntryPoint == entryPointName && s.leadership != nil {
-			s.leadership.AddRoutes(internalMuxRouter)
-
-		}
-	}
-
-	return internalMuxRouter
 }
 
 func buildServerTimeouts(globalConfig configuration.GlobalConfiguration) (readTimeout, writeTimeout, idleTimeout time.Duration) {
@@ -663,24 +695,35 @@ func registerMetricClients(metricsConfig *types.Metrics) metrics.Registry {
 	}
 
 	var registries []metrics.Registry
+
 	if metricsConfig.Prometheus != nil {
-		prometheusRegister := metrics.RegisterPrometheus(metricsConfig.Prometheus)
+		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "prometheus"))
+		prometheusRegister := metrics.RegisterPrometheus(ctx, metricsConfig.Prometheus)
 		if prometheusRegister != nil {
 			registries = append(registries, prometheusRegister)
-			log.Debug("Configured Prometheus metrics")
+			log.FromContext(ctx).Debug("Configured Prometheus metrics")
 		}
 	}
+
 	if metricsConfig.Datadog != nil {
-		registries = append(registries, metrics.RegisterDatadog(metricsConfig.Datadog))
-		log.Debugf("Configured DataDog metrics pushing to %s once every %s", metricsConfig.Datadog.Address, metricsConfig.Datadog.PushInterval)
+		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "datadog"))
+		registries = append(registries, metrics.RegisterDatadog(ctx, metricsConfig.Datadog))
+		log.FromContext(ctx).Debugf("Configured DataDog metrics: pushing to %s once every %s",
+			metricsConfig.Datadog.Address, metricsConfig.Datadog.PushInterval)
 	}
+
 	if metricsConfig.StatsD != nil {
-		registries = append(registries, metrics.RegisterStatsd(metricsConfig.StatsD))
-		log.Debugf("Configured StatsD metrics pushing to %s once every %s", metricsConfig.StatsD.Address, metricsConfig.StatsD.PushInterval)
+		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "statsd"))
+		registries = append(registries, metrics.RegisterStatsd(ctx, metricsConfig.StatsD))
+		log.FromContext(ctx).Debugf("Configured StatsD metrics: pushing to %s once every %s",
+			metricsConfig.StatsD.Address, metricsConfig.StatsD.PushInterval)
 	}
+
 	if metricsConfig.InfluxDB != nil {
-		registries = append(registries, metrics.RegisterInfluxDB(metricsConfig.InfluxDB))
-		log.Debugf("Configured InfluxDB metrics pushing to %s once every %s", metricsConfig.InfluxDB.Address, metricsConfig.InfluxDB.PushInterval)
+		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "influxdb"))
+		registries = append(registries, metrics.RegisterInfluxDB(ctx, metricsConfig.InfluxDB))
+		log.FromContext(ctx).Debugf("Configured InfluxDB metrics: pushing to %s once every %s",
+			metricsConfig.InfluxDB.Address, metricsConfig.InfluxDB.PushInterval)
 	}
 
 	return metrics.NewMultiRegistry(registries)

@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"net/url"
 	"regexp"
@@ -39,13 +40,18 @@ const (
 	influxDBServerUpName                = "traefik.backend.server.up"
 )
 
+const (
+	protocolHTTP = "http"
+	protocolUDP  = "udp"
+)
+
 // RegisterInfluxDB registers the metrics pusher if this didn't happen yet and creates a InfluxDB Registry instance.
-func RegisterInfluxDB(config *types.InfluxDB) Registry {
+func RegisterInfluxDB(ctx context.Context, config *types.InfluxDB) Registry {
 	if influxDBClient == nil {
-		influxDBClient = initInfluxDBClient(config)
+		influxDBClient = initInfluxDBClient(ctx, config)
 	}
 	if influxDBTicker == nil {
-		influxDBTicker = initInfluxDBTicker(config)
+		influxDBTicker = initInfluxDBTicker(ctx, config)
 	}
 
 	return &standardRegistry{
@@ -66,30 +72,32 @@ func RegisterInfluxDB(config *types.InfluxDB) Registry {
 }
 
 // initInfluxDBTicker creates a influxDBClient
-func initInfluxDBClient(config *types.InfluxDB) *influx.Influx {
+func initInfluxDBClient(ctx context.Context, config *types.InfluxDB) *influx.Influx {
+	logger := log.FromContext(ctx)
+
 	// TODO deprecated: move this switch into configuration.SetEffectiveConfiguration when web provider will be removed.
 	switch config.Protocol {
-	case "udp":
+	case protocolUDP:
 		if len(config.Database) > 0 || len(config.RetentionPolicy) > 0 {
-			log.Warn("Database and RetentionPolicy are only used when protocol is http.")
+			logger.Warn("Database and RetentionPolicy options have no effect with UDP.")
 			config.Database = ""
 			config.RetentionPolicy = ""
 		}
-	case "http":
+	case protocolHTTP:
 		if u, err := url.Parse(config.Address); err == nil {
 			if u.Scheme != "http" && u.Scheme != "https" {
-				log.Warnf("InfluxDB address %s should specify a scheme of http or https, defaulting to http.", config.Address)
+				logger.Warnf("InfluxDB address %s should specify a scheme (http or https): falling back on HTTP.", config.Address)
 				config.Address = "http://" + config.Address
 			}
 		} else {
-			log.Errorf("Unable to parse influxdb address: %v, defaulting to udp.", err)
-			config.Protocol = "udp"
+			logger.Errorf("Unable to parse the InfluxDB address %v: falling back on UDP.", err)
+			config.Protocol = protocolUDP
 			config.Database = ""
 			config.RetentionPolicy = ""
 		}
 	default:
-		log.Warnf("Unsupported protocol: %s, defaulting to udp.", config.Protocol)
-		config.Protocol = "udp"
+		logger.Warnf("Unsupported protocol %s: falling back on UDP.", config.Protocol)
+		config.Protocol = protocolUDP
 		config.Database = ""
 		config.RetentionPolicy = ""
 	}
@@ -101,16 +109,16 @@ func initInfluxDBClient(config *types.InfluxDB) *influx.Influx {
 			RetentionPolicy: config.RetentionPolicy,
 		},
 		kitlog.LoggerFunc(func(keyvals ...interface{}) error {
-			log.Info(keyvals)
+			log.WithoutContext().WithField(log.MetricsProviderName, "influxdb").Info(keyvals)
 			return nil
 		}))
 }
 
 // initInfluxDBTicker initializes metrics pusher
-func initInfluxDBTicker(config *types.InfluxDB) *time.Ticker {
+func initInfluxDBTicker(ctx context.Context, config *types.InfluxDB) *time.Ticker {
 	pushInterval, err := time.ParseDuration(config.PushInterval)
 	if err != nil {
-		log.Warnf("Unable to parse %s into pushInterval, using 10s as default value", config.PushInterval)
+		log.FromContext(ctx).Warnf("Unable to parse %s from config.PushInterval: using 10s as the default value", config.PushInterval)
 		pushInterval = 10 * time.Second
 	}
 
@@ -144,8 +152,10 @@ func (w *influxDBWriter) Write(bp influxdb.BatchPoints) error {
 	defer c.Close()
 
 	if writeErr := c.Write(bp); writeErr != nil {
-		log.Errorf("Error writing to influx: %s", writeErr.Error())
-		if handleErr := w.handleWriteError(c, writeErr); handleErr != nil {
+		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "influxdb"))
+		log.FromContext(ctx).Errorf("Error while writing to InfluxDB: %s", writeErr.Error())
+
+		if handleErr := w.handleWriteError(ctx, c, writeErr); handleErr != nil {
 			return handleErr
 		}
 		// Retry write after successful handling of writeErr
@@ -168,8 +178,8 @@ func (w *influxDBWriter) initWriteClient() (influxdb.Client, error) {
 	})
 }
 
-func (w *influxDBWriter) handleWriteError(c influxdb.Client, writeErr error) error {
-	if w.config.Protocol != "http" {
+func (w *influxDBWriter) handleWriteError(ctx context.Context, c influxdb.Client, writeErr error) error {
+	if w.config.Protocol != protocolHTTP {
 		return writeErr
 	}
 
@@ -184,7 +194,9 @@ func (w *influxDBWriter) handleWriteError(c influxdb.Client, writeErr error) err
 		qStr = fmt.Sprintf("%s WITH NAME \"%s\"", qStr, w.config.RetentionPolicy)
 	}
 
-	log.Debugf("Influx database does not exist, attempting to create with query: %s", qStr)
+	logger := log.FromContext(ctx)
+
+	logger.Debugf("InfluxDB database not found: attempting to create one with %s", qStr)
 
 	q := influxdb.NewQuery(qStr, "", "")
 	response, queryErr := c.Query(q)
@@ -192,10 +204,10 @@ func (w *influxDBWriter) handleWriteError(c influxdb.Client, writeErr error) err
 		queryErr = response.Error()
 	}
 	if queryErr != nil {
-		log.Errorf("Error creating InfluxDB database: %s", queryErr)
+		logger.Errorf("Error while creating the InfluxDB database %s", queryErr)
 		return queryErr
 	}
 
-	log.Debugf("Successfully created influx database: %s", w.config.Database)
+	logger.Debugf("Successfully created the InfluxDB database %s", w.config.Database)
 	return nil
 }

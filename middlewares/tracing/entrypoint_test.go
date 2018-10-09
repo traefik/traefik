@@ -1,70 +1,87 @@
 package tracing
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/containous/traefik/tracing"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestEntryPointMiddlewareServeHTTP(t *testing.T) {
-	expectedTags := map[string]interface{}{
-		"span.kind":   ext.SpanKindRPCServerEnum,
-		"http.method": "GET",
-		"component":   "",
-		"http.url":    "http://www.test.com",
-		"http.host":   "www.test.com",
+func TestEntryPointMiddleware(t *testing.T) {
+	type expected struct {
+		Tags          map[string]interface{}
+		OperationName string
 	}
 
 	testCases := []struct {
-		desc         string
-		entryPoint   string
-		tracing      *Tracing
-		expectedTags map[string]interface{}
-		expectedName string
+		desc          string
+		entryPoint    string
+		spanNameLimit int
+		tracing       *trackingBackenMock
+		expected      expected
 	}{
 		{
-			desc:       "no truncation test",
-			entryPoint: "test",
-			tracing: &Tracing{
-				SpanNameLimit: 0,
-				tracer:        &MockTracer{Span: &MockSpan{Tags: make(map[string]interface{})}},
+			desc:          "no truncation test",
+			entryPoint:    "test",
+			spanNameLimit: 0,
+			tracing: &trackingBackenMock{
+				tracer: &MockTracer{Span: &MockSpan{Tags: make(map[string]interface{})}},
 			},
-			expectedTags: expectedTags,
-			expectedName: "Entrypoint test www.test.com",
-		}, {
-			desc:       "basic test",
-			entryPoint: "test",
-			tracing: &Tracing{
-				SpanNameLimit: 25,
-				tracer:        &MockTracer{Span: &MockSpan{Tags: make(map[string]interface{})}},
+			expected: expected{
+				Tags: map[string]interface{}{
+					"span.kind":   ext.SpanKindRPCServerEnum,
+					"http.method": http.MethodGet,
+					"component":   "",
+					"http.url":    "http://www.test.com",
+					"http.host":   "www.test.com",
+				},
+				OperationName: "EntryPoint test www.test.com",
 			},
-			expectedTags: expectedTags,
-			expectedName: "Entrypoint te... ww... 39b97e58",
+		},
+		{
+			desc:          "basic test",
+			entryPoint:    "test",
+			spanNameLimit: 25,
+			tracing: &trackingBackenMock{
+				tracer: &MockTracer{Span: &MockSpan{Tags: make(map[string]interface{})}},
+			},
+			expected: expected{
+				Tags: map[string]interface{}{
+					"span.kind":   ext.SpanKindRPCServerEnum,
+					"http.method": http.MethodGet,
+					"component":   "",
+					"http.url":    "http://www.test.com",
+					"http.host":   "www.test.com",
+				},
+				OperationName: "EntryPoint te... ww... 0c15301b",
+			},
 		},
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
 
-			e := &entryPointMiddleware{
-				entryPoint: test.entryPoint,
-				Tracing:    test.tracing,
-			}
+			newTracing, err := tracing.NewTracing("", test.spanNameLimit, test.tracing)
+			require.NoError(t, err)
 
-			next := func(http.ResponseWriter, *http.Request) {
+			req := httptest.NewRequest(http.MethodGet, "http://www.test.com", nil)
+			rw := httptest.NewRecorder()
+
+			next := http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
 				span := test.tracing.tracer.(*MockTracer).Span
 
-				actual := span.Tags
-				assert.Equal(t, test.expectedTags, actual)
-				assert.Equal(t, test.expectedName, span.OpName)
-			}
+				tags := span.Tags
+				assert.Equal(t, test.expected.Tags, tags)
+				assert.Equal(t, test.expected.OperationName, span.OpName)
+			})
 
-			e.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "http://www.test.com", nil), next)
+			handler := NewEntryPoint(context.Background(), newTracing, test.entryPoint, next)
+			handler.ServeHTTP(rw, req)
 		})
 	}
 }

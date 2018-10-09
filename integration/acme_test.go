@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"github.com/containous/traefik/integration/try"
-	"github.com/containous/traefik/provider/acme"
+	"github.com/containous/traefik/old/provider/acme"
+	"github.com/containous/traefik/old/types"
 	"github.com/containous/traefik/testhelpers"
-	"github.com/containous/traefik/types"
 	"github.com/go-check/check"
 	"github.com/miekg/dns"
 	checker "github.com/vdemeester/shakers"
@@ -256,6 +256,8 @@ func (s *AcmeSuite) TestHTTP01OnHostRuleDynamicCertificatesWithWildcard(c *check
 }
 
 func (s *AcmeSuite) TestHTTP01OnDemand(c *check.C) {
+	c.Skip("on demand")
+
 	testCase := acmeTestCase{
 		traefikConfFilePath: "fixtures/acme/acme_base.toml",
 		template: templateModel{
@@ -272,6 +274,8 @@ func (s *AcmeSuite) TestHTTP01OnDemand(c *check.C) {
 }
 
 func (s *AcmeSuite) TestHTTP01OnDemandStaticCertificatesWithWildcard(c *check.C) {
+	c.Skip("on demand")
+
 	testCase := acmeTestCase{
 		traefikConfFilePath: "fixtures/acme/acme_tls.toml",
 		template: templateModel{
@@ -288,6 +292,8 @@ func (s *AcmeSuite) TestHTTP01OnDemandStaticCertificatesWithWildcard(c *check.C)
 }
 
 func (s *AcmeSuite) TestHTTP01OnDemandStaticCertificatesWithWildcardMultipleEntrypoints(c *check.C) {
+	c.Skip("on demand")
+
 	testCase := acmeTestCase{
 		traefikConfFilePath: "fixtures/acme/acme_tls_multiple_entrypoints.toml",
 		template: templateModel{
@@ -304,6 +310,8 @@ func (s *AcmeSuite) TestHTTP01OnDemandStaticCertificatesWithWildcardMultipleEntr
 }
 
 func (s *AcmeSuite) TestHTTP01OnDemandDynamicCertificatesWithWildcard(c *check.C) {
+	c.Skip("on demand")
+
 	testCase := acmeTestCase{
 		traefikConfFilePath: "fixtures/acme/acme_tls_dynamic.toml",
 		template: templateModel{

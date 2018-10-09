@@ -8,25 +8,29 @@ logLevel = "DEBUG"
 
 [file]
 
-[backends]
-  [backends.backend1]
-    [backends.backend1.servers.server1]
-    url = "http://{{.Server1}}:80"
-    weight = 1
 
-[frontends]
-  [frontends.frontend1]
-  passHostHeader = true
-  backend = "backend1"
-    [frontends.frontend1.routes.test_1]
-    rule = "Path:/"
-    [frontends.frontend1.ratelimit]
+[Routers]
+  [Routers.router1]
+    Service = "service1"
+    Middlewares = [ "ratelimit" ]
+    Rule = "Path:/"
+
+[Middlewares]
+  [Middlewares.ratelimit.RateLimit]
     extractorfunc = "client.ip"
-      [frontends.frontend1.ratelimit.rateset.rateset1]
+      [Middlewares.ratelimit.RateLimit.rateset.rateset1]
       period = "60s"
       average = 4
       burst = 5
-      [frontends.frontend1.ratelimit.rateset.rateset2]
+      [Middlewares.ratelimit.RateLimit.rateset.rateset2]
       period = "3s"
       average = 1
       burst = 2
+
+[Services]
+  [Services.service1]
+    [Services.service1.LoadBalancer]
+      passHostHeader = true
+      [[Services.service1.LoadBalancer.Servers]]
+        URL = "http://{{.Server1}}:80"
+        Weight = 1

@@ -1,57 +1,57 @@
 package tracing
 
 import (
-	"fmt"
+	"context"
 	"net/http"
 
-	"github.com/containous/traefik/log"
+	"github.com/containous/alice"
+	"github.com/containous/traefik/middlewares"
+	"github.com/containous/traefik/tracing"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/urfave/negroni"
 )
 
-type entryPointMiddleware struct {
-	entryPoint string
-	*Tracing
-}
+const (
+	entryPointTypeName = "TracingEntryPoint"
+)
 
-// NewEntryPoint creates a new middleware that the incoming request
-func (t *Tracing) NewEntryPoint(name string) negroni.Handler {
-	log.Debug("Added entrypoint tracing middleware")
-	return &entryPointMiddleware{Tracing: t, entryPoint: name}
-}
+// NewEntryPoint creates a new middleware that the incoming request.
+func NewEntryPoint(ctx context.Context, t *tracing.Tracing, entryPointName string, next http.Handler) http.Handler {
+	middlewares.GetLogger(ctx, "tracing", entryPointTypeName).Debug("Creating middleware")
 
-func (e *entryPointMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	opNameFunc := generateEntryPointSpanName
-
-	ctx, _ := e.Extract(opentracing.HTTPHeaders, HTTPHeadersCarrier(r.Header))
-	span := e.StartSpan(opNameFunc(r, e.entryPoint, e.SpanNameLimit), ext.RPCServerOption(ctx))
-	ext.Component.Set(span, e.ServiceName)
-	LogRequest(span, r)
-	ext.SpanKindRPCServer.Set(span)
-
-	r = r.WithContext(opentracing.ContextWithSpan(r.Context(), span))
-
-	recorder := newStatusCodeRecoder(w, 200)
-	next(recorder, r)
-
-	LogResponseCode(span, recorder.Status())
-	span.Finish()
-}
-
-// generateEntryPointSpanName will return a Span name of an appropriate lenth based on the 'spanLimit' argument.  If needed, it will be truncated, but will not be less than 24 characters.
-func generateEntryPointSpanName(r *http.Request, entryPoint string, spanLimit int) string {
-	name := fmt.Sprintf("Entrypoint %s %s", entryPoint, r.Host)
-
-	if spanLimit > 0 && len(name) > spanLimit {
-		if spanLimit < EntryPointMaxLengthNumber {
-			log.Warnf("SpanNameLimit is set to be less than required static number of characters, defaulting to %d + 3", EntryPointMaxLengthNumber)
-			spanLimit = EntryPointMaxLengthNumber + 3
-		}
-		hash := computeHash(name)
-		limit := (spanLimit - EntryPointMaxLengthNumber) / 2
-		name = fmt.Sprintf("Entrypoint %s %s %s", truncateString(entryPoint, limit), truncateString(r.Host, limit), hash)
+	return &entryPointMiddleware{
+		entryPoint: entryPointName,
+		Tracing:    t,
+		next:       next,
 	}
+}
 
-	return name
+type entryPointMiddleware struct {
+	*tracing.Tracing
+	entryPoint string
+	next       http.Handler
+}
+
+func (e *entryPointMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	spanCtx, _ := e.Extract(opentracing.HTTPHeaders, tracing.HTTPHeadersCarrier(req.Header))
+
+	span, req, finish := e.StartSpanf(req, ext.SpanKindRPCServerEnum, "EntryPoint", []string{e.entryPoint, req.Host}, " ", ext.RPCServerOption(spanCtx))
+	defer finish()
+
+	ext.Component.Set(span, e.ServiceName)
+	tracing.LogRequest(span, req)
+
+	req = req.WithContext(tracing.WithTracing(req.Context(), e.Tracing))
+
+	recorder := newStatusCodeRecoder(rw, http.StatusOK)
+	e.next.ServeHTTP(recorder, req)
+
+	tracing.LogResponseCode(span, recorder.Status())
+}
+
+// WrapEntryPointHandler Wraps tracing to alice.Constructor.
+func WrapEntryPointHandler(ctx context.Context, tracer *tracing.Tracing, entryPointName string) alice.Constructor {
+	return func(next http.Handler) (http.Handler, error) {
+		return NewEntryPoint(ctx, tracer, entryPointName, next), nil
+	}
 }

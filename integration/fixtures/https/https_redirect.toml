@@ -5,8 +5,10 @@ defaultEntryPoints = ["http", "https"]
 [entryPoints]
   [entryPoints.http]
   address = ":8888"
+
   [entryPoints.http.redirect]
   entryPoint = "https"
+
   [entryPoints.https]
   address = ":8443"
     [entryPoints.https.tls]
@@ -15,56 +17,88 @@ defaultEntryPoints = ["http", "https"]
 
 [file]
 
-[backends]
-  [backends.backend1]
-    [backends.backend1.servers.server1]
-    url = "http://127.0.0.1:80"
-    weight = 1
+[Routers]
+  [Routers.router1]
+    Service = "service1"
+    Middlewares = ["redirect-https"]
+    Rule = "Host: example.com"
 
-[frontends]
+  [Routers.router2]
+    Service = "service1"
+    Middlewares = ["redirect-https", "api-slash-strip"]
+    Rule = "Host: example2.com"
 
-  [frontends.frontend1]
-  backend = "backend1"
-    [frontends.frontend1.routes.test_1]
-    rule = "Host: example.com; PathPrefixStrip: /api"
- [frontends.frontend2]
-  backend = "backend1"
-    [frontends.frontend2.routes.test_1]
-    rule = "Host: example2.com; PathPrefixStrip: /api/"
+  [Routers.router3]
+    Service = "service1"
+    Middlewares = ["redirect-https", "foo-add-prefix"]
+    Rule = "Host: test.com"
 
-  [frontends.frontend3]
-  backend = "backend1"
-    [frontends.frontend3.routes.test_1]
-    rule = "Host: test.com; AddPrefix: /foo"
-  [frontends.frontend4]
-  backend = "backend1"
-    [frontends.frontend4.routes.test_1]
-    rule = "Host: test2.com; AddPrefix: /foo/"
+  [Routers.router4]
+    Service = "service1"
+    Middlewares = ["redirect-https", "foo-slash-add-prefix"]
+    Rule = "Host: test2.com"
 
-  [frontends.frontend5]
-  backend = "backend1"
-    [frontends.frontend5.routes.test_1]
-    rule = "Host: foo.com; PathPrefixStripRegex: /{id:[a-z]+}"
-  [frontends.frontend6]
-  backend = "backend1"
-    [frontends.frontend6.routes.test_1]
-    rule = "Host: foo2.com; PathPrefixStripRegex: /{id:[a-z]+}/"
+  [Routers.router5]
+    Service = "service1"
+    Middlewares = ["redirect-https", "id-strip-regex-prefix"]
+    Rule = "Host: foo.com"
 
-   [frontends.frontend7]
-  backend = "backend1"
-    [frontends.frontend7.routes.test_1]
-    rule = "Host: bar.com; ReplacePathRegex: /api /"
-   [frontends.frontend8]
-  backend = "backend1"
-    [frontends.frontend8.routes.test_1]
-    rule = "Host: bar2.com; ReplacePathRegex: /api/ /"
+  [Routers.router6]
+    Service = "service1"
+    Middlewares = ["redirect-https", "id-slash-strip-regex-prefix"]
+    Rule = "Host: foo2.com"
 
-   [frontends.frontend9]
-  backend = "backend1"
-    [frontends.frontend9.routes.test_1]
-    rule = "Host: pow.com; ReplacePath: /api"
-   [frontends.frontend10]
-  backend = "backend1"
-    [frontends.frontend10.routes.test_1]
-    rule = "Host: pow2.com; ReplacePath: /api/"
+  [Routers.router7]
+    Service = "service1"
+    Middlewares = ["redirect-https", "api-regex-replace"]
+    Rule = "Host: bar.com"
 
+  [Routers.router8]
+    Service = "service1"
+    Middlewares = ["redirect-https", "api-slash-regex-replace"]
+    Rule = "Host: bar2.com"
+
+  [Routers.router9]
+    Service = "service1"
+    Middlewares = ["redirect-https", "api-replace-path"]
+    Rule = "Host: pow.com"
+
+  [Routers.router10]
+    Service = "service1"
+    Middlewares = ["redirect-https", "api-slash-replace-path"]
+    Rule = "Host: pow2.com"
+
+[Middlewares]
+  [Middlewares.api-strip.StripPrefix]
+     prefixes = ["/api"]
+  [Middlewares.api-slash-strip.StripPrefix]
+     prefixes = ["/api/"]
+  [Middlewares.foo-add-prefix.AddPrefix]
+     prefix = "/foo"
+  [Middlewares.foo-slash-add-prefix.AddPrefix]
+     prefix = "/foo/"
+  [Middlewares.id-strip-regex-prefix.StripPrefixRegex]
+     regex = ["/{id:[a-z]+}"]
+  [Middlewares.id-slash-strip-regex-prefix.StripPrefixRegex]
+     regex = ["/{id:[a-z]+}/"]
+  [Middlewares.api-regex-replace.ReplacePathRegex]
+     regex = "/api"
+     replacement = "/"
+  [Middlewares.api-slash-regex-replace.ReplacePathRegex]
+     regex = "/api/"
+     replacement = "/"
+  [Middlewares.api-replace-path.ReplacePath]
+     path = "/api"
+  [Middlewares.api-slash-replace-path.ReplacePath]
+     path = "/api/"
+  [Middlewares.redirect-https.redirect]
+     regex = "^(?:https?://)?([\\w\\._-]+)(?::\\d+)?(.*)$"
+     replacement = "https://${1}:8443${2}"
+
+[Services]
+  [Services.service1]
+    [Services.service1.LoadBalancer]
+
+      [[Services.service1.LoadBalancer.Servers]]
+        URL = "http://127.0.0.1:80"
+        Weight = 1

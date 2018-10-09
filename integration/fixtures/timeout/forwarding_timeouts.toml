@@ -3,37 +3,37 @@ defaultEntryPoints = ["http"]
 
 [entryPoints]
   [entryPoints.http]
-  address = ":8000"
+    address = ":8000"
 
 [accessLog]
-format = "json"
+  format = "json"
 
 [api]
 
 [forwardingTimeouts]
-dialTimeout = "300ms"
-responseHeaderTimeout = "300ms"
+  dialTimeout = "300ms"
+  responseHeaderTimeout = "300ms"
 
 [file]
 
-[backends]
-  [backends.backend1]
-    [backends.backend1.servers.server1]
-    # Non-routable IP address that should always deliver a dial timeout.
-    # See: https://stackoverflow.com/questions/100841/artificially-create-a-connection-timeout-error#answer-904609
-    url = "http://50.255.255.1"
-    weight = 1
-  [backends.backend2]
-    [backends.backend2.servers.server2]
-    url = "http://{{.TimeoutEndpoint}}:9000"
-    weight = 1
+[Routers]
+  [Routers.router1]
+    Service = "service1"
+    Rule = "Path:/dialTimeout"
 
-[frontends]
-  [frontends.frontend1]
-  backend = "backend1"
-    [frontends.frontend1.routes.test_1]
-    rule = "Path:/dialTimeout"
-  [frontends.frontend2]
-  backend = "backend2"
-    [frontends.frontend2.routes.test_2]
-    rule = "Path:/responseHeaderTimeout"
+  [Routers.router2]
+    Service = "service2"
+    Rule = "Path:/responseHeaderTimeout"
+
+[Services]
+  [Services.service1]
+    [Services.service1.LoadBalancer]
+      [[Services.service1.LoadBalancer.Servers]]
+        URL = "http://50.255.255.1"
+        Weight = 1
+
+  [Services.service2]
+    [Services.service2.LoadBalancer]
+      [[Services.service2.LoadBalancer.Servers]]
+        URL = "http://{{.TimeoutEndpoint}}:9000"
+        Weight = 1

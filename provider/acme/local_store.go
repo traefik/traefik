@@ -42,6 +42,8 @@ func (s *LocalStore) get() (*StoredData, error) {
 		}
 
 		if hasData {
+			logger := log.WithoutContext().WithField(log.ProviderName, "acme")
+
 			f, err := os.Open(s.filename)
 			if err != nil {
 				return nil, err
@@ -66,7 +68,7 @@ func (s *LocalStore) get() (*StoredData, error) {
 					return nil, err
 				}
 				if isOldRegistration {
-					log.Debug("Reset ACME account.")
+					logger.Debug("Reseting ACME account.")
 					s.storedData.Account = nil
 					s.SaveDataChan <- s.storedData
 				}
@@ -76,7 +78,7 @@ func (s *LocalStore) get() (*StoredData, error) {
 			var certificates []*Certificate
 			for _, certificate := range s.storedData.Certificates {
 				if len(certificate.Certificate) == 0 || len(certificate.Key) == 0 {
-					log.Debugf("Delete certificate %v for domains %v which have no value.", certificate, certificate.Domain.ToStrArray())
+					logger.Debugf("Deleting empty certificate %v for %v", certificate, certificate.Domain.ToStrArray())
 					continue
 				}
 				certificates = append(certificates, certificate)
@@ -95,15 +97,16 @@ func (s *LocalStore) get() (*StoredData, error) {
 // listenSaveAction listens to a chan to store ACME data in json format into LocalStore.filename
 func (s *LocalStore) listenSaveAction() {
 	safe.Go(func() {
+		logger := log.WithoutContext().WithField(log.ProviderName, "acme")
 		for object := range s.SaveDataChan {
 			data, err := json.MarshalIndent(object, "", "  ")
 			if err != nil {
-				log.Error(err)
+				logger.Error(err)
 			}
 
 			err = ioutil.WriteFile(s.filename, data, 0600)
 			if err != nil {
-				log.Error(err)
+				logger.Error(err)
 			}
 		}
 	})

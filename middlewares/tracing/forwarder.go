@@ -1,63 +1,58 @@
 package tracing
 
 import (
-	"fmt"
+	"context"
 	"net/http"
 
-	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/middlewares"
+	"github.com/containous/traefik/tracing"
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/urfave/negroni"
+)
+
+const (
+	forwarderTypeName = "TracingForwarder"
 )
 
 type forwarderMiddleware struct {
-	frontend string
-	backend  string
-	opName   string
-	*Tracing
+	router  string
+	service string
+	next    http.Handler
 }
 
-// NewForwarderMiddleware creates a new forwarder middleware that traces the outgoing request
-func (t *Tracing) NewForwarderMiddleware(frontend, backend string) negroni.Handler {
-	log.Debugf("Added outgoing tracing middleware %s", frontend)
+// NewForwarder creates a new forwarder middleware that traces the outgoing request.
+func NewForwarder(ctx context.Context, router, service string, next http.Handler) http.Handler {
+	middlewares.GetLogger(ctx, "tracing", forwarderTypeName).
+		Debugf("Added outgoing tracing middleware %s", service)
+
 	return &forwarderMiddleware{
-		Tracing:  t,
-		frontend: frontend,
-		backend:  backend,
-		opName:   generateForwardSpanName(frontend, backend, t.SpanNameLimit),
+		router:  router,
+		service: service,
+		next:    next,
 	}
 }
 
-func (f *forwarderMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	span, r, finish := StartSpan(r, f.opName, true)
+func (f *forwarderMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	tr, err := tracing.FromContext(req.Context())
+	if err != nil {
+		f.next.ServeHTTP(rw, req)
+		return
+	}
+
+	opParts := []string{f.service, f.router}
+	span, req, finish := tr.StartSpanf(req, ext.SpanKindRPCClientEnum, "forward", opParts, "/")
 	defer finish()
-	span.SetTag("frontend.name", f.frontend)
-	span.SetTag("backend.name", f.backend)
-	ext.HTTPMethod.Set(span, r.Method)
-	ext.HTTPUrl.Set(span, fmt.Sprintf("%s%s", r.URL.String(), r.RequestURI))
-	span.SetTag("http.host", r.Host)
 
-	InjectRequestHeaders(r)
+	span.SetTag("service.name", f.service)
+	span.SetTag("router.name", f.router)
+	ext.HTTPMethod.Set(span, req.Method)
+	ext.HTTPUrl.Set(span, req.URL.String())
+	span.SetTag("http.host", req.Host)
 
-	recorder := newStatusCodeRecoder(w, 200)
+	tracing.InjectRequestHeaders(req)
 
-	next(recorder, r)
+	recorder := newStatusCodeRecoder(rw, 200)
 
-	LogResponseCode(span, recorder.Status())
-}
+	f.next.ServeHTTP(recorder, req)
 
-// generateForwardSpanName will return a Span name of an appropriate lenth based on the 'spanLimit' argument.  If needed, it will be truncated, but will not be less than 21 characters
-func generateForwardSpanName(frontend, backend string, spanLimit int) string {
-	name := fmt.Sprintf("forward %s/%s", frontend, backend)
-
-	if spanLimit > 0 && len(name) > spanLimit {
-		if spanLimit < ForwardMaxLengthNumber {
-			log.Warnf("SpanNameLimit is set to be less than required static number of characters, defaulting to %d + 3", ForwardMaxLengthNumber)
-			spanLimit = ForwardMaxLengthNumber + 3
-		}
-		hash := computeHash(name)
-		limit := (spanLimit - ForwardMaxLengthNumber) / 2
-		name = fmt.Sprintf("forward %s/%s/%s", truncateString(frontend, limit), truncateString(backend, limit), hash)
-	}
-
-	return name
+	tracing.LogResponseCode(span, recorder.Status())
 }

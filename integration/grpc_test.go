@@ -167,7 +167,7 @@ func (s *GRPCSuite) TestGRPC(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("Host:127.0.0.1"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 1*time.Second, try.BodyContains("Host:127.0.0.1"))
 	c.Assert(err, check.IsNil)
 
 	var response string
@@ -205,7 +205,7 @@ func (s *GRPCSuite) TestGRPCh2c(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("Host:127.0.0.1"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 1*time.Second, try.BodyContains("Host:127.0.0.1"))
 	c.Assert(err, check.IsNil)
 
 	var response string
@@ -247,7 +247,7 @@ func (s *GRPCSuite) TestGRPCh2cTermination(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("Host:127.0.0.1"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 1*time.Second, try.BodyContains("Host:127.0.0.1"))
 	c.Assert(err, check.IsNil)
 
 	var response string
@@ -289,7 +289,7 @@ func (s *GRPCSuite) TestGRPCInsecure(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("Host:127.0.0.1"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 1*time.Second, try.BodyContains("Host:127.0.0.1"))
 	c.Assert(err, check.IsNil)
 
 	var response string
@@ -336,7 +336,7 @@ func (s *GRPCSuite) TestGRPCBuffer(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("Host:127.0.0.1"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 1*time.Second, try.BodyContains("Host:127.0.0.1"))
 	c.Assert(err, check.IsNil)
 	var client helloworld.Greeter_StreamExampleClient
 	client, closer, err := callStreamExampleClientGRPC()
@@ -364,7 +364,7 @@ func (s *GRPCSuite) TestGRPCBuffer(c *check.C) {
 
 func (s *GRPCSuite) TestGRPCBufferWithFlushInterval(c *check.C) {
 	stopStreamExample := make(chan bool)
-	defer func() { stopStreamExample <- true }()
+
 	lis, err := net.Listen("tcp", ":0")
 	c.Assert(err, check.IsNil)
 	_, port, err := net.SplitHostPort(lis.Addr().String())
@@ -387,21 +387,22 @@ func (s *GRPCSuite) TestGRPCBufferWithFlushInterval(c *check.C) {
 		KeyContent:     string(LocalhostKey),
 		GRPCServerPort: port,
 	})
-
 	defer os.Remove(file)
+
 	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
-
 	err = cmd.Start()
 	c.Assert(err, check.IsNil)
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("Host:127.0.0.1"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 1*time.Second, try.BodyContains("Host:127.0.0.1"))
 	c.Assert(err, check.IsNil)
+
 	var client helloworld.Greeter_StreamExampleClient
 	client, closer, err := callStreamExampleClientGRPC()
 	defer closer()
+	defer func() { stopStreamExample <- true }()
 	c.Assert(err, check.IsNil)
 
 	received := make(chan bool)
@@ -412,7 +413,7 @@ func (s *GRPCSuite) TestGRPCBufferWithFlushInterval(c *check.C) {
 		received <- true
 	}()
 
-	err = try.Do(time.Millisecond*100, func() error {
+	err = try.Do(100*time.Millisecond, func() error {
 		select {
 		case <-received:
 			return nil

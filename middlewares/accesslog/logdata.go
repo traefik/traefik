@@ -12,14 +12,16 @@ const (
 	// Duration is the map key used for the total time taken by processing the response, including the origin server's time but
 	// not the log writing time.
 	Duration = "Duration"
-	// FrontendName is the map key used for the name of the Traefik frontend.
-	FrontendName = "FrontendName"
-	// BackendName is the map key used for the name of the Traefik backend.
-	BackendName = "BackendName"
-	// BackendURL is the map key used for the URL of the Traefik backend.
-	BackendURL = "BackendURL"
-	// BackendAddr is the map key used for the IP:port of the Traefik backend (extracted from BackendURL)
-	BackendAddr = "BackendAddr"
+
+	// RouterName is the map key used for the name of the Traefik router.
+	RouterName = "RouterName"
+	// ServiceName is the map key used for the name of the Traefik backend.
+	ServiceName = "ServiceName"
+	// ServiceURL is the map key used for the URL of the Traefik backend.
+	ServiceURL = "ServiceURL"
+	// ServiceAddr is the map key used for the IP:port of the Traefik backend (extracted from BackendURL)
+	ServiceAddr = "ServiceAddr"
+
 	// ClientAddr is the map key used for the remote address in its original form (usually IP:port).
 	ClientAddr = "ClientAddr"
 	// ClientHost is the map key used for the remote IP address from which the client request was received.
@@ -72,9 +74,9 @@ const (
 var defaultCoreKeys = [...]string{
 	StartUTC,
 	Duration,
-	FrontendName,
-	BackendName,
-	BackendURL,
+	RouterName,
+	ServiceName,
+	ServiceURL,
 	ClientHost,
 	ClientPort,
 	ClientUsername,
@@ -99,7 +101,7 @@ func init() {
 	for _, k := range defaultCoreKeys {
 		allCoreKeys[k] = struct{}{}
 	}
-	allCoreKeys[BackendAddr] = struct{}{}
+	allCoreKeys[ServiceAddr] = struct{}{}
 	allCoreKeys[ClientAddr] = struct{}{}
 	allCoreKeys[RequestAddr] = struct{}{}
 	allCoreKeys[GzipRatio] = struct{}{}

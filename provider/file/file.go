@@ -1,6 +1,7 @@
 package file
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/containous/traefik/config"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
@@ -17,6 +19,8 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/fsnotify.v1"
 )
+
+const providerName = "file"
 
 var _ provider.Provider = (*Provider)(nil)
 
@@ -34,7 +38,7 @@ func (p *Provider) Init(constraints types.Constraints) error {
 
 // Provide allows the file provider to provide configurations to traefik
 // using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
+func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.Pool) error {
 	configuration, err := p.BuildConfiguration()
 
 	if err != nil {
@@ -63,9 +67,11 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 // BuildConfiguration loads configuration either from file or a directory specified by 'Filename'/'Directory'
 // and returns a 'Configuration' object
-func (p *Provider) BuildConfiguration() (*types.Configuration, error) {
+func (p *Provider) BuildConfiguration() (*config.Configuration, error) {
+	ctx := log.With(context.Background(), log.Str(log.ProviderName, providerName))
+
 	if len(p.Directory) > 0 {
-		return p.loadFileConfigFromDirectory(p.Directory, nil)
+		return p.loadFileConfigFromDirectory(ctx, p.Directory, nil)
 	}
 
 	if len(p.Filename) > 0 {
@@ -79,7 +85,7 @@ func (p *Provider) BuildConfiguration() (*types.Configuration, error) {
 	return nil, errors.New("error using file configuration backend, no filename defined")
 }
 
-func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationChan chan<- types.ConfigMessage, callback func(chan<- types.ConfigMessage, fsnotify.Event)) error {
+func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationChan chan<- config.Message, callback func(chan<- config.Message, fsnotify.Event)) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return fmt.Errorf("error creating file watcher: %s", err)
@@ -115,14 +121,14 @@ func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationCh
 					callback(configurationChan, evt)
 				}
 			case err := <-watcher.Errors:
-				log.Errorf("Watcher event error: %s", err)
+				log.WithoutContext().WithField(log.ProviderName, providerName).Errorf("Watcher event error: %s", err)
 			}
 		}
 	})
 	return nil
 }
 
-func (p *Provider) watcherCallback(configurationChan chan<- types.ConfigMessage, event fsnotify.Event) {
+func (p *Provider) watcherCallback(configurationChan chan<- config.Message, event fsnotify.Event) {
 	watchItem := p.TraefikFile
 	if len(p.Directory) > 0 {
 		watchItem = p.Directory
@@ -130,23 +136,24 @@ func (p *Provider) watcherCallback(configurationChan chan<- types.ConfigMessage,
 		watchItem = p.Filename
 	}
 
+	logger := log.WithoutContext().WithField(log.ProviderName, providerName)
+
 	if _, err := os.Stat(watchItem); err != nil {
-		log.Debugf("Unable to watch %s : %v", watchItem, err)
+		logger.Errorf("Unable to watch %s : %v", watchItem, err)
 		return
 	}
 
 	configuration, err := p.BuildConfiguration()
-
 	if err != nil {
-		log.Errorf("Error occurred during watcher callback: %s", err)
+		logger.Errorf("Error occurred during watcher callback: %s", err)
 		return
 	}
 
 	sendConfigToChannel(configurationChan, configuration)
 }
 
-func sendConfigToChannel(configurationChan chan<- types.ConfigMessage, configuration *types.Configuration) {
-	configurationChan <- types.ConfigMessage{
+func sendConfigToChannel(configurationChan chan<- config.Message, configuration *config.Configuration) {
+	configurationChan <- config.Message{
 		ProviderName:  "file",
 		Configuration: configuration,
 	}
@@ -163,13 +170,13 @@ func readFile(filename string) (string, error) {
 	return "", fmt.Errorf("invalid filename: %s", filename)
 }
 
-func (p *Provider) loadFileConfig(filename string, parseTemplate bool) (*types.Configuration, error) {
+func (p *Provider) loadFileConfig(filename string, parseTemplate bool) (*config.Configuration, error) {
 	fileContent, err := readFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("error reading configuration file: %s - %s", filename, err)
 	}
 
-	var configuration *types.Configuration
+	var configuration *config.Configuration
 	if parseTemplate {
 		configuration, err = p.CreateConfiguration(fileContent, template.FuncMap{}, false)
 	} else {
@@ -179,16 +186,20 @@ func (p *Provider) loadFileConfig(filename string, parseTemplate bool) (*types.C
 	if err != nil {
 		return nil, err
 	}
-	if configuration == nil || configuration.Backends == nil && configuration.Frontends == nil && configuration.TLS == nil {
-		configuration = &types.Configuration{
-			Frontends: make(map[string]*types.Frontend),
-			Backends:  make(map[string]*types.Backend),
+
+	if configuration == nil || configuration.Routers == nil && configuration.Middlewares == nil && configuration.Services == nil && configuration.TLS == nil {
+		configuration = &config.Configuration{
+			Routers:     make(map[string]*config.Router),
+			Middlewares: make(map[string]*config.Middleware),
+			Services:    make(map[string]*config.Service),
 		}
 	}
 	return configuration, err
 }
 
-func (p *Provider) loadFileConfigFromDirectory(directory string, configuration *types.Configuration) (*types.Configuration, error) {
+func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory string, configuration *config.Configuration) (*config.Configuration, error) {
+	logger := log.FromContext(ctx)
+
 	fileList, err := ioutil.ReadDir(directory)
 
 	if err != nil {
@@ -196,9 +207,10 @@ func (p *Provider) loadFileConfigFromDirectory(directory string, configuration *
 	}
 
 	if configuration == nil {
-		configuration = &types.Configuration{
-			Frontends: make(map[string]*types.Frontend),
-			Backends:  make(map[string]*types.Backend),
+		configuration = &config.Configuration{
+			Routers:     make(map[string]*config.Router),
+			Middlewares: make(map[string]*config.Middleware),
+			Services:    make(map[string]*config.Service),
 		}
 	}
 
@@ -206,7 +218,7 @@ func (p *Provider) loadFileConfigFromDirectory(directory string, configuration *
 	for _, item := range fileList {
 
 		if item.IsDir() {
-			configuration, err = p.loadFileConfigFromDirectory(filepath.Join(directory, item.Name()), configuration)
+			configuration, err = p.loadFileConfigFromDirectory(ctx, filepath.Join(directory, item.Name()), configuration)
 			if err != nil {
 				return configuration, fmt.Errorf("unable to load content configuration from subdirectory %s: %v", item, err)
 			}
@@ -215,38 +227,46 @@ func (p *Provider) loadFileConfigFromDirectory(directory string, configuration *
 			continue
 		}
 
-		var c *types.Configuration
+		var c *config.Configuration
 		c, err = p.loadFileConfig(path.Join(directory, item.Name()), true)
 
 		if err != nil {
 			return configuration, err
 		}
 
-		for backendName, backend := range c.Backends {
-			if _, exists := configuration.Backends[backendName]; exists {
-				log.Warnf("Backend %s already configured, skipping", backendName)
+		for name, conf := range c.Routers {
+			if _, exists := configuration.Routers[name]; exists {
+				logger.WithField(log.RouterName, name).Warn("Router already configured, skipping")
 			} else {
-				configuration.Backends[backendName] = backend
+				configuration.Routers[name] = conf
 			}
 		}
 
-		for frontendName, frontend := range c.Frontends {
-			if _, exists := configuration.Frontends[frontendName]; exists {
-				log.Warnf("Frontend %s already configured, skipping", frontendName)
+		for name, conf := range c.Middlewares {
+			if _, exists := configuration.Middlewares[name]; exists {
+				logger.WithField(log.MiddlewareName, name).Warn("Middleware already configured, skipping")
 			} else {
-				configuration.Frontends[frontendName] = frontend
+				configuration.Middlewares[name] = conf
+			}
+		}
+
+		for name, conf := range c.Services {
+			if _, exists := configuration.Services[name]; exists {
+				logger.WithField(log.ServiceName, name).Warn("Service already configured, skipping")
+			} else {
+				configuration.Services[name] = conf
 			}
 		}
 
 		for _, conf := range c.TLS {
 			if _, exists := configTLSMaps[conf]; exists {
-				log.Warnf("TLS Configuration %v already configured, skipping", conf)
+				logger.Warnf("TLS Configuration %v already configured, skipping", conf)
 			} else {
 				configTLSMaps[conf] = struct{}{}
 			}
 		}
-
 	}
+
 	for conf := range configTLSMaps {
 		configuration.TLS = append(configuration.TLS, conf)
 	}

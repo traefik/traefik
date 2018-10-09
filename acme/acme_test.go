@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	acmeprovider "github.com/containous/traefik/provider/acme"
+	acmeprovider "github.com/containous/traefik/old/provider/acme"
+	"github.com/containous/traefik/old/types"
 	"github.com/containous/traefik/tls/generate"
-	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/xenolf/lego/acme"
 )
