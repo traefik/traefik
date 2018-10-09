@@ -1,6 +1,6 @@
 # Key-value store configuration
 
-Both [static global configuration](/user-guide/kv-config/#static-configuration-in-key-value-store) and [dynamic](/user-guide/kv-config/#dynamic-configuration-in-key-value-store) configuration can be stored in a Key-value store.
+Both [static global configuration](#static-configuration-in-key-value-store) and [dynamic](#dynamic-configuration-in-key-value-store) configuration can be stored in a Key-value store.
 
 This section explains how to launch Træfik using a configuration loaded from a Key-value store.
 
@@ -60,7 +60,7 @@ We should now fill the store with the Træfik global configuration.
 To do that, we can send the Key-value pairs via [curl commands](https://www.consul.io/intro/getting-started/kv.html) or via the [Web UI](https://www.consul.io/intro/getting-started/ui.html).
 
 Fortunately, Træfik allows automation of this process using the `storeconfig` subcommand.  
-Please refer to the [store Træfik configuration](/user-guide/kv-config/#store-configuration-in-key-value-store) section to get documentation on it.
+Please refer to the [store Træfik configuration](#store-configuration-in-key-value-store) section to get documentation on it.
 
 Here is the toml configuration we would like to store in the Key-value Store  :
 
@@ -413,15 +413,15 @@ Here, we have a 50% balance between the `http://172.17.0.3:80` and the `http://1
 ## Store configuration in Key-value store
 
 !!! note
-    Don't forget to [setup the connection between Træfik and Key-value store](/user-guide/kv-config/#launch-trfik).
+    Don't forget to [setup the connection between Træfik and Key-value store](#launch-trfik).
 
-The static Træfik configuration in a key-value store can be automatically created and updated, using the [`storeconfig` subcommand](/basics/#commands).
+The static Træfik configuration in a key-value store can be automatically created and updated, using the [`storeconfig` subcommand](../../basics/#commands).
 
 ```bash
 traefik storeconfig [flags] ...
 ```
-This command is here only to automate the [process which upload the configuration into the Key-value store](/user-guide/kv-config/#upload-the-configuration-in-the-key-value-store).
-Træfik will not start but the [static configuration](/basics/#static-trfik-configuration) will be uploaded into the Key-value store.  
+This command is here only to automate the [process which upload the configuration into the Key-value store](#upload-the-configuration-in-the-key-value-store).
+Træfik will not start but the [static configuration](../../basics/#static-trfik-configuration) will be uploaded into the Key-value store.  
 
 If you configured ACME (Let's Encrypt), your registration account and your certificates will also be uploaded.
 

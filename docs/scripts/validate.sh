@@ -20,7 +20,7 @@ find "${PATH_TO_SITE}" -type f -not -path "/app/site/theme/*" \
   --check-html \
   --only_4xx \
   --alt_ignore="/traefik.logo.png/" \
-  --url-ignore "/localhost:/,/127.0.0.1:/,/fonts.gstatic.com/,/.minikube/,/github.com\/containous\/traefik\/*edit*/,/github.com\/containous\/traefik\/$/,/\.\.\/#/" \
+  --url-ignore "/localhost:/,/127.0.0.1:/,/fonts.gstatic.com/,/.minikube/,/github.com\/containous\/traefik\/*edit*/,/github.com\/containous\/traefik\/$/,/\.\.\/#/,/docs.traefik.io\/benchmark/,/\/img/" \
   '{}'
 ## HTML-proofer options at https://github.com/gjtorikian/html-proofer#configuration
 

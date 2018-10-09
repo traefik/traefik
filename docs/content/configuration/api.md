@@ -33,7 +33,7 @@
   debug = true
 ```
 
-For more customization, see [entry points](/configuration/entrypoints/) documentation and the examples below.
+For more customization, see [entry points](../../configuration/entrypoints/) documentation and the examples below.
 
 ## Web UI
 
@@ -76,7 +76,7 @@ keeping it restricted over internal networks
 | `/api/providers/{provider}/frontends/{frontend}/routes`         |     `GET`        | List routes in a frontend                 |
 | `/api/providers/{provider}/frontends/{frontend}/routes/{route}` |     `GET`        | Get a route in a frontend                 |
 
-<1> See [Rest](/configuration/backends/rest/#api) for more information.
+<1> See [Rest](../../configuration/backends/rest/#api) for more information.
 
 !!! warning
     For compatibility reason, when you activate the rest provider, you can use `web` or `rest` as `provider` value.
@@ -175,7 +175,7 @@ defaultEntryPoints = ["http"]
 entrypoint="foo"
 ```
 
-For more information, see [entry points](/configuration/entrypoints/) .
+For more information, see [entry points](../../configuration/entrypoints/) .
 
 ### Provider call example
 

@@ -1,6 +1,6 @@
 # ACME (Let's Encrypt) Configuration
 
-See [Let's Encrypt examples](/user-guide/examples/#lets-encrypt-support) and [Docker & Let's Encrypt user guide](/user-guide/docker-and-lets-encrypt) as well.
+See [Let's Encrypt examples](../../user-guide/examples/#lets-encrypt-support) and [Docker & Let's Encrypt user guide](../../user-guide/docker-and-lets-encrypt) as well.
 
 ## Configuration
 
@@ -249,7 +249,7 @@ Useful if internal networks block external DNS queries.
 
 ##### `provider`
 
-Here is a list of supported `provider`s, that can automate the DNS verification, along with the required environment variables and their [wildcard & root domain support](/configuration/acme/#wildcard-domains) for each. Do not hesitate to complete it.
+Here is a list of supported `provider`s, that can automate the DNS verification, along with the required environment variables and their [wildcard & root domain support](../../configuration/acme/#wildcard-domains) for each. Do not hesitate to complete it.
 
 | Provider Name                                          | Provider Code  | Environment Variables                                                                                                           | Wildcard & Root Domain Support |
 |--------------------------------------------------------|----------------|---------------------------------------------------------------------------------------------------------------------------------|--------------------------------|
@@ -322,7 +322,7 @@ Each domain & SAN will lead to a certificate request.
 #### Wildcard Domains
 
 [ACME V2](https://community.letsencrypt.org/t/acme-v2-and-wildcard-certificate-support-is-live/55579) allows wildcard certificate support.
-As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/staging-endpoint-for-acme-v2/49605) wildcard certificates can only be generated through a [`DNS-01` challenge](/configuration/acme/#dnschallenge).
+As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/staging-endpoint-for-acme-v2/49605) wildcard certificates can only be generated through a [`DNS-01` challenge](../../configuration/acme/#dnschallenge).
 
 ```toml
 [acme]
@@ -339,7 +339,7 @@ Most likely the root domain should receive a certificate too, so it needs to be 
 In this case the generated DNS TXT record for both domains is the same.
 Eventhough this behavior is [DNS RFC](https://community.letsencrypt.org/t/wildcard-issuance-two-txt-records-for-the-same-name/54528/2) compliant, it can lead to problems as all DNS providers keep DNS records cached for a certain time (TTL) and this TTL can be superior to the challenge timeout making the `DNS-01` challenge fail.
 The Træfik ACME client library [LEGO](https://github.com/xenolf/lego) supports some but not all DNS providers to work around this issue.
-The [`provider` table](/configuration/acme/#provider) indicates if they allow generating certificates for a wildcard domain and its root domain.
+The [`provider` table](../../configuration/acme/#provider) indicates if they allow generating certificates for a wildcard domain and its root domain.
 
 ### `onDemand` (Deprecated)
 
@@ -380,7 +380,7 @@ For example, the rule `Host:test1.traefik.io,test2.traefik.io` will request a ce
 
 !!! warning
     `onHostRule` option can not be used to generate wildcard certificates.
-    Refer to [wildcard generation](/configuration/acme/#wildcard-domains) for further information.
+    Refer to [wildcard generation](../../configuration/acme/#wildcard-domains) for further information.
 
 ### `storage`
 
@@ -402,7 +402,7 @@ The value can refer to two kinds of storage:
     `storage` replaces `storageFile` which is deprecated.
 
 !!! note
-    During migration to a KV store use both `storageFile` and `storage` to migrate ACME certificates too. See [`storeconfig` subcommand](/user-guide/kv-config/#store-configuration-in-key-value-store) for further information.
+    During migration to a KV store use both `storageFile` and `storage` to migrate ACME certificates too. See [`storeconfig` subcommand](../../user-guide/kv-config/#store-configuration-in-key-value-store) for further information.
 
 #### As a File
 
@@ -418,7 +418,7 @@ docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 ```
 
 !!! warning
-    This file cannot be shared across multiple instances of Træfik at the same time. Please use a [KV Store entry](/configuration/acme/#as-a-key-value-store-entry) instead.
+    This file cannot be shared across multiple instances of Træfik at the same time. Please use a [KV Store entry](../../configuration/acme/#as-a-key-value-store-entry) instead.
 
 #### As a Key Value Store Entry
 
@@ -446,12 +446,12 @@ For example: if `acme.storage`'s value is `/etc/traefik/acme/acme.json`, the bac
 ### `dnsProvider` (Deprecated)
 
 !!! danger "DEPRECATED"
-    This option is deprecated. Please use [dnsChallenge.provider](/configuration/acme/#provider) instead.
+    This option is deprecated. Please use [dnsChallenge.provider](../../configuration/acme/#provider) instead.
 
 ### `delayDontCheckDNS` (Deprecated)
 
 !!! danger "DEPRECATED"
-    This option is deprecated. Please use [dnsChallenge.delayBeforeCheck](/configuration/acme/#dnschallenge) instead.
+    This option is deprecated. Please use [dnsChallenge.delayBeforeCheck](../../configuration/acme/#dnschallenge) instead.
 
 ## Fallbacks
 

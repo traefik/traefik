@@ -2,7 +2,7 @@
 
 ## Concepts
 
-Let's take our example from the [overview](/#overview) again:
+Let's take our example from the [overview](../#overview) again:
 
 
 > Imagine that you have deployed a bunch of microservices on your infrastructure. You probably used a service registry (like etcd or consul) and/or an orchestrator (swarm, Mesos/Marathon) to manage all these services.
@@ -513,8 +513,8 @@ Additional http headers and hostname to health check request can be specified, f
 
 Træfik's configuration has two parts:
 
-- The [static Træfik configuration](/basics#static-trfik-configuration) which is loaded only at the beginning.
-- The [dynamic Træfik configuration](/basics#dynamic-trfik-configuration) which can be hot-reloaded (no need to restart the process).
+- The [static Træfik configuration](#static-trfik-configuration) which is loaded only at the beginning.
+- The [dynamic Træfik configuration](#dynamic-trfik-configuration) which can be hot-reloaded (no need to restart the process).
 
 ### Static Træfik configuration
 
@@ -523,9 +523,9 @@ The static configuration is the global configuration which is setting up connect
 Træfik can be configured using many configuration sources with the following precedence order.
 Each item takes precedence over the item below it:
 
-- [Key-value store](/basics/#key-value-stores)
-- [Arguments](/basics/#arguments)
-- [Configuration file](/basics/#configuration-file)
+- [Key-value store](#key-value-stores)
+- [Arguments](#arguments)
+- [Configuration file](#configuration-file)
 - Default
 
 It means that arguments override configuration file, and key-value store overrides arguments.
@@ -548,7 +548,7 @@ You can override this by setting a `configFile` argument:
 traefik --configFile=foo/bar/myconfigfile.toml
 ```
 
-Please refer to the [global configuration](/configuration/commons) section to get documentation on it.
+Please refer to the [global configuration](../configuration/commons) section to get documentation on it.
 
 #### Arguments
 
@@ -569,23 +569,23 @@ Træfik supports several Key-value stores:
 - [ZooKeeper](https://zookeeper.apache.org/)
 - [boltdb](https://github.com/boltdb/bolt)
 
-Please refer to the [User Guide Key-value store configuration](/user-guide/kv-config/) section to get documentation on it.
+Please refer to the [User Guide Key-value store configuration](../user-guide/kv-config/) section to get documentation on it.
 
 ### Dynamic Træfik configuration
 
 The dynamic configuration concerns :
 
-- [Frontends](/basics/#frontends)
-- [Backends](/basics/#backends)
-- [Servers](/basics/#servers)
+- [Frontends](#frontends)
+- [Backends](#backends)
+- [Servers](#servers)
 - HTTPS Certificates
 
-Træfik can hot-reload those rules which could be provided by [multiple configuration backends](/configuration/commons).
+Træfik can hot-reload those rules which could be provided by [multiple configuration backends](../configuration/commons).
 
 We only need to enable `watch` option to make Træfik watch configuration backend changes and generate its configuration automatically.
 Routes to services will be created and updated instantly at any changes.
 
-Please refer to the [configuration backends](/configuration/commons) section to get documentation on it.
+Please refer to the [configuration backends](../configuration/commons) section to get documentation on it.
 
 ## Commands
 
@@ -599,7 +599,7 @@ traefik [command] [--flag=flag_argument]
 List of Træfik available commands with description :
 
 - `version` : Print version
-- `storeconfig` : Store the static Traefik configuration into a Key-value stores. Please refer to the [Store Træfik configuration](/user-guide/kv-config/#store-configuration-in-key-value-store) section to get documentation on it.
+- `storeconfig` : Store the static Traefik configuration into a Key-value stores. Please refer to the [Store Træfik configuration](../user-guide/kv-config/#store-configuration-in-key-value-store) section to get documentation on it.
 - `bug`: The easiest way to submit a pre-filled issue.
 - `healthcheck`: Calls Traefik `/ping` to check health.
 
@@ -639,7 +639,7 @@ This command allows to check the health of Traefik. Its exit status is `0` if Tr
 This can be used with Docker [HEALTHCHECK](https://docs.docker.com/engine/reference/builder/#healthcheck) instruction or any other health check orchestration mechanism.
 
 !!! note
-    The [`ping`](/configuration/ping) must be enabled to allow the `healthcheck` command to call `/ping`.
+    The [`ping`](../configuration/ping) must be enabled to allow the `healthcheck` command to call `/ping`.
 
 ```bash
 traefik healthcheck

@@ -90,7 +90,7 @@ defaultEntryPoints = ["http", "https"]
 
 ### CLI
 
-For more information about the CLI, see the documentation about [Traefik command](/basics/#traefik).
+For more information about the CLI, see the documentation about [Traefik command](../../basics/#traefik).
 
 ```shell
 --entryPoints='Name:http Address::80'
@@ -239,7 +239,7 @@ Define an entrypoint with SNI support.
 
 ### Dynamic Certificates
 
-If you need to add or remove TLS certificates while Traefik is started, Dynamic TLS certificates are supported using the [file provider](/configuration/backends/file).
+If you need to add or remove TLS certificates while Traefik is started, Dynamic TLS certificates are supported using the [file provider](../../configuration/backends/file).
 
 
 ## TLS Mutual Authentication
@@ -501,7 +501,7 @@ The following example enables IP white listing and accepts requests from client 
       # Override the clientIPStrategy
 ```
 
-By default, Træfik uses the client IP (see [ClientIPStrategy](/configuration/entrypoints/#clientipstrategy)) for the whitelisting.
+By default, Træfik uses the client IP (see [ClientIPStrategy](../../configuration/entrypoints/#clientipstrategy)) for the whitelisting.
 
 If you want to use another IP than the one determined by `ClientIPStrategy` for the whitelisting, you can define the `IPStrategy` option:
 

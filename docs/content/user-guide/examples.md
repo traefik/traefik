@@ -30,7 +30,7 @@ defaultEntryPoints = ["http", "https"]
       certFile = "integration/fixtures/https/snitest.org.cert"
       keyFile = "integration/fixtures/https/snitest.org.key"
 ```
-Note that we can either give path to certificate file or directly the file content itself ([like in this TOML example](/user-guide/kv-config/#upload-the-configuration-in-the-key-value-store)).
+Note that we can either give path to certificate file or directly the file content itself ([like in this TOML example](../kv-config/#upload-the-configuration-in-the-key-value-store)).
 
 ## HTTP redirect on HTTPS
 
@@ -188,7 +188,7 @@ entryPoint = "https"
 DNS challenge needs environment variables to be executed.
 These variables have to be set on the machine/container that host Træfik.
 
-These variables are described [in this section](/configuration/acme/#provider).
+These variables are described [in this section](../../configuration/acme/#provider).
 
 ### DNS challenge with wildcard domains
 
@@ -221,9 +221,9 @@ entryPoint = "https"
 DNS challenge needs environment variables to be executed.
 These variables have to be set on the machine/container that host Træfik.
 
-These variables are described [in this section](/configuration/acme/#provider).
+These variables are described [in this section](../../configuration/acme/#provider).
 
-More information about wildcard certificates are available [in this section](/configuration/acme/#wildcard-domains).
+More information about wildcard certificates are available [in this section](../../configuration/acme/#wildcard-domains).
 
 ### onHostRule option and provided certificates (with HTTP challenge)
 
@@ -254,7 +254,7 @@ Træfik will only try to generate a Let's encrypt certificate (thanks to `HTTP-0
 
 #### Prerequisites
 
-Before you use Let's Encrypt in a Traefik cluster, take a look to [the key-value store explanations](/user-guide/kv-config) and more precisely at [this section](/user-guide/kv-config/#store-configuration-in-key-value-store), which will describe how to migrate from a acme local storage *(acme.json file)* to a key-value store configuration.
+Before you use Let's Encrypt in a Traefik cluster, take a look to [the key-value store explanations](../kv-config) and more precisely at [this section](../kv-config/#store-configuration-in-key-value-store), which will describe how to migrate from a acme local storage *(acme.json file)* to a key-value store configuration.
 
 #### Configuration
 
@@ -296,7 +296,7 @@ This configuration allows to use the key `traefik/acme/account` to get/set Let's
 The `consul` provider contains the configuration.
 
 !!! note
-    It's possible to use others key-value store providers as described [here](/user-guide/kv-config/#key-value-store-configuration).
+    It's possible to use others key-value store providers as described [here](../kv-config/#key-value-store-configuration).
 
 ## Override entrypoints in frontends
 

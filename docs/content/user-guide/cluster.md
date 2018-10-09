@@ -13,7 +13,7 @@ _(Currently, we recommend [Consul](https://consul.io) .)_
 
 We created a special Træfik command to help configuring your Key Value store from a Træfik TOML configuration file.
 
-Please refer to [this section](/user-guide/kv-config/#store-configuration-in-key-value-store) to get more details.
+Please refer to [this section](../kv-config/#store-configuration-in-key-value-store) to get more details.
 
 ## Deploy a Træfik cluster
 
@@ -26,7 +26,7 @@ If this instance fails, another manager will be automatically elected.
 
 ## Træfik cluster and Let's Encrypt
 
-**In cluster mode, ACME certificates have to be stored in [a KV Store entry](/configuration/acme/#as-a-key-value-store-entry).**
+**In cluster mode, ACME certificates have to be stored in [a KV Store entry](../../configuration/acme/#as-a-key-value-store-entry).**
 
 Thanks to the Træfik cluster mode algorithm (based on [the Raft Consensus Algorithm](https://raft.github.io/)), only one instance will contact Let's encrypt to solve the challenges.
 

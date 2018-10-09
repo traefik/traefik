@@ -56,6 +56,6 @@ prefix = "/traefik"
 #    insecureSkipVerify = true
 ```
 
-To enable constraints see [provider-specific constraints section](/configuration/commons/#provider-specific).
+To enable constraints see [provider-specific constraints section](../../../configuration/commons/#provider-specific).
 
-Please refer to the [Key Value storage structure](/user-guide/kv-config/#key-value-storage-structure) section to get documentation on Traefik KV structure.
+Please refer to the [Key Value storage structure](../../../user-guide/kv-config/#key-value-storage-structure) section to get documentation on Traefik KV structure.

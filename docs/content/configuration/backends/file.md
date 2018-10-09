@@ -190,8 +190,8 @@ Træfik can be configured with a file.
 
 You have two choices:
 
-- [Rules in Træfik configuration file](/configuration/backends/file/#rules-in-trfik-configuration-file)
-- [Rules in dedicated files](/configuration/backends/file/#rules-in-dedicated-files)
+- [Rules in Træfik configuration file](../../../configuration/backends/file/#rules-in-trfik-configuration-file)
+- [Rules in dedicated files](../../../configuration/backends/file/#rules-in-dedicated-files)
 
 To enable the file backend, you must either pass the `--file` option to the Træfik binary or put the `[file]` section (with or without inner settings) in the configuration file.
 

@@ -56,4 +56,4 @@ filename = "boltdb.tmpl"
 #    insecureSkipVerify = true
 ```
 
-To enable constraints see [provider-specific constraints section](/configuration/commons/#provider-specific).
+To enable constraints see [provider-specific constraints section](../../../configuration/commons/#provider-specific).

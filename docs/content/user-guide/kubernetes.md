@@ -373,7 +373,7 @@ We should now be able to visit [traefik-ui.minikube](http://traefik-ui.minikube)
 
 !!! note
     For this example to work you need a TLS entrypoint. You don't have to provide a TLS certificate at this point.
-    For more details see [here](/configuration/entrypoints/).
+    For more details see [here](../../configuration/entrypoints/).
 
 To setup an HTTPS-protected ingress, you can leverage the TLS feature of the ingress resource.
 
@@ -421,7 +421,7 @@ If there are any errors while loading the TLS section of an ingress, the whole i
 
 ## Basic Authentication
 
-It's possible to protect access to Træfik through basic authentication. (See the [Kubernetes Ingress](/configuration/backends/kubernetes) configuration page for syntactical details and restrictions.)
+It's possible to protect access to Træfik through basic authentication. (See the [Kubernetes Ingress](../../configuration/backends/kubernetes) configuration page for syntactical details and restrictions.)
 
 ### Creating the Secret
 
@@ -626,7 +626,7 @@ spec:
 ```
 
 !!! note
-    We also set a [circuit breaker expression](/basics/#backends) for one of the backends by setting the `traefik.backend.circuitbreaker` annotation on the service.
+    We also set a [circuit breaker expression](../../basics/#circuit-breakers) for one of the backends by setting the `traefik.backend.circuitbreaker` annotation on the service.
 
 [examples/k8s/cheese-services.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/cheese-services.yaml)
 
@@ -960,7 +960,7 @@ A few conditions must hold for service weights to be applied correctly:
 
 - The associated service backends must share the same path and host.
 - The total percentage shared across all service backends must yield 100% (see the section on [omitting the final service](#omitting-the-final-service), however).
-- The percentage values are interpreted as floating point numbers to a supported precision as defined in the [annotation documentation](/configuration/backends/kubernetes#general-annotations).
+- The percentage values are interpreted as floating point numbers to a supported precision as defined in the [annotation documentation](../../configuration/backends/kubernetes#general-annotations).
 
 ### Omitting the Final Service
 
