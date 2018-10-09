@@ -120,6 +120,7 @@ func TestSetEffectiveConfigurationTracing(t *testing.T) {
 					SameSpan:     false,
 					ID128Bit:     true,
 					Debug:        false,
+					SampleRate:   1.0,
 				},
 			},
 		},
@@ -138,6 +139,7 @@ func TestSetEffectiveConfigurationTracing(t *testing.T) {
 					SameSpan:     true,
 					ID128Bit:     true,
 					Debug:        true,
+					SampleRate:   0.02,
 				},
 			},
 			expected: &tracing.Tracing{
@@ -148,6 +150,7 @@ func TestSetEffectiveConfigurationTracing(t *testing.T) {
 					SameSpan:     true,
 					ID128Bit:     true,
 					Debug:        true,
+					SampleRate:   0.02,
 				},
 			},
 		},
