@@ -30,6 +30,7 @@ import (
 )
 
 var _ provider.Provider = (*Provider)(nil)
+var traefikDefaultIngressClasses = IngressClasses{"", traefikDefaultIngressClass}
 
 const (
 	ruleTypePath               = "Path"
@@ -64,7 +65,7 @@ type Provider struct {
 	EnablePassTLSCert      bool             `description:"Kubernetes enable Pass TLS Client Certs" export:"true"`
 	Namespaces             Namespaces       `description:"Kubernetes namespaces" export:"true"`
 	LabelSelector          string           `description:"Kubernetes Ingress label selector to use" export:"true"`
-	IngressClass           string           `description:"Value of kubernetes.io/ingress.class annotation to watch for" export:"true"`
+	IngressClass           IngressClasses   `description:"Value of kubernetes.io/ingress.class annotation to watch for" export:"true"`
 	IngressEndpoint        *IngressEndpoint `description:"Kubernetes Ingress Endpoint"`
 	lastConfiguration      safe.Safe
 }
@@ -717,10 +718,16 @@ func equalPorts(servicePort corev1.ServicePort, ingressPort intstr.IntOrString) 
 }
 
 func (p *Provider) shouldProcessIngress(annotationIngressClass string) bool {
-	if len(p.IngressClass) == 0 {
-		return len(annotationIngressClass) == 0 || annotationIngressClass == traefikDefaultIngressClass
+	ingressClass := p.IngressClass
+	if len(ingressClass) == 0 {
+		ingressClass = traefikDefaultIngressClasses
 	}
-	return annotationIngressClass == p.IngressClass
+	for _, ic := range ingressClass {
+		if ic == annotationIngressClass {
+			return true
+		}
+	}
+	return false
 }
 
 func getAuthConfig(i *extensionsv1beta1.Ingress, k8sClient Client) (*types.Auth, error) {

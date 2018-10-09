@@ -1787,7 +1787,7 @@ func TestIngressClassAnnotation(t *testing.T) {
 		},
 		{
 			desc:     "Provided IngressClass annotation",
-			provider: Provider{IngressClass: traefikDefaultRealm + "-other"},
+			provider: Provider{IngressClass: IngressClasses{traefikDefaultRealm + "-other"}},
 			expected: buildConfiguration(
 				backends(
 					backend("foo/bar",
@@ -1808,7 +1808,7 @@ func TestIngressClassAnnotation(t *testing.T) {
 		},
 		{
 			desc:     "Provided IngressClass annotation",
-			provider: Provider{IngressClass: "custom"},
+			provider: Provider{IngressClass: IngressClasses{"custom"}},
 			expected: buildConfiguration(
 				backends(
 					backend("foo/bar",
