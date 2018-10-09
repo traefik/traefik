@@ -11,7 +11,7 @@ RUN apk --no-cache --no-progress add \
     tini \
   && gem install --no-document html-proofer
 
-COPY ./validate.sh /validate.sh
+COPY ./scripts/validate.sh /validate.sh
 
 WORKDIR /app
 VOLUME ["/tmp","/app"]

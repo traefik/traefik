@@ -7,7 +7,7 @@ dev_addr: 0.0.0.0:8000
 repo_name: 'GitHub'
 repo_url: 'https://github.com/containous/traefik'
 
-docs_dir: 'docs'
+docs_dir: 'content'
 
 theme:
   name: 'material'
