@@ -260,6 +260,12 @@
   revision = "2ea60e5f094469f9e65adb9cd103795b73ae743e"
 
 [[projects]]
+  name = "github.com/cloudflare/cloudflare-go"
+  packages = ["."]
+  revision = "1f9007fbecae20711133c60519338c41cef1ffb4"
+  version = "v0.8.5"
+
+[[projects]]
   branch = "master"
   name = "github.com/codahale/hdrhistogram"
   packages = ["."]
@@ -638,6 +644,12 @@
   revision = "1d0bd113de87027671077d3c71eb3ac5d7dbba72"
 
 [[projects]]
+  name = "github.com/go-resty/resty"
+  packages = ["."]
+  revision = "d4920dcf5b7689548a6db640278a9b35a5b48ec6"
+  version = "v1.9.1"
+
+[[projects]]
   name = "github.com/go-stack/stack"
   packages = ["."]
   revision = "54be5f394ed2c3e19dac9134a40a95ba5a017f7b"
@@ -871,6 +883,12 @@
   name = "github.com/libkermit/docker-check"
   packages = ["."]
   revision = "1113af38e5916529ad7317b0fe12e273e6e92af5"
+
+[[projects]]
+  name = "github.com/linode/linodego"
+  packages = ["."]
+  revision = "d0d31d8ca62fa3f7e4526ca0ce95de81e4ed001e"
+  version = "v0.5.1"
 
 [[projects]]
   name = "github.com/mailgun/minheap"
@@ -1362,6 +1380,7 @@
     "providers/dns/iij",
     "providers/dns/lightsail",
     "providers/dns/linode",
+    "providers/dns/linodev4",
     "providers/dns/namecheap",
     "providers/dns/namedotcom",
     "providers/dns/netcup",
@@ -1377,7 +1396,7 @@
     "providers/dns/vegadns",
     "providers/dns/vultr"
   ]
-  revision = "621237d07213aa6dead90bdf6fd46251220fa669"
+  revision = "dd087560a0a4a52b3388dd320a5982a0e8233eff"
 
 [[projects]]
   branch = "master"
@@ -1412,6 +1431,7 @@
     "ipv4",
     "ipv6",
     "proxy",
+    "publicsuffix",
     "trace",
     "websocket"
   ]
