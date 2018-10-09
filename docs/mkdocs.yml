@@ -19,8 +19,6 @@ theme:
   palette:
     primary: 'cyan'
     accent: 'cyan'
-  feature:
-    tabs: false
   i18n:
     prev: 'Previous'
     next: 'Next'
@@ -58,7 +56,7 @@ markdown_extensions:
       permalink: true
 
 # Page tree
-pages:
+nav:
   - Getting Started: index.md
   - Basics: basics.md
   - Configuration:
