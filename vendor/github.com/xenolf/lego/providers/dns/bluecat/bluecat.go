@@ -353,7 +353,7 @@ func (d *DNSProvider) lookupViewID(viewName string) (uint, error) {
 
 	queryArgs := map[string]string{
 		"parentId": strconv.FormatUint(uint64(confID), 10),
-		"name":     d.config.DNSView,
+		"name":     viewName,
 		"type":     viewType,
 	}
 

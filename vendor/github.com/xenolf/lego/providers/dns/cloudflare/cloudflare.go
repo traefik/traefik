@@ -8,12 +8,18 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/cloudflare/cloudflare-go"
 	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/log"
 	"github.com/xenolf/lego/platform/config/env"
 )
 
 // CloudFlareAPIURL represents the API endpoint to call.
-const CloudFlareAPIURL = defaultBaseURL // Deprecated
+const CloudFlareAPIURL = "https://api.cloudflare.com/client/v4" // Deprecated
+
+const (
+	minTTL = 120
+)
 
 // Config is used to configure the creation of the DNSProvider
 type Config struct {
@@ -28,7 +34,7 @@ type Config struct {
 // NewDefaultConfig returns a default configuration for the DNSProvider
 func NewDefaultConfig() *Config {
 	return &Config{
-		TTL:                env.GetOrDefaultInt("CLOUDFLARE_TTL", 120),
+		TTL:                env.GetOrDefaultInt("CLOUDFLARE_TTL", minTTL),
 		PropagationTimeout: env.GetOrDefaultSecond("CLOUDFLARE_PROPAGATION_TIMEOUT", 2*time.Minute),
 		PollingInterval:    env.GetOrDefaultSecond("CLOUDFLARE_POLLING_INTERVAL", 2*time.Second),
 		HTTPClient: &http.Client{
@@ -39,7 +45,7 @@ func NewDefaultConfig() *Config {
 
 // DNSProvider is an implementation of the acme.ChallengeProvider interface
 type DNSProvider struct {
-	client *Client
+	client *cloudflare.API
 	config *Config
 }
 
@@ -47,7 +53,9 @@ type DNSProvider struct {
 // Credentials must be passed in the environment variables:
 // CLOUDFLARE_EMAIL and CLOUDFLARE_API_KEY.
 func NewDNSProvider() (*DNSProvider, error) {
-	values, err := env.Get("CLOUDFLARE_EMAIL", "CLOUDFLARE_API_KEY")
+	values, err := env.GetWithFallback(
+		[]string{"CLOUDFLARE_EMAIL", "CF_API_EMAIL"},
+		[]string{"CLOUDFLARE_API_KEY", "CF_API_KEY"})
 	if err != nil {
 		return nil, fmt.Errorf("cloudflare: %v", err)
 	}
@@ -76,45 +84,92 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 		return nil, errors.New("cloudflare: the configuration of the DNS provider is nil")
 	}
 
-	client, err := NewClient(config.AuthEmail, config.AuthKey)
+	if config.TTL < minTTL {
+		return nil, fmt.Errorf("cloudflare: invalid TTL, TTL (%d) must be greater than %d", config.TTL, minTTL)
+	}
+
+	client, err := cloudflare.New(config.AuthKey, config.AuthEmail, cloudflare.HTTPClient(config.HTTPClient))
 	if err != nil {
 		return nil, err
 	}
 
-	client.HTTPClient = config.HTTPClient
-
 	// TODO: must be remove. keep only for compatibility reason.
 	client.BaseURL = CloudFlareAPIURL
 
-	return &DNSProvider{
-		client: client,
-		config: config,
-	}, nil
+	return &DNSProvider{client: client, config: config}, nil
 }
 
-// Timeout returns the timeout and interval to use when checking for DNS
-// propagation. Adjusting here to cope with spikes in propagation times.
+// Timeout returns the timeout and interval to use when checking for DNS propagation.
+// Adjusting here to cope with spikes in propagation times.
 func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 	return d.config.PropagationTimeout, d.config.PollingInterval
 }
 
-// Present creates a TXT record to fulfil the dns-01 challenge
+// Present creates a TXT record to fulfill the dns-01 challenge
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
 
-	rec := TxtRecord{
+	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	if err != nil {
+		return fmt.Errorf("cloudflare: %v", err)
+	}
+
+	zoneID, err := d.client.ZoneIDByName(authZone)
+	if err != nil {
+		return fmt.Errorf("cloudflare: failed to find zone %s: %v", authZone, err)
+	}
+
+	dnsRecord := cloudflare.DNSRecord{
 		Type:    "TXT",
 		Name:    acme.UnFqdn(fqdn),
 		Content: value,
 		TTL:     d.config.TTL,
 	}
 
-	return d.client.AddTxtRecord(fqdn, rec)
+	response, _ := d.client.CreateDNSRecord(zoneID, dnsRecord)
+	if err != nil {
+		return fmt.Errorf("cloudflare: failed to create TXT record: %v", err)
+	}
+
+	if !response.Success {
+		return fmt.Errorf("cloudflare: failed to create TXT record: %+v %+v", response.Errors, response.Messages)
+	}
+
+	log.Infof("cloudflare: new record for %s, ID %s", domain, response.Result.ID)
+
+	return nil
 }
 
 // CleanUp removes the TXT record matching the specified parameters
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
 
-	return d.client.RemoveTxtRecord(fqdn)
+	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	if err != nil {
+		return fmt.Errorf("cloudflare: %v", err)
+	}
+
+	zoneID, err := d.client.ZoneIDByName(authZone)
+	if err != nil {
+		return fmt.Errorf("cloudflare: failed to find zone %s: %v", authZone, err)
+	}
+
+	dnsRecord := cloudflare.DNSRecord{
+		Type: "TXT",
+		Name: acme.UnFqdn(fqdn),
+	}
+
+	records, err := d.client.DNSRecords(zoneID, dnsRecord)
+	if err != nil {
+		return fmt.Errorf("cloudflare: failed to find TXT records: %v", err)
+	}
+
+	for _, record := range records {
+		err = d.client.DeleteDNSRecord(zoneID, record.ID)
+		if err != nil {
+			log.Printf("cloudflare: failed to delete TXT record: %v", err)
+		}
+	}
+
+	return nil
 }

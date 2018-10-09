@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -57,7 +56,7 @@ func NewDNSProvider() (*DNSProvider, error) {
 	}
 
 	var baseURL string
-	if sandbox, _ := strconv.ParseBool(os.Getenv("DNSMADEEASY_SANDBOX")); sandbox {
+	if sandbox, _ := strconv.ParseBool(env.GetOrFile("DNSMADEEASY_SANDBOX")); sandbox {
 		baseURL = "https://api.sandbox.dnsmadeeasy.com/V2.0"
 	} else {
 		baseURL = "https://api.dnsmadeeasy.com/V2.0"

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/xenolf/lego/acme"
@@ -52,7 +51,7 @@ func NewDNSProvider() (*DNSProvider, error) {
 	}
 
 	config := NewDefaultConfig()
-	config.BaseURL = os.Getenv("NIFCLOUD_DNS_ENDPOINT")
+	config.BaseURL = env.GetOrFile("NIFCLOUD_DNS_ENDPOINT")
 	config.AccessKey = values["NIFCLOUD_ACCESS_KEY_ID"]
 	config.SecretKey = values["NIFCLOUD_SECRET_ACCESS_KEY"]
 

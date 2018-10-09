@@ -5,7 +5,6 @@ package alidns
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -57,7 +56,7 @@ func NewDNSProvider() (*DNSProvider, error) {
 	config := NewDefaultConfig()
 	config.APIKey = values["ALICLOUD_ACCESS_KEY"]
 	config.SecretKey = values["ALICLOUD_SECRET_KEY"]
-	config.RegionID = os.Getenv("ALICLOUD_REGION_ID")
+	config.RegionID = env.GetOrFile("ALICLOUD_REGION_ID")
 
 	return NewDNSProviderConfig(config)
 }
@@ -105,7 +104,7 @@ func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 	return d.config.PropagationTimeout, d.config.PollingInterval
 }
 
-// Present creates a TXT record to fulfil the dns-01 challenge.
+// Present creates a TXT record to fulfill the dns-01 challenge.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
 

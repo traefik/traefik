@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"os"
 	"strings"
 	"time"
 
@@ -62,8 +61,8 @@ func NewDNSProvider() (*DNSProvider, error) {
 
 	config := NewDefaultConfig()
 	config.Nameserver = values["RFC2136_NAMESERVER"]
-	config.TSIGKey = os.Getenv("RFC2136_TSIG_KEY")
-	config.TSIGSecret = os.Getenv("RFC2136_TSIG_SECRET")
+	config.TSIGKey = env.GetOrFile("RFC2136_TSIG_KEY")
+	config.TSIGSecret = env.GetOrFile("RFC2136_TSIG_SECRET")
 
 	return NewDNSProviderConfig(config)
 }
