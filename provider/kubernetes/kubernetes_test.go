@@ -3457,3 +3457,48 @@ func TestAddGlobalBackendEndpointAPIError(t *testing.T) {
 	err := provider.addGlobalBackend(client, ingresses, config)
 	assert.Error(t, err)
 }
+
+func TestTemplateBreakingIngresssValues(t *testing.T) {
+	ingresses := []*extensionsv1beta1.Ingress{
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesIngressClass, "testing-\"foo\""),
+			iRules(
+				iRule(
+					iHost("foo"),
+					iPaths(onePath(iPath("/bar"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iRules(
+				iRule(
+					iHost("testing-\"foo\""),
+					iPaths(onePath(iPath("/bar"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iRules(
+				iRule(
+					iHost("foo"),
+					iPaths(onePath(iPath("/testing-\"foo\""), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+	}
+
+	client := clientMock{
+		ingresses: ingresses,
+	}
+	provider := Provider{}
+
+	actual, err := provider.loadIngresses(client)
+	require.NoError(t, err, "error loading ingresses")
+
+	expected := buildConfiguration(
+		backends(),
+		frontends(),
+	)
+
+	assert.Equal(t, expected, actual)
+}

@@ -129,6 +129,49 @@ func TestBasicAuthSuccess(t *testing.T) {
 	assert.Equal(t, "traefik\n", string(body), "they should be equal")
 }
 
+func TestBasicRealm(t *testing.T) {
+	authMiddlewareDefaultRealm, errdefault := NewAuthenticator(&types.Auth{
+		Basic: &types.Basic{
+			Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
+		},
+	}, &tracing.Tracing{})
+	require.NoError(t, errdefault)
+
+	authMiddlewareCustomRealm, errcustom := NewAuthenticator(&types.Auth{
+		Basic: &types.Basic{
+			Realm: "foobar",
+			Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
+		},
+	}, &tracing.Tracing{})
+	require.NoError(t, errcustom)
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "traefik")
+	})
+
+	n := negroni.New(authMiddlewareDefaultRealm)
+	n.UseHandler(handler)
+	ts := httptest.NewServer(n)
+	defer ts.Close()
+
+	client := &http.Client{}
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	res, err := client.Do(req)
+	require.NoError(t, err)
+	assert.Equal(t, "Basic realm=\"traefik\"", res.Header.Get("Www-Authenticate"), "they should be equal")
+
+	n = negroni.New(authMiddlewareCustomRealm)
+	n.UseHandler(handler)
+	ts = httptest.NewServer(n)
+	defer ts.Close()
+
+	client = &http.Client{}
+	req = testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	res, err = client.Do(req)
+	require.NoError(t, err)
+	assert.Equal(t, "Basic realm=\"foobar\"", res.Header.Get("Www-Authenticate"), "they should be equal")
+}
+
 func TestDigestAuthFail(t *testing.T) {
 	_, err := NewAuthenticator(&types.Auth{
 		Digest: &types.Digest{

@@ -52,6 +52,7 @@ defaultEntryPoints = ["http", "https"]
       headerField = "X-WebAuth-User"
       [entryPoints.http.auth.basic]
         removeHeader = true
+        realm = "Your realm"
         users = [
           "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
           "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
@@ -143,6 +144,7 @@ ProxyProtocol.Insecure:true
 ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24
 Auth.Basic.Users:test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0
 Auth.Basic.Removeheader:true
+Auth.Basic.Realm:traefik
 Auth.Digest.Users:test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e
 Auth.Digest.Removeheader:true
 Auth.HeaderField:X-WebAuth-User
@@ -289,6 +291,18 @@ Users can be specified directly in the TOML file, or indirectly by referencing a
 ```
 
 Optionally, you can:
+
+- customize the realm
+
+```toml
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+  [entryPoints.http.auth]
+    [entryPoints.http.auth.basic]
+    realm = "Your realm"
+    users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
+```
 
 - pass authenticated user to application via headers
 

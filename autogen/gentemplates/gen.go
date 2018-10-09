@@ -444,6 +444,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
 
       {{if $auth.Basic }}
       [frontends."frontend-{{ $frontendName }}".auth.basic]
+        realm = "{{ $auth.Basic.Realm }}"
         removeHeader = {{ $auth.Basic.RemoveHeader }}
         {{if $auth.Basic.Users }}
         users = [{{range $auth.Basic.Users }}

@@ -451,36 +451,33 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 		}
 	}
 
-	if s.globalConfiguration.ACME != nil {
-		if entryPointName == s.globalConfiguration.ACME.EntryPoint {
-			checkOnDemandDomain := func(domain string) bool {
-				routeMatch := &mux.RouteMatch{}
-				match := router.GetHandler().Match(&http.Request{URL: &url.URL{}, Host: domain}, routeMatch)
-				if match && routeMatch.Route != nil {
-					return true
-				}
-				return false
+	if s.globalConfiguration.ACME != nil && entryPointName == s.globalConfiguration.ACME.EntryPoint {
+		checkOnDemandDomain := func(domain string) bool {
+			routeMatch := &mux.RouteMatch{}
+			match := router.GetHandler().Match(&http.Request{URL: &url.URL{}, Host: domain}, routeMatch)
+			if match && routeMatch.Route != nil {
+				return true
 			}
+			return false
+		}
 
-			err := s.globalConfiguration.ACME.CreateClusterConfig(s.leadership, config, s.serverEntryPoints[entryPointName].certs.DynamicCerts, checkOnDemandDomain)
-			if err != nil {
-				return nil, err
-			}
+		err := s.globalConfiguration.ACME.CreateClusterConfig(s.leadership, config, s.serverEntryPoints[entryPointName].certs.DynamicCerts, checkOnDemandDomain)
+		if err != nil {
+			return nil, err
 		}
 	} else {
 		config.GetCertificate = s.serverEntryPoints[entryPointName].getCertificate
-	}
+		if len(config.Certificates) != 0 {
+			certMap := s.buildNameOrIPToCertificate(config.Certificates)
 
-	if len(config.Certificates) != 0 {
-		certMap := s.buildNameOrIPToCertificate(config.Certificates)
-
-		if s.entryPoints[entryPointName].CertificateStore != nil {
-			s.entryPoints[entryPointName].CertificateStore.StaticCerts.Set(certMap)
+			if s.entryPoints[entryPointName].CertificateStore != nil {
+				s.entryPoints[entryPointName].CertificateStore.StaticCerts.Set(certMap)
+			}
 		}
-	}
 
-	// Remove certs from the TLS config object
-	config.Certificates = []tls.Certificate{}
+		// Remove certs from the TLS config object
+		config.Certificates = []tls.Certificate{}
+	}
 
 	// Set the minimum TLS version if set in the config TOML
 	if minConst, exists := traefiktls.MinVersion[s.entryPoints[entryPointName].Configuration.TLS.MinVersion]; exists {

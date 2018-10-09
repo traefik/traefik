@@ -323,12 +323,24 @@ func (p *Provider) initAccount() (*Account, error) {
 	return p.account, nil
 }
 
+func contains(entryPoints []string, acmeEntryPoint string) bool {
+	for _, entryPoint := range entryPoints {
+		if entryPoint == acmeEntryPoint {
+			return true
+		}
+	}
+	return false
+}
+
 func (p *Provider) watchNewDomains() {
 	p.pool.Go(func(stop chan bool) {
 		for {
 			select {
 			case config := <-p.configFromListenerChan:
 				for _, frontend := range config.Frontends {
+					if !contains(frontend.EntryPoints, p.EntryPoint) {
+						continue
+					}
 					for _, route := range frontend.Routes {
 						domainRules := rules.Rules{}
 						domains, err := domainRules.ParseDomains(route.Rule)
