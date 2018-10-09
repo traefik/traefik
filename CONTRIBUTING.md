@@ -167,8 +167,8 @@ The [documentation site](http://docs.traefik.io/) is built with [mkdocs](http://
 You can build the documentation and serve it locally with livereloading, using the `docs` target:
 
 ```bash
-$ make docs
-docker build -t traefik-docs -f docs.Dockerfile .
+$ make -C ./docs docs-serve
+docker build -t traefik-docs -f build.Dockerfile ./
 # […]
 docker run  --rm -v /home/user/go/github/containous/traefik:/mkdocs -p 8000:8000 traefik-docs mkdocs serve
 # […]
@@ -177,12 +177,12 @@ docker run  --rm -v /home/user/go/github/containous/traefik:/mkdocs -p 8000:8000
 [I 170828 20:47:48 handlers:62] Start detecting changes
 ```
 
-And go to [http://127.0.0.1:8000](http://127.0.0.1:8000).
+And open the page [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
 If you only want to build the documentation without serving it locally, you can use the following command:
 
 ```bash
-$ make docs-build
+$ make docs
 ...
 ```
 
@@ -191,16 +191,17 @@ $ make docs-build
 First make sure you have python and pip installed
 
 ```bash
-$ python --version
-Python 2.7.2
-$ pip --version
-pip 1.5.2
+$ python3 --version
+Python 3.6.6
+$ pip3 --version
+pip 10.0.1
 ```
 
 Then install mkdocs with pip
 
 ```bash
-pip install --user -r requirements.txt
+cd ./docs
+pip3 install --user -r requirements.txt
 ```
 
 To build documentation locally and serve it locally,
@@ -221,19 +222,11 @@ INFO    -  Cleaning site directory
 You can verify that the documentation meets some expectations, as checking for dead links, html markup validity.
 
 ```bash
-$ make docs-verify
-docker build -t traefik-docs-verify ./script/docs-verify-docker-image ## Build Validator image
+$ make -C ./docs docs-verify
 ...
-docker run --rm -v /home/travis/build/containous/traefik:/app traefik-docs-verify ## Check for dead links and w3c compliance
+Successfully tagged traefik-docs-verify:latest
 === Checking HTML content...
 Running ["HtmlCheck", "ImageCheck", "ScriptCheck", "LinkCheck"] on /app/site/basics/index.html on *.html...
-```
-
-If you recently changed the documentation, do not forget to clean it to have it rebuilt:
-
-```bash
-$ make docs-clean docs-verify
-...
 ```
 
 ## How to Write a Good Issue
