@@ -3,8 +3,6 @@
 package gandiv5
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -184,61 +182,75 @@ func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 // functions to perform API actions
 
 func (d *DNSProvider) addTXTRecord(domain string, name string, value string, ttl int) error {
-	target := fmt.Sprintf("domains/%s/records/%s/TXT", domain, name)
-	response, err := d.sendRequest(http.MethodPut, target, addFieldRequest{
-		RRSetTTL:    ttl,
-		RRSetValues: []string{value},
-	})
-	if response != nil {
-		log.Infof("gandiv5: %s", response.Message)
+	// Get exiting values for the TXT records
+	// Needed to create challenges for both wildcard and base name domains
+	txtRecord, err := d.getTXTRecord(domain, name)
+	if err != nil {
+		return err
 	}
-	return err
+
+	values := []string{value}
+	if len(txtRecord.RRSetValues) > 0 {
+		values = append(values, txtRecord.RRSetValues...)
+	}
+
+	target := fmt.Sprintf("domains/%s/records/%s/TXT", domain, name)
+
+	newRecord := &Record{RRSetTTL: ttl, RRSetValues: values}
+	req, err := d.newRequest(http.MethodPut, target, newRecord)
+	if err != nil {
+		return err
+	}
+
+	message := &apiResponse{}
+	err = d.do(req, message)
+	if err != nil {
+		return fmt.Errorf("unable to create TXT record for domain %s and name %s: %v", domain, name, err)
+	}
+
+	if message != nil && len(message.Message) > 0 {
+		log.Infof("API response: %s", message.Message)
+	}
+
+	return nil
+}
+
+func (d *DNSProvider) getTXTRecord(domain, name string) (*Record, error) {
+	target := fmt.Sprintf("domains/%s/records/%s/TXT", domain, name)
+
+	// Get exiting values for the TXT records
+	// Needed to create challenges for both wildcard and base name domains
+	req, err := d.newRequest(http.MethodGet, target, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	txtRecord := &Record{}
+	err = d.do(req, txtRecord)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get TXT records for domain %s and name %s: %v", domain, name, err)
+	}
+
+	return txtRecord, nil
 }
 
 func (d *DNSProvider) deleteTXTRecord(domain string, name string) error {
 	target := fmt.Sprintf("domains/%s/records/%s/TXT", domain, name)
-	response, err := d.sendRequest(http.MethodDelete, target, deleteFieldRequest{
-		Delete: true,
-	})
-	if response != nil && response.Message == "" {
-		log.Infof("gandiv5: Zone record deleted")
-	}
-	return err
-}
 
-func (d *DNSProvider) sendRequest(method string, resource string, payload interface{}) (*responseStruct, error) {
-	url := fmt.Sprintf("%s/%s", d.config.BaseURL, resource)
-
-	body, err := json.Marshal(payload)
+	req, err := d.newRequest(http.MethodDelete, target, nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	req, err := http.NewRequest(method, url, bytes.NewReader(body))
+	message := &apiResponse{}
+	err = d.do(req, message)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("unable to delete TXT record for domain %s and name %s: %v", domain, name, err)
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	if len(d.config.APIKey) > 0 {
-		req.Header.Set("X-Api-Key", d.config.APIKey)
+	if message != nil && len(message.Message) > 0 {
+		log.Infof("API response: %s", message.Message)
 	}
 
-	resp, err := d.config.HTTPClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("request failed with HTTP status code %d", resp.StatusCode)
-	}
-
-	var response responseStruct
-	err = json.NewDecoder(resp.Body).Decode(&response)
-	if err != nil && method != http.MethodDelete {
-		return nil, err
-	}
-
-	return &response, nil
+	return nil
 }

@@ -113,6 +113,10 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 		return nil, fmt.Errorf("otc: credentials missing")
 	}
 
+	if config.TTL < minTTL {
+		return nil, fmt.Errorf("otc: invalid TTL, TTL (%d) must be greater than %d", config.TTL, minTTL)
+	}
+
 	if config.IdentityEndpoint == "" {
 		config.IdentityEndpoint = defaultIdentityEndpoint
 	}
@@ -123,10 +127,6 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 // Present creates a TXT record using the specified parameters
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
-
-	if d.config.TTL < minTTL {
-		d.config.TTL = minTTL
-	}
 
 	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
 	if err != nil {

@@ -230,9 +230,9 @@ func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 }
 
 // rpcCall makes an XML-RPC call to Gandi's RPC endpoint by
-// marshalling the data given in the call argument to XML and sending
-// that via HTTP Post to Gandi. The response is then unmarshalled into
-// the resp argument.
+// marshaling the data given in the call argument to XML and sending
+// that via HTTP Post to Gandi.
+// The response is then unmarshalled into the resp argument.
 func (d *DNSProvider) rpcCall(call *methodCall, resp response) error {
 	// marshal
 	b, err := xml.MarshalIndent(call, "", "  ")

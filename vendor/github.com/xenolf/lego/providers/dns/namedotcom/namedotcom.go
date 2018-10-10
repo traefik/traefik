@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -14,6 +13,9 @@ import (
 	"github.com/xenolf/lego/acme"
 	"github.com/xenolf/lego/platform/config/env"
 )
+
+// according to https://www.name.com/api-docs/DNS#CreateRecord
+const minTTL = 300
 
 // Config is used to configure the creation of the DNSProvider
 type Config struct {
@@ -29,7 +31,7 @@ type Config struct {
 // NewDefaultConfig returns a default configuration for the DNSProvider
 func NewDefaultConfig() *Config {
 	return &Config{
-		TTL:                env.GetOrDefaultInt("NAMECOM_TTL", 120),
+		TTL:                env.GetOrDefaultInt("NAMECOM_TTL", minTTL),
 		PropagationTimeout: env.GetOrDefaultSecond("NAMECOM_PROPAGATION_TIMEOUT", acme.DefaultPropagationTimeout),
 		PollingInterval:    env.GetOrDefaultSecond("NAMECOM_POLLING_INTERVAL", acme.DefaultPollingInterval),
 		HTTPClient: &http.Client{
@@ -56,7 +58,7 @@ func NewDNSProvider() (*DNSProvider, error) {
 	config := NewDefaultConfig()
 	config.Username = values["NAMECOM_USERNAME"]
 	config.APIToken = values["NAMECOM_API_TOKEN"]
-	config.Server = os.Getenv("NAMECOM_SERVER")
+	config.Server = env.GetOrFile("NAMECOM_SERVER")
 
 	return NewDNSProviderConfig(config)
 }
@@ -87,6 +89,10 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 		return nil, fmt.Errorf("namedotcom: API token is required")
 	}
 
+	if config.TTL < minTTL {
+		return nil, fmt.Errorf("namedotcom: invalid TTL, TTL (%d) must be greater than %d", config.TTL, minTTL)
+	}
+
 	client := namecom.New(config.Username, config.APIToken)
 	client.Client = config.HTTPClient
 
@@ -97,7 +103,7 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 	return &DNSProvider{client: client, config: config}, nil
 }
 
-// Present creates a TXT record to fulfil the dns-01 challenge.
+// Present creates a TXT record to fulfill the dns-01 challenge.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
 

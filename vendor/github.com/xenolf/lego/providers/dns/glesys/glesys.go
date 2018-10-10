@@ -160,8 +160,6 @@ func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 	return d.config.PropagationTimeout, d.config.PollingInterval
 }
 
-// POSTing/Marshalling/Unmarshalling
-
 func (d *DNSProvider) sendRequest(method string, resource string, payload interface{}) (*responseStruct, error) {
 	url := fmt.Sprintf("%s/%s", defaultBaseURL, resource)
 

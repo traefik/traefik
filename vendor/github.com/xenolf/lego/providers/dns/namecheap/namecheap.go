@@ -3,12 +3,10 @@
 package namecheap
 
 import (
-	"encoding/xml"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -147,22 +145,28 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 		return fmt.Errorf("namecheap: %v", err)
 	}
 
-	hosts, err := d.getHosts(ch)
+	records, err := d.getHosts(ch.sld, ch.tld)
 	if err != nil {
 		return fmt.Errorf("namecheap: %v", err)
 	}
 
-	d.addChallengeRecord(ch, &hosts)
+	record := Record{
+		Name:    ch.key,
+		Type:    "TXT",
+		Address: ch.keyValue,
+		MXPref:  "10",
+		TTL:     strconv.Itoa(d.config.TTL),
+	}
+
+	records = append(records, record)
 
 	if d.config.Debug {
-		for _, h := range hosts {
-			log.Printf(
-				"%-5.5s %-30.30s %-6s %-70.70s\n",
-				h.Type, h.Name, h.TTL, h.Address)
+		for _, h := range records {
+			log.Printf("%-5.5s %-30.30s %-6s %-70.70s", h.Type, h.Name, h.TTL, h.Address)
 		}
 	}
 
-	err = d.setHosts(ch, hosts)
+	err = d.setHosts(ch.sld, ch.tld, records)
 	if err != nil {
 		return fmt.Errorf("namecheap: %v", err)
 	}
@@ -181,16 +185,25 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 		return fmt.Errorf("namecheap: %v", err)
 	}
 
-	hosts, err := d.getHosts(ch)
+	records, err := d.getHosts(ch.sld, ch.tld)
 	if err != nil {
 		return fmt.Errorf("namecheap: %v", err)
 	}
 
-	if removed := d.removeChallengeRecord(ch, &hosts); !removed {
+	// Find the challenge TXT record and remove it if found.
+	var found bool
+	for i, h := range records {
+		if h.Name == ch.key && h.Type == "TXT" {
+			records = append(records[:i], records[i+1:]...)
+			found = true
+		}
+	}
+
+	if !found {
 		return nil
 	}
 
-	err = d.setHosts(ch, hosts)
+	err = d.setHosts(ch.sld, ch.tld, records)
 	if err != nil {
 		return fmt.Errorf("namecheap: %v", err)
 	}
@@ -243,189 +256,15 @@ func newChallenge(domain, keyAuth string, tlds map[string]string) (*challenge, e
 		host = strings.Join(parts[:longest-1], ".")
 	}
 
-	key, keyValue, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
 
 	return &challenge{
 		domain:   domain,
 		key:      "_acme-challenge." + host,
-		keyFqdn:  key,
-		keyValue: keyValue,
+		keyFqdn:  fqdn,
+		keyValue: value,
 		tld:      tld,
 		sld:      sld,
 		host:     host,
 	}, nil
-}
-
-// setGlobalParams adds the namecheap global parameters to the provided url
-// Values record.
-func (d *DNSProvider) setGlobalParams(v *url.Values, cmd string) {
-	v.Set("ApiUser", d.config.APIUser)
-	v.Set("ApiKey", d.config.APIKey)
-	v.Set("UserName", d.config.APIUser)
-	v.Set("Command", cmd)
-	v.Set("ClientIp", d.config.ClientIP)
-}
-
-// getTLDs requests the list of available TLDs from namecheap.
-func (d *DNSProvider) getTLDs() (tlds map[string]string, err error) {
-	values := make(url.Values)
-	d.setGlobalParams(&values, "namecheap.domains.getTldList")
-
-	reqURL, err := url.Parse(d.config.BaseURL)
-	if err != nil {
-		return nil, err
-	}
-	reqURL.RawQuery = values.Encode()
-
-	resp, err := d.config.HTTPClient.Get(reqURL.String())
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("getHosts HTTP error %d", resp.StatusCode)
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var gtr getTldsResponse
-	if err := xml.Unmarshal(body, &gtr); err != nil {
-		return nil, err
-	}
-	if len(gtr.Errors) > 0 {
-		return nil, fmt.Errorf("%s [%d]", gtr.Errors[0].Description, gtr.Errors[0].Number)
-	}
-
-	tlds = make(map[string]string)
-	for _, t := range gtr.Result {
-		tlds[t.Name] = t.Name
-	}
-	return tlds, nil
-}
-
-// getHosts reads the full list of DNS host records using the Namecheap API.
-func (d *DNSProvider) getHosts(ch *challenge) (hosts []host, err error) {
-	values := make(url.Values)
-	d.setGlobalParams(&values, "namecheap.domains.dns.getHosts")
-
-	values.Set("SLD", ch.sld)
-	values.Set("TLD", ch.tld)
-
-	reqURL, err := url.Parse(d.config.BaseURL)
-	if err != nil {
-		return nil, err
-	}
-	reqURL.RawQuery = values.Encode()
-
-	resp, err := d.config.HTTPClient.Get(reqURL.String())
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("getHosts HTTP error %d", resp.StatusCode)
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var ghr getHostsResponse
-	if err = xml.Unmarshal(body, &ghr); err != nil {
-		return nil, err
-	}
-	if len(ghr.Errors) > 0 {
-		return nil, fmt.Errorf("%s [%d]", ghr.Errors[0].Description, ghr.Errors[0].Number)
-	}
-
-	return ghr.Hosts, nil
-}
-
-// setHosts writes the full list of DNS host records using the Namecheap API.
-func (d *DNSProvider) setHosts(ch *challenge, hosts []host) error {
-	values := make(url.Values)
-	d.setGlobalParams(&values, "namecheap.domains.dns.setHosts")
-
-	values.Set("SLD", ch.sld)
-	values.Set("TLD", ch.tld)
-
-	for i, h := range hosts {
-		ind := fmt.Sprintf("%d", i+1)
-		values.Add("HostName"+ind, h.Name)
-		values.Add("RecordType"+ind, h.Type)
-		values.Add("Address"+ind, h.Address)
-		values.Add("MXPref"+ind, h.MXPref)
-		values.Add("TTL"+ind, h.TTL)
-	}
-
-	resp, err := d.config.HTTPClient.PostForm(d.config.BaseURL, values)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 400 {
-		return fmt.Errorf("setHosts HTTP error %d", resp.StatusCode)
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	var shr setHostsResponse
-	if err := xml.Unmarshal(body, &shr); err != nil {
-		return err
-	}
-	if len(shr.Errors) > 0 {
-		return fmt.Errorf("%s [%d]", shr.Errors[0].Description, shr.Errors[0].Number)
-	}
-	if shr.Result.IsSuccess != "true" {
-		return fmt.Errorf("setHosts failed")
-	}
-
-	return nil
-}
-
-// addChallengeRecord adds a DNS challenge TXT record to a list of namecheap
-// host records.
-func (d *DNSProvider) addChallengeRecord(ch *challenge, hosts *[]host) {
-	host := host{
-		Name:    ch.key,
-		Type:    "TXT",
-		Address: ch.keyValue,
-		MXPref:  "10",
-		TTL:     strconv.Itoa(d.config.TTL),
-	}
-
-	// If there's already a TXT record with the same name, replace it.
-	for i, h := range *hosts {
-		if h.Name == ch.key && h.Type == "TXT" {
-			(*hosts)[i] = host
-			return
-		}
-	}
-
-	// No record was replaced, so add a new one.
-	*hosts = append(*hosts, host)
-}
-
-// removeChallengeRecord removes a DNS challenge TXT record from a list of
-// namecheap host records. Return true if a record was removed.
-func (d *DNSProvider) removeChallengeRecord(ch *challenge, hosts *[]host) bool {
-	// Find the challenge TXT record and remove it if found.
-	for i, h := range *hosts {
-		if h.Name == ch.key && h.Type == "TXT" {
-			*hosts = append((*hosts)[:i], (*hosts)[i+1:]...)
-			return true
-		}
-	}
-
-	return false
 }

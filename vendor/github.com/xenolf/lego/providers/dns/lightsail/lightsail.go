@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"os"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -54,7 +53,7 @@ type Config struct {
 // NewDefaultConfig returns a default configuration for the DNSProvider
 func NewDefaultConfig() *Config {
 	return &Config{
-		DNSZone:            os.Getenv("DNS_ZONE"),
+		DNSZone:            env.GetOrFile("DNS_ZONE"),
 		PropagationTimeout: env.GetOrDefaultSecond("LIGHTSAIL_PROPAGATION_TIMEOUT", acme.DefaultPropagationTimeout),
 		PollingInterval:    env.GetOrDefaultSecond("LIGHTSAIL_POLLING_INTERVAL", acme.DefaultPollingInterval),
 		Region:             env.GetOrDefaultString("LIGHTSAIL_REGION", "us-east-1"),
@@ -108,7 +107,7 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
 
-	err := d.newTxtRecord(domain, fqdn, `"`+value+`"`)
+	err := d.newTxtRecord(fqdn, `"`+value+`"`)
 	if err != nil {
 		return fmt.Errorf("lightsail: %v", err)
 	}
@@ -141,7 +140,7 @@ func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 	return d.config.PropagationTimeout, d.config.PollingInterval
 }
 
-func (d *DNSProvider) newTxtRecord(domain string, fqdn string, value string) error {
+func (d *DNSProvider) newTxtRecord(fqdn string, value string) error {
 	params := &lightsail.CreateDomainEntryInput{
 		DomainName: aws.String(d.config.DNSZone),
 		DomainEntry: &lightsail.DomainEntry{

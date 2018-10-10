@@ -99,10 +99,10 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	}
 
 	record := configdns.NewTxtRecord()
-	record.SetField("name", recordName)
-	record.SetField("ttl", d.config.TTL)
-	record.SetField("target", value)
-	record.SetField("active", true)
+	_ = record.SetField("name", recordName)
+	_ = record.SetField("ttl", d.config.TTL)
+	_ = record.SetField("target", value)
+	_ = record.SetField("active", true)
 
 	existingRecord := d.findExistingRecord(zone, recordName)
 
@@ -110,8 +110,10 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 		if reflect.DeepEqual(existingRecord.ToMap(), record.ToMap()) {
 			return nil
 		}
-		zone.RemoveRecord(existingRecord)
-		return d.createRecord(zone, record)
+		err = zone.RemoveRecord(existingRecord)
+		if err != nil {
+			return fmt.Errorf("fastdns: %v", err)
+		}
 	}
 
 	return d.createRecord(zone, record)
