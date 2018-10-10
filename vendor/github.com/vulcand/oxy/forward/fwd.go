@@ -491,6 +491,9 @@ func (f *httpForwarder) copyWebSocketRequest(req *http.Request) (outReq *http.Re
 	outReq.RequestURI = "" // Outgoing request should not have RequestURI
 
 	outReq.URL.Host = req.URL.Host
+	if !f.passHost {
+		outReq.Host = req.URL.Host
+	}
 
 	outReq.Header = make(http.Header)
 	// gorilla websocket use this header to set the request.Host tested in checkSameOrigin
