@@ -19,5 +19,6 @@ logLevel = "DEBUG"
 [frontends]
   [frontends.frontend1]
   backend = "backend1"
+  passHostHeader = true
     [frontends.frontend1.routes.test_1]
     rule = "PathPrefix:/ws"

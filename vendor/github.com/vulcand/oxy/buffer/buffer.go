@@ -330,7 +330,7 @@ func (b *Buffer) copyRequest(req *http.Request, body io.ReadCloser, bodySize int
 	o.TransferEncoding = []string{}
 	// http.Transport will close the request body on any error, we are controlling the close process ourselves, so we override the closer here
 	if body == nil {
-		o.Body = nil
+		o.Body = ioutil.NopCloser(req.Body)
 	} else {
 		o.Body = ioutil.NopCloser(body.(io.Reader))
 	}
