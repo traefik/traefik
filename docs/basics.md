@@ -89,6 +89,7 @@ Following is the list of existing modifier rules:
 - `AddPrefix: /products`: Add path prefix to the existing request path prior to forwarding the request to the backend.
 - `ReplacePath: /serverless-path`: Replaces the path and adds the old path to the `X-Replaced-Path` header. Useful for mapping to AWS Lambda or Google Cloud Functions.
 - `ReplacePathRegex: ^/api/v2/(.*) /api/$1`: Replaces the path with a regular expression and adds the old path to the `X-Replaced-Path` header. Separate the regular expression and the replacement by a space.
+- `ReplaceQueryRegex: ^/item/([0-9]+)/view\\?(.*) id=$1&$2`: Modifies the query parameters. The regular expression is matched against the path AND query parameters. The regular expression must match the full path otherwise parts of the unmatched path will appear in the resulting query parameter.
 
 #### Matchers
 
@@ -224,12 +225,13 @@ The following rules are both `Matchers` and `Modifiers`, so the `Matcher` portio
 
 `Modifiers` will be applied in a pre-determined order regardless of their order in the `rule` configuration section.
 
-1. `PathStrip`
-2. `PathPrefixStrip`
-3. `PathStripRegex`
-4. `PathPrefixStripRegex`
-5. `AddPrefix`
-6. `ReplacePath`
+1. `ReplaceQueryRegex`
+2. `PathStrip`
+3. `PathPrefixStrip`
+4. `PathStripRegex`
+5. `PathPrefixStripRegex`
+6. `AddPrefix`
+7. `ReplacePath`
 
 #### Priorities
 

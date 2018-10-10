@@ -98,6 +98,7 @@ type ServerRoute struct {
 	AddPrefix          string
 	ReplacePath        string
 	ReplacePathRegex   string
+	ReplaceQueryRegex  string
 }
 
 // ErrorPage holds custom error page configuration

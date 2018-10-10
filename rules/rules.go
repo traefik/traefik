@@ -137,6 +137,13 @@ func (r *Rules) replacePathRegex(paths ...string) *mux.Route {
 	return r.Route.Route
 }
 
+func (r *Rules) replaceQueryRegex(paths ...string) *mux.Route {
+	for _, path := range paths {
+		r.Route.ReplaceQueryRegex = path
+	}
+	return r.Route.Route
+}
+
 func (r *Rules) addPrefix(paths ...string) *mux.Route {
 	for _, path := range paths {
 		r.Route.AddPrefix = path
@@ -201,6 +208,7 @@ func (r *Rules) parseRules(expression string, onRule func(functionName string, f
 		"AddPrefix":            r.addPrefix,
 		"ReplacePath":          r.replacePath,
 		"ReplacePathRegex":     r.replacePathRegex,
+		"ReplaceQueryRegex":    r.replaceQueryRegex,
 		"Query":                r.query,
 	}
 

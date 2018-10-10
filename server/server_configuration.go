@@ -488,6 +488,16 @@ func buildMatcherMiddlewares(serverRoute *types.ServerRoute, handler http.Handle
 		handler = middlewares.NewStripPrefixRegex(handler, serverRoute.StripPrefixesRegex)
 	}
 
+	if len(serverRoute.ReplaceQueryRegex) > 0 {
+		sp := strings.Split(serverRoute.ReplaceQueryRegex, " ")
+		if len(sp) == 2 {
+			handler = middlewares.NewReplaceQueryRegexHandler(sp[0], sp[1], handler)
+		} else {
+			log.Warnf("Invalid syntax for ReplaceQueryRegex: %s. Separate the regular expression and the replacement by a space.", serverRoute.ReplaceQueryRegex)
+		}
+
+	}
+
 	return handler
 }
 
