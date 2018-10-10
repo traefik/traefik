@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/BurntSushi/ty/fun"
 	"github.com/cenk/backoff"
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/log"
@@ -762,8 +761,16 @@ func (p *Provider) getValidDomains(domain types.Domain, wildcardAllowed bool) ([
 		}
 	}
 
-	domains = fun.Map(types.CanonicalDomain, domains).([]string)
-	return domains, nil
+	var cleanDomains []string
+	for _, domain := range domains {
+		canonicalDomain := types.CanonicalDomain(domain)
+		cleanDomain := acme.UnFqdn(canonicalDomain)
+		if canonicalDomain != cleanDomain {
+			log.Warnf("FQDN detected, please remove the trailing dot: %s", canonicalDomain)
+		}
+		cleanDomains = append(cleanDomains, cleanDomain)
+	}
+	return cleanDomains, nil
 }
 
 func isDomainAlreadyChecked(domainToCheck string, existentDomains []string) bool {
