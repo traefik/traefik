@@ -1393,10 +1393,11 @@
     "providers/dns/rfc2136",
     "providers/dns/route53",
     "providers/dns/sakuracloud",
+    "providers/dns/stackpath",
     "providers/dns/vegadns",
     "providers/dns/vultr"
   ]
-  revision = "dd087560a0a4a52b3388dd320a5982a0e8233eff"
+  revision = "01c63ec08d1d85e3ad44c16dff95dadee26a81bc"
 
 [[projects]]
   branch = "master"
@@ -1442,6 +1443,7 @@
   name = "golang.org/x/oauth2"
   packages = [
     ".",
+    "clientcredentials",
     "google",
     "internal",
     "jws",

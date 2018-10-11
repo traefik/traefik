@@ -61,7 +61,7 @@ type DNSProvider struct {
 // The REST endpoint will be appended. In addition, the Configuration name
 // and external DNS View Name must be passed in BLUECAT_CONFIG_NAME and BLUECAT_DNS_VIEW
 func NewDNSProvider() (*DNSProvider, error) {
-	values, err := env.Get("BLUECAT_SERVER_URL", "BLUECAT_USER_NAME", "BLUECAT_CONFIG_NAME", "BLUECAT_CONFIG_NAME", "BLUECAT_DNS_VIEW")
+	values, err := env.Get("BLUECAT_SERVER_URL", "BLUECAT_USER_NAME", "BLUECAT_PASSWORD", "BLUECAT_CONFIG_NAME", "BLUECAT_DNS_VIEW")
 	if err != nil {
 		return nil, fmt.Errorf("bluecat: %v", err)
 	}

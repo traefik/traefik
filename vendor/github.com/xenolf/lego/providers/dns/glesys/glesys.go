@@ -94,6 +94,7 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 	}
 
 	return &DNSProvider{
+		config:        config,
 		activeRecords: make(map[string]int),
 	}, nil
 }

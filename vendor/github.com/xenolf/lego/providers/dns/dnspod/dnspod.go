@@ -81,7 +81,7 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 	client := dnspod.NewClient(params)
 	client.HttpClient = config.HTTPClient
 
-	return &DNSProvider{client: client}, nil
+	return &DNSProvider{client: client, config: config}, nil
 }
 
 // Present creates a TXT record to fulfill the dns-01 challenge.
