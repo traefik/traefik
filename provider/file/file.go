@@ -80,12 +80,12 @@ func (p *Provider) BuildConfiguration() (*types.Configuration, error) {
 }
 
 func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationChan chan<- types.ConfigMessage, callback func(chan<- types.ConfigMessage, fsnotify.Event)) error {
-	watcher, err := fsnotify.NewWatcher()
+	watcher, err := newWatcher()
 	if err != nil {
-		return fmt.Errorf("error creating file watcher: %s", err)
+		return err
 	}
 
-	err = watcher.Add(directory)
+	err = watcher.addRecursive(directory)
 	if err != nil {
 		return fmt.Errorf("error adding file watcher: %s", err)
 	}
@@ -98,7 +98,7 @@ func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationCh
 			case <-stop:
 				return
 			case evt := <-watcher.Events:
-				if p.Directory == "" {
+				if len(p.Directory) == 0 {
 					var filename string
 					if len(p.Filename) > 0 {
 						filename = p.Filename
@@ -188,11 +188,11 @@ func (p *Provider) loadFileConfig(filename string, parseTemplate bool) (*types.C
 	return configuration, err
 }
 
-func (p *Provider) loadFileConfigFromDirectory(directory string, configuration *types.Configuration) (*types.Configuration, error) {
+func (p *Provider) loadFileConfigFromDirectory(directory string, configuration *types.Configuration) *types.Configuration {
 	fileList, err := ioutil.ReadDir(directory)
-
 	if err != nil {
-		return configuration, fmt.Errorf("unable to read directory %s: %v", directory, err)
+		log.Errorf("Unable to read directory %s: %v", directory, err)
+		return configuration
 	}
 
 	if configuration == nil {
@@ -204,12 +204,8 @@ func (p *Provider) loadFileConfigFromDirectory(directory string, configuration *
 
 	configTLSMaps := make(map[*tls.Configuration]struct{})
 	for _, item := range fileList {
-
 		if item.IsDir() {
-			configuration, err = p.loadFileConfigFromDirectory(filepath.Join(directory, item.Name()), configuration)
-			if err != nil {
-				return configuration, fmt.Errorf("unable to load content configuration from subdirectory %s: %v", item, err)
-			}
+			configuration = p.loadFileConfigFromDirectory(filepath.Join(directory, item.Name()), configuration)
 			continue
 		} else if !strings.HasSuffix(item.Name(), ".toml") && !strings.HasSuffix(item.Name(), ".tmpl") {
 			continue
@@ -217,9 +213,9 @@ func (p *Provider) loadFileConfigFromDirectory(directory string, configuration *
 
 		var c *types.Configuration
 		c, err = p.loadFileConfig(path.Join(directory, item.Name()), true)
-
 		if err != nil {
-			return configuration, err
+			log.Errorf("Unable to load content configuration from file %s: %v", item, err)
+			continue
 		}
 
 		for backendName, backend := range c.Backends {
@@ -250,5 +246,5 @@ func (p *Provider) loadFileConfigFromDirectory(directory string, configuration *
 	for conf := range configTLSMaps {
 		configuration.TLS = append(configuration.TLS, conf)
 	}
-	return configuration, nil
+	return configuration
 }
