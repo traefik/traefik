@@ -65,7 +65,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 // and returns a 'Configuration' object
 func (p *Provider) BuildConfiguration() (*types.Configuration, error) {
 	if len(p.Directory) > 0 {
-		return p.loadFileConfigFromDirectory(p.Directory, nil)
+		return p.loadFileConfigFromDirectory(p.Directory), nil
 	}
 
 	if len(p.Filename) > 0 {
@@ -188,34 +188,32 @@ func (p *Provider) loadFileConfig(filename string, parseTemplate bool) (*types.C
 	return configuration, err
 }
 
-func (p *Provider) loadFileConfigFromDirectory(directory string, configuration *types.Configuration) *types.Configuration {
+func (p *Provider) loadFileConfigFromDirectory(directory string) *types.Configuration {
+	configuration := &types.Configuration{
+		Frontends: make(map[string]*types.Frontend),
+		Backends:  make(map[string]*types.Backend),
+	}
+
 	fileList, err := ioutil.ReadDir(directory)
 	if err != nil {
 		log.Errorf("Unable to read directory %s: %v", directory, err)
 		return configuration
 	}
 
-	if configuration == nil {
-		configuration = &types.Configuration{
-			Frontends: make(map[string]*types.Frontend),
-			Backends:  make(map[string]*types.Backend),
-		}
-	}
-
 	configTLSMaps := make(map[*tls.Configuration]struct{})
 	for _, item := range fileList {
+		var c *types.Configuration
+
 		if item.IsDir() {
-			configuration = p.loadFileConfigFromDirectory(filepath.Join(directory, item.Name()), configuration)
-			continue
+			c = p.loadFileConfigFromDirectory(filepath.Join(directory, item.Name()))
 		} else if !strings.HasSuffix(item.Name(), ".toml") && !strings.HasSuffix(item.Name(), ".tmpl") {
 			continue
-		}
-
-		var c *types.Configuration
-		c, err = p.loadFileConfig(path.Join(directory, item.Name()), true)
-		if err != nil {
-			log.Errorf("Unable to load content configuration from file %s: %v", item, err)
-			continue
+		} else {
+			c, err = p.loadFileConfig(path.Join(directory, item.Name()), true)
+			if err != nil {
+				log.Errorf("Unable to load content configuration from file %s: %v", item, err)
+				continue
+			}
 		}
 
 		for backendName, backend := range c.Backends {
