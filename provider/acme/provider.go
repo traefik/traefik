@@ -770,6 +770,7 @@ func (p *Provider) getValidDomains(domain types.Domain, wildcardAllowed bool) ([
 		}
 		cleanDomains = append(cleanDomains, cleanDomain)
 	}
+
 	return cleanDomains, nil
 }
 
