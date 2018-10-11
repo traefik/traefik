@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"testing"
 	"time"
 
@@ -13,46 +12,6 @@ import (
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 )
-
-// createRandomFile Helper
-func createRandomFile(t *testing.T, tempDir string, contents ...string) *os.File {
-	return createFile(t, tempDir, fmt.Sprintf("temp%d.toml", time.Now().UnixNano()), contents...)
-}
-
-// createFile Helper
-func createFile(t *testing.T, tempDir string, name string, contents ...string) *os.File {
-	t.Helper()
-	fileName := path.Join(tempDir, name)
-
-	tempFile, err := os.Create(fileName)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	for _, content := range contents {
-		_, err := tempFile.WriteString(content)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	err = tempFile.Close()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return tempFile
-}
-
-// createTempDir Helper
-func createTempDir(t *testing.T, dir string) string {
-	t.Helper()
-	d, err := ioutil.TempDir("", dir)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return d
-}
 
 // createFrontendConfiguration Helper
 func createFrontendConfiguration(n int) string {
