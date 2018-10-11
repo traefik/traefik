@@ -82,7 +82,7 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 	client := api.NewClient(config.Token, config.Secret, "tk1a")
 	client.UserAgent = acme.UserAgent
 
-	return &DNSProvider{client: client}, nil
+	return &DNSProvider{client: client, config: config}, nil
 }
 
 // Present creates a TXT record to fulfill the dns-01 challenge.

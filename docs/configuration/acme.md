@@ -291,6 +291,7 @@ Here is a list of supported `provider`s, that can automate the DNS verification,
 | [RFC2136](https://tools.ietf.org/html/rfc2136)         | `rfc2136`      | `RFC2136_TSIG_KEY`, `RFC2136_TSIG_SECRET`, `RFC2136_TSIG_ALGORITHM`, `RFC2136_NAMESERVER`                                       | Not tested yet                 |
 | [Route 53](https://aws.amazon.com/route53/)            | `route53`      | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `[AWS_REGION]`, `[AWS_HOSTED_ZONE_ID]` or a configured user/instance IAM profile. | YES                            |
 | [Sakura Cloud](https://cloud.sakura.ad.jp/)            | `sakuracloud`  | `SAKURACLOUD_ACCESS_TOKEN`, `SAKURACLOUD_ACCESS_TOKEN_SECRET`                                                                   | Not tested yet                 |
+| [Stackpath](https://www.stackpath.com/)                | `stackpath`    | `STACKPATH_CLIENT_ID`, `STACKPATH_CLIENT_SECRET`, `STACKPATH_STACK_ID`                                                          | Not tested yet                 |
 | [VegaDNS](https://github.com/shupp/VegaDNS-API)        | `vegadns`      | `SECRET_VEGADNS_KEY`, `SECRET_VEGADNS_SECRET`, `VEGADNS_URL`                                                                    | Not tested yet                 |
 | [VULTR](https://www.vultr.com)                         | `vultr`        | `VULTR_API_KEY`                                                                                                                 | Not tested yet                 |
 
