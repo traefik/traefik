@@ -13,9 +13,12 @@ import (
 func TestNewPoolContext(t *testing.T) {
 	type testKeyType string
 	testKey := testKeyType("test")
+
 	ctx := context.WithValue(context.Background(), testKey, "test")
 	p := NewPool(ctx)
+
 	retCtx := p.Ctx()
+
 	retCtxVal, ok := retCtx.Value(testKey).(string)
 	if !ok || retCtxVal != "test" {
 		t.Errorf("Pool.Ctx() did not return a derived context, got %#v, expected context with test value", retCtx)
@@ -52,7 +55,8 @@ func (tr *fakeRoutine) routine(stop chan bool) {
 
 func TestPoolWithCtx(t *testing.T) {
 	testRoutine := newFakeRoutine()
-	tt := []struct {
+
+	testCases := []struct {
 		desc string
 		fn   func(*Pool)
 	}{
@@ -70,19 +74,20 @@ func TestPoolWithCtx(t *testing.T) {
 			},
 		},
 	}
-	for _, tc := range tt {
-		tc := tc
-		t.Run(tc.desc, func(t *testing.T) {
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			// These subtests cannot be run in parallel, since the testRoutine
 			// is shared across the subtests.
 			p := NewPool(context.Background())
 			timer := time.NewTimer(500 * time.Millisecond)
 			defer timer.Stop()
 
-			tc.fn(p)
+			test.fn(p)
 			defer p.Cleanup()
 			if len(p.routinesCtx) != 1 {
-				t.Fatalf("After %s, Pool did have %d goroutineCtxs, expected 1", tc.desc, len(p.routinesCtx))
+				t.Fatalf("After %s, Pool did have %d goroutineCtxs, expected 1", test.desc, len(p.routinesCtx))
 			}
 
 			testDone := make(chan bool, 1)
@@ -91,6 +96,7 @@ func TestPoolWithCtx(t *testing.T) {
 				p.Cleanup()
 				testDone <- true
 			}()
+
 			select {
 			case <-timer.C:
 				testRoutine.Lock()
@@ -105,8 +111,9 @@ func TestPoolWithCtx(t *testing.T) {
 
 func TestPoolWithStopChan(t *testing.T) {
 	testRoutine := newFakeRoutine()
-	ctx := context.Background()
-	p := NewPool(ctx)
+
+	p := NewPool(context.Background())
+
 	timer := time.NewTimer(500 * time.Millisecond)
 	defer timer.Stop()
 
@@ -121,6 +128,7 @@ func TestPoolWithStopChan(t *testing.T) {
 		p.Cleanup()
 		testDone <- true
 	}()
+
 	select {
 	case <-timer.C:
 		testRoutine.Lock()
@@ -133,8 +141,9 @@ func TestPoolWithStopChan(t *testing.T) {
 
 func TestPoolStartWithStopChan(t *testing.T) {
 	testRoutine := newFakeRoutine()
-	ctx := context.Background()
-	p := NewPool(ctx)
+
+	p := NewPool(context.Background())
+
 	timer := time.NewTimer(500 * time.Millisecond)
 	defer timer.Stop()
 
