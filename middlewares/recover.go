@@ -27,7 +27,16 @@ func NegroniRecoverHandler() negroni.Handler {
 
 func recoverFunc(w http.ResponseWriter) {
 	if err := recover(); err != nil {
-		log.Errorf("Recovered from panic in http handler: %+v", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		if shouldLogPanic(err) {
+			log.Errorf("Recovered from panic in http handler: %+v", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		} else {
+			log.Debugf("HTTP handler has been aborted: %v", err)
+		}
 	}
+}
+
+// https://github.com/golang/go/blob/c33153f7b416c03983324b3e8f869ce1116d84bc/src/net/http/httputil/reverseproxy.go#L284
+func shouldLogPanic(panicValue interface{}) bool {
+	return panicValue != nil && panicValue != http.ErrAbortHandler
 }
