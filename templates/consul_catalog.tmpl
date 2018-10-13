@@ -105,10 +105,12 @@
       {{if $auth.Forward }}
       [frontends."frontend-{{ $service.ServiceName }}".auth.forward]
         address = "{{ $auth.Forward.Address }}"
+        trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
+        {{if $auth.Forward.AuthResponseHeaders }}
         authResponseHeaders = [{{range $auth.Forward.AuthResponseHeaders }}
           "{{.}}",
           {{end}}]
-        trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
+        {{end}}
 
         {{if $auth.Forward.TLS }}
         [frontends."frontend-{{ $service.ServiceName }}".auth.forward.tls]

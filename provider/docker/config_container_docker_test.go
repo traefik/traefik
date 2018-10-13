@@ -64,54 +64,6 @@ func TestDockerBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "when frontend basic auth",
-			containers: []docker.ContainerJSON{
-				containerJSON(
-					name("test"),
-					labels(map[string]string{
-						label.TraefikFrontendAuthBasicUsers:        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						label.TraefikFrontendAuthBasicUsersFile:    ".htpasswd",
-						label.TraefikFrontendAuthBasicRemoveHeader: "true",
-					}),
-					ports(nat.PortMap{
-						"80/tcp": {},
-					}),
-					withNetwork("bridge", ipv4("127.0.0.1")),
-				),
-			},
-			expectedFrontends: map[string]*types.Frontend{
-				"frontend-Host-test-docker-localhost-0": {
-					Backend:        "backend-test",
-					PassHostHeader: true,
-					EntryPoints:    []string{},
-					Auth: &types.Auth{
-						Basic: &types.Basic{
-							RemoveHeader: true,
-							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
-							UsersFile: ".htpasswd",
-						},
-					},
-					Routes: map[string]types.Route{
-						"route-frontend-Host-test-docker-localhost-0": {
-							Rule: "Host:test.docker.localhost",
-						},
-					},
-				},
-			},
-			expectedBackends: map[string]*types.Backend{
-				"backend-test": {
-					Servers: map[string]types.Server{
-						"server-test-842895ca2aca17f6ee36ddb2f621194d": {
-							URL:    "http://127.0.0.1:80",
-							Weight: label.DefaultWeight,
-						},
-					},
-					CircuitBreaker: nil,
-				},
-			},
-		},
-		{
 			desc: "when pass tls client certificate",
 			containers: []docker.ContainerJSON{
 				containerJSON(
@@ -153,6 +105,53 @@ func TestDockerBuildConfiguration(t *testing.T) {
 								Province:     true,
 								SerialNumber: true,
 							},
+						},
+					},
+					Routes: map[string]types.Route{
+						"route-frontend-Host-test-docker-localhost-0": {
+							Rule: "Host:test.docker.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test": {
+					Servers: map[string]types.Server{
+						"server-test-842895ca2aca17f6ee36ddb2f621194d": {
+							URL:    "http://127.0.0.1:80",
+							Weight: label.DefaultWeight,
+						},
+					},
+					CircuitBreaker: nil,
+				},
+			},
+		}, {
+			desc: "when frontend basic auth",
+			containers: []docker.ContainerJSON{
+				containerJSON(
+					name("test"),
+					labels(map[string]string{
+						label.TraefikFrontendAuthBasicUsers:        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendAuthBasicUsersFile:    ".htpasswd",
+						label.TraefikFrontendAuthBasicRemoveHeader: "true",
+					}),
+					ports(nat.PortMap{
+						"80/tcp": {},
+					}),
+					withNetwork("bridge", ipv4("127.0.0.1")),
+				),
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-Host-test-docker-localhost-0": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					Auth: &types.Auth{
+						Basic: &types.Basic{
+							RemoveHeader: true,
+							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							UsersFile: ".htpasswd",
 						},
 					},
 					Routes: map[string]types.Route{
@@ -279,6 +278,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendAuthForwardTLSCert:               "server.crt",
 						label.TraefikFrontendAuthForwardTLSKey:                "server.key",
 						label.TraefikFrontendAuthForwardTLSInsecureSkipVerify: "true",
+						label.TraefikFrontendAuthForwardAuthResponseHeaders:   "X-Auth-User,X-Auth-Token",
 					}),
 					ports(nat.PortMap{
 						"80/tcp": {},
@@ -293,8 +293,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 					EntryPoints:    []string{},
 					Auth: &types.Auth{
 						Forward: &types.Forward{
-							Address:            "auth.server",
-							TrustForwardHeader: true,
+							Address: "auth.server",
 							TLS: &types.ClientTLS{
 								CA:                 "ca.crt",
 								CAOptional:         true,
@@ -302,6 +301,8 @@ func TestDockerBuildConfiguration(t *testing.T) {
 								Cert:               "server.crt",
 								Key:                "server.key",
 							},
+							TrustForwardHeader:  true,
+							AuthResponseHeaders: []string{"X-Auth-User", "X-Auth-Token"},
 						},
 					},
 					Routes: map[string]types.Route{

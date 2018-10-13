@@ -213,6 +213,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					withPair(pathFrontendAuthForwardTLSCert, "server.crt"),
 					withPair(pathFrontendAuthForwardTLSKey, "server.key"),
 					withPair(pathFrontendAuthForwardTLSInsecureSkipVerify, "true"),
+					withPair(pathFrontendAuthForwardAuthResponseHeaders, "X-Auth-User,X-Auth-Token"),
 				),
 				backend("backend"),
 			),
@@ -232,8 +233,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						Auth: &types.Auth{
 							HeaderField: "X-WebAuth-User",
 							Forward: &types.Forward{
-								Address:            "auth.server",
-								TrustForwardHeader: true,
+								Address: "auth.server",
 								TLS: &types.ClientTLS{
 									CA:                 "ca.crt",
 									CAOptional:         true,
@@ -241,6 +241,8 @@ func TestProviderBuildConfiguration(t *testing.T) {
 									Cert:               "server.crt",
 									Key:                "server.key",
 								},
+								TrustForwardHeader:  true,
+								AuthResponseHeaders: []string{"X-Auth-User", "X-Auth-Token"},
 							},
 						},
 					},

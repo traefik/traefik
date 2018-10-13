@@ -276,7 +276,9 @@ func TestBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendAuthForwardTLSCaOptional:         aws.String("true"),
 						label.TraefikFrontendAuthForwardTLSCert:               aws.String("server.crt"),
 						label.TraefikFrontendAuthForwardTLSKey:                aws.String("server.key"),
-						label.TraefikFrontendAuthForwardTLSInsecureSkipVerify: aws.String("true"), label.TraefikFrontendAuthHeaderField: aws.String("X-WebAuth-User"),
+						label.TraefikFrontendAuthForwardTLSInsecureSkipVerify: aws.String("true"),
+						label.TraefikFrontendAuthHeaderField:                  aws.String("X-WebAuth-User"),
+						label.TraefikFrontendAuthForwardAuthResponseHeaders:   aws.String("X-Auth-User,X-Auth-Token"),
 					}),
 					iMachine(
 						mState(ec2.InstanceStateNameRunning),
@@ -309,8 +311,7 @@ func TestBuildConfiguration(t *testing.T) {
 						Auth: &types.Auth{
 							HeaderField: "X-WebAuth-User",
 							Forward: &types.Forward{
-								Address:            "auth.server",
-								TrustForwardHeader: true,
+								Address: "auth.server",
 								TLS: &types.ClientTLS{
 									CA:                 "ca.crt",
 									CAOptional:         true,
@@ -318,6 +319,8 @@ func TestBuildConfiguration(t *testing.T) {
 									Cert:               "server.crt",
 									Key:                "server.key",
 								},
+								TrustForwardHeader:  true,
+								AuthResponseHeaders: []string{"X-Auth-User", "X-Auth-Token"},
 							},
 						},
 						PassHostHeader: true,

@@ -328,7 +328,13 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						Attributes: []string{
 							"random.foo=bar",
 							label.TraefikFrontendAuthForwardAddress + "=auth.server",
-							label.TraefikFrontendAuthForwardAuthResponseHeaders + "=X-Auth-User",
+							label.TraefikFrontendAuthForwardAuthResponseHeaders + "=X-Auth-User,X-Auth-Token",
+							label.TraefikFrontendAuthForwardTrustForwardHeader + "=true",
+							label.TraefikFrontendAuthForwardTLSCa + "=ca.crt",
+							label.TraefikFrontendAuthForwardTLSCaOptional + "=true",
+							label.TraefikFrontendAuthForwardTLSCert + "=server.crt",
+							label.TraefikFrontendAuthForwardTLSKey + "=server.key",
+							label.TraefikFrontendAuthForwardTLSInsecureSkipVerify + "=true",
 						},
 					},
 					Nodes: []*api.ServiceEntry{
@@ -363,8 +369,16 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					},
 					Auth: &types.Auth{
 						Forward: &types.Forward{
-							Address:             "auth.server",
-							AuthResponseHeaders: []string{"X-Auth-User"},
+							Address: "auth.server",
+							TLS: &types.ClientTLS{
+								CA:                 "ca.crt",
+								CAOptional:         true,
+								Cert:               "server.crt",
+								Key:                "server.key",
+								InsecureSkipVerify: true,
+							},
+							TrustForwardHeader:  true,
+							AuthResponseHeaders: []string{"X-Auth-User", "X-Auth-Token"},
 						},
 					},
 					EntryPoints: []string{},
