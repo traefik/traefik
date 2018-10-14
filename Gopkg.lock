@@ -1366,6 +1366,7 @@
     "providers/dns/dnsimple",
     "providers/dns/dnsmadeeasy",
     "providers/dns/dnspod",
+    "providers/dns/dreamhost",
     "providers/dns/duckdns",
     "providers/dns/dyn",
     "providers/dns/exec",
@@ -1397,7 +1398,7 @@
     "providers/dns/vegadns",
     "providers/dns/vultr"
   ]
-  revision = "01c63ec08d1d85e3ad44c16dff95dadee26a81bc"
+  revision = "160d6fe60303699067faad57dc0b1e147ac499ef"
 
 [[projects]]
   branch = "master"
