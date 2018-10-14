@@ -89,13 +89,17 @@ type ChangeInfo struct {
 }
 
 // NewClient Creates a new client of NIFCLOUD DNS
-func NewClient(accessKey string, secretKey string) *Client {
+func NewClient(accessKey string, secretKey string) (*Client, error) {
+	if len(accessKey) == 0 || len(secretKey) == 0 {
+		return nil, errors.New("credentials missing")
+	}
+
 	return &Client{
 		accessKey:  accessKey,
 		secretKey:  secretKey,
 		BaseURL:    defaultBaseURL,
 		HTTPClient: &http.Client{},
-	}
+	}, nil
 }
 
 // Client client of NIFCLOUD DNS

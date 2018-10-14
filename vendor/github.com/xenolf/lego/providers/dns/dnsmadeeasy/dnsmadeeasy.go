@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -18,6 +17,7 @@ type Config struct {
 	BaseURL            string
 	APIKey             string
 	APISecret          string
+	Sandbox            bool
 	HTTPClient         *http.Client
 	PropagationTimeout time.Duration
 	PollingInterval    time.Duration
@@ -55,15 +55,8 @@ func NewDNSProvider() (*DNSProvider, error) {
 		return nil, fmt.Errorf("dnsmadeeasy: %v", err)
 	}
 
-	var baseURL string
-	if sandbox, _ := strconv.ParseBool(env.GetOrFile("DNSMADEEASY_SANDBOX")); sandbox {
-		baseURL = "https://api.sandbox.dnsmadeeasy.com/V2.0"
-	} else {
-		baseURL = "https://api.dnsmadeeasy.com/V2.0"
-	}
-
 	config := NewDefaultConfig()
-	config.BaseURL = baseURL
+	config.Sandbox = env.GetOrDefaultBool("DNSMADEEASY_SANDBOX", false)
 	config.APIKey = values["DNSMADEEASY_API_KEY"]
 	config.APISecret = values["DNSMADEEASY_API_SECRET"]
 
@@ -88,8 +81,15 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 		return nil, errors.New("dnsmadeeasy: the configuration of the DNS provider is nil")
 	}
 
-	if config.BaseURL == "" {
-		return nil, fmt.Errorf("dnsmadeeasy: base URL missing")
+	var baseURL string
+	if config.Sandbox {
+		baseURL = "https://api.sandbox.dnsmadeeasy.com/V2.0"
+	} else {
+		if len(config.BaseURL) > 0 {
+			baseURL = config.BaseURL
+		} else {
+			baseURL = "https://api.dnsmadeeasy.com/V2.0"
+		}
 	}
 
 	client, err := NewClient(config.APIKey, config.APISecret)
@@ -98,7 +98,7 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 	}
 
 	client.HTTPClient = config.HTTPClient
-	client.BaseURL = config.BaseURL
+	client.BaseURL = baseURL
 
 	return &DNSProvider{
 		client: client,

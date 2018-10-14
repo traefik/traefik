@@ -102,6 +102,10 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 		config.BaseURL = defaultBaseURL
 	}
 
+	if config.TTL < minTTL {
+		return nil, fmt.Errorf("gandiv5: invalid TTL, TTL (%d) must be greater than %d", config.TTL, minTTL)
+	}
+
 	return &DNSProvider{
 		config:          config,
 		inProgressFQDNs: make(map[string]inProgressInfo),
@@ -111,10 +115,6 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 // Present creates a TXT record using the specified parameters.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
-
-	if d.config.TTL < minTTL {
-		d.config.TTL = minTTL // 300 is gandi minimum value for ttl
-	}
 
 	// find authZone
 	authZone, err := findZoneByFqdn(fqdn, acme.RecursiveNameservers)
