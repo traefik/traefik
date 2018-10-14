@@ -175,6 +175,71 @@ func Test_toBool(t *testing.T) {
 	}
 }
 
+func TestEntryPoints_listValidIPRange(t *testing.T) {
+	testCases := []struct {
+		name    string
+		value   string
+		results []string
+	}{
+		{
+			name:    "no IPs",
+			value:   "",
+			results: []string{},
+		},
+		{
+			name:    "single valid IP",
+			value:   "1.2.3.4/32",
+			results: []string{"1.2.3.4/32"},
+		},
+		{
+			name:    "single invalid IP",
+			value:   "1.2.3/24",
+			results: []string{},
+		},
+		{
+			name:    "single invalid IP",
+			value:   "1.2.3.4/240",
+			results: []string{},
+		},
+		{
+			name:    "single invalid IP",
+			value:   "1000.2.3.4/24",
+			results: []string{},
+		},
+		{
+			name:    "single invalid IP",
+			value:   "1.2.3.4",
+			results: []string{},
+		},
+		{
+			name:    "multiple valid IPs",
+			value:   "1.2.3.4/24,2.3.4.5/16,255.255.255.255/32",
+			results: []string{"1.2.3.4/24", "2.3.4.5/16", "255.255.255.255/32"},
+		},
+		{
+			name:    "multiple valid and invalid IPs",
+			value:   "1.2.3.4/24,2.3.4.5/16,10.2500.23.53/32,10.101.23/234,3.4.6/32,1.2.3.4,255.255.255.255/32",
+			results: []string{"1.2.3.4/24", "2.3.4.5/16", "255.255.255.255/32"},
+		},
+		{
+			name:    "multiple invalid IPs",
+			value:   "10.2500.23.53/32,10.101.23/234,3.4.6/32,1.2.3.4",
+			results: []string{},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			result := listValidIPRange(test.value)
+
+			assert.Equal(t, test.results, result)
+		})
+	}
+}
+
 func TestEntryPoints_Set(t *testing.T) {
 	testCases := []struct {
 		name                   string
@@ -495,6 +560,25 @@ func TestEntryPoints_Set(t *testing.T) {
 			expectedEntryPoint: &EntryPoint{
 				Compress:         &Compress{},
 				ForwardedHeaders: &ForwardedHeaders{},
+			},
+		},
+		{
+			name: "exclude whitelist sourcerange IPs that are not valid",
+			expression: "Name:foo Whitelist.SourceRange:" +
+				"1.2.3.4/24," +
+				"2000.3.4.5/24," +
+				"2.3.4.5," +
+				"2.3.4.5/600," +
+				"100.200.100.200/24",
+			expectedEntryPointName: "foo",
+			expectedEntryPoint: &EntryPoint{
+				ForwardedHeaders: &ForwardedHeaders{Insecure: false},
+				WhiteList: &types.WhiteList{
+					SourceRange: []string{
+						"1.2.3.4/24",
+						"100.200.100.200/24",
+					},
+				},
 			},
 		},
 	}
