@@ -57,7 +57,9 @@ watch = true
 exposedByDefault = true
 
 # Use the IP address from the binded port instead of the inner network one.
-# For specific use-case :)
+# 
+# In case no IP address is attached to the binded port (or in case 
+# there is no bind), the inner network one will be used as a fallback.     
 #
 # Optional
 # Default: false
@@ -427,3 +429,25 @@ Segment labels override the default behavior.
     When running inside a container, Træfik will need network access through:
 
     `docker network connect <network> <traefik-container>`
+
+## usebindportip
+
+The default behavior of Træfik is to route requests to the IP/Port of the matching container.
+When setting `usebindportip` to true, you tell Træfik to use the IP/Port attached to the container's binding instead of the inner network IP/Port.
+
+When used in conjunction with `traefik.port` (that tells Traefik to route requests to a specific port), Traefik tries to find a binding with `traefik.port` port to select the container. If it can't find such a binding, Traefik falls back on the internal network IP of the container, but still uses the `traefik.port` that is set in the label.
+
+Below is a recap of the behavior of `usebindportip` in different situations.
+
+| traefik.port label | Container's binding     | Routes to       |
+|--------------------|-------------------------|-----------------|
+|          -         |           -             | IntIP:IntPort   |
+|          -         | ExtPort:IntPort         | IntIP:IntPort   |
+|          -         | ExtIp:ExtPort:IntPort   | ExtIp:ExtPort   |
+| LblPort            |           -             | IntIp:LblPort   |
+| LblPort            | ExtIp:ExtPort:LblPort   | ExtIp:ExtPort   |
+| LblPort            | ExtIp:ExtPort:OtherPort | IntIp:LblPort   |
+| LblPort            | ExtIp1:ExtPort1:IntPort1 & ExtIp2:LblPort:IntPort2   | ExtIp2:LblPort |
+
+!!! note
+    In the above table, ExtIp stands for "external IP found in the binding", IntIp stands for "internal network container's IP", ExtPort stands for "external Port found in the binding", and IntPort stands for "internal network container's port."
