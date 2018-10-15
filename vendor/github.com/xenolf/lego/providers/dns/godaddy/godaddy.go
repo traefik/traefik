@@ -86,6 +86,10 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 		return nil, fmt.Errorf("godaddy: credentials missing")
 	}
 
+	if config.TTL < minTTL {
+		return nil, fmt.Errorf("godaddy: invalid TTL, TTL (%d) must be greater than %d", config.TTL, minTTL)
+	}
+
 	return &DNSProvider{config: config}, nil
 }
 
@@ -103,16 +107,12 @@ func (d *DNSProvider) extractRecordName(fqdn, domain string) string {
 	return name
 }
 
-// Present creates a TXT record to fulfil the dns-01 challenge
+// Present creates a TXT record to fulfill the dns-01 challenge
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
 	domainZone, err := d.getZone(fqdn)
 	if err != nil {
 		return err
-	}
-
-	if d.config.TTL < minTTL {
-		d.config.TTL = minTTL
 	}
 
 	recordName := d.extractRecordName(fqdn, domainZone)

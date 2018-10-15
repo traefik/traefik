@@ -148,29 +148,25 @@ func getJSON(uri string, respBody interface{}) (http.Header, error) {
 func postJSON(j *jws, uri string, reqBody, respBody interface{}) (http.Header, error) {
 	jsonBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return nil, errors.New("Failed to marshal network message")
+		return nil, errors.New("failed to marshal network message")
 	}
 
 	resp, err := j.post(uri, jsonBytes)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to post JWS message. -> %v", err)
+		return nil, fmt.Errorf("failed to post JWS message. -> %v", err)
 	}
 
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= http.StatusBadRequest {
-
-		err := handleHTTPError(resp)
-
+		err = handleHTTPError(resp)
 		switch err.(type) {
-
 		case NonceError:
-
 			// Retry once if the nonce was invalidated
 
-			retryResp, err := j.post(uri, jsonBytes)
-			if err != nil {
-				return nil, fmt.Errorf("Failed to post JWS message. -> %v", err)
+			retryResp, errP := j.post(uri, jsonBytes)
+			if errP != nil {
+				return nil, fmt.Errorf("failed to post JWS message. -> %v", errP)
 			}
 
 			defer retryResp.Body.Close()

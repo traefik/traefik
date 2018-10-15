@@ -87,7 +87,7 @@ services:
 ```
 
 !!! warning
-    Enabling the Web UI with the `--api` flag might exposes configuration elements. You can read more about this on the [API/Dashboard's Security section](/configuration/api#security).
+    Enabling the Web UI with the `--api` flag might expose configuration elements. You can read more about this on the [API/Dashboard's Security section](/configuration/api#security).
 
 
 **That's it. Now you can launch Træfik!**

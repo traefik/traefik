@@ -3,7 +3,6 @@ package auroradns
 import (
 	"errors"
 	"fmt"
-	"os"
 	"sync"
 	"time"
 
@@ -53,7 +52,7 @@ func NewDNSProvider() (*DNSProvider, error) {
 	}
 
 	config := NewDefaultConfig()
-	config.BaseURL = os.Getenv("AURORA_ENDPOINT")
+	config.BaseURL = env.GetOrFile("AURORA_ENDPOINT")
 	config.UserID = values["AURORA_USER_ID"]
 	config.Key = values["AURORA_KEY"]
 

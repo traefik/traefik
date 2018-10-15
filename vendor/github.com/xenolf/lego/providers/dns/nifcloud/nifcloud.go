@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/xenolf/lego/acme"
@@ -52,7 +51,7 @@ func NewDNSProvider() (*DNSProvider, error) {
 	}
 
 	config := NewDefaultConfig()
-	config.BaseURL = os.Getenv("NIFCLOUD_DNS_ENDPOINT")
+	config.BaseURL = env.GetOrFile("NIFCLOUD_DNS_ENDPOINT")
 	config.AccessKey = values["NIFCLOUD_ACCESS_KEY_ID"]
 	config.SecretKey = values["NIFCLOUD_SECRET_ACCESS_KEY"]
 
@@ -78,7 +77,10 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 		return nil, errors.New("nifcloud: the configuration of the DNS provider is nil")
 	}
 
-	client := NewClient(config.AccessKey, config.SecretKey)
+	client, err := NewClient(config.AccessKey, config.SecretKey)
+	if err != nil {
+		return nil, fmt.Errorf("nifcloud: %v", err)
+	}
 
 	if config.HTTPClient != nil {
 		client.HTTPClient = config.HTTPClient

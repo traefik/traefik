@@ -49,6 +49,7 @@ const (
 	pathFrontendWhiteListIPStrategyExcludedIPs            = pathFrontendWhiteListIPStrategy + "/excludedips"
 
 	pathFrontendAuth                             = "/auth/"
+	pathFrontendAuthHeaderField                  = pathFrontendAuth + "headerfield"
 	pathFrontendAuthBasic                        = pathFrontendAuth + "basic/"
 	pathFrontendAuthBasicRemoveHeader            = pathFrontendAuthBasic + "removeheader"
 	pathFrontendAuthBasicUsers                   = pathFrontendAuthBasic + "users"
@@ -59,6 +60,7 @@ const (
 	pathFrontendAuthDigestUsersFile              = pathFrontendAuthDigest + "usersfile"
 	pathFrontendAuthForward                      = pathFrontendAuth + "forward/"
 	pathFrontendAuthForwardAddress               = pathFrontendAuthForward + "address"
+	pathFrontendAuthForwardAuthResponseHeaders   = pathFrontendAuthForward + ".authresponseheaders"
 	pathFrontendAuthForwardTLS                   = pathFrontendAuthForward + "tls/"
 	pathFrontendAuthForwardTLSCa                 = pathFrontendAuthForwardTLS + "ca"
 	pathFrontendAuthForwardTLSCaOptional         = pathFrontendAuthForwardTLS + "caoptional"
@@ -66,7 +68,6 @@ const (
 	pathFrontendAuthForwardTLSInsecureSkipVerify = pathFrontendAuthForwardTLS + "insecureskipverify"
 	pathFrontendAuthForwardTLSKey                = pathFrontendAuthForwardTLS + "key"
 	pathFrontendAuthForwardTrustForwardHeader    = pathFrontendAuthForward + "trustforwardheader"
-	pathFrontendAuthHeaderField                  = pathFrontendAuth + "headerfield"
 
 	pathFrontendEntryPoints            = "/entrypoints"
 	pathFrontendRedirectEntryPoint     = "/redirect/entrypoint"

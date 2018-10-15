@@ -59,7 +59,7 @@ func NewDNSProviderProgram(program string) (*DNSProvider, error) {
 	return NewDNSProviderConfig(&Config{Program: program})
 }
 
-// Present creates a TXT record to fulfil the dns-01 challenge.
+// Present creates a TXT record to fulfill the dns-01 challenge.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	var args []string
 	if d.config.Mode == "RAW" {

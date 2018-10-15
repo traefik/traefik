@@ -34,6 +34,7 @@ import (
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/pkg/errors"
+	lego "github.com/xenolf/lego/acme"
 )
 
 const (
@@ -258,6 +259,17 @@ func (gc *GlobalConfiguration) initACMEProvider() {
 		if gc.ACME.HTTPChallenge != nil && gc.ACME.TLSChallenge != nil {
 			log.Warn("Unable to use HTTP challenge and TLS challenge at the same time. Fallback to TLS challenge.")
 			gc.ACME.HTTPChallenge = nil
+		}
+
+		for _, domain := range gc.ACME.Domains {
+			if domain.Main != lego.UnFqdn(domain.Main) {
+				log.Warnf("FQDN detected, please remove the trailing dot: %s", domain.Main)
+			}
+			for _, san := range domain.SANs {
+				if san != lego.UnFqdn(san) {
+					log.Warnf("FQDN detected, please remove the trailing dot: %s", san)
+				}
+			}
 		}
 
 		if len(gc.ACME.DNSProvider) > 0 {

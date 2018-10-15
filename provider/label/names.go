@@ -47,6 +47,7 @@ const (
 	SuffixFrontendAuthDigestUsersFile                        = SuffixFrontendAuthDigest + ".usersFile"
 	SuffixFrontendAuthForward                                = SuffixFrontendAuth + ".forward"
 	SuffixFrontendAuthForwardAddress                         = SuffixFrontendAuthForward + ".address"
+	SuffixFrontendAuthForwardAuthResponseHeaders             = SuffixFrontendAuthForward + ".authResponseHeaders"
 	SuffixFrontendAuthForwardTLS                             = SuffixFrontendAuthForward + ".tls"
 	SuffixFrontendAuthForwardTLSCa                           = SuffixFrontendAuthForwardTLS + ".ca"
 	SuffixFrontendAuthForwardTLSCaOptional                   = SuffixFrontendAuthForwardTLS + ".caOptional"
@@ -150,6 +151,7 @@ const (
 	TraefikFrontendAuthDigestUsersFile                       = Prefix + SuffixFrontendAuthDigestUsersFile
 	TraefikFrontendAuthForward                               = Prefix + SuffixFrontendAuthForward
 	TraefikFrontendAuthForwardAddress                        = Prefix + SuffixFrontendAuthForwardAddress
+	TraefikFrontendAuthForwardAuthResponseHeaders            = Prefix + SuffixFrontendAuthForwardAuthResponseHeaders
 	TraefikFrontendAuthForwardTLS                            = Prefix + SuffixFrontendAuthForwardTLS
 	TraefikFrontendAuthForwardTLSCa                          = Prefix + SuffixFrontendAuthForwardTLSCa
 	TraefikFrontendAuthForwardTLSCaOptional                  = Prefix + SuffixFrontendAuthForwardTLSCaOptional

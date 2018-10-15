@@ -147,8 +147,9 @@ func getAuthDigest(labels map[string]string) *types.Digest {
 // getAuthForward Create Forward Auth from labels
 func getAuthForward(labels map[string]string) *types.Forward {
 	forwardAuth := &types.Forward{
-		Address:            GetStringValue(labels, TraefikFrontendAuthForwardAddress, ""),
-		TrustForwardHeader: GetBoolValue(labels, TraefikFrontendAuthForwardTrustForwardHeader, false),
+		Address:             GetStringValue(labels, TraefikFrontendAuthForwardAddress, ""),
+		AuthResponseHeaders: GetSliceStringValue(labels, TraefikFrontendAuthForwardAuthResponseHeaders),
+		TrustForwardHeader:  GetBoolValue(labels, TraefikFrontendAuthForwardTrustForwardHeader, false),
 	}
 
 	// TLS configuration

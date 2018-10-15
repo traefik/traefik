@@ -57,7 +57,9 @@ watch = true
 exposedByDefault = true
 
 # Use the IP address from the binded port instead of the inner network one.
-# For specific use-case :)
+# 
+# In case no IP address is attached to the binded port (or in case 
+# there is no bind), the inner network one will be used as a fallback.     
 #
 # Optional
 # Default: false
@@ -213,6 +215,7 @@ Labels can be used on containers to override default behavior.
 | `traefik.domain`                                                    | Sets the default base domain for the frontend rules. For more information, check the [Container Labels section's of the user guide "Let's Encrypt & Docker"](/user-guide/docker-and-lets-encrypt/#container-labels)              |
 | `traefik.enable=false`                                              | Disables this container in Træfik.                                                                                                                                                                                               |
 | `traefik.port=80`                                                   | Registers this port. Useful when the container exposes multiples ports.                                                                                                                                                          |
+| `traefik.tags=foo,bar,myTag`                                        | Adds Træfik tags to the Docker container/service to be used in [constraints](/configuration/commons/#constraints).                                                                                                               |
 | `traefik.protocol=https`                                            | Overrides the default `http` protocol                                                                                                                                                                                            |
 | `traefik.weight=10`                                                 | Assigns this weight to the container                                                                                                                                                                                             |
 | `traefik.backend=foo`                                               | Gives the name `foo` to the generated backend for this container.                                                                                                                                                                |
@@ -244,6 +247,7 @@ Labels can be used on containers to override default behavior.
 | `traefik.frontend.auth.digest.users=EXPR`                           | Sets the digest authentication to this frontend in CSV format: `User:Realm:Hash,User:Realm:Hash`.                                                                                                                                |
 | `traefik.frontend.auth.digest.usersFile=/path/.htdigest`            | Sets the digest authentication with an external file; if users and usersFile are provided, both are merged, with external file contents having precedence.                                                                       |
 | `traefik.frontend.auth.forward.address=https://example.com`         | Sets the URL of the authentication server.                                                                                                                                                                                       |
+| `traefik.frontend.auth.forward.authResponseHeaders=EXPR`            | Sets the forward authentication authResponseHeaders in CSV format: `X-Auth-User,X-Auth-Header`                                                                                                                                   |
 | `traefik.frontend.auth.forward.tls.ca=/path/ca.pem`                 | Sets the Certificate Authority (CA) for the TLS connection with the authentication server.                                                                                                                                       |
 | `traefik.frontend.auth.forward.tls.caOptional=true`                 | Checks the certificates if present but do not force to be signed by a specified Certificate Authority (CA).                                                                                                                      |
 | `traefik.frontend.auth.forward.tls.cert=/path/server.pem`           | Sets the Certificate for the TLS connection with the authentication server.                                                                                                                                                      |
@@ -347,6 +351,7 @@ Segment labels override the default behavior.
 | `traefik.<segment_name>.frontend.auth.digest.users=EXPR`                           | Same as `traefik.frontend.auth.digest.users`                           |
 | `traefik.<segment_name>.frontend.auth.digest.usersFile=/path/.htdigest`            | Same as `traefik.frontend.auth.digest.usersFile`                       |
 | `traefik.<segment_name>.frontend.auth.forward.address=https://example.com`         | Same as `traefik.frontend.auth.forward.address`                        |
+| `traefik.<segment_name>.frontend.auth.forward.authResponseHeaders=EXPR`            | Same as `traefik.frontend.auth.forward.authResponseHeaders`            |
 | `traefik.<segment_name>.frontend.auth.forward.tls.ca=/path/ca.pem`                 | Same as `traefik.frontend.auth.forward.tls.ca`                         |
 | `traefik.<segment_name>.frontend.auth.forward.tls.caOptional=true`                 | Same as `traefik.frontend.auth.forward.tls.caOptional`                 |
 | `traefik.<segment_name>.frontend.auth.forward.tls.cert=/path/server.pem`           | Same as `traefik.frontend.auth.forward.tls.cert`                       |
@@ -428,3 +433,25 @@ Segment labels override the default behavior.
     When running inside a container, Træfik will need network access through:
 
     `docker network connect <network> <traefik-container>`
+
+## usebindportip
+
+The default behavior of Træfik is to route requests to the IP/Port of the matching container.
+When setting `usebindportip` to true, you tell Træfik to use the IP/Port attached to the container's binding instead of the inner network IP/Port.
+
+When used in conjunction with the `traefik.port` label (that tells Træfik to route requests to a specific port), Træfik tries to find a binding with `traefik.port` port to select the container. If it can't find such a binding, Træfik falls back on the internal network IP of the container, but still uses the `traefik.port` that is set in the label.
+
+Below is a recap of the behavior of `usebindportip` in different situations.
+
+| traefik.port label | Container's binding                                | Routes to      |
+|--------------------|----------------------------------------------------|----------------|
+|          -         |           -                                        | IntIP:IntPort  |
+|          -         | ExtPort:IntPort                                    | IntIP:IntPort  |
+|          -         | ExtIp:ExtPort:IntPort                              | ExtIp:ExtPort  |
+| LblPort            |           -                                        | IntIp:LblPort  |
+| LblPort            | ExtIp:ExtPort:LblPort                              | ExtIp:ExtPort  |
+| LblPort            | ExtIp:ExtPort:OtherPort                            | IntIp:LblPort  |
+| LblPort            | ExtIp1:ExtPort1:IntPort1 & ExtIp2:LblPort:IntPort2 | ExtIp2:LblPort |
+
+!!! note
+    In the above table, ExtIp stands for "external IP found in the binding", IntIp stands for "internal network container's IP", ExtPort stands for "external Port found in the binding", and IntPort stands for "internal network container's port."

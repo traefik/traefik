@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/exoscale/egoscale"
@@ -56,7 +55,7 @@ func NewDNSProvider() (*DNSProvider, error) {
 	config := NewDefaultConfig()
 	config.APIKey = values["EXOSCALE_API_KEY"]
 	config.APISecret = values["EXOSCALE_API_SECRET"]
-	config.Endpoint = os.Getenv("EXOSCALE_ENDPOINT")
+	config.Endpoint = env.GetOrFile("EXOSCALE_ENDPOINT")
 
 	return NewDNSProviderConfig(config)
 }
@@ -93,7 +92,7 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 	return &DNSProvider{client: client, config: config}, nil
 }
 
-// Present creates a TXT record to fulfil the dns-01 challenge.
+// Present creates a TXT record to fulfill the dns-01 challenge.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
 	zone, recordName, err := d.FindZoneAndRecordName(fqdn, domain)

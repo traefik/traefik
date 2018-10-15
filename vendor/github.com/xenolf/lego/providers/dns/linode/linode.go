@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	dnsMinTTLSecs      = 300
+	minTTL             = 300
 	dnsUpdateFreqMins  = 15
 	dnsUpdateFudgeSecs = 120
 )
@@ -30,7 +30,7 @@ type Config struct {
 func NewDefaultConfig() *Config {
 	return &Config{
 		PollingInterval: env.GetOrDefaultSecond("LINODE_POLLING_INTERVAL", 15*time.Second),
-		TTL:             env.GetOrDefaultInt("LINODE_TTL", 60),
+		TTL:             env.GetOrDefaultInt("LINODE_TTL", minTTL),
 	}
 }
 
@@ -79,6 +79,10 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 		return nil, errors.New("linode: credentials missing")
 	}
 
+	if config.TTL < minTTL {
+		return nil, fmt.Errorf("linode: invalid TTL, TTL (%d) must be greater than %d", config.TTL, minTTL)
+	}
+
 	return &DNSProvider{
 		config: config,
 		client: dns.New(config.APIKey),
@@ -96,7 +100,7 @@ func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 	minsRemaining := dnsUpdateFreqMins - (time.Now().Minute() % dnsUpdateFreqMins)
 
 	timeout = (time.Duration(minsRemaining) * time.Minute) +
-		(dnsMinTTLSecs * time.Second) +
+		(minTTL * time.Second) +
 		(dnsUpdateFudgeSecs * time.Second)
 	interval = d.config.PollingInterval
 	return
@@ -110,7 +114,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 		return err
 	}
 
-	if _, err = d.client.CreateDomainResourceTXT(zone.domainID, acme.UnFqdn(fqdn), value, 60); err != nil {
+	if _, err = d.client.CreateDomainResourceTXT(zone.domainID, acme.UnFqdn(fqdn), value, d.config.TTL); err != nil {
 		return err
 	}
 
@@ -138,6 +142,7 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 			if err != nil {
 				return err
 			}
+
 			if resp.ResourceID != resource.ResourceID {
 				return errors.New("error deleting resource: resource IDs do not match")
 			}

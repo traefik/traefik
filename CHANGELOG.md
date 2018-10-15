@@ -1,5 +1,30 @@
 # Change Log
 
+## [v1.7.3](https://github.com/containous/traefik/tree/v1.7.3) (2018-10-15)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.2...v1.7.3)
+
+**Enhancements:**
+- Improve the CLI help ([#3996](https://github.com/containous/traefik/pull/3996) by [dduportal](https://github.com/dduportal))
+
+**Bug fixes:**
+- **[acme]** DNS challenge Cloudflare auth zone ([#4042](https://github.com/containous/traefik/pull/4042) by [ldez](https://github.com/ldez))
+- **[acme]** ACME DNS challenges ([#3998](https://github.com/containous/traefik/pull/3998) by [ldez](https://github.com/ldez))
+- **[acme]** Don&#39;t initalize ACME provider if storage is empty ([#3988](https://github.com/containous/traefik/pull/3988) by [nmengin](https://github.com/nmengin))
+- **[acme]** Fix: acme DNS providers ([#4021](https://github.com/containous/traefik/pull/4021) by [ldez](https://github.com/ldez))
+- **[acme]** Prevent some malformed errors in LE. ([#4015](https://github.com/containous/traefik/pull/4015) by [ldez](https://github.com/ldez))
+- **[authentication,consulcatalog,docker,ecs,etcd,kv,marathon,mesos,rancher]** Add the AuthResponseHeaders to the labels ([#3973](https://github.com/containous/traefik/pull/3973) by [Crypto89](https://github.com/Crypto89))
+- **[docker]** usebindportip can fall back on the container ip / port ([#4018](https://github.com/containous/traefik/pull/4018) by [geraldcroes](https://github.com/geraldcroes))
+- **[k8s]** Avoid flapping of multiple Ingress definitions ([#3862](https://github.com/containous/traefik/pull/3862) by [rtreffer](https://github.com/rtreffer))
+- **[middleware,server]** Log stack on panic ([#4033](https://github.com/containous/traefik/pull/4033) by [ldez](https://github.com/ldez))
+- **[middleware,server]** Fix recover from panic handler ([#4031](https://github.com/containous/traefik/pull/4031) by [mmatur](https://github.com/mmatur))
+- **[server,websocket]** Fix update oxy ([#4009](https://github.com/containous/traefik/pull/4009) by [mmatur](https://github.com/mmatur))
+
+**Documentation:**
+- **[docker]** Add tags label to Docker provider documentation ([#3896](https://github.com/containous/traefik/pull/3896) by [artheus](https://github.com/artheus))
+- **[docker]** Added two examples with labels in docker-compose.yml ([#3891](https://github.com/containous/traefik/pull/3891) by [pascalandy](https://github.com/pascalandy))
+- **[k8s]** Move buffering annotation documentation to service ([#3991](https://github.com/containous/traefik/pull/3991) by [ldez](https://github.com/ldez))
+- Fix a typo ([#3995](https://github.com/containous/traefik/pull/3995) by [arnydo](https://github.com/arnydo))
+
 ## [v1.7.2](https://github.com/containous/traefik/tree/v1.7.2) (2018-10-04)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.1...v1.7.2)
 

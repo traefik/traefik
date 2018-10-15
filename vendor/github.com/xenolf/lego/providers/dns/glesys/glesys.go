@@ -93,7 +93,12 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 		return nil, fmt.Errorf("glesys: incomplete credentials provided")
 	}
 
+	if config.TTL < minTTL {
+		return nil, fmt.Errorf("glesys: invalid TTL, TTL (%d) must be greater than %d", config.TTL, minTTL)
+	}
+
 	return &DNSProvider{
+		config:        config,
 		activeRecords: make(map[string]int),
 	}, nil
 }
@@ -102,9 +107,6 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
 
-	if d.config.TTL < minTTL {
-		d.config.TTL = minTTL // 60 is GleSYS minimum value for ttl
-	}
 	// find authZone
 	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
 	if err != nil {
@@ -159,8 +161,6 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 	return d.config.PropagationTimeout, d.config.PollingInterval
 }
-
-// POSTing/Marshalling/Unmarshalling
 
 func (d *DNSProvider) sendRequest(method string, resource string, payload interface{}) (*responseStruct, error) {
 	url := fmt.Sprintf("%s/%s", defaultBaseURL, resource)

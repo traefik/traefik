@@ -38,11 +38,11 @@ type Client struct {
 // NewClient creates a DNSMadeEasy client
 func NewClient(apiKey string, apiSecret string) (*Client, error) {
 	if apiKey == "" {
-		return nil, fmt.Errorf("DNSMadeEasy: credentials missing: API key")
+		return nil, fmt.Errorf("credentials missing: API key")
 	}
 
 	if apiSecret == "" {
-		return nil, fmt.Errorf("DNSMadeEasy: credentials missing: API secret")
+		return nil, fmt.Errorf("credentials missing: API secret")
 	}
 
 	return &Client{

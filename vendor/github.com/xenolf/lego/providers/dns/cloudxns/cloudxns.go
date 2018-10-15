@@ -28,8 +28,8 @@ func NewDefaultConfig() *Config {
 	client.Timeout = time.Second * time.Duration(env.GetOrDefaultInt("CLOUDXNS_HTTP_TIMEOUT", 30))
 
 	return &Config{
-		PropagationTimeout: env.GetOrDefaultSecond("AKAMAI_PROPAGATION_TIMEOUT", acme.DefaultPropagationTimeout),
-		PollingInterval:    env.GetOrDefaultSecond("AKAMAI_POLLING_INTERVAL", acme.DefaultPollingInterval),
+		PropagationTimeout: env.GetOrDefaultSecond("CLOUDXNS_PROPAGATION_TIMEOUT", acme.DefaultPropagationTimeout),
+		PollingInterval:    env.GetOrDefaultSecond("CLOUDXNS_POLLING_INTERVAL", acme.DefaultPollingInterval),
 		TTL:                env.GetOrDefaultInt("CLOUDXNS_TTL", 120),
 		HTTPClient:         &client,
 	}
@@ -76,10 +76,10 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 
 	client.HTTPClient = config.HTTPClient
 
-	return &DNSProvider{client: client}, nil
+	return &DNSProvider{client: client, config: config}, nil
 }
 
-// Present creates a TXT record to fulfil the dns-01 challenge.
+// Present creates a TXT record to fulfill the dns-01 challenge.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
 

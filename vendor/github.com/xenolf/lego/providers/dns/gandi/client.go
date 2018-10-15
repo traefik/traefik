@@ -82,8 +82,6 @@ type responseBool struct {
 	Value bool `xml:"params>param>value>boolean"`
 }
 
-// POSTing/Marshalling/Unmarshalling
-
 type rpcError struct {
 	faultCode   int
 	faultString string
