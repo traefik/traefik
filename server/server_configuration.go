@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/healthcheck"
@@ -163,7 +164,7 @@ func (s *Server) loadFrontendConfig(
 				postConfigs = append(postConfigs, postConfig)
 			}
 
-			fwd, err := s.buildForwarder(entryPointName, entryPoint, frontendName, frontend, responseModifier)
+			fwd, err := s.buildForwarder(entryPointName, entryPoint, frontendName, frontend, responseModifier, backend)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create the forwarder for frontend %s: %v", frontendName, err)
 			}
@@ -216,7 +217,7 @@ func (s *Server) loadFrontendConfig(
 
 func (s *Server) buildForwarder(entryPointName string, entryPoint *configuration.EntryPoint,
 	frontendName string, frontend *types.Frontend,
-	responseModifier modifyResponse) (http.Handler, error) {
+	responseModifier modifyResponse, backend *types.Backend) (http.Handler, error) {
 
 	roundTripper, err := s.getRoundTripper(entryPointName, frontend.PassTLSCert, entryPoint.TLS)
 	if err != nil {
@@ -228,6 +229,11 @@ func (s *Server) buildForwarder(entryPointName string, entryPoint *configuration
 		return nil, fmt.Errorf("error creating rewriter for frontend %s: %v", frontendName, err)
 	}
 
+	var flushInterval parse.Duration
+	if backend.ResponseForwarding != nil {
+		flushInterval = backend.ResponseForwarding.FlushInterval
+	}
+
 	var fwd http.Handler
 	fwd, err = forward.New(
 		forward.Stream(true),
@@ -236,6 +242,7 @@ func (s *Server) buildForwarder(entryPointName string, entryPoint *configuration
 		forward.Rewriter(rewriter),
 		forward.ResponseModifier(responseModifier),
 		forward.BufferPool(s.bufferPool),
+		forward.StreamingFlushInterval(time.Duration(flushInterval)),
 		forward.WebsocketConnectionClosedHook(func(req *http.Request, conn net.Conn) {
 			server := req.Context().Value(http.ServerContextKey).(*http.Server)
 			if server != nil {

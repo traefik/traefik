@@ -13,6 +13,7 @@ import (
 
 	"github.com/abronan/valkeyrie/store"
 	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/log"
 	traefiktls "github.com/containous/traefik/tls"
@@ -22,12 +23,18 @@ import (
 
 // Backend holds backend configuration.
 type Backend struct {
-	Servers        map[string]Server `json:"servers,omitempty"`
-	CircuitBreaker *CircuitBreaker   `json:"circuitBreaker,omitempty"`
-	LoadBalancer   *LoadBalancer     `json:"loadBalancer,omitempty"`
-	MaxConn        *MaxConn          `json:"maxConn,omitempty"`
-	HealthCheck    *HealthCheck      `json:"healthCheck,omitempty"`
-	Buffering      *Buffering        `json:"buffering,omitempty"`
+	Servers            map[string]Server   `json:"servers,omitempty"`
+	CircuitBreaker     *CircuitBreaker     `json:"circuitBreaker,omitempty"`
+	LoadBalancer       *LoadBalancer       `json:"loadBalancer,omitempty"`
+	MaxConn            *MaxConn            `json:"maxConn,omitempty"`
+	HealthCheck        *HealthCheck        `json:"healthCheck,omitempty"`
+	Buffering          *Buffering          `json:"buffering,omitempty"`
+	ResponseForwarding *ResponseForwarding `json:"forwardingResponse,omitempty"`
+}
+
+// ResponseForwarding holds configuration for the forward of the response
+type ResponseForwarding struct {
+	FlushInterval parse.Duration `json:"flushInterval,omitempty"`
 }
 
 // MaxConn holds maximum connection configuration
