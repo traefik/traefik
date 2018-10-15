@@ -435,7 +435,7 @@ Segment labels override the default behavior.
 The default behavior of Træfik is to route requests to the IP/Port of the matching container.
 When setting `usebindportip` to true, you tell Træfik to use the IP/Port attached to the container's binding instead of the inner network IP/Port.
 
-When used in conjunction with `traefik.port` (that tells Traefik to route requests to a specific port), Traefik tries to find a binding with `traefik.port` port to select the container. If it can't find such a binding, Traefik falls back on the internal network IP of the container, but still uses the `traefik.port` that is set in the label.
+When used in conjunction with `traefik.port` (that tells Træfik to route requests to a specific port), Træfik tries to find a binding with `traefik.port` port to select the container. If it can't find such a binding, Træfik falls back on the internal network IP of the container, but still uses the `traefik.port` that is set in the label.
 
 Below is a recap of the behavior of `usebindportip` in different situations.
 
