@@ -2,6 +2,7 @@ package configuration
 
 import (
 	"fmt"
+	"net"
 	"strconv"
 	"strings"
 
@@ -96,7 +97,7 @@ func (ep *EntryPoints) Set(value string) error {
 func makeWhiteList(result map[string]string) *types.WhiteList {
 	if rawRange, ok := result["whitelist_sourcerange"]; ok {
 		return &types.WhiteList{
-			SourceRange: strings.Split(rawRange, ","),
+			SourceRange: listValidIPRange(rawRange),
 			IPStrategy:  makeIPStrategy("whitelist_ipstrategy", result),
 		}
 	}
@@ -319,4 +320,15 @@ func toInt(conf map[string]string, key string) int {
 		return intVal
 	}
 	return 0
+}
+
+func listValidIPRange(rawRange string) []string {
+	sourceRange := []string{}
+	for _, ipRange := range strings.Split(rawRange, ",") {
+		if _, _, err := net.ParseCIDR(ipRange); err == nil {
+			sourceRange = append(sourceRange, ipRange)
+		}
+	}
+
+	return sourceRange
 }
