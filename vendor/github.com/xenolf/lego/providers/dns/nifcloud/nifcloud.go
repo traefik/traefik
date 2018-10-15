@@ -77,7 +77,10 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 		return nil, errors.New("nifcloud: the configuration of the DNS provider is nil")
 	}
 
-	client := NewClient(config.AccessKey, config.SecretKey)
+	client, err := NewClient(config.AccessKey, config.SecretKey)
+	if err != nil {
+		return nil, fmt.Errorf("nifcloud: %v", err)
+	}
 
 	if config.HTTPClient != nil {
 		client.HTTPClient = config.HTTPClient

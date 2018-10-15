@@ -412,7 +412,7 @@ DNSNames:
 // the whole certificate will fail.
 func (c *Client) ObtainCertificate(domains []string, bundle bool, privKey crypto.PrivateKey, mustStaple bool) (*CertificateResource, error) {
 	if len(domains) == 0 {
-		return nil, errors.New("No domains to obtain a certificate for")
+		return nil, errors.New("no domains to obtain a certificate for")
 	}
 
 	if bundle {

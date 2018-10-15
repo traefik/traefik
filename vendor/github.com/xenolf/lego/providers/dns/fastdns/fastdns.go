@@ -77,7 +77,7 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 	}
 
 	if config.ClientToken == "" || config.ClientSecret == "" || config.AccessToken == "" || config.Host == "" {
-		return nil, fmt.Errorf("FastDNS credentials are missing")
+		return nil, fmt.Errorf("fastdns: credentials are missing")
 	}
 
 	return &DNSProvider{config: config}, nil

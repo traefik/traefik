@@ -114,7 +114,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 		return fmt.Errorf("cloudflare: %v", err)
 	}
 
-	zoneID, err := d.client.ZoneIDByName(authZone)
+	zoneID, err := d.client.ZoneIDByName(acme.UnFqdn(authZone))
 	if err != nil {
 		return fmt.Errorf("cloudflare: failed to find zone %s: %v", authZone, err)
 	}
@@ -149,7 +149,7 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 		return fmt.Errorf("cloudflare: %v", err)
 	}
 
-	zoneID, err := d.client.ZoneIDByName(authZone)
+	zoneID, err := d.client.ZoneIDByName(acme.UnFqdn(authZone))
 	if err != nil {
 		return fmt.Errorf("cloudflare: failed to find zone %s: %v", authZone, err)
 	}

@@ -89,39 +89,7 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 		return nil, fmt.Errorf("rackspace: credentials missing")
 	}
 
-	authData := AuthData{
-		Auth: Auth{
-			APIKeyCredentials: APIKeyCredentials{
-				Username: config.APIUser,
-				APIKey:   config.APIKey,
-			},
-		},
-	}
-
-	body, err := json.Marshal(authData)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(http.MethodPost, config.BaseURL, bytes.NewReader(body))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	// client := &http.Client{Timeout: 30 * time.Second}
-	resp, err := config.HTTPClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("rackspace: error querying Identity API: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("rackspace: authentication failed: response code: %d", resp.StatusCode)
-	}
-
-	var identity Identity
-	err = json.NewDecoder(resp.Body).Decode(&identity)
+	identity, err := login(config)
 	if err != nil {
 		return nil, fmt.Errorf("rackspace: %v", err)
 	}
@@ -134,6 +102,7 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 			break
 		}
 	}
+
 	if dnsEndpoint == "" {
 		return nil, fmt.Errorf("rackspace: failed to populate DNS endpoint, check Rackspace API for changes")
 	}
@@ -149,6 +118,7 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 // Present creates a TXT record to fulfill the dns-01 challenge
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+
 	zoneID, err := d.getHostedZoneID(fqdn)
 	if err != nil {
 		return fmt.Errorf("rackspace: %v", err)
@@ -178,6 +148,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 // CleanUp removes the TXT record matching the specified parameters
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+
 	zoneID, err := d.getHostedZoneID(fqdn)
 	if err != nil {
 		return fmt.Errorf("rackspace: %v", err)
@@ -204,15 +175,6 @@ func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 // getHostedZoneID performs a lookup to get the DNS zone which needs
 // modifying for a given FQDN
 func (d *DNSProvider) getHostedZoneID(fqdn string) (int, error) {
-	// HostedZones represents the response when querying Rackspace DNS zones
-	type ZoneSearchResponse struct {
-		TotalEntries int `json:"totalEntries"`
-		HostedZones  []struct {
-			ID   int    `json:"id"`
-			Name string `json:"name"`
-		} `json:"domains"`
-	}
-
 	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
 	if err != nil {
 		return 0, err
@@ -250,8 +212,7 @@ func (d *DNSProvider) findTxtRecord(fqdn string, zoneID int) (*Record, error) {
 		return nil, err
 	}
 
-	recordsLength := len(records.Record)
-	switch recordsLength {
+	switch len(records.Record) {
 	case 1:
 	case 0:
 		return nil, fmt.Errorf("no TXT record found for %s", fqdn)
@@ -265,6 +226,7 @@ func (d *DNSProvider) findTxtRecord(fqdn string, zoneID int) (*Record, error) {
 // makeRequest is a wrapper function used for making DNS API requests
 func (d *DNSProvider) makeRequest(method, uri string, body io.Reader) (json.RawMessage, error) {
 	url := d.cloudDNSEndpoint + uri
+
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
@@ -291,4 +253,45 @@ func (d *DNSProvider) makeRequest(method, uri string, body io.Reader) (json.RawM
 	}
 
 	return r, nil
+}
+
+func login(config *Config) (*Identity, error) {
+	authData := AuthData{
+		Auth: Auth{
+			APIKeyCredentials: APIKeyCredentials{
+				Username: config.APIUser,
+				APIKey:   config.APIKey,
+			},
+		},
+	}
+
+	body, err := json.Marshal(authData)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, config.BaseURL, bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := config.HTTPClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("error querying Identity API: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("authentication failed: response code: %d", resp.StatusCode)
+	}
+
+	var identity Identity
+	err = json.NewDecoder(resp.Body).Decode(&identity)
+	if err != nil {
+		return nil, err
+	}
+
+	return &identity, nil
 }
