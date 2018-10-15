@@ -439,15 +439,15 @@ When used in conjunction with `traefik.port` (that tells Traefik to route reques
 
 Below is a recap of the behavior of `usebindportip` in different situations.
 
-| traefik.port label | Container's binding     | Routes to       |
-|--------------------|-------------------------|-----------------|
-|          -         |           -             | IntIP:IntPort   |
-|          -         | ExtPort:IntPort         | IntIP:IntPort   |
-|          -         | ExtIp:ExtPort:IntPort   | ExtIp:ExtPort   |
-| LblPort            |           -             | IntIp:LblPort   |
-| LblPort            | ExtIp:ExtPort:LblPort   | ExtIp:ExtPort   |
-| LblPort            | ExtIp:ExtPort:OtherPort | IntIp:LblPort   |
-| LblPort            | ExtIp1:ExtPort1:IntPort1 & ExtIp2:LblPort:IntPort2   | ExtIp2:LblPort |
+| traefik.port label | Container's binding                                | Routes to      |
+|--------------------|----------------------------------------------------|----------------|
+|          -         |           -                                        | IntIP:IntPort  |
+|          -         | ExtPort:IntPort                                    | IntIP:IntPort  |
+|          -         | ExtIp:ExtPort:IntPort                              | ExtIp:ExtPort  |
+| LblPort            |           -                                        | IntIp:LblPort  |
+| LblPort            | ExtIp:ExtPort:LblPort                              | ExtIp:ExtPort  |
+| LblPort            | ExtIp:ExtPort:OtherPort                            | IntIp:LblPort  |
+| LblPort            | ExtIp1:ExtPort1:IntPort1 & ExtIp2:LblPort:IntPort2 | ExtIp2:LblPort |
 
 !!! note
     In the above table, ExtIp stands for "external IP found in the binding", IntIp stands for "internal network container's IP", ExtPort stands for "external Port found in the binding", and IntPort stands for "internal network container's port."
