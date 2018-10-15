@@ -459,8 +459,9 @@ func (p *Provider) getAuthDigest(rootPath string) *types.Digest {
 // getAuthForward Create Forward Auth from path
 func (p *Provider) getAuthForward(rootPath string) *types.Forward {
 	forwardAuth := &types.Forward{
-		Address:            p.get("", rootPath, pathFrontendAuthForwardAddress),
-		TrustForwardHeader: p.getBool(false, rootPath, pathFrontendAuthForwardTrustForwardHeader),
+		Address:             p.get("", rootPath, pathFrontendAuthForwardAddress),
+		TrustForwardHeader:  p.getBool(false, rootPath, pathFrontendAuthForwardTrustForwardHeader),
+		AuthResponseHeaders: p.getList(rootPath, pathFrontendAuthForwardAuthResponseHeaders),
 	}
 
 	// TLS configuration
