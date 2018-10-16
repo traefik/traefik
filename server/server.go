@@ -627,7 +627,7 @@ func buildProxyProtocolListener(entryPoint *configuration.EntryPoint, listener n
 
 func (s *Server) buildInternalRouter(entryPointName string) *mux.Router {
 	internalMuxRouter := mux.NewRouter()
-	internalMuxRouter.StrictSlash(true)
+	internalMuxRouter.StrictSlash(!s.globalConfiguration.KeepTrailingSlash)
 	internalMuxRouter.SkipClean(true)
 
 	if entryPoint, ok := s.entryPoints[entryPointName]; ok && entryPoint.InternalRouter != nil {
