@@ -33,6 +33,13 @@
 #
 # checkNewVersion = false
 
+# Tells traefik whether it should keep the trailing slashes in the paths (e.g. /paths/) or redirect to the no trailing slash paths instead (/paths).
+#
+# Optional
+# Default: false
+#
+# keepTrailingSlash = false
+
 # Providers throttle duration.
 #
 # Optional
@@ -102,6 +109,25 @@ If you encounter 'too many open files' errors, you can either increase this valu
 
 - `defaultEntryPoints`: Entrypoints to be used by frontends that do not specify any entrypoint.  
 Each frontend can specify its own entrypoints.
+
+- `keepTrailingSlash`: Tells Træfik whether it should keep the trailing slashes that might be present in the paths of incoming requests (true), or if it should redirect to the slashless version of the URL (default behavior: false) 
+
+!!! note 
+    Beware that the value of keepTrailingSlash can have a significant impact on the way your frontend rules are interpreted.
+    The table below tries to sum up several behaviors depending on requests/configurations. 
+    The current default behavior is deprecated and kept for compatibility reasons. 
+    As a consequence, we encourage you to set keepTrailingSlash to true.
+    
+    | Incoming request     | keepTrailingSlash | Path:{value} | Behavior                              
+    |----------------------|-------------------|--------------|----------------------------|
+    | http://foo.com/path/ | false             | Path:/path/  | Proceeds with the request  |
+    | http://foo.com/path/ | false             | Path:/path   | 301 to http://foo.com/path |           
+    | http://foo.com/path  | false             | Path:/path/  | Proceeds with the request  |
+    | http://foo.com/path  | false             | Path:/path   | Proceeds with the request  |
+    | http://foo.com/path/ | true              | Path:/path/  | Proceeds with the request  |
+    | http://foo.com/path/ | true              | Path:/path   | 404                        |
+    | http://foo.com/path  | true              | Path:/path/  | 404                        |
+    | http://foo.com/path  | true              | Path:/path   | Proceeds with the request  |
 
 
 ## Constraints
