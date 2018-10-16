@@ -118,8 +118,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 
 	// Get new certificates list sorted per entrypoints
 	// Update certificates
-	entryPointsCertificates, err := s.loadHTTPSConfiguration(configurations, globalConfiguration.DefaultEntryPoints)
-	// FIXME error management
+	entryPointsCertificates := s.loadHTTPSConfiguration(configurations, globalConfiguration.DefaultEntryPoints)
 
 	// Sort routes and update certificates
 	for serverEntryPointName, serverEntryPoint := range serverEntryPoints {
@@ -558,17 +557,15 @@ func (s *Server) postLoadConfiguration() {
 }
 
 // loadHTTPSConfiguration add/delete HTTPS certificate managed dynamically
-func (s *Server) loadHTTPSConfiguration(configurations types.Configurations, defaultEntryPoints configuration.DefaultEntryPoints) (map[string]map[string]*tls.Certificate, error) {
+func (s *Server) loadHTTPSConfiguration(configurations types.Configurations, defaultEntryPoints configuration.DefaultEntryPoints) map[string]map[string]*tls.Certificate {
 	newEPCertificates := make(map[string]map[string]*tls.Certificate)
 	// Get all certificates
 	for _, config := range configurations {
 		if config.TLS != nil && len(config.TLS) > 0 {
-			if err := traefiktls.SortTLSPerEntryPoints(config.TLS, newEPCertificates, defaultEntryPoints); err != nil {
-				return nil, err
-			}
+			traefiktls.SortTLSPerEntryPoints(config.TLS, newEPCertificates, defaultEntryPoints)
 		}
 	}
-	return newEPCertificates, nil
+	return newEPCertificates
 }
 
 func (s *Server) buildServerEntryPoints() map[string]*serverEntryPoint {
