@@ -116,7 +116,7 @@ Each frontend can specify its own entrypoints.
     Beware that the value of `keepTrailingSlash` can have a significant impact on the way your frontend rules are interpreted.
     The table below tries to sum up several behaviors depending on requests/configurations. 
     The current default behavior is deprecated and kept for compatibility reasons. 
-    As a consequence, we encourage you to set keepTrailingSlash to true.
+    As a consequence, we encourage you to set `keepTrailingSlash` to true.
     
     | Incoming request     | keepTrailingSlash | Path:{value} | Behavior                              
     |----------------------|-------------------|--------------|----------------------------|
