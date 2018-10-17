@@ -304,7 +304,7 @@ All domains must have A/AAAA records pointing to Traefik.
 Each domain & SAN will lead to a certificate request.
 
 !!! note
-    The certificates for the domains listed in acme.domains are negotiated at traefik startup only.
+    The certificates for the domains listed in `acme.domains` are negotiated at traefik startup only.
 
 ```toml
 [acme]
