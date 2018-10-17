@@ -14,12 +14,12 @@ Let's take our example from the [overview](/#overview) again:
 
 > ![Architecture](img/architecture.png)
 
-Let's zoom on Træfik and have an overview of its internal architecture:
+Let's zoom on Traefik and have an overview of its internal architecture:
 
 
 ![Architecture](img/internal.png)
 
-- Incoming requests end on [entrypoints](#entrypoints), as the name suggests, they are the network entry points into Træfik (listening port, SSL, traffic redirection...).
+- Incoming requests end on [entrypoints](#entrypoints), as the name suggests, they are the network entry points into Traefik (listening port, SSL, traffic redirection...).
 - Traffic is then forwarded to a matching [frontend](#frontends). A frontend defines routes from [entrypoints](#entrypoints) to [backends](#backends).
 Routes are created using requests fields (`Host`, `Path`, `Headers`...) and can match or not a request.
 - The [frontend](#frontends) will then send the request to a [backend](#backends). A backend can be composed by one or more [servers](#servers), and by a load-balancing strategy.
@@ -27,7 +27,7 @@ Routes are created using requests fields (`Host`, `Path`, `Headers`...) and can 
 
 ### Entrypoints
 
-Entrypoints are the network entry points into Træfik.
+Entrypoints are the network entry points into Traefik.
 They can be defined using:
 
 - a port (80, 443...)
@@ -514,16 +514,16 @@ Additional http headers and hostname to health check request can be specified, f
 
 ## Configuration
 
-Træfik's configuration has two parts:
+Traefik's configuration has two parts:
 
-- The [static Træfik configuration](/basics#static-trfik-configuration) which is loaded only at the beginning.
-- The [dynamic Træfik configuration](/basics#dynamic-trfik-configuration) which can be hot-reloaded (no need to restart the process).
+- The [static Traefik configuration](/basics#static-traefik-configuration) which is loaded only at the beginning.
+- The [dynamic Traefik configuration](/basics#dynamic-traefik-configuration) which can be hot-reloaded (no need to restart the process).
 
-### Static Træfik configuration
+### Static Traefik configuration
 
 The static configuration is the global configuration which is setting up connections to configuration backends and entrypoints.
 
-Træfik can be configured using many configuration sources with the following precedence order.
+Traefik can be configured using many configuration sources with the following precedence order.
 Each item takes precedence over the item below it:
 
 - [Key-value store](/basics/#key-value-stores)
@@ -539,7 +539,7 @@ It means that arguments override configuration file, and key-value store overrid
 
 #### Configuration file
 
-By default, Træfik will try to find a `traefik.toml` in the following places:
+By default, Traefik will try to find a `traefik.toml` in the following places:
 
 - `/etc/traefik/`
 - `$HOME/.traefik/`
@@ -565,7 +565,7 @@ Note that all default values will be displayed as well.
 
 #### Key-value stores
 
-Træfik supports several Key-value stores:
+Traefik supports several Key-value stores:
 
 - [Consul](https://consul.io)
 - [etcd](https://coreos.com/etcd/)
@@ -574,7 +574,7 @@ Træfik supports several Key-value stores:
 
 Please refer to the [User Guide Key-value store configuration](/user-guide/kv-config/) section to get documentation on it.
 
-### Dynamic Træfik configuration
+### Dynamic Traefik configuration
 
 The dynamic configuration concerns :
 
@@ -583,9 +583,9 @@ The dynamic configuration concerns :
 - [Servers](/basics/#servers)
 - HTTPS Certificates
 
-Træfik can hot-reload those rules which could be provided by [multiple configuration backends](/configuration/commons).
+Traefik can hot-reload those rules which could be provided by [multiple configuration backends](/configuration/commons).
 
-We only need to enable `watch` option to make Træfik watch configuration backend changes and generate its configuration automatically.
+We only need to enable `watch` option to make Traefik watch configuration backend changes and generate its configuration automatically.
 Routes to services will be created and updated instantly at any changes.
 
 Please refer to the [configuration backends](/configuration/commons) section to get documentation on it.
@@ -599,10 +599,10 @@ Usage:
 traefik [command] [--flag=flag_argument]
 ```
 
-List of Træfik available commands with description :
+List of Traefik available commands with description :
 
 - `version` : Print version
-- `storeconfig` : Store the static Traefik configuration into a Key-value stores. Please refer to the [Store Træfik configuration](/user-guide/kv-config/#store-configuration-in-key-value-store) section to get documentation on it.
+- `storeconfig` : Store the static Traefik configuration into a Key-value stores. Please refer to the [Store Traefik configuration](/user-guide/kv-config/#store-configuration-in-key-value-store) section to get documentation on it.
 - `bug`: The easiest way to submit a pre-filled issue.
 - `healthcheck`: Calls Traefik `/ping` to check health.
 
@@ -627,7 +627,7 @@ docker run traefik[:version] --help
 
 ### Command: bug
 
-Here is the easiest way to submit a pre-filled issue on [Træfik GitHub](https://github.com/containous/traefik).
+Here is the easiest way to submit a pre-filled issue on [Traefik GitHub](https://github.com/containous/traefik).
 
 ```bash
 traefik bug
@@ -660,14 +660,14 @@ You can read the public proposal on this topic [here](https://github.com/contain
 
 ### Why ?
 
-In order to help us learn more about how Træfik is being used and improve it, we collect anonymous usage statistics from running instances.
+In order to help us learn more about how Traefik is being used and improve it, we collect anonymous usage statistics from running instances.
 Those data help us prioritize our developments and focus on what's more important (for example, which configuration backend is used and which is not used).
 
 ### What ?
 
-Once a day (the first call begins 10 minutes after the start of Træfik), we collect:
+Once a day (the first call begins 10 minutes after the start of Traefik), we collect:
 
-- the Træfik version
+- the Traefik version
 - a hash of the configuration
 - an **anonymous version** of the static configuration:
     - token, user name, password, URL, IP, domain, email, etc, are removed

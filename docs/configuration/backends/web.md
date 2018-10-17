@@ -3,7 +3,7 @@
 !!! danger "DEPRECATED"
     The web provider is deprecated, please use the [api](/configuration/api.md), the [ping](/configuration/ping.md), the [metrics](/configuration/metrics) and the [rest](/configuration/backends/rest.md) provider.
 
-Træfik can be configured:
+Traefik can be configured:
 
 - using a RESTful api.
 - to use a monitoring system (like Prometheus, DataDog or StatD, ...).
@@ -97,7 +97,7 @@ usersFile = "/path/to/.htdigest"
 
 ## Metrics
 
-You can enable Træfik to export internal metrics to different monitoring systems.
+You can enable Traefik to export internal metrics to different monitoring systems.
 
 ### Prometheus
 
@@ -239,8 +239,8 @@ recentErrors = 10
 
 | Path                                                            |     Method    | Description                                                                                        |
 |-----------------------------------------------------------------|:-------------:|----------------------------------------------------------------------------------------------------|
-| `/`                                                             |     `GET`     | Provides a simple HTML frontend of Træfik                                                          |
-| `/ping`                                                         | `GET`, `HEAD` | A simple endpoint to check for Træfik process liveness. Return a code `200` with the content: `OK` |
+| `/`                                                             |     `GET`     | Provides a simple HTML frontend of Traefik                                                          |
+| `/ping`                                                         | `GET`, `HEAD` | A simple endpoint to check for Traefik process liveness. Return a code `200` with the content: `OK` |
 | `/health`                                                       |     `GET`     | JSON health metrics                                                                                |
 | `/api`                                                          |     `GET`     | Configuration for all providers                                                                    |
 | `/api/providers`                                                |     `GET`     | Providers                                                                                          |
@@ -286,11 +286,11 @@ curl -s "http://localhost:8080/health" | jq .
 ```
 ```json
 {
-  // Træfik PID
+  // Traefik PID
   "pid": 2458,
-  // Træfik server uptime (formated time)
+  // Traefik server uptime (formated time)
   "uptime": "39m6.885931127s",
-  //  Træfik server uptime in seconds
+  //  Traefik server uptime in seconds
   "uptime_sec": 2346.885931127,
   // current server date
   "time": "2015-10-07 18:32:24.362238909 +0200 CEST",
@@ -300,7 +300,7 @@ curl -s "http://localhost:8080/health" | jq .
   "status_code_count": {
     "502": 1
   },
-  // count HTTP response status code since Træfik started
+  // count HTTP response status code since Traefik started
   "total_status_code_count": {
     "200": 7,
     "404": 21,

@@ -1,6 +1,6 @@
 # BoltDB Provider
 
-Træfik can be configured to use BoltDB as a provider.
+Traefik can be configured to use BoltDB as a provider.
 
 ```toml
 ################################################################

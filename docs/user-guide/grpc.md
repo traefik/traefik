@@ -4,9 +4,9 @@
 
 This section explains how to use Traefik as reverse proxy for gRPC application.
 
-### Træfik configuration
+### Traefik configuration
 
-At last, we configure our Træfik instance to use both self-signed certificates.
+At last, we configure our Traefik instance to use both self-signed certificates.
 
 ```toml
 defaultEntryPoints = ["https"]
@@ -39,7 +39,7 @@ defaultEntryPoints = ["https"]
 
 ### Conclusion
 
-We don't need specific configuration to use gRPC in Træfik, we just need to use `h2c` protocol, or use HTTPS communications to have HTTP2 with the backend.
+We don't need specific configuration to use gRPC in Traefik, we just need to use `h2c` protocol, or use HTTPS communications to have HTTP2 with the backend.
 
 ## With HTTPS
 
@@ -75,9 +75,9 @@ with
 Common Name (e.g. server FQDN or YOUR name) []: frontend.local
 ```
 
-### Træfik configuration
+### Traefik configuration
 
-At last, we configure our Træfik instance to use both self-signed certificates.
+At last, we configure our Traefik instance to use both self-signed certificates.
 
 ```toml
 defaultEntryPoints = ["https"]
@@ -152,7 +152,7 @@ err := s.Serve(lis)
 // ...
 ```
 
-Next we will modify gRPC Client to use our Træfik self-signed certificate:
+Next we will modify gRPC Client to use our Traefik self-signed certificate:
 
 ```go
 // ...

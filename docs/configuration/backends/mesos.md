@@ -1,6 +1,6 @@
 # Mesos Generic Provider
 
-Træfik can be configured to use Mesos as a provider.
+Traefik can be configured to use Mesos as a provider.
 
 ```toml
 ################################################################
@@ -109,7 +109,7 @@ The following labels can be defined on Mesos tasks. They adjust the behavior for
 | Label                                                               | Description                                                                                                                                                                                                                   |
 |---------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `traefik.domain`                                                    | Sets the default base domain for the frontend rules.                                                                                                                                                                               |
-| `traefik.enable=false`                                              | Disables this container in Træfik.                                                                                                                                                                                            |
+| `traefik.enable=false`                                              | Disables this container in Traefik.                                                                                                                                                                                            |
 | `traefik.port=80`                                                   | Registers this port. Useful when the application exposes multiple ports.                                                                                                                                                      |
 | `traefik.portName=web`                                              | Registers port by name in the application's ports array. Useful when the application exposes multiple ports.                                                                                                                  |
 | `traefik.portIndex=1`                                               | Registers port by index in the application's ports array. Useful when the application exposes multiple ports.                                                                                                                 |

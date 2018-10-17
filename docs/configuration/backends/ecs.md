@@ -1,6 +1,6 @@
 # ECS Provider
 
-Træfik can be configured to use Amazon ECS as a provider.
+Traefik can be configured to use Amazon ECS as a provider.
 
 ## Configuration
 
@@ -106,7 +106,7 @@ To enable constraints see [provider-specific constraints section](/configuration
 
 ## Policy
 
-Træfik needs the following policy to read ECS information:
+Traefik needs the following policy to read ECS information:
 
 ```json
 {
@@ -139,7 +139,7 @@ Labels can be used on task containers to override default behaviour:
 | Label                                                               | Description                                                                                                                                                                                                                   |
 |---------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `traefik.domain`                                                    | Sets the default base domain for frontend rules.                                                                                                                                                                                   |
-| `traefik.enable=false`                                              | Disables this container in Træfik.                                                                                                                                                                                            |
+| `traefik.enable=false`                                              | Disables this container in Traefik.                                                                                                                                                                                            |
 | `traefik.port=80`                                                   | Overrides the default `port` value. Overrides `NetworkBindings` from Docker Container                                                                                                                                         |
 | `traefik.protocol=https`                                            | Overrides the default `http` protocol                                                                                                                                                                                         |
 | `traefik.weight=10`                                                 | Assigns this weight to the container                                                                                                                                                                                          |

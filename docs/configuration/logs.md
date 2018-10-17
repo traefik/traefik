@@ -278,7 +278,7 @@ accessLogsFile = "log/access.log"
 
 ### CLF - Common Log Format
 
-By default, Træfik use the CLF (`common`) as access log format.
+By default, Traefik use the CLF (`common`) as access log format.
 
 ```html
 <remote_IP_address> - <client_user_name_if_available> [<timestamp>] "<request_method> <request_path> <request_protocol>" <origin_server_HTTP_status> <origin_server_content_size> "<request_referrer>" "<request_user_agent>" <number_of_requests_received_since_Traefik_started> "<Traefik_frontend_name>" "<Traefik_backend_URL>" <request_duration_in_ms>ms 

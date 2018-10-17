@@ -1,6 +1,6 @@
 # Azure Service Fabric Provider
 
-Træfik can be configured to use Azure Service Fabric as a provider.
+Traefik can be configured to use Azure Service Fabric as a provider.
 
 See [this repository for an example deployment package and further documentation.](https://aka.ms/traefikonsf)
 
@@ -47,13 +47,13 @@ refreshSeconds = 10
 
 ## Labels
 
-The provider uses labels to configure how services are exposed through Træfik.
+The provider uses labels to configure how services are exposed through Traefik.
 These can be set using Extensions and the Property Manager API
 
 #### Extensions
 
 Set labels with extensions through the services `ServiceManifest.xml` file.
-Here is an example of an extension setting Træfik labels:
+Here is an example of an extension setting Traefik labels:
 
 ```xml
 <StatelessServiceType ServiceTypeName="WebServiceType">
@@ -96,9 +96,9 @@ Labels, set through extensions or the property manager, can be used on services 
 
 | Label                                                      | Description                                                                                                                                                                                                               |
 |------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `traefik.enable=false`                                     | Disable this container in Træfik                                                                                                                                                                                          |
+| `traefik.enable=false`                                     | Disable this container in Traefik                                                                                                                                                                                          |
 | `traefik.backend.circuitbreaker.expression=EXPR`           | Create a [circuit breaker](/basics/#backends) to be used against the backend                                                                                                                                              |
-| `traefik.servicefabric.groupname`                               | Group all services with the same name into a single backend in Træfik                                                                                                                                                     |
+| `traefik.servicefabric.groupname`                               | Group all services with the same name into a single backend in Traefik                                                                                                                                                     |
 | `traefik.servicefabric.groupweight`                             | Set the weighting of the current services nodes in the backend group                                                                                                                                                      |
 | `traefik.servicefabric.enablelabeloverrides`                             | Toggle whether labels can be overridden using the Service Fabric Property Manager API                                                                                                                                                      |
 | `traefik.backend.healthcheck.path=/health`                 | Enable health check for the backend, hitting the container at `path`.                                                                                                                                                     |

@@ -1,6 +1,6 @@
 # Swarm cluster
 
-This section explains how to create a multi-host [swarm](https://docs.docker.com/swarm) cluster using [docker-machine](https://docs.docker.com/machine/) and how to deploy Træfik on it.
+This section explains how to create a multi-host [swarm](https://docs.docker.com/swarm) cluster using [docker-machine](https://docs.docker.com/machine/) and how to deploy Traefik on it.
 
 The cluster consists of:
 
@@ -71,9 +71,9 @@ eval $(docker-machine env --swarm mhs-demo0)
 docker network create --driver overlay --subnet=10.0.9.0/24 my-net
 ```
 
-## Deploy Træfik
+## Deploy Traefik
 
-Deploy Træfik:
+Deploy Traefik:
 
 ```shell
 docker $(docker-machine config mhs-demo0) run \
@@ -132,7 +132,7 @@ ba2c21488299        emilevauge/whoami   "/whoamI"                8 seconds ago  
 8fbc39271b4c        traefik             "/traefik -l DEBUG -c"   36 seconds ago      Up 37 seconds       192.168.99.101:80->80/tcp, 192.168.99.101:8080->8080/tcp   mhs-demo0/serene_bhabha
 ```
 
-## Access to your apps through Træfik
+## Access to your apps through Traefik
 
 ```shell
 curl -H Host:whoami0.traefik http://$(docker-machine ip mhs-demo0)
