@@ -22,7 +22,7 @@ import (
 )
 
 var _ provider.Provider = (*Provider)(nil)
-
+var existingTaskDef = make(map[string]*ecs.TaskDefinition)
 // Provider holds configurations of the provider.
 type Provider struct {
 	provider.BaseProvider `mapstructure:",squash" export:"true"`
@@ -400,17 +400,22 @@ func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, cl
 func (p *Provider) lookupTaskDefinitions(ctx context.Context, client *awsClient, taskDefArns map[string]*ecs.Task) (map[string]*ecs.TaskDefinition, error) {
 	taskDef := make(map[string]*ecs.TaskDefinition)
 	for arn, task := range taskDefArns {
-		resp, err := client.ecs.DescribeTaskDefinitionWithContext(ctx, &ecs.DescribeTaskDefinitionInput{
-			TaskDefinition: task.TaskDefinitionArn,
-		})
+		if definition, ok := existingTaskDef[arn]; ok {
+			taskDef[arn] = definition
+			log.Debugf("Found existing task definition for %s. Skipping the call", arn)
+		} else {
+			resp, err := client.ecs.DescribeTaskDefinitionWithContext(ctx, &ecs.DescribeTaskDefinitionInput{
+				TaskDefinition: task.TaskDefinitionArn,
+			})
 
-		if err != nil {
-			log.Errorf("Unable to describe task definition: %s", err)
-			return nil, err
+			if err != nil {
+				log.Errorf("Unable to describe task definition: %s", err)
+				return nil, err
+			}
+			taskDef[arn] = resp.TaskDefinition
 		}
-
-		taskDef[arn] = resp.TaskDefinition
 	}
+	existingTaskDef = taskDef
 	return taskDef, nil
 }
 
