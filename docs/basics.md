@@ -516,8 +516,8 @@ Additional http headers and hostname to health check request can be specified, f
 
 Traefik's configuration has two parts:
 
-- The [static Traefik configuration](/basics#static-trfik-configuration) which is loaded only at the beginning.
-- The [dynamic Traefik configuration](/basics#dynamic-trfik-configuration) which can be hot-reloaded (no need to restart the process).
+- The [static Traefik configuration](/basics#static-traefik-configuration) which is loaded only at the beginning.
+- The [dynamic Traefik configuration](/basics#dynamic-traefik-configuration) which can be hot-reloaded (no need to restart the process).
 
 ### Static Traefik configuration
 

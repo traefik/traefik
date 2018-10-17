@@ -85,7 +85,7 @@ _(But if you'd rather configure some of your routes manually, Traefik supports t
 
 ## Quickstart
 
-To get your hands on Traefik, you can use the [5-Minute Quickstart](http://docs.traefik.io/#the-trfik-quickstart-using-docker) in our documentation (you will need Docker).
+To get your hands on Traefik, you can use the [5-Minute Quickstart](http://docs.traefik.io/#the-traefik-quickstart-using-docker) in our documentation (you will need Docker).
 
 Alternatively, if you don't want to install anything on your computer, you can try Traefik online in this great [Katacoda tutorial](https://www.katacoda.com/courses/traefik/deploy-load-balancer) that shows how to load balance requests between multiple Docker containers. 
 
