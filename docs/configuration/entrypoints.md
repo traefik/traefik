@@ -235,8 +235,8 @@ If you need to add or remove TLS certificates while Traefik is started, Dynamic 
 ## TLS Mutual Authentication
 
 TLS Mutual Authentication can be `optional` or not.
-If it's `optional`, Træfik will authorize connection with certificates not signed by a specified Certificate Authority (CA).
-Otherwise, Træfik will only accept clients that present a certificate signed by a specified Certificate Authority (CA).
+If it's `optional`, Traefik will authorize connection with certificates not signed by a specified Certificate Authority (CA).
+Otherwise, Traefik will only accept clients that present a certificate signed by a specified Certificate Authority (CA).
 `ClientCAFiles` can be configured with multiple `CA:s` in the same file or use multiple files containing one or several `CA:s`.
 The `CA:s` has to be in PEM format.
 
@@ -486,7 +486,7 @@ To enable [ProxyProtocol](https://www.haproxy.org/download/1.8/doc/proxy-protoco
 Only IPs in `trustedIPs` will lead to remote client address replacement: you should declare your load-balancer IP or CIDR range here (in testing environment, you can trust everyone using `insecure = true`).
 
 !!! danger
-    When queuing Træfik behind another load-balancer, be sure to carefully configure Proxy Protocol on both sides.
+    When queuing Traefik behind another load-balancer, be sure to carefully configure Proxy Protocol on both sides.
     Otherwise, it could introduce a security risk in your system by forging requests.
 
 ```toml

@@ -162,7 +162,7 @@ func HasPrefix(labels map[string]string, prefix string) bool {
 	return false
 }
 
-// IsEnabled Check if a container is enabled in Træfik
+// IsEnabled Check if a container is enabled in Traefik
 func IsEnabled(labels map[string]string, exposedByDefault bool) bool {
 	return GetBoolValue(labels, TraefikEnable, exposedByDefault)
 }

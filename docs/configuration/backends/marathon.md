@@ -1,6 +1,6 @@
 # Marathon Provider
 
-Træfik can be configured to use Marathon as a provider.
+Traefik can be configured to use Marathon as a provider.
 
 See also [Marathon user guide](/user-guide/marathon).
 
@@ -196,7 +196,7 @@ The following labels can be defined on Marathon applications. They adjust the be
 | Label                                                               | Description                                                                                                                                                                                                                   |
 |---------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `traefik.domain`                                                    | Sets the default base domain used for the frontend rules.                                                                                                                                                                          |
-| `traefik.enable=false`                                              | Disables this container in Træfik.                                                                                                                                                                                            |
+| `traefik.enable=false`                                              | Disables this container in Traefik.                                                                                                                                                                                            |
 | `traefik.port=80`                                                   | Registers this port. Useful when the container exposes multiples ports.                                                                                                                                                       |
 | `traefik.portIndex=1`                                               | Registers port by index in the application's ports array. Useful when the application exposes multiple ports.                                                                                                                 |
 | `traefik.protocol=https`                                            | Overrides the default `http` protocol.                                                                                                                                                                                        |

@@ -478,7 +478,7 @@ func datastoreContains(datastore *cluster.Datastore, expectedValue string) func(
 func (s *ConsulSuite) TestSNIDynamicTlsConfig(c *check.C) {
 	s.setupConsul(c)
 	consulHost := s.composeProject.Container(c, "consul").NetworkSettings.IPAddress
-	// start Træfik
+	// start Traefik
 	file := s.adaptFile(c, "fixtures/consul/simple_https.toml", struct{ ConsulHost string }{consulHost})
 	defer os.Remove(file)
 	cmd, display := s.traefikCmd(withConfigFile(file))

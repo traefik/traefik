@@ -1,6 +1,6 @@
 # Eureka Provider
 
-Træfik can be configured to use Eureka as a provider.
+Traefik can be configured to use Eureka as a provider.
 
 ```toml
 ################################################################

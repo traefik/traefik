@@ -279,7 +279,7 @@ Here is a list of supported `provider`s, that can automate the DNS verification,
 | [Lightsail](https://aws.amazon.com/lightsail/)         | `lightsail`    | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `DNS_ZONE`                                                                        | Not tested yet                 |
 | [Linode](https://www.linode.com)                       | `linode`       | `LINODE_API_KEY`                                                                                                                | Not tested yet                 |
 | [Linode v4](https://www.linode.com)                    | `linodev4`     | `LINODE_TOKEN`                                                                                                                  | Not tested yet                 |
-| manual                                                 | -              | none, but you need to run Træfik interactively, turn on `acmeLogging` to see instructions and press <kbd>Enter</kbd>.           | YES                            |
+| manual                                                 | -              | none, but you need to run Traefik interactively, turn on `acmeLogging` to see instructions and press <kbd>Enter</kbd>.           | YES                            |
 | [Namecheap](https://www.namecheap.com)                 | `namecheap`    | `NAMECHEAP_API_USER`, `NAMECHEAP_API_KEY`                                                                                       | YES                            |
 | [name.com](https://www.name.com/)                      | `namedotcom`   | `NAMECOM_USERNAME`, `NAMECOM_API_TOKEN`, `NAMECOM_SERVER`                                                                       | Not tested yet                 |
 | [Netcup](https://www.netcup.eu/)                       | `netcup`       | `NETCUP_CUSTOMER_NUMBER`, `NETCUP_API_KEY`, `NETCUP_API_PASSWORD`                                                               | Not tested yet                 |
@@ -299,7 +299,7 @@ Here is a list of supported `provider`s, that can automate the DNS verification,
 ### `domains`
 
 You can provide SANs (alternative domains) to each main domain.
-All domains must have A/AAAA records pointing to Træfik.
+All domains must have A/AAAA records pointing to Traefik.
 Each domain & SAN will lead to a certificate request.
 
 ```toml
@@ -341,7 +341,7 @@ Due to ACME limitation it is not possible to define wildcards in SANs (alternati
 Most likely the root domain should receive a certificate too, so it needs to be specified as SAN and 2 `DNS-01` challenges are executed.
 In this case the generated DNS TXT record for both domains is the same.
 Eventhough this behaviour is [DNS RFC](https://community.letsencrypt.org/t/wildcard-issuance-two-txt-records-for-the-same-name/54528/2) compliant, it can lead to problems as all DNS providers keep DNS records cached for a certain time (TTL) and this TTL can be superior to the challenge timeout making the `DNS-01` challenge fail.
-The Træfik ACME client library [LEGO](https://github.com/xenolf/lego) supports some but not all DNS providers to work around this issue.
+The Traefik ACME client library [LEGO](https://github.com/xenolf/lego) supports some but not all DNS providers to work around this issue.
 The [`provider` table](/configuration/acme/#provider) indicates if they allow generating certificates for a wildcard domain and its root domain.
 
 ### `onDemand` (Deprecated)
@@ -421,7 +421,7 @@ docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 ```
 
 !!! warning
-    This file cannot be shared across multiple instances of Træfik at the same time. Please use a [KV Store entry](/configuration/acme/#as-a-key-value-store-entry) instead.
+    This file cannot be shared across multiple instances of Traefik at the same time. Please use a [KV Store entry](/configuration/acme/#as-a-key-value-store-entry) instead.
 
 #### As a Key Value Store Entry
 
@@ -443,8 +443,8 @@ During migration from ACME v1 to ACME v2, using a storage file, a backup of the 
 For example: if `acme.storage`'s value is `/etc/traefik/acme/acme.json`, the backup file will be `/etc/traefik/acme/acme.json.bak`.
 
 !!! note
-    When Træfik is launched in a container, the storage file's parent directory needs to be mounted to be able to access the backup file on the host.
-    Otherwise the backup file will be deleted when the container is stopped. Træfik will only generate it once!
+    When Traefik is launched in a container, the storage file's parent directory needs to be mounted to be able to access the backup file on the host.
+    Otherwise the backup file will be deleted when the container is stopped. Traefik will only generate it once!
 
 ### `dnsProvider` (Deprecated)
 
@@ -465,4 +465,4 @@ If Let's Encrypt is not reachable, these certificates will be used:
   1. Provided certificates
 
 !!! note
-    For new (sub)domains which need Let's Encrypt authentification, the default Træfik certificate will be used until Træfik is restarted.
+    For new (sub)domains which need Let's Encrypt authentification, the default Traefik certificate will be used until Traefik is restarted.

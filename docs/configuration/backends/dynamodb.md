@@ -1,6 +1,6 @@
 # DynamoDB Provider
 
-Træfik can be configured to use Amazon DynamoDB as a provider.
+Traefik can be configured to use Amazon DynamoDB as a provider.
 
 ## Configuration
 

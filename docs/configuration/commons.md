@@ -132,9 +132,9 @@ Each frontend can specify its own entrypoints.
 
 ## Constraints
 
-In a micro-service architecture, with a central service discovery, setting constraints limits Træfik scope to a smaller number of routes.
+In a micro-service architecture, with a central service discovery, setting constraints limits Traefik scope to a smaller number of routes.
 
-Træfik filters services according to service attributes/tags set in your providers.
+Traefik filters services according to service attributes/tags set in your providers.
 
 Supported filters:
 
@@ -255,7 +255,7 @@ These can "burst" up to 10 and 200 in each period respectively.
 ## Buffering
 
 In some cases request/buffering can be enabled for a specific backend.
-By enabling this, Træfik will read the entire request into memory (possibly buffering large requests into disk) and will reject requests that are over a specified limit.
+By enabling this, Traefik will read the entire request into memory (possibly buffering large requests into disk) and will reject requests that are over a specified limit.
 This may help services deal with large data (multipart/form-data for example) more efficiently and should minimise time spent when sending data to a backend server.
 
 For more information please check [oxy/buffer](http://godoc.org/github.com/vulcand/oxy/buffer) documentation.

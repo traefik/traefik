@@ -155,7 +155,7 @@ func (s *EtcdSuite) TestNominalConfiguration(c *check.C) {
 	})
 	c.Assert(err, checker.IsNil)
 
-	// wait for Træfik
+	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8081/api/providers", 60*time.Second, try.BodyContains("Path:/test"))
 	c.Assert(err, checker.IsNil)
 
@@ -213,7 +213,7 @@ func (s *EtcdSuite) TestGlobalConfiguration(c *check.C) {
 	})
 	c.Assert(err, checker.IsNil)
 
-	// start Træfik
+	// start Traefik
 	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/simple_web.toml"),
 		"--etcd",
@@ -293,7 +293,7 @@ func (s *EtcdSuite) TestGlobalConfiguration(c *check.C) {
 
 func (s *EtcdSuite) TestCertificatesContentWithSNIConfigHandshake(c *check.C) {
 	etcdHost := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress
-	// start Træfik
+	// start Traefik
 	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/simple_web.toml"),
 		"--etcd",
@@ -411,7 +411,7 @@ func (s *EtcdSuite) TestCommandStoreConfig(c *check.C) {
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 
-	// wait for Træfik finish without error
+	// wait for Traefik finish without error
 	cmd.Wait()
 
 	// CHECK
@@ -437,7 +437,7 @@ func (s *EtcdSuite) TestCommandStoreConfig(c *check.C) {
 
 func (s *EtcdSuite) TestSNIDynamicTlsConfig(c *check.C) {
 	etcdHost := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress
-	// start Træfik
+	// start Traefik
 	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/etcd/simple_https.toml"),
 		"--etcd",
