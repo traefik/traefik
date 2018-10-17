@@ -15,7 +15,7 @@
 
 | Path    | Method        | Description                                                                                        |
 |---------|---------------|----------------------------------------------------------------------------------------------------|
-| `/ping` | `GET`, `HEAD` | A simple endpoint to check for Træfik process liveness. Return a code `200` with the content: `OK` |
+| `/ping` | `GET`, `HEAD` | A simple endpoint to check for Traefik process liveness. Return a code `200` with the content: `OK` |
 
 
 !!! warning

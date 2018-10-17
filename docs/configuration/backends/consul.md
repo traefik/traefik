@@ -1,6 +1,6 @@
 # Consul Key-Value Provider
 
-Træfik can be configured to use Consul as a provider.
+Traefik can be configured to use Consul as a provider.
 
 ```toml
 ################################################################

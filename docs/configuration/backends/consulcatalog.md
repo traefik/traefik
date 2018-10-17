@@ -1,6 +1,6 @@
 # Consul Catalog Provider
 
-Træfik can be configured to use service discovery catalog of Consul as a provider.
+Traefik can be configured to use service discovery catalog of Consul as a provider.
 
 ```toml
 ################################################################
@@ -96,7 +96,7 @@ Additional settings can be defined using Consul Catalog tags.
 
 | Label                                                                | Description                                                                                                                                                                                                                   |
 |----------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `<prefix>.enable=false`                                              | Disables this container in Træfik.                                                                                                                                                                                            |
+| `<prefix>.enable=false`                                              | Disables this container in Traefik.                                                                                                                                                                                            |
 | `<prefix>.protocol=https`                                            | Overrides the default `http` protocol.                                                                                                                                                                                        |
 | `<prefix>.weight=10`                                                 | Assigns this weight to the container.                                                                                                                                                                                         |
 | `traefik.backend.buffering.maxRequestBodyBytes=0`                    | See [buffering](/configuration/commons/#buffering) section.                                                                                                                                                                   |
@@ -214,7 +214,7 @@ If you need to support multiple frontends for a service, for example when having
 
 ### Examples
 
-If you want that Træfik uses Consul tags correctly you need to defined them like that:
+If you want that Traefik uses Consul tags correctly you need to defined them like that:
 
 ```js
 traefik.enable=true
@@ -222,7 +222,7 @@ traefik.tags=api
 traefik.tags=external
 ```
 
-If the prefix defined in Træfik configuration is `bla`, tags need to be defined like that:
+If the prefix defined in Traefik configuration is `bla`, tags need to be defined like that:
 
 ```js
 bla.enable=true

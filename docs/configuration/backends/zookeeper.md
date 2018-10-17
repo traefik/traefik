@@ -1,6 +1,6 @@
 # Zookeeper Provider
 
-Træfik can be configured to use Zookeeper as a provider.
+Traefik can be configured to use Zookeeper as a provider.
 
 ```toml
 ################################################################

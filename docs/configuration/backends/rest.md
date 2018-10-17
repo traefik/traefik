@@ -1,6 +1,6 @@
 # Rest Provider
 
-Træfik can be configured:
+Traefik can be configured:
 
 - using a RESTful api.
 

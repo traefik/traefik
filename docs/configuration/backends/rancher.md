@@ -1,6 +1,6 @@
 # Rancher Provider
 
-Træfik can be configured to use Rancher as a provider.
+Traefik can be configured to use Rancher as a provider.
 
 ## Global Configuration
 
@@ -141,7 +141,7 @@ Labels can be used on task containers to override default behavior:
 | Label                                                               | Description                                                                                                                                                                                                                      |
 |---------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `traefik.domain`                                                    | Sets the default base domain for the frontend rules.                                                                                                                                                                                  |
-| `traefik.enable=false`                                              | Disables this container in Træfik.                                                                                                                                                                                               |
+| `traefik.enable=false`                                              | Disables this container in Traefik.                                                                                                                                                                                               |
 | `traefik.port=80`                                                   | Registers this port. Useful when the container exposes multiple ports.                                                                                                                                                           |
 | `traefik.protocol=https`                                            | Overrides the default `http` protocol.                                                                                                                                                                                           |
 | `traefik.weight=10`                                                 | Assigns this weight to the container.                                                                                                                                                                                            |

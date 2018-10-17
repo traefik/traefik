@@ -1,15 +1,15 @@
 # Clustering / High Availability on Docker Swarm with Consul
 
-This guide explains how to use Træfik in high availability mode in a Docker Swarm and with Let's Encrypt.
+This guide explains how to use Traefik in high availability mode in a Docker Swarm and with Let's Encrypt.
 
-Why do we need Træfik in cluster mode? Running multiple instances should work out of the box?
+Why do we need Traefik in cluster mode? Running multiple instances should work out of the box?
 
-If you want to use Let's Encrypt with Træfik, sharing configuration or TLS certificates between many Træfik instances, you need Træfik cluster/HA.
+If you want to use Let's Encrypt with Traefik, sharing configuration or TLS certificates between many Traefik instances, you need Traefik cluster/HA.
 
 Ok, could we mount a shared volume used by all my instances? Yes, you can, but it will not work.
 When you use Let's Encrypt, you need to store certificates, but not only.
-When Træfik generates a new certificate, it configures a challenge and once Let's Encrypt will verify the ownership of the domain, it will ping back the challenge.
-If the challenge is not known by other Træfik instances, the validation will fail.
+When Traefik generates a new certificate, it configures a challenge and once Let's Encrypt will verify the ownership of the domain, it will ping back the challenge.
+If the challenge is not known by other Traefik instances, the validation will fail.
 
 For more information about the challenge: [Automatic Certificate Management Environment (ACME)](https://github.com/ietf-wg-acme/acme/blob/master/draft-ietf-acme-acme.md#http-challenge)
 
@@ -17,12 +17,12 @@ For more information about the challenge: [Automatic Certificate Management Envi
 
 You will need a working Docker Swarm cluster.
 
-## Træfik configuration
+## Traefik configuration
 
 In this guide, we will not use a TOML configuration file, but only command line flag.
 With that, we can use the base image without mounting configuration file or building custom image.
 
-What Træfik should do:
+What Traefik should do:
 
 - Listen to 80 and 443
 - Redirect HTTP traffic to HTTPS
@@ -64,7 +64,7 @@ Let's Encrypt needs 4 parameters: an TLS entry point to listen to, a non-TLS ent
 
 To enable Let's Encrypt support, you need to add `--acme` flag.
 
-Now, Træfik needs to know where to store the certificates, we can choose between a key in a Key-Value store, or a file path: `--acme.storage=my/key` or `--acme.storage=/path/to/acme.json`.
+Now, Traefik needs to know where to store the certificates, we can choose between a key in a Key-Value store, or a file path: `--acme.storage=my/key` or `--acme.storage=/path/to/acme.json`.
 
 The `acme.httpChallenge.entryPoint` flag enables the `HTTP-01` challenge and specifies the entryPoint to use during the challenges.
 
@@ -143,9 +143,9 @@ networks:
 
 ## Migrate configuration to Consul
 
-We created a special Træfik command to help configuring your Key Value store from a Træfik TOML configuration file and/or CLI flags.
+We created a special Traefik command to help configuring your Key Value store from a Traefik TOML configuration file and/or CLI flags.
 
-## Deploy a Træfik cluster
+## Deploy a Traefik cluster
 
 The best way we found is to have an initializer service.
 This service will push the config to Consul via the `storeconfig` sub-command.
@@ -173,7 +173,7 @@ The initializer in a docker-compose file will be:
       - consul
 ```
 
-And now, the Træfik part will only have the Consul configuration.
+And now, the Traefik part will only have the Consul configuration.
 
 ```yaml
   traefik:
@@ -189,10 +189,10 @@ And now, the Træfik part will only have the Consul configuration.
 ```
 
 !!! note
-    For Træfik <1.5.0 add `acme.storage=traefik/acme/account` because Træfik is not reading it from Consul.
+    For Traefik <1.5.0 add `acme.storage=traefik/acme/account` because Traefik is not reading it from Consul.
 
 If you have some update to do, update the initializer service and re-deploy it.
-The new configuration will be stored in Consul, and you need to restart the Træfik node: `docker service update --force traefik_traefik`.
+The new configuration will be stored in Consul, and you need to restart the Traefik node: `docker service update --force traefik_traefik`.
 
 ## Full docker-compose file
 

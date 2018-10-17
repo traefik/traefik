@@ -32,7 +32,7 @@ traefik*
 ##### Setting up your `go` environment
 
 - You need `go` v1.9+
-- It is recommended you clone Træfik into a directory like `~/go/src/github.com/containous/traefik` (This is the official golang workspace hierarchy, and will allow dependencies to resolve properly)
+- It is recommended you clone Traefik into a directory like `~/go/src/github.com/containous/traefik` (This is the official golang workspace hierarchy, and will allow dependencies to resolve properly)
 - Set your `GOPATH` and `PATH` variable to be set to `~/go` via:
 
 ```bash
@@ -56,9 +56,9 @@ GORACE=""
 ## more go env's will be listed
 ```
 
-##### Build Træfik
+##### Build Traefik
 
-Once your environment is set up and the Træfik repository cloned you can build Træfik. You need get `go-bindata` once to be able to use `go generate` command as part of the build.  The steps to build are:
+Once your environment is set up and the Traefik repository cloned you can build Traefik. You need get `go-bindata` once to be able to use `go generate` command as part of the build.  The steps to build are:
 
 ```bash
 cd ~/go/src/github.com/containous/traefik
@@ -77,7 +77,7 @@ go build ./cmd/traefik
 # run other commands like tests
 ```
 
-You will find the Træfik executable in the `~/go/src/github.com/containous/traefik` folder as `traefik`.
+You will find the Traefik executable in the `~/go/src/github.com/containous/traefik` folder as `traefik`.
 
 ### Updating the templates
 
