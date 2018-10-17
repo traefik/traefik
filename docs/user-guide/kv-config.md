@@ -425,7 +425,7 @@ The static Traefik configuration in a key-value store can be automatically creat
 traefik storeconfig [flags] ...
 ```
 This command is here only to automate the [process which upload the configuration into the Key-value store](/user-guide/kv-config/#upload-the-configuration-in-the-key-value-store).
-Traefik will not start but the [static configuration](/basics/#static-trfik-configuration) will be uploaded into the Key-value store.  
+Traefik will not start but the [static configuration](/basics/#static-traefik-configuration) will be uploaded into the Key-value store.  
 
 If you configured ACME (Let's Encrypt), your registration account and your certificates will also be uploaded.
 
