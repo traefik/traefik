@@ -144,6 +144,7 @@ entryPoint = "https"
 
 # Domains list.
 # Only domains defined here can generate wildcard certificates.
+# The certificates for these domains are negotiated at traefik startup only.
 #
 # [[acme.domains]]
 #   main = "local1.com"
@@ -301,6 +302,9 @@ Here is a list of supported `provider`s, that can automate the DNS verification,
 You can provide SANs (alternative domains) to each main domain.
 All domains must have A/AAAA records pointing to Traefik.
 Each domain & SAN will lead to a certificate request.
+
+!!! note
+    The certificates for the domains listed in acme.domains are negotiated at traefik startup only.
 
 ```toml
 [acme]
