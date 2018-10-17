@@ -87,6 +87,7 @@ type GlobalConfiguration struct {
 	RespondingTimeouts        *RespondingTimeouts     `description:"Timeouts for incoming requests to the Traefik instance" export:"true"`
 	ForwardingTimeouts        *ForwardingTimeouts     `description:"Timeouts for requests forwarded to the backend servers" export:"true"`
 	AllowMinWeightZero        bool                    `description:"Allow weight to take 0 as minimum real value." export:"true"`         // Deprecated
+	KeepTrailingSlash         bool                    `description:"Do not remove trailing slash." export:"true"`                         // Deprecated
 	Web                       *WebCompatibility       `description:"(Deprecated) Enable Web backend with default settings" export:"true"` // Deprecated
 	Docker                    *docker.Provider        `description:"Enable Docker backend with default settings" export:"true"`
 	File                      *file.Provider          `description:"Enable File backend with default settings" export:"true"`

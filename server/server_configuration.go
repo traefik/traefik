@@ -633,7 +633,7 @@ func buildDefaultCertificate(defaultCertificate *traefiktls.Certificate) (*tls.C
 func (s *Server) buildDefaultHTTPRouter() *mux.Router {
 	rt := mux.NewRouter()
 	rt.NotFoundHandler = s.wrapHTTPHandlerWithAccessLog(http.HandlerFunc(http.NotFound), "backend not found")
-	rt.StrictSlash(true)
+	rt.StrictSlash(!s.globalConfiguration.KeepTrailingSlash)
 	rt.SkipClean(true)
 	return rt
 }
