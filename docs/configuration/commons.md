@@ -113,7 +113,7 @@ Each frontend can specify its own entrypoints.
 - `keepTrailingSlash`: Tells Træfik whether it should keep the trailing slashes that might be present in the paths of incoming requests (true), or if it should redirect to the slashless version of the URL (default behavior: false) 
 
 !!! note 
-    Beware that the value of keepTrailingSlash can have a significant impact on the way your frontend rules are interpreted.
+    Beware that the value of `keepTrailingSlash` can have a significant impact on the way your frontend rules are interpreted.
     The table below tries to sum up several behaviors depending on requests/configurations. 
     The current default behavior is deprecated and kept for compatibility reasons. 
     As a consequence, we encourage you to set keepTrailingSlash to true.
