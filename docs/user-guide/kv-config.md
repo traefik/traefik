@@ -417,7 +417,7 @@ Here, we have a 50% balance between the `http://172.17.0.3:80` and the `http://1
 ## Store configuration in Key-value store
 
 !!! note
-    Don't forget to [setup the connection between Traefik and Key-value store](/user-guide/kv-config/#launch-trfik).
+    Don't forget to [setup the connection between Traefik and Key-value store](/user-guide/kv-config/#launch-traefik).
 
 The static Traefik configuration in a key-value store can be automatically created and updated, using the [`storeconfig` subcommand](/basics/#commands).
 
