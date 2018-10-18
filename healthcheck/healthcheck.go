@@ -71,7 +71,7 @@ func (b *BackendConfig) newRequest(serverURL *url.URL) (*http.Request, error) {
 
 	u.Path += b.Path
 
-	return http.NewRequest(http.MethodGet, u.String(), nil)
+	return http.NewRequest(http.MethodGet, u.String(), http.NoBody)
 }
 
 // this function adds additional http headers and hostname to http.request

@@ -40,7 +40,7 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 		}
 	}
 
-	forwardReq, err := http.NewRequest(http.MethodGet, config.Address, nil)
+	forwardReq, err := http.NewRequest(http.MethodGet, config.Address, http.NoBody)
 	tracing.LogRequest(tracing.GetSpan(r), forwardReq)
 	if err != nil {
 		tracing.SetErrorAndDebugLog(r, "Error calling %s. Cause %s", config.Address, err)
