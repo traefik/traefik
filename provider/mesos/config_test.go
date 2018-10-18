@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	"github.com/mesosphere/mesos-dns/records/state"
@@ -13,6 +14,9 @@ import (
 )
 
 func TestBuildConfiguration(t *testing.T) {
+	var flushInterval parse.Duration
+	flushInterval.Set("10ms")
+
 	p := &Provider{
 		Domain:           "mesos.localhost",
 		ExposedByDefault: true,
@@ -314,6 +318,7 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel(label.TraefikBackend, "foobar"),
 
 					withLabel(label.TraefikBackendCircuitBreakerExpression, "NetworkErrorRatio() > 0.5"),
+					withLabel(label.TraefikBackendResponseForwardingFlushInterval, "10ms"),
 					withLabel(label.TraefikBackendHealthCheckScheme, "http"),
 					withLabel(label.TraefikBackendHealthCheckPath, "/health"),
 					withLabel(label.TraefikBackendHealthCheckPort, "880"),
@@ -545,6 +550,9 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 					CircuitBreaker: &types.CircuitBreaker{
 						Expression: "NetworkErrorRatio() > 0.5",
+					},
+					ResponseForwarding: &types.ResponseForwarding{
+						FlushInterval: flushInterval,
 					},
 					LoadBalancer: &types.LoadBalancer{
 						Method: "drr",

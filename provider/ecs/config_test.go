@@ -8,12 +8,16 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestBuildConfiguration(t *testing.T) {
+	var flushInterval parse.Duration
+	flushInterval.Set("10ms")
+
 	testCases := []struct {
 		desc      string
 		instances []ecsInstance
@@ -342,6 +346,7 @@ func TestBuildConfiguration(t *testing.T) {
 						label.TraefikBackend: aws.String("foobar"),
 
 						label.TraefikBackendCircuitBreakerExpression:         aws.String("NetworkErrorRatio() > 0.5"),
+						label.TraefikBackendResponseForwardingFlushInterval:  aws.String("10ms"),
 						label.TraefikBackendHealthCheckScheme:                aws.String("http"),
 						label.TraefikBackendHealthCheckPath:                  aws.String("/health"),
 						label.TraefikBackendHealthCheckPort:                  aws.String("880"),
@@ -457,6 +462,9 @@ func TestBuildConfiguration(t *testing.T) {
 						},
 						CircuitBreaker: &types.CircuitBreaker{
 							Expression: "NetworkErrorRatio() > 0.5",
+						},
+						ResponseForwarding: &types.ResponseForwarding{
+							FlushInterval: flushInterval,
 						},
 						LoadBalancer: &types.LoadBalancer{
 							Method: "drr",

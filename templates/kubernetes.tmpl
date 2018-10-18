@@ -8,6 +8,11 @@
       expression = "{{ $backend.CircuitBreaker.Expression }}"
     {{end}}
 
+    {{if $backend.ResponseForwarding }}
+    [backends."{{ $backendName }}".responseForwarding]
+      flushInterval = "{{ $backend.responseForwarding.FlushInterval }}"
+    {{end}}
+
     [backends."{{ $backendName }}".loadBalancer]
       method = "{{ $backend.LoadBalancer.Method }}"
       sticky = {{ $backend.LoadBalancer.Sticky }}

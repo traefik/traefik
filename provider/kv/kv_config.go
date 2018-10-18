@@ -12,6 +12,7 @@ import (
 	"github.com/BurntSushi/ty/fun"
 	"github.com/abronan/valkeyrie/store"
 	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/tls"
@@ -59,6 +60,7 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		// Backend functions
 		"getServers":              p.getServers,
 		"getCircuitBreaker":       p.getCircuitBreaker,
+		"getResponseForwarding":   p.getResponseForwarding,
 		"getLoadBalancer":         p.getLoadBalancer,
 		"getMaxConn":              p.getMaxConn,
 		"getHealthCheck":          p.getHealthCheck,
@@ -267,6 +269,17 @@ func (p *Provider) getLoadBalancer(rootPath string) *types.LoadBalancer {
 	}
 
 	return lb
+}
+
+func (p *Provider) getResponseForwarding(rootPath string) *types.ResponseForwarding {
+	if !p.has(rootPath, pathBackendResponseForwardingFlushInterval) {
+		return nil
+	}
+	var flushInterval parse.Duration
+	flushInterval.Set(p.get("0", rootPath, pathBackendResponseForwardingFlushInterval))
+	return &types.ResponseForwarding{
+		FlushInterval: flushInterval,
+	}
 }
 
 func (p *Provider) getCircuitBreaker(rootPath string) *types.CircuitBreaker {

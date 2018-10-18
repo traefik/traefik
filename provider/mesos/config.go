@@ -29,15 +29,16 @@ func (p *Provider) buildConfigurationV2(tasks []state.Task) *types.Configuration
 		"getID":               getID,
 
 		// Backend functions
-		"getBackendName":    getBackendName,
-		"getCircuitBreaker": label.GetCircuitBreaker,
-		"getLoadBalancer":   label.GetLoadBalancer,
-		"getMaxConn":        label.GetMaxConn,
-		"getHealthCheck":    label.GetHealthCheck,
-		"getBuffering":      label.GetBuffering,
-		"getServers":        p.getServers,
-		"getHost":           p.getHost,
-		"getServerPort":     p.getServerPort,
+		"getBackendName":        getBackendName,
+		"getCircuitBreaker":     label.GetCircuitBreaker,
+		"getLoadBalancer":       label.GetLoadBalancer,
+		"getMaxConn":            label.GetMaxConn,
+		"getHealthCheck":        label.GetHealthCheck,
+		"getBuffering":          label.GetBuffering,
+		"getResponseForwarding": label.GetResponseForwarding,
+		"getServers":            p.getServers,
+		"getHost":               p.getHost,
+		"getServerPort":         p.getServerPort,
 
 		// Frontend functions
 		"getSegmentNameSuffix": getSegmentNameSuffix,

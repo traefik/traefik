@@ -29,6 +29,7 @@ const (
 	SuffixBackendMaxConnAmount                               = "backend.maxconn.amount"
 	SuffixBackendMaxConnExtractorFunc                        = "backend.maxconn.extractorfunc"
 	SuffixBackendBuffering                                   = "backend.buffering"
+	SuffixBackendResponseForwardingFlushInterval             = "backend.responseforwarding.flushinterval"
 	SuffixBackendBufferingMaxRequestBodyBytes                = SuffixBackendBuffering + ".maxRequestBodyBytes"
 	SuffixBackendBufferingMemRequestBodyBytes                = SuffixBackendBuffering + ".memRequestBodyBytes"
 	SuffixBackendBufferingMaxResponseBodyBytes               = SuffixBackendBuffering + ".maxResponseBodyBytes"
@@ -131,6 +132,7 @@ const (
 	TraefikBackendMaxConnAmount                              = Prefix + SuffixBackendMaxConnAmount
 	TraefikBackendMaxConnExtractorFunc                       = Prefix + SuffixBackendMaxConnExtractorFunc
 	TraefikBackendBuffering                                  = Prefix + SuffixBackendBuffering
+	TraefikBackendResponseForwardingFlushInterval            = Prefix + SuffixBackendResponseForwardingFlushInterval
 	TraefikBackendBufferingMaxRequestBodyBytes               = Prefix + SuffixBackendBufferingMaxRequestBodyBytes
 	TraefikBackendBufferingMemRequestBodyBytes               = Prefix + SuffixBackendBufferingMemRequestBodyBytes
 	TraefikBackendBufferingMaxResponseBodyBytes              = Prefix + SuffixBackendBufferingMaxResponseBodyBytes

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
 )
@@ -351,6 +352,18 @@ func GetHealthCheck(labels map[string]string) *types.HealthCheck {
 		Interval: interval,
 		Hostname: hostname,
 		Headers:  headers,
+	}
+}
+
+// GetResponseForwarding Create ResponseForwarding from labels
+func GetResponseForwarding(labels map[string]string) *types.ResponseForwarding {
+	if !HasPrefix(labels, TraefikBackendResponseForwardingFlushInterval) {
+		return nil
+	}
+	var flushInterval parse.Duration
+	flushInterval.Set(GetStringValue(labels, TraefikBackendResponseForwardingFlushInterval, "0"))
+	return &types.ResponseForwarding{
+		FlushInterval: flushInterval,
 	}
 }
 

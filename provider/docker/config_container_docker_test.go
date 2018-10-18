@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	docker "github.com/docker/docker/api/types"
@@ -16,6 +17,9 @@ import (
 )
 
 func TestDockerBuildConfiguration(t *testing.T) {
+	var flushInterval parse.Duration
+	flushInterval.Set("10ms")
+
 	testCases := []struct {
 		desc              string
 		containers        []docker.ContainerJSON
@@ -434,6 +438,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						label.TraefikBackend: "foobar",
 
 						label.TraefikBackendCircuitBreakerExpression:         "NetworkErrorRatio() > 0.5",
+						label.TraefikBackendResponseForwardingFlushInterval:  "10ms",
 						label.TraefikBackendHealthCheckScheme:                "http",
 						label.TraefikBackendHealthCheckPath:                  "/health",
 						label.TraefikBackendHealthCheckPort:                  "880",
@@ -665,6 +670,9 @@ func TestDockerBuildConfiguration(t *testing.T) {
 					},
 					CircuitBreaker: &types.CircuitBreaker{
 						Expression: "NetworkErrorRatio() > 0.5",
+					},
+					ResponseForwarding: &types.ResponseForwarding{
+						FlushInterval: flushInterval,
 					},
 					LoadBalancer: &types.LoadBalancer{
 						Method: "drr",

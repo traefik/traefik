@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
@@ -90,6 +91,15 @@ func circuitBreaker(exp string) func(*types.Backend) {
 	return func(b *types.Backend) {
 		b.CircuitBreaker = &types.CircuitBreaker{}
 		b.CircuitBreaker.Expression = exp
+	}
+}
+
+func responseForwarding(interval string) func(*types.Backend) {
+	return func(b *types.Backend) {
+		b.ResponseForwarding = &types.ResponseForwarding{}
+		var duration parse.Duration
+		duration.Set(interval)
+		b.ResponseForwarding.FlushInterval = duration
 	}
 }
 

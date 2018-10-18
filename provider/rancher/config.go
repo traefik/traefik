@@ -20,12 +20,13 @@ func (p *Provider) buildConfigurationV2(services []rancherData) *types.Configura
 		"getDomain":     label.GetFuncString(label.TraefikDomain, p.Domain),
 
 		// Backend functions
-		"getCircuitBreaker": label.GetCircuitBreaker,
-		"getLoadBalancer":   label.GetLoadBalancer,
-		"getMaxConn":        label.GetMaxConn,
-		"getHealthCheck":    label.GetHealthCheck,
-		"getBuffering":      label.GetBuffering,
-		"getServers":        getServers,
+		"getCircuitBreaker":     label.GetCircuitBreaker,
+		"getLoadBalancer":       label.GetLoadBalancer,
+		"getMaxConn":            label.GetMaxConn,
+		"getHealthCheck":        label.GetHealthCheck,
+		"getBuffering":          label.GetBuffering,
+		"getResponseForwarding": label.GetResponseForwarding,
+		"getServers":            getServers,
 
 		// Frontend functions
 		"getBackendName":       getBackendName,

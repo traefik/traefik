@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/containous/flaeg"
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	"github.com/hashicorp/consul/api"
@@ -20,6 +21,9 @@ func TestProviderBuildConfiguration(t *testing.T) {
 		FrontEndRule:         "Host:{{.ServiceName}}.{{.Domain}}",
 		frontEndRuleTemplate: template.New("consul catalog frontend rule"),
 	}
+
+	var flushInterval parse.Duration
+	flushInterval.Set("10ms")
 
 	testCases := []struct {
 		desc              string
@@ -405,6 +409,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 							label.TraefikBackend + "=foobar",
 
 							label.TraefikBackendCircuitBreakerExpression + "=NetworkErrorRatio() > 0.5",
+							label.TraefikBackendResponseForwardingFlushInterval + "=10ms",
 							label.TraefikBackendHealthCheckPath + "=/health",
 							label.TraefikBackendHealthCheckScheme + "=http",
 							label.TraefikBackendHealthCheckPort + "=880",
@@ -672,6 +677,9 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					},
 					CircuitBreaker: &types.CircuitBreaker{
 						Expression: "NetworkErrorRatio() > 0.5",
+					},
+					ResponseForwarding: &types.ResponseForwarding{
+						FlushInterval: flushInterval,
 					},
 					LoadBalancer: &types.LoadBalancer{
 						Method: "drr",
