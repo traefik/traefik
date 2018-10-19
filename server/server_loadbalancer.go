@@ -115,7 +115,8 @@ func (s *Server) buildLoadBalancer(frontendName string, backendName string, back
 	var saveFrontend http.Handler
 
 	if s.accessLoggerMiddleware != nil {
-		saveBackend := accesslog.NewSaveBackend(fwd, backendName)
+		saveUsername := accesslog.NewSaveUsername(fwd)
+		saveBackend := accesslog.NewSaveBackend(saveUsername, backendName)
 		saveFrontend = accesslog.NewSaveFrontend(saveBackend, frontendName)
 		rr, _ = roundrobin.New(saveFrontend)
 	} else {

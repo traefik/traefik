@@ -309,7 +309,8 @@ func buildIPWhiteLister(whiteList *types.WhiteList, wlRange []string) (*middlewa
 
 func (s *Server) wrapNegroniHandlerWithAccessLog(handler negroni.Handler, frontendName string) negroni.Handler {
 	if s.accessLoggerMiddleware != nil {
-		saveBackend := accesslog.NewSaveNegroniBackend(handler, "Traefik")
+		saveUsername := accesslog.NewSaveNegroniUsername(handler)
+		saveBackend := accesslog.NewSaveNegroniBackend(saveUsername, "Traefik")
 		saveFrontend := accesslog.NewSaveNegroniFrontend(saveBackend, frontendName)
 		return saveFrontend
 	}
@@ -318,7 +319,8 @@ func (s *Server) wrapNegroniHandlerWithAccessLog(handler negroni.Handler, fronte
 
 func (s *Server) wrapHTTPHandlerWithAccessLog(handler http.Handler, frontendName string) http.Handler {
 	if s.accessLoggerMiddleware != nil {
-		saveBackend := accesslog.NewSaveBackend(handler, "Traefik")
+		saveUsername := accesslog.NewSaveUsername(handler)
+		saveBackend := accesslog.NewSaveBackend(saveUsername, "Traefik")
 		saveFrontend := accesslog.NewSaveFrontend(saveBackend, frontendName)
 		return saveFrontend
 	}

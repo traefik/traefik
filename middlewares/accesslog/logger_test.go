@@ -619,7 +619,6 @@ func doLogging(t *testing.T, config *types.AccessLog) {
 		Method:     testMethod,
 		RemoteAddr: fmt.Sprintf("%s:%d", testHostname, testPort),
 		URL: &url.URL{
-			User: url.UserPassword(testUsername, ""),
 			Path: testPath,
 		},
 	}
@@ -639,4 +638,5 @@ func logWriterTestHandlerFunc(rw http.ResponseWriter, r *http.Request) {
 	logDataTable.Core[RetryAttempts] = testRetryAttempts
 	logDataTable.Core[StartUTC] = testStart.UTC()
 	logDataTable.Core[StartLocal] = testStart.Local()
+	logDataTable.Core[ClientUsername] = testUsername
 }
