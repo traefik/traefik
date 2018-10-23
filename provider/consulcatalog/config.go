@@ -111,7 +111,7 @@ func (p *Provider) getFrontendRule(service serviceUpdate) string {
 		return ""
 	}
 
-	return buffer.String()
+	return strings.TrimSuffix(buffer.String(), ".")
 }
 
 func (p *Provider) getServer(node *api.ServiceEntry) types.Server {
