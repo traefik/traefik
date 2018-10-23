@@ -128,7 +128,11 @@ func (p *Provider) serviceFilter(service rancherData) bool {
 
 func (p *Provider) getFrontendRule(serviceName string, labels map[string]string) string {
 	domain := label.GetStringValue(labels, label.TraefikDomain, p.Domain)
-	defaultRule := "Host:" + strings.ToLower(strings.Replace(serviceName, "/", ".", -1)) + "." + domain
+	if len(domain) > 0 {
+		domain = "." + domain
+	}
+
+	defaultRule := "Host:" + strings.ToLower(strings.Replace(serviceName, "/", ".", -1)) + domain
 
 	return label.GetStringValue(labels, label.TraefikFrontendRule, defaultRule)
 }

@@ -52,7 +52,7 @@ func TestBuildConfiguration(t *testing.T) {
 						Backend:     "backend-instance",
 						Routes: map[string]types.Route{
 							"route-frontend-instance": {
-								Rule: "Host:instance.",
+								Rule: "Host:instance",
 							},
 						},
 						PassHostHeader: true,
@@ -99,7 +99,7 @@ func TestBuildConfiguration(t *testing.T) {
 						Backend:     "backend-instance",
 						Routes: map[string]types.Route{
 							"route-frontend-instance": {
-								Rule: "Host:instance.",
+								Rule: "Host:instance",
 							},
 						},
 						PassHostHeader: true,
@@ -144,7 +144,7 @@ func TestBuildConfiguration(t *testing.T) {
 						Backend:     "backend-instance",
 						Routes: map[string]types.Route{
 							"route-frontend-instance": {
-								Rule: "Host:instance.",
+								Rule: "Host:instance",
 							},
 						},
 						Auth: &types.Auth{
@@ -195,7 +195,7 @@ func TestBuildConfiguration(t *testing.T) {
 						Backend:     "backend-instance",
 						Routes: map[string]types.Route{
 							"route-frontend-instance": {
-								Rule: "Host:instance.",
+								Rule: "Host:instance",
 							},
 						},
 						Auth: &types.Auth{
@@ -246,7 +246,7 @@ func TestBuildConfiguration(t *testing.T) {
 						Backend:     "backend-instance",
 						Routes: map[string]types.Route{
 							"route-frontend-instance": {
-								Rule: "Host:instance.",
+								Rule: "Host:instance",
 							},
 						},
 						Auth: &types.Auth{
@@ -305,7 +305,7 @@ func TestBuildConfiguration(t *testing.T) {
 						Backend:     "backend-instance",
 						Routes: map[string]types.Route{
 							"route-frontend-instance": {
-								Rule: "Host:instance.",
+								Rule: "Host:instance",
 							},
 						},
 						Auth: &types.Auth{

@@ -1029,6 +1029,7 @@ func TestProviderGetFrontendRule(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		service  serviceUpdate
+		domain   string
 		expected string
 	}{
 		{
@@ -1037,7 +1038,17 @@ func TestProviderGetFrontendRule(t *testing.T) {
 				ServiceName: "foo",
 				Attributes:  []string{},
 			},
+			domain:   "localhost",
 			expected: "Host:foo.localhost",
+		},
+		{
+			desc: "When no domain should return default host foo",
+			service: serviceUpdate{
+				ServiceName: "foo",
+				Attributes:  []string{},
+			},
+			domain:   "",
+			expected: "Host:foo",
 		},
 		{
 			desc: "Should return host *.example.com",
@@ -1047,6 +1058,7 @@ func TestProviderGetFrontendRule(t *testing.T) {
 					"traefik.frontend.rule=Host:*.example.com",
 				},
 			},
+			domain:   "localhost",
 			expected: "Host:*.example.com",
 		},
 		{
@@ -1057,6 +1069,7 @@ func TestProviderGetFrontendRule(t *testing.T) {
 					"traefik.frontend.rule=Host:{{.ServiceName}}.example.com",
 				},
 			},
+			domain:   "localhost",
 			expected: "Host:foo.example.com",
 		},
 		{
@@ -1068,6 +1081,7 @@ func TestProviderGetFrontendRule(t *testing.T) {
 					"contextPath=/bar",
 				},
 			},
+			domain:   "localhost",
 			expected: "PathPrefix:/bar",
 		},
 	}
@@ -1078,7 +1092,7 @@ func TestProviderGetFrontendRule(t *testing.T) {
 			t.Parallel()
 
 			p := &Provider{
-				Domain:               "localhost",
+				Domain:               test.domain,
 				Prefix:               "traefik",
 				FrontEndRule:         "Host:{{.ServiceName}}.{{.Domain}}",
 				frontEndRuleTemplate: template.New("consul catalog frontend rule"),
