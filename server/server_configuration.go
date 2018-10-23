@@ -78,10 +78,6 @@ func (s *Server) loadConfiguration(configMsg types.ConfigMessage) {
 // loadConfig returns a new gorilla.mux Route from the specified global configuration and the dynamic
 // provider configurations.
 func (s *Server) loadConfig(configurations types.Configurations, globalConfiguration configuration.GlobalConfiguration) (map[string]*serverEntryPoint, error) {
-	redirectHandlers, err := s.buildEntryPointRedirect()
-	if err != nil {
-		return nil, err
-	}
 
 	serverEntryPoints := s.buildServerEntryPoints()
 
@@ -95,7 +91,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 
 		for _, frontendName := range frontendNames {
 			frontendPostConfigs, err := s.loadFrontendConfig(providerName, frontendName, config,
-				redirectHandlers, serverEntryPoints,
+				serverEntryPoints,
 				backendsHandlers, backendsHealthCheck)
 			if err != nil {
 				log.Errorf("%v. Skipping frontend %s...", err, frontendName)
@@ -133,7 +129,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 
 func (s *Server) loadFrontendConfig(
 	providerName string, frontendName string, config *types.Configuration,
-	redirectHandlers map[string]negroni.Handler, serverEntryPoints map[string]*serverEntryPoint,
+	serverEntryPoints map[string]*serverEntryPoint,
 	backendsHandlers map[string]http.Handler, backendsHealthCheck map[string]*healthcheck.BackendConfig,
 ) ([]handlerPostConfig, error) {
 
@@ -193,10 +189,6 @@ func (s *Server) loadFrontendConfig(
 			}
 
 			n := negroni.New()
-
-			if _, exist := redirectHandlers[entryPointName]; exist {
-				n.Use(redirectHandlers[entryPointName])
-			}
 
 			for _, handler := range handlers {
 				n.Use(handler)
