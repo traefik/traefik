@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/log"
 	"github.com/xenolf/lego/platform/config/env"
 )
 
@@ -27,8 +28,8 @@ type Config struct {
 func NewDefaultConfig() *Config {
 	return &Config{
 		TTL:                env.GetOrDefaultInt("NETCUP_TTL", 120),
-		PropagationTimeout: env.GetOrDefaultSecond("NETCUP_PROPAGATION_TIMEOUT", acme.DefaultPropagationTimeout),
-		PollingInterval:    env.GetOrDefaultSecond("NETCUP_POLLING_INTERVAL", acme.DefaultPollingInterval),
+		PropagationTimeout: env.GetOrDefaultSecond("NETCUP_PROPAGATION_TIMEOUT", 120*time.Second),
+		PollingInterval:    env.GetOrDefaultSecond("NETCUP_POLLING_INTERVAL", 5*time.Second),
 		HTTPClient: &http.Client{
 			Timeout: env.GetOrDefaultSecond("NETCUP_HTTP_TIMEOUT", 10*time.Second),
 		},
@@ -76,11 +77,11 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 		return nil, errors.New("netcup: the configuration of the DNS provider is nil")
 	}
 
-	if config.Customer == "" || config.Key == "" || config.Password == "" {
-		return nil, fmt.Errorf("netcup: netcup credentials missing")
+	client, err := NewClient(config.Customer, config.Key, config.Password)
+	if err != nil {
+		return nil, fmt.Errorf("netcup: %v", err)
 	}
 
-	client := NewClient(config.Customer, config.Key, config.Password)
 	client.HTTPClient = config.HTTPClient
 
 	return &DNSProvider{client: client, config: config}, nil
@@ -100,27 +101,37 @@ func (d *DNSProvider) Present(domainName, token, keyAuth string) error {
 		return fmt.Errorf("netcup: %v", err)
 	}
 
-	hostname := strings.Replace(fqdn, "."+zone, "", 1)
-	record := CreateTxtRecord(hostname, value, d.config.TTL)
-
-	err = d.client.UpdateDNSRecord(sessionID, acme.UnFqdn(zone), record)
-	if err != nil {
-		if errLogout := d.client.Logout(sessionID); errLogout != nil {
-			return fmt.Errorf("netcup: failed to add TXT-Record: %v; %v", err, errLogout)
+	defer func() {
+		err = d.client.Logout(sessionID)
+		if err != nil {
+			log.Print("netcup: %v", err)
 		}
+	}()
+
+	hostname := strings.Replace(fqdn, "."+zone, "", 1)
+	record := createTxtRecord(hostname, value, d.config.TTL)
+
+	zone = acme.UnFqdn(zone)
+
+	records, err := d.client.GetDNSRecords(zone, sessionID)
+	if err != nil {
+		// skip no existing records
+		log.Infof("no existing records, error ignored: %v", err)
+	}
+
+	records = append(records, record)
+
+	err = d.client.UpdateDNSRecord(sessionID, zone, records)
+	if err != nil {
 		return fmt.Errorf("netcup: failed to add TXT-Record: %v", err)
 	}
 
-	err = d.client.Logout(sessionID)
-	if err != nil {
-		return fmt.Errorf("netcup: %v", err)
-	}
 	return nil
 }
 
 // CleanUp removes the TXT record matching the specified parameters
-func (d *DNSProvider) CleanUp(domainname, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domainname, keyAuth)
+func (d *DNSProvider) CleanUp(domainName, token, keyAuth string) error {
+	fqdn, value, _ := acme.DNS01Record(domainName, keyAuth)
 
 	zone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
 	if err != nil {
@@ -132,6 +143,13 @@ func (d *DNSProvider) CleanUp(domainname, token, keyAuth string) error {
 		return fmt.Errorf("netcup: %v", err)
 	}
 
+	defer func() {
+		err = d.client.Logout(sessionID)
+		if err != nil {
+			log.Print("netcup: %v", err)
+		}
+	}()
+
 	hostname := strings.Replace(fqdn, "."+zone, "", 1)
 
 	zone = acme.UnFqdn(zone)
@@ -141,27 +159,20 @@ func (d *DNSProvider) CleanUp(domainname, token, keyAuth string) error {
 		return fmt.Errorf("netcup: %v", err)
 	}
 
-	record := CreateTxtRecord(hostname, value, 0)
+	record := createTxtRecord(hostname, value, 0)
 
-	idx, err := GetDNSRecordIdx(records, record)
+	idx, err := getDNSRecordIdx(records, record)
 	if err != nil {
 		return fmt.Errorf("netcup: %v", err)
 	}
 
 	records[idx].DeleteRecord = true
 
-	err = d.client.UpdateDNSRecord(sessionID, zone, records[idx])
+	err = d.client.UpdateDNSRecord(sessionID, zone, []DNSRecord{records[idx]})
 	if err != nil {
-		if errLogout := d.client.Logout(sessionID); errLogout != nil {
-			return fmt.Errorf("netcup: %v; %v", err, errLogout)
-		}
 		return fmt.Errorf("netcup: %v", err)
 	}
 
-	err = d.client.Logout(sessionID)
-	if err != nil {
-		return fmt.Errorf("netcup: %v", err)
-	}
 	return nil
 }
 
@@ -169,4 +180,30 @@ func (d *DNSProvider) CleanUp(domainname, token, keyAuth string) error {
 // Adjusting here to cope with spikes in propagation times.
 func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 	return d.config.PropagationTimeout, d.config.PollingInterval
+}
+
+// getDNSRecordIdx searches a given array of DNSRecords for a given DNSRecord
+// equivalence is determined by Destination and RecortType attributes
+// returns index of given DNSRecord in given array of DNSRecords
+func getDNSRecordIdx(records []DNSRecord, record DNSRecord) (int, error) {
+	for index, element := range records {
+		if record.Destination == element.Destination && record.RecordType == element.RecordType {
+			return index, nil
+		}
+	}
+	return -1, fmt.Errorf("no DNS Record found")
+}
+
+// createTxtRecord uses the supplied values to return a DNSRecord of type TXT for the dns-01 challenge
+func createTxtRecord(hostname, value string, ttl int) DNSRecord {
+	return DNSRecord{
+		ID:           0,
+		Hostname:     hostname,
+		RecordType:   "TXT",
+		Priority:     "",
+		Destination:  value,
+		DeleteRecord: false,
+		State:        "",
+		TTL:          ttl,
+	}
 }

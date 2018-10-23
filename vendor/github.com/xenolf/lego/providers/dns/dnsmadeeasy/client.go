@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"time"
 )
@@ -25,6 +26,10 @@ type Record struct {
 	Value    string `json:"value"`
 	TTL      int    `json:"ttl"`
 	SourceID int    `json:"sourceId"`
+}
+
+type recordsResponse struct {
+	Records *[]Record `json:"data"`
 }
 
 // Client DNSMadeEasy client
@@ -81,10 +86,6 @@ func (c *Client) GetRecords(domain *Domain, recordName, recordType string) (*[]R
 		return nil, err
 	}
 	defer resp.Body.Close()
-
-	type recordsResponse struct {
-		Records *[]Record `json:"data"`
-	}
 
 	records := &recordsResponse{}
 	err = json.NewDecoder(resp.Body).Decode(&records)
@@ -151,7 +152,11 @@ func (c *Client) sendRequest(method, resource string, payload interface{}) (*htt
 	}
 
 	if resp.StatusCode > 299 {
-		return nil, fmt.Errorf("DNSMadeEasy API request failed with HTTP status code %d", resp.StatusCode)
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("request failed with HTTP status code %d", resp.StatusCode)
+		}
+		return nil, fmt.Errorf("request failed with HTTP status code %d: %s", resp.StatusCode, string(body))
 	}
 
 	return resp, nil
