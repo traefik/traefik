@@ -451,6 +451,9 @@ func (a *ACME) buildACMEClient(account *Account) (*acme.Client, error) {
 			return nil, err
 		}
 
+		acmeprovider.SetRecursiveNameServers(a.DNSChallenge.Resolvers)
+		acmeprovider.SetPropagationCheck(a.DNSChallenge.DisablePropagationCheck)
+
 		var provider acme.ChallengeProvider
 		provider, err = dns.NewDNSChallengeProviderByName(a.DNSChallenge.Provider)
 		if err != nil {
