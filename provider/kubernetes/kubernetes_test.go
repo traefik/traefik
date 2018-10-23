@@ -50,6 +50,11 @@ func TestLoadIngresses(t *testing.T) {
 						onePath(iBackend("service7", intstr.FromInt(80))),
 					),
 				),
+				iRule(iHost(""),
+					iPaths(
+						onePath(iBackend("service8", intstr.FromInt(80))),
+					),
+				),
 			),
 		),
 	}
@@ -118,6 +123,14 @@ func TestLoadIngresses(t *testing.T) {
 				clusterIP("10.0.0.7"),
 				sPorts(sPort(80, ""))),
 		),
+		buildService(
+			sName("service8"),
+			sNamespace("testing"),
+			sUID("8"),
+			sSpec(
+				clusterIP("10.0.0.8"),
+				sPorts(sPort(80, ""))),
+		),
 	}
 
 	endpoints := []*corev1.Endpoints{
@@ -163,6 +176,14 @@ func TestLoadIngresses(t *testing.T) {
 			eUID("7"),
 			subset(
 				eAddresses(eAddress("10.10.0.7")),
+				ePorts(ePort(80, ""))),
+		),
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service8"),
+			eUID("8"),
+			subset(
+				eAddresses(eAddress("10.10.0.8")),
 				ePorts(ePort(80, ""))),
 		),
 	}
@@ -218,6 +239,12 @@ func TestLoadIngresses(t *testing.T) {
 					server("http://10.10.0.7:80", weight(1)),
 				),
 			),
+			backend("service8",
+				lbMethod("wrr"),
+				servers(
+					server("http://10.10.0.8:80", weight(1)),
+				),
+			),
 		),
 		frontends(
 			frontend("foo/bar",
@@ -247,6 +274,10 @@ func TestLoadIngresses(t *testing.T) {
 			frontend("*.service7",
 				passHostHeader(),
 				routes(route("*.service7", "HostRegexp:{subdomain:[A-Za-z0-9-_]+}.service7")),
+			),
+			frontend("service8",
+				passHostHeader(),
+				routes(route("/", "PathPrefix:/")),
 			),
 		),
 	)
