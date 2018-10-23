@@ -77,6 +77,13 @@ func TestGetBestCertificate(t *testing.T) {
 			dynamicCert:   "*.snitest.com",
 			expectedCert:  "*.snitest.com",
 		},
+		{
+			desc:          "Best Match with two wildcard certs",
+			domainToCheck: "foo.www.snitest.com",
+			staticCert:    "*.www.snitest.com",
+			dynamicCert:   "*.snitest.com",
+			expectedCert:  "*.www.snitest.com",
+		},
 	}
 
 	for _, test := range testCases {
