@@ -214,11 +214,14 @@ func (p *Provider) getFrontendRule(app appData) string {
 	}
 
 	domain := label.GetStringValue(app.SegmentLabels, label.TraefikDomain, p.Domain)
+	if len(domain) > 0 {
+		domain = "." + domain
+	}
 
 	if len(app.SegmentName) > 0 {
-		return "Host:" + strings.ToLower(provider.Normalize(app.SegmentName)) + "." + p.getSubDomain(app.ID) + "." + domain
+		return "Host:" + strings.ToLower(provider.Normalize(app.SegmentName)) + "." + p.getSubDomain(app.ID) + domain
 	}
-	return "Host:" + p.getSubDomain(app.ID) + "." + domain
+	return "Host:" + p.getSubDomain(app.ID) + domain
 }
 
 func getPort(task marathon.Task, app appData) string {

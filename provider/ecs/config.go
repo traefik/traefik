@@ -141,7 +141,11 @@ func (p *Provider) getFrontendRule(i ecsInstance) string {
 	}
 
 	domain := label.GetStringValue(i.SegmentLabels, label.TraefikDomain, p.Domain)
-	defaultRule := "Host:" + strings.ToLower(strings.Replace(i.Name, "_", "-", -1)) + "." + domain
+	if len(domain) > 0 {
+		domain = "." + domain
+	}
+
+	defaultRule := "Host:" + strings.ToLower(strings.Replace(i.Name, "_", "-", -1)) + domain
 
 	return label.GetStringValue(i.TraefikLabels, label.TraefikFrontendRule, defaultRule)
 }

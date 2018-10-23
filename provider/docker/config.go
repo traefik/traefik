@@ -186,13 +186,16 @@ func (p *Provider) getFrontendRule(container dockerData, segmentLabels map[strin
 	}
 
 	domain := label.GetStringValue(segmentLabels, label.TraefikDomain, p.Domain)
+	if len(domain) > 0 {
+		domain = "." + domain
+	}
 
 	if values, err := label.GetStringMultipleStrict(container.Labels, labelDockerComposeProject, labelDockerComposeService); err == nil {
-		return "Host:" + getSubDomain(values[labelDockerComposeService]+"."+values[labelDockerComposeProject]) + "." + domain
+		return "Host:" + getSubDomain(values[labelDockerComposeService]+"."+values[labelDockerComposeProject]) + domain
 	}
 
 	if len(domain) > 0 {
-		return "Host:" + getSubDomain(container.ServiceName) + "." + domain
+		return "Host:" + getSubDomain(container.ServiceName) + domain
 	}
 
 	return ""

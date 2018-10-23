@@ -222,8 +222,11 @@ func (p *Provider) getFrontendRule(task taskData) string {
 	}
 
 	domain := label.GetStringValue(task.TraefikLabels, label.TraefikDomain, p.Domain)
+	if len(domain) > 0 {
+		domain = "." + domain
+	}
 
-	return "Host:" + p.getSegmentSubDomain(task) + "." + domain
+	return "Host:" + p.getSegmentSubDomain(task) + domain
 }
 
 func (p *Provider) getServers(tasks []taskData) map[string]types.Server {
