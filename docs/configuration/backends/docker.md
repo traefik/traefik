@@ -22,7 +22,7 @@ endpoint = "unix:///var/run/docker.sock"
 # Default base domain used for the frontend rules.
 # Can be overridden by setting the "traefik.domain" label on a container.
 #
-# Required
+# Optional
 #
 domain = "docker.localhost"
 
