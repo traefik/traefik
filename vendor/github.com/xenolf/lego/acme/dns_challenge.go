@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/miekg/dns"
@@ -18,8 +19,9 @@ type preCheckDNSFunc func(fqdn, value string) (bool, error)
 var (
 	// PreCheckDNS checks DNS propagation before notifying ACME that
 	// the DNS challenge is ready.
-	PreCheckDNS preCheckDNSFunc = checkDNSPropagation
-	fqdnToZone                  = map[string]string{}
+	PreCheckDNS  preCheckDNSFunc = checkDNSPropagation
+	fqdnToZone                   = map[string]string{}
+	muFqdnToZone sync.Mutex
 )
 
 const defaultResolvConf = "/etc/resolv.conf"
@@ -262,6 +264,9 @@ func lookupNameservers(fqdn string) ([]string, error) {
 // FindZoneByFqdn determines the zone apex for the given fqdn by recursing up the
 // domain labels until the nameserver returns a SOA record in the answer section.
 func FindZoneByFqdn(fqdn string, nameservers []string) (string, error) {
+	muFqdnToZone.Lock()
+	defer muFqdnToZone.Unlock()
+
 	// Do we have it cached?
 	if zone, ok := fqdnToZone[fqdn]; ok {
 		return zone, nil

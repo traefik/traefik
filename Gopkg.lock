@@ -49,6 +49,7 @@
     "autorest",
     "autorest/adal",
     "autorest/azure",
+    "autorest/azure/auth",
     "autorest/date",
     "autorest/to"
   ]
@@ -364,6 +365,12 @@
   version = "v3.2.0"
 
 [[projects]]
+  name = "github.com/dimchansky/utfbom"
+  packages = ["."]
+  revision = "5448fe645cb1964ba70ac8f9f2ffe975e61a536c"
+  version = "v1.0.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/dnsimple/dnsimple-go"
   packages = ["dnsimple"]
@@ -532,19 +539,6 @@
   packages = ["."]
   revision = "44cc805cf13205b55f69e14bcb69867d1ae92f98"
   version = "v1.1.0"
-
-[[projects]]
-  name = "github.com/edeckers/auroradnsclient"
-  packages = [
-    ".",
-    "records",
-    "requests",
-    "requests/errors",
-    "tokens",
-    "zones"
-  ]
-  revision = "1563e622aaca0a8bb895a448f31d4a430ab97586"
-  version = "v1.0.3"
 
 [[projects]]
   branch = "master"
@@ -862,6 +856,12 @@
   name = "github.com/kr/logfmt"
   packages = ["."]
   revision = "b84e30acd515aadc4b783ad4ff83aff3299bdfe0"
+
+[[projects]]
+  name = "github.com/ldez/go-auroradns"
+  packages = ["."]
+  revision = "b40dfcae7c417f8129579362695dc1f3cfe5928d"
+  version = "v2.0.0"
 
 [[projects]]
   branch = "master"
@@ -1398,7 +1398,7 @@
     "providers/dns/vegadns",
     "providers/dns/vultr"
   ]
-  revision = "160d6fe60303699067faad57dc0b1e147ac499ef"
+  revision = "1151b4e3befc51b7b215179c87791753721dc6d5"
 
 [[projects]]
   branch = "master"
@@ -1410,6 +1410,8 @@
     "ed25519/internal/edwards25519",
     "ocsp",
     "pbkdf2",
+    "pkcs12",
+    "pkcs12/internal/rc2",
     "scrypt",
     "ssh/terminal"
   ]

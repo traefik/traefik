@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
@@ -15,18 +16,26 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/adal"
 	"github.com/Azure/go-autorest/autorest/azure"
+	"github.com/Azure/go-autorest/autorest/azure/auth"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/xenolf/lego/acme"
 	"github.com/xenolf/lego/platform/config/env"
 )
 
+const defaultMetadataEndpoint = "http://169.254.169.254"
+
 // Config is used to configure the creation of the DNSProvider
 type Config struct {
-	ClientID           string
-	ClientSecret       string
-	SubscriptionID     string
-	TenantID           string
-	ResourceGroup      string
+	// optional if using instance metadata service
+	ClientID     string
+	ClientSecret string
+	TenantID     string
+
+	SubscriptionID string
+	ResourceGroup  string
+
+	MetadataEndpoint string
+
 	PropagationTimeout time.Duration
 	PollingInterval    time.Duration
 	TTL                int
@@ -39,29 +48,26 @@ func NewDefaultConfig() *Config {
 		TTL:                env.GetOrDefaultInt("AZURE_TTL", 60),
 		PropagationTimeout: env.GetOrDefaultSecond("AZURE_PROPAGATION_TIMEOUT", 2*time.Minute),
 		PollingInterval:    env.GetOrDefaultSecond("AZURE_POLLING_INTERVAL", 2*time.Second),
+		MetadataEndpoint:   env.GetOrFile("AZURE_METADATA_ENDPOINT"),
 	}
 }
 
 // DNSProvider is an implementation of the acme.ChallengeProvider interface
 type DNSProvider struct {
-	config *Config
+	config     *Config
+	authorizer autorest.Authorizer
 }
 
 // NewDNSProvider returns a DNSProvider instance configured for azure.
-// Credentials must be passed in the environment variables: AZURE_CLIENT_ID,
-// AZURE_CLIENT_SECRET, AZURE_SUBSCRIPTION_ID, AZURE_TENANT_ID, AZURE_RESOURCE_GROUP
+// Credentials can be passed in the environment variables:
+// AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_SUBSCRIPTION_ID, AZURE_TENANT_ID, AZURE_RESOURCE_GROUP
+// If the credentials are _not_ set via the environment,
+// then it will attempt to get a bearer token via the instance metadata service.
+// see: https://github.com/Azure/go-autorest/blob/v10.14.0/autorest/azure/auth/auth.go#L38-L42
 func NewDNSProvider() (*DNSProvider, error) {
-	values, err := env.Get("AZURE_CLIENT_ID", "AZURE_CLIENT_SECRET", "AZURE_SUBSCRIPTION_ID", "AZURE_TENANT_ID", "AZURE_RESOURCE_GROUP")
-	if err != nil {
-		return nil, fmt.Errorf("azure: %v", err)
-	}
-
 	config := NewDefaultConfig()
-	config.ClientID = values["AZURE_CLIENT_ID"]
-	config.ClientSecret = values["AZURE_CLIENT_SECRET"]
-	config.SubscriptionID = values["AZURE_SUBSCRIPTION_ID"]
-	config.TenantID = values["AZURE_TENANT_ID"]
-	config.ResourceGroup = values["AZURE_RESOURCE_GROUP"]
+	config.SubscriptionID = env.GetOrFile("AZURE_SUBSCRIPTION_ID")
+	config.ResourceGroup = env.GetOrFile("AZURE_RESOURCE_GROUP")
 
 	return NewDNSProviderConfig(config)
 }
@@ -73,8 +79,8 @@ func NewDNSProviderCredentials(clientID, clientSecret, subscriptionID, tenantID,
 	config := NewDefaultConfig()
 	config.ClientID = clientID
 	config.ClientSecret = clientSecret
-	config.SubscriptionID = subscriptionID
 	config.TenantID = tenantID
+	config.SubscriptionID = subscriptionID
 	config.ResourceGroup = resourceGroup
 
 	return NewDNSProviderConfig(config)
@@ -86,11 +92,40 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 		return nil, errors.New("azure: the configuration of the DNS provider is nil")
 	}
 
-	if config.ClientID == "" || config.ClientSecret == "" || config.SubscriptionID == "" || config.TenantID == "" || config.ResourceGroup == "" {
-		return nil, errors.New("azure: some credentials information are missing")
+	if config.HTTPClient == nil {
+		config.HTTPClient = http.DefaultClient
 	}
 
-	return &DNSProvider{config: config}, nil
+	authorizer, err := getAuthorizer(config)
+	if err != nil {
+		return nil, err
+	}
+
+	if config.SubscriptionID == "" {
+		subsID, err := getMetadata(config, "subscriptionId")
+		if err != nil {
+			return nil, fmt.Errorf("azure: %v", err)
+		}
+
+		if subsID == "" {
+			return nil, errors.New("azure: SubscriptionID is missing")
+		}
+		config.SubscriptionID = subsID
+	}
+
+	if config.ResourceGroup == "" {
+		resGroup, err := getMetadata(config, "resourceGroupName")
+		if err != nil {
+			return nil, fmt.Errorf("azure: %v", err)
+		}
+
+		if resGroup == "" {
+			return nil, errors.New("azure: ResourceGroup is missing")
+		}
+		config.ResourceGroup = resGroup
+	}
+
+	return &DNSProvider{config: config, authorizer: authorizer}, nil
 }
 
 // Timeout returns the timeout and interval to use when checking for DNS
@@ -110,12 +145,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	}
 
 	rsc := dns.NewRecordSetsClient(d.config.SubscriptionID)
-	spt, err := d.newServicePrincipalToken(azure.PublicCloud.ResourceManagerEndpoint)
-	if err != nil {
-		return fmt.Errorf("azure: %v", err)
-	}
-
-	rsc.Authorizer = autorest.NewBearerAuthorizer(spt)
+	rsc.Authorizer = d.authorizer
 
 	relative := toRelativeRecord(fqdn, acme.ToFqdn(zone))
 	rec := dns.RecordSet{
@@ -145,12 +175,7 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 
 	relative := toRelativeRecord(fqdn, acme.ToFqdn(zone))
 	rsc := dns.NewRecordSetsClient(d.config.SubscriptionID)
-	spt, err := d.newServicePrincipalToken(azure.PublicCloud.ResourceManagerEndpoint)
-	if err != nil {
-		return fmt.Errorf("azure: %v", err)
-	}
-
-	rsc.Authorizer = autorest.NewBearerAuthorizer(spt)
+	rsc.Authorizer = d.authorizer
 
 	_, err = rsc.Delete(ctx, d.config.ResourceGroup, zone, relative, dns.TXT, "")
 	if err != nil {
@@ -166,14 +191,8 @@ func (d *DNSProvider) getHostedZoneID(ctx context.Context, fqdn string) (string,
 		return "", err
 	}
 
-	// Now we want to to Azure and get the zone.
-	spt, err := d.newServicePrincipalToken(azure.PublicCloud.ResourceManagerEndpoint)
-	if err != nil {
-		return "", err
-	}
-
 	dc := dns.NewZonesClient(d.config.SubscriptionID)
-	dc.Authorizer = autorest.NewBearerAuthorizer(spt)
+	dc.Authorizer = d.authorizer
 
 	zone, err := dc.Get(ctx, d.config.ResourceGroup, acme.UnFqdn(authZone))
 	if err != nil {
@@ -184,17 +203,61 @@ func (d *DNSProvider) getHostedZoneID(ctx context.Context, fqdn string) (string,
 	return to.String(zone.Name), nil
 }
 
-// NewServicePrincipalTokenFromCredentials creates a new ServicePrincipalToken using values of the
-// passed credentials map.
-func (d *DNSProvider) newServicePrincipalToken(scope string) (*adal.ServicePrincipalToken, error) {
-	oauthConfig, err := adal.NewOAuthConfig(azure.PublicCloud.ActiveDirectoryEndpoint, d.config.TenantID)
-	if err != nil {
-		return nil, err
-	}
-	return adal.NewServicePrincipalToken(*oauthConfig, d.config.ClientID, d.config.ClientSecret, scope)
-}
-
 // Returns the relative record to the domain
 func toRelativeRecord(domain, zone string) string {
 	return acme.UnFqdn(strings.TrimSuffix(domain, zone))
+}
+
+func getAuthorizer(config *Config) (autorest.Authorizer, error) {
+	if config.ClientID != "" && config.ClientSecret != "" && config.TenantID != "" {
+		oauthConfig, err := adal.NewOAuthConfig(azure.PublicCloud.ActiveDirectoryEndpoint, config.TenantID)
+		if err != nil {
+			return nil, err
+		}
+
+		spt, err := adal.NewServicePrincipalToken(*oauthConfig, config.ClientID, config.ClientSecret, azure.PublicCloud.ResourceManagerEndpoint)
+		if err != nil {
+			return nil, err
+		}
+
+		spt.SetSender(config.HTTPClient)
+		return autorest.NewBearerAuthorizer(spt), nil
+	}
+
+	return auth.NewAuthorizerFromEnvironment()
+}
+
+// Fetches metadata from environment or he instance metadata service
+// borrowed from https://github.com/Microsoft/azureimds/blob/master/imdssample.go
+func getMetadata(config *Config, field string) (string, error) {
+	metadataEndpoint := config.MetadataEndpoint
+	if len(metadataEndpoint) == 0 {
+		metadataEndpoint = defaultMetadataEndpoint
+	}
+
+	resource := fmt.Sprintf("%s/metadata/instance/compute/%s", metadataEndpoint, field)
+	req, err := http.NewRequest(http.MethodGet, resource, nil)
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Add("Metadata", "True")
+
+	q := req.URL.Query()
+	q.Add("format", "text")
+	q.Add("api-version", "2017-12-01")
+	req.URL.RawQuery = q.Encode()
+
+	resp, err := config.HTTPClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return string(respBody[:]), nil
 }
