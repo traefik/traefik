@@ -30,8 +30,6 @@ import (
 const (
 	// SwarmAPIVersion is a constant holding the version of the Provider API traefik will use
 	SwarmAPIVersion = "1.24"
-	// SwarmDefaultWatchTime is the duration of the interval when polling docker
-	SwarmDefaultWatchTime = 15 * time.Second
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -46,6 +44,7 @@ type Provider struct {
 	UseBindPortIP         bool             `description:"Use the ip address from the bound port, rather than from the inner network" export:"true"`
 	SwarmMode             bool             `description:"Use Docker on Swarm Mode" export:"true"`
 	Network               string           `description:"Default Docker network used" export:"true"`
+	RefreshSeconds        int              `description:"Polling interval for swarm mode (in seconds)" export:"true"`
 }
 
 // Init the provider
@@ -162,7 +161,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				if p.SwarmMode {
 					errChan := make(chan error)
 					// TODO: This need to be change. Linked to Swarm events docker/docker#23827
-					ticker := time.NewTicker(SwarmDefaultWatchTime)
+					ticker := time.NewTicker(time.Second * time.Duration(p.SwarmRefreshPeriod))
 					pool.GoCtx(func(ctx context.Context) {
 						defer close(errChan)
 						for {
