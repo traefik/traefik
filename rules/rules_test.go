@@ -196,8 +196,30 @@ func TestHostRegexp(t *testing.T) {
 			},
 		},
 		{
-			desc:    "uppercased hostnames in request",
+			desc:    "regex insensitive",
 			hostExp: "{dummy:[A-Za-z-]+\\.bar\\.com}",
+			urls: map[string]bool{
+				"http://FOO.bar.com": true,
+				"http://foo.bar.com": true,
+				"http://fooubar.com": false,
+				"http://barucom":     false,
+				"http://barcom":      false,
+			},
+		},
+		{
+			desc:    "insensitive host",
+			hostExp: "{dummy:[a-z-]+\\.bar\\.com}",
+			urls: map[string]bool{
+				"http://FOO.bar.com": true,
+				"http://foo.bar.com": true,
+				"http://fooubar.com": false,
+				"http://barucom":     false,
+				"http://barcom":      false,
+			},
+		},
+		{
+			desc:    "insensitive host simple",
+			hostExp: "foo.bar.com",
 			urls: map[string]bool{
 				"http://FOO.bar.com": true,
 				"http://foo.bar.com": true,
@@ -223,7 +245,7 @@ func TestHostRegexp(t *testing.T) {
 
 			for testURL, match := range test.urls {
 				req := testhelpers.MustNewRequest(http.MethodGet, testURL, nil)
-				assert.Equal(t, match, rt.Match(req, &mux.RouteMatch{}))
+				assert.Equal(t, match, rt.Match(req, &mux.RouteMatch{}), testURL)
 			}
 		})
 	}

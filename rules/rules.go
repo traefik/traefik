@@ -56,7 +56,7 @@ func (r *Rules) host(hosts ...string) *mux.Route {
 func (r *Rules) hostRegexp(hostPatterns ...string) *mux.Route {
 	router := r.Route.Route.Subrouter()
 	for _, hostPattern := range hostPatterns {
-		router.Host(strings.ToLower(hostPattern))
+		router.Host(hostPattern)
 	}
 	return r.Route.Route
 }
