@@ -291,7 +291,7 @@
   branch = "master"
   name = "github.com/containous/mux"
   packages = ["."]
-  revision = "06ccd3e75091eb659b1d720cda0e16bc7057954c"
+  revision = "c33f32e268983f989290677351b871b65da75ba5"
 
 [[projects]]
   name = "github.com/containous/staert"
@@ -819,6 +819,7 @@
   revision = "9b66602d496a139e4722bdde32f0f1ac1c12d4a8"
 
 [[projects]]
+  branch = "master"
   name = "github.com/jjcollinge/servicefabric"
   packages = ["."]
   revision = "8eebe170fa1ba25d3dfb928b3f86a7313b13b9fe"

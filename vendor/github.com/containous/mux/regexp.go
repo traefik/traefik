@@ -53,6 +53,12 @@ func newRouteRegexp(tpl string, matchHost, matchPrefix, matchQuery, strictSlash,
 	varsN := make([]string, len(idxs)/2)
 	varsR := make([]*regexp.Regexp, len(idxs)/2)
 	pattern := bytes.NewBufferString("")
+
+	// Host matching is case insensitive
+	if matchHost {
+		fmt.Fprint(pattern, "(?i)")
+	}
+
 	pattern.WriteByte('^')
 	reverse := bytes.NewBufferString("")
 	var end int
