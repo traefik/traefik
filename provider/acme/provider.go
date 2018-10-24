@@ -791,6 +791,7 @@ func isDomainAlreadyChecked(domainToCheck string, existentDomains []string) bool
 	return false
 }
 
+// SetPropagationCheck to disable the Lego PreCheck.
 func SetPropagationCheck(disable bool) {
 	if disable {
 		acme.PreCheckDNS = func(_, _ string) (bool, error) {
@@ -799,6 +800,7 @@ func SetPropagationCheck(disable bool) {
 	}
 }
 
+// SetRecursiveNameServers to provide a custom DNS resolver.
 func SetRecursiveNameServers(dnsResolvers []string) {
 	resolvers := normaliseDNSResolvers(dnsResolvers)
 	if len(resolvers) > 0 {
