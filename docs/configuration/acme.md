@@ -142,6 +142,23 @@ entryPoint = "https"
   #
   # delayBeforeCheck = 0
 
+  # Use following DNS servers to resolve the FQDN authority.
+  #
+  # Optional
+  # Default: empty
+  #
+  # resolvers = ["1.1.1.1:53", "8.8.8.8:53"]
+
+  # Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready.
+  #
+  # NOT RECOMMENDED:
+  # Increase the risk of reaching Let's Encrypt's rate limits.
+  #
+  # Optional
+  # Default: false
+  #
+  # disablePropagationCheck = true
+
 # Domains list.
 # Only domains defined here can generate wildcard certificates.
 # The certificates for these domains are negotiated at traefik startup only.
@@ -301,6 +318,10 @@ Here is a list of supported `provider`s, that can automate the DNS verification,
 | [Stackpath](https://www.stackpath.com/)                | `stackpath`    | `STACKPATH_CLIENT_ID`, `STACKPATH_CLIENT_SECRET`, `STACKPATH_STACK_ID`                                                                    | Not tested yet                 |
 | [VegaDNS](https://github.com/shupp/VegaDNS-API)        | `vegadns`      | `SECRET_VEGADNS_KEY`, `SECRET_VEGADNS_SECRET`, `VEGADNS_URL`                                                                              | Not tested yet                 |
 | [VULTR](https://www.vultr.com)                         | `vultr`        | `VULTR_API_KEY`                                                                                                                           | Not tested yet                 |
+
+#### `resolvers`
+
+Use custom DNS servers to resolve the FQDN authority.
 
 ### `domains`
 

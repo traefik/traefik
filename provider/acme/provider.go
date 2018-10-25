@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	fmtlog "log"
+	"net"
 	"net/url"
 	"reflect"
 	"strings"
@@ -74,10 +75,12 @@ type Certificate struct {
 
 // DNSChallenge contains DNS challenge Configuration
 type DNSChallenge struct {
-	Provider         string         `description:"Use a DNS-01 based challenge provider rather than HTTPS."`
-	DelayBeforeCheck flaeg.Duration `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."`
-	preCheckTimeout  time.Duration
-	preCheckInterval time.Duration
+	Provider                string             `description:"Use a DNS-01 based challenge provider rather than HTTPS."`
+	DelayBeforeCheck        flaeg.Duration     `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."`
+	Resolvers               types.DNSResolvers `description:"Use following DNS servers to resolve the FQDN authority."`
+	DisablePropagationCheck bool               `description:"Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended]"`
+	preCheckTimeout         time.Duration
+	preCheckInterval        time.Duration
 }
 
 // HTTPChallenge contains HTTP challenge Configuration
@@ -251,6 +254,9 @@ func (p *Provider) getClient() (*acme.Client, error) {
 
 	if p.DNSChallenge != nil && len(p.DNSChallenge.Provider) > 0 {
 		log.Debugf("Using DNS Challenge provider: %s", p.DNSChallenge.Provider)
+
+		SetRecursiveNameServers(p.DNSChallenge.Resolvers)
+		SetPropagationCheck(p.DNSChallenge.DisablePropagationCheck)
 
 		err = dnsOverrideDelay(p.DNSChallenge.DelayBeforeCheck)
 		if err != nil {
@@ -783,4 +789,38 @@ func isDomainAlreadyChecked(domainToCheck string, existentDomains []string) bool
 		}
 	}
 	return false
+}
+
+// SetPropagationCheck to disable the Lego PreCheck.
+func SetPropagationCheck(disable bool) {
+	if disable {
+		acme.PreCheckDNS = func(_, _ string) (bool, error) {
+			return true, nil
+		}
+	}
+}
+
+// SetRecursiveNameServers to provide a custom DNS resolver.
+func SetRecursiveNameServers(dnsResolvers []string) {
+	resolvers := normaliseDNSResolvers(dnsResolvers)
+	if len(resolvers) > 0 {
+		acme.RecursiveNameservers = resolvers
+		log.Infof("Validating FQDN authority with DNS using %+v", resolvers)
+	}
+}
+
+// ensure all servers have a port number
+func normaliseDNSResolvers(dnsResolvers []string) []string {
+	var normalisedResolvers []string
+	for _, server := range dnsResolvers {
+		srv := strings.TrimSpace(server)
+		if len(srv) > 0 {
+			if host, port, err := net.SplitHostPort(srv); err != nil {
+				normalisedResolvers = append(normalisedResolvers, net.JoinHostPort(srv, "53"))
+			} else {
+				normalisedResolvers = append(normalisedResolvers, net.JoinHostPort(host, port))
+			}
+		}
+	}
+	return normalisedResolvers
 }
