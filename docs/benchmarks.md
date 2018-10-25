@@ -15,7 +15,7 @@ I used 4 VMs for the tests with the following configuration:
 
 1. One VM used to launch the benchmarking tool [wrk](https://github.com/wg/wrk)
 2. One VM for Traefik (v1.0.0-beta.416) / nginx (v1.4.6)
-3. Two VMs for 2 backend servers in go [whoami](https://github.com/emilevauge/whoamI/)
+3. Two VMs for 2 backend servers in go [whoami](https://github.com/containous/whoami/)
 
 Each VM has been tuned using the following limits:
 

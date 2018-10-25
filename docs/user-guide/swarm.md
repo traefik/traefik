@@ -112,12 +112,12 @@ Let's explain this command:
 
 ## Deploy your apps
 
-We can now deploy our app on the cluster, here [whoami](https://github.com/emilevauge/whoami), a simple web server in GO, on the network `my-net`:
+We can now deploy our app on the cluster, here [whoami](https://github.com/containous/whoami), a simple web server in GO, on the network `my-net`:
 
 ```shell
 eval $(docker-machine env --swarm mhs-demo0)
-docker run -d --name=whoami0 --net=my-net --env="constraint:node==mhs-demo0" emilevauge/whoami
-docker run -d --name=whoami1 --net=my-net --env="constraint:node==mhs-demo1" emilevauge/whoami
+docker run -d --name=whoami0 --net=my-net --env="constraint:node==mhs-demo0" containous/whoami
+docker run -d --name=whoami1 --net=my-net --env="constraint:node==mhs-demo1" containous/whoami
 ```
 
 Check that everything is started:
@@ -127,8 +127,8 @@ docker ps
 ```
 ```
 CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                                                      NAMES
-ba2c21488299        emilevauge/whoami   "/whoamI"                8 seconds ago       Up 9 seconds        80/tcp                                                     mhs-demo1/whoami1
-8147a7746e7a        emilevauge/whoami   "/whoamI"                19 seconds ago      Up 20 seconds       80/tcp                                                     mhs-demo0/whoami0
+ba2c21488299        containous/whoami   "/whoamI"                8 seconds ago       Up 9 seconds        80/tcp                                                     mhs-demo1/whoami1
+8147a7746e7a        containous/whoami   "/whoamI"                19 seconds ago      Up 20 seconds       80/tcp                                                     mhs-demo0/whoami0
 8fbc39271b4c        traefik             "/traefik -l DEBUG -c"   36 seconds ago      Up 37 seconds       192.168.99.101:80->80/tcp, 192.168.99.101:8080->8080/tcp   mhs-demo0/serene_bhabha
 ```
 

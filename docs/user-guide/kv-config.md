@@ -24,7 +24,7 @@ The Traefik global configuration will be retrieved from a [Consul](https://consu
 
 First we have to launch Consul in a container.
 
-The [docker-compose file](https://docs.docker.com/compose/compose-file/) allows us to launch Consul and four instances of the trivial app [emilevauge/whoamI](https://github.com/emilevauge/whoamI) :
+The [docker-compose file](https://docs.docker.com/compose/compose-file/) allows us to launch Consul and four instances of the trivial app [containous/whoami](https://github.com/containous/whoami) :
 
 ```yaml
 consul:
@@ -42,16 +42,16 @@ consul:
     - "8302/udp"
 
 whoami1:
-  image: emilevauge/whoami
+  image: containous/whoami
 
 whoami2:
-  image: emilevauge/whoami
+  image: containous/whoami
 
 whoami3:
-  image: emilevauge/whoami
+  image: containous/whoami
 
 whoami4:
-  image: emilevauge/whoami
+  image: containous/whoami
 ```
 
 ### Upload the configuration in the Key-value store
