@@ -180,7 +180,7 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 
 	next.ServeHTTP(crw, reqWithDataTable)
 
-	core[ClientUsername] = usernameIfPresent(reqWithDataTable.URL)
+	core[ClientUsername] = formatUsernameForLog(core[ClientUsername])
 
 	logDataTable.DownstreamResponse = crw.Header()
 
@@ -231,14 +231,12 @@ func silentSplitHostPort(value string) (host string, port string) {
 	return host, port
 }
 
-func usernameIfPresent(theURL *url.URL) string {
-	username := "-"
-	if theURL.User != nil {
-		if name := theURL.User.Username(); name != "" {
-			username = name
-		}
+func formatUsernameForLog(usernameField interface{}) string {
+	username, ok := usernameField.(string)
+	if ok && len(username) != 0 {
+		return username
 	}
-	return username
+	return "-"
 }
 
 // Logging handler to log frontend name, backend name, and elapsed time
