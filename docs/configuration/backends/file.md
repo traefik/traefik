@@ -23,6 +23,9 @@ Traefik can be configured with a file.
 
     [backends.backend1.circuitBreaker]
       expression = "NetworkErrorRatio() > 0.5"
+      
+    [backends.backend1.responseforwarding]
+      flushinterval = "10ms"
 
     [backends.backend1.loadBalancer]
       method = "drr"
