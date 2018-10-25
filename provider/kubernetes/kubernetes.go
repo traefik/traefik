@@ -43,6 +43,7 @@ const (
 	traefikDefaultIngressClass = "traefik"
 	defaultBackendName         = "global-default-backend"
 	defaultFrontendName        = "global-default-frontend"
+	defaultFrontendRule        = "PathPrefix:/"
 	allowedProtocolHTTPS       = "https"
 	allowedProtocolH2C         = "h2c"
 )
@@ -238,6 +239,11 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				}
 
 				baseName := r.Host + pa.Path
+
+				if len(baseName) == 0 {
+					baseName = pa.Backend.ServiceName
+				}
+
 				if priority > 0 {
 					baseName = strconv.Itoa(priority) + "-" + baseName
 				}
@@ -316,6 +322,12 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						frontend.Routes[r.Host] = types.Route{
 							Rule: getRuleForHost(r.Host),
 						}
+					}
+				}
+
+				if len(frontend.Routes) == 0 {
+					frontend.Routes["/"] = types.Route{
+						Rule: defaultFrontendRule,
 					}
 				}
 
@@ -539,7 +551,7 @@ func (p *Provider) addGlobalBackend(cl Client, i *extensionsv1beta1.Ingress, tem
 	}
 
 	templateObjects.Frontends[defaultFrontendName].Routes["/"] = types.Route{
-		Rule: "PathPrefix:/",
+		Rule: defaultFrontendRule,
 	}
 
 	return nil
@@ -578,6 +590,7 @@ func getRuleForPath(pa extensionsv1beta1.HTTPIngressPath, i *extensionsv1beta1.I
 
 		rules = append(rules, rule)
 	}
+
 	return strings.Join(rules, ";"), nil
 }
 
