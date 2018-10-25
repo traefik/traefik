@@ -182,6 +182,10 @@ entryPoint = "https"
 [acme.tlsChallenge]
 ```
 
+!!! note
+    If the `TLS-ALPN-01` challenge is used, `acme.entryPoint` has to be reachable by Let's Encrypt through port 443.
+    This is a Let's Encrypt limitation as described on the [community forum](https://community.letsencrypt.org/t/support-for-ports-other-than-80-and-443/3419/72).
+
 #### `httpChallenge`
 
 Use the `HTTP-01` challenge to generate and renew ACME certificates by provisioning a HTTP resource under a well-known URI.
