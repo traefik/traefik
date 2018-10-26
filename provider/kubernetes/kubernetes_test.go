@@ -728,6 +728,7 @@ func TestGetPassHostHeader(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+// Deprecated
 func TestGetPassTLSCert(t *testing.T) {
 	ingresses := []*extensionsv1beta1.Ingress{
 		buildIngress(iNamespace("awesome"),
@@ -1102,6 +1103,20 @@ func TestIngressAnnotations(t *testing.T) {
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesPassTLSCert, "true"),
+			iAnnotation(annotationKubernetesPassTLSClientCert, `
+pem: true
+infos:
+  notafter: true
+  notbefore: true
+  sans: true
+  subject:
+    country: true
+    province: true
+    locality: true
+    organization: true
+    commonname: true
+    serialnumber: true
+`),
 			iAnnotation(annotationKubernetesIngressClass, traefikDefaultRealm),
 			iRules(
 				iRule(
@@ -1500,13 +1515,7 @@ rateset:
 			),
 			frontend("other/sslstuff",
 				passHostHeader(),
-				passTLSCert(),
-				routes(
-					route("/sslstuff", "PathPrefix:/sslstuff"),
-					route("other", "Host:other")),
-			),
-			frontend("other/sslstuff",
-				passHostHeader(),
+				passTLSClientCert(),
 				passTLSCert(),
 				routes(
 					route("/sslstuff", "PathPrefix:/sslstuff"),
