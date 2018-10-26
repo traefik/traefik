@@ -125,8 +125,15 @@ type moveHandler struct {
 func (m *moveHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	rw.Header().Set("Location", m.location.String())
 	status := http.StatusFound
+	if req.Method != http.MethodGet {
+		status = http.StatusTemporaryRedirect
+	}
+
 	if m.permanent {
 		status = http.StatusMovedPermanently
+		if req.Method != http.MethodGet {
+			status = http.StatusPermanentRedirect
+		}
 	}
 	rw.WriteHeader(status)
 	rw.Write([]byte(http.StatusText(status)))
