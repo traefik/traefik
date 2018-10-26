@@ -109,7 +109,7 @@ entryPoint = "bar"
 In the above example, you would access a regular path, administration panel, and health-check as follows:
 
 * Regular path: `http://hostname:80/path`
-* Admin Panel: `http://hostname:8083/`
+* Dashboard: `http://hostname:8083/`
 * Ping URL: `http://hostname:8082/ping`
 
 In the above example, it is _very_ important to create a named dedicated entry point, and do **not** include it in `defaultEntryPoints`.
