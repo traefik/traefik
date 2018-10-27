@@ -1,5 +1,5 @@
 import { Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { axisBottom, axisLeft, easeLinear, max, min, scaleBand, scaleLinear, select } from 'd3';
+import { axisBottom, axisLeft, max, scaleBand, scaleLinear, select } from 'd3';
 import { format } from 'd3-format';
 import * as _ from 'lodash';
 import { WindowService } from '../../services/window.service';
