@@ -121,18 +121,16 @@ func (p *Provider) createClient() (client.APIClient, error) {
 // Provide allows the docker provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
-	// TODO register this routine in pool, and watch for stop channel
-	safe.Go(func() {
+	pool.GoCtx(func(routineCtx context.Context) {
 		operation := func() error {
 			var err error
-
+			ctx, cancel := context.WithCancel(routineCtx)
 			dockerClient, err := p.createClient()
 			if err != nil {
 				log.Errorf("Failed to create a client for docker, error: %s", err)
 				return err
 			}
 
-			ctx := context.Background()
 			serverVersion, err := dockerClient.ServerVersion(ctx)
 			if err != nil {
 				log.Errorf("Failed to retrieve information of the docker client and server host: %s", err)
@@ -144,12 +142,14 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				dockerDataList, err = listServices(ctx, dockerClient)
 				if err != nil {
 					log.Errorf("Failed to list services for docker swarm mode, error %s", err)
+					cancel()
 					return err
 				}
 			} else {
 				dockerDataList, err = listContainers(ctx, dockerClient)
 				if err != nil {
 					log.Errorf("Failed to list containers for docker, error %s", err)
+					cancel()
 					return err
 				}
 			}
@@ -160,12 +160,11 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				Configuration: configuration,
 			}
 			if p.Watch {
-				ctx, cancel := context.WithCancel(ctx)
 				if p.SwarmMode {
 					errChan := make(chan error)
 					// TODO: This need to be change. Linked to Swarm events docker/docker#23827
 					ticker := time.NewTicker(SwarmDefaultWatchTime)
-					pool.Go(func(stop chan bool) {
+					pool.GoCtx(func(ctx context.Context) {
 						defer close(errChan)
 						for {
 							select {
@@ -184,9 +183,8 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 									}
 								}
 
-							case <-stop:
+							case <-ctx.Done():
 								ticker.Stop()
-								cancel()
 								return
 							}
 						}
@@ -197,10 +195,6 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 					// channel closed
 
 				} else {
-					pool.Go(func(stop chan bool) {
-						<-stop
-						cancel()
-					})
 					f := filters.NewArgs()
 					f.Add("type", "container")
 					options := dockertypes.EventsOptions{
@@ -213,7 +207,6 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 						if err != nil {
 							log.Errorf("Failed to list containers for docker, error %s", err)
 							// Call cancel to get out of the monitor
-							cancel()
 							return
 						}
 						configuration := p.buildConfiguration(containers)
@@ -238,8 +231,10 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 							if err == io.EOF {
 								log.Debug("Provider event stream closed")
 							}
-
+							cancel()
 							return err
+						case <-ctx.Done():
+							return nil
 						}
 					}
 				}
@@ -249,7 +244,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		notify := func(err error, time time.Duration) {
 			log.Errorf("Provider connection error %+v, retrying in %s", err, time)
 		}
-		err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
+		err := backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), routineCtx), notify)
 		if err != nil {
 			log.Errorf("Cannot connect to docker server %+v", err)
 		}
