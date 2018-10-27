@@ -125,6 +125,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		operation := func() error {
 			var err error
 			ctx, cancel := context.WithCancel(routineCtx)
+			defer cancel()
 			dockerClient, err := p.createClient()
 			if err != nil {
 				log.Errorf("Failed to create a client for docker, error: %s", err)
@@ -142,14 +143,12 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				dockerDataList, err = listServices(ctx, dockerClient)
 				if err != nil {
 					log.Errorf("Failed to list services for docker swarm mode, error %s", err)
-					cancel()
 					return err
 				}
 			} else {
 				dockerDataList, err = listContainers(ctx, dockerClient)
 				if err != nil {
 					log.Errorf("Failed to list containers for docker, error %s", err)
-					cancel()
 					return err
 				}
 			}
@@ -231,7 +230,6 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 							if err == io.EOF {
 								log.Debug("Provider event stream closed")
 							}
-							cancel()
 							return err
 						case <-ctx.Done():
 							return nil
