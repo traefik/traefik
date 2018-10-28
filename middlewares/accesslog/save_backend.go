@@ -49,7 +49,7 @@ func serveSaveBackend(rw http.ResponseWriter, r *http.Request, backendName strin
 	table.Core[BackendURL] = r.URL // note that this is *not* the original incoming URL
 	table.Core[BackendAddr] = r.URL.Host
 
-	crw := &captureResponseWriter{rw: rw}
+	crw := &captureResponseWriter{RW: rw}
 	start := time.Now().UTC()
 
 	apply(crw)

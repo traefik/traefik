@@ -21,6 +21,7 @@ type EntryPoint struct {
 	ProxyProtocol    *ProxyProtocol    `export:"true"`
 	ForwardedHeaders *ForwardedHeaders `export:"true"`
 	ClientIPStrategy *types.IPStrategy `export:"true"`
+	RemoveHeaders    []string          `export:"true"`	
 }
 
 // Compress contains compress configuration
@@ -72,6 +73,10 @@ func (ep *EntryPoints) Set(value string) error {
 	if len(result["compress"]) > 0 {
 		compress = &Compress{}
 	}
+	var removeHeaders []string
+	if len(result["removeheaders"]) > 0 {
+		removeHeaders = strings.Split(result["removeheaders"], ",")
+	}
 
 	configTLS, err := makeEntryPointTLS(result)
 	if err != nil {
@@ -88,6 +93,7 @@ func (ep *EntryPoints) Set(value string) error {
 		ProxyProtocol:    makeEntryPointProxyProtocol(result),
 		ForwardedHeaders: makeEntryPointForwardedHeaders(result),
 		ClientIPStrategy: makeIPStrategy("clientipstrategy", result),
+		RemoveHeaders:    removeHeaders,		
 	}
 
 	return nil

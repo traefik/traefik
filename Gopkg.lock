@@ -234,6 +234,7 @@
     "private/protocol/rest",
     "private/protocol/restxml",
     "private/protocol/xml/xmlutil",
+    "service/lambda",
     "service/dynamodb",
     "service/dynamodb/dynamodbattribute",
     "service/dynamodb/dynamodbiface",
@@ -1786,3 +1787,4 @@
   inputs-digest = "8eb11befb583dfb89320dd7b7aea9e54b40e0523e60e66ed418788394b873d44"
   solver-name = "gps-cdcl"
   solver-version = 1
+  

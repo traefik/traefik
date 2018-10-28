@@ -175,7 +175,7 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 		core[ClientHost] = forwardedFor
 	}
 
-	crw := &captureResponseWriter{rw: rw}
+	crw := &captureResponseWriter{RW: rw}
 
 	next.ServeHTTP(crw, reqWithDataTable)
 

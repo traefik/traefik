@@ -27,6 +27,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
 	"github.com/vulcand/oxy/forward"
+	"net/url"
 )
 
 // loadConfiguration manages dynamically frontends, backends and TLS configurations
@@ -165,7 +166,7 @@ func (s *Server) loadFrontendConfig(
 		if backendsHandlers[entryPointName+providerName+frontendHash] == nil {
 			log.Debugf("Creating backend %s", frontend.Backend)
 
-			handlers, responseModifier, postConfig, err := s.buildMiddlewares(frontendName, frontend, config.Backends, entryPointName, providerName)
+			handlers, responseModifier, postConfig, err := s.buildMiddlewares(frontendName, frontend, config.Backends, entryPointName, entryPoint, providerName)
 			if err != nil {
 				return nil, err
 			}
@@ -174,7 +175,7 @@ func (s *Server) loadFrontendConfig(
 				postConfigs = append(postConfigs, postConfig)
 			}
 
-			fwd, err := s.buildForwarder(entryPointName, entryPoint, frontendName, frontend, responseModifier)
+			fwd, err := s.buildForwarder(entryPointName, entryPoint, frontendName, frontend, responseModifier, config.Backends)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create the forwarder for frontend %s: %v", frontendName, err)
 			}
@@ -231,7 +232,7 @@ func (s *Server) loadFrontendConfig(
 
 func (s *Server) buildForwarder(entryPointName string, entryPoint *configuration.EntryPoint,
 	frontendName string, frontend *types.Frontend,
-	responseModifier modifyResponse) (http.Handler, error) {
+	responseModifier modifyResponse, backends map[string]*types.Backend) (http.Handler, error) {
 
 	roundTripper, err := s.getRoundTripper(entryPointName, frontend.PassTLSCert, entryPoint.TLS)
 	if err != nil {
@@ -239,22 +240,46 @@ func (s *Server) buildForwarder(entryPointName string, entryPoint *configuration
 	}
 
 	var fwd http.Handler
-	fwd, err = forward.New(
-		forward.Stream(true),
-		forward.PassHostHeader(frontend.PassHostHeader),
-		forward.RoundTripper(roundTripper),
-		forward.ResponseModifier(responseModifier),
-		forward.BufferPool(s.bufferPool),
-		forward.WebsocketConnectionClosedHook(func(req *http.Request, conn net.Conn) {
-			server := req.Context().Value(http.ServerContextKey).(*http.Server)
-			if server != nil {
-				connState := server.ConnState
-				if connState != nil {
-					connState(conn, http.StateClosed)
+	var isLambda = false
+	for _, srv := range backends[frontend.Backend].Servers {
+		u, err := url.Parse(srv.URL)
+		if err != nil {
+			log.Errorf("Error parsing server URL %s: %v", srv.URL, err)
+			log.Errorf("Skipping frontend %s...", frontendName)
+			return nil, fmt.Errorf("Error parsing server URL %s: %v", frontendName, err)
+		}
+
+		if u.Scheme == "lambda" {
+			isLambda = true
+		}
+
+		if isLambda && u.Scheme != "lambda" {
+			log.Errorf("Backend can not have lambda and non-lambda servers at the same time %s", frontend.Backend)
+			log.Errorf("Skipping frontend %s...", frontendName)
+			return nil, fmt.Errorf("Backend can not have lambda and non-lambda servers at the same time %s", frontend.Backend)
+		}
+
+	}
+	if isLambda {
+		fwd = middlewares.NewLambda(fwd)
+	} else {
+		fwd, err = forward.New(
+			forward.Stream(true),
+			forward.PassHostHeader(frontend.PassHostHeader),
+			forward.RoundTripper(roundTripper),
+			forward.ResponseModifier(responseModifier),
+			forward.BufferPool(s.bufferPool),
+			forward.WebsocketConnectionClosedHook(func(req *http.Request, conn net.Conn) {
+				server := req.Context().Value(http.ServerContextKey).(*http.Server)
+				if server != nil {
+					connState := server.ConnState
+					if connState != nil {
+						connState(conn, http.StateClosed)
+					}
 				}
-			}
-		}),
-	)
+			}),
+		)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("error creating forwarder for frontend %s: %v", frontendName, err)
 	}

@@ -171,10 +171,10 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 			return nil
 		}
 
-		notify := func(err error, time time.Duration) {
-			log.Errorf("Provider connection error %+v, retrying in %s", err, time)
-		}
-		err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
+		//notify := func(err error, time time.Duration) {
+		//	log.Errorf("Provider connection error %+v, retrying in %s", err, time)
+		//}
+		err := backoff.Retry(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()))
 		if err != nil {
 			log.Errorf("Cannot connect to Provider api %+v", err)
 		}
@@ -261,7 +261,6 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 		if err != nil {
 			return nil, err
 		}
-
 		for key, task := range tasks {
 
 			containerInstance := ec2Instances[aws.StringValue(task.ContainerInstanceArn)]
@@ -300,16 +299,30 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 					}
 				} else {
 					var ports []portMapping
-					for _, mapping := range container.NetworkBindings {
-						if mapping != nil {
-							ports = append(ports, portMapping{
-								hostPort:      aws.Int64Value(mapping.HostPort),
-								containerPort: aws.Int64Value(mapping.ContainerPort),
-							})
+					var privateIP string
+					if len(container.NetworkInterfaces) > 0 {
+						for _, mapping := range containerDefinition.PortMappings {
+							if mapping != nil {
+								ports = append(ports, portMapping{
+									hostPort:      aws.Int64Value(mapping.HostPort),
+									containerPort: aws.Int64Value(mapping.ContainerPort),
+								})
+							}
+						}
+						privateIP = aws.StringValue(container.NetworkInterfaces[0].PrivateIpv4Address)
+					} else {
+						for _, mapping := range container.NetworkBindings {
+							if mapping != nil {
+								ports = append(ports, portMapping{
+									hostPort:      aws.Int64Value(mapping.HostPort),
+									containerPort: aws.Int64Value(mapping.ContainerPort),
+								})
+							}
+							privateIP = aws.StringValue(containerInstance.PrivateIpAddress)
 						}
 					}
 					mach = &machine{
-						privateIP: aws.StringValue(containerInstance.PrivateIpAddress),
+						privateIP: privateIP,
 						ports:     ports,
 						state:     aws.StringValue(containerInstance.State.Name),
 					}
@@ -397,7 +410,9 @@ func (p *Provider) lookupTaskDefinitions(ctx context.Context, client *awsClient,
 		})
 
 		if err != nil {
-			log.Errorf("Unable to describe task definition: %s", err)
+			if !strings.Contains(err.Error(), "ThrottlingException") {
+				log.Errorf("Unable to describe task definition: %s", err)
+			}
 			return nil, err
 		}
 

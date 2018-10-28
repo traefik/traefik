@@ -431,7 +431,7 @@ func TestNewServerWithResponseModifiers(t *testing.T) {
 				Header:  headers,
 			}
 
-			responseModifier := buildModifyResponse(test.secureMiddleware, test.headerMiddleware)
+			responseModifier := buildModifyResponse(test.secureMiddleware, test.headerMiddleware, []string{})
 			err := responseModifier(res)
 
 			assert.NoError(t, err)
