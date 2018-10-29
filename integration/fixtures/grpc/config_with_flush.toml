@@ -17,7 +17,7 @@ rootCAs = [ """{{ .CertContent }}""" ]
 
 [backends]
   [backends.backend1]
-  [backends.backend1.responseforwarding]
+  [backends.backend1.responseForwarding]
     flushInterval="1ms"
     [backends.backend1.servers.server1]
     url = "https://127.0.0.1:{{ .GRPCServerPort }}"
