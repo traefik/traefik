@@ -15,6 +15,7 @@ logLevel = "DEBUG"
     path = "/health"
     port = 80
     interval = "1s"
+    timeout = "0.9s"
     [backends.backend1.servers.server1]
     url = "http://{{.Server1}}:81"
     weight = 1

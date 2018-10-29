@@ -379,6 +379,7 @@ func TestGetHealthCheck(t *testing.T) {
 			labels: map[string]string{
 				TraefikBackendHealthCheckPort:     "80",
 				TraefikBackendHealthCheckInterval: "6",
+				TraefikBackendHealthCheckTimeout:  "3",
 			},
 			expected: nil,
 		},
@@ -388,6 +389,7 @@ func TestGetHealthCheck(t *testing.T) {
 				TraefikBackendHealthCheckPath:     "/health",
 				TraefikBackendHealthCheckPort:     "80",
 				TraefikBackendHealthCheckInterval: "6",
+				TraefikBackendHealthCheckTimeout:  "3",
 				TraefikBackendHealthCheckHeaders:  "Foo:bar || Goo:bir",
 				TraefikBackendHealthCheckHostname: "traefik",
 				TraefikBackendHealthCheckScheme:   "http",
@@ -397,6 +399,7 @@ func TestGetHealthCheck(t *testing.T) {
 				Path:     "/health",
 				Port:     80,
 				Interval: "6",
+				Timeout:  "3",
 				Hostname: "traefik",
 				Headers: map[string]string{
 					"Foo": "bar",
@@ -753,13 +756,14 @@ func TestGetAuth(t *testing.T) {
 			desc: "should return a basic auth",
 			labels: map[string]string{
 				TraefikFrontendAuthHeaderField:       "myHeaderField",
+				TraefikFrontendAuthBasicRealm:        "myRealm",
 				TraefikFrontendAuthBasicUsers:        "user:pwd,user2:pwd2",
 				TraefikFrontendAuthBasicUsersFile:    "myUsersFile",
 				TraefikFrontendAuthBasicRemoveHeader: "true",
 			},
 			expected: &types.Auth{
 				HeaderField: "myHeaderField",
-				Basic:       &types.Basic{UsersFile: "myUsersFile", Users: []string{"user:pwd", "user2:pwd2"}, RemoveHeader: true},
+				Basic:       &types.Basic{UsersFile: "myUsersFile", Users: []string{"user:pwd", "user2:pwd2"}, RemoveHeader: true, Realm: "myRealm"},
 			},
 		},
 		{

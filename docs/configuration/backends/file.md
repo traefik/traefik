@@ -37,6 +37,7 @@ Træfik can be configured with a file.
       path = "/health"
       port = 88
       interval = "30s"
+      timeout = "5s"
       scheme = "http"
       hostname = "myhost.com"
       [backends.backend1.healthcheck.headers]

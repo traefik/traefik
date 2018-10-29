@@ -271,6 +271,7 @@ func (p *Provider) getHealthCheck(rootPath string) *types.HealthCheck {
 	scheme := p.get("", rootPath, pathBackendHealthCheckScheme)
 	port := p.getInt(label.DefaultBackendHealthCheckPort, rootPath, pathBackendHealthCheckPort)
 	interval := p.get("30s", rootPath, pathBackendHealthCheckInterval)
+	timeout := p.get("5s", rootPath, pathBackendHealthCheckTimeout)
 	hostname := p.get("", rootPath, pathBackendHealthCheckHostname)
 	headers := p.getMap(rootPath, pathBackendHealthCheckHeaders)
 
@@ -279,6 +280,7 @@ func (p *Provider) getHealthCheck(rootPath string) *types.HealthCheck {
 		Path:     path,
 		Port:     port,
 		Interval: interval,
+		Timeout:  timeout,
 		Hostname: hostname,
 		Headers:  headers,
 	}
@@ -409,8 +411,9 @@ func (p *Provider) getAuthDigest(rootPath string) *types.Digest {
 // getAuthForward Create Forward Auth from path
 func (p *Provider) getAuthForward(rootPath string) *types.Forward {
 	forwardAuth := &types.Forward{
-		Address:            p.get("", rootPath, pathFrontendAuthForwardAddress),
-		TrustForwardHeader: p.getBool(false, rootPath, pathFrontendAuthForwardTrustForwardHeader),
+		Address:             p.get("", rootPath, pathFrontendAuthForwardAddress),
+		TrustForwardHeader:  p.getBool(false, rootPath, pathFrontendAuthForwardTrustForwardHeader),
+		AuthResponseHeaders: p.getList(rootPath, pathFrontendAuthForwardAuthResponseHeaders),
 	}
 
 	// TLS configuration

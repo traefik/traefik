@@ -165,12 +165,19 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 	globalConfiguration.SetEffectiveConfiguration(configFile)
 	globalConfiguration.ValidateConfiguration()
 
+	log.Infof("Traefik version %s built on %s", version.Version, version.BuildDate)
+
+	jsonConf, err := json.Marshal(globalConfiguration)
+	if err != nil {
+		log.Error(err)
+		log.Debugf("Global configuration loaded [struct] %#v", globalConfiguration)
+	} else {
+		log.Debugf("Global configuration loaded %s", string(jsonConf))
+	}
+
 	if globalConfiguration.API != nil && globalConfiguration.API.Dashboard {
 		globalConfiguration.API.DashboardAssets = &assetfs.AssetFS{Asset: genstatic.Asset, AssetInfo: genstatic.AssetInfo, AssetDir: genstatic.AssetDir, Prefix: "static"}
 	}
-
-	jsonConf, _ := json.Marshal(globalConfiguration)
-	log.Infof("Traefik version %s built on %s", version.Version, version.BuildDate)
 
 	if globalConfiguration.CheckNewVersion {
 		checkNewVersion()
@@ -178,16 +185,15 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 
 	stats(globalConfiguration)
 
-	log.Debugf("Global configuration loaded %s", string(jsonConf))
-
 	providerAggregator := configuration.NewProviderAggregator(globalConfiguration)
 
-	acmeprovider := globalConfiguration.InitACMEProvider()
-	if acmeprovider != nil {
-
-		if err := providerAggregator.AddProvider(acmeprovider); err != nil {
-			log.Errorf("Error initializing provider ACME: %v", err)
-			acmeprovider = nil
+	acmeProvider, err := globalConfiguration.InitACMEProvider()
+	if err != nil {
+		log.Errorf("Unable to initialize ACME provider: %v", err)
+	} else if acmeProvider != nil {
+		if err := providerAggregator.AddProvider(acmeProvider); err != nil {
+			log.Errorf("Unable to add ACME provider to the providers list: %v", err)
+			acmeProvider = nil
 		}
 	}
 
@@ -199,23 +205,25 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 		}
 
 		internalRouter := router.NewInternalRouterAggregator(*globalConfiguration, entryPointName)
-		if acmeprovider != nil {
-			if acmeprovider.HTTPChallenge != nil && acmeprovider.HTTPChallenge.EntryPoint == entryPointName {
-				internalRouter.AddRouter(acmeprovider)
+		if acmeProvider != nil {
+			if acmeProvider.HTTPChallenge != nil && entryPointName == acmeProvider.HTTPChallenge.EntryPoint {
+				internalRouter.AddRouter(acmeProvider)
 			}
 
 			// TLS ALPN 01
-			if acmeprovider.HTTPChallenge == nil && acmeprovider.DNSChallenge == nil && acmeprovider.TLSChallenge != nil {
-				entryPoint.TLSALPNGetter = acmeprovider.GetTLSALPNCertificate
+			if acmeProvider.TLSChallenge != nil && acmeProvider.HTTPChallenge == nil && acmeProvider.DNSChallenge == nil {
+				entryPoint.TLSALPNGetter = acmeProvider.GetTLSALPNCertificate
 			}
 
-			if acmeprovider.EntryPoint == entryPointName && acmeprovider.OnDemand {
-				entryPoint.OnDemandListener = acmeprovider.ListenRequest
+			if acmeProvider.OnDemand && entryPointName == acmeProvider.EntryPoint {
+				entryPoint.OnDemandListener = acmeProvider.ListenRequest
 			}
 
-			entryPoint.CertificateStore = traefiktls.NewCertificateStore()
-			acmeprovider.SetCertificateStore(entryPoint.CertificateStore)
-
+			if entryPointName == acmeProvider.EntryPoint {
+				entryPoint.CertificateStore = traefiktls.NewCertificateStore()
+				acmeProvider.SetCertificateStore(entryPoint.CertificateStore)
+				log.Debugf("Setting Acme Certificate store from Entrypoint: %s", entryPointName)
+			}
 		}
 
 		entryPoint.InternalRouter = internalRouter
@@ -223,9 +231,9 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 	}
 
 	svr := server.NewServer(*globalConfiguration, providerAggregator, entryPoints)
-	if acmeprovider != nil && acmeprovider.OnHostRule {
-		acmeprovider.SetConfigListenerChan(make(chan types.Configuration))
-		svr.AddListener(acmeprovider.ListenConfiguration)
+	if acmeProvider != nil && acmeProvider.OnHostRule {
+		acmeProvider.SetConfigListenerChan(make(chan types.Configuration))
+		svr.AddListener(acmeProvider.ListenConfiguration)
 	}
 	ctx := cmd.ContextWithSignal(context.Background())
 

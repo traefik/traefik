@@ -5,6 +5,7 @@ import (
 
 	"github.com/xenolf/lego/acme"
 	"github.com/xenolf/lego/providers/dns/acmedns"
+	"github.com/xenolf/lego/providers/dns/alidns"
 	"github.com/xenolf/lego/providers/dns/auroradns"
 	"github.com/xenolf/lego/providers/dns/azure"
 	"github.com/xenolf/lego/providers/dns/bluecat"
@@ -14,6 +15,7 @@ import (
 	"github.com/xenolf/lego/providers/dns/dnsimple"
 	"github.com/xenolf/lego/providers/dns/dnsmadeeasy"
 	"github.com/xenolf/lego/providers/dns/dnspod"
+	"github.com/xenolf/lego/providers/dns/dreamhost"
 	"github.com/xenolf/lego/providers/dns/duckdns"
 	"github.com/xenolf/lego/providers/dns/dyn"
 	"github.com/xenolf/lego/providers/dns/exec"
@@ -24,10 +26,14 @@ import (
 	"github.com/xenolf/lego/providers/dns/gcloud"
 	"github.com/xenolf/lego/providers/dns/glesys"
 	"github.com/xenolf/lego/providers/dns/godaddy"
+	"github.com/xenolf/lego/providers/dns/hostingde"
+	"github.com/xenolf/lego/providers/dns/iij"
 	"github.com/xenolf/lego/providers/dns/lightsail"
 	"github.com/xenolf/lego/providers/dns/linode"
+	"github.com/xenolf/lego/providers/dns/linodev4"
 	"github.com/xenolf/lego/providers/dns/namecheap"
 	"github.com/xenolf/lego/providers/dns/namedotcom"
+	"github.com/xenolf/lego/providers/dns/netcup"
 	"github.com/xenolf/lego/providers/dns/nifcloud"
 	"github.com/xenolf/lego/providers/dns/ns1"
 	"github.com/xenolf/lego/providers/dns/otc"
@@ -37,6 +43,7 @@ import (
 	"github.com/xenolf/lego/providers/dns/rfc2136"
 	"github.com/xenolf/lego/providers/dns/route53"
 	"github.com/xenolf/lego/providers/dns/sakuracloud"
+	"github.com/xenolf/lego/providers/dns/stackpath"
 	"github.com/xenolf/lego/providers/dns/vegadns"
 	"github.com/xenolf/lego/providers/dns/vultr"
 )
@@ -46,6 +53,8 @@ func NewDNSChallengeProviderByName(name string) (acme.ChallengeProvider, error) 
 	switch name {
 	case "acme-dns":
 		return acmedns.NewDNSProvider()
+	case "alidns":
+		return alidns.NewDNSProvider()
 	case "azure":
 		return azure.NewDNSProvider()
 	case "auroradns":
@@ -64,12 +73,16 @@ func NewDNSChallengeProviderByName(name string) (acme.ChallengeProvider, error) 
 		return dnsmadeeasy.NewDNSProvider()
 	case "dnspod":
 		return dnspod.NewDNSProvider()
+	case "dreamhost":
+		return dreamhost.NewDNSProvider()
 	case "duckdns":
 		return duckdns.NewDNSProvider()
 	case "dyn":
 		return dyn.NewDNSProvider()
 	case "fastdns":
 		return fastdns.NewDNSProvider()
+	case "exec":
+		return exec.NewDNSProvider()
 	case "exoscale":
 		return exoscale.NewDNSProvider()
 	case "gandi":
@@ -82,18 +95,34 @@ func NewDNSChallengeProviderByName(name string) (acme.ChallengeProvider, error) 
 		return gcloud.NewDNSProvider()
 	case "godaddy":
 		return godaddy.NewDNSProvider()
+	case "hostingde":
+		return hostingde.NewDNSProvider()
+	case "iij":
+		return iij.NewDNSProvider()
 	case "lightsail":
 		return lightsail.NewDNSProvider()
 	case "linode":
 		return linode.NewDNSProvider()
+	case "linodev4":
+		return linodev4.NewDNSProvider()
 	case "manual":
 		return acme.NewDNSProviderManual()
 	case "namecheap":
 		return namecheap.NewDNSProvider()
 	case "namedotcom":
 		return namedotcom.NewDNSProvider()
+	case "netcup":
+		return netcup.NewDNSProvider()
 	case "nifcloud":
 		return nifcloud.NewDNSProvider()
+	case "ns1":
+		return ns1.NewDNSProvider()
+	case "otc":
+		return otc.NewDNSProvider()
+	case "ovh":
+		return ovh.NewDNSProvider()
+	case "pdns":
+		return pdns.NewDNSProvider()
 	case "rackspace":
 		return rackspace.NewDNSProvider()
 	case "route53":
@@ -102,20 +131,12 @@ func NewDNSChallengeProviderByName(name string) (acme.ChallengeProvider, error) 
 		return rfc2136.NewDNSProvider()
 	case "sakuracloud":
 		return sakuracloud.NewDNSProvider()
-	case "vultr":
-		return vultr.NewDNSProvider()
-	case "ovh":
-		return ovh.NewDNSProvider()
-	case "pdns":
-		return pdns.NewDNSProvider()
-	case "ns1":
-		return ns1.NewDNSProvider()
-	case "otc":
-		return otc.NewDNSProvider()
-	case "exec":
-		return exec.NewDNSProvider()
+	case "stackpath":
+		return stackpath.NewDNSProvider()
 	case "vegadns":
 		return vegadns.NewDNSProvider()
+	case "vultr":
+		return vultr.NewDNSProvider()
 	default:
 		return nil, fmt.Errorf("unrecognised DNS provider: %s", name)
 	}

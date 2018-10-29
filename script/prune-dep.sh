@@ -32,7 +32,7 @@ find vendor -type f  \( ! -iname 'licen[cs]e*' \
  -a ! -iname '*.hxx' \
  -a ! -iname '*.s' \) -exec rm -f {} +
 
-find -type d \( -iname '*Godeps*' \) -exec rm -rf {} +
+find . -type d \( -iname '*Godeps*' \) -exec rm -rf {} +
 
 find vendor -type l  \( ! -iname 'licen[cs]e*' \
  -a ! -iname '*notice*' \

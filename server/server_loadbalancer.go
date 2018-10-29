@@ -409,11 +409,28 @@ func buildHealthCheckOptions(lb healthcheck.BalancerHandler, backend string, hc 
 		}
 	}
 
+	timeout := time.Duration(hcConfig.Timeout)
+	if hc.Timeout != "" {
+		timeoutOverride, err := time.ParseDuration(hc.Timeout)
+		if err != nil {
+			log.Errorf("Illegal health check timeout for backend '%s': %s", backend, err)
+		} else if timeoutOverride <= 0 {
+			log.Errorf("Health check timeout smaller than zero for backend '%s', backend", backend)
+		} else {
+			timeout = timeoutOverride
+		}
+	}
+
+	if timeout >= interval {
+		log.Warnf("Health check timeout for backend '%s' should be lower than the health check interval. Interval set to timeout + 1 second (%s).", backend)
+	}
+
 	return &healthcheck.Options{
 		Scheme:   hc.Scheme,
 		Path:     hc.Path,
 		Port:     hc.Port,
 		Interval: interval,
+		Timeout:  timeout,
 		LB:       lb,
 		Hostname: hc.Hostname,
 		Headers:  hc.Headers,

@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/BurntSushi/ty/fun"
 	"github.com/cenk/backoff"
 	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/log"
@@ -323,12 +322,24 @@ func (p *Provider) initAccount() (*Account, error) {
 	return p.account, nil
 }
 
+func contains(entryPoints []string, acmeEntryPoint string) bool {
+	for _, entryPoint := range entryPoints {
+		if entryPoint == acmeEntryPoint {
+			return true
+		}
+	}
+	return false
+}
+
 func (p *Provider) watchNewDomains() {
 	p.pool.Go(func(stop chan bool) {
 		for {
 			select {
 			case config := <-p.configFromListenerChan:
 				for _, frontend := range config.Frontends {
+					if !contains(frontend.EntryPoints, p.EntryPoint) {
+						continue
+					}
 					for _, route := range frontend.Routes {
 						domainRules := rules.Rules{}
 						domains, err := domainRules.ParseDomains(route.Rule)
@@ -750,8 +761,17 @@ func (p *Provider) getValidDomains(domain types.Domain, wildcardAllowed bool) ([
 		}
 	}
 
-	domains = fun.Map(types.CanonicalDomain, domains).([]string)
-	return domains, nil
+	var cleanDomains []string
+	for _, domain := range domains {
+		canonicalDomain := types.CanonicalDomain(domain)
+		cleanDomain := acme.UnFqdn(canonicalDomain)
+		if canonicalDomain != cleanDomain {
+			log.Warnf("FQDN detected, please remove the trailing dot: %s", canonicalDomain)
+		}
+		cleanDomains = append(cleanDomains, cleanDomain)
+	}
+
+	return cleanDomains, nil
 }
 
 func isDomainAlreadyChecked(domainToCheck string, existentDomains []string) bool {

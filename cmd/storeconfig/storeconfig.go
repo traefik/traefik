@@ -86,7 +86,7 @@ func Run(kv *staert.KvSource, traefikConfiguration *cmd.TraefikConfiguration) fu
 			}
 
 			accountInitialized, err := keyExists(kv, traefikConfiguration.GlobalConfiguration.ACME.Storage)
-			if err != nil {
+			if err != nil && err != store.ErrKeyNotFound {
 				return err
 			}
 

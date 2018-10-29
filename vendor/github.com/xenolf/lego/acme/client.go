@@ -26,6 +26,9 @@ const (
 	// “new-reg”, “new-authz” and “new-cert” endpoints. From the documentation the
 	// limitation is 20 requests per second, but using 20 as value doesn't work but 18 do
 	overallRequestLimit = 18
+
+	statusValid   = "valid"
+	statusInvalid = "invalid"
 )
 
 // User interface is to be implemented by users of this library.
@@ -39,6 +42,17 @@ type User interface {
 // Interface for all challenge solvers to implement.
 type solver interface {
 	Solve(challenge challenge, domain string) error
+}
+
+// Interface for challenges like dns, where we can set a record in advance for ALL challenges.
+// This saves quite a bit of time vs creating the records and solving them serially.
+type preSolver interface {
+	PreSolve(challenge challenge, domain string) error
+}
+
+// Interface for challenges like dns, where we can solve all the challenges before to delete them.
+type cleanup interface {
+	CleanUp(challenge challenge, domain string) error
 }
 
 type validateFunc func(j *jws, domain, uri string, chlng challenge) error
@@ -374,8 +388,10 @@ DNSNames:
 		}
 	}
 
-	// Add the CSR to the certificate so that it can be used for renewals.
-	cert.CSR = pemEncode(&csr)
+	if cert != nil {
+		// Add the CSR to the certificate so that it can be used for renewals.
+		cert.CSR = pemEncode(&csr)
+	}
 
 	// do not return an empty failures map, because
 	// it would still be a non-nil error value
@@ -396,7 +412,7 @@ DNSNames:
 // the whole certificate will fail.
 func (c *Client) ObtainCertificate(domains []string, bundle bool, privKey crypto.PrivateKey, mustStaple bool) (*CertificateResource, error) {
 	if len(domains) == 0 {
-		return nil, errors.New("No domains to obtain a certificate for")
+		return nil, errors.New("no domains to obtain a certificate for")
 	}
 
 	if bundle {
@@ -489,9 +505,9 @@ func (c *Client) RenewCertificate(cert CertificateResource, bundle, mustStaple b
 	// Start by checking to see if the certificate was based off a CSR, and
 	// use that if it's defined.
 	if len(cert.CSR) > 0 {
-		csr, err := pemDecodeTox509CSR(cert.CSR)
-		if err != nil {
-			return nil, err
+		csr, errP := pemDecodeTox509CSR(cert.CSR)
+		if errP != nil {
+			return nil, errP
 		}
 		newCert, failures := c.ObtainCertificateForCSR(*csr, bundle)
 		return newCert, failures
@@ -524,7 +540,6 @@ func (c *Client) RenewCertificate(cert CertificateResource, bundle, mustStaple b
 }
 
 func (c *Client) createOrderForIdentifiers(domains []string) (orderResource, error) {
-
 	var identifiers []identifier
 	for _, domain := range domains {
 		identifiers = append(identifiers, identifier{Type: "dns", Value: domain})
@@ -548,29 +563,75 @@ func (c *Client) createOrderForIdentifiers(domains []string) (orderResource, err
 	return orderRes, nil
 }
 
+// an authz with the solver we have chosen and the index of the challenge associated with it
+type selectedAuthSolver struct {
+	authz          authorization
+	challengeIndex int
+	solver         solver
+}
+
 // Looks through the challenge combinations to find a solvable match.
 // Then solves the challenges in series and returns.
 func (c *Client) solveChallengeForAuthz(authorizations []authorization) error {
 	failures := make(ObtainError)
 
-	// loop through the resources, basically through the domains.
+	authSolvers := []*selectedAuthSolver{}
+
+	// loop through the resources, basically through the domains. First pass just selects a solver for each authz.
 	for _, authz := range authorizations {
-		if authz.Status == "valid" {
+		if authz.Status == statusValid {
 			// Boulder might recycle recent validated authz (see issue #267)
 			log.Infof("[%s] acme: Authorization already valid; skipping challenge", authz.Identifier.Value)
 			continue
 		}
+		if i, solvr := c.chooseSolver(authz, authz.Identifier.Value); solvr != nil {
+			authSolvers = append(authSolvers, &selectedAuthSolver{
+				authz:          authz,
+				challengeIndex: i,
+				solver:         solvr,
+			})
+		} else {
+			failures[authz.Identifier.Value] = fmt.Errorf("[%s] acme: Could not determine solvers", authz.Identifier.Value)
+		}
+	}
 
-		// no solvers - no solving
-		if i, solver := c.chooseSolver(authz, authz.Identifier.Value); solver != nil {
-			err := solver.Solve(authz.Challenges[i], authz.Identifier.Value)
-			if err != nil {
-				//c.disableAuthz(authz.Identifier)
+	// for all valid presolvers, first submit the challenges so they have max time to propagate
+	for _, item := range authSolvers {
+		authz := item.authz
+		i := item.challengeIndex
+		if presolver, ok := item.solver.(preSolver); ok {
+			if err := presolver.PreSolve(authz.Challenges[i], authz.Identifier.Value); err != nil {
 				failures[authz.Identifier.Value] = err
 			}
-		} else {
-			//c.disableAuthz(authz)
-			failures[authz.Identifier.Value] = fmt.Errorf("[%s] acme: Could not determine solvers", authz.Identifier.Value)
+		}
+	}
+
+	defer func() {
+		// clean all created TXT records
+		for _, item := range authSolvers {
+			if clean, ok := item.solver.(cleanup); ok {
+				if failures[item.authz.Identifier.Value] != nil {
+					// already failed in previous loop
+					continue
+				}
+				err := clean.CleanUp(item.authz.Challenges[item.challengeIndex], item.authz.Identifier.Value)
+				if err != nil {
+					log.Warnf("Error cleaning up %s: %v ", item.authz.Identifier.Value, err)
+				}
+			}
+		}
+	}()
+
+	// finally solve all challenges for real
+	for _, item := range authSolvers {
+		authz := item.authz
+		i := item.challengeIndex
+		if failures[authz.Identifier.Value] != nil {
+			// already failed in previous loop
+			continue
+		}
+		if err := item.solver.Solve(authz.Challenges[i], authz.Identifier.Value); err != nil {
+			failures[authz.Identifier.Value] = err
 		}
 	}
 
@@ -696,7 +757,7 @@ func (c *Client) requestCertificateForCsr(order orderResource, bundle bool, csr 
 		return nil, err
 	}
 
-	if retOrder.Status == "invalid" {
+	if retOrder.Status == statusInvalid {
 		return nil, err
 	}
 
@@ -706,7 +767,7 @@ func (c *Client) requestCertificateForCsr(order orderResource, bundle bool, csr 
 		PrivateKey: privateKeyPem,
 	}
 
-	if retOrder.Status == "valid" {
+	if retOrder.Status == statusValid {
 		// if the certificate is available right away, short cut!
 		ok, err := c.checkCertResponse(retOrder, &certRes, bundle)
 		if err != nil {
@@ -750,9 +811,8 @@ func (c *Client) requestCertificateForCsr(order orderResource, bundle bool, csr 
 // should already have the Domain (common name) field populated. If bundle is
 // true, the certificate will be bundled with the issuer's cert.
 func (c *Client) checkCertResponse(order orderMessage, certRes *CertificateResource, bundle bool) (bool, error) {
-
 	switch order.Status {
-	case "valid":
+	case statusValid:
 		resp, err := httpGet(order.Certificate)
 		if err != nil {
 			return false, err
@@ -801,7 +861,7 @@ func (c *Client) checkCertResponse(order orderMessage, certRes *CertificateResou
 
 	case "processing":
 		return false, nil
-	case "invalid":
+	case statusInvalid:
 		return false, errors.New("order has invalid state: invalid")
 	default:
 		return false, nil
@@ -863,12 +923,12 @@ func validate(j *jws, domain, uri string, c challenge) error {
 	// Repeatedly check the server for an updated status on our request.
 	for {
 		switch chlng.Status {
-		case "valid":
+		case statusValid:
 			log.Infof("[%s] The server validated our request", domain)
 			return nil
 		case "pending":
 		case "processing":
-		case "invalid":
+		case statusInvalid:
 			return handleChallengeError(chlng)
 		default:
 			return errors.New("the server returned an unexpected state")

@@ -64,54 +64,6 @@ func TestDockerBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "when frontend basic auth",
-			containers: []docker.ContainerJSON{
-				containerJSON(
-					name("test"),
-					labels(map[string]string{
-						label.TraefikFrontendAuthBasicUsers:        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						label.TraefikFrontendAuthBasicUsersFile:    ".htpasswd",
-						label.TraefikFrontendAuthBasicRemoveHeader: "true",
-					}),
-					ports(nat.PortMap{
-						"80/tcp": {},
-					}),
-					withNetwork("bridge", ipv4("127.0.0.1")),
-				),
-			},
-			expectedFrontends: map[string]*types.Frontend{
-				"frontend-Host-test-docker-localhost-0": {
-					Backend:        "backend-test",
-					PassHostHeader: true,
-					EntryPoints:    []string{},
-					Auth: &types.Auth{
-						Basic: &types.Basic{
-							RemoveHeader: true,
-							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
-							UsersFile: ".htpasswd",
-						},
-					},
-					Routes: map[string]types.Route{
-						"route-frontend-Host-test-docker-localhost-0": {
-							Rule: "Host:test.docker.localhost",
-						},
-					},
-				},
-			},
-			expectedBackends: map[string]*types.Backend{
-				"backend-test": {
-					Servers: map[string]types.Server{
-						"server-test-842895ca2aca17f6ee36ddb2f621194d": {
-							URL:    "http://127.0.0.1:80",
-							Weight: label.DefaultWeight,
-						},
-					},
-					CircuitBreaker: nil,
-				},
-			},
-		},
-		{
 			desc: "when pass tls client certificate",
 			containers: []docker.ContainerJSON{
 				containerJSON(
@@ -153,6 +105,55 @@ func TestDockerBuildConfiguration(t *testing.T) {
 								Province:     true,
 								SerialNumber: true,
 							},
+						},
+					},
+					Routes: map[string]types.Route{
+						"route-frontend-Host-test-docker-localhost-0": {
+							Rule: "Host:test.docker.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test": {
+					Servers: map[string]types.Server{
+						"server-test-842895ca2aca17f6ee36ddb2f621194d": {
+							URL:    "http://127.0.0.1:80",
+							Weight: label.DefaultWeight,
+						},
+					},
+					CircuitBreaker: nil,
+				},
+			},
+		}, {
+			desc: "when frontend basic auth",
+			containers: []docker.ContainerJSON{
+				containerJSON(
+					name("test"),
+					labels(map[string]string{
+						label.TraefikFrontendAuthBasicUsers:        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendAuthBasicUsersFile:    ".htpasswd",
+						label.TraefikFrontendAuthBasicRemoveHeader: "true",
+						label.TraefikFrontendAuthBasicRealm:        "myRealm",
+					}),
+					ports(nat.PortMap{
+						"80/tcp": {},
+					}),
+					withNetwork("bridge", ipv4("127.0.0.1")),
+				),
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-Host-test-docker-localhost-0": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					Auth: &types.Auth{
+						Basic: &types.Basic{
+							RemoveHeader: true,
+							Realm:        "myRealm",
+							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							UsersFile: ".htpasswd",
 						},
 					},
 					Routes: map[string]types.Route{
@@ -279,6 +280,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendAuthForwardTLSCert:               "server.crt",
 						label.TraefikFrontendAuthForwardTLSKey:                "server.key",
 						label.TraefikFrontendAuthForwardTLSInsecureSkipVerify: "true",
+						label.TraefikFrontendAuthForwardAuthResponseHeaders:   "X-Auth-User,X-Auth-Token",
 					}),
 					ports(nat.PortMap{
 						"80/tcp": {},
@@ -293,8 +295,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 					EntryPoints:    []string{},
 					Auth: &types.Auth{
 						Forward: &types.Forward{
-							Address:            "auth.server",
-							TrustForwardHeader: true,
+							Address: "auth.server",
 							TLS: &types.ClientTLS{
 								CA:                 "ca.crt",
 								CAOptional:         true,
@@ -302,6 +303,8 @@ func TestDockerBuildConfiguration(t *testing.T) {
 								Cert:               "server.crt",
 								Key:                "server.key",
 							},
+							TrustForwardHeader:  true,
+							AuthResponseHeaders: []string{"X-Auth-User", "X-Auth-Token"},
 						},
 					},
 					Routes: map[string]types.Route{
@@ -437,6 +440,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						label.TraefikBackendHealthCheckPath:                  "/health",
 						label.TraefikBackendHealthCheckPort:                  "880",
 						label.TraefikBackendHealthCheckInterval:              "6",
+						label.TraefikBackendHealthCheckTimeout:               "3",
 						label.TraefikBackendHealthCheckHostname:              "foo.com",
 						label.TraefikBackendHealthCheckHeaders:               "Foo:bar || Bar:foo",
 						label.TraefikBackendLoadBalancerMethod:               "drr",
@@ -462,6 +466,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendPassTLSClientCertInfosSubjectSerialNumber: "true",
 
 						label.TraefikFrontendAuthBasic:                        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendAuthBasicRealm:                   "myRealm",
 						label.TraefikFrontendAuthBasicRemoveHeader:            "true",
 						label.TraefikFrontendAuthBasicUsers:                   "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.TraefikFrontendAuthBasicUsersFile:               ".htpasswd",
@@ -568,6 +573,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{
+							Realm:        "myRealm",
 							RemoveHeader: true,
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
@@ -683,6 +689,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						Path:     "/health",
 						Port:     880,
 						Interval: "6",
+						Timeout:  "3",
 						Hostname: "foo.com",
 						Headers: map[string]string{
 							"Foo": "bar",
@@ -1393,6 +1400,31 @@ func TestDockerGetIPPort(t *testing.T) {
 		expectsError bool
 	}{
 		{
+			desc: "label traefik.port not set, no binding, falling back on the container's IP/Port",
+			container: containerJSON(
+				ports(nat.PortMap{
+					"8080/tcp": {},
+				}),
+				withNetwork("testnet", ipv4("10.11.12.13"))),
+			ip:   "10.11.12.13",
+			port: "8080",
+		},
+		{
+			desc: "label traefik.port not set, single binding with port only, falling back on the container's IP/Port",
+			container: containerJSON(
+				withNetwork("testnet", ipv4("10.11.12.13")),
+				ports(nat.PortMap{
+					"80/tcp": []nat.PortBinding{
+						{
+							HostPort: "8082",
+						},
+					},
+				}),
+			),
+			ip:   "10.11.12.13",
+			port: "80",
+		},
+		{
 			desc: "label traefik.port not set, binding with ip:port should create a route to the bound ip:port",
 			container: containerJSON(
 				ports(nat.PortMap{
@@ -1406,6 +1438,52 @@ func TestDockerGetIPPort(t *testing.T) {
 				withNetwork("testnet", ipv4("10.11.12.13"))),
 			ip:   "1.2.3.4",
 			port: "8081",
+		},
+		{
+			desc: "label traefik.port set, no binding, falling back on the container's IP/traefik.port",
+			container: containerJSON(
+				labels(map[string]string{
+					label.TraefikPort: "80",
+				}),
+				withNetwork("testnet", ipv4("10.11.12.13"))),
+			ip:   "10.11.12.13",
+			port: "80",
+		},
+		{
+			desc: "label traefik.port set, single binding with ip:port for the label, creates the route",
+			container: containerJSON(
+				labels(map[string]string{
+					label.TraefikPort: "443",
+				}),
+				ports(nat.PortMap{
+					"443/tcp": []nat.PortBinding{
+						{
+							HostIP:   "5.6.7.8",
+							HostPort: "8082",
+						},
+					},
+				}),
+				withNetwork("testnet", ipv4("10.11.12.13"))),
+			ip:   "5.6.7.8",
+			port: "8082",
+		},
+		{
+			desc: "label traefik.port set, no binding on the corresponding port, falling back on the container's IP/label.port",
+			container: containerJSON(
+				labels(map[string]string{
+					label.TraefikPort: "80",
+				}),
+				ports(nat.PortMap{
+					"443/tcp": []nat.PortBinding{
+						{
+							HostIP:   "5.6.7.8",
+							HostPort: "8082",
+						},
+					},
+				}),
+				withNetwork("testnet", ipv4("10.11.12.13"))),
+			ip:   "10.11.12.13",
+			port: "80",
 		},
 		{
 			desc: "label traefik.port set, multiple bindings on different ports, uses the label to select the correct (first) binding",
@@ -1455,69 +1533,6 @@ func TestDockerGetIPPort(t *testing.T) {
 			ip:   "5.6.7.8",
 			port: "8082",
 		},
-		{
-			desc: "label traefik.port set, single binding with ip:port for the label, creates the route",
-			container: containerJSON(
-				labels(map[string]string{
-					label.TraefikPort: "443",
-				}),
-				ports(nat.PortMap{
-					"443/tcp": []nat.PortBinding{
-						{
-							HostIP:   "5.6.7.8",
-							HostPort: "8082",
-						},
-					},
-				}),
-				withNetwork("testnet", ipv4("10.11.12.13"))),
-			ip:   "5.6.7.8",
-			port: "8082",
-		},
-		{
-			desc: "label traefik.port not set, single binding with port only, server ignored",
-			container: containerJSON(
-				ports(nat.PortMap{
-					"80/tcp": []nat.PortBinding{
-						{
-							HostPort: "8082",
-						},
-					},
-				}),
-				withNetwork("testnet", ipv4("10.11.12.13"))),
-			expectsError: true,
-		},
-		{
-			desc: "label traefik.port not set, no binding, server ignored",
-			container: containerJSON(
-				withNetwork("testnet", ipv4("10.11.12.13"))),
-			expectsError: true,
-		},
-		{
-			desc: "label traefik.port set, no binding on the corresponding port, server ignored",
-			container: containerJSON(
-				labels(map[string]string{
-					label.TraefikPort: "80",
-				}),
-				ports(nat.PortMap{
-					"443/tcp": []nat.PortBinding{
-						{
-							HostIP:   "5.6.7.8",
-							HostPort: "8082",
-						},
-					},
-				}),
-				withNetwork("testnet", ipv4("10.11.12.13"))),
-			expectsError: true,
-		},
-		{
-			desc: "label traefik.port set, no binding, server ignored",
-			container: containerJSON(
-				labels(map[string]string{
-					label.TraefikPort: "80",
-				}),
-				withNetwork("testnet", ipv4("10.11.12.13"))),
-			expectsError: true,
-		},
 	}
 
 	for _, test := range testCases {
@@ -1530,7 +1545,7 @@ func TestDockerGetIPPort(t *testing.T) {
 			dData.SegmentLabels = segmentProperties[""]
 
 			provider := &Provider{
-				Network:       "webnet",
+				Network:       "testnet",
 				UseBindPortIP: true,
 			}
 

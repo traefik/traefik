@@ -42,11 +42,12 @@ type Options struct {
 	Port      int
 	Transport http.RoundTripper
 	Interval  time.Duration
+	Timeout   time.Duration
 	LB        BalancerHandler
 }
 
 func (opt Options) String() string {
-	return fmt.Sprintf("[Hostname: %s Headers: %v Path: %s Port: %d Interval: %s]", opt.Hostname, opt.Headers, opt.Path, opt.Port, opt.Interval)
+	return fmt.Sprintf("[Hostname: %s Headers: %v Path: %s Port: %d Interval: %s Timeout: %s]", opt.Hostname, opt.Headers, opt.Path, opt.Port, opt.Interval, opt.Timeout)
 }
 
 // BackendConfig HealthCheck configuration for a backend
@@ -180,9 +181,8 @@ func newHealthCheck(metrics metricsRegistry) *HealthCheck {
 // NewBackendConfig Instantiate a new BackendConfig
 func NewBackendConfig(options Options, backendName string) *BackendConfig {
 	return &BackendConfig{
-		Options:        options,
-		name:           backendName,
-		requestTimeout: 5 * time.Second,
+		Options: options,
+		name:    backendName,
 	}
 }
 
@@ -197,7 +197,7 @@ func checkHealth(serverURL *url.URL, backend *BackendConfig) error {
 	req = backend.addHeadersAndHost(req)
 
 	client := http.Client{
-		Timeout:   backend.requestTimeout,
+		Timeout:   backend.Options.Timeout,
 		Transport: backend.Options.Transport,
 	}
 

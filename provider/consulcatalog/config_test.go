@@ -329,6 +329,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						Attributes: []string{
 							"random.foo=bar",
 							label.TraefikFrontendAuthForwardAddress + "=auth.server",
+							label.TraefikFrontendAuthForwardAuthResponseHeaders + "=X-Auth-User,X-Auth-Token",
 							label.TraefikFrontendAuthForwardTrustForwardHeader + "=true",
 							label.TraefikFrontendAuthForwardTLSCa + "=ca.crt",
 							label.TraefikFrontendAuthForwardTLSCaOptional + "=true",
@@ -371,8 +372,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Forward: &types.Forward{
-							Address:            "auth.server",
-							TrustForwardHeader: true,
+							Address: "auth.server",
 							TLS: &types.ClientTLS{
 								CA:                 "ca.crt",
 								CAOptional:         true,
@@ -380,6 +380,8 @@ func TestProviderBuildConfiguration(t *testing.T) {
 								Cert:               "server.crt",
 								Key:                "server.key",
 							},
+							TrustForwardHeader:  true,
+							AuthResponseHeaders: []string{"X-Auth-User", "X-Auth-Token"},
 						},
 					},
 					EntryPoints: []string{},
@@ -410,6 +412,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 							label.TraefikBackendHealthCheckScheme + "=http",
 							label.TraefikBackendHealthCheckPort + "=880",
 							label.TraefikBackendHealthCheckInterval + "=6",
+							label.TraefikBackendHealthCheckTimeout + "=3",
 							label.TraefikBackendHealthCheckHostname + "=foo.com",
 							label.TraefikBackendHealthCheckHeaders + "=Foo:bar || Bar:foo",
 							label.TraefikBackendLoadBalancerMethod + "=drr",
@@ -442,6 +445,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 							label.TraefikFrontendAuthDigestUsers + "=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 							label.TraefikFrontendAuthDigestUsersFile + "=.htpasswd",
 							label.TraefikFrontendAuthForwardAddress + "=auth.server",
+							label.TraefikFrontendAuthForwardAuthResponseHeaders + "=X-Auth-User,X-Auth-Token",
 							label.TraefikFrontendAuthForwardTrustForwardHeader + "=true",
 							label.TraefikFrontendAuthForwardTLSCa + "=ca.crt",
 							label.TraefikFrontendAuthForwardTLSCaOptional + "=true",
@@ -691,6 +695,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						Path:     "/health",
 						Port:     880,
 						Interval: "6",
+						Timeout:  "3",
 						Hostname: "foo.com",
 						Headers: map[string]string{
 							"Foo": "bar",

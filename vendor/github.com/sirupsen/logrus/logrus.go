@@ -140,4 +140,11 @@ type FieldLogger interface {
 	Errorln(args ...interface{})
 	Fatalln(args ...interface{})
 	Panicln(args ...interface{})
+
+	// IsDebugEnabled() bool
+	// IsInfoEnabled() bool
+	// IsWarnEnabled() bool
+	// IsErrorEnabled() bool
+	// IsFatalEnabled() bool
+	// IsPanicEnabled() bool
 }
