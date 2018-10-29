@@ -231,7 +231,10 @@ func (s *Server) buildForwarder(entryPointName string, entryPoint *configuration
 
 	var flushInterval parse.Duration
 	if backend.ResponseForwarding != nil {
-		flushInterval = backend.ResponseForwarding.FlushInterval
+		err := flushInterval.Set(backend.ResponseForwarding.FlushInterval)
+		if err != nil {
+			return nil, fmt.Errorf("error creating flush interval for frontend %s: %v", frontendName, err)
+		}
 	}
 
 	var fwd http.Handler

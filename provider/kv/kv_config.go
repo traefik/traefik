@@ -12,7 +12,6 @@ import (
 	"github.com/BurntSushi/ty/fun"
 	"github.com/abronan/valkeyrie/store"
 	"github.com/containous/flaeg"
-	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/tls"
@@ -280,15 +279,8 @@ func (p *Provider) getResponseForwarding(rootPath string) *types.ResponseForward
 		return nil
 	}
 
-	var flushInterval parse.Duration
-	err := flushInterval.Set(value)
-	if err != nil {
-		log.Errorf("invalid flush interval %s: %v", value, err)
-		return nil
-	}
-
 	return &types.ResponseForwarding{
-		FlushInterval: flushInterval,
+		FlushInterval: value,
 	}
 }
 

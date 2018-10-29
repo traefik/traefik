@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/cenk/backoff"
-	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
@@ -960,15 +959,8 @@ func getResponseForwarding(service *corev1.Service) *types.ResponseForwarding {
 		return nil
 	}
 
-	var flushInterval parse.Duration
-	err := flushInterval.Set(flushIntervalValue)
-	if err != nil {
-		log.Errorf("invalid flush interval %s: %v", flushIntervalValue, err)
-		return nil
-	}
-
 	return &types.ResponseForwarding{
-		FlushInterval: flushInterval,
+		FlushInterval: flushIntervalValue,
 	}
 }
 

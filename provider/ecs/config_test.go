@@ -8,7 +8,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/containous/flaeg"
-	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
@@ -461,7 +460,7 @@ func TestBuildConfiguration(t *testing.T) {
 							Expression: "NetworkErrorRatio() > 0.5",
 						},
 						ResponseForwarding: &types.ResponseForwarding{
-							FlushInterval: parse.Duration(10 * time.Millisecond),
+							FlushInterval: "10ms",
 						},
 						LoadBalancer: &types.LoadBalancer{
 							Method: "drr",

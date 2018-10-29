@@ -13,7 +13,6 @@ import (
 
 	"github.com/abronan/valkeyrie/store"
 	"github.com/containous/flaeg"
-	"github.com/containous/flaeg/parse"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/log"
 	traefiktls "github.com/containous/traefik/tls"
@@ -34,7 +33,7 @@ type Backend struct {
 
 // ResponseForwarding holds configuration for the forward of the response
 type ResponseForwarding struct {
-	FlushInterval parse.Duration `json:"flushInterval,omitempty"`
+	FlushInterval string `json:"flushInterval,omitempty"`
 }
 
 // MaxConn holds maximum connection configuration

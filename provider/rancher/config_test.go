@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/containous/flaeg"
-	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
@@ -280,7 +279,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						Expression: "NetworkErrorRatio() > 0.5",
 					},
 					ResponseForwarding: &types.ResponseForwarding{
-						FlushInterval: parse.Duration(10 * time.Millisecond),
+						FlushInterval: "10ms",
 					},
 					LoadBalancer: &types.LoadBalancer{
 						Method: "drr",

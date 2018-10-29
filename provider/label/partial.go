@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/containous/flaeg"
-	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
 )
@@ -361,16 +360,10 @@ func GetResponseForwarding(labels map[string]string) *types.ResponseForwarding {
 		return nil
 	}
 
-	var flushInterval parse.Duration
 	value := GetStringValue(labels, TraefikBackendResponseForwardingFlushInterval, "0")
-	err := flushInterval.Set(value)
-	if err != nil {
-		log.Errorf("invalid flush interval %s: %v", value, err)
-		return nil
-	}
 
 	return &types.ResponseForwarding{
-		FlushInterval: flushInterval,
+		FlushInterval: value,
 	}
 }
 
