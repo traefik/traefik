@@ -91,7 +91,7 @@ func (f *FieldNames) Set(value string) error {
 	// When arguments are passed through YAML, escaped double quotes
 	// might be added to this string, and they would break the last
 	// key/value pair. This ensures the string is clean.
-	value = strings.Replace(value, "\"", "", -1)
+	value = strings.Trim(value, "\"")
 
 	fields := strings.Fields(value)
 
@@ -131,7 +131,7 @@ func (f *FieldHeaderNames) Set(value string) error {
 	// When arguments are passed through YAML, escaped double quotes
 	// might be added to this string, and they would break the last
 	// key/value pair. This ensures the string is clean.
-	value = strings.Replace(value, "\"", "", -1)
+	value = strings.Trim(value, "\"")
 
 	fields := strings.Fields(value)
 
