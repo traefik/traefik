@@ -88,6 +88,11 @@ func (f *FieldNames) Get() interface{} {
 // Set's argument is a string to be parsed to set the flag.
 // It's a space-separated list, so we split it.
 func (f *FieldNames) Set(value string) error {
+	// When arguments are passed through YAML, escaped double quotes
+	// might be added to this string, and they would break the last
+	// key/value pair. This ensures the string is clean.
+	value = strings.Trim(value, "\"")
+
 	fields := strings.Fields(value)
 
 	for _, field := range fields {
@@ -123,6 +128,11 @@ func (f *FieldHeaderNames) Get() interface{} {
 // Set's argument is a string to be parsed to set the flag.
 // It's a space-separated list, so we split it.
 func (f *FieldHeaderNames) Set(value string) error {
+	// When arguments are passed through YAML, escaped double quotes
+	// might be added to this string, and they would break the last
+	// key/value pair. This ensures the string is clean.
+	value = strings.Trim(value, "\"")
+
 	fields := strings.Fields(value)
 
 	for _, field := range fields {
