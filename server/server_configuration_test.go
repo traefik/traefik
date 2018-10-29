@@ -135,8 +135,7 @@ func TestServerLoadConfigHealthCheckOptions(t *testing.T) {
 
 				srv := NewServer(globalConfig, nil, entryPoints)
 
-				_, err := srv.loadConfig(dynamicConfigs, globalConfig)
-				require.NoError(t, err)
+				_ = srv.loadConfig(dynamicConfigs, globalConfig)
 
 				expectedNumHealthCheckBackends := 0
 				if healthCheck != nil {
@@ -187,8 +186,7 @@ func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
 	}
 
 	srv := NewServer(globalConfig, nil, entryPoints)
-	_, err := srv.loadConfig(dynamicConfigs, globalConfig)
-	require.NoError(t, err)
+	_ = srv.loadConfig(dynamicConfigs, globalConfig)
 }
 
 func TestServerLoadCertificateWithDefaultEntryPoint(t *testing.T) {
@@ -214,9 +212,9 @@ func TestServerLoadCertificateWithDefaultEntryPoint(t *testing.T) {
 	}
 
 	srv := NewServer(globalConfig, nil, entryPoints)
-	if mapEntryPoints, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
-		t.Fatalf("got error: %s", err)
-	} else if !mapEntryPoints["https"].certs.ContainsCertificates() {
+
+	mapEntryPoints := srv.loadConfig(dynamicConfigs, globalConfig)
+	if !mapEntryPoints["https"].certs.ContainsCertificates() {
 		t.Fatal("got error: https entryPoint must have TLS certificates.")
 	}
 }
@@ -259,10 +257,7 @@ func TestReuseBackend(t *testing.T) {
 
 	srv := NewServer(globalConfig, nil, entryPoints)
 
-	serverEntryPoints, err := srv.loadConfig(dynamicConfigs, globalConfig)
-	if err != nil {
-		t.Fatalf("error loading config: %s", err)
-	}
+	serverEntryPoints := srv.loadConfig(dynamicConfigs, globalConfig)
 
 	// Test that the /ok path returns a status 200.
 	responseRecorderOk := &httptest.ResponseRecorder{}

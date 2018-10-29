@@ -163,6 +163,14 @@ func (s *Server) buildServerEntryPointMiddlewares(serverEntryPointName string, s
 		}
 	}
 
+	if s.entryPoints[serverEntryPointName].Configuration.Redirect != nil {
+		redirectHandlers, err := s.buildEntryPointRedirect()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create redirect middleware: %v", err)
+		}
+		serverMiddlewares = append(serverMiddlewares, redirectHandlers[serverEntryPointName])
+	}
+
 	if s.entryPoints[serverEntryPointName].Configuration.Auth != nil {
 		authMiddleware, err := mauth.NewAuthenticator(s.entryPoints[serverEntryPointName].Configuration.Auth, s.tracingMiddleware)
 		if err != nil {
