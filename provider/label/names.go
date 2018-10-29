@@ -29,7 +29,7 @@ const (
 	SuffixBackendMaxConnAmount                               = "backend.maxconn.amount"
 	SuffixBackendMaxConnExtractorFunc                        = "backend.maxconn.extractorfunc"
 	SuffixBackendBuffering                                   = "backend.buffering"
-	SuffixBackendResponseForwardingFlushInterval             = "backend.responseforwarding.flushinterval"
+	SuffixBackendResponseForwardingFlushInterval             = "backend.responseForwarding.flushInterval"
 	SuffixBackendBufferingMaxRequestBodyBytes                = SuffixBackendBuffering + ".maxRequestBodyBytes"
 	SuffixBackendBufferingMemRequestBodyBytes                = SuffixBackendBuffering + ".memRequestBodyBytes"
 	SuffixBackendBufferingMaxResponseBodyBytes               = SuffixBackendBuffering + ".maxResponseBodyBytes"
