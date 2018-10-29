@@ -275,8 +275,18 @@ func (p *Provider) getResponseForwarding(rootPath string) *types.ResponseForward
 	if !p.has(rootPath, pathBackendResponseForwardingFlushInterval) {
 		return nil
 	}
+	value := p.get("", rootPath, pathBackendResponseForwardingFlushInterval)
+	if len(value) == 0 {
+		return nil
+	}
+
 	var flushInterval parse.Duration
-	flushInterval.Set(p.get("0", rootPath, pathBackendResponseForwardingFlushInterval))
+	err := flushInterval.Set(value)
+	if err != nil {
+		log.Errorf("invalid flush interval %s: %v", value, err)
+		return nil
+	}
+
 	return &types.ResponseForwarding{
 		FlushInterval: flushInterval,
 	}

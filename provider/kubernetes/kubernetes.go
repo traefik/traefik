@@ -961,7 +961,12 @@ func getResponseForwarding(service *corev1.Service) *types.ResponseForwarding {
 	}
 
 	var flushInterval parse.Duration
-	flushInterval.Set(flushIntervalValue)
+	err := flushInterval.Set(flushIntervalValue)
+	if err != nil {
+		log.Errorf("invalid flush interval %s: %v", flushIntervalValue, err)
+		return nil
+	}
+
 	return &types.ResponseForwarding{
 		FlushInterval: flushInterval,
 	}

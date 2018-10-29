@@ -360,8 +360,15 @@ func GetResponseForwarding(labels map[string]string) *types.ResponseForwarding {
 	if !HasPrefix(labels, TraefikBackendResponseForwardingFlushInterval) {
 		return nil
 	}
+
 	var flushInterval parse.Duration
-	flushInterval.Set(GetStringValue(labels, TraefikBackendResponseForwardingFlushInterval, "0"))
+	value := GetStringValue(labels, TraefikBackendResponseForwardingFlushInterval, "0")
+	err := flushInterval.Set(value)
+	if err != nil {
+		log.Errorf("invalid flush interval %s: %v", value, err)
+		return nil
+	}
+
 	return &types.ResponseForwarding{
 		FlushInterval: flushInterval,
 	}
