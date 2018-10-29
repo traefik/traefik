@@ -830,3 +830,71 @@ func (s *HTTPSSuite) TestEntrypointHttpsRedirectAndPathModification(c *check.C) 
 		}
 	}
 }
+
+// TestWithSNIStaticCaseInsensitive involves a client sending a SNI hostname of
+// "bar.www.snitest.com", which matches the DNS SAN of '*.WWW.SNITEST.COM'. The test
+// verifies that traefik presents the correct certificate.
+func (s *HTTPSSuite) TestWithSNIStaticCaseInsensitive(c *check.C) {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/https_sni_case_insensitive_static.toml"))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 500*time.Millisecond, try.BodyContains("HostRegexp: {subdomain:[a-z1-9-]+}.www.snitest.com"))
+	c.Assert(err, checker.IsNil)
+
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+		ServerName:         "bar.www.snitest.com",
+		NextProtos:         []string{"h2", "http/1.1"},
+	}
+	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
+	c.Assert(err, checker.IsNil, check.Commentf("failed to connect to server"))
+
+	defer conn.Close()
+	err = conn.Handshake()
+	c.Assert(err, checker.IsNil, check.Commentf("TLS handshake error"))
+
+	cs := conn.ConnectionState()
+	err = cs.PeerCertificates[0].VerifyHostname("*.WWW.SNITEST.COM")
+	c.Assert(err, checker.IsNil, check.Commentf("certificate did not match SNI servername"))
+
+	proto := conn.ConnectionState().NegotiatedProtocol
+	c.Assert(proto, checker.Equals, "h2")
+}
+
+// TestWithSNIDynamicCaseInsensitive involves a client sending a SNI hostname of
+// "bar.www.snitest.com", which matches the DNS SAN of '*.WWW.SNITEST.COM'. The test
+// verifies that traefik presents the correct certificate.
+func (s *HTTPSSuite) TestWithSNIDynamicCaseInsensitive(c *check.C) {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/https_sni_case_insensitive_dynamic.toml"))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 500*time.Millisecond, try.BodyContains("HostRegexp: {subdomain:[a-z1-9-]+}.www.snitest.com"))
+	c.Assert(err, checker.IsNil)
+
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+		ServerName:         "bar.www.snitest.com",
+		NextProtos:         []string{"h2", "http/1.1"},
+	}
+	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
+	c.Assert(err, checker.IsNil, check.Commentf("failed to connect to server"))
+
+	defer conn.Close()
+	err = conn.Handshake()
+	c.Assert(err, checker.IsNil, check.Commentf("TLS handshake error"))
+
+	cs := conn.ConnectionState()
+	err = cs.PeerCertificates[0].VerifyHostname("*.WWW.SNITEST.COM")
+	c.Assert(err, checker.IsNil, check.Commentf("certificate did not match SNI servername"))
+
+	proto := conn.ConnectionState().NegotiatedProtocol
+	c.Assert(proto, checker.Equals, "h2")
+}

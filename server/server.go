@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"time"
 
@@ -711,13 +712,13 @@ func (s *Server) buildNameOrIPToCertificate(certs []tls.Certificate) map[string]
 			continue
 		}
 		if len(x509Cert.Subject.CommonName) > 0 {
-			certMap[x509Cert.Subject.CommonName] = cert
+			certMap[strings.ToLower(x509Cert.Subject.CommonName)] = cert
 		}
 		for _, san := range x509Cert.DNSNames {
-			certMap[san] = cert
+			certMap[strings.ToLower(san)] = cert
 		}
 		for _, ipSan := range x509Cert.IPAddresses {
-			certMap[ipSan.String()] = cert
+			certMap[strings.ToLower(ipSan.String())] = cert
 		}
 	}
 	return certMap
