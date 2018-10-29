@@ -22,7 +22,8 @@ const (
 	annotationKubernetesWhiteListSourceRange       = "ingress.kubernetes.io/whitelist-source-range"
 	annotationKubernetesWhiteListUseXForwardedFor  = "ingress.kubernetes.io/whitelist-x-forwarded-for"
 	annotationKubernetesPreserveHost               = "ingress.kubernetes.io/preserve-host"
-	annotationKubernetesPassTLSCert                = "ingress.kubernetes.io/pass-tls-cert"
+	annotationKubernetesPassTLSCert                = "ingress.kubernetes.io/pass-tls-cert" // Deprecated
+	annotationKubernetesPassTLSClientCert          = "ingress.kubernetes.io/pass-client-tls-cert"
 	annotationKubernetesFrontendEntryPoints        = "ingress.kubernetes.io/frontend-entry-points"
 	annotationKubernetesPriority                   = "ingress.kubernetes.io/priority"
 	annotationKubernetesCircuitBreakerExpression   = "ingress.kubernetes.io/circuit-breaker-expression"

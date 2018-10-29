@@ -1379,6 +1379,28 @@ var _templatesKubernetesTmpl = []byte(`[backends]
         {{end}}
     {{end}}
 
+    {{if $frontend.PassTLSClientCert }}
+    [frontends."{{ $frontendName }}".passTLSClientCert]
+      pem = {{ $frontend.PassTLSClientCert.PEM }}
+      {{ $infos := $frontend.PassTLSClientCert.Infos }}
+      {{if $infos }}
+      [frontends."{{ $frontendName }}".passTLSClientCert.infos]
+        notAfter = {{ $infos.NotAfter   }}
+        notBefore = {{ $infos.NotBefore }}
+        sans = {{ $infos.Sans }}
+        {{ $subject := $infos.Subject }}
+        {{if $subject }}
+        [frontends."{{ $frontendName }}".passTLSClientCert.infos.subject]
+          country = {{ $subject.Country }}
+          province = {{ $subject.Province }}
+          locality = {{ $subject.Locality }}
+          organization = {{ $subject.Organization }}
+          commonName = {{ $subject.CommonName }}
+          serialNumber = {{ $subject.SerialNumber }}
+        {{end}}
+      {{end}}
+    {{end}}
+
   {{if $frontend.Headers }}
   [frontends."{{ $frontendName }}".headers]
     SSLRedirect = {{ $frontend.Headers.SSLRedirect }}
