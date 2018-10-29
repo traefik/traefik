@@ -56,7 +56,7 @@ func (p *Provider) buildConfiguration(containersInspected []dockerData) *types.C
 		"getRateLimit":         label.GetRateLimit,
 		"getHeaders":           label.GetHeaders,
 		"getWhiteList":         label.GetWhiteList,
-		"getCnameFlattening": label.GetFuncBool(label.TraefikFrontendCnameFlattening, label.DefaultFrontendCnameFlattening),
+		"getCnameFlattening":   label.GetFuncBool(label.TraefikFrontendCnameFlattening, label.DefaultFrontendCnameFlattening),
 	}
 
 	// filter containers

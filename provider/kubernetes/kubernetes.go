@@ -275,18 +275,18 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					cnameFlattening := getBoolValue(i.Annotations, annotationKubernetesCnameFlattening, p.EnableCnameFlattening)
 
 					frontend = &types.Frontend{
-						Backend:        baseName,
-						PassHostHeader: passHostHeader,
-						PassTLSCert:    passTLSCert,
-						Routes:         make(map[string]types.Route),
-						Priority:       priority,
-						WhiteList:      getWhiteList(i),
-						Redirect:       getFrontendRedirect(i, baseName, pa.Path),
-						EntryPoints:    entryPoints,
-						Headers:        getHeader(i),
-						Errors:         getErrorPages(i),
-						RateLimit:      getRateLimit(i),
-						Auth:           auth,
+						Backend:         baseName,
+						PassHostHeader:  passHostHeader,
+						PassTLSCert:     passTLSCert,
+						Routes:          make(map[string]types.Route),
+						Priority:        priority,
+						WhiteList:       getWhiteList(i),
+						Redirect:        getFrontendRedirect(i, baseName, pa.Path),
+						EntryPoints:     entryPoints,
+						Headers:         getHeader(i),
+						Errors:          getErrorPages(i),
+						RateLimit:       getRateLimit(i),
+						Auth:            auth,
 						CnameFlattening: cnameFlattening,
 					}
 				}

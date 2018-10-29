@@ -552,9 +552,9 @@ func TestDockerBuildConfiguration(t *testing.T) {
 							Rule: "Host:traefik.io",
 						},
 					},
-					PassHostHeader: true,
-					PassTLSCert:    true,
-					Priority:       666,
+					PassHostHeader:  true,
+					PassTLSCert:     true,
+					Priority:        666,
 					CnameFlattening: true,
 					PassTLSClientCert: &types.TLSClientHeaders{
 						PEM: true,

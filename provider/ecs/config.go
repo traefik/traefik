@@ -46,7 +46,7 @@ func (p *Provider) buildConfiguration(instances []ecsInstance) (*types.Configura
 		"getRateLimit":         label.GetRateLimit,
 		"getHeaders":           label.GetHeaders,
 		"getWhiteList":         label.GetWhiteList,
-		"getCnameFlattening": label.GetFuncBool(label.TraefikFrontendCnameFlattening, label.DefaultFrontendCnameFlattening),
+		"getCnameFlattening":   label.GetFuncBool(label.TraefikFrontendCnameFlattening, label.DefaultFrontendCnameFlattening),
 	}
 
 	services := make(map[string][]ecsInstance)
