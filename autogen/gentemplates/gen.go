@@ -143,6 +143,14 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
     expression = "{{ $circuitBreaker.Expression }}"
   {{end}}
 
+  {{ $responseForwarding := getResponseForwarding $service.TraefikLabels }}
+  {{if $responseForwarding }}
+  [backends."backend-{{ $backendName }}".responseForwarding]
+    flushInterval = "{{ $responseForwarding.FlushInterval }}"
+  {{end}}
+
+
+
   {{ $loadBalancer := getLoadBalancer $service.TraefikLabels }}
   {{if $loadBalancer }}
   [backends."backend-{{ $backendName }}".loadBalancer]
@@ -620,6 +628,12 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
     expression = "{{ $circuitBreaker.Expression }}"
   {{end}}
 
+  {{ $responseForwarding := getResponseForwarding $backend.SegmentLabels }}
+  {{if $responseForwarding }}
+  [backends."backend-{{ $backendName }}".responseForwarding]
+    flushInterval = "{{ $responseForwarding.FlushInterval }}"
+  {{end}}
+
   {{ $loadBalancer := getLoadBalancer $backend.SegmentLabels }}
   {{if $loadBalancer }}
     [backends."backend-{{ $backendName }}".loadBalancer]
@@ -948,6 +962,12 @@ var _templatesEcsTmpl = []byte(`[backends]
     expression = "{{ $circuitBreaker.Expression }}"
   {{end}}
 
+  {{ $responseForwarding := getResponseForwarding $firstInstance.SegmentLabels }}
+  {{if $responseForwarding }}
+  [backends."backend-{{ $serviceName }}".responseForwarding]
+    flushInterval = "{{ $responseForwarding.FlushInterval }}"
+  {{end}}
+
   {{ $loadBalancer := getLoadBalancer $firstInstance.SegmentLabels }}
   {{if $loadBalancer }}
   [backends."backend-{{ $serviceName }}".loadBalancer]
@@ -1258,6 +1278,11 @@ var _templatesKubernetesTmpl = []byte(`[backends]
       expression = "{{ $backend.CircuitBreaker.Expression }}"
     {{end}}
 
+    {{if $backend.ResponseForwarding }}
+    [backends."{{ $backendName }}".responseForwarding]
+      flushInterval = "{{ $backend.responseForwarding.FlushInterval }}"
+    {{end}}
+
     [backends."{{ $backendName }}".loadBalancer]
       method = "{{ $backend.LoadBalancer.Method }}"
       sticky = {{ $backend.LoadBalancer.Sticky }}
@@ -1491,6 +1516,12 @@ var _templatesKvTmpl = []byte(`[backends]
   {{if $circuitBreaker }}
   [backends."{{ $backendName }}".circuitBreaker]
     expression = "{{ $circuitBreaker.Expression }}"
+  {{end}}
+          
+  {{ $responseForwarding := getResponseForwarding $backend }}
+  {{if $responseForwarding }}
+  [backends."{{ $backendName }}".responseForwarding]
+    flushInterval = "{{ $responseForwarding.flushInterval }}"
   {{end}}
 
   {{ $loadBalancer := getLoadBalancer $backend }}
@@ -1862,6 +1893,12 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
     [backends."{{ $backendName }}".circuitBreaker]
       expression = "{{ $circuitBreaker.Expression }}"
     {{end}}
+          
+    {{ $responseForwarding := getResponseForwarding $app.SegmentLabels }}
+    {{if $responseForwarding }}
+    [backends."{{ $backendName }}".responseForwarding]
+      flushInterval = "{{ $responseForwarding.FlushInterval }}"
+    {{end}}
 
     {{ $loadBalancer := getLoadBalancer $app.SegmentLabels }}
     {{if $loadBalancer }}
@@ -2175,6 +2212,12 @@ var _templatesMesosTmpl = []byte(`[backends]
   {{if $circuitBreaker }}
   [backends."backend-{{ $backendName }}".circuitBreaker]
     expression = "{{ $circuitBreaker.Expression }}"
+  {{end}}
+
+  {{ $responseForwarding := getResponseForwarding $app.TraefikLabels }}
+  {{if $responseForwarding }}
+  [backends."backend-{{ $backendName }}".responseForwarding]
+    flushInterval = "{{ $responseForwarding.FlushInterval }}"
   {{end}}
 
   {{ $loadBalancer := getLoadBalancer $app.TraefikLabels }}
@@ -2543,6 +2586,12 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
   {{if $circuitBreaker }}
   [backends."backend-{{ $backendName }}".circuitBreaker]
     expression = "{{ $circuitBreaker.Expression }}"
+  {{end}}
+
+  {{ $responseForwarding := getResponseForwarding $backend.SegmentLabels }}
+  {{if $responseForwarding }}
+  [backends."backend-{{ $backendName }}".responseForwarding]
+    flushInterval = "{{ $responseForwarding.FlushInterval }}"
   {{end}}
 
   {{ $loadBalancer := getLoadBalancer $backend.SegmentLabels }}

@@ -32,13 +32,14 @@ func (p *Provider) buildConfigurationV2(applications *marathon.Applications) *ty
 		"getBackendName": p.getBackendName,
 
 		// Backend functions
-		"getPort":           getPort,
-		"getCircuitBreaker": label.GetCircuitBreaker,
-		"getLoadBalancer":   label.GetLoadBalancer,
-		"getMaxConn":        label.GetMaxConn,
-		"getHealthCheck":    label.GetHealthCheck,
-		"getBuffering":      label.GetBuffering,
-		"getServers":        p.getServers,
+		"getPort":               getPort,
+		"getCircuitBreaker":     label.GetCircuitBreaker,
+		"getLoadBalancer":       label.GetLoadBalancer,
+		"getMaxConn":            label.GetMaxConn,
+		"getHealthCheck":        label.GetHealthCheck,
+		"getBuffering":          label.GetBuffering,
+		"getResponseForwarding": label.GetResponseForwarding,
+		"getServers":            p.getServers,
 
 		// Frontend functions
 		"getSegmentNameSuffix": getSegmentNameSuffix,

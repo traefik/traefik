@@ -34,6 +34,7 @@ func (p *Provider) buildConfigurationV2(catalog []catalogUpdate) *types.Configur
 		"getMaxConn":            label.GetMaxConn,
 		"getHealthCheck":        label.GetHealthCheck,
 		"getBuffering":          label.GetBuffering,
+		"getResponseForwarding": label.GetResponseForwarding,
 		"getServer":             p.getServer,
 
 		// Frontend functions

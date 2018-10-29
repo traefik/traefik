@@ -337,6 +337,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				templateObjects.Backends[baseName].LoadBalancer = getLoadBalancer(service)
 				templateObjects.Backends[baseName].MaxConn = getMaxConn(service)
 				templateObjects.Backends[baseName].Buffering = getBuffering(service)
+				templateObjects.Backends[baseName].ResponseForwarding = getResponseForwarding(service)
 
 				protocol := label.DefaultProtocol
 
@@ -494,6 +495,7 @@ func (p *Provider) addGlobalBackend(cl Client, i *extensionsv1beta1.Ingress, tem
 	templateObjects.Backends[defaultBackendName].LoadBalancer = getLoadBalancer(service)
 	templateObjects.Backends[defaultBackendName].MaxConn = getMaxConn(service)
 	templateObjects.Backends[defaultBackendName].Buffering = getBuffering(service)
+	templateObjects.Backends[defaultBackendName].ResponseForwarding = getResponseForwarding(service)
 
 	endpoints, exists, err := cl.GetEndpoints(service.Namespace, service.Name)
 	if err != nil {
@@ -948,6 +950,17 @@ func getWhiteList(i *extensionsv1beta1.Ingress) *types.WhiteList {
 	return &types.WhiteList{
 		SourceRange:      ranges,
 		UseXForwardedFor: getBoolValue(i.Annotations, annotationKubernetesWhiteListUseXForwardedFor, false),
+	}
+}
+
+func getResponseForwarding(service *corev1.Service) *types.ResponseForwarding {
+	flushIntervalValue := getStringValue(service.Annotations, annotationKubernetesResponseForwardingFlushInterval, "")
+	if len(flushIntervalValue) == 0 {
+		return nil
+	}
+
+	return &types.ResponseForwarding{
+		FlushInterval: flushIntervalValue,
 	}
 }
 

@@ -93,6 +93,13 @@ func circuitBreaker(exp string) func(*types.Backend) {
 	}
 }
 
+func responseForwarding(interval string) func(*types.Backend) {
+	return func(b *types.Backend) {
+		b.ResponseForwarding = &types.ResponseForwarding{}
+		b.ResponseForwarding.FlushInterval = interval
+	}
+}
+
 func buffering(opts ...func(*types.Buffering)) func(*types.Backend) {
 	return func(b *types.Backend) {
 		if b.Buffering == nil {

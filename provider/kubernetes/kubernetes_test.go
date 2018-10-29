@@ -908,6 +908,9 @@ func TestServiceAnnotations(t *testing.T) {
 				iRule(
 					iHost("max-conn"),
 					iPaths(onePath(iBackend("service4", intstr.FromInt(804))))),
+				iRule(
+					iHost("flush"),
+					iPaths(onePath(iBackend("service5", intstr.FromInt(805))))),
 			),
 		),
 	}
@@ -958,6 +961,15 @@ retryexpression: IsNetworkError() && Attempts() <= 2
 				clusterIP("10.0.0.4"),
 				sPorts(sPort(804, "http"))),
 		),
+		buildService(
+			sName("service5"),
+			sNamespace("testing"),
+			sUID("5"),
+			sAnnotation(annotationKubernetesResponseForwardingFlushInterval, "10ms"),
+			sSpec(
+				clusterIP("10.0.0.5"),
+				sPorts(sPort(80, ""))),
+		),
 	}
 
 	endpoints := []*corev1.Endpoints{
@@ -1005,6 +1017,17 @@ retryexpression: IsNetworkError() && Attempts() <= 2
 				eAddresses(eAddress("10.4.0.2")),
 				ePorts(ePort(8080, "http"))),
 		),
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service5"),
+			eUID("5"),
+			subset(
+				eAddresses(eAddress("10.4.0.1")),
+				ePorts(ePort(8080, "http"))),
+			subset(
+				eAddresses(eAddress("10.4.0.2")),
+				ePorts(ePort(8080, "http"))),
+		),
 	}
 
 	watchChan := make(chan interface{})
@@ -1027,6 +1050,11 @@ retryexpression: IsNetworkError() && Attempts() <= 2
 					server("http://10.21.0.1:8080", weight(1))),
 				lbMethod("drr"),
 				circuitBreaker("NetworkErrorRatio() > 0.5"),
+			),
+			backend("flush",
+				servers(),
+				lbMethod("wrr"),
+				responseForwarding("10ms"),
 			),
 			backend("bar",
 				servers(
@@ -1073,6 +1101,10 @@ retryexpression: IsNetworkError() && Attempts() <= 2
 				passHostHeader(),
 				routes(
 					route("max-conn", "Host:max-conn"))),
+			frontend("flush",
+				passHostHeader(),
+				routes(
+					route("flush", "Host:flush"))),
 		),
 	)
 

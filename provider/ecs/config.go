@@ -21,14 +21,16 @@ import (
 func (p *Provider) buildConfigurationV2(instances []ecsInstance) (*types.Configuration, error) {
 	var ecsFuncMap = template.FuncMap{
 		// Backend functions
-		"getHost":           getHost,
-		"getPort":           getPort,
-		"getCircuitBreaker": label.GetCircuitBreaker,
-		"getLoadBalancer":   label.GetLoadBalancer,
-		"getMaxConn":        label.GetMaxConn,
-		"getHealthCheck":    label.GetHealthCheck,
-		"getBuffering":      label.GetBuffering,
-		"getServers":        getServers,
+		"getHost":               getHost,
+		"getPort":               getPort,
+		"getCircuitBreaker":     label.GetCircuitBreaker,
+		"getLoadBalancer":       label.GetLoadBalancer,
+		"getMaxConn":            label.GetMaxConn,
+		"getHealthCheck":        label.GetHealthCheck,
+		"getBuffering":          label.GetBuffering,
+		"getResponseForwarding": label.GetResponseForwarding,
+
+		"getServers": getServers,
 
 		// Frontend functions
 		"filterFrontends":      filterFrontends,

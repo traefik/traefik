@@ -354,6 +354,19 @@ func GetHealthCheck(labels map[string]string) *types.HealthCheck {
 	}
 }
 
+// GetResponseForwarding Create ResponseForwarding from labels
+func GetResponseForwarding(labels map[string]string) *types.ResponseForwarding {
+	if !HasPrefix(labels, TraefikBackendResponseForwardingFlushInterval) {
+		return nil
+	}
+
+	value := GetStringValue(labels, TraefikBackendResponseForwardingFlushInterval, "0")
+
+	return &types.ResponseForwarding{
+		FlushInterval: value,
+	}
+}
+
 // GetBuffering Create buffering from labels
 func GetBuffering(labels map[string]string) *types.Buffering {
 	if !HasPrefix(labels, TraefikBackendBuffering) {
