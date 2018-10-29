@@ -333,10 +333,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			dynamicConfigs := types.Configurations{"config": test.config(testServer.URL)}
 
 			srv := NewServer(globalConfig, nil, entryPointsConfig)
-			entryPoints, err := srv.loadConfig(dynamicConfigs, globalConfig)
-			if err != nil {
-				t.Fatalf("error loading config: %s", err)
-			}
+			entryPoints := srv.loadConfig(dynamicConfigs, globalConfig)
 
 			responseRecorder := &httptest.ResponseRecorder{}
 			request := httptest.NewRequest(http.MethodGet, testServer.URL+requestPath, nil)

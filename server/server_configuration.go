@@ -42,13 +42,7 @@ func (s *Server) loadConfiguration(configMsg types.ConfigMessage) {
 
 	s.metricsRegistry.ConfigReloadsCounter().Add(1)
 
-	newServerEntryPoints, err := s.loadConfig(newConfigurations, s.globalConfiguration)
-	if err != nil {
-		s.metricsRegistry.ConfigReloadsFailureCounter().Add(1)
-		s.metricsRegistry.LastConfigReloadFailureGauge().Set(float64(time.Now().Unix()))
-		log.Error("Error loading new configuration, aborted ", err)
-		return
-	}
+	newServerEntryPoints := s.loadConfig(newConfigurations, s.globalConfiguration)
 
 	s.metricsRegistry.LastConfigReloadSuccessGauge().Set(float64(time.Now().Unix()))
 
@@ -77,7 +71,7 @@ func (s *Server) loadConfiguration(configMsg types.ConfigMessage) {
 
 // loadConfig returns a new gorilla.mux Route from the specified global configuration and the dynamic
 // provider configurations.
-func (s *Server) loadConfig(configurations types.Configurations, globalConfiguration configuration.GlobalConfiguration) (map[string]*serverEntryPoint, error) {
+func (s *Server) loadConfig(configurations types.Configurations, globalConfiguration configuration.GlobalConfiguration) map[string]*serverEntryPoint {
 
 	serverEntryPoints := s.buildServerEntryPoints()
 
@@ -124,7 +118,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 		}
 	}
 
-	return serverEntryPoints, err
+	return serverEntryPoints
 }
 
 func (s *Server) loadFrontendConfig(

@@ -285,6 +285,5 @@ func TestServerGenericFrontendAuthFail(t *testing.T) {
 
 	srv := NewServer(globalConfig, nil, nil)
 
-	_, err := srv.loadConfig(dynamicConfigs, globalConfig)
-	require.NoError(t, err)
+	_ = srv.loadConfig(dynamicConfigs, globalConfig)
 }
