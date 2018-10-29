@@ -216,7 +216,7 @@ func (b *Buffer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if err := b.checkLimit(req); err != nil {
-		log.Errorf("vulcand/oxy/buffer: request body over limit, err: %v", err)
+		b.log.Errorf("vulcand/oxy/buffer: request body over limit, err: %v", err)
 		b.errHandler.ServeHTTP(w, req, err)
 		return
 	}
@@ -239,7 +239,7 @@ func (b *Buffer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		if body != nil {
 			errClose := body.Close()
 			if errClose != nil {
-				log.Errorf("vulcand/oxy/buffer: failed to close body, err: %v", errClose)
+				b.log.Errorf("vulcand/oxy/buffer: failed to close body, err: %v", errClose)
 			}
 		}
 	}()
@@ -330,7 +330,7 @@ func (b *Buffer) copyRequest(req *http.Request, body io.ReadCloser, bodySize int
 	o.TransferEncoding = []string{}
 	// http.Transport will close the request body on any error, we are controlling the close process ourselves, so we override the closer here
 	if body == nil {
-		o.Body = nil
+		o.Body = ioutil.NopCloser(req.Body)
 	} else {
 		o.Body = ioutil.NopCloser(body.(io.Reader))
 	}
@@ -383,7 +383,14 @@ func (b *bufferWriter) Header() http.Header {
 }
 
 func (b *bufferWriter) Write(buf []byte) (int, error) {
-	return b.buffer.Write(buf)
+	length, err := b.buffer.Write(buf)
+	if err != nil {
+		// Since go1.11 (https://github.com/golang/go/commit/8f38f28222abccc505b9a1992deecfe3e2cb85de)
+		// if the writer returns an error, the reverse proxy panics
+		b.log.Error(err)
+		length = len(buf)
+	}
+	return length, nil
 }
 
 // WriteHeader sets rw.Code.
@@ -410,7 +417,7 @@ func (b *bufferWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 		return conn, rw, err
 	}
 	b.log.Warningf("Upstream ResponseWriter of type %v does not implement http.Hijacker. Returning dummy channel.", reflect.TypeOf(b.responseWriter))
-	return nil, nil, fmt.Errorf("The response writer that was wrapped in this proxy, does not implement http.Hijacker. It is of type: %v", reflect.TypeOf(b.responseWriter))
+	return nil, nil, fmt.Errorf("the response writer wrapped in this proxy does not implement http.Hijacker. Its type is: %v", reflect.TypeOf(b.responseWriter))
 }
 
 // SizeErrHandler Size error handler

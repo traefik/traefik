@@ -181,6 +181,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					withPair(pathFrontendAuthForwardTLSCert, "server.crt"),
 					withPair(pathFrontendAuthForwardTLSKey, "server.key"),
 					withPair(pathFrontendAuthForwardTLSInsecureSkipVerify, "true"),
+					withPair(pathFrontendAuthForwardAuthResponseHeaders, "X-Auth-User,X-Auth-Token"),
 				),
 				backend("backend"),
 			),
@@ -200,8 +201,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						Auth: &types.Auth{
 							HeaderField: "X-WebAuth-User",
 							Forward: &types.Forward{
-								Address:            "auth.server",
-								TrustForwardHeader: true,
+								Address: "auth.server",
 								TLS: &types.ClientTLS{
 									CA:                 "ca.crt",
 									CAOptional:         true,
@@ -209,6 +209,8 @@ func TestProviderBuildConfiguration(t *testing.T) {
 									Cert:               "server.crt",
 									Key:                "server.key",
 								},
+								TrustForwardHeader:  true,
+								AuthResponseHeaders: []string{"X-Auth-User", "X-Auth-Token"},
 							},
 						},
 					},
@@ -260,6 +262,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					withPair(pathBackendHealthCheckPath, "/health"),
 					withPair(pathBackendHealthCheckPort, "80"),
 					withPair(pathBackendHealthCheckInterval, "30s"),
+					withPair(pathBackendHealthCheckTimeout, "5s"),
 					withPair(pathBackendHealthCheckHostname, "foo.com"),
 					withPair(pathBackendHealthCheckHeaders+"Foo", "bar"),
 					withPair(pathBackendHealthCheckHeaders+"Bar", "foo"),
@@ -277,6 +280,18 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					withPair(pathFrontendBackend, "backend1"),
 					withPair(pathFrontendPriority, "6"),
 					withPair(pathFrontendPassHostHeader, "false"),
+
+					withPair(pathFrontendPassTLSClientCertPem, "true"),
+					withPair(pathFrontendPassTLSClientCertInfosNotBefore, "true"),
+					withPair(pathFrontendPassTLSClientCertInfosNotAfter, "true"),
+					withPair(pathFrontendPassTLSClientCertInfosSans, "true"),
+					withPair(pathFrontendPassTLSClientCertInfosSubjectCommonName, "true"),
+					withPair(pathFrontendPassTLSClientCertInfosSubjectCountry, "true"),
+					withPair(pathFrontendPassTLSClientCertInfosSubjectLocality, "true"),
+					withPair(pathFrontendPassTLSClientCertInfosSubjectOrganization, "true"),
+					withPair(pathFrontendPassTLSClientCertInfosSubjectProvince, "true"),
+					withPair(pathFrontendPassTLSClientCertInfosSubjectSerialNumber, "true"),
+
 					withPair(pathFrontendPassTLSCert, "true"),
 					withList(pathFrontendEntryPoints, "http", "https"),
 					withList(pathFrontendWhiteListSourceRange, "1.1.1.1/24", "1234:abcd::42/32"),
@@ -376,6 +391,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 							Path:     "/health",
 							Port:     80,
 							Interval: "30s",
+							Timeout:  "5s",
 							Hostname: "foo.com",
 							Headers: map[string]string{
 								"Foo": "bar",
@@ -403,6 +419,22 @@ func TestProviderBuildConfiguration(t *testing.T) {
 							IPStrategy: &types.IPStrategy{
 								Depth:       5,
 								ExcludedIPs: []string{"1.1.1.1/24", "1234:abcd::42/32"},
+							},
+						},
+						PassTLSClientCert: &types.TLSClientHeaders{
+							PEM: true,
+							Infos: &types.TLSClientCertificateInfos{
+								NotBefore: true,
+								Sans:      true,
+								NotAfter:  true,
+								Subject: &types.TLSCLientCertificateSubjectInfos{
+									CommonName:   true,
+									Country:      true,
+									Locality:     true,
+									Organization: true,
+									Province:     true,
+									SerialNumber: true,
+								},
 							},
 						},
 						Auth: &types.Auth{
@@ -1960,9 +1992,12 @@ func TestProviderGetHealthCheck(t *testing.T) {
 				backend("foo",
 					withPair(pathBackendHealthCheckPath, "/health"),
 					withPair(pathBackendHealthCheckPort, "80"),
-					withPair(pathBackendHealthCheckInterval, "10s"))),
+					withPair(pathBackendHealthCheckInterval, "10s"),
+					withPair(pathBackendHealthCheckTimeout, "3s"))),
+
 			expected: &types.HealthCheck{
 				Interval: "10s",
+				Timeout:  "3s",
 				Path:     "/health",
 				Port:     80,
 			},
@@ -1975,6 +2010,7 @@ func TestProviderGetHealthCheck(t *testing.T) {
 					withPair(pathBackendHealthCheckPath, "/health"))),
 			expected: &types.HealthCheck{
 				Interval: "30s",
+				Timeout:  "5s",
 				Path:     "/health",
 				Port:     0,
 			},
@@ -1985,7 +2021,8 @@ func TestProviderGetHealthCheck(t *testing.T) {
 			kvPairs: filler("traefik",
 				backend("foo",
 					withPair(pathBackendHealthCheckPort, "80"),
-					withPair(pathBackendHealthCheckInterval, "30s"))),
+					withPair(pathBackendHealthCheckInterval, "30s"),
+					withPair(pathBackendHealthCheckTimeout, "5s"))),
 			expected: nil,
 		},
 	}

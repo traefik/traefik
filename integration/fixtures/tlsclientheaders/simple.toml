@@ -1,0 +1,24 @@
+logLevel = "DEBUG"
+defaultEntryPoints = ["https"]
+debug = true
+rootCAs = [ """{{ .RootCertContent }}""" ]
+
+[entryPoints]
+  [entryPoints.https]
+    address = ":8443"
+
+    [entryPoints.https.tls]
+
+      [entryPoints.https.tls.ClientCA]
+      files = [ """{{ .RootCertContent }}""" ]
+      optional = false
+
+      [[entryPoints.https.tls.certificates]]
+      certFile = """{{ .ServerCertContent }}"""
+      keyFile  = """{{ .ServerKeyContent }}"""
+
+[api]
+
+[docker]
+endpoint = "unix:///var/run/docker.sock"
+watch = true

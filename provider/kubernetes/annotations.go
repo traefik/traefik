@@ -1,6 +1,8 @@
 package kubernetes
 
 import (
+	"strconv"
+
 	"github.com/containous/traefik/provider/label"
 )
 
@@ -84,6 +86,13 @@ func getAnnotationName(annotations map[string]string, name string) string {
 func getStringValue(annotations map[string]string, annotation string, defaultValue string) string {
 	annotationName := getAnnotationName(annotations, annotation)
 	return label.GetStringValue(annotations, annotationName, defaultValue)
+}
+
+func getStringSafeValue(annotations map[string]string, annotation string, defaultValue string) (string, error) {
+	annotationName := getAnnotationName(annotations, annotation)
+	value := label.GetStringValue(annotations, annotationName, defaultValue)
+	_, err := strconv.Unquote(`"` + value + `"`)
+	return value, err
 }
 
 func getBoolValue(annotations map[string]string, annotation string, defaultValue bool) bool {

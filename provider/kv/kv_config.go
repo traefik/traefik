@@ -41,19 +41,20 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getTLSSection": p.getTLSSection,
 
 		// Frontend functions
-		"getBackendName":     p.getFuncString(pathFrontendBackend, ""),
-		"getPriority":        p.getFuncInt(pathFrontendPriority, label.DefaultFrontendPriority),
-		"getPassHostHeader":  p.getFuncBool(pathFrontendPassHostHeader, label.DefaultPassHostHeader),
-		"getPassTLSCert":     p.getFuncBool(pathFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getEntryPoints":     p.getFuncList(pathFrontendEntryPoints),
-		"getAuth":            p.getAuth,
-		"getRoutes":          p.getRoutes,
-		"getRedirect":        p.getRedirect,
-		"getErrorPages":      p.getErrorPages,
-		"getRateLimit":       p.getRateLimit,
-		"getHeaders":         p.getHeaders,
-		"getWhiteList":       p.getWhiteList,
-		"getCnameFlattening": p.getFuncBool(pathCnameFlattening, label.DefaultFrontendCnameFlattening),
+		"getBackendName":       p.getFuncString(pathFrontendBackend, ""),
+		"getPriority":          p.getFuncInt(pathFrontendPriority, label.DefaultFrontendPriority),
+		"getPassHostHeader":    p.getFuncBool(pathFrontendPassHostHeader, label.DefaultPassHostHeader),
+		"getPassTLSCert":       p.getFuncBool(pathFrontendPassTLSCert, label.DefaultPassTLSCert),
+		"getPassTLSClientCert": p.getTLSClientCert,
+		"getEntryPoints":       p.getFuncList(pathFrontendEntryPoints),
+		"getAuth":              p.getAuth,
+		"getRoutes":            p.getRoutes,
+		"getRedirect":          p.getRedirect,
+		"getErrorPages":        p.getErrorPages,
+		"getRateLimit":         p.getRateLimit,
+		"getHeaders":           p.getHeaders,
+		"getWhiteList":         p.getWhiteList,
+		"getCnameFlattening":   p.getFuncBool(pathCnameFlattening, label.DefaultFrontendCnameFlattening),
 
 		// Backend functions
 		"getServers":        p.getServers,
@@ -271,6 +272,7 @@ func (p *Provider) getHealthCheck(rootPath string) *types.HealthCheck {
 	scheme := p.get("", rootPath, pathBackendHealthCheckScheme)
 	port := p.getInt(label.DefaultBackendHealthCheckPort, rootPath, pathBackendHealthCheckPort)
 	interval := p.get("30s", rootPath, pathBackendHealthCheckInterval)
+	timeout := p.get("5s", rootPath, pathBackendHealthCheckTimeout)
 	hostname := p.get("", rootPath, pathBackendHealthCheckHostname)
 	headers := p.getMap(rootPath, pathBackendHealthCheckHeaders)
 
@@ -279,6 +281,7 @@ func (p *Provider) getHealthCheck(rootPath string) *types.HealthCheck {
 		Path:     path,
 		Port:     port,
 		Interval: interval,
+		Timeout:  timeout,
 		Hostname: hostname,
 		Headers:  headers,
 	}
@@ -335,6 +338,39 @@ func (p *Provider) getTLSSection(prefix string) []*tls.Configuration {
 	return tlsSection
 }
 
+// getTLSClientCert create TLS client header configuration from labels
+func (p *Provider) getTLSClientCert(rootPath string) *types.TLSClientHeaders {
+	if !p.hasPrefix(rootPath, pathFrontendPassTLSClientCert) {
+		return nil
+	}
+
+	tlsClientHeaders := &types.TLSClientHeaders{
+		PEM: p.getBool(false, rootPath, pathFrontendPassTLSClientCertPem),
+	}
+
+	if p.hasPrefix(rootPath, pathFrontendPassTLSClientCertInfos) {
+		infos := &types.TLSClientCertificateInfos{
+			NotAfter:  p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosNotAfter),
+			NotBefore: p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosNotBefore),
+			Sans:      p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSans),
+		}
+
+		if p.hasPrefix(rootPath, pathFrontendPassTLSClientCertInfosSubject) {
+			subject := &types.TLSCLientCertificateSubjectInfos{
+				CommonName:   p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectCommonName),
+				Country:      p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectCountry),
+				Locality:     p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectLocality),
+				Organization: p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectOrganization),
+				Province:     p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectProvince),
+				SerialNumber: p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectSerialNumber),
+			}
+			infos.Subject = subject
+		}
+		tlsClientHeaders.Infos = infos
+	}
+	return tlsClientHeaders
+}
+
 // GetAuth Create auth from path
 func (p *Provider) getAuth(rootPath string) *types.Auth {
 	if p.hasPrefix(rootPath, pathFrontendAuth) {
@@ -376,8 +412,9 @@ func (p *Provider) getAuthDigest(rootPath string) *types.Digest {
 // getAuthForward Create Forward Auth from path
 func (p *Provider) getAuthForward(rootPath string) *types.Forward {
 	forwardAuth := &types.Forward{
-		Address:            p.get("", rootPath, pathFrontendAuthForwardAddress),
-		TrustForwardHeader: p.getBool(false, rootPath, pathFrontendAuthForwardTrustForwardHeader),
+		Address:             p.get("", rootPath, pathFrontendAuthForwardAddress),
+		TrustForwardHeader:  p.getBool(false, rootPath, pathFrontendAuthForwardTrustForwardHeader),
+		AuthResponseHeaders: p.getList(rootPath, pathFrontendAuthForwardAuthResponseHeaders),
 	}
 
 	// TLS configuration

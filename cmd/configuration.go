@@ -177,6 +177,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	// default HealthCheckConfig
 	healthCheck := configuration.HealthCheckConfig{
 		Interval: parse.Duration(configuration.DefaultHealthCheckInterval),
+		Timeout:  parse.Duration(configuration.DefaultHealthCheckTimeout),
 	}
 
 	// default RespondingTimeouts
@@ -207,6 +208,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 			SameSpan:     false,
 			ID128Bit:     true,
 			Debug:        false,
+			SampleRate:   1.0,
 		},
 		DataDog: &datadog.Config{
 			LocalAgentHostPort: "localhost:8126",
@@ -302,6 +304,7 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 			MaxIdleConnsPerHost:       200,
 			HealthCheck: &configuration.HealthCheckConfig{
 				Interval: parse.Duration(configuration.DefaultHealthCheckInterval),
+				Timeout:  parse.Duration(configuration.DefaultHealthCheckTimeout),
 			},
 			LifeCycle: &configuration.LifeCycle{
 				GraceTimeOut: parse.Duration(configuration.DefaultGraceTimeout),

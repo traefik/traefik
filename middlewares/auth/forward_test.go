@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/negroni"
+	"github.com/vulcand/oxy/forward"
 )
 
 func TestForwardAuthFail(t *testing.T) {
@@ -122,6 +123,59 @@ func TestForwardAuthRedirect(t *testing.T) {
 	assert.NotEmpty(t, string(body), "there should be something in the body")
 }
 
+func TestForwardAuthRemoveHopByHopHeaders(t *testing.T) {
+	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		headers := w.Header()
+		for _, header := range forward.HopHeaders {
+			if header == forward.TransferEncoding {
+				headers.Add(header, "identity")
+			} else {
+				headers.Add(header, "test")
+			}
+		}
+
+		http.Redirect(w, r, "http://example.com/redirect-test", http.StatusFound)
+	}))
+	defer authTs.Close()
+
+	authMiddleware, err := NewAuthenticator(&types.Auth{
+		Forward: &types.Forward{
+			Address: authTs.URL,
+		},
+	}, &tracing.Tracing{})
+	assert.NoError(t, err, "there should be no error")
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "traefik")
+	})
+	n := negroni.New(authMiddleware)
+	n.UseHandler(handler)
+	ts := httptest.NewServer(n)
+	defer ts.Close()
+
+	client := &http.Client{
+		CheckRedirect: func(r *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	res, err := client.Do(req)
+	assert.NoError(t, err, "there should be no error")
+	assert.Equal(t, http.StatusFound, res.StatusCode, "they should be equal")
+
+	for _, header := range forward.HopHeaders {
+		assert.Equal(t, "", res.Header.Get(header), "hop-by-hop header '%s' mustn't be set", header)
+	}
+
+	location, err := res.Location()
+	assert.NoError(t, err, "there should be no error")
+	assert.Equal(t, "http://example.com/redirect-test", location.String(), "they should be equal")
+
+	body, err := ioutil.ReadAll(res.Body)
+	assert.NoError(t, err, "there should be no error")
+	assert.NotEmpty(t, string(body), "there should be something in the body")
+}
+
 func TestForwardAuthFailResponseHeaders(t *testing.T) {
 	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie := &http.Cookie{Name: "example", Value: "testing", Path: "/"}
@@ -177,11 +231,12 @@ func TestForwardAuthFailResponseHeaders(t *testing.T) {
 
 func Test_writeHeader(t *testing.T) {
 	testCases := []struct {
-		name               string
-		headers            map[string]string
-		trustForwardHeader bool
-		emptyHost          bool
-		expectedHeaders    map[string]string
+		name                      string
+		headers                   map[string]string
+		trustForwardHeader        bool
+		emptyHost                 bool
+		expectedHeaders           map[string]string
+		checkForUnexpectedHeaders bool
 	}{
 		{
 			name: "trust Forward Header",
@@ -280,6 +335,29 @@ func Test_writeHeader(t *testing.T) {
 				"X-Forwarded-Method": "GET",
 			},
 		},
+		{
+			name: "remove hop-by-hop headers",
+			headers: map[string]string{
+				forward.Connection:         "Connection",
+				forward.KeepAlive:          "KeepAlive",
+				forward.ProxyAuthenticate:  "ProxyAuthenticate",
+				forward.ProxyAuthorization: "ProxyAuthorization",
+				forward.Te:                 "Te",
+				forward.Trailers:           "Trailers",
+				forward.TransferEncoding:   "TransferEncoding",
+				forward.Upgrade:            "Upgrade",
+				"X-CustomHeader":           "CustomHeader",
+			},
+			trustForwardHeader: false,
+			expectedHeaders: map[string]string{
+				"X-CustomHeader":     "CustomHeader",
+				"X-Forwarded-Proto":  "http",
+				"X-Forwarded-Host":   "foo.bar",
+				"X-Forwarded-Uri":    "/path?q=1",
+				"X-Forwarded-Method": "GET",
+			},
+			checkForUnexpectedHeaders: true,
+		},
 	}
 
 	for _, test := range testCases {
@@ -298,8 +376,16 @@ func Test_writeHeader(t *testing.T) {
 
 			writeHeader(req, forwardReq, test.trustForwardHeader)
 
-			for key, value := range test.expectedHeaders {
-				assert.Equal(t, value, forwardReq.Header.Get(key))
+			actualHeaders := forwardReq.Header
+			expectedHeaders := test.expectedHeaders
+			for key, value := range expectedHeaders {
+				assert.Equal(t, value, actualHeaders.Get(key))
+				actualHeaders.Del(key)
+			}
+			if test.checkForUnexpectedHeaders {
+				for key := range actualHeaders {
+					assert.Fail(t, "Unexpected header found", key)
+				}
 			}
 		})
 	}

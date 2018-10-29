@@ -516,37 +516,37 @@ func TestModifierType(t *testing.T) {
 		expectedModifierRule      string
 	}{
 		{
-			desc: "Request modifier annotation missing",
+			desc:                      "Request modifier annotation missing",
 			requestModifierAnnotation: "",
 			expectedModifierRule:      "",
 		},
 		{
-			desc: "AddPrefix modifier annotation",
+			desc:                      "AddPrefix modifier annotation",
 			requestModifierAnnotation: " AddPrefix: /foo",
 			expectedModifierRule:      "AddPrefix:/foo",
 		},
 		{
-			desc: "ReplacePath modifier annotation",
+			desc:                      "ReplacePath modifier annotation",
 			requestModifierAnnotation: " ReplacePath: /foo",
 			expectedModifierRule:      "ReplacePath:/foo",
 		},
 		{
-			desc: "ReplacePathRegex modifier annotation",
+			desc:                      "ReplacePathRegex modifier annotation",
 			requestModifierAnnotation: " ReplacePathRegex: /foo /bar",
 			expectedModifierRule:      "ReplacePathRegex:/foo /bar",
 		},
 		{
-			desc: "AddPrefix modifier annotation",
+			desc:                      "AddPrefix modifier annotation",
 			requestModifierAnnotation: "AddPrefix:/foo",
 			expectedModifierRule:      "AddPrefix:/foo",
 		},
 		{
-			desc: "ReplacePath modifier annotation",
+			desc:                      "ReplacePath modifier annotation",
 			requestModifierAnnotation: "ReplacePath:/foo",
 			expectedModifierRule:      "ReplacePath:/foo",
 		},
 		{
-			desc: "ReplacePathRegex modifier annotation",
+			desc:                      "ReplacePathRegex modifier annotation",
 			requestModifierAnnotation: "ReplacePathRegex:/foo /bar",
 			expectedModifierRule:      "ReplacePathRegex:/foo /bar",
 		},
@@ -608,23 +608,23 @@ func TestModifierFails(t *testing.T) {
 		requestModifierAnnotation string
 	}{
 		{
-			desc: "Request modifier missing part of annotation",
+			desc:                      "Request modifier missing part of annotation",
 			requestModifierAnnotation: "AddPrefix: ",
 		},
 		{
-			desc: "Request modifier full of spaces annotation",
+			desc:                      "Request modifier full of spaces annotation",
 			requestModifierAnnotation: "    ",
 		},
 		{
-			desc: "Request modifier missing both parts of annotation",
+			desc:                      "Request modifier missing both parts of annotation",
 			requestModifierAnnotation: "  :  ",
 		},
 		{
-			desc: "Request modifier using unknown rule",
+			desc:                      "Request modifier using unknown rule",
 			requestModifierAnnotation: "Foo: /bar",
 		},
 		{
-			desc: "Missing Rule",
+			desc:                      "Missing Rule",
 			requestModifierAnnotation: " : /bar",
 		},
 	}
@@ -1597,6 +1597,14 @@ rateset:
 				routes(
 					route("/", "PathPrefix:/"),
 					route("root", "Host:root"),
+				),
+			),
+			frontend("root2/",
+				passHostHeader(),
+				redirectRegex("root2/$", "root2/root2"),
+				routes(
+					route("/", "PathPrefix:/;ReplacePathRegex: ^/(.*) /abc$1"),
+					route("root2", "Host:root2"),
 				),
 			),
 			frontend("root/root1",
@@ -3458,4 +3466,139 @@ func TestAddGlobalBackendEndpointAPIError(t *testing.T) {
 	provider := Provider{}
 	err := provider.addGlobalBackend(client, ingresses, config)
 	assert.Error(t, err)
+}
+
+func TestTemplateBreakingIngresssValues(t *testing.T) {
+	ingresses := []*extensionsv1beta1.Ingress{
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesIngressClass, "testing-\"foo\""),
+			iRules(
+				iRule(
+					iHost("foo"),
+					iPaths(onePath(iPath("/bar"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iRules(
+				iRule(
+					iHost("testing-\"foo\""),
+					iPaths(onePath(iPath("/bar"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iRules(
+				iRule(
+					iHost("foo"),
+					iPaths(onePath(iPath("/testing-\"foo\""), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+	}
+
+	client := clientMock{
+		ingresses: ingresses,
+	}
+	provider := Provider{}
+
+	actual, err := provider.loadIngresses(client)
+	require.NoError(t, err, "error loading ingresses")
+
+	expected := buildConfiguration(
+		backends(),
+		frontends(),
+	)
+
+	assert.Equal(t, expected, actual)
+}
+
+func TestDivergingIngressDefinitions(t *testing.T) {
+	ingresses := []*extensionsv1beta1.Ingress{
+		buildIngress(
+			iNamespace("testing"),
+			iRules(
+				iRule(
+					iHost("host-a"),
+					iPaths(
+						onePath(iBackend("service1", intstr.FromString("80"))),
+					)),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iRules(
+				iRule(
+					iHost("host-a"),
+					iPaths(
+						onePath(iBackend("missing", intstr.FromString("80"))),
+					)),
+			),
+		),
+	}
+
+	services := []*corev1.Service{
+		buildService(
+			sName("service1"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sPorts(sPort(80, "http")),
+			),
+		),
+	}
+
+	endpoints := []*corev1.Endpoints{
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service1"),
+			eUID("1"),
+			subset(
+				eAddresses(
+					eAddress("10.10.0.1"),
+				),
+				ePorts(ePort(80, "http")),
+			),
+			subset(
+				eAddresses(
+					eAddress("10.10.0.2"),
+				),
+				ePorts(ePort(80, "http")),
+			),
+		),
+	}
+
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		endpoints: endpoints,
+		watchChan: watchChan,
+	}
+	provider := Provider{}
+
+	actual, err := provider.loadIngresses(client)
+	require.NoError(t, err, "error loading ingresses")
+
+	expected := buildConfiguration(
+		backends(
+			backend("host-a",
+				servers(
+					server("http://10.10.0.1:80", weight(1)),
+					server("http://10.10.0.2:80", weight(1)),
+				),
+				lbMethod("wrr"),
+			),
+		),
+		frontends(
+			frontend("host-a",
+				passHostHeader(),
+				routes(
+					route("host-a", "Host:host-a")),
+			),
+		),
+	)
+
+	assert.Equal(t, expected, actual, "error merging multiple backends")
 }

@@ -35,7 +35,7 @@ func (s *DepthStrategy) GetIP(req *http.Request) string {
 	if len(xffs) < s.Depth {
 		return ""
 	}
-	return xffs[len(xffs)-s.Depth]
+	return strings.TrimSpace(xffs[len(xffs)-s.Depth])
 }
 
 // CheckerStrategy a strategy based on an IP Checker
@@ -54,8 +54,9 @@ func (s *CheckerStrategy) GetIP(req *http.Request) string {
 	xffs := strings.Split(xff, ",")
 
 	for i := len(xffs) - 1; i >= 0; i-- {
-		if contain, _ := s.Checker.Contains(xffs[i]); !contain {
-			return xffs[i]
+		xffTrimmed := strings.TrimSpace(xffs[i])
+		if contain, _ := s.Checker.Contains(xffTrimmed); !contain {
+			return xffTrimmed
 		}
 	}
 	return ""

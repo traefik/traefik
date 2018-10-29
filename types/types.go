@@ -74,6 +74,7 @@ type HealthCheck struct {
 	Path     string            `json:"path,omitempty"`
 	Port     int               `json:"port,omitempty"`
 	Interval string            `json:"interval,omitempty"`
+	Timeout  string            `json:"timeout,omitempty"`
 	Hostname string            `json:"hostname,omitempty"`
 	Headers  map[string]string `json:"headers,omitempty"`
 }
@@ -178,19 +179,20 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 
 // Frontend holds frontend configuration.
 type Frontend struct {
-	EntryPoints     []string              `json:"entryPoints,omitempty" hash:"ignore"`
-	Backend         string                `json:"backend,omitempty"`
-	Routes          map[string]Route      `json:"routes,omitempty" hash:"ignore"`
-	PassHostHeader  bool                  `json:"passHostHeader,omitempty"`
-	PassTLSCert     bool                  `json:"passTLSCert,omitempty"`
-	Priority        int                   `json:"priority"`
-	WhiteList       *WhiteList            `json:"whiteList,omitempty"`
-	Headers         *Headers              `json:"headers,omitempty"`
-	Errors          map[string]*ErrorPage `json:"errors,omitempty"`
-	RateLimit       *RateLimit            `json:"ratelimit,omitempty"`
-	Redirect        *Redirect             `json:"redirect,omitempty"`
-	Auth            *Auth                 `json:"auth,omitempty"`
-	CnameFlattening bool                  `json:"cnameFlattening,omitempty"`
+	EntryPoints       []string              `json:"entryPoints,omitempty" hash:"ignore"`
+	Backend           string                `json:"backend,omitempty"`
+	Routes            map[string]Route      `json:"routes,omitempty" hash:"ignore"`
+	PassHostHeader    bool                  `json:"passHostHeader,omitempty"`
+	PassTLSCert       bool                  `json:"passTLSCert,omitempty"` // Deprecated use PassTLSClientCert instead
+	PassTLSClientCert *TLSClientHeaders     `json:"passTLSClientCert,omitempty"`
+	Priority          int                   `json:"priority"`
+	WhiteList         *WhiteList            `json:"whiteList,omitempty"`
+	Headers           *Headers              `json:"headers,omitempty"`
+	Errors            map[string]*ErrorPage `json:"errors,omitempty"`
+	RateLimit         *RateLimit            `json:"ratelimit,omitempty"`
+	Redirect          *Redirect             `json:"redirect,omitempty"`
+	Auth              *Auth                 `json:"auth,omitempty"`
+	CnameFlattening   bool
 }
 
 // Hash returns the hash value of a Frontend struct.
@@ -400,6 +402,7 @@ type Users []string
 
 // Basic HTTP basic authentication
 type Basic struct {
+	Realm        string `json:"realm,omitempty"`
 	Users        `json:"users,omitempty" mapstructure:","`
 	UsersFile    string `json:"usersFile,omitempty"`
 	RemoveHeader bool   `json:"removeHeader,omitempty"`
@@ -528,7 +531,9 @@ func (clientTLS *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
 		} else {
 			ca = []byte(clientTLS.CA)
 		}
-		caPool.AppendCertsFromPEM(ca)
+		if !caPool.AppendCertsFromPEM(ca) {
+			return nil, fmt.Errorf("failed to parse CA")
+		}
 		if clientTLS.CAOptional {
 			clientAuth = tls.VerifyClientCertIfGiven
 		} else {
@@ -645,4 +650,28 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 	}
 
 	return &ip.RemoteAddrStrategy{}, nil
+}
+
+// TLSClientHeaders holds the TLS client cert headers configuration.
+type TLSClientHeaders struct {
+	PEM   bool                       `description:"Enable header with escaped client pem" json:"pem"`
+	Infos *TLSClientCertificateInfos `description:"Enable header with configured client cert infos" json:"infos,omitempty"`
+}
+
+// TLSClientCertificateInfos holds the client TLS certificate infos configuration
+type TLSClientCertificateInfos struct {
+	NotAfter  bool                              `description:"Add NotAfter info in header" json:"notAfter"`
+	NotBefore bool                              `description:"Add NotBefore info in header" json:"notBefore"`
+	Subject   *TLSCLientCertificateSubjectInfos `description:"Add Subject info in header" json:"subject,omitempty"`
+	Sans      bool                              `description:"Add Sans info in header" json:"sans"`
+}
+
+// TLSCLientCertificateSubjectInfos holds the client TLS certificate subject infos configuration
+type TLSCLientCertificateSubjectInfos struct {
+	Country      bool `description:"Add Country info in header" json:"country"`
+	Province     bool `description:"Add Province info in header" json:"province"`
+	Locality     bool `description:"Add Locality info in header" json:"locality"`
+	Organization bool `description:"Add Organization info in header" json:"organization"`
+	CommonName   bool `description:"Add CommonName info in header" json:"commonName"`
+	SerialNumber bool `description:"Add SerialNumber info in header" json:"serialNumber"`
 }

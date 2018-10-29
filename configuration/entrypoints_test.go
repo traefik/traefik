@@ -32,6 +32,7 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 				"Compress:true " +
 				"ProxyProtocol.TrustedIPs:192.168.0.1 " +
 				"ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24 " +
+				"Auth.Basic.Realm:myRealm " +
 				"Auth.Basic.Users:test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0 " +
 				"Auth.Basic.RemoveHeader:true " +
 				"Auth.Digest.Users:test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e " +
@@ -52,6 +53,7 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 				"ClientIPStrategy.ExcludedIPs:10.0.0.3/24,20.0.0.3/24 ",
 			expectedResult: map[string]string{
 				"address":                             ":8000",
+				"auth_basic_realm":                    "myRealm",
 				"auth_basic_users":                    "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 				"auth_basic_removeheader":             "true",
 				"auth_digest_users":                   "test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e",
@@ -69,21 +71,21 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 				"ca_optional":                         "true",
 				"compress":                            "true",
 				"forwardedheaders_trustedips":         "10.0.0.3/24,20.0.0.3/24",
-				"name": "foo",
-				"proxyprotocol_trustedips": "192.168.0.1",
-				"redirect_entrypoint":      "https",
-				"redirect_permanent":       "true",
-				"redirect_regex":           "http://localhost/(.*)",
-				"redirect_replacement":     "http://mydomain/$1",
-				"tls":                              "goo,gii",
-				"tls_acme":                         "TLS",
-				"tls_ciphersuites":                 "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
-				"tls_minversion":                   "VersionTLS11",
-				"whitelist_sourcerange":            "10.42.0.0/16,152.89.1.33/32,afed:be44::/16",
-				"whitelist_ipstrategy_depth":       "3",
-				"whitelist_ipstrategy_excludedips": "10.0.0.3/24,20.0.0.3/24",
-				"clientipstrategy_depth":           "3",
-				"clientipstrategy_excludedips":     "10.0.0.3/24,20.0.0.3/24",
+				"name":                                "foo",
+				"proxyprotocol_trustedips":            "192.168.0.1",
+				"redirect_entrypoint":                 "https",
+				"redirect_permanent":                  "true",
+				"redirect_regex":                      "http://localhost/(.*)",
+				"redirect_replacement":                "http://mydomain/$1",
+				"tls":                                 "goo,gii",
+				"tls_acme":                            "TLS",
+				"tls_ciphersuites":                    "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+				"tls_minversion":                      "VersionTLS11",
+				"whitelist_sourcerange":               "10.42.0.0/16,152.89.1.33/32,afed:be44::/16",
+				"whitelist_ipstrategy_depth":          "3",
+				"whitelist_ipstrategy_excludedips":    "10.0.0.3/24,20.0.0.3/24",
+				"clientipstrategy_depth":              "3",
+				"clientipstrategy_excludedips":        "10.0.0.3/24,20.0.0.3/24",
 			},
 		},
 		{
@@ -197,6 +199,7 @@ func TestEntryPoints_Set(t *testing.T) {
 				"Compress:true " +
 				"ProxyProtocol.TrustedIPs:192.168.0.1 " +
 				"ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24 " +
+				"Auth.Basic.Realm:myRealm " +
 				"Auth.Basic.Users:test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0 " +
 				"Auth.Basic.RemoveHeader:true " +
 				"Auth.Digest.Users:test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e " +
@@ -232,7 +235,7 @@ func TestEntryPoints_Set(t *testing.T) {
 						},
 					},
 					ClientCA: tls.ClientCA{
-						Files:    []string{"car"},
+						Files:    tls.FilesOrContents{"car"},
 						Optional: true,
 					},
 				},
@@ -244,6 +247,7 @@ func TestEntryPoints_Set(t *testing.T) {
 				},
 				Auth: &types.Auth{
 					Basic: &types.Basic{
+						Realm:        "myRealm",
 						RemoveHeader: true,
 						Users: types.Users{
 							"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
@@ -324,6 +328,7 @@ func TestEntryPoints_Set(t *testing.T) {
 				"whiteList.sourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16 " +
 				"proxyProtocol.TrustedIPs:192.168.0.1 " +
 				"forwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24 " +
+				"auth.basic.realm:myRealm " +
 				"auth.basic.users:test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0 " +
 				"auth.digest.users:test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e " +
 				"auth.headerField:X-WebAuth-User " +
@@ -352,7 +357,7 @@ func TestEntryPoints_Set(t *testing.T) {
 						},
 					},
 					ClientCA: tls.ClientCA{
-						Files:    []string{"car"},
+						Files:    tls.FilesOrContents{"car"},
 						Optional: true,
 					},
 				},
@@ -364,6 +369,7 @@ func TestEntryPoints_Set(t *testing.T) {
 				},
 				Auth: &types.Auth{
 					Basic: &types.Basic{
+						Realm: "myRealm",
 						Users: types.Users{
 							"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 							"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",

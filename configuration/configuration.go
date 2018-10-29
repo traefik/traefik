@@ -33,6 +33,8 @@ import (
 	"github.com/containous/traefik/provider/zk"
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
+	"github.com/pkg/errors"
+	lego "github.com/xenolf/lego/acme"
 )
 
 const (
@@ -41,6 +43,9 @@ const (
 
 	// DefaultHealthCheckInterval is the default health check interval.
 	DefaultHealthCheckInterval = 30 * time.Second
+
+	// DefaultHealthCheckTimeout is the default health check request timeout.
+	DefaultHealthCheckTimeout = 5 * time.Second
 
 	// DefaultDialTimeout when connecting to a backend server.
 	DefaultDialTimeout = 30 * time.Second
@@ -75,7 +80,7 @@ type GlobalConfiguration struct {
 	ProvidersThrottleDuration parse.Duration          `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time." export:"true"`
 	MaxIdleConnsPerHost       int                     `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used" export:"true"`
 	InsecureSkipVerify        bool                    `description:"Disable SSL certificate verification" export:"true"`
-	RootCAs                   tls.RootCAs             `description:"Add cert file for self-signed certificate"`
+	RootCAs                   tls.FilesOrContents     `description:"Add cert file for self-signed certificate"`
 	Retry                     *Retry                  `description:"Enable retry sending request if network error" export:"true"`
 	HealthCheck               *HealthCheckConfig      `description:"Health check parameters" export:"true"`
 	RespondingTimeouts        *RespondingTimeouts     `description:"Timeouts for incoming requests to the Traefik instance" export:"true"`
@@ -127,6 +132,11 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 		// ForwardedHeaders must be remove in the next breaking version
 		if entryPoint.ForwardedHeaders == nil {
 			entryPoint.ForwardedHeaders = &ForwardedHeaders{}
+		}
+
+		if entryPoint.TLS != nil && entryPoint.TLS.DefaultCertificate == nil && len(entryPoint.TLS.Certificates) > 0 {
+			log.Infof("No tls.defaultCertificate given for %s: using the first item in tls.certificates as a fallback.", entryPointName)
+			entryPoint.TLS.DefaultCertificate = &entryPoint.TLS.Certificates[0]
 		}
 	}
 
@@ -198,6 +208,7 @@ func (gc *GlobalConfiguration) initTracing() {
 					SameSpan:     false,
 					ID128Bit:     true,
 					Debug:        false,
+					SampleRate:   1.0,
 				}
 			}
 			if gc.Tracing.Jaeger != nil {
@@ -250,6 +261,17 @@ func (gc *GlobalConfiguration) initACMEProvider() {
 			gc.ACME.HTTPChallenge = nil
 		}
 
+		for _, domain := range gc.ACME.Domains {
+			if domain.Main != lego.UnFqdn(domain.Main) {
+				log.Warnf("FQDN detected, please remove the trailing dot: %s", domain.Main)
+			}
+			for _, san := range domain.SANs {
+				if san != lego.UnFqdn(san) {
+					log.Warnf("FQDN detected, please remove the trailing dot: %s", san)
+				}
+			}
+		}
+
 		if len(gc.ACME.DNSProvider) > 0 {
 			log.Warn("ACME.DNSProvider is deprecated, use ACME.DNSChallenge instead")
 			gc.ACME.DNSChallenge = &acmeprovider.DNSChallenge{Provider: gc.ACME.DNSProvider, DelayBeforeCheck: gc.ACME.DelayDontCheckDNS}
@@ -262,8 +284,13 @@ func (gc *GlobalConfiguration) initACMEProvider() {
 }
 
 // InitACMEProvider create an acme provider from the ACME part of globalConfiguration
-func (gc *GlobalConfiguration) InitACMEProvider() *acmeprovider.Provider {
+func (gc *GlobalConfiguration) InitACMEProvider() (*acmeprovider.Provider, error) {
 	if gc.ACME != nil {
+		if len(gc.ACME.Storage) == 0 {
+			// Delete the ACME configuration to avoid starting ACME in cluster mode
+			gc.ACME = nil
+			return nil, errors.New("unable to initialize ACME provider with no storage location for the certificates")
+		}
 		// TODO: Remove when Provider ACME will replace totally ACME
 		// If provider file, use Provider ACME instead of ACME
 		if gc.Cluster == nil {
@@ -287,10 +314,10 @@ func (gc *GlobalConfiguration) InitACMEProvider() *acmeprovider.Provider {
 			provider.Store = store
 			acme.ConvertToNewFormat(provider.Storage)
 			gc.ACME = nil
-			return provider
+			return provider, nil
 		}
 	}
-	return nil
+	return nil, nil
 }
 
 func getSafeACMECAServer(caServerSrc string) string {
@@ -372,6 +399,7 @@ type Retry struct {
 // HealthCheckConfig contains health check configuration parameters.
 type HealthCheckConfig struct {
 	Interval parse.Duration `description:"Default periodicity of enabled health checks" export:"true"`
+	Timeout  parse.Duration `description:"Default request timeout of enabled health checks" export:"true"`
 }
 
 // RespondingTimeouts contains timeout configurations for incoming requests to the Traefik instance.

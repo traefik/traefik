@@ -94,6 +94,72 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
+			desc: "when pass tls client cert configuration",
+			services: []swarm.Service{
+				swarmService(
+					serviceName("test"),
+					serviceLabels(map[string]string{
+						label.TraefikPort:                                              "80",
+						label.TraefikFrontendPassTLSClientCertPem:                      "true",
+						label.TraefikFrontendPassTLSClientCertInfosNotBefore:           "true",
+						label.TraefikFrontendPassTLSClientCertInfosNotAfter:            "true",
+						label.TraefikFrontendPassTLSClientCertInfosSans:                "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectCommonName:   "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectCountry:      "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectLocality:     "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectOrganization: "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectProvince:     "true",
+						label.TraefikFrontendPassTLSClientCertInfosSubjectSerialNumber: "true",
+					}),
+					withEndpointSpec(modeVIP),
+					withEndpoint(virtualIP("1", "127.0.0.1/24")),
+				),
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-Host-test-docker-localhost-0": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					PassTLSClientCert: &types.TLSClientHeaders{
+						PEM: true,
+						Infos: &types.TLSClientCertificateInfos{
+							NotBefore: true,
+							Sans:      true,
+							NotAfter:  true,
+							Subject: &types.TLSCLientCertificateSubjectInfos{
+								CommonName:   true,
+								Country:      true,
+								Locality:     true,
+								Organization: true,
+								Province:     true,
+								SerialNumber: true,
+							},
+						},
+					},
+					Routes: map[string]types.Route{
+						"route-frontend-Host-test-docker-localhost-0": {
+							Rule: "Host:test.docker.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test": {
+					Servers: map[string]types.Server{
+						"server-test-842895ca2aca17f6ee36ddb2f621194d": {
+							URL:    "http://127.0.0.1:80",
+							Weight: label.DefaultWeight,
+						},
+					},
+				},
+			},
+			networks: map[string]*docker.NetworkResource{
+				"1": {
+					Name: "foo",
+				},
+			},
+		},
+		{
 			desc: "when frontend basic auth configuration",
 			services: []swarm.Service{
 				swarmService(
@@ -101,6 +167,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 					serviceLabels(map[string]string{
 						label.TraefikPort:                          "80",
 						label.TraefikFrontendAuthBasicUsers:        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendAuthBasicRealm:        "myRealm",
 						label.TraefikFrontendAuthBasicUsersFile:    ".htpasswd",
 						label.TraefikFrontendAuthBasicRemoveHeader: "true",
 					}),
@@ -115,6 +182,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 					EntryPoints:    []string{},
 					Auth: &types.Auth{
 						Basic: &types.Basic{
+							Realm:        "myRealm",
 							RemoveHeader: true,
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
@@ -256,6 +324,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendAuthForwardTLSCert:               "server.crt",
 						label.TraefikFrontendAuthForwardTLSKey:                "server.key",
 						label.TraefikFrontendAuthForwardTLSInsecureSkipVerify: "true",
+						label.TraefikFrontendAuthForwardAuthResponseHeaders:   "X-Auth-User,X-Auth-Token",
 					}),
 					withEndpointSpec(modeVIP),
 					withEndpoint(virtualIP("1", "127.0.0.1/24")),
@@ -268,8 +337,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 					EntryPoints:    []string{},
 					Auth: &types.Auth{
 						Forward: &types.Forward{
-							Address:            "auth.server",
-							TrustForwardHeader: true,
+							Address: "auth.server",
 							TLS: &types.ClientTLS{
 								CA:                 "ca.crt",
 								CAOptional:         true,
@@ -277,6 +345,8 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 								Key:                "server.key",
 								InsecureSkipVerify: true,
 							},
+							TrustForwardHeader:  true,
+							AuthResponseHeaders: []string{"X-Auth-User", "X-Auth-Token"},
 						},
 					},
 					Routes: map[string]types.Route{
@@ -319,6 +389,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						label.TraefikBackendHealthCheckPath:                  "/health",
 						label.TraefikBackendHealthCheckPort:                  "880",
 						label.TraefikBackendHealthCheckInterval:              "6",
+						label.TraefikBackendHealthCheckTimeout:               "3",
 						label.TraefikBackendHealthCheckHostname:              "foo.com",
 						label.TraefikBackendHealthCheckHeaders:               "Foo:bar || Bar:foo",
 						label.TraefikBackendLoadBalancerMethod:               "drr",
@@ -333,6 +404,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						label.TraefikBackendBufferingRetryExpression:         "IsNetworkError() && Attempts() <= 2",
 
 						label.TraefikFrontendAuthBasicRemoveHeader:            "true",
+						label.TraefikFrontendAuthBasicRealm:                   "myRealm",
 						label.TraefikFrontendAuthBasicUsers:                   "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.TraefikFrontendAuthBasicUsersFile:               ".htpasswd",
 						label.TraefikFrontendAuthDigestRemoveHeader:           "true",
@@ -422,6 +494,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{
+							Realm:        "myRealm",
 							RemoveHeader: true,
 							Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
@@ -536,6 +609,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						Path:     "/health",
 						Port:     880,
 						Interval: "6",
+						Timeout:  "3",
 						Hostname: "foo.com",
 						Headers: map[string]string{
 							"Foo": "bar",

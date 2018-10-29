@@ -35,6 +35,7 @@
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+    timeout = "{{ $healthCheck.Timeout }}"
     hostname = "{{ $healthCheck.Hostname }}"
     {{if $healthCheck.Headers }}
     [backends."backend-{{ $backendName }}".healthCheck.headers]
@@ -77,6 +78,29 @@
       "{{.}}",
       {{end}}]
 
+    {{ $tlsClientCert := getPassTLSClientCert $app.TraefikLabels }}
+    {{if $tlsClientCert }}
+    [frontends."frontend-{{ $frontendName }}".passTLSClientCert]
+      pem = {{ $tlsClientCert.PEM }}
+      {{ $infos := $tlsClientCert.Infos }}
+      {{if $infos }}
+      [frontends."frontend-{{ $frontendName }}".passTLSClientCert.infos]
+        notAfter = {{ $infos.NotAfter   }}
+        notBefore = {{ $infos.NotBefore }}
+        sans = {{ $infos.Sans }}
+        {{ $subject := $infos.Subject }}
+        {{if $subject }}
+        [frontends."frontend-{{ $frontendName }}".passTLSClientCert.infos.subject]
+          country = {{ $subject.Country }}
+          province = {{ $subject.Province }}
+          locality = {{ $subject.Locality }}
+          organization = {{ $subject.Organization }}
+          commonName = {{ $subject.CommonName }}
+          serialNumber = {{ $subject.SerialNumber }}
+        {{end}}
+      {{end}}
+    {{end}}
+
     {{ $auth := getAuth $app.TraefikLabels }}
     {{if $auth }}
     [frontends."frontend-{{ $frontendName }}".auth]
@@ -86,6 +110,11 @@
       [frontends."frontend-{{ $frontendName }}".auth.forward]
         address = "{{ $auth.Forward.Address }}"
         trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
+        {{if $auth.Forward.AuthResponseHeaders }}
+        authResponseHeaders = [{{range $auth.Forward.AuthResponseHeaders }}
+          "{{.}}",
+          {{end}}]
+        {{end}}
 
         {{if $auth.Forward.TLS }}
         [frontends."frontend-{{ $frontendName }}".auth.forward.tls]

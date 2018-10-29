@@ -88,6 +88,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+    timeout = "{{ $healthCheck.Timeout }}"
     hostname = "{{ $healthCheck.Hostname }}"
     {{if $healthCheck.Headers }}
     [backends."backend-{{ $backendName }}".healthCheck.headers]
@@ -130,8 +131,30 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
       "{{.}}",
       {{end}}]
 
-    {{ $auth := getAuth $service.TraefikLabels }}
+    {{ $tlsClientCert := getPassTLSClientCert $service.TraefikLabels }}
+    {{if $tlsClientCert }}
+    [frontends."frontend-{{ $service.ServiceName }}".passTLSClientCert]
+      pem = {{ $tlsClientCert.PEM }}
+      {{ $infos := $tlsClientCert.Infos }}
+      {{if $infos }}
+      [frontends."frontend-{{ $service.ServiceName }}".passTLSClientCert.infos]
+        notAfter = {{ $infos.NotAfter   }}
+        notBefore = {{ $infos.NotBefore }}
+        sans = {{ $infos.Sans }}
+        {{ $subject := $infos.Subject }}
+        {{if $subject }}
+        [frontends."frontend-{{ $service.ServiceName }}".passTLSClientCert.infos.subject]
+          country = {{ $subject.Country }}
+          province = {{ $subject.Province }}
+          locality = {{ $subject.Locality }}
+          organization = {{ $subject.Organization }}
+          commonName = {{ $subject.CommonName }}
+          serialNumber = {{ $subject.SerialNumber }}
+        {{end}}
+      {{end}}
+    {{end}}
 
+    {{ $auth := getAuth $service.TraefikLabels }}
     {{if $auth }}
     [frontends."frontend-{{ $service.ServiceName }}".auth]
       headerField = "{{ $auth.HeaderField }}"
@@ -140,6 +163,11 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
       [frontends."frontend-{{ $service.ServiceName }}".auth.forward]
         address = "{{ $auth.Forward.Address }}"
         trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
+        {{if $auth.Forward.AuthResponseHeaders }}
+        authResponseHeaders = [{{range $auth.Forward.AuthResponseHeaders }}
+          "{{.}}",
+          {{end}}]
+        {{end}}
 
         {{if $auth.Forward.TLS }}
         [frontends."frontend-{{ $service.ServiceName }}".auth.forward.tls]
@@ -335,6 +363,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+    timeout = "{{ $healthCheck.Timeout }}"
     hostname = "{{ $healthCheck.Hostname }}"
     {{if $healthCheck.Headers }}
     [backends."backend-{{ $backendName }}".healthCheck.headers]
@@ -377,6 +406,29 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
       "{{.}}",
       {{end}}]
 
+    {{ $tlsClientCert := getPassTLSClientCert $container.SegmentLabels }}
+    {{if $tlsClientCert }}
+    [frontends."frontend-{{ $frontendName }}".passTLSClientCert]
+      pem = {{ $tlsClientCert.PEM }}
+      {{ $infos := $tlsClientCert.Infos }}
+      {{if $infos }}
+      [frontends."frontend-{{ $frontendName }}".passTLSClientCert.infos]
+        notAfter = {{ $infos.NotAfter   }}
+        notBefore = {{ $infos.NotBefore }}
+        sans = {{ $infos.Sans }}
+        {{ $subject := $infos.Subject }}
+        {{if $subject }}
+        [frontends."frontend-{{ $frontendName }}".passTLSClientCert.infos.subject]
+          country = {{ $subject.Country }}
+          province = {{ $subject.Province }}
+          locality = {{ $subject.Locality }}
+          organization = {{ $subject.Organization }}
+          commonName = {{ $subject.CommonName }}
+          serialNumber = {{ $subject.SerialNumber }}
+        {{end}}
+      {{end}}
+    {{end}}
+
     {{ $auth := getAuth $container.SegmentLabels }}
     {{if $auth }}
     [frontends."frontend-{{ $frontendName }}".auth]
@@ -386,6 +438,11 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
       [frontends."frontend-{{ $frontendName }}".auth.forward]
         address = "{{ $auth.Forward.Address }}"
         trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
+        {{if $auth.Forward.AuthResponseHeaders }}
+        authResponseHeaders = [{{range $auth.Forward.AuthResponseHeaders }}
+          "{{.}}",
+          {{end}}]
+        {{end}}
 
         {{if $auth.Forward.TLS }}
         [frontends."frontend-{{ $frontendName }}".auth.forward.tls]
@@ -399,6 +456,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
 
       {{if $auth.Basic }}
       [frontends."frontend-{{ $frontendName }}".auth.basic]
+        realm = "{{ $auth.Basic.Realm }}"
         removeHeader = {{ $auth.Basic.RemoveHeader }}
         {{if $auth.Basic.Users }}
         users = [{{range $auth.Basic.Users }}
@@ -581,6 +639,7 @@ var _templatesEcsTmpl = []byte(`[backends]
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+    timeout = "{{ $healthCheck.Timeout }}"
     hostname = "{{ $healthCheck.Hostname }}"
     {{if $healthCheck.Headers }}
     [backends."backend-{{ $serviceName }}".healthCheck.headers]
@@ -625,6 +684,29 @@ var _templatesEcsTmpl = []byte(`[backends]
       "{{.}}",
       {{end}}]
 
+    {{ $tlsClientCert := getPassTLSClientCert $instance.SegmentLabels }}
+    {{if $tlsClientCert }}
+    [frontends."frontend-{{ $frontendName }}".passTLSClientCert]
+      pem = {{ $tlsClientCert.PEM }}
+      {{ $infos := $tlsClientCert.Infos }}
+      {{if $infos }}
+      [frontends."frontend-{{ $frontendName }}".passTLSClientCert.infos]
+        notAfter = {{ $infos.NotAfter   }}
+        notBefore = {{ $infos.NotBefore }}
+        sans = {{ $infos.Sans }}
+        {{ $subject := $infos.Subject }}
+        {{if $subject }}
+        [frontends."frontend-{{ $frontendName }}".passTLSClientCert.infos.subject]
+          country = {{ $subject.Country }}
+          province = {{ $subject.Province }}
+          locality = {{ $subject.Locality }}
+          organization = {{ $subject.Organization }}
+          commonName = {{ $subject.CommonName }}
+          serialNumber = {{ $subject.SerialNumber }}
+        {{end}}
+      {{end}}
+    {{end}}
+
     {{ $auth := getAuth $instance.SegmentLabels }}
     {{if $auth }}
     [frontends."frontend-{{ $frontendName }}".auth]
@@ -634,6 +716,11 @@ var _templatesEcsTmpl = []byte(`[backends]
       [frontends."frontend-{{ $frontendName }}".auth.forward]
         address = "{{ $auth.Forward.Address }}"
         trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
+        {{if $auth.Forward.AuthResponseHeaders }}
+        authResponseHeaders = [{{range $auth.Forward.AuthResponseHeaders }}
+          "{{.}}",
+          {{end}}]
+        {{end}}
 
         {{if $auth.Forward.TLS }}
         [frontends."frontend-{{ $frontendName }}".auth.forward.tls]
@@ -1083,14 +1170,15 @@ var _templatesKvTmpl = []byte(`[backends]
 
   {{ $healthCheck := getHealthCheck $backend }}
   {{if $healthCheck }}
-  [backends.{{ $backendName }}.healthCheck]
+  [backends."{{ $backendName }}".healthCheck]
     scheme = "{{ $healthCheck.Scheme }}"
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+    timeout = "{{ $healthCheck.Timeout }}"
     hostname = "{{ $healthCheck.Hostname }}"
     {{if $healthCheck.Headers }}
-    [backends.{{ $backendName }}.healthCheck.headers]
+    [backends."{{ $backendName }}".healthCheck.headers]
       {{range $k, $v := $healthCheck.Headers }}
       {{$k}} = "{{$v}}"
       {{end}}
@@ -1099,7 +1187,7 @@ var _templatesKvTmpl = []byte(`[backends]
 
   {{ $buffering := getBuffering $backend }}
   {{if $buffering }}
-  [backends.{{ $backendName }}.buffering]
+  [backends."{{ $backendName }}".buffering]
     maxRequestBodyBytes = {{ $buffering.MaxRequestBodyBytes }}
     memRequestBodyBytes = {{ $buffering.MemRequestBodyBytes }}
     maxResponseBodyBytes = {{ $buffering.MaxResponseBodyBytes }}
@@ -1130,6 +1218,29 @@ var _templatesKvTmpl = []byte(`[backends]
       "{{.}}",
       {{end}}]
 
+    {{ $tlsClientCert := getPassTLSClientCert $frontend }}
+    {{if $tlsClientCert }}
+    [frontends."{{ $frontendName }}".passTLSClientCert]
+      pem = {{ $tlsClientCert.PEM }}
+      {{ $infos := $tlsClientCert.Infos }}
+      {{if $infos }}
+      [frontends."{{ $frontendName }}".passTLSClientCert.infos]
+        notAfter = {{ $infos.NotAfter   }}
+        notBefore = {{ $infos.NotBefore }}
+        sans = {{ $infos.Sans }}
+        {{ $subject := $infos.Subject }}
+        {{if $subject }}
+        [frontends."{{ $frontendName }}".passTLSClientCert.infos.subject]
+          country = {{ $subject.Country }}
+          province = {{ $subject.Province }}
+          locality = {{ $subject.Locality }}
+          organization = {{ $subject.Organization }}
+          commonName = {{ $subject.CommonName }}
+          serialNumber = {{ $subject.SerialNumber }}
+        {{end}}
+      {{end}}
+    {{end}}
+
     {{ $auth := getAuth $frontend }}
     {{if $auth }}
     [frontends."{{ $frontendName }}".auth]
@@ -1139,6 +1250,11 @@ var _templatesKvTmpl = []byte(`[backends]
       [frontends."{{ $frontendName }}".auth.forward]
         address = "{{ $auth.Forward.Address }}"
         trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
+        {{if $auth.Forward.AuthResponseHeaders }}
+        authResponseHeaders = [{{range $auth.Forward.AuthResponseHeaders }}
+          "{{.}}",
+          {{end}}]
+        {{end}}
 
         {{if $auth.Forward.TLS }}
         [frontends."{{ $frontendName }}".auth.forward.tls]
@@ -1351,6 +1467,7 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
       path = "{{ $healthCheck.Path }}"
       port = {{ $healthCheck.Port }}
       interval = "{{ $healthCheck.Interval }}"
+      timeout = "{{ $healthCheck.Timeout }}"
       hostname = "{{ $healthCheck.Hostname }}"
       {{if $healthCheck.Headers }}
       [backends.{{ $backendName }}.healthCheck.headers]
@@ -1393,7 +1510,30 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
       "{{.}}",
       {{end}}]
 
-    {{ $auth := getAuth $app.SegmentLabels }}
+    {{ $tlsClientCert := getPassTLSClientCert $app.SegmentLabels }}
+    {{if $tlsClientCert }}
+    [frontends."{{ $frontendName }}".passTLSClientCert]
+      pem = {{ $tlsClientCert.PEM }}
+      {{ $infos := $tlsClientCert.Infos }}
+      {{if $infos }}
+      [frontends."{{ $frontendName }}".passTLSClientCert.infos]
+        notAfter = {{ $infos.NotAfter   }}
+        notBefore = {{ $infos.NotBefore }}
+        sans = {{ $infos.Sans }}
+        {{ $subject := $infos.Subject }}
+        {{if $subject }}
+        [frontends."{{ $frontendName }}".passTLSClientCert.infos.subject]
+          country = {{ $subject.Country }}
+          province = {{ $subject.Province }}
+          locality = {{ $subject.Locality }}
+          organization = {{ $subject.Organization }}
+          commonName = {{ $subject.CommonName }}
+          serialNumber = {{ $subject.SerialNumber }}
+        {{end}}
+      {{end}}
+    {{end}}
+
+  {{ $auth := getAuth $app.SegmentLabels }}
     {{if $auth }}
     [frontends."{{ $frontendName }}".auth]
       headerField = "{{ $auth.HeaderField }}"
@@ -1402,6 +1542,11 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
       [frontends."{{ $frontendName }}".auth.forward]
         address = "{{ $auth.Forward.Address }}"
         trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
+        {{if $auth.Forward.AuthResponseHeaders }}
+        authResponseHeaders = [{{range $auth.Forward.AuthResponseHeaders }}
+          "{{.}}",
+          {{end}}]
+        {{end}}
 
         {{if $auth.Forward.TLS }}
         [frontends."{{ $frontendName }}".auth.forward.tls]
@@ -1599,6 +1744,7 @@ var _templatesMesosTmpl = []byte(`[backends]
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+    timeout = "{{ $healthCheck.Timeout }}"
     hostname = "{{ $healthCheck.Hostname }}"
     {{if $healthCheck.Headers }}
     [backends."backend-{{ $backendName }}".healthCheck.headers]
@@ -1641,6 +1787,29 @@ var _templatesMesosTmpl = []byte(`[backends]
       "{{.}}",
       {{end}}]
 
+    {{ $tlsClientCert := getPassTLSClientCert $app.TraefikLabels }}
+    {{if $tlsClientCert }}
+    [frontends."frontend-{{ $frontendName }}".passTLSClientCert]
+      pem = {{ $tlsClientCert.PEM }}
+      {{ $infos := $tlsClientCert.Infos }}
+      {{if $infos }}
+      [frontends."frontend-{{ $frontendName }}".passTLSClientCert.infos]
+        notAfter = {{ $infos.NotAfter   }}
+        notBefore = {{ $infos.NotBefore }}
+        sans = {{ $infos.Sans }}
+        {{ $subject := $infos.Subject }}
+        {{if $subject }}
+        [frontends."frontend-{{ $frontendName }}".passTLSClientCert.infos.subject]
+          country = {{ $subject.Country }}
+          province = {{ $subject.Province }}
+          locality = {{ $subject.Locality }}
+          organization = {{ $subject.Organization }}
+          commonName = {{ $subject.CommonName }}
+          serialNumber = {{ $subject.SerialNumber }}
+        {{end}}
+      {{end}}
+    {{end}}
+
     {{ $auth := getAuth $app.TraefikLabels }}
     {{if $auth }}
     [frontends."frontend-{{ $frontendName }}".auth]
@@ -1650,6 +1819,11 @@ var _templatesMesosTmpl = []byte(`[backends]
       [frontends."frontend-{{ $frontendName }}".auth.forward]
         address = "{{ $auth.Forward.Address }}"
         trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
+        {{if $auth.Forward.AuthResponseHeaders }}
+        authResponseHeaders = [{{range $auth.Forward.AuthResponseHeaders }}
+          "{{.}}",
+          {{end}}]
+        {{end}}
 
         {{if $auth.Forward.TLS }}
         [frontends."frontend-{{ $frontendName }}".auth.forward.tls]
@@ -1870,6 +2044,7 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
+    timeout = "{{ $healthCheck.Timeout }}"
     hostname = "{{ $healthCheck.Hostname }}"
     {{if $healthCheck.Headers }}
     [backends."backend-{{ $backendName }}".healthCheck.headers]
@@ -1911,6 +2086,29 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
       "{{.}}",
       {{end}}]
 
+    {{ $tlsClientCert := getPassTLSClientCert $service.SegmentLabels }}
+    {{if $tlsClientCert }}
+    [frontends."frontend-{{ $frontendName }}".passTLSClientCert]
+      pem = {{ $tlsClientCert.PEM }}
+      {{ $infos := $tlsClientCert.Infos }}
+      {{if $infos }}
+      [frontends."frontend-{{ $frontendName }}".passTLSClientCert.infos]
+        notAfter = {{ $infos.NotAfter   }}
+        notBefore = {{ $infos.NotBefore }}
+        sans = {{ $infos.Sans }}
+        {{ $subject := $infos.Subject }}
+        {{if $subject }}
+        [frontends."frontend-{{ $frontendName }}".passTLSClientCert.infos.subject]
+          country = {{ $subject.Country }}
+          province = {{ $subject.Province }}
+          locality = {{ $subject.Locality }}
+          organization = {{ $subject.Organization }}
+          commonName = {{ $subject.CommonName }}
+          serialNumber = {{ $subject.SerialNumber }}
+        {{end}}
+      {{end}}
+    {{end}}
+
     {{ $auth := getAuth $service.SegmentLabels }}
     {{if $auth }}
     [frontends."frontend-{{ $frontendName }}".auth]
@@ -1920,6 +2118,11 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
       [frontends."frontend-{{ $frontendName }}".auth.forward]
         address = "{{ $auth.Forward.Address }}"
         trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
+        {{if $auth.Forward.AuthResponseHeaders }}
+        authResponseHeaders = [{{range $auth.Forward.AuthResponseHeaders }}
+          "{{.}}",
+          {{end}}]
+        {{end}}
 
         {{if $auth.Forward.TLS }}
         [frontends."frontend-{{ $frontendName }}".auth.forward.tls]

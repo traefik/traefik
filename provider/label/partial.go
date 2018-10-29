@@ -62,6 +62,39 @@ func GetRedirect(labels map[string]string) *types.Redirect {
 	return nil
 }
 
+// GetTLSClientCert create TLS client header configuration from labels
+func GetTLSClientCert(labels map[string]string) *types.TLSClientHeaders {
+	if !HasPrefix(labels, TraefikFrontendPassTLSClientCert) {
+		return nil
+	}
+
+	tlsClientHeaders := &types.TLSClientHeaders{
+		PEM: GetBoolValue(labels, TraefikFrontendPassTLSClientCertPem, false),
+	}
+
+	if HasPrefix(labels, TraefikFrontendPassTLSClientCertInfos) {
+		infos := &types.TLSClientCertificateInfos{
+			NotAfter:  GetBoolValue(labels, TraefikFrontendPassTLSClientCertInfosNotAfter, false),
+			NotBefore: GetBoolValue(labels, TraefikFrontendPassTLSClientCertInfosNotBefore, false),
+			Sans:      GetBoolValue(labels, TraefikFrontendPassTLSClientCertInfosSans, false),
+		}
+
+		if HasPrefix(labels, TraefikFrontendPassTLSClientCertInfosSubject) {
+			subject := &types.TLSCLientCertificateSubjectInfos{
+				CommonName:   GetBoolValue(labels, TraefikFrontendPassTLSClientCertInfosSubjectCommonName, false),
+				Country:      GetBoolValue(labels, TraefikFrontendPassTLSClientCertInfosSubjectCountry, false),
+				Locality:     GetBoolValue(labels, TraefikFrontendPassTLSClientCertInfosSubjectLocality, false),
+				Organization: GetBoolValue(labels, TraefikFrontendPassTLSClientCertInfosSubjectOrganization, false),
+				Province:     GetBoolValue(labels, TraefikFrontendPassTLSClientCertInfosSubjectProvince, false),
+				SerialNumber: GetBoolValue(labels, TraefikFrontendPassTLSClientCertInfosSubjectSerialNumber, false),
+			}
+			infos.Subject = subject
+		}
+		tlsClientHeaders.Infos = infos
+	}
+	return tlsClientHeaders
+}
+
 // GetAuth Create auth from labels
 func GetAuth(labels map[string]string) *types.Auth {
 	if !HasPrefix(labels, TraefikFrontendAuth) {
@@ -86,6 +119,7 @@ func GetAuth(labels map[string]string) *types.Auth {
 // getAuthBasic Create Basic Auth from labels
 func getAuthBasic(labels map[string]string) *types.Basic {
 	basicAuth := &types.Basic{
+		Realm:        GetStringValue(labels, TraefikFrontendAuthBasicRealm, ""),
 		UsersFile:    GetStringValue(labels, TraefikFrontendAuthBasicUsersFile, ""),
 		RemoveHeader: GetBoolValue(labels, TraefikFrontendAuthBasicRemoveHeader, false),
 	}
@@ -113,8 +147,9 @@ func getAuthDigest(labels map[string]string) *types.Digest {
 // getAuthForward Create Forward Auth from labels
 func getAuthForward(labels map[string]string) *types.Forward {
 	forwardAuth := &types.Forward{
-		Address:            GetStringValue(labels, TraefikFrontendAuthForwardAddress, ""),
-		TrustForwardHeader: GetBoolValue(labels, TraefikFrontendAuthForwardTrustForwardHeader, false),
+		Address:             GetStringValue(labels, TraefikFrontendAuthForwardAddress, ""),
+		AuthResponseHeaders: GetSliceStringValue(labels, TraefikFrontendAuthForwardAuthResponseHeaders),
+		TrustForwardHeader:  GetBoolValue(labels, TraefikFrontendAuthForwardTrustForwardHeader, false),
 	}
 
 	// TLS configuration
@@ -309,6 +344,7 @@ func GetHealthCheck(labels map[string]string) *types.HealthCheck {
 	scheme := GetStringValue(labels, TraefikBackendHealthCheckScheme, "")
 	port := GetIntValue(labels, TraefikBackendHealthCheckPort, DefaultBackendHealthCheckPort)
 	interval := GetStringValue(labels, TraefikBackendHealthCheckInterval, "")
+	timeout := GetStringValue(labels, TraefikBackendHealthCheckTimeout, "")
 	hostname := GetStringValue(labels, TraefikBackendHealthCheckHostname, "")
 	headers := GetMapValue(labels, TraefikBackendHealthCheckHeaders)
 
@@ -317,6 +353,7 @@ func GetHealthCheck(labels map[string]string) *types.HealthCheck {
 		Path:     path,
 		Port:     port,
 		Interval: interval,
+		Timeout:  timeout,
 		Hostname: hostname,
 		Headers:  headers,
 	}

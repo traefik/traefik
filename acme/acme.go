@@ -127,7 +127,6 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 
 	a.checkOnDemandDomain = checkOnDemandDomain
 	a.dynamicCerts = certs
-	a.challengeTLSProvider = &challengeTLSProvider{store: a.store}
 
 	tlsConfig.GetCertificate = a.getCertificate
 	a.TLSConfig = tlsConfig
@@ -157,6 +156,7 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 	}
 
 	a.store = datastore
+	a.challengeTLSProvider = &challengeTLSProvider{store: a.store}
 
 	ticker := time.NewTicker(24 * time.Hour)
 	leadership.Pool.AddGoCtx(func(ctx context.Context) {
@@ -692,16 +692,25 @@ func searchUncheckedDomains(domains []string, certs map[string]*tls.Certificate)
 }
 
 func (a *ACME) getDomainsCertificates(domains []string) (*Certificate, error) {
-	domains = fun.Map(types.CanonicalDomain, domains).([]string)
-	log.Debugf("Loading ACME certificates %s...", domains)
+	var cleanDomains []string
+	for _, domain := range domains {
+		canonicalDomain := types.CanonicalDomain(domain)
+		cleanDomain := acme.UnFqdn(canonicalDomain)
+		if canonicalDomain != cleanDomain {
+			log.Warnf("FQDN detected, please remove the trailing dot: %s", canonicalDomain)
+		}
+		cleanDomains = append(cleanDomains, cleanDomain)
+	}
+
+	log.Debugf("Loading ACME certificates %s...", cleanDomains)
 	bundle := true
 
-	certificate, err := a.client.ObtainCertificate(domains, bundle, nil, OSCPMustStaple)
+	certificate, err := a.client.ObtainCertificate(cleanDomains, bundle, nil, OSCPMustStaple)
 	if err != nil {
 		return nil, fmt.Errorf("cannot obtain certificates: %+v", err)
 	}
 
-	log.Debugf("Loaded ACME certificates %s", domains)
+	log.Debugf("Loaded ACME certificates %s", cleanDomains)
 	return &Certificate{
 		Domain:        certificate.Domain,
 		CertURL:       certificate.CertURL,

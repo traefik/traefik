@@ -247,6 +247,7 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthForwardTLSCert:               "server.crt",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthForwardTLSKey:                "server.key",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthForwardTLSInsecureSkipVerify: "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendAuthForwardAuthResponseHeaders:   "X-Auth-User,X-Auth-Token",
 					}),
 					iMachine(
 						mState(ec2.InstanceStateNameRunning),
@@ -270,8 +271,7 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Forward: &types.Forward{
-							Address:            "auth.server",
-							TrustForwardHeader: true,
+							Address: "auth.server",
 							TLS: &types.ClientTLS{
 								CA:                 "ca.crt",
 								CAOptional:         true,
@@ -279,6 +279,8 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 								Key:                "server.key",
 								InsecureSkipVerify: true,
 							},
+							TrustForwardHeader:  true,
+							AuthResponseHeaders: []string{"X-Auth-User", "X-Auth-Token"},
 						},
 					},
 				},
@@ -320,6 +322,17 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthForwardTLSKey:                "server.key",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthForwardTLSInsecureSkipVerify: "true",
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthHeaderField:                  "X-WebAuth-User",
+
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertPem:                      "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosNotBefore:           "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosNotAfter:            "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSans:                "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSubjectCommonName:   "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSubjectCountry:      "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSubjectLocality:     "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSubjectOrganization: "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSubjectProvince:     "true",
+						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSClientCertInfosSubjectSerialNumber: "true",
 
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasic:                      "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.Prefix + "sauternes." + label.SuffixFrontendEntryPoints:                    "http,https",
@@ -391,6 +404,22 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 					PassHostHeader: true,
 					PassTLSCert:    true,
 					Priority:       666,
+					PassTLSClientCert: &types.TLSClientHeaders{
+						PEM: true,
+						Infos: &types.TLSClientCertificateInfos{
+							NotBefore: true,
+							Sans:      true,
+							NotAfter:  true,
+							Subject: &types.TLSCLientCertificateSubjectInfos{
+								CommonName:   true,
+								Country:      true,
+								Locality:     true,
+								Organization: true,
+								Province:     true,
+								SerialNumber: true,
+							},
+						},
+					},
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",
 						Basic: &types.Basic{

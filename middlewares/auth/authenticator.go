@@ -45,8 +45,11 @@ func NewAuthenticator(authConfig *types.Auth, tracingMiddleware *tracing.Tracing
 		if err != nil {
 			return nil, err
 		}
-
-		basicAuth := goauth.NewBasicAuthenticator("traefik", authenticator.secretBasic)
+		realm := "traefik"
+		if authConfig.Basic.Realm != "" {
+			realm = authConfig.Basic.Realm
+		}
+		basicAuth := goauth.NewBasicAuthenticator(realm, authenticator.secretBasic)
 		tracingAuth.handler = createAuthBasicHandler(basicAuth, authConfig)
 		tracingAuth.name = "Auth Basic"
 		tracingAuth.clientSpanKind = false

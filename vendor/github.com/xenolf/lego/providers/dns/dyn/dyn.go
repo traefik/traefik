@@ -5,6 +5,7 @@ package dyn
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -14,122 +15,166 @@ import (
 	"github.com/xenolf/lego/platform/config/env"
 )
 
-var dynBaseURL = "https://api.dynect.net/REST"
+// Config is used to configure the creation of the DNSProvider
+type Config struct {
+	CustomerName       string
+	UserName           string
+	Password           string
+	HTTPClient         *http.Client
+	PropagationTimeout time.Duration
+	PollingInterval    time.Duration
+	TTL                int
+}
 
-type dynResponse struct {
-	// One of 'success', 'failure', or 'incomplete'
-	Status string `json:"status"`
-
-	// The structure containing the actual results of the request
-	Data json.RawMessage `json:"data"`
-
-	// The ID of the job that was created in response to a request.
-	JobID int `json:"job_id"`
-
-	// A list of zero or more messages
-	Messages json.RawMessage `json:"msgs"`
+// NewDefaultConfig returns a default configuration for the DNSProvider
+func NewDefaultConfig() *Config {
+	return &Config{
+		TTL:                env.GetOrDefaultInt("DYN_TTL", 120),
+		PropagationTimeout: env.GetOrDefaultSecond("DYN_PROPAGATION_TIMEOUT", acme.DefaultPropagationTimeout),
+		PollingInterval:    env.GetOrDefaultSecond("DYN_POLLING_INTERVAL", acme.DefaultPollingInterval),
+		HTTPClient: &http.Client{
+			Timeout: env.GetOrDefaultSecond("DYN_HTTP_TIMEOUT", 10*time.Second),
+		},
+	}
 }
 
 // DNSProvider is an implementation of the acme.ChallengeProvider interface that uses
 // Dyn's Managed DNS API to manage TXT records for a domain.
 type DNSProvider struct {
-	customerName string
-	userName     string
-	password     string
-	token        string
-	client       *http.Client
+	config *Config
+	token  string
 }
 
 // NewDNSProvider returns a DNSProvider instance configured for Dyn DNS.
-// Credentials must be passed in the environment variables: DYN_CUSTOMER_NAME,
-// DYN_USER_NAME and DYN_PASSWORD.
+// Credentials must be passed in the environment variables:
+// DYN_CUSTOMER_NAME, DYN_USER_NAME and DYN_PASSWORD.
 func NewDNSProvider() (*DNSProvider, error) {
 	values, err := env.Get("DYN_CUSTOMER_NAME", "DYN_USER_NAME", "DYN_PASSWORD")
 	if err != nil {
-		return nil, fmt.Errorf("DynDNS: %v", err)
+		return nil, fmt.Errorf("dyn: %v", err)
 	}
 
-	return NewDNSProviderCredentials(values["DYN_CUSTOMER_NAME"], values["DYN_USER_NAME"], values["DYN_PASSWORD"])
+	config := NewDefaultConfig()
+	config.CustomerName = values["DYN_CUSTOMER_NAME"]
+	config.UserName = values["DYN_USER_NAME"]
+	config.Password = values["DYN_PASSWORD"]
+
+	return NewDNSProviderConfig(config)
 }
 
-// NewDNSProviderCredentials uses the supplied credentials to return a
-// DNSProvider instance configured for Dyn DNS.
+// NewDNSProviderCredentials uses the supplied credentials
+// to return a DNSProvider instance configured for Dyn DNS.
+// Deprecated
 func NewDNSProviderCredentials(customerName, userName, password string) (*DNSProvider, error) {
-	if customerName == "" || userName == "" || password == "" {
-		return nil, fmt.Errorf("DynDNS credentials missing")
-	}
+	config := NewDefaultConfig()
+	config.CustomerName = customerName
+	config.UserName = userName
+	config.Password = password
 
-	return &DNSProvider{
-		customerName: customerName,
-		userName:     userName,
-		password:     password,
-		client:       &http.Client{Timeout: 10 * time.Second},
-	}, nil
+	return NewDNSProviderConfig(config)
 }
 
-func (d *DNSProvider) sendRequest(method, resource string, payload interface{}) (*dynResponse, error) {
-	url := fmt.Sprintf("%s/%s", dynBaseURL, resource)
-
-	body, err := json.Marshal(payload)
-	if err != nil {
-		return nil, err
+// NewDNSProviderConfig return a DNSProvider instance configured for Dyn DNS
+func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
+	if config == nil {
+		return nil, errors.New("dyn: the configuration of the DNS provider is nil")
 	}
 
-	req, err := http.NewRequest(method, url, bytes.NewReader(body))
-	if err != nil {
-		return nil, err
+	if config.CustomerName == "" || config.UserName == "" || config.Password == "" {
+		return nil, fmt.Errorf("dyn: credentials missing")
 	}
+
+	return &DNSProvider{config: config}, nil
+}
+
+// Present creates a TXT record using the specified parameters
+func (d *DNSProvider) Present(domain, token, keyAuth string) error {
+	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+
+	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	if err != nil {
+		return fmt.Errorf("dyn: %v", err)
+	}
+
+	err = d.login()
+	if err != nil {
+		return fmt.Errorf("dyn: %v", err)
+	}
+
+	data := map[string]interface{}{
+		"rdata": map[string]string{
+			"txtdata": value,
+		},
+		"ttl": strconv.Itoa(d.config.TTL),
+	}
+
+	resource := fmt.Sprintf("TXTRecord/%s/%s/", authZone, fqdn)
+	_, err = d.sendRequest(http.MethodPost, resource, data)
+	if err != nil {
+		return fmt.Errorf("dyn: %v", err)
+	}
+
+	err = d.publish(authZone, "Added TXT record for ACME dns-01 challenge using lego client")
+	if err != nil {
+		return fmt.Errorf("dyn: %v", err)
+	}
+
+	return d.logout()
+}
+
+// CleanUp removes the TXT record matching the specified parameters
+func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
+	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+
+	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	if err != nil {
+		return fmt.Errorf("dyn: %v", err)
+	}
+
+	err = d.login()
+	if err != nil {
+		return fmt.Errorf("dyn: %v", err)
+	}
+
+	resource := fmt.Sprintf("TXTRecord/%s/%s/", authZone, fqdn)
+	url := fmt.Sprintf("%s/%s", defaultBaseURL, resource)
+
+	req, err := http.NewRequest(http.MethodDelete, url, nil)
+	if err != nil {
+		return fmt.Errorf("dyn: %v", err)
+	}
+
 	req.Header.Set("Content-Type", "application/json")
-	if len(d.token) > 0 {
-		req.Header.Set("Auth-Token", d.token)
-	}
+	req.Header.Set("Auth-Token", d.token)
 
-	resp, err := d.client.Do(req)
+	resp, err := d.config.HTTPClient.Do(req)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("dyn: %v", err)
 	}
-	defer resp.Body.Close()
+	resp.Body.Close()
 
-	if resp.StatusCode >= 500 {
-		return nil, fmt.Errorf("Dyn API request failed with HTTP status code %d", resp.StatusCode)
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("dyn: API request failed to delete TXT record HTTP status code %d", resp.StatusCode)
 	}
 
-	var dynRes dynResponse
-	err = json.NewDecoder(resp.Body).Decode(&dynRes)
+	err = d.publish(authZone, "Removed TXT record for ACME dns-01 challenge using lego client")
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("dyn: %v", err)
 	}
 
-	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("Dyn API request failed with HTTP status code %d: %s", resp.StatusCode, dynRes.Messages)
-	} else if resp.StatusCode == 307 {
-		// TODO add support for HTTP 307 response and long running jobs
-		return nil, fmt.Errorf("Dyn API request returned HTTP 307. This is currently unsupported")
-	}
+	return d.logout()
+}
 
-	if dynRes.Status == "failure" {
-		// TODO add better error handling
-		return nil, fmt.Errorf("Dyn API request failed: %s", dynRes.Messages)
-	}
-
-	return &dynRes, nil
+// Timeout returns the timeout and interval to use when checking for DNS propagation.
+// Adjusting here to cope with spikes in propagation times.
+func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
+	return d.config.PropagationTimeout, d.config.PollingInterval
 }
 
 // Starts a new Dyn API Session. Authenticates using customerName, userName,
 // password and receives a token to be used in for subsequent requests.
 func (d *DNSProvider) login() error {
-	type creds struct {
-		Customer string `json:"customer_name"`
-		User     string `json:"user_name"`
-		Pass     string `json:"password"`
-	}
-
-	type session struct {
-		Token   string `json:"token"`
-		Version string `json:"version"`
-	}
-
-	payload := &creds{Customer: d.customerName, User: d.userName, Pass: d.password}
+	payload := &creds{Customer: d.config.CustomerName, User: d.config.UserName, Pass: d.config.Password}
 	dynRes, err := d.sendRequest(http.MethodPost, "Session", payload)
 	if err != nil {
 		return err
@@ -153,7 +198,7 @@ func (d *DNSProvider) logout() error {
 		return nil
 	}
 
-	url := fmt.Sprintf("%s/Session", dynBaseURL)
+	url := fmt.Sprintf("%s/Session", defaultBaseURL)
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
 		return err
@@ -161,14 +206,14 @@ func (d *DNSProvider) logout() error {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Auth-Token", d.token)
 
-	resp, err := d.client.Do(req)
+	resp, err := d.config.HTTPClient.Do(req)
 	if err != nil {
 		return err
 	}
 	resp.Body.Close()
 
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("Dyn API request failed to delete session with HTTP status code %d", resp.StatusCode)
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("API request failed to delete session with HTTP status code %d", resp.StatusCode)
 	}
 
 	d.token = ""
@@ -176,47 +221,7 @@ func (d *DNSProvider) logout() error {
 	return nil
 }
 
-// Present creates a TXT record using the specified parameters
-func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
-
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
-	if err != nil {
-		return err
-	}
-
-	err = d.login()
-	if err != nil {
-		return err
-	}
-
-	data := map[string]interface{}{
-		"rdata": map[string]string{
-			"txtdata": value,
-		},
-		"ttl": strconv.Itoa(ttl),
-	}
-
-	resource := fmt.Sprintf("TXTRecord/%s/%s/", authZone, fqdn)
-	_, err = d.sendRequest(http.MethodPost, resource, data)
-	if err != nil {
-		return err
-	}
-
-	err = d.publish(authZone, "Added TXT record for ACME dns-01 challenge using lego client")
-	if err != nil {
-		return err
-	}
-
-	return d.logout()
-}
-
 func (d *DNSProvider) publish(zone, notes string) error {
-	type publish struct {
-		Publish bool   `json:"publish"`
-		Notes   string `json:"notes"`
-	}
-
 	pub := &publish{Publish: true, Notes: notes}
 	resource := fmt.Sprintf("Zone/%s/", zone)
 
@@ -224,45 +229,50 @@ func (d *DNSProvider) publish(zone, notes string) error {
 	return err
 }
 
-// CleanUp removes the TXT record matching the specified parameters
-func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+func (d *DNSProvider) sendRequest(method, resource string, payload interface{}) (*dynResponse, error) {
+	url := fmt.Sprintf("%s/%s", defaultBaseURL, resource)
 
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	body, err := json.Marshal(payload)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	err = d.login()
+	req, err := http.NewRequest(method, url, bytes.NewReader(body))
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	resource := fmt.Sprintf("TXTRecord/%s/%s/", authZone, fqdn)
-	url := fmt.Sprintf("%s/%s", dynBaseURL, resource)
-
-	req, err := http.NewRequest(http.MethodDelete, url, nil)
-	if err != nil {
-		return err
-	}
-
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Auth-Token", d.token)
+	if len(d.token) > 0 {
+		req.Header.Set("Auth-Token", d.token)
+	}
 
-	resp, err := d.client.Do(req)
+	resp, err := d.config.HTTPClient.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	resp.Body.Close()
+	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("Dyn API request failed to delete TXT record HTTP status code %d", resp.StatusCode)
+	if resp.StatusCode >= 500 {
+		return nil, fmt.Errorf("API request failed with HTTP status code %d", resp.StatusCode)
 	}
 
-	err = d.publish(authZone, "Removed TXT record for ACME dns-01 challenge using lego client")
+	var dynRes dynResponse
+	err = json.NewDecoder(resp.Body).Decode(&dynRes)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return d.logout()
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("API request failed with HTTP status code %d: %s", resp.StatusCode, dynRes.Messages)
+	} else if resp.StatusCode == 307 {
+		// TODO add support for HTTP 307 response and long running jobs
+		return nil, fmt.Errorf("API request returned HTTP 307. This is currently unsupported")
+	}
+
+	if dynRes.Status == "failure" {
+		// TODO add better error handling
+		return nil, fmt.Errorf("API request failed: %s", dynRes.Messages)
+	}
+
+	return &dynRes, nil
 }

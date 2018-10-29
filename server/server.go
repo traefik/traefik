@@ -6,7 +6,6 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	stdlog "log"
 	"net"
 	"net/http"
@@ -137,29 +136,35 @@ type serverEntryPoint struct {
 
 func (s serverEntryPoint) Shutdown(ctx context.Context) {
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := s.httpServer.Shutdown(ctx); err != nil {
-			if ctx.Err() == context.DeadlineExceeded {
-				log.Debugf("Wait server shutdown is over due to: %s", err)
-				err = s.httpServer.Close()
-				if err != nil {
-					log.Error(err)
+	if s.httpServer != nil {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := s.httpServer.Shutdown(ctx); err != nil {
+				if ctx.Err() == context.DeadlineExceeded {
+					log.Debugf("Wait server shutdown is over due to: %s", err)
+					err = s.httpServer.Close()
+					if err != nil {
+						log.Error(err)
+					}
 				}
 			}
-		}
-	}()
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := s.hijackConnectionTracker.Shutdown(ctx); err != nil {
-			if ctx.Err() == context.DeadlineExceeded {
-				log.Debugf("Wait hijack connection is over due to: %s", err)
-				s.hijackConnectionTracker.Close()
+		}()
+	}
+
+	if s.hijackConnectionTracker != nil {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := s.hijackConnectionTracker.Shutdown(ctx); err != nil {
+				if ctx.Err() == context.DeadlineExceeded {
+					log.Debugf("Wait hijack connection is over due to: %s", err)
+					s.hijackConnectionTracker.Close()
+				}
 			}
-		}
-	}()
+		}()
+	}
+
 	wg.Wait()
 }
 
@@ -244,7 +249,9 @@ func (s *Server) Start() {
 		s.listenConfigurations(stop)
 	})
 	s.startProvider()
-	go s.listenSignals()
+	s.routinesPool.Go(func(stop chan bool) {
+		s.listenSignals(stop)
+	})
 }
 
 // StartWithContext starts the server and Stop/Close it when context is Done
@@ -427,7 +434,7 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 	if len(tlsOption.ClientCA.Files) > 0 {
 		pool := x509.NewCertPool()
 		for _, caFile := range tlsOption.ClientCA.Files {
-			data, err := ioutil.ReadFile(caFile)
+			data, err := caFile.Read()
 			if err != nil {
 				return nil, err
 			}
@@ -444,36 +451,33 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 		}
 	}
 
-	if s.globalConfiguration.ACME != nil {
-		if entryPointName == s.globalConfiguration.ACME.EntryPoint {
-			checkOnDemandDomain := func(domain string) bool {
-				routeMatch := &mux.RouteMatch{}
-				match := router.GetHandler().Match(&http.Request{URL: &url.URL{}, Host: domain}, routeMatch)
-				if match && routeMatch.Route != nil {
-					return true
-				}
-				return false
+	if s.globalConfiguration.ACME != nil && entryPointName == s.globalConfiguration.ACME.EntryPoint {
+		checkOnDemandDomain := func(domain string) bool {
+			routeMatch := &mux.RouteMatch{}
+			match := router.GetHandler().Match(&http.Request{URL: &url.URL{}, Host: domain}, routeMatch)
+			if match && routeMatch.Route != nil {
+				return true
 			}
+			return false
+		}
 
-			err := s.globalConfiguration.ACME.CreateClusterConfig(s.leadership, config, s.serverEntryPoints[entryPointName].certs.DynamicCerts, checkOnDemandDomain)
-			if err != nil {
-				return nil, err
-			}
+		err := s.globalConfiguration.ACME.CreateClusterConfig(s.leadership, config, s.serverEntryPoints[entryPointName].certs.DynamicCerts, checkOnDemandDomain)
+		if err != nil {
+			return nil, err
 		}
 	} else {
 		config.GetCertificate = s.serverEntryPoints[entryPointName].getCertificate
-	}
+		if len(config.Certificates) != 0 {
+			certMap := s.buildNameOrIPToCertificate(config.Certificates)
 
-	if len(config.Certificates) != 0 {
-		certMap := s.buildNameOrIPToCertificate(config.Certificates)
-
-		if s.entryPoints[entryPointName].CertificateStore != nil {
-			s.entryPoints[entryPointName].CertificateStore.StaticCerts.Set(certMap)
+			if s.entryPoints[entryPointName].CertificateStore != nil {
+				s.entryPoints[entryPointName].CertificateStore.StaticCerts.Set(certMap)
+			}
 		}
-	}
 
-	// Remove certs from the TLS config object
-	config.Certificates = []tls.Certificate{}
+		// Remove certs from the TLS config object
+		config.Certificates = []tls.Certificate{}
+	}
 
 	// Set the minimum TLS version if set in the config TOML
 	if minConst, exists := traefiktls.MinVersion[s.entryPoints[entryPointName].Configuration.TLS.MinVersion]; exists {

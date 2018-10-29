@@ -1,4 +1,4 @@
-// +build !appengine
+// +build !appengine,!js,!windows
 
 package logrus
 

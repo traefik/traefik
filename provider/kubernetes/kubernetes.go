@@ -180,8 +180,11 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 	}
 
 	for _, i := range ingresses {
-		annotationIngressClass := getAnnotationName(i.Annotations, annotationKubernetesIngressClass)
-		ingressClass := i.Annotations[annotationIngressClass]
+		ingressClass, err := getStringSafeValue(i.Annotations, annotationKubernetesIngressClass, "")
+		if err != nil {
+			log.Errorf("Misconfigured ingress class for ingress %s/%s: %v", i.Namespace, i.Name, err)
+			continue
+		}
 
 		if !p.shouldProcessIngress(ingressClass) {
 			continue
@@ -222,6 +225,19 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 			for _, pa := range r.HTTP.Paths {
 				priority := getIntValue(i.Annotations, annotationKubernetesPriority, 0)
+
+				err := templateSafeString(r.Host)
+				if err != nil {
+					log.Errorf("failed to validate host %q for ingress %s/%s: %v", r.Host, i.Namespace, i.Name, err)
+					continue
+				}
+
+				err = templateSafeString(pa.Path)
+				if err != nil {
+					log.Errorf("failed to validate path %q for ingress %s/%s: %v", pa.Path, i.Namespace, i.Name, err)
+					continue
+				}
+
 				baseName := r.Host + pa.Path
 				if priority > 0 {
 					baseName = strconv.Itoa(priority) + "-" + baseName
@@ -243,7 +259,10 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					continue
 				}
 
-				if _, exists := templateObjects.Frontends[baseName]; !exists {
+				var frontend *types.Frontend
+				if fe, exists := templateObjects.Frontends[baseName]; exists {
+					frontend = fe
+				} else {
 					auth, err := getAuthConfig(i, k8sClient)
 					if err != nil {
 						log.Errorf("Failed to retrieve auth configuration for ingress %s/%s: %s", i.Namespace, i.Name, err)
@@ -255,40 +274,20 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					entryPoints := getSliceStringValue(i.Annotations, annotationKubernetesFrontendEntryPoints)
 					cnameFlattening := getBoolValue(i.Annotations, annotationKubernetesCnameFlattening, p.EnableCnameFlattening)
 
-					templateObjects.Frontends[baseName] = &types.Frontend{
-						Backend:         baseName,
-						PassHostHeader:  passHostHeader,
-						PassTLSCert:     passTLSCert,
-						Routes:          make(map[string]types.Route),
-						Priority:        priority,
-						WhiteList:       getWhiteList(i),
-						Redirect:        getFrontendRedirect(i, baseName, pa.Path),
-						EntryPoints:     entryPoints,
-						Headers:         getHeader(i),
-						Errors:          getErrorPages(i),
-						RateLimit:       getRateLimit(i),
-						Auth:            auth,
+					frontend = &types.Frontend{
+						Backend:        baseName,
+						PassHostHeader: passHostHeader,
+						PassTLSCert:    passTLSCert,
+						Routes:         make(map[string]types.Route),
+						Priority:       priority,
+						WhiteList:      getWhiteList(i),
+						Redirect:       getFrontendRedirect(i, baseName, pa.Path),
+						EntryPoints:    entryPoints,
+						Headers:        getHeader(i),
+						Errors:         getErrorPages(i),
+						RateLimit:      getRateLimit(i),
+						Auth:           auth,
 						CnameFlattening: cnameFlattening,
-					}
-				}
-
-				if len(r.Host) > 0 {
-					if _, exists := templateObjects.Frontends[baseName].Routes[r.Host]; !exists {
-						templateObjects.Frontends[baseName].Routes[r.Host] = types.Route{
-							Rule: getRuleForHost(r.Host),
-						}
-					}
-				}
-
-				rule, err := getRuleForPath(pa, i)
-				if err != nil {
-					log.Errorf("Failed to get rule for ingress %s/%s: %s", i.Namespace, i.Name, err)
-					delete(templateObjects.Frontends, baseName)
-					continue
-				}
-				if rule != "" {
-					templateObjects.Frontends[baseName].Routes[pa.Path] = types.Route{
-						Rule: rule,
 					}
 				}
 
@@ -300,10 +299,30 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 				if !exists {
 					log.Errorf("Service not found for %s/%s", i.Namespace, pa.Backend.ServiceName)
-					delete(templateObjects.Frontends, baseName)
 					continue
 				}
 
+				rule, err := getRuleForPath(pa, i)
+				if err != nil {
+					log.Errorf("Failed to get rule for ingress %s/%s: %s", i.Namespace, i.Name, err)
+					continue
+				}
+
+				if rule != "" {
+					frontend.Routes[pa.Path] = types.Route{
+						Rule: rule,
+					}
+				}
+
+				if len(r.Host) > 0 {
+					if _, exists := frontend.Routes[r.Host]; !exists {
+						frontend.Routes[r.Host] = types.Route{
+							Rule: getRuleForHost(r.Host),
+						}
+					}
+				}
+
+				templateObjects.Frontends[baseName] = frontend
 				templateObjects.Backends[baseName].CircuitBreaker = getCircuitBreaker(service)
 				templateObjects.Backends[baseName].LoadBalancer = getLoadBalancer(service)
 				templateObjects.Backends[baseName].MaxConn = getMaxConn(service)
@@ -887,15 +906,13 @@ func getFrontendRedirect(i *extensionsv1beta1.Ingress, baseName, path string) *t
 		}
 	}
 
-	redirectRegex := getStringValue(i.Annotations, annotationKubernetesRedirectRegex, "")
-	_, err := strconv.Unquote(`"` + redirectRegex + `"`)
+	redirectRegex, err := getStringSafeValue(i.Annotations, annotationKubernetesRedirectRegex, "")
 	if err != nil {
 		log.Debugf("Skipping Redirect on Ingress %s/%s due to invalid regex: %s", i.Namespace, i.Name, redirectRegex)
 		return nil
 	}
 
-	redirectReplacement := getStringValue(i.Annotations, annotationKubernetesRedirectReplacement, "")
-	_, err = strconv.Unquote(`"` + redirectReplacement + `"`)
+	redirectReplacement, err := getStringSafeValue(i.Annotations, annotationKubernetesRedirectReplacement, "")
 	if err != nil {
 		log.Debugf("Skipping Redirect on Ingress %s/%s due to invalid replacement: %q", i.Namespace, i.Name, redirectRegex)
 		return nil
@@ -1067,4 +1084,9 @@ func getRateLimit(i *extensionsv1beta1.Ingress) *types.RateLimit {
 	}
 
 	return rateLimit
+}
+
+func templateSafeString(value string) error {
+	_, err := strconv.Unquote(`"` + value + `"`)
+	return err
 }

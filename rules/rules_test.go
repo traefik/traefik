@@ -64,24 +64,38 @@ func TestParseDomains(t *testing.T) {
 	rules := &Rules{}
 
 	tests := []struct {
-		expression string
-		domain     []string
+		description   string
+		expression    string
+		domain        []string
+		errorExpected bool
 	}{
 		{
-			expression: "Host:foo.bar,test.bar",
-			domain:     []string{"foo.bar", "test.bar"},
+			description:   "Many host rules",
+			expression:    "Host:foo.bar,test.bar",
+			domain:        []string{"foo.bar", "test.bar"},
+			errorExpected: false,
 		},
 		{
-			expression: "Path:/test",
-			domain:     []string{},
+			description:   "No host rule",
+			expression:    "Path:/test",
+			errorExpected: false,
 		},
 		{
-			expression: "Host:foo.bar;Path:/test",
-			domain:     []string{"foo.bar"},
+			description:   "Host rule and another rule",
+			expression:    "Host:foo.bar;Path:/test",
+			domain:        []string{"foo.bar"},
+			errorExpected: false,
 		},
 		{
-			expression: "Host: Foo.Bar ;Path:/test",
-			domain:     []string{"foo.bar"},
+			description:   "Host rule to trim and another rule",
+			expression:    "Host: Foo.Bar ;Path:/test",
+			domain:        []string{"foo.bar"},
+			errorExpected: false,
+		},
+		{
+			description:   "Host rule with no domain",
+			expression:    "Host: ;Path:/test",
+			errorExpected: true,
 		},
 	}
 
@@ -91,7 +105,12 @@ func TestParseDomains(t *testing.T) {
 			t.Parallel()
 
 			domains, err := rules.ParseDomains(test.expression)
-			require.NoError(t, err, "%s: Error while parsing domain.", test.expression)
+
+			if test.errorExpected {
+				require.Errorf(t, err, "unable to parse correctly the domains in the Host rule from %q", test.expression)
+			} else {
+				require.NoError(t, err, "%s: Error while parsing domain.", test.expression)
+			}
 
 			assert.EqualValues(t, test.domain, domains, "%s: Error parsing domains from expression.", test.expression)
 		})
@@ -199,11 +218,17 @@ func TestHostRegexp(t *testing.T) {
 	}
 }
 
-type fakeHandler struct {
-	name string
-}
+func TestParseInvalidSyntax(t *testing.T) {
+	router := mux.NewRouter()
+	router.StrictSlash(true)
 
-func (h *fakeHandler) ServeHTTP(http.ResponseWriter, *http.Request) {}
+	rules := &Rules{Route: &types.ServerRoute{Route: router.NewRoute()}}
+	expression01 := "Path: /path1;Query:param_one=true, /path2"
+
+	routeFoo, err := rules.Parse(expression01)
+	require.Error(t, err)
+	assert.Nil(t, routeFoo)
+}
 
 func TestPathPrefix(t *testing.T) {
 	testCases := []struct {
@@ -268,3 +293,9 @@ func TestPathPrefix(t *testing.T) {
 		})
 	}
 }
+
+type fakeHandler struct {
+	name string
+}
+
+func (h *fakeHandler) ServeHTTP(http.ResponseWriter, *http.Request) {}

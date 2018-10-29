@@ -68,7 +68,8 @@ func TestBuildConfiguration(t *testing.T) {
 					ID("1"),
 					dockerLabels(map[string]*string{
 						label.TraefikBackendHealthCheckPath:     aws.String("/health"),
-						label.TraefikBackendHealthCheckInterval: aws.String("1s"),
+						label.TraefikBackendHealthCheckInterval: aws.String("6s"),
+						label.TraefikBackendHealthCheckTimeout:  aws.String("3s"),
 					}),
 					iMachine(
 						mState(ec2.InstanceStateNameRunning),
@@ -84,7 +85,8 @@ func TestBuildConfiguration(t *testing.T) {
 					"backend-instance": {
 						HealthCheck: &types.HealthCheck{
 							Path:     "/health",
-							Interval: "1s",
+							Interval: "6s",
+							Timeout:  "3s",
 						},
 						Servers: map[string]types.Server{
 							"server-instance-1": {
@@ -276,7 +278,9 @@ func TestBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendAuthForwardTLSCaOptional:         aws.String("true"),
 						label.TraefikFrontendAuthForwardTLSCert:               aws.String("server.crt"),
 						label.TraefikFrontendAuthForwardTLSKey:                aws.String("server.key"),
-						label.TraefikFrontendAuthForwardTLSInsecureSkipVerify: aws.String("true"), label.TraefikFrontendAuthHeaderField: aws.String("X-WebAuth-User"),
+						label.TraefikFrontendAuthForwardTLSInsecureSkipVerify: aws.String("true"),
+						label.TraefikFrontendAuthHeaderField:                  aws.String("X-WebAuth-User"),
+						label.TraefikFrontendAuthForwardAuthResponseHeaders:   aws.String("X-Auth-User,X-Auth-Token"),
 					}),
 					iMachine(
 						mState(ec2.InstanceStateNameRunning),
@@ -309,8 +313,7 @@ func TestBuildConfiguration(t *testing.T) {
 						Auth: &types.Auth{
 							HeaderField: "X-WebAuth-User",
 							Forward: &types.Forward{
-								Address:            "auth.server",
-								TrustForwardHeader: true,
+								Address: "auth.server",
 								TLS: &types.ClientTLS{
 									CA:                 "ca.crt",
 									CAOptional:         true,
@@ -318,6 +321,8 @@ func TestBuildConfiguration(t *testing.T) {
 									Cert:               "server.crt",
 									Key:                "server.key",
 								},
+								TrustForwardHeader:  true,
+								AuthResponseHeaders: []string{"X-Auth-User", "X-Auth-Token"},
 							},
 						},
 						PassHostHeader: true,
@@ -343,6 +348,7 @@ func TestBuildConfiguration(t *testing.T) {
 						label.TraefikBackendHealthCheckPath:                  aws.String("/health"),
 						label.TraefikBackendHealthCheckPort:                  aws.String("880"),
 						label.TraefikBackendHealthCheckInterval:              aws.String("6"),
+						label.TraefikBackendHealthCheckTimeout:               aws.String("3"),
 						label.TraefikBackendHealthCheckHostname:              aws.String("foo.com"),
 						label.TraefikBackendHealthCheckHeaders:               aws.String("Foo:bar || Bar:foo"),
 						label.TraefikBackendLoadBalancerMethod:               aws.String("drr"),
@@ -355,6 +361,17 @@ func TestBuildConfiguration(t *testing.T) {
 						label.TraefikBackendBufferingMaxRequestBodyBytes:     aws.String("10485760"),
 						label.TraefikBackendBufferingMemRequestBodyBytes:     aws.String("2097152"),
 						label.TraefikBackendBufferingRetryExpression:         aws.String("IsNetworkError() && Attempts() <= 2"),
+
+						label.TraefikFrontendPassTLSClientCertPem:                      aws.String("true"),
+						label.TraefikFrontendPassTLSClientCertInfosNotBefore:           aws.String("true"),
+						label.TraefikFrontendPassTLSClientCertInfosNotAfter:            aws.String("true"),
+						label.TraefikFrontendPassTLSClientCertInfosSans:                aws.String("true"),
+						label.TraefikFrontendPassTLSClientCertInfosSubjectCommonName:   aws.String("true"),
+						label.TraefikFrontendPassTLSClientCertInfosSubjectCountry:      aws.String("true"),
+						label.TraefikFrontendPassTLSClientCertInfosSubjectLocality:     aws.String("true"),
+						label.TraefikFrontendPassTLSClientCertInfosSubjectOrganization: aws.String("true"),
+						label.TraefikFrontendPassTLSClientCertInfosSubjectProvince:     aws.String("true"),
+						label.TraefikFrontendPassTLSClientCertInfosSubjectSerialNumber: aws.String("true"),
 
 						label.TraefikFrontendAuthBasic:                        aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 						label.TraefikFrontendAuthBasicRemoveHeader:            aws.String("true"),
@@ -460,6 +477,7 @@ func TestBuildConfiguration(t *testing.T) {
 							Path:     "/health",
 							Port:     880,
 							Interval: "6",
+							Timeout:  "3",
 							Hostname: "foo.com",
 							Headers: map[string]string{
 								"Foo": "bar",
@@ -491,6 +509,22 @@ func TestBuildConfiguration(t *testing.T) {
 						PassTLSCert:     true,
 						Priority:        666,
 						CnameFlattening: true,
+						PassTLSClientCert: &types.TLSClientHeaders{
+							PEM: true,
+							Infos: &types.TLSClientCertificateInfos{
+								NotBefore: true,
+								Sans:      true,
+								NotAfter:  true,
+								Subject: &types.TLSCLientCertificateSubjectInfos{
+									CommonName:   true,
+									Country:      true,
+									Locality:     true,
+									Organization: true,
+									Province:     true,
+									SerialNumber: true,
+								},
+							},
+						},
 						Auth: &types.Auth{
 							HeaderField: "X-WebAuth-User",
 							Basic: &types.Basic{
@@ -608,6 +642,7 @@ func TestBuildConfiguration(t *testing.T) {
 						label.TraefikBackendHealthCheckPath:                  aws.String("/health"),
 						label.TraefikBackendHealthCheckPort:                  aws.String("880"),
 						label.TraefikBackendHealthCheckInterval:              aws.String("6"),
+						label.TraefikBackendHealthCheckTimeout:               aws.String("3"),
 						label.TraefikBackendHealthCheckHostname:              aws.String("foo.com"),
 						label.TraefikBackendHealthCheckHeaders:               aws.String("Foo:bar || Bar:foo"),
 						label.TraefikBackendLoadBalancerMethod:               aws.String("drr"),
@@ -694,6 +729,7 @@ func TestBuildConfiguration(t *testing.T) {
 						label.TraefikBackendHealthCheckPath:                  aws.String("/health"),
 						label.TraefikBackendHealthCheckPort:                  aws.String("880"),
 						label.TraefikBackendHealthCheckInterval:              aws.String("6"),
+						label.TraefikBackendHealthCheckTimeout:               aws.String("3"),
 						label.TraefikBackendHealthCheckHostname:              aws.String("bar.com"),
 						label.TraefikBackendHealthCheckHeaders:               aws.String("Foo:bar || Bar:foo"),
 						label.TraefikBackendLoadBalancerMethod:               aws.String("drr"),
@@ -797,6 +833,7 @@ func TestBuildConfiguration(t *testing.T) {
 							Path:     "/health",
 							Port:     880,
 							Interval: "6",
+							Timeout:  "3",
 							Hostname: "foo.com",
 							Headers: map[string]string{
 								"Foo": "bar",

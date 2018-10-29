@@ -8,7 +8,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/BurntSushi/ty/fun"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/hostresolver"
 	"github.com/containous/traefik/log"
@@ -271,6 +270,9 @@ func (r *Rules) Parse(expression string) (*mux.Route, error) {
 			if r.err != nil {
 				return r.err
 			}
+			if resultRoute == nil {
+				return fmt.Errorf("invalid expression: %s", expression)
+			}
 			if resultRoute.GetError() != nil {
 				return resultRoute.GetError()
 			}
@@ -289,9 +291,11 @@ func (r *Rules) Parse(expression string) (*mux.Route, error) {
 // ParseDomains parses rules expressions and returns domains
 func (r *Rules) ParseDomains(expression string) ([]string, error) {
 	var domains []string
+	isHostRule := false
 
 	err := r.parseRules(expression, func(functionName string, function interface{}, arguments []string) error {
 		if functionName == "Host" {
+			isHostRule = true
 			domains = append(domains, arguments...)
 		}
 		return nil
@@ -300,5 +304,18 @@ func (r *Rules) ParseDomains(expression string) ([]string, error) {
 		return nil, fmt.Errorf("error parsing domains: %v", err)
 	}
 
-	return fun.Map(strings.ToLower, domains).([]string), nil
+	var cleanDomains []string
+	for _, domain := range domains {
+		canonicalDomain := strings.ToLower(domain)
+		if len(canonicalDomain) > 0 {
+			cleanDomains = append(cleanDomains, canonicalDomain)
+		}
+	}
+
+	// Return an error if an Host rule is detected but no domain are parsed
+	if isHostRule && len(cleanDomains) == 0 {
+		return nil, fmt.Errorf("unable to parse correctly the domains in the Host rule from %q", expression)
+	}
+
+	return cleanDomains, nil
 }
