@@ -164,7 +164,10 @@ func (s *Server) buildServerEntryPointMiddlewares(serverEntryPointName string, s
 	}
 
 	if s.entryPoints[serverEntryPointName].Configuration.Redirect != nil {
-		redirectHandlers, _ := s.buildEntryPointRedirect()
+		redirectHandlers, err := s.buildEntryPointRedirect()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create redirect middleware: %v", err)
+		}
 		serverMiddlewares = append(serverMiddlewares, redirectHandlers[serverEntryPointName])
 	}
 
