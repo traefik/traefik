@@ -16,9 +16,6 @@ import (
 )
 
 func TestSwarmBuildConfiguration(t *testing.T) {
-	var flushInterval parse.Duration
-	flushInterval.Set("10ms")
-
 	testCases := []struct {
 		desc              string
 		services          []swarm.Service
@@ -590,7 +587,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						Expression: "NetworkErrorRatio() > 0.5",
 					},
 					ResponseForwarding: &types.ResponseForwarding{
-						FlushInterval: flushInterval,
+						FlushInterval: parse.Duration(10 * time.Millisecond),
 					},
 					LoadBalancer: &types.LoadBalancer{
 						Method: "drr",

@@ -22,9 +22,6 @@ func TestProviderBuildConfiguration(t *testing.T) {
 		frontEndRuleTemplate: template.New("consul catalog frontend rule"),
 	}
 
-	var flushInterval parse.Duration
-	flushInterval.Set("10ms")
-
 	testCases := []struct {
 		desc              string
 		nodes             []catalogUpdate
@@ -679,7 +676,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						Expression: "NetworkErrorRatio() > 0.5",
 					},
 					ResponseForwarding: &types.ResponseForwarding{
-						FlushInterval: flushInterval,
+						FlushInterval: parse.Duration(10 * time.Millisecond),
 					},
 					LoadBalancer: &types.LoadBalancer{
 						Method: "drr",

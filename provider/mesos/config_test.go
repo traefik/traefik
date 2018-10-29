@@ -14,9 +14,6 @@ import (
 )
 
 func TestBuildConfiguration(t *testing.T) {
-	var flushInterval parse.Duration
-	flushInterval.Set("10ms")
-
 	p := &Provider{
 		Domain:           "mesos.localhost",
 		ExposedByDefault: true,
@@ -552,7 +549,7 @@ func TestBuildConfiguration(t *testing.T) {
 						Expression: "NetworkErrorRatio() > 0.5",
 					},
 					ResponseForwarding: &types.ResponseForwarding{
-						FlushInterval: flushInterval,
+						FlushInterval: parse.Duration(10 * time.Millisecond),
 					},
 					LoadBalancer: &types.LoadBalancer{
 						Method: "drr",

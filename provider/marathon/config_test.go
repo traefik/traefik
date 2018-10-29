@@ -29,9 +29,6 @@ func TestGetConfigurationAPIErrors(t *testing.T) {
 }
 
 func TestBuildConfiguration(t *testing.T) {
-	var flushInterval parse.Duration
-	flushInterval.Set("10ms")
-
 	testCases := []struct {
 		desc              string
 		applications      *marathon.Applications
@@ -592,7 +589,7 @@ func TestBuildConfiguration(t *testing.T) {
 						Expression: "NetworkErrorRatio() > 0.5",
 					},
 					ResponseForwarding: &types.ResponseForwarding{
-						FlushInterval: flushInterval,
+						FlushInterval: parse.Duration(10 * time.Millisecond),
 					},
 					LoadBalancer: &types.LoadBalancer{
 						Method: "drr",
