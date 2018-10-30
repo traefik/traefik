@@ -1,4 +1,4 @@
-// Package dreamhost Adds lego support for http://dreamhost.com DNS updates
+// Package dreamhost implements a DNS provider for solving the DNS-01 challenge using DreamHost.
 // See https://help.dreamhost.com/hc/en-us/articles/217560167-API_overview
 // and https://help.dreamhost.com/hc/en-us/articles/217555707-DNS-API-commands for the API spec.
 package dreamhost

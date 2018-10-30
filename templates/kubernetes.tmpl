@@ -8,6 +8,11 @@
       expression = "{{ $backend.CircuitBreaker.Expression }}"
     {{end}}
 
+    {{if $backend.ResponseForwarding }}
+    [backends."{{ $backendName }}".responseForwarding]
+      flushInterval = "{{ $backend.responseForwarding.FlushInterval }}"
+    {{end}}
+
     [backends."{{ $backendName }}".loadBalancer]
       method = "{{ $backend.LoadBalancer.Method }}"
       {{if $backend.LoadBalancer.Stickiness }}
@@ -132,6 +137,28 @@
           average = {{ $limit.Average }}
           burst = {{ $limit.Burst }}
         {{end}}
+    {{end}}
+
+    {{if $frontend.PassTLSClientCert }}
+    [frontends."{{ $frontendName }}".passTLSClientCert]
+      pem = {{ $frontend.PassTLSClientCert.PEM }}
+      {{ $infos := $frontend.PassTLSClientCert.Infos }}
+      {{if $infos }}
+      [frontends."{{ $frontendName }}".passTLSClientCert.infos]
+        notAfter = {{ $infos.NotAfter   }}
+        notBefore = {{ $infos.NotBefore }}
+        sans = {{ $infos.Sans }}
+        {{ $subject := $infos.Subject }}
+        {{if $subject }}
+        [frontends."{{ $frontendName }}".passTLSClientCert.infos.subject]
+          country = {{ $subject.Country }}
+          province = {{ $subject.Province }}
+          locality = {{ $subject.Locality }}
+          organization = {{ $subject.Organization }}
+          commonName = {{ $subject.CommonName }}
+          serialNumber = {{ $subject.SerialNumber }}
+        {{end}}
+      {{end}}
     {{end}}
 
   {{if $frontend.Headers }}

@@ -14,10 +14,10 @@ const (
 	defaultValue        = "-"
 )
 
-// CommonLogFormatter provides formatting in the Træfik common log format
+// CommonLogFormatter provides formatting in the Traefik common log format
 type CommonLogFormatter struct{}
 
-// Format formats the log entry in the Træfik common log format
+// Format formats the log entry in the Traefik common log format
 func (f *CommonLogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	b := &bytes.Buffer{}
 

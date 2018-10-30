@@ -1,10 +1,10 @@
-# Træfik Web UI
+# Traefik Web UI
 
-Access to Træfik Web UI, ex: http://localhost:8080
+Access to Traefik Web UI, ex: http://localhost:8080
 
 ## Interface
 
-Træfik Web UI provide 2 types of informations:
+Traefik Web UI provide 2 types of informations:
 - Providers with their backends and frontends information.
 - Health of the web server.
 

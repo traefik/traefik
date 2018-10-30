@@ -7,6 +7,12 @@
   [backends."{{ $backendName }}".circuitBreaker]
     expression = "{{ $circuitBreaker.Expression }}"
   {{end}}
+          
+  {{ $responseForwarding := getResponseForwarding $backend }}
+  {{if $responseForwarding }}
+  [backends."{{ $backendName }}".responseForwarding]
+    flushInterval = "{{ $responseForwarding.flushInterval }}"
+  {{end}}
 
   {{ $loadBalancer := getLoadBalancer $backend }}
   {{if $loadBalancer }}

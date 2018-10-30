@@ -93,6 +93,13 @@ func circuitBreaker(exp string) func(*types.Backend) {
 	}
 }
 
+func responseForwarding(interval string) func(*types.Backend) {
+	return func(b *types.Backend) {
+		b.ResponseForwarding = &types.ResponseForwarding{}
+		b.ResponseForwarding.FlushInterval = interval
+	}
+}
+
 func buffering(opts ...func(*types.Buffering)) func(*types.Backend) {
 	return func(b *types.Backend) {
 		if b.Buffering == nil {
@@ -398,9 +405,31 @@ func limitPeriod(period time.Duration) func(*types.Rate) {
 	}
 }
 
+// Deprecated
 func passTLSCert() func(*types.Frontend) {
 	return func(f *types.Frontend) {
 		f.PassTLSCert = true
+	}
+}
+
+func passTLSClientCert() func(*types.Frontend) {
+	return func(f *types.Frontend) {
+		f.PassTLSClientCert = &types.TLSClientHeaders{
+			PEM: true,
+			Infos: &types.TLSClientCertificateInfos{
+				NotAfter:  true,
+				NotBefore: true,
+				Subject: &types.TLSCLientCertificateSubjectInfos{
+					Country:      true,
+					Province:     true,
+					Locality:     true,
+					Organization: true,
+					CommonName:   true,
+					SerialNumber: true,
+				},
+				Sans: true,
+			},
+		}
 	}
 }
 

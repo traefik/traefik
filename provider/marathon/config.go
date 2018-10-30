@@ -30,13 +30,14 @@ func (p *Provider) buildConfiguration(applications *marathon.Applications) *type
 		"getBackendName": p.getBackendName,
 
 		// Backend functions
-		"getPort":           getPort,
-		"getCircuitBreaker": label.GetCircuitBreaker,
-		"getLoadBalancer":   label.GetLoadBalancer,
-		"getMaxConn":        label.GetMaxConn,
-		"getHealthCheck":    label.GetHealthCheck,
-		"getBuffering":      label.GetBuffering,
-		"getServers":        p.getServers,
+		"getPort":               getPort,
+		"getCircuitBreaker":     label.GetCircuitBreaker,
+		"getLoadBalancer":       label.GetLoadBalancer,
+		"getMaxConn":            label.GetMaxConn,
+		"getHealthCheck":        label.GetHealthCheck,
+		"getBuffering":          label.GetBuffering,
+		"getResponseForwarding": label.GetResponseForwarding,
+		"getServers":            p.getServers,
 
 		// Frontend functions
 		"getSegmentNameSuffix": getSegmentNameSuffix,
@@ -212,11 +213,14 @@ func (p *Provider) getFrontendRule(app appData) string {
 	}
 
 	domain := label.GetStringValue(app.SegmentLabels, label.TraefikDomain, p.Domain)
+	if len(domain) > 0 {
+		domain = "." + domain
+	}
 
 	if len(app.SegmentName) > 0 {
-		return "Host:" + strings.ToLower(provider.Normalize(app.SegmentName)) + "." + p.getSubDomain(app.ID) + "." + domain
+		return "Host:" + strings.ToLower(provider.Normalize(app.SegmentName)) + "." + p.getSubDomain(app.ID) + domain
 	}
-	return "Host:" + p.getSubDomain(app.ID) + "." + domain
+	return "Host:" + p.getSubDomain(app.ID) + domain
 }
 
 func getPort(task marathon.Task, app appData) string {

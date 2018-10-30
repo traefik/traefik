@@ -32,8 +32,8 @@
 ## PR review process:
 
 * The status `needs-design-review` is only used in complex/heavy/tricky PRs.
-* From `status/1-needs-design-review` to `status/2-needs-review`: 1 design LGTM in comment, by a senior maintainer, if needed.
-* From `status/2-needs-review` to `status/3-needs-merge`: 3 LGTM by any maintainer.
+* From `1` to `2`: 1 comment that says “design LGTM” (by a senior maintainer).
+* From `2` to `3`: 3 LGTM approvals by any maintainer.
 * If needed, a specific maintainer familiar with a particular domain can be requested for the review.
 * If a PR has been implemented in pair programming, one peer's LGTM goes into the review for free
 * Amending someone else's pull request is authorized only in emergency, if a rebase is needed, or if the initial contributor is silent
@@ -50,20 +50,21 @@ We use [PRM](https://github.com/ldez/prm) to manage locally pull requests.
 The maintainer giving the final LGTM must add the `status/3-needs-merge` label to trigger the merge bot.
 
 By default, a squash-rebase merge will be carried out.
-If you want to preserve commits you must add `bot/merge-method-rebase` before `status/3-needs-merge`.
+To preserve commits, add `bot/merge-method-rebase` before `status/3-needs-merge`.
 
-The status `status/4-merge-in-progress` is only for the bot.
+The status `status/4-merge-in-progress` is only used by the bot.
 
 If the bot is not able to perform the merge, the label `bot/need-human-merge` is added.  
-In this case you must solve conflicts/CI/... and after you only need to remove `bot/need-human-merge`.
+In such a situation, solve the conflicts/CI/... and then remove the label `bot/need-human-merge`.
 
-A maintainer can add `bot/no-merge` on a PR if he want (temporarily) prevent a merge by the bot.
+To prevent the bot from automatically merging a PR, add the label `bot/no-merge`.
 
-`bot/light-review` can be used to decrease required LGTM from 3 to 1 when:
+The label `bot/light-review` decreases the number of required LGTM from 3 to 1.
 
-- vendor updates from previously reviewed PRs
-- merges branches into master
-- prepare release
+This label is used when:
+- Updating the vendors from previously reviewed PRs
+- Merging branches into the master
+- Preparing the release
 
 
 ### [Myrmica Bibikoffi](https://github.com/containous/bibikoffi/)
@@ -84,7 +85,7 @@ A maintainer can add `bot/no-merge` on a PR if he want (temporarily) prevent a m
 
 ## Labels
 
-If we open/look an issue/PR, we must add a `kind/*`, an `area/*` and a `status/*`.
+A maintainer that looks at an issue/PR must define its `kind/*`, `area/*`, and `status/*`.
 
 ### Contributor
 
@@ -96,19 +97,19 @@ If we open/look an issue/PR, we must add a `kind/*`, an `area/*` and a `status/*
 ### Kind
 
 * `kind/enhancement`: a new or improved feature.
-* `kind/question`: It's a question. **(only for issue)**
-* `kind/proposal`: proposal PR/issues need a public debate.
-  * _Proposal issues_ are design proposal that need to be refined with multiple contributors.
+* `kind/question`: a question. **(only for issue)**
+* `kind/proposal`: a proposal that needs to be discussed.
+  * _Proposal issues_ are design proposals
   * _Proposal PRs_ are technical prototypes that need to be refined with multiple contributors.
 
-* `kind/bug/possible`: if we need to analyze to understand if it's a bug or not. **(only for issues)**
-* `kind/bug/confirmed`: we are sure, it's a bug. **(only for issues)**
-* `kind/bug/fix`: it's a bug fix. **(only for PR)**
+* `kind/bug/possible`: a possible bug that needs analysis before it is confirmed or fixed. **(only for issues)**
+* `kind/bug/confirmed`: a confirmed bug (reproducible). **(only for issues)**
+* `kind/bug/fix`: a bug fix. **(only for PR)**
 
 ### Resolution
 
-* `resolution/duplicate`: it's a duplicate issue/PR.
-* `resolution/declined`: Rule #1 of open-source: no is temporary, yes is forever.
+* `resolution/duplicate`: a duplicate issue/PR.
+* `resolution/declined`: declined (Rule #1 of open-source: no is temporary, yes is forever).
 * `WIP`: Work In Progress. **(only for PR)**
 
 ### Platform
@@ -121,10 +122,10 @@ If we open/look an issue/PR, we must add a `kind/*`, an `area/*` and a `status/*
 * `area/api`: Traefik API related.
 * `area/authentication`: Authentication related.
 * `area/cluster`: Traefik clustering related.
-* `area/documentation`: regards improving/adding documentation.
-* `area/infrastructure`: related to CI or Traefik building scripts.
+* `area/documentation`: Documentation related.
+* `area/infrastructure`: CI or Traefik building scripts related.
 * `area/healthcheck`: Health-check related.
-* `area/logs`: Traefik logs related.
+* `area/logs`: Logs related.
 * `area/middleware`: Middleware related.
 * `area/middleware/metrics`: Metrics related. (Prometheus, StatsD, ...)
 * `area/middleware/tracing`: Tracing related. (Jaeger, Zipkin, ...)
@@ -160,7 +161,7 @@ If we open/look an issue/PR, we must add a `kind/*`, an `area/*` and a `status/*
 
 ### PR size
 
-_Automatically set by a bot_
+__Automatically set by a bot__
 
 * `size/S`: small PR.
 * `size/M`: medium PR.
@@ -170,8 +171,8 @@ _Automatically set by a bot_
 
 The `status/*` labels represent the desired state in the workflow.
 
-* `status/0-needs-triage`: all new issue or PR have this status. _[bot only]_
-* `status/1-needs-design-review`: need a design review. **(only for PR)**
-* `status/2-needs-review`: need a code/documentation review. **(only for PR)**
+* `status/0-needs-triage`: all the new issues and PRs have this status. _[bot only]_
+* `status/1-needs-design-review`: needs a design review. **(only for PR)**
+* `status/2-needs-review`: needs a code/documentation review. **(only for PR)**
 * `status/3-needs-merge`: ready to merge. **(only for PR)**
-* `status/4-merge-in-progress`: merge in progress. _[bot only]_
+* `status/4-merge-in-progress`: merge is in progress. _[bot only]_

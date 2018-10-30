@@ -196,6 +196,17 @@ func (c *Certificate) AppendCertificates(certs map[string]map[string]*tls.Certif
 	return err
 }
 
+func (c *Certificate) getTruncatedCertificateName() string {
+	certName := c.CertFile.String()
+
+	// Truncate certificate information only if it's a well formed certificate content with more than 50 characters
+	if !c.CertFile.IsPath() && strings.HasPrefix(certName, certificateHeader) && len(certName) > len(certificateHeader)+50 {
+		certName = strings.TrimPrefix(c.CertFile.String(), certificateHeader)[:50]
+	}
+
+	return certName
+}
+
 // String is the method to format the flag's value, part of the flag.Value interface.
 // The String method's output will be used in diagnostics.
 func (c *Certificates) String() string {

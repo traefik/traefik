@@ -64,6 +64,14 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
     expression = "{{ $circuitBreaker.Expression }}"
   {{end}}
 
+  {{ $responseForwarding := getResponseForwarding $service.TraefikLabels }}
+  {{if $responseForwarding }}
+  [backends."backend-{{ $backendName }}".responseForwarding]
+    flushInterval = "{{ $responseForwarding.FlushInterval }}"
+  {{end}}
+
+
+
   {{ $loadBalancer := getLoadBalancer $service.TraefikLabels }}
   {{if $loadBalancer }}
   [backends."backend-{{ $backendName }}".loadBalancer]
@@ -336,6 +344,12 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
   {{if $circuitBreaker }}
   [backends."backend-{{ $backendName }}".circuitBreaker]
     expression = "{{ $circuitBreaker.Expression }}"
+  {{end}}
+
+  {{ $responseForwarding := getResponseForwarding $backend.SegmentLabels }}
+  {{if $responseForwarding }}
+  [backends."backend-{{ $backendName }}".responseForwarding]
+    flushInterval = "{{ $responseForwarding.FlushInterval }}"
   {{end}}
 
   {{ $loadBalancer := getLoadBalancer $backend.SegmentLabels }}
@@ -611,6 +625,12 @@ var _templatesEcsTmpl = []byte(`[backends]
   {{if $circuitBreaker }}
   [backends."backend-{{ $serviceName }}".circuitBreaker]
     expression = "{{ $circuitBreaker.Expression }}"
+  {{end}}
+
+  {{ $responseForwarding := getResponseForwarding $firstInstance.SegmentLabels }}
+  {{if $responseForwarding }}
+  [backends."backend-{{ $serviceName }}".responseForwarding]
+    flushInterval = "{{ $responseForwarding.FlushInterval }}"
   {{end}}
 
   {{ $loadBalancer := getLoadBalancer $firstInstance.SegmentLabels }}
@@ -929,6 +949,11 @@ var _templatesKubernetesTmpl = []byte(`[backends]
       expression = "{{ $backend.CircuitBreaker.Expression }}"
     {{end}}
 
+    {{if $backend.ResponseForwarding }}
+    [backends."{{ $backendName }}".responseForwarding]
+      flushInterval = "{{ $backend.responseForwarding.FlushInterval }}"
+    {{end}}
+
     [backends."{{ $backendName }}".loadBalancer]
       method = "{{ $backend.LoadBalancer.Method }}"
       {{if $backend.LoadBalancer.Stickiness }}
@@ -1055,6 +1080,28 @@ var _templatesKubernetesTmpl = []byte(`[backends]
         {{end}}
     {{end}}
 
+    {{if $frontend.PassTLSClientCert }}
+    [frontends."{{ $frontendName }}".passTLSClientCert]
+      pem = {{ $frontend.PassTLSClientCert.PEM }}
+      {{ $infos := $frontend.PassTLSClientCert.Infos }}
+      {{if $infos }}
+      [frontends."{{ $frontendName }}".passTLSClientCert.infos]
+        notAfter = {{ $infos.NotAfter   }}
+        notBefore = {{ $infos.NotBefore }}
+        sans = {{ $infos.Sans }}
+        {{ $subject := $infos.Subject }}
+        {{if $subject }}
+        [frontends."{{ $frontendName }}".passTLSClientCert.infos.subject]
+          country = {{ $subject.Country }}
+          province = {{ $subject.Province }}
+          locality = {{ $subject.Locality }}
+          organization = {{ $subject.Organization }}
+          commonName = {{ $subject.CommonName }}
+          serialNumber = {{ $subject.SerialNumber }}
+        {{end}}
+      {{end}}
+    {{end}}
+
   {{if $frontend.Headers }}
   [frontends."{{ $frontendName }}".headers]
     SSLRedirect = {{ $frontend.Headers.SSLRedirect }}
@@ -1145,6 +1192,12 @@ var _templatesKvTmpl = []byte(`[backends]
   {{if $circuitBreaker }}
   [backends."{{ $backendName }}".circuitBreaker]
     expression = "{{ $circuitBreaker.Expression }}"
+  {{end}}
+          
+  {{ $responseForwarding := getResponseForwarding $backend }}
+  {{if $responseForwarding }}
+  [backends."{{ $backendName }}".responseForwarding]
+    flushInterval = "{{ $responseForwarding.flushInterval }}"
   {{end}}
 
   {{ $loadBalancer := getLoadBalancer $backend }}
@@ -1437,6 +1490,12 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
     [backends."{{ $backendName }}".circuitBreaker]
       expression = "{{ $circuitBreaker.Expression }}"
     {{end}}
+          
+    {{ $responseForwarding := getResponseForwarding $app.SegmentLabels }}
+    {{if $responseForwarding }}
+    [backends."{{ $backendName }}".responseForwarding]
+      flushInterval = "{{ $responseForwarding.FlushInterval }}"
+    {{end}}
 
     {{ $loadBalancer := getLoadBalancer $app.SegmentLabels }}
     {{if $loadBalancer }}
@@ -1712,6 +1771,12 @@ var _templatesMesosTmpl = []byte(`[backends]
   {{if $circuitBreaker }}
   [backends."backend-{{ $backendName }}".circuitBreaker]
     expression = "{{ $circuitBreaker.Expression }}"
+  {{end}}
+
+  {{ $responseForwarding := getResponseForwarding $app.TraefikLabels }}
+  {{if $responseForwarding }}
+  [backends."backend-{{ $backendName }}".responseForwarding]
+    flushInterval = "{{ $responseForwarding.FlushInterval }}"
   {{end}}
 
   {{ $loadBalancer := getLoadBalancer $app.TraefikLabels }}
@@ -2011,6 +2076,12 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
   {{if $circuitBreaker }}
   [backends."backend-{{ $backendName }}".circuitBreaker]
     expression = "{{ $circuitBreaker.Expression }}"
+  {{end}}
+
+  {{ $responseForwarding := getResponseForwarding $backend.SegmentLabels }}
+  {{if $responseForwarding }}
+  [backends."backend-{{ $backendName }}".responseForwarding]
+    flushInterval = "{{ $responseForwarding.FlushInterval }}"
   {{end}}
 
   {{ $loadBalancer := getLoadBalancer $backend.SegmentLabels }}

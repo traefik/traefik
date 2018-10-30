@@ -1,6 +1,6 @@
 # Examples
 
-You will find here some configuration examples of Træfik.
+You will find here some configuration examples of Traefik.
 
 ## HTTP only
 
@@ -87,7 +87,7 @@ entryPoint = "https"
 
 This configuration allows generating Let's Encrypt certificates (thanks to `HTTP-01` challenge) for the four domains `local[1-4].com` with described SANs.
 
-Træfik generates these certificates when it starts and it needs to be restart if new domains are added.
+Traefik generates these certificates when it starts and it needs to be restart if new domains are added.
 
 ### onHostRule option (with HTTP challenge)
 
@@ -122,9 +122,9 @@ entryPoint = "https"
 
 This configuration allows generating Let's Encrypt certificates (thanks to `HTTP-01` challenge) for the four domains `local[1-4].com`.
 
-Træfik generates these certificates when it starts.
+Traefik generates these certificates when it starts.
 
-If a backend is added with a `onHost` rule, Træfik will automatically generate the Let's Encrypt certificate for the new domain (for frontends wired on the `acme.entryPoint`).
+If a backend is added with a `onHost` rule, Traefik will automatically generate the Let's Encrypt certificate for the new domain (for frontends wired on the `acme.entryPoint`).
 
 ### OnDemand option (with HTTP challenge)
 
@@ -186,7 +186,7 @@ entryPoint = "https"
 ```
 
 DNS challenge needs environment variables to be executed.
-These variables have to be set on the machine/container that host Træfik.
+These variables have to be set on the machine/container that host Traefik.
 
 These variables are described [in this section](/configuration/acme/#provider).
 
@@ -219,7 +219,7 @@ entryPoint = "https"
 ```
 
 DNS challenge needs environment variables to be executed.
-These variables have to be set on the machine/container that host Træfik.
+These variables have to be set on the machine/container that host Traefik.
 
 These variables are described [in this section](/configuration/acme/#provider).
 
@@ -248,7 +248,7 @@ entryPoint = "https"
   entryPoint = "http"
 ```
 
-Træfik will only try to generate a Let's encrypt certificate (thanks to `HTTP-01` challenge) if the domain cannot be checked by the provided certificates.
+Traefik will only try to generate a Let's encrypt certificate (thanks to `HTTP-01` challenge) if the domain cannot be checked by the provided certificates.
 
 ### Cluster mode
 

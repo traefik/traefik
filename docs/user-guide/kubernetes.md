@@ -1,6 +1,6 @@
 # Kubernetes Ingress Controller
 
-This guide explains how to use Træfik as an Ingress controller for a Kubernetes cluster.
+This guide explains how to use Traefik as an Ingress controller for a Kubernetes cluster.
 
 If you are not familiar with Ingresses in Kubernetes you might want to read the [Kubernetes user guide](https://kubernetes.io/docs/concepts/services-networking/ingress/)
 
@@ -19,12 +19,12 @@ The config files used in this guide can be found in the [examples directory](htt
 
 Kubernetes introduces [Role Based Access Control (RBAC)](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) in 1.6+ to allow fine-grained control of Kubernetes resources and API.
 
-If your cluster is configured with RBAC, you will need to authorize Træfik to use the Kubernetes API. There are two ways to set up the proper permission: Via namespace-specific RoleBindings or a single, global ClusterRoleBinding.
+If your cluster is configured with RBAC, you will need to authorize Traefik to use the Kubernetes API. There are two ways to set up the proper permission: Via namespace-specific RoleBindings or a single, global ClusterRoleBinding.
 
-RoleBindings per namespace enable to restrict granted permissions to the very namespaces only that Træfik is watching over, thereby following the least-privileges principle. This is the preferred approach if Træfik is not supposed to watch all namespaces, and the set of namespaces does not change dynamically. Otherwise, a single ClusterRoleBinding must be employed.
+RoleBindings per namespace enable to restrict granted permissions to the very namespaces only that Traefik is watching over, thereby following the least-privileges principle. This is the preferred approach if Traefik is not supposed to watch all namespaces, and the set of namespaces does not change dynamically. Otherwise, a single ClusterRoleBinding must be employed.
 
 !!! note
-    RoleBindings per namespace are available in Træfik 1.5 and later. Please use ClusterRoleBindings for older versions.
+    RoleBindings per namespace are available in Traefik 1.5 and later. Please use ClusterRoleBindings for older versions.
 
 For the sake of simplicity, this guide will use a ClusterRoleBinding:
 
@@ -74,11 +74,11 @@ subjects:
 kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik-rbac.yaml
 ```
 
-For namespaced restrictions, one RoleBinding is required per watched namespace along with a corresponding configuration of Træfik's `kubernetes.namespaces` parameter.
+For namespaced restrictions, one RoleBinding is required per watched namespace along with a corresponding configuration of Traefik's `kubernetes.namespaces` parameter.
 
-## Deploy Træfik using a Deployment or DaemonSet
+## Deploy Traefik using a Deployment or DaemonSet
 
-It is possible to use Træfik with a [Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) or a [DaemonSet](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) object,
+It is possible to use Traefik with a [Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) or a [DaemonSet](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) object,
  whereas both options have their own pros and cons:
 
 - The scalability can be much better when using a Deployment, because you will have a Single-Pod-per-Node model when using a DaemonSet, whereas you may need less replicas based on your environment when using a Deployment.
@@ -221,7 +221,7 @@ spec:
 !!! note
     This will create a Daemonset that uses privileged ports 80/8080 on the host. This may not work on all providers, but illustrates the static (non-NodePort) hostPort binding. The `traefik-ingress-service` can still be used inside the cluster to access the DaemonSet pods.
 
-To deploy Træfik to your cluster start by submitting one of the YAML files to the cluster with `kubectl`:
+To deploy Traefik to your cluster start by submitting one of the YAML files to the cluster with `kubectl`:
 
 ```shell
 kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik-deployment.yaml
@@ -257,14 +257,14 @@ traefik-ingress-controller-678226159-eqseo   1/1       Running   0          7m
 ```
 
 You should see that after submitting the Deployment or DaemonSet to Kubernetes it has launched a Pod, and it is now running.
-_It might take a few moments for Kubernetes to pull the Træfik image and start the container._
+_It might take a few moments for Kubernetes to pull the Traefik image and start the container._
 
 !!! note
     You could also check the deployment with the Kubernetes dashboard, run
     `minikube dashboard` to open it in your browser, then choose the `kube-system`
     namespace from the menu at the top right of the screen.
 
-You should now be able to access Træfik on port 80 of your Minikube instance when using the DaemonSet:
+You should now be able to access Traefik on port 80 of your Minikube instance when using the DaemonSet:
 
 ```shell
 curl $(minikube ip)
@@ -285,23 +285,23 @@ curl $(minikube ip):<NODEPORT>
 ```
 
 !!! note
-    We expect to see a 404 response here as we haven't yet given Træfik any configuration.
+    We expect to see a 404 response here as we haven't yet given Traefik any configuration.
 
 All further examples below assume a DaemonSet installation. Deployment users will need to append the NodePort when constructing requests.
 
-## Deploy Træfik using Helm Chart
+## Deploy Traefik using Helm Chart
 
 !!! note
-    The Helm Chart is maintained by the community, not the Træfik project maintainers.
+    The Helm Chart is maintained by the community, not the Traefik project maintainers.
 
-Instead of installing Træfik via Kubernetes object directly, you can also use the Træfik Helm chart.
+Instead of installing Traefik via Kubernetes object directly, you can also use the Traefik Helm chart.
 
-Install the Træfik chart by:
+Install the Traefik chart by:
 
 ```shell
 helm install stable/traefik
 ```
-Install the Træfik chart using a values.yaml file.
+Install the Traefik chart using a values.yaml file.
 
 ```shell
 helm install --values values.yaml stable/traefik
@@ -320,7 +320,7 @@ For more information, check out [the documentation](https://github.com/kubernete
 
 ## Submitting an Ingress to the Cluster
 
-Lets start by creating a Service and an Ingress that will expose the [Træfik Web UI](https://github.com/containous/traefik#web-ui).
+Lets start by creating a Service and an Ingress that will expose the [Traefik Web UI](https://github.com/containous/traefik#web-ui).
 
 ```yaml
 apiVersion: v1
@@ -367,7 +367,7 @@ You can get the IP address of your minikube instance by running `minikube ip`:
 echo "$(minikube ip) traefik-ui.minikube" | sudo tee -a /etc/hosts
 ```
 
-We should now be able to visit [traefik-ui.minikube](http://traefik-ui.minikube) in the browser and view the Træfik web UI.
+We should now be able to visit [traefik-ui.minikube](http://traefik-ui.minikube) in the browser and view the Traefik web UI.
 
 ### Add a TLS Certificate to the Ingress
 
@@ -421,7 +421,7 @@ If there are any errors while loading the TLS section of an ingress, the whole i
 
 ## Basic Authentication
 
-It's possible to protect access to Træfik through basic authentication. (See the [Kubernetes Ingress](/configuration/backends/kubernetes) configuration page for syntactical details and restrictions.)
+It's possible to protect access to Traefik through basic authentication. (See the [Kubernetes Ingress](/configuration/backends/kubernetes) configuration page for syntactical details and restrictions.)
 
 ### Creating the Secret
 
@@ -677,7 +677,7 @@ spec:
 kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/cheese-ingress.yaml
 ```
 
-Now visit the [Træfik dashboard](http://traefik-ui.minikube/) and you should see a frontend for each host.
+Now visit the [Traefik dashboard](http://traefik-ui.minikube/) and you should see a frontend for each host.
 Along with a backend listing for each service with a server set up for each pod.
 
 If you edit your `/etc/hosts` again you should be able to access the cheese websites in your browser.
@@ -726,7 +726,7 @@ spec:
 [examples/k8s/cheeses-ingress.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/cheeses-ingress.yaml)
 
 !!! note
-    We are configuring Træfik to strip the prefix from the url path with the `traefik.frontend.rule.type` annotation so that we can use the containers from the previous example without modification.
+    We are configuring Traefik to strip the prefix from the url path with the `traefik.frontend.rule.type` annotation so that we can use the containers from the previous example without modification.
 
 ```shell
 kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/cheeses-ingress.yaml
@@ -744,7 +744,7 @@ You should now be able to visit the websites in your browser.
 
 ## Multiple Ingress Definitions for the Same Host (or Host+Path)
 
-Træfik will merge multiple Ingress definitions for the same host/path pair into one definition.
+Traefik will merge multiple Ingress definitions for the same host/path pair into one definition.
 
 Let's say the number of cheese services is growing.
 It is now time to move the cheese services to a dedicated cheese namespace to simplify the managements of cheese and non-cheese services.
@@ -771,7 +771,7 @@ spec:
           servicePort: http
 ```
 
-Træfik will now look for cheddar service endpoints (ports on healthy pods) in both the cheese and the default namespace.
+Traefik will now look for cheddar service endpoints (ports on healthy pods) in both the cheese and the default namespace.
 Deploying cheddar into the cheese namespace and afterwards shutting down cheddar in the default namespace is enough to migrate the traffic.
 
 !!! note
@@ -824,12 +824,12 @@ Note that priority values must be quoted to avoid numeric interpretation (which 
 ## Forwarding to ExternalNames
 
 When specifying an [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#services-without-selectors),
-Træfik will forward requests to the given host accordingly and use HTTPS when the Service port matches 443.
+Traefik will forward requests to the given host accordingly and use HTTPS when the Service port matches 443.
 This still requires setting up a proper port mapping on the Service from the Ingress port to the (external) Service port.
 
 ## Disable passing the Host Header
 
-By default Træfik will pass the incoming Host header to the upstream resource.
+By default Traefik will pass the incoming Host header to the upstream resource.
 
 However, there are times when you may not want this to be the case. For example, if your service is of the ExternalName type.
 
@@ -889,38 +889,38 @@ If you were to visit `example.com/static` the request would then be passed on to
 
 ## Partitioning the Ingress object space
 
-By default, Træfik processes every Ingress objects it observes. At times, however, it may be desirable to ignore certain objects. The following sub-sections describe common use cases and how they can be handled with Træfik.
+By default, Traefik processes every Ingress objects it observes. At times, however, it may be desirable to ignore certain objects. The following sub-sections describe common use cases and how they can be handled with Traefik.
 
-### Between Træfik and other Ingress controller implementations
+### Between Traefik and other Ingress controller implementations
 
-Sometimes Træfik runs along other Ingress controller implementations. One such example is when both Træfik and a cloud provider Ingress controller are active.
+Sometimes Traefik runs along other Ingress controller implementations. One such example is when both Traefik and a cloud provider Ingress controller are active.
 
-The `kubernetes.io/ingress.class` annotation can be attached to any Ingress object in order to control whether Træfik should handle it.
+The `kubernetes.io/ingress.class` annotation can be attached to any Ingress object in order to control whether Traefik should handle it.
 
-If the annotation is missing, contains an empty value, or the value `traefik`, then the Træfik controller will take responsibility and process the associated Ingress object.
+If the annotation is missing, contains an empty value, or the value `traefik`, then the Traefik controller will take responsibility and process the associated Ingress object.
 
-It is also possible to set the `ingressClass` option in Træfik to a particular value. Træfik will only process matching Ingress objects.
-For instance, setting the option to `traefik-internal` causes Træfik to process Ingress objects with the same `kubernetes.io/ingress.class` annotation value, ignoring all other objects (including those with a `traefik` value, empty value, and missing annotation).
+It is also possible to set the `ingressClass` option in Traefik to a particular value. Traefik will only process matching Ingress objects.
+For instance, setting the option to `traefik-internal` causes Traefik to process Ingress objects with the same `kubernetes.io/ingress.class` annotation value, ignoring all other objects (including those with a `traefik` value, empty value, and missing annotation).
 
 !!! note
     Letting multiple ingress controllers handle the same ingress objects can lead to unintended behavior.
     It is recommended to prefix all ingressClass values with `traefik` to avoid unintended collisions with other ingress implementations.
 
-### Between multiple Træfik Deployments
+### Between multiple Traefik Deployments
 
-Sometimes multiple Træfik Deployments are supposed to run concurrently.
+Sometimes multiple Traefik Deployments are supposed to run concurrently.
 For instance, it is conceivable to have one Deployment deal with internal and another one with external traffic.
 
-For such cases, it is advisable to classify Ingress objects through a label and configure the `labelSelector` option per each Træfik Deployment accordingly.
+For such cases, it is advisable to classify Ingress objects through a label and configure the `labelSelector` option per each Traefik Deployment accordingly.
 To stick with the internal/external example above, all Ingress objects meant for internal traffic could receive a `traffic-type: internal` label while objects designated for external traffic receive a `traffic-type: external` label.
-The label selectors on the Træfik Deployments would then be `traffic-type=internal` and `traffic-type=external`, respectively.
+The label selectors on the Traefik Deployments would then be `traffic-type=internal` and `traffic-type=external`, respectively.
 
 ## Traffic Splitting
 
 It is possible to split Ingress traffic in a fine-grained manner between multiple deployments using _service weights_.
 
 One canonical use case is canary releases where a deployment representing a newer release is to receive an initially small but ever-increasing fraction of the requests over time.
-The way this can be done in Træfik is to specify a percentage of requests that should go into each deployment.
+The way this can be done in Traefik is to specify a percentage of requests that should go into each deployment.
 
 For instance, say that an application `my-app` runs in version 1.
 A newer version 2 is about to be released, but confidence in the robustness and reliability of new version running in production can only be gained gradually.
@@ -953,7 +953,7 @@ spec:
 ```
 
 Take note of the `traefik.ingress.kubernetes.io/service-weights` annotation: It specifies the distribution of requests among the referenced backend services, `my-app` and `my-app-canary`.
-With this definition, Træfik will route 99% of the requests to the pods backed by the `my-app` deployment, and 1% to those backed by `my-app-canary`.
+With this definition, Traefik will route 99% of the requests to the pods backed by the `my-app` deployment, and 1% to those backed by `my-app-canary`.
 Over time, the ratio may slowly shift towards the canary deployment until it is deemed to replace the previous main application, in steps such as 5%/95%, 10%/90%, 50%/50%, and finally 100%/0%.
 
 A few conditions must hold for service weights to be applied correctly:
@@ -1006,7 +1006,7 @@ The examples shown deliberately do not specify any [resource limitations](https:
 
 In a production environment, however, it is important to set proper bounds, especially with regards to CPU:
 
-- too strict and Træfik will be throttled while serving requests (as Kubernetes imposes hard quotas)
-- too loose and Træfik may waste resources not available for other containers
+- too strict and Traefik will be throttled while serving requests (as Kubernetes imposes hard quotas)
+- too loose and Traefik may waste resources not available for other containers
 
 When in doubt, you should measure your resource needs, and adjust requests and limits accordingly.

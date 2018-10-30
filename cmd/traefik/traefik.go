@@ -71,6 +71,7 @@ Complete documentation is available at https://traefik.io`,
 	f.AddParser(reflect.TypeOf(kubernetes.Namespaces{}), &kubernetes.Namespaces{})
 	f.AddParser(reflect.TypeOf(ecs.Clusters{}), &ecs.Clusters{})
 	f.AddParser(reflect.TypeOf([]types.Domain{}), &types.Domains{})
+	f.AddParser(reflect.TypeOf(types.DNSResolvers{}), &types.DNSResolvers{})
 	f.AddParser(reflect.TypeOf(types.Buckets{}), &types.Buckets{})
 	f.AddParser(reflect.TypeOf(types.StatusCodes{}), &types.StatusCodes{})
 	f.AddParser(reflect.TypeOf(types.FieldNames{}), &types.FieldNames{})

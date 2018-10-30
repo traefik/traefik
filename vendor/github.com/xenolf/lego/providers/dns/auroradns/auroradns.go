@@ -1,3 +1,4 @@
+// Package auroradns implements a DNS provider for solving the DNS-01 challenge using Aurora DNS.
 package auroradns
 
 import (
@@ -6,9 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/edeckers/auroradnsclient"
-	"github.com/edeckers/auroradnsclient/records"
-	"github.com/edeckers/auroradnsclient/zones"
+	"github.com/ldez/go-auroradns"
 	"github.com/xenolf/lego/acme"
 	"github.com/xenolf/lego/platform/config/env"
 )
@@ -39,7 +38,7 @@ type DNSProvider struct {
 	recordIDs   map[string]string
 	recordIDsMu sync.Mutex
 	config      *Config
-	client      *auroradnsclient.AuroraDNSClient
+	client      *auroradns.Client
 }
 
 // NewDNSProvider returns a DNSProvider instance configured for AuroraDNS.
@@ -85,7 +84,12 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 		config.BaseURL = defaultBaseURL
 	}
 
-	client, err := auroradnsclient.NewAuroraDNSClient(config.BaseURL, config.UserID, config.Key)
+	tr, err := auroradns.NewTokenTransport(config.UserID, config.Key)
+	if err != nil {
+		return nil, fmt.Errorf("aurora: %v", err)
+	}
+
+	client, err := auroradns.NewClient(tr.Client(), auroradns.WithBaseURL(config.BaseURL))
 	if err != nil {
 		return nil, fmt.Errorf("aurora: %v", err)
 	}
@@ -117,26 +121,25 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 	authZone = acme.UnFqdn(authZone)
 
-	zoneRecord, err := d.getZoneInformationByName(authZone)
+	zone, err := d.getZoneInformationByName(authZone)
 	if err != nil {
 		return fmt.Errorf("aurora: could not create record: %v", err)
 	}
 
-	reqData :=
-		records.CreateRecordRequest{
-			RecordType: "TXT",
-			Name:       subdomain,
-			Content:    value,
-			TTL:        d.config.TTL,
-		}
+	record := auroradns.Record{
+		RecordType: "TXT",
+		Name:       subdomain,
+		Content:    value,
+		TTL:        d.config.TTL,
+	}
 
-	respData, err := d.client.CreateRecord(zoneRecord.ID, reqData)
+	newRecord, _, err := d.client.CreateRecord(zone.ID, record)
 	if err != nil {
 		return fmt.Errorf("aurora: could not create record: %v", err)
 	}
 
 	d.recordIDsMu.Lock()
-	d.recordIDs[fqdn] = respData.ID
+	d.recordIDs[fqdn] = newRecord.ID
 	d.recordIDsMu.Unlock()
 
 	return nil
@@ -161,12 +164,12 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 
 	authZone = acme.UnFqdn(authZone)
 
-	zoneRecord, err := d.getZoneInformationByName(authZone)
+	zone, err := d.getZoneInformationByName(authZone)
 	if err != nil {
 		return err
 	}
 
-	_, err = d.client.RemoveRecord(zoneRecord.ID, recordID)
+	_, _, err = d.client.DeleteRecord(zone.ID, recordID)
 	if err != nil {
 		return err
 	}
@@ -184,10 +187,10 @@ func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 	return d.config.PropagationTimeout, d.config.PollingInterval
 }
 
-func (d *DNSProvider) getZoneInformationByName(name string) (zones.ZoneRecord, error) {
-	zs, err := d.client.GetZones()
+func (d *DNSProvider) getZoneInformationByName(name string) (auroradns.Zone, error) {
+	zs, _, err := d.client.ListZones()
 	if err != nil {
-		return zones.ZoneRecord{}, err
+		return auroradns.Zone{}, err
 	}
 
 	for _, element := range zs {
@@ -196,5 +199,5 @@ func (d *DNSProvider) getZoneInformationByName(name string) (zones.ZoneRecord, e
 		}
 	}
 
-	return zones.ZoneRecord{}, fmt.Errorf("could not find Zone record")
+	return auroradns.Zone{}, fmt.Errorf("could not find Zone record")
 }

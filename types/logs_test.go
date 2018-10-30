@@ -301,6 +301,14 @@ func TestFieldsHeadersNamesSet(t *testing.T) {
 				"X-HEADER-2": "bar",
 			},
 		},
+		{
+			desc:  "Two values separated by space with escaped double quotes should return FieldNames of size 2",
+			value: "\"X-HEADER-1=foo X-HEADER-2=bar\"",
+			expected: &FieldHeaderNames{
+				"X-HEADER-1": "foo",
+				"X-HEADER-2": "bar",
+			},
+		},
 	}
 
 	for _, test := range testCases {

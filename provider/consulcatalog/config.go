@@ -34,6 +34,7 @@ func (p *Provider) buildConfiguration(catalog []catalogUpdate) *types.Configurat
 		"getMaxConn":            label.GetMaxConn,
 		"getHealthCheck":        label.GetHealthCheck,
 		"getBuffering":          label.GetBuffering,
+		"getResponseForwarding": label.GetResponseForwarding,
 		"getServer":             p.getServer,
 
 		// Frontend functions
@@ -111,7 +112,7 @@ func (p *Provider) getFrontendRule(service serviceUpdate) string {
 		return ""
 	}
 
-	return buffer.String()
+	return strings.TrimSuffix(buffer.String(), ".")
 }
 
 func (p *Provider) getServer(node *api.ServiceEntry) types.Server {

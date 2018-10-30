@@ -1,6 +1,6 @@
 # File Provider
 
-Træfik can be configured with a file.
+Traefik can be configured with a file.
 
 ## Reference
 
@@ -23,6 +23,9 @@ Træfik can be configured with a file.
 
     [backends.backend1.circuitBreaker]
       expression = "NetworkErrorRatio() > 0.5"
+      
+    [backends.backend1.responseForwarding]
+      flushInterval = "10ms"
 
     [backends.backend1.loadBalancer]
       method = "drr"
@@ -190,16 +193,16 @@ Træfik can be configured with a file.
 
 You have two choices:
 
-- [Rules in Træfik configuration file](/configuration/backends/file/#rules-in-trfik-configuration-file)
+- [Rules in Traefik configuration file](/configuration/backends/file/#rules-in-traefik-configuration-file)
 - [Rules in dedicated files](/configuration/backends/file/#rules-in-dedicated-files)
 
-To enable the file backend, you must either pass the `--file` option to the Træfik binary or put the `[file]` section (with or without inner settings) in the configuration file.
+To enable the file backend, you must either pass the `--file` option to the Traefik binary or put the `[file]` section (with or without inner settings) in the configuration file.
 
-The configuration file allows managing both backends/frontends and HTTPS certificates (which are not [Let's Encrypt](https://letsencrypt.org) certificates generated through Træfik).
+The configuration file allows managing both backends/frontends and HTTPS certificates (which are not [Let's Encrypt](https://letsencrypt.org) certificates generated through Traefik).
 
-TOML templating can be used if rules are not defined in the Træfik configuration file.
+TOML templating can be used if rules are not defined in the Traefik configuration file.
 
-### Rules in Træfik Configuration File
+### Rules in Traefik Configuration File
 
 Add your configuration at the end of the global configuration file `traefik.toml`:
 
@@ -245,11 +248,11 @@ defaultEntryPoints = ["http", "https"]
     It's recommended to use the file provider to declare certificates.
 
 !!! warning
-    TOML templating cannot be used if rules are defined in the Træfik configuration file.
+    TOML templating cannot be used if rules are defined in the Traefik configuration file.
 
 ### Rules in Dedicated Files
 
-Træfik allows defining rules in one or more separate files.
+Traefik allows defining rules in one or more separate files.
 
 #### One Separate File
 
@@ -270,7 +273,7 @@ defaultEntryPoints = ["http", "https"]
   watch = true
 ```
 
-The option `file.watch` allows Træfik to watch file changes automatically.
+The option `file.watch` allows Traefik to watch file changes automatically.
 
 #### Multiple Separated Files
 
@@ -282,7 +285,7 @@ You could have multiple `.toml` files in a directory (and recursively in its sub
   watch = true
 ```
 
-The option `file.watch` allows Træfik to watch file changes automatically.
+The option `file.watch` allows Traefik to watch file changes automatically.
 
 #### Separate Files Content
 
@@ -320,9 +323,9 @@ Backends, Frontends and TLS certificates are defined one at time, as described i
 
 !!! warning
     TOML templating can only be used **if rules are defined in one or more separate files**.
-    Templating will not work in the Træfik configuration file.
+    Templating will not work in the Traefik configuration file.
 
-Træfik allows using TOML templating.
+Traefik allows using TOML templating.
 
 Thus, it's possible to define easily lot of Backends, Frontends and TLS certificates as described in the file `template-rules.toml` :
 

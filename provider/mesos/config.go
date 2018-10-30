@@ -29,15 +29,16 @@ func (p *Provider) buildConfiguration(tasks []state.Task) *types.Configuration {
 		"getID":               getID,
 
 		// Backend functions
-		"getBackendName":    getBackendName,
-		"getCircuitBreaker": label.GetCircuitBreaker,
-		"getLoadBalancer":   label.GetLoadBalancer,
-		"getMaxConn":        label.GetMaxConn,
-		"getHealthCheck":    label.GetHealthCheck,
-		"getBuffering":      label.GetBuffering,
-		"getServers":        p.getServers,
-		"getHost":           p.getHost,
-		"getServerPort":     p.getServerPort,
+		"getBackendName":        getBackendName,
+		"getCircuitBreaker":     label.GetCircuitBreaker,
+		"getLoadBalancer":       label.GetLoadBalancer,
+		"getMaxConn":            label.GetMaxConn,
+		"getHealthCheck":        label.GetHealthCheck,
+		"getBuffering":          label.GetBuffering,
+		"getResponseForwarding": label.GetResponseForwarding,
+		"getServers":            p.getServers,
+		"getHost":               p.getHost,
+		"getServerPort":         p.getServerPort,
 
 		// Frontend functions
 		"getSegmentNameSuffix": getSegmentNameSuffix,
@@ -222,8 +223,11 @@ func (p *Provider) getFrontendRule(task taskData) string {
 	}
 
 	domain := label.GetStringValue(task.TraefikLabels, label.TraefikDomain, p.Domain)
+	if len(domain) > 0 {
+		domain = "." + domain
+	}
 
-	return "Host:" + p.getSegmentSubDomain(task) + "." + domain
+	return "Host:" + p.getSegmentSubDomain(task) + domain
 }
 
 func (p *Provider) getServers(tasks []taskData) map[string]types.Server {

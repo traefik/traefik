@@ -385,6 +385,7 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						label.TraefikBackend: "foobar",
 
 						label.TraefikBackendCircuitBreakerExpression:         "NetworkErrorRatio() > 0.5",
+						label.TraefikBackendResponseForwardingFlushInterval:  "10ms",
 						label.TraefikBackendHealthCheckScheme:                "http",
 						label.TraefikBackendHealthCheckPath:                  "/health",
 						label.TraefikBackendHealthCheckPort:                  "880",
@@ -591,6 +592,9 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 					},
 					CircuitBreaker: &types.CircuitBreaker{
 						Expression: "NetworkErrorRatio() > 0.5",
+					},
+					ResponseForwarding: &types.ResponseForwarding{
+						FlushInterval: "10ms",
 					},
 					LoadBalancer: &types.LoadBalancer{
 						Method: "drr",

@@ -1,4 +1,4 @@
-// Package duckdns Adds lego support for http://duckdns.org.
+// Package duckdns implements a DNS provider for solving the DNS-01 challenge using DuckDNS.
 // See http://www.duckdns.org/spec.jsp for more info on updating TXT records.
 package duckdns
 
@@ -7,8 +7,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
 	"time"
 
+	"github.com/miekg/dns"
 	"github.com/xenolf/lego/acme"
 	"github.com/xenolf/lego/platform/config/env"
 )
@@ -96,9 +100,16 @@ func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 // To update the TXT record we just need to make one simple get request.
 // In DuckDNS you only have one TXT record shared with the domain and all sub domains.
 func updateTxtRecord(domain, token, txt string, clear bool) error {
-	u := fmt.Sprintf("https://www.duckdns.org/update?domains=%s&token=%s&clear=%t&txt=%s", domain, token, clear, txt)
+	u, _ := url.Parse("https://www.duckdns.org/update")
 
-	response, err := acme.HTTPClient.Get(u)
+	query := u.Query()
+	query.Set("domains", getMainDomain(domain))
+	query.Set("token", token)
+	query.Set("clear", strconv.FormatBool(clear))
+	query.Set("txt", txt)
+	u.RawQuery = query.Encode()
+
+	response, err := acme.HTTPClient.Get(u.String())
 	if err != nil {
 		return err
 	}
@@ -114,4 +125,24 @@ func updateTxtRecord(domain, token, txt string, clear bool) error {
 		return fmt.Errorf("request to change TXT record for DuckDNS returned the following result (%s) this does not match expectation (OK) used url [%s]", body, u)
 	}
 	return nil
+}
+
+// DuckDNS only lets you write to your subdomain
+// so it must be in format subdomain.duckdns.org
+// not in format subsubdomain.subdomain.duckdns.org
+// so strip off everything that is not top 3 levels
+func getMainDomain(domain string) string {
+	domain = acme.UnFqdn(domain)
+
+	split := dns.Split(domain)
+	if strings.HasSuffix(strings.ToLower(domain), "duckdns.org") {
+		if len(split) < 3 {
+			return ""
+		}
+
+		firstSubDomainIndex := split[len(split)-3]
+		return domain[firstSubDomainIndex:]
+	}
+
+	return domain[split[len(split)-1]:]
 }

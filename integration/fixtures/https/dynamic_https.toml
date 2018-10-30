@@ -20,6 +20,21 @@
 
 [[tls]]
 entryPoints = ["https"]
+    #  bad certificates to validate the loop on the certificate appending
+  [tls.certificate]
+    # bad content
+    certFile = """-----BEGIN CERTIFICATE-----
+MIIC/zCCAeegAwIBAgIJALAYHG/vGqWEMA0GCSqGSIb3DQEBBQUAMBYxFDASBgNV
+-----END CERTIFICATE-----"""
+    # bad content
+    keyFile = """-----BEGIN RSA PRIVATE KEY-----
+wihZ13e3i5UQEYuoRcH1RUd1wyYoBSKuQnsT2WwVZ1wlXSYaELAbQgaI9NtfBA0G
+eRG3DaVpez4DQVupZDHMgxJUYqqKynUj6GD1YiaxGROj3TYCu6e7OxyhalhCllSu
+w/X5M802XqzLjeec5zHoZDfknnAkgR9MsxZYmZPFaDyL6GOKUB8=
+-----END RSA PRIVATE KEY-----"""
+
+[[tls]]
+entryPoints = ["https"]
   [tls.certificate]
     certFile = """-----BEGIN CERTIFICATE-----
 MIIC/zCCAeegAwIBAgIJALAYHG/vGqWEMA0GCSqGSIb3DQEBBQUAMBYxFDASBgNV

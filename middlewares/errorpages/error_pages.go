@@ -123,7 +123,7 @@ func newRequest(baseURL string) (*http.Request, error) {
 		return nil, fmt.Errorf("error pages: error when parse URL: %v", err)
 	}
 
-	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, u.String(), http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("error pages: error when create query: %v", err)
 	}

@@ -21,14 +21,16 @@ import (
 func (p *Provider) buildConfiguration(instances []ecsInstance) (*types.Configuration, error) {
 	var ecsFuncMap = template.FuncMap{
 		// Backend functions
-		"getHost":           getHost,
-		"getPort":           getPort,
-		"getCircuitBreaker": label.GetCircuitBreaker,
-		"getLoadBalancer":   label.GetLoadBalancer,
-		"getMaxConn":        label.GetMaxConn,
-		"getHealthCheck":    label.GetHealthCheck,
-		"getBuffering":      label.GetBuffering,
-		"getServers":        getServers,
+		"getHost":               getHost,
+		"getPort":               getPort,
+		"getCircuitBreaker":     label.GetCircuitBreaker,
+		"getLoadBalancer":       label.GetLoadBalancer,
+		"getMaxConn":            label.GetMaxConn,
+		"getHealthCheck":        label.GetHealthCheck,
+		"getBuffering":          label.GetBuffering,
+		"getResponseForwarding": label.GetResponseForwarding,
+
+		"getServers": getServers,
 
 		// Frontend functions
 		"filterFrontends":      filterFrontends,
@@ -141,7 +143,11 @@ func (p *Provider) getFrontendRule(i ecsInstance) string {
 	}
 
 	domain := label.GetStringValue(i.SegmentLabels, label.TraefikDomain, p.Domain)
-	defaultRule := "Host:" + strings.ToLower(strings.Replace(i.Name, "_", "-", -1)) + "." + domain
+	if len(domain) > 0 {
+		domain = "." + domain
+	}
+
+	defaultRule := "Host:" + strings.ToLower(strings.Replace(i.Name, "_", "-", -1)) + domain
 
 	return label.GetStringValue(i.TraefikLabels, label.TraefikFrontendRule, defaultRule)
 }

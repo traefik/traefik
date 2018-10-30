@@ -361,3 +361,64 @@ func (s *GRPCSuite) TestGRPCBuffer(c *check.C) {
 	})
 	c.Assert(err, check.IsNil)
 }
+
+func (s *GRPCSuite) TestGRPCBufferWithFlushInterval(c *check.C) {
+	stopStreamExample := make(chan bool)
+	defer func() { stopStreamExample <- true }()
+	lis, err := net.Listen("tcp", ":0")
+	c.Assert(err, check.IsNil)
+	_, port, err := net.SplitHostPort(lis.Addr().String())
+	c.Assert(err, check.IsNil)
+
+	go func() {
+		err := startGRPCServer(lis, &myserver{
+			stopStreamExample: stopStreamExample,
+		})
+		c.Log(err)
+		c.Assert(err, check.IsNil)
+	}()
+
+	file := s.adaptFile(c, "fixtures/grpc/config_with_flush.toml", struct {
+		CertContent    string
+		KeyContent     string
+		GRPCServerPort string
+	}{
+		CertContent:    string(LocalhostCert),
+		KeyContent:     string(LocalhostKey),
+		GRPCServerPort: port,
+	})
+
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+
+	err = cmd.Start()
+	c.Assert(err, check.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("Host:127.0.0.1"))
+	c.Assert(err, check.IsNil)
+	var client helloworld.Greeter_StreamExampleClient
+	client, closer, err := callStreamExampleClientGRPC()
+	defer closer()
+	c.Assert(err, check.IsNil)
+
+	received := make(chan bool)
+	go func() {
+		tr, err := client.Recv()
+		c.Assert(err, check.IsNil)
+		c.Assert(len(tr.Data), check.Equals, 512)
+		received <- true
+	}()
+
+	err = try.Do(time.Millisecond*100, func() error {
+		select {
+		case <-received:
+			return nil
+		default:
+			return errors.New("failed to receive stream data")
+		}
+	})
+	c.Assert(err, check.IsNil)
+}

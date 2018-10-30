@@ -144,6 +144,14 @@ func (s *Server) buildServerEntryPointMiddlewares(serverEntryPointName string) (
 		}
 	}
 
+	if s.entryPoints[serverEntryPointName].Configuration.Redirect != nil {
+		redirectHandlers, err := s.buildEntryPointRedirect()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create redirect middleware: %v", err)
+		}
+		serverMiddlewares = append(serverMiddlewares, redirectHandlers[serverEntryPointName])
+	}
+
 	if s.entryPoints[serverEntryPointName].Configuration.Auth != nil {
 		authMiddleware, err := mauth.NewAuthenticator(s.entryPoints[serverEntryPointName].Configuration.Auth, s.tracingMiddleware)
 		if err != nil {
@@ -306,7 +314,8 @@ func buildIPWhiteLister(whiteList *types.WhiteList, ipStrategy *types.IPStrategy
 
 func (s *Server) wrapNegroniHandlerWithAccessLog(handler negroni.Handler, frontendName string) negroni.Handler {
 	if s.accessLoggerMiddleware != nil {
-		saveBackend := accesslog.NewSaveNegroniBackend(handler, "Træfik")
+		saveUsername := accesslog.NewSaveNegroniUsername(handler)
+		saveBackend := accesslog.NewSaveNegroniBackend(saveUsername, "Traefik")
 		saveFrontend := accesslog.NewSaveNegroniFrontend(saveBackend, frontendName)
 		return saveFrontend
 	}
@@ -315,7 +324,8 @@ func (s *Server) wrapNegroniHandlerWithAccessLog(handler negroni.Handler, fronte
 
 func (s *Server) wrapHTTPHandlerWithAccessLog(handler http.Handler, frontendName string) http.Handler {
 	if s.accessLoggerMiddleware != nil {
-		saveBackend := accesslog.NewSaveBackend(handler, "Træfik")
+		saveUsername := accesslog.NewSaveUsername(handler)
+		saveBackend := accesslog.NewSaveBackend(saveUsername, "Traefik")
 		saveFrontend := accesslog.NewSaveFrontend(saveBackend, frontendName)
 		return saveFrontend
 	}

@@ -20,12 +20,13 @@ func (p *Provider) buildConfiguration(services []rancherData) *types.Configurati
 		"getDomain":     label.GetFuncString(label.TraefikDomain, p.Domain),
 
 		// Backend functions
-		"getCircuitBreaker": label.GetCircuitBreaker,
-		"getLoadBalancer":   label.GetLoadBalancer,
-		"getMaxConn":        label.GetMaxConn,
-		"getHealthCheck":    label.GetHealthCheck,
-		"getBuffering":      label.GetBuffering,
-		"getServers":        getServers,
+		"getCircuitBreaker":     label.GetCircuitBreaker,
+		"getLoadBalancer":       label.GetLoadBalancer,
+		"getMaxConn":            label.GetMaxConn,
+		"getHealthCheck":        label.GetHealthCheck,
+		"getBuffering":          label.GetBuffering,
+		"getResponseForwarding": label.GetResponseForwarding,
+		"getServers":            getServers,
 
 		// Frontend functions
 		"getBackendName":       getBackendName,
@@ -128,7 +129,11 @@ func (p *Provider) serviceFilter(service rancherData) bool {
 
 func (p *Provider) getFrontendRule(serviceName string, labels map[string]string) string {
 	domain := label.GetStringValue(labels, label.TraefikDomain, p.Domain)
-	defaultRule := "Host:" + strings.ToLower(strings.Replace(serviceName, "/", ".", -1)) + "." + domain
+	if len(domain) > 0 {
+		domain = "." + domain
+	}
+
+	defaultRule := "Host:" + strings.ToLower(strings.Replace(serviceName, "/", ".", -1)) + domain
 
 	return label.GetStringValue(labels, label.TraefikFrontendRule, defaultRule)
 }

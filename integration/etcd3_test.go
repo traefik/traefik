@@ -447,7 +447,7 @@ func (s *Etcd3Suite) TestCommandStoreConfig(c *check.C) {
 }
 
 func (s *Etcd3Suite) TestSNIDynamicTlsConfig(c *check.C) {
-	// start Træfik
+	// start Traefik
 	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/etcd/simple_https.toml"),
 		"--etcd",
@@ -584,7 +584,7 @@ func (s *Etcd3Suite) TestSNIDynamicTlsConfig(c *check.C) {
 }
 
 func (s *Etcd3Suite) TestDeleteSNIDynamicTlsConfig(c *check.C) {
-	// start Træfik
+	// start Traefik
 	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/etcd/simple_https.toml"),
 		"--etcd",

@@ -10,6 +10,12 @@
     [backends."{{ $backendName }}".circuitBreaker]
       expression = "{{ $circuitBreaker.Expression }}"
     {{end}}
+          
+    {{ $responseForwarding := getResponseForwarding $app.SegmentLabels }}
+    {{if $responseForwarding }}
+    [backends."{{ $backendName }}".responseForwarding]
+      flushInterval = "{{ $responseForwarding.FlushInterval }}"
+    {{end}}
 
     {{ $loadBalancer := getLoadBalancer $app.SegmentLabels }}
     {{if $loadBalancer }}

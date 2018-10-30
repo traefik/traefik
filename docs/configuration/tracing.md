@@ -4,7 +4,7 @@ The tracing system allows developers to visualize call flows in their infrastruc
 
 We use [OpenTracing](http://opentracing.io). It is an open standard designed for distributed tracing.
 
-Træfik supports three tracing backends: Jaeger, Zipkin and DataDog.
+Traefik supports three tracing backends: Jaeger, Zipkin and DataDog.
 
 ## Jaeger
 
@@ -73,7 +73,7 @@ Træfik supports three tracing backends: Jaeger, Zipkin and DataDog.
 ```
 
 !!! warning
-    Træfik is only able to send data over compact thrift protocol to the [Jaeger agent](https://www.jaegertracing.io/docs/deployment/#agent).
+    Traefik is only able to send data over compact thrift protocol to the [Jaeger agent](https://www.jaegertracing.io/docs/deployment/#agent).
 
 ## Zipkin
 

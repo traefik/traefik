@@ -1,6 +1,6 @@
 # Etcd Provider
 
-Træfik can be configured to use Etcd as a provider.
+Traefik can be configured to use Etcd as a provider.
 
 ```toml
 ################################################################

@@ -1,5 +1,40 @@
 # Change Log
 
+## [v1.7.4](https://github.com/containous/traefik/tree/v1.7.4) (2018-10-30)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.3...v1.7.4)
+
+**Bug fixes:**
+- **[acme]** Support custom DNS resolvers for Let&#39;s Encrypt. ([#4101](https://github.com/containous/traefik/pull/4101) by [ldez](https://github.com/ldez))
+- **[acme]** fix: netcup and DuckDNS. ([#4094](https://github.com/containous/traefik/pull/4094) by [ldez](https://github.com/ldez))
+- **[authentication,logs,middleware]** Fix display of client username field ([#4093](https://github.com/containous/traefik/pull/4093) by [Ullaakut](https://github.com/Ullaakut))
+- **[authentication,middleware]** Nil request body with retry ([#4075](https://github.com/containous/traefik/pull/4075) by [ldez](https://github.com/ldez))
+- **[consul,consulcatalog,docker,ecs,k8s,marathon,mesos,rancher]** Add flush interval option on backend ([#4112](https://github.com/containous/traefik/pull/4112) by [juliens](https://github.com/juliens))
+- **[consulcatalog,docker,ecs,marathon,mesos,rancher]** Remove the trailing dot if the domain is not defined. ([#4095](https://github.com/containous/traefik/pull/4095) by [ldez](https://github.com/ldez))
+- **[docker]** Provider docker shutdown problem ([#4122](https://github.com/containous/traefik/pull/4122) by [juliens](https://github.com/juliens))
+- **[k8s]** Add default path if nothing present ([#4097](https://github.com/containous/traefik/pull/4097) by [SantoDE](https://github.com/SantoDE))
+- **[k8s]** Add the missing pass-client-tls annotation to the kubernetes provider ([#4118](https://github.com/containous/traefik/pull/4118) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[logs]** Fix access log field parsing ([#4113](https://github.com/containous/traefik/pull/4113) by [Ullaakut](https://github.com/Ullaakut))
+- **[middleware]** Add static redirect ([#4090](https://github.com/containous/traefik/pull/4090) by [SantoDE](https://github.com/SantoDE))
+- **[rules]** Add keepTrailingSlash option ([#4062](https://github.com/containous/traefik/pull/4062) by [juliens](https://github.com/juliens))
+- **[rules]** Case insensitive host rule  ([#3931](https://github.com/containous/traefik/pull/3931) by [bgandon](https://github.com/bgandon))
+- **[tls]** Fix certificate insertion loop to keep valid certificate and ignore the bad one ([#4050](https://github.com/containous/traefik/pull/4050) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[webui]** Typo in the UI. ([#4096](https://github.com/containous/traefik/pull/4096) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[acme]** Adds the note: acme.domains is a startup configuration ([#4065](https://github.com/containous/traefik/pull/4065) by [geraldcroes](https://github.com/geraldcroes))
+- **[acme]** exoscale move from .ch to .com ([#4130](https://github.com/containous/traefik/pull/4130) by [greut](https://github.com/greut))
+- **[acme]** Fixing a typo. ([#4124](https://github.com/containous/traefik/pull/4124) by [konovalov-nk](https://github.com/konovalov-nk))
+- **[acme]** Add a note about TLS-ALPN challenge. ([#4106](https://github.com/containous/traefik/pull/4106) by [ldez](https://github.com/ldez))
+- **[acme]** Clarify DuckDNS does not support multiple TXT records ([#4061](https://github.com/containous/traefik/pull/4061) by [KnicKnic](https://github.com/KnicKnic))
+- **[docker]** Domain is also optional for &#34;normal&#34; mode ([#4086](https://github.com/containous/traefik/pull/4086) by [herver](https://github.com/herver))
+- **[provider]** Fix mistake in the documentation of several backends ([#4133](https://github.com/containous/traefik/pull/4133) by [whalehub](https://github.com/whalehub))
+- Replaces emilevauge/whoami by containous/whoami in the documentation ([#4111](https://github.com/containous/traefik/pull/4111) by [geraldcroes](https://github.com/geraldcroes))
+- Uses ASCII characters to spell Traefik ([#4063](https://github.com/containous/traefik/pull/4063) by [geraldcroes](https://github.com/geraldcroes))
+
+**Misc:**
+- **[tls]** Add double wildcard test ([#4091](https://github.com/containous/traefik/pull/4091) by [dtomcej](https://github.com/dtomcej))
+- **[webui]** Removed unused imports ([#4123](https://github.com/containous/traefik/pull/4123) by [mwvdev](https://github.com/mwvdev))
+
 ## [v1.7.3](https://github.com/containous/traefik/tree/v1.7.3) (2018-10-15)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.2...v1.7.3)
 
