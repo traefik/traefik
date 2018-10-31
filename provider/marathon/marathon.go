@@ -147,10 +147,31 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 			})
 		}
 		configuration := p.loadMarathonConfig()
-		configurationChan <- types.ConfigMessage{
-			ProviderName:  "marathon",
-			Configuration: configuration,
+		if configuration != nil {
+			configurationChan <- types.ConfigMessage{
+				ProviderName:  "marathon",
+				Configuration: configuration,
+			}
+		} else if p.Watch {
+			pool.Go(func(stop chan bool) {
+				for {
+					select {
+					case <-stop:
+						return
+					case <-time.After(5 * time.Second):
+						configuration := p.loadMarathonConfig()
+						if configuration != nil {
+							configurationChan <- types.ConfigMessage{
+								ProviderName:  "marathon",
+								Configuration: configuration,
+							}
+							return
+						}
+					}
+				}
+			})
 		}
+
 		return nil
 	}
 
