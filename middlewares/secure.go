@@ -17,6 +17,7 @@ func NewSecure(headers *types.Headers) *secure.Secure {
 		SSLRedirect:             headers.SSLRedirect,
 		SSLTemporaryRedirect:    headers.SSLTemporaryRedirect,
 		SSLHost:                 headers.SSLHost,
+		SSLForceHost:            headers.SSLForceHost,
 		SSLProxyHeaders:         headers.SSLProxyHeaders,
 		STSSeconds:              headers.STSSeconds,
 		STSIncludeSubdomains:    headers.STSIncludeSubdomains,
