@@ -1027,7 +1027,7 @@ func TestDockerCheckPortLabels(t *testing.T) {
 		{
 			container: containerJSON(labels(map[string]string{
 				types.LabelPrefix + "servicename.protocol": "http",
-				types.LabelPort:                            "80",
+				types.LabelPort: "80",
 			})),
 			expectedError: false,
 		},

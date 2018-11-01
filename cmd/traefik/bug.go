@@ -92,7 +92,7 @@ func newBugCmd(traefikConfiguration *TraefikConfiguration, traefikPointersConfig
 		Description:           `Report an issue on Traefik bugtracker`,
 		Config:                traefikConfiguration,
 		DefaultPointersConfig: traefikPointersConfiguration,
-		Run: runBugCmd(traefikConfiguration),
+		Run:                   runBugCmd(traefikConfiguration),
 		Metadata: map[string]string{
 			"parseAllSources": "true",
 		},

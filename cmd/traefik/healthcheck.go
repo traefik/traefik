@@ -18,7 +18,7 @@ func newHealthCheckCmd(traefikConfiguration *TraefikConfiguration, traefikPointe
 		Description:           `Calls traefik /ping to check health (web provider must be enabled)`,
 		Config:                traefikConfiguration,
 		DefaultPointersConfig: traefikPointersConfiguration,
-		Run: runHealthCheck(traefikConfiguration),
+		Run:                   runHealthCheck(traefikConfiguration),
 		Metadata: map[string]string{
 			"parseAllSources": "true",
 		},
