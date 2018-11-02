@@ -38,6 +38,10 @@ const (
 	RequestMethod = "RequestMethod"
 	// RequestPath is the map key used for the HTTP request URI, not including the scheme, host or port.
 	RequestPath = "RequestPath"
+	// RequestPathRaw is the map key used for the HTTP request path, without any others URI parts.
+	RequestPathRaw = "RequestPathRaw"
+	// RequestQuery is the map key used for the HTTP request query, without any others URI parts.
+	RequestQuery = "RequestQuery"
 	// RequestProtocol is the map key used for the version of HTTP requested.
 	RequestProtocol = "RequestProtocol"
 	// RequestContentSize is the map key used for the number of bytes in the request entity (a.k.a. body) sent by the client.
@@ -82,6 +86,8 @@ var defaultCoreKeys = [...]string{
 	RequestPort,
 	RequestMethod,
 	RequestPath,
+	RequestPathRaw,
+	RequestQuery,
 	RequestProtocol,
 	RequestContentSize,
 	OriginDuration,

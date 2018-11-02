@@ -163,6 +163,9 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 		ForceQuery: req.URL.ForceQuery,
 		Fragment:   req.URL.Fragment,
 	}
+	core[RequestPathRaw] = req.URL.Path
+	core[RequestQuery] = req.URL.RawQuery
+
 	urlCopyString := urlCopy.String()
 	core[RequestMethod] = req.Method
 	core[RequestPath] = urlCopyString

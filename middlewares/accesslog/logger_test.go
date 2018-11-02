@@ -31,6 +31,7 @@ var (
 	testHostname            = "TestHost"
 	testUsername            = "TestUser"
 	testPath                = "testpath"
+	testQuery               = "foo=bar"
 	testPort                = 8181
 	testProto               = "HTTP/0.0"
 	testMethod              = http.MethodPost
@@ -129,7 +130,7 @@ func TestLoggerCLF(t *testing.T) {
 	logData, err := ioutil.ReadFile(logFilePath)
 	require.NoError(t, err)
 
-	expectedLog := ` TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 1 "testFrontend" "http://127.0.0.1/testBackend" 1ms`
+	expectedLog := ` TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath?foo=bar HTTP/0.0" 123 12 "testReferer" "testUserAgent" 1 "testFrontend" "http://127.0.0.1/testBackend" 1ms`
 	assertValidLogData(t, expectedLog, logData)
 }
 
@@ -144,7 +145,7 @@ func TestAsyncLoggerCLF(t *testing.T) {
 	logData, err := ioutil.ReadFile(logFilePath)
 	require.NoError(t, err)
 
-	expectedLog := ` TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 1 "testFrontend" "http://127.0.0.1/testBackend" 1ms`
+	expectedLog := ` TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath?foo=bar HTTP/0.0" 123 12 "testReferer" "testUserAgent" 1 "testFrontend" "http://127.0.0.1/testBackend" 1ms`
 	assertValidLogData(t, expectedLog, logData)
 }
 
@@ -196,7 +197,9 @@ func TestLoggerJSON(t *testing.T) {
 				RequestHost:               assertString(testHostname),
 				RequestAddr:               assertString(testHostname),
 				RequestMethod:             assertString(testMethod),
-				RequestPath:               assertString(testPath),
+				RequestPathRaw:            assertString(testPath),
+				RequestQuery:              assertString(testQuery),
+				RequestPath:               assertString(testPath + "?" + testQuery),
 				RequestProtocol:           assertString(testProto),
 				RequestPort:               assertString("-"),
 				DownstreamStatus:          assertFloat64(float64(testStatus)),
@@ -349,7 +352,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 				FilePath: "",
 				Format:   CommonFormat,
 			},
-			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
+			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath?foo=bar HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
 		},
 		{
 			desc: "default config with empty filters",
@@ -358,7 +361,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 				Format:   CommonFormat,
 				Filters:  &types.AccessLogFilters{},
 			},
-			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
+			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath?foo=bar HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
 		},
 		{
 			desc: "Status code filter not matching",
@@ -380,7 +383,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 					StatusCodes: []string{"123"},
 				},
 			},
-			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
+			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath?foo=bar HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
 		},
 		{
 			desc: "Duration filter not matching",
@@ -402,7 +405,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 					MinDuration: parse.Duration(1 * time.Millisecond),
 				},
 			},
-			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
+			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath?foo=bar HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
 		},
 		{
 			desc: "Retry attempts filter matching",
@@ -413,7 +416,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 					RetryAttempts: true,
 				},
 			},
-			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
+			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath?foo=bar HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
 		},
 		{
 			desc: "Default mode keep",
@@ -424,7 +427,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 					DefaultMode: "keep",
 				},
 			},
-			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
+			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath?foo=bar HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
 		},
 		{
 			desc: "Default mode keep with override",
@@ -438,7 +441,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 					},
 				},
 			},
-			expectedLog: `- - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
+			expectedLog: `- - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath?foo=bar HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
 		},
 		{
 			desc: "Default mode drop",
@@ -618,7 +621,8 @@ func doLogging(t *testing.T, config *types.AccessLog) {
 		Method:     testMethod,
 		RemoteAddr: fmt.Sprintf("%s:%d", testHostname, testPort),
 		URL: &url.URL{
-			Path: testPath,
+			Path:     testPath,
+			RawQuery: testQuery,
 		},
 	}
 
