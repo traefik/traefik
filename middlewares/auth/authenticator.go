@@ -134,7 +134,7 @@ func getLinesFromFile(filename string) ([]string, error) {
 	var filteredLines []string
 	for _, rawLine := range rawLines {
 		line := strings.TrimSpace(rawLine)
-		if line != "" {
+		if line != "" && !strings.HasPrefix(line, "#") {
 			filteredLines = append(filteredLines, line)
 		}
 	}

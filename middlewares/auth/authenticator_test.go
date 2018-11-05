@@ -45,6 +45,17 @@ func TestAuthUsersFromFile(t *testing.T) {
 				return parserDigestUsers(digest)
 			},
 		},
+		{
+			authType: "basic",
+			usersStr: "#Comment\ntest:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/\ntest2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0\n",
+			userKeys: []string{"test", "test2"},
+			parserFunc: func(fileName string) (map[string]string, error) {
+				basic := &types.Basic{
+					UsersFile: fileName,
+				}
+				return parserBasicUsers(basic)
+			},
+		},
 	}
 
 	for _, test := range tests {
