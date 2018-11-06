@@ -27,7 +27,7 @@ The `/ping` health-check URL is enabled with the command-line `--ping` or config
 Thus, if you have a regular path for `/foo` and an entrypoint on `:80`, you would access them as follows:
 
 * Regular path: `http://hostname:80/foo`
-* Dashboard: `http://hostname:8080/`
+* Admin panel: `http://hostname:8080/`
 * Ping URL: `http://hostname:8080/ping`
 
 However, for security reasons, you may want to be able to expose the `/ping` health-check URL to outside health-checkers, e.g. an Internet service or cloud load-balancer, _without_ exposing your dashboard's port.
