@@ -169,6 +169,24 @@ service1: 1000%
 
 func TestComputeServiceWeights(t *testing.T) {
 	client := clientMock{
+		services: []*corev1.Service{
+			buildService(
+				sName("service1"),
+				sNamespace("testing"),
+			),
+			buildService(
+				sName("service2"),
+				sNamespace("testing"),
+			),
+			buildService(
+				sName("service3"),
+				sNamespace("testing"),
+			),
+			buildService(
+				sName("service4"),
+				sNamespace("testing"),
+			),
+		},
 		endpoints: []*corev1.Endpoints{
 			buildEndpoint(
 				eNamespace("testing"),
@@ -446,8 +464,12 @@ service2: 80%
 			if test.expectError {
 				require.Error(t, err)
 			} else {
-				for ingSvc, percentage := range test.expectedWeights {
-					assert.Equal(t, int(percentage), weightAllocator.getWeight(ingSvc.host, ingSvc.path, ingSvc.service))
+				if err != nil {
+					t.Errorf("%v failed: %v", test.desc, err)
+				} else {
+					for ingSvc, percentage := range test.expectedWeights {
+						assert.Equal(t, int(percentage), weightAllocator.getWeight(ingSvc.host, ingSvc.path, ingSvc.service))
+					}
 				}
 			}
 		})
