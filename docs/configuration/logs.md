@@ -213,38 +213,41 @@ format = "json"
 
 ### List of all available fields
 
-```ini
-StartUTC
-StartLocal
-Duration
-FrontendName
-BackendName
-BackendURL
-BackendAddr
-ClientAddr
-ClientHost
-ClientPort
-ClientUsername
-RequestAddr
-RequestHost
-RequestPort
-RequestMethod
-RequestPath
-RequestProtocol
-RequestLine
-RequestContentSize
-OriginDuration
-OriginContentSize
-OriginStatus
-OriginStatusLine
-DownstreamStatus
-DownstreamStatusLine
-DownstreamContentSize
-RequestCount
-GzipRatio
-Overhead
-RetryAttempts
-```
+|   Field   |   Description |
+|-----------|---------------|
+|   StartUTC    |   StartUTC is the map key used for the time at which request processing started.  |
+|   StartLocal  |   StartLocal is the map key used for the local time at which request processing started.  |
+|   Duration    |   Duration is the map key used for the total time taken by processing the response, including the origin server's time but not the log writing time.  |
+|   FrontendName    |   FrontendName is the map key used for the name of the Traefik frontend.  |
+|   BackendName |   BackendName is the map key used for the name of the Traefik backend.    |
+|   BackendURL  |   BackendURL is the map key used for the URL of the Traefik backend.  |
+|   BackendAddr |   BackendAddr is the map key used for the IP:port of the Traefik backend (extracted from BackendURL)  |
+|   ClientAddr  |   ClientAddr is the map key used for the remote address in its original form (usually IP:port).   |
+|   ClientHost  |   ClientHost is the map key used for the remote IP address from which the client request was received.    |
+|   ClientPort  |   ClientPort is the map key used for the remote TCP port from which the client request was received.  |
+|   ClientUsername  |   ClientUsername is the map key used for the username provided in the URL, if present.    |
+|   RequestAddr |   RequestAddr is the map key used for the HTTP Host header (usually IP:port). This is treated as not a header by the Go API.  |
+|   RequestHost |   RequestHost is the map key used for the HTTP Host server name (not including port). |
+|   RequestPort |   RequestPort is the map key used for the TCP port from the HTTP Host.    |
+|   RequestMethod   |   RequestMethod is the map key used for the HTTP method.  |
+|   RequestPath |   RequestPath is the map key used for the HTTP request URI, not including the scheme, host or port.   |
+|   RequestPathRaw  |   RequestPathRaw is the map key used for the HTTP request path, without any others URI parts. |
+|   RequestQuery    |   RequestQuery is the map key used for the HTTP request query, without any others URI parts.  |
+|   RequestProtocol |   RequestProtocol is the map key used for the version of HTTP requested.  |
+|   RequestLine |   RequestMethod + RequestPath + RequestProtocol   |
+|   RequestContentSize  |   RequestContentSize is the map key used for the number of bytes in the request entity (a.k.a. body) sent by the client.     |
+|   OriginDuration  |   OriginDuration is the map key used for the time taken by the origin server ('upstream') to return its response. |
+|   OriginContentSize   |   OriginContentSize is the map key used for the content length specified by the origin server, or 0 if unspecified.   |
+|   OriginStatus    |   OriginStatus is the map key used for the HTTP status code returned by the origin server. If the request was handled by this Traefik instance (e.g. with a redirect), then this value will be absent.    |
+|   OriginStatusLine    |   OriginStatus + Status code explanation  |
+|   DownstreamStatus    |   DownstreamStatus is the map key used for the HTTP status code returned to the client.   |
+|   DownstreamStatusLine    |   DownstreamStatus + Status code explanation  |
+|   DownstreamContentSize   |   DownstreamContentSize is the map key used for the number of bytes in the response entity returned to the client. This is in addition to the "Content-Length" header, which may be present in the origin response.   |
+|   RequestCount    |   RequestCount is the map key used for the number of requests received since the Traefik instance started.    |
+|   GzipRatio   |   GzipRatio is the map key used for the response body compression ratio achieved. |
+|   Overhead    |   Overhead is the map key used for the processing time overhead caused by Traefik.    |
+|   RetryAttempts   |   RetryAttempts is the map key used for the amount of attempts the request was retried.   |
+
 
 ### CLF - Common Log Format
 
