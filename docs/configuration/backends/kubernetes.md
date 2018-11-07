@@ -128,10 +128,11 @@ This will give more flexibility in cloud/dynamic environments.
 Traefik automatically requests endpoint information based on the service provided in the ingress spec.
 Although traefik will connect directly to the endpoints (pods), it still checks the service port to see if TLS communication is required.
 
-There are 2 ways to configure Traefik to use https to communicate with backend pods:
+There are 3 ways to configure Traefik to use https to communicate with backend pods:
 
 1. If the service port defined in the ingress spec is 443 (note that you can still use `targetPort` to use a different port on your pod).
 2. If the service port defined in the ingress spec has a name that starts with `https` (such as `https-api`, `https-web` or just `https`).
+3. If the ingress spec includes the annotation `ingress.kubernetes.io/protocol: https`.
 
 If either of those configuration options exist, then the backend communication protocol is assumed to be TLS, and will connect via TLS automatically.
 
@@ -166,7 +167,7 @@ The following general annotations are applicable on the Ingress object:
 | `traefik.ingress.kubernetes.io/service-weights: <YML>`                          | Set ingress backend weights specified as percentage or decimal numbers in YAML. (6)                                                                                                        |
 | `traefik.ingress.kubernetes.io/whitelist-source-range: "1.2.3.0/24, fe80::/16"` | A comma-separated list of IP ranges permitted for access (7).                                                                                                                              |
 | `ingress.kubernetes.io/whitelist-x-forwarded-for: "true"`                       | Use `X-Forwarded-For` header as valid source of IP for the white list.                                                                                                                     |
-| `ingress.kubernetes.io/protocol: <NAME>`                                        | Set the protocol Traefik will use to communicate with pods.                                                                                                                                |
+| `ingress.kubernetes.io/protocol: http,https,h2c`                                | Set the protocol Traefik will use to communicate with pods.                                                                                                                                |
 
 <1> `traefik.ingress.kubernetes.io/app-root`:
 Non-root paths will not be affected by this annotation and handled normally.
