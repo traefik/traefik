@@ -379,7 +379,7 @@ You can add a TLS entrypoint by adding the following `args` to the container spe
 
 ```yaml
  --defaultentrypoints=http,https
- --entrypoints=Name:https Address::443 TLS Compress:true
+ --entrypoints=Name:https Address::443 TLS
  --entrypoints=Name:http Address::80
 ```
     
