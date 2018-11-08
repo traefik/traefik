@@ -357,15 +357,16 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 							continue
 						}
 
-						if service.Spec.Type == "ExternalName" {
+						// We have to treat external-name service differently here b/c it doesn't have any endpoints
+						if service.Spec.Type == corev1.ServiceTypeExternalName {
 							url := protocol + "://" + service.Spec.ExternalName
 							if port.Port != 443 && port.Port != 80 {
 								url = fmt.Sprintf("%s:%d", url, port.Port)
 							}
-
+							externalNameServiceWeight := weightAllocator.getWeight(r.Host, pa.Path, pa.Backend.ServiceName)
 							templateObjects.Backends[baseName].Servers[url] = types.Server{
 								URL:    url,
-								Weight: label.DefaultWeight,
+								Weight: externalNameServiceWeight,
 							}
 						} else {
 							endpoints, exists, err := k8sClient.GetEndpoints(service.Namespace, service.Name)

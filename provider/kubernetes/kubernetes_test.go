@@ -3206,6 +3206,7 @@ func TestPercentageWeightServiceAnnotation(t *testing.T) {
 		buildIngress(
 			iAnnotation(annotationKubernetesServiceWeights, `
 service1: 10%
+service3: 20%
 `),
 			iNamespace("testing"),
 			iRules(
@@ -3214,6 +3215,7 @@ service1: 10%
 					iPaths(
 						onePath(iPath("/foo"), iBackend("service1", intstr.FromString("8080"))),
 						onePath(iPath("/foo"), iBackend("service2", intstr.FromString("7070"))),
+						onePath(iPath("/foo"), iBackend("service3", intstr.FromString("9090"))),
 						onePath(iPath("/bar"), iBackend("service2", intstr.FromString("7070"))),
 					)),
 			),
@@ -3236,6 +3238,16 @@ service1: 10%
 			sSpec(
 				clusterIP("10.0.0.1"),
 				sPorts(sPort(7070, "")),
+			),
+		),
+		buildService(
+			sName("service3"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				sType(corev1.ServiceTypeExternalName),
+				sExternalName("example.com"),
+				sPorts(sPort(9090, "")),
 			),
 		),
 	}
@@ -3285,8 +3297,9 @@ service1: 10%
 				servers(
 					server("http://10.10.0.1:8080", weight(int(newPercentageValueFromFloat64(0.05)))),
 					server("http://10.10.0.2:8080", weight(int(newPercentageValueFromFloat64(0.05)))),
-					server("http://10.10.0.3:7070", weight(int(newPercentageValueFromFloat64(0.45)))),
-					server("http://10.10.0.4:7070", weight(int(newPercentageValueFromFloat64(0.45)))),
+					server("http://10.10.0.3:7070", weight(int(newPercentageValueFromFloat64(0.35)))),
+					server("http://10.10.0.4:7070", weight(int(newPercentageValueFromFloat64(0.35)))),
+					server("http://example.com:9090", weight(int(newPercentageValueFromFloat64(0.2)))),
 				),
 				lbMethod("wrr"),
 			),
