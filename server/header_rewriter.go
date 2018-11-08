@@ -7,6 +7,12 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/whitelist"
 	"github.com/vulcand/oxy/forward"
+	"github.com/vulcand/oxy/utils"
+)
+
+const (
+	xForwardedURI    = "X-Forwarded-Uri"
+	xForwardedMethod = "X-Forwarded-Method"
 )
 
 // NewHeaderRewriter Create a header rewriter
@@ -45,6 +51,8 @@ func (h *headerRewriter) Rewrite(req *http.Request) {
 	err := h.ips.IsAuthorized(req)
 	if err != nil {
 		log.Debug(err)
+		// Remove additional X-Forwarded Headers which are used by the forward authentication
+		utils.RemoveHeaders(req.Header, xForwardedURI, xForwardedMethod)
 		h.secureRewriter.Rewrite(req)
 		return
 	}
