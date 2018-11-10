@@ -210,10 +210,15 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 						}
 						configuration := p.buildConfiguration(containers)
 						if configuration != nil {
-							configurationChan <- types.ConfigMessage{
+							message := types.ConfigMessage{
 								ProviderName:  "docker",
 								Configuration: configuration,
 							}
+							select {
+							case configurationChan <- message:
+							case <-ctx.Done():
+							}
+
 						}
 					}
 
