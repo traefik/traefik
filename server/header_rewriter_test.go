@@ -23,8 +23,10 @@ func TestHeaderRewriter_Rewrite(t *testing.T) {
 			trustedIPs: []string{"10.10.10.10"},
 			insecure:   false,
 			expected: map[string]string{
-				"X-Foo":           "bar",
-				"X-Forwarded-For": "30.30.30.30",
+				"X-Foo":              "bar",
+				"X-Forwarded-For":    "30.30.30.30",
+				"X-Forwarded-Uri":    "/bar",
+				"X-Forwarded-Method": "GET",
 			},
 		},
 		{
@@ -33,8 +35,10 @@ func TestHeaderRewriter_Rewrite(t *testing.T) {
 			trustedIPs: []string{"10.10.10.10"},
 			insecure:   false,
 			expected: map[string]string{
-				"X-Foo":           "bar",
-				"X-Forwarded-For": "",
+				"X-Foo":              "bar",
+				"X-Forwarded-For":    "",
+				"X-Forwarded-Uri":    "",
+				"X-Forwarded-Method": "",
 			},
 		},
 		{
@@ -43,8 +47,10 @@ func TestHeaderRewriter_Rewrite(t *testing.T) {
 			trustedIPs: []string{"10.10.10.10"},
 			insecure:   false,
 			expected: map[string]string{
-				"X-Foo":           "bar",
-				"X-Forwarded-For": "",
+				"X-Foo":              "bar",
+				"X-Forwarded-For":    "",
+				"X-Forwarded-Uri":    "",
+				"X-Forwarded-Method": "",
 			},
 		},
 		{
@@ -53,8 +59,10 @@ func TestHeaderRewriter_Rewrite(t *testing.T) {
 			trustedIPs: []string{"10.10.10.10"},
 			insecure:   true,
 			expected: map[string]string{
-				"X-Foo":           "bar",
-				"X-Forwarded-For": "30.30.30.30",
+				"X-Foo":              "bar",
+				"X-Forwarded-For":    "30.30.30.30",
+				"X-Forwarded-Uri":    "/bar",
+				"X-Forwarded-Method": "GET",
 			},
 		},
 		{
@@ -63,8 +71,10 @@ func TestHeaderRewriter_Rewrite(t *testing.T) {
 			trustedIPs: []string{"10.10.10.10"},
 			insecure:   true,
 			expected: map[string]string{
-				"X-Foo":           "bar",
-				"X-Forwarded-For": "30.30.30.30",
+				"X-Foo":              "bar",
+				"X-Forwarded-For":    "30.30.30.30",
+				"X-Forwarded-Uri":    "/bar",
+				"X-Forwarded-Method": "GET",
 			},
 		},
 		{
@@ -73,8 +83,10 @@ func TestHeaderRewriter_Rewrite(t *testing.T) {
 			trustedIPs: []string{"10.10.10.10"},
 			insecure:   true,
 			expected: map[string]string{
-				"X-Foo":           "bar",
-				"X-Forwarded-For": "30.30.30.30",
+				"X-Foo":              "bar",
+				"X-Forwarded-For":    "30.30.30.30",
+				"X-Forwarded-Uri":    "/bar",
+				"X-Forwarded-Method": "GET",
 			},
 		},
 	}
@@ -93,6 +105,8 @@ func TestHeaderRewriter_Rewrite(t *testing.T) {
 
 			req.Header.Set("X-Foo", "bar")
 			req.Header.Set("X-Forwarded-For", "30.30.30.30")
+			req.Header.Set("X-Forwarded-Uri", "/bar")
+			req.Header.Set("X-Forwarded-Method", "GET")
 
 			rewriter.Rewrite(req)
 
