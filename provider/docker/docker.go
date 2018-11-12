@@ -44,7 +44,7 @@ type Provider struct {
 	UseBindPortIP         bool             `description:"Use the ip address from the bound port, rather than from the inner network" export:"true"`
 	SwarmMode             bool             `description:"Use Docker on Swarm Mode" export:"true"`
 	Network               string           `description:"Default Docker network used" export:"true"`
-	RefreshSeconds        int              `description:"Polling interval for swarm mode (in seconds)" export:"true"`
+	SwarmRefreshPeriod    int              `description:"Polling interval for swarm mode (in seconds)" export:"true"`
 }
 
 // Init the provider
