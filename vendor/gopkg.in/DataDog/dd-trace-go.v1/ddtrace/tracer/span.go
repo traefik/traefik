@@ -81,7 +81,7 @@ func (s *span) SetTag(key string, value interface{}) {
 		return
 	}
 	if key == ext.Error {
-		s.setTagError(value)
+		s.setTagError(value, true)
 		return
 	}
 	if v, ok := value.(string); ok {
@@ -99,7 +99,10 @@ func (s *span) SetTag(key string, value interface{}) {
 
 // setTagError sets the error tag. It accounts for various valid scenarios.
 // This method is not safe for concurrent use.
-func (s *span) setTagError(value interface{}) {
+func (s *span) setTagError(value interface{}, debugStack bool) {
+	if s.finished {
+		return
+	}
 	switch v := value.(type) {
 	case bool:
 		// bool value as per Opentracing spec.
@@ -114,7 +117,9 @@ func (s *span) setTagError(value interface{}) {
 		s.Error = 1
 		s.Meta[ext.ErrorMsg] = v.Error()
 		s.Meta[ext.ErrorType] = reflect.TypeOf(v).String()
-		s.Meta[ext.ErrorStack] = string(debug.Stack())
+		if debugStack {
+			s.Meta[ext.ErrorStack] = string(debug.Stack())
+		}
 	case nil:
 		// no error
 		s.Error = 0
@@ -166,7 +171,9 @@ func (s *span) Finish(opts ...ddtrace.FinishOption) {
 		t = cfg.FinishTime.UnixNano()
 	}
 	if cfg.Error != nil {
-		s.SetTag(ext.Error, cfg.Error)
+		s.Lock()
+		s.setTagError(cfg.Error, !cfg.NoDebugStack)
+		s.Unlock()
 	}
 	s.finish(t)
 }

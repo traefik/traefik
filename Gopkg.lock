@@ -819,7 +819,6 @@
   revision = "9b66602d496a139e4722bdde32f0f1ac1c12d4a8"
 
 [[projects]]
-  branch = "master"
   name = "github.com/jjcollinge/servicefabric"
   packages = ["."]
   revision = "8eebe170fa1ba25d3dfb928b3f86a7313b13b9fe"
@@ -1564,8 +1563,8 @@
     "ddtrace/opentracer",
     "ddtrace/tracer"
   ]
-  revision = "d052956664af54dbcff2712d10c67c76fbfc299f"
-  version = "v1.0.0"
+  revision = "48eeff27357376bcb31a15674dc4be9078de88b3"
+  version = "v1.5.0"
 
 [[projects]]
   name = "gopkg.in/fsnotify.v1"
@@ -1824,6 +1823,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "059f9d29d78e7a800b676c529197fd627de968837b01c663a8a00ee72c36271b"
+  inputs-digest = "6ee32d5903ed13bd76b1611117595144c7dad503aee04cc390b28ca308f2e1b8"
   solver-name = "gps-cdcl"
   solver-version = 1
