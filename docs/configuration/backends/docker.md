@@ -284,8 +284,8 @@ Labels can be used on containers to override default behavior.
 | `traefik.frontend.whiteList.sourceRange=RANGE`                      | Sets a list of IP-Ranges which are allowed to access.<br>An unset or empty list allows all Source-IPs to access.<br>If one of the Net-Specifications are invalid, the whole list is invalid and allows all Source-IPs to access. |
 | `traefik.frontend.whiteList.useXForwardedFor=true`                  | Uses `X-Forwarded-For` header as valid source of IP for the white list.                                                                                                                                                          |
 
-[1] `traefik.docker.network`:
-If a container is linked to several networks, be sure to set the proper network name (you can check with `docker inspect <container_id>`) otherwise it will randomly pick one (depending on how docker is returning them).
+[1] `traefik.docker.network`:  
+If a container is linked to several networks, be sure to set the proper network name (you can check with `docker inspect <container_id>`) otherwise it will randomly pick one (depending on how docker is returning them).  
 For instance when deploying docker `stack` from compose files, the compose defined networks will be prefixed with the `stack` name.
 Or if your service references external network use it's name instead.
 
@@ -294,9 +294,9 @@ To create `user:password` pair, it's possible to use this command:
 `echo $(htpasswd -nb user password) | sed -e s/\\$/\\$\\$/g`.  
 The result will be `user:$$apr1$$9Cv/OMGj$$ZomWQzuQbL.3TRCS81A1g/`, note additional symbol `$` makes escaping.
 
-[3] `traefik.backend.loadbalancer.swarm`:
+[3] `traefik.backend.loadbalancer.swarm`:  
 If you enable this option, Traefik will use the virtual IP provided by docker swarm instead of the containers IPs.
-Which means that Traefik will not perform any kind of load balancing and will delegate this task to swarm.
+Which means that Traefik will not perform any kind of load balancing and will delegate this task to swarm.  
 It also means that Traefik will manipulate only one backend, not one backend per container.
 
 #### Custom Headers
