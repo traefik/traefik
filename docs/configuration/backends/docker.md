@@ -236,7 +236,7 @@ Labels can be used on containers to override default behavior.
 | `traefik.backend.loadbalancer.stickiness=true`                      | Enables backend sticky sessions                                                                                                                                                                                                  |
 | `traefik.backend.loadbalancer.stickiness.cookieName=NAME`           | Sets the cookie name manually for sticky sessions                                                                                                                                                                                |
 | `traefik.backend.loadbalancer.sticky=true`                          | Enables backend sticky sessions (DEPRECATED)                                                                                                                                                                                     |
-| `traefik.backend.loadbalancer.swarm=true`                           | Uses Swarm's inbuilt load balancer (only relevant under Swarm Mode).                                                                                                                                                             |
+| `traefik.backend.loadbalancer.swarm=true`                           | Uses Swarm's inbuilt load balancer (only relevant under Swarm Mode) [3].                                                                                                                                                         |
 | `traefik.backend.maxconn.amount=10`                                 | Sets a maximum number of connections to the backend.<br>Must be used in conjunction with the below label to take effect.                                                                                                         |
 | `traefik.backend.maxconn.extractorfunc=client.ip`                   | Sets the function to be used against the request to determine what to limit maximum connections to the backend by.<br>Must be used in conjunction with the above label to take effect.                                           |
 | `traefik.frontend.auth.basic=EXPR`                                  | Sets the basic authentication to this frontend in CSV format: `User:Hash,User:Hash` [2] (DEPRECATED).                                                                                                                            |
@@ -294,6 +294,10 @@ To create `user:password` pair, it's possible to use this command:
 `echo $(htpasswd -nb user password) | sed -e s/\\$/\\$\\$/g`.  
 The result will be `user:$$apr1$$9Cv/OMGj$$ZomWQzuQbL.3TRCS81A1g/`, note additional symbol `$` makes escaping.
 
+[3] `traefik.backend.loadbalancer.swarm`:
+If you enable this option, Traefik will use the virtual IP provided by docker swarm instead of the containers IPs.
+Which means that Traefik will not perform any kind of load balancing and will delegate this task to swarm.
+It also means that Traefik will manipulate only one backend, not one backend per container.
 
 #### Custom Headers
 
