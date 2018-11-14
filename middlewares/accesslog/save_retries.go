@@ -14,6 +14,8 @@ func (s *SaveRetries) Retried(req *http.Request, attempt int) {
 		attempt--
 	}
 
-	table := GetLogDataTable(req)
-	table.Core[RetryAttempts] = attempt
+	table := GetLogData(req)
+	if table != nil {
+		table.Core[RetryAttempts] = attempt
+	}
 }

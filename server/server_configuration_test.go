@@ -1,25 +1,16 @@
 package server
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 	"time"
 
-	"github.com/containous/flaeg/parse"
-	"github.com/containous/mux"
-	"github.com/containous/traefik/configuration"
-	"github.com/containous/traefik/healthcheck"
-	"github.com/containous/traefik/middlewares"
-	"github.com/containous/traefik/rules"
+	"github.com/containous/traefik/config"
+	"github.com/containous/traefik/old/configuration"
 	th "github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/tls"
-	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/vulcand/oxy/roundrobin"
 )
 
 // LocalhostCert is a PEM-encoded TLS cert with SAN IPs
@@ -60,137 +51,6 @@ f9Oeos0UUothgiDktdQHxdNEwLjQf7lJJBzV+5OtwswCWA==
 -----END RSA PRIVATE KEY-----`)
 )
 
-type testLoadBalancer struct{}
-
-func (lb *testLoadBalancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	// noop
-}
-
-func (lb *testLoadBalancer) RemoveServer(u *url.URL) error {
-	return nil
-}
-
-func (lb *testLoadBalancer) UpsertServer(u *url.URL, options ...roundrobin.ServerOption) error {
-	return nil
-}
-
-func (lb *testLoadBalancer) Servers() []*url.URL {
-	return []*url.URL{}
-}
-
-func TestServerLoadConfigHealthCheckOptions(t *testing.T) {
-	healthChecks := []*types.HealthCheck{
-		nil,
-		{
-			Path: "/path",
-		},
-	}
-
-	for _, lbMethod := range []string{"Wrr", "Drr"} {
-		for _, healthCheck := range healthChecks {
-			t.Run(fmt.Sprintf("%s/hc=%t", lbMethod, healthCheck != nil), func(t *testing.T) {
-				globalConfig := configuration.GlobalConfiguration{
-					HealthCheck: &configuration.HealthCheckConfig{
-						Interval: parse.Duration(5 * time.Second),
-						Timeout:  parse.Duration(3 * time.Second),
-					},
-				}
-				entryPoints := map[string]EntryPoint{
-					"http": {
-						Configuration: &configuration.EntryPoint{
-							ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true},
-						},
-					},
-				}
-
-				dynamicConfigs := types.Configurations{
-					"config": &types.Configuration{
-						Frontends: map[string]*types.Frontend{
-							"frontend": {
-								EntryPoints: []string{"http"},
-								Backend:     "backend",
-							},
-						},
-						Backends: map[string]*types.Backend{
-							"backend": {
-								Servers: map[string]types.Server{
-									"server": {
-										URL: "http://localhost",
-									},
-								},
-								LoadBalancer: &types.LoadBalancer{
-									Method: lbMethod,
-								},
-								HealthCheck: healthCheck,
-							},
-						},
-						TLS: []*tls.Configuration{
-							{
-								Certificate: &tls.Certificate{
-									CertFile: localhostCert,
-									KeyFile:  localhostKey,
-								},
-								EntryPoints: []string{"http"},
-							},
-						},
-					},
-				}
-
-				srv := NewServer(globalConfig, nil, entryPoints)
-
-				_ = srv.loadConfig(dynamicConfigs, globalConfig)
-
-				expectedNumHealthCheckBackends := 0
-				if healthCheck != nil {
-					expectedNumHealthCheckBackends = 1
-				}
-				assert.Len(t, healthcheck.GetHealthCheck(th.NewCollectingHealthCheckMetrics()).Backends, expectedNumHealthCheckBackends, "health check backends")
-			})
-		}
-	}
-}
-
-func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
-	globalConfig := configuration.GlobalConfiguration{
-		EntryPoints: configuration.EntryPoints{
-			"http": &configuration.EntryPoint{ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true}},
-		},
-	}
-
-	dynamicConfigs := types.Configurations{
-		"config": &types.Configuration{
-			Frontends: map[string]*types.Frontend{
-				"frontend": {
-					EntryPoints: []string{"http"},
-					Backend:     "backend",
-				},
-			},
-			Backends: map[string]*types.Backend{
-				"backend": {
-					Servers: map[string]types.Server{
-						"server": {
-							URL: "http://localhost",
-						},
-					},
-					LoadBalancer: &types.LoadBalancer{
-						Method: "Wrr",
-					},
-				},
-			},
-		},
-	}
-
-	entryPoints := map[string]EntryPoint{}
-	for key, value := range globalConfig.EntryPoints {
-		entryPoints[key] = EntryPoint{
-			Configuration: value,
-		}
-	}
-
-	srv := NewServer(globalConfig, nil, entryPoints)
-	_ = srv.loadConfig(dynamicConfigs, globalConfig)
-}
-
 func TestServerLoadCertificateWithDefaultEntryPoint(t *testing.T) {
 	globalConfig := configuration.GlobalConfiguration{
 		DefaultEntryPoints: []string{"http", "https"},
@@ -200,8 +60,8 @@ func TestServerLoadCertificateWithDefaultEntryPoint(t *testing.T) {
 		"http":  {Configuration: &configuration.EntryPoint{}},
 	}
 
-	dynamicConfigs := types.Configurations{
-		"config": &types.Configuration{
+	dynamicConfigs := config.Configurations{
+		"config": &config.Configuration{
 			TLS: []*tls.Configuration{
 				{
 					Certificate: &tls.Certificate{
@@ -214,22 +74,17 @@ func TestServerLoadCertificateWithDefaultEntryPoint(t *testing.T) {
 	}
 
 	srv := NewServer(globalConfig, nil, entryPoints)
-
-	mapEntryPoints := srv.loadConfig(dynamicConfigs, globalConfig)
-	if !mapEntryPoints["https"].certs.ContainsCertificates() {
+	_, mapsCerts := srv.loadConfig(dynamicConfigs, globalConfig)
+	if len(mapsCerts["https"]) == 0 {
 		t.Fatal("got error: https entryPoint must have TLS certificates.")
 	}
 }
 
-func TestReuseBackend(t *testing.T) {
+func TestReuseService(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}))
 	defer testServer.Close()
-
-	globalConfig := configuration.GlobalConfiguration{
-		DefaultEntryPoints: []string{"http"},
-	}
 
 	entryPoints := map[string]EntryPoint{
 		"http": {Configuration: &configuration.EntryPoint{
@@ -237,38 +92,40 @@ func TestReuseBackend(t *testing.T) {
 		}},
 	}
 
-	dynamicConfigs := types.Configurations{
+	globalConfig := configuration.GlobalConfiguration{
+		DefaultEntryPoints: []string{"http"},
+	}
+
+	dynamicConfigs := config.Configurations{
 		"config": th.BuildConfiguration(
-			th.WithFrontends(
-				th.WithFrontend("backend",
-					th.WithFrontendName("frontend0"),
+			th.WithRouters(
+				th.WithRouter("foo",
+					th.WithServiceName("bar"),
+					th.WithRule("Path:/ok")),
+				th.WithRouter("foo2",
 					th.WithEntryPoints("http"),
-					th.WithRoutes(th.WithRoute("/ok", "Path: /ok"))),
-				th.WithFrontend("backend",
-					th.WithFrontendName("frontend1"),
-					th.WithEntryPoints("http"),
-					th.WithRoutes(th.WithRoute("/unauthorized", "Path: /unauthorized")),
-					th.WithFrontEndAuth(&types.Auth{
-						Basic: &types.Basic{
-							Users: []string{"foo:bar"},
-						},
-					})),
+					th.WithRule("Path:/unauthorized"),
+					th.WithServiceName("bar"),
+					th.WithRouterMiddlewares("basicauth")),
 			),
-			th.WithBackends(th.WithBackendNew("backend",
+			th.WithMiddlewares(th.WithMiddleware("basicauth",
+				th.WithBasicAuth(&config.BasicAuth{Users: []string{"foo:bar"}}),
+			)),
+			th.WithLoadBalancerServices(th.WithService("bar",
 				th.WithLBMethod("wrr"),
-				th.WithServersNew(th.WithServerNew(testServer.URL))),
+				th.WithServers(th.WithServer(testServer.URL))),
 			),
 		),
 	}
 
 	srv := NewServer(globalConfig, nil, entryPoints)
 
-	serverEntryPoints := srv.loadConfig(dynamicConfigs, globalConfig)
+	serverEntryPoints, _ := srv.loadConfig(dynamicConfigs, globalConfig)
 
 	// Test that the /ok path returns a status 200.
 	responseRecorderOk := &httptest.ResponseRecorder{}
 	requestOk := httptest.NewRequest(http.MethodGet, testServer.URL+"/ok", nil)
-	serverEntryPoints["http"].httpRouter.ServeHTTP(responseRecorderOk, requestOk)
+	serverEntryPoints["http"].ServeHTTP(responseRecorderOk, requestOk)
 
 	assert.Equal(t, http.StatusOK, responseRecorderOk.Result().StatusCode, "status code")
 
@@ -276,15 +133,15 @@ func TestReuseBackend(t *testing.T) {
 	// the basic authentication defined on the frontend.
 	responseRecorderUnauthorized := &httptest.ResponseRecorder{}
 	requestUnauthorized := httptest.NewRequest(http.MethodGet, testServer.URL+"/unauthorized", nil)
-	serverEntryPoints["http"].httpRouter.ServeHTTP(responseRecorderUnauthorized, requestUnauthorized)
+	serverEntryPoints["http"].ServeHTTP(responseRecorderUnauthorized, requestUnauthorized)
 
 	assert.Equal(t, http.StatusUnauthorized, responseRecorderUnauthorized.Result().StatusCode, "status code")
 }
 
 func TestThrottleProviderConfigReload(t *testing.T) {
 	throttleDuration := 30 * time.Millisecond
-	publishConfig := make(chan types.ConfigMessage)
-	providerConfig := make(chan types.ConfigMessage)
+	publishConfig := make(chan config.Message)
+	providerConfig := make(chan config.Message)
 	stop := make(chan bool)
 	defer func() {
 		stop <- true
@@ -312,7 +169,7 @@ func TestThrottleProviderConfigReload(t *testing.T) {
 
 	// publish 5 new configs, one new config each 10 milliseconds
 	for i := 0; i < 5; i++ {
-		providerConfig <- types.ConfigMessage{}
+		providerConfig <- config.Message{}
 		time.Sleep(10 * time.Millisecond)
 	}
 
@@ -333,207 +190,5 @@ func TestThrottleProviderConfigReload(t *testing.T) {
 		}
 	case <-time.After(100 * time.Millisecond):
 		t.Error("Last config was not published in time")
-	}
-}
-
-func TestServerMultipleFrontendRules(t *testing.T) {
-	testCases := []struct {
-		expression  string
-		requestURL  string
-		expectedURL string
-	}{
-		{
-			expression:  "Host:foo.bar",
-			requestURL:  "http://foo.bar",
-			expectedURL: "http://foo.bar",
-		},
-		{
-			expression:  "PathPrefix:/management;ReplacePath:/health",
-			requestURL:  "http://foo.bar/management",
-			expectedURL: "http://foo.bar/health",
-		},
-		{
-			expression:  "Host:foo.bar;AddPrefix:/blah",
-			requestURL:  "http://foo.bar/baz",
-			expectedURL: "http://foo.bar/blah/baz",
-		},
-		{
-			expression:  "PathPrefixStripRegex:/one/{two}/{three:[0-9]+}",
-			requestURL:  "http://foo.bar/one/some/12345/four",
-			expectedURL: "http://foo.bar/four",
-		},
-		{
-			expression:  "PathPrefixStripRegex:/one/{two}/{three:[0-9]+};AddPrefix:/zero",
-			requestURL:  "http://foo.bar/one/some/12345/four",
-			expectedURL: "http://foo.bar/zero/four",
-		},
-		{
-			expression:  "AddPrefix:/blah;ReplacePath:/baz",
-			requestURL:  "http://foo.bar/hello",
-			expectedURL: "http://foo.bar/baz",
-		},
-		{
-			expression:  "PathPrefixStrip:/management;ReplacePath:/health",
-			requestURL:  "http://foo.bar/management",
-			expectedURL: "http://foo.bar/health",
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.expression, func(t *testing.T) {
-			t.Parallel()
-
-			router := mux.NewRouter()
-			route := router.NewRoute()
-			serverRoute := &types.ServerRoute{Route: route}
-			reqHostMid := &middlewares.RequestHost{}
-			rls := &rules.Rules{Route: serverRoute}
-
-			expression := test.expression
-			routeResult, err := rls.Parse(expression)
-
-			if err != nil {
-				t.Fatalf("Error while building route for %s: %+v", expression, err)
-			}
-
-			request := th.MustNewRequest(http.MethodGet, test.requestURL, nil)
-			var routeMatch bool
-			reqHostMid.ServeHTTP(nil, request, func(w http.ResponseWriter, r *http.Request) {
-				routeMatch = routeResult.Match(r, &mux.RouteMatch{Route: routeResult})
-			})
-
-			if !routeMatch {
-				t.Fatalf("Rule %s doesn't match", expression)
-			}
-
-			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				require.Equal(t, test.expectedURL, r.URL.String(), "URL")
-			})
-
-			hd := buildMatcherMiddlewares(serverRoute, handler)
-			serverRoute.Route.Handler(hd)
-
-			serverRoute.Route.GetHandler().ServeHTTP(nil, request)
-		})
-	}
-}
-
-func TestServerBuildHealthCheckOptions(t *testing.T) {
-	lb := &testLoadBalancer{}
-	globalInterval := 15 * time.Second
-	globalTimeout := 3 * time.Second
-
-	testCases := []struct {
-		desc         string
-		hc           *types.HealthCheck
-		expectedOpts *healthcheck.Options
-	}{
-		{
-			desc:         "nil health check",
-			hc:           nil,
-			expectedOpts: nil,
-		},
-		{
-			desc: "empty path",
-			hc: &types.HealthCheck{
-				Path: "",
-			},
-			expectedOpts: nil,
-		},
-		{
-			desc: "unparseable interval",
-			hc: &types.HealthCheck{
-				Path:     "/path",
-				Interval: "unparseable",
-			},
-			expectedOpts: &healthcheck.Options{
-				Path:     "/path",
-				Interval: globalInterval,
-				LB:       lb,
-				Timeout:  3 * time.Second,
-			},
-		},
-		{
-			desc: "sub-zero interval",
-			hc: &types.HealthCheck{
-				Path:     "/path",
-				Interval: "-42s",
-			},
-			expectedOpts: &healthcheck.Options{
-				Path:     "/path",
-				Interval: globalInterval,
-				LB:       lb,
-				Timeout:  3 * time.Second,
-			},
-		},
-		{
-			desc: "parseable interval",
-			hc: &types.HealthCheck{
-				Path:     "/path",
-				Interval: "5m",
-			},
-			expectedOpts: &healthcheck.Options{
-				Path:     "/path",
-				Interval: 5 * time.Minute,
-				LB:       lb,
-				Timeout:  3 * time.Second,
-			},
-		},
-		{
-			desc: "unparseable timeout",
-			hc: &types.HealthCheck{
-				Path:     "/path",
-				Interval: "15s",
-				Timeout:  "unparseable",
-			},
-			expectedOpts: &healthcheck.Options{
-				Path:     "/path",
-				Interval: globalInterval,
-				Timeout:  globalTimeout,
-				LB:       lb,
-			},
-		},
-		{
-			desc: "sub-zero timeout",
-			hc: &types.HealthCheck{
-				Path:     "/path",
-				Interval: "15s",
-				Timeout:  "-42s",
-			},
-			expectedOpts: &healthcheck.Options{
-				Path:     "/path",
-				Interval: globalInterval,
-				Timeout:  globalTimeout,
-				LB:       lb,
-			},
-		},
-		{
-			desc: "parseable timeout",
-			hc: &types.HealthCheck{
-				Path:     "/path",
-				Interval: "15s",
-				Timeout:  "10s",
-			},
-			expectedOpts: &healthcheck.Options{
-				Path:     "/path",
-				Interval: globalInterval,
-				Timeout:  10 * time.Second,
-				LB:       lb,
-			},
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			opts := buildHealthCheckOptions(lb, "backend", test.hc, &configuration.HealthCheckConfig{
-				Interval: parse.Duration(globalInterval),
-				Timeout:  parse.Duration(globalTimeout),
-			})
-			assert.Equal(t, test.expectedOpts, opts, "health check options")
-		})
 	}
 }

@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"context"
 	"time"
 
 	"github.com/containous/traefik/log"
@@ -11,7 +12,7 @@ import (
 )
 
 var datadogClient = dogstatsd.New("traefik.", kitlog.LoggerFunc(func(keyvals ...interface{}) error {
-	log.Info(keyvals)
+	log.WithoutContext().WithField(log.MetricsProviderName, "datadog").Info(keyvals)
 	return nil
 }))
 
@@ -34,9 +35,9 @@ const (
 )
 
 // RegisterDatadog registers the metrics pusher if this didn't happen yet and creates a datadog Registry instance.
-func RegisterDatadog(config *types.Datadog) Registry {
+func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 	if datadogTicker == nil {
-		datadogTicker = initDatadogClient(config)
+		datadogTicker = initDatadogClient(ctx, config)
 	}
 
 	registry := &standardRegistry{
@@ -58,14 +59,14 @@ func RegisterDatadog(config *types.Datadog) Registry {
 	return registry
 }
 
-func initDatadogClient(config *types.Datadog) *time.Ticker {
+func initDatadogClient(ctx context.Context, config *types.Datadog) *time.Ticker {
 	address := config.Address
 	if len(address) == 0 {
 		address = "localhost:8125"
 	}
 	pushInterval, err := time.ParseDuration(config.PushInterval)
 	if err != nil {
-		log.Warnf("Unable to parse %s into pushInterval, using 10s as default value", config.PushInterval)
+		log.FromContext(ctx).Warnf("Unable to parse %s from config.PushInterval: using 10s as the default value", config.PushInterval)
 		pushInterval = 10 * time.Second
 	}
 

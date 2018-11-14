@@ -37,29 +37,35 @@ func init() {
 
 	if *container {
 		// tests launched from a container
-		check.Suite(&AccessLogSuite{})
+
+		// FIXME Provider tests
+		// check.Suite(&ConsulCatalogSuite{})
+		// check.Suite(&ConsulSuite{})
+		// check.Suite(&DockerComposeSuite{})
+		// check.Suite(&DockerSuite{})
+		// check.Suite(&DynamoDBSuite{})
+		// check.Suite(&EurekaSuite{})
+		// check.Suite(&MarathonSuite{})
+		// check.Suite(&MarathonSuite15{})
+		// check.Suite(&MesosSuite{})
+
+		// FIXME use docker
+		// check.Suite(&AccessLogSuite{})
+		// check.Suite(&ConstraintSuite{})
+		// check.Suite(&TLSClientHeadersSuite{})
+		// check.Suite(&HostResolverSuite{})
+		// check.Suite(&LogRotationSuite{})
+
+		// FIXME e2e tests
 		check.Suite(&AcmeSuite{})
-		check.Suite(&ConstraintSuite{})
-		check.Suite(&ConsulCatalogSuite{})
-		check.Suite(&ConsulSuite{})
-		check.Suite(&DockerComposeSuite{})
-		check.Suite(&DockerSuite{})
-		check.Suite(&DynamoDBSuite{})
 		check.Suite(&ErrorPagesSuite{})
-		check.Suite(&EurekaSuite{})
 		check.Suite(&FileSuite{})
 		check.Suite(&GRPCSuite{})
 		check.Suite(&HealthCheckSuite{})
-		check.Suite(&HostResolverSuite{})
 		check.Suite(&HTTPSSuite{})
-		check.Suite(&LogRotationSuite{})
-		check.Suite(&MarathonSuite{})
-		check.Suite(&MarathonSuite15{})
-		check.Suite(&MesosSuite{})
 		check.Suite(&RateLimitSuite{})
 		check.Suite(&RetrySuite{})
 		check.Suite(&SimpleSuite{})
-		check.Suite(&TLSClientHeadersSuite{})
 		check.Suite(&TimeoutSuite{})
 		check.Suite(&TracingSuite{})
 		check.Suite(&WebsocketSuite{})
@@ -67,7 +73,9 @@ func init() {
 	if *host {
 		// tests launched from the host
 		check.Suite(&ProxyProtocolSuite{})
-		check.Suite(&Etcd3Suite{})
+
+		// FIXME Provider tests
+		// check.Suite(&Etcd3Suite{})
 	}
 }
 
@@ -125,10 +133,10 @@ func (s *BaseSuite) traefikCmd(args ...string) (*exec.Cmd, func(*check.C)) {
 
 func (s *BaseSuite) displayTraefikLog(c *check.C, output *bytes.Buffer) {
 	if output == nil || output.Len() == 0 {
-		log.Printf("%s: No Traefik logs.", c.TestName())
+		log.Infof("%s: No Traefik logs.", c.TestName())
 	} else {
-		log.Printf("%s: Traefik logs: ", c.TestName())
-		log.Println(output.String())
+		log.Infof("%s: Traefik logs: ", c.TestName())
+		log.Infof(output.String())
 	}
 }
 

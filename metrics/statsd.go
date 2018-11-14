@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"context"
 	"time"
 
 	"github.com/containous/traefik/log"
@@ -11,7 +12,7 @@ import (
 )
 
 var statsdClient = statsd.New("traefik.", kitlog.LoggerFunc(func(keyvals ...interface{}) error {
-	log.Info(keyvals)
+	log.WithoutContext().WithField(log.MetricsProviderName, "statsd").Info(keyvals)
 	return nil
 }))
 
@@ -33,9 +34,9 @@ const (
 )
 
 // RegisterStatsd registers the metrics pusher if this didn't happen yet and creates a statsd Registry instance.
-func RegisterStatsd(config *types.Statsd) Registry {
+func RegisterStatsd(ctx context.Context, config *types.Statsd) Registry {
 	if statsdTicker == nil {
-		statsdTicker = initStatsdTicker(config)
+		statsdTicker = initStatsdTicker(ctx, config)
 	}
 
 	return &standardRegistry{
@@ -56,14 +57,14 @@ func RegisterStatsd(config *types.Statsd) Registry {
 }
 
 // initStatsdTicker initializes metrics pusher and creates a statsdClient if not created already
-func initStatsdTicker(config *types.Statsd) *time.Ticker {
+func initStatsdTicker(ctx context.Context, config *types.Statsd) *time.Ticker {
 	address := config.Address
 	if len(address) == 0 {
 		address = "localhost:8125"
 	}
 	pushInterval, err := time.ParseDuration(config.PushInterval)
 	if err != nil {
-		log.Warnf("Unable to parse %s into pushInterval, using 10s as default value", config.PushInterval)
+		log.FromContext(ctx).Warnf("Unable to parse %s from config.PushInterval: using 10s as the default value", config.PushInterval)
 		pushInterval = 10 * time.Second
 	}
 

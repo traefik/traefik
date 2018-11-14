@@ -15,17 +15,15 @@ rootCAs = [ """{{ .CertContent }}""" ]
 
 [file]
 
-[backends]
-  [backends.backend1]
-  [backends.backend1.responseForwarding]
-    flushInterval="1ms"
-    [backends.backend1.servers.server1]
-    url = "https://127.0.0.1:{{ .GRPCServerPort }}"
-    weight = 1
-
-
-[frontends]
-  [frontends.frontend1]
-  backend = "backend1"
-    [frontends.frontend1.routes.test_1]
+[routers]
+  [routers.router1]
     rule = "Host:127.0.0.1"
+    service = "service1"
+
+[services]
+  [services.service1.loadbalancer]
+  [services.service1.loadbalancer.responseForwarding]
+     flushInterval="1ms"
+    [[services.service1.loadbalancer.servers]]
+      url = "https://127.0.0.1:{{ .GRPCServerPort }}"
+      weight = 1

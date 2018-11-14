@@ -486,7 +486,7 @@ Responses are compressed when:
 
 ## White Listing
 
-Træfik supports whitelisting to accept or refuse requests based on the client IP.
+Traefik supports whitelisting to accept or refuse requests based on the client IP.
 
 The following example enables IP white listing and accepts requests from client IPs defined in `sourceRange`.
 
@@ -501,7 +501,7 @@ The following example enables IP white listing and accepts requests from client 
       # Override the clientIPStrategy
 ```
 
-By default, Træfik uses the client IP (see [ClientIPStrategy](/configuration/entrypoints/#clientipstrategy)) for the whitelisting.
+By default, Traefik uses the client IP (see [ClientIPStrategy](/configuration/entrypoints/#clientipstrategy)) for the whitelisting.
 
 If you want to use another IP than the one determined by `ClientIPStrategy` for the whitelisting, you can define the `IPStrategy` option:
 
@@ -522,7 +522,7 @@ In the above example, if the value of the `X-Forwarded-For` header was `"10.0.0.
 
 ## ClientIPStrategy
 
-The `clientIPStrategy` defines how you want Træfik to determine the client IP (used for whitelisting for example).
+The `clientIPStrategy` defines how you want Traefik to determine the client IP (used for whitelisting for example).
 
 There are several option available:
 
@@ -560,7 +560,7 @@ Examples:
   
 ### Excluded IPs
 
-Træfik will scan the `X-Forwarded-For` header (from the right) and pick the first IP not in the `excludedIPs` list.
+Traefik will scan the `X-Forwarded-For` header (from the right) and pick the first IP not in the `excludedIPs` list.
 
 ```toml
 [entryPoints]
@@ -586,7 +586,7 @@ Examples:
 
 ### Default
 
-If there are no `depth` or `excludedIPs`, then the client IP is the IP of the computer that initiated the connection with the Træfik server (the remote address).
+If there are no `depth` or `excludedIPs`, then the client IP is the IP of the computer that initiated the connection with the Traefik server (the remote address).
 
 ## ProxyProtocol
 

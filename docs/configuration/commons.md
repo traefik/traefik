@@ -83,7 +83,7 @@ If you encounter 'too many open files' errors, you can either increase this valu
 - `defaultEntryPoints`: Entrypoints to be used by frontends that do not specify any entrypoint.  
 Each frontend can specify its own entrypoints.
 
-- `keepTrailingSlash`: Tells Træfik whether it should keep the trailing slashes that might be present in the paths of incoming requests (true), or if it should redirect to the slashless version of the URL (default behavior: false) 
+- `keepTrailingSlash`: Tells Traefik whether it should keep the trailing slashes that might be present in the paths of incoming requests (true), or if it should redirect to the slashless version of the URL (default behavior: false) 
 
 !!! note 
     Beware that the value of `keepTrailingSlash` can have a significant impact on the way your frontend rules are interpreted.

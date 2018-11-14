@@ -13,7 +13,7 @@ import (
 
 	"github.com/containous/traefik/integration/try"
 	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/middlewares/accesslog"
+	"github.com/containous/traefik/old/middlewares/accesslog"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
 )

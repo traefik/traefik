@@ -12,8 +12,8 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/containous/traefik/integration/try"
+	"github.com/containous/traefik/old/types"
 	traefiktls "github.com/containous/traefik/tls"
-	"github.com/containous/traefik/types"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
 )
@@ -32,7 +32,7 @@ func (s *HTTPSSuite) TestWithSNIConfigHandshake(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 500*time.Millisecond, try.BodyContains("Host:snitest.org"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 500*time.Millisecond, try.BodyContains("Host:snitest.org"))
 	c.Assert(err, checker.IsNil)
 
 	tlsConfig := &tls.Config{
@@ -66,7 +66,7 @@ func (s *HTTPSSuite) TestWithSNIConfigRoute(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("Host:snitest.org"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 1*time.Second, try.BodyContains("Host:snitest.org"))
 	c.Assert(err, checker.IsNil)
 
 	backend1 := startTestServer("9010", http.StatusNoContent)
@@ -122,7 +122,7 @@ func (s *HTTPSSuite) TestWithSNIStrictNotMatchedRequest(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 500*time.Millisecond, try.BodyContains("Host:snitest.com"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 500*time.Millisecond, try.BodyContains("Host:snitest.com"))
 	c.Assert(err, checker.IsNil)
 
 	tlsConfig := &tls.Config{
@@ -146,7 +146,7 @@ func (s *HTTPSSuite) TestWithDefaultCertificate(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 500*time.Millisecond, try.BodyContains("Host:snitest.com"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 500*time.Millisecond, try.BodyContains("Host:snitest.com"))
 	c.Assert(err, checker.IsNil)
 
 	tlsConfig := &tls.Config{
@@ -180,7 +180,7 @@ func (s *HTTPSSuite) TestWithDefaultCertificateNoSNI(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 500*time.Millisecond, try.BodyContains("Host:snitest.com"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 500*time.Millisecond, try.BodyContains("Host:snitest.com"))
 	c.Assert(err, checker.IsNil)
 
 	tlsConfig := &tls.Config{
@@ -214,7 +214,7 @@ func (s *HTTPSSuite) TestWithOverlappingStaticCertificate(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 500*time.Millisecond, try.BodyContains("Host:snitest.com"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 500*time.Millisecond, try.BodyContains("Host:snitest.com"))
 	c.Assert(err, checker.IsNil)
 
 	tlsConfig := &tls.Config{
@@ -249,7 +249,7 @@ func (s *HTTPSSuite) TestWithOverlappingDynamicCertificate(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 500*time.Millisecond, try.BodyContains("Host:snitest.com"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 500*time.Millisecond, try.BodyContains("Host:snitest.com"))
 	c.Assert(err, checker.IsNil)
 
 	tlsConfig := &tls.Config{
@@ -282,7 +282,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthentication(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 500*time.Millisecond, try.BodyContains("Host:snitest.org"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 500*time.Millisecond, try.BodyContains("Host:snitest.org"))
 	c.Assert(err, checker.IsNil)
 
 	tlsConfig := &tls.Config{
@@ -338,7 +338,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAs(c *check.
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 500*time.Millisecond, try.BodyContains("Host:snitest.org"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 1*time.Second, try.BodyContains("Host:snitest.org"))
 	c.Assert(err, checker.IsNil)
 
 	tlsConfig := &tls.Config{
@@ -399,7 +399,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAsMultipleFi
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1000*time.Millisecond, try.BodyContains("Host:snitest.org"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 1*time.Second, try.BodyContains("Host:snitest.org"))
 	c.Assert(err, checker.IsNil)
 
 	tlsConfig := &tls.Config{
@@ -464,7 +464,7 @@ func (s *HTTPSSuite) TestWithRootCAsContentForHTTPSOnBackend(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains(backend.URL))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/services", 1*time.Second, try.BodyContains(backend.URL))
 	c.Assert(err, checker.IsNil)
 
 	err = try.GetRequest("http://127.0.0.1:8081/ping", 1*time.Second, try.StatusCodeIs(http.StatusOK))
@@ -486,7 +486,7 @@ func (s *HTTPSSuite) TestWithRootCAsFileForHTTPSOnBackend(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains(backend.URL))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/services", 1*time.Second, try.BodyContains(backend.URL))
 	c.Assert(err, checker.IsNil)
 
 	err = try.GetRequest("http://127.0.0.1:8081/ping", 1*time.Second, try.StatusCodeIs(http.StatusOK))
@@ -544,7 +544,7 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithNoChange(c *check.C) {
 	}
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("Host:"+tr1.TLSClientConfig.ServerName))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 1*time.Second, try.BodyContains("Host:"+tr1.TLSClientConfig.ServerName))
 	c.Assert(err, checker.IsNil)
 
 	backend1 := startTestServer("9010", http.StatusNoContent)
@@ -613,7 +613,7 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithChange(c *check.C) {
 	}
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("Host:"+tr2.TLSClientConfig.ServerName))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 1*time.Second, try.BodyContains("Host:"+tr2.TLSClientConfig.ServerName))
 	c.Assert(err, checker.IsNil)
 
 	backend1 := startTestServer("9010", http.StatusNoContent)
@@ -676,7 +676,7 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithTlsConfigurationDeletion(c
 	}
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("Host:"+tr2.TLSClientConfig.ServerName))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 1*time.Second, try.BodyContains("Host:"+tr2.TLSClientConfig.ServerName))
 	c.Assert(err, checker.IsNil)
 
 	backend2 := startTestServer("9020", http.StatusResetContent)
@@ -741,7 +741,7 @@ func (s *HTTPSSuite) TestEntrypointHttpsRedirectAndPathModification(c *check.C) 
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1000*time.Millisecond, try.BodyContains("Host: example.com"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 5*time.Second, try.BodyContains("Host: example.com"))
 	c.Assert(err, checker.IsNil)
 
 	client := &http.Client{

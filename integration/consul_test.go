@@ -16,7 +16,7 @@ import (
 	"github.com/containous/staert"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/integration/try"
-	"github.com/containous/traefik/types"
+	"github.com/containous/traefik/old/types"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
 )

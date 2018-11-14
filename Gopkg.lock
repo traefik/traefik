@@ -9,12 +9,6 @@
 
 [[projects]]
   branch = "master"
-  name = "code.cloudfoundry.org/clock"
-  packages = ["."]
-  revision = "02e53af36e6c978af692887ed449b74026d76fec"
-
-[[projects]]
-  branch = "master"
   name = "github.com/ArthurHlt/go-eureka-client"
   packages = ["eureka"]
   revision = "9d0a49cbd39aa3634ae1977e9f519a262b10adaf"
@@ -86,11 +80,6 @@
   name = "github.com/Masterminds/sprig"
   packages = ["."]
   revision = "e039e20e500c2c025d9145be375e27cf42a94174"
-
-[[projects]]
-  name = "github.com/Microsoft/ApplicationInsights-Go"
-  packages = ["appinsights"]
-  revision = "98ac7ca026c26818888600ea0d966987aa56f043"
 
 [[projects]]
   name = "github.com/Microsoft/go-winio"
@@ -278,6 +267,12 @@
   revision = "b2b946a77f5973f420514090d6f6dd58b08303f0"
 
 [[projects]]
+  branch = "containous-fork"
+  name = "github.com/containous/alice"
+  packages = ["."]
+  revision = "d83ebdd94cbdbcd9c6c6a22e1a0cde05e55d9d90"
+
+[[projects]]
   name = "github.com/containous/flaeg"
   packages = [
     ".",
@@ -297,12 +292,6 @@
   packages = ["."]
   revision = "66717a0e0ca950c4b6dc8c87b46da0b8495c6e41"
   version = "v3.1.1"
-
-[[projects]]
-  name = "github.com/containous/traefik-extra-service-fabric"
-  packages = ["."]
-  revision = "6e90a9eef2ac9d320e55d6e994d169673a8d8b0f"
-  version = "v1.3.0"
 
 [[projects]]
   name = "github.com/coreos/bbolt"
@@ -800,18 +789,6 @@
   ]
   revision = "2d474a3089bcfce6b472779be9470a1f0ef3d5e4"
   version = "v1.3.7"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/jjcollinge/logrus-appinsights"
-  packages = ["."]
-  revision = "9b66602d496a139e4722bdde32f0f1ac1c12d4a8"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/jjcollinge/servicefabric"
-  packages = ["."]
-  revision = "8eebe170fa1ba25d3dfb928b3f86a7313b13b9fe"
 
 [[projects]]
   name = "github.com/jmespath/go-jmespath"
@@ -1814,6 +1791,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "37e89a543fca153d166cc70fd7fed689f06d894140bf617f69f5f664ffee621e"
+  inputs-digest = "d4f73c986b64003e14a36894149943e956e0dfa40b8837bfd11bf5fa3ad78c77"
   solver-name = "gps-cdcl"
   solver-version = 1

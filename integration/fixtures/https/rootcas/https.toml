@@ -28,14 +28,15 @@ fblo6RBxUQ==
 
 [file]
 
-[backends]
-  [backends.backend1]
-    [backends.backend1.servers.server1]
-    url = "{{ .BackendHost }}"
-    weight = 1
+[Routers]
+  [Routers.router1]
+    Service = "service1"
+    Rule = "Path: /ping"
 
-[frontends]
-  [frontends.frontend1]
-  backend = "backend1"
-    [frontends.frontend1.routes.test_1]
-    rule = "Path: /ping"
+[Services]
+  [Services.service1]
+    [Services.service1.LoadBalancer]
+
+      [[Services.service1.LoadBalancer.Servers]]
+        URL = "{{ .BackendHost }}"
+        Weight = 1

@@ -45,8 +45,8 @@ func ParseAccessLog(data string) (map[string]string, error) {
 		result[RequestRefererHeader] = submatch[9]
 		result[RequestUserAgentHeader] = submatch[10]
 		result[RequestCount] = submatch[11]
-		result[FrontendName] = submatch[12]
-		result[BackendURL] = submatch[13]
+		result[RouterName] = submatch[12]
+		result[ServiceURL] = submatch[13]
 		result[Duration] = submatch[14]
 	}
 

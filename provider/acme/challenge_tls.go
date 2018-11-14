@@ -15,7 +15,8 @@ type challengeTLSALPN struct {
 }
 
 func (c *challengeTLSALPN) Present(domain, token, keyAuth string) error {
-	log.Debugf("TLS Challenge Present temp certificate for %s", domain)
+	log.WithoutContext().WithField(log.ProviderName, "acme").
+		Debugf("TLS Challenge Present temp certificate for %s", domain)
 
 	certPEMBlock, keyPEMBlock, err := acme.TLSALPNChallengeBlocks(domain, keyAuth)
 	if err != nil {
@@ -27,7 +28,8 @@ func (c *challengeTLSALPN) Present(domain, token, keyAuth string) error {
 }
 
 func (c *challengeTLSALPN) CleanUp(domain, token, keyAuth string) error {
-	log.Debugf("TLS Challenge CleanUp temp certificate for %s", domain)
+	log.WithoutContext().WithField(log.ProviderName, "acme").
+		Debugf("TLS Challenge CleanUp temp certificate for %s", domain)
 
 	return c.Store.RemoveTLSChallenge(domain)
 }

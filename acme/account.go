@@ -15,8 +15,8 @@ import (
 	"time"
 
 	"github.com/containous/traefik/log"
-	acmeprovider "github.com/containous/traefik/provider/acme"
-	"github.com/containous/traefik/types"
+	acmeprovider "github.com/containous/traefik/old/provider/acme"
+	"github.com/containous/traefik/old/types"
 	"github.com/xenolf/lego/acme"
 )
 

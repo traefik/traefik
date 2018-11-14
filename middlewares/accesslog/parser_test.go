@@ -14,7 +14,7 @@ func TestParseAccessLog(t *testing.T) {
 	}{
 		{
 			desc:  "full log",
-			value: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 1 "testFrontend" "http://127.0.0.1/testBackend" 1ms`,
+			value: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 1 "testRouter" "http://127.0.0.1/testService" 1ms`,
 			expected: map[string]string{
 				ClientHost:             "TestHost",
 				ClientUsername:         "TestUser",
@@ -27,14 +27,14 @@ func TestParseAccessLog(t *testing.T) {
 				RequestRefererHeader:   `"testReferer"`,
 				RequestUserAgentHeader: `"testUserAgent"`,
 				RequestCount:           "1",
-				FrontendName:           `"testFrontend"`,
-				BackendURL:             `"http://127.0.0.1/testBackend"`,
+				RouterName:             `"testRouter"`,
+				ServiceURL:             `"http://127.0.0.1/testService"`,
 				Duration:               "1ms",
 			},
 		},
 		{
 			desc:  "log with space",
-			value: `127.0.0.1 - - [09/Mar/2018:10:51:32 +0000] "GET / HTTP/1.1" 401 17 "-" "Go-http-client/1.1" 1 "testFrontend with space" - 0ms`,
+			value: `127.0.0.1 - - [09/Mar/2018:10:51:32 +0000] "GET / HTTP/1.1" 401 17 "-" "Go-http-client/1.1" 1 "testRouter with space" - 0ms`,
 			expected: map[string]string{
 				ClientHost:             "127.0.0.1",
 				ClientUsername:         "-",
@@ -47,8 +47,8 @@ func TestParseAccessLog(t *testing.T) {
 				RequestRefererHeader:   `"-"`,
 				RequestUserAgentHeader: `"Go-http-client/1.1"`,
 				RequestCount:           "1",
-				FrontendName:           `"testFrontend with space"`,
-				BackendURL:             `-`,
+				RouterName:             `"testRouter with space"`,
+				ServiceURL:             `-`,
 				Duration:               "0ms",
 			},
 		},

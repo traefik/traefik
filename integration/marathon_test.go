@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/containous/traefik/integration/try"
-	"github.com/containous/traefik/provider/label"
+	"github.com/containous/traefik/old/provider/label"
 	"github.com/gambol99/go-marathon"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"

@@ -9,13 +9,12 @@ import (
 
 	"github.com/containous/flaeg/parse"
 	"github.com/containous/mux"
-	"github.com/containous/traefik/configuration"
+	"github.com/containous/traefik/config"
 	"github.com/containous/traefik/middlewares"
+	"github.com/containous/traefik/old/configuration"
 	th "github.com/containous/traefik/testhelpers"
-	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/unrolled/secure"
 )
 
 func TestPrepareServerTimeouts(t *testing.T) {
@@ -62,7 +61,7 @@ func TestPrepareServerTimeouts(t *testing.T) {
 			router := middlewares.NewHandlerSwitcher(mux.NewRouter())
 
 			srv := NewServer(test.globalConfig, nil, nil)
-			httpServer, _, err := srv.prepareServer(entryPointName, entryPoint, router, nil)
+			httpServer, _, err := srv.prepareServer(context.Background(), entryPointName, entryPoint, router)
 			require.NoError(t, err, "Unexpected error when preparing srv")
 
 			assert.Equal(t, test.expectedIdleTimeout, httpServer.IdleTimeout, "IdleTimeout")
@@ -87,7 +86,7 @@ func TestListenProvidersSkipsEmptyConfigs(t *testing.T) {
 		}
 	}()
 
-	server.configurationChan <- types.ConfigMessage{ProviderName: "kubernetes"}
+	server.configurationChan <- config.Message{ProviderName: "kubernetes"}
 
 	// give some time so that the configuration can be processed
 	time.Sleep(100 * time.Millisecond)
@@ -103,12 +102,12 @@ func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
 			select {
 			case <-stop:
 				return
-			case config := <-server.configurationValidatedChan:
+			case conf := <-server.configurationValidatedChan:
 				// set the current configuration
 				// this is usually done in the processing part of the published configuration
 				// so we have to emulate the behavior here
-				currentConfigurations := server.currentConfigurations.Get().(types.Configurations)
-				currentConfigurations[config.ProviderName] = config.Configuration
+				currentConfigurations := server.currentConfigurations.Get().(config.Configurations)
+				currentConfigurations[conf.ProviderName] = conf.Configuration
 				server.currentConfigurations.Set(currentConfigurations)
 
 				publishedConfigCount++
@@ -119,19 +118,19 @@ func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
 		}
 	}()
 
-	config := th.BuildConfiguration(
-		th.WithFrontends(th.WithFrontend("backend")),
-		th.WithBackends(th.WithBackendNew("backend")),
+	conf := th.BuildConfiguration(
+		th.WithRouters(th.WithRouter("foo")),
+		th.WithLoadBalancerServices(th.WithService("bar")),
 	)
 
 	// provide a configuration
-	server.configurationChan <- types.ConfigMessage{ProviderName: "kubernetes", Configuration: config}
+	server.configurationChan <- config.Message{ProviderName: "kubernetes", Configuration: conf}
 
 	// give some time so that the configuration can be processed
 	time.Sleep(20 * time.Millisecond)
 
 	// provide the same configuration a second time
-	server.configurationChan <- types.ConfigMessage{ProviderName: "kubernetes", Configuration: config}
+	server.configurationChan <- config.Message{ProviderName: "kubernetes", Configuration: conf}
 
 	// give some time so that the configuration can be processed
 	time.Sleep(100 * time.Millisecond)
@@ -160,12 +159,12 @@ func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 		}
 	}()
 
-	config := th.BuildConfiguration(
-		th.WithFrontends(th.WithFrontend("backend")),
-		th.WithBackends(th.WithBackendNew("backend")),
+	conf := th.BuildConfiguration(
+		th.WithRouters(th.WithRouter("foo")),
+		th.WithLoadBalancerServices(th.WithService("bar")),
 	)
-	server.configurationChan <- types.ConfigMessage{ProviderName: "kubernetes", Configuration: config}
-	server.configurationChan <- types.ConfigMessage{ProviderName: "marathon", Configuration: config}
+	server.configurationChan <- config.Message{ProviderName: "kubernetes", Configuration: conf}
+	server.configurationChan <- config.Message{ProviderName: "marathon", Configuration: conf}
 
 	select {
 	case <-consumePublishedConfigsDone:
@@ -206,20 +205,21 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 
 	testCases := []struct {
 		desc               string
-		config             func(testServerURL string) *types.Configuration
+		config             func(testServerURL string) *config.Configuration
 		expectedStatusCode int
 	}{
 		{
 			desc: "Ok",
-			config: func(testServerURL string) *types.Configuration {
+			config: func(testServerURL string) *config.Configuration {
 				return th.BuildConfiguration(
-					th.WithFrontends(th.WithFrontend("backend",
+					th.WithRouters(th.WithRouter("foo",
 						th.WithEntryPoints("http"),
-						th.WithRoutes(th.WithRoute(requestPath, routeRule))),
+						th.WithServiceName("bar"),
+						th.WithRule(routeRule)),
 					),
-					th.WithBackends(th.WithBackendNew("backend",
+					th.WithLoadBalancerServices(th.WithService("bar",
 						th.WithLBMethod("wrr"),
-						th.WithServersNew(th.WithServerNew(testServerURL))),
+						th.WithServers(th.WithServer(testServerURL))),
 					),
 				)
 			},
@@ -227,20 +227,21 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 		},
 		{
 			desc: "No Frontend",
-			config: func(testServerURL string) *types.Configuration {
+			config: func(testServerURL string) *config.Configuration {
 				return th.BuildConfiguration()
 			},
 			expectedStatusCode: http.StatusNotFound,
 		},
 		{
 			desc: "Empty Backend LB-Drr",
-			config: func(testServerURL string) *types.Configuration {
+			config: func(testServerURL string) *config.Configuration {
 				return th.BuildConfiguration(
-					th.WithFrontends(th.WithFrontend("backend",
+					th.WithRouters(th.WithRouter("foo",
 						th.WithEntryPoints("http"),
-						th.WithRoutes(th.WithRoute(requestPath, routeRule))),
+						th.WithServiceName("bar"),
+						th.WithRule(routeRule)),
 					),
-					th.WithBackends(th.WithBackendNew("backend",
+					th.WithLoadBalancerServices(th.WithService("bar",
 						th.WithLBMethod("drr")),
 					),
 				)
@@ -249,14 +250,15 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 		},
 		{
 			desc: "Empty Backend LB-Drr Sticky",
-			config: func(testServerURL string) *types.Configuration {
+			config: func(testServerURL string) *config.Configuration {
 				return th.BuildConfiguration(
-					th.WithFrontends(th.WithFrontend("backend",
+					th.WithRouters(th.WithRouter("foo",
 						th.WithEntryPoints("http"),
-						th.WithRoutes(th.WithRoute(requestPath, routeRule))),
+						th.WithServiceName("bar"),
+						th.WithRule(routeRule)),
 					),
-					th.WithBackends(th.WithBackendNew("backend",
-						th.WithLBMethod("drr"), th.WithLBSticky("test")),
+					th.WithLoadBalancerServices(th.WithService("bar",
+						th.WithLBMethod("drr"), th.WithStickiness("test")),
 					),
 				)
 			},
@@ -264,13 +266,14 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 		},
 		{
 			desc: "Empty Backend LB-Wrr",
-			config: func(testServerURL string) *types.Configuration {
+			config: func(testServerURL string) *config.Configuration {
 				return th.BuildConfiguration(
-					th.WithFrontends(th.WithFrontend("backend",
+					th.WithRouters(th.WithRouter("foo",
 						th.WithEntryPoints("http"),
-						th.WithRoutes(th.WithRoute(requestPath, routeRule))),
+						th.WithServiceName("bar"),
+						th.WithRule(routeRule)),
 					),
-					th.WithBackends(th.WithBackendNew("backend",
+					th.WithLoadBalancerServices(th.WithService("bar",
 						th.WithLBMethod("wrr")),
 					),
 				)
@@ -279,14 +282,15 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 		},
 		{
 			desc: "Empty Backend LB-Wrr Sticky",
-			config: func(testServerURL string) *types.Configuration {
+			config: func(testServerURL string) *config.Configuration {
 				return th.BuildConfiguration(
-					th.WithFrontends(th.WithFrontend("backend",
+					th.WithRouters(th.WithRouter("foo",
 						th.WithEntryPoints("http"),
-						th.WithRoutes(th.WithRoute(requestPath, routeRule))),
+						th.WithServiceName("bar"),
+						th.WithRule(routeRule)),
 					),
-					th.WithBackends(th.WithBackendNew("backend",
-						th.WithLBMethod("wrr"), th.WithLBSticky("test")),
+					th.WithLoadBalancerServices(th.WithService("bar",
+						th.WithLBMethod("wrr"), th.WithStickiness("test")),
 					),
 				)
 			},
@@ -309,134 +313,17 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			entryPointsConfig := map[string]EntryPoint{
 				"http": {Configuration: &configuration.EntryPoint{ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true}}},
 			}
-			dynamicConfigs := types.Configurations{"config": test.config(testServer.URL)}
+			dynamicConfigs := config.Configurations{"config": test.config(testServer.URL)}
 
 			srv := NewServer(globalConfig, nil, entryPointsConfig)
-			entryPoints := srv.loadConfig(dynamicConfigs, globalConfig)
+			entryPoints, _ := srv.loadConfig(dynamicConfigs, globalConfig)
 
 			responseRecorder := &httptest.ResponseRecorder{}
 			request := httptest.NewRequest(http.MethodGet, testServer.URL+requestPath, nil)
 
-			entryPoints["http"].httpRouter.ServeHTTP(responseRecorder, request)
+			entryPoints["http"].ServeHTTP(responseRecorder, request)
 
 			assert.Equal(t, test.expectedStatusCode, responseRecorder.Result().StatusCode, "status code")
-		})
-	}
-}
-
-type mockContext struct {
-	headers http.Header
-}
-
-func (c mockContext) Deadline() (deadline time.Time, ok bool) {
-	return deadline, ok
-}
-
-func (c mockContext) Done() <-chan struct{} {
-	ch := make(chan struct{})
-	close(ch)
-	return ch
-}
-
-func (c mockContext) Err() error {
-	return context.DeadlineExceeded
-}
-
-func (c mockContext) Value(key interface{}) interface{} {
-	return c.headers
-}
-
-func TestNewServerWithResponseModifiers(t *testing.T) {
-	testCases := []struct {
-		desc             string
-		headerMiddleware *middlewares.HeaderStruct
-		secureMiddleware *secure.Secure
-		ctx              context.Context
-		expected         map[string]string
-	}{
-		{
-			desc:             "header and secure nil",
-			headerMiddleware: nil,
-			secureMiddleware: nil,
-			ctx:              mockContext{},
-			expected: map[string]string{
-				"X-Default":       "powpow",
-				"Referrer-Policy": "same-origin",
-			},
-		},
-		{
-			desc: "header middleware not nil",
-			headerMiddleware: middlewares.NewHeaderFromStruct(&types.Headers{
-				CustomResponseHeaders: map[string]string{
-					"X-Default": "powpow",
-				},
-			}),
-			secureMiddleware: nil,
-			ctx:              mockContext{},
-			expected: map[string]string{
-				"X-Default":       "powpow",
-				"Referrer-Policy": "same-origin",
-			},
-		},
-		{
-			desc:             "secure middleware not nil",
-			headerMiddleware: nil,
-			secureMiddleware: middlewares.NewSecure(&types.Headers{
-				ReferrerPolicy: "no-referrer",
-			}),
-			ctx: mockContext{
-				headers: http.Header{"Referrer-Policy": []string{"no-referrer"}},
-			},
-			expected: map[string]string{
-				"X-Default":       "powpow",
-				"Referrer-Policy": "no-referrer",
-			},
-		},
-		{
-			desc: "header and secure middleware not nil",
-			headerMiddleware: middlewares.NewHeaderFromStruct(&types.Headers{
-				CustomResponseHeaders: map[string]string{
-					"Referrer-Policy": "powpow",
-				},
-			}),
-			secureMiddleware: middlewares.NewSecure(&types.Headers{
-				ReferrerPolicy: "no-referrer",
-			}),
-			ctx: mockContext{
-				headers: http.Header{"Referrer-Policy": []string{"no-referrer"}},
-			},
-			expected: map[string]string{
-				"X-Default":       "powpow",
-				"Referrer-Policy": "powpow",
-			},
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			headers := make(http.Header)
-			headers.Add("X-Default", "powpow")
-			headers.Add("Referrer-Policy", "same-origin")
-
-			req := httptest.NewRequest(http.MethodGet, "http://127.0.0.1", nil)
-
-			res := &http.Response{
-				Request: req.WithContext(test.ctx),
-				Header:  headers,
-			}
-
-			responseModifier := buildModifyResponse(test.secureMiddleware, test.headerMiddleware)
-			err := responseModifier(res)
-
-			assert.NoError(t, err)
-			assert.Equal(t, len(test.expected), len(res.Header))
-
-			for k, v := range test.expected {
-				assert.Equal(t, v, res.Header.Get(k))
-			}
 		})
 	}
 }

@@ -9,193 +9,29 @@ import (
 	"testing"
 	"time"
 
+	"github.com/containous/traefik/config"
 	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 )
 
-// createRandomFile Helper
-func createRandomFile(t *testing.T, tempDir string, contents ...string) *os.File {
-	return createFile(t, tempDir, fmt.Sprintf("temp%d.toml", time.Now().UnixNano()), contents...)
-}
-
-// createFile Helper
-func createFile(t *testing.T, tempDir string, name string, contents ...string) *os.File {
-	t.Helper()
-	fileName := path.Join(tempDir, name)
-
-	tempFile, err := os.Create(fileName)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	for _, content := range contents {
-		_, err := tempFile.WriteString(content)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	err = tempFile.Close()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return tempFile
-}
-
-// createTempDir Helper
-func createTempDir(t *testing.T, dir string) string {
-	t.Helper()
-	d, err := ioutil.TempDir("", dir)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return d
-}
-
-// createFrontendConfiguration Helper
-func createFrontendConfiguration(n int) string {
-	conf := "[frontends]\n"
-	for i := 1; i <= n; i++ {
-		conf += fmt.Sprintf(`  [frontends."frontend%[1]d"]
-  backend = "backend%[1]d"
-`, i)
-	}
-	return conf
-}
-
-// createBackendConfiguration Helper
-func createBackendConfiguration(n int) string {
-	conf := "[backends]\n"
-	for i := 1; i <= n; i++ {
-		conf += fmt.Sprintf(`  [backends.backend%[1]d]
-    [backends.backend%[1]d.servers.server1]
-    url = "http://172.17.0.%[1]d:80"
-`, i)
-	}
-	return conf
-}
-
-// createTLS Helper
-func createTLS(n int) string {
-	var conf string
-	for i := 1; i <= n; i++ {
-		conf += fmt.Sprintf(`[[TLS]]
-	EntryPoints = ["https"]
-	[TLS.Certificate]
-	CertFile = "integration/fixtures/https/snitest%[1]d.com.cert"
-	KeyFile = "integration/fixtures/https/snitest%[1]d.com.key"
-`, i)
-	}
-	return conf
-}
-
 type ProvideTestCase struct {
-	desc                string
-	directoryContent    []string
-	fileContent         string
-	traefikFileContent  string
-	expectedNumFrontend int
-	expectedNumBackend  int
-	expectedNumTLSConf  int
-}
-
-func getTestCases() []ProvideTestCase {
-	return []ProvideTestCase{
-		{
-			desc:                "simple file",
-			fileContent:         createFrontendConfiguration(2) + createBackendConfiguration(3) + createTLS(4),
-			expectedNumFrontend: 2,
-			expectedNumBackend:  3,
-			expectedNumTLSConf:  4,
-		},
-		{
-			desc:        "simple file and a traefik file",
-			fileContent: createFrontendConfiguration(2) + createBackendConfiguration(3) + createTLS(4),
-			traefikFileContent: `
-			debug=true
-`,
-			expectedNumFrontend: 2,
-			expectedNumBackend:  3,
-			expectedNumTLSConf:  4,
-		},
-		{
-			desc: "template file",
-			fileContent: `
-[frontends]
-{{ range $i, $e := until 20 }}
-  [frontends.frontend{{ $e }}]
-  backend = "backend"  
-{{ end }}
-`,
-			expectedNumFrontend: 20,
-		},
-		{
-			desc: "simple directory",
-			directoryContent: []string{
-				createFrontendConfiguration(2),
-				createBackendConfiguration(3),
-				createTLS(4),
-			},
-			expectedNumFrontend: 2,
-			expectedNumBackend:  3,
-			expectedNumTLSConf:  4,
-		},
-		{
-			desc: "template in directory",
-			directoryContent: []string{
-				`
-[frontends]
-{{ range $i, $e := until 20 }}
-  [frontends.frontend{{ $e }}]
-  backend = "backend"  
-{{ end }}
-`,
-				`
-[backends]
-{{ range $i, $e := until 20 }}
-  [backends.backend{{ $e }}]
- [backends.backend{{ $e }}.servers.server1]
-	url="http://127.0.0.1"
-{{ end }}
-`,
-			},
-			expectedNumFrontend: 20,
-			expectedNumBackend:  20,
-		},
-		{
-			desc: "simple traefik file",
-			traefikFileContent: `
-				debug=true
-				[file]	
-				` + createFrontendConfiguration(2) + createBackendConfiguration(3) + createTLS(4),
-			expectedNumFrontend: 2,
-			expectedNumBackend:  3,
-			expectedNumTLSConf:  4,
-		},
-		{
-			desc: "simple traefik file with templating",
-			traefikFileContent: `
-				temp="{{ getTag \"test\" }}"
-				[file]	
-				` + createFrontendConfiguration(2) + createBackendConfiguration(3) + createTLS(4),
-			expectedNumFrontend: 2,
-			expectedNumBackend:  3,
-			expectedNumTLSConf:  4,
-		},
-	}
+	desc               string
+	directoryContent   []string
+	fileContent        string
+	traefikFileContent string
+	expectedNumRouter  int
+	expectedNumService int
+	expectedNumTLSConf int
 }
 
 func TestProvideWithoutWatch(t *testing.T) {
 	for _, test := range getTestCases() {
-		test := test
 		t.Run(test.desc+" without watch", func(t *testing.T) {
-			t.Parallel()
-
 			provider, clean := createProvider(t, test, false)
 			defer clean()
-			configChan := make(chan types.ConfigMessage)
+			configChan := make(chan config.Message)
+
+			provider.DebugLogGeneratedTemplate = true
 
 			go func() {
 				err := provider.Provide(configChan, safe.NewPool(context.Background()))
@@ -204,10 +40,10 @@ func TestProvideWithoutWatch(t *testing.T) {
 
 			timeout := time.After(time.Second)
 			select {
-			case config := <-configChan:
-				assert.Len(t, config.Configuration.Backends, test.expectedNumBackend)
-				assert.Len(t, config.Configuration.Frontends, test.expectedNumFrontend)
-				assert.Len(t, config.Configuration.TLS, test.expectedNumTLSConf)
+			case conf := <-configChan:
+				assert.Len(t, conf.Configuration.Services, test.expectedNumService)
+				assert.Len(t, conf.Configuration.Routers, test.expectedNumRouter)
+				assert.Len(t, conf.Configuration.TLS, test.expectedNumTLSConf)
 			case <-timeout:
 				t.Errorf("timeout while waiting for config")
 			}
@@ -217,13 +53,10 @@ func TestProvideWithoutWatch(t *testing.T) {
 
 func TestProvideWithWatch(t *testing.T) {
 	for _, test := range getTestCases() {
-		test := test
 		t.Run(test.desc+" with watch", func(t *testing.T) {
-			t.Parallel()
-
 			provider, clean := createProvider(t, test, true)
 			defer clean()
-			configChan := make(chan types.ConfigMessage)
+			configChan := make(chan config.Message)
 
 			go func() {
 				err := provider.Provide(configChan, safe.NewPool(context.Background()))
@@ -232,10 +65,10 @@ func TestProvideWithWatch(t *testing.T) {
 
 			timeout := time.After(time.Second)
 			select {
-			case config := <-configChan:
-				assert.Len(t, config.Configuration.Backends, 0)
-				assert.Len(t, config.Configuration.Frontends, 0)
-				assert.Len(t, config.Configuration.TLS, 0)
+			case conf := <-configChan:
+				assert.Len(t, conf.Configuration.Services, 0)
+				assert.Len(t, conf.Configuration.Routers, 0)
+				assert.Len(t, conf.Configuration.TLS, 0)
 			case <-timeout:
 				t.Errorf("timeout while waiting for config")
 			}
@@ -259,17 +92,17 @@ func TestProvideWithWatch(t *testing.T) {
 			}
 
 			timeout = time.After(time.Second * 1)
-			var numUpdates, numBackends, numFrontends, numTLSConfs int
+			var numUpdates, numServices, numRouters, numTLSConfs int
 			for {
 				select {
-				case config := <-configChan:
+				case conf := <-configChan:
 					numUpdates++
-					numBackends = len(config.Configuration.Backends)
-					numFrontends = len(config.Configuration.Frontends)
-					numTLSConfs = len(config.Configuration.TLS)
-					t.Logf("received update #%d: backends %d/%d, frontends %d/%d, TLS configs %d/%d", numUpdates, numBackends, test.expectedNumBackend, numFrontends, test.expectedNumFrontend, numTLSConfs, test.expectedNumTLSConf)
+					numServices = len(conf.Configuration.Services)
+					numRouters = len(conf.Configuration.Routers)
+					numTLSConfs = len(conf.Configuration.TLS)
+					t.Logf("received update #%d: services %d/%d, routers %d/%d, TLS configs %d/%d", numUpdates, numServices, test.expectedNumService, numRouters, test.expectedNumRouter, numTLSConfs, test.expectedNumTLSConf)
 
-					if numBackends == test.expectedNumBackend && numFrontends == test.expectedNumFrontend && numTLSConfs == test.expectedNumTLSConf {
+					if numServices == test.expectedNumService && numRouters == test.expectedNumRouter && numTLSConfs == test.expectedNumTLSConf {
 						return
 					}
 				case <-timeout:
@@ -282,7 +115,7 @@ func TestProvideWithWatch(t *testing.T) {
 
 func TestErrorWhenEmptyConfig(t *testing.T) {
 	provider := &Provider{}
-	configChan := make(chan types.ConfigMessage)
+	configChan := make(chan config.Message)
 	errorChan := make(chan struct{})
 	go func() {
 		err := provider.Provide(configChan, safe.NewPool(context.Background()))
@@ -297,6 +130,93 @@ func TestErrorWhenEmptyConfig(t *testing.T) {
 	case <-timeout:
 		t.Fatal("timeout while waiting for config")
 	case <-errorChan:
+	}
+}
+
+func getTestCases() []ProvideTestCase {
+	return []ProvideTestCase{
+		{
+			desc:               "simple file",
+			fileContent:        createRoutersConfiguration(3) + createServicesConfiguration(6) + createTLS(5),
+			expectedNumRouter:  3,
+			expectedNumService: 6,
+			expectedNumTLSConf: 5,
+		},
+		{
+			desc:        "simple file and a traefik file",
+			fileContent: createRoutersConfiguration(4) + createServicesConfiguration(8) + createTLS(4),
+			traefikFileContent: `
+			debug=true
+`,
+			expectedNumRouter:  4,
+			expectedNumService: 8,
+			expectedNumTLSConf: 4,
+		},
+		{
+			desc: "template file",
+			fileContent: `
+[routers]
+{{ range $i, $e := until 20 }}
+  [routers.router{{ $e }}]
+  service = "application"  
+{{ end }}
+`,
+			expectedNumRouter: 20,
+		},
+		{
+			desc: "simple directory",
+			directoryContent: []string{
+				createRoutersConfiguration(2),
+				createServicesConfiguration(3),
+				createTLS(4),
+			},
+			expectedNumRouter:  2,
+			expectedNumService: 3,
+			expectedNumTLSConf: 4,
+		},
+		{
+			desc: "template in directory",
+			directoryContent: []string{
+				`
+[routers]
+{{ range $i, $e := until 20 }}
+  [routers.router{{ $e }}]
+  service = "application"  
+{{ end }}
+`,
+				`
+[services]
+{{ range $i, $e := until 20 }}
+  [services.application-{{ $e }}]
+	[[services.application-{{ $e }}.servers]]
+	url="http://127.0.0.1"
+	weight = 1
+{{ end }}
+`,
+			},
+			expectedNumRouter:  20,
+			expectedNumService: 20,
+		},
+		{
+			desc: "simple traefik file",
+			traefikFileContent: `
+				debug=true
+				[file]	
+				` + createRoutersConfiguration(2) + createServicesConfiguration(3) + createTLS(4),
+			expectedNumRouter:  2,
+			expectedNumService: 3,
+			expectedNumTLSConf: 4,
+		},
+		{
+			desc: "simple traefik file with templating",
+			traefikFileContent: `
+				temp="{{ getTag \"test\" }}"
+				[file]	
+				` + createRoutersConfiguration(2) + createServicesConfiguration(3) + createTLS(4),
+			expectedNumRouter:  2,
+			expectedNumService: 3,
+			expectedNumTLSConf: 4,
+		},
 	}
 }
 
@@ -335,4 +255,84 @@ func createProvider(t *testing.T, test ProvideTestCase, watch bool) (*Provider, 
 	return provider, func() {
 		os.Remove(tempDir)
 	}
+}
+
+// createRandomFile Helper
+func createRandomFile(t *testing.T, tempDir string, contents ...string) *os.File {
+	return createFile(t, tempDir, fmt.Sprintf("temp%d.toml", time.Now().UnixNano()), contents...)
+}
+
+// createFile Helper
+func createFile(t *testing.T, tempDir string, name string, contents ...string) *os.File {
+	t.Helper()
+	fileName := path.Join(tempDir, name)
+
+	tempFile, err := os.Create(fileName)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, content := range contents {
+		_, err = tempFile.WriteString(content)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	err = tempFile.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return tempFile
+}
+
+// createTempDir Helper
+func createTempDir(t *testing.T, dir string) string {
+	t.Helper()
+	d, err := ioutil.TempDir("", dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return d
+}
+
+// createRoutersConfiguration Helper
+func createRoutersConfiguration(n int) string {
+	conf := "[routers]\n"
+	for i := 1; i <= n; i++ {
+		conf += fmt.Sprintf(` 
+[routers."router%[1]d"]
+	service = "application-%[1]d"
+`, i)
+	}
+	return conf
+}
+
+// createServicesConfiguration Helper
+func createServicesConfiguration(n int) string {
+	conf := "[services]\n"
+	for i := 1; i <= n; i++ {
+		conf += fmt.Sprintf(`
+[services.application-%[1]d.loadbalancer]
+   [[services.application-%[1]d.loadbalancer.servers]]
+     url = "http://172.17.0.%[1]d:80"
+     weight = 1
+`, i)
+	}
+	return conf
+}
+
+// createTLS Helper
+func createTLS(n int) string {
+	var conf string
+	for i := 1; i <= n; i++ {
+		conf += fmt.Sprintf(`[[TLS]]
+	EntryPoints = ["https"]
+	[TLS.Certificate]
+	CertFile = "integration/fixtures/https/snitest%[1]d.com.cert"
+	KeyFile = "integration/fixtures/https/snitest%[1]d.com.key"
+`, i)
+	}
+	return conf
 }

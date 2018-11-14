@@ -8,20 +8,25 @@ logLevel = "DEBUG"
 
 [api]
 
-[retry]
-
 [file]
-[backends]
-  [backends.backend1]
-    [backends.backend1.servers.server1]
-    url = "http://{{.WhoamiEndpoint}}:8080" # not valid
-    weight = 1
-    [backends.backend1.servers.server2]
-    url = "http://{{.WhoamiEndpoint}}:80"
-    weight = 1
 
-[frontends]
-  [frontends.frontend1]
-  backend = "backend1"
-    [frontends.frontend1.routes.test_1]
-    rule = "PathPrefix:/"
+[Routers]
+  [Routers.router1]
+    Service = "service1"
+    Middlewares = [ "retry" ]
+    Rule = "PathPrefix:/"
+
+[Middlewares.retry.Retry]
+Attempts = 3
+
+[Services]
+  [Services.service1]
+    [Services.service1.LoadBalancer]
+
+      [[Services.service1.LoadBalancer.Servers]]
+        URL = "http://{{.WhoamiEndpoint}}:8080"
+        Weight = 1
+
+      [[Services.service1.LoadBalancer.Servers]]
+        URL = "http://{{.WhoamiEndpoint}}:80"
+        Weight = 1

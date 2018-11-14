@@ -37,14 +37,14 @@ path="/traefik"
 
 [file]
 
-[backends]
-  [backends.backend]
-    [backends.backend.servers.server1]
+[services]
+  [services.test.loadbalancer]
+    [[services.test.loadbalancer.servers]]
     url = "http://127.0.0.1:9010"
     weight = 1
 
-[frontends]
-  [frontends.frontend]
-  backend = "backend"
-    [frontends.frontend.routes.test]
-    rule = "Host:traefik.acme.wtf"
+[routers]
+  [routers.test]
+  service = "test"
+  rule = "Host:traefik.acme.wtf"
+  entryPoints = ["https"]

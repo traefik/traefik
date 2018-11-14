@@ -4,32 +4,30 @@ import (
 	"time"
 
 	"github.com/containous/flaeg/parse"
-	"github.com/containous/traefik-extra-service-fabric"
-	"github.com/containous/traefik/api"
-	"github.com/containous/traefik/configuration"
-	"github.com/containous/traefik/middlewares/accesslog"
-	"github.com/containous/traefik/middlewares/tracing"
-	"github.com/containous/traefik/middlewares/tracing/datadog"
-	"github.com/containous/traefik/middlewares/tracing/jaeger"
-	"github.com/containous/traefik/middlewares/tracing/zipkin"
-	"github.com/containous/traefik/ping"
-	"github.com/containous/traefik/provider/boltdb"
-	"github.com/containous/traefik/provider/consul"
-	"github.com/containous/traefik/provider/consulcatalog"
-	"github.com/containous/traefik/provider/docker"
-	"github.com/containous/traefik/provider/dynamodb"
-	"github.com/containous/traefik/provider/ecs"
-	"github.com/containous/traefik/provider/etcd"
-	"github.com/containous/traefik/provider/eureka"
-	"github.com/containous/traefik/provider/file"
-	"github.com/containous/traefik/provider/kubernetes"
-	"github.com/containous/traefik/provider/marathon"
-	"github.com/containous/traefik/provider/mesos"
-	"github.com/containous/traefik/provider/rancher"
-	"github.com/containous/traefik/provider/rest"
-	"github.com/containous/traefik/provider/zk"
-	"github.com/containous/traefik/types"
-	sf "github.com/jjcollinge/servicefabric"
+	"github.com/containous/traefik/old/api"
+	"github.com/containous/traefik/old/configuration"
+	"github.com/containous/traefik/old/middlewares/accesslog"
+	"github.com/containous/traefik/old/middlewares/tracing"
+	"github.com/containous/traefik/old/middlewares/tracing/datadog"
+	"github.com/containous/traefik/old/middlewares/tracing/jaeger"
+	"github.com/containous/traefik/old/middlewares/tracing/zipkin"
+	"github.com/containous/traefik/old/ping"
+	"github.com/containous/traefik/old/provider/boltdb"
+	"github.com/containous/traefik/old/provider/consul"
+	"github.com/containous/traefik/old/provider/consulcatalog"
+	"github.com/containous/traefik/old/provider/docker"
+	"github.com/containous/traefik/old/provider/dynamodb"
+	"github.com/containous/traefik/old/provider/ecs"
+	"github.com/containous/traefik/old/provider/etcd"
+	"github.com/containous/traefik/old/provider/eureka"
+	"github.com/containous/traefik/old/provider/file"
+	"github.com/containous/traefik/old/provider/kubernetes"
+	"github.com/containous/traefik/old/provider/marathon"
+	"github.com/containous/traefik/old/provider/mesos"
+	"github.com/containous/traefik/old/provider/rancher"
+	"github.com/containous/traefik/old/provider/rest"
+	"github.com/containous/traefik/old/provider/zk"
+	"github.com/containous/traefik/old/types"
 )
 
 // TraefikConfiguration holds GlobalConfiguration and other stuff
@@ -144,11 +142,6 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	// default Eureka
 	var defaultEureka eureka.Provider
 	defaultEureka.RefreshSeconds = parse.Duration(30 * time.Second)
-
-	// default ServiceFabric
-	var defaultServiceFabric servicefabric.Provider
-	defaultServiceFabric.APIVersion = sf.DefaultAPIVersion
-	defaultServiceFabric.RefreshSeconds = 10
 
 	// default Ping
 	var defaultPing = ping.Handler{

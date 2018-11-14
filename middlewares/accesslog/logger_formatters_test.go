@@ -32,8 +32,8 @@ func TestCommonLogFormatter_Format(t *testing.T) {
 				RequestRefererHeader:   "",
 				RequestUserAgentHeader: "",
 				RequestCount:           0,
-				FrontendName:           "",
-				BackendURL:             "",
+				RouterName:             "",
+				ServiceURL:             "",
 			},
 			expectedLog: `10.0.0.1 - Client [10/Nov/2009:23:00:00 +0000] "GET /foo http" - - "-" "-" 0 - - 123000ms
 `,
@@ -53,8 +53,8 @@ func TestCommonLogFormatter_Format(t *testing.T) {
 				RequestRefererHeader:   "referer",
 				RequestUserAgentHeader: "agent",
 				RequestCount:           nil,
-				FrontendName:           "foo",
-				BackendURL:             "http://10.0.0.2/toto",
+				RouterName:             "foo",
+				ServiceURL:             "http://10.0.0.2/toto",
 			},
 			expectedLog: `10.0.0.1 - Client [10/Nov/2009:23:00:00 +0000] "GET /foo http" 123 132 "referer" "agent" - "foo" "http://10.0.0.2/toto" 123000ms
 `,

@@ -43,17 +43,3 @@ defaultEntryPoints = ["http", "https"]
   {{end}}
 
 [api]
-
-[file]
-
-[backends]
-  [backends.backend]
-    [backends.backend.servers.server1]
-    url = "http://127.0.0.1:9010"
-    weight = 1
-
-[frontends]
-  [frontends.frontend]
-  backend = "backend"
-    [frontends.frontend.routes.test]
-    rule = "Host:traefik.acme.wtf"

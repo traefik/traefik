@@ -131,50 +131,58 @@ func (hc *HealthCheck) execute(ctx context.Context, backend *BackendConfig) {
 func (hc *HealthCheck) checkBackend(backend *BackendConfig) {
 	enabledURLs := backend.LB.Servers()
 	var newDisabledURLs []*url.URL
+	// FIXME re enable metrics
 	for _, disableURL := range backend.disabledURLs {
-		serverUpMetricValue := float64(0)
+		//serverUpMetricValue := float64(0)
 		if err := checkHealth(disableURL, backend); err == nil {
 			log.Warnf("Health check up: Returning to server list. Backend: %q URL: %q", backend.name, disableURL.String())
 			if err := backend.LB.UpsertServer(disableURL, roundrobin.Weight(1)); err != nil {
 				log.Error(err)
 			}
-			serverUpMetricValue = 1
+			//serverUpMetricValue = 1
 		} else {
 			log.Warnf("Health check still failing. Backend: %q URL: %q Reason: %s", backend.name, disableURL.String(), err)
 			newDisabledURLs = append(newDisabledURLs, disableURL)
 		}
-		labelValues := []string{"backend", backend.name, "url", disableURL.String()}
-		hc.metrics.BackendServerUpGauge().With(labelValues...).Set(serverUpMetricValue)
+		//labelValues := []string{"backend", backend.name, "url", disableURL.String()}
+		//hc.metrics.BackendServerUpGauge().With(labelValues...).Set(serverUpMetricValue)
 	}
 	backend.disabledURLs = newDisabledURLs
 
+	// FIXME re enable metrics
 	for _, enableURL := range enabledURLs {
-		serverUpMetricValue := float64(1)
+		//serverUpMetricValue := float64(1)
 		if err := checkHealth(enableURL, backend); err != nil {
 			log.Warnf("Health check failed: Remove from server list. Backend: %q URL: %q Reason: %s", backend.name, enableURL.String(), err)
 			if err := backend.LB.RemoveServer(enableURL); err != nil {
 				log.Error(err)
 			}
 			backend.disabledURLs = append(backend.disabledURLs, enableURL)
-			serverUpMetricValue = 0
+			//serverUpMetricValue = 0
 		}
-		labelValues := []string{"backend", backend.name, "url", enableURL.String()}
-		hc.metrics.BackendServerUpGauge().With(labelValues...).Set(serverUpMetricValue)
+		//labelValues := []string{"backend", backend.name, "url", enableURL.String()}
+		//hc.metrics.BackendServerUpGauge().With(labelValues...).Set(serverUpMetricValue)
 	}
 }
 
+// FIXME re add metrics
+//func GetHealthCheck(metrics metricsRegistry) *HealthCheck {
+
 // GetHealthCheck returns the health check which is guaranteed to be a singleton.
-func GetHealthCheck(metrics metricsRegistry) *HealthCheck {
+func GetHealthCheck() *HealthCheck {
 	once.Do(func() {
-		singleton = newHealthCheck(metrics)
+		singleton = newHealthCheck()
+		//singleton = newHealthCheck(metrics)
 	})
 	return singleton
 }
 
-func newHealthCheck(metrics metricsRegistry) *HealthCheck {
+// FIXME re add metrics
+//func newHealthCheck(metrics metricsRegistry) *HealthCheck {
+func newHealthCheck() *HealthCheck {
 	return &HealthCheck{
 		Backends: make(map[string]*BackendConfig),
-		metrics:  metrics,
+		//metrics:  metrics,
 	}
 }
 

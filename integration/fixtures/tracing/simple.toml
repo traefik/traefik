@@ -19,53 +19,57 @@ debug = true
       samplingType = "const"
       samplingParam = 1.0
 
-[retry]
-  attempts = 3
-
 [file]
 
-[backends]
-  [backends.backend1]
-    [backends.backend1.servers.server-ratelimit]
-      url = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
-      weight = 1
-  [backends.backend2]
-    [backends.backend2.servers.server-retry]
-      url = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
-      weight = 1
-  [backends.backend3]
-    [backends.backend3.servers.server-auth]
-      url = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
-      weight = 1
+[Routers]
+  [Routers.router1]
+    Service = "service1"
+    Middlewares = ["retry", "ratelimit"]
+    Rule = "Path:/ratelimit"
+  [Routers.router2]
+    Service = "service2"
+    Middlewares = ["retry"]
+    Rule = "Path:/retry"
+  [Routers.router3]
+    Service = "service3"
+    Middlewares = ["retry", "basic-auth"]
+    Rule = "Path:/auth"
 
-[frontends]
-  [frontends.frontend1]
+[Middlewares]
+  [Middlewares.retry.retry]
+     attempts = 3
+  [Middlewares.basic-auth.BasicAuth]
+     users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
+  [Middlewares.ratelimit.RateLimit]
+        extractorfunc = "client.ip"
+          [Middlewares.ratelimit.RateLimit.rateset.rateset1]
+            period = "60s"
+            average = 4
+            burst = 5
+          [Middlewares.ratelimit.RateLimit.rateset.rateset2]
+            period = "3s"
+            average = 1
+            burst = 2
+
+
+[Services]
+  [Services.service1]
+    [Services.service1.LoadBalancer]
+      passHostHeader = true
+      [[Services.service1.LoadBalancer.Servers]]
+        URL = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
+        Weight = 1
+
+  [Services.service2]
     passHostHeader = true
-    backend = "backend1"
-    [frontends.frontend1.routes.test_ratelimit]
-      rule = "Path:/ratelimit"
-    [frontends.frontend1.ratelimit]
-      extractorfunc = "client.ip"
-        [frontends.frontend1.ratelimit.rateset.rateset1]
-          period = "60s"
-          average = 4
-          burst = 5
-        [frontends.frontend1.ratelimit.rateset.rateset2]
-          period = "3s"
-          average = 1
-          burst = 2
-  [frontends.frontend2]
+    [Services.service2.LoadBalancer]
+      [[Services.service2.LoadBalancer.Servers]]
+        URL = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
+        Weight = 1
+
+  [Services.service3]
     passHostHeader = true
-    backend = "backend2"
-    [frontends.frontend2.routes.test_retry]
-      rule = "Path:/retry"
-  [frontends.frontend3]
-    passHostHeader = true
-    backend = "backend3"
-    [frontends.frontend3.auth.basic]
-      users = [
-        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-        "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-      ]
-    [frontends.frontend3.routes.test_auth]
-      rule = "Path:/auth"
+    [Services.service3.LoadBalancer]
+      [[Services.service3.LoadBalancer.Servers]]
+        URL = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
+        Weight = 1

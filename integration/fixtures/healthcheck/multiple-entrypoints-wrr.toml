@@ -4,30 +4,29 @@ logLevel = "DEBUG"
 
 [entryPoints]
   [entryPoints.http1]
-  address = ":8000"
+    address = ":8000"
   [entryPoints.http2]
-  address = ":9000"
+    address = ":9000"
 
 [api]
 
 [file]
-[backends]
-  [backends.backend1]
-    [backends.backend1.LoadBalancer]
-      method = "wrr"
-    [backends.backend1.healthcheck]
-    path = "/health"
-    interval = "1s"
-    timeout = "0.9s"
-    [backends.backend1.servers.server1]
-    url = "http://{{.Server1}}:80"
-    weight = 1
-    [backends.backend1.servers.server2]
-    url = "http://{{.Server2}}:80"
-    weight = 1
 
-[frontends]
-  [frontends.frontend1]
-  backend = "backend1"
-    [frontends.frontend1.routes.test_1]
+[routers]
+  [routers.router1]
+    service = "service1"
     rule = "Host:test.localhost"
+
+[services]
+  [services.service1.loadbalancer]
+    method = "wrr"
+    [services.service1.loadbalancer.healthcheck]
+      path = "/health"
+      interval = "1s"
+      timeout = "0.9s"
+    [[services.service1.loadbalancer.servers]]
+      url = "http://{{.Server1}}:80"
+      weight = 1
+    [[services.service1.loadbalancer.servers]]
+      url = "http://{{.Server2}}:80"
+      weight = 1
