@@ -375,6 +375,14 @@ We should now be able to visit [traefik-ui.minikube](http://traefik-ui.minikube)
     For this example to work you need a TLS entrypoint. You don't have to provide a TLS certificate at this point.
     For more details see [here](/configuration/entrypoints/).
 
+You can add a TLS entrypoint by adding the following `args` to the container spec:
+
+```yaml
+ --defaultentrypoints=http,https
+ --entrypoints=Name:https Address::443 TLS
+ --entrypoints=Name:http Address::80
+```
+    
 To setup an HTTPS-protected ingress, you can leverage the TLS feature of the ingress resource.
 
 ```yaml
