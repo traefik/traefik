@@ -386,7 +386,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 							}
 
 							for _, subset := range endpoints.Subsets {
-								endpointPort := endpointPortNumber(port, subset.Ports)
+								endpointPort := endpointPortNumber(port, subset.Ports, len(service.Spec.Ports))
 								if endpointPort == 0 {
 									// endpoint port does not match service.
 									continue
@@ -510,7 +510,7 @@ func (p *Provider) addGlobalBackend(cl Client, i *extensionsv1beta1.Ingress, tem
 	}
 
 	for _, subset := range endpoints.Subsets {
-		endpointPort := endpointPortNumber(corev1.ServicePort{Protocol: "TCP", Port: int32(i.Spec.Backend.ServicePort.IntValue())}, subset.Ports)
+		endpointPort := endpointPortNumber(corev1.ServicePort{Protocol: "TCP", Port: int32(i.Spec.Backend.ServicePort.IntValue())}, subset.Ports, 1)
 		if endpointPort == 0 {
 			// endpoint port does not match service.
 			continue
@@ -707,7 +707,7 @@ func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (
 
 // endpointPortNumber returns the port to be used for this endpoint. It is zero
 // if the endpoint does not match the given service port.
-func endpointPortNumber(servicePort corev1.ServicePort, endpointPorts []corev1.EndpointPort) int32 {
+func endpointPortNumber(servicePort corev1.ServicePort, endpointPorts []corev1.EndpointPort, nbServicePort int) int32 {
 	// Is this reasonable to assume?
 	if len(endpointPorts) == 0 {
 		return servicePort.Port
@@ -720,7 +720,19 @@ func endpointPortNumber(servicePort corev1.ServicePort, endpointPorts []corev1.E
 		if servicePort.Name == endpointPort.Name {
 			return endpointPort.Port
 		}
+		// ServicePort.Name option is optional only if one ServicePort is defined,
+		// if there is only one servicePort, if the servicePort.Name is empty, return the EndpointPort port if it is equals to the ServicePort port even if the EndpointPort Name is not empty
+		if nbServicePort == 1 && len(servicePort.Name) == 0 && servicePort.Port == endpointPort.Port {
+			return endpointPort.Port
+		}
 	}
+
+	// As the EndpointPort.Name option is optional only if one EndpointPort is defined,
+	// if the EndpointPort.Name is empty, return the ServicePort port if it is equals to the EndpointPort port even if the servicePort Name is not empty
+	if len(endpointPorts) == 1 && (len(endpointPorts[0].Name) == 0 || len(servicePort.Name) == 0) && servicePort.Port == endpointPorts[0].Port {
+		return servicePort.Port
+	}
+
 	return 0
 }
 

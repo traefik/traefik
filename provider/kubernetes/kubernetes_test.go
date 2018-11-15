@@ -55,6 +55,16 @@ func TestLoadIngresses(t *testing.T) {
 						onePath(iBackend("service8", intstr.FromInt(80))),
 					),
 				),
+				iRule(iHost("service9"),
+					iPaths(
+						onePath(iBackend("service9", intstr.FromInt(80))),
+					),
+				),
+				iRule(iHost("service10"),
+					iPaths(
+						onePath(iBackend("service10", intstr.FromInt(80))),
+					),
+				),
 			),
 		),
 	}
@@ -131,6 +141,22 @@ func TestLoadIngresses(t *testing.T) {
 				clusterIP("10.0.0.8"),
 				sPorts(sPort(80, ""))),
 		),
+		buildService(
+			sName("service9"),
+			sNamespace("testing"),
+			sUID("9"),
+			sSpec(
+				clusterIP("None"),
+				sPorts(sPort(80, ""))),
+		),
+		buildService(
+			sName("service10"),
+			sNamespace("testing"),
+			sUID("10"),
+			sSpec(
+				clusterIP("None"),
+				sPorts(sPort(80, "http"), sPort(443, "https"))),
+		),
 	}
 
 	endpoints := []*corev1.Endpoints{
@@ -184,6 +210,22 @@ func TestLoadIngresses(t *testing.T) {
 			eUID("8"),
 			subset(
 				eAddresses(eAddress("10.10.0.8")),
+				ePorts(ePort(80, ""))),
+		),
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service9"),
+			eUID("9"),
+			subset(
+				eAddresses(eAddress("10.10.0.9")),
+				ePorts(ePort(80, "http"))),
+		),
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service10"),
+			eUID("10"),
+			subset(
+				eAddresses(eAddress("10.10.0.10")),
 				ePorts(ePort(80, ""))),
 		),
 	}
@@ -245,6 +287,18 @@ func TestLoadIngresses(t *testing.T) {
 					server("http://10.10.0.8:80", weight(1)),
 				),
 			),
+			backend("service9",
+				lbMethod("wrr"),
+				servers(
+					server("http://10.10.0.9:80", weight(1)),
+				),
+			),
+			backend("service10",
+				lbMethod("wrr"),
+				servers(
+					server("http://10.10.0.10:80", weight(1)),
+				),
+			),
 		),
 		frontends(
 			frontend("foo/bar",
@@ -279,9 +333,158 @@ func TestLoadIngresses(t *testing.T) {
 				passHostHeader(),
 				routes(route("/", "PathPrefix:/")),
 			),
+			frontend("service9",
+				passHostHeader(),
+				routes(route("service9", "Host:service9")),
+			),
+			frontend("service10",
+				passHostHeader(),
+				routes(route("service10", "Host:service10")),
+			),
 		),
 	)
 	assert.Equal(t, expected, actual)
+}
+
+func TestEndpointPortNumber(t *testing.T) {
+	testCases := []struct {
+		desc               string
+		servicePort        corev1.ServicePort
+		endpointPorts      []corev1.EndpointPort
+		nbServicePort      int
+		expectedPortNumber int32
+	}{
+		{
+			desc:        "One serviceport, one endpointport, empty serviceport and endpointport names",
+			servicePort: corev1.ServicePort{Port: 80, Name: ""},
+			endpointPorts: []corev1.EndpointPort{
+				{
+					Name: "",
+					Port: 80,
+				},
+			},
+			nbServicePort:      1,
+			expectedPortNumber: 80,
+		},
+		{
+			desc:        "One serviceport, one endpointport, serviceport name and endpointport name match",
+			servicePort: corev1.ServicePort{Port: 80, Name: "matchedName"},
+			endpointPorts: []corev1.EndpointPort{
+				{
+					Name: "matchedName",
+					Port: 80,
+				},
+			},
+			nbServicePort:      1,
+			expectedPortNumber: 80,
+		},
+		{
+			desc:        "One serviceport, one endpointport, serviceport name and endpointport name do not match",
+			servicePort: corev1.ServicePort{Port: 80, Name: "unmatchedServicePortName"},
+			endpointPorts: []corev1.EndpointPort{
+				{
+					Name: "unmatchedEndpointPortName",
+					Port: 80,
+				},
+			},
+			nbServicePort:      1,
+			expectedPortNumber: 0,
+		},
+		{
+			desc:        "One serviceport, one endpointport, empty serviceport name",
+			servicePort: corev1.ServicePort{Port: 80, Name: ""},
+			endpointPorts: []corev1.EndpointPort{
+				{
+					Name: "EndpointPortName",
+					Port: 80,
+				},
+			},
+			nbServicePort:      1,
+			expectedPortNumber: 80,
+		},
+		{
+			desc:        "One serviceport, one endpointport, empty endpointport name",
+			servicePort: corev1.ServicePort{Port: 80, Name: "ServicePortName"},
+			endpointPorts: []corev1.EndpointPort{
+				{
+					Name: "",
+					Port: 80,
+				},
+			},
+			nbServicePort:      1,
+			expectedPortNumber: 80,
+		},
+		{
+			desc:        "Many serviceports, one endpointport, empty endpointport name",
+			servicePort: corev1.ServicePort{Port: 80, Name: "ServicePortName"},
+			endpointPorts: []corev1.EndpointPort{
+				{
+					Name: "",
+					Port: 80,
+				},
+			},
+			nbServicePort:      2,
+			expectedPortNumber: 80,
+		},
+		{
+			desc:        "One serviceport, many endpointports, empty serviceport name",
+			servicePort: corev1.ServicePort{Port: 80, Name: ""},
+			endpointPorts: []corev1.EndpointPort{
+				{
+					Name: "EndpointPortName01",
+					Port: 80,
+				},
+				{
+					Name: "EndpointPortName02",
+					Port: 8080,
+				},
+			},
+			nbServicePort:      2,
+			expectedPortNumber: 0,
+		},
+		{
+			desc:        "Many serviceports, many endpointports, one serviceport name and one endpointport name match",
+			servicePort: corev1.ServicePort{Port: 80, Name: "matchedName"},
+			endpointPorts: []corev1.EndpointPort{
+				{
+					Name: "matchedName",
+					Port: 80,
+				},
+				{
+					Name: "EndpointPortName02",
+					Port: 8080,
+				},
+			},
+			nbServicePort:      2,
+			expectedPortNumber: 80,
+		},
+		{
+			desc:        "Many serviceports, many endpointports, serviceport name and endpointport names do not match",
+			servicePort: corev1.ServicePort{Port: 80, Name: "ServicePortName"},
+			endpointPorts: []corev1.EndpointPort{
+				{
+					Name: "EndpointPortName01",
+					Port: 80,
+				},
+				{
+					Name: "EndpointPortName02",
+					Port: 8080,
+				},
+			},
+			nbServicePort:      2,
+			expectedPortNumber: 0,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actualPort := endpointPortNumber(test.servicePort, test.endpointPorts, test.nbServicePort)
+			assert.Equal(t, test.expectedPortNumber, actualPort)
+		})
+	}
 }
 
 func TestLoadGlobalIngressWithPortNumbers(t *testing.T) {
@@ -548,37 +751,37 @@ func TestModifierType(t *testing.T) {
 		expectedModifierRule      string
 	}{
 		{
-			desc:                      "Request modifier annotation missing",
+			desc: "Request modifier annotation missing",
 			requestModifierAnnotation: "",
 			expectedModifierRule:      "",
 		},
 		{
-			desc:                      "AddPrefix modifier annotation",
+			desc: "AddPrefix modifier annotation",
 			requestModifierAnnotation: " AddPrefix: /foo",
 			expectedModifierRule:      "AddPrefix:/foo",
 		},
 		{
-			desc:                      "ReplacePath modifier annotation",
+			desc: "ReplacePath modifier annotation",
 			requestModifierAnnotation: " ReplacePath: /foo",
 			expectedModifierRule:      "ReplacePath:/foo",
 		},
 		{
-			desc:                      "ReplacePathRegex modifier annotation",
+			desc: "ReplacePathRegex modifier annotation",
 			requestModifierAnnotation: " ReplacePathRegex: /foo /bar",
 			expectedModifierRule:      "ReplacePathRegex:/foo /bar",
 		},
 		{
-			desc:                      "AddPrefix modifier annotation",
+			desc: "AddPrefix modifier annotation",
 			requestModifierAnnotation: "AddPrefix:/foo",
 			expectedModifierRule:      "AddPrefix:/foo",
 		},
 		{
-			desc:                      "ReplacePath modifier annotation",
+			desc: "ReplacePath modifier annotation",
 			requestModifierAnnotation: "ReplacePath:/foo",
 			expectedModifierRule:      "ReplacePath:/foo",
 		},
 		{
-			desc:                      "ReplacePathRegex modifier annotation",
+			desc: "ReplacePathRegex modifier annotation",
 			requestModifierAnnotation: "ReplacePathRegex:/foo /bar",
 			expectedModifierRule:      "ReplacePathRegex:/foo /bar",
 		},
@@ -640,23 +843,23 @@ func TestModifierFails(t *testing.T) {
 		requestModifierAnnotation string
 	}{
 		{
-			desc:                      "Request modifier missing part of annotation",
+			desc: "Request modifier missing part of annotation",
 			requestModifierAnnotation: "AddPrefix: ",
 		},
 		{
-			desc:                      "Request modifier full of spaces annotation",
+			desc: "Request modifier full of spaces annotation",
 			requestModifierAnnotation: "    ",
 		},
 		{
-			desc:                      "Request modifier missing both parts of annotation",
+			desc: "Request modifier missing both parts of annotation",
 			requestModifierAnnotation: "  :  ",
 		},
 		{
-			desc:                      "Request modifier using unknown rule",
+			desc: "Request modifier using unknown rule",
 			requestModifierAnnotation: "Foo: /bar",
 		},
 		{
-			desc:                      "Missing Rule",
+			desc: "Missing Rule",
 			requestModifierAnnotation: " : /bar",
 		},
 	}
