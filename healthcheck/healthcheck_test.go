@@ -150,11 +150,16 @@ func TestSetBackendsConfiguration(t *testing.T) {
 }
 
 func TestNewRequest(t *testing.T) {
+	type expected struct {
+		err   bool
+		value string
+	}
+
 	testCases := []struct {
 		desc      string
 		serverURL string
 		options   Options
-		expected  string
+		expected  expected
 	}{
 		{
 			desc:      "no port override",
@@ -163,7 +168,10 @@ func TestNewRequest(t *testing.T) {
 				Path: "/test",
 				Port: 0,
 			},
-			expected: "http://backend1:80/test",
+			expected: expected{
+				err:   false,
+				value: "http://backend1:80/test",
+			},
 		},
 		{
 			desc:      "port override",
@@ -172,7 +180,10 @@ func TestNewRequest(t *testing.T) {
 				Path: "/test",
 				Port: 8080,
 			},
-			expected: "http://backend2:8080/test",
+			expected: expected{
+				err:   false,
+				value: "http://backend2:8080/test",
+			},
 		},
 		{
 			desc:      "no port override with no port in server URL",
@@ -181,7 +192,10 @@ func TestNewRequest(t *testing.T) {
 				Path: "/health",
 				Port: 0,
 			},
-			expected: "http://backend1/health",
+			expected: expected{
+				err:   false,
+				value: "http://backend1/health",
+			},
 		},
 		{
 			desc:      "port override with no port in server URL",
@@ -190,7 +204,10 @@ func TestNewRequest(t *testing.T) {
 				Path: "/health",
 				Port: 8080,
 			},
-			expected: "http://backend2:8080/health",
+			expected: expected{
+				err:   false,
+				value: "http://backend2:8080/health",
+			},
 		},
 		{
 			desc:      "scheme override",
@@ -200,7 +217,46 @@ func TestNewRequest(t *testing.T) {
 				Path:   "/test",
 				Port:   0,
 			},
-			expected: "http://backend1:80/test",
+			expected: expected{
+				err:   false,
+				value: "http://backend1:80/test",
+			},
+		},
+		{
+			desc:      "path with param",
+			serverURL: "http://backend1:80",
+			options: Options{
+				Path: "/health?powpow=do",
+				Port: 0,
+			},
+			expected: expected{
+				err:   false,
+				value: "http://backend1:80/health?powpow=do",
+			},
+		},
+		{
+			desc:      "path with params",
+			serverURL: "http://backend1:80",
+			options: Options{
+				Path: "/health?powpow=do&do=powpow",
+				Port: 0,
+			},
+			expected: expected{
+				err:   false,
+				value: "http://backend1:80/health?powpow=do&do=powpow",
+			},
+		},
+		{
+			desc:      "path with invalid path",
+			serverURL: "http://backend1:80",
+			options: Options{
+				Path: ":",
+				Port: 0,
+			},
+			expected: expected{
+				err:   true,
+				value: "",
+			},
 		},
 	}
 
@@ -211,13 +267,18 @@ func TestNewRequest(t *testing.T) {
 
 			backend := NewBackendConfig(test.options, "backendName")
 
-			u, err := url.Parse(test.serverURL)
-			require.NoError(t, err)
+			u := testhelpers.MustParseURL(test.serverURL)
 
 			req, err := backend.newRequest(u)
-			require.NoError(t, err, "failed to create new backend request")
 
-			assert.Equal(t, test.expected, req.URL.String())
+			if test.expected.err {
+				require.Error(t, err)
+				assert.Nil(t, nil)
+			} else {
+				require.NoError(t, err, "failed to create new backend request")
+				require.NotNil(t, req)
+				assert.Equal(t, test.expected.value, req.URL.String())
+			}
 		})
 	}
 }
