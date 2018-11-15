@@ -133,7 +133,7 @@ git clone https://github.com/containous/traefik
 
 ## Introductory Videos
 
-Here is a talk given by [Emile Vauge](https://github.com/emilevauge) at [GopherCon 2017](https://gophercon.com/).
+Here is a talk given by [Emile Vauge](https://github.com/emilevauge) at GopherCon 2017.
 You will learn Traefik basics in less than 10 minutes.
 
 [![Traefik GopherCon 2017](https://img.youtube.com/vi/RgudiksfL-k/0.jpg)](https://www.youtube.com/watch?v=RgudiksfL-k)
