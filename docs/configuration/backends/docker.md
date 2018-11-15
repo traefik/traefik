@@ -236,11 +236,11 @@ Labels can be used on containers to override default behavior.
 | `traefik.backend.loadbalancer.method=drr`                           | Overrides the default `wrr` load balancer algorithm                                                                                                                                                                              |
 | `traefik.backend.loadbalancer.stickiness=true`                      | Enables backend sticky sessions                                                                                                                                                                                                  |
 | `traefik.backend.loadbalancer.stickiness.cookieName=NAME`           | Sets the cookie name manually for sticky sessions                                                                                                                                                                                |
-| `traefik.backend.loadbalancer.swarm=true`                           | Uses Swarm's inbuilt load balancer (only relevant under Swarm Mode).                                                                                                                                                             |
+| `traefik.backend.loadbalancer.swarm=true`                           | Uses Swarm's inbuilt load balancer (only relevant under Swarm Mode). [3].                                                                                                                                                        |
 | `traefik.backend.maxconn.amount=10`                                 | Sets a maximum number of connections to the backend.<br>Must be used in conjunction with the below label to take effect.                                                                                                         |
 | `traefik.backend.maxconn.extractorfunc=client.ip`                   | Sets the function to be used against the request to determine what to limit maximum connections to the backend by.<br>Must be used in conjunction with the above label to take effect.                                           |
 | `traefik.frontend.auth.basic=EXPR`                                  | Sets the basic authentication to this frontend in CSV format: `User:Hash,User:Hash` [2] (DEPRECATED).                                                                                                                            |
-| `traefik.frontend.auth.basic.realm=REALM`                     | Sets the realm of basic authentication to this frontend.                                                                                                                                                                            |
+| `traefik.frontend.auth.basic.realm=REALM`                     | Sets the realm of basic authentication to this frontend.                                                                                                                                                                               |
 | `traefik.frontend.auth.basic.removeHeader=true`                     | If set to `true`, removes the `Authorization` header.                                                                                                                                                                            |
 | `traefik.frontend.auth.basic.users=EXPR`                            | Sets the basic authentication to this frontend in CSV format: `User:Hash,User:Hash` [2].                                                                                                                                         |
 | `traefik.frontend.auth.basic.usersFile=/path/.htpasswd`             | Sets the basic authentication with an external file; if users and usersFile are provided, both are merged, with external file contents having precedence.                                                                        |
@@ -287,8 +287,8 @@ Labels can be used on containers to override default behavior.
 | `traefik.frontend.whiteList.ipStrategy.depth=5`                     | See [whitelist](/configuration/entrypoints/#white-listing)                                                                                                                                                                       |
 | `traefik.frontend.whiteList.ipStrategy.excludedIPs=127.0.0.1`       | See [whitelist](/configuration/entrypoints/#white-listing)                                                                                                                                                                       |
 
-[1] `traefik.docker.network`:
-If a container is linked to several networks, be sure to set the proper network name (you can check with `docker inspect <container_id>`) otherwise it will randomly pick one (depending on how docker is returning them).
+[1] `traefik.docker.network`:  
+If a container is linked to several networks, be sure to set the proper network name (you can check with `docker inspect <container_id>`) otherwise it will randomly pick one (depending on how docker is returning them).  
 For instance when deploying docker `stack` from compose files, the compose defined networks will be prefixed with the `stack` name.
 Or if your service references external network use it's name instead.
 
@@ -296,6 +296,11 @@ Or if your service references external network use it's name instead.
 To create `user:password` pair, it's possible to use this command:  
 `echo $(htpasswd -nb user password) | sed -e s/\\$/\\$\\$/g`.  
 The result will be `user:$$apr1$$9Cv/OMGj$$ZomWQzuQbL.3TRCS81A1g/`, note additional symbol `$` makes escaping.
+
+[3] `traefik.backend.loadbalancer.swarm`:  
+If you enable this option, Traefik will use the virtual IP provided by docker swarm instead of the containers IPs.
+Which means that Traefik will not perform any kind of load balancing and will delegate this task to swarm.  
+It also means that Traefik will manipulate only one backend, not one backend per container.
 
 #### Custom Headers
 
