@@ -88,6 +88,9 @@ type FinishConfig struct {
 	// Error holds an optional error that should be set on the span before
 	// finishing.
 	Error error
+
+	// NoDebugStack will prevent any set errors from generating an attached stack trace tag.
+	NoDebugStack bool
 }
 
 // StartSpanConfig holds the configuration for starting a new span. It is usually passed

@@ -63,7 +63,7 @@ func (z *span) DecodeMsg(dc *msgp.Reader) (err error) {
 			if z.Meta == nil && zb0002 > 0 {
 				z.Meta = make(map[string]string, zb0002)
 			} else if len(z.Meta) > 0 {
-				for key, _ := range z.Meta {
+				for key := range z.Meta {
 					delete(z.Meta, key)
 				}
 			}
@@ -90,7 +90,7 @@ func (z *span) DecodeMsg(dc *msgp.Reader) (err error) {
 			if z.Metrics == nil && zb0003 > 0 {
 				z.Metrics = make(map[string]float64, zb0003)
 			} else if len(z.Metrics) > 0 {
-				for key, _ := range z.Metrics {
+				for key := range z.Metrics {
 					delete(z.Metrics, key)
 				}
 			}
