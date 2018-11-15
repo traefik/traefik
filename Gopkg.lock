@@ -566,6 +566,12 @@
   revision = "62e9147c64a1ed519147b62a56a14e83e2be02c1"
 
 [[projects]]
+  name = "github.com/fatih/structs"
+  packages = ["."]
+  revision = "4966fc68f5b7593aafa6cbbba2d65ec6e1416047"
+  version = "v1.1.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/flynn/go-shlex"
   packages = ["."]
@@ -847,6 +853,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/kolo/xmlrpc"
+  packages = ["."]
+  revision = "16bdd962781df9696f40cc2bab924f1a855a7f89"
+
+[[projects]]
+  branch = "master"
   name = "github.com/konsorten/go-windows-terminal-sequences"
   packages = ["."]
   revision = "b729f2633dfe35f4d1d8a32385f6685610ce1cb5"
@@ -989,10 +1001,10 @@
   revision = "2bca23e0e452137f789efbc8610126fd8b94f73b"
 
 [[projects]]
-  branch = "master"
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
-  revision = "b4575eea38cca1123ec2dc90c26529b5c5acfcff"
+  revision = "3536a929edddb9a5b34bd6861dc4a9647cb459fe"
+  version = "v1.1.2"
 
 [[projects]]
   branch = "master"
@@ -1201,6 +1213,12 @@
   version = "v1.1.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/smueller18/goinwx"
+  packages = ["."]
+  revision = "5d138389109eca96463f44f692408f0d1c731278"
+
+[[projects]]
   name = "github.com/spf13/pflag"
   packages = ["."]
   revision = "cb88ea77998c3f024757528e3305022ab50b43be"
@@ -1246,6 +1264,16 @@
   packages = ["msgp"]
   revision = "b2b6a672cf1e5b90748f79b8b81fc8c5cf0571a1"
   version = "1.0.2"
+
+[[projects]]
+  name = "github.com/transip/gotransip"
+  packages = [
+    ".",
+    "domain",
+    "util"
+  ]
+  revision = "1dc93a7db3567a5ccf865106afac88278ba940cf"
+  version = "v5.8.1"
 
 [[projects]]
   branch = "master"
@@ -1362,6 +1390,7 @@
     "providers/dns/bluecat",
     "providers/dns/cloudflare",
     "providers/dns/cloudxns",
+    "providers/dns/conoha",
     "providers/dns/digitalocean",
     "providers/dns/dnsimple",
     "providers/dns/dnsmadeeasy",
@@ -1378,10 +1407,13 @@
     "providers/dns/glesys",
     "providers/dns/godaddy",
     "providers/dns/hostingde",
+    "providers/dns/httpreq",
     "providers/dns/iij",
+    "providers/dns/inwx",
     "providers/dns/lightsail",
     "providers/dns/linode",
     "providers/dns/linodev4",
+    "providers/dns/mydnsjp",
     "providers/dns/namecheap",
     "providers/dns/namedotcom",
     "providers/dns/netcup",
@@ -1394,11 +1426,14 @@
     "providers/dns/rfc2136",
     "providers/dns/route53",
     "providers/dns/sakuracloud",
+    "providers/dns/selectel",
     "providers/dns/stackpath",
+    "providers/dns/transip",
     "providers/dns/vegadns",
+    "providers/dns/vscale",
     "providers/dns/vultr"
   ]
-  revision = "1151b4e3befc51b7b215179c87791753721dc6d5"
+  revision = "a5f0a3ff8026e05cbdd11c391c0e25122497c736"
 
 [[projects]]
   branch = "master"
