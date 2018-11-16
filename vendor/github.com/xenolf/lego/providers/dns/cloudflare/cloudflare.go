@@ -126,7 +126,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 		TTL:     d.config.TTL,
 	}
 
-	response, _ := d.client.CreateDNSRecord(zoneID, dnsRecord)
+	response, err := d.client.CreateDNSRecord(zoneID, dnsRecord)
 	if err != nil {
 		return fmt.Errorf("cloudflare: failed to create TXT record: %v", err)
 	}
