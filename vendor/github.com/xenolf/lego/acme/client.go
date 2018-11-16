@@ -665,7 +665,7 @@ func (c *Client) getAuthzForOrder(order orderResource) ([]authorization, error) 
 
 		go func(authzURL string) {
 			var authz authorization
-			_, err := getJSON(authzURL, &authz)
+			_, err := postAsGet(c.jws, authzURL, &authz)
 			if err != nil {
 				errc <- domainError{Domain: authz.Identifier.Value, Error: err}
 				return
@@ -789,7 +789,7 @@ func (c *Client) requestCertificateForCsr(order orderResource, bundle bool, csr 
 		case <-stopTimer.C:
 			return nil, errors.New("certificate polling timed out")
 		case <-retryTick.C:
-			_, err := getJSON(order.URL, &retOrder)
+			_, err := postAsGet(c.jws, order.URL, &retOrder)
 			if err != nil {
 				return nil, err
 			}
@@ -813,7 +813,7 @@ func (c *Client) requestCertificateForCsr(order orderResource, bundle bool, csr 
 func (c *Client) checkCertResponse(order orderMessage, certRes *CertificateResource, bundle bool) (bool, error) {
 	switch order.Status {
 	case statusValid:
-		resp, err := httpGet(order.Certificate)
+		resp, err := postAsGet(c.jws, order.Certificate, nil)
 		if err != nil {
 			return false, err
 		}
@@ -871,7 +871,7 @@ func (c *Client) checkCertResponse(order orderMessage, certRes *CertificateResou
 // getIssuerCertificate requests the issuer certificate
 func (c *Client) getIssuerCertificate(url string) ([]byte, error) {
 	log.Infof("acme: Requesting issuer cert from %s", url)
-	resp, err := httpGet(url)
+	resp, err := postAsGet(c.jws, url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -914,7 +914,10 @@ func parseLinks(links []string) map[string]string {
 func validate(j *jws, domain, uri string, c challenge) error {
 	var chlng challenge
 
-	hdr, err := postJSON(j, uri, c, &chlng)
+	// Challenge initiation is done by sending a JWS payload containing the
+	// trivial JSON object `{}`. We use an empty struct instance as the postJSON
+	// payload here to achieve this result.
+	hdr, err := postJSON(j, uri, struct{}{}, &chlng)
 	if err != nil {
 		return err
 	}
@@ -940,11 +943,15 @@ func validate(j *jws, domain, uri string, c challenge) error {
 			// If it doesn't, we'll just poll hard.
 			ra = 5
 		}
+
 		time.Sleep(time.Duration(ra) * time.Second)
 
-		hdr, err = getJSON(uri, &chlng)
+		resp, err := postAsGet(j, uri, &chlng)
 		if err != nil {
 			return err
+		}
+		if resp != nil {
+			hdr = resp.Header
 		}
 	}
 }
