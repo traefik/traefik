@@ -117,6 +117,8 @@ func (c CertificateStore) ResetCache() {
 
 // MatchDomain return true if a domain match the cert domain
 func MatchDomain(domain string, certDomain string) bool {
+	certDomain = strings.ToLower(strings.TrimSpace(certDomain))
+
 	if domain == certDomain {
 		return true
 	}
