@@ -112,7 +112,7 @@ To enable constraints see [provider-specific constraints section](/configuration
 #
 # swarm classic (1.12-)
 # endpoint = "tcp://127.0.0.1:2375"
-# swarm intergated (1.12+)
+# docker swarm mode (1.12+)
 endpoint = "tcp://127.0.0.1:2377"
 
 # Default base domain used for the frontend rules.
