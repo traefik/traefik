@@ -10,7 +10,9 @@ import (
 	"time"
 )
 
-var tracerVersion = "v1.0"
+// TODO(gbbr): find a more effective way to keep this up to date,
+// e.g. via `go generate`
+var tracerVersion = "v1.5.0"
 
 const (
 	defaultHostname    = "localhost"
@@ -57,16 +59,8 @@ func newHTTPTransport(addr string) *httpTransport {
 		"Datadog-Meta-Tracer-Version":   tracerVersion,
 		"Content-Type":                  "application/msgpack",
 	}
-	host, port, _ := net.SplitHostPort(addr)
-	if host == "" {
-		host = defaultHostname
-	}
-	if port == "" {
-		port = defaultPort
-	}
-	addr = fmt.Sprintf("%s:%s", host, port)
 	return &httpTransport{
-		traceURL: fmt.Sprintf("http://%s/v0.3/traces", addr),
+		traceURL: fmt.Sprintf("http://%s/v0.3/traces", resolveAddr(addr)),
 		client: &http.Client{
 			// We copy the transport to avoid using the default one, as it might be
 			// augmented with tracing and we don't want these calls to be recorded.
@@ -117,4 +111,21 @@ func (t *httpTransport) send(p *payload) error {
 		return fmt.Errorf("%s", txt)
 	}
 	return nil
+}
+
+// resolveAddr resolves the given agent address and fills in any missing host
+// and port using the defaults.
+func resolveAddr(addr string) string {
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		// no port in addr
+		host = addr
+	}
+	if host == "" {
+		host = defaultHostname
+	}
+	if port == "" {
+		port = defaultPort
+	}
+	return fmt.Sprintf("%s:%s", host, port)
 }

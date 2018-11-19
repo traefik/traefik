@@ -15,6 +15,10 @@ var (
 func SetGlobalTracer(t ddtrace.Tracer) {
 	mu.Lock()
 	defer mu.Unlock()
+	if !Testing {
+		// avoid infinite loop when calling (*mocktracer.Tracer).Stop
+		globalTracer.Stop()
+	}
 	globalTracer = t
 }
 

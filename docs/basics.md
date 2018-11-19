@@ -743,8 +743,6 @@ If you want to dig into more details, here is the source code of the collecting 
 
 By default we anonymize all configuration fields, except fields tagged with `export=true`.
 
-You can check all fields in the [godoc](https://godoc.org/github.com/containous/traefik/configuration#GlobalConfiguration).
-
 ### How to enable this ?
 
 You can enable the collecting system by:
