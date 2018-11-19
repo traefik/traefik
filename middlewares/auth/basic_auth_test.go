@@ -198,11 +198,21 @@ func TestBasicAuthUsersFromFile(t *testing.T) {
 			userFileContent: "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/\ntest2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0\n",
 			givenUsers:      []string{"test2:$apr1$mK.GtItK$ncnLYvNLek0weXdxo68690"},
 			expectedUsers:   map[string]string{"test": "test", "test2": "overridden"},
-			realm:           "trafikee",
+			realm:           "traefik",
+		},
+		{
+			desc:            "Should skip comments",
+			userFileContent: "#Comment\ntest:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/\ntest2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0\n",
+			givenUsers:      []string{},
+			expectedUsers:   map[string]string{"test": "test", "test2": "test2"},
+			realm:           "traefiker",
 		},
 	}
 
 	for _, test := range testCases {
+		if test.desc != "Should skip comments" {
+			continue
+		}
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()

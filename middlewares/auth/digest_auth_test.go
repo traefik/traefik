@@ -80,10 +80,10 @@ func TestDigestAuthUsersFromFile(t *testing.T) {
 		},
 		{
 			desc:            "Should authenticate the correct user based on the realm",
-			userFileContent: "test:traefik:a2688e031edb4be6a3797f3882655c05\ntest:traefikee:316a669c158c8b7ab1048b03961a7aa5\n",
+			userFileContent: "test:traefik:a2688e031edb4be6a3797f3882655c05\ntest:traefiker:a3d334dff2645b914918de78bec50bf4\n",
 			givenUsers:      []string{},
 			expectedUsers:   map[string]string{"test": "test2"},
-			realm:           "traefikee",
+			realm:           "traefiker",
 		},
 	}
 
