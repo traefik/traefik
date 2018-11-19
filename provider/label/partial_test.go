@@ -733,6 +733,13 @@ func TestGetAuth(t *testing.T) {
 			expected: nil,
 		},
 		{
+			desc: "should return nil when no real auth",
+			labels: map[string]string{
+				TraefikFrontendAuthHeaderField: "myHeaderField",
+			},
+			expected: nil,
+		},
+		{
 			desc: "should return a basic auth",
 			labels: map[string]string{
 				TraefikFrontendAuthHeaderField:       "myHeaderField",
