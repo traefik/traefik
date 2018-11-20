@@ -110,7 +110,10 @@ To enable constraints see [provider-specific constraints section](/configuration
 # Required
 # Default: "unix:///var/run/docker.sock"
 #
-endpoint = "tcp://127.0.0.1:2375"
+# swarm classic (1.12-)
+# endpoint = "tcp://127.0.0.1:2375"
+# docker swarm mode (1.12+)
+endpoint = "tcp://127.0.0.1:2377"
 
 # Default base domain used for the frontend rules.
 # Can be overridden by setting the "traefik.domain" label on a services.
