@@ -109,6 +109,8 @@ func GetAuth(labels map[string]string) *types.Auth {
 		auth.Digest = getAuthDigest(labels)
 	} else if HasPrefix(labels, TraefikFrontendAuthForward) {
 		auth.Forward = getAuthForward(labels)
+	} else {
+		return nil
 	}
 
 	return auth
