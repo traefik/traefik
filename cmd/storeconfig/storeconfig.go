@@ -3,9 +3,7 @@ package storeconfig
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	stdlog "log"
-	"os"
 
 	"github.com/abronan/valkeyrie/store"
 	"github.com/containous/flaeg"
@@ -13,7 +11,6 @@ import (
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/cmd"
-	"github.com/containous/traefik/log"
 )
 
 // NewCmd builds a new StoreConfig command
@@ -77,14 +74,6 @@ func Run(kv *staert.KvSource, traefikConfiguration *cmd.TraefikConfiguration) fu
 		if traefikConfiguration.Configuration.ACME != nil {
 			account := &acme.Account{}
 
-			// Migrate ACME data from file to KV store if needed
-			if len(traefikConfiguration.Configuration.ACME.StorageFile) > 0 {
-				account, err = migrateACMEData(traefikConfiguration.Configuration.ACME.StorageFile)
-				if err != nil {
-					return err
-				}
-			}
-
 			accountInitialized, err := keyExists(kv, traefikConfiguration.Configuration.ACME.Storage)
 			if err != nil && err != store.ErrKeyNotFound {
 				return err
@@ -111,9 +100,6 @@ func Run(kv *staert.KvSource, traefikConfiguration *cmd.TraefikConfiguration) fu
 					return err
 				}
 			}
-
-			// Force to delete storagefile
-			return kv.Delete(kv.Prefix + "/acme/storagefile")
 		}
 		return nil
 	}
@@ -126,52 +112,6 @@ func keyExists(source *staert.KvSource, key string) (bool, error) {
 	}
 
 	return len(list) > 0, nil
-}
-
-// migrateACMEData allows migrating data from acme.json file to KV store in function of the file format
-func migrateACMEData(fileName string) (*acme.Account, error) {
-
-	f, err := os.Open(fileName)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	file, err := ioutil.ReadAll(f)
-	if err != nil {
-		return nil, err
-	}
-
-	// Check if the storage file is not empty before to get data
-	account := &acme.Account{}
-	if len(file) > 0 {
-		accountFromNewFormat, err := acme.FromNewToOldFormat(fileName)
-		if err != nil {
-			return nil, err
-		}
-
-		if accountFromNewFormat == nil {
-			// convert ACME json file to KV store (used for backward compatibility)
-			localStore := acme.NewLocalStore(fileName)
-
-			account, err = localStore.Get()
-			if err != nil {
-				return nil, err
-			}
-
-			err = account.RemoveAccountV1Values()
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			account = accountFromNewFormat
-		}
-	} else {
-		log.Warnf("No data will be imported from the storageFile %q because it is empty.", fileName)
-	}
-
-	err = account.Init()
-	return account, err
 }
 
 // CreateKvSource creates KvSource

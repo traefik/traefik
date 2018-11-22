@@ -88,7 +88,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 			},
 		},
 		Storage:      "Storage",
-		StorageFile:  "StorageFile",
 		OnDemand:     true,
 		OnHostRule:   true,
 		CAServer:     "CAServer",
