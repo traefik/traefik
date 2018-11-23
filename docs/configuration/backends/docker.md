@@ -93,7 +93,6 @@ network = "web"
 
 To enable constraints see [provider-specific constraints section](/configuration/commons/#provider-specific).
 
-
 ## Docker Swarm Mode
 
 ```toml
@@ -179,6 +178,57 @@ exposedByDefault = false
 ```
 
 To enable constraints see [provider-specific constraints section](/configuration/commons/#provider-specific).
+
+## Security Considerations
+
+### Security Challenge with the Docker Socket
+
+Traefik requires access to the docker socket to get its dynamic configuration,
+by watching the Docker API through this socket.
+
+!!! important
+    Depending on your context and your usage, accessing the Docker API without any restriction might be a security concern.
+
+As explained on the Docker documentation: ([Docker Daemon Attack Surface page](https://docs.docker.com/engine/security/security/#docker-daemon-attack-surface)):
+
+```[...] only **trusted** users should be allowed to control your Docker daemon [...]'```
+
+If the Traefik processes (handling requests from the outside world) is attacked,
+then the attacker can access the Docker (or Swarm Mode) backend.
+
+Also, when using Swarm Mode, it is mandatory to schedule Traefik's containers on the Swarm manager nodes,
+to let Traefik accessing the Docker Socket of the Swarm manager node.
+
+More information about Docker's security:
+
+- [KubeCon EU 2018 Keynote, Running with Scissors, from Liz Rice](https://www.youtube.com/watch?v=ltrV-Qmh3oY)
+- [Don't expose the Docker socket (not even to a container)](https://www.lvh.io/posts/dont-expose-the-docker-socket-not-even-to-a-container.html)
+- [A thread on Stack Overflow about sharing the `/var/run/docker.sock` file](https://news.ycombinator.com/item?id=17983623)
+- [To Dind or not to DinD](https://blog.loof.fr/2018/01/to-dind-or-not-do-dind.html)
+
+### Security Compensation
+
+The main security compensation is to expose the Docker socket over TCP, instead of the default Unix socket file.
+It allows different implementation levels of the [AAA (Authentication, Authorization, Accounting) concepts](https://en.wikipedia.org/wiki/AAA_(computer_security)), depending on your security assessment:
+
+- Authentication with Client Certificates as described in [the "Protect the Docker daemon socket" page of Docker's documentation](https://docs.docker.com/engine/security/https/)
+
+- Authorization with the [Docker Authorization Plugin Mechanism](https://docs.docker.com/engine/extend/plugins_authorization/)
+
+- Accounting at networking level, by exposing the socket only inside a Docker private network, only available for Traefik.
+
+- Accounting at container level, by exposing the socket on a another container than Traefik's.
+  With Swarm mode, it allows scheduling of Traefik on worker nodes, with only the "socket exposer" container on the manager nodes.
+
+- Accounting at kernel level, by enforcing kernel calls with mechanisms like [SELinux](https://en.wikipedia.org/wiki/Security-Enhanced_Linux),
+  to only allows an identified set of actions for Traefik's process (or the "socket exposer" process).
+
+Use the following ressources to get started:
+
+- [Traefik issue GH-4174 about security with Docker socket](https://github.com/containous/traefik/issues/4174)
+- [Inspecting Docker Activity with Socat](https://developers.redhat.com/blog/2015/02/25/inspecting-docker-activity-with-socat/)
+- [Letting Traefik run on Worker Nodes](https://blog.mikesir87.io/2018/07/letting-traefik-run-on-worker-nodes/)
+- [Docker Socket Proxy from Tecnativa](https://github.com/Tecnativa/docker-socket-proxy)
 
 ## Labels: overriding default behavior
 
