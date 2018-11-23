@@ -46,6 +46,16 @@ type ServiceRepresentation struct {
 	ID string `json:"id"`
 }
 
+type CertificateRepresentation struct {
+	CertFile string `json:"cert_file`
+	KeyFile  string `json:"key_file"`
+}
+
+type TLSRepresentation struct {
+	EntryPoints []string `json:"entry_points`
+	Certificate *CertificateRepresentation
+}
+
 // Handler expose api routes
 type Handler struct {
 	EntryPoint            string
@@ -78,6 +88,7 @@ func (p Handler) Append(router *mux.Router) {
 	router.Methods(http.MethodGet).Path("/api/providers/{provider}/middlewares/{middleware}").HandlerFunc(p.getMiddlewareHandler)
 	router.Methods(http.MethodGet).Path("/api/providers/{provider}/services").HandlerFunc(p.getServicesHandler)
 	router.Methods(http.MethodGet).Path("/api/providers/{provider}/services/{service}").HandlerFunc(p.getServiceHandler)
+	router.Methods(http.MethodGet).Path("/api/tls").HandlerFunc(p.getTLSHandler)
 
 	// FIXME stats
 	// health route
@@ -300,5 +311,37 @@ func (p Handler) getServiceHandler(rw http.ResponseWriter, request *http.Request
 	if err != nil {
 		log.FromContext(request.Context()).Error(err)
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (p Handler) getTLSHandler(rw http.ResponseWriter, request *http.Request) {
+
+	// FIXME handle currentConfiguration
+	if p.CurrentConfigurations != nil {
+		currentConfigurations, ok := p.CurrentConfigurations.Get().(config.Configurations)
+		if !ok {
+			rw.WriteHeader(http.StatusOK)
+			return
+		}
+		configurations := make(map[string][]*TLSRepresentation)
+		for name := range currentConfigurations {
+			configurations[name] = make([]*TLSRepresentation, 0)
+			currentConfiguration := currentConfigurations[name]
+			for _, tls := range currentConfiguration.TLS {
+				t := &TLSRepresentation{
+					EntryPoints: tls.EntryPoints,
+					Certificate: &CertificateRepresentation{
+						CertFile: tls.Certificate.CertFile.String(),
+						KeyFile:  tls.Certificate.KeyFile.String(),
+					},
+				}
+				configurations[name] = append(configurations[name], t)
+			}
+		}
+		err := templateRenderer.JSON(rw, http.StatusOK, configurations)
+		if err != nil {
+			log.FromContext(request.Context()).Error(err)
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		}
 	}
 }
