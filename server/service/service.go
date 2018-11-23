@@ -61,7 +61,10 @@ func (m *Manager) Build(rootCtx context.Context, serviceName string, responseMod
 	// TODO refactor ?
 	if conf, ok := m.configs[serviceName]; ok {
 		// FIXME Should handle multiple service types
-		return m.getLoadBalancerServiceHandler(ctx, serviceName, conf.LoadBalancer, responseModifier)
+		if conf.LoadBalancer != nil {
+			return m.getLoadBalancerServiceHandler(ctx, serviceName, conf.LoadBalancer, responseModifier)
+		}
+		return nil, fmt.Errorf("the service %q doesn't have any load balancer", serviceName)
 	}
 	return nil, fmt.Errorf("the service %q does not exits", serviceName)
 }

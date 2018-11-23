@@ -60,6 +60,21 @@ func TestRouterManager_Get(t *testing.T) {
 			expected:    ExpectedResult{StatusCode: http.StatusOK},
 		},
 		{
+			desc: "no load balancer",
+			routersConfig: map[string]*config.Router{
+				"foo": {
+					EntryPoints: []string{"web"},
+					Service:     "foo-service",
+					Rule:        "Host:foo.bar",
+				},
+			},
+			serviceConfig: map[string]*config.Service{
+				"foo-service": {},
+			},
+			entryPoints: []string{"web"},
+			expected:    ExpectedResult{StatusCode: http.StatusNotFound},
+		},
+		{
 			desc: "no middleware, default entry point",
 			routersConfig: map[string]*config.Router{
 				"foo": {
