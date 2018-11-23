@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/old/provider/acme"
+	"github.com/containous/traefik/provider/acme"
 )
 
 // LocalStore is a store using a file as storage

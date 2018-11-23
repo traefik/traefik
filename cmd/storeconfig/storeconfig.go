@@ -36,21 +36,21 @@ func Run(kv *staert.KvSource, traefikConfiguration *cmd.TraefikConfiguration) fu
 			return fmt.Errorf("error using command storeconfig, no Key-value store defined")
 		}
 
-		fileConfig := traefikConfiguration.GlobalConfiguration.File
+		fileConfig := traefikConfiguration.Providers.File
 		if fileConfig != nil {
-			traefikConfiguration.GlobalConfiguration.File = nil
+			traefikConfiguration.Providers.File = nil
 			if len(fileConfig.Filename) == 0 && len(fileConfig.Directory) == 0 {
 				fileConfig.Filename = traefikConfiguration.ConfigFile
 			}
 		}
 
-		jsonConf, err := json.Marshal(traefikConfiguration.GlobalConfiguration)
+		jsonConf, err := json.Marshal(traefikConfiguration.Configuration)
 		if err != nil {
 			return err
 		}
 		stdlog.Printf("Storing configuration: %s\n", jsonConf)
 
-		err = kv.StoreConfig(traefikConfiguration.GlobalConfiguration)
+		err = kv.StoreConfig(traefikConfiguration.Configuration)
 		if err != nil {
 			return err
 		}
@@ -74,24 +74,24 @@ func Run(kv *staert.KvSource, traefikConfiguration *cmd.TraefikConfiguration) fu
 			}
 		}
 
-		if traefikConfiguration.GlobalConfiguration.ACME != nil {
+		if traefikConfiguration.Configuration.ACME != nil {
 			account := &acme.Account{}
 
 			// Migrate ACME data from file to KV store if needed
-			if len(traefikConfiguration.GlobalConfiguration.ACME.StorageFile) > 0 {
-				account, err = migrateACMEData(traefikConfiguration.GlobalConfiguration.ACME.StorageFile)
+			if len(traefikConfiguration.Configuration.ACME.StorageFile) > 0 {
+				account, err = migrateACMEData(traefikConfiguration.Configuration.ACME.StorageFile)
 				if err != nil {
 					return err
 				}
 			}
 
-			accountInitialized, err := keyExists(kv, traefikConfiguration.GlobalConfiguration.ACME.Storage)
+			accountInitialized, err := keyExists(kv, traefikConfiguration.Configuration.ACME.Storage)
 			if err != nil && err != store.ErrKeyNotFound {
 				return err
 			}
 
 			// Check to see if ACME account object is already in kv store
-			if traefikConfiguration.GlobalConfiguration.ACME.OverrideCertificates || !accountInitialized {
+			if traefikConfiguration.Configuration.ACME.OverrideCertificates || !accountInitialized {
 
 				// Store the ACME Account into the KV Store
 				// Certificates in KV Store will be overridden
@@ -103,7 +103,7 @@ func Run(kv *staert.KvSource, traefikConfiguration *cmd.TraefikConfiguration) fu
 
 				source := staert.KvSource{
 					Store:  kv,
-					Prefix: traefikConfiguration.GlobalConfiguration.ACME.Storage,
+					Prefix: traefikConfiguration.Configuration.ACME.Storage,
 				}
 
 				err = source.StoreConfig(meta)
@@ -182,29 +182,29 @@ func CreateKvSource(traefikConfiguration *cmd.TraefikConfiguration) (*staert.KvS
 	var err error
 
 	switch {
-	case traefikConfiguration.Consul != nil:
-		kvStore, err = traefikConfiguration.Consul.CreateStore()
+	case traefikConfiguration.Providers.Consul != nil:
+		kvStore, err = traefikConfiguration.Providers.Consul.CreateStore()
 		kv = &staert.KvSource{
 			Store:  kvStore,
-			Prefix: traefikConfiguration.Consul.Prefix,
+			Prefix: traefikConfiguration.Providers.Consul.Prefix,
 		}
-	case traefikConfiguration.Etcd != nil:
-		kvStore, err = traefikConfiguration.Etcd.CreateStore()
+	case traefikConfiguration.Providers.Etcd != nil:
+		kvStore, err = traefikConfiguration.Providers.Etcd.CreateStore()
 		kv = &staert.KvSource{
 			Store:  kvStore,
-			Prefix: traefikConfiguration.Etcd.Prefix,
+			Prefix: traefikConfiguration.Providers.Etcd.Prefix,
 		}
-	case traefikConfiguration.Zookeeper != nil:
-		kvStore, err = traefikConfiguration.Zookeeper.CreateStore()
+	case traefikConfiguration.Providers.Zookeeper != nil:
+		kvStore, err = traefikConfiguration.Providers.Zookeeper.CreateStore()
 		kv = &staert.KvSource{
 			Store:  kvStore,
-			Prefix: traefikConfiguration.Zookeeper.Prefix,
+			Prefix: traefikConfiguration.Providers.Zookeeper.Prefix,
 		}
-	case traefikConfiguration.Boltdb != nil:
-		kvStore, err = traefikConfiguration.Boltdb.CreateStore()
+	case traefikConfiguration.Providers.Boltdb != nil:
+		kvStore, err = traefikConfiguration.Providers.Boltdb.CreateStore()
 		kv = &staert.KvSource{
 			Store:  kvStore,
-			Prefix: traefikConfiguration.Boltdb.Prefix,
+			Prefix: traefikConfiguration.Providers.Boltdb.Prefix,
 		}
 	}
 	return kv, err

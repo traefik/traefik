@@ -15,7 +15,6 @@ import (
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/tls"
-	"github.com/containous/traefik/types"
 	"github.com/pkg/errors"
 	"gopkg.in/fsnotify.v1"
 )
@@ -32,8 +31,8 @@ type Provider struct {
 }
 
 // Init the provider
-func (p *Provider) Init(constraints types.Constraints) error {
-	return p.BaseProvider.Init(constraints)
+func (p *Provider) Init() error {
+	return p.BaseProvider.Init()
 }
 
 // Provide allows the file provider to provide configurations to traefik

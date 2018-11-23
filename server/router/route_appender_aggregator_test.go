@@ -39,6 +39,7 @@ func TestNewRouteAppenderAggregator(t *testing.T) {
 		{
 			desc: "API with auth, ping without auth",
 			staticConf: static.Configuration{
+				Global: &static.Global{},
 				API: &static.API{
 					EntryPoint:  "traefik",
 					Middlewares: []string{"dumb"},
@@ -46,10 +47,8 @@ func TestNewRouteAppenderAggregator(t *testing.T) {
 				Ping: &ping.Handler{
 					EntryPoint: "traefik",
 				},
-				EntryPoints: &static.EntryPoints{
-					EntryPointList: map[string]static.EntryPoint{
-						"traefik": {},
-					},
+				EntryPoints: static.EntryPoints{
+					"traefik": {},
 				},
 			},
 			middles: map[string]alice.Constructor{
@@ -69,13 +68,12 @@ func TestNewRouteAppenderAggregator(t *testing.T) {
 		{
 			desc: "Wrong entrypoint name",
 			staticConf: static.Configuration{
+				Global: &static.Global{},
 				API: &static.API{
 					EntryPoint: "no",
 				},
-				EntryPoints: &static.EntryPoints{
-					EntryPointList: map[string]static.EntryPoint{
-						"traefik": {},
-					},
+				EntryPoints: static.EntryPoints{
+					"traefik": {},
 				},
 			},
 			expected: map[string]int{

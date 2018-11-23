@@ -124,7 +124,7 @@ func (p *Provider) ListenRequest(domain string) (*tls.Certificate, error) {
 }
 
 // Init for compatibility reason the BaseProvider implements an empty Init
-func (p *Provider) Init(_ types.Constraints) error {
+func (p *Provider) Init() error {
 	ctx := log.With(context.Background(), log.Str(log.ProviderName, "acme"))
 	logger := log.FromContext(ctx)
 

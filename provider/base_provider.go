@@ -25,8 +25,7 @@ type BaseProvider struct {
 }
 
 // Init for compatibility reason the BaseProvider implements an empty Init.
-func (p *BaseProvider) Init(constraints types.Constraints) error {
-	p.Constraints = append(p.Constraints, constraints...)
+func (p *BaseProvider) Init() error {
 	return nil
 }
 

@@ -22,9 +22,9 @@ import (
 	"github.com/containous/staert"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/log"
-	acmeprovider "github.com/containous/traefik/old/provider/acme"
-	"github.com/containous/traefik/old/types"
+	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/safe"
+	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
 	"github.com/eapache/channels"
 	"github.com/xenolf/lego/acme"
@@ -208,7 +208,7 @@ func (a *ACME) leadershipListener(elected bool) error {
 			needRegister = true
 		} else if len(account.KeyType) == 0 {
 			// Set the KeyType if not already defined in the account
-			account.KeyType = acmeprovider.GetKeyType(a.KeyType)
+			account.KeyType = acmeprovider.GetKeyType(context.Background(), a.KeyType)
 		}
 
 		a.client, err = a.buildACMEClient(account)

@@ -2,7 +2,6 @@ package tls
 
 import (
 	"crypto/tls"
-	"crypto/x509"
 	"net"
 	"sort"
 	"strings"
@@ -16,6 +15,7 @@ import (
 // CertificateStore store for dynamic and static certificates
 type CertificateStore struct {
 	DynamicCerts       *safe.Safe
+	StaticCerts        *safe.Safe
 	DefaultCertificate *tls.Certificate
 	CertCache          *cache.Cache
 	SniStrict          bool
@@ -24,43 +24,22 @@ type CertificateStore struct {
 // NewCertificateStore create a store for dynamic and static certificates
 func NewCertificateStore() *CertificateStore {
 	return &CertificateStore{
+		StaticCerts:  &safe.Safe{},
 		DynamicCerts: &safe.Safe{},
 		CertCache:    cache.New(1*time.Hour, 10*time.Minute),
 	}
 }
 
-func (c CertificateStore) getDefaultCertificateDomains() []string {
-	var allCerts []string
-
-	if c.DefaultCertificate == nil {
-		return allCerts
-	}
-
-	x509Cert, err := x509.ParseCertificate(c.DefaultCertificate.Certificate[0])
-	if err != nil {
-		log.WithoutContext().Errorf("Could not parse default certicate: %v", err)
-		return allCerts
-	}
-
-	if len(x509Cert.Subject.CommonName) > 0 {
-		allCerts = append(allCerts, x509Cert.Subject.CommonName)
-	}
-
-	for _, san := range x509Cert.DNSNames {
-		allCerts = append(allCerts, san)
-	}
-
-	for _, ipSan := range x509Cert.IPAddresses {
-		allCerts = append(allCerts, ipSan.String())
-	}
-
-	return allCerts
-}
-
 // GetAllDomains return a slice with all the certificate domain
 func (c CertificateStore) GetAllDomains() []string {
+	var allCerts []string
 
-	allCerts := c.getDefaultCertificateDomains()
+	// Get static certificates
+	if c.StaticCerts != nil && c.StaticCerts.Get() != nil {
+		for domains := range c.StaticCerts.Get().(map[string]*tls.Certificate) {
+			allCerts = append(allCerts, domains)
+		}
+	}
 
 	// Get dynamic certificates
 	if c.DynamicCerts != nil && c.DynamicCerts.Get() != nil {
@@ -98,6 +77,16 @@ func (c CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) *
 		}
 	}
 
+	if c.StaticCerts != nil && c.StaticCerts.Get() != nil {
+		for domains, cert := range c.StaticCerts.Get().(map[string]*tls.Certificate) {
+			for _, certDomain := range strings.Split(domains, ",") {
+				if MatchDomain(domainToCheck, certDomain) {
+					matchedCerts[certDomain] = cert
+				}
+			}
+		}
+	}
+
 	if len(matchedCerts) > 0 {
 		// sort map by keys
 		keys := make([]string, 0, len(matchedCerts))
@@ -112,6 +101,11 @@ func (c CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) *
 	}
 
 	return nil
+}
+
+// ContainsCertificates checks if there are any certs in the store
+func (c CertificateStore) ContainsCertificates() bool {
+	return c.StaticCerts.Get() != nil || c.DynamicCerts.Get() != nil
 }
 
 // ResetCache clears the cache in the store

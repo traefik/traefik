@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/containous/traefik/anonymize"
+	"github.com/containous/traefik/config/static"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/old/configuration"
 	"github.com/containous/traefik/version"
@@ -29,15 +30,15 @@ type data struct {
 }
 
 // Collect anonymous data.
-func Collect(globalConfiguration *configuration.GlobalConfiguration) error {
-	anonConfig, err := anonymize.Do(globalConfiguration, false)
+func Collect(staticConfiguration *static.Configuration) error {
+	anonConfig, err := anonymize.Do(staticConfiguration, false)
 	if err != nil {
 		return err
 	}
 
 	log.Infof("Anonymous stats sent to %s: %s", collectorURL, anonConfig)
 
-	hashConf, err := hashstructure.Hash(globalConfiguration, nil)
+	hashConf, err := hashstructure.Hash(staticConfiguration, nil)
 	if err != nil {
 		return err
 	}

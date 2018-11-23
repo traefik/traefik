@@ -14,75 +14,36 @@ import (
 )
 
 func TestGetBestCertificate(t *testing.T) {
+	// FIXME Add tests for defaultCert
 	testCases := []struct {
 		desc          string
 		domainToCheck string
-		staticCert    string
 		dynamicCert   string
 		expectedCert  string
 	}{
 		{
 			desc:          "Empty Store, returns no certs",
 			domainToCheck: "snitest.com",
-			staticCert:    "",
 			dynamicCert:   "",
 			expectedCert:  "",
 		},
 		{
-			desc:          "Empty static cert store",
+			desc:          "Best Match with no corresponding",
 			domainToCheck: "snitest.com",
-			staticCert:    "",
-			dynamicCert:   "snitest.com",
-			expectedCert:  "snitest.com",
-		},
-		{
-			desc:          "Empty dynamic cert store",
-			domainToCheck: "snitest.com",
-			staticCert:    "snitest.com",
-			dynamicCert:   "",
-			expectedCert:  "snitest.com",
+			dynamicCert:   "snitest.org",
+			expectedCert:  "",
 		},
 		{
 			desc:          "Best Match",
 			domainToCheck: "snitest.com",
-			staticCert:    "snitest.com",
-			dynamicCert:   "snitest.org",
+			dynamicCert:   "snitest.com",
 			expectedCert:  "snitest.com",
 		},
 		{
-			desc:          "Best Match with wildcard dynamic and exact static",
+			desc:          "Best Match with dynamic wildcard",
 			domainToCheck: "www.snitest.com",
-			staticCert:    "www.snitest.com",
-			dynamicCert:   "*.snitest.com",
-			expectedCert:  "www.snitest.com",
-		},
-		{
-			desc:          "Best Match with wildcard static and exact dynamic",
-			domainToCheck: "www.snitest.com",
-			staticCert:    "*.snitest.com",
-			dynamicCert:   "www.snitest.com",
-			expectedCert:  "www.snitest.com",
-		},
-		{
-			desc:          "Best Match with static wildcard only",
-			domainToCheck: "www.snitest.com",
-			staticCert:    "*.snitest.com",
-			dynamicCert:   "",
-			expectedCert:  "*.snitest.com",
-		},
-		{
-			desc:          "Best Match with dynamic wildcard only",
-			domainToCheck: "www.snitest.com",
-			staticCert:    "",
 			dynamicCert:   "*.snitest.com",
 			expectedCert:  "*.snitest.com",
-		},
-		{
-			desc:          "Best Match with two wildcard certs",
-			domainToCheck: "foo.www.snitest.com",
-			staticCert:    "*.www.snitest.com",
-			dynamicCert:   "*.snitest.com",
-			expectedCert:  "*.www.snitest.com",
 		},
 	}
 
@@ -90,14 +51,7 @@ func TestGetBestCertificate(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			staticMap := map[string]*tls.Certificate{}
 			dynamicMap := map[string]*tls.Certificate{}
-
-			if test.staticCert != "" {
-				cert, err := loadTestCert(test.staticCert)
-				require.NoError(t, err)
-				staticMap[test.staticCert] = cert
-			}
 
 			if test.dynamicCert != "" {
 				cert, err := loadTestCert(test.dynamicCert)
@@ -107,7 +61,6 @@ func TestGetBestCertificate(t *testing.T) {
 
 			store := &CertificateStore{
 				DynamicCerts: safe.New(dynamicMap),
-				StaticCerts:  safe.New(staticMap),
 				CertCache:    cache.New(1*time.Hour, 10*time.Minute),
 			}
 

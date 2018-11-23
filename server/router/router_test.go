@@ -209,7 +209,7 @@ func TestRouterManager_Get(t *testing.T) {
 
 			routerManager := NewManager(test.routersConfig, serviceManager, middlewaresBuilder, responseModifierFactory)
 
-			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, test.defaultEntryPoints)
+			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints)
 
 			w := httptest.NewRecorder()
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)
@@ -309,7 +309,7 @@ func TestAccessLog(t *testing.T) {
 
 			routerManager := NewManager(test.routersConfig, serviceManager, middlewaresBuilder, responseModifierFactory)
 
-			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, test.defaultEntryPoints)
+			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints)
 
 			w := httptest.NewRecorder()
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)

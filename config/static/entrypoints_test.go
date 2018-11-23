@@ -1,9 +1,8 @@
-package configuration
+package static
 
 import (
 	"testing"
 
-	"github.com/containous/traefik/old/types"
 	"github.com/containous/traefik/tls"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -186,277 +185,70 @@ func TestEntryPoints_Set(t *testing.T) {
 			name: "all parameters camelcase",
 			expression: "Name:foo " +
 				"Address::8000 " +
-				"TLS:goo,gii;foo,fii " +
 				"TLS " +
 				"TLS.MinVersion:VersionTLS11 " +
 				"TLS.CipherSuites:TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA " +
 				"CA:car " +
 				"CA.Optional:true " +
-				"Redirect.EntryPoint:https " +
-				"Redirect.Regex:http://localhost/(.*) " +
-				"Redirect.Replacement:http://mydomain/$1 " +
-				"Redirect.Permanent:true " +
-				"Compress:true " +
-				"ProxyProtocol.TrustedIPs:192.168.0.1 " +
-				"ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24 " +
-				"Auth.Basic.Realm:myRealm " +
-				"Auth.Basic.Users:test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0 " +
-				"Auth.Basic.RemoveHeader:true " +
-				"Auth.Digest.Users:test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e " +
-				"Auth.Digest.RemoveHeader:true " +
-				"Auth.HeaderField:X-WebAuth-User " +
-				"Auth.Forward.Address:https://authserver.com/auth " +
-				"Auth.Forward.AuthResponseHeaders:X-Auth,X-Test,X-Secret " +
-				"Auth.Forward.TrustForwardHeader:true " +
-				"Auth.Forward.TLS.CA:path/to/local.crt " +
-				"Auth.Forward.TLS.CAOptional:true " +
-				"Auth.Forward.TLS.Cert:path/to/foo.cert " +
-				"Auth.Forward.TLS.Key:path/to/foo.key " +
-				"Auth.Forward.TLS.InsecureSkipVerify:true " +
-				"WhiteList.SourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16 " +
-				"WhiteList.IPStrategy.depth:3 " +
-				"WhiteList.IPStrategy.ExcludedIPs:10.0.0.3/24,20.0.0.3/24 " +
-				"ClientIPStrategy.depth:3 " +
-				"ClientIPStrategy.ExcludedIPs:10.0.0.3/24,20.0.0.3/24 ",
+				"ProxyProtocol.TrustedIPs:192.168.0.1 ",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
 				Address: ":8000",
 				TLS: &tls.TLS{
 					MinVersion:   "VersionTLS11",
 					CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384", "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305", "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA"},
-					Certificates: tls.Certificates{
-						{
-							CertFile: tls.FileOrContent("goo"),
-							KeyFile:  tls.FileOrContent("gii"),
-						},
-						{
-							CertFile: tls.FileOrContent("foo"),
-							KeyFile:  tls.FileOrContent("fii"),
-						},
-					},
 					ClientCA: tls.ClientCA{
 						Files:    tls.FilesOrContents{"car"},
 						Optional: true,
 					},
 				},
-				Redirect: &types.Redirect{
-					EntryPoint:  "https",
-					Regex:       "http://localhost/(.*)",
-					Replacement: "http://mydomain/$1",
-					Permanent:   true,
-				},
-				Auth: &types.Auth{
-					Basic: &types.Basic{
-						Realm:        "myRealm",
-						RemoveHeader: true,
-						Users: types.Users{
-							"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-							"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						},
-					},
-					Digest: &types.Digest{
-						RemoveHeader: true,
-						Users: types.Users{
-							"test:traefik:a2688e031edb4be6a3797f3882655c05",
-							"test2:traefik:518845800f9e2bfb1f1f740ec24f074e",
-						},
-					},
-					Forward: &types.Forward{
-						Address:             "https://authserver.com/auth",
-						AuthResponseHeaders: []string{"X-Auth", "X-Test", "X-Secret"},
-						TLS: &types.ClientTLS{
-							CA:                 "path/to/local.crt",
-							CAOptional:         true,
-							Cert:               "path/to/foo.cert",
-							Key:                "path/to/foo.key",
-							InsecureSkipVerify: true,
-						},
-						TrustForwardHeader: true,
-					},
-					HeaderField: "X-WebAuth-User",
-				},
-				WhiteList: &types.WhiteList{
-					SourceRange: []string{
-						"10.42.0.0/16",
-						"152.89.1.33/32",
-						"afed:be44::/16",
-					},
-					IPStrategy: &types.IPStrategy{
-						Depth: 3,
-						ExcludedIPs: []string{
-							"10.0.0.3/24",
-							"20.0.0.3/24",
-						},
-					},
-				},
-				Compress: &Compress{},
 				ProxyProtocol: &ProxyProtocol{
 					Insecure:   false,
 					TrustedIPs: []string{"192.168.0.1"},
 				},
-				ForwardedHeaders: &ForwardedHeaders{
-					Insecure: false,
-					TrustedIPs: []string{
-						"10.0.0.3/24",
-						"20.0.0.3/24",
-					},
-				},
-				ClientIPStrategy: &types.IPStrategy{
-					Depth: 3,
-					ExcludedIPs: []string{
-						"10.0.0.3/24",
-						"20.0.0.3/24",
-					},
-				},
+				// FIXME Test ServersTransport
 			},
 		},
 		{
 			name: "all parameters lowercase",
 			expression: "Name:foo " +
 				"address::8000 " +
-				"tls:goo,gii;foo,fii " +
 				"tls " +
 				"tls.minversion:VersionTLS11 " +
 				"tls.ciphersuites:TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA " +
 				"ca:car " +
 				"ca.Optional:true " +
-				"redirect.entryPoint:https " +
-				"redirect.regex:http://localhost/(.*) " +
-				"redirect.replacement:http://mydomain/$1 " +
-				"redirect.permanent:true " +
-				"compress:true " +
-				"whiteList.sourceRange:10.42.0.0/16,152.89.1.33/32,afed:be44::/16 " +
-				"proxyProtocol.TrustedIPs:192.168.0.1 " +
-				"forwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24 " +
-				"auth.basic.realm:myRealm " +
-				"auth.basic.users:test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0 " +
-				"auth.digest.users:test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e " +
-				"auth.headerField:X-WebAuth-User " +
-				"auth.forward.address:https://authserver.com/auth " +
-				"auth.forward.authResponseHeaders:X-Auth,X-Test,X-Secret " +
-				"auth.forward.trustForwardHeader:true " +
-				"auth.forward.tls.ca:path/to/local.crt " +
-				"auth.forward.tls.caOptional:true " +
-				"auth.forward.tls.cert:path/to/foo.cert " +
-				"auth.forward.tls.key:path/to/foo.key " +
-				"auth.forward.tls.insecureSkipVerify:true ",
+				"proxyProtocol.TrustedIPs:192.168.0.1 ",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
 				Address: ":8000",
 				TLS: &tls.TLS{
 					MinVersion:   "VersionTLS11",
 					CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384", "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305", "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA"},
-					Certificates: tls.Certificates{
-						{
-							CertFile: tls.FileOrContent("goo"),
-							KeyFile:  tls.FileOrContent("gii"),
-						},
-						{
-							CertFile: tls.FileOrContent("foo"),
-							KeyFile:  tls.FileOrContent("fii"),
-						},
-					},
 					ClientCA: tls.ClientCA{
 						Files:    tls.FilesOrContents{"car"},
 						Optional: true,
 					},
 				},
-				Redirect: &types.Redirect{
-					EntryPoint:  "https",
-					Regex:       "http://localhost/(.*)",
-					Replacement: "http://mydomain/$1",
-					Permanent:   true,
-				},
-				Auth: &types.Auth{
-					Basic: &types.Basic{
-						Realm: "myRealm",
-						Users: types.Users{
-							"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-							"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						},
-					},
-					Digest: &types.Digest{
-						Users: types.Users{
-							"test:traefik:a2688e031edb4be6a3797f3882655c05",
-							"test2:traefik:518845800f9e2bfb1f1f740ec24f074e",
-						},
-					},
-					Forward: &types.Forward{
-						Address:             "https://authserver.com/auth",
-						AuthResponseHeaders: []string{"X-Auth", "X-Test", "X-Secret"},
-						TLS: &types.ClientTLS{
-							CA:                 "path/to/local.crt",
-							CAOptional:         true,
-							Cert:               "path/to/foo.cert",
-							Key:                "path/to/foo.key",
-							InsecureSkipVerify: true,
-						},
-						TrustForwardHeader: true,
-					},
-					HeaderField: "X-WebAuth-User",
-				},
-				WhiteList: &types.WhiteList{
-					SourceRange: []string{
-						"10.42.0.0/16",
-						"152.89.1.33/32",
-						"afed:be44::/16",
-					},
-				},
-				Compress: &Compress{},
 				ProxyProtocol: &ProxyProtocol{
 					Insecure:   false,
 					TrustedIPs: []string{"192.168.0.1"},
 				},
-				ForwardedHeaders: &ForwardedHeaders{
-					Insecure: false,
-					TrustedIPs: []string{
-						"10.0.0.3/24",
-						"20.0.0.3/24",
-					},
-				},
+				// FIXME Test ServersTransport
 			},
 		},
 		{
 			name:                   "default",
 			expression:             "Name:foo",
 			expectedEntryPointName: "foo",
-			expectedEntryPoint: &EntryPoint{
-				ForwardedHeaders: &ForwardedHeaders{Insecure: false},
-			},
-		},
-		{
-			name:                   "ForwardedHeaders insecure true",
-			expression:             "Name:foo ForwardedHeaders.insecure:true",
-			expectedEntryPointName: "foo",
-			expectedEntryPoint: &EntryPoint{
-				ForwardedHeaders: &ForwardedHeaders{Insecure: true},
-			},
-		},
-		{
-			name:                   "ForwardedHeaders insecure false",
-			expression:             "Name:foo ForwardedHeaders.insecure:false",
-			expectedEntryPointName: "foo",
-			expectedEntryPoint: &EntryPoint{
-				ForwardedHeaders: &ForwardedHeaders{Insecure: false},
-			},
-		},
-		{
-			name:                   "ForwardedHeaders TrustedIPs",
-			expression:             "Name:foo ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24",
-			expectedEntryPointName: "foo",
-			expectedEntryPoint: &EntryPoint{
-				ForwardedHeaders: &ForwardedHeaders{
-					TrustedIPs: []string{"10.0.0.3/24", "20.0.0.3/24"},
-				},
-			},
+			expectedEntryPoint:     &EntryPoint{},
 		},
 		{
 			name:                   "ProxyProtocol insecure true",
 			expression:             "Name:foo ProxyProtocol.insecure:true",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
-				ForwardedHeaders: &ForwardedHeaders{},
-				ProxyProtocol:    &ProxyProtocol{Insecure: true},
+				ProxyProtocol: &ProxyProtocol{Insecure: true},
 			},
 		},
 		{
@@ -464,8 +256,7 @@ func TestEntryPoints_Set(t *testing.T) {
 			expression:             "Name:foo ProxyProtocol.insecure:false",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
-				ForwardedHeaders: &ForwardedHeaders{},
-				ProxyProtocol:    &ProxyProtocol{},
+				ProxyProtocol: &ProxyProtocol{},
 			},
 		},
 		{
@@ -473,28 +264,9 @@ func TestEntryPoints_Set(t *testing.T) {
 			expression:             "Name:foo ProxyProtocol.TrustedIPs:10.0.0.3/24,20.0.0.3/24",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
-				ForwardedHeaders: &ForwardedHeaders{},
 				ProxyProtocol: &ProxyProtocol{
 					TrustedIPs: []string{"10.0.0.3/24", "20.0.0.3/24"},
 				},
-			},
-		},
-		{
-			name:                   "compress on",
-			expression:             "Name:foo Compress:on",
-			expectedEntryPointName: "foo",
-			expectedEntryPoint: &EntryPoint{
-				Compress:         &Compress{},
-				ForwardedHeaders: &ForwardedHeaders{},
-			},
-		},
-		{
-			name:                   "compress true",
-			expression:             "Name:foo Compress:true",
-			expectedEntryPointName: "foo",
-			expectedEntryPoint: &EntryPoint{
-				Compress:         &Compress{},
-				ForwardedHeaders: &ForwardedHeaders{},
 			},
 		},
 	}

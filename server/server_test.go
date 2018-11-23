@@ -1,75 +1,17 @@
 package server
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
 	"github.com/containous/flaeg/parse"
-	"github.com/containous/mux"
 	"github.com/containous/traefik/config"
-	"github.com/containous/traefik/middlewares"
-	"github.com/containous/traefik/old/configuration"
+	"github.com/containous/traefik/config/static"
 	th "github.com/containous/traefik/testhelpers"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
-
-func TestPrepareServerTimeouts(t *testing.T) {
-	testCases := []struct {
-		desc                 string
-		globalConfig         configuration.GlobalConfiguration
-		expectedIdleTimeout  time.Duration
-		expectedReadTimeout  time.Duration
-		expectedWriteTimeout time.Duration
-	}{
-		{
-			desc: "full configuration",
-			globalConfig: configuration.GlobalConfiguration{
-				RespondingTimeouts: &configuration.RespondingTimeouts{
-					IdleTimeout:  parse.Duration(10 * time.Second),
-					ReadTimeout:  parse.Duration(12 * time.Second),
-					WriteTimeout: parse.Duration(14 * time.Second),
-				},
-			},
-			expectedIdleTimeout:  10 * time.Second,
-			expectedReadTimeout:  12 * time.Second,
-			expectedWriteTimeout: 14 * time.Second,
-		},
-		{
-			desc:                 "using defaults",
-			globalConfig:         configuration.GlobalConfiguration{},
-			expectedIdleTimeout:  180 * time.Second,
-			expectedReadTimeout:  0 * time.Second,
-			expectedWriteTimeout: 0 * time.Second,
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			entryPointName := "http"
-			entryPoint := &configuration.EntryPoint{
-				Address:          "localhost:0",
-				ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true},
-			}
-			router := middlewares.NewHandlerSwitcher(mux.NewRouter())
-
-			srv := NewServer(test.globalConfig, nil, nil)
-			httpServer, _, err := srv.prepareServer(context.Background(), entryPointName, entryPoint, router)
-			require.NoError(t, err, "Unexpected error when preparing srv")
-
-			assert.Equal(t, test.expectedIdleTimeout, httpServer.IdleTimeout, "IdleTimeout")
-			assert.Equal(t, test.expectedReadTimeout, httpServer.ReadTimeout, "ReadTimeout")
-			assert.Equal(t, test.expectedWriteTimeout, httpServer.WriteTimeout, "WriteTimeout")
-		})
-	}
-}
 
 func TestListenProvidersSkipsEmptyConfigs(t *testing.T) {
 	server, stop, invokeStopChan := setupListenProvider(10 * time.Millisecond)
@@ -186,14 +128,13 @@ func setupListenProvider(throttleDuration time.Duration) (server *Server, stop c
 		stop <- true
 	}
 
-	globalConfig := configuration.GlobalConfiguration{
-		EntryPoints: configuration.EntryPoints{
-			"http": &configuration.EntryPoint{},
+	staticConfiguration := static.Configuration{
+		Providers: &static.Providers{
+			ProvidersThrottleDuration: parse.Duration(throttleDuration),
 		},
-		ProvidersThrottleDuration: parse.Duration(throttleDuration),
 	}
 
-	server = NewServer(globalConfig, nil, nil)
+	server = NewServer(staticConfiguration, nil, nil)
 	go server.listenProviders(stop)
 
 	return server, stop, invokeStopChan
@@ -309,14 +250,14 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			}))
 			defer testServer.Close()
 
-			globalConfig := configuration.GlobalConfiguration{}
-			entryPointsConfig := map[string]EntryPoint{
-				"http": {Configuration: &configuration.EntryPoint{ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true}}},
+			globalConfig := static.Configuration{}
+			entryPointsConfig := EntryPoints{
+				"http": &EntryPoint{},
 			}
 			dynamicConfigs := config.Configurations{"config": test.config(testServer.URL)}
 
 			srv := NewServer(globalConfig, nil, entryPointsConfig)
-			entryPoints, _ := srv.loadConfig(dynamicConfigs, globalConfig)
+			entryPoints, _ := srv.loadConfig(dynamicConfigs)
 
 			responseRecorder := &httptest.ResponseRecorder{}
 			request := httptest.NewRequest(http.MethodGet, testServer.URL+requestPath, nil)

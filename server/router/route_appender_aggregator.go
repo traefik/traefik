@@ -38,6 +38,7 @@ func NewRouteAppenderAggregator(ctx context.Context, chainBuilder chainBuilder, 
 					Statistics:            conf.API.Statistics,
 					DashboardAssets:       conf.API.DashboardAssets,
 					CurrentConfigurations: currentConfiguration,
+					Debug:                 conf.Global.Debug,
 				},
 				routerMiddlewares: chain,
 			})
