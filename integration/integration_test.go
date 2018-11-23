@@ -60,6 +60,7 @@ func init() {
 		check.Suite(&AcmeSuite{})
 		check.Suite(&ErrorPagesSuite{})
 		check.Suite(&FileSuite{})
+		check.Suite(&RestSuite{})
 		check.Suite(&GRPCSuite{})
 		check.Suite(&HealthCheckSuite{})
 		check.Suite(&HTTPSSuite{})

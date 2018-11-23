@@ -1,0 +1,4 @@
+whoami1:
+  image: emilevauge/whoami
+  ports:
+    - "8881:80"

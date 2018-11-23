@@ -1,0 +1,12 @@
+
+[entryPoints]
+  [entryPoints.http]
+    address = ":8000"
+
+[api]
+
+[log]
+logLevel = "DEBUG"
+
+[providers]
+   [providers.rest]
