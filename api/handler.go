@@ -46,13 +46,15 @@ type ServiceRepresentation struct {
 	ID string `json:"id"`
 }
 
+// CertificateRepresentation is private/public key pairs
 type CertificateRepresentation struct {
-	CertFile string `json:"cert_file`
+	CertFile string `json:"cert_file"`
 	KeyFile  string `json:"key_file"`
 }
 
+// TLSRepresentation groups certificates per entry points
 type TLSRepresentation struct {
-	EntryPoints []string `json:"entry_points`
+	EntryPoints []string `json:"entry_points"`
 	Certificate *CertificateRepresentation
 }
 
