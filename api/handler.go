@@ -54,8 +54,8 @@ type CertificateRepresentation struct {
 
 // TLSRepresentation groups certificates per entry points
 type TLSRepresentation struct {
-	EntryPoints []string `json:"entry_points"`
-	Certificate *CertificateRepresentation
+	EntryPoints []string                   `json:"entry_points"`
+	Certificate *CertificateRepresentation `json:"certificate"`
 }
 
 // Handler expose api routes
