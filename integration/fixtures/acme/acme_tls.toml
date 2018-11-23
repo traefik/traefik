@@ -1,6 +1,5 @@
+[log]
 logLevel = "DEBUG"
-
-defaultEntryPoints = ["http", "https"]
 
 [entryPoints]
   [entryPoints.http]
@@ -8,7 +7,7 @@ defaultEntryPoints = ["http", "https"]
   [entryPoints.https]
   address = "{{ .PortHTTPS }}"
     [entryPoints.https.tls]
-      [[entryPoints.https.tls.certificates]]
+      [entryPoints.https.tls.DefaultCertificate]
       certFile = "fixtures/acme/ssl/wildcard.crt"
       keyFile = "fixtures/acme/ssl/wildcard.key"
 
@@ -41,7 +40,8 @@ defaultEntryPoints = ["http", "https"]
 
 [api]
 
-[file]
+[providers]
+   [providers.file]
 
 [services]
   [services.test.loadbalancer]

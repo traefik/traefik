@@ -1,19 +1,20 @@
-defaultEntryPoints = ["http"]
-
+[global]
 debug=true
 
 [entryPoints]
   [entryPoints.http]
-  address = ":8000"
+     address = ":8000"
 
 [api]
 
-[docker]
-endpoint = "unix:///var/run/docker.sock"
-watch = true
-exposedByDefault = false
+[providers]
+   [providers.docker]
+      endpoint = "unix:///var/run/docker.sock"
+      watch = true
+      exposedByDefault = false
 
-[file]
+   [providers.file]
+
 [Routers]
   [Routers.router-1]
     Service = "service-test"

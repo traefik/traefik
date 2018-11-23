@@ -1,19 +1,22 @@
-defaultEntryPoints = ["wss"]
-
+[log]
 logLevel = "DEBUG"
+
+[serversTransport]
 insecureSkipVerify=true
 
 [entryPoints]
   [entryPoints.wss]
   address = ":8000"
   [entryPoints.wss.tls]
-  [[entryPoints.wss.tls.certificates]]
+  [entryPoints.wss.tls.DefaultCertificate]
     certFile = "resources/tls/local.cert"
     keyFile = "resources/tls/local.key"
 
 [api]
 
-[file]
+
+[providers]
+   [providers.file]
 
 [Routers]
   [Routers.router1]

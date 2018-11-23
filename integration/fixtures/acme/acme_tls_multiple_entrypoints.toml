@@ -1,6 +1,6 @@
+[log]
 logLevel = "DEBUG"
 
-defaultEntryPoints = ["http", "https"]
 
 [entryPoints]
   [entryPoints.http]
@@ -11,7 +11,7 @@ defaultEntryPoints = ["http", "https"]
   [entryPoints.traefik]
   address = ":9000"
     [entryPoints.traefik.tls]
-      [[entryPoints.traefik.tls.certificates]]
+      [entryPoints.traefik.tls.DefaultCertificate]
       certFile = "fixtures/acme/ssl/wildcard.crt"
       keyFile = "fixtures/acme/ssl/wildcard.key"
 

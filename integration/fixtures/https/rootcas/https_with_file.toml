@@ -1,7 +1,7 @@
+[log]
 logLevel = "DEBUG"
 
-defaultEntryPoints = ["http"]
-
+[serversTransport]
 # Use certificate in net/internal/testcert.go
 rootCAs =  [ "fixtures/https/rootcas/local.crt"]
 
@@ -11,7 +11,8 @@ rootCAs =  [ "fixtures/https/rootcas/local.crt"]
 
 [api]
 
-[file]
+[providers]
+   [providers.file]
 
 [Routers]
   [Routers.router1]

@@ -1,5 +1,4 @@
-defaultEntryPoints = ["http"]
-
+[log]
 logLevel = "DEBUG"
 
 [entryPoints]
@@ -9,10 +8,11 @@ logLevel = "DEBUG"
   address = ":8081"
 
 
-[etcd]
-  endpoint = "{{.EtcdHost}}:2379"
-  prefix = "/traefik"
-  watch = true
+[providers]
+   [providers.etcd]
+      endpoint = "{{.EtcdHost}}:2379"
+      prefix = "/traefik"
+      watch = true
 
 [api]
   entryPoint = "api"

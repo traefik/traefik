@@ -1,5 +1,4 @@
-defaultEntryPoints = ["http"]
-
+[log]
 logLevel = "DEBUG"
 
 [entryPoints]
@@ -8,11 +7,12 @@ logLevel = "DEBUG"
   [entryPoints.api]
   address = ":8081"
 
-[dynamodb]
-  accessKeyID = "key"
-  secretAccessKey = "secret"
-  endpoint = "{{.DynamoURL}}"
-  region = "us-east-1"
+[providers]
+   [providers.dynamodb]
+      accessKeyID = "key"
+      secretAccessKey = "secret"
+      endpoint = "{{.DynamoURL}}"
+      region = "us-east-1"
 
 [api]
   entryPoint = "api"

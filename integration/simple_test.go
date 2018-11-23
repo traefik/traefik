@@ -61,26 +61,6 @@ func (s *SimpleSuite) TestWithWebConfig(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *SimpleSuite) TestDefaultEntryPoints(c *check.C) {
-	cmd, output := s.cmdTraefik("--debug")
-
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
-
-	err = try.Do(500*time.Millisecond, func() error {
-		expected := `\"DefaultEntryPoints\":[\"http\"]`
-		actual := output.String()
-
-		if !strings.Contains(actual, expected) {
-			return fmt.Errorf("got %s, wanted %s", actual, expected)
-		}
-
-		return nil
-	})
-	c.Assert(err, checker.IsNil)
-}
-
 func (s *SimpleSuite) TestPrintHelp(c *check.C) {
 	cmd, output := s.cmdTraefik("--help")
 
@@ -180,7 +160,7 @@ func (s *SimpleSuite) TestApiOnSameEntryPoint(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
-	cmd, output := s.traefikCmd("--defaultEntryPoints=http", "--entryPoints=Name:http Address::8000", "--api.entryPoint=http", "--debug", "--docker")
+	cmd, output := s.traefikCmd("--entryPoints=Name:http Address::8000", "--api.entryPoint=http", "--global.debug", "--providers.docker")
 	defer output(c)
 
 	err := cmd.Start()
@@ -264,7 +244,7 @@ func (s *SimpleSuite) TestDefaultEntrypointHTTP(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
-	cmd, output := s.traefikCmd("--entryPoints=Name:http Address::8000", "--debug", "--docker", "--api")
+	cmd, output := s.traefikCmd("--entryPoints=Name:http Address::8000", "--global.debug", "--providers.docker", "--api")
 	defer output(c)
 
 	err := cmd.Start()
@@ -284,7 +264,7 @@ func (s *SimpleSuite) TestWithUnexistingEntrypoint(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
-	cmd, output := s.traefikCmd("--defaultEntryPoints=https,http", "--entryPoints=Name:http Address::8000", "--debug", "--docker", "--api")
+	cmd, output := s.traefikCmd("--entryPoints=Name:http Address::8000", "--global.debug", "--providers.docker", "--api")
 	defer output(c)
 
 	err := cmd.Start()
@@ -304,7 +284,7 @@ func (s *SimpleSuite) TestMetricsPrometheusDefaultEntrypoint(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
-	cmd, output := s.traefikCmd("--defaultEntryPoints=http", "--entryPoints=Name:http Address::8000", "--api", "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0", "--docker", "--debug")
+	cmd, output := s.traefikCmd("--entryPoints=Name:http Address::8000", "--api", "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0", "--docker", "--global.debug")
 	defer output(c)
 
 	err := cmd.Start()

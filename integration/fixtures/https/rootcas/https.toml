@@ -1,7 +1,8 @@
+[log]
 logLevel = "DEBUG"
 
-defaultEntryPoints = ["http"]
 
+[serversTransport]
 # Use certificate in net/internal/testcert.go
 rootCAs =  [ """
 -----BEGIN CERTIFICATE-----
@@ -26,7 +27,8 @@ fblo6RBxUQ==
 
 [api]
 
-[file]
+[providers]
+   [providers.file]
 
 [Routers]
   [Routers.router1]

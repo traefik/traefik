@@ -1,5 +1,11 @@
+[log]
 logLevel = "DEBUG"
-defaultEntryPoints = ["http"]
+
+
+[serversTransport.forwardingTimeouts]
+  dialTimeout = "300ms"
+  responseHeaderTimeout = "300ms"
+
 
 [entryPoints]
   [entryPoints.http]
@@ -10,11 +16,9 @@ defaultEntryPoints = ["http"]
 
 [api]
 
-[forwardingTimeouts]
-  dialTimeout = "300ms"
-  responseHeaderTimeout = "300ms"
 
-[file]
+[providers]
+   [providers.file]
 
 [Routers]
   [Routers.router1]

@@ -1,13 +1,12 @@
-defaultEntryPoints = ["http"]
-
+[log]
 logLevel = "DEBUG"
 
 [entryPoints]
   [entryPoints.http]
   address = ":80"
 
-[file]
-
+[providers]
+   [providers.file]
 
 [Routers]
   [Routers.router1]

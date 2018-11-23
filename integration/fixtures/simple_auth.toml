@@ -1,5 +1,5 @@
+[log]
 logLevel = "DEBUG"
-defaultEntryPoints = ["http"]
 
 [entryPoints]
   [entryPoints.http]
@@ -12,7 +12,8 @@ defaultEntryPoints = ["http"]
 [api]
    middlewares = ["authentication"]
 
-[middleware.authentication.basic-auth]
-   users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
+[middlewares]
+   [middlewares.authentication.basic-auth]
+      users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
 
 [ping]

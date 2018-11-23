@@ -1,16 +1,15 @@
 ################################################################
 # Global configuration
 ################################################################
-[traefikLog]
-  filePath = "traefik.log"
+[log]
+logLevel = "DEBUG"
+filePath = "traefik.log"
+
+[global]
+checkNewVersion = false
 
 [accessLog]
   filePath = "access.log"
-
-logLevel = "DEBUG"
-defaultEntryPoints = ["http"]
-
-checkNewVersion = false
 
 [entryPoints]
   [entryPoints.http]
@@ -19,7 +18,8 @@ checkNewVersion = false
 [api]
   dashboard = false
 
-[docker]
-  exposedByDefault = false
-  domain = "docker.local"
-  watch = true
+[providers]
+   [providers.docker]
+     exposedByDefault = false
+     domain = "docker.local"
+     watch = true

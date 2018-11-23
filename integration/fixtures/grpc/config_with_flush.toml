@@ -1,19 +1,20 @@
-defaultEntryPoints = ["https"]
 
+[serversTransport]
 rootCAs = [ """{{ .CertContent }}""" ]
 
 [entryPoints]
   [entryPoints.https]
   address = ":4443"
     [entryPoints.https.tls]
-     [[entryPoints.https.tls.certificates]]
+     [entryPoints.https.tls.DefaultCertificate]
      certFile = """{{ .CertContent }}"""
      keyFile  = """{{ .KeyContent }}"""
 
 
 [api]
 
-[file]
+[providers]
+   [providers.file]
 
 [routers]
   [routers.router1]

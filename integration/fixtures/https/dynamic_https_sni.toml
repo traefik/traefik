@@ -1,6 +1,6 @@
+[log]
 logLevel = "DEBUG"
 
-defaultEntryPoints = ["https"]
 
 [entryPoints]
   [entryPoints.https]
@@ -13,7 +13,7 @@ defaultEntryPoints = ["https"]
 
 [api]
 
-[file]
-
-fileName = "{{.DynamicConfFileName}}"
-watch = true
+[providers]
+   [providers.file]
+      fileName = "{{.DynamicConfFileName}}"
+      watch = true

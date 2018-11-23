@@ -1,5 +1,4 @@
-defaultEntryPoints = ["http"]
-
+[log]
 logLevel = "DEBUG"
 
 [entryPoints]
@@ -8,7 +7,8 @@ logLevel = "DEBUG"
 
 [api]
 
-[file]
+[providers]
+   [providers.file]
 
 [Routers]
   [Routers.router1]
@@ -17,7 +17,7 @@ logLevel = "DEBUG"
     Rule = "PathPrefix:/"
 
 [Middlewares.retry.Retry]
-Attempts = 3
+   Attempts = 3
 
 [Services]
   [Services.service1]

@@ -1,5 +1,5 @@
+[log]
 logLevel = "DEBUG"
-defaultEntryPoints = ["http"]
 
 [entryPoints]
   [entryPoints.http]
@@ -9,7 +9,8 @@ defaultEntryPoints = ["http"]
 
 [api]
 
-[file]
+[providers]
+   [providers.file]
 
 [Routers]
   [Routers.router1]
