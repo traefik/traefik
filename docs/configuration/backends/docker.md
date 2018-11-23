@@ -57,9 +57,9 @@ watch = true
 exposedByDefault = true
 
 # Use the IP address from the binded port instead of the inner network one.
-# 
-# In case no IP address is attached to the binded port (or in case 
-# there is no bind), the inner network one will be used as a fallback.     
+#
+# In case no IP address is attached to the binded port (or in case
+# there is no bind), the inner network one will be used as a fallback.
 #
 # Optional
 # Default: false
@@ -337,26 +337,26 @@ Labels can be used on containers to override default behavior.
 | `traefik.frontend.whiteList.sourceRange=RANGE`                      | Sets a list of IP-Ranges which are allowed to access.<br>An unset or empty list allows all Source-IPs to access.<br>If one of the Net-Specifications are invalid, the whole list is invalid and allows all Source-IPs to access. |
 | `traefik.frontend.whiteList.useXForwardedFor=true`                  | Uses `X-Forwarded-For` header as valid source of IP for the white list.                                                                                                                                                          |
 
-[1] `traefik.docker.network`:  
-If a container is linked to several networks, be sure to set the proper network name (you can check with `docker inspect <container_id>`) otherwise it will randomly pick one (depending on how docker is returning them).  
+[1] `traefik.docker.network`:
+If a container is linked to several networks, be sure to set the proper network name (you can check with `docker inspect <container_id>`) otherwise it will randomly pick one (depending on how docker is returning them).
 For instance when deploying docker `stack` from compose files, the compose defined networks will be prefixed with the `stack` name.
 Or if your service references external network use it's name instead.
 
-[2] `traefik.frontend.auth.basic.users=EXPR `:  
-To create `user:password` pair, it's possible to use this command:  
-`echo $(htpasswd -nb user password) | sed -e s/\\$/\\$\\$/g`.  
+[2] `traefik.frontend.auth.basic.users=EXPR`:
+To create `user:password` pair, it's possible to use this command:
+`echo $(htpasswd -nb user password) | sed -e s/\\$/\\$\\$/g`.
 The result will be `user:$$apr1$$9Cv/OMGj$$ZomWQzuQbL.3TRCS81A1g/`, note additional symbol `$` makes escaping.
 
-[3] `traefik.backend.loadbalancer.swarm`:  
+[3] `traefik.backend.loadbalancer.swarm`:
 If you enable this option, Traefik will use the virtual IP provided by docker swarm instead of the containers IPs.
-Which means that Traefik will not perform any kind of load balancing and will delegate this task to swarm.  
+Which means that Traefik will not perform any kind of load balancing and will delegate this task to swarm.
 It also means that Traefik will manipulate only one backend, not one backend per container.
 
 #### Custom Headers
 
 | Label                                                 | Description                                                                                                                                                                         |
 |-------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `traefik.frontend.headers.customRequestHeaders=EXPR ` | Provides the container with custom request headers that will be appended to each request forwarded to the container.<br>Format: <code>HEADER:value&vert;&vert;HEADER2:value2</code> |
+| `traefik.frontend.headers.customRequestHeaders=EXPR` | Provides the container with custom request headers that will be appended to each request forwarded to the container.<br>Format: <code>HEADER:value&vert;&vert;HEADER2:value2</code> |
 | `traefik.frontend.headers.customResponseHeaders=EXPR` | Appends the headers to each response returned by the container, before forwarding the response to the client.<br>Format: <code>HEADER:value&vert;&vert;HEADER2:value2</code>        |
 
 #### Security Headers
@@ -371,7 +371,7 @@ It also means that Traefik will manipulate only one backend, not one backend per
 | `traefik.frontend.headers.customFrameOptionsValue=VALUE` | Overrides the `X-Frame-Options` header with the custom value.                                                                                                                                       |
 | `traefik.frontend.headers.forceSTSHeader=false`          | Adds the STS  header to non-SSL requests.                                                                                                                                                           |
 | `traefik.frontend.headers.frameDeny=false`               | Adds the `X-Frame-Options` header with the value of `DENY`.                                                                                                                                         |
-| `traefik.frontend.headers.hostsProxyHeaders=EXPR `       | Provides a list of headers that the proxied hostname may be stored.<br>Format: `HEADER1,HEADER2`                                                                                                    |
+| `traefik.frontend.headers.hostsProxyHeaders=EXPR`       | Provides a list of headers that the proxied hostname may be stored.<br>Format: `HEADER1,HEADER2`                                                                                                    |
 | `traefik.frontend.headers.isDevelopment=false`           | This will cause the `AllowedHosts`, `SSLRedirect`, and `STSSeconds`/`STSIncludeSubdomains` options to be ignored during development.<br>When deploying to production, be sure to set this to false. |
 | `traefik.frontend.headers.publicKey=VALUE`               | Adds HPKP header.                                                                                                                                                                                   |
 | `traefik.frontend.headers.referrerPolicy=VALUE`          | Adds referrer policy  header.                                                                                                                                                                       |
@@ -448,7 +448,7 @@ Segment labels override the default behavior.
 
 | Label                                                                | Description                                              |
 |----------------------------------------------------------------------|----------------------------------------------------------|
-| `traefik.<segment_name>.frontend.headers.customRequestHeaders=EXPR ` | Same as `traefik.frontend.headers.customRequestHeaders`  |
+| `traefik.<segment_name>.frontend.headers.customRequestHeaders=EXPR` | Same as `traefik.frontend.headers.customRequestHeaders`  |
 | `traefik.<segment_name>.frontend.headers.customResponseHeaders=EXPR` | Same as `traefik.frontend.headers.customResponseHeaders` |
 
 #### Security Headers
