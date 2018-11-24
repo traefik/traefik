@@ -48,36 +48,36 @@ type sliceOfStrings []string
 
 // String is the method to format the flag's value, part of the flag.Value interface.
 // The String method's output will be used in diagnostics.
-func (dep *sliceOfStrings) String() string {
-	return strings.Join(*dep, ",")
+func (s *sliceOfStrings) String() string {
+	return strings.Join(*s, ",")
 }
 
 // Set is the method to set the flag value, part of the flag.Value interface.
 // Set's argument is a string to be parsed to set the flag.
 // It's a comma-separated list, so we split it.
-func (dep *sliceOfStrings) Set(value string) error {
+func (s *sliceOfStrings) Set(value string) error {
 	strings := strings.Split(value, ",")
 	if len(strings) == 0 {
 		return fmt.Errorf("bad []string format: %s", value)
 	}
 	for _, entrypoint := range strings {
-		*dep = append(*dep, entrypoint)
+		*s = append(*s, entrypoint)
 	}
 	return nil
 }
 
 // Get return the []string
-func (dep *sliceOfStrings) Get() interface{} {
-	return *dep
+func (s *sliceOfStrings) Get() interface{} {
+	return *s
 }
 
 // SetValue sets the []string with val
-func (dep *sliceOfStrings) SetValue(val interface{}) {
-	*dep = val.([]string)
+func (s *sliceOfStrings) SetValue(val interface{}) {
+	*s = val.([]string)
 }
 
 // Type is type of the struct
-func (dep *sliceOfStrings) Type() string {
+func (s *sliceOfStrings) Type() string {
 	return "sliceOfStrings"
 }
 

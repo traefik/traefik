@@ -35,7 +35,7 @@ type TraefikConfiguration struct {
 	ConfigFile           string `short:"c" description:"Configuration file to use (TOML)." export:"true"`
 }
 
-// NewTraefikConfiguration creates a TraefikConfigurationOld with default values
+// NewTraefikConfiguration creates a TraefikConfiguration with default values
 func NewTraefikConfiguration() *TraefikConfiguration {
 	return &TraefikConfiguration{
 		Configuration: static.Configuration{
@@ -55,7 +55,7 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 	}
 }
 
-// NewTraefikDefaultPointersConfiguration creates a TraefikConfigurationOld with pointers default values
+// NewTraefikDefaultPointersConfiguration creates a TraefikConfiguration with pointers default values
 func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	// default File
 	var defaultFile file.Provider

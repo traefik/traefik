@@ -2,14 +2,13 @@ package static
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/tls"
 )
 
-// EntryPoint holds the entry point configuration
+// EntryPoint holds the entry point configuration.
 type EntryPoint struct {
 	Address       string
 	Transport     *EntryPointsTransport
@@ -17,7 +16,7 @@ type EntryPoint struct {
 	ProxyProtocol *ProxyProtocol
 }
 
-// ProxyProtocol contains Proxy-Protocol configuration
+// ProxyProtocol contains Proxy-Protocol configuration.
 type ProxyProtocol struct {
 	Insecure   bool `export:"true"`
 	TrustedIPs []string
@@ -26,7 +25,7 @@ type ProxyProtocol struct {
 // EntryPoints holds the HTTP entry point list.
 type EntryPoints map[string]*EntryPoint
 
-// EntryPointsTransport configures communication between clients and Traefik
+// EntryPointsTransport configures communication between clients and Traefik.
 type EntryPointsTransport struct {
 	LifeCycle          *LifeCycle          `description:"Timeouts influencing the server life cycle" export:"true"`
 	RespondingTimeouts *RespondingTimeouts `description:"Timeouts for incoming requests to the Traefik instance" export:"true"`
@@ -38,17 +37,17 @@ func (ep EntryPoints) String() string {
 	return fmt.Sprintf("%+v", map[string]*EntryPoint(ep))
 }
 
-// Get return the EntryPoints map
+// Get return the EntryPoints map.
 func (ep *EntryPoints) Get() interface{} {
 	return *ep
 }
 
-// SetValue sets the EntryPoints map with val
+// SetValue sets the EntryPoints map with val.
 func (ep *EntryPoints) SetValue(val interface{}) {
 	*ep = val.(EntryPoints)
 }
 
-// Type is type of the struct
+// Type is type of the struct.
 func (ep *EntryPoints) Type() string {
 	return "entrypoints"
 }
@@ -167,15 +166,4 @@ func toBool(conf map[string]string, key string) bool {
 			strings.EqualFold(val, "on")
 	}
 	return false
-}
-
-func toInt(conf map[string]string, key string) int {
-	if val, ok := conf[key]; ok {
-		intVal, err := strconv.Atoi(val)
-		if err != nil {
-			return 0
-		}
-		return intVal
-	}
-	return 0
 }
