@@ -46,9 +46,7 @@ func (c CertificateStore) getDefaultCertificateDomains() []string {
 		allCerts = append(allCerts, x509Cert.Subject.CommonName)
 	}
 
-	for _, san := range x509Cert.DNSNames {
-		allCerts = append(allCerts, san)
-	}
+	allCerts = append(allCerts, x509Cert.DNSNames...)
 
 	for _, ipSan := range x509Cert.IPAddresses {
 		allCerts = append(allCerts, ipSan.String())

@@ -27,13 +27,12 @@ func TestRouterManager_Get(t *testing.T) {
 	}
 
 	testCases := []struct {
-		desc               string
-		routersConfig      map[string]*config.Router
-		serviceConfig      map[string]*config.Service
-		middlewaresConfig  map[string]*config.Middleware
-		entryPoints        []string
-		defaultEntryPoints []string
-		expected           ExpectedResult
+		desc              string
+		routersConfig     map[string]*config.Router
+		serviceConfig     map[string]*config.Service
+		middlewaresConfig map[string]*config.Middleware
+		entryPoints       []string
+		expected          ExpectedResult
 	}{
 		{
 			desc: "no middleware",
@@ -81,9 +80,8 @@ func TestRouterManager_Get(t *testing.T) {
 					},
 				},
 			},
-			entryPoints:        []string{"web"},
-			defaultEntryPoints: []string{"web"},
-			expected:           ExpectedResult{StatusCode: http.StatusOK},
+			entryPoints: []string{"web"},
+			expected:    ExpectedResult{StatusCode: http.StatusOK},
 		},
 		{
 			desc: "no middleware, no matching",

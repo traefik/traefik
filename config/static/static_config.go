@@ -382,7 +382,7 @@ func convertACMEChallenge(oldACMEChallenge *acme.ACME) *acmeprovider.Configurati
 				log.Warnf("FQDN detected, please remove the trailing dot: %s", san)
 			}
 		}
-		conf.Domains = append(conf.Domains, types.Domain(domain))
+		conf.Domains = append(conf.Domains, domain)
 	}
 	if oldACMEChallenge.HTTPChallenge != nil {
 		conf.HTTPChallenge = &acmeprovider.HTTPChallenge{

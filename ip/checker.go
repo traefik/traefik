@@ -60,7 +60,7 @@ func (ip *Checker) IsAuthorized(addr string) error {
 
 // Contains checks if provided address is in the trusted IPs
 func (ip *Checker) Contains(addr string) (bool, error) {
-	if len(addr) <= 0 {
+	if len(addr) == 0 {
 		return false, errors.New("empty IP address")
 	}
 

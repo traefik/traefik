@@ -22,7 +22,6 @@ import (
 	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
 	"github.com/sirupsen/logrus"
-
 	"github.com/xenolf/lego/acme"
 )
 

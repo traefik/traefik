@@ -94,7 +94,7 @@ func cnameResolve(ctx context.Context, host string, resolvPath string) (*cnameRe
 		result = append(result, tempRecord)
 	}
 
-	if len(result) <= 0 {
+	if len(result) == 0 {
 		return nil, nil
 	}
 
