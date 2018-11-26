@@ -20,6 +20,7 @@ func TestGetBestCertificate(t *testing.T) {
 		domainToCheck string
 		dynamicCert   string
 		expectedCert  string
+		uppercase     bool
 	}{
 		{
 			desc:          "Empty Store, returns no certs",
@@ -45,6 +46,13 @@ func TestGetBestCertificate(t *testing.T) {
 			dynamicCert:   "*.snitest.com",
 			expectedCert:  "*.snitest.com",
 		},
+		{
+			desc:          "Best Match with dynamic wildcard only, case insensitive",
+			domainToCheck: "bar.www.snitest.com",
+			dynamicCert:   "*.www.snitest.com",
+			expectedCert:  "*.www.snitest.com",
+			uppercase:     true,
+		},
 	}
 
 	for _, test := range testCases {
@@ -54,9 +62,9 @@ func TestGetBestCertificate(t *testing.T) {
 			dynamicMap := map[string]*tls.Certificate{}
 
 			if test.dynamicCert != "" {
-				cert, err := loadTestCert(test.dynamicCert)
+				cert, err := loadTestCert(test.dynamicCert, test.uppercase)
 				require.NoError(t, err)
-				dynamicMap[test.dynamicCert] = cert
+				dynamicMap[strings.ToLower(test.dynamicCert)] = cert
 			}
 
 			store := &CertificateStore{
@@ -66,7 +74,7 @@ func TestGetBestCertificate(t *testing.T) {
 
 			var expected *tls.Certificate
 			if test.expectedCert != "" {
-				cert, err := loadTestCert(test.expectedCert)
+				cert, err := loadTestCert(test.expectedCert, test.uppercase)
 				require.NoError(t, err)
 				expected = cert
 			}
@@ -81,10 +89,15 @@ func TestGetBestCertificate(t *testing.T) {
 	}
 }
 
-func loadTestCert(certName string) (*tls.Certificate, error) {
+func loadTestCert(certName string, uppercase bool) (*tls.Certificate, error) {
+	replacement := "wildcard"
+	if uppercase {
+		replacement = "uppercase_wildcard"
+	}
+
 	staticCert, err := tls.LoadX509KeyPair(
-		fmt.Sprintf("../integration/fixtures/https/%s.cert", strings.Replace(certName, "*", "wildcard", -1)),
-		fmt.Sprintf("../integration/fixtures/https/%s.key", strings.Replace(certName, "*", "wildcard", -1)),
+		fmt.Sprintf("../integration/fixtures/https/%s.cert", strings.Replace(certName, "*", replacement, -1)),
+		fmt.Sprintf("../integration/fixtures/https/%s.key", strings.Replace(certName, "*", replacement, -1)),
 	)
 	if err != nil {
 		return nil, err
