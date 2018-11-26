@@ -20,6 +20,7 @@ func TestGetBestCertificate(t *testing.T) {
 		staticCert    string
 		dynamicCert   string
 		expectedCert  string
+		uppercase     bool
 	}{
 		{
 			desc:          "Empty Store, returns no certs",
@@ -27,6 +28,7 @@ func TestGetBestCertificate(t *testing.T) {
 			staticCert:    "",
 			dynamicCert:   "",
 			expectedCert:  "",
+			uppercase:     false,
 		},
 		{
 			desc:          "Empty static cert store",
@@ -34,6 +36,7 @@ func TestGetBestCertificate(t *testing.T) {
 			staticCert:    "",
 			dynamicCert:   "snitest.com",
 			expectedCert:  "snitest.com",
+			uppercase:     false,
 		},
 		{
 			desc:          "Empty dynamic cert store",
@@ -41,6 +44,7 @@ func TestGetBestCertificate(t *testing.T) {
 			staticCert:    "snitest.com",
 			dynamicCert:   "",
 			expectedCert:  "snitest.com",
+			uppercase:     false,
 		},
 		{
 			desc:          "Best Match",
@@ -48,6 +52,7 @@ func TestGetBestCertificate(t *testing.T) {
 			staticCert:    "snitest.com",
 			dynamicCert:   "snitest.org",
 			expectedCert:  "snitest.com",
+			uppercase:     false,
 		},
 		{
 			desc:          "Best Match with wildcard dynamic and exact static",
@@ -55,6 +60,7 @@ func TestGetBestCertificate(t *testing.T) {
 			staticCert:    "www.snitest.com",
 			dynamicCert:   "*.snitest.com",
 			expectedCert:  "www.snitest.com",
+			uppercase:     false,
 		},
 		{
 			desc:          "Best Match with wildcard static and exact dynamic",
@@ -62,6 +68,7 @@ func TestGetBestCertificate(t *testing.T) {
 			staticCert:    "*.snitest.com",
 			dynamicCert:   "www.snitest.com",
 			expectedCert:  "www.snitest.com",
+			uppercase:     false,
 		},
 		{
 			desc:          "Best Match with static wildcard only",
@@ -69,6 +76,7 @@ func TestGetBestCertificate(t *testing.T) {
 			staticCert:    "*.snitest.com",
 			dynamicCert:   "",
 			expectedCert:  "*.snitest.com",
+			uppercase:     false,
 		},
 		{
 			desc:          "Best Match with dynamic wildcard only",
@@ -76,6 +84,7 @@ func TestGetBestCertificate(t *testing.T) {
 			staticCert:    "",
 			dynamicCert:   "*.snitest.com",
 			expectedCert:  "*.snitest.com",
+			uppercase:     false,
 		},
 		{
 			desc:          "Best Match with two wildcard certs",
@@ -83,6 +92,23 @@ func TestGetBestCertificate(t *testing.T) {
 			staticCert:    "*.www.snitest.com",
 			dynamicCert:   "*.snitest.com",
 			expectedCert:  "*.www.snitest.com",
+			uppercase:     false,
+		},
+		{
+			desc:          "Best Match with static wildcard only, case insensitive",
+			domainToCheck: "bar.www.snitest.com",
+			staticCert:    "*.www.snitest.com",
+			dynamicCert:   "",
+			expectedCert:  "*.www.snitest.com",
+			uppercase:     true,
+		},
+		{
+			desc:          "Best Match with dynamic wildcard only, case insensitive",
+			domainToCheck: "bar.www.snitest.com",
+			staticCert:    "",
+			dynamicCert:   "*.www.snitest.com",
+			expectedCert:  "*.www.snitest.com",
+			uppercase:     true,
 		},
 	}
 
@@ -94,15 +120,15 @@ func TestGetBestCertificate(t *testing.T) {
 			dynamicMap := map[string]*tls.Certificate{}
 
 			if test.staticCert != "" {
-				cert, err := loadTestCert(test.staticCert)
+				cert, err := loadTestCert(test.staticCert, test.uppercase)
 				require.NoError(t, err)
-				staticMap[test.staticCert] = cert
+				staticMap[strings.ToLower(test.staticCert)] = cert
 			}
 
 			if test.dynamicCert != "" {
-				cert, err := loadTestCert(test.dynamicCert)
+				cert, err := loadTestCert(test.dynamicCert, test.uppercase)
 				require.NoError(t, err)
-				dynamicMap[test.dynamicCert] = cert
+				dynamicMap[strings.ToLower(test.dynamicCert)] = cert
 			}
 
 			store := &CertificateStore{
@@ -113,7 +139,7 @@ func TestGetBestCertificate(t *testing.T) {
 
 			var expected *tls.Certificate
 			if test.expectedCert != "" {
-				cert, err := loadTestCert(test.expectedCert)
+				cert, err := loadTestCert(test.expectedCert, test.uppercase)
 				require.NoError(t, err)
 				expected = cert
 			}
@@ -128,10 +154,15 @@ func TestGetBestCertificate(t *testing.T) {
 	}
 }
 
-func loadTestCert(certName string) (*tls.Certificate, error) {
+func loadTestCert(certName string, uppercase bool) (*tls.Certificate, error) {
+	replacement := "wildcard"
+	if uppercase {
+		replacement = "uppercase_wildcard"
+	}
+
 	staticCert, err := tls.LoadX509KeyPair(
-		fmt.Sprintf("../integration/fixtures/https/%s.cert", strings.Replace(certName, "*", "wildcard", -1)),
-		fmt.Sprintf("../integration/fixtures/https/%s.key", strings.Replace(certName, "*", "wildcard", -1)),
+		fmt.Sprintf("../integration/fixtures/https/%s.cert", strings.Replace(certName, "*", replacement, -1)),
+		fmt.Sprintf("../integration/fixtures/https/%s.key", strings.Replace(certName, "*", replacement, -1)),
 	)
 	if err != nil {
 		return nil, err

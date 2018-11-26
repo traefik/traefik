@@ -1,0 +1,37 @@
+logLevel = "DEBUG"
+
+defaultEntryPoints = ["https"]
+
+[entryPoints]
+  [entryPoints.https]
+  address = ":4443"
+    [entryPoints.https.tls]
+     [entryPoints.https.tls.defaultCertificate]
+     certFile = "fixtures/https/wildcard.snitest.com.cert"
+     keyFile = "fixtures/https/wildcard.snitest.com.key"
+
+[api]
+
+[file]
+
+[backends]
+  [backends.backend1]
+    [backends.backend1.servers.server1]
+    url = "http://127.0.0.1:9010"
+    weight = 1
+
+[frontends]
+  [frontends.frontend1]
+  backend = "backend1"
+    [frontends.frontend1.routes.test_1]
+    rule = "HostRegexp: {subdomain:[a-z1-9-]+}.snitest.com"
+  [frontends.frontend2]
+  backend = "backend1"
+    [frontends.frontend2.routes.test_1]
+    rule = "HostRegexp: {subdomain:[a-z1-9-]+}.www.snitest.com"
+
+[[tls]]
+  entryPoints = ["https"]
+  [tls.certificate]
+    certFile = "fixtures/https/uppercase_wildcard.www.snitest.com.cert"
+    keyFile = "fixtures/https/uppercase_wildcard.www.snitest.com.key"

@@ -154,13 +154,13 @@ func (c *Certificate) AppendCertificates(certs map[string]map[string]*tls.Certif
 
 	var SANs []string
 	if parsedCert.Subject.CommonName != "" {
-		SANs = append(SANs, parsedCert.Subject.CommonName)
+		SANs = append(SANs, strings.ToLower(parsedCert.Subject.CommonName))
 	}
 	if parsedCert.DNSNames != nil {
 		sort.Strings(parsedCert.DNSNames)
 		for _, dnsName := range parsedCert.DNSNames {
 			if dnsName != parsedCert.Subject.CommonName {
-				SANs = append(SANs, dnsName)
+				SANs = append(SANs, strings.ToLower(dnsName))
 			}
 		}
 
@@ -168,7 +168,7 @@ func (c *Certificate) AppendCertificates(certs map[string]map[string]*tls.Certif
 	if parsedCert.IPAddresses != nil {
 		for _, ip := range parsedCert.IPAddresses {
 			if ip.String() != parsedCert.Subject.CommonName {
-				SANs = append(SANs, ip.String())
+				SANs = append(SANs, strings.ToLower(ip.String()))
 			}
 		}
 
