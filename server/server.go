@@ -356,10 +356,14 @@ func (s *Server) listenProviders(stop chan bool) {
 		case <-stop:
 			return
 		case configMsg, ok := <-s.configurationChan:
-			if !ok || configMsg.Configuration == nil {
+			if !ok {
 				return
 			}
-			s.preLoadConfiguration(configMsg)
+			if configMsg.Configuration != nil {
+				s.preLoadConfiguration(configMsg)
+			} else {
+				log.Debugf("Received nil configuration from provider %q, skipping.", configMsg.ProviderName)
+			}
 		}
 	}
 }
