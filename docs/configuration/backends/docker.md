@@ -191,7 +191,7 @@ by watching the Docker API through this socket.
 
 As explained on the Docker documentation: ([Docker Daemon Attack Surface page](https://docs.docker.com/engine/security/security/#docker-daemon-attack-surface)):
 
-```[...] only **trusted** users should be allowed to control your Docker daemon [...]'```
+`[...] only **trusted** users should be allowed to control your Docker daemon [...]`
 
 If the Traefik processes (handling requests from the outside world) is attacked,
 then the attacker can access the Docker (or Swarm Mode) backend.
