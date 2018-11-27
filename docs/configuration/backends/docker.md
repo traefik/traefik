@@ -73,6 +73,13 @@ usebindportip = true
 #
 swarmMode = false
 
+# Polling interval (in seconds) for Swarm Mode.
+#
+# Optional
+# Default: 15
+#
+swarmModeRefreshSeconds = 15
+
 # Define a default docker network to use for connections to all containers.
 # Can be overridden by the traefik.docker.network label.
 #

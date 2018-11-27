@@ -154,6 +154,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultDocker.ExposedByDefault = true
 	defaultDocker.Endpoint = "unix:///var/run/docker.sock"
 	defaultDocker.SwarmMode = false
+	defaultDocker.SwarmModeRefreshSeconds = 15
 
 	// default Rest
 	var defaultRest rest.Provider
