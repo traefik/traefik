@@ -151,7 +151,7 @@ type Configuration struct {
 	Routers     map[string]*Router          `json:"routers,omitempty" toml:",omitempty"`
 	Middlewares map[string]*Middleware      `json:"middlewares,omitempty" toml:",omitempty"`
 	Services    map[string]*Service         `json:"services,omitempty" toml:",omitempty"`
-	TLS         []*traefiktls.Configuration `json:"-"`
+	TLS         []*traefiktls.Configuration `json:"-" label:"-"`
 }
 
 // Service holds a service configuration (can only be of one type at the same time).
