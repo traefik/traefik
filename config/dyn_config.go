@@ -21,8 +21,8 @@ type Router struct {
 
 // LoadBalancerService holds the LoadBalancerService configuration.
 type LoadBalancerService struct {
-	Stickiness         *Stickiness         `json:"stickiness,omitempty" toml:",omitempty"`
-	Servers            []Server            `json:"servers,omitempty" toml:",omitempty"`
+	Stickiness         *Stickiness         `json:"stickiness,omitempty" toml:",omitempty" label:"allowEmpty"`
+	Servers            []Server            `json:"servers,omitempty" toml:",omitempty" label-slice-as-struct:"server"`
 	Method             string              `json:"method,omitempty" toml:",omitempty"`
 	HealthCheck        *HealthCheck        `json:"healthCheck,omitempty" toml:",omitempty"`
 	PassHostHeader     bool                `json:"passHostHeader" toml:",omitempty"`
