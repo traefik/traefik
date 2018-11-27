@@ -36,15 +36,15 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	provider.BaseProvider `mapstructure:",squash" export:"true"`
-	Endpoint              string           `description:"Docker server endpoint. Can be a tcp or a unix socket endpoint"`
-	Domain                string           `description:"Default domain used"`
-	TLS                   *types.ClientTLS `description:"Enable Docker TLS support" export:"true"`
-	ExposedByDefault      bool             `description:"Expose containers by default" export:"true"`
-	UseBindPortIP         bool             `description:"Use the ip address from the bound port, rather than from the inner network" export:"true"`
-	SwarmMode             bool             `description:"Use Docker on Swarm Mode" export:"true"`
-	Network               string           `description:"Default Docker network used" export:"true"`
-	SwarmRefreshPeriod    int              `description:"Polling interval for swarm mode (in seconds)" export:"true"`
+	provider.BaseProvider   `mapstructure:",squash" export:"true"`
+	Endpoint                string           `description:"Docker server endpoint. Can be a tcp or a unix socket endpoint"`
+	Domain                  string           `description:"Default domain used"`
+	TLS                     *types.ClientTLS `description:"Enable Docker TLS support" export:"true"`
+	ExposedByDefault        bool             `description:"Expose containers by default" export:"true"`
+	UseBindPortIP           bool             `description:"Use the ip address from the bound port, rather than from the inner network" export:"true"`
+	SwarmMode               bool             `description:"Use Docker on Swarm Mode" export:"true"`
+	Network                 string           `description:"Default Docker network used" export:"true"`
+	SwarmModeRefreshSeconds int              `description:"Polling interval for swarm mode (in seconds)" export:"true"`
 }
 
 // Init the provider
@@ -96,7 +96,10 @@ func (p *Provider) createClient() (client.APIClient, error) {
 		if err != nil {
 			return nil, err
 		}
-		sockets.ConfigureTransport(tr, hostURL.Scheme, hostURL.Host)
+
+		if err := sockets.ConfigureTransport(tr, hostURL.Scheme, hostURL.Host); err != nil {
+			return nil, err
+		}
 
 		httpClient = &http.Client{
 			Transport: tr,
@@ -161,7 +164,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				if p.SwarmMode {
 					errChan := make(chan error)
 					// TODO: This need to be change. Linked to Swarm events docker/docker#23827
-					ticker := time.NewTicker(time.Second * time.Duration(p.SwarmRefreshPeriod))
+					ticker := time.NewTicker(time.Second * time.Duration(p.SwarmModeRefreshSeconds))
 					pool.GoCtx(func(ctx context.Context) {
 						defer close(errChan)
 						for {
