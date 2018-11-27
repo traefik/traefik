@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/containous/traefik/old/log"
+	"github.com/containous/traefik/old/tls"
 	"github.com/containous/traefik/old/types"
-	"github.com/containous/traefik/tls"
 )
 
 // EntryPoint holds an entry point configuration of the reverse proxy (ip, port, TLS...)

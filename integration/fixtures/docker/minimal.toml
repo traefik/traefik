@@ -1,5 +1,5 @@
-defaultEntryPoints = ["http"]
 
+[log]
 logLevel = "DEBUG"
 
 [entryPoints]
@@ -8,7 +8,8 @@ logLevel = "DEBUG"
 
 [api]
 
-[docker]
-endpoint = "{{.DockerHost}}"
-domain = "docker.localhost"
-exposedByDefault = false
+[providers]
+   [providers.docker]
+      endpoint = "{{.DockerHost}}"
+      domain = "docker.localhost"
+      exposedByDefault = false

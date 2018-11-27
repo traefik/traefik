@@ -1,33 +1,30 @@
-package static
+package configuration
 
 import (
-	oldapi "github.com/containous/traefik/old/api"
-	"github.com/containous/traefik/old/configuration"
-	oldtracing "github.com/containous/traefik/old/middlewares/tracing"
-	oldfile "github.com/containous/traefik/old/provider/file"
-	oldtypes "github.com/containous/traefik/old/types"
+	"github.com/containous/traefik/config/static"
+	"github.com/containous/traefik/old/api"
+	"github.com/containous/traefik/old/middlewares/tracing"
+	"github.com/containous/traefik/old/provider/file"
+	"github.com/containous/traefik/old/types"
 	"github.com/containous/traefik/ping"
 	"github.com/containous/traefik/provider"
-	"github.com/containous/traefik/provider/file"
+	file2 "github.com/containous/traefik/provider/file"
 	"github.com/containous/traefik/tracing/datadog"
 	"github.com/containous/traefik/tracing/jaeger"
 	"github.com/containous/traefik/tracing/zipkin"
-	"github.com/containous/traefik/types"
+	types2 "github.com/containous/traefik/types"
 )
 
 // ConvertStaticConf FIXME sugar
 // Deprecated
-func ConvertStaticConf(globalConfiguration configuration.GlobalConfiguration) Configuration {
-	staticConfiguration := Configuration{}
+func ConvertStaticConf(globalConfiguration GlobalConfiguration) static.Configuration {
+	staticConfiguration := static.Configuration{}
 
-	staticConfiguration.EntryPoints = &EntryPoints{
-		EntryPointList: make(EntryPointList),
-		Defaults:       globalConfiguration.DefaultEntryPoints,
-	}
+	staticConfiguration.EntryPoints = make(static.EntryPoints)
 
 	if globalConfiguration.EntryPoints != nil {
 		for name, ep := range globalConfiguration.EntryPoints {
-			staticConfiguration.EntryPoints.EntryPointList[name] = EntryPoint{
+			staticConfiguration.EntryPoints[name] = &static.EntryPoint{
 				Address: ep.Address,
 			}
 		}
@@ -41,8 +38,7 @@ func ConvertStaticConf(globalConfiguration configuration.GlobalConfiguration) Co
 	}
 
 	staticConfiguration.API = convertAPI(globalConfiguration.API)
-	staticConfiguration.Constraints = convertConstraints(globalConfiguration.Constraints)
-	staticConfiguration.File = convertFile(globalConfiguration.File)
+	staticConfiguration.Providers.File = convertFile(globalConfiguration.File)
 	staticConfiguration.Metrics = ConvertMetrics(globalConfiguration.Metrics)
 	staticConfiguration.AccessLog = ConvertAccessLog(globalConfiguration.AccessLog)
 	staticConfiguration.Tracing = ConvertTracing(globalConfiguration.Tracing)
@@ -53,35 +49,35 @@ func ConvertStaticConf(globalConfiguration configuration.GlobalConfiguration) Co
 
 // ConvertAccessLog FIXME sugar
 // Deprecated
-func ConvertAccessLog(old *oldtypes.AccessLog) *types.AccessLog {
+func ConvertAccessLog(old *types.AccessLog) *types2.AccessLog {
 	if old == nil {
 		return nil
 	}
 
-	accessLog := &types.AccessLog{
+	accessLog := &types2.AccessLog{
 		FilePath:      old.FilePath,
 		Format:        old.Format,
 		BufferingSize: old.BufferingSize,
 	}
 
 	if old.Filters != nil {
-		accessLog.Filters = &types.AccessLogFilters{
-			StatusCodes:   types.StatusCodes(old.Filters.StatusCodes),
+		accessLog.Filters = &types2.AccessLogFilters{
+			StatusCodes:   types2.StatusCodes(old.Filters.StatusCodes),
 			RetryAttempts: old.Filters.RetryAttempts,
 			MinDuration:   old.Filters.MinDuration,
 		}
 	}
 
 	if old.Fields != nil {
-		accessLog.Fields = &types.AccessLogFields{
+		accessLog.Fields = &types2.AccessLogFields{
 			DefaultMode: old.Fields.DefaultMode,
-			Names:       types.FieldNames(old.Fields.Names),
+			Names:       types2.FieldNames(old.Fields.Names),
 		}
 
 		if old.Fields.Headers != nil {
-			accessLog.Fields.Headers = &types.FieldHeaders{
+			accessLog.Fields.Headers = &types2.FieldHeaders{
 				DefaultMode: old.Fields.Headers.DefaultMode,
-				Names:       types.FieldHeaderNames(old.Fields.Headers.Names),
+				Names:       types2.FieldHeaderNames(old.Fields.Headers.Names),
 			}
 		}
 	}
@@ -91,35 +87,35 @@ func ConvertAccessLog(old *oldtypes.AccessLog) *types.AccessLog {
 
 // ConvertMetrics FIXME sugar
 // Deprecated
-func ConvertMetrics(old *oldtypes.Metrics) *types.Metrics {
+func ConvertMetrics(old *types.Metrics) *types2.Metrics {
 	if old == nil {
 		return nil
 	}
 
-	metrics := &types.Metrics{}
+	metrics := &types2.Metrics{}
 
 	if old.Prometheus != nil {
-		metrics.Prometheus = &types.Prometheus{
+		metrics.Prometheus = &types2.Prometheus{
 			EntryPoint: old.Prometheus.EntryPoint,
-			Buckets:    types.Buckets(old.Prometheus.Buckets),
+			Buckets:    types2.Buckets(old.Prometheus.Buckets),
 		}
 	}
 
 	if old.Datadog != nil {
-		metrics.Datadog = &types.Datadog{
+		metrics.Datadog = &types2.Datadog{
 			Address:      old.Datadog.Address,
 			PushInterval: old.Datadog.PushInterval,
 		}
 	}
 
 	if old.StatsD != nil {
-		metrics.StatsD = &types.Statsd{
+		metrics.StatsD = &types2.Statsd{
 			Address:      old.StatsD.Address,
 			PushInterval: old.StatsD.PushInterval,
 		}
 	}
 	if old.InfluxDB != nil {
-		metrics.InfluxDB = &types.InfluxDB{
+		metrics.InfluxDB = &types2.InfluxDB{
 			Address:         old.InfluxDB.Address,
 			Protocol:        old.InfluxDB.Protocol,
 			PushInterval:    old.InfluxDB.PushInterval,
@@ -135,12 +131,12 @@ func ConvertMetrics(old *oldtypes.Metrics) *types.Metrics {
 
 // ConvertTracing FIXME sugar
 // Deprecated
-func ConvertTracing(old *oldtracing.Tracing) *Tracing {
+func ConvertTracing(old *tracing.Tracing) *static.Tracing {
 	if old == nil {
 		return nil
 	}
 
-	tra := &Tracing{
+	tra := &static.Tracing{
 		Backend:       old.Backend,
 		ServiceName:   old.ServiceName,
 		SpanNameLimit: old.SpanNameLimit,
@@ -177,19 +173,19 @@ func ConvertTracing(old *oldtracing.Tracing) *Tracing {
 	return tra
 }
 
-func convertAPI(old *oldapi.Handler) *API {
+func convertAPI(old *api.Handler) *static.API {
 	if old == nil {
 		return nil
 	}
 
-	api := &API{
+	api := &static.API{
 		EntryPoint:      old.EntryPoint,
 		Dashboard:       old.Dashboard,
 		DashboardAssets: old.DashboardAssets,
 	}
 
 	if old.Statistics != nil {
-		api.Statistics = &types.Statistics{
+		api.Statistics = &types2.Statistics{
 			RecentErrors: old.Statistics.RecentErrors,
 		}
 	}
@@ -197,10 +193,10 @@ func convertAPI(old *oldapi.Handler) *API {
 	return api
 }
 
-func convertConstraints(oldConstraints oldtypes.Constraints) types.Constraints {
-	constraints := types.Constraints{}
+func convertConstraints(oldConstraints types.Constraints) types2.Constraints {
+	constraints := types2.Constraints{}
 	for _, value := range oldConstraints {
-		constraint := &types.Constraint{
+		constraint := &types2.Constraint{
 			Key:       value.Key,
 			MustMatch: value.MustMatch,
 			Regex:     value.Regex,
@@ -211,12 +207,12 @@ func convertConstraints(oldConstraints oldtypes.Constraints) types.Constraints {
 	return constraints
 }
 
-func convertFile(old *oldfile.Provider) *file.Provider {
+func convertFile(old *file.Provider) *file2.Provider {
 	if old == nil {
 		return nil
 	}
 
-	f := &file.Provider{
+	f := &file2.Provider{
 		BaseProvider: provider.BaseProvider{
 			Watch:    old.Watch,
 			Filename: old.Filename,
@@ -233,12 +229,12 @@ func convertFile(old *oldfile.Provider) *file.Provider {
 
 // ConvertHostResolverConfig FIXME
 // Deprecated
-func ConvertHostResolverConfig(oldconfig *configuration.HostResolverConfig) *HostResolverConfig {
+func ConvertHostResolverConfig(oldconfig *HostResolverConfig) *static.HostResolverConfig {
 	if oldconfig == nil {
 		return nil
 	}
 
-	return &HostResolverConfig{
+	return &static.HostResolverConfig{
 		CnameFlattening: oldconfig.CnameFlattening,
 		ResolvConfig:    oldconfig.ResolvConfig,
 		ResolvDepth:     oldconfig.ResolvDepth,

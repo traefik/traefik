@@ -27,13 +27,12 @@ func TestRouterManager_Get(t *testing.T) {
 	}
 
 	testCases := []struct {
-		desc               string
-		routersConfig      map[string]*config.Router
-		serviceConfig      map[string]*config.Service
-		middlewaresConfig  map[string]*config.Middleware
-		entryPoints        []string
-		defaultEntryPoints []string
-		expected           ExpectedResult
+		desc              string
+		routersConfig     map[string]*config.Router
+		serviceConfig     map[string]*config.Service
+		middlewaresConfig map[string]*config.Middleware
+		entryPoints       []string
+		expected          ExpectedResult
 	}{
 		{
 			desc: "no middleware",
@@ -81,9 +80,8 @@ func TestRouterManager_Get(t *testing.T) {
 					},
 				},
 			},
-			entryPoints:        []string{"web"},
-			defaultEntryPoints: []string{"web"},
-			expected:           ExpectedResult{StatusCode: http.StatusOK},
+			entryPoints: []string{"web"},
+			expected:    ExpectedResult{StatusCode: http.StatusOK},
 		},
 		{
 			desc: "no middleware, no matching",
@@ -209,7 +207,7 @@ func TestRouterManager_Get(t *testing.T) {
 
 			routerManager := NewManager(test.routersConfig, serviceManager, middlewaresBuilder, responseModifierFactory)
 
-			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, test.defaultEntryPoints)
+			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints)
 
 			w := httptest.NewRecorder()
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)
@@ -309,7 +307,7 @@ func TestAccessLog(t *testing.T) {
 
 			routerManager := NewManager(test.routersConfig, serviceManager, middlewaresBuilder, responseModifierFactory)
 
-			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, test.defaultEntryPoints)
+			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints)
 
 			w := httptest.NewRecorder()
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)

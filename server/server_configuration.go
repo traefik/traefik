@@ -12,19 +12,15 @@ import (
 	"github.com/containous/alice"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/config"
-	"github.com/containous/traefik/config/static"
 	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/middlewares/accesslog"
 	"github.com/containous/traefik/middlewares/requestdecorator"
 	"github.com/containous/traefik/middlewares/tracing"
-	"github.com/containous/traefik/old/configuration"
 	"github.com/containous/traefik/responsemodifiers"
 	"github.com/containous/traefik/server/middleware"
 	"github.com/containous/traefik/server/router"
 	"github.com/containous/traefik/server/service"
 	traefiktls "github.com/containous/traefik/tls"
-	"github.com/containous/traefik/tls/generate"
 	"github.com/eapache/channels"
 	"github.com/sirupsen/logrus"
 )
@@ -44,25 +40,25 @@ func (s *Server) loadConfiguration(configMsg config.Message) {
 
 	s.metricsRegistry.ConfigReloadsCounter().Add(1)
 
-	handlers, certificates := s.loadConfig(newConfigurations, s.globalConfiguration)
+	handlers, certificates := s.loadConfig(newConfigurations)
 
 	s.metricsRegistry.LastConfigReloadSuccessGauge().Set(float64(time.Now().Unix()))
 
 	for entryPointName, handler := range handlers {
-		s.serverEntryPoints[entryPointName].httpRouter.UpdateHandler(handler)
+		s.entryPoints[entryPointName].httpRouter.UpdateHandler(handler)
 	}
 
-	for entryPointName, serverEntryPoint := range s.serverEntryPoints {
+	for entryPointName, entryPoint := range s.entryPoints {
 		eLogger := logger.WithField(log.EntryPointName, entryPointName)
-		if s.entryPoints[entryPointName].Configuration.TLS == nil {
+		if entryPoint.Certs == nil {
 			if len(certificates[entryPointName]) > 0 {
 				eLogger.Debugf("Cannot configure certificates for the non-TLS %s entryPoint.", entryPointName)
 			}
 		} else {
-			serverEntryPoint.certs.DynamicCerts.Set(certificates[entryPointName])
-			serverEntryPoint.certs.ResetCache()
+			entryPoint.Certs.DynamicCerts.Set(certificates[entryPointName])
+			entryPoint.Certs.ResetCache()
 		}
-		eLogger.Infof("Server configuration reloaded on %s", s.serverEntryPoints[entryPointName].httpServer.Addr)
+		eLogger.Infof("Server configuration reloaded on %s", s.entryPoints[entryPointName].httpServer.Addr)
 	}
 
 	s.currentConfigurations.Set(newConfigurations)
@@ -76,7 +72,7 @@ func (s *Server) loadConfiguration(configMsg config.Message) {
 
 // loadConfig returns a new gorilla.mux Route from the specified global configuration and the dynamic
 // provider configurations.
-func (s *Server) loadConfig(configurations config.Configurations, globalConfiguration configuration.GlobalConfiguration) (map[string]http.Handler, map[string]map[string]*tls.Certificate) {
+func (s *Server) loadConfig(configurations config.Configurations) (map[string]http.Handler, map[string]map[string]*tls.Certificate) {
 
 	ctx := context.TODO()
 
@@ -106,14 +102,12 @@ func (s *Server) loadConfig(configurations config.Configurations, globalConfigur
 
 	// Get new certificates list sorted per entry points
 	// Update certificates
-	entryPointsCertificates := s.loadHTTPSConfiguration(configurations, globalConfiguration.DefaultEntryPoints)
+	entryPointsCertificates := s.loadHTTPSConfiguration(configurations)
 
 	return handlers, entryPointsCertificates
 }
 
 func (s *Server) applyConfiguration(ctx context.Context, configuration config.Configuration) map[string]http.Handler {
-	staticConfiguration := static.ConvertStaticConf(s.globalConfiguration)
-
 	var entryPoints []string
 	for entryPointName := range s.entryPoints {
 		entryPoints = append(entryPoints, entryPointName)
@@ -125,7 +119,7 @@ func (s *Server) applyConfiguration(ctx context.Context, configuration config.Co
 
 	routerManager := router.NewManager(configuration.Routers, serviceManager, middlewaresBuilder, responseModifierFactory)
 
-	handlers := routerManager.BuildHandlers(ctx, entryPoints, staticConfiguration.EntryPoints.Defaults)
+	handlers := routerManager.BuildHandlers(ctx, entryPoints)
 
 	routerHandlers := make(map[string]http.Handler)
 
@@ -145,7 +139,7 @@ func (s *Server) applyConfiguration(ctx context.Context, configuration config.Co
 		if h, ok := handlers[entryPointName]; ok {
 			internalMuxRouter.NotFoundHandler = h
 		} else {
-			internalMuxRouter.NotFoundHandler = s.buildDefaultHTTPRouter()
+			internalMuxRouter.NotFoundHandler = buildDefaultHTTPRouter()
 		}
 
 		routerHandlers[entryPointName] = internalMuxRouter
@@ -174,7 +168,6 @@ func (s *Server) applyConfiguration(ctx context.Context, configuration config.Co
 }
 
 func (s *Server) preLoadConfiguration(configMsg config.Message) {
-	providersThrottleDuration := time.Duration(s.globalConfiguration.ProvidersThrottleDuration)
 	s.defaultConfigurationValues(configMsg.Configuration)
 	currentConfigurations := s.currentConfigurations.Get().(config.Configurations)
 
@@ -199,7 +192,7 @@ func (s *Server) preLoadConfiguration(configMsg config.Message) {
 		providerConfigUpdateCh = make(chan config.Message)
 		s.providerConfigUpdateMap[configMsg.ProviderName] = providerConfigUpdateCh
 		s.routinesPool.Go(func(stop chan bool) {
-			s.throttleProviderConfigReload(providersThrottleDuration, s.configurationValidatedChan, providerConfigUpdateCh, stop)
+			s.throttleProviderConfigReload(s.providersThrottleDuration, s.configurationValidatedChan, providerConfigUpdateCh, stop)
 		})
 	}
 
@@ -263,12 +256,12 @@ func (s *Server) postLoadConfiguration() {
 	// 	metrics.OnConfigurationUpdate(activeConfig)
 	// }
 
-	if s.globalConfiguration.ACME == nil || s.leadership == nil || !s.leadership.IsLeader() {
-		return
-	}
-
 	// FIXME acme
-	// if s.globalConfiguration.ACME.OnHostRule {
+	// if s.staticConfiguration.ACME == nil || s.leadership == nil || !s.leadership.IsLeader() {
+	// 	return
+	// }
+	//
+	// if s.staticConfiguration.ACME.OnHostRule {
 	// 	currentConfigurations := s.currentConfigurations.Get().(config.Configurations)
 	// 	for _, config := range currentConfigurations {
 	// 		for _, frontend := range config.Frontends {
@@ -277,7 +270,7 @@ func (s *Server) postLoadConfiguration() {
 	// 			// and is configured with ACME
 	// 			acmeEnabled := false
 	// 			for _, entryPoint := range frontend.EntryPoints {
-	// 				if s.globalConfiguration.ACME.EntryPoint == entryPoint && s.entryPoints[entryPoint].Configuration.TLS != nil {
+	// 				if s.staticConfiguration.ACME.EntryPoint == entryPoint && s.entryPoints[entryPoint].Configuration.TLS != nil {
 	// 					acmeEnabled = true
 	// 					break
 	// 				}
@@ -292,7 +285,7 @@ func (s *Server) postLoadConfiguration() {
 	// 					} else if len(domains) == 0 {
 	// 						log.Debugf("No domain parsed in rule %q", route.Rule)
 	// 					} else {
-	// 						s.globalConfiguration.ACME.LoadCertificateForDomains(domains)
+	// 						s.staticConfiguration.ACME.LoadCertificateForDomains(domains)
 	// 					}
 	// 				}
 	// 			}
@@ -302,69 +295,23 @@ func (s *Server) postLoadConfiguration() {
 }
 
 // loadHTTPSConfiguration add/delete HTTPS certificate managed dynamically
-func (s *Server) loadHTTPSConfiguration(configurations config.Configurations, defaultEntryPoints configuration.DefaultEntryPoints) map[string]map[string]*tls.Certificate {
+func (s *Server) loadHTTPSConfiguration(configurations config.Configurations) map[string]map[string]*tls.Certificate {
+	var entryPoints []string
+	for entryPointName := range s.entryPoints {
+		entryPoints = append(entryPoints, entryPointName)
+	}
+
 	newEPCertificates := make(map[string]map[string]*tls.Certificate)
 	// Get all certificates
 	for _, config := range configurations {
 		if config.TLS != nil && len(config.TLS) > 0 {
-			traefiktls.SortTLSPerEntryPoints(config.TLS, newEPCertificates, defaultEntryPoints)
+			traefiktls.SortTLSPerEntryPoints(config.TLS, newEPCertificates, entryPoints)
 		}
 	}
 	return newEPCertificates
 }
 
-func (s *Server) buildServerEntryPoints() map[string]*serverEntryPoint {
-	serverEntryPoints := make(map[string]*serverEntryPoint)
-
-	ctx := context.Background()
-
-	handlers := s.applyConfiguration(ctx, config.Configuration{})
-
-	for entryPointName, entryPoint := range s.entryPoints {
-		serverEntryPoints[entryPointName] = &serverEntryPoint{
-			httpRouter:       middlewares.NewHandlerSwitcher(handlers[entryPointName]),
-			onDemandListener: entryPoint.OnDemandListener,
-			tlsALPNGetter:    entryPoint.TLSALPNGetter,
-		}
-
-		if entryPoint.CertificateStore != nil {
-			serverEntryPoints[entryPointName].certs = entryPoint.CertificateStore
-		} else {
-			serverEntryPoints[entryPointName].certs = traefiktls.NewCertificateStore()
-		}
-
-		if entryPoint.Configuration.TLS != nil {
-			logger := log.FromContext(ctx).WithField(log.EntryPointName, entryPointName)
-
-			serverEntryPoints[entryPointName].certs.SniStrict = entryPoint.Configuration.TLS.SniStrict
-
-			if entryPoint.Configuration.TLS.DefaultCertificate != nil {
-				cert, err := buildDefaultCertificate(entryPoint.Configuration.TLS.DefaultCertificate)
-				if err != nil {
-					logger.Error(err)
-					continue
-				}
-				serverEntryPoints[entryPointName].certs.DefaultCertificate = cert
-			} else {
-				cert, err := generate.DefaultCertificate()
-				if err != nil {
-					logger.Error(err)
-					continue
-				}
-				serverEntryPoints[entryPointName].certs.DefaultCertificate = cert
-			}
-			if len(entryPoint.Configuration.TLS.Certificates) > 0 {
-				config, _ := entryPoint.Configuration.TLS.Certificates.CreateTLSConfig(entryPointName)
-				certMap := s.buildNameOrIPToCertificate(config.Certificates)
-				serverEntryPoints[entryPointName].certs.StaticCerts.Set(certMap)
-
-			}
-		}
-	}
-	return serverEntryPoints
-}
-
-func (s *Server) buildDefaultHTTPRouter() *mux.Router {
+func buildDefaultHTTPRouter() *mux.Router {
 	rt := mux.NewRouter()
 	rt.NotFoundHandler = http.HandlerFunc(http.NotFound)
 	rt.SkipClean(true)

@@ -1,5 +1,5 @@
+[log]
 logLevel = "DEBUG"
-defaultEntryPoints = ["http"]
 
 [entryPoints]
   [entryPoints.http]
@@ -7,10 +7,11 @@ defaultEntryPoints = ["http"]
 
 [api]
 
-[docker]
-exposedByDefault = false
-domain = "docker.local"
-watch = true
+[providers]
+   [providers.docker]
+      exposedByDefault = false
+      domain = "docker.local"
+      watch = true
 
 [hostResolver]
 cnameFlattening = true

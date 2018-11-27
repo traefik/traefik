@@ -8,20 +8,16 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/types"
 )
 
 // ProviderAggregator aggregates providers.
 type ProviderAggregator struct {
-	providers   []provider.Provider
-	constraints types.Constraints
+	providers []provider.Provider
 }
 
 // NewProviderAggregator returns an aggregate of all the providers configured in the static configuration.
-func NewProviderAggregator(conf static.Configuration) ProviderAggregator {
-	p := ProviderAggregator{
-		constraints: conf.Constraints,
-	}
+func NewProviderAggregator(conf static.Providers) ProviderAggregator {
+	p := ProviderAggregator{}
 
 	if conf.File != nil {
 		p.quietAddProvider(conf.File)
@@ -39,7 +35,7 @@ func (p *ProviderAggregator) quietAddProvider(provider provider.Provider) {
 
 // AddProvider adds a provider in the providers map.
 func (p *ProviderAggregator) AddProvider(provider provider.Provider) error {
-	err := provider.Init(p.constraints)
+	err := provider.Init()
 	if err != nil {
 		return err
 	}
@@ -48,7 +44,7 @@ func (p *ProviderAggregator) AddProvider(provider provider.Provider) error {
 }
 
 // Init the provider
-func (p ProviderAggregator) Init(_ types.Constraints) error {
+func (p ProviderAggregator) Init() error {
 	return nil
 }
 

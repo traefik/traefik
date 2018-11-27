@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	fmtlog "log"
 	"net/http"
 	"os"
@@ -25,16 +26,15 @@ import (
 	"github.com/containous/traefik/config/static"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/old/configuration"
 	"github.com/containous/traefik/old/provider/ecs"
 	"github.com/containous/traefik/old/provider/kubernetes"
-	"github.com/containous/traefik/old/types"
+	oldtypes "github.com/containous/traefik/old/types"
 	"github.com/containous/traefik/provider/aggregator"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/server"
 	"github.com/containous/traefik/server/router"
-	"github.com/containous/traefik/server/uuid"
 	traefiktls "github.com/containous/traefik/tls"
+	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
 	"github.com/coreos/go-systemd/daemon"
 	"github.com/elazarl/go-bindata-assetfs"
@@ -42,6 +42,44 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/vulcand/oxy/roundrobin"
 )
+
+// sliceOfStrings is the parser for []string
+type sliceOfStrings []string
+
+// String is the method to format the flag's value, part of the flag.Value interface.
+// The String method's output will be used in diagnostics.
+func (s *sliceOfStrings) String() string {
+	return strings.Join(*s, ",")
+}
+
+// Set is the method to set the flag value, part of the flag.Value interface.
+// Set's argument is a string to be parsed to set the flag.
+// It's a comma-separated list, so we split it.
+func (s *sliceOfStrings) Set(value string) error {
+	strings := strings.Split(value, ",")
+	if len(strings) == 0 {
+		return fmt.Errorf("bad []string format: %s", value)
+	}
+	for _, entrypoint := range strings {
+		*s = append(*s, entrypoint)
+	}
+	return nil
+}
+
+// Get return the []string
+func (s *sliceOfStrings) Get() interface{} {
+	return *s
+}
+
+// SetValue sets the []string with val
+func (s *sliceOfStrings) SetValue(val interface{}) {
+	*s = val.([]string)
+}
+
+// Type is type of the struct
+func (s *sliceOfStrings) Type() string {
+	return "sliceOfStrings"
+}
 
 func main() {
 	// traefik config inits
@@ -56,7 +94,7 @@ Complete documentation is available at https://traefik.io`,
 		Config:                traefikConfiguration,
 		DefaultPointersConfig: traefikPointersConfiguration,
 		Run: func() error {
-			runCmd(&traefikConfiguration.GlobalConfiguration, traefikConfiguration.ConfigFile)
+			runCmd(&traefikConfiguration.Configuration, traefikConfiguration.ConfigFile)
 			return nil
 		},
 	}
@@ -67,8 +105,9 @@ Complete documentation is available at https://traefik.io`,
 	// init flaeg source
 	f := flaeg.New(traefikCmd, os.Args[1:])
 	// add custom parsers
-	f.AddParser(reflect.TypeOf(configuration.EntryPoints{}), &configuration.EntryPoints{})
-	f.AddParser(reflect.TypeOf(configuration.DefaultEntryPoints{}), &configuration.DefaultEntryPoints{})
+	f.AddParser(reflect.TypeOf(static.EntryPoints{}), &static.EntryPoints{})
+
+	f.AddParser(reflect.SliceOf(reflect.TypeOf("")), &sliceOfStrings{})
 	f.AddParser(reflect.TypeOf(traefiktls.FilesOrContents{}), &traefiktls.FilesOrContents{})
 	f.AddParser(reflect.TypeOf(types.Constraints{}), &types.Constraints{})
 	f.AddParser(reflect.TypeOf(kubernetes.Namespaces{}), &kubernetes.Namespaces{})
@@ -76,9 +115,15 @@ Complete documentation is available at https://traefik.io`,
 	f.AddParser(reflect.TypeOf([]types.Domain{}), &types.Domains{})
 	f.AddParser(reflect.TypeOf(types.DNSResolvers{}), &types.DNSResolvers{})
 	f.AddParser(reflect.TypeOf(types.Buckets{}), &types.Buckets{})
+
 	f.AddParser(reflect.TypeOf(types.StatusCodes{}), &types.StatusCodes{})
 	f.AddParser(reflect.TypeOf(types.FieldNames{}), &types.FieldNames{})
 	f.AddParser(reflect.TypeOf(types.FieldHeaderNames{}), &types.FieldHeaderNames{})
+
+	// FIXME Remove with ACME
+	f.AddParser(reflect.TypeOf([]oldtypes.Domain{}), &oldtypes.Domains{})
+	// FIXME Remove with old providers
+	f.AddParser(reflect.TypeOf(oldtypes.Constraints{}), &oldtypes.Constraints{})
 
 	// add commands
 	f.AddCommand(cmdVersion.NewCmd())
@@ -124,19 +169,13 @@ Complete documentation is available at https://traefik.io`,
 
 	// if a KV Store is enable and no sub-command called in args
 	if kv != nil && usedCmd == traefikCmd {
-		if traefikConfiguration.Cluster == nil {
-			traefikConfiguration.Cluster = &types.Cluster{Node: uuid.Get()}
-		}
-		if traefikConfiguration.Cluster.Store == nil {
-			traefikConfiguration.Cluster.Store = &types.Store{Prefix: kv.Prefix, Store: kv.Store}
-		}
 		s.AddSource(kv)
 		operation := func() error {
 			_, err := s.LoadConfig()
 			return err
 		}
 		notify := func(err error, time time.Duration) {
-			log.Errorf("Load config error: %+v, retrying in %s", err, time)
+			log.WithoutContext().Errorf("Load config error: %+v, retrying in %s", err, time)
 		}
 		err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
 		if err != nil {
@@ -153,84 +192,85 @@ Complete documentation is available at https://traefik.io`,
 	os.Exit(0)
 }
 
-func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile string) {
-	configureLogging(globalConfiguration)
+func runCmd(staticConfiguration *static.Configuration, configFile string) {
+	configureLogging(staticConfiguration)
 
 	if len(configFile) > 0 {
-		log.Infof("Using TOML configuration file %s", configFile)
+		log.WithoutContext().Infof("Using TOML configuration file %s", configFile)
 	}
 
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 
 	if err := roundrobin.SetDefaultWeight(0); err != nil {
-		log.Error(err)
+		log.WithoutContext().Errorf("Could not set roundrobin default weight: %v", err)
 	}
 
-	globalConfiguration.SetEffectiveConfiguration(configFile)
-	globalConfiguration.ValidateConfiguration()
+	staticConfiguration.SetEffectiveConfiguration(configFile)
+	staticConfiguration.ValidateConfiguration()
 
-	log.Infof("Traefik version %s built on %s", version.Version, version.BuildDate)
+	log.WithoutContext().Infof("Traefik version %s built on %s", version.Version, version.BuildDate)
 
-	jsonConf, err := json.Marshal(globalConfiguration)
+	jsonConf, err := json.Marshal(staticConfiguration)
 	if err != nil {
-		log.Error(err)
-		log.Debugf("Global configuration loaded [struct] %#v", globalConfiguration)
+		log.WithoutContext().Errorf("Could not marshal static configuration: %v", err)
+		log.WithoutContext().Debugf("Static configuration loaded [struct] %#v", staticConfiguration)
 	} else {
-		log.Debugf("Global configuration loaded %s", string(jsonConf))
+		log.WithoutContext().Debugf("Static configuration loaded %s", string(jsonConf))
 	}
 
-	if globalConfiguration.API != nil && globalConfiguration.API.Dashboard {
-		globalConfiguration.API.DashboardAssets = &assetfs.AssetFS{Asset: genstatic.Asset, AssetInfo: genstatic.AssetInfo, AssetDir: genstatic.AssetDir, Prefix: "static"}
+	if staticConfiguration.API != nil && staticConfiguration.API.Dashboard {
+		staticConfiguration.API.DashboardAssets = &assetfs.AssetFS{Asset: genstatic.Asset, AssetInfo: genstatic.AssetInfo, AssetDir: genstatic.AssetDir, Prefix: "static"}
 	}
 
-	if globalConfiguration.CheckNewVersion {
+	if staticConfiguration.Global.CheckNewVersion {
 		checkNewVersion()
 	}
 
-	stats(globalConfiguration)
+	stats(staticConfiguration)
 
-	providerAggregator := aggregator.NewProviderAggregator(static.ConvertStaticConf(*globalConfiguration))
+	providerAggregator := aggregator.NewProviderAggregator(*staticConfiguration.Providers)
 
-	acmeProvider, err := globalConfiguration.InitACMEProvider()
+	acmeProvider, err := staticConfiguration.InitACMEProvider()
 	if err != nil {
-		log.Errorf("Unable to initialize ACME provider: %v", err)
+		log.WithoutContext().Errorf("Unable to initialize ACME provider: %v", err)
 	} else if acmeProvider != nil {
 		if err := providerAggregator.AddProvider(acmeProvider); err != nil {
-			log.Errorf("Unable to add ACME provider to the providers list: %v", err)
+			log.WithoutContext().Errorf("Unable to add ACME provider to the providers list: %v", err)
 			acmeProvider = nil
 		}
 	}
 
-	entryPoints := map[string]server.EntryPoint{}
-	staticConf := static.ConvertStaticConf(*globalConfiguration)
-	for entryPointName, config := range globalConfiguration.EntryPoints {
-		factory := router.NewRouteAppenderFactory(staticConf, entryPointName, acmeProvider)
-		entryPoint := server.EntryPoint{
-			RouteAppenderFactory: factory,
-			Configuration:        config,
+	serverEntryPoints := make(server.EntryPoints)
+	for entryPointName, config := range staticConfiguration.EntryPoints {
+		ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
+		logger := log.FromContext(ctx)
+
+		serverEntryPoint, err := server.NewEntryPoint(ctx, config)
+		if err != nil {
+			logger.Errorf("Error while building entryPoint: %v", err)
+			continue
 		}
 
-		if acmeProvider != nil {
+		serverEntryPoint.RouteAppenderFactory = router.NewRouteAppenderFactory(*staticConfiguration, entryPointName, acmeProvider)
+
+		if acmeProvider != nil && entryPointName == acmeProvider.EntryPoint {
+			logger.Debugf("Setting Acme Certificate store from Entrypoint")
+			acmeProvider.SetCertificateStore(serverEntryPoint.Certs)
+
+			if acmeProvider.OnDemand {
+				serverEntryPoint.OnDemandListener = acmeProvider.ListenRequest
+			}
+
 			// TLS ALPN 01
 			if acmeProvider.TLSChallenge != nil && acmeProvider.HTTPChallenge == nil && acmeProvider.DNSChallenge == nil {
-				entryPoint.TLSALPNGetter = acmeProvider.GetTLSALPNCertificate
-			}
-
-			if acmeProvider.OnDemand && entryPointName == acmeProvider.EntryPoint {
-				entryPoint.OnDemandListener = acmeProvider.ListenRequest
-			}
-
-			if entryPointName == acmeProvider.EntryPoint {
-				entryPoint.CertificateStore = traefiktls.NewCertificateStore()
-				acmeProvider.SetCertificateStore(entryPoint.CertificateStore)
-				log.Debugf("Setting Acme Certificate store from Entrypoint: %s", entryPointName)
+				serverEntryPoint.TLSALPNGetter = acmeProvider.GetTLSALPNCertificate
 			}
 		}
 
-		entryPoints[entryPointName] = entryPoint
+		serverEntryPoints[entryPointName] = serverEntryPoint
 	}
 
-	svr := server.NewServer(*globalConfiguration, providerAggregator, entryPoints)
+	svr := server.NewServer(*staticConfiguration, providerAggregator, serverEntryPoints)
 
 	if acmeProvider != nil && acmeProvider.OnHostRule {
 		acmeProvider.SetConfigListenerChan(make(chan config.Configuration))
@@ -238,46 +278,46 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 	}
 	ctx := cmd.ContextWithSignal(context.Background())
 
-	if staticConf.Ping != nil {
-		staticConf.Ping.WithContext(ctx)
+	if staticConfiguration.Ping != nil {
+		staticConfiguration.Ping.WithContext(ctx)
 	}
 
-	svr.StartWithContext(ctx)
+	svr.Start(ctx)
 	defer svr.Close()
 
 	sent, err := daemon.SdNotify(false, "READY=1")
 	if !sent && err != nil {
-		log.Error("Fail to notify", err)
+		log.WithoutContext().Errorf("Failed to notify: %v", err)
 	}
 
 	t, err := daemon.SdWatchdogEnabled(false)
 	if err != nil {
-		log.Error("Problem with watchdog", err)
+		log.WithoutContext().Errorf("Could not enable Watchdog: %v", err)
 	} else if t != 0 {
 		// Send a ping each half time given
 		t = t / 2
-		log.Info("Watchdog activated with timer each ", t)
+		log.WithoutContext().Infof("Watchdog activated with timer duration %s", t)
 		safe.Go(func() {
 			tick := time.Tick(t)
 			for range tick {
-				_, errHealthCheck := healthcheck.Do(*globalConfiguration)
-				if globalConfiguration.Ping == nil || errHealthCheck == nil {
+				_, errHealthCheck := healthcheck.Do(*staticConfiguration)
+				if staticConfiguration.Ping == nil || errHealthCheck == nil {
 					if ok, _ := daemon.SdNotify(false, "WATCHDOG=1"); !ok {
-						log.Error("Fail to tick watchdog")
+						log.WithoutContext().Error("Fail to tick watchdog")
 					}
 				} else {
-					log.Error(errHealthCheck)
+					log.WithoutContext().Error(errHealthCheck)
 				}
 			}
 		})
 	}
 
 	svr.Wait()
-	log.Info("Shutting down")
+	log.WithoutContext().Info("Shutting down")
 	logrus.Exit(0)
 }
 
-func configureLogging(globalConfiguration *configuration.GlobalConfiguration) {
+func configureLogging(staticConfiguration *static.Configuration) {
 	// configure default log flags
 	fmtlog.SetFlags(fmtlog.Lshortfile | fmtlog.LstdFlags)
 
@@ -285,27 +325,30 @@ func configureLogging(globalConfiguration *configuration.GlobalConfiguration) {
 	// an explicitly defined log level always has precedence. if none is
 	// given and debug mode is disabled, the default is ERROR, and DEBUG
 	// otherwise.
-	levelStr := strings.ToLower(globalConfiguration.LogLevel)
+	var levelStr string
+	if staticConfiguration.Log != nil {
+		levelStr = strings.ToLower(staticConfiguration.Log.LogLevel)
+	}
 	if levelStr == "" {
 		levelStr = "error"
-		if globalConfiguration.Debug {
+		if staticConfiguration.Global.Debug {
 			levelStr = "debug"
 		}
 	}
 	level, err := logrus.ParseLevel(levelStr)
 	if err != nil {
-		log.Error("Error getting level", err)
+		log.WithoutContext().Errorf("Error getting level: %v", err)
 	}
 	log.SetLevel(level)
 
 	var logFile string
-	if globalConfiguration.TraefikLog != nil && len(globalConfiguration.TraefikLog.FilePath) > 0 {
-		logFile = globalConfiguration.TraefikLog.FilePath
+	if staticConfiguration.Log != nil && len(staticConfiguration.Log.FilePath) > 0 {
+		logFile = staticConfiguration.Log.FilePath
 	}
 
 	// configure log format
 	var formatter logrus.Formatter
-	if globalConfiguration.TraefikLog != nil && globalConfiguration.TraefikLog.Format == "json" {
+	if staticConfiguration.Log != nil && staticConfiguration.Log.Format == "json" {
 		formatter = &logrus.JSONFormatter{}
 	} else {
 		disableColors := len(logFile) > 0
@@ -317,17 +360,17 @@ func configureLogging(globalConfiguration *configuration.GlobalConfiguration) {
 		dir := filepath.Dir(logFile)
 
 		if err := os.MkdirAll(dir, 0755); err != nil {
-			log.Errorf("Failed to create log path %s: %s", dir, err)
+			log.WithoutContext().Errorf("Failed to create log path %s: %s", dir, err)
 		}
 
 		err = log.OpenFile(logFile)
 		logrus.RegisterExitHandler(func() {
 			if err := log.CloseFile(); err != nil {
-				log.Error("Error closing log", err)
+				log.WithoutContext().Errorf("Error while closing log: %v", err)
 			}
 		})
 		if err != nil {
-			log.Error("Error opening file", err)
+			log.WithoutContext().Errorf("Error while opening log file %s: %v", logFile, err)
 		}
 	}
 }
@@ -341,17 +384,17 @@ func checkNewVersion() {
 	})
 }
 
-func stats(globalConfiguration *configuration.GlobalConfiguration) {
-	if globalConfiguration.SendAnonymousUsage {
-		log.Info(`
+func stats(staticConfiguration *static.Configuration) {
+	if staticConfiguration.Global.SendAnonymousUsage {
+		log.WithoutContext().Info(`
 Stats collection is enabled.
 Many thanks for contributing to Traefik's improvement by allowing us to receive anonymous information from your configuration.
 Help us improve Traefik by leaving this feature on :)
 More details on: https://docs.traefik.io/basics/#collected-data
 `)
-		collect(globalConfiguration)
+		collect(staticConfiguration)
 	} else {
-		log.Info(`
+		log.WithoutContext().Info(`
 Stats collection is disabled.
 Help us improve Traefik by turning this feature on :)
 More details on: https://docs.traefik.io/basics/#collected-data
@@ -359,12 +402,12 @@ More details on: https://docs.traefik.io/basics/#collected-data
 	}
 }
 
-func collect(globalConfiguration *configuration.GlobalConfiguration) {
+func collect(staticConfiguration *static.Configuration) {
 	ticker := time.Tick(24 * time.Hour)
 	safe.Go(func() {
 		for time.Sleep(10 * time.Minute); ; <-ticker {
-			if err := collector.Collect(globalConfiguration); err != nil {
-				log.Debug(err)
+			if err := collector.Collect(staticConfiguration); err != nil {
+				log.WithoutContext().Debug(err)
 			}
 		}
 	})

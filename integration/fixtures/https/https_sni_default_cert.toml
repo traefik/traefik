@@ -1,24 +1,19 @@
+[log]
 logLevel = "DEBUG"
 
-defaultEntryPoints = ["https"]
 
 [entryPoints]
   [entryPoints.https]
   address = ":4443"
     [entryPoints.https.tls]
-     [entryPoints.https.tls.defaultCertificate]
+     [entryPoints.https.tls.DefaultCertificate]
      certFile = "fixtures/https/snitest.com.cert"
      keyFile = "fixtures/https/snitest.com.key"
-     [[entryPoints.https.tls.certificates]]
-     certFile = "fixtures/https/wildcard.snitest.com.cert"
-     keyFile = "fixtures/https/wildcard.snitest.com.key"
-     [[entryPoints.https.tls.certificates]]
-     certFile = "fixtures/https/www.snitest.com.cert"
-     keyFile = "fixtures/https/www.snitest.com.key"
 
 [api]
 
-[file]
+[providers]
+   [providers.file]
 
 [Routers]
   [Routers.router1]
@@ -35,3 +30,15 @@ defaultEntryPoints = ["https"]
       [[Services.service1.LoadBalancer.Servers]]
         URL = "http://127.0.0.1:9010"
         Weight = 1
+
+[[tls]]
+  entryPoints = ["https"]
+  [tls.certificate]
+     certFile = "fixtures/https/wildcard.snitest.com.cert"
+     keyFile = "fixtures/https/wildcard.snitest.com.key"
+[[tls]]
+  entryPoints = ["https"]
+  [tls.certificate]
+     certFile = "fixtures/https/www.snitest.com.cert"
+     keyFile = "fixtures/https/www.snitest.com.key"
+

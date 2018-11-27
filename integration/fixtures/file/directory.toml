@@ -1,10 +1,10 @@
-defaultEntryPoints = ["http"]
-
+[log]
 logLevel = "DEBUG"
 
 [entryPoints]
   [entryPoints.http]
   address = ":8000"
 
-[file]
-  directory = "fixtures/file/dir/"
+[providers]
+   [providers.file]
+      directory = "fixtures/file/dir/"

@@ -10,7 +10,7 @@ import (
 
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/cmd"
-	"github.com/containous/traefik/old/configuration"
+	"github.com/containous/traefik/config/static"
 )
 
 // NewCmd builds a new HealthCheck command
@@ -29,9 +29,9 @@ func NewCmd(traefikConfiguration *cmd.TraefikConfiguration, traefikPointersConfi
 
 func runCmd(traefikConfiguration *cmd.TraefikConfiguration) func() error {
 	return func() error {
-		traefikConfiguration.GlobalConfiguration.SetEffectiveConfiguration(traefikConfiguration.ConfigFile)
+		traefikConfiguration.Configuration.SetEffectiveConfiguration(traefikConfiguration.ConfigFile)
 
-		resp, errPing := Do(traefikConfiguration.GlobalConfiguration)
+		resp, errPing := Do(traefikConfiguration.Configuration)
 		if errPing != nil {
 			fmt.Printf("Error calling healthcheck: %s\n", errPing)
 			os.Exit(1)
@@ -47,17 +47,18 @@ func runCmd(traefikConfiguration *cmd.TraefikConfiguration) func() error {
 }
 
 // Do try to do a healthcheck
-func Do(globalConfiguration configuration.GlobalConfiguration) (*http.Response, error) {
-	if globalConfiguration.Ping == nil {
+func Do(staticConfiguration static.Configuration) (*http.Response, error) {
+	if staticConfiguration.Ping == nil {
 		return nil, errors.New("please enable `ping` to use health check")
 	}
-	pingEntryPoint, ok := globalConfiguration.EntryPoints[globalConfiguration.Ping.EntryPoint]
+	pingEntryPoint, ok := staticConfiguration.EntryPoints[staticConfiguration.Ping.EntryPoint]
 	if !ok {
 		return nil, errors.New("missing `ping` entrypoint")
 	}
 
 	client := &http.Client{Timeout: 5 * time.Second}
 	protocol := "http"
+
 	if pingEntryPoint.TLS != nil {
 		protocol = "https"
 		tr := &http.Transport{
@@ -65,6 +66,7 @@ func Do(globalConfiguration configuration.GlobalConfiguration) (*http.Response, 
 		}
 		client.Transport = tr
 	}
+
 	path := "/"
 
 	return client.Head(protocol + "://" + pingEntryPoint.Address + path + "ping")

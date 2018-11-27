@@ -1,6 +1,6 @@
+[log]
 logLevel = "DEBUG"
 
-defaultEntryPoints = ["http", "https"]
 
 [entryPoints]
   [entryPoints.http]
@@ -34,6 +34,7 @@ defaultEntryPoints = ["http", "https"]
 
 [api]
 
-[file]
-filename = "fixtures/acme/certificates.toml"
-watch = true
+[providers]
+   [providers.file]
+      filename = "fixtures/acme/certificates.toml"
+      watch = true

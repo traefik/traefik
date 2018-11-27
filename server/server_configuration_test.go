@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/containous/traefik/config"
-	"github.com/containous/traefik/old/configuration"
+	"github.com/containous/traefik/config/static"
 	th "github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/tls"
 	"github.com/stretchr/testify/assert"
@@ -51,14 +51,8 @@ f9Oeos0UUothgiDktdQHxdNEwLjQf7lJJBzV+5OtwswCWA==
 -----END RSA PRIVATE KEY-----`)
 )
 
-func TestServerLoadCertificateWithDefaultEntryPoint(t *testing.T) {
-	globalConfig := configuration.GlobalConfiguration{
-		DefaultEntryPoints: []string{"http", "https"},
-	}
-	entryPoints := map[string]EntryPoint{
-		"https": {Configuration: &configuration.EntryPoint{TLS: &tls.TLS{}}},
-		"http":  {Configuration: &configuration.EntryPoint{}},
-	}
+func TestServerLoadCertificateWithTLSEntryPoints(t *testing.T) {
+	staticConfig := static.Configuration{}
 
 	dynamicConfigs := config.Configurations{
 		"config": &config.Configuration{
@@ -73,9 +67,16 @@ func TestServerLoadCertificateWithDefaultEntryPoint(t *testing.T) {
 		},
 	}
 
-	srv := NewServer(globalConfig, nil, entryPoints)
-	_, mapsCerts := srv.loadConfig(dynamicConfigs, globalConfig)
-	if len(mapsCerts["https"]) == 0 {
+	srv := NewServer(staticConfig, nil, EntryPoints{
+		"https": &EntryPoint{
+			Certs: tls.NewCertificateStore(),
+		},
+		"https2": &EntryPoint{
+			Certs: tls.NewCertificateStore(),
+		},
+	})
+	_, mapsCerts := srv.loadConfig(dynamicConfigs)
+	if len(mapsCerts["https"]) == 0 || len(mapsCerts["https2"]) == 0 {
 		t.Fatal("got error: https entryPoint must have TLS certificates.")
 	}
 }
@@ -86,15 +87,11 @@ func TestReuseService(t *testing.T) {
 	}))
 	defer testServer.Close()
 
-	entryPoints := map[string]EntryPoint{
-		"http": {Configuration: &configuration.EntryPoint{
-			ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true},
-		}},
+	entryPoints := EntryPoints{
+		"http": &EntryPoint{},
 	}
 
-	globalConfig := configuration.GlobalConfiguration{
-		DefaultEntryPoints: []string{"http"},
-	}
+	staticConfig := static.Configuration{}
 
 	dynamicConfigs := config.Configurations{
 		"config": th.BuildConfiguration(
@@ -118,14 +115,14 @@ func TestReuseService(t *testing.T) {
 		),
 	}
 
-	srv := NewServer(globalConfig, nil, entryPoints)
+	srv := NewServer(staticConfig, nil, entryPoints)
 
-	serverEntryPoints, _ := srv.loadConfig(dynamicConfigs, globalConfig)
+	entrypointsHandlers, _ := srv.loadConfig(dynamicConfigs)
 
 	// Test that the /ok path returns a status 200.
 	responseRecorderOk := &httptest.ResponseRecorder{}
 	requestOk := httptest.NewRequest(http.MethodGet, testServer.URL+"/ok", nil)
-	serverEntryPoints["http"].ServeHTTP(responseRecorderOk, requestOk)
+	entrypointsHandlers["http"].ServeHTTP(responseRecorderOk, requestOk)
 
 	assert.Equal(t, http.StatusOK, responseRecorderOk.Result().StatusCode, "status code")
 
@@ -133,7 +130,7 @@ func TestReuseService(t *testing.T) {
 	// the basic authentication defined on the frontend.
 	responseRecorderUnauthorized := &httptest.ResponseRecorder{}
 	requestUnauthorized := httptest.NewRequest(http.MethodGet, testServer.URL+"/unauthorized", nil)
-	serverEntryPoints["http"].ServeHTTP(responseRecorderUnauthorized, requestUnauthorized)
+	entrypointsHandlers["http"].ServeHTTP(responseRecorderUnauthorized, requestUnauthorized)
 
 	assert.Equal(t, http.StatusUnauthorized, responseRecorderUnauthorized.Result().StatusCode, "status code")
 }
@@ -147,8 +144,8 @@ func TestThrottleProviderConfigReload(t *testing.T) {
 		stop <- true
 	}()
 
-	globalConfig := configuration.GlobalConfiguration{}
-	server := NewServer(globalConfig, nil, nil)
+	staticConfiguration := static.Configuration{}
+	server := NewServer(staticConfiguration, nil, nil)
 
 	go server.throttleProviderConfigReload(throttleDuration, publishConfig, providerConfig, stop)
 

@@ -1,5 +1,5 @@
+[log]
 logLevel = "DEBUG"
-defaultEntryPoints = ["http"]
 
 [entryPoints]
   [entryPoints.http]

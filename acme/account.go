@@ -1,6 +1,7 @@
 package acme
 
 import (
+	"context"
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
@@ -15,8 +16,8 @@ import (
 	"time"
 
 	"github.com/containous/traefik/log"
-	acmeprovider "github.com/containous/traefik/old/provider/acme"
-	"github.com/containous/traefik/old/types"
+	acmeprovider "github.com/containous/traefik/provider/acme"
+	"github.com/containous/traefik/types"
 	"github.com/xenolf/lego/acme"
 )
 
@@ -72,7 +73,7 @@ func (a *Account) Init() error {
 
 // NewAccount creates an account
 func NewAccount(email string, certs []*DomainsCertificate, keyTypeValue string) (*Account, error) {
-	keyType := acmeprovider.GetKeyType(keyTypeValue)
+	keyType := acmeprovider.GetKeyType(context.Background(), keyTypeValue)
 
 	// Create a user. New accounts need an email and private key to start
 	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)

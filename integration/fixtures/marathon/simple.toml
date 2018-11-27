@@ -1,5 +1,4 @@
-defaultEntryPoints = ["http"]
-
+[log]
 logLevel = "DEBUG"
 
 [entryPoints]
@@ -11,7 +10,8 @@ logLevel = "DEBUG"
 [api]
   entryPoint = "api"
 
-[marathon]
-  endpoint = "{{.MarathonURL}}"
-  watch = true
-  exposedByDefault = true
+[providers]
+   [providers.marathon]
+      endpoint = "{{.MarathonURL}}"
+      watch = true
+      exposedByDefault = true

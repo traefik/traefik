@@ -1,6 +1,7 @@
-defaultEntryPoints = ["http"]
-
+[log]
 logLevel = "DEBUG"
+
+[global]
 debug = true
 
 [api]
@@ -19,7 +20,8 @@ debug = true
       samplingType = "const"
       samplingParam = 1.0
 
-[file]
+[providers]
+   [providers.file]
 
 [Routers]
   [Routers.router1]

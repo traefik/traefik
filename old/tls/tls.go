@@ -24,6 +24,7 @@ type ClientCA struct {
 type TLS struct {
 	MinVersion         string `export:"true"`
 	CipherSuites       []string
+	Certificates       Certificates
 	ClientCA           ClientCA
 	DefaultCertificate *Certificate
 	SniStrict          bool `export:"true"`

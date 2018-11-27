@@ -44,8 +44,8 @@ type Manager struct {
 }
 
 // BuildHandlers Builds handler for all entry points
-func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, defaultEntryPoints []string) map[string]http.Handler {
-	entryPointsRouters := m.filteredRouters(rootCtx, entryPoints, defaultEntryPoints)
+func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) map[string]http.Handler {
+	entryPointsRouters := m.filteredRouters(rootCtx, entryPoints)
 
 	entryPointHandlers := make(map[string]http.Handler)
 	for entryPointName, routers := range entryPointsRouters {
@@ -73,13 +73,13 @@ func contains(entryPoints []string, entryPointName string) bool {
 	return false
 }
 
-func (m *Manager) filteredRouters(ctx context.Context, entryPoints []string, defaultEntryPoints []string) map[string]map[string]*config.Router {
+func (m *Manager) filteredRouters(ctx context.Context, entryPoints []string) map[string]map[string]*config.Router {
 	entryPointsRouters := make(map[string]map[string]*config.Router)
 
 	for rtName, rt := range m.configs {
 		eps := rt.EntryPoints
 		if len(eps) == 0 {
-			eps = defaultEntryPoints
+			eps = entryPoints
 		}
 		for _, entryPointName := range eps {
 			if !contains(entryPoints, entryPointName) {

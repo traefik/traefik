@@ -93,7 +93,7 @@ func cnameResolve(host string, resolvPath string) (*cnameResolv, error) {
 		result = append(result, tempRecord)
 	}
 
-	if len(result) <= 0 {
+	if len(result) == 0 {
 		return nil, nil
 	}
 

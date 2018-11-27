@@ -1,9 +1,9 @@
+[log]
 logLevel = "ERROR"
-defaultEntryPoints = ["http"]
-checkNewVersion = false
+filePath = "traefik.log"
 
-[traefikLog]
-  filePath = "traefik.log"
+[global]
+checkNewVersion = false
 
 [accessLog]
   filePath = "access.log"
@@ -36,7 +36,8 @@ checkNewVersion = false
 
 [api]
 
-[docker]
-  exposedByDefault = false
-  domain = "docker.local"
-  watch = true
+[providers]
+   [providers.docker]
+     exposedByDefault = false
+     domain = "docker.local"
+     watch = true

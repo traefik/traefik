@@ -1,5 +1,5 @@
-defaultEntryPoints = ["http"]
 
+[global]
 debug = true
 
 [entryPoints]
@@ -8,7 +8,8 @@ debug = true
 
 [api]
 
-[file]
+[providers]
+   [providers.file]
 
 [routers]
   [routers.router1]

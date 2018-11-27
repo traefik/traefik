@@ -7,9 +7,11 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/containous/traefik/config/static"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/old/configuration"
 	traefiktls "github.com/containous/traefik/tls"
+	"github.com/pkg/errors"
 	"golang.org/x/net/http2"
 )
 
@@ -22,26 +24,30 @@ func (t *h2cTransportWrapper) RoundTrip(req *http.Request) (*http.Response, erro
 	return t.Transport.RoundTrip(req)
 }
 
-// createHTTPTransport creates an http.Transport configured with the GlobalConfiguration settings.
+// createHTTPTransport creates an http.Transport configured with the Transport configuration settings.
 // For the settings that can't be configured in Traefik it uses the default http.Transport settings.
 // An exception to this is the MaxIdleConns setting as we only provide the option MaxIdleConnsPerHost
 // in Traefik at this point in time. Setting this value to the default of 100 could lead to confusing
 // behavior and backwards compatibility issues.
-func createHTTPTransport(globalConfiguration configuration.GlobalConfiguration) (*http.Transport, error) {
+func createHTTPTransport(transportConfiguration *static.ServersTransport) (*http.Transport, error) {
+	if transportConfiguration == nil {
+		return nil, errors.New("no transport configuration given")
+	}
+
 	dialer := &net.Dialer{
 		Timeout:   configuration.DefaultDialTimeout,
 		KeepAlive: 30 * time.Second,
 		DualStack: true,
 	}
 
-	if globalConfiguration.ForwardingTimeouts != nil {
-		dialer.Timeout = time.Duration(globalConfiguration.ForwardingTimeouts.DialTimeout)
+	if transportConfiguration.ForwardingTimeouts != nil {
+		dialer.Timeout = time.Duration(transportConfiguration.ForwardingTimeouts.DialTimeout)
 	}
 
 	transport := &http.Transport{
 		Proxy:                 http.ProxyFromEnvironment,
 		DialContext:           dialer.DialContext,
-		MaxIdleConnsPerHost:   globalConfiguration.MaxIdleConnsPerHost,
+		MaxIdleConnsPerHost:   transportConfiguration.MaxIdleConnsPerHost,
 		IdleConnTimeout:       90 * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
@@ -56,17 +62,17 @@ func createHTTPTransport(globalConfiguration configuration.GlobalConfiguration) 
 		},
 	})
 
-	if globalConfiguration.ForwardingTimeouts != nil {
-		transport.ResponseHeaderTimeout = time.Duration(globalConfiguration.ForwardingTimeouts.ResponseHeaderTimeout)
+	if transportConfiguration.ForwardingTimeouts != nil {
+		transport.ResponseHeaderTimeout = time.Duration(transportConfiguration.ForwardingTimeouts.ResponseHeaderTimeout)
 	}
 
-	if globalConfiguration.InsecureSkipVerify {
+	if transportConfiguration.InsecureSkipVerify {
 		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
 
-	if len(globalConfiguration.RootCAs) > 0 {
+	if len(transportConfiguration.RootCAs) > 0 {
 		transport.TLSClientConfig = &tls.Config{
-			RootCAs: createRootCACertPool(globalConfiguration.RootCAs),
+			RootCAs: createRootCACertPool(transportConfiguration.RootCAs),
 		}
 	}
 

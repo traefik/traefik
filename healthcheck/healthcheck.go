@@ -53,9 +53,8 @@ func (opt Options) String() string {
 // BackendConfig HealthCheck configuration for a backend
 type BackendConfig struct {
 	Options
-	name           string
-	disabledURLs   []*url.URL
-	requestTimeout time.Duration
+	name         string
+	disabledURLs []*url.URL
 }
 
 func (b *BackendConfig) newRequest(serverURL *url.URL) (*http.Request, error) {

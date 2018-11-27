@@ -1,6 +1,6 @@
+[log]
 logLevel = "DEBUG"
 
-defaultEntryPoints = ["https"]
 
 [entryPoints]
   [entryPoints.https]
@@ -13,7 +13,8 @@ defaultEntryPoints = ["https"]
 
 [api]
 
-[file]
+[providers]
+   [providers.file]
 
 [Routers]
   [Routers.router1]

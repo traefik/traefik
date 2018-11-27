@@ -1,6 +1,7 @@
+[log]
 logLevel = "DEBUG"
 
-defaultEntryPoints = ["http", "https"]
+
 
 [entryPoints]
   [entryPoints.http]
@@ -35,7 +36,8 @@ defaultEntryPoints = ["http", "https"]
 [web]
 path="/traefik"
 
-[file]
+[providers]
+   [providers.file]
 
 [services]
   [services.test.loadbalancer]

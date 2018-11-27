@@ -1,5 +1,5 @@
+[log]
 logLevel = "DEBUG"
-defaultEntryPoints = ["http"]
 
 [entryPoints]
   [entryPoints.http]
@@ -10,4 +10,6 @@ defaultEntryPoints = ["http"]
     depth=2
 
 [api]
-[docker]
+
+[providers]
+   [providers.docker]
