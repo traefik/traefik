@@ -23,6 +23,7 @@ import (
 
 var _ provider.Provider = (*Provider)(nil)
 var existingTaskDef = make(map[string]*ecs.TaskDefinition)
+
 // Provider holds configurations of the provider.
 type Provider struct {
 	provider.BaseProvider `mapstructure:",squash" export:"true"`
