@@ -21,7 +21,6 @@ func (s *RestSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
-
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/rest/simple.toml"))
 
 	defer display(c)
@@ -29,7 +28,7 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	// Expected a 404 as we did not configure anything
+	// Expected a 404 as we did not configure anything.
 	err = try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
 

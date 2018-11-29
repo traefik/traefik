@@ -16,7 +16,7 @@ import (
 
 var _ provider.Provider = (*Provider)(nil)
 
-// Provider is a provider.Provider implementation that provides a Rest API
+// Provider is a provider.Provider implementation that provides a Rest API.
 type Provider struct {
 	configurationChan chan<- config.Message
 	EntryPoint        string `description:"EntryPoint" export:"true"`
@@ -24,12 +24,12 @@ type Provider struct {
 
 var templatesRenderer = render.New(render.Options{Directory: "nowhere"})
 
-// Init the provider
+// Init the provider.
 func (p *Provider) Init() error {
 	return nil
 }
 
-// Append add rest provider routes on a router
+// Append add rest provider routes on a router.
 func (p *Provider) Append(systemRouter *mux.Router) {
 	systemRouter.
 		Methods(http.MethodPut).
