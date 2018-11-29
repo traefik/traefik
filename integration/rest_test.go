@@ -21,6 +21,7 @@ func (s *RestSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
+
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/rest/simple.toml"))
 
 	defer display(c)
@@ -46,7 +47,7 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 				LoadBalancer: &config.LoadBalancerService{
 					Servers: []config.Server{
 						{
-							URL:    "http://172.17.0.2:80",
+							URL:    "http://" + s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress + ":80",
 							Weight: 1,
 						},
 					},
