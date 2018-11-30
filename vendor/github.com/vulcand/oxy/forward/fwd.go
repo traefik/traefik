@@ -548,6 +548,16 @@ func (f *httpForwarder) serveHTTP(w http.ResponseWriter, inReq *http.Request, ct
 	} else {
 		revproxy.ServeHTTP(w, outReq)
 	}
+
+	for key := range w.Header() {
+		if strings.HasPrefix(key, http.TrailerPrefix) {
+			if fl, ok := w.(http.Flusher); ok {
+				fl.Flush()
+			}
+			break
+		}
+	}
+
 }
 
 // IsWebsocketRequest determines if the specified HTTP request is a
