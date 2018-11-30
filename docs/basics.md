@@ -94,10 +94,12 @@ Following is the list of existing modifier rules:
 
 Matcher rules determine if a particular request should be forwarded to a backend.
 
-Separate multiple rule values by `,` (comma) in order to enable ANY semantics (i.e., forward a request if any rule matches).
-Does not work for `Headers` and `HeadersRegexp`.
-
-Separate multiple rule values by `;` (semicolon) in order to enable ALL semantics (i.e., forward a request if all rules match).
+The associativity rule is the following:
+- `,` is the `OR` operator (works **only inside a matcher**, ex: `Host:foo.com,bar.com`).
+    - i.e., forward a request if any rule matches.
+    - Does not work for `Headers` and `HeadersRegexp`.
+- `;` is the `AND` operator (works **only between matchers**, ex: `Host:foo.com;Path:/bar`) 
+    - i.e., forward a request if all rules match
 
 Following is the list of existing matcher rules along with examples:
 
