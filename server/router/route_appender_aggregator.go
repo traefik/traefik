@@ -24,7 +24,9 @@ func NewRouteAppenderAggregator(ctx context.Context, chainBuilder chainBuilder, 
 
 	aggregator := &RouteAppenderAggregator{}
 
-	// FIXME add REST
+	if conf.Providers != nil && conf.Providers.Rest != nil {
+		aggregator.AddAppender(conf.Providers.Rest)
+	}
 
 	if conf.API != nil && conf.API.EntryPoint == entryPointName {
 		chain, err := chainBuilder.BuildChain(ctx, conf.API.Middlewares)
