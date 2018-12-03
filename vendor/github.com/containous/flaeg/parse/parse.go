@@ -172,7 +172,7 @@ type Duration time.Duration
 
 // Set sets the duration from the given string value.
 func (d *Duration) Set(s string) error {
-	if v, err := strconv.Atoi(s); err == nil {
+	if v, err := strconv.ParseInt(s, 10, 64); err == nil {
 		*d = Duration(time.Duration(v) * time.Second)
 		return nil
 	}
@@ -211,7 +211,7 @@ func (d *Duration) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON deserializes the given text into a duration value.
 func (d *Duration) UnmarshalJSON(text []byte) error {
-	if v, err := strconv.Atoi(string(text)); err == nil {
+	if v, err := strconv.ParseInt(string(text), 10, 64); err == nil {
 		*d = Duration(time.Duration(v))
 		return nil
 	}
