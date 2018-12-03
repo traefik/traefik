@@ -21,13 +21,7 @@ func AddMetadata(structure interface{}, node *Node) error {
 	rootType := reflect.TypeOf(structure)
 	node.Kind = rootType.Kind()
 
-	for i := range node.Children {
-		if err := addMetadata(rootType, node.Children[i]); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return browseChildren(rootType, node)
 }
 
 func addMetadata(rootType reflect.Type, node *Node) error {
