@@ -43,7 +43,6 @@ type ACME struct {
 	Email                 string                      `description:"Email address used for registration"`
 	Domains               []types.Domain              `description:"SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='main.net,san1.net,san2.net'"`
 	Storage               string                      `description:"File or key used for certificates storage."`
-	StorageFile           string                      // Deprecated
 	OnDemand              bool                        `description:"(Deprecated) Enable on demand certificate generation. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."` // Deprecated
 	OnHostRule            bool                        `description:"Enable certificate generation on frontends Host rules."`
 	CAServer              string                      `description:"CA server to use."`
