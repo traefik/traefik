@@ -240,7 +240,9 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 					log.Errorf("Unable to describe tasks for %v", page.TaskArns)
 				} else {
 					for _, t := range resp.Tasks {
-						tasks[aws.StringValue(t.TaskArn)] = t
+						if aws.StringValue(t.LastStatus) == ecs.DesiredStatusRunning {
+							tasks[aws.StringValue(t.TaskArn)] = t
+						}
 					}
 				}
 			}
