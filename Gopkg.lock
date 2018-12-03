@@ -278,8 +278,8 @@
     ".",
     "parse"
   ]
-  revision = "aad81c7ac7f49671a59b9ede8ab22436e132a302"
-  version = "v1.3.0"
+  revision = "c93d194b807ef171c43344d60adad8b58217390a"
+  version = "v1.4.1"
 
 [[projects]]
   branch = "master"
@@ -343,10 +343,10 @@
   version = "v3.2.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/dimchansky/utfbom"
   packages = ["."]
-  revision = "5448fe645cb1964ba70ac8f9f2ffe975e61a536c"
-  version = "v1.0.0"
+  revision = "c410c2305b32ec96caea4e24b4ecbf648e2eeb25"
 
 [[projects]]
   branch = "master"
@@ -1826,6 +1826,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "817d5ad6a6ae085d57953a73f7b615a223fa3e70b6152bf87382508bfbfbd655"
+  inputs-digest = "001d7f14037057a96b36926ec5a68b92cfc230aed7dee45989e4e7b1f4d59214"
   solver-name = "gps-cdcl"
   solver-version = 1
