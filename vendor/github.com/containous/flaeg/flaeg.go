@@ -434,6 +434,11 @@ func LoadWithCommand(cmd *Command, cmdArgs []string, customParsers map[reflect.T
 
 // PrintHelpWithCommand generates and prints command line help for a Command
 func PrintHelpWithCommand(flagMap map[string]reflect.StructField, defaultValMap map[string]reflect.Value, parsers map[reflect.Type]parse.Parser, cmd *Command, subCmd []*Command) error {
+	// Hide command from help
+	if cmd != nil && cmd.HideHelp {
+		return fmt.Errorf("command %s not found", cmd.Name)
+	}
+
 	// Define a templates
 	// Using POSXE STD : http://pubs.opengroup.org/onlinepubs/9699919799/
 	const helper = `{{if .ProgDescription}}{{.ProgDescription}}
@@ -457,7 +462,7 @@ Flags:
 		SubCommands     map[string]string
 	}
 	tempStruct := TempStruct{}
-	if cmd != nil && !cmd.HideHelp {
+	if cmd != nil {
 		tempStruct.ProgName = cmd.Name
 		tempStruct.ProgDescription = cmd.Description
 		tempStruct.SubCommands = map[string]string{}
@@ -582,7 +587,10 @@ func PrintErrorWithCommand(err error, flagMap map[string]reflect.StructField, de
 		fmt.Printf("Error here : %s\n", err)
 	}
 
-	PrintHelpWithCommand(flagMap, defaultValMap, parsers, cmd, subCmd)
+	if errHelp := PrintHelpWithCommand(flagMap, defaultValMap, parsers, cmd, subCmd); errHelp != nil {
+		return errHelp
+	}
+
 	return err
 }
 
@@ -661,7 +669,7 @@ func (f *Flaeg) findCommandWithCommandArgs() (*Command, []string, error) {
 	commandName, f.commandArgs = splitArgs(f.args)
 	if len(commandName) > 0 {
 		for _, command := range f.commands {
-			if commandName == command.Name && !command.HideHelp {
+			if commandName == command.Name {
 				f.calledCommand = command
 				return f.calledCommand, f.commandArgs, nil
 			}
