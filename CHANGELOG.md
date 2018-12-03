@@ -1,5 +1,39 @@
 # Change Log
 
+## [v1.7.5](https://github.com/containous/traefik/tree/v1.7.5) (2018-12-03)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.4...v1.7.5)
+
+**Enhancements:**
+- **[docker]** [docker backend] - Add config flag to set refreshSeconds for swarmmode ticker ([#4105](https://github.com/containous/traefik/pull/4105) by [WTFKr0](https://github.com/WTFKr0))
+- **[k8s]** Support canary weight for external name service ([#4135](https://github.com/containous/traefik/pull/4135) by [yue9944882](https://github.com/yue9944882))
+
+**Bug fixes:**
+- **[acme]** Fix ACME spec and Cloudflare. ([#4201](https://github.com/containous/traefik/pull/4201) by [ldez](https://github.com/ldez))
+- **[authentication,middleware]** Remove X-Forwarded-Uri and X-Forwarded-Method from untrusted IP ([#4036](https://github.com/containous/traefik/pull/4036) by [stffabi](https://github.com/stffabi))
+- **[authentication,middleware]** Allow usersFile comments ([#4159](https://github.com/containous/traefik/pull/4159) by [thde](https://github.com/thde))
+- **[authentication]** Fix partial declaration of authentication. ([#4212](https://github.com/containous/traefik/pull/4212) by [ldez](https://github.com/ldez))
+- **[docker]** Verify ctx when we send configuration message in docker provider ([#4185](https://github.com/containous/traefik/pull/4185) by [juliens](https://github.com/juliens))
+- **[ecs]** Filter ECS tasks by LastStatus before adding to list of service tasks ([#4255](https://github.com/containous/traefik/pull/4255) by [hwhelan-CB](https://github.com/hwhelan-CB))
+- **[healthcheck]** Query params in health check ([#4188](https://github.com/containous/traefik/pull/4188) by [mmatur](https://github.com/mmatur))
+- **[metrics]** Upgraded DD APM library ([#4189](https://github.com/containous/traefik/pull/4189) by [aantono](https://github.com/aantono))
+- **[middleware]** Fix ssl force host secure middleware ([#4138](https://github.com/containous/traefik/pull/4138) by [mmatur](https://github.com/mmatur))
+- **[oxy]** Fix unannonced trailers problem when body is empty ([#4258](https://github.com/containous/traefik/pull/4258) by [juliens](https://github.com/juliens))
+- **[provider,server]** Log configuration errors from providers and keeps listening ([#4230](https://github.com/containous/traefik/pull/4230) by [geraldcroes](https://github.com/geraldcroes))
+- **[tls]** Implement Case-insensitive SNI matching ([#4132](https://github.com/containous/traefik/pull/4132) by [dtomcej](https://github.com/dtomcej))
+- Use ParseInt instead of Atoi for parsing durations ([#4263](https://github.com/containous/traefik/pull/4263) by [mmatur](https://github.com/mmatur))
+
+**Documentation:**
+- **[acme]** ACME DNS provider is called `acme-dns` ([#4166](https://github.com/containous/traefik/pull/4166) by [robsdedude](https://github.com/robsdedude))
+- **[docker]** Add a &#34;Security Consideration&#34; section in the Docker&#39;s backend section of the documentation ([#4225](https://github.com/containous/traefik/pull/4225) by [dduportal](https://github.com/dduportal))
+- **[docker]** Clarify swarm loadbalancer documentation ([#4194](https://github.com/containous/traefik/pull/4194) by [jlevesy](https://github.com/jlevesy))
+- **[docker]** Fix spelling in comment ([#4169](https://github.com/containous/traefik/pull/4169) by [giocomai](https://github.com/giocomai))
+- **[docker]** Update swarm mode endpoint ([#4208](https://github.com/containous/traefik/pull/4208) by [siyu6974](https://github.com/siyu6974))
+- **[k8s]** Include an explicit list of kubernetes protocol annotations in docs. ([#4170](https://github.com/containous/traefik/pull/4170) by [shanna](https://github.com/shanna))
+- **[k8s]** Improve kubernetes TLS user guide ([#4175](https://github.com/containous/traefik/pull/4175) by [mterring](https://github.com/mterring))
+- **[k8s]** frame-deny should be set to true to enable the header ([#4171](https://github.com/containous/traefik/pull/4171) by [swestcott](https://github.com/swestcott))
+- **[rules]** Matcher associativity rule. ([#4244](https://github.com/containous/traefik/pull/4244) by [ldez](https://github.com/ldez))
+- Documentation: Rename &#34;admin panel&#34; to &#34;dashboard ([#4156](https://github.com/containous/traefik/pull/4156) by [thernstig](https://github.com/thernstig))
+
 ## [v1.7.4](https://github.com/containous/traefik/tree/v1.7.4) (2018-10-30)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.3...v1.7.4)
 
