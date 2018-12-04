@@ -24,7 +24,7 @@ type Middleware struct {
 	MaxConn           *MaxConn           `json:"maxConn,omitempty"`
 	Buffering         *Buffering         `json:"buffering,omitempty"`
 	CircuitBreaker    *CircuitBreaker    `json:"circuitBreaker,omitempty"`
-	Compress          *Compress          `json:"compress,omitempty"`
+	Compress          *Compress          `json:"compress,omitempty" label:"allowEmpty"`
 	PassTLSClientCert *PassTLSClientCert `json:"passTLSClientCert,omitempty"`
 	Retry             *Retry             `json:"retry,omitempty"`
 }
