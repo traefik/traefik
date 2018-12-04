@@ -392,7 +392,7 @@ metadata:
   name: traefik-web-ui
   namespace: kube-system
   annotations:
-    kubernetes.io/ingress.class: traefik
+    kubernetes.io/ingress.class: "traefik"
 spec:
   rules:
   - host: traefik-ui.minikube
@@ -475,7 +475,7 @@ metadata:
  name: prometheus-dashboard
  namespace: monitoring
  annotations:
-   kubernetes.io/ingress.class: traefik
+   kubernetes.io/ingress.class: "traefik"
    traefik.ingress.kubernetes.io/auth-type: "basic"
    traefik.ingress.kubernetes.io/auth-secret: "mysecret"
 spec:
@@ -650,7 +650,7 @@ kind: Ingress
 metadata:
   name: cheese
   annotations:
-    kubernetes.io/ingress.class: traefik
+    kubernetes.io/ingress.class: "traefik"
 spec:
   rules:
   - host: stilton.minikube
@@ -710,8 +710,8 @@ kind: Ingress
 metadata:
   name: cheeses
   annotations:
-    kubernetes.io/ingress.class: traefik
-    traefik.frontend.rule.type: PathPrefixStrip
+    kubernetes.io/ingress.class: "traefik"
+    traefik.frontend.rule.type: "PathPrefixStrip"
 spec:
   rules:
   - host: cheeses.minikube
@@ -766,8 +766,8 @@ metadata:
   name: cheese
   namespace: cheese
   annotations:
-    kubernetes.io/ingress.class: traefik
-    traefik.frontend.rule.type: PathPrefixStrip
+    kubernetes.io/ingress.class: "traefik"
+    traefik.frontend.rule.type: "PathPrefixStrip"
 spec:
   rules:
   - host: cheese.minikube
@@ -861,7 +861,7 @@ kind: Ingress
 metadata:
   name: example
   annotations:
-    kubernetes.io/ingress.class: traefik
+    kubernetes.io/ingress.class: "traefik"
     traefik.frontend.passHostHeader: "false"
 spec:
   rules:
