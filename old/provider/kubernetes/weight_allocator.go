@@ -7,6 +7,7 @@ import (
 
 	"github.com/containous/traefik/old/provider/label"
 	"gopkg.in/yaml.v2"
+	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 )
 
@@ -165,6 +166,23 @@ func getServiceInstanceCounts(ingress *extensionsv1beta1.Ingress, client Client)
 
 	for _, rule := range ingress.Spec.Rules {
 		for _, pa := range rule.HTTP.Paths {
+			svc, exists, err := client.GetService(ingress.Namespace, pa.Backend.ServiceName)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get service %s/%s: %v", ingress.Namespace, pa.Backend.ServiceName, err)
+			}
+			if !exists {
+				return nil, fmt.Errorf("service not found for %s/%s", ingress.Namespace, pa.Backend.ServiceName)
+			}
+			if svc.Spec.Type == corev1.ServiceTypeExternalName {
+				// external-name service has only one instance b/c it will actually be interpreted as a DNS record
+				// instead of real server.
+				serviceInstanceCounts[ingressService{
+					host:    rule.Host,
+					path:    pa.Path,
+					service: pa.Backend.ServiceName,
+				}] = 1
+				continue
+			}
 			count := 0
 			endpoints, exists, err := client.GetEndpoints(ingress.Namespace, pa.Backend.ServiceName)
 			if err != nil {
