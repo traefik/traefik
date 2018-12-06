@@ -249,7 +249,7 @@
   revision = "7e6055773c5137efbeb3bd2410d705fe10ab6bfd"
 
 [[override]]
-  branch = "master"
+  version = "v1.1.1"
   name = "github.com/miekg/dns"
 
 [prune]

@@ -825,7 +825,6 @@
   revision = "9b66602d496a139e4722bdde32f0f1ac1c12d4a8"
 
 [[projects]]
-  branch = "master"
   name = "github.com/jjcollinge/servicefabric"
   packages = ["."]
   revision = "8eebe170fa1ba25d3dfb928b3f86a7313b13b9fe"
@@ -978,10 +977,10 @@
   source = "https://github.com/containous/mesos-dns.git"
 
 [[projects]]
-  branch = "master"
   name = "github.com/miekg/dns"
   packages = ["."]
-  revision = "906238edc6eb0ddface4a1923f6d41ef2a5ca59b"
+  revision = "7586a3cbe8ccfc63f82de3ab2ceeb08c9939af72"
+  version = "v1.1.1"
 
 [[projects]]
   branch = "master"
@@ -1880,6 +1879,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0e6c80da944b0750d18d0c45b6952671fed96ad5db2f07ab11f801a7ffbeca98"
+  inputs-digest = "4db3d8feea9f875e0c32ce071e49eceab18a89a3cef3d3b9bea59f2a992b2628"
   solver-name = "gps-cdcl"
   solver-version = 1
