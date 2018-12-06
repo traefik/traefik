@@ -95,7 +95,7 @@ func (s *Server) buildMiddlewares(frontendName string, frontend *types.Frontend,
 	if secureMiddleware != nil {
 		log.Debugf("Adding secure middleware for frontend %s", frontendName)
 
-		handler := negroni.HandlerFunc(secureMiddleware.HandlerFuncWithNextForRequestOnly)
+		handler := negroni.HandlerFunc(secureMiddleware.HandlerFuncWithNextForRequestOnlyWithContextCheck)
 		middle = append(middle, handler)
 	}
 
@@ -335,10 +335,10 @@ func (s *Server) wrapHTTPHandlerWithAccessLog(handler http.Handler, frontendName
 	return handler
 }
 
-func buildModifyResponse(secure *secure.Secure, header *middlewares.HeaderStruct) func(res *http.Response) error {
+func buildModifyResponse(secure *middlewares.SecureConfig, header *middlewares.HeaderStruct) func(res *http.Response) error {
 	return func(res *http.Response) error {
 		if secure != nil {
-			if err := secure.ModifyResponseHeaders(res); err != nil {
+			if err := secure.Secure.ModifyResponseHeaders(res); err != nil {
 				return err
 			}
 		}
