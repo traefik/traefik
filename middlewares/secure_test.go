@@ -1,6 +1,8 @@
 package middlewares
 
 import (
+	"context"
+	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -90,6 +92,70 @@ func TestSSLForceHost(t *testing.T) {
 			test.secureMiddleware.HandlerFuncWithNextForRequestOnlyWithContextCheck(rw, req, next)
 
 			assert.Equal(t, test.expected, rw.Result().StatusCode)
+		})
+	}
+}
+
+func TestSSLRedirectWithModifiedRequest(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		addPrefix     bool
+		replacePrefix bool
+		stripPrefix   bool
+		url           string
+		key           string
+		expected      string
+	}{
+		{
+			desc:        "StripPrefix",
+			stripPrefix: true,
+			url:         "http://powpow.example.com/foo",
+			key:         "/bacon/foo",
+			expected:    "/bacon/foo",
+		},
+		{
+			desc:      "AddPrefix",
+			addPrefix: true,
+			url:       "http://powpow.example.com/bacon/foo",
+			key:       "/bacon",
+			expected:  "/foo",
+		},
+		{
+			desc:          "ReplacePrefix",
+			replacePrefix: true,
+			url:           "http://powpow.example.com/foo",
+			key:           "/bacon/foo",
+			expected:      "/bacon/foo",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+
+			secureMiddleware := NewSecure(&types.Headers{
+				SSLRedirect:  true,
+				SSLForceHost: true,
+				SSLHost:      "powpow.example.com",
+			})
+
+			next := func(rw http.ResponseWriter, r *http.Request) {
+				rw.Write([]byte("OK"))
+			}
+			req := testhelpers.MustNewRequest(http.MethodGet, test.url, nil)
+			switch {
+			case test.stripPrefix:
+				req = req.WithContext(context.WithValue(req.Context(), StripPrefixKey, test.key))
+			case test.addPrefix:
+				req = req.WithContext(context.WithValue(req.Context(), AddPrefixKey, test.key))
+			case test.replacePrefix:
+				req = req.WithContext(context.WithValue(req.Context(), ReplacePathKey, test.key))
+			}
+			req.RequestURI = req.URL.RequestURI()
+			rw := httptest.NewRecorder()
+			secureMiddleware.HandlerFuncWithNextForRequestOnlyWithContextCheck(rw, req, next)
+			returnedLocation, err := rw.Result().Location()
+			require.NoError(t, err)
+			assert.Equal(t, test.expected, returnedLocation.Path)
 		})
 	}
 }
