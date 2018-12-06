@@ -8,6 +8,7 @@ import (
 	"github.com/unrolled/secure"
 )
 
+// SecureConfig is a wrapper for a Secure instance to allow extension.
 type SecureConfig struct {
 	Secure *secure.Secure
 }

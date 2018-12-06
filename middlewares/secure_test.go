@@ -8,14 +8,13 @@ import (
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/unrolled/secure"
 )
 
 func TestSSLForceHost(t *testing.T) {
 	testCases := []struct {
 		desc             string
 		host             string
-		secureMiddleware *secure.Secure
+		secureMiddleware *SecureConfig
 		expected         int
 	}{
 		{
@@ -88,7 +87,7 @@ func TestSSLForceHost(t *testing.T) {
 			}
 
 			rw := httptest.NewRecorder()
-			test.secureMiddleware.HandlerFuncWithNextForRequestOnly(rw, req, next)
+			test.secureMiddleware.HandlerFuncWithNextForRequestOnlyWithContextCheck(rw, req, next)
 
 			assert.Equal(t, test.expected, rw.Result().StatusCode)
 		})
