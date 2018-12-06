@@ -1,5 +1,4 @@
-// Package cloudxns implements a DNS provider for solving the DNS-01 challenge
-// using CloudXNS DNS.
+// Package cloudxns implements a DNS provider for solving the DNS-01 challenge using CloudXNS DNS.
 package cloudxns
 
 import (
@@ -8,8 +7,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/platform/config/env"
+	"github.com/xenolf/lego/providers/dns/cloudxns/internal"
 )
 
 // Config is used to configure the creation of the DNSProvider
@@ -24,21 +24,20 @@ type Config struct {
 
 // NewDefaultConfig returns a default configuration for the DNSProvider
 func NewDefaultConfig() *Config {
-	client := acme.HTTPClient
-	client.Timeout = time.Second * time.Duration(env.GetOrDefaultInt("CLOUDXNS_HTTP_TIMEOUT", 30))
-
 	return &Config{
-		PropagationTimeout: env.GetOrDefaultSecond("CLOUDXNS_PROPAGATION_TIMEOUT", acme.DefaultPropagationTimeout),
-		PollingInterval:    env.GetOrDefaultSecond("CLOUDXNS_POLLING_INTERVAL", acme.DefaultPollingInterval),
-		TTL:                env.GetOrDefaultInt("CLOUDXNS_TTL", 120),
-		HTTPClient:         &client,
+		PropagationTimeout: env.GetOrDefaultSecond("CLOUDXNS_PROPAGATION_TIMEOUT", dns01.DefaultPropagationTimeout),
+		PollingInterval:    env.GetOrDefaultSecond("CLOUDXNS_POLLING_INTERVAL", dns01.DefaultPollingInterval),
+		TTL:                env.GetOrDefaultInt("CLOUDXNS_TTL", dns01.DefaultTTL),
+		HTTPClient: &http.Client{
+			Timeout: time.Second * time.Duration(env.GetOrDefaultInt("CLOUDXNS_HTTP_TIMEOUT", 30)),
+		},
 	}
 }
 
 // DNSProvider is an implementation of the acme.ChallengeProvider interface
 type DNSProvider struct {
 	config *Config
-	client *Client
+	client *internal.Client
 }
 
 // NewDNSProvider returns a DNSProvider instance configured for CloudXNS.
@@ -50,15 +49,9 @@ func NewDNSProvider() (*DNSProvider, error) {
 		return nil, fmt.Errorf("CloudXNS: %v", err)
 	}
 
-	return NewDNSProviderCredentials(values["CLOUDXNS_API_KEY"], values["CLOUDXNS_SECRET_KEY"])
-}
-
-// NewDNSProviderCredentials uses the supplied credentials to return a
-// DNSProvider instance configured for CloudXNS.
-func NewDNSProviderCredentials(apiKey, secretKey string) (*DNSProvider, error) {
 	config := NewDefaultConfig()
-	config.APIKey = apiKey
-	config.SecretKey = secretKey
+	config.APIKey = values["CLOUDXNS_API_KEY"]
+	config.SecretKey = values["CLOUDXNS_SECRET_KEY"]
 
 	return NewDNSProviderConfig(config)
 }
@@ -69,7 +62,7 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 		return nil, errors.New("CloudXNS: the configuration of the DNS provider is nil")
 	}
 
-	client, err := NewClient(config.APIKey, config.SecretKey)
+	client, err := internal.NewClient(config.APIKey, config.SecretKey)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +74,7 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 
 // Present creates a TXT record to fulfill the dns-01 challenge.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
 	info, err := d.client.GetDomainInformation(fqdn)
 	if err != nil {
@@ -93,7 +86,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters.
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _ := dns01.GetRecord(domain, keyAuth)
 
 	info, err := d.client.GetDomainInformation(fqdn)
 	if err != nil {

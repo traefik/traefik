@@ -1,5 +1,4 @@
-// Package azure implements a DNS provider for solving the DNS-01
-// challenge using azure DNS.
+// Package azure implements a DNS provider for solving the DNS-01 challenge using azure DNS.
 // Azure doesn't like trailing dots on domain names, most of the acme code does.
 package azure
 
@@ -18,7 +17,7 @@ import (
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
 	"github.com/Azure/go-autorest/autorest/to"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/platform/config/env"
 )
 
@@ -72,20 +71,6 @@ func NewDNSProvider() (*DNSProvider, error) {
 	return NewDNSProviderConfig(config)
 }
 
-// NewDNSProviderCredentials uses the supplied credentials
-// to return a DNSProvider instance configured for azure.
-// Deprecated
-func NewDNSProviderCredentials(clientID, clientSecret, subscriptionID, tenantID, resourceGroup string) (*DNSProvider, error) {
-	config := NewDefaultConfig()
-	config.ClientID = clientID
-	config.ClientSecret = clientSecret
-	config.TenantID = tenantID
-	config.SubscriptionID = subscriptionID
-	config.ResourceGroup = resourceGroup
-
-	return NewDNSProviderConfig(config)
-}
-
 // NewDNSProviderConfig return a DNSProvider instance configured for Azure.
 func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 	if config == nil {
@@ -128,8 +113,8 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 	return &DNSProvider{config: config, authorizer: authorizer}, nil
 }
 
-// Timeout returns the timeout and interval to use when checking for DNS
-// propagation. Adjusting here to cope with spikes in propagation times.
+// Timeout returns the timeout and interval to use when checking for DNS propagation.
+// Adjusting here to cope with spikes in propagation times.
 func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 	return d.config.PropagationTimeout, d.config.PollingInterval
 }
@@ -137,7 +122,7 @@ func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 // Present creates a TXT record to fulfill the dns-01 challenge
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	ctx := context.Background()
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
 	zone, err := d.getHostedZoneID(ctx, fqdn)
 	if err != nil {
@@ -147,12 +132,38 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	rsc := dns.NewRecordSetsClient(d.config.SubscriptionID)
 	rsc.Authorizer = d.authorizer
 
-	relative := toRelativeRecord(fqdn, acme.ToFqdn(zone))
+	relative := toRelativeRecord(fqdn, dns01.ToFqdn(zone))
+
+	// Get existing record set
+	rset, err := rsc.Get(ctx, d.config.ResourceGroup, zone, relative, dns.TXT)
+	if err != nil {
+		detailedError, ok := err.(autorest.DetailedError)
+		if !ok || detailedError.StatusCode != http.StatusNotFound {
+			return fmt.Errorf("azure: %v", err)
+		}
+	}
+
+	// Construct unique TXT records using map
+	uniqRecords := map[string]struct{}{value: {}}
+	if rset.RecordSetProperties != nil && rset.TxtRecords != nil {
+		for _, txtRecord := range *rset.TxtRecords {
+			// Assume Value doesn't contain multiple strings
+			if txtRecord.Value != nil && len(*txtRecord.Value) > 0 {
+				uniqRecords[(*txtRecord.Value)[0]] = struct{}{}
+			}
+		}
+	}
+
+	var txtRecords []dns.TxtRecord
+	for txt := range uniqRecords {
+		txtRecords = append(txtRecords, dns.TxtRecord{Value: &[]string{txt}})
+	}
+
 	rec := dns.RecordSet{
 		Name: &relative,
 		RecordSetProperties: &dns.RecordSetProperties{
 			TTL:        to.Int64Ptr(int64(d.config.TTL)),
-			TxtRecords: &[]dns.TxtRecord{{Value: &[]string{value}}},
+			TxtRecords: &txtRecords,
 		},
 	}
 
@@ -166,14 +177,14 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 // CleanUp removes the TXT record matching the specified parameters
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	ctx := context.Background()
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _ := dns01.GetRecord(domain, keyAuth)
 
 	zone, err := d.getHostedZoneID(ctx, fqdn)
 	if err != nil {
 		return fmt.Errorf("azure: %v", err)
 	}
 
-	relative := toRelativeRecord(fqdn, acme.ToFqdn(zone))
+	relative := toRelativeRecord(fqdn, dns01.ToFqdn(zone))
 	rsc := dns.NewRecordSetsClient(d.config.SubscriptionID)
 	rsc.Authorizer = d.authorizer
 
@@ -186,7 +197,7 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 
 // Checks that azure has a zone for this domain name.
 func (d *DNSProvider) getHostedZoneID(ctx context.Context, fqdn string) (string, error) {
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := dns01.FindZoneByFqdn(fqdn)
 	if err != nil {
 		return "", err
 	}
@@ -194,7 +205,7 @@ func (d *DNSProvider) getHostedZoneID(ctx context.Context, fqdn string) (string,
 	dc := dns.NewZonesClient(d.config.SubscriptionID)
 	dc.Authorizer = d.authorizer
 
-	zone, err := dc.Get(ctx, d.config.ResourceGroup, acme.UnFqdn(authZone))
+	zone, err := dc.Get(ctx, d.config.ResourceGroup, dns01.UnFqdn(authZone))
 	if err != nil {
 		return "", err
 	}
@@ -205,7 +216,7 @@ func (d *DNSProvider) getHostedZoneID(ctx context.Context, fqdn string) (string,
 
 // Returns the relative record to the domain
 func toRelativeRecord(domain, zone string) string {
-	return acme.UnFqdn(strings.TrimSuffix(domain, zone))
+	return dns01.UnFqdn(strings.TrimSuffix(domain, zone))
 }
 
 func getAuthorizer(config *Config) (autorest.Authorizer, error) {
@@ -259,5 +270,5 @@ func getMetadata(config *Config, field string) (string, error) {
 		return "", err
 	}
 
-	return string(respBody[:]), nil
+	return string(respBody), nil
 }

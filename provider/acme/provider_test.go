@@ -8,7 +8,7 @@ import (
 	traefiktls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/certcrypto"
 )
 
 func TestGetUncheckedCertificates(t *testing.T) {
@@ -616,11 +616,11 @@ func TestInitAccount(t *testing.T) {
 			desc: "Existing account with all information",
 			account: &Account{
 				Email:   "foo@foo.net",
-				KeyType: acme.EC256,
+				KeyType: certcrypto.EC256,
 			},
 			expectedAccount: &Account{
 				Email:   "foo@foo.net",
-				KeyType: acme.EC256,
+				KeyType: certcrypto.EC256,
 			},
 		},
 		{
@@ -629,19 +629,19 @@ func TestInitAccount(t *testing.T) {
 			keyType: "EC256",
 			expectedAccount: &Account{
 				Email:   "foo@foo.net",
-				KeyType: acme.EC256,
+				KeyType: certcrypto.EC256,
 			},
 		},
 		{
 			desc: "Existing account with no email",
 			account: &Account{
-				KeyType: acme.RSA4096,
+				KeyType: certcrypto.RSA4096,
 			},
 			email:   "foo@foo.net",
 			keyType: "EC256",
 			expectedAccount: &Account{
 				Email:   "foo@foo.net",
-				KeyType: acme.EC256,
+				KeyType: certcrypto.EC256,
 			},
 		},
 		{
@@ -653,7 +653,7 @@ func TestInitAccount(t *testing.T) {
 			keyType: "EC256",
 			expectedAccount: &Account{
 				Email:   "foo@foo.net",
-				KeyType: acme.EC256,
+				KeyType: certcrypto.EC256,
 			},
 		},
 		{
@@ -664,7 +664,7 @@ func TestInitAccount(t *testing.T) {
 			email: "bar@foo.net",
 			expectedAccount: &Account{
 				Email:   "foo@foo.net",
-				KeyType: acme.RSA4096,
+				KeyType: certcrypto.RSA4096,
 			},
 		},
 	}

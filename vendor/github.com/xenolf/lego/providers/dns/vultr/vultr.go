@@ -1,5 +1,4 @@
-// Package vultr implements a DNS provider for solving the DNS-01 challenge using
-// the vultr DNS.
+// Package vultr implements a DNS provider for solving the DNS-01 challenge using the vultr DNS.
 // See https://www.vultr.com/api/#dns
 package vultr
 
@@ -12,7 +11,7 @@ import (
 	"time"
 
 	vultr "github.com/JamesClonk/vultr/lib"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/platform/config/env"
 )
 
@@ -28,9 +27,9 @@ type Config struct {
 // NewDefaultConfig returns a default configuration for the DNSProvider
 func NewDefaultConfig() *Config {
 	return &Config{
-		TTL:                env.GetOrDefaultInt("VULTR_TTL", 120),
-		PropagationTimeout: env.GetOrDefaultSecond("VULTR_PROPAGATION_TIMEOUT", acme.DefaultPropagationTimeout),
-		PollingInterval:    env.GetOrDefaultSecond("VULTR_POLLING_INTERVAL", acme.DefaultPollingInterval),
+		TTL:                env.GetOrDefaultInt("VULTR_TTL", dns01.DefaultTTL),
+		PropagationTimeout: env.GetOrDefaultSecond("VULTR_PROPAGATION_TIMEOUT", dns01.DefaultPropagationTimeout),
+		PollingInterval:    env.GetOrDefaultSecond("VULTR_POLLING_INTERVAL", dns01.DefaultPollingInterval),
 		HTTPClient: &http.Client{
 			Timeout: env.GetOrDefaultSecond("VULTR_HTTP_TIMEOUT", 0),
 			// from Vultr Client
@@ -61,16 +60,6 @@ func NewDNSProvider() (*DNSProvider, error) {
 	return NewDNSProviderConfig(config)
 }
 
-// NewDNSProviderCredentials uses the supplied credentials
-// to return a DNSProvider instance configured for Vultr.
-// Deprecated
-func NewDNSProviderCredentials(apiKey string) (*DNSProvider, error) {
-	config := NewDefaultConfig()
-	config.APIKey = apiKey
-
-	return NewDNSProviderConfig(config)
-}
-
 // NewDNSProviderConfig return a DNSProvider instance configured for Vultr.
 func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 	if config == nil {
@@ -83,7 +72,6 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 
 	options := &vultr.Options{
 		HTTPClient: config.HTTPClient,
-		UserAgent:  acme.UserAgent,
 	}
 	client := vultr.NewClient(config.APIKey, options)
 
@@ -92,7 +80,7 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 
 // Present creates a TXT record to fulfill the DNS-01 challenge.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
 	zoneDomain, err := d.getHostedZone(domain)
 	if err != nil {
@@ -111,7 +99,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters.
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _ := dns01.GetRecord(domain, keyAuth)
 
 	zoneDomain, records, err := d.findTxtRecords(domain, fqdn)
 	if err != nil {
@@ -183,7 +171,7 @@ func (d *DNSProvider) findTxtRecords(domain, fqdn string) (string, []vultr.DNSRe
 }
 
 func (d *DNSProvider) extractRecordName(fqdn, domain string) string {
-	name := acme.UnFqdn(fqdn)
+	name := dns01.UnFqdn(fqdn)
 	if idx := strings.Index(name, "."+domain); idx != -1 {
 		return name[:idx]
 	}

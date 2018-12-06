@@ -1,5 +1,4 @@
-// Package sakuracloud implements a DNS provider for solving the DNS-01 challenge
-// using sakuracloud DNS.
+// Package sakuracloud implements a DNS provider for solving the DNS-01 challenge using SakuraCloud DNS.
 package sakuracloud
 
 import (
@@ -11,7 +10,7 @@ import (
 
 	"github.com/sacloud/libsacloud/api"
 	"github.com/sacloud/libsacloud/sacloud"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/platform/config/env"
 )
 
@@ -27,9 +26,9 @@ type Config struct {
 // NewDefaultConfig returns a default configuration for the DNSProvider
 func NewDefaultConfig() *Config {
 	return &Config{
-		TTL:                env.GetOrDefaultInt("SAKURACLOUD_TTL", 120),
-		PropagationTimeout: env.GetOrDefaultSecond("SAKURACLOUD_PROPAGATION_TIMEOUT", acme.DefaultPropagationTimeout),
-		PollingInterval:    env.GetOrDefaultSecond("SAKURACLOUD_POLLING_INTERVAL", acme.DefaultPollingInterval),
+		TTL:                env.GetOrDefaultInt("SAKURACLOUD_TTL", dns01.DefaultTTL),
+		PropagationTimeout: env.GetOrDefaultSecond("SAKURACLOUD_PROPAGATION_TIMEOUT", dns01.DefaultPropagationTimeout),
+		PollingInterval:    env.GetOrDefaultSecond("SAKURACLOUD_POLLING_INTERVAL", dns01.DefaultPollingInterval),
 	}
 }
 
@@ -39,7 +38,7 @@ type DNSProvider struct {
 	client *api.Client
 }
 
-// NewDNSProvider returns a DNSProvider instance configured for sakuracloud.
+// NewDNSProvider returns a DNSProvider instance configured for SakuraCloud.
 // Credentials must be passed in the environment variables: SAKURACLOUD_ACCESS_TOKEN & SAKURACLOUD_ACCESS_TOKEN_SECRET
 func NewDNSProvider() (*DNSProvider, error) {
 	values, err := env.Get("SAKURACLOUD_ACCESS_TOKEN", "SAKURACLOUD_ACCESS_TOKEN_SECRET")
@@ -54,18 +53,7 @@ func NewDNSProvider() (*DNSProvider, error) {
 	return NewDNSProviderConfig(config)
 }
 
-// NewDNSProviderCredentials uses the supplied credentials
-// to return a DNSProvider instance configured for sakuracloud.
-// Deprecated
-func NewDNSProviderCredentials(token, secret string) (*DNSProvider, error) {
-	config := NewDefaultConfig()
-	config.Token = token
-	config.Secret = secret
-
-	return NewDNSProviderConfig(config)
-}
-
-// NewDNSProviderConfig return a DNSProvider instance configured for GleSYS.
+// NewDNSProviderConfig return a DNSProvider instance configured for SakuraCloud.
 func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 	if config == nil {
 		return nil, errors.New("sakuracloud: the configuration of the DNS provider is nil")
@@ -80,14 +68,13 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 	}
 
 	client := api.NewClient(config.Token, config.Secret, "tk1a")
-	client.UserAgent = acme.UserAgent
 
 	return &DNSProvider{client: client, config: config}, nil
 }
 
 // Present creates a TXT record to fulfill the dns-01 challenge.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
 	zone, err := d.getHostedZone(domain)
 	if err != nil {
@@ -107,7 +94,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters.
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _ := dns01.GetRecord(domain, keyAuth)
 
 	zone, err := d.getHostedZone(domain)
 	if err != nil {
@@ -144,12 +131,12 @@ func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 }
 
 func (d *DNSProvider) getHostedZone(domain string) (*sacloud.DNS, error) {
-	authZone, err := acme.FindZoneByFqdn(acme.ToFqdn(domain), acme.RecursiveNameservers)
+	authZone, err := dns01.FindZoneByFqdn(dns01.ToFqdn(domain))
 	if err != nil {
 		return nil, err
 	}
 
-	zoneName := acme.UnFqdn(authZone)
+	zoneName := dns01.UnFqdn(authZone)
 
 	res, err := d.client.GetDNSAPI().WithNameLike(zoneName).Find()
 	if err != nil {
@@ -181,7 +168,7 @@ func (d *DNSProvider) findTxtRecords(fqdn string, zone *sacloud.DNS) ([]sacloud.
 }
 
 func (d *DNSProvider) extractRecordName(fqdn, domain string) string {
-	name := acme.UnFqdn(fqdn)
+	name := dns01.UnFqdn(fqdn)
 	if idx := strings.Index(name, "."+domain); idx != -1 {
 		return name[:idx]
 	}

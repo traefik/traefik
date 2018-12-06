@@ -9,7 +9,7 @@ import (
 
 	"github.com/transip/gotransip"
 	transipdomain "github.com/transip/gotransip/domain"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/platform/config/env"
 )
 
@@ -78,17 +78,17 @@ func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 
 // Present creates a TXT record to fulfill the dns-01 challenge
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := dns01.FindZoneByFqdn(fqdn)
 	if err != nil {
 		return err
 	}
 
-	domainName := acme.UnFqdn(authZone)
+	domainName := dns01.UnFqdn(authZone)
 
 	// get the subDomain
-	subDomain := strings.TrimSuffix(acme.UnFqdn(fqdn), "."+domainName)
+	subDomain := strings.TrimSuffix(dns01.UnFqdn(fqdn), "."+domainName)
 
 	// get all DNS entries
 	info, err := transipdomain.GetInfo(d.client, domainName)
@@ -114,17 +114,17 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _ := dns01.GetRecord(domain, keyAuth)
 
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := dns01.FindZoneByFqdn(fqdn)
 	if err != nil {
 		return err
 	}
 
-	domainName := acme.UnFqdn(authZone)
+	domainName := dns01.UnFqdn(authZone)
 
 	// get the subDomain
-	subDomain := strings.TrimSuffix(acme.UnFqdn(fqdn), "."+domainName)
+	subDomain := strings.TrimSuffix(dns01.UnFqdn(fqdn), "."+domainName)
 
 	// get all DNS entries
 	info, err := transipdomain.GetInfo(d.client, domainName)

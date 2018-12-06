@@ -1,5 +1,4 @@
-// Package ns1 implements a DNS provider for solving the DNS-01 challenge
-// using NS1 DNS.
+// Package ns1 implements a DNS provider for solving the DNS-01 challenge using NS1 DNS.
 package ns1
 
 import (
@@ -9,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/log"
 	"github.com/xenolf/lego/platform/config/env"
 	"gopkg.in/ns1/ns1-go.v2/rest"
@@ -28,9 +27,9 @@ type Config struct {
 // NewDefaultConfig returns a default configuration for the DNSProvider
 func NewDefaultConfig() *Config {
 	return &Config{
-		TTL:                env.GetOrDefaultInt("NS1_TTL", 120),
-		PropagationTimeout: env.GetOrDefaultSecond("NS1_PROPAGATION_TIMEOUT", acme.DefaultPropagationTimeout),
-		PollingInterval:    env.GetOrDefaultSecond("NS1_POLLING_INTERVAL", acme.DefaultPollingInterval),
+		TTL:                env.GetOrDefaultInt("NS1_TTL", dns01.DefaultTTL),
+		PropagationTimeout: env.GetOrDefaultSecond("NS1_PROPAGATION_TIMEOUT", dns01.DefaultPropagationTimeout),
+		PollingInterval:    env.GetOrDefaultSecond("NS1_POLLING_INTERVAL", dns01.DefaultPollingInterval),
 		HTTPClient: &http.Client{
 			Timeout: env.GetOrDefaultSecond("NS1_HTTP_TIMEOUT", 10*time.Second),
 		},
@@ -57,16 +56,6 @@ func NewDNSProvider() (*DNSProvider, error) {
 	return NewDNSProviderConfig(config)
 }
 
-// NewDNSProviderCredentials uses the supplied credentials
-// to return a DNSProvider instance configured for NS1.
-// Deprecated
-func NewDNSProviderCredentials(key string) (*DNSProvider, error) {
-	config := NewDefaultConfig()
-	config.APIKey = key
-
-	return NewDNSProviderConfig(config)
-}
-
 // NewDNSProviderConfig return a DNSProvider instance configured for NS1.
 func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 	if config == nil {
@@ -84,20 +73,20 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 
 // Present creates a TXT record to fulfill the dns-01 challenge.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
 	zone, err := d.getHostedZone(fqdn)
 	if err != nil {
 		return fmt.Errorf("ns1: %v", err)
 	}
 
-	record, _, err := d.client.Records.Get(zone.Zone, acme.UnFqdn(fqdn), "TXT")
+	record, _, err := d.client.Records.Get(zone.Zone, dns01.UnFqdn(fqdn), "TXT")
 
 	// Create a new record
 	if err == rest.ErrRecordMissing || record == nil {
 		log.Infof("Create a new record for [zone: %s, fqdn: %s, domain: %s]", zone.Zone, fqdn)
 
-		record = dns.NewRecord(zone.Zone, acme.UnFqdn(fqdn), "TXT")
+		record = dns.NewRecord(zone.Zone, dns01.UnFqdn(fqdn), "TXT")
 		record.TTL = d.config.TTL
 		record.Answers = []*dns.Answer{{Rdata: []string{value}}}
 
@@ -128,14 +117,14 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters.
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _ := dns01.GetRecord(domain, keyAuth)
 
 	zone, err := d.getHostedZone(fqdn)
 	if err != nil {
 		return fmt.Errorf("ns1: %v", err)
 	}
 
-	name := acme.UnFqdn(fqdn)
+	name := dns01.UnFqdn(fqdn)
 	_, err = d.client.Records.Delete(zone.Zone, name, "TXT")
 	if err != nil {
 		return fmt.Errorf("ns1: failed to delete record [zone: %q, domain: %q]: %v", zone.Zone, name, err)
@@ -164,7 +153,7 @@ func (d *DNSProvider) getHostedZone(fqdn string) (*dns.Zone, error) {
 }
 
 func getAuthZone(fqdn string) (string, error) {
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := dns01.FindZoneByFqdn(fqdn)
 	if err != nil {
 		return "", err
 	}

@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/platform/config/env"
 )
 
@@ -72,8 +72,8 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 
 // Present creates a TXT record to fulfill the dns-01 challenge.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
-	record := acme.UnFqdn(fqdn)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
+	record := dns01.UnFqdn(fqdn)
 
 	u, err := d.buildQuery(cmdAddRecord, record, value)
 	if err != nil {
@@ -89,8 +89,8 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp clears DreamHost TXT record
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
-	record := acme.UnFqdn(fqdn)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
+	record := dns01.UnFqdn(fqdn)
 
 	u, err := d.buildQuery(cmdRemoveRecord, record, value)
 	if err != nil {

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/xenolf/lego/log"
 )
 
 const apiKeyHeader = "X-Api-Key"
@@ -22,6 +24,80 @@ type Record struct {
 	RRSetValues []string `json:"rrset_values"`
 	RRSetName   string   `json:"rrset_name,omitempty"`
 	RRSetType   string   `json:"rrset_type,omitempty"`
+}
+
+func (d *DNSProvider) addTXTRecord(domain string, name string, value string, ttl int) error {
+	// Get exiting values for the TXT records
+	// Needed to create challenges for both wildcard and base name domains
+	txtRecord, err := d.getTXTRecord(domain, name)
+	if err != nil {
+		return err
+	}
+
+	values := []string{value}
+	if len(txtRecord.RRSetValues) > 0 {
+		values = append(values, txtRecord.RRSetValues...)
+	}
+
+	target := fmt.Sprintf("domains/%s/records/%s/TXT", domain, name)
+
+	newRecord := &Record{RRSetTTL: ttl, RRSetValues: values}
+	req, err := d.newRequest(http.MethodPut, target, newRecord)
+	if err != nil {
+		return err
+	}
+
+	message := &apiResponse{}
+	err = d.do(req, message)
+	if err != nil {
+		return fmt.Errorf("unable to create TXT record for domain %s and name %s: %v", domain, name, err)
+	}
+
+	if message != nil && len(message.Message) > 0 {
+		log.Infof("API response: %s", message.Message)
+	}
+
+	return nil
+}
+
+func (d *DNSProvider) getTXTRecord(domain, name string) (*Record, error) {
+	target := fmt.Sprintf("domains/%s/records/%s/TXT", domain, name)
+
+	// Get exiting values for the TXT records
+	// Needed to create challenges for both wildcard and base name domains
+	req, err := d.newRequest(http.MethodGet, target, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	txtRecord := &Record{}
+	err = d.do(req, txtRecord)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get TXT records for domain %s and name %s: %v", domain, name, err)
+	}
+
+	return txtRecord, nil
+}
+
+func (d *DNSProvider) deleteTXTRecord(domain string, name string) error {
+	target := fmt.Sprintf("domains/%s/records/%s/TXT", domain, name)
+
+	req, err := d.newRequest(http.MethodDelete, target, nil)
+	if err != nil {
+		return err
+	}
+
+	message := &apiResponse{}
+	err = d.do(req, message)
+	if err != nil {
+		return fmt.Errorf("unable to delete TXT record for domain %s and name %s: %v", domain, name, err)
+	}
+
+	if message != nil && len(message.Message) > 0 {
+		log.Infof("API response: %s", message.Message)
+	}
+
+	return nil
 }
 
 func (d *DNSProvider) newRequest(method, resource string, body interface{}) (*http.Request, error) {

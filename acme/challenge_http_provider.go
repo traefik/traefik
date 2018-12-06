@@ -9,10 +9,10 @@ import (
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge"
 )
 
-var _ acme.ChallengeProviderTimeout = (*challengeHTTPProvider)(nil)
+var _ challenge.ProviderTimeout = (*challengeHTTPProvider)(nil)
 
 type challengeHTTPProvider struct {
 	store cluster.Store

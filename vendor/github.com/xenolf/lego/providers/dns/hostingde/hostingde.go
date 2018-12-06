@@ -1,22 +1,16 @@
-// Package hostingde implements a DNS provider for solving the DNS-01
-// challenge using hosting.de.
+// Package hostingde implements a DNS provider for solving the DNS-01 challenge using hosting.de.
 package hostingde
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"sync"
 	"time"
 
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/platform/config/env"
 )
-
-const defaultBaseURL = "https://secure.hosting.de/api/dns/v1/json"
 
 // Config is used to configure the creation of the DNSProvider
 type Config struct {
@@ -31,7 +25,7 @@ type Config struct {
 // NewDefaultConfig returns a default configuration for the DNSProvider
 func NewDefaultConfig() *Config {
 	return &Config{
-		TTL:                env.GetOrDefaultInt("HOSTINGDE_TTL", 120),
+		TTL:                env.GetOrDefaultInt("HOSTINGDE_TTL", dns01.DefaultTTL),
 		PropagationTimeout: env.GetOrDefaultSecond("HOSTINGDE_PROPAGATION_TIMEOUT", 2*time.Minute),
 		PollingInterval:    env.GetOrDefaultSecond("HOSTINGDE_POLLING_INTERVAL", 2*time.Second),
 		HTTPClient: &http.Client{
@@ -91,11 +85,11 @@ func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 
 // Present creates a TXT record to fulfill the dns-01 challenge
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
 	rec := []RecordsAddRequest{{
 		Type:    "TXT",
-		Name:    acme.UnFqdn(fqdn),
+		Name:    dns01.UnFqdn(fqdn),
 		Content: value,
 		TTL:     d.config.TTL,
 	}}
@@ -114,7 +108,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	}
 
 	for _, record := range resp.Response.Records {
-		if record.Name == acme.UnFqdn(fqdn) && record.Content == fmt.Sprintf(`"%s"`, value) {
+		if record.Name == dns01.UnFqdn(fqdn) && record.Content == fmt.Sprintf(`"%s"`, value) {
 			d.recordIDsMu.Lock()
 			d.recordIDs[fqdn] = record.ID
 			d.recordIDsMu.Unlock()
@@ -130,7 +124,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
 	// get the record's unique ID from when we created it
 	d.recordIDsMu.Lock()
@@ -142,7 +136,7 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 
 	rec := []RecordsDeleteRequest{{
 		Type:    "TXT",
-		Name:    acme.UnFqdn(fqdn),
+		Name:    dns01.UnFqdn(fqdn),
 		Content: value,
 		ID:      recordID,
 	}}
@@ -165,45 +159,4 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 		return fmt.Errorf("hostingde: %v", err)
 	}
 	return nil
-}
-
-func (d *DNSProvider) updateZone(updateRequest ZoneUpdateRequest) (*ZoneUpdateResponse, error) {
-	body, err := json.Marshal(updateRequest)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(http.MethodPost, defaultBaseURL+"/zoneUpdate", bytes.NewReader(body))
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := d.config.HTTPClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("error querying API: %v", err)
-	}
-
-	defer resp.Body.Close()
-
-	content, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, errors.New(toUnreadableBodyMessage(req, content))
-	}
-
-	// Everything looks good; but we'll need the ID later to delete the record
-	updateResponse := &ZoneUpdateResponse{}
-	err = json.Unmarshal(content, updateResponse)
-	if err != nil {
-		return nil, fmt.Errorf("%v: %s", err, toUnreadableBodyMessage(req, content))
-	}
-
-	if updateResponse.Status != "success" && updateResponse.Status != "pending" {
-		return updateResponse, errors.New(toUnreadableBodyMessage(req, content))
-	}
-
-	return updateResponse, nil
-}
-
-func toUnreadableBodyMessage(req *http.Request, rawBody []byte) string {
-	return fmt.Sprintf("the request %s sent a response with a body which is an invalid format: %q", req.URL, string(rawBody))
 }

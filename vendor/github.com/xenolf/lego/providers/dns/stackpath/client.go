@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"path"
 
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
 	"golang.org/x/net/publicsuffix"
 )
 
@@ -49,7 +49,7 @@ func (e *ErrorResponse) Error() string {
 
 // https://developer.stackpath.com/en/api/dns/#operation/GetZones
 func (d *DNSProvider) getZones(domain string) (*Zone, error) {
-	domain = acme.UnFqdn(domain)
+	domain = dns01.UnFqdn(domain)
 	tld, err := publicsuffix.EffectiveTLDPlusOne(domain)
 	if err != nil {
 		return nil, err
