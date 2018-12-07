@@ -308,7 +308,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 
 		client.Challenge.Exclude([]challenge.Type{challenge.HTTP01, challenge.DNS01})
 
-		err = client.Challenge.SetHTTP01Provider(&challengeTLSALPN{Store: p.Store})
+		err = client.Challenge.SetTLSALPN01Provider(&challengeTLSALPN{Store: p.Store})
 		if err != nil {
 			return nil, err
 		}
