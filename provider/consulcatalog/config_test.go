@@ -822,6 +822,113 @@ func TestProviderBuildConfiguration(t *testing.T) {
 	}
 }
 
+func TestProviderBuildConfigurationCustomPrefix(t *testing.T) {
+	prefix := "traefik-test"
+	p := &Provider{
+		Domain:               "localhost",
+		Prefix:               prefix,
+		ExposedByDefault:     false,
+		FrontEndRule:         "Host:{{.ServiceName}}.{{.Domain}}",
+		frontEndRuleTemplate: template.New("consul catalog frontend rule"),
+	}
+
+	testCases := []struct {
+		desc              string
+		nodes             []catalogUpdate
+		expectedFrontends map[string]*types.Frontend
+		expectedBackends  map[string]*types.Backend
+	}{
+		{
+			desc: "Should build config which contains three frontends and one backend",
+			nodes: []catalogUpdate{
+				{
+					Service: &serviceUpdate{
+						ServiceName: "test",
+						Attributes: []string{
+							"random.foo=bar",
+							prefix + ".frontend.rule=Host:A",
+							prefix + ".frontends.test1.rule=Host:B",
+							prefix + ".frontends.test2.rule=Host:C",
+						},
+					},
+					Nodes: []*api.ServiceEntry{
+						{
+							Service: &api.AgentService{
+								Service: "test",
+								Address: "127.0.0.1",
+								Port:    80,
+								Tags: []string{
+									"random.foo=bar",
+								},
+							},
+							Node: &api.Node{
+								Node:    "localhost",
+								Address: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-test": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					Routes: map[string]types.Route{
+						"route-host-test": {
+							Rule: "Host:A",
+						},
+					},
+					EntryPoints: []string{},
+				},
+				"frontend-test-test1": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					Routes: map[string]types.Route{
+						"route-host-test-test1": {
+							Rule: "Host:B",
+						},
+					},
+					EntryPoints: []string{},
+				},
+				"frontend-test-test2": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					Routes: map[string]types.Route{
+						"route-host-test-test2": {
+							Rule: "Host:C",
+						},
+					},
+					EntryPoints: []string{},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test": {
+					Servers: map[string]types.Server{
+						"test-0-O0Tnh-SwzY69M6SurTKP3wNKkzI": {
+							URL:    "http://127.0.0.1:80",
+							Weight: 1,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			nodes := fakeLoadTraefikLabelsSlice(test.nodes, p.Prefix)
+
+			actualConfig := p.buildConfigurationV2(nodes)
+			assert.NotNil(t, actualConfig)
+			assert.Equal(t, test.expectedBackends, actualConfig.Backends)
+			assert.Equal(t, test.expectedFrontends, actualConfig.Frontends)
+		})
+	}
+}
+
 func TestGetTag(t *testing.T) {
 	testCases := []struct {
 		desc         string
