@@ -865,7 +865,7 @@ func TestGetPassTLSClientCert(t *testing.T) {
 			},
 			expected: &types.TLSClientHeaders{
 				Infos: &types.TLSClientCertificateInfos{
-					Subject: &types.TLSCLientCertificateSubjectInfos{
+					Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
 						CommonName: true,
 					},
 				},
@@ -878,7 +878,7 @@ func TestGetPassTLSClientCert(t *testing.T) {
 			},
 			expected: &types.TLSClientHeaders{
 				Infos: &types.TLSClientCertificateInfos{
-					Subject: &types.TLSCLientCertificateSubjectInfos{
+					Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
 						Country: true,
 					},
 				},
@@ -891,7 +891,7 @@ func TestGetPassTLSClientCert(t *testing.T) {
 			},
 			expected: &types.TLSClientHeaders{
 				Infos: &types.TLSClientCertificateInfos{
-					Subject: &types.TLSCLientCertificateSubjectInfos{
+					Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
 						Locality: true,
 					},
 				},
@@ -904,7 +904,7 @@ func TestGetPassTLSClientCert(t *testing.T) {
 			},
 			expected: &types.TLSClientHeaders{
 				Infos: &types.TLSClientCertificateInfos{
-					Subject: &types.TLSCLientCertificateSubjectInfos{
+					Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
 						Organization: true,
 					},
 				},
@@ -917,7 +917,7 @@ func TestGetPassTLSClientCert(t *testing.T) {
 			},
 			expected: &types.TLSClientHeaders{
 				Infos: &types.TLSClientCertificateInfos{
-					Subject: &types.TLSCLientCertificateSubjectInfos{
+					Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
 						Province: true,
 					},
 				},
@@ -930,7 +930,7 @@ func TestGetPassTLSClientCert(t *testing.T) {
 			},
 			expected: &types.TLSClientHeaders{
 				Infos: &types.TLSClientCertificateInfos{
-					Subject: &types.TLSCLientCertificateSubjectInfos{
+					Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
 						SerialNumber: true,
 					},
 				},
@@ -939,16 +939,24 @@ func TestGetPassTLSClientCert(t *testing.T) {
 		{
 			desc: "should return tlsClientHeaders with all infos",
 			labels: map[string]string{
-				TraefikFrontendPassTLSClientCertPem:                      "true",
-				TraefikFrontendPassTLSClientCertInfosNotAfter:            "true",
-				TraefikFrontendPassTLSClientCertInfosNotBefore:           "true",
-				TraefikFrontendPassTLSClientCertInfosSans:                "true",
-				TraefikFrontendPassTLSClientCertInfosSubjectCommonName:   "true",
-				TraefikFrontendPassTLSClientCertInfosSubjectCountry:      "true",
-				TraefikFrontendPassTLSClientCertInfosSubjectLocality:     "true",
-				TraefikFrontendPassTLSClientCertInfosSubjectOrganization: "true",
-				TraefikFrontendPassTLSClientCertInfosSubjectProvince:     "true",
-				TraefikFrontendPassTLSClientCertInfosSubjectSerialNumber: "true",
+				TraefikFrontendPassTLSClientCertPem:                         "true",
+				TraefikFrontendPassTLSClientCertInfosNotAfter:               "true",
+				TraefikFrontendPassTLSClientCertInfosNotBefore:              "true",
+				TraefikFrontendPassTLSClientCertInfosSans:                   "true",
+				TraefikFrontendPassTLSClientCertInfosIssuerCommonName:       "true",
+				TraefikFrontendPassTLSClientCertInfosIssuerCountry:          "true",
+				TraefikFrontendPassTLSClientCertInfosIssuerDomainComponent:  "true",
+				TraefikFrontendPassTLSClientCertInfosIssuerLocality:         "true",
+				TraefikFrontendPassTLSClientCertInfosIssuerOrganization:     "true",
+				TraefikFrontendPassTLSClientCertInfosIssuerProvince:         "true",
+				TraefikFrontendPassTLSClientCertInfosIssuerSerialNumber:     "true",
+				TraefikFrontendPassTLSClientCertInfosSubjectCommonName:      "true",
+				TraefikFrontendPassTLSClientCertInfosSubjectCountry:         "true",
+				TraefikFrontendPassTLSClientCertInfosSubjectDomainComponent: "true",
+				TraefikFrontendPassTLSClientCertInfosSubjectLocality:        "true",
+				TraefikFrontendPassTLSClientCertInfosSubjectOrganization:    "true",
+				TraefikFrontendPassTLSClientCertInfosSubjectProvince:        "true",
+				TraefikFrontendPassTLSClientCertInfosSubjectSerialNumber:    "true",
 			},
 			expected: &types.TLSClientHeaders{
 				PEM: true,
@@ -956,13 +964,23 @@ func TestGetPassTLSClientCert(t *testing.T) {
 					Sans:      true,
 					NotBefore: true,
 					NotAfter:  true,
-					Subject: &types.TLSCLientCertificateSubjectInfos{
-						Province:     true,
-						Organization: true,
-						Locality:     true,
-						Country:      true,
-						CommonName:   true,
-						SerialNumber: true,
+					Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
+						CommonName:      true,
+						Country:         true,
+						DomainComponent: true,
+						Locality:        true,
+						Organization:    true,
+						Province:        true,
+						SerialNumber:    true,
+					},
+					Issuer: &types.TLSCLientCertificateDistinguishedNameInfos{
+						CommonName:      true,
+						Country:         true,
+						DomainComponent: true,
+						Locality:        true,
+						Organization:    true,
+						Province:        true,
+						SerialNumber:    true,
 					},
 				},
 			},
