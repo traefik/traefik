@@ -67,13 +67,23 @@ Traefik can be configured with a file.
         # Pass the escaped pem in a `X-Forwarded-Ssl-Client-Cert` header
         pem = true
         # Pass the escaped client cert infos selected below in a `X-Forwarded-Ssl-Client-Cert-Infos` header
-        # The unescaped header is like `Subject="C=%s,ST=%s,L=%s,O=%s,CN=%s",NB=%d,NA=%d,SAN=%s`
+        # The unescaped header is like:
+        # `Subject="DC=%s,C=%s,ST=%s,L=%s,O=%s,CN=%s",Issuer="DC=%s,C=%s,ST=%s,L=%s,O=%s,CN=%s",NB=%d,NA=%d,SAN=%s`
         # It there is more than one certificates, their are separated by a `;`
         [frontends.frontend-server.passTLSClientCert.infos]
             notBefore = true
             notAfter = true
             [frontends.frontend-server.passTLSClientCert.infos.subject]
                 country = true
+                domainComponent = true
+                province = true
+                locality = true
+                organization = true
+                commonName = true
+                serialNumber = true
+            [frontends.frontend-server.passTLSClientCert.infos.issuer]
+                country = true
+                domainComponent = true
                 province = true
                 locality = true
                 organization = true
