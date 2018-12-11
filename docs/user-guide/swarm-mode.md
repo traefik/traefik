@@ -76,7 +76,7 @@ docker-machine ssh manager "docker network create --driver=overlay traefik-net"
 ## Deploy Traefik
 
 Let's deploy Traefik as a docker service in our cluster.
-The only requirement for Traefik to work with swarm mode is that it needs to run on a manager node - we are going to use a [constraint](https://docs.docker.com/engine/reference/commandline/service_create/#/specify-service-constraints-constraint) for that.
+The only requirement for Traefik to work with swarm mode is that it needs to run on a manager node - we are going to use a [constraint](https://docs.docker.com/engine/reference/commandline/service_create/#specify-service-constraints---constraint) for that.
 
 ```shell
 docker-machine ssh manager "docker service create \
