@@ -1454,7 +1454,7 @@
     "providers/dns/vultr",
     "registration"
   ]
-  revision = "42941ccea6b431ebff203d4cb520991fb7b47951"
+  revision = "b05b54d1f69a31ceed92e2995243c5b17821c9e4"
 
 [[projects]]
   branch = "master"
