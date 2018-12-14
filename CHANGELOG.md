@@ -1,5 +1,12 @@
 # Change Log
 
+## [v1.7.6](https://github.com/containous/traefik/tree/v1.7.6) (2018-12-07)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.5...v1.7.6)
+
+**Bug fixes:**
+- **[consulcatalog]** Fix label segmentation when using custom prefix ([#4272](https://github.com/containous/traefik/pull/4272) by [hsmade](https://github.com/hsmade))
+- Update to Go 1.11.3 [CVE-2018-16875](https://nvd.nist.gov/vuln/detail/CVE-2018-16875)
+
 ## [v1.7.5](https://github.com/containous/traefik/tree/v1.7.5) (2018-12-03)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.4...v1.7.5)
 
