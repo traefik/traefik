@@ -4,14 +4,18 @@ RUN apk --update upgrade \
 && apk --no-cache --no-progress add git mercurial bash gcc musl-dev curl tar \
 && rm -rf /var/cache/apk/*
 
-RUN go get github.com/containous/go-bindata/... \
-&& go get golang.org/x/lint/golint \
+RUN go get golang.org/x/lint/golint \
 && go get github.com/kisielk/errcheck \
 && go get github.com/client9/misspell/cmd/misspell
 
 # Which docker version to test on
 ARG DOCKER_VERSION=17.03.2
 ARG DEP_VERSION=0.4.1
+
+# Download go-bindata binary to bin folder in $GOPATH
+RUN mkdir -p /usr/local/bin \
+    && curl -fsSL -o /usr/local/bin/go-bindata https://github.com/containous/go-bindata/releases/download/v1.0.0/go-bindata \
+    && chmod +x /usr/local/bin/go-bindata
 
 # Download dep binary to bin folder in $GOPATH
 RUN mkdir -p /usr/local/bin \
