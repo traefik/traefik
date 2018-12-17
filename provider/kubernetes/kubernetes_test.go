@@ -548,37 +548,37 @@ func TestModifierType(t *testing.T) {
 		expectedModifierRule      string
 	}{
 		{
-			desc: "Request modifier annotation missing",
+			desc:                      "Request modifier annotation missing",
 			requestModifierAnnotation: "",
 			expectedModifierRule:      "",
 		},
 		{
-			desc: "AddPrefix modifier annotation",
+			desc:                      "AddPrefix modifier annotation",
 			requestModifierAnnotation: " AddPrefix: /foo",
 			expectedModifierRule:      "AddPrefix:/foo",
 		},
 		{
-			desc: "ReplacePath modifier annotation",
+			desc:                      "ReplacePath modifier annotation",
 			requestModifierAnnotation: " ReplacePath: /foo",
 			expectedModifierRule:      "ReplacePath:/foo",
 		},
 		{
-			desc: "ReplacePathRegex modifier annotation",
+			desc:                      "ReplacePathRegex modifier annotation",
 			requestModifierAnnotation: " ReplacePathRegex: /foo /bar",
 			expectedModifierRule:      "ReplacePathRegex:/foo /bar",
 		},
 		{
-			desc: "AddPrefix modifier annotation",
+			desc:                      "AddPrefix modifier annotation",
 			requestModifierAnnotation: "AddPrefix:/foo",
 			expectedModifierRule:      "AddPrefix:/foo",
 		},
 		{
-			desc: "ReplacePath modifier annotation",
+			desc:                      "ReplacePath modifier annotation",
 			requestModifierAnnotation: "ReplacePath:/foo",
 			expectedModifierRule:      "ReplacePath:/foo",
 		},
 		{
-			desc: "ReplacePathRegex modifier annotation",
+			desc:                      "ReplacePathRegex modifier annotation",
 			requestModifierAnnotation: "ReplacePathRegex:/foo /bar",
 			expectedModifierRule:      "ReplacePathRegex:/foo /bar",
 		},
@@ -640,23 +640,23 @@ func TestModifierFails(t *testing.T) {
 		requestModifierAnnotation string
 	}{
 		{
-			desc: "Request modifier missing part of annotation",
+			desc:                      "Request modifier missing part of annotation",
 			requestModifierAnnotation: "AddPrefix: ",
 		},
 		{
-			desc: "Request modifier full of spaces annotation",
+			desc:                      "Request modifier full of spaces annotation",
 			requestModifierAnnotation: "    ",
 		},
 		{
-			desc: "Request modifier missing both parts of annotation",
+			desc:                      "Request modifier missing both parts of annotation",
 			requestModifierAnnotation: "  :  ",
 		},
 		{
-			desc: "Request modifier using unknown rule",
+			desc:                      "Request modifier using unknown rule",
 			requestModifierAnnotation: "Foo: /bar",
 		},
 		{
-			desc: "Missing Rule",
+			desc:                      "Missing Rule",
 			requestModifierAnnotation: " : /bar",
 		},
 	}
