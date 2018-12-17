@@ -78,7 +78,7 @@ func GetTLSClientCert(labels map[string]string) *types.TLSClientHeaders {
 		}
 
 		if HasPrefix(labels, TraefikFrontendPassTLSClientCertInfosSubject) {
-			subject := &types.TLSCLientCertificateDistinguishedNameInfos{
+			subject := &types.TLSCLientCertificateDNInfos{
 				CommonName:      GetBoolValue(labels, TraefikFrontendPassTLSClientCertInfosSubjectCommonName, false),
 				Country:         GetBoolValue(labels, TraefikFrontendPassTLSClientCertInfosSubjectCountry, false),
 				DomainComponent: GetBoolValue(labels, TraefikFrontendPassTLSClientCertInfosSubjectDomainComponent, false),
@@ -91,7 +91,7 @@ func GetTLSClientCert(labels map[string]string) *types.TLSClientHeaders {
 		}
 
 		if HasPrefix(labels, TraefikFrontendPassTLSClientCertInfosIssuer) {
-			issuer := &types.TLSCLientCertificateDistinguishedNameInfos{
+			issuer := &types.TLSCLientCertificateDNInfos{
 				CommonName:      GetBoolValue(labels, TraefikFrontendPassTLSClientCertInfosIssuerCommonName, false),
 				Country:         GetBoolValue(labels, TraefikFrontendPassTLSClientCertInfosIssuerCountry, false),
 				DomainComponent: GetBoolValue(labels, TraefikFrontendPassTLSClientCertInfosIssuerDomainComponent, false),

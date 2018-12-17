@@ -31,7 +31,7 @@ type TLSClientCertificateInfos struct {
 	Subject   *DistinguishedNameOptions
 }
 
-// DistinguishedNameOptions is a struct for specifying the configuration for the distinguished name infos.
+// DistinguishedNameOptions is a struct for specifying the configuration for the distinguished name info.
 type DistinguishedNameOptions struct {
 	CommonName          bool
 	CountryName         bool
@@ -42,13 +42,13 @@ type DistinguishedNameOptions struct {
 	StateOrProvinceName bool
 }
 
-// TLSClientHeaders is a middleware that helps setup a few tls infos features.
+// TLSClientHeaders is a middleware that helps setup a few tls info features.
 type TLSClientHeaders struct {
 	Infos *TLSClientCertificateInfos // pass selected informations from the client certificate
 	PEM   bool                       // pass the sanitized pem to the backend in a specific header
 }
 
-func newDistinguishedNameOptions(infos *types.TLSCLientCertificateDistinguishedNameInfos) *DistinguishedNameOptions {
+func newDistinguishedNameOptions(infos *types.TLSCLientCertificateDNInfos) *DistinguishedNameOptions {
 	if infos == nil {
 		return nil
 	}
@@ -163,65 +163,67 @@ func getSANs(cert *x509.Certificate) []string {
 	return append(sans, uris...)
 }
 
-func getDistinguishedNameInfos(prefix string, options *DistinguishedNameOptions, cs *pkix.Name) string {
-	var dn string
-
+func getDNInfos(prefix string, options *DistinguishedNameOptions, cs *pkix.Name) string {
 	if options == nil {
-		return dn
+		return ""
 	}
 
-	var content []string
+	content := &strings.Builder{}
 
 	// Manage non standard attributes
 	for _, name := range cs.Names {
 		// Domain Component - RFC 2247
 		if options.DomainComponent && attributeTypeNames[name.Type.String()] == "DC" {
-			content = append(content, fmt.Sprintf("DC=%s", name.Value))
+			content.WriteString(fmt.Sprintf("DC=%s,", name.Value))
 		}
 	}
 
-	if options.CountryName && len(cs.Country) > 0 {
-		for _, country := range cs.Country {
-			content = append(content, fmt.Sprintf("C=%s", country))
-		}
+	if options.CountryName {
+		writeParts(content, cs.Country, "C")
 	}
 
-	if options.StateOrProvinceName && len(cs.Province) > 0 {
-		for _, province := range cs.Province {
-			content = append(content, fmt.Sprintf("ST=%s", province))
-		}
+	if options.StateOrProvinceName {
+		writeParts(content, cs.Province, "ST")
 	}
 
-	if options.LocalityName && len(cs.Locality) > 0 {
-		for _, locality := range cs.Locality {
-			content = append(content, fmt.Sprintf("L=%s", locality))
-		}
+	if options.LocalityName {
+		writeParts(content, cs.Locality, "L")
 	}
 
-	if options.OrganizationName && len(cs.Organization) > 0 {
-		for _, organization := range cs.Organization {
-			content = append(content, fmt.Sprintf("O=%s", organization))
-		}
+	if options.OrganizationName {
+		writeParts(content, cs.Organization, "O")
 	}
 
-	if options.SerialNumber && len(cs.SerialNumber) > 0 {
-		content = append(content, fmt.Sprintf("SN=%s", cs.SerialNumber))
+	if options.SerialNumber {
+		writePart(content, cs.SerialNumber, "SN")
 	}
 
-	if options.CommonName && len(cs.CommonName) > 0 {
-		content = append(content, fmt.Sprintf("CN=%s", cs.CommonName))
+	if options.CommonName {
+		writePart(content, cs.CommonName, "CN")
 	}
 
-	if len(content) > 0 {
-		dn = prefix + `="` + strings.Join(content, ",") + `"`
+	if content.Len() > 0 {
+		return prefix + `="` + strings.TrimSuffix(content.String(), ",") + `"`
 	}
 
-	return dn
+	return ""
 }
 
-// getXForwardedTLSClientCertInfos Build a string with the wanted client certificates informations
+func writeParts(content *strings.Builder, entries []string, prefix string) {
+	for _, entry := range entries {
+		writePart(content, entry, prefix)
+	}
+}
+
+func writePart(content *strings.Builder, entry string, prefix string) {
+	if len(entry) > 0 {
+		content.WriteString(fmt.Sprintf("%s=%s,", prefix, entry))
+	}
+}
+
+// getXForwardedTLSClientCertInfo Build a string with the wanted client certificates informations
 // like Subject="DC=%s,C=%s,ST=%s,L=%s,O=%s,CN=%s",NB=%d,NA=%d,SAN=%s;
-func (s *TLSClientHeaders) getXForwardedTLSClientCertInfos(certs []*x509.Certificate) string {
+func (s *TLSClientHeaders) getXForwardedTLSClientCertInfo(certs []*x509.Certificate) string {
 	var headerValues []string
 
 	for _, peerCert := range certs {
@@ -231,12 +233,12 @@ func (s *TLSClientHeaders) getXForwardedTLSClientCertInfos(certs []*x509.Certifi
 		var na string
 
 		if s.Infos != nil {
-			subject := getDistinguishedNameInfos("Subject", s.Infos.Subject, &peerCert.Subject)
+			subject := getDNInfos("Subject", s.Infos.Subject, &peerCert.Subject)
 			if len(subject) > 0 {
 				values = append(values, subject)
 			}
 
-			issuer := getDistinguishedNameInfos("Issuer", s.Infos.Issuer, &peerCert.Issuer)
+			issuer := getDNInfos("Issuer", s.Infos.Issuer, &peerCert.Issuer)
 			if len(issuer) > 0 {
 				values = append(values, issuer)
 			}
@@ -278,7 +280,7 @@ func (s *TLSClientHeaders) ModifyRequestHeaders(r *http.Request) {
 
 	if s.Infos != nil {
 		if r.TLS != nil && len(r.TLS.PeerCertificates) > 0 {
-			headerContent := s.getXForwardedTLSClientCertInfos(r.TLS.PeerCertificates)
+			headerContent := s.getXForwardedTLSClientCertInfo(r.TLS.PeerCertificates)
 			r.Header.Set(xForwardedTLSClientCertInfos, url.QueryEscape(headerContent))
 		} else {
 			log.Warn("Try to extract certificate on a request without TLS")

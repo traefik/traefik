@@ -107,7 +107,7 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 							NotBefore: true,
 							Sans:      true,
 							NotAfter:  true,
-							Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
+							Subject: &types.TLSCLientCertificateDNInfos{
 								CommonName:      true,
 								Country:         true,
 								DomainComponent: true,
@@ -461,7 +461,7 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 							NotBefore: true,
 							Sans:      true,
 							NotAfter:  true,
-							Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
+							Subject: &types.TLSCLientCertificateDNInfos{
 								CommonName:      true,
 								Country:         true,
 								DomainComponent: true,
@@ -470,7 +470,7 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 								Province:        true,
 								SerialNumber:    true,
 							},
-							Issuer: &types.TLSCLientCertificateDistinguishedNameInfos{
+							Issuer: &types.TLSCLientCertificateDNInfos{
 								CommonName:      true,
 								Country:         true,
 								DomainComponent: true,

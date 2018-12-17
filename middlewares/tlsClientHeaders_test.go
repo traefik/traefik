@@ -498,7 +498,7 @@ func TestTlsClientheadersWithCertInfos(t *testing.T) {
 			desc: "No TLS, with pem option true",
 			tlsClientCertHeaders: &types.TLSClientHeaders{
 				Infos: &types.TLSClientCertificateInfos{
-					Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
+					Subject: &types.TLSCLientCertificateDNInfos{
 						CommonName:   true,
 						Organization: true,
 						Locality:     true,
@@ -514,7 +514,7 @@ func TestTlsClientheadersWithCertInfos(t *testing.T) {
 			tlsClientCertHeaders: &types.TLSClientHeaders{
 				PEM: false,
 				Infos: &types.TLSClientCertificateInfos{
-					Subject: &types.TLSCLientCertificateDistinguishedNameInfos{},
+					Subject: &types.TLSCLientCertificateDNInfos{},
 				},
 			},
 		},
@@ -525,7 +525,7 @@ func TestTlsClientheadersWithCertInfos(t *testing.T) {
 				Infos: &types.TLSClientCertificateInfos{
 					NotAfter:  true,
 					NotBefore: true,
-					Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
+					Subject: &types.TLSCLientCertificateDNInfos{
 						CommonName:      true,
 						Country:         true,
 						DomainComponent: true,
@@ -534,7 +534,7 @@ func TestTlsClientheadersWithCertInfos(t *testing.T) {
 						Province:        true,
 						SerialNumber:    true,
 					},
-					Issuer: &types.TLSCLientCertificateDistinguishedNameInfos{
+					Issuer: &types.TLSCLientCertificateDNInfos{
 						CommonName:      true,
 						Country:         true,
 						DomainComponent: true,
@@ -554,10 +554,10 @@ func TestTlsClientheadersWithCertInfos(t *testing.T) {
 			tlsClientCertHeaders: &types.TLSClientHeaders{
 				Infos: &types.TLSClientCertificateInfos{
 					NotAfter: true,
-					Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
+					Subject: &types.TLSCLientCertificateDNInfos{
 						Organization: true,
 					},
-					Issuer: &types.TLSCLientCertificateDistinguishedNameInfos{
+					Issuer: &types.TLSCLientCertificateDNInfos{
 						Country: true,
 					},
 					Sans: true,
@@ -572,7 +572,7 @@ func TestTlsClientheadersWithCertInfos(t *testing.T) {
 				Infos: &types.TLSClientCertificateInfos{
 					NotAfter:  true,
 					NotBefore: true,
-					Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
+					Subject: &types.TLSCLientCertificateDNInfos{
 						CommonName:      true,
 						Country:         true,
 						DomainComponent: true,
@@ -581,7 +581,7 @@ func TestTlsClientheadersWithCertInfos(t *testing.T) {
 						Province:        true,
 						SerialNumber:    true,
 					},
-					Issuer: &types.TLSCLientCertificateDistinguishedNameInfos{
+					Issuer: &types.TLSCLientCertificateDNInfos{
 						CommonName:      true,
 						Country:         true,
 						DomainComponent: true,
@@ -602,7 +602,7 @@ func TestTlsClientheadersWithCertInfos(t *testing.T) {
 				Infos: &types.TLSClientCertificateInfos{
 					NotAfter:  true,
 					NotBefore: true,
-					Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
+					Subject: &types.TLSCLientCertificateDNInfos{
 						CommonName:      true,
 						Country:         true,
 						DomainComponent: true,
@@ -611,7 +611,7 @@ func TestTlsClientheadersWithCertInfos(t *testing.T) {
 						Province:        true,
 						SerialNumber:    true,
 					},
-					Issuer: &types.TLSCLientCertificateDistinguishedNameInfos{
+					Issuer: &types.TLSCLientCertificateDNInfos{
 						CommonName:      true,
 						Country:         true,
 						DomainComponent: true,
@@ -783,7 +783,7 @@ func TestNewTLSClientHeadersFromStruct(t *testing.T) {
 			frontend: &types.Frontend{
 				PassTLSClientCert: &types.TLSClientHeaders{
 					Infos: &types.TLSClientCertificateInfos{
-						Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
+						Subject: &types.TLSCLientCertificateDNInfos{
 							Organization: true,
 						},
 					},
@@ -803,7 +803,7 @@ func TestNewTLSClientHeadersFromStruct(t *testing.T) {
 			frontend: &types.Frontend{
 				PassTLSClientCert: &types.TLSClientHeaders{
 					Infos: &types.TLSClientCertificateInfos{
-						Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
+						Subject: &types.TLSCLientCertificateDNInfos{
 							Country: true,
 						},
 					},
@@ -823,7 +823,7 @@ func TestNewTLSClientHeadersFromStruct(t *testing.T) {
 			frontend: &types.Frontend{
 				PassTLSClientCert: &types.TLSClientHeaders{
 					Infos: &types.TLSClientCertificateInfos{
-						Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
+						Subject: &types.TLSCLientCertificateDNInfos{
 							SerialNumber: true,
 						},
 					},
@@ -843,7 +843,7 @@ func TestNewTLSClientHeadersFromStruct(t *testing.T) {
 			frontend: &types.Frontend{
 				PassTLSClientCert: &types.TLSClientHeaders{
 					Infos: &types.TLSClientCertificateInfos{
-						Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
+						Subject: &types.TLSCLientCertificateDNInfos{
 							Province: true,
 						},
 					},
@@ -863,7 +863,7 @@ func TestNewTLSClientHeadersFromStruct(t *testing.T) {
 			frontend: &types.Frontend{
 				PassTLSClientCert: &types.TLSClientHeaders{
 					Infos: &types.TLSClientCertificateInfos{
-						Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
+						Subject: &types.TLSCLientCertificateDNInfos{
 							Locality: true,
 						},
 					},
@@ -883,7 +883,7 @@ func TestNewTLSClientHeadersFromStruct(t *testing.T) {
 			frontend: &types.Frontend{
 				PassTLSClientCert: &types.TLSClientHeaders{
 					Infos: &types.TLSClientCertificateInfos{
-						Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
+						Subject: &types.TLSCLientCertificateDNInfos{
 							CommonName: true,
 						},
 					},
@@ -903,7 +903,7 @@ func TestNewTLSClientHeadersFromStruct(t *testing.T) {
 			frontend: &types.Frontend{
 				PassTLSClientCert: &types.TLSClientHeaders{
 					Infos: &types.TLSClientCertificateInfos{
-						Issuer: &types.TLSCLientCertificateDistinguishedNameInfos{
+						Issuer: &types.TLSCLientCertificateDNInfos{
 							CommonName:      true,
 							Country:         true,
 							DomainComponent: true,
@@ -953,7 +953,7 @@ func TestNewTLSClientHeadersFromStruct(t *testing.T) {
 					Infos: &types.TLSClientCertificateInfos{
 						NotAfter:  true,
 						NotBefore: true,
-						Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
+						Subject: &types.TLSCLientCertificateDNInfos{
 							CommonName:   true,
 							Country:      true,
 							Locality:     true,
@@ -961,7 +961,7 @@ func TestNewTLSClientHeadersFromStruct(t *testing.T) {
 							Province:     true,
 							SerialNumber: true,
 						},
-						Issuer: &types.TLSCLientCertificateDistinguishedNameInfos{
+						Issuer: &types.TLSCLientCertificateDNInfos{
 							Country:         true,
 							DomainComponent: true,
 							Locality:        true,

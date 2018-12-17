@@ -865,7 +865,7 @@ func TestGetPassTLSClientCert(t *testing.T) {
 			},
 			expected: &types.TLSClientHeaders{
 				Infos: &types.TLSClientCertificateInfos{
-					Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
+					Subject: &types.TLSCLientCertificateDNInfos{
 						CommonName: true,
 					},
 				},
@@ -878,7 +878,7 @@ func TestGetPassTLSClientCert(t *testing.T) {
 			},
 			expected: &types.TLSClientHeaders{
 				Infos: &types.TLSClientCertificateInfos{
-					Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
+					Subject: &types.TLSCLientCertificateDNInfos{
 						Country: true,
 					},
 				},
@@ -891,7 +891,7 @@ func TestGetPassTLSClientCert(t *testing.T) {
 			},
 			expected: &types.TLSClientHeaders{
 				Infos: &types.TLSClientCertificateInfos{
-					Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
+					Subject: &types.TLSCLientCertificateDNInfos{
 						Locality: true,
 					},
 				},
@@ -904,7 +904,7 @@ func TestGetPassTLSClientCert(t *testing.T) {
 			},
 			expected: &types.TLSClientHeaders{
 				Infos: &types.TLSClientCertificateInfos{
-					Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
+					Subject: &types.TLSCLientCertificateDNInfos{
 						Organization: true,
 					},
 				},
@@ -917,7 +917,7 @@ func TestGetPassTLSClientCert(t *testing.T) {
 			},
 			expected: &types.TLSClientHeaders{
 				Infos: &types.TLSClientCertificateInfos{
-					Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
+					Subject: &types.TLSCLientCertificateDNInfos{
 						Province: true,
 					},
 				},
@@ -930,7 +930,7 @@ func TestGetPassTLSClientCert(t *testing.T) {
 			},
 			expected: &types.TLSClientHeaders{
 				Infos: &types.TLSClientCertificateInfos{
-					Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
+					Subject: &types.TLSCLientCertificateDNInfos{
 						SerialNumber: true,
 					},
 				},
@@ -964,7 +964,7 @@ func TestGetPassTLSClientCert(t *testing.T) {
 					Sans:      true,
 					NotBefore: true,
 					NotAfter:  true,
-					Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
+					Subject: &types.TLSCLientCertificateDNInfos{
 						CommonName:      true,
 						Country:         true,
 						DomainComponent: true,
@@ -973,7 +973,7 @@ func TestGetPassTLSClientCert(t *testing.T) {
 						Province:        true,
 						SerialNumber:    true,
 					},
-					Issuer: &types.TLSCLientCertificateDistinguishedNameInfos{
+					Issuer: &types.TLSCLientCertificateDNInfos{
 						CommonName:      true,
 						Country:         true,
 						DomainComponent: true,

@@ -403,7 +403,7 @@ func passTLSClientCert() func(*types.Frontend) {
 			Infos: &types.TLSClientCertificateInfos{
 				NotAfter:  true,
 				NotBefore: true,
-				Subject: &types.TLSCLientCertificateDistinguishedNameInfos{
+				Subject: &types.TLSCLientCertificateDNInfos{
 					CommonName:      true,
 					Country:         true,
 					DomainComponent: true,
@@ -412,7 +412,7 @@ func passTLSClientCert() func(*types.Frontend) {
 					Province:        true,
 					SerialNumber:    true,
 				},
-				Issuer: &types.TLSCLientCertificateDistinguishedNameInfos{
+				Issuer: &types.TLSCLientCertificateDNInfos{
 					CommonName:      true,
 					Country:         true,
 					DomainComponent: true,

@@ -533,3 +533,40 @@ Example:
   backend = "{{$backend}}"
 {{end}}
 ```
+
+## Pass TLS Client Cert
+
+```toml
+# Pass the escaped client cert infos selected below in a `X-Forwarded-Ssl-Client-Cert-Infos` header.
+[frontends.frontend1.passTLSClientCert]
+        pem = true
+        [frontends.frontend1.passTLSClientCert.infos]
+            notBefore = true
+            notAfter = true
+            [frontends.frontend1.passTLSClientCert.infos.subject]
+                country = true
+                domainComponent = true
+                province = true
+                locality = true
+                organization = true
+                commonName = true
+                serialNumber = true
+            [frontends.frontend1.passTLSClientCert.infos.issuer]
+                country = true
+                domainComponent = true
+                province = true
+                locality = true
+                organization = true
+                commonName = true
+                serialNumber = true
+```
+
+Pass TLS Client Cert `pem` defines if the escaped pem is added to a `X-Forwarded-Ssl-Client-Cert` header.  
+Pass TLS Client Cert `infos` configuration defines how the certificate data are added to a `X-Forwarded-Ssl-Client-Cert-Infos` header.  
+
+The following example shows an unescaped result that uses all the available fields:
+If there is more than one certificates, their are separated by a `;`
+
+```
+Subject="DC=org,DC=cheese,C=FR,C=US,ST=Cheese org state,ST=Cheese com state,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=*.cheese.com",Issuer="DC=org,DC=cheese,C=FR,C=US,ST=Signing State,ST=Signing State 2,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=Simple Signing CA 2",NB=1544094616,NA=1607166616,SAN=*.cheese.org,*.cheese.net,*.cheese.com,test@cheese.org,test@cheese.net,10.0.1.0,10.0.1.2
+```

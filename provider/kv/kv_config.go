@@ -403,7 +403,7 @@ func (p *Provider) getTLSClientCert(rootPath string) *types.TLSClientHeaders {
 		}
 
 		if p.hasPrefix(rootPath, pathFrontendPassTLSClientCertInfosSubject) {
-			subject := &types.TLSCLientCertificateDistinguishedNameInfos{
+			subject := &types.TLSCLientCertificateDNInfos{
 				CommonName:      p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectCommonName),
 				Country:         p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectCountry),
 				DomainComponent: p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectDomainComponent),
@@ -416,7 +416,7 @@ func (p *Provider) getTLSClientCert(rootPath string) *types.TLSClientHeaders {
 		}
 
 		if p.hasPrefix(rootPath, pathFrontendPassTLSClientCertInfosIssuer) {
-			issuer := &types.TLSCLientCertificateDistinguishedNameInfos{
+			issuer := &types.TLSCLientCertificateDNInfos{
 				CommonName:      p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosIssuerCommonName),
 				Country:         p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosIssuerCountry),
 				DomainComponent: p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosIssuerDomainComponent),
