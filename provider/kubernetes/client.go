@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"sort"
 	"time"
 
 	"github.com/containous/traefik/log"
@@ -165,6 +166,12 @@ func (c *clientImpl) GetIngresses() []*extensionsv1beta1.Ingress {
 			result = append(result, ing)
 		}
 	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Namespace < result[j].Namespace ||
+			result[i].Namespace == result[j].Namespace && result[i].Name < result[j].Name
+	})
+
 	return result
 }
 
