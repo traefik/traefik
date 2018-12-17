@@ -2804,7 +2804,7 @@ func TestGetTLS(t *testing.T) {
 		desc      string
 		ingress   *extensionsv1beta1.Ingress
 		client    Client
-		result    []*tls.Configuration
+		result    map[string]*tls.Configuration
 		errResult string
 	}{
 		{
@@ -2884,11 +2884,21 @@ func TestGetTLS(t *testing.T) {
 				),
 				iTLSes(
 					iTLS("test-secret"),
-					iTLS("test-secret"),
+					iTLS("test-secret2"),
 				),
 			),
 			client: clientMock{
 				secrets: []*corev1.Secret{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "test-secret2",
+							Namespace: "testing",
+						},
+						Data: map[string][]byte{
+							"tls.crt": []byte("tls-crt"),
+							"tls.key": []byte("tls-key"),
+						},
+					},
 					{
 						ObjectMeta: metav1.ObjectMeta{
 							Name:      "test-secret",
@@ -2901,14 +2911,14 @@ func TestGetTLS(t *testing.T) {
 					},
 				},
 			},
-			result: []*tls.Configuration{
-				{
+			result: map[string]*tls.Configuration{
+				"test-secret": {
 					Certificate: &tls.Certificate{
 						CertFile: tls.FileOrContent("tls-crt"),
 						KeyFile:  tls.FileOrContent("tls-key"),
 					},
 				},
-				{
+				"test-secret2": {
 					Certificate: &tls.Certificate{
 						CertFile: tls.FileOrContent("tls-crt"),
 						KeyFile:  tls.FileOrContent("tls-key"),
@@ -2938,9 +2948,9 @@ func TestGetTLS(t *testing.T) {
 					},
 				},
 			},
-			result: []*tls.Configuration{
-				{
-					EntryPoints: []string{"https", "api-secure"},
+			result: map[string]*tls.Configuration{
+				"test-secret": {
+					EntryPoints: []string{"api-secure", "https"},
 					Certificate: &tls.Certificate{
 						CertFile: tls.FileOrContent("tls-crt"),
 						KeyFile:  tls.FileOrContent("tls-key"),
@@ -2955,7 +2965,8 @@ func TestGetTLS(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			tlsConfigs, err := getTLS(test.ingress, test.client)
+			tlsConfigs := map[string]*tls.Configuration{}
+			err := getTLS(test.ingress, test.client, tlsConfigs)
 
 			if test.errResult != "" {
 				assert.EqualError(t, err, test.errResult)

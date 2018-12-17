@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 	"text/template"
@@ -179,6 +180,8 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 		Frontends: map[string]*types.Frontend{},
 	}
 
+	tlsConfigs := map[string]*tls.Configuration{}
+
 	for _, i := range ingresses {
 		ingressClass, err := getStringSafeValue(i.Annotations, annotationKubernetesIngressClass, "")
 		if err != nil {
@@ -190,12 +193,11 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 			continue
 		}
 
-		tlsSection, err := getTLS(i, k8sClient)
+		err = getTLS(i, k8sClient, tlsConfigs)
 		if err != nil {
 			log.Errorf("Error configuring TLS for ingress %s/%s: %v", i.Namespace, i.Name, err)
 			continue
 		}
-		templateObjects.TLS = append(templateObjects.TLS, tlsSection...)
 
 		if i.Spec.Backend != nil {
 			err := p.addGlobalBackend(k8sClient, i, templateObjects)
@@ -416,6 +418,16 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 			log.Errorf("Cannot update Ingress %s/%s due to error: %v", i.Namespace, i.Name, err)
 		}
 	}
+
+	var secretNames []string
+	for secretName := range tlsConfigs {
+		secretNames = append(secretNames, secretName)
+	}
+	sort.Strings(secretNames)
+	for _, secretName := range secretNames {
+		templateObjects.TLS = append(templateObjects.TLS, tlsConfigs[secretName])
+	}
+
 	return templateObjects, nil
 }
 
@@ -636,37 +648,54 @@ func getRuleForHost(host string) string {
 	return "Host:" + host
 }
 
-func getTLS(ingress *extensionsv1beta1.Ingress, k8sClient Client) ([]*tls.Configuration, error) {
-	var tlsConfigs []*tls.Configuration
+func getTLS(ingress *extensionsv1beta1.Ingress, k8sClient Client, tlsConfigs map[string]*tls.Configuration) error {
 
 	for _, t := range ingress.Spec.TLS {
 		secret, exists, err := k8sClient.GetSecret(ingress.Namespace, t.SecretName)
 		if err != nil {
-			return nil, fmt.Errorf("failed to fetch secret %s/%s: %v", ingress.Namespace, t.SecretName, err)
+			return fmt.Errorf("failed to fetch secret %s/%s: %v", ingress.Namespace, t.SecretName, err)
 		}
 		if !exists {
-			return nil, fmt.Errorf("secret %s/%s does not exist", ingress.Namespace, t.SecretName)
+			return fmt.Errorf("secret %s/%s does not exist", ingress.Namespace, t.SecretName)
 		}
 
 		cert, key, err := getCertificateBlocks(secret, ingress.Namespace, t.SecretName)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		entryPoints := getSliceStringValue(ingress.Annotations, annotationKubernetesFrontendEntryPoints)
+		newEntryPoints := getSliceStringValue(ingress.Annotations, annotationKubernetesFrontendEntryPoints)
 
-		tlsConfig := &tls.Configuration{
-			EntryPoints: entryPoints,
-			Certificate: &tls.Certificate{
-				CertFile: tls.FileOrContent(cert),
-				KeyFile:  tls.FileOrContent(key),
-			},
+		tlsConfig, tlsExists := tlsConfigs[t.SecretName]
+		if tlsExists {
+			for _, entryPoint := range newEntryPoints {
+				tlsConfig.EntryPoints = mergeEntryPoint(tlsConfig.EntryPoints, entryPoint)
+			}
+		} else {
+			sort.Strings(newEntryPoints)
+			tlsConfig := &tls.Configuration{
+				EntryPoints: newEntryPoints,
+				Certificate: &tls.Certificate{
+					CertFile: tls.FileOrContent(cert),
+					KeyFile:  tls.FileOrContent(key),
+				},
+			}
+			tlsConfigs[t.SecretName] = tlsConfig
 		}
-
-		tlsConfigs = append(tlsConfigs, tlsConfig)
 	}
 
-	return tlsConfigs, nil
+	return nil
+}
+
+func mergeEntryPoint(entryPoints []string, newEntryPoint string) []string {
+	for _, ep := range entryPoints {
+		if ep == newEntryPoint {
+			return entryPoints
+		}
+	}
+	entryPoints = append(entryPoints, newEntryPoint)
+	sort.Strings(entryPoints)
+	return entryPoints
 }
 
 func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (string, string, error) {
