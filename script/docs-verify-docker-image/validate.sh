@@ -18,9 +18,10 @@ find "${PATH_TO_SITE}" -type f -not -path "/app/site/theme/*" \
 | xargs -0 -r -P "${NUMBER_OF_CPUS}" -I '{}' \
   htmlproofer \
   --check-html \
-  --only_4xx \
+  --check_external_hash \
   --alt_ignore="/traefik.logo.png/" \
-  --url-ignore "/localhost:/,/127.0.0.1:/,/fonts.gstatic.com/,/.minikube/,/github.com\/containous\/traefik\/*edit*/,/github.com\/containous\/traefik\/$/" \
+  --http_status_ignore="0,500,501,503" \
+  --url-ignore "/https://groups.google.com/a/traefik.io/forum/#!forum/security/,/localhost:/,/127.0.0.1:/,/fonts.gstatic.com/,/.minikube/,/github.com\/containous\/traefik\/*edit*/,/github.com\/containous\/traefik\/$/" \
   '{}'
 ## HTML-proofer options at https://github.com/gjtorikian/html-proofer#configuration
 
