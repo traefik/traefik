@@ -23,6 +23,7 @@ TRAEFIK_IMAGE := $(if $(REPONAME),$(REPONAME),"containous/traefik")
 INTEGRATION_OPTS := $(if $(MAKE_DOCKER_HOST),-e "DOCKER_HOST=$(MAKE_DOCKER_HOST)", -e "TEST_CONTAINER=1" -v "/var/run/docker.sock:/var/run/docker.sock")
 TRAEFIK_DOC_IMAGE := traefik-docs
 TRAEFIK_DOC_VERIFY_IMAGE := $(TRAEFIK_DOC_IMAGE)-verify
+DOCS_VERIFY_SKIP ?= false
 
 DOCKER_BUILD_ARGS := $(if $(DOCKER_VERSION), "--build-arg=DOCKER_VERSION=$(DOCKER_VERSION)",)
 DOCKER_RUN_OPTS := $(TRAEFIK_ENVS) $(TRAEFIK_MOUNT) "$(TRAEFIK_DEV_IMAGE)"
@@ -104,8 +105,12 @@ docs: docs-image
 docs-build: site
 
 docs-verify: site
-	docker build -t $(TRAEFIK_DOC_VERIFY_IMAGE) ./script/docs-verify-docker-image ## Build Validator image
-	docker run --rm -v $(CURDIR):/app $(TRAEFIK_DOC_VERIFY_IMAGE) ## Check for dead links and w3c compliance
+ifeq ($(DOCS_VERIFY_SKIP),false)
+	docker build -t $(TRAEFIK_DOC_VERIFY_IMAGE) ./script/docs-verify-docker-image
+	docker run --rm -v $(CURDIR):/app $(TRAEFIK_DOC_VERIFY_IMAGE)
+else
+	@echo "DOCS_LINT_SKIP is true: no linting done."
+endif
 
 site: docs-image
 	docker run  $(DOCKER_RUN_DOC_OPTS) $(TRAEFIK_DOC_IMAGE) mkdocs build

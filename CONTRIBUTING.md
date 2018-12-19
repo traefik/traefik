@@ -236,6 +236,14 @@ $ make docs-clean docs-verify
 ...
 ```
 
+Please note that verification can be disabled by setting the environment variable `DOCS_VERIFY_SKIP` to `true`:
+
+```shell
+DOCS_VERIFY_SKIP=true make docs-verify
+...
+DOCS_LINT_SKIP is true: no linting done.
+```
+
 ## How to Write a Good Issue
 
 Please keep in mind that the GitHub issue tracker is not intended as a general support forum, but for reporting bugs and feature requests.
