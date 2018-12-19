@@ -16,8 +16,9 @@ const (
 // ClientCA defines traefik CA files for a entryPoint
 // and it indicates if they are mandatory or have just to be analyzed if provided
 type ClientCA struct {
-	Files    FilesOrContents
-	Optional bool
+	Files      FilesOrContents
+	Optional   bool
+	SkipVerify bool
 }
 
 // TLS configures TLS for an entry point

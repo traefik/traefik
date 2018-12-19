@@ -17,7 +17,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/armon/go-proxyproto"
+	proxyproto "github.com/armon/go-proxyproto"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/configuration"
@@ -461,9 +461,17 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 		}
 		config.ClientCAs = pool
 		if tlsOption.ClientCA.Optional {
-			config.ClientAuth = tls.VerifyClientCertIfGiven
+			if tlsOption.ClientCA.SkipVerify {
+				config.ClientAuth = tls.RequestClientCert
+			} else {
+				config.ClientAuth = tls.VerifyClientCertIfGiven
+			}
 		} else {
-			config.ClientAuth = tls.RequireAndVerifyClientCert
+			if tlsOption.ClientCA.SkipVerify {
+				config.ClientAuth = tls.RequireAnyClientCert
+			} else {
+				config.ClientAuth = tls.RequireAndVerifyClientCert
+			}
 		}
 	}
 

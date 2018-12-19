@@ -17,7 +17,7 @@ import (
 	"github.com/containous/traefik/log"
 	traefiktls "github.com/containous/traefik/tls"
 	"github.com/mitchellh/hashstructure"
-	"github.com/ryanuber/go-glob"
+	glob "github.com/ryanuber/go-glob"
 )
 
 // Backend holds backend configuration.
@@ -510,6 +510,7 @@ func (b *Buckets) SetValue(val interface{}) {
 type ClientTLS struct {
 	CA                 string `description:"TLS CA" json:"ca,omitempty"`
 	CAOptional         bool   `description:"TLS CA.Optional" json:"caOptional,omitempty"`
+	CASkipVerify       bool   `description:"TLS CA.SkipVerify" json:"caSkipVerify,omitempty"`
 	Cert               string `description:"TLS cert" json:"cert,omitempty"`
 	Key                string `description:"TLS key" json:"key,omitempty"`
 	InsecureSkipVerify bool   `description:"TLS insecure skip verify" json:"insecureSkipVerify,omitempty"`
@@ -537,10 +538,19 @@ func (clientTLS *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
 		if !caPool.AppendCertsFromPEM(ca) {
 			return nil, fmt.Errorf("failed to parse CA")
 		}
+
 		if clientTLS.CAOptional {
-			clientAuth = tls.VerifyClientCertIfGiven
+			if clientTLS.CASkipVerify {
+				clientAuth = tls.RequestClientCert
+			} else {
+				clientAuth = tls.VerifyClientCertIfGiven
+			}
 		} else {
-			clientAuth = tls.RequireAndVerifyClientCert
+			if clientTLS.CASkipVerify {
+				clientAuth = tls.RequireAnyClientCert
+			} else {
+				clientAuth = tls.RequireAndVerifyClientCert
+			}
 		}
 	}
 

@@ -237,9 +237,11 @@ func makeEntryPointTLS(result map[string]string) (*tls.TLS, error) {
 			files := tls.FilesOrContents{}
 			files.Set(result["ca"])
 			optional := toBool(result, "ca_optional")
+			skipVerify := toBool(result, "ca_skipverify")
 			configTLS.ClientCA = tls.ClientCA{
-				Files:    files,
-				Optional: optional,
+				Files:      files,
+				Optional:   optional,
+				SkipVerify: skipVerify,
 			}
 		}
 
