@@ -167,6 +167,7 @@ func ConvertTracing(old *tracing.Tracing) *static.Tracing {
 			LocalAgentHostPort: old.DataDog.LocalAgentHostPort,
 			GlobalTag:          old.DataDog.GlobalTag,
 			Debug:              old.DataDog.Debug,
+			PrioritySampling:   old.DataDog.PrioritySampling,
 		}
 	}
 

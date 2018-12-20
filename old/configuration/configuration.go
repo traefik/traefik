@@ -225,6 +225,7 @@ func (gc *GlobalConfiguration) initTracing() {
 					LocalAgentHostPort: "localhost:8126",
 					GlobalTag:          "",
 					Debug:              false,
+					PrioritySampling:   false,
 				}
 			}
 			if gc.Tracing.Zipkin != nil {
