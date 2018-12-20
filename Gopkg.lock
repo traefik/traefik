@@ -1566,8 +1566,8 @@
     "ddtrace/opentracer",
     "ddtrace/tracer"
   ]
-  revision = "48eeff27357376bcb31a15674dc4be9078de88b3"
-  version = "v1.5.0"
+  revision = "5a8139286014811d2bccd5ef67ec4844ea0998a7"
+  version = "v1.7.0"
 
 [[projects]]
   name = "gopkg.in/fsnotify.v1"
@@ -1826,6 +1826,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "001d7f14037057a96b36926ec5a68b92cfc230aed7dee45989e4e7b1f4d59214"
+  inputs-digest = "e9f7ef0c4117f64b1cf9170fab748af3cb051f016cf8ffbd5decc6766fe123dd"
   solver-name = "gps-cdcl"
   solver-version = 1

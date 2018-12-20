@@ -1,6 +1,7 @@
 package tracer
 
 import (
+	"net/http"
 	"os"
 	"path/filepath"
 	"time"
@@ -20,6 +21,9 @@ type config struct {
 	// sampler specifies the sampler that will be used for sampling traces.
 	sampler Sampler
 
+	// prioritySampling will be non-nil when priority sampling is enabled.
+	prioritySampling *prioritySampler
+
 	// agentAddr specifies the hostname and  of the agent where the traces
 	// are sent to.
 	agentAddr string
@@ -33,6 +37,9 @@ type config struct {
 
 	// propagator propagates span context cross-process
 	propagator Propagator
+
+	// httpRoundTripper defines the http.RoundTripper used by the agent transport.
+	httpRoundTripper http.RoundTripper
 }
 
 // StartOption represents a function that can be provided as a parameter to Start.
@@ -43,6 +50,16 @@ func defaults(c *config) {
 	c.serviceName = filepath.Base(os.Args[0])
 	c.sampler = NewAllSampler()
 	c.agentAddr = defaultAddress
+}
+
+// WithPrioritySampling enables priority sampling on the active tracer instance. When using
+// distributed tracing, this option must be enabled in order to get all the parts of a distributed
+// trace sampled. To learn more about priority sampling, please visit:
+// https://docs.datadoghq.com/tracing/getting_further/trace_sampling_and_storage/#priority-sampling-for-distributed-tracing
+func WithPrioritySampling() StartOption {
+	return func(c *config) {
+		c.prioritySampling = newPrioritySampler()
+	}
 }
 
 // WithDebugMode enables debug mode on the tracer, resulting in more verbose logging.
@@ -90,6 +107,15 @@ func WithGlobalTag(k string, v interface{}) StartOption {
 func WithSampler(s Sampler) StartOption {
 	return func(c *config) {
 		c.sampler = s
+	}
+}
+
+// WithHTTPRoundTripper allows customizing the underlying HTTP transport for
+// emitting spans. This is useful for advanced customization such as emitting
+// spans to a unix domain socket. The default should be used in most cases.
+func WithHTTPRoundTripper(r http.RoundTripper) StartOption {
+	return func(c *config) {
+		c.httpRoundTripper = r
 	}
 }
 

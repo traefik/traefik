@@ -235,4 +235,7 @@ func (s *span) String() string {
 	return strings.Join(lines, "\n")
 }
 
-const samplingPriorityKey = "_sampling_priority_v1"
+const (
+	samplingPriorityKey     = "_sampling_priority_v1"
+	samplingPriorityRateKey = "_sampling_priority_rate_v1"
+)

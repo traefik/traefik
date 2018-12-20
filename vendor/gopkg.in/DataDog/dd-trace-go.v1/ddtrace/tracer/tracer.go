@@ -112,7 +112,7 @@ func newTracer(opts ...StartOption) *tracer {
 		fn(c)
 	}
 	if c.transport == nil {
-		c.transport = newTransport(c.agentAddr)
+		c.transport = newTransport(c.agentAddr, c.httpRoundTripper)
 	}
 	if c.propagator == nil {
 		c.propagator = NewPropagator(nil)
@@ -247,6 +247,7 @@ func (t *tracer) StartSpan(operationName string, options ...ddtrace.StartSpanOpt
 			span.Metrics[samplingPriorityKey] = float64(context.samplingPriority())
 		}
 		if context.span != nil {
+			// it has a local parent, inherit the service
 			context.span.RLock()
 			span.Service = context.span.Service
 			context.span.RUnlock()
@@ -254,9 +255,8 @@ func (t *tracer) StartSpan(operationName string, options ...ddtrace.StartSpanOpt
 	}
 	span.context = newSpanContext(span, context)
 	if context == nil || context.span == nil {
-		// this is either a global root span or a process-level root span
+		// this is either a root span or it has a remote parent, we should add the PID.
 		span.SetTag(ext.Pid, strconv.Itoa(os.Getpid()))
-		t.sample(span)
 	}
 	// add tags from options
 	for k, v := range opts.Tags {
@@ -265,6 +265,10 @@ func (t *tracer) StartSpan(operationName string, options ...ddtrace.StartSpanOpt
 	// add global tags
 	for k, v := range t.config.globalTags {
 		span.SetTag(k, v)
+	}
+	if context == nil {
+		// this is a brand new trace, sample it
+		t.sample(span)
 	}
 	return span
 }
@@ -299,9 +303,12 @@ func (t *tracer) flushTraces() {
 	if t.config.debug {
 		log.Printf("Sending payload: size: %d traces: %d\n", size, count)
 	}
-	err := t.config.transport.send(t.payload)
+	rc, err := t.config.transport.send(t.payload)
 	if err != nil {
 		t.pushError(&dataLossError{context: err, count: count})
+	}
+	if err == nil && t.config.prioritySampling != nil {
+		t.config.prioritySampling.readRatesJSON(rc) // TODO: handle error?
 	}
 	t.payload.reset()
 }
@@ -366,5 +373,8 @@ func (t *tracer) sample(span *span) {
 			return
 		}
 		span.Metrics[sampleRateMetricKey] = rs.Rate()
+	}
+	if t.config.prioritySampling != nil {
+		t.config.prioritySampling.apply(span)
 	}
 }
