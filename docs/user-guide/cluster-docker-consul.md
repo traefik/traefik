@@ -88,7 +88,7 @@ To watch docker events, add `--docker.watch`.
 ### Full docker-compose file
 
 ```yaml
-version: "3"
+version: "3.4"
 services:
   traefik:
     image: traefik:1.5
