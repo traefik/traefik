@@ -71,7 +71,7 @@
 
 [[constraint]]
   name = "github.com/containous/staert"
-  version = "3.1.1"
+  version = "3.1.2"
 
 #[[constraint]]
 #  name = "github.com/containous/traefik-extra-service-fabric"
@@ -131,18 +131,6 @@
 [[constraint]]
   name = "github.com/mesosphere/mesos-dns"
   source = "https://github.com/containous/mesos-dns.git"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/mitchellh/copystructure"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/mitchellh/hashstructure"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/mitchellh/mapstructure"
 
 [[constraint]]
   name = "github.com/opentracing/opentracing-go"
