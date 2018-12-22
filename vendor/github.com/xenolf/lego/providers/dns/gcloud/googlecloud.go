@@ -8,17 +8,26 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/xenolf/lego/challenge/dns01"
+	"github.com/xenolf/lego/log"
 	"github.com/xenolf/lego/platform/config/env"
+	"github.com/xenolf/lego/platform/wait"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/dns/v1"
+	"google.golang.org/api/googleapi"
+)
+
+const (
+	changeStatusDone = "done"
 )
 
 // Config is used to configure the creation of the DNSProvider
 type Config struct {
+	Debug              bool
 	Project            string
 	PropagationTimeout time.Duration
 	PollingInterval    time.Duration
@@ -29,6 +38,7 @@ type Config struct {
 // NewDefaultConfig returns a default configuration for the DNSProvider
 func NewDefaultConfig() *Config {
 	return &Config{
+		Debug:              env.GetOrDefaultBool("GCE_DEBUG", false),
 		TTL:                env.GetOrDefaultInt("GCE_TTL", dns01.DefaultTTL),
 		PropagationTimeout: env.GetOrDefaultSecond("GCE_PROPAGATION_TIMEOUT", 180*time.Second),
 		PollingInterval:    env.GetOrDefaultSecond("GCE_POLLING_INTERVAL", 5*time.Second),
@@ -131,9 +141,30 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	}
 
 	// Look for existing records.
-	existing, err := d.findTxtRecords(zone, fqdn)
+	existingRrSet, err := d.findTxtRecords(zone, fqdn)
 	if err != nil {
 		return fmt.Errorf("googlecloud: %v", err)
+	}
+
+	for _, rrSet := range existingRrSet {
+		var rrd []string
+		for _, rr := range rrSet.Rrdatas {
+			data := mustUnquote(rr)
+			rrd = append(rrd, data)
+
+			if data == value {
+				log.Printf("skip: the record already exists: %s", value)
+				return nil
+			}
+		}
+		rrSet.Rrdatas = rrd
+	}
+
+	// Attempt to delete the existing records before adding the new one.
+	if len(existingRrSet) > 0 {
+		if err = d.applyChanges(zone, &dns.Change{Deletions: existingRrSet}); err != nil {
+			return fmt.Errorf("googlecloud: %v", err)
+		}
 	}
 
 	rec := &dns.ResourceRecordSet{
@@ -143,36 +174,69 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 		Type:    "TXT",
 	}
 
-	change := &dns.Change{}
-
-	if len(existing) > 0 {
-		// Attempt to delete the existing records when adding our new one.
-		change.Deletions = existing
-
-		// Append existing TXT record data to the new TXT record data
-		for _, value := range existing {
-			rec.Rrdatas = append(rec.Rrdatas, value.Rrdatas...)
+	// Append existing TXT record data to the new TXT record data
+	for _, rrSet := range existingRrSet {
+		for _, rr := range rrSet.Rrdatas {
+			if rr != value {
+				rec.Rrdatas = append(rec.Rrdatas, rr)
+			}
 		}
 	}
 
-	change.Additions = []*dns.ResourceRecordSet{rec}
+	change := &dns.Change{
+		Additions: []*dns.ResourceRecordSet{rec},
+	}
 
-	chg, err := d.client.Changes.Create(d.config.Project, zone, change).Do()
-	if err != nil {
+	if err = d.applyChanges(zone, change); err != nil {
 		return fmt.Errorf("googlecloud: %v", err)
 	}
 
-	// wait for change to be acknowledged
-	for chg.Status == "pending" {
-		time.Sleep(time.Second)
+	return nil
+}
 
-		chg, err = d.client.Changes.Get(d.config.Project, zone, chg.Id).Do()
-		if err != nil {
-			return fmt.Errorf("googlecloud: %v", err)
-		}
+func (d *DNSProvider) applyChanges(zone string, change *dns.Change) error {
+	if d.config.Debug {
+		data, _ := json.Marshal(change)
+		log.Printf("change (Create): %s", string(data))
 	}
 
-	return nil
+	chg, err := d.client.Changes.Create(d.config.Project, zone, change).Do()
+	if err != nil {
+		if v, ok := err.(*googleapi.Error); ok {
+			if v.Code == http.StatusNotFound {
+				return nil
+			}
+		}
+
+		data, _ := json.Marshal(change)
+		return fmt.Errorf("failed to perform changes [zone %s, change %s]: %v", zone, string(data), err)
+	}
+
+	if chg.Status == changeStatusDone {
+		return nil
+	}
+
+	chgID := chg.Id
+
+	// wait for change to be acknowledged
+	return wait.For("apply change", 30*time.Second, 3*time.Second, func() (bool, error) {
+		if d.config.Debug {
+			data, _ := json.Marshal(change)
+			log.Printf("change (Get): %s", string(data))
+		}
+
+		chg, err = d.client.Changes.Get(d.config.Project, zone, chgID).Do()
+		if err != nil {
+			data, _ := json.Marshal(change)
+			return false, fmt.Errorf("failed to get changes [zone %s, change %s]: %v", zone, string(data), err)
+		}
+
+		if chg.Status == changeStatusDone {
+			return true, nil
+		}
+
+		return false, fmt.Errorf("status: %s", chg.Status)
+	})
 }
 
 // CleanUp removes the TXT record matching the specified parameters.
@@ -235,4 +299,12 @@ func (d *DNSProvider) findTxtRecords(zone, fqdn string) ([]*dns.ResourceRecordSe
 	}
 
 	return recs.Rrsets, nil
+}
+
+func mustUnquote(raw string) string {
+	clean, err := strconv.Unquote(raw)
+	if err != nil {
+		return raw
+	}
+	return clean
 }

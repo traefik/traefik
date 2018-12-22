@@ -197,7 +197,7 @@ func (d *DNSProvider) changeRecord(action, hostedZoneID string, recordSet *route
 
 	changeID := resp.ChangeInfo.Id
 
-	return wait.For(d.config.PropagationTimeout, d.config.PollingInterval, func() (bool, error) {
+	return wait.For("route53", d.config.PropagationTimeout, d.config.PollingInterval, func() (bool, error) {
 		reqParams := &route53.GetChangeInput{Id: changeID}
 
 		resp, err := d.client.GetChange(reqParams)

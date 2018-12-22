@@ -146,7 +146,7 @@ func (d *DNSProvider) changeRecord(action, fqdn, value, domain string, ttl int) 
 
 	statusID := resp.ChangeInfo.ID
 
-	return wait.For(120*time.Second, 4*time.Second, func() (bool, error) {
+	return wait.For("nifcloud", 120*time.Second, 4*time.Second, func() (bool, error) {
 		resp, err := d.client.GetChange(statusID)
 		if err != nil {
 			return false, fmt.Errorf("failed to query NIFCLOUD DNS change status: %v", err)
