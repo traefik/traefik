@@ -939,7 +939,7 @@ func loadAuthTLSSecret(namespace, secretName string, k8sClient Client) (string, 
 func getFrontendRedirect(i *extensionsv1beta1.Ingress, baseName, path string) *types.Redirect {
 	permanent := getBoolValue(i.Annotations, annotationKubernetesRedirectPermanent, false)
 
-	if appRoot := getStringValue(i.Annotations, annotationKubernetesAppRoot, ""); appRoot != "" && path == "/" {
+	if appRoot := getStringValue(i.Annotations, annotationKubernetesAppRoot, ""); appRoot != "" && (path == "/" || path == "") {
 		return &types.Redirect{
 			Regex:       fmt.Sprintf("%s$", baseName),
 			Replacement: fmt.Sprintf("%s/%s", strings.TrimRight(baseName, "/"), strings.TrimLeft(appRoot, "/")),
