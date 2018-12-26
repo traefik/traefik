@@ -53,6 +53,7 @@ type clientImpl struct {
 	factories            map[string]informers.SharedInformerFactory
 	ingressLabelSelector labels.Selector
 	isNamespaceAll       bool
+	watchedNamespaces    Namespaces
 }
 
 func newClientImpl(clientset *kubernetes.Clientset) *clientImpl {
@@ -120,6 +121,8 @@ func (c *clientImpl) WatchAll(namespaces Namespaces, stopCh <-chan struct{}) (<-
 		c.isNamespaceAll = true
 	}
 
+	c.watchedNamespaces = namespaces
+
 	eventHandler := c.newResourceEventHandler(eventCh)
 	for _, ns := range namespaces {
 		factory := informers.NewFilteredSharedInformerFactory(c.clientset, resyncPeriod, ns, nil)
@@ -170,6 +173,10 @@ func (c *clientImpl) GetIngresses() []*extensionsv1beta1.Ingress {
 
 // UpdateIngressStatus updates an Ingress with a provided status.
 func (c *clientImpl) UpdateIngressStatus(namespace, name, ip, hostname string) error {
+	if !c.isWatchedNamespace(namespace) {
+		return fmt.Errorf("failed to get ingress %s/%s: namespace is not within watched namespaces", namespace, name)
+	}
+
 	ing, err := c.factories[c.lookupNamespace(namespace)].Extensions().V1beta1().Ingresses().Lister().Ingresses(namespace).Get(name)
 	if err != nil {
 		return fmt.Errorf("failed to get ingress %s/%s: %v", namespace, name, err)
@@ -195,6 +202,10 @@ func (c *clientImpl) UpdateIngressStatus(namespace, name, ip, hostname string) e
 
 // GetService returns the named service from the given namespace.
 func (c *clientImpl) GetService(namespace, name string) (*corev1.Service, bool, error) {
+	if !c.isWatchedNamespace(namespace) {
+		return nil, false, fmt.Errorf("failed to get service %s/%s: namespace is not within watched namespaces", namespace, name)
+	}
+
 	service, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Services().Lister().Services(namespace).Get(name)
 	exist, err := translateNotFoundError(err)
 	return service, exist, err
@@ -202,6 +213,10 @@ func (c *clientImpl) GetService(namespace, name string) (*corev1.Service, bool, 
 
 // GetEndpoints returns the named endpoints from the given namespace.
 func (c *clientImpl) GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error) {
+	if !c.isWatchedNamespace(namespace) {
+		return nil, false, fmt.Errorf("failed to get endpoints %s/%s: namespace is not within watched namespaces", namespace, name)
+	}
+
 	endpoint, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Endpoints().Lister().Endpoints(namespace).Get(name)
 	exist, err := translateNotFoundError(err)
 	return endpoint, exist, err
@@ -209,6 +224,10 @@ func (c *clientImpl) GetEndpoints(namespace, name string) (*corev1.Endpoints, bo
 
 // GetSecret returns the named secret from the given namespace.
 func (c *clientImpl) GetSecret(namespace, name string) (*corev1.Secret, bool, error) {
+	if !c.isWatchedNamespace(namespace) {
+		return nil, false, fmt.Errorf("failed to get secret %s/%s: namespace is not within watched namespaces", namespace, name)
+	}
+
 	secret, err := c.factories[c.lookupNamespace(namespace)].Core().V1().Secrets().Lister().Secrets(namespace).Get(name)
 	exist, err := translateNotFoundError(err)
 	return secret, exist, err
@@ -258,4 +277,18 @@ func translateNotFoundError(err error) (bool, error) {
 		return false, nil
 	}
 	return err == nil, err
+}
+
+// isWatchedNamespace checks to ensure that the namespace is being watched before we request
+// it to ensure we don't panic by requesting an out-of-watch object
+func (c *clientImpl) isWatchedNamespace(ns string) bool {
+	if c.isNamespaceAll {
+		return true
+	}
+	for _, watchedNamespace := range c.watchedNamespaces {
+		if watchedNamespace == ns {
+			return true
+		}
+	}
+	return false
 }
