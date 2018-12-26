@@ -1310,6 +1310,18 @@ rateset:
 		),
 		buildIngress(
 			iNamespace("testing"),
+			iAnnotation(annotationKubernetesAppRoot, "/root"),
+			iRules(
+				iRule(
+					iHost("root3"),
+					iPaths(
+						onePath(iBackend("service1", intstr.FromInt(80))),
+					),
+				),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
 			iAnnotation(annotationKubernetesIngressClass, "traefik"),
 			iAnnotation(annotationKubernetesCustomRequestHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
 			iAnnotation(annotationKubernetesCustomResponseHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
@@ -1518,6 +1530,11 @@ rateset:
 				servers(),
 				lbMethod("wrr"),
 			),
+			backend("root3",
+				servers(
+					server("http://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
 			backend("protocol/valid",
 				servers(
 					server("h2c://example.com", weight(1)),
@@ -1682,6 +1699,13 @@ rateset:
 				routes(
 					route("/root1", "PathPrefix:/root1"),
 					route("root", "Host:root"),
+				),
+			),
+			frontend("root3",
+				passHostHeader(),
+				redirectRegex("root3$", "root3/root"),
+				routes(
+					route("root3", "Host:root3"),
 				),
 			),
 			frontend("protocol/valid",
