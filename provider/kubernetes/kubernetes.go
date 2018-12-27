@@ -644,6 +644,11 @@ func getTLS(ingress *extensionsv1beta1.Ingress, k8sClient Client, tlsConfigs map
 	for _, t := range ingress.Spec.TLS {
 		newEntryPoints := getSliceStringValue(ingress.Annotations, annotationKubernetesFrontendEntryPoints)
 
+		if t.SecretName == "" {
+			log.Debugf("Skipping TLS sub-section for ingress %s/%s: No secret name provided", ingress.Namespace, ingress.Name)
+			continue
+		}
+
 		configKey := ingress.Namespace + "/" + t.SecretName
 		if tlsConfig, tlsExists := tlsConfigs[configKey]; tlsExists {
 			for _, entryPoint := range newEntryPoints {
