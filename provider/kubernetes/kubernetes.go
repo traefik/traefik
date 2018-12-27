@@ -642,12 +642,12 @@ func getRuleForHost(host string) string {
 
 func getTLS(ingress *extensionsv1beta1.Ingress, k8sClient Client, tlsConfigs map[string]*tls.Configuration) error {
 	for _, t := range ingress.Spec.TLS {
-		newEntryPoints := getSliceStringValue(ingress.Annotations, annotationKubernetesFrontendEntryPoints)
-
 		if t.SecretName == "" {
 			log.Debugf("Skipping TLS sub-section for ingress %s/%s: No secret name provided", ingress.Namespace, ingress.Name)
 			continue
 		}
+
+		newEntryPoints := getSliceStringValue(ingress.Annotations, annotationKubernetesFrontendEntryPoints)
 
 		configKey := ingress.Namespace + "/" + t.SecretName
 		if tlsConfig, tlsExists := tlsConfigs[configKey]; tlsExists {
