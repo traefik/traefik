@@ -155,7 +155,8 @@ echo -e "-----BEGIN RSA PRIVATE KEY-----\n${priv}\n-----END RSA PRIVATE KEY-----
    | openssl rsa -inform pem -out "${pdir}/letsencrypt.key"
 
 # Process the certificates for each of the domains in acme.json
-for domain in $(jq -r '.Certificates[].Domain.Main' ${acmefile}); do
+domains=$(jq -r '.Certificates[].Domain.Main' ${acmefile}) || bad_adme
+for domain in $domains; do
 	# Traefik stores a cert bundle for each domain.  Within this cert
 	# bundle there is both proper the certificate and the Let's Encrypt CA
 	echo "Extracting cert bundle for ${domain}"
