@@ -247,6 +247,10 @@ func makeEntryPointTLS(result map[string]string) (*tls.TLS, error) {
 			configTLS.MinVersion = result["tls_minversion"]
 		}
 
+		if len(result["tls_useacme"]) > 0 {
+			configTLS.UseACME = toBool(result, "tls_useacme")
+		}
+
 		if len(result["tls_ciphersuites"]) > 0 {
 			configTLS.CipherSuites = strings.Split(result["tls_ciphersuites"], ",")
 		}

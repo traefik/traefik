@@ -226,7 +226,7 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 				entryPoint.CertificateStore = acmeCertificateStore
 				acmeprovider.SetCertificateStore(acmeCertificateStore)
 				log.Debugf("Setting Acme Certificate store from Entrypoint: %s", entryPointName)
-			} else if config.TLS != nil && config.TLS.ACME {
+			} else if config.TLS != nil && config.TLS.UseACME {
 				entryPoint.CertificateStore = acmeCertificateStore
 				log.Debugf("Using Acme Certificates for Entrypoint: %s", entryPointName)
 			}

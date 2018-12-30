@@ -12,6 +12,10 @@ See [Let's Encrypt examples](/user-guide/examples/#lets-encrypt-support) and [Do
   [entryPoints.https]
   address = ":443"
     [entryPoints.https.tls]
+  [entryPoints.https_other]
+  address = ":8443"
+    [entryPoints.https_other.tls]
+    useAcme = true
 ```
 
 ```toml
@@ -245,6 +249,36 @@ defaultEntryPoints = ["http", "https"]
 
 !!! note
     `acme.httpChallenge.entryPoint` has to be reachable through port 80. It's a Let's Encrypt limitation as described on the [community forum](https://community.letsencrypt.org/t/support-for-ports-other-than-80-and-443/3419/72).
+
+#### `ACME Certificate on other entryPoints`
+
+You can specify additional entryPoints to use the acme certificates by setting `useAcme = true` under the entryPoints tls settings.
+This allows you to use, for example, a wildcard certificate to secure internal only entryPoints. In the example below, the entrypoint `https`
+is used to obtain the acme certificate and the entryPoints `https_int` also uses the acme certificate. The `useAcme` option is not required
+on the entrypoint specified under the `acme` settings.
+
+```toml
+defaultEntryPoints = ["http", "https"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+  [entryPoints.https_int]
+  address = ":8443"
+    [entryPoints.https_int.tls]
+    useAcme = true
+# ...
+
+[acme]
+  # ...
+  entryPoint = "https"
+  [acme.httpChallenge]
+    entryPoint = "http"
+```
+
 
 #### `dnsChallenge`
 

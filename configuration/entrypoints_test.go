@@ -22,6 +22,7 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 				"TLS:goo,gii " +
 				"TLS " +
 				"TLS.MinVersion:VersionTLS11 " +
+				"TLS.UseACME:true " +
 				"TLS.CipherSuites:TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA " +
 				"CA:car " +
 				"CA.Optional:true " +
@@ -77,6 +78,7 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 				"tls_acme":                            "TLS",
 				"tls_ciphersuites":                    "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
 				"tls_minversion":                      "VersionTLS11",
+				"tls_useacme":                         "true",
 				"whitelistsourcerange":                "10.42.0.0/16,152.89.1.33/32,afed:be44::/16",
 				"whitelist_sourcerange":               "10.42.0.0/16,152.89.1.33/32,afed:be44::/16",
 				"whitelist_usexforwardedfor":          "true",
@@ -183,6 +185,7 @@ func TestEntryPoints_Set(t *testing.T) {
 				"TLS:goo,gii;foo,fii " +
 				"TLS " +
 				"TLS.MinVersion:VersionTLS11 " +
+				"TLS.UseAcme:true " +
 				"TLS.CipherSuites:TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA " +
 				"CA:car " +
 				"CA.Optional:true " +
@@ -214,6 +217,7 @@ func TestEntryPoints_Set(t *testing.T) {
 				Address: ":8000",
 				TLS: &tls.TLS{
 					MinVersion:   "VersionTLS11",
+					UseACME:      true,
 					CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384", "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305", "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA"},
 					Certificates: tls.Certificates{
 						{
@@ -299,6 +303,7 @@ func TestEntryPoints_Set(t *testing.T) {
 				"tls:goo,gii;foo,fii " +
 				"tls " +
 				"tls.minversion:VersionTLS11 " +
+				"tls.useacme:true " +
 				"tls.ciphersuites:TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA " +
 				"ca:car " +
 				"ca.Optional:true " +
@@ -326,6 +331,7 @@ func TestEntryPoints_Set(t *testing.T) {
 				Address: ":8000",
 				TLS: &tls.TLS{
 					MinVersion:   "VersionTLS11",
+					UseACME:      true,
 					CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384", "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305", "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA"},
 					Certificates: tls.Certificates{
 						{
