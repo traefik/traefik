@@ -200,6 +200,7 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 	}
 
 	entryPoints := map[string]server.EntryPoint{}
+	acmeCertificateStore := traefiktls.NewCertificateStore()
 	for entryPointName, config := range globalConfiguration.EntryPoints {
 
 		entryPoint := server.EntryPoint{
@@ -222,9 +223,12 @@ func runCmd(globalConfiguration *configuration.GlobalConfiguration, configFile s
 			}
 
 			if entryPointName == acmeprovider.EntryPoint {
-				entryPoint.CertificateStore = traefiktls.NewCertificateStore()
-				acmeprovider.SetCertificateStore(entryPoint.CertificateStore)
+				entryPoint.CertificateStore = acmeCertificateStore
+				acmeprovider.SetCertificateStore(acmeCertificateStore)
 				log.Debugf("Setting Acme Certificate store from Entrypoint: %s", entryPointName)
+			} else if config.TLS != nil && config.TLS.ACME {
+				entryPoint.CertificateStore = acmeCertificateStore
+				log.Debugf("Using Acme Certificates for Entrypoint: %s", entryPointName)
 			}
 		}
 

@@ -29,6 +29,7 @@ type TLS struct {
 	ClientCA           ClientCA
 	DefaultCertificate *Certificate
 	SniStrict          bool `export:"true"`
+	ACME               bool `export:"true"`
 }
 
 // FilesOrContents hold the CA we want to have in root
