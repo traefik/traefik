@@ -22,6 +22,7 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 				"TLS " +
 				"TLS.MinVersion:VersionTLS11 " +
 				"TLS.CipherSuites:TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA " +
+				"TLS.UseACME:true " +
 				"CA:car " +
 				"CA.Optional:true " +
 				"Redirect.EntryPoint:https " +
@@ -80,6 +81,7 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 				"tls_acme":                            "TLS",
 				"tls_ciphersuites":                    "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
 				"tls_minversion":                      "VersionTLS11",
+				"tls_useacme":                         "true",
 				"whitelist_sourcerange":               "10.42.0.0/16,152.89.1.33/32,afed:be44::/16",
 				"whitelist_ipstrategy_depth":          "3",
 				"whitelist_ipstrategy_excludedips":    "10.0.0.3/24,20.0.0.3/24",
@@ -188,6 +190,7 @@ func TestEntryPoints_Set(t *testing.T) {
 				"TLS " +
 				"TLS.MinVersion:VersionTLS11 " +
 				"TLS.CipherSuites:TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA " +
+				"TLS.UseAcme:true " +
 				"CA:car " +
 				"CA.Optional:true " +
 				"ProxyProtocol.TrustedIPs:192.168.0.1 ",
@@ -197,6 +200,7 @@ func TestEntryPoints_Set(t *testing.T) {
 				TLS: &tls.TLS{
 					MinVersion:   "VersionTLS11",
 					CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384", "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305", "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA"},
+					UseACME:      true,
 					ClientCA: tls.ClientCA{
 						Files:    tls.FilesOrContents{"car"},
 						Optional: true,
@@ -216,6 +220,7 @@ func TestEntryPoints_Set(t *testing.T) {
 				"tls " +
 				"tls.minversion:VersionTLS11 " +
 				"tls.ciphersuites:TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA " +
+				"tls.useacme:true " +
 				"ca:car " +
 				"ca.Optional:true " +
 				"proxyProtocol.TrustedIPs:192.168.0.1 ",
@@ -225,6 +230,7 @@ func TestEntryPoints_Set(t *testing.T) {
 				TLS: &tls.TLS{
 					MinVersion:   "VersionTLS11",
 					CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384", "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305", "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA"},
+					UseACME:      true,
 					ClientCA: tls.ClientCA{
 						Files:    tls.FilesOrContents{"car"},
 						Optional: true,

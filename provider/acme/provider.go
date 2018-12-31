@@ -104,6 +104,11 @@ func (p *Provider) SetCertificateStore(certificateStore *traefiktls.CertificateS
 	p.certificateStore = certificateStore
 }
 
+// GetCertificateStore returns the configured certificate store
+func (p *Provider) GetCertificateStore() *traefiktls.CertificateStore {
+	return p.certificateStore
+}
+
 // ListenConfiguration sets a new Configuration into the configFromListenerChan
 func (p *Provider) ListenConfiguration(config config.Configuration) {
 	p.configFromListenerChan <- config

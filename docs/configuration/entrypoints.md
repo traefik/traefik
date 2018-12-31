@@ -31,6 +31,7 @@ defaultEntryPoints = ["http", "https"]
         "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
         "TLS_RSA_WITH_AES_256_GCM_SHA384"
        ]
+      useAcme = true
       [[entryPoints.http.tls.certificates]]
         certFile = "path/to/my.cert"
         keyFile = "path/to/my.key"
@@ -126,6 +127,7 @@ TLS:/my/path/foo.cert,/my/path/foo.key;/my/path/goo.cert,/my/path/goo.key;/my/pa
 TLS
 TLS.MinVersion:VersionTLS11
 TLS.CipherSuites:TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384
+TLS.UseACME:true
 TLS.SniStrict:true
 TLS.DefaultCertificate.Cert:path/to/foo.cert
 TLS.DefaultCertificate.Key:path/to/foo.key

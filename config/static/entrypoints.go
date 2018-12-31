@@ -128,6 +128,10 @@ func makeEntryPointTLS(result map[string]string) (*tls.TLS, error) {
 			configTLS.SniStrict = toBool(result, "tls_snistrict")
 		}
 
+		if len(result["tls_useacme"]) > 0 {
+			configTLS.UseACME = toBool(result, "tls_useacme")
+		}
+
 		if len(result["tls_defaultcertificate_cert"]) > 0 && len(result["tls_defaultcertificate_key"]) > 0 {
 			configTLS.DefaultCertificate = &tls.Certificate{
 				CertFile: tls.FileOrContent(result["tls_defaultcertificate_cert"]),

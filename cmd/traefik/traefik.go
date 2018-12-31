@@ -270,6 +270,16 @@ func runCmd(staticConfiguration *static.Configuration, configFile string) {
 		serverEntryPoints[entryPointName] = serverEntryPoint
 	}
 
+	// For any additional entrypoints set to UseACME certificates, point it to the same entrypoint/acme certificate store
+	if acmeProvider != nil && acmeProvider.GetCertificateStore() != nil {
+		for entryPointName, config := range staticConfiguration.EntryPoints {
+			if config.TLS != nil && config.TLS.UseACME && entryPointName != acmeProvider.EntryPoint {
+				serverEntryPoints[entryPointName].Certs = acmeProvider.GetCertificateStore()
+				log.Debugf("Setting entrypoint %s to use acme certs", entryPointName)
+			}
+		}
+	}
+
 	svr := server.NewServer(*staticConfiguration, providerAggregator, serverEntryPoints)
 
 	if acmeProvider != nil && acmeProvider.OnHostRule {
