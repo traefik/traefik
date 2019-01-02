@@ -76,28 +76,7 @@ func (s *Server) loadConfig(configurations config.Configurations) (map[string]ht
 
 	ctx := context.TODO()
 
-	// FIXME manage duplicates
-	conf := config.Configuration{
-		Routers:     make(map[string]*config.Router),
-		Middlewares: make(map[string]*config.Middleware),
-		Services:    make(map[string]*config.Service),
-	}
-	for _, config := range configurations {
-		for key, value := range config.Middlewares {
-			conf.Middlewares[key] = value
-		}
-
-		for key, value := range config.Services {
-			conf.Services[key] = value
-		}
-
-		for key, value := range config.Routers {
-			conf.Routers[key] = value
-		}
-
-		conf.TLS = append(conf.TLS, config.TLS...)
-	}
-
+	conf := mergeConfiguration(configurations)
 	handlers := s.applyConfiguration(ctx, conf)
 
 	// Get new certificates list sorted per entry points

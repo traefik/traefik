@@ -85,7 +85,7 @@ func (s *TracingSuite) TestZipkinRateLimit(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusTooManyRequests))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://"+s.ZipkinIP+":9411/api/v2/spans?serviceName=tracing", 20*time.Second, try.BodyContains("forward service1/router1", "ratelimit"))
+	err = try.GetRequest("http://"+s.ZipkinIP+":9411/api/v2/spans?serviceName=tracing", 20*time.Second, try.BodyContains("forward service1/file.router1", "file.ratelimit"))
 	c.Assert(err, checker.IsNil)
 
 }
@@ -109,7 +109,7 @@ func (s *TracingSuite) TestZipkinRetry(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/retry", 500*time.Millisecond, try.StatusCodeIs(http.StatusBadGateway))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://"+s.ZipkinIP+":9411/api/v2/spans?serviceName=tracing", 20*time.Second, try.BodyContains("forward service2/router2", "retry"))
+	err = try.GetRequest("http://"+s.ZipkinIP+":9411/api/v2/spans?serviceName=tracing", 20*time.Second, try.BodyContains("forward service2/file.router2", "file.retry"))
 	c.Assert(err, checker.IsNil)
 }
 
@@ -132,6 +132,6 @@ func (s *TracingSuite) TestZipkinAuth(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/auth", 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://"+s.ZipkinIP+":9411/api/v2/spans?serviceName=tracing", 20*time.Second, try.BodyContains("entrypoint http", "basic-auth"))
+	err = try.GetRequest("http://"+s.ZipkinIP+":9411/api/v2/spans?serviceName=tracing", 20*time.Second, try.BodyContains("entrypoint http", "file.basic-auth"))
 	c.Assert(err, checker.IsNil)
 }

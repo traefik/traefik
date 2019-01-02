@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/containous/traefik/config"
+	"github.com/containous/traefik/server/internal"
 	"github.com/containous/traefik/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -320,6 +321,61 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 					req.Header.Set("Cookie", recorder.Header().Get("Set-Cookie"))
 				}
 			}
+		})
+	}
+}
+
+func TestManager_Build(t *testing.T) {
+	testCases := []struct {
+		desc         string
+		serviceName  string
+		configs      map[string]*config.Service
+		providerName string
+	}{
+		{
+			desc:        "Simple service name",
+			serviceName: "serviceName",
+			configs: map[string]*config.Service{
+				"serviceName": {
+					LoadBalancer: &config.LoadBalancerService{Method: "wrr"},
+				},
+			},
+		},
+		{
+			desc:        "Service name with provider",
+			serviceName: "provider-1.serviceName",
+			configs: map[string]*config.Service{
+				"provider-1.serviceName": {
+					LoadBalancer: &config.LoadBalancerService{Method: "wrr"},
+				},
+			},
+		},
+		{
+			desc:        "Service name with provider",
+			serviceName: "serviceName",
+			configs: map[string]*config.Service{
+				"provider-1.serviceName": {
+					LoadBalancer: &config.LoadBalancerService{Method: "wrr"},
+				},
+			},
+			providerName: "provider-1",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			manager := NewManager(test.configs, http.DefaultTransport)
+
+			ctx := context.Background()
+			if len(test.providerName) > 0 {
+				ctx = internal.AddProviderInContext(ctx, test.providerName)
+			}
+
+			_, err := manager.Build(ctx, test.serviceName, nil)
+			require.NoError(t, err)
 		})
 	}
 }

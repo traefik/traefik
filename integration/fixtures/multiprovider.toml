@@ -1,0 +1,24 @@
+[log]
+logLevel = "DEBUG"
+
+[api]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":8000"
+
+[Providers]
+   [Providers.Rest]
+
+   [Providers.File]
+
+[Services]
+  [Services.service]
+    [Services.service.LoadBalancer]
+
+      [[Services.service.LoadBalancer.Servers]]
+        URL = "{{.Server}}"
+        Weight = 1
+[Middlewares]
+  [Middlewares.customheader.Headers.CustomRequestHeaders]
+  X-Custom="CustomValue"
