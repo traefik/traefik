@@ -223,7 +223,12 @@ Multiple sets of rates can be added to each frontend, but the time periods must 
 
 In the above example, frontend1 is configured to limit requests by the client's ip address.  
 An average of 5 requests every 3 seconds is allowed and an average of 100 requests every 10 seconds.  
-These can "burst" up to 10 and 200 in each period respectively.
+These can "burst" up to 10 and 200 in each period respectively. 
+
+Valid values for `extractorfunc` are:
+  * `client.ip`
+  * `request.host`
+  * `request.header.<header name>`
 
 ## Buffering
 
