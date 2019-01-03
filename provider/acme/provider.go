@@ -268,8 +268,6 @@ func (p *Provider) getClient() (*lego.Client, error) {
 			return nil, err
 		}
 
-		client.Challenge.Exclude([]challenge.Type{challenge.HTTP01, challenge.TLSALPN01})
-
 		err = client.Challenge.SetDNS01Provider(provider,
 			dns01.CondOption(len(p.DNSChallenge.Resolvers) > 0, dns01.AddRecursiveNameservers(p.DNSChallenge.Resolvers)),
 			dns01.CondOption(p.DNSChallenge.DisablePropagationCheck || p.DNSChallenge.DelayBeforeCheck > 0,
@@ -297,16 +295,12 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	} else if p.HTTPChallenge != nil && len(p.HTTPChallenge.EntryPoint) > 0 {
 		log.Debug("Using HTTP Challenge provider.")
 
-		client.Challenge.Exclude([]challenge.Type{challenge.DNS01, challenge.TLSALPN01})
-
 		err = client.Challenge.SetHTTP01Provider(&challengeHTTP{Store: p.Store})
 		if err != nil {
 			return nil, err
 		}
 	} else if p.TLSChallenge != nil {
 		log.Debug("Using TLS Challenge provider.")
-
-		client.Challenge.Exclude([]challenge.Type{challenge.HTTP01, challenge.DNS01})
 
 		err = client.Challenge.SetTLSALPN01Provider(&challengeTLSALPN{Store: p.Store})
 		if err != nil {

@@ -446,7 +446,6 @@ func (a *ACME) buildACMEClient(account *Account) (*lego.Client, error) {
 			return nil, err
 		}
 
-		client.Challenge.Exclude([]challenge.Type{challenge.HTTP01, challenge.TLSALPN01})
 		err = client.Challenge.SetDNS01Provider(provider,
 			dns01.CondOption(len(a.DNSChallenge.Resolvers) > 0, dns01.AddRecursiveNameservers(a.DNSChallenge.Resolvers)),
 			dns01.CondOption(a.DNSChallenge.DisablePropagationCheck || a.DNSChallenge.DelayBeforeCheck > 0,
@@ -465,7 +464,6 @@ func (a *ACME) buildACMEClient(account *Account) (*lego.Client, error) {
 	if a.HTTPChallenge != nil && len(a.HTTPChallenge.EntryPoint) > 0 {
 		log.Debug("Using HTTP Challenge provider.")
 
-		client.Challenge.Exclude([]challenge.Type{challenge.DNS01, challenge.TLSALPN01})
 		a.challengeHTTPProvider = &challengeHTTPProvider{store: a.store}
 		err = client.Challenge.SetHTTP01Provider(a.challengeHTTPProvider)
 		return client, err
@@ -474,7 +472,7 @@ func (a *ACME) buildACMEClient(account *Account) (*lego.Client, error) {
 	// TLS Challenge
 	if a.TLSChallenge != nil {
 		log.Debug("Using TLS Challenge provider.")
-		client.Challenge.Exclude([]challenge.Type{challenge.HTTP01, challenge.DNS01})
+
 		err = client.Challenge.SetTLSALPN01Provider(a.challengeTLSProvider)
 		return client, err
 	}

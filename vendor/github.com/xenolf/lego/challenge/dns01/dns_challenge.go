@@ -140,6 +140,8 @@ func (c *Challenge) Solve(authz acme.Authorization) error {
 
 // CleanUp cleans the challenge.
 func (c *Challenge) CleanUp(authz acme.Authorization) error {
+	log.Infof("[%s] acme: Cleaning DNS-01 challenge", challenge.GetTargetedDomain(authz))
+
 	chlng, err := challenge.FindChallenge(challenge.DNS01, authz)
 	if err != nil {
 		return err
