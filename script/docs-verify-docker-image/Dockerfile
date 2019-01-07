@@ -7,9 +7,9 @@ RUN apk --no-cache --no-progress add \
     ruby-bigdecimal \
     ruby-ffi \
     ruby-json \
-    ruby-nokogiri \
+    ruby-nokogiri=1.8.3-r0 \
     tini \
-  && gem install --no-document html-proofer
+  && gem install --no-document html-proofer -v 3.9.3
 
 COPY ./validate.sh /validate.sh
 
