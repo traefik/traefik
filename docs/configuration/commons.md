@@ -562,7 +562,7 @@ Example:
 ```
 
 Pass TLS Client Cert `pem` defines if the escaped pem is added to a `X-Forwarded-Ssl-Client-Cert` header.  
-Pass TLS Client Cert `infos` configuration defines how the certificate data are added to a `X-Forwarded-Ssl-Client-Cert-Infos` header.  
+Pass TLS Client Cert `infos` defines how the certificate data are added to a `X-Forwarded-Ssl-Client-Cert-Infos` header.  
 
 The following example shows an unescaped result that uses all the available fields:
 If there are more than one certificate, they are separated by a `;`
