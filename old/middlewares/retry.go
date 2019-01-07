@@ -44,9 +44,7 @@ func (retry *Retry) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	attempts := 1
 	for {
-		attemptsExhausted := attempts >= retry.attempts
-
-		shouldRetry := !attemptsExhausted
+		shouldRetry := attempts < retry.attempts
 		retryResponseWriter := newRetryResponseWriter(rw, shouldRetry)
 
 		// Disable retries when the backend already received request data
@@ -99,6 +97,7 @@ type retryResponseWriter interface {
 func newRetryResponseWriter(rw http.ResponseWriter, shouldRetry bool) retryResponseWriter {
 	responseWriter := &retryResponseWriterWithoutCloseNotify{
 		responseWriter: rw,
+		headers:        make(http.Header),
 		shouldRetry:    shouldRetry,
 	}
 	if _, ok := rw.(http.CloseNotifier); ok {
@@ -109,6 +108,7 @@ func newRetryResponseWriter(rw http.ResponseWriter, shouldRetry bool) retryRespo
 
 type retryResponseWriterWithoutCloseNotify struct {
 	responseWriter http.ResponseWriter
+	headers        http.Header
 	shouldRetry    bool
 }
 
@@ -121,10 +121,7 @@ func (rr *retryResponseWriterWithoutCloseNotify) DisableRetries() {
 }
 
 func (rr *retryResponseWriterWithoutCloseNotify) Header() http.Header {
-	if rr.ShouldRetry() {
-		return make(http.Header)
-	}
-	return rr.responseWriter.Header()
+	return rr.headers
 }
 
 func (rr *retryResponseWriterWithoutCloseNotify) Write(buf []byte) (int, error) {
@@ -147,6 +144,16 @@ func (rr *retryResponseWriterWithoutCloseNotify) WriteHeader(code int) {
 	if rr.ShouldRetry() {
 		return
 	}
+
+	// In that case retry case is set to false which means we at least managed
+	// to write headers to the backend : we are not going to perform any further retry.
+	// So it is now safe to alter current response headers with headers collected during
+	// the latest try before writing headers to client.
+	headers := rr.responseWriter.Header()
+	for header, value := range rr.headers {
+		headers[header] = value
+	}
+
 	rr.responseWriter.WriteHeader(code)
 }
 
