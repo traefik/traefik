@@ -239,6 +239,8 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 			LocalAgentHostPort: "localhost:8126",
 			GlobalTag:          "",
 			Debug:              false,
+			PrioritySampling:   false,
+
 		},
 	}
 
