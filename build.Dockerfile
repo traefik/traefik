@@ -10,7 +10,7 @@ RUN go get golang.org/x/lint/golint \
 
 # Which docker version to test on
 ARG DOCKER_VERSION=17.03.2
-ARG DEP_VERSION=0.4.1
+ARG DEP_VERSION=0.5.0
 
 # Download go-bindata binary to bin folder in $GOPATH
 RUN mkdir -p /usr/local/bin \
