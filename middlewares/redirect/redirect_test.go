@@ -17,11 +17,12 @@ func TestNewRegexHandler(t *testing.T) {
 	testCases := []struct {
 		desc           string
 		config         config.Redirect
+		method         string
 		url            string
+		secured        bool
 		expectedURL    string
 		expectedStatus int
 		errorExpected  bool
-		secured        bool
 	}{
 		{
 			desc: "simple redirection",
@@ -124,6 +125,29 @@ func TestNewRegexHandler(t *testing.T) {
 			expectedURL:    "http://foo:88",
 			expectedStatus: http.StatusFound,
 		},
+		{
+			desc: "HTTP to HTTP POST",
+			config: config.Redirect{
+				Regex:       `^http://`,
+				Replacement: "https://$1",
+			},
+			url:            "http://foo",
+			method:         http.MethodPost,
+			expectedURL:    "https://foo",
+			expectedStatus: http.StatusTemporaryRedirect,
+		},
+		{
+			desc: "HTTP to HTTP POST permanent",
+			config: config.Redirect{
+				Regex:       `^http://`,
+				Replacement: "https://$1",
+				Permanent:   true,
+			},
+			url:            "http://foo",
+			method:         http.MethodPost,
+			expectedURL:    "https://foo",
+			expectedStatus: http.StatusPermanentRedirect,
+		},
 	}
 
 	for _, test := range testCases {
@@ -142,23 +166,29 @@ func TestNewRegexHandler(t *testing.T) {
 				require.NotNil(t, handler)
 
 				recorder := httptest.NewRecorder()
-				r := testhelpers.MustNewRequest(http.MethodGet, test.url, nil)
+
+				method := http.MethodGet
+				if test.method != "" {
+					method = test.method
+				}
+				r := testhelpers.MustNewRequest(method, test.url, nil)
 				if test.secured {
 					r.TLS = &tls.ConnectionState{}
 				}
 				r.Header.Set("X-Foo", "bar")
 				handler.ServeHTTP(recorder, r)
 
-				if test.expectedStatus == http.StatusMovedPermanently || test.expectedStatus == http.StatusFound {
-					assert.Equal(t, test.expectedStatus, recorder.Code)
+				assert.Equal(t, test.expectedStatus, recorder.Code)
+				if test.expectedStatus == http.StatusMovedPermanently ||
+					test.expectedStatus == http.StatusFound ||
+					test.expectedStatus == http.StatusTemporaryRedirect ||
+					test.expectedStatus == http.StatusPermanentRedirect {
 
 					location, err := recorder.Result().Location()
 					require.NoError(t, err)
 
 					assert.Equal(t, test.expectedURL, location.String())
 				} else {
-					assert.Equal(t, test.expectedStatus, recorder.Code)
-
 					location, err := recorder.Result().Location()
 					require.Errorf(t, err, "Location %v", location)
 				}
