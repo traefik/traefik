@@ -1,5 +1,4 @@
-// Package ovh implements a DNS provider for solving the DNS-01
-// challenge using OVH DNS.
+// Package ovh implements a DNS provider for solving the DNS-01 challenge using OVH DNS.
 package ovh
 
 import (
@@ -11,12 +10,22 @@ import (
 	"time"
 
 	"github.com/ovh/go-ovh/ovh"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/platform/config/env"
 )
 
 // OVH API reference:       https://eu.api.ovh.com/
 // Create a Token:					https://eu.api.ovh.com/createToken/
+
+// Record a DNS record
+type Record struct {
+	ID        int    `json:"id,omitempty"`
+	FieldType string `json:"fieldType,omitempty"`
+	SubDomain string `json:"subDomain,omitempty"`
+	Target    string `json:"target,omitempty"`
+	TTL       int    `json:"ttl,omitempty"`
+	Zone      string `json:"zone,omitempty"`
+}
 
 // Config is used to configure the creation of the DNSProvider
 type Config struct {
@@ -33,9 +42,9 @@ type Config struct {
 // NewDefaultConfig returns a default configuration for the DNSProvider
 func NewDefaultConfig() *Config {
 	return &Config{
-		TTL:                env.GetOrDefaultInt("OVH_TTL", 120),
-		PropagationTimeout: env.GetOrDefaultSecond("OVH_PROPAGATION_TIMEOUT", acme.DefaultPropagationTimeout),
-		PollingInterval:    env.GetOrDefaultSecond("OVH_POLLING_INTERVAL", acme.DefaultPollingInterval),
+		TTL:                env.GetOrDefaultInt("OVH_TTL", dns01.DefaultTTL),
+		PropagationTimeout: env.GetOrDefaultSecond("OVH_PROPAGATION_TIMEOUT", dns01.DefaultPropagationTimeout),
+		PollingInterval:    env.GetOrDefaultSecond("OVH_POLLING_INTERVAL", dns01.DefaultPollingInterval),
 		HTTPClient: &http.Client{
 			Timeout: env.GetOrDefaultSecond("OVH_HTTP_TIMEOUT", ovh.DefaultTimeout),
 		},
@@ -72,19 +81,6 @@ func NewDNSProvider() (*DNSProvider, error) {
 	return NewDNSProviderConfig(config)
 }
 
-// NewDNSProviderCredentials uses the supplied credentials
-// to return a DNSProvider instance configured for OVH.
-// Deprecated
-func NewDNSProviderCredentials(apiEndpoint, applicationKey, applicationSecret, consumerKey string) (*DNSProvider, error) {
-	config := NewDefaultConfig()
-	config.APIEndpoint = apiEndpoint
-	config.ApplicationKey = applicationKey
-	config.ApplicationSecret = applicationSecret
-	config.ConsumerKey = consumerKey
-
-	return NewDNSProviderConfig(config)
-}
-
 // NewDNSProviderConfig return a DNSProvider instance configured for OVH.
 func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 	if config == nil {
@@ -116,32 +112,32 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 
 // Present creates a TXT record to fulfill the dns-01 challenge.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
 	// Parse domain name
-	authZone, err := acme.FindZoneByFqdn(acme.ToFqdn(domain), acme.RecursiveNameservers)
+	authZone, err := dns01.FindZoneByFqdn(dns01.ToFqdn(domain))
 	if err != nil {
 		return fmt.Errorf("ovh: could not determine zone for domain: '%s'. %s", domain, err)
 	}
 
-	authZone = acme.UnFqdn(authZone)
+	authZone = dns01.UnFqdn(authZone)
 	subDomain := d.extractRecordName(fqdn, authZone)
 
 	reqURL := fmt.Sprintf("/domain/zone/%s/record", authZone)
-	reqData := txtRecordRequest{FieldType: "TXT", SubDomain: subDomain, Target: value, TTL: d.config.TTL}
-	var respData txtRecordResponse
+	reqData := Record{FieldType: "TXT", SubDomain: subDomain, Target: value, TTL: d.config.TTL}
 
 	// Create TXT record
+	var respData Record
 	err = d.client.Post(reqURL, reqData, &respData)
 	if err != nil {
-		return fmt.Errorf("ovh: error when call api to add record: %v", err)
+		return fmt.Errorf("ovh: error when call api to add record (%s): %v", reqURL, err)
 	}
 
 	// Apply the change
 	reqURL = fmt.Sprintf("/domain/zone/%s/refresh", authZone)
 	err = d.client.Post(reqURL, nil, nil)
 	if err != nil {
-		return fmt.Errorf("ovh: error when call api to refresh zone: %v", err)
+		return fmt.Errorf("ovh: error when call api to refresh zone (%s): %v", reqURL, err)
 	}
 
 	d.recordIDsMu.Lock()
@@ -153,7 +149,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _ := dns01.GetRecord(domain, keyAuth)
 
 	// get the record's unique ID from when we created it
 	d.recordIDsMu.Lock()
@@ -163,18 +159,18 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 		return fmt.Errorf("ovh: unknown record ID for '%s'", fqdn)
 	}
 
-	authZone, err := acme.FindZoneByFqdn(acme.ToFqdn(domain), acme.RecursiveNameservers)
+	authZone, err := dns01.FindZoneByFqdn(dns01.ToFqdn(domain))
 	if err != nil {
 		return fmt.Errorf("ovh: could not determine zone for domain: '%s'. %s", domain, err)
 	}
 
-	authZone = acme.UnFqdn(authZone)
+	authZone = dns01.UnFqdn(authZone)
 
 	reqURL := fmt.Sprintf("/domain/zone/%s/record/%d", authZone, recordID)
 
 	err = d.client.Delete(reqURL, nil)
 	if err != nil {
-		return fmt.Errorf("ovh: error when call OVH api to delete challenge record: %v", err)
+		return fmt.Errorf("ovh: error when call OVH api to delete challenge record (%s): %v", reqURL, err)
 	}
 
 	// Delete record ID from map
@@ -192,27 +188,9 @@ func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 }
 
 func (d *DNSProvider) extractRecordName(fqdn, domain string) string {
-	name := acme.UnFqdn(fqdn)
+	name := dns01.UnFqdn(fqdn)
 	if idx := strings.Index(name, "."+domain); idx != -1 {
 		return name[:idx]
 	}
 	return name
-}
-
-// txtRecordRequest represents the request body to DO's API to make a TXT record
-type txtRecordRequest struct {
-	FieldType string `json:"fieldType"`
-	SubDomain string `json:"subDomain"`
-	Target    string `json:"target"`
-	TTL       int    `json:"ttl"`
-}
-
-// txtRecordResponse represents a response from DO's API after making a TXT record
-type txtRecordResponse struct {
-	ID        int    `json:"id"`
-	FieldType string `json:"fieldType"`
-	SubDomain string `json:"subDomain"`
-	Target    string `json:"target"`
-	TTL       int    `json:"ttl"`
-	Zone      string `json:"zone"`
 }

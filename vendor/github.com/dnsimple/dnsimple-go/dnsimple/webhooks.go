@@ -14,7 +14,7 @@ type WebhooksService struct {
 
 // Webhook represents a DNSimple webhook.
 type Webhook struct {
-	ID  int64    `json:"id,omitempty"`
+	ID  int64  `json:"id,omitempty"`
 	URL string `json:"url,omitempty"`
 }
 

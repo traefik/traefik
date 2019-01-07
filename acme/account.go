@@ -17,15 +17,16 @@ import (
 	"github.com/containous/traefik/log"
 	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/types"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/certcrypto"
+	"github.com/xenolf/lego/registration"
 )
 
 // Account is used to store lets encrypt registration info
 type Account struct {
 	Email              string
-	Registration       *acme.RegistrationResource
+	Registration       *registration.Resource
 	PrivateKey         []byte
-	KeyType            acme.KeyType
+	KeyType            certcrypto.KeyType
 	DomainsCertificate DomainsCertificates
 	ChallengeCerts     map[string]*ChallengeCert
 	HTTPChallenge      map[string]map[string][]byte
@@ -100,7 +101,7 @@ func (a *Account) GetEmail() string {
 }
 
 // GetRegistration returns lets encrypt registration resource
-func (a *Account) GetRegistration() *acme.RegistrationResource {
+func (a *Account) GetRegistration() *registration.Resource {
 	return a.Registration
 }
 

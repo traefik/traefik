@@ -35,7 +35,7 @@ import (
 	"github.com/containous/traefik/whitelist"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/tlsalpn01"
 )
 
 var httpServerLogger = stdlog.New(log.WriterLevel(logrus.DebugLevel), "", 0)
@@ -439,7 +439,7 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 	s.serverEntryPoints[entryPointName].certs.DynamicCerts.Set(make(map[string]*tls.Certificate))
 
 	// ensure http2 enabled
-	config.NextProtos = []string{"h2", "http/1.1", acme.ACMETLS1Protocol}
+	config.NextProtos = []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol}
 
 	if len(tlsOption.ClientCAFiles) > 0 {
 		log.Warnf("Deprecated configuration found during TLS configuration creation: %s. Please use %s (which allows to make the CA Files optional).", "tls.ClientCAFiles", "tls.ClientCA.files")

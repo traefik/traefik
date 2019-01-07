@@ -80,18 +80,17 @@ func main() {
 		o := scope.Lookup(name)
 		st, _ := getTypeStruct(o.Type(), scope)
 
-		fmt.Fprintf(b, "func (rr *%s) pack(msg []byte, off int, compression map[string]int, compress bool) (int, error) {\n", name)
-		fmt.Fprint(b, `off, err := rr.Hdr.pack(msg, off, compression, compress)
+		fmt.Fprintf(b, "func (rr *%s) pack(msg []byte, off int, compression compressionMap, compress bool) (int, int, error) {\n", name)
+		fmt.Fprint(b, `headerEnd, off, err := rr.Hdr.pack(msg, off, compression, compress)
 if err != nil {
-	return off, err
+	return headerEnd, off, err
 }
-headerEnd := off
 `)
 		for i := 1; i < st.NumFields(); i++ {
 			o := func(s string) {
 				fmt.Fprintf(b, s, st.Field(i).Name())
 				fmt.Fprint(b, `if err != nil {
-return off, err
+return headerEnd, off, err
 }
 `)
 			}
@@ -106,7 +105,7 @@ return off, err
 				case `dns:"nsec"`:
 					o("off, err = packDataNsec(rr.%s, msg, off)\n")
 				case `dns:"domain-name"`:
-					o("off, err = packDataDomainNames(rr.%s, msg, off, compression, compress)\n")
+					o("off, err = packDataDomainNames(rr.%s, msg, off, compression, false)\n")
 				default:
 					log.Fatalln(name, st.Field(i).Name(), st.Tag(i))
 				}
@@ -116,9 +115,9 @@ return off, err
 			switch {
 			case st.Tag(i) == `dns:"-"`: // ignored
 			case st.Tag(i) == `dns:"cdomain-name"`:
-				o("off, err = PackDomainName(rr.%s, msg, off, compression, compress)\n")
+				o("off, _, err = packDomainName(rr.%s, msg, off, compression, compress)\n")
 			case st.Tag(i) == `dns:"domain-name"`:
-				o("off, err = PackDomainName(rr.%s, msg, off, compression, false)\n")
+				o("off, _, err = packDomainName(rr.%s, msg, off, compression, false)\n")
 			case st.Tag(i) == `dns:"a"`:
 				o("off, err = packDataA(rr.%s, msg, off)\n")
 			case st.Tag(i) == `dns:"aaaa"`:
@@ -145,7 +144,7 @@ return off, err
 if rr.%s != "-" {
   off, err = packStringHex(rr.%s, msg, off)
   if err != nil {
-    return off, err
+    return headerEnd, off, err
   }
 }
 `, field, field)
@@ -176,9 +175,7 @@ if rr.%s != "-" {
 				log.Fatalln(name, st.Field(i).Name(), st.Tag(i))
 			}
 		}
-		// We have packed everything, only now we know the rdlength of this RR
-		fmt.Fprintln(b, "rr.Header().Rdlength = uint16(off-headerEnd)")
-		fmt.Fprintln(b, "return off, nil }\n")
+		fmt.Fprintln(b, "return headerEnd, off, nil }\n")
 	}
 
 	fmt.Fprint(b, "// unpack*() functions\n\n")

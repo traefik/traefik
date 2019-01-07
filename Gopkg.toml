@@ -19,6 +19,11 @@
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 
+[prune]
+  non-go = true
+  go-tests = true
+  unused-packages = true
+
 [[constraint]]
   branch = "master"
   name = "github.com/ArthurHlt/go-eureka-client"
@@ -249,13 +254,8 @@
   revision = "7e6055773c5137efbeb3bd2410d705fe10ab6bfd"
 
 [[override]]
-  branch = "master"
+  version = "v1.1.1"
   name = "github.com/miekg/dns"
-
-[prune]
-  non-go = true
-  go-tests = true
-  unused-packages = true
 
 [[constraint]]
   name = "github.com/patrickmn/go-cache"

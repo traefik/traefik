@@ -1,5 +1,4 @@
-// Package rfc2136 implements a DNS provider for solving the DNS-01 challenge
-// using the rfc2136 dynamic update.
+// Package rfc2136 implements a DNS provider for solving the DNS-01 challenge using the rfc2136 dynamic update.
 package rfc2136
 
 import (
@@ -10,11 +9,9 @@ import (
 	"time"
 
 	"github.com/miekg/dns"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/platform/config/env"
 )
-
-const defaultTimeout = 60 * time.Second
 
 // Config is used to configure the creation of the DNSProvider
 type Config struct {
@@ -31,7 +28,7 @@ type Config struct {
 func NewDefaultConfig() *Config {
 	return &Config{
 		TSIGAlgorithm: env.GetOrDefaultString("RFC2136_TSIG_ALGORITHM", dns.HmacMD5),
-		TTL:           env.GetOrDefaultInt("RFC2136_TTL", 120),
+		TTL:           env.GetOrDefaultInt("RFC2136_TTL", dns01.DefaultTTL),
 		PropagationTimeout: env.GetOrDefaultSecond("RFC2136_PROPAGATION_TIMEOUT",
 			env.GetOrDefaultSecond("RFC2136_TIMEOUT", 60*time.Second)),
 		PollingInterval: env.GetOrDefaultSecond("RFC2136_POLLING_INTERVAL", 2*time.Second),
@@ -63,34 +60,6 @@ func NewDNSProvider() (*DNSProvider, error) {
 	config.Nameserver = values["RFC2136_NAMESERVER"]
 	config.TSIGKey = env.GetOrFile("RFC2136_TSIG_KEY")
 	config.TSIGSecret = env.GetOrFile("RFC2136_TSIG_SECRET")
-
-	return NewDNSProviderConfig(config)
-}
-
-// NewDNSProviderCredentials uses the supplied credentials
-// to return a DNSProvider instance configured for rfc2136 dynamic update.
-// To disable TSIG authentication, leave the TSIG parameters as empty strings.
-// nameserver must be a network address in the form "host" or "host:port".
-// Deprecated
-func NewDNSProviderCredentials(nameserver, tsigAlgorithm, tsigKey, tsigSecret, rawTimeout string) (*DNSProvider, error) {
-	config := NewDefaultConfig()
-	config.Nameserver = nameserver
-	config.TSIGAlgorithm = tsigAlgorithm
-	config.TSIGKey = tsigKey
-	config.TSIGSecret = tsigSecret
-
-	timeout := defaultTimeout
-	if rawTimeout != "" {
-		t, err := time.ParseDuration(rawTimeout)
-		if err != nil {
-			return nil, err
-		} else if t < 0 {
-			return nil, fmt.Errorf("rfc2136: invalid/negative RFC2136_TIMEOUT: %v", rawTimeout)
-		} else {
-			timeout = t
-		}
-	}
-	config.PropagationTimeout = timeout
 
 	return NewDNSProviderConfig(config)
 }
@@ -135,7 +104,7 @@ func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 
 // Present creates a TXT record using the specified parameters
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
 	err := d.changeRecord("INSERT", fqdn, value, d.config.TTL)
 	if err != nil {
@@ -146,7 +115,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
 	err := d.changeRecord("REMOVE", fqdn, value, d.config.TTL)
 	if err != nil {
@@ -157,7 +126,7 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 
 func (d *DNSProvider) changeRecord(action, fqdn, value string, ttl int) error {
 	// Find the zone for the given fqdn
-	zone, err := acme.FindZoneByFqdn(fqdn, []string{d.config.Nameserver})
+	zone, err := dns01.FindZoneByFqdnCustom(fqdn, []string{d.config.Nameserver})
 	if err != nil {
 		return err
 	}

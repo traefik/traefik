@@ -23,7 +23,7 @@ const (
 	// This is a pro-forma convention given that Go dependencies
 	// tends to be fetched directly from the repo.
 	// It is also used in the user-agent identify the client.
-	Version = "0.16.0"
+	Version = "0.21.0"
 
 	// defaultBaseURL to the DNSimple production API.
 	defaultBaseURL = "https://api.dnsimple.com"
@@ -37,12 +37,9 @@ const (
 
 // Client represents a client to the DNSimple API.
 type Client struct {
-	// HttpClient is the underlying HTTP client
+	// httpClient is the underlying HTTP client
 	// used to communicate with the API.
-	HttpClient *http.Client
-
-	// Credentials used for accessing the DNSimple API
-	Credentials Credentials
+	httpClient *http.Client
 
 	// BaseURL for API requests.
 	// Defaults to the public DNSimple API, but can be set to a different endpoint (e.g. the sandbox).
@@ -85,9 +82,12 @@ type ListOptions struct {
 	Sort string `url:"sort,omitempty"`
 }
 
-// NewClient returns a new DNSimple API client using the given credentials.
-func NewClient(credentials Credentials) *Client {
-	c := &Client{Credentials: credentials, HttpClient: &http.Client{}, BaseURL: defaultBaseURL}
+// NewClient returns a new DNSimple API client.
+//
+// To authenticate you must provide an http.Client that will perform authentication
+// for you with one of the currently supported mechanisms: OAuth or HTTP Basic.
+func NewClient(httpClient *http.Client) *Client {
+	c := &Client{httpClient: httpClient, BaseURL: defaultBaseURL}
 	c.Identity = &IdentityService{client: c}
 	c.Accounts = &AccountsService{client: c}
 	c.Certificates = &CertificatesService{client: c}
@@ -126,9 +126,6 @@ func (c *Client) NewRequest(method, path string, payload interface{}) (*http.Req
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("User-Agent", formatUserAgent(c.UserAgent))
-	for key, value := range c.Credentials.Headers() {
-		req.Header.Add(key, value)
-	}
 
 	return req, nil
 }
@@ -212,7 +209,7 @@ func (c *Client) Do(req *http.Request, obj interface{}) (*http.Response, error) 
 		log.Printf("Executing request (%v): %#v", req.URL, req)
 	}
 
-	resp, err := c.HttpClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -231,7 +228,7 @@ func (c *Client) Do(req *http.Request, obj interface{}) (*http.Response, error) 
 	// the response body is decoded into v.
 	if obj != nil {
 		if w, ok := obj.(io.Writer); ok {
-			io.Copy(w, resp.Body)
+			_, err = io.Copy(w, resp.Body)
 		} else {
 			err = json.NewDecoder(resp.Body).Decode(obj)
 		}
