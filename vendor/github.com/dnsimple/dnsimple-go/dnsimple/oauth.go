@@ -72,7 +72,7 @@ func (s *OauthService) ExchangeAuthorizationForToken(authorization *ExchangeAuth
 		return nil, err
 	}
 
-	resp, err := s.client.HttpClient.Do(req)
+	resp, err := s.client.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

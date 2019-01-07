@@ -31,7 +31,7 @@ import (
 	"github.com/containous/traefik/tracing/zipkin"
 	"github.com/containous/traefik/types"
 	"github.com/elazarl/go-bindata-assetfs"
-	lego "github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
 )
 
 const (
@@ -374,11 +374,11 @@ func convertACMEChallenge(oldACMEChallenge *acme.ACME) *acmeprovider.Configurati
 	}
 
 	for _, domain := range oldACMEChallenge.Domains {
-		if domain.Main != lego.UnFqdn(domain.Main) {
+		if domain.Main != dns01.UnFqdn(domain.Main) {
 			log.Warnf("FQDN detected, please remove the trailing dot: %s", domain.Main)
 		}
 		for _, san := range domain.SANs {
-			if san != lego.UnFqdn(san) {
+			if san != dns01.UnFqdn(san) {
 				log.Warnf("FQDN detected, please remove the trailing dot: %s", san)
 			}
 		}

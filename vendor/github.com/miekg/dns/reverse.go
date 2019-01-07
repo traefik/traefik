@@ -12,6 +12,11 @@ var StringToOpcode = reverseInt(OpcodeToString)
 // StringToRcode is a map of rcodes to strings.
 var StringToRcode = reverseInt(RcodeToString)
 
+func init() {
+	// Preserve previous NOTIMP typo, see github.com/miekg/dns/issues/733.
+	StringToRcode["NOTIMPL"] = RcodeNotImplemented
+}
+
 // Reverse a map
 func reverseInt8(m map[uint8]string) map[string]uint8 {
 	n := make(map[string]uint8, len(m))

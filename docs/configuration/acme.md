@@ -332,6 +332,14 @@ Here is a list of supported `provider`s, that can automate the DNS verification,
 
 Use custom DNS servers to resolve the FQDN authority.
 
+```toml
+[acme]
+# ...
+[acme.dnsChallenge]
+  # ...
+  resolvers = ["1.1.1.1:53", "8.8.8.8:53"]
+```
+
 ### `domains`
 
 You can provide SANs (alternative domains) to each main domain.

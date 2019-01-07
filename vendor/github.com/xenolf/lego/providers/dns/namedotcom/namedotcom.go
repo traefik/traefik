@@ -1,5 +1,4 @@
-// Package namedotcom implements a DNS provider for solving the DNS-01 challenge
-// using Name.com's DNS service.
+// Package namedotcom implements a DNS provider for solving the DNS-01 challenge using Name.com's DNS service.
 package namedotcom
 
 import (
@@ -10,7 +9,7 @@ import (
 	"time"
 
 	"github.com/namedotcom/go/namecom"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/platform/config/env"
 )
 
@@ -32,8 +31,8 @@ type Config struct {
 func NewDefaultConfig() *Config {
 	return &Config{
 		TTL:                env.GetOrDefaultInt("NAMECOM_TTL", minTTL),
-		PropagationTimeout: env.GetOrDefaultSecond("NAMECOM_PROPAGATION_TIMEOUT", acme.DefaultPropagationTimeout),
-		PollingInterval:    env.GetOrDefaultSecond("NAMECOM_POLLING_INTERVAL", acme.DefaultPollingInterval),
+		PropagationTimeout: env.GetOrDefaultSecond("NAMECOM_PROPAGATION_TIMEOUT", 15*time.Minute),
+		PollingInterval:    env.GetOrDefaultSecond("NAMECOM_POLLING_INTERVAL", 20*time.Second),
 		HTTPClient: &http.Client{
 			Timeout: env.GetOrDefaultSecond("NAMECOM_HTTP_TIMEOUT", 10*time.Second),
 		},
@@ -59,18 +58,6 @@ func NewDNSProvider() (*DNSProvider, error) {
 	config.Username = values["NAMECOM_USERNAME"]
 	config.APIToken = values["NAMECOM_API_TOKEN"]
 	config.Server = env.GetOrFile("NAMECOM_SERVER")
-
-	return NewDNSProviderConfig(config)
-}
-
-// NewDNSProviderCredentials uses the supplied credentials
-// to return a DNSProvider instance configured for namedotcom.
-// Deprecated
-func NewDNSProviderCredentials(username, apiToken, server string) (*DNSProvider, error) {
-	config := NewDefaultConfig()
-	config.Username = username
-	config.APIToken = apiToken
-	config.Server = server
 
 	return NewDNSProviderConfig(config)
 }
@@ -105,7 +92,7 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 
 // Present creates a TXT record to fulfill the dns-01 challenge.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
 	request := &namecom.Record{
 		DomainName: domain,
@@ -125,7 +112,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters.
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _ := dns01.GetRecord(domain, keyAuth)
 
 	records, err := d.getRecords(domain)
 	if err != nil {
@@ -175,7 +162,7 @@ func (d *DNSProvider) getRecords(domain string) ([]*namecom.Record, error) {
 }
 
 func (d *DNSProvider) extractRecordName(fqdn, domain string) string {
-	name := acme.UnFqdn(fqdn)
+	name := dns01.UnFqdn(fqdn)
 	if idx := strings.Index(name, "."+domain); idx != -1 {
 		return name[:idx]
 	}

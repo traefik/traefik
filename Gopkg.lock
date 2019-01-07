@@ -430,19 +430,19 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:ec6271918b59b872a2d25e374569a4f75f1839d91e4191470c297b7eaaaf7641"
+  digest = "1:f9adc21a937e5da643ea14a3488cb7506788876737a5e205394e508627a6eec8"
   name = "github.com/dimchansky/utfbom"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "c410c2305b32ec96caea4e24b4ecbf648e2eeb25"
+  revision = "d2133a1ce379ef6fa992b0514a77146c60db9d1c"
 
 [[projects]]
-  branch = "master"
-  digest = "1:e8055cec2992f8bbf63c390aa6b36d78c2f93b13617e4569168c09219f88c6b0"
+  digest = "1:e856fc44ab196970612bdc8c15e65ccf92ed8d4ccb3a2e65b88dc240a2fe5d0b"
   name = "github.com/dnsimple/dnsimple-go"
   packages = ["dnsimple"]
   pruneopts = "NUT"
-  revision = "bbe1a2c87affea187478e24d3aea3cac25f870b3"
+  revision = "f5ead9c20763fd925dea1362f2af5d671ed2a459"
+  version = "v0.21.0"
 
 [[projects]]
   digest = "1:cf7cba074c4d2f8e2a5cc2f10b1f6762c86cff2e39917b9f9a6dbd7df57fe9c9"
@@ -1188,12 +1188,12 @@
   source = "https://github.com/containous/mesos-dns.git"
 
 [[projects]]
-  branch = "master"
-  digest = "1:68cbf3a326abda169b26327b95302db8bcf297a49e689e85746bfc04d1cd8c33"
+  digest = "1:b83995756f9b1a24c518d40052d80f524f0a9024ee0479d8a8e91ec2548074d1"
   name = "github.com/miekg/dns"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "906238edc6eb0ddface4a1923f6d41ef2a5ca59b"
+  revision = "7586a3cbe8ccfc63f82de3ab2ceeb08c9939af72"
+  version = "v1.1.1"
 
 [[projects]]
   branch = "master"
@@ -1705,12 +1705,25 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:1c455a900935917ff95c6dfc95461ffc0d7b138a803e9504319f2d9a39e5d6f3"
+  digest = "1:f3f9f7b883b89edc06283285964a8125b15f31c1634a8ccb2860c8c8b3f6231d"
   name = "github.com/xenolf/lego"
   packages = [
     "acme",
+    "acme/api",
+    "acme/api/internal/nonces",
+    "acme/api/internal/secure",
+    "acme/api/internal/sender",
+    "certcrypto",
+    "certificate",
+    "challenge",
+    "challenge/dns01",
+    "challenge/http01",
+    "challenge/resolver",
+    "challenge/tlsalpn01",
+    "lego",
     "log",
     "platform/config/env",
+    "platform/wait",
     "providers/dns",
     "providers/dns/acmedns",
     "providers/dns/alidns",
@@ -1719,10 +1732,13 @@
     "providers/dns/bluecat",
     "providers/dns/cloudflare",
     "providers/dns/cloudxns",
+    "providers/dns/cloudxns/internal",
     "providers/dns/conoha",
+    "providers/dns/conoha/internal",
     "providers/dns/digitalocean",
     "providers/dns/dnsimple",
     "providers/dns/dnsmadeeasy",
+    "providers/dns/dnsmadeeasy/internal",
     "providers/dns/dnspod",
     "providers/dns/dreamhost",
     "providers/dns/duckdns",
@@ -1746,7 +1762,9 @@
     "providers/dns/namecheap",
     "providers/dns/namedotcom",
     "providers/dns/netcup",
+    "providers/dns/netcup/internal",
     "providers/dns/nifcloud",
+    "providers/dns/nifcloud/internal",
     "providers/dns/ns1",
     "providers/dns/otc",
     "providers/dns/ovh",
@@ -1756,18 +1774,21 @@
     "providers/dns/route53",
     "providers/dns/sakuracloud",
     "providers/dns/selectel",
+    "providers/dns/selectel/internal",
     "providers/dns/stackpath",
     "providers/dns/transip",
     "providers/dns/vegadns",
     "providers/dns/vscale",
+    "providers/dns/vscale/internal",
     "providers/dns/vultr",
+    "registration",
   ]
   pruneopts = "NUT"
-  revision = "a5f0a3ff8026e05cbdd11c391c0e25122497c736"
+  revision = "43401f2475dd1f6cc2e220908f0caba246ea854e"
 
 [[projects]]
   branch = "master"
-  digest = "1:d25ae0946d8bebad296b1a167cd62b92c3079e90c59f91657f69da08fe0cf76c"
+  digest = "1:30c1930f8c9fee79f3af60c8b7cd92edd12a4f22187f5527d53509b1a794f555"
   name = "golang.org/x/crypto"
   packages = [
     "bcrypt",
@@ -1782,7 +1803,7 @@
     "ssh/terminal",
   ]
   pruneopts = "NUT"
-  revision = "91a49db82a88618983a78a06c1cbd4e00ab749ab"
+  revision = "505ab145d0a99da450461ae2c1a9f6cd10d1f447"
 
 [[projects]]
   branch = "master"
@@ -2343,8 +2364,16 @@
     "github.com/vulcand/oxy/roundrobin",
     "github.com/vulcand/oxy/utils",
     "github.com/xenolf/lego/acme",
+    "github.com/xenolf/lego/certcrypto",
+    "github.com/xenolf/lego/certificate",
+    "github.com/xenolf/lego/challenge",
+    "github.com/xenolf/lego/challenge/dns01",
+    "github.com/xenolf/lego/challenge/http01",
+    "github.com/xenolf/lego/challenge/tlsalpn01",
+    "github.com/xenolf/lego/lego",
     "github.com/xenolf/lego/log",
     "github.com/xenolf/lego/providers/dns",
+    "github.com/xenolf/lego/registration",
     "golang.org/x/net/http/httpguts",
     "golang.org/x/net/http2",
     "golang.org/x/net/http2/hpack",

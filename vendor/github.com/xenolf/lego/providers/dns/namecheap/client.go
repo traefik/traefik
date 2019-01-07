@@ -20,8 +20,8 @@ type Record struct {
 	TTL     string `xml:",attr"`
 }
 
-// apierror describes an error record in a namecheap API response.
-type apierror struct {
+// apiError describes an error record in a namecheap API response.
+type apiError struct {
 	Number      int    `xml:",attr"`
 	Description string `xml:",innerxml"`
 }
@@ -29,7 +29,7 @@ type apierror struct {
 type setHostsResponse struct {
 	XMLName xml.Name   `xml:"ApiResponse"`
 	Status  string     `xml:"Status,attr"`
-	Errors  []apierror `xml:"Errors>Error"`
+	Errors  []apiError `xml:"Errors>Error"`
 	Result  struct {
 		IsSuccess string `xml:",attr"`
 	} `xml:"CommandResponse>DomainDNSSetHostsResult"`
@@ -38,13 +38,13 @@ type setHostsResponse struct {
 type getHostsResponse struct {
 	XMLName xml.Name   `xml:"ApiResponse"`
 	Status  string     `xml:"Status,attr"`
-	Errors  []apierror `xml:"Errors>Error"`
+	Errors  []apiError `xml:"Errors>Error"`
 	Hosts   []Record   `xml:"CommandResponse>DomainDNSGetHostsResult>host"`
 }
 
 type getTldsResponse struct {
 	XMLName xml.Name   `xml:"ApiResponse"`
-	Errors  []apierror `xml:"Errors>Error"`
+	Errors  []apiError `xml:"Errors>Error"`
 	Result  []struct {
 		Name string `xml:",attr"`
 	} `xml:"CommandResponse>Tlds>Tld"`

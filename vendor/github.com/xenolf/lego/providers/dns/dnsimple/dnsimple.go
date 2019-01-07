@@ -1,8 +1,8 @@
-// Package dnsimple implements a DNS provider for solving the DNS-01 challenge
-// using dnsimple DNS.
+// Package dnsimple implements a DNS provider for solving the DNS-01 challenge using dnsimple DNS.
 package dnsimple
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strconv"
@@ -10,8 +10,9 @@ import (
 	"time"
 
 	"github.com/dnsimple/dnsimple-go/dnsimple"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/platform/config/env"
+	"golang.org/x/oauth2"
 )
 
 // Config is used to configure the creation of the DNSProvider
@@ -26,9 +27,9 @@ type Config struct {
 // NewDefaultConfig returns a default configuration for the DNSProvider
 func NewDefaultConfig() *Config {
 	return &Config{
-		TTL:                env.GetOrDefaultInt("DNSIMPLE_TTL", 120),
-		PropagationTimeout: env.GetOrDefaultSecond("DNSIMPLE_PROPAGATION_TIMEOUT", acme.DefaultPropagationTimeout),
-		PollingInterval:    env.GetOrDefaultSecond("DNSIMPLE_POLLING_INTERVAL", acme.DefaultPollingInterval),
+		TTL:                env.GetOrDefaultInt("DNSIMPLE_TTL", dns01.DefaultTTL),
+		PropagationTimeout: env.GetOrDefaultSecond("DNSIMPLE_PROPAGATION_TIMEOUT", dns01.DefaultPropagationTimeout),
+		PollingInterval:    env.GetOrDefaultSecond("DNSIMPLE_POLLING_INTERVAL", dns01.DefaultPollingInterval),
 	}
 }
 
@@ -50,17 +51,6 @@ func NewDNSProvider() (*DNSProvider, error) {
 	return NewDNSProviderConfig(config)
 }
 
-// NewDNSProviderCredentials uses the supplied credentials
-// to return a DNSProvider instance configured for DNSimple.
-// Deprecated
-func NewDNSProviderCredentials(accessToken, baseURL string) (*DNSProvider, error) {
-	config := NewDefaultConfig()
-	config.AccessToken = accessToken
-	config.BaseURL = baseURL
-
-	return NewDNSProviderConfig(config)
-}
-
 // NewDNSProviderConfig return a DNSProvider instance configured for DNSimple.
 func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 	if config == nil {
@@ -71,8 +61,8 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 		return nil, fmt.Errorf("dnsimple: OAuth token is missing")
 	}
 
-	client := dnsimple.NewClient(dnsimple.NewOauthTokenCredentials(config.AccessToken))
-	client.UserAgent = acme.UserAgent
+	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: config.AccessToken})
+	client := dnsimple.NewClient(oauth2.NewClient(context.Background(), ts))
 
 	if config.BaseURL != "" {
 		client.BaseURL = config.BaseURL
@@ -83,7 +73,7 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 
 // Present creates a TXT record to fulfill the dns-01 challenge.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
 	zoneName, err := d.getHostedZone(domain)
 	if err != nil {
@@ -106,7 +96,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters.
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _ := dns01.GetRecord(domain, keyAuth)
 
 	records, err := d.findTxtRecords(domain, fqdn)
 	if err != nil {
@@ -136,7 +126,7 @@ func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 }
 
 func (d *DNSProvider) getHostedZone(domain string) (string, error) {
-	authZone, err := acme.FindZoneByFqdn(acme.ToFqdn(domain), acme.RecursiveNameservers)
+	authZone, err := dns01.FindZoneByFqdn(dns01.ToFqdn(domain))
 	if err != nil {
 		return "", err
 	}
@@ -146,7 +136,7 @@ func (d *DNSProvider) getHostedZone(domain string) (string, error) {
 		return "", err
 	}
 
-	zoneName := acme.UnFqdn(authZone)
+	zoneName := dns01.UnFqdn(authZone)
 
 	zones, err := d.client.Zones.ListZones(accountID, &dnsimple.ZoneListOptions{NameLike: zoneName})
 	if err != nil {
@@ -200,7 +190,7 @@ func newTxtRecord(zoneName, fqdn, value string, ttl int) dnsimple.ZoneRecord {
 }
 
 func extractRecordName(fqdn, domain string) string {
-	name := acme.UnFqdn(fqdn)
+	name := dns01.UnFqdn(fqdn)
 	if idx := strings.Index(name, "."+domain); idx != -1 {
 		return name[:idx]
 	}
