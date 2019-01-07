@@ -32,6 +32,24 @@ const (
 	UTF32LittleEndian
 )
 
+// String returns a user-friendly string representation of the encoding. Satisfies fmt.Stringer interface.
+func (e Encoding) String() string {
+	switch e {
+	case UTF8:
+		return "UTF8"
+	case UTF16BigEndian:
+		return "UTF16BigEndian"
+	case UTF16LittleEndian:
+		return "UTF16LittleEndian"
+	case UTF32BigEndian:
+		return "UTF32BigEndian"
+	case UTF32LittleEndian:
+		return "UTF32LittleEndian"
+	default:
+		return "Unknown"
+	}
+}
+
 const maxConsecutiveEmptyReads = 100
 
 // Skip creates Reader which automatically detects BOM (Unicode Byte Order Mark) and removes it as necessary.

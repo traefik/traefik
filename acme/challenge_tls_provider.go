@@ -11,10 +11,11 @@ import (
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge"
+	"github.com/xenolf/lego/challenge/tlsalpn01"
 )
 
-var _ acme.ChallengeProviderTimeout = (*challengeTLSProvider)(nil)
+var _ challenge.ProviderTimeout = (*challengeTLSProvider)(nil)
 
 type challengeTLSProvider struct {
 	store cluster.Store
@@ -113,7 +114,7 @@ func (c *challengeTLSProvider) Timeout() (timeout, interval time.Duration) {
 }
 
 func tlsALPN01ChallengeCert(domain, keyAuth string) (*ChallengeCert, error) {
-	tempCertPEM, rsaPrivPEM, err := acme.TLSALPNChallengeBlocks(domain, keyAuth)
+	tempCertPEM, rsaPrivPEM, err := tlsalpn01.ChallengeBlocks(domain, keyAuth)
 	if err != nil {
 		return nil, err
 	}

@@ -9,8 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/platform/config/env"
+	"github.com/xenolf/lego/providers/dns/dnsmadeeasy/internal"
 )
 
 // Config is used to configure the creation of the DNSProvider
@@ -28,9 +29,9 @@ type Config struct {
 // NewDefaultConfig returns a default configuration for the DNSProvider
 func NewDefaultConfig() *Config {
 	return &Config{
-		TTL:                env.GetOrDefaultInt("DNSMADEEASY_TTL", 120),
-		PropagationTimeout: env.GetOrDefaultSecond("DNSMADEEASY_PROPAGATION_TIMEOUT", acme.DefaultPropagationTimeout),
-		PollingInterval:    env.GetOrDefaultSecond("DNSMADEEASY_POLLING_INTERVAL", acme.DefaultPollingInterval),
+		TTL:                env.GetOrDefaultInt("DNSMADEEASY_TTL", dns01.DefaultTTL),
+		PropagationTimeout: env.GetOrDefaultSecond("DNSMADEEASY_PROPAGATION_TIMEOUT", dns01.DefaultPropagationTimeout),
+		PollingInterval:    env.GetOrDefaultSecond("DNSMADEEASY_POLLING_INTERVAL", dns01.DefaultPollingInterval),
 		HTTPClient: &http.Client{
 			Timeout: env.GetOrDefaultSecond("DNSMADEEASY_HTTP_TIMEOUT", 10*time.Second),
 			Transport: &http.Transport{
@@ -44,7 +45,7 @@ func NewDefaultConfig() *Config {
 // DNSMadeEasy's DNS API to manage TXT records for a domain.
 type DNSProvider struct {
 	config *Config
-	client *Client
+	client *internal.Client
 }
 
 // NewDNSProvider returns a DNSProvider instance configured for DNSMadeEasy DNS.
@@ -60,18 +61,6 @@ func NewDNSProvider() (*DNSProvider, error) {
 	config.Sandbox = env.GetOrDefaultBool("DNSMADEEASY_SANDBOX", false)
 	config.APIKey = values["DNSMADEEASY_API_KEY"]
 	config.APISecret = values["DNSMADEEASY_API_SECRET"]
-
-	return NewDNSProviderConfig(config)
-}
-
-// NewDNSProviderCredentials uses the supplied credentials
-// to return a DNSProvider instance configured for DNS Made Easy.
-// Deprecated
-func NewDNSProviderCredentials(baseURL, apiKey, apiSecret string) (*DNSProvider, error) {
-	config := NewDefaultConfig()
-	config.BaseURL = baseURL
-	config.APIKey = apiKey
-	config.APISecret = apiSecret
 
 	return NewDNSProviderConfig(config)
 }
@@ -93,7 +82,7 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 		}
 	}
 
-	client, err := NewClient(config.APIKey, config.APISecret)
+	client, err := internal.NewClient(config.APIKey, config.APISecret)
 	if err != nil {
 		return nil, fmt.Errorf("dnsmadeeasy: %v", err)
 	}
@@ -109,9 +98,9 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 
 // Present creates a TXT record using the specified parameters
 func (d *DNSProvider) Present(domainName, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domainName, keyAuth)
+	fqdn, value := dns01.GetRecord(domainName, keyAuth)
 
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := dns01.FindZoneByFqdn(fqdn)
 	if err != nil {
 		return fmt.Errorf("dnsmadeeasy: unable to find zone for %s: %v", fqdn, err)
 	}
@@ -124,7 +113,7 @@ func (d *DNSProvider) Present(domainName, token, keyAuth string) error {
 
 	// create the TXT record
 	name := strings.Replace(fqdn, "."+authZone, "", 1)
-	record := &Record{Type: "TXT", Name: name, Value: value, TTL: d.config.TTL}
+	record := &internal.Record{Type: "TXT", Name: name, Value: value, TTL: d.config.TTL}
 
 	err = d.client.CreateRecord(domain, record)
 	if err != nil {
@@ -135,9 +124,9 @@ func (d *DNSProvider) Present(domainName, token, keyAuth string) error {
 
 // CleanUp removes the TXT records matching the specified parameters
 func (d *DNSProvider) CleanUp(domainName, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domainName, keyAuth)
+	fqdn, _ := dns01.GetRecord(domainName, keyAuth)
 
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := dns01.FindZoneByFqdn(fqdn)
 	if err != nil {
 		return fmt.Errorf("dnsmadeeasy: unable to find zone for %s: %v", fqdn, err)
 	}

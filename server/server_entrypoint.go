@@ -22,7 +22,7 @@ import (
 	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
 	"github.com/sirupsen/logrus"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/tlsalpn01"
 )
 
 // EntryPoints map of EntryPoint
@@ -380,7 +380,7 @@ func buildTLSConfig(tlsOption traefiktls.TLS) (*tls.Config, error) {
 	conf := &tls.Config{}
 
 	// ensure http2 enabled
-	conf.NextProtos = []string{"h2", "http/1.1", acme.ACMETLS1Protocol}
+	conf.NextProtos = []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol}
 
 	if len(tlsOption.ClientCA.Files) > 0 {
 		pool := x509.NewCertPool()

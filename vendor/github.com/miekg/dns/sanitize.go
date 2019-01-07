@@ -5,6 +5,7 @@ package dns
 // rrs.
 // m is used to store the RRs temporary. If it is nil a new map will be allocated.
 func Dedup(rrs []RR, m map[string]RR) []RR {
+
 	if m == nil {
 		m = make(map[string]RR)
 	}

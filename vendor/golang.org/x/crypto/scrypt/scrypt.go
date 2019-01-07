@@ -29,7 +29,7 @@ func blockXOR(dst, src []uint32, n int) {
 }
 
 // salsaXOR applies Salsa20/8 to the XOR of 16 numbers from tmp and in,
-// and puts the result into both both tmp and out.
+// and puts the result into both tmp and out.
 func salsaXOR(tmp *[16]uint32, in, out []uint32) {
 	w0 := tmp[0] ^ in[0]
 	w1 := tmp[1] ^ in[1]
@@ -218,7 +218,7 @@ func smix(b []byte, r, N int, v, xy []uint32) {
 // For example, you can get a derived key for e.g. AES-256 (which needs a
 // 32-byte key) by doing:
 //
-//      dk, err := scrypt.Key([]byte("some password"), salt, 16384, 8, 1, 32)
+//      dk, err := scrypt.Key([]byte("some password"), salt, 32768, 8, 1, 32)
 //
 // The recommended parameters for interactive logins as of 2017 are N=32768, r=8
 // and p=1. The parameters N, r, and p should be increased as memory latency and

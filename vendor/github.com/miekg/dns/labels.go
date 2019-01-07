@@ -178,10 +178,10 @@ func equal(a, b string) bool {
 		ai := a[i]
 		bi := b[i]
 		if ai >= 'A' && ai <= 'Z' {
-			ai |= ('a' - 'A')
+			ai |= 'a' - 'A'
 		}
 		if bi >= 'A' && bi <= 'Z' {
-			bi |= ('a' - 'A')
+			bi |= 'a' - 'A'
 		}
 		if ai != bi {
 			return false
