@@ -19,7 +19,6 @@ type Config struct {
 	GlobalTag          string `description:"Key:Value tag to be set on all the spans." export:"true"`
 	Debug              bool   `description:"Enable DataDog debug." export:"true"`
 	PrioritySampling   bool   `description:"Enable priority sampling. When using distributed tracing, this option must be enabled in order to get all the parts of a distributed trace sampled."`
-
 }
 
 // Setup sets up the tracer

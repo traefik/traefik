@@ -240,7 +240,6 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 			GlobalTag:          "",
 			Debug:              false,
 			PrioritySampling:   false,
-
 		},
 	}
 
