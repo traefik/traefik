@@ -2,17 +2,37 @@ package tracer
 
 import (
 	"fmt"
+	"io"
 	"net"
 	"net/http"
+	"os"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
 )
 
-// TODO(gbbr): find a more effective way to keep this up to date,
-// e.g. via `go generate`
-var tracerVersion = "v1.5.0"
+var (
+	// TODO(gbbr): find a more effective way to keep this up to date,
+	// e.g. via `go generate`
+	tracerVersion = "v1.7.0"
+
+	// We copy the transport to avoid using the default one, as it might be
+	// augmented with tracing and we don't want these calls to be recorded.
+	// See https://golang.org/pkg/net/http/#DefaultTransport .
+	defaultRoundTripper = &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+			DualStack: true,
+		}).DialContext,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
+)
 
 const (
 	defaultHostname    = "localhost"
@@ -22,25 +42,33 @@ const (
 	traceCountHeader   = "X-Datadog-Trace-Count" // header containing the number of traces in the payload
 )
 
-// Transport is an interface for span submission to the agent.
+// transport is an interface for span submission to the agent.
 type transport interface {
-	send(p *payload) error
+	// send sends the payload p to the agent using the transport set up.
+	// It returns a non-nil response body when no error occurred.
+	send(p *payload) (body io.ReadCloser, err error)
 }
 
 // newTransport returns a new Transport implementation that sends traces to a
-// trace agent running on the given hostname and port. If the zero values for
-// hostname and port are provided, the default values will be used ("localhost"
-// for hostname, and "8126" for port).
+// trace agent running on the given hostname and port, using a given
+// http.RoundTripper. If the zero values for hostname and port are provided,
+// the default values will be used ("localhost" for hostname, and "8126" for
+// port). If roundTripper is nil, a default is used.
 //
 // In general, using this method is only necessary if you have a trace agent
-// running on a non-default port or if it's located on another machine.
-func newTransport(addr string) transport {
-	return newHTTPTransport(addr)
+// running on a non-default port, if it's located on another machine, or when
+// otherwise needing to customize the transport layer, for instance when using
+// a unix domain socket.
+func newTransport(addr string, roundTripper http.RoundTripper) transport {
+	if roundTripper == nil {
+		roundTripper = defaultRoundTripper
+	}
+	return newHTTPTransport(addr, roundTripper)
 }
 
 // newDefaultTransport return a default transport for this tracing client
 func newDefaultTransport() transport {
-	return newHTTPTransport(defaultAddress)
+	return newHTTPTransport(defaultAddress, defaultRoundTripper)
 }
 
 type httpTransport struct {
@@ -50,7 +78,7 @@ type httpTransport struct {
 }
 
 // newHTTPTransport returns an httpTransport for the given endpoint
-func newHTTPTransport(addr string) *httpTransport {
+func newHTTPTransport(addr string, roundTripper http.RoundTripper) *httpTransport {
 	// initialize the default EncoderPool with Encoder headers
 	defaultHeaders := map[string]string{
 		"Datadog-Meta-Lang":             "go",
@@ -60,34 +88,20 @@ func newHTTPTransport(addr string) *httpTransport {
 		"Content-Type":                  "application/msgpack",
 	}
 	return &httpTransport{
-		traceURL: fmt.Sprintf("http://%s/v0.3/traces", resolveAddr(addr)),
+		traceURL: fmt.Sprintf("http://%s/v0.4/traces", resolveAddr(addr)),
 		client: &http.Client{
-			// We copy the transport to avoid using the default one, as it might be
-			// augmented with tracing and we don't want these calls to be recorded.
-			// See https://golang.org/pkg/net/http/#DefaultTransport .
-			Transport: &http.Transport{
-				Proxy: http.ProxyFromEnvironment,
-				DialContext: (&net.Dialer{
-					Timeout:   30 * time.Second,
-					KeepAlive: 30 * time.Second,
-					DualStack: true,
-				}).DialContext,
-				MaxIdleConns:          100,
-				IdleConnTimeout:       90 * time.Second,
-				TLSHandshakeTimeout:   10 * time.Second,
-				ExpectContinueTimeout: 1 * time.Second,
-			},
-			Timeout: defaultHTTPTimeout,
+			Transport: roundTripper,
+			Timeout:   defaultHTTPTimeout,
 		},
 		headers: defaultHeaders,
 	}
 }
 
-func (t *httpTransport) send(p *payload) error {
+func (t *httpTransport) send(p *payload) (body io.ReadCloser, err error) {
 	// prepare the client and send the payload
 	req, err := http.NewRequest("POST", t.traceURL, p)
 	if err != nil {
-		return fmt.Errorf("cannot create http request: %v", err)
+		return nil, fmt.Errorf("cannot create http request: %v", err)
 	}
 	for header, value := range t.headers {
 		req.Header.Set(header, value)
@@ -96,25 +110,26 @@ func (t *httpTransport) send(p *payload) error {
 	req.Header.Set("Content-Length", strconv.Itoa(p.size()))
 	response, err := t.client.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer response.Body.Close()
 	if code := response.StatusCode; code >= 400 {
 		// error, check the body for context information and
 		// return a nice error.
 		msg := make([]byte, 1000)
 		n, _ := response.Body.Read(msg)
+		response.Body.Close()
 		txt := http.StatusText(code)
 		if n > 0 {
-			return fmt.Errorf("%s (Status: %s)", msg[:n], txt)
+			return nil, fmt.Errorf("%s (Status: %s)", msg[:n], txt)
 		}
-		return fmt.Errorf("%s", txt)
+		return nil, fmt.Errorf("%s", txt)
 	}
-	return nil
+	return response.Body, nil
 }
 
 // resolveAddr resolves the given agent address and fills in any missing host
-// and port using the defaults.
+// and port using the defaults. Some environment variable settings will
+// take precedence over configuration.
 func resolveAddr(addr string) string {
 	host, port, err := net.SplitHostPort(addr)
 	if err != nil {
@@ -126,6 +141,12 @@ func resolveAddr(addr string) string {
 	}
 	if port == "" {
 		port = defaultPort
+	}
+	if v := os.Getenv("DD_AGENT_HOST"); v != "" {
+		host = v
+	}
+	if v := os.Getenv("DD_TRACE_AGENT_PORT"); v != "" {
+		port = v
 	}
 	return fmt.Sprintf("%s:%s", host, port)
 }

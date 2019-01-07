@@ -201,8 +201,8 @@ func (s *span) finish(finishTime int64) {
 	}
 	s.finished = true
 
-	if !s.context.sampled {
-		// not sampled
+	if s.context.drop {
+		// not sampled by local sampler
 		return
 	}
 	s.context.finish()
@@ -235,4 +235,7 @@ func (s *span) String() string {
 	return strings.Join(lines, "\n")
 }
 
-const samplingPriorityKey = "_sampling_priority_v1"
+const (
+	samplingPriorityKey     = "_sampling_priority_v1"
+	samplingPriorityRateKey = "_sampling_priority_rate_v1"
+)
