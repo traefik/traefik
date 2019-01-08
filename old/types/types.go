@@ -665,18 +665,21 @@ type TLSClientHeaders struct {
 
 // TLSClientCertificateInfos holds the client TLS certificate infos configuration
 type TLSClientCertificateInfos struct {
-	NotAfter  bool                              `description:"Add NotAfter info in header" json:"notAfter"`
-	NotBefore bool                              `description:"Add NotBefore info in header" json:"notBefore"`
-	Subject   *TLSCLientCertificateSubjectInfos `description:"Add Subject info in header" json:"subject,omitempty"`
-	Sans      bool                              `description:"Add Sans info in header" json:"sans"`
+	NotAfter  bool                         `description:"Add NotAfter info in header" json:"notAfter"`
+	NotBefore bool                         `description:"Add NotBefore info in header" json:"notBefore"`
+	Sans      bool                         `description:"Add Sans info in header" json:"sans"`
+	Subject   *TLSCLientCertificateDNInfos `description:"Add Subject info in header" json:"subject,omitempty"`
+	Issuer    *TLSCLientCertificateDNInfos `description:"Add Issuer info in header" json:"issuer,omitempty"`
 }
 
-// TLSCLientCertificateSubjectInfos holds the client TLS certificate subject infos configuration
-type TLSCLientCertificateSubjectInfos struct {
-	Country      bool `description:"Add Country info in header" json:"country"`
-	Province     bool `description:"Add Province info in header" json:"province"`
-	Locality     bool `description:"Add Locality info in header" json:"locality"`
-	Organization bool `description:"Add Organization info in header" json:"organization"`
-	CommonName   bool `description:"Add CommonName info in header" json:"commonName"`
-	SerialNumber bool `description:"Add SerialNumber info in header" json:"serialNumber"`
+// TLSCLientCertificateDNInfos holds the client TLS certificate distinguished name infos configuration
+// cf https://tools.ietf.org/html/rfc3739
+type TLSCLientCertificateDNInfos struct {
+	Country         bool `description:"Add Country info in header" json:"country"`
+	Province        bool `description:"Add Province info in header" json:"province"`
+	Locality        bool `description:"Add Locality info in header" json:"locality"`
+	Organization    bool `description:"Add Organization info in header" json:"organization"`
+	CommonName      bool `description:"Add CommonName info in header" json:"commonName"`
+	SerialNumber    bool `description:"Add SerialNumber info in header" json:"serialNumber"`
+	DomainComponent bool `description:"Add Domain Component info in header" json:"domainComponent"`
 }

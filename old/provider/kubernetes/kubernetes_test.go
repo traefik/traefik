@@ -1146,6 +1146,15 @@ infos:
     organization: true
     commonname: true
     serialnumber: true
+    domaincomponent: true
+  issuer:
+    country: true
+    province: true
+    locality: true
+    organization: true
+    commonname: true
+    serialnumber: true
+    domaincomponent: true
 `),
 			iAnnotation(annotationKubernetesIngressClass, traefikDefaultRealm),
 			iRules(

@@ -599,6 +599,7 @@ func getSegments(path string, prefix string, tree map[string]string) []*frontend
 			segmentNames[strings.SplitN(strings.TrimPrefix(key, path+"."), ".", 2)[0]] = true
 		}
 	}
+
 	// get labels for each segment found
 	for segment := range segmentNames {
 		labels := make(map[string]string)
