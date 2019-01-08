@@ -94,8 +94,7 @@ Complete documentation is available at https://traefik.io`,
 		Config:                traefikConfiguration,
 		DefaultPointersConfig: traefikPointersConfiguration,
 		Run: func() error {
-			runCmd(&traefikConfiguration.Configuration, traefikConfiguration.ConfigFile)
-			return nil
+			return runCmd(&traefikConfiguration.Configuration, traefikConfiguration.ConfigFile)
 		},
 	}
 
@@ -192,7 +191,7 @@ Complete documentation is available at https://traefik.io`,
 	os.Exit(0)
 }
 
-func runCmd(staticConfiguration *static.Configuration, configFile string) {
+func runCmd(staticConfiguration *static.Configuration, configFile string) error {
 	configureLogging(staticConfiguration)
 
 	if len(configFile) > 0 {
@@ -247,8 +246,7 @@ func runCmd(staticConfiguration *static.Configuration, configFile string) {
 
 		serverEntryPoint, err := server.NewEntryPoint(ctx, config)
 		if err != nil {
-			logger.Errorf("Error while building entryPoint: %v", err)
-			continue
+			return fmt.Errorf("error while building entryPoint %s: %v", entryPointName, err)
 		}
 
 		serverEntryPoint.RouteAppenderFactory = router.NewRouteAppenderFactory(*staticConfiguration, entryPointName, acmeProvider)
@@ -315,6 +313,7 @@ func runCmd(staticConfiguration *static.Configuration, configFile string) {
 	svr.Wait()
 	log.WithoutContext().Info("Shutting down")
 	logrus.Exit(0)
+	return nil
 }
 
 func configureLogging(staticConfiguration *static.Configuration) {
