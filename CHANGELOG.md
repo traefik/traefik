@@ -1,5 +1,26 @@
 # Change Log
 
+## [v1.7.7](https://github.com/containous/traefik/tree/v1.7.7) (2019-01-08)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.6...v1.7.7)
+
+**Bug fixes:**
+- **[acme]** Update Lego ([#4277](https://github.com/containous/traefik/pull/4277) by [ldez](https://github.com/ldez))
+- **[k8s]** Check for watched namespace before getting kubernetes objects ([#4327](https://github.com/containous/traefik/pull/4327) by [dtomcej](https://github.com/dtomcej))
+- **[k8s]** Allow empty path with App-root annotation ([#4326](https://github.com/containous/traefik/pull/4326) by [dtomcej](https://github.com/dtomcej))
+- **[k8s]** kubernetes: sort and uniq TLS secrets ([#4307](https://github.com/containous/traefik/pull/4307) by [zarqman](https://github.com/zarqman))
+- **[k8s]** Skip TLS section with no secret in Kubernetes ingress ([#4340](https://github.com/containous/traefik/pull/4340) by [dtomcej](https://github.com/dtomcej))
+- **[middleware,consul,consulcatalog,docker,ecs,k8s,marathon,mesos,rancher]** Add Pass TLS Cert Issuer and Domain Component ([#4298](https://github.com/containous/traefik/pull/4298) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[middleware]** Retry middleware : store headers per attempts and propagate them when responding. ([#4299](https://github.com/containous/traefik/pull/4299) by [jlevesy](https://github.com/jlevesy))
+- **[middleware]** Redirection status codes for methods different than GET ([#4116](https://github.com/containous/traefik/pull/4116) by [r--w](https://github.com/r--w))
+- Test and exit for jq error before domain loop ([#4347](https://github.com/containous/traefik/pull/4347) by [muhlemmer](https://github.com/muhlemmer))
+
+**Documentation:**
+- **[acme]** Letsencrypt - Add info on httpreq format ([#4355](https://github.com/containous/traefik/pull/4355) by [goetas](https://github.com/goetas))
+- **[docker]** Update broken link for Docker service constraints ([#4289](https://github.com/containous/traefik/pull/4289) by [clrech](https://github.com/clrech))
+- **[middleware]** Add extractorfunc values ([#4351](https://github.com/containous/traefik/pull/4351) by [hsmade](https://github.com/hsmade))
+- **[provider]** Rephrase the `traefik.backend` definition in documentation ([#4317](https://github.com/containous/traefik/pull/4317) by [dduportal](https://github.com/dduportal))
+- Harden Traefik systemd service ([#4302](https://github.com/containous/traefik/pull/4302) by [jacksgt](https://github.com/jacksgt))
+
 ## [v1.7.6](https://github.com/containous/traefik/tree/v1.7.6) (2018-12-07)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.5...v1.7.6)
 
