@@ -166,7 +166,7 @@ func (dns *Msg) IsEdns0() *OPT {
 // label fits in 63 characters, but there is no length check for the entire
 // string s. I.e.  a domain name longer than 255 characters is considered valid.
 func IsDomainName(s string) (labels int, ok bool) {
-	_, labels, err := packDomainName(s, nil, 0, nil, false)
+	_, labels, err := packDomainName(s, nil, 0, compressionMap{}, false)
 	return labels, err == nil
 }
 

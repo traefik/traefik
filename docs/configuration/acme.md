@@ -299,7 +299,7 @@ Here is a list of supported `provider`s, that can automate the DNS verification,
 | [GoDaddy](https://godaddy.com/domains)                 | `godaddy`      | `GODADDY_API_KEY`, `GODADDY_API_SECRET`                                                                                                   | Not tested yet                 |
 | [Google Cloud DNS](https://cloud.google.com/dns/docs/) | `gcloud`       | `GCE_PROJECT`, `GCE_SERVICE_ACCOUNT_FILE`                                                                                                 | YES                            |
 | [hosting.de](https://www.hosting.de)                   | `hostingde`    | `HOSTINGDE_API_KEY`, `HOSTINGDE_ZONE_NAME`                                                                                                | Not tested yet                 |
-| HTTP request                                           | `httpreq`      | `HTTPREQ_ENDPOINT`, `HTTPREQ_MODE`, `HTTPREQ_USERNAME`, `HTTPREQ_PASSWORD`                                                                | YES                            |
+| HTTP request                                           | `httpreq`      | `HTTPREQ_ENDPOINT`, `HTTPREQ_MODE`, `HTTPREQ_USERNAME`, `HTTPREQ_PASSWORD` (1)                                                            | YES                            |
 | [IIJ](https://www.iij.ad.jp/)                          | `iij`          | `IIJ_API_ACCESS_KEY`, `IIJ_API_SECRET_KEY`, `IIJ_DO_SERVICE_CODE`                                                                         | Not tested yet                 |
 | [INWX](https://www.inwx.de/en)                         | `inwx`         | `INWX_USERNAME`, `INWX_PASSWORD`                                                                                                          | YES                            |
 | [Lightsail](https://aws.amazon.com/lightsail/)         | `lightsail`    | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `DNS_ZONE`                                                                                  | Not tested yet                 |
@@ -326,9 +326,19 @@ Here is a list of supported `provider`s, that can automate the DNS verification,
 | [Vscale](https://vscale.io/)                           | `vscale`       | `VSCALE_API_TOKEN`                                                                                                                        | YES                            |
 | [VULTR](https://www.vultr.com)                         | `vultr`        | `VULTR_API_KEY`                                                                                                                           | Not tested yet                 |
 
+- (1): more information about the HTTP message format can be found [here](https://github.com/xenolf/lego/blob/master/providers/dns/httpreq/readme.md)
+
 #### `resolvers`
 
 Use custom DNS servers to resolve the FQDN authority.
+
+```toml
+[acme]
+# ...
+[acme.dnsChallenge]
+  # ...
+  resolvers = ["1.1.1.1:53", "8.8.8.8:53"]
+```
 
 ### `domains`
 

@@ -365,16 +365,16 @@
   version = "v3.2.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/dimchansky/utfbom"
   packages = ["."]
-  revision = "5448fe645cb1964ba70ac8f9f2ffe975e61a536c"
-  version = "v1.0.0"
+  revision = "d2133a1ce379ef6fa992b0514a77146c60db9d1c"
 
 [[projects]]
-  branch = "master"
   name = "github.com/dnsimple/dnsimple-go"
   packages = ["dnsimple"]
-  revision = "bbe1a2c87affea187478e24d3aea3cac25f870b3"
+  revision = "f5ead9c20763fd925dea1362f2af5d671ed2a459"
+  version = "v0.21.0"
 
 [[projects]]
   name = "github.com/docker/cli"
@@ -977,10 +977,10 @@
   source = "https://github.com/containous/mesos-dns.git"
 
 [[projects]]
-  branch = "master"
   name = "github.com/miekg/dns"
   packages = ["."]
-  revision = "906238edc6eb0ddface4a1923f6d41ef2a5ca59b"
+  revision = "7586a3cbe8ccfc63f82de3ab2ceeb08c9939af72"
+  version = "v1.1.1"
 
 [[projects]]
   branch = "master"
@@ -1380,8 +1380,21 @@
   name = "github.com/xenolf/lego"
   packages = [
     "acme",
+    "acme/api",
+    "acme/api/internal/nonces",
+    "acme/api/internal/secure",
+    "acme/api/internal/sender",
+    "certcrypto",
+    "certificate",
+    "challenge",
+    "challenge/dns01",
+    "challenge/http01",
+    "challenge/resolver",
+    "challenge/tlsalpn01",
+    "lego",
     "log",
     "platform/config/env",
+    "platform/wait",
     "providers/dns",
     "providers/dns/acmedns",
     "providers/dns/alidns",
@@ -1390,10 +1403,13 @@
     "providers/dns/bluecat",
     "providers/dns/cloudflare",
     "providers/dns/cloudxns",
+    "providers/dns/cloudxns/internal",
     "providers/dns/conoha",
+    "providers/dns/conoha/internal",
     "providers/dns/digitalocean",
     "providers/dns/dnsimple",
     "providers/dns/dnsmadeeasy",
+    "providers/dns/dnsmadeeasy/internal",
     "providers/dns/dnspod",
     "providers/dns/dreamhost",
     "providers/dns/duckdns",
@@ -1417,7 +1433,9 @@
     "providers/dns/namecheap",
     "providers/dns/namedotcom",
     "providers/dns/netcup",
+    "providers/dns/netcup/internal",
     "providers/dns/nifcloud",
+    "providers/dns/nifcloud/internal",
     "providers/dns/ns1",
     "providers/dns/otc",
     "providers/dns/ovh",
@@ -1427,13 +1445,16 @@
     "providers/dns/route53",
     "providers/dns/sakuracloud",
     "providers/dns/selectel",
+    "providers/dns/selectel/internal",
     "providers/dns/stackpath",
     "providers/dns/transip",
     "providers/dns/vegadns",
     "providers/dns/vscale",
-    "providers/dns/vultr"
+    "providers/dns/vscale/internal",
+    "providers/dns/vultr",
+    "registration"
   ]
-  revision = "a5f0a3ff8026e05cbdd11c391c0e25122497c736"
+  revision = "43401f2475dd1f6cc2e220908f0caba246ea854e"
 
 [[projects]]
   branch = "master"
@@ -1450,7 +1471,7 @@
     "scrypt",
     "ssh/terminal"
   ]
-  revision = "91a49db82a88618983a78a06c1cbd4e00ab749ab"
+  revision = "505ab145d0a99da450461ae2c1a9f6cd10d1f447"
 
 [[projects]]
   branch = "master"
@@ -1858,6 +1879,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "26517fdb01d55f549e4692c251587c90f657b7736e2951d673a530f3b86a90fb"
+  inputs-digest = "4db3d8feea9f875e0c32ce071e49eceab18a89a3cef3d3b9bea59f2a992b2628"
   solver-name = "gps-cdcl"
   solver-version = 1

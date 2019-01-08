@@ -1,68 +1,52 @@
 package dnsimple
 
 import (
-	"encoding/base64"
+	"net/http"
 )
 
-const (
-	httpHeaderDomainToken   = "X-DNSimple-Domain-Token"
-	httpHeaderApiToken      = "X-DNSimple-Token"
-	httpHeaderAuthorization = "Authorization"
-)
+// BasicAuthTransport is an http.RoundTripper that authenticates all requests
+// using HTTP Basic Authentication with the provided username and password.
+type BasicAuthTransport struct {
+	Username string
+	Password string
 
-// Provides credentials that can be used for authenticating with DNSimple.
-//
-// See https://developer.dnsimple.com/v2/#authentication
-type Credentials interface {
-	// Returns the HTTP headers that should be set
-	// to authenticate the HTTP Request.
-	Headers() map[string]string
+	// Transport is the transport RoundTripper used to make HTTP requests.
+	// If nil, http.DefaultTransport is used.
+	Transport http.RoundTripper
 }
 
-// Domain token authentication
-type domainTokenCredentials struct {
-	domainToken string
+// RoundTrip implements the RoundTripper interface.  We just add the
+// basic auth and return the RoundTripper for this transport type.
+func (t *BasicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req2 := cloneRequest(req) // per RoundTripper contract
+
+	req2.SetBasicAuth(t.Username, t.Password)
+	return t.transport().RoundTrip(req2)
 }
 
-// NewDomainTokenCredentials construct Credentials using the DNSimple Domain Token method.
-func NewDomainTokenCredentials(domainToken string) Credentials {
-	return &domainTokenCredentials{domainToken: domainToken}
+// Client returns an *http.Client that uses the BasicAuthTransport transport
+// to authenticate the request via HTTP Basic Auth.
+func (t *BasicAuthTransport) Client() *http.Client {
+	return &http.Client{Transport: t}
 }
 
-func (c *domainTokenCredentials) Headers() map[string]string {
-	return map[string]string{httpHeaderDomainToken: c.domainToken}
+func (t *BasicAuthTransport) transport() http.RoundTripper {
+	if t.Transport != nil {
+		return t.Transport
+	}
+	return http.DefaultTransport
 }
 
-// HTTP basic authentication
-type httpBasicCredentials struct {
-	email    string
-	password string
-}
-
-// NewHTTPBasicCredentials construct Credentials using HTTP Basic Auth.
-func NewHTTPBasicCredentials(email, password string) Credentials {
-	return &httpBasicCredentials{email, password}
-}
-
-func (c *httpBasicCredentials) Headers() map[string]string {
-	return map[string]string{httpHeaderAuthorization: "Basic " + c.basicAuth(c.email, c.password)}
-}
-
-func (c *httpBasicCredentials) basicAuth(username, password string) string {
-	auth := username + ":" + password
-	return base64.StdEncoding.EncodeToString([]byte(auth))
-}
-
-// OAuth token authentication
-type oauthTokenCredentials struct {
-	oauthToken string
-}
-
-// NewOauthTokenCredentials construct Credentials using the OAuth access token.
-func NewOauthTokenCredentials(oauthToken string) Credentials {
-	return &oauthTokenCredentials{oauthToken: oauthToken}
-}
-
-func (c *oauthTokenCredentials) Headers() map[string]string {
-	return map[string]string{httpHeaderAuthorization: "Bearer " + c.oauthToken}
+// cloneRequest returns a clone of the provided *http.Request.
+// The clone is a shallow copy of the struct and its Header map.
+func cloneRequest(r *http.Request) *http.Request {
+	// shallow copy of the struct
+	r2 := new(http.Request)
+	*r2 = *r
+	// deep copy of the Header
+	r2.Header = make(http.Header, len(r.Header))
+	for k, s := range r.Header {
+		r2.Header[k] = append([]string(nil), s...)
+	}
+	return r2
 }

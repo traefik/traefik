@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/smueller18/goinwx"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/log"
 	"github.com/xenolf/lego/platform/config/env"
 )
@@ -25,8 +25,8 @@ type Config struct {
 // NewDefaultConfig returns a default configuration for the DNSProvider
 func NewDefaultConfig() *Config {
 	return &Config{
-		PropagationTimeout: env.GetOrDefaultSecond("INWX_PROPAGATION_TIMEOUT", acme.DefaultPropagationTimeout),
-		PollingInterval:    env.GetOrDefaultSecond("INWX_POLLING_INTERVAL", acme.DefaultPollingInterval),
+		PropagationTimeout: env.GetOrDefaultSecond("INWX_PROPAGATION_TIMEOUT", dns01.DefaultPropagationTimeout),
+		PollingInterval:    env.GetOrDefaultSecond("INWX_POLLING_INTERVAL", dns01.DefaultPollingInterval),
 		TTL:                env.GetOrDefaultInt("INWX_TTL", 300),
 		Sandbox:            env.GetOrDefaultBool("INWX_SANDBOX", false),
 	}
@@ -75,9 +75,9 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 
 // Present creates a TXT record using the specified parameters
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := dns01.FindZoneByFqdn(fqdn)
 	if err != nil {
 		return fmt.Errorf("inwx: %v", err)
 	}
@@ -95,8 +95,8 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	}()
 
 	var request = &goinwx.NameserverRecordRequest{
-		Domain:  acme.UnFqdn(authZone),
-		Name:    acme.UnFqdn(fqdn),
+		Domain:  dns01.UnFqdn(authZone),
+		Name:    dns01.UnFqdn(fqdn),
 		Type:    "TXT",
 		Content: value,
 		Ttl:     d.config.TTL,
@@ -104,9 +104,9 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 	_, err = d.client.Nameservers.CreateRecord(request)
 	if err != nil {
-		switch err.(type) {
+		switch er := err.(type) {
 		case *goinwx.ErrorResponse:
-			if err.(*goinwx.ErrorResponse).Message == "Object exists" {
+			if er.Message == "Object exists" {
 				return nil
 			}
 			return fmt.Errorf("inwx: %v", err)
@@ -120,9 +120,9 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _ := dns01.GetRecord(domain, keyAuth)
 
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := dns01.FindZoneByFqdn(fqdn)
 	if err != nil {
 		return fmt.Errorf("inwx: %v", err)
 	}
@@ -140,8 +140,8 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	}()
 
 	response, err := d.client.Nameservers.Info(&goinwx.NameserverInfoRequest{
-		Domain: acme.UnFqdn(authZone),
-		Name:   acme.UnFqdn(fqdn),
+		Domain: dns01.UnFqdn(authZone),
+		Name:   dns01.UnFqdn(fqdn),
 		Type:   "TXT",
 	})
 	if err != nil {

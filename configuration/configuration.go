@@ -34,7 +34,7 @@ import (
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/pkg/errors"
-	lego "github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
 )
 
 const (
@@ -405,11 +405,11 @@ func (gc *GlobalConfiguration) initACMEProvider() {
 		}
 
 		for _, domain := range gc.ACME.Domains {
-			if domain.Main != lego.UnFqdn(domain.Main) {
+			if domain.Main != dns01.UnFqdn(domain.Main) {
 				log.Warnf("FQDN detected, please remove the trailing dot: %s", domain.Main)
 			}
 			for _, san := range domain.SANs {
-				if san != lego.UnFqdn(san) {
+				if san != dns01.UnFqdn(san) {
 					log.Warnf("FQDN detected, please remove the trailing dot: %s", san)
 				}
 			}

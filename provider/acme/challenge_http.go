@@ -9,10 +9,11 @@ import (
 	"github.com/containous/mux"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge"
+	"github.com/xenolf/lego/challenge/http01"
 )
 
-var _ acme.ChallengeProviderTimeout = (*challengeHTTP)(nil)
+var _ challenge.ProviderTimeout = (*challengeHTTP)(nil)
 
 type challengeHTTP struct {
 	Store Store
@@ -61,7 +62,7 @@ func getTokenValue(token, domain string, store Store) []byte {
 // AddRoutes add routes on internal router
 func (p *Provider) AddRoutes(router *mux.Router) {
 	router.Methods(http.MethodGet).
-		Path(acme.HTTP01ChallengePath("{token}")).
+		Path(http01.ChallengePath("{token}")).
 		Handler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			vars := mux.Vars(req)
 			if token, ok := vars["token"]; ok {

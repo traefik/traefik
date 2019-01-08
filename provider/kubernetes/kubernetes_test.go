@@ -1148,6 +1148,15 @@ infos:
     organization: true
     commonname: true
     serialnumber: true
+    domaincomponent: true
+  issuer:
+    country: true
+    province: true
+    locality: true
+    organization: true
+    commonname: true
+    serialnumber: true
+    domaincomponent: true
 `),
 			iAnnotation(annotationKubernetesIngressClass, traefikDefaultRealm),
 			iRules(
@@ -2824,6 +2833,16 @@ func TestGetTLS(t *testing.T) {
 		),
 	)
 
+	testIngressWithoutSecret := buildIngress(
+		iNamespace("testing"),
+		iRules(
+			iRule(iHost("ep1.example.com")),
+		),
+		iTLSes(
+			iTLS("", "foo.com"),
+		),
+	)
+
 	testCases := []struct {
 		desc      string
 		ingress   *extensionsv1beta1.Ingress
@@ -2949,6 +2968,12 @@ func TestGetTLS(t *testing.T) {
 					},
 				},
 			},
+		},
+		{
+			desc:    "return nil when no secret is defined",
+			ingress: testIngressWithoutSecret,
+			client:  clientMock{},
+			result:  map[string]*tls.Configuration{},
 		},
 		{
 			desc: "pass the endpoints defined in the annotation to the certificate",

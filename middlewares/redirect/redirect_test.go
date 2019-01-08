@@ -17,6 +17,7 @@ func TestNewEntryPointHandler(t *testing.T) {
 		desc           string
 		entryPoint     *configuration.EntryPoint
 		permanent      bool
+		method         string
 		url            string
 		expectedURL    string
 		expectedStatus int
@@ -60,6 +61,24 @@ func TestNewEntryPointHandler(t *testing.T) {
 			expectedStatus: http.StatusMovedPermanently,
 		},
 		{
+			desc:           "HTTP to HTTP POST",
+			entryPoint:     &configuration.EntryPoint{Address: ":80"},
+			permanent:      false,
+			url:            "http://foo:90",
+			method:         http.MethodPost,
+			expectedURL:    "http://foo:80",
+			expectedStatus: http.StatusTemporaryRedirect,
+		},
+		{
+			desc:           "HTTP to HTTP POST permanent",
+			entryPoint:     &configuration.EntryPoint{Address: ":80"},
+			permanent:      true,
+			url:            "http://foo:90",
+			method:         http.MethodPost,
+			expectedURL:    "http://foo:80",
+			expectedStatus: http.StatusPermanentRedirect,
+		},
+		{
 			desc:          "invalid address",
 			entryPoint:    &configuration.EntryPoint{Address: ":foo", TLS: &tls.TLS{}},
 			url:           "http://foo:80",
@@ -80,7 +99,11 @@ func TestNewEntryPointHandler(t *testing.T) {
 				require.NoError(t, err)
 
 				recorder := httptest.NewRecorder()
-				r := testhelpers.MustNewRequest(http.MethodGet, test.url, nil)
+				method := http.MethodGet
+				if test.method != "" {
+					method = test.method
+				}
+				r := testhelpers.MustNewRequest(method, test.url, nil)
 				handler.ServeHTTP(recorder, r, nil)
 
 				location, err := recorder.Result().Location()

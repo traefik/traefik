@@ -1,4 +1,4 @@
-// Package selectel implements a DNS provider for solving the DNS-01 challenge using Vscale Domains API.
+// Package vscale implements a DNS provider for solving the DNS-01 challenge using Vscale Domains API.
 // Vscale Domain API reference: https://developers.vscale.io/documentation/api/v1/#api-Domains
 // Token: https://vscale.io/panel/settings/tokens/
 package vscale
@@ -9,7 +9,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
+	"github.com/xenolf/lego/providers/dns/vscale/internal"
+
 	"github.com/xenolf/lego/platform/config/env"
 )
 
@@ -54,7 +56,7 @@ func NewDefaultConfig() *Config {
 // DNSProvider is an implementation of the acme.ChallengeProvider interface.
 type DNSProvider struct {
 	config *Config
-	client *Client
+	client *internal.Client
 }
 
 // NewDNSProvider returns a DNSProvider instance configured for Vscale Domains API.
@@ -85,10 +87,9 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 		return nil, fmt.Errorf("vscale: invalid TTL, TTL (%d) must be greater than %d", config.TTL, minTTL)
 	}
 
-	client := NewClient(ClientOpts{
+	client := internal.NewClient(internal.ClientOpts{
 		BaseURL:    config.BaseURL,
 		Token:      config.Token,
-		UserAgent:  acme.UserAgent,
 		HTTPClient: config.HTTPClient,
 	})
 
@@ -103,14 +104,14 @@ func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 
 // Present creates a TXT record to fulfill DNS-01 challenge.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
 	domainObj, err := d.client.GetDomainByName(domain)
 	if err != nil {
 		return fmt.Errorf("vscale: %v", err)
 	}
 
-	txtRecord := Record{
+	txtRecord := internal.Record{
 		Type:    "TXT",
 		TTL:     d.config.TTL,
 		Name:    fqdn,
@@ -126,7 +127,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes a TXT record used for DNS-01 challenge.
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _ := dns01.GetRecord(domain, keyAuth)
 
 	domainObj, err := d.client.GetDomainByName(domain)
 	if err != nil {

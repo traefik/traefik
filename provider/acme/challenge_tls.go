@@ -5,10 +5,11 @@ import (
 
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge"
+	"github.com/xenolf/lego/challenge/tlsalpn01"
 )
 
-var _ acme.ChallengeProvider = (*challengeTLSALPN)(nil)
+var _ challenge.Provider = (*challengeTLSALPN)(nil)
 
 type challengeTLSALPN struct {
 	Store Store
@@ -17,7 +18,7 @@ type challengeTLSALPN struct {
 func (c *challengeTLSALPN) Present(domain, token, keyAuth string) error {
 	log.Debugf("TLS Challenge Present temp certificate for %s", domain)
 
-	certPEMBlock, keyPEMBlock, err := acme.TLSALPNChallengeBlocks(domain, keyAuth)
+	certPEMBlock, keyPEMBlock, err := tlsalpn01.ChallengeBlocks(domain, keyAuth)
 	if err != nil {
 		return err
 	}

@@ -1,5 +1,4 @@
-// Package nifcloud implements a DNS provider for solving the DNS-01 challenge
-// using NIFCLOUD DNS.
+// Package nifcloud implements a DNS provider for solving the DNS-01 challenge using NIFCLOUD DNS.
 package nifcloud
 
 import (
@@ -8,8 +7,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/providers/dns/nifcloud/internal"
+
+	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/platform/config/env"
+	"github.com/xenolf/lego/platform/wait"
 )
 
 // Config is used to configure the creation of the DNSProvider
@@ -26,9 +28,9 @@ type Config struct {
 // NewDefaultConfig returns a default configuration for the DNSProvider
 func NewDefaultConfig() *Config {
 	return &Config{
-		TTL:                env.GetOrDefaultInt("NIFCLOUD_TTL", 120),
-		PropagationTimeout: env.GetOrDefaultSecond("NIFCLOUD_PROPAGATION_TIMEOUT", acme.DefaultPropagationTimeout),
-		PollingInterval:    env.GetOrDefaultSecond("NIFCLOUD_POLLING_INTERVAL", acme.DefaultPollingInterval),
+		TTL:                env.GetOrDefaultInt("NIFCLOUD_TTL", dns01.DefaultTTL),
+		PropagationTimeout: env.GetOrDefaultSecond("NIFCLOUD_PROPAGATION_TIMEOUT", dns01.DefaultPropagationTimeout),
+		PollingInterval:    env.GetOrDefaultSecond("NIFCLOUD_POLLING_INTERVAL", dns01.DefaultPollingInterval),
 		HTTPClient: &http.Client{
 			Timeout: env.GetOrDefaultSecond("NIFCLOUD_HTTP_TIMEOUT", 30*time.Second),
 		},
@@ -37,7 +39,7 @@ func NewDefaultConfig() *Config {
 
 // DNSProvider implements the acme.ChallengeProvider interface
 type DNSProvider struct {
-	client *Client
+	client *internal.Client
 	config *Config
 }
 
@@ -58,26 +60,13 @@ func NewDNSProvider() (*DNSProvider, error) {
 	return NewDNSProviderConfig(config)
 }
 
-// NewDNSProviderCredentials uses the supplied credentials
-// to return a DNSProvider instance configured for NIFCLOUD.
-// Deprecated
-func NewDNSProviderCredentials(httpClient *http.Client, endpoint, accessKey, secretKey string) (*DNSProvider, error) {
-	config := NewDefaultConfig()
-	config.HTTPClient = httpClient
-	config.BaseURL = endpoint
-	config.AccessKey = accessKey
-	config.SecretKey = secretKey
-
-	return NewDNSProviderConfig(config)
-}
-
 // NewDNSProviderConfig return a DNSProvider instance configured for NIFCLOUD.
 func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 	if config == nil {
 		return nil, errors.New("nifcloud: the configuration of the DNS provider is nil")
 	}
 
-	client, err := NewClient(config.AccessKey, config.SecretKey)
+	client, err := internal.NewClient(config.AccessKey, config.SecretKey)
 	if err != nil {
 		return nil, fmt.Errorf("nifcloud: %v", err)
 	}
@@ -95,7 +84,7 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 
 // Present creates a TXT record using the specified parameters
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
 	err := d.changeRecord("CREATE", fqdn, value, domain, d.config.TTL)
 	if err != nil {
@@ -106,7 +95,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
 	err := d.changeRecord("DELETE", fqdn, value, domain, d.config.TTL)
 	if err != nil {
@@ -122,22 +111,22 @@ func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 }
 
 func (d *DNSProvider) changeRecord(action, fqdn, value, domain string, ttl int) error {
-	name := acme.UnFqdn(fqdn)
+	name := dns01.UnFqdn(fqdn)
 
-	reqParams := ChangeResourceRecordSetsRequest{
-		XMLNs: xmlNs,
-		ChangeBatch: ChangeBatch{
+	reqParams := internal.ChangeResourceRecordSetsRequest{
+		XMLNs: internal.XMLNs,
+		ChangeBatch: internal.ChangeBatch{
 			Comment: "Managed by Lego",
-			Changes: Changes{
-				Change: []Change{
+			Changes: internal.Changes{
+				Change: []internal.Change{
 					{
 						Action: action,
-						ResourceRecordSet: ResourceRecordSet{
+						ResourceRecordSet: internal.ResourceRecordSet{
 							Name: name,
 							Type: "TXT",
 							TTL:  ttl,
-							ResourceRecords: ResourceRecords{
-								ResourceRecord: []ResourceRecord{
+							ResourceRecords: internal.ResourceRecords{
+								ResourceRecord: []internal.ResourceRecord{
 									{
 										Value: value,
 									},
@@ -157,7 +146,7 @@ func (d *DNSProvider) changeRecord(action, fqdn, value, domain string, ttl int) 
 
 	statusID := resp.ChangeInfo.ID
 
-	return acme.WaitFor(120*time.Second, 4*time.Second, func() (bool, error) {
+	return wait.For("nifcloud", 120*time.Second, 4*time.Second, func() (bool, error) {
 		resp, err := d.client.GetChange(statusID)
 		if err != nil {
 			return false, fmt.Errorf("failed to query NIFCLOUD DNS change status: %v", err)
