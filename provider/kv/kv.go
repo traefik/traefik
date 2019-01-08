@@ -24,8 +24,10 @@ type Provider struct {
 	TLS                   *types.ClientTLS `description:"Enable TLS support" export:"true"`
 	Username              string           `description:"KV Username"`
 	Password              string           `description:"KV Password"`
+	CacheKeyValues        bool             `description:"Cache KVs while applying the template"`
 	storeType             store.Backend
 	kvClient              store.Store
+	kvCache               map[string]*store.KVPair
 }
 
 // CreateStore create the K/V store
@@ -71,15 +73,21 @@ func (p *Provider) watchKv(configurationChan chan<- types.ConfigMessage, prefix 
 			select {
 			case <-stop:
 				return nil
-			case _, ok := <-events:
+			case tree, ok := <-events:
 				if !ok {
 					return errors.New("watchtree channel closed")
+				}
+				if p.CacheKeyValues {
+					kvCache := make(map[string]*store.KVPair, len(tree))
+					for _, kv := range tree {
+						kvCache[kv.Key] = kv
+					}
+					p.kvCache = kvCache
 				}
 				configuration, errC := p.buildConfiguration()
 				if errC != nil {
 					return errC
 				}
-
 				if configuration != nil {
 					configurationChan <- types.ConfigMessage{
 						ProviderName:  string(p.storeType),
@@ -114,11 +122,21 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				}
 			})
 		}
+		if p.CacheKeyValues {
+			tree, err := p.kvClient.List(p.Prefix, nil)
+			if err != nil {
+				return fmt.Errorf("failed to list KV store: %v", err)
+			}
+			kvCache := make(map[string]*store.KVPair, len(tree))
+			for _, kv := range tree {
+				kvCache[kv.Key] = kv
+			}
+			p.kvCache = kvCache
+		}
 		configuration, err := p.buildConfiguration()
 		if err != nil {
 			return err
 		}
-
 		configurationChan <- types.ConfigMessage{
 			ProviderName:  string(p.storeType),
 			Configuration: configuration,

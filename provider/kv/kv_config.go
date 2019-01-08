@@ -575,7 +575,11 @@ func (p *Provider) listServers(backend string) []string {
 
 func (p *Provider) serverFilter(serverName string) bool {
 	key := fmt.Sprint(serverName, pathBackendServerURL)
-	if _, err := p.kvClient.Get(key, nil); err != nil {
+	if p.CacheKeyValues && p.kvCache != nil {
+		if _, ok := p.kvCache[key]; !ok {
+			return false
+		}
+	} else if _, err := p.kvClient.Get(key, nil); err != nil {
 		log.Errorf("Failed to retrieve value for key %s: %s", key, err)
 		checkError(err)
 
@@ -586,9 +590,16 @@ func (p *Provider) serverFilter(serverName string) bool {
 
 func (p *Provider) checkConstraints(keys ...string) bool {
 	joinedKeys := strings.Join(keys, "")
-	keyPair, err := p.kvClient.Get(joinedKeys, nil)
-	if err != nil {
-		checkError(err)
+	var err error
+	var keyPair *store.KVPair
+
+	if p.CacheKeyValues && p.kvCache != nil {
+		keyPair = p.kvCache[joinedKeys]
+	} else {
+		keyPair, err = p.kvClient.Get(joinedKeys, nil)
+		if err != nil {
+			checkError(err)
+		}
 	}
 
 	value := ""
@@ -638,12 +649,23 @@ func (p *Provider) get(defaultValue string, keyParts ...string) string {
 		key = strings.TrimPrefix(key, pathSeparator)
 	}
 
-	keyPair, err := p.kvClient.Get(key, nil)
-	if err != nil || keyPair == nil {
-		log.Debugf("Cannot get key %s %s", key, err)
+	var err error
+	var keyPair *store.KVPair
+	if p.CacheKeyValues && p.kvCache != nil {
+		keyPair = p.kvCache[key]
+	} else {
+		keyPair, err = p.kvClient.Get(key, nil)
+		if err != nil || keyPair == nil {
+			log.Debugf("Cannot get key %s %s", key, err)
+		}
+	}
+	if err != nil {
 		checkError(err)
 
 		log.Debugf("Setting %s to default: %s", key, defaultValue)
+		return defaultValue
+	} else if keyPair == nil {
+		log.Debugf("Cannot get key %s, setting default %s", key, defaultValue)
 		return defaultValue
 	}
 
@@ -676,7 +698,17 @@ func (p *Provider) hasPrefix(keyParts ...string) bool {
 		baseKey += "/"
 	}
 
-	listKeys, err := p.kvClient.List(baseKey, nil)
+	var err error
+	var listKeys []*store.KVPair
+	if p.CacheKeyValues && p.kvCache != nil {
+		for key, kv := range p.kvCache {
+			if key != baseKey && strings.HasPrefix(key, baseKey) {
+				listKeys = append(listKeys, kv)
+			}
+		}
+	} else {
+		listKeys, err = p.kvClient.List(baseKey, nil)
+	}
 	if err != nil {
 		log.Debugf("Cannot list keys under %q: %v", baseKey, err)
 		checkError(err)
@@ -720,7 +752,17 @@ func (p *Provider) getInt64(defaultValue int64, keyParts ...string) int64 {
 func (p *Provider) list(keyParts ...string) []string {
 	rootKey := strings.Join(keyParts, "")
 
-	keysPairs, err := p.kvClient.List(rootKey, nil)
+	var err error
+	var keysPairs []*store.KVPair
+	if p.CacheKeyValues && p.kvCache != nil {
+		for key, kv := range p.kvCache {
+			if key != rootKey && strings.HasPrefix(key, rootKey) {
+				keysPairs = append(keysPairs, kv)
+			}
+		}
+	} else {
+		keysPairs, err = p.kvClient.List(rootKey, nil)
+	}
 	if err != nil {
 		log.Debugf("Cannot list keys under %q: %v", rootKey, err)
 		checkError(err)
