@@ -184,7 +184,10 @@ func (c *Configuration) SetEffectiveConfiguration(configFile string) {
 			entryPoint.Transport.RespondingTimeouts = &RespondingTimeouts{
 				IdleTimeout: parse.Duration(DefaultIdleTimeout),
 			}
+		}
 
+		if entryPoint.ForwardedHeaders == nil {
+			entryPoint.ForwardedHeaders = &ForwardedHeaders{}
 		}
 	}
 
