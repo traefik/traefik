@@ -403,16 +403,31 @@ func (p *Provider) getTLSClientCert(rootPath string) *types.TLSClientHeaders {
 		}
 
 		if p.hasPrefix(rootPath, pathFrontendPassTLSClientCertInfosSubject) {
-			subject := &types.TLSCLientCertificateSubjectInfos{
-				CommonName:   p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectCommonName),
-				Country:      p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectCountry),
-				Locality:     p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectLocality),
-				Organization: p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectOrganization),
-				Province:     p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectProvince),
-				SerialNumber: p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectSerialNumber),
+			subject := &types.TLSCLientCertificateDNInfos{
+				CommonName:      p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectCommonName),
+				Country:         p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectCountry),
+				DomainComponent: p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectDomainComponent),
+				Locality:        p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectLocality),
+				Organization:    p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectOrganization),
+				Province:        p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectProvince),
+				SerialNumber:    p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosSubjectSerialNumber),
 			}
 			infos.Subject = subject
 		}
+
+		if p.hasPrefix(rootPath, pathFrontendPassTLSClientCertInfosIssuer) {
+			issuer := &types.TLSCLientCertificateDNInfos{
+				CommonName:      p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosIssuerCommonName),
+				Country:         p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosIssuerCountry),
+				DomainComponent: p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosIssuerDomainComponent),
+				Locality:        p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosIssuerLocality),
+				Organization:    p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosIssuerOrganization),
+				Province:        p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosIssuerProvince),
+				SerialNumber:    p.getBool(false, rootPath, pathFrontendPassTLSClientCertInfosIssuerSerialNumber),
+			}
+			infos.Issuer = issuer
+		}
+
 		tlsClientHeaders.Infos = infos
 	}
 	return tlsClientHeaders
