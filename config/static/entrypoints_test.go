@@ -206,6 +206,7 @@ func TestEntryPoints_Set(t *testing.T) {
 					Insecure:   false,
 					TrustedIPs: []string{"192.168.0.1"},
 				},
+				ForwardedHeaders: &ForwardedHeaders{},
 				// FIXME Test ServersTransport
 			},
 		},
@@ -234,6 +235,7 @@ func TestEntryPoints_Set(t *testing.T) {
 					Insecure:   false,
 					TrustedIPs: []string{"192.168.0.1"},
 				},
+				ForwardedHeaders: &ForwardedHeaders{},
 				// FIXME Test ServersTransport
 			},
 		},
@@ -241,14 +243,17 @@ func TestEntryPoints_Set(t *testing.T) {
 			name:                   "default",
 			expression:             "Name:foo",
 			expectedEntryPointName: "foo",
-			expectedEntryPoint:     &EntryPoint{},
+			expectedEntryPoint: &EntryPoint{
+				ForwardedHeaders: &ForwardedHeaders{},
+			},
 		},
 		{
 			name:                   "ProxyProtocol insecure true",
 			expression:             "Name:foo ProxyProtocol.insecure:true",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
-				ProxyProtocol: &ProxyProtocol{Insecure: true},
+				ProxyProtocol:    &ProxyProtocol{Insecure: true},
+				ForwardedHeaders: &ForwardedHeaders{},
 			},
 		},
 		{
@@ -256,7 +261,8 @@ func TestEntryPoints_Set(t *testing.T) {
 			expression:             "Name:foo ProxyProtocol.insecure:false",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
-				ProxyProtocol: &ProxyProtocol{},
+				ProxyProtocol:    &ProxyProtocol{},
+				ForwardedHeaders: &ForwardedHeaders{},
 			},
 		},
 		{
@@ -267,6 +273,7 @@ func TestEntryPoints_Set(t *testing.T) {
 				ProxyProtocol: &ProxyProtocol{
 					TrustedIPs: []string{"10.0.0.3/24", "20.0.0.3/24"},
 				},
+				ForwardedHeaders: &ForwardedHeaders{},
 			},
 		},
 	}
