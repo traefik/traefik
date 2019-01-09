@@ -17,7 +17,7 @@ type EntryPoint struct {
 	ForwardedHeaders *ForwardedHeaders
 }
 
-// ForwardedHeaders Trust client forwarding headers
+// ForwardedHeaders Trust client forwarding headers.
 type ForwardedHeaders struct {
 	Insecure   bool
 	TrustedIPs []string
