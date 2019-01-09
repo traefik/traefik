@@ -8,7 +8,7 @@ import (
 	"github.com/vulcand/oxy/utils"
 )
 
-// XForwarded filter for XForwarded headers
+// XForwarded filter for XForwarded headers.
 type XForwarded struct {
 	insecure   bool
 	trustedIps []string
@@ -16,7 +16,7 @@ type XForwarded struct {
 	next       http.Handler
 }
 
-// NewXForwarded creates a new XForwarded
+// NewXForwarded creates a new XForwarded.
 func NewXForwarded(insecure bool, trustedIps []string, next http.Handler) (*XForwarded, error) {
 	var ipChecker *ip.Checker
 	if len(trustedIps) > 0 {
