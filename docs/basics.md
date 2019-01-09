@@ -236,7 +236,8 @@ The following rules are both `Matchers` and `Modifiers`, so the `Matcher` portio
 #### Priorities
 
 By default, routes will be sorted (in descending order) using rules length (to avoid path overlap):
-`PathPrefix:/foo;Host:foo.com` (length == 28) will be matched before `PathPrefixStrip:/foobar` (length == 23) will be matched before `PathPrefix:/foo,/bar` (length == 20).
+`PathPrefix:/foo;Host:foo.com` (length == 28) will be matched before `PathPrefixStrip:/foobar` (length == 23) will be matched before `PathPrefix:/foo,/bar` (length == 20).  
+The minimum priority is 1. A priority value of zero will be ignored.
 
 You can customize priority by frontend. The priority value override the rule length during sorting:
 
