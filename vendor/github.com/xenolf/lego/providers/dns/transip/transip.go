@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/transip/gotransip"
@@ -33,8 +34,9 @@ func NewDefaultConfig() *Config {
 
 // DNSProvider describes a provider for TransIP
 type DNSProvider struct {
-	config *Config
-	client gotransip.SOAPClient
+	config       *Config
+	client       gotransip.Client
+	dnsEntriesMu sync.Mutex
 }
 
 // NewDNSProvider returns a DNSProvider instance configured for TransIP.
@@ -90,6 +92,10 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	// get the subDomain
 	subDomain := strings.TrimSuffix(dns01.UnFqdn(fqdn), "."+domainName)
 
+	// use mutex to prevent race condition from GetInfo until SetDNSEntries
+	d.dnsEntriesMu.Lock()
+	defer d.dnsEntriesMu.Unlock()
+
 	// get all DNS entries
 	info, err := transipdomain.GetInfo(d.client, domainName)
 	if err != nil {
@@ -125,6 +131,10 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 
 	// get the subDomain
 	subDomain := strings.TrimSuffix(dns01.UnFqdn(fqdn), "."+domainName)
+
+	// use mutex to prevent race condition from GetInfo until SetDNSEntries
+	d.dnsEntriesMu.Lock()
+	defer d.dnsEntriesMu.Unlock()
 
 	// get all DNS entries
 	info, err := transipdomain.GetInfo(d.client, domainName)
