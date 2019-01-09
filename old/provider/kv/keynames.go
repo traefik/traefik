@@ -52,7 +52,6 @@ const (
 	pathFrontendPassTLSClientCertInfosSubjectOrganization    = pathFrontendPassTLSClientCertInfosSubject + "/organization"
 	pathFrontendPassTLSClientCertInfosSubjectProvince        = pathFrontendPassTLSClientCertInfosSubject + "/province"
 	pathFrontendPassTLSClientCertInfosSubjectSerialNumber    = pathFrontendPassTLSClientCertInfosSubject + "/serialnumber"
-	pathFrontendPassTLSCert                                  = "/passtlscert"
 	pathFrontendWhiteListSourceRange                         = "/whitelist/sourcerange"
 	pathFrontendWhiteListIPStrategy                          = "/whitelist/ipstrategy"
 	pathFrontendWhiteListIPStrategyDepth                     = pathFrontendWhiteListIPStrategy + "/depth"

@@ -44,7 +44,6 @@ func (p *Provider) buildConfiguration(catalog []catalogUpdate) *types.Configurat
 		"getFrontEndEntryPoints": label.GetFuncSliceString(label.TraefikFrontendEntryPoints),
 		"getPriority":            label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
 		"getPassHostHeader":      label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
-		"getPassTLSCert":         label.GetFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getPassTLSClientCert":   label.GetTLSClientCert,
 		"getWhiteList":           label.GetWhiteList,
 		"getRedirect":            label.GetRedirect,

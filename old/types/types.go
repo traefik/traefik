@@ -189,7 +189,6 @@ type Frontend struct {
 	Backend           string                `json:"backend,omitempty"`
 	Routes            map[string]Route      `json:"routes,omitempty" hash:"ignore"`
 	PassHostHeader    bool                  `json:"passHostHeader,omitempty"`
-	PassTLSCert       bool                  `json:"passTLSCert,omitempty"` // Deprecated use PassTLSClientCert instead
 	PassTLSClientCert *TLSClientHeaders     `json:"passTLSClientCert,omitempty"`
 	Priority          int                   `json:"priority"`
 	WhiteList         *WhiteList            `json:"whiteList,omitempty"`

@@ -44,7 +44,6 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getBackendName":       p.getFuncString(pathFrontendBackend, ""),
 		"getPriority":          p.getFuncInt(pathFrontendPriority, label.DefaultFrontendPriority),
 		"getPassHostHeader":    p.getFuncBool(pathFrontendPassHostHeader, label.DefaultPassHostHeader),
-		"getPassTLSCert":       p.getFuncBool(pathFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getPassTLSClientCert": p.getTLSClientCert,
 		"getEntryPoints":       p.getFuncList(pathFrontendEntryPoints),
 		"getAuth":              p.getAuth,

@@ -395,7 +395,6 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 						label.Prefix + "sauternes." + label.SuffixFrontendAuthBasic:                      "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.Prefix + "sauternes." + label.SuffixFrontendEntryPoints:                    "http,https",
 						label.Prefix + "sauternes." + label.SuffixFrontendPassHostHeader:                 "true",
-						label.Prefix + "sauternes." + label.SuffixFrontendPassTLSCert:                    "true",
 						label.Prefix + "sauternes." + label.SuffixFrontendPriority:                       "666",
 						label.Prefix + "sauternes." + label.SuffixFrontendRedirectEntryPoint:             "https",
 						label.Prefix + "sauternes." + label.SuffixFrontendRedirectRegex:                  "nope",
@@ -457,7 +456,6 @@ func TestSegmentBuildConfiguration(t *testing.T) {
 						"https",
 					},
 					PassHostHeader: true,
-					PassTLSCert:    true,
 					Priority:       666,
 					PassTLSClientCert: &types.TLSClientHeaders{
 						PEM: true,

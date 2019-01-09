@@ -24,7 +24,6 @@ const (
 	annotationKubernetesWhiteListIPStrategyDepth        = "ingress.kubernetes.io/whitelist-ipstrategy-depth"
 	annotationKubernetesWhiteListIPStrategyExcludedIPs  = "ingress.kubernetes.io/whitelist-ipstrategy-excluded-ips"
 	annotationKubernetesPreserveHost                    = "ingress.kubernetes.io/preserve-host"
-	annotationKubernetesPassTLSCert                     = "ingress.kubernetes.io/pass-tls-cert" // Deprecated
 	annotationKubernetesPassTLSClientCert               = "ingress.kubernetes.io/pass-client-tls-cert"
 	annotationKubernetesFrontendEntryPoints             = "ingress.kubernetes.io/frontend-entry-points"
 	annotationKubernetesPriority                        = "ingress.kubernetes.io/priority"

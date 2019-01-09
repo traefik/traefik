@@ -76,7 +76,6 @@
     backend = "backend-{{ $serviceName }}"
     priority = {{ getPriority $instance.SegmentLabels }}
     passHostHeader = {{ getPassHostHeader $instance.SegmentLabels }}
-    passTLSCert = {{ getPassTLSCert $instance.SegmentLabels }}
 
     entryPoints = [{{range getEntryPoints $instance.SegmentLabels }}
       "{{.}}",

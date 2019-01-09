@@ -63,7 +63,6 @@ type Provider struct {
 	Token                  string           `description:"Kubernetes bearer token (not needed for in-cluster client)"`
 	CertAuthFilePath       string           `description:"Kubernetes certificate authority file path (not needed for in-cluster client)"`
 	DisablePassHostHeaders bool             `description:"Kubernetes disable PassHost Headers" export:"true"`
-	EnablePassTLSCert      bool             `description:"Kubernetes enable Pass TLS Client Certs" export:"true"` // Deprecated
 	Namespaces             Namespaces       `description:"Kubernetes namespaces" export:"true"`
 	LabelSelector          string           `description:"Kubernetes Ingress label selector to use" export:"true"`
 	IngressClass           string           `description:"Value of kubernetes.io/ingress.class annotation to watch for" export:"true"`
@@ -276,13 +275,11 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					}
 
 					passHostHeader := getBoolValue(i.Annotations, annotationKubernetesPreserveHost, !p.DisablePassHostHeaders)
-					passTLSCert := getBoolValue(i.Annotations, annotationKubernetesPassTLSCert, p.EnablePassTLSCert) // Deprecated
 					entryPoints := getSliceStringValue(i.Annotations, annotationKubernetesFrontendEntryPoints)
 
 					frontend = &types.Frontend{
 						Backend:           baseName,
 						PassHostHeader:    passHostHeader,
-						PassTLSCert:       passTLSCert,
 						PassTLSClientCert: getPassTLSClientCert(i),
 						Routes:            make(map[string]types.Route),
 						Priority:          priority,
@@ -540,14 +537,12 @@ func (p *Provider) addGlobalBackend(cl Client, i *extensionsv1beta1.Ingress, tem
 	}
 
 	passHostHeader := getBoolValue(i.Annotations, annotationKubernetesPreserveHost, !p.DisablePassHostHeaders)
-	passTLSCert := getBoolValue(i.Annotations, annotationKubernetesPassTLSCert, p.EnablePassTLSCert) // Deprecated
 	priority := getIntValue(i.Annotations, annotationKubernetesPriority, 0)
 	entryPoints := getSliceStringValue(i.Annotations, annotationKubernetesFrontendEntryPoints)
 
 	templateObjects.Frontends[defaultFrontendName] = &types.Frontend{
 		Backend:           defaultBackendName,
 		PassHostHeader:    passHostHeader,
-		PassTLSCert:       passTLSCert,
 		PassTLSClientCert: getPassTLSClientCert(i),
 		Routes:            make(map[string]types.Route),
 		Priority:          priority,

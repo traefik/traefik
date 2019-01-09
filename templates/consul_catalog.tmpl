@@ -76,7 +76,6 @@
     backend = "backend-{{ getServiceBackendName $service }}"
     priority = {{ getPriority $service.TraefikLabels }}
     passHostHeader = {{ getPassHostHeader $service.TraefikLabels }}
-    passTLSCert = {{ getPassTLSCert $service.TraefikLabels }}
 
     entryPoints = [{{range getFrontEndEntryPoints $service.TraefikLabels }}
       "{{.}}",

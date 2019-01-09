@@ -441,7 +441,6 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendAuthBasic:                      "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						label.TraefikFrontendEntryPoints:                    "http,https",
 						label.TraefikFrontendPassHostHeader:                 "true",
-						label.TraefikFrontendPassTLSCert:                    "true",
 						label.TraefikFrontendPriority:                       "666",
 						label.TraefikFrontendRedirectEntryPoint:             "https",
 						label.TraefikFrontendRedirectRegex:                  "nope",
@@ -506,7 +505,6 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						},
 					},
 					PassHostHeader: true,
-					PassTLSCert:    true,
 					Priority:       666,
 					Auth: &types.Auth{
 						HeaderField: "X-WebAuth-User",

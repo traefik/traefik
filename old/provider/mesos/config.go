@@ -48,7 +48,6 @@ func (p *Provider) buildConfiguration(tasks []state.Task) *types.Configuration {
 		"getAuth":              label.GetAuth,
 		"getPriority":          label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
 		"getPassHostHeader":    label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
-		"getPassTLSCert":       label.GetFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getPassTLSClientCert": label.GetTLSClientCert,
 		"getFrontendRule":      p.getFrontendRule,
 		"getRedirect":          label.GetRedirect,

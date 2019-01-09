@@ -20,7 +20,6 @@ const (
 	DefaultWeight                                  = 1
 	DefaultProtocol                                = "http"
 	DefaultPassHostHeader                          = true
-	DefaultPassTLSCert                             = false
 	DefaultFrontendPriority                        = 0
 	DefaultCircuitBreakerExpression                = "NetworkErrorRatio() > 1"
 	DefaultBackendLoadBalancerMethod               = "wrr"

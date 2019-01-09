@@ -405,13 +405,6 @@ func limitPeriod(period time.Duration) func(*types.Rate) {
 	}
 }
 
-// Deprecated
-func passTLSCert() func(*types.Frontend) {
-	return func(f *types.Frontend) {
-		f.PassTLSCert = true
-	}
-}
-
 func passTLSClientCert() func(*types.Frontend) {
 	return func(f *types.Frontend) {
 		f.PassTLSClientCert = &types.TLSClientHeaders{

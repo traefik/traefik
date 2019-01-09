@@ -150,7 +150,6 @@ func TestBuildConfigurationSegments(t *testing.T) {
 
 					withSegmentLabel(label.TraefikFrontendEntryPoints, "http,https", "containous"),
 					withSegmentLabel(label.TraefikFrontendPassHostHeader, "true", "containous"),
-					withSegmentLabel(label.TraefikFrontendPassTLSCert, "true", "containous"),
 					withSegmentLabel(label.TraefikFrontendPriority, "666", "containous"),
 					withSegmentLabel(label.TraefikFrontendRedirectEntryPoint, "https", "containous"),
 					withSegmentLabel(label.TraefikFrontendRedirectRegex, "nope", "containous"),
@@ -210,7 +209,6 @@ func TestBuildConfigurationSegments(t *testing.T) {
 						},
 					},
 					PassHostHeader: true,
-					PassTLSCert:    true,
 					Priority:       666,
 					PassTLSClientCert: &types.TLSClientHeaders{
 						PEM: true,

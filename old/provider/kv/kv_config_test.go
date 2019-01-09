@@ -300,7 +300,6 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					withPair(pathFrontendPassTLSClientCertInfosSubjectProvince, "true"),
 					withPair(pathFrontendPassTLSClientCertInfosSubjectSerialNumber, "true"),
 
-					withPair(pathFrontendPassTLSCert, "true"),
 					withList(pathFrontendEntryPoints, "http", "https"),
 					withList(pathFrontendWhiteListSourceRange, "1.1.1.1/24", "1234:abcd::42/32"),
 					withPair(pathFrontendWhiteListIPStrategyDepth, "5"),
@@ -419,7 +418,6 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						Priority:    6,
 						EntryPoints: []string{"http", "https"},
 						Backend:     "backend1",
-						PassTLSCert: true,
 						WhiteList: &types.WhiteList{
 							SourceRange: []string{"1.1.1.1/24", "1234:abcd::42/32"},
 							IPStrategy: &types.IPStrategy{

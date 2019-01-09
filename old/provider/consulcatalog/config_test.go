@@ -465,7 +465,6 @@ func TestProviderBuildConfiguration(t *testing.T) {
 
 							label.TraefikFrontendEntryPoints + "=http,https",
 							label.TraefikFrontendPassHostHeader + "=true",
-							label.TraefikFrontendPassTLSCert + "=true",
 							label.TraefikFrontendPriority + "=666",
 							label.TraefikFrontendRedirectEntryPoint + "=https",
 							label.TraefikFrontendRedirectRegex + "=nope",
@@ -562,7 +561,6 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						},
 					},
 					PassHostHeader: true,
-					PassTLSCert:    true,
 					Priority:       666,
 					PassTLSClientCert: &types.TLSClientHeaders{
 						PEM: true,

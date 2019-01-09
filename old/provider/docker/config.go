@@ -46,7 +46,6 @@ func (p *Provider) buildConfiguration(containersInspected []dockerData) *types.C
 		"getBackendName":       getBackendName,
 		"getPriority":          label.GetFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
 		"getPassHostHeader":    label.GetFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
-		"getPassTLSCert":       label.GetFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getPassTLSClientCert": label.GetTLSClientCert,
 		"getEntryPoints":       label.GetFuncSliceString(label.TraefikFrontendEntryPoints),
 		"getBasicAuth":         label.GetFuncSliceString(label.TraefikFrontendAuthBasic), // Deprecated

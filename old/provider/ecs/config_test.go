@@ -400,7 +400,6 @@ func TestBuildConfiguration(t *testing.T) {
 
 						label.TraefikFrontendEntryPoints:                    aws.String("http,https"),
 						label.TraefikFrontendPassHostHeader:                 aws.String("true"),
-						label.TraefikFrontendPassTLSCert:                    aws.String("true"),
 						label.TraefikFrontendPriority:                       aws.String("666"),
 						label.TraefikFrontendRedirectEntryPoint:             aws.String("https"),
 						label.TraefikFrontendRedirectRegex:                  aws.String("nope"),
@@ -517,7 +516,6 @@ func TestBuildConfiguration(t *testing.T) {
 							},
 						},
 						PassHostHeader: true,
-						PassTLSCert:    true,
 						Priority:       666,
 						PassTLSClientCert: &types.TLSClientHeaders{
 							PEM: true,
@@ -679,7 +677,6 @@ func TestBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendAuthBasicUsers:       aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 						label.TraefikFrontendEntryPoints:          aws.String("http,https"),
 						label.TraefikFrontendPassHostHeader:       aws.String("true"),
-						label.TraefikFrontendPassTLSCert:          aws.String("true"),
 						label.TraefikFrontendPriority:             aws.String("666"),
 						label.TraefikFrontendRedirectEntryPoint:   aws.String("https"),
 						label.TraefikFrontendRedirectRegex:        aws.String("nope"),
@@ -766,7 +763,6 @@ func TestBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendAuthBasic:            aws.String("test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 						label.TraefikFrontendEntryPoints:          aws.String("http,https"),
 						label.TraefikFrontendPassHostHeader:       aws.String("true"),
-						label.TraefikFrontendPassTLSCert:          aws.String("true"),
 						label.TraefikFrontendPriority:             aws.String("666"),
 						label.TraefikFrontendRedirectEntryPoint:   aws.String("https"),
 						label.TraefikFrontendRedirectRegex:        aws.String("nope"),
@@ -882,7 +878,6 @@ func TestBuildConfiguration(t *testing.T) {
 							},
 						},
 						PassHostHeader: true,
-						PassTLSCert:    true,
 						Priority:       666,
 						Auth: &types.Auth{
 							Basic: &types.Basic{

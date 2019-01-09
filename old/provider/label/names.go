@@ -104,7 +104,6 @@ const (
 	SuffixFrontendPassTLSClientCertInfosSubjectOrganization     = SuffixFrontendPassTLSClientCertInfosSubject + ".organization"
 	SuffixFrontendPassTLSClientCertInfosSubjectProvince         = SuffixFrontendPassTLSClientCertInfosSubject + ".province"
 	SuffixFrontendPassTLSClientCertInfosSubjectSerialNumber     = SuffixFrontendPassTLSClientCertInfosSubject + ".serialNumber"
-	SuffixFrontendPassTLSCert                                   = "frontend.passTLSCert" // Deprecated
 	SuffixFrontendPriority                                      = "frontend.priority"
 	SuffixFrontendRateLimitExtractorFunc                        = "frontend.rateLimit.extractorFunc"
 	SuffixFrontendRedirectEntryPoint                            = "frontend.redirect.entryPoint"
@@ -195,7 +194,6 @@ const (
 	TraefikFrontendPassTLSClientCertInfosSubjectOrganization    = Prefix + SuffixFrontendPassTLSClientCertInfosSubjectOrganization
 	TraefikFrontendPassTLSClientCertInfosSubjectProvince        = Prefix + SuffixFrontendPassTLSClientCertInfosSubjectProvince
 	TraefikFrontendPassTLSClientCertInfosSubjectSerialNumber    = Prefix + SuffixFrontendPassTLSClientCertInfosSubjectSerialNumber
-	TraefikFrontendPassTLSCert                                  = Prefix + SuffixFrontendPassTLSCert // Deprecated
 	TraefikFrontendPriority                                     = Prefix + SuffixFrontendPriority
 	TraefikFrontendRateLimitExtractorFunc                       = Prefix + SuffixFrontendRateLimitExtractorFunc
 	TraefikFrontendRedirectEntryPoint                           = Prefix + SuffixFrontendRedirectEntryPoint

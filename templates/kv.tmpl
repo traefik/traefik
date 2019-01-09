@@ -74,7 +74,6 @@
     backend = "{{ getBackendName $frontend }}"
     priority = {{ getPriority $frontend }}
     passHostHeader = {{ getPassHostHeader $frontend }}
-    passTLSCert = {{ getPassTLSCert $frontend }}
 
     entryPoints = [{{range getEntryPoints $frontend }}
       "{{.}}",

@@ -727,51 +727,6 @@ func TestGetPassHostHeader(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-// Deprecated
-func TestGetPassTLSCert(t *testing.T) {
-	ingresses := []*extensionsv1beta1.Ingress{
-		buildIngress(iNamespace("awesome"),
-			iRules(iRule(
-				iHost("foo"),
-				iPaths(onePath(iPath("/bar"), iBackend("service1", intstr.FromInt(80))))),
-			),
-		),
-	}
-
-	services := []*corev1.Service{
-		buildService(
-			sName("service1"),
-			sNamespace("awesome"),
-			sUID("1"),
-			sSpec(sPorts(sPort(801, "http"))),
-		),
-	}
-
-	watchChan := make(chan interface{})
-	client := clientMock{
-		ingresses: ingresses,
-		services:  services,
-		watchChan: watchChan,
-	}
-	provider := Provider{EnablePassTLSCert: true}
-
-	actual, err := provider.loadIngresses(client)
-	require.NoError(t, err, "error loading ingresses")
-
-	expected := buildConfiguration(
-		backends(backend("foo/bar", lbMethod("wrr"), servers())),
-		frontends(frontend("foo/bar",
-			passHostHeader(),
-			passTLSCert(),
-			routes(
-				route("/bar", "PathPrefix:/bar"),
-				route("foo", "Host:foo")),
-		)),
-	)
-
-	assert.Equal(t, expected, actual)
-}
-
 func TestInvalidRedirectAnnotation(t *testing.T) {
 	ingresses := []*extensionsv1beta1.Ingress{
 		buildIngress(iNamespace("awesome"),
@@ -1132,7 +1087,6 @@ func TestIngressAnnotations(t *testing.T) {
 		),
 		buildIngress(
 			iNamespace("testing"),
-			iAnnotation(annotationKubernetesPassTLSCert, "true"),
 			iAnnotation(annotationKubernetesPassTLSClientCert, `
 pem: true
 infos:
@@ -1589,7 +1543,6 @@ rateset:
 			frontend("other/sslstuff",
 				passHostHeader(),
 				passTLSClientCert(),
-				passTLSCert(),
 				routes(
 					route("/sslstuff", "PathPrefix:/sslstuff"),
 					route("other", "Host:other")),
@@ -1997,63 +1950,6 @@ func TestPriorityHeaderValue(t *testing.T) {
 			frontend("1337-foo/bar",
 				passHostHeader(),
 				priority(1337),
-				routes(
-					route("/bar", "PathPrefix:/bar"),
-					route("foo", "Host:foo")),
-			),
-		),
-	)
-
-	assert.Equal(t, expected, actual)
-}
-
-func TestInvalidPassTLSCertValue(t *testing.T) {
-	ingresses := []*extensionsv1beta1.Ingress{
-		buildIngress(
-			iNamespace("testing"),
-			iAnnotation(annotationKubernetesPassTLSCert, "herpderp"),
-			iRules(
-				iRule(
-					iHost("foo"),
-					iPaths(onePath(iPath("/bar"), iBackend("service1", intstr.FromInt(80))))),
-			),
-		),
-	}
-
-	services := []*corev1.Service{
-		buildService(
-			sName("service1"),
-			sNamespace("testing"),
-			sUID("1"),
-			sSpec(
-				clusterIP("10.0.0.1"),
-				sType("ExternalName"),
-				sExternalName("example.com"),
-				sPorts(sPort(80, "http"))),
-		),
-	}
-
-	watchChan := make(chan interface{})
-	client := clientMock{
-		ingresses: ingresses,
-		services:  services,
-		watchChan: watchChan,
-	}
-	provider := Provider{}
-
-	actual, err := provider.loadIngresses(client)
-	require.NoError(t, err, "error loading ingresses")
-
-	expected := buildConfiguration(
-		backends(
-			backend("foo/bar",
-				servers(server("http://example.com", weight(1))),
-				lbMethod("wrr"),
-			),
-		),
-		frontends(
-			frontend("foo/bar",
-				passHostHeader(),
 				routes(
 					route("/bar", "PathPrefix:/bar"),
 					route("foo", "Host:foo")),
