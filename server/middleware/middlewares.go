@@ -83,7 +83,7 @@ func checkRecursivity(ctx context.Context, middlewareName string) (context.Conte
 		currentStack = []string{}
 	}
 	if inSlice(middlewareName, currentStack) {
-		return ctx, fmt.Errorf("could not instanciate middleware %s: recursion detected in %s", middlewareName, strings.Join(append(currentStack, middlewareName), "->"))
+		return ctx, fmt.Errorf("could not instantiate middleware %s: recursion detected in %s", middlewareName, strings.Join(append(currentStack, middlewareName), "->"))
 	}
 	return context.WithValue(ctx, middlewareStackKey, append(currentStack, middlewareName)), nil
 }

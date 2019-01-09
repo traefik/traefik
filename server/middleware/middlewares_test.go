@@ -265,7 +265,7 @@ func TestChainWithContext(t *testing.T) {
 					},
 				},
 			},
-			expectedError: errors.New("could not instanciate middleware m1: recursion detected in m1->m2->m3->m1"),
+			expectedError: errors.New("could not instantiate middleware m1: recursion detected in m1->m2->m3->m1"),
 		},
 		{
 			desc:       "Detects recursion in Middleware chain",
@@ -290,7 +290,7 @@ func TestChainWithContext(t *testing.T) {
 					},
 				},
 			},
-			expectedError: errors.New("could not instanciate middleware provider.m1: recursion detected in provider.m1->provider2.m2->provider.m3->provider.m1"),
+			expectedError: errors.New("could not instantiate middleware provider.m1: recursion detected in provider.m1->provider2.m2->provider.m3->provider.m1"),
 		},
 		{
 			buildChain: []string{"ok", "m0"},
@@ -304,7 +304,7 @@ func TestChainWithContext(t *testing.T) {
 					},
 				},
 			},
-			expectedError: errors.New("could not instanciate middleware m0: recursion detected in m0->m0"),
+			expectedError: errors.New("could not instantiate middleware m0: recursion detected in m0->m0"),
 		},
 		{
 			desc:       "Detects MiddlewareChain that references a Chain that references a Chain with a missing middleware",
@@ -331,7 +331,7 @@ func TestChainWithContext(t *testing.T) {
 					},
 				},
 			},
-			expectedError: errors.New("could not instanciate middleware m2: recursion detected in m0->m1->m2->m3->m2"),
+			expectedError: errors.New("could not instantiate middleware m2: recursion detected in m0->m1->m2->m3->m2"),
 		},
 		{
 			desc:       "--",
@@ -343,7 +343,7 @@ func TestChainWithContext(t *testing.T) {
 					},
 				},
 			},
-			expectedError: errors.New("could not instanciate middleware m0: recursion detected in m0->m0"),
+			expectedError: errors.New("could not instantiate middleware m0: recursion detected in m0->m0"),
 		},
 	}
 

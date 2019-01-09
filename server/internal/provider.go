@@ -19,12 +19,9 @@ const (
 func CreateProviderContext(ctx context.Context, elementName string) (contextWithProvider context.Context, fullyQualifiedElementName string) {
 	if providerName := getProviderName(elementName); len(providerName) > 0 {
 		return AddProviderInContext(ctx, providerName), elementName
-	} else {
-		if providerName, ok := ctx.Value(providerKey).(string); ok {
-			return ctx, providerName + "." + elementName
-		}
+	} else if providerName, ok := ctx.Value(providerKey).(string); ok {
+		return ctx, providerName + "." + elementName
 	}
-
 	log.FromContext(ctx).Debugf("Could not find a provider for %s.", elementName)
 	return ctx, elementName
 }
@@ -37,6 +34,7 @@ func getProviderName(middleware string) string {
 	return parts[0]
 }
 
+// AddProviderInContext add the provider name in the context
 func AddProviderInContext(ctx context.Context, providerName string) context.Context {
 	return context.WithValue(ctx, providerKey, providerName)
 }
