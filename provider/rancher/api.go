@@ -193,6 +193,7 @@ func listRancherContainer(client *rancher.RancherClient) ([]*rancher.Container, 
 
 	if err != nil {
 		log.Errorf("Cannot get Provider Services %+v", err)
+		return containerList, err
 	}
 
 	valid := true
