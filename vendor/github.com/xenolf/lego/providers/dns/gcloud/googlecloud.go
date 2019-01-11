@@ -55,10 +55,12 @@ type DNSProvider struct {
 // Project name must be passed in the environment variable: GCE_PROJECT.
 // A Service Account file can be passed in the environment variable: GCE_SERVICE_ACCOUNT_FILE
 func NewDNSProvider() (*DNSProvider, error) {
+	// Use a service account file if specified via environment variable.
 	if saFile, ok := os.LookupEnv("GCE_SERVICE_ACCOUNT_FILE"); ok {
 		return NewDNSProviderServiceAccount(saFile)
 	}
 
+	// Use default credentials.
 	project := os.Getenv("GCE_PROJECT")
 	return NewDNSProviderCredentials(project)
 }
@@ -94,15 +96,20 @@ func NewDNSProviderServiceAccount(saFile string) (*DNSProvider, error) {
 		return nil, fmt.Errorf("googlecloud: unable to read Service Account file: %v", err)
 	}
 
-	// read project id from service account file
-	var datJSON struct {
-		ProjectID string `json:"project_id"`
+	// If GCE_PROJECT is non-empty it overrides the project in the service
+	// account file.
+	project := os.Getenv("GCE_PROJECT")
+	if project == "" {
+		// read project id from service account file
+		var datJSON struct {
+			ProjectID string `json:"project_id"`
+		}
+		err = json.Unmarshal(dat, &datJSON)
+		if err != nil || datJSON.ProjectID == "" {
+			return nil, fmt.Errorf("googlecloud: project ID not found in Google Cloud Service Account file")
+		}
+		project = datJSON.ProjectID
 	}
-	err = json.Unmarshal(dat, &datJSON)
-	if err != nil || datJSON.ProjectID == "" {
-		return nil, fmt.Errorf("googlecloud: project ID not found in Google Cloud Service Account file")
-	}
-	project := datJSON.ProjectID
 
 	conf, err := google.JWTConfigFromJSON(dat, dns.NdevClouddnsReadwriteScope)
 	if err != nil {
