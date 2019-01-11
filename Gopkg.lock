@@ -1704,8 +1704,7 @@
   revision = "0c8571ac0ce161a5feb57375a9cdf148c98c0f70"
 
 [[projects]]
-  branch = "master"
-  digest = "1:f3f9f7b883b89edc06283285964a8125b15f31c1634a8ccb2860c8c8b3f6231d"
+  digest = "1:9eab86777ed6cf496e7659b9c67a0b7ebd1d76f55e1771f8bf52fb68f5f2d040"
   name = "github.com/xenolf/lego"
   packages = [
     "acme",
@@ -1784,7 +1783,8 @@
     "registration",
   ]
   pruneopts = "NUT"
-  revision = "43401f2475dd1f6cc2e220908f0caba246ea854e"
+  revision = "86c9de3db61436d07de2471508067f18c16c1997"
+  version = "v2.0.1"
 
 [[projects]]
   branch = "master"
@@ -2363,7 +2363,6 @@
     "github.com/vulcand/oxy/ratelimit",
     "github.com/vulcand/oxy/roundrobin",
     "github.com/vulcand/oxy/utils",
-    "github.com/xenolf/lego/acme",
     "github.com/xenolf/lego/certcrypto",
     "github.com/xenolf/lego/certificate",
     "github.com/xenolf/lego/challenge",
