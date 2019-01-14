@@ -122,11 +122,32 @@ func (m *moveHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 func rawURL(req *http.Request) string {
 	scheme := "http"
+	host := req.Host
+	port := ""
+	uri := req.RequestURI
+
+	schemeRegex := `^(https?):\/\/([\w\._-]+)(:\d+)?(.*)$`
+	re, _ := regexp.Compile(schemeRegex)
+	if re.Match([]byte(req.RequestURI)) {
+		match := re.FindStringSubmatch(req.RequestURI)
+		scheme = match[1]
+
+		if len(match[2]) > 0 {
+			host = match[2]
+		}
+
+		if len(match[3]) > 0 {
+			port = match[3]
+		}
+
+		uri = match[4]
+	}
+
 	if req.TLS != nil || isXForwardedHTTPS(req) {
 		scheme = "https"
 	}
 
-	return strings.Join([]string{scheme, "://", req.Host, req.RequestURI}, "")
+	return strings.Join([]string{scheme, "://", host, port, uri}, "")
 }
 
 func isXForwardedHTTPS(request *http.Request) bool {

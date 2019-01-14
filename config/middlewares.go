@@ -252,6 +252,13 @@ type Retry struct {
 	Attempts int `description:"Number of attempts" export:"true"`
 }
 
+// SchemeRedirect holds the redirection.
+type SchemeRedirect struct {
+	Scheme    string `json:"scheme,omitempty"`
+	Port      string `json:"port,omitempty"`
+	Permanent bool   `json:"permanent,omitempty"`
+}
+
 // StripPrefix holds the StripPrefix configuration.
 type StripPrefix struct {
 	Prefixes []string `json:"prefixes,omitempty"`
