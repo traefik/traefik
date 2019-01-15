@@ -1031,7 +1031,7 @@ func TestSwarmGetIPAddress(t *testing.T) {
 			segmentProperties := label.ExtractTraefikLabels(dData.Labels)
 			dData.SegmentLabels = segmentProperties[""]
 
-			actual := provider.getDeprecatedIPAddress(dData)
+			actual := provider.getIPAddress(dData)
 			assert.Equal(t, test.expected, actual)
 		})
 	}

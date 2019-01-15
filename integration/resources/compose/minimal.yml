@@ -1,5 +1,5 @@
 whoami1:
   image: emilevauge/whoami
   labels:
-    - traefik.frontend.rule=PathPrefix:/whoami
+    - traefik.Routers.RouterMini.Rule=PathPrefix:/whoami
     - traefik.enable=true

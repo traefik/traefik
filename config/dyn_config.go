@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"reflect"
 
 	traefiktls "github.com/containous/traefik/tls"
 )
@@ -29,6 +30,27 @@ type LoadBalancerService struct {
 	ResponseForwarding *ResponseForwarding `json:"forwardingResponse,omitempty" toml:",omitempty"`
 }
 
+func (l *LoadBalancerService) Mergeable(loadBalancer *LoadBalancerService) bool {
+	savedServers := l.Servers
+	defer func() {
+		l.Servers = savedServers
+	}()
+	l.Servers = nil
+
+	savedServersLB := loadBalancer.Servers
+	defer func() {
+		loadBalancer.Servers = savedServersLB
+	}()
+	loadBalancer.Servers = nil
+
+	return reflect.DeepEqual(l, loadBalancer)
+}
+
+func (l *LoadBalancerService) DefaultsHook() {
+	l.PassHostHeader = true
+	l.Method = "wrr"
+}
+
 // ResponseForwarding holds configuration for the forward of the response.
 type ResponseForwarding struct {
 	FlushInterval string `json:"flushInterval,omitempty" toml:",omitempty"`
@@ -41,8 +63,15 @@ type Stickiness struct {
 
 // Server holds the server configuration.
 type Server struct {
-	URL    string `json:"url"`
+	URL    string `json:"url" label:"-"`
+	Scheme string `toml:"-" json:"-"`
+	Port   string `toml:"-" json:"-"`
 	Weight int    `json:"weight"`
+}
+
+func (s *Server) DefaultsHook() {
+	s.Weight = 1
+	s.Scheme = "http"
 }
 
 // HealthCheck holds the HealthCheck configuration.

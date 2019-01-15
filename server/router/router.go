@@ -57,7 +57,16 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) m
 			log.FromContext(ctx).Error(err)
 			continue
 		}
-		entryPointHandlers[entryPointName] = handler
+
+		handlerWithAccessLog, err := alice.New(func(next http.Handler) (http.Handler, error) {
+			return accesslog.NewFieldHandler(next, log.EntryPointName, entryPointName, accesslog.AddOriginFields), nil
+		}).Then(handler)
+		if err != nil {
+			log.FromContext(ctx).Error(err)
+			entryPointHandlers[entryPointName] = handler
+		} else {
+			entryPointHandlers[entryPointName] = handlerWithAccessLog
+		}
 	}
 
 	m.serviceManager.LaunchHealthCheck()
@@ -171,13 +180,9 @@ func (m *Manager) buildHandler(ctx context.Context, router *config.Router, route
 
 	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
 
-	alHandler := func(next http.Handler) (http.Handler, error) {
-		return accesslog.NewFieldHandler(next, accesslog.ServiceName, router.Service, accesslog.AddServiceFields), nil
-	}
-
 	tHandler := func(next http.Handler) (http.Handler, error) {
 		return tracing.NewForwarder(ctx, routerName, router.Service, next), nil
 	}
 
-	return alice.New().Append(alHandler).Extend(*mHandler).Append(tHandler).Then(sHandler)
+	return alice.New().Extend(*mHandler).Append(tHandler).Then(sHandler)
 }

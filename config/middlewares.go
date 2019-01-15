@@ -190,13 +190,17 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 // IPWhiteList holds the ip white list configuration.
 type IPWhiteList struct {
 	SourceRange []string    `json:"sourceRange,omitempty"`
-	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty"`
+	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty" label:"allowEmpty"`
 }
 
 // MaxConn holds maximum connection configuration.
 type MaxConn struct {
 	Amount        int64  `json:"amount,omitempty"`
 	ExtractorFunc string `json:"extractorFunc,omitempty"`
+}
+
+func (m *MaxConn) DefaultsHook() {
+	m.ExtractorFunc = "request.host"
 }
 
 // PassTLSClientCert holds the TLS client cert headers configuration.

@@ -44,6 +44,12 @@ func AddServiceFields(rw http.ResponseWriter, req *http.Request, next http.Handl
 	data.Core[ServiceURL] = req.URL // note that this is *not* the original incoming URL
 	data.Core[ServiceAddr] = req.URL.Host
 
+	next.ServeHTTP(rw, req)
+
+}
+
+// AddOriginFields add origin fields
+func AddOriginFields(rw http.ResponseWriter, req *http.Request, next http.Handler, data *LogData) {
 	crw := &captureResponseWriter{rw: rw}
 	start := time.Now().UTC()
 

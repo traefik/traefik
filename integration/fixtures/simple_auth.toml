@@ -12,8 +12,10 @@ logLevel = "DEBUG"
 [api]
    middlewares = ["authentication"]
 
-[middlewares]
-   [middlewares.authentication.basic-auth]
-      users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
-
 [ping]
+
+[providers.file]
+
+[middlewares]
+   [middlewares.authentication.basicauth]
+      users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]

@@ -11,18 +11,6 @@ checkNewVersion = false
 [entryPoints]
   [entryPoints.http]
     address = ":8000"
-  [entryPoints.httpRedirect]
-    address = ":8001"
-    [entryPoints.httpRedirect.redirect]
-      entryPoint = "http"
-  [entryPoints.httpWhitelistReject]
-    address = ":8002"
-  [entryPoints.httpWhitelistReject.whiteList]
-    sourceRange = ["8.8.8.8/32"]
-  [entryPoints.httpAuth]
-    address = ":8004"
-    [entryPoints.httpAuth.auth.basic]
-        users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
   [entryPoints.frontendRedirect]
     address = ":8005"
   [entryPoints.httpFrontendAuth]
@@ -31,8 +19,6 @@ checkNewVersion = false
     address = ":8007"
   [entryPoints.digestAuth]
     address = ":8008"
-    [entryPoints.digestAuth.auth.digest]
-      users = ["test:traefik:a2688e031edb4be6a3797f3882655c05", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
 
 [api]
 

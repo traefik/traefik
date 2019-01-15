@@ -2,13 +2,13 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/containous/traefik/config"
 	"github.com/containous/traefik/server/internal"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -73,7 +73,7 @@ func TestMiddlewaresRegistry_BuildChainNilConfig(t *testing.T) {
 
 	chain := middlewaresBuilder.BuildChain(context.Background(), []string{"empty"})
 	_, err := chain.Then(nil)
-	require.NoError(t, err)
+	require.Error(t, err)
 }
 
 func TestMiddlewaresRegistry_BuildMiddlewareAddPrefix(t *testing.T) {
@@ -98,7 +98,7 @@ func TestMiddlewaresRegistry_BuildMiddlewareAddPrefix(t *testing.T) {
 		expectedError bool
 	}{
 		{
-			desc:          "Should not create an emty AddPrefix middleware when given an empty prefix",
+			desc:          "Should not create an empty AddPrefix middleware when given an empty prefix",
 			middlewareID:  "empty",
 			expectedError: true,
 		}, {

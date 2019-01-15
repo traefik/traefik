@@ -25,7 +25,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// loadConfiguration manages dynamically frontends, backends and TLS configurations
+// loadConfiguration manages dynamically routers, middlewares, servers and TLS configurations
 func (s *Server) loadConfiguration(configMsg config.Message) {
 	logger := log.FromContext(log.With(context.Background(), log.Str(log.ProviderName, configMsg.ProviderName)))
 

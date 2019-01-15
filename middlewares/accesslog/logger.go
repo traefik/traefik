@@ -187,7 +187,9 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 
 	next.ServeHTTP(crw, reqWithDataTable)
 
-	core[ClientUsername] = usernameIfPresent(reqWithDataTable.URL)
+	if _, ok := core[ClientUsername]; !ok {
+		core[ClientUsername] = usernameIfPresent(reqWithDataTable.URL)
+	}
 
 	logDataTable.DownstreamResponse = crw.Header()
 

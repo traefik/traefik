@@ -41,8 +41,6 @@ func init() {
 		// FIXME Provider tests
 		// check.Suite(&ConsulCatalogSuite{})
 		// check.Suite(&ConsulSuite{})
-		// check.Suite(&DockerComposeSuite{})
-		// check.Suite(&DockerSuite{})
 		// check.Suite(&DynamoDBSuite{})
 		// check.Suite(&EurekaSuite{})
 		// check.Suite(&MarathonSuite{})
@@ -50,31 +48,34 @@ func init() {
 		// check.Suite(&MesosSuite{})
 
 		// FIXME use docker
-		// check.Suite(&AccessLogSuite{})
+
+		// FIXME use consulcatalog
 		// check.Suite(&ConstraintSuite{})
-		// check.Suite(&TLSClientHeadersSuite{})
-		// check.Suite(&HostResolverSuite{})
-		// check.Suite(&LogRotationSuite{})
 
 		// FIXME e2e tests
+		check.Suite(&AccessLogSuite{})
 		check.Suite(&AcmeSuite{})
+		check.Suite(&DockerComposeSuite{})
+		check.Suite(&DockerSuite{})
 		check.Suite(&ErrorPagesSuite{})
 		check.Suite(&FileSuite{})
-		check.Suite(&RestSuite{})
 		check.Suite(&GRPCSuite{})
 		check.Suite(&HealthCheckSuite{})
+		check.Suite(&HostResolverSuite{})
 		check.Suite(&HTTPSSuite{})
+		check.Suite(&LogRotationSuite{})
 		check.Suite(&RateLimitSuite{})
+		check.Suite(&RestSuite{})
 		check.Suite(&RetrySuite{})
 		check.Suite(&SimpleSuite{})
 		check.Suite(&TimeoutSuite{})
+		check.Suite(&TLSClientHeadersSuite{})
 		check.Suite(&TracingSuite{})
 		check.Suite(&WebsocketSuite{})
 	}
 	if *host {
 		// tests launched from the host
 		check.Suite(&ProxyProtocolSuite{})
-
 		// FIXME Provider tests
 		// check.Suite(&Etcd3Suite{})
 	}
