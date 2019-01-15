@@ -4,11 +4,8 @@ import (
 	"github.com/containous/traefik/config/static"
 	"github.com/containous/traefik/old/api"
 	"github.com/containous/traefik/old/middlewares/tracing"
-	"github.com/containous/traefik/old/provider/file"
 	"github.com/containous/traefik/old/types"
 	"github.com/containous/traefik/ping"
-	"github.com/containous/traefik/provider"
-	file2 "github.com/containous/traefik/provider/file"
 	"github.com/containous/traefik/tracing/datadog"
 	"github.com/containous/traefik/tracing/jaeger"
 	"github.com/containous/traefik/tracing/zipkin"
@@ -38,7 +35,6 @@ func ConvertStaticConf(globalConfiguration GlobalConfiguration) static.Configura
 	}
 
 	staticConfiguration.API = convertAPI(globalConfiguration.API)
-	staticConfiguration.Providers.File = convertFile(globalConfiguration.File)
 	staticConfiguration.Metrics = ConvertMetrics(globalConfiguration.Metrics)
 	staticConfiguration.AccessLog = ConvertAccessLog(globalConfiguration.AccessLog)
 	staticConfiguration.Tracing = ConvertTracing(globalConfiguration.Tracing)
@@ -205,26 +201,6 @@ func convertConstraints(oldConstraints types.Constraints) types2.Constraints {
 		constraints = append(constraints, constraint)
 	}
 	return constraints
-}
-
-func convertFile(old *file.Provider) *file2.Provider {
-	if old == nil {
-		return nil
-	}
-
-	f := &file2.Provider{
-		BaseProvider: provider.BaseProvider{
-			Watch:    old.Watch,
-			Filename: old.Filename,
-			Trace:    old.Trace,
-		},
-		Directory:   old.Directory,
-		TraefikFile: old.TraefikFile,
-	}
-	f.DebugLogGeneratedTemplate = old.DebugLogGeneratedTemplate
-	f.Constraints = convertConstraints(old.Constraints)
-
-	return f
 }
 
 // ConvertHostResolverConfig FIXME
