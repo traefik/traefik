@@ -218,7 +218,7 @@ func (s *Server) startHTTPServers() {
 	// Use an empty configuration in order to initialize the default handlers with internal routes
 	handlers := s.applyConfiguration(context.Background(), config.Configuration{})
 	for entryPointName, handler := range handlers {
-		s.entryPoints[entryPointName].httpRouter.UpdateHandler(handler)
+		s.entryPoints[entryPointName].switcher.UpdateHandler(handler)
 	}
 
 	for entryPointName, entryPoint := range s.entryPoints {

@@ -45,7 +45,7 @@ func (s *Server) loadConfiguration(configMsg config.Message) {
 	s.metricsRegistry.LastConfigReloadSuccessGauge().Set(float64(time.Now().Unix()))
 
 	for entryPointName, handler := range handlers {
-		s.entryPoints[entryPointName].httpRouter.UpdateHandler(handler)
+		s.entryPoints[entryPointName].switcher.UpdateHandler(handler)
 	}
 
 	for entryPointName, entryPoint := range s.entryPoints {
