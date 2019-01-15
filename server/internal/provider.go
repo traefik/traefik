@@ -13,28 +13,33 @@ const (
 	providerKey contextKey = iota
 )
 
-// CreateProviderContext creates a context with the provider name extracted from elementName if specified
-//  if not, returns the given context and the fully qualified elementName (prefixed with the provider name)
-//  in case there is no context in the provider and no context: logs a warning
-func CreateProviderContext(ctx context.Context, elementName string) (contextWithProvider context.Context, fullyQualifiedElementName string) {
-	if providerName := getProviderName(elementName); len(providerName) > 0 {
-		return AddProviderInContext(ctx, providerName), elementName
-	} else if providerName, ok := ctx.Value(providerKey).(string); ok {
-		return ctx, providerName + "." + elementName
-	}
-	log.FromContext(ctx).Debugf("Could not find a provider for %s.", elementName)
-	return ctx, elementName
-}
-
-func getProviderName(middleware string) string {
-	parts := strings.Split(middleware, ".")
+// AddProviderInContext Adds the provider name in the context
+func AddProviderInContext(ctx context.Context, elementName string) context.Context {
+	parts := strings.Split(elementName, ".")
 	if len(parts) == 1 {
-		return ""
+		log.FromContext(ctx).Debugf("Could not find a provider for %s.", elementName)
+		return ctx
 	}
-	return parts[0]
+
+	if name, ok := ctx.Value(providerKey).(string); ok && name == parts[0] {
+		return ctx
+	}
+
+	return context.WithValue(ctx, providerKey, parts[0])
 }
 
-// AddProviderInContext add the provider name in the context
-func AddProviderInContext(ctx context.Context, providerName string) context.Context {
-	return context.WithValue(ctx, providerKey, providerName)
+// GetQualifiedName Gets the fully qualified name.
+func GetQualifiedName(ctx context.Context, elementName string) string {
+	parts := strings.Split(elementName, ".")
+	if len(parts) == 1 {
+		if providerName, ok := ctx.Value(providerKey).(string); ok {
+			return MakeQualifiedName(providerName, parts[0])
+		}
+	}
+	return elementName
+}
+
+// MakeQualifiedName Creates a qualified name for an element
+func MakeQualifiedName(providerName string, elementName string) string {
+	return providerName + "." + elementName
 }

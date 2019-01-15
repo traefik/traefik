@@ -58,10 +58,12 @@ type Manager struct {
 // Build Creates a http.Handler for a service configuration.
 func (m *Manager) Build(rootCtx context.Context, serviceName string, responseModifier func(*http.Response) error) (http.Handler, error) {
 	ctx := log.With(rootCtx, log.Str(log.ServiceName, serviceName))
-	// TODO refactor ?
-	ctx, serviceName = internal.CreateProviderContext(ctx, serviceName)
+
+	serviceName = internal.GetQualifiedName(ctx, serviceName)
+	ctx = internal.AddProviderInContext(ctx, serviceName)
+
 	if conf, ok := m.configs[serviceName]; ok {
-		// FIXME Should handle multiple service types
+		// TODO Should handle multiple service types
 		if conf.LoadBalancer != nil {
 			return m.getLoadBalancerServiceHandler(ctx, serviceName, conf.LoadBalancer, responseModifier)
 		}

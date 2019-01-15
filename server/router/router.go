@@ -105,10 +105,10 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		SkipClean(true)
 
 	for routerName, routerConfig := range configs {
-		ctx = log.With(ctx, log.Str(log.RouterName, routerName))
+		ctx := log.With(ctx, log.Str(log.RouterName, routerName))
 		logger := log.FromContext(ctx)
 
-		ctx, routerName := internal.CreateProviderContext(ctx, routerName)
+		ctx = internal.AddProviderInContext(ctx, routerName)
 
 		handler, err := m.buildRouterHandler(ctx, routerName)
 		if err != nil {

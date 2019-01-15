@@ -351,7 +351,7 @@ func TestManager_Build(t *testing.T) {
 			},
 		},
 		{
-			desc:        "Service name with provider",
+			desc:        "Service name with provider in context",
 			serviceName: "serviceName",
 			configs: map[string]*config.Service{
 				"provider-1.serviceName": {
@@ -371,7 +371,7 @@ func TestManager_Build(t *testing.T) {
 
 			ctx := context.Background()
 			if len(test.providerName) > 0 {
-				ctx = internal.AddProviderInContext(ctx, test.providerName)
+				ctx = internal.AddProviderInContext(ctx, test.providerName+".foobar")
 			}
 
 			_, err := manager.Build(ctx, test.serviceName, nil)

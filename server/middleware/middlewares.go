@@ -56,7 +56,8 @@ func NewBuilder(configs map[string]*config.Middleware, serviceBuilder serviceBui
 func (b *Builder) BuildChain(ctx context.Context, middlewares []string) *alice.Chain {
 	chain := alice.New()
 	for _, middlewareName := range middlewares {
-		constructorContext, middlewareName := internal.CreateProviderContext(ctx, middlewareName)
+		middlewareName := internal.GetQualifiedName(ctx, middlewareName)
+		constructorContext := internal.AddProviderInContext(ctx, middlewareName)
 		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
 			var err error
 			if constructorContext, err = checkRecursivity(constructorContext, middlewareName); err != nil {

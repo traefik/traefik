@@ -1,9 +1,8 @@
 package server
 
 import (
-	"fmt"
-
 	"github.com/containous/traefik/config"
+	"github.com/containous/traefik/server/internal"
 )
 
 func mergeConfiguration(configurations config.Configurations) config.Configuration {
@@ -15,20 +14,16 @@ func mergeConfiguration(configurations config.Configurations) config.Configurati
 
 	for provider, configuration := range configurations {
 		for routerName, router := range configuration.Routers {
-			conf.Routers[getQualifiedName(provider, routerName)] = router
+			conf.Routers[internal.MakeQualifiedName(provider, routerName)] = router
 		}
 		for middlewareName, middleware := range configuration.Middlewares {
-			conf.Middlewares[getQualifiedName(provider, middlewareName)] = middleware
+			conf.Middlewares[internal.MakeQualifiedName(provider, middlewareName)] = middleware
 		}
 		for serviceName, service := range configuration.Services {
-			conf.Services[getQualifiedName(provider, serviceName)] = service
+			conf.Services[internal.MakeQualifiedName(provider, serviceName)] = service
 		}
 		conf.TLS = append(conf.TLS, configuration.TLS...)
 	}
 
 	return conf
-}
-
-func getQualifiedName(provider string, element string) string {
-	return fmt.Sprintf("%s.%s", provider, element)
 }

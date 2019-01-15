@@ -354,7 +354,7 @@ func TestChainWithContext(t *testing.T) {
 
 			ctx := context.Background()
 			if len(test.contextProvider) > 0 {
-				ctx = internal.AddProviderInContext(ctx, test.contextProvider)
+				ctx = internal.AddProviderInContext(ctx, test.contextProvider+".foobar")
 			}
 
 			builder := NewBuilder(test.configuration, nil)
