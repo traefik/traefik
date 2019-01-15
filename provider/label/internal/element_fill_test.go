@@ -3,7 +3,9 @@ package internal
 import (
 	"reflect"
 	"testing"
+	"time"
 
+	"github.com/containous/flaeg/parse"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -362,6 +364,54 @@ func TestFill(t *testing.T) {
 			},
 			element:  &struct{ Foo uint64 }{},
 			expected: expected{error: true},
+		},
+		{
+			desc: "time.Duration with unit",
+			node: &Node{
+				Name: "traefik",
+				Kind: reflect.Struct,
+				Children: []*Node{
+					{Name: "Foo", FieldName: "Foo", Value: "4s", Kind: reflect.Int64},
+				},
+			},
+			element:  &struct{ Foo time.Duration }{},
+			expected: expected{element: &struct{ Foo time.Duration }{Foo: 4 * time.Second}},
+		},
+		{
+			desc: "time.Duration without unit",
+			node: &Node{
+				Name: "traefik",
+				Kind: reflect.Struct,
+				Children: []*Node{
+					{Name: "Foo", FieldName: "Foo", Value: "4", Kind: reflect.Int64},
+				},
+			},
+			element:  &struct{ Foo time.Duration }{},
+			expected: expected{element: &struct{ Foo time.Duration }{Foo: 4 * time.Nanosecond}},
+		},
+		{
+			desc: "parse.Duration with unit",
+			node: &Node{
+				Name: "traefik",
+				Kind: reflect.Struct,
+				Children: []*Node{
+					{Name: "Foo", FieldName: "Foo", Value: "4s", Kind: reflect.Int64},
+				},
+			},
+			element:  &struct{ Foo parse.Duration }{},
+			expected: expected{element: &struct{ Foo parse.Duration }{Foo: parse.Duration(4 * time.Second)}},
+		},
+		{
+			desc: "parse.Duration without unit",
+			node: &Node{
+				Name: "traefik",
+				Kind: reflect.Struct,
+				Children: []*Node{
+					{Name: "Foo", FieldName: "Foo", Value: "4", Kind: reflect.Int64},
+				},
+			},
+			element:  &struct{ Foo parse.Duration }{},
+			expected: expected{element: &struct{ Foo parse.Duration }{Foo: parse.Duration(4 * time.Second)}},
 		},
 		{
 			desc: "bool",
@@ -1069,6 +1119,57 @@ func TestFill(t *testing.T) {
 			}{},
 			expected: expected{error: true},
 		},
+		{
+			desc: "pointer DefaultsHook method",
+			node: &Node{
+				Name: "traefik",
+				Kind: reflect.Struct,
+				Children: []*Node{
+					{
+						Name:      "Foo",
+						FieldName: "Foo",
+						Kind:      reflect.Struct,
+						Children: []*Node{
+							{Name: "Fuu", FieldName: "Fuu", Value: "huu", Kind: reflect.String},
+						}},
+				}},
+			element: &struct {
+				Foo *initialledFoo
+			}{},
+			expected: expected{element: &struct {
+				Foo *initialledFoo
+			}{
+				Foo: &initialledFoo{
+					Fii: "default",
+					Fuu: "huu",
+				},
+			}},
+		},
+		{
+			desc: "pointer wrong DefaultsHook method",
+			node: &Node{
+				Name: "traefik",
+				Kind: reflect.Struct,
+				Children: []*Node{
+					{
+						Name:      "Foo",
+						FieldName: "Foo",
+						Kind:      reflect.Struct,
+						Children: []*Node{
+							{Name: "Fuu", FieldName: "Fuu", Value: "huu", Kind: reflect.String},
+						}},
+				}},
+			element: &struct {
+				Foo *wrongInitialledFoo
+			}{},
+			expected: expected{element: &struct {
+				Foo *wrongInitialledFoo
+			}{
+				Foo: &wrongInitialledFoo{
+					Fuu: "huu",
+				},
+			}},
+		},
 	}
 
 	for _, test := range testCases {
@@ -1085,4 +1186,23 @@ func TestFill(t *testing.T) {
 			}
 		})
 	}
+}
+
+type initialledFoo struct {
+	Fii string
+	Fuu string
+}
+
+func (t *initialledFoo) DefaultsHook() {
+	t.Fii = "default"
+}
+
+type wrongInitialledFoo struct {
+	Fii string
+	Fuu string
+}
+
+func (t *wrongInitialledFoo) DefaultsHook() error {
+	t.Fii = "default"
+	return nil
 }

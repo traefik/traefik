@@ -25,6 +25,12 @@ func TestAddMetadata(t *testing.T) {
 		expected  expected
 	}{
 		{
+			desc:      "Node Nil",
+			tree:      nil,
+			structure: nil,
+			expected:  expected{node: nil},
+		},
+		{
 			desc:      "Empty Node",
 			tree:      &Node{},
 			structure: nil,
