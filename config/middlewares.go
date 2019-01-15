@@ -199,6 +199,7 @@ type MaxConn struct {
 	ExtractorFunc string `json:"extractorFunc,omitempty"`
 }
 
+// DefaultsHook Default values for a MaxConn.
 func (m *MaxConn) DefaultsHook() {
 	m.ExtractorFunc = "request.host"
 }

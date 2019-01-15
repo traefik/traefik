@@ -30,6 +30,7 @@ type LoadBalancerService struct {
 	ResponseForwarding *ResponseForwarding `json:"forwardingResponse,omitempty" toml:",omitempty"`
 }
 
+// Mergeable Defines if a service is mergeable.
 func (l *LoadBalancerService) Mergeable(loadBalancer *LoadBalancerService) bool {
 	savedServers := l.Servers
 	defer func() {
@@ -46,6 +47,7 @@ func (l *LoadBalancerService) Mergeable(loadBalancer *LoadBalancerService) bool 
 	return reflect.DeepEqual(l, loadBalancer)
 }
 
+// DefaultsHook Default values for a LoadBalancerService.
 func (l *LoadBalancerService) DefaultsHook() {
 	l.PassHostHeader = true
 	l.Method = "wrr"
@@ -69,6 +71,7 @@ type Server struct {
 	Weight int    `json:"weight"`
 }
 
+// DefaultsHook Default values for a Server.
 func (s *Server) DefaultsHook() {
 	s.Weight = 1
 	s.Scheme = "http"
