@@ -15,13 +15,11 @@ import (
 
 // chainBuilder The contract of the middleware builder
 type chainBuilder interface {
-	BuildChain(ctx context.Context, middlewares []string) (*alice.Chain, error)
+	BuildChain(ctx context.Context, middlewares []string) *alice.Chain
 }
 
 // NewRouteAppenderAggregator Creates a new RouteAppenderAggregator
 func NewRouteAppenderAggregator(ctx context.Context, chainBuilder chainBuilder, conf static.Configuration, entryPointName string, currentConfiguration *safe.Safe) *RouteAppenderAggregator {
-	logger := log.FromContext(ctx)
-
 	aggregator := &RouteAppenderAggregator{}
 
 	if conf.Providers != nil && conf.Providers.Rest != nil {
@@ -29,46 +27,35 @@ func NewRouteAppenderAggregator(ctx context.Context, chainBuilder chainBuilder, 
 	}
 
 	if conf.API != nil && conf.API.EntryPoint == entryPointName {
-		chain, err := chainBuilder.BuildChain(ctx, conf.API.Middlewares)
-		if err != nil {
-			logger.Error(err)
-		} else {
-			aggregator.AddAppender(&WithMiddleware{
-				appender: api.Handler{
-					EntryPoint:            conf.API.EntryPoint,
-					Dashboard:             conf.API.Dashboard,
-					Statistics:            conf.API.Statistics,
-					DashboardAssets:       conf.API.DashboardAssets,
-					CurrentConfigurations: currentConfiguration,
-					Debug:                 conf.Global.Debug,
-				},
-				routerMiddlewares: chain,
-			})
-		}
+		chain := chainBuilder.BuildChain(ctx, conf.API.Middlewares)
+		aggregator.AddAppender(&WithMiddleware{
+			appender: api.Handler{
+				EntryPoint:            conf.API.EntryPoint,
+				Dashboard:             conf.API.Dashboard,
+				Statistics:            conf.API.Statistics,
+				DashboardAssets:       conf.API.DashboardAssets,
+				CurrentConfigurations: currentConfiguration,
+				Debug:                 conf.Global.Debug,
+			},
+			routerMiddlewares: chain,
+		})
+
 	}
 
 	if conf.Ping != nil && conf.Ping.EntryPoint == entryPointName {
-		chain, err := chainBuilder.BuildChain(ctx, conf.Ping.Middlewares)
-		if err != nil {
-			logger.Error(err)
-		} else {
-			aggregator.AddAppender(&WithMiddleware{
-				appender:          conf.Ping,
-				routerMiddlewares: chain,
-			})
-		}
+		chain := chainBuilder.BuildChain(ctx, conf.Ping.Middlewares)
+		aggregator.AddAppender(&WithMiddleware{
+			appender:          conf.Ping,
+			routerMiddlewares: chain,
+		})
 	}
 
 	if conf.Metrics != nil && conf.Metrics.Prometheus != nil && conf.Metrics.Prometheus.EntryPoint == entryPointName {
-		chain, err := chainBuilder.BuildChain(ctx, conf.Metrics.Prometheus.Middlewares)
-		if err != nil {
-			logger.Error(err)
-		} else {
-			aggregator.AddAppender(&WithMiddleware{
-				appender:          metrics.PrometheusHandler{},
-				routerMiddlewares: chain,
-			})
-		}
+		chain := chainBuilder.BuildChain(ctx, conf.Metrics.Prometheus.Middlewares)
+		aggregator.AddAppender(&WithMiddleware{
+			appender:          metrics.PrometheusHandler{},
+			routerMiddlewares: chain,
+		})
 	}
 
 	return aggregator

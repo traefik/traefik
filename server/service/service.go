@@ -16,6 +16,7 @@ import (
 	"github.com/containous/traefik/middlewares/emptybackendhandler"
 	"github.com/containous/traefik/old/middlewares/pipelining"
 	"github.com/containous/traefik/server/cookie"
+	"github.com/containous/traefik/server/internal"
 	"github.com/vulcand/oxy/forward"
 	"github.com/vulcand/oxy/roundrobin"
 )
@@ -58,9 +59,11 @@ type Manager struct {
 func (m *Manager) Build(rootCtx context.Context, serviceName string, responseModifier func(*http.Response) error) (http.Handler, error) {
 	ctx := log.With(rootCtx, log.Str(log.ServiceName, serviceName))
 
-	// TODO refactor ?
+	serviceName = internal.GetQualifiedName(ctx, serviceName)
+	ctx = internal.AddProviderInContext(ctx, serviceName)
+
 	if conf, ok := m.configs[serviceName]; ok {
-		// FIXME Should handle multiple service types
+		// TODO Should handle multiple service types
 		if conf.LoadBalancer != nil {
 			return m.getLoadBalancerServiceHandler(ctx, serviceName, conf.LoadBalancer, responseModifier)
 		}

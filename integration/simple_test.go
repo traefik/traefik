@@ -1,6 +1,8 @@
 package integration
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -9,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/containous/traefik/config"
 	"github.com/containous/traefik/integration/try"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
@@ -433,4 +436,54 @@ func (s *SimpleSuite) TestKeepTrailingSlash(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	http.DefaultClient.CheckRedirect = oldCheckRedirect
+}
+
+func (s *SimpleSuite) TestMultiprovider(c *check.C) {
+	s.createComposeProject(c, "base")
+	s.composeProject.Start(c)
+
+	server := "http://" + s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
+
+	file := s.adaptFile(c, "fixtures/multiprovider.toml", struct {
+		Server string
+	}{Server: server})
+	defer os.Remove(file)
+
+	cmd, output := s.traefikCmd(withConfigFile(file))
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/services", 1000*time.Millisecond, try.BodyContains("service"))
+	c.Assert(err, checker.IsNil)
+
+	config := config.Configuration{
+		Routers: map[string]*config.Router{
+			"router1": {
+				EntryPoints: []string{"http"},
+				Middlewares: []string{"file.customheader"},
+				Service:     "file.service",
+				Rule:        "PathPrefix:/",
+			},
+		},
+	}
+
+	json, err := json.Marshal(config)
+	c.Assert(err, checker.IsNil)
+
+	request, err := http.NewRequest(http.MethodPut, "http://127.0.0.1:8080/api/providers/rest", bytes.NewReader(json))
+	c.Assert(err, checker.IsNil)
+
+	response, err := http.DefaultClient.Do(request)
+	c.Assert(err, checker.IsNil)
+	c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/rest/routers", 1000*time.Millisecond, try.BodyContains("PathPrefix:/"))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/", 1*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("CustomValue"))
+	c.Assert(err, checker.IsNil)
+
 }

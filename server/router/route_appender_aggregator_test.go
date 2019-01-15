@@ -17,7 +17,7 @@ type ChainBuilderMock struct {
 	middles map[string]alice.Constructor
 }
 
-func (c *ChainBuilderMock) BuildChain(ctx context.Context, middles []string) (*alice.Chain, error) {
+func (c *ChainBuilderMock) BuildChain(ctx context.Context, middles []string) *alice.Chain {
 	chain := alice.New()
 
 	for _, mName := range middles {
@@ -26,7 +26,7 @@ func (c *ChainBuilderMock) BuildChain(ctx context.Context, middles []string) (*a
 		}
 	}
 
-	return &chain, nil
+	return &chain
 }
 
 func TestNewRouteAppenderAggregator(t *testing.T) {
@@ -61,7 +61,7 @@ func TestNewRouteAppenderAggregator(t *testing.T) {
 			expected: map[string]int{
 				"/wrong": http.StatusBadGateway,
 				"/ping":  http.StatusOK,
-				//"/.well-known/acme-challenge/token": http.StatusNotFound, // FIXME
+				// "/.well-known/acme-challenge/token": http.StatusNotFound, // FIXME
 				"/api/providers": http.StatusUnauthorized,
 			},
 		},

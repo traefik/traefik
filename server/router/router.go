@@ -13,6 +13,7 @@ import (
 	"github.com/containous/traefik/middlewares/recovery"
 	"github.com/containous/traefik/middlewares/tracing"
 	"github.com/containous/traefik/responsemodifiers"
+	"github.com/containous/traefik/server/internal"
 	"github.com/containous/traefik/server/middleware"
 	"github.com/containous/traefik/server/service"
 )
@@ -104,8 +105,10 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		SkipClean(true)
 
 	for routerName, routerConfig := range configs {
-		ctx = log.With(ctx, log.Str(log.RouterName, routerName))
+		ctx := log.With(ctx, log.Str(log.RouterName, routerName))
 		logger := log.FromContext(ctx)
+
+		ctx = internal.AddProviderInContext(ctx, routerName)
 
 		handler, err := m.buildRouterHandler(ctx, routerName)
 		if err != nil {
@@ -166,10 +169,7 @@ func (m *Manager) buildHandler(ctx context.Context, router *config.Router, route
 		return nil, err
 	}
 
-	mHandler, err := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
-	if err != nil {
-		return nil, err
-	}
+	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
 
 	alHandler := func(next http.Handler) (http.Handler, error) {
 		return accesslog.NewFieldHandler(next, accesslog.ServiceName, router.Service, accesslog.AddServiceFields), nil
