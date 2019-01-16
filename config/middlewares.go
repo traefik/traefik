@@ -18,6 +18,7 @@ type Middleware struct {
 	Errors            *ErrorPage         `json:"errors,omitempty"`
 	RateLimit         *RateLimit         `json:"rateLimit,omitempty"`
 	Redirect          *Redirect          `json:"redirect,omitempty"`
+	SchemeRedirect    *SchemeRedirect    `json:"schemeredirect,omitempty"`
 	BasicAuth         *BasicAuth         `json:"basicAuth,omitempty"`
 	DigestAuth        *DigestAuth        `json:"digestAuth,omitempty"`
 	ForwardAuth       *ForwardAuth       `json:"forwardAuth,omitempty"`
