@@ -24,7 +24,6 @@ import (
 	"github.com/containous/traefik/middlewares/replacepath"
 	"github.com/containous/traefik/middlewares/replacepathregex"
 	"github.com/containous/traefik/middlewares/retry"
-	"github.com/containous/traefik/middlewares/schemeredirect"
 	"github.com/containous/traefik/middlewares/stripprefix"
 	"github.com/containous/traefik/middlewares/stripprefixregex"
 	"github.com/containous/traefik/middlewares/tracing"
@@ -249,11 +248,22 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string, c
 		}
 	}
 
-	// Redirect
-	if config.Redirect != nil {
+	// RedirectRegex
+	if config.RedirectRegex != nil {
 		if middleware == nil {
 			middleware = func(next http.Handler) (http.Handler, error) {
-				return redirect.New(ctx, next, *config.Redirect, middlewareName)
+				return redirect.NewRedirectRegex(ctx, next, *config.RedirectRegex, middlewareName)
+			}
+		} else {
+			return nil, badConf
+		}
+	}
+
+	// RedirectScheme
+	if config.RedirectScheme != nil {
+		if middleware == nil {
+			middleware = func(next http.Handler) (http.Handler, error) {
+				return redirect.NewRedirectScheme(ctx, next, *config.RedirectScheme, middlewareName)
 			}
 		} else {
 			return nil, badConf
@@ -288,17 +298,6 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string, c
 			middleware = func(next http.Handler) (http.Handler, error) {
 				// FIXME missing metrics / accessLog
 				return retry.New(ctx, next, *config.Retry, retry.Listeners{}, middlewareName)
-			}
-		} else {
-			return nil, badConf
-		}
-	}
-
-	// SchemeRedirect
-	if config.SchemeRedirect != nil {
-		if middleware == nil {
-			middleware = func(next http.Handler) (http.Handler, error) {
-				return schemeredirect.New(ctx, next, *config.SchemeRedirect, middlewareName)
 			}
 		} else {
 			return nil, badConf

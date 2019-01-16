@@ -13,10 +13,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewRegexHandler(t *testing.T) {
+func TestRedirectRegexHandler(t *testing.T) {
 	testCases := []struct {
 		desc           string
-		config         config.Redirect
+		config         config.RedirectRegex
 		method         string
 		url            string
 		secured        bool
@@ -26,7 +26,7 @@ func TestNewRegexHandler(t *testing.T) {
 	}{
 		{
 			desc: "simple redirection",
-			config: config.Redirect{
+			config: config.RedirectRegex{
 				Regex:       `^(?:http?:\/\/)(foo)(\.com)(:\d+)(.*)$`,
 				Replacement: "https://${1}bar$2:443$4",
 			},
@@ -36,7 +36,7 @@ func TestNewRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "use request header",
-			config: config.Redirect{
+			config: config.RedirectRegex{
 				Regex:       `^(?:http?:\/\/)(foo)(\.com)(:\d+)(.*)$`,
 				Replacement: `https://${1}{{ .Request.Header.Get "X-Foo" }}$2:443$4`,
 			},
@@ -46,7 +46,7 @@ func TestNewRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "URL doesn't match regex",
-			config: config.Redirect{
+			config: config.RedirectRegex{
 				Regex:       `^(?:http?:\/\/)(foo)(\.com)(:\d+)(.*)$`,
 				Replacement: "https://${1}bar$2:443$4",
 			},
@@ -55,7 +55,7 @@ func TestNewRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "invalid rewritten URL",
-			config: config.Redirect{
+			config: config.RedirectRegex{
 				Regex:       `^(.*)$`,
 				Replacement: "http://192.168.0.%31/",
 			},
@@ -64,7 +64,7 @@ func TestNewRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "invalid regex",
-			config: config.Redirect{
+			config: config.RedirectRegex{
 				Regex:       `^(.*`,
 				Replacement: "$1",
 			},
@@ -73,7 +73,7 @@ func TestNewRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP to HTTPS permanent",
-			config: config.Redirect{
+			config: config.RedirectRegex{
 				Regex:       `^http://`,
 				Replacement: "https://$1",
 				Permanent:   true,
@@ -84,7 +84,7 @@ func TestNewRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTPS to HTTP permanent",
-			config: config.Redirect{
+			config: config.RedirectRegex{
 				Regex:       `https://foo`,
 				Replacement: "http://foo",
 				Permanent:   true,
@@ -96,7 +96,7 @@ func TestNewRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP to HTTPS",
-			config: config.Redirect{
+			config: config.RedirectRegex{
 				Regex:       `http://foo:80`,
 				Replacement: "https://foo:443",
 			},
@@ -106,7 +106,7 @@ func TestNewRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTPS to HTTP",
-			config: config.Redirect{
+			config: config.RedirectRegex{
 				Regex:       `https://foo:443`,
 				Replacement: "http://foo:80",
 			},
@@ -117,7 +117,7 @@ func TestNewRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP to HTTP",
-			config: config.Redirect{
+			config: config.RedirectRegex{
 				Regex:       `http://foo:80`,
 				Replacement: "http://foo:88",
 			},
@@ -127,7 +127,7 @@ func TestNewRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP to HTTP POST",
-			config: config.Redirect{
+			config: config.RedirectRegex{
 				Regex:       `^http://`,
 				Replacement: "https://$1",
 			},
@@ -138,7 +138,7 @@ func TestNewRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP to HTTP POST permanent",
-			config: config.Redirect{
+			config: config.RedirectRegex{
 				Regex:       `^http://`,
 				Replacement: "https://$1",
 				Permanent:   true,
@@ -156,7 +156,7 @@ func TestNewRegexHandler(t *testing.T) {
 			t.Parallel()
 
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-			handler, err := New(context.Background(), next, test.config, "traefikTest")
+			handler, err := NewRedirectRegex(context.Background(), next, test.config, "traefikTest")
 
 			if test.errorExpected {
 				require.Error(t, err)

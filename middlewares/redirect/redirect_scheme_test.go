@@ -1,4 +1,4 @@
-package schemeredirect
+package redirect
 
 import (
 	"context"
@@ -13,10 +13,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewRegexHandler(t *testing.T) {
+func TestRedirectSchemeHandler(t *testing.T) {
 	testCases := []struct {
 		desc           string
-		config         config.SchemeRedirect
+		config         config.RedirectScheme
 		method         string
 		url            string
 		secured        bool
@@ -26,13 +26,13 @@ func TestNewRegexHandler(t *testing.T) {
 	}{
 		{
 			desc:          "Without scheme",
-			config:        config.SchemeRedirect{},
+			config:        config.RedirectScheme{},
 			url:           "http://foo",
 			errorExpected: true,
 		},
 		{
 			desc: "HTTP to HTTPS",
-			config: config.SchemeRedirect{
+			config: config.RedirectScheme{
 				Scheme: "https",
 			},
 			url:            "http://foo",
@@ -41,7 +41,7 @@ func TestNewRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP with port to HTTPS without port",
-			config: config.SchemeRedirect{
+			config: config.RedirectScheme{
 				Scheme: "https",
 			},
 			url:            "http://foo:8080",
@@ -50,7 +50,7 @@ func TestNewRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP without port to HTTPS with port",
-			config: config.SchemeRedirect{
+			config: config.RedirectScheme{
 				Scheme: "https",
 				Port:   "8443",
 			},
@@ -60,7 +60,7 @@ func TestNewRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP with port to HTTPS with port",
-			config: config.SchemeRedirect{
+			config: config.RedirectScheme{
 				Scheme: "https",
 				Port:   "8443",
 			},
@@ -70,7 +70,7 @@ func TestNewRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTPS with port to HTTPS with port",
-			config: config.SchemeRedirect{
+			config: config.RedirectScheme{
 				Scheme: "https",
 				Port:   "8443",
 			},
@@ -80,7 +80,7 @@ func TestNewRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTPS with port to HTTPS without port",
-			config: config.SchemeRedirect{
+			config: config.RedirectScheme{
 				Scheme: "https",
 			},
 			url:            "https://foo:8000",
@@ -89,7 +89,7 @@ func TestNewRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "redirection to HTTPS without port from an URL already in https",
-			config: config.SchemeRedirect{
+			config: config.RedirectScheme{
 				Scheme: "https",
 			},
 			url:            "https://foo:8000/theother",
@@ -98,7 +98,7 @@ func TestNewRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP to HTTPS permanent",
-			config: config.SchemeRedirect{
+			config: config.RedirectScheme{
 				Scheme:    "https",
 				Port:      "8443",
 				Permanent: true,
@@ -109,7 +109,7 @@ func TestNewRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "to HTTP 80",
-			config: config.SchemeRedirect{
+			config: config.RedirectScheme{
 				Scheme: "http",
 				Port:   "80",
 			},
@@ -119,7 +119,7 @@ func TestNewRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP to wss",
-			config: config.SchemeRedirect{
+			config: config.RedirectScheme{
 				Scheme: "wss",
 				Port:   "9443",
 			},
@@ -129,7 +129,7 @@ func TestNewRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP to wss without port",
-			config: config.SchemeRedirect{
+			config: config.RedirectScheme{
 				Scheme: "wss",
 			},
 			url:            "http://foo",
@@ -138,7 +138,7 @@ func TestNewRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP with port to wss without port",
-			config: config.SchemeRedirect{
+			config: config.RedirectScheme{
 				Scheme: "wss",
 			},
 			url:            "http://foo:5678",
@@ -147,7 +147,7 @@ func TestNewRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP to HTTPS without port",
-			config: config.SchemeRedirect{
+			config: config.RedirectScheme{
 				Scheme: "https",
 			},
 			url:            "http://foo:443",
@@ -156,7 +156,7 @@ func TestNewRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP port redirection",
-			config: config.SchemeRedirect{
+			config: config.RedirectScheme{
 				Scheme: "http",
 				Port:   "8181",
 			},
@@ -166,7 +166,7 @@ func TestNewRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTPS with port 80 to HTTPS without port",
-			config: config.SchemeRedirect{
+			config: config.RedirectScheme{
 				Scheme: "https",
 			},
 			url:            "https://foo:80",
@@ -182,7 +182,7 @@ func TestNewRegexHandler(t *testing.T) {
 			t.Parallel()
 
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-			handler, err := New(context.Background(), next, test.config, "traefikTest")
+			handler, err := NewRedirectScheme(context.Background(), next, test.config, "traefikTest")
 
 			if test.errorExpected {
 				require.Error(t, err)

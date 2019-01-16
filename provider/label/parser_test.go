@@ -237,7 +237,7 @@ func TestDecodeConfiguration(t *testing.T) {
 				},
 			},
 			"Middleware13": {
-				Redirect: &config.Redirect{
+				Redirect: &config.RedirectRegex{
 					Regex:       "foobar",
 					Replacement: "foobar",
 					Permanent:   true,
@@ -553,7 +553,7 @@ func TestEncodeConfiguration(t *testing.T) {
 				},
 			},
 			"Middleware13": {
-				Redirect: &config.Redirect{
+				Redirect: &config.RedirectRegex{
 					Regex:       "foobar",
 					Replacement: "foobar",
 					Permanent:   true,
@@ -856,9 +856,9 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.Middlewares.Middleware12.RateLimit.RateSet.Rate1.Average":                "42",
 		"traefik.Middlewares.Middleware12.RateLimit.RateSet.Rate1.Burst":                  "42",
 		"traefik.Middlewares.Middleware12.RateLimit.RateSet.Rate1.Period":                 "42",
-		"traefik.Middlewares.Middleware13.Redirect.Permanent":                             "true",
-		"traefik.Middlewares.Middleware13.Redirect.Regex":                                 "foobar",
-		"traefik.Middlewares.Middleware13.Redirect.Replacement":                           "foobar",
+		"traefik.Middlewares.Middleware13.RedirectRegex.Permanent":                        "true",
+		"traefik.Middlewares.Middleware13.RedirectRegex.Regex":                            "foobar",
+		"traefik.Middlewares.Middleware13.RedirectRegex.Replacement":                      "foobar",
 		"traefik.Middlewares.Middleware14.ReplacePath.Path":                               "foobar",
 		"traefik.Middlewares.Middleware15.ReplacePathRegex.Regex":                         "foobar",
 		"traefik.Middlewares.Middleware15.ReplacePathRegex.Replacement":                   "foobar",

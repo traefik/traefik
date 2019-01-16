@@ -1,24 +1,23 @@
-package schemeredirect
+package redirect
 
 import (
 	"context"
 	"net/http"
 
 	"github.com/containous/traefik/middlewares"
-	"github.com/containous/traefik/middlewares/baseredirect"
 	"github.com/pkg/errors"
 
 	"github.com/containous/traefik/config"
 )
 
 const (
-	typeName            = "SchemeRedirect"
+	typeSchemeName      = "RedirectScheme"
 	schemeRedirectRegex = `^(https?:\/\/)?([\w\._-]+)(:\d+)?(.*)$`
 )
 
-// New creates a new schemeredirect middleware.
-func New(ctx context.Context, next http.Handler, conf config.SchemeRedirect, name string) (http.Handler, error) {
-	logger := middlewares.GetLogger(ctx, name, typeName)
+// NewRedirectScheme creates a new RedirectScheme middleware.
+func NewRedirectScheme(ctx context.Context, next http.Handler, conf config.RedirectScheme, name string) (http.Handler, error) {
+	logger := middlewares.GetLogger(ctx, name, typeSchemeName)
 	logger.Debug("Creating middleware")
 	logger.Debugf("Setting up redirection to %s %s", conf.Scheme, conf.Port)
 
@@ -31,11 +30,5 @@ func New(ctx context.Context, next http.Handler, conf config.SchemeRedirect, nam
 		port = ":" + conf.Port
 	}
 
-	c := config.BaseRedirect{
-		Regex:       schemeRedirectRegex,
-		Replacement: conf.Scheme + "://${2}" + port + "${4}",
-		Permanent:   conf.Permanent,
-	}
-
-	return baseredirect.New(ctx, next, c, name)
+	return newRedirect(ctx, next, schemeRedirectRegex, conf.Scheme+"://${2}"+port+"${4}", conf.Permanent, name)
 }

@@ -17,8 +17,8 @@ type Middleware struct {
 	Headers           *Headers           `json:"headers,omitempty"`
 	Errors            *ErrorPage         `json:"errors,omitempty"`
 	RateLimit         *RateLimit         `json:"rateLimit,omitempty"`
-	Redirect          *Redirect          `json:"redirect,omitempty"`
-	SchemeRedirect    *SchemeRedirect    `json:"schemeredirect,omitempty"`
+	RedirectRegex     *RedirectRegex     `json:"redirectregex,omitempty"`
+	RedirectScheme    *RedirectScheme    `json:"schemeredirect,omitempty"`
 	BasicAuth         *BasicAuth         `json:"basicAuth,omitempty"`
 	DigestAuth        *DigestAuth        `json:"digestAuth,omitempty"`
 	ForwardAuth       *ForwardAuth       `json:"forwardAuth,omitempty"`
@@ -230,15 +230,15 @@ func (r *RateLimit) SetDefaults() {
 	r.ExtractorFunc = "request.host"
 }
 
-// Redirect holds the redirection configuration of an entry point to another, or to an URL.
-type Redirect struct {
+// RedirectRegex holds the redirection configuration.
+type RedirectRegex struct {
 	Regex       string `json:"regex,omitempty"`
 	Replacement string `json:"replacement,omitempty"`
 	Permanent   bool   `json:"permanent,omitempty"`
 }
 
-// SchemeRedirect holds the scheme redirection configuration.
-type SchemeRedirect struct {
+// RedirectScheme holds the scheme redirection configuration.
+type RedirectScheme struct {
 	Scheme    string `json:"scheme,omitempty"`
 	Port      string `json:"port,omitempty"`
 	Permanent bool   `json:"permanent,omitempty"`
