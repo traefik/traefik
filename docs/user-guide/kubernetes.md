@@ -679,7 +679,7 @@ spec:
 [examples/k8s/cheese-ingress.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/cheese-ingress.yaml)
 
 !!! note
-    we list each hostname, and add a backend service.
+    We list each hostname, and add a backend service.
 
 ```shell
 kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/cheese-ingress.yaml
@@ -783,11 +783,11 @@ Traefik will now look for cheddar service endpoints (ports on healthy pods) in b
 Deploying cheddar into the cheese namespace and afterwards shutting down cheddar in the default namespace is enough to migrate the traffic.
 
 !!! note
-   The kubernetes documentation does not specify this merging behavior.
+    The kubernetes documentation does not specify this merging behavior.
 
 !!! note
-   Merging ingress definitions can cause problems if the annotations differ or if the services handle requests differently.
-   Be careful and extra cautious when running multiple overlapping ingress definitions.
+    Merging ingress definitions can cause problems if the annotations differ or if the services handle requests differently.
+    Be careful and extra cautious when running multiple overlapping ingress definitions.
 
 ## Specifying Routing Priorities
 
