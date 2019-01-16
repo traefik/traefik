@@ -16,7 +16,7 @@ import (
 	"github.com/vulcand/oxy/utils"
 )
 
-type baseredirect struct {
+type baseRedirect struct {
 	next        http.Handler
 	regex       *regexp.Regexp
 	replacement string
@@ -25,14 +25,14 @@ type baseredirect struct {
 	name        string
 }
 
-// New creates a baseredirect middleware.
+// New creates a BaseRedirect middleware.
 func New(ctx context.Context, next http.Handler, config config.BaseRedirect, name string) (http.Handler, error) {
 	re, err := regexp.Compile(config.Regex)
 	if err != nil {
 		return nil, err
 	}
 
-	return &baseredirect{
+	return &baseRedirect{
 		regex:       re,
 		replacement: config.Replacement,
 		permanent:   config.Permanent,
@@ -42,11 +42,11 @@ func New(ctx context.Context, next http.Handler, config config.BaseRedirect, nam
 	}, nil
 }
 
-func (r *baseredirect) GetTracingInformation() (string, ext.SpanKindEnum) {
+func (r *baseRedirect) GetTracingInformation() (string, ext.SpanKindEnum) {
 	return r.name, tracing.SpanKindNoneEnum
 }
 
-func (r *baseredirect) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+func (r *baseRedirect) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	oldURL := rawURL(req)
 
 	// If the Regexp doesn't match, skip to the next handler
