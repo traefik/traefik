@@ -1962,7 +1962,7 @@
   version = "v1.12.0"
 
 [[projects]]
-  digest = "1:7ed5f088604ff1018ff0e80f4b80765cab92bbe4763b50de852af884d24a526b"
+  digest = "1:b886012746f19e2a7c6c3901ea9f86e8a5e32ff2b4407086f4f3181269976957"
   name = "gopkg.in/DataDog/dd-trace-go.v1"
   packages = [
     "ddtrace",
@@ -1972,8 +1972,8 @@
     "ddtrace/tracer",
   ]
   pruneopts = "NUT"
-  revision = "48eeff27357376bcb31a15674dc4be9078de88b3"
-  version = "v1.5.0"
+  revision = "7fb2bce4b1ed6ab61f7a9e1be30dea56de19db7c"
+  version = "v1.8.0"
 
 [[projects]]
   digest = "1:c970218a20933dd0a2eb2006de922217fa9276f57d25009b2a934eb1c50031cc"
