@@ -16,7 +16,7 @@ const (
 	schemeRedirectRegex = `^(https?:\/\/)?([\w\._-]+)(:\d+)?(.*)$`
 )
 
-// Creates a new schemeredirect middleware
+// New creates a new schemeredirect middleware.
 func New(ctx context.Context, next http.Handler, conf config.SchemeRedirect, name string) (http.Handler, error) {
 	logger := middlewares.GetLogger(ctx, name, typeName)
 	logger.Debug("Creating middleware")
