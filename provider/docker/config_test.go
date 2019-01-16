@@ -1599,7 +1599,7 @@ func TestDockerGetIPPort(t *testing.T) {
 				UseBindPortIP: true,
 			}
 
-			actualIP, actualPort, actualError := provider.getIPPort(dData, test.serverPort)
+			actualIP, actualPort, actualError := provider.getIPPort(context.Background(), dData, test.serverPort)
 			if test.expected.error {
 				require.Error(t, actualError)
 			} else {
@@ -1766,7 +1766,7 @@ func TestDockerGetIPAddress(t *testing.T) {
 				dData.ExtraConf.Docker.Network = test.network
 			}
 
-			actual := provider.getIPAddress(dData)
+			actual := provider.getIPAddress(context.Background(), dData)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
@@ -1827,10 +1827,10 @@ func TestSwarmGetIPAddress(t *testing.T) {
 				SwarmMode: true,
 			}
 
-			dData, err := provider.parseService(test.service, test.networks)
+			dData, err := provider.parseService(context.Background(), test.service, test.networks)
 			require.NoError(t, err)
 
-			actual := provider.getIPAddress(dData)
+			actual := provider.getIPAddress(context.Background(), dData)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
@@ -1860,7 +1860,7 @@ func TestSwarmGetPort(t *testing.T) {
 
 			p := Provider{}
 
-			dData, err := p.parseService(test.service, test.networks)
+			dData, err := p.parseService(context.Background(), test.service, test.networks)
 			require.NoError(t, err)
 
 			actual := getPort(dData, test.serverPort)

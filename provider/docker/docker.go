@@ -85,12 +85,12 @@ func (p *Provider) createClient() (client.APIClient, error) {
 
 	if p.TLS != nil {
 		ctx := log.With(context.Background(), log.Str(log.ProviderName, "docker"))
-		config, err := p.TLS.CreateTLSConfig(ctx)
+		conf, err := p.TLS.CreateTLSConfig(ctx)
 		if err != nil {
 			return nil, err
 		}
 		tr := &http.Transport{
-			TLSClientConfig: config,
+			TLSClientConfig: conf,
 		}
 
 		hostURL, err := client.ParseHostURL(p.Endpoint)
@@ -284,7 +284,7 @@ func (p *Provider) listContainers(ctx context.Context, dockerClient client.Conta
 
 		extraConf, err := p.getConfiguration(dData)
 		if err != nil {
-			log.Errorf("Skip container %s: %v", getServiceName(dData), err)
+			log.FromContext(ctx).Errorf("Skip container %s: %v", getServiceName(dData), err)
 			continue
 		}
 		dData.ExtraConf = extraConf
@@ -300,7 +300,7 @@ func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClie
 	dData := dockerData{}
 	containerInspected, err := dockerClient.ContainerInspect(ctx, containerID)
 	if err != nil {
-		log.Warnf("Failed to inspect container %s, error: %s", containerID, err)
+		log.FromContext(ctx).Warnf("Failed to inspect container %s, error: %s", containerID, err)
 	} else {
 		// This condition is here to avoid to have empty IP https://github.com/containous/traefik/issues/2459
 		// We register only container which are running
@@ -353,6 +353,8 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 }
 
 func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerData, error) {
+	logger := log.FromContext(ctx)
+
 	serviceList, err := dockerClient.ServiceList(ctx, dockertypes.ServiceListOptions{})
 	if err != nil {
 		return nil, err
@@ -373,7 +375,7 @@ func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClie
 
 	networkList, err := dockerClient.NetworkList(ctx, dockertypes.NetworkListOptions{Filters: networkListArgs})
 	if err != nil {
-		log.Debugf("Failed to network inspect on client for docker, error: %s", err)
+		logger.Debugf("Failed to network inspect on client for docker, error: %s", err)
 		return nil, err
 	}
 
@@ -387,9 +389,9 @@ func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClie
 	var dockerDataListTasks []dockerData
 
 	for _, service := range serviceList {
-		dData, err := p.parseService(service, networkMap)
+		dData, err := p.parseService(ctx, service, networkMap)
 		if err != nil {
-			log.Errorf("Skip container %s: %v", getServiceName(dData), err)
+			logger.Errorf("Skip container %s: %v", getServiceName(dData), err)
 			continue
 		}
 
@@ -401,7 +403,7 @@ func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClie
 			isGlobalSvc := service.Spec.Mode.Global != nil
 			dockerDataListTasks, err = listTasks(ctx, dockerClient, service.ID, dData, networkMap, isGlobalSvc)
 			if err != nil {
-				log.Warn(err)
+				logger.Warn(err)
 			} else {
 				dockerDataList = append(dockerDataList, dockerDataListTasks...)
 			}
@@ -410,7 +412,9 @@ func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClie
 	return dockerDataList, err
 }
 
-func (p *Provider) parseService(service swarmtypes.Service, networkMap map[string]*dockertypes.NetworkResource) (dockerData, error) {
+func (p *Provider) parseService(ctx context.Context, service swarmtypes.Service, networkMap map[string]*dockertypes.NetworkResource) (dockerData, error) {
+	logger := log.FromContext(ctx)
+
 	dData := dockerData{
 		ServiceName:     service.Spec.Annotations.Name,
 		Name:            service.Spec.Annotations.Name,
@@ -428,7 +432,7 @@ func (p *Provider) parseService(service swarmtypes.Service, networkMap map[strin
 	if service.Spec.EndpointSpec != nil {
 		if service.Spec.EndpointSpec.Mode == swarmtypes.ResolutionModeDNSRR {
 			if dData.ExtraConf.Docker.LBSwarm {
-				log.Warnf("Ignored %s endpoint-mode not supported, service name: %s. Fallback to Traefik load balancing", swarmtypes.ResolutionModeDNSRR, service.Spec.Annotations.Name)
+				logger.Warnf("Ignored %s endpoint-mode not supported, service name: %s. Fallback to Traefik load balancing", swarmtypes.ResolutionModeDNSRR, service.Spec.Annotations.Name)
 			}
 		} else if service.Spec.EndpointSpec.Mode == swarmtypes.ResolutionModeVIP {
 			dData.NetworkSettings.Networks = make(map[string]*networkData)
@@ -444,10 +448,10 @@ func (p *Provider) parseService(service swarmtypes.Service, networkMap map[strin
 						}
 						dData.NetworkSettings.Networks[network.Name] = network
 					} else {
-						log.Debugf("No virtual IPs found in network %s", virtualIP.NetworkID)
+						logger.Debugf("No virtual IPs found in network %s", virtualIP.NetworkID)
 					}
 				} else {
-					log.Debugf("Network not found, id: %s", virtualIP.NetworkID)
+					logger.Debugf("Network not found, id: %s", virtualIP.NetworkID)
 				}
 			}
 		}
@@ -471,7 +475,7 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 		if task.Status.State != swarmtypes.TaskStateRunning {
 			continue
 		}
-		dData := parseTasks(task, serviceDockerData, networkMap, isGlobalSvc)
+		dData := parseTasks(ctx, task, serviceDockerData, networkMap, isGlobalSvc)
 		if len(dData.NetworkSettings.Networks) > 0 {
 			dockerDataList = append(dockerDataList, dData)
 		}
@@ -479,7 +483,7 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 	return dockerDataList, err
 }
 
-func parseTasks(task swarmtypes.Task, serviceDockerData dockerData,
+func parseTasks(ctx context.Context, task swarmtypes.Task, serviceDockerData dockerData,
 	networkMap map[string]*dockertypes.NetworkResource, isGlobalSvc bool) dockerData {
 	dData := dockerData{
 		ServiceName:     serviceDockerData.Name,
@@ -508,7 +512,7 @@ func parseTasks(task swarmtypes.Task, serviceDockerData dockerData,
 						dData.NetworkSettings.Networks[network.Name] = network
 					}
 				} else {
-					log.Debugf("No IP addresses found for network %s", virtualIP.Network.ID)
+					log.FromContext(ctx).Debugf("No IP addresses found for network %s", virtualIP.Network.ID)
 				}
 			}
 		}

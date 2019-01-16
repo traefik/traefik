@@ -85,7 +85,7 @@ func TestListTasks(t *testing.T) {
 			t.Parallel()
 
 			p := Provider{}
-			dockerData, err := p.parseService(test.service, test.networks)
+			dockerData, err := p.parseService(context.Background(), test.service, test.networks)
 			require.NoError(t, err)
 
 			dockerClient := &fakeTasksClient{tasks: test.tasks}
@@ -400,11 +400,11 @@ func TestSwarmTaskParsing(t *testing.T) {
 
 			p := Provider{}
 
-			dData, err := p.parseService(test.service, test.networks)
+			dData, err := p.parseService(context.Background(), test.service, test.networks)
 			require.NoError(t, err)
 
 			for _, task := range test.tasks {
-				taskDockerData := parseTasks(task, dData, test.networks, test.isGlobalSVC)
+				taskDockerData := parseTasks(context.Background(), task, dData, test.networks, test.isGlobalSVC)
 				expected := test.expected[task.ID]
 				assert.Equal(t, expected.Name, taskDockerData.Name)
 			}

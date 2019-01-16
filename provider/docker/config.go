@@ -21,34 +21,38 @@ func (p *Provider) buildConfiguration(ctx context.Context, containersInspected [
 	}
 
 	for _, container := range containersInspected {
-		if !p.keepContainer(container) {
+		ctxContainer := log.With(ctx, log.Str("container", getServiceName(container)))
+
+		if !p.keepContainer(ctxContainer, container) {
 			continue
 		}
+
+		logs := log.FromContext(ctxContainer)
 
 		confFromLabel, err := label.DecodeConfiguration(container.Labels)
 		if err != nil {
-			log.Error(err)
+			logs.Error(err)
 			continue
 		}
 
-		err = p.buildServiceConfiguration(container, confFromLabel)
+		err = p.buildServiceConfiguration(ctx, container, confFromLabel)
 		if err != nil {
-			log.Error(err)
+			logs.Error(err)
 			continue
 		}
 
-		provider.MergeServices(ctx, confFromLabel, configuration)
+		provider.MergeServices(ctxContainer, confFromLabel, configuration)
 
-		p.buildRouterConfiguration(container, confFromLabel)
-		provider.MergeRouters(ctx, confFromLabel, configuration)
+		p.buildRouterConfiguration(ctxContainer, container, confFromLabel)
+		provider.MergeRouters(ctxContainer, confFromLabel, configuration)
 
-		provider.MergeMiddlewares(ctx, confFromLabel, configuration)
+		provider.MergeMiddlewares(ctxContainer, confFromLabel, configuration)
 	}
 
 	return configuration
 }
 
-func (p *Provider) buildServiceConfiguration(container dockerData, configuration *config.Configuration) error {
+func (p *Provider) buildServiceConfiguration(ctx context.Context, container dockerData, configuration *config.Configuration) error {
 	serviceName := getServiceName(container)
 
 	if len(configuration.Services) == 0 {
@@ -61,7 +65,7 @@ func (p *Provider) buildServiceConfiguration(container dockerData, configuration
 	}
 
 	for _, service := range configuration.Services {
-		err := p.addServer(container, service.LoadBalancer)
+		err := p.addServer(ctx, container, service.LoadBalancer)
 		if err != nil {
 			return err
 		}
@@ -70,12 +74,14 @@ func (p *Provider) buildServiceConfiguration(container dockerData, configuration
 	return nil
 }
 
-func (p *Provider) buildRouterConfiguration(container dockerData, configuration *config.Configuration) {
+func (p *Provider) buildRouterConfiguration(ctx context.Context, container dockerData, configuration *config.Configuration) {
+	logger := log.FromContext(ctx)
+
 	serviceName := getServiceName(container)
 
 	if len(configuration.Routers) == 0 {
 		if len(configuration.Services) > 1 {
-			log.Infof("could not create a router for the container %s: too many services", serviceName)
+			logger.Info("could not create a router for the container: too many services")
 		} else {
 			configuration.Routers = make(map[string]*config.Router)
 			configuration.Routers[serviceName] = &config.Router{}
@@ -90,7 +96,8 @@ func (p *Provider) buildRouterConfiguration(container dockerData, configuration 
 		if router.Service == "" {
 			if len(configuration.Services) > 1 {
 				delete(configuration.Routers, routerName)
-				log.Errorf("could not define the service name for the router %s: too many services", routerName)
+				logger.WithField(log.RouterName, routerName).
+					Error("could not define the service name for the router: too many services")
 				continue
 			}
 
@@ -101,30 +108,32 @@ func (p *Provider) buildRouterConfiguration(container dockerData, configuration 
 	}
 }
 
-func (p *Provider) keepContainer(container dockerData) bool {
+func (p *Provider) keepContainer(ctx context.Context, container dockerData) bool {
+	logger := log.FromContext(ctx)
+
 	if !container.ExtraConf.Enable {
-		log.Debugf("Filtering disabled container %s", container.Name)
+		logger.Debugf("Filtering disabled container %s", container.Name)
 		return false
 	}
 
 	if ok, failingConstraint := p.MatchConstraints(container.ExtraConf.Tags); !ok {
 		if failingConstraint != nil {
-			log.Debugf("Container %s pruned by %q constraint", container.Name, failingConstraint.String())
+			logger.Debugf("Container %s pruned by %q constraint", container.Name, failingConstraint.String())
 		}
 		return false
 	}
 
 	if container.Health != "" && container.Health != "healthy" {
-		log.Debugf("Filtering unhealthy or starting container %s", container.Name)
+		logger.Debugf("Filtering unhealthy or starting container %s", container.Name)
 		return false
 	}
 
 	return true
 }
 
-func (p *Provider) addServer(container dockerData, loadBalancer *config.LoadBalancerService) error {
+func (p *Provider) addServer(ctx context.Context, container dockerData, loadBalancer *config.LoadBalancerService) error {
 	serverPort := getLBServerPort(loadBalancer)
-	ip, port, err := p.getIPPort(container, serverPort)
+	ip, port, err := p.getIPPort(ctx, container, serverPort)
 	if err != nil {
 		return err
 	}
@@ -151,16 +160,18 @@ func (p *Provider) addServer(container dockerData, loadBalancer *config.LoadBala
 	return nil
 }
 
-func (p *Provider) getIPPort(container dockerData, serverPort string) (string, string, error) {
+func (p *Provider) getIPPort(ctx context.Context, container dockerData, serverPort string) (string, string, error) {
+	logger := log.FromContext(ctx)
+
 	var ip, port string
 	usedBound := false
 
 	if p.UseBindPortIP {
 		portBinding, err := p.getPortBinding(container, serverPort)
 		if err != nil {
-			log.Infof("Unable to find a binding for container %q, falling back on its internal IP/Port.", container.Name)
+			logger.Infof("Unable to find a binding for container %q, falling back on its internal IP/Port.", container.Name)
 		} else if (portBinding.HostIP == "0.0.0.0") || (len(portBinding.HostIP) == 0) {
-			log.Infof("Cannot determine the IP address (got %q) for %q's binding, falling back on its internal IP/Port.", portBinding.HostIP, container.Name)
+			logger.Infof("Cannot determine the IP address (got %q) for %q's binding, falling back on its internal IP/Port.", portBinding.HostIP, container.Name)
 		} else {
 			ip = portBinding.HostIP
 			port = portBinding.HostPort
@@ -169,7 +180,7 @@ func (p *Provider) getIPPort(container dockerData, serverPort string) (string, s
 	}
 
 	if !usedBound {
-		ip = p.getIPAddress(container)
+		ip = p.getIPAddress(ctx, container)
 		port = getPort(container, serverPort)
 	}
 
@@ -180,7 +191,9 @@ func (p *Provider) getIPPort(container dockerData, serverPort string) (string, s
 	return ip, port, nil
 }
 
-func (p Provider) getIPAddress(container dockerData) string {
+func (p Provider) getIPAddress(ctx context.Context, container dockerData) string {
+	logger := log.FromContext(ctx)
+
 	if container.ExtraConf.Docker.Network != "" {
 		networkSettings := container.NetworkSettings
 		if networkSettings.Networks != nil {
@@ -189,7 +202,7 @@ func (p Provider) getIPAddress(container dockerData) string {
 				return network.Addr
 			}
 
-			log.Warnf("Could not find network named '%s' for container '%s'! Maybe you're missing the project's prefix in the label? Defaulting to first available network.", container.ExtraConf.Docker.Network, container.Name)
+			logger.Warnf("Could not find network named '%s' for container '%s'! Maybe you're missing the project's prefix in the label? Defaulting to first available network.", container.ExtraConf.Docker.Network, container.Name)
 		}
 	}
 
@@ -205,24 +218,24 @@ func (p Provider) getIPAddress(container dockerData) string {
 	if container.NetworkSettings.NetworkMode.IsContainer() {
 		dockerClient, err := p.createClient()
 		if err != nil {
-			log.Warnf("Unable to get IP address for container %s, error: %s", container.Name, err)
+			logger.Warnf("Unable to get IP address: %s", err)
 			return ""
 		}
 
 		connectedContainer := container.NetworkSettings.NetworkMode.ConnectedContainer()
 		containerInspected, err := dockerClient.ContainerInspect(context.Background(), connectedContainer)
 		if err != nil {
-			log.Warnf("Unable to get IP address for container %s : Failed to inspect container ID %s, error: %s", container.Name, connectedContainer, err)
+			logger.Warnf("Unable to get IP address for container %s : Failed to inspect container ID %s, error: %s", container.Name, connectedContainer, err)
 			return ""
 		}
-		return p.getIPAddress(parseContainer(containerInspected))
+		return p.getIPAddress(ctx, parseContainer(containerInspected))
 	}
 
 	for _, network := range container.NetworkSettings.Networks {
 		return network.Addr
 	}
 
-	log.Warnf("Unable to find the IP address for the container %q.", container.Name)
+	logger.Warn("Unable to find the IP address.")
 	return ""
 }
 
