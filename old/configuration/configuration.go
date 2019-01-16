@@ -22,7 +22,6 @@ import (
 	"github.com/containous/traefik/old/provider/etcd"
 	"github.com/containous/traefik/old/provider/eureka"
 	"github.com/containous/traefik/old/provider/kubernetes"
-	"github.com/containous/traefik/old/provider/marathon"
 	"github.com/containous/traefik/old/provider/mesos"
 	"github.com/containous/traefik/old/provider/rancher"
 	"github.com/containous/traefik/old/provider/rest"
@@ -88,7 +87,6 @@ type GlobalConfiguration struct {
 	KeepTrailingSlash         bool                    `description:"Do not remove trailing slash." export:"true"` // Deprecated
 	Docker                    *docker.Provider        `description:"Enable Docker backend with default settings" export:"true"`
 	File                      *file.Provider          `description:"Enable File backend with default settings" export:"true"`
-	Marathon                  *marathon.Provider      `description:"Enable Marathon backend with default settings" export:"true"`
 	Consul                    *consul.Provider        `description:"Enable Consul backend with default settings" export:"true"`
 	ConsulCatalog             *consulcatalog.Provider `description:"Enable Consul catalog backend with default settings" export:"true"`
 	Etcd                      *etcd.Provider          `description:"Enable Etcd backend with default settings" export:"true"`

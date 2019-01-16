@@ -4,21 +4,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containous/traefik/old/provider/label"
 	"github.com/gambol99/go-marathon"
 )
 
 const testTaskName = "taskID"
-
-func withAppData(app marathon.Application, segmentName string) appData {
-	segmentProperties := label.ExtractTraefikLabels(stringValueMap(app.Labels))
-	return appData{
-		Application:   app,
-		SegmentLabels: segmentProperties[segmentName],
-		SegmentName:   segmentName,
-		LinkedApps:    nil,
-	}
-}
 
 // Functions related to building applications.
 
@@ -61,17 +50,6 @@ func withLabel(key, value string) func(*marathon.Application) {
 func constraint(value string) func(*marathon.Application) {
 	return func(app *marathon.Application) {
 		app.AddConstraint(strings.Split(value, ":")...)
-	}
-}
-
-func withSegmentLabel(key, value string, segmentName string) func(*marathon.Application) {
-	if len(segmentName) == 0 {
-		panic("segmentName can not be empty")
-	}
-
-	property := strings.TrimPrefix(key, label.Prefix)
-	return func(app *marathon.Application) {
-		app.AddLabel(label.Prefix+segmentName+"."+property, value)
 	}
 }
 

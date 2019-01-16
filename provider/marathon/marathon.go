@@ -1,23 +1,29 @@
 package marathon
 
 import (
+	"context"
+	"fmt"
 	"net"
 	"net/http"
 	"net/url"
+	"text/template"
 	"time"
 
 	"github.com/cenk/backoff"
 	"github.com/containous/flaeg/parse"
+	"github.com/containous/traefik/config"
 	"github.com/containous/traefik/job"
-	"github.com/containous/traefik/old/log"
-	"github.com/containous/traefik/old/provider"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/old/types"
+	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/gambol99/go-marathon"
 	"github.com/sirupsen/logrus"
 )
 
 const (
+	// DefaultTemplateRule The default template for the default rule.
+	DefaultTemplateRule   = "Host:{{ normalize .Name }}"
 	traceMaxScanTokenSize = 1024 * 1024
 	marathonEventIDs      = marathon.EventIDApplications |
 		marathon.EventIDAddHealthCheck |
@@ -36,23 +42,15 @@ const (
 	taskStateStaging TaskState = "TASK_STAGING"
 )
 
-const (
-	labelIPAddressIdx         = "traefik.ipAddressIdx"
-	labelLbCompatibilityGroup = "HAPROXY_GROUP"
-	labelLbCompatibility      = "HAPROXY_0_VHOST"
-)
-
 var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configuration of the provider.
 type Provider struct {
 	provider.BaseProvider
 	Endpoint                  string           `description:"Marathon server endpoint. You can also specify multiple endpoint for Marathon" export:"true"`
-	Domain                    string           `description:"Default domain used" export:"true"`
+	DefaultRule               string           `description:"Default rule"`
 	ExposedByDefault          bool             `description:"Expose Marathon apps by default" export:"true"`
-	GroupsAsSubDomains        bool             `description:"Convert Marathon groups to subdomains" export:"true"`
 	DCOSToken                 string           `description:"DCOSToken for DCOS environment, This will override the Authorization header" export:"true"`
-	MarathonLBCompatibility   bool             `description:"Add compatibility with marathon-lb labels" export:"true"`
 	FilterMarathonConstraints bool             `description:"Enable use of Marathon constraints in constraint filtering" export:"true"`
 	TLS                       *types.ClientTLS `description:"Enable TLS support" export:"true"`
 	DialerTimeout             parse.Duration   `description:"Set a dialer timeout for Marathon" export:"true"`
@@ -64,6 +62,7 @@ type Provider struct {
 	RespectReadinessChecks    bool             `description:"Filter out tasks with non-successful readiness checks during deployments" export:"true"`
 	readyChecker              *readinessChecker
 	marathonClient            marathon.Marathon
+	defaultRuleTpl            *template.Template
 }
 
 // Basic holds basic authentication specific configurations
@@ -73,39 +72,59 @@ type Basic struct {
 }
 
 // Init the provider
-func (p *Provider) Init(constraints types.Constraints) error {
-	return p.BaseProvider.Init(constraints)
+func (p *Provider) Init() error {
+	fm := template.FuncMap{
+		"strsToItfs": func(values []string) []interface{} {
+			var r []interface{}
+			for _, v := range values {
+				r = append(r, v)
+			}
+			return r
+		},
+	}
+
+	defaultRuleTpl, err := provider.MakeDefaultRuleTemplate(p.DefaultRule, fm)
+	if err != nil {
+		return fmt.Errorf("error while parsing default rule: %v", err)
+	}
+
+	p.defaultRuleTpl = defaultRuleTpl
+	return p.BaseProvider.Init()
 }
 
 // Provide allows the marathon provider to provide configurations to traefik
 // using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
+func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.Pool) error {
+	ctx := log.With(context.Background(), log.Str(log.ProviderName, "marathon"))
+	logger := log.FromContext(ctx)
+
 	operation := func() error {
-		config := marathon.NewDefaultConfig()
-		config.URL = p.Endpoint
-		config.EventsTransport = marathon.EventsTransportSSE
+
+		confg := marathon.NewDefaultConfig()
+		confg.URL = p.Endpoint
+		confg.EventsTransport = marathon.EventsTransportSSE
 		if p.Trace {
-			config.LogOutput = log.CustomWriterLevel(logrus.DebugLevel, traceMaxScanTokenSize)
+			confg.LogOutput = log.CustomWriterLevel(logrus.DebugLevel, traceMaxScanTokenSize)
 		}
 		if p.Basic != nil {
-			config.HTTPBasicAuthUser = p.Basic.HTTPBasicAuthUser
-			config.HTTPBasicPassword = p.Basic.HTTPBasicPassword
+			confg.HTTPBasicAuthUser = p.Basic.HTTPBasicAuthUser
+			confg.HTTPBasicPassword = p.Basic.HTTPBasicPassword
 		}
 		var rc *readinessChecker
 		if p.RespectReadinessChecks {
-			log.Debug("Enabling Marathon readiness checker")
+			logger.Debug("Enabling Marathon readiness checker")
 			rc = defaultReadinessChecker(p.Trace)
 		}
 		p.readyChecker = rc
 
 		if len(p.DCOSToken) > 0 {
-			config.DCOSToken = p.DCOSToken
+			confg.DCOSToken = p.DCOSToken
 		}
 		TLSConfig, err := p.TLS.CreateTLSConfig()
 		if err != nil {
 			return err
 		}
-		config.HTTPClient = &http.Client{
+		confg.HTTPClient = &http.Client{
 			Transport: &http.Transport{
 				DialContext: (&net.Dialer{
 					KeepAlive: time.Duration(p.KeepAlive),
@@ -116,9 +135,9 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				TLSClientConfig:       TLSConfig,
 			},
 		}
-		client, err := marathon.NewClient(config)
+		client, err := marathon.NewClient(confg)
 		if err != nil {
-			log.Errorf("Failed to create a client for marathon, error: %s", err)
+			logger.Errorf("Failed to create a client for marathon, error: %s", err)
 			return err
 		}
 		p.marathonClient = client
@@ -126,7 +145,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		if p.Watch {
 			update, err := client.AddEventsListener(marathonEventIDs)
 			if err != nil {
-				log.Errorf("Failed to register for events, %s", err)
+				logger.Errorf("Failed to register for events, %s", err)
 				return err
 			}
 			pool.Go(func(stop chan bool) {
@@ -136,13 +155,13 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 					case <-stop:
 						return
 					case event := <-update:
-						log.Debugf("Received provider event %s", event)
+						logger.Debugf("Received provider event %s", event)
 
-						configuration := p.getConfiguration()
-						if configuration != nil {
-							configurationChan <- types.ConfigMessage{
+						conf := p.getConfigurations(ctx)
+						if conf != nil {
+							configurationChan <- config.Message{
 								ProviderName:  "marathon",
-								Configuration: configuration,
+								Configuration: conf,
 							}
 						}
 					}
@@ -150,8 +169,8 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 			})
 		}
 
-		configuration := p.getConfiguration()
-		configurationChan <- types.ConfigMessage{
+		configuration := p.getConfigurations(ctx)
+		configurationChan <- config.Message{
 			ProviderName:  "marathon",
 			Configuration: configuration,
 		}
@@ -159,23 +178,23 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	}
 
 	notify := func(err error, time time.Duration) {
-		log.Errorf("Provider connection error %+v, retrying in %s", err, time)
+		logger.Errorf("Provider connection error %+v, retrying in %s", err, time)
 	}
 	err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
 	if err != nil {
-		log.Errorf("Cannot connect to Provider server %+v", err)
+		logger.Errorf("Cannot connect to Provider server: %+v", err)
 	}
 	return nil
 }
 
-func (p *Provider) getConfiguration() *types.Configuration {
+func (p *Provider) getConfigurations(ctx context.Context) *config.Configuration {
 	applications, err := p.getApplications()
 	if err != nil {
-		log.Errorf("Failed to retrieve Marathon applications: %v", err)
+		log.FromContext(ctx).Errorf("Failed to retrieve Marathon applications: %v", err)
 		return nil
 	}
 
-	return p.buildConfiguration(applications)
+	return p.buildConfiguration(ctx, applications)
 }
 
 func (p *Provider) getApplications() (*marathon.Applications, error) {

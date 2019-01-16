@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/containous/traefik/integration/try"
-	"github.com/containous/traefik/old/provider/label"
 	"github.com/gambol99/go-marathon"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
@@ -109,7 +108,7 @@ func (s *MarathonSuite) TestConfigurationUpdate(c *check.C) {
 		Name("/whoami").
 		CPU(0.1).
 		Memory(32).
-		AddLabel(label.TraefikFrontendRule, "PathPrefix:/service")
+		AddLabel("traefik.Routers.rt.Rule", "PathPrefix:/service")
 	app.Container.Docker.Bridged().
 		Expose(80).
 		Container("containous/whoami")
@@ -126,7 +125,7 @@ func (s *MarathonSuite) TestConfigurationUpdate(c *check.C) {
 		Name("/whoami").
 		CPU(0.1).
 		Memory(32).
-		AddLabel(label.Prefix+"app"+label.TraefikFrontendRule, "PathPrefix:/app")
+		AddLabel("traefik.Routers.app.Rule", "PathPrefix:/app")
 	app.Container.Docker.Bridged().
 		Expose(80).
 		Container("containous/whoami")
