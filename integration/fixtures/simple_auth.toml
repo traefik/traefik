@@ -10,7 +10,7 @@ logLevel = "DEBUG"
 
 
 [api]
-   middlewares = ["authentication"]
+   middlewares = ["file.authentication"]
 
 [ping]
 
