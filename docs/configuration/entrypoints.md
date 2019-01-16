@@ -101,7 +101,7 @@ For more information about the CLI, see the documentation about [Traefik command
     Whitespace is used as option separator and `,` is used as value separator for the list.  
     The names of the options are case-insensitive.
 
-In compose file the entrypoint syntax is different:
+In compose file the entrypoint syntax is different. Notice how quotes are used:
 
 ```yaml
 traefik:
