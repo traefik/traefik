@@ -236,6 +236,13 @@ type Redirect struct {
 	Permanent   bool   `json:"permanent,omitempty"`
 }
 
+// SchemeRedirect holds the scheme redirection configuration.
+type SchemeRedirect struct {
+	Scheme    string `json:"scheme,omitempty"`
+	Port      string `json:"port,omitempty"`
+	Permanent bool   `json:"permanent,omitempty"`
+}
+
 // ReplacePath holds the ReplacePath configuration.
 type ReplacePath struct {
 	Path string `json:"path,omitempty"`
@@ -247,16 +254,9 @@ type ReplacePathRegex struct {
 	Replacement string `json:"replacement,omitempty"`
 }
 
-// Retry contains request retry config
+// Retry holds the retry configuration.
 type Retry struct {
 	Attempts int `description:"Number of attempts" export:"true"`
-}
-
-// SchemeRedirect holds the redirection.
-type SchemeRedirect struct {
-	Scheme    string `json:"scheme,omitempty"`
-	Port      string `json:"port,omitempty"`
-	Permanent bool   `json:"permanent,omitempty"`
 }
 
 // StripPrefix holds the StripPrefix configuration.
