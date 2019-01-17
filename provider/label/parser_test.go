@@ -90,9 +90,12 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.middlewares.Middleware12.ratelimit.rateset.Rate1.average":                "42",
 		"traefik.middlewares.Middleware12.ratelimit.rateset.Rate1.burst":                  "42",
 		"traefik.middlewares.Middleware12.ratelimit.rateset.Rate1.period":                 "42",
-		"traefik.middlewares.Middleware13.redirect.permanent":                             "true",
-		"traefik.middlewares.Middleware13.redirect.regex":                                 "foobar",
-		"traefik.middlewares.Middleware13.redirect.replacement":                           "foobar",
+		"traefik.middlewares.Middleware13.redirectregex.permanent":                        "true",
+		"traefik.middlewares.Middleware13.redirectregex.regex":                            "foobar",
+		"traefik.middlewares.Middleware13.redirectregex.replacement":                      "foobar",
+		"traefik.middlewares.Middleware13b.redirectscheme.scheme":                         "https",
+		"traefik.middlewares.Middleware13b.redirectscheme.port":                           "80",
+		"traefik.middlewares.Middleware13b.redirectscheme.permanent":                      "true",
 		"traefik.middlewares.Middleware14.replacepath.path":                               "foobar",
 		"traefik.middlewares.Middleware15.replacepathregex.regex":                         "foobar",
 		"traefik.middlewares.Middleware15.replacepathregex.replacement":                   "foobar",
@@ -237,10 +240,17 @@ func TestDecodeConfiguration(t *testing.T) {
 				},
 			},
 			"Middleware13": {
-				Redirect: &config.RedirectRegex{
+				RedirectRegex: &config.RedirectRegex{
 					Regex:       "foobar",
 					Replacement: "foobar",
 					Permanent:   true,
+				},
+			},
+			"Middleware13b": {
+				RedirectScheme: &config.RedirectScheme{
+					Scheme:    "https",
+					Port:      "80",
+					Permanent: true,
 				},
 			},
 			"Middleware14": {
@@ -553,10 +563,17 @@ func TestEncodeConfiguration(t *testing.T) {
 				},
 			},
 			"Middleware13": {
-				Redirect: &config.RedirectRegex{
+				RedirectRegex: &config.RedirectRegex{
 					Regex:       "foobar",
 					Replacement: "foobar",
 					Permanent:   true,
+				},
+			},
+			"Middleware13b": {
+				RedirectScheme: &config.RedirectScheme{
+					Scheme:    "https",
+					Port:      "80",
+					Permanent: true,
 				},
 			},
 			"Middleware14": {
@@ -856,9 +873,12 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.Middlewares.Middleware12.RateLimit.RateSet.Rate1.Average":                "42",
 		"traefik.Middlewares.Middleware12.RateLimit.RateSet.Rate1.Burst":                  "42",
 		"traefik.Middlewares.Middleware12.RateLimit.RateSet.Rate1.Period":                 "42",
-		"traefik.Middlewares.Middleware13.RedirectRegex.Permanent":                        "true",
 		"traefik.Middlewares.Middleware13.RedirectRegex.Regex":                            "foobar",
 		"traefik.Middlewares.Middleware13.RedirectRegex.Replacement":                      "foobar",
+		"traefik.Middlewares.Middleware13.RedirectRegex.Permanent":                        "true",
+		"traefik.Middlewares.Middleware13b.RedirectScheme.Scheme":                         "https",
+		"traefik.Middlewares.Middleware13b.RedirectScheme.Port":                           "80",
+		"traefik.Middlewares.Middleware13b.RedirectScheme.Permanent":                      "true",
 		"traefik.Middlewares.Middleware14.ReplacePath.Path":                               "foobar",
 		"traefik.Middlewares.Middleware15.ReplacePathRegex.Regex":                         "foobar",
 		"traefik.Middlewares.Middleware15.ReplacePathRegex.Replacement":                   "foobar",
