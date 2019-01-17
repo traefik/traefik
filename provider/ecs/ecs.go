@@ -19,10 +19,11 @@ import (
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
+	"github.com/patrickmn/go-cache"
 )
 
 var _ provider.Provider = (*Provider)(nil)
-var existingTaskDef = make(map[string]*ecs.TaskDefinition)
+var existingTaskDefCache = cache.New(30*time.Minute, 5*time.Minute)
 
 // Provider holds configurations of the provider.
 type Provider struct {
@@ -401,9 +402,9 @@ func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, cl
 func (p *Provider) lookupTaskDefinitions(ctx context.Context, client *awsClient, taskDefArns map[string]*ecs.Task) (map[string]*ecs.TaskDefinition, error) {
 	taskDef := make(map[string]*ecs.TaskDefinition)
 	for arn, task := range taskDefArns {
-		if definition, ok := existingTaskDef[arn]; ok {
-			taskDef[arn] = definition
-			log.Debugf("Found existing task definition for %s. Skipping the call", arn)
+		if definition, ok := existingTaskDefCache.Get(arn); ok {
+			taskDef[arn] = definition.(*ecs.TaskDefinition)
+			log.Debugf("Found cached task definition for %s. Skipping the call", arn)
 		} else {
 			resp, err := client.ecs.DescribeTaskDefinitionWithContext(ctx, &ecs.DescribeTaskDefinitionInput{
 				TaskDefinition: task.TaskDefinitionArn,
@@ -413,10 +414,11 @@ func (p *Provider) lookupTaskDefinitions(ctx context.Context, client *awsClient,
 				log.Errorf("Unable to describe task definition: %s", err)
 				return nil, err
 			}
+
 			taskDef[arn] = resp.TaskDefinition
+			existingTaskDefCache.Set(arn, resp.TaskDefinition, cache.DefaultExpiration)
 		}
 	}
-	existingTaskDef = taskDef
 	return taskDef, nil
 }
 
