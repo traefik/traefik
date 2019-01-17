@@ -3,6 +3,7 @@ package docker
 import (
 	"context"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/containous/traefik/config"
@@ -145,6 +146,7 @@ func Test_buildConfiguration(t *testing.T) {
 			desc: "two containers with same service name no label",
 			containers: []dockerData{
 				{
+					ID:          "1",
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels:      map[string]string{},
@@ -161,6 +163,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 				{
+					ID:          "2",
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels:      map[string]string{},
@@ -451,6 +454,7 @@ func Test_buildConfiguration(t *testing.T) {
 			desc: "two containers with same service name and different LB method",
 			containers: []dockerData{
 				{
+					ID:          "1",
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
@@ -469,6 +473,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 				{
+					ID:          "2",
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
@@ -499,9 +504,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "two containers with same service name and same LB method",
+			desc: "three containers with same service name and different LB method",
 			containers: []dockerData{
 				{
+					ID:          "1",
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
@@ -520,6 +526,79 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 				{
+					ID:          "2",
+					ServiceName: "Test",
+					Name:        "Test",
+					Labels: map[string]string{
+						"traefik.services.Service1.loadbalancer.method": "wrr",
+					},
+					NetworkSettings: networkSettings{
+						Ports: nat.PortMap{
+							nat.Port("80/tcp"): []nat.PortBinding{},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "127.0.0.2",
+							},
+						},
+					},
+				},
+				{
+					ID:          "3",
+					ServiceName: "Test",
+					Name:        "Test",
+					Labels: map[string]string{
+						"traefik.services.Service1.loadbalancer.method": "foo",
+					},
+					NetworkSettings: networkSettings{
+						Ports: nat.PortMap{
+							nat.Port("80/tcp"): []nat.PortBinding{},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "127.0.0.2",
+							},
+						},
+					},
+				},
+			},
+			expected: &config.Configuration{
+				Routers: map[string]*config.Router{
+					"Test": {
+						Service: "Service1",
+						Rule:    "Host:Test.traefik.wtf",
+					},
+				},
+				Middlewares: map[string]*config.Middleware{},
+				Services:    map[string]*config.Service{},
+			},
+		},
+		{
+			desc: "two containers with same service name and same LB method",
+			containers: []dockerData{
+				{
+					ID:          "1",
+					ServiceName: "Test",
+					Name:        "Test",
+					Labels: map[string]string{
+						"traefik.services.Service1.loadbalancer.method": "drr",
+					},
+					NetworkSettings: networkSettings{
+						Ports: nat.PortMap{
+							nat.Port("80/tcp"): []nat.PortBinding{},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "127.0.0.1",
+							},
+						},
+					},
+				},
+				{
+					ID:          "2",
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
@@ -623,6 +702,7 @@ func Test_buildConfiguration(t *testing.T) {
 			desc: "two containers with two identical middleware",
 			containers: []dockerData{
 				{
+					ID:          "1",
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
@@ -641,6 +721,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 				{
+					ID:          "2",
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
@@ -698,6 +779,7 @@ func Test_buildConfiguration(t *testing.T) {
 			desc: "two containers with two different middleware with same name",
 			containers: []dockerData{
 				{
+					ID:          "1",
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
@@ -716,6 +798,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 				{
+					ID:          "2",
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
@@ -763,9 +846,103 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
+			desc: "three containers with different middleware with same name",
+			containers: []dockerData{
+				{
+					ID:          "1",
+					ServiceName: "Test",
+					Name:        "Test",
+					Labels: map[string]string{
+						"traefik.middlewares.Middleware1.maxconn.amount": "42",
+					},
+					NetworkSettings: networkSettings{
+						Ports: nat.PortMap{
+							nat.Port("80/tcp"): []nat.PortBinding{},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "127.0.0.1",
+							},
+						},
+					},
+				},
+				{
+					ID:          "2",
+					ServiceName: "Test",
+					Name:        "Test",
+					Labels: map[string]string{
+						"traefik.middlewares.Middleware1.maxconn.amount": "41",
+					},
+					NetworkSettings: networkSettings{
+						Ports: nat.PortMap{
+							nat.Port("80/tcp"): []nat.PortBinding{},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "127.0.0.2",
+							},
+						},
+					},
+				},
+				{
+					ID:          "3",
+					ServiceName: "Test",
+					Name:        "Test",
+					Labels: map[string]string{
+						"traefik.middlewares.Middleware1.maxconn.amount": "40",
+					},
+					NetworkSettings: networkSettings{
+						Ports: nat.PortMap{
+							nat.Port("80/tcp"): []nat.PortBinding{},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "127.0.0.3",
+							},
+						},
+					},
+				},
+			},
+			expected: &config.Configuration{
+				Routers: map[string]*config.Router{
+					"Test": {
+						Service: "Test",
+						Rule:    "Host:Test.traefik.wtf",
+					},
+				},
+				Middlewares: map[string]*config.Middleware{},
+				Services: map[string]*config.Service{
+					"Test": {
+						LoadBalancer: &config.LoadBalancerService{
+							Servers: []config.Server{
+								{
+									URL:    "http://127.0.0.1:80",
+									Weight: 1,
+								},
+								{
+									URL:    "http://127.0.0.2:80",
+									Weight: 1,
+								},
+								{
+									URL:    "http://127.0.0.3:80",
+									Weight: 1,
+								},
+							},
+							Method:         "wrr",
+							PassHostHeader: true,
+						},
+					},
+				},
+			},
+		},
+		{
 			desc: "two containers with two different router with same name",
 			containers: []dockerData{
 				{
+					ID:          "1",
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
@@ -784,6 +961,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 				{
+					ID:          "2",
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
@@ -826,9 +1004,10 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "two containers with two identical router",
+			desc: "three containers with different router with same name",
 			containers: []dockerData{
 				{
+					ID:          "1",
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
@@ -847,6 +1026,95 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 				{
+					ID:          "2",
+					ServiceName: "Test",
+					Name:        "Test",
+					Labels: map[string]string{
+						"traefik.routers.Router1.rule": "Host:bar.com",
+					},
+					NetworkSettings: networkSettings{
+						Ports: nat.PortMap{
+							nat.Port("80/tcp"): []nat.PortBinding{},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "127.0.0.2",
+							},
+						},
+					},
+				},
+				{
+					ID:          "3",
+					ServiceName: "Test",
+					Name:        "Test",
+					Labels: map[string]string{
+						"traefik.routers.Router1.rule": "Host:foobar.com",
+					},
+					NetworkSettings: networkSettings{
+						Ports: nat.PortMap{
+							nat.Port("80/tcp"): []nat.PortBinding{},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "127.0.0.3",
+							},
+						},
+					},
+				},
+			},
+			expected: &config.Configuration{
+				Routers:     map[string]*config.Router{},
+				Middlewares: map[string]*config.Middleware{},
+				Services: map[string]*config.Service{
+					"Test": {
+						LoadBalancer: &config.LoadBalancerService{
+							Servers: []config.Server{
+								{
+									URL:    "http://127.0.0.1:80",
+									Weight: 1,
+								},
+								{
+									URL:    "http://127.0.0.2:80",
+									Weight: 1,
+								},
+								{
+									URL:    "http://127.0.0.3:80",
+									Weight: 1,
+								},
+							},
+							Method:         "wrr",
+							PassHostHeader: true,
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "two containers with two identical router",
+			containers: []dockerData{
+				{
+					ID:          "1",
+					ServiceName: "Test",
+					Name:        "Test",
+					Labels: map[string]string{
+						"traefik.routers.Router1.rule": "Host:foo.com",
+					},
+					NetworkSettings: networkSettings{
+						Ports: nat.PortMap{
+							nat.Port("80/tcp"): []nat.PortBinding{},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "127.0.0.1",
+							},
+						},
+					},
+				},
+				{
+					ID:          "2",
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
@@ -1410,7 +1678,11 @@ func Test_buildConfiguration(t *testing.T) {
 	}
 
 	for _, test := range testCases {
+		if strings.Replace(test.desc, " ", "_", -1) != "two_containers_with_same_service_name_no_label" {
+			// continue
+		}
 		test := test
+
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 

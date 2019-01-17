@@ -2,6 +2,7 @@ package docker
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -14,42 +15,37 @@ import (
 )
 
 func (p *Provider) buildConfiguration(ctx context.Context, containersInspected []dockerData) *config.Configuration {
-	configuration := &config.Configuration{
-		Routers:     make(map[string]*config.Router),
-		Middlewares: make(map[string]*config.Middleware),
-		Services:    make(map[string]*config.Service),
-	}
+	configurations := make(map[string]*config.Configuration)
 
 	for _, container := range containersInspected {
-		ctxContainer := log.With(ctx, log.Str("container", getServiceName(container)))
+		containerName := getServiceName(container) + "-" + container.ID
+
+		ctxContainer := log.With(ctx, log.Str("container", containerName))
 
 		if !p.keepContainer(ctxContainer, container) {
 			continue
 		}
 
-		logs := log.FromContext(ctxContainer)
+		logger := log.FromContext(ctxContainer)
 
 		confFromLabel, err := label.DecodeConfiguration(container.Labels)
 		if err != nil {
-			logs.Error(err)
+			logger.Error(err)
 			continue
 		}
 
-		err = p.buildServiceConfiguration(ctx, container, confFromLabel)
+		err = p.buildServiceConfiguration(ctxContainer, container, confFromLabel)
 		if err != nil {
-			logs.Error(err)
+			logger.Error(err)
 			continue
 		}
-
-		provider.MergeServices(ctxContainer, confFromLabel, configuration)
 
 		p.buildRouterConfiguration(ctxContainer, container, confFromLabel)
-		provider.MergeRouters(ctxContainer, confFromLabel, configuration)
 
-		provider.MergeMiddlewares(ctxContainer, confFromLabel, configuration)
+		configurations[containerName] = confFromLabel
 	}
 
-	return configuration
+	return provider.Merge(ctx, configurations)
 }
 
 func (p *Provider) buildServiceConfiguration(ctx context.Context, container dockerData, configuration *config.Configuration) error {
@@ -112,19 +108,19 @@ func (p *Provider) keepContainer(ctx context.Context, container dockerData) bool
 	logger := log.FromContext(ctx)
 
 	if !container.ExtraConf.Enable {
-		logger.Debugf("Filtering disabled container %s", container.Name)
+		logger.Debug("Filtering disabled container")
 		return false
 	}
 
 	if ok, failingConstraint := p.MatchConstraints(container.ExtraConf.Tags); !ok {
 		if failingConstraint != nil {
-			logger.Debugf("Container %s pruned by %q constraint", container.Name, failingConstraint.String())
+			logger.Debugf("Container pruned by %q constraint", failingConstraint.String())
 		}
 		return false
 	}
 
 	if container.Health != "" && container.Health != "healthy" {
-		logger.Debugf("Filtering unhealthy or starting container %s", container.Name)
+		logger.Debug("Filtering unhealthy or starting container")
 		return false
 	}
 
@@ -151,7 +147,7 @@ func (p *Provider) addServer(ctx context.Context, container dockerData, loadBala
 	}
 
 	if port == "" {
-		return fmt.Errorf("port is missing on container %s", getServiceName(container))
+		return errors.New("port is missing")
 	}
 
 	loadBalancer.Servers[0].URL = fmt.Sprintf("%s://%s", loadBalancer.Servers[0].Scheme, net.JoinHostPort(ip, port))

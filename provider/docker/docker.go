@@ -55,6 +55,7 @@ func (p *Provider) Init() error {
 
 // dockerData holds the need data to the Provider p
 type dockerData struct {
+	ID              string
 	ServiceName     string
 	Name            string
 	Labels          map[string]string // List of labels set to container or service
@@ -281,6 +282,9 @@ func (p *Provider) listContainers(ctx context.Context, dockerClient client.Conta
 	// get inspect containers
 	for _, container := range containerList {
 		dData := inspectContainers(ctx, dockerClient, container.ID)
+		if len(dData.Name) == 0 {
+			continue
+		}
 
 		extraConf, err := p.getConfiguration(dData)
 		if err != nil {
@@ -289,9 +293,7 @@ func (p *Provider) listContainers(ctx context.Context, dockerClient client.Conta
 		}
 		dData.ExtraConf = extraConf
 
-		if len(dData.Name) > 0 {
-			containersInspected = append(containersInspected, dData)
-		}
+		containersInspected = append(containersInspected, dData)
 	}
 	return containersInspected, nil
 }
@@ -317,6 +319,7 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 	}
 
 	if container.ContainerJSONBase != nil {
+		dData.ID = container.ContainerJSONBase.ID
 		dData.Name = container.ContainerJSONBase.Name
 		dData.ServiceName = dData.Name // Default ServiceName to be the container's Name.
 		dData.Node = container.ContainerJSONBase.Node
@@ -416,6 +419,7 @@ func (p *Provider) parseService(ctx context.Context, service swarmtypes.Service,
 	logger := log.FromContext(ctx)
 
 	dData := dockerData{
+		ID:              service.ID,
 		ServiceName:     service.Spec.Annotations.Name,
 		Name:            service.Spec.Annotations.Name,
 		Labels:          service.Spec.Annotations.Labels,
@@ -426,7 +430,6 @@ func (p *Provider) parseService(ctx context.Context, service swarmtypes.Service,
 	if err != nil {
 		return dockerData{}, err
 	}
-
 	dData.ExtraConf = extraConf
 
 	if service.Spec.EndpointSpec != nil {
@@ -486,9 +489,11 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 func parseTasks(ctx context.Context, task swarmtypes.Task, serviceDockerData dockerData,
 	networkMap map[string]*dockertypes.NetworkResource, isGlobalSvc bool) dockerData {
 	dData := dockerData{
+		ID:              task.ID,
 		ServiceName:     serviceDockerData.Name,
 		Name:            serviceDockerData.Name + "." + strconv.Itoa(task.Slot),
 		Labels:          serviceDockerData.Labels,
+		ExtraConf:       serviceDockerData.ExtraConf,
 		NetworkSettings: networkSettings{},
 	}
 
