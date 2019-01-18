@@ -30,7 +30,7 @@ type LoadBalancerService struct {
 	ResponseForwarding *ResponseForwarding `json:"forwardingResponse,omitempty" toml:",omitempty"`
 }
 
-// Mergeable Defines if a service is mergeable.
+// Mergeable tells if the given service is mergeable.
 func (l *LoadBalancerService) Mergeable(loadBalancer *LoadBalancerService) bool {
 	savedServers := l.Servers
 	defer func() {
