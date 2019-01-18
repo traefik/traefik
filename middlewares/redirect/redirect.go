@@ -24,7 +24,7 @@ type redirect struct {
 	name        string
 }
 
-// New creates a BaseRedirect middleware.
+// New creates a Redirect middleware.
 func newRedirect(ctx context.Context, next http.Handler, regex string, replacement string, permanent bool, name string) (http.Handler, error) {
 	re, err := regexp.Compile(regex)
 	if err != nil {

@@ -6,9 +6,6 @@ logLevel = "DEBUG"
   [entryPoints.http]
   address = ":8888"
 
-  [entryPoints.http.redirect]
-  entryPoint = "https"
-
   [entryPoints.https]
   address = ":8443"
     [entryPoints.https.tls]
@@ -92,7 +89,7 @@ logLevel = "DEBUG"
      path = "/api"
   [Middlewares.api-slash-replace-path.ReplacePath]
      path = "/api/"
-  [Middlewares.redirect-https.redirect]
+  [Middlewares.redirect-https.redirectRegex]
      regex = "^(?:https?://)?([\\w\\._-]+)(?::\\d+)?(.*)$"
      replacement = "https://${1}:8443${2}"
 
