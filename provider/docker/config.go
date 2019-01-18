@@ -39,7 +39,17 @@ func (p *Provider) buildConfiguration(ctx context.Context, containersInspected [
 			continue
 		}
 
-		p.buildRouterConfiguration(ctxContainer, container, confFromLabel)
+		serviceName := getServiceName(container)
+
+		model := struct {
+			Name   string
+			Labels map[string]string
+		}{
+			Name:   serviceName,
+			Labels: container.Labels,
+		}
+
+		provider.BuildRouterConfiguration(ctx, confFromLabel, serviceName, p.defaultRuleTpl, model)
 
 		configurations[containerName] = confFromLabel
 	}
@@ -67,39 +77,6 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, container dock
 	}
 
 	return nil
-}
-
-func (p *Provider) buildRouterConfiguration(ctx context.Context, container dockerData, configuration *config.Configuration) {
-	logger := log.FromContext(ctx)
-	serviceName := getServiceName(container)
-
-	if len(configuration.Routers) == 0 {
-		if len(configuration.Services) > 1 {
-			logger.Info("could not create a router for the container: too many services")
-		} else {
-			configuration.Routers = make(map[string]*config.Router)
-			configuration.Routers[serviceName] = &config.Router{}
-		}
-	}
-
-	for routerName, router := range configuration.Routers {
-		if router.Rule == "" {
-			router.Rule = "Host:" + getSubDomain(serviceName) + "." + container.ExtraConf.Domain
-		}
-
-		if router.Service == "" {
-			if len(configuration.Services) > 1 {
-				delete(configuration.Routers, routerName)
-				logger.WithField(log.RouterName, routerName).
-					Error("Could not define the service name for the router: too many services")
-				continue
-			}
-
-			for serviceName := range configuration.Services {
-				router.Service = serviceName
-			}
-		}
-	}
 }
 
 func (p *Provider) keepContainer(ctx context.Context, container dockerData) bool {

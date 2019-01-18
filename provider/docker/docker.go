@@ -2,11 +2,13 @@ package docker
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"strconv"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/cenk/backoff"
@@ -30,7 +32,8 @@ import (
 
 const (
 	// SwarmAPIVersion is a constant holding the version of the Provider API traefik will use
-	SwarmAPIVersion = "1.24"
+	SwarmAPIVersion     = "1.24"
+	DefaultTemplateRule = "Host:{{ normalize .Name }}"
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -39,17 +42,24 @@ var _ provider.Provider = (*Provider)(nil)
 type Provider struct {
 	provider.BaseProvider   `mapstructure:",squash" export:"true"`
 	Endpoint                string           `description:"Docker server endpoint. Can be a tcp or a unix socket endpoint"`
-	Domain                  string           `description:"Default domain used"`
+	DefaultRule             string           `description:"Default rule"`
 	TLS                     *types.ClientTLS `description:"Enable Docker TLS support" export:"true"`
 	ExposedByDefault        bool             `description:"Expose containers by default" export:"true"`
 	UseBindPortIP           bool             `description:"Use the ip address from the bound port, rather than from the inner network" export:"true"`
 	SwarmMode               bool             `description:"Use Docker on Swarm Mode" export:"true"`
 	Network                 string           `description:"Default Docker network used" export:"true"`
 	SwarmModeRefreshSeconds int              `description:"Polling interval for swarm mode (in seconds)" export:"true"`
+	defaultRuleTpl          *template.Template
 }
 
 // Init the provider
 func (p *Provider) Init() error {
+	defaultRuleTpl, err := provider.BuildDefaultRuleTemplate(p.DefaultRule, nil)
+	if err != nil {
+		return fmt.Errorf("error while parsing default rule: %v", err)
+	}
+
+	p.defaultRuleTpl = defaultRuleTpl
 	return p.BaseProvider.Init()
 }
 

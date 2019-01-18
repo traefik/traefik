@@ -1,10 +1,15 @@
 package provider
 
 import (
+	"bytes"
 	"context"
 	"reflect"
 	"sort"
+	"strings"
+	"text/template"
+	"unicode"
 
+	"github.com/Masterminds/sprig"
 	"github.com/containous/traefik/config"
 	"github.com/containous/traefik/log"
 )
@@ -112,4 +117,69 @@ func AddMiddleware(configuration *config.Configuration, middlewareName string, m
 	}
 
 	return reflect.DeepEqual(configuration.Middlewares[middlewareName], middleware)
+}
+
+func BuildDefaultRuleTemplate(defaultRule string, funcMap template.FuncMap) (*template.Template, error) {
+	defaultFuncMap := sprig.TxtFuncMap()
+	defaultFuncMap["normalize"] = Normalize
+
+	for k, fn := range funcMap {
+		defaultFuncMap[k] = fn
+	}
+
+	return template.New("defaultRule").Funcs(defaultFuncMap).Parse(defaultRule)
+}
+
+func BuildRouterConfiguration(ctx context.Context, configuration *config.Configuration, name string, defaultRuleTpl *template.Template, model interface{}) {
+	logger := log.FromContext(ctx)
+
+	if len(configuration.Routers) == 0 {
+		if len(configuration.Services) > 1 {
+			log.FromContext(ctx).Info("Could not create a router for the container: too many services")
+		} else {
+			configuration.Routers = make(map[string]*config.Router)
+			configuration.Routers[name] = &config.Router{}
+		}
+	}
+
+	for routerName, router := range configuration.Routers {
+		loggerRouter := logger.WithField(log.RouterName, routerName)
+		if len(router.Rule) == 0 {
+			writer := &bytes.Buffer{}
+			if err := defaultRuleTpl.Execute(writer, model); err != nil {
+				loggerRouter.Errorf("Error while parsing default rule: %v", err)
+				delete(configuration.Routers, routerName)
+				continue
+			}
+
+			router.Rule = writer.String()
+			if len(router.Rule) == 0 {
+				loggerRouter.Error("Undefined rule")
+				delete(configuration.Routers, routerName)
+				continue
+			}
+		}
+
+		if router.Service == "" {
+			if len(configuration.Services) > 1 {
+				delete(configuration.Routers, routerName)
+				loggerRouter.
+					Error("Could not define the service name for the router: too many services")
+				continue
+			}
+
+			for serviceName := range configuration.Services {
+				router.Service = serviceName
+			}
+		}
+	}
+}
+
+// Normalize Replace all special chars with `-`
+func Normalize(name string) string {
+	fargs := func(c rune) bool {
+		return !unicode.IsLetter(c) && !unicode.IsNumber(c)
+	}
+	// get function
+	return strings.Join(strings.FieldsFunc(name, fargs), "-")
 }
