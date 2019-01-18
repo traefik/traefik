@@ -41,7 +41,7 @@ Edit your `docker-compose.yml` file and add the following at the end of your fil
 ```yaml
 # ... 
   whoami:
-    image: emilevauge/whoami # A container that exposes an API to show its IP address
+    image: containous/whoami # A container that exposes an API to show its IP address
     labels:
       - "traefik.frontend.rule=Host:whoami.docker.localhost"
 ```

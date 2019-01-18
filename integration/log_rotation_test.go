@@ -140,7 +140,7 @@ func verifyEmptyErrorLog(c *check.C, name string) {
 		if e2 != nil {
 			return e2
 		}
-		c.Assert(traefikLog, checker.HasLen, 0)
+		c.Assert(string(traefikLog), checker.HasLen, 0)
 		return nil
 	})
 	c.Assert(err, checker.IsNil)

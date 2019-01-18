@@ -12,8 +12,8 @@ consul:
     - "8302"
     - "8302/udp"
 whoami1:
-  image: emilevauge/whoami
+  image: containous/whoami
 whoami2:
-  image: emilevauge/whoami
+  image: containous/whoami
 whoami3:
-  image: emilevauge/whoami
+  image: containous/whoami

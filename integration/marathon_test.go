@@ -112,7 +112,7 @@ func (s *MarathonSuite) TestConfigurationUpdate(c *check.C) {
 		AddLabel(label.TraefikFrontendRule, "PathPrefix:/service")
 	app.Container.Docker.Bridged().
 		Expose(80).
-		Container("emilevauge/whoami")
+		Container("containous/whoami")
 
 	// Deploy the test application.
 	deployApplication(c, client, app)
@@ -129,7 +129,7 @@ func (s *MarathonSuite) TestConfigurationUpdate(c *check.C) {
 		AddLabel(label.Prefix+"app"+label.TraefikFrontendRule, "PathPrefix:/app")
 	app.Container.Docker.Bridged().
 		Expose(80).
-		Container("emilevauge/whoami")
+		Container("containous/whoami")
 
 	// Deploy the test application.
 	deployApplication(c, client, app)

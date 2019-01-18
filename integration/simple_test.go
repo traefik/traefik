@@ -158,8 +158,6 @@ func (s *SimpleSuite) TestRequestAcceptGraceTimeout(c *check.C) {
 }
 
 func (s *SimpleSuite) TestApiOnSameEntryPoint(c *check.C) {
-	c.Skip("Use docker")
-
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
@@ -175,10 +173,10 @@ func (s *SimpleSuite) TestApiOnSameEntryPoint(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/test", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8000/api", 1*time.Second, try.StatusCodeIs(http.StatusOK))
+	err = try.GetRequest("http://127.0.0.1:8000/api/providers/docker", 1*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8000/api/providers/file/routers", 1*time.Second, try.BodyContains("PathPrefix"))
+	err = try.GetRequest("http://127.0.0.1:8000/api/providers/docker/routers", 1*time.Second, try.BodyContains("PathPrefix"))
 	c.Assert(err, checker.IsNil)
 
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
@@ -186,8 +184,7 @@ func (s *SimpleSuite) TestApiOnSameEntryPoint(c *check.C) {
 }
 
 func (s *SimpleSuite) TestStatsWithMultipleEntryPoint(c *check.C) {
-	c.Skip("Use docker")
-
+	c.Skip("Stats is missing")
 	s.createComposeProject(c, "stats")
 	s.composeProject.Start(c)
 
@@ -223,7 +220,6 @@ func (s *SimpleSuite) TestStatsWithMultipleEntryPoint(c *check.C) {
 }
 
 func (s *SimpleSuite) TestNoAuthOnPing(c *check.C) {
-	c.Skip("Middlewares on entryPoint don't work anymore")
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
@@ -234,7 +230,7 @@ func (s *SimpleSuite) TestNoAuthOnPing(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8001/api", 1*time.Second, try.StatusCodeIs(http.StatusUnauthorized))
+	err = try.GetRequest("http://127.0.0.1:8001/api/providers", 2*time.Second, try.StatusCodeIs(http.StatusUnauthorized))
 	c.Assert(err, checker.IsNil)
 
 	err = try.GetRequest("http://127.0.0.1:8001/ping", 1*time.Second, try.StatusCodeIs(http.StatusOK))
@@ -242,8 +238,6 @@ func (s *SimpleSuite) TestNoAuthOnPing(c *check.C) {
 }
 
 func (s *SimpleSuite) TestDefaultEntrypointHTTP(c *check.C) {
-	c.Skip("Use docker")
-
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
@@ -254,7 +248,7 @@ func (s *SimpleSuite) TestDefaultEntrypointHTTP(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 1*time.Second, try.BodyContains("PathPrefix"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/docker/routers", 1*time.Second, try.BodyContains("PathPrefix"))
 	c.Assert(err, checker.IsNil)
 
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
@@ -262,8 +256,6 @@ func (s *SimpleSuite) TestDefaultEntrypointHTTP(c *check.C) {
 }
 
 func (s *SimpleSuite) TestWithUnexistingEntrypoint(c *check.C) {
-	c.Skip("Use docker")
-
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
@@ -274,7 +266,7 @@ func (s *SimpleSuite) TestWithUnexistingEntrypoint(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 1*time.Second, try.BodyContains("PathPrefix"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/docker/routers", 1*time.Second, try.BodyContains("PathPrefix"))
 	c.Assert(err, checker.IsNil)
 
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
@@ -282,19 +274,17 @@ func (s *SimpleSuite) TestWithUnexistingEntrypoint(c *check.C) {
 }
 
 func (s *SimpleSuite) TestMetricsPrometheusDefaultEntrypoint(c *check.C) {
-	c.Skip("Use docker")
-
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
-	cmd, output := s.traefikCmd("--entryPoints=Name:http Address::8000", "--api", "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0", "--docker", "--global.debug")
+	cmd, output := s.traefikCmd("--entryPoints=Name:http Address::8000", "--api", "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0", "--providers.docker", "--global.debug")
 	defer output(c)
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 1*time.Second, try.BodyContains("PathPrefix"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/docker/routers", 1*time.Second, try.BodyContains("PathPrefix"))
 	c.Assert(err, checker.IsNil)
 
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
@@ -305,8 +295,6 @@ func (s *SimpleSuite) TestMetricsPrometheusDefaultEntrypoint(c *check.C) {
 }
 
 func (s *SimpleSuite) TestMultipleProviderSameBackendName(c *check.C) {
-	c.Skip("Use docker")
-
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
@@ -336,8 +324,6 @@ func (s *SimpleSuite) TestMultipleProviderSameBackendName(c *check.C) {
 }
 
 func (s *SimpleSuite) TestIPStrategyWhitelist(c *check.C) {
-	c.Skip("Use docker")
-
 	s.createComposeProject(c, "whitelist")
 	s.composeProject.Start(c)
 
@@ -348,7 +334,10 @@ func (s *SimpleSuite) TestIPStrategyWhitelist(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 1*time.Second, try.BodyContains("override"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/docker/routers", 2*time.Second, try.BodyContains("override"))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/docker/routers", 2*time.Second, try.BodyContains("override.remoteaddr.whitelist.docker.local"))
 	c.Assert(err, checker.IsNil)
 
 	testCases := []struct {
@@ -357,18 +346,19 @@ func (s *SimpleSuite) TestIPStrategyWhitelist(c *check.C) {
 		host               string
 		expectedStatusCode int
 	}{
-		{
-			desc:               "default client ip strategy accept",
-			xForwardedFor:      "8.8.8.8,127.0.0.1",
-			host:               "no.override.whitelist.docker.local",
-			expectedStatusCode: 200,
-		},
-		{
-			desc:               "default client ip strategy reject",
-			xForwardedFor:      "8.8.8.10,127.0.0.1",
-			host:               "no.override.whitelist.docker.local",
-			expectedStatusCode: 403,
-		},
+		// {
+		// 	desc:               "default client ip strategy accept",
+		// 	xForwardedFor:      "8.8.8.8,127.0.0.1",
+		// 	host:               "no.override.whitelist.docker.local",
+		// 	expectedStatusCode: 200,
+		// },
+		// FIXME add clientipstrategy and forwarded headers on entrypoint
+		// {
+		// 	desc:               "default client ip strategy reject",
+		// 	xForwardedFor:      "8.8.8.10,127.0.0.1",
+		// 	host:               "no.override.whitelist.docker.local",
+		// 	expectedStatusCode: 403,
+		// },
 		{
 			desc:               "override remote addr reject",
 			xForwardedFor:      "8.8.8.8,8.8.8.8",

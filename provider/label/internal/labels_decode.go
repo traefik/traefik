@@ -8,10 +8,20 @@ import (
 
 // DecodeToNode Converts the labels to a node.
 // labels -> nodes
-func DecodeToNode(labels map[string]string) (*Node, error) {
+func DecodeToNode(labels map[string]string, filters ...string) (*Node, error) {
 	var sortedKeys []string
 	for key := range labels {
-		sortedKeys = append(sortedKeys, key)
+		if len(filters) == 0 {
+			sortedKeys = append(sortedKeys, key)
+			continue
+		}
+
+		for _, filter := range filters {
+			if len(key) >= len(filter) && strings.EqualFold(key[:len(filter)], filter) {
+				sortedKeys = append(sortedKeys, key)
+				continue
+			}
+		}
 	}
 	sort.Strings(sortedKeys)
 

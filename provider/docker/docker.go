@@ -10,11 +10,12 @@ import (
 	"time"
 
 	"github.com/cenk/backoff"
+	"github.com/containous/traefik/config"
 	"github.com/containous/traefik/job"
-	"github.com/containous/traefik/old/log"
-	"github.com/containous/traefik/old/provider"
-	"github.com/containous/traefik/old/types"
+	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
+	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
 	dockertypes "github.com/docker/docker/api/types"
 	dockercontainertypes "github.com/docker/docker/api/types/container"
@@ -48,20 +49,20 @@ type Provider struct {
 }
 
 // Init the provider
-func (p *Provider) Init(constraints types.Constraints) error {
-	return p.BaseProvider.Init(constraints)
+func (p *Provider) Init() error {
+	return p.BaseProvider.Init()
 }
 
 // dockerData holds the need data to the Provider p
 type dockerData struct {
+	ID              string
 	ServiceName     string
 	Name            string
 	Labels          map[string]string // List of labels set to container or service
 	NetworkSettings networkSettings
 	Health          string
 	Node            *dockertypes.ContainerNode
-	SegmentLabels   map[string]string
-	SegmentName     string
+	ExtraConf       configuration
 }
 
 // NetworkSettings holds the networks data to the Provider p
@@ -84,19 +85,19 @@ func (p *Provider) createClient() (client.APIClient, error) {
 	var httpClient *http.Client
 
 	if p.TLS != nil {
-		config, err := p.TLS.CreateTLSConfig()
+		ctx := log.With(context.Background(), log.Str(log.ProviderName, "docker"))
+		conf, err := p.TLS.CreateTLSConfig(ctx)
 		if err != nil {
 			return nil, err
 		}
 		tr := &http.Transport{
-			TLSClientConfig: config,
+			TLSClientConfig: conf,
 		}
 
 		hostURL, err := client.ParseHostURL(p.Endpoint)
 		if err != nil {
 			return nil, err
 		}
-
 		if err := sockets.ConfigureTransport(tr, hostURL.Scheme, hostURL.Host); err != nil {
 			return nil, err
 		}
@@ -122,41 +123,47 @@ func (p *Provider) createClient() (client.APIClient, error) {
 
 // Provide allows the docker provider to provide configurations to traefik
 // using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
+func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.Pool) error {
 	pool.GoCtx(func(routineCtx context.Context) {
+		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, "docker"))
+		logger := log.FromContext(ctxLog)
+
 		operation := func() error {
 			var err error
-			ctx, cancel := context.WithCancel(routineCtx)
+			ctx, cancel := context.WithCancel(ctxLog)
 			defer cancel()
+
+			ctx = log.With(ctx, log.Str(log.ProviderName, "docker"))
+
 			dockerClient, err := p.createClient()
 			if err != nil {
-				log.Errorf("Failed to create a client for docker, error: %s", err)
+				logger.Errorf("Failed to create a client for docker, error: %s", err)
 				return err
 			}
 
 			serverVersion, err := dockerClient.ServerVersion(ctx)
 			if err != nil {
-				log.Errorf("Failed to retrieve information of the docker client and server host: %s", err)
+				logger.Errorf("Failed to retrieve information of the docker client and server host: %s", err)
 				return err
 			}
-			log.Debugf("Provider connection established with docker %s (API %s)", serverVersion.Version, serverVersion.APIVersion)
+			logger.Debugf("Provider connection established with docker %s (API %s)", serverVersion.Version, serverVersion.APIVersion)
 			var dockerDataList []dockerData
 			if p.SwarmMode {
-				dockerDataList, err = listServices(ctx, dockerClient)
+				dockerDataList, err = p.listServices(ctx, dockerClient)
 				if err != nil {
-					log.Errorf("Failed to list services for docker swarm mode, error %s", err)
+					logger.Errorf("Failed to list services for docker swarm mode, error %s", err)
 					return err
 				}
 			} else {
-				dockerDataList, err = listContainers(ctx, dockerClient)
+				dockerDataList, err = p.listContainers(ctx, dockerClient)
 				if err != nil {
-					log.Errorf("Failed to list containers for docker, error %s", err)
+					logger.Errorf("Failed to list containers for docker, error %s", err)
 					return err
 				}
 			}
 
-			configuration := p.buildConfiguration(dockerDataList)
-			configurationChan <- types.ConfigMessage{
+			configuration := p.buildConfiguration(ctxLog, dockerDataList)
+			configurationChan <- config.Message{
 				ProviderName:  "docker",
 				Configuration: configuration,
 			}
@@ -166,19 +173,24 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 					// TODO: This need to be change. Linked to Swarm events docker/docker#23827
 					ticker := time.NewTicker(time.Second * time.Duration(p.SwarmModeRefreshSeconds))
 					pool.GoCtx(func(ctx context.Context) {
+
+						ctx = log.With(ctx, log.Str(log.ProviderName, "docker"))
+						logger := log.FromContext(ctx)
+
 						defer close(errChan)
 						for {
 							select {
 							case <-ticker.C:
-								services, err := listServices(ctx, dockerClient)
+								services, err := p.listServices(ctx, dockerClient)
 								if err != nil {
-									log.Errorf("Failed to list services for docker, error %s", err)
+									logger.Errorf("Failed to list services for docker, error %s", err)
 									errChan <- err
 									return
 								}
-								configuration := p.buildConfiguration(services)
+
+								configuration := p.buildConfiguration(ctx, services)
 								if configuration != nil {
-									configurationChan <- types.ConfigMessage{
+									configurationChan <- config.Message{
 										ProviderName:  "docker",
 										Configuration: configuration,
 									}
@@ -203,16 +215,17 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 					}
 
 					startStopHandle := func(m eventtypes.Message) {
-						log.Debugf("Provider event received %+v", m)
-						containers, err := listContainers(ctx, dockerClient)
+						logger.Debugf("Provider event received %+v", m)
+						containers, err := p.listContainers(ctx, dockerClient)
 						if err != nil {
-							log.Errorf("Failed to list containers for docker, error %s", err)
+							logger.Errorf("Failed to list containers for docker, error %s", err)
 							// Call cancel to get out of the monitor
 							return
 						}
-						configuration := p.buildConfiguration(containers)
+
+						configuration := p.buildConfiguration(ctx, containers)
 						if configuration != nil {
-							message := types.ConfigMessage{
+							message := config.Message{
 								ProviderName:  "docker",
 								Configuration: configuration,
 							}
@@ -235,7 +248,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 							}
 						case err := <-errc:
 							if err == io.EOF {
-								log.Debug("Provider event stream closed")
+								logger.Debug("Provider event stream closed")
 							}
 							return err
 						case <-ctx.Done():
@@ -246,40 +259,50 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 			}
 			return nil
 		}
+
 		notify := func(err error, time time.Duration) {
-			log.Errorf("Provider connection error %+v, retrying in %s", err, time)
+			logger.Errorf("Provider connection error %+v, retrying in %s", err, time)
 		}
-		err := backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), routineCtx), notify)
+		err := backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctxLog), notify)
 		if err != nil {
-			log.Errorf("Cannot connect to docker server %+v", err)
+			logger.Errorf("Cannot connect to docker server %+v", err)
 		}
 	})
 
 	return nil
 }
 
-func listContainers(ctx context.Context, dockerClient client.ContainerAPIClient) ([]dockerData, error) {
+func (p *Provider) listContainers(ctx context.Context, dockerClient client.ContainerAPIClient) ([]dockerData, error) {
 	containerList, err := dockerClient.ContainerList(ctx, dockertypes.ContainerListOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	var containersInspected []dockerData
+	var inspectedContainers []dockerData
 	// get inspect containers
 	for _, container := range containerList {
 		dData := inspectContainers(ctx, dockerClient, container.ID)
-		if len(dData.Name) > 0 {
-			containersInspected = append(containersInspected, dData)
+		if len(dData.Name) == 0 {
+			continue
 		}
+
+		extraConf, err := p.getConfiguration(dData)
+		if err != nil {
+			log.FromContext(ctx).Errorf("Skip container %s: %v", getServiceName(dData), err)
+			continue
+		}
+		dData.ExtraConf = extraConf
+
+		inspectedContainers = append(inspectedContainers, dData)
 	}
-	return containersInspected, nil
+	return inspectedContainers, nil
 }
 
 func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClient, containerID string) dockerData {
 	dData := dockerData{}
 	containerInspected, err := dockerClient.ContainerInspect(ctx, containerID)
 	if err != nil {
-		log.Warnf("Failed to inspect container %s, error: %s", containerID, err)
+		log.FromContext(ctx).Warnf("Failed to inspect container %s, error: %s", containerID, err)
 	} else {
 		// This condition is here to avoid to have empty IP https://github.com/containous/traefik/issues/2459
 		// We register only container which are running
@@ -296,6 +319,7 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 	}
 
 	if container.ContainerJSONBase != nil {
+		dData.ID = container.ContainerJSONBase.ID
 		dData.Name = container.ContainerJSONBase.Name
 		dData.ServiceName = dData.Name // Default ServiceName to be the container's Name.
 		dData.Node = container.ContainerJSONBase.Node
@@ -331,7 +355,9 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 	return dData
 }
 
-func listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerData, error) {
+func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerData, error) {
+	logger := log.FromContext(ctx)
+
 	serviceList, err := dockerClient.ServiceList(ctx, dockertypes.ServiceListOptions{})
 	if err != nil {
 		return nil, err
@@ -352,7 +378,7 @@ func listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerD
 
 	networkList, err := dockerClient.NetworkList(ctx, dockertypes.NetworkListOptions{Filters: networkListArgs})
 	if err != nil {
-		log.Debugf("Failed to network inspect on client for docker, error: %s", err)
+		logger.Debugf("Failed to network inspect on client for docker, error: %s", err)
 		return nil, err
 	}
 
@@ -366,9 +392,13 @@ func listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerD
 	var dockerDataListTasks []dockerData
 
 	for _, service := range serviceList {
-		dData := parseService(service, networkMap)
+		dData, err := p.parseService(ctx, service, networkMap)
+		if err != nil {
+			logger.Errorf("Skip container %s: %v", getServiceName(dData), err)
+			continue
+		}
 
-		if isBackendLBSwarm(dData) {
+		if dData.ExtraConf.Docker.LBSwarm {
 			if len(dData.NetworkSettings.Networks) > 0 {
 				dockerDataList = append(dockerDataList, dData)
 			}
@@ -376,7 +406,7 @@ func listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerD
 			isGlobalSvc := service.Spec.Mode.Global != nil
 			dockerDataListTasks, err = listTasks(ctx, dockerClient, service.ID, dData, networkMap, isGlobalSvc)
 			if err != nil {
-				log.Warn(err)
+				logger.Warn(err)
 			} else {
 				dockerDataList = append(dockerDataList, dockerDataListTasks...)
 			}
@@ -385,18 +415,27 @@ func listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerD
 	return dockerDataList, err
 }
 
-func parseService(service swarmtypes.Service, networkMap map[string]*dockertypes.NetworkResource) dockerData {
+func (p *Provider) parseService(ctx context.Context, service swarmtypes.Service, networkMap map[string]*dockertypes.NetworkResource) (dockerData, error) {
+	logger := log.FromContext(ctx)
+
 	dData := dockerData{
+		ID:              service.ID,
 		ServiceName:     service.Spec.Annotations.Name,
 		Name:            service.Spec.Annotations.Name,
 		Labels:          service.Spec.Annotations.Labels,
 		NetworkSettings: networkSettings{},
 	}
 
+	extraConf, err := p.getConfiguration(dData)
+	if err != nil {
+		return dockerData{}, err
+	}
+	dData.ExtraConf = extraConf
+
 	if service.Spec.EndpointSpec != nil {
 		if service.Spec.EndpointSpec.Mode == swarmtypes.ResolutionModeDNSRR {
-			if isBackendLBSwarm(dData) {
-				log.Warnf("Ignored %s endpoint-mode not supported, service name: %s. Fallback to Traefik load balancing", swarmtypes.ResolutionModeDNSRR, service.Spec.Annotations.Name)
+			if dData.ExtraConf.Docker.LBSwarm {
+				logger.Warnf("Ignored %s endpoint-mode not supported, service name: %s. Fallback to Traefik load balancing", swarmtypes.ResolutionModeDNSRR, service.Spec.Annotations.Name)
 			}
 		} else if service.Spec.EndpointSpec.Mode == swarmtypes.ResolutionModeVIP {
 			dData.NetworkSettings.Networks = make(map[string]*networkData)
@@ -412,15 +451,15 @@ func parseService(service swarmtypes.Service, networkMap map[string]*dockertypes
 						}
 						dData.NetworkSettings.Networks[network.Name] = network
 					} else {
-						log.Debugf("No virtual IPs found in network %s", virtualIP.NetworkID)
+						logger.Debugf("No virtual IPs found in network %s", virtualIP.NetworkID)
 					}
 				} else {
-					log.Debugf("Network not found, id: %s", virtualIP.NetworkID)
+					logger.Debugf("Network not found, id: %s", virtualIP.NetworkID)
 				}
 			}
 		}
 	}
-	return dData
+	return dData, nil
 }
 
 func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID string,
@@ -439,7 +478,7 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 		if task.Status.State != swarmtypes.TaskStateRunning {
 			continue
 		}
-		dData := parseTasks(task, serviceDockerData, networkMap, isGlobalSvc)
+		dData := parseTasks(ctx, task, serviceDockerData, networkMap, isGlobalSvc)
 		if len(dData.NetworkSettings.Networks) > 0 {
 			dockerDataList = append(dockerDataList, dData)
 		}
@@ -447,12 +486,14 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 	return dockerDataList, err
 }
 
-func parseTasks(task swarmtypes.Task, serviceDockerData dockerData,
+func parseTasks(ctx context.Context, task swarmtypes.Task, serviceDockerData dockerData,
 	networkMap map[string]*dockertypes.NetworkResource, isGlobalSvc bool) dockerData {
 	dData := dockerData{
+		ID:              task.ID,
 		ServiceName:     serviceDockerData.Name,
 		Name:            serviceDockerData.Name + "." + strconv.Itoa(task.Slot),
 		Labels:          serviceDockerData.Labels,
+		ExtraConf:       serviceDockerData.ExtraConf,
 		NetworkSettings: networkSettings{},
 	}
 
@@ -476,7 +517,7 @@ func parseTasks(task swarmtypes.Task, serviceDockerData dockerData,
 						dData.NetworkSettings.Networks[network.Name] = network
 					}
 				} else {
-					log.Debugf("No IP addresses found for network %s", virtualIP.Network.ID)
+					log.FromContext(ctx).Debugf("No IP addresses found for network %s", virtualIP.Network.ID)
 				}
 			}
 		}

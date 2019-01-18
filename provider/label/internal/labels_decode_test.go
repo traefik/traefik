@@ -18,15 +18,13 @@ func TestDecodeToNode(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		in       map[string]string
+		filters  []string
 		expected expected
 	}{
 		{
-			desc: "level 0",
-			in:   map[string]string{"traefik": "bar"},
-			expected: expected{node: &Node{
-				Name:  "traefik",
-				Value: "bar",
-			}},
+			desc:     "no label",
+			in:       map[string]string{},
+			expected: expected{node: nil},
 		},
 		{
 			desc: "level 1",
@@ -74,6 +72,20 @@ func TestDecodeToNode(t *testing.T) {
 				"traefic": "bur",
 			},
 			expected: expected{error: true},
+		},
+		{
+			desc: "several entries, prefix filter",
+			in: map[string]string{
+				"traefik.foo": "bar",
+				"traefik.fii": "bir",
+			},
+			filters: []string{"traefik.Foo"},
+			expected: expected{node: &Node{
+				Name: "traefik",
+				Children: []*Node{
+					{Name: "foo", Value: "bar"},
+				},
+			}},
 		},
 		{
 			desc: "several entries, level 1",
@@ -172,7 +184,7 @@ func TestDecodeToNode(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			out, err := DecodeToNode(test.in)
+			out, err := DecodeToNode(test.in, test.filters...)
 
 			if test.expected.error {
 				require.Error(t, err)

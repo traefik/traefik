@@ -173,7 +173,7 @@ services:
         ipv4_address: 10.0.1.9
 
   whoami01:
-    image: emilevauge/whoami
+    image: containous/whoami
     expose:
       - "80"
     labels:
@@ -186,7 +186,7 @@ services:
         ipv4_address: 10.0.1.10
 
   whoami02:
-    image: emilevauge/whoami
+    image: containous/whoami
     expose:
       - "80"
     labels:

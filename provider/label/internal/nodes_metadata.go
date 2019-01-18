@@ -10,6 +10,10 @@ import (
 // AddMetadata Adds metadata to a node.
 // nodes + element -> nodes
 func AddMetadata(structure interface{}, node *Node) error {
+	if node == nil {
+		return nil
+	}
+
 	if len(node.Children) == 0 {
 		return fmt.Errorf("invalid node %s: no child", node.Name)
 	}

@@ -5,21 +5,11 @@ import (
 	"github.com/containous/traefik/provider/label/internal"
 )
 
-// Decode Converts the labels to a configuration.
-// labels -> [ node -> node + metadata (type) ] -> element (node)
-func Decode(labels map[string]string) (*config.Configuration, error) {
-	node, err := internal.DecodeToNode(labels)
-	if err != nil {
-		return nil, err
-	}
-
+// DecodeConfiguration Converts the labels to a configuration.
+func DecodeConfiguration(labels map[string]string) (*config.Configuration, error) {
 	conf := &config.Configuration{}
-	err = internal.AddMetadata(conf, node)
-	if err != nil {
-		return nil, err
-	}
 
-	err = internal.Fill(conf, node)
+	err := Decode(labels, conf, "traefik.services", "traefik.routers", "traefik.middlewares")
 	if err != nil {
 		return nil, err
 	}
@@ -27,10 +17,36 @@ func Decode(labels map[string]string) (*config.Configuration, error) {
 	return conf, nil
 }
 
-// Encode Converts a configuration to labels.
+// EncodeConfiguration Converts a configuration to labels.
+func EncodeConfiguration(conf *config.Configuration) (map[string]string, error) {
+	return Encode(conf)
+}
+
+// Decode Converts the labels to an element.
+// labels -> [ node -> node + metadata (type) ] -> element (node)
+func Decode(labels map[string]string, element interface{}, filters ...string) error {
+	node, err := internal.DecodeToNode(labels, filters...)
+	if err != nil {
+		return err
+	}
+
+	err = internal.AddMetadata(element, node)
+	if err != nil {
+		return err
+	}
+
+	err = internal.Fill(element, node)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Encode Converts an element to labels.
 // element -> node (value) -> label (node)
-func Encode(conf *config.Configuration) (map[string]string, error) {
-	node, err := internal.EncodeToNode(conf)
+func Encode(element interface{}) (map[string]string, error) {
+	node, err := internal.EncodeToNode(element)
 	if err != nil {
 		return nil, err
 	}

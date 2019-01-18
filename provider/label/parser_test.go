@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDecode(t *testing.T) {
+func TestDecodeConfiguration(t *testing.T) {
 	labels := map[string]string{
 		"traefik.middlewares.Middleware0.addprefix.prefix":                                "foobar",
 		"traefik.middlewares.Middleware1.basicauth.headerfield":                           "foobar",
@@ -123,7 +123,8 @@ func TestDecode(t *testing.T) {
 		"traefik.services.Service0.loadbalancer.method":                           "foobar",
 		"traefik.services.Service0.loadbalancer.passhostheader":                   "true",
 		"traefik.services.Service0.loadbalancer.responseforwarding.flushinterval": "foobar",
-		"traefik.services.Service0.loadbalancer.server.url":                       "foobar",
+		"traefik.services.Service0.loadbalancer.server.scheme":                    "foobar",
+		"traefik.services.Service0.loadbalancer.server.port":                      "8080",
 		"traefik.services.Service0.loadbalancer.server.weight":                    "42",
 		"traefik.services.Service0.loadbalancer.stickiness.cookiename":            "foobar",
 		"traefik.services.Service1.loadbalancer.healthcheck.headers.name0":        "foobar",
@@ -137,13 +138,13 @@ func TestDecode(t *testing.T) {
 		"traefik.services.Service1.loadbalancer.method":                           "foobar",
 		"traefik.services.Service1.loadbalancer.passhostheader":                   "true",
 		"traefik.services.Service1.loadbalancer.responseforwarding.flushinterval": "foobar",
-		"traefik.services.Service1.loadbalancer.server.url":                       "foobar",
-		"traefik.services.Service1.loadbalancer.server.weight":                    "42",
+		"traefik.services.Service1.loadbalancer.server.scheme":                    "foobar",
+		"traefik.services.Service1.loadbalancer.server.port":                      "8080",
 		"traefik.services.Service1.loadbalancer.stickiness":                       "false",
 		"traefik.services.Service1.loadbalancer.stickiness.cookiename":            "fui",
 	}
 
-	configuration, err := Decode(labels)
+	configuration, err := DecodeConfiguration(labels)
 	require.NoError(t, err)
 
 	expected := &config.Configuration{
@@ -222,12 +223,12 @@ func TestDecode(t *testing.T) {
 				RateLimit: &config.RateLimit{
 					RateSet: map[string]*config.Rate{
 						"Rate0": {
-							Period:  parse.Duration(42 * time.Nanosecond),
+							Period:  parse.Duration(42 * time.Second),
 							Average: 42,
 							Burst:   42,
 						},
 						"Rate1": {
-							Period:  parse.Duration(42 * time.Nanosecond),
+							Period:  parse.Duration(42 * time.Second),
 							Average: 42,
 							Burst:   42,
 						},
@@ -403,7 +404,8 @@ func TestDecode(t *testing.T) {
 					},
 					Servers: []config.Server{
 						{
-							URL:    "foobar",
+							Scheme: "foobar",
+							Port:   "8080",
 							Weight: 42,
 						},
 					},
@@ -430,8 +432,9 @@ func TestDecode(t *testing.T) {
 				LoadBalancer: &config.LoadBalancerService{
 					Servers: []config.Server{
 						{
-							URL:    "foobar",
-							Weight: 42,
+							Scheme: "foobar",
+							Port:   "8080",
+							Weight: 1,
 						},
 					},
 					Method: "foobar",
@@ -459,7 +462,7 @@ func TestDecode(t *testing.T) {
 	assert.Equal(t, expected, configuration)
 }
 
-func TestEncode(t *testing.T) {
+func TestEncodeConfiguration(t *testing.T) {
 	configuration := &config.Configuration{
 		Routers: map[string]*config.Router{
 			"Router0": {
@@ -717,7 +720,8 @@ func TestEncode(t *testing.T) {
 					},
 					Servers: []config.Server{
 						{
-							URL:    "foobar",
+							Scheme: "foobar",
+							Port:   "8080",
 							Weight: 42,
 						},
 					},
@@ -744,7 +748,8 @@ func TestEncode(t *testing.T) {
 				LoadBalancer: &config.LoadBalancerService{
 					Servers: []config.Server{
 						{
-							URL:    "foobar",
+							Scheme: "foobar",
+							Port:   "8080",
 							Weight: 42,
 						},
 					},
@@ -770,7 +775,7 @@ func TestEncode(t *testing.T) {
 		},
 	}
 
-	labels, err := Encode(configuration)
+	labels, err := EncodeConfiguration(configuration)
 	require.NoError(t, err)
 
 	expected := map[string]string{
@@ -873,7 +878,6 @@ func TestEncode(t *testing.T) {
 		"traefik.Routers.Router1.Rule":        "foobar",
 		"traefik.Routers.Router1.Service":     "foobar",
 
-		"traefik.Services.Service0.LoadBalancer.HealthCheck.Headers.name0":        "foobar",
 		"traefik.Services.Service0.LoadBalancer.HealthCheck.Headers.name1":        "foobar",
 		"traefik.Services.Service0.LoadBalancer.HealthCheck.Hostname":             "foobar",
 		"traefik.Services.Service0.LoadBalancer.HealthCheck.Interval":             "foobar",
@@ -884,7 +888,8 @@ func TestEncode(t *testing.T) {
 		"traefik.Services.Service0.LoadBalancer.Method":                           "foobar",
 		"traefik.Services.Service0.LoadBalancer.PassHostHeader":                   "true",
 		"traefik.Services.Service0.LoadBalancer.ResponseForwarding.FlushInterval": "foobar",
-		"traefik.Services.Service0.LoadBalancer.server.URL":                       "foobar",
+		"traefik.Services.Service0.LoadBalancer.server.Port":                      "8080",
+		"traefik.Services.Service0.LoadBalancer.server.Scheme":                    "foobar",
 		"traefik.Services.Service0.LoadBalancer.server.Weight":                    "42",
 		"traefik.Services.Service0.LoadBalancer.Stickiness.CookieName":            "foobar",
 		"traefik.Services.Service1.LoadBalancer.HealthCheck.Headers.name0":        "foobar",
@@ -898,7 +903,9 @@ func TestEncode(t *testing.T) {
 		"traefik.Services.Service1.LoadBalancer.Method":                           "foobar",
 		"traefik.Services.Service1.LoadBalancer.PassHostHeader":                   "true",
 		"traefik.Services.Service1.LoadBalancer.ResponseForwarding.FlushInterval": "foobar",
-		"traefik.Services.Service1.LoadBalancer.server.URL":                       "foobar",
+		"traefik.Services.Service1.LoadBalancer.server.Port":                      "8080",
+		"traefik.Services.Service1.LoadBalancer.server.Scheme":                    "foobar",
+		"traefik.Services.Service0.LoadBalancer.HealthCheck.Headers.name0":        "foobar",
 		"traefik.Services.Service1.LoadBalancer.server.Weight":                    "42",
 	}
 

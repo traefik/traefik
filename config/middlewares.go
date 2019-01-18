@@ -190,13 +190,18 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 // IPWhiteList holds the ip white list configuration.
 type IPWhiteList struct {
 	SourceRange []string    `json:"sourceRange,omitempty"`
-	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty"`
+	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty" label:"allowEmpty"`
 }
 
 // MaxConn holds maximum connection configuration.
 type MaxConn struct {
 	Amount        int64  `json:"amount,omitempty"`
 	ExtractorFunc string `json:"extractorFunc,omitempty"`
+}
+
+// SetDefaults Default values for a MaxConn.
+func (m *MaxConn) SetDefaults() {
+	m.ExtractorFunc = "request.host"
 }
 
 // PassTLSClientCert holds the TLS client cert headers configuration.
@@ -217,6 +222,11 @@ type RateLimit struct {
 	RateSet map[string]*Rate `json:"rateset,omitempty"`
 	// FIXME replace by ipStrategy see oxy and replace
 	ExtractorFunc string `json:"extractorFunc,omitempty"`
+}
+
+// SetDefaults Default values for a MaxConn.
+func (r *RateLimit) SetDefaults() {
+	r.ExtractorFunc = "request.host"
 }
 
 // Redirect holds the redirection configuration of an entry point to another, or to an URL.

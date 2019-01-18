@@ -1,107 +1,79 @@
 server0:
-  image: emilevauge/whoami
+  image: containous/whoami
   labels:
     - traefik.enable=true
-    - traefik.port=80
-    - traefik.backend=backend1
-    - traefik.frontend.entryPoints=http
-    - traefik.frontend.rule=Path:/test
+    - traefik.routers.rt-server0.entryPoints=http
+    - traefik.routers.rt-server0.rule=Path:/test
+    - traefik.services.service1.loadbalancer.server.port=80
 server1:
-  image: emilevauge/whoami
+  image: containous/whoami
   labels:
     - traefik.enable=true
-    - traefik.port=80
-    - traefik.backend=backend1
-    - traefik.frontend.entryPoints=http
-    - traefik.frontend.rule=Host:frontend1.docker.local
+    - traefik.routers.rt-server1.entryPoints=http
+    - traefik.routers.rt-server1.rule=Host:frontend1.docker.local
+    - traefik.services.service1.loadbalancer.server.port=80
 server2:
-  image: emilevauge/whoami
+  image: containous/whoami
   labels:
     - traefik.enable=true
-    - traefik.port=80
-    - traefik.backend=backend2
-    - traefik.frontend.entryPoints=http
-    - traefik.frontend.rule=Host:frontend2.docker.local
-    - traefik.frontend.passHostHeader=true
-    - backend.loadbalancer.method=drr
+    - traefik.routers.rt-server2.entryPoints=http
+    - traefik.routers.rt-server2.rule=Host:frontend2.docker.local
+    - traefik.services.service2.loadbalancer.server.port=80
+    - traefik.services.service2.loadbalancer.method=drr
 server3:
-  image: emilevauge/whoami
+  image: containous/whoami
   labels:
     - traefik.enable=true
-    - traefik.port=80
-    - traefik.backend=backend2
-    - traefik.frontend.entryPoints=http
-    - traefik.frontend.rule=Host:frontend2.docker.local
-    - traefik.frontend.passHostHeader=true
-    - backend.loadbalancer.method=drr
+    - traefik.routers.rt-server3.entryPoints=http
+    - traefik.routers.rt-server3.rule=Host:frontend2.docker.local
+    - traefik.services.service2.loadbalancer.server.port=80
+    - traefik.services.service2.loadbalancer.method=drr
 authFrontend:
-  image: emilevauge/whoami
+  image: containous/whoami
   labels:
     - traefik.enable=true
-    - traefik.port=80
-    - traefik.backend=backend3
-    - traefik.frontend.entryPoints=httpFrontendAuth
-    - traefik.frontend.rule=Host:frontend.auth.docker.local
-    - traefik.frontend.auth.basic=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/
-authEntrypoint:
-  image: emilevauge/whoami
+    - traefik.routers.rt-authFrontend.entryPoints=httpFrontendAuth
+    - traefik.routers.rt-authFrontend.rule=Host:frontend.auth.docker.local
+    - traefik.routers.rt-authFrontend.middlewares=basicauth
+    - traefik.middlewares.basicauth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/
+    - traefik.services.service3.loadbalancer.server.port=80
+digestAuthMiddleware:
+  image: containous/whoami
   labels:
     - traefik.enable=true
-    - traefik.port=80
-    - traefik.backend=backend3
-    - traefik.frontend.entryPoints=httpAuth
-    - traefik.frontend.rule=Host:entrypoint.auth.docker.local
-digestAuthEntrypoint:
-  image: emilevauge/whoami
-  labels:
-    - traefik.enable=true
-    - traefik.port=80
-    - traefik.backend=backend3
-    - traefik.frontend.entryPoints=digestAuth
-    - traefik.frontend.rule=Host:entrypoint.digest.auth.docker.local
-entrypointRedirect:
-  image: emilevauge/whoami
-  labels:
-    - traefik.enable=true
-    - traefik.port=80
-    - traefik.backend=backend3
-    - traefik.frontend.entryPoints=httpRedirect
-    - traefik.frontend.rule=Path:/test
+    - traefik.routers.rt-digestAuthMiddleware.entryPoints=digestAuth
+    - traefik.routers.rt-digestAuthMiddleware.rule=Host:entrypoint.digest.auth.docker.local
+    - traefik.routers.rt-digestAuthMiddleware.middlewares=digestauth
+    - traefik.middlewares.digestauth.digestauth.users=test:traefik:a2688e031edb4be6a3797f3882655c05, test2:traefik:518845800f9e2bfb1f1f740ec24f074e
+    - traefik.services.service3.loadbalancer.server.port=80
 frontendRedirect:
-  image: emilevauge/whoami
+  image: containous/whoami
   labels:
     - traefik.enable=true
-    - traefik.port=80
-    - traefik.backend=backend3
-    - traefik.frontend.entryPoints=frontendRedirect
-    - traefik.frontend.rule=Path:/test
-    - traefik.frontend.redirect.entryPoint=http
+    - traefik.routers.rt-frontendRedirect.entryPoints=frontendRedirect
+    - traefik.routers.rt-frontendRedirect.rule=Path:/test
+    - traefik.routers.rt-frontendRedirect.middlewares=redirecthttp
+    - traefik.middlewares.redirecthttp.redirect.regex=^(?:https?://)?([\w\._-]+)(?::\d+)?(.*)$$
+    - traefik.middlewares.redirecthttp.redirect.replacement=http://$${1}:8000$${2}
+    - traefik.services.service3.loadbalancer.server.port=80
 rateLimit:
-  image: emilevauge/whoami
+  image: containous/whoami
   labels:
     - traefik.enable=true
-    - traefik.port=80
-    - traefik.backend=backend3
-    - traefik.frontend.entryPoints=httpRateLimit
-    - traefik.frontend.rule=Host:ratelimit.docker.local
-    - traefik.frontend.rateLimit.extractorFunc=client.ip
-    - traefik.frontend.rateLimit.rateSet.powpow.period=3s
-    - traefik.frontend.rateLimit.rateSet.powpow.average=1
-    - traefik.frontend.rateLimit.rateSet.powpow.burst=2
-entrypointWhitelist:
-  image: emilevauge/whoami
-  labels:
-    - traefik.enable=true
-    - traefik.port=80
-    - traefik.backend=backend3
-    - traefik.frontend.entryPoints=httpWhitelistReject
-    - traefik.frontend.rule=Host:entrypoint.whitelist.docker.local
+    - traefik.routers.rt-rateLimit.entryPoints=httpRateLimit
+    - traefik.routers.rt-rateLimit.rule=Host:ratelimit.docker.local
+    - traefik.routers.rt-rateLimit.middlewares=rate
+    - traefik.middlewares.rate.ratelimit.extractorfunc=client.ip
+    - traefik.middlewares.rate.ratelimit.rateset.Rate0.average=1
+    - traefik.middlewares.rate.ratelimit.rateset.Rate0.burst=2
+    - traefik.middlewares.rate.ratelimit.rateset.Rate0.period=10s
+    - traefik.services.service3.loadbalancer.server.port=80
 frontendWhitelist:
-  image: emilevauge/whoami
+  image: containous/whoami
   labels:
     - traefik.enable=true
-    - traefik.port=80
-    - traefik.backend=backend3
-    - traefik.frontend.whiteList.sourceRange=8.8.8.8/32
-    - traefik.frontend.entryPoints=http
-    - traefik.frontend.rule=Host:frontend.whitelist.docker.local
+    - traefik.routers.rt-frontendWhitelist.entryPoints=http
+    - traefik.routers.rt-frontendWhitelist.rule=Host:frontend.whitelist.docker.local
+    - traefik.routers.rt-frontendWhitelist.middlewares=wl
+    - traefik.middlewares.wl.ipwhitelist.sourcerange=8.8.8.8/32
+    - traefik.services.service3.loadbalancer.server.port=80

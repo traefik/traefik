@@ -12,6 +12,7 @@ import (
 	"github.com/docker/docker/api/types/swarm"
 	dockerclient "github.com/docker/docker/client"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type fakeTasksClient struct {
@@ -82,7 +83,11 @@ func TestListTasks(t *testing.T) {
 		test := test
 		t.Run(strconv.Itoa(caseID), func(t *testing.T) {
 			t.Parallel()
-			dockerData := parseService(test.service, test.networks)
+
+			p := Provider{}
+			dockerData, err := p.parseService(context.Background(), test.service, test.networks)
+			require.NoError(t, err)
+
 			dockerClient := &fakeTasksClient{tasks: test.tasks}
 			taskDockerData, _ := listTasks(context.Background(), dockerClient, test.service.ID, dockerData, test.networks, test.isGlobalSVC)
 
@@ -127,6 +132,7 @@ func (c *fakeServicesClient) TaskList(ctx context.Context, options dockertypes.T
 func TestListServices(t *testing.T) {
 	testCases := []struct {
 		desc             string
+		extraConf        configuration
 		services         []swarm.Service
 		tasks            []swarm.Task
 		dockerVersion    string
@@ -139,8 +145,8 @@ func TestListServices(t *testing.T) {
 				swarmService(
 					serviceName("service1"),
 					serviceLabels(map[string]string{
-						labelDockerNetwork:            "barnet",
-						labelBackendLoadBalancerSwarm: "true",
+						"traefik.docker.network": "barnet",
+						"traefik.docker.LBSwarm": "true",
 					}),
 					withEndpointSpec(modeVIP),
 					withEndpoint(
@@ -150,8 +156,8 @@ func TestListServices(t *testing.T) {
 				swarmService(
 					serviceName("service2"),
 					serviceLabels(map[string]string{
-						labelDockerNetwork:            "barnet",
-						labelBackendLoadBalancerSwarm: "true",
+						"traefik.docker.network": "barnet",
+						"traefik.docker.LBSwarm": "true",
 					}),
 					withEndpointSpec(modeDNSSR)),
 			},
@@ -165,8 +171,8 @@ func TestListServices(t *testing.T) {
 				swarmService(
 					serviceName("service1"),
 					serviceLabels(map[string]string{
-						labelDockerNetwork:            "barnet",
-						labelBackendLoadBalancerSwarm: "true",
+						"traefik.docker.network": "barnet",
+						"traefik.docker.LBSwarm": "true",
 					}),
 					withEndpointSpec(modeVIP),
 					withEndpoint(
@@ -176,8 +182,8 @@ func TestListServices(t *testing.T) {
 				swarmService(
 					serviceName("service2"),
 					serviceLabels(map[string]string{
-						labelDockerNetwork:            "barnet",
-						labelBackendLoadBalancerSwarm: "true",
+						"traefik.docker.network": "barnet",
+						"traefik.docker.LBSwarm": "true",
 					}),
 					withEndpointSpec(modeDNSSR)),
 			},
@@ -212,7 +218,7 @@ func TestListServices(t *testing.T) {
 				swarmService(
 					serviceName("service1"),
 					serviceLabels(map[string]string{
-						labelDockerNetwork: "barnet",
+						"traefik.docker.network": "barnet",
 					}),
 					withEndpointSpec(modeVIP),
 					withEndpoint(
@@ -222,7 +228,7 @@ func TestListServices(t *testing.T) {
 				swarmService(
 					serviceName("service2"),
 					serviceLabels(map[string]string{
-						labelDockerNetwork: "barnet",
+						"traefik.docker.network": "barnet",
 					}),
 					withEndpointSpec(modeDNSSR)),
 			},
@@ -266,17 +272,23 @@ func TestListServices(t *testing.T) {
 		},
 	}
 
-	for caseID, test := range testCases {
+	for _, test := range testCases {
 		test := test
-		t.Run(strconv.Itoa(caseID), func(t *testing.T) {
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			dockerClient := &fakeServicesClient{services: test.services, tasks: test.tasks, dockerVersion: test.dockerVersion, networks: test.networks}
 
-			serviceDockerData, err := listServices(context.Background(), dockerClient)
+			p := Provider{}
+
+			serviceDockerData, err := p.listServices(context.Background(), dockerClient)
 			assert.NoError(t, err)
 
 			assert.Equal(t, len(test.expectedServices), len(serviceDockerData))
 			for i, serviceName := range test.expectedServices {
+				if len(serviceDockerData) <= i {
+					require.Fail(t, "index", "invalid index %d", i)
+				}
 				assert.Equal(t, serviceName, serviceDockerData[i].Name)
 			}
 		})
@@ -385,10 +397,14 @@ func TestSwarmTaskParsing(t *testing.T) {
 		test := test
 		t.Run(strconv.Itoa(caseID), func(t *testing.T) {
 			t.Parallel()
-			dData := parseService(test.service, test.networks)
+
+			p := Provider{}
+
+			dData, err := p.parseService(context.Background(), test.service, test.networks)
+			require.NoError(t, err)
 
 			for _, task := range test.tasks {
-				taskDockerData := parseTasks(task, dData, test.networks, test.isGlobalSVC)
+				taskDockerData := parseTasks(context.Background(), task, dData, test.networks, test.isGlobalSVC)
 				expected := test.expected[task.ID]
 				assert.Equal(t, expected.Name, taskDockerData.Name)
 			}

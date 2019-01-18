@@ -2,18 +2,18 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/containous/traefik/config"
 	"github.com/containous/traefik/server/internal"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestMiddlewaresRegistry_BuildMiddlewareCircuitBreaker(t *testing.T) {
+func TestBuilder_buildConstructorCircuitBreaker(t *testing.T) {
 	testConfig := map[string]*config.Middleware{
 		"empty": {
 			CircuitBreaker: &config.CircuitBreaker{
@@ -65,7 +65,7 @@ func TestMiddlewaresRegistry_BuildMiddlewareCircuitBreaker(t *testing.T) {
 	}
 }
 
-func TestMiddlewaresRegistry_BuildChainNilConfig(t *testing.T) {
+func TestBuilder_BuildChainNilConfig(t *testing.T) {
 	testConfig := map[string]*config.Middleware{
 		"empty": {},
 	}
@@ -73,10 +73,21 @@ func TestMiddlewaresRegistry_BuildChainNilConfig(t *testing.T) {
 
 	chain := middlewaresBuilder.BuildChain(context.Background(), []string{"empty"})
 	_, err := chain.Then(nil)
-	require.NoError(t, err)
+	require.Error(t, err)
 }
 
-func TestMiddlewaresRegistry_BuildMiddlewareAddPrefix(t *testing.T) {
+func TestBuilder_BuildChainNonExistentChain(t *testing.T) {
+	testConfig := map[string]*config.Middleware{
+		"foobar": {},
+	}
+	middlewaresBuilder := NewBuilder(testConfig, nil)
+
+	chain := middlewaresBuilder.BuildChain(context.Background(), []string{"empty"})
+	_, err := chain.Then(nil)
+	require.Error(t, err)
+}
+
+func TestBuilder_buildConstructorAddPrefix(t *testing.T) {
 	testConfig := map[string]*config.Middleware{
 		"empty": {
 			AddPrefix: &config.AddPrefix{
@@ -98,7 +109,7 @@ func TestMiddlewaresRegistry_BuildMiddlewareAddPrefix(t *testing.T) {
 		expectedError bool
 	}{
 		{
-			desc:          "Should not create an emty AddPrefix middleware when given an empty prefix",
+			desc:          "Should not create an empty AddPrefix middleware when given an empty prefix",
 			middlewareID:  "empty",
 			expectedError: true,
 		}, {
@@ -128,7 +139,7 @@ func TestMiddlewaresRegistry_BuildMiddlewareAddPrefix(t *testing.T) {
 	}
 }
 
-func TestChainWithContext(t *testing.T) {
+func TestBuild_BuildChainWithContext(t *testing.T) {
 	testCases := []struct {
 		desc            string
 		buildChain      []string

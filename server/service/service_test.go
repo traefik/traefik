@@ -2,10 +2,8 @@ package service
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 
 	"github.com/containous/traefik/config"
@@ -13,40 +11,7 @@ import (
 	"github.com/containous/traefik/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/vulcand/oxy/roundrobin"
 )
-
-type MockRR struct {
-	err error
-}
-
-func (*MockRR) Servers() []*url.URL {
-	panic("implement me")
-}
-
-func (*MockRR) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	panic("implement me")
-}
-
-func (*MockRR) ServerWeight(u *url.URL) (int, bool) {
-	panic("implement me")
-}
-
-func (*MockRR) RemoveServer(u *url.URL) error {
-	panic("implement me")
-}
-
-func (m *MockRR) UpsertServer(u *url.URL, options ...roundrobin.ServerOption) error {
-	return m.err
-}
-
-func (*MockRR) NextServer() (*url.URL, error) {
-	panic("implement me")
-}
-
-func (*MockRR) Next() http.Handler {
-	panic("implement me")
-}
 
 type MockForwarder struct{}
 
@@ -62,7 +27,6 @@ func TestGetLoadBalancer(t *testing.T) {
 		serviceName string
 		service     *config.LoadBalancerService
 		fwd         http.Handler
-		rr          balancerHandler
 		expectError bool
 	}{
 		{
@@ -77,22 +41,6 @@ func TestGetLoadBalancer(t *testing.T) {
 				},
 			},
 			fwd:         &MockForwarder{},
-			rr:          &MockRR{},
-			expectError: true,
-		},
-		{
-			desc:        "Fails when the server upsert fails",
-			serviceName: "test",
-			service: &config.LoadBalancerService{
-				Servers: []config.Server{
-					{
-						URL:    "http://foo",
-						Weight: 0,
-					},
-				},
-			},
-			fwd:         &MockForwarder{},
-			rr:          &MockRR{err: errors.New("upsert fails")},
 			expectError: true,
 		},
 		{
@@ -100,7 +48,6 @@ func TestGetLoadBalancer(t *testing.T) {
 			serviceName: "test",
 			service:     &config.LoadBalancerService{},
 			fwd:         &MockForwarder{},
-			rr:          &MockRR{},
 			expectError: false,
 		},
 		{
@@ -110,7 +57,6 @@ func TestGetLoadBalancer(t *testing.T) {
 				Stickiness: &config.Stickiness{},
 			},
 			fwd:         &MockForwarder{},
-			rr:          &MockRR{},
 			expectError: false,
 		},
 	}
@@ -120,7 +66,7 @@ func TestGetLoadBalancer(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			handler, err := sm.getLoadBalancer(context.Background(), test.serviceName, test.service, test.fwd, test.rr)
+			handler, err := sm.getLoadBalancer(context.Background(), test.serviceName, test.service, test.fwd)
 			if test.expectError {
 				require.Error(t, err)
 				assert.Nil(t, handler)
