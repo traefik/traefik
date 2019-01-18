@@ -21,7 +21,7 @@ import (
 // FIXME handle this offline but loading them before build
 var RequiredImages = map[string]string{
 	"swarm":             "1.0.0",
-	"emilevauge/whoami": "latest",
+	"containous/whoami": "latest",
 }
 
 // Docker test suites

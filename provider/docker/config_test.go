@@ -450,7 +450,7 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "two containers with same service name and different LB method",
+			desc: "two containers with same service name and different LB methods",
 			containers: []dockerData{
 				{
 					ID:          "1",
@@ -503,7 +503,7 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "three containers with same service name and different LB method",
+			desc: "three containers with same service name and different LB methods",
 			containers: []dockerData{
 				{
 					ID:          "1",
@@ -575,7 +575,7 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "two containers with same service name and same LB method",
+			desc: "two containers with same service name and same LB methods",
 			containers: []dockerData{
 				{
 					ID:          "1",
@@ -698,7 +698,7 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "two containers with two identical middleware",
+			desc: "two containers with two identical middlewares",
 			containers: []dockerData{
 				{
 					ID:          "1",
@@ -775,7 +775,7 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "two containers with two different middleware with same name",
+			desc: "two containers with two different middlewares with same name",
 			containers: []dockerData{
 				{
 					ID:          "1",
@@ -845,7 +845,7 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "three containers with different middleware with same name",
+			desc: "three containers with different middlewares with same name",
 			containers: []dockerData{
 				{
 					ID:          "1",
@@ -938,7 +938,7 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "two containers with two different router with same name",
+			desc: "two containers with two different routers with same name",
 			containers: []dockerData{
 				{
 					ID:          "1",
@@ -1003,7 +1003,7 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "three containers with different router with same name",
+			desc: "three containers with different routers with same name",
 			containers: []dockerData{
 				{
 					ID:          "1",
@@ -1091,7 +1091,7 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "two containers with two identical router",
+			desc: "two containers with two identical routers",
 			containers: []dockerData{
 				{
 					ID:          "1",
@@ -1161,7 +1161,7 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "two containers with two identical router rule and different service name",
+			desc: "two containers with two identical router rules and different service names",
 			containers: []dockerData{
 				{
 					ServiceName: "Test",

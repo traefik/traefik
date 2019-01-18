@@ -57,7 +57,6 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	defer display(c)
 
 	defer func() {
-
 		traefikLog, err := ioutil.ReadFile(traefikTestLogFile)
 		c.Assert(err, checker.IsNil)
 		log.Info(string(traefikLog))

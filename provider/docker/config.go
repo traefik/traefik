@@ -19,7 +19,6 @@ func (p *Provider) buildConfiguration(ctx context.Context, containersInspected [
 
 	for _, container := range containersInspected {
 		containerName := getServiceName(container) + "-" + container.ID
-
 		ctxContainer := log.With(ctx, log.Str("container", containerName))
 
 		if !p.keepContainer(ctxContainer, container) {
@@ -72,7 +71,6 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, container dock
 
 func (p *Provider) buildRouterConfiguration(ctx context.Context, container dockerData, configuration *config.Configuration) {
 	logger := log.FromContext(ctx)
-
 	serviceName := getServiceName(container)
 
 	if len(configuration.Routers) == 0 {
@@ -93,7 +91,7 @@ func (p *Provider) buildRouterConfiguration(ctx context.Context, container docke
 			if len(configuration.Services) > 1 {
 				delete(configuration.Routers, routerName)
 				logger.WithField(log.RouterName, routerName).
-					Error("could not define the service name for the router: too many services")
+					Error("Could not define the service name for the router: too many services")
 				continue
 			}
 

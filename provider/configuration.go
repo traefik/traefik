@@ -60,19 +60,19 @@ func Merge(ctx context.Context, configurations map[string]*config.Configuration)
 
 	for serviceName := range servicesToDelete {
 		logger.WithField(log.ServiceName, serviceName).
-			Errorf("Service defined multiple times with different configuration in %v", services[serviceName])
+			Errorf("Service defined multiple times with different configurations in %v", services[serviceName])
 		delete(configuration.Services, serviceName)
 	}
 
 	for routerName := range routersToDelete {
 		logger.WithField(log.RouterName, routerName).
-			Errorf("Router defined multiple times with different configuration in %v", routers[routerName])
+			Errorf("Router defined multiple times with different configurations in %v", routers[routerName])
 		delete(configuration.Routers, routerName)
 	}
 
 	for middlewareName := range middlewaresToDelete {
 		logger.WithField(log.MiddlewareName, middlewareName).
-			Errorf("Middleware defined multiple times with different configuration in %v", middlewares[middlewareName])
+			Errorf("Middleware defined multiple times with different configurations in %v", middlewares[middlewareName])
 		delete(configuration.Middlewares, middlewareName)
 	}
 
