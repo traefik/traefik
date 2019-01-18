@@ -32,7 +32,6 @@ func (clientTLS *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, e
 	clientAuth := tls.NoClientCert
 	if clientTLS.CA != "" {
 		var ca []byte
-
 		if _, errCA := os.Stat(clientTLS.CA); errCA == nil {
 			var err error
 			ca, err = ioutil.ReadFile(clientTLS.CA)

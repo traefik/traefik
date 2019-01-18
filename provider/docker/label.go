@@ -11,6 +11,7 @@ const (
 	labelDockerComposeService = "com.docker.compose.service"
 )
 
+// configuration Contains information from the labels that are globals (not related to the dynamic configuration) or specific to the provider.
 type configuration struct {
 	Enable bool
 	Tags   []string
