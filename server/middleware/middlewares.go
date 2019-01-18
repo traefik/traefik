@@ -58,19 +58,20 @@ func (b *Builder) BuildChain(ctx context.Context, middlewares []string) *alice.C
 	for _, middlewareName := range middlewares {
 		middlewareName := internal.GetQualifiedName(ctx, middlewareName)
 		constructorContext := internal.AddProviderInContext(ctx, middlewareName)
+
 		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+			if _, ok := b.configs[middlewareName]; !ok {
+				return nil, fmt.Errorf("middleware %q does not exist", middlewareName)
+			}
+
 			var err error
 			if constructorContext, err = checkRecursivity(constructorContext, middlewareName); err != nil {
 				return nil, err
 			}
 
-			if _, ok := b.configs[middlewareName]; !ok {
-				return nil, fmt.Errorf("middleware %q does not exist", middlewareName)
-			}
-
 			constructor, err := b.buildConstructor(constructorContext, middlewareName, *b.configs[middlewareName])
 			if err != nil {
-				return nil, fmt.Errorf("error while instanciation of %s: %v", middlewareName, err)
+				return nil, fmt.Errorf("error during instanciation of %s: %v", middlewareName, err)
 			}
 			return constructor(next)
 		})

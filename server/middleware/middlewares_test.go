@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMiddlewaresRegistry_BuildMiddlewareCircuitBreaker(t *testing.T) {
+func TestBuilder_buildConstructorCircuitBreaker(t *testing.T) {
 	testConfig := map[string]*config.Middleware{
 		"empty": {
 			CircuitBreaker: &config.CircuitBreaker{
@@ -65,7 +65,7 @@ func TestMiddlewaresRegistry_BuildMiddlewareCircuitBreaker(t *testing.T) {
 	}
 }
 
-func TestMiddlewaresRegistry_BuildChainNilConfig(t *testing.T) {
+func TestBuilder_BuildChainNilConfig(t *testing.T) {
 	testConfig := map[string]*config.Middleware{
 		"empty": {},
 	}
@@ -76,7 +76,18 @@ func TestMiddlewaresRegistry_BuildChainNilConfig(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestMiddlewaresRegistry_BuildMiddlewareAddPrefix(t *testing.T) {
+func TestBuilder_BuildChainNonExistentChain(t *testing.T) {
+	testConfig := map[string]*config.Middleware{
+		"foobar": {},
+	}
+	middlewaresBuilder := NewBuilder(testConfig, nil)
+
+	chain := middlewaresBuilder.BuildChain(context.Background(), []string{"empty"})
+	_, err := chain.Then(nil)
+	require.Error(t, err)
+}
+
+func TestBuilder_buildConstructorAddPrefix(t *testing.T) {
 	testConfig := map[string]*config.Middleware{
 		"empty": {
 			AddPrefix: &config.AddPrefix{
@@ -128,7 +139,7 @@ func TestMiddlewaresRegistry_BuildMiddlewareAddPrefix(t *testing.T) {
 	}
 }
 
-func TestChainWithContext(t *testing.T) {
+func TestBuild_BuildChainWithContext(t *testing.T) {
 	testCases := []struct {
 		desc            string
 		buildChain      []string
