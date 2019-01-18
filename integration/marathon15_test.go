@@ -102,7 +102,7 @@ func (s *MarathonSuite15) TestConfigurationUpdate(c *check.C) {
 	app.Container.
 		Expose(80).
 		Docker.
-		Container("emilevauge/whoami")
+		Container("containous/whoami")
 	*app.Networks = append(*app.Networks, *marathon.NewBridgePodNetwork())
 
 	// Deploy the test application.
@@ -122,7 +122,7 @@ func (s *MarathonSuite15) TestConfigurationUpdate(c *check.C) {
 	app.Container.
 		Expose(80).
 		Docker.
-		Container("emilevauge/whoami")
+		Container("containous/whoami")
 	*app.Networks = append(*app.Networks, *marathon.NewBridgePodNetwork())
 
 	// Deploy the test application.

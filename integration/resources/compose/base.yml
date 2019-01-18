@@ -1,10 +1,10 @@
 whoami1:
-   image: containous/whoami
+  image: containous/whoami
   labels:
     - traefik.enable=true
     - traefik.routers.router1.rule=PathPrefix:/whoami
 
 whoami2:
-   image: containous/whoami
+  image: containous/whoami
   labels:
     - traefik.enable=false

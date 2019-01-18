@@ -12,7 +12,7 @@
                     "container": {
                         "type": "DOCKER",
                         "docker": {
-                            "image": "emilevauge/whoami",
+                            "image": "containous/whoami",
                             "network": "BRIDGE",
                             "portMappings": [
                                 {

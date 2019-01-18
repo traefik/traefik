@@ -1,19 +1,19 @@
 server0:
-   image: containous/whoami
+  image: containous/whoami
   labels:
     - traefik.enable=true
     - traefik.routers.rt-server0.entryPoints=http
     - traefik.routers.rt-server0.rule=Path:/test
     - traefik.services.service1.loadbalancer.server.port=80
 server1:
-   image: containous/whoami
+  image: containous/whoami
   labels:
     - traefik.enable=true
     - traefik.routers.rt-server1.entryPoints=http
     - traefik.routers.rt-server1.rule=Host:frontend1.docker.local
     - traefik.services.service1.loadbalancer.server.port=80
 server2:
-   image: containous/whoami
+  image: containous/whoami
   labels:
     - traefik.enable=true
     - traefik.routers.rt-server2.entryPoints=http
@@ -21,7 +21,7 @@ server2:
     - traefik.services.service2.loadbalancer.server.port=80
     - traefik.services.service2.loadbalancer.method=drr
 server3:
-   image: containous/whoami
+  image: containous/whoami
   labels:
     - traefik.enable=true
     - traefik.routers.rt-server3.entryPoints=http
@@ -29,7 +29,7 @@ server3:
     - traefik.services.service2.loadbalancer.server.port=80
     - traefik.services.service2.loadbalancer.method=drr
 authFrontend:
-   image: containous/whoami
+  image: containous/whoami
   labels:
     - traefik.enable=true
     - traefik.routers.rt-authFrontend.entryPoints=httpFrontendAuth
@@ -38,7 +38,7 @@ authFrontend:
     - traefik.middlewares.basicauth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/
     - traefik.services.service3.loadbalancer.server.port=80
 digestAuthMiddleware:
-   image: containous/whoami
+  image: containous/whoami
   labels:
     - traefik.enable=true
     - traefik.routers.rt-digestAuthMiddleware.entryPoints=digestAuth
@@ -47,7 +47,7 @@ digestAuthMiddleware:
     - traefik.middlewares.digestauth.digestauth.users=test:traefik:a2688e031edb4be6a3797f3882655c05, test2:traefik:518845800f9e2bfb1f1f740ec24f074e
     - traefik.services.service3.loadbalancer.server.port=80
 frontendRedirect:
-   image: contaiinous/whoami
+  image: containous/whoami
   labels:
     - traefik.enable=true
     - traefik.routers.rt-frontendRedirect.entryPoints=frontendRedirect
@@ -57,7 +57,7 @@ frontendRedirect:
     - traefik.middlewares.redirecthttp.redirect.replacement=http://$${1}:8000$${2}
     - traefik.services.service3.loadbalancer.server.port=80
 rateLimit:
-   image: containous/whoami
+  image: containous/whoami
   labels:
     - traefik.enable=true
     - traefik.routers.rt-rateLimit.entryPoints=httpRateLimit
@@ -69,7 +69,7 @@ rateLimit:
     - traefik.middlewares.rate.ratelimit.rateset.Rate0.period=10s
     - traefik.services.service3.loadbalancer.server.port=80
 frontendWhitelist:
-   image: containous/whoami
+  image: containous/whoami
   labels:
     - traefik.enable=true
     - traefik.routers.rt-frontendWhitelist.entryPoints=http

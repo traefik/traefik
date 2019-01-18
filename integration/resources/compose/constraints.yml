@@ -12,6 +12,6 @@ consul:
     - "8302"
     - "8302/udp"
 whoami:
-  image: emilevauge/whoami
+  image: containous/whoami
   ports:
     - "8881:80"
