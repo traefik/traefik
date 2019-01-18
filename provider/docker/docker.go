@@ -278,7 +278,7 @@ func (p *Provider) listContainers(ctx context.Context, dockerClient client.Conta
 		return nil, err
 	}
 
-	var containersInspected []dockerData
+	var inspectedContainers []dockerData
 	// get inspect containers
 	for _, container := range containerList {
 		dData := inspectContainers(ctx, dockerClient, container.ID)
@@ -293,9 +293,9 @@ func (p *Provider) listContainers(ctx context.Context, dockerClient client.Conta
 		}
 		dData.ExtraConf = extraConf
 
-		containersInspected = append(containersInspected, dData)
+		inspectedContainers = append(inspectedContainers, dData)
 	}
-	return containersInspected, nil
+	return inspectedContainers, nil
 }
 
 func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClient, containerID string) dockerData {

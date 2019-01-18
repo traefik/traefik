@@ -11,7 +11,7 @@ import (
 )
 
 type initializer interface {
-	DefaultsHook()
+	SetDefaults()
 }
 
 // Fill the fields of the element.
@@ -88,7 +88,7 @@ func setPtr(field reflect.Value, node *Node) error {
 		field.Set(reflect.New(field.Type().Elem()))
 
 		if field.Type().Implements(reflect.TypeOf((*initializer)(nil)).Elem()) {
-			method := field.MethodByName("DefaultsHook")
+			method := field.MethodByName("SetDefaults")
 			if method.IsValid() {
 				method.Call([]reflect.Value{})
 			}
@@ -216,7 +216,7 @@ func setSliceAsStruct(field reflect.Value, node *Node) error {
 		return fmt.Errorf("invalid slice: node %s", node.Name)
 	}
 
-	// use Ptr to allow "DefaultsHook"
+	// use Ptr to allow "SetDefaults"
 	value := reflect.New(reflect.PtrTo(field.Type().Elem()))
 	err := setPtr(value, node)
 	if err != nil {

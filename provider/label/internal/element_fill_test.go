@@ -1120,7 +1120,7 @@ func TestFill(t *testing.T) {
 			expected: expected{error: true},
 		},
 		{
-			desc: "pointer DefaultsHook method",
+			desc: "pointer SetDefaults method",
 			node: &Node{
 				Name: "traefik",
 				Kind: reflect.Struct,
@@ -1146,7 +1146,7 @@ func TestFill(t *testing.T) {
 			}},
 		},
 		{
-			desc: "pointer wrong DefaultsHook method",
+			desc: "pointer wrong SetDefaults method",
 			node: &Node{
 				Name: "traefik",
 				Kind: reflect.Struct,
@@ -1193,7 +1193,7 @@ type initialledFoo struct {
 	Fuu string
 }
 
-func (t *initialledFoo) DefaultsHook() {
+func (t *initialledFoo) SetDefaults() {
 	t.Fii = "default"
 }
 
@@ -1202,7 +1202,7 @@ type wrongInitialledFoo struct {
 	Fuu string
 }
 
-func (t *wrongInitialledFoo) DefaultsHook() error {
+func (t *wrongInitialledFoo) SetDefaults() error {
 	t.Fii = "default"
 	return nil
 }

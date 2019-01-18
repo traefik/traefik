@@ -47,8 +47,8 @@ func (l *LoadBalancerService) Mergeable(loadBalancer *LoadBalancerService) bool 
 	return reflect.DeepEqual(l, loadBalancer)
 }
 
-// DefaultsHook Default values for a LoadBalancerService.
-func (l *LoadBalancerService) DefaultsHook() {
+// SetDefaults Default values for a LoadBalancerService.
+func (l *LoadBalancerService) SetDefaults() {
 	l.PassHostHeader = true
 	l.Method = "wrr"
 }
@@ -71,8 +71,8 @@ type Server struct {
 	Weight int    `json:"weight"`
 }
 
-// DefaultsHook Default values for a Server.
-func (s *Server) DefaultsHook() {
+// SetDefaults Default values for a Server.
+func (s *Server) SetDefaults() {
 	s.Weight = 1
 	s.Scheme = "http"
 }

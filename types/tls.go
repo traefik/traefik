@@ -32,6 +32,7 @@ func (clientTLS *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, e
 	clientAuth := tls.NoClientCert
 	if clientTLS.CA != "" {
 		var ca []byte
+
 		if _, errCA := os.Stat(clientTLS.CA); errCA == nil {
 			var err error
 			ca, err = ioutil.ReadFile(clientTLS.CA)
@@ -41,9 +42,11 @@ func (clientTLS *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, e
 		} else {
 			ca = []byte(clientTLS.CA)
 		}
+
 		if !caPool.AppendCertsFromPEM(ca) {
 			return nil, fmt.Errorf("failed to parse CA")
 		}
+
 		if clientTLS.CAOptional {
 			clientAuth = tls.VerifyClientCertIfGiven
 		} else {
@@ -51,12 +54,12 @@ func (clientTLS *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, e
 		}
 	}
 
-	cert := tls.Certificate{}
-	_, errKeyIsFile := os.Stat(clientTLS.Key)
-
 	if !clientTLS.InsecureSkipVerify && (len(clientTLS.Cert) == 0 || len(clientTLS.Key) == 0) {
 		return nil, fmt.Errorf("TLS Certificate or Key file must be set when TLS configuration is created")
 	}
+
+	cert := tls.Certificate{}
+	_, errKeyIsFile := os.Stat(clientTLS.Key)
 
 	if len(clientTLS.Cert) > 0 && len(clientTLS.Key) > 0 {
 		var err error

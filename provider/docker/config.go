@@ -53,7 +53,7 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, container dock
 	if len(configuration.Services) == 0 {
 		configuration.Services = make(map[string]*config.Service)
 		lb := &config.LoadBalancerService{}
-		lb.DefaultsHook()
+		lb.SetDefaults()
 		configuration.Services[serviceName] = &config.Service{
 			LoadBalancer: lb,
 		}
@@ -134,7 +134,7 @@ func (p *Provider) addServer(ctx context.Context, container dockerData, loadBala
 
 	if len(loadBalancer.Servers) == 0 {
 		server := config.Server{}
-		server.DefaultsHook()
+		server.SetDefaults()
 
 		loadBalancer.Servers = []config.Server{server}
 	}

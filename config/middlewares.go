@@ -199,8 +199,8 @@ type MaxConn struct {
 	ExtractorFunc string `json:"extractorFunc,omitempty"`
 }
 
-// DefaultsHook Default values for a MaxConn.
-func (m *MaxConn) DefaultsHook() {
+// SetDefaults Default values for a MaxConn.
+func (m *MaxConn) SetDefaults() {
 	m.ExtractorFunc = "request.host"
 }
 
@@ -222,6 +222,11 @@ type RateLimit struct {
 	RateSet map[string]*Rate `json:"rateset,omitempty"`
 	// FIXME replace by ipStrategy see oxy and replace
 	ExtractorFunc string `json:"extractorFunc,omitempty"`
+}
+
+// SetDefaults Default values for a MaxConn.
+func (r *RateLimit) SetDefaults() {
+	r.ExtractorFunc = "request.host"
 }
 
 // Redirect holds the redirection configuration of an entry point to another, or to an URL.
