@@ -3,7 +3,6 @@ package docker
 import (
 	"context"
 	"strconv"
-	"strings"
 	"testing"
 
 	"github.com/containous/traefik/config"
@@ -1678,9 +1677,6 @@ func Test_buildConfiguration(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		if strings.Replace(test.desc, " ", "_", -1) != "two_containers_with_same_service_name_no_label" {
-			// continue
-		}
 		test := test
 
 		t.Run(test.desc, func(t *testing.T) {
