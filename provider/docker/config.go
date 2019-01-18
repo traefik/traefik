@@ -201,10 +201,8 @@ func (p Provider) getIPAddress(ctx context.Context, container dockerData) string
 	}
 
 	if container.NetworkSettings.NetworkMode.IsHost() {
-		if container.Node != nil {
-			if container.Node.IPAddress != "" {
-				return container.Node.IPAddress
-			}
+		if container.Node != nil && container.Node.IPAddress != "" {
+			return container.Node.IPAddress
 		}
 		return "127.0.0.1"
 	}
