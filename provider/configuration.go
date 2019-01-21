@@ -119,7 +119,8 @@ func AddMiddleware(configuration *config.Configuration, middlewareName string, m
 	return reflect.DeepEqual(configuration.Middlewares[middlewareName], middleware)
 }
 
-func BuildDefaultRuleTemplate(defaultRule string, funcMap template.FuncMap) (*template.Template, error) {
+// MakeDefaultRuleTemplate Creates the default rule template.
+func MakeDefaultRuleTemplate(defaultRule string, funcMap template.FuncMap) (*template.Template, error) {
 	defaultFuncMap := sprig.TxtFuncMap()
 	defaultFuncMap["normalize"] = Normalize
 
@@ -130,7 +131,8 @@ func BuildDefaultRuleTemplate(defaultRule string, funcMap template.FuncMap) (*te
 	return template.New("defaultRule").Funcs(defaultFuncMap).Parse(defaultRule)
 }
 
-func BuildRouterConfiguration(ctx context.Context, configuration *config.Configuration, name string, defaultRuleTpl *template.Template, model interface{}) {
+// BuildRouterConfiguration Builds a router configuration.
+func BuildRouterConfiguration(ctx context.Context, configuration *config.Configuration, defaultRouterName string, defaultRuleTpl *template.Template, model interface{}) {
 	logger := log.FromContext(ctx)
 
 	if len(configuration.Routers) == 0 {
@@ -138,7 +140,7 @@ func BuildRouterConfiguration(ctx context.Context, configuration *config.Configu
 			log.FromContext(ctx).Info("Could not create a router for the container: too many services")
 		} else {
 			configuration.Routers = make(map[string]*config.Router)
-			configuration.Routers[name] = &config.Router{}
+			configuration.Routers[defaultRouterName] = &config.Router{}
 		}
 	}
 
@@ -175,7 +177,7 @@ func BuildRouterConfiguration(ctx context.Context, configuration *config.Configu
 	}
 }
 
-// Normalize Replace all special chars with `-`
+// Normalize Replace all special chars with `-`.
 func Normalize(name string) string {
 	fargs := func(c rune) bool {
 		return !unicode.IsLetter(c) && !unicode.IsNumber(c)

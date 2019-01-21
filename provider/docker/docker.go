@@ -31,8 +31,9 @@ import (
 )
 
 const (
-	// SwarmAPIVersion is a constant holding the version of the Provider API traefik will use
-	SwarmAPIVersion     = "1.24"
+	// SwarmAPIVersion is a constant holding the version of the Provider API traefik will use.
+	SwarmAPIVersion = "1.24"
+	// DefaultTemplateRule The default template for the default rule.
 	DefaultTemplateRule = "Host:{{ normalize .Name }}"
 )
 
@@ -52,9 +53,9 @@ type Provider struct {
 	defaultRuleTpl          *template.Template
 }
 
-// Init the provider
+// Init the provider.
 func (p *Provider) Init() error {
-	defaultRuleTpl, err := provider.BuildDefaultRuleTemplate(p.DefaultRule, nil)
+	defaultRuleTpl, err := provider.MakeDefaultRuleTemplate(p.DefaultRule, nil)
 	if err != nil {
 		return fmt.Errorf("error while parsing default rule: %v", err)
 	}
@@ -63,7 +64,7 @@ func (p *Provider) Init() error {
 	return p.BaseProvider.Init()
 }
 
-// dockerData holds the need data to the Provider p
+// dockerData holds the need data to the provider.
 type dockerData struct {
 	ID              string
 	ServiceName     string
@@ -75,14 +76,14 @@ type dockerData struct {
 	ExtraConf       configuration
 }
 
-// NetworkSettings holds the networks data to the Provider p
+// NetworkSettings holds the networks data to the provider.
 type networkSettings struct {
 	NetworkMode dockercontainertypes.NetworkMode
 	Ports       nat.PortMap
 	Networks    map[string]*networkData
 }
 
-// Network holds the network data to the Provider p
+// Network holds the network data to the provider.
 type networkData struct {
 	Name     string
 	Addr     string
@@ -131,8 +132,7 @@ func (p *Provider) createClient() (client.APIClient, error) {
 	return client.NewClient(p.Endpoint, apiVersion, httpClient, httpHeaders)
 }
 
-// Provide allows the docker provider to provide configurations to traefik
-// using the given configuration channel.
+// Provide allows the docker provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.Pool) error {
 	pool.GoCtx(func(routineCtx context.Context) {
 		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, "docker"))
