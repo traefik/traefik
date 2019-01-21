@@ -162,7 +162,7 @@ func BuildRouterConfiguration(ctx context.Context, configuration *config.Configu
 			}
 		}
 
-		if router.Service == "" {
+		if len(router.Service) == 0 {
 			if len(configuration.Services) > 1 {
 				delete(configuration.Routers, routerName)
 				loggerRouter.
