@@ -10,11 +10,9 @@ logLevel = "DEBUG"
 
 [routers]
   [routers.router1]
-      middlewares = ["error"]
-      service = "service1"
-
-  [routers.router1.routes.test_1]
-      rule = "Host:test.local"
+    rule = "Host:test.local"
+    service = "service1"
+    middlewares = ["error"]
 
 [middlewares]
     [middlewares.error.errors]

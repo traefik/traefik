@@ -2,11 +2,13 @@ package docker
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"strconv"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/cenk/backoff"
@@ -29,8 +31,10 @@ import (
 )
 
 const (
-	// SwarmAPIVersion is a constant holding the version of the Provider API traefik will use
+	// SwarmAPIVersion is a constant holding the version of the Provider API traefik will use.
 	SwarmAPIVersion = "1.24"
+	// DefaultTemplateRule The default template for the default rule.
+	DefaultTemplateRule = "Host:{{ normalize .Name }}"
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -39,21 +43,28 @@ var _ provider.Provider = (*Provider)(nil)
 type Provider struct {
 	provider.BaseProvider   `mapstructure:",squash" export:"true"`
 	Endpoint                string           `description:"Docker server endpoint. Can be a tcp or a unix socket endpoint"`
-	Domain                  string           `description:"Default domain used"`
+	DefaultRule             string           `description:"Default rule"`
 	TLS                     *types.ClientTLS `description:"Enable Docker TLS support" export:"true"`
 	ExposedByDefault        bool             `description:"Expose containers by default" export:"true"`
 	UseBindPortIP           bool             `description:"Use the ip address from the bound port, rather than from the inner network" export:"true"`
 	SwarmMode               bool             `description:"Use Docker on Swarm Mode" export:"true"`
 	Network                 string           `description:"Default Docker network used" export:"true"`
 	SwarmModeRefreshSeconds int              `description:"Polling interval for swarm mode (in seconds)" export:"true"`
+	defaultRuleTpl          *template.Template
 }
 
-// Init the provider
+// Init the provider.
 func (p *Provider) Init() error {
+	defaultRuleTpl, err := provider.MakeDefaultRuleTemplate(p.DefaultRule, nil)
+	if err != nil {
+		return fmt.Errorf("error while parsing default rule: %v", err)
+	}
+
+	p.defaultRuleTpl = defaultRuleTpl
 	return p.BaseProvider.Init()
 }
 
-// dockerData holds the need data to the Provider p
+// dockerData holds the need data to the provider.
 type dockerData struct {
 	ID              string
 	ServiceName     string
@@ -65,14 +76,14 @@ type dockerData struct {
 	ExtraConf       configuration
 }
 
-// NetworkSettings holds the networks data to the Provider p
+// NetworkSettings holds the networks data to the provider.
 type networkSettings struct {
 	NetworkMode dockercontainertypes.NetworkMode
 	Ports       nat.PortMap
 	Networks    map[string]*networkData
 }
 
-// Network holds the network data to the Provider p
+// Network holds the network data to the provider.
 type networkData struct {
 	Name     string
 	Addr     string
@@ -121,8 +132,7 @@ func (p *Provider) createClient() (client.APIClient, error) {
 	return client.NewClient(p.Endpoint, apiVersion, httpClient, httpHeaders)
 }
 
-// Provide allows the docker provider to provide configurations to traefik
-// using the given configuration channel.
+// Provide allows the docker provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.Pool) error {
 	pool.GoCtx(func(routineCtx context.Context) {
 		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, "docker"))

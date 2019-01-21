@@ -142,14 +142,13 @@ func (s *BaseSuite) displayTraefikLog(c *check.C, output *bytes.Buffer) {
 	}
 }
 
-func (s *BaseSuite) adaptFileForHost(c *check.C, path string) string {
+func (s *BaseSuite) getDockerHost() string {
 	dockerHost := os.Getenv("DOCKER_HOST")
 	if dockerHost == "" {
 		// Default docker socket
 		dockerHost = "unix:///var/run/docker.sock"
 	}
-	tempObjects := struct{ DockerHost string }{dockerHost}
-	return s.adaptFile(c, path, tempObjects)
+	return dockerHost
 }
 
 func (s *BaseSuite) adaptFile(c *check.C, path string, tempObjects interface{}) string {

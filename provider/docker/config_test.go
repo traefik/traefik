@@ -14,6 +14,304 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestDefaultRule(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		containers  []dockerData
+		defaultRule string
+		expected    *config.Configuration
+	}{
+		{
+			desc: "default rule with no variable",
+			containers: []dockerData{
+				{
+					ServiceName: "Test",
+					Name:        "Test",
+					Labels:      map[string]string{},
+					NetworkSettings: networkSettings{
+						Ports: nat.PortMap{
+							nat.Port("80/tcp"): []nat.PortBinding{},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			defaultRule: "Host:foo.bar",
+			expected: &config.Configuration{
+				Routers: map[string]*config.Router{
+					"Test": {
+						Service: "Test",
+						Rule:    "Host:foo.bar",
+					},
+				},
+				Middlewares: map[string]*config.Middleware{},
+				Services: map[string]*config.Service{
+					"Test": {
+						LoadBalancer: &config.LoadBalancerService{
+							Servers: []config.Server{
+								{
+									URL:    "http://127.0.0.1:80",
+									Weight: 1,
+								},
+							},
+							Method:         "wrr",
+							PassHostHeader: true,
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "default rule with service name",
+			containers: []dockerData{
+				{
+					ServiceName: "Test",
+					Name:        "Test",
+					Labels:      map[string]string{},
+					NetworkSettings: networkSettings{
+						Ports: nat.PortMap{
+							nat.Port("80/tcp"): []nat.PortBinding{},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			defaultRule: "Host:{{ .Name }}.foo.bar",
+			expected: &config.Configuration{
+				Routers: map[string]*config.Router{
+					"Test": {
+						Service: "Test",
+						Rule:    "Host:Test.foo.bar",
+					},
+				},
+				Middlewares: map[string]*config.Middleware{},
+				Services: map[string]*config.Service{
+					"Test": {
+						LoadBalancer: &config.LoadBalancerService{
+							Servers: []config.Server{
+								{
+									URL:    "http://127.0.0.1:80",
+									Weight: 1,
+								},
+							},
+							Method:         "wrr",
+							PassHostHeader: true,
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "default rule with label",
+			containers: []dockerData{
+				{
+					ServiceName: "Test",
+					Name:        "Test",
+					Labels: map[string]string{
+						"traefik.domain": "foo.bar",
+					},
+					NetworkSettings: networkSettings{
+						Ports: nat.PortMap{
+							nat.Port("80/tcp"): []nat.PortBinding{},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			defaultRule: `Host:{{ .Name }}.{{ index .Labels "traefik.domain" }}`,
+			expected: &config.Configuration{
+				Routers: map[string]*config.Router{
+					"Test": {
+						Service: "Test",
+						Rule:    "Host:Test.foo.bar",
+					},
+				},
+				Middlewares: map[string]*config.Middleware{},
+				Services: map[string]*config.Service{
+					"Test": {
+						LoadBalancer: &config.LoadBalancerService{
+							Servers: []config.Server{
+								{
+									URL:    "http://127.0.0.1:80",
+									Weight: 1,
+								},
+							},
+							Method:         "wrr",
+							PassHostHeader: true,
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "invalid rule",
+			containers: []dockerData{
+				{
+					ServiceName: "Test",
+					Name:        "Test",
+					Labels:      map[string]string{},
+					NetworkSettings: networkSettings{
+						Ports: nat.PortMap{
+							nat.Port("80/tcp"): []nat.PortBinding{},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			defaultRule: `Host:{{ .Toto }}`,
+			expected: &config.Configuration{
+				Routers:     map[string]*config.Router{},
+				Middlewares: map[string]*config.Middleware{},
+				Services: map[string]*config.Service{
+					"Test": {
+						LoadBalancer: &config.LoadBalancerService{
+							Servers: []config.Server{
+								{
+									URL:    "http://127.0.0.1:80",
+									Weight: 1,
+								},
+							},
+							Method:         "wrr",
+							PassHostHeader: true,
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "undefined rule",
+			containers: []dockerData{
+				{
+					ServiceName: "Test",
+					Name:        "Test",
+					Labels:      map[string]string{},
+					NetworkSettings: networkSettings{
+						Ports: nat.PortMap{
+							nat.Port("80/tcp"): []nat.PortBinding{},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			defaultRule: ``,
+			expected: &config.Configuration{
+				Routers:     map[string]*config.Router{},
+				Middlewares: map[string]*config.Middleware{},
+				Services: map[string]*config.Service{
+					"Test": {
+						LoadBalancer: &config.LoadBalancerService{
+							Servers: []config.Server{
+								{
+									URL:    "http://127.0.0.1:80",
+									Weight: 1,
+								},
+							},
+							Method:         "wrr",
+							PassHostHeader: true,
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "default template rule",
+			containers: []dockerData{
+				{
+					ServiceName: "Test",
+					Name:        "Test",
+					Labels:      map[string]string{},
+					NetworkSettings: networkSettings{
+						Ports: nat.PortMap{
+							nat.Port("80/tcp"): []nat.PortBinding{},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			defaultRule: DefaultTemplateRule,
+			expected: &config.Configuration{
+				Routers: map[string]*config.Router{
+					"Test": {
+						Service: "Test",
+						Rule:    "Host:Test",
+					},
+				},
+				Middlewares: map[string]*config.Middleware{},
+				Services: map[string]*config.Service{
+					"Test": {
+						LoadBalancer: &config.LoadBalancerService{
+							Servers: []config.Server{
+								{
+									URL:    "http://127.0.0.1:80",
+									Weight: 1,
+								},
+							},
+							Method:         "wrr",
+							PassHostHeader: true,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{
+				ExposedByDefault: true,
+				DefaultRule:      test.defaultRule,
+			}
+
+			err := p.Init()
+			require.NoError(t, err)
+
+			for i := 0; i < len(test.containers); i++ {
+				var err error
+				test.containers[i].ExtraConf, err = p.getConfiguration(test.containers[i])
+				require.NoError(t, err)
+			}
+
+			configuration := p.buildConfiguration(context.Background(), test.containers)
+
+			assert.Equal(t, test.expected, configuration)
+		})
+	}
+}
+
 func Test_buildConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc        string
@@ -1572,52 +1870,6 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "one container with domain label",
-			containers: []dockerData{
-				{
-					ServiceName: "Test",
-					Name:        "Test",
-					Labels: map[string]string{
-						"traefik.domain": "traefik.io",
-					},
-					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
-						},
-						Networks: map[string]*networkData{
-							"bridge": {
-								Name: "bridge",
-								Addr: "127.0.0.1",
-							},
-						},
-					},
-				},
-			},
-			expected: &config.Configuration{
-				Routers: map[string]*config.Router{
-					"Test": {
-						Service: "Test",
-						Rule:    "Host:Test.traefik.io",
-					},
-				},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"Test": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://127.0.0.1:80",
-									Weight: 1,
-								},
-							},
-							Method:         "wrr",
-							PassHostHeader: true,
-						},
-					},
-				},
-			},
-		},
-		{
 			desc: "Middlewares used in router",
 			containers: []dockerData{
 				{
@@ -1683,10 +1935,13 @@ func Test_buildConfiguration(t *testing.T) {
 			t.Parallel()
 
 			p := Provider{
-				Domain:           "traefik.wtf",
 				ExposedByDefault: true,
+				DefaultRule:      "Host:{{ normalize .Name }}.traefik.wtf",
 			}
 			p.Constraints = test.constraints
+
+			err := p.Init()
+			require.NoError(t, err)
 
 			for i := 0; i < len(test.containers); i++ {
 				var err error

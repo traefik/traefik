@@ -17,6 +17,10 @@ func addRoute(ctx context.Context, router *mux.Router, rule string, priority int
 		return err
 	}
 
+	if len(matchers) == 0 {
+		return fmt.Errorf("invalid rule: %s", rule)
+	}
+
 	if priority == 0 {
 		priority = len(rule)
 	}

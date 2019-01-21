@@ -15,7 +15,6 @@ const (
 type configuration struct {
 	Enable bool
 	Tags   []string
-	Domain string
 	Docker specificConfiguration
 }
 
@@ -27,13 +26,12 @@ type specificConfiguration struct {
 func (p *Provider) getConfiguration(container dockerData) (configuration, error) {
 	conf := configuration{
 		Enable: p.ExposedByDefault,
-		Domain: p.Domain,
 		Docker: specificConfiguration{
 			Network: p.Network,
 		},
 	}
 
-	err := label.Decode(container.Labels, &conf, "traefik.docker.", "traefik.domain", "traefik.enable", "traefik.tags")
+	err := label.Decode(container.Labels, &conf, "traefik.docker.", "traefik.enable", "traefik.tags")
 	if err != nil {
 		return configuration{}, err
 	}

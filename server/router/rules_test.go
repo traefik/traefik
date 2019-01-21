@@ -15,16 +15,20 @@ import (
 
 func Test_addRoute(t *testing.T) {
 	testCases := []struct {
-		desc     string
-		rule     string
-		headers  map[string]string
-		expected map[string]int
+		desc          string
+		rule          string
+		headers       map[string]string
+		expected      map[string]int
+		expectedError bool
 	}{
 		{
-			desc: "no rule",
-			expected: map[string]int{
-				"http://localhost/foo": http.StatusOK,
-			},
+			desc:          "no rule",
+			expectedError: true,
+		},
+		{
+			desc:          "Rule with no matcher",
+			rule:          "rulewithnotmatcher",
+			expectedError: true,
 		},
 		{
 			desc: "PathPrefix",
@@ -217,24 +221,27 @@ func Test_addRoute(t *testing.T) {
 			router.SkipClean(true)
 
 			err := addRoute(context.Background(), router, test.rule, 0, handler)
-			require.NoError(t, err)
+			if test.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
 
-			// RequestDecorator is necessary for the host rule
-			reqHost := requestdecorator.New(nil)
+				// RequestDecorator is necessary for the host rule
+				reqHost := requestdecorator.New(nil)
 
-			results := make(map[string]int)
-			for calledURL := range test.expected {
-				w := httptest.NewRecorder()
+				results := make(map[string]int)
+				for calledURL := range test.expected {
+					w := httptest.NewRecorder()
 
-				req := testhelpers.MustNewRequest(http.MethodGet, calledURL, nil)
-				for key, value := range test.headers {
-					req.Header.Set(key, value)
+					req := testhelpers.MustNewRequest(http.MethodGet, calledURL, nil)
+					for key, value := range test.headers {
+						req.Header.Set(key, value)
+					}
+					reqHost.ServeHTTP(w, req, router.ServeHTTP)
+					results[calledURL] = w.Code
 				}
-				reqHost.ServeHTTP(w, req, router.ServeHTTP)
-				results[calledURL] = w.Code
+				assert.Equal(t, test.expected, results)
 			}
-			assert.Equal(t, test.expected, results)
-
 		})
 	}
 }

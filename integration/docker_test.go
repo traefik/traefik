@@ -79,11 +79,19 @@ func (s *DockerSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *DockerSuite) TearDownTest(c *check.C) {
-	s.project.Clean(c, os.Getenv("CIRCLECI") != "")
+	s.project.Clean(c, os.Getenv("CIRCLECI") != "") // FIXME
 }
 
 func (s *DockerSuite) TestSimpleConfiguration(c *check.C) {
-	file := s.adaptFileForHost(c, "fixtures/docker/simple.toml")
+	tempObjects := struct {
+		DockerHost  string
+		DefaultRule string
+	}{
+		DockerHost:  s.getDockerHost(),
+		DefaultRule: "Host:{{ normalize .Name }}.docker.localhost",
+	}
+
+	file := s.adaptFile(c, "fixtures/docker/simple.toml", tempObjects)
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -99,7 +107,15 @@ func (s *DockerSuite) TestSimpleConfiguration(c *check.C) {
 }
 
 func (s *DockerSuite) TestDefaultDockerContainers(c *check.C) {
-	file := s.adaptFileForHost(c, "fixtures/docker/simple.toml")
+	tempObjects := struct {
+		DockerHost  string
+		DefaultRule string
+	}{
+		DockerHost:  s.getDockerHost(),
+		DefaultRule: "Host:{{ normalize .Name }}.docker.localhost",
+	}
+
+	file := s.adaptFile(c, "fixtures/docker/simple.toml", tempObjects)
 	defer os.Remove(file)
 
 	name := s.startContainer(c, "swarm:1.0.0", "manage", "token://blablabla")
@@ -129,7 +145,15 @@ func (s *DockerSuite) TestDefaultDockerContainers(c *check.C) {
 }
 
 func (s *DockerSuite) TestDockerContainersWithLabels(c *check.C) {
-	file := s.adaptFileForHost(c, "fixtures/docker/simple.toml")
+	tempObjects := struct {
+		DockerHost  string
+		DefaultRule string
+	}{
+		DockerHost:  s.getDockerHost(),
+		DefaultRule: "Host:{{ normalize .Name }}.docker.localhost",
+	}
+
+	file := s.adaptFile(c, "fixtures/docker/simple.toml", tempObjects)
 	defer os.Remove(file)
 
 	// Start a container with some labels
@@ -177,7 +201,15 @@ func (s *DockerSuite) TestDockerContainersWithLabels(c *check.C) {
 }
 
 func (s *DockerSuite) TestDockerContainersWithOneMissingLabels(c *check.C) {
-	file := s.adaptFileForHost(c, "fixtures/docker/simple.toml")
+	tempObjects := struct {
+		DockerHost  string
+		DefaultRule string
+	}{
+		DockerHost:  s.getDockerHost(),
+		DefaultRule: "Host:{{ normalize .Name }}.docker.localhost",
+	}
+
+	file := s.adaptFile(c, "fixtures/docker/simple.toml", tempObjects)
 	defer os.Remove(file)
 
 	// Start a container with some labels
@@ -199,13 +231,21 @@ func (s *DockerSuite) TestDockerContainersWithOneMissingLabels(c *check.C) {
 
 	// FIXME Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
 	// TODO validate : run on 80
-	// Expected a 404 as we did not comfigure anything
+	// Expected a 404 as we did not configure anything
 	err = try.Request(req, 1500*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
 }
 
 func (s *DockerSuite) TestRestartDockerContainers(c *check.C) {
-	file := s.adaptFileForHost(c, "fixtures/docker/simple.toml")
+	tempObjects := struct {
+		DockerHost  string
+		DefaultRule string
+	}{
+		DockerHost:  s.getDockerHost(),
+		DefaultRule: "Host:{{ normalize .Name }}.docker.localhost",
+	}
+
+	file := s.adaptFile(c, "fixtures/docker/simple.toml", tempObjects)
 	defer os.Remove(file)
 
 	// Start a container with some labels

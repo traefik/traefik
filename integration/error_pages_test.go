@@ -26,7 +26,6 @@ func (s *ErrorPagesSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *ErrorPagesSuite) TestSimpleConfiguration(c *check.C) {
-
 	file := s.adaptFile(c, "fixtures/error_pages/simple.toml", struct {
 		Server1 string
 		Server2 string

@@ -10,7 +10,7 @@ logLevel = "DEBUG"
 [providers]
    [providers.docker]
       exposedByDefault = false
-      domain = "docker.local"
+      defaultRule = "{{ normalize .Name }}.docker.local"
       watch = true
 
 [hostResolver]

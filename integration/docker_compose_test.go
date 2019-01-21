@@ -40,7 +40,14 @@ func (s *DockerComposeSuite) TestComposeScale(c *check.C) {
 
 	s.composeProject.Scale(c, composeService, serviceCount)
 
-	file := s.adaptFileForHost(c, "fixtures/docker/minimal.toml")
+	tempObjects := struct {
+		DockerHost  string
+		DefaultRule string
+	}{
+		DockerHost:  s.getDockerHost(),
+		DefaultRule: "Host:{{ normalize .Name }}.docker.localhost",
+	}
+	file := s.adaptFile(c, "fixtures/docker/minimal.toml", tempObjects)
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
