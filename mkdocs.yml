@@ -17,10 +17,13 @@ theme:
   favicon: img/traefik.icon.png
   logo: img/traefik.logo.png
   palette:
-    primary: 'cyan'
-    accent: 'cyan'
+    primary: 'blue'
+    accent: 'light blue'
   feature:
     tabs: false
+  palette:
+    primary: 'cyan'
+    accent: 'cyan'
   i18n:
     prev: 'Previous'
     next: 'Next'
@@ -40,9 +43,9 @@ google_analytics:
 #    - type: 'stack-overflow'
 #      link: 'https://stackoverflow.com/questions/tagged/traefik'
 #    - type: 'slack'
-#      link: 'https://slack.traefik.io'
+#      link: 'https://traefik.herokuapp.com'
 #    - type: 'twitter'
-#      link: 'https://twitter.com/traefik'
+#      link: 'https://twitter.com/traefikproxy'
 
 extra_css:
   - theme/styles/extra.css
@@ -53,47 +56,74 @@ extra_javascript:
   - theme/js/extra.js
 
 markdown_extensions:
+  - attr_list
   - admonition
+  - codehilite
+  - footnotes
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.smartsymbols
+  - pymdownx.tasklist
+  - markdown_include.include:
+      base_path: /mkdocs/docs/includes/
+      encoding: utf-8
   - toc:
       permalink: true
 
 # Page tree
-pages:
-  - Getting Started: index.md
-  - Basics: basics.md
-  - Configuration:
-    - 'Commons': 'configuration/commons.md'
-    - 'Logs': 'configuration/logs.md'
-    - 'EntryPoints': 'configuration/entrypoints.md'
-    - 'Let''s Encrypt': 'configuration/acme.md'
-    - 'API / Dashboard': 'configuration/api.md'
-    - 'BoltDB': 'configuration/backends/boltdb.md'
-    - 'Consul': 'configuration/backends/consul.md'
-    - 'Consul Catalog': 'configuration/backends/consulcatalog.md'
-    - 'Docker': 'configuration/backends/docker.md'
-    - 'DynamoDB': 'configuration/backends/dynamodb.md'
-    - 'ECS': 'configuration/backends/ecs.md'
-    - 'Etcd': 'configuration/backends/etcd.md'
-    - 'Eureka': 'configuration/backends/eureka.md'
-    - 'File': 'configuration/backends/file.md'
-    - 'Kubernetes Ingress': 'configuration/backends/kubernetes.md'
-    - 'Marathon': 'configuration/backends/marathon.md'
-    - 'Mesos': 'configuration/backends/mesos.md'
-    - 'Rancher': 'configuration/backends/rancher.md'
-    - 'Rest': 'configuration/backends/rest.md'
-    - 'Azure Service Fabric': 'configuration/backends/servicefabric.md'
-    - 'Zookeeper': 'configuration/backends/zookeeper.md'
-    - 'Ping': 'configuration/ping.md'
-    - 'Metrics': 'configuration/metrics.md'
-    - 'Tracing': 'configuration/tracing.md'
-  - User Guides:
-    - 'Configuration Examples': 'user-guide/examples.md'
-    - 'Swarm Mode Cluster': 'user-guide/swarm-mode.md'
-    - 'Swarm Cluster': 'user-guide/swarm.md'
-    - 'Let''s Encrypt & Docker': 'user-guide/docker-and-lets-encrypt.md'
-    - 'Kubernetes': 'user-guide/kubernetes.md'
-    - 'Marathon': 'user-guide/marathon.md'
-    - 'Key-value Store Configuration': 'user-guide/kv-config.md'
-    - 'Clustering/HA': 'user-guide/cluster.md'
-    - 'gRPC Example': 'user-guide/grpc.md'
-    - 'Traefik cluster example with Swarm': 'user-guide/cluster-docker-consul.md'
+nav:
+  - 'Welcome': 'index.md'
+  - 'Getting Started':
+      - 'Concepts' : 'getting-started/concepts.md'
+      - 'Quick Start': 'getting-started/quick-start.md'
+      - 'Configuration Overview': 'getting-started/configuration-overview.md'
+  - 'Providers':
+      - 'Overview': 'providers/overview.md'
+      - 'Docker': 'providers/docker.md'
+      - 'File': 'providers/file.md'
+  - 'Routing & Load Balancing':
+      - 'Overview': 'routing/overview.md'
+      - 'Entrypoints': 'routing/entrypoints.md'
+      - 'Routers': 'routing/routers.md'
+      - 'Services': 'routing/services.md'
+  - 'Middlewares':
+      - 'Overview': 'routing/middleware/overview.md'
+      - 'AddPrefix': 'routing/middleware/addprefix.md'
+      - 'BasicAuth': 'routing/middleware/basicauth.md'
+      - 'Buffering': 'routing/middleware/buffering.md'
+      - 'Chain': 'routing/middleware/chain.md'
+      - 'CircuitBreaker': 'routing/middleware/circuitbreaker.md'
+      - 'Compress': 'routing/middleware/compress.md'
+      - 'DigestAuth': 'routing/middleware/digestauth.md'
+      - 'Errors': 'routing/middleware/errorpages.md'
+      - 'ForwardAuth': 'routing/middleware/forwardauth.md'
+      - 'Headers': 'routing/middleware/headers.md'
+      - 'IpWhitelist': 'routing/middleware/ipwhitelist.md'
+      - 'Maxconn': 'routing/middleware/maxconnection.md'
+      - 'PassTLSClientCert': 'routing/middleware/passtlsclientcert.md'
+      - 'RateLimit': 'routing/middleware/ratelimit.md'
+      - 'RegexRedirect': 'routing/middleware/regexredirect.md'
+      - 'ReplacePath': 'routing/middleware/replacepath.md'
+      - 'ReplacePathRegex': 'routing/middleware/replacepathregex.md'
+      - 'Retry': 'routing/middleware/retry.md'
+      - 'SchemeRedirect': 'routing/middleware/schemeredirect.md'
+      - 'StripPrefix': 'routing/middleware/stripprefix.md'
+      - 'StripPrefixRegex': 'routing/middleware/stripprefixregex.md'
+  - 'Features':
+      - 'Dashboard' : 'features/dashboard.md'
+      - 'Logs': 'features/logs.md'
+      - 'ACME': 'features/acme.md'
+      - 'Tracing': 'features/tracing.md'
+      - 'Debug Mode': 'features/debug-mode.md'
+      - 'Ping': 'features/ping.md'
+      - 'CLI': 'features/cli.md'
+      - 'Data Collection': 'features/data-collection.md'
+  - 'Contributing':
+      - 'Thank You!': 'contributing/thank-you.md'
+      - 'Submitting Issues': 'contributing/submitting-issues.md'
+      - 'Submitting PRs': 'contributing/submitting-pull-requests.md'
+      - 'Building and Testing': 'contributing/building-testing.md'
+      - 'Documentation': 'contributing/documentation.md'
+      - 'Advocating': 'contributing/advocating.md'
+      - 'Wiki': 'contributing/wiki.md'
+  - 'Glossary': 'glossary.md'

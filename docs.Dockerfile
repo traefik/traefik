@@ -6,5 +6,8 @@ COPY requirements.txt /mkdocs/
 WORKDIR /mkdocs
 VOLUME /mkdocs
 
-RUN apk --no-cache --no-progress add py-pip \
-  && pip install --user -r requirements.txt
+RUN apk --update upgrade \
+&& apk --no-cache --no-progress add py-pip \
+&& rm -rf /var/cache/apk/* \
+&& pip install --upgrade pip \
+&& pip install --user -r requirements.txt

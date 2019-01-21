@@ -1,0 +1,20 @@
+.md-logo img {
+    background-color: white;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+}
+
+/* Fix for Chrome */
+.md-typeset__table td code {
+    word-break: unset;
+}
+
+.md-typeset__table tr :nth-child(1) {
+    word-wrap: break-word;
+    max-width: 30em;
+}
+
+p {
+    text-align: justify;
+}
