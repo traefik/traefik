@@ -45,7 +45,7 @@ func (s *DockerComposeSuite) TestComposeScale(c *check.C) {
 		DefaultRule string
 	}{
 		DockerHost:  s.getDockerHost(),
-		DefaultRule: "{{ normalize .Name }}.docker.localhost",
+		DefaultRule: "Host:{{ normalize .Name }}.docker.localhost",
 	}
 	file := s.adaptFile(c, "fixtures/docker/minimal.toml", tempObjects)
 	defer os.Remove(file)
