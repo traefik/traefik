@@ -287,7 +287,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 				}
 
 				var mach *machine
-				if aws.StringValue(task.LaunchType) == ecs.LaunchTypeFargate {
+				if len(task.Attachments) != 0 {
 					var ports []portMapping
 					for _, mapping := range containerDefinition.PortMappings {
 						if mapping != nil {
