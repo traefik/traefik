@@ -242,7 +242,6 @@ func Test_addRoute(t *testing.T) {
 				}
 				assert.Equal(t, test.expected, results)
 			}
-
 		})
 	}
 }
