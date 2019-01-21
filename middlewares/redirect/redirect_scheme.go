@@ -26,7 +26,7 @@ func NewRedirectScheme(ctx context.Context, next http.Handler, conf config.Redir
 	}
 
 	port := ""
-	if (len(conf.Port) > 0) && !((conf.Scheme == "http" && conf.Port == "80") || (conf.Scheme == "https" && conf.Port == "443")) {
+	if len(conf.Port) > 0 && !(conf.Scheme == "http" && conf.Port == "80" || conf.Scheme == "https" && conf.Port == "443") {
 		port = ":" + conf.Port
 	}
 
