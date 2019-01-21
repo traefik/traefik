@@ -9,6 +9,6 @@ logLevel = "DEBUG"
 
 [providers]
    [providers.docker]
-       endpoint = "{{.DockerHost}}"
-       defaultRule = "{{ normalize .Name }}.docker.localhost"
+      endpoint = "{{ .DockerHost }}"
+      defaultRule = "{{ .DefaultRule }}"
        exposedByDefault = true
