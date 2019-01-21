@@ -53,7 +53,7 @@ frontendRedirect:
     - traefik.routers.rt-frontendRedirect.entryPoints=frontendRedirect
     - traefik.routers.rt-frontendRedirect.rule=Path:/test
     - traefik.routers.rt-frontendRedirect.middlewares=redirecthttp
-    - traefik.middlewares.redirecthttp.redirectScheme.scheme=https
+    - traefik.middlewares.redirecthttp.redirectScheme.scheme=http
     - traefik.middlewares.redirecthttp.redirectScheme.port=8000
     - traefik.services.service3.loadbalancer.server.port=80
 rateLimit:
