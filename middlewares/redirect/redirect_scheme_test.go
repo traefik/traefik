@@ -243,7 +243,6 @@ func TestRedirectSchemeHandler(t *testing.T) {
 						location, err := recorder.Result().Location()
 						require.Errorf(t, err, "Location %v", location)
 					}
-
 				}
 			}
 		})
