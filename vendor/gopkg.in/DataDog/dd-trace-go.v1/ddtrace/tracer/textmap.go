@@ -175,11 +175,11 @@ func (p *propagator) extractTextMap(reader TextMapReader) (ddtrace.SpanContext, 
 				return ErrSpanContextCorrupted
 			}
 		case p.cfg.PriorityHeader:
-			ctx.priority, err = strconv.Atoi(v)
+			priority, err := strconv.Atoi(v)
 			if err != nil {
 				return ErrSpanContextCorrupted
 			}
-			ctx.hasPriority = true
+			ctx.setSamplingPriority(priority)
 		default:
 			if strings.HasPrefix(key, p.cfg.BaggagePrefix) {
 				ctx.setBaggageItem(strings.TrimPrefix(key, p.cfg.BaggagePrefix), v)

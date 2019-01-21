@@ -1376,7 +1376,6 @@
   revision = "0c8571ac0ce161a5feb57375a9cdf148c98c0f70"
 
 [[projects]]
-  branch = "master"
   name = "github.com/xenolf/lego"
   packages = [
     "acme",
@@ -1454,7 +1453,8 @@
     "providers/dns/vultr",
     "registration"
   ]
-  revision = "43401f2475dd1f6cc2e220908f0caba246ea854e"
+  revision = "86c9de3db61436d07de2471508067f18c16c1997"
+  version = "v2.0.1"
 
 [[projects]]
   branch = "master"
@@ -1619,8 +1619,8 @@
     "ddtrace/opentracer",
     "ddtrace/tracer"
   ]
-  revision = "48eeff27357376bcb31a15674dc4be9078de88b3"
-  version = "v1.5.0"
+  revision = "7fb2bce4b1ed6ab61f7a9e1be30dea56de19db7c"
+  version = "v1.8.0"
 
 [[projects]]
   name = "gopkg.in/fsnotify.v1"
@@ -1879,6 +1879,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4db3d8feea9f875e0c32ce071e49eceab18a89a3cef3d3b9bea59f2a992b2628"
+  inputs-digest = "781857167b93ec784d40c7c093a46c4d817f2d47b0dbc1f08fe3ec8ffc562cf9"
   solver-name = "gps-cdcl"
   solver-version = 1

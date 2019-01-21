@@ -284,7 +284,7 @@ Here is a list of supported `provider`s, that can automate the DNS verification,
 | [CloudXNS](https://www.cloudxns.net)                   | `cloudxns`     | `CLOUDXNS_API_KEY`, `CLOUDXNS_SECRET_KEY`                                                                                                 | Not tested yet                 |
 | [ConoHa](https://www.conoha.jp)                        | `conoha`       | `CONOHA_TENANT_ID`, `CONOHA_API_USERNAME`, `CONOHA_API_PASSWORD`                                                                          | YES                            |
 | [DigitalOcean](https://www.digitalocean.com)           | `digitalocean` | `DO_AUTH_TOKEN`                                                                                                                           | YES                            |
-| [DNSimple](https://dnsimple.com)                       | `dnsimple`     | `DNSIMPLE_OAUTH_TOKEN`, `DNSIMPLE_BASE_URL`                                                                                               | Not tested yet                 |
+| [DNSimple](https://dnsimple.com)                       | `dnsimple`     | `DNSIMPLE_OAUTH_TOKEN`, `DNSIMPLE_BASE_URL`                                                                                               | YES                            |
 | [DNS Made Easy](https://dnsmadeeasy.com)               | `dnsmadeeasy`  | `DNSMADEEASY_API_KEY`, `DNSMADEEASY_API_SECRET`, `DNSMADEEASY_SANDBOX`                                                                    | Not tested yet                 |
 | [DNSPod](https://www.dnspod.com/)                      | `dnspod`       | `DNSPOD_API_KEY`                                                                                                                          | Not tested yet                 |
 | [DreamHost](https://www.dreamhost.com/)                | `dreamhost`    | `DREAMHOST_API_KEY`                                                                                                                       | YES                            |
@@ -297,7 +297,7 @@ Here is a list of supported `provider`s, that can automate the DNS verification,
 | [Gandi v5](http://doc.livedns.gandi.net)               | `gandiv5`      | `GANDIV5_API_KEY`                                                                                                                         | YES                            |
 | [Glesys](https://glesys.com/)                          | `glesys`       | `GLESYS_API_USER`, `GLESYS_API_KEY`, `GLESYS_DOMAIN`                                                                                      | Not tested yet                 |
 | [GoDaddy](https://godaddy.com/domains)                 | `godaddy`      | `GODADDY_API_KEY`, `GODADDY_API_SECRET`                                                                                                   | Not tested yet                 |
-| [Google Cloud DNS](https://cloud.google.com/dns/docs/) | `gcloud`       | `GCE_PROJECT`, `GCE_SERVICE_ACCOUNT_FILE`                                                                                                 | YES                            |
+| [Google Cloud DNS](https://cloud.google.com/dns/docs/) | `gcloud`       | `GCE_PROJECT`, Application Default Credentials (2) (3), [`GCE_SERVICE_ACCOUNT_FILE`]                                                      | YES                            |
 | [hosting.de](https://www.hosting.de)                   | `hostingde`    | `HOSTINGDE_API_KEY`, `HOSTINGDE_ZONE_NAME`                                                                                                | Not tested yet                 |
 | HTTP request                                           | `httpreq`      | `HTTPREQ_ENDPOINT`, `HTTPREQ_MODE`, `HTTPREQ_USERNAME`, `HTTPREQ_PASSWORD` (1)                                                            | YES                            |
 | [IIJ](https://www.iij.ad.jp/)                          | `iij`          | `IIJ_API_ACCESS_KEY`, `IIJ_API_SECRET_KEY`, `IIJ_DO_SERVICE_CODE`                                                                         | Not tested yet                 |
@@ -327,6 +327,8 @@ Here is a list of supported `provider`s, that can automate the DNS verification,
 | [VULTR](https://www.vultr.com)                         | `vultr`        | `VULTR_API_KEY`                                                                                                                           | Not tested yet                 |
 
 - (1): more information about the HTTP message format can be found [here](https://github.com/xenolf/lego/blob/master/providers/dns/httpreq/readme.md)
+- (2): https://cloud.google.com/docs/authentication/production#providing_credentials_to_your_application
+- (3): https://github.com/golang/oauth2/blob/36a7019397c4c86cf59eeab3bc0d188bac444277/google/default.go#L61-L76
 
 #### `resolvers`
 

@@ -14,7 +14,6 @@ defaultEntryPoints = ["https"]
 [entryPoints]
   [entryPoints.http]
   address = ":80"
-    [entryPoints.http]
 
 [api]
 
