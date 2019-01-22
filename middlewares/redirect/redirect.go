@@ -10,15 +10,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/containous/traefik/config"
-	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/tracing"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/vulcand/oxy/utils"
-)
-
-const (
-	typeName = "Redirect"
 )
 
 type redirect struct {
@@ -30,21 +24,17 @@ type redirect struct {
 	name        string
 }
 
-// New creates a redirect middleware.
-func New(ctx context.Context, next http.Handler, config config.Redirect, name string) (http.Handler, error) {
-	logger := middlewares.GetLogger(ctx, name, typeName)
-	logger.Debug("Creating middleware")
-	logger.Debugf("Setting up redirect %s -> %s", config.Regex, config.Replacement)
-
-	re, err := regexp.Compile(config.Regex)
+// New creates a Redirect middleware.
+func newRedirect(ctx context.Context, next http.Handler, regex string, replacement string, permanent bool, name string) (http.Handler, error) {
+	re, err := regexp.Compile(regex)
 	if err != nil {
 		return nil, err
 	}
 
 	return &redirect{
 		regex:       re,
-		replacement: config.Replacement,
-		permanent:   config.Permanent,
+		replacement: replacement,
+		permanent:   permanent,
 		errHandler:  utils.DefaultHandler,
 		next:        next,
 		name:        name,
@@ -122,11 +112,32 @@ func (m *moveHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 func rawURL(req *http.Request) string {
 	scheme := "http"
+	host := req.Host
+	port := ""
+	uri := req.RequestURI
+
+	schemeRegex := `^(https?):\/\/([\w\._-]+)(:\d+)?(.*)$`
+	re, _ := regexp.Compile(schemeRegex)
+	if re.Match([]byte(req.RequestURI)) {
+		match := re.FindStringSubmatch(req.RequestURI)
+		scheme = match[1]
+
+		if len(match[2]) > 0 {
+			host = match[2]
+		}
+
+		if len(match[3]) > 0 {
+			port = match[3]
+		}
+
+		uri = match[4]
+	}
+
 	if req.TLS != nil || isXForwardedHTTPS(req) {
 		scheme = "https"
 	}
 
-	return strings.Join([]string{scheme, "://", req.Host, req.RequestURI}, "")
+	return strings.Join([]string{scheme, "://", host, port, uri}, "")
 }
 
 func isXForwardedHTTPS(request *http.Request) bool {

@@ -248,11 +248,22 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string, c
 		}
 	}
 
-	// Redirect
-	if config.Redirect != nil {
+	// RedirectRegex
+	if config.RedirectRegex != nil {
 		if middleware == nil {
 			middleware = func(next http.Handler) (http.Handler, error) {
-				return redirect.New(ctx, next, *config.Redirect, middlewareName)
+				return redirect.NewRedirectRegex(ctx, next, *config.RedirectRegex, middlewareName)
+			}
+		} else {
+			return nil, badConf
+		}
+	}
+
+	// RedirectScheme
+	if config.RedirectScheme != nil {
+		if middleware == nil {
+			middleware = func(next http.Handler) (http.Handler, error) {
+				return redirect.NewRedirectScheme(ctx, next, *config.RedirectScheme, middlewareName)
 			}
 		} else {
 			return nil, badConf
