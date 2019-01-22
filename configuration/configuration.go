@@ -235,6 +235,10 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 		} else {
 			gc.Docker.TemplateVersion = 2
 		}
+
+		if gc.Docker.SwarmModeRefreshSeconds <= 0 {
+			gc.Docker.SwarmModeRefreshSeconds = 15
+		}
 	}
 
 	if gc.Marathon != nil {
