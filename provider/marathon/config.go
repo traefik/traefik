@@ -16,13 +16,6 @@ import (
 	"github.com/gambol99/go-marathon"
 )
 
-type appData struct {
-	marathon.Application
-	SegmentLabels map[string]string
-	SegmentName   string
-	LinkedApps    []*appData
-}
-
 func (p *Provider) buildConfiguration(ctx context.Context, applications *marathon.Applications) *config.Configuration {
 	configurations := make(map[string]*config.Configuration)
 
