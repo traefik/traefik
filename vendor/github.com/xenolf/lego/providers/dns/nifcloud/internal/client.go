@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	defaultBaseURL = "https://dns.api.cloud.nifty.com"
+	defaultBaseURL = "https://dns.api.nifcloud.com"
 	apiVersion     = "2012-12-12N2013-12-16"
 	// XMLNs XML NS of Route53
 	XMLNs = "https://route53.amazonaws.com/doc/2012-12-12/"
