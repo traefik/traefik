@@ -1451,10 +1451,11 @@
     "providers/dns/vscale",
     "providers/dns/vscale/internal",
     "providers/dns/vultr",
+    "providers/dns/zoneee",
     "registration"
   ]
-  revision = "86c9de3db61436d07de2471508067f18c16c1997"
-  version = "v2.0.1"
+  revision = "00ad82dec10ad0af1e037ee652ad1f1cc7015178"
+  version = "v2.1.0"
 
 [[projects]]
   branch = "master"

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/decker502/dnspod-go"
+	dnspod "github.com/decker502/dnspod-go"
 	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/platform/config/env"
 )
