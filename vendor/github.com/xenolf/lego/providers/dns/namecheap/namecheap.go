@@ -180,10 +180,12 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 
 	// Find the challenge TXT record and remove it if found.
 	var found bool
-	for i, h := range records {
+	var newRecords []Record
+	for _, h := range records {
 		if h.Name == ch.key && h.Type == "TXT" {
-			records = append(records[:i], records[i+1:]...)
 			found = true
+		} else {
+			newRecords = append(newRecords, h)
 		}
 	}
 
@@ -191,7 +193,7 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 		return nil
 	}
 
-	err = d.setHosts(ch.sld, ch.tld, records)
+	err = d.setHosts(ch.sld, ch.tld, newRecords)
 	if err != nil {
 		return fmt.Errorf("namecheap: %v", err)
 	}

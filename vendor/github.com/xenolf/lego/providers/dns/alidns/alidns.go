@@ -150,7 +150,7 @@ func (d *DNSProvider) getHostedZone(domain string) (string, string, error) {
 
 		domains = append(domains, response.Domains.Domain...)
 
-		if response.PageNumber >= response.PageSize {
+		if response.PageNumber*response.PageSize >= response.TotalCount {
 			break
 		}
 
