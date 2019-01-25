@@ -61,7 +61,7 @@ func NewDNSProvider() (*DNSProvider, error) {
 	}
 
 	// Use default credentials.
-	project := os.Getenv("GCE_PROJECT")
+	project := env.GetOrDefaultString("GCE_PROJECT", "")
 	return NewDNSProviderCredentials(project)
 }
 
@@ -98,7 +98,7 @@ func NewDNSProviderServiceAccount(saFile string) (*DNSProvider, error) {
 
 	// If GCE_PROJECT is non-empty it overrides the project in the service
 	// account file.
-	project := os.Getenv("GCE_PROJECT")
+	project := env.GetOrDefaultString("GCE_PROJECT", "")
 	if project == "" {
 		// read project id from service account file
 		var datJSON struct {

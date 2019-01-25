@@ -1704,7 +1704,7 @@
   revision = "0c8571ac0ce161a5feb57375a9cdf148c98c0f70"
 
 [[projects]]
-  digest = "1:9eab86777ed6cf496e7659b9c67a0b7ebd1d76f55e1771f8bf52fb68f5f2d040"
+  digest = "1:245afb86e7f760a9ccdfaa4ee052f2af723bdfab5fbeb257fc5d3aebf94a0bd2"
   name = "github.com/xenolf/lego"
   packages = [
     "acme",
@@ -1780,11 +1780,12 @@
     "providers/dns/vscale",
     "providers/dns/vscale/internal",
     "providers/dns/vultr",
+    "providers/dns/zoneee",
     "registration",
   ]
   pruneopts = "NUT"
-  revision = "86c9de3db61436d07de2471508067f18c16c1997"
-  version = "v2.0.1"
+  revision = "00ad82dec10ad0af1e037ee652ad1f1cc7015178"
+  version = "v2.1.0"
 
 [[projects]]
   branch = "master"

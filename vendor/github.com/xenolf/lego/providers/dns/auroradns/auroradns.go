@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ldez/go-auroradns"
+	auroradns "github.com/ldez/go-auroradns"
 	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/platform/config/env"
 )

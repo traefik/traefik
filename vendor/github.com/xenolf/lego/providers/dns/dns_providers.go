@@ -54,6 +54,7 @@ import (
 	"github.com/xenolf/lego/providers/dns/vegadns"
 	"github.com/xenolf/lego/providers/dns/vscale"
 	"github.com/xenolf/lego/providers/dns/vultr"
+	"github.com/xenolf/lego/providers/dns/zoneee"
 )
 
 // NewDNSChallengeProviderByName Factory for DNS providers
@@ -159,6 +160,8 @@ func NewDNSChallengeProviderByName(name string) (challenge.Provider, error) {
 		return vultr.NewDNSProvider()
 	case "vscale":
 		return vscale.NewDNSProvider()
+	case "zoneee":
+		return zoneee.NewDNSProvider()
 	default:
 		return nil, fmt.Errorf("unrecognised DNS provider: %s", name)
 	}
