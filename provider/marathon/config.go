@@ -86,7 +86,6 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, app marathon.A
 		defaultServer := config.Server{}
 		defaultServer.SetDefaults()
 
-		// Server dans labels?
 		if len(service.LoadBalancer.Servers) > 0 {
 			defaultServer = service.LoadBalancer.Servers[0]
 		}
