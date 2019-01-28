@@ -2,7 +2,6 @@ package server
 
 import (
 	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -317,51 +316,8 @@ func (s *Server) preLoadConfiguration(configMsg types.ConfigMessage) {
 	}
 
 	if reflect.DeepEqual(currentConfigurations[configMsg.ProviderName], configMsg.Configuration) {
-
-		updateNeeded := false
-		if configMsg.Configuration.TLS != nil && len(configMsg.Configuration.TLS) > 0 {
-
-			log.Debugf("Checking for changes in dynamic TLS certificates")
-			for _, conf := range configMsg.Configuration.TLS {
-				for _, entrypoint := range conf.EntryPoints {
-
-					// Get new certs per entrypoint
-					newCerts := make(map[string]map[string]*tls.Certificate)
-					if err := conf.Certificate.AppendCertificates(newCerts, entrypoint); err != nil {
-						log.Debugf("Error while trying to create configuration for new certs, skipping")
-						continue
-					}
-
-					// Load current Certificates Store
-					currentCerts := &traefiktls.CertificateStore{}
-					if _, ok := s.serverEntryPoints[entrypoint]; ok {
-						currentCerts = s.serverEntryPoints[entrypoint].certs
-					} else {
-						log.Warnf("Cannot load entrypoint configuration from server for entrypoint: %s", entrypoint)
-						break
-					}
-
-					// verify old certificates are still present or update
-					updateNeeded = func() bool {
-						for _, newCert := range newCerts[entrypoint] {
-							if !verifyDynamicCertInStore(newCert, currentCerts) {
-								return true
-							}
-						}
-						return false
-					}()
-
-				}
-				if updateNeeded {
-					log.Infof("Found certificate update, will reload config")
-					break
-				}
-			}
-		}
-		if !updateNeeded {
-			log.Infof("Skipping same configuration for provider %s", configMsg.ProviderName)
-			return
-		}
+		log.Infof("Skipping same configuration for provider %s", configMsg.ProviderName)
+		return
 	}
 
 	providerConfigUpdateCh, ok := s.providerConfigUpdateMap[configMsg.ProviderName]
@@ -696,28 +652,4 @@ func buildHostResolver(globalConfig configuration.GlobalConfiguration) *hostreso
 		}
 	}
 	return nil
-}
-
-func verifyDynamicCertInStore(cert *tls.Certificate, certificateStore *traefiktls.CertificateStore) bool {
-	if certificateStore.DynamicCerts != nil && certificateStore.DynamicCerts.Get() != nil {
-		for _, storeCert := range certificateStore.DynamicCerts.Get().(map[string]*tls.Certificate) {
-
-			x509Curr, err := x509.ParseCertificate(storeCert.Certificate[0])
-			if err != nil {
-				log.Infof("Error reading certificate: %v", err)
-				continue
-			}
-			x509New, err := x509.ParseCertificate(cert.Certificate[0])
-			if err != nil {
-				log.Infof("Error reading certificate: %v", err)
-				continue
-			}
-
-			if x509Curr.Equal(x509New) {
-				log.Debugf("Certificate already present")
-				return true
-			}
-		}
-	}
-	return false
 }
