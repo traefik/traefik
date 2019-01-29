@@ -510,7 +510,7 @@ func TestBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "two apps with same service name and different LB method",
+			desc: "two apps with same service name and different LB methods",
 			applications: withApplications(
 				application(
 					appID("/app"),
@@ -602,7 +602,7 @@ func TestBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "two apps with two different middleware",
+			desc: "two apps with two different middlewares",
 			applications: withApplications(
 				application(
 					appID("/app"),
@@ -657,7 +657,7 @@ func TestBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "two apps with two different router with same name",
+			desc: "two apps with two different routers with same name",
 			applications: withApplications(
 				application(
 					appID("/app"),
@@ -703,7 +703,7 @@ func TestBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "two apps with two identical router with same name",
+			desc: "two apps with two identical routers with same name",
 			applications: withApplications(
 				application(
 					appID("/app"),
@@ -748,7 +748,7 @@ func TestBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "two apps with two identical router with same name",
+			desc: "two apps with two identical routers with same name",
 			applications: withApplications(
 				application(
 					appID("/app"),

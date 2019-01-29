@@ -219,7 +219,7 @@ func processPorts(app marathon.Application, task marathon.Task, serverPort strin
 		}
 
 		if port <= 0 {
-			return 0, fmt.Errorf("explicitly specified port %d must be larger than zero", port)
+			return 0, fmt.Errorf("explicitly specified port %d must be greater than zero", port)
 		} else if port > 0 {
 			return port, nil
 		}
