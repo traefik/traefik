@@ -15,13 +15,13 @@ import (
 	"github.com/containous/traefik/old/provider/etcd"
 	"github.com/containous/traefik/old/provider/eureka"
 	"github.com/containous/traefik/old/provider/kubernetes"
-	"github.com/containous/traefik/old/provider/marathon"
 	"github.com/containous/traefik/old/provider/mesos"
 	"github.com/containous/traefik/old/provider/rancher"
 	"github.com/containous/traefik/old/provider/zk"
 	"github.com/containous/traefik/ping"
 	"github.com/containous/traefik/provider/docker"
 	"github.com/containous/traefik/provider/file"
+	"github.com/containous/traefik/provider/marathon"
 	"github.com/containous/traefik/provider/rest"
 	"github.com/containous/traefik/tracing/datadog"
 	"github.com/containous/traefik/tracing/jaeger"
@@ -170,6 +170,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultMarathon.ResponseHeaderTimeout = parse.Duration(60 * time.Second)
 	defaultMarathon.TLSHandshakeTimeout = parse.Duration(5 * time.Second)
 	defaultMarathon.KeepAlive = parse.Duration(10 * time.Second)
+	defaultMarathon.DefaultRule = marathon.DefaultTemplateRule
 
 	// default Consul
 	var defaultConsul consul.Provider

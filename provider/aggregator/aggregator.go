@@ -27,6 +27,10 @@ func NewProviderAggregator(conf static.Providers) ProviderAggregator {
 		p.quietAddProvider(conf.Docker)
 	}
 
+	if conf.Marathon != nil {
+		p.quietAddProvider(conf.Marathon)
+	}
+
 	if conf.Rest != nil {
 		p.quietAddProvider(conf.Rest)
 	}

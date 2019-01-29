@@ -43,11 +43,7 @@ func init() {
 		// check.Suite(&ConsulSuite{})
 		// check.Suite(&DynamoDBSuite{})
 		// check.Suite(&EurekaSuite{})
-		// check.Suite(&MarathonSuite{})
-		// check.Suite(&MarathonSuite15{})
 		// check.Suite(&MesosSuite{})
-
-		// FIXME use docker
 
 		// FIXME use consulcatalog
 		// check.Suite(&ConstraintSuite{})
@@ -64,6 +60,8 @@ func init() {
 		check.Suite(&HostResolverSuite{})
 		check.Suite(&HTTPSSuite{})
 		check.Suite(&LogRotationSuite{})
+		check.Suite(&MarathonSuite{})
+		check.Suite(&MarathonSuite15{})
 		check.Suite(&RateLimitSuite{})
 		check.Suite(&RestSuite{})
 		check.Suite(&RetrySuite{})
