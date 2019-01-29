@@ -1311,7 +1311,7 @@ func TestGetServer(t *testing.T) {
 				Weight: 1,
 			},
 			expected: expected{
-				error: `unable to process ports for /app taskID: explicitly specified port -6 must be larger than zero`,
+				error: `unable to process ports for /app taskID: explicitly specified port -6 must be greater than zero`,
 			},
 		},
 		{
