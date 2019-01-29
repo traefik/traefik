@@ -213,6 +213,12 @@ func (c *Configuration) SetEffectiveConfiguration(configFile string) {
 		}
 	}
 
+	if c.Providers.Docker != nil {
+		if c.Providers.Docker.SwarmModeRefreshSeconds <= 0 {
+			c.Providers.Docker.SwarmModeRefreshSeconds = 15
+		}
+	}
+
 	if c.Providers.File != nil {
 		c.Providers.File.TraefikFile = configFile
 	}
