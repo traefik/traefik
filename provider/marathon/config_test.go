@@ -1089,7 +1089,7 @@ func TestBuildConfiguration(t *testing.T) {
 		},
 		{
 			desc:        "one app with group as subdomain rule",
-			defaultRule: `Host:{{ .Name | trimPrefix "/" | splitList "/" | strsToItfs | reverse | join "." }}.marathon.localhost`,
+			defaultRule: `Host("{{ .Name | trimPrefix "/" | splitList "/" | strsToItfs | reverse | join "." }}.marathon.localhost")`,
 			applications: withApplications(
 				application(
 					appID("/a/b/app"),
@@ -1100,7 +1100,7 @@ func TestBuildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"a_b_app": {
 						Service: "a_b_app",
-						Rule:    "Host(`app.b.a.marathon.localhost`)",
+						Rule:    `Host("app.b.a.marathon.localhost")`,
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -1127,7 +1127,7 @@ func TestBuildConfiguration(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			defaultRule := DefaultTemplateRule + ".marathon.localhost"
+			defaultRule := "Host(`{{ normalize .Name }}.marathon.localhost`)"
 			if len(test.defaultRule) > 0 {
 				defaultRule = test.defaultRule
 			}
