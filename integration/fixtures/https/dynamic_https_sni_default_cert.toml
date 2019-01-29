@@ -17,10 +17,10 @@ logLevel = "DEBUG"
 [Routers]
   [Routers.router1]
     Service = "service1"
-    Rule = "Host:snitest.com"
+    Rule = "Host(`snitest.com`)"
   [Routers.router2]
     Service = "service1"
-    Rule = "Host:www.snitest.com"
+    Rule = "Host(`www.snitest.com`)"
 
 [Services]
   [Services.service1]

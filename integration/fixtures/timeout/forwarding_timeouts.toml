@@ -23,11 +23,11 @@ logLevel = "DEBUG"
 [Routers]
   [Routers.router1]
     Service = "service1"
-    Rule = "Path:/dialTimeout"
+    Rule = "Path(`/dialTimeout`)"
 
   [Routers.router2]
     Service = "service2"
-    Rule = "Path:/responseHeaderTimeout"
+    Rule = "Path(`/responseHeaderTimeout`)"
 
 [Services]
   [Services.service1]

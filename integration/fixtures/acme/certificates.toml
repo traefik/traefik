@@ -7,7 +7,7 @@
 [routers]
   [routers.test]
   service = "test"
-  rule = "Host:traefik.acme.wtf"
+  rule = "Host(`traefik.acme.wtf`)"
   entryPoints = ["https"]
 
 

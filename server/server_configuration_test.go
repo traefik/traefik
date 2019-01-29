@@ -98,10 +98,10 @@ func TestReuseService(t *testing.T) {
 			th.WithRouters(
 				th.WithRouter("foo",
 					th.WithServiceName("bar"),
-					th.WithRule("Path:/ok")),
+					th.WithRule("Path(`/ok`)")),
 				th.WithRouter("foo2",
 					th.WithEntryPoints("http"),
-					th.WithRule("Path:/unauthorized"),
+					th.WithRule("Path(`/unauthorized`)"),
 					th.WithServiceName("bar"),
 					th.WithRouterMiddlewares("basicauth")),
 			),

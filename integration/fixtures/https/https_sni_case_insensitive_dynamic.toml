@@ -16,10 +16,10 @@ logLevel = "DEBUG"
 [Routers]
   [Routers.router1]
     Service = "service1"
-    rule = "HostRegexp: {subdomain:[a-z1-9-]+}.snitest.com"
+    rule = "HostRegexp(`{subdomain:[a-z1-9-]+}.snitest.com`)"
   [Routers.router2]
     Service = "service1"
-    rule = "HostRegexp: {subdomain:[a-z1-9-]+}.www.snitest.com"
+    rule = "HostRegexp(`{subdomain:[a-z1-9-]+}.www.snitest.com`)"
 
 [Services]
   [Services.service1]

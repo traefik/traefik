@@ -21,7 +21,7 @@ insecureSkipVerify=true
 [Routers]
   [Routers.router1]
     Service = "service1"
-    Rule = "Path:/echo,/ws"
+    Rule = "Path(`/echo`,`/ws`)"
 
 [Services]
   [Services.service1]

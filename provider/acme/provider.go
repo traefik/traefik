@@ -357,9 +357,7 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 				for routerName, route := range config.Routers {
 					logger := log.FromContext(ctx).WithField(log.RouterName, routerName)
 
-					// FIXME use new rule system
-					domainRules := rules.Rules{}
-					domains, err := domainRules.ParseDomains(route.Rule)
+					domains, err := rules.ParseDomains(route.Rule)
 					if err != nil {
 						logger.Errorf("Error parsing domains in provider ACME: %v", err)
 						continue

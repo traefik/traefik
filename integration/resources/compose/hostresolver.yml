@@ -3,4 +3,4 @@ server1:
   labels:
     - traefik.enable=true
     - traefik.services.service1.loadbalancer.server.port=80
-    - traefik.routers.router1.rule=Host:github.com
+    - traefik.routers.router1.rule=Host("github.com")

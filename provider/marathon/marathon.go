@@ -23,7 +23,7 @@ import (
 
 const (
 	// DefaultTemplateRule The default template for the default rule.
-	DefaultTemplateRule   = "Host:{{ normalize .Name }}"
+	DefaultTemplateRule   = "Host(`{{ normalize .Name }}`)"
 	traceMaxScanTokenSize = 1024 * 1024
 	marathonEventIDs      = marathon.EventIDApplications |
 		marathon.EventIDAddHealthCheck |

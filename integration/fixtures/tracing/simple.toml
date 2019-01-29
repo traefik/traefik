@@ -27,15 +27,15 @@ debug = true
   [Routers.router1]
     Service = "service1"
     Middlewares = ["retry", "ratelimit"]
-    Rule = "Path:/ratelimit"
+    Rule = "Path(`/ratelimit`)"
   [Routers.router2]
     Service = "service2"
     Middlewares = ["retry"]
-    Rule = "Path:/retry"
+    Rule = "Path(`/retry`)"
   [Routers.router3]
     Service = "service3"
     Middlewares = ["retry", "basic-auth"]
-    Rule = "Path:/auth"
+    Rule = "Path(`/auth`)"
 
 [Middlewares]
   [Middlewares.retry.retry]

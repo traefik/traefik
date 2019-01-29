@@ -7,8 +7,7 @@ import (
 	"strings"
 
 	"github.com/containous/alice"
-	"github.com/containous/traefik/config/static"
-	"github.com/containous/traefik/old/types"
+	"github.com/containous/traefik/types"
 )
 
 const (
@@ -24,7 +23,7 @@ type RequestDecorator struct {
 }
 
 // New creates a new request host middleware.
-func New(hostResolverConfig *static.HostResolverConfig) *RequestDecorator {
+func New(hostResolverConfig *types.HostResolverConfig) *RequestDecorator {
 	requestDecorator := &RequestDecorator{}
 	if hostResolverConfig != nil {
 		requestDecorator.hostResolver = &Resolver{

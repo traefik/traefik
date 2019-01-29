@@ -108,7 +108,7 @@ func (s *MarathonSuite) TestConfigurationUpdate(c *check.C) {
 		Name("/whoami").
 		CPU(0.1).
 		Memory(32).
-		AddLabel("traefik.Routers.rt.Rule", "PathPrefix:/service")
+		AddLabel("traefik.Routers.rt.Rule", "PathPrefix(`/service`)")
 	app.Container.Docker.Bridged().
 		Expose(80).
 		Container("containous/whoami")
@@ -125,7 +125,7 @@ func (s *MarathonSuite) TestConfigurationUpdate(c *check.C) {
 		Name("/whoami").
 		CPU(0.1).
 		Memory(32).
-		AddLabel("traefik.Routers.app.Rule", "PathPrefix:/app")
+		AddLabel("traefik.Routers.app.Rule", "PathPrefix(`/app`)")
 	app.Container.Docker.Bridged().
 		Expose(80).
 		Container("containous/whoami")

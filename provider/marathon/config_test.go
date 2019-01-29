@@ -48,7 +48,7 @@ func TestBuildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"app": {
 						Service: "app",
-						Rule:    "Host:app.marathon.localhost",
+						Rule:    "Host(`app.marathon.localhost`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -92,7 +92,7 @@ func TestBuildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"app": {
 						Service: "app",
-						Rule:    "Host:app.marathon.localhost",
+						Rule:    "Host(`app.marathon.localhost`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -124,7 +124,7 @@ func TestBuildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"app": {
 						Service:     "app",
-						Rule:        "Host:app.marathon.localhost",
+						Rule:        "Host(`app.marathon.localhost`)",
 						Middlewares: []string{"Middleware1"},
 					},
 				},
@@ -160,21 +160,21 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(8080))),
 
 					withLabel("traefik.services.Service1.LoadBalancer.server.port", "index:0"),
-					withLabel("traefik.routers.Router1.rule", "Host:app.marathon.localhost"),
+					withLabel("traefik.routers.Router1.rule", "Host(`app.marathon.localhost`)"),
 				),
 				application(
 					appID("/foo-v001"),
 					withTasks(localhostTask(taskPorts(8081))),
 
 					withLabel("traefik.services.Service1.LoadBalancer.server.port", "index:0"),
-					withLabel("traefik.routers.Router1.rule", "Host:app.marathon.localhost"),
+					withLabel("traefik.routers.Router1.rule", "Host(`app.marathon.localhost`)"),
 				),
 			),
 			expected: &config.Configuration{
 				Routers: map[string]*config.Router{
 					"Router1": {
 						Service: "Service1",
-						Rule:    "Host:app.marathon.localhost",
+						Rule:    "Host(`app.marathon.localhost`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -205,7 +205,7 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(8081))),
 
 					withLabel("traefik.services.Service1.LoadBalancer.server.port", "index:0"),
-					withLabel("traefik.routers.Router1.rule", "Host:app.marathon.localhost"),
+					withLabel("traefik.routers.Router1.rule", "Host(`app.marathon.localhost`)"),
 				),
 				application(
 					appID("/foo-v001"),
@@ -213,14 +213,14 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(8083))),
 
 					withLabel("traefik.services.Service1.LoadBalancer.server.port", "index:0"),
-					withLabel("traefik.routers.Router1.rule", "Host:app.marathon.localhost"),
+					withLabel("traefik.routers.Router1.rule", "Host(`app.marathon.localhost`)"),
 				),
 			),
 			expected: &config.Configuration{
 				Routers: map[string]*config.Router{
 					"Router1": {
 						Service: "Service1",
-						Rule:    "Host:app.marathon.localhost",
+						Rule:    "Host(`app.marathon.localhost`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -266,11 +266,11 @@ func TestBuildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"foo": {
 						Service: "foo",
-						Rule:    "Host:foo.marathon.localhost",
+						Rule:    "Host(`foo.marathon.localhost`)",
 					},
 					"bar": {
 						Service: "bar",
-						Rule:    "Host:bar.marathon.localhost",
+						Rule:    "Host(`bar.marathon.localhost`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -310,7 +310,7 @@ func TestBuildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"app": {
 						Service: "app",
-						Rule:    "Host:app.marathon.localhost",
+						Rule:    "Host(`app.marathon.localhost`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -347,7 +347,7 @@ func TestBuildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"app": {
 						Service: "Service1",
-						Rule:    "Host:app.marathon.localhost",
+						Rule:    "Host(`app.marathon.localhost`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -373,14 +373,14 @@ func TestBuildConfiguration(t *testing.T) {
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
 					withLabel("traefik.services.Service1.loadbalancer.method", "wrr"),
-					withLabel("traefik.routers.Router1.rule", "Host:foo.com"),
+					withLabel("traefik.routers.Router1.rule", "Host(`foo.com`)"),
 					withLabel("traefik.routers.Router1.service", "Service1"),
 				)),
 			expected: &config.Configuration{
 				Routers: map[string]*config.Router{
 					"Router1": {
 						Service: "Service1",
-						Rule:    "Host:foo.com",
+						Rule:    "Host(`foo.com`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -407,7 +407,7 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/app"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.routers.Router1.rule", "Host:foo.com"),
+					withLabel("traefik.routers.Router1.rule", "Host(`foo.com`)"),
 				)),
 			expected: &config.Configuration{
 				Middlewares: map[string]*config.Middleware{},
@@ -428,7 +428,7 @@ func TestBuildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"Router1": {
 						Service: "app",
-						Rule:    "Host:foo.com",
+						Rule:    "Host(`foo.com`)",
 					},
 				},
 			},
@@ -440,14 +440,14 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/app"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.routers.Router1.rule", "Host:foo.com"),
+					withLabel("traefik.routers.Router1.rule", "Host(`foo.com`)"),
 					withLabel("traefik.services.Service1.loadbalancer.method", "wrr"),
 				)),
 			expected: &config.Configuration{
 				Routers: map[string]*config.Router{
 					"Router1": {
 						Service: "Service1",
-						Rule:    "Host:foo.com",
+						Rule:    "Host(`foo.com`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -474,7 +474,7 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/app"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.routers.Router1.rule", "Host:foo.com"),
+					withLabel("traefik.routers.Router1.rule", "Host(`foo.com`)"),
 					withLabel("traefik.services.Service1.loadbalancer.method", "wrr"),
 					withLabel("traefik.services.Service2.loadbalancer.method", "wrr"),
 				)),
@@ -528,11 +528,11 @@ func TestBuildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"app": {
 						Service: "Service1",
-						Rule:    "Host:app.marathon.localhost",
+						Rule:    "Host(`app.marathon.localhost`)",
 					},
 					"app2": {
 						Service: "Service1",
-						Rule:    "Host:app2.marathon.localhost",
+						Rule:    "Host(`app2.marathon.localhost`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -558,11 +558,11 @@ func TestBuildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"app": {
 						Service: "app",
-						Rule:    "Host:app.marathon.localhost",
+						Rule:    "Host(`app.marathon.localhost`)",
 					},
 					"app2": {
 						Service: "app2",
-						Rule:    "Host:app2.marathon.localhost",
+						Rule:    "Host(`app2.marathon.localhost`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{
@@ -620,11 +620,11 @@ func TestBuildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"app": {
 						Service: "app",
-						Rule:    "Host:app.marathon.localhost",
+						Rule:    "Host(`app.marathon.localhost`)",
 					},
 					"app2": {
 						Service: "app2",
-						Rule:    "Host:app2.marathon.localhost",
+						Rule:    "Host(`app2.marathon.localhost`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -663,13 +663,13 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/app"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.routers.Router1.rule", "Host:foo.com"),
+					withLabel("traefik.routers.Router1.rule", "Host(`foo.com`)"),
 				),
 				application(
 					appID("/app2"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.routers.Router1.rule", "Host:bar.com"),
+					withLabel("traefik.routers.Router1.rule", "Host(`bar.com`)"),
 				)),
 			expected: &config.Configuration{
 				Routers:     map[string]*config.Router{},
@@ -709,21 +709,21 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/app"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.routers.Router1.rule", "Host:foo.com"),
+					withLabel("traefik.routers.Router1.rule", "Host(`foo.com`)"),
 					withLabel("traefik.services.Service1.LoadBalancer.method", "wrr"),
 				),
 				application(
 					appID("/app2"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.routers.Router1.rule", "Host:foo.com"),
+					withLabel("traefik.routers.Router1.rule", "Host(`foo.com`)"),
 					withLabel("traefik.services.Service1.LoadBalancer.method", "wrr"),
 				)),
 			expected: &config.Configuration{
 				Routers: map[string]*config.Router{
 					"Router1": {
 						Service: "Service1",
-						Rule:    "Host:foo.com",
+						Rule:    "Host(`foo.com`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -754,13 +754,13 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/app"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.routers.Router1.rule", "Host:foo.com"),
+					withLabel("traefik.routers.Router1.rule", "Host(`foo.com`)"),
 				),
 				application(
 					appID("/app2"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.routers.Router1.rule", "Host:foo.com"),
+					withLabel("traefik.routers.Router1.rule", "Host(`foo.com`)"),
 				)),
 			expected: &config.Configuration{
 				Routers:     map[string]*config.Router{},
@@ -806,7 +806,7 @@ func TestBuildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"app": {
 						Service: "app",
-						Rule:    "Host:app.marathon.localhost",
+						Rule:    "Host(`app.marathon.localhost`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -840,7 +840,7 @@ func TestBuildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"app": {
 						Service: "Service1",
-						Rule:    "Host:app.marathon.localhost",
+						Rule:    "Host(`app.marathon.localhost`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -1026,7 +1026,7 @@ func TestBuildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"app": {
 						Service: "app",
-						Rule:    "Host:app.marathon.localhost",
+						Rule:    "Host(`app.marathon.localhost`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -1067,7 +1067,7 @@ func TestBuildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"app": {
 						Service: "app",
-						Rule:    "Host:app.marathon.localhost",
+						Rule:    "Host(`app.marathon.localhost`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -1100,7 +1100,7 @@ func TestBuildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"a_b_app": {
 						Service: "a_b_app",
-						Rule:    "Host:app.b.a.marathon.localhost",
+						Rule:    "Host(`app.b.a.marathon.localhost`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},

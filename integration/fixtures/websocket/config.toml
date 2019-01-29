@@ -13,7 +13,7 @@ logLevel = "DEBUG"
 [Routers]
   [Routers.router1]
     Service = "service1"
-    Rule = "PathPrefix:/ws"
+    Rule = "PathPrefix(`/ws`)"
 
 [Services]
   [Services.service1]

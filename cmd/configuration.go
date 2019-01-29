@@ -144,7 +144,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		},
 	}
 
-	defaultResolver := static.HostResolverConfig{
+	defaultResolver := types.HostResolverConfig{
 		CnameFlattening: false,
 		ResolvConfig:    "/etc/resolv.conf",
 		ResolvDepth:     5,

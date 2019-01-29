@@ -34,7 +34,7 @@ entryPoint = "api"
 [Routers]
   [Routers.router1]
     Service = "service1"
-    Rule = "Path: /test1"
+    Rule = "Path(`/test1`)"
 
 [Services]
   [Services.service1]

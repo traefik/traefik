@@ -88,7 +88,7 @@ func (s *DockerSuite) TestSimpleConfiguration(c *check.C) {
 		DefaultRule string
 	}{
 		DockerHost:  s.getDockerHost(),
-		DefaultRule: "Host:{{ normalize .Name }}.docker.localhost",
+		DefaultRule: "Host(`{{ normalize .Name }}.docker.localhost`)",
 	}
 
 	file := s.adaptFile(c, "fixtures/docker/simple.toml", tempObjects)
@@ -112,7 +112,7 @@ func (s *DockerSuite) TestDefaultDockerContainers(c *check.C) {
 		DefaultRule string
 	}{
 		DockerHost:  s.getDockerHost(),
-		DefaultRule: "Host:{{ normalize .Name }}.docker.localhost",
+		DefaultRule: "Host(`{{ normalize .Name }}.docker.localhost`)",
 	}
 
 	file := s.adaptFile(c, "fixtures/docker/simple.toml", tempObjects)
@@ -150,7 +150,7 @@ func (s *DockerSuite) TestDockerContainersWithLabels(c *check.C) {
 		DefaultRule string
 	}{
 		DockerHost:  s.getDockerHost(),
-		DefaultRule: "Host:{{ normalize .Name }}.docker.localhost",
+		DefaultRule: "Host(`{{ normalize .Name }}.docker.localhost`)",
 	}
 
 	file := s.adaptFile(c, "fixtures/docker/simple.toml", tempObjects)
@@ -158,13 +158,13 @@ func (s *DockerSuite) TestDockerContainersWithLabels(c *check.C) {
 
 	// Start a container with some labels
 	labels := map[string]string{
-		"traefik.Routers.Super.Rule": "Host:my.super.host",
+		"traefik.Routers.Super.Rule": "Host(`my.super.host`)",
 	}
 	s.startContainerWithLabels(c, "swarm:1.0.0", labels, "manage", "token://blabla")
 
 	// Start another container by replacing a '.' by a '-'
 	labels = map[string]string{
-		"traefik.Routers.SuperHost.Rule": "Host:my-super.host",
+		"traefik.Routers.SuperHost.Rule": "Host(`my-super.host`)",
 	}
 	s.startContainerWithLabels(c, "swarm:1.0.0", labels, "manage", "token://blablabla")
 
@@ -206,7 +206,7 @@ func (s *DockerSuite) TestDockerContainersWithOneMissingLabels(c *check.C) {
 		DefaultRule string
 	}{
 		DockerHost:  s.getDockerHost(),
-		DefaultRule: "Host:{{ normalize .Name }}.docker.localhost",
+		DefaultRule: "Host(`{{ normalize .Name }}.docker.localhost`)",
 	}
 
 	file := s.adaptFile(c, "fixtures/docker/simple.toml", tempObjects)
@@ -242,7 +242,7 @@ func (s *DockerSuite) TestRestartDockerContainers(c *check.C) {
 		DefaultRule string
 	}{
 		DockerHost:  s.getDockerHost(),
-		DefaultRule: "Host:{{ normalize .Name }}.docker.localhost",
+		DefaultRule: "Host(`{{ normalize .Name }}.docker.localhost`)",
 	}
 
 	file := s.adaptFile(c, "fixtures/docker/simple.toml", tempObjects)
@@ -250,7 +250,7 @@ func (s *DockerSuite) TestRestartDockerContainers(c *check.C) {
 
 	// Start a container with some labels
 	labels := map[string]string{
-		"traefik.Routers.Super.Rule":                       "Host:my.super.host",
+		"traefik.Routers.Super.Rule":                       "Host(`my.super.host`)",
 		"traefik.Services.powpow.LoadBalancer.server.Port": "2375",
 	}
 	s.startContainerWithNameAndLabels(c, "powpow", "swarm:1.0.0", labels, "manage", "token://blabla")

@@ -40,7 +40,7 @@ func TestRouterManager_Get(t *testing.T) {
 				"foo": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
-					Rule:        "Host:foo.bar",
+					Rule:        "Host(`foo.bar`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{
@@ -65,7 +65,7 @@ func TestRouterManager_Get(t *testing.T) {
 				"foo": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
-					Rule:        "Host:foo.bar",
+					Rule:        "Host(`foo.bar`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{
@@ -79,7 +79,7 @@ func TestRouterManager_Get(t *testing.T) {
 			routersConfig: map[string]*config.Router{
 				"foo": {
 					Service: "foo-service",
-					Rule:    "Host:foo.bar",
+					Rule:    "Host(`foo.bar`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{
@@ -104,7 +104,7 @@ func TestRouterManager_Get(t *testing.T) {
 				"foo": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
-					Rule:        "Host:bar.bar",
+					Rule:        "Host(`bar.bar`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{
@@ -130,7 +130,7 @@ func TestRouterManager_Get(t *testing.T) {
 					EntryPoints: []string{"web"},
 					Middlewares: []string{"headers-middle", "auth-middle"},
 					Service:     "foo-service",
-					Rule:        "Host:foo.bar",
+					Rule:        "Host(`foo.bar`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{
@@ -173,7 +173,7 @@ func TestRouterManager_Get(t *testing.T) {
 					EntryPoints: []string{"web"},
 					Middlewares: []string{"auth-middle", "headers-middle"},
 					Service:     "foo-service",
-					Rule:        "Host:foo.bar",
+					Rule:        "Host(`foo.bar`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{
@@ -215,7 +215,7 @@ func TestRouterManager_Get(t *testing.T) {
 				"provider-1.foo": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
-					Rule:        "Host:foo.bar",
+					Rule:        "Host(`foo.bar`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{
@@ -240,7 +240,7 @@ func TestRouterManager_Get(t *testing.T) {
 				"provider-1.foo": {
 					EntryPoints: []string{"web"},
 					Service:     "provider-2.foo-service",
-					Rule:        "Host:foo.bar",
+					Rule:        "Host(`foo.bar`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{
@@ -266,7 +266,7 @@ func TestRouterManager_Get(t *testing.T) {
 					EntryPoints: []string{"web"},
 					Middlewares: []string{"provider-2.chain-middle", "headers-middle"},
 					Service:     "foo-service",
-					Rule:        "Host:foo.bar",
+					Rule:        "Host(`foo.bar`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{
@@ -353,12 +353,12 @@ func TestAccessLog(t *testing.T) {
 				"foo": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
-					Rule:        "Host:foo.bar",
+					Rule:        "Host(`foo.bar`)",
 				},
 				"bar": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
-					Rule:        "Host:bar.foo",
+					Rule:        "Host(`bar.foo`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{
@@ -383,12 +383,12 @@ func TestAccessLog(t *testing.T) {
 				"foo": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
-					Rule:        "Host:bar.foo",
+					Rule:        "Host(`bar.foo`)",
 				},
 				"bar": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
-					Rule:        "Host:foo.bar",
+					Rule:        "Host(`foo.bar`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{

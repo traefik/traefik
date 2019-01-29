@@ -19,7 +19,7 @@ logLevel = "DEBUG"
 [Routers]
   [Routers.router1]
     Service = "service1"
-    Rule = "Host:snitest.com"
+    Rule = "Host(`snitest.com`)"
 
 [Services]
   [Services.service1]

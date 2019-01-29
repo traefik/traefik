@@ -34,7 +34,7 @@ const (
 	// SwarmAPIVersion is a constant holding the version of the Provider API traefik will use.
 	SwarmAPIVersion = "1.24"
 	// DefaultTemplateRule The default template for the default rule.
-	DefaultTemplateRule = "Host:{{ normalize .Name }}"
+	DefaultTemplateRule = "Host(`{{ normalize .Name }}`)"
 )
 
 var _ provider.Provider = (*Provider)(nil)

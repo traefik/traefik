@@ -41,12 +41,12 @@ func TestDefaultRule(t *testing.T) {
 					},
 				},
 			},
-			defaultRule: "Host:foo.bar",
+			defaultRule: "Host(`foo.bar`)",
 			expected: &config.Configuration{
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Test",
-						Rule:    "Host:foo.bar",
+						Rule:    "Host(`foo.bar`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -86,12 +86,12 @@ func TestDefaultRule(t *testing.T) {
 					},
 				},
 			},
-			defaultRule: "Host:{{ .Name }}.foo.bar",
+			defaultRule: "Host(`{{ .Name }}.foo.bar`)",
 			expected: &config.Configuration{
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Test",
-						Rule:    "Host:Test.foo.bar",
+						Rule:    "Host(`Test.foo.bar`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -133,12 +133,12 @@ func TestDefaultRule(t *testing.T) {
 					},
 				},
 			},
-			defaultRule: `Host:{{ .Name }}.{{ index .Labels "traefik.domain" }}`,
+			defaultRule: `Host("{{ .Name }}.{{ index .Labels "traefik.domain" }}")`,
 			expected: &config.Configuration{
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Test",
-						Rule:    "Host:Test.foo.bar",
+						Rule:    `Host("Test.foo.bar")`,
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -178,7 +178,7 @@ func TestDefaultRule(t *testing.T) {
 					},
 				},
 			},
-			defaultRule: `Host:{{ .Toto }}`,
+			defaultRule: `Host("{{ .Toto }}")`,
 			expected: &config.Configuration{
 				Routers:     map[string]*config.Router{},
 				Middlewares: map[string]*config.Middleware{},
@@ -263,7 +263,7 @@ func TestDefaultRule(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Test",
-						Rule:    "Host:Test",
+						Rule:    "Host(`Test`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -343,7 +343,7 @@ func Test_buildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Test",
-						Rule:    "Host:Test.traefik.wtf",
+						Rule:    "Host(`Test.traefik.wtf`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -403,11 +403,11 @@ func Test_buildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Test",
-						Rule:    "Host:Test.traefik.wtf",
+						Rule:    "Host(`Test.traefik.wtf`)",
 					},
 					"Test2": {
 						Service: "Test2",
-						Rule:    "Host:Test2.traefik.wtf",
+						Rule:    "Host(`Test2.traefik.wtf`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -481,7 +481,7 @@ func Test_buildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Test",
-						Rule:    "Host:Test.traefik.wtf",
+						Rule:    "Host(`Test.traefik.wtf`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -531,7 +531,7 @@ func Test_buildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Service1",
-						Rule:    "Host:Test.traefik.wtf",
+						Rule:    "Host(`Test.traefik.wtf`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -559,7 +559,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Name:        "Test",
 					Labels: map[string]string{
 						"traefik.services.Service1.loadbalancer.method": "wrr",
-						"traefik.routers.Router1.rule":                  "Host:foo.com",
+						"traefik.routers.Router1.rule":                  "Host(`foo.com`)",
 						"traefik.routers.Router1.service":               "Service1",
 					},
 					NetworkSettings: networkSettings{
@@ -579,7 +579,7 @@ func Test_buildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"Router1": {
 						Service: "Service1",
-						Rule:    "Host:foo.com",
+						Rule:    "Host(`foo.com`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -606,7 +606,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.routers.Router1.rule": "Host:foo.com",
+						"traefik.routers.Router1.rule": "Host(`foo.com`)",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -640,7 +640,7 @@ func Test_buildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"Router1": {
 						Service: "Test",
-						Rule:    "Host:foo.com",
+						Rule:    "Host(`foo.com`)",
 					},
 				},
 			},
@@ -652,7 +652,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.routers.Router1.rule":                  "Host:foo.com",
+						"traefik.routers.Router1.rule":                  "Host(`foo.com`)",
 						"traefik.services.Service1.loadbalancer.method": "wrr",
 					},
 					NetworkSettings: networkSettings{
@@ -672,7 +672,7 @@ func Test_buildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"Router1": {
 						Service: "Service1",
-						Rule:    "Host:foo.com",
+						Rule:    "Host(`foo.com`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -699,7 +699,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.routers.Router1.rule":                  "Host:foo.com",
+						"traefik.routers.Router1.rule":                  "Host(`foo.com`)",
 						"traefik.services.Service1.loadbalancer.method": "wrr",
 						"traefik.services.Service2.loadbalancer.method": "wrr",
 					},
@@ -793,7 +793,7 @@ func Test_buildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Service1",
-						Rule:    "Host:Test.traefik.wtf",
+						Rule:    "Host(`Test.traefik.wtf`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -865,7 +865,7 @@ func Test_buildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Service1",
-						Rule:    "Host:Test.traefik.wtf",
+						Rule:    "Host(`Test.traefik.wtf`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -918,7 +918,7 @@ func Test_buildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Service1",
-						Rule:    "Host:Test.traefik.wtf",
+						Rule:    "Host(`Test.traefik.wtf`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -968,7 +968,7 @@ func Test_buildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Test",
-						Rule:    "Host:Test.traefik.wtf",
+						Rule:    "Host(`Test.traefik.wtf`)",
 					},
 				},
 				Services: map[string]*config.Service{
@@ -1041,7 +1041,7 @@ func Test_buildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Test",
-						Rule:    "Host:Test.traefik.wtf",
+						Rule:    "Host(`Test.traefik.wtf`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{
@@ -1118,7 +1118,7 @@ func Test_buildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Test",
-						Rule:    "Host:Test.traefik.wtf",
+						Rule:    "Host(`Test.traefik.wtf`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -1207,7 +1207,7 @@ func Test_buildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Test",
-						Rule:    "Host:Test.traefik.wtf",
+						Rule:    "Host(`Test.traefik.wtf`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -1243,7 +1243,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.routers.Router1.rule": "Host:foo.com",
+						"traefik.routers.Router1.rule": "Host(`foo.com`)",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1262,7 +1262,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.routers.Router1.rule": "Host:bar.com",
+						"traefik.routers.Router1.rule": "Host(`bar.com`)",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1308,7 +1308,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.routers.Router1.rule": "Host:foo.com",
+						"traefik.routers.Router1.rule": "Host(`foo.com`)",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1327,7 +1327,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.routers.Router1.rule": "Host:bar.com",
+						"traefik.routers.Router1.rule": "Host(`bar.com`)",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1346,7 +1346,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.routers.Router1.rule": "Host:foobar.com",
+						"traefik.routers.Router1.rule": "Host(`foobar.com`)",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1396,7 +1396,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.routers.Router1.rule": "Host:foo.com",
+						"traefik.routers.Router1.rule": "Host(`foo.com`)",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1415,7 +1415,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.routers.Router1.rule": "Host:foo.com",
+						"traefik.routers.Router1.rule": "Host(`foo.com`)",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1434,7 +1434,7 @@ func Test_buildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"Router1": {
 						Service: "Test",
-						Rule:    "Host:foo.com",
+						Rule:    "Host(`foo.com`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -1465,7 +1465,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.routers.Router1.rule": "Host:foo.com",
+						"traefik.routers.Router1.rule": "Host(`foo.com`)",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1483,7 +1483,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test2",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.routers.Router1.rule": "Host:foo.com",
+						"traefik.routers.Router1.rule": "Host(`foo.com`)",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1555,7 +1555,7 @@ func Test_buildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Test",
-						Rule:    "Host:Test.traefik.wtf",
+						Rule:    "Host(`Test.traefik.wtf`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -1602,7 +1602,7 @@ func Test_buildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Service1",
-						Rule:    "Host:Test.traefik.wtf",
+						Rule:    "Host(`Test.traefik.wtf`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -1849,7 +1849,7 @@ func Test_buildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Test",
-						Rule:    "Host:Test.traefik.wtf",
+						Rule:    "Host(`Test.traefik.wtf`)",
 					},
 				},
 				Middlewares: map[string]*config.Middleware{},
@@ -1896,7 +1896,7 @@ func Test_buildConfiguration(t *testing.T) {
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service:     "Test",
-						Rule:        "Host:Test.traefik.wtf",
+						Rule:        "Host(`Test.traefik.wtf`)",
 						Middlewares: []string{"Middleware1"},
 					},
 				},
@@ -1936,7 +1936,7 @@ func Test_buildConfiguration(t *testing.T) {
 
 			p := Provider{
 				ExposedByDefault: true,
-				DefaultRule:      "Host:{{ normalize .Name }}.traefik.wtf",
+				DefaultRule:      "Host(`{{ normalize .Name }}.traefik.wtf`)",
 			}
 			p.Constraints = test.constraints
 

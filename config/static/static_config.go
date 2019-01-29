@@ -66,7 +66,7 @@ type Configuration struct {
 	AccessLog *types.AccessLog `description:"Access log settings" export:"true"`
 	Tracing   *Tracing         `description:"OpenTracing configuration" export:"true"`
 
-	HostResolver *HostResolverConfig `description:"Enable CNAME Flattening" export:"true"`
+	HostResolver *types.HostResolverConfig `description:"Enable CNAME Flattening" export:"true"`
 
 	ACME *acme.ACME `description:"Enable ACME (Let's Encrypt): automatic SSL" export:"true"`
 }
@@ -122,13 +122,6 @@ type Tracing struct {
 	Jaeger        *jaeger.Config  `description:"Settings for jaeger"`
 	Zipkin        *zipkin.Config  `description:"Settings for zipkin"`
 	DataDog       *datadog.Config `description:"Settings for DataDog"`
-}
-
-// HostResolverConfig contain configuration for CNAME Flattening.
-type HostResolverConfig struct {
-	CnameFlattening bool   `description:"A flag to enable/disable CNAME flattening" export:"true"`
-	ResolvConfig    string `description:"resolv.conf used for DNS resolving" export:"true"`
-	ResolvDepth     int    `description:"The maximal depth of DNS recursive resolving" export:"true"`
 }
 
 // Providers contains providers configuration

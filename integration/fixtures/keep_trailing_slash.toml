@@ -22,4 +22,4 @@ logLevel = "DEBUG"
   [frontends.frontend1]
      backend = "backend1"
      [frontends.frontend1.routes.test_1]
-        rule = "Path:/test/foo"
+        rule = "Path(`/test/foo`)"

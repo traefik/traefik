@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/containous/traefik/rules"
+
 	"github.com/containous/alice"
-	"github.com/containous/mux"
 	"github.com/containous/traefik/config"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares/accesslog"
@@ -110,8 +111,10 @@ func (m *Manager) filteredRouters(ctx context.Context, entryPoints []string) map
 }
 
 func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*config.Router) (http.Handler, error) {
-	router := mux.NewRouter().
-		SkipClean(true)
+	router, err := rules.NewRouter()
+	if err != nil {
+		return nil, err
+	}
 
 	for routerName, routerConfig := range configs {
 		ctx := log.With(ctx, log.Str(log.RouterName, routerName))
@@ -125,7 +128,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			continue
 		}
 
-		err = addRoute(ctx, router, routerConfig.Rule, routerConfig.Priority, handler)
+		err = router.AddRoute(ctx, routerConfig.Rule, routerConfig.Priority, handler)
 		if err != nil {
 			logger.Error(err)
 			continue
