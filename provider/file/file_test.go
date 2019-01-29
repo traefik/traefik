@@ -12,6 +12,7 @@ import (
 	"github.com/containous/traefik/config"
 	"github.com/containous/traefik/safe"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type ProvideTestCase struct {
@@ -335,4 +336,25 @@ func createTLS(n int) string {
 `, i)
 	}
 	return conf
+}
+
+func TestTLSContent(t *testing.T) {
+	tempDir := createTempDir(t, "testdir")
+	defer os.Remove(tempDir)
+
+	fileTLS := createRandomFile(t, tempDir, "CONTENT")
+	fileConfig := createRandomFile(t, tempDir, `
+[[tls]]
+entryPoints = ["https"]
+  [tls.certificate]
+    certFile = "`+fileTLS.Name()+`"
+    keyFile = "`+fileTLS.Name()+`"
+`)
+
+	provider := &Provider{}
+	configuration, err := provider.loadFileConfig(fileConfig.Name(), true)
+	require.NoError(t, err)
+
+	require.Equal(t, "CONTENT", configuration.TLS[0].Certificate.CertFile.String())
+	require.Equal(t, "CONTENT", configuration.TLS[0].Certificate.KeyFile.String())
 }

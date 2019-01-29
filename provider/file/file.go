@@ -181,10 +181,28 @@ func (p *Provider) loadFileConfig(filename string, parseTemplate bool) (*config.
 	} else {
 		configuration, err = p.DecodeConfiguration(fileContent)
 	}
-
 	if err != nil {
 		return nil, err
 	}
+
+	var tlsConfigs []*tls.Configuration
+	for _, conf := range configuration.TLS {
+		bytes, err := conf.Certificate.CertFile.Read()
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+		conf.Certificate.CertFile = tls.FileOrContent(string(bytes))
+
+		bytes, err = conf.Certificate.KeyFile.Read()
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+		conf.Certificate.KeyFile = tls.FileOrContent(string(bytes))
+		tlsConfigs = append(tlsConfigs, conf)
+	}
+	configuration.TLS = tlsConfigs
 
 	if configuration == nil || configuration.Routers == nil && configuration.Middlewares == nil && configuration.Services == nil && configuration.TLS == nil {
 		configuration = &config.Configuration{
@@ -193,7 +211,7 @@ func (p *Provider) loadFileConfig(filename string, parseTemplate bool) (*config.
 			Services:    make(map[string]*config.Service),
 		}
 	}
-	return configuration, err
+	return configuration, nil
 }
 
 func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory string, configuration *config.Configuration) (*config.Configuration, error) {
