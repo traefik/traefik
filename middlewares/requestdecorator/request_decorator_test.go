@@ -4,7 +4,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/containous/traefik/config/static"
+	"github.com/containous/traefik/types"
+
 	"github.com/containous/traefik/testhelpers"
 	"github.com/stretchr/testify/assert"
 )
@@ -90,7 +91,7 @@ func TestRequestFlattening(t *testing.T) {
 			})
 
 			rh := New(
-				&static.HostResolverConfig{
+				&types.HostResolverConfig{
 					CnameFlattening: true,
 					ResolvConfig:    "/etc/resolv.conf",
 					ResolvDepth:     5,

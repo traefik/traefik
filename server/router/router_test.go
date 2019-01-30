@@ -40,7 +40,7 @@ func TestRouterManager_Get(t *testing.T) {
 				"foo": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
-					Rule:        "Host:foo.bar",
+					Rule:        "Host(`foo.bar`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{
@@ -65,7 +65,7 @@ func TestRouterManager_Get(t *testing.T) {
 				"foo": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
-					Rule:        "Host:foo.bar",
+					Rule:        "Host(`foo.bar`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{
@@ -79,7 +79,7 @@ func TestRouterManager_Get(t *testing.T) {
 			routersConfig: map[string]*config.Router{
 				"foo": {
 					Service: "foo-service",
-					Rule:    "Host:foo.bar",
+					Rule:    "Host(`foo.bar`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{
@@ -104,7 +104,7 @@ func TestRouterManager_Get(t *testing.T) {
 				"foo": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
-					Rule:        "Host:bar.bar",
+					Rule:        "Host(`bar.bar`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{
@@ -130,7 +130,7 @@ func TestRouterManager_Get(t *testing.T) {
 					EntryPoints: []string{"web"},
 					Middlewares: []string{"headers-middle", "auth-middle"},
 					Service:     "foo-service",
-					Rule:        "Host:foo.bar",
+					Rule:        "Host(`foo.bar`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{
@@ -173,7 +173,7 @@ func TestRouterManager_Get(t *testing.T) {
 					EntryPoints: []string{"web"},
 					Middlewares: []string{"auth-middle", "headers-middle"},
 					Service:     "foo-service",
-					Rule:        "Host:foo.bar",
+					Rule:        "Host(`foo.bar`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{
@@ -215,7 +215,7 @@ func TestRouterManager_Get(t *testing.T) {
 				"provider-1.foo": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
-					Rule:        "Host:foo.bar",
+					Rule:        "Host(`foo.bar`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{
@@ -240,7 +240,7 @@ func TestRouterManager_Get(t *testing.T) {
 				"provider-1.foo": {
 					EntryPoints: []string{"web"},
 					Service:     "provider-2.foo-service",
-					Rule:        "Host:foo.bar",
+					Rule:        "Host(`foo.bar`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{
@@ -266,7 +266,7 @@ func TestRouterManager_Get(t *testing.T) {
 					EntryPoints: []string{"web"},
 					Middlewares: []string{"provider-2.chain-middle", "headers-middle"},
 					Service:     "foo-service",
-					Rule:        "Host:foo.bar",
+					Rule:        "Host(`foo.bar`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{
@@ -339,13 +339,12 @@ func TestAccessLog(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 
 	testCases := []struct {
-		desc               string
-		routersConfig      map[string]*config.Router
-		serviceConfig      map[string]*config.Service
-		middlewaresConfig  map[string]*config.Middleware
-		entryPoints        []string
-		defaultEntryPoints []string
-		expected           string
+		desc              string
+		routersConfig     map[string]*config.Router
+		serviceConfig     map[string]*config.Service
+		middlewaresConfig map[string]*config.Middleware
+		entryPoints       []string
+		expected          string
 	}{
 		{
 			desc: "apply routerName in accesslog (first match)",
@@ -353,12 +352,12 @@ func TestAccessLog(t *testing.T) {
 				"foo": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
-					Rule:        "Host:foo.bar",
+					Rule:        "Host(`foo.bar`)",
 				},
 				"bar": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
-					Rule:        "Host:bar.foo",
+					Rule:        "Host(`bar.foo`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{
@@ -383,12 +382,12 @@ func TestAccessLog(t *testing.T) {
 				"foo": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
-					Rule:        "Host:bar.foo",
+					Rule:        "Host(`bar.foo`)",
 				},
 				"bar": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
-					Rule:        "Host:foo.bar",
+					Rule:        "Host(`foo.bar`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{

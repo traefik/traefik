@@ -20,7 +20,7 @@ logLevel = "DEBUG"
 [Routers]
   [Routers.router]
     Service = "service"
-    Rule = "Path:/service"
+    Rule = "Path(`/service`)"
 
 [Services]
   [Services.service]

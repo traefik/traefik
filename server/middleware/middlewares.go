@@ -55,8 +55,8 @@ func NewBuilder(configs map[string]*config.Middleware, serviceBuilder serviceBui
 // BuildChain creates a middleware chain
 func (b *Builder) BuildChain(ctx context.Context, middlewares []string) *alice.Chain {
 	chain := alice.New()
-	for _, middlewareName := range middlewares {
-		middlewareName := internal.GetQualifiedName(ctx, middlewareName)
+	for _, name := range middlewares {
+		middlewareName := internal.GetQualifiedName(ctx, name)
 		constructorContext := internal.AddProviderInContext(ctx, middlewareName)
 
 		chain = chain.Append(func(next http.Handler) (http.Handler, error) {

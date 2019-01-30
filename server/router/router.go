@@ -6,13 +6,13 @@ import (
 	"net/http"
 
 	"github.com/containous/alice"
-	"github.com/containous/mux"
 	"github.com/containous/traefik/config"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares/accesslog"
 	"github.com/containous/traefik/middlewares/recovery"
 	"github.com/containous/traefik/middlewares/tracing"
 	"github.com/containous/traefik/responsemodifiers"
+	"github.com/containous/traefik/rules"
 	"github.com/containous/traefik/server/internal"
 	"github.com/containous/traefik/server/middleware"
 	"github.com/containous/traefik/server/service"
@@ -50,6 +50,7 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) m
 
 	entryPointHandlers := make(map[string]http.Handler)
 	for entryPointName, routers := range entryPointsRouters {
+		entryPointName := entryPointName
 		ctx := log.With(rootCtx, log.Str(log.EntryPointName, entryPointName))
 
 		handler, err := m.buildEntryPointHandler(ctx, routers)
@@ -110,22 +111,24 @@ func (m *Manager) filteredRouters(ctx context.Context, entryPoints []string) map
 }
 
 func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*config.Router) (http.Handler, error) {
-	router := mux.NewRouter().
-		SkipClean(true)
+	router, err := rules.NewRouter()
+	if err != nil {
+		return nil, err
+	}
 
 	for routerName, routerConfig := range configs {
-		ctx := log.With(ctx, log.Str(log.RouterName, routerName))
-		logger := log.FromContext(ctx)
+		ctxRouter := log.With(ctx, log.Str(log.RouterName, routerName))
+		logger := log.FromContext(ctxRouter)
 
-		ctx = internal.AddProviderInContext(ctx, routerName)
+		ctxRouter = internal.AddProviderInContext(ctxRouter, routerName)
 
-		handler, err := m.buildRouterHandler(ctx, routerName)
+		handler, err := m.buildRouterHandler(ctxRouter, routerName)
 		if err != nil {
 			logger.Error(err)
 			continue
 		}
 
-		err = addRoute(ctx, router, routerConfig.Rule, routerConfig.Priority, handler)
+		err = router.AddRoute(routerConfig.Rule, routerConfig.Priority, handler)
 		if err != nil {
 			logger.Error(err)
 			continue

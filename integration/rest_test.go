@@ -38,7 +38,7 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 				EntryPoints: []string{"http"},
 				Middlewares: []string{},
 				Service:     "service1",
-				Rule:        "PathPrefix:/",
+				Rule:        "PathPrefix(`/`)",
 			},
 		},
 		Services: map[string]*config.Service{
@@ -65,7 +65,7 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/rest/routers", 1000*time.Millisecond, try.BodyContains("PathPrefix:/"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/rest/routers", 1000*time.Millisecond, try.BodyContains("PathPrefix(`/`)"))
 	c.Assert(err, checker.IsNil)
 
 	err = try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusOK))

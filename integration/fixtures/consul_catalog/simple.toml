@@ -10,4 +10,4 @@ logLevel = "DEBUG"
 [providers]
    [providers.consulCatalog]
       domain = "consul.localhost"
-      frontEndRule = "Host:{{.ServiceName}}.{{.Domain}}"
+      frontEndRule = "Host(`{{.ServiceName}}.{{.Domain}}`)"

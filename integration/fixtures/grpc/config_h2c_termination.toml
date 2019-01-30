@@ -17,7 +17,7 @@ debug = true
 
 [routers]
   [routers.router1]
-    rule = "Host:127.0.0.1"
+    rule = "Host(`127.0.0.1`)"
     service = "service1"
 
 [services]

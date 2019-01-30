@@ -19,52 +19,52 @@ logLevel = "DEBUG"
   [Routers.router1]
     Service = "service1"
     Middlewares = ["redirect-https"]
-    Rule = "Host: example.com"
+    Rule = "Host(`example.com`)"
 
   [Routers.router2]
     Service = "service1"
     Middlewares = ["redirect-https", "api-slash-strip"]
-    Rule = "Host: example2.com"
+    Rule = "Host(`example2.com`)"
 
   [Routers.router3]
     Service = "service1"
     Middlewares = ["redirect-https", "foo-add-prefix"]
-    Rule = "Host: test.com"
+    Rule = "Host(`test.com`)"
 
   [Routers.router4]
     Service = "service1"
     Middlewares = ["redirect-https", "foo-slash-add-prefix"]
-    Rule = "Host: test2.com"
+    Rule = "Host(`test2.com`)"
 
   [Routers.router5]
     Service = "service1"
     Middlewares = ["redirect-https", "id-strip-regex-prefix"]
-    Rule = "Host: foo.com"
+    Rule = "Host(`foo.com`)"
 
   [Routers.router6]
     Service = "service1"
     Middlewares = ["redirect-https", "id-slash-strip-regex-prefix"]
-    Rule = "Host: foo2.com"
+    Rule = "Host(`foo2.com`)"
 
   [Routers.router7]
     Service = "service1"
     Middlewares = ["redirect-https", "api-regex-replace"]
-    Rule = "Host: bar.com"
+    Rule = "Host(`bar.com`)"
 
   [Routers.router8]
     Service = "service1"
     Middlewares = ["redirect-https", "api-slash-regex-replace"]
-    Rule = "Host: bar2.com"
+    Rule = "Host(`bar2.com`)"
 
   [Routers.router9]
     Service = "service1"
     Middlewares = ["redirect-https", "api-replace-path"]
-    Rule = "Host: pow.com"
+    Rule = "Host(`pow.com`)"
 
   [Routers.router10]
     Service = "service1"
     Middlewares = ["redirect-https", "api-slash-replace-path"]
-    Rule = "Host: pow2.com"
+    Rule = "Host(`pow2.com`)"
 
 [Middlewares]
   [Middlewares.api-strip.StripPrefix]

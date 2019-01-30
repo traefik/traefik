@@ -2,7 +2,7 @@ noOverrideWhitelist:
   image: containous/whoami
   labels:
     - traefik.enable=true
-    - traefik.routers.rt1.rule=Host:no.override.whitelist.docker.local
+    - traefik.routers.rt1.rule=Host("no.override.whitelist.docker.local")
     - traefik.routers.rt1.middlewares=wl1
     - traefik.middlewares.wl1.ipwhiteList.sourceRange=8.8.8.8
 
@@ -10,7 +10,7 @@ overrideIPStrategyRemoteAddrWhitelist:
   image: containous/whoami
   labels:
     - traefik.enable=true
-    - traefik.routers.rt2.rule=Host:override.remoteaddr.whitelist.docker.local
+    - traefik.routers.rt2.rule=Host("override.remoteaddr.whitelist.docker.local")
     - traefik.routers.rt2.middlewares=wl2
     - traefik.middlewares.wl2.ipwhitelist.sourceRange=8.8.8.8
     - traefik.middlewares.wl2.ipwhitelist.ipStrategy=true
@@ -19,7 +19,7 @@ overrideIPStrategyDepthWhitelist:
   image: containous/whoami
   labels:
   - traefik.enable=true
-  - traefik.routers.rt3.rule=Host:override.depth.whitelist.docker.local
+  - traefik.routers.rt3.rule=Host("override.depth.whitelist.docker.local")
   - traefik.routers.rt3.middlewares=wl3
   - traefik.middlewares.wl3.ipwhitelist.sourceRange=8.8.8.8
   - traefik.middlewares.wl3.ipwhitelist.ipStrategy.depth=3
@@ -28,7 +28,7 @@ overrideIPStrategyExcludedIPsWhitelist:
   image: containous/whoami
   labels:
   - traefik.enable=true
-  - traefik.routers.rt4.rule=Host:override.excludedips.whitelist.docker.local
+  - traefik.routers.rt4.rule=Host("override.excludedips.whitelist.docker.local")
   - traefik.routers.rt4.middlewares=wl4
   - traefik.middlewares.wl4.ipwhitelist.sourceRange=8.8.8.8
   - traefik.middlewares.wl4.ipwhitelist.ipStrategy.excludedIPs=10.0.0.1,10.0.0.2

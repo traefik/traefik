@@ -1,6 +1,6 @@
 [routers]
   [routers.router1]
-    rule = "Path:/test1"
+    rule = "Path(`/test1`)"
     service = "service1"
 
 [services]

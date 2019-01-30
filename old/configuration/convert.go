@@ -205,12 +205,12 @@ func convertConstraints(oldConstraints types.Constraints) types2.Constraints {
 
 // ConvertHostResolverConfig FIXME
 // Deprecated
-func ConvertHostResolverConfig(oldconfig *HostResolverConfig) *static.HostResolverConfig {
+func ConvertHostResolverConfig(oldconfig *HostResolverConfig) *types2.HostResolverConfig {
 	if oldconfig == nil {
 		return nil
 	}
 
-	return &static.HostResolverConfig{
+	return &types2.HostResolverConfig{
 		CnameFlattening: oldconfig.CnameFlattening,
 		ResolvConfig:    oldconfig.ResolvConfig,
 		ResolvDepth:     oldconfig.ResolvDepth,

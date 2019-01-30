@@ -15,7 +15,7 @@ logLevel = "DEBUG"
 [routers]
   [routers.router1]
     service = "service1"
-    rule = "Host:test.localhost"
+    Rule = "Host(`test.localhost`)"
 
 [services]
   [services.service1.loadbalancer]

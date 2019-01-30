@@ -142,7 +142,7 @@ func setupListenProvider(throttleDuration time.Duration) (server *Server, stop c
 
 func TestServerResponseEmptyBackend(t *testing.T) {
 	const requestPath = "/path"
-	const routeRule = "Path:" + requestPath
+	const routeRule = "Path(`" + requestPath + "`)"
 
 	testCases := []struct {
 		desc               string
