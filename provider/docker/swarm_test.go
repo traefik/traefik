@@ -132,7 +132,6 @@ func (c *fakeServicesClient) TaskList(ctx context.Context, options dockertypes.T
 func TestListServices(t *testing.T) {
 	testCases := []struct {
 		desc             string
-		extraConf        configuration
 		services         []swarm.Service
 		tasks            []swarm.Task
 		dockerVersion    string

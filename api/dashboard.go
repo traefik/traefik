@@ -24,13 +24,13 @@ func (g DashboardHandler) Append(router *mux.Router) {
 	router.Methods(http.MethodGet).
 		Path("/").
 		HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
-			http.Redirect(response, request, request.Header.Get("X-Forwarded-Prefix")+"/dashboard/", 302)
+			http.Redirect(response, request, request.Header.Get("X-Forwarded-Prefix")+"/dashboard/", http.StatusFound)
 		})
 
 	router.Methods(http.MethodGet).
 		Path("/dashboard/status").
 		HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
-			http.Redirect(response, request, "/dashboard/", 302)
+			http.Redirect(response, request, "/dashboard/", http.StatusFound)
 		})
 
 	router.Methods(http.MethodGet).

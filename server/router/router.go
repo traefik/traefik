@@ -50,6 +50,7 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) m
 
 	entryPointHandlers := make(map[string]http.Handler)
 	for entryPointName, routers := range entryPointsRouters {
+		entryPointName := entryPointName
 		ctx := log.With(rootCtx, log.Str(log.EntryPointName, entryPointName))
 
 		handler, err := m.buildEntryPointHandler(ctx, routers)

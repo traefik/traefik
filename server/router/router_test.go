@@ -339,13 +339,12 @@ func TestAccessLog(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 
 	testCases := []struct {
-		desc               string
-		routersConfig      map[string]*config.Router
-		serviceConfig      map[string]*config.Service
-		middlewaresConfig  map[string]*config.Middleware
-		entryPoints        []string
-		defaultEntryPoints []string
-		expected           string
+		desc              string
+		routersConfig     map[string]*config.Router
+		serviceConfig     map[string]*config.Service
+		middlewaresConfig map[string]*config.Middleware
+		entryPoints       []string
+		expected          string
 	}{
 		{
 			desc: "apply routerName in accesslog (first match)",
