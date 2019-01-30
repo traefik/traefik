@@ -11,6 +11,7 @@
 - **[ecs]** Cache exising task definitions to avoid rate limiting ([#4177](https://github.com/containous/traefik/pull/4177) by [hwhelan-CB](https://github.com/hwhelan-CB))
 - **[tls]** Check for dynamic tls updates on configuration preload ([#4022](https://github.com/containous/traefik/pull/4022) by [ffilippopoulos](https://github.com/ffilippopoulos))
 - **[tracing]** Support Datadog tracer priority sampling ([#4359](https://github.com/containous/traefik/pull/4359) by [jcassee](https://github.com/jcassee))
+- Update to Go 1.11.5 [CVE-2019-6486](https://nvd.nist.gov/vuln/detail/CVE-2019-6486)
 
 **Documentation:**
 - **[acme]** More detailed info about Google Cloud DNS. ([#4395](https://github.com/containous/traefik/pull/4395) by [ldez](https://github.com/ldez))
