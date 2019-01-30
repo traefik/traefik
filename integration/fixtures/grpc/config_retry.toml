@@ -1,0 +1,31 @@
+defaultEntryPoints = ["https"]
+
+rootCAs = [ """{{ .CertContent }}""" ]
+
+[retry]
+
+[entryPoints]
+  [entryPoints.https]
+  address = ":4443"
+    [entryPoints.https.tls]
+     [[entryPoints.https.tls.certificates]]
+     certFile = """{{ .CertContent }}"""
+     keyFile  = """{{ .KeyContent }}"""
+
+
+[api]
+
+[file]
+
+[backends]
+  [backends.backend1]
+    [backends.backend1.servers.server1]
+    url = "https://127.0.0.1:{{ .GRPCServerPort }}"
+    weight = 1
+
+
+[frontends]
+  [frontends.frontend1]
+  backend = "backend1"
+    [frontends.frontend1.routes.test_1]
+    rule = "Host:127.0.0.1"
