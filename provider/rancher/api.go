@@ -71,9 +71,18 @@ func (p *Provider) apiProvide(configurationChan chan<- types.ConfigMessage, pool
 			}
 
 			ctx := context.Background()
-			var stacks = listRancherStacks(rancherClient)
-			var services = listRancherServices(rancherClient)
-			var container = listRancherContainer(rancherClient)
+			stacks, err := listRancherStacks(rancherClient)
+			if err != nil {
+				return err
+			}
+			services, err := listRancherServices(rancherClient)
+			if err != nil {
+				return err
+			}
+			container, err := listRancherContainer(rancherClient)
+			if err != nil {
+				return err
+			}
 
 			var rancherData = parseAPISourcedRancherData(stacks, services, container)
 
@@ -94,20 +103,29 @@ func (p *Provider) apiProvide(configurationChan chan<- types.ConfigMessage, pool
 
 							if errAPI != nil {
 								log.Errorf("Cannot establish connection: %+v, Rancher API return: %+v; Skipping refresh Data from Rancher API.", errAPI, checkAPI)
-							} else {
-								log.Debugf("Refreshing new Data from Rancher API")
-								stacks := listRancherStacks(rancherClient)
-								services := listRancherServices(rancherClient)
-								container := listRancherContainer(rancherClient)
+								continue
+							}
+							log.Debugf("Refreshing new Data from Rancher API")
+							stacks, err = listRancherStacks(rancherClient)
+							if err != nil {
+								continue
+							}
+							services, err = listRancherServices(rancherClient)
+							if err != nil {
+								continue
+							}
+							container, err = listRancherContainer(rancherClient)
+							if err != nil {
+								continue
+							}
 
-								rancherData := parseAPISourcedRancherData(stacks, services, container)
+							rancherData := parseAPISourcedRancherData(stacks, services, container)
 
-								configuration := p.buildConfiguration(rancherData)
-								if configuration != nil {
-									configurationChan <- types.ConfigMessage{
-										ProviderName:  "rancher",
-										Configuration: configuration,
-									}
+							configuration := p.buildConfiguration(rancherData)
+							if configuration != nil {
+								configurationChan <- types.ConfigMessage{
+									ProviderName:  "rancher",
+									Configuration: configuration,
 								}
 							}
 						case <-stop:
@@ -133,7 +151,7 @@ func (p *Provider) apiProvide(configurationChan chan<- types.ConfigMessage, pool
 	return nil
 }
 
-func listRancherStacks(client *rancher.RancherClient) []*rancher.Stack {
+func listRancherStacks(client *rancher.RancherClient) ([]*rancher.Stack, error) {
 
 	var stackList []*rancher.Stack
 
@@ -147,10 +165,10 @@ func listRancherStacks(client *rancher.RancherClient) []*rancher.Stack {
 		stackList = append(stackList, &stacks.Data[k])
 	}
 
-	return stackList
+	return stackList, err
 }
 
-func listRancherServices(client *rancher.RancherClient) []*rancher.Service {
+func listRancherServices(client *rancher.RancherClient) ([]*rancher.Service, error) {
 
 	var servicesList []*rancher.Service
 
@@ -164,10 +182,10 @@ func listRancherServices(client *rancher.RancherClient) []*rancher.Service {
 		servicesList = append(servicesList, &services.Data[k])
 	}
 
-	return servicesList
+	return servicesList, err
 }
 
-func listRancherContainer(client *rancher.RancherClient) []*rancher.Container {
+func listRancherContainer(client *rancher.RancherClient) ([]*rancher.Container, error) {
 
 	var containerList []*rancher.Container
 
@@ -175,6 +193,7 @@ func listRancherContainer(client *rancher.RancherClient) []*rancher.Container {
 
 	if err != nil {
 		log.Errorf("Cannot get Provider Services %+v", err)
+		return containerList, err
 	}
 
 	valid := true
@@ -195,7 +214,7 @@ func listRancherContainer(client *rancher.RancherClient) []*rancher.Container {
 		}
 	}
 
-	return containerList
+	return containerList, err
 }
 
 func parseAPISourcedRancherData(stacks []*rancher.Stack, services []*rancher.Service, containers []*rancher.Container) []rancherData {
