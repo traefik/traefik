@@ -97,7 +97,7 @@ func host(route *mux.Route, hosts ...string) error {
 		hosts[i] = strings.ToLower(host)
 	}
 
-	route.MatcherFunc(func(req *http.Request, route *mux.RouteMatch) bool {
+	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
 		reqHost := requestdecorator.GetCanonizedHost(req.Context())
 		if len(reqHost) == 0 {
 			log.FromContext(req.Context()).Warnf("Could not retrieve CanonizedHost, rejecting %s", req.Host)

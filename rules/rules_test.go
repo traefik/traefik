@@ -636,7 +636,8 @@ func TestHostRegexp(t *testing.T) {
 			t.Parallel()
 
 			rt := &mux.Route{}
-			hostRegexp(rt, test.hostExp)
+			err := hostRegexp(rt, test.hostExp)
+			require.NoError(t, err)
 
 			for testURL, match := range test.urls {
 				req := testhelpers.MustNewRequest(http.MethodGet, testURL, nil)
