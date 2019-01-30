@@ -1,18 +1,14 @@
 package rules
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strings"
 
-	"github.com/vulcand/predicate"
-
-	"github.com/pkg/errors"
-
 	"github.com/containous/mux"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares/requestdecorator"
+	"github.com/vulcand/predicate"
 )
 
 var funcs = map[string]func(*mux.Route, ...string) error{
@@ -46,7 +42,7 @@ func NewRouter() (*Router, error) {
 }
 
 // AddRoute add a new route to the router.
-func (r *Router) AddRoute(ctx context.Context, rule string, priority int, handler http.Handler) error {
+func (r *Router) AddRoute(rule string, priority int, handler http.Handler) error {
 	parse, err := r.parser.Parse(rule)
 	if err != nil {
 		return fmt.Errorf("error while parsing rule %s: %v", rule, err)
@@ -54,7 +50,7 @@ func (r *Router) AddRoute(ctx context.Context, rule string, priority int, handle
 
 	buildTree, ok := parse.(treeBuilder)
 	if !ok {
-		return errors.New("cannot parse")
+		return fmt.Errorf("error while parsing rule %s", rule)
 	}
 
 	if priority == 0 {
@@ -66,10 +62,10 @@ func (r *Router) AddRoute(ctx context.Context, rule string, priority int, handle
 }
 
 type tree struct {
-	matcher string
-	value   []string
-	ruleA   *tree
-	ruleB   *tree
+	matcher   string
+	value     []string
+	ruleLeft  *tree
+	ruleRight *tree
 }
 
 func path(route *mux.Route, paths ...string) error {
@@ -167,25 +163,19 @@ func addRuleOnRouter(router *mux.Router, rule *tree) error {
 	switch rule.matcher {
 	case "and":
 		route := router.NewRoute()
-		err := addRuleOnRoute(route, rule.ruleA)
+		err := addRuleOnRoute(route, rule.ruleLeft)
 		if err != nil {
 			return err
 		}
 
-		err = addRuleOnRoute(route, rule.ruleB)
-		if err != nil {
-			return err
-		}
+		return addRuleOnRoute(route, rule.ruleRight)
 	case "or":
-		err := addRuleOnRouter(router, rule.ruleA)
+		err := addRuleOnRouter(router, rule.ruleLeft)
 		if err != nil {
 			return err
 		}
 
-		err = addRuleOnRouter(router, rule.ruleB)
-		if err != nil {
-			return err
-		}
+		return addRuleOnRouter(router, rule.ruleRight)
 	default:
 		err := checkRule(rule)
 		if err != nil {
@@ -194,34 +184,26 @@ func addRuleOnRouter(router *mux.Router, rule *tree) error {
 
 		return funcs[rule.matcher](router.NewRoute(), rule.value...)
 	}
-
-	return nil
 }
 
 func addRuleOnRoute(route *mux.Route, rule *tree) error {
 	switch rule.matcher {
 	case "and":
-		err := addRuleOnRoute(route, rule.ruleA)
+		err := addRuleOnRoute(route, rule.ruleLeft)
 		if err != nil {
 			return err
 		}
 
-		err = addRuleOnRoute(route, rule.ruleB)
-		if err != nil {
-			return err
-		}
+		return addRuleOnRoute(route, rule.ruleRight)
 	case "or":
-		subrouter := route.Subrouter()
+		subRouter := route.Subrouter()
 
-		err := addRuleOnRouter(subrouter, rule.ruleA)
+		err := addRuleOnRouter(subRouter, rule.ruleLeft)
 		if err != nil {
 			return err
 		}
 
-		err = addRuleOnRouter(subrouter, rule.ruleB)
-		if err != nil {
-			return err
-		}
+		return addRuleOnRouter(subRouter, rule.ruleRight)
 	default:
 		err := checkRule(rule)
 		if err != nil {
@@ -230,8 +212,6 @@ func addRuleOnRoute(route *mux.Route, rule *tree) error {
 
 		return funcs[rule.matcher](route, rule.value...)
 	}
-
-	return nil
 }
 
 func checkRule(rule *tree) error {

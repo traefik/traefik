@@ -38,31 +38,32 @@ func lower(slice []string) []string {
 }
 
 func parseDomain(tree *tree) []string {
-	if tree.matcher == "or" || tree.matcher == "and" {
-		return append(parseDomain(tree.ruleA), parseDomain(tree.ruleB)...)
-	} else if tree.matcher == "Host" {
+	switch tree.matcher {
+	case "and", "or":
+		return append(parseDomain(tree.ruleLeft), parseDomain(tree.ruleRight)...)
+	case "Host":
 		return tree.value
+	default:
+		return nil
 	}
-
-	return nil
 }
 
-func andFunc(a, b treeBuilder) treeBuilder {
+func andFunc(left, right treeBuilder) treeBuilder {
 	return func() *tree {
 		return &tree{
-			matcher: "and",
-			ruleA:   a(),
-			ruleB:   b(),
+			matcher:   "and",
+			ruleLeft:  left(),
+			ruleRight: right(),
 		}
 	}
 }
 
-func orFunc(a, b treeBuilder) treeBuilder {
+func orFunc(left, right treeBuilder) treeBuilder {
 	return func() *tree {
 		return &tree{
-			matcher: "or",
-			ruleA:   a(),
-			ruleB:   b(),
+			matcher:   "or",
+			ruleLeft:  left(),
+			ruleRight: right(),
 		}
 	}
 }

@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/containous/traefik/rules"
-
 	"github.com/containous/alice"
 	"github.com/containous/traefik/config"
 	"github.com/containous/traefik/log"
@@ -14,6 +12,7 @@ import (
 	"github.com/containous/traefik/middlewares/recovery"
 	"github.com/containous/traefik/middlewares/tracing"
 	"github.com/containous/traefik/responsemodifiers"
+	"github.com/containous/traefik/rules"
 	"github.com/containous/traefik/server/internal"
 	"github.com/containous/traefik/server/middleware"
 	"github.com/containous/traefik/server/service"
@@ -117,18 +116,18 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 	}
 
 	for routerName, routerConfig := range configs {
-		ctx := log.With(ctx, log.Str(log.RouterName, routerName))
-		logger := log.FromContext(ctx)
+		ctxRouter := log.With(ctx, log.Str(log.RouterName, routerName))
+		logger := log.FromContext(ctxRouter)
 
-		ctx = internal.AddProviderInContext(ctx, routerName)
+		ctxRouter = internal.AddProviderInContext(ctxRouter, routerName)
 
-		handler, err := m.buildRouterHandler(ctx, routerName)
+		handler, err := m.buildRouterHandler(ctxRouter, routerName)
 		if err != nil {
 			logger.Error(err)
 			continue
 		}
 
-		err = router.AddRoute(ctx, routerConfig.Rule, routerConfig.Priority, handler)
+		err = router.AddRoute(routerConfig.Rule, routerConfig.Priority, handler)
 		if err != nil {
 			logger.Error(err)
 			continue

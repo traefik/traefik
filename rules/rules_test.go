@@ -1,7 +1,6 @@
 package rules
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -398,7 +397,7 @@ func Test_addRoute(t *testing.T) {
 			router, err := NewRouter()
 			require.NoError(t, err)
 
-			err = router.AddRoute(context.Background(), test.rule, 0, handler)
+			err = router.AddRoute(test.rule, 0, handler)
 			if test.expectedError {
 				require.Error(t, err)
 			} else {
@@ -552,7 +551,7 @@ func Test_addRoutePriority(t *testing.T) {
 					w.Header().Set("X-From", route.xFrom)
 				})
 
-				err := router.AddRoute(context.Background(), route.rule, route.priority, handler)
+				err := router.AddRoute(route.rule, route.priority, handler)
 				require.NoError(t, err, route.rule)
 			}
 
@@ -648,7 +647,7 @@ func TestHostRegexp(t *testing.T) {
 }
 
 func TestParseDomains(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		description   string
 		expression    string
 		domain        []string
@@ -684,7 +683,7 @@ func TestParseDomains(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.expression, func(t *testing.T) {
 			t.Parallel()
