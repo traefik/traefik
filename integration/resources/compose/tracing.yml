@@ -20,4 +20,4 @@ jaeger:
     - "14268:14268"
     - "9411:9411"
 whoami:
-  image: emilevauge/whoami
+  image: containous/whoami

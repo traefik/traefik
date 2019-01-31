@@ -1,45 +1,116 @@
 package rules
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
-	"reflect"
-	"sort"
 	"strings"
 
 	"github.com/containous/mux"
-	"github.com/containous/traefik/hostresolver"
-	"github.com/containous/traefik/old/middlewares"
-	"github.com/containous/traefik/old/types"
+	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/middlewares/requestdecorator"
+	"github.com/vulcand/predicate"
 )
 
-// Rules holds rule parsing and configuration
-type Rules struct {
-	Route        *types.ServerRoute
-	err          error
-	HostResolver *hostresolver.Resolver
+var funcs = map[string]func(*mux.Route, ...string) error{
+	"Host":          host,
+	"HostRegexp":    hostRegexp,
+	"Path":          path,
+	"PathPrefix":    pathPrefix,
+	"Method":        methods,
+	"Headers":       headers,
+	"HeadersRegexp": headersRegexp,
+	"Query":         query,
 }
 
-func (r *Rules) host(hosts ...string) *mux.Route {
+// Router handle routing with rules
+type Router struct {
+	*mux.Router
+	parser predicate.Parser
+}
+
+// NewRouter returns a new router instance.
+func NewRouter() (*Router, error) {
+	parser, err := newParser()
+	if err != nil {
+		return nil, err
+	}
+
+	return &Router{
+		Router: mux.NewRouter().SkipClean(true),
+		parser: parser,
+	}, nil
+}
+
+// AddRoute add a new route to the router.
+func (r *Router) AddRoute(rule string, priority int, handler http.Handler) error {
+	parse, err := r.parser.Parse(rule)
+	if err != nil {
+		return fmt.Errorf("error while parsing rule %s: %v", rule, err)
+	}
+
+	buildTree, ok := parse.(treeBuilder)
+	if !ok {
+		return fmt.Errorf("error while parsing rule %s", rule)
+	}
+
+	if priority == 0 {
+		priority = len(rule)
+	}
+
+	route := r.NewRoute().Handler(handler).Priority(priority)
+	return addRuleOnRoute(route, buildTree())
+}
+
+type tree struct {
+	matcher   string
+	value     []string
+	ruleLeft  *tree
+	ruleRight *tree
+}
+
+func path(route *mux.Route, paths ...string) error {
+	rt := route.Subrouter()
+
+	for _, path := range paths {
+		tmpRt := rt.Path(path)
+		if tmpRt.GetError() != nil {
+			return tmpRt.GetError()
+		}
+	}
+	return nil
+}
+
+func pathPrefix(route *mux.Route, paths ...string) error {
+	rt := route.Subrouter()
+
+	for _, path := range paths {
+		tmpRt := rt.PathPrefix(path)
+		if tmpRt.GetError() != nil {
+			return tmpRt.GetError()
+		}
+	}
+	return nil
+}
+
+func host(route *mux.Route, hosts ...string) error {
 	for i, host := range hosts {
 		hosts[i] = strings.ToLower(host)
 	}
 
-	return r.Route.Route.MatcherFunc(func(req *http.Request, route *mux.RouteMatch) bool {
-		reqHost := middlewares.GetCanonizedHost(req.Context())
+	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
+		reqHost := requestdecorator.GetCanonizedHost(req.Context())
 		if len(reqHost) == 0 {
+			log.FromContext(req.Context()).Warnf("Could not retrieve CanonizedHost, rejecting %s", req.Host)
 			return false
 		}
 
-		if r.HostResolver != nil && r.HostResolver.CnameFlattening {
-			reqH, flatH := r.HostResolver.CNAMEFlatten(reqHost)
+		flatH := requestdecorator.GetCNAMEFlatten(req.Context())
+		if len(flatH) > 0 {
 			for _, host := range hosts {
-				if strings.EqualFold(reqH, host) || strings.EqualFold(flatH, host) {
+				if strings.EqualFold(reqHost, host) || strings.EqualFold(flatH, host) {
 					return true
 				}
-				// FIXME
-				//log.Debugf("CNAMEFlattening: request %s which resolved to %s, is not matched to route %s", reqH, flatH, host)
+				log.FromContext(req.Context()).Debugf("CNAMEFlattening: request %s which resolved to %s, is not matched to route %s", reqHost, flatH, host)
 			}
 			return false
 		}
@@ -51,270 +122,107 @@ func (r *Rules) host(hosts ...string) *mux.Route {
 		}
 		return false
 	})
+	return nil
 }
 
-func (r *Rules) hostRegexp(hostPatterns ...string) *mux.Route {
-	router := r.Route.Route.Subrouter()
-	for _, hostPattern := range hostPatterns {
-		router.Host(hostPattern)
-	}
-	return r.Route.Route
-}
-
-func (r *Rules) path(paths ...string) *mux.Route {
-	router := r.Route.Route.Subrouter()
-	for _, path := range paths {
-		router.Path(path)
-	}
-	return r.Route.Route
-}
-
-func (r *Rules) pathPrefix(paths ...string) *mux.Route {
-	router := r.Route.Route.Subrouter()
-	for _, path := range paths {
-		buildPath(path, router)
-	}
-	return r.Route.Route
-}
-
-func buildPath(path string, router *mux.Router) {
-	// {} are used to define a regex pattern in http://www.gorillatoolkit.org/pkg/mux.
-	// if we find a { in the path, that means we use regex, then the gorilla/mux implementation is chosen
-	// otherwise, we use a lightweight implementation
-	if strings.Contains(path, "{") {
-		router.PathPrefix(path)
-	} else {
-		m := &prefixMatcher{prefix: path}
-		router.NewRoute().MatcherFunc(m.Match)
-	}
-}
-
-type prefixMatcher struct {
-	prefix string
-}
-
-func (m *prefixMatcher) Match(r *http.Request, _ *mux.RouteMatch) bool {
-	return strings.HasPrefix(r.URL.Path, m.prefix) || strings.HasPrefix(r.URL.Path, m.prefix+"/")
-}
-
-type bySize []string
-
-func (a bySize) Len() int           { return len(a) }
-func (a bySize) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a bySize) Less(i, j int) bool { return len(a[i]) > len(a[j]) }
-
-func (r *Rules) pathStrip(paths ...string) *mux.Route {
-	sort.Sort(bySize(paths))
-	r.Route.StripPrefixes = paths
-	router := r.Route.Route.Subrouter()
-	for _, path := range paths {
-		router.Path(strings.TrimSpace(path))
-	}
-	return r.Route.Route
-}
-
-func (r *Rules) pathStripRegex(paths ...string) *mux.Route {
-	sort.Sort(bySize(paths))
-	r.Route.StripPrefixesRegex = paths
-	router := r.Route.Route.Subrouter()
-	for _, path := range paths {
-		router.Path(path)
-	}
-	return r.Route.Route
-}
-
-func (r *Rules) replacePath(paths ...string) *mux.Route {
-	for _, path := range paths {
-		r.Route.ReplacePath = path
-	}
-	return r.Route.Route
-}
-
-func (r *Rules) replacePathRegex(paths ...string) *mux.Route {
-	for _, path := range paths {
-		r.Route.ReplacePathRegex = path
-	}
-	return r.Route.Route
-}
-
-func (r *Rules) addPrefix(paths ...string) *mux.Route {
-	for _, path := range paths {
-		r.Route.AddPrefix = path
-	}
-	return r.Route.Route
-}
-
-func (r *Rules) pathPrefixStrip(paths ...string) *mux.Route {
-	sort.Sort(bySize(paths))
-	r.Route.StripPrefixes = paths
-	router := r.Route.Route.Subrouter()
-	for _, path := range paths {
-		buildPath(path, router)
-	}
-	return r.Route.Route
-}
-
-func (r *Rules) pathPrefixStripRegex(paths ...string) *mux.Route {
-	sort.Sort(bySize(paths))
-	r.Route.StripPrefixesRegex = paths
-	router := r.Route.Route.Subrouter()
-	for _, path := range paths {
-		router.PathPrefix(path)
-	}
-	return r.Route.Route
-}
-
-func (r *Rules) methods(methods ...string) *mux.Route {
-	return r.Route.Route.Methods(methods...)
-}
-
-func (r *Rules) headers(headers ...string) *mux.Route {
-	return r.Route.Route.Headers(headers...)
-}
-
-func (r *Rules) headersRegexp(headers ...string) *mux.Route {
-	return r.Route.Route.HeadersRegexp(headers...)
-}
-
-func (r *Rules) query(query ...string) *mux.Route {
-	var queries []string
-	for _, elem := range query {
-		queries = append(queries, strings.Split(elem, "=")...)
-	}
-
-	return r.Route.Route.Queries(queries...)
-}
-
-func (r *Rules) parseRules(expression string, onRule func(functionName string, function interface{}, arguments []string) error) error {
-	functions := map[string]interface{}{
-		"Host":                 r.host,
-		"HostRegexp":           r.hostRegexp,
-		"Path":                 r.path,
-		"PathStrip":            r.pathStrip,
-		"PathStripRegex":       r.pathStripRegex,
-		"PathPrefix":           r.pathPrefix,
-		"PathPrefixStrip":      r.pathPrefixStrip,
-		"PathPrefixStripRegex": r.pathPrefixStripRegex,
-		"Method":               r.methods,
-		"Headers":              r.headers,
-		"HeadersRegexp":        r.headersRegexp,
-		"AddPrefix":            r.addPrefix,
-		"ReplacePath":          r.replacePath,
-		"ReplacePathRegex":     r.replacePathRegex,
-		"Query":                r.query,
-	}
-
-	if len(expression) == 0 {
-		return errors.New("empty rule")
-	}
-
-	f := func(c rune) bool {
-		return c == ':'
-	}
-
-	// Allow multiple rules separated by ;
-	splitRule := func(c rune) bool {
-		return c == ';'
-	}
-
-	parsedRules := strings.FieldsFunc(expression, splitRule)
-
-	for _, rule := range parsedRules {
-		// get function
-		parsedFunctions := strings.FieldsFunc(rule, f)
-		if len(parsedFunctions) == 0 {
-			return fmt.Errorf("error parsing rule: '%s'", rule)
-		}
-
-		functionName := strings.TrimSpace(parsedFunctions[0])
-		parsedFunction, ok := functions[functionName]
-		if !ok {
-			return fmt.Errorf("error parsing rule: '%s'. Unknown function: '%s'", rule, parsedFunctions[0])
-		}
-		parsedFunctions = append(parsedFunctions[:0], parsedFunctions[1:]...)
-
-		// get function
-		fargs := func(c rune) bool {
-			return c == ','
-		}
-		parsedArgs := strings.FieldsFunc(strings.Join(parsedFunctions, ":"), fargs)
-		if len(parsedArgs) == 0 {
-			return fmt.Errorf("error parsing args from rule: '%s'", rule)
-		}
-
-		for i := range parsedArgs {
-			parsedArgs[i] = strings.TrimSpace(parsedArgs[i])
-		}
-
-		err := onRule(functionName, parsedFunction, parsedArgs)
-		if err != nil {
-			return fmt.Errorf("parsing error on rule: %v", err)
+func hostRegexp(route *mux.Route, hosts ...string) error {
+	router := route.Subrouter()
+	for _, host := range hosts {
+		tmpRt := router.Host(host)
+		if tmpRt.GetError() != nil {
+			return tmpRt.GetError()
 		}
 	}
 	return nil
 }
 
-// Parse parses rules expressions
-func (r *Rules) Parse(expression string) (*mux.Route, error) {
-	var resultRoute *mux.Route
-
-	err := r.parseRules(expression, func(functionName string, function interface{}, arguments []string) error {
-		inputs := make([]reflect.Value, len(arguments))
-		for i := range arguments {
-			inputs[i] = reflect.ValueOf(arguments[i])
-		}
-		method := reflect.ValueOf(function)
-		if method.IsValid() {
-			resultRoute = method.Call(inputs)[0].Interface().(*mux.Route)
-			if r.err != nil {
-				return r.err
-			}
-			if resultRoute == nil {
-				return fmt.Errorf("invalid expression: %s", expression)
-			}
-			if resultRoute.GetError() != nil {
-				return resultRoute.GetError()
-			}
-		} else {
-			return fmt.Errorf("method not found: '%s'", functionName)
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("error parsing rule: %v", err)
-	}
-
-	return resultRoute, nil
+func methods(route *mux.Route, methods ...string) error {
+	return route.Methods(methods...).GetError()
 }
 
-// ParseDomains parses rules expressions and returns domains
-func (r *Rules) ParseDomains(expression string) ([]string, error) {
-	var domains []string
-	isHostRule := false
+func headers(route *mux.Route, headers ...string) error {
+	return route.Headers(headers...).GetError()
+}
 
-	err := r.parseRules(expression, func(functionName string, function interface{}, arguments []string) error {
-		if functionName == "Host" {
-			isHostRule = true
-			domains = append(domains, arguments...)
+func headersRegexp(route *mux.Route, headers ...string) error {
+	return route.HeadersRegexp(headers...).GetError()
+}
+
+func query(route *mux.Route, query ...string) error {
+	var queries []string
+	for _, elem := range query {
+		queries = append(queries, strings.Split(elem, "=")...)
+	}
+
+	route.Queries(queries...)
+	// Queries can return nil so we can't chain the GetError()
+	return route.GetError()
+}
+
+func addRuleOnRouter(router *mux.Router, rule *tree) error {
+	switch rule.matcher {
+	case "and":
+		route := router.NewRoute()
+		err := addRuleOnRoute(route, rule.ruleLeft)
+		if err != nil {
+			return err
 		}
-		return nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("error parsing domains: %v", err)
+
+		return addRuleOnRoute(route, rule.ruleRight)
+	case "or":
+		err := addRuleOnRouter(router, rule.ruleLeft)
+		if err != nil {
+			return err
+		}
+
+		return addRuleOnRouter(router, rule.ruleRight)
+	default:
+		err := checkRule(rule)
+		if err != nil {
+			return err
+		}
+
+		return funcs[rule.matcher](router.NewRoute(), rule.value...)
+	}
+}
+
+func addRuleOnRoute(route *mux.Route, rule *tree) error {
+	switch rule.matcher {
+	case "and":
+		err := addRuleOnRoute(route, rule.ruleLeft)
+		if err != nil {
+			return err
+		}
+
+		return addRuleOnRoute(route, rule.ruleRight)
+	case "or":
+		subRouter := route.Subrouter()
+
+		err := addRuleOnRouter(subRouter, rule.ruleLeft)
+		if err != nil {
+			return err
+		}
+
+		return addRuleOnRouter(subRouter, rule.ruleRight)
+	default:
+		err := checkRule(rule)
+		if err != nil {
+			return err
+		}
+
+		return funcs[rule.matcher](route, rule.value...)
+	}
+}
+
+func checkRule(rule *tree) error {
+	if len(rule.value) == 0 {
+		return fmt.Errorf("no args for matcher %s", rule.matcher)
 	}
 
-	var cleanDomains []string
-	for _, domain := range domains {
-		canonicalDomain := strings.ToLower(domain)
-		if len(canonicalDomain) > 0 {
-			cleanDomains = append(cleanDomains, canonicalDomain)
+	for _, v := range rule.value {
+		if len(v) == 0 {
+			return fmt.Errorf("empty args for matcher %s, %v", rule.matcher, rule.value)
 		}
 	}
-
-	// Return an error if an Host rule is detected but no domain are parsed
-	if isHostRule && len(cleanDomains) == 0 {
-		return nil, fmt.Errorf("unable to parse correctly the domains in the Host rule from %q", expression)
-	}
-
-	return cleanDomains, nil
+	return nil
 }

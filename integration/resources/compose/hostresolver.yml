@@ -1,8 +1,6 @@
 server1:
-  image: emilevauge/whoami
+  image: containous/whoami
   labels:
     - traefik.enable=true
-    - traefik.port=80
-    - traefik.backend=backend1
-    - traefik.frontend.entryPoints=http
-    - traefik.frontend.rule=Host:github.com
+    - traefik.services.service1.loadbalancer.server.port=80
+    - traefik.routers.router1.rule=Host("github.com")

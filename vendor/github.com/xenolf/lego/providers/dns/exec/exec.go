@@ -1,3 +1,4 @@
+// Package exec implements a DNS provider which runs a program for adding/removing the DNS record.
 package exec
 
 import (
@@ -5,17 +6,27 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strconv"
+	"time"
 
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/log"
 	"github.com/xenolf/lego/platform/config/env"
 )
 
 // Config Provider configuration.
 type Config struct {
-	Program string
-	Mode    string
+	Program            string
+	Mode               string
+	PropagationTimeout time.Duration
+	PollingInterval    time.Duration
+}
+
+// NewDefaultConfig returns a default configuration for the DNSProvider
+func NewDefaultConfig() *Config {
+	return &Config{
+		PropagationTimeout: env.GetOrDefaultSecond("EXEC_PROPAGATION_TIMEOUT", dns01.DefaultPropagationTimeout),
+		PollingInterval:    env.GetOrDefaultSecond("EXEC_POLLING_INTERVAL", dns01.DefaultPollingInterval),
+	}
 }
 
 // DNSProvider adds and removes the record for the DNS challenge by calling a
@@ -32,10 +43,11 @@ func NewDNSProvider() (*DNSProvider, error) {
 		return nil, fmt.Errorf("exec: %v", err)
 	}
 
-	return NewDNSProviderConfig(&Config{
-		Program: values["EXEC_PATH"],
-		Mode:    os.Getenv("EXEC_MODE"),
-	})
+	config := NewDefaultConfig()
+	config.Program = values["EXEC_PATH"]
+	config.Mode = os.Getenv("EXEC_MODE")
+
+	return NewDNSProviderConfig(config)
 }
 
 // NewDNSProviderConfig returns a new DNS provider which runs the given configuration
@@ -48,25 +60,14 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 	return &DNSProvider{config: config}, nil
 }
 
-// NewDNSProviderProgram returns a new DNS provider which runs the given program
-// for adding and removing the DNS record.
-// Deprecated: use NewDNSProviderConfig instead
-func NewDNSProviderProgram(program string) (*DNSProvider, error) {
-	if len(program) == 0 {
-		return nil, errors.New("the program is undefined")
-	}
-
-	return NewDNSProviderConfig(&Config{Program: program})
-}
-
 // Present creates a TXT record to fulfill the dns-01 challenge.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	var args []string
 	if d.config.Mode == "RAW" {
 		args = []string{"present", "--", domain, token, keyAuth}
 	} else {
-		fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
-		args = []string{"present", fqdn, value, strconv.Itoa(ttl)}
+		fqdn, value := dns01.GetRecord(domain, keyAuth)
+		args = []string{"present", fqdn, value}
 	}
 
 	cmd := exec.Command(d.config.Program, args...)
@@ -85,8 +86,8 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	if d.config.Mode == "RAW" {
 		args = []string{"cleanup", "--", domain, token, keyAuth}
 	} else {
-		fqdn, value, ttl := acme.DNS01Record(domain, keyAuth)
-		args = []string{"cleanup", fqdn, value, strconv.Itoa(ttl)}
+		fqdn, value := dns01.GetRecord(domain, keyAuth)
+		args = []string{"cleanup", fqdn, value}
 	}
 
 	cmd := exec.Command(d.config.Program, args...)
@@ -97,4 +98,10 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	}
 
 	return err
+}
+
+// Timeout returns the timeout and interval to use when checking for DNS propagation.
+// Adjusting here to cope with spikes in propagation times.
+func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
+	return d.config.PropagationTimeout, d.config.PollingInterval
 }

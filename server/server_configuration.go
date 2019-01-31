@@ -25,7 +25,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// loadConfiguration manages dynamically frontends, backends and TLS configurations
+// loadConfiguration manages dynamically routers, middlewares, servers and TLS configurations
 func (s *Server) loadConfiguration(configMsg config.Message) {
 	logger := log.FromContext(log.With(context.Background(), log.Str(log.ProviderName, configMsg.ProviderName)))
 
@@ -45,7 +45,7 @@ func (s *Server) loadConfiguration(configMsg config.Message) {
 	s.metricsRegistry.LastConfigReloadSuccessGauge().Set(float64(time.Now().Unix()))
 
 	for entryPointName, handler := range handlers {
-		s.entryPoints[entryPointName].httpRouter.UpdateHandler(handler)
+		s.entryPoints[entryPointName].switcher.UpdateHandler(handler)
 	}
 
 	for entryPointName, entryPoint := range s.entryPoints {
@@ -76,28 +76,7 @@ func (s *Server) loadConfig(configurations config.Configurations) (map[string]ht
 
 	ctx := context.TODO()
 
-	// FIXME manage duplicates
-	conf := config.Configuration{
-		Routers:     make(map[string]*config.Router),
-		Middlewares: make(map[string]*config.Middleware),
-		Services:    make(map[string]*config.Service),
-	}
-	for _, config := range configurations {
-		for key, value := range config.Middlewares {
-			conf.Middlewares[key] = value
-		}
-
-		for key, value := range config.Services {
-			conf.Services[key] = value
-		}
-
-		for key, value := range config.Routers {
-			conf.Routers[key] = value
-		}
-
-		conf.TLS = append(conf.TLS, config.TLS...)
-	}
-
+	conf := mergeConfiguration(configurations)
 	handlers := s.applyConfiguration(ctx, conf)
 
 	// Get new certificates list sorted per entry points

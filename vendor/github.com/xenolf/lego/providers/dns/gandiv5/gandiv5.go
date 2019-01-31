@@ -1,5 +1,4 @@
-// Package gandiv5 implements a DNS provider for solving the DNS-01
-// challenge using Gandi LiveDNS api.
+// Package gandiv5 implements a DNS provider for solving the DNS-01 challenge using Gandi LiveDNS api.
 package gandiv5
 
 import (
@@ -10,8 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/xenolf/lego/acme"
-	"github.com/xenolf/lego/log"
+	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/platform/config/env"
 )
 
@@ -22,10 +20,6 @@ const (
 	defaultBaseURL = "https://dns.api.gandi.net/api/v5"
 	minTTL         = 300
 )
-
-// findZoneByFqdn determines the DNS zone of an fqdn.
-// It is overridden during tests.
-var findZoneByFqdn = acme.FindZoneByFqdn
 
 // inProgressInfo contains information about an in-progress challenge
 type inProgressInfo struct {
@@ -62,6 +56,8 @@ type DNSProvider struct {
 	config          *Config
 	inProgressFQDNs map[string]inProgressInfo
 	inProgressMu    sync.Mutex
+	// findZoneByFqdn determines the DNS zone of an fqdn. It is overridden during tests.
+	findZoneByFqdn func(fqdn string) (string, error)
 }
 
 // NewDNSProvider returns a DNSProvider instance configured for Gandi.
@@ -74,16 +70,6 @@ func NewDNSProvider() (*DNSProvider, error) {
 
 	config := NewDefaultConfig()
 	config.APIKey = values["GANDIV5_API_KEY"]
-
-	return NewDNSProviderConfig(config)
-}
-
-// NewDNSProviderCredentials uses the supplied credentials
-// to return a DNSProvider instance configured for Gandi.
-// Deprecated
-func NewDNSProviderCredentials(apiKey string) (*DNSProvider, error) {
-	config := NewDefaultConfig()
-	config.APIKey = apiKey
 
 	return NewDNSProviderConfig(config)
 }
@@ -109,15 +95,16 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 	return &DNSProvider{
 		config:          config,
 		inProgressFQDNs: make(map[string]inProgressInfo),
+		findZoneByFqdn:  dns01.FindZoneByFqdn,
 	}, nil
 }
 
 // Present creates a TXT record using the specified parameters.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
 	// find authZone
-	authZone, err := findZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := d.findZoneByFqdn(fqdn)
 	if err != nil {
 		return fmt.Errorf("gandiv5: findZoneByFqdn failure: %v", err)
 	}
@@ -135,7 +122,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	defer d.inProgressMu.Unlock()
 
 	// add TXT record into authZone
-	err = d.addTXTRecord(acme.UnFqdn(authZone), name, value, d.config.TTL)
+	err = d.addTXTRecord(dns01.UnFqdn(authZone), name, value, d.config.TTL)
 	if err != nil {
 		return err
 	}
@@ -150,7 +137,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters.
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _ := dns01.GetRecord(domain, keyAuth)
 
 	// acquire lock and retrieve authZone
 	d.inProgressMu.Lock()
@@ -165,7 +152,7 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	delete(d.inProgressFQDNs, fqdn)
 
 	// delete TXT record from authZone
-	err := d.deleteTXTRecord(acme.UnFqdn(authZone), fieldName)
+	err := d.deleteTXTRecord(dns01.UnFqdn(authZone), fieldName)
 	if err != nil {
 		return fmt.Errorf("gandiv5: %v", err)
 	}
@@ -177,80 +164,4 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 // when checking for DNS record propagation with Gandi.
 func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 	return d.config.PropagationTimeout, d.config.PollingInterval
-}
-
-// functions to perform API actions
-
-func (d *DNSProvider) addTXTRecord(domain string, name string, value string, ttl int) error {
-	// Get exiting values for the TXT records
-	// Needed to create challenges for both wildcard and base name domains
-	txtRecord, err := d.getTXTRecord(domain, name)
-	if err != nil {
-		return err
-	}
-
-	values := []string{value}
-	if len(txtRecord.RRSetValues) > 0 {
-		values = append(values, txtRecord.RRSetValues...)
-	}
-
-	target := fmt.Sprintf("domains/%s/records/%s/TXT", domain, name)
-
-	newRecord := &Record{RRSetTTL: ttl, RRSetValues: values}
-	req, err := d.newRequest(http.MethodPut, target, newRecord)
-	if err != nil {
-		return err
-	}
-
-	message := &apiResponse{}
-	err = d.do(req, message)
-	if err != nil {
-		return fmt.Errorf("unable to create TXT record for domain %s and name %s: %v", domain, name, err)
-	}
-
-	if message != nil && len(message.Message) > 0 {
-		log.Infof("API response: %s", message.Message)
-	}
-
-	return nil
-}
-
-func (d *DNSProvider) getTXTRecord(domain, name string) (*Record, error) {
-	target := fmt.Sprintf("domains/%s/records/%s/TXT", domain, name)
-
-	// Get exiting values for the TXT records
-	// Needed to create challenges for both wildcard and base name domains
-	req, err := d.newRequest(http.MethodGet, target, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	txtRecord := &Record{}
-	err = d.do(req, txtRecord)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get TXT records for domain %s and name %s: %v", domain, name, err)
-	}
-
-	return txtRecord, nil
-}
-
-func (d *DNSProvider) deleteTXTRecord(domain string, name string) error {
-	target := fmt.Sprintf("domains/%s/records/%s/TXT", domain, name)
-
-	req, err := d.newRequest(http.MethodDelete, target, nil)
-	if err != nil {
-		return err
-	}
-
-	message := &apiResponse{}
-	err = d.do(req, message)
-	if err != nil {
-		return fmt.Errorf("unable to delete TXT record for domain %s and name %s: %v", domain, name, err)
-	}
-
-	if message != nil && len(message.Message) > 0 {
-		log.Infof("API response: %s", message.Message)
-	}
-
-	return nil
 }

@@ -10,18 +10,18 @@ import (
 	"github.com/containous/traefik/old/provider/boltdb"
 	"github.com/containous/traefik/old/provider/consul"
 	"github.com/containous/traefik/old/provider/consulcatalog"
-	"github.com/containous/traefik/old/provider/docker"
 	"github.com/containous/traefik/old/provider/dynamodb"
 	"github.com/containous/traefik/old/provider/ecs"
 	"github.com/containous/traefik/old/provider/etcd"
 	"github.com/containous/traefik/old/provider/eureka"
 	"github.com/containous/traefik/old/provider/kubernetes"
-	"github.com/containous/traefik/old/provider/marathon"
 	"github.com/containous/traefik/old/provider/mesos"
 	"github.com/containous/traefik/old/provider/rancher"
 	"github.com/containous/traefik/old/provider/zk"
 	"github.com/containous/traefik/ping"
+	"github.com/containous/traefik/provider/docker"
 	"github.com/containous/traefik/provider/file"
+	"github.com/containous/traefik/provider/marathon"
 	"github.com/containous/traefik/provider/rest"
 	"github.com/containous/traefik/tracing/datadog"
 	"github.com/containous/traefik/tracing/jaeger"
@@ -110,6 +110,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 			LocalAgentHostPort: "localhost:8126",
 			GlobalTag:          "",
 			Debug:              false,
+			PrioritySampling:   false,
 		},
 	}
 
@@ -143,7 +144,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		},
 	}
 
-	defaultResolver := static.HostResolverConfig{
+	defaultResolver := types.HostResolverConfig{
 		CnameFlattening: false,
 		ResolvConfig:    "/etc/resolv.conf",
 		ResolvDepth:     5,
@@ -155,6 +156,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultDocker.Endpoint = "unix:///var/run/docker.sock"
 	defaultDocker.SwarmMode = false
 	defaultDocker.SwarmModeRefreshSeconds = 15
+	defaultDocker.DefaultRule = docker.DefaultTemplateRule
 
 	// default Rest
 	var defaultRest rest.Provider
@@ -169,6 +171,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultMarathon.ResponseHeaderTimeout = parse.Duration(60 * time.Second)
 	defaultMarathon.TLSHandshakeTimeout = parse.Duration(5 * time.Second)
 	defaultMarathon.KeepAlive = parse.Duration(10 * time.Second)
+	defaultMarathon.DefaultRule = marathon.DefaultTemplateRule
 
 	// default Consul
 	var defaultConsul consul.Provider

@@ -2,8 +2,10 @@ package retry
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/http/httptrace"
 	"strings"
 	"testing"
 
@@ -145,6 +147,50 @@ func TestRetryListeners(t *testing.T) {
 		listener := retryListener.(*countingRetryListener)
 		if listener.timesCalled != 2 {
 			t.Errorf("retry listener was called %d time(s), want %d time(s)", listener.timesCalled, 2)
+		}
+	}
+}
+
+func TestMultipleRetriesShouldNotLooseHeaders(t *testing.T) {
+	attempt := 0
+	expectedHeaderName := "X-Foo-Test-2"
+	expectedHeaderValue := "bar"
+
+	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		headerName := fmt.Sprintf("X-Foo-Test-%d", attempt)
+		rw.Header().Add(headerName, expectedHeaderValue)
+		if attempt < 2 {
+			attempt++
+			return
+		}
+
+		// Request has been successfully written to backend
+		trace := httptrace.ContextClientTrace(req.Context())
+		trace.WroteHeaders()
+
+		// And we decide to answer to client
+		rw.WriteHeader(http.StatusNoContent)
+	})
+
+	retry, err := New(context.Background(), next, config.Retry{Attempts: 3}, &countingRetryListener{}, "traefikTest")
+	require.NoError(t, err)
+
+	responseRecorder := httptest.NewRecorder()
+	retry.ServeHTTP(responseRecorder, testhelpers.MustNewRequest(http.MethodGet, "http://test", http.NoBody))
+
+	headerValue := responseRecorder.Header().Get(expectedHeaderName)
+
+	// Validate if we have the correct header
+	if headerValue != expectedHeaderValue {
+		t.Errorf("Expected to have %s for header %s, got %s", expectedHeaderValue, expectedHeaderName, headerValue)
+	}
+
+	// Validate that we don't have headers from previous attempts
+	for i := 0; i < attempt; i++ {
+		headerName := fmt.Sprintf("X-Foo-Test-%d", i)
+		headerValue = responseRecorder.Header().Get("headerName")
+		if headerValue != "" {
+			t.Errorf("Expected no value for header %s, got %s", headerName, headerValue)
 		}
 	}
 }

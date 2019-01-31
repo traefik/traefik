@@ -12,7 +12,7 @@ logLevel = "DEBUG"
   [Routers.router1]
     Service = "service1"
     Middlewares = [ "ratelimit" ]
-    Rule = "Path:/"
+    Rule = "Path(`/`)"
 
 [Middlewares]
   [Middlewares.ratelimit.RateLimit]

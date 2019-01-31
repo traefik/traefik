@@ -8,15 +8,16 @@ import (
 	"crypto/x509"
 
 	"github.com/containous/traefik/log"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/certcrypto"
+	"github.com/xenolf/lego/registration"
 )
 
 // Account is used to store lets encrypt registration info
 type Account struct {
 	Email        string
-	Registration *acme.RegistrationResource
+	Registration *registration.Resource
 	PrivateKey   []byte
-	KeyType      acme.KeyType
+	KeyType      certcrypto.KeyType
 }
 
 const (
@@ -47,7 +48,7 @@ func (a *Account) GetEmail() string {
 }
 
 // GetRegistration returns lets encrypt registration resource
-func (a *Account) GetRegistration() *acme.RegistrationResource {
+func (a *Account) GetRegistration() *registration.Resource {
 	return a.Registration
 }
 
@@ -64,25 +65,25 @@ func (a *Account) GetPrivateKey() crypto.PrivateKey {
 }
 
 // GetKeyType used to determine which algo to used
-func GetKeyType(ctx context.Context, value string) acme.KeyType {
+func GetKeyType(ctx context.Context, value string) certcrypto.KeyType {
 	logger := log.FromContext(ctx)
 
 	switch value {
 	case "EC256":
-		return acme.EC256
+		return certcrypto.EC256
 	case "EC384":
-		return acme.EC384
+		return certcrypto.EC384
 	case "RSA2048":
-		return acme.RSA2048
+		return certcrypto.RSA2048
 	case "RSA4096":
-		return acme.RSA4096
+		return certcrypto.RSA4096
 	case "RSA8192":
-		return acme.RSA8192
+		return certcrypto.RSA8192
 	case "":
-		logger.Infof("The key type is empty. Use default key type %v.", acme.RSA4096)
-		return acme.RSA4096
+		logger.Infof("The key type is empty. Use default key type %v.", certcrypto.RSA4096)
+		return certcrypto.RSA4096
 	default:
-		logger.Infof("Unable to determine the key type value %q: falling back on %v.", value, acme.RSA4096)
-		return acme.RSA4096
+		logger.Infof("Unable to determine the key type value %q: falling back on %v.", value, certcrypto.RSA4096)
+		return certcrypto.RSA4096
 	}
 }

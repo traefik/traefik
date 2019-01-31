@@ -17,14 +17,11 @@ import (
 	"github.com/containous/traefik/old/provider/boltdb"
 	"github.com/containous/traefik/old/provider/consul"
 	"github.com/containous/traefik/old/provider/consulcatalog"
-	"github.com/containous/traefik/old/provider/docker"
 	"github.com/containous/traefik/old/provider/dynamodb"
 	"github.com/containous/traefik/old/provider/ecs"
 	"github.com/containous/traefik/old/provider/etcd"
 	"github.com/containous/traefik/old/provider/eureka"
-	"github.com/containous/traefik/old/provider/file"
 	"github.com/containous/traefik/old/provider/kubernetes"
-	"github.com/containous/traefik/old/provider/marathon"
 	"github.com/containous/traefik/old/provider/mesos"
 	"github.com/containous/traefik/old/provider/rancher"
 	"github.com/containous/traefik/old/provider/rest"
@@ -32,9 +29,11 @@ import (
 	"github.com/containous/traefik/old/tls"
 	"github.com/containous/traefik/old/types"
 	acmeprovider "github.com/containous/traefik/provider/acme"
+	"github.com/containous/traefik/provider/docker"
+	"github.com/containous/traefik/provider/file"
 	newtypes "github.com/containous/traefik/types"
 	"github.com/pkg/errors"
-	lego "github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
 )
 
 const (
@@ -88,7 +87,6 @@ type GlobalConfiguration struct {
 	KeepTrailingSlash         bool                    `description:"Do not remove trailing slash." export:"true"` // Deprecated
 	Docker                    *docker.Provider        `description:"Enable Docker backend with default settings" export:"true"`
 	File                      *file.Provider          `description:"Enable File backend with default settings" export:"true"`
-	Marathon                  *marathon.Provider      `description:"Enable Marathon backend with default settings" export:"true"`
 	Consul                    *consul.Provider        `description:"Enable Consul backend with default settings" export:"true"`
 	ConsulCatalog             *consulcatalog.Provider `description:"Enable Consul catalog backend with default settings" export:"true"`
 	Etcd                      *etcd.Provider          `description:"Enable Etcd backend with default settings" export:"true"`
@@ -225,6 +223,7 @@ func (gc *GlobalConfiguration) initTracing() {
 					LocalAgentHostPort: "localhost:8126",
 					GlobalTag:          "",
 					Debug:              false,
+					PrioritySampling:   false,
 				}
 			}
 			if gc.Tracing.Zipkin != nil {
@@ -414,11 +413,11 @@ func convertACMEChallenge(oldACMEChallenge *acme.ACME) *acmeprovider.Configurati
 	}
 
 	for _, domain := range oldACMEChallenge.Domains {
-		if domain.Main != lego.UnFqdn(domain.Main) {
+		if domain.Main != dns01.UnFqdn(domain.Main) {
 			log.Warnf("FQDN detected, please remove the trailing dot: %s", domain.Main)
 		}
 		for _, san := range domain.SANs {
-			if san != lego.UnFqdn(san) {
+			if san != dns01.UnFqdn(san) {
 				log.Warnf("FQDN detected, please remove the trailing dot: %s", san)
 			}
 		}

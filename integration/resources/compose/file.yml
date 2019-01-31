@@ -1,20 +1,20 @@
 whoami1:
-  image: emilevauge/whoami
+  image: containous/whoami
   ports:
     - "8881:80"
 whoami2:
-  image: emilevauge/whoami
+  image: containous/whoami
   ports:
     - "8882:80"
 whoami3:
-  image: emilevauge/whoami
+  image: containous/whoami
   ports:
     - "8883:80"
 whoami4:
-  image: emilevauge/whoami
+  image: containous/whoami
   ports:
     - "8884:80"
 whoami5:
-  image: emilevauge/whoami
+  image: containous/whoami
   ports:
     - "8885:80"

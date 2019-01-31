@@ -1,5 +1,4 @@
-// Package linodev4 implements a DNS provider for solving the DNS-01 challenge
-// using Linode DNS and Linode's APIv4
+// Package linodev4 implements a DNS provider for solving the DNS-01 challenge using Linode DNS and Linode's APIv4
 package linodev4
 
 import (
@@ -12,7 +11,7 @@ import (
 	"time"
 
 	"github.com/linode/linodego"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/platform/config/env"
 	"golang.org/x/oauth2"
 )
@@ -115,14 +114,14 @@ func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 
 // Present creates a TXT record using the specified parameters.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 	zone, err := d.getHostedZoneInfo(fqdn)
 	if err != nil {
 		return err
 	}
 
 	createOpts := linodego.DomainRecordCreateOptions{
-		Name:   acme.UnFqdn(fqdn),
+		Name:   dns01.UnFqdn(fqdn),
 		Target: value,
 		TTLSec: d.config.TTL,
 		Type:   linodego.RecordTypeTXT,
@@ -134,7 +133,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters.
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
 	zone, err := d.getHostedZoneInfo(fqdn)
 	if err != nil {
@@ -163,13 +162,13 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 
 func (d *DNSProvider) getHostedZoneInfo(fqdn string) (*hostedZoneInfo, error) {
 	// Lookup the zone that handles the specified FQDN.
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := dns01.FindZoneByFqdn(fqdn)
 	if err != nil {
 		return nil, err
 	}
 
 	// Query the authority zone.
-	data, err := json.Marshal(map[string]string{"domain": acme.UnFqdn(authZone)})
+	data, err := json.Marshal(map[string]string{"domain": dns01.UnFqdn(authZone)})
 	if err != nil {
 		return nil, err
 	}

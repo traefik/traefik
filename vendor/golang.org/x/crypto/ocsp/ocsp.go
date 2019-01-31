@@ -63,7 +63,7 @@ func (r ResponseStatus) String() string {
 }
 
 // ResponseError is an error that may be returned by ParseResponse to indicate
-// that the response itself is an error, not just that its indicating that a
+// that the response itself is an error, not just that it's indicating that a
 // certificate is revoked, unknown, etc.
 type ResponseError struct {
 	Status ResponseStatus
@@ -488,10 +488,6 @@ func ParseResponseForCert(bytes []byte, cert, issuer *x509.Certificate) (*Respon
 		return nil, err
 	}
 
-	if len(basicResp.Certificates) > 1 {
-		return nil, ParseError("OCSP response contains bad number of certificates")
-	}
-
 	if n := len(basicResp.TBSResponseData.Responses); n == 0 || cert == nil && n > 1 {
 		return nil, ParseError("OCSP response contains bad number of responses")
 	}
@@ -544,6 +540,13 @@ func ParseResponseForCert(bytes []byte, cert, issuer *x509.Certificate) (*Respon
 	}
 
 	if len(basicResp.Certificates) > 0 {
+		// Responders should only send a single certificate (if they
+		// send any) that connects the responder's certificate to the
+		// original issuer. We accept responses with multiple
+		// certificates due to a number responders sending them[1], but
+		// ignore all but the first.
+		//
+		// [1] https://github.com/golang/go/issues/21527
 		ret.Certificate, err = x509.ParseCertificate(basicResp.Certificates[0].FullBytes)
 		if err != nil {
 			return nil, err

@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -30,13 +31,17 @@ func (s *TimeoutSuite) TestForwardingTimeouts(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 60*time.Second, try.BodyContains("Path:/dialTimeout"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 60*time.Second, try.BodyContains("Path(`/dialTimeout`)"))
 	c.Assert(err, checker.IsNil)
 
 	// This simulates a DialTimeout when connecting to the backend server.
 	response, err := http.Get("http://127.0.0.1:8000/dialTimeout")
 	c.Assert(err, checker.IsNil)
 	c.Assert(response.StatusCode, checker.Equals, http.StatusGatewayTimeout)
+
+	// Check that timeout service is available
+	statusURL := fmt.Sprintf("http://%s:9000/statusTest?status=200", httpTimeoutEndpoint)
+	c.Assert(try.GetRequest(statusURL, 60*time.Second, try.StatusCodeIs(http.StatusOK)), checker.IsNil)
 
 	// This simulates a ResponseHeaderTimeout.
 	response, err = http.Get("http://127.0.0.1:8000/responseHeaderTimeout?sleep=1000")

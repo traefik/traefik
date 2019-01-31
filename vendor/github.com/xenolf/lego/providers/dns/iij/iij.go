@@ -9,7 +9,7 @@ import (
 
 	"github.com/iij/doapi"
 	"github.com/iij/doapi/protocol"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/platform/config/env"
 )
 
@@ -73,7 +73,7 @@ func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 
 // Present creates a TXT record using the specified parameters
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	_, value, _ := acme.DNS01Record(domain, keyAuth)
+	_, value := dns01.GetRecord(domain, keyAuth)
 
 	err := d.addTxtRecord(domain, value)
 	if err != nil {
@@ -84,7 +84,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	_, value, _ := acme.DNS01Record(domain, keyAuth)
+	_, value := dns01.GetRecord(domain, keyAuth)
 
 	err := d.deleteTxtRecord(domain, value)
 	if err != nil {

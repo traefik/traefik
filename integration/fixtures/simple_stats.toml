@@ -14,12 +14,12 @@ debug=true
   [Routers.router1]
     EntryPoints = ["http"]
     Service = "service1"
-    Rule = "PathPrefix:/whoami"
+    Rule = "PathPrefix(`/whoami`)"
 
   [Routers.router2]
     EntryPoints = ["traefik"]
     Service = "service2"
-    Rule = "PathPrefix:/whoami"
+    Rule = "PathPrefix(`/whoami`)"
 
 [Services]
   [Services.service1]

@@ -14,7 +14,7 @@ logLevel = "DEBUG"
   [Routers.router1]
     Service = "service1"
     Middlewares = [ "retry" ]
-    Rule = "PathPrefix:/"
+    Rule = "PathPrefix(`/`)"
 
 [Middlewares.retry.Retry]
    Attempts = 3

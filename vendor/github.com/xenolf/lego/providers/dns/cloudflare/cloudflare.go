@@ -1,5 +1,4 @@
-// Package cloudflare implements a DNS provider for solving the DNS-01
-// challenge using cloudflare DNS.
+// Package cloudflare implements a DNS provider for solving the DNS-01 challenge using cloudflare DNS.
 package cloudflare
 
 import (
@@ -8,14 +7,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cloudflare/cloudflare-go"
-	"github.com/xenolf/lego/acme"
+	cloudflare "github.com/cloudflare/cloudflare-go"
+	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/log"
 	"github.com/xenolf/lego/platform/config/env"
 )
-
-// CloudFlareAPIURL represents the API endpoint to call.
-const CloudFlareAPIURL = "https://api.cloudflare.com/client/v4" // Deprecated
 
 const (
 	minTTL = 120
@@ -67,17 +63,6 @@ func NewDNSProvider() (*DNSProvider, error) {
 	return NewDNSProviderConfig(config)
 }
 
-// NewDNSProviderCredentials uses the supplied credentials
-// to return a DNSProvider instance configured for Cloudflare.
-// Deprecated
-func NewDNSProviderCredentials(email, key string) (*DNSProvider, error) {
-	config := NewDefaultConfig()
-	config.AuthEmail = email
-	config.AuthKey = key
-
-	return NewDNSProviderConfig(config)
-}
-
 // NewDNSProviderConfig return a DNSProvider instance configured for Cloudflare.
 func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 	if config == nil {
@@ -93,9 +78,6 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 		return nil, err
 	}
 
-	// TODO: must be remove. keep only for compatibility reason.
-	client.BaseURL = CloudFlareAPIURL
-
 	return &DNSProvider{client: client, config: config}, nil
 }
 
@@ -107,21 +89,21 @@ func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 
 // Present creates a TXT record to fulfill the dns-01 challenge
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := dns01.FindZoneByFqdn(fqdn)
 	if err != nil {
 		return fmt.Errorf("cloudflare: %v", err)
 	}
 
-	zoneID, err := d.client.ZoneIDByName(acme.UnFqdn(authZone))
+	zoneID, err := d.client.ZoneIDByName(dns01.UnFqdn(authZone))
 	if err != nil {
 		return fmt.Errorf("cloudflare: failed to find zone %s: %v", authZone, err)
 	}
 
 	dnsRecord := cloudflare.DNSRecord{
 		Type:    "TXT",
-		Name:    acme.UnFqdn(fqdn),
+		Name:    dns01.UnFqdn(fqdn),
 		Content: value,
 		TTL:     d.config.TTL,
 	}
@@ -142,21 +124,21 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _ := dns01.GetRecord(domain, keyAuth)
 
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := dns01.FindZoneByFqdn(fqdn)
 	if err != nil {
 		return fmt.Errorf("cloudflare: %v", err)
 	}
 
-	zoneID, err := d.client.ZoneIDByName(acme.UnFqdn(authZone))
+	zoneID, err := d.client.ZoneIDByName(dns01.UnFqdn(authZone))
 	if err != nil {
 		return fmt.Errorf("cloudflare: failed to find zone %s: %v", authZone, err)
 	}
 
 	dnsRecord := cloudflare.DNSRecord{
 		Type: "TXT",
-		Name: acme.UnFqdn(fqdn),
+		Name: dns01.UnFqdn(fqdn),
 	}
 
 	records, err := d.client.DNSRecords(zoneID, dnsRecord)

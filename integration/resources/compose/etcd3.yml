@@ -12,22 +12,22 @@ services:
       - 7001
 
   whoami1:
-    image: emilevauge/whoami
+    image: containous/whoami
     depends_on:
       - etcd
 
   whoami2:
-    image: emilevauge/whoami
+    image: containous/whoami
     depends_on:
       - whoami1
 
   whoami3:
-    image: emilevauge/whoami
+    image: containous/whoami
     depends_on:
       - whoami2
 
   whoami4:
-    image: emilevauge/whoami
+    image: containous/whoami
     depends_on:
       - whoami3
 

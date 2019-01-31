@@ -174,4 +174,10 @@ Traefik supports three tracing backends: Jaeger, Zipkin and DataDog.
     #
     globalTag = ""
 
+    # Enable priority sampling. When using distributed tracing, this option must be enabled in order
+    # to get all the parts of a distributed trace sampled.
+    #
+    # Default: false
+    #
+    prioritySampling = false
 ```

@@ -17,7 +17,8 @@ type Middleware struct {
 	Headers           *Headers           `json:"headers,omitempty"`
 	Errors            *ErrorPage         `json:"errors,omitempty"`
 	RateLimit         *RateLimit         `json:"rateLimit,omitempty"`
-	Redirect          *Redirect          `json:"redirect,omitempty"`
+	RedirectRegex     *RedirectRegex     `json:"redirectregex,omitempty"`
+	RedirectScheme    *RedirectScheme    `json:"redirectscheme,omitempty"`
 	BasicAuth         *BasicAuth         `json:"basicAuth,omitempty"`
 	DigestAuth        *DigestAuth        `json:"digestAuth,omitempty"`
 	ForwardAuth       *ForwardAuth       `json:"forwardAuth,omitempty"`
@@ -190,7 +191,7 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 // IPWhiteList holds the ip white list configuration.
 type IPWhiteList struct {
 	SourceRange []string    `json:"sourceRange,omitempty"`
-	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty"`
+	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty" label:"allowEmpty"`
 }
 
 // MaxConn holds maximum connection configuration.
@@ -199,10 +200,15 @@ type MaxConn struct {
 	ExtractorFunc string `json:"extractorFunc,omitempty"`
 }
 
+// SetDefaults Default values for a MaxConn.
+func (m *MaxConn) SetDefaults() {
+	m.ExtractorFunc = "request.host"
+}
+
 // PassTLSClientCert holds the TLS client cert headers configuration.
 type PassTLSClientCert struct {
-	PEM   bool                       `description:"Enable header with escaped client pem" json:"pem"`
-	Infos *TLSClientCertificateInfos `description:"Enable header with configured client cert infos" json:"infos,omitempty"`
+	PEM  bool                      `description:"Enable header with escaped client pem" json:"pem"`
+	Info *TLSClientCertificateInfo `description:"Enable header with configured client cert info" json:"info,omitempty"`
 }
 
 // Rate holds the rate limiting configuration for a specific time period.
@@ -219,11 +225,23 @@ type RateLimit struct {
 	ExtractorFunc string `json:"extractorFunc,omitempty"`
 }
 
-// Redirect holds the redirection configuration of an entry point to another, or to an URL.
-type Redirect struct {
+// SetDefaults Default values for a MaxConn.
+func (r *RateLimit) SetDefaults() {
+	r.ExtractorFunc = "request.host"
+}
+
+// RedirectRegex holds the redirection configuration.
+type RedirectRegex struct {
 	Regex       string `json:"regex,omitempty"`
 	Replacement string `json:"replacement,omitempty"`
 	Permanent   bool   `json:"permanent,omitempty"`
+}
+
+// RedirectScheme holds the scheme redirection configuration.
+type RedirectScheme struct {
+	Scheme    string `json:"scheme,omitempty"`
+	Port      string `json:"port,omitempty"`
+	Permanent bool   `json:"permanent,omitempty"`
 }
 
 // ReplacePath holds the ReplacePath configuration.
@@ -237,7 +255,7 @@ type ReplacePathRegex struct {
 	Replacement string `json:"replacement,omitempty"`
 }
 
-// Retry contains request retry config
+// Retry holds the retry configuration.
 type Retry struct {
 	Attempts int `description:"Number of attempts" export:"true"`
 }
@@ -252,22 +270,25 @@ type StripPrefixRegex struct {
 	Regex []string `json:"regex,omitempty"`
 }
 
-// TLSClientCertificateInfos holds the client TLS certificate infos configuration.
-type TLSClientCertificateInfos struct {
-	NotAfter  bool                              `description:"Add NotAfter info in header" json:"notAfter"`
-	NotBefore bool                              `description:"Add NotBefore info in header" json:"notBefore"`
-	Subject   *TLSCLientCertificateSubjectInfos `description:"Add Subject info in header" json:"subject,omitempty"`
-	Sans      bool                              `description:"Add Sans info in header" json:"sans"`
+// TLSClientCertificateInfo holds the client TLS certificate info configuration.
+type TLSClientCertificateInfo struct {
+	NotAfter  bool                        `description:"Add NotAfter info in header" json:"notAfter"`
+	NotBefore bool                        `description:"Add NotBefore info in header" json:"notBefore"`
+	Sans      bool                        `description:"Add Sans info in header" json:"sans"`
+	Subject   *TLSCLientCertificateDNInfo `description:"Add Subject info in header" json:"subject,omitempty"`
+	Issuer    *TLSCLientCertificateDNInfo `description:"Add Issuer info in header" json:"issuer,omitempty"`
 }
 
-// TLSCLientCertificateSubjectInfos holds the client TLS certificate subject infos configuration.
-type TLSCLientCertificateSubjectInfos struct {
-	Country      bool `description:"Add Country info in header" json:"country"`
-	Province     bool `description:"Add Province info in header" json:"province"`
-	Locality     bool `description:"Add Locality info in header" json:"locality"`
-	Organization bool `description:"Add Organization info in header" json:"organization"`
-	CommonName   bool `description:"Add CommonName info in header" json:"commonName"`
-	SerialNumber bool `description:"Add SerialNumber info in header" json:"serialNumber"`
+// TLSCLientCertificateDNInfo holds the client TLS certificate distinguished name info configuration
+// cf https://tools.ietf.org/html/rfc3739
+type TLSCLientCertificateDNInfo struct {
+	Country         bool `description:"Add Country info in header" json:"country"`
+	Province        bool `description:"Add Province info in header" json:"province"`
+	Locality        bool `description:"Add Locality info in header" json:"locality"`
+	Organization    bool `description:"Add Organization info in header" json:"organization"`
+	CommonName      bool `description:"Add CommonName info in header" json:"commonName"`
+	SerialNumber    bool `description:"Add SerialNumber info in header" json:"serialNumber"`
+	DomainComponent bool `description:"Add Domain Component info in header" json:"domainComponent"`
 }
 
 // Users holds a list of users

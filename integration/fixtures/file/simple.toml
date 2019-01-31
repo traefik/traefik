@@ -11,11 +11,11 @@ logLevel = "DEBUG"
 
 [routers]
   [routers.router1]
-    rule = "Host:test.localhost"
+    rule = "Host(`test.localhost`)"
     service = "service2"
 
   [routers.router2]
-    rule = "Path:/test"
+    rule = "Path(`/test`)"
     middlewares = ["circuitbreaker"]
     service = "service1"
 

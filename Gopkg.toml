@@ -71,7 +71,7 @@
 
 [[constraint]]
   name = "github.com/containous/staert"
-  version = "3.1.1"
+  version = "3.1.2"
 
 #[[constraint]]
 #  name = "github.com/containous/traefik-extra-service-fabric"
@@ -133,18 +133,6 @@
   source = "https://github.com/containous/mesos-dns.git"
 
 [[constraint]]
-  branch = "master"
-  name = "github.com/mitchellh/copystructure"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/mitchellh/hashstructure"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/mitchellh/mapstructure"
-
-[[constraint]]
   name = "github.com/opentracing/opentracing-go"
   version = "1.0.2"
 
@@ -190,9 +178,9 @@
   name = "github.com/vulcand/oxy"
 
 [[constraint]]
-  branch = "master"
+#  branch = "master"
   name = "github.com/xenolf/lego"
-#  version = "1.0.0"
+  version = "2.1.0"
 
 [[constraint]]
   name = "google.golang.org/grpc"
@@ -258,7 +246,7 @@
   revision = "7e6055773c5137efbeb3bd2410d705fe10ab6bfd"
 
 [[override]]
-  branch = "master"
+  version = "v1.1.1"
   name = "github.com/miekg/dns"
 
 [[constraint]]
@@ -267,4 +255,4 @@
 
 [[constraint]]
   name = "gopkg.in/DataDog/dd-trace-go.v1"
-  version = "1.5.0"
+  version = "1.7.0"

@@ -8,13 +8,13 @@ traefik:
     - /var/run/docker.sock:/var/run/docker.sock
 
 whoami1:
-  image: emilevauge/whoami
+  image: containous/whoami
   labels:
     - "traefik.backend=whoami"
     - "traefik.frontend.rule=Host:whoami.docker.localhost"
 
 whoami2:
-  image: emilevauge/whoami
+  image: containous/whoami
   labels:
     - "traefik.backend=whoami"
     - "traefik.frontend.rule=Host:whoami.docker.localhost"

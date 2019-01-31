@@ -11,19 +11,19 @@ import (
 	"github.com/containous/traefik/old/provider/boltdb"
 	"github.com/containous/traefik/old/provider/consul"
 	"github.com/containous/traefik/old/provider/consulcatalog"
-	"github.com/containous/traefik/old/provider/docker"
 	"github.com/containous/traefik/old/provider/dynamodb"
 	"github.com/containous/traefik/old/provider/ecs"
 	"github.com/containous/traefik/old/provider/etcd"
 	"github.com/containous/traefik/old/provider/eureka"
 	"github.com/containous/traefik/old/provider/kubernetes"
-	"github.com/containous/traefik/old/provider/marathon"
 	"github.com/containous/traefik/old/provider/mesos"
 	"github.com/containous/traefik/old/provider/rancher"
 	"github.com/containous/traefik/old/provider/zk"
 	"github.com/containous/traefik/ping"
 	acmeprovider "github.com/containous/traefik/provider/acme"
+	"github.com/containous/traefik/provider/docker"
 	"github.com/containous/traefik/provider/file"
+	"github.com/containous/traefik/provider/marathon"
 	"github.com/containous/traefik/provider/rest"
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/tracing/datadog"
@@ -31,7 +31,7 @@ import (
 	"github.com/containous/traefik/tracing/zipkin"
 	"github.com/containous/traefik/types"
 	"github.com/elazarl/go-bindata-assetfs"
-	lego "github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
 )
 
 const (
@@ -66,7 +66,7 @@ type Configuration struct {
 	AccessLog *types.AccessLog `description:"Access log settings" export:"true"`
 	Tracing   *Tracing         `description:"OpenTracing configuration" export:"true"`
 
-	HostResolver *HostResolverConfig `description:"Enable CNAME Flattening" export:"true"`
+	HostResolver *types.HostResolverConfig `description:"Enable CNAME Flattening" export:"true"`
 
 	ACME *acme.ACME `description:"Enable ACME (Let's Encrypt): automatic SSL" export:"true"`
 }
@@ -124,13 +124,6 @@ type Tracing struct {
 	DataDog       *datadog.Config `description:"Settings for DataDog"`
 }
 
-// HostResolverConfig contain configuration for CNAME Flattening.
-type HostResolverConfig struct {
-	CnameFlattening bool   `description:"A flag to enable/disable CNAME flattening" export:"true"`
-	ResolvConfig    string `description:"resolv.conf used for DNS resolving" export:"true"`
-	ResolvDepth     int    `description:"The maximal depth of DNS recursive resolving" export:"true"`
-}
-
 // Providers contains providers configuration
 type Providers struct {
 	ProvidersThrottleDuration parse.Duration          `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time." export:"true"`
@@ -184,7 +177,10 @@ func (c *Configuration) SetEffectiveConfiguration(configFile string) {
 			entryPoint.Transport.RespondingTimeouts = &RespondingTimeouts{
 				IdleTimeout: parse.Duration(DefaultIdleTimeout),
 			}
+		}
 
+		if entryPoint.ForwardedHeaders == nil {
+			entryPoint.ForwardedHeaders = &ForwardedHeaders{}
 		}
 	}
 
@@ -207,6 +203,12 @@ func (c *Configuration) SetEffectiveConfiguration(configFile string) {
 
 		if c.Providers.Rancher.Metadata != nil && len(c.Providers.Rancher.Metadata.Prefix) == 0 {
 			c.Providers.Rancher.Metadata.Prefix = "latest"
+		}
+	}
+
+	if c.Providers.Docker != nil {
+		if c.Providers.Docker.SwarmModeRefreshSeconds <= 0 {
+			c.Providers.Docker.SwarmModeRefreshSeconds = 15
 		}
 	}
 
@@ -374,11 +376,11 @@ func convertACMEChallenge(oldACMEChallenge *acme.ACME) *acmeprovider.Configurati
 	}
 
 	for _, domain := range oldACMEChallenge.Domains {
-		if domain.Main != lego.UnFqdn(domain.Main) {
+		if domain.Main != dns01.UnFqdn(domain.Main) {
 			log.Warnf("FQDN detected, please remove the trailing dot: %s", domain.Main)
 		}
 		for _, san := range domain.SANs {
-			if san != lego.UnFqdn(san) {
+			if san != dns01.UnFqdn(san) {
 				log.Warnf("FQDN detected, please remove the trailing dot: %s", san)
 			}
 		}

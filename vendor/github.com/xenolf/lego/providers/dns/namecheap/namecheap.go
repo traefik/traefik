@@ -1,5 +1,4 @@
-// Package namecheap implements a DNS provider for solving the DNS-01
-// challenge using namecheap DNS.
+// Package namecheap implements a DNS provider for solving the DNS-01 challenge using namecheap DNS.
 package namecheap
 
 import (
@@ -11,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/log"
 	"github.com/xenolf/lego/platform/config/env"
 )
@@ -64,7 +63,7 @@ func NewDefaultConfig() *Config {
 	return &Config{
 		BaseURL:            defaultBaseURL,
 		Debug:              env.GetOrDefaultBool("NAMECHEAP_DEBUG", false),
-		TTL:                env.GetOrDefaultInt("NAMECHEAP_TTL", 120),
+		TTL:                env.GetOrDefaultInt("NAMECHEAP_TTL", dns01.DefaultTTL),
 		PropagationTimeout: env.GetOrDefaultSecond("NAMECHEAP_PROPAGATION_TIMEOUT", 60*time.Minute),
 		PollingInterval:    env.GetOrDefaultSecond("NAMECHEAP_POLLING_INTERVAL", 15*time.Second),
 		HTTPClient: &http.Client{
@@ -91,17 +90,6 @@ func NewDNSProvider() (*DNSProvider, error) {
 	config := NewDefaultConfig()
 	config.APIUser = values["NAMECHEAP_API_USER"]
 	config.APIKey = values["NAMECHEAP_API_KEY"]
-
-	return NewDNSProviderConfig(config)
-}
-
-// NewDNSProviderCredentials uses the supplied credentials
-// to return a DNSProvider instance configured for namecheap.
-// Deprecated
-func NewDNSProviderCredentials(apiUser, apiKey string) (*DNSProvider, error) {
-	config := NewDefaultConfig()
-	config.APIUser = apiUser
-	config.APIKey = apiKey
 
 	return NewDNSProviderConfig(config)
 }
@@ -192,10 +180,12 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 
 	// Find the challenge TXT record and remove it if found.
 	var found bool
-	for i, h := range records {
+	var newRecords []Record
+	for _, h := range records {
 		if h.Name == ch.key && h.Type == "TXT" {
-			records = append(records[:i], records[i+1:]...)
 			found = true
+		} else {
+			newRecords = append(newRecords, h)
 		}
 	}
 
@@ -203,7 +193,7 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 		return nil
 	}
 
-	err = d.setHosts(ch.sld, ch.tld, records)
+	err = d.setHosts(ch.sld, ch.tld, newRecords)
 	if err != nil {
 		return fmt.Errorf("namecheap: %v", err)
 	}
@@ -233,7 +223,7 @@ func getClientIP(client *http.Client, debug bool) (addr string, err error) {
 // newChallenge builds a challenge record from a domain name, a challenge
 // authentication key, and a map of available TLDs.
 func newChallenge(domain, keyAuth string, tlds map[string]string) (*challenge, error) {
-	domain = acme.UnFqdn(domain)
+	domain = dns01.UnFqdn(domain)
 	parts := strings.Split(domain, ".")
 
 	// Find the longest matching TLD.
@@ -256,7 +246,7 @@ func newChallenge(domain, keyAuth string, tlds map[string]string) (*challenge, e
 		host = strings.Join(parts[:longest-1], ".")
 	}
 
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
 	return &challenge{
 		domain:   domain,

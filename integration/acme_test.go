@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"github.com/containous/traefik/integration/try"
-	"github.com/containous/traefik/old/provider/acme"
-	"github.com/containous/traefik/old/types"
+	"github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/testhelpers"
+	"github.com/containous/traefik/types"
 	"github.com/go-check/check"
 	"github.com/miekg/dns"
 	checker "github.com/vdemeester/shakers"

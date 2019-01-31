@@ -1,19 +1,14 @@
-// Package digitalocean implements a DNS provider for solving the DNS-01
-// challenge using digitalocean DNS.
+// Package digitalocean implements a DNS provider for solving the DNS-01 challenge using digitalocean DNS.
 package digitalocean
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"net/http"
 	"sync"
 	"time"
 
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/platform/config/env"
 )
 
@@ -63,16 +58,6 @@ func NewDNSProvider() (*DNSProvider, error) {
 	return NewDNSProviderConfig(config)
 }
 
-// NewDNSProviderCredentials uses the supplied credentials
-// to return a DNSProvider instance configured for Digital Ocean.
-// Deprecated
-func NewDNSProviderCredentials(apiAuthToken string) (*DNSProvider, error) {
-	config := NewDefaultConfig()
-	config.AuthToken = apiAuthToken
-
-	return NewDNSProviderConfig(config)
-}
-
 // NewDNSProviderConfig return a DNSProvider instance configured for Digital Ocean.
 func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 	if config == nil {
@@ -101,7 +86,7 @@ func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 
 // Present creates a TXT record using the specified parameters
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
 	respData, err := d.addTxtRecord(domain, fqdn, value)
 	if err != nil {
@@ -117,7 +102,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _ := dns01.GetRecord(domain, keyAuth)
 
 	// get the record's unique ID from when we created it
 	d.recordIDsMu.Lock()
@@ -138,103 +123,4 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	d.recordIDsMu.Unlock()
 
 	return nil
-}
-
-func (d *DNSProvider) removeTxtRecord(domain string, recordID int) error {
-	authZone, err := acme.FindZoneByFqdn(acme.ToFqdn(domain), acme.RecursiveNameservers)
-	if err != nil {
-		return fmt.Errorf("could not determine zone for domain: '%s'. %s", domain, err)
-	}
-
-	reqURL := fmt.Sprintf("%s/v2/domains/%s/records/%d", d.config.BaseURL, acme.UnFqdn(authZone), recordID)
-	req, err := d.newRequest(http.MethodDelete, reqURL, nil)
-	if err != nil {
-		return err
-	}
-
-	resp, err := d.config.HTTPClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 400 {
-		return readError(req, resp)
-	}
-
-	return nil
-}
-
-func (d *DNSProvider) addTxtRecord(domain, fqdn, value string) (*txtRecordResponse, error) {
-	authZone, err := acme.FindZoneByFqdn(acme.ToFqdn(domain), acme.RecursiveNameservers)
-	if err != nil {
-		return nil, fmt.Errorf("could not determine zone for domain: '%s'. %s", domain, err)
-	}
-
-	reqData := txtRecordRequest{RecordType: "TXT", Name: fqdn, Data: value, TTL: d.config.TTL}
-	body, err := json.Marshal(reqData)
-	if err != nil {
-		return nil, err
-	}
-
-	reqURL := fmt.Sprintf("%s/v2/domains/%s/records", d.config.BaseURL, acme.UnFqdn(authZone))
-	req, err := d.newRequest(http.MethodPost, reqURL, bytes.NewReader(body))
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := d.config.HTTPClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 400 {
-		return nil, readError(req, resp)
-	}
-
-	content, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, errors.New(toUnreadableBodyMessage(req, content))
-	}
-
-	// Everything looks good; but we'll need the ID later to delete the record
-	respData := &txtRecordResponse{}
-	err = json.Unmarshal(content, respData)
-	if err != nil {
-		return nil, fmt.Errorf("%v: %s", err, toUnreadableBodyMessage(req, content))
-	}
-
-	return respData, nil
-}
-
-func (d *DNSProvider) newRequest(method, reqURL string, body io.Reader) (*http.Request, error) {
-	req, err := http.NewRequest(method, reqURL, body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", d.config.AuthToken))
-
-	return req, nil
-}
-
-func readError(req *http.Request, resp *http.Response) error {
-	content, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return errors.New(toUnreadableBodyMessage(req, content))
-	}
-
-	var errInfo digitalOceanAPIError
-	err = json.Unmarshal(content, &errInfo)
-	if err != nil {
-		return fmt.Errorf("digitalOceanAPIError unmarshaling error: %v: %s", err, toUnreadableBodyMessage(req, content))
-	}
-
-	return fmt.Errorf("HTTP %d: %s: %s", resp.StatusCode, errInfo.ID, errInfo.Message)
-}
-
-func toUnreadableBodyMessage(req *http.Request, rawBody []byte) string {
-	return fmt.Sprintf("the request %s sent a response with a body which is an invalid format: %q", req.URL, string(rawBody))
 }

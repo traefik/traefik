@@ -33,7 +33,7 @@ fblo6RBxUQ==
 [Routers]
   [Routers.router1]
     Service = "service1"
-    Rule = "Path: /ping"
+    Rule = "Path(`/ping`)"
 
 [Services]
   [Services.service1]

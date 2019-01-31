@@ -7,10 +7,10 @@ dynamo:
     - "8000"
 
 whoami1:
-  image: emilevauge/whoami
+  image: containous/whoami
 
 whoami2:
-  image: emilevauge/whoami
+  image: containous/whoami
 
 whoami3:
-  image: emilevauge/whoami
+  image: containous/whoami

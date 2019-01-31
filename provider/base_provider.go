@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"strings"
 	"text/template"
-	"unicode"
 
 	"github.com/BurntSushi/toml"
 	"github.com/Masterminds/sprig"
@@ -46,15 +45,6 @@ func (p *BaseProvider) MatchConstraints(tags []string) (bool, *types.Constraint)
 
 	// If no constraint or every constraints matching
 	return true, nil
-}
-
-// GetConfiguration returns the provider configuration from default template (file or content) or overrode template file.
-func (p *BaseProvider) GetConfiguration(defaultTemplate string, funcMap template.FuncMap, templateObjects interface{}) (*config.Configuration, error) {
-	tmplContent, err := p.getTemplateContent(defaultTemplate)
-	if err != nil {
-		return nil, err
-	}
-	return p.CreateConfiguration(tmplContent, funcMap, templateObjects)
 }
 
 // CreateConfiguration creates a provider configuration from content using templating.
@@ -120,21 +110,4 @@ func (p *BaseProvider) getTemplateContent(defaultTemplateFile string) (string, e
 
 func split(sep, s string) []string {
 	return strings.Split(s, sep)
-}
-
-// Normalize transforms a string that work with the rest of traefik.
-// Replace '.' with '-' in quoted keys because of this issue https://github.com/BurntSushi/toml/issues/78
-func Normalize(name string) string {
-	fargs := func(c rune) bool {
-		return !unicode.IsLetter(c) && !unicode.IsNumber(c)
-	}
-	// get function
-	return strings.Join(strings.FieldsFunc(name, fargs), "-")
-}
-
-// ReverseStringSlice inverts the order of the given slice of string.
-func ReverseStringSlice(slice *[]string) {
-	for i, j := 0, len(*slice)-1; i < j; i, j = i+1, j-1 {
-		(*slice)[i], (*slice)[j] = (*slice)[j], (*slice)[i]
-	}
 }

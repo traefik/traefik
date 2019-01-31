@@ -1146,6 +1146,15 @@ infos:
     organization: true
     commonname: true
     serialnumber: true
+    domaincomponent: true
+  issuer:
+    country: true
+    province: true
+    locality: true
+    organization: true
+    commonname: true
+    serialnumber: true
+    domaincomponent: true
 `),
 			iAnnotation(annotationKubernetesIngressClass, traefikDefaultRealm),
 			iRules(
@@ -1304,6 +1313,18 @@ rateset:
 					iHost("root2"),
 					iPaths(
 						onePath(iPath("/"), iBackend("service2", intstr.FromInt(80))),
+					),
+				),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesAppRoot, "/root"),
+			iRules(
+				iRule(
+					iHost("root3"),
+					iPaths(
+						onePath(iBackend("service1", intstr.FromInt(80))),
 					),
 				),
 			),
@@ -1518,6 +1539,11 @@ rateset:
 				servers(),
 				lbMethod("wrr"),
 			),
+			backend("root3",
+				servers(
+					server("http://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
 			backend("protocol/valid",
 				servers(
 					server("h2c://example.com", weight(1)),
@@ -1682,6 +1708,13 @@ rateset:
 				routes(
 					route("/root1", "PathPrefix:/root1"),
 					route("root", "Host:root"),
+				),
+			),
+			frontend("root3",
+				passHostHeader(),
+				redirectRegex("root3$", "root3/root"),
+				routes(
+					route("root3", "Host:root3"),
 				),
 			),
 			frontend("protocol/valid",
@@ -2826,11 +2859,21 @@ func TestGetTLS(t *testing.T) {
 		),
 	)
 
+	testIngressWithoutSecret := buildIngress(
+		iNamespace("testing"),
+		iRules(
+			iRule(iHost("ep1.example.com")),
+		),
+		iTLSes(
+			iTLS("", "foo.com"),
+		),
+	)
+
 	testCases := []struct {
 		desc      string
 		ingress   *extensionsv1beta1.Ingress
 		client    Client
-		result    []*tls.Configuration
+		result    map[string]*tls.Configuration
 		errResult string
 	}{
 		{
@@ -2910,11 +2953,21 @@ func TestGetTLS(t *testing.T) {
 				),
 				iTLSes(
 					iTLS("test-secret"),
-					iTLS("test-secret"),
+					iTLS("test-secret2"),
 				),
 			),
 			client: clientMock{
 				secrets: []*corev1.Secret{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "test-secret2",
+							Namespace: "testing",
+						},
+						Data: map[string][]byte{
+							"tls.crt": []byte("tls-crt"),
+							"tls.key": []byte("tls-key"),
+						},
+					},
 					{
 						ObjectMeta: metav1.ObjectMeta{
 							Name:      "test-secret",
@@ -2927,20 +2980,26 @@ func TestGetTLS(t *testing.T) {
 					},
 				},
 			},
-			result: []*tls.Configuration{
-				{
+			result: map[string]*tls.Configuration{
+				"testing/test-secret": {
 					Certificate: &tls.Certificate{
 						CertFile: tls.FileOrContent("tls-crt"),
 						KeyFile:  tls.FileOrContent("tls-key"),
 					},
 				},
-				{
+				"testing/test-secret2": {
 					Certificate: &tls.Certificate{
 						CertFile: tls.FileOrContent("tls-crt"),
 						KeyFile:  tls.FileOrContent("tls-key"),
 					},
 				},
 			},
+		},
+		{
+			desc:    "return nil when no secret is defined",
+			ingress: testIngressWithoutSecret,
+			client:  clientMock{},
+			result:  map[string]*tls.Configuration{},
 		},
 		{
 			desc: "pass the endpoints defined in the annotation to the certificate",
@@ -2964,9 +3023,9 @@ func TestGetTLS(t *testing.T) {
 					},
 				},
 			},
-			result: []*tls.Configuration{
-				{
-					EntryPoints: []string{"https", "api-secure"},
+			result: map[string]*tls.Configuration{
+				"testing/test-secret": {
+					EntryPoints: []string{"api-secure", "https"},
 					Certificate: &tls.Certificate{
 						CertFile: tls.FileOrContent("tls-crt"),
 						KeyFile:  tls.FileOrContent("tls-key"),
@@ -2981,7 +3040,8 @@ func TestGetTLS(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			tlsConfigs, err := getTLS(test.ingress, test.client)
+			tlsConfigs := map[string]*tls.Configuration{}
+			err := getTLS(test.ingress, test.client, tlsConfigs)
 
 			if test.errResult != "" {
 				assert.EqualError(t, err, test.errResult)

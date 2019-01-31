@@ -15,7 +15,7 @@ logLevel = "DEBUG"
 [Routers]
   [Routers.router1]
     Service = "service1"
-    Rule = "Path:/whoami"
+    Rule = "Path(`/whoami`)"
 
 [Services]
   [Services.service1]

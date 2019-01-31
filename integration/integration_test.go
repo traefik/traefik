@@ -41,40 +41,39 @@ func init() {
 		// FIXME Provider tests
 		// check.Suite(&ConsulCatalogSuite{})
 		// check.Suite(&ConsulSuite{})
-		// check.Suite(&DockerComposeSuite{})
-		// check.Suite(&DockerSuite{})
 		// check.Suite(&DynamoDBSuite{})
 		// check.Suite(&EurekaSuite{})
-		// check.Suite(&MarathonSuite{})
-		// check.Suite(&MarathonSuite15{})
 		// check.Suite(&MesosSuite{})
 
-		// FIXME use docker
-		// check.Suite(&AccessLogSuite{})
+		// FIXME use consulcatalog
 		// check.Suite(&ConstraintSuite{})
-		// check.Suite(&TLSClientHeadersSuite{})
-		// check.Suite(&HostResolverSuite{})
-		// check.Suite(&LogRotationSuite{})
 
 		// FIXME e2e tests
+		check.Suite(&AccessLogSuite{})
 		check.Suite(&AcmeSuite{})
+		check.Suite(&DockerComposeSuite{})
+		check.Suite(&DockerSuite{})
 		check.Suite(&ErrorPagesSuite{})
 		check.Suite(&FileSuite{})
-		check.Suite(&RestSuite{})
 		check.Suite(&GRPCSuite{})
 		check.Suite(&HealthCheckSuite{})
+		check.Suite(&HostResolverSuite{})
 		check.Suite(&HTTPSSuite{})
+		check.Suite(&LogRotationSuite{})
+		check.Suite(&MarathonSuite{})
+		check.Suite(&MarathonSuite15{})
 		check.Suite(&RateLimitSuite{})
+		check.Suite(&RestSuite{})
 		check.Suite(&RetrySuite{})
 		check.Suite(&SimpleSuite{})
 		check.Suite(&TimeoutSuite{})
+		check.Suite(&TLSClientHeadersSuite{})
 		check.Suite(&TracingSuite{})
 		check.Suite(&WebsocketSuite{})
 	}
 	if *host {
 		// tests launched from the host
 		check.Suite(&ProxyProtocolSuite{})
-
 		// FIXME Provider tests
 		// check.Suite(&Etcd3Suite{})
 	}
@@ -141,14 +140,13 @@ func (s *BaseSuite) displayTraefikLog(c *check.C, output *bytes.Buffer) {
 	}
 }
 
-func (s *BaseSuite) adaptFileForHost(c *check.C, path string) string {
+func (s *BaseSuite) getDockerHost() string {
 	dockerHost := os.Getenv("DOCKER_HOST")
 	if dockerHost == "" {
 		// Default docker socket
 		dockerHost = "unix:///var/run/docker.sock"
 	}
-	tempObjects := struct{ DockerHost string }{dockerHost}
-	return s.adaptFile(c, path, tempObjects)
+	return dockerHost
 }
 
 func (s *BaseSuite) adaptFile(c *check.C, path string, tempObjects interface{}) string {

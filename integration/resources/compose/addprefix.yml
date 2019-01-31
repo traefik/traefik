@@ -1,5 +1,0 @@
-whoami1:
-  image: emilevauge/whoami
-  labels:
-    - traefik.enable=true
-    - traefik.frontend.rule=AddPrefix:/whoami;PathPrefix:/

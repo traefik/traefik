@@ -1,5 +1,8 @@
 consul:
-  image: consul
+  # use v1.4.0 because https://github.com/hashicorp/consul/issues/5270
+  # v1.4.1 cannot be used.
+  # waiting for v1.4.2
+  image: consul:1.4.0
   command: agent -server -bootstrap-expect 1 -client 0.0.0.0 -log-level debug -ui
   ports:
     - "8400:8400"
@@ -12,8 +15,8 @@ consul:
     - "8302"
     - "8302/udp"
 whoami1:
-  image: emilevauge/whoami
+  image: containous/whoami
 whoami2:
-  image: emilevauge/whoami
+  image: containous/whoami
 whoami3:
-  image: emilevauge/whoami
+  image: containous/whoami

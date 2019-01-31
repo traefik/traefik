@@ -50,7 +50,7 @@ func (s *TLSClientHeadersSuite) TestTLSClientHeaders(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 2*time.Second, try.BodyContains("PathPrefix:/"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/docker/routers", 2*time.Second, try.BodyContains("PathPrefix(`/`)"))
 	c.Assert(err, checker.IsNil)
 
 	request, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:8443", nil)

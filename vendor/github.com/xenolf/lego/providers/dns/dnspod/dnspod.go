@@ -1,5 +1,4 @@
-// Package dnspod implements a DNS provider for solving the DNS-01 challenge
-// using dnspod DNS.
+// Package dnspod implements a DNS provider for solving the DNS-01 challenge using dnspod DNS.
 package dnspod
 
 import (
@@ -10,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/decker502/dnspod-go"
-	"github.com/xenolf/lego/acme"
+	dnspod "github.com/decker502/dnspod-go"
+	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/platform/config/env"
 )
 
@@ -28,8 +27,8 @@ type Config struct {
 func NewDefaultConfig() *Config {
 	return &Config{
 		TTL:                env.GetOrDefaultInt("DNSPOD_TTL", 600),
-		PropagationTimeout: env.GetOrDefaultSecond("DNSPOD_PROPAGATION_TIMEOUT", acme.DefaultPropagationTimeout),
-		PollingInterval:    env.GetOrDefaultSecond("DNSPOD_POLLING_INTERVAL", acme.DefaultPollingInterval),
+		PropagationTimeout: env.GetOrDefaultSecond("DNSPOD_PROPAGATION_TIMEOUT", dns01.DefaultPropagationTimeout),
+		PollingInterval:    env.GetOrDefaultSecond("DNSPOD_POLLING_INTERVAL", dns01.DefaultPollingInterval),
 		HTTPClient: &http.Client{
 			Timeout: env.GetOrDefaultSecond("DNSPOD_HTTP_TIMEOUT", 0),
 		},
@@ -56,16 +55,6 @@ func NewDNSProvider() (*DNSProvider, error) {
 	return NewDNSProviderConfig(config)
 }
 
-// NewDNSProviderCredentials uses the supplied credentials
-// to return a DNSProvider instance configured for dnspod.
-// Deprecated
-func NewDNSProviderCredentials(key string) (*DNSProvider, error) {
-	config := NewDefaultConfig()
-	config.LoginToken = key
-
-	return NewDNSProviderConfig(config)
-}
-
 // NewDNSProviderConfig return a DNSProvider instance configured for dnspod.
 func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 	if config == nil {
@@ -86,7 +75,7 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 
 // Present creates a TXT record to fulfill the dns-01 challenge.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 	zoneID, zoneName, err := d.getHostedZone(domain)
 	if err != nil {
 		return err
@@ -103,7 +92,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters.
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _ := dns01.GetRecord(domain, keyAuth)
 
 	records, err := d.findTxtRecords(domain, fqdn)
 	if err != nil {
@@ -136,14 +125,14 @@ func (d *DNSProvider) getHostedZone(domain string) (string, string, error) {
 		return "", "", fmt.Errorf("API call failed: %v", err)
 	}
 
-	authZone, err := acme.FindZoneByFqdn(acme.ToFqdn(domain), acme.RecursiveNameservers)
+	authZone, err := dns01.FindZoneByFqdn(dns01.ToFqdn(domain))
 	if err != nil {
 		return "", "", err
 	}
 
 	var hostedZone dnspod.Domain
 	for _, zone := range zones {
-		if zone.Name == acme.UnFqdn(authZone) {
+		if zone.Name == dns01.UnFqdn(authZone) {
 			hostedZone = zone
 		}
 	}
@@ -192,7 +181,7 @@ func (d *DNSProvider) findTxtRecords(domain, fqdn string) ([]dnspod.Record, erro
 }
 
 func (d *DNSProvider) extractRecordName(fqdn, domain string) string {
-	name := acme.UnFqdn(fqdn)
+	name := dns01.UnFqdn(fqdn)
 	if idx := strings.Index(name, "."+domain); idx != -1 {
 		return name[:idx]
 	}

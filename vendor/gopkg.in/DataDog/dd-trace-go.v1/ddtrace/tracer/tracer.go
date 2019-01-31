@@ -41,6 +41,9 @@ type tracer struct {
 	// a synchronous (blocking) operation, meaning that it will only return after
 	// the trace has been fully processed and added onto the payload.
 	syncPush chan struct{}
+
+	// prioritySampling holds an instance of the priority sampler.
+	prioritySampling *prioritySampler
 }
 
 const (
@@ -112,21 +115,22 @@ func newTracer(opts ...StartOption) *tracer {
 		fn(c)
 	}
 	if c.transport == nil {
-		c.transport = newTransport(c.agentAddr)
+		c.transport = newTransport(c.agentAddr, c.httpRoundTripper)
 	}
 	if c.propagator == nil {
 		c.propagator = NewPropagator(nil)
 	}
 	t := &tracer{
-		config:         c,
-		payload:        newPayload(),
-		flushAllReq:    make(chan chan<- struct{}),
-		flushTracesReq: make(chan struct{}, 1),
-		flushErrorsReq: make(chan struct{}, 1),
-		exitReq:        make(chan struct{}),
-		payloadQueue:   make(chan []*span, payloadQueueSize),
-		errorBuffer:    make(chan error, errorBufferSize),
-		stopped:        make(chan struct{}),
+		config:           c,
+		payload:          newPayload(),
+		flushAllReq:      make(chan chan<- struct{}),
+		flushTracesReq:   make(chan struct{}, 1),
+		flushErrorsReq:   make(chan struct{}, 1),
+		exitReq:          make(chan struct{}),
+		payloadQueue:     make(chan []*span, payloadQueueSize),
+		errorBuffer:      make(chan error, errorBufferSize),
+		stopped:          make(chan struct{}),
+		prioritySampling: newPrioritySampler(),
 	}
 
 	go t.worker()
@@ -247,6 +251,7 @@ func (t *tracer) StartSpan(operationName string, options ...ddtrace.StartSpanOpt
 			span.Metrics[samplingPriorityKey] = float64(context.samplingPriority())
 		}
 		if context.span != nil {
+			// it has a local parent, inherit the service
 			context.span.RLock()
 			span.Service = context.span.Service
 			context.span.RUnlock()
@@ -254,9 +259,8 @@ func (t *tracer) StartSpan(operationName string, options ...ddtrace.StartSpanOpt
 	}
 	span.context = newSpanContext(span, context)
 	if context == nil || context.span == nil {
-		// this is either a global root span or a process-level root span
+		// this is either a root span or it has a remote parent, we should add the PID.
 		span.SetTag(ext.Pid, strconv.Itoa(os.Getpid()))
-		t.sample(span)
 	}
 	// add tags from options
 	for k, v := range opts.Tags {
@@ -265,6 +269,10 @@ func (t *tracer) StartSpan(operationName string, options ...ddtrace.StartSpanOpt
 	// add global tags
 	for k, v := range t.config.globalTags {
 		span.SetTag(k, v)
+	}
+	if context == nil {
+		// this is a brand new trace, sample it
+		t.sample(span)
 	}
 	return span
 }
@@ -299,9 +307,12 @@ func (t *tracer) flushTraces() {
 	if t.config.debug {
 		log.Printf("Sending payload: size: %d traces: %d\n", size, count)
 	}
-	err := t.config.transport.send(t.payload)
+	rc, err := t.config.transport.send(t.payload)
 	if err != nil {
 		t.pushError(&dataLossError{context: err, count: count})
+	}
+	if err == nil {
+		t.prioritySampling.readRatesJSON(rc) // TODO: handle error?
 	}
 	t.payload.reset()
 }
@@ -350,21 +361,17 @@ const sampleRateMetricKey = "_sample_rate"
 
 // Sample samples a span with the internal sampler.
 func (t *tracer) sample(span *span) {
+	if span.context.hasPriority {
+		// sampling decision was already made
+		return
+	}
 	sampler := t.config.sampler
-	sampled := sampler.Sample(span)
-	span.context.sampled = sampled
-	if !sampled {
+	if !sampler.Sample(span) {
+		span.context.drop = true
 		return
 	}
 	if rs, ok := sampler.(RateSampler); ok && rs.Rate() < 1 {
-		// the span was sampled using a rate sampler which wasn't all permissive,
-		// so we make note of the sampling rate.
-		span.Lock()
-		defer span.Unlock()
-		if span.finished {
-			// we don't touch finished span as they might be flushing
-			return
-		}
 		span.Metrics[sampleRateMetricKey] = rs.Rate()
 	}
+	t.prioritySampling.apply(span)
 }

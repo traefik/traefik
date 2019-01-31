@@ -1,5 +1,4 @@
-// Package alidns implements a DNS provider for solving the DNS-01 challenge
-// using Alibaba Cloud DNS.
+// Package alidns implements a DNS provider for solving the DNS-01 challenge using Alibaba Cloud DNS.
 package alidns
 
 import (
@@ -12,7 +11,7 @@ import (
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth/credentials"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/alidns"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/platform/config/env"
 )
 
@@ -33,8 +32,8 @@ type Config struct {
 func NewDefaultConfig() *Config {
 	return &Config{
 		TTL:                env.GetOrDefaultInt("ALICLOUD_TTL", 600),
-		PropagationTimeout: env.GetOrDefaultSecond("ALICLOUD_PROPAGATION_TIMEOUT", acme.DefaultPropagationTimeout),
-		PollingInterval:    env.GetOrDefaultSecond("ALICLOUD_POLLING_INTERVAL", acme.DefaultPollingInterval),
+		PropagationTimeout: env.GetOrDefaultSecond("ALICLOUD_PROPAGATION_TIMEOUT", dns01.DefaultPropagationTimeout),
+		PollingInterval:    env.GetOrDefaultSecond("ALICLOUD_POLLING_INTERVAL", dns01.DefaultPollingInterval),
 		HTTPTimeout:        env.GetOrDefaultSecond("ALICLOUD_HTTP_TIMEOUT", 10*time.Second),
 	}
 }
@@ -57,18 +56,6 @@ func NewDNSProvider() (*DNSProvider, error) {
 	config.APIKey = values["ALICLOUD_ACCESS_KEY"]
 	config.SecretKey = values["ALICLOUD_SECRET_KEY"]
 	config.RegionID = env.GetOrFile("ALICLOUD_REGION_ID")
-
-	return NewDNSProviderConfig(config)
-}
-
-// NewDNSProviderCredentials uses the supplied credentials
-// to return a DNSProvider instance configured for alidns.
-// Deprecated
-func NewDNSProviderCredentials(apiKey, secretKey, regionID string) (*DNSProvider, error) {
-	config := NewDefaultConfig()
-	config.APIKey = apiKey
-	config.SecretKey = secretKey
-	config.RegionID = regionID
 
 	return NewDNSProviderConfig(config)
 }
@@ -106,7 +93,7 @@ func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 
 // Present creates a TXT record to fulfill the dns-01 challenge.
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
 	_, zoneName, err := d.getHostedZone(domain)
 	if err != nil {
@@ -124,7 +111,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters.
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _ := dns01.GetRecord(domain, keyAuth)
 
 	records, err := d.findTxtRecords(domain, fqdn)
 	if err != nil {
@@ -149,19 +136,35 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 
 func (d *DNSProvider) getHostedZone(domain string) (string, string, error) {
 	request := alidns.CreateDescribeDomainsRequest()
-	zones, err := d.client.DescribeDomains(request)
-	if err != nil {
-		return "", "", fmt.Errorf("API call failed: %v", err)
+
+	var domains []alidns.Domain
+	startPage := 1
+
+	for {
+		request.PageNumber = requests.NewInteger(startPage)
+
+		response, err := d.client.DescribeDomains(request)
+		if err != nil {
+			return "", "", fmt.Errorf("API call failed: %v", err)
+		}
+
+		domains = append(domains, response.Domains.Domain...)
+
+		if response.PageNumber*response.PageSize >= response.TotalCount {
+			break
+		}
+
+		startPage++
 	}
 
-	authZone, err := acme.FindZoneByFqdn(acme.ToFqdn(domain), acme.RecursiveNameservers)
+	authZone, err := dns01.FindZoneByFqdn(dns01.ToFqdn(domain))
 	if err != nil {
 		return "", "", err
 	}
 
 	var hostedZone alidns.Domain
-	for _, zone := range zones.Domains.Domain {
-		if zone.DomainName == acme.UnFqdn(authZone) {
+	for _, zone := range domains {
+		if zone.DomainName == dns01.UnFqdn(authZone) {
 			hostedZone = zone
 		}
 	}
@@ -209,7 +212,7 @@ func (d *DNSProvider) findTxtRecords(domain, fqdn string) ([]alidns.Record, erro
 }
 
 func (d *DNSProvider) extractRecordName(fqdn, domain string) string {
-	name := acme.UnFqdn(fqdn)
+	name := dns01.UnFqdn(fqdn)
 	if idx := strings.Index(name, "."+domain); idx != -1 {
 		return name[:idx]
 	}

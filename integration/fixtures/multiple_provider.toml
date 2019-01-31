@@ -18,7 +18,7 @@ debug=true
 [Routers]
   [Routers.router-1]
     Service = "service-test"
-    Rule = "PathPrefix:/file"
+    Rule = "PathPrefix(`/file`)"
 
 [Services]
   [Services.service-test]

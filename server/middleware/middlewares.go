@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/containous/alice"
 	"github.com/containous/traefik/config"
@@ -26,7 +27,14 @@ import (
 	"github.com/containous/traefik/middlewares/stripprefix"
 	"github.com/containous/traefik/middlewares/stripprefixregex"
 	"github.com/containous/traefik/middlewares/tracing"
+	"github.com/containous/traefik/server/internal"
 	"github.com/pkg/errors"
+)
+
+type middlewareStackType int
+
+const (
+	middlewareStackKey middlewareStackType = iota
 )
 
 // Builder the middleware builder
@@ -45,22 +53,41 @@ func NewBuilder(configs map[string]*config.Middleware, serviceBuilder serviceBui
 }
 
 // BuildChain creates a middleware chain
-func (b *Builder) BuildChain(ctx context.Context, middlewares []string) (*alice.Chain, error) {
+func (b *Builder) BuildChain(ctx context.Context, middlewares []string) *alice.Chain {
 	chain := alice.New()
-	for _, middlewareName := range middlewares {
-		if _, ok := b.configs[middlewareName]; !ok {
-			return nil, fmt.Errorf("middleware %q does not exist", middlewareName)
-		}
+	for _, name := range middlewares {
+		middlewareName := internal.GetQualifiedName(ctx, name)
+		constructorContext := internal.AddProviderInContext(ctx, middlewareName)
 
-		constructor, err := b.buildConstructor(ctx, middlewareName, *b.configs[middlewareName])
-		if err != nil {
-			return nil, err
-		}
-		if constructor != nil {
-			chain = chain.Append(constructor)
-		}
+		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+			if _, ok := b.configs[middlewareName]; !ok {
+				return nil, fmt.Errorf("middleware %q does not exist", middlewareName)
+			}
+
+			var err error
+			if constructorContext, err = checkRecursivity(constructorContext, middlewareName); err != nil {
+				return nil, err
+			}
+
+			constructor, err := b.buildConstructor(constructorContext, middlewareName, *b.configs[middlewareName])
+			if err != nil {
+				return nil, fmt.Errorf("error during instanciation of %s: %v", middlewareName, err)
+			}
+			return constructor(next)
+		})
 	}
-	return &chain, nil
+	return &chain
+}
+
+func checkRecursivity(ctx context.Context, middlewareName string) (context.Context, error) {
+	currentStack, ok := ctx.Value(middlewareStackKey).([]string)
+	if !ok {
+		currentStack = []string{}
+	}
+	if inSlice(middlewareName, currentStack) {
+		return ctx, fmt.Errorf("could not instantiate middleware %s: recursion detected in %s", middlewareName, strings.Join(append(currentStack, middlewareName), "->"))
+	}
+	return context.WithValue(ctx, middlewareStackKey, append(currentStack, middlewareName)), nil
 }
 
 func (b *Builder) buildConstructor(ctx context.Context, middlewareName string, config config.Middleware) (alice.Constructor, error) {
@@ -221,11 +248,22 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string, c
 		}
 	}
 
-	// Redirect
-	if config.Redirect != nil {
+	// RedirectRegex
+	if config.RedirectRegex != nil {
 		if middleware == nil {
 			middleware = func(next http.Handler) (http.Handler, error) {
-				return redirect.New(ctx, next, *config.Redirect, middlewareName)
+				return redirect.NewRedirectRegex(ctx, next, *config.RedirectRegex, middlewareName)
+			}
+		} else {
+			return nil, badConf
+		}
+	}
+
+	// RedirectScheme
+	if config.RedirectScheme != nil {
+		if middleware == nil {
+			middleware = func(next http.Handler) (http.Handler, error) {
+				return redirect.NewRedirectScheme(ctx, next, *config.RedirectScheme, middlewareName)
 			}
 		} else {
 			return nil, badConf
@@ -288,5 +326,18 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string, c
 		}
 	}
 
+	if middleware == nil {
+		return nil, fmt.Errorf("middleware %q does not exist", middlewareName)
+	}
+
 	return tracing.Wrap(ctx, middleware), nil
+}
+
+func inSlice(element string, stack []string) bool {
+	for _, value := range stack {
+		if value == element {
+			return true
+		}
+	}
+	return false
 }

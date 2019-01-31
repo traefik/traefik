@@ -10,10 +10,17 @@ import (
 
 // EntryPoint holds the entry point configuration.
 type EntryPoint struct {
-	Address       string
-	Transport     *EntryPointsTransport
-	TLS           *tls.TLS
-	ProxyProtocol *ProxyProtocol
+	Address          string
+	Transport        *EntryPointsTransport
+	TLS              *tls.TLS
+	ProxyProtocol    *ProxyProtocol
+	ForwardedHeaders *ForwardedHeaders
+}
+
+// ForwardedHeaders Trust client forwarding headers.
+type ForwardedHeaders struct {
+	Insecure   bool
+	TrustedIPs []string
 }
 
 // ProxyProtocol contains Proxy-Protocol configuration.
@@ -64,9 +71,10 @@ func (ep *EntryPoints) Set(value string) error {
 	}
 
 	(*ep)[result["name"]] = &EntryPoint{
-		Address:       result["address"],
-		TLS:           configTLS,
-		ProxyProtocol: makeEntryPointProxyProtocol(result),
+		Address:          result["address"],
+		TLS:              configTLS,
+		ProxyProtocol:    makeEntryPointProxyProtocol(result),
+		ForwardedHeaders: makeEntryPointForwardedHeaders(result),
 	}
 
 	return nil
@@ -170,4 +178,16 @@ func toBool(conf map[string]string, key string) bool {
 			strings.EqualFold(val, "on")
 	}
 	return false
+}
+
+func makeEntryPointForwardedHeaders(result map[string]string) *ForwardedHeaders {
+	forwardedHeaders := &ForwardedHeaders{}
+	forwardedHeaders.Insecure = toBool(result, "forwardedheaders_insecure")
+
+	fhTrustedIPs := result["forwardedheaders_trustedips"]
+	if len(fhTrustedIPs) > 0 {
+		forwardedHeaders.TrustedIPs = strings.Split(fhTrustedIPs, ",")
+	}
+
+	return forwardedHeaders
 }

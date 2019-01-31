@@ -20,11 +20,6 @@ func Test_doOnJSON(t *testing.T) {
    "Network": "",
    "Address": ":80",
    "TLS": null,
-   "Redirect": {
-    "EntryPoint": "https",
-    "Regex": "",
-    "Replacement": ""
-   },
    "Auth": null,
    "Compress": false
   },
@@ -36,7 +31,6 @@ func Test_doOnJSON(t *testing.T) {
     "Certificates": null,
     "ClientCAFiles": null
    },
-   "Redirect": null,
    "Auth": null,
    "Compress": false
   }
@@ -109,11 +103,6 @@ func Test_doOnJSON(t *testing.T) {
    "Network": "",
    "Address": ":80",
    "TLS": null,
-   "Redirect": {
-    "EntryPoint": "https",
-    "Regex": "",
-    "Replacement": ""
-   },
    "Auth": null,
    "Compress": false
   },
@@ -125,7 +114,6 @@ func Test_doOnJSON(t *testing.T) {
     "Certificates": null,
     "ClientCAFiles": null
    },
-   "Redirect": null,
    "Auth": null,
    "Compress": false
   }

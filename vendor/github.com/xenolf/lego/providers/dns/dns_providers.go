@@ -3,7 +3,8 @@ package dns
 import (
 	"fmt"
 
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge"
+	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/providers/dns/acmedns"
 	"github.com/xenolf/lego/providers/dns/alidns"
 	"github.com/xenolf/lego/providers/dns/auroradns"
@@ -53,10 +54,11 @@ import (
 	"github.com/xenolf/lego/providers/dns/vegadns"
 	"github.com/xenolf/lego/providers/dns/vscale"
 	"github.com/xenolf/lego/providers/dns/vultr"
+	"github.com/xenolf/lego/providers/dns/zoneee"
 )
 
 // NewDNSChallengeProviderByName Factory for DNS providers
-func NewDNSChallengeProviderByName(name string) (acme.ChallengeProvider, error) {
+func NewDNSChallengeProviderByName(name string) (challenge.Provider, error) {
 	switch name {
 	case "acme-dns":
 		return acmedns.NewDNSProvider()
@@ -119,7 +121,7 @@ func NewDNSChallengeProviderByName(name string) (acme.ChallengeProvider, error) 
 	case "linodev4":
 		return linodev4.NewDNSProvider()
 	case "manual":
-		return acme.NewDNSProviderManual()
+		return dns01.NewDNSProviderManual()
 	case "mydnsjp":
 		return mydnsjp.NewDNSProvider()
 	case "namecheap":
@@ -158,6 +160,8 @@ func NewDNSChallengeProviderByName(name string) (acme.ChallengeProvider, error) 
 		return vultr.NewDNSProvider()
 	case "vscale":
 		return vscale.NewDNSProvider()
+	case "zoneee":
+		return zoneee.NewDNSProvider()
 	default:
 		return nil, fmt.Errorf("unrecognised DNS provider: %s", name)
 	}

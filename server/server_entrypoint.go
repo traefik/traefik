@@ -17,12 +17,13 @@ import (
 	"github.com/containous/traefik/ip"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares"
+	"github.com/containous/traefik/middlewares/forwardedheaders"
 	"github.com/containous/traefik/old/configuration"
 	traefiktls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
 	"github.com/sirupsen/logrus"
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/tlsalpn01"
 )
 
 // EntryPoints map of EntryPoint
@@ -30,15 +31,22 @@ type EntryPoints map[string]*EntryPoint
 
 // NewEntryPoint creates a new EntryPoint
 func NewEntryPoint(ctx context.Context, configuration *static.EntryPoint) (*EntryPoint, error) {
-	logger := log.FromContext(ctx)
 	var err error
 
-	router := middlewares.NewHandlerSwitcher(buildDefaultHTTPRouter())
+	switcher := middlewares.NewHandlerSwitcher(buildDefaultHTTPRouter())
+	handler, err := forwardedheaders.NewXForwarded(
+		configuration.ForwardedHeaders.Insecure,
+		configuration.ForwardedHeaders.TrustedIPs,
+		switcher)
+	if err != nil {
+		return nil, err
+	}
+
 	tracker := newHijackConnectionTracker()
 
 	listener, err := buildListener(ctx, configuration)
 	if err != nil {
-		logger.Fatalf("Error preparing server: %v", err)
+		return nil, fmt.Errorf("error preparing server: %v", err)
 	}
 
 	var tlsConfig *tls.Config
@@ -56,11 +64,11 @@ func NewEntryPoint(ctx context.Context, configuration *static.EntryPoint) (*Entr
 	}
 
 	entryPoint := &EntryPoint{
-		httpRouter:              router,
+		switcher:                switcher,
 		transportConfiguration:  configuration.Transport,
 		hijackConnectionTracker: tracker,
 		listener:                listener,
-		httpServer:              buildServer(ctx, configuration, tlsConfig, router, tracker),
+		httpServer:              buildServer(ctx, configuration, tlsConfig, handler, tracker),
 		Certs:                   certificateStore,
 	}
 
@@ -76,7 +84,7 @@ type EntryPoint struct {
 	RouteAppenderFactory    RouteAppenderFactory
 	httpServer              *h2c.Server
 	listener                net.Listener
-	httpRouter              *middlewares.HandlerSwitcher
+	switcher                *middlewares.HandlerSwitcher
 	Certs                   *traefiktls.CertificateStore
 	OnDemandListener        func(string) (*tls.Certificate, error)
 	TLSALPNGetter           func(string) (*tls.Certificate, error)
@@ -380,7 +388,7 @@ func buildTLSConfig(tlsOption traefiktls.TLS) (*tls.Config, error) {
 	conf := &tls.Config{}
 
 	// ensure http2 enabled
-	conf.NextProtos = []string{"h2", "http/1.1", acme.ACMETLS1Protocol}
+	conf.NextProtos = []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol}
 
 	if len(tlsOption.ClientCA.Files) > 0 {
 		pool := x509.NewCertPool()

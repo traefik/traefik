@@ -15,7 +15,6 @@ import (
 	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/xenolf/lego/acme"
 )
 
 func TestDomainsSet(t *testing.T) {
@@ -258,39 +257,10 @@ func TestRemoveDuplicates(t *testing.T) {
 	}
 }
 
-func TestNoPreCheckOverride(t *testing.T) {
-	acme.PreCheckDNS = nil // Irreversable - but not expecting real calls into this during testing process
-	err := dnsOverrideDelay(0)
-	if err != nil {
-		t.Errorf("Error in dnsOverrideDelay :%v", err)
-	}
-	if acme.PreCheckDNS != nil {
-		t.Error("Unexpected change to acme.PreCheckDNS when leaving DNS verification as is.")
-	}
-}
-
-func TestSillyPreCheckOverride(t *testing.T) {
-	err := dnsOverrideDelay(-5)
-	if err == nil {
-		t.Error("Missing expected error in dnsOverrideDelay!")
-	}
-}
-
-func TestPreCheckOverride(t *testing.T) {
-	acme.PreCheckDNS = nil // Irreversable - but not expecting real calls into this during testing process
-	err := dnsOverrideDelay(5)
-	if err != nil {
-		t.Errorf("Error in dnsOverrideDelay :%v", err)
-	}
-	if acme.PreCheckDNS == nil {
-		t.Error("No change to acme.PreCheckDNS when meant to be adding enforcing override function.")
-	}
-}
-
 func TestAcmeClientCreation(t *testing.T) {
-	acme.PreCheckDNS = nil // Irreversable - but not expecting real calls into this during testing process
 	// Lengthy setup to avoid external web requests - oh for easier golang testing!
 	account := &Account{Email: "f@f"}
+
 	account.PrivateKey, _ = base64.StdEncoding.DecodeString(`
 MIIBPAIBAAJBAMp2Ni92FfEur+CAvFkgC12LT4l9D53ApbBpDaXaJkzzks+KsLw9zyAxvlrfAyTCQ
 7tDnEnIltAXyQ0uOFUUdcMCAwEAAQJAK1FbipATZcT9cGVa5x7KD7usytftLW14heQUPXYNV80r/3
@@ -298,8 +268,9 @@ lmnpvjL06dffRpwkYeN8DATQF/QOcy3NNNGDw/4QIhAPAKmiZFxA/qmRXsuU8Zhlzf16WrNZ68K64
 asn/h3qZrAiEA1+wFR3WXCPIolOvd7AHjfgcTKQNkoMPywU4FYUNQ1AkCIQDv8yk0qPjckD6HVCPJ
 llJh9MC0svjevGtNlxJoE3lmEQIhAKXy1wfZ32/XtcrnENPvi6lzxI0T94X7s5pP3aCoPPoJAiEAl
 cijFkALeQp/qyeXdFld2v9gUN3eCgljgcl0QweRoIc=---`)
+
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`{
+		_, err := w.Write([]byte(`{
   "GPHhmRVEDas": "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417",
   "keyChange": "https://foo/acme/key-change",
   "meta": {
@@ -310,9 +281,20 @@ cijFkALeQp/qyeXdFld2v9gUN3eCgljgcl0QweRoIc=---`)
   "newOrder": "https://foo/acme/new-order",
   "revokeCert": "https://foo/acme/revoke-cert"
 }`))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	}))
 	defer ts.Close()
-	a := ACME{DNSChallenge: &acmeprovider.DNSChallenge{Provider: "manual", DelayBeforeCheck: 10}, CAServer: ts.URL}
+
+	a := ACME{
+		CAServer: ts.URL,
+		DNSChallenge: &acmeprovider.DNSChallenge{
+			Provider:                "manual",
+			DelayBeforeCheck:        10,
+			DisablePropagationCheck: true,
+		},
+	}
 
 	client, err := a.buildACMEClient(account)
 	if err != nil {
@@ -320,9 +302,6 @@ cijFkALeQp/qyeXdFld2v9gUN3eCgljgcl0QweRoIc=---`)
 	}
 	if client == nil {
 		t.Error("No client from buildACMEClient!")
-	}
-	if acme.PreCheckDNS == nil {
-		t.Error("No change to acme.PreCheckDNS when meant to be adding enforcing override function.")
 	}
 }
 

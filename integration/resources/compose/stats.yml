@@ -1,4 +1,4 @@
 whoami1:
-  image: emilevauge/whoami
+  image: containous/whoami
 whoami2:
-  image: emilevauge/whoami
+  image: containous/whoami

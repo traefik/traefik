@@ -2,5 +2,6 @@ whoami:
     image: containous/whoami
     labels:
       - traefik.frontend.passTLSClientCert.pem=true
-      - traefik.frontend.rule=PathPrefix:/
-
+      - traefik.routers.route1.rule=PathPrefix(`/`)
+      - traefik.routers.route1.middlewares=passtls
+      - traefik.middlewares.passtls.passtlsclientcert.pem=true

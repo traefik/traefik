@@ -1,19 +1,14 @@
-// Package otc implements a DNS provider for solving the DNS-01 challenge
-// using Open Telekom Cloud Managed DNS.
+// Package otc implements a DNS provider for solving the DNS-01 challenge using Open Telekom Cloud Managed DNS.
 package otc
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"time"
 
-	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/challenge/dns01"
 	"github.com/xenolf/lego/platform/config/env"
 )
 
@@ -39,8 +34,8 @@ type Config struct {
 func NewDefaultConfig() *Config {
 	return &Config{
 		IdentityEndpoint:   env.GetOrDefaultString("OTC_IDENTITY_ENDPOINT", defaultIdentityEndpoint),
-		PropagationTimeout: env.GetOrDefaultSecond("OTC_PROPAGATION_TIMEOUT", acme.DefaultPropagationTimeout),
-		PollingInterval:    env.GetOrDefaultSecond("OTC_POLLING_INTERVAL", acme.DefaultPollingInterval),
+		PropagationTimeout: env.GetOrDefaultSecond("OTC_PROPAGATION_TIMEOUT", dns01.DefaultPropagationTimeout),
+		PollingInterval:    env.GetOrDefaultSecond("OTC_POLLING_INTERVAL", dns01.DefaultPollingInterval),
 		TTL:                env.GetOrDefaultInt("OTC_TTL", minTTL),
 		HTTPClient: &http.Client{
 			Timeout: env.GetOrDefaultSecond("OTC_HTTP_TIMEOUT", 10*time.Second),
@@ -89,20 +84,6 @@ func NewDNSProvider() (*DNSProvider, error) {
 	return NewDNSProviderConfig(config)
 }
 
-// NewDNSProviderCredentials uses the supplied credentials
-// to return a DNSProvider instance configured for OTC DNS.
-// Deprecated
-func NewDNSProviderCredentials(domainName, userName, password, projectName, identityEndpoint string) (*DNSProvider, error) {
-	config := NewDefaultConfig()
-	config.IdentityEndpoint = identityEndpoint
-	config.DomainName = domainName
-	config.UserName = userName
-	config.Password = password
-	config.ProjectName = projectName
-
-	return NewDNSProviderConfig(config)
-}
-
 // NewDNSProviderConfig return a DNSProvider instance configured for OTC DNS.
 func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 	if config == nil {
@@ -126,9 +107,9 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 
 // Present creates a TXT record using the specified parameters
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
-	fqdn, value, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := dns01.FindZoneByFqdn(fqdn)
 	if err != nil {
 		return fmt.Errorf("otc: %v", err)
 	}
@@ -162,9 +143,9 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 // CleanUp removes the TXT record matching the specified parameters
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _, _ := acme.DNS01Record(domain, keyAuth)
+	fqdn, _ := dns01.GetRecord(domain, keyAuth)
 
-	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
+	authZone, err := dns01.FindZoneByFqdn(fqdn)
 	if err != nil {
 		return fmt.Errorf("otc: %v", err)
 	}
@@ -195,185 +176,4 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 // Adjusting here to cope with spikes in propagation times.
 func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 	return d.config.PropagationTimeout, d.config.PollingInterval
-}
-
-// sendRequest send request
-func (d *DNSProvider) sendRequest(method, resource string, payload interface{}) (io.Reader, error) {
-	url := fmt.Sprintf("%s/%s", d.baseURL, resource)
-
-	body, err := json.Marshal(payload)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(method, url, bytes.NewReader(body))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	if len(d.token) > 0 {
-		req.Header.Set("X-Auth-Token", d.token)
-	}
-
-	resp, err := d.config.HTTPClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("OTC API request %s failed with HTTP status code %d", url, resp.StatusCode)
-	}
-
-	body1, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes.NewReader(body1), nil
-}
-
-func (d *DNSProvider) loginRequest() error {
-	userResp := userResponse{
-		Name:     d.config.UserName,
-		Password: d.config.Password,
-		Domain: nameResponse{
-			Name: d.config.DomainName,
-		},
-	}
-
-	loginResp := loginResponse{
-		Auth: authResponse{
-			Identity: identityResponse{
-				Methods: []string{"password"},
-				Password: passwordResponse{
-					User: userResp,
-				},
-			},
-			Scope: scopeResponse{
-				Project: nameResponse{
-					Name: d.config.ProjectName,
-				},
-			},
-		},
-	}
-
-	body, err := json.Marshal(loginResp)
-	if err != nil {
-		return err
-	}
-
-	req, err := http.NewRequest(http.MethodPost, d.config.IdentityEndpoint, bytes.NewReader(body))
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{Timeout: d.config.HTTPClient.Timeout}
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 400 {
-		return fmt.Errorf("OTC API request failed with HTTP status code %d", resp.StatusCode)
-	}
-
-	d.token = resp.Header.Get("X-Subject-Token")
-
-	if d.token == "" {
-		return fmt.Errorf("unable to get auth token")
-	}
-
-	var endpointResp endpointResponse
-
-	err = json.NewDecoder(resp.Body).Decode(&endpointResp)
-	if err != nil {
-		return err
-	}
-
-	for _, v := range endpointResp.Token.Catalog {
-		if v.Type == "dns" {
-			for _, endpoint := range v.Endpoints {
-				d.baseURL = fmt.Sprintf("%s/v2", endpoint.URL)
-				continue
-			}
-		}
-	}
-
-	if d.baseURL == "" {
-		return fmt.Errorf("unable to get dns endpoint")
-	}
-
-	return nil
-}
-
-// Starts a new OTC API Session. Authenticates using userName, password
-// and receives a token to be used in for subsequent requests.
-func (d *DNSProvider) login() error {
-	return d.loginRequest()
-}
-
-func (d *DNSProvider) getZoneID(zone string) (string, error) {
-	resource := fmt.Sprintf("zones?name=%s", zone)
-	resp, err := d.sendRequest(http.MethodGet, resource, nil)
-	if err != nil {
-		return "", err
-	}
-
-	var zonesRes zonesResponse
-	err = json.NewDecoder(resp).Decode(&zonesRes)
-	if err != nil {
-		return "", err
-	}
-
-	if len(zonesRes.Zones) < 1 {
-		return "", fmt.Errorf("zone %s not found", zone)
-	}
-
-	if len(zonesRes.Zones) > 1 {
-		return "", fmt.Errorf("to many zones found")
-	}
-
-	if zonesRes.Zones[0].ID == "" {
-		return "", fmt.Errorf("id not found")
-	}
-
-	return zonesRes.Zones[0].ID, nil
-}
-
-func (d *DNSProvider) getRecordSetID(zoneID string, fqdn string) (string, error) {
-	resource := fmt.Sprintf("zones/%s/recordsets?type=TXT&name=%s", zoneID, fqdn)
-	resp, err := d.sendRequest(http.MethodGet, resource, nil)
-	if err != nil {
-		return "", err
-	}
-
-	var recordSetsRes recordSetsResponse
-	err = json.NewDecoder(resp).Decode(&recordSetsRes)
-	if err != nil {
-		return "", err
-	}
-
-	if len(recordSetsRes.RecordSets) < 1 {
-		return "", fmt.Errorf("record not found")
-	}
-
-	if len(recordSetsRes.RecordSets) > 1 {
-		return "", fmt.Errorf("to many records found")
-	}
-
-	if recordSetsRes.RecordSets[0].ID == "" {
-		return "", fmt.Errorf("id not found")
-	}
-
-	return recordSetsRes.RecordSets[0].ID, nil
-}
-
-func (d *DNSProvider) deleteRecordSet(zoneID, recordID string) error {
-	resource := fmt.Sprintf("zones/%s/recordsets/%s", zoneID, recordID)
-
-	_, err := d.sendRequest(http.MethodDelete, resource, nil)
-	return err
 }

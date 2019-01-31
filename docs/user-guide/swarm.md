@@ -7,7 +7,7 @@ The cluster consists of:
 - 2 servers
 - 1 swarm master
 - 2 swarm nodes
-- 1 [overlay](https://docs.docker.com/engine/userguide/networking/dockernetworks/#an-overlay-network) network (multi-host networking)
+- 1 [overlay](https://docs.docker.com/network/overlay/) network (multi-host networking)
 
 ## Prerequisites
 

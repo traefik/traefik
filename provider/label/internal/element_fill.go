@@ -5,7 +5,14 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/containous/flaeg/parse"
 )
+
+type initializer interface {
+	SetDefaults()
+}
 
 // Fill the fields of the element.
 // nodes -> element
@@ -79,6 +86,13 @@ func fill(field reflect.Value, node *Node) error {
 func setPtr(field reflect.Value, node *Node) error {
 	if field.IsNil() {
 		field.Set(reflect.New(field.Type().Elem()))
+
+		if field.Type().Implements(reflect.TypeOf((*initializer)(nil)).Elem()) {
+			method := field.MethodByName("SetDefaults")
+			if method.IsValid() {
+				method.Call([]reflect.Value{})
+			}
+		}
 	}
 
 	return fill(field.Elem(), node)
@@ -202,11 +216,14 @@ func setSliceAsStruct(field reflect.Value, node *Node) error {
 		return fmt.Errorf("invalid slice: node %s", node.Name)
 	}
 
-	elem := reflect.New(field.Type().Elem()).Elem()
-	err := setStruct(elem, node)
+	// use Ptr to allow "SetDefaults"
+	value := reflect.New(reflect.PtrTo(field.Type().Elem()))
+	err := setPtr(value, node)
 	if err != nil {
 		return err
 	}
+
+	elem := value.Elem().Elem()
 
 	field.Set(reflect.MakeSlice(field.Type(), 1, 1))
 	field.Index(0).Set(elem)
@@ -236,12 +253,35 @@ func setMap(field reflect.Value, node *Node) error {
 }
 
 func setInt(field reflect.Value, value string, bitSize int) error {
+	switch field.Type() {
+	case reflect.TypeOf(parse.Duration(0)):
+		return setDuration(field, value, bitSize, time.Second)
+	case reflect.TypeOf(time.Duration(0)):
+		return setDuration(field, value, bitSize, time.Nanosecond)
+	default:
+		val, err := strconv.ParseInt(value, 10, bitSize)
+		if err != nil {
+			return err
+		}
+
+		field.Set(reflect.ValueOf(val).Convert(field.Type()))
+		return nil
+	}
+}
+
+func setDuration(field reflect.Value, value string, bitSize int, defaultUnit time.Duration) error {
 	val, err := strconv.ParseInt(value, 10, bitSize)
+	if err == nil {
+		field.Set(reflect.ValueOf(time.Duration(val) * defaultUnit).Convert(field.Type()))
+		return nil
+	}
+
+	duration, err := time.ParseDuration(value)
 	if err != nil {
 		return err
 	}
 
-	field.Set(reflect.ValueOf(val).Convert(field.Type()))
+	field.Set(reflect.ValueOf(duration).Convert(field.Type()))
 	return nil
 }
 
