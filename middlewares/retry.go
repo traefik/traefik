@@ -110,7 +110,7 @@ type retryResponseWriterWithoutCloseNotify struct {
 	responseWriter http.ResponseWriter
 	headers        http.Header
 	shouldRetry    bool
-	written         bool
+	written        bool
 }
 
 func (rr *retryResponseWriterWithoutCloseNotify) ShouldRetry() bool {
