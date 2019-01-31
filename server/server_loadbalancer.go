@@ -211,6 +211,7 @@ func (s *Server) getRoundTripper(entryPointName string, passTLSCert bool, tls *t
 		if err != nil {
 			return nil, fmt.Errorf("failed to create TLSClientConfig: %v", err)
 		}
+		tlsConfig.InsecureSkipVerify = s.globalConfiguration.InsecureSkipVerify
 
 		transport, err := createHTTPTransport(s.globalConfiguration)
 		if err != nil {
