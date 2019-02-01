@@ -423,3 +423,45 @@ func (s *GRPCSuite) TestGRPCBufferWithFlushInterval(c *check.C) {
 	})
 	c.Assert(err, check.IsNil)
 }
+
+func (s *GRPCSuite) TestGRPCWithRetry(c *check.C) {
+	lis, err := net.Listen("tcp", ":0")
+	_, port, err := net.SplitHostPort(lis.Addr().String())
+	c.Assert(err, check.IsNil)
+
+	go func() {
+		err := startGRPCServer(lis, &myserver{})
+		c.Log(err)
+		c.Assert(err, check.IsNil)
+	}()
+
+	file := s.adaptFile(c, "fixtures/grpc/config_retry.toml", struct {
+		CertContent    string
+		KeyContent     string
+		GRPCServerPort string
+	}{
+		CertContent:    string(LocalhostCert),
+		KeyContent:     string(LocalhostKey),
+		GRPCServerPort: port,
+	})
+
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+
+	err = cmd.Start()
+	c.Assert(err, check.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 1*time.Second, try.BodyContains("Host(`127.0.0.1`)"))
+	c.Assert(err, check.IsNil)
+
+	var response string
+	err = try.Do(1*time.Second, func() error {
+		response, err = callHelloClientGRPC("World", true)
+		return err
+	})
+	c.Assert(err, check.IsNil)
+	c.Assert(response, check.Equals, "Hello World")
+}
