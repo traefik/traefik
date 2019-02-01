@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/unrolled/secure"
+	"gitlab.com/JanMa/correlation"
 )
 
 func TestPrepareServerTimeouts(t *testing.T) {
@@ -369,17 +370,19 @@ func (c mockContext) Value(key interface{}) interface{} {
 
 func TestNewServerWithResponseModifiers(t *testing.T) {
 	testCases := []struct {
-		desc             string
-		headerMiddleware *middlewares.HeaderStruct
-		secureMiddleware *secure.Secure
-		ctx              context.Context
-		expected         map[string]string
+		desc                  string
+		headerMiddleware      *middlewares.HeaderStruct
+		secureMiddleware      *secure.Secure
+		correlationMiddleware *correlation.Correlation
+		ctx                   context.Context
+		expected              map[string]string
 	}{
 		{
-			desc:             "header and secure nil",
-			headerMiddleware: nil,
-			secureMiddleware: nil,
-			ctx:              mockContext{},
+			desc:                  "header, secure and correlation nil",
+			headerMiddleware:      nil,
+			secureMiddleware:      nil,
+			correlationMiddleware: nil,
+			ctx:                   mockContext{},
 			expected: map[string]string{
 				"X-Default":       "powpow",
 				"Referrer-Policy": "same-origin",
@@ -392,8 +395,9 @@ func TestNewServerWithResponseModifiers(t *testing.T) {
 					"X-Default": "powpow",
 				},
 			}),
-			secureMiddleware: nil,
-			ctx:              mockContext{},
+			secureMiddleware:      nil,
+			correlationMiddleware: nil,
+			ctx:                   mockContext{},
 			expected: map[string]string{
 				"X-Default":       "powpow",
 				"Referrer-Policy": "same-origin",
@@ -405,12 +409,26 @@ func TestNewServerWithResponseModifiers(t *testing.T) {
 			secureMiddleware: middlewares.NewSecure(&types.Headers{
 				ReferrerPolicy: "no-referrer",
 			}),
+			correlationMiddleware: nil,
 			ctx: mockContext{
 				headers: http.Header{"Referrer-Policy": []string{"no-referrer"}},
 			},
 			expected: map[string]string{
 				"X-Default":       "powpow",
 				"Referrer-Policy": "no-referrer",
+			},
+		},
+		{
+			desc:             "correlation middleware not nil",
+			headerMiddleware: nil,
+			secureMiddleware: nil,
+			correlationMiddleware: middlewares.NewCorrelation(&types.Headers{
+				CorrelationIDType: "UUID",
+			}),
+			ctx: mockContext{},
+			expected: map[string]string{
+				"X-Default":       "powpow",
+				"Referrer-Policy": "same-origin",
 			},
 		},
 		{
@@ -422,6 +440,47 @@ func TestNewServerWithResponseModifiers(t *testing.T) {
 			}),
 			secureMiddleware: middlewares.NewSecure(&types.Headers{
 				ReferrerPolicy: "no-referrer",
+			}),
+			correlationMiddleware: nil,
+			ctx: mockContext{
+				headers: http.Header{"Referrer-Policy": []string{"no-referrer"}},
+			},
+			expected: map[string]string{
+				"X-Default":       "powpow",
+				"Referrer-Policy": "powpow",
+			},
+		},
+		{
+			desc: "header and correlation middleware not nil",
+			headerMiddleware: middlewares.NewHeaderFromStruct(&types.Headers{
+				CustomResponseHeaders: map[string]string{
+					"Referrer-Policy": "powpow",
+				},
+			}),
+			secureMiddleware: nil,
+			correlationMiddleware: middlewares.NewCorrelation(&types.Headers{
+				CorrelationIDType: "UUID",
+			}),
+			ctx: mockContext{
+				headers: http.Header{"Referrer-Policy": []string{"no-referrer"}},
+			},
+			expected: map[string]string{
+				"X-Default":       "powpow",
+				"Referrer-Policy": "powpow",
+			},
+		},
+		{
+			desc: "header, secure and correlation middleware not nil",
+			headerMiddleware: middlewares.NewHeaderFromStruct(&types.Headers{
+				CustomResponseHeaders: map[string]string{
+					"Referrer-Policy": "powpow",
+				},
+			}),
+			secureMiddleware: middlewares.NewSecure(&types.Headers{
+				ReferrerPolicy: "no-referrer",
+			}),
+			correlationMiddleware: middlewares.NewCorrelation(&types.Headers{
+				CorrelationIDType: "UUID",
 			}),
 			ctx: mockContext{
 				headers: http.Header{"Referrer-Policy": []string{"no-referrer"}},
@@ -449,7 +508,7 @@ func TestNewServerWithResponseModifiers(t *testing.T) {
 				Header:  headers,
 			}
 
-			responseModifier := buildModifyResponse(test.secureMiddleware, test.headerMiddleware)
+			responseModifier := buildModifyResponse(test.secureMiddleware, test.correlationMiddleware, test.headerMiddleware)
 			err := responseModifier(res)
 
 			assert.NoError(t, err)

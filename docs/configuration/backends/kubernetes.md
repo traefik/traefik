@@ -331,6 +331,16 @@ The following security annotations are applicable on the Ingress object:
 | `ingress.kubernetes.io/ssl-force-host: "true"`            | If `SSLForceHost` is `true` and `SSLHost` is set, requests will be forced to use `SSLHost` even the ones that are already using SSL. Default is false.                                              |
 | `ingress.kubernetes.io/ssl-proxy-headers: EXPR`           | Header combinations that would signify a proper SSL Request (Such as `X-Forwarded-For:https`). Format: <code>HEADER:value&vert;&vert;HEADER2:value2</code>                                          |
 
+### Correlation ID Headers
+
+The following security annotations are applicable on the Ingress object:
+
+| Label                                                     | Description                                                                                                                                                                                         |
+|-----------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ingress.kubernetes.io/correlation-id-type: EXPR`         | Adds the `X-Correlation-ID` header with the configured setting.<br>Format: `UUID`                                                                                                                   |
+| `ingress.kubernetes.io/correlation-header-name: EXPR`     | Adds a correlation ID header with the given name.<br>Format: `cID`                                                                                                                                  |
+| `ingress.kubernetes.io/correlation-custom-string: EXPR`   | Sets the content of the correlation ID header if the type is set to `Custom`.<br>Format: `{{uuidv4}}`                                                                                               |
+
 ### Authentication
 
 Additional authentication annotations can be added to the Ingress object.

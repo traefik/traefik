@@ -80,6 +80,9 @@ const (
 	SuffixFrontendHeadersPublicKey                              = SuffixFrontendHeaders + "publicKey"
 	SuffixFrontendHeadersReferrerPolicy                         = SuffixFrontendHeaders + "referrerPolicy"
 	SuffixFrontendHeadersIsDevelopment                          = SuffixFrontendHeaders + "isDevelopment"
+	SuffixFrontendHeadersCorrelationHeaderName                  = SuffixFrontendHeaders + "correlationHeaderName"
+	SuffixFrontendHeadersCorrelationIDType                      = SuffixFrontendHeaders + "correlationIDType"
+	SuffixFrontendHeadersCorrelationCustomString                = SuffixFrontendHeaders + "correlationCustomString"
 	SuffixFrontendPassHostHeader                                = "frontend.passHostHeader"
 	SuffixFrontendPassTLSClientCert                             = "frontend.passTLSClientCert"
 	SuffixFrontendPassTLSClientCertPem                          = SuffixFrontendPassTLSClientCert + ".pem"
@@ -225,6 +228,9 @@ const (
 	TraefikFrontendPublicKey                                    = Prefix + SuffixFrontendHeadersPublicKey
 	TraefikFrontendReferrerPolicy                               = Prefix + SuffixFrontendHeadersReferrerPolicy
 	TraefikFrontendIsDevelopment                                = Prefix + SuffixFrontendHeadersIsDevelopment
+	TraefikFrontendCorrelationHeaderName                        = Prefix + SuffixFrontendHeadersCorrelationHeaderName
+	TraefikFrontendCorrelationIDType                            = Prefix + SuffixFrontendHeadersCorrelationIDType
+	TraefikFrontendCorrelationCustomString                      = Prefix + SuffixFrontendHeadersCorrelationCustomString
 	BaseFrontendErrorPage                                       = "frontend.errors."
 	SuffixErrorPageBackend                                      = "backend"
 	SuffixErrorPageQuery                                        = "query"

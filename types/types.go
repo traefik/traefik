@@ -150,6 +150,10 @@ type Headers struct {
 	PublicKey               string            `json:"publicKey,omitempty"`
 	ReferrerPolicy          string            `json:"referrerPolicy,omitempty"`
 	IsDevelopment           bool              `json:"isDevelopment,omitempty"`
+
+	CorrelationHeaderName   string `json:"correlationHeaderName,omitempty"`
+	CorrelationIDType       string `json:"correlationIDType,omitempty"`
+	CorrelationCustomString string `json:"correlationCustomString,omitempty"`
 }
 
 // HasCustomHeadersDefined checks to see if any of the custom header elements have been set
@@ -180,6 +184,13 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 		h.PublicKey != "" ||
 		h.ReferrerPolicy != "" ||
 		h.IsDevelopment)
+}
+
+// HasCorrelationHeadersDefined checks to see if any of the correlation header elements have been set
+func (h *Headers) HasCorrelationHeadersDefined() bool {
+	return h != nil && (len(h.CorrelationHeaderName) != 0 ||
+		len(h.CorrelationIDType) != 0 ||
+		(h.CorrelationIDType == "Custom" && len(h.CorrelationCustomString) != 0))
 }
 
 // Frontend holds frontend configuration.

@@ -228,6 +228,9 @@
       PublicKey = "{{ $headers.PublicKey }}"
       ReferrerPolicy = "{{ $headers.ReferrerPolicy }}"
       IsDevelopment = {{ $headers.IsDevelopment }}
+      CorrelationHeaderName = "{{ $headers.CorrelationHeaderName }}"
+      CorrelationIDType = "{{ $headers.CorrelationIDType }}"
+      CorrelationCustomString = "{{ $headers.CorrelationCustomString }}"
 
       {{if $headers.AllowedHosts }}
       AllowedHosts = [{{range $headers.AllowedHosts }}

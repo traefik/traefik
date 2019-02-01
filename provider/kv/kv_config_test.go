@@ -359,6 +359,10 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					withPair(pathFrontendBrowserXSSFilter, "true"),
 					withPair(pathFrontendIsDevelopment, "true"),
 
+					withPair(pathFrontendCorrelationHeaderName, "foo"),
+					withPair(pathFrontendCorrelationIDType, "Custom"),
+					withPair(pathFrontendCorrelationCustomString, "bar"),
+
 					withPair("routes/route1/rule", "Host:test.localhost"),
 					withPair("routes/route2/rule", "Path:/foo")),
 				entry("tls/foo",
@@ -532,6 +536,10 @@ func TestProviderBuildConfiguration(t *testing.T) {
 							ContentTypeNosniff:      true,
 							BrowserXSSFilter:        true,
 							IsDevelopment:           true,
+
+							CorrelationHeaderName:   "foo",
+							CorrelationIDType:       "Custom",
+							CorrelationCustomString: "bar",
 						},
 					},
 				},

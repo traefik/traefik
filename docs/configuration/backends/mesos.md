@@ -220,6 +220,14 @@ The following labels can be defined on Mesos tasks. They adjust the behavior for
 | `traefik.frontend.headers.STSIncludeSubdomains=true`     | Adds the `IncludeSubdomains` section of the STS  header.                                                                                                                                            |
 | `traefik.frontend.headers.STSPreload=true`               | Adds the preload flag to the STS  header.                                                                                                                                                           |
 
+### Correlation ID Headers
+
+| Label                                                     | Description                                                                                                                                                                                         |
+|-----------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `traefik.frontend.headers.correlationIDType=EXPR`         | Adds the `X-Correlation-ID` header with the configured setting.<br>Format: `UUID`                                                                                                                   |
+| `traefik.frontend.headers.correlationHeaderName=EXPR`     | Adds a correlation ID header with the given name.<br>Format: `cID`                                                                                                                                  |
+| `traefik.frontend.headers.correlationCustomString=EXPR`   | Sets the content of the correlation ID header if the type is set to `Custom`.<br>Format: `{{uuidv4}}`                                                                                               |
+
 ### Applications with Multiple Ports (segment labels)
 
 Segment labels are used to define routes to an application exposing multiple ports.
@@ -316,3 +324,11 @@ Segment labels override the default behavior.
 | `traefik.<segment_name>.frontend.headers.STSSeconds=315360000`          | Same as `traefik.frontend.headers.STSSeconds=315360000`      |
 | `traefik.<segment_name>.frontend.headers.STSIncludeSubdomains=true`     | Same as `traefik.frontend.headers.STSIncludeSubdomains=true` |
 | `traefik.<segment_name>.frontend.headers.STSPreload=true`               | Same as `traefik.frontend.headers.STSPreload=true`           |
+
+#### Correlation ID Headers
+
+| Label                                                                     | Description                                                |
+|---------------------------------------------------------------------------|------------------------------------------------------------|
+| `traefik.<segment_name>.frontend.headers.correlationIDType=EXPR`          | Same as `traefik.frontend.headers.correlationIDType`       |
+| `traefik.<segment_name>.frontend.headers.correlationHeaderName=EXPR`      | Same as `traefik.frontend.headers.correlationHeaderName`   |
+| `traefik.<segment_name>.frontend.headers.correlationCustomString=EXPR`    | Same as `traefik.frontend.headers.correlationCustomString` |

@@ -323,6 +323,38 @@ In this example, traffic routed through the first frontend will have the `X-Fram
 !!! note
     The detailed documentation for those security headers can be found in [unrolled/secure](https://github.com/unrolled/secure#available-options).
 
+#### Correlation ID headers
+
+Correlation ID headers can be added in a similar manner as the custom headers and security headers. This allows for correlation IDs to be added to incoming requests.
+
+An example of correlation ID headers:
+
+```toml
+[frontends]
+  [frontends.frontend1]
+  backend = "backend1"
+    [frontends.frontend1.headers]
+    # Valid values for CorrelationIDType field are:
+    #   - "UUID"
+    #   - "CUID"
+    #   - "Random"
+    #   - "Time"
+    #   - "Custom"
+    CorrelationIDType = "UUID"
+    CorrelationHeaderName = "X-Correlation-ID"
+  [frontends.frontend2]
+  backend = "backend2"
+    [frontends.frontend2.headers]
+    CorrelationIDType = "Custom"
+    CorrelationCustomString = "{{uuidv4}}"
+    CorrelationHeaderName = "cID"
+```
+
+In this example, traffic routed through the first frontend will have the `X-Correlation-ID` header set containing a random UUID for every new incoming request. The second frontend will set the `cID` header containing always the same UUID which gets generated when Traefik parses the configuration.
+
+!!! note
+    The detailed documentation for those correlation ID headers can be found in [JanMa/correlation](https://gitlab.com/JanMa/correlation#available-options).
+
 ### Backends
 
 A backend is responsible to load-balance the traffic coming from one or more frontends to a set of http servers.

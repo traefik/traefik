@@ -118,6 +118,10 @@ const (
 	pathFrontendReferrerPolicy          = "/headers/referrerpolicy"
 	pathFrontendIsDevelopment           = "/headers/isdevelopment"
 
+	pathFrontendCorrelationHeaderName   = "/headers/correlationHeaderName"
+	pathFrontendCorrelationIDType       = "/headers/correlationIDType"
+	pathFrontendCorrelationCustomString = "/headers/correlationCustomString"
+
 	pathFrontendRoutes = "/routes/"
 	pathFrontendRule   = "/rule"
 

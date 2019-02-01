@@ -156,3 +156,11 @@ Labels, set through extensions or the property manager, can be used on services 
 | `traefik.frontend.headers.publicKey=VALUE`               | Adds HPKP header.                                                                                                                                                                                   |
 | `traefik.frontend.headers.referrerPolicy=VALUE`          | Adds referrer policy  header.                                                                                                                                                                       |
 | `traefik.frontend.headers.isDevelopment=false`           | This will cause the `AllowedHosts`, `SSLRedirect`, and `STSSeconds`/`STSIncludeSubdomains` options to be ignored during development.<br>When deploying to production, be sure to set this to false. |
+
+### Correlation ID Headers
+
+| Label                                                     | Description                                                                                                                                                                                         |
+|-----------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `traefik.frontend.headers.correlationIDType=EXPR`         | Adds the `X-Correlation-ID` header with the configured setting.<br>Format: `UUID`                                                                                                                   |
+| `traefik.frontend.headers.correlationHeaderName=EXPR`     | Adds a correlation ID header with the given name.<br>Format: `cID`                                                                                                                                  |
+| `traefik.frontend.headers.correlationCustomString=EXPR`   | Sets the content of the correlation ID header if the type is set to `Custom`.<br>Format: `{{uuidv4}}`                                                                                               |

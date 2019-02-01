@@ -403,6 +403,28 @@
                             </table>
                           </div>
 
+                          <div class="column is-12">
+                            <table class="table is-fullwidth is-hoverable table-fixed-break">
+                              <tbody>
+                                <tr>
+                                  <td colspan="2">Correlation</td>
+                                </tr>
+                                <tr *ngIf="p.headers.correlationHeaderName">
+                                  <td><span class="has-text-grey">Correlation ID Header Name</span></td>
+                                  <td><span class="has-text-grey">{{ p.headers.correlationHeaderName }}</span></td>
+                                </tr>
+                                <tr *ngIf="p.headers.correlationIDType">
+                                    <td><span class="has-text-grey">Correlation ID Type</span></td>
+                                    <td><span class="has-text-grey">{{ p.headers.correlationIDType }}</span></td>
+                                </tr>
+                                <tr *ngIf="p.headers.correlationCustomString">
+                                    <td><span class="has-text-grey">Correlation ID Custom String</span></td>
+                                    <td><span class="has-text-grey">{{ p.headers.correlationCustomString }}</span></td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+
                           <div class="column is-12" *ngIf="p.headers.sslProxyHeaders?.length">
                             <table class="table is-fullwidth is-hoverable table-fixed-break">
                               <tbody>

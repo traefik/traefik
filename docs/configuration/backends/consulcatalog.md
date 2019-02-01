@@ -220,6 +220,16 @@ If you need to support multiple frontends for a service, for example when having
 | `<prefix>.frontend.headers.STSIncludeSubdomains=true`     | Adds the `IncludeSubdomains` section of the STS  header.                                                                                                                                            |
 | `<prefix>.frontend.headers.STSPreload=true`               | Adds the preload flag to the STS  header.                                                                                                                                                           |
 
+### Correlation ID Headers
+
+!!! note
+    The default prefix is `traefik`.
+
+| Label                                                     | Description                                                                                                                                                                                         |
+|-----------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `<prefix>.frontend.headers.correlationIDType=EXPR`        | Adds the `X-Correlation-ID` header with the configured setting.<br>Format: `UUID`                                                                                                                   |
+| `<prefix>.frontend.headers.correlationHeaderName=EXPR`    | Adds a correlation ID header with the given name.<br>Format: `cID`                                                                                                                                  |
+| `<prefix>.frontend.headers.correlationCustomString=EXPR`  | Sets the content of the correlation ID header if the type is set to `Custom`.<br>Format: `{{uuidv4}}`                                                                                               |
 
 ### Examples
 

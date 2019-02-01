@@ -246,9 +246,13 @@ func (p *Provider) getHeaders(rootPath string) *types.Headers {
 		PublicKey:               p.get("", rootPath, pathFrontendPublicKey),
 		ReferrerPolicy:          p.get("", rootPath, pathFrontendReferrerPolicy),
 		IsDevelopment:           p.getBool(false, rootPath, pathFrontendIsDevelopment),
+
+		CorrelationHeaderName:   p.get("", rootPath, pathFrontendCorrelationHeaderName),
+		CorrelationIDType:       p.get("", rootPath, pathFrontendCorrelationIDType),
+		CorrelationCustomString: p.get("", rootPath, pathFrontendCorrelationCustomString),
 	}
 
-	if !headers.HasSecureHeadersDefined() && !headers.HasCustomHeadersDefined() {
+	if !headers.HasSecureHeadersDefined() && !headers.HasCustomHeadersDefined() && !headers.HasCustomHeadersDefined() {
 		return nil
 	}
 

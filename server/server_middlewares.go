@@ -15,6 +15,7 @@ import (
 	thoas_stats "github.com/thoas/stats"
 	"github.com/unrolled/secure"
 	"github.com/urfave/negroni"
+	"gitlab.com/JanMa/correlation"
 )
 
 type handlerPostConfig func(backendsHandlers map[string]http.Handler) error
@@ -99,6 +100,15 @@ func (s *Server) buildMiddlewares(frontendName string, frontend *types.Frontend,
 		middle = append(middle, handler)
 	}
 
+	// Correlation
+	correlationMiddleware := middlewares.NewCorrelation(frontend.Headers)
+	if correlationMiddleware != nil {
+		log.Debugf("Adding correlation middleware for fontend %s", frontendName)
+
+		handler := negroni.HandlerFunc(correlationMiddleware.HandlerFuncWithNextForRequestOnly)
+		middle = append(middle, handler)
+	}
+
 	// Basic auth
 	if len(frontend.BasicAuth) > 0 {
 		log.Debugf("Adding basic authentication for frontend %s", frontendName)
@@ -132,7 +142,7 @@ func (s *Server) buildMiddlewares(frontendName string, frontend *types.Frontend,
 		middle = append(middle, handler)
 	}
 
-	return middle, buildModifyResponse(secureMiddleware, headerMiddleware), postConfig, nil
+	return middle, buildModifyResponse(secureMiddleware, correlationMiddleware, headerMiddleware), postConfig, nil
 }
 
 func (s *Server) buildServerEntryPointMiddlewares(serverEntryPointName string, serverEntryPoint *serverEntryPoint) ([]negroni.Handler, error) {
@@ -335,10 +345,16 @@ func (s *Server) wrapHTTPHandlerWithAccessLog(handler http.Handler, frontendName
 	return handler
 }
 
-func buildModifyResponse(secure *secure.Secure, header *middlewares.HeaderStruct) func(res *http.Response) error {
+func buildModifyResponse(secure *secure.Secure, correlation *correlation.Correlation, header *middlewares.HeaderStruct) func(res *http.Response) error {
 	return func(res *http.Response) error {
 		if secure != nil {
 			if err := secure.ModifyResponseHeaders(res); err != nil {
+				return err
+			}
+		}
+
+		if correlation != nil {
+			if err := correlation.ModifyResponseHeaders(res); err != nil {
 				return err
 			}
 		}

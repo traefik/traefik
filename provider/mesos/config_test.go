@@ -403,6 +403,10 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel(label.TraefikFrontendBrowserXSSFilter, "true"),
 					withLabel(label.TraefikFrontendIsDevelopment, "true"),
 
+					withLabel(label.TraefikFrontendCorrelationHeaderName, "foo"),
+					withLabel(label.TraefikFrontendCorrelationIDType, "Custom"),
+					withLabel(label.TraefikFrontendCorrelationCustomString, "bar"),
+
 					withLabel(label.Prefix+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageStatus, "404"),
 					withLabel(label.Prefix+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageBackend, "foobar"),
 					withLabel(label.Prefix+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageQuery, "foo_query"),
@@ -518,6 +522,9 @@ func TestBuildConfiguration(t *testing.T) {
 						PublicKey:               "foo",
 						ReferrerPolicy:          "foo",
 						IsDevelopment:           true,
+						CorrelationHeaderName:   "foo",
+						CorrelationIDType:       "Custom",
+						CorrelationCustomString: "bar",
 					},
 					Errors: map[string]*types.ErrorPage{
 						"foo": {

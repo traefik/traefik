@@ -365,6 +365,10 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
       ReferrerPolicy = "{{ $headers.ReferrerPolicy }}"
       IsDevelopment = {{ $headers.IsDevelopment }}
 
+      CorrelationHeaderName = "{{ $headers.CorrelationHeaderName }}"
+      CorrelationIDType = "{{ $headers.CorrelationIDType }}"
+      CorrelationCustomString = "{{ $headers.CorrelationCustomString }}"
+
       {{if $headers.AllowedHosts }}
       AllowedHosts = [{{range $headers.AllowedHosts }}
         "{{.}}",
@@ -859,6 +863,9 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
       PublicKey = "{{ $headers.PublicKey }}"
       ReferrerPolicy = "{{ $headers.ReferrerPolicy }}"
       IsDevelopment = {{ $headers.IsDevelopment }}
+      CorrelationHeaderName = "{{ $headers.CorrelationHeaderName }}"
+      CorrelationIDType = "{{ $headers.CorrelationIDType }}"
+      CorrelationCustomString = "{{ $headers.CorrelationCustomString }}"
 
       {{if $headers.AllowedHosts }}
       AllowedHosts = [{{range $headers.AllowedHosts }}
@@ -1208,6 +1215,10 @@ var _templatesEcsTmpl = []byte(`[backends]
       ReferrerPolicy = "{{ $headers.ReferrerPolicy }}"
       IsDevelopment = {{ $headers.IsDevelopment }}
 
+      CorrelationHeaderName = "{{ $headers.CorrelationHeaderName }}"
+      CorrelationIDType = "{{ $headers.CorrelationIDType }}"
+      CorrelationCustomString = "{{ $headers.CorrelationCustomString }}"
+
       {{if $headers.AllowedHosts }}
       AllowedHosts = [{{range $headers.AllowedHosts }}
         "{{.}}",
@@ -1493,6 +1504,9 @@ var _templatesKubernetesTmpl = []byte(`[backends]
     PublicKey = "{{ $frontend.Headers.PublicKey }}"
     ReferrerPolicy = "{{ $frontend.Headers.ReferrerPolicy }}"
     IsDevelopment = {{ $frontend.Headers.IsDevelopment }}
+    CorrelationHeaderName = "{{ $frontend.Headers.CorrelationHeaderName }}"
+    CorrelationIDType = "{{ $frontend.Headers.CorrelationIDType }}"
+    CorrelationCustomString = "{{ $frontend.Headers.CorrelationCustomString }}"
     {{if $frontend.Headers.AllowedHosts }}
     AllowedHosts = [{{range $frontend.Headers.AllowedHosts }}
       "{{.}}",
@@ -1785,6 +1799,10 @@ var _templatesKvTmpl = []byte(`[backends]
       PublicKey = "{{ $headers.PublicKey }}"
       ReferrerPolicy = "{{ $headers.ReferrerPolicy }}"
       IsDevelopment = {{ $headers.IsDevelopment }}
+
+      CorrelationHeaderName = "{{ $headers.CorrelationHeaderName }}"
+      CorrelationIDType = "{{ $headers.CorrelationIDType }}"
+      CorrelationCustomString = "{{ $headers.CorrelationCustomString }}"
 
       {{if $headers.AllowedHosts }}
       AllowedHosts = [{{range $headers.AllowedHosts }}
@@ -2174,6 +2192,10 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
       ReferrerPolicy = "{{ $headers.ReferrerPolicy }}"
       IsDevelopment = {{ $headers.IsDevelopment }}
 
+      CorrelationHeaderName = "{{ $headers.CorrelationHeaderName }}"
+      CorrelationIDType = "{{ $headers.CorrelationIDType }}"
+      CorrelationCustomString = "{{ $headers.CorrelationCustomString }}"
+
       {{if $headers.AllowedHosts }}
       AllowedHosts = [{{range $headers.AllowedHosts }}
         "{{.}}",
@@ -2505,6 +2527,10 @@ var _templatesMesosTmpl = []byte(`[backends]
       PublicKey = "{{ $headers.PublicKey }}"
       ReferrerPolicy = "{{ $headers.ReferrerPolicy }}"
       IsDevelopment = {{ $headers.IsDevelopment }}
+
+      CorrelationHeaderName = "{{ $headers.CorrelationHeaderName }}"
+      CorrelationIDType = "{{ $headers.CorrelationIDType }}"
+      CorrelationCustomString = "{{ $headers.CorrelationCustomString }}"
 
       {{if $headers.AllowedHosts }}
       AllowedHosts = [{{range $headers.AllowedHosts }}
@@ -2890,6 +2916,10 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
       PublicKey = "{{ $headers.PublicKey }}"
       ReferrerPolicy = "{{ $headers.ReferrerPolicy }}"
       IsDevelopment = {{ $headers.IsDevelopment }}
+
+      CorrelationHeaderName = "{{ $headers.CorrelationHeaderName }}"
+      CorrelationIDType = "{{ $headers.CorrelationIDType }}"
+      CorrelationCustomString = "{{ $headers.CorrelationCustomString }}"
 
       {{if $headers.AllowedHosts }}
       AllowedHosts = [{{range $headers.AllowedHosts }}

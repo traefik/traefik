@@ -130,6 +130,10 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendBrowserXSSFilter:        "true",
 						label.TraefikFrontendIsDevelopment:           "true",
 
+						label.TraefikFrontendCorrelationHeaderName:   "foo",
+						label.TraefikFrontendCorrelationIDType:       "Custom",
+						label.TraefikFrontendCorrelationCustomString: "bar",
+
 						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageStatus:  "404",
 						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageBackend: "foobar",
 						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageQuery:   "foo_query",
@@ -245,6 +249,9 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						PublicKey:               "foo",
 						ReferrerPolicy:          "foo",
 						IsDevelopment:           true,
+						CorrelationHeaderName:   "foo",
+						CorrelationIDType:       "Custom",
+						CorrelationCustomString: "bar",
 					},
 					Errors: map[string]*types.ErrorPage{
 						"foo": {
@@ -409,6 +416,10 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						label.Prefix + "sauternes." + label.SuffixFrontendHeadersBrowserXSSFilter:        "true",
 						label.Prefix + "sauternes." + label.SuffixFrontendHeadersIsDevelopment:           "true",
 
+						label.Prefix + "sauternes." + label.SuffixFrontendHeadersCorrelationHeaderName:   "foo",
+						label.Prefix + "sauternes." + label.SuffixFrontendHeadersCorrelationIDType:       "Custom",
+						label.Prefix + "sauternes." + label.SuffixFrontendHeadersCorrelationCustomString: "bar",
+
 						label.Prefix + "sauternes." + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageStatus:  "404",
 						label.Prefix + "sauternes." + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageBackend: "foobar",
 						label.Prefix + "sauternes." + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageQuery:   "foo_query",
@@ -513,6 +524,9 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						PublicKey:               "foo",
 						ReferrerPolicy:          "foo",
 						IsDevelopment:           true,
+						CorrelationHeaderName:   "foo",
+						CorrelationIDType:       "Custom",
+						CorrelationCustomString: "bar",
 					},
 					Errors: map[string]*types.ErrorPage{
 						"bar": {

@@ -1345,6 +1345,9 @@ rateset:
 			iAnnotation(annotationKubernetesContentSecurityPolicy, "foo"),
 			iAnnotation(annotationKubernetesPublicKey, "foo"),
 			iAnnotation(annotationKubernetesReferrerPolicy, "foo"),
+			iAnnotation(annotationKubernetesCorrelationHeaderName, "foo"),
+			iAnnotation(annotationKubernetesCorrelationIDType, "Custom"),
+			iAnnotation(annotationKubernetesCorrelationCustomString, "bar"),
 			iRules(
 				iRule(
 					iHost("custom-headers"),
@@ -1656,6 +1659,9 @@ rateset:
 					PublicKey:               "foo",
 					ReferrerPolicy:          "foo",
 					CustomBrowserXSSValue:   "foo",
+					CorrelationHeaderName:   "foo",
+					CorrelationIDType:       "Custom",
+					CorrelationCustomString: "bar",
 				}),
 				routes(
 					route("/customheaders", "PathPrefix:/customheaders"),

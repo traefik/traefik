@@ -68,6 +68,10 @@ const (
 	annotationKubernetesReferrerPolicy          = "ingress.kubernetes.io/referrer-policy"
 	annotationKubernetesIsDevelopment           = "ingress.kubernetes.io/is-development"
 	annotationKubernetesProtocol                = "ingress.kubernetes.io/protocol"
+
+	annotationKubernetesCorrelationHeaderName   = "ingress.kubernetes.io/correlation-header-name"
+	annotationKubernetesCorrelationIDType       = "ingress.kubernetes.io/correlation-id-type"
+	annotationKubernetesCorrelationCustomString = "ingress.kubernetes.io/correlation-custom-string"
 )
 
 // TODO [breaking] remove label support

@@ -431,6 +431,10 @@ func TestBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendBrowserXSSFilter:        aws.String("true"),
 						label.TraefikFrontendIsDevelopment:           aws.String("true"),
 
+						label.TraefikFrontendCorrelationHeaderName:   aws.String("foo"),
+						label.TraefikFrontendCorrelationIDType:       aws.String("Custom"),
+						label.TraefikFrontendCorrelationCustomString: aws.String("bar"),
+
 						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageStatus:  aws.String("404"),
 						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageBackend: aws.String("foobar"),
 						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageQuery:   aws.String("foo_query"),
@@ -595,6 +599,10 @@ func TestBuildConfiguration(t *testing.T) {
 							PublicKey:               "foo",
 							ReferrerPolicy:          "foo",
 							IsDevelopment:           true,
+
+							CorrelationHeaderName:   "foo",
+							CorrelationIDType:       "Custom",
+							CorrelationCustomString: "bar",
 						},
 						Errors: map[string]*types.ErrorPage{
 							"bar": {
@@ -706,6 +714,10 @@ func TestBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendBrowserXSSFilter:        aws.String("true"),
 						label.TraefikFrontendIsDevelopment:           aws.String("true"),
 
+						label.TraefikFrontendCorrelationHeaderName:   aws.String("foo"),
+						label.TraefikFrontendCorrelationIDType:       aws.String("Custom"),
+						label.TraefikFrontendCorrelationCustomString: aws.String("bar"),
+
 						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageStatus:  aws.String("404"),
 						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageBackend: aws.String("foobar"),
 						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageQuery:   aws.String("foo_query"),
@@ -793,6 +805,10 @@ func TestBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendContentTypeNosniff:      aws.String("true"),
 						label.TraefikFrontendBrowserXSSFilter:        aws.String("true"),
 						label.TraefikFrontendIsDevelopment:           aws.String("true"),
+
+						label.TraefikFrontendCorrelationHeaderName:   aws.String("foo"),
+						label.TraefikFrontendCorrelationIDType:       aws.String("Custom"),
+						label.TraefikFrontendCorrelationCustomString: aws.String("bar"),
 
 						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageStatus:  aws.String("404"),
 						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageBackend: aws.String("foobar"),
@@ -930,6 +946,10 @@ func TestBuildConfiguration(t *testing.T) {
 							PublicKey:               "foo",
 							ReferrerPolicy:          "foo",
 							IsDevelopment:           true,
+
+							CorrelationHeaderName:   "foo",
+							CorrelationIDType:       "Custom",
+							CorrelationCustomString: "bar",
 						},
 						Errors: map[string]*types.ErrorPage{
 							"bar": {

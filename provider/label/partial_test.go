@@ -624,6 +624,9 @@ func TestGetHeaders(t *testing.T) {
 				TraefikFrontendContentTypeNosniff:      "true",
 				TraefikFrontendBrowserXSSFilter:        "true",
 				TraefikFrontendIsDevelopment:           "true",
+				TraefikFrontendCorrelationHeaderName:   "foo",
+				TraefikFrontendCorrelationIDType:       "Custom",
+				TraefikFrontendCorrelationCustomString: "bar",
 			},
 			expected: &types.Headers{
 				CustomRequestHeaders: map[string]string{
@@ -657,6 +660,9 @@ func TestGetHeaders(t *testing.T) {
 				ContentTypeNosniff:      true,
 				BrowserXSSFilter:        true,
 				IsDevelopment:           true,
+				CorrelationHeaderName:   "foo",
+				CorrelationIDType:       "Custom",
+				CorrelationCustomString: "bar",
 			},
 		},
 	}

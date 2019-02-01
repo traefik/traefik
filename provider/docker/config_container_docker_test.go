@@ -541,6 +541,10 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						label.TraefikFrontendBrowserXSSFilter:        "true",
 						label.TraefikFrontendIsDevelopment:           "true",
 
+						label.TraefikFrontendCorrelationHeaderName:   "foo",
+						label.TraefikFrontendCorrelationIDType:       "Custom",
+						label.TraefikFrontendCorrelationCustomString: "bar",
+
 						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageStatus:  "404",
 						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageBackend: "foobar",
 						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageQuery:   "foo_query",
@@ -656,6 +660,10 @@ func TestDockerBuildConfiguration(t *testing.T) {
 						PublicKey:               "foo",
 						ReferrerPolicy:          "foo",
 						IsDevelopment:           true,
+
+						CorrelationHeaderName:   "foo",
+						CorrelationIDType:       "Custom",
+						CorrelationCustomString: "bar",
 					},
 					Errors: map[string]*types.ErrorPage{
 						"foo": {

@@ -323,9 +323,13 @@ func GetHeaders(labels map[string]string) *types.Headers {
 		PublicKey:               GetStringValue(labels, TraefikFrontendPublicKey, ""),
 		ReferrerPolicy:          GetStringValue(labels, TraefikFrontendReferrerPolicy, ""),
 		CustomBrowserXSSValue:   GetStringValue(labels, TraefikFrontendCustomBrowserXSSValue, ""),
+
+		CorrelationHeaderName:   GetStringValue(labels, TraefikFrontendCorrelationHeaderName, ""),
+		CorrelationIDType:       GetStringValue(labels, TraefikFrontendCorrelationIDType, ""),
+		CorrelationCustomString: GetStringValue(labels, TraefikFrontendCorrelationCustomString, ""),
 	}
 
-	if !headers.HasSecureHeadersDefined() && !headers.HasCustomHeadersDefined() {
+	if !headers.HasSecureHeadersDefined() && !headers.HasCustomHeadersDefined() && !headers.HasCorrelationHeadersDefined() {
 		return nil
 	}
 
