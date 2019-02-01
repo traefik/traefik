@@ -11,7 +11,7 @@ import (
 	"github.com/urfave/negroni"
 )
 
-// IPWhiteLister is a middleware that provides Checks of the Requesting IP against a set of Whitelists
+// IPBlackLister is a middleware that provides Checks of the Requesting IP against a set of Whitelists
 type IPBlackLister struct {
 	handler     negroni.Handler
 	blackLister *whitelist.IP
