@@ -25,7 +25,7 @@ describe('BarChartComponent', () => {
   });
 
   it('should initially go to loading state', () => {
-    expect(component.loading).toBeTruthy()
+    expect(component.loading).toBeTruthy();
   });
 
 });
