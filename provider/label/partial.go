@@ -37,6 +37,19 @@ func GetWhiteList(labels map[string]string) *types.WhiteList {
 	return nil
 }
 
+// GetBlackList Create white list from labels
+func GetBlackList(labels map[string]string) *types.BlackList {
+	ranges := GetSliceStringValue(labels, TraefikFrontendBlackListSourceRange)
+	if len(ranges) > 0 {
+		return &types.BlackList{
+			SourceRange:      ranges,
+			UseXForwardedFor: GetBoolValue(labels, TraefikFrontendBlackListUseXForwardedFor, false),
+		}
+	}
+
+	return nil
+}
+
 // GetRedirect Create redirect from labels
 func GetRedirect(labels map[string]string) *types.Redirect {
 	permanent := GetBoolValue(labels, TraefikFrontendRedirectPermanent, false)

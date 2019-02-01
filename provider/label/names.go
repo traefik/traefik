@@ -115,6 +115,9 @@ const (
 	SuffixFrontendWhiteList                                     = "frontend.whiteList."
 	SuffixFrontendWhiteListSourceRange                          = SuffixFrontendWhiteList + "sourceRange"
 	SuffixFrontendWhiteListUseXForwardedFor                     = SuffixFrontendWhiteList + "useXForwardedFor"
+	SuffixFrontendBlackList                                     = "frontend.blackList."
+	SuffixFrontendBlackListSourceRange                          = SuffixFrontendBlackList + "sourceRange"
+	SuffixFrontendBlackListUseXForwardedFor                     = SuffixFrontendBlackList + "useXForwardedFor"
 	TraefikDomain                                               = Prefix + SuffixDomain
 	TraefikEnable                                               = Prefix + SuffixEnable
 	TraefikPort                                                 = Prefix + SuffixPort
@@ -203,6 +206,8 @@ const (
 	TraefikFrontendWhitelistSourceRange                         = Prefix + SuffixFrontendWhitelistSourceRange // Deprecated
 	TraefikFrontendWhiteListSourceRange                         = Prefix + SuffixFrontendWhiteListSourceRange
 	TraefikFrontendWhiteListUseXForwardedFor                    = Prefix + SuffixFrontendWhiteListUseXForwardedFor
+	TraefikFrontendBlackListSourceRange                         = Prefix + SuffixFrontendBlackListSourceRange
+	TraefikFrontendBlackListUseXForwardedFor                    = Prefix + SuffixFrontendBlackListUseXForwardedFor
 	TraefikFrontendRequestHeaders                               = Prefix + SuffixFrontendRequestHeaders
 	TraefikFrontendResponseHeaders                              = Prefix + SuffixFrontendResponseHeaders
 	TraefikFrontendAllowedHosts                                 = Prefix + SuffixFrontendHeadersAllowedHosts

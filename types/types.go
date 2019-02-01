@@ -74,6 +74,12 @@ type WhiteList struct {
 	UseXForwardedFor bool     `json:"useXForwardedFor,omitempty" export:"true"`
 }
 
+// BlackList contains white list configuration.
+type BlackList struct {
+	SourceRange      []string `json:"sourceRange,omitempty"`
+	UseXForwardedFor bool     `json:"useXForwardedFor,omitempty" export:"true"`
+}
+
 // HealthCheck holds HealthCheck configuration
 type HealthCheck struct {
 	Scheme   string            `json:"scheme,omitempty"`
@@ -194,6 +200,7 @@ type Frontend struct {
 	BasicAuth            []string              `json:"basicAuth"`                      // Deprecated
 	WhitelistSourceRange []string              `json:"whitelistSourceRange,omitempty"` // Deprecated
 	WhiteList            *WhiteList            `json:"whiteList,omitempty"`
+	BlackList            *BlackList            `json:"blackList,omitempty"`
 	Headers              *Headers              `json:"headers,omitempty"`
 	Errors               map[string]*ErrorPage `json:"errors,omitempty"`
 	RateLimit            *RateLimit            `json:"ratelimit,omitempty"`

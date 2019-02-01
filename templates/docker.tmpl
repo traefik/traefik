@@ -173,6 +173,15 @@
       useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
     {{end}}
 
+    {{ $blacklist := getBlackList $container.SegmentLabels }}
+    {{if $blacklist }}
+    [frontends."frontend-{{ $frontendName }}".blackList]
+      sourceRange = [{{range $blacklist.SourceRange }}
+        "{{.}}",
+        {{end}}]
+      useXForwardedFor = {{ $blacklist.UseXForwardedFor }}
+    {{end}}
+
     {{ $redirect := getRedirect $container.SegmentLabels }}
     {{if $redirect }}
     [frontends."frontend-{{ $frontendName }}".redirect]

@@ -27,6 +27,18 @@ func NewInternalRouterAggregator(globalConfiguration configuration.GlobalConfigu
 		}
 	}
 
+	if globalConfiguration.EntryPoints[entryPointName].BlackList != nil {
+		ipBlacklistMiddleware, err := middlewares.NewIPBlackLister(
+			globalConfiguration.EntryPoints[entryPointName].BlackList.SourceRange,
+			globalConfiguration.EntryPoints[entryPointName].BlackList.UseXForwardedFor)
+		if err != nil {
+			log.Fatalf("Error creating blacklist middleware: %s", err)
+		}
+		if ipBlacklistMiddleware != nil {
+			serverMiddlewares = append(serverMiddlewares, ipBlacklistMiddleware)
+		}
+	}
+
 	if globalConfiguration.EntryPoints[entryPointName].Auth != nil {
 		authMiddleware, err := mauth.NewAuthenticator(globalConfiguration.EntryPoints[entryPointName].Auth, nil)
 		if err != nil {

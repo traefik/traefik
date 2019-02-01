@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestIsAuthorized(t *testing.T) {
+func TestContainsReq(t *testing.T) {
 	testCases := []struct {
 		desc                string
 		whiteList           []string
@@ -103,7 +103,7 @@ func TestIsAuthorized(t *testing.T) {
 			whiteLister, err := NewIP(test.whiteList, false, test.allowXForwardedFor)
 			require.NoError(t, err)
 
-			err = whiteLister.IsAuthorized(req)
+			err = whiteLister.ContainsReq(req)
 			if test.authorized {
 				require.NoError(t, err)
 			} else {

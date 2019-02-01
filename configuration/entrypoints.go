@@ -17,6 +17,7 @@ type EntryPoint struct {
 	Auth                 *types.Auth       `export:"true"`
 	WhitelistSourceRange []string          // Deprecated
 	WhiteList            *types.WhiteList  `export:"true"`
+	BlackList            *types.BlackList  `export:"true"`
 	Compress             bool              `export:"true"`
 	ProxyProtocol        *ProxyProtocol    `export:"true"`
 	ForwardedHeaders     *ForwardedHeaders `export:"true"`
@@ -84,6 +85,7 @@ func (ep *EntryPoints) Set(value string) error {
 		Compress:             compress,
 		WhitelistSourceRange: whiteListSourceRange,
 		WhiteList:            makeWhiteList(result),
+		BlackList:            makeBlackList(result),
 		ProxyProtocol:        makeEntryPointProxyProtocol(result),
 		ForwardedHeaders:     makeEntryPointForwardedHeaders(result),
 	}
@@ -100,6 +102,17 @@ func makeWhiteList(result map[string]string) *types.WhiteList {
 		}
 	}
 	return wl
+}
+
+func makeBlackList(result map[string]string) *types.BlackList {
+	var bl *types.BlackList
+	if rawRange, ok := result["blacklist_sourcerange"]; ok {
+		bl = &types.BlackList{
+			SourceRange:      strings.Split(rawRange, ","),
+			UseXForwardedFor: toBool(result, "blacklist_usexforwardedfor"),
+		}
+	}
+	return bl
 }
 
 func makeEntryPointAuth(result map[string]string) *types.Auth {

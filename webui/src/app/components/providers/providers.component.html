@@ -295,6 +295,34 @@
                       </div>
                     </div>
 
+                    <div *ngIf="p.blackList">
+                      <hr/>
+                      <div class="columns is-gapless is-multiline is-mobile section-line">
+                        <div class="column is-half">
+                          <h2 class="section-line-header">Blacklist</h2>
+                        </div>
+                        <div class="column is-half">
+                          <div class="field">
+                            <div class="control">
+                              <div class="tags has-addons">
+                                <span class="tag is-light">useXForwardedFor</span>
+                                <span class="tag is-info">{{ !!p.blackList.useXForwardedFor }}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="column">
+                          <div class="field padding-5-10">
+                            <div class="control">
+                              <div class="tags">
+                                <span class="tag is-info" *ngFor="let blRange of p.blackList.sourceRange">{{ blRange }}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
                     <div *ngIf="p.headers">
                       <hr/>
                       <div class="section-line">

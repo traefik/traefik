@@ -68,6 +68,23 @@ func (s *Server) buildMiddlewares(frontendName string, frontend *types.Frontend,
 		middle = append(middle, handler)
 	}
 
+	// Blacklist
+	ipBlacklistMiddleware, err := buildIPBlackLister(frontend.BlackList)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("error creating IP Blacklister: %s", err)
+	}
+	if ipBlacklistMiddleware != nil {
+		if frontend.BlackList != nil {
+			log.Debugf("Configured IP Blacklists: %v", frontend.BlackList.SourceRange)
+		}
+
+		handler := s.tracingMiddleware.NewNegroniHandlerWrapper(
+			"IP blacklist",
+			s.wrapNegroniHandlerWithAccessLog(ipBlacklistMiddleware, fmt.Sprintf("ipblacklister for %s", frontendName)),
+			false)
+		middle = append(middle, handler)
+	}
+
 	// Redirect
 	if frontend.Redirect != nil && entryPointName != frontend.Redirect.EntryPoint {
 		rewrite, err := s.buildRedirectHandler(entryPointName, frontend.Redirect)
@@ -193,6 +210,15 @@ func (s *Server) buildServerEntryPointMiddlewares(serverEntryPointName string, s
 		serverMiddlewares = append(serverMiddlewares, s.wrapNegroniHandlerWithAccessLog(ipWhitelistMiddleware, fmt.Sprintf("ipwhitelister for entrypoint %s", serverEntryPointName)))
 	}
 
+	ipBlacklistMiddleware, err := buildIPBlackLister(
+		s.entryPoints[serverEntryPointName].Configuration.BlackList)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create ip blacklist middleware: %v", err)
+	}
+	if ipBlacklistMiddleware != nil {
+		serverMiddlewares = append(serverMiddlewares, s.wrapNegroniHandlerWithAccessLog(ipBlacklistMiddleware, fmt.Sprintf("ipblacklister for entrypoint %s", serverEntryPointName)))
+	}
+
 	// RequestHost Cannonizer
 	serverMiddlewares = append(serverMiddlewares, &middlewares.RequestHost{})
 
@@ -311,6 +337,14 @@ func buildIPWhiteLister(whiteList *types.WhiteList, wlRange []string) (*middlewa
 		return middlewares.NewIPWhiteLister(whiteList.SourceRange, whiteList.UseXForwardedFor)
 	} else if len(wlRange) > 0 {
 		return middlewares.NewIPWhiteLister(wlRange, false)
+	}
+	return nil, nil
+}
+
+func buildIPBlackLister(blackList *types.BlackList) (*middlewares.IPBlackLister, error) {
+	if blackList != nil &&
+		len(blackList.SourceRange) > 0 {
+		return middlewares.NewIPBlackLister(blackList.SourceRange, blackList.UseXForwardedFor)
 	}
 	return nil, nil
 }

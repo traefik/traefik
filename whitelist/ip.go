@@ -6,6 +6,8 @@ import (
 	"net"
 	"net/http"
 	"strings"
+
+	"github.com/containous/traefik/log"
 )
 
 const (
@@ -49,8 +51,8 @@ func NewIP(whiteList []string, insecure bool, useXForwardedFor bool) (*IP, error
 	return &ip, nil
 }
 
-// IsAuthorized checks if provided request is authorized by the white list
-func (ip *IP) IsAuthorized(req *http.Request) error {
+// ContainsReq checks if provided request is authorized by the white list
+func (ip *IP) ContainsReq(req *http.Request) error {
 	if ip.insecure {
 		return nil
 	}
@@ -143,4 +145,14 @@ func parseHost(addr string) string {
 		return addr
 	}
 	return host
+}
+
+func Reject(w http.ResponseWriter) {
+	statusCode := http.StatusForbidden
+
+	w.WriteHeader(statusCode)
+	_, err := w.Write([]byte(http.StatusText(statusCode)))
+	if err != nil {
+		log.Error(err)
+	}
 }

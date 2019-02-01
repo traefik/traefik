@@ -309,6 +309,15 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
       useXForwardedFor = {{ $whitelist.UseXForwardedFor }}
     {{end}}
 
+    {{ $blacklist := getBlackList $service.TraefikLabels }}
+    {{if $blacklist }}
+    [frontends."frontend-{{ $service.ServiceName }}".blackList]
+      sourceRange = [{{range $blacklist.SourceRange }}
+        "{{.}}",
+        {{end}}]
+      useXForwardedFor = {{ $blacklist.UseXForwardedFor }}
+    {{end}}
+
     {{ $redirect := getRedirect $service.TraefikLabels }}
     {{if $redirect }}
     [frontends."frontend-{{ $service.ServiceName }}".redirect]

@@ -48,7 +48,7 @@ func (h *headerRewriter) Rewrite(req *http.Request) {
 		return
 	}
 
-	err := h.ips.IsAuthorized(req)
+	err := h.ips.ContainsReq(req)
 	if err != nil {
 		log.Debug(err)
 		// Remove additional X-Forwarded Headers which are used by the forward authentication

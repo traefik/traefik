@@ -57,6 +57,7 @@ func (p *Provider) buildConfigurationV2(containersInspected []dockerData) *types
 		"getRateLimit":         label.GetRateLimit,
 		"getHeaders":           label.GetHeaders,
 		"getWhiteList":         label.GetWhiteList,
+		"getBlackList":         label.GetBlackList,
 	}
 
 	// filter containers
