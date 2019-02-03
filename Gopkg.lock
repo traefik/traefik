@@ -301,7 +301,7 @@
 [[projects]]
   branch = "master"
   digest = "1:97b8422f271b83e760ce1279715d0f5d124f267459b56806306a64a0f82721c9"
-  name = "github.com/cenk/backoff"
+  name = "github.com/cenkalti/backoff"
   packages = ["."]
   pruneopts = "NUT"
   revision = "2ea60e5f094469f9e65adb9cd103795b73ae743e"
@@ -2278,7 +2278,7 @@
     "github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface",
     "github.com/aws/aws-sdk-go/service/ec2",
     "github.com/aws/aws-sdk-go/service/ecs",
-    "github.com/cenk/backoff",
+    "github.com/cenkalti/backoff",
     "github.com/containous/alice",
     "github.com/containous/flaeg",
     "github.com/containous/flaeg/parse",
@@ -2364,6 +2364,7 @@
     "github.com/vulcand/oxy/ratelimit",
     "github.com/vulcand/oxy/roundrobin",
     "github.com/vulcand/oxy/utils",
+    "github.com/vulcand/predicate",
     "github.com/xenolf/lego/certcrypto",
     "github.com/xenolf/lego/certificate",
     "github.com/xenolf/lego/challenge",

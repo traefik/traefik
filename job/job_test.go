@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cenk/backoff"
+	"github.com/cenkalti/backoff"
 )
 
 func TestJobBackOff(t *testing.T) {

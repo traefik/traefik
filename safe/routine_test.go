@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cenk/backoff"
+	"github.com/cenkalti/backoff"
 )
 
 func TestNewPoolContext(t *testing.T) {

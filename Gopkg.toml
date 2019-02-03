@@ -55,7 +55,7 @@
 
 [[constraint]]
   branch = "master"
-  name = "github.com/cenk/backoff"
+  name = "github.com/cenkalti/backoff"
 
 [[constraint]]
   name = "github.com/containous/flaeg"
