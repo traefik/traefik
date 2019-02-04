@@ -11,13 +11,15 @@ You need to run the `binary` target. This will create binaries for Linux platfor
 
 ```bash
 $ make binary
-docker build -t "traefik-dev:no-more-godep-ever" -f build.Dockerfile .
+
+$ docker build -t "traefik-dev:no-more-godep-ever" -f build.Dockerfile .
 Sending build context to Docker daemon 295.3 MB
 Step 0 : FROM golang:1.11-alpine
  ---> 8c6473912976
 Step 1 : RUN go get github.com/golang/dep/cmd/dep
 [...]
-docker run --rm  -v "/var/run/docker.sock:/var/run/docker.sock" -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -v "/home/user/go/src/github.com/containous/traefik/"dist":/go/src/github.com/containous/traefik/"dist"" "traefik-dev:no-more-godep-ever" ./script/make.sh generate binary
+
+$ docker run --rm  -v "/var/run/docker.sock:/var/run/docker.sock" -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -v "/home/user/go/src/github.com/containous/traefik/"dist":/go/src/github.com/containous/traefik/"dist"" "traefik-dev:no-more-godep-ever" ./script/make.sh generate binary
 ---> Making bundle: generate (in .)
 removed 'gen.go'
 
