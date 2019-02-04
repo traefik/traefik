@@ -8,7 +8,7 @@ import (
 
 	"github.com/abronan/valkeyrie"
 	"github.com/abronan/valkeyrie/store"
-	"github.com/cenk/backoff"
+	"github.com/cenkalti/backoff"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/old/log"
 	"github.com/containous/traefik/old/provider"

@@ -54,8 +54,8 @@
   version = "1.13.11"
 
 [[constraint]]
-  branch = "master"
-  name = "github.com/cenk/backoff"
+  name = "github.com/cenkalti/backoff"
+  version = "2.1.1"
 
 [[constraint]]
   name = "github.com/containous/flaeg"

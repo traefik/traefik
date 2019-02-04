@@ -6,7 +6,7 @@ import (
 	"runtime/debug"
 	"sync"
 
-	"github.com/cenk/backoff"
+	"github.com/cenkalti/backoff"
 	"github.com/containous/traefik/log"
 )
 

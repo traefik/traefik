@@ -3,7 +3,7 @@ package job
 import (
 	"time"
 
-	"github.com/cenk/backoff"
+	"github.com/cenkalti/backoff"
 )
 
 var (

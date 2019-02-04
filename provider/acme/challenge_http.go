@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cenk/backoff"
+	"github.com/cenkalti/backoff"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"

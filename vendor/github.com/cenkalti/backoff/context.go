@@ -1,9 +1,8 @@
 package backoff
 
 import (
+	"context"
 	"time"
-
-	"golang.org/x/net/context"
 )
 
 // BackOffContext is a backoff policy that stops retrying after the context
@@ -52,9 +51,13 @@ func (b *backOffContext) Context() context.Context {
 
 func (b *backOffContext) NextBackOff() time.Duration {
 	select {
-	case <-b.Context().Done():
+	case <-b.ctx.Done():
 		return Stop
 	default:
-		return b.BackOff.NextBackOff()
 	}
+	next := b.BackOff.NextBackOff()
+	if deadline, ok := b.ctx.Deadline(); ok && deadline.Sub(time.Now()) < next {
+		return Stop
+	}
+	return next
 }

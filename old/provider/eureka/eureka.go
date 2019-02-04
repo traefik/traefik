@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/ArthurHlt/go-eureka-client/eureka"
-	"github.com/cenk/backoff"
+	"github.com/cenkalti/backoff"
 	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/old/log"

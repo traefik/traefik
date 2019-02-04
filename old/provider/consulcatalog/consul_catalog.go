@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/BurntSushi/ty/fun"
-	"github.com/cenk/backoff"
+	"github.com/cenkalti/backoff"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/old/log"
 	"github.com/containous/traefik/old/provider"
