@@ -4,7 +4,7 @@ import { Pipe, PipeTransform } from '@angular/core';
  * HumanReadableFilterPipe converts a time period in nanoseconds to a human-readable
  * string.
  */
-@Pipe({name: 'humanreadable'})
+@Pipe({ name: 'humanreadable' })
 export class HumanReadableFilterPipe implements PipeTransform {
   transform(value): any {
     let result = '';

@@ -18,7 +18,7 @@ export class ProvidersComponent implements OnInit, OnDestroy {
   tab: string;
   keyword: string;
 
-  constructor(private apiService: ApiService) { }
+  constructor(private apiService: ApiService) {}
 
   ngOnInit() {
     this.maxItem = 100;

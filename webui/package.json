@@ -13,6 +13,7 @@
     "build": "ng build --prod --no-delete-output-path --output-path ../static/",
     "test": "ng test",
     "lint": "ng lint",
+    "format": "yarn prettier 'src/**/*.{js,ts,html}' '*.md'",
     "e2e": "ng e2e"
   },
   "dependencies": {
@@ -34,9 +35,9 @@
     "date-fns": "^1.29.0",
     "lodash": "^4.17.5",
     "rxjs": "^6.4.0",
+    "rxjs-compat": "^6.0.0-rc.0",
     "tslib": "^1.9.0",
-    "zone.js": "^0.8.19",
-    "rxjs-compat": "^6.0.0-rc.0"
+    "zone.js": "^0.8.19"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "~0.13.0",
@@ -54,9 +55,11 @@
     "karma-coverage-istanbul-reporter": "^2.0.4",
     "karma-jasmine": "~2.0.1",
     "karma-jasmine-html-reporter": "^1.4.0",
+    "prettier": "^1.16.4",
     "protractor": "~5.4.2",
     "ts-node": "~8.0.2",
     "tslint": "~5.12.1",
+    "tslint-config-prettier": "^1.18.0",
     "typescript": "~3.2.4"
   }
 }

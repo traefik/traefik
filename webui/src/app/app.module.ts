@@ -38,14 +38,11 @@ import { WindowService } from './services/window.service';
     HttpClientModule,
     FormsModule,
     RouterModule.forRoot([
-      {path: '', component: ProvidersComponent, pathMatch: 'full'},
-      {path: 'status', component: HealthComponent}
+      { path: '', component: ProvidersComponent, pathMatch: 'full' },
+      { path: 'status', component: HealthComponent }
     ])
   ],
-  providers: [
-    ApiService,
-    WindowService
-  ],
+  providers: [ApiService, WindowService],
   bootstrap: [AppComponent]
 })
-export class AppModule { }
+export class AppModule {}

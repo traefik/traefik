@@ -8,10 +8,12 @@ export class WindowService {
 
   constructor(private eventManager: EventManager) {
     this.resize = new Subject();
-    this.eventManager.addGlobalEventListener('window', 'resize', this.onResize);
-  }
-
-  onResize = (event: UIEvent) => {
-    this.resize.next(event.target);
+    this.eventManager.addGlobalEventListener(
+      'window',
+      'resize',
+      (event: UIEvent) => {
+        this.resize.next(event.target);
+      }
+    );
   }
 }
