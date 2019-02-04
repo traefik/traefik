@@ -146,6 +146,7 @@ func TestSetEffectiveConfigurationTracing(t *testing.T) {
 					SamplingType:       "const",
 					SamplingParam:      1.0,
 					LocalAgentHostPort: "127.0.0.1:6831",
+					TraceContextHeaderName: "uber-trace-id",
 				},
 				Zipkin: nil,
 			},
@@ -159,6 +160,7 @@ func TestSetEffectiveConfigurationTracing(t *testing.T) {
 					SamplingType:       "const",
 					SamplingParam:      1.0,
 					LocalAgentHostPort: "127.0.0.1:6831",
+					TraceContextHeaderName: "uber-trace-id",
 				},
 			},
 			expected: &tracing.Tracing{
@@ -181,6 +183,7 @@ func TestSetEffectiveConfigurationTracing(t *testing.T) {
 					SamplingType:       "const",
 					SamplingParam:      1.0,
 					LocalAgentHostPort: "127.0.0.1:6831",
+					TraceContextHeaderName: "uber-trace-id",
 				},
 				Zipkin: &zipkin.Config{
 					HTTPEndpoint: "http://powpow:9411/api/v1/spans",

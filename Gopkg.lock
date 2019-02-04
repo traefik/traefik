@@ -1291,17 +1291,20 @@
   packages = [
     ".",
     "config",
+    "internal/baggage",
+    "internal/baggage/remote",
     "internal/spanlog",
     "log",
     "rpcmetrics",
     "thrift-gen/agent",
+    "thrift-gen/baggage",
     "thrift-gen/jaeger",
     "thrift-gen/sampling",
     "thrift-gen/zipkincore",
     "utils"
   ]
-  revision = "3e3870040def0ebdaf65a003863fa64f5cb26139"
-  version = "v2.9.0"
+  revision = "f54d8ece0a66e3db6a9247e946eb1e2bd79029ea"
+  version = "v2.11.1"
 
 [[projects]]
   name = "github.com/uber/jaeger-lib"
@@ -1880,6 +1883,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "781857167b93ec784d40c7c093a46c4d817f2d47b0dbc1f08fe3ec8ffc562cf9"
+  inputs-digest = "65efc1e4349b760e3c74e117d297e59e6005e769fdfe1ecaa31531b56a227e7f"
   solver-name = "gps-cdcl"
   solver-version = 1

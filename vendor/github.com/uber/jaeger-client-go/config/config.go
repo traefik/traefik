@@ -1,22 +1,16 @@
-// Copyright (c) 2016 Uber Technologies, Inc.
-
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
+// Copyright (c) 2017 Uber Technologies, Inc.
 //
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package config
 
@@ -30,6 +24,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 
 	"github.com/uber/jaeger-client-go"
+	"github.com/uber/jaeger-client-go/internal/baggage/remote"
 	"github.com/uber/jaeger-client-go/rpcmetrics"
 )
 
@@ -37,10 +32,12 @@ const defaultSamplingProbability = 0.001
 
 // Configuration configures and creates Jaeger Tracer
 type Configuration struct {
-	Disabled   bool            `yaml:"disabled"`
-	Sampler    *SamplerConfig  `yaml:"sampler"`
-	Reporter   *ReporterConfig `yaml:"reporter"`
-	RPCMetrics bool            `yaml:"rpc_metrics"`
+	Disabled            bool                       `yaml:"disabled"`
+	Sampler             *SamplerConfig             `yaml:"sampler"`
+	Reporter            *ReporterConfig            `yaml:"reporter"`
+	Headers             *jaeger.HeadersConfig      `yaml:"headers"`
+	RPCMetrics          bool                       `yaml:"rpc_metrics"`
+	BaggageRestrictions *BaggageRestrictionsConfig `yaml:"baggage_restrictions"`
 }
 
 // SamplerConfig allows initializing a non-default sampler.  All fields are optional.
@@ -89,6 +86,23 @@ type ReporterConfig struct {
 
 	// LocalAgentHostPort instructs reporter to send spans to jaeger-agent at this address
 	LocalAgentHostPort string `yaml:"localAgentHostPort"`
+}
+
+// BaggageRestrictionsConfig configures the baggage restrictions manager which can be used to whitelist
+// certain baggage keys. All fields are optional.
+type BaggageRestrictionsConfig struct {
+	// DenyBaggageOnInitializationFailure controls the startup failure mode of the baggage restriction
+	// manager. If true, the manager will not allow any baggage to be written until baggage restrictions have
+	// been retrieved from jaeger-agent. If false, the manager wil allow any baggage to be written until baggage
+	// restrictions have been retrieved from jaeger-agent.
+	DenyBaggageOnInitializationFailure bool `yaml:"denyBaggageOnInitializationFailure"`
+
+	// HostPort is the hostPort of jaeger-agent's baggage restrictions server
+	HostPort string `yaml:"hostPort"`
+
+	// RefreshInterval controls how often the baggage restriction manager will poll
+	// jaeger-agent for the most recent baggage restrictions.
+	RefreshInterval time.Duration `yaml:"refreshInterval"`
 }
 
 type nullCloser struct{}
@@ -144,6 +158,8 @@ func (c Configuration) New(
 	tracerOptions := []jaeger.TracerOption{
 		jaeger.TracerOptions.Metrics(tracerMetrics),
 		jaeger.TracerOptions.Logger(opts.logger),
+		jaeger.TracerOptions.CustomHeaderKeys(c.Headers),
+		jaeger.TracerOptions.Gen128Bit(opts.gen128Bit),
 		jaeger.TracerOptions.ZipkinSharedRPCSpan(opts.zipkinSharedRPCSpan),
 	}
 
@@ -157,6 +173,20 @@ func (c Configuration) New(
 
 	for _, cobs := range opts.contribObservers {
 		tracerOptions = append(tracerOptions, jaeger.TracerOptions.ContribObserver(cobs))
+	}
+
+	if c.BaggageRestrictions != nil {
+		mgr := remote.NewRestrictionManager(
+			serviceName,
+			remote.Options.Metrics(tracerMetrics),
+			remote.Options.Logger(opts.logger),
+			remote.Options.HostPort(c.BaggageRestrictions.HostPort),
+			remote.Options.RefreshInterval(c.BaggageRestrictions.RefreshInterval),
+			remote.Options.DenyBaggageOnInitializationFailure(
+				c.BaggageRestrictions.DenyBaggageOnInitializationFailure,
+			),
+		)
+		tracerOptions = append(tracerOptions, jaeger.TracerOptions.BaggageRestrictionManager(mgr))
 	}
 
 	tracer, closer := jaeger.NewTracer(
@@ -181,7 +211,7 @@ func (c Configuration) InitGlobalTracer(
 	if err != nil {
 		return nil, err
 	}
-	opentracing.InitGlobalTracer(tracer)
+	opentracing.SetGlobalTracer(tracer)
 	return closer, nil
 }
 
