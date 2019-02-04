@@ -224,10 +224,10 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		ServiceName:   "traefik",
 		SpanNameLimit: 0,
 		Jaeger: &jaeger.Config{
-			SamplingServerURL:  "http://localhost:5778/sampling",
-			SamplingType:       "const",
-			SamplingParam:      1.0,
-			LocalAgentHostPort: "127.0.0.1:6831",
+			SamplingServerURL:      "http://localhost:5778/sampling",
+			SamplingType:           "const",
+			SamplingParam:          1.0,
+			LocalAgentHostPort:     "127.0.0.1:6831",
 			TraceContextHeaderName: "uber-trace-id",
 		},
 		Zipkin: &zipkin.Config{
