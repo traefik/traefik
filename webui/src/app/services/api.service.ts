@@ -1,14 +1,11 @@
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import 'rxjs/add/observable/empty';
 import 'rxjs/add/observable/of';
 import 'rxjs/add/operator/catch';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/retry';
 import { Observable } from 'rxjs/Observable';
-import { empty } from 'rxjs';
-import {catchError, retry} from "rxjs/internal/operators";
-
+import { EMPTY } from 'rxjs/internal/observable/empty';
 
 export interface ProviderType {
   [provider: string]: {
@@ -32,7 +29,7 @@ export class ApiService {
       .retry(4)
       .catch((err: HttpErrorResponse) => {
         console.error(`[version] returned code ${err.status}, body was: ${err.error}`);
-        return Observable.empty();
+        return EMPTY;
       });
   }
 
@@ -41,7 +38,7 @@ export class ApiService {
       .retry(2)
       .catch((err: HttpErrorResponse) => {
         console.error(`[health] returned code ${err.status}, body was: ${err.error}`);
-        return Observable.empty();
+        return EMPTY;
       });
   }
 
