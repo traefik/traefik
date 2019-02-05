@@ -11,7 +11,10 @@ export class BackendFilterPipe implements PipeTransform {
     }
 
     const keyword = filter.toLowerCase();
-    return items.filter(d => d.id.toLowerCase().includes(keyword)
-      || d.servers.some(r => r.url.toLowerCase().includes(keyword)));
+    return items.filter(
+      d =>
+        d.id.toLowerCase().includes(keyword) ||
+        d.servers.some(r => r.url.toLowerCase().includes(keyword))
+    );
   }
 }

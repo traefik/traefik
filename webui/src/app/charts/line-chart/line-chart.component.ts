@@ -1,4 +1,11 @@
-import { Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  Input,
+  OnChanges,
+  OnInit,
+  SimpleChanges
+} from '@angular/core';
 import {
   axisBottom,
   axisLeft,
@@ -21,7 +28,7 @@ import { WindowService } from '../../services/window.service';
   templateUrl: 'line-chart.component.html'
 })
 export class LineChartComponent implements OnChanges, OnInit {
-  @Input() value: { count: number, date: string };
+  @Input() value: { count: number; date: string };
 
   firstDisplay: boolean;
   dirty: boolean;
@@ -42,14 +49,21 @@ export class LineChartComponent implements OnChanges, OnInit {
   yAxis: any;
   height: number;
   width: number;
-  margin = {top: 40, right: 40, bottom: 60, left: 60};
+  margin = { top: 40, right: 40, bottom: 60, left: 60 };
   loading = true;
 
-  constructor(private elementRef: ElementRef, public windowService: WindowService) { }
+  constructor(
+    private elementRef: ElementRef,
+    public windowService: WindowService
+  ) {}
 
   ngOnInit() {
-    this.lineChartEl = this.elementRef.nativeElement.querySelector('.line-chart');
-    this.loadingEl = this.elementRef.nativeElement.querySelector('.line-chart-loading');
+    this.lineChartEl = this.elementRef.nativeElement.querySelector(
+      '.line-chart'
+    );
+    this.loadingEl = this.elementRef.nativeElement.querySelector(
+      '.line-chart-loading'
+    );
     this.limit = 40;
 
     // related to the Observable.timer(0, 3000) in health component
@@ -77,14 +91,16 @@ export class LineChartComponent implements OnChanges, OnInit {
   render() {
     // When the lineChartEl is not displayed (is-hidden), width and length are equal to 0.
     let elt;
-    if (this.lineChartEl.clientWidth === 0 || this.lineChartEl.clientHeight === 0) {
+    if (
+      this.lineChartEl.clientWidth === 0 ||
+      this.lineChartEl.clientHeight === 0
+    ) {
       elt = this.loadingEl;
     } else {
       elt = this.lineChartEl;
     }
     this.width = elt.clientWidth - this.margin.left - this.margin.right;
     this.height = elt.clientHeight - this.margin.top - this.margin.bottom;
-
 
     const el = this.lineChartEl.querySelector('svg');
     if (el) {
@@ -105,11 +121,16 @@ export class LineChartComponent implements OnChanges, OnInit {
     this.x = scaleTime().range([0, this.width - 10]);
     this.y = scaleLinear().range([this.height, 0]);
 
-    this.x.domain([<any>this.now - (this.limit - 2), <any>this.now - this.duration]);
+    this.x.domain([
+      (this.now as any) - (this.limit - 2),
+      (this.now as any) - this.duration
+    ]);
     this.y.domain([0, max(this.data, (d: any) => d)]);
 
     this.line = line()
-      .x((d: any, i: number) => this.x(<any>this.now - (this.limit - 1 - i) * this.duration))
+      .x((d: any, i: number) =>
+        this.x((this.now as any) - (this.limit - 1 - i) * this.duration)
+      )
       .y((d: any) => this.y(d))
       .curve(curveLinear);
 
@@ -121,16 +142,24 @@ export class LineChartComponent implements OnChanges, OnInit {
       .attr('width', this.width)
       .attr('height', this.height);
 
-    this.xAxis = this.svg.append('g')
+    this.xAxis = this.svg
+      .append('g')
       .attr('class', 'x axis')
       .attr('transform', `translate(0, ${this.height})`)
-      .call(axisBottom(this.x).tickSize(-this.height).ticks(timeSecond, 5).tickFormat(timeFormat('%H:%M:%S')));
+      .call(
+        axisBottom(this.x)
+          .tickSize(-this.height)
+          .ticks(timeSecond, 5)
+          .tickFormat(timeFormat('%H:%M:%S'))
+      );
 
-    this.yAxis = this.svg.append('g')
+    this.yAxis = this.svg
+      .append('g')
       .attr('class', 'y axis')
       .call(axisLeft(this.y).tickSize(-this.width));
 
-    this.path = this.svg.append('g')
+    this.path = this.svg
+      .append('g')
       .attr('clip-path', 'url(#clip)')
       .append('path')
       .data([this.data])
@@ -149,8 +178,12 @@ export class LineChartComponent implements OnChanges, OnInit {
     this.data.push(value * 1000000);
     this.now = new Date();
 
-    this.x.domain([<any>this.now - (this.limit - 2) * this.duration, <any>this.now - this.duration]);
-    const minv = min(this.data, (d: any) => d) > 0 ? min(this.data, (d: any) => d) - 4 : 0;
+    this.x.domain([
+      (this.now as any) - (this.limit - 2) * this.duration,
+      (this.now as any) - this.duration
+    ]);
+    const minv =
+      min(this.data, (d: any) => d) > 0 ? min(this.data, (d: any) => d) - 4 : 0;
     const maxv = max(this.data, (d: any) => d) + 4;
     this.y.domain([minv, maxv]);
 
@@ -158,7 +191,12 @@ export class LineChartComponent implements OnChanges, OnInit {
       .transition()
       .duration(this.firstDisplay || this.dirty ? 0 : this.duration)
       .ease(easeLinear)
-      .call(axisBottom(this.x).tickSize(-this.height).ticks(timeSecond, 5).tickFormat(timeFormat('%H:%M:%S')));
+      .call(
+        axisBottom(this.x)
+          .tickSize(-this.height)
+          .ticks(timeSecond, 5)
+          .tickFormat(timeFormat('%H:%M:%S'))
+      );
 
     this.xAxis
       .transition()
@@ -183,7 +221,12 @@ export class LineChartComponent implements OnChanges, OnInit {
       .transition()
       .duration(this.duration)
       .ease(easeLinear)
-      .attr('transform', `translate(${this.x(<any>this.now - (this.limit - 1) * this.duration)})`);
+      .attr(
+        'transform',
+        `translate(${this.x(
+          (this.now as any) - (this.limit - 1) * this.duration
+        )})`
+      );
 
     this.firstDisplay = false;
     this.dirty = false;

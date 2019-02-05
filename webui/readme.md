@@ -5,6 +5,7 @@ Access to Traefik Web UI, ex: http://localhost:8080
 ## Interface
 
 Traefik Web UI provide 2 types of informations:
+
 - Providers with their backends and frontends information.
 - Health of the web server.
 
@@ -27,9 +28,11 @@ make generate-webui  # Generate static contents in `traefik/static/` folder.
 - Go to the directory `webui`
 
 - To install dependencies, execute the following commands:
+
   - `yarn install`
 
 - Build static Web UI, execute the following command:
+
   - `yarn run build`
 
 - Static contents are build in the directory `static`
@@ -43,7 +46,6 @@ make generate-webui  # Generate static contents in `traefik/static/` folder.
   - add a hash in the file names to prevent browser cache problems
   - all images will be optimized at build
   - bundle JavaScript in one file
-
 
 ## How to edit (only for frontends developer)
 

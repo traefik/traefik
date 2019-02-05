@@ -1,7 +1,7 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { BarChartComponent } from './bar-chart.component';
 import { WindowService } from '../../services/window.service';
+import { BarChartComponent } from './bar-chart.component';
 
 describe('BarChartComponent', () => {
   let component: BarChartComponent;
@@ -9,10 +9,9 @@ describe('BarChartComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ BarChartComponent ],
-      providers: [{provide: WindowService, useInstance: {}}]
-    })
-    .compileComponents();
+      declarations: [BarChartComponent],
+      providers: [{ provide: WindowService, useInstance: {} }]
+    }).compileComponents();
   }));
 
   beforeEach(() => {
@@ -27,5 +26,4 @@ describe('BarChartComponent', () => {
   it('should initially go to loading state', () => {
     expect(component.loading).toBeTruthy();
   });
-
 });
