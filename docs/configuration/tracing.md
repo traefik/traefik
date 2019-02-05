@@ -58,6 +58,13 @@ Traefik supports three tracing backends: Jaeger, Zipkin and DataDog.
     # Default: "127.0.0.1:6831"
     #
     localAgentHostPort = "127.0.0.1:6831"
+    
+    # Trace Context Header Name is the http header name used to propagate tracing context.
+    # This must be in lower-case to avoid mismatches when decoding incoming headers.
+    #
+    # Default: "uber-trace-id"
+    #
+    traceContextHeaderName = "uber-trace-id"
 ```
 
 !!! warning

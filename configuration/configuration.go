@@ -34,6 +34,7 @@ import (
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/pkg/errors"
+	jaegercli "github.com/uber/jaeger-client-go"
 	"github.com/xenolf/lego/challenge/dns01"
 )
 
@@ -335,10 +336,11 @@ func (gc *GlobalConfiguration) initTracing() {
 		case jaeger.Name:
 			if gc.Tracing.Jaeger == nil {
 				gc.Tracing.Jaeger = &jaeger.Config{
-					SamplingServerURL:  "http://localhost:5778/sampling",
-					SamplingType:       "const",
-					SamplingParam:      1.0,
-					LocalAgentHostPort: "127.0.0.1:6831",
+					SamplingServerURL:      "http://localhost:5778/sampling",
+					SamplingType:           "const",
+					SamplingParam:          1.0,
+					LocalAgentHostPort:     "127.0.0.1:6831",
+					TraceContextHeaderName: jaegercli.TraceContextHeaderName,
 				}
 			}
 			if gc.Tracing.Zipkin != nil {

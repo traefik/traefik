@@ -142,10 +142,11 @@ func TestSetEffectiveConfigurationTracing(t *testing.T) {
 			expected: &tracing.Tracing{
 				Backend: "jaeger",
 				Jaeger: &jaeger.Config{
-					SamplingServerURL:  "http://localhost:5778/sampling",
-					SamplingType:       "const",
-					SamplingParam:      1.0,
-					LocalAgentHostPort: "127.0.0.1:6831",
+					SamplingServerURL:      "http://localhost:5778/sampling",
+					SamplingType:           "const",
+					SamplingParam:          1.0,
+					LocalAgentHostPort:     "127.0.0.1:6831",
+					TraceContextHeaderName: "uber-trace-id",
 				},
 				Zipkin: nil,
 			},
@@ -155,10 +156,11 @@ func TestSetEffectiveConfigurationTracing(t *testing.T) {
 			tracing: &tracing.Tracing{
 				Backend: "zipkin",
 				Jaeger: &jaeger.Config{
-					SamplingServerURL:  "http://localhost:5778/sampling",
-					SamplingType:       "const",
-					SamplingParam:      1.0,
-					LocalAgentHostPort: "127.0.0.1:6831",
+					SamplingServerURL:      "http://localhost:5778/sampling",
+					SamplingType:           "const",
+					SamplingParam:          1.0,
+					LocalAgentHostPort:     "127.0.0.1:6831",
+					TraceContextHeaderName: "uber-trace-id",
 				},
 			},
 			expected: &tracing.Tracing{
@@ -177,10 +179,11 @@ func TestSetEffectiveConfigurationTracing(t *testing.T) {
 			tracing: &tracing.Tracing{
 				Backend: "zipkin",
 				Jaeger: &jaeger.Config{
-					SamplingServerURL:  "http://localhost:5778/sampling",
-					SamplingType:       "const",
-					SamplingParam:      1.0,
-					LocalAgentHostPort: "127.0.0.1:6831",
+					SamplingServerURL:      "http://localhost:5778/sampling",
+					SamplingType:           "const",
+					SamplingParam:          1.0,
+					LocalAgentHostPort:     "127.0.0.1:6831",
+					TraceContextHeaderName: "uber-trace-id",
 				},
 				Zipkin: &zipkin.Config{
 					HTTPEndpoint: "http://powpow:9411/api/v1/spans",
