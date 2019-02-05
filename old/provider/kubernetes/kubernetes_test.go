@@ -1712,7 +1712,7 @@ rateset:
 			),
 			frontend("root3",
 				passHostHeader(),
-				redirectRegex("root3$", "root3/root"),
+				redirectRegex("root3/$", "root3/root"),
 				routes(
 					route("root3", "Host:root3"),
 				),
