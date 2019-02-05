@@ -28,17 +28,6 @@ const (
 	defaultHealthCheckTimeout  = 5 * time.Second
 )
 
-// See oxy/roundrobin/rr.go
-type balancerHandler interface {
-	Servers() []*url.URL
-	ServeHTTP(w http.ResponseWriter, req *http.Request)
-	ServerWeight(u *url.URL) (int, bool)
-	RemoveServer(u *url.URL) error
-	UpsertServer(u *url.URL, options ...roundrobin.ServerOption) error
-	NextServer() (*url.URL, error)
-	Next() http.Handler
-}
-
 // NewManager creates a new Manager
 func NewManager(configs map[string]*config.Service, defaultRoundTripper http.RoundTripper) *Manager {
 	return &Manager{
@@ -148,11 +137,12 @@ func buildHealthCheckOptions(ctx context.Context, lb healthcheck.BalancerHandler
 	interval := defaultHealthCheckInterval
 	if hc.Interval != "" {
 		intervalOverride, err := time.ParseDuration(hc.Interval)
-		if err != nil {
+		switch {
+		case err != nil:
 			logger.Errorf("Illegal health check interval for '%s': %s", backend, err)
-		} else if intervalOverride <= 0 {
+		case intervalOverride <= 0:
 			logger.Errorf("Health check interval smaller than zero for service '%s'", backend)
-		} else {
+		default:
 			interval = intervalOverride
 		}
 	}
@@ -160,11 +150,12 @@ func buildHealthCheckOptions(ctx context.Context, lb healthcheck.BalancerHandler
 	timeout := defaultHealthCheckTimeout
 	if hc.Timeout != "" {
 		timeoutOverride, err := time.ParseDuration(hc.Timeout)
-		if err != nil {
+		switch {
+		case err != nil:
 			logger.Errorf("Illegal health check timeout for backend '%s': %s", backend, err)
-		} else if timeoutOverride <= 0 {
+		case timeoutOverride <= 0:
 			logger.Errorf("Health check timeout smaller than zero for backend '%s', backend", backend)
-		} else {
+		default:
 			timeout = timeoutOverride
 		}
 	}

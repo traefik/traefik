@@ -272,7 +272,7 @@ func (h *Handler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestRead
 		core[DownstreamContentSize] = crw.Size()
 		if original, ok := core[OriginContentSize]; ok {
 			o64 := original.(int64)
-			if o64 != crw.Size() && 0 != crw.Size() {
+			if crw.Size() != o64 && crw.Size() != 0 {
 				core[GzipRatio] = float64(o64) / float64(crw.Size())
 			}
 		}

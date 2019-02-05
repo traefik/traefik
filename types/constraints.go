@@ -23,13 +23,14 @@ func NewConstraint(exp string) (*Constraint, error) {
 	sep := ""
 	constraint := &Constraint{}
 
-	if strings.Contains(exp, "==") {
+	switch {
+	case strings.Contains(exp, "=="):
 		sep = "=="
 		constraint.MustMatch = true
-	} else if strings.Contains(exp, "!=") {
+	case strings.Contains(exp, "!="):
 		sep = "!="
 		constraint.MustMatch = false
-	} else {
+	default:
 		return nil, errors.New("constraint expression missing valid operator: '==' or '!='")
 	}
 

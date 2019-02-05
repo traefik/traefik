@@ -205,9 +205,7 @@ func (s *LocalStore) RemoveHTTPChallengeToken(token, domain string) error {
 	}
 
 	if _, ok := s.storedData.HTTPChallenges[token]; ok {
-		if _, domainOk := s.storedData.HTTPChallenges[token][domain]; domainOk {
-			delete(s.storedData.HTTPChallenges[token], domain)
-		}
+		delete(s.storedData.HTTPChallenges[token], domain)
 		if len(s.storedData.HTTPChallenges[token]) == 0 {
 			delete(s.storedData.HTTPChallenges, token)
 		}

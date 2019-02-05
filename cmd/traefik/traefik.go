@@ -293,7 +293,7 @@ func runCmd(staticConfiguration *static.Configuration, configFile string) error 
 		log.WithoutContext().Errorf("Could not enable Watchdog: %v", err)
 	} else if t != 0 {
 		// Send a ping each half time given
-		t = t / 2
+		t /= 2
 		log.WithoutContext().Infof("Watchdog activated with timer duration %s", t)
 		safe.Go(func() {
 			tick := time.Tick(t)

@@ -2,13 +2,11 @@ package provider
 
 import (
 	"bytes"
-	"io/ioutil"
 	"strings"
 	"text/template"
 
 	"github.com/BurntSushi/toml"
 	"github.com/Masterminds/sprig"
-	"github.com/containous/traefik/autogen/gentemplates"
 	"github.com/containous/traefik/config"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
@@ -86,26 +84,6 @@ func (p *BaseProvider) DecodeConfiguration(content string) (*config.Configuratio
 		return nil, err
 	}
 	return configuration, nil
-}
-
-func (p *BaseProvider) getTemplateContent(defaultTemplateFile string) (string, error) {
-	if len(p.Filename) > 0 {
-		buf, err := ioutil.ReadFile(p.Filename)
-		if err != nil {
-			return "", err
-		}
-		return string(buf), nil
-	}
-
-	if strings.HasSuffix(defaultTemplateFile, ".tmpl") {
-		buf, err := gentemplates.Asset(defaultTemplateFile)
-		if err != nil {
-			return "", err
-		}
-		return string(buf), nil
-	}
-
-	return defaultTemplateFile, nil
 }
 
 func split(sep, s string) []string {

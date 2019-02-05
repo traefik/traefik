@@ -3,6 +3,21 @@
 
   skip-files = [
     "^old/.*",
+    "^acme/.*",
+    "^cluster/.*",
+    "^cmd/convert/.*",
+    "^h2c/.*",
+    "^integration/.*",
+
+#    "^cmd/traefik/.*",
+#    "^anonymize/.*",
+#    "^provider/.*",
+#    "^tracing/.*",
+#    "^safe/.*",
+#    "^h2c/.*",
+#    "^healthcheck/.*",
+#    "^middlewares/.*",
+#    "^server/.*",
   ]
 
 [linters-settings]
@@ -21,7 +36,7 @@
 
   [linters-settings.goconst]
     min-len = 3.0
-    min-occurrences = 3.0
+    min-occurrences = 4.0
 
   [linters-settings.misspell]
     locale = "US"
@@ -34,12 +49,18 @@
     "gas",
     "dupl",
     "prealloc",
+    "gochecknoinits",
+    "gochecknoglobals",
+    "unparam",
+    "scopelint",
+    "goimports",
   ]
 
 [issues]
   max-per-linter = 0
   max-same = 0
   exclude = [
+    "field `(foo|fuu)` is unused",
     "(.+) is deprecated:",
     "cyclomatic complexity (\\d+) of func `\\(\\*Builder\\)\\.buildConstructor` is high", #alt/server/middleware/middlewares.go
     "`logger` can be `github.com/containous/traefik/vendor/github.com/stretchr/testify/assert.TestingT`", # alt/middlewares/recovery/recovery.go:

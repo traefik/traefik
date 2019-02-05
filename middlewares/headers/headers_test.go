@@ -106,7 +106,7 @@ func TestSecureHeader(t *testing.T) {
 
 func TestSSLForceHost(t *testing.T) {
 	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.Write([]byte("OK"))
+		_, _ = rw.Write([]byte("OK"))
 	})
 
 	testCases := []struct {

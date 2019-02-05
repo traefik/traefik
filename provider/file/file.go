@@ -47,11 +47,12 @@ func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.P
 	if p.Watch {
 		var watchItem string
 
-		if len(p.Directory) > 0 {
+		switch {
+		case len(p.Directory) > 0:
 			watchItem = p.Directory
-		} else if len(p.Filename) > 0 {
+		case len(p.Filename) > 0:
 			watchItem = filepath.Dir(p.Filename)
-		} else {
+		default:
 			watchItem = filepath.Dir(p.TraefikFile)
 		}
 

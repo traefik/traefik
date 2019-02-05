@@ -139,11 +139,12 @@ func (p *Provider) getIPPort(ctx context.Context, container dockerData, serverPo
 
 	if p.UseBindPortIP {
 		portBinding, err := p.getPortBinding(container, serverPort)
-		if err != nil {
+		switch {
+		case err != nil:
 			logger.Infof("Unable to find a binding for container %q, falling back on its internal IP/Port.", container.Name)
-		} else if (portBinding.HostIP == "0.0.0.0") || (len(portBinding.HostIP) == 0) {
+		case portBinding.HostIP == "0.0.0.0" || len(portBinding.HostIP) == 0:
 			logger.Infof("Cannot determine the IP address (got %q) for %q's binding, falling back on its internal IP/Port.", portBinding.HostIP, container.Name)
-		} else {
+		default:
 			ip = portBinding.HostIP
 			port = portBinding.HostPort
 			usedBound = true
@@ -166,9 +167,9 @@ func (p Provider) getIPAddress(ctx context.Context, container dockerData) string
 	logger := log.FromContext(ctx)
 
 	if container.ExtraConf.Docker.Network != "" {
-		networkSettings := container.NetworkSettings
-		if networkSettings.Networks != nil {
-			network := networkSettings.Networks[container.ExtraConf.Docker.Network]
+		settings := container.NetworkSettings
+		if settings.Networks != nil {
+			network := settings.Networks[container.ExtraConf.Docker.Network]
 			if network != nil {
 				return network.Addr
 			}
@@ -249,11 +250,6 @@ func getPort(container dockerData, serverPort string) string {
 	}
 
 	return ""
-}
-
-// Escape beginning slash "/", convert all others to dash "-", and convert underscores "_" to dash "-"
-func getSubDomain(name string) string {
-	return strings.NewReplacer("/", "-", "_", "-").Replace(strings.TrimPrefix(name, "/"))
 }
 
 func getServiceName(container dockerData) string {
