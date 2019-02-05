@@ -12,3 +12,5 @@ RUN yarn install
 COPY . $WEBUI_DIR/
 
 EXPOSE 8080
+
+RUN yarn lint
