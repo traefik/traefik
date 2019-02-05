@@ -1294,23 +1294,27 @@
     "internal/baggage",
     "internal/baggage/remote",
     "internal/spanlog",
+    "internal/throttler",
+    "internal/throttler/remote",
     "log",
     "rpcmetrics",
+    "thrift",
     "thrift-gen/agent",
     "thrift-gen/baggage",
     "thrift-gen/jaeger",
     "thrift-gen/sampling",
     "thrift-gen/zipkincore",
+    "transport",
     "utils"
   ]
-  revision = "f54d8ece0a66e3db6a9247e946eb1e2bd79029ea"
-  version = "v2.11.1"
+  revision = "1a782e2da844727691fef1757c72eb190c2909f0"
+  version = "v2.15.0"
 
 [[projects]]
   name = "github.com/uber/jaeger-lib"
   packages = ["metrics"]
-  revision = "3b2a9ad2a045881ab7a0f81d465be54c8292ee4f"
-  version = "v1.1.0"
+  revision = "ed3a127ec5fef7ae9ea95b01b542c47fbd999ce5"
+  version = "v1.5.0"
 
 [[projects]]
   name = "github.com/ugorji/go"
@@ -1883,6 +1887,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "12aa786fdc1ae5b90041d2acba799576385e0be77362ab6e21c11a059fd9b6b0"
+  inputs-digest = "7234505a1c5efade68c571b94aded09899e8c5888d3f4af16928d88e8797c887"
   solver-name = "gps-cdcl"
   solver-version = 1

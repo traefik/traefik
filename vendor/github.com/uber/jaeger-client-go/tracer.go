@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Uber Technologies, Inc.
+// Copyright (c) 2017-2018 Uber Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import (
 	"io"
 	"os"
 	"reflect"
+	"strconv"
 	"sync"
 	"time"
 
@@ -26,6 +27,7 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 
 	"github.com/uber/jaeger-client-go/internal/baggage"
+	"github.com/uber/jaeger-client-go/internal/throttler"
 	"github.com/uber/jaeger-client-go/log"
 	"github.com/uber/jaeger-client-go/utils"
 )
@@ -48,6 +50,7 @@ type Tracer struct {
 		gen128Bit            bool // whether to generate 128bit trace IDs
 		zipkinSharedRPCSpan  bool
 		highTraceIDGenerator func() uint64 // custom high trace ID generator
+		maxTagValueLength    int
 		// more options to come
 	}
 	// pool for Span objects
@@ -58,10 +61,13 @@ type Tracer struct {
 
 	observer compositeObserver
 
-	tags []Tag
+	tags    []Tag
+	process Process
 
 	baggageRestrictionManager baggage.RestrictionManager
 	baggageSetter             *baggageSetter
+
+	debugThrottler throttler.Throttler
 }
 
 // NewTracer creates Tracer implementation that reports tracing to Jaeger.
@@ -111,6 +117,10 @@ func NewTracer(
 	} else {
 		t.baggageSetter = newBaggageSetter(baggage.NewDefaultRestrictionManager(0), &t.metrics)
 	}
+	if t.debugThrottler == nil {
+		t.debugThrottler = throttler.DefaultThrottler{}
+	}
+
 	if t.randomNumber == nil {
 		rng := utils.NewRand(time.Now().UnixNano())
 		t.randomNumber = func() uint64 {
@@ -142,6 +152,17 @@ func NewTracer(
 	} else if t.options.highTraceIDGenerator != nil {
 		t.logger.Error("Overriding high trace ID generator but not generating " +
 			"128 bit trace IDs, consider enabling the \"Gen128Bit\" option")
+	}
+	if t.options.maxTagValueLength == 0 {
+		t.options.maxTagValueLength = DefaultMaxTagValueLength
+	}
+	t.process = Process{
+		Service: serviceName,
+		UUID:    strconv.FormatUint(t.randomNumber(), 16),
+		Tags:    t.tags,
+	}
+	if throttler, ok := t.debugThrottler.(ProcessSetter); ok {
+		throttler.SetProcess(t.process)
 	}
 
 	return t, t
@@ -177,6 +198,12 @@ func (t *Tracer) startSpanWithOptions(
 		options.StartTime = t.timeNow()
 	}
 
+	// Predicate whether the given span context is a valid reference
+	// which may be used as parent / debug ID / baggage items source
+	isValidReference := func(ctx SpanContext) bool {
+		return ctx.IsValid() || ctx.isDebugIDContainerOnly() || len(ctx.baggage) != 0
+	}
+
 	var references []Reference
 	var parent SpanContext
 	var hasParent bool // need this because `parent` is a value, not reference
@@ -188,7 +215,7 @@ func (t *Tracer) startSpanWithOptions(
 				reflect.ValueOf(ref.ReferencedContext)))
 			continue
 		}
-		if !(ctx.IsValid() || ctx.isDebugIDContainerOnly() || len(ctx.baggage) != 0) {
+		if !isValidReference(ctx) {
 			continue
 		}
 		references = append(references, Reference{Type: ref.Type, Context: ctx})
@@ -197,7 +224,7 @@ func (t *Tracer) startSpanWithOptions(
 			hasParent = ref.Type == opentracing.ChildOfRef
 		}
 	}
-	if !hasParent && parent.IsValid() {
+	if !hasParent && isValidReference(parent) {
 		// If ChildOfRef wasn't found but a FollowFromRef exists, use the context from
 		// the FollowFromRef as the parent
 		hasParent = true
@@ -220,7 +247,7 @@ func (t *Tracer) startSpanWithOptions(
 		ctx.spanID = SpanID(ctx.traceID.Low)
 		ctx.parentID = 0
 		ctx.flags = byte(0)
-		if hasParent && parent.isDebugIDContainerOnly() {
+		if hasParent && parent.isDebugIDContainerOnly() && t.isDebugAllowed(operationName) {
 			ctx.flags |= (flagSampled | flagDebug)
 			samplerTags = []Tag{{key: JaegerDebugHeader, value: parent.debugID}}
 		} else if sampled, tags := t.sampler.IsSampled(ctx.traceID, operationName); sampled {
@@ -294,6 +321,9 @@ func (t *Tracer) Close() error {
 	if mgr, ok := t.baggageRestrictionManager.(io.Closer); ok {
 		mgr.Close()
 	}
+	if throttler, ok := t.debugThrottler.(io.Closer); ok {
+		throttler.Close()
+	}
 	return nil
 }
 
@@ -341,7 +371,7 @@ func (t *Tracer) startSpanInternal(
 		copy(sp.tags, internalTags)
 		for k, v := range tags {
 			sp.observer.OnSetTag(k, v)
-			if k == string(ext.SamplingPriority) && setSamplingPriority(sp, v) {
+			if k == string(ext.SamplingPriority) && !setSamplingPriority(sp, v) {
 				continue
 			}
 			sp.setTagNoLocking(k, v)
@@ -390,7 +420,12 @@ func (t *Tracer) randomID() uint64 {
 	return val
 }
 
-// (NB) span should hold the lock before making this call
+// (NB) span must hold the lock before making this call
 func (t *Tracer) setBaggage(sp *Span, key, value string) {
 	t.baggageSetter.setBaggage(sp, key, value)
+}
+
+// (NB) span must hold the lock before making this call
+func (t *Tracer) isDebugAllowed(operation string) bool {
+	return t.debugThrottler.IsAllowed(operation)
 }
