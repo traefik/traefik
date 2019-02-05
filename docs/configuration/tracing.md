@@ -70,6 +70,13 @@ Traefik supports three tracing backends: Jaeger, Zipkin and DataDog.
     #
     # Default: "jaeger"
     propagation = "jaeger"
+    
+    # Trace Context Header Name is the http header name used to propagate tracing context.
+    # This must be in lower-case to avoid mismatches when decoding incoming headers.
+    #
+    # Default: "uber-trace-id"
+    #
+    traceContextHeaderName = "uber-trace-id"
 ```
 
 !!! warning
