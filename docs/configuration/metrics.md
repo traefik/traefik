@@ -20,7 +20,7 @@
     # Buckets for latency metrics
     #
     # Optional
-    # Default: [0.1, 0.3, 1.2, 5]
+    # Default: [0.1, 0.3, 1.2, 5.0]
     #
     buckets = [0.1,0.3,1.2,5.0]
 
