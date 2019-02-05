@@ -19,8 +19,7 @@ func (s *Server) listenSignals(stop chan bool) {
 		case <-stop:
 			return
 		case sig := <-s.signals:
-			switch sig {
-			case syscall.SIGUSR1:
+			if sig == syscall.SIGUSR1 {
 				log.WithoutContext().Infof("Closing and re-opening log files for rotation: %+v", sig)
 
 				if s.accessLoggerMiddleware != nil {

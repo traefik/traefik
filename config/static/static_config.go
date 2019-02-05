@@ -334,10 +334,8 @@ func (c *Configuration) ValidateConfiguration() {
 	if c.ACME != nil {
 		if _, ok := c.EntryPoints[c.ACME.EntryPoint]; !ok {
 			log.Fatalf("Unknown entrypoint %q for ACME configuration", c.ACME.EntryPoint)
-		} else {
-			if c.EntryPoints[c.ACME.EntryPoint].TLS == nil {
-				log.Fatalf("Entrypoint %q has no TLS configuration for ACME configuration", c.ACME.EntryPoint)
-			}
+		} else if c.EntryPoints[c.ACME.EntryPoint].TLS == nil {
+			log.Fatalf("Entrypoint %q has no TLS configuration for ACME configuration", c.ACME.EntryPoint)
 		}
 	}
 }

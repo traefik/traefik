@@ -277,7 +277,8 @@ func (p *Provider) getClient() (*lego.Client, error) {
 		return nil, err
 	}
 
-	if p.DNSChallenge != nil && len(p.DNSChallenge.Provider) > 0 {
+	switch {
+	case p.DNSChallenge != nil && len(p.DNSChallenge.Provider) > 0:
 		logger.Debugf("Using DNS Challenge provider: %s", p.DNSChallenge.Provider)
 
 		var provider challenge.Provider
@@ -310,21 +311,23 @@ func (p *Provider) getClient() (*lego.Client, error) {
 			p.DNSChallenge.preCheckTimeout, p.DNSChallenge.preCheckInterval = challengeProviderTimeout.Timeout()
 		}
 
-	} else if p.HTTPChallenge != nil && len(p.HTTPChallenge.EntryPoint) > 0 {
+	case p.HTTPChallenge != nil && len(p.HTTPChallenge.EntryPoint) > 0:
 		logger.Debug("Using HTTP Challenge provider.")
 
 		err = client.Challenge.SetHTTP01Provider(&challengeHTTP{Store: p.Store})
 		if err != nil {
 			return nil, err
 		}
-	} else if p.TLSChallenge != nil {
+
+	case p.TLSChallenge != nil:
 		logger.Debug("Using TLS Challenge provider.")
 
 		err = client.Challenge.SetTLSALPN01Provider(&challengeTLSALPN{Store: p.Store})
 		if err != nil {
 			return nil, err
 		}
-	} else {
+
+	default:
 		return nil, errors.New("ACME challenge not specified, please select TLS or HTTP or DNS Challenge")
 	}
 

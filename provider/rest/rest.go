@@ -45,16 +45,16 @@ func (p *Provider) Append(systemRouter *mux.Router) {
 
 			configuration := new(config.Configuration)
 			body, _ := ioutil.ReadAll(request.Body)
-			err := json.Unmarshal(body, configuration)
-			if err == nil {
-				p.configurationChan <- config.Message{ProviderName: "rest", Configuration: configuration}
-				err := templatesRenderer.JSON(response, http.StatusOK, configuration)
-				if err != nil {
-					log.WithoutContext().Error(err)
-				}
-			} else {
+
+			if err := json.Unmarshal(body, configuration); err != nil {
 				log.WithoutContext().Errorf("Error parsing configuration %+v", err)
 				http.Error(response, fmt.Sprintf("%+v", err), http.StatusBadRequest)
+				return
+			}
+
+			p.configurationChan <- config.Message{ProviderName: "rest", Configuration: configuration}
+			if err := templatesRenderer.JSON(response, http.StatusOK, configuration); err != nil {
+				log.WithoutContext().Error(err)
 			}
 		})
 }

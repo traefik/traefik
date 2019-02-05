@@ -271,7 +271,8 @@ func getSANs(cert *x509.Certificate) []string {
 		return sans
 	}
 
-	sans = append(cert.DNSNames, cert.EmailAddresses...)
+	sans = append(sans, cert.DNSNames...)
+	sans = append(sans, cert.EmailAddresses...)
 
 	var ips []string
 	for _, ip := range cert.IPAddresses {

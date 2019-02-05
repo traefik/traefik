@@ -132,35 +132,35 @@ func (hc *HealthCheck) checkBackend(backend *BackendConfig) {
 	var newDisabledURLs []*url.URL
 	// FIXME re enable metrics
 	for _, disableURL := range backend.disabledURLs {
-		//serverUpMetricValue := float64(0)
+		// FIXME serverUpMetricValue := float64(0)
 		if err := checkHealth(disableURL, backend); err == nil {
 			log.Warnf("Health check up: Returning to server list. Backend: %q URL: %q", backend.name, disableURL.String())
-			if err := backend.LB.UpsertServer(disableURL, roundrobin.Weight(1)); err != nil {
+			if err = backend.LB.UpsertServer(disableURL, roundrobin.Weight(1)); err != nil {
 				log.Error(err)
 			}
-			//serverUpMetricValue = 1
+			// FIXME serverUpMetricValue = 1
 		} else {
 			log.Warnf("Health check still failing. Backend: %q URL: %q Reason: %s", backend.name, disableURL.String(), err)
 			newDisabledURLs = append(newDisabledURLs, disableURL)
 		}
-		//labelValues := []string{"backend", backend.name, "url", disableURL.String()}
-		//hc.metrics.BackendServerUpGauge().With(labelValues...).Set(serverUpMetricValue)
+		// FIXME labelValues := []string{"backend", backend.name, "url", disableURL.String()}
+		// FIXME hc.metrics.BackendServerUpGauge().With(labelValues...).Set(serverUpMetricValue)
 	}
 	backend.disabledURLs = newDisabledURLs
 
 	// FIXME re enable metrics
 	for _, enableURL := range enabledURLs {
-		//serverUpMetricValue := float64(1)
+		// FIXME serverUpMetricValue := float64(1)
 		if err := checkHealth(enableURL, backend); err != nil {
 			log.Warnf("Health check failed: Remove from server list. Backend: %q URL: %q Reason: %s", backend.name, enableURL.String(), err)
 			if err := backend.LB.RemoveServer(enableURL); err != nil {
 				log.Error(err)
 			}
 			backend.disabledURLs = append(backend.disabledURLs, enableURL)
-			//serverUpMetricValue = 0
+			// FIXME serverUpMetricValue = 0
 		}
-		//labelValues := []string{"backend", backend.name, "url", enableURL.String()}
-		//hc.metrics.BackendServerUpGauge().With(labelValues...).Set(serverUpMetricValue)
+		// FIXME labelValues := []string{"backend", backend.name, "url", enableURL.String()}
+		// FIXME hc.metrics.BackendServerUpGauge().With(labelValues...).Set(serverUpMetricValue)
 	}
 }
 

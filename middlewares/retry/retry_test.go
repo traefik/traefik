@@ -256,7 +256,7 @@ func TestRetryWebsocket(t *testing.T) {
 
 	forwarder, err := forward.New()
 	if err != nil {
-		t.Fatalf("Error creating forwarder: %s", err)
+		t.Fatalf("Error creating forwarder: %v", err)
 	}
 
 	backendServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -274,7 +274,7 @@ func TestRetryWebsocket(t *testing.T) {
 
 			loadBalancer, err := roundrobin.New(forwarder)
 			if err != nil {
-				t.Fatalf("Error creating load balancer: %s", err)
+				t.Fatalf("Error creating load balancer: %v", err)
 			}
 
 			basePort := 33444
@@ -287,7 +287,10 @@ func TestRetryWebsocket(t *testing.T) {
 			}
 
 			// add the functioning server to the end of the load balancer list
-			loadBalancer.UpsertServer(testhelpers.MustParseURL(backendServer.URL))
+			err = loadBalancer.UpsertServer(testhelpers.MustParseURL(backendServer.URL))
+			if err != nil {
+				t.Fatalf("Fail to upsert server: %v", err)
+			}
 
 			retryListener := &countingRetryListener{}
 			retryH, err := New(context.Background(), loadBalancer, config.Retry{Attempts: test.maxRequestAttempts}, retryListener, "traefikTest")

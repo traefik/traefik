@@ -155,15 +155,15 @@ func sendReport(body string) {
 	}
 }
 
-func openBrowser(URL string) error {
+func openBrowser(u string) error {
 	var err error
 	switch runtime.GOOS {
 	case "linux":
-		err = exec.Command("xdg-open", URL).Start()
+		err = exec.Command("xdg-open", u).Start()
 	case "windows":
-		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", URL).Start()
+		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", u).Start()
 	case "darwin":
-		err = exec.Command("open", URL).Start()
+		err = exec.Command("open", u).Start()
 	default:
 		err = fmt.Errorf("unsupported platform")
 	}

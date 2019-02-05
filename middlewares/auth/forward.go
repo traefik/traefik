@@ -167,19 +167,23 @@ func writeHeader(req *http.Request, forwardReq *http.Request, trustForwardHeader
 		forwardReq.Header.Set(forward.XForwardedFor, clientIP)
 	}
 
-	if xMethod := req.Header.Get(xForwardedMethod); xMethod != "" && trustForwardHeader {
+	xMethod := req.Header.Get(xForwardedMethod)
+	switch {
+	case xMethod != "" && trustForwardHeader:
 		forwardReq.Header.Set(xForwardedMethod, xMethod)
-	} else if req.Method != "" {
+	case req.Method != "":
 		forwardReq.Header.Set(xForwardedMethod, req.Method)
-	} else {
+	default:
 		forwardReq.Header.Del(xForwardedMethod)
 	}
 
-	if xfp := req.Header.Get(forward.XForwardedProto); xfp != "" && trustForwardHeader {
+	xfp := req.Header.Get(forward.XForwardedProto)
+	switch {
+	case xfp != "" && trustForwardHeader:
 		forwardReq.Header.Set(forward.XForwardedProto, xfp)
-	} else if req.TLS != nil {
+	case req.TLS != nil:
 		forwardReq.Header.Set(forward.XForwardedProto, "https")
-	} else {
+	default:
 		forwardReq.Header.Set(forward.XForwardedProto, "http")
 	}
 
@@ -187,19 +191,23 @@ func writeHeader(req *http.Request, forwardReq *http.Request, trustForwardHeader
 		forwardReq.Header.Set(forward.XForwardedPort, xfp)
 	}
 
-	if xfh := req.Header.Get(forward.XForwardedHost); xfh != "" && trustForwardHeader {
+	xfh := req.Header.Get(forward.XForwardedHost)
+	switch {
+	case xfh != "" && trustForwardHeader:
 		forwardReq.Header.Set(forward.XForwardedHost, xfh)
-	} else if req.Host != "" {
+	case req.Host != "":
 		forwardReq.Header.Set(forward.XForwardedHost, req.Host)
-	} else {
+	default:
 		forwardReq.Header.Del(forward.XForwardedHost)
 	}
 
-	if xfURI := req.Header.Get(xForwardedURI); xfURI != "" && trustForwardHeader {
+	xfURI := req.Header.Get(xForwardedURI)
+	switch {
+	case xfURI != "" && trustForwardHeader:
 		forwardReq.Header.Set(xForwardedURI, xfURI)
-	} else if req.URL.RequestURI() != "" {
+	case req.URL.RequestURI() != "":
 		forwardReq.Header.Set(xForwardedURI, req.URL.RequestURI())
-	} else {
+	default:
 		forwardReq.Header.Del(xForwardedURI)
 	}
 }
