@@ -1592,7 +1592,7 @@
   revision = "03389da7e0bf9844767f82690f4d68fc097a1306"
 
 [[projects]]
-  digest = "1:d69d06aa6732b9df6ab33998db450ffe0cae9f98e7d019ef3bebac8fd8cd0138"
+  digest = "1:7d3a890e525da3b7014d26dd1d4a0e4d31a479995007cd11989ad31db132e66c"
   name = "github.com/uber/jaeger-client-go"
   packages = [
     ".",
@@ -1610,12 +1610,13 @@
     "thrift-gen/jaeger",
     "thrift-gen/sampling",
     "thrift-gen/zipkincore",
+    "transport",
     "utils",
     "zipkin",
   ]
   pruneopts = "NUT"
-  revision = "b043381d944715b469fd6b37addfd30145ca1758"
-  version = "v2.14.0"
+  revision = "1a782e2da844727691fef1757c72eb190c2909f0"
+  version = "v2.15.0"
 
 [[projects]]
   digest = "1:0f09db8429e19d57c8346ad76fbbc679341fa86073d3b8fb5ac919f0357d8f4c"
@@ -2350,6 +2351,7 @@
     "github.com/stretchr/testify/require",
     "github.com/stvp/go-udp-testing",
     "github.com/thoas/stats",
+    "github.com/uber/jaeger-client-go",
     "github.com/uber/jaeger-client-go/config",
     "github.com/uber/jaeger-client-go/zipkin",
     "github.com/uber/jaeger-lib/metrics",
