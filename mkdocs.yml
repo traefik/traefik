@@ -102,11 +102,11 @@ nav:
       - 'Maxconn': 'middlewares/maxconnection.md'
       - 'PassTLSClientCert': 'middlewares/passtlsclientcert.md'
       - 'RateLimit': 'middlewares/ratelimit.md'
-      - 'RegexRedirect': 'middlewares/regexredirect.md'
+      - 'RedirectRegex': 'middlewares/redirectregex.md'
+      - 'RedirectScheme': 'middlewares/redirectscheme.md'
       - 'ReplacePath': 'middlewares/replacepath.md'
       - 'ReplacePathRegex': 'middlewares/replacepathregex.md'
       - 'Retry': 'middlewares/retry.md'
-      - 'SchemeRedirect': 'middlewares/schemeredirect.md'
       - 'StripPrefix': 'middlewares/stripprefix.md'
       - 'StripPrefixRegex': 'middlewares/stripprefixregex.md'
   - 'Features':

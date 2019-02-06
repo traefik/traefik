@@ -97,8 +97,8 @@ If you use multiple `providers` and wish to reference a middleware declared in a
 | [MaxConnection](maxconnection.md)         | Limit the number of simultaneous connections      | Security, Request lifecycle |
 | [PassTLSClientCert](passtlsclientcert.md) | TODO                                              | Security                    |
 | [RateLimit](ratelimit.md)                 | Limit the call frequency                          | Security, Request lifecycle |
-| [SchemeRedirect](schemeredirect.md)       | Redirect easily the client elsewhere              | Request lifecycle           |
-| [RegexRedirect](regexredirect.md)         | Redirect the client elsewhere                     | Request lifecycle           |
+| [RedirectScheme](redirectscheme.md)       | Redirect easily the client elsewhere              | Request lifecycle           |
+| [RedirectRegex](redirectregex.md)         | Redirect the client elsewhere                     | Request lifecycle           |
 | [ReplacePath](replacepath.md)             | Change the path of the request                    | Path Modifier               |
 | [ReplacePathRegex](replacepathregex.md)   | Change the path of the request                    | Path Modifier               |
 | [Retry](retry.md)                         | Automatically retry the request in case of errors | Request lifecycle           |
