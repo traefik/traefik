@@ -14,37 +14,37 @@ Traefik can automatically generate certificates for your domains using an ACME p
 
     ```toml
     [entryPoints]
-      [entryPoints.http-unsecure]
+      [entryPoints.web]
          address = ":80"
 
-      [entryPoints.http-secure]
+      [entryPoints.http-tls]
          address = ":443"
-         [entryPoints.https.tls] # enabling TLS
+         [entryPoints.http-tls.tls] # enabling TLS
     
     [acme]
        email = "your-email@your-domain.org"
        storage = "acme.json"
-       entryPoint = "http-secure" # acme is enabled on http-secure
+       entryPoint = "http-tls" # acme is enabled on http-tls
        onHostRule = true # dynamic generation based on the Host() matcher
        [acme.httpChallenge]
-          entryPoint = "http-unsecure" # used during the challenge 
+          entryPoint = "web" # used during the challenge 
     ```
     
 ??? example "Configuring Wildcard Certificates"
 
     ```toml
     [entryPoints]
-      [entryPoints.http-unsecure]
+      [entryPoints.web]
          address = ":80"
 
-      [entryPoints.http-secure]
+      [entryPoints.http-tls]
          address = ":443"
          [entryPoints.https.tls] # enabling TLS
     
     [acme]
         email = "your-email@your-domain.org"
         storage = "acme.json"
-        entryPoint = "http-secure" # acme is enabled on http-secure
+        entryPoint = "http-tls" # acme is enabled on http-tls
         [acme.dnsChallenge]
             provider = "xxx"
           
