@@ -23,10 +23,10 @@ The AddPrefix middleware updates the URL Path of the request before forwarding i
     a-container:
       image: a-container-image 
         labels:
-          - "traefik.middlewares.add-bar.addprefix.prefix=/bar",
+          - "traefik.middlewares.add-bar.addprefix.prefix=/bar"
     ```
 ## Configuration Options
 
 ### prefix
 
-`prefix` is the string to add before the current path in the requtested URL. It should include the leading slash (`/`).
+`prefix` is the string to add before the current path in the requested URL. It should include the leading slash (`/`).
