@@ -3,6 +3,8 @@
 Redirecting the Client to a Different Location
 {: .subtitle }
 
+`TODO: add schema`
+
 RegexRedirect redirect a request from an url to another with regex matching and replacement.
 
 ## Configuration Examples

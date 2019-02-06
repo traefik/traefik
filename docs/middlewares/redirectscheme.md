@@ -3,6 +3,8 @@
 Redirecting the Client to a Different Scheme/Port
 {: .subtitle }
 
+`TODO: add schema`
+
 RegexRedirect redirect request from a scheme to another.
 
 ## Configuration Examples
