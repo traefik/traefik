@@ -29,7 +29,7 @@ Traefik can be configured:
 
 
 ```shell
-curl -XPUT @file "http://localhost:8080/api/providers/rest"
+curl -XPUT -d @file "http://localhost:8080/api/providers/rest"
 ```
 
 with `@file`:
