@@ -3,7 +3,7 @@
 Compressing the Response before Sending it to the Client
 {: .subtitle }
 
-![Compress](../../img/middleware/compress.png)
+![Compress](../img/middleware/compress.png)
 
 The Compress middleware enables the gzip compression. 
 

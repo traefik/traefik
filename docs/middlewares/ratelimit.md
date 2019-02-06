@@ -3,7 +3,7 @@
 Protection from Too Many Calls
 {: .subtitle }
 
-![RateLimit](../../img/middleware/ratelimit.png)
+![RateLimit](../img/middleware/ratelimit.png)
 
 The RateLimit middleware ensures that services will receive a _fair_ number of requests, and allows you define what is fair.
 

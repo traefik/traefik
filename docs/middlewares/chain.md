@@ -3,7 +3,7 @@
 When One Isn't Enougth
 {: .subtitle }
 
-![Chain](../../img/middleware/chain.png)
+![Chain](../img/middleware/chain.png)
 
 The Chain middleware enables you to define reusable combinations of other pieces of middleware. 
 It makes reusing the same groups easier.

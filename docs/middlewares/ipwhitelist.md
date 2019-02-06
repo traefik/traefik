@@ -3,7 +3,7 @@
 Limiting Clients to Specific IPs
 {: .subtitle }
 
-![IpWhiteList](../../img/middleware/ipwhitelist.png)
+![IpWhiteList](../img/middleware/ipwhitelist.png)
 
 IPWhitelist accepts / refuses requests based on the client IP.
 

@@ -5,7 +5,7 @@ Connecting Requests to Services
 
 ![Routers](../img/routers.png)
 
-A router is in charge of connecting incoming requests to the services that can handle them. In the process, routers may use pieces of [middleware](./middleware/overview.md) to update the request, or act before forwarding the request to the service.
+A router is in charge of connecting incoming requests to the services that can handle them. In the process, routers may use pieces of [middleware](../middlewares/overview.md) to update the request, or act before forwarding the request to the service.
 
 ## Configuration Example
 
@@ -18,7 +18,7 @@ A router is in charge of connecting incoming requests to the services that can h
         service = "service-foo"
     ```
 
-??? example "With a [Middleware](./middleware/overview.md) -- using the [File Provider](../providers/file.md)"
+??? example "With a [Middleware](../middlewares/overview.md) -- using the [File Provider](../providers/file.md)"
 
     ```toml
       [Routers]
@@ -128,7 +128,7 @@ The table below lists all the available matchers:
 
 ### Middlewares
 
-You can attach a list of [middlewares](./middleware/overview.md) to the routers.
+You can attach a list of [middlewares](../middlewares/overview.md) to the routers.
 The middlewares will take effect only if the rule matches, and before forwarding the request to the service. 
 
 ### Service

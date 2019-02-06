@@ -3,7 +3,7 @@
 Don't Waste Time Calling Unhealthy Services
 {: .subtitle }
 
-![CircuitBreaker](../../img/middleware/circuitbreaker.png) 
+![CircuitBreaker](../img/middleware/circuitbreaker.png) 
 
 The circuit breaker protects your system from stacking requests to unhealthy services (resulting in cascading failures).
 

@@ -27,7 +27,7 @@ You no longer need to create and synchronize configuration files cluttered with 
 
 !!! note "Updating the requests" 
 
-    In the [middleware](../routing/middlewares/overview.md) section, you can learn about how to update the requests before forwarding them to the services. 
+    In the [middleware](../middlewares/overview.md) section, you can learn about how to update the requests before forwarding them to the services. 
 
 !!! question "How does Traefik discover the services?"
 

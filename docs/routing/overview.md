@@ -5,7 +5,7 @@ What's Happening to the Requests?
 
 Let's zoom on Traefik's architecture and talk about the components that enable the routes to be created.
 
-First, when you start Traefik, you define [entrypoints](../routing/entrypoints.md) (in their most basic forms, they are port numbers). Then, connected to these entrypoints, [routers](../routing/routers.md) analyze the incoming requests to see if they match a set of [rules](../routing/routers.md#rules). If they do, the router might transform the request using pieces of [middleware](../routing/middleware/overview.md) before forwarding them to your [services](../routing/services.md).
+First, when you start Traefik, you define [entrypoints](../routing/entrypoints.md) (in their most basic forms, they are port numbers). Then, connected to these entrypoints, [routers](../routing/routers.md) analyze the incoming requests to see if they match a set of [rules](../routing/routers.md#rules). If they do, the router might transform the request using pieces of [middleware](../middlewares/overview.md) before forwarding them to your [services](../routing/services.md).
 
 
 ![Architecture](../img/architecture-overview.png)
@@ -16,11 +16,11 @@ First, when you start Traefik, you define [entrypoints](../routing/entrypoints.m
  - [_Entrypoints_](../routing/entrypoints.md) listen for incomming traffic (ports, SSL, ...)
  - [_Routers_](../routing/routers.md) analyse the requests (host, path, headers, ...)
  - [_Services_](../routing/services.md) forward the request to your services (load balancing, ...)
- - [_Middlewares_](../routing/middleware/overview.md) may update the request or make decisions based on the request (authentication, rate limiting, headers, ...)
+ - [_Middlewares_](../middlewares/overview.md) may update the request or make decisions based on the request (authentication, rate limiting, headers, ...)
  
 ## Example with a File Provider
 
-Below is an example of a full configuration file for the [file provider](../providers/file.md) that forwards `http://domain/whoami/` requests to a service reachable on `http://private/whoami-service/`. In the process, Traefik will make sure that the user is authenticated (using the [BasicAuth middleware](./middleware/basicauth.md)).     
+Below is an example of a full configuration file for the [file provider](../providers/file.md) that forwards `http://domain/whoami/` requests to a service reachable on `http://private/whoami-service/`. In the process, Traefik will make sure that the user is authenticated (using the [BasicAuth middleware](../middlewares/basicauth.md)).     
 
 ```toml
 [EntryPoints]

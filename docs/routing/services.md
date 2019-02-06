@@ -58,7 +58,7 @@ The `weight` option defines the weight of the server for the load balancing algo
 
 !!! note
     Paths in the servers' `url` have no effet. 
-    If you want the requests to be sent to a specific path on your servers, configure your [`routers`](./routers.md) to use a corresponding [Middleware](./middleware/overview.md) (e.g. the [AddPrefix](./middleware/addprefix.md) or [ReplacePath](./middleware/replacepath.md)) middlewares.
+    If you want the requests to be sent to a specific path on your servers, configure your [`routers`](./routers.md) to use a corresponding [Middleware](../middlewares/overview.md) (e.g. the [AddPrefix](../middlewares/addprefix.md) or [ReplacePath](../middlewares/replacepath.md)) middlewares.
     
 ??? example "A Service with One Server -- Using the [File Provider](../providers/file.md)"
     

@@ -3,7 +3,7 @@
 Adding Digest Authentication
 {: .subtitle } 
 
-![BasicAuth](../../img/middleware/digestauth.png)
+![BasicAuth](../img/middleware/digestauth.png)
 
 The DigestAuth middleware is a quick way to restrict access to your services to known users.
 

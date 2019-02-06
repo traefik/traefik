@@ -3,7 +3,7 @@
 Limiting the Number of Simultaneous Clients
 {: .subtitle }
 
-![MaxConnection](../../img/middleware/maxconnection.png)
+![MaxConnection](../img/middleware/maxconnection.png)
 
 To proactively prevent services from being overwhelmed with high load, a maximum connection limit can be applied.
 

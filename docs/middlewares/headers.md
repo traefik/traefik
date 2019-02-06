@@ -3,7 +3,7 @@
 Adding Headers to the Request / Response
 {: .subtitle }
 
-![Headers](../../img/middleware/headers.png)
+![Headers](../img/middleware/headers.png)
 
 The Headers middleware can manage the requests/responses headers.
 
