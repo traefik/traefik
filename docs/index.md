@@ -3,7 +3,7 @@
 Traefik is an [open-source](https://github.com/containous/traefik) *Edge Router* that makes publishing your services a fun and easy experience. 
 It receives requests on behalf of your system and finds out which components are responsible for handling them. 
 
-What sets Traefik appart, besides [its many features](features/overview.md), is that it automatically discovers the right configuration for your services. 
+What sets Traefik appart, besides its many features, is that it automatically discovers the right configuration for your services. 
 The magic happens when Traefik inspects your infrastructure, where it finds relevant information and discovers which service serves which request. 
 
 Traefik is natively compliant with every major cluster technology, such as Kubernetes, Docker, Docker Swarm, AWS, Mesos, Marathon, and [the list goes on](providers/overview.md); and can handle many at the same time. (It even works for legacy software running on bare metal.)

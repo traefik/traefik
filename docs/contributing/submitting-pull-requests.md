@@ -30,8 +30,8 @@ Help the readers focus on what matters, and help them understand the structure o
 - One feature per Pull Request.
 - Write useful descriptions and titles.
 - Avoid re-formatting code that is not on the path of your PR.
-- Make sure the [code builds](building.md).
-- Make sure [all tests pass](building.md#test).
+- Make sure the [code builds](building-testing.md).
+- Make sure [all tests pass](building-testing.md).
 - Add tests.
 - Address review comments in terms of additional commits (and don't amend/squash existing ones unless the PR is trivial).
 

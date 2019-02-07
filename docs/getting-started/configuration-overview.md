@@ -73,4 +73,4 @@ Traefik supports several Key-value stores:
 
 ## Available Configuration Options
 
-All the configuration options are documented in their related section. You can browse the available [features](../features/overview.md), the [providers](../providers/overview.md), or the [routing section](../routing/overview.md) to see them in action.
+All the configuration options are documented in their related section. You can browse the available features in the menu, the [providers](../providers/overview.md), or the [routing section](../routing/overview.md) to see them in action.
