@@ -21,20 +21,15 @@ body {
     font-family: 'Noto Sans', sans-serif;
 }
 
-p {
-    font-size: 1.2em;
-    font-weight: 400;
-}
-
 h1 {
     font-weight: bold !important;
     color: rgba(0,0,0,.9) !important;
-    font-size: 1.3em;
+    font-size: 1.25em;
 }
 
 h2 {
     font-weight: bold !important;
-    font-size: 1.25em;
+    font-size: 1.1em;
 }
 
 h3 {
@@ -46,14 +41,6 @@ figcaption {
     font-size: 0.8em;
     font-style: italic;
     color: #8D909F;
-}
-
-.md-nav--secondary {
-    border: 2px solid #e39641;
-    padding: 1em;
-    border-radius: 1em;
-    background-color: rgba(244,243,243,0.3);
-    box-shadow: 0 5px 12px 0 rgba(34,72,98,0.2);
 }
 
 p.subtitle {
