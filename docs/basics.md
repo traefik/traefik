@@ -95,6 +95,7 @@ Following is the list of existing modifier rules:
 Matcher rules determine if a particular request should be forwarded to a backend.
 
 The associativity rule is the following:
+
 - `,` is the `OR` operator (works **only inside a matcher**, ex: `Host:foo.com,bar.com`).
     - i.e., forward a request if any rule matches.
     - Does not work for `Headers` and `HeadersRegexp`.
