@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"context"
 	"errors"
+	"math"
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -958,8 +959,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				Middlewares: map[string]*config.Middleware{},
 				Routers: map[string]*config.Router{
 					"/": {
-						Rule:    "PathPrefix(`/`)",
-						Service: "default-backend",
+						Rule:     "PathPrefix(`/`)",
+						Service:  "default-backend",
+						Priority: math.MinInt32,
 					},
 				},
 				Services: map[string]*config.Service{
@@ -1840,8 +1842,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				Middlewares: map[string]*config.Middleware{},
 				Routers: map[string]*config.Router{
 					"/": {
-						Rule:    "PathPrefix(`/`)",
-						Service: "default-backend",
+						Rule:     "PathPrefix(`/`)",
+						Service:  "default-backend",
+						Priority: math.MinInt32,
 					},
 				},
 				Services: map[string]*config.Service{
