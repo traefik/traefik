@@ -12,7 +12,7 @@ traefik [command] [--flag=flag_argument]
 Available commands: 
 
 - `version` : Print version
-- `storeconfig` : Store the static Traefik configuration into a Key-value stores. Please refer to the [Store Traefik configuration](/user-guide/kv-config/#store-configuration-in-key-value-store) section to get documentation on it.
+- `storeconfig` : Store the static Traefik configuration into a Key-value stores. Please refer to the `Store Traefik configuration`(TODO: add doc and link) section to get documentation on it.
 - `bug`: The easiest way to submit a pre-filled issue.
 - `healthcheck`: Calls Traefik `/ping` to check health.
 

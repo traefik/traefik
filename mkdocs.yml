@@ -61,17 +61,21 @@ markdown_extensions:
   - codehilite
   - footnotes
   - pymdownx.details
-  - pymdownx.superfences
-  - pymdownx.smartsymbols
-  - pymdownx.tasklist
-  - markdown_include.include:
-      base_path: /mkdocs/docs/includes/
-      encoding: utf-8
+# TODO: Fix plugin issues
+#  - pymdownx.superfences
+#  - pymdownx.smartsymbols
+#  - pymdownx.tasklist
+#  - markdown_include.include:
+#      base_path: /mkdocs/docs/includes/
+#      encoding: utf-8
   - toc:
       permalink: true
 
 # Page tree
-nav:
+pages:
+  - '': 'reference/acme.md'
+  - '': 'reference/providers/docker.md'
+  - '': 'reference/entrypoints.md'
   - 'Welcome': 'index.md'
   - 'Getting Started':
       - 'Concepts' : 'getting-started/concepts.md'

@@ -20,7 +20,7 @@ By default, the dashboard is available on `/` on port `:8080`.
 
 !!! tip "Did You Know?"
     It is possible to customize the dashboard endpoint. 
-    To learn how, refer to the [Traefik's API documentation](/advanced/api.md).
+    To learn how, refer to the `Traefik's API documentation`(TODO: add doc and link).
     
 ## Enabling the Dashboard
 
@@ -60,4 +60,4 @@ To enable the dashboard, you need to enable Traefik's API.
     
 !!! tip "Did You Know?"
     The API provides more features than the Dashboard. 
-    To learn more about it, refer to the [Traefik's API documentation](/advanced/api.md).
+    To learn more about it, refer to the `Traefik's API documentation`(TODO: add doc and link).

@@ -117,7 +117,7 @@ Use the `DNS-01` challenge to generate and renew ACME certificates by provisioni
 
 ??? list "Supported Providers"
 
-    Here is a list of supported `providers`, that can automate the DNS verification, along with the required environment variables and their [wildcard & root domain support](/configuration/acme/#wildcard-domains). 
+    Here is a list of supported `providers`, that can automate the DNS verification, along with the required environment variables and their [wildcard & root domain support](#wildcard-domains). 
     
     | Provider Name                                          | Provider Code  | Environment Variables                                                                                                                     | Wildcard & Root Domain Support |
     |--------------------------------------------------------|----------------|-------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------|
@@ -220,7 +220,7 @@ Each domain & SAN will lead to a certificate request.
 #### Wildcard Domains
 
 [ACME V2](https://community.letsencrypt.org/t/acme-v2-and-wildcard-certificate-support-is-live/55579) supports wildcard certificates.
-As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/staging-endpoint-for-acme-v2/49605) wildcard certificates can only be generated through a [`DNS-01` challenge](/configuration/acme/#dnschallenge).
+As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/staging-endpoint-for-acme-v2/49605) wildcard certificates can only be generated through a [`DNS-01` challenge](#dnschallenge).
 
 ```toml
 [acme]
@@ -240,7 +240,7 @@ Most likely the root domain should receive a certificate too, so it needs to be 
 In this case the generated DNS TXT record for both domains is the same.
 Even though this behavior is [DNS RFC](https://community.letsencrypt.org/t/wildcard-issuance-two-txt-records-for-the-same-name/54528/2) compliant, it can lead to problems as all DNS providers keep DNS records cached for a given time (TTL) and this TTL can be greater than the challenge timeout making the `DNS-01` challenge fail.
 The Traefik ACME client library [LEGO](https://github.com/xenolf/lego) supports some but not all DNS providers to work around this issue.
-The [`provider` table](/configuration/acme/#provider) indicates if they allow generating certificates for a wildcard domain and its root domain.
+The [Supported `provider` table](#dnschallenge) indicates if they allow generating certificates for a wildcard domain and its root domain.
 
 ### caServer
 
@@ -270,7 +270,7 @@ onHostRule = true
     The rule `Host(test1.traefik.io,test2.traefik.io)` will request a certificate with the main domain `test1.traefik.io` and SAN `test2.traefik.io`.
 
 !!! warning
-    `onHostRule` option can not be used to generate wildcard certificates. Refer to [wildcard generation](/configuration/acme/#wildcard-domains) for further information.
+    `onHostRule` option can not be used to generate wildcard certificates. Refer to [wildcard generation](#wildcard-domains) for further information.
 
 ### `storage`
 

@@ -18,10 +18,10 @@ Good Old Configuration File
 
 ### Old Content
 
-Traefik can hot-reload those rules which could be provided by [multiple configuration backends](/configuration/commons).
+Traefik can hot-reload those rules which could be provided by multiple configuration backends.
 
 We only need to enable `watch` option to make Traefik watch configuration backend changes and generate its configuration automatically.
 Routes to services will be created and updated instantly at any changes.
 
-Please refer to the [configuration backends](/configuration/commons) section to get documentation on it.
+Please refer to the configuration backends section to get documentation on it.
 
