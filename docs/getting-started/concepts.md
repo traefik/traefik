@@ -5,9 +5,9 @@ Everything You Need to Know
 
 ## Edge Router
 
-Traefik is an _Edge Router_, it means that it's the door to your platform, and that it intercepts and routes every incoming request: it knows all the logic and every rule that determine which services handle which requests (based on the [path](../routing/routers.md#path), the [host](../routing/routers.md#host), [headers](../routing/routers.md#headers), [and so on](../routing/routers.md#rule) ...).
+Traefik is an _Edge Router_, it means that it's the door to your platform, and that it intercepts and routes every incoming request: it knows all the logic and every rule that determine which services handle which requests (based on the [path](/routing/routers/#rule), the [host](/routing/routers/#rule), [headers](/routing/routers/#rule), [and so on](/routing/routers/#rule) ...).
 
-![The Door to Your Infrastructure](../img/traefik-concepts-1.png)
+![The Door to Your Infrastructure](/img/traefik-concepts-1.png)
 
 ## Auto Service Discovery
 
