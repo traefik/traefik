@@ -15,7 +15,7 @@ import (
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
-	"github.com/jjcollinge/logrus-appinsights"
+	appinsights "github.com/jjcollinge/logrus-appinsights"
 	sf "github.com/jjcollinge/servicefabric"
 )
 
@@ -164,11 +164,12 @@ func getClusterServices(sfClient sfClient) ([]ServiceItemExtended, error) {
 				for _, partition := range partitions.Items {
 					partitionExt := PartitionItemExtended{PartitionItem: partition}
 
-					if isStateful(item) {
+					switch {
+					case isStateful(item):
 						partitionExt.Replicas = getValidReplicas(sfClient, app, service, partition)
-					} else if isStateless(item) {
+					case isStateless(item):
 						partitionExt.Instances = getValidInstances(sfClient, app, service, partition)
-					} else {
+					default:
 						log.Errorf("Unsupported service kind %s in service %s", partition.ServiceKind, service.Name)
 						continue
 					}
@@ -291,7 +292,7 @@ func getLabels(sfClient sfClient, service *sf.ServiceItem, app *sf.ApplicationIt
 }
 
 func createAppInsightsHook(appInsightsClientName string, instrumentationKey string, maxBatchSize int, interval flaeg.Duration) {
-	hook, err := logrus_appinsights.New(appInsightsClientName, logrus_appinsights.Config{
+	hook, err := appinsights.New(appInsightsClientName, appinsights.Config{
 		InstrumentationKey: instrumentationKey,
 		MaxBatchSize:       maxBatchSize,            // optional
 		MaxBatchInterval:   time.Duration(interval), // optional

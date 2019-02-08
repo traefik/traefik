@@ -63,7 +63,6 @@ type ExponentialBackOff struct {
 
 	currentInterval time.Duration
 	startTime       time.Time
-	random          *rand.Rand
 }
 
 // Clock is an interface that returns current time for BackOff.
@@ -89,7 +88,6 @@ func NewExponentialBackOff() *ExponentialBackOff {
 		MaxInterval:         DefaultMaxInterval,
 		MaxElapsedTime:      DefaultMaxElapsedTime,
 		Clock:               SystemClock,
-		random:              rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 	b.Reset()
 	return b
@@ -118,10 +116,7 @@ func (b *ExponentialBackOff) NextBackOff() time.Duration {
 		return Stop
 	}
 	defer b.incrementCurrentInterval()
-	if b.random == nil {
-		b.random = rand.New(rand.NewSource(time.Now().UnixNano()))
-	}
-	return getRandomValueFromInterval(b.RandomizationFactor, b.random.Float64(), b.currentInterval)
+	return getRandomValueFromInterval(b.RandomizationFactor, rand.Float64(), b.currentInterval)
 }
 
 // GetElapsedTime returns the elapsed time since an ExponentialBackOff instance

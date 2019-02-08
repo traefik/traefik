@@ -15,7 +15,6 @@ type Notify func(error, time.Duration)
 
 // Retry the operation o until it does not return error or BackOff stops.
 // o is guaranteed to be run at least once.
-// It is the caller's responsibility to reset b after Retry returns.
 //
 // If o returns a *PermanentError, the operation is not retried, and the
 // wrapped error is returned.
@@ -29,6 +28,7 @@ func Retry(o Operation, b BackOff) error { return RetryNotify(o, b, nil) }
 func RetryNotify(operation Operation, b BackOff, notify Notify) error {
 	var err error
 	var next time.Duration
+	var t *time.Timer
 
 	cb := ensureContext(b)
 
@@ -42,7 +42,7 @@ func RetryNotify(operation Operation, b BackOff, notify Notify) error {
 			return permanent.Err
 		}
 
-		if next = b.NextBackOff(); next == Stop {
+		if next = cb.NextBackOff(); next == Stop {
 			return err
 		}
 
@@ -50,11 +50,15 @@ func RetryNotify(operation Operation, b BackOff, notify Notify) error {
 			notify(err, next)
 		}
 
-		t := time.NewTimer(next)
+		if t == nil {
+			t = time.NewTimer(next)
+			defer t.Stop()
+		} else {
+			t.Reset(next)
+		}
 
 		select {
 		case <-cb.Context().Done():
-			t.Stop()
 			return err
 		case <-t.C:
 		}

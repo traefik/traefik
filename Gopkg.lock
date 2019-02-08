@@ -255,10 +255,10 @@
   revision = "4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9"
 
 [[projects]]
-  branch = "master"
   name = "github.com/cenk/backoff"
   packages = ["."]
-  revision = "2ea60e5f094469f9e65adb9cd103795b73ae743e"
+  revision = "1e4cf3da559842a91afcb6ea6141451e6c30c618"
+  version = "v2.1.1"
 
 [[projects]]
   name = "github.com/cenkalti/backoff"
@@ -308,8 +308,8 @@
 [[projects]]
   name = "github.com/containous/traefik-extra-service-fabric"
   packages = ["."]
-  revision = "6e90a9eef2ac9d320e55d6e994d169673a8d8b0f"
-  version = "v1.3.0"
+  revision = "b9142ccc2205284b288c0b085444fedd42ea5126"
+  version = "v1.4.0"
 
 [[projects]]
   name = "github.com/coreos/bbolt"
@@ -1904,6 +1904,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7234505a1c5efade68c571b94aded09899e8c5888d3f4af16928d88e8797c887"
+  inputs-digest = "8e2d1952c8e853cc6514e5962809e746f0f20eda9dce49e5f17a1d35544fc79e"
   solver-name = "gps-cdcl"
   solver-version = 1
