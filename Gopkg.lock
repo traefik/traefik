@@ -1023,6 +1023,14 @@
   version = "v1.3.7"
 
 [[projects]]
+  digest = "1:78efd72f12ed0244e5fbe82bd0ecdbaf3e21402ee9176525ef1138a2fc0d3b17"
+  name = "github.com/instana/go-sensor"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "493edb42228321483dd4d59ade71ca93fa89d66b"
+  version = "1.4.12"
+
+[[projects]]
   digest = "1:ac6d01547ec4f7f673311b4663909269bfb8249952de3279799289467837c3cc"
   name = "github.com/jmespath/go-jmespath"
   packages = ["."]
@@ -1110,6 +1118,14 @@
   pruneopts = "NUT"
   revision = "d0d31d8ca62fa3f7e4526ca0ce95de81e4ed001e"
   version = "v0.5.1"
+
+[[projects]]
+  digest = "1:8520e78cbe9878f6bf0cfdcfaed5761cd575b3568c260a1c891ac1f5c5c6a726"
+  name = "github.com/looplab/fsm"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "84b5307469f859464403f80919467950a79de1b1"
+  version = "v0.1.0"
 
 [[projects]]
   digest = "1:196b0d7580e898df15a7cc5371cbfe2b8e22904f5c6c883ed5db0130e551c8fb"
@@ -1326,6 +1342,17 @@
   packages = ["."]
   pruneopts = "NUT"
   revision = "a52f2342449246d5bcc273e65cbdcfa5f7d6c63c"
+
+[[projects]]
+  digest = "1:cc405544fecfb5a8e0c409127ef67ce3b91d11143a00121e5b822e4f8eabe7d2"
+  name = "github.com/opentracing/basictracer-go"
+  packages = [
+    ".",
+    "wire",
+  ]
+  pruneopts = "NUT"
+  revision = "1b32af207119a14b1b231d451df3ed04a72efebf"
+  version = "v1.0.0"
 
 [[projects]]
   digest = "1:7da29c22bcc5c2ffb308324377dc00b5084650348c2799e573ed226d8cc9faf0"
@@ -2326,6 +2353,7 @@
     "github.com/hashicorp/consul/api",
     "github.com/hashicorp/go-version",
     "github.com/influxdata/influxdb/client/v2",
+    "github.com/instana/go-sensor",
     "github.com/libkermit/compose/check",
     "github.com/libkermit/docker",
     "github.com/libkermit/docker-check",

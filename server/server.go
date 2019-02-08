@@ -21,6 +21,7 @@ import (
 	"github.com/containous/traefik/server/middleware"
 	"github.com/containous/traefik/tracing"
 	"github.com/containous/traefik/tracing/datadog"
+	"github.com/containous/traefik/tracing/instana"
 	"github.com/containous/traefik/tracing/jaeger"
 	"github.com/containous/traefik/tracing/zipkin"
 	"github.com/containous/traefik/types"
@@ -60,6 +61,8 @@ func setupTracing(conf *static.Tracing) tracing.TrackingBackend {
 		return conf.Zipkin
 	case datadog.Name:
 		return conf.DataDog
+	case instana.Name:
+		return conf.Instana
 	default:
 		log.WithoutContext().Warnf("Could not initialize tracing: unknown tracer %q", conf.Backend)
 		return nil

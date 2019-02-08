@@ -24,6 +24,7 @@ import (
 	"github.com/containous/traefik/provider/marathon"
 	"github.com/containous/traefik/provider/rest"
 	"github.com/containous/traefik/tracing/datadog"
+	"github.com/containous/traefik/tracing/instana"
 	"github.com/containous/traefik/tracing/jaeger"
 	"github.com/containous/traefik/tracing/zipkin"
 	"github.com/containous/traefik/types"
@@ -113,6 +114,11 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 			GlobalTag:          "",
 			Debug:              false,
 			PrioritySampling:   false,
+		},
+		Instana: &instana.Config{
+			LocalAgentHost: "localhost",
+			LocalAgentPort: 42699,
+			LogLevel:       "info",
 		},
 	}
 
