@@ -167,8 +167,8 @@
     "edgegrid",
     "jsonhooks-v1"
   ]
-  revision = "a494eba1efa1f38338393727dff63389a6a66534"
-  version = "v0.6.0"
+  revision = "1471ce9c14c6d8c007516e129262962a628fecdf"
+  version = "v0.7.3"
 
 [[projects]]
   name = "github.com/aliyun/alibaba-cloud-sdk-go"
@@ -259,6 +259,12 @@
   name = "github.com/cenk/backoff"
   packages = ["."]
   revision = "2ea60e5f094469f9e65adb9cd103795b73ae743e"
+
+[[projects]]
+  name = "github.com/cenkalti/backoff"
+  packages = ["."]
+  revision = "1e4cf3da559842a91afcb6ea6141451e6c30c618"
+  version = "v2.1.1"
 
 [[projects]]
   name = "github.com/cloudflare/cloudflare-go"
@@ -597,8 +603,8 @@
 [[projects]]
   name = "github.com/go-ini/ini"
   packages = ["."]
-  revision = "32e4c1e6bc4e7d0d8451aa6b75200d19e37a536a"
-  version = "v1.32.0"
+  revision = "6ed8d5f64cd79a498d1f3fab5880cc376ce41bbe"
+  version = "v1.41.0"
 
 [[projects]]
   name = "github.com/go-kit/kit"
@@ -712,6 +718,12 @@
   revision = "bbcb9da2d746f8bdbd6a936686a0a6067ada0ec5"
 
 [[projects]]
+  name = "github.com/google/uuid"
+  packages = ["."]
+  revision = "064e2069ce9c359c118179501254f67d7d37ba24"
+  version = "0.2"
+
+[[projects]]
   name = "github.com/googleapis/gnostic"
   packages = [
     "OpenAPIv2",
@@ -720,6 +732,22 @@
   ]
   revision = "ee43cbb60db7bd22502942cccbc39059117352ab"
   version = "v0.1.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/gophercloud/gophercloud"
+  packages = [
+    ".",
+    "openstack",
+    "openstack/dns/v2/recordsets",
+    "openstack/dns/v2/zones",
+    "openstack/identity/v2/tenants",
+    "openstack/identity/v2/tokens",
+    "openstack/identity/v3/tokens",
+    "openstack/utils",
+    "pagination"
+  ]
+  revision = "bc37892e196848d7d56ba0db974ba1d7d5c43b2a"
 
 [[projects]]
   name = "github.com/gorilla/context"
@@ -870,12 +898,6 @@
   revision = "b84e30acd515aadc4b783ad4ff83aff3299bdfe0"
 
 [[projects]]
-  name = "github.com/ldez/go-auroradns"
-  packages = ["."]
-  revision = "b40dfcae7c417f8129579362695dc1f3cfe5928d"
-  version = "v2.0.0"
-
-[[projects]]
   branch = "master"
   name = "github.com/libkermit/compose"
   packages = [
@@ -1022,6 +1044,18 @@
   name = "github.com/namedotcom/go"
   packages = ["namecom"]
   revision = "08470befbe04613bd4b44cb6978b05d50294c4d4"
+
+[[projects]]
+  name = "github.com/nrdcg/auroradns"
+  packages = ["."]
+  revision = "750ca8603f9f2cca2457acb22ea6e44d3f05358c"
+  version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/nrdcg/goinwx"
+  packages = ["."]
+  revision = "d8152159450570012552f924a0ae6ab3d8c617e0"
+  version = "v0.6.0"
 
 [[projects]]
   branch = "master"
@@ -1213,12 +1247,6 @@
   version = "v1.1.0"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/smueller18/goinwx"
-  packages = ["."]
-  revision = "5d138389109eca96463f44f692408f0d1c731278"
-
-[[projects]]
   name = "github.com/spf13/pflag"
   packages = ["."]
   revision = "cb88ea77998c3f024757528e3305022ab50b43be"
@@ -1274,12 +1302,6 @@
   ]
   revision = "1dc93a7db3567a5ccf865106afac88278ba940cf"
   version = "v5.8.1"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/tuvistavie/securerandom"
-  packages = ["."]
-  revision = "15512123a948d62f6361bd84818e11f2ad84059a"
 
 [[projects]]
   name = "github.com/tv42/zbase32"
@@ -1412,6 +1434,7 @@
     "providers/dns/cloudxns/internal",
     "providers/dns/conoha",
     "providers/dns/conoha/internal",
+    "providers/dns/designate",
     "providers/dns/digitalocean",
     "providers/dns/dnsimple",
     "providers/dns/dnsmadeeasy",
@@ -1461,8 +1484,8 @@
     "providers/dns/zoneee",
     "registration"
   ]
-  revision = "00ad82dec10ad0af1e037ee652ad1f1cc7015178"
-  version = "v2.1.0"
+  revision = "52e43eb318b07ace590c2144804292c89aa74802"
+  version = "v2.2.0"
 
 [[projects]]
   branch = "master"
@@ -1648,12 +1671,6 @@
   packages = ["."]
   revision = "5b3e00af70a9484542169a976dcab8d03e601a17"
   version = "v1.30.0"
-
-[[projects]]
-  branch = "v1"
-  name = "gopkg.in/mattes/go-expand-tilde.v1"
-  packages = ["."]
-  revision = "cb884138e64c9a8bf5c7d6106d74b0fca082df0c"
 
 [[projects]]
   branch = "v2"

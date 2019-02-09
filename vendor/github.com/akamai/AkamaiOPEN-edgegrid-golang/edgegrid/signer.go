@@ -14,8 +14,8 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
-	"github.com/tuvistavie/securerandom"
 )
 
 const defaultSection = "DEFAULT"
@@ -49,12 +49,12 @@ func makeEdgeTimeStamp() string {
 // It is a random string used to detect replayed request messages.
 // A GUID is recommended.
 func createNonce() string {
-	uuid, err := securerandom.Uuid()
+	uuid, err := uuid.NewRandom()
 	if err != nil {
 		log.Errorf(errorMap[ErrUUIDGenerateFailed], err)
 		return ""
 	}
-	return uuid
+	return uuid.String()
 }
 
 func stringMinifier(in string) (out string) {
