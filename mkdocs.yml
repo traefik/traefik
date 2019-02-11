@@ -72,7 +72,7 @@ markdown_extensions:
       permalink: true
 
 # Page tree
-pages:
+nav:
   - '': 'reference/acme.md'
   - '': 'reference/providers/docker.md'
   - '': 'reference/entrypoints.md'
