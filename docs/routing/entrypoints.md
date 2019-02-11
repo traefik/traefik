@@ -105,7 +105,9 @@ Entrypoints are part of the [static configuration](../getting-started/configurat
                 - --defaultentrypoints=powpow
                 - "--entryPoints=Name:powpow Address::42 Compress:true"
         ```
+
         or
+        
         ```yaml
         traefik:
             image: traefik

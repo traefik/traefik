@@ -51,7 +51,7 @@ Its exit status is `0` if Traefik is healthy and `1` if it is unhealthy.
 This can be used with Docker [HEALTHCHECK](https://docs.docker.com/engine/reference/builder/#healthcheck) instruction or any other health check orchestration mechanism.
 
 !!! note
-    The [`ping`](/features/ping/) endpoint must be enabled to allow the `healthcheck` command to call `/ping`.
+    The [`ping` endpoint](../ping/) must be enabled to allow the `healthcheck` command to call `/ping`.
 
 ```bash
 traefik healthcheck

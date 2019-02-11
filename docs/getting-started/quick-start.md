@@ -68,6 +68,7 @@ curl -H Host:whoami.docker.localhost http://127.0.0.1
 ```
 
 _Shows the following output:_
+
 ```yaml
 Hostname: 8656c8ddca6c
 IP: 172.27.0.3
