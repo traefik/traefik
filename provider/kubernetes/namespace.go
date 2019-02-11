@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// Namespaces holds kubernetes namespaces
+// Namespaces holds kubernetes namespaces.
 type Namespaces []string
 
 // Set adds strings elem into the the parser
