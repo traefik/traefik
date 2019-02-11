@@ -33,7 +33,7 @@ const (
 	traefikDefaultIngressClass       = "traefik"
 )
 
-// IngressEndpoint holds the endpoint information for the Kubernetes provider
+// IngressEndpoint holds the endpoint information for the Kubernetes provider.
 type IngressEndpoint struct {
 	IP               string `description:"IP used for Kubernetes Ingress endpoints"`
 	Hostname         string `description:"Hostname used for Kubernetes Ingress endpoints"`
