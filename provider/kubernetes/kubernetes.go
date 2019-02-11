@@ -517,7 +517,6 @@ func (p *Provider) addGlobalBackend(cl Client, i *extensionsv1beta1.Ingress, tem
 		for _, subset := range endpoints.Subsets {
 			endpointPort := endpointPortNumber(port, subset.Ports)
 			if endpointPort == 0 {
-				log.Errorf("Endpoint subset ports %v don't match service port: %v ", subset.Ports, port)
 				// endpoint port does not match service.
 				continue
 			}
