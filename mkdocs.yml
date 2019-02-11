@@ -66,10 +66,9 @@ markdown_extensions:
   - pymdownx.smartsymbols
   - pymdownx.superfences
   - pymdownx.tasklist
-# TODO: Fix plugin issues
-#  - markdown_include.include:
-#      base_path: /mkdocs/docs/includes/
-#      encoding: utf-8
+  - markdown_include.include:
+      base_path: docs/includes/
+      encoding: utf-8
   - toc:
       permalink: true
 
