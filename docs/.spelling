@@ -3,18 +3,14 @@
 # global dictionary is at the start, file overrides afterwards
 # one word per line, to define a file override use ' - filename'
 # where filename is relative to this configuration file
-traefikee
 traefik
 kubernetes
 kubectl
 namespace
 namespaces
 daemonset
-vCPU
 whoami
 containous
-ddos
-natively
 hostname
 http
 https
@@ -35,6 +31,5 @@ macOS
 sha256
 checksums
 e.g.
-support.containo.us
 frontends
 backends
