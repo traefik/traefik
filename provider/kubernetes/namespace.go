@@ -23,7 +23,7 @@ func (ns *Namespaces) Set(str string) error {
 // Get []string.
 func (ns *Namespaces) Get() interface{} { return *ns }
 
-// String return slice in a string
+// String return slice in a string.
 func (ns *Namespaces) String() string { return fmt.Sprintf("%v", *ns) }
 
 // SetValue sets []string into the parser.
