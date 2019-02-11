@@ -278,7 +278,7 @@ func translateNotFoundError(err error) (bool, error) {
 }
 
 // isWatchedNamespace checks to ensure that the namespace is being watched before we request
-// it to ensure we don't panic by requesting an out-of-watch object
+// it to ensure we don't panic by requesting an out-of-watch object.
 func (c *clientImpl) isWatchedNamespace(ns string) bool {
 	if c.isNamespaceAll {
 		return true
