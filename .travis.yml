@@ -16,7 +16,7 @@ env:
 
 script:
 - echo "Skipping tests... (Tests are executed on SemaphoreCI)"
-- if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then make docs-verify; fi
+- if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then make docs; fi
 
 before_deploy:
   - >
