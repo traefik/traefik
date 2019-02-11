@@ -1,12 +1,12 @@
 #!/bin/sh
 
+PATH_TO_SITE="${1:-/app/site}"
+
 set -eu
 
-PATH_TO_SITE="/app/site"
 [ -d "${PATH_TO_SITE}" ]
 
 NUMBER_OF_CPUS="$(grep -c processor /proc/cpuinfo)"
-
 
 echo "=== Checking HTML content..."
 
@@ -25,4 +25,4 @@ find "${PATH_TO_SITE}" -type f -not -path "/app/site/theme/*" \
   '{}' 1>/dev/null
 ## HTML-proofer options at https://github.com/gjtorikian/html-proofer#configuration
 
-echo "= Documentation checked successfuly."
+echo "= Documentation checked successfully."

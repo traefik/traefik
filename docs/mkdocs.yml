@@ -7,15 +7,15 @@ dev_addr: 0.0.0.0:8000
 repo_name: 'GitHub'
 repo_url: 'https://github.com/containous/traefik'
 
-docs_dir: 'docs'
+docs_dir: 'content'
 
 theme:
   name: 'material'
-  custom_dir: 'docs/theme'
+  custom_dir: 'theme'
   language: en
   include_sidebar: true
-  favicon: img/traefik.icon.png
-  logo: img/traefik.logo.png
+  favicon: assets/img/traefik.icon.png
+  logo: assets/img/traefik.logo.png
   palette:
     primary: 'blue'
     accent: 'light blue'
@@ -34,26 +34,16 @@ google_analytics:
   - 'UA-51880359-3'
   - 'docs.traefik.io'
 
-# Options
-# Comment because the call of the CDN is very slow.
-#extra:
-#  social:
-#    - type: 'github'
-#      link: 'https://github.com/containous/traefik'
-#    - type: 'stack-overflow'
-#      link: 'https://stackoverflow.com/questions/tagged/traefik'
-#    - type: 'slack'
-#      link: 'https://traefik.herokuapp.com'
-#    - type: 'twitter'
-#      link: 'https://twitter.com/traefikproxy'
-
 extra_css:
-  - theme/styles/extra.css
-  - theme/styles/atom-one-light.css # Hightlight JS CSS theme
+  - assets/styles/extra.css # Our custom styles
+  - assets/styles/atom-one-light.css # HightlightJS's CSS theme
 
 extra_javascript:
-  - theme/js/hljs/highlight.pack.js # Download from https://highlightjs.org/download/ and enable YAML, TOML and Dockerfile
-  - theme/js/extra.js
+  - assets/js/hljs/highlight.pack.js # Download from https://highlightjs.org/download/ and enable YAML, TOML and Dockerfile
+  - assets/js/extra.js
+
+plugins:
+  - search
 
 markdown_extensions:
   - attr_list
@@ -67,7 +57,7 @@ markdown_extensions:
   - pymdownx.superfences
   - pymdownx.tasklist
   - markdown_include.include:
-      base_path: docs/includes/
+      base_path: content/includes/
       encoding: utf-8
   - toc:
       permalink: true
