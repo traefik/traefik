@@ -6,8 +6,11 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -16,7 +19,7 @@ import (
 )
 
 var (
-	libraryVersion = "0.6.0"
+	libraryVersion = "0.6.2"
 	// UserAgent is the User-Agent value sent for all requests
 	UserAgent = "Akamai-Open-Edgegrid-golang/" + libraryVersion + " golang/" + strings.TrimPrefix(runtime.Version(), "go")
 	// Client is the *http.Client to use
@@ -61,13 +64,21 @@ func NewRequest(config edgegrid.Config, method, path string, body io.Reader) (*h
 // NewJSONRequest creates an HTTP request that can be sent to the Akamai APIs with a JSON body
 // The JSON body is encoded and the Content-Type/Accept headers are set automatically.
 func NewJSONRequest(config edgegrid.Config, method, path string, body interface{}) (*http.Request, error) {
-	jsonBody, err := jsonhooks.Marshal(body)
-	if err != nil {
-		return nil, err
+	var req *http.Request
+	var err error
+
+	if body != nil {
+		jsonBody, err := jsonhooks.Marshal(body)
+		if err != nil {
+			return nil, err
+		}
+
+		buf := bytes.NewReader(jsonBody)
+		req, err = NewRequest(config, method, path, buf)
+	} else {
+		req, err = NewRequest(config, method, path, nil)
 	}
 
-	buf := bytes.NewReader(jsonBody)
-	req, err := NewRequest(config, method, path, buf)
 	if err != nil {
 		return nil, err
 	}
@@ -76,6 +87,36 @@ func NewJSONRequest(config edgegrid.Config, method, path string, body interface{
 	req.Header.Set("Accept", "application/json,*/*")
 
 	return req, nil
+}
+
+// NewMultiPartFormDataRequest creates an HTTP request that uploads a file to the Akamai API
+func NewMultiPartFormDataRequest(config edgegrid.Config, uriPath, filePath string, otherFormParams map[string]string) (*http.Request, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	// TODO: make this field name configurable
+	part, err := writer.CreateFormFile("importFile", filepath.Base(filePath))
+	if err != nil {
+		return nil, err
+	}
+	_, err = io.Copy(part, file)
+
+	for key, val := range otherFormParams {
+		_ = writer.WriteField(key, val)
+	}
+	err = writer.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := NewRequest(config, "POST", uriPath, body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	return req, err
 }
 
 // Do performs a given HTTP Request, signed with the Akamai OPEN Edgegrid

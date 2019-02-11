@@ -4,8 +4,11 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"os"
+	"strconv"
 	"time"
 
+	"github.com/miekg/dns"
 	"github.com/xenolf/lego/acme"
 	"github.com/xenolf/lego/acme/api"
 	"github.com/xenolf/lego/challenge"
@@ -135,7 +138,7 @@ func (c *Challenge) Solve(authz acme.Authorization) error {
 	}
 
 	chlng.KeyAuthorization = keyAuth
-	return c.validate(c.core, authz.Identifier.Value, chlng)
+	return c.validate(c.core, domain, chlng)
 }
 
 // CleanUp cleans the challenge.
@@ -172,5 +175,14 @@ func GetRecord(domain, keyAuth string) (fqdn string, value string) {
 	// base64URL encoding without padding
 	value = base64.RawURLEncoding.EncodeToString(keyAuthShaBytes[:sha256.Size])
 	fqdn = fmt.Sprintf("_acme-challenge.%s.", domain)
+
+	if ok, _ := strconv.ParseBool(os.Getenv("LEGO_EXPERIMENTAL_CNAME_SUPPORT")); ok {
+		r, err := dnsQuery(fqdn, dns.TypeCNAME, recursiveNameservers, true)
+		// Check if the domain has CNAME then return that
+		if err == nil && r.Rcode == dns.RcodeSuccess {
+			fqdn = updateDomainWithCName(r, fqdn)
+		}
+	}
+
 	return
 }

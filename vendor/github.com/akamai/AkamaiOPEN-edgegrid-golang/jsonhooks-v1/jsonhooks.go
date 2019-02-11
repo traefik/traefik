@@ -44,7 +44,7 @@ type PreJSONMarshaler interface {
 // ImplementsPreJSONMarshaler checks for support for the PreMarshalJSON pre-hook
 func ImplementsPreJSONMarshaler(v interface{}) bool {
 	value := reflect.ValueOf(v)
-	if value.Kind() == reflect.Ptr && value.IsNil() {
+	if !value.IsValid() {
 		return false
 	}
 
