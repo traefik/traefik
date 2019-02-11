@@ -20,7 +20,7 @@ func (ns *Namespaces) Set(str string) error {
 	return nil
 }
 
-// Get []string
+// Get []string.
 func (ns *Namespaces) Get() interface{} { return *ns }
 
 // String return slice in a string
