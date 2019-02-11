@@ -297,6 +297,7 @@ In Docker you can mount either the JSON file, or the folder containing it:
 ```bash
 docker run -v "/my/host/acme.json:acme.json" traefik
 ```
+
 ```bash
 docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 ```

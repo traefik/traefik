@@ -3,14 +3,14 @@
 How the Magic Happens
 {: .subtitle }
 
-![Configuration](/img/static-dynamic-configuration.png)
+![Configuration](../../img/static-dynamic-configuration.png)
 
 Configuration in Traefik can refer to two different things:
    
    - The fully dynamic routing configuration (refered to as the _dynamic configuration_)
    - The startup configuration (refered to as the _static configuration_)
 
-Elements in the _static configuration_ set up connections to [providers](/providers/overview/) and define the [entrypoints](/routing/entrypoints/) Traefik will listen to (these elements don't change often).
+Elements in the _static configuration_ set up connections to [providers](../../providers/overview/) and define the [entrypoints](../../routing/entrypoints/) Traefik will listen to (these elements don't change often).
 
 The _dynamic configuration_ contains everything that defines how the requests are handled by your system. This configuration can change and is seamlessly hot-reloaded, without any request interuption or connection loss.    
 

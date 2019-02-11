@@ -49,30 +49,31 @@ google_analytics:
 
 extra_css:
   - theme/styles/extra.css
-  - theme/styles/atom-one-light.css
+  - theme/styles/atom-one-light.css # Hightlight JS CSS theme
 
 extra_javascript:
-  - theme/js/hljs/highlight.pack.js
+  - theme/js/hljs/highlight.pack.js # Download from https://highlightjs.org/download/ and enable YAML, TOML and Dockerfile
   - theme/js/extra.js
 
 markdown_extensions:
   - attr_list
   - admonition
-  - codehilite
   - footnotes
   - pymdownx.details
-# TODO: Fix plugin issues
-#  - pymdownx.superfences
-#  - pymdownx.smartsymbols
-#  - pymdownx.tasklist
-#  - markdown_include.include:
-#      base_path: /mkdocs/docs/includes/
-#      encoding: utf-8
+  - pymdownx.inlinehilite
+  - pymdownx.highlight:
+      use_pygments: false # hljs is used instead of pygment for TOML hihglighting support
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tasklist
+  - markdown_include.include:
+      base_path: docs/includes/
+      encoding: utf-8
   - toc:
       permalink: true
 
 # Page tree
-pages:
+nav:
   - '': 'reference/acme.md'
   - '': 'reference/providers/docker.md'
   - '': 'reference/entrypoints.md'

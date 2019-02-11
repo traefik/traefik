@@ -35,7 +35,7 @@ logLevel = "INFO"
 
 ## CLI
 
-For more information about the CLI, see the documentation about [Traefik command](/basics/#traefik).
+For more information about the CLI, see the documentation about [Traefik command](../../features/cli).
 
 ```shell
 --logLevel="DEBUG"
@@ -51,4 +51,3 @@ For more information about the CLI, see the documentation about [Traefik command
 --accessLog.fields.headers.defaultMode="keep"
 --accessLog.fields.headers.names="User-Agent=redact Authorization=drop Content-Type=keep"
 ```
-
