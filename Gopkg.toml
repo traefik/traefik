@@ -178,9 +178,8 @@
   name = "github.com/vulcand/oxy"
 
 [[constraint]]
-#  branch = "master"
   name = "github.com/xenolf/lego"
-  version = "2.1.0"
+  version = "2.2.0"
 
 [[constraint]]
   name = "google.golang.org/grpc"
