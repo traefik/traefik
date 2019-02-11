@@ -21,7 +21,7 @@ docs: docs-clean docs-image docs-build docs-verify
 
 # Writer Mode: build and serve docs on http://localhost:8000 with livereload
 docs-serve: docs-image
-	docker run  $(DOCKER_RUN_DOC_OPTS) $(TRAEFIK_DOC_IMAGE) mkdocs serve
+	docker run  $(DOCKER_RUN_DOC_OPTS) $(TRAEFIK_DOCS_BUILD_IMAGE) mkdocs serve
 
 # Utilities Targets for each step
 docs-image:
