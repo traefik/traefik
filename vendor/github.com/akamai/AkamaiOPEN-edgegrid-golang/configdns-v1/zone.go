@@ -82,7 +82,7 @@ func GetZone(hostname string) (*Zone, error) {
 	} else if res.StatusCode == 404 {
 		return nil, &ZoneError{zoneName: hostname}
 	} else {
-		err = client.BodyJSON(res, &zone)
+		err = client.BodyJSON(res, zone)
 		if err != nil {
 			return nil, err
 		}
@@ -762,11 +762,18 @@ func (zone *Zone) removeTxtRecord(record *TxtRecord) error {
 	return errors.New("Txt Record not found")
 }
 
-func (zone *Zone) PreMarshalJSON() error {
+func (zone *Zone) PostUnmarshalJSON() error {
 	if zone.Zone.Soa.Serial > 0 {
-		zone.Zone.Soa.Serial = zone.Zone.Soa.Serial + 1
-	} else {
+		zone.Zone.Soa.originalSerial = zone.Zone.Soa.Serial
+	}
+	return nil
+}
+
+func (zone *Zone) PreMarshalJSON() error {
+	if zone.Zone.Soa.Serial == 0 {
 		zone.Zone.Soa.Serial = uint(time.Now().Unix())
+	} else if zone.Zone.Soa.Serial == zone.Zone.Soa.originalSerial {
+		zone.Zone.Soa.Serial = zone.Zone.Soa.Serial + 1
 	}
 	return nil
 }
@@ -786,21 +793,24 @@ func (zone *Zone) validateCnames() (bool, []name) {
 }
 
 func (zone *Zone) removeCnameName(host string) {
-	for i, v := range cnameNames {
-		if v.name == host {
-			r := cnameNames[:i]
-			cnameNames = append(r, cnameNames[i+1:]...)
+	var ncn []name
+	for _, v := range cnameNames {
+		if v.name != host {
+			ncn =append(ncn, v)
 		}
 	}
+	cnameNames = ncn
 }
 
+
 func (zone *Zone) removeNonCnameName(host string) {
-	for i, v := range nonCnameNames {
-		if v.name == host {
-			r := nonCnameNames[:i]
-			nonCnameNames = append(r, nonCnameNames[i+1:]...)
+	var ncn []name
+	for _, v := range nonCnameNames {
+		if v.name != host {
+			ncn =append(ncn, v)
 		}
 	}
+	nonCnameNames = ncn
 }
 
 func (zone *Zone) FindRecords(recordType string, options map[string]interface{}) []DNSRecord {
