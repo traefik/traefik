@@ -9,7 +9,7 @@ import (
 type Namespaces []string
 
 // Set adds strings elem into the the parser
-// it splits str on , and ;
+// it splits str on , and ;.
 func (ns *Namespaces) Set(str string) error {
 	fargs := func(c rune) bool {
 		return c == ',' || c == ';'
