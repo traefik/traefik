@@ -83,7 +83,7 @@ func (p *Provider) newK8sClient(ctx context.Context, ingressLabelSelector string
 	return cl, err
 }
 
-// Init the provider
+// Init the provider.
 func (p *Provider) Init() error {
 	return p.BaseProvider.Init()
 }
