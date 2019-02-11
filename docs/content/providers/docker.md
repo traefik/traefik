@@ -3,7 +3,7 @@
 A Story of Labels & Containers
 {: .subtitle } 
 
-![Docker](../img/providers/docker.png)
+![Docker](../assets/img/providers/docker.png)
 
 Attach labels to your containers and let Traefik do the rest!
 

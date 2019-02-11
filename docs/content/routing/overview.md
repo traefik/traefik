@@ -8,7 +8,7 @@ Let's zoom on Traefik's architecture and talk about the components that enable t
 First, when you start Traefik, you define [entrypoints](./entrypoints.md) (in their most basic forms, they are port numbers). Then, connected to these entrypoints, [routers](./routers.md) analyze the incoming requests to see if they match a set of [rules](../routers#rule). If they do, the router might transform the request using pieces of [middleware](../middlewares/overview.md) before forwarding them to your [services](./services.md).
 
 
-![Architecture](../img/architecture-overview.png)
+![Architecture](../assets/img/architecture-overview.png)
 
 ## Clear Responsibilities
 

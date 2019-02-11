@@ -3,7 +3,7 @@
 Opening Connections for Incomming Requests
 {: .subtitle }
 
-![EntryPoints](../img/entrypoints.png)
+![EntryPoints](../assets/img/entrypoints.png)
 
 Entrypoints are the network entry points into Traefik.
 They can be defined using:

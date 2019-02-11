@@ -6,12 +6,12 @@ See What's Going On
 The dashboard is the central place that shows you the current active routes handled by Traefik. 
 
 <figure>
-   <img src="../../img/dashboard-main.png" alt="Dashboard - Providers" />
+   <img src="../../assets/img/dashboard-main.png" alt="Dashboard - Providers" />
    <figcaption>The dashboard in action with Traefik listening to 3 different providers</figcaption>
 </figure>
 
 <figure>
-   <img src="../../img/dashboard-health.png" alt="Dashboard - Health" />
+   <img src="../../assets/img/dashboard-health.png" alt="Dashboard - Health" />
    <figcaption>The dashboard shows the health of the system.</figcaption>
 </figure>
 

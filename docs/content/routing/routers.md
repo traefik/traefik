@@ -3,7 +3,7 @@
 Connecting Requests to Services
 {: .subtitle }
 
-![Routers](../img/routers.png)
+![Routers](../assets/img/routers.png)
 
 A router is in charge of connecting incoming requests to the services that can handle them. In the process, routers may use pieces of [middleware](../middlewares/overview.md) to update the request, or act before forwarding the request to the service.
 

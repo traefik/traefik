@@ -3,7 +3,7 @@
 How to Read the Request before Forwarding It
 {: .subtitle }
 
-![Buffering](../img/middleware/buffering.png)
+![Buffering](../assets/img/middleware/buffering.png)
 
 The Buffering middleware gives you control on how you want to read the requests before sending them to services.
 
@@ -67,4 +67,3 @@ Available functions for the retry expression are:
    - `Attempts()` number of attempts (the first one counts)
    - `ResponseCode()` response code of the service
    - `IsNetworkError()` - if the response code is related to networking error 
-

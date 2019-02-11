@@ -3,7 +3,7 @@
 How the Magic Happens
 {: .subtitle }
 
-![Configuration](../../img/static-dynamic-configuration.png)
+![Configuration](../assets/img/static-dynamic-configuration.png)
 
 Configuration in Traefik can refer to two different things:
    

@@ -3,7 +3,7 @@
 Tweaking the Request
 {: .subtitle }
 
-![Overview](../img/middleware/overview.png)
+![Overview](../assets/img/middleware/overview.png)
 
 Attached to the routers, pieces of middleware are a mean of tweaking the requests before they are sent to your [service](../routing/services.md) (or before the answer from the services are sent to the clients). 
 

@@ -3,7 +3,7 @@
 Traefik's Many Friends
 {: .subtitle }
 
-![Providers](../img/providers.png)
+![Providers](../assets/img/providers.png)
 
 Providers in Traefik are existing infrastructure components, whether orchestrators, container engines, cloud providers, or key-value stores. 
 The idea is that Traefik will query the providers' API in order to find relevant information about routing, and each time Traefik detects a change, it dynamicaly updates the routes.
@@ -86,4 +86,3 @@ If you want to limit the scope of Traefik service discovery, you can set constra
          [providers.docker]
             constraints = ["tag==api"]
         ```
-        

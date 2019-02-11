@@ -3,7 +3,7 @@
 Protection from Too Many Calls
 {: .subtitle }
 
-![RateLimit](../img/middleware/ratelimit.png)
+![RateLimit](../assets/img/middleware/ratelimit.png)
 
 The RateLimit middleware ensures that services will receive a _fair_ number of requests, and allows you define what is fair.
 
@@ -66,4 +66,3 @@ The rate limit will allow an average of `average` requests every `period`, with 
 !!! note "Period Format"
 
     Period is to be given in a format understood by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration).
-    

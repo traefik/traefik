@@ -3,7 +3,7 @@
 It Has Never Been Easier to Say That Something Went Wrong
 {: .subtitle }
 
-![ErrorPages](../img/middleware/errorpages.png)
+![ErrorPages](../assets/img/middleware/errorpages.png)
 
 The ErrorPage middleware returns a custom page in lieu of the default, according to configured ranges of HTTP Status codes.
 

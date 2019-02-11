@@ -3,7 +3,7 @@
 Using an External Service to Ccheck for Credentials
 {: .subtitle }
 
-![AuthForward](../img/middleware/authforward.png)
+![AuthForward](../assets/img/middleware/authforward.png)
 
 The ForwardAuth middleware delegate the authentication to an external service.
 If the service response code is 2XX, access is granted and the original request is performed.

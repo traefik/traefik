@@ -3,7 +3,7 @@
 Configuring How to Reach the Services
 {: .subtitle }
 
-![Services](../img/services.png)
+![Services](../assets/img/services.png)
 
 The `Services` are responsible for configuring how to reach the actual services that will eventually handle the incoming requests. 
 
