@@ -14,7 +14,7 @@ RUN apk --no-cache --no-progress add \
     ruby-nokogiri=1.8.3-r0 \
     tini \
   && gem install --no-document html-proofer -v 3.9.3 \
-  && npm install write-good https://github.com/adamdmharvey/node-markdown-spellcheck markdownlint markdownlint-cli --global
+  && npm install write-good markdownlint markdownlint-cli --global
 
 COPY ./scripts/verify.sh /verify.sh
 COPY ./scripts/lint.sh /lint.sh

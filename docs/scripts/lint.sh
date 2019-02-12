@@ -13,10 +13,6 @@ echo "== Linting Markdown"
 cd "${BASE_DIR}" || exit 1
 markdownlint "${BASE_DIR}/content/**/*.md" || EXIT_CODE=1
 
-echo "== Spell Checking the Markdown"
-# Uses the file ".spelling" as dictionary
-mdspell "${BASE_DIR}/content/**/*.md" --ignore-numbers --ignore-acronyms --en-us --report --no-colour || EXIT_CODE=1
-
 echo "== Checking English Writing Style with 'Write-Good'"
 write-good "${BASE_DIR}/content/"**/*.md || EXIT_CODE=1
 
