@@ -273,36 +273,42 @@ The data are taken from the following certificate part:
 
 The escape `notafter` info part will be like:
 
-```NA=1607166616```
+```text
+NA=1607166616
+```
 
 #### info.notbefore
 
 Set the `info.notafter` option to `true` to add the `Not Before` information from the `Validity` part.
 
-The data are taken from the following certificate part:      
+The data are taken from the following certificate part:
 
 ```text
-    Validity
-        Not Before: Dec  6 11:10:16 2018 GMT
+Validity
+    Not Before: Dec  6 11:10:16 2018 GMT
 ```
 
 The escape `notafter` info part will be like:
 
-```NB=1544094616```
+```text
+NB=1544094616
+```
 
 #### info.sans
 
 Set the `info.sans` option to `true` to add the `Subject Alternative Name` information from the `Subject Alternative Name` part.
-The data are taken from the following certificate part:      
+The data are taken from the following certificate part:
 
 ```text
  X509v3 Subject Alternative Name: 
     DNS:*.cheese.org, DNS:*.cheese.net, DNS:*.cheese.com, IP Address:10.0.1.0, IP Address:10.0.1.2, email:test@cheese.org, email:test@cheese.net
 ```
 
-The escape SANs info part will be like :    
+The escape SANs info part will be like:
 
-```SAN=*.cheese.org,*.cheese.net,*.cheese.com,test@cheese.org,test@cheese.net,10.0.1.0,10.0.1.2```
+```text
+SAN=*.cheese.org,*.cheese.net,*.cheese.com,test@cheese.org,test@cheese.net,10.0.1.0,10.0.1.2
+```
 
 !!! note "multiple values"
 
