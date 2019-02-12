@@ -7,8 +7,8 @@ How the Magic Happens
 
 Configuration in Traefik can refer to two different things:
    
-- The fully dynamic routing configuration (refered to as the _dynamic configuration_)
-- The startup configuration (refered to as the _static configuration_)
+- The fully dynamic routing configuration (referred to as the _dynamic configuration_)
+- The startup configuration (referred to as the _static configuration_)
 
 Elements in the _static configuration_ set up connections to [providers](../../providers/overview/) and define the [entrypoints](../../routing/entrypoints/) Traefik will listen to (these elements don't change often).
 
@@ -46,7 +46,7 @@ If you don't provide a value for a given option, default values apply.
 
     Some root options are enablers: they set default values for all their children. 
     
-    For example, the `--providers.docker` option enables the docker provider. Once positionned, this option sets (and resets) all the default values under the root `providers.docker`. If you define child options using a lesser precedence configuration source, they will be overwritten by the default values.  
+    For example, the `--providers.docker` option enables the docker provider. Once positioned, this option sets (and resets) all the default values under the root `providers.docker`. If you define child options using a lesser precedence configuration source, they will be overwritten by the default values.  
     
 ### Configuration File
 

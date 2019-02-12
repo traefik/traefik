@@ -48,4 +48,4 @@ Below is an example of a full configuration file for the [file provider](../prov
 
 !!! note "The File Provider"
 
-    In this example, we use the [file provider](../providers/file.md). Even if it is one of the least magical way of configuring Traefik, it explicitely describes every available notion.
+    In this example, we use the [file provider](../providers/file.md). Even if it is one of the least magical way of configuring Traefik, it explicitly describes every available notion.

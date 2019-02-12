@@ -14,7 +14,7 @@ To assess if your system is healthy, the circuit breaker constantly monitors the
 
 !!! Note
 
-    - The CircuitBreaker only analyses what happens _after_ it is positionned in the middleware chain. What happens _before_ has no impact on its state.
+    - The CircuitBreaker only analyses what happens _after_ it is positioned in the middleware chain. What happens _before_ has no impact on its state.
     - The CircuitBreaker only affects the routers that use it. Routers that don't use the CircuitBreaker won't be affected by its state.
 
 !!! important

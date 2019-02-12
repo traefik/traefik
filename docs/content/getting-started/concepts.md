@@ -11,7 +11,7 @@ Traefik is an _Edge Router_, it means that it's the door to your platform, and t
 
 ## Auto Service Discovery
 
-Where traditionaly edge routers (or reverse proxies) need a configuration file that contains every possible route to your services, Traefik gets them from the services themselves.
+Where traditionally edge routers (or reverse proxies) need a configuration file that contains every possible route to your services, Traefik gets them from the services themselves.
 
 Deploying your services, you attach information that tell Traefik the characteristics of the requests the services can handle.
 

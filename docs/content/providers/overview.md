@@ -6,7 +6,7 @@ Traefik's Many Friends
 ![Providers](../assets/img/providers.png)
 
 Providers in Traefik are existing infrastructure components, whether orchestrators, container engines, cloud providers, or key-value stores. 
-The idea is that Traefik will query the providers' API in order to find relevant information about routing, and each time Traefik detects a change, it dynamicaly updates the routes.
+The idea is that Traefik will query the providers' API in order to find relevant information about routing, and each time Traefik detects a change, it dynamically updates the routes.
 
 Deploy and forget is Traefik's credo.
 
