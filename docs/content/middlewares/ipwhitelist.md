@@ -52,7 +52,6 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
         | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `3`     | `"11.0.0.1"` |
         | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `5`     | `""`         |
 
-
 ??? example "File -- Whitelisting Based on `X-Forwarded-For` with `depth=2`"
 
     ```toml
@@ -93,7 +92,6 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
 
 !!! important
     If `depth` is specified, `excludedIPs` is ignored.
-
 
 ??? example "File -- Exclude from `X-Forwarded-For`"
 

@@ -50,9 +50,9 @@ The `extractorfunc` option defines the strategy used to categorize requests.
 
 The possible values are:
 
- * `request.host` categorizes requests based on the request host.
- * `client.ip` categorizes requests based on the client ip.
- * `request.header.ANY_HEADER` categorizes requests based on the provided `ANY_HEADER` value.
+- `request.host` categorizes requests based on the request host.
+- `client.ip` categorizes requests based on the client ip.
+- `request.header.ANY_HEADER` categorizes requests based on the provided `ANY_HEADER` value.
 
 ### ratelimit (multiple values)
 

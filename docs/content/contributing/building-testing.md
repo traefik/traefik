@@ -162,7 +162,7 @@ More: https://labix.org/gocheck
 
 Unit tests can be run from the cloned directory using `$ go test ./...` which should return `ok`, similar to:
 
-```
+```test
 ok      _/home/user/go/src/github/containous/traefik    0.004s
 ```
 

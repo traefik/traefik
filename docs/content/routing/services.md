@@ -68,7 +68,6 @@ The `weight` option defines the weight of the server for the load balancing algo
          [[Services.my-service.LoadBalancer.servers]]
             url = "http://private-ip-server-1/"
     ```
-    
 
 #### Load-balancing
 

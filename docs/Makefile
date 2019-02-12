@@ -17,7 +17,7 @@ DOCKER_RUN_DOC_MOUNT := -v $(CURDIR):/mkdocs
 DOCKER_RUN_DOC_OPTS := --rm $(DOCKER_RUN_DOC_MOUNT) -p $(DOCKER_RUN_DOC_PORT):8000
 
 # Default: generates the documentation into $(CURDIR)/site
-docs: docs-clean docs-image docs-build docs-verify
+docs: docs-clean docs-image docs-lint docs-build docs-verify
 
 # Writer Mode: build and serve docs on http://localhost:8000 with livereload
 docs-serve: docs-image
@@ -28,9 +28,10 @@ docs-image:
 	docker build -t $(TRAEFIK_DOCS_BUILD_IMAGE) -f docs.Dockerfile ./
 
 docs-build: docs-image
-	docker run  $(DOCKER_RUN_DOC_OPTS) $(TRAEFIK_DOCS_BUILD_IMAGE) mkdocs build
+	docker run $(DOCKER_RUN_DOC_OPTS) $(TRAEFIK_DOCS_BUILD_IMAGE) sh -c "mkdocs build \
+		&& chown -R $(shell id -u):$(shell id -g) site/"
 
-docs-verify: site
+docs-verify: docs-build
 	@if [ "$(DOCS_VERIFY_SKIP)" != "true" ]; then \
 		docker build -t $(TRAEFIK_DOCS_CHECK_IMAGE) -f check.Dockerfile ./; \
 		docker run --rm -v $(CURDIR):/app $(TRAEFIK_DOCS_CHECK_IMAGE) /verify.sh; \
@@ -49,4 +50,4 @@ docs-lint:
 docs-clean:
 	rm -rf $(CURDIR)/site
 
-.PHONY: all docs-verify docs docs-clean docs-build
+.PHONY: all docs-verify docs docs-clean docs-build docs-lint

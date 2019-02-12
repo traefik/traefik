@@ -64,6 +64,6 @@ You can have the Buffering middleware replay the request with the help of the `r
     
 Available functions for the retry expression are:
 
-   - `Attempts()` number of attempts (the first one counts)
-   - `ResponseCode()` response code of the service
-   - `IsNetworkError()` - if the response code is related to networking error 
+- `Attempts()` number of attempts (the first one counts)
+- `ResponseCode()` response code of the service
+- `IsNetworkError()` - if the response code is related to networking error 

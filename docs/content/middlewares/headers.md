@@ -64,7 +64,6 @@ Add the `X-Script-Name` header to the proxied request and the `X-Custom-Response
 Security related headers (HSTS headers, SSL redirection, Browser XSS filter, etc) can be added and configured per frontend in a similar manner to the custom headers above.
 This functionality allows for some easy security features to quickly be set.
 
-
 ??? example "File"
 
     ```toml    

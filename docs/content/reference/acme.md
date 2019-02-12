@@ -4,7 +4,7 @@ Every Options for ACME
 {: .subtitle} 
 
 ## TOML
- 
+
 ```toml
     # Sample entrypoint configuration when using ACME.
     [entryPoints]

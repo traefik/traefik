@@ -30,7 +30,6 @@ Below is the list of the currently supported providers in Traefik.
 | Kubernetes (not documented) | Orchestrator | Custom Annotation  |
 | Marathon (not documented) | Orchestrator | Label  |
 
-
 !!! note "More Providers"
 
     The current version of Traefik is in development and doesn't support (yet) every provider. See the previous version (1.7) for more providers.
@@ -40,21 +39,25 @@ Below is the list of the currently supported providers in Traefik.
 If you want to limit the scope of Traefik service discovery, you can set constraints. Doing so, Traefik will create routes for containers that match these constraints only.
 
 ??? example "Containers with the api Tag"
+
     ```toml
     constraints = ["tag==api"]
     ```
 
 ??? example "Containers without the api Tag"
+
     ```toml
     constraints = ["tag!=api"]
     ```
     
 ??? example "Containers with tags starting with 'us-'"
+
     ```toml
     constraints = ["tag==us-*"]
     ```
 
 ??? example "Multiple constraints"
+
     ```toml
     # Multiple constraints
     #   - "tag==" must match with at least one tag

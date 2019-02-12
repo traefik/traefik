@@ -3,7 +3,7 @@
 Removing Prefixes From the Path Before Forwarding the Request
 {: .subtitle }
 
-# OldContent
+## OldContent
  
 Use a `*Strip` matcher if your backend listens on the root path (`/`) but should be routeable on a specific prefix.
 For instance, `PathPrefixStrip: /products` would match `/products` but also `/products/shoes` and `/products/shirts`.  

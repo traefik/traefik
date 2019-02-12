@@ -17,12 +17,11 @@ To save us some time and get quicker feedback, be sure to follow the guide lines
     - the Traefik community Slack channel: [![Join the chat at https://slack.traefik.io](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://slack.traefik.io)
     - [Stack Overflow](https://stackoverflow.com/questions/tagged/traefik) (using the `traefik` tag)
 
-
-### Issue Title
+## Issue Title
 
 The title must be short and descriptive. (~60 characters)
 
-### Description
+## Description
 
 Follow the [issue template](https://github.com/containous/traefik/blob/master/.github/ISSUE_TEMPLATE.md) as much as possible, and make use of the `traefik bug` command if you can (see the [video on Youtube](https://www.youtube.com/watch?v=Lyz62L8m93I)).
 
@@ -33,7 +32,7 @@ Remain as clear and concise as possible
 Take time to polish the format of your message so we'll enjoy reading it and working on it. 
 Help the readers focus on what matters, and help them understand the structure of your message (see the [Github Markdown Syntax](https://help.github.com/articles/github-flavored-markdown)).
 
-### Feature Request
+## Feature Request
 
 Traefik is an open-source project and aims to be the best edge router possible.
 
@@ -41,7 +40,6 @@ Remember when asking for new features that these must be useful to the majority 
 
 Do you best to explain what you're looking for, and why it would improve Traefik for everyone. 
 
-### International English
+## International English
 
 Every maintainer / Traefik user is not a native English speaker, so if you feel sometimes that some messages sound rude, remember that it probably is a langage barrier problem from someone willing to help you.
-

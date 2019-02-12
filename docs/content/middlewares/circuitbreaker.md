@@ -45,9 +45,9 @@ To assess if your system is healthy, the circuit breaker constantly monitors the
 
 There are three possible states for your circuit breaker:
 
-   - Close (your service operates normally)
-   - Open (the fallback mechanism takes over your service)
-   - Recovering (the circuit breaker tries to resume normal operations by progressively sending requests to your service)
+- Close (your service operates normally)
+- Open (the fallback mechanism takes over your service)
+- Recovering (the circuit breaker tries to resume normal operations by progressively sending requests to your service)
    
 ### Close
 
@@ -71,9 +71,9 @@ You can specify an `expression` that, once matched, will trigger the circuit bre
 
 The `expression` can check three different metrics:
 
-   - The network error ratio (`NetworkErrorRatio`)
-   - The status code ratio (`ResponseCodeRatio`)
-   - The latency at quantile, in milliseconds (`LatencyAtQuantileMS`)
+- The network error ratio (`NetworkErrorRatio`)
+- The status code ratio (`ResponseCodeRatio`)
+- The latency at quantile, in milliseconds (`LatencyAtQuantileMS`)
    
 #### NetworkErrorRatio
 
@@ -110,8 +110,8 @@ You can combine multiple metrics using operators in your expression.
 
 Supported operators are:
 
-   - AND (`&&`)
-   - OR (`||)
+- AND (`&&`)
+- OR (`||)
 
 For example, `ResponseCodeRatio(500, 600, 0, 600) > 0.30 || NetworkErrorRatio() > 0.10` triggers the circuit breaker when 30% of the requests return a 5XX status code, or when the ratio of network errors reaches 10%. 
 
@@ -119,13 +119,13 @@ For example, `ResponseCodeRatio(500, 600, 0, 600) > 0.30 || NetworkErrorRatio() 
 
 Here is the list of supported operators:
 
-   - Greater than (`>`)
-   - Greater or equal than (`>=`)
-   - Lesser than (`<`)
-   - Lesser or equal than (`<=`)
-   - Not (`!`)
-   - Equal (`==`)
-   - Not Equal (`!=`)
+- Greater than (`>`)
+- Greater or equal than (`>=`)
+- Lesser than (`<`)
+- Lesser or equal than (`<=`)
+- Not (`!`)
+- Equal (`==`)
+- Not Equal (`!=`)
  
 ### Fallback mechanism
 

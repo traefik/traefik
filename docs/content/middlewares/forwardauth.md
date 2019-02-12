@@ -27,7 +27,6 @@ Otherwise, the response from the authentication server is returned.
           key = "path/to/foo.key"      
     ```
 
-
 ??? example "Docker -- Forward authentication to authserver.com"
 
     ```yml

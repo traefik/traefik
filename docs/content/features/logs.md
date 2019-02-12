@@ -65,7 +65,6 @@ By default, the `logLevel` is set to `error`, but you can choose amongst `DEBUG`
 By default access logs are written to the standard output.
 To write the logs into a log file, use the `filePath` option.
 
-
 in the Common Log Format (CLF), extended with additional fields.
 
 #### format
@@ -80,7 +79,6 @@ To write logs in JSON, use `json` in the `format` option.
     ```html
     <remote_IP_address> - <client_user_name_if_available> [<timestamp>] "<request_method> <request_path> <request_protocol>" <origin_server_HTTP_status> <origin_server_content_size> "<request_referrer>" "<request_user_agent>" <number_of_requests_received_since_Traefik_started> "<Traefik_frontend_name>" "<Traefik_backend_URL>" <request_duration_in_ms>ms 
     ```
-
 
 #### bufferingSize
 

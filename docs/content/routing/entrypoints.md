@@ -134,7 +134,6 @@ To add SNI support, define `certFile` and `keyFile`.
 !!! note
     If you provide an empty TLS configuration, default self-signed certificates will be generated.
 
-
 ### Dynamic Certificates
 
 To add / remove TLS certificates while Traefik is running, the [file provider](../providers/file.md) supports Dynamic TLS certificates in its `[[tls]]` section.
@@ -173,7 +172,6 @@ Traefik supports both optional and non optional (defaut value) mutual authentica
         You can use a file per `CA:s`, or a single file containing multiple `CA:s` (in `PEM` format).
 
         `ClientCA.files` is not optional: every client will have to present a valid certificate. (This requirement will apply to every server certificate declared in the entrypoint.)
-
 
 ### Minimum TLS Version
 

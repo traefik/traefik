@@ -10,6 +10,7 @@ PassTLSClientCert adds in header the selected data from the passed client tls ce
 ## Configuration Examples
 
 ??? example "File -- Pass the escaped pem in the `X-Forwarded-Tls-Client-Cert` header"
+    
     ```toml
     [Middlewares]
       [Middlewares.test-passtlsclientcert.passtlsclientcert]
@@ -26,6 +27,7 @@ PassTLSClientCert adds in header the selected data from the passed client tls ce
     ```
 
 ??? example "File -- Pass all the available info in the `X-Forwarded-Tls-Client-Cert-Info` header"
+
     ```toml
     [Middlewares]
       [Middlewares.test-passtlsclientcert.passtlsclientcert]
@@ -200,6 +202,7 @@ The `pem` option sets the `X-Forwarded-Tls-Client-Cert` header with the escape c
 In the example, it is the part between `-----BEGIN CERTIFICATE-----` and `-----END CERTIFICATE-----` delimiters :
 
 ??? example "The data used by the pem option"
+
     ```
     -----BEGIN CERTIFICATE-----
     MIIGWjCCBUKgAwIBAgIBATANBgkqhkiG9w0BAQUFADCCAYQxEzARBgoJkiaJk/Is
@@ -244,15 +247,13 @@ In the example, it is the part between `-----BEGIN CERTIFICATE-----` and `-----E
     The delimiters and `\n` will be removed.  
     If there are more than one certificate, they are separated by a "`;`".
 
-    
-    
 ### info
 
 The `info` option select the specific client certificate details you want to add to the `X-Forwarded-Tls-Client-Cert-Info` header.
 The value of the header will be an escaped concatenation of all the selected certificate details.
 The following example shows an unescaped result that uses all the available fields: 
 
-```
+```text
 Subject="DC=org,DC=cheese,C=FR,C=US,ST=Cheese org state,ST=Cheese com state,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=*.cheese.com",Issuer="DC=org,DC=cheese,C=FR,C=US,ST=Signing State,ST=Signing State 2,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=Simple Signing CA 2",NB=1544094616,NA=1607166616,SAN=*.cheese.org,*.cheese.net,*.cheese.com,test@cheese.org,test@cheese.net,10.0.1.0,10.0.1.2
 ```
 
@@ -260,13 +261,12 @@ Subject="DC=org,DC=cheese,C=FR,C=US,ST=Cheese org state,ST=Cheese com state,L=TO
 
     If there are more than one certificate, they are separated by a `;`.
 
-
 #### info.notafter 
 
 Set the `info.notafter` option to `true` to add the `Not After` information from the `Validity` part.
 The data are taken from the following certificate part:      
-    
-```
+
+```text
     Validity
         Not After : Dec  5 11:10:16 2020 GMT            
 ```
@@ -275,14 +275,13 @@ The escape `notafter` info part will be like:
 
 ```NA=1607166616```
 
-
 #### info.notbefore
 
 Set the `info.notafter` option to `true` to add the `Not Before` information from the `Validity` part.
 
 The data are taken from the following certificate part:      
-    
-```
+
+```text
     Validity
         Not Before: Dec  6 11:10:16 2018 GMT
 ```
@@ -291,21 +290,19 @@ The escape `notafter` info part will be like:
 
 ```NB=1544094616```
 
-
 #### info.sans
 
 Set the `info.sans` option to `true` to add the `Subject Alternative Name` information from the `Subject Alternative Name` part.
 The data are taken from the following certificate part:      
-    
-```
+
+```text
  X509v3 Subject Alternative Name: 
     DNS:*.cheese.org, DNS:*.cheese.net, DNS:*.cheese.com, IP Address:10.0.1.0, IP Address:10.0.1.2, email:test@cheese.org, email:test@cheese.net
 ```
-    
+
 The escape SANs info part will be like :    
 
 ```SAN=*.cheese.org,*.cheese.net,*.cheese.com,test@cheese.org,test@cheese.net,10.0.1.0,10.0.1.2```
-
 
 !!! note "multiple values"
 
@@ -317,7 +314,7 @@ The `info.subject` select the specific client certificate subject details you wa
 
 The data are taken from the following certificate part :
 
-```
+```text
 Subject: DC=org, DC=cheese, O=Cheese, O=Cheese 2, OU=Simple Signing Section, OU=Simple Signing Section 2, CN=*.cheese.org, CN=*.cheese.com, C=FR, C=US, L=TOULOUSE, L=LYON, ST=Cheese org state, ST=Cheese com state/emailAddress=cert@cheese.org/emailAddress=cert@scheese.com
 ```
 
@@ -327,7 +324,7 @@ Set the `info.subject.country` option to true to add the `country` information i
 The data are taken from the subject part with the `C` key. 
 The escape country info in the subject part will be like :
 
-```
+```text
 C=FR,C=US
 ```
 
@@ -339,7 +336,7 @@ The data are taken from the subject part with the `ST` key.
 
 The escape province info in the subject part will be like :
 
-```
+```text
 ST=Cheese org state,ST=Cheese com state
 ```
 
@@ -351,7 +348,7 @@ The data are taken from the subject part with the `L` key.
 
 The escape locality info in the subject part will be like :
 
-```
+```text
 L=TOULOUSE,L=LYON
 ```
 
@@ -363,7 +360,7 @@ The data are taken from the subject part with the `O` key.
 
 The escape organization info in the subject part will be like :
 
-```
+```text
 O=Cheese,O=Cheese 2
 ```
 
@@ -375,7 +372,7 @@ The data are taken from the subject part with the `CN` key.
 
 The escape commonname info in the subject part will be like :
 
-```
+```text
 CN=*.cheese.com
 ```
 
@@ -387,7 +384,7 @@ The data are taken from the subject part with the `SN` key.
 
 The escape serialnumber info in the subject part will be like :
 
-```
+```text
 SN=1234567890
 ```
 
@@ -399,16 +396,17 @@ The data are taken from the subject part with the `DC` key.
 
 The escape domaincomponent info in the subject part will be like :
 
-```
+```text
 DC=org,DC=cheese
 ```
+
 #### info.issuer
 
 The `info.issuer` select the specific client certificate issuer details you want to add to the `X-Forwarded-Tls-Client-Cert-Info` header.
 
 The data are taken from the following certificate part :
 
-```
+```text
 Issuer: DC=org, DC=cheese, O=Cheese, O=Cheese 2, OU=Simple Signing Section, OU=Simple Signing Section 2, CN=Simple Signing CA, CN=Simple Signing CA 2, C=FR, C=US, L=TOULOUSE, L=LYON, ST=Signing State, ST=Signing State 2/emailAddress=simple@signing.com/emailAddress=simple2@signing.com
 ```
 
@@ -418,7 +416,7 @@ Set the `info.issuer.country` option to true to add the `country` information in
 The data are taken from the issuer part with the `C` key. 
 The escape country info in the issuer part will be like :
 
-```
+```text
 C=FR,C=US
 ```
 
@@ -430,7 +428,7 @@ The data are taken from the issuer part with the `ST` key.
 
 The escape province info in the issuer part will be like :
 
-```
+```text
 ST=Signing State,ST=Signing State 2
 ```
 
@@ -442,7 +440,7 @@ The data are taken from the issuer part with the `L` key.
 
 The escape locality info in the issuer part will be like :
 
-```
+```text
 L=TOULOUSE,L=LYON
 ```
 
@@ -454,7 +452,7 @@ The data are taken from the issuer part with the `O` key.
 
 The escape organization info in the issuer part will be like :
 
-```
+```text
 O=Cheese,O=Cheese 2
 ```
 
@@ -466,7 +464,7 @@ The data are taken from the issuer part with the `CN` key.
 
 The escape commonname info in the issuer part will be like :
 
-```
+```text
 CN=Simple Signing CA 2
 ```
 
@@ -478,7 +476,7 @@ The data are taken from the issuer part with the `SN` key.
 
 The escape serialnumber info in the issuer part will be like :
 
-```
+```text
 SN=1234567890
 ```
 
@@ -490,6 +488,6 @@ The data are taken from the issuer part with the `DC` key.
 
 The escape domaincomponent info in the issuer part will be like :
 
-```
+```text
 DC=org,DC=cheese
 ```

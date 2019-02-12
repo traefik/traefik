@@ -7,16 +7,15 @@ Let's zoom on Traefik's architecture and talk about the components that enable t
 
 First, when you start Traefik, you define [entrypoints](./entrypoints.md) (in their most basic forms, they are port numbers). Then, connected to these entrypoints, [routers](./routers.md) analyze the incoming requests to see if they match a set of [rules](../routers#rule). If they do, the router might transform the request using pieces of [middleware](../middlewares/overview.md) before forwarding them to your [services](./services.md).
 
-
 ![Architecture](../assets/img/architecture-overview.png)
 
 ## Clear Responsibilities
 
- - [_Providers_](../providers/overview.md) discover the services that live on your infrastructure (their IP, health, ...) 
- - [_Entrypoints_](./entrypoints.md) listen for incomming traffic (ports, SSL, ...)
- - [_Routers_](./routers.md) analyse the requests (host, path, headers, ...)
- - [_Services_](./services.md) forward the request to your services (load balancing, ...)
- - [_Middlewares_](../middlewares/overview.md) may update the request or make decisions based on the request (authentication, rate limiting, headers, ...)
+- [_Providers_](../providers/overview.md) discover the services that live on your infrastructure (their IP, health, ...) 
+- [_Entrypoints_](./entrypoints.md) listen for incomming traffic (ports, SSL, ...)
+- [_Routers_](./routers.md) analyse the requests (host, path, headers, ...)
+- [_Services_](./services.md) forward the request to your services (load balancing, ...)
+- [_Middlewares_](../middlewares/overview.md) may update the request or make decisions based on the request (authentication, rate limiting, headers, ...)
  
 ## Example with a File Provider
 

@@ -108,7 +108,6 @@ The table below lists all the available matchers:
 
     In order to use regular expressions with `Host` and `Path` expressions, you must declare an arbitrarily named variable followed by the colon-separated regular expression, all enclosed in curly braces. Any pattern supported by [Go's regexp package](https://golang.org/pkg/regexp/) may be used (example: `/posts/{id:[0-9]+}`).
     
-
 !!! tip "Combining Matchers Using Operators and Parenthesis"
     
     You can combine multiple matchers using the AND (`&&`) and OR (`||) operators. You can also use parenthesis.
@@ -124,7 +123,6 @@ The table below lists all the available matchers:
     Use a `*Prefix*` matcher if your service listens on a particular base path but also serves requests on sub-paths.
     For instance, `PathPrefix: /products` would match `/products` but also `/products/shoes` and `/products/shirts`.
     Since the path is forwarded as-is, your service is expected to listen on `/products`.
-
 
 ### Middlewares
 

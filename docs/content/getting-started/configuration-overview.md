@@ -7,8 +7,8 @@ How the Magic Happens
 
 Configuration in Traefik can refer to two different things:
    
-   - The fully dynamic routing configuration (refered to as the _dynamic configuration_)
-   - The startup configuration (refered to as the _static configuration_)
+- The fully dynamic routing configuration (refered to as the _dynamic configuration_)
+- The startup configuration (refered to as the _static configuration_)
 
 Elements in the _static configuration_ set up connections to [providers](../../providers/overview/) and define the [entrypoints](../../routing/entrypoints/) Traefik will listen to (these elements don't change often).
 

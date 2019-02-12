@@ -57,7 +57,6 @@ Attach labels to your containers and let Traefik do the rest!
         If you use a compose file with the Swarm mode, labels should be defined in the `deploy` part of your service.
         This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/#labels-1)).
 
-
 ## Provider Configuration Options
 
 !!! tip "Browse the Reference"
@@ -85,7 +84,6 @@ Traefik requires access to the docker socket to get its dynamic configuration.
         - [Don't expose the Docker socket (not even to a container)](https://www.lvh.io/posts/dont-expose-the-docker-socket-not-even-to-a-container.html)
         - [A thread on Stack Overflow about sharing the `/var/run/docker.sock` file](https://news.ycombinator.com/item?id=17983623)
         - [To Dind or not to DinD](https://blog.loof.fr/2018/01/to-dind-or-not-do-dind.html)
-
 
 ??? tip "Security Compensation"
 

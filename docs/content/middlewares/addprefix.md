@@ -25,6 +25,7 @@ The AddPrefix middleware updates the URL Path of the request before forwarding i
         labels:
           - "traefik.middlewares.add-bar.addprefix.prefix=/bar"
     ```
+
 ## Configuration Options
 
 ### prefix

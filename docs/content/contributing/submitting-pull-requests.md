@@ -9,11 +9,11 @@ Now the last step is to submit your Pull Request in a way that makes sure it get
 
 Let's go though the classic pitfalls to make sure everything is right. 
 
-### Title
+## Title
 
 The title must be short and descriptive. (~60 characters)
 
-### Description
+## Description
 
 Follow the [pull request template](https://github.com/containous/traefik/blob/master/.github/PULL_REQUEST_TEMPLATE.md) as much as possible.
 
@@ -24,7 +24,7 @@ Remain clear and concise.
 Take time to polish the format of your message so we'll enjoy reading it and working on it. 
 Help the readers focus on what matters, and help them understand the structure of your message (see the [Github Markdown Syntax](https://help.github.com/articles/github-flavored-markdown)).
 
-### PR Content
+## PR Content
 
 - Make it small.
 - One feature per Pull Request.
