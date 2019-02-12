@@ -1,10 +1,4 @@
 {
-    "no-hard-tabs": false,
-    "MD007": { "indent": 4 },
-    "MD009": false,
-    "MD013": false,
-    "MD026": false,
-    "MD033": false,
-    "MD034": false,
+    "extends": "../../.markdownlint.json",
     "MD041": false
 }

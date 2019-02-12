@@ -11,9 +11,9 @@ readonly BASE_DIR=/app
 echo "== Linting Markdown"
 # Uses the file ".markdownlint.json" for setup
 cd "${BASE_DIR}" || exit 1
-markdownlint "${BASE_DIR}/content/**/*.md" || EXIT_CODE=1
+markdownlint --config ${BASE_DIR}/content/includes/.markdownlint.json "${BASE_DIR}/content/**/*.md" || EXIT_CODE=1
 
-echo "== Checking English Writing Style with 'Write-Good'"
-write-good "${BASE_DIR}/content/"**/*.md || EXIT_CODE=1
+# echo "== Checking English Writing Style with 'Write-Good'"
+# write-good "${BASE_DIR}/content/"**/*.md || EXIT_CODE=1
 
 exit "${EXIT_CODE}"
