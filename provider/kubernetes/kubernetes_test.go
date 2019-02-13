@@ -1509,7 +1509,7 @@ rateset:
 					server("http://example.com", weight(1))),
 				lbMethod("wrr"),
 			),
-			backend("other/",
+			backend("http-https_other/",
 				servers(
 					server("http://example.com", weight(1)),
 					server("http://example.com", weight(1))),
@@ -1617,7 +1617,7 @@ rateset:
 					route("/stuff", "PathPrefix:/stuff"),
 					route("other", "Host:other")),
 			),
-			frontend("other/",
+			frontend("http-https_other/",
 				passHostHeader(),
 				entryPoints("http", "https"),
 				routes(
@@ -2836,24 +2836,24 @@ func TestTLSSecretLoad(t *testing.T) {
 
 	expected := buildConfiguration(
 		backends(
-			backend("example.com",
+			backend("ep1-ep2_example.com",
 				servers(),
 				lbMethod("wrr"),
 			),
-			backend("example.org",
+			backend("ep1-ep2_example.org",
 				servers(),
 				lbMethod("wrr"),
 			),
 		),
 		frontends(
-			frontend("example.com",
+			frontend("ep1-ep2_example.com",
 				entryPoints("ep1", "ep2"),
 				passHostHeader(),
 				routes(
 					route("example.com", "Host:example.com"),
 				),
 			),
-			frontend("example.org",
+			frontend("ep1-ep2_example.org",
 				entryPoints("ep1", "ep2"),
 				passHostHeader(),
 				routes(
