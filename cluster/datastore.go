@@ -13,7 +13,7 @@ import (
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 )
 
 // Metadata stores Object plus metadata

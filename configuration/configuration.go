@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/containous/flaeg"
-	"github.com/containous/traefik-extra-service-fabric"
+	servicefabric "github.com/containous/traefik-extra-service-fabric"
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/api"
 	"github.com/containous/traefik/log"
