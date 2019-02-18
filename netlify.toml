@@ -1,6 +1,6 @@
 [build]
 # Path relative to the root of the repository
-publish = "docs/site"
+publish = "site"
 base = "docs"
 
 # Path relative to the "base" directory

@@ -13,4 +13,7 @@ sed -i "s#site_url:.*#site_url: ${DEPLOY_PRIME_URL}#" "${CURRENT_DIR}/../mkdocs.
 # Build
 mkdocs build
 
+# Put "site" dir where it's expected
+mv ./site ../
+
 exit 0

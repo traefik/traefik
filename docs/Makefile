@@ -8,15 +8,14 @@ DOCS_LINT_SKIP ?= false
 
 TRAEFIK_DOCS_BUILD_IMAGE ?= traefik-docs
 TRAEFIK_DOCS_CHECK_IMAGE ?= $(TRAEFIK_DOCS_BUILD_IMAGE)-check
-DOCKER_RUN_DOC_PORT := 8000
-DOCKER_RUN_DOC_MOUNT := -v $(CURDIR):/mkdocs
-DOCKER_RUN_DOC_OPTS := --rm $(DOCKER_RUN_DOC_MOUNT) -e GIT_REF_NAME -e AWS_S3_BUCKET_ID -e DOCKER_IMAGE_NAME
+
+SITE_DIR := $(CURDIR)/../site
 
 DOCKER_RUN_DOC_PORT := 8000
-DOCKER_RUN_DOC_MOUNT := -v $(CURDIR):/mkdocs
-DOCKER_RUN_DOC_OPTS := --rm $(DOCKER_RUN_DOC_MOUNT) -p $(DOCKER_RUN_DOC_PORT):8000
+DOCKER_RUN_DOC_MOUNTS := -v $(SITE_DIR):/mkdocs/site -v $(CURDIR):/mkdocs 
+DOCKER_RUN_DOC_OPTS := --rm $(DOCKER_RUN_DOC_MOUNTS) -p $(DOCKER_RUN_DOC_PORT):8000
 
-# Default: generates the documentation into $(CURDIR)/site
+# Default: generates the documentation into $(SITE_DIR)
 docs: docs-clean docs-image docs-lint docs-build docs-verify
 
 # Writer Mode: build and serve docs on http://localhost:8000 with livereload
@@ -48,6 +47,6 @@ docs-lint:
 	fi
 
 docs-clean:
-	rm -rf $(CURDIR)/site
+	rm -rf $(SITE_DIR)
 
 .PHONY: all docs-verify docs docs-clean docs-build docs-lint
