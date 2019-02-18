@@ -1,5 +1,22 @@
 # Change Log
 
+## [v1.7.9](https://github.com/containous/traefik/tree/v1.7.9) (2019-02-11)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.8...v1.7.9)
+
+**Bug fixes:**
+- **[acme]** Updates of Lego. ([#4480](https://github.com/containous/traefik/pull/4480) by [ldez](https://github.com/ldez))
+- **[k8s]** app-root on non-explicit path include &#34;/&#34; in the redirect ([#4458](https://github.com/containous/traefik/pull/4458) by [doctori](https://github.com/doctori))
+- **[middleware]** Missing trailers with retry ([#4442](https://github.com/containous/traefik/pull/4442) by [juliens](https://github.com/juliens))
+- **[rancher]** Handle errors when working with rancher ([#4378](https://github.com/containous/traefik/pull/4378) by [apsifly](https://github.com/apsifly))
+- **[servicefabric]** Add support for specifying the name of the endpoint. ([#4479](https://github.com/containous/traefik/pull/4479) by [ldez](https://github.com/ldez))
+- **[tls]** insecureSkipVerify for the passTLSCert transport ([#4438](https://github.com/containous/traefik/pull/4438) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[tracing]** Add Tracing Header Context Name option for Jaeger ([#4459](https://github.com/containous/traefik/pull/4459) by [gadoor](https://github.com/gadoor))
+
+**Documentation:**
+- **[metrics]** Update default value of buckets for Prometheus ([#4468](https://github.com/containous/traefik/pull/4468) by [adam-golab](https://github.com/adam-golab))
+- **[rules]** Fixes the display of the associativity rules. ([#4478](https://github.com/containous/traefik/pull/4478) by [ldez](https://github.com/ldez))
+- Fixed curl example ([#4471](https://github.com/containous/traefik/pull/4471) by [rgarrigue](https://github.com/rgarrigue))
+
 ## [v1.7.8](https://github.com/containous/traefik/tree/v1.7.8) (2019-01-29)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.7...v1.7.8)
 
@@ -11,6 +28,7 @@
 - **[ecs]** Cache exising task definitions to avoid rate limiting ([#4177](https://github.com/containous/traefik/pull/4177) by [hwhelan-CB](https://github.com/hwhelan-CB))
 - **[tls]** Check for dynamic tls updates on configuration preload ([#4022](https://github.com/containous/traefik/pull/4022) by [ffilippopoulos](https://github.com/ffilippopoulos))
 - **[tracing]** Support Datadog tracer priority sampling ([#4359](https://github.com/containous/traefik/pull/4359) by [jcassee](https://github.com/jcassee))
+- Update to Go 1.11.5 [CVE-2019-6486](https://nvd.nist.gov/vuln/detail/CVE-2019-6486)
 
 **Documentation:**
 - **[acme]** More detailed info about Google Cloud DNS. ([#4395](https://github.com/containous/traefik/pull/4395) by [ldez](https://github.com/ldez))

@@ -1,0 +1,34 @@
+[serversTransport]
+rootCAs = [ """{{ .CertContent }}""" ]
+
+[entryPoints]
+  [entryPoints.https]
+  address = ":4443"
+    [entryPoints.https.tls]
+     [entryPoints.https.tls.DefaultCertificate]
+     certFile = """{{ .CertContent }}"""
+     keyFile  = """{{ .KeyContent }}"""
+
+
+[api]
+
+[providers]
+   [providers.file]
+
+[routers]
+  [routers.router1]
+    rule = "Host(`127.0.0.1`)"
+    service = "service1"
+    middlewares = ["retryer"]
+
+[middlewares]
+  [middlewares.retryer.retry]
+    Attempts = 2
+
+[services]
+  [services.service1.loadbalancer]
+  [services.service1.loadbalancer.responseForwarding]
+     flushInterval="1ms"
+    [[services.service1.loadbalancer.servers]]
+      url = "https://127.0.0.1:{{ .GRPCServerPort }}"
+      weight = 1

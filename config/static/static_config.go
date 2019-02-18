@@ -30,7 +30,8 @@ import (
 	"github.com/containous/traefik/tracing/jaeger"
 	"github.com/containous/traefik/tracing/zipkin"
 	"github.com/containous/traefik/types"
-	"github.com/elazarl/go-bindata-assetfs"
+	assetfs "github.com/elazarl/go-bindata-assetfs"
+	jaegercli "github.com/uber/jaeger-client-go"
 	"github.com/xenolf/lego/challenge/dns01"
 )
 
@@ -226,12 +227,13 @@ func (c *Configuration) initTracing() {
 		case jaeger.Name:
 			if c.Tracing.Jaeger == nil {
 				c.Tracing.Jaeger = &jaeger.Config{
-					SamplingServerURL:  "http://localhost:5778/sampling",
-					SamplingType:       "const",
-					SamplingParam:      1.0,
-					LocalAgentHostPort: "127.0.0.1:6831",
-					Propagation:        "jaeger",
-					Gen128Bit:          false,
+					SamplingServerURL:      "http://localhost:5778/sampling",
+					SamplingType:           "const",
+					SamplingParam:          1.0,
+					LocalAgentHostPort:     "127.0.0.1:6831",
+					Propagation:            "jaeger",
+					Gen128Bit:              false,
+					TraceContextHeaderName: jaegercli.TraceContextHeaderName,
 				}
 			}
 			if c.Tracing.Zipkin != nil {

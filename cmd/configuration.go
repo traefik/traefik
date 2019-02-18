@@ -27,6 +27,7 @@ import (
 	"github.com/containous/traefik/tracing/jaeger"
 	"github.com/containous/traefik/tracing/zipkin"
 	"github.com/containous/traefik/types"
+	jaegercli "github.com/uber/jaeger-client-go"
 )
 
 // TraefikConfiguration holds GlobalConfiguration and other stuff
@@ -92,12 +93,13 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		ServiceName:   "traefik",
 		SpanNameLimit: 0,
 		Jaeger: &jaeger.Config{
-			SamplingServerURL:  "http://localhost:5778/sampling",
-			SamplingType:       "const",
-			SamplingParam:      1.0,
-			LocalAgentHostPort: "127.0.0.1:6831",
-			Propagation:        "jaeger",
-			Gen128Bit:          false,
+			SamplingServerURL:      "http://localhost:5778/sampling",
+			SamplingType:           "const",
+			SamplingParam:          1.0,
+			LocalAgentHostPort:     "127.0.0.1:6831",
+			Propagation:            "jaeger",
+			Gen128Bit:              false,
+			TraceContextHeaderName: jaegercli.TraceContextHeaderName,
 		},
 		Zipkin: &zipkin.Config{
 			HTTPEndpoint: "http://localhost:9411/api/v1/spans",

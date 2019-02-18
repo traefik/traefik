@@ -132,6 +132,7 @@ type responseWriterWithoutCloseNotify struct {
 	responseWriter http.ResponseWriter
 	headers        http.Header
 	shouldRetry    bool
+	written        bool
 }
 
 func (r *responseWriterWithoutCloseNotify) ShouldRetry() bool {
@@ -143,6 +144,9 @@ func (r *responseWriterWithoutCloseNotify) DisableRetries() {
 }
 
 func (r *responseWriterWithoutCloseNotify) Header() http.Header {
+	if r.written {
+		return r.responseWriter.Header()
+	}
 	return r.headers
 }
 
@@ -177,6 +181,7 @@ func (r *responseWriterWithoutCloseNotify) WriteHeader(code int) {
 	}
 
 	r.responseWriter.WriteHeader(code)
+	r.written = true
 }
 
 func (r *responseWriterWithoutCloseNotify) Hijack() (net.Conn, *bufio.ReadWriter, error) {

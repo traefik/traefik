@@ -1323,15 +1323,16 @@ func (record *RrsigRecord) ToMap() map[string]interface{} {
 }
 
 type SoaRecord struct {
-	fieldMap     []string `json:"-"`
-	TTL          int      `json:"ttl,omitempty"`
-	Originserver string   `json:"originserver,omitempty"`
-	Contact      string   `json:"contact,omitempty"`
-	Serial       uint     `json:"serial,omitempty"`
-	Refresh      int      `json:"refresh,omitempty"`
-	Retry        int      `json:"retry,omitempty"`
-	Expire       int      `json:"expire,omitempty"`
-	Minimum      uint     `json:"minimum,omitempty"`
+	fieldMap       []string `json:"-"`
+	originalSerial uint     `json:"-"`
+	TTL            int      `json:"ttl,omitempty"`
+	Originserver   string   `json:"originserver,omitempty"`
+	Contact        string   `json:"contact,omitempty"`
+	Serial         uint     `json:"serial,omitempty"`
+	Refresh        int      `json:"refresh,omitempty"`
+	Retry          int      `json:"retry,omitempty"`
+	Expire         int      `json:"expire,omitempty"`
+	Minimum        uint     `json:"minimum,omitempty"`
 }
 
 func NewSoaRecord() *SoaRecord {

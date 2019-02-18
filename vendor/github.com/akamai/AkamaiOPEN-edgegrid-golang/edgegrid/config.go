@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/go-ini/ini"
-	"gopkg.in/mattes/go-expand-tilde.v1"
+	"github.com/mitchellh/go-homedir"
 )
 
 // Config struct provides all the necessary fields to
@@ -86,7 +86,7 @@ func InitEdgeRc(filepath string, section string) (Config, error) {
 	// Tilde seems to be not working when passing ~/.edgerc as file
 	// Takes current user and use home dir instead
 
-	path, err := tilde.Expand(filepath)
+	path, err := homedir.Expand(filepath)
 
 	if err != nil {
 		return c, fmt.Errorf(errorMap[ErrHomeDirNotFound], err)

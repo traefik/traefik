@@ -190,7 +190,7 @@
   revision = "063d875e3c5fd734fa2aa12fac83829f62acfc70"
 
 [[projects]]
-  digest = "1:f401d3cc35275af81a9c1c5b960cc335779a1244f79d0559ae3fb56ca823c560"
+  digest = "1:47071ecf8d840dd357ede1b2aed46576bdd0a866adecef3c9e85a00db9672202"
   name = "github.com/akamai/AkamaiOPEN-edgegrid-golang"
   packages = [
     "client-v1",
@@ -199,8 +199,8 @@
     "jsonhooks-v1",
   ]
   pruneopts = "NUT"
-  revision = "a494eba1efa1f38338393727dff63389a6a66534"
-  version = "v0.6.0"
+  revision = "1471ce9c14c6d8c007516e129262962a628fecdf"
+  version = "v0.7.3"
 
 [[projects]]
   digest = "1:823e87ae25170339e2bfd1d6f7c2e27554c6bb5655f91c67b37bd5be45bb6b32"
@@ -707,12 +707,12 @@
   source = "github.com/containous/check"
 
 [[projects]]
-  digest = "1:0c0eac431b07bd0da31ef684aa15b5b5eeeda8a820f666e6523d2bfb8ce868c4"
+  digest = "1:5e92676b56ce4c69edf9ee1f6343c56f637e30af11b9d8b5edd1b6530f3fbc3d"
   name = "github.com/go-ini/ini"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "32e4c1e6bc4e7d0d8451aa6b75200d19e37a536a"
-  version = "v1.32.0"
+  revision = "6ed8d5f64cd79a498d1f3fab5880cc376ce41bbe"
+  version = "v1.41.0"
 
 [[projects]]
   digest = "1:9e53c5e9ee65a2c587d6ade11761ef2f976abfcd9599c5016b7046e63c1f7fb2"
@@ -858,6 +858,14 @@
   revision = "bbcb9da2d746f8bdbd6a936686a0a6067ada0ec5"
 
 [[projects]]
+  digest = "1:1bb197a3b5db4e06e00b7560f8e89836c486627f2a0338332ed37daa003d259e"
+  name = "github.com/google/uuid"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "064e2069ce9c359c118179501254f67d7d37ba24"
+  version = "0.2"
+
+[[projects]]
   digest = "1:3d7c1446fc5c710351b246c0dc6700fae843ca27f5294d0bd9f68bab2a810c44"
   name = "github.com/googleapis/gnostic"
   packages = [
@@ -868,6 +876,24 @@
   pruneopts = "NUT"
   revision = "ee43cbb60db7bd22502942cccbc39059117352ab"
   version = "v0.1.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:31a16fabf629bd7e0e6ad92939f31847cc57f3fe08898d3c31333da817196c72"
+  name = "github.com/gophercloud/gophercloud"
+  packages = [
+    ".",
+    "openstack",
+    "openstack/dns/v2/recordsets",
+    "openstack/dns/v2/zones",
+    "openstack/identity/v2/tenants",
+    "openstack/identity/v2/tokens",
+    "openstack/identity/v3/tokens",
+    "openstack/utils",
+    "pagination",
+  ]
+  pruneopts = "NUT"
+  revision = "892256c468586d66a6864daeee52441afc0f7e38"
 
 [[projects]]
   digest = "1:dbd86d229eacaa86a98b10f8fb3e3fc69a1913e0f4e010e7cc1f92bf12edca92"
@@ -1049,14 +1075,6 @@
   packages = ["."]
   pruneopts = "NUT"
   revision = "b84e30acd515aadc4b783ad4ff83aff3299bdfe0"
-
-[[projects]]
-  digest = "1:417193ba917954c4837c6fc48c6ac241b3fefd13fc0889367b4a7e43b69d582c"
-  name = "github.com/ldez/go-auroradns"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "b40dfcae7c417f8129579362695dc1f3cfe5928d"
-  version = "v2.0.0"
 
 [[projects]]
   branch = "master"
@@ -1249,6 +1267,22 @@
   packages = ["namecom"]
   pruneopts = "NUT"
   revision = "08470befbe04613bd4b44cb6978b05d50294c4d4"
+
+[[projects]]
+  digest = "1:417193ba917954c4837c6fc48c6ac241b3fefd13fc0889367b4a7e43b69d582c"
+  name = "github.com/nrdcg/auroradns"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "750ca8603f9f2cca2457acb22ea6e44d3f05358c"
+  version = "v1.0.0"
+
+[[projects]]
+  digest = "1:78bc7967454f8c2a1257b3fe4ed1d57227fb1dff46fd74d38b91bd0d0cc2620a"
+  name = "github.com/nrdcg/goinwx"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "d8152159450570012552f924a0ae6ab3d8c617e0"
+  version = "v0.6.0"
 
 [[projects]]
   branch = "master"
@@ -1496,14 +1530,6 @@
   version = "v1.1.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:94fcec8ba983a96bb3f123ab9690955baf44d6d32de342f95f5a2f665c70457a"
-  name = "github.com/smueller18/goinwx"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "5d138389109eca96463f44f692408f0d1c731278"
-
-[[projects]]
   digest = "1:f709d7d110053ada282e5ab1eabcb3581bcf3aaa27d22873ab8d8291c7a474bb"
   name = "github.com/spf13/pflag"
   packages = ["."]
@@ -1577,14 +1603,6 @@
   revision = "1dc93a7db3567a5ccf865106afac88278ba940cf"
 
 [[projects]]
-  branch = "master"
-  digest = "1:0aee615b3628dca9530ea6aba07c0ff5ed74ab1d01f6fe6d33c0137d14d44ef0"
-  name = "github.com/tuvistavie/securerandom"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "15512123a948d62f6361bd84818e11f2ad84059a"
-
-[[projects]]
   digest = "1:9b2996458a2f7d1f3e0ebf08152acfe8c1106f3fe855d08121c5ee7d801a063f"
   name = "github.com/tv42/zbase32"
   packages = ["."]
@@ -1592,7 +1610,7 @@
   revision = "03389da7e0bf9844767f82690f4d68fc097a1306"
 
 [[projects]]
-  digest = "1:d69d06aa6732b9df6ab33998db450ffe0cae9f98e7d019ef3bebac8fd8cd0138"
+  digest = "1:7d3a890e525da3b7014d26dd1d4a0e4d31a479995007cd11989ad31db132e66c"
   name = "github.com/uber/jaeger-client-go"
   packages = [
     ".",
@@ -1610,12 +1628,13 @@
     "thrift-gen/jaeger",
     "thrift-gen/sampling",
     "thrift-gen/zipkincore",
+    "transport",
     "utils",
     "zipkin",
   ]
   pruneopts = "NUT"
-  revision = "b043381d944715b469fd6b37addfd30145ca1758"
-  version = "v2.14.0"
+  revision = "1a782e2da844727691fef1757c72eb190c2909f0"
+  version = "v2.15.0"
 
 [[projects]]
   digest = "1:0f09db8429e19d57c8346ad76fbbc679341fa86073d3b8fb5ac919f0357d8f4c"
@@ -1704,7 +1723,7 @@
   revision = "0c8571ac0ce161a5feb57375a9cdf148c98c0f70"
 
 [[projects]]
-  digest = "1:245afb86e7f760a9ccdfaa4ee052f2af723bdfab5fbeb257fc5d3aebf94a0bd2"
+  digest = "1:2a8f3a3c32e8a622b4053f0653c1e172b0480e75493636d75f0324b77c620805"
   name = "github.com/xenolf/lego"
   packages = [
     "acme",
@@ -1734,6 +1753,7 @@
     "providers/dns/cloudxns/internal",
     "providers/dns/conoha",
     "providers/dns/conoha/internal",
+    "providers/dns/designate",
     "providers/dns/digitalocean",
     "providers/dns/dnsimple",
     "providers/dns/dnsmadeeasy",
@@ -1784,8 +1804,8 @@
     "registration",
   ]
   pruneopts = "NUT"
-  revision = "00ad82dec10ad0af1e037ee652ad1f1cc7015178"
-  version = "v2.1.0"
+  revision = "52e43eb318b07ace590c2144804292c89aa74802"
+  version = "v2.2.0"
 
 [[projects]]
   branch = "master"
@@ -1999,14 +2019,6 @@
   pruneopts = "NUT"
   revision = "5b3e00af70a9484542169a976dcab8d03e601a17"
   version = "v1.30.0"
-
-[[projects]]
-  branch = "v1"
-  digest = "1:1cc3aaf6317bf5da2659ab96c517e243951b61a5d5fe3bd8255c6260fbad08ee"
-  name = "gopkg.in/mattes/go-expand-tilde.v1"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "cb884138e64c9a8bf5c7d6106d74b0fca082df0c"
 
 [[projects]]
   branch = "v2"
@@ -2350,6 +2362,7 @@
     "github.com/stretchr/testify/require",
     "github.com/stvp/go-udp-testing",
     "github.com/thoas/stats",
+    "github.com/uber/jaeger-client-go",
     "github.com/uber/jaeger-client-go/config",
     "github.com/uber/jaeger-client-go/zipkin",
     "github.com/uber/jaeger-lib/metrics",
