@@ -200,12 +200,6 @@
   version = "0.10.0"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/armon/go-proxyproto"
-  packages = ["."]
-  revision = "48572f11356f1843b694f21a290d4f1006bc5e47"
-
-[[projects]]
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -253,6 +247,12 @@
   name = "github.com/beorn7/perks"
   packages = ["quantile"]
   revision = "4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/c0va23/go-proxyprotocol"
+  packages = ["."]
+  revision = "9734bef97b6c844ab247abaf12106dd56d048fb5"
 
 [[projects]]
   name = "github.com/cenk/backoff"
@@ -1904,6 +1904,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8e2d1952c8e853cc6514e5962809e746f0f20eda9dce49e5f17a1d35544fc79e"
+  inputs-digest = "11d252390648bec9bf4fdfba31b8bd93530dea4c56b467334ce6d9056b36186e"
   solver-name = "gps-cdcl"
   solver-version = 1

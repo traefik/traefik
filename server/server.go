@@ -17,7 +17,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/armon/go-proxyproto"
+	"github.com/c0va23/go-proxyprotocol"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/configuration"
@@ -617,17 +617,20 @@ func buildProxyProtocolListener(entryPoint *configuration.EntryPoint, listener n
 
 	log.Infof("Enabling ProxyProtocol for trusted IPs %v", entryPoint.ProxyProtocol.TrustedIPs)
 
-	return &proxyproto.Listener{
-		Listener: listener,
-		SourceCheck: func(addr net.Addr) (bool, error) {
-			ip, ok := addr.(*net.TCPAddr)
-			if !ok {
-				return false, fmt.Errorf("type error %v", addr)
-			}
+	sourceCheck := func(addr net.Addr) (bool, error) {
+		ip, ok := addr.(*net.TCPAddr)
+		if !ok {
+			return false, fmt.Errorf("type error %v", addr)
+		}
 
-			return IPs.ContainsIP(ip.IP), nil
-		},
-	}, nil
+		return IPs.ContainsIP(ip.IP), nil
+	}
+
+	proxyProtocolListener := proxyprotocol.NewDefaultListener(listener).
+		WithSourceChecker(sourceCheck).
+		WithLogger(proxyprotocol.LoggerFunc(log.Debugf))
+
+	return proxyProtocolListener, nil
 }
 
 func (s *Server) buildInternalRouter(entryPointName string) *mux.Router {
