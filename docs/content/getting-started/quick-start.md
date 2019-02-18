@@ -3,7 +3,7 @@
 A Simple Use Case Using Docker
 {: .subtitle }
 
-![quickstart-diagram](../assets/img/quickstart-diagram.svg)
+![quickstart-diagram](../assets/img/quickstart-diagram.png)
 
 !!! tip 
     To save some time, you can clone [Traefik's repository](https://github.com/containous/traefik).
