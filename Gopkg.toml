@@ -47,7 +47,7 @@
 
 [[constraint]]
   branch = "master"
-  name = "github.com/armon/go-proxyproto"
+  name = "github.com/c0va23/go-proxyprotocol"
 
 [[constraint]]
   name = "github.com/aws/aws-sdk-go"
