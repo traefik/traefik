@@ -72,7 +72,7 @@ nav:
       - 'Concepts' : 'getting-started/concepts.md'
       - 'Quick Start': 'getting-started/quick-start.md'
       - 'Configuration Overview': 'getting-started/configuration-overview.md'
-  - 'Providers':
+  - 'Configuration Discovery':
       - 'Overview': 'providers/overview.md'
       - 'Docker': 'providers/docker.md'
       - 'File': 'providers/file.md'
@@ -104,8 +104,9 @@ nav:
       - 'Retry': 'middlewares/retry.md'
       - 'StripPrefix': 'middlewares/stripprefix.md'
       - 'StripPrefixRegex': 'middlewares/stripprefixregex.md'
-  - 'Features':
+  - 'Additional Features':
       - 'Dashboard' : 'features/dashboard.md'
+      - 'Access Logs': 'features/access-logs.md'
       - 'Logs': 'features/logs.md'
       - 'ACME': 'features/acme.md'
       - 'Tracing': 'features/tracing.md'

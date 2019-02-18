@@ -97,10 +97,6 @@ This functionality allows for some easy security features to quickly be set.
 
 The `customRequestHeaders` option lists the Header names and values to apply to the request.
 
-### hostsProxyHeaders
-
-The `hostsProxyHeaders` option lists the Header names and values to apply to the response.
-
 ### allowedHosts 
 
 The `allowedHosts` option lists fully qualified domain names that are allowed.
