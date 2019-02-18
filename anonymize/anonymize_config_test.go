@@ -31,7 +31,7 @@ import (
 	"github.com/containous/traefik/safe"
 	traefiktls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
-	"github.com/elazarl/go-bindata-assetfs"
+	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"github.com/thoas/stats"
 )
 
