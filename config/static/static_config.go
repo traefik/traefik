@@ -30,7 +30,7 @@ import (
 	"github.com/containous/traefik/tracing/jaeger"
 	"github.com/containous/traefik/tracing/zipkin"
 	"github.com/containous/traefik/types"
-	"github.com/elazarl/go-bindata-assetfs"
+	assetfs "github.com/elazarl/go-bindata-assetfs"
 	jaegercli "github.com/uber/jaeger-client-go"
 	"github.com/xenolf/lego/challenge/dns01"
 )

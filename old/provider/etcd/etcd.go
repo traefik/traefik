@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/abronan/valkeyrie/store"
-	"github.com/abronan/valkeyrie/store/etcd/v3"
+	etcdv3 "github.com/abronan/valkeyrie/store/etcd/v3"
 	"github.com/containous/traefik/old/provider"
 	"github.com/containous/traefik/old/provider/kv"
 	"github.com/containous/traefik/old/types"

@@ -14,7 +14,7 @@ import (
 	"github.com/containous/traefik/provider/file"
 	traefiktls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
-	"github.com/elazarl/go-bindata-assetfs"
+	assetfs "github.com/elazarl/go-bindata-assetfs"
 )
 
 func TestDo_globalConfiguration(t *testing.T) {
