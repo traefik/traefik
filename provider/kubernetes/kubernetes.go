@@ -350,7 +350,7 @@ func getTLS(ctx context.Context, ingress *v1beta1.Ingress, k8sClient Client, tls
 		}
 
 		configKey := ingress.Namespace + "/" + t.SecretName
-		if tlsConfig, tlsExists := tlsConfigs[configKey]; !tlsExists {
+		if _, tlsExists := tlsConfigs[configKey]; !tlsExists {
 			secret, exists, err := k8sClient.GetSecret(ingress.Namespace, t.SecretName)
 			if err != nil {
 				return fmt.Errorf("failed to fetch secret %s/%s: %v", ingress.Namespace, t.SecretName, err)
@@ -364,13 +364,12 @@ func getTLS(ctx context.Context, ingress *v1beta1.Ingress, k8sClient Client, tls
 				return err
 			}
 
-			tlsConfig = &tls.Configuration{
+			tlsConfigs[configKey] = &tls.Configuration{
 				Certificate: &tls.Certificate{
 					CertFile: tls.FileOrContent(cert),
 					KeyFile:  tls.FileOrContent(key),
 				},
 			}
-			tlsConfigs[configKey] = tlsConfig
 		}
 	}
 

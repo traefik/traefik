@@ -17,14 +17,13 @@ import (
 
 func TestLoadConfigurationFromIngresses(t *testing.T) {
 	testCases := []struct {
-		desc          string
-		ingressClass  string
-		ingresses     []*v1beta1.Ingress
-		services      []*corev1.Service
-		secrets       []*corev1.Secret
-		endpoints     []*corev1.Endpoints
-		expected      *config.Configuration
-		expectedError bool
+		desc         string
+		ingressClass string
+		ingresses    []*v1beta1.Ingress
+		services     []*corev1.Service
+		secrets      []*corev1.Secret
+		endpoints    []*corev1.Endpoints
+		expected     *config.Configuration
 	}{
 		{
 			desc: "Empty ingresses",
@@ -2089,9 +2088,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		if test.desc != "Ingress with default traefik ingressClass" {
-			//continue
-		}
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
