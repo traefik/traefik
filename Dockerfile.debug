@@ -1,0 +1,64 @@
+FROM  golang:1.10.1-alpine3.7 as builder
+RUN apk --update upgrade \
+&& apk --no-cache --no-progress add git mercurial bash gcc musl-dev curl tar \
+&& rm -rf /var/cache/apk/*
+
+RUN go get golang.org/x/lint/golint \
+&& go get github.com/kisielk/errcheck \
+&& go get github.com/client9/misspell/cmd/misspell
+
+# Which docker version to test on
+ARG DOCKER_VERSION=17.03.2
+ARG DEP_VERSION=0.4.1
+
+# Download go-bindata binary to bin folder in $GOPATH
+RUN mkdir -p /usr/local/bin \
+    && curl -fsSL -o /usr/local/bin/go-bindata https://github.com/containous/go-bindata/releases/download/v1.0.0/go-bindata \
+    && chmod +x /usr/local/bin/go-bindata
+
+# Download dep binary to bin folder in $GOPATH
+RUN mkdir -p /usr/local/bin \
+    && curl -fsSL -o /usr/local/bin/dep https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 \
+    && chmod +x /usr/local/bin/dep
+
+# Download docker
+RUN mkdir -p /usr/local/bin \
+    && curl -fL https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}-ce.tgz \
+    | tar -xzC /usr/local/bin --transform 's#^.+/##x'
+
+WORKDIR /go/src/github.com/containous/traefik
+COPY . /go/src/github.com/containous/traefik
+
+#RUN dep ensure -v
+RUN go get github.com/containous/go-bindata/...
+RUN go generate
+
+ENV CGO_ENABLED=0
+ENV GOGC=off
+ENV VERSION="SNAPSHOT"
+ENV CODENAME="debug"
+
+RUN apk add --no-cache git
+RUN go get github.com/derekparker/delve/cmd/dlv
+RUN go build -gcflags "all=-N -l" -v -ldflags " \
+        -X github.com/containous/traefik/version.Version=$VERSION \
+        -X github.com/containous/traefik/version.Codename=$CODENAME \
+        -X github.com/containous/traefik/version.BuildDate=$(date -u '+%Y-%m-%d_%I:%M:%S%p')" \
+        -a -installsuffix nocgo -o dist/traefik ./cmd/traefik
+
+FROM alpine:3.7
+
+## Port 80 belongs to our application, 40000 belongs to Delve
+EXPOSE 80 40000
+
+# Allow delve to run on Alpine based containers.
+RUN apk add --no-cache libc6-compat
+
+WORKDIR /
+COPY script/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /go/src/github.com/containous/traefik/dist/traefik /
+COPY --from=builder /go/bin/dlv /
+VOLUME ["/tmp"]
+
+# Run delve
+CMD ["/dlv", "--listen=:40000", "--headless=true", "--api-version=2", "exec", "/traefik"]
