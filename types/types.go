@@ -17,7 +17,7 @@ import (
 	"github.com/containous/traefik/log"
 	traefiktls "github.com/containous/traefik/tls"
 	"github.com/mitchellh/hashstructure"
-	"github.com/ryanuber/go-glob"
+	glob "github.com/ryanuber/go-glob"
 )
 
 // Backend holds backend configuration.
@@ -86,8 +86,9 @@ type HealthCheck struct {
 
 // Server holds server configuration.
 type Server struct {
-	URL    string `json:"url,omitempty"`
-	Weight int    `json:"weight"`
+	URL           string `json:"url,omitempty"`
+	Weight        int    `json:"weight"`
+	CustomHeaders map[string]string
 }
 
 // Route holds route configuration.

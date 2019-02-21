@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/containous/traefik/provider/label"
+	yaml "gopkg.in/yaml.v2"
 )
 
 const (
@@ -27,6 +28,7 @@ const (
 	annotationKubernetesFrontendEntryPoints             = "ingress.kubernetes.io/frontend-entry-points"
 	annotationKubernetesPriority                        = "ingress.kubernetes.io/priority"
 	annotationKubernetesCircuitBreakerExpression        = "ingress.kubernetes.io/circuit-breaker-expression"
+	annotationKubernetesBackendCustomRequestHeaders     = "ingress.kubernetes.io/backend-custom-request-headers"
 	annotationKubernetesLoadBalancerMethod              = "ingress.kubernetes.io/load-balancer-method"
 	annotationKubernetesAffinity                        = "ingress.kubernetes.io/affinity"
 	annotationKubernetesSessionCookieName               = "ingress.kubernetes.io/session-cookie-name"
@@ -140,4 +142,25 @@ func getSliceStringValue(annotations map[string]string, annotation string) []str
 func getMapValue(annotations map[string]string, annotation string) map[string]string {
 	annotationName := getAnnotationName(annotations, annotation)
 	return label.GetMapValue(annotations, annotationName)
+}
+
+func getBackendCustomRequestHeaders(annotations map[string]string, annotation, serviceName string) map[string]string {
+	annotationName := getAnnotationName(annotations, annotation)
+
+	customHeaders := make(map[string]string)
+	if err := yaml.Unmarshal([]byte(annotations[annotationName]), customHeaders); err != nil {
+		// TODO: CV Log error
+		return nil
+	}
+
+	serviceCustomRequestHeaders := make(map[string]map[string]string)
+	for name, headerSet := range customHeaders {
+		serviceCustomRequestHeaders[name] = label.ParseMapValue(name, headerSet)
+	}
+
+	if len(serviceCustomRequestHeaders) > 0 {
+		return serviceCustomRequestHeaders[serviceName]
+	}
+
+	return nil
 }

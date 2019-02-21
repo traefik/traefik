@@ -114,13 +114,28 @@ func (s *Server) buildLoadBalancer(frontendName string, backendName string, back
 	var rr *roundrobin.RoundRobin
 	var saveFrontend http.Handler
 
+	lbOpt := roundrobin.RoundRobinRequestRewriteListener(func(oldReq *http.Request, newReq *http.Request) {
+		for _, server := range backend.Servers {
+			serverURLAsURL, _ := url.Parse(server.URL)
+			if serverURLAsURL.Hostname() == newReq.URL.Hostname() {
+				for header, value := range server.CustomHeaders {
+					if value == "" {
+						newReq.Header.Del(header)
+					} else {
+						newReq.Header.Set(header, value)
+					}
+				}
+			}
+		}
+	})
+
 	if s.accessLoggerMiddleware != nil {
 		saveUsername := accesslog.NewSaveUsername(fwd)
 		saveBackend := accesslog.NewSaveBackend(saveUsername, backendName)
 		saveFrontend = accesslog.NewSaveFrontend(saveBackend, frontendName)
-		rr, _ = roundrobin.New(saveFrontend)
+		rr, _ = roundrobin.New(saveFrontend, lbOpt)
 	} else {
-		rr, _ = roundrobin.New(fwd)
+		rr, _ = roundrobin.New(fwd, lbOpt)
 	}
 
 	var stickySession *roundrobin.StickySession
@@ -193,7 +208,6 @@ func (s *Server) configureLBServers(lb healthcheck.BalancerHandler, backend *typ
 		}
 
 		log.Debugf("Creating server %s at %s with weight %d", name, u, srv.Weight)
-
 		if err := lb.UpsertServer(u, roundrobin.Weight(srv.Weight)); err != nil {
 			return fmt.Errorf("error adding server %s to load balancer: %v", srv.URL, err)
 		}

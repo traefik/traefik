@@ -23,7 +23,7 @@ import (
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -366,8 +366,9 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 							}
 							externalNameServiceWeight := weightAllocator.getWeight(r.Host, pa.Path, pa.Backend.ServiceName)
 							templateObjects.Backends[baseName].Servers[url] = types.Server{
-								URL:    url,
-								Weight: externalNameServiceWeight,
+								URL:           url,
+								Weight:        externalNameServiceWeight,
+								CustomHeaders: getBackendCustomRequestHeaders(service.Annotations, annotationKubernetesBackendCustomRequestHeaders, pa.Backend.ServiceName),
 							}
 						} else {
 							endpoints, exists, err := k8sClient.GetEndpoints(service.Namespace, service.Name)
@@ -400,8 +401,9 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 									}
 
 									templateObjects.Backends[baseName].Servers[name] = types.Server{
-										URL:    url,
-										Weight: weightAllocator.getWeight(r.Host, pa.Path, pa.Backend.ServiceName),
+										URL:           url,
+										Weight:        weightAllocator.getWeight(r.Host, pa.Path, pa.Backend.ServiceName),
+										CustomHeaders: getBackendCustomRequestHeaders(service.Annotations, annotationKubernetesBackendCustomRequestHeaders, pa.Backend.ServiceName),
 									}
 								}
 							}
@@ -467,6 +469,18 @@ func (p *Provider) loadConfig(templateObjects types.Configuration) *types.Config
 	if err != nil {
 		log.Error(err)
 	}
+
+	for backendName, backend := range configuration.Backends {
+		if templatedBackend, ok := templateObjects.Backends[backendName]; ok {
+			for serverName := range backend.Servers {
+				if templatedServer, ok := templatedBackend.Servers[serverName]; ok {
+					server := types.Server(templatedServer)
+					backend.Servers[serverName] = server
+				}
+			}
+		}
+	}
+
 	return configuration
 }
 
