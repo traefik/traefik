@@ -54,6 +54,7 @@ var (
 type Certificate struct {
 	CertFile FileOrContent
 	KeyFile  FileOrContent
+	Domains  []string
 }
 
 // Certificates defines traefik certificates type
@@ -133,9 +134,36 @@ func (c *Certificates) isEmpty() bool {
 	return key == len(*c)
 }
 
+// Returns a list of domains for the certificate, let configuration override
+func (c *Certificate) GetDomainsFromCertificate(asn1Data []byte) []string {
+	if c.Domains != nil {
+		return c.Domains
+	}
+	parsedCert, _ := x509.ParseCertificate(asn1Data)
+	var SANs []string
+	if parsedCert.Subject.CommonName != "" {
+		SANs = append(SANs, strings.ToLower(parsedCert.Subject.CommonName))
+	}
+	if parsedCert.DNSNames != nil {
+		sort.Strings(parsedCert.DNSNames)
+		for _, dnsName := range parsedCert.DNSNames {
+			if dnsName != parsedCert.Subject.CommonName {
+				SANs = append(SANs, strings.ToLower(dnsName))
+			}
+		}
+	}
+	if parsedCert.IPAddresses != nil {
+		for _, ip := range parsedCert.IPAddresses {
+			if ip.String() != parsedCert.Subject.CommonName {
+				SANs = append(SANs, strings.ToLower(ip.String()))
+			}
+		}
+	}
+	return SANs
+}
+
 // AppendCertificates appends a Certificate to a certificates map sorted by entrypoints
 func (c *Certificate) AppendCertificates(certs map[string]map[string]*tls.Certificate, ep string) error {
-
 	certContent, err := c.CertFile.Read()
 	if err != nil {
 		return fmt.Errorf("unable to read CertFile : %v", err)
@@ -150,29 +178,7 @@ func (c *Certificate) AppendCertificates(certs map[string]map[string]*tls.Certif
 		return fmt.Errorf("unable to generate TLS certificate : %v", err)
 	}
 
-	parsedCert, _ := x509.ParseCertificate(tlsCert.Certificate[0])
-
-	var SANs []string
-	if parsedCert.Subject.CommonName != "" {
-		SANs = append(SANs, strings.ToLower(parsedCert.Subject.CommonName))
-	}
-	if parsedCert.DNSNames != nil {
-		sort.Strings(parsedCert.DNSNames)
-		for _, dnsName := range parsedCert.DNSNames {
-			if dnsName != parsedCert.Subject.CommonName {
-				SANs = append(SANs, strings.ToLower(dnsName))
-			}
-		}
-
-	}
-	if parsedCert.IPAddresses != nil {
-		for _, ip := range parsedCert.IPAddresses {
-			if ip.String() != parsedCert.Subject.CommonName {
-				SANs = append(SANs, strings.ToLower(ip.String()))
-			}
-		}
-
-	}
+	SANs := c.GetDomainsFromCertificate(tlsCert.Certificate[0])
 	certKey := strings.Join(SANs, ",")
 
 	certExists := false
