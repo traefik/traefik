@@ -183,6 +183,8 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 	tlsConfigs := map[string]*tls.Configuration{}
 
 	for _, i := range ingresses {
+		backendRequestHeaders := getBackendCustomRequestHeaders(i.Annotations, annotationKubernetesBackendCustomRequestHeaders)
+
 		ingressClass, err := getStringSafeValue(i.Annotations, annotationKubernetesIngressClass, "")
 		if err != nil {
 			log.Errorf("Misconfigured ingress class for ingress %s/%s: %v", i.Namespace, i.Name, err)
@@ -368,7 +370,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 							templateObjects.Backends[baseName].Servers[url] = types.Server{
 								URL:           url,
 								Weight:        externalNameServiceWeight,
-								CustomHeaders: getBackendCustomRequestHeaders(service.Annotations, annotationKubernetesBackendCustomRequestHeaders, pa.Backend.ServiceName),
+								CustomHeaders: backendRequestHeaders[pa.Backend.ServiceName],
 							}
 						} else {
 							endpoints, exists, err := k8sClient.GetEndpoints(service.Namespace, service.Name)
@@ -403,7 +405,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 									templateObjects.Backends[baseName].Servers[name] = types.Server{
 										URL:           url,
 										Weight:        weightAllocator.getWeight(r.Host, pa.Path, pa.Backend.ServiceName),
-										CustomHeaders: getBackendCustomRequestHeaders(service.Annotations, annotationKubernetesBackendCustomRequestHeaders, pa.Backend.ServiceName),
+										CustomHeaders: backendRequestHeaders[pa.Backend.ServiceName],
 									}
 								}
 							}

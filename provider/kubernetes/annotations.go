@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"github.com/containous/traefik/log"
 	"strconv"
 
 	"github.com/containous/traefik/provider/label"
@@ -144,23 +145,19 @@ func getMapValue(annotations map[string]string, annotation string) map[string]st
 	return label.GetMapValue(annotations, annotationName)
 }
 
-func getBackendCustomRequestHeaders(annotations map[string]string, annotation, serviceName string) map[string]string {
+func getBackendCustomRequestHeaders(annotations map[string]string, annotation string) map[string]map[string]string {
 	annotationName := getAnnotationName(annotations, annotation)
+	serviceCustomRequestHeaders := make(map[string]map[string]string)
 
 	customHeaders := make(map[string]string)
 	if err := yaml.Unmarshal([]byte(annotations[annotationName]), customHeaders); err != nil {
-		// TODO: CV Log error
-		return nil
+		log.Errorf("error un-marshalling custom request header yaml %v", err)
+		return serviceCustomRequestHeaders
 	}
 
-	serviceCustomRequestHeaders := make(map[string]map[string]string)
 	for name, headerSet := range customHeaders {
 		serviceCustomRequestHeaders[name] = label.ParseMapValue(name, headerSet)
 	}
 
-	if len(serviceCustomRequestHeaders) > 0 {
-		return serviceCustomRequestHeaders[serviceName]
-	}
-
-	return nil
+	return serviceCustomRequestHeaders
 }
