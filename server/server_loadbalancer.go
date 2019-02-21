@@ -114,17 +114,20 @@ func (s *Server) buildLoadBalancer(frontendName string, backendName string, back
 	var rr *roundrobin.RoundRobin
 	var saveFrontend http.Handler
 
+	backEndCustomHeaders := make(map[string]map[string]string)
+	for _, server := range backend.Servers {
+		serverURLAsURL, err := url.Parse(server.URL)
+		if err == nil {
+			backEndCustomHeaders[serverURLAsURL.Hostname()] = server.CustomHeaders
+		}
+	}
+
 	lbOpt := roundrobin.RoundRobinRequestRewriteListener(func(oldReq *http.Request, newReq *http.Request) {
-		for _, server := range backend.Servers {
-			serverURLAsURL, _ := url.Parse(server.URL)
-			if serverURLAsURL.Hostname() == newReq.URL.Hostname() {
-				for header, value := range server.CustomHeaders {
-					if value == "" {
-						newReq.Header.Del(header)
-					} else {
-						newReq.Header.Set(header, value)
-					}
-				}
+		for header, value := range backEndCustomHeaders[newReq.URL.Hostname()] {
+			if value == "" {
+				newReq.Header.Del(header)
+			} else {
+				newReq.Header.Set(header, value)
 			}
 		}
 	})
