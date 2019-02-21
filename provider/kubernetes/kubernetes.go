@@ -410,12 +410,12 @@ func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (
 			namespace, secretName, strings.Join(missingEntries, ", "))
 	}
 
-	cert := string(tlsCrtData[:])
+	cert := string(tlsCrtData)
 	if cert == "" {
 		missingEntries = append(missingEntries, "tls.crt")
 	}
 
-	key := string(tlsKeyData[:])
+	key := string(tlsKeyData)
 	if key == "" {
 		missingEntries = append(missingEntries, "tls.key")
 	}
