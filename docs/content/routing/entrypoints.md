@@ -49,7 +49,7 @@ They can be defined using:
     
     !!! tip "Automatic HTTPS with ACME"
        
-        If you don't have certificate files and wish to automatically enable HTTPS, you should have a look at one of Traefik's most praised feature: [ACME & Let's Encrypt integration](../features/acme.md)
+        If you don't have certificate files and wish to automatically enable HTTPS, you should have a look at one of Traefik's most praised feature: [ACME & Let's Encrypt integration](./acme.md)
 
 ??? example "Client Certificate Authentication"
 

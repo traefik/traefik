@@ -35,7 +35,7 @@ logLevel = "INFO"
 
 ## CLI
 
-For more information about the CLI, see the documentation about [Traefik command](../../features/cli).
+For more information about the CLI, see the documentation about [Traefik command](../../operations/cli).
 
 ```shell
 --logLevel="DEBUG"

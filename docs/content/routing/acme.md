@@ -255,7 +255,7 @@ The [Supported `provider` table](#dnschallenge) indicates if they allow generati
     
 ### onHostRule
 
-Enable certificate generation on [routers](../routing/routers.md) `Host` rules (for routers active on the `acme.entryPoint`).
+Enable certificate generation on [routers](routers.md) `Host` rules (for routers active on the `acme.entryPoint`).
 
 This will request a certificate from Let's Encrypt for each router with a Host rule.
 
