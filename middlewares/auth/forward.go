@@ -96,6 +96,7 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 	}
 
 	for _, headerName := range config.AuthResponseHeaders {
+		r.Header.Del(headerName)
 		headerKey := http.CanonicalHeaderKey(headerName)
 		for _, headerValue := range forwardResponse.Header[headerKey] {
 			if len(headerValue) > 0 {

@@ -77,6 +77,7 @@ func TestForwardAuthSuccess(t *testing.T) {
 	defer ts.Close()
 
 	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	req.Header.Set("X-Auth-Group", "admin_group")
 	res, err := http.DefaultClient.Do(req)
 	assert.NoError(t, err, "there should be no error")
 	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
