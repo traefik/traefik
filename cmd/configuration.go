@@ -3,6 +3,8 @@ package cmd
 import (
 	"time"
 
+	"github.com/containous/traefik/pkg/provider/rancher"
+
 	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/containous/traefik/pkg/middlewares/accesslog"
@@ -171,6 +173,15 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 
 	// default Kubernetes
 	var defaultKubernetes ingress.Provider
+	defaultKubernetes.Watch = true
+
+	// default Rancher
+	var defaultRancher rancher.Provider
+	defaultRancher.Watch = true
+	defaultRancher.ExposedByDefault = true
+	defaultRancher.EnableServiceHealthFilter = true
+	defaultRancher.RefreshSeconds = 15
+	defaultRancher.DefaultRule = rancher.DefaultTemplateRule
 
 	defaultProviders := static.Providers{
 		File:       &defaultFile,
