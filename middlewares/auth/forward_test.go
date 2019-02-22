@@ -50,6 +50,8 @@ func TestForwardAuthFail(t *testing.T) {
 func TestForwardAuthSuccess(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Auth-User", "user@example.com")
+		w.Header().Add("X-Auth-Group", "group1")
+		w.Header().Add("X-Auth-Group", "group2")
 		w.Header().Set("X-Auth-Secret", "secret")
 		fmt.Fprintln(w, "Success")
 	}))
@@ -58,13 +60,14 @@ func TestForwardAuthSuccess(t *testing.T) {
 	middleware, err := NewAuthenticator(&types.Auth{
 		Forward: &types.Forward{
 			Address:             server.URL,
-			AuthResponseHeaders: []string{"X-Auth-User"},
+			AuthResponseHeaders: []string{"X-Auth-User", "X-Auth-Group"},
 		},
 	}, &tracing.Tracing{})
 	assert.NoError(t, err, "there should be no error")
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "user@example.com", r.Header.Get("X-Auth-User"))
+		assert.Equal(t, []string{"group1", "group2"}, r.Header["X-Auth-Group"])
 		assert.Empty(t, r.Header.Get("X-Auth-Secret"))
 		fmt.Fprintln(w, "traefik")
 	})
