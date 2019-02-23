@@ -70,7 +70,7 @@ curl -H Host:whoami.docker.localhost http://127.0.0.1
 _Shows the following output:_
 
 ```yaml
-Hostname: 8656c8ddca6c
+Hostname: a656c8ddca6c
 IP: 172.27.0.3
 #...
 ```
@@ -94,13 +94,13 @@ curl -H Host:whoami.docker.localhost http://127.0.0.1
 The output will show alternatively one of the followings:
 
 ```yaml
-Hostname: 8656c8ddca6c
+Hostname: a656c8ddca6c
 IP: 172.27.0.3
 #...
 ```
 
 ```yaml
-Hostname: 8458f154e1f1
+Hostname: s458f154e1f1
 IP: 172.27.0.4
 # ...
 ```
