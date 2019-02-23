@@ -5,7 +5,9 @@ What's Happening to the Requests?
 
 Let's zoom on Traefik's architecture and talk about the components that enable the routes to be created.
 
-First, when you start Traefik, you define [entrypoints](./entrypoints.md) (in their most basic forms, they are port numbers). Then, connected to these entrypoints, [routers](./routers.md) analyze the incoming requests to see if they match a set of [rules](../routers#rule). If they do, the router might transform the request using pieces of [middleware](../middlewares/overview.md) before forwarding them to your [services](./services.md).
+First, when you start Traefik, you define [entrypoints](./entrypoints.md) (in their most basic forms, they are port numbers).
+Then, connected to these entrypoints, [routers](./routers.md) analyze the incoming requests to see if they match a set of [rules](../routers#rule).
+If they do, the router might transform the request using pieces of [middleware](../middlewares/overview.md) before forwarding them to your [services](./services.md).
 
 ![Architecture](../assets/img/architecture-overview.png)
 
@@ -19,7 +21,8 @@ First, when you start Traefik, you define [entrypoints](./entrypoints.md) (in th
  
 ## Example with a File Provider
 
-Below is an example of a full configuration file for the [file provider](../providers/file.md) that forwards `http://domain/whoami/` requests to a service reachable on `http://private/whoami-service/`. In the process, Traefik will make sure that the user is authenticated (using the [BasicAuth middleware](../middlewares/basicauth.md)).     
+Below is an example of a full configuration file for the [file provider](../providers/file.md) that forwards `http://domain/whoami/` requests to a service reachable on `http://private/whoami-service/`.
+In the process, Traefik will make sure that the user is authenticated (using the [BasicAuth middleware](../middlewares/basicauth.md)).     
 
 ```toml
 [EntryPoints]
@@ -48,4 +51,5 @@ Below is an example of a full configuration file for the [file provider](../prov
 
 !!! note "The File Provider"
 
-    In this example, we use the [file provider](../providers/file.md). Even if it is one of the least magical way of configuring Traefik, it explicitly describes every available notion.
+    In this example, we use the [file provider](../providers/file.md).
+    Even if it is one of the least magical way of configuring Traefik, it explicitly describes every available notion.

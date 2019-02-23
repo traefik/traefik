@@ -42,4 +42,4 @@ Do you best to explain what you're looking for, and why it would improve Traefik
 
 ## International English
 
-Every maintainer / Traefik user is not a native English speaker, so if you feel sometimes that some messages sound rude, remember that it probably is a langage barrier problem from someone willing to help you.
+Every maintainer / Traefik user is not a native English speaker, so if you feel sometimes that some messages sound rude, remember that it probably is a language barrier problem from someone willing to help you.

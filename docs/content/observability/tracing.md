@@ -178,5 +178,4 @@ Traefik supports three tracing backends: Jaeger, Zipkin, and DataDog.
         # Default: ""
         #
         globalTag = ""
-    
     ```

@@ -17,7 +17,8 @@ Deploying your services, you attach information that tell Traefik the characteri
 
 ![Decentralized Configuration](../assets/img/traefik-concepts-2.png)
 
-It means that when a service is deployed, Traefik detects it immediately and updates the routing rules in real time. The opposite is true: when you remove a service from your infrastructure, the route will disapear accordingly.
+It means that when a service is deployed, Traefik detects it immediately and updates the routing rules in real time.
+The opposite is true: when you remove a service from your infrastructure, the route will disapear accordingly.
 
 You no longer need to create and synchronize configuration files cluttered with IP addresses or other rules.
 

@@ -17,11 +17,12 @@ The title must be short and descriptive. (~60 characters)
 
 Follow the [pull request template](https://github.com/containous/traefik/blob/master/.github/PULL_REQUEST_TEMPLATE.md) as much as possible.
 
-Explain the conditions which led you to write this PR: give us context. The context should lead to something, an idea or a problem that you’re facing.
+Explain the conditions which led you to write this PR: give us context.
+The context should lead to something, an idea or a problem that you’re facing.
 
 Remain clear and concise.
 
-Take time to polish the format of your message so we'll enjoy reading it and working on it. 
+Take time to polish the format of your message so we'll enjoy reading it and working on it.
 Help the readers focus on what matters, and help them understand the structure of your message (see the [Github Markdown Syntax](https://help.github.com/articles/github-flavored-markdown)).
 
 ## PR Content

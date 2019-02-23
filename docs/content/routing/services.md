@@ -29,7 +29,8 @@ The `Services` are responsible for configuring how to reach the actual services 
 ### General
 
 Currently, the `LoadBalancer` service is the only supported kind of `Service` (see below).
-However, since Traefik is an ever evolving project, other kind of Services will be available in the future, reason why you have to specify what kind of service you declare. 
+However, since Traefik is an ever evolving project, other kind of Services will be available in the future,
+reason why you have to specify what kind of service you declare. 
 
 ### Load Balancer
 
@@ -58,7 +59,8 @@ The `weight` option defines the weight of the server for the load balancing algo
 
 !!! note
     Paths in the servers' `url` have no effet. 
-    If you want the requests to be sent to a specific path on your servers, configure your [`routers`](./routers.md) to use a corresponding [Middleware](../middlewares/overview.md) (e.g. the [AddPrefix](../middlewares/addprefix.md) or [ReplacePath](../middlewares/replacepath.md)) middlewares.
+    If you want the requests to be sent to a specific path on your servers,
+    configure your [`routers`](./routers.md) to use a corresponding [Middleware](../middlewares/overview.md) (e.g. the [AddPrefix](../middlewares/addprefix.md) or [ReplacePath](../middlewares/replacepath.md)) middlewares.
     
 ??? example "A Service with One Server -- Using the [File Provider](../providers/file.md)"
     

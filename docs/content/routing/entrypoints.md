@@ -45,7 +45,8 @@ They can be defined using:
 
     !!! note
     
-        In the example, `http` and `https` are the names for the entrypoints and have nothing to do with the underlying protocol. We could have written `entryPoints.foo` and `entryPoints.bar` instead. 
+        In the example, `http` and `https` are the names for the entrypoints and have nothing to do with the underlying protocol.
+        We could have written `entryPoints.foo` and `entryPoints.bar` instead. 
     
     !!! tip "Automatic HTTPS with ACME"
        

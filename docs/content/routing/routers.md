@@ -5,7 +5,8 @@ Connecting Requests to Services
 
 ![Routers](../assets/img/routers.png)
 
-A router is in charge of connecting incoming requests to the services that can handle them. In the process, routers may use pieces of [middleware](../middlewares/overview.md) to update the request, or act before forwarding the request to the service.
+A router is in charge of connecting incoming requests to the services that can handle them.
+In the process, routers may use pieces of [middleware](../middlewares/overview.md) to update the request, or act before forwarding the request to the service.
 
 ## Configuration Example
 
@@ -89,20 +90,22 @@ If the rule is verified, then the router becomes active and calls middlewares, t
     ```
 The table below lists all the available matchers:
 
-| Rule                                                    | Description                                                                                                                                                                                                                                                                             |
-|------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ``Headers(`key`, `value`)``                  | Check if there is a key `key`defined in the headers, with the value `value`                                                                                                                                                                               |
-| ``HeadersRegexp(`key`, `regexp`)``     | Check if there is a key `key`defined in the headers, with a value that matches the regular expression `regexp`                                                                                                                                  |
-| ``Host(`domain-1`, ...)``                         | Check if the request domain targets one of the given `domains`.                                                                                                                                                                                                                              |
-| ``HostRegexp(`traefik.io`, `{subdomain:[a-z]+}.traefik.io`, ...)``    | Check if the request domain matches the given `regexp`.                                                                                                                                                                                                      |
-| `Method(methods, ...)`                                   | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`)                                                                                                                                                                                                                       |
-| ``Path(`path`, `/articles/{category}/{id:[0-9]+}`, ...)``       | Match exact request path. It accepts a sequence of literal and regular expression paths.                                                                                                                                                                                                |
-| ``PathPrefix(`/products/`, `/articles/{category}/{id:[0-9]+}`)`` | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.                                                                                                                                                                                        |
-| ``Query(`foo=bar`, `bar=baz`)``                                  | Match` Query String parameters. It accepts a sequence of key=value pairs.                                                                                                                                                                                                                |
+| Rule                                                               | Description                                                                                                    |
+|--------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
+| ``Headers(`key`, `value`)``                                        | Check if there is a key `key`defined in the headers, with the value `value`                                    |
+| ``HeadersRegexp(`key`, `regexp`)``                                 | Check if there is a key `key`defined in the headers, with a value that matches the regular expression `regexp` |
+| ``Host(`domain-1`, ...)``                                          | Check if the request domain targets one of the given `domains`.                                                |
+| ``HostRegexp(`traefik.io`, `{subdomain:[a-z]+}.traefik.io`, ...)`` | Check if the request domain matches the given `regexp`.                                                        |
+| `Method(methods, ...)`                                             | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`)            |
+| ``Path(`path`, `/articles/{category}/{id:[0-9]+}`, ...)``          | Match exact request path. It accepts a sequence of literal and regular expression paths.                       |
+| ``PathPrefix(`/products/`, `/articles/{category}/{id:[0-9]+}`)``   | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.               |
+| ``Query(`foo=bar`, `bar=baz`)``                                    | Match` Query String parameters. It accepts a sequence of key=value pairs.                                      |
 
 !!! important "Regexp Syntax"
 
-    In order to use regular expressions with `Host` and `Path` expressions, you must declare an arbitrarily named variable followed by the colon-separated regular expression, all enclosed in curly braces. Any pattern supported by [Go's regexp package](https://golang.org/pkg/regexp/) may be used (example: `/posts/{id:[0-9]+}`).
+    In order to use regular expressions with `Host` and `Path` expressions,
+    you must declare an arbitrarily named variable followed by the colon-separated regular expression, all enclosed in curly braces.
+    Any pattern supported by [Go's regexp package](https://golang.org/pkg/regexp/) may be used (example: `/posts/{id:[0-9]+}`).
     
 !!! tip "Combining Matchers Using Operators and Parenthesis"
     

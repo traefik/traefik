@@ -12,7 +12,8 @@ Configuration in Traefik can refer to two different things:
 
 Elements in the _static configuration_ set up connections to [providers](../../providers/overview/) and define the [entrypoints](../../routing/entrypoints/) Traefik will listen to (these elements don't change often).
 
-The _dynamic configuration_ contains everything that defines how the requests are handled by your system. This configuration can change and is seamlessly hot-reloaded, without any request interuption or connection loss.    
+The _dynamic configuration_ contains everything that defines how the requests are handled by your system.
+This configuration can change and is seamlessly hot-reloaded, without any request interuption or connection loss.    
 
 ## The Dynamic Configuration 
 
@@ -46,7 +47,9 @@ If you don't provide a value for a given option, default values apply.
 
     Some root options are enablers: they set default values for all their children. 
     
-    For example, the `--providers.docker` option enables the docker provider. Once positioned, this option sets (and resets) all the default values under the root `providers.docker`. If you define child options using a lesser precedence configuration source, they will be overwritten by the default values.  
+    For example, the `--providers.docker` option enables the docker provider.
+    Once positioned, this option sets (and resets) all the default values under the root `providers.docker`.
+    If you define child options using a lesser precedence configuration source, they will be overwritten by the default values.  
     
 ### Configuration File
 
@@ -73,4 +76,6 @@ Traefik supports several Key-value stores:
 
 ## Available Configuration Options
 
-All the configuration options are documented in their related section. You can browse the available features in the menu, the [providers](../providers/overview.md), or the [routing section](../routing/overview.md) to see them in action.
+All the configuration options are documented in their related section.
+
+You can browse the available features in the menu, the [providers](../providers/overview.md), or the [routing section](../routing/overview.md) to see them in action.

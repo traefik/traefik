@@ -18,15 +18,25 @@ This will create binaries for the Linux platform in the `dist` folder.
 
 ```bash
 $ make binary
-docker build -t "traefik-dev:no-more-godep-ever" -f build.Dockerfile .
-Sending build context to Docker daemon 295.3 MB
-Step 0 : FROM golang:1.11-alpine
- ---> 8c6473912976
-Step 1 : RUN go get github.com/golang/dep/cmd/dep
+docker build -t traefik-webui -f webui/Dockerfile webui
+Sending build context to Docker daemon  2.686MB
+Step 1/11 : FROM node:8.15.0
+ ---> 1f6c34f7921c
 [...]
-docker run --rm  -v "/var/run/docker.sock:/var/run/docker.sock" -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -v "/home/user/go/src/github.com/containous/traefik/"dist":/go/src/github.com/containous/traefik/"dist"" "traefik-dev:no-more-godep-ever" ./script/make.sh generate binary
+Successfully built ce4ff439c06a
+Successfully tagged traefik-webui:latest
+[...]
+docker build  -t "traefik-dev:4475--feature-documentation" -f build.Dockerfile .
+Sending build context to Docker daemon    279MB
+Step 1/10 : FROM golang:1.11-alpine
+ ---> f4bfb3d22bda
+[...]
+Successfully built 5c3c1a911277
+Successfully tagged traefik-dev:4475--feature-documentation
+docker run  -e "TEST_CONTAINER=1" -v "/var/run/docker.sock:/var/run/docker.sock" -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -e VERBOSE -e VERSION -e CODENAME -e TESTDIRS -e CI -e CONTAINER=DOCKER		 -v "/home/ldez/sources/go/src/github.com/containous/traefik/"dist":/go/src/github.com/containous/traefik/"dist"" "traefik-dev:4475--feature-documentation" ./script/make.sh generate binary
 ---> Making bundle: generate (in .)
-removed 'gen.go'
+removed 'autogen/gentemplates/gen.go'
+removed 'autogen/genstatic/gen.go'
 
 ---> Making bundle: binary (in .)
 
@@ -98,9 +108,10 @@ If you happen to update the provider's templates (located in `/templates`), you 
 
 ### Setting up dependency management
 
-The [dep](https://github.com/golang/dep) command is not required for building; however, it is necessary if you need to update the dependencies (i.e., add, update, or remove third-party packages).
+The [dep](https://github.com/golang/dep) command is not required for building;
+however, it is necessary if you need to update the dependencies (i.e., add, update, or remove third-party packages).
 
-You need [dep](https://github.com/golang/dep) >= O.4.1.
+You need [dep](https://github.com/golang/dep) >= 0.5.0.
 
 If you want to add a dependency, use `dep ensure -add` to have [dep](https://github.com/golang/dep) put it into the vendor folder and update the dep manifest/lock files (`Gopkg.toml` and `Gopkg.lock`, respectively).
 
@@ -124,6 +135,7 @@ $ go build ./cmd/traefik
 
 Run unit tests using the `test-unit` target.
 Run integration tests using the `test-integration` target.
+Run all tests (unit and integration) using the `test` target.
 
 ```bash
 $ make test-unit
@@ -140,7 +152,7 @@ ok      github.com/containous/traefik   0.005s  coverage: 4.1% of statements
 Test success
 ```
 
-For development purposes, you can specify which tests to run by using:
+For development purposes, you can specify which tests to run by using (only works the `test-integration` target):
 
 ```bash
 # Run every tests in the MyTest suite
