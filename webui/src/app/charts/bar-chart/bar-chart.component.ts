@@ -4,7 +4,8 @@ import {
   Input,
   OnChanges,
   OnInit,
-  SimpleChanges
+  SimpleChanges,
+  OnDestroy
 } from '@angular/core';
 import { axisBottom, axisLeft, max, scaleBand, scaleLinear, select } from 'd3';
 import { format } from 'd3-format';
@@ -15,7 +16,7 @@ import { WindowService } from '../../services/window.service';
   selector: 'app-bar-chart',
   templateUrl: './bar-chart.component.html'
 })
-export class BarChartComponent implements OnInit, OnChanges {
+export class BarChartComponent implements OnInit, OnChanges, OnDestroy {
   @Input() value: any;
 
   barChartEl: HTMLElement;
@@ -30,6 +31,10 @@ export class BarChartComponent implements OnInit, OnChanges {
   data: any[];
   previousData: any[];
 
+  private readonly resize$$ = this.windowService.resizeDebounce$.subscribe(w =>
+    this.draw()
+  );
+
   constructor(
     public elementRef: ElementRef,
     public windowService: WindowService
@@ -41,8 +46,6 @@ export class BarChartComponent implements OnInit, OnChanges {
     this.barChartEl = this.elementRef.nativeElement.querySelector('.bar-chart');
     this.setup();
     setTimeout(() => (this.loading = false), 1000);
-
-    this.windowService.resize.subscribe(w => this.draw());
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -56,6 +59,10 @@ export class BarChartComponent implements OnInit, OnChanges {
 
       this.draw();
     }
+  }
+
+  ngOnDestroy() {
+    this.resize$$.unsubscribe();
   }
 
   setup(): void {

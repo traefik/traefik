@@ -1,18 +1,21 @@
 import { Injectable } from '@angular/core';
 import { EventManager } from '@angular/platform-browser';
 import { Subject } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 
 @Injectable()
 export class WindowService {
-  resize: Subject<any>;
+  private readonly _resize = new Subject<EventTarget>();
+
+  readonly resize = this._resize.asObservable();
+  readonly resizeDebounce$ = this.resize.pipe(debounceTime(200));
 
   constructor(private eventManager: EventManager) {
-    this.resize = new Subject();
     this.eventManager.addGlobalEventListener(
       'window',
       'resize',
       (event: UIEvent) => {
-        this.resize.next(event.target);
+        this._resize.next(event.target);
       }
     );
   }

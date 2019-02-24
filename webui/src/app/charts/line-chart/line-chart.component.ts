@@ -4,7 +4,9 @@ import {
   Input,
   OnChanges,
   OnInit,
-  SimpleChanges
+  SimpleChanges,
+  ChangeDetectorRef,
+  OnDestroy
 } from '@angular/core';
 import {
   axisBottom,
@@ -27,7 +29,7 @@ import { WindowService } from '../../services/window.service';
   selector: 'app-line-chart',
   templateUrl: 'line-chart.component.html'
 })
-export class LineChartComponent implements OnChanges, OnInit {
+export class LineChartComponent implements OnChanges, OnInit, OnDestroy {
   @Input() value: { count: number; date: string };
 
   firstDisplay: boolean;
@@ -52,9 +54,22 @@ export class LineChartComponent implements OnChanges, OnInit {
   margin = { top: 40, right: 40, bottom: 60, left: 60 };
   loading = true;
 
+  private readonly resize$$ = this.windowService.resizeDebounce$.subscribe(
+    () => {
+      if (this.svg) {
+        this.dirty = true;
+        this.loading = true;
+
+        this.render();
+        this.cdr.markForCheck();
+      }
+    }
+  );
+
   constructor(
-    private elementRef: ElementRef,
-    public windowService: WindowService
+    private readonly elementRef: ElementRef,
+    private readonly cdr: ChangeDetectorRef,
+    private readonly windowService: WindowService
   ) {}
 
   ngOnInit() {
@@ -78,14 +93,10 @@ export class LineChartComponent implements OnChanges, OnInit {
 
     this.firstDisplay = true;
     this.render();
+  }
 
-    this.windowService.resize.subscribe(w => {
-      if (this.svg) {
-        this.dirty = true;
-        this.loading = true;
-        this.render();
-      }
-    });
+  ngOnDestroy() {
+    this.resize$$.unsubscribe();
   }
 
   render() {
