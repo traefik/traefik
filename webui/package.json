@@ -36,7 +36,7 @@
     "lodash": "^4.17.5",
     "rxjs": "^6.4.0",
     "tslib": "^1.9.0",
-    "zone.js": "^0.8.19"
+    "zone.js": "^0.8.29"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "~0.13.0",
@@ -45,8 +45,9 @@
     "@angular/language-service": "^7.2.3",
     "@types/jasmine": "~3.3.8",
     "@types/jasminewd2": "~2.0.2",
+    "@types/lodash": "^4.14.121",
     "@types/node": "~10.12.20",
-    "codelyzer": "^4.0.1",
+    "codelyzer": "^4.5.0",
     "jasmine-core": "~3.3.0",
     "jasmine-spec-reporter": "~4.2.1",
     "karma": "~4.0.0",
