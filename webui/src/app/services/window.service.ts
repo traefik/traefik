@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { EventManager } from '@angular/platform-browser';
-import { Subject } from 'rxjs/Subject';
+import { Subject } from 'rxjs';
 
 @Injectable()
 export class WindowService {

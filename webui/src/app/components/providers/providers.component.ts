@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import * as _ from 'lodash';
-import { Observable } from 'rxjs/Observable';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription, timer } from 'rxjs';
+import { mergeMap, timeInterval } from 'rxjs/operators';
 import { ApiService } from '../../services/api.service';
 
 @Component({
@@ -23,9 +23,11 @@ export class ProvidersComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.maxItem = 100;
     this.keyword = '';
-    this.sub = Observable.timer(0, 2000)
-      .timeInterval()
-      .mergeMap(() => this.apiService.fetchProviders())
+    this.sub = timer(0, 2000)
+      .pipe(
+        timeInterval(),
+        mergeMap(() => this.apiService.fetchProviders())
+      )
       .subscribe(data => {
         if (!_.isEqual(this.previousData, data)) {
           this.previousData = _.cloneDeep(data);
