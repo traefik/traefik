@@ -6,6 +6,7 @@ import {
 import { Injectable } from '@angular/core';
 import { Observable, EMPTY, of } from 'rxjs';
 import { catchError, map, retry } from 'rxjs/operators';
+import { RawHealth } from '../components/health/health.component';
 
 export interface ProviderType {
   [provider: string]: {
@@ -36,16 +37,18 @@ export class ApiService {
     );
   }
 
-  fetchHealthStatus(): Observable<any> {
-    return this.http.get('../health', { headers: this.headers }).pipe(
-      retry(2),
-      catchError((err: HttpErrorResponse) => {
-        console.error(
-          `[health] returned code ${err.status}, body was: ${err.error}`
-        );
-        return EMPTY;
-      })
-    );
+  fetchHealthStatus() {
+    return this.http
+      .get<RawHealth>('../health', { headers: this.headers })
+      .pipe(
+        retry(2),
+        catchError((err: HttpErrorResponse) => {
+          console.error(
+            `[health] returned code ${err.status}, body was: ${err.error}`
+          );
+          return EMPTY;
+        })
+      );
   }
 
   fetchProviders(): Observable<any> {
