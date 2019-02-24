@@ -2,22 +2,39 @@ import {
   Component,
   ElementRef,
   Input,
-  OnChanges,
   OnInit,
-  SimpleChanges,
-  OnDestroy
+  OnDestroy,
+  ChangeDetectorRef
 } from '@angular/core';
 import { axisBottom, axisLeft, max, scaleBand, scaleLinear, select } from 'd3';
 import { format } from 'd3-format';
 import * as _ from 'lodash';
 import { WindowService } from '../../services/window.service';
 
+interface DataModel {
+  code: string;
+  count: number;
+}
+
 @Component({
   selector: 'app-bar-chart',
   templateUrl: './bar-chart.component.html'
 })
-export class BarChartComponent implements OnInit, OnChanges, OnDestroy {
-  @Input() value: any;
+export class BarChartComponent implements OnInit, OnDestroy {
+  @Input() set value(data: DataModel[] | null) {
+    if (data == null || _.isEqual(this.value, data) === true) {
+      return;
+    }
+
+    this._value = data;
+    this.draw();
+  }
+
+  private _value?: DataModel[];
+
+  get value() {
+    return this._value;
+  }
 
   barChartEl: HTMLElement;
   svg: any;
@@ -27,38 +44,29 @@ export class BarChartComponent implements OnInit, OnChanges, OnDestroy {
   width: number;
   height: number;
   margin = { top: 40, right: 40, bottom: 40, left: 40 };
-  loading: boolean;
-  data: any[];
+  data?: DataModel[];
   previousData: any[];
 
-  private readonly resize$$ = this.windowService.resizeDebounce$.subscribe(w =>
-    this.draw()
+  get loading() {
+    return this.value == null || this.svg == null;
+  }
+
+  private readonly resize$$ = this.windowService.resizeDebounce$.subscribe(
+    () => {
+      this.draw();
+      this.cdr.markForCheck();
+    }
   );
 
   constructor(
-    public elementRef: ElementRef,
-    public windowService: WindowService
-  ) {
-    this.loading = true;
-  }
+    private readonly elementRef: ElementRef,
+    private readonly cdr: ChangeDetectorRef,
+    private readonly windowService: WindowService
+  ) {}
 
   ngOnInit() {
     this.barChartEl = this.elementRef.nativeElement.querySelector('.bar-chart');
     this.setup();
-    setTimeout(() => (this.loading = false), 1000);
-  }
-
-  ngOnChanges(changes: SimpleChanges) {
-    if (!this.value || !this.svg) {
-      return;
-    }
-
-    if (!_.isEqual(this.previousData, this.value)) {
-      this.previousData = _.cloneDeep(this.value);
-      this.data = this.value;
-
-      this.draw();
-    }
   }
 
   ngOnDestroy() {
@@ -89,6 +97,12 @@ export class BarChartComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   draw(): void {
+    if (this.loading) {
+      return;
+    }
+
+    const data = (this.data = this.value || []);
+
     if (
       this.barChartEl.clientWidth === 0 ||
       this.barChartEl.clientHeight === 0
@@ -101,8 +115,8 @@ export class BarChartComponent implements OnInit, OnChanges, OnDestroy {
         this.barChartEl.clientHeight - this.margin.top - this.margin.bottom;
     }
 
-    this.x.domain(this.data.map((d: any) => d.code));
-    this.y.domain([0, max(this.data, (d: any) => d.count)]);
+    this.x.domain(data.map(d => d.code));
+    this.y.domain([0, max(data, (d: DataModel) => d.count)]);
 
     this.svg
       .attr('width', this.width + this.margin.left + this.margin.right)
@@ -125,7 +139,7 @@ export class BarChartComponent implements OnInit, OnChanges, OnDestroy {
     // Clean previous graph
     this.g.selectAll('.bar').remove();
 
-    const bars = this.g.selectAll('.bar').data(this.data);
+    const bars = this.g.selectAll('.bar').data(data);
 
     bars
       .enter()

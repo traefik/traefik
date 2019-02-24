@@ -10,7 +10,7 @@ describe('BarChartComponent', () => {
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [BarChartComponent],
-      providers: [{ provide: WindowService, useInstance: {} }]
+      providers: [WindowService]
     }).compileComponents();
   }));
 
