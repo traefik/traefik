@@ -1,0 +1,125 @@
+site_name: Traefik
+site_description: Traefik Documentation
+site_author: containo.us
+site_url: https://docs.traefik.io
+dev_addr: 0.0.0.0:8000
+
+repo_name: 'GitHub'
+repo_url: 'https://github.com/containous/traefik'
+
+docs_dir: 'content'
+
+theme:
+  name: 'material'
+  custom_dir: 'theme'
+  language: en
+  include_sidebar: true
+  favicon: assets/img/traefik.icon.png
+  logo: assets/img/traefik.logo.png
+  palette:
+    primary: 'blue'
+    accent: 'light blue'
+  feature:
+    tabs: false
+  palette:
+    primary: 'cyan'
+    accent: 'cyan'
+  i18n:
+    prev: 'Previous'
+    next: 'Next'
+
+copyright: "Copyright &copy; 2016-2019 Containous"
+
+google_analytics:
+  - 'UA-51880359-3'
+  - 'docs.traefik.io'
+
+extra_css:
+  - assets/styles/extra.css # Our custom styles
+  - assets/styles/atom-one-light.css # HightlightJS's CSS theme
+
+extra_javascript:
+  - assets/js/hljs/highlight.pack.js # Download from https://highlightjs.org/download/ and enable YAML, TOML and Dockerfile
+  - assets/js/extra.js
+
+plugins:
+  - search
+
+markdown_extensions:
+  - attr_list
+  - admonition
+  - footnotes
+  - pymdownx.details
+  - pymdownx.inlinehilite
+  - pymdownx.highlight:
+      use_pygments: false # hljs is used instead of pygment for TOML hihglighting support
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tasklist
+  - markdown_include.include:
+      base_path: content/includes/
+      encoding: utf-8
+  - toc:
+      permalink: true
+
+# Page tree
+nav:
+  - '': 'reference/acme.md'
+  - '': 'reference/providers/docker.md'
+  - '': 'reference/entrypoints.md'
+  - 'Welcome': 'index.md'
+  - 'Getting Started':
+      - 'Concepts' : 'getting-started/concepts.md'
+      - 'Quick Start': 'getting-started/quick-start.md'
+      - 'Configuration Overview': 'getting-started/configuration-overview.md'
+  - 'Configuration Discovery':
+      - 'Overview': 'providers/overview.md'
+      - 'Docker': 'providers/docker.md'
+      - 'File': 'providers/file.md'
+  - 'Routing & Load Balancing':
+      - 'Overview': 'routing/overview.md'
+      - 'Entrypoints': 'routing/entrypoints.md'
+      - 'Routers': 'routing/routers.md'
+      - 'Services': 'routing/services.md'
+      - 'ACME': 'routing/acme.md'
+  - 'Middlewares':
+      - 'Overview': 'middlewares/overview.md'
+      - 'AddPrefix': 'middlewares/addprefix.md'
+      - 'BasicAuth': 'middlewares/basicauth.md'
+      - 'Buffering': 'middlewares/buffering.md'
+      - 'Chain': 'middlewares/chain.md'
+      - 'CircuitBreaker': 'middlewares/circuitbreaker.md'
+      - 'Compress': 'middlewares/compress.md'
+      - 'DigestAuth': 'middlewares/digestauth.md'
+      - 'Errors': 'middlewares/errorpages.md'
+      - 'ForwardAuth': 'middlewares/forwardauth.md'
+      - 'Headers': 'middlewares/headers.md'
+      - 'IpWhitelist': 'middlewares/ipwhitelist.md'
+      - 'Maxconn': 'middlewares/maxconnection.md'
+      - 'PassTLSClientCert': 'middlewares/passtlsclientcert.md'
+      - 'RateLimit': 'middlewares/ratelimit.md'
+      - 'RedirectRegex': 'middlewares/redirectregex.md'
+      - 'RedirectScheme': 'middlewares/redirectscheme.md'
+      - 'ReplacePath': 'middlewares/replacepath.md'
+      - 'ReplacePathRegex': 'middlewares/replacepathregex.md'
+      - 'Retry': 'middlewares/retry.md'
+      - 'StripPrefix': 'middlewares/stripprefix.md'
+      - 'StripPrefixRegex': 'middlewares/stripprefixregex.md'
+  - 'Operations':
+      - 'CLI': 'operations/cli.md'
+      - 'Dashboard' : 'operations/dashboard.md'
+      - 'Ping': 'operations/ping.md'
+      - 'Debug Mode': 'operations/debug-mode.md'
+  - 'Observability':
+      - 'Logs': 'observability/logs.md'
+      - 'Access Logs': 'observability/access-logs.md'
+      - 'Tracing': 'observability/tracing.md'
+  - 'Contributing':
+      - 'Thank You!': 'contributing/thank-you.md'
+      - 'Submitting Issues': 'contributing/submitting-issues.md'
+      - 'Submitting PRs': 'contributing/submitting-pull-requests.md'
+      - 'Building and Testing': 'contributing/building-testing.md'
+      - 'Documentation': 'contributing/documentation.md'
+      - 'Data Collection': 'contributing/data-collection.md'
+      - 'Advocating': 'contributing/advocating.md'
+  - 'Glossary': 'glossary.md'
