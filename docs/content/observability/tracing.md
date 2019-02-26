@@ -179,3 +179,41 @@ Traefik supports three tracing backends: Jaeger, Zipkin, and DataDog.
         #
         globalTag = ""
     ```
+    
+??? example "With Instana"
+
+    ```toml
+    # Tracing definition
+    [tracing]
+      # Backend name used to send tracing data
+      #
+      # Default: "jaeger"
+      #
+      backend = "instana"
+      # Service name used in Instana backend
+      #
+      # Default: "traefik"
+      #
+      serviceName = "traefik"
+      [tracing.instana]
+        # Local Agent Host instructs reporter to send spans to instana-agent at this address
+        #
+        # Default: "127.0.0.1"
+        #
+        localAgentHost = "127.0.0.1"
+        # Local Agent port instructs reporter to send spans to the instana-agent at this port
+        # 
+        # Default: 42699
+        #
+        localAgentPort = 42699
+        # Set Instana tracer log level
+        #
+        # Default: info
+        # Valid values for logLevel field are:
+        #   - error
+        #   - warn
+        #   - debug
+        #   - info
+        #
+        logLevel = "info"
+    ``` 

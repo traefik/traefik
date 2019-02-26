@@ -14,16 +14,17 @@ import (
 	"github.com/containous/traefik/old/provider/ecs"
 	"github.com/containous/traefik/old/provider/etcd"
 	"github.com/containous/traefik/old/provider/eureka"
-	"github.com/containous/traefik/old/provider/kubernetes"
 	"github.com/containous/traefik/old/provider/mesos"
 	"github.com/containous/traefik/old/provider/rancher"
 	"github.com/containous/traefik/old/provider/zk"
 	"github.com/containous/traefik/ping"
 	"github.com/containous/traefik/provider/docker"
 	"github.com/containous/traefik/provider/file"
+	"github.com/containous/traefik/provider/kubernetes"
 	"github.com/containous/traefik/provider/marathon"
 	"github.com/containous/traefik/provider/rest"
 	"github.com/containous/traefik/tracing/datadog"
+	"github.com/containous/traefik/tracing/instana"
 	"github.com/containous/traefik/tracing/jaeger"
 	"github.com/containous/traefik/tracing/zipkin"
 	"github.com/containous/traefik/types"
@@ -113,6 +114,11 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 			GlobalTag:          "",
 			Debug:              false,
 			PrioritySampling:   false,
+		},
+		Instana: &instana.Config{
+			LocalAgentHost: "localhost",
+			LocalAgentPort: 42699,
+			LogLevel:       "info",
 		},
 	}
 
