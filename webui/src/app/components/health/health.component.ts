@@ -1,12 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { distanceInWordsStrict, format, subSeconds } from 'date-fns';
 import * as _ from 'lodash';
-import 'rxjs/add/observable/timer';
-import 'rxjs/add/operator/map';
-import 'rxjs/add/operator/mergeMap';
-import 'rxjs/add/operator/timeInterval';
-import { Observable } from 'rxjs/Observable';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription, timer } from 'rxjs';
+import { mergeMap, timeInterval } from 'rxjs/operators';
 import { ApiService } from '../../services/api.service';
 
 @Component({
@@ -32,9 +28,11 @@ export class HealthComponent implements OnInit, OnDestroy {
   constructor(private apiService: ApiService) {}
 
   ngOnInit() {
-    this.sub = Observable.timer(0, 3000)
-      .timeInterval()
-      .mergeMap(() => this.apiService.fetchHealthStatus())
+    this.sub = timer(0, 3000)
+      .pipe(
+        timeInterval(),
+        mergeMap(() => this.apiService.fetchHealthStatus())
+      )
       .subscribe(data => {
         if (data) {
           if (!_.isEqual(this.previousRecentErrors, data.recent_errors)) {

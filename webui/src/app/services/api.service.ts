@@ -4,12 +4,8 @@ import {
   HttpHeaders
 } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import 'rxjs/add/observable/of';
-import 'rxjs/add/operator/catch';
-import 'rxjs/add/operator/map';
-import 'rxjs/add/operator/retry';
-import { EMPTY } from 'rxjs/internal/observable/empty';
-import { Observable } from 'rxjs/Observable';
+import { Observable, EMPTY, of } from 'rxjs';
+import { catchError, map, retry } from 'rxjs/operators';
 
 export interface ProviderType {
   [provider: string]: {
@@ -29,40 +25,40 @@ export class ApiService {
   }
 
   fetchVersion(): Observable<any> {
-    return this.http
-      .get('../api/version', { headers: this.headers })
-      .retry(4)
-      .catch((err: HttpErrorResponse) => {
+    return this.http.get('../api/version', { headers: this.headers }).pipe(
+      retry(4),
+      catchError((err: HttpErrorResponse) => {
         console.error(
           `[version] returned code ${err.status}, body was: ${err.error}`
         );
         return EMPTY;
-      });
+      })
+    );
   }
 
   fetchHealthStatus(): Observable<any> {
-    return this.http
-      .get('../health', { headers: this.headers })
-      .retry(2)
-      .catch((err: HttpErrorResponse) => {
+    return this.http.get('../health', { headers: this.headers }).pipe(
+      retry(2),
+      catchError((err: HttpErrorResponse) => {
         console.error(
           `[health] returned code ${err.status}, body was: ${err.error}`
         );
         return EMPTY;
-      });
+      })
+    );
   }
 
   fetchProviders(): Observable<any> {
-    return this.http
-      .get('../api/providers', { headers: this.headers })
-      .retry(2)
-      .catch((err: HttpErrorResponse) => {
+    return this.http.get('../api/providers', { headers: this.headers }).pipe(
+      retry(2),
+      catchError((err: HttpErrorResponse) => {
         console.error(
           `[providers] returned code ${err.status}, body was: ${err.error}`
         );
-        return Observable.of<any>({});
-      })
-      .map((data: any): ProviderType => this.parseProviders(data));
+        return of<any>({});
+      }),
+      map((data: any): ProviderType => this.parseProviders(data))
+    );
   }
 
   parseProviders(data: any): ProviderType {
