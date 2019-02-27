@@ -139,7 +139,6 @@ func (s *HTTPSSuite) TestWithSNIStrictNotMatchedRequest(c *check.C) {
 // "snitest.org", which does not match the CN of 'snitest.com.crt'. The test
 // verifies that traefik returns the default certificate.
 func (s *HTTPSSuite) TestWithDefaultCertificate(c *check.C) {
-	os.Setenv("GODEBUG", os.Getenv("GODEBUG")+"tls13=1")
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/https_sni_default_cert.toml"))
 	defer display(c)
 	err := cmd.Start()
@@ -154,45 +153,6 @@ func (s *HTTPSSuite) TestWithDefaultCertificate(c *check.C) {
 		InsecureSkipVerify: true,
 		ServerName:         "snitest.org",
 		NextProtos:         []string{"h2", "http/1.1"},
-	}
-	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
-	c.Assert(err, checker.IsNil, check.Commentf("failed to connect to server"))
-
-	defer conn.Close()
-	err = conn.Handshake()
-	c.Assert(err, checker.IsNil, check.Commentf("TLS handshake error"))
-
-	cs := conn.ConnectionState()
-	err = cs.PeerCertificates[0].VerifyHostname("snitest.com")
-	c.Assert(err, checker.IsNil, check.Commentf("certificate did not serve correct default certificate"))
-
-	proto := cs.NegotiatedProtocol
-	c.Assert(proto, checker.Equals, "h2")
-}
-
-// TestTLS13 test TLS 1.3
-func (s *HTTPSSuite) TestTLS13(c *check.C) {
-	previous := os.Getenv("GODEBUG")
-	if len(previous) > 0 {
-		previous += ","
-	}
-	os.Setenv("GODEBUG", previous+"tls13=1")
-
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/https_sni_default_cert.toml"))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
-
-	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 500*time.Millisecond, try.BodyContains("Host(`snitest.com`)"))
-	c.Assert(err, checker.IsNil)
-
-	tlsConfig := &tls.Config{
-		InsecureSkipVerify: true,
-		ServerName:         "snitest.org",
-		NextProtos:         []string{"h2", "http/1.1"},
-		MinVersion:         tls.VersionTLS13,
 	}
 	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
 	c.Assert(err, checker.IsNil, check.Commentf("failed to connect to server"))
@@ -370,7 +330,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthentication(c *check.C) {
 
 // TestWithClientCertificateAuthentication
 // Use two CA:s and test that clients with client signed by either of them can connect
-func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAs(c *check.C) {
+func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAs(c *check.C) {
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/clientca/https_2ca1config.toml"))
 	defer display(c)
 	err := cmd.Start()
@@ -431,7 +391,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAs(c *check.
 
 // TestWithClientCertificateAuthentication
 // Use two CA:s in two different files and test that clients with client signed by either of them can connect
-func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAsMultipleFiles(c *check.C) {
+func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAsMultipleFiles(c *check.C) {
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/clientca/https_2ca2config.toml"))
 	defer display(c)
 	err := cmd.Start()

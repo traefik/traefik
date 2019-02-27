@@ -5,7 +5,6 @@ RUN apk --update upgrade \
 && rm -rf /var/cache/apk/*
 
 RUN go get golang.org/x/lint/golint \
-&& go get github.com/kisielk/errcheck \
 && go get github.com/client9/misspell/cmd/misspell
 
 # Which docker version to test on
