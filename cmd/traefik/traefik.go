@@ -43,6 +43,14 @@ import (
 	"github.com/vulcand/oxy/roundrobin"
 )
 
+func init() {
+	previous := os.Getenv("GODEBUG")
+	if len(previous) > 0 {
+		previous += ","
+	}
+	os.Setenv("GODEBUG", previous+"tls13=1")
+}
+
 // sliceOfStrings is the parser for []string
 type sliceOfStrings []string
 
