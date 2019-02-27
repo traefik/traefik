@@ -299,7 +299,7 @@ func (p *Provider) watchHealthState(stopCh <-chan struct{}, watchCh chan<- map[s
 				for _, healthy := range healthyState {
 					key := fmt.Sprintf("%s-%s", healthy.Node, healthy.ServiceID)
 					_, failing := currentFailing[key]
-					if healthy.Status == "passing" && !failing {
+					if (healthy.Status == "passing" || healthy.Status == "warning") && !failing {
 						current[key] = append(current[key], healthy.Node)
 					} else if strings.HasPrefix(healthy.CheckID, "_service_maintenance") || strings.HasPrefix(healthy.CheckID, "_node_maintenance") {
 						maintenance = append(maintenance, healthy.CheckID)
