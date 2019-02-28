@@ -4,7 +4,7 @@ import (
 	"io"
 
 	"github.com/containous/traefik/log"
-	"github.com/instana/go-sensor"
+	instana "github.com/instana/go-sensor"
 	"github.com/opentracing/opentracing-go"
 )
 

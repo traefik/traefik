@@ -6,11 +6,13 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/containous/traefik/config"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/tracing"
 	"github.com/opentracing/opentracing-go/ext"
@@ -152,15 +154,18 @@ func getDNInfo(prefix string, options *DistinguishedNameOptions, cs *pkix.Name) 
 	return ""
 }
 
-func writeParts(content *strings.Builder, entries []string, prefix string) {
+func writeParts(content io.StringWriter, entries []string, prefix string) {
 	for _, entry := range entries {
 		writePart(content, entry, prefix)
 	}
 }
 
-func writePart(content *strings.Builder, entry string, prefix string) {
+func writePart(content io.StringWriter, entry string, prefix string) {
 	if len(entry) > 0 {
-		content.WriteString(fmt.Sprintf("%s=%s,", prefix, entry))
+		_, err := content.WriteString(fmt.Sprintf("%s=%s,", prefix, entry))
+		if err != nil {
+			log.Error(err)
+		}
 	}
 }
 

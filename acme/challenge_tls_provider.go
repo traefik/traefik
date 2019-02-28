@@ -37,7 +37,11 @@ func (c *challengeTLSProvider) getCertificate(domain string) (cert *tls.Certific
 		return nil, false
 	}
 
-	account.Init()
+	err := account.Init()
+	if err != nil {
+		log.Errorf("Unable to init ACME Account: %v", err)
+		return nil, false
+	}
 
 	var result *tls.Certificate
 	operation := func() error {
@@ -58,7 +62,7 @@ func (c *challengeTLSProvider) getCertificate(domain string) (cert *tls.Certific
 	ebo := backoff.NewExponentialBackOff()
 	ebo.MaxElapsedTime = 60 * time.Second
 
-	err := backoff.RetryNotify(safe.OperationWithRecover(operation), ebo, notify)
+	err = backoff.RetryNotify(safe.OperationWithRecover(operation), ebo, notify)
 	if err != nil {
 		log.Errorf("Error getting cert: %v", err)
 		return nil, false

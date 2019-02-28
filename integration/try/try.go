@@ -126,7 +126,7 @@ func Do(timeout time.Duration, operation DoCondition) error {
 	}
 }
 
-func doTryGet(url string, timeout time.Duration, transport *http.Transport, conditions ...ResponseCondition) (*http.Response, error) {
+func doTryGet(url string, timeout time.Duration, transport http.RoundTripper, conditions ...ResponseCondition) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
@@ -135,11 +135,11 @@ func doTryGet(url string, timeout time.Duration, transport *http.Transport, cond
 	return doTryRequest(req, timeout, transport, conditions...)
 }
 
-func doTryRequest(request *http.Request, timeout time.Duration, transport *http.Transport, conditions ...ResponseCondition) (*http.Response, error) {
+func doTryRequest(request *http.Request, timeout time.Duration, transport http.RoundTripper, conditions ...ResponseCondition) (*http.Response, error) {
 	return doRequest(Do, timeout, request, transport, conditions...)
 }
 
-func doRequest(action timedAction, timeout time.Duration, request *http.Request, transport *http.Transport, conditions ...ResponseCondition) (*http.Response, error) {
+func doRequest(action timedAction, timeout time.Duration, request *http.Request, transport http.RoundTripper, conditions ...ResponseCondition) (*http.Response, error) {
 	var resp *http.Response
 	return resp, action(timeout, func() error {
 		var err error
