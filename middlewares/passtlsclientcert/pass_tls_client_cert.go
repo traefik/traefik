@@ -19,7 +19,7 @@ import (
 
 const (
 	xForwardedTLSClientCert     = "X-Forwarded-Tls-Client-Cert"
-	xForwardedTLSClientCertInfo = "X-Forwarded-Tls-Client-Cert-info"
+	xForwardedTLSClientCertInfo = "X-Forwarded-Tls-Client-Cert-Info"
 	typeName                    = "PassClientTLSCert"
 )
 

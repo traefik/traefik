@@ -9,6 +9,7 @@
 /webui/.tmp/
 .vscode/
 /site/
+/docs/site/
 *.log
 *.exe
 .DS_Store

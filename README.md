@@ -1,6 +1,6 @@
 
 <p align="center">
-<img src="docs/img/traefik.logo.png" alt="Traefik" title="Traefik" />
+<img src="docs/content/assets/img/traefik.logo.png" alt="Traefik" title="Traefik" />
 </p>
 
 [![Build Status SemaphoreCI](https://semaphoreci.com/api/v1/containous/traefik/branches/master/shields_badge.svg)](https://semaphoreci.com/containous/traefik)
@@ -50,7 +50,7 @@ Traefik listens to your service registry/orchestrator API and instantly generate
 **Run Traefik and let it do the work for you!** 
 _(But if you'd rather configure some of your routes manually, Traefik supports that too!)_
 
-![Architecture](docs/img/architecture.png)
+![Architecture](docs/content/assets/img/architecture.png)
 
 ## Features
 
@@ -95,8 +95,8 @@ If you are looking for a more comprehensive and real use-case example, you can a
 
 You can access the simple HTML frontend of Traefik.
 
-![Web UI Providers](docs/img/web.frontend.png)
-![Web UI Health](docs/img/traefik-health.png)
+![Web UI Providers](docs/content/assets/img/dashboard-main.png)
+![Web UI Health](docs/content/assets/img/dashboard-health.png)
 
 ## Documentation
 
@@ -171,7 +171,7 @@ We use [Semantic Versioning](http://semver.org/)
 
 ## Credits
 
-Kudos to [Peka](http://peka.byethost11.com/photoblog/) for his awesome work on the logo ![logo](docs/img/traefik.icon.png).
+Kudos to [Peka](http://peka.byethost11.com/photoblog/) for his awesome work on the logo ![logo](docs/content/assets/img/traefik.icon.png).
 
 Traefik's logo is licensed under the Creative Commons 3.0 Attributions license.
 

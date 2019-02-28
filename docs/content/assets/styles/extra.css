@@ -1,0 +1,59 @@
+@import url('https://fonts.googleapis.com/css?family=Noto+Sans|Noto+Serif');
+
+.md-logo img {
+    background-color: white;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+}
+
+/* Fix for Chrome */
+.md-typeset__table td code {
+    word-break: unset;
+}
+
+.md-typeset__table tr :nth-child(1) {
+    word-wrap: break-word;
+    max-width: 30em;
+}
+
+body {
+    font-family: 'Noto Sans', sans-serif;
+}
+
+h1 {
+    font-weight: bold !important;
+    color: rgba(0,0,0,.9) !important;
+}
+
+h2 {
+    font-weight: bold !important;
+}
+
+h3 {
+    font-weight: bold !important;
+}
+
+figcaption {
+    text-align: center;
+    font-size: 0.8em;
+    font-style: italic;
+    color: #8D909F;
+}
+
+p.subtitle {
+    color: rgba(0,0,0,.54);
+    padding-top: 0;
+    margin-top: -2em;
+    font-weight: bold;
+    font-size: 1.25em;
+}
+
+.markdown-body .task-list-item {
+    list-style-type: none !important;
+}
+
+.markdown-body .task-list-item input[type="checkbox"] {
+    margin: 0 4px 0.25em -20px;
+    vertical-align: middle;
+}
