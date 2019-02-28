@@ -50,7 +50,7 @@ Traefik listens to your service registry/orchestrator API and instantly generate
 **Run Traefik and let it do the work for you!** 
 _(But if you'd rather configure some of your routes manually, Traefik supports that too!)_
 
-![Architecture](docs/content/assets/img/architecture.png)
+![Architecture](docs/content/assets/img/traefik-architecture.png)
 
 ## Features
 
