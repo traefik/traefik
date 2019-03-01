@@ -5,7 +5,7 @@ import (
 
 	"github.com/abronan/valkeyrie/store"
 	"github.com/abronan/valkeyrie/store/etcd/v2"
-	"github.com/abronan/valkeyrie/store/etcd/v3"
+	etcdv3 "github.com/abronan/valkeyrie/store/etcd/v3"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/provider/kv"

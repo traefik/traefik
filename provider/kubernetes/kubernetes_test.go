@@ -374,7 +374,7 @@ func TestLoadGlobalIngressWithHttpsPortNames(t *testing.T) {
 			eUID("1"),
 			subset(
 				eAddresses(eAddress("10.10.0.1")),
-				ePorts(ePort(8080, ""))),
+				ePorts(ePort(8080, "https-global"))),
 		),
 	}
 
