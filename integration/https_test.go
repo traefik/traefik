@@ -330,7 +330,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthentication(c *check.C) {
 
 // TestWithClientCertificateAuthentication
 // Use two CA:s and test that clients with client signed by either of them can connect
-func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAs(c *check.C) {
+func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAs(c *check.C) {
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/clientca/https_2ca1config.toml"))
 	defer display(c)
 	err := cmd.Start()
@@ -391,7 +391,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAs(c *check.
 
 // TestWithClientCertificateAuthentication
 // Use two CA:s in two different files and test that clients with client signed by either of them can connect
-func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAsMultipleFiles(c *check.C) {
+func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAsMultipleFiles(c *check.C) {
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/clientca/https_2ca2config.toml"))
 	defer display(c)
 	err := cmd.Start()

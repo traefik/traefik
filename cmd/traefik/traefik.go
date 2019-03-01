@@ -43,6 +43,14 @@ import (
 	"github.com/vulcand/oxy/roundrobin"
 )
 
+func init() {
+	goDebug := os.Getenv("GODEBUG")
+	if len(goDebug) > 0 {
+		goDebug += ","
+	}
+	os.Setenv("GODEBUG", goDebug+"tls13=1")
+}
+
 // sliceOfStrings is the parser for []string
 type sliceOfStrings []string
 
@@ -56,11 +64,11 @@ func (s *sliceOfStrings) String() string {
 // Set's argument is a string to be parsed to set the flag.
 // It's a comma-separated list, so we split it.
 func (s *sliceOfStrings) Set(value string) error {
-	strings := strings.Split(value, ",")
-	if len(strings) == 0 {
+	parts := strings.Split(value, ",")
+	if len(parts) == 0 {
 		return fmt.Errorf("bad []string format: %s", value)
 	}
-	for _, entrypoint := range strings {
+	for _, entrypoint := range parts {
 		*s = append(*s, entrypoint)
 	}
 	return nil

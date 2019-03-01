@@ -9,7 +9,7 @@ unset IFS
 errors=()
 for f in "${files[@]}"; do
 	# we use "git show" here to validate that what's committed passes go vet
-	failedVet=$(go tool vet -printf=false "$f")
+	failedVet=$(go vet -printf=false "$f")
 	if [ "$failedVet" ]; then
 		errors+=( "$failedVet" )
 	fi
