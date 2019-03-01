@@ -3343,10 +3343,10 @@ service2: "l5d-dst-override:service2.testing.svc.cluster.local"
 		backends(
 			backend("host1/foo",
 				servers(
-					server("http://10.10.0.1:8080", weight(1), customHeaders(map[string]string {"L5d-Dst-Override": "service1.testing.svc.cluster.local"})),
-					server("http://10.10.0.2:8080", weight(1), customHeaders(map[string]string {"L5d-Dst-Override": "service1.testing.svc.cluster.local"})),
-					server("http://10.10.0.3:7070", weight(1), customHeaders(map[string]string {"L5d-Dst-Override": "service2.testing.svc.cluster.local"})),
-					server("http://10.10.0.4:7070", weight(1), customHeaders(map[string]string {"L5d-Dst-Override": "service2.testing.svc.cluster.local"})),
+					server("http://10.10.0.1:8080", weight(1), customHeaders(map[string]string{"L5d-Dst-Override": "service1.testing.svc.cluster.local"})),
+					server("http://10.10.0.2:8080", weight(1), customHeaders(map[string]string{"L5d-Dst-Override": "service1.testing.svc.cluster.local"})),
+					server("http://10.10.0.3:7070", weight(1), customHeaders(map[string]string{"L5d-Dst-Override": "service2.testing.svc.cluster.local"})),
+					server("http://10.10.0.4:7070", weight(1), customHeaders(map[string]string{"L5d-Dst-Override": "service2.testing.svc.cluster.local"})),
 				),
 				lbMethod("wrr"),
 			),
@@ -3361,7 +3361,7 @@ service2: "l5d-dst-override:service2.testing.svc.cluster.local"
 		),
 	)
 
-	assert.Equal(t, expected, actual, "error loading percentage weight annotation")
+	assert.Equal(t, expected, actual, "error loading custom backend header ingress")
 }
 
 func TestPercentageWeightServiceAnnotation(t *testing.T) {
