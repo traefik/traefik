@@ -299,10 +299,22 @@ retryexpression: IsNetworkError() && Attempts() <= 2
 
 ### Custom Headers Annotations
 
-|                        Annotation                     |                                                                                             Description                                                                          |
-| ------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ingress.kubernetes.io/custom-request-headers: EXPR`  | Provides the container with custom request headers that will be appended to each request forwarded to the container. Format: <code>HEADER:value&vert;&vert;HEADER2:value2</code> |
-| `ingress.kubernetes.io/custom-response-headers: EXPR` | Appends the headers to each response returned by the container, before forwarding the response to the client. Format: <code>HEADER:value&vert;&vert;HEADER2:value2</code>        |
+|                        Annotation                             |                                                                                         Description                                                                              |
+| --------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ingress.kubernetes.io/custom-request-headers: EXPR`          | Provides the container with custom request headers that will be appended to each request forwarded to the container. Format: <code>HEADER:value&vert;&vert;HEADER2:value2</code> |
+| `ingress.kubernetes.io/backend-custom-request-headers: <YML>` | Provides distinct backend container(s) with custom request headers that will be appended to each request forwarded to the container. (1)                                         |
+| `ingress.kubernetes.io/custom-response-headers: EXPR`         | Appends the headers to each response returned by the container, before forwarding the response to the client. Format: <code>HEADER:value&vert;&vert;HEADER2:value2</code>        |
+
+<1> `ingress.kubernetes.io/backend-custom-request-headers`:
+Backend custom request headers enables fine-grained control over the request header's sent to distinct backend containers.
+The value format follows the <code>HEADER:value&vert;&vert;HEADER2:value2</code> convention.
+
+Example:
+
+```yaml
+service_backend1: "l5d-dst-override:service_backend1.mynamespace.svc.cluster.local"
+service_backend2: "l5d-dst-override:service_backend2.mynamespace.svc.cluster.local"
+```
 
 ### Security Headers Annotations
 
