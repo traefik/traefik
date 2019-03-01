@@ -68,6 +68,12 @@ func weight(value int) func(*types.Server) {
 	}
 }
 
+func customHeaders(value map[string]string) func(*types.Server) {
+	return func(s *types.Server) {
+		s.CustomHeaders = value
+	}
+}
+
 func lbMethod(method string) func(*types.Backend) {
 	return func(b *types.Backend) {
 		if b.LoadBalancer == nil {

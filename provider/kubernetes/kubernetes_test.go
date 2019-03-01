@@ -3261,6 +3261,109 @@ func TestProviderUpdateIngressStatus(t *testing.T) {
 	}
 }
 
+func TestBackendDistinctCustomHeadersServiceAnnotation(t *testing.T) {
+	ingresses := []*extensionsv1beta1.Ingress{
+		buildIngress(
+			iAnnotation(annotationKubernetesBackendCustomRequestHeaders, `
+service1: "l5d-dst-override:service1.testing.svc.cluster.local"
+service2: "l5d-dst-override:service2.testing.svc.cluster.local"
+`),
+			iNamespace("testing"),
+			iRules(
+				iRule(
+					iHost("host1"),
+					iPaths(
+						onePath(iPath("/foo"), iBackend("service1", intstr.FromString("8080"))),
+						onePath(iPath("/foo"), iBackend("service2", intstr.FromString("7070"))),
+					)),
+			),
+		),
+	}
+	services := []*corev1.Service{
+		buildService(
+			sName("service1"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sPorts(sPort(8080, "")),
+			),
+		),
+		buildService(
+			sName("service2"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sPorts(sPort(7070, "")),
+			),
+		),
+	}
+
+	endpoints := []*corev1.Endpoints{
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service1"),
+			eUID("1"),
+			subset(
+				eAddresses(
+					eAddress("10.10.0.1"),
+					eAddress("10.10.0.2"),
+				),
+				ePorts(ePort(8080, "")),
+			),
+		),
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service2"),
+			eUID("1"),
+			subset(
+				eAddresses(
+					eAddress("10.10.0.3"),
+					eAddress("10.10.0.4"),
+				),
+				ePorts(ePort(7070, "")),
+			),
+		),
+	}
+
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		endpoints: endpoints,
+		watchChan: watchChan,
+	}
+	provider := Provider{}
+
+	actual, err := provider.loadIngresses(client)
+	require.NoError(t, err, "error loading ingresses")
+
+	expected := buildConfiguration(
+		backends(
+			backend("host1/foo",
+				servers(
+					server("http://10.10.0.1:8080", weight(1), customHeaders(map[string]string {"L5d-Dst-Override": "service1.testing.svc.cluster.local"})),
+					server("http://10.10.0.2:8080", weight(1), customHeaders(map[string]string {"L5d-Dst-Override": "service1.testing.svc.cluster.local"})),
+					server("http://10.10.0.3:7070", weight(1), customHeaders(map[string]string {"L5d-Dst-Override": "service2.testing.svc.cluster.local"})),
+					server("http://10.10.0.4:7070", weight(1), customHeaders(map[string]string {"L5d-Dst-Override": "service2.testing.svc.cluster.local"})),
+				),
+				lbMethod("wrr"),
+			),
+		),
+		frontends(
+			frontend("host1/foo",
+				passHostHeader(),
+				routes(
+					route("/foo", "PathPrefix:/foo"),
+					route("host1", "Host:host1")),
+			),
+		),
+	)
+
+	assert.Equal(t, expected, actual, "error loading percentage weight annotation")
+}
+
 func TestPercentageWeightServiceAnnotation(t *testing.T) {
 	ingresses := []*extensionsv1beta1.Ingress{
 		buildIngress(
