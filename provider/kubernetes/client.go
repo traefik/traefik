@@ -1,12 +1,12 @@
 package kubernetes
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"time"
 
 	"github.com/containous/traefik/old/log"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	kubeerror "k8s.io/apimachinery/pkg/api/errors"
@@ -16,6 +16,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 const resyncPeriod = 10 * time.Minute
@@ -78,6 +79,15 @@ func newInClusterClient(endpoint string) (*clientImpl, error) {
 	return createClientFromConfig(config)
 }
 
+func newExternalClusterClientFromFile(file string) (*clientImpl, error) {
+	configFromFlags, err := clientcmd.BuildConfigFromFlags("", file)
+
+	if err != nil {
+		return nil, err
+	}
+	return createClientFromConfig(configFromFlags)
+}
+
 // newExternalClusterClient returns a new Provider client that may run outside
 // of the cluster.
 // The endpoint parameter must not be empty.
@@ -99,11 +109,11 @@ func newExternalClusterClient(endpoint, token, caFilePath string) (*clientImpl, 
 
 		config.TLSClientConfig = rest.TLSClientConfig{CAData: caData}
 	}
-
 	return createClientFromConfig(config)
 }
 
 func createClientFromConfig(c *rest.Config) (*clientImpl, error) {
+
 	clientset, err := kubernetes.NewForConfig(c)
 	if err != nil {
 		return nil, err

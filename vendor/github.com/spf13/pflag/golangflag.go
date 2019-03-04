@@ -6,12 +6,9 @@ package pflag
 
 import (
 	goflag "flag"
-	"fmt"
 	"reflect"
 	"strings"
 )
-
-var _ = fmt.Print
 
 // flagValueWrapper implements pflag.Value around a flag.Value.  The main
 // difference here is the addition of the Type method that returns a string
@@ -101,4 +98,8 @@ func (f *FlagSet) AddGoFlagSet(newSet *goflag.FlagSet) {
 	newSet.VisitAll(func(goflag *goflag.Flag) {
 		f.AddGoFlag(goflag)
 	})
+	if f.addedGoFlagSets == nil {
+		f.addedGoFlagSets = make([]*goflag.FlagSet, 0)
+	}
+	f.addedGoFlagSets = append(f.addedGoFlagSets, newSet)
 }
