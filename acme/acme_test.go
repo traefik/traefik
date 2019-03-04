@@ -15,6 +15,7 @@ import (
 	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDomainsSet(t *testing.T) {
@@ -58,7 +59,7 @@ func TestDomainsSet(t *testing.T) {
 			t.Parallel()
 
 			domains := types.Domains{}
-			domains.Set(test.input)
+			_ = domains.Set(test.input)
 			assert.Exactly(t, test.expected, domains)
 		})
 	}
@@ -110,7 +111,7 @@ func TestDomainsSetAppend(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.input, func(t *testing.T) {
 
-			domains.Set(test.input)
+			_ = domains.Set(test.input)
 			assert.Exactly(t, test.expected, domains)
 		})
 	}
@@ -237,7 +238,9 @@ func TestRemoveDuplicates(t *testing.T) {
 			},
 		},
 	}
-	domainsCertificates.Init()
+
+	err := domainsCertificates.Init()
+	require.NoError(t, err)
 
 	if len(domainsCertificates.Certs) != 2 {
 		t.Errorf("Expected domainsCertificates length %d %+v\nGot %+v", 2, domainsCertificates.Certs, len(domainsCertificates.Certs))
@@ -790,7 +793,8 @@ func TestRemoveEmptyCertificates(t *testing.T) {
 			t.Parallel()
 
 			a := &Account{DomainsCertificate: *test.dc}
-			a.Init()
+			err := a.Init()
+			require.NoError(t, err)
 
 			assert.Equal(t, len(test.expectedDc.Certs), len(a.DomainsCertificate.Certs))
 			sort.Sort(&a.DomainsCertificate)

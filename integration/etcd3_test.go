@@ -85,7 +85,7 @@ func (s *Etcd3Suite) SetUpSuite(c *check.C) {
 
 func (s *Etcd3Suite) TearDownTest(c *check.C) {
 	// Delete all Traefik keys from ETCD
-	s.kv.DeleteTree("/traefik")
+	_ = s.kv.DeleteTree("/traefik")
 }
 
 func (s *Etcd3Suite) TearDownSuite(c *check.C) {

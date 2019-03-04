@@ -309,18 +309,19 @@ func (p *Provider) listContainers(ctx context.Context, dockerClient client.Conta
 }
 
 func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClient, containerID string) dockerData {
-	dData := dockerData{}
 	containerInspected, err := dockerClient.ContainerInspect(ctx, containerID)
 	if err != nil {
 		log.FromContext(ctx).Warnf("Failed to inspect container %s, error: %s", containerID, err)
-	} else {
-		// This condition is here to avoid to have empty IP https://github.com/containous/traefik/issues/2459
-		// We register only container which are running
-		if containerInspected.ContainerJSONBase != nil && containerInspected.ContainerJSONBase.State != nil && containerInspected.ContainerJSONBase.State.Running {
-			dData = parseContainer(containerInspected)
-		}
+		return dockerData{}
 	}
-	return dData
+
+	// This condition is here to avoid to have empty IP https://github.com/containous/traefik/issues/2459
+	// We register only container which are running
+	if containerInspected.ContainerJSONBase != nil && containerInspected.ContainerJSONBase.State != nil && containerInspected.ContainerJSONBase.State.Running {
+		return parseContainer(containerInspected)
+	}
+
+	return dockerData{}
 }
 
 func parseContainer(container dockertypes.ContainerJSON) dockerData {

@@ -21,7 +21,8 @@ func TestGet(t *testing.T) {
 	fileContent, err := ioutil.ReadFile(acmeFile)
 	assert.NoError(t, err)
 
-	tmpFile.Write(fileContent)
+	_, err = tmpFile.Write(fileContent)
+	assert.NoError(t, err)
 
 	localStore := NewLocalStore(tmpFile.Name())
 	account, err := localStore.Get()
