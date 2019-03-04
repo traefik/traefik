@@ -482,8 +482,10 @@ To enable IP white listing at the entry point level.
 
 ## ProxyProtocol
 
-To enable [ProxyProtocol](https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt) support.
+To enable [ProxyProtocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) support.
 Only IPs in `trustedIPs` will lead to remote client address replacement: you should declare your load-balancer IP or CIDR range here (in testing environment, you can trust everyone using `insecure = true`).
+
+Supported both proxy protocol v1 and v2.
 
 !!! danger
     When queuing Traefik behind another load-balancer, be sure to carefully configure Proxy Protocol on both sides.
