@@ -198,7 +198,11 @@ required = [
 
 [[constraint]]
   name = "google.golang.org/grpc"
-  version = "1.5.2"
+  version = "1.13.0"
+
+[[constraing]]
+  name = "github.com/golang/protobuf/proto"
+  version = "v1.3.0"
 
 [[constraint]]
   name = "gopkg.in/fsnotify.v1"
