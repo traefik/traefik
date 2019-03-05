@@ -282,3 +282,7 @@ required = [
 [[constraint]]
   name = "github.com/instana/go-sensor"
   version = "1.4.12"
+
+[[constraint]]
+  name = "github.com/ExpediaDotCom/haystack-client-go"
+  revision = "3ee3ba12ce07ae900855f7cf3e3f543418e865bf"
