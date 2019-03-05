@@ -17,7 +17,6 @@ import (
 	"github.com/containous/staert"
 	"github.com/containous/traefik/autogen/genstatic"
 	"github.com/containous/traefik/cmd"
-	"github.com/containous/traefik/cmd/bug"
 	"github.com/containous/traefik/cmd/healthcheck"
 	"github.com/containous/traefik/cmd/storeconfig"
 	cmdVersion "github.com/containous/traefik/cmd/version"
@@ -134,7 +133,6 @@ Complete documentation is available at https://traefik.io`,
 
 	// add commands
 	f.AddCommand(cmdVersion.NewCmd())
-	f.AddCommand(bug.NewCmd(traefikConfiguration, traefikPointersConfiguration))
 	f.AddCommand(storeConfigCmd)
 	f.AddCommand(healthcheck.NewCmd(traefikConfiguration, traefikPointersConfiguration))
 
