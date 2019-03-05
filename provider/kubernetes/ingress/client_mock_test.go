@@ -1,4 +1,4 @@
-package kubernetes
+package ingress
 
 import (
 	corev1 "k8s.io/api/core/v1"

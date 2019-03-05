@@ -21,7 +21,7 @@ import (
 	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/provider/docker"
 	"github.com/containous/traefik/provider/file"
-	"github.com/containous/traefik/provider/kubernetes"
+	"github.com/containous/traefik/provider/kubernetes/ingress"
 	"github.com/containous/traefik/provider/marathon"
 	"github.com/containous/traefik/provider/rest"
 	"github.com/containous/traefik/tls"
@@ -137,7 +137,7 @@ type Providers struct {
 	Etcd                      *etcd.Provider          `description:"Enable Etcd backend with default settings" export:"true"`
 	Zookeeper                 *zk.Provider            `description:"Enable Zookeeper backend with default settings" export:"true"`
 	Boltdb                    *boltdb.Provider        `description:"Enable Boltdb backend with default settings" export:"true"`
-	Kubernetes                *kubernetes.Provider    `description:"Enable Kubernetes backend with default settings" export:"true"`
+	Kubernetes                *ingress.Provider       `description:"Enable Kubernetes backend with default settings" export:"true"`
 	Mesos                     *mesos.Provider         `description:"Enable Mesos backend with default settings" export:"true"`
 	Eureka                    *eureka.Provider        `description:"Enable Eureka backend with default settings" export:"true"`
 	ECS                       *ecs.Provider           `description:"Enable ECS backend with default settings" export:"true"`
