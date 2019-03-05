@@ -80,5 +80,5 @@ func (l loggerWrapper) Info(format string, v ...interface{}) {
 
 /*Debug prints the info message*/
 func (l loggerWrapper) Debug(format string, v ...interface{}) {
-	l.Debug(format, v)
+	l.logger.Debug(format, v)
 }

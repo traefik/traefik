@@ -200,8 +200,12 @@ required = [
   name = "google.golang.org/grpc"
   version = "1.13.0"
 
-[[constraing]]
-  name = "github.com/golang/protobuf/proto"
+[[override]]
+  name = "golang.org/x/sys"
+  revision = "1c9583448a9c3aa0f9a6a5241bf73c0bd8aafded"
+
+[[constraint]]
+  name = "github.com/golang/protobuf"
   version = "v1.3.0"
 
 [[constraint]]
