@@ -1783,6 +1783,70 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "Ingress with a basic rule on one path with https (portname starts with https)",
+			ingresses: []*v1beta1.Ingress{
+				buildIngress(
+					iNamespace("testing"),
+					iRules(
+						iRule(
+							iPaths(
+								onePath(iPath("/bar"), iBackend("service1", intstr.FromInt(8443)))),
+						),
+					),
+				),
+			},
+			services: []*corev1.Service{
+				buildService(
+					sName("service1"),
+					sNamespace("testing"),
+					sUID("1"),
+					sSpec(
+						clusterIP("10.0.0.1"),
+						sPorts(sPort(8443, "https-foo"))),
+				),
+			},
+			endpoints: []*corev1.Endpoints{
+				buildEndpoint(
+					eNamespace("testing"),
+					eName("service1"),
+					eUID("1"),
+					subset(
+						eAddresses(eAddress("10.10.0.1")),
+						ePorts(ePort(8443, "https-foo"))),
+					subset(
+						eAddresses(eAddress("10.21.0.1")),
+						ePorts(ePort(8443, "https-foo"))),
+				),
+			},
+			expected: &config.Configuration{
+				Middlewares: map[string]*config.Middleware{},
+				Routers: map[string]*config.Router{
+					"/bar": {
+						Rule:    "PathPrefix(`/bar`)",
+						Service: "testing/service1/8443",
+					},
+				},
+				Services: map[string]*config.Service{
+					"testing/service1/8443": {
+						LoadBalancer: &config.LoadBalancerService{
+							Method:         "wrr",
+							PassHostHeader: true,
+							Servers: []config.Server{
+								{
+									URL:    "https://10.10.0.1:8443",
+									Weight: 1,
+								},
+								{
+									URL:    "https://10.21.0.1:8443",
+									Weight: 1,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			desc: "Double Single Service Ingress",
 			ingresses: []*v1beta1.Ingress{
 				buildIngress(
