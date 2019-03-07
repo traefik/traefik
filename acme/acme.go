@@ -103,8 +103,10 @@ func (a *ACME) AddRoutes(router *mux.Router) {
 				}
 				tokenValue := a.challengeHTTPProvider.getTokenValue(token, domain)
 				if len(tokenValue) > 0 {
-					rw.WriteHeader(http.StatusOK)
-					rw.Write(tokenValue)
+					_, err := rw.Write(tokenValue)
+					if err != nil {
+						http.Error(rw, err.Error(), http.StatusInternalServerError)
+					}
 					return
 				}
 			}
@@ -131,7 +133,11 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 
 	listener := func(object cluster.Object) error {
 		account := object.(*Account)
-		account.Init()
+		err := account.Init()
+		if err != nil {
+			return err
+		}
+
 		if !leadership.IsLeader() {
 			a.client, err = a.buildACMEClient(account)
 			if err != nil {
@@ -187,7 +193,11 @@ func (a *ACME) leadershipListener(elected bool) error {
 		}
 
 		account := object.(*Account)
-		account.Init()
+		err = account.Init()
+		if err != nil {
+			return err
+		}
+
 		// Reset Account values if caServer changed, thus registration URI can be updated
 		if account != nil && account.Registration != nil && !isAccountMatchingCaServer(account.Registration.URI, a.CAServer) {
 			log.Info("Account URI does not match the current CAServer. The account will be reset")

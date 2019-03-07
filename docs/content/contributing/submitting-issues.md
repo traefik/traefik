@@ -23,7 +23,7 @@ The title must be short and descriptive. (~60 characters)
 
 ## Description
 
-Follow the [issue template](https://github.com/containous/traefik/blob/master/.github/ISSUE_TEMPLATE.md) as much as possible, and make use of the `traefik bug` command if you can (see the [video on Youtube](https://www.youtube.com/watch?v=Lyz62L8m93I)).
+Follow the [issue template](https://github.com/containous/traefik/blob/master/.github/ISSUE_TEMPLATE.md) as much as possible.
 
 Explain us in which conditions you encountered the issue, what is your context.
 

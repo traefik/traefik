@@ -88,9 +88,7 @@ func (c *challengeHTTPProvider) CleanUp(domain, token, keyAuth string) error {
 
 	account := object.(*Account)
 	if _, ok := account.HTTPChallenge[token]; ok {
-		if _, domainOk := account.HTTPChallenge[token][domain]; domainOk {
-			delete(account.HTTPChallenge[token], domain)
-		}
+		delete(account.HTTPChallenge[token], domain)
 		if len(account.HTTPChallenge[token]) == 0 {
 			delete(account.HTTPChallenge, token)
 		}

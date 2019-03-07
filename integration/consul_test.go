@@ -16,7 +16,6 @@ import (
 	"github.com/containous/staert"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/integration/try"
-	"github.com/containous/traefik/old/types"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
 )
@@ -39,39 +38,6 @@ func (s *ConsulSuite) setupConsul(c *check.C) {
 			ConnectionTimeout: 10 * time.Second,
 		},
 	)
-	if err != nil {
-		c.Fatal("Cannot create store consul")
-	}
-	s.kv = kv
-
-	// wait for consul
-	err = try.Do(60*time.Second, try.KVExists(kv, "test"))
-	c.Assert(err, checker.IsNil)
-}
-
-func (s *ConsulSuite) setupConsulTLS(c *check.C) {
-	s.createComposeProject(c, "consul_tls")
-	s.composeProject.Start(c)
-
-	consul.Register()
-	clientTLS := &types.ClientTLS{
-		CA:                 "resources/tls/ca.cert",
-		Cert:               "resources/tls/consul.cert",
-		Key:                "resources/tls/consul.key",
-		InsecureSkipVerify: true,
-	}
-	TLSConfig, err := clientTLS.CreateTLSConfig()
-	c.Assert(err, checker.IsNil)
-
-	kv, err := valkeyrie.NewStore(
-		store.CONSUL,
-		[]string{s.composeProject.Container(c, "consul").NetworkSettings.IPAddress + ":8585"},
-		&store.Config{
-			ConnectionTimeout: 10 * time.Second,
-			TLS:               TLSConfig,
-		},
-	)
-
 	if err != nil {
 		c.Fatal("Cannot create store consul")
 	}

@@ -222,7 +222,7 @@ func loadService(client Client, namespace string, backend v1beta1.IngressBackend
 			}
 
 			protocol := "http"
-			if port == 443 || portName == "https" {
+			if port == 443 || strings.HasPrefix(portName, "https") {
 				protocol = "https"
 			}
 

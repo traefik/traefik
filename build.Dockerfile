@@ -1,12 +1,11 @@
-FROM golang:1.11-alpine
+FROM golang:1.12-alpine
 
 RUN apk --update upgrade \
 && apk --no-cache --no-progress add git mercurial bash gcc musl-dev curl tar \
 && rm -rf /var/cache/apk/*
 
-RUN go get golang.org/x/lint/golint \
-&& go get github.com/kisielk/errcheck \
-&& go get github.com/client9/misspell/cmd/misspell
+RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.15.0 \
+    && go get github.com/client9/misspell/cmd/misspell
 
 # Which docker version to test on
 ARG DOCKER_VERSION=17.03.2

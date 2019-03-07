@@ -13,7 +13,6 @@ Available commands:
 
 - `version` : Print version
 - `storeconfig` : Store the static Traefik configuration into a Key-value stores. Please refer to the `Store Traefik configuration`(TODO: add doc and link) section to get documentation on it.
-- `bug`: The easiest way to submit a pre-filled issue.
 - `healthcheck`: Calls Traefik `/ping` to check health.
 
 Each command can have additional flags.
@@ -33,14 +32,6 @@ traefik --help
 
 docker run traefik[:version] --help
 # ex: docker run traefik:1.5 --help
-```
-
-## Command: bug
-
-The easiest way to submit a pre-filled issue on [Traefik GitHub](https://github.com/containous/traefik)! Watch [this demo](https://www.youtube.com/watch?v=Lyz62L8m93I) for more information.
-
-```bash
-traefik bug
 ```
 
 ### Command: healthcheck

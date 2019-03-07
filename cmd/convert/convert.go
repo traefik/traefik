@@ -39,28 +39,34 @@ func main() {
 	log.SetOutput(os.Stdout)
 	log.SetLevel(logrus.DebugLevel)
 
-	oldconfig := &types.Configuration{}
-	toml.Decode(oldvalue, oldconfig)
+	oldConfig := &types.Configuration{}
+	_, err := toml.Decode(oldvalue, oldConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	newconfig := config.Configuration{
+	newConfig := config.Configuration{
 		Routers:     make(map[string]*config.Router),
 		Middlewares: make(map[string]*config.Middleware),
 		Services:    make(map[string]*config.Service),
 	}
 
-	for frontendName, frontend := range oldconfig.Frontends {
-		newconfig.Routers[replaceFrontend(frontendName)] = convertFrontend(frontend)
+	for frontendName, frontend := range oldConfig.Frontends {
+		newConfig.Routers[replaceFrontend(frontendName)] = convertFrontend(frontend)
 		if frontend.PassHostHeader {
 			log.Warn("ignore PassHostHeader")
 		}
 	}
 
-	for backendName, backend := range oldconfig.Backends {
-		newconfig.Services[replaceBackend(backendName)] = convertBackend(backend)
+	for backendName, backend := range oldConfig.Backends {
+		newConfig.Services[replaceBackend(backendName)] = convertBackend(backend)
 	}
 
 	encoder := toml.NewEncoder(os.Stdout)
-	encoder.Encode(newconfig)
+	err = encoder.Encode(newConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func replaceBackend(name string) string {
@@ -139,7 +145,6 @@ func convertBackend(backend *types.Backend) *config.Service {
 				Headers:  backend.HealthCheck.Headers,
 			}
 		}
-
 	}
 
 	return service

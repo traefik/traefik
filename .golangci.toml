@@ -1,35 +1,19 @@
 [run]
-  deadline = "5m"
-
+  deadline = "10m"
   skip-files = [
     "^old/.*",
-    "^acme/.*",
-    "^cluster/.*",
-    "^cmd/convert/.*",
-    "^h2c/.*",
-    "^integration/.*",
-
-#    "^cmd/traefik/.*",
-#    "^anonymize/.*",
-#    "^provider/.*",
-#    "^tracing/.*",
-#    "^safe/.*",
-#    "^h2c/.*",
-#    "^healthcheck/.*",
-#    "^middlewares/.*",
-#    "^server/.*",
   ]
 
 [linters-settings]
 
   [linters-settings.govet]
-    check-shadowing = true
+    check-shadowing = false
 
   [linters-settings.golint]
     min-confidence = 0.0
 
   [linters-settings.gocyclo]
-    min-complexity = 22.0
+    min-complexity = 14.0
 
   [linters-settings.maligned]
     suggest-new = true
@@ -44,25 +28,63 @@
 [linters]
   enable-all = true
   disable = [
+    "gocyclo", # FIXME must be fixed
+    "gosec",
+    "dupl",
     "maligned",
     "lll",
-    "gas",
-    "dupl",
+    "unparam",
     "prealloc",
+    "scopelint",
     "gochecknoinits",
     "gochecknoglobals",
-    "unparam",
-    "scopelint",
-    "goimports",
   ]
 
 [issues]
+  exclude-use-default = false
   max-per-linter = 0
-  max-same = 0
+  max-same-issues = 0
   exclude = [
-    "field `(foo|fuu)` is unused",
-    "(.+) is deprecated:",
-    "cyclomatic complexity (\\d+) of func `\\(\\*Builder\\)\\.buildConstructor` is high", #alt/server/middleware/middlewares.go
-    "`logger` can be `github.com/containous/traefik/vendor/github.com/stretchr/testify/assert.TestingT`", # alt/middlewares/recovery/recovery.go:
-    "`fn` can be `net/http.Handler`", # alt/server/alice/chain.go
+    "SA1019: http.CloseNotifier is deprecated: the CloseNotifier interface predates Go's context package. New code should use Request.Context instead.", # FIXME must be fixed
+    "Error return value of .((os\\.)?std(out|err)\\..*|.*Close|.*Flush|os\\.Remove(All)?|.*printf?|os\\.(Un)?Setenv). is not checked",
+    "should have a package comment, unless it's in another file for this package",
   ]
+ [[issues.exclude-rules]]
+    path = ".+_test.go"
+    linters = ["goconst"]
+ [[issues.exclude-rules]]
+    path = "provider/label/internal/.+_test.go"
+    text = "U1000: field `(foo|fuu)` is unused"
+ [[issues.exclude-rules]]
+    path = "middlewares/recovery/recovery.go"
+    text = "`logger` can be `github.com/containous/traefik/vendor/github.com/stretchr/testify/assert.TestingT`"
+ [[issues.exclude-rules]]
+    path = "integration/.+_test.go"
+    text = "Error return value of `cmd\\.Process\\.Kill` is not checked"
+ [[issues.exclude-rules]]
+    path = "integration/(consul_catalog_test|constraint_test).go"
+    text = "Error return value of `(s.deregisterService|s.deregisterAgentService)` is not checked"
+ [[issues.exclude-rules]]
+    path = "integration/grpc_test.go"
+    text = "Error return value of `closer` is not checked"
+ [[issues.exclude-rules]]
+    path = "provider/kubernetes/builder_(endpoint|service)_test.go"
+    text = "(U1000: func )?`(.+)` is unused"
+ [[issues.exclude-rules]]
+    path = "provider/docker/builder_test.go"
+    text = "(U1000: func )?`(.+)` is unused"
+ [[issues.exclude-rules]]
+    path = "cmd/configuration.go"
+    text = "string `traefik` has (\\d) occurrences, make it a constant"
+ [[issues.exclude-rules]]
+    path = "h2c/h2c.go"
+    text = "Error return value of `rw.Write` is not checked"
+ [[issues.exclude-rules]]
+    path = "server/service/bufferpool.go"
+    text = "SA6002: argument should be pointer-like to avoid allocations"
+ [[issues.exclude-rules]] # FIXME must be fixed
+    path = "acme/.+.go"
+    text = "(assignment copies lock value to domainsCerts|literal copies lock value from)"
+ [[issues.exclude-rules]] # FIXME must be fixed
+    path = "cmd/context.go"
+    text = "S1000: should use a simple channel send/receive instead of `select` with a single case"
