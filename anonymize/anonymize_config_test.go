@@ -45,14 +45,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 					IdleTimeout:  parse.Duration(111 * time.Second),
 				},
 			},
-			TLS: &traefiktls.TLS{
-				MinVersion:   "foo MinVersion",
-				CipherSuites: []string{"foo CipherSuites 1", "foo CipherSuites 2", "foo CipherSuites 3"},
-				ClientCA: traefiktls.ClientCA{
-					Files:    traefiktls.FilesOrContents{"foo ClientCAFiles 1", "foo ClientCAFiles 2", "foo ClientCAFiles 3"},
-					Optional: false,
-				},
-			},
 			ProxyProtocol: &static.ProxyProtocol{
 				TrustedIPs: []string{"127.0.0.1/32", "192.168.0.1"},
 			},
@@ -64,14 +56,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 					ReadTimeout:  parse.Duration(111 * time.Second),
 					WriteTimeout: parse.Duration(111 * time.Second),
 					IdleTimeout:  parse.Duration(111 * time.Second),
-				},
-			},
-			TLS: &traefiktls.TLS{
-				MinVersion:   "fii MinVersion",
-				CipherSuites: []string{"fii CipherSuites 1", "fii CipherSuites 2", "fii CipherSuites 3"},
-				ClientCA: traefiktls.ClientCA{
-					Files:    traefiktls.FilesOrContents{"fii ClientCAFiles 1", "fii ClientCAFiles 2", "fii ClientCAFiles 3"},
-					Optional: false,
 				},
 			},
 			ProxyProtocol: &static.ProxyProtocol{

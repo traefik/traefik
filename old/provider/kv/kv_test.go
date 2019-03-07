@@ -10,6 +10,7 @@ import (
 )
 
 func TestKvWatchTree(t *testing.T) {
+	t.Skip("Old")
 	returnedChans := make(chan chan []*store.KVPair)
 	provider := Provider{
 		kvClient: &Mock{

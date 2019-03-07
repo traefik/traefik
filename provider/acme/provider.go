@@ -89,7 +89,7 @@ type Provider struct {
 	client                 *lego.Client
 	certsChan              chan *Certificate
 	configurationChan      chan<- config.Message
-	certificateStore       *traefiktls.CertificateStore
+	tlsManager             *traefiktls.Manager
 	clientMutex            sync.Mutex
 	configFromListenerChan chan config.Configuration
 	pool                   *safe.Pool
@@ -97,14 +97,14 @@ type Provider struct {
 	resolvingDomainsMutex  sync.RWMutex
 }
 
+// SetTLSManager sets the tls manager to use
+func (p *Provider) SetTLSManager(tlsManager *traefiktls.Manager) {
+	p.tlsManager = tlsManager
+}
+
 // SetConfigListenerChan initializes the configFromListenerChan
 func (p *Provider) SetConfigListenerChan(configFromListenerChan chan config.Configuration) {
 	p.configFromListenerChan = configFromListenerChan
-}
-
-// SetCertificateStore allow to initialize certificate store
-func (p *Provider) SetCertificateStore(certificateStore *traefiktls.CertificateStore) {
-	p.certificateStore = certificateStore
 }
 
 // ListenConfiguration sets a new Configuration into the configFromListenerChan
@@ -352,40 +352,56 @@ func (p *Provider) initAccount(ctx context.Context) (*Account, error) {
 	return p.account, nil
 }
 
+func (p *Provider) resolveDomains(ctx context.Context, domains []string) {
+	if len(domains) == 0 {
+		log.FromContext(ctx).Debug("No domain parsed in provider ACME")
+		return
+	}
+
+	log.FromContext(ctx).Debugf("Try to challenge certificate for domain %v founded in HostSNI rule", domains)
+
+	var domain types.Domain
+	if len(domains) > 0 {
+		domain = types.Domain{Main: domains[0]}
+		if len(domains) > 1 {
+			domain.SANs = domains[1:]
+		}
+
+		safe.Go(func() {
+			if _, err := p.resolveCertificate(ctx, domain, false); err != nil {
+				log.FromContext(ctx).Errorf("Unable to obtain ACME certificate for domains %q: %v", strings.Join(domains, ","), err)
+			}
+		})
+	}
+}
+
 func (p *Provider) watchNewDomains(ctx context.Context) {
 	p.pool.Go(func(stop chan bool) {
 		for {
 			select {
 			case config := <-p.configFromListenerChan:
-				for routerName, route := range config.Routers {
-					logger := log.FromContext(ctx).WithField(log.RouterName, routerName)
+				if config.TCP != nil {
+					for routerName, route := range config.TCP.Routers {
+						ctxRouter := log.With(ctx, log.Str(log.RouterName, routerName), log.Str(log.Rule, route.Rule))
+
+						domains, err := rules.ParseHostSNI(route.Rule)
+						if err != nil {
+							log.FromContext(ctxRouter).Errorf("Error parsing domains in provider ACME: %v", err)
+							continue
+						}
+						p.resolveDomains(ctxRouter, domains)
+					}
+				}
+
+				for routerName, route := range config.HTTP.Routers {
+					ctxRouter := log.With(ctx, log.Str(log.RouterName, routerName), log.Str(log.Rule, route.Rule))
 
 					domains, err := rules.ParseDomains(route.Rule)
 					if err != nil {
-						logger.Errorf("Error parsing domains in provider ACME: %v", err)
+						log.FromContext(ctxRouter).Errorf("Error parsing domains in provider ACME: %v", err)
 						continue
 					}
-
-					if len(domains) == 0 {
-						logger.Debugf("No domain parsed in rule %q in provider ACME", route.Rule)
-						continue
-					}
-
-					logger.Debugf("Try to challenge certificate for domain %v founded in Host rule", domains)
-
-					var domain types.Domain
-					if len(domains) > 0 {
-						domain = types.Domain{Main: domains[0]}
-						if len(domains) > 1 {
-							domain.SANs = domains[1:]
-						}
-
-						safe.Go(func() {
-							if _, err := p.resolveCertificate(ctx, domain, false); err != nil {
-								logger.Errorf("Unable to obtain ACME certificate for domains %q detected thanks to rule %q : %v", strings.Join(domains, ","), route.Rule, err)
-							}
-						})
-					}
+					p.resolveDomains(ctxRouter, domains)
 				}
 			case <-stop:
 				return
@@ -635,16 +651,18 @@ func (p *Provider) refreshCertificates() {
 	conf := config.Message{
 		ProviderName: "ACME",
 		Configuration: &config.Configuration{
-			Routers:     map[string]*config.Router{},
-			Middlewares: map[string]*config.Middleware{},
-			Services:    map[string]*config.Service{},
-			TLS:         []*traefiktls.Configuration{},
+			HTTP: &config.HTTPConfiguration{
+				Routers:     map[string]*config.Router{},
+				Middlewares: map[string]*config.Middleware{},
+				Services:    map[string]*config.Service{},
+			},
+			TLS: []*traefiktls.Configuration{},
 		},
 	}
 
 	for _, cert := range p.certificates {
 		cert := &traefiktls.Certificate{CertFile: traefiktls.FileOrContent(cert.Certificate), KeyFile: traefiktls.FileOrContent(cert.Key)}
-		conf.Configuration.TLS = append(conf.Configuration.TLS, &traefiktls.Configuration{Certificate: cert, EntryPoints: []string{p.EntryPoint}})
+		conf.Configuration.TLS = append(conf.Configuration.TLS, &traefiktls.Configuration{Certificate: cert})
 	}
 	p.configurationChan <- conf
 }
@@ -695,7 +713,7 @@ func (p *Provider) getUncheckedDomains(ctx context.Context, domainsToCheck []str
 
 	log.FromContext(ctx).Debugf("Looking for provided certificate(s) to validate %q...", domainsToCheck)
 
-	allDomains := p.certificateStore.GetAllDomains()
+	allDomains := p.tlsManager.GetStore("default").GetAllDomains()
 
 	// Get ACME certificates
 	for _, cert := range p.certificates {

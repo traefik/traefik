@@ -32,10 +32,10 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
 
-	config := config.Configuration{
+	config := config.HTTPConfiguration{
 		Routers: map[string]*config.Router{
 			"router1": {
-				EntryPoints: []string{"http"},
+				EntryPoints: []string{"web"},
 				Middlewares: []string{},
 				Service:     "service1",
 				Rule:        "PathPrefix(`/`)",

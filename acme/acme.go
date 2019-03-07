@@ -614,7 +614,7 @@ func (a *ACME) getProvidedCertificate(domains string) *tls.Certificate {
 }
 
 func searchProvidedCertificateForDomains(domain string, certs map[string]*tls.Certificate) *tls.Certificate {
-	// Use regex to test for provided certs that might have been added into TLSConfig
+	// Use regex to test for provided certs that might have been added into TLSOptions
 	for certDomains := range certs {
 		domainChecked := false
 		for _, certDomain := range strings.Split(certDomains, ",") {

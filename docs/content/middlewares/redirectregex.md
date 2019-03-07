@@ -12,8 +12,8 @@ RegexRedirect redirect a request from an url to another with regex matching and 
 ??? example "File -- Redirect with domain replacement"
 
     ```toml
-    [Middlewares]
-      [Middlewares.test-redirectregex.redirectregex]
+    [http.middlewares]
+      [http.middlewares.test-redirectregex.redirectregex]
         regex = "^http://localhost/(.*)"
         replacement = "http://mydomain/$1"
     ```
@@ -24,8 +24,8 @@ RegexRedirect redirect a request from an url to another with regex matching and 
      a-container:
         image: a-container-image 
             labels:
-                - "traefik.Middlewares.test-redirectregex.redirectregex.regex=^http://localhost/(.*)"
-                - "traefik.Middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$1"
+                - "traefik.http.middlewares.test-redirectregex.redirectregex.regex=^http://localhost/(.*)"
+                - "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$1"
     ```
 
 ## Configuration Options

@@ -652,7 +652,7 @@ func getTLS(ingress *extensionsv1beta1.Ingress, k8sClient Client, tlsConfigs map
 		configKey := ingress.Namespace + "/" + t.SecretName
 		if tlsConfig, tlsExists := tlsConfigs[configKey]; tlsExists {
 			for _, entryPoint := range newEntryPoints {
-				tlsConfig.EntryPoints = mergeEntryPoint(tlsConfig.EntryPoints, entryPoint)
+				tlsConfig.Stores = mergeEntryPoint(tlsConfig.Stores, entryPoint)
 			}
 		} else {
 			secret, exists, err := k8sClient.GetSecret(ingress.Namespace, t.SecretName)
@@ -671,7 +671,7 @@ func getTLS(ingress *extensionsv1beta1.Ingress, k8sClient Client, tlsConfigs map
 			sort.Strings(newEntryPoints)
 
 			tlsConfig = &tls.Configuration{
-				EntryPoints: newEntryPoints,
+				Stores: newEntryPoints,
 				Certificate: &tls.Certificate{
 					CertFile: tls.FileOrContent(cert),
 					KeyFile:  tls.FileOrContent(key),

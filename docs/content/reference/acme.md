@@ -7,12 +7,11 @@ Every Options for ACME
 
 ```toml
     # Sample entrypoint configuration when using ACME.
-    [entryPoints]
-      [entryPoints.http]
+    [entrypoints]
+      [entrypoints.web]
       address = ":80"
-      [entryPoints.https]
+      [entrypoints.web-secure]
       address = ":443"
-        [entryPoints.https.tls]
         
     # Enable ACME (Let's Encrypt): automatic SSL.
     [acme]
@@ -35,12 +34,6 @@ Every Options for ACME
     #
     storage = "acme.json"
     # or `storage = "traefik/acme/account"` if using KV store.
-    
-    # Entrypoint to proxy acme apply certificates to.
-    #
-    # Required
-    #
-    entryPoint = "https"
     
     # Deprecated, replaced by [acme.dnsChallenge].
     #

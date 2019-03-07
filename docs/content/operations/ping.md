@@ -8,8 +8,8 @@ Checking the Health of Your Traefik Instances
 ??? example "Enabling /ping on the http EntryPoint"
 
     ```toml
-    [entryPoints]
-       [entrypoints.http]
+    [entrypoints]
+       [entrypoints.web]
           address = ":80"
     
     [ping]
@@ -19,13 +19,13 @@ Checking the Health of Your Traefik Instances
 ??? example "Enabling /ping on the https EntryPoint"
 
     ```toml
-    [entryPoints]
-       [entryPoints.http]
+    [entrypoints]
+       [entrypoints.web]
           address = ":80"
 
-      [entryPoints.https]
+      [entrypoints.web-secure]
          address = ":443"
-         [entryPoints.https.tls]   
+         [entrypoints.web-secure.tls]   
     
     [ping]
       entryPoint = "https"
@@ -34,11 +34,11 @@ Checking the Health of Your Traefik Instances
 ??? example "Enabling /ping on a dedicated EntryPoint"
     
     ```toml    
-    [entryPoints]
-      [entryPoints.http]
+    [entrypoints]
+      [entrypoints.web]
         address = ":80"
       
-      [entryPoints.ping]
+      [entrypoints.ping]
         address = ":8082"
     
     [ping]

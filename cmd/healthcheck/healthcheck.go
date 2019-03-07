@@ -1,7 +1,6 @@
 package healthcheck
 
 import (
-	"crypto/tls"
 	"errors"
 	"fmt"
 	"net/http"
@@ -59,13 +58,14 @@ func Do(staticConfiguration static.Configuration) (*http.Response, error) {
 	client := &http.Client{Timeout: 5 * time.Second}
 	protocol := "http"
 
-	if pingEntryPoint.TLS != nil {
-		protocol = "https"
-		tr := &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
-		client.Transport = tr
-	}
+	// FIXME Handle TLS on ping etc...
+	// if pingEntryPoint.TLS != nil {
+	// 	protocol = "https"
+	// 	tr := &http.Transport{
+	// 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	// 	}
+	// 	client.Transport = tr
+	// }
 
 	path := "/"
 

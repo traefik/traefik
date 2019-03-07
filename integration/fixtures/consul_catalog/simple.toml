@@ -3,8 +3,8 @@ logLevel = "DEBUG"
 
 [api]
 
-[entryPoints]
-  [entryPoints.http]
+[entrypoints]
+  [entrypoints.web]
   address = ":8000"
 
 [providers]

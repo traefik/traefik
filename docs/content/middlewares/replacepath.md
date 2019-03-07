@@ -12,8 +12,8 @@ Replace the path of the request url.
 ??? example "File -- Replace the path by /foo"
 
     ```toml
-    [Middlewares]
-      [Middlewares.test-replacepath.ReplacePath]
+    [http.middlewares]
+      [http.middlewares.test-replacepath.ReplacePath]
          path = "/foo"
     ```
 
@@ -23,7 +23,7 @@ Replace the path of the request url.
     a-container:
       image: a-container-image 
         labels:
-          - "traefik.middlewares.test-replacepath.replacepath.path=/foo"
+          - "traefik.http.middlewares.test-replacepath.replacepath.path=/foo"
     ```
     
 ## Configuration Options

@@ -1,44 +1,43 @@
 [log]
-logLevel = "DEBUG"
+   logLevel = "DEBUG"
 
-
-[entryPoints]
-  [entryPoints.https]
-  address = ":4443"
-    [entryPoints.https.tls]
-     [entryPoints.https.tls.DefaultCertificate]
-     certFile = "fixtures/https/snitest.com.cert"
-     keyFile = "fixtures/https/snitest.com.key"
+[entrypoints]
+  [entrypoints.web-secure]
+     address = ":4443"
 
 [api]
 
 [providers]
    [providers.file]
 
-[Routers]
-  [Routers.router1]
-    Service = "service1"
-    Rule = "Host(`snitest.com`)"
-  [Routers.router2]
-    Service = "service1"
-    Rule = "Host(`www.snitest.com`)"
+[http.routers]
+  [http.routers.router1]
+    service = "service1"
+    rule = "Host(`snitest.com`)"
+    [http.routers.router1.tls]
 
-[Services]
-  [Services.service1]
-    [Services.service1.LoadBalancer]
+  [http.routers.router2]
+    service = "service1"
+    rule = "Host(`www.snitest.com`)"
+    [http.routers.router2.tls]
 
-      [[Services.service1.LoadBalancer.Servers]]
-        URL = "http://127.0.0.1:9010"
-        Weight = 1
+[http.services]
+  [http.services.service1]
+    [http.services.service1.LoadBalancer]
+      [[http.services.service1.LoadBalancer.Servers]]
+        url = "http://127.0.0.1:9010"
+        weight = 1
 
 [[tls]]
-  entryPoints = ["https"]
   [tls.certificate]
      certFile = "fixtures/https/wildcard.snitest.com.cert"
      keyFile = "fixtures/https/wildcard.snitest.com.key"
+
 [[tls]]
-  entryPoints = ["https"]
   [tls.certificate]
      certFile = "fixtures/https/www.snitest.com.cert"
      keyFile = "fixtures/https/www.snitest.com.key"
 
+[tlsStores.default.DefaultCertificate]
+    certFile = "fixtures/https/snitest.com.cert"
+    keyFile = "fixtures/https/snitest.com.key"

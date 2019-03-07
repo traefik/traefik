@@ -2,8 +2,10 @@ package router
 
 import (
 	"context"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/containous/traefik/config"
@@ -318,7 +320,7 @@ func TestRouterManager_Get(t *testing.T) {
 
 			routerManager := NewManager(test.routersConfig, serviceManager, middlewaresBuilder, responseModifierFactory)
 
-			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints)
+			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, false)
 
 			w := httptest.NewRecorder()
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)
@@ -417,7 +419,7 @@ func TestAccessLog(t *testing.T) {
 
 			routerManager := NewManager(test.routersConfig, serviceManager, middlewaresBuilder, responseModifierFactory)
 
-			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints)
+			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, false)
 
 			w := httptest.NewRecorder()
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)
@@ -439,4 +441,91 @@ func TestAccessLog(t *testing.T) {
 			}))
 		})
 	}
+}
+
+type staticTransport struct {
+	res *http.Response
+}
+
+func (t *staticTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	return t.res, nil
+}
+
+func BenchmarkRouterServe(b *testing.B) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+
+	res := &http.Response{
+		StatusCode: 200,
+		Body:       ioutil.NopCloser(strings.NewReader("")),
+	}
+	routersConfig := map[string]*config.Router{
+		"foo": {
+			EntryPoints: []string{"web"},
+			Service:     "foo-service",
+			Rule:        "Host(`foo.bar`) && Path(`/`)",
+		},
+	}
+	serviceConfig := map[string]*config.Service{
+		"foo-service": {
+			LoadBalancer: &config.LoadBalancerService{
+				Servers: []config.Server{
+					{
+						URL:    server.URL,
+						Weight: 1,
+					},
+				},
+				Method: "wrr",
+			},
+		},
+	}
+	entryPoints := []string{"web"}
+
+	serviceManager := service.NewManager(serviceConfig, &staticTransport{res})
+	middlewaresBuilder := middleware.NewBuilder(map[string]*config.Middleware{}, serviceManager)
+	responseModifierFactory := responsemodifiers.NewBuilder(map[string]*config.Middleware{})
+
+	routerManager := NewManager(routersConfig, serviceManager, middlewaresBuilder, responseModifierFactory)
+
+	handlers := routerManager.BuildHandlers(context.Background(), entryPoints, false)
+
+	w := httptest.NewRecorder()
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)
+
+	reqHost := requestdecorator.New(nil)
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		reqHost.ServeHTTP(w, req, handlers["web"].ServeHTTP)
+	}
+
+}
+func BenchmarkService(b *testing.B) {
+	res := &http.Response{
+		StatusCode: 200,
+		Body:       ioutil.NopCloser(strings.NewReader("")),
+	}
+
+	serviceConfig := map[string]*config.Service{
+		"foo-service": {
+			LoadBalancer: &config.LoadBalancerService{
+				Servers: []config.Server{
+					{
+						URL:    "tchouck",
+						Weight: 1,
+					},
+				},
+				Method: "wrr",
+			},
+		},
+	}
+
+	serviceManager := service.NewManager(serviceConfig, &staticTransport{res})
+	w := httptest.NewRecorder()
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)
+
+	handler, _ := serviceManager.BuildHTTP(context.Background(), "foo-service", nil)
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		handler.ServeHTTP(w, req)
+	}
+
 }

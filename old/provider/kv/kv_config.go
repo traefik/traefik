@@ -339,7 +339,7 @@ func (p *Provider) getTLSSection(prefix string) []*tls.Configuration {
 		}
 
 		tlsConf := &tls.Configuration{
-			EntryPoints: entryPoints,
+			Stores: entryPoints,
 			Certificate: &tls.Certificate{
 				CertFile: tls.FileOrContent(certFile),
 				KeyFile:  tls.FileOrContent(keyFile),

@@ -12,8 +12,8 @@ The BasicAuth middleware is a quick way to restrict access to your services to k
 ??? example "File -- Declaring the user list"
 
     ```toml
-    [Middlewares]
-      [Middlewares.test-auth.basicauth]
+    [http.middlewares]
+      [http.middlewares.test-auth.basicauth]
       users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", 
       "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
     ```
@@ -24,7 +24,7 @@ The BasicAuth middleware is a quick way to restrict access to your services to k
     a-container:
           image: a-container-image 
             labels:
-              - "traefik.middlewares.declared-users-only.basicauth.usersFile=path-to-file.ext",
+              - "traefik.http.middlewares.declared-users-only.basicauth.usersFile=path-to-file.ext",
     ```
 
 ## Configuration Options
@@ -73,7 +73,7 @@ You can customize the header field for the authenticated user using the `headerF
 ??? example "File -- Passing Authenticated Users to Services Via Headers"
 
     ```toml
-      [Middlewares.my-auth.basicauth]
+      [http.middlewares.my-auth.basicauth]
         usersFile = "path-to-file.ext"
         headerField = "X-WebAuth-User" # header for the authenticated user
     ```

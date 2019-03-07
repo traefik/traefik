@@ -481,7 +481,7 @@ func tlsSection(opts ...func(*tls.Configuration)) func(*tls.Configuration) {
 
 func tlsEntryPoints(entryPoints ...string) func(*tls.Configuration) {
 	return func(c *tls.Configuration) {
-		c.EntryPoints = entryPoints
+		c.Stores = entryPoints
 	}
 }
 
@@ -636,7 +636,7 @@ func sampleConfiguration() *types.Configuration {
 		},
 		TLS: []*tls.Configuration{
 			{
-				EntryPoints: []string{"https"},
+				Stores: []string{"https"},
 				Certificate: &tls.Certificate{
 					CertFile: tls.FileOrContent("certificate"),
 					KeyFile:  tls.FileOrContent("key"),

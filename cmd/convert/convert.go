@@ -45,7 +45,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	newConfig := config.Configuration{
+	newConfig := config.HTTPConfiguration{
 		Routers:     make(map[string]*config.Router),
 		Middlewares: make(map[string]*config.Middleware),
 		Services:    make(map[string]*config.Service),

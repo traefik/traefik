@@ -43,7 +43,7 @@ Edit your `docker-compose.yml` file and add the following at the end of your fil
   whoami:
     image: containous/whoami # A container that exposes an API to show its IP address
     labels:
-      - "traefik.router.rule=Host:whoami.docker.localhost"
+      - "traefik.http.routers.whoami.rule=Host:whoami.docker.localhost"
 ```
 
 The above defines `whoami`: a simple web service that outputs information about the machine it is deployed on (its IP address, host, and so on).

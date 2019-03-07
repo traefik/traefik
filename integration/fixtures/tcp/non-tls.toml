@@ -1,0 +1,22 @@
+[entrypoints]
+  [entrypoints.tcp]
+    address = ":8093"
+
+[api]
+
+[global]
+   debug = true
+
+[providers.file]
+
+[tcp]
+    [tcp.routers]
+       [tcp.routers.to-whoami-no-tls]
+          entrypoints = ["tcp"]
+          rule="HostSNI(`*`)"
+          service = "whoami-no-tls"
+
+    [tcp.services]
+        [tcp.services.whoami-no-tls.loadbalancer]
+          [[tcp.services.whoami-no-tls.loadbalancer.servers]]
+            address = "localhost:8084"

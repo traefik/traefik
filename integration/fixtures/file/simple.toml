@@ -1,6 +1,6 @@
 
-[entryPoints]
-  [entryPoints.http]
+[entrypoints]
+  [entrypoints.web]
     address = ":8000"
 
 [log]
@@ -9,35 +9,35 @@ logLevel = "DEBUG"
 [providers]
    [providers.file]
 
-[routers]
-  [routers.router1]
+[http.routers]
+  [http.routers.router1]
     rule = "Host(`test.localhost`)"
     service = "service2"
 
-  [routers.router2]
+  [http.routers.router2]
     rule = "Path(`/test`)"
     middlewares = ["circuitbreaker"]
     service = "service1"
 
-[middlewares]
-  [middlewares.circuitbreaker.circuitbreaker]
+[http.middlewares]
+  [http.middlewares.circuitbreaker.circuitbreaker]
     expression = "NetworkErrorRatio() > 0.5"
 
-[services]
-  [services.service1.loadbalancer]
-    [[services.service1.loadbalancer.servers]]
+[http.services]
+  [http.services.service1.loadbalancer]
+    [[http.services.service1.loadbalancer.servers]]
       url = "http://172.17.0.2:80"
       weight = 10
-    [[services.service1.loadbalancer.servers]]
+    [[http.services.service1.loadbalancer.servers]]
       url = "http://172.17.0.3:80"
       weight = 1
 
-  [services.service2]
-    [services.service2.loadbalancer]
+  [http.services.service2]
+    [http.services.service2.loadbalancer]
       method = "drr"
-      [[services.service2.loadbalancer.servers]]
+      [[http.services.service2.loadbalancer.servers]]
         url = "http://172.17.0.4:80"
         weight = 1
-      [[services.service2.loadbalancer.servers]]
+      [[http.services.service2.loadbalancer.servers]]
         url = "http://172.17.0.5:80"
         weight = 2

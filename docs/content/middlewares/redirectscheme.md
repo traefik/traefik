@@ -12,8 +12,8 @@ RegexRedirect redirect request from a scheme to another.
 ??? example "File -- Redirect to https"
 
     ```toml
-    [Middlewares]
-      [Middlewares.test-redirectscheme.redirectscheme]
+    [http.middlewares]
+      [http.middlewares.test-redirectscheme.redirectscheme]
         scheme = "https"
     ```
 
@@ -23,7 +23,7 @@ RegexRedirect redirect request from a scheme to another.
      a-container:
         image: a-container-image 
             labels:
-                - "traefik.Middlewares.test-redirectscheme.redirectscheme.scheme=https"
+                - "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
     ```
 
 ## Configuration Options

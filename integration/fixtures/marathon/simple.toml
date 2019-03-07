@@ -1,10 +1,10 @@
 [log]
 logLevel = "DEBUG"
 
-[entryPoints]
-  [entryPoints.http]
+[entrypoints]
+  [entrypoints.web]
   address = ":8000"
-[entryPoints.api]
+[entrypoints.api]
   address = ":9090"
 
 [api]

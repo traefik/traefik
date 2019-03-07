@@ -250,9 +250,12 @@ func loadService(client Client, namespace string, backend v1beta1.IngressBackend
 
 func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Client) *config.Configuration {
 	conf := &config.Configuration{
-		Routers:     map[string]*config.Router{},
-		Middlewares: map[string]*config.Middleware{},
-		Services:    map[string]*config.Service{},
+		HTTP: &config.HTTPConfiguration{
+			Routers:     map[string]*config.Router{},
+			Middlewares: map[string]*config.Middleware{},
+			Services:    map[string]*config.Service{},
+		},
+		TCP: &config.TCPConfiguration{},
 	}
 
 	ingresses := client.GetIngresses()
@@ -272,7 +275,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 		if len(ingress.Spec.Rules) == 0 {
 			if ingress.Spec.Backend != nil {
-				if _, ok := conf.Services["default-backend"]; ok {
+				if _, ok := conf.HTTP.Services["default-backend"]; ok {
 					log.FromContext(ctx).Error("The default backend already exists.")
 					continue
 				}
@@ -286,13 +289,13 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 					continue
 				}
 
-				conf.Routers["/"] = &config.Router{
+				conf.HTTP.Routers["/"] = &config.Router{
 					Rule:     "PathPrefix(`/`)",
 					Priority: math.MinInt32,
 					Service:  "default-backend",
 				}
 
-				conf.Services["default-backend"] = service
+				conf.HTTP.Services["default-backend"] = service
 			}
 		}
 		for _, rule := range ingress.Spec.Rules {
@@ -327,12 +330,12 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 					rules = append(rules, "PathPrefix(`"+p.Path+"`)")
 				}
 
-				conf.Routers[strings.Replace(rule.Host, ".", "-", -1)+p.Path] = &config.Router{
+				conf.HTTP.Routers[strings.Replace(rule.Host, ".", "-", -1)+p.Path] = &config.Router{
 					Rule:    strings.Join(rules, " && "),
 					Service: serviceName,
 				}
 
-				conf.Services[serviceName] = service
+				conf.HTTP.Services[serviceName] = service
 			}
 		}
 	}

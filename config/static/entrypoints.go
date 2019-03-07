@@ -5,14 +5,12 @@ import (
 	"strings"
 
 	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/tls"
 )
 
 // EntryPoint holds the entry point configuration.
 type EntryPoint struct {
 	Address          string
 	Transport        *EntryPointsTransport
-	TLS              *tls.TLS
 	ProxyProtocol    *ProxyProtocol
 	ForwardedHeaders *ForwardedHeaders
 }
@@ -65,14 +63,8 @@ func (ep *EntryPoints) Type() string {
 func (ep *EntryPoints) Set(value string) error {
 	result := parseEntryPointsConfiguration(value)
 
-	configTLS, err := makeEntryPointTLS(result)
-	if err != nil {
-		return err
-	}
-
 	(*ep)[result["name"]] = &EntryPoint{
 		Address:          result["address"],
-		TLS:              configTLS,
 		ProxyProtocol:    makeEntryPointProxyProtocol(result),
 		ForwardedHeaders: makeEntryPointForwardedHeaders(result),
 	}
@@ -98,55 +90,6 @@ func makeEntryPointProxyProtocol(result map[string]string) *ProxyProtocol {
 	}
 
 	return proxyProtocol
-}
-
-func makeEntryPointTLS(result map[string]string) (*tls.TLS, error) {
-	var configTLS *tls.TLS
-
-	if len(result["tls"]) > 0 {
-		certs := tls.Certificates{}
-		if err := certs.Set(result["tls"]); err != nil {
-			return nil, err
-		}
-		configTLS = &tls.TLS{}
-	} else if len(result["tls_acme"]) > 0 {
-		configTLS = &tls.TLS{}
-	}
-
-	if configTLS != nil {
-		if len(result["ca"]) > 0 {
-			files := tls.FilesOrContents{}
-			if err := files.Set(result["ca"]); err != nil {
-				return nil, err
-			}
-			optional := toBool(result, "ca_optional")
-			configTLS.ClientCA = tls.ClientCA{
-				Files:    files,
-				Optional: optional,
-			}
-		}
-
-		if len(result["tls_minversion"]) > 0 {
-			configTLS.MinVersion = result["tls_minversion"]
-		}
-
-		if len(result["tls_ciphersuites"]) > 0 {
-			configTLS.CipherSuites = strings.Split(result["tls_ciphersuites"], ",")
-		}
-
-		if len(result["tls_snistrict"]) > 0 {
-			configTLS.SniStrict = toBool(result, "tls_snistrict")
-		}
-
-		if len(result["tls_defaultcertificate_cert"]) > 0 && len(result["tls_defaultcertificate_key"]) > 0 {
-			configTLS.DefaultCertificate = &tls.Certificate{
-				CertFile: tls.FileOrContent(result["tls_defaultcertificate_cert"]),
-				KeyFile:  tls.FileOrContent(result["tls_defaultcertificate_key"]),
-			}
-		}
-	}
-
-	return configTLS, nil
 }
 
 func parseEntryPointsConfiguration(raw string) map[string]string {

@@ -1,12 +1,12 @@
 [log]
 logLevel = "DEBUG"
 
-[entryPoints]
-  [entryPoints.http]
+[entrypoints]
+  [entrypoints.web]
   address = ":8000"
-  [entryPoints.http.ForwardedHeaders]
+  [entrypoints.web.ForwardedHeaders]
     insecure=true
-  [entryPoints.http.ClientIPStrategy]
+  [entrypoints.web.ClientIPStrategy]
     depth=2
 
 [api]

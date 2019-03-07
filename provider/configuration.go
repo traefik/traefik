@@ -19,9 +19,15 @@ func Merge(ctx context.Context, configurations map[string]*config.Configuration)
 	logger := log.FromContext(ctx)
 
 	configuration := &config.Configuration{
-		Routers:     make(map[string]*config.Router),
-		Middlewares: make(map[string]*config.Middleware),
-		Services:    make(map[string]*config.Service),
+		HTTP: &config.HTTPConfiguration{
+			Routers:     make(map[string]*config.Router),
+			Middlewares: make(map[string]*config.Middleware),
+			Services:    make(map[string]*config.Service),
+		},
+		TCP: &config.TCPConfiguration{
+			Routers:  make(map[string]*config.TCPRouter),
+			Services: make(map[string]*config.TCPService),
+		},
 	}
 
 	servicesToDelete := map[string]struct{}{}
@@ -41,23 +47,23 @@ func Merge(ctx context.Context, configurations map[string]*config.Configuration)
 
 	for _, root := range sortedKeys {
 		conf := configurations[root]
-		for serviceName, service := range conf.Services {
+		for serviceName, service := range conf.HTTP.Services {
 			services[serviceName] = append(services[serviceName], root)
-			if !AddService(configuration, serviceName, service) {
+			if !AddService(configuration.HTTP, serviceName, service) {
 				servicesToDelete[serviceName] = struct{}{}
 			}
 		}
 
-		for routerName, router := range conf.Routers {
+		for routerName, router := range conf.HTTP.Routers {
 			routers[routerName] = append(routers[routerName], root)
-			if !AddRouter(configuration, routerName, router) {
+			if !AddRouter(configuration.HTTP, routerName, router) {
 				routersToDelete[routerName] = struct{}{}
 			}
 		}
 
-		for middlewareName, middleware := range conf.Middlewares {
+		for middlewareName, middleware := range conf.HTTP.Middlewares {
 			middlewares[middlewareName] = append(middlewares[middlewareName], root)
-			if !AddMiddleware(configuration, middlewareName, middleware) {
+			if !AddMiddleware(configuration.HTTP, middlewareName, middleware) {
 				middlewaresToDelete[middlewareName] = struct{}{}
 			}
 		}
@@ -66,26 +72,26 @@ func Merge(ctx context.Context, configurations map[string]*config.Configuration)
 	for serviceName := range servicesToDelete {
 		logger.WithField(log.ServiceName, serviceName).
 			Errorf("Service defined multiple times with different configurations in %v", services[serviceName])
-		delete(configuration.Services, serviceName)
+		delete(configuration.HTTP.Services, serviceName)
 	}
 
 	for routerName := range routersToDelete {
 		logger.WithField(log.RouterName, routerName).
 			Errorf("Router defined multiple times with different configurations in %v", routers[routerName])
-		delete(configuration.Routers, routerName)
+		delete(configuration.HTTP.Routers, routerName)
 	}
 
 	for middlewareName := range middlewaresToDelete {
 		logger.WithField(log.MiddlewareName, middlewareName).
 			Errorf("Middleware defined multiple times with different configurations in %v", middlewares[middlewareName])
-		delete(configuration.Middlewares, middlewareName)
+		delete(configuration.HTTP.Middlewares, middlewareName)
 	}
 
 	return configuration
 }
 
 // AddService Adds a service to a configurations.
-func AddService(configuration *config.Configuration, serviceName string, service *config.Service) bool {
+func AddService(configuration *config.HTTPConfiguration, serviceName string, service *config.Service) bool {
 	if _, ok := configuration.Services[serviceName]; !ok {
 		configuration.Services[serviceName] = service
 		return true
@@ -100,7 +106,7 @@ func AddService(configuration *config.Configuration, serviceName string, service
 }
 
 // AddRouter Adds a router to a configurations.
-func AddRouter(configuration *config.Configuration, routerName string, router *config.Router) bool {
+func AddRouter(configuration *config.HTTPConfiguration, routerName string, router *config.Router) bool {
 	if _, ok := configuration.Routers[routerName]; !ok {
 		configuration.Routers[routerName] = router
 		return true
@@ -110,7 +116,7 @@ func AddRouter(configuration *config.Configuration, routerName string, router *c
 }
 
 // AddMiddleware Adds a middleware to a configurations.
-func AddMiddleware(configuration *config.Configuration, middlewareName string, middleware *config.Middleware) bool {
+func AddMiddleware(configuration *config.HTTPConfiguration, middlewareName string, middleware *config.Middleware) bool {
 	if _, ok := configuration.Middlewares[middlewareName]; !ok {
 		configuration.Middlewares[middlewareName] = middleware
 		return true
@@ -132,7 +138,7 @@ func MakeDefaultRuleTemplate(defaultRule string, funcMap template.FuncMap) (*tem
 }
 
 // BuildRouterConfiguration Builds a router configuration.
-func BuildRouterConfiguration(ctx context.Context, configuration *config.Configuration, defaultRouterName string, defaultRuleTpl *template.Template, model interface{}) {
+func BuildRouterConfiguration(ctx context.Context, configuration *config.HTTPConfiguration, defaultRouterName string, defaultRuleTpl *template.Template, model interface{}) {
 	logger := log.FromContext(ctx)
 
 	if len(configuration.Routers) == 0 {

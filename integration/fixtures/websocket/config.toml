@@ -1,8 +1,8 @@
 [log]
 logLevel = "DEBUG"
 
-[entryPoints]
-  [entryPoints.http]
+[entrypoints]
+  [entrypoints.web]
   address = ":8000"
 
 [api]
@@ -10,15 +10,15 @@ logLevel = "DEBUG"
 [providers]
    [providers.file]
 
-[Routers]
-  [Routers.router1]
+[http.routers]
+  [http.routers.router1]
     Service = "service1"
     Rule = "PathPrefix(`/ws`)"
 
-[Services]
-  [Services.service1]
-    [Services.service1.LoadBalancer]
+[http.services]
+  [http.services.service1]
+    [http.services.service1.LoadBalancer]
       passHostHeader = true
-      [[Services.service1.LoadBalancer.Servers]]
+      [[http.services.service1.LoadBalancer.Servers]]
         URL = "{{ .WebsocketServer }}"
         Weight = 1

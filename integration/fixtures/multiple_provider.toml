@@ -1,8 +1,8 @@
 [global]
 debug=true
 
-[entryPoints]
-  [entryPoints.http]
+[entrypoints]
+  [entrypoints.web]
      address = ":8000"
 
 [api]
@@ -15,15 +15,15 @@ debug=true
 
    [providers.file]
 
-[Routers]
-  [Routers.router-1]
+[http.routers]
+  [http.routers.router-1]
     Service = "service-test"
     Rule = "PathPrefix(`/file`)"
 
-[Services]
-  [Services.service-test]
-    [Services.service-test.LoadBalancer]
+[http.services]
+  [http.services.service-test]
+    [http.services.service-test.LoadBalancer]
 
-      [[Services.service-test.LoadBalancer.Servers]]
+      [[http.services.service-test.LoadBalancer.Servers]]
         URL = "http://{{ .IP }}"
         Weight = 1

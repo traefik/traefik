@@ -12,8 +12,8 @@ IPWhitelist accepts / refuses requests based on the client IP.
 ??? example "File -- Accepts request from defined IP"
 
     ```toml
-    [Middlewares]
-      [Middlewares.test-ipwhitelist.ipWhiteList]
+    [http.middlewares]
+      [http.middlewares.test-ipwhitelist.ipWhiteList]
         sourceRange = ["127.0.0.1/32", "192.168.1.7"]
     ```
 
@@ -23,7 +23,7 @@ IPWhitelist accepts / refuses requests based on the client IP.
      a-container:
         image: a-container-image 
             labels:
-                - "traefik.Middlewares.Middleware9.IPWhiteList.SourceRange=127.0.0.1/32, 192.168.1.7"
+                - "traefik.http.middlewares.Middleware9.IPWhiteList.SourceRange=127.0.0.1/32, 192.168.1.7"
     ```
 
 ## Configuration Options
@@ -55,10 +55,10 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
 ??? example "File -- Whitelisting Based on `X-Forwarded-For` with `depth=2`"
 
     ```toml
-    [Middlewares]
-      [Middlewares.test-ipwhitelist.ipWhiteList]
+    [http.middlewares]
+      [http.middlewares.test-ipwhitelist.ipWhiteList]
         sourceRange = ["127.0.0.1/32", "192.168.1.7"]
-        [Middlewares.test-ipwhitelist.ipWhiteList.ipStrategy]
+        [http.middlewares.test-ipwhitelist.ipWhiteList.ipStrategy]
             depth = 2
     ```
 
@@ -68,8 +68,8 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
      a-container:
         image: a-container-image 
             labels:
-                - "traefik.Middlewares.testIPwhitelist.ipWhiteList.SourceRange=127.0.0.1/32, 192.168.1.7"
-                - "traefik.middlewares.testIPwhitelist.ipwhitelist.ipstrategy.depth=2"
+                - "traefik.http.middlewares.testIPwhitelist.ipWhiteList.SourceRange=127.0.0.1/32, 192.168.1.7"
+                - "traefik.http.middlewares.testIPwhitelist.ipwhitelist.ipstrategy.depth=2"
     ```
 
 !!! note
@@ -97,9 +97,9 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
 ??? example "File -- Exclude from `X-Forwarded-For`"
 
     ```toml
-    [Middlewares]
-      [Middlewares.test-ipwhitelist.ipWhiteList]
-        [Middlewares.test-ipwhitelist.ipWhiteList.ipStrategy]
+    [http.middlewares]
+      [http.middlewares.test-ipwhitelist.ipWhiteList]
+        [http.middlewares.test-ipwhitelist.ipWhiteList.ipStrategy]
           excludedIPs = ["127.0.0.1/32", "192.168.1.7"]
     ```
 
@@ -109,5 +109,5 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
      a-container:
         image: a-container-image 
             labels:
-                - "traefik.middlewares.testIPwhitelist.ipwhitelist.ipstrategy.excludedIPs=127.0.0.1/32, 192.168.1.7"
+                - "traefik.http.middlewares.testIPwhitelist.ipwhitelist.ipstrategy.excludedIPs=127.0.0.1/32, 192.168.1.7"
     ```

@@ -3,50 +3,61 @@
 Configuring How to Reach the Services
 {: .subtitle }
 
-![Services](../assets/img/services.png)
+![services](../../assets/img/services.png)
 
 The `Services` are responsible for configuring how to reach the actual services that will eventually handle the incoming requests. 
 
 ## Configuration Example
 
-??? example "Declaring a Service with Two Servers (with Load Balancing) -- Using the [File Provider](../providers/file.md)"
+??? example "Declaring an HTTP Service with Two Servers -- Using the [File Provider](../../providers/file.md)"
 
     ```toml
-    [Services]
-      [Services.my-service.LoadBalancer]
+    [http.services]
+      [http.services.my-service.LoadBalancer]
          method = "wrr" # Load Balancing based on weights
          
-         [[Services.my-service.LoadBalancer.servers]]
+         [[http.services.my-service.LoadBalancer.servers]]
             url = "http://private-ip-server-1/"
             weight = 30 # 30% of the requests will go to that instance
-         [[Services.my-service.LoadBalancer.servers]]
+         [[http.services.my-service.LoadBalancer.servers]]
             url = "http://private-ip-server-2/"
             weight = 70 # 70% of the requests will go to that instance         
     ```
 
-## Configuration
+??? example "Declaring a TCP Service with Two Servers -- Using the [File Provider](../../providers/file.md)"
+
+    ```toml
+    [tcp.services]
+      [tcp.services.my-service.LoadBalancer]         
+         [[tcp.services.my-service.LoadBalancer.servers]]
+            address = "xx.xx.xx.xx:xx"
+         [[tcp.services.my-service.LoadBalancer.servers]]
+            address = "xx.xx.xx.xx:xx"
+    ```
+
+## Configuring HTTP Services
 
 ### General
 
-Currently, the `LoadBalancer` service is the only supported kind of `Service` (see below).
-However, since Traefik is an ever evolving project, other kind of Services will be available in the future,
-reason why you have to specify what kind of service you declare. 
+Currently, `LoadBalancer` is the only supported kind of HTTP `Service` (see below).
+However, since Traefik is an ever evolving project, other kind of HTTP Services will be available in the future,
+reason why you have to specify it. 
 
 ### Load Balancer
 
-The `LoadBalancer` service is able to load balance the requests between multiple instances of your programs. 
+The load balancers are able to load balance the requests between multiple instances of your programs. 
 
-??? example "Declaring a Service with Two Servers (with Load Balancing) -- Using the [File Provider](../providers/file.md)"
+??? example "Declaring a Service with Two Servers (with Load Balancing) -- Using the [File Provider](../../providers/file.md)"
 
     ```toml
-    [Services]
-      [Services.my-service.LoadBalancer]
+    [http.services]
+      [http.services.my-service.LoadBalancer]
          method = "wrr" # Load Balancing based on weights
          
-         [[Services.my-service.LoadBalancer.servers]]
+         [[http.services.my-service.LoadBalancer.servers]]
             url = "http://private-ip-server-1/"
             weight = 50 # 50% of the requests will go to that instance
-         [[Services.my-service.LoadBalancer.servers]]
+         [[http.services.my-service.LoadBalancer.servers]]
             url = "http://private-ip-server-2/"
             weight = 50 # 50% of the requests will go to that instance         
     ```
@@ -60,14 +71,14 @@ The `weight` option defines the weight of the server for the load balancing algo
 !!! note
     Paths in the servers' `url` have no effet. 
     If you want the requests to be sent to a specific path on your servers,
-    configure your [`routers`](./routers.md) to use a corresponding [Middleware](../middlewares/overview.md) (e.g. the [AddPrefix](../middlewares/addprefix.md) or [ReplacePath](../middlewares/replacepath.md)) middlewares.
-    
-??? example "A Service with One Server -- Using the [File Provider](../providers/file.md)"
-    
+    configure your [`routers`](../routers/index.md) to use a corresponding [middleware](../../middlewares/overview.md) (e.g. the [AddPrefix](../../middlewares/addprefix.md) or [ReplacePath](../../middlewares/replacepath.md)) middlewares.
+
+??? example "A Service with One Server -- Using the [File Provider](../../providers/file.md)"
+
     ```toml
-    [Services]
-      [Services.my-service.LoadBalancer]
-         [[Services.my-service.LoadBalancer.servers]]
+    [http.services]
+      [http.services.my-service.LoadBalancer]
+         [[http.services.my-service.LoadBalancer.servers]]
             url = "http://private-ip-server-1/"
     ```
 
@@ -77,16 +88,16 @@ Various methods of load balancing are supported:
 
 - `wrr`: Weighted Round Robin.
 - `drr`: Dynamic Round Robin: increases weights on servers that perform better than others (rolls back to original weights when the server list is updated)
-    
-??? example "Load Balancing Using DRR -- Using the [File Provider](../providers/file.md)"
-    
+
+??? example "Load Balancing Using DRR -- Using the [File Provider](../../providers/file.md)"
+
     ```toml
-    [Services]
-      [Services.my-service.LoadBalancer]
+    [http.services]
+      [http.services.my-service.LoadBalancer]
          method = "drr"
-         [[Services.my-service.LoadBalancer.servers]]
+         [[http.services.my-service.LoadBalancer.servers]]
             url = "http://private-ip-server-1/"
-         [[Services.my-service.LoadBalancer.servers]]
+         [[http.services.my-service.LoadBalancer.servers]]
             url = "http://private-ip-server-1/"
     ```
 
@@ -106,17 +117,17 @@ On subsequent requests, the client is forwarded to the same server.
 ??? example "Adding Stickiness"
 
     ```toml
-    [Services]
-      [Services.my-service]
-        [Services.my-service.LoadBalancer.stickiness]
+    [http.services]
+      [http.services.my-service]
+        [http.services.my-service.LoadBalancer.stickiness]
     ```
 
 ??? example "Adding Stickiness with a Custom Cookie Name"
 
     ```toml
-    [Services]
-      [Services.my-service]
-        [Services.my-service.LoadBalancer.stickiness]
+    [http.services]
+      [http.services.my-service]
+        [http.services.my-service.LoadBalancer.stickiness]
            cookieName = "my_stickiness_cookie_name"
     ```
 
@@ -148,9 +159,9 @@ Below are the available options for the health check mechanism:
 ??? example "Custom Interval & Timeout -- Using the File Provider"
 
     ```toml
-    [Services]
-      [Servicess.Service-1]
-        [Services.Service-1.healthcheck]
+    [http.services]
+      [http.servicess.Service-1]
+        [http.services.Service-1.healthcheck]
             path = "/health"
             interval = "10s"
             timeout = "3s"
@@ -159,9 +170,9 @@ Below are the available options for the health check mechanism:
 ??? example "Custom Port -- Using the File Provider"
 
     ```toml
-    [Services]
-      [Services.Service-1]
-        [Services.Service-1.healthcheck]
+    [http.services]
+      [http.services.Service-1]
+        [http.services.Service-1.healthcheck]
             path = "/health"
             port = 8080
     ```
@@ -169,9 +180,9 @@ Below are the available options for the health check mechanism:
 ??? example "Custom Scheme -- Using the File Provider"
 
     ```toml
-    [Services]
-      [Services.Service-1]
-        [Services.Service-1.healthcheck]
+    [http.services]
+      [http.services.Service-1]
+        [http.services.Service-1.healthcheck]
             path = "/health"
             scheme = "http"
     ```
@@ -179,12 +190,53 @@ Below are the available options for the health check mechanism:
 ??? example "Additional HTTP Headers -- Using the File Provider"
 
     ```toml
-    [Services]
-        [Services.Service-1]
-            [Servicess.Service-1.healthcheck]
+    [http.services]
+        [http.services.Service-1]
+            [http.servicess.Service-1.healthcheck]
                 path = "/health"
 
                 [Service.Service-1.healthcheck.headers]
                     My-Custom-Header = "foo"
                     My-Header = "bar"
     ```
+    
+## Configuring TCP Services
+
+### General
+
+Currently, `LoadBalancer` is the only supported kind of TCP `Service`.
+However, since Traefik is an ever evolving project, other kind of TCP Services will be available in the future,
+reason why you have to specify it. 
+
+### Load Balancer
+
+The load balancers are able to load balance the requests between multiple instances of your programs. 
+
+??? example "Declaring a Service with Two Servers -- Using the [File Provider](../../providers/file.md)"
+
+    ```toml
+    [tcp.services]
+      [tcp.services.my-service.LoadBalancer]
+         [[tcp.services.my-service.LoadBalancer.servers]]
+            address = "xx.xx.xx.xx:xx"
+         [[tcp.services.my-service.LoadBalancer.servers]]
+            address = "xx.xx.xx.xx:xx"
+    ```
+
+#### Servers
+
+Servers declare a single instance of your program.
+The `address` option (IP:Port) point to a specific instance.
+
+??? example "A Service with One Server -- Using the [File Provider](../../providers/file.md)"
+
+    ```toml
+    [tcp.services]
+      [tcp.services.my-service.LoadBalancer]
+         [[tcp.services.my-service.LoadBalancer.servers]]
+            address = "xx.xx.xx.xx:xx"
+    ```
+
+!!! note "Weight"
+    
+    The TCP LoadBalancer is currently a round robin only implementation and doesn't yet support weights.

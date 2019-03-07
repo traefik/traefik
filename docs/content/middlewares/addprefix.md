@@ -12,8 +12,8 @@ The AddPrefix middleware updates the URL Path of the request before forwarding i
 ??? example "File -- Prefixing with /foo"
 
     ```toml
-    [Middlewares]
-      [Middlewares.add-foo.AddPrefix]
+    [http.middlewares]
+      [http.middlewares.add-foo.AddPrefix]
          prefix = "/foo"
     ```
 
@@ -23,7 +23,7 @@ The AddPrefix middleware updates the URL Path of the request before forwarding i
     a-container:
       image: a-container-image 
         labels:
-          - "traefik.middlewares.add-bar.addprefix.prefix=/bar"
+          - "traefik.http.middlewares.add-bar.addprefix.prefix=/bar"
     ```
 
 ## Configuration Options

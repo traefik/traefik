@@ -277,16 +277,18 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 	defer prometheus.Unregister(promState)
 
 	configurations := make(config.Configurations)
-	configurations["providerName"] = th.BuildConfiguration(
-		th.WithRouters(
-			th.WithRouter("foo",
-				th.WithServiceName("bar")),
+	configurations["providerName"] = &config.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithRouters(
+				th.WithRouter("foo",
+					th.WithServiceName("bar")),
+			),
+			th.WithLoadBalancerServices(th.WithService("bar",
+				th.WithLBMethod("wrr"),
+				th.WithServers(th.WithServer("http://localhost:9000"))),
+			),
 		),
-		th.WithLoadBalancerServices(th.WithService("bar",
-			th.WithLBMethod("wrr"),
-			th.WithServers(th.WithServer("http://localhost:9000"))),
-		),
-	)
+	}
 
 	OnConfigurationUpdate(configurations)
 

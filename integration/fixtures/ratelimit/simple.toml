@@ -1,35 +1,35 @@
 [log]
 logLevel = "DEBUG"
 
-[entryPoints]
-  [entryPoints.http]
+[entrypoints]
+  [entrypoints.web]
   address = ":80"
 
 [providers]
    [providers.file]
 
-[Routers]
-  [Routers.router1]
+[http.routers]
+  [http.routers.router1]
     Service = "service1"
     Middlewares = [ "ratelimit" ]
     Rule = "Path(`/`)"
 
-[Middlewares]
-  [Middlewares.ratelimit.RateLimit]
+[http.middlewares]
+  [http.middlewares.ratelimit.RateLimit]
     extractorfunc = "client.ip"
-      [Middlewares.ratelimit.RateLimit.rateset.rateset1]
+      [http.middlewares.ratelimit.RateLimit.rateset.rateset1]
       period = "60s"
       average = 4
       burst = 5
-      [Middlewares.ratelimit.RateLimit.rateset.rateset2]
+      [http.middlewares.ratelimit.RateLimit.rateset.rateset2]
       period = "3s"
       average = 1
       burst = 2
 
-[Services]
-  [Services.service1]
-    [Services.service1.LoadBalancer]
+[http.services]
+  [http.services.service1]
+    [http.services.service1.LoadBalancer]
       passHostHeader = true
-      [[Services.service1.LoadBalancer.Servers]]
+      [[http.services.service1.LoadBalancer.Servers]]
         URL = "http://{{.Server1}}:80"
         Weight = 1

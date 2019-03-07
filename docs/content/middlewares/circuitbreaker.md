@@ -26,8 +26,8 @@ To assess if your system is healthy, the circuit breaker constantly monitors the
 ??? example "Latency Check -- Using Toml"
 
     ```toml
-    [middlewares]
-       [middlewares.latency-check.circuitbreaker]
+    [http.middlewares]
+       [http.middlewares.latency-check.circuitbreaker]
           expression = "LatencyAtQuantileMS(50.0) > 100"
     ```
 
@@ -38,7 +38,7 @@ To assess if your system is healthy, the circuit breaker constantly monitors the
     container-definition:
          image: image-name
          labels:
-             - "traefik.middlewares.latency-check.circuitbreaker.expression=LatencyAtQuantileMS(50.0) > 100"
+             - "traefik.http.middlewares.latency-check.circuitbreaker.expression=LatencyAtQuantileMS(50.0) > 100"
     ```
 
 ## Possible States

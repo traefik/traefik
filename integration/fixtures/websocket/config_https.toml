@@ -4,13 +4,9 @@ logLevel = "DEBUG"
 [serversTransport]
 insecureSkipVerify=true
 
-[entryPoints]
-  [entryPoints.wss]
+[entrypoints]
+  [entrypoints.wss]
   address = ":8000"
-  [entryPoints.wss.tls]
-  [entryPoints.wss.tls.DefaultCertificate]
-    certFile = "resources/tls/local.cert"
-    keyFile = "resources/tls/local.key"
 
 [api]
 
@@ -18,15 +14,20 @@ insecureSkipVerify=true
 [providers]
    [providers.file]
 
-[Routers]
-  [Routers.router1]
+[http.routers]
+  [http.routers.router1]
     Service = "service1"
     Rule = "Path(`/echo`,`/ws`)"
+    [http.routers.router1.tls]
 
-[Services]
-  [Services.service1]
-    [Services.service1.LoadBalancer]
+[http.services]
+  [http.services.service1]
+    [http.services.service1.LoadBalancer]
       PassHostHeader = true
-      [[Services.service1.LoadBalancer.Servers]]
+      [[http.services.service1.LoadBalancer.Servers]]
         URL = "{{ .WebsocketServer }}"
         Weight = 1
+
+[tlsStores.default.DefaultCertificate]
+    certFile = "resources/tls/local.cert"
+    keyFile = "resources/tls/local.key"

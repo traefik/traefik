@@ -7,9 +7,12 @@ import (
 
 // DecodeConfiguration Converts the labels to a configuration.
 func DecodeConfiguration(labels map[string]string) (*config.Configuration, error) {
-	conf := &config.Configuration{}
+	conf := &config.Configuration{
+		HTTP: &config.HTTPConfiguration{},
+		TCP:  &config.TCPConfiguration{},
+	}
 
-	err := Decode(labels, conf, "traefik.services", "traefik.routers", "traefik.middlewares")
+	err := Decode(labels, conf, "traefik.http", "traefik.tcp")
 	if err != nil {
 		return nil, err
 	}

@@ -17,7 +17,7 @@ import (
 func NewCmd(traefikConfiguration *cmd.TraefikConfiguration, traefikPointersConfiguration *cmd.TraefikConfiguration) *flaeg.Command {
 	return &flaeg.Command{
 		Name:                  "storeconfig",
-		Description:           `Store the static traefik configuration into a Key-value stores. Traefik will not start.`,
+		Description:           `Stores the static traefik configuration into a Key-value stores. Traefik will not start.`,
 		Config:                traefikConfiguration,
 		DefaultPointersConfig: traefikPointersConfiguration,
 		Metadata: map[string]string{
@@ -82,8 +82,8 @@ func Run(kv *staert.KvSource, traefikConfiguration *cmd.TraefikConfiguration) fu
 			// Check to see if ACME account object is already in kv store
 			if traefikConfiguration.Configuration.ACME.OverrideCertificates || !accountInitialized {
 
-				// Store the ACME Account into the KV Store
-				// Certificates in KV Store will be overridden
+				// Stores the ACME Account into the KV Store
+				// Certificates in KV Stores will be overridden
 				meta := cluster.NewMetadata(account)
 				err = meta.Marshall()
 				if err != nil {

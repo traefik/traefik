@@ -367,13 +367,15 @@ func (c *Configuration) InitACMEProvider() (*acmeprovider.Provider, error) {
 
 // ValidateConfiguration validate that configuration is coherent
 func (c *Configuration) ValidateConfiguration() {
-	if c.ACME != nil {
-		if _, ok := c.EntryPoints[c.ACME.EntryPoint]; !ok {
-			log.Fatalf("Unknown entrypoint %q for ACME configuration", c.ACME.EntryPoint)
-		} else if c.EntryPoints[c.ACME.EntryPoint].TLS == nil {
-			log.Fatalf("Entrypoint %q has no TLS configuration for ACME configuration", c.ACME.EntryPoint)
-		}
-	}
+	// FIXME Validate store config?
+	// if c.ACME != nil {
+	// if _, ok := c.EntryPoints[c.ACME.EntryPoint]; !ok {
+	// 	log.Fatalf("Unknown entrypoint %q for ACME configuration", c.ACME.EntryPoint)
+	// }
+	// else if c.EntryPoints[c.ACME.EntryPoint].TLS == nil {
+	// 	log.Fatalf("Entrypoint %q has no TLS configuration for ACME configuration", c.ACME.EntryPoint)
+	// }
+	// }
 }
 
 func getSafeACMECAServer(caServerSrc string) string {

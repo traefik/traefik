@@ -1,18 +1,16 @@
 [log]
 logLevel = "DEBUG"
 
-
-[entryPoints]
-  [entryPoints.http]
+[entrypoints]
+  [entrypoints.web]
   address = "{{ .PortHTTP }}"
-  [entryPoints.https]
+  [entrypoints.web-secure]
   address = "{{ .PortHTTPS }}"
-    [entryPoints.https.tls]
 
 [acme]
   email = "test@traefik.io"
   storage = "/tmp/acme.json"
-  entryPoint = "https"
+#  entryPoint = "https"
   acmeLogging = true
   onDemand = {{ .Acme.OnDemand }}
   onHostRule = {{ .Acme.OnHostRule }}

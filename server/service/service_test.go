@@ -320,7 +320,7 @@ func TestManager_Build(t *testing.T) {
 				ctx = internal.AddProviderInContext(ctx, test.providerName+".foobar")
 			}
 
-			_, err := manager.Build(ctx, test.serviceName, nil)
+			_, err := manager.BuildHTTP(ctx, test.serviceName, nil)
 			require.NoError(t, err)
 		})
 	}

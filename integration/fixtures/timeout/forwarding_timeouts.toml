@@ -7,8 +7,8 @@ logLevel = "DEBUG"
   responseHeaderTimeout = "300ms"
 
 
-[entryPoints]
-  [entryPoints.http]
+[entrypoints]
+  [entrypoints.web]
     address = ":8000"
 
 [accessLog]
@@ -20,24 +20,24 @@ logLevel = "DEBUG"
 [providers]
    [providers.file]
 
-[Routers]
-  [Routers.router1]
+[http.routers]
+  [http.routers.router1]
     Service = "service1"
     Rule = "Path(`/dialTimeout`)"
 
-  [Routers.router2]
+  [http.routers.router2]
     Service = "service2"
     Rule = "Path(`/responseHeaderTimeout`)"
 
-[Services]
-  [Services.service1]
-    [Services.service1.LoadBalancer]
-      [[Services.service1.LoadBalancer.Servers]]
+[http.services]
+  [http.services.service1]
+    [http.services.service1.LoadBalancer]
+      [[http.services.service1.LoadBalancer.Servers]]
         URL = "http://50.255.255.1"
         Weight = 1
 
-  [Services.service2]
-    [Services.service2.LoadBalancer]
-      [[Services.service2.LoadBalancer.Servers]]
+  [http.services.service2]
+    [http.services.service2.LoadBalancer]
+      [[http.services.service2.LoadBalancer.Servers]]
         URL = "http://{{.TimeoutEndpoint}}:9000"
         Weight = 1

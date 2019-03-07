@@ -3025,7 +3025,7 @@ func TestGetTLS(t *testing.T) {
 			},
 			result: map[string]*tls.Configuration{
 				"testing/test-secret": {
-					EntryPoints: []string{"api-secure", "https"},
+					Stores: []string{"api-secure", "https"},
 					Certificate: &tls.Certificate{
 						CertFile: tls.FileOrContent("tls-crt"),
 						KeyFile:  tls.FileOrContent("tls-key"),

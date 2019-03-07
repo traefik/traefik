@@ -720,7 +720,6 @@ func modifyCertificateConfFileContent(c *check.C, certFileName, confFileName, en
 					CertFile: traefiktls.FileOrContent("fixtures/https/" + certFileName + ".cert"),
 					KeyFile:  traefiktls.FileOrContent("fixtures/https/" + certFileName + ".key"),
 				},
-				EntryPoints: []string{entryPoint},
 			}},
 		}
 
