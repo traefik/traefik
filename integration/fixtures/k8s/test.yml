@@ -31,7 +31,6 @@ metadata:
 spec:
   ports:
     - name: http
-      targetPort: 80
       port: 80
   selector:
     app: containous

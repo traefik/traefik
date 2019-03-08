@@ -26,6 +26,11 @@ import (
 // K8sSuite
 type K8sSuite struct{ BaseSuite }
 
+const (
+	kubeServer = "https://127.0.0.1:6443"
+	namespace  = "default"
+)
+
 func (s *K8sSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "k8s")
 	s.composeProject.Start(c)
@@ -63,7 +68,7 @@ func parseK8sYaml(fileR []byte) []runtime.Object {
 }
 
 func (s *K8sSuite) TestSimpleDefaultConfig(c *check.C) {
-	req := testhelpers.MustNewRequest(http.MethodGet, "https://127.0.0.1:6443", nil)
+	req := testhelpers.MustNewRequest(http.MethodGet, kubeServer, nil)
 	err := try.RequestWithTransport(req, time.Second*60, &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}, try.StatusCodeIs(http.StatusUnauthorized))
 	c.Assert(err, checker.IsNil)
 
@@ -99,13 +104,13 @@ func (s *K8sSuite) TestSimpleDefaultConfig(c *check.C) {
 	for _, obj := range k8sObjects {
 		switch o := obj.(type) {
 		case *v1beta12.Deployment:
-			_, err := clientset.ExtensionsV1beta1().Deployments("default").Create(o)
+			_, err := clientset.ExtensionsV1beta1().Deployments(namespace).Create(o)
 			c.Assert(err, checker.IsNil)
 		case *v1.Service:
-			_, err := clientset.CoreV1().Services("default").Create(o)
+			_, err := clientset.CoreV1().Services(namespace).Create(o)
 			c.Assert(err, checker.IsNil)
 		case *v1beta12.Ingress:
-			_, err := clientset.ExtensionsV1beta1().Ingresses("default").Create(o)
+			_, err := clientset.ExtensionsV1beta1().Ingresses(namespace).Create(o)
 			c.Assert(err, checker.IsNil)
 		default:
 			log.WithoutContext().Errorf("Unknown runtime object %+v %T", o, o)
