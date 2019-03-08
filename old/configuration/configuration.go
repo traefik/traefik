@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/containous/flaeg/parse"
-	"github.com/containous/traefik/acme"
+	"github.com/containous/traefik/old/acme"
 	"github.com/containous/traefik/old/api"
 	"github.com/containous/traefik/old/log"
 	"github.com/containous/traefik/old/middlewares/tracing"
@@ -402,9 +402,9 @@ type HostResolverConfig struct {
 // Deprecated
 func convertACMEChallenge(oldACMEChallenge *acme.ACME) *acmeprovider.Configuration {
 	conf := &acmeprovider.Configuration{
-		KeyType:     oldACMEChallenge.KeyType,
-		OnHostRule:  oldACMEChallenge.OnHostRule,
-		OnDemand:    oldACMEChallenge.OnDemand,
+		KeyType:    oldACMEChallenge.KeyType,
+		OnHostRule: oldACMEChallenge.OnHostRule,
+		// OnDemand:    oldACMEChallenge.OnDemand,
 		Email:       oldACMEChallenge.Email,
 		Storage:     oldACMEChallenge.Storage,
 		ACMELogging: oldACMEChallenge.ACMELogging,

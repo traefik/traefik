@@ -8,8 +8,6 @@ import (
 	"github.com/abronan/valkeyrie/store"
 	"github.com/containous/flaeg"
 	"github.com/containous/staert"
-	"github.com/containous/traefik/acme"
-	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/cmd"
 )
 
@@ -71,48 +69,48 @@ func Run(kv *staert.KvSource, traefikConfiguration *cmd.TraefikConfiguration) fu
 			}
 		}
 
-		if traefikConfiguration.Configuration.ACME != nil {
-			account := &acme.Account{}
-
-			accountInitialized, err := keyExists(kv, traefikConfiguration.Configuration.ACME.Storage)
-			if err != nil && err != store.ErrKeyNotFound {
-				return err
-			}
-
-			// Check to see if ACME account object is already in kv store
-			if traefikConfiguration.Configuration.ACME.OverrideCertificates || !accountInitialized {
-
-				// Stores the ACME Account into the KV Store
-				// Certificates in KV Stores will be overridden
-				meta := cluster.NewMetadata(account)
-				err = meta.Marshall()
-				if err != nil {
-					return err
-				}
-
-				source := staert.KvSource{
-					Store:  kv,
-					Prefix: traefikConfiguration.Configuration.ACME.Storage,
-				}
-
-				err = source.StoreConfig(meta)
-				if err != nil {
-					return err
-				}
-			}
-		}
+		// if traefikConfiguration.Configuration.ACME != nil {
+		// 	account := &acme.Account{}
+		//
+		// 	accountInitialized, err := keyExists(kv, traefikConfiguration.Configuration.ACME.Storage)
+		// 	if err != nil && err != store.ErrKeyNotFound {
+		// 		return err
+		// 	}
+		//
+		// 	// Check to see if ACME account object is already in kv store
+		// 	if traefikConfiguration.Configuration.ACME.OverrideCertificates || !accountInitialized {
+		//
+		// 		// Stores the ACME Account into the KV Store
+		// 		// Certificates in KV Stores will be overridden
+		// 		meta := cluster.NewMetadata(account)
+		// 		err = meta.Marshall()
+		// 		if err != nil {
+		// 			return err
+		// 		}
+		//
+		// 		source := staert.KvSource{
+		// 			Store:  kv,
+		// 			Prefix: traefikConfiguration.Configuration.ACME.Storage,
+		// 		}
+		//
+		// 		err = source.StoreConfig(meta)
+		// 		if err != nil {
+		// 			return err
+		// 		}
+		// 	}
+		// }
 		return nil
 	}
 }
 
-func keyExists(source *staert.KvSource, key string) (bool, error) {
-	list, err := source.List(key, nil)
-	if err != nil {
-		return false, err
-	}
-
-	return len(list) > 0, nil
-}
+// func keyExists(source *staert.KvSource, key string) (bool, error) {
+// 	list, err := source.List(key, nil)
+// 	if err != nil {
+// 		return false, err
+// 	}
+//
+// 	return len(list) > 0, nil
+// }
 
 // CreateKvSource creates KvSource
 // TLS support is enable for Consul and Etcd backends

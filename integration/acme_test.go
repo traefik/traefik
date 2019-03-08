@@ -241,78 +241,6 @@ func (s *AcmeSuite) TestHTTP01OnHostRuleDynamicCertificatesWithWildcard(c *check
 	s.retrieveAcmeCertificate(c, testCase)
 }
 
-func (s *AcmeSuite) TestHTTP01OnDemand(c *check.C) {
-	c.Skip("on demand")
-
-	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme_base.toml",
-		template: templateModel{
-			Acme: acme.Configuration{
-				HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
-				OnDemand:      true,
-			},
-		},
-		expectedCommonName: acmeDomain,
-		expectedAlgorithm:  x509.RSA,
-	}
-
-	s.retrieveAcmeCertificate(c, testCase)
-}
-
-func (s *AcmeSuite) TestHTTP01OnDemandStaticCertificatesWithWildcard(c *check.C) {
-	c.Skip("on demand")
-
-	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme_tls.toml",
-		template: templateModel{
-			Acme: acme.Configuration{
-				HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
-				OnDemand:      true,
-			},
-		},
-		expectedCommonName: wildcardDomain,
-		expectedAlgorithm:  x509.RSA,
-	}
-
-	s.retrieveAcmeCertificate(c, testCase)
-}
-
-func (s *AcmeSuite) TestHTTP01OnDemandStaticCertificatesWithWildcardMultipleEntrypoints(c *check.C) {
-	c.Skip("on demand")
-
-	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme_tls_multiple_entrypoints.toml",
-		template: templateModel{
-			Acme: acme.Configuration{
-				HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
-				OnDemand:      true,
-			},
-		},
-		expectedCommonName: acmeDomain,
-		expectedAlgorithm:  x509.RSA,
-	}
-
-	s.retrieveAcmeCertificate(c, testCase)
-}
-
-func (s *AcmeSuite) TestHTTP01OnDemandDynamicCertificatesWithWildcard(c *check.C) {
-	c.Skip("on demand")
-
-	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme_tls_dynamic.toml",
-		template: templateModel{
-			Acme: acme.Configuration{
-				HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
-				OnDemand:      true,
-			},
-		},
-		expectedCommonName: wildcardDomain,
-		expectedAlgorithm:  x509.RSA,
-	}
-
-	s.retrieveAcmeCertificate(c, testCase)
-}
-
 func (s *AcmeSuite) TestTLSALPN01OnHostRule(c *check.C) {
 	testCase := acmeTestCase{
 		traefikConfFilePath: "fixtures/acme/acme_base.toml",
@@ -320,24 +248,6 @@ func (s *AcmeSuite) TestTLSALPN01OnHostRule(c *check.C) {
 			Acme: acme.Configuration{
 				TLSChallenge: &acme.TLSChallenge{},
 				OnHostRule:   true,
-			},
-		},
-		expectedCommonName: acmeDomain,
-		expectedAlgorithm:  x509.RSA,
-	}
-
-	s.retrieveAcmeCertificate(c, testCase)
-}
-
-func (s *AcmeSuite) TestTLSALPN01OnDemand(c *check.C) {
-	c.Skip("on demand")
-
-	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme_base.toml",
-		template: templateModel{
-			Acme: acme.Configuration{
-				TLSChallenge: &acme.TLSChallenge{},
-				OnDemand:     true,
 			},
 		},
 		expectedCommonName: acmeDomain,

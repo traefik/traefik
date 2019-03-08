@@ -47,7 +47,6 @@ type Configuration struct {
 	EntryPoint    string         `description:"EntryPoint to use."`
 	KeyType       string         `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'. Default to 'RSA4096'"`
 	OnHostRule    bool           `description:"Enable certificate generation on frontends Host rules."`
-	OnDemand      bool           `description:"Enable on demand certificate generation. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."` // Deprecated
 	DNSChallenge  *DNSChallenge  `description:"Activate DNS-01 Challenge"`
 	HTTPChallenge *HTTPChallenge `description:"Activate HTTP-01 Challenge"`
 	TLSChallenge  *TLSChallenge  `description:"Activate TLS-ALPN-01 Challenge"`
@@ -128,6 +127,7 @@ func (p *Provider) ListenRequest(domain string) (*tls.Certificate, error) {
 
 // Init for compatibility reason the BaseProvider implements an empty Init
 func (p *Provider) Init() error {
+
 	ctx := log.With(context.Background(), log.Str(log.ProviderName, "acme"))
 	logger := log.FromContext(ctx)
 
@@ -137,9 +137,10 @@ func (p *Provider) Init() error {
 		legolog.Logger = fmtlog.New(ioutil.Discard, "", 0)
 	}
 
-	if p.Store == nil {
-		return errors.New("no store found for the ACME provider")
+	if len(p.Configuration.Storage) == 0 {
+		return errors.New("unable to initialize ACME provider with no storage location for the certificates")
 	}
+	p.Store = NewLocalStore(p.Configuration.Storage)
 
 	var err error
 	p.account, err = p.Store.GetAccount()

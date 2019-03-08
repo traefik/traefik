@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/containous/flaeg/parse"
-	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/old/provider/boltdb"
 	"github.com/containous/traefik/old/provider/consul"
@@ -70,7 +69,7 @@ type Configuration struct {
 
 	HostResolver *types.HostResolverConfig `description:"Enable CNAME Flattening" export:"true"`
 
-	ACME *acme.ACME `description:"Enable ACME (Let's Encrypt): automatic SSL" export:"true"`
+	ACME *acmeprovider.Configuration `description:"Enable ACME (Let's Encrypt): automatic SSL" export:"true"`
 }
 
 // Global holds the global configuration.
@@ -338,10 +337,6 @@ func (c *Configuration) initACMEProvider() {
 			log.Warn("Unable to use HTTP challenge and TLS challenge at the same time. Fallback to TLS challenge.")
 			c.ACME.HTTPChallenge = nil
 		}
-
-		if c.ACME.OnDemand {
-			log.Warn("ACME.OnDemand is deprecated")
-		}
 	}
 }
 
@@ -349,24 +344,29 @@ func (c *Configuration) initACMEProvider() {
 func (c *Configuration) InitACMEProvider() (*acmeprovider.Provider, error) {
 	if c.ACME != nil {
 		if len(c.ACME.Storage) == 0 {
-			// Delete the ACME configuration to avoid starting ACME in cluster mode
-			c.ACME = nil
 			return nil, errors.New("unable to initialize ACME provider with no storage location for the certificates")
 		}
-		provider := &acmeprovider.Provider{}
-		provider.Configuration = convertACMEChallenge(c.ACME)
-
-		store := acmeprovider.NewLocalStore(provider.Storage)
-		provider.Store = store
-		acme.ConvertToNewFormat(provider.Storage)
-		c.ACME = nil
-		return provider, nil
+		return &acmeprovider.Provider{
+			Configuration: c.ACME,
+		}, nil
 	}
 	return nil, nil
 }
 
 // ValidateConfiguration validate that configuration is coherent
 func (c *Configuration) ValidateConfiguration() {
+	if c.ACME != nil {
+		for _, domain := range c.ACME.Domains {
+			if domain.Main != dns01.UnFqdn(domain.Main) {
+				log.Warnf("FQDN detected, please remove the trailing dot: %s", domain.Main)
+			}
+			for _, san := range domain.SANs {
+				if san != dns01.UnFqdn(san) {
+					log.Warnf("FQDN detected, please remove the trailing dot: %s", san)
+				}
+			}
+		}
+	}
 	// FIXME Validate store config?
 	// if c.ACME != nil {
 	// if _, ok := c.EntryPoints[c.ACME.EntryPoint]; !ok {
@@ -396,48 +396,4 @@ func getSafeACMECAServer(caServerSrc string) string {
 	}
 
 	return caServerSrc
-}
-
-// Deprecated
-func convertACMEChallenge(oldACMEChallenge *acme.ACME) *acmeprovider.Configuration {
-	conf := &acmeprovider.Configuration{
-		KeyType:     oldACMEChallenge.KeyType,
-		OnHostRule:  oldACMEChallenge.OnHostRule,
-		OnDemand:    oldACMEChallenge.OnDemand,
-		Email:       oldACMEChallenge.Email,
-		Storage:     oldACMEChallenge.Storage,
-		ACMELogging: oldACMEChallenge.ACMELogging,
-		CAServer:    oldACMEChallenge.CAServer,
-		EntryPoint:  oldACMEChallenge.EntryPoint,
-	}
-
-	for _, domain := range oldACMEChallenge.Domains {
-		if domain.Main != dns01.UnFqdn(domain.Main) {
-			log.Warnf("FQDN detected, please remove the trailing dot: %s", domain.Main)
-		}
-		for _, san := range domain.SANs {
-			if san != dns01.UnFqdn(san) {
-				log.Warnf("FQDN detected, please remove the trailing dot: %s", san)
-			}
-		}
-		conf.Domains = append(conf.Domains, domain)
-	}
-	if oldACMEChallenge.HTTPChallenge != nil {
-		conf.HTTPChallenge = &acmeprovider.HTTPChallenge{
-			EntryPoint: oldACMEChallenge.HTTPChallenge.EntryPoint,
-		}
-	}
-
-	if oldACMEChallenge.DNSChallenge != nil {
-		conf.DNSChallenge = &acmeprovider.DNSChallenge{
-			Provider:         oldACMEChallenge.DNSChallenge.Provider,
-			DelayBeforeCheck: oldACMEChallenge.DNSChallenge.DelayBeforeCheck,
-		}
-	}
-
-	if oldACMEChallenge.TLSChallenge != nil {
-		conf.TLSChallenge = &acmeprovider.TLSChallenge{}
-	}
-
-	return conf
 }

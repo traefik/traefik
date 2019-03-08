@@ -12,7 +12,6 @@ logLevel = "DEBUG"
   storage = "/tmp/acme.json"
 #  entryPoint = "https"
   acmeLogging = true
-  onDemand = {{ .Acme.OnDemand }}
   onHostRule = {{ .Acme.OnHostRule }}
   keyType = "{{ .Acme.KeyType }}"
   caServer = "{{ .Acme.CAServer }}"

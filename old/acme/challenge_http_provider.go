@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff"
-	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/old/cluster"
 	"github.com/containous/traefik/safe"
 	"github.com/xenolf/lego/challenge"
 )

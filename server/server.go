@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/config"
 	"github.com/containous/traefik/config/static"
 	"github.com/containous/traefik/log"
@@ -40,7 +39,6 @@ type Server struct {
 	accessLoggerMiddleware     *accesslog.Handler
 	tracer                     *tracing.Tracing
 	routinesPool               *safe.Pool
-	leadership                 *cluster.Leadership //FIXME Cluster
 	defaultRoundTripper        http.RoundTripper
 	metricsRegistry            metrics.Registry
 	provider                   provider.Provider
@@ -136,7 +134,6 @@ func (s *Server) Start(ctx context.Context) {
 	}()
 
 	s.startTCPServers()
-	s.startLeadership()
 	s.routinesPool.Go(func(stop chan bool) {
 		s.listenProviders(stop)
 	})
@@ -187,7 +184,6 @@ func (s *Server) Close() {
 	}(ctx)
 
 	stopMetricsClients()
-	s.stopLeadership()
 	s.routinesPool.Cleanup()
 	close(s.configurationChan)
 	close(s.configurationValidatedChan)
@@ -206,18 +202,6 @@ func (s *Server) Close() {
 	}
 
 	cancel()
-}
-
-func (s *Server) startLeadership() {
-	if s.leadership != nil {
-		s.leadership.Participate(s.routinesPool)
-	}
-}
-
-func (s *Server) stopLeadership() {
-	if s.leadership != nil {
-		s.leadership.Stop()
-	}
 }
 
 func (s *Server) startTCPServers() {

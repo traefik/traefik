@@ -1,15 +1,14 @@
 package anonymize
 
 import (
-	"crypto/tls"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/containous/flaeg/parse"
-	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/config/static"
 	"github.com/containous/traefik/provider"
+	"github.com/containous/traefik/provider/acme"
 	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/provider/file"
 	traefiktls "github.com/containous/traefik/tls"
@@ -63,7 +62,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 			},
 		},
 	}
-	config.ACME = &acme.ACME{
+	config.ACME = &acme.Configuration{
 		Email: "acme Email",
 		Domains: []types.Domain{
 			{
@@ -72,16 +71,11 @@ func TestDo_globalConfiguration(t *testing.T) {
 			},
 		},
 		Storage:      "Storage",
-		OnDemand:     true,
 		OnHostRule:   true,
 		CAServer:     "CAServer",
 		EntryPoint:   "EntryPoint",
 		DNSChallenge: &acmeprovider.DNSChallenge{Provider: "DNSProvider"},
 		ACMELogging:  true,
-		TLSConfig: &tls.Config{
-			InsecureSkipVerify: true,
-			// ...
-		},
 	}
 	config.Providers = &static.Providers{
 		ProvidersThrottleDuration: parse.Duration(111 * time.Second),
