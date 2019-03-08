@@ -383,7 +383,15 @@ func checkNewVersion() {
 }
 
 func stats(staticConfiguration *static.Configuration) {
-	if staticConfiguration.Global.SendAnonymousUsage {
+	if staticConfiguration.Global.SendAnonymousUsage == nil {
+		log.WithoutContext().Error(`
+You haven't specify the sendAnonymousUsage option, it will be enable by default.
+`)
+		sendAnonymousUsage := true
+		staticConfiguration.Global.SendAnonymousUsage = &sendAnonymousUsage
+	}
+
+	if *staticConfiguration.Global.SendAnonymousUsage {
 		log.WithoutContext().Info(`
 Stats collection is enabled.
 Many thanks for contributing to Traefik's improvement by allowing us to receive anonymous information from your configuration.
