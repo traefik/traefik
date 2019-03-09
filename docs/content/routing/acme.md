@@ -172,7 +172,7 @@ Use the `DNS-01` challenge to generate and renew ACME certificates by provisioni
     | [Vscale](https://vscale.io/)                           | `vscale`       | `VSCALE_API_TOKEN`                                                                                                                        | YES                            |
     | [VULTR](https://www.vultr.com)                         | `vultr`        | `VULTR_API_KEY`                                                                                                                           | Not tested yet                 |
     
-    - (1): more information about the HTTP message format can be found [here](https://github.com/xenolf/lego/blob/master/providers/dns/httpreq/readme.md)
+    - (1): more information about the HTTP message format can be found [here](https://xenolf.github.io/lego/dns/httpreq/)
 
 !!! note "`delayBeforeCheck`"
     By default, the `provider` verifies the TXT record _before_ letting ACME verify.
