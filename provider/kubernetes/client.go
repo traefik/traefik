@@ -81,7 +81,6 @@ func newInClusterClient(endpoint string) (*clientImpl, error) {
 
 func newExternalClusterClientFromFile(file string) (*clientImpl, error) {
 	configFromFlags, err := clientcmd.BuildConfigFromFlags("", file)
-
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +112,6 @@ func newExternalClusterClient(endpoint, token, caFilePath string) (*clientImpl, 
 }
 
 func createClientFromConfig(c *rest.Config) (*clientImpl, error) {
-
 	clientset, err := kubernetes.NewForConfig(c)
 	if err != nil {
 		return nil, err
