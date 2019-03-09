@@ -1,12 +1,12 @@
 package kubernetes
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"time"
 
 	"github.com/containous/traefik/old/log"
-	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	kubeerror "k8s.io/apimachinery/pkg/api/errors"
