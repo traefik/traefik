@@ -1,0 +1,11 @@
+[global]
+debug=true
+
+[entryPoints]
+  [entryPoints.http]
+     address = ":8000"
+
+[api]
+
+[Providers]
+   [Providers.Kubernetes]

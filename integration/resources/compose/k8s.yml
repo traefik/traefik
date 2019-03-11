@@ -1,0 +1,20 @@
+server:
+  image: rancher/k3s:v0.2.0-rc4
+  command: server --disable-agent
+  environment:
+    - K3S_CLUSTER_SECRET=somethingtotallyrandom
+    - K3S_KUBECONFIG_OUTPUT=/output/kubeconfig.yaml
+    - K3S_KUBECONFIG_MODE=666
+  volumes:
+    - ./output:/output
+  ports:
+    - 6443:6443
+
+node:
+  image: rancher/k3s:v0.2.0-rc4
+  privileged: true
+  links:
+    - server
+  environment:
+    - K3S_URL=https://server:6443
+    - K3S_CLUSTER_SECRET=somethingtotallyrandom

@@ -985,6 +985,14 @@
   revision = "19f2c401e122352c047a84d6584dd51e2fb8fcc4"
 
 [[projects]]
+  branch = "master"
+  digest = "1:b7f860847a1d71f925ba9385ed95f1ebc0abfeb418a78e219ab61f48fdfeffad"
+  name = "github.com/howeyc/gopass"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "bf9dde6d0d2c004a008c27aaee91170c786f6db8"
+
+[[projects]]
   digest = "1:45e66b20393507035c6a7d15bef5ffe8faf5b083621c1284d9824cc052776de5"
   name = "github.com/huandu/xstrings"
   packages = ["."]
@@ -1557,11 +1565,12 @@
   version = "v1.1.0"
 
 [[projects]]
-  digest = "1:f709d7d110053ada282e5ab1eabcb3581bcf3aaa27d22873ab8d8291c7a474bb"
+  digest = "1:9d8420bbf131d1618bde6530af37c3799340d3762cc47210c1d9532a4c3a2779"
   name = "github.com/spf13/pflag"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "cb88ea77998c3f024757528e3305022ab50b43be"
+  revision = "298182f68c66c05229eb03ac171abe6e309ee79a"
+  version = "v1.0.3"
 
 [[projects]]
   digest = "1:10301358a67805684f6b525cba6ad7ec014dbd56cccc2926fadc9189faa7889a"
@@ -2166,7 +2175,7 @@
   version = "kubernetes-1.9.0"
 
 [[projects]]
-  digest = "1:73fb394370cf934e4529d6b8c76d44e4ec153079356add273df066957f853451"
+  digest = "1:38c77bd3136157819bfeec7a3ce19b94a15f013f34499becb6ef3fdc206c660b"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
@@ -2267,8 +2276,12 @@
     "pkg/version",
     "rest",
     "rest/watch",
+    "tools/auth",
     "tools/cache",
+    "tools/clientcmd",
     "tools/clientcmd/api",
+    "tools/clientcmd/api/latest",
+    "tools/clientcmd/api/v1",
     "tools/metrics",
     "tools/pager",
     "tools/reference",
@@ -2276,6 +2289,7 @@
     "util/buffer",
     "util/cert",
     "util/flowcontrol",
+    "util/homedir",
     "util/integer",
   ]
   pruneopts = "NUT"
@@ -2431,13 +2445,16 @@
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/apimachinery/pkg/labels",
+    "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/runtime/schema",
     "k8s.io/apimachinery/pkg/types",
     "k8s.io/apimachinery/pkg/util/intstr",
     "k8s.io/client-go/informers",
     "k8s.io/client-go/kubernetes",
+    "k8s.io/client-go/kubernetes/scheme",
     "k8s.io/client-go/rest",
     "k8s.io/client-go/tools/cache",
+    "k8s.io/client-go/tools/clientcmd",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

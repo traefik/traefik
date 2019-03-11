@@ -68,10 +68,14 @@ func (p *Provider) newK8sClient(ctx context.Context, ingressLabelSelector string
 	}
 
 	var cl *clientImpl
-	if os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "" {
+	switch {
+	case os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "":
 		log.FromContext(ctx).Infof("Creating in-cluster Provider client%s", withEndpoint)
 		cl, err = newInClusterClient(p.Endpoint)
-	} else {
+	case os.Getenv("KUBECONFIG") != "":
+		log.FromContext(ctx).Infof("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
+		cl, err = newExternalClusterClientFromFile(os.Getenv("KUBECONFIG"))
+	default:
 		log.FromContext(ctx).Infof("Creating cluster-external Provider client%s", withEndpoint)
 		cl, err = newExternalClusterClient(p.Endpoint, p.Token, p.CertAuthFilePath)
 	}
