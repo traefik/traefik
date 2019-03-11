@@ -9,8 +9,8 @@ import (
 	"github.com/containous/mux"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
-	"github.com/xenolf/lego/challenge"
-	"github.com/xenolf/lego/challenge/http01"
+	"github.com/go-acme/lego/challenge"
+	"github.com/go-acme/lego/challenge/http01"
 )
 
 var _ challenge.ProviderTimeout = (*challengeHTTP)(nil)

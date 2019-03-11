@@ -18,7 +18,7 @@ import (
 const (
 	// format for SOAP envelopes
 	soapEnvelopeFixture string = `<?xml version="1.0" encoding="UTF-8"?>
-<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ns1="%s">
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ns1="http://www.transip.nl/soap" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
 	<SOAP-ENV:Body>%s</SOAP-ENV:Body>
 </SOAP-ENV:Envelope>`
 )
@@ -68,7 +68,7 @@ func (s soapFault) String() string {
 // paramsEncoder allows SoapParams to hook into encoding theirselves, useful when
 // fields consist of complex structs
 type paramsEncoder interface {
-	EncodeParams(ParamsContainer)
+	EncodeParams(ParamsContainer, string)
 	EncodeArgs(string) string
 }
 
@@ -124,6 +124,7 @@ func (s soapParams) Encode() string {
 			continue
 		}
 
+		// get key for this value
 		key = s.keys[i]
 
 		switch v.(type) {
@@ -143,6 +144,12 @@ func (s soapParams) Encode() string {
 		case int, int8, int16, int32, int64:
 			buf.WriteString(fmt.Sprintf("%s=", key))
 			buf.WriteString(fmt.Sprintf("%d", v))
+		case bool:
+			c := v.(bool)
+			buf.WriteString(fmt.Sprintf("%s=", key))
+			if c {
+				buf.WriteString("1")
+			}
 		default:
 			continue
 		}
@@ -196,7 +203,7 @@ func (sr *SoapRequest) AddArgument(key string, value interface{}) {
 	// check if value implements paramsEncoder
 	if pe, ok := value.(paramsEncoder); ok {
 		sr.args = append(sr.args, pe.EncodeArgs(key))
-		pe.EncodeParams(sr.params)
+		pe.EncodeParams(sr.params, "")
 		return
 	}
 
@@ -220,7 +227,7 @@ func (sr *SoapRequest) AddArgument(key string, value interface{}) {
 }
 
 func (sr SoapRequest) getEnvelope() string {
-	return fmt.Sprintf(soapEnvelopeFixture, transipAPIHost, getSOAPArgs(sr.Method, sr.args...))
+	return fmt.Sprintf(soapEnvelopeFixture, getSOAPArgs(sr.Method, sr.args...))
 }
 
 type soapClient struct {
@@ -406,11 +413,27 @@ type TestParamsContainer struct {
 // Add just makes sure we use Len(), key and value in the result so it can be
 // tested
 func (t *TestParamsContainer) Add(key string, value interface{}) {
-	var prefix string
+	var suffix string
 	if t.Len() > 0 {
-		prefix = "&"
+		suffix = "&"
 	}
-	t.Prm = t.Prm + prefix + fmt.Sprintf("%d%s=%s", t.Len(), key, value)
+
+	if value != nil {
+		var prm string
+		switch value.(type) {
+		case bool:
+			c := value.(bool)
+			if c {
+				prm = "1"
+			}
+		default:
+			prm = fmt.Sprintf("%s", value)
+		}
+
+		suffix = suffix + fmt.Sprintf("%d%s=%s", t.Len(), key, prm)
+	}
+
+	t.Prm = t.Prm + suffix
 }
 
 // Len returns current length of test data in TestParamsContainer

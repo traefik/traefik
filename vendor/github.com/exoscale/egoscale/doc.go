@@ -1,18 +1,18 @@
 /*
 
-Package egoscale is a mapping for with the CloudStack API (http://cloudstack.apache.org/api.html) from Go. It has been designed against the Exoscale (https://www.exoscale.com/) infrastructure but should fit other CloudStack services.
+Package egoscale is a mapping for the Exoscale API (https://community.exoscale.com/api/compute/).
 
 Requests and Responses
 
 To build a request, construct the adequate struct. This library expects a pointer for efficiency reasons only. The response is a struct corresponding to the data at stake. E.g. DeployVirtualMachine gives a VirtualMachine, as a pointer as well to avoid big copies.
 
-Then everything within the struct is not a pointer. Find below some examples of how egoscale may be used to interact with a CloudStack endpoint, especially Exoscale itself. If anything feels odd or unclear, please let us know: https://github.com/exoscale/egoscale/issues
+Then everything within the struct is not a pointer. Find below some examples of how egoscale may be used. If anything feels odd or unclear, please let us know: https://github.com/exoscale/egoscale/issues
 
 	req := &egoscale.DeployVirtualMachine{
 		Size:              10,
-		ServiceOfferingID: "...",
-		TemplateID:        "...",
-		ZoneID:            "...",
+		ServiceOfferingID: egoscale.MustParseUUID("..."),
+		TemplateID:        egoscale.MustParseUUID("..."),
+		ZoneID:            egoscale.MastParseUUID("..."),
 	}
 
 	fmt.Println("Deployment started")
@@ -28,9 +28,9 @@ This example deploys a virtual machine while controlling the job status as it go
 
 	req := &egoscale.DeployVirtualMachine{
 		Size:              10,
-		ServiceOfferingID: "...",
-		TemplateID:        "...",
-		ZoneID:            "...",
+		ServiceOfferingID: egoscale.MustParseUUID("..."),
+		TemplateID:        egoscale.MustParseUUID("..."),
+		ZoneID:            egoscale.MustParseUUID("..."),
 	}
 	vm := &egoscale.VirtualMachine{}
 
@@ -63,20 +63,20 @@ Debugging and traces
 
 As this library is mostly an HTTP client, you can reuse all the existing tools around it.
 
-	cs := egoscale.NewClient("https://api.exoscale.ch/compute", "EXO...", "...")
+	cs := egoscale.NewClient("https://api.exoscale.com/compute", "EXO...", "...")
 	// sets a logger on stderr
-	cs.Logger = log.Newos.Stderr, "prefix", log.LstdFlags)
+	cs.Logger = log.New(os.Stderr, "prefix", log.LstdFlags)
 	// activates the HTTP traces
 	cs.TraceOn()
 
-Nota bene: when running the tests or the egoscale library via another tool, e.g. the exo cli (or the cs cli), the environment variable EXOSCALE_TRACE=prefix does the above configuration for you. As a developer using egoscale as a library, you'll find it more convenient to plug your favorite io.Writer as it's Logger.
+Nota bene: when running the tests or the egoscale library via another tool, e.g. the exo cli, the environment variable EXOSCALE_TRACE=prefix does the above configuration for you. As a developer using egoscale as a library, you'll find it more convenient to plug your favorite io.Writer as it's a Logger.
 
 
 APIs
 
-All the available APIs on the server and provided by the API Discovery plugin
+All the available APIs on the server and provided by the API Discovery plugin.
 
-	cs := egoscale.NewClient("https://api.exoscale.ch/compute", "EXO...", "...")
+	cs := egoscale.NewClient("https://api.exoscale.com/compute", "EXO...", "...")
 
 	resp, err := cs.Request(&egoscale.ListAPIs{})
 	if err != nil {
@@ -96,14 +96,17 @@ Security Groups provide a way to isolate traffic to VMs. Rules are added via the
 
 	resp, err := cs.Request(&egoscale.CreateSecurityGroup{
 		Name: "Load balancer",
-		Description: "Opens HTTP/HTTPS ports from the outside world",
+		Description: "Open HTTP/HTTPS ports from the outside world",
 	})
 	securityGroup := resp.(*egoscale.SecurityGroup)
 
 	resp, err = cs.Request(&egoscale.AuthorizeSecurityGroupIngress{
 		Description:     "SSH traffic",
 		SecurityGroupID: securityGroup.ID,
-		CidrList:        []string{"0.0.0.0/0"},
+		CidrList:        []CIDR{
+			*egoscale.MustParseCIDR("0.0.0.0/0"),
+			*egoscale.MustParseCIDR("::/0"),
+		},
 		Protocol:        "tcp",
 		StartPort:       22,
 		EndPort:         22,
@@ -117,32 +120,32 @@ Security Groups provide a way to isolate traffic to VMs. Rules are added via the
 	})
 	// ...
 
-Security Group also implement the generic List, Get and Delete interfaces (Listable, Gettable and Deletable).
+Security Group also implement the generic List, Get and Delete interfaces (Listable and Deletable).
 
 	// List all Security Groups
-	sgs, err := cs.List(new(egoscale.SecurityGroup))
+	sgs, _ := cs.List(&egoscale.SecurityGroup{})
 	for _, s := range sgs {
 		sg := s.(egoscale.SecurityGroup)
 		// ...
 	}
 
 	// Get a Security Group
-	sg := &egoscale.SecurityGroup{Name: "Load balancer"}
-	if err := cs.Get(sg); err != nil {
+	sgQuery := &egoscale.SecurityGroup{Name: "Load balancer"}
+	resp, err := cs.Get(sgQuery); err != nil {
 		...
 	}
-	// The SecurityGroup struct has been loaded with the SecurityGroup informations
+	sg := resp.(*egoscale.SecurityGroup)
 
 	if err := cs.Delete(sg); err != nil {
 		...
 	}
 	// The SecurityGroup has been deleted
 
-See: http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/stable/networking_and_traffic.html#security-groups
+See: https://community.exoscale.com/documentation/compute/security-groups/
 
 Zones
 
-A Zone corresponds to a Data Center. You may list them. Zone implements the Listable interface, which let you perform a list in two different ways. The first exposes the underlying CloudStack request while the second one hide them and you only manipulate the structs of your interest.
+A Zone corresponds to a Data Center. You may list them. Zone implements the Listable interface, which let you perform a list in two different ways. The first exposes the underlying request while the second one hide them and you only manipulate the structs of your interest.
 
 	// Using ListZones request
 	req := &egoscale.ListZones{}
@@ -171,7 +174,7 @@ Elastic IPs
 
 An Elastic IP is a way to attach an IP address to many Virtual Machines. The API side of the story configures the external environment, like the routing. Some work is required within the machine to properly configure the interfaces.
 
-See: http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/latest/networking_and_traffic.html#about-elastic-ips
+See: https://community.exoscale.com/documentation/compute/eip/
 
 */
 package egoscale
