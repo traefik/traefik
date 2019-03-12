@@ -92,19 +92,24 @@ func TestDo_globalConfiguration(t *testing.T) {
 		},
 	}
 	config.ACME = &acme.Configuration{
-		Email: "acme Email",
+		Email:        "acme Email",
+		ACMELogging:  true,
+		CAServer:     "CAServer",
+		Storage:      "Storage",
+		EntryPoint:   "EntryPoint",
+		KeyType:      "MyKeyType",
+		OnHostRule:   true,
+		DNSChallenge: &acmeprovider.DNSChallenge{Provider: "DNSProvider"},
+		HTTPChallenge: &acmeprovider.HTTPChallenge{
+			EntryPoint: "MyEntryPoint",
+		},
+		TLSChallenge: &acmeprovider.TLSChallenge{},
 		Domains: []types.Domain{
 			{
 				Main: "Domains Main",
 				SANs: []string{"Domains acme SANs 1", "Domains acme SANs 2", "Domains acme SANs 3"},
 			},
 		},
-		Storage:      "Storage",
-		OnHostRule:   true,
-		CAServer:     "CAServer",
-		EntryPoint:   "EntryPoint",
-		DNSChallenge: &acmeprovider.DNSChallenge{Provider: "DNSProvider"},
-		ACMELogging:  true,
 	}
 	config.Providers = &static.Providers{
 		ProvidersThrottleDuration: parse.Duration(111 * time.Second),
