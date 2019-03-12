@@ -25,6 +25,23 @@ type NetworkOffering struct {
 	TrafficType              string            `json:"traffictype,omitempty" doc:"the traffic type for the network offering, supported types are Public, Management, Control, Guest, Vlan or Storage."`
 }
 
+// ListRequest builds the ListNetworkOfferings request
+//
+// This doesn't take into account the IsDefault flag as the default value is true.
+func (no NetworkOffering) ListRequest() (ListCommand, error) {
+	req := &ListNetworkOfferings{
+		Availability: no.Availability,
+		ID:           no.ID,
+		Name:         no.Name,
+		State:        no.State,
+		TrafficType:  no.TrafficType,
+	}
+
+	return req, nil
+}
+
+//go:generate go run generate/main.go -interface=Listable ListNetworkOfferings
+
 // ListNetworkOfferings represents a query for network offerings
 type ListNetworkOfferings struct {
 	Availability       string    `json:"availability,omitempty" doc:"the availability of network offering. Default value is Required"`
@@ -55,10 +72,6 @@ type ListNetworkOfferingsResponse struct {
 	NetworkOffering []NetworkOffering `json:"networkoffering"`
 }
 
-func (ListNetworkOfferings) response() interface{} {
-	return new(ListNetworkOfferingsResponse)
-}
-
 // UpdateNetworkOffering represents a modification of a network offering
 type UpdateNetworkOffering struct {
 	Availability     string `json:"availability,omitempty" doc:"the availability of network offering. Default value is Required for Guest Virtual network offering; Optional for Guest Direct network offering"`
@@ -72,6 +85,7 @@ type UpdateNetworkOffering struct {
 	_                bool   `name:"updateNetworkOffering" description:"Updates a network offering."`
 }
 
-func (UpdateNetworkOffering) response() interface{} {
+// Response returns the struct to unmarshal
+func (UpdateNetworkOffering) Response() interface{} {
 	return new(NetworkOffering)
 }

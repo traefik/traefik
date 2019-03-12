@@ -118,7 +118,7 @@ func GetIsLocked(c gotransip.Client, domainName string) (bool, error) {
 }
 
 // Register registers a domain name and will automatically create and sign a proposition for it
-func Register(c gotransip.Client, domain string) error {
+func Register(c gotransip.Client, domain Domain) error {
 	sr := gotransip.SoapRequest{
 		Service: serviceName,
 		Method:  "register",

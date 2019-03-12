@@ -33,9 +33,9 @@ import (
 	traefiktls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/whitelist"
+	"github.com/go-acme/lego/challenge/tlsalpn01"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
-	"github.com/xenolf/lego/challenge/tlsalpn01"
 )
 
 var httpServerLogger = stdlog.New(log.WriterLevel(logrus.DebugLevel), "", 0)

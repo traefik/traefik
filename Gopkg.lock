@@ -563,8 +563,8 @@
 [[projects]]
   name = "github.com/exoscale/egoscale"
   packages = ["."]
-  revision = "d8dfca6802ad5c1a5300e52fa68067e791322035"
-  version = "v0.11.4"
+  revision = "0a91ac8209d6a805f259ff881d0c2654221d0346"
+  version = "v0.14.3"
 
 [[projects]]
   name = "github.com/fatih/color"
@@ -592,6 +592,92 @@
   name = "github.com/ghodss/yaml"
   packages = ["."]
   revision = "73d445a93680fa1a78ae23a5839bad48f32ba1ee"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/go-acme/lego"
+  packages = [
+    "acme",
+    "acme/api",
+    "acme/api/internal/nonces",
+    "acme/api/internal/secure",
+    "acme/api/internal/sender",
+    "certcrypto",
+    "certificate",
+    "challenge",
+    "challenge/dns01",
+    "challenge/http01",
+    "challenge/resolver",
+    "challenge/tlsalpn01",
+    "lego",
+    "log",
+    "platform/config/env",
+    "platform/wait",
+    "providers/dns",
+    "providers/dns/acmedns",
+    "providers/dns/alidns",
+    "providers/dns/auroradns",
+    "providers/dns/azure",
+    "providers/dns/bluecat",
+    "providers/dns/cloudflare",
+    "providers/dns/cloudns",
+    "providers/dns/cloudns/internal",
+    "providers/dns/cloudxns",
+    "providers/dns/cloudxns/internal",
+    "providers/dns/conoha",
+    "providers/dns/conoha/internal",
+    "providers/dns/designate",
+    "providers/dns/digitalocean",
+    "providers/dns/dnsimple",
+    "providers/dns/dnsmadeeasy",
+    "providers/dns/dnsmadeeasy/internal",
+    "providers/dns/dnspod",
+    "providers/dns/dreamhost",
+    "providers/dns/duckdns",
+    "providers/dns/dyn",
+    "providers/dns/exec",
+    "providers/dns/exoscale",
+    "providers/dns/fastdns",
+    "providers/dns/gandi",
+    "providers/dns/gandiv5",
+    "providers/dns/gcloud",
+    "providers/dns/glesys",
+    "providers/dns/godaddy",
+    "providers/dns/hostingde",
+    "providers/dns/httpreq",
+    "providers/dns/iij",
+    "providers/dns/inwx",
+    "providers/dns/lightsail",
+    "providers/dns/linode",
+    "providers/dns/linodev4",
+    "providers/dns/mydnsjp",
+    "providers/dns/namecheap",
+    "providers/dns/namedotcom",
+    "providers/dns/netcup",
+    "providers/dns/netcup/internal",
+    "providers/dns/nifcloud",
+    "providers/dns/nifcloud/internal",
+    "providers/dns/ns1",
+    "providers/dns/oraclecloud",
+    "providers/dns/otc",
+    "providers/dns/ovh",
+    "providers/dns/pdns",
+    "providers/dns/rackspace",
+    "providers/dns/rfc2136",
+    "providers/dns/route53",
+    "providers/dns/sakuracloud",
+    "providers/dns/selectel",
+    "providers/dns/selectel/internal",
+    "providers/dns/stackpath",
+    "providers/dns/transip",
+    "providers/dns/vegadns",
+    "providers/dns/vscale",
+    "providers/dns/vscale/internal",
+    "providers/dns/vultr",
+    "providers/dns/zoneee",
+    "registration"
+  ]
+  revision = "11ddd58253974c38f1b84cca1129da48cb82dff7"
 
 [[projects]]
   branch = "fork-containous"
@@ -1113,6 +1199,15 @@
   revision = "1f5c07e90700ae93ddcba0c7af7d9c7201646ccc"
 
 [[projects]]
+  name = "github.com/oracle/oci-go-sdk"
+  packages = [
+    "common",
+    "dns"
+  ]
+  revision = "5295b14d42d1417490d318ff91475c5868e0fd8f"
+  version = "v4.1.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/ovh/go-ovh"
   packages = ["ovh"]
@@ -1300,8 +1395,8 @@
     "domain",
     "util"
   ]
-  revision = "1dc93a7db3567a5ccf865106afac88278ba940cf"
-  version = "v5.8.1"
+  revision = "c6e2ce0bbb4a601a909e3b7a773358d6b503e663"
+  version = "v5.8.2"
 
 [[projects]]
   name = "github.com/tv42/zbase32"
@@ -1403,89 +1498,6 @@
   name = "github.com/xeipuuv/gojsonschema"
   packages = ["."]
   revision = "0c8571ac0ce161a5feb57375a9cdf148c98c0f70"
-
-[[projects]]
-  name = "github.com/xenolf/lego"
-  packages = [
-    "acme",
-    "acme/api",
-    "acme/api/internal/nonces",
-    "acme/api/internal/secure",
-    "acme/api/internal/sender",
-    "certcrypto",
-    "certificate",
-    "challenge",
-    "challenge/dns01",
-    "challenge/http01",
-    "challenge/resolver",
-    "challenge/tlsalpn01",
-    "lego",
-    "log",
-    "platform/config/env",
-    "platform/wait",
-    "providers/dns",
-    "providers/dns/acmedns",
-    "providers/dns/alidns",
-    "providers/dns/auroradns",
-    "providers/dns/azure",
-    "providers/dns/bluecat",
-    "providers/dns/cloudflare",
-    "providers/dns/cloudxns",
-    "providers/dns/cloudxns/internal",
-    "providers/dns/conoha",
-    "providers/dns/conoha/internal",
-    "providers/dns/designate",
-    "providers/dns/digitalocean",
-    "providers/dns/dnsimple",
-    "providers/dns/dnsmadeeasy",
-    "providers/dns/dnsmadeeasy/internal",
-    "providers/dns/dnspod",
-    "providers/dns/dreamhost",
-    "providers/dns/duckdns",
-    "providers/dns/dyn",
-    "providers/dns/exec",
-    "providers/dns/exoscale",
-    "providers/dns/fastdns",
-    "providers/dns/gandi",
-    "providers/dns/gandiv5",
-    "providers/dns/gcloud",
-    "providers/dns/glesys",
-    "providers/dns/godaddy",
-    "providers/dns/hostingde",
-    "providers/dns/httpreq",
-    "providers/dns/iij",
-    "providers/dns/inwx",
-    "providers/dns/lightsail",
-    "providers/dns/linode",
-    "providers/dns/linodev4",
-    "providers/dns/mydnsjp",
-    "providers/dns/namecheap",
-    "providers/dns/namedotcom",
-    "providers/dns/netcup",
-    "providers/dns/netcup/internal",
-    "providers/dns/nifcloud",
-    "providers/dns/nifcloud/internal",
-    "providers/dns/ns1",
-    "providers/dns/otc",
-    "providers/dns/ovh",
-    "providers/dns/pdns",
-    "providers/dns/rackspace",
-    "providers/dns/rfc2136",
-    "providers/dns/route53",
-    "providers/dns/sakuracloud",
-    "providers/dns/selectel",
-    "providers/dns/selectel/internal",
-    "providers/dns/stackpath",
-    "providers/dns/transip",
-    "providers/dns/vegadns",
-    "providers/dns/vscale",
-    "providers/dns/vscale/internal",
-    "providers/dns/vultr",
-    "providers/dns/zoneee",
-    "registration"
-  ]
-  revision = "52e43eb318b07ace590c2144804292c89aa74802"
-  version = "v2.2.0"
 
 [[projects]]
   branch = "master"
@@ -1904,6 +1916,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8e2d1952c8e853cc6514e5962809e746f0f20eda9dce49e5f17a1d35544fc79e"
+  inputs-digest = "f63ec47121609bae0d1fb226078acda9556528924ca9ec03aea716d42036f6aa"
   solver-name = "gps-cdcl"
   solver-version = 1
