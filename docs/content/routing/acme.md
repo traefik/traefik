@@ -175,7 +175,7 @@ Use the `DNS-01` challenge to generate and renew ACME certificates by provisioni
     | [VULTR](https://www.vultr.com)                              | `vultr`        | `VULTR_API_KEY`                                                                                                                           | Not tested yet                 |
     | [Zone.ee](https://www.zone.ee)                              | `zoneee`       | `ZONEEE_API_USER`, `ZONEEE_API_KEY`                                                                                                       | YES                            |
         
-    - (1): more information about the HTTP message format can be found [here](https://xenolf.github.io/lego/dns/httpreq/)
+    - (1): more information about the HTTP message format can be found [here](https://go-acme.github.io/lego/dns/httpreq/)
     - (2): https://cloud.google.com/docs/authentication/production#providing_credentials_to_your_application
     - (3): https://github.com/golang/oauth2/blob/36a7019397c4c86cf59eeab3bc0d188bac444277/google/default.go#L61-L76
 
@@ -247,7 +247,7 @@ Thus, the wildcard domain has to be defined as a main domain.
 Most likely the root domain should receive a certificate too, so it needs to be specified as SAN and 2 `DNS-01` challenges are executed.
 In this case the generated DNS TXT record for both domains is the same.
 Even though this behavior is [DNS RFC](https://community.letsencrypt.org/t/wildcard-issuance-two-txt-records-for-the-same-name/54528/2) compliant, it can lead to problems as all DNS providers keep DNS records cached for a given time (TTL) and this TTL can be greater than the challenge timeout making the `DNS-01` challenge fail.
-The Traefik ACME client library [LEGO](https://github.com/xenolf/lego) supports some but not all DNS providers to work around this issue.
+The Traefik ACME client library [LEGO](https://github.com/go-acme/lego) supports some but not all DNS providers to work around this issue.
 The [Supported `provider` table](#dnschallenge) indicates if they allow generating certificates for a wildcard domain and its root domain.
 
 ### caServer
