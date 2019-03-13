@@ -38,6 +38,9 @@ Attach labels to your containers and let Traefik do the rest!
     
     ```toml
     [docker]
+    # swarm classic (1.12-)
+    # endpoint = "tcp://127.0.0.1:2375"
+    # docker swarm mode (1.12+)
     endpoint = "tcp://127.0.0.1:2377"
     swarmMode = true
     ```
