@@ -54,6 +54,23 @@ type TCPLoadBalancerService struct {
 }
 
 // Mergeable tells if the given service is mergeable.
+func (l *TCPLoadBalancerService) Mergeable(loadBalancer *TCPLoadBalancerService) bool {
+	savedServers := l.Servers
+	defer func() {
+		l.Servers = savedServers
+	}()
+	l.Servers = nil
+
+	savedServersLB := loadBalancer.Servers
+	defer func() {
+		loadBalancer.Servers = savedServersLB
+	}()
+	loadBalancer.Servers = nil
+
+	return reflect.DeepEqual(l, loadBalancer)
+}
+
+// Mergeable tells if the given service is mergeable.
 func (l *LoadBalancerService) Mergeable(loadBalancer *LoadBalancerService) bool {
 	savedServers := l.Servers
 	defer func() {
@@ -68,6 +85,11 @@ func (l *LoadBalancerService) Mergeable(loadBalancer *LoadBalancerService) bool 
 	loadBalancer.Servers = nil
 
 	return reflect.DeepEqual(l, loadBalancer)
+}
+
+// SetDefaults Default values for a LoadBalancerService.
+func (l *TCPLoadBalancerService) SetDefaults() {
+	l.Method = "wrr"
 }
 
 // SetDefaults Default values for a LoadBalancerService.
@@ -97,7 +119,13 @@ type Server struct {
 // TCPServer holds a TCP Server configuration
 type TCPServer struct {
 	Address string `json:"address" label:"-"`
+	Port    string `toml:"-" json:"-"`
 	Weight  int    `json:"weight"`
+}
+
+// SetDefaults Default values for a Server.
+func (s *TCPServer) SetDefaults() {
+	s.Weight = 1
 }
 
 // SetDefaults Default values for a Server.
