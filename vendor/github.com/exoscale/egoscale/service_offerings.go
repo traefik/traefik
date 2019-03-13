@@ -1,9 +1,5 @@
 package egoscale
 
-import (
-	"fmt"
-)
-
 // ServiceOffering corresponds to the Compute Offerings
 //
 // A service offering correspond to some hardware features (CPU, RAM).
@@ -21,11 +17,9 @@ type ServiceOffering struct {
 	DiskIopsReadRate          int64             `json:"diskIopsReadRate,omitempty" doc:"io requests read rate of the service offering"`
 	DiskIopsWriteRate         int64             `json:"diskIopsWriteRate,omitempty" doc:"io requests write rate of the service offering"`
 	Displaytext               string            `json:"displaytext,omitempty" doc:"an alternate display text of the service offering."`
-	Domain                    string            `json:"domain,omitempty" doc:"Domain name for the offering"`
-	DomainID                  *UUID             `json:"domainid,omitempty" doc:"the domain id of the service offering"`
 	HostTags                  string            `json:"hosttags,omitempty" doc:"the host tag for the service offering"`
 	HypervisorSnapshotReserve int               `json:"hypervisorsnapshotreserve,omitempty" doc:"Hypervisor snapshot reserve space as a percent of a volume (for managed storage using Xen or VMware)"`
-	ID                        *UUID             `json:"id,omitempty" doc:"the id of the service offering"`
+	ID                        *UUID             `json:"id" doc:"the id of the service offering"`
 	IsCustomized              bool              `json:"iscustomized,omitempty" doc:"is true if the offering is customized"`
 	IsCustomizedIops          bool              `json:"iscustomizediops,omitempty" doc:"true if disk offering uses custom iops, false otherwise"`
 	IsSystem                  bool              `json:"issystem,omitempty" doc:"is this a system vm offering"`
@@ -49,7 +43,6 @@ func (so ServiceOffering) ListRequest() (ListCommand, error) {
 	// Restricted cannot be applied here because it really has three states
 	req := &ListServiceOfferings{
 		ID:           so.ID,
-		DomainID:     so.DomainID,
 		Name:         so.Name,
 		SystemVMType: so.SystemVMType,
 	}
@@ -61,9 +54,10 @@ func (so ServiceOffering) ListRequest() (ListCommand, error) {
 	return req, nil
 }
 
+//go:generate go run generate/main.go -interface=Listable ListServiceOfferings
+
 // ListServiceOfferings represents a query for service offerings
 type ListServiceOfferings struct {
-	DomainID         *UUID  `json:"domainid,omitempty" doc:"the ID of the domain associated with the service offering"`
 	ID               *UUID  `json:"id,omitempty" doc:"ID of the service offering"`
 	IsSystem         *bool  `json:"issystem,omitempty" doc:"is this a system vm offering"`
 	Keyword          string `json:"keyword,omitempty" doc:"List by keyword"`
@@ -80,32 +74,4 @@ type ListServiceOfferings struct {
 type ListServiceOfferingsResponse struct {
 	Count           int               `json:"count"`
 	ServiceOffering []ServiceOffering `json:"serviceoffering"`
-}
-
-func (ListServiceOfferings) response() interface{} {
-	return new(ListServiceOfferingsResponse)
-}
-
-// SetPage sets the current page
-func (lso *ListServiceOfferings) SetPage(page int) {
-	lso.Page = page
-}
-
-// SetPageSize sets the page size
-func (lso *ListServiceOfferings) SetPageSize(pageSize int) {
-	lso.PageSize = pageSize
-}
-
-func (ListServiceOfferings) each(resp interface{}, callback IterateItemFunc) {
-	sos, ok := resp.(*ListServiceOfferingsResponse)
-	if !ok {
-		callback(nil, fmt.Errorf("wrong type. ListServiceOfferingsResponse expected, got %T", resp))
-		return
-	}
-
-	for i := range sos.ServiceOffering {
-		if !callback(&sos.ServiceOffering[i], nil) {
-			break
-		}
-	}
 }
