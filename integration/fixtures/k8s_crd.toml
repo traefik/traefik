@@ -1,0 +1,11 @@
+[global]
+debug=true
+
+[entryPoints]
+  [entryPoints.web]
+     address = ":8000"
+
+[api]
+
+[Providers]
+   [Providers.KubernetesCRD]

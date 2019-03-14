@@ -1,0 +1,22 @@
+kind: Ingress
+apiVersion: extensions/v1beta1
+metadata:
+  name: ""
+  namespace: testing
+
+spec:
+  rules:
+  - host: traefik.tchouk
+    http:
+      paths:
+      - path: /bar
+        backend:
+          serviceName: service1
+          servicePort: 80
+  - host: traefik.courgette
+    http:
+      paths:
+      - path: /carotte
+        backend:
+          serviceName: service2
+          servicePort: 8082

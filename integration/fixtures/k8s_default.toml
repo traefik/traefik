@@ -2,7 +2,7 @@
 debug=true
 
 [entryPoints]
-  [entryPoints.http]
+  [entryPoints.web]
      address = ":8000"
 
 [api]

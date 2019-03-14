@@ -113,6 +113,9 @@ generate-webui: build-webui
 		echo 'For more informations show `webui/readme.md`' > $$PWD/static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md; \
 	fi
 
+generate-crd:
+	./script/update-generated-crd-code.sh
+
 lint:
 	script/validate-lint
 

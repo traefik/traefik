@@ -21,7 +21,6 @@ import (
 	"github.com/containous/traefik/old/provider/ecs"
 	"github.com/containous/traefik/old/provider/etcd"
 	"github.com/containous/traefik/old/provider/eureka"
-	"github.com/containous/traefik/old/provider/kubernetes"
 	"github.com/containous/traefik/old/provider/mesos"
 	"github.com/containous/traefik/old/provider/rancher"
 	"github.com/containous/traefik/old/provider/rest"
@@ -31,6 +30,7 @@ import (
 	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/provider/docker"
 	"github.com/containous/traefik/provider/file"
+	"github.com/containous/traefik/provider/kubernetes/ingress"
 	newtypes "github.com/containous/traefik/types"
 	"github.com/go-acme/lego/challenge/dns01"
 	"github.com/pkg/errors"
@@ -92,7 +92,7 @@ type GlobalConfiguration struct {
 	Etcd                      *etcd.Provider          `description:"Enable Etcd backend with default settings" export:"true"`
 	Zookeeper                 *zk.Provider            `description:"Enable Zookeeper backend with default settings" export:"true"`
 	Boltdb                    *boltdb.Provider        `description:"Enable Boltdb backend with default settings" export:"true"`
-	Kubernetes                *kubernetes.Provider    `description:"Enable Kubernetes backend with default settings" export:"true"`
+	Kubernetes                *ingress.Provider       `description:"Enable Kubernetes backend with default settings" export:"true"`
 	Mesos                     *mesos.Provider         `description:"Enable Mesos backend with default settings" export:"true"`
 	Eureka                    *eureka.Provider        `description:"Enable Eureka backend with default settings" export:"true"`
 	ECS                       *ecs.Provider           `description:"Enable ECS backend with default settings" export:"true"`

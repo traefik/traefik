@@ -1,0 +1,24 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: service1
+  namespace: testing
+
+spec:
+  ports:
+    - name: tchouk
+      port: 80
+  clusterIp: 10.0.0.1
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: service1
+  namespace: toto
+
+spec:
+  ports:
+    - name: tchouk
+      port: 80
+  clusterIp: 10.0.0.1

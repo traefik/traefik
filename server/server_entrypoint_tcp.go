@@ -312,7 +312,7 @@ func (c *connectionTracker) Close() {
 		if err := conn.Close(); err != nil {
 			log.WithoutContext().Errorf("Error while closing connection: %v", err)
 		}
-		delete(c.conns, conn)
+		c.RemoveConnection(conn)
 	}
 }
 
