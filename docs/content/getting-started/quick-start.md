@@ -7,7 +7,6 @@ A Simple Use Case Using Docker
 
 !!! tip 
     To save some time, you can clone [Traefik's repository](https://github.com/containous/traefik).
-    The quickstart files are located in the [examples/quickstart](https://github.com/containous/traefik/tree/master/examples/quickstart/) directory.
 
 ## Launch Traefik With the Docker Provider
 
