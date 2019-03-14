@@ -59,8 +59,8 @@ test-integration: build ## run the integration tests
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate binary test-integration
 	TEST_HOST=1 ./script/make.sh test-integration
 
-validate: build  ## validate code, vendor and autogen
-	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate validate-lint validate-misspell validate-vendor validate-autogen
+validate: build  ## validate code, vendor
+	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate validate-lint validate-misspell validate-vendor
 
 build: dist
 	docker build $(DOCKER_BUILD_ARGS) -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .

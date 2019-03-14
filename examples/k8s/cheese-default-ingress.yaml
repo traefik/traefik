@@ -1,8 +1,0 @@
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: cheese-default
-spec:
-  backend:
-    serviceName: stilton
-    servicePort: 80
