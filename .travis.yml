@@ -12,7 +12,6 @@ env:
     - REPO: $TRAVIS_REPO_SLUG
     - VERSION: $TRAVIS_TAG
     - CODENAME: maroilles
-    - N_MAKE_JOBS: 2
 
 script:
 - echo "Skipping tests... (Tests are executed on SemaphoreCI)"
@@ -27,12 +26,12 @@ before_deploy:
       docker version;
       make image;
       if [ "$TRAVIS_TAG" ]; then
-        make -j${N_MAKE_JOBS} crossbinary-parallel;
-        tar cfz dist/traefik-${VERSION}.src.tar.gz --exclude-vcs --exclude dist .;
+        make release-packages;
       fi;
-      curl -sfL https://raw.githubusercontent.com/containous/structor/master/godownloader.sh | bash -s -- -b "${GOPATH}/bin" v1.4.0
+      curl -sfL https://raw.githubusercontent.com/containous/structor/master/godownloader.sh | bash -s -- -b "${GOPATH}/bin" v1.6.0
       structor -o containous -r traefik --dockerfile-url="https://raw.githubusercontent.com/containous/traefik/v1.7/docs.Dockerfile" --menu.js-url="https://raw.githubusercontent.com/containous/structor/master/traefik-menu.js.gotmpl" --rqts-url="https://raw.githubusercontent.com/containous/structor/master/requirements-override.txt" --exp-branch=master --debug;
     fi
+
 deploy:
   - provider: releases
     api_key: ${GITHUB_TOKEN}
