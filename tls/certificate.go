@@ -139,7 +139,7 @@ func (c *Certificates) isEmpty() bool {
 	return key == len(*c)
 }
 
-// Returns a list of domains for the certificate, let configuration override
+// GetDomainsFromCertificate returns a list of domains for the certificate, let configuration override
 func (c *Certificate) GetDomainsFromCertificate(asn1Data []byte) []string {
 	if c.Domains != nil {
 		return c.Domains
