@@ -13,7 +13,8 @@ import (
 	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/provider/docker"
 	"github.com/containous/traefik/provider/file"
-	"github.com/containous/traefik/provider/kubernetes"
+	"github.com/containous/traefik/provider/kubernetes/crd"
+	"github.com/containous/traefik/provider/kubernetes/ingress"
 	traefiktls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/tracing/datadog"
 	"github.com/containous/traefik/tracing/instana"
@@ -192,7 +193,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 		SwarmModeRefreshSeconds: 42,
 	}
 
-	config.Providers.Kubernetes = &kubernetes.Provider{
+	config.Providers.Kubernetes = &ingress.Provider{
 		BaseProvider: provider.BaseProvider{
 			Watch:    true,
 			Filename: "myFileName",
@@ -219,11 +220,35 @@ func TestDo_globalConfiguration(t *testing.T) {
 		Namespaces:             []string{"a", "b"},
 		LabelSelector:          "myLabelSelector",
 		IngressClass:           "MyIngressClass",
-		IngressEndpoint: &kubernetes.IngressEndpoint{
-			IP:               "MyIp",
-			Hostname:         "MyHostname",
-			PublishedService: "MyPublishedService",
+	}
+
+	config.Providers.KubernetesCRD = &crd.Provider{
+		BaseProvider: provider.BaseProvider{
+			Watch:    true,
+			Filename: "myFileName",
+			Constraints: types.Constraints{
+				{
+					Key:       "k8s Constraints Key 1",
+					Regex:     "k8s Constraints Regex 2",
+					MustMatch: true,
+				},
+				{
+					Key:       "k8s Constraints Key 1",
+					Regex:     "k8s Constraints Regex 2",
+					MustMatch: true,
+				},
+			},
+			Trace:                     true,
+			DebugLogGeneratedTemplate: true,
 		},
+		Endpoint:               "MyEndpoint",
+		Token:                  "MyToken",
+		CertAuthFilePath:       "MyCertAuthPath",
+		DisablePassHostHeaders: true,
+		EnablePassTLSCert:      true,
+		Namespaces:             []string{"a", "b"},
+		LabelSelector:          "myLabelSelector",
+		IngressClass:           "MyIngressClass",
 	}
 
 	// FIXME Test the other providers once they are migrated
