@@ -9,8 +9,8 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
+	"github.com/go-acme/lego/challenge/tlsalpn01"
 	"github.com/sirupsen/logrus"
-	"github.com/xenolf/lego/challenge/tlsalpn01"
 )
 
 // Manager is the TLS option/store/configuration factory

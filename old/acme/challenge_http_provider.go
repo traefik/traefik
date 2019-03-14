@@ -9,7 +9,7 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/old/cluster"
 	"github.com/containous/traefik/safe"
-	"github.com/xenolf/lego/challenge"
+	"github.com/go-acme/lego/challenge"
 )
 
 var _ challenge.ProviderTimeout = (*challengeHTTPProvider)(nil)

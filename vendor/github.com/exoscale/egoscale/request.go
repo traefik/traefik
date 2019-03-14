@@ -24,7 +24,7 @@ func (e ErrorResponse) Error() string {
 }
 
 // Error formats a CloudStack job response into a standard error
-func (e booleanResponse) Error() error {
+func (e BooleanResponse) Error() error {
 	if !e.Success {
 		return fmt.Errorf("API error: %s", e.DisplayText)
 	}
@@ -32,11 +32,17 @@ func (e booleanResponse) Error() error {
 	return nil
 }
 
-// XXX: addIpToNic, activateIp6, restorevmresponse are kind of special
-var responseKeys = map[string]string{
-	"addiptonicresponse":            "addiptovmnicresponse",
-	"activateip6response":           "activateip6nicresponse",
-	"restorevirtualmachineresponse": "restorevmresponse",
+func responseKey(key string) (string, bool) {
+	// XXX: addIpToNic, activateIp6, restorevmresponse are kind of special
+	var responseKeys = map[string]string{
+		"addiptonicresponse":            "addiptovmnicresponse",
+		"activateip6response":           "activateip6nicresponse",
+		"restorevirtualmachineresponse": "restorevmresponse",
+		"updatevmaffinitygroupresponse": "updatevirtualmachineresponse",
+	}
+
+	k, ok := responseKeys[key]
+	return k, ok
 }
 
 func (client *Client) parseResponse(resp *http.Response, apiName string) (json.RawMessage, error) {
@@ -59,7 +65,7 @@ func (client *Client) parseResponse(resp *http.Response, apiName string) (json.R
 
 		if !ok {
 			// try again with the special keys
-			value, ok := responseKeys[key]
+			value, ok := responseKey(key)
 			if ok {
 				key = value
 			}
@@ -67,9 +73,7 @@ func (client *Client) parseResponse(resp *http.Response, apiName string) (json.R
 			response, ok = m[key]
 
 			if !ok {
-				for k := range m {
-					return nil, fmt.Errorf("malformed JSON response, %q was expected, got %q", key, k)
-				}
+				return nil, fmt.Errorf("malformed JSON response %d, %q was expected.\n%s", resp.StatusCode, key, b)
 			}
 		}
 	}
@@ -110,7 +114,7 @@ func (client *Client) parseResponse(resp *http.Response, apiName string) (json.R
 func (client *Client) asyncRequest(ctx context.Context, asyncCommand AsyncCommand) (interface{}, error) {
 	var err error
 
-	resp := asyncCommand.asyncResponse()
+	resp := asyncCommand.AsyncResponse()
 	client.AsyncRequestWithContext(
 		ctx,
 		asyncCommand,
@@ -138,8 +142,8 @@ func (client *Client) SyncRequestWithContext(ctx context.Context, command Comman
 		return nil, err
 	}
 
-	response := command.response()
-	b, ok := response.(*booleanResponse)
+	response := command.Response()
+	b, ok := response.(*BooleanResponse)
 	if ok {
 		m := make(map[string]interface{})
 		if errUnmarshal := json.Unmarshal(body, &m); errUnmarshal != nil {
@@ -177,7 +181,7 @@ func (client *Client) BooleanRequest(command Command) error {
 		return err
 	}
 
-	if b, ok := resp.(*booleanResponse); ok {
+	if b, ok := resp.(*BooleanResponse); ok {
 		return b.Error()
 	}
 
@@ -191,7 +195,7 @@ func (client *Client) BooleanRequestWithContext(ctx context.Context, command Com
 		return err
 	}
 
-	if b, ok := resp.(*booleanResponse); ok {
+	if b, ok := resp.(*BooleanResponse); ok {
 		return b.Error()
 	}
 
@@ -208,9 +212,9 @@ func (client *Client) Request(command Command) (interface{}, error) {
 
 // RequestWithContext preforms a command with a context
 func (client *Client) RequestWithContext(ctx context.Context, command Command) (interface{}, error) {
-	switch command.(type) {
+	switch c := command.(type) {
 	case AsyncCommand:
-		return client.asyncRequest(ctx, command.(AsyncCommand))
+		return client.asyncRequest(ctx, c)
 	default:
 		return client.SyncRequestWithContext(ctx, command)
 	}
@@ -277,10 +281,9 @@ func (client *Client) AsyncRequestWithContext(ctx context.Context, asyncCommand 
 
 // Payload builds the HTTP request params from the given command
 func (client *Client) Payload(command Command) (url.Values, error) {
-	params := url.Values{}
-	err := prepareValues("", params, command)
+	params, err := prepareValues("", command)
 	if err != nil {
-		return params, err
+		return nil, err
 	}
 	if hookReq, ok := command.(onBeforeHook); ok {
 		if err := hookReq.onBeforeSend(params); err != nil {
@@ -290,6 +293,11 @@ func (client *Client) Payload(command Command) (url.Values, error) {
 	params.Set("apikey", client.APIKey)
 	params.Set("command", client.APIName(command))
 	params.Set("response", "json")
+
+	if params.Get("expires") == "" && client.Expiration >= 0 {
+		params.Set("signatureversion", "3")
+		params.Set("expires", time.Now().Add(client.Expiration).Local().Format("2006-01-02T15:04:05-0700"))
+	}
 
 	return params, nil
 }

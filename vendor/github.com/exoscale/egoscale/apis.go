@@ -3,7 +3,7 @@ package egoscale
 // API represents an API service
 type API struct {
 	Description string     `json:"description,omitempty" doc:"description of the api"`
-	IsAsync     bool       `json:"isasync,omitempty" doc:"true if api is asynchronous"`
+	IsAsync     bool       `json:"isasync" doc:"true if api is asynchronous"`
 	Name        string     `json:"name,omitempty" doc:"the name of the api command"`
 	Related     string     `json:"related,omitempty" doc:"comma separated related apis"`
 	Since       string     `json:"since,omitempty" doc:"version of CloudStack the api was introduced in"`
@@ -42,6 +42,7 @@ type ListAPIsResponse struct {
 	API   []API `json:"api"`
 }
 
-func (*ListAPIs) response() interface{} {
+// Response returns the struct to unmarshal
+func (*ListAPIs) Response() interface{} {
 	return new(ListAPIsResponse)
 }

@@ -1,6 +1,7 @@
 package egoscale
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -128,7 +129,7 @@ func (req *DNSErrorResponse) Error() string {
 }
 
 // CreateDomain creates a DNS domain
-func (client *Client) CreateDomain(name string) (*DNSDomain, error) {
+func (client *Client) CreateDomain(ctx context.Context, name string) (*DNSDomain, error) {
 	m, err := json.Marshal(DNSDomainResponse{
 		Domain: &DNSDomain{
 			Name: name,
@@ -138,7 +139,7 @@ func (client *Client) CreateDomain(name string) (*DNSDomain, error) {
 		return nil, err
 	}
 
-	resp, err := client.dnsRequest("/v1/domains", nil, string(m), "POST")
+	resp, err := client.dnsRequest(ctx, "/v1/domains", nil, string(m), "POST")
 	if err != nil {
 		return nil, err
 	}
@@ -152,8 +153,8 @@ func (client *Client) CreateDomain(name string) (*DNSDomain, error) {
 }
 
 // GetDomain gets a DNS domain
-func (client *Client) GetDomain(name string) (*DNSDomain, error) {
-	resp, err := client.dnsRequest("/v1/domains/"+name, nil, "", "GET")
+func (client *Client) GetDomain(ctx context.Context, name string) (*DNSDomain, error) {
+	resp, err := client.dnsRequest(ctx, "/v1/domains/"+name, nil, "", "GET")
 	if err != nil {
 		return nil, err
 	}
@@ -167,8 +168,8 @@ func (client *Client) GetDomain(name string) (*DNSDomain, error) {
 }
 
 // GetDomains gets DNS domains
-func (client *Client) GetDomains() ([]DNSDomain, error) {
-	resp, err := client.dnsRequest("/v1/domains", nil, "", "GET")
+func (client *Client) GetDomains(ctx context.Context) ([]DNSDomain, error) {
+	resp, err := client.dnsRequest(ctx, "/v1/domains", nil, "", "GET")
 	if err != nil {
 		return nil, err
 	}
@@ -186,15 +187,15 @@ func (client *Client) GetDomains() ([]DNSDomain, error) {
 }
 
 // DeleteDomain delets a DNS domain
-func (client *Client) DeleteDomain(name string) error {
-	_, err := client.dnsRequest("/v1/domains/"+name, nil, "", "DELETE")
+func (client *Client) DeleteDomain(ctx context.Context, name string) error {
+	_, err := client.dnsRequest(ctx, "/v1/domains/"+name, nil, "", "DELETE")
 	return err
 }
 
 // GetRecord returns a DNS record
-func (client *Client) GetRecord(domain string, recordID int64) (*DNSRecord, error) {
+func (client *Client) GetRecord(ctx context.Context, domain string, recordID int64) (*DNSRecord, error) {
 	id := strconv.FormatInt(recordID, 10)
-	resp, err := client.dnsRequest("/v1/domains/"+domain+"/records/"+id, nil, "", "GET")
+	resp, err := client.dnsRequest(ctx, "/v1/domains/"+domain+"/records/"+id, nil, "", "GET")
 	if err != nil {
 		return nil, err
 	}
@@ -208,8 +209,8 @@ func (client *Client) GetRecord(domain string, recordID int64) (*DNSRecord, erro
 }
 
 // GetRecords returns the DNS records
-func (client *Client) GetRecords(domain string) ([]DNSRecord, error) {
-	resp, err := client.dnsRequest("/v1/domains/"+domain+"/records", nil, "", "GET")
+func (client *Client) GetRecords(ctx context.Context, domain string) ([]DNSRecord, error) {
+	resp, err := client.dnsRequest(ctx, "/v1/domains/"+domain+"/records", nil, "", "GET")
 	if err != nil {
 		return nil, err
 	}
@@ -228,7 +229,7 @@ func (client *Client) GetRecords(domain string) ([]DNSRecord, error) {
 }
 
 // GetRecordsWithFilters returns the DNS records (filters can be empty)
-func (client *Client) GetRecordsWithFilters(domain, name, recordType string) ([]DNSRecord, error) {
+func (client *Client) GetRecordsWithFilters(ctx context.Context, domain, name, recordType string) ([]DNSRecord, error) {
 
 	filters := url.Values{}
 	if name != "" {
@@ -238,7 +239,7 @@ func (client *Client) GetRecordsWithFilters(domain, name, recordType string) ([]
 		filters.Add("record_type", recordType)
 	}
 
-	resp, err := client.dnsRequest("/v1/domains/"+domain+"/records", filters, "", "GET")
+	resp, err := client.dnsRequest(ctx, "/v1/domains/"+domain+"/records", filters, "", "GET")
 	if err != nil {
 		return nil, err
 	}
@@ -257,7 +258,7 @@ func (client *Client) GetRecordsWithFilters(domain, name, recordType string) ([]
 }
 
 // CreateRecord creates a DNS record
-func (client *Client) CreateRecord(name string, rec DNSRecord) (*DNSRecord, error) {
+func (client *Client) CreateRecord(ctx context.Context, name string, rec DNSRecord) (*DNSRecord, error) {
 	body, err := json.Marshal(DNSRecordResponse{
 		Record: rec,
 	})
@@ -265,7 +266,7 @@ func (client *Client) CreateRecord(name string, rec DNSRecord) (*DNSRecord, erro
 		return nil, err
 	}
 
-	resp, err := client.dnsRequest("/v1/domains/"+name+"/records", nil, string(body), "POST")
+	resp, err := client.dnsRequest(ctx, "/v1/domains/"+name+"/records", nil, string(body), "POST")
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +280,7 @@ func (client *Client) CreateRecord(name string, rec DNSRecord) (*DNSRecord, erro
 }
 
 // UpdateRecord updates a DNS record
-func (client *Client) UpdateRecord(name string, rec UpdateDNSRecord) (*DNSRecord, error) {
+func (client *Client) UpdateRecord(ctx context.Context, name string, rec UpdateDNSRecord) (*DNSRecord, error) {
 	body, err := json.Marshal(UpdateDNSRecordResponse{
 		Record: rec,
 	})
@@ -288,7 +289,7 @@ func (client *Client) UpdateRecord(name string, rec UpdateDNSRecord) (*DNSRecord
 	}
 
 	id := strconv.FormatInt(rec.ID, 10)
-	resp, err := client.dnsRequest("/v1/domains/"+name+"/records/"+id, nil, string(body), "PUT")
+	resp, err := client.dnsRequest(ctx, "/v1/domains/"+name+"/records/"+id, nil, string(body), "PUT")
 	if err != nil {
 		return nil, err
 	}
@@ -302,14 +303,14 @@ func (client *Client) UpdateRecord(name string, rec UpdateDNSRecord) (*DNSRecord
 }
 
 // DeleteRecord deletes a record
-func (client *Client) DeleteRecord(name string, recordID int64) error {
+func (client *Client) DeleteRecord(ctx context.Context, name string, recordID int64) error {
 	id := strconv.FormatInt(recordID, 10)
-	_, err := client.dnsRequest("/v1/domains/"+name+"/records/"+id, nil, "", "DELETE")
+	_, err := client.dnsRequest(ctx, "/v1/domains/"+name+"/records/"+id, nil, "", "DELETE")
 
 	return err
 }
 
-func (client *Client) dnsRequest(uri string, urlValues url.Values, params, method string) (json.RawMessage, error) {
+func (client *Client) dnsRequest(ctx context.Context, uri string, urlValues url.Values, params, method string) (json.RawMessage, error) {
 	rawURL := client.Endpoint + uri
 	url, err := url.Parse(rawURL)
 	if err != nil {
@@ -338,7 +339,7 @@ func (client *Client) dnsRequest(uri string, urlValues url.Values, params, metho
 	}
 	req.Header = hdr
 
-	resp, err := client.HTTPClient.Do(req)
+	resp, err := client.HTTPClient.Do(req.WithContext(ctx))
 	if err != nil {
 		return nil, err
 	}

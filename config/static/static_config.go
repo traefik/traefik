@@ -31,8 +31,8 @@ import (
 	"github.com/containous/traefik/tracing/zipkin"
 	"github.com/containous/traefik/types"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
+	"github.com/go-acme/lego/challenge/dns01"
 	jaegercli "github.com/uber/jaeger-client-go"
-	"github.com/xenolf/lego/challenge/dns01"
 )
 
 const (

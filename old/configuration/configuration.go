@@ -32,8 +32,8 @@ import (
 	"github.com/containous/traefik/provider/docker"
 	"github.com/containous/traefik/provider/file"
 	newtypes "github.com/containous/traefik/types"
+	"github.com/go-acme/lego/challenge/dns01"
 	"github.com/pkg/errors"
-	"github.com/xenolf/lego/challenge/dns01"
 )
 
 const (
