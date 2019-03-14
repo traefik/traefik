@@ -58,7 +58,7 @@ func Test_doOnJSON(t *testing.T) {
   "DNSProvider": "",
   "DelayDontCheckDNS": 0,
   "ACMELogging": false,
-  "TLSConfig": null
+  "TLSOptions": null
  },
  "DefaultEntryPoints": [
   "https",
@@ -141,7 +141,7 @@ func Test_doOnJSON(t *testing.T) {
   "DNSProvider": "",
   "DelayDontCheckDNS": 0,
   "ACMELogging": false,
-  "TLSConfig": null
+  "TLSOptions": null
  },
  "DefaultEntryPoints": [
   "https",

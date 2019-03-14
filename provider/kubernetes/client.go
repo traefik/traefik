@@ -16,6 +16,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 const resyncPeriod = 10 * time.Minute
@@ -78,6 +79,14 @@ func newInClusterClient(endpoint string) (*clientImpl, error) {
 	return createClientFromConfig(config)
 }
 
+func newExternalClusterClientFromFile(file string) (*clientImpl, error) {
+	configFromFlags, err := clientcmd.BuildConfigFromFlags("", file)
+	if err != nil {
+		return nil, err
+	}
+	return createClientFromConfig(configFromFlags)
+}
+
 // newExternalClusterClient returns a new Provider client that may run outside
 // of the cluster.
 // The endpoint parameter must not be empty.
@@ -99,7 +108,6 @@ func newExternalClusterClient(endpoint, token, caFilePath string) (*clientImpl, 
 
 		config.TLSClientConfig = rest.TLSClientConfig{CAData: caData}
 	}
-
 	return createClientFromConfig(config)
 }
 

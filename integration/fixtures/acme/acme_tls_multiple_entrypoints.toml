@@ -1,26 +1,26 @@
 [log]
 logLevel = "DEBUG"
 
+[entrypoints]
+  [entrypoints.web]
+    address = "{{ .PortHTTP }}"
 
-[entryPoints]
-  [entryPoints.http]
-  address = "{{ .PortHTTP }}"
-  [entryPoints.https]
-  address = "{{ .PortHTTPS }}"
-    [entryPoints.https.tls]
-  [entryPoints.traefik]
-  address = ":9000"
-    [entryPoints.traefik.tls]
-      [entryPoints.traefik.tls.DefaultCertificate]
-      certFile = "fixtures/acme/ssl/wildcard.crt"
-      keyFile = "fixtures/acme/ssl/wildcard.key"
+  [entrypoints.web-secure]
+    address = "{{ .PortHTTPS }}"
+
+  [entrypoints.traefik]
+    address = ":9000"
+#       FIXME
+#      [entrypoints.traefik.tls]
+#        [entrypoints.traefik.tls.DefaultCertificate]
+#        certFile = "fixtures/acme/ssl/wildcard.crt"
+#        keyFile = "fixtures/acme/ssl/wildcard.key"
 
 [acme]
   email = "test@traefik.io"
   storage = "/tmp/acme.json"
-  entryPoint = "https"
+#  entryPoint = "https"
   acmeLogging = true
-  onDemand = {{ .Acme.OnDemand }}
   onHostRule = {{ .Acme.OnHostRule }}
   keyType = "{{ .Acme.KeyType }}"
   caServer = "{{ .Acme.CAServer }}"

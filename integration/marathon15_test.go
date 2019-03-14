@@ -97,7 +97,7 @@ func (s *MarathonSuite15) TestConfigurationUpdate(c *check.C) {
 		CPU(0.1).
 		Memory(32).
 		EmptyNetworks().
-		AddLabel("traefik.Routers.rt.Rule", "PathPrefix(`/service`)")
+		AddLabel("traefik.http.Routers.rt.Rule", "PathPrefix(`/service`)")
 	app.Container.
 		Expose(80).
 		Docker.
@@ -117,7 +117,7 @@ func (s *MarathonSuite15) TestConfigurationUpdate(c *check.C) {
 		CPU(0.1).
 		Memory(32).
 		EmptyNetworks().
-		AddLabel("traefik.Routers.app.Rule", "PathPrefix(`/app`)")
+		AddLabel("traefik.http.Routers.app.Rule", "PathPrefix(`/app`)")
 	app.Container.
 		Expose(80).
 		Docker.

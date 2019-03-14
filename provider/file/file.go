@@ -205,13 +205,6 @@ func (p *Provider) loadFileConfig(filename string, parseTemplate bool) (*config.
 	}
 	configuration.TLS = tlsConfigs
 
-	if configuration == nil || configuration.Routers == nil && configuration.Middlewares == nil && configuration.Services == nil && configuration.TLS == nil {
-		configuration = &config.Configuration{
-			Routers:     make(map[string]*config.Router),
-			Middlewares: make(map[string]*config.Middleware),
-			Services:    make(map[string]*config.Service),
-		}
-	}
 	return configuration, nil
 }
 
@@ -226,9 +219,15 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 
 	if configuration == nil {
 		configuration = &config.Configuration{
-			Routers:     make(map[string]*config.Router),
-			Middlewares: make(map[string]*config.Middleware),
-			Services:    make(map[string]*config.Service),
+			HTTP: &config.HTTPConfiguration{
+				Routers:     make(map[string]*config.Router),
+				Middlewares: make(map[string]*config.Middleware),
+				Services:    make(map[string]*config.Service),
+			},
+			TCP: &config.TCPConfiguration{
+				Routers:  make(map[string]*config.TCPRouter),
+				Services: make(map[string]*config.TCPService),
+			},
 		}
 	}
 
@@ -252,33 +251,49 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 			return configuration, err
 		}
 
-		for name, conf := range c.Routers {
-			if _, exists := configuration.Routers[name]; exists {
-				logger.WithField(log.RouterName, name).Warn("Router already configured, skipping")
+		for name, conf := range c.HTTP.Routers {
+			if _, exists := configuration.HTTP.Routers[name]; exists {
+				logger.WithField(log.RouterName, name).Warn("HTTP router already configured, skipping")
 			} else {
-				configuration.Routers[name] = conf
+				configuration.HTTP.Routers[name] = conf
 			}
 		}
 
-		for name, conf := range c.Middlewares {
-			if _, exists := configuration.Middlewares[name]; exists {
-				logger.WithField(log.MiddlewareName, name).Warn("Middleware already configured, skipping")
+		for name, conf := range c.HTTP.Middlewares {
+			if _, exists := configuration.HTTP.Middlewares[name]; exists {
+				logger.WithField(log.MiddlewareName, name).Warn("HTTP middleware already configured, skipping")
 			} else {
-				configuration.Middlewares[name] = conf
+				configuration.HTTP.Middlewares[name] = conf
 			}
 		}
 
-		for name, conf := range c.Services {
-			if _, exists := configuration.Services[name]; exists {
-				logger.WithField(log.ServiceName, name).Warn("Service already configured, skipping")
+		for name, conf := range c.HTTP.Services {
+			if _, exists := configuration.HTTP.Services[name]; exists {
+				logger.WithField(log.ServiceName, name).Warn("HTTP service already configured, skipping")
 			} else {
-				configuration.Services[name] = conf
+				configuration.HTTP.Services[name] = conf
+			}
+		}
+
+		for name, conf := range c.TCP.Routers {
+			if _, exists := configuration.TCP.Routers[name]; exists {
+				logger.WithField(log.RouterName, name).Warn("TCP router already configured, skipping")
+			} else {
+				configuration.TCP.Routers[name] = conf
+			}
+		}
+
+		for name, conf := range c.TCP.Services {
+			if _, exists := configuration.TCP.Services[name]; exists {
+				logger.WithField(log.ServiceName, name).Warn("TCP service already configured, skipping")
+			} else {
+				configuration.TCP.Services[name] = conf
 			}
 		}
 
 		for _, conf := range c.TLS {
 			if _, exists := configTLSMaps[conf]; exists {
-				logger.Warnf("TLS Configuration %v already configured, skipping", conf)
+				logger.Warnf("TLS configuration %v already configured, skipping", conf)
 			} else {
 				configTLSMaps[conf] = struct{}{}
 			}

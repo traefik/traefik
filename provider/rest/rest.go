@@ -43,7 +43,7 @@ func (p *Provider) Append(systemRouter *mux.Router) {
 				return
 			}
 
-			configuration := new(config.Configuration)
+			configuration := new(config.HTTPConfiguration)
 			body, _ := ioutil.ReadAll(request.Body)
 
 			if err := json.Unmarshal(body, configuration); err != nil {
@@ -52,7 +52,9 @@ func (p *Provider) Append(systemRouter *mux.Router) {
 				return
 			}
 
-			p.configurationChan <- config.Message{ProviderName: "rest", Configuration: configuration}
+			p.configurationChan <- config.Message{ProviderName: "rest", Configuration: &config.Configuration{
+				HTTP: configuration,
+			}}
 			if err := templatesRenderer.JSON(response, http.StatusOK, configuration); err != nil {
 				log.WithoutContext().Error(err)
 			}

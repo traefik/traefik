@@ -12,8 +12,8 @@ The Compress middleware enables the gzip compression.
 ??? example "File -- enable gzip compression"
 
     ```toml
-    [Middlewares]
-      [Middlewares.test-compress.Compress]
+    [http.middlewares]
+      [http.middlewares.test-compress.Compress]
     ```
     
 ??? example "Docker -- enable gzip compression"
@@ -22,7 +22,7 @@ The Compress middleware enables the gzip compression.
     a-container:
           image: a-container-image 
             labels:
-              - "traefik.middlewares.test-compress.compress=true",
+              - "traefik.http.middlewares.test-compress.compress=true",
     ```
 
 ## Notes

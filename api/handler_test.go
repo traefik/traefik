@@ -30,8 +30,10 @@ func TestHandler_Configuration(t *testing.T) {
 			path: "/api/providers",
 			configuration: config.Configurations{
 				"foo": {
-					Routers: map[string]*config.Router{
-						"bar": {EntryPoints: []string{"foo", "bar"}},
+					HTTP: &config.HTTPConfiguration{
+						Routers: map[string]*config.Router{
+							"bar": {EntryPoints: []string{"foo", "bar"}},
+						},
 					},
 				},
 			},
@@ -42,18 +44,20 @@ func TestHandler_Configuration(t *testing.T) {
 			path: "/api/providers/foo",
 			configuration: config.Configurations{
 				"foo": {
-					Routers: map[string]*config.Router{
-						"bar": {EntryPoints: []string{"foo", "bar"}},
-					},
-					Middlewares: map[string]*config.Middleware{
-						"bar": {
-							AddPrefix: &config.AddPrefix{Prefix: "bar"},
+					HTTP: &config.HTTPConfiguration{
+						Routers: map[string]*config.Router{
+							"bar": {EntryPoints: []string{"foo", "bar"}},
 						},
-					},
-					Services: map[string]*config.Service{
-						"foo": {
-							LoadBalancer: &config.LoadBalancerService{
-								Method: "wrr",
+						Middlewares: map[string]*config.Middleware{
+							"bar": {
+								AddPrefix: &config.AddPrefix{Prefix: "bar"},
+							},
+						},
+						Services: map[string]*config.Service{
+							"foo": {
+								LoadBalancer: &config.LoadBalancerService{
+									Method: "wrr",
+								},
 							},
 						},
 					},
@@ -72,8 +76,10 @@ func TestHandler_Configuration(t *testing.T) {
 			path: "/api/providers/foo/routers",
 			configuration: config.Configurations{
 				"foo": {
-					Routers: map[string]*config.Router{
-						"bar": {EntryPoints: []string{"foo", "bar"}},
+					HTTP: &config.HTTPConfiguration{
+						Routers: map[string]*config.Router{
+							"bar": {EntryPoints: []string{"foo", "bar"}},
+						},
 					},
 				},
 			},
@@ -84,8 +90,10 @@ func TestHandler_Configuration(t *testing.T) {
 			path: "/api/providers/foo/routers/bar",
 			configuration: config.Configurations{
 				"foo": {
-					Routers: map[string]*config.Router{
-						"bar": {EntryPoints: []string{"foo", "bar"}},
+					HTTP: &config.HTTPConfiguration{
+						Routers: map[string]*config.Router{
+							"bar": {EntryPoints: []string{"foo", "bar"}},
+						},
 					},
 				},
 			},
@@ -104,10 +112,12 @@ func TestHandler_Configuration(t *testing.T) {
 			path: "/api/providers/foo/services",
 			configuration: config.Configurations{
 				"foo": {
-					Services: map[string]*config.Service{
-						"foo": {
-							LoadBalancer: &config.LoadBalancerService{
-								Method: "wrr",
+					HTTP: &config.HTTPConfiguration{
+						Services: map[string]*config.Service{
+							"foo": {
+								LoadBalancer: &config.LoadBalancerService{
+									Method: "wrr",
+								},
 							},
 						},
 					},
@@ -120,10 +130,12 @@ func TestHandler_Configuration(t *testing.T) {
 			path: "/api/providers/foo/services/foo",
 			configuration: config.Configurations{
 				"foo": {
-					Services: map[string]*config.Service{
-						"foo": {
-							LoadBalancer: &config.LoadBalancerService{
-								Method: "wrr",
+					HTTP: &config.HTTPConfiguration{
+						Services: map[string]*config.Service{
+							"foo": {
+								LoadBalancer: &config.LoadBalancerService{
+									Method: "wrr",
+								},
 							},
 						},
 					},
@@ -144,9 +156,11 @@ func TestHandler_Configuration(t *testing.T) {
 			path: "/api/providers/foo/middlewares",
 			configuration: config.Configurations{
 				"foo": {
-					Middlewares: map[string]*config.Middleware{
-						"bar": {
-							AddPrefix: &config.AddPrefix{Prefix: "bar"},
+					HTTP: &config.HTTPConfiguration{
+						Middlewares: map[string]*config.Middleware{
+							"bar": {
+								AddPrefix: &config.AddPrefix{Prefix: "bar"},
+							},
 						},
 					},
 				},
@@ -158,9 +172,11 @@ func TestHandler_Configuration(t *testing.T) {
 			path: "/api/providers/foo/middlewares/bar",
 			configuration: config.Configurations{
 				"foo": {
-					Middlewares: map[string]*config.Middleware{
-						"bar": {
-							AddPrefix: &config.AddPrefix{Prefix: "bar"},
+					HTTP: &config.HTTPConfiguration{
+						Middlewares: map[string]*config.Middleware{
+							"bar": {
+								AddPrefix: &config.AddPrefix{Prefix: "bar"},
+							},
 						},
 					},
 				},

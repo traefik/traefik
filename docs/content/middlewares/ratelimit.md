@@ -12,11 +12,11 @@ The RateLimit middleware ensures that services will receive a _fair_ number of r
 ??? example "Limit to 100 requests every 10 seconds (with a possible burst of 200)"
 
     ```toml
-    [middlewares]
-        [middlewares.fair-ratelimit.ratelimit]
+    [http.middlewares]
+        [http.middlewares.fair-ratelimit.ratelimit]
             extractorfunc = "client.ip"
     
-              [middlewares.fair-ratelimit.ratelimit.rateset1]
+              [http.middlewares.fair-ratelimit.ratelimit.rateset1]
                 period = "10s"
                 average = 100
                 burst = 200
@@ -25,16 +25,16 @@ The RateLimit middleware ensures that services will receive a _fair_ number of r
 ??? example "Combine multiple limits"
 
     ```toml
-    [middlewares]
-        [middlewares.fair-ratelimit.ratelimit]
+    [http.middlewares]
+        [http.middlewares.fair-ratelimit.ratelimit]
             extractorfunc = "client.ip"
     
-              [middlewares.fair-ratelimit.ratelimit.rateset1]
+              [http.middlewares.fair-ratelimit.ratelimit.rateset1]
                 period = "10s"
                 average = 100
                 burst = 200
 
-              [middlewares.fair-ratelimit.ratelimit.rateset2]
+              [http.middlewares.fair-ratelimit.ratelimit.rateset2]
                 period = "3s"
                 average = 5
                 burst = 10

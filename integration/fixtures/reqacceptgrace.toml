@@ -1,32 +1,30 @@
 [log]
 logLevel = "DEBUG"
 
-[entryPoints]
-  [entryPoints.http]
+[entrypoints]
+  [entrypoints.web]
   address = ":8000"
-  [entryPoints.http.transport.lifeCycle]
+  [entrypoints.web.transport.lifeCycle]
     RequestAcceptGraceTimeout = "10s"
 
-
-  [entryPoints.traefik]
+  [entrypoints.traefik]
   address = ":8001"
-[entryPoints.traefik.transport.lifeCycle]
+[entrypoints.traefik.transport.lifeCycle]
     RequestAcceptGraceTimeout = "10s"
-
 
 [providers]
    [providers.file]
 
-[Routers]
-  [Routers.router]
+[http.routers]
+  [http.routers.router]
     Service = "service"
     Rule = "Path(`/service`)"
 
-[Services]
-  [Services.service]
-    [Services.service.LoadBalancer]
+[http.services]
+  [http.services.service]
+    [http.services.service.LoadBalancer]
 
-      [[Services.service.LoadBalancer.Servers]]
+      [[http.services.service.LoadBalancer.Servers]]
         URL = "{{.Server}}"
         Weight = 1
 

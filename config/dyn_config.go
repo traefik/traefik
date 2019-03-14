@@ -13,11 +13,28 @@ import (
 
 // Router holds the router configuration.
 type Router struct {
-	EntryPoints []string `json:"entryPoints"`
-	Middlewares []string `json:"middlewares,omitempty" toml:",omitempty"`
-	Service     string   `json:"service,omitempty" toml:",omitempty"`
-	Rule        string   `json:"rule,omitempty" toml:",omitempty"`
-	Priority    int      `json:"priority,omitempty" toml:"priority,omitzero"`
+	EntryPoints []string         `json:"entryPoints"`
+	Middlewares []string         `json:"middlewares,omitempty" toml:",omitempty"`
+	Service     string           `json:"service,omitempty" toml:",omitempty"`
+	Rule        string           `json:"rule,omitempty" toml:",omitempty"`
+	Priority    int              `json:"priority,omitempty" toml:"priority,omitzero"`
+	TLS         *RouterTLSConfig `json:"tls,omitempty" toml:"tls,omitzero" label:"allowEmpty"`
+}
+
+// RouterTLSConfig holds the TLS configuration for a router
+type RouterTLSConfig struct{}
+
+// TCPRouter holds the router configuration.
+type TCPRouter struct {
+	EntryPoints []string            `json:"entryPoints"`
+	Service     string              `json:"service,omitempty" toml:",omitempty"`
+	Rule        string              `json:"rule,omitempty" toml:",omitempty"`
+	TLS         *RouterTCPTLSConfig `json:"tls,omitempty" toml:"tls,omitzero" label:"allowEmpty"`
+}
+
+// RouterTCPTLSConfig holds the TLS configuration for a router
+type RouterTCPTLSConfig struct {
+	Passthrough bool `json:"passthrough,omitempty" toml:"passthrough,omitzero"`
 }
 
 // LoadBalancerService holds the LoadBalancerService configuration.
@@ -28,6 +45,12 @@ type LoadBalancerService struct {
 	HealthCheck        *HealthCheck        `json:"healthCheck,omitempty" toml:",omitempty"`
 	PassHostHeader     bool                `json:"passHostHeader" toml:",omitempty"`
 	ResponseForwarding *ResponseForwarding `json:"forwardingResponse,omitempty" toml:",omitempty"`
+}
+
+// TCPLoadBalancerService holds the LoadBalancerService configuration.
+type TCPLoadBalancerService struct {
+	Servers []TCPServer `json:"servers,omitempty" toml:",omitempty" label-slice-as-struct:"server"`
+	Method  string      `json:"method,omitempty" toml:",omitempty"`
 }
 
 // Mergeable tells if the given service is mergeable.
@@ -69,6 +92,12 @@ type Server struct {
 	Scheme string `toml:"-" json:"-"`
 	Port   string `toml:"-" json:"-"`
 	Weight int    `json:"weight"`
+}
+
+// TCPServer holds a TCP Server configuration
+type TCPServer struct {
+	Address string `json:"address" label:"-"`
+	Weight  int    `json:"weight"`
 }
 
 // SetDefaults Default values for a Server.
@@ -175,18 +204,37 @@ type Message struct {
 	Configuration *Configuration
 }
 
+// Configuration is the root of the dynamic configuration
+type Configuration struct {
+	HTTP       *HTTPConfiguration
+	TCP        *TCPConfiguration
+	TLS        []*traefiktls.Configuration `json:"-" label:"-"`
+	TLSOptions map[string]traefiktls.TLS
+	TLSStores  map[string]traefiktls.Store
+}
+
 // Configurations is for currentConfigurations Map.
 type Configurations map[string]*Configuration
 
-// Configuration FIXME better name?
-type Configuration struct {
-	Routers     map[string]*Router          `json:"routers,omitempty" toml:",omitempty"`
-	Middlewares map[string]*Middleware      `json:"middlewares,omitempty" toml:",omitempty"`
-	Services    map[string]*Service         `json:"services,omitempty" toml:",omitempty"`
-	TLS         []*traefiktls.Configuration `json:"-" label:"-"`
+// HTTPConfiguration FIXME better name?
+type HTTPConfiguration struct {
+	Routers     map[string]*Router     `json:"routers,omitempty" toml:",omitempty"`
+	Middlewares map[string]*Middleware `json:"middlewares,omitempty" toml:",omitempty"`
+	Services    map[string]*Service    `json:"services,omitempty" toml:",omitempty"`
+}
+
+// TCPConfiguration FIXME better name?
+type TCPConfiguration struct {
+	Routers  map[string]*TCPRouter  `json:"routers,omitempty" toml:",omitempty"`
+	Services map[string]*TCPService `json:"services,omitempty" toml:",omitempty"`
 }
 
 // Service holds a service configuration (can only be of one type at the same time).
 type Service struct {
 	LoadBalancer *LoadBalancerService `json:"loadbalancer,omitempty" toml:",omitempty,omitzero"`
+}
+
+// TCPService holds a tcp service configuration (can only be of one type at the same time).
+type TCPService struct {
+	LoadBalancer *TCPLoadBalancerService `json:"loadbalancer,omitempty" toml:",omitempty,omitzero"`
 }

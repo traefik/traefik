@@ -33,7 +33,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, containersInspected [
 			continue
 		}
 
-		err = p.buildServiceConfiguration(ctxContainer, container, confFromLabel)
+		err = p.buildServiceConfiguration(ctxContainer, container, confFromLabel.HTTP)
 		if err != nil {
 			logger.Error(err)
 			continue
@@ -49,7 +49,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, containersInspected [
 			Labels: container.Labels,
 		}
 
-		provider.BuildRouterConfiguration(ctx, confFromLabel, serviceName, p.defaultRuleTpl, model)
+		provider.BuildRouterConfiguration(ctx, confFromLabel.HTTP, serviceName, p.defaultRuleTpl, model)
 
 		configurations[containerName] = confFromLabel
 	}
@@ -57,7 +57,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, containersInspected [
 	return provider.Merge(ctx, configurations)
 }
 
-func (p *Provider) buildServiceConfiguration(ctx context.Context, container dockerData, configuration *config.Configuration) error {
+func (p *Provider) buildServiceConfiguration(ctx context.Context, container dockerData, configuration *config.HTTPConfiguration) error {
 	serviceName := getServiceName(container)
 
 	if len(configuration.Services) == 0 {

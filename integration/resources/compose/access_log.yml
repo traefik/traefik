@@ -2,78 +2,78 @@ server0:
   image: containous/whoami
   labels:
     - traefik.enable=true
-    - traefik.routers.rt-server0.entryPoints=http
-    - traefik.routers.rt-server0.rule=Path("/test")
-    - traefik.services.service1.loadbalancer.server.port=80
+    - traefik.http.routers.rt-server0.entryPoints=web
+    - traefik.http.routers.rt-server0.rule=Path("/test")
+    - traefik.http.services.service1.loadbalancer.server.port=80
 server1:
   image: containous/whoami
   labels:
     - traefik.enable=true
-    - traefik.routers.rt-server1.entryPoints=http
-    - traefik.routers.rt-server1.rule=Host("frontend1.docker.local")
-    - traefik.services.service1.loadbalancer.server.port=80
+    - traefik.http.routers.rt-server1.entryPoints=web
+    - traefik.http.routers.rt-server1.rule=Host("frontend1.docker.local")
+    - traefik.http.services.service1.loadbalancer.server.port=80
 server2:
   image: containous/whoami
   labels:
     - traefik.enable=true
-    - traefik.routers.rt-server2.entryPoints=http
-    - traefik.routers.rt-server2.rule=Host("frontend2.docker.local")
-    - traefik.services.service2.loadbalancer.server.port=80
-    - traefik.services.service2.loadbalancer.method=drr
+    - traefik.http.routers.rt-server2.entryPoints=web
+    - traefik.http.routers.rt-server2.rule=Host("frontend2.docker.local")
+    - traefik.http.services.service2.loadbalancer.server.port=80
+    - traefik.http.services.service2.loadbalancer.method=drr
 server3:
   image: containous/whoami
   labels:
     - traefik.enable=true
-    - traefik.routers.rt-server3.entryPoints=http
-    - traefik.routers.rt-server3.rule=Host("frontend2.docker.local")
-    - traefik.services.service2.loadbalancer.server.port=80
-    - traefik.services.service2.loadbalancer.method=drr
+    - traefik.http.routers.rt-server3.entryPoints=web
+    - traefik.http.routers.rt-server3.rule=Host("frontend2.docker.local")
+    - traefik.http.services.service2.loadbalancer.server.port=80
+    - traefik.http.services.service2.loadbalancer.method=drr
 authFrontend:
   image: containous/whoami
   labels:
     - traefik.enable=true
-    - traefik.routers.rt-authFrontend.entryPoints=httpFrontendAuth
-    - traefik.routers.rt-authFrontend.rule=Host("frontend.auth.docker.local")
-    - traefik.routers.rt-authFrontend.middlewares=basicauth
-    - traefik.middlewares.basicauth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/
-    - traefik.services.service3.loadbalancer.server.port=80
+    - traefik.http.routers.rt-authFrontend.entryPoints=httpFrontendAuth
+    - traefik.http.routers.rt-authFrontend.rule=Host("frontend.auth.docker.local")
+    - traefik.http.routers.rt-authFrontend.middlewares=basicauth
+    - traefik.http.middlewares.basicauth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/
+    - traefik.http.services.service3.loadbalancer.server.port=80
 digestAuthMiddleware:
   image: containous/whoami
   labels:
     - traefik.enable=true
-    - traefik.routers.rt-digestAuthMiddleware.entryPoints=digestAuth
-    - traefik.routers.rt-digestAuthMiddleware.rule=Host("entrypoint.digest.auth.docker.local")
-    - traefik.routers.rt-digestAuthMiddleware.middlewares=digestauth
-    - traefik.middlewares.digestauth.digestauth.users=test:traefik:a2688e031edb4be6a3797f3882655c05, test2:traefik:518845800f9e2bfb1f1f740ec24f074e
-    - traefik.services.service3.loadbalancer.server.port=80
+    - traefik.http.routers.rt-digestAuthMiddleware.entryPoints=digestAuth
+    - traefik.http.routers.rt-digestAuthMiddleware.rule=Host("entrypoint.digest.auth.docker.local")
+    - traefik.http.routers.rt-digestAuthMiddleware.middlewares=digestauth
+    - traefik.http.middlewares.digestauth.digestauth.users=test:traefik:a2688e031edb4be6a3797f3882655c05, test2:traefik:518845800f9e2bfb1f1f740ec24f074e
+    - traefik.http.services.service3.loadbalancer.server.port=80
 frontendRedirect:
   image: containous/whoami
   labels:
     - traefik.enable=true
-    - traefik.routers.rt-frontendRedirect.entryPoints=frontendRedirect
-    - traefik.routers.rt-frontendRedirect.rule=Path("/test")
-    - traefik.routers.rt-frontendRedirect.middlewares=redirecthttp
-    - traefik.middlewares.redirecthttp.redirectScheme.scheme=http
-    - traefik.middlewares.redirecthttp.redirectScheme.port=8000
-    - traefik.services.service3.loadbalancer.server.port=80
+    - traefik.http.routers.rt-frontendRedirect.entryPoints=frontendRedirect
+    - traefik.http.routers.rt-frontendRedirect.rule=Path("/test")
+    - traefik.http.routers.rt-frontendRedirect.middlewares=redirecthttp
+    - traefik.http.middlewares.redirecthttp.redirectScheme.scheme=http
+    - traefik.http.middlewares.redirecthttp.redirectScheme.port=8000
+    - traefik.http.services.service3.loadbalancer.server.port=80
 rateLimit:
   image: containous/whoami
   labels:
     - traefik.enable=true
-    - traefik.routers.rt-rateLimit.entryPoints=httpRateLimit
-    - traefik.routers.rt-rateLimit.rule=Host("ratelimit.docker.local")
-    - traefik.routers.rt-rateLimit.middlewares=rate
-    - traefik.middlewares.rate.ratelimit.extractorfunc=client.ip
-    - traefik.middlewares.rate.ratelimit.rateset.Rate0.average=1
-    - traefik.middlewares.rate.ratelimit.rateset.Rate0.burst=2
-    - traefik.middlewares.rate.ratelimit.rateset.Rate0.period=10s
-    - traefik.services.service3.loadbalancer.server.port=80
+    - traefik.http.routers.rt-rateLimit.entryPoints=httpRateLimit
+    - traefik.http.routers.rt-rateLimit.rule=Host("ratelimit.docker.local")
+    - traefik.http.routers.rt-rateLimit.middlewares=rate
+    - traefik.http.middlewares.rate.ratelimit.extractorfunc=client.ip
+    - traefik.http.middlewares.rate.ratelimit.rateset.Rate0.average=1
+    - traefik.http.middlewares.rate.ratelimit.rateset.Rate0.burst=2
+    - traefik.http.middlewares.rate.ratelimit.rateset.Rate0.period=10s
+    - traefik.http.services.service3.loadbalancer.server.port=80
 frontendWhitelist:
   image: containous/whoami
   labels:
     - traefik.enable=true
-    - traefik.routers.rt-frontendWhitelist.entryPoints=http
-    - traefik.routers.rt-frontendWhitelist.rule=Host("frontend.whitelist.docker.local")
-    - traefik.routers.rt-frontendWhitelist.middlewares=wl
-    - traefik.middlewares.wl.ipwhitelist.sourcerange=8.8.8.8/32
-    - traefik.services.service3.loadbalancer.server.port=80
+    - traefik.http.routers.rt-frontendWhitelist.entryPoints=web
+    - traefik.http.routers.rt-frontendWhitelist.rule=Host("frontend.whitelist.docker.local")
+    - traefik.http.routers.rt-frontendWhitelist.middlewares=wl
+    - traefik.http.middlewares.wl.ipwhitelist.sourcerange=8.8.8.8/32
+    - traefik.http.services.service3.loadbalancer.server.port=80

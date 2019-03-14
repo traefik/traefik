@@ -1,4 +1,4 @@
 
-[entryPoints]
-  [entryPoints.http]
+[entrypoints]
+  [entrypoints.web]
      address = ":8000"

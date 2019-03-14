@@ -1,8 +1,10 @@
-[entryPoints]
-  [entryPoints.http]
+[log]
+  logLevel = "DEBUG"
+
+[entrypoints]
+  [entrypoints.web]
   address = ":8000"
 
-logLevel = "DEBUG"
 
 [providers]
    [providers.file]

@@ -207,7 +207,8 @@ func (c *Certificate) AppendCertificates(certs map[string]map[string]*tls.Certif
 	return err
 }
 
-func (c *Certificate) getTruncatedCertificateName() string {
+// GetTruncatedCertificateName truncates the certificate name
+func (c *Certificate) GetTruncatedCertificateName() string {
 	certName := c.CertFile.String()
 
 	// Truncate certificate information only if it's a well formed certificate content with more than 50 characters

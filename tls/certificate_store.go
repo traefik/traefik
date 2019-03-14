@@ -18,7 +18,6 @@ type CertificateStore struct {
 	DynamicCerts       *safe.Safe
 	DefaultCertificate *tls.Certificate
 	CertCache          *cache.Cache
-	SniStrict          bool
 }
 
 // NewCertificateStore create a store for dynamic and static certificates

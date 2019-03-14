@@ -5,8 +5,8 @@ import (
 )
 
 // BuildConfiguration is a helper to create a configuration.
-func BuildConfiguration(dynamicConfigBuilders ...func(*config.Configuration)) *config.Configuration {
-	conf := &config.Configuration{}
+func BuildConfiguration(dynamicConfigBuilders ...func(*config.HTTPConfiguration)) *config.HTTPConfiguration {
+	conf := &config.HTTPConfiguration{}
 	for _, build := range dynamicConfigBuilders {
 		build(conf)
 	}
@@ -14,8 +14,8 @@ func BuildConfiguration(dynamicConfigBuilders ...func(*config.Configuration)) *c
 }
 
 // WithRouters is a helper to create a configuration.
-func WithRouters(opts ...func(*config.Router) string) func(*config.Configuration) {
-	return func(c *config.Configuration) {
+func WithRouters(opts ...func(*config.Router) string) func(*config.HTTPConfiguration) {
+	return func(c *config.HTTPConfiguration) {
 		c.Routers = make(map[string]*config.Router)
 		for _, opt := range opts {
 			b := &config.Router{}
@@ -50,8 +50,8 @@ func WithServiceName(serviceName string) func(*config.Router) {
 }
 
 // WithLoadBalancerServices is a helper to create a configuration.
-func WithLoadBalancerServices(opts ...func(service *config.LoadBalancerService) string) func(*config.Configuration) {
-	return func(c *config.Configuration) {
+func WithLoadBalancerServices(opts ...func(service *config.LoadBalancerService) string) func(*config.HTTPConfiguration) {
+	return func(c *config.HTTPConfiguration) {
 		c.Services = make(map[string]*config.Service)
 		for _, opt := range opts {
 			b := &config.LoadBalancerService{}
@@ -74,8 +74,8 @@ func WithService(name string, opts ...func(*config.LoadBalancerService)) func(*c
 }
 
 // WithMiddlewares is a helper to create a configuration.
-func WithMiddlewares(opts ...func(*config.Middleware) string) func(*config.Configuration) {
-	return func(c *config.Configuration) {
+func WithMiddlewares(opts ...func(*config.Middleware) string) func(*config.HTTPConfiguration) {
+	return func(c *config.HTTPConfiguration) {
 		c.Middlewares = make(map[string]*config.Middleware)
 		for _, opt := range opts {
 			b := &config.Middleware{}

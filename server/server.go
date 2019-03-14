@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/config"
 	"github.com/containous/traefik/config/static"
 	"github.com/containous/traefik/log"
@@ -19,6 +18,7 @@ import (
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/server/middleware"
+	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/tracing"
 	"github.com/containous/traefik/tracing/datadog"
 	"github.com/containous/traefik/tracing/instana"
@@ -29,7 +29,7 @@ import (
 
 // Server is the reverse-proxy/load-balancer engine
 type Server struct {
-	entryPoints                EntryPoints
+	entryPointsTCP             TCPEntryPoints
 	configurationChan          chan config.Message
 	configurationValidatedChan chan config.Message
 	signals                    chan os.Signal
@@ -39,13 +39,13 @@ type Server struct {
 	accessLoggerMiddleware     *accesslog.Handler
 	tracer                     *tracing.Tracing
 	routinesPool               *safe.Pool
-	leadership                 *cluster.Leadership //FIXME Cluster
 	defaultRoundTripper        http.RoundTripper
 	metricsRegistry            metrics.Registry
 	provider                   provider.Provider
 	configurationListeners     []func(config.Configuration)
 	requestDecorator           *requestdecorator.RequestDecorator
 	providersThrottleDuration  time.Duration
+	tlsManager                 *tls.Manager
 }
 
 // RouteAppenderFactory the route appender factory interface
@@ -70,11 +70,11 @@ func setupTracing(conf *static.Tracing) tracing.TrackingBackend {
 }
 
 // NewServer returns an initialized Server.
-func NewServer(staticConfiguration static.Configuration, provider provider.Provider, entryPoints EntryPoints) *Server {
+func NewServer(staticConfiguration static.Configuration, provider provider.Provider, entryPoints TCPEntryPoints, tlsManager *tls.Manager) *Server {
 	server := &Server{}
 
 	server.provider = provider
-	server.entryPoints = entryPoints
+	server.entryPointsTCP = entryPoints
 	server.configurationChan = make(chan config.Message, 100)
 	server.configurationValidatedChan = make(chan config.Message, 100)
 	server.signals = make(chan os.Signal, 1)
@@ -83,6 +83,7 @@ func NewServer(staticConfiguration static.Configuration, provider provider.Provi
 	currentConfigurations := make(config.Configurations)
 	server.currentConfigurations.Set(currentConfigurations)
 	server.providerConfigUpdateMap = make(map[string]chan config.Message)
+	server.tlsManager = tlsManager
 
 	if staticConfiguration.Providers != nil {
 		server.providersThrottleDuration = time.Duration(staticConfiguration.Providers.ProvidersThrottleDuration)
@@ -132,8 +133,7 @@ func (s *Server) Start(ctx context.Context) {
 		s.Stop()
 	}()
 
-	s.startHTTPServers()
-	s.startLeadership()
+	s.startTCPServers()
 	s.routinesPool.Go(func(stop chan bool) {
 		s.listenProviders(stop)
 	})
@@ -156,9 +156,9 @@ func (s *Server) Stop() {
 	defer log.WithoutContext().Info("Server stopped")
 
 	var wg sync.WaitGroup
-	for epn, ep := range s.entryPoints {
+	for epn, ep := range s.entryPointsTCP {
 		wg.Add(1)
-		go func(entryPointName string, entryPoint *EntryPoint) {
+		go func(entryPointName string, entryPoint *TCPEntryPoint) {
 			ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
 			defer wg.Done()
 
@@ -184,7 +184,6 @@ func (s *Server) Close() {
 	}(ctx)
 
 	stopMetricsClients()
-	s.stopLeadership()
 	s.routinesPool.Cleanup()
 	close(s.configurationChan)
 	close(s.configurationValidatedChan)
@@ -205,28 +204,16 @@ func (s *Server) Close() {
 	cancel()
 }
 
-func (s *Server) startLeadership() {
-	if s.leadership != nil {
-		s.leadership.Participate(s.routinesPool)
-	}
-}
-
-func (s *Server) stopLeadership() {
-	if s.leadership != nil {
-		s.leadership.Stop()
-	}
-}
-
-func (s *Server) startHTTPServers() {
+func (s *Server) startTCPServers() {
 	// Use an empty configuration in order to initialize the default handlers with internal routes
-	handlers := s.applyConfiguration(context.Background(), config.Configuration{})
-	for entryPointName, handler := range handlers {
-		s.entryPoints[entryPointName].switcher.UpdateHandler(handler)
+	routers := s.loadConfigurationTCP(config.Configurations{})
+	for entryPointName, router := range routers {
+		s.entryPointsTCP[entryPointName].switchRouter(router)
 	}
 
-	for entryPointName, entryPoint := range s.entryPoints {
+	for entryPointName, serverEntryPoint := range s.entryPointsTCP {
 		ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
-		go entryPoint.Start(ctx)
+		go serverEntryPoint.startTCP(ctx)
 	}
 }
 

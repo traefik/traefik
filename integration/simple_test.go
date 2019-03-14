@@ -449,10 +449,10 @@ func (s *SimpleSuite) TestMultiprovider(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/services", 1000*time.Millisecond, try.BodyContains("service"))
 	c.Assert(err, checker.IsNil)
 
-	config := config.Configuration{
+	config := config.HTTPConfiguration{
 		Routers: map[string]*config.Router{
 			"router1": {
-				EntryPoints: []string{"http"},
+				EntryPoints: []string{"web"},
 				Middlewares: []string{"file.customheader"},
 				Service:     "file.service",
 				Rule:        "PathPrefix(`/`)",

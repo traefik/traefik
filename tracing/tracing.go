@@ -2,6 +2,7 @@ package tracing
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -32,7 +33,7 @@ func FromContext(ctx context.Context) (*Tracing, error) {
 
 	tracer, ok := ctx.Value(tracingKey).(*Tracing)
 	if !ok {
-		return nil, fmt.Errorf("unable to find tracing in the context")
+		return nil, errors.New("unable to find tracing in the context")
 	}
 	return tracer, nil
 }

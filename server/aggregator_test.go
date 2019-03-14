@@ -11,12 +11,12 @@ func TestAggregator(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		given    config.Configurations
-		expected config.Configuration
+		expected *config.HTTPConfiguration
 	}{
 		{
 			desc:  "Nil returns an empty configuration",
 			given: nil,
-			expected: config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers:     make(map[string]*config.Router),
 				Middlewares: make(map[string]*config.Middleware),
 				Services:    make(map[string]*config.Service),
@@ -26,18 +26,20 @@ func TestAggregator(t *testing.T) {
 			desc: "Returns fully qualified elements from a mono-provider configuration map",
 			given: config.Configurations{
 				"provider-1": &config.Configuration{
-					Routers: map[string]*config.Router{
-						"router-1": {},
-					},
-					Middlewares: map[string]*config.Middleware{
-						"middleware-1": {},
-					},
-					Services: map[string]*config.Service{
-						"service-1": {},
+					HTTP: &config.HTTPConfiguration{
+						Routers: map[string]*config.Router{
+							"router-1": {},
+						},
+						Middlewares: map[string]*config.Middleware{
+							"middleware-1": {},
+						},
+						Services: map[string]*config.Service{
+							"service-1": {},
+						},
 					},
 				},
 			},
-			expected: config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"provider-1.router-1": {},
 				},
@@ -53,29 +55,33 @@ func TestAggregator(t *testing.T) {
 			desc: "Returns fully qualified elements from a multi-provider configuration map",
 			given: config.Configurations{
 				"provider-1": &config.Configuration{
-					Routers: map[string]*config.Router{
-						"router-1": {},
-					},
-					Middlewares: map[string]*config.Middleware{
-						"middleware-1": {},
-					},
-					Services: map[string]*config.Service{
-						"service-1": {},
+					HTTP: &config.HTTPConfiguration{
+						Routers: map[string]*config.Router{
+							"router-1": {},
+						},
+						Middlewares: map[string]*config.Middleware{
+							"middleware-1": {},
+						},
+						Services: map[string]*config.Service{
+							"service-1": {},
+						},
 					},
 				},
 				"provider-2": &config.Configuration{
-					Routers: map[string]*config.Router{
-						"router-1": {},
-					},
-					Middlewares: map[string]*config.Middleware{
-						"middleware-1": {},
-					},
-					Services: map[string]*config.Service{
-						"service-1": {},
+					HTTP: &config.HTTPConfiguration{
+						Routers: map[string]*config.Router{
+							"router-1": {},
+						},
+						Middlewares: map[string]*config.Middleware{
+							"middleware-1": {},
+						},
+						Services: map[string]*config.Service{
+							"service-1": {},
+						},
 					},
 				},
 			},
-			expected: config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"provider-1.router-1": {},
 					"provider-2.router-1": {},
@@ -96,8 +102,9 @@ func TestAggregator(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			actual := mergeConfiguration(test.given)
-			assert.Equal(t, test.expected, actual)
+			assert.Equal(t, test.expected, actual.HTTP)
 		})
 	}
 }

@@ -7,19 +7,9 @@ debug = true
 [serversTransport]
 rootCAs = [ """{{ .RootCertContent }}""" ]
 
-[entryPoints]
-  [entryPoints.https]
+[entrypoints]
+  [entrypoints.web-secure]
     address = ":8443"
-
-    [entryPoints.https.tls]
-
-      [entryPoints.https.tls.ClientCA]
-      files = [ """{{ .RootCertContent }}""" ]
-      optional = false
-
-      [entryPoints.https.tls.DefaultCertificate]
-      certFile = """{{ .ServerCertContent }}"""
-      keyFile  = """{{ .ServerKeyContent }}"""
 
 [api]
 
@@ -27,3 +17,13 @@ rootCAs = [ """{{ .RootCertContent }}""" ]
    [providers.docker]
       endpoint = "unix:///var/run/docker.sock"
       watch = true
+
+   [providers.file]
+
+[tlsOptions.default.ClientCA]
+    files = [ """{{ .RootCertContent }}""" ]
+    optional = false
+
+[tlsStores.default.DefaultCertificate]
+    certFile = """{{ .ServerCertContent }}"""
+    keyFile  = """{{ .ServerKeyContent }}"""

@@ -9,6 +9,7 @@ import (
 	"github.com/Masterminds/sprig"
 	"github.com/containous/traefik/config"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 )
 
@@ -79,7 +80,20 @@ func (p *BaseProvider) CreateConfiguration(tmplContent string, funcMap template.
 
 // DecodeConfiguration Decodes a *types.Configuration from a content.
 func (p *BaseProvider) DecodeConfiguration(content string) (*config.Configuration, error) {
-	configuration := new(config.Configuration)
+	configuration := &config.Configuration{
+		HTTP: &config.HTTPConfiguration{
+			Routers:     make(map[string]*config.Router),
+			Middlewares: make(map[string]*config.Middleware),
+			Services:    make(map[string]*config.Service),
+		},
+		TCP: &config.TCPConfiguration{
+			Routers:  make(map[string]*config.TCPRouter),
+			Services: make(map[string]*config.TCPService),
+		},
+		TLS:        make([]*tls.Configuration, 0),
+		TLSStores:  make(map[string]tls.Store),
+		TLSOptions: make(map[string]tls.TLS),
+	}
 	if _, err := toml.Decode(content, configuration); err != nil {
 		return nil, err
 	}

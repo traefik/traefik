@@ -1,22 +1,17 @@
 [log]
-logLevel = "DEBUG"
+  logLevel = "DEBUG"
 
-[entryPoints]
-  [entryPoints.http]
-  address = "{{ .PortHTTP }}"
-  [entryPoints.https]
-  address = "{{ .PortHTTPS }}"
-    [entryPoints.https.tls]
-      [entryPoints.https.tls.DefaultCertificate]
-      certFile = "fixtures/acme/ssl/wildcard.crt"
-      keyFile = "fixtures/acme/ssl/wildcard.key"
+[entrypoints]
+  [entrypoints.web]
+    address = "{{ .PortHTTP }}"
+  [entrypoints.web-secure]
+    address = "{{ .PortHTTPS }}"
 
 [acme]
   email = "test@traefik.io"
   storage = "/tmp/acme.json"
-  entryPoint = "https"
+#  entryPoint = "https"
   acmeLogging = true
-  onDemand = {{ .Acme.OnDemand }}
   onHostRule = {{ .Acme.OnHostRule }}
   keyType = "{{ .Acme.KeyType }}"
   caServer = "{{ .Acme.CAServer }}"
@@ -43,14 +38,19 @@ logLevel = "DEBUG"
 [providers]
    [providers.file]
 
-[services]
-  [services.test.loadbalancer]
-    [[services.test.loadbalancer.servers]]
+[http.services]
+  [http.services.test.loadbalancer]
+    [[http.services.test.loadbalancer.servers]]
     url = "http://127.0.0.1:9010"
     weight = 1
 
-[routers]
-  [routers.test]
-  service = "test"
+[http.routers]
+  [http.routers.test]
+  entryPoints = ["web-secure"]
   rule = "Host(`traefik.acme.wtf`)"
-  entryPoints = ["https"]
+  service = "test"
+  [http.routers.test.tls]
+
+[tlsStores.default.defaultCertificate]
+      certFile = "fixtures/acme/ssl/wildcard.crt"
+      keyFile = "fixtures/acme/ssl/wildcard.key"

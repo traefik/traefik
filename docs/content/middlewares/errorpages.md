@@ -15,18 +15,18 @@ The ErrorPage middleware returns a custom page in lieu of the default, according
 ??? example "File -- Custom Error Page for 5XX"
 
     ```toml
-    [Routers]
-      [Routers.router1]
+    [http.routers]
+      [http.routers.router1]
         Service = "my-service"
         Rule = Host(`my-domain`)
 
-    [Middlewares]
-      [Middlewares.5XX-errors.Errors]
+    [http.middlewares]
+      [http.middlewares.5XX-errors.Errors]
         status = ["500-599"]
         service = "error-handler-service"
         query = "/error.html"
                 
-    [Services]
+    [http.services]
       # ... definition of error-handler-service and my-service
     ```
 
@@ -36,9 +36,9 @@ The ErrorPage middleware returns a custom page in lieu of the default, according
     a-container:
       image: a-container-image 
         labels:
-          - "traefik.middlewares.test-errorpage.errors.status=500-599",
-          - "traefik.middlewares.test-errorpage.errors.service=serviceError",
-          - "traefik.middlewares.test-errorpage.errors.query=/{status}.html",
+          - "traefik.http.middlewares.test-errorpage.errors.status=500-599",
+          - "traefik.http.middlewares.test-errorpage.errors.service=serviceError",
+          - "traefik.http.middlewares.test-errorpage.errors.query=/{status}.html",
             		
     ```
     

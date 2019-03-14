@@ -3,14 +3,12 @@ package service
 import (
 	"context"
 	"fmt"
-	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"time"
 
 	"github.com/containous/alice"
-	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/config"
 	"github.com/containous/traefik/healthcheck"
 	"github.com/containous/traefik/log"
@@ -19,7 +17,6 @@ import (
 	"github.com/containous/traefik/old/middlewares/pipelining"
 	"github.com/containous/traefik/server/cookie"
 	"github.com/containous/traefik/server/internal"
-	"github.com/vulcand/oxy/forward"
 	"github.com/vulcand/oxy/roundrobin"
 )
 
@@ -46,8 +43,8 @@ type Manager struct {
 	configs             map[string]*config.Service
 }
 
-// Build Creates a http.Handler for a service configuration.
-func (m *Manager) Build(rootCtx context.Context, serviceName string, responseModifier func(*http.Response) error) (http.Handler, error) {
+// BuildHTTP Creates a http.Handler for a service configuration.
+func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string, responseModifier func(*http.Response) error) (http.Handler, error) {
 	ctx := log.With(rootCtx, log.Str(log.ServiceName, serviceName))
 
 	serviceName = internal.GetQualifiedName(ctx, serviceName)
@@ -55,6 +52,7 @@ func (m *Manager) Build(rootCtx context.Context, serviceName string, responseMod
 
 	if conf, ok := m.configs[serviceName]; ok {
 		// TODO Should handle multiple service types
+		// FIXME Check if the service is declared multiple times with different types
 		if conf.LoadBalancer != nil {
 			return m.getLoadBalancerServiceHandler(ctx, serviceName, conf.LoadBalancer, responseModifier)
 		}
@@ -69,8 +67,7 @@ func (m *Manager) getLoadBalancerServiceHandler(
 	service *config.LoadBalancerService,
 	responseModifier func(*http.Response) error,
 ) (http.Handler, error) {
-
-	fwd, err := m.buildForwarder(service.PassHostHeader, service.ResponseForwarding, responseModifier)
+	fwd, err := buildProxy(service.PassHostHeader, service.ResponseForwarding, m.defaultRoundTripper, m.bufferPool, responseModifier)
 	if err != nil {
 		return nil, err
 	}
@@ -257,33 +254,4 @@ func (m *Manager) upsertServers(ctx context.Context, lb healthcheck.BalancerHand
 		// FIXME Handle Metrics
 	}
 	return nil
-}
-
-func (m *Manager) buildForwarder(passHostHeader bool, responseForwarding *config.ResponseForwarding, responseModifier func(*http.Response) error) (http.Handler, error) {
-
-	var flushInterval parse.Duration
-	if responseForwarding != nil {
-		err := flushInterval.Set(responseForwarding.FlushInterval)
-		if err != nil {
-			return nil, fmt.Errorf("error creating flush interval: %v", err)
-		}
-	}
-
-	return forward.New(
-		forward.Stream(true),
-		forward.PassHostHeader(passHostHeader),
-		forward.RoundTripper(m.defaultRoundTripper),
-		forward.ResponseModifier(responseModifier),
-		forward.BufferPool(m.bufferPool),
-		forward.StreamingFlushInterval(time.Duration(flushInterval)),
-		forward.WebsocketConnectionClosedHook(func(req *http.Request, conn net.Conn) {
-			server := req.Context().Value(http.ServerContextKey).(*http.Server)
-			if server != nil {
-				connState := server.ConnState
-				if connState != nil {
-					connState(conn, http.StateClosed)
-				}
-			}
-		}),
-	)
 }

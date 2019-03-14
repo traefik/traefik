@@ -5,35 +5,35 @@ Tweaking the Request
 
 ![Overview](../assets/img/middleware/overview.png)
 
-Attached to the routers, pieces of middleware are a mean of tweaking the requests before they are sent to your [service](../routing/services.md) (or before the answer from the services are sent to the clients). 
+Attached to the routers, pieces of middleware are a mean of tweaking the requests before they are sent to your [service](../routing/services/index.md) (or before the answer from the services are sent to the clients).
 
-There are many different available middlewares in Traefik, some can modify the request, the headers, some are in charge of redirections, some add authentication, and so on. 
+There are many different available middlewares in Traefik, some can modify the request, the headers, some are in charge of redirections, some add authentication, and so on.
 
-Pieces of middleware can be combined in chains to fit every scenario.   
- 
-## Configuration Example  
+Pieces of middleware can be combined in chains to fit every scenario.
+
+## Configuration Example
 
 ??? example "As Toml Configuration File"
 
     ```toml
     [providers]
        [providers.file]
-    
-    [Routers]
-      [Routers.router1]
+
+    [http.routers]
+      [http.routers.router1]
         Service = "myService"
         Middlewares = ["foo-add-prefix"]
         Rule = "Host: example.com"
-      
-    [Middlewares]
-     [Middlewares.foo-add-prefix.AddPrefix]
+
+    [http.middlewares]
+     [http.middlewares.foo-add-prefix.AddPrefix]
         prefix = "/foo"
-    
-    [Services]
-     [Services.service1]
-       [Services.service1.LoadBalancer]
-    
-         [[Services.service1.LoadBalancer.Servers]]
+
+    [http.services]
+     [http.services.service1]
+       [http.services.service1.LoadBalancer]
+
+         [[http.services.service1.LoadBalancer.Servers]]
            URL = "http://127.0.0.1:80"
            Weight = 1
     ```
@@ -45,7 +45,7 @@ Pieces of middleware can be combined in chains to fit every scenario.
     whoami:
       image: containous/whoami  # A container that exposes an API to show its IP address
         labels:
-          - "traefik.middlewares.foo-add-prefix.addprefix.prefix=/foo",
+          - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo",
     ```
 
 ## Advanced Configuration
@@ -58,25 +58,25 @@ If you use multiple `providers` and wish to reference a middleware declared in a
 ??? abstract "Referencing a Middleware from Another Provider"
 
     Declaring the add-foo-prefix in the file provider.
-        
+
     ```toml
     [providers]
        [providers.file]
-          
-    [middlewares]
-     [middlewares.add-foo-prefix.AddPrefix]
+
+    [http.middlewares]
+     [http.middlewares.add-foo-prefix.AddPrefix]
         prefix = "/foo"
     ```
 
     Using the add-foo-prefix middleware from docker.
-    
+
     ```yaml
     your-container: #
-        image: your-docker-image  
-        
+        image: your-docker-image
+
         labels:
           # Attach file.add-foo-prefix middleware (declared in file)
-          - "traefik.routers.middlewares=file.add-foo-prefix",
+          - "traefik.http.routers.middlewares=file.add-foo-prefix",
     ```
 
 ## Available Middlewares

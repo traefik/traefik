@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/containous/flaeg/parse"
-	"github.com/containous/traefik/acme"
+	"github.com/containous/traefik/old/acme"
 	"github.com/containous/traefik/old/api"
 	"github.com/containous/traefik/old/log"
 	"github.com/containous/traefik/old/middlewares/tracing"
@@ -32,8 +32,8 @@ import (
 	"github.com/containous/traefik/provider/docker"
 	"github.com/containous/traefik/provider/file"
 	newtypes "github.com/containous/traefik/types"
+	"github.com/go-acme/lego/challenge/dns01"
 	"github.com/pkg/errors"
-	"github.com/xenolf/lego/challenge/dns01"
 )
 
 const (
@@ -402,9 +402,9 @@ type HostResolverConfig struct {
 // Deprecated
 func convertACMEChallenge(oldACMEChallenge *acme.ACME) *acmeprovider.Configuration {
 	conf := &acmeprovider.Configuration{
-		KeyType:     oldACMEChallenge.KeyType,
-		OnHostRule:  oldACMEChallenge.OnHostRule,
-		OnDemand:    oldACMEChallenge.OnDemand,
+		KeyType:    oldACMEChallenge.KeyType,
+		OnHostRule: oldACMEChallenge.OnHostRule,
+		// OnDemand:    oldACMEChallenge.OnDemand,
 		Email:       oldACMEChallenge.Email,
 		Storage:     oldACMEChallenge.Storage,
 		ACMELogging: oldACMEChallenge.ACMELogging,

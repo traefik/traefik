@@ -7,7 +7,7 @@ The tracing system allows developers to visualize call flows in their infrastruc
 
 Traefik uses OpenTracing, an open standard designed for distributed tracing.
 
-Traefik supports three tracing backends: Jaeger, Zipkin, and DataDog.
+Traefik supports three tracing backends: Jaeger, Zipkin, DataDog, and Instana.
 
 ## Configuration Reference
 
@@ -75,6 +75,13 @@ Traefik supports three tracing backends: Jaeger, Zipkin, and DataDog.
         #
         # Default: "jaeger"
         propagation = "jaeger"
+        
+        # Trace Context Header Name is the http header name used to propagate tracing context.
+        # This must be in lower-case to avoid mismatches when decoding incoming headers.
+        #
+        # Default: "uber-trace-id"
+        #
+        traceContextHeaderName = "uber-trace-id"
     ```
 
     !!! warning
@@ -178,6 +185,14 @@ Traefik supports three tracing backends: Jaeger, Zipkin, and DataDog.
         # Default: ""
         #
         globalTag = ""
+        
+        # Enable priority sampling. When using distributed tracing, this option must be enabled in order
+        # to get all the parts of a distributed trace sampled.
+        #
+        # Default: false
+        #
+        prioritySampling = false
+
     ```
     
 ??? example "With Instana"

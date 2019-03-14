@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -59,8 +60,8 @@ func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
 			}
 		}
 	}()
-
-	conf := th.BuildConfiguration(
+	conf := &config.Configuration{}
+	conf.HTTP = th.BuildConfiguration(
 		th.WithRouters(th.WithRouter("foo")),
 		th.WithLoadBalancerServices(th.WithService("bar")),
 	)
@@ -101,7 +102,8 @@ func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 		}
 	}()
 
-	conf := th.BuildConfiguration(
+	conf := &config.Configuration{}
+	conf.HTTP = th.BuildConfiguration(
 		th.WithRouters(th.WithRouter("foo")),
 		th.WithLoadBalancerServices(th.WithService("bar")),
 	)
@@ -134,7 +136,7 @@ func setupListenProvider(throttleDuration time.Duration) (server *Server, stop c
 		},
 	}
 
-	server = NewServer(staticConfiguration, nil, nil)
+	server = NewServer(staticConfiguration, nil, nil, nil)
 	go server.listenProviders(stop)
 
 	return server, stop, invokeStopChan
@@ -146,12 +148,12 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 
 	testCases := []struct {
 		desc               string
-		config             func(testServerURL string) *config.Configuration
+		config             func(testServerURL string) *config.HTTPConfiguration
 		expectedStatusCode int
 	}{
 		{
 			desc: "Ok",
-			config: func(testServerURL string) *config.Configuration {
+			config: func(testServerURL string) *config.HTTPConfiguration {
 				return th.BuildConfiguration(
 					th.WithRouters(th.WithRouter("foo",
 						th.WithEntryPoints("http"),
@@ -168,14 +170,14 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 		},
 		{
 			desc: "No Frontend",
-			config: func(testServerURL string) *config.Configuration {
+			config: func(testServerURL string) *config.HTTPConfiguration {
 				return th.BuildConfiguration()
 			},
 			expectedStatusCode: http.StatusNotFound,
 		},
 		{
 			desc: "Empty Backend LB-Drr",
-			config: func(testServerURL string) *config.Configuration {
+			config: func(testServerURL string) *config.HTTPConfiguration {
 				return th.BuildConfiguration(
 					th.WithRouters(th.WithRouter("foo",
 						th.WithEntryPoints("http"),
@@ -191,7 +193,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 		},
 		{
 			desc: "Empty Backend LB-Drr Sticky",
-			config: func(testServerURL string) *config.Configuration {
+			config: func(testServerURL string) *config.HTTPConfiguration {
 				return th.BuildConfiguration(
 					th.WithRouters(th.WithRouter("foo",
 						th.WithEntryPoints("http"),
@@ -207,7 +209,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 		},
 		{
 			desc: "Empty Backend LB-Wrr",
-			config: func(testServerURL string) *config.Configuration {
+			config: func(testServerURL string) *config.HTTPConfiguration {
 				return th.BuildConfiguration(
 					th.WithRouters(th.WithRouter("foo",
 						th.WithEntryPoints("http"),
@@ -223,7 +225,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 		},
 		{
 			desc: "Empty Backend LB-Wrr Sticky",
-			config: func(testServerURL string) *config.Configuration {
+			config: func(testServerURL string) *config.HTTPConfiguration {
 				return th.BuildConfiguration(
 					th.WithRouters(th.WithRouter("foo",
 						th.WithEntryPoints("http"),
@@ -251,13 +253,12 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			defer testServer.Close()
 
 			globalConfig := static.Configuration{}
-			entryPointsConfig := EntryPoints{
-				"http": &EntryPoint{},
+			entryPointsConfig := TCPEntryPoints{
+				"http": &TCPEntryPoint{},
 			}
-			dynamicConfigs := config.Configurations{"config": test.config(testServer.URL)}
 
-			srv := NewServer(globalConfig, nil, entryPointsConfig)
-			entryPoints, _ := srv.loadConfig(dynamicConfigs)
+			srv := NewServer(globalConfig, nil, entryPointsConfig, nil)
+			entryPoints, _ := srv.createHTTPHandlers(context.Background(), *test.config(testServer.URL), []string{"http"})
 
 			responseRecorder := &httptest.ResponseRecorder{}
 			request := httptest.NewRequest(http.MethodGet, testServer.URL+requestPath, nil)

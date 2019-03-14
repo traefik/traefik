@@ -3,7 +3,6 @@ package static
 import (
 	"testing"
 
-	"github.com/containous/traefik/tls"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -18,10 +17,6 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 			name: "all parameters",
 			value: "Name:foo " +
 				"Address::8000 " +
-				"TLS:goo,gii " +
-				"TLS " +
-				"TLS.MinVersion:VersionTLS11 " +
-				"TLS.CipherSuites:TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA " +
 				"CA:car " +
 				"CA.Optional:true " +
 				"Redirect.EntryPoint:https " +
@@ -76,10 +71,6 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 				"redirect_permanent":                  "true",
 				"redirect_regex":                      "http://localhost/(.*)",
 				"redirect_replacement":                "http://mydomain/$1",
-				"tls":                                 "goo,gii",
-				"tls_acme":                            "TLS",
-				"tls_ciphersuites":                    "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
-				"tls_minversion":                      "VersionTLS11",
 				"whitelist_sourcerange":               "10.42.0.0/16,152.89.1.33/32,afed:be44::/16",
 				"whitelist_ipstrategy_depth":          "3",
 				"whitelist_ipstrategy_excludedips":    "10.0.0.3/24,20.0.0.3/24",
@@ -93,15 +84,6 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 			expectedResult: map[string]string{
 				"name":     "foo",
 				"compress": "on",
-			},
-		},
-		{
-			name:  "TLS",
-			value: "Name:foo TLS:goo TLS",
-			expectedResult: map[string]string{
-				"name":     "foo",
-				"tls":      "goo",
-				"tls_acme": "TLS",
 			},
 		},
 	}
@@ -185,23 +167,12 @@ func TestEntryPoints_Set(t *testing.T) {
 			name: "all parameters camelcase",
 			expression: "Name:foo " +
 				"Address::8000 " +
-				"TLS " +
-				"TLS.MinVersion:VersionTLS11 " +
-				"TLS.CipherSuites:TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA " +
 				"CA:car " +
 				"CA.Optional:true " +
 				"ProxyProtocol.TrustedIPs:192.168.0.1 ",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
 				Address: ":8000",
-				TLS: &tls.TLS{
-					MinVersion:   "VersionTLS11",
-					CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384", "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305", "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA"},
-					ClientCA: tls.ClientCA{
-						Files:    tls.FilesOrContents{"car"},
-						Optional: true,
-					},
-				},
 				ProxyProtocol: &ProxyProtocol{
 					Insecure:   false,
 					TrustedIPs: []string{"192.168.0.1"},
@@ -223,14 +194,6 @@ func TestEntryPoints_Set(t *testing.T) {
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
 				Address: ":8000",
-				TLS: &tls.TLS{
-					MinVersion:   "VersionTLS11",
-					CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384", "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305", "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA"},
-					ClientCA: tls.ClientCA{
-						Files:    tls.FilesOrContents{"car"},
-						Optional: true,
-					},
-				},
 				ProxyProtocol: &ProxyProtocol{
 					Insecure:   false,
 					TrustedIPs: []string{"192.168.0.1"},

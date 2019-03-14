@@ -245,36 +245,29 @@ func runCmd(staticConfiguration *static.Configuration, configFile string) error 
 		}
 	}
 
-	serverEntryPoints := make(server.EntryPoints)
+	serverEntryPointsTCP := make(server.TCPEntryPoints)
 	for entryPointName, config := range staticConfiguration.EntryPoints {
 		ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
-		logger := log.FromContext(ctx)
-
-		serverEntryPoint, err := server.NewEntryPoint(ctx, config)
+		serverEntryPointsTCP[entryPointName], err = server.NewTCPEntryPoint(ctx, config)
 		if err != nil {
 			return fmt.Errorf("error while building entryPoint %s: %v", entryPointName, err)
 		}
+		serverEntryPointsTCP[entryPointName].RouteAppenderFactory = router.NewRouteAppenderFactory(*staticConfiguration, entryPointName, acmeProvider)
 
-		serverEntryPoint.RouteAppenderFactory = router.NewRouteAppenderFactory(*staticConfiguration, entryPointName, acmeProvider)
-
-		if acmeProvider != nil && entryPointName == acmeProvider.EntryPoint {
-			logger.Debugf("Setting Acme Certificate store from Entrypoint")
-			acmeProvider.SetCertificateStore(serverEntryPoint.Certs)
-
-			if acmeProvider.OnDemand {
-				serverEntryPoint.OnDemandListener = acmeProvider.ListenRequest
-			}
-
-			// TLS ALPN 01
-			if acmeProvider.TLSChallenge != nil && acmeProvider.HTTPChallenge == nil && acmeProvider.DNSChallenge == nil {
-				serverEntryPoint.TLSALPNGetter = acmeProvider.GetTLSALPNCertificate
-			}
-		}
-
-		serverEntryPoints[entryPointName] = serverEntryPoint
 	}
 
-	svr := server.NewServer(*staticConfiguration, providerAggregator, serverEntryPoints)
+	tlsManager := traefiktls.NewManager()
+
+	if acmeProvider != nil {
+		acmeProvider.SetTLSManager(tlsManager)
+		if acmeProvider.TLSChallenge != nil &&
+			acmeProvider.HTTPChallenge == nil &&
+			acmeProvider.DNSChallenge == nil {
+			tlsManager.TLSAlpnGetter = acmeProvider.GetTLSALPNCertificate
+		}
+	}
+
+	svr := server.NewServer(*staticConfiguration, providerAggregator, serverEntryPointsTCP, tlsManager)
 
 	if acmeProvider != nil && acmeProvider.OnHostRule {
 		acmeProvider.SetConfigListenerChan(make(chan config.Configuration))

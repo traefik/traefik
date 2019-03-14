@@ -16,8 +16,8 @@ This can help services deal with large data (multipart/form-data for example), a
 ??? example "File -- Sets the maximum request body to 2Mb"
     
     ```toml
-    [Middlewares]
-      [Middlewares.2Mb-limit.buffering]
+    [http.middlewares]
+      [http.middlewares.2Mb-limit.buffering]
           maxRequestBodyBytes = 250000
     ``` 
 
@@ -27,7 +27,7 @@ This can help services deal with large data (multipart/form-data for example), a
     a-container:
       image: a-container-image 
         labels:
-          - "traefik.middlewares.1Mb-memory.buffering.memRequestBodyBytes=125000",
+          - "traefik.http.middlewares.1Mb-memory.buffering.memRequestBodyBytes=125000",
     ```
 
 ## Configuration Options

@@ -1,0 +1,73 @@
+[entrypoints]
+  [entrypoints.tcp]
+    address = ":8093"
+
+[api]
+
+[providers.file]
+
+[http]
+    [http.routers]
+       [http.routers.my-router]
+          rule = "Path(`/test`)"
+          service = "whoami"
+          entrypoint=["tcp"]
+
+    [http.routers.my-https-router]
+       entrypoints=["tcp"]
+       rule = "Path(`/whoami/`)"
+       service = "whoami"
+       [http.routers.my-https-router.tls]
+
+    [http.services]
+          [http.services.whoami.loadbalancer]
+            [[http.services.whoami.loadbalancer.servers]]
+              url = "http://localhost:8085"
+              weight=1
+[tcp]
+    [tcp.routers]
+        [tcp.routers.to-whoami-a]
+            rule = "HostSNI(`whoami-a.test`)"
+            service = "whoami-a"
+            entrypoints = [ "tcp" ]
+            [tcp.routers.to-whoami-a.tls]
+                passthrough=true
+
+        [tcp.routers.to-whoami-b]
+            rule = "HostSNI(`whoami-b.test`)"
+            service = "whoami-b"
+            entrypoints = [ "tcp" ]
+            [tcp.routers.to-whoami-b.tls]
+                passthrough=true
+
+        [tcp.routers.to-whoami-no-cert]
+            rule = "HostSNI(`whoami-c.test`)"
+            service = "whoami-no-cert"
+            entrypoints = [ "tcp" ]
+            [tcp.routers.to-whoami-no-cert.tls]
+
+        [tcp.services.whoami-a]
+            [tcp.services.whoami-a.loadbalancer]
+              method = "wrr"
+              [[tcp.services.whoami-a.loadbalancer.servers]]
+                address = "localhost:8081"
+                weight = 1
+
+        [tcp.services.whoami-b]
+            [tcp.services.whoami-b.loadbalancer]
+              method = "wrr"
+              [[tcp.services.whoami-b.loadbalancer.servers]]
+                address = "localhost:8082"
+                weight = 1
+
+        [tcp.services.whoami-no-cert]
+            [tcp.services.whoami-no-cert.loadbalancer]
+              method = "wrr"
+              [[tcp.services.whoami-no-cert.loadbalancer.servers]]
+                address = "localhost:8083"
+                weight = 1
+
+[[tls]]
+  [tls.certificate]
+  certFile = "fixtures/tcp/whoami-c.crt"
+  keyFile = "fixtures/tcp/whoami-c.key"

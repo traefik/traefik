@@ -34,7 +34,7 @@ func TestBuildConfiguration(t *testing.T) {
 		constraints               types.Constraints
 		filterMarathonConstraints bool
 		defaultRule               string
-		expected                  *config.Configuration
+		expected                  *config.HTTPConfiguration
 	}{
 		{
 			desc: "simple application",
@@ -44,7 +44,7 @@ func TestBuildConfiguration(t *testing.T) {
 					appPorts(80),
 					withTasks(localhostTask(taskPorts(80))),
 				)),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"app": {
 						Service: "app",
@@ -74,7 +74,7 @@ func TestBuildConfiguration(t *testing.T) {
 					appPorts(80),
 					withTasks(localhostTask(taskPorts(80), taskState(taskStateStaging))),
 				)),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers:     map[string]*config.Router{},
 				Middlewares: map[string]*config.Middleware{},
 				Services:    map[string]*config.Service{},
@@ -88,7 +88,7 @@ func TestBuildConfiguration(t *testing.T) {
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
 				)),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"app": {
 						Service: "app",
@@ -116,11 +116,11 @@ func TestBuildConfiguration(t *testing.T) {
 				application(
 					appID("/app"),
 					appPorts(80),
-					withLabel("traefik.middlewares.Middleware1.basicauth.users", "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
-					withLabel("traefik.routers.app.middlewares", "Middleware1"),
+					withLabel("traefik.http.middlewares.Middleware1.basicauth.users", "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+					withLabel("traefik.http.routers.app.middlewares", "Middleware1"),
 					withTasks(localhostTask(taskPorts(80))),
 				)),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"app": {
 						Service:     "app",
@@ -159,18 +159,18 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/foo-v000"),
 					withTasks(localhostTask(taskPorts(8080))),
 
-					withLabel("traefik.services.Service1.LoadBalancer.server.port", "index:0"),
-					withLabel("traefik.routers.Router1.rule", "Host(`app.marathon.localhost`)"),
+					withLabel("traefik.http.services.Service1.LoadBalancer.server.port", "index:0"),
+					withLabel("traefik.http.routers.Router1.rule", "Host(`app.marathon.localhost`)"),
 				),
 				application(
 					appID("/foo-v001"),
 					withTasks(localhostTask(taskPorts(8081))),
 
-					withLabel("traefik.services.Service1.LoadBalancer.server.port", "index:0"),
-					withLabel("traefik.routers.Router1.rule", "Host(`app.marathon.localhost`)"),
+					withLabel("traefik.http.services.Service1.LoadBalancer.server.port", "index:0"),
+					withLabel("traefik.http.routers.Router1.rule", "Host(`app.marathon.localhost`)"),
 				),
 			),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Router1": {
 						Service: "Service1",
@@ -204,19 +204,19 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(8080))),
 					withTasks(localhostTask(taskPorts(8081))),
 
-					withLabel("traefik.services.Service1.LoadBalancer.server.port", "index:0"),
-					withLabel("traefik.routers.Router1.rule", "Host(`app.marathon.localhost`)"),
+					withLabel("traefik.http.services.Service1.LoadBalancer.server.port", "index:0"),
+					withLabel("traefik.http.routers.Router1.rule", "Host(`app.marathon.localhost`)"),
 				),
 				application(
 					appID("/foo-v001"),
 					withTasks(localhostTask(taskPorts(8082))),
 					withTasks(localhostTask(taskPorts(8083))),
 
-					withLabel("traefik.services.Service1.LoadBalancer.server.port", "index:0"),
-					withLabel("traefik.routers.Router1.rule", "Host(`app.marathon.localhost`)"),
+					withLabel("traefik.http.services.Service1.LoadBalancer.server.port", "index:0"),
+					withLabel("traefik.http.routers.Router1.rule", "Host(`app.marathon.localhost`)"),
 				),
 			),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Router1": {
 						Service: "Service1",
@@ -262,7 +262,7 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(8081))),
 				),
 			),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"foo": {
 						Service: "foo",
@@ -306,7 +306,7 @@ func TestBuildConfiguration(t *testing.T) {
 					appPorts(80),
 					withTasks(localhostTask(taskPorts(80)), localhostTask(taskPorts(81))),
 				)),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"app": {
 						Service: "app",
@@ -341,9 +341,9 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/app"),
 					appPorts(80),
 					withTasks(localhostTask(taskPorts(80))),
-					withLabel("traefik.services.Service1.loadbalancer.method", "drr"),
+					withLabel("traefik.http.services.Service1.loadbalancer.method", "drr"),
 				)),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"app": {
 						Service: "Service1",
@@ -372,11 +372,11 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/app"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.services.Service1.loadbalancer.method", "wrr"),
-					withLabel("traefik.routers.Router1.rule", "Host(`foo.com`)"),
-					withLabel("traefik.routers.Router1.service", "Service1"),
+					withLabel("traefik.http.services.Service1.loadbalancer.method", "wrr"),
+					withLabel("traefik.http.routers.Router1.rule", "Host(`foo.com`)"),
+					withLabel("traefik.http.routers.Router1.service", "Service1"),
 				)),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Router1": {
 						Service: "Service1",
@@ -407,9 +407,9 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/app"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.routers.Router1.rule", "Host(`foo.com`)"),
+					withLabel("traefik.http.routers.Router1.rule", "Host(`foo.com`)"),
 				)),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Middlewares: map[string]*config.Middleware{},
 				Services: map[string]*config.Service{
 					"app": {
@@ -440,10 +440,10 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/app"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.routers.Router1.rule", "Host(`foo.com`)"),
-					withLabel("traefik.services.Service1.loadbalancer.method", "wrr"),
+					withLabel("traefik.http.routers.Router1.rule", "Host(`foo.com`)"),
+					withLabel("traefik.http.services.Service1.loadbalancer.method", "wrr"),
 				)),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Router1": {
 						Service: "Service1",
@@ -474,11 +474,11 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/app"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.routers.Router1.rule", "Host(`foo.com`)"),
-					withLabel("traefik.services.Service1.loadbalancer.method", "wrr"),
-					withLabel("traefik.services.Service2.loadbalancer.method", "wrr"),
+					withLabel("traefik.http.routers.Router1.rule", "Host(`foo.com`)"),
+					withLabel("traefik.http.services.Service1.loadbalancer.method", "wrr"),
+					withLabel("traefik.http.services.Service2.loadbalancer.method", "wrr"),
 				)),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers:     map[string]*config.Router{},
 				Middlewares: map[string]*config.Middleware{},
 				Services: map[string]*config.Service{
@@ -516,15 +516,15 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/app"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.services.Service1.loadbalancer.method", "wrr"),
+					withLabel("traefik.http.services.Service1.loadbalancer.method", "wrr"),
 				),
 				application(
 					appID("/app2"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.services.Service1.loadbalancer.method", "drr"),
+					withLabel("traefik.http.services.Service1.loadbalancer.method", "drr"),
 				)),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"app": {
 						Service: "Service1",
@@ -546,15 +546,15 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/app"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.middlewares.Middleware1.maxconn.amount", "42"),
+					withLabel("traefik.http.middlewares.Middleware1.maxconn.amount", "42"),
 				),
 				application(
 					appID("/app2"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.middlewares.Middleware1.maxconn.amount", "42"),
+					withLabel("traefik.http.middlewares.Middleware1.maxconn.amount", "42"),
 				)),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"app": {
 						Service: "app",
@@ -608,15 +608,15 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/app"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.middlewares.Middleware1.maxconn.amount", "42"),
+					withLabel("traefik.http.middlewares.Middleware1.maxconn.amount", "42"),
 				),
 				application(
 					appID("/app2"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.middlewares.Middleware1.maxconn.amount", "41"),
+					withLabel("traefik.http.middlewares.Middleware1.maxconn.amount", "41"),
 				)),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"app": {
 						Service: "app",
@@ -663,15 +663,15 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/app"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.routers.Router1.rule", "Host(`foo.com`)"),
+					withLabel("traefik.http.routers.Router1.rule", "Host(`foo.com`)"),
 				),
 				application(
 					appID("/app2"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.routers.Router1.rule", "Host(`bar.com`)"),
+					withLabel("traefik.http.routers.Router1.rule", "Host(`bar.com`)"),
 				)),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers:     map[string]*config.Router{},
 				Middlewares: map[string]*config.Middleware{},
 				Services: map[string]*config.Service{
@@ -709,17 +709,17 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/app"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.routers.Router1.rule", "Host(`foo.com`)"),
-					withLabel("traefik.services.Service1.LoadBalancer.method", "wrr"),
+					withLabel("traefik.http.routers.Router1.rule", "Host(`foo.com`)"),
+					withLabel("traefik.http.services.Service1.LoadBalancer.method", "wrr"),
 				),
 				application(
 					appID("/app2"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.routers.Router1.rule", "Host(`foo.com`)"),
-					withLabel("traefik.services.Service1.LoadBalancer.method", "wrr"),
+					withLabel("traefik.http.routers.Router1.rule", "Host(`foo.com`)"),
+					withLabel("traefik.http.services.Service1.LoadBalancer.method", "wrr"),
 				)),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Router1": {
 						Service: "Service1",
@@ -754,15 +754,15 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/app"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.routers.Router1.rule", "Host(`foo.com`)"),
+					withLabel("traefik.http.routers.Router1.rule", "Host(`foo.com`)"),
 				),
 				application(
 					appID("/app2"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.routers.Router1.rule", "Host(`foo.com`)"),
+					withLabel("traefik.http.routers.Router1.rule", "Host(`foo.com`)"),
 				)),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers:     map[string]*config.Router{},
 				Middlewares: map[string]*config.Middleware{},
 				Services: map[string]*config.Service{
@@ -802,7 +802,7 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(80, 81))),
 					withLabel("traefik.wrong.label", "tchouk"),
 				)),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"app": {
 						Service: "app",
@@ -833,10 +833,10 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/app"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.services.Service1.LoadBalancer.server.scheme", "h2c"),
-					withLabel("traefik.services.Service1.LoadBalancer.server.port", "90"),
+					withLabel("traefik.http.services.Service1.LoadBalancer.server.scheme", "h2c"),
+					withLabel("traefik.http.services.Service1.LoadBalancer.server.port", "90"),
 				)),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"app": {
 						Service: "Service1",
@@ -867,10 +867,10 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/app"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.services.Service1.LoadBalancer.server.port", ""),
-					withLabel("traefik.services.Service2.LoadBalancer.server.port", "8080"),
+					withLabel("traefik.http.services.Service1.LoadBalancer.server.port", ""),
+					withLabel("traefik.http.services.Service2.LoadBalancer.server.port", "8080"),
 				)),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers:     map[string]*config.Router{},
 				Middlewares: map[string]*config.Middleware{},
 				Services: map[string]*config.Service{
@@ -909,7 +909,7 @@ func TestBuildConfiguration(t *testing.T) {
 					appPorts(80, 81),
 					withTasks(localhostTask()),
 				)),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers:     map[string]*config.Router{},
 				Middlewares: map[string]*config.Middleware{},
 				Services:    map[string]*config.Service{},
@@ -922,9 +922,9 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/app"),
 					appPorts(80, 81),
 					withTasks(localhostTask()),
-					withLabel("traefik.middlewares.Middleware1.basicauth.users", "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+					withLabel("traefik.http.middlewares.Middleware1.basicauth.users", "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 				)),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers:     map[string]*config.Router{},
 				Middlewares: map[string]*config.Middleware{},
 				Services:    map[string]*config.Service{},
@@ -939,7 +939,7 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask()),
 					withLabel("traefik.enable", "false"),
 				)),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers:     map[string]*config.Router{},
 				Middlewares: map[string]*config.Middleware{},
 				Services:    map[string]*config.Service{},
@@ -954,7 +954,7 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask()),
 					withLabel("traefik.enable", "false"),
 				)),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers:     map[string]*config.Router{},
 				Middlewares: map[string]*config.Middleware{},
 				Services:    map[string]*config.Service{},
@@ -976,7 +976,7 @@ func TestBuildConfiguration(t *testing.T) {
 					Regex:     "bar",
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers:     map[string]*config.Router{},
 				Middlewares: map[string]*config.Middleware{},
 				Services:    map[string]*config.Service{},
@@ -999,7 +999,7 @@ func TestBuildConfiguration(t *testing.T) {
 					Regex:     "rack_id:CLUSTER:rack-2",
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers:     map[string]*config.Router{},
 				Middlewares: map[string]*config.Middleware{},
 				Services:    map[string]*config.Service{},
@@ -1022,7 +1022,7 @@ func TestBuildConfiguration(t *testing.T) {
 					Regex:     "rack_id:CLUSTER:rack-1",
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"app": {
 						Service: "app",
@@ -1063,7 +1063,7 @@ func TestBuildConfiguration(t *testing.T) {
 					Regex:     "bar",
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"app": {
 						Service: "app",
@@ -1096,7 +1096,7 @@ func TestBuildConfiguration(t *testing.T) {
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
 				)),
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"a_b_app": {
 						Service: "a_b_app",
@@ -1145,7 +1145,7 @@ func TestBuildConfiguration(t *testing.T) {
 			actualConfig := p.buildConfiguration(context.Background(), test.applications)
 
 			assert.NotNil(t, actualConfig)
-			assert.Equal(t, test.expected, actualConfig)
+			assert.Equal(t, test.expected, actualConfig.HTTP)
 		})
 	}
 }

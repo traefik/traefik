@@ -60,8 +60,8 @@ func init() {
 		check.Suite(&HostResolverSuite{})
 		check.Suite(&HTTPSSuite{})
 		check.Suite(&LogRotationSuite{})
-		check.Suite(&MarathonSuite{})
-		check.Suite(&MarathonSuite15{})
+		// check.Suite(&MarathonSuite{})
+		// check.Suite(&MarathonSuite15{})
 		check.Suite(&RateLimitSuite{})
 		check.Suite(&RestSuite{})
 		check.Suite(&RetrySuite{})
@@ -73,7 +73,9 @@ func init() {
 	}
 	if *host {
 		// tests launched from the host
+		// check.Suite(&K8sSuite{})
 		check.Suite(&ProxyProtocolSuite{})
+		check.Suite(&TCPSuite{})
 		// FIXME Provider tests
 		// check.Suite(&Etcd3Suite{})
 	}

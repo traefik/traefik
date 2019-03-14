@@ -1,6 +1,6 @@
 whoami1:
   image: containous/whoami
   labels:
-    - traefik.Routers.RouterMini.Rule=PathPrefix("/whoami")
+    - traefik.http.Routers.RouterMini.Rule=PathPrefix("/whoami")
     - traefik.enable=true
     
