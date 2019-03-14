@@ -48,6 +48,49 @@ Pieces of middleware can be combined in chains to fit every scenario.
           - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo",
     ```
 
+??? example "In a Kubernetes CRD"
+
+    ```yaml
+    apiVersion: apiextensions.k8s.io/v1beta1
+    kind: CustomResourceDefinition
+    metadata:
+      name: middlewares.traefik.containo.us
+    spec:
+      group: traefik.containo.us
+      version: v1alpha1
+      names:
+        kind: Middleware
+        plural: middlewares
+        singular: middleware
+      scope: Namespaced
+
+    ---
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: Middleware
+    metadata:
+      name: stripprefix
+      namespace: default
+
+    spec:
+      stripprefix:
+        prefixes:
+          - /stripit
+
+    ---
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: ingressroute.crd
+      namespace: default
+
+    spec:
+    # more fields...
+      routes:
+        # more fields...
+        middleware:
+        - name: stripprefix
+    ```
+
 ## Advanced Configuration
 
 When you declare a middleware, it lives in its `provider` namespace.

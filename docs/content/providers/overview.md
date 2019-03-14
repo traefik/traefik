@@ -25,12 +25,12 @@ Even if each provider is different, we can categorize them in four groups:
 
 Below is the list of the currently supported providers in Traefik. 
 
-| Provider                    | Type         | Configuration Type |
-|-----------------------------|--------------|--------------------|
-| [Docker](./docker.md)       | Orchestrator | Label              |
-| [File](./file.md)           | Orchestrator | Custom Annotation  |
-| Kubernetes (not documented) | Orchestrator | Custom Annotation  |
-| Marathon (not documented)   | Orchestrator | Label              |
+| Provider                      | Type         | Configuration Type |
+|-------------------------------|--------------|--------------------|
+| [Docker](./docker.md)         | Orchestrator | Label              |
+| [File](./file.md)             | Orchestrator | Custom Annotation  |
+| [Kubernetes](./kubernetes.md) | Orchestrator | Custom Resource    |
+| Marathon (not documented)     | Orchestrator | Label              |
 
 !!! note "More Providers"
 
