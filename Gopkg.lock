@@ -2101,7 +2101,7 @@
   version = "kubernetes-1.11.7"
 
 [[projects]]
-  digest = "1:bf3c1830dfb5b25b68de13b80d8d224ac4ff2d2579436f41193c620263fef5ca"
+  digest = "1:1fa62171c3cf8abf9933ec87c1a00881f8f086a5928b2a8481c469ab67cb4104"
   name = "k8s.io/apimachinery"
   packages = [
     "pkg/api/errors",
@@ -2132,15 +2132,18 @@
     "pkg/util/framer",
     "pkg/util/intstr",
     "pkg/util/json",
+    "pkg/util/mergepatch",
     "pkg/util/net",
     "pkg/util/runtime",
     "pkg/util/sets",
+    "pkg/util/strategicpatch",
     "pkg/util/validation",
     "pkg/util/validation/field",
     "pkg/util/wait",
     "pkg/util/yaml",
     "pkg/version",
     "pkg/watch",
+    "third_party/forked/golang/json",
     "third_party/forked/golang/reflect",
   ]
   pruneopts = "NUT"
@@ -2148,10 +2151,11 @@
   version = "kubernetes-1.11.7"
 
 [[projects]]
-  digest = "1:4d6b87c107503be5e97cfb4a7ccd11730517486bd909c1ce0e48ac47a0f8ee3f"
+  digest = "1:b557d722202c63ce865634b8adc42b7d283b7d71bd52c7becf525abc04b8bed9"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
+    "discovery/fake",
     "informers",
     "informers/admissionregistration",
     "informers/admissionregistration/v1alpha1",
@@ -2256,6 +2260,7 @@
     "plugin/pkg/client/auth/exec",
     "rest",
     "rest/watch",
+    "testing",
     "tools/auth",
     "tools/cache",
     "tools/clientcmd",
@@ -2330,6 +2335,14 @@
   pruneopts = "NUT"
   revision = "71442cd4037d612096940ceb0f3fec3f7fff66e0"
   version = "v0.2.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:03a96603922fc1f6895ae083e1e16d943b55ef0656b56965351bd87e7d90485f"
+  name = "k8s.io/kube-openapi"
+  packages = ["pkg/util/proto"]
+  pruneopts = "NUT"
+  revision = "15615b16d372105f0c69ff47dfe7402926a65aaa"
 
 [solve-meta]
   analyzer-name = "dep"
@@ -2466,7 +2479,6 @@
     "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/opentracer",
     "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer",
     "gopkg.in/fsnotify.v1",
-    "gopkg.in/yaml.v2",
     "k8s.io/api/core/v1",
     "k8s.io/api/extensions/v1beta1",
     "k8s.io/apimachinery/pkg/api/errors",
@@ -2474,14 +2486,20 @@
     "k8s.io/apimachinery/pkg/labels",
     "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/runtime/schema",
+    "k8s.io/apimachinery/pkg/runtime/serializer",
     "k8s.io/apimachinery/pkg/types",
     "k8s.io/apimachinery/pkg/util/intstr",
+    "k8s.io/apimachinery/pkg/watch",
+    "k8s.io/client-go/discovery",
+    "k8s.io/client-go/discovery/fake",
     "k8s.io/client-go/informers",
     "k8s.io/client-go/kubernetes",
     "k8s.io/client-go/kubernetes/scheme",
     "k8s.io/client-go/rest",
+    "k8s.io/client-go/testing",
     "k8s.io/client-go/tools/cache",
     "k8s.io/client-go/tools/clientcmd",
+    "k8s.io/client-go/util/flowcontrol",
     "k8s.io/code-generator/cmd/client-gen",
     "k8s.io/code-generator/cmd/deepcopy-gen",
     "k8s.io/code-generator/cmd/defaulter-gen",
