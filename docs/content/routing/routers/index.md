@@ -222,8 +222,9 @@ If you want to limit the router scope to a set of entrypoints, set the entrypoin
     [tcp.routers]
        [tcp.routers.Router-1]
           # By default, routers listen to every entrypoints
-          rule = "Host(traefik.io)"
+          rule = "HostSNI(`traefik.io`)"
           service = "service-1"
+          [tcp.routers.Router-1.tls] # will route TLS requests (and ignore non tls requests)
     ```
 
 ??? example "Listens to Specific EntryPoints"
@@ -240,7 +241,7 @@ If you want to limit the router scope to a set of entrypoints, set the entrypoin
     [tcp.routers]
        [tcp.routers.Router-1]
           entryPoints = ["web-secure", "other"] # won't listen to entrypoint web
-          rule = "Host(traefik.io)"
+          rule = "HostSNI(`traefik.io`)"
           service = "service-1"
           [tcp.routers.Router-1.tls] # will route TLS requests (and ignore non tls requests)
     ```
