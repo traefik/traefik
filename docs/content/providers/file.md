@@ -3,9 +3,6 @@
 Good Old Configuration File
 {: .subtitle } 
 
-
-
-
 The file provider lets you define the [dynamic configuration](./overview.md) in a `toml` file.
 You can write these configuration elements:
 
@@ -19,7 +16,7 @@ You can write these configuration elements:
 !!! tip
     The file provider can be a good location for common elements you'd like to re-use from other providers; e.g. declaring whitelist middlewares, basic authentication, ...
 
-### Configuration Examples
+## Configuration Examples
 
 ??? example "Declaring Routers, Middlewares & Services"
 
