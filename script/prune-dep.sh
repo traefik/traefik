@@ -30,6 +30,7 @@ find vendor -type f  \( ! -iname 'licen[cs]e*' \
  -a ! -iname '*.hh' \
  -a ! -iname '*.hpp' \
  -a ! -iname '*.hxx' \
+ -a ! -wholename 'vendor/k8s.io/code-generator/*' \
  -a ! -iname '*.s' \) -exec rm -f {} +
 
 find . -type d \( -iname '*Godeps*' \) -exec rm -rf {} +
