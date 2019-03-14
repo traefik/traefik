@@ -41,6 +41,10 @@ func NewProviderAggregator(conf static.Providers) ProviderAggregator {
 		p.quietAddProvider(conf.Kubernetes)
 	}
 
+	if conf.KubernetesCRD != nil {
+		p.quietAddProvider(conf.KubernetesCRD)
+	}
+
 	return p
 }
 

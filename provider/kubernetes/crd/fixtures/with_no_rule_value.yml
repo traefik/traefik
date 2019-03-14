@@ -1,0 +1,17 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test.crd
+  namespace: default
+
+spec:
+  entryPoints:
+    - web
+
+  routes:
+  - match: ""
+    kind: Rule
+    priority: 12
+    services:
+    - name: whoami
+      port: 80

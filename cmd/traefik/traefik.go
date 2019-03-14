@@ -28,7 +28,7 @@ import (
 	"github.com/containous/traefik/old/provider/ecs"
 	oldtypes "github.com/containous/traefik/old/types"
 	"github.com/containous/traefik/provider/aggregator"
-	"github.com/containous/traefik/provider/kubernetes/ingress"
+	"github.com/containous/traefik/provider/kubernetes/k8s"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/server"
 	"github.com/containous/traefik/server/router"
@@ -116,7 +116,7 @@ Complete documentation is available at https://traefik.io`,
 	f.AddParser(reflect.SliceOf(reflect.TypeOf("")), &sliceOfStrings{})
 	f.AddParser(reflect.TypeOf(traefiktls.FilesOrContents{}), &traefiktls.FilesOrContents{})
 	f.AddParser(reflect.TypeOf(types.Constraints{}), &types.Constraints{})
-	f.AddParser(reflect.TypeOf(ingress.Namespaces{}), &ingress.Namespaces{})
+	f.AddParser(reflect.TypeOf(k8s.Namespaces{}), &k8s.Namespaces{})
 	f.AddParser(reflect.TypeOf(ecs.Clusters{}), &ecs.Clusters{})
 	f.AddParser(reflect.TypeOf([]types.Domain{}), &types.Domains{})
 	f.AddParser(reflect.TypeOf(types.DNSResolvers{}), &types.DNSResolvers{})
