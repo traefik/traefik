@@ -1,15 +1,15 @@
 package configuration
 
 import (
-	"github.com/containous/traefik/config/static"
 	"github.com/containous/traefik/old/api"
 	"github.com/containous/traefik/old/middlewares/tracing"
 	"github.com/containous/traefik/old/types"
-	"github.com/containous/traefik/ping"
-	"github.com/containous/traefik/tracing/datadog"
-	"github.com/containous/traefik/tracing/jaeger"
-	"github.com/containous/traefik/tracing/zipkin"
-	types2 "github.com/containous/traefik/types"
+	"github.com/containous/traefik/pkg/config/static"
+	"github.com/containous/traefik/pkg/ping"
+	"github.com/containous/traefik/pkg/tracing/datadog"
+	"github.com/containous/traefik/pkg/tracing/jaeger"
+	"github.com/containous/traefik/pkg/tracing/zipkin"
+	types2 "github.com/containous/traefik/pkg/types"
 )
 
 // ConvertStaticConf FIXME sugar

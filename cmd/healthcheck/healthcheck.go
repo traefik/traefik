@@ -9,7 +9,7 @@ import (
 
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/cmd"
-	"github.com/containous/traefik/config/static"
+	"github.com/containous/traefik/pkg/config/static"
 )
 
 // NewCmd builds a new HealthCheck command

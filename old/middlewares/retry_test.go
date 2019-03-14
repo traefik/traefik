@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/containous/traefik/testhelpers"
+	"github.com/containous/traefik/pkg/testhelpers"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

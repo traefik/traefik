@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	"github.com/containous/traefik/config"
 	"github.com/containous/traefik/old/log"
 	"github.com/containous/traefik/old/types"
+	"github.com/containous/traefik/pkg/config"
 	"github.com/sirupsen/logrus"
 )
 

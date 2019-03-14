@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/containous/traefik/testhelpers"
+	"github.com/containous/traefik/pkg/testhelpers"
 	"github.com/vulcand/oxy/roundrobin"
 )
 

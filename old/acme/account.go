@@ -15,9 +15,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containous/traefik/log"
-	acmeprovider "github.com/containous/traefik/provider/acme"
-	"github.com/containous/traefik/types"
+	"github.com/containous/traefik/pkg/log"
+	acmeprovider "github.com/containous/traefik/pkg/provider/acme"
+	"github.com/containous/traefik/pkg/types"
 	"github.com/go-acme/lego/certcrypto"
 	"github.com/go-acme/lego/registration"
 )

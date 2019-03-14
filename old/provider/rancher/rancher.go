@@ -6,7 +6,7 @@ import (
 	"github.com/containous/traefik/old/log"
 	"github.com/containous/traefik/old/provider"
 	"github.com/containous/traefik/old/types"
-	"github.com/containous/traefik/safe"
+	"github.com/containous/traefik/pkg/safe"
 )
 
 const (

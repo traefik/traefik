@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff"
-	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/old/cluster"
-	"github.com/containous/traefik/safe"
+	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/pkg/safe"
 	"github.com/go-acme/lego/challenge"
 	"github.com/go-acme/lego/challenge/tlsalpn01"
 )

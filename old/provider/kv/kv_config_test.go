@@ -10,7 +10,7 @@ import (
 	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/old/provider/label"
 	"github.com/containous/traefik/old/types"
-	"github.com/containous/traefik/tls"
+	"github.com/containous/traefik/pkg/tls"
 	"github.com/stretchr/testify/assert"
 )
 

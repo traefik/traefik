@@ -15,7 +15,7 @@ import (
 	"github.com/containous/traefik/old/log"
 	"github.com/containous/traefik/old/provider/label"
 	"github.com/containous/traefik/old/types"
-	"github.com/containous/traefik/tls"
+	"github.com/containous/traefik/pkg/tls"
 )
 
 func (p *Provider) buildConfiguration() *types.Configuration {
