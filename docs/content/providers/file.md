@@ -3,27 +3,25 @@
 Good Old Configuration File
 {: .subtitle } 
 
-No longer afraid of using files for your configuration, the file provider is here for you !
 
-## Configuration
 
-### Overview
 
-This provider apply the traefik configuration from a `toml` file.
-It could be defined:
+The file provider lets you define the [dynamic configuration](./overview.md) in a `toml` file.
+You can write these configuration elements:
 
-* At the end of the global configuration file `traefik.toml`
-* In [one dedicated file](#filename-optional)
-* In [multiple dedicated files](http://0.0.0.0:8000/providers/file/#directory-optional)
+* At the end of the main Traefik configuration file (by default: `traefik.toml`).
+* In [a dedicated file](#filename-optional)
+* In [several dedicated files](#directory-optional)
 
-As it is a configuration reference, you will find it everywhere in the traefik documentation.
+!!! note
+    The file provider is the default format used throughout the documentation to show samples of the configuration for many features. 
 
 !!! tip
-    As Traefik is multi-providers, you can define one or more middlewares in the file provider and use it in another provider (like docker).
+    The file provider can be a good location for common elements you'd like to re-use from other providers; e.g. declaring whitelist middlewares, basic authentication, ...
 
 ### Configuration Examples
 
-??? example "Configuring File & Deploying / Exposing Services"
+??? example "Declaring Routers, Middlewares & Services"
 
     ``` toml
     # Enabling the file provider
@@ -65,7 +63,7 @@ As it is a configuration reference, you will find it everywhere in the traefik d
 
 ### filename (_Optional_)
 
-Defines the path of a dedicated configuration file to use.
+Defines the path of the configuration file.
 
 ```toml
 [providers]
@@ -75,7 +73,7 @@ Defines the path of a dedicated configuration file to use.
 
 ### directory (_Optional_)
 
-Defines the directory path of dedicated configuration files to use.
+Defines the directory that contains the configuration files.
 
 ```toml
 [providers]
@@ -85,8 +83,8 @@ Defines the directory path of dedicated configuration files to use.
 
 ### watch (_Optional_)
 
-Set the `watch` option to `true` to allow Traefik to watch file changes automatically.  
-It works both for the `filename` and `directory` options.
+Set the `watch` option to `true` to allow Traefik to automatically watch for file changes.  
+It works with both the `filename` and the `directory` options.
 
 ```toml
 [providers]
@@ -98,7 +96,7 @@ It works both for the `filename` and `directory` options.
 ### TOML Templating
 
 !!! warning
-    TOML templating can only be used **if rules are defined in one or more separate files**. Templating will not work in the Traefik configuration file.
+    TOML templating only works along with dedicated configuration files. Templating does not work in the Traefik main configuration file.
 
 Traefik allows using TOML templating.  
 Thus, it's possible to define easily lot of routers, services and TLS certificates as described in the file `template-rules.toml` :
