@@ -653,12 +653,12 @@
   revision = "89ef8af493ab468a45a42bb0d89a06fccdd2fb22"
 
 [[projects]]
-  digest = "1:a12a1a87292cc2c5923b070b478109cffc86f22cc368481cd8d589b35e446802"
+  digest = "1:6f26e34204ddad638d25456c6443c2763aa38954558226722c253e08e9f491fa"
   name = "github.com/exoscale/egoscale"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "d8dfca6802ad5c1a5300e52fa68067e791322035"
-  version = "v0.11.4"
+  revision = "0a91ac8209d6a805f259ff881d0c2654221d0346"
+  version = "v0.14.3"
 
 [[projects]]
   digest = "1:b0d5e98ac0f0a509eb320f542e748582d637aae09e74538212e9712d1e71064b"
@@ -696,6 +696,94 @@
   packages = ["."]
   pruneopts = "NUT"
   revision = "73d445a93680fa1a78ae23a5839bad48f32ba1ee"
+
+[[projects]]
+  branch = "master"
+  digest = "1:7dcfb91047873eb70b3a20ed5c400c4d05d9c1e73c9dac0e71ec0d44589d208a"
+  name = "github.com/go-acme/lego"
+  packages = [
+    "acme",
+    "acme/api",
+    "acme/api/internal/nonces",
+    "acme/api/internal/secure",
+    "acme/api/internal/sender",
+    "certcrypto",
+    "certificate",
+    "challenge",
+    "challenge/dns01",
+    "challenge/http01",
+    "challenge/resolver",
+    "challenge/tlsalpn01",
+    "lego",
+    "log",
+    "platform/config/env",
+    "platform/wait",
+    "providers/dns",
+    "providers/dns/acmedns",
+    "providers/dns/alidns",
+    "providers/dns/auroradns",
+    "providers/dns/azure",
+    "providers/dns/bluecat",
+    "providers/dns/cloudflare",
+    "providers/dns/cloudns",
+    "providers/dns/cloudns/internal",
+    "providers/dns/cloudxns",
+    "providers/dns/cloudxns/internal",
+    "providers/dns/conoha",
+    "providers/dns/conoha/internal",
+    "providers/dns/designate",
+    "providers/dns/digitalocean",
+    "providers/dns/dnsimple",
+    "providers/dns/dnsmadeeasy",
+    "providers/dns/dnsmadeeasy/internal",
+    "providers/dns/dnspod",
+    "providers/dns/dreamhost",
+    "providers/dns/duckdns",
+    "providers/dns/dyn",
+    "providers/dns/exec",
+    "providers/dns/exoscale",
+    "providers/dns/fastdns",
+    "providers/dns/gandi",
+    "providers/dns/gandiv5",
+    "providers/dns/gcloud",
+    "providers/dns/glesys",
+    "providers/dns/godaddy",
+    "providers/dns/hostingde",
+    "providers/dns/httpreq",
+    "providers/dns/iij",
+    "providers/dns/inwx",
+    "providers/dns/lightsail",
+    "providers/dns/linode",
+    "providers/dns/linodev4",
+    "providers/dns/mydnsjp",
+    "providers/dns/namecheap",
+    "providers/dns/namedotcom",
+    "providers/dns/netcup",
+    "providers/dns/netcup/internal",
+    "providers/dns/nifcloud",
+    "providers/dns/nifcloud/internal",
+    "providers/dns/ns1",
+    "providers/dns/oraclecloud",
+    "providers/dns/otc",
+    "providers/dns/ovh",
+    "providers/dns/pdns",
+    "providers/dns/rackspace",
+    "providers/dns/rfc2136",
+    "providers/dns/route53",
+    "providers/dns/sakuracloud",
+    "providers/dns/selectel",
+    "providers/dns/selectel/internal",
+    "providers/dns/stackpath",
+    "providers/dns/transip",
+    "providers/dns/vegadns",
+    "providers/dns/vscale",
+    "providers/dns/vscale/internal",
+    "providers/dns/vultr",
+    "providers/dns/zoneee",
+    "registration",
+  ]
+  pruneopts = "NUT"
+  revision = "0c87df143e630a1c50b4c36c8fbdda6cd993ebba"
 
 [[projects]]
   branch = "fork-containous"
@@ -1389,6 +1477,17 @@
   revision = "1f5c07e90700ae93ddcba0c7af7d9c7201646ccc"
 
 [[projects]]
+  digest = "1:b52f6b7059f06a11ab6ab039714dda0d93878d9227f84c84ca9b6f046bfb5fef"
+  name = "github.com/oracle/oci-go-sdk"
+  packages = [
+    "common",
+    "dns",
+  ]
+  pruneopts = "NUT"
+  revision = "0306ff0303b6c9f6ea6458021adc9f8f09f562b0"
+  version = "v4.2.0"
+
+[[projects]]
   branch = "master"
   digest = "1:4e9d94fd7812a4c41e403796decb682a8f18fa50fa1f48532967dddc279303f5"
   name = "github.com/ovh/go-ovh"
@@ -1757,91 +1856,6 @@
   packages = ["."]
   pruneopts = "NUT"
   revision = "0c8571ac0ce161a5feb57375a9cdf148c98c0f70"
-
-[[projects]]
-  digest = "1:2a8f3a3c32e8a622b4053f0653c1e172b0480e75493636d75f0324b77c620805"
-  name = "github.com/xenolf/lego"
-  packages = [
-    "acme",
-    "acme/api",
-    "acme/api/internal/nonces",
-    "acme/api/internal/secure",
-    "acme/api/internal/sender",
-    "certcrypto",
-    "certificate",
-    "challenge",
-    "challenge/dns01",
-    "challenge/http01",
-    "challenge/resolver",
-    "challenge/tlsalpn01",
-    "lego",
-    "log",
-    "platform/config/env",
-    "platform/wait",
-    "providers/dns",
-    "providers/dns/acmedns",
-    "providers/dns/alidns",
-    "providers/dns/auroradns",
-    "providers/dns/azure",
-    "providers/dns/bluecat",
-    "providers/dns/cloudflare",
-    "providers/dns/cloudxns",
-    "providers/dns/cloudxns/internal",
-    "providers/dns/conoha",
-    "providers/dns/conoha/internal",
-    "providers/dns/designate",
-    "providers/dns/digitalocean",
-    "providers/dns/dnsimple",
-    "providers/dns/dnsmadeeasy",
-    "providers/dns/dnsmadeeasy/internal",
-    "providers/dns/dnspod",
-    "providers/dns/dreamhost",
-    "providers/dns/duckdns",
-    "providers/dns/dyn",
-    "providers/dns/exec",
-    "providers/dns/exoscale",
-    "providers/dns/fastdns",
-    "providers/dns/gandi",
-    "providers/dns/gandiv5",
-    "providers/dns/gcloud",
-    "providers/dns/glesys",
-    "providers/dns/godaddy",
-    "providers/dns/hostingde",
-    "providers/dns/httpreq",
-    "providers/dns/iij",
-    "providers/dns/inwx",
-    "providers/dns/lightsail",
-    "providers/dns/linode",
-    "providers/dns/linodev4",
-    "providers/dns/mydnsjp",
-    "providers/dns/namecheap",
-    "providers/dns/namedotcom",
-    "providers/dns/netcup",
-    "providers/dns/netcup/internal",
-    "providers/dns/nifcloud",
-    "providers/dns/nifcloud/internal",
-    "providers/dns/ns1",
-    "providers/dns/otc",
-    "providers/dns/ovh",
-    "providers/dns/pdns",
-    "providers/dns/rackspace",
-    "providers/dns/rfc2136",
-    "providers/dns/route53",
-    "providers/dns/sakuracloud",
-    "providers/dns/selectel",
-    "providers/dns/selectel/internal",
-    "providers/dns/stackpath",
-    "providers/dns/transip",
-    "providers/dns/vegadns",
-    "providers/dns/vscale",
-    "providers/dns/vscale/internal",
-    "providers/dns/vultr",
-    "providers/dns/zoneee",
-    "registration",
-  ]
-  pruneopts = "NUT"
-  revision = "52e43eb318b07ace590c2144804292c89aa74802"
-  version = "v2.2.0"
 
 [[projects]]
   branch = "master"
@@ -2354,6 +2368,16 @@
     "github.com/eapache/channels",
     "github.com/elazarl/go-bindata-assetfs",
     "github.com/gambol99/go-marathon",
+    "github.com/go-acme/lego/certcrypto",
+    "github.com/go-acme/lego/certificate",
+    "github.com/go-acme/lego/challenge",
+    "github.com/go-acme/lego/challenge/dns01",
+    "github.com/go-acme/lego/challenge/http01",
+    "github.com/go-acme/lego/challenge/tlsalpn01",
+    "github.com/go-acme/lego/lego",
+    "github.com/go-acme/lego/log",
+    "github.com/go-acme/lego/providers/dns",
+    "github.com/go-acme/lego/registration",
     "github.com/go-check/check",
     "github.com/go-kit/kit/log",
     "github.com/go-kit/kit/metrics",
@@ -2420,16 +2444,6 @@
     "github.com/vulcand/oxy/roundrobin",
     "github.com/vulcand/oxy/utils",
     "github.com/vulcand/predicate",
-    "github.com/xenolf/lego/certcrypto",
-    "github.com/xenolf/lego/certificate",
-    "github.com/xenolf/lego/challenge",
-    "github.com/xenolf/lego/challenge/dns01",
-    "github.com/xenolf/lego/challenge/http01",
-    "github.com/xenolf/lego/challenge/tlsalpn01",
-    "github.com/xenolf/lego/lego",
-    "github.com/xenolf/lego/log",
-    "github.com/xenolf/lego/providers/dns",
-    "github.com/xenolf/lego/registration",
     "golang.org/x/net/http/httpguts",
     "golang.org/x/net/http2",
     "golang.org/x/net/http2/hpack",
