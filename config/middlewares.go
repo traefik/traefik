@@ -5,6 +5,8 @@ import (
 	"github.com/containous/traefik/ip"
 )
 
+// +k8s:deepcopy-gen=true
+
 // Middleware holds the Middleware configuration.
 type Middleware struct {
 	AddPrefix         *AddPrefix         `json:"addPrefix,omitempty"`
@@ -30,10 +32,14 @@ type Middleware struct {
 	Retry             *Retry             `json:"retry,omitempty"`
 }
 
+// +k8s:deepcopy-gen=true
+
 // AddPrefix holds the AddPrefix configuration.
 type AddPrefix struct {
 	Prefix string `json:"prefix,omitempty"`
 }
+
+// +k8s:deepcopy-gen=true
 
 // Auth holds the authentication configuration (BASIC, DIGEST, users).
 type Auth struct {
@@ -41,6 +47,8 @@ type Auth struct {
 	Digest  *DigestAuth  `json:"digest,omitempty" export:"true"`
 	Forward *ForwardAuth `json:"forward,omitempty" export:"true"`
 }
+
+// +k8s:deepcopy-gen=true
 
 // BasicAuth holds the HTTP basic authentication configuration.
 type BasicAuth struct {
@@ -51,6 +59,8 @@ type BasicAuth struct {
 	HeaderField  string `json:"headerField,omitempty" export:"true"`
 }
 
+// +k8s:deepcopy-gen=true
+
 // Buffering holds the request/response buffering configuration.
 type Buffering struct {
 	MaxRequestBodyBytes  int64  `json:"maxRequestBodyBytes,omitempty"`
@@ -60,18 +70,26 @@ type Buffering struct {
 	RetryExpression      string `json:"retryExpression,omitempty"`
 }
 
+// +k8s:deepcopy-gen=true
+
 // Chain holds a chain of middlewares
 type Chain struct {
 	Middlewares []string `json:"middlewares"`
 }
+
+// +k8s:deepcopy-gen=true
 
 // CircuitBreaker holds the circuit breaker configuration.
 type CircuitBreaker struct {
 	Expression string `json:"expression,omitempty"`
 }
 
+// +k8s:deepcopy-gen=true
+
 // Compress holds the compress configuration.
 type Compress struct{}
+
+// +k8s:deepcopy-gen=true
 
 // DigestAuth holds the Digest HTTP authentication configuration.
 type DigestAuth struct {
@@ -82,12 +100,16 @@ type DigestAuth struct {
 	HeaderField  string `json:"headerField,omitempty" export:"true"`
 }
 
+// +k8s:deepcopy-gen=true
+
 // ErrorPage holds the custom error page configuration.
 type ErrorPage struct {
 	Status  []string `json:"status,omitempty"`
 	Service string   `json:"service,omitempty"`
 	Query   string   `json:"query,omitempty"`
 }
+
+// +k8s:deepcopy-gen=true
 
 // ForwardAuth holds the http forward authentication configuration.
 type ForwardAuth struct {
@@ -96,6 +118,8 @@ type ForwardAuth struct {
 	TrustForwardHeader  bool       `description:"Trust X-Forwarded-* headers" json:"trustForwardHeader,omitempty" export:"true"`
 	AuthResponseHeaders []string   `description:"Headers to be forwarded from auth response" json:"authResponseHeaders,omitempty"`
 }
+
+// +k8s:deepcopy-gen=true
 
 // Headers holds the custom header configuration.
 type Headers struct {
@@ -154,6 +178,8 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 		h.IsDevelopment)
 }
 
+// +k8s:deepcopy-gen=true
+
 // IPStrategy holds the ip strategy configuration.
 type IPStrategy struct {
 	Depth       int      `json:"depth,omitempty" export:"true"`
@@ -188,11 +214,15 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 	return &ip.RemoteAddrStrategy{}, nil
 }
 
+// +k8s:deepcopy-gen=true
+
 // IPWhiteList holds the ip white list configuration.
 type IPWhiteList struct {
 	SourceRange []string    `json:"sourceRange,omitempty"`
 	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty" label:"allowEmpty"`
 }
+
+// +k8s:deepcopy-gen=true
 
 // MaxConn holds maximum connection configuration.
 type MaxConn struct {
@@ -205,11 +235,15 @@ func (m *MaxConn) SetDefaults() {
 	m.ExtractorFunc = "request.host"
 }
 
+// +k8s:deepcopy-gen=true
+
 // PassTLSClientCert holds the TLS client cert headers configuration.
 type PassTLSClientCert struct {
 	PEM  bool                      `description:"Enable header with escaped client pem" json:"pem"`
 	Info *TLSClientCertificateInfo `description:"Enable header with configured client cert info" json:"info,omitempty"`
 }
+
+// +k8s:deepcopy-gen=true
 
 // Rate holds the rate limiting configuration for a specific time period.
 type Rate struct {
@@ -217,6 +251,8 @@ type Rate struct {
 	Average int64          `json:"average,omitempty"`
 	Burst   int64          `json:"burst,omitempty"`
 }
+
+// +k8s:deepcopy-gen=true
 
 // RateLimit holds the rate limiting configuration for a given frontend.
 type RateLimit struct {
@@ -230,12 +266,16 @@ func (r *RateLimit) SetDefaults() {
 	r.ExtractorFunc = "request.host"
 }
 
+// +k8s:deepcopy-gen=true
+
 // RedirectRegex holds the redirection configuration.
 type RedirectRegex struct {
 	Regex       string `json:"regex,omitempty"`
 	Replacement string `json:"replacement,omitempty"`
 	Permanent   bool   `json:"permanent,omitempty"`
 }
+
+// +k8s:deepcopy-gen=true
 
 // RedirectScheme holds the scheme redirection configuration.
 type RedirectScheme struct {
@@ -244,10 +284,14 @@ type RedirectScheme struct {
 	Permanent bool   `json:"permanent,omitempty"`
 }
 
+// +k8s:deepcopy-gen=true
+
 // ReplacePath holds the ReplacePath configuration.
 type ReplacePath struct {
 	Path string `json:"path,omitempty"`
 }
+
+// +k8s:deepcopy-gen=true
 
 // ReplacePathRegex holds the ReplacePathRegex configuration.
 type ReplacePathRegex struct {
@@ -255,20 +299,28 @@ type ReplacePathRegex struct {
 	Replacement string `json:"replacement,omitempty"`
 }
 
+// +k8s:deepcopy-gen=true
+
 // Retry holds the retry configuration.
 type Retry struct {
 	Attempts int `description:"Number of attempts" export:"true"`
 }
+
+// +k8s:deepcopy-gen=true
 
 // StripPrefix holds the StripPrefix configuration.
 type StripPrefix struct {
 	Prefixes []string `json:"prefixes,omitempty"`
 }
 
+// +k8s:deepcopy-gen=true
+
 // StripPrefixRegex holds the StripPrefixRegex configuration.
 type StripPrefixRegex struct {
 	Regex []string `json:"regex,omitempty"`
 }
+
+// +k8s:deepcopy-gen=true
 
 // TLSClientCertificateInfo holds the client TLS certificate info configuration.
 type TLSClientCertificateInfo struct {
@@ -278,6 +330,8 @@ type TLSClientCertificateInfo struct {
 	Subject   *TLSCLientCertificateDNInfo `description:"Add Subject info in header" json:"subject,omitempty"`
 	Issuer    *TLSCLientCertificateDNInfo `description:"Add Issuer info in header" json:"issuer,omitempty"`
 }
+
+// +k8s:deepcopy-gen=true
 
 // TLSCLientCertificateDNInfo holds the client TLS certificate distinguished name info configuration
 // cf https://tools.ietf.org/html/rfc3739
@@ -291,5 +345,19 @@ type TLSCLientCertificateDNInfo struct {
 	DomainComponent bool `description:"Add Domain Component info in header" json:"domainComponent"`
 }
 
+// +k8s:deepcopy-gen=true
+
 // Users holds a list of users
 type Users []string
+
+// +k8s:deepcopy-gen=true
+
+// ClientTLS holds the TLS specific configurations as client
+// CA, Cert and Key can be either path or file contents.
+type ClientTLS struct {
+	CA                 string `description:"TLS CA" json:"ca,omitempty"`
+	CAOptional         bool   `description:"TLS CA.Optional" json:"caOptional,omitempty"`
+	Cert               string `description:"TLS cert" json:"cert,omitempty"`
+	Key                string `description:"TLS key" json:"key,omitempty"`
+	InsecureSkipVerify bool   `description:"TLS insecure skip verify" json:"insecureSkipVerify,omitempty"`
+}

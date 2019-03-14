@@ -1,0 +1,88 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami
+  namespace: default
+
+spec:
+  ports:
+    - name: web
+      port: 80
+  selector:
+    app: containous
+    task: whoami
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoami
+  namespace: default
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.1
+      - ip: 10.10.0.2
+    ports:
+      - name: web
+        port: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami2
+  namespace: default
+
+spec:
+  ports:
+    - name: web
+      port: 8080
+  selector:
+    app: containous
+    task: whoami2
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoami2
+  namespace: default
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.3
+      - ip: 10.10.0.4
+    ports:
+      - name: web
+        port: 8080
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoamitls
+  namespace: default
+
+spec:
+  ports:
+    - name: web-secure
+      port: 443
+  selector:
+    app: containous
+    task: whoami2
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoamitls
+  namespace: default
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.5
+      - ip: 10.10.0.6
+    ports:
+      - name: web-secure
+        port: 443

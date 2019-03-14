@@ -1,0 +1,12 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: service1
+  namespace: testing
+
+spec:
+  ports:
+  - name: https
+    protocol: ""
+    port: 8443
+  clusterIp: 10.0.0.1

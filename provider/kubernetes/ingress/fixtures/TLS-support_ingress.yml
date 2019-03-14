@@ -1,0 +1,36 @@
+kind: Ingress
+apiVersion: extensions/v1beta1
+metadata:
+  name: ""
+  namespace: testing
+
+spec:
+  tls:
+  - secretName: myTlsSecret
+  rules:
+  - host: example.com
+    http:
+      paths:
+      - path: ""
+        backend:
+          serviceName: example-com
+          servicePort: 80
+
+---
+kind: Ingress
+apiVersion: extensions/v1beta1
+metadata:
+  name: ""
+  namespace: testing
+
+spec:
+  tls:
+  - secretName: myUndefinedSecret
+  rules:
+  - host: example.fail
+    http:
+      paths:
+      - path: ""
+        backend:
+          serviceName: example-fail
+          servicePort: 80

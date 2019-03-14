@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/config/static"
 	"github.com/containous/traefik/tcp"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +21,7 @@ func TestShutdownHTTP(t *testing.T) {
 		Transport: &static.EntryPointsTransport{
 			LifeCycle: &static.LifeCycle{
 				RequestAcceptGraceTimeout: 0,
-				GraceTimeOut:              5000000000,
+				GraceTimeOut:              parse.Duration(5 * time.Second),
 			},
 		},
 		ForwardedHeaders: &static.ForwardedHeaders{},
@@ -31,7 +32,7 @@ func TestShutdownHTTP(t *testing.T) {
 
 	router := &tcp.Router{}
 	router.HTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		time.Sleep(time.Second * 1)
+		time.Sleep(1 * time.Second)
 		rw.WriteHeader(http.StatusOK)
 	}))
 	entryPoint.switchRouter(router)
@@ -41,7 +42,7 @@ func TestShutdownHTTP(t *testing.T) {
 
 	go entryPoint.Shutdown(context.Background())
 
-	request, err := http.NewRequest("GET", "http://127.0.0.1:8082", nil)
+	request, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8082", nil)
 	require.NoError(t, err)
 
 	err = request.Write(conn)
@@ -58,7 +59,7 @@ func TestShutdownHTTPHijacked(t *testing.T) {
 		Transport: &static.EntryPointsTransport{
 			LifeCycle: &static.LifeCycle{
 				RequestAcceptGraceTimeout: 0,
-				GraceTimeOut:              5000000000,
+				GraceTimeOut:              parse.Duration(5 * time.Second),
 			},
 		},
 		ForwardedHeaders: &static.ForwardedHeaders{},
@@ -71,7 +72,7 @@ func TestShutdownHTTPHijacked(t *testing.T) {
 	router.HTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		conn, _, err := rw.(http.Hijacker).Hijack()
 		require.NoError(t, err)
-		time.Sleep(time.Second * 1)
+		time.Sleep(1 * time.Second)
 
 		resp := http.Response{StatusCode: http.StatusOK}
 		err = resp.Write(conn)
@@ -85,7 +86,7 @@ func TestShutdownHTTPHijacked(t *testing.T) {
 
 	go entryPoint.Shutdown(context.Background())
 
-	request, err := http.NewRequest("GET", "http://127.0.0.1:8082", nil)
+	request, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8082", nil)
 	require.NoError(t, err)
 
 	err = request.Write(conn)
@@ -102,7 +103,7 @@ func TestShutdownTCPConn(t *testing.T) {
 		Transport: &static.EntryPointsTransport{
 			LifeCycle: &static.LifeCycle{
 				RequestAcceptGraceTimeout: 0,
-				GraceTimeOut:              5000000000,
+				GraceTimeOut:              parse.Duration(5 * time.Second),
 			},
 		},
 		ForwardedHeaders: &static.ForwardedHeaders{},
@@ -115,7 +116,7 @@ func TestShutdownTCPConn(t *testing.T) {
 	router.AddCatchAllNoTLS(tcp.HandlerFunc(func(conn net.Conn) {
 		_, err := http.ReadRequest(bufio.NewReader(conn))
 		require.NoError(t, err)
-		time.Sleep(time.Second * 1)
+		time.Sleep(1 * time.Second)
 
 		resp := http.Response{StatusCode: http.StatusOK}
 		err = resp.Write(conn)
@@ -129,7 +130,7 @@ func TestShutdownTCPConn(t *testing.T) {
 
 	go entryPoint.Shutdown(context.Background())
 
-	request, err := http.NewRequest("GET", "http://127.0.0.1:8082", nil)
+	request, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8082", nil)
 	require.NoError(t, err)
 
 	err = request.Write(conn)

@@ -1,0 +1,22 @@
+kind: Ingress
+apiVersion: extensions/v1beta1
+metadata:
+  name: ""
+  namespace: testing
+
+spec:
+  backend:
+    serviceName: service1
+    servicePort: 80
+
+---
+kind: Ingress
+apiVersion: extensions/v1beta1
+metadata:
+  name: ""
+  namespace: testing
+
+spec:
+  backend:
+    serviceName: service2
+    servicePort: 80

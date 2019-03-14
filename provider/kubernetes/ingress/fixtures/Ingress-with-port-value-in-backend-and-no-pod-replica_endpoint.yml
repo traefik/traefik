@@ -1,0 +1,21 @@
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: service1
+  namespace: testing
+
+subsets:
+- addresses:
+  - ip: 10.10.0.1
+  ports:
+  - name: carotte
+    port: 8090
+  - name: tchouk
+    port: 8089
+- addresses:
+  - ip: 10.21.0.1
+  ports:
+  - name: carotte
+    port: 8090
+  - name: tchouk
+    port: 8089

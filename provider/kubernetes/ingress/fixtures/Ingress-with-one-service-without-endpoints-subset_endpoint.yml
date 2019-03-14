@@ -1,0 +1,5 @@
+kind: Endpoints
+apiVersion: v1
+metadata:
+    name: service1
+    namespace: testing

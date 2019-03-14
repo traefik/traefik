@@ -1,0 +1,29 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: stripprefix
+  namespace: default
+
+spec:
+  stripprefix:
+    prefixes:
+      - /tobestripped
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test2.crd
+  namespace: default
+
+spec:
+  entrypoints:
+    - web
+  routes:
+  - match: Host(`foo.com`) && PathPrefix(`/tobestripped`)
+    kind: Rule
+    services:
+    - name: whoami
+      port: 80
+    middlewares:
+    - name: stripprefix

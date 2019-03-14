@@ -2,14 +2,12 @@ package provider
 
 import (
 	"bytes"
-	"io/ioutil"
 	"strings"
 	"text/template"
 	"unicode"
 
 	"github.com/BurntSushi/toml"
 	"github.com/Masterminds/sprig"
-	"github.com/containous/traefik/autogen/gentemplates"
 	"github.com/containous/traefik/old/log"
 	"github.com/containous/traefik/old/types"
 	"github.com/containous/traefik/safe"
@@ -107,24 +105,9 @@ func (p *BaseProvider) DecodeConfiguration(content string) (*types.Configuration
 	return configuration, nil
 }
 
+// genTemplate does not do anything anymore because we removed the templates
 func (p *BaseProvider) getTemplateContent(defaultTemplateFile string) (string, error) {
-	if len(p.Filename) > 0 {
-		buf, err := ioutil.ReadFile(p.Filename)
-		if err != nil {
-			return "", err
-		}
-		return string(buf), nil
-	}
-
-	if strings.HasSuffix(defaultTemplateFile, ".tmpl") {
-		buf, err := gentemplates.Asset(defaultTemplateFile)
-		if err != nil {
-			return "", err
-		}
-		return string(buf), nil
-	}
-
-	return defaultTemplateFile, nil
+	return "", nil
 }
 
 func split(sep, s string) []string {

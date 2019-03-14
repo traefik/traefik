@@ -58,6 +58,26 @@ func (obj *Unstructured) IsList() bool {
 	_, ok = field.([]interface{})
 	return ok
 }
+func (obj *Unstructured) ToList() (*UnstructuredList, error) {
+	if !obj.IsList() {
+		// return an empty list back
+		return &UnstructuredList{Object: obj.Object}, nil
+	}
+
+	ret := &UnstructuredList{}
+	ret.Object = obj.Object
+
+	err := obj.EachListItem(func(item runtime.Object) error {
+		castItem := item.(*Unstructured)
+		ret.Items = append(ret.Items, *castItem)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return ret, nil
+}
 
 func (obj *Unstructured) EachListItem(fn func(runtime.Object) error) error {
 	field, ok := obj.Object["items"]
@@ -82,7 +102,7 @@ func (obj *Unstructured) EachListItem(fn func(runtime.Object) error) error {
 
 func (obj *Unstructured) UnstructuredContent() map[string]interface{} {
 	if obj.Object == nil {
-		obj.Object = make(map[string]interface{})
+		return make(map[string]interface{})
 	}
 	return obj.Object
 }
@@ -138,8 +158,8 @@ func (u *Unstructured) setNestedMap(value map[string]string, fields ...string) {
 }
 
 func (u *Unstructured) GetOwnerReferences() []metav1.OwnerReference {
-	field, ok := nestedFieldNoCopy(u.Object, "metadata", "ownerReferences")
-	if !ok {
+	field, found, err := NestedFieldNoCopy(u.Object, "metadata", "ownerReferences")
+	if !found || err != nil {
 		return nil
 	}
 	original, ok := field.([]interface{})
@@ -228,8 +248,8 @@ func (u *Unstructured) SetResourceVersion(version string) {
 }
 
 func (u *Unstructured) GetGeneration() int64 {
-	val, ok := NestedInt64(u.Object, "metadata", "generation")
-	if !ok {
+	val, found, err := NestedInt64(u.Object, "metadata", "generation")
+	if !found || err != nil {
 		return 0
 	}
 	return val
@@ -289,8 +309,8 @@ func (u *Unstructured) SetDeletionTimestamp(timestamp *metav1.Time) {
 }
 
 func (u *Unstructured) GetDeletionGracePeriodSeconds() *int64 {
-	val, ok := NestedInt64(u.Object, "metadata", "deletionGracePeriodSeconds")
-	if !ok {
+	val, found, err := NestedInt64(u.Object, "metadata", "deletionGracePeriodSeconds")
+	if !found || err != nil {
 		return nil
 	}
 	return &val
@@ -305,7 +325,7 @@ func (u *Unstructured) SetDeletionGracePeriodSeconds(deletionGracePeriodSeconds 
 }
 
 func (u *Unstructured) GetLabels() map[string]string {
-	m, _ := NestedStringMap(u.Object, "metadata", "labels")
+	m, _, _ := NestedStringMap(u.Object, "metadata", "labels")
 	return m
 }
 
@@ -314,7 +334,7 @@ func (u *Unstructured) SetLabels(labels map[string]string) {
 }
 
 func (u *Unstructured) GetAnnotations() map[string]string {
-	m, _ := NestedStringMap(u.Object, "metadata", "annotations")
+	m, _, _ := NestedStringMap(u.Object, "metadata", "annotations")
 	return m
 }
 
@@ -337,8 +357,8 @@ func (u *Unstructured) GroupVersionKind() schema.GroupVersionKind {
 }
 
 func (u *Unstructured) GetInitializers() *metav1.Initializers {
-	m, ok := nestedMapNoCopy(u.Object, "metadata", "initializers")
-	if !ok {
+	m, found, err := nestedMapNoCopy(u.Object, "metadata", "initializers")
+	if !found || err != nil {
 		return nil
 	}
 	out := &metav1.Initializers{}
@@ -362,7 +382,7 @@ func (u *Unstructured) SetInitializers(initializers *metav1.Initializers) {
 }
 
 func (u *Unstructured) GetFinalizers() []string {
-	val, _ := NestedStringSlice(u.Object, "metadata", "finalizers")
+	val, _, _ := NestedStringSlice(u.Object, "metadata", "finalizers")
 	return val
 }
 

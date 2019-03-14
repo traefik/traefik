@@ -20,7 +20,7 @@ import (
 	"github.com/containous/traefik/ping"
 	"github.com/containous/traefik/provider/docker"
 	"github.com/containous/traefik/provider/file"
-	"github.com/containous/traefik/provider/kubernetes"
+	"github.com/containous/traefik/provider/kubernetes/ingress"
 	"github.com/containous/traefik/provider/marathon"
 	"github.com/containous/traefik/provider/rest"
 	"github.com/containous/traefik/tracing/datadog"
@@ -42,8 +42,7 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 	return &TraefikConfiguration{
 		Configuration: static.Configuration{
 			Global: &static.Global{
-				CheckNewVersion:    true,
-				SendAnonymousUsage: false,
+				CheckNewVersion: true,
 			},
 			EntryPoints: make(static.EntryPoints),
 			Providers: &static.Providers{
@@ -214,7 +213,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultBoltDb.Prefix = "/traefik"
 
 	// default Kubernetes
-	var defaultKubernetes kubernetes.Provider
+	var defaultKubernetes ingress.Provider
 	defaultKubernetes.Watch = true
 
 	// default Mesos

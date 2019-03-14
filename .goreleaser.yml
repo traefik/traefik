@@ -1,0 +1,55 @@
+project_name: traefik
+
+before:
+  hooks:
+    - go generate
+
+builds:
+  - binary: traefik
+
+    main: ./cmd/traefik/traefik.go
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X github.com/containous/traefik/version.Version={{.Version}} -X github.com/containous/traefik/version.Codename={{.Env.CODENAME}}  -X github.com/containous/traefik/version.BuildDate={{.Date}}
+
+    goos:
+      - linux
+      - darwin
+      - windows
+      - freebsd
+      - openbsd
+    goarch:
+      - amd64
+      - 386
+      - arm
+      - arm64
+      - ppc64le
+    goarm:
+      - 7
+      - 6
+      - 5
+    ignore:
+      - goos: darwin
+        goarch: 386
+      - goos: openbsd
+        goarch: arm
+      - goos: freebsd
+        goarch: arm
+
+changelog:
+  skip: true
+
+archive:
+  name_template: '{{ .ProjectName }}_v{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm
+    }}v{{ .Arm }}{{ end }}'
+  format: tar.gz
+  format_overrides:
+    - goos: windows
+      format: zip
+  files:
+    - LICENSE.md
+    - CHANGELOG.md
+
+release:
+  disable: true

@@ -28,7 +28,7 @@ import (
 	"github.com/containous/traefik/old/provider/ecs"
 	oldtypes "github.com/containous/traefik/old/types"
 	"github.com/containous/traefik/provider/aggregator"
-	"github.com/containous/traefik/provider/kubernetes"
+	"github.com/containous/traefik/provider/kubernetes/k8s"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/server"
 	"github.com/containous/traefik/server/router"
@@ -116,7 +116,7 @@ Complete documentation is available at https://traefik.io`,
 	f.AddParser(reflect.SliceOf(reflect.TypeOf("")), &sliceOfStrings{})
 	f.AddParser(reflect.TypeOf(traefiktls.FilesOrContents{}), &traefiktls.FilesOrContents{})
 	f.AddParser(reflect.TypeOf(types.Constraints{}), &types.Constraints{})
-	f.AddParser(reflect.TypeOf(kubernetes.Namespaces{}), &kubernetes.Namespaces{})
+	f.AddParser(reflect.TypeOf(k8s.Namespaces{}), &k8s.Namespaces{})
 	f.AddParser(reflect.TypeOf(ecs.Clusters{}), &ecs.Clusters{})
 	f.AddParser(reflect.TypeOf([]types.Domain{}), &types.Domains{})
 	f.AddParser(reflect.TypeOf(types.DNSResolvers{}), &types.DNSResolvers{})
@@ -383,7 +383,15 @@ func checkNewVersion() {
 }
 
 func stats(staticConfiguration *static.Configuration) {
-	if staticConfiguration.Global.SendAnonymousUsage {
+	if staticConfiguration.Global.SendAnonymousUsage == nil {
+		log.WithoutContext().Error(`
+You haven't specify the sendAnonymousUsage option, it will be enable by default.
+`)
+		sendAnonymousUsage := true
+		staticConfiguration.Global.SendAnonymousUsage = &sendAnonymousUsage
+	}
+
+	if *staticConfiguration.Global.SendAnonymousUsage {
 		log.WithoutContext().Info(`
 Stats collection is enabled.
 Many thanks for contributing to Traefik's improvement by allowing us to receive anonymous information from your configuration.

@@ -34,7 +34,7 @@ type TCPRouter struct {
 
 // RouterTCPTLSConfig holds the TLS configuration for a router
 type RouterTCPTLSConfig struct {
-	Passthrough bool `json:"passthrough,omitempty" toml:"passthrough,omitzero"`
+	Passthrough bool `json:"passthrough" toml:"passthrough,omitzero"`
 }
 
 // LoadBalancerService holds the LoadBalancerService configuration.
@@ -117,16 +117,6 @@ type HealthCheck struct {
 	Timeout  string            `json:"timeout,omitempty" toml:",omitempty"`
 	Hostname string            `json:"hostname,omitempty" toml:",omitempty"`
 	Headers  map[string]string `json:"headers,omitempty" toml:",omitempty"`
-}
-
-// ClientTLS holds the TLS specific configurations as client
-// CA, Cert and Key can be either path or file contents.
-type ClientTLS struct {
-	CA                 string `description:"TLS CA" json:"ca,omitempty"`
-	CAOptional         bool   `description:"TLS CA.Optional" json:"caOptional,omitempty"`
-	Cert               string `description:"TLS cert" json:"cert,omitempty"`
-	Key                string `description:"TLS key" json:"key,omitempty"`
-	InsecureSkipVerify bool   `description:"TLS insecure skip verify" json:"insecureSkipVerify,omitempty"`
 }
 
 // CreateTLSConfig creates a TLS config from ClientTLS structures.
