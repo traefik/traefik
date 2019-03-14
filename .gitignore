@@ -8,7 +8,7 @@
 /site/
 /docs/site/
 /static/
-/autogen/genstatic/gen.go
+/autogen/
 /traefik
 /traefik.toml
 *.log
