@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/containous/traefik/old/log"
+	"github.com/containous/traefik/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	kubeerror "k8s.io/apimachinery/pkg/api/errors"
@@ -41,7 +42,7 @@ func (reh *resourceEventHandler) OnDelete(obj interface{}) {
 // WatchAll starts the watch of the Provider resources and updates the stores.
 // The stores can then be accessed via the Get* functions.
 type Client interface {
-	WatchAll(namespaces Namespaces, stopCh <-chan struct{}) (<-chan interface{}, error)
+	WatchAll(namespaces k8s.Namespaces, stopCh <-chan struct{}) (<-chan interface{}, error)
 	GetIngresses() []*extensionsv1beta1.Ingress
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
@@ -49,24 +50,17 @@ type Client interface {
 	UpdateIngressStatus(namespace, name, ip, hostname string) error
 }
 
-type clientImpl struct {
+type clientWrapper struct {
 	clientset            *kubernetes.Clientset
 	factories            map[string]informers.SharedInformerFactory
 	ingressLabelSelector labels.Selector
 	isNamespaceAll       bool
-	watchedNamespaces    Namespaces
-}
-
-func newClientImpl(clientset *kubernetes.Clientset) *clientImpl {
-	return &clientImpl{
-		clientset: clientset,
-		factories: make(map[string]informers.SharedInformerFactory),
-	}
+	watchedNamespaces    k8s.Namespaces
 }
 
 // newInClusterClient returns a new Provider client that is expected to run
 // inside the cluster.
-func newInClusterClient(endpoint string) (*clientImpl, error) {
+func newInClusterClient(endpoint string) (*clientWrapper, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create in-cluster configuration: %s", err)
@@ -79,7 +73,7 @@ func newInClusterClient(endpoint string) (*clientImpl, error) {
 	return createClientFromConfig(config)
 }
 
-func newExternalClusterClientFromFile(file string) (*clientImpl, error) {
+func newExternalClusterClientFromFile(file string) (*clientWrapper, error) {
 	configFromFlags, err := clientcmd.BuildConfigFromFlags("", file)
 	if err != nil {
 		return nil, err
@@ -90,7 +84,7 @@ func newExternalClusterClientFromFile(file string) (*clientImpl, error) {
 // newExternalClusterClient returns a new Provider client that may run outside
 // of the cluster.
 // The endpoint parameter must not be empty.
-func newExternalClusterClient(endpoint, token, caFilePath string) (*clientImpl, error) {
+func newExternalClusterClient(endpoint, token, caFilePath string) (*clientWrapper, error) {
 	if endpoint == "" {
 		return nil, errors.New("endpoint missing for external cluster client")
 	}
@@ -111,7 +105,7 @@ func newExternalClusterClient(endpoint, token, caFilePath string) (*clientImpl, 
 	return createClientFromConfig(config)
 }
 
-func createClientFromConfig(c *rest.Config) (*clientImpl, error) {
+func createClientFromConfig(c *rest.Config) (*clientWrapper, error) {
 	clientset, err := kubernetes.NewForConfig(c)
 	if err != nil {
 		return nil, err
@@ -120,18 +114,25 @@ func createClientFromConfig(c *rest.Config) (*clientImpl, error) {
 	return newClientImpl(clientset), nil
 }
 
+func newClientImpl(clientset *kubernetes.Clientset) *clientWrapper {
+	return &clientWrapper{
+		clientset: clientset,
+		factories: make(map[string]informers.SharedInformerFactory),
+	}
+}
+
 // WatchAll starts namespace-specific controllers for all relevant kinds.
-func (c *clientImpl) WatchAll(namespaces Namespaces, stopCh <-chan struct{}) (<-chan interface{}, error) {
+func (c *clientWrapper) WatchAll(namespaces k8s.Namespaces, stopCh <-chan struct{}) (<-chan interface{}, error) {
 	eventCh := make(chan interface{}, 1)
+	eventHandler := c.newResourceEventHandler(eventCh)
 
 	if len(namespaces) == 0 {
-		namespaces = Namespaces{metav1.NamespaceAll}
+		namespaces = k8s.Namespaces{metav1.NamespaceAll}
 		c.isNamespaceAll = true
 	}
 
 	c.watchedNamespaces = namespaces
 
-	eventHandler := c.newResourceEventHandler(eventCh)
 	for _, ns := range namespaces {
 		factory := informers.NewFilteredSharedInformerFactory(c.clientset, resyncPeriod, ns, nil)
 		factory.Extensions().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
@@ -165,7 +166,7 @@ func (c *clientImpl) WatchAll(namespaces Namespaces, stopCh <-chan struct{}) (<-
 }
 
 // GetIngresses returns all Ingresses for observed namespaces in the cluster.
-func (c *clientImpl) GetIngresses() []*extensionsv1beta1.Ingress {
+func (c *clientWrapper) GetIngresses() []*extensionsv1beta1.Ingress {
 	var result []*extensionsv1beta1.Ingress
 	for ns, factory := range c.factories {
 		ings, err := factory.Extensions().V1beta1().Ingresses().Lister().List(c.ingressLabelSelector)
@@ -178,7 +179,7 @@ func (c *clientImpl) GetIngresses() []*extensionsv1beta1.Ingress {
 }
 
 // UpdateIngressStatus updates an Ingress with a provided status.
-func (c *clientImpl) UpdateIngressStatus(namespace, name, ip, hostname string) error {
+func (c *clientWrapper) UpdateIngressStatus(namespace, name, ip, hostname string) error {
 	if !c.isWatchedNamespace(namespace) {
 		return fmt.Errorf("failed to get ingress %s/%s: namespace is not within watched namespaces", namespace, name)
 	}
@@ -207,7 +208,7 @@ func (c *clientImpl) UpdateIngressStatus(namespace, name, ip, hostname string) e
 }
 
 // GetService returns the named service from the given namespace.
-func (c *clientImpl) GetService(namespace, name string) (*corev1.Service, bool, error) {
+func (c *clientWrapper) GetService(namespace, name string) (*corev1.Service, bool, error) {
 	if !c.isWatchedNamespace(namespace) {
 		return nil, false, fmt.Errorf("failed to get service %s/%s: namespace is not within watched namespaces", namespace, name)
 	}
@@ -218,7 +219,7 @@ func (c *clientImpl) GetService(namespace, name string) (*corev1.Service, bool, 
 }
 
 // GetEndpoints returns the named endpoints from the given namespace.
-func (c *clientImpl) GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error) {
+func (c *clientWrapper) GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error) {
 	if !c.isWatchedNamespace(namespace) {
 		return nil, false, fmt.Errorf("failed to get endpoints %s/%s: namespace is not within watched namespaces", namespace, name)
 	}
@@ -229,7 +230,7 @@ func (c *clientImpl) GetEndpoints(namespace, name string) (*corev1.Endpoints, bo
 }
 
 // GetSecret returns the named secret from the given namespace.
-func (c *clientImpl) GetSecret(namespace, name string) (*corev1.Secret, bool, error) {
+func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, bool, error) {
 	if !c.isWatchedNamespace(namespace) {
 		return nil, false, fmt.Errorf("failed to get secret %s/%s: namespace is not within watched namespaces", namespace, name)
 	}
@@ -245,14 +246,14 @@ func (c *clientImpl) GetSecret(namespace, name string) (*corev1.Secret, bool, er
 // The distinction is necessary because we index all informers on the special
 // identifier iff all-namespaces are requested but receive specific namespace
 // identifiers from the Kubernetes API, so we have to bridge this gap.
-func (c *clientImpl) lookupNamespace(ns string) string {
+func (c *clientWrapper) lookupNamespace(ns string) string {
 	if c.isNamespaceAll {
 		return metav1.NamespaceAll
 	}
 	return ns
 }
 
-func (c *clientImpl) newResourceEventHandler(events chan<- interface{}) cache.ResourceEventHandler {
+func (c *clientWrapper) newResourceEventHandler(events chan<- interface{}) cache.ResourceEventHandler {
 	return &cache.FilteringResourceEventHandler{
 		FilterFunc: func(obj interface{}) bool {
 			// Ignore Ingresses that do not match our custom label selector.
@@ -287,7 +288,7 @@ func translateNotFoundError(err error) (bool, error) {
 
 // isWatchedNamespace checks to ensure that the namespace is being watched before we request
 // it to ensure we don't panic by requesting an out-of-watch object.
-func (c *clientImpl) isWatchedNamespace(ns string) bool {
+func (c *clientWrapper) isWatchedNamespace(ns string) bool {
 	if c.isNamespaceAll {
 		return true
 	}

@@ -1,21 +1,58 @@
 package ingress
 
 import (
+	"fmt"
+	"io/ioutil"
+
+	"github.com/containous/traefik/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	v1beta12 "k8s.io/api/extensions/v1beta1"
 )
+
+var _ Client = (*clientMock)(nil)
 
 type clientMock struct {
 	ingresses []*extensionsv1beta1.Ingress
 	services  []*corev1.Service
 	secrets   []*corev1.Secret
 	endpoints []*corev1.Endpoints
-	watchChan chan interface{}
 
 	apiServiceError       error
 	apiSecretError        error
 	apiEndpointsError     error
 	apiIngressStatusError error
+
+	watchChan chan interface{}
+}
+
+func newClientMock(paths ...string) clientMock {
+	var c clientMock
+
+	for _, path := range paths {
+		yamlContent, err := ioutil.ReadFile(path)
+		if err != nil {
+			panic(err)
+		}
+
+		k8sObjects := k8s.MustParseYaml(yamlContent)
+		for _, obj := range k8sObjects {
+			switch o := obj.(type) {
+			case *corev1.Service:
+				c.services = append(c.services, o)
+			case *corev1.Secret:
+				c.secrets = append(c.secrets, o)
+			case *corev1.Endpoints:
+				c.endpoints = append(c.endpoints, o)
+			case *v1beta12.Ingress:
+				c.ingresses = append(c.ingresses, o)
+			default:
+				panic(fmt.Sprintf("Unknown runtime object %+v %T", o, o))
+			}
+		}
+	}
+
+	return c
 }
 
 func (c clientMock) GetIngresses() []*extensionsv1beta1.Ingress {
@@ -62,7 +99,7 @@ func (c clientMock) GetSecret(namespace, name string) (*corev1.Secret, bool, err
 	return nil, false, nil
 }
 
-func (c clientMock) WatchAll(namespaces Namespaces, stopCh <-chan struct{}) (<-chan interface{}, error) {
+func (c clientMock) WatchAll(namespaces k8s.Namespaces, stopCh <-chan struct{}) (<-chan interface{}, error) {
 	return c.watchChan, nil
 }
 

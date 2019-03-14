@@ -17,6 +17,7 @@ import (
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
+	"github.com/containous/traefik/provider/kubernetes/k8s"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/tls"
 	"github.com/pkg/errors"
@@ -26,57 +27,50 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-var _ provider.Provider = (*Provider)(nil)
-
 const (
 	annotationKubernetesIngressClass = "kubernetes.io/ingress.class"
 	traefikDefaultIngressClass       = "traefik"
 )
 
-// IngressEndpoint holds the endpoint information for the Kubernetes provider.
-type IngressEndpoint struct {
-	IP               string `description:"IP used for Kubernetes Ingress endpoints"`
-	Hostname         string `description:"Hostname used for Kubernetes Ingress endpoints"`
-	PublishedService string `description:"Published Kubernetes Service to copy status from"`
-}
-
 // Provider holds configurations of the provider.
 type Provider struct {
 	provider.BaseProvider  `mapstructure:",squash" export:"true"`
-	Endpoint               string           `description:"Kubernetes server endpoint (required for external cluster client)"`
-	Token                  string           `description:"Kubernetes bearer token (not needed for in-cluster client)"`
-	CertAuthFilePath       string           `description:"Kubernetes certificate authority file path (not needed for in-cluster client)"`
-	DisablePassHostHeaders bool             `description:"Kubernetes disable PassHost Headers" export:"true"`
-	EnablePassTLSCert      bool             `description:"Kubernetes enable Pass TLS Client Certs" export:"true"` // Deprecated
-	Namespaces             Namespaces       `description:"Kubernetes namespaces" export:"true"`
-	LabelSelector          string           `description:"Kubernetes Ingress label selector to use" export:"true"`
-	IngressClass           string           `description:"Value of kubernetes.io/ingress.class annotation to watch for" export:"true"`
-	IngressEndpoint        *IngressEndpoint `description:"Kubernetes Ingress Endpoint"`
+	Endpoint               string         `description:"Kubernetes server endpoint (required for external cluster client)"`
+	Token                  string         `description:"Kubernetes bearer token (not needed for in-cluster client)"`
+	CertAuthFilePath       string         `description:"Kubernetes certificate authority file path (not needed for in-cluster client)"`
+	DisablePassHostHeaders bool           `description:"Kubernetes disable PassHost Headers" export:"true"`
+	EnablePassTLSCert      bool           `description:"Kubernetes enable Pass TLS Client Certs" export:"true"` // Deprecated
+	Namespaces             k8s.Namespaces `description:"Kubernetes namespaces" export:"true"`
+	LabelSelector          string         `description:"Kubernetes Ingress label selector to use" export:"true"`
+	IngressClass           string         `description:"Value of kubernetes.io/ingress.class annotation to watch for" export:"true"`
 	lastConfiguration      safe.Safe
 }
 
-func (p *Provider) newK8sClient(ctx context.Context, ingressLabelSelector string) (Client, error) {
+func (p *Provider) newK8sClient(ctx context.Context, ingressLabelSelector string) (*clientWrapper, error) {
 	ingLabelSel, err := labels.Parse(ingressLabelSelector)
 	if err != nil {
 		return nil, fmt.Errorf("invalid ingress label selector: %q", ingressLabelSelector)
 	}
-	log.FromContext(ctx).Infof("ingress label selector is: %q", ingLabelSel)
+
+	logger := log.FromContext(ctx)
+
+	logger.Infof("ingress label selector is: %q", ingLabelSel)
 
 	withEndpoint := ""
 	if p.Endpoint != "" {
 		withEndpoint = fmt.Sprintf(" with endpoint %v", p.Endpoint)
 	}
 
-	var cl *clientImpl
+	var cl *clientWrapper
 	switch {
 	case os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "":
-		log.FromContext(ctx).Infof("Creating in-cluster Provider client%s", withEndpoint)
+		logger.Infof("Creating in-cluster Provider client%s", withEndpoint)
 		cl, err = newInClusterClient(p.Endpoint)
 	case os.Getenv("KUBECONFIG") != "":
-		log.FromContext(ctx).Infof("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
+		logger.Infof("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
 		cl, err = newExternalClusterClientFromFile(os.Getenv("KUBECONFIG"))
 	default:
-		log.FromContext(ctx).Infof("Creating cluster-external Provider client%s", withEndpoint)
+		logger.Infof("Creating cluster-external Provider client%s", withEndpoint)
 		cl, err = newExternalClusterClient(p.Endpoint, p.Token, p.CertAuthFilePath)
 	}
 
@@ -95,7 +89,7 @@ func (p *Provider) Init() error {
 // Provide allows the k8s provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.Pool) error {
-	ctxLog := log.With(context.Background(), log.Str(log.ProviderName, "docker"))
+	ctxLog := log.With(context.Background(), log.Str(log.ProviderName, "kubernetes"))
 	logger := log.FromContext(ctxLog)
 	// Tell glog (used by client-go) to log into STDERR. Otherwise, we risk
 	// certain kinds of API errors getting logged into a directory not
@@ -116,6 +110,7 @@ func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.P
 		operation := func() error {
 			stopWatch := make(chan struct{}, 1)
 			defer close(stopWatch)
+
 			eventsChan, err := k8sClient.WatchAll(p.Namespaces, stopWatch)
 			if err != nil {
 				logger.Errorf("Error watching kubernetes events: %v", err)
@@ -127,6 +122,7 @@ func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.P
 					return nil
 				}
 			}
+
 			for {
 				select {
 				case <-stop:

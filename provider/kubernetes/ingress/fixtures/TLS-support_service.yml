@@ -1,0 +1,26 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: example-com
+  namespace: testing
+
+spec:
+  ports:
+  - name: http
+    port: 80
+  clusterIp: 10.0.0.1
+  type: ClusterIP
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: example-org
+  namespace: testing
+
+spec:
+  ports:
+  - name: http
+    port: 80
+  clusterIp: 10.0.0.2
+  type: ClusterIP
