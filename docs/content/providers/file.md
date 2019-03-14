@@ -1,27 +1,149 @@
-# TODO -- File
+# Traefik & File
 
 Good Old Configuration File
 {: .subtitle } 
 
-## Configuration
+The file provider lets you define the [dynamic configuration](./overview.md) in a `toml` file.
+You can write these configuration elements:
 
-### Full Example in toml
+* At the end of the main Traefik configuration file (by default: `traefik.toml`).
+* In [a dedicated file](#filename-optional)
+* In [several dedicated files](#directory-optional)
 
-`TO COMPLETE`
+!!! note
+    The file provider is the default format used throughout the documentation to show samples of the configuration for many features. 
 
-### In same file
+!!! tip
+    The file provider can be a good location for common elements you'd like to re-use from other providers; e.g. declaring whitelist middlewares, basic authentication, ...
 
-`TO COMPLETE`
+## Configuration Examples
 
-## In dedicated file
+??? example "Declaring Routers, Middlewares & Services"
 
-`TO COMPLETE`
+    ``` toml
+    # Enabling the file provider
+    [providers.files]
+    
+    [http]
+      # Add the router
+      [http.routers]
+        [http.routers.router0]
+          entrypoints = ["web"]
+          middlewares = ["my-basic-auth"]
+          service = "service-foo"
+          rule = "Path(`foo`)"
+    
+        # Add the middleware
+        [http.middlewares]    
+          [http.middlewares.my-basic-auth.BasicAuth]
+            users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", 
+                      "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
+            usersFile = "etc/traefik/.htpasswd"
+        
+        # Add the service
+        [http.services]
+          [http.services.service-foo]
+            [http.services.service-foo.LoadBalancer]
+              method = "wrr"
+              [[http.services.service-foo.LoadBalancer.Servers]]
+                url = "http://foo/"
+                weight = 30
+              [[http.services.service-foo.LoadBalancer.Servers]]
+                url = "http://bar/"
+                weight = 70
+    ```
 
-### Old Content
+## Provider Configuration Options
 
-Traefik can hot-reload those rules which could be provided by multiple configuration backends.
+!!! tip "Browse the Reference"
+    If you're in a hurry, maybe you'd rather go through the [File Reference](../reference/providers/file.md).
 
-We only need to enable `watch` option to make Traefik watch configuration backend changes and generate its configuration automatically.
-Routes to services will be created and updated instantly at any changes.
+### filename (_Optional_)
 
-Please refer to the configuration backends section to get documentation on it.
+Defines the path of the configuration file.
+
+```toml
+[providers]
+  [providers.file]
+    filename = "rules.toml"
+```
+
+### directory (_Optional_)
+
+Defines the directory that contains the configuration files.
+
+```toml
+[providers]
+  [providers.file]
+    directory = "/path/to/config"
+```
+
+### watch (_Optional_)
+
+Set the `watch` option to `true` to allow Traefik to automatically watch for file changes.  
+It works with both the `filename` and the `directory` options.
+
+```toml
+[providers]
+  [providers.file]
+    filename = "rules.toml"
+    watch = true
+```
+
+### TOML Templating
+
+!!! warning
+    TOML templating only works along with dedicated configuration files. Templating does not work in the Traefik main configuration file.
+
+Traefik allows using TOML templating.  
+Thus, it's possible to define easily lot of routers, services and TLS certificates as described in the file `template-rules.toml` :
+
+??? example "Configuring Using Templating"
+
+    ```toml
+    # template-rules.toml
+    [http]
+    
+      [http.routers]
+      {{ range $i, $e := until 100 }}
+        [http.routers.router{{ $e }}]
+        # ...
+      {{ end }}  
+      
+      
+      [http.Services]
+      {{ range $i, $e := until 100 }}
+          [http.services.service{{ $e }}]
+          # ...
+      {{ end }}  
+      
+    [tcp]
+    
+      [tcp.routers]
+      {{ range $i, $e := until 100 }}
+        [tcp.routers.router{{ $e }}]
+        # ...
+      {{ end }}  
+      
+      
+      [tcp.Services]
+      {{ range $i, $e := until 100 }}
+          [http.services.service{{ $e }}]
+          # ...
+      {{ end }}  
+    
+    {{ range $i, $e := until 10 }}
+    [[TLS]]
+      Store = ["my-store-foo-{{ $e }}", "my-store-bar-{{ $e }}"]
+      [TLS.Certificate]
+        CertFile = "/etc/traefik/cert-{{ $e }}.pem"
+        KeyFile = "/etc/traefik/cert-{{ $e }}.key"
+    {{ end }}
+    
+    [TLSConfig]
+    {{ range $i, $e := until 10 }}
+      [TLSConfig.TLS{{ $e }}]
+      # ...
+    {{ end }}
+    
+    ```

@@ -66,6 +66,7 @@ markdown_extensions:
 nav:
   - '': 'reference/acme.md'
   - '': 'reference/providers/docker.md'
+  - '': 'reference/providers/file.md'
   - '': 'reference/entrypoints.md'
   - 'Welcome': 'index.md'
   - 'Getting Started':
