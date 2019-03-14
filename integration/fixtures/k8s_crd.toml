@@ -8,4 +8,4 @@ debug=true
 [api]
 
 [Providers]
-   [Providers.Kubernetes]
+   [Providers.KubernetesCRD]

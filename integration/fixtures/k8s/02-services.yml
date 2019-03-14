@@ -1,11 +1,12 @@
----
 kind: Deployment
 apiVersion: extensions/v1beta1
 metadata:
   name: whoami
+  namespace: default
   labels:
     app: containous
     name: whoami
+
 spec:
   replicas: 2
   selector:
@@ -23,11 +24,14 @@ spec:
           image: containous/whoami
           ports:
             - containerPort: 80
+
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: whoami
+  namespace: default
+
 spec:
   ports:
     - name: http
@@ -35,17 +39,3 @@ spec:
   selector:
     app: containous
     task: whoami
----
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: cheeses
-spec:
-  rules:
-    - host: whoami.test
-      http:
-        paths:
-          - path: /whoami
-            backend:
-              serviceName: whoami
-              servicePort: http
