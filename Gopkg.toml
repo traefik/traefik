@@ -19,10 +19,22 @@
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 
+required = [
+  "k8s.io/code-generator/cmd/client-gen",
+  "k8s.io/code-generator/cmd/deepcopy-gen",
+  "k8s.io/code-generator/cmd/defaulter-gen",
+  "k8s.io/code-generator/cmd/lister-gen",
+  "k8s.io/code-generator/cmd/informer-gen",
+]
+
 [prune]
   non-go = true
   go-tests = true
   unused-packages = true
+  [[prune.project]]
+    name = "k8s.io/code-generator"
+    non-go = false
+    unused-packages = false
 
 [[constraint]]
   branch = "master"
@@ -193,15 +205,23 @@
 
 [[constraint]]
   name = "k8s.io/client-go"
-  version = "6.0.0"
+  version = "8.0.0" # 8.0.0
+
+[[constraint]]
+  name = "k8s.io/code-generator"
+  version = "kubernetes-1.11.7"
 
 [[constraint]]
   name = "k8s.io/api"
-  version = "kubernetes-1.9.0"
+  version = "kubernetes-1.11.7" # "kubernetes-1.11.7"
 
 [[constraint]]
   name = "k8s.io/apimachinery"
-  version = "kubernetes-1.9.0"
+  version = "kubernetes-1.11.7" # "kubernetes-1.11.7"
+
+[[override]]
+  name = "github.com/json-iterator/go"
+  version = "1.1.6"
 
 [[constraint]]
   branch = "master"
