@@ -120,3 +120,7 @@ spec:
 ## Full reference example
 
 [Traefik IngressRoute Reference](../reference/providers/kubernetescrd.md).
+
+## Further
+
+Also see the [full example](../getting-started/crd-acme/index.md) with Let's Encrypt.

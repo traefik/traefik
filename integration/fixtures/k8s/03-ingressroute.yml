@@ -15,4 +15,3 @@ spec:
     services:
     - name: whoami
       port: 80
-
