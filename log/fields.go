@@ -4,6 +4,7 @@ package log
 const (
 	EntryPointName      = "entryPointName"
 	RouterName          = "routerName"
+	Rule                = "rule"
 	MiddlewareName      = "middlewareName"
 	MiddlewareType      = "middlewareType"
 	ProviderName        = "providerName"

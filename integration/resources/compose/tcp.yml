@@ -1,0 +1,32 @@
+whoami-a:
+  image: containous/whoamitcp
+  command: -name whoami-a -certFile /certs/whoami-a.crt -keyFile /certs/whoami-a.key
+  volumes:
+    - ../../fixtures/tcp:/certs
+  ports:
+    - "8081:8080"
+
+whoami-b:
+  image: containous/whoamitcp
+  command: -name whoami-b -certFile /certs/whoami-b.crt -keyFile /certs/whoami-b.key
+  volumes:
+    - ../../fixtures/tcp:/certs
+  ports:
+    - "8082:8080"
+
+whoami-no-cert:
+  image: containous/whoamitcp
+  command: -name whoami-no-cert
+  ports:
+    - "8083:8080"
+
+whoami-no-tls:
+  image: containous/whoamitcp
+  command: -name whoami-no-tls
+  ports:
+    - "8084:8080"
+
+whoami:
+  image: containous/whoami
+  ports:
+    - "8085:80"

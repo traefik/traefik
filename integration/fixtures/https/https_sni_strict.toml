@@ -1,30 +1,33 @@
 [log]
-logLevel = "DEBUG"
+  logLevel = "DEBUG"
 
-
-[entryPoints]
-  [entryPoints.https]
-  address = ":4443"
-    [entryPoints.https.tls]
-    sniStrict = true
-     [entryPoints.https.tls.defaultCertificate]
-     certFile = "fixtures/https/snitest.com.cert"
-     keyFile = "fixtures/https/snitest.com.key"
+[entrypoints]
+  [entrypoints.web-secure]
+    address = ":4443"
 
 [api]
 
 [providers]
    [providers.file]
 
-[Routers]
-  [Routers.router1]
-    Service = "service1"
-    Rule = "Host(`snitest.com`)"
+[http.routers]
+  [http.routers.router1]
+    service = "service1"
+    rule = "Host(`snitest.com`)"
+    [http.routers.router1.tls]
 
-[Services]
-  [Services.service1]
-    [Services.service1.LoadBalancer]
+[http.services]
+  [http.services.service1]
+    [http.services.service1.LoadBalancer]
+      [[http.services.service1.LoadBalancer.Servers]]
+        url = "http://127.0.0.1:9010"
+        weight = 1
 
-      [[Services.service1.LoadBalancer.Servers]]
-        URL = "http://127.0.0.1:9010"
-        Weight = 1
+[tlsOptions.default]
+    sniStrict = true
+
+[tlsStores.default]
+    [tlsStores.default.DefaultCertificate]
+        certFile = "fixtures/https/snitest.com.cert"
+        keyFile = "fixtures/https/snitest.com.key"
+

@@ -8,10 +8,10 @@ filePath = "access.log"
 filePath = "traefik.log"
 logLevel = "ERROR"
 
-[entryPoints]
-  [entryPoints.http]
+[entrypoints]
+  [entrypoints.web]
   address = ":8000"
-  [entryPoints.api]
+  [entrypoints.api]
   address = ":7888"
 
 checkNewVersion = false
@@ -31,15 +31,15 @@ entryPoint = "api"
 ################################################################
 # rules
 ################################################################
-[Routers]
-  [Routers.router1]
+[http.routers]
+  [http.routers.router1]
     Service = "service1"
     Rule = "Path(`/test1`)"
 
-[Services]
-  [Services.service1]
-    [Services.service1.LoadBalancer]
+[http.services]
+  [http.services.service1]
+    [http.services.service1.LoadBalancer]
 
-      [[Services.service1.LoadBalancer.Servers]]
+      [[http.services.service1.LoadBalancer.Servers]]
         URL = "http://127.0.0.1:8081"
         Weight = 1

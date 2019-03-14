@@ -14,7 +14,7 @@ import (
 
 var _ Store = (*LocalStore)(nil)
 
-// LocalStore Store implementation for local file
+// LocalStore Stores implementation for local file
 type LocalStore struct {
 	filename     string
 	storedData   *StoredData

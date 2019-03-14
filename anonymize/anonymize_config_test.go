@@ -1,15 +1,14 @@
 package anonymize
 
 import (
-	"crypto/tls"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/containous/flaeg/parse"
-	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/config/static"
 	"github.com/containous/traefik/provider"
+	"github.com/containous/traefik/provider/acme"
 	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/provider/file"
 	traefiktls "github.com/containous/traefik/tls"
@@ -45,14 +44,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 					IdleTimeout:  parse.Duration(111 * time.Second),
 				},
 			},
-			TLS: &traefiktls.TLS{
-				MinVersion:   "foo MinVersion",
-				CipherSuites: []string{"foo CipherSuites 1", "foo CipherSuites 2", "foo CipherSuites 3"},
-				ClientCA: traefiktls.ClientCA{
-					Files:    traefiktls.FilesOrContents{"foo ClientCAFiles 1", "foo ClientCAFiles 2", "foo ClientCAFiles 3"},
-					Optional: false,
-				},
-			},
 			ProxyProtocol: &static.ProxyProtocol{
 				TrustedIPs: []string{"127.0.0.1/32", "192.168.0.1"},
 			},
@@ -66,20 +57,12 @@ func TestDo_globalConfiguration(t *testing.T) {
 					IdleTimeout:  parse.Duration(111 * time.Second),
 				},
 			},
-			TLS: &traefiktls.TLS{
-				MinVersion:   "fii MinVersion",
-				CipherSuites: []string{"fii CipherSuites 1", "fii CipherSuites 2", "fii CipherSuites 3"},
-				ClientCA: traefiktls.ClientCA{
-					Files:    traefiktls.FilesOrContents{"fii ClientCAFiles 1", "fii ClientCAFiles 2", "fii ClientCAFiles 3"},
-					Optional: false,
-				},
-			},
 			ProxyProtocol: &static.ProxyProtocol{
 				TrustedIPs: []string{"127.0.0.1/32", "192.168.0.1"},
 			},
 		},
 	}
-	config.ACME = &acme.ACME{
+	config.ACME = &acme.Configuration{
 		Email: "acme Email",
 		Domains: []types.Domain{
 			{
@@ -88,16 +71,11 @@ func TestDo_globalConfiguration(t *testing.T) {
 			},
 		},
 		Storage:      "Storage",
-		OnDemand:     true,
 		OnHostRule:   true,
 		CAServer:     "CAServer",
 		EntryPoint:   "EntryPoint",
 		DNSChallenge: &acmeprovider.DNSChallenge{Provider: "DNSProvider"},
 		ACMELogging:  true,
-		TLSConfig: &tls.Config{
-			InsecureSkipVerify: true,
-			// ...
-		},
 	}
 	config.Providers = &static.Providers{
 		ProvidersThrottleDuration: parse.Duration(111 * time.Second),

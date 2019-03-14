@@ -3,8 +3,8 @@ logLevel = "DEBUG"
 
 [api]
 
-[entryPoints]
-  [entryPoints.http]
+[entrypoints]
+  [entrypoints.web]
   address = ":8000"
 
 [Providers]
@@ -12,13 +12,13 @@ logLevel = "DEBUG"
 
    [Providers.File]
 
-[Services]
-  [Services.service]
-    [Services.service.LoadBalancer]
+[http.services]
+  [http.services.service]
+    [http.services.service.LoadBalancer]
 
-      [[Services.service.LoadBalancer.Servers]]
+      [[http.services.service.LoadBalancer.Servers]]
         URL = "{{.Server}}"
         Weight = 1
-[Middlewares]
-  [Middlewares.customheader.Headers.CustomRequestHeaders]
+[http.middlewares]
+  [http.middlewares.customheader.Headers.CustomRequestHeaders]
   X-Custom="CustomValue"

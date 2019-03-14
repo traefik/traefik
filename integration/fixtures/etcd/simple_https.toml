@@ -1,14 +1,14 @@
 [log]
 logLevel = "DEBUG"
 
-[entryPoints]
-  [entryPoints.api]
+[entrypoints]
+  [entrypoints.api]
   address = ":8081"
-  [entryPoints.http]
+  [entrypoints.web]
   address = ":8000"
-  [entryPoints.https]
+  [entrypoints.web-secure]
   address = ":4443"
-        [entryPoints.https.tls]
+        [entrypoints.web-secure.tls]
 
 
 

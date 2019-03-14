@@ -14,13 +14,13 @@ Otherwise, the response from the authentication server is returned.
 ??? example "File -- Forward authentication to authserver.com"
 
     ```toml
-    [Middlewares]
-      [Middlewares.test-auth.forwardauth]
+    [http.middlewares]
+      [http.middlewares.test-auth.forwardauth]
         address = "https://authserver.com/auth"
         trustForwardHeader = true
         authResponseHeaders = ["X-Auth-User", "X-Secret"]
 
-        [Middlewares.test-auth.forwardauth.tls]
+        [http.middlewares.test-auth.forwardauth.tls]
           ca = "path/to/local.crt"
           caOptional = true
           cert = "path/to/foo.cert"
@@ -33,14 +33,14 @@ Otherwise, the response from the authentication server is returned.
     a-container:
           image: a-container-image 
             labels:
-              - "traefik.Middlewares.test-auth.ForwardAuth.Address=https://authserver.com/auth"
-              - "traefik.Middlewares.test-auth.ForwardAuth.AuthResponseHeaders=X-Auth-User, X-Secret"
-              - "traefik.Middlewares.test-auth.ForwardAuth.TLS.CA=path/to/local.crt"
-              - "traefik.Middlewares.test-auth.ForwardAuth.TLS.CAOptional=true"
-              - "traefik.Middlewares.test-auth.ForwardAuth.TLS.Cert=path/to/foo.cert"
-              - "traefik.Middlewares.test-auth.ForwardAuth.TLS.InsecureSkipVerify=true"
-              - "traefik.Middlewares.test-auth.ForwardAuth.TLS.Key=path/to/foo.key"
-              - "traefik.Middlewares.test-auth.ForwardAuth.TrustForwardHeader=true"
+              - "traefik.http.middlewares.test-auth.ForwardAuth.Address=https://authserver.com/auth"
+              - "traefik.http.middlewares.test-auth.ForwardAuth.AuthResponseHeaders=X-Auth-User, X-Secret"
+              - "traefik.http.middlewares.test-auth.ForwardAuth.TLS.CA=path/to/local.crt"
+              - "traefik.http.middlewares.test-auth.ForwardAuth.TLS.CAOptional=true"
+              - "traefik.http.middlewares.test-auth.ForwardAuth.TLS.Cert=path/to/foo.cert"
+              - "traefik.http.middlewares.test-auth.ForwardAuth.TLS.InsecureSkipVerify=true"
+              - "traefik.http.middlewares.test-auth.ForwardAuth.TLS.Key=path/to/foo.key"
+              - "traefik.http.middlewares.test-auth.ForwardAuth.TrustForwardHeader=true"
               		
     ```
 

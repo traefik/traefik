@@ -28,9 +28,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc: "Empty ingresses",
 			expected: &config.Configuration{
-				Routers:     map[string]*config.Router{},
-				Middlewares: map[string]*config.Middleware{},
-				Services:    map[string]*config.Service{},
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Routers:     map[string]*config.Router{},
+					Middlewares: map[string]*config.Middleware{},
+					Services:    map[string]*config.Service{},
+				},
 			},
 		},
 		{
@@ -70,26 +73,29 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers: map[string]*config.Router{
-					"/bar": {
-						Rule:    "PathPrefix(`/bar`)",
-						Service: "testing/service1/80",
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers: map[string]*config.Router{
+						"/bar": {
+							Rule:    "PathPrefix(`/bar`)",
+							Service: "testing/service1/80",
+						},
 					},
-				},
-				Services: map[string]*config.Service{
-					"testing/service1/80": {
-						LoadBalancer: &config.LoadBalancerService{
-							Method:         "wrr",
-							PassHostHeader: true,
-							Servers: []config.Server{
-								{
-									URL:    "http://10.10.0.1:8080",
-									Weight: 1,
-								},
-								{
-									URL:    "http://10.21.0.1:8080",
-									Weight: 1,
+					Services: map[string]*config.Service{
+						"testing/service1/80": {
+							LoadBalancer: &config.LoadBalancerService{
+								Method:         "wrr",
+								PassHostHeader: true,
+								Servers: []config.Server{
+									{
+										URL:    "http://10.10.0.1:8080",
+										Weight: 1,
+									},
+									{
+										URL:    "http://10.21.0.1:8080",
+										Weight: 1,
+									},
 								},
 							},
 						},
@@ -138,30 +144,33 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers: map[string]*config.Router{
-					"/bar": {
-						Rule:    "PathPrefix(`/bar`)",
-						Service: "testing/service1/80",
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers: map[string]*config.Router{
+						"/bar": {
+							Rule:    "PathPrefix(`/bar`)",
+							Service: "testing/service1/80",
+						},
+						"/foo": {
+							Rule:    "PathPrefix(`/foo`)",
+							Service: "testing/service1/80",
+						},
 					},
-					"/foo": {
-						Rule:    "PathPrefix(`/foo`)",
-						Service: "testing/service1/80",
-					},
-				},
-				Services: map[string]*config.Service{
-					"testing/service1/80": {
-						LoadBalancer: &config.LoadBalancerService{
-							Method:         "wrr",
-							PassHostHeader: true,
-							Servers: []config.Server{
-								{
-									URL:    "http://10.10.0.1:8080",
-									Weight: 1,
-								},
-								{
-									URL:    "http://10.21.0.1:8080",
-									Weight: 1,
+					Services: map[string]*config.Service{
+						"testing/service1/80": {
+							LoadBalancer: &config.LoadBalancerService{
+								Method:         "wrr",
+								PassHostHeader: true,
+								Servers: []config.Server{
+									{
+										URL:    "http://10.10.0.1:8080",
+										Weight: 1,
+									},
+									{
+										URL:    "http://10.21.0.1:8080",
+										Weight: 1,
+									},
 								},
 							},
 						},
@@ -208,30 +217,33 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers: map[string]*config.Router{
-					"/bar": {
-						Rule:    "PathPrefix(`/bar`)",
-						Service: "testing/service1/80",
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers: map[string]*config.Router{
+						"/bar": {
+							Rule:    "PathPrefix(`/bar`)",
+							Service: "testing/service1/80",
+						},
+						"/foo": {
+							Rule:    "PathPrefix(`/foo`)",
+							Service: "testing/service1/80",
+						},
 					},
-					"/foo": {
-						Rule:    "PathPrefix(`/foo`)",
-						Service: "testing/service1/80",
-					},
-				},
-				Services: map[string]*config.Service{
-					"testing/service1/80": {
-						LoadBalancer: &config.LoadBalancerService{
-							Method:         "wrr",
-							PassHostHeader: true,
-							Servers: []config.Server{
-								{
-									URL:    "http://10.10.0.1:8080",
-									Weight: 1,
-								},
-								{
-									URL:    "http://10.21.0.1:8080",
-									Weight: 1,
+					Services: map[string]*config.Service{
+						"testing/service1/80": {
+							LoadBalancer: &config.LoadBalancerService{
+								Method:         "wrr",
+								PassHostHeader: true,
+								Servers: []config.Server{
+									{
+										URL:    "http://10.10.0.1:8080",
+										Weight: 1,
+									},
+									{
+										URL:    "http://10.21.0.1:8080",
+										Weight: 1,
+									},
 								},
 							},
 						},
@@ -278,26 +290,29 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers: map[string]*config.Router{
-					"traefik-tchouk/bar": {
-						Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
-						Service: "testing/service1/80",
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers: map[string]*config.Router{
+						"traefik-tchouk/bar": {
+							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+							Service: "testing/service1/80",
+						},
 					},
-				},
-				Services: map[string]*config.Service{
-					"testing/service1/80": {
-						LoadBalancer: &config.LoadBalancerService{
-							Method:         "wrr",
-							PassHostHeader: true,
-							Servers: []config.Server{
-								{
-									URL:    "http://10.10.0.1:8080",
-									Weight: 1,
-								},
-								{
-									URL:    "http://10.21.0.1:8080",
-									Weight: 1,
+					Services: map[string]*config.Service{
+						"testing/service1/80": {
+							LoadBalancer: &config.LoadBalancerService{
+								Method:         "wrr",
+								PassHostHeader: true,
+								Servers: []config.Server{
+									{
+										URL:    "http://10.10.0.1:8080",
+										Weight: 1,
+									},
+									{
+										URL:    "http://10.21.0.1:8080",
+										Weight: 1,
+									},
 								},
 							},
 						},
@@ -341,22 +356,25 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers: map[string]*config.Router{
-					"example-com": {
-						Rule:    "Host(`example.com`)",
-						Service: "testing/example-com/80",
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers: map[string]*config.Router{
+						"example-com": {
+							Rule:    "Host(`example.com`)",
+							Service: "testing/example-com/80",
+						},
 					},
-				},
-				Services: map[string]*config.Service{
-					"testing/example-com/80": {
-						LoadBalancer: &config.LoadBalancerService{
-							Method:         "wrr",
-							PassHostHeader: true,
-							Servers: []config.Server{
-								{
-									URL:    "http://10.11.0.1:80",
-									Weight: 1,
+					Services: map[string]*config.Service{
+						"testing/example-com/80": {
+							LoadBalancer: &config.LoadBalancerService{
+								Method:         "wrr",
+								PassHostHeader: true,
+								Servers: []config.Server{
+									{
+										URL:    "http://10.11.0.1:80",
+										Weight: 1,
+									},
 								},
 							},
 						},
@@ -404,30 +422,33 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers: map[string]*config.Router{
-					"traefik-tchouk/bar": {
-						Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
-						Service: "testing/service1/80",
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers: map[string]*config.Router{
+						"traefik-tchouk/bar": {
+							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+							Service: "testing/service1/80",
+						},
+						"traefik-tchouk/foo": {
+							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/foo`)",
+							Service: "testing/service1/80",
+						},
 					},
-					"traefik-tchouk/foo": {
-						Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/foo`)",
-						Service: "testing/service1/80",
-					},
-				},
-				Services: map[string]*config.Service{
-					"testing/service1/80": {
-						LoadBalancer: &config.LoadBalancerService{
-							Method:         "wrr",
-							PassHostHeader: true,
-							Servers: []config.Server{
-								{
-									URL:    "http://10.10.0.1:8080",
-									Weight: 1,
-								},
-								{
-									URL:    "http://10.21.0.1:8080",
-									Weight: 1,
+					Services: map[string]*config.Service{
+						"testing/service1/80": {
+							LoadBalancer: &config.LoadBalancerService{
+								Method:         "wrr",
+								PassHostHeader: true,
+								Servers: []config.Server{
+									{
+										URL:    "http://10.10.0.1:8080",
+										Weight: 1,
+									},
+									{
+										URL:    "http://10.21.0.1:8080",
+										Weight: 1,
+									},
 								},
 							},
 						},
@@ -480,30 +501,33 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers: map[string]*config.Router{
-					"traefik-tchouk/bar": {
-						Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
-						Service: "testing/service1/80",
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers: map[string]*config.Router{
+						"traefik-tchouk/bar": {
+							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+							Service: "testing/service1/80",
+						},
+						"traefik-courgette/carotte": {
+							Rule:    "Host(`traefik.courgette`) && PathPrefix(`/carotte`)",
+							Service: "testing/service1/80",
+						},
 					},
-					"traefik-courgette/carotte": {
-						Rule:    "Host(`traefik.courgette`) && PathPrefix(`/carotte`)",
-						Service: "testing/service1/80",
-					},
-				},
-				Services: map[string]*config.Service{
-					"testing/service1/80": {
-						LoadBalancer: &config.LoadBalancerService{
-							Method:         "wrr",
-							PassHostHeader: true,
-							Servers: []config.Server{
-								{
-									URL:    "http://10.10.0.1:8080",
-									Weight: 1,
-								},
-								{
-									URL:    "http://10.21.0.1:8080",
-									Weight: 1,
+					Services: map[string]*config.Service{
+						"testing/service1/80": {
+							LoadBalancer: &config.LoadBalancerService{
+								Method:         "wrr",
+								PassHostHeader: true,
+								Servers: []config.Server{
+									{
+										URL:    "http://10.10.0.1:8080",
+										Weight: 1,
+									},
+									{
+										URL:    "http://10.21.0.1:8080",
+										Weight: 1,
+									},
 								},
 							},
 						},
@@ -551,30 +575,33 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers: map[string]*config.Router{
-					"/bar": {
-						Rule:    "PathPrefix(`/bar`)",
-						Service: "testing/service1/80",
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers: map[string]*config.Router{
+						"/bar": {
+							Rule:    "PathPrefix(`/bar`)",
+							Service: "testing/service1/80",
+						},
+						"/foo": {
+							Rule:    "PathPrefix(`/foo`)",
+							Service: "testing/service1/80",
+						},
 					},
-					"/foo": {
-						Rule:    "PathPrefix(`/foo`)",
-						Service: "testing/service1/80",
-					},
-				},
-				Services: map[string]*config.Service{
-					"testing/service1/80": {
-						LoadBalancer: &config.LoadBalancerService{
-							Method:         "wrr",
-							PassHostHeader: true,
-							Servers: []config.Server{
-								{
-									URL:    "http://10.10.0.1:8080",
-									Weight: 1,
-								},
-								{
-									URL:    "http://10.21.0.1:8080",
-									Weight: 1,
+					Services: map[string]*config.Service{
+						"testing/service1/80": {
+							LoadBalancer: &config.LoadBalancerService{
+								Method:         "wrr",
+								PassHostHeader: true,
+								Servers: []config.Server{
+									{
+										URL:    "http://10.10.0.1:8080",
+										Weight: 1,
+									},
+									{
+										URL:    "http://10.21.0.1:8080",
+										Weight: 1,
+									},
 								},
 							},
 						},
@@ -620,9 +647,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers:     map[string]*config.Router{},
-				Services:    map[string]*config.Service{},
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers:     map[string]*config.Router{},
+					Services:    map[string]*config.Service{},
+				},
 			},
 		},
 		{
@@ -670,26 +700,29 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers: map[string]*config.Router{
-					"traefik-courgette/carotte": {
-						Rule:    "Host(`traefik.courgette`) && PathPrefix(`/carotte`)",
-						Service: "testing/service1/80",
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers: map[string]*config.Router{
+						"traefik-courgette/carotte": {
+							Rule:    "Host(`traefik.courgette`) && PathPrefix(`/carotte`)",
+							Service: "testing/service1/80",
+						},
 					},
-				},
-				Services: map[string]*config.Service{
-					"testing/service1/80": {
-						LoadBalancer: &config.LoadBalancerService{
-							Method:         "wrr",
-							PassHostHeader: true,
-							Servers: []config.Server{
-								{
-									URL:    "http://10.10.0.1:8080",
-									Weight: 1,
-								},
-								{
-									URL:    "http://10.21.0.1:8080",
-									Weight: 1,
+					Services: map[string]*config.Service{
+						"testing/service1/80": {
+							LoadBalancer: &config.LoadBalancerService{
+								Method:         "wrr",
+								PassHostHeader: true,
+								Servers: []config.Server{
+									{
+										URL:    "http://10.10.0.1:8080",
+										Weight: 1,
+									},
+									{
+										URL:    "http://10.21.0.1:8080",
+										Weight: 1,
+									},
 								},
 							},
 						},
@@ -736,9 +769,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers:     map[string]*config.Router{},
-				Services:    map[string]*config.Service{},
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers:     map[string]*config.Router{},
+					Services:    map[string]*config.Service{},
+				},
 			},
 		},
 		{
@@ -805,46 +841,49 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers: map[string]*config.Router{
-					"traefik-tchouk/bar": {
-						Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
-						Service: "testing/service1/80",
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers: map[string]*config.Router{
+						"traefik-tchouk/bar": {
+							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+							Service: "testing/service1/80",
+						},
+						"traefik-courgette/carotte": {
+							Rule:    "Host(`traefik.courgette`) && PathPrefix(`/carotte`)",
+							Service: "testing/service2/8082",
+						},
 					},
-					"traefik-courgette/carotte": {
-						Rule:    "Host(`traefik.courgette`) && PathPrefix(`/carotte`)",
-						Service: "testing/service2/8082",
-					},
-				},
-				Services: map[string]*config.Service{
-					"testing/service1/80": {
-						LoadBalancer: &config.LoadBalancerService{
-							Method:         "wrr",
-							PassHostHeader: true,
-							Servers: []config.Server{
-								{
-									URL:    "http://10.10.0.1:8080",
-									Weight: 1,
-								},
-								{
-									URL:    "http://10.21.0.1:8080",
-									Weight: 1,
+					Services: map[string]*config.Service{
+						"testing/service1/80": {
+							LoadBalancer: &config.LoadBalancerService{
+								Method:         "wrr",
+								PassHostHeader: true,
+								Servers: []config.Server{
+									{
+										URL:    "http://10.10.0.1:8080",
+										Weight: 1,
+									},
+									{
+										URL:    "http://10.21.0.1:8080",
+										Weight: 1,
+									},
 								},
 							},
 						},
-					},
-					"testing/service2/8082": {
-						LoadBalancer: &config.LoadBalancerService{
-							Method:         "wrr",
-							PassHostHeader: true,
-							Servers: []config.Server{
-								{
-									URL:    "http://10.10.0.2:8080",
-									Weight: 1,
-								},
-								{
-									URL:    "http://10.21.0.2:8080",
-									Weight: 1,
+						"testing/service2/8082": {
+							LoadBalancer: &config.LoadBalancerService{
+								Method:         "wrr",
+								PassHostHeader: true,
+								Servers: []config.Server{
+									{
+										URL:    "http://10.10.0.2:8080",
+										Weight: 1,
+									},
+									{
+										URL:    "http://10.21.0.2:8080",
+										Weight: 1,
+									},
 								},
 							},
 						},
@@ -885,9 +924,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers:     map[string]*config.Router{},
-				Services:    map[string]*config.Service{},
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers:     map[string]*config.Router{},
+					Services:    map[string]*config.Service{},
+				},
 			},
 		},
 		{
@@ -917,9 +959,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 			endpoints: []*corev1.Endpoints{},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers:     map[string]*config.Router{},
-				Services:    map[string]*config.Service{},
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers:     map[string]*config.Router{},
+					Services:    map[string]*config.Service{},
+				},
 			},
 		},
 		{
@@ -954,27 +999,30 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers: map[string]*config.Router{
-					"/": {
-						Rule:     "PathPrefix(`/`)",
-						Service:  "default-backend",
-						Priority: math.MinInt32,
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers: map[string]*config.Router{
+						"/": {
+							Rule:     "PathPrefix(`/`)",
+							Service:  "default-backend",
+							Priority: math.MinInt32,
+						},
 					},
-				},
-				Services: map[string]*config.Service{
-					"default-backend": {
-						LoadBalancer: &config.LoadBalancerService{
-							Method:         "wrr",
-							PassHostHeader: true,
-							Servers: []config.Server{
-								{
-									URL:    "http://10.10.0.1:8080",
-									Weight: 1,
-								},
-								{
-									URL:    "http://10.21.0.1:8080",
-									Weight: 1,
+					Services: map[string]*config.Service{
+						"default-backend": {
+							LoadBalancer: &config.LoadBalancerService{
+								Method:         "wrr",
+								PassHostHeader: true,
+								Servers: []config.Server{
+									{
+										URL:    "http://10.10.0.1:8080",
+										Weight: 1,
+									},
+									{
+										URL:    "http://10.21.0.1:8080",
+										Weight: 1,
+									},
 								},
 							},
 						},
@@ -1031,26 +1079,29 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers: map[string]*config.Router{
-					"traefik-tchouk/bar": {
-						Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
-						Service: "testing/service1/80",
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers: map[string]*config.Router{
+						"traefik-tchouk/bar": {
+							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+							Service: "testing/service1/80",
+						},
 					},
-				},
-				Services: map[string]*config.Service{
-					"testing/service1/80": {
-						LoadBalancer: &config.LoadBalancerService{
-							Method:         "wrr",
-							PassHostHeader: true,
-							Servers: []config.Server{
-								{
-									URL:    "http://10.10.0.1:8089",
-									Weight: 1,
-								},
-								{
-									URL:    "http://10.21.0.1:8089",
-									Weight: 1,
+					Services: map[string]*config.Service{
+						"testing/service1/80": {
+							LoadBalancer: &config.LoadBalancerService{
+								Method:         "wrr",
+								PassHostHeader: true,
+								Servers: []config.Server{
+									{
+										URL:    "http://10.10.0.1:8089",
+										Weight: 1,
+									},
+									{
+										URL:    "http://10.21.0.1:8089",
+										Weight: 1,
+									},
 								},
 							},
 						},
@@ -1107,26 +1158,29 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers: map[string]*config.Router{
-					"traefik-tchouk/bar": {
-						Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
-						Service: "testing/service1/tchouk",
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers: map[string]*config.Router{
+						"traefik-tchouk/bar": {
+							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+							Service: "testing/service1/tchouk",
+						},
 					},
-				},
-				Services: map[string]*config.Service{
-					"testing/service1/tchouk": {
-						LoadBalancer: &config.LoadBalancerService{
-							Method:         "wrr",
-							PassHostHeader: true,
-							Servers: []config.Server{
-								{
-									URL:    "http://10.10.0.1:8089",
-									Weight: 1,
-								},
-								{
-									URL:    "http://10.21.0.1:8089",
-									Weight: 1,
+					Services: map[string]*config.Service{
+						"testing/service1/tchouk": {
+							LoadBalancer: &config.LoadBalancerService{
+								Method:         "wrr",
+								PassHostHeader: true,
+								Servers: []config.Server{
+									{
+										URL:    "http://10.10.0.1:8089",
+										Weight: 1,
+									},
+									{
+										URL:    "http://10.21.0.1:8089",
+										Weight: 1,
+									},
 								},
 							},
 						},
@@ -1176,26 +1230,29 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers: map[string]*config.Router{
-					"traefik-tchouk/bar": {
-						Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
-						Service: "testing/service1/tchouk",
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers: map[string]*config.Router{
+						"traefik-tchouk/bar": {
+							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+							Service: "testing/service1/tchouk",
+						},
 					},
-				},
-				Services: map[string]*config.Service{
-					"testing/service1/tchouk": {
-						LoadBalancer: &config.LoadBalancerService{
-							Method:         "wrr",
-							PassHostHeader: true,
-							Servers: []config.Server{
-								{
-									URL:    "http://10.10.0.1:8089",
-									Weight: 1,
-								},
-								{
-									URL:    "http://10.10.0.2:8089",
-									Weight: 1,
+					Services: map[string]*config.Service{
+						"testing/service1/tchouk": {
+							LoadBalancer: &config.LoadBalancerService{
+								Method:         "wrr",
+								PassHostHeader: true,
+								Servers: []config.Server{
+									{
+										URL:    "http://10.10.0.1:8089",
+										Weight: 1,
+									},
+									{
+										URL:    "http://10.10.0.2:8089",
+										Weight: 1,
+									},
 								},
 							},
 						},
@@ -1246,46 +1303,49 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers: map[string]*config.Router{
-					"traefik-tchouk/bar": {
-						Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
-						Service: "testing/service1/tchouk",
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers: map[string]*config.Router{
+						"traefik-tchouk/bar": {
+							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+							Service: "testing/service1/tchouk",
+						},
+						"traefik-tchouk/foo": {
+							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/foo`)",
+							Service: "testing/service1/carotte",
+						},
 					},
-					"traefik-tchouk/foo": {
-						Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/foo`)",
-						Service: "testing/service1/carotte",
-					},
-				},
-				Services: map[string]*config.Service{
-					"testing/service1/tchouk": {
-						LoadBalancer: &config.LoadBalancerService{
-							Method:         "wrr",
-							PassHostHeader: true,
-							Servers: []config.Server{
-								{
-									URL:    "http://10.10.0.1:8089",
-									Weight: 1,
-								},
-								{
-									URL:    "http://10.10.0.2:8089",
-									Weight: 1,
+					Services: map[string]*config.Service{
+						"testing/service1/tchouk": {
+							LoadBalancer: &config.LoadBalancerService{
+								Method:         "wrr",
+								PassHostHeader: true,
+								Servers: []config.Server{
+									{
+										URL:    "http://10.10.0.1:8089",
+										Weight: 1,
+									},
+									{
+										URL:    "http://10.10.0.2:8089",
+										Weight: 1,
+									},
 								},
 							},
 						},
-					},
-					"testing/service1/carotte": {
-						LoadBalancer: &config.LoadBalancerService{
-							Method:         "wrr",
-							PassHostHeader: true,
-							Servers: []config.Server{
-								{
-									URL:    "http://10.10.0.1:8090",
-									Weight: 1,
-								},
-								{
-									URL:    "http://10.10.0.2:8090",
-									Weight: 1,
+						"testing/service1/carotte": {
+							LoadBalancer: &config.LoadBalancerService{
+								Method:         "wrr",
+								PassHostHeader: true,
+								Servers: []config.Server{
+									{
+										URL:    "http://10.10.0.1:8090",
+										Weight: 1,
+									},
+									{
+										URL:    "http://10.10.0.2:8090",
+										Weight: 1,
+									},
 								},
 							},
 						},
@@ -1365,46 +1425,49 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers: map[string]*config.Router{
-					"traefik-tchouk/bar": {
-						Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
-						Service: "testing/service1/tchouk",
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers: map[string]*config.Router{
+						"traefik-tchouk/bar": {
+							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+							Service: "testing/service1/tchouk",
+						},
+						"toto-traefik-tchouk/bar": {
+							Rule:    "Host(`toto.traefik.tchouk`) && PathPrefix(`/bar`)",
+							Service: "toto/service1/tchouk",
+						},
 					},
-					"toto-traefik-tchouk/bar": {
-						Rule:    "Host(`toto.traefik.tchouk`) && PathPrefix(`/bar`)",
-						Service: "toto/service1/tchouk",
-					},
-				},
-				Services: map[string]*config.Service{
-					"testing/service1/tchouk": {
-						LoadBalancer: &config.LoadBalancerService{
-							Method:         "wrr",
-							PassHostHeader: true,
-							Servers: []config.Server{
-								{
-									URL:    "http://10.10.0.1:8089",
-									Weight: 1,
-								},
-								{
-									URL:    "http://10.10.0.2:8089",
-									Weight: 1,
+					Services: map[string]*config.Service{
+						"testing/service1/tchouk": {
+							LoadBalancer: &config.LoadBalancerService{
+								Method:         "wrr",
+								PassHostHeader: true,
+								Servers: []config.Server{
+									{
+										URL:    "http://10.10.0.1:8089",
+										Weight: 1,
+									},
+									{
+										URL:    "http://10.10.0.2:8089",
+										Weight: 1,
+									},
 								},
 							},
 						},
-					},
-					"toto/service1/tchouk": {
-						LoadBalancer: &config.LoadBalancerService{
-							Method:         "wrr",
-							PassHostHeader: true,
-							Servers: []config.Server{
-								{
-									URL:    "http://10.11.0.1:8089",
-									Weight: 1,
-								},
-								{
-									URL:    "http://10.11.0.2:8089",
-									Weight: 1,
+						"toto/service1/tchouk": {
+							LoadBalancer: &config.LoadBalancerService{
+								Method:         "wrr",
+								PassHostHeader: true,
+								Servers: []config.Server{
+									{
+										URL:    "http://10.11.0.1:8089",
+										Weight: 1,
+									},
+									{
+										URL:    "http://10.11.0.2:8089",
+										Weight: 1,
+									},
 								},
 							},
 						},
@@ -1451,9 +1514,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers:     map[string]*config.Router{},
-				Services:    map[string]*config.Service{},
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers:     map[string]*config.Router{},
+					Services:    map[string]*config.Service{},
+				},
 			},
 		},
 		{
@@ -1495,9 +1561,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers:     map[string]*config.Router{},
-				Services:    map[string]*config.Service{},
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers:     map[string]*config.Router{},
+					Services:    map[string]*config.Service{},
+				},
 			},
 		},
 		{
@@ -1527,22 +1596,25 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers: map[string]*config.Router{
-					"traefik-tchouk/bar": {
-						Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
-						Service: "testing/service1/8080",
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers: map[string]*config.Router{
+						"traefik-tchouk/bar": {
+							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+							Service: "testing/service1/8080",
+						},
 					},
-				},
-				Services: map[string]*config.Service{
-					"testing/service1/8080": {
-						LoadBalancer: &config.LoadBalancerService{
-							Method:         "wrr",
-							PassHostHeader: true,
-							Servers: []config.Server{
-								{
-									URL:    "http://traefik.wtf:8080",
-									Weight: 1,
+					Services: map[string]*config.Service{
+						"testing/service1/8080": {
+							LoadBalancer: &config.LoadBalancerService{
+								Method:         "wrr",
+								PassHostHeader: true,
+								Servers: []config.Server{
+									{
+										URL:    "http://traefik.wtf:8080",
+										Weight: 1,
+									},
 								},
 							},
 						},
@@ -1623,22 +1695,25 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				},
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers: map[string]*config.Router{
-					"example-com": {
-						Rule:    "Host(`example.com`)",
-						Service: "testing/example-com/80",
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers: map[string]*config.Router{
+						"example-com": {
+							Rule:    "Host(`example.com`)",
+							Service: "testing/example-com/80",
+						},
 					},
-				},
-				Services: map[string]*config.Service{
-					"testing/example-com/80": {
-						LoadBalancer: &config.LoadBalancerService{
-							Method:         "wrr",
-							PassHostHeader: true,
-							Servers: []config.Server{
-								{
-									URL:    "http://10.11.0.1:80",
-									Weight: 1,
+					Services: map[string]*config.Service{
+						"testing/example-com/80": {
+							LoadBalancer: &config.LoadBalancerService{
+								Method:         "wrr",
+								PassHostHeader: true,
+								Servers: []config.Server{
+									{
+										URL:    "http://10.11.0.1:80",
+										Weight: 1,
+									},
 								},
 							},
 						},
@@ -1691,26 +1766,29 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers: map[string]*config.Router{
-					"/bar": {
-						Rule:    "PathPrefix(`/bar`)",
-						Service: "testing/service1/443",
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers: map[string]*config.Router{
+						"/bar": {
+							Rule:    "PathPrefix(`/bar`)",
+							Service: "testing/service1/443",
+						},
 					},
-				},
-				Services: map[string]*config.Service{
-					"testing/service1/443": {
-						LoadBalancer: &config.LoadBalancerService{
-							Method:         "wrr",
-							PassHostHeader: true,
-							Servers: []config.Server{
-								{
-									URL:    "https://10.10.0.1:443",
-									Weight: 1,
-								},
-								{
-									URL:    "https://10.21.0.1:443",
-									Weight: 1,
+					Services: map[string]*config.Service{
+						"testing/service1/443": {
+							LoadBalancer: &config.LoadBalancerService{
+								Method:         "wrr",
+								PassHostHeader: true,
+								Servers: []config.Server{
+									{
+										URL:    "https://10.10.0.1:443",
+										Weight: 1,
+									},
+									{
+										URL:    "https://10.21.0.1:443",
+										Weight: 1,
+									},
 								},
 							},
 						},
@@ -1755,26 +1833,29 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers: map[string]*config.Router{
-					"/bar": {
-						Rule:    "PathPrefix(`/bar`)",
-						Service: "testing/service1/8443",
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers: map[string]*config.Router{
+						"/bar": {
+							Rule:    "PathPrefix(`/bar`)",
+							Service: "testing/service1/8443",
+						},
 					},
-				},
-				Services: map[string]*config.Service{
-					"testing/service1/8443": {
-						LoadBalancer: &config.LoadBalancerService{
-							Method:         "wrr",
-							PassHostHeader: true,
-							Servers: []config.Server{
-								{
-									URL:    "https://10.10.0.1:8443",
-									Weight: 1,
-								},
-								{
-									URL:    "https://10.21.0.1:8443",
-									Weight: 1,
+					Services: map[string]*config.Service{
+						"testing/service1/8443": {
+							LoadBalancer: &config.LoadBalancerService{
+								Method:         "wrr",
+								PassHostHeader: true,
+								Servers: []config.Server{
+									{
+										URL:    "https://10.10.0.1:8443",
+										Weight: 1,
+									},
+									{
+										URL:    "https://10.21.0.1:8443",
+										Weight: 1,
+									},
 								},
 							},
 						},
@@ -1819,26 +1900,30 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers: map[string]*config.Router{
-					"/bar": {
-						Rule:    "PathPrefix(`/bar`)",
-						Service: "testing/service1/8443",
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+
+					Routers: map[string]*config.Router{
+						"/bar": {
+							Rule:    "PathPrefix(`/bar`)",
+							Service: "testing/service1/8443",
+						},
 					},
-				},
-				Services: map[string]*config.Service{
-					"testing/service1/8443": {
-						LoadBalancer: &config.LoadBalancerService{
-							Method:         "wrr",
-							PassHostHeader: true,
-							Servers: []config.Server{
-								{
-									URL:    "https://10.10.0.1:8443",
-									Weight: 1,
-								},
-								{
-									URL:    "https://10.21.0.1:8443",
-									Weight: 1,
+					Services: map[string]*config.Service{
+						"testing/service1/8443": {
+							LoadBalancer: &config.LoadBalancerService{
+								Method:         "wrr",
+								PassHostHeader: true,
+								Servers: []config.Server{
+									{
+										URL:    "https://10.10.0.1:8443",
+										Weight: 1,
+									},
+									{
+										URL:    "https://10.21.0.1:8443",
+										Weight: 1,
+									},
 								},
 							},
 						},
@@ -1901,27 +1986,30 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers: map[string]*config.Router{
-					"/": {
-						Rule:     "PathPrefix(`/`)",
-						Service:  "default-backend",
-						Priority: math.MinInt32,
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers: map[string]*config.Router{
+						"/": {
+							Rule:     "PathPrefix(`/`)",
+							Service:  "default-backend",
+							Priority: math.MinInt32,
+						},
 					},
-				},
-				Services: map[string]*config.Service{
-					"default-backend": {
-						LoadBalancer: &config.LoadBalancerService{
-							Method:         "wrr",
-							PassHostHeader: true,
-							Servers: []config.Server{
-								{
-									URL:    "http://10.30.0.1:8080",
-									Weight: 1,
-								},
-								{
-									URL:    "http://10.41.0.1:8080",
-									Weight: 1,
+					Services: map[string]*config.Service{
+						"default-backend": {
+							LoadBalancer: &config.LoadBalancerService{
+								Method:         "wrr",
+								PassHostHeader: true,
+								Servers: []config.Server{
+									{
+										URL:    "http://10.30.0.1:8080",
+										Weight: 1,
+									},
+									{
+										URL:    "http://10.41.0.1:8080",
+										Weight: 1,
+									},
 								},
 							},
 						},
@@ -1964,22 +2052,25 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers: map[string]*config.Router{
-					"/bar": {
-						Rule:    "PathPrefix(`/bar`)",
-						Service: "testing/service1/80",
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers: map[string]*config.Router{
+						"/bar": {
+							Rule:    "PathPrefix(`/bar`)",
+							Service: "testing/service1/80",
+						},
 					},
-				},
-				Services: map[string]*config.Service{
-					"testing/service1/80": {
-						LoadBalancer: &config.LoadBalancerService{
-							Method:         "wrr",
-							PassHostHeader: true,
-							Servers: []config.Server{
-								{
-									URL:    "http://10.10.0.1:8080",
-									Weight: 1,
+					Services: map[string]*config.Service{
+						"testing/service1/80": {
+							LoadBalancer: &config.LoadBalancerService{
+								Method:         "wrr",
+								PassHostHeader: true,
+								Servers: []config.Server{
+									{
+										URL:    "http://10.10.0.1:8080",
+										Weight: 1,
+									},
 								},
 							},
 						},
@@ -2022,9 +2113,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers:     map[string]*config.Router{},
-				Services:    map[string]*config.Service{},
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers:     map[string]*config.Router{},
+					Services:    map[string]*config.Service{},
+				},
 			},
 		},
 		{
@@ -2063,9 +2157,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers:     map[string]*config.Router{},
-				Services:    map[string]*config.Service{},
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers:     map[string]*config.Router{},
+					Services:    map[string]*config.Service{},
+				},
 			},
 		},
 		{
@@ -2103,9 +2200,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers:     map[string]*config.Router{},
-				Services:    map[string]*config.Service{},
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers:     map[string]*config.Router{},
+					Services:    map[string]*config.Service{},
+				},
 			},
 		},
 		{
@@ -2144,9 +2244,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				),
 			},
 			expected: &config.Configuration{
-				Middlewares: map[string]*config.Middleware{},
-				Routers:     map[string]*config.Router{},
-				Services:    map[string]*config.Service{},
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Routers:     map[string]*config.Router{},
+					Services:    map[string]*config.Service{},
+				},
 			},
 		},
 	}

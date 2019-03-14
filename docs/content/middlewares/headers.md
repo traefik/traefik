@@ -16,11 +16,11 @@ Add the `X-Script-Name` header to the proxied request and the `X-Custom-Response
 ??? example "File"
 
     ```toml
-    [Middlewares]
-      [Middlewares.testHeader.headers]
-        [Middlewares.testHeader.headers.CustomRequestHeaders]
+    [http.middlewares]
+      [http.middlewares.testHeader.headers]
+        [http.middlewares.testHeader.headers.CustomRequestHeaders]
             X-Script-Name = "test"
-        [Middlewares.testHeader.headers.CustomResponseHeaders]
+        [http.middlewares.testHeader.headers.CustomResponseHeaders]
             X-Custom-Response-Header = "True"
     ```
 
@@ -30,8 +30,8 @@ Add the `X-Script-Name` header to the proxied request and the `X-Custom-Response
     a-container:
           image: a-container-image 
             labels:
-              - "traefik.Middlewares.testHeader.Headers.CustomRequestHeaders.X-Script-Name=test",
-              - "traefik.Middlewares.testHeader.Headers.CustomResponseHeaders.X-Custom-Response-Header=True",
+              - "traefik.http.middlewares.testHeader.Headers.CustomRequestHeaders.X-Script-Name=test",
+              - "traefik.http.middlewares.testHeader.Headers.CustomResponseHeaders.X-Custom-Response-Header=True",
     ```
 
 ### Adding and Removing Headers
@@ -41,11 +41,11 @@ Add the `X-Script-Name` header to the proxied request and the `X-Custom-Response
 ??? example "File"
 
     ```toml    
-    [Middlewares]
-      [Middlewares.testHeader.headers]
-        [Middlewares.testHeader.headers.CustomRequestHeaders]
+    [http.middlewares]
+      [http.middlewares.testHeader.headers]
+        [http.middlewares.testHeader.headers.CustomRequestHeaders]
             X-Script-Name = "test"
-        [Middlewares.testHeader.headers.CustomResponseHeaders]
+        [http.middlewares.testHeader.headers.CustomResponseHeaders]
             X-Custom-Response-Header = "True"
     ```
 
@@ -55,8 +55,8 @@ Add the `X-Script-Name` header to the proxied request and the `X-Custom-Response
     a-container:
           image: a-container-image 
             labels:
-              - "traefik.Middlewares.testHeader.Headers.CustomRequestHeaders.X-Script-Name=test",
-              - "traefik.Middlewares.testHeader.Headers.CustomResponseHeaders.X-Custom-Response-Header=True",
+              - "traefik.http.middlewares.testHeader.Headers.CustomRequestHeaders.X-Script-Name=test",
+              - "traefik.http.middlewares.testHeader.Headers.CustomResponseHeaders.X-Custom-Response-Header=True",
     ```
 
 ### Using Security Headers
@@ -67,8 +67,8 @@ This functionality allows for some easy security features to quickly be set.
 ??? example "File"
 
     ```toml    
-    [Middlewares]
-      [Middlewares.testHeader.headers]
+    [http.middlewares]
+      [http.middlewares.testHeader.headers]
         FrameDeny = true
         SSLRedirect = true
     ```
@@ -79,8 +79,8 @@ This functionality allows for some easy security features to quickly be set.
     a-container:
           image: a-container-image 
             labels:
-              - "traefik.Middlewares.testHeader.Headers.FrameDeny=true",
-              - "traefik.Middlewares.testHeader.Headers.SSLRedirect=true",
+              - "traefik.http.middlewares.testHeader.Headers.FrameDeny=true",
+              - "traefik.http.middlewares.testHeader.Headers.SSLRedirect=true",
     ```
        
 ## Configuration Options

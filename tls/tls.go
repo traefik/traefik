@@ -1,17 +1,11 @@
 package tls
 
 import (
-	"crypto/tls"
 	"fmt"
 	"strings"
-
-	"github.com/containous/traefik/log"
-	"github.com/sirupsen/logrus"
 )
 
-const (
-	certificateHeader = "-----BEGIN CERTIFICATE-----\n"
-)
+const certificateHeader = "-----BEGIN CERTIFICATE-----\n"
 
 // ClientCA defines traefik CA files for a entryPoint
 // and it indicates if they are mandatory or have just to be analyzed if provided
@@ -22,11 +16,15 @@ type ClientCA struct {
 
 // TLS configures TLS for an entry point
 type TLS struct {
-	MinVersion         string `export:"true"`
-	CipherSuites       []string
-	ClientCA           ClientCA
+	MinVersion   string `export:"true"`
+	CipherSuites []string
+	ClientCA     ClientCA
+	SniStrict    bool `export:"true"`
+}
+
+// Store holds the options for a given Store
+type Store struct {
 	DefaultCertificate *Certificate
-	SniStrict          bool `export:"true"`
 }
 
 // FilesOrContents hold the CA we want to have in root
@@ -34,7 +32,7 @@ type FilesOrContents []FileOrContent
 
 // Configuration allows mapping a TLS certificate to a list of entrypoints
 type Configuration struct {
-	EntryPoints []string
+	Stores      []string
 	Certificate *Certificate
 }
 
@@ -75,26 +73,4 @@ func (r *FilesOrContents) SetValue(val interface{}) {
 // Type is type of the struct
 func (r *FilesOrContents) Type() string {
 	return "filesorcontents"
-}
-
-// SortTLSPerEntryPoints converts TLS configuration sorted by Certificates into TLS configuration sorted by EntryPoints
-func SortTLSPerEntryPoints(configurations []*Configuration, epConfiguration map[string]map[string]*tls.Certificate, defaultEntryPoints []string) {
-	if epConfiguration == nil {
-		epConfiguration = make(map[string]map[string]*tls.Certificate)
-	}
-	for _, conf := range configurations {
-		if conf.EntryPoints == nil || len(conf.EntryPoints) == 0 {
-			if log.GetLevel() >= logrus.DebugLevel {
-				log.Debugf("No entryPoint is defined to add the certificate %s, it will be added to the default entryPoints: %s",
-					conf.Certificate.getTruncatedCertificateName(),
-					strings.Join(defaultEntryPoints, ", "))
-			}
-			conf.EntryPoints = append(conf.EntryPoints, defaultEntryPoints...)
-		}
-		for _, ep := range conf.EntryPoints {
-			if err := conf.Certificate.AppendCertificates(epConfiguration, ep); err != nil {
-				log.Errorf("Unable to append certificate %s to entrypoint %s: %v", conf.Certificate.getTruncatedCertificateName(), ep, err)
-			}
-		}
-	}
 }

@@ -7,12 +7,14 @@ import (
 	"github.com/containous/traefik/config/static"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
+	"github.com/containous/traefik/provider/file"
 	"github.com/containous/traefik/safe"
 )
 
 // ProviderAggregator aggregates providers.
 type ProviderAggregator struct {
-	providers []provider.Provider
+	fileProvider *file.Provider
+	providers    []provider.Provider
 }
 
 // NewProviderAggregator returns an aggregate of all the providers configured in the static configuration.
@@ -55,7 +57,12 @@ func (p *ProviderAggregator) AddProvider(provider provider.Provider) error {
 	if err != nil {
 		return err
 	}
-	p.providers = append(p.providers, provider)
+
+	if fileProvider, ok := provider.(*file.Provider); ok {
+		p.fileProvider = fileProvider
+	} else {
+		p.providers = append(p.providers, provider)
+	}
 	return nil
 }
 
@@ -66,19 +73,29 @@ func (p ProviderAggregator) Init() error {
 
 // Provide calls the provide method of every providers
 func (p ProviderAggregator) Provide(configurationChan chan<- config.Message, pool *safe.Pool) error {
+	if p.fileProvider != nil {
+		launchProvider(configurationChan, pool, p.fileProvider)
+	}
+
 	for _, prd := range p.providers {
-		jsonConf, err := json.Marshal(prd)
-		if err != nil {
-			log.WithoutContext().Debugf("Cannot marshal the provider configuration %T: %v", prd, err)
-		}
-		log.WithoutContext().Infof("Starting provider %T %s", prd, jsonConf)
-		currentProvider := prd
 		safe.Go(func() {
-			err := currentProvider.Provide(configurationChan, pool)
-			if err != nil {
-				log.WithoutContext().Errorf("Cannot start the provider %T: %v", prd, err)
-			}
+			launchProvider(configurationChan, pool, prd)
 		})
 	}
 	return nil
+}
+
+func launchProvider(configurationChan chan<- config.Message, pool *safe.Pool, prd provider.Provider) {
+	jsonConf, err := json.Marshal(prd)
+	if err != nil {
+		log.WithoutContext().Debugf("Cannot marshal the provider configuration %T: %v", prd, err)
+	}
+
+	log.WithoutContext().Infof("Starting provider %T %s", prd, jsonConf)
+
+	currentProvider := prd
+	err = currentProvider.Provide(configurationChan, pool)
+	if err != nil {
+		log.WithoutContext().Errorf("Cannot start the provider %T: %v", prd, err)
+	}
 }

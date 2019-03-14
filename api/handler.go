@@ -65,19 +65,20 @@ type jsonRenderer interface {
 }
 
 // Append add api routes on a router
-func (p Handler) Append(router *mux.Router) {
-	if p.Debug {
+func (h Handler) Append(router *mux.Router) {
+	if h.Debug {
 		DebugHandler{}.Append(router)
 	}
 
-	router.Methods(http.MethodGet).Path("/api/providers").HandlerFunc(p.getProvidersHandler)
-	router.Methods(http.MethodGet).Path("/api/providers/{provider}").HandlerFunc(p.getProviderHandler)
-	router.Methods(http.MethodGet).Path("/api/providers/{provider}/routers").HandlerFunc(p.getRoutersHandler)
-	router.Methods(http.MethodGet).Path("/api/providers/{provider}/routers/{router}").HandlerFunc(p.getRouterHandler)
-	router.Methods(http.MethodGet).Path("/api/providers/{provider}/middlewares").HandlerFunc(p.getMiddlewaresHandler)
-	router.Methods(http.MethodGet).Path("/api/providers/{provider}/middlewares/{middleware}").HandlerFunc(p.getMiddlewareHandler)
-	router.Methods(http.MethodGet).Path("/api/providers/{provider}/services").HandlerFunc(p.getServicesHandler)
-	router.Methods(http.MethodGet).Path("/api/providers/{provider}/services/{service}").HandlerFunc(p.getServiceHandler)
+	router.Methods(http.MethodGet).Path("/api/rawdata").HandlerFunc(h.getRawData)
+	router.Methods(http.MethodGet).Path("/api/providers").HandlerFunc(h.getProvidersHandler)
+	router.Methods(http.MethodGet).Path("/api/providers/{provider}").HandlerFunc(h.getProviderHandler)
+	router.Methods(http.MethodGet).Path("/api/providers/{provider}/routers").HandlerFunc(h.getRoutersHandler)
+	router.Methods(http.MethodGet).Path("/api/providers/{provider}/routers/{router}").HandlerFunc(h.getRouterHandler)
+	router.Methods(http.MethodGet).Path("/api/providers/{provider}/middlewares").HandlerFunc(h.getMiddlewaresHandler)
+	router.Methods(http.MethodGet).Path("/api/providers/{provider}/middlewares/{middleware}").HandlerFunc(h.getMiddlewareHandler)
+	router.Methods(http.MethodGet).Path("/api/providers/{provider}/services").HandlerFunc(h.getServicesHandler)
+	router.Methods(http.MethodGet).Path("/api/providers/{provider}/services/{service}").HandlerFunc(h.getServiceHandler)
 
 	// FIXME stats
 	// health route
@@ -85,15 +86,30 @@ func (p Handler) Append(router *mux.Router) {
 
 	version.Handler{}.Append(router)
 
-	if p.Dashboard {
-		DashboardHandler{Assets: p.DashboardAssets}.Append(router)
+	if h.Dashboard {
+		DashboardHandler{Assets: h.DashboardAssets}.Append(router)
 	}
 }
 
-func (p Handler) getProvidersHandler(rw http.ResponseWriter, request *http.Request) {
+func (h Handler) getRawData(rw http.ResponseWriter, request *http.Request) {
+	if h.CurrentConfigurations != nil {
+		currentConfigurations, ok := h.CurrentConfigurations.Get().(config.Configurations)
+		if !ok {
+			rw.WriteHeader(http.StatusOK)
+			return
+		}
+		err := templateRenderer.JSON(rw, http.StatusOK, currentConfigurations)
+		if err != nil {
+			log.FromContext(request.Context()).Error(err)
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		}
+	}
+}
+
+func (h Handler) getProvidersHandler(rw http.ResponseWriter, request *http.Request) {
 	// FIXME handle currentConfiguration
-	if p.CurrentConfigurations != nil {
-		currentConfigurations, ok := p.CurrentConfigurations.Get().(config.Configurations)
+	if h.CurrentConfigurations != nil {
+		currentConfigurations, ok := h.CurrentConfigurations.Get().(config.Configurations)
 		if !ok {
 			rw.WriteHeader(http.StatusOK)
 			return
@@ -115,10 +131,10 @@ func (p Handler) getProvidersHandler(rw http.ResponseWriter, request *http.Reque
 	}
 }
 
-func (p Handler) getProviderHandler(rw http.ResponseWriter, request *http.Request) {
+func (h Handler) getProviderHandler(rw http.ResponseWriter, request *http.Request) {
 	providerID := mux.Vars(request)["provider"]
 
-	currentConfigurations := p.CurrentConfigurations.Get().(config.Configurations)
+	currentConfigurations := h.CurrentConfigurations.Get().(config.Configurations)
 
 	provider, ok := currentConfigurations[providerID]
 	if !ok {
@@ -126,8 +142,13 @@ func (p Handler) getProviderHandler(rw http.ResponseWriter, request *http.Reques
 		return
 	}
 
+	if provider.HTTP == nil {
+		http.NotFound(rw, request)
+		return
+	}
+
 	var routers []ResourceIdentifier
-	for name := range provider.Routers {
+	for name := range provider.HTTP.Routers {
 		routers = append(routers, ResourceIdentifier{
 			ID:   name,
 			Path: "/api/providers/" + providerID + "/routers",
@@ -135,7 +156,7 @@ func (p Handler) getProviderHandler(rw http.ResponseWriter, request *http.Reques
 	}
 
 	var services []ResourceIdentifier
-	for name := range provider.Services {
+	for name := range provider.HTTP.Services {
 		services = append(services, ResourceIdentifier{
 			ID:   name,
 			Path: "/api/providers/" + providerID + "/services",
@@ -143,7 +164,7 @@ func (p Handler) getProviderHandler(rw http.ResponseWriter, request *http.Reques
 	}
 
 	var middlewares []ResourceIdentifier
-	for name := range provider.Middlewares {
+	for name := range provider.HTTP.Middlewares {
 		middlewares = append(middlewares, ResourceIdentifier{
 			ID:   name,
 			Path: "/api/providers/" + providerID + "/middlewares",
@@ -159,10 +180,10 @@ func (p Handler) getProviderHandler(rw http.ResponseWriter, request *http.Reques
 	}
 }
 
-func (p Handler) getRoutersHandler(rw http.ResponseWriter, request *http.Request) {
+func (h Handler) getRoutersHandler(rw http.ResponseWriter, request *http.Request) {
 	providerID := mux.Vars(request)["provider"]
 
-	currentConfigurations := p.CurrentConfigurations.Get().(config.Configurations)
+	currentConfigurations := h.CurrentConfigurations.Get().(config.Configurations)
 
 	provider, ok := currentConfigurations[providerID]
 	if !ok {
@@ -170,8 +191,13 @@ func (p Handler) getRoutersHandler(rw http.ResponseWriter, request *http.Request
 		return
 	}
 
+	if provider.HTTP == nil {
+		http.NotFound(rw, request)
+		return
+	}
+
 	var routers []RouterRepresentation
-	for name, router := range provider.Routers {
+	for name, router := range provider.HTTP.Routers {
 		routers = append(routers, RouterRepresentation{Router: router, ID: name})
 	}
 
@@ -182,11 +208,11 @@ func (p Handler) getRoutersHandler(rw http.ResponseWriter, request *http.Request
 	}
 }
 
-func (p Handler) getRouterHandler(rw http.ResponseWriter, request *http.Request) {
+func (h Handler) getRouterHandler(rw http.ResponseWriter, request *http.Request) {
 	providerID := mux.Vars(request)["provider"]
 	routerID := mux.Vars(request)["router"]
 
-	currentConfigurations := p.CurrentConfigurations.Get().(config.Configurations)
+	currentConfigurations := h.CurrentConfigurations.Get().(config.Configurations)
 
 	provider, ok := currentConfigurations[providerID]
 	if !ok {
@@ -194,7 +220,12 @@ func (p Handler) getRouterHandler(rw http.ResponseWriter, request *http.Request)
 		return
 	}
 
-	router, ok := provider.Routers[routerID]
+	if provider.HTTP == nil {
+		http.NotFound(rw, request)
+		return
+	}
+
+	router, ok := provider.HTTP.Routers[routerID]
 	if !ok {
 		http.NotFound(rw, request)
 		return
@@ -207,10 +238,10 @@ func (p Handler) getRouterHandler(rw http.ResponseWriter, request *http.Request)
 	}
 }
 
-func (p Handler) getMiddlewaresHandler(rw http.ResponseWriter, request *http.Request) {
+func (h Handler) getMiddlewaresHandler(rw http.ResponseWriter, request *http.Request) {
 	providerID := mux.Vars(request)["provider"]
 
-	currentConfigurations := p.CurrentConfigurations.Get().(config.Configurations)
+	currentConfigurations := h.CurrentConfigurations.Get().(config.Configurations)
 
 	provider, ok := currentConfigurations[providerID]
 	if !ok {
@@ -218,8 +249,13 @@ func (p Handler) getMiddlewaresHandler(rw http.ResponseWriter, request *http.Req
 		return
 	}
 
+	if provider.HTTP == nil {
+		http.NotFound(rw, request)
+		return
+	}
+
 	var middlewares []MiddlewareRepresentation
-	for name, middleware := range provider.Middlewares {
+	for name, middleware := range provider.HTTP.Middlewares {
 		middlewares = append(middlewares, MiddlewareRepresentation{Middleware: middleware, ID: name})
 	}
 
@@ -230,11 +266,11 @@ func (p Handler) getMiddlewaresHandler(rw http.ResponseWriter, request *http.Req
 	}
 }
 
-func (p Handler) getMiddlewareHandler(rw http.ResponseWriter, request *http.Request) {
+func (h Handler) getMiddlewareHandler(rw http.ResponseWriter, request *http.Request) {
 	providerID := mux.Vars(request)["provider"]
 	middlewareID := mux.Vars(request)["middleware"]
 
-	currentConfigurations := p.CurrentConfigurations.Get().(config.Configurations)
+	currentConfigurations := h.CurrentConfigurations.Get().(config.Configurations)
 
 	provider, ok := currentConfigurations[providerID]
 	if !ok {
@@ -242,7 +278,12 @@ func (p Handler) getMiddlewareHandler(rw http.ResponseWriter, request *http.Requ
 		return
 	}
 
-	middleware, ok := provider.Middlewares[middlewareID]
+	if provider.HTTP == nil {
+		http.NotFound(rw, request)
+		return
+	}
+
+	middleware, ok := provider.HTTP.Middlewares[middlewareID]
 	if !ok {
 		http.NotFound(rw, request)
 		return
@@ -255,10 +296,10 @@ func (p Handler) getMiddlewareHandler(rw http.ResponseWriter, request *http.Requ
 	}
 }
 
-func (p Handler) getServicesHandler(rw http.ResponseWriter, request *http.Request) {
+func (h Handler) getServicesHandler(rw http.ResponseWriter, request *http.Request) {
 	providerID := mux.Vars(request)["provider"]
 
-	currentConfigurations := p.CurrentConfigurations.Get().(config.Configurations)
+	currentConfigurations := h.CurrentConfigurations.Get().(config.Configurations)
 
 	provider, ok := currentConfigurations[providerID]
 	if !ok {
@@ -266,8 +307,13 @@ func (p Handler) getServicesHandler(rw http.ResponseWriter, request *http.Reques
 		return
 	}
 
+	if provider.HTTP == nil {
+		http.NotFound(rw, request)
+		return
+	}
+
 	var services []ServiceRepresentation
-	for name, service := range provider.Services {
+	for name, service := range provider.HTTP.Services {
 		services = append(services, ServiceRepresentation{Service: service, ID: name})
 	}
 
@@ -278,11 +324,11 @@ func (p Handler) getServicesHandler(rw http.ResponseWriter, request *http.Reques
 	}
 }
 
-func (p Handler) getServiceHandler(rw http.ResponseWriter, request *http.Request) {
+func (h Handler) getServiceHandler(rw http.ResponseWriter, request *http.Request) {
 	providerID := mux.Vars(request)["provider"]
 	serviceID := mux.Vars(request)["service"]
 
-	currentConfigurations := p.CurrentConfigurations.Get().(config.Configurations)
+	currentConfigurations := h.CurrentConfigurations.Get().(config.Configurations)
 
 	provider, ok := currentConfigurations[providerID]
 	if !ok {
@@ -290,7 +336,12 @@ func (p Handler) getServiceHandler(rw http.ResponseWriter, request *http.Request
 		return
 	}
 
-	service, ok := provider.Services[serviceID]
+	if provider.HTTP == nil {
+		http.NotFound(rw, request)
+		return
+	}
+
+	service, ok := provider.HTTP.Services[serviceID]
 	if !ok {
 		http.NotFound(rw, request)
 		return

@@ -1,33 +1,33 @@
 [log]
 logLevel = "DEBUG"
 
-[entryPoints]
-  [entryPoints.http]
+[entrypoints]
+  [entrypoints.web]
   address = ":8080"
 
 [providers]
    [providers.file]
 
-[routers]
-  [routers.router1]
+[http.routers]
+  [http.routers.router1]
       Rule = "Host(`test.local`)"
       service = "service1"
       middlewares = ["error"]
 
-[middlewares]
-    [middlewares.error.errors]
+[http.middlewares]
+    [http.middlewares.error.errors]
         status = ["500-502", "503-599"]
         service = "error"
         query = "/50x.html"
 
-[services]
-  [services.service1.loadbalancer]
+[http.services]
+  [http.services.service1.loadbalancer]
     passHostHeader = true
-    [[services.service1.loadbalancer.servers]]
+    [[http.services.service1.loadbalancer.servers]]
         url = "http://{{.Server1}}:80"
         weight = 1
 
-  [services.error.loadbalancer]
-    [[services.error.loadbalancer.servers]]
+  [http.services.error.loadbalancer]
+    [[http.services.error.loadbalancer.servers]]
         url = "http://{{.Server2}}:80"
         weight = 1

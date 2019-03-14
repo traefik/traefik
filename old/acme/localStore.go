@@ -110,7 +110,7 @@ func ConvertToNewFormat(fileName string) {
 			storeCertificates = newCertificates
 		}
 
-		// Store the data in new format into the file even if account is nil
+		// Stores the data in new format into the file even if account is nil
 		// to delete Account in ACME v1 format and keeping the certificates
 		newLocalStore := acme.NewLocalStore(fileName)
 		newLocalStore.SaveDataChan <- &acme.StoredData{Account: newAccount, Certificates: storeCertificates}

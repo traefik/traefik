@@ -5,8 +5,8 @@ logLevel = "DEBUG"
 # Use certificate in net/internal/testcert.go
 rootCAs =  [ "fixtures/https/rootcas/local.crt"]
 
-[entryPoints]
-  [entryPoints.http]
+[entrypoints]
+  [entrypoints.web]
   address = ":8081"
 
 [api]
@@ -14,15 +14,15 @@ rootCAs =  [ "fixtures/https/rootcas/local.crt"]
 [providers]
    [providers.file]
 
-[Routers]
-  [Routers.router1]
+[http.routers]
+  [http.routers.router1]
     Service = "service1"
     Rule = "Path(`/ping`)"
 
-[Services]
-  [Services.service1]
-    [Services.service1.LoadBalancer]
+[http.services]
+  [http.services.service1]
+    [http.services.service1.LoadBalancer]
 
-      [[Services.service1.LoadBalancer.Servers]]
+      [[http.services.service1.LoadBalancer.Servers]]
         URL = "{{ .BackendHost }}"
         Weight = 1

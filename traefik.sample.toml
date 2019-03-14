@@ -16,14 +16,6 @@
 #
 # logLevel = "DEBUG"
 
-# Entrypoints to be used by frontends that do not specify any entrypoint.
-# Each frontend can specify its own entrypoints.
-#
-# Optional
-# Default: ["http"]
-#
-# defaultEntryPoints = ["http", "https"]
-
 ################################################################
 # Entrypoints configuration
 ################################################################
@@ -32,8 +24,8 @@
 #
 # Optional
 # Default:
-[entryPoints]
-    [entryPoints.http]
+[entrypoints]
+    [entrypoints.web]
     address = ":80"
 
 ################################################################

@@ -12,8 +12,8 @@ To proactively prevent services from being overwhelmed with high load, a maximum
 ??? example "File -- Limiting to 10 simultaneous connections"
 
     ```toml
-    [Middlewares]
-      [Middlewares.test-maxconn.maxconn]
+    [http.middlewares]
+      [http.middlewares.test-maxconn.maxconn]
       amount = 10 
     ```
 
@@ -23,7 +23,7 @@ To proactively prevent services from being overwhelmed with high load, a maximum
     a-container:
           image: a-container-image 
             labels:
-              - "traefik.middlewares.test-maxconn.maxconn.amount=10"
+              - "traefik.http.middlewares.test-maxconn.maxconn.amount=10"
     ```
 
 ## Configuration Options

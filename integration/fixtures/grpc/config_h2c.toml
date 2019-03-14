@@ -1,9 +1,8 @@
-
 [global]
 debug = true
 
-[entryPoints]
-  [entryPoints.http]
+[entrypoints]
+  [entrypoints.web]
     address = ":8081"
 
 [api]
@@ -11,13 +10,13 @@ debug = true
 [providers]
    [providers.file]
 
-[routers]
-  [routers.router1]
+[http.routers]
+  [http.routers.router1]
     rule = "Host(`127.0.0.1`)"
     service = "service1"
 
-[services]
-  [services.service1.loadbalancer]
-    [[services.service1.loadbalancer.servers]]
+[http.services]
+  [http.services.service1.loadbalancer]
+    [[http.services.service1.loadbalancer.servers]]
       url = "h2c://127.0.0.1:{{ .GRPCServerPort }}"
       weight = 1

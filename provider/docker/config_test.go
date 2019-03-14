@@ -19,7 +19,7 @@ func TestDefaultRule(t *testing.T) {
 		desc        string
 		containers  []dockerData
 		defaultRule string
-		expected    *config.Configuration
+		expected    *config.HTTPConfiguration
 	}{
 		{
 			desc: "default rule with no variable",
@@ -42,7 +42,7 @@ func TestDefaultRule(t *testing.T) {
 				},
 			},
 			defaultRule: "Host(`foo.bar`)",
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Test",
@@ -87,7 +87,7 @@ func TestDefaultRule(t *testing.T) {
 				},
 			},
 			defaultRule: "Host(`{{ .Name }}.foo.bar`)",
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Test",
@@ -134,7 +134,7 @@ func TestDefaultRule(t *testing.T) {
 				},
 			},
 			defaultRule: `Host("{{ .Name }}.{{ index .Labels "traefik.domain" }}")`,
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Test",
@@ -179,7 +179,7 @@ func TestDefaultRule(t *testing.T) {
 				},
 			},
 			defaultRule: `Host("{{ .Toto }}")`,
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers:     map[string]*config.Router{},
 				Middlewares: map[string]*config.Middleware{},
 				Services: map[string]*config.Service{
@@ -219,7 +219,7 @@ func TestDefaultRule(t *testing.T) {
 				},
 			},
 			defaultRule: ``,
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers:     map[string]*config.Router{},
 				Middlewares: map[string]*config.Middleware{},
 				Services: map[string]*config.Service{
@@ -259,7 +259,7 @@ func TestDefaultRule(t *testing.T) {
 				},
 			},
 			defaultRule: DefaultTemplateRule,
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Test",
@@ -307,7 +307,7 @@ func TestDefaultRule(t *testing.T) {
 
 			configuration := p.buildConfiguration(context.Background(), test.containers)
 
-			assert.Equal(t, test.expected, configuration)
+			assert.Equal(t, test.expected, configuration.HTTP)
 		})
 	}
 }
@@ -317,7 +317,7 @@ func Test_buildConfiguration(t *testing.T) {
 		desc        string
 		containers  []dockerData
 		constraints types.Constraints
-		expected    *config.Configuration
+		expected    *config.HTTPConfiguration
 	}{
 		{
 			desc: "one container no label",
@@ -339,7 +339,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Test",
@@ -399,7 +399,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Test",
@@ -477,7 +477,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Test",
@@ -512,7 +512,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.services.Service1.loadbalancer.method": "drr",
+						"traefik.http.services.Service1.loadbalancer.method": "drr",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -527,7 +527,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Service1",
@@ -558,9 +558,9 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.services.Service1.loadbalancer.method": "wrr",
-						"traefik.routers.Router1.rule":                  "Host(`foo.com`)",
-						"traefik.routers.Router1.service":               "Service1",
+						"traefik.http.services.Service1.loadbalancer.method": "wrr",
+						"traefik.http.routers.Router1.rule":                  "Host(`foo.com`)",
+						"traefik.http.routers.Router1.service":               "Service1",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -575,7 +575,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Router1": {
 						Service: "Service1",
@@ -606,7 +606,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.routers.Router1.rule": "Host(`foo.com`)",
+						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -621,7 +621,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Middlewares: map[string]*config.Middleware{},
 				Services: map[string]*config.Service{
 					"Test": {
@@ -652,8 +652,8 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.routers.Router1.rule":                  "Host(`foo.com`)",
-						"traefik.services.Service1.loadbalancer.method": "wrr",
+						"traefik.http.routers.Router1.rule":                  "Host(`foo.com`)",
+						"traefik.http.services.Service1.loadbalancer.method": "wrr",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -668,7 +668,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Router1": {
 						Service: "Service1",
@@ -699,9 +699,9 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.routers.Router1.rule":                  "Host(`foo.com`)",
-						"traefik.services.Service1.loadbalancer.method": "wrr",
-						"traefik.services.Service2.loadbalancer.method": "wrr",
+						"traefik.http.routers.Router1.rule":                  "Host(`foo.com`)",
+						"traefik.http.services.Service1.loadbalancer.method": "wrr",
+						"traefik.http.services.Service2.loadbalancer.method": "wrr",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -716,7 +716,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers:     map[string]*config.Router{},
 				Middlewares: map[string]*config.Middleware{},
 				Services: map[string]*config.Service{
@@ -755,7 +755,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.services.Service1.loadbalancer.method": "drr",
+						"traefik.http.services.Service1.loadbalancer.method": "drr",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -774,7 +774,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.services.Service1.loadbalancer.method": "wrr",
+						"traefik.http.services.Service1.loadbalancer.method": "wrr",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -789,7 +789,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Service1",
@@ -808,7 +808,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.services.Service1.loadbalancer.method": "drr",
+						"traefik.http.services.Service1.loadbalancer.method": "drr",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -827,7 +827,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.services.Service1.loadbalancer.method": "wrr",
+						"traefik.http.services.Service1.loadbalancer.method": "wrr",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -846,7 +846,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.services.Service1.loadbalancer.method": "foo",
+						"traefik.http.services.Service1.loadbalancer.method": "foo",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -861,7 +861,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Service1",
@@ -880,7 +880,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.services.Service1.loadbalancer.method": "drr",
+						"traefik.http.services.Service1.loadbalancer.method": "drr",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -899,7 +899,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.services.Service1.loadbalancer.method": "drr",
+						"traefik.http.services.Service1.loadbalancer.method": "drr",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -914,7 +914,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Service1",
@@ -949,7 +949,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.middlewares.Middleware1.maxconn.amount": "42",
+						"traefik.http.middlewares.Middleware1.maxconn.amount": "42",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -964,7 +964,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Test",
@@ -1003,7 +1003,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.middlewares.Middleware1.maxconn.amount": "42",
+						"traefik.http.middlewares.Middleware1.maxconn.amount": "42",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1022,7 +1022,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.middlewares.Middleware1.maxconn.amount": "42",
+						"traefik.http.middlewares.Middleware1.maxconn.amount": "42",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1037,7 +1037,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Test",
@@ -1080,7 +1080,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.middlewares.Middleware1.maxconn.amount": "42",
+						"traefik.http.middlewares.Middleware1.maxconn.amount": "42",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1099,7 +1099,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.middlewares.Middleware1.maxconn.amount": "41",
+						"traefik.http.middlewares.Middleware1.maxconn.amount": "41",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1114,7 +1114,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Test",
@@ -1150,7 +1150,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.middlewares.Middleware1.maxconn.amount": "42",
+						"traefik.http.middlewares.Middleware1.maxconn.amount": "42",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1169,7 +1169,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.middlewares.Middleware1.maxconn.amount": "41",
+						"traefik.http.middlewares.Middleware1.maxconn.amount": "41",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1188,7 +1188,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.middlewares.Middleware1.maxconn.amount": "40",
+						"traefik.http.middlewares.Middleware1.maxconn.amount": "40",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1203,7 +1203,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Test",
@@ -1243,7 +1243,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.routers.Router1.rule": "Host(`foo.com`)",
+						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1262,7 +1262,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.routers.Router1.rule": "Host(`bar.com`)",
+						"traefik.http.routers.Router1.rule": "Host(`bar.com`)",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1277,7 +1277,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers:     map[string]*config.Router{},
 				Middlewares: map[string]*config.Middleware{},
 				Services: map[string]*config.Service{
@@ -1308,7 +1308,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.routers.Router1.rule": "Host(`foo.com`)",
+						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1327,7 +1327,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.routers.Router1.rule": "Host(`bar.com`)",
+						"traefik.http.routers.Router1.rule": "Host(`bar.com`)",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1346,7 +1346,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.routers.Router1.rule": "Host(`foobar.com`)",
+						"traefik.http.routers.Router1.rule": "Host(`foobar.com`)",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1361,7 +1361,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers:     map[string]*config.Router{},
 				Middlewares: map[string]*config.Middleware{},
 				Services: map[string]*config.Service{
@@ -1396,7 +1396,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.routers.Router1.rule": "Host(`foo.com`)",
+						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1415,7 +1415,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.routers.Router1.rule": "Host(`foo.com`)",
+						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1430,7 +1430,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Router1": {
 						Service: "Test",
@@ -1465,7 +1465,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.routers.Router1.rule": "Host(`foo.com`)",
+						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1483,7 +1483,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test2",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.routers.Router1.rule": "Host(`foo.com`)",
+						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1498,7 +1498,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers:     map[string]*config.Router{},
 				Middlewares: map[string]*config.Middleware{},
 				Services: map[string]*config.Service{
@@ -1551,7 +1551,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Test",
@@ -1582,8 +1582,8 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.services.Service1.LoadBalancer.server.scheme": "h2c",
-						"traefik.services.Service1.LoadBalancer.server.port":   "8080",
+						"traefik.http.services.Service1.LoadBalancer.server.scheme": "h2c",
+						"traefik.http.services.Service1.LoadBalancer.server.port":   "8080",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1598,7 +1598,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Service1",
@@ -1629,8 +1629,8 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.services.Service1.LoadBalancer.server.port": "",
-						"traefik.services.Service2.LoadBalancer.server.port": "8080",
+						"traefik.http.services.Service1.LoadBalancer.server.port": "",
+						"traefik.http.services.Service2.LoadBalancer.server.port": "8080",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1645,7 +1645,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers:     map[string]*config.Router{},
 				Middlewares: map[string]*config.Middleware{},
 				Services: map[string]*config.Service{
@@ -1694,7 +1694,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers:     map[string]*config.Router{},
 				Middlewares: map[string]*config.Middleware{},
 				Services:    map[string]*config.Service{},
@@ -1707,7 +1707,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.middlewares.Middleware1.maxconn.amount": "42",
+						"traefik.http.middlewares.Middleware1.maxconn.amount": "42",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{},
@@ -1720,7 +1720,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers:     map[string]*config.Router{},
 				Middlewares: map[string]*config.Middleware{},
 				Services:    map[string]*config.Service{},
@@ -1748,7 +1748,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers:     map[string]*config.Router{},
 				Middlewares: map[string]*config.Middleware{},
 				Services:    map[string]*config.Service{},
@@ -1775,7 +1775,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Health: "not_healthy",
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers:     map[string]*config.Router{},
 				Middlewares: map[string]*config.Middleware{},
 				Services:    map[string]*config.Service{},
@@ -1810,7 +1810,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Regex:     "bar",
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers:     map[string]*config.Router{},
 				Middlewares: map[string]*config.Middleware{},
 				Services:    map[string]*config.Service{},
@@ -1845,7 +1845,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Regex:     "foo",
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service: "Test",
@@ -1876,8 +1876,8 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.middlewares.Middleware1.basicauth.users": "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						"traefik.routers.Test.middlewares":                "Middleware1",
+						"traefik.http.middlewares.Middleware1.basicauth.users": "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						"traefik.http.routers.Test.middlewares":                "Middleware1",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1892,7 +1892,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			expected: &config.Configuration{
+			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
 					"Test": {
 						Service:     "Test",
@@ -1951,7 +1951,7 @@ func Test_buildConfiguration(t *testing.T) {
 
 			configuration := p.buildConfiguration(context.Background(), test.containers)
 
-			assert.Equal(t, test.expected, configuration)
+			assert.Equal(t, test.expected, configuration.HTTP)
 		})
 	}
 }

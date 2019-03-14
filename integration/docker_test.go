@@ -158,13 +158,13 @@ func (s *DockerSuite) TestDockerContainersWithLabels(c *check.C) {
 
 	// Start a container with some labels
 	labels := map[string]string{
-		"traefik.Routers.Super.Rule": "Host(`my.super.host`)",
+		"traefik.http.Routers.Super.Rule": "Host(`my.super.host`)",
 	}
 	s.startContainerWithLabels(c, "swarm:1.0.0", labels, "manage", "token://blabla")
 
 	// Start another container by replacing a '.' by a '-'
 	labels = map[string]string{
-		"traefik.Routers.SuperHost.Rule": "Host(`my-super.host`)",
+		"traefik.http.Routers.SuperHost.Rule": "Host(`my-super.host`)",
 	}
 	s.startContainerWithLabels(c, "swarm:1.0.0", labels, "manage", "token://blablabla")
 
@@ -250,8 +250,8 @@ func (s *DockerSuite) TestRestartDockerContainers(c *check.C) {
 
 	// Start a container with some labels
 	labels := map[string]string{
-		"traefik.Routers.Super.Rule":                       "Host(`my.super.host`)",
-		"traefik.Services.powpow.LoadBalancer.server.Port": "2375",
+		"traefik.http.Routers.Super.Rule":                       "Host(`my.super.host`)",
+		"traefik.http.Services.powpow.LoadBalancer.server.Port": "2375",
 	}
 	s.startContainerWithNameAndLabels(c, "powpow", "swarm:1.0.0", labels, "manage", "token://blabla")
 

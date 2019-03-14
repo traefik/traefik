@@ -14,8 +14,8 @@ import (
 	"github.com/abronan/valkeyrie/store"
 	"github.com/abronan/valkeyrie/store/consul"
 	"github.com/containous/staert"
-	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/integration/try"
+	"github.com/containous/traefik/old/cluster"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
 )

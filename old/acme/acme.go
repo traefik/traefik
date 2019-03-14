@@ -19,8 +19,8 @@ import (
 	"github.com/cenkalti/backoff"
 	"github.com/containous/mux"
 	"github.com/containous/staert"
-	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/old/cluster"
 	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
@@ -614,7 +614,7 @@ func (a *ACME) getProvidedCertificate(domains string) *tls.Certificate {
 }
 
 func searchProvidedCertificateForDomains(domain string, certs map[string]*tls.Certificate) *tls.Certificate {
-	// Use regex to test for provided certs that might have been added into TLSConfig
+	// Use regex to test for provided certs that might have been added into TLSOptions
 	for certDomains := range certs {
 		domainChecked := false
 		for _, certDomain := range strings.Split(certDomains, ",") {

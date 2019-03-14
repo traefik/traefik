@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"reflect"
 	"time"
@@ -19,16 +18,16 @@ import (
 	"github.com/containous/traefik/responsemodifiers"
 	"github.com/containous/traefik/server/middleware"
 	"github.com/containous/traefik/server/router"
+	routertcp "github.com/containous/traefik/server/router/tcp"
 	"github.com/containous/traefik/server/service"
-	traefiktls "github.com/containous/traefik/tls"
+	"github.com/containous/traefik/server/service/tcp"
+	tcpCore "github.com/containous/traefik/tcp"
 	"github.com/eapache/channels"
 	"github.com/sirupsen/logrus"
 )
 
 // loadConfiguration manages dynamically routers, middlewares, servers and TLS configurations
 func (s *Server) loadConfiguration(configMsg config.Message) {
-	logger := log.FromContext(log.With(context.Background(), log.Str(log.ProviderName, configMsg.ProviderName)))
-
 	currentConfigurations := s.currentConfigurations.Get().(config.Configurations)
 
 	// Copy configurations to new map so we don't change current if LoadConfig fails
@@ -40,26 +39,12 @@ func (s *Server) loadConfiguration(configMsg config.Message) {
 
 	s.metricsRegistry.ConfigReloadsCounter().Add(1)
 
-	handlers, certificates := s.loadConfig(newConfigurations)
+	handlersTCP := s.loadConfigurationTCP(newConfigurations)
+	for entryPointName, router := range handlersTCP {
+		s.entryPointsTCP[entryPointName].switchRouter(router)
+	}
 
 	s.metricsRegistry.LastConfigReloadSuccessGauge().Set(float64(time.Now().Unix()))
-
-	for entryPointName, handler := range handlers {
-		s.entryPoints[entryPointName].switcher.UpdateHandler(handler)
-	}
-
-	for entryPointName, entryPoint := range s.entryPoints {
-		eLogger := logger.WithField(log.EntryPointName, entryPointName)
-		if entryPoint.Certs == nil {
-			if len(certificates[entryPointName]) > 0 {
-				eLogger.Debugf("Cannot configure certificates for the non-TLS %s entryPoint.", entryPointName)
-			}
-		} else {
-			entryPoint.Certs.DynamicCerts.Set(certificates[entryPointName])
-			entryPoint.Certs.ResetCache()
-		}
-		eLogger.Infof("Server configuration reloaded on %s", s.entryPoints[entryPointName].httpServer.Addr)
-	}
 
 	s.currentConfigurations.Set(newConfigurations)
 
@@ -70,35 +55,48 @@ func (s *Server) loadConfiguration(configMsg config.Message) {
 	s.postLoadConfiguration()
 }
 
-// loadConfig returns a new gorilla.mux Route from the specified global configuration and the dynamic
+// loadConfigurationTCP returns a new gorilla.mux Route from the specified global configuration and the dynamic
 // provider configurations.
-func (s *Server) loadConfig(configurations config.Configurations) (map[string]http.Handler, map[string]map[string]*tls.Certificate) {
-
+func (s *Server) loadConfigurationTCP(configurations config.Configurations) map[string]*tcpCore.Router {
 	ctx := context.TODO()
 
-	conf := mergeConfiguration(configurations)
-	handlers := s.applyConfiguration(ctx, conf)
-
-	// Get new certificates list sorted per entry points
-	// Update certificates
-	entryPointsCertificates := s.loadHTTPSConfiguration(configurations)
-
-	return handlers, entryPointsCertificates
-}
-
-func (s *Server) applyConfiguration(ctx context.Context, configuration config.Configuration) map[string]http.Handler {
 	var entryPoints []string
-	for entryPointName := range s.entryPoints {
+	for entryPointName := range s.entryPointsTCP {
 		entryPoints = append(entryPoints, entryPointName)
 	}
 
+	conf := mergeConfiguration(configurations)
+
+	s.tlsManager.UpdateConfigs(conf.TLSStores, conf.TLSOptions, conf.TLS)
+
+	handlersNonTLS, handlersTLS := s.createHTTPHandlers(ctx, *conf.HTTP, entryPoints)
+
+	routersTCP := s.createTCPRouters(ctx, conf.TCP, entryPoints, handlersNonTLS, handlersTLS, s.tlsManager.Get("default", "default"))
+
+	return routersTCP
+}
+
+func (s *Server) createTCPRouters(ctx context.Context, configuration *config.TCPConfiguration, entryPoints []string, handlers map[string]http.Handler, handlersTLS map[string]http.Handler, tlsConfig *tls.Config) map[string]*tcpCore.Router {
+	if configuration == nil {
+		return make(map[string]*tcpCore.Router)
+	}
+
+	serviceManager := tcp.NewManager(configuration.Services)
+	routerManager := routertcp.NewManager(configuration.Routers, serviceManager, handlers, handlersTLS, tlsConfig)
+
+	return routerManager.BuildHandlers(ctx, entryPoints)
+
+}
+
+func (s *Server) createHTTPHandlers(ctx context.Context, configuration config.HTTPConfiguration, entryPoints []string) (map[string]http.Handler, map[string]http.Handler) {
 	serviceManager := service.NewManager(configuration.Services, s.defaultRoundTripper)
 	middlewaresBuilder := middleware.NewBuilder(configuration.Middlewares, serviceManager)
 	responseModifierFactory := responsemodifiers.NewBuilder(configuration.Middlewares)
 
 	routerManager := router.NewManager(configuration.Routers, serviceManager, middlewaresBuilder, responseModifierFactory)
 
-	handlers := routerManager.BuildHandlers(ctx, entryPoints)
+	handlersNonTLS := routerManager.BuildHandlers(ctx, entryPoints, false)
+	handlersTLS := routerManager.BuildHandlers(ctx, entryPoints, true)
 
 	routerHandlers := make(map[string]http.Handler)
 
@@ -108,14 +106,14 @@ func (s *Server) applyConfiguration(ctx context.Context, configuration config.Co
 
 		ctx = log.With(ctx, log.Str(log.EntryPointName, entryPointName))
 
-		factory := s.entryPoints[entryPointName].RouteAppenderFactory
+		factory := s.entryPointsTCP[entryPointName].RouteAppenderFactory
 		if factory != nil {
 			// FIXME remove currentConfigurations
 			appender := factory.NewAppender(ctx, middlewaresBuilder, &s.currentConfigurations)
 			appender.Append(internalMuxRouter)
 		}
 
-		if h, ok := handlers[entryPointName]; ok {
+		if h, ok := handlersNonTLS[entryPointName]; ok {
 			internalMuxRouter.NotFoundHandler = h
 		} else {
 			internalMuxRouter.NotFoundHandler = buildDefaultHTTPRouter()
@@ -141,13 +139,42 @@ func (s *Server) applyConfiguration(ctx context.Context, configuration config.Co
 			continue
 		}
 		internalMuxRouter.NotFoundHandler = handler
+
+		handlerTLS, ok := handlersTLS[entryPointName]
+		if ok {
+			handlerTLSWithMiddlewares, err := chain.Then(handlerTLS)
+			if err != nil {
+				log.FromContext(ctx).Error(err)
+				continue
+			}
+			handlersTLS[entryPointName] = handlerTLSWithMiddlewares
+		}
 	}
 
-	return routerHandlers
+	return routerHandlers, handlersTLS
+}
+
+func isEmptyConfiguration(conf *config.Configuration) bool {
+	if conf == nil {
+		return true
+	}
+	if conf.TCP == nil {
+		conf.TCP = &config.TCPConfiguration{}
+	}
+	if conf.HTTP == nil {
+		conf.HTTP = &config.HTTPConfiguration{}
+	}
+
+	return conf.HTTP.Routers == nil &&
+		conf.HTTP.Services == nil &&
+		conf.HTTP.Middlewares == nil &&
+		conf.TLS == nil &&
+		conf.TCP.Routers == nil &&
+		conf.TCP.Services == nil
 }
 
 func (s *Server) preLoadConfiguration(configMsg config.Message) {
-	s.defaultConfigurationValues(configMsg.Configuration)
+	s.defaultConfigurationValues(configMsg.Configuration.HTTP)
 	currentConfigurations := s.currentConfigurations.Get().(config.Configurations)
 
 	logger := log.WithoutContext().WithField(log.ProviderName, configMsg.ProviderName)
@@ -156,7 +183,7 @@ func (s *Server) preLoadConfiguration(configMsg config.Message) {
 		logger.Debugf("Configuration received from provider %s: %s", configMsg.ProviderName, string(jsonConf))
 	}
 
-	if configMsg.Configuration == nil || configMsg.Configuration.Routers == nil && configMsg.Configuration.Services == nil && configMsg.Configuration.Middlewares == nil && configMsg.Configuration.TLS == nil {
+	if isEmptyConfiguration(configMsg.Configuration) {
 		logger.Infof("Skipping empty Configuration for provider %s", configMsg.ProviderName)
 		return
 	}
@@ -178,7 +205,7 @@ func (s *Server) preLoadConfiguration(configMsg config.Message) {
 	providerConfigUpdateCh <- configMsg
 }
 
-func (s *Server) defaultConfigurationValues(configuration *config.Configuration) {
+func (s *Server) defaultConfigurationValues(configuration *config.HTTPConfiguration) {
 	// FIXME create a config hook
 }
 
@@ -235,59 +262,6 @@ func (s *Server) postLoadConfiguration() {
 	// 	metrics.OnConfigurationUpdate(activeConfig)
 	// }
 
-	// FIXME acme
-	// if s.staticConfiguration.ACME == nil || s.leadership == nil || !s.leadership.IsLeader() {
-	// 	return
-	// }
-	//
-	// if s.staticConfiguration.ACME.OnHostRule {
-	// 	currentConfigurations := s.currentConfigurations.Get().(config.Configurations)
-	// 	for _, config := range currentConfigurations {
-	// 		for _, frontend := range config.Frontends {
-	//
-	// 			// check if one of the frontend entrypoints is configured with TLS
-	// 			// and is configured with ACME
-	// 			acmeEnabled := false
-	// 			for _, entryPoint := range frontend.EntryPoints {
-	// 				if s.staticConfiguration.ACME.EntryPoint == entryPoint && s.entryPoints[entryPoint].Configuration.TLS != nil {
-	// 					acmeEnabled = true
-	// 					break
-	// 				}
-	// 			}
-	//
-	// 			if acmeEnabled {
-	// 				for _, route := range frontend.Routes {
-	// 					rls := rules.Rules{}
-	// 					domains, err := rls.ParseDomains(route.Rule)
-	// 					if err != nil {
-	// 						log.Errorf("Error parsing domains: %v", err)
-	// 					} else if len(domains) == 0 {
-	// 						log.Debugf("No domain parsed in rule %q", route.Rule)
-	// 					} else {
-	// 						s.staticConfiguration.ACME.LoadCertificateForDomains(domains)
-	// 					}
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// }
-}
-
-// loadHTTPSConfiguration add/delete HTTPS certificate managed dynamically
-func (s *Server) loadHTTPSConfiguration(configurations config.Configurations) map[string]map[string]*tls.Certificate {
-	var entryPoints []string
-	for entryPointName := range s.entryPoints {
-		entryPoints = append(entryPoints, entryPointName)
-	}
-
-	newEPCertificates := make(map[string]map[string]*tls.Certificate)
-	// Get all certificates
-	for _, config := range configurations {
-		if config.TLS != nil && len(config.TLS) > 0 {
-			traefiktls.SortTLSPerEntryPoints(config.TLS, newEPCertificates, entryPoints)
-		}
-	}
-	return newEPCertificates
 }
 
 func buildDefaultHTTPRouter() *mux.Router {
@@ -295,22 +269,4 @@ func buildDefaultHTTPRouter() *mux.Router {
 	rt.NotFoundHandler = http.HandlerFunc(http.NotFound)
 	rt.SkipClean(true)
 	return rt
-}
-
-func buildDefaultCertificate(defaultCertificate *traefiktls.Certificate) (*tls.Certificate, error) {
-	certFile, err := defaultCertificate.CertFile.Read()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get cert file content: %v", err)
-	}
-
-	keyFile, err := defaultCertificate.KeyFile.Read()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get key file content: %v", err)
-	}
-
-	cert, err := tls.X509KeyPair(certFile, keyFile)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load X509 key pair: %v", err)
-	}
-	return &cert, nil
 }

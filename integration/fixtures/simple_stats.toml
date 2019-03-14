@@ -1,8 +1,8 @@
 [global]
 debug=true
 
-[entryPoints]
-  [entryPoints.http]
+[entrypoints]
+  [entrypoints.web]
   address = ":8000"
 
 [api]
@@ -10,26 +10,26 @@ debug=true
 [providers]
    [providers.file]
 
-[Routers]
-  [Routers.router1]
-    EntryPoints = ["http"]
+[http.routers]
+  [http.routers.router1]
+    EntryPoints = ["web"]
     Service = "service1"
     Rule = "PathPrefix(`/whoami`)"
 
-  [Routers.router2]
+  [http.routers.router2]
     EntryPoints = ["traefik"]
     Service = "service2"
     Rule = "PathPrefix(`/whoami`)"
 
-[Services]
-  [Services.service1]
-    [Services.service1.LoadBalancer]
-      [[Services.service1.LoadBalancer.Servers]]
+[http.services]
+  [http.services.service1]
+    [http.services.service1.LoadBalancer]
+      [[http.services.service1.LoadBalancer.Servers]]
         URL = "{{ .Server1 }}"
         Weight = 1
 
-  [Services.service2]
-    [Services.service2.LoadBalancer]
-      [[Services.service2.LoadBalancer.Servers]]
+  [http.services.service2]
+    [http.services.service2.LoadBalancer]
+      [[http.services.service2.LoadBalancer.Servers]]
         URL = "{{ .Server2 }}"
         Weight = 1

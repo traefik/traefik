@@ -45,8 +45,8 @@ type Manager struct {
 }
 
 // BuildHandlers Builds handler for all entry points
-func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) map[string]http.Handler {
-	entryPointsRouters := m.filteredRouters(rootCtx, entryPoints)
+func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, tls bool) map[string]http.Handler {
+	entryPointsRouters := m.filteredRouters(rootCtx, entryPoints, tls)
 
 	entryPointHandlers := make(map[string]http.Handler)
 	for entryPointName, routers := range entryPointsRouters {
@@ -84,10 +84,14 @@ func contains(entryPoints []string, entryPointName string) bool {
 	return false
 }
 
-func (m *Manager) filteredRouters(ctx context.Context, entryPoints []string) map[string]map[string]*config.Router {
+func (m *Manager) filteredRouters(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*config.Router {
 	entryPointsRouters := make(map[string]map[string]*config.Router)
 
 	for rtName, rt := range m.configs {
+		if (tls && rt.TLS == nil) || (!tls && rt.TLS != nil) {
+			continue
+		}
+
 		eps := rt.EntryPoints
 		if len(eps) == 0 {
 			eps = entryPoints
@@ -155,7 +159,7 @@ func (m *Manager) buildRouterHandler(ctx context.Context, routerName string) (ht
 		return nil, fmt.Errorf("no configuration for %s", routerName)
 	}
 
-	handler, err := m.buildHandler(ctx, configRouter, routerName)
+	handler, err := m.buildHTTPHandler(ctx, configRouter, routerName)
 	if err != nil {
 		return nil, err
 	}
@@ -173,10 +177,10 @@ func (m *Manager) buildRouterHandler(ctx context.Context, routerName string) (ht
 	return m.routerHandlers[routerName], nil
 }
 
-func (m *Manager) buildHandler(ctx context.Context, router *config.Router, routerName string) (http.Handler, error) {
+func (m *Manager) buildHTTPHandler(ctx context.Context, router *config.Router, routerName string) (http.Handler, error) {
 	rm := m.modifierBuilder.Build(ctx, router.Middlewares)
 
-	sHandler, err := m.serviceManager.Build(ctx, router.Service, rm)
+	sHandler, err := m.serviceManager.BuildHTTP(ctx, router.Service, rm)
 	if err != nil {
 		return nil, err
 	}

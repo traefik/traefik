@@ -39,7 +39,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, applications *maratho
 			continue
 		}
 
-		err = p.buildServiceConfiguration(ctxApp, app, extraConf, confFromLabel)
+		err = p.buildServiceConfiguration(ctxApp, app, extraConf, confFromLabel.HTTP)
 		if err != nil {
 			logger.Error(err)
 			continue
@@ -55,7 +55,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, applications *maratho
 
 		serviceName := getServiceName(app)
 
-		provider.BuildRouterConfiguration(ctxApp, confFromLabel, serviceName, p.defaultRuleTpl, model)
+		provider.BuildRouterConfiguration(ctxApp, confFromLabel.HTTP, serviceName, p.defaultRuleTpl, model)
 
 		configurations[app.ID] = confFromLabel
 	}
@@ -67,7 +67,7 @@ func getServiceName(app marathon.Application) string {
 	return strings.Replace(strings.TrimPrefix(app.ID, "/"), "/", "_", -1)
 }
 
-func (p *Provider) buildServiceConfiguration(ctx context.Context, app marathon.Application, extraConf configuration, conf *config.Configuration) error {
+func (p *Provider) buildServiceConfiguration(ctx context.Context, app marathon.Application, extraConf configuration, conf *config.HTTPConfiguration) error {
 	appName := getServiceName(app)
 	appCtx := log.With(ctx, log.Str("ApplicationID", appName))
 

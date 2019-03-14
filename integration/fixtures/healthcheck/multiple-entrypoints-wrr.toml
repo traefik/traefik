@@ -1,10 +1,10 @@
 [log]
 logLevel = "DEBUG"
 
-[entryPoints]
-  [entryPoints.http1]
+[entrypoints]
+  [entrypoints.http1]
     address = ":8000"
-  [entryPoints.http2]
+  [entrypoints.http2]
     address = ":9000"
 
 [api]
@@ -12,21 +12,21 @@ logLevel = "DEBUG"
 [providers]
    [providers.file]
 
-[routers]
-  [routers.router1]
+[http.routers]
+  [http.routers.router1]
     service = "service1"
     Rule = "Host(`test.localhost`)"
 
-[services]
-  [services.service1.loadbalancer]
+[http.services]
+  [http.services.service1.loadbalancer]
     method = "wrr"
-    [services.service1.loadbalancer.healthcheck]
+    [http.services.service1.loadbalancer.healthcheck]
       path = "/health"
       interval = "1s"
       timeout = "0.9s"
-    [[services.service1.loadbalancer.servers]]
+    [[http.services.service1.loadbalancer.servers]]
       url = "http://{{.Server1}}:80"
       weight = 1
-    [[services.service1.loadbalancer.servers]]
+    [[http.services.service1.loadbalancer.servers]]
       url = "http://{{.Server2}}:80"
       weight = 1

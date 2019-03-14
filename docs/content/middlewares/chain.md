@@ -14,27 +14,27 @@ It makes reusing the same groups easier.
     
     ```toml
     # ...    
-    [Routers]
-        [Routers.router1]
+    [http.routers]
+        [http.routers.router1]
             service = "service1"
             middlewares = ["secured"]
             rule = "Host: mydomain"
     
-    [Middlewares]
-        [Middlewares.secured.Chain]
+    [http.middlewares]
+        [http.middlewares.secured.Chain]
             middlewares = ["https-only", "known-ips", "auth-users"]
             
-        [Middlewares.auth-users.BasicAuth]
+        [http.middlewares.auth-users.BasicAuth]
             users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"]
-        [Middlewares.https-only.SchemeRedirect]
+        [http.middlewares.https-only.SchemeRedirect]
             scheme = "https"
-        [Middlewares.known-ips.ipWhiteList]
+        [http.middlewares.known-ips.ipWhiteList]
             sourceRange = ["192.168.1.7", "x.x.x.x", "x.x.x.x"]
     
-    [Services]
-      [Services.service1]
-        [Services.service1.LoadBalancer]
-          [[Services.service1.LoadBalancer.Servers]]
+    [http.services]
+      [http.services.service1]
+        [http.services.service1.LoadBalancer]
+          [[http.services.service1.LoadBalancer.Servers]]
             URL = "http://127.0.0.1:80"
             Weight = 1
     ```

@@ -1,10 +1,10 @@
-[routers]
-  [routers.router2]
+[http.routers]
+  [http.routers.router2]
     rule = "Path(`/test2`)"
     service = "service2"
 
-[services]
-  [services.service2.loadbalancer]
-    [[services.service2.loadbalancer.servers]]
+[http.services]
+  [http.services.service2.loadbalancer]
+    [[http.services.service2.loadbalancer.servers]]
       url = "http://172.17.0.123:80"
       weight = 1

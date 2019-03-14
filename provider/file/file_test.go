@@ -42,8 +42,8 @@ func TestProvideWithoutWatch(t *testing.T) {
 			timeout := time.After(time.Second)
 			select {
 			case conf := <-configChan:
-				assert.Len(t, conf.Configuration.Services, test.expectedNumService)
-				assert.Len(t, conf.Configuration.Routers, test.expectedNumRouter)
+				assert.Len(t, conf.Configuration.HTTP.Services, test.expectedNumService)
+				assert.Len(t, conf.Configuration.HTTP.Routers, test.expectedNumRouter)
 				assert.Len(t, conf.Configuration.TLS, test.expectedNumTLSConf)
 			case <-timeout:
 				t.Errorf("timeout while waiting for config")
@@ -67,8 +67,8 @@ func TestProvideWithWatch(t *testing.T) {
 			timeout := time.After(time.Second)
 			select {
 			case conf := <-configChan:
-				assert.Len(t, conf.Configuration.Services, 0)
-				assert.Len(t, conf.Configuration.Routers, 0)
+				assert.Len(t, conf.Configuration.HTTP.Services, 0)
+				assert.Len(t, conf.Configuration.HTTP.Routers, 0)
 				assert.Len(t, conf.Configuration.TLS, 0)
 			case <-timeout:
 				t.Errorf("timeout while waiting for config")
@@ -98,8 +98,8 @@ func TestProvideWithWatch(t *testing.T) {
 				select {
 				case conf := <-configChan:
 					numUpdates++
-					numServices = len(conf.Configuration.Services)
-					numRouters = len(conf.Configuration.Routers)
+					numServices = len(conf.Configuration.HTTP.Services)
+					numRouters = len(conf.Configuration.HTTP.Routers)
 					numTLSConfs = len(conf.Configuration.TLS)
 					t.Logf("received update #%d: services %d/%d, routers %d/%d, TLS configs %d/%d", numUpdates, numServices, test.expectedNumService, numRouters, test.expectedNumRouter, numTLSConfs, test.expectedNumTLSConf)
 
@@ -156,9 +156,9 @@ func getTestCases() []ProvideTestCase {
 		{
 			desc: "template file",
 			fileContent: `
-[routers]
+[http.routers]
 {{ range $i, $e := until 20 }}
-  [routers.router{{ $e }}]
+  [http.routers.router{{ $e }}]
   service = "application"  
 {{ end }}
 `,
@@ -179,17 +179,17 @@ func getTestCases() []ProvideTestCase {
 			desc: "template in directory",
 			directoryContent: []string{
 				`
-[routers]
+[http.routers]
 {{ range $i, $e := until 20 }}
-  [routers.router{{ $e }}]
+  [http.routers.router{{ $e }}]
   service = "application"  
 {{ end }}
 `,
 				`
-[services]
+[http.services]
 {{ range $i, $e := until 20 }}
-  [services.application-{{ $e }}]
-	[[services.application-{{ $e }}.servers]]
+  [http.services.application-{{ $e }}]
+	[[http.services.application-{{ $e }}.servers]]
 	url="http://127.0.0.1"
 	weight = 1
 {{ end }}
@@ -202,7 +202,7 @@ func getTestCases() []ProvideTestCase {
 			desc: "simple traefik file",
 			traefikFileContent: `
 				debug=true
-				[file]	
+				[providers.file]	
 				` + createRoutersConfiguration(2) + createServicesConfiguration(3) + createTLS(4),
 			expectedNumRouter:  2,
 			expectedNumService: 3,
@@ -212,7 +212,7 @@ func getTestCases() []ProvideTestCase {
 			desc: "simple traefik file with templating",
 			traefikFileContent: `
 				temp="{{ getTag \"test\" }}"
-				[file]	
+				[providers.file]	
 				` + createRoutersConfiguration(2) + createServicesConfiguration(3) + createTLS(4),
 			expectedNumRouter:  2,
 			expectedNumService: 3,
@@ -300,10 +300,10 @@ func createTempDir(t *testing.T, dir string) string {
 
 // createRoutersConfiguration Helper
 func createRoutersConfiguration(n int) string {
-	conf := "[routers]\n"
+	conf := "[http.routers]\n"
 	for i := 1; i <= n; i++ {
 		conf += fmt.Sprintf(` 
-[routers."router%[1]d"]
+[http.routers."router%[1]d"]
 	service = "application-%[1]d"
 `, i)
 	}
@@ -312,11 +312,11 @@ func createRoutersConfiguration(n int) string {
 
 // createServicesConfiguration Helper
 func createServicesConfiguration(n int) string {
-	conf := "[services]\n"
+	conf := "[http.services]\n"
 	for i := 1; i <= n; i++ {
 		conf += fmt.Sprintf(`
-[services.application-%[1]d.loadbalancer]
-   [[services.application-%[1]d.loadbalancer.servers]]
+[http.services.application-%[1]d.loadbalancer]
+   [[http.services.application-%[1]d.loadbalancer.servers]]
      url = "http://172.17.0.%[1]d:80"
      weight = 1
 `, i)

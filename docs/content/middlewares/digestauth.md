@@ -12,8 +12,8 @@ The DigestAuth middleware is a quick way to restrict access to your services to 
 ??? example "File -- Declaring the user list"
 
     ```toml
-    [Middlewares]
-      [Middlewares.test-auth.digestauth]
+    [http.middlewares]
+      [http.middlewares.test-auth.digestauth]
       users = ["test:traefik:a2688e031edb4be6a3797f3882655c05", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
     ```
 
@@ -23,7 +23,7 @@ The DigestAuth middleware is a quick way to restrict access to your services to 
     a-container:
           image: a-container-image 
             labels:
-              - "traefik.middlewares.declared-users-only.digestauth.usersFile=path-to-file.ext",
+              - "traefik.http.middlewares.declared-users-only.digestauth.usersFile=path-to-file.ext",
     ```
 
 !!! tip 
@@ -68,7 +68,7 @@ You can customize the header field for the authenticated user using the `headerF
 ??? example "File -- Passing Authenticated Users to Services Via Headers"
 
     ```toml
-      [Middlewares.my-auth.digestauth]
+      [http.middlewares.my-auth.digestauth]
         usersFile = "path-to-file.ext"
         headerField = "X-WebAuth-User" # header for the authenticated user
     ```

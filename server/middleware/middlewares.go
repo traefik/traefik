@@ -44,7 +44,7 @@ type Builder struct {
 }
 
 type serviceBuilder interface {
-	Build(ctx context.Context, serviceName string, responseModifier func(*http.Response) error) (http.Handler, error)
+	BuildHTTP(ctx context.Context, serviceName string, responseModifier func(*http.Response) error) (http.Handler, error)
 }
 
 // NewBuilder creates a new Builder
@@ -57,9 +57,9 @@ func (b *Builder) BuildChain(ctx context.Context, middlewares []string) *alice.C
 	chain := alice.New()
 	for _, name := range middlewares {
 		middlewareName := internal.GetQualifiedName(ctx, name)
-		constructorContext := internal.AddProviderInContext(ctx, middlewareName)
 
 		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+			constructorContext := internal.AddProviderInContext(ctx, middlewareName)
 			if _, ok := b.configs[middlewareName]; !ok {
 				return nil, fmt.Errorf("middleware %q does not exist", middlewareName)
 			}
