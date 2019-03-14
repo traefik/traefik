@@ -237,6 +237,16 @@ func runCmd(staticConfiguration *static.Configuration, configFile string) error 
 		}
 	}
 
+	vaultProvider, err := staticConfiguration.InitVaultProvider()
+	if err != nil {
+		log.WithoutContext().Errorf("Unable to initialize Vault provider: %v", err)
+	} else if vaultProvider != nil {
+		if err := providerAggregator.AddProvider(vaultProvider); err != nil {
+			log.WithoutContext().Errorf("Unable to add Vault provider to the providers list: %v", err)
+			vaultProvider = nil
+		}
+	}
+
 	serverEntryPointsTCP := make(server.TCPEntryPoints)
 	for entryPointName, config := range staticConfiguration.EntryPoints {
 		ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
@@ -259,12 +269,22 @@ func runCmd(staticConfiguration *static.Configuration, configFile string) error 
 		}
 	}
 
+	if vaultProvider != nil {
+		vaultProvider.SetTLSManager(tlsManager)
+	}
+
 	svr := server.NewServer(*staticConfiguration, providerAggregator, serverEntryPointsTCP, tlsManager)
 
 	if acmeProvider != nil && acmeProvider.OnHostRule {
 		acmeProvider.SetConfigListenerChan(make(chan config.Configuration))
 		svr.AddListener(acmeProvider.ListenConfiguration)
 	}
+
+	if vaultProvider != nil && vaultProvider.OnHostRule {
+		vaultProvider.SetConfigListenerChan(make(chan config.Configuration))
+		svr.AddListener(vaultProvider.ListenConfiguration)
+	}
+
 	ctx := cmd.ContextWithSignal(context.Background())
 
 	if staticConfiguration.Ping != nil {

@@ -15,6 +15,7 @@ import (
 	"github.com/containous/traefik/pkg/provider/kubernetes/ingress"
 	"github.com/containous/traefik/pkg/provider/marathon"
 	"github.com/containous/traefik/pkg/provider/rest"
+	vaultprovider "github.com/containous/traefik/pkg/provider/vault"
 	"github.com/containous/traefik/pkg/tls"
 	"github.com/containous/traefik/pkg/tracing/datadog"
 	"github.com/containous/traefik/pkg/tracing/instana"
@@ -61,6 +62,8 @@ type Configuration struct {
 	HostResolver *types.HostResolverConfig `description:"Enable CNAME Flattening" export:"true"`
 
 	ACME *acmeprovider.Configuration `description:"Enable ACME (Let's Encrypt): automatic SSL" export:"true"`
+
+	Vault *vaultprovider.Configuration `description:"Enable Vault PKI support" export:"true"`
 }
 
 // Global holds the global configuration.
@@ -179,6 +182,7 @@ func (c *Configuration) SetEffectiveConfiguration(configFile string) {
 	}
 
 	c.initACMEProvider()
+	c.initVaultProvider()
 	c.initTracing()
 }
 
@@ -308,6 +312,28 @@ func (c *Configuration) InitACMEProvider() (*acmeprovider.Provider, error) {
 		}
 		return &acmeprovider.Provider{
 			Configuration: c.ACME,
+		}, nil
+	}
+	return nil, nil
+}
+
+func (c *Configuration) initVaultProvider() {
+	if c.Vault != nil {
+		if c.ACME != nil {
+			log.Warn("Unable to use Vault provider and ACME provider at the same time. Fallback to ACME provider.")
+			c.Vault = nil
+		}
+	}
+}
+
+// InitVaultProvider create an Vault provider from the Vault part of globalConfiguration
+func (c *Configuration) InitVaultProvider() (*vaultprovider.Provider, error) {
+	if c.Vault != nil {
+		if len(c.Vault.Storage) == 0 {
+			return nil, errors.New("unable to initialize Vault provider with no storage location for the certificates")
+		}
+		return &vaultprovider.Provider{
+			Configuration: c.Vault,
 		}, nil
 	}
 	return nil, nil
