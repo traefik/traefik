@@ -73,7 +73,7 @@ func init() {
 	}
 	if *host {
 		// tests launched from the host
-		check.Suite(&K8sSuite{})
+		// check.Suite(&K8sSuite{})
 		check.Suite(&ProxyProtocolSuite{})
 		check.Suite(&TCPSuite{})
 		// FIXME Provider tests
