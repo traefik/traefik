@@ -4,6 +4,7 @@ filePath = "traefik.log"
 
 [global]
 checkNewVersion = false
+sendAnonymousUsage = false
 
 [accessLog]
   filePath = "access.log"

@@ -42,8 +42,7 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 	return &TraefikConfiguration{
 		Configuration: static.Configuration{
 			Global: &static.Global{
-				CheckNewVersion:    true,
-				SendAnonymousUsage: false,
+				CheckNewVersion: true,
 			},
 			EntryPoints: make(static.EntryPoints),
 			Providers: &static.Providers{

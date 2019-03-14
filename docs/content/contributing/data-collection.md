@@ -5,15 +5,17 @@ Understanding How Traefik is Being Used
 
 ## Configuration Example
 
-**By default, this feature is disabled;** but to allow us understand better how you use Traefik, please enable the data collection option.
+Understanding how you use Traefik is very important to us: it helps us improve the solution in many different ways.  
+For this very reason, the sendAnonymousUsage option is mandatory: we want you to take time to consider whether or not you wish to share anonymous data with us so we can benefit from your experience and use cases.
+
+!!! warning
+    During the alpha stage only, leaving this option unset will not prevent Traefik from running but will generate an error log indicating that it enables data collection by default.
 
 ??? example "Enabling Data Collection with TOML"
 
     ```toml
     [Global]
         # Send anonymous usage data
-        # Default: false
-        #
         sendAnonymousUsage = true
     ```
 
