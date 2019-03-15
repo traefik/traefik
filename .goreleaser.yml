@@ -11,7 +11,7 @@ builds:
     env:
       - CGO_ENABLED=0
     ldflags:
-      - -s -w -X github.com/containous/traefik/version.Version={{.Version}} -X github.com/containous/traefik/version.Codename={{.Env.CODENAME}}  -X github.com/containous/traefik/version.BuildDate={{.Date}}
+      - -s -w -X github.com/containous/traefik/pkg/version.Version={{.Version}} -X github.com/containous/traefik/pkg/version.Codename={{.Env.CODENAME}}  -X github.com/containous/traefik/pkg/version.BuildDate={{.Date}}
 
     goos:
       - linux

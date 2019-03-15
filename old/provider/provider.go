@@ -10,7 +10,7 @@ import (
 	"github.com/Masterminds/sprig"
 	"github.com/containous/traefik/old/log"
 	"github.com/containous/traefik/old/types"
-	"github.com/containous/traefik/safe"
+	"github.com/containous/traefik/pkg/safe"
 )
 
 // Provider defines methods of a provider.

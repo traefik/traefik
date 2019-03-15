@@ -10,9 +10,9 @@ import (
 	"github.com/abronan/valkeyrie/store"
 	"github.com/cenkalti/backoff"
 	"github.com/containous/staert"
-	"github.com/containous/traefik/job"
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/safe"
+	"github.com/containous/traefik/pkg/job"
+	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/pkg/safe"
 	uuid "github.com/satori/go.uuid"
 )
 

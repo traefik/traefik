@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/safe"
+	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/pkg/safe"
 	"github.com/patrickmn/go-cache"
 )
 

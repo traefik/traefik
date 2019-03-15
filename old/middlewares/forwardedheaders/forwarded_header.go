@@ -3,7 +3,7 @@ package forwardedheaders
 import (
 	"net/http"
 
-	"github.com/containous/traefik/ip"
+	"github.com/containous/traefik/pkg/ip"
 	"github.com/vulcand/oxy/forward"
 	"github.com/vulcand/oxy/utils"
 )
