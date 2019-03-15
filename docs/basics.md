@@ -746,7 +746,7 @@ Once a day (the first call begins 10 minutes after the start of Traefik), we col
 
 ### Show me the code !
 
-If you want to dig into more details, here is the source code of the collecting system: [collector.go](https://github.com/containous/traefik/blob/master/collector/collector.go)
+If you want to dig into more details, here is the source code of the collecting system: [collector.go](https://github.com/containous/traefik/blob/v1.7/collector/collector.go)
 
 By default we anonymize all configuration fields, except fields tagged with `export=true`.
 
