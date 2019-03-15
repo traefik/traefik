@@ -13,3 +13,4 @@
 /traefik.toml
 *.log
 *.exe
+cover.out

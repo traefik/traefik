@@ -96,8 +96,8 @@ func loadTestCert(certName string, uppercase bool) (*tls.Certificate, error) {
 	}
 
 	staticCert, err := tls.LoadX509KeyPair(
-		fmt.Sprintf("../integration/fixtures/https/%s.cert", strings.Replace(certName, "*", replacement, -1)),
-		fmt.Sprintf("../integration/fixtures/https/%s.key", strings.Replace(certName, "*", replacement, -1)),
+		fmt.Sprintf("../../integration/fixtures/https/%s.cert", strings.Replace(certName, "*", replacement, -1)),
+		fmt.Sprintf("../../integration/fixtures/https/%s.key", strings.Replace(certName, "*", replacement, -1)),
 	)
 	if err != nil {
 		return nil, err
