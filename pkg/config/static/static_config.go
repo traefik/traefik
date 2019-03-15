@@ -64,9 +64,9 @@ type Configuration struct {
 	Ping    *ping.Handler  `description:"Enable ping" export:"true"`
 	// Rest    *rest.Provider `description:"Enable Rest backend with default settings" export:"true"`
 
-	Log       *types.TraefikLog
-	AccessLog *types.AccessLog `description:"Access log settings" export:"true"`
-	Tracing   *Tracing         `description:"OpenTracing configuration" export:"true"`
+	Log       *types.TraefikLog `description:"Traefik log settings" export:"true"`
+	AccessLog *types.AccessLog  `description:"Access log settings" export:"true"`
+	Tracing   *Tracing          `description:"OpenTracing configuration" export:"true"`
 
 	HostResolver *types.HostResolverConfig `description:"Enable CNAME Flattening" export:"true"`
 
