@@ -141,11 +141,14 @@ func (c *Certificates) isEmpty() bool {
 
 // GetDomainsFromCertificate returns a list of domains for the certificate, let configuration override
 func (c *Certificate) GetDomainsFromCertificate(asn1Data []byte) []string {
+	var SANs []string
 	if c.Domains != nil {
-		return c.Domains
+		for _, domain := range c.Domains {
+			SANs = append(SANs, strings.ToLower(domain))
+		}
+		return SANs
 	}
 	parsedCert, _ := x509.ParseCertificate(asn1Data)
-	var SANs []string
 	if parsedCert.Subject.CommonName != "" {
 		SANs = append(SANs, strings.ToLower(parsedCert.Subject.CommonName))
 	}
