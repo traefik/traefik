@@ -43,12 +43,12 @@ type Provider struct {
 	Namespaces             k8s.Namespaces   `description:"Kubernetes namespaces" export:"true"`
 	LabelSelector          string           `description:"Kubernetes Ingress label selector to use" export:"true"`
 	IngressClass           string           `description:"Value of kubernetes.io/ingress.class annotation to watch for" export:"true"`
-	IngressEndpoint        *IngressEndpoint `description:"Kubernetes Ingress Endpoint"`
+	IngressEndpoint        *EndpointIngress `description:"Kubernetes Ingress Endpoint"`
 	lastConfiguration      safe.Safe
 }
 
-// IngressEndpoint holds the endpoint information for the Kubernetes provider
-type IngressEndpoint struct {
+// EndpointIngress holds the endpoint information for the Kubernetes provider
+type EndpointIngress struct {
 	IP               string `description:"IP used for Kubernetes Ingress endpoints"`
 	Hostname         string `description:"Hostname used for Kubernetes Ingress endpoints"`
 	PublishedService string `description:"Published Kubernetes Service to copy status from"`
@@ -443,7 +443,7 @@ func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (
 }
 
 func (p *Provider) updateIngressStatus(i *v1beta1.Ingress, k8sClient Client) error {
-	// Only process if an IngressEndpoint has been configured
+	// Only process if an EndpointIngress has been configured
 	if p.IngressEndpoint == nil {
 		return nil
 	}
