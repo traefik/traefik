@@ -288,16 +288,20 @@ func (c *connectionTracker) RemoveConnection(conn net.Conn) {
 	delete(c.conns, conn)
 }
 
+func (c *connectionTracker) isEmpty() bool {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+	return len(c.conns) == 0
+}
+
 // Shutdown wait for the connection closing
 func (c *connectionTracker) Shutdown(ctx context.Context) error {
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
 	for {
-		c.lock.RLock()
-		if len(c.conns) == 0 {
+		if c.isEmpty() {
 			return nil
 		}
-		c.lock.RUnlock()
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
