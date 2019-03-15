@@ -20,7 +20,7 @@ fi
 
 echo "Building ${VERSION} ${CODENAME} ${DATE}"
 
-GIT_REPO_URL='github.com/containous/traefik/version'
+GIT_REPO_URL='github.com/containous/traefik/pkg/version'
 GO_BUILD_CMD="go build -ldflags"
 GO_BUILD_OPT="-s -w -X ${GIT_REPO_URL}.Version=${VERSION} -X ${GIT_REPO_URL}.Codename=${CODENAME} -X ${GIT_REPO_URL}.BuildDate=${DATE}"
 

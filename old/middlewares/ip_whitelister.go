@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/containous/traefik/ip"
 	"github.com/containous/traefik/old/log"
 	"github.com/containous/traefik/old/middlewares/tracing"
+	"github.com/containous/traefik/pkg/ip"
 	"github.com/pkg/errors"
 	"github.com/urfave/negroni"
 )

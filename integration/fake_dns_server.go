@@ -5,7 +5,7 @@ import (
 	"net"
 	"os"
 
-	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/pkg/log"
 	"github.com/miekg/dns"
 )
 

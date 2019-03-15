@@ -13,7 +13,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/containous/traefik/integration/try"
 	"github.com/containous/traefik/old/types"
-	traefiktls "github.com/containous/traefik/tls"
+	traefiktls "github.com/containous/traefik/pkg/tls"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
 )

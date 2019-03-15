@@ -8,7 +8,7 @@ import (
 	"github.com/containous/traefik/old/provider"
 	"github.com/containous/traefik/old/provider/kv"
 	"github.com/containous/traefik/old/types"
-	"github.com/containous/traefik/safe"
+	"github.com/containous/traefik/pkg/safe"
 )
 
 var _ provider.Provider = (*Provider)(nil)

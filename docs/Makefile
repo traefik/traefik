@@ -35,7 +35,7 @@ docs-verify: docs-build
 		docker build -t $(TRAEFIK_DOCS_CHECK_IMAGE) -f check.Dockerfile ./; \
 		docker run --rm -v $(CURDIR):/app $(TRAEFIK_DOCS_CHECK_IMAGE) /verify.sh; \
 	else \
-		@echo "DOCS_VERIFY_SKIP is true: no verification done."; \
+		echo "DOCS_VERIFY_SKIP is true: no verification done."; \
 	fi
 
 docs-lint:
@@ -43,7 +43,7 @@ docs-lint:
 		docker build -t $(TRAEFIK_DOCS_CHECK_IMAGE) -f check.Dockerfile ./ && \
 		docker run --rm -v $(CURDIR):/app $(TRAEFIK_DOCS_CHECK_IMAGE) /lint.sh; \
 	else \
-		@echo "DOCS_LINT_SKIP is true: no linting done."; \
+		echo "DOCS_LINT_SKIP is true: no linting done."; \
 	fi
 
 docs-clean:

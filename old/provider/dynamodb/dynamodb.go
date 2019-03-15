@@ -13,11 +13,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/cenkalti/backoff"
-	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/old/log"
 	"github.com/containous/traefik/old/provider"
 	"github.com/containous/traefik/old/types"
-	"github.com/containous/traefik/safe"
+	"github.com/containous/traefik/pkg/job"
+	"github.com/containous/traefik/pkg/safe"
 )
 
 var _ provider.Provider = (*Provider)(nil)

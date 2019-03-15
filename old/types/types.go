@@ -14,9 +14,9 @@ import (
 	"github.com/abronan/valkeyrie/store"
 	"github.com/containous/flaeg/parse"
 	"github.com/containous/mux"
-	"github.com/containous/traefik/ip"
 	"github.com/containous/traefik/old/log"
-	traefiktls "github.com/containous/traefik/tls"
+	"github.com/containous/traefik/pkg/ip"
+	traefiktls "github.com/containous/traefik/pkg/tls"
 	"github.com/mitchellh/hashstructure"
 	"github.com/ryanuber/go-glob"
 )

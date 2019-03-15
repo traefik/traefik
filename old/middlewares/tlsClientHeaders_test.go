@@ -13,7 +13,7 @@ import (
 	"testing"
 
 	"github.com/containous/traefik/old/types"
-	"github.com/containous/traefik/testhelpers"
+	"github.com/containous/traefik/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -13,7 +13,7 @@ import (
 	"testing"
 	"text/template"
 
-	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/pkg/log"
 	"github.com/go-check/check"
 	compose "github.com/libkermit/compose/check"
 	checker "github.com/vdemeester/shakers"
