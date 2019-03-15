@@ -30,7 +30,7 @@ before_deploy:
         make -j${N_MAKE_JOBS} crossbinary-parallel;
         tar cfz dist/traefik-${VERSION}.src.tar.gz --exclude-vcs --exclude dist .;
       fi;
-      curl -sfL https://raw.githubusercontent.com/containous/structor/master/godownloader.sh | bash -s -- -b "${GOPATH}/bin" v1.4.0
+      curl -sfL https://raw.githubusercontent.com/containous/structor/master/godownloader.sh | bash -s -- -b "${GOPATH}/bin" v1.6.0
       structor -o containous -r traefik --dockerfile-url="https://raw.githubusercontent.com/containous/traefik/v1.7/docs.Dockerfile" --menu.js-url="https://raw.githubusercontent.com/containous/structor/master/traefik-menu.js.gotmpl" --rqts-url="https://raw.githubusercontent.com/containous/structor/master/requirements-override.txt" --exp-branch=master --debug;
     fi
 deploy:
