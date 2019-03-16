@@ -37,18 +37,6 @@ func init() {
 
 	if *container {
 		// tests launched from a container
-
-		// FIXME Provider tests
-		// check.Suite(&ConsulCatalogSuite{})
-		// check.Suite(&ConsulSuite{})
-		// check.Suite(&DynamoDBSuite{})
-		// check.Suite(&EurekaSuite{})
-		// check.Suite(&MesosSuite{})
-
-		// FIXME use consulcatalog
-		// check.Suite(&ConstraintSuite{})
-
-		// FIXME e2e tests
 		check.Suite(&AccessLogSuite{})
 		check.Suite(&AcmeSuite{})
 		check.Suite(&DockerComposeSuite{})
@@ -60,8 +48,8 @@ func init() {
 		check.Suite(&HostResolverSuite{})
 		check.Suite(&HTTPSSuite{})
 		check.Suite(&LogRotationSuite{})
-		// check.Suite(&MarathonSuite{})
-		// check.Suite(&MarathonSuite15{})
+		check.Suite(&MarathonSuite{})
+		check.Suite(&MarathonSuite15{})
 		check.Suite(&RateLimitSuite{})
 		check.Suite(&RestSuite{})
 		check.Suite(&RetrySuite{})
@@ -76,8 +64,6 @@ func init() {
 		check.Suite(&K8sSuite{})
 		check.Suite(&ProxyProtocolSuite{})
 		check.Suite(&TCPSuite{})
-		// FIXME Provider tests
-		// check.Suite(&Etcd3Suite{})
 	}
 }
 
