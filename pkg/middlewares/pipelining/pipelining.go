@@ -2,23 +2,32 @@ package pipelining
 
 import (
 	"bufio"
+	"context"
 	"net"
 	"net/http"
+
+	"github.com/containous/traefik/pkg/middlewares"
 )
 
-// Pipelining returns a middleware
-type Pipelining struct {
+const (
+	typeName = "Pipelining"
+)
+
+// pipelining returns a middleware
+type pipelining struct {
 	next http.Handler
 }
 
-// NewPipelining returns a new Pipelining instance
-func NewPipelining(next http.Handler) *Pipelining {
-	return &Pipelining{
+// New returns a new pipelining instance
+func New(ctx context.Context, next http.Handler, name string) http.Handler {
+	middlewares.GetLogger(ctx, name, typeName).Debug("Creating middleware")
+
+	return &pipelining{
 		next: next,
 	}
 }
 
-func (p *Pipelining) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+func (p *pipelining) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	// https://github.com/golang/go/blob/3d59583836630cf13ec4bfbed977d27b1b7adbdc/src/net/http/server.go#L201-L218
 	if r.Method == http.MethodPut || r.Method == http.MethodPost {
 		p.next.ServeHTTP(rw, r)

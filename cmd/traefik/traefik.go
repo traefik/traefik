@@ -20,8 +20,6 @@ import (
 	"github.com/containous/traefik/cmd/healthcheck"
 	"github.com/containous/traefik/cmd/storeconfig"
 	cmdVersion "github.com/containous/traefik/cmd/version"
-	"github.com/containous/traefik/old/provider/ecs"
-	oldtypes "github.com/containous/traefik/old/types"
 	"github.com/containous/traefik/pkg/collector"
 	"github.com/containous/traefik/pkg/config"
 	"github.com/containous/traefik/pkg/config/static"
@@ -117,7 +115,6 @@ Complete documentation is available at https://traefik.io`,
 	f.AddParser(reflect.TypeOf(traefiktls.FilesOrContents{}), &traefiktls.FilesOrContents{})
 	f.AddParser(reflect.TypeOf(types.Constraints{}), &types.Constraints{})
 	f.AddParser(reflect.TypeOf(k8s.Namespaces{}), &k8s.Namespaces{})
-	f.AddParser(reflect.TypeOf(ecs.Clusters{}), &ecs.Clusters{})
 	f.AddParser(reflect.TypeOf([]types.Domain{}), &types.Domains{})
 	f.AddParser(reflect.TypeOf(types.DNSResolvers{}), &types.DNSResolvers{})
 	f.AddParser(reflect.TypeOf(types.Buckets{}), &types.Buckets{})
@@ -125,11 +122,6 @@ Complete documentation is available at https://traefik.io`,
 	f.AddParser(reflect.TypeOf(types.StatusCodes{}), &types.StatusCodes{})
 	f.AddParser(reflect.TypeOf(types.FieldNames{}), &types.FieldNames{})
 	f.AddParser(reflect.TypeOf(types.FieldHeaderNames{}), &types.FieldHeaderNames{})
-
-	// FIXME Remove with ACME
-	f.AddParser(reflect.TypeOf([]oldtypes.Domain{}), &oldtypes.Domains{})
-	// FIXME Remove with old providers
-	f.AddParser(reflect.TypeOf(oldtypes.Constraints{}), &oldtypes.Constraints{})
 
 	// add commands
 	f.AddCommand(cmdVersion.NewCmd())

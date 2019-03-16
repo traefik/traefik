@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/containous/alice"
-	"github.com/containous/traefik/old/middlewares/pipelining"
 	"github.com/containous/traefik/pkg/config"
 	"github.com/containous/traefik/pkg/healthcheck"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/middlewares/accesslog"
 	"github.com/containous/traefik/pkg/middlewares/emptybackendhandler"
+	"github.com/containous/traefik/pkg/middlewares/pipelining"
 	"github.com/containous/traefik/pkg/server/cookie"
 	"github.com/containous/traefik/pkg/server/internal"
 	"github.com/vulcand/oxy/roundrobin"
@@ -76,7 +76,7 @@ func (m *Manager) getLoadBalancerServiceHandler(
 		return accesslog.NewFieldHandler(next, accesslog.ServiceName, serviceName, accesslog.AddServiceFields), nil
 	}
 
-	handler, err := alice.New().Append(alHandler).Then(pipelining.NewPipelining(fwd))
+	handler, err := alice.New().Append(alHandler).Then(pipelining.New(ctx, fwd, "pipelining"))
 	if err != nil {
 		return nil, err
 	}
@@ -100,10 +100,10 @@ func (m *Manager) LaunchHealthCheck() {
 	for serviceName, balancers := range m.balancers {
 		ctx := log.With(context.Background(), log.Str(log.ServiceName, serviceName))
 
-		// FIXME aggregate
+		// TODO aggregate
 		balancer := balancers[0]
 
-		// FIXME Should all the services handle healthcheck? Handle different types
+		// TODO Should all the services handle healthcheck? Handle different types
 		service := m.configs[serviceName].LoadBalancer
 
 		// Health Check

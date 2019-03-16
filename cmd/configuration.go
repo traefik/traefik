@@ -4,19 +4,8 @@ import (
 	"time"
 
 	"github.com/containous/flaeg/parse"
-	"github.com/containous/traefik/old/configuration"
-	"github.com/containous/traefik/old/middlewares/accesslog"
-	"github.com/containous/traefik/old/provider/boltdb"
-	"github.com/containous/traefik/old/provider/consul"
-	"github.com/containous/traefik/old/provider/consulcatalog"
-	"github.com/containous/traefik/old/provider/dynamodb"
-	"github.com/containous/traefik/old/provider/ecs"
-	"github.com/containous/traefik/old/provider/etcd"
-	"github.com/containous/traefik/old/provider/eureka"
-	"github.com/containous/traefik/old/provider/mesos"
-	"github.com/containous/traefik/old/provider/rancher"
-	"github.com/containous/traefik/old/provider/zk"
 	"github.com/containous/traefik/pkg/config/static"
+	"github.com/containous/traefik/pkg/middlewares/accesslog"
 	"github.com/containous/traefik/pkg/ping"
 	"github.com/containous/traefik/pkg/provider/docker"
 	"github.com/containous/traefik/pkg/provider/file"
@@ -134,7 +123,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultMetrics := types.Metrics{
 		Prometheus: &types.Prometheus{
 			Buckets:    types.Buckets{0.1, 0.3, 1.2, 5},
-			EntryPoint: configuration.DefaultInternalEntryPointName,
+			EntryPoint: static.DefaultInternalEntryPointName,
 		},
 		Datadog: &types.Datadog{
 			Address:      "localhost:8125",
@@ -167,7 +156,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 
 	// default Rest
 	var defaultRest rest.Provider
-	defaultRest.EntryPoint = configuration.DefaultInternalEntryPointName
+	defaultRest.EntryPoint = static.DefaultInternalEntryPointName
 
 	// default Marathon
 	var defaultMarathon marathon.Provider
@@ -180,91 +169,16 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultMarathon.KeepAlive = parse.Duration(10 * time.Second)
 	defaultMarathon.DefaultRule = marathon.DefaultTemplateRule
 
-	// default Consul
-	var defaultConsul consul.Provider
-	defaultConsul.Watch = true
-	defaultConsul.Endpoint = "127.0.0.1:8500"
-	defaultConsul.Prefix = "traefik"
-
-	// default CatalogProvider
-	var defaultConsulCatalog consulcatalog.Provider
-	defaultConsulCatalog.Endpoint = "127.0.0.1:8500"
-	defaultConsulCatalog.ExposedByDefault = true
-	defaultConsulCatalog.Prefix = "traefik"
-	defaultConsulCatalog.FrontEndRule = "Host:{{.ServiceName}}.{{.Domain}}"
-	defaultConsulCatalog.Stale = false
-
-	// default Etcd
-	var defaultEtcd etcd.Provider
-	defaultEtcd.Watch = true
-	defaultEtcd.Endpoint = "127.0.0.1:2379"
-	defaultEtcd.Prefix = "/traefik"
-
-	// default Zookeeper
-	var defaultZookeeper zk.Provider
-	defaultZookeeper.Watch = true
-	defaultZookeeper.Endpoint = "127.0.0.1:2181"
-	defaultZookeeper.Prefix = "traefik"
-
-	// default Boltdb
-	var defaultBoltDb boltdb.Provider
-	defaultBoltDb.Watch = true
-	defaultBoltDb.Endpoint = "127.0.0.1:4001"
-	defaultBoltDb.Prefix = "/traefik"
-
 	// default Kubernetes
 	var defaultKubernetes ingress.Provider
 	defaultKubernetes.Watch = true
 
-	// default Mesos
-	var defaultMesos mesos.Provider
-	defaultMesos.Watch = true
-	defaultMesos.Endpoint = "http://127.0.0.1:5050"
-	defaultMesos.ExposedByDefault = true
-	defaultMesos.RefreshSeconds = 30
-	defaultMesos.ZkDetectionTimeout = 30
-	defaultMesos.StateTimeoutSecond = 30
-
-	// default ECS
-	var defaultECS ecs.Provider
-	defaultECS.Watch = true
-	defaultECS.ExposedByDefault = true
-	defaultECS.AutoDiscoverClusters = false
-	defaultECS.Clusters = ecs.Clusters{"default"}
-	defaultECS.RefreshSeconds = 15
-
-	// default Rancher
-	var defaultRancher rancher.Provider
-	defaultRancher.Watch = true
-	defaultRancher.ExposedByDefault = true
-	defaultRancher.RefreshSeconds = 15
-
-	// default DynamoDB
-	var defaultDynamoDB dynamodb.Provider
-	defaultDynamoDB.RefreshSeconds = 15
-	defaultDynamoDB.TableName = "traefik"
-	defaultDynamoDB.Watch = true
-
-	// default Eureka
-	var defaultEureka eureka.Provider
-	defaultEureka.RefreshSeconds = parse.Duration(30 * time.Second)
-
 	defaultProviders := static.Providers{
-		File:          &defaultFile,
-		Docker:        &defaultDocker,
-		Rest:          &defaultRest,
-		Marathon:      &defaultMarathon,
-		Consul:        &defaultConsul,
-		ConsulCatalog: &defaultConsulCatalog,
-		Etcd:          &defaultEtcd,
-		Zookeeper:     &defaultZookeeper,
-		Boltdb:        &defaultBoltDb,
-		Kubernetes:    &defaultKubernetes,
-		Mesos:         &defaultMesos,
-		ECS:           &defaultECS,
-		Rancher:       &defaultRancher,
-		Eureka:        &defaultEureka,
-		DynamoDB:      &defaultDynamoDB,
+		File:       &defaultFile,
+		Docker:     &defaultDocker,
+		Rest:       &defaultRest,
+		Marathon:   &defaultMarathon,
+		Kubernetes: &defaultKubernetes,
 	}
 
 	return &TraefikConfiguration{

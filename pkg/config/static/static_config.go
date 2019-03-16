@@ -6,16 +6,6 @@ import (
 	"time"
 
 	"github.com/containous/flaeg/parse"
-	"github.com/containous/traefik/old/provider/boltdb"
-	"github.com/containous/traefik/old/provider/consul"
-	"github.com/containous/traefik/old/provider/consulcatalog"
-	"github.com/containous/traefik/old/provider/dynamodb"
-	"github.com/containous/traefik/old/provider/ecs"
-	"github.com/containous/traefik/old/provider/etcd"
-	"github.com/containous/traefik/old/provider/eureka"
-	"github.com/containous/traefik/old/provider/mesos"
-	"github.com/containous/traefik/old/provider/rancher"
-	"github.com/containous/traefik/old/provider/zk"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/ping"
 	acmeprovider "github.com/containous/traefik/pkg/provider/acme"
@@ -129,23 +119,13 @@ type Tracing struct {
 
 // Providers contains providers configuration
 type Providers struct {
-	ProvidersThrottleDuration parse.Duration          `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time." export:"true"`
-	Docker                    *docker.Provider        `description:"Enable Docker backend with default settings" export:"true"`
-	File                      *file.Provider          `description:"Enable File backend with default settings" export:"true"`
-	Marathon                  *marathon.Provider      `description:"Enable Marathon backend with default settings" export:"true"`
-	Consul                    *consul.Provider        `description:"Enable Consul backend with default settings" export:"true"`
-	ConsulCatalog             *consulcatalog.Provider `description:"Enable Consul catalog backend with default settings" export:"true"`
-	Etcd                      *etcd.Provider          `description:"Enable Etcd backend with default settings" export:"true"`
-	Zookeeper                 *zk.Provider            `description:"Enable Zookeeper backend with default settings" export:"true"`
-	Boltdb                    *boltdb.Provider        `description:"Enable Boltdb backend with default settings" export:"true"`
-	Kubernetes                *ingress.Provider       `description:"Enable Kubernetes backend with default settings" export:"true"`
-	KubernetesCRD             *crd.Provider           `description:"Enable Kubernetes backend with default settings" export:"true"`
-	Mesos                     *mesos.Provider         `description:"Enable Mesos backend with default settings" export:"true"`
-	Eureka                    *eureka.Provider        `description:"Enable Eureka backend with default settings" export:"true"`
-	ECS                       *ecs.Provider           `description:"Enable ECS backend with default settings" export:"true"`
-	Rancher                   *rancher.Provider       `description:"Enable Rancher backend with default settings" export:"true"`
-	DynamoDB                  *dynamodb.Provider      `description:"Enable DynamoDB backend with default settings" export:"true"`
-	Rest                      *rest.Provider          `description:"Enable Rest backend with default settings" export:"true"`
+	ProvidersThrottleDuration parse.Duration     `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time." export:"true"`
+	Docker                    *docker.Provider   `description:"Enable Docker backend with default settings" export:"true"`
+	File                      *file.Provider     `description:"Enable File backend with default settings" export:"true"`
+	Marathon                  *marathon.Provider `description:"Enable Marathon backend with default settings" export:"true"`
+	Kubernetes                *ingress.Provider  `description:"Enable Kubernetes backend with default settings" export:"true"`
+	KubernetesCRD             *crd.Provider      `description:"Enable Kubernetes backend with default settings" export:"true"`
+	Rest                      *rest.Provider     `description:"Enable Rest backend with default settings" export:"true"`
 }
 
 // SetEffectiveConfiguration adds missing configuration parameters derived from existing ones.
@@ -185,28 +165,6 @@ func (c *Configuration) SetEffectiveConfiguration(configFile string) {
 
 		if entryPoint.ForwardedHeaders == nil {
 			entryPoint.ForwardedHeaders = &ForwardedHeaders{}
-		}
-	}
-
-	if c.Providers.Rancher != nil {
-		// Ensure backwards compatibility for now
-		if len(c.Providers.Rancher.AccessKey) > 0 ||
-			len(c.Providers.Rancher.Endpoint) > 0 ||
-			len(c.Providers.Rancher.SecretKey) > 0 {
-
-			if c.Providers.Rancher.API == nil {
-				c.Providers.Rancher.API = &rancher.APIConfiguration{
-					AccessKey: c.Providers.Rancher.AccessKey,
-					SecretKey: c.Providers.Rancher.SecretKey,
-					Endpoint:  c.Providers.Rancher.Endpoint,
-				}
-			}
-			log.Warn("Deprecated configuration found: rancher.[accesskey|secretkey|endpoint]. " +
-				"Please use rancher.api.[accesskey|secretkey|endpoint] instead.")
-		}
-
-		if c.Providers.Rancher.Metadata != nil && len(c.Providers.Rancher.Metadata.Prefix) == 0 {
-			c.Providers.Rancher.Metadata.Prefix = "latest"
 		}
 	}
 

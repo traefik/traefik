@@ -1,6 +1,7 @@
 package pipelining
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -16,7 +17,7 @@ func (r *recorderWithCloseNotify) CloseNotify() <-chan bool {
 	panic("implement me")
 }
 
-func TestNewPipelining(t *testing.T) {
+func TestNew(t *testing.T) {
 	testCases := []struct {
 		desc                   string
 		HTTPMethod             string
@@ -59,7 +60,7 @@ func TestNewPipelining(t *testing.T) {
 				assert.Equal(t, test.implementCloseNotifier, ok)
 				w.WriteHeader(http.StatusOK)
 			})
-			handler := NewPipelining(nextHandler)
+			handler := New(context.Background(), nextHandler, "pipe")
 
 			req := httptest.NewRequest(test.HTTPMethod, "http://localhost", nil)
 

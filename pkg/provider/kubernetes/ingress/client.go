@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/containous/traefik/old/log"
+	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"

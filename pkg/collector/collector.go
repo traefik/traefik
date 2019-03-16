@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/containous/traefik/old/configuration"
 	"github.com/containous/traefik/pkg/anonymize"
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/containous/traefik/pkg/log"
@@ -63,7 +62,7 @@ func Collect(staticConfiguration *static.Configuration) error {
 
 func makeHTTPClient() *http.Client {
 	dialer := &net.Dialer{
-		Timeout:   configuration.DefaultDialTimeout,
+		Timeout:   30 * time.Second,
 		KeepAlive: 30 * time.Second,
 		DualStack: true,
 	}

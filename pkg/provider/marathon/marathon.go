@@ -11,12 +11,12 @@ import (
 
 	"github.com/cenkalti/backoff"
 	"github.com/containous/flaeg/parse"
-	"github.com/containous/traefik/old/types"
 	"github.com/containous/traefik/pkg/config"
 	"github.com/containous/traefik/pkg/job"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/provider"
 	"github.com/containous/traefik/pkg/safe"
+	"github.com/containous/traefik/pkg/types"
 	"github.com/gambol99/go-marathon"
 	"github.com/sirupsen/logrus"
 )
@@ -120,7 +120,7 @@ func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.P
 		if len(p.DCOSToken) > 0 {
 			confg.DCOSToken = p.DCOSToken
 		}
-		TLSConfig, err := p.TLS.CreateTLSConfig()
+		TLSConfig, err := p.TLS.CreateTLSConfig(ctx)
 		if err != nil {
 			return err
 		}

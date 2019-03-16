@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/containous/traefik/old/log"
+	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/provider/kubernetes/crd/generated/clientset/versioned"
 	"github.com/containous/traefik/pkg/provider/kubernetes/crd/generated/informers/externalversions"
 	"github.com/containous/traefik/pkg/provider/kubernetes/crd/traefik/v1alpha1"
