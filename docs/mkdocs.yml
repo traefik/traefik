@@ -9,6 +9,7 @@ repo_url: 'https://github.com/containous/traefik'
 
 docs_dir: 'content'
 
+# https://squidfunk.github.io/mkdocs-material/
 theme:
   name: 'material'
   custom_dir: 'theme'
@@ -16,9 +17,6 @@ theme:
   include_sidebar: true
   favicon: assets/img/traefik.icon.png
   logo: assets/img/traefik.logo.png
-  palette:
-    primary: 'blue'
-    accent: 'light blue'
   feature:
     tabs: false
   palette:
@@ -45,6 +43,8 @@ extra_javascript:
 plugins:
   - search
 
+# https://squidfunk.github.io/mkdocs-material/extensions/admonition/
+# https://facelessuser.github.io/pymdown-extensions/
 markdown_extensions:
   - attr_list
   - admonition
@@ -52,10 +52,12 @@ markdown_extensions:
   - pymdownx.details
   - pymdownx.inlinehilite
   - pymdownx.highlight:
-      use_pygments: false # hljs is used instead of pygment for TOML hihglighting support
+      use_pygments: false # hljs is used instead of pygment for TOML highlighting support
   - pymdownx.smartsymbols
   - pymdownx.superfences
   - pymdownx.tasklist
+  - pymdownx.snippets:
+      check_paths: true
   - markdown_include.include:
       base_path: content/includes/
       encoding: utf-8
