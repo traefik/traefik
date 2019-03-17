@@ -44,8 +44,9 @@ func TestLogRotation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error setting up temporary directory: %s", err)
 	}
+	defer os.RemoveAll(tempDir)
 
-	fileName := tempDir + "traefik.log"
+	fileName := filepath.Join(tempDir, "traefik.log")
 	rotatedFileName := fileName + ".rotated"
 
 	config := &types.AccessLog{FilePath: fileName, Format: CommonFormat}
@@ -587,6 +588,7 @@ func captureStdout(t *testing.T) (out *os.File, restoreStdout func()) {
 
 	restoreStdout = func() {
 		os.Stdout = original
+		os.RemoveAll(file.Name())
 	}
 
 	return file, restoreStdout
