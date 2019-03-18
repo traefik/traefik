@@ -21,13 +21,13 @@
 
 * 3 Maintainers should attend to a Contributions Daily Meeting where we sort and label new issues ([is:issue label:status/0-needs-triage](https://github.com/containous/traefik/issues?utf8=%E2%9C%93&q=is%3Aissue+label%3Astatus%2F0-needs-triage+)), and review every Pull Requests
 * Every pull request should be checked during the Contributions Daily Meeting
-   * Even if it’s already assigned
-   * Even PR labelled with `contributor/waiting-for-corrections` or `contributor/waiting-for-feedback`
+    * Even if it’s already assigned
+    * Even PR labelled with `contributor/waiting-for-corrections` or `contributor/waiting-for-feedback`
 * Issues labeled with `priority/P0` and `priority/P1` should be assigned.
 * Modifying an issue or a pull request (labels, assignees, milestone) is only possible:
-   * During the Contributions Daily Meeting
-   * By an assigned maintainer
-   * In case of emergency, if a change proposal is approved by 2 other maintainers (on Slack, Discord, etc)
+    * During the Contributions Daily Meeting
+    * By an assigned maintainer
+    * In case of emergency, if a change proposal is approved by 2 other maintainers (on Slack, Discord, etc)
 
 ## PR review process:
 
@@ -40,12 +40,11 @@
 
 We use [PRM](https://github.com/ldez/prm) to manage locally pull requests.
 
-
 ## Bots
 
 ### [Myrmica Lobicornis](https://github.com/containous/lobicornis/)
 
-**Update and Merge Pull Request**
+Update and Merge Pull Request.
 
 The maintainer giving the final LGTM must add the `status/3-needs-merge` label to trigger the merge bot.
 
@@ -62,30 +61,38 @@ To prevent the bot from automatically merging a PR, add the label `bot/no-merge`
 The label `bot/light-review` decreases the number of required LGTM from 3 to 1.
 
 This label is used when:
-- Updating the vendors from previously reviewed PRs
-- Merging branches into the master
-- Preparing the release
 
+* Updating the vendors from previously reviewed PRs
+* Merging branches into the master
+* Preparing the release
 
 ### [Myrmica Bibikoffi](https://github.com/containous/bibikoffi/)
 
 * closes stale issues [cron]
     * use some criterion as number of days between creation, last update, labels, ...
 
-
 ### [Myrmica Aloba](https://github.com/containous/aloba)
 
-**Manage GitHub labels**
+Manage GitHub labels.
 
 * Add labels on new PR [GitHub WebHook]
 * Add milestone to a new PR based on a branch version (1.4, 1.3, ...) [GitHub WebHook]
 * Add and remove `contributor/waiting-for-corrections` label when a review request changes [GitHub WebHook]
 * Weekly report of PR status on Slack (CaptainPR) [cron]
 
-
 ## Labels
 
 A maintainer that looks at an issue/PR must define its `kind/*`, `area/*`, and `status/*`.
+
+### Status - Workflow
+
+The `status/*` labels represent the desired state in the workflow.
+
+* `status/0-needs-triage`: all the new issues and PRs have this status. _[bot only]_
+* `status/1-needs-design-review`: needs a design review. **(only for PR)**
+* `status/2-needs-review`: needs a code/documentation review. **(only for PR)**
+* `status/3-needs-merge`: ready to merge. **(only for PR)**
+* `status/4-merge-in-progress`: merge is in progress. _[bot only]_
 
 ### Contributor
 
@@ -99,8 +106,8 @@ A maintainer that looks at an issue/PR must define its `kind/*`, `area/*`, and `
 * `kind/enhancement`: a new or improved feature.
 * `kind/question`: a question. **(only for issue)**
 * `kind/proposal`: a proposal that needs to be discussed.
-  * _Proposal issues_ are design proposals
-  * _Proposal PRs_ are technical prototypes that need to be refined with multiple contributors.
+    * _Proposal issues_ are design proposals
+    * _Proposal PRs_ are technical prototypes that need to be refined with multiple contributors.
 
 * `kind/bug/possible`: a possible bug that needs analysis before it is confirmed or fixed. **(only for issues)**
 * `kind/bug/confirmed`: a confirmed bug (reproducible). **(only for issues)**
@@ -161,18 +168,8 @@ A maintainer that looks at an issue/PR must define its `kind/*`, `area/*`, and `
 
 ### PR size
 
-__Automatically set by a bot__
+Automatically set by a bot.
 
 * `size/S`: small PR.
 * `size/M`: medium PR.
 * `size/L`: Large PR.
-
-### Status - Workflow
-
-The `status/*` labels represent the desired state in the workflow.
-
-* `status/0-needs-triage`: all the new issues and PRs have this status. _[bot only]_
-* `status/1-needs-design-review`: needs a design review. **(only for PR)**
-* `status/2-needs-review`: needs a code/documentation review. **(only for PR)**
-* `status/3-needs-merge`: ready to merge. **(only for PR)**
-* `status/4-merge-in-progress`: merge is in progress. _[bot only]_
