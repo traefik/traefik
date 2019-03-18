@@ -5,7 +5,6 @@ import (
 	"fmt"
 	stdlog "log"
 
-	"github.com/abronan/valkeyrie/store"
 	"github.com/containous/flaeg"
 	"github.com/containous/staert"
 	"github.com/containous/traefik/cmd"
@@ -18,6 +17,7 @@ func NewCmd(traefikConfiguration *cmd.TraefikConfiguration, traefikPointersConfi
 		Description:           `Stores the static traefik configuration into a Key-value stores. Traefik will not start.`,
 		Config:                traefikConfiguration,
 		DefaultPointersConfig: traefikPointersConfiguration,
+		HideHelp:              true, // TODO storeconfig
 		Metadata: map[string]string{
 			"parseAllSources": "true",
 		},
@@ -116,34 +116,35 @@ func Run(kv *staert.KvSource, traefikConfiguration *cmd.TraefikConfiguration) fu
 // TLS support is enable for Consul and Etcd backends
 func CreateKvSource(traefikConfiguration *cmd.TraefikConfiguration) (*staert.KvSource, error) {
 	var kv *staert.KvSource
-	var kvStore store.Store
+	// var kvStore store.Store
 	var err error
 
-	switch {
-	case traefikConfiguration.Providers.Consul != nil:
-		kvStore, err = traefikConfiguration.Providers.Consul.CreateStore()
-		kv = &staert.KvSource{
-			Store:  kvStore,
-			Prefix: traefikConfiguration.Providers.Consul.Prefix,
-		}
-	case traefikConfiguration.Providers.Etcd != nil:
-		kvStore, err = traefikConfiguration.Providers.Etcd.CreateStore()
-		kv = &staert.KvSource{
-			Store:  kvStore,
-			Prefix: traefikConfiguration.Providers.Etcd.Prefix,
-		}
-	case traefikConfiguration.Providers.Zookeeper != nil:
-		kvStore, err = traefikConfiguration.Providers.Zookeeper.CreateStore()
-		kv = &staert.KvSource{
-			Store:  kvStore,
-			Prefix: traefikConfiguration.Providers.Zookeeper.Prefix,
-		}
-	case traefikConfiguration.Providers.Boltdb != nil:
-		kvStore, err = traefikConfiguration.Providers.Boltdb.CreateStore()
-		kv = &staert.KvSource{
-			Store:  kvStore,
-			Prefix: traefikConfiguration.Providers.Boltdb.Prefix,
-		}
-	}
+	// TODO kv store
+	// switch {
+	// case traefikConfiguration.Providers.Consul != nil:
+	// 	kvStore, err = traefikConfiguration.Providers.Consul.CreateStore()
+	// 	kv = &staert.KvSource{
+	// 		Store:  kvStore,
+	// 		Prefix: traefikConfiguration.Providers.Consul.Prefix,
+	// 	}
+	// case traefikConfiguration.Providers.Etcd != nil:
+	// 	kvStore, err = traefikConfiguration.Providers.Etcd.CreateStore()
+	// 	kv = &staert.KvSource{
+	// 		Store:  kvStore,
+	// 		Prefix: traefikConfiguration.Providers.Etcd.Prefix,
+	// 	}
+	// case traefikConfiguration.Providers.Zookeeper != nil:
+	// 	kvStore, err = traefikConfiguration.Providers.Zookeeper.CreateStore()
+	// 	kv = &staert.KvSource{
+	// 		Store:  kvStore,
+	// 		Prefix: traefikConfiguration.Providers.Zookeeper.Prefix,
+	// 	}
+	// case traefikConfiguration.Providers.Boltdb != nil:
+	// 	kvStore, err = traefikConfiguration.Providers.Boltdb.CreateStore()
+	// 	kv = &staert.KvSource{
+	// 		Store:  kvStore,
+	// 		Prefix: traefikConfiguration.Providers.Boltdb.Prefix,
+	// 	}
+	// }
 	return kv, err
 }

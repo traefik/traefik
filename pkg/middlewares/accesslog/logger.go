@@ -53,7 +53,7 @@ type Handler struct {
 func WrapHandler(handler *Handler) alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
 		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			handler.ServeHTTP(rw, req, next.ServeHTTP)
+			handler.ServeHTTP(rw, req, next)
 		}), nil
 	}
 }
@@ -140,7 +140,7 @@ func GetLogData(req *http.Request) *LogData {
 	return nil
 }
 
-func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
+func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http.Handler) {
 	now := time.Now().UTC()
 
 	core := CoreLogData{

@@ -11,10 +11,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/containous/traefik/old/types"
 	"github.com/containous/traefik/pkg/config"
 	"github.com/containous/traefik/pkg/middlewares"
 	"github.com/containous/traefik/pkg/tracing"
+	"github.com/containous/traefik/pkg/types"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/sirupsen/logrus"
 	"github.com/vulcand/oxy/utils"

@@ -67,7 +67,7 @@ func TestLogRotation(t *testing.T) {
 	writeDone := make(chan bool)
 	go func() {
 		for i := 0; i < iterations; i++ {
-			logHandler.ServeHTTP(recorder, req, next)
+			logHandler.ServeHTTP(recorder, req, http.HandlerFunc(next))
 			if i == iterations/2 {
 				halfDone <- true
 			}
@@ -624,7 +624,7 @@ func doLogging(t *testing.T, config *types.AccessLog) {
 		},
 	}
 
-	logger.ServeHTTP(httptest.NewRecorder(), req, logWriterTestHandlerFunc)
+	logger.ServeHTTP(httptest.NewRecorder(), req, http.HandlerFunc(logWriterTestHandlerFunc))
 }
 
 func logWriterTestHandlerFunc(rw http.ResponseWriter, r *http.Request) {

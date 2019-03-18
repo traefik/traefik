@@ -12,7 +12,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/containous/traefik/integration/try"
-	"github.com/containous/traefik/old/types"
+	"github.com/containous/traefik/pkg/config"
 	traefiktls "github.com/containous/traefik/pkg/tls"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
@@ -714,7 +714,7 @@ func modifyCertificateConfFileContent(c *check.C, certFileName, confFileName, en
 
 	// If certificate file is not provided, just truncate the configuration file
 	if len(certFileName) > 0 {
-		tlsConf := types.Configuration{
+		tlsConf := config.Configuration{
 			TLS: []*traefiktls.Configuration{{
 				Certificate: &traefiktls.Certificate{
 					CertFile: traefiktls.FileOrContent("fixtures/https/" + certFileName + ".cert"),

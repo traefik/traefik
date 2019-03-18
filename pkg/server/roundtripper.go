@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/containous/traefik/old/configuration"
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/containous/traefik/pkg/log"
 	traefiktls "github.com/containous/traefik/pkg/tls"
@@ -35,7 +34,7 @@ func createHTTPTransport(transportConfiguration *static.ServersTransport) (*http
 	}
 
 	dialer := &net.Dialer{
-		Timeout:   configuration.DefaultDialTimeout,
+		Timeout:   30 * time.Second,
 		KeepAlive: 30 * time.Second,
 		DualStack: true,
 	}
