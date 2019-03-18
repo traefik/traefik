@@ -8,7 +8,7 @@
 /webui/.tmp/
 /examples/acme/acme.json
 /site/
-/doc/site/
+/docs/site/
 /traefik.toml
 /dist
 /traefik
