@@ -113,13 +113,13 @@ If you need commercial support, please contact [Containo.us](https://containo.us
 
 ## Download
 
-- Grab the latest binary from the [releases](https://github.com/containous/traefik/releases) page and run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/master/traefik.sample.toml):
+- Grab the latest binary from the [releases](https://github.com/containous/traefik/releases) page and run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/v1.7/traefik.sample.toml):
 
 ```shell
 ./traefik --configFile=traefik.toml
 ```
 
-- Or use the official tiny Docker image and run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/master/traefik.sample.toml):
+- Or use the official tiny Docker image and run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/v1.7/traefik.sample.toml):
 
 ```shell
 docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/etc/traefik/traefik.toml traefik

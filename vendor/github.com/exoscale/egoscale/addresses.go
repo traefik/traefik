@@ -8,14 +8,10 @@ import (
 
 // IPAddress represents an IP Address
 type IPAddress struct {
-	Account                   string        `json:"account,omitempty" doc:"the account the public IP address is associated with"`
 	Allocated                 string        `json:"allocated,omitempty" doc:"date the public IP address was acquired"`
 	Associated                string        `json:"associated,omitempty" doc:"date the public IP address was associated"`
 	AssociatedNetworkID       *UUID         `json:"associatednetworkid,omitempty" doc:"the ID of the Network associated with the IP address"`
 	AssociatedNetworkName     string        `json:"associatednetworkname,omitempty" doc:"the name of the Network associated with the IP address"`
-	Domain                    string        `json:"domain,omitempty" doc:"the domain the public IP address is associated with"`
-	DomainID                  *UUID         `json:"domainid,omitempty" doc:"the domain ID the public IP address is associated with"`
-	ForDisplay                bool          `json:"fordisplay,omitempty" doc:"is public ip for display to the regular user"`
 	ForVirtualNetwork         bool          `json:"forvirtualnetwork,omitempty" doc:"the virtual network for the IP address"`
 	ID                        *UUID         `json:"id,omitempty" doc:"public IP address id"`
 	IPAddress                 net.IP        `json:"ipaddress,omitempty" doc:"public IP address"`
@@ -48,9 +44,7 @@ func (IPAddress) ResourceType() string {
 // ListRequest builds the ListAdresses request
 func (ipaddress IPAddress) ListRequest() (ListCommand, error) {
 	req := &ListPublicIPAddresses{
-		Account:             ipaddress.Account,
 		AssociatedNetworkID: ipaddress.AssociatedNetworkID,
-		DomainID:            ipaddress.DomainID,
 		ID:                  ipaddress.ID,
 		IPAddress:           ipaddress.IPAddress,
 		PhysicalNetworkID:   ipaddress.PhysicalNetworkID,
@@ -62,9 +56,6 @@ func (ipaddress IPAddress) ListRequest() (ListCommand, error) {
 	}
 	if ipaddress.IsSourceNat {
 		req.IsSourceNat = &ipaddress.IsSourceNat
-	}
-	if ipaddress.ForDisplay {
-		req.ForDisplay = &ipaddress.ForDisplay
 	}
 	if ipaddress.ForVirtualNetwork {
 		req.ForVirtualNetwork = &ipaddress.ForVirtualNetwork
@@ -86,21 +77,19 @@ func (ipaddress IPAddress) Delete(ctx context.Context, client *Client) error {
 
 // AssociateIPAddress (Async) represents the IP creation
 type AssociateIPAddress struct {
-	Account    string `json:"account,omitempty" doc:"the account to associate with this IP address"`
-	DomainID   *UUID  `json:"domainid,omitempty" doc:"the ID of the domain to associate with this IP address"`
-	ForDisplay *bool  `json:"fordisplay,omitempty" doc:"an optional field, whether to the display the ip to the end user or not"`
-	IsPortable *bool  `json:"isportable,omitempty" doc:"should be set to true if public IP is required to be transferable across zones, if not specified defaults to false"`
-	NetworkdID *UUID  `json:"networkid,omitempty" doc:"The network this ip address should be associated to."`
-	RegionID   int    `json:"regionid,omitempty" doc:"region ID from where portable ip is to be associated."`
-	ZoneID     *UUID  `json:"zoneid,omitempty" doc:"the ID of the availability zone you want to acquire an public IP address from"`
-	_          bool   `name:"associateIpAddress" description:"Acquires and associates a public IP to an account."`
+	IsPortable *bool `json:"isportable,omitempty" doc:"should be set to true if public IP is required to be transferable across zones, if not specified defaults to false"`
+	NetworkdID *UUID `json:"networkid,omitempty" doc:"The network this ip address should be associated to."`
+	ZoneID     *UUID `json:"zoneid,omitempty" doc:"the ID of the availability zone you want to acquire an public IP address from"`
+	_          bool  `name:"associateIpAddress" description:"Acquires and associates a public IP to an account."`
 }
 
-func (AssociateIPAddress) response() interface{} {
+// Response returns the struct to unmarshal
+func (AssociateIPAddress) Response() interface{} {
 	return new(AsyncJobResult)
 }
 
-func (AssociateIPAddress) asyncResponse() interface{} {
+// AsyncResponse returns the struct to unmarshal the async job
+func (AssociateIPAddress) AsyncResponse() interface{} {
 	return new(IPAddress)
 }
 
@@ -110,47 +99,47 @@ type DisassociateIPAddress struct {
 	_  bool  `name:"disassociateIpAddress" description:"Disassociates an ip address from the account."`
 }
 
-func (DisassociateIPAddress) response() interface{} {
+// Response returns the struct to unmarshal
+func (DisassociateIPAddress) Response() interface{} {
 	return new(AsyncJobResult)
 }
 
-func (DisassociateIPAddress) asyncResponse() interface{} {
-	return new(booleanResponse)
+// AsyncResponse returns the struct to unmarshal the async job
+func (DisassociateIPAddress) AsyncResponse() interface{} {
+	return new(BooleanResponse)
 }
 
 // UpdateIPAddress (Async) represents the IP modification
 type UpdateIPAddress struct {
-	ID         *UUID `json:"id" doc:"the id of the public ip address to update"`
-	CustomID   *UUID `json:"customid,omitempty" doc:"an optional field, in case you want to set a custom id to the resource. Allowed to Root Admins only"`
-	ForDisplay *bool `json:"fordisplay,omitempty" doc:"an optional field, whether to the display the ip to the end user or not"`
-	_          bool  `name:"updateIpAddress" description:"Updates an ip address"`
+	ID       *UUID `json:"id" doc:"the id of the public ip address to update"`
+	CustomID *UUID `json:"customid,omitempty" doc:"an optional field, in case you want to set a custom id to the resource. Allowed to Root Admins only"`
+	_        bool  `name:"updateIpAddress" description:"Updates an ip address"`
 }
 
-func (UpdateIPAddress) response() interface{} {
+// Response returns the struct to unmarshal
+func (UpdateIPAddress) Response() interface{} {
 	return new(AsyncJobResult)
 }
 
-func (UpdateIPAddress) asyncResponse() interface{} {
+// AsyncResponse returns the struct to unmarshal the async job
+func (UpdateIPAddress) AsyncResponse() interface{} {
 	return new(IPAddress)
 }
 
+//go:generate go run generate/main.go -interface=Listable ListPublicIPAddresses
+
 // ListPublicIPAddresses represents a search for public IP addresses
 type ListPublicIPAddresses struct {
-	Account             string        `json:"account,omitempty" doc:"list resources by account. Must be used with the domainId parameter."`
 	AllocatedOnly       *bool         `json:"allocatedonly,omitempty" doc:"limits search results to allocated public IP addresses"`
 	AssociatedNetworkID *UUID         `json:"associatednetworkid,omitempty" doc:"lists all public IP addresses associated to the network specified"`
-	DomainID            *UUID         `json:"domainid,omitempty" doc:"list only resources belonging to the domain specified"`
-	ForDisplay          *bool         `json:"fordisplay,omitempty" doc:"list resources by display flag; only ROOT admin is eligible to pass this parameter"`
 	ForLoadBalancing    *bool         `json:"forloadbalancing,omitempty" doc:"list only ips used for load balancing"`
 	ForVirtualNetwork   *bool         `json:"forvirtualnetwork,omitempty" doc:"the virtual network for the IP address"`
 	ID                  *UUID         `json:"id,omitempty" doc:"lists ip address by id"`
 	IPAddress           net.IP        `json:"ipaddress,omitempty" doc:"lists the specified IP address"`
 	IsElastic           *bool         `json:"iselastic,omitempty" doc:"list only elastic ip addresses"`
-	IsRecursive         *bool         `json:"isrecursive,omitempty" doc:"defaults to false, but if true, lists all resources from the parent specified by the domainId till leaves."`
 	IsSourceNat         *bool         `json:"issourcenat,omitempty" doc:"list only source nat ip addresses"`
 	IsStaticNat         *bool         `json:"isstaticnat,omitempty" doc:"list only static nat ip addresses"`
 	Keyword             string        `json:"keyword,omitempty" doc:"List by keyword"`
-	ListAll             *bool         `json:"listall,omitempty" doc:"If set to false, list only resources belonging to the command's caller; if set to true - list resources that the caller is authorized to see. Default value is false"`
 	Page                int           `json:"page,omitempty"`
 	PageSize            int           `json:"pagesize,omitempty"`
 	PhysicalNetworkID   *UUID         `json:"physicalnetworkid,omitempty" doc:"lists all public IP addresses by physical network id"`
@@ -164,32 +153,4 @@ type ListPublicIPAddresses struct {
 type ListPublicIPAddressesResponse struct {
 	Count           int         `json:"count"`
 	PublicIPAddress []IPAddress `json:"publicipaddress"`
-}
-
-func (ListPublicIPAddresses) response() interface{} {
-	return new(ListPublicIPAddressesResponse)
-}
-
-// SetPage sets the current page
-func (ls *ListPublicIPAddresses) SetPage(page int) {
-	ls.Page = page
-}
-
-// SetPageSize sets the page size
-func (ls *ListPublicIPAddresses) SetPageSize(pageSize int) {
-	ls.PageSize = pageSize
-}
-
-func (ListPublicIPAddresses) each(resp interface{}, callback IterateItemFunc) {
-	ips, ok := resp.(*ListPublicIPAddressesResponse)
-	if !ok {
-		callback(nil, fmt.Errorf("wrong type. ListPublicIPAddressesResponse expected, got %T", resp))
-		return
-	}
-
-	for i := range ips.PublicIPAddress {
-		if !callback(&ips.PublicIPAddress[i], nil) {
-			break
-		}
-	}
 }

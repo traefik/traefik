@@ -66,7 +66,7 @@ _(But if you'd rather configure some of your routes manually, Traefik supports t
 
 In this quickstart, we'll use [Docker compose](https://docs.docker.com/compose) to create our demo infrastructure.
 
-To save some time, you can clone [Traefik's repository](https://github.com/containous/traefik) and use the quickstart files located in the [examples/quickstart](https://github.com/containous/traefik/tree/master/examples/quickstart/) directory.
+To save some time, you can clone [Traefik's repository](https://github.com/containous/traefik) and use the quickstart files located in the [examples/quickstart](https://github.com/containous/traefik/tree/v1.7/examples/quickstart/) directory.
 
 ### 1 — Launch Traefik — Tell It to Listen to Docker
 
@@ -190,7 +190,7 @@ You will learn fundamental Traefik features and see some demos with Kubernetes.
 
 ### The Official Binary File
 
-You can grab the latest binary from the [releases](https://github.com/containous/traefik/releases) page and just run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/master/traefik.sample.toml):
+You can grab the latest binary from the [releases](https://github.com/containous/traefik/releases) page and just run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/v1.7/traefik.sample.toml):
 
 ```shell
 ./traefik -c traefik.toml

@@ -1124,7 +1124,7 @@
 - **[acme,tls]** Rename TLSConfigurations to TLS. ([#2744](https://github.com/containous/traefik/pull/2744) by [ldez](https://github.com/ldez))
 - **[acme,provider,docker,tls]** Make the TLS certificates management dynamic. ([#2233](https://github.com/containous/traefik/pull/2233) by [nmengin](https://github.com/nmengin))
 - **[acme]** Add Let&#39;s Encrypt HTTP Challenge ([#2701](https://github.com/containous/traefik/pull/2701) by [Juliens](https://github.com/Juliens))
-- **[acme]** Update github.com/xenolf/lego to 0.4.1 ([#2304](https://github.com/containous/traefik/pull/2304) by [oldmantaiter](https://github.com/oldmantaiter))
+- **[acme]** Update github.com/go-acme/lego to 0.4.1 ([#2304](https://github.com/containous/traefik/pull/2304) by [oldmantaiter](https://github.com/oldmantaiter))
 - **[api,healthcheck,metrics,provider,webui]** Split Web into API/Dashboard, ping, metric and Rest Provider ([#2335](https://github.com/containous/traefik/pull/2335) by [Juliens](https://github.com/Juliens))
 - **[authentication]** Pass through certain forward auth negative response headers ([#2127](https://github.com/containous/traefik/pull/2127) by [wheresmysocks](https://github.com/wheresmysocks))
 - **[cluster,consul,file]** Add file to storeconfig ([#2419](https://github.com/containous/traefik/pull/2419) by [emilevauge](https://github.com/emilevauge))
@@ -1403,7 +1403,7 @@
 
 **Enhancements:**
 - **[acme,provider,docker,tls]** Make the TLS certificates management dynamic. ([#2233](https://github.com/containous/traefik/pull/2233) by [nmengin](https://github.com/nmengin))
-- **[acme]** Update github.com/xenolf/lego to 0.4.1 ([#2304](https://github.com/containous/traefik/pull/2304) by [oldmantaiter](https://github.com/oldmantaiter))
+- **[acme]** Update github.com/go-acme/lego to 0.4.1 ([#2304](https://github.com/containous/traefik/pull/2304) by [oldmantaiter](https://github.com/oldmantaiter))
 - **[api,healthcheck,metrics,provider,webui]** Split Web into API/Dashboard, ping, metric and Rest Provider ([#2335](https://github.com/containous/traefik/pull/2335) by [Juliens](https://github.com/Juliens))
 - **[authentication]** Pass through certain forward auth negative response headers ([#2127](https://github.com/containous/traefik/pull/2127) by [wheresmysocks](https://github.com/wheresmysocks))
 - **[cluster,consul,file]** Add file to storeconfig ([#2419](https://github.com/containous/traefik/pull/2419) by [emilevauge](https://github.com/emilevauge))
