@@ -254,7 +254,7 @@ func createProvider(t *testing.T, test ProvideTestCase, watch bool) (*Provider, 
 	}
 
 	return provider, func() {
-		os.Remove(tempDir)
+		os.RemoveAll(tempDir)
 	}
 }
 
@@ -340,7 +340,7 @@ func createTLS(n int) string {
 
 func TestTLSContent(t *testing.T) {
 	tempDir := createTempDir(t, "testdir")
-	defer os.Remove(tempDir)
+	defer os.RemoveAll(tempDir)
 
 	fileTLS := createRandomFile(t, tempDir, "CONTENT")
 	fileConfig := createRandomFile(t, tempDir, `
