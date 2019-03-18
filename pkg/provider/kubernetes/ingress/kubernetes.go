@@ -39,7 +39,6 @@ type Provider struct {
 	Token                  string           `description:"Kubernetes bearer token (not needed for in-cluster client)"`
 	CertAuthFilePath       string           `description:"Kubernetes certificate authority file path (not needed for in-cluster client)"`
 	DisablePassHostHeaders bool             `description:"Kubernetes disable PassHost Headers" export:"true"`
-	EnablePassTLSCert      bool             `description:"Kubernetes enable Pass TLS Client Certs" export:"true"` // Deprecated
 	Namespaces             k8s.Namespaces   `description:"Kubernetes namespaces" export:"true"`
 	LabelSelector          string           `description:"Kubernetes Ingress label selector to use" export:"true"`
 	IngressClass           string           `description:"Value of kubernetes.io/ingress.class annotation to watch for" export:"true"`

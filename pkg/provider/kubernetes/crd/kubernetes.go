@@ -31,25 +31,16 @@ const (
 	traefikDefaultIngressClass       = "traefik"
 )
 
-// IngressEndpoint holds the endpoint information for the Kubernetes provider.
-type IngressEndpoint struct {
-	IP               string `description:"IP used for Kubernetes Ingress endpoints"`
-	Hostname         string `description:"Hostname used for Kubernetes Ingress endpoints"`
-	PublishedService string `description:"Published Kubernetes Service to copy status from"`
-}
-
 // Provider holds configurations of the provider.
 type Provider struct {
 	provider.BaseProvider  `mapstructure:",squash" export:"true"`
-	Endpoint               string           `description:"Kubernetes server endpoint (required for external cluster client)"`
-	Token                  string           `description:"Kubernetes bearer token (not needed for in-cluster client)"`
-	CertAuthFilePath       string           `description:"Kubernetes certificate authority file path (not needed for in-cluster client)"`
-	DisablePassHostHeaders bool             `description:"Kubernetes disable PassHost Headers" export:"true"`
-	EnablePassTLSCert      bool             `description:"Kubernetes enable Pass TLS Client Certs" export:"true"` // Deprecated
-	Namespaces             k8s.Namespaces   `description:"Kubernetes namespaces" export:"true"`
-	LabelSelector          string           `description:"Kubernetes Ingress label selector to use" export:"true"`
-	IngressClass           string           `description:"Value of kubernetes.io/ingress.class annotation to watch for" export:"true"`
-	IngressEndpoint        *IngressEndpoint `description:"Kubernetes Ingress Endpoint"`
+	Endpoint               string         `description:"Kubernetes server endpoint (required for external cluster client)"`
+	Token                  string         `description:"Kubernetes bearer token (not needed for in-cluster client)"`
+	CertAuthFilePath       string         `description:"Kubernetes certificate authority file path (not needed for in-cluster client)"`
+	DisablePassHostHeaders bool           `description:"Kubernetes disable PassHost Headers" export:"true"`
+	Namespaces             k8s.Namespaces `description:"Kubernetes namespaces" export:"true"`
+	LabelSelector          string         `description:"Kubernetes Ingress label selector to use" export:"true"`
+	IngressClass           string         `description:"Value of kubernetes.io/ingress.class annotation to watch for" export:"true"`
 	lastConfiguration      safe.Safe
 }
 
