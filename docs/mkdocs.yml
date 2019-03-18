@@ -127,4 +127,5 @@ nav:
       - 'Documentation': 'contributing/documentation.md'
       - 'Data Collection': 'contributing/data-collection.md'
       - 'Advocating': 'contributing/advocating.md'
+      - 'Maintainers': 'contributing/maintainers.md'
   - 'Glossary': 'glossary.md'

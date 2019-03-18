@@ -87,6 +87,16 @@ This label is used when:
 
 A maintainer that looks at an issue/PR must define its `kind/*`, `area/*`, and `status/*`.
 
+### Status - Workflow
+
+The `status/*` labels represent the desired state in the workflow.
+
+* `status/0-needs-triage`: all the new issues and PRs have this status. _[bot only]_
+* `status/1-needs-design-review`: needs a design review. **(only for PR)**
+* `status/2-needs-review`: needs a code/documentation review. **(only for PR)**
+* `status/3-needs-merge`: ready to merge. **(only for PR)**
+* `status/4-merge-in-progress`: merge is in progress. _[bot only]_
+
 ### Contributor
 
 * `contributor/need-more-information`: we need more information from the contributor in order to analyze a problem.
@@ -166,13 +176,3 @@ __Automatically set by a bot__
 * `size/S`: small PR.
 * `size/M`: medium PR.
 * `size/L`: Large PR.
-
-### Status - Workflow
-
-The `status/*` labels represent the desired state in the workflow.
-
-* `status/0-needs-triage`: all the new issues and PRs have this status. _[bot only]_
-* `status/1-needs-design-review`: needs a design review. **(only for PR)**
-* `status/2-needs-review`: needs a code/documentation review. **(only for PR)**
-* `status/3-needs-merge`: ready to merge. **(only for PR)**
-* `status/4-merge-in-progress`: merge is in progress. _[bot only]_
