@@ -10,7 +10,7 @@ else
   export VERSION=''
 fi
 
-export CODENAME=maroilles
+export CODENAME=faisselle
 
 export N_MAKE_JOBS=2
 
