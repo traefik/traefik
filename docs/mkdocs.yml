@@ -81,7 +81,7 @@ nav:
       - 'Overview': 'providers/overview.md'
       - 'Docker': 'providers/docker.md'
       - 'File': 'providers/file.md'
-      - 'Kubernetes': 'providers/kubernetes.md'
+      - 'Kubernetes CRD': 'providers/kubernetes-crd.md'
   - 'Routing & Load Balancing':
       - 'Overview': 'routing/overview.md'
       - 'Entrypoints': 'routing/entrypoints.md'

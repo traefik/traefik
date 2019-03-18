@@ -8,7 +8,8 @@ Traefik's Many Friends
 Configuration discovery in Traefik is achieved through _Providers_.
 
 The _providers_ are existing infrastructure components, whether orchestrators, container engines, cloud providers, or key-value stores. 
-The idea is that Traefik will query the providers' API in order to find relevant information about routing, and each time Traefik detects a change, it dynamically updates the routes.
+The idea is that Traefik will query the providers' API in order to find relevant information about routing,
+and each time Traefik detects a change, it dynamically updates the routes.
 
 Deploy and forget is Traefik's credo.
 
@@ -25,12 +26,12 @@ Even if each provider is different, we can categorize them in four groups:
 
 Below is the list of the currently supported providers in Traefik. 
 
-| Provider                      | Type         | Configuration Type |
-|-------------------------------|--------------|--------------------|
-| [Docker](./docker.md)         | Orchestrator | Label              |
-| [File](./file.md)             | Orchestrator | Custom Annotation  |
-| [Kubernetes](./kubernetes.md) | Orchestrator | Custom Resource    |
-| Marathon (not documented)     | Orchestrator | Label              |
+| Provider                        | Type         | Configuration Type |
+|---------------------------------|--------------|--------------------|
+| [Docker](./docker.md)           | Orchestrator | Label              |
+| [File](./file.md)               | Orchestrator | Custom Annotation  |
+| [Kubernetes](kubernetes-crd.md) | Orchestrator | Custom Resource    |
+| Marathon (not yet documented)   | Orchestrator | Label              |
 
 !!! note "More Providers"
 
@@ -38,7 +39,8 @@ Below is the list of the currently supported providers in Traefik.
     
 ## Constraints Configuration
 
-If you want to limit the scope of Traefik service discovery, you can set constraints. Doing so, Traefik will create routes for containers that match these constraints only.
+If you want to limit the scope of Traefik service discovery, you can set constraints.
+Doing so, Traefik will create routes for containers that match these constraints only.
 
 ??? example "Containers with the api Tag"
 

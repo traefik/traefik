@@ -4,35 +4,27 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
 {: .subtitle }
 
 [comment]: # (Link "Kubernetes Ingress controller" to ./kubernetes-ingress.md)
-The Traefik Kubernetes provider used to be a Kubernetes Ingress controller in the strict sense of the term; that is to say, it would manage access to a cluster services by supporting the [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) specification.
 
-However, as the community expressed the need to benefit from Traefik features without resorting to (lots of) annotations, we ended up writing a [Custom Resource Definition](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (alias CRD in the following) for an IngressRoute type, defined below, in order to provide a better way to configure access to a Kubernetes cluster.
+The Traefik Kubernetes provider used to be a Kubernetes Ingress controller in the strict sense of the term; that is to say,
+it would manage access to a cluster services by supporting the [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) specification.
 
-## IngressRoute definition
+However, as the community expressed the need to benefit from Traefik features without resorting to (lots of) annotations,
+we ended up writing a [Custom Resource Definition](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (alias CRD in the following) for an IngressRoute type, defined below, in order to provide a better way to configure access to a Kubernetes cluster.
+
+## IngressRoute definitionInIngressRouteIngressRoutegressRoute
 
 ```yaml
-apiVersion: apiextensions.k8s.io/v1beta1
-kind: CustomResourceDefinition
-metadata:
-  name: ingressroutes.traefik.containo.us
-
-spec:
-  group: traefik.containo.us
-  version: v1alpha1
-  names:
-    kind: IngressRoute
-    plural: ingressroutes
-    singular: ingressroute
-  scope: Namespaced
+--8<-- "content/providers/crd_ingress_route.yml"
 ```
 
-That IngressRoute kind can then be used to define an IngressRoute object, such as:
+That `IngressRoute` kind can then be used to define an `IngressRoute` object, such as:
 
 ```yaml
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   name: ingressroutefoo.crd
+
 spec:
   entrypoints:
     - web
@@ -54,30 +46,20 @@ spec:
 
 ## Middleware
 
-Additionally, to allow for the use of middlewares in an IngressRoute, we defined the CRD below for the Middleware kind.
+Additionally, to allow for the use of middlewares in an `IngressRoute`, we defined the CRD below for the `Middleware` kind.
 
 ```yaml
-apiVersion: apiextensions.k8s.io/v1beta1
-kind: CustomResourceDefinition
-metadata:
-  name: middlewares.traefik.containo.us
-spec:
-  group: traefik.containo.us
-  version: v1alpha1
-  names:
-    kind: Middleware
-    plural: middlewares
-    singular: middleware
-  scope: Namespaced
+--8<-- "content/providers/crd_middlewares.yml"
 ```
 
-Once the Middleware kind has been registered with the Kubernetes cluster, it can then be used in IngressRoute definitions, such as:
+Once the `Middleware` kind has been registered with the Kubernetes cluster, it can then be used in `IngressRoute` definitions, such as:
 
 ```yaml
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
   name: stripprefix
+
 spec:
   stripprefix:
     prefixes:
@@ -88,6 +70,7 @@ apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   name: ingressroutebar.crd
+
 spec:
   entrypoints:
     - web
@@ -103,13 +86,14 @@ spec:
 
 ## TLS
 
-To allow for TLS, we made use of the Secret kind, as it was already defined, and it can be directly used in an IngressRoute:
+To allow for TLS, we made use of the `Secret` kind, as it was already defined, and it can be directly used in an `IngressRoute`:
 
 ```yaml
 apiVersion: v1
 kind: Secret
 metadata:
   name: supersecret
+
 data:
   tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
   tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
@@ -119,6 +103,7 @@ apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   name: ingressroute.crd
+
 spec:
   entryPoints:
     - web
