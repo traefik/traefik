@@ -28,8 +28,8 @@ before_deploy:
       if [ "$TRAVIS_TAG" ]; then
         make release-packages;
       fi;
-      curl -sfL https://raw.githubusercontent.com/containous/structor/master/godownloader.sh | bash -s -- -b "${GOPATH}/bin" v1.6.0
-      structor -o containous -r traefik --dockerfile-url="https://raw.githubusercontent.com/containous/traefik/v1.7/docs.Dockerfile" --menu.js-url="https://raw.githubusercontent.com/containous/structor/master/traefik-menu.js.gotmpl" --rqts-url="https://raw.githubusercontent.com/containous/structor/master/requirements-override.txt" --exp-branch=master --debug;
+      curl -sfL https://raw.githubusercontent.com/containous/structor/master/godownloader.sh | bash -s -- -b "${GOPATH}/bin" v1.7.0
+      structor -o containous -r traefik --dockerfile-url="https://raw.githubusercontent.com/containous/traefik/v1.7/docs.Dockerfile" --menu.js-url="https://raw.githubusercontent.com/containous/structor/master/traefik-menu.js.gotmpl" --rqts-url="https://raw.githubusercontent.com/containous/structor/master/requirements-override.txt" --force-edit-url --exp-branch=master --debug;
     fi
 
 deploy:
