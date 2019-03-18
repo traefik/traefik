@@ -33,8 +33,6 @@ apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   name: ingressroutefoo.crd
-  namespace: default
-
 spec:
   entrypoints:
     - web
@@ -80,8 +78,6 @@ apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
   name: stripprefix
-  namespace: default
-
 spec:
   stripprefix:
     prefixes:
@@ -92,8 +88,6 @@ apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   name: ingressroutebar.crd
-  namespace: default
-
 spec:
   entrypoints:
     - web
@@ -116,8 +110,6 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: supersecret
-  namespace: default
-
 data:
   tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
   tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
@@ -127,8 +119,6 @@ apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   name: ingressroute.crd
-  namespace: default
-
 spec:
   entryPoints:
     - web

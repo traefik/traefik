@@ -40,8 +40,6 @@ apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   name: ingressroute.crd
-  namespace: default
-
 spec:
   entrypoints:
     - web

@@ -69,8 +69,6 @@ Pieces of middleware can be combined in chains to fit every scenario.
     kind: Middleware
     metadata:
       name: stripprefix
-      namespace: default
-
     spec:
       stripprefix:
         prefixes:
@@ -81,8 +79,6 @@ Pieces of middleware can be combined in chains to fit every scenario.
     kind: IngressRoute
     metadata:
       name: ingressroute.crd
-      namespace: default
-
     spec:
     # more fields...
       routes:

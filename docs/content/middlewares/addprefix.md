@@ -33,8 +33,6 @@ The AddPrefix middleware updates the URL Path of the request before forwarding i
     kind: Middleware
     metadata:
       name: addprefix
-      namespace: default
-
     spec:
       addprefix:
         prefix: /bar
