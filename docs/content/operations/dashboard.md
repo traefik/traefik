@@ -6,7 +6,8 @@ See What's Going On
 The dashboard is the central place that shows you the current active routes handled by Traefik. 
 
 <aside class="notice">
-   Currently, the dashboard is in a Work In Progress State while beeing reconstructed for v2. Therefore, the dashboard is currently not working
+   Currently, the dashboard is in a Work In Progress State while beeing reconstructed for v2. 
+   Therefore, the dashboard is currently not working.
 </aside>
 
 <figure>
