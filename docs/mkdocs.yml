@@ -66,9 +66,11 @@ markdown_extensions:
 
 # Page tree
 nav:
+  - '': 'providers/kubernetes-ingress.md'
   - '': 'reference/acme.md'
   - '': 'reference/providers/docker.md'
   - '': 'reference/providers/file.md'
+  - '': 'reference/providers/kubernetescrd.md'
   - '': 'reference/entrypoints.md'
   - 'Welcome': 'index.md'
   - 'Getting Started':
@@ -79,6 +81,7 @@ nav:
       - 'Overview': 'providers/overview.md'
       - 'Docker': 'providers/docker.md'
       - 'File': 'providers/file.md'
+      - 'Kubernetes IngressRoute': 'providers/kubernetes-crd.md'
   - 'Routing & Load Balancing':
       - 'Overview': 'routing/overview.md'
       - 'Entrypoints': 'routing/entrypoints.md'
