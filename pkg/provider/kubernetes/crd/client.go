@@ -65,7 +65,7 @@ type clientWrapper struct {
 	factoriesCrd  map[string]externalversions.SharedInformerFactory
 	factoriesKube map[string]informers.SharedInformerFactory
 
-	ingressLabelSelector labels.Selector
+	labelSelector labels.Selector
 
 	isNamespaceAll    bool
 	watchedNamespaces k8s.Namespaces
@@ -202,7 +202,7 @@ func (c *clientWrapper) GetIngressRoutes() []*v1alpha1.IngressRoute {
 	var result []*v1alpha1.IngressRoute
 
 	for ns, factory := range c.factoriesCrd {
-		ings, err := factory.Traefik().V1alpha1().IngressRoutes().Lister().List(c.ingressLabelSelector)
+		ings, err := factory.Traefik().V1alpha1().IngressRoutes().Lister().List(c.labelSelector)
 		if err != nil {
 			log.Errorf("Failed to list ingresses in namespace %s: %s", ns, err)
 		}
@@ -216,7 +216,7 @@ func (c *clientWrapper) GetMiddlewares() []*v1alpha1.Middleware {
 	var result []*v1alpha1.Middleware
 
 	for ns, factory := range c.factoriesCrd {
-		ings, err := factory.Traefik().V1alpha1().Middlewares().Lister().List(c.ingressLabelSelector)
+		ings, err := factory.Traefik().V1alpha1().Middlewares().Lister().List(c.labelSelector)
 		if err != nil {
 			log.Errorf("Failed to list ingresses in namespace %s: %s", ns, err)
 		}
@@ -230,7 +230,7 @@ func (c *clientWrapper) GetMiddlewares() []*v1alpha1.Middleware {
 func (c *clientWrapper) GetIngresses() []*extensionsv1beta1.Ingress {
 	var result []*extensionsv1beta1.Ingress
 	for ns, factory := range c.factoriesKube {
-		ings, err := factory.Extensions().V1beta1().Ingresses().Lister().List(c.ingressLabelSelector)
+		ings, err := factory.Extensions().V1beta1().Ingresses().Lister().List(c.labelSelector)
 		if err != nil {
 			log.Errorf("Failed to list ingresses in namespace %s: %s", ns, err)
 		}
@@ -320,7 +320,7 @@ func (c *clientWrapper) newResourceEventHandler(events chan<- interface{}) cache
 			// Ignore Ingresses that do not match our custom label selector.
 			if ing, ok := obj.(*extensionsv1beta1.Ingress); ok {
 				lbls := labels.Set(ing.GetLabels())
-				return c.ingressLabelSelector.Matches(lbls)
+				return c.labelSelector.Matches(lbls)
 			}
 			return true
 		},
