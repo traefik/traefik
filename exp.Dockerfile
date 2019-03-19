@@ -25,9 +25,10 @@ RUN mkdir -p /usr/local/bin \
 WORKDIR /go/src/github.com/containous/traefik
 COPY . /go/src/github.com/containous/traefik
 
+RUN rm -rf /go/src/github.com/containous/traefik/static/
 COPY --from=webui /src/static/ /go/src/github.com/containous/traefik/static/
 
-RUN ./script/make.sh binary
+RUN ./script/make.sh generate binary
 
 ## IMAGE
 FROM scratch
