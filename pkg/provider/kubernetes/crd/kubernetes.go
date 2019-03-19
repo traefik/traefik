@@ -95,9 +95,7 @@ func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.P
 		return err
 	}
 
-	if p.LabelSelector != "" {
-		logger.Debugf("Using label selector: %q", p.LabelSelector)
-	}
+	logger.Debugf("Using label selector: %q", p.LabelSelector)
 	k8sClient, err := p.newK8sClient(ctxLog, p.LabelSelector)
 	if err != nil {
 		return err
