@@ -26,6 +26,18 @@ The AddPrefix middleware updates the URL Path of the request before forwarding i
           - "traefik.http.middlewares.add-bar.addprefix.prefix=/bar"
     ```
 
+??? example "Kubernetes -- Prefixing with /bar"
+
+    ```yaml
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: Middleware
+    metadata:
+      name: addprefix
+    spec:
+      addprefix:
+        prefix: /bar
+    ```
+
 ## Configuration Options
 
 ### prefix
