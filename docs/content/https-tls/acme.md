@@ -145,7 +145,7 @@ Do not hesitate to complete it.
 | [Lightsail](https://aws.amazon.com/lightsail/)              | `lightsail`    | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `DNS_ZONE`                                                                                    | Not tested yet                 |
 | [Linode](https://www.linode.com)                            | `linode`       | `LINODE_API_KEY`                                                                                                                            | Not tested yet                 |
 | [Linode v4](https://www.linode.com)                         | `linodev4`     | `LINODE_TOKEN`                                                                                                                              | Not tested yet                 |
-| manual                                                      | -              | none, but you need to run Traefik interactively, turn on `acmeLogging` to see instructions and press <kbd>Enter</kbd>.                      | YES                            |
+| manual                                                      | -              | none, but you need to run Traefik interactively (that is, `docker run -it`, [^4]), turn on `acmeLogging` to see instructions and press <kbd>Enter</kbd>.                      | YES                            |
 | [MyDNS.jp](https://www.mydns.jp/)                           | `mydnsjp`      | `MYDNSJP_MASTER_ID`, `MYDNSJP_PASSWORD`                                                                                                     | YES                            |
 | [Namecheap](https://www.namecheap.com)                      | `namecheap`    | `NAMECHEAP_API_USER`, `NAMECHEAP_API_KEY`                                                                                                   | YES                            |
 | [name.com](https://www.name.com/)                           | `namedotcom`   | `NAMECOM_USERNAME`, `NAMECOM_API_TOKEN`, `NAMECOM_SERVER`                                                                                   | Not tested yet                 |
@@ -169,9 +169,10 @@ Do not hesitate to complete it.
 | [VULTR](https://www.vultr.com)                              | `vultr`        | `VULTR_API_KEY`                                                                                                                             | Not tested yet                 |
 | [Zone.ee](https://www.zone.ee)                              | `zoneee`       | `ZONEEE_API_USER`, `ZONEEE_API_KEY`                                                                                                         | YES                            |
 
-[^1]: more information about the HTTP message format can be found [here](https://go-acme.github.io/lego/dns/httpreq/)
-[^2]: [providing_credentials_to_your_application](https://cloud.google.com/docs/authentication/production#providing_credentials_to_your_application)
-[^3]: [google/default.go](https://github.com/golang/oauth2/blob/36a7019397c4c86cf59eeab3bc0d188bac444277/google/default.go#L61-L76)
+[^1]: more information about the HTTP message format can be found [here](https://go-acme.github.io/lego/dns/httpreq/)  
+[^2]: [providing_credentials_to_your_application](https://cloud.google.com/docs/authentication/production#providing_credentials_to_your_application)  
+[^3]: [google/default.go](https://github.com/golang/oauth2/blob/36a7019397c4c86cf59eeab3bc0d188bac444277/google/default.go#L61-L76)  
+[^4]: as there is no way to support terminal attached to container when deploying with `docker stack`, you might resort to first running the container interactively (that is with `docker run -it`) to generate certificates and then reuse the certificates inside your docker stack container. You can mount a named volume with the same name containing the acme storage file to both containers to achieve this.
 
 !!! note "`delayBeforeCheck`"
     By default, the `provider` verifies the TXT record _before_ letting ACME verify.
