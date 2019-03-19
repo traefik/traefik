@@ -1,5 +1,16 @@
 # Change Log
 
+## [v2.0.0-alpha2](https://github.com/containous/traefik/tree/v2.0.0-alpha2) (2019-03-19)
+[All Commits](https://github.com/containous/traefik/compare/v2.0.0-alpha1...v2.0.0-alpha2)
+
+**Bug fixes:**
+- **[k8s,k8s/crd]** Fix log messages about label selector ([#4629](https://github.com/containous/traefik/pull/4629) by [mpl](https://github.com/mpl))
+- **[server]** Fix problem in aggregator provider ([#4625](https://github.com/containous/traefik/pull/4625) by [juliens](https://github.com/juliens))
+
+**Documentation:**
+- **[k8s,k8s/crd]** doc: kubernetes CRD provider ([#4620](https://github.com/containous/traefik/pull/4620) by [mpl](https://github.com/mpl))
+- **[webui]** change docs and adjust dashboard for v2 alpha ([#4632](https://github.com/containous/traefik/pull/4632) by [SantoDE](https://github.com/SantoDE))
+
 ## [v2.0.0-alpha1](https://github.com/containous/traefik/tree/v2.0.0-alpha1) (2019-03-18)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.0-rc1...v2.0.0-alpha1)
 
