@@ -1,6 +1,6 @@
 # ForwardAuth
 
-Using an External Service to Ccheck for Credentials
+Using an External Service to Check for Credentials
 {: .subtitle }
 
 ![AuthForward](../assets/img/middleware/authforward.png)
