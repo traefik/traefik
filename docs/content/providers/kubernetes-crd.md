@@ -11,7 +11,7 @@ it would manage access to a cluster services by supporting the [Ingress](https:/
 However, as the community expressed the need to benefit from Traefik features without resorting to (lots of) annotations,
 we ended up writing a [Custom Resource Definition](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (alias CRD in the following) for an IngressRoute type, defined below, in order to provide a better way to configure access to a Kubernetes cluster.
 
-## IngressRoute definitionInIngressRouteIngressRoutegressRoute
+## Traefik IngressRoute definition
 
 ```yaml
 --8<-- "content/providers/crd_ingress_route.yml"
@@ -102,7 +102,7 @@ data:
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: ingressroute.crd
+  name: ingressroutetls.crd
 
 spec:
   entryPoints:
@@ -119,4 +119,4 @@ spec:
 
 ## Full reference example
 
-[Kubernetes CRD Reference](../reference/providers/kubernetescrd.md).
+[Traefik IngressRoute Reference](../reference/providers/kubernetescrd.md).

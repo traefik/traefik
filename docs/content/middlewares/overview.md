@@ -48,7 +48,7 @@ Pieces of middleware can be combined in chains to fit every scenario.
           - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo",
     ```
 
-??? example "In a Kubernetes CRD"
+??? example "As a Kubernetes Traefik IngressRoute"
 
     ```yaml
     apiVersion: apiextensions.k8s.io/v1beta1
