@@ -82,6 +82,7 @@ func (p ProviderAggregator) Provide(configurationChan chan<- config.Message, poo
 	}
 
 	for _, prd := range p.providers {
+		prd := prd
 		safe.Go(func() {
 			launchProvider(configurationChan, pool, prd)
 		})
