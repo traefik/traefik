@@ -48,11 +48,6 @@ deploy:
     on:
       repo: containous/traefik
       tags: true
-  - provider: script
-    script: sh script/deploy-docker.sh
-    skip_cleanup: true
-    on:
-      repo: containous/traefik
   - provider: pages
     edge: false
     github_token: ${GITHUB_TOKEN}
