@@ -213,9 +213,13 @@ More information about Docker's security:
 - [A thread on Stack Overflow about sharing the `/var/run/docker.sock` file](https://news.ycombinator.com/item?id=17983623)
 - [To Dind or not to DinD](https://blog.loof.fr/2018/01/to-dind-or-not-do-dind.html)
 
-### Security Compensation
+### Workarounds
 
-The main security compensation is to expose the Docker socket over TCP, instead of the default Unix socket file.
+!!! note "Improved Security"
+
+    [TraefikEE](https://containo.us/traefikee) solves this problem by separating the control plane (connected to Docker) and the data plane (handling the requests).
+
+Another possible workaround is to expose the Docker socket over TCP, instead of the default Unix socket file.
 It allows different implementation levels of the [AAA (Authentication, Authorization, Accounting) concepts](https://en.wikipedia.org/wiki/AAA_(computer_security)), depending on your security assessment:
 
 - Authentication with Client Certificates as described in [the "Protect the Docker daemon socket" page of Docker's documentation](https://docs.docker.com/engine/security/https/)
