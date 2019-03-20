@@ -144,7 +144,7 @@ You will learn fundamental Traefik features and see some demos with Kubernetes.
 
 ## Maintainers
 
-[Information about process and maintainers](MAINTAINER.md)
+[Information about process and maintainers](docs/content/contributing/maintainers.md)
 
 ## Contributing
 
