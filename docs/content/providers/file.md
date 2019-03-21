@@ -22,7 +22,7 @@ You can write these configuration elements:
 
     ``` toml
     # Enabling the file provider
-    [providers.files]
+    [providers.file]
     
     [http]
       # Add the router
