@@ -179,7 +179,6 @@ func (s *DockerSuite) TestDockerContainersWithTCPLabels(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	c.Assert(who, checker.Contains, "my.super.host")
-
 }
 
 func (s *DockerSuite) TestDockerContainersWithLabels(c *check.C) {

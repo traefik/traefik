@@ -323,11 +323,6 @@ func TestDefaultRule(t *testing.T) {
 
 	for _, test := range testCases {
 		test := test
-
-		// if test.desc != "tcp with label and port" {
-		// 	continue
-		// }
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
