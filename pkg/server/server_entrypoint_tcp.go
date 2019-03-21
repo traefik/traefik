@@ -312,11 +312,13 @@ func (c *connectionTracker) Shutdown(ctx context.Context) error {
 
 // Close close all the connections in the tracked connections list
 func (c *connectionTracker) Close() {
+	c.lock.Lock()
+	defer c.lock.Unlock()
 	for conn := range c.conns {
 		if err := conn.Close(); err != nil {
 			log.WithoutContext().Errorf("Error while closing connection: %v", err)
 		}
-		c.RemoveConnection(conn)
+		delete(c.conns, conn)
 	}
 }
 
