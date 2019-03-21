@@ -273,6 +273,8 @@ Useful if internal networks block external DNS queries.
 
 Here is a list of supported `provider`s, that can automate the DNS verification, along with the required environment variables and their [wildcard & root domain support](/configuration/acme/#wildcard-domains) for each.
 Do not hesitate to complete it.
+Every lego environment variable can be overriden by their respective `_FILE` counterpart, which should have a filepath to a file that contains the secret as its value.
+For example, `CF_API_EMAIL_FILE=/run/secrets/traefik_cf-api-email` could be used to provide a Cloudflare API email address as a Docker secret named `traefik_cf-api-email`.
 
 | Provider Name                                               | Provider Code  | Environment Variables                                                                                                                       | Wildcard & Root Domain Support |
 |-------------------------------------------------------------|----------------|---------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------|
