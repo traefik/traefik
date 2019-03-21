@@ -247,8 +247,8 @@ You can declare TCP Routers and/or Services using labels.
 
 !!! warning "TCP and HTTP"
 
-    If you declare TCP Routers/Services, we will not create any HTTP Routers/Services automatically.
-    If you declare both TCP Routers/Services and HTTP Routers/Services we will create both.
+    If you declare a TCP Router/Service, it will prevent Traefik from automatically create an HTTP Router/Service (like it does by default if no TCP Router/Service is defined).
+    You can declare both a TCP Router/Service and an HTTP Router/Service for the same container (but you have to do so manually).
 
 ### Specific Options
 
