@@ -228,6 +228,27 @@ You can declare pieces of middleware using labels starting with `traefik.http.mi
 
     If you declare multiple middleware with the same name but with different parameters, the middleware fails to be declared.
 
+### TCP
+
+You can declare TCP Routers and/or Services using labels.
+
+??? example "Declaring TCP Routers and Services"
+
+    ```yaml
+       services:
+         my-container:
+           # ...
+           labels:
+             - traefik.tcp.routers.my-router.rule="HostSNI(`my-host.com`)"
+             - traefik.tcp.routers.my-router.rule.tls="true"
+             - traefik.tcp.services.my-service.loadbalancer.server.port="4123"
+    ```
+
+!!! warning "TCP and HTTP"
+
+    If you declare a TCP Router/Service, it will prevent Traefik from automatically create an HTTP Router/Service (like it does by default if no TCP Router/Service is defined).
+    You can declare both a TCP Router/Service and an HTTP Router/Service for the same container (but you have to do so manually).
+
 ### Specific Options
 
 #### traefik.enable
