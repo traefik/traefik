@@ -115,6 +115,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.routers.Router0.middlewares": "foobar, fiibar",
 		"traefik.http.routers.Router0.priority":    "42",
 		"traefik.http.routers.Router0.rule":        "foobar",
+		"traefik.http.routers.Router0.tls":         "true",
 		"traefik.http.routers.Router0.service":     "foobar",
 		"traefik.http.routers.Router1.entrypoints": "foobar, fiibar",
 		"traefik.http.routers.Router1.middlewares": "foobar, fiibar",
@@ -171,6 +172,7 @@ func TestDecodeConfiguration(t *testing.T) {
 				Service:  "foobar",
 				Rule:     "foobar",
 				Priority: 42,
+				TLS:      &config.RouterTLSConfig{},
 			},
 			"Router1": {
 				EntryPoints: []string{
@@ -504,6 +506,7 @@ func TestEncodeConfiguration(t *testing.T) {
 					Service:  "foobar",
 					Rule:     "foobar",
 					Priority: 42,
+					TLS:      &config.RouterTLSConfig{},
 				},
 				"Router1": {
 					EntryPoints: []string{
@@ -925,6 +928,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Routers.Router0.Priority":    "42",
 		"traefik.HTTP.Routers.Router0.Rule":        "foobar",
 		"traefik.HTTP.Routers.Router0.Service":     "foobar",
+		"traefik.HTTP.Routers.Router0.TLS":         "true",
 		"traefik.HTTP.Routers.Router1.EntryPoints": "foobar, fiibar",
 		"traefik.HTTP.Routers.Router1.Middlewares": "foobar, fiibar",
 		"traefik.HTTP.Routers.Router1.Priority":    "42",
