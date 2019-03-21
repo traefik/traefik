@@ -223,11 +223,10 @@ You can declare pieces of middleware using labels starting with `traefik.http.mi
              - traefik.http.middlewares.my-redirect.schemeredirect.scheme=https
              - traefik.http.routers.middlewares=my-redirect
     ```
-    
+
 !!! warning "Conflicts in Declaration"
 
     If you declare multiple middleware with the same name but with different parameters, the middleware fails to be declared.
-
 
 ### TCP
 
