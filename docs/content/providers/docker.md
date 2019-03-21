@@ -29,7 +29,7 @@ Attach labels to your containers and let Traefik do the rest!
       my-container:
         # ...
         labels:
-          - traefik.http.services.my-container.rule=Host(my-domain)
+          - traefik.http.routers.my-container.rule=Host(`my-domain`)
     ```
 
 ??? example "Configuring Docker Swarm & Deploying / Exposing Services"
@@ -53,7 +53,7 @@ Attach labels to your containers and let Traefik do the rest!
       my-container:
         deploy:
           labels:
-            - traefik.http.services.my-container.rule=Host(my-domain)
+            - traefik.http.routers.my-container.rule=Host(`my-domain`)
     ```
 
     !!! important "Labels in Docker Swarm Mode"
