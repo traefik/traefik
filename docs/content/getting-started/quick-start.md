@@ -5,9 +5,6 @@ A Simple Use Case Using Docker
 
 ![quickstart-diagram](../assets/img/quickstart-diagram.png)
 
-!!! tip 
-    To save some time, you can clone [Traefik's repository](https://github.com/containous/traefik).
-
 ## Launch Traefik With the Docker Provider
 
 Create a `docker-compose.yml` file where you will define a `reverse-proxy` service that uses the official Traefik image:
