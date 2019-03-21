@@ -18,7 +18,7 @@ version: '3'
 services:
   reverse-proxy:
     image: traefik # The official Traefik docker image
-    command: --api --docker # Enables the web UI and tells Traefik to listen to docker
+    command: --api --providers.docker # Enables the web UI and tells Traefik to listen to docker
     ports:
       - "80:80"     # The HTTP port
       - "8080:8080" # The Web UI (enabled by --api)
@@ -47,7 +47,7 @@ Edit your `docker-compose.yml` file and add the following at the end of your fil
   whoami:
     image: containous/whoami # A container that exposes an API to show its IP address
     labels:
-      - "traefik.router.rule=Host:whoami.docker.localhost"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.docker.localhost`)"
 ```
 
 The above defines `whoami`: a simple web service that outputs information about the machine it is deployed on (its IP address, host, and so on).
