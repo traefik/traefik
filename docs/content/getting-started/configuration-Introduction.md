@@ -1,4 +1,4 @@
-# Configuration Overview
+# Configuration Introduction
 
 How the Magic Happens
 {: .subtitle }
