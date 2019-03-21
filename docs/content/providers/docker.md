@@ -124,7 +124,7 @@ Traefik requires access to the docker socket to get its dynamic configuration.
     services:
 
       traefik:
-         image: traefik
+         image: traefik:v2.0 # The official v2.0 Traefik docker image
          ports:
            - "80:80"
          volumes:
