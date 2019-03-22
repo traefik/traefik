@@ -69,7 +69,6 @@ spec:
       labels:
         app: whoami
     spec:
-      serviceAccountName: traefik-ingress-controller
       containers:
         - name: whoami
           image: containous/whoami
