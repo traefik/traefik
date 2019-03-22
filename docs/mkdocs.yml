@@ -122,6 +122,8 @@ nav:
       - 'Logs': 'observability/logs.md'
       - 'Access Logs': 'observability/access-logs.md'
       - 'Tracing': 'observability/tracing.md'
+  - 'User Guides':
+      - 'Kubernetes And Let''s Encrypt': 'user-guides/crd-acme/index.md'
   - 'Contributing':
       - 'Thank You!': 'contributing/thank-you.md'
       - 'Submitting Issues': 'contributing/submitting-issues.md'

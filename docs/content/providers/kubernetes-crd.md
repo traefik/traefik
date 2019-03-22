@@ -123,4 +123,4 @@ spec:
 
 ## Further
 
-Also see the [full example](../getting-started/crd-acme/index.md) with Let's Encrypt.
+Also see the [full example](../user-guides/crd-acme/index.md) with Let's Encrypt.
