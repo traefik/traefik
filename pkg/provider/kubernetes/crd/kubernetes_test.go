@@ -311,6 +311,43 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:  "TLS with ACME",
+			paths: []string{"services.yml", "with_tls_acme.yml"},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"default/test.crd-6b204d94623b3df4370c": {
+							EntryPoints: []string{"web"},
+							Service:     "default/test.crd-6b204d94623b3df4370c",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+							Priority:    12,
+							TLS:         &config.RouterTLSConfig{},
+						},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"default/test.crd-6b204d94623b3df4370c": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://10.10.0.1:80",
+										Weight: 1,
+									},
+									{
+										URL:    "http://10.10.0.2:80",
+										Weight: 1,
+									},
+								},
+								Method:         "wrr",
+								PassHostHeader: true,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			desc:  "Simple Ingress Route, defaulting to https for servers",
 			paths: []string{"services.yml", "with_https_default.yml"},
 			expected: &config.Configuration{
