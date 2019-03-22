@@ -76,7 +76,7 @@ nav:
   - 'Getting Started':
       - 'Concepts' : 'getting-started/concepts.md'
       - 'Quick Start': 'getting-started/quick-start.md'
-      - 'Configuration Overview': 'getting-started/configuration-overview.md'
+      - 'Configuration Introduction': 'getting-started/configuration-overview.md'
   - 'Configuration Discovery':
       - 'Overview': 'providers/overview.md'
       - 'Docker': 'providers/docker.md'

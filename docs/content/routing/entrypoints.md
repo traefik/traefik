@@ -64,7 +64,7 @@ Entrypoints are part of the [static configuration](../getting-started/configurat
         
         ```yaml
         traefik:
-            image: traefik
+            image: traefik:v2.0 # The official v2.0 Traefik docker image
             command:
                 - --defaultentrypoints=powpow
                 - "--entryPoints=Name:powpow Address::42 Compress:true"
@@ -74,7 +74,7 @@ Entrypoints are part of the [static configuration](../getting-started/configurat
         
         ```yaml
         traefik:
-            image: traefik
+            image: traefik:v2.0 # The official v2.0 Traefik docker image
             command: --defaultentrypoints=powpow --entryPoints='Name:powpow Address::42 Compress:true'
         ```
 
