@@ -24,7 +24,7 @@ before_deploy:
       sudo -E apt-get -yq update;
       sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install docker-ce=${DOCKER_VERSION}*;
       docker version;
-      make image;
+      make build-image;
       if [ "$TRAVIS_TAG" ]; then
         make release-packages;
       fi;
