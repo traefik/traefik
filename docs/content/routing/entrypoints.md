@@ -1,6 +1,6 @@
 # EntryPoints
 
-Opening Connections for Incomming Requests
+Opening Connections for Incoming Requests
 {: .subtitle }
 
 ![EntryPoints](../assets/img/entrypoints.png)
@@ -97,7 +97,7 @@ Traefik supports [ProxyProtocol](https://www.haproxy.org/download/1.8/doc/proxy-
     
 ??? example "Insecure Mode -- Testing Environnement Only"
 
-    In a test environments, you can configure Traefik to trust every incomming connection. Doing so, every remote client address will be replaced (`trustedIPs` won't have any effect)
+    In a test environments, you can configure Traefik to trust every incoming connection. Doing so, every remote client address will be replaced (`trustedIPs` won't have any effect)
 
     ```toml
     [entrypoints]
