@@ -34,6 +34,8 @@ DOCKER_RUN_OPTS := $(TRAEFIK_ENVS) $(TRAEFIK_MOUNT) "$(TRAEFIK_DEV_IMAGE)"
 DOCKER_RUN_TRAEFIK := docker run $(INTEGRATION_OPTS) -it $(DOCKER_RUN_OPTS)
 DOCKER_RUN_TRAEFIK_NOTTY := docker run $(INTEGRATION_OPTS) -i $(DOCKER_RUN_OPTS)
 
+PRE_TARGET ?= build-dev-image
+
 default: binary
 
 ## Build Dev Docker image
@@ -79,21 +81,21 @@ test: build-dev-image
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate test-unit binary test-integration
 
 ## Run the unit tests
-test-unit: build-dev-image
-	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate test-unit
+test-unit: $(PRE_TARGET)
+	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK)) ./script/make.sh generate test-unit
 
 ## Pull all images for integration tests
 pull-images:
 	grep --no-filename -E '^\s+image:' ./integration/resources/compose/*.yml | awk '{print $$2}' | sort | uniq | xargs -P 6 -n 1 docker pull
 
 ## Run the integration tests
-test-integration: build-dev-image
-	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate binary test-integration
+test-integration: $(PRE_TARGET)
+	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK),TEST_CONTAINER=1) ./script/make.sh generate binary test-integration
 	TEST_HOST=1 ./script/make.sh test-integration
 
 ## Validate code, vendor
-validate: build-dev-image
-	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate validate-lint validate-misspell validate-vendor
+validate: $(PRE_TARGET)
+	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK)) ./script/make.sh generate validate-lint validate-misspell validate-vendor
 
 ## Clean up static directory and build a Docker Traefik image
 build-image: binary
