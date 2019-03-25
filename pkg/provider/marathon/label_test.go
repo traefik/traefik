@@ -4,7 +4,6 @@ import (
 	"math"
 	"testing"
 
-	"github.com/containous/traefik/pkg/provider"
 	"github.com/gambol99/go-marathon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,7 +23,6 @@ func TestGetConfiguration(t *testing.T) {
 				Labels:      &map[string]string{},
 			},
 			p: Provider{
-				BaseProvider:              provider.BaseProvider{},
 				ExposedByDefault:          false,
 				FilterMarathonConstraints: false,
 			},
@@ -45,7 +43,6 @@ func TestGetConfiguration(t *testing.T) {
 				},
 			},
 			p: Provider{
-				BaseProvider:              provider.BaseProvider{},
 				ExposedByDefault:          false,
 				FilterMarathonConstraints: false,
 			},
@@ -66,7 +63,6 @@ func TestGetConfiguration(t *testing.T) {
 				},
 			},
 			p: Provider{
-				BaseProvider:              provider.BaseProvider{},
 				ExposedByDefault:          false,
 				FilterMarathonConstraints: false,
 			},
@@ -87,7 +83,6 @@ func TestGetConfiguration(t *testing.T) {
 				Labels: &map[string]string{},
 			},
 			p: Provider{
-				BaseProvider:              provider.BaseProvider{},
 				ExposedByDefault:          false,
 				FilterMarathonConstraints: true,
 			},
@@ -108,7 +103,6 @@ func TestGetConfiguration(t *testing.T) {
 				Labels:      &map[string]string{},
 			},
 			p: Provider{
-				BaseProvider:              provider.BaseProvider{},
 				ExposedByDefault:          true,
 				FilterMarathonConstraints: false,
 			},
@@ -129,7 +123,6 @@ func TestGetConfiguration(t *testing.T) {
 				},
 			},
 			p: Provider{
-				BaseProvider:              provider.BaseProvider{},
 				ExposedByDefault:          true,
 				FilterMarathonConstraints: false,
 			},
@@ -150,7 +143,6 @@ func TestGetConfiguration(t *testing.T) {
 				},
 			},
 			p: Provider{
-				BaseProvider:              provider.BaseProvider{},
 				ExposedByDefault:          true,
 				FilterMarathonConstraints: false,
 			},

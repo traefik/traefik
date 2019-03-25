@@ -171,7 +171,6 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 
 	// default Kubernetes
 	var defaultKubernetes ingress.Provider
-	defaultKubernetes.Watch = true
 
 	defaultProviders := static.Providers{
 		File:       &defaultFile,
