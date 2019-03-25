@@ -1,20 +1,9 @@
 ################################################################
 # Global configuration
 ################################################################
-
-# Enable debug mode
-#
-# Optional
-# Default: false
-#
-# debug = true
-
-# Log level
-#
-# Optional
-# Default: "ERROR"
-#
-# logLevel = "DEBUG"
+[global]
+  checkNewVersion = true
+  sendAnonymousUsage = true
 
 ################################################################
 # Entrypoints configuration
@@ -37,7 +26,14 @@
 #
 # Optional
 #
-# [traefikLog]
+[log]
+
+# Log level
+#
+# Optional
+# Default: "ERROR"
+#
+# logLevel = "DEBUG"
 
 # Sets the filepath for the traefik log. If not specified, stdout will be used.
 # Intermediate directories are created if necessary.
@@ -121,7 +117,7 @@
 ################################################################
 
 # Enable Docker configuration backend
-[docker]
+[providers.docker]
 
 # Docker server endpoint. Can be a tcp or a unix socket endpoint.
 #
@@ -130,13 +126,12 @@
 #
 # endpoint = "tcp://10.10.10.10:2375"
 
-# Default domain used.
-# Can be overridden by setting the "traefik.domain" label on a container.
+# Default host rule.
 #
 # Optional
 # Default: ""
 #
-# domain = "docker.localhost"
+# DefaultRule = "Host(`{{ normalize .Name }}.docker.localhost`)"
 
 # Expose containers by default in traefik
 #
