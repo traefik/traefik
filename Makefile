@@ -110,6 +110,10 @@ generate-crd:
 
 lint:
 	script/validate-lint
+	script/validate-misspell
+
+local-test-unit:
+	go test ./pkg/...
 
 fmt:
 	gofmt -s -l -w $(SRCS)
