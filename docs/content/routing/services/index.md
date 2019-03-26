@@ -80,6 +80,7 @@ The `weight` option defines the weight of the server for the load balancing algo
       [http.services.my-service.LoadBalancer]
          [[http.services.my-service.LoadBalancer.servers]]
             url = "http://private-ip-server-1/"
+            weight = 1
     ```
 
 #### Load-balancing
@@ -97,8 +98,10 @@ Various methods of load balancing are supported:
          method = "drr"
          [[http.services.my-service.LoadBalancer.servers]]
             url = "http://private-ip-server-1/"
+            weight = 1
          [[http.services.my-service.LoadBalancer.servers]]
             url = "http://private-ip-server-1/"
+            weight = 1
     ```
 
 #### Sticky sessions
