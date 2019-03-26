@@ -594,7 +594,6 @@
   revision = "73d445a93680fa1a78ae23a5839bad48f32ba1ee"
 
 [[projects]]
-  branch = "master"
   name = "github.com/go-acme/lego"
   packages = [
     "acme",
@@ -632,6 +631,7 @@
     "providers/dns/dnsmadeeasy",
     "providers/dns/dnsmadeeasy/internal",
     "providers/dns/dnspod",
+    "providers/dns/dode",
     "providers/dns/dreamhost",
     "providers/dns/duckdns",
     "providers/dns/dyn",
@@ -677,7 +677,8 @@
     "providers/dns/zoneee",
     "registration"
   ]
-  revision = "11ddd58253974c38f1b84cca1129da48cb82dff7"
+  revision = "aaecc1ca7254190b71c5f01f57ee3bb6701bc937"
+  version = "v2.4.0"
 
 [[projects]]
   branch = "fork-containous"
@@ -1916,6 +1917,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f63ec47121609bae0d1fb226078acda9556528924ca9ec03aea716d42036f6aa"
+  inputs-digest = "e1f276078ea628ca8cc597040e41a6a56d9b64e1dcc96bfdc99004171b848bd0"
   solver-name = "gps-cdcl"
   solver-version = 1

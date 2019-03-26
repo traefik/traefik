@@ -91,7 +91,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	zonesFind := ZoneConfigsFindRequest{
 		Filter: Filter{
 			Field: "zoneName",
-			Value: domain,
+			Value: d.config.ZoneName,
 		},
 		Limit: 1,
 		Page:  1,
@@ -151,7 +151,7 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	zonesFind := ZoneConfigsFindRequest{
 		Filter: Filter{
 			Field: "zoneName",
-			Value: domain,
+			Value: d.config.ZoneName,
 		},
 		Limit: 1,
 		Page:  1,
