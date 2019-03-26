@@ -15,7 +15,7 @@ In the process, routers may use pieces of [middleware](../../middlewares/overvie
     ```toml
       [http.routers]
         [http.routers.my-router]
-        rule = "Path(/foo)"
+        rule = "Path(`/foo`)"
         service = "service-foo"
     ```
 
@@ -24,7 +24,7 @@ In the process, routers may use pieces of [middleware](../../middlewares/overvie
     ```toml
       [http.routers]
         [http.routers.my-router]
-        rule = "Path(/foo)"
+        rule = "Path(`/foo`)"
         middlewares = ["authentication"] # declared elsewhere
         service = "service-foo"
     ```
@@ -67,7 +67,7 @@ If you want to limit the router scope to a set of entrypoint, set the entrypoint
     [http.routers]
        [http.routers.Router-1]
           # By default, routers listen to every entrypoints
-          rule = "Host(traefik.io)"
+          rule = "Host(`traefik.io`)"
           service = "service-1"
     ```
 
@@ -85,7 +85,7 @@ If you want to limit the router scope to a set of entrypoint, set the entrypoint
     [http.routers]
        [http.routers.Router-1]
           entryPoints = ["web-secure", "other"] # won't listen to entrypoint web
-          rule = "Host(traefik.io)"
+          rule = "Host(`traefik.io`)"
           service = "service-1"
     ```
 
@@ -248,9 +248,9 @@ If you want to limit the router scope to a set of entrypoints, set the entrypoin
 
 ### Rule
 
-| Rule                                                               | Description                                                                                                    |
-|--------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
-| ``HostSNI(`domain-1`, ...)``                                          | Check if the Server Name Indication corresponds to the given `domains`.                                               |
+| Rule                         | Description                                                             |
+|------------------------------|-------------------------------------------------------------------------|
+| ``HostSNI(`domain-1`, ...)`` | Check if the Server Name Indication corresponds to the given `domains`. |
 
 !!! important "HostSNI & TLS"
 

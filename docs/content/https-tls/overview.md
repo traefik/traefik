@@ -19,7 +19,7 @@ TLS is enabled at the [router](../routing/routers/index.md) level, but some opti
 
     ```toml
     [tlsOptions]
-      [tlsOptions.default]
+        [tlsOptions.default]
         minVersion = "VersionTLS12"
     ```
 

@@ -23,7 +23,7 @@ Pieces of middleware can be combined in chains to fit every scenario.
       [http.routers.router1]
         Service = "myService"
         Middlewares = ["foo-add-prefix"]
-        Rule = "Host: example.com"
+        Rule = "Host(`example.com`)"
 
     [http.middlewares]
      [http.middlewares.foo-add-prefix.AddPrefix]
