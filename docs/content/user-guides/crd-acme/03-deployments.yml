@@ -8,6 +8,7 @@ metadata:
 kind: Deployment
 apiVersion: extensions/v1beta1
 metadata:
+  namespace: default
   name: traefik
   labels:
     app: traefik
@@ -19,7 +20,6 @@ spec:
       app: traefik
   template:
     metadata:
-      namespace: default
       labels:
         app: traefik
     spec:
@@ -57,6 +57,7 @@ spec:
 kind: Deployment
 apiVersion: extensions/v1beta1
 metadata:
+  namespace: default
   name: whoami
   labels:
     app: whoami
