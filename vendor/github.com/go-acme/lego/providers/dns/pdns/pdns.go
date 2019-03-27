@@ -121,6 +121,19 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 		TTL:  d.config.TTL,
 	}
 
+	// Look for existing records.
+	existingRrSet, err := d.findTxtRecord(fqdn)
+	if err != nil {
+		return fmt.Errorf("pdns: %v", err)
+	}
+
+	// merge the existing and new records
+	var records []Record
+	if existingRrSet != nil {
+		records = existingRrSet.Records
+	}
+	records = append(records, rec)
+
 	rrsets := rrSets{
 		RRSets: []rrSet{
 			{
@@ -129,7 +142,7 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 				Type:       "TXT",
 				Kind:       "Master",
 				TTL:        d.config.TTL,
-				Records:    []Record{rec},
+				Records:    records,
 			},
 		},
 	}
@@ -158,6 +171,9 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	set, err := d.findTxtRecord(fqdn)
 	if err != nil {
 		return fmt.Errorf("pdns: %v", err)
+	}
+	if set == nil {
+		return fmt.Errorf("pdns: no existing record found for %s", fqdn)
 	}
 
 	rrsets := rrSets{
