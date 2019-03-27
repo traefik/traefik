@@ -64,8 +64,8 @@ generate-webui: build-webui-image
 	fi
 
 ## Build the linux binary
-binary: generate-webui build-dev-image
-	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate binary
+binary: generate-webui $(PRE_TARGET)
+	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK)) ./script/make.sh generate binary
 
 ## Build the binary for the standard plaforms (linux, darwin, windows)
 crossbinary-default: generate-webui build-dev-image
