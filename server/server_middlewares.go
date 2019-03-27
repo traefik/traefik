@@ -112,6 +112,15 @@ func (s *Server) buildMiddlewares(frontendName string, frontend *types.Frontend,
 		middle = append(middle, handler)
 	}
 
+	// TLSClientHeaders
+	tlsClientHeadersMiddleware := middlewares.NewTLSClientHeaders(frontend)
+	if tlsClientHeadersMiddleware != nil {
+		log.Debugf("Adding TLSClientHeaders middleware for frontend %s", frontendName)
+
+		handler := s.tracingMiddleware.NewNegroniHandlerWrapper("TLSClientHeaders", tlsClientHeadersMiddleware, false)
+		middle = append(middle, handler)
+	}
+
 	// Authentication
 	if frontend.Auth != nil {
 		authMiddleware, err := mauth.NewAuthenticator(frontend.Auth, s.tracingMiddleware)
@@ -120,15 +129,6 @@ func (s *Server) buildMiddlewares(frontendName string, frontend *types.Frontend,
 		}
 
 		handler := s.wrapNegroniHandlerWithAccessLog(authMiddleware, fmt.Sprintf("Auth for %s", frontendName))
-		middle = append(middle, handler)
-	}
-
-	// TLSClientHeaders
-	tlsClientHeadersMiddleware := middlewares.NewTLSClientHeaders(frontend)
-	if tlsClientHeadersMiddleware != nil {
-		log.Debugf("Adding TLSClientHeaders middleware for frontend %s", frontendName)
-
-		handler := s.tracingMiddleware.NewNegroniHandlerWrapper("TLSClientHeaders", tlsClientHeadersMiddleware, false)
 		middle = append(middle, handler)
 	}
 
