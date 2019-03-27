@@ -127,7 +127,7 @@ func (d *DNSProvider) findTxtRecord(fqdn string) (*rrSet, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("no existing record found for %s", fqdn)
+	return nil, nil
 }
 
 func (d *DNSProvider) getAPIVersion() (int, error) {
