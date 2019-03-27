@@ -110,7 +110,10 @@ Use the `DNS-01` challenge to generate and renew ACME certificates by provisioni
  
 Here is a list of supported `providers`, that can automate the DNS verification,
 along with the required environment variables and their [wildcard & root domain support](#wildcard-domains).
-Do not hesitate to complete it. 
+Do not hesitate to complete it.
+
+Every lego environment variable can be overridden by their respective `_FILE` counterpart, which should have a filepath to a file that contains the secret as its value.
+For example, `CF_API_EMAIL_FILE=/run/secrets/traefik_cf-api-email` could be used to provide a Cloudflare API email address as a Docker secret named `traefik_cf-api-email`.
 
 | Provider Name                                               | Provider Code  | Environment Variables                                                                                                                       | Wildcard & Root Domain Support |
 |-------------------------------------------------------------|----------------|---------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------|
