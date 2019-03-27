@@ -371,10 +371,10 @@
   version = "v3.2.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/dimchansky/utfbom"
   packages = ["."]
   revision = "d2133a1ce379ef6fa992b0514a77146c60db9d1c"
+  version = "v1.1.0"
 
 [[projects]]
   name = "github.com/dnsimple/dnsimple-go"
@@ -1370,9 +1370,11 @@
   revision = "c4434f09ec131ecf30f986d5dcb1636508bfa49a"
 
 [[projects]]
+  branch = "containous-fork"
   name = "github.com/thoas/stats"
   packages = ["."]
-  revision = "152b5d051953fdb6e45f14b6826962aadc032324"
+  revision = "4975baf6a358ed3ddaa42133996e1959f96c9300"
+  source = "github.com/containous/stats"
 
 [[projects]]
   branch = "master"
@@ -1917,6 +1919,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e1f276078ea628ca8cc597040e41a6a56d9b64e1dcc96bfdc99004171b848bd0"
+  inputs-digest = "1b1c45a195b71a6071789da436bbb93c869724248618f3fe094a40b1f8bdaa2f"
   solver-name = "gps-cdcl"
   solver-version = 1

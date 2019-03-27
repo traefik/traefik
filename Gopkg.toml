@@ -46,6 +46,11 @@
   source = "github.com/containous/go-http-auth"
 
 [[constraint]]
+  branch = "containous-fork"
+  name = "github.com/thoas/stats"
+  source = "github.com/containous/stats"
+
+[[constraint]]
   branch = "master"
   name = "github.com/armon/go-proxyproto"
 
