@@ -19,7 +19,7 @@ type Config struct {
 	GlobalTag                  string `description:"Key:Value tag to be set on all the spans." export:"true"`
 	Debug                      bool   `description:"Enable DataDog debug." export:"true"`
 	PrioritySampling           bool   `description:"Enable priority sampling. When using distributed tracing, this option must be enabled in order to get all the parts of a distributed trace sampled."`
-	TraceIDHeaderName          string `description:"Specifies the header name that will be used to store the trace ID.." export:"true"`
+	TraceIDHeaderName          string `description:"Specifies the header name that will be used to store the trace ID." export:"true"`
 	ParentIDHeaderName         string `description:"Specifies the header name that will be used to store the parent ID." export:"true"`
 	SamplingPriorityHeaderName string `description:"Specifies the header name that will be used to store the sampling priority." export:"true"`
 	BagagePrefixHeaderName     string `description:"specifies the header name prefix that will be used to store baggage items in a map." export:"true"`
