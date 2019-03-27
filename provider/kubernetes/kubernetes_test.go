@@ -284,6 +284,59 @@ func TestLoadIngresses(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+func TestLoadGlobalIngressWithExternalName(t *testing.T) {
+	ingresses := []*extensionsv1beta1.Ingress{
+		buildIngress(
+			iNamespace("testing"),
+			iSpecBackends(iSpecBackend(iIngressBackend("service1", intstr.FromInt(80)))),
+		),
+	}
+
+	services := []*corev1.Service{
+		buildService(
+			sName("service1"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				sType("ExternalName"),
+				sExternalName("some-external-name"),
+				sPorts(sPort(80, ""))),
+		),
+	}
+
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		watchChan: watchChan,
+	}
+	provider := Provider{}
+
+	actual, err := provider.loadIngresses(client)
+	require.NoError(t, err, "error loading ingresses")
+
+	expected := buildConfiguration(
+		backends(
+			backend("global-default-backend",
+				lbMethod("wrr"),
+				servers(
+					server("http://some-external-name", weight(1)),
+				),
+			),
+		),
+		frontends(
+			frontend("global-default-backend",
+				frontendName("global-default-frontend"),
+				passHostHeader(),
+				routes(
+					route("/", "PathPrefix:/"),
+				),
+			),
+		),
+	)
+	assert.Equal(t, expected, actual)
+}
+
 func TestLoadGlobalIngressWithPortNumbers(t *testing.T) {
 	ingresses := []*extensionsv1beta1.Ingress{
 		buildIngress(

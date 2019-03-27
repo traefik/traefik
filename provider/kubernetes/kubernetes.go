@@ -503,39 +503,62 @@ func (p *Provider) addGlobalBackend(cl Client, i *extensionsv1beta1.Ingress, tem
 	templateObjects.Backends[defaultBackendName].ResponseForwarding = getResponseForwarding(service)
 
 	for _, port := range service.Spec.Ports {
-		endpoints, exists, err := cl.GetEndpoints(service.Namespace, service.Name)
-		if err != nil {
-			return fmt.Errorf("error retrieving endpoint information from k8s API %s/%s: %v", service.Namespace, service.Name, err)
-		}
-		if !exists {
-			return fmt.Errorf("endpoints not found for %s/%s", service.Namespace, service.Name)
-		}
-		if len(endpoints.Subsets) == 0 {
-			return fmt.Errorf("endpoints not available for %s/%s", service.Namespace, service.Name)
-		}
 
-		for _, subset := range endpoints.Subsets {
-			endpointPort := endpointPortNumber(port, subset.Ports)
-			if endpointPort == 0 {
-				// endpoint port does not match service.
-				continue
-			}
+		// We have to treat external-name service differently here b/c it doesn't have any endpoints
+		if service.Spec.Type == corev1.ServiceTypeExternalName {
 
 			protocol := "http"
-			for _, address := range subset.Addresses {
-				if endpointPort == 443 || strings.HasPrefix(i.Spec.Backend.ServicePort.String(), "https") {
-					protocol = "https"
+			if port.Port == 443 || strings.HasPrefix(port.Name, "https") {
+				protocol = "https"
+			}
+
+			url := protocol + "://" + service.Spec.ExternalName
+			if port.Port != 443 && port.Port != 80 {
+				url = fmt.Sprintf("%s:%d", url, port.Port)
+			}
+
+			templateObjects.Backends[defaultBackendName].Servers[url] = types.Server{
+				URL:    url,
+				Weight: label.DefaultWeight,
+			}
+
+		} else {
+
+			endpoints, exists, err := cl.GetEndpoints(service.Namespace, service.Name)
+			if err != nil {
+				return fmt.Errorf("error retrieving endpoint information from k8s API %s/%s: %v", service.Namespace, service.Name, err)
+			}
+			if !exists {
+				return fmt.Errorf("endpoints not found for %s/%s", service.Namespace, service.Name)
+			}
+			if len(endpoints.Subsets) == 0 {
+				return fmt.Errorf("endpoints not available for %s/%s", service.Namespace, service.Name)
+			}
+
+			for _, subset := range endpoints.Subsets {
+
+				endpointPort := endpointPortNumber(port, subset.Ports)
+				if endpointPort == 0 {
+					// endpoint port does not match service.
+					continue
 				}
 
-				url := fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(address.IP, strconv.FormatInt(int64(endpointPort), 10)))
-				name := url
-				if address.TargetRef != nil && address.TargetRef.Name != "" {
-					name = address.TargetRef.Name
-				}
+				protocol := "http"
+				for _, address := range subset.Addresses {
+					if endpointPort == 443 || strings.HasPrefix(i.Spec.Backend.ServicePort.String(), "https") {
+						protocol = "https"
+					}
 
-				templateObjects.Backends[defaultBackendName].Servers[name] = types.Server{
-					URL:    url,
-					Weight: label.DefaultWeight,
+					url := fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(address.IP, strconv.FormatInt(int64(endpointPort), 10)))
+					name := url
+					if address.TargetRef != nil && address.TargetRef.Name != "" {
+						name = address.TargetRef.Name
+					}
+
+					templateObjects.Backends[defaultBackendName].Servers[name] = types.Server{
+						URL:    url,
+						Weight: label.DefaultWeight,
+					}
 				}
 			}
 		}
