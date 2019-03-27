@@ -14,7 +14,8 @@ The DigestAuth middleware is a quick way to restrict access to your services to 
     ```toml
     [http.middlewares]
       [http.middlewares.test-auth.digestauth]
-      users = ["test:traefik:a2688e031edb4be6a3797f3882655c05", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
+        users = ["test:traefik:a2688e031edb4be6a3797f3882655c05",
+        "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
     ```
 
 ??? example "Docker -- Using an external file for the authorized users"

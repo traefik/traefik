@@ -5,35 +5,15 @@ Checking the Health of Your Traefik Instances
 
 ## Configuration Examples
 
-??? example "Enabling /ping on the http EntryPoint"
+??? example "Enabling /ping"
 
     ```toml
-    [entrypoints]
-       [entrypoints.web]
-          address = ":80"
-    
     [ping]
-      entryPoint = "http"
-    ```
-
-??? example "Enabling /ping on the https EntryPoint"
-
-    ```toml
-    [entrypoints]
-       [entrypoints.web]
-          address = ":80"
-
-      [entrypoints.web-secure]
-         address = ":443"
-         [entrypoints.web-secure.tls]   
-    
-    [ping]
-      entryPoint = "https"
     ```
 
 ??? example "Enabling /ping on a dedicated EntryPoint"
     
-    ```toml    
+    ```toml
     [entrypoints]
       [entrypoints.web]
         address = ":80"
@@ -45,8 +25,8 @@ Checking the Health of Your Traefik Instances
         entryPoint = "ping"
     ```
 
-| Path    | Method        | Description                                                                                        |
-|---------|---------------|----------------------------------------------------------------------------------------------------|
+| Path    | Method        | Description                                                                                         |
+|---------|---------------|-----------------------------------------------------------------------------------------------------|
 | `/ping` | `GET`, `HEAD` | A simple endpoint to check for Traefik process liveness. Return a code `200` with the content: `OK` |
 
 ## Configuration Options

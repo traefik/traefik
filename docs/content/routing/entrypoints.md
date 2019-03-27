@@ -29,11 +29,6 @@ They define the port which will receive the requests (whether HTTP or TCP).
     
       [entrypoints.web-secure]
         address = ":443"
-        
-        [entrypoints.web-secure.tls]
-          [[entrypoints.web-secure.tls.certificates]]
-            certFile = "tests/traefik.crt"
-            keyFile = "tests/traefik.key"
     ```
 
     - Two entrypoints are defined: one called `web`, and the other called `web-secure`.
@@ -51,7 +46,7 @@ Entrypoints are part of the [static configuration](../getting-started/configurat
     
     ```shell
     --entryPoints='Name:http Address::80'
-    --entryPoints='Name:https Address::443 TLS'
+    --entryPoints='Name:https Address::443'
     ```
     
     !!! note

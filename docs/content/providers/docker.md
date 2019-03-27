@@ -17,7 +17,7 @@ Attach labels to your containers and let Traefik do the rest!
     Enabling the docker provider
 
     ```toml
-    [docker]
+    [providers.docker]
     endpoint = "unix:///var/run/docker.sock"
     ```
 
