@@ -41,7 +41,8 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	provider.BaseProvider   `mapstructure:",squash" export:"true"`
+	provider.Constrainer    `mapstructure:",squash" export:"true"`
+	Watch                   bool             `description:"Watch provider" export:"true"`
 	Endpoint                string           `description:"Docker server endpoint. Can be a tcp or a unix socket endpoint"`
 	DefaultRule             string           `description:"Default rule"`
 	TLS                     *types.ClientTLS `description:"Enable Docker TLS support" export:"true"`
@@ -61,7 +62,7 @@ func (p *Provider) Init() error {
 	}
 
 	p.defaultRuleTpl = defaultRuleTpl
-	return p.BaseProvider.Init()
+	return nil
 }
 
 // dockerData holds the need data to the provider.

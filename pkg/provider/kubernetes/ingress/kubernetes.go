@@ -16,7 +16,6 @@ import (
 	"github.com/containous/traefik/pkg/config"
 	"github.com/containous/traefik/pkg/job"
 	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/provider"
 	"github.com/containous/traefik/pkg/provider/kubernetes/k8s"
 	"github.com/containous/traefik/pkg/safe"
 	"github.com/containous/traefik/pkg/tls"
@@ -34,7 +33,6 @@ const (
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	provider.BaseProvider  `mapstructure:",squash" export:"true"`
 	Endpoint               string           `description:"Kubernetes server endpoint (required for external cluster client)"`
 	Token                  string           `description:"Kubernetes bearer token (not needed for in-cluster client)"`
 	CertAuthFilePath       string           `description:"Kubernetes certificate authority file path (not needed for in-cluster client)"`
@@ -90,7 +88,7 @@ func (p *Provider) newK8sClient(ctx context.Context, ingressLabelSelector string
 
 // Init the provider.
 func (p *Provider) Init() error {
-	return p.BaseProvider.Init()
+	return nil
 }
 
 // Provide allows the k8s provider to provide configurations to traefik
