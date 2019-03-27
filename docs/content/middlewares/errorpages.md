@@ -12,38 +12,33 @@ The ErrorPage middleware returns a custom page in lieu of the default, according
 
 ## Configuration Examples
 
-??? example "File -- Custom Error Page for 5XX"
+```yaml tab="Docker"
+# Dynamic Custom Error Page for 5XX Status Code
+labels:
+- "traefik.http.middlewares.test-errorpage.errors.status=500-599",
+- "traefik.http.middlewares.test-errorpage.errors.service=serviceError",
+- "traefik.http.middlewares.test-errorpage.errors.query=/{status}.html",
+```
 
-    ```toml
-    [http.routers]
-      [http.routers.router1]
-        Service = "my-service"
-        Rule = Host(`my-domain`)
+```toml tab="File"
+# Custom Error Page for 5XX
+[http.routers]
+  [http.routers.router1]
+    Service = "my-service"
+    Rule = Host(`my-domain`)
 
-    [http.middlewares]
-      [http.middlewares.5XX-errors.Errors]
-        status = ["500-599"]
-        service = "error-handler-service"
-        query = "/error.html"
-                
-    [http.services]
-      # ... definition of error-handler-service and my-service
-    ```
+[http.middlewares]
+  [http.middlewares.5XX-errors.Errors]
+    status = ["500-599"]
+    service = "error-handler-service"
+    query = "/error.html"
+            
+[http.services]
+  # ... definition of error-handler-service and my-service
+```
 
-??? example "Docker -- Dynamic Custom Error Page for 5XX Status Code"
-
-    ```yaml
-    a-container:
-      image: a-container-image 
-        labels:
-          - "traefik.http.middlewares.test-errorpage.errors.status=500-599",
-          - "traefik.http.middlewares.test-errorpage.errors.service=serviceError",
-          - "traefik.http.middlewares.test-errorpage.errors.query=/{status}.html",
-            		
-    ```
-    
-    !!! note 
-        In this example, the error page URL is based on the status code (`query=/{status}.html)`.
+!!! note 
+    In this example, the error page URL is based on the status code (`query=/{status}.html)`.
 
 ## Configuration Options
 

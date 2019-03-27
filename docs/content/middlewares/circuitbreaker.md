@@ -23,23 +23,18 @@ To assess if your system is healthy, the circuit breaker constantly monitors the
 
 ## Configuration Examples
 
-??? example "Latency Check -- Using Toml"
+```yaml tab="Docker"
+# Latency Check
+labels:
+- "traefik.http.middlewares.latency-check.circuitbreaker.expression=LatencyAtQuantileMS(50.0) > 100"
+```
 
-    ```toml
-    [http.middlewares]
-       [http.middlewares.latency-check.circuitbreaker]
-          expression = "LatencyAtQuantileMS(50.0) > 100"
-    ```
-
-??? example "Latency Check -- Using Docker Labels"
-   
-    ```yaml
-    # in a docker compose file
-    container-definition:
-         image: image-name
-         labels:
-             - "traefik.http.middlewares.latency-check.circuitbreaker.expression=LatencyAtQuantileMS(50.0) > 100"
-    ```
+```toml tab="File"
+# Latency Check
+[http.middlewares]
+   [http.middlewares.latency-check.circuitbreaker]
+      expression = "LatencyAtQuantileMS(50.0) > 100"
+```
 
 ## Possible States
 
