@@ -3,7 +3,9 @@
 The Kubernetes Ingress Controller, The Custom Resource Way.
 {: .subtitle }
 
-[comment]: # (Link "Kubernetes Ingress controller" to ./kubernetes-ingress.md)
+<!--
+ TODO (Link "Kubernetes Ingress controller" to ./kubernetes-ingress.md)
+ -->
 
 The Traefik Kubernetes provider used to be a Kubernetes Ingress controller in the strict sense of the term; that is to say,
 it would manage access to a cluster services by supporting the [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) specification.
@@ -120,3 +122,7 @@ spec:
 ## Full reference example
 
 [Traefik IngressRoute Reference](../reference/providers/kubernetescrd.md).
+
+## Further
+
+Also see the [full example](../user-guides/crd-acme/index.md) with Let's Encrypt.

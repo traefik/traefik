@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik
+
+spec:
+  ports:
+    - protocol: TCP
+      name: web
+      port: 8000
+    - protocol: TCP
+      name: admin
+      port: 8080
+    - protocol: TCP
+      name: websecure
+      port: 4443
+  selector:
+    app: traefik
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami
+
+spec:
+  ports:
+    - protocol: TCP
+      name: web
+      port: 80
+  selector:
+    app: whoami
