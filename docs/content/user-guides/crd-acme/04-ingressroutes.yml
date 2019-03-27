@@ -6,7 +6,7 @@ spec:
   entrypoints:
     - web
   routes:
-  - match: Host(`your.domain.name`) && PathPrefix(`/notls`)
+  - match: Host(`your.domain.com`) && PathPrefix(`/notls`)
     kind: Rule
     services:
     - name: whoami
@@ -21,7 +21,7 @@ spec:
   entrypoints:
     - websecure
   routes:
-  - match: Host(`your.domain.name`) && PathPrefix(`/tls`)
+  - match: Host(`your.domain.com`) && PathPrefix(`/tls`)
     kind: Rule
     services:
     - name: whoami
