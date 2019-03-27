@@ -28,13 +28,15 @@ type recorderResponseWriter struct {
 	status      int
 	size        int
 	beforeFuncs []beforeFunc
+	written bool
 }
 
 func NewRecorderResponseWriter(w http.ResponseWriter, statusCode int) ResponseWriter {
-	return &recorderResponseWriter{w, statusCode, 0, nil}
+	return &recorderResponseWriter{ResponseWriter: w, status: statusCode}
 }
 
 func (r *recorderResponseWriter) WriteHeader(code int) {
+	r.written = true
 	r.ResponseWriter.WriteHeader(code)
 	r.status = code
 }
@@ -78,6 +80,9 @@ func (r *recorderResponseWriter) CloseNotify() <-chan bool {
 }
 
 func (r *recorderResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if !r.written {
+		r.status = 0
+	}
 	hijacker, ok := r.ResponseWriter.(http.Hijacker)
 	if !ok {
 		return nil, nil, fmt.Errorf("the ResponseWriter doesn't support the Hijacker interface")
