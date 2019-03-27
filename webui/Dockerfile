@@ -1,4 +1,4 @@
-FROM node:6.9.1
+FROM node:6.16.0
 
 ENV WEBUI_DIR /src/webui
 RUN mkdir -p $WEBUI_DIR
