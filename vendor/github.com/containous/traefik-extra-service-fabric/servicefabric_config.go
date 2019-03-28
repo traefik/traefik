@@ -48,6 +48,7 @@ func (p *Provider) buildConfiguration(services []ServiceItemExtended) (*types.Co
 		"getWhiteList":      getWhiteList,
 		"getHeaders":        getHeaders,
 		"getRedirect":       getRedirect,
+		"getErrorPages":     getErrorPages,
 
 		// SF Service Grouping
 		"getGroupedServices": getFuncServicesGroupedByLabel(traefikSFGroupName),
@@ -171,4 +172,8 @@ func getCircuitBreaker(service ServiceItemExtended) *types.CircuitBreaker {
 
 func getLoadBalancer(service ServiceItemExtended) *types.LoadBalancer {
 	return label.GetLoadBalancer(service.Labels)
+}
+
+func getErrorPages(service ServiceItemExtended) map[string]*types.ErrorPage {
+	return label.GetErrorPages(service.Labels)
 }
