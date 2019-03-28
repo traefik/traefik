@@ -47,10 +47,7 @@ func (ts *TomlSource) Parse(cmd *flaeg.Command) (*flaeg.Command, error) {
 		return nil, err
 	}
 
-	flgArgs, hasUnderField, err := generateArgs(metadata, boolFlags)
-	if err != nil {
-		return nil, err
-	}
+	flgArgs, hasUnderField := generateArgs(metadata, boolFlags)
 
 	err = flaeg.Load(cmd.Config, cmd.DefaultPointersConfig, flgArgs)
 	if err != nil && err != flaeg.ErrParserNotFound {
@@ -89,7 +86,7 @@ func findFile(filename string, dirNFile []string) string {
 	return ""
 }
 
-func generateArgs(metadata toml.MetaData, flags []string) ([]string, bool, error) {
+func generateArgs(metadata toml.MetaData, flags []string) ([]string, bool) {
 	var flgArgs []string
 	keys := metadata.Keys()
 	hasUnderField := false
@@ -117,5 +114,5 @@ func generateArgs(metadata toml.MetaData, flags []string) ([]string, bool, error
 		}
 	}
 
-	return flgArgs, hasUnderField, nil
+	return flgArgs, hasUnderField
 }
