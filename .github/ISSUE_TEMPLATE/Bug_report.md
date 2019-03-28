@@ -27,7 +27,7 @@ Bug
 
 <!--
 
-If you just checked the "Yes" box, be aware that this is probably not a bug. The configs between 1.7.X and 2.X are NOT compatible. Please have a look here https://docs.traefik.io/v2.0/getting-started/configuration-overview/.
+If you just checked the "Yes" box, be aware that this is probably not a bug. The configurations between 1.X and 2.X are NOT compatible. Please have a look here https://docs.traefik.io/v2.0/getting-started/configuration-overview/.
 
 -->
 
