@@ -245,6 +245,11 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					baseName = pa.Backend.ServiceName
 				}
 
+				entryPoints := getSliceStringValue(i.Annotations, annotationKubernetesFrontendEntryPoints)
+				if len(entryPoints) > 0 {
+					baseName = strings.Join(entryPoints, "-") + "_" + baseName
+				}
+
 				if priority > 0 {
 					baseName = strconv.Itoa(priority) + "-" + baseName
 				}
@@ -277,7 +282,6 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 					passHostHeader := getBoolValue(i.Annotations, annotationKubernetesPreserveHost, !p.DisablePassHostHeaders)
 					passTLSCert := getBoolValue(i.Annotations, annotationKubernetesPassTLSCert, p.EnablePassTLSCert) // Deprecated
-					entryPoints := getSliceStringValue(i.Annotations, annotationKubernetesFrontendEntryPoints)
 
 					frontend = &types.Frontend{
 						Backend:           baseName,
