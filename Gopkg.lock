@@ -1469,11 +1469,11 @@
   revision = "c4434f09ec131ecf30f986d5dcb1636508bfa49a"
 
 [[projects]]
-  digest = "1:c269070c7f286c941392076d6c42a4a7a062356f7083a48bd202397e877a965e"
+  digest = "1:84b9a5318d8ce3b8a9b1509bf15734f4f9dcd4decf9d9e9c7346a16c7b64d49e"
   name = "github.com/thoas/stats"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "152b5d051953fdb6e45f14b6826962aadc032324"
+  revision = "4975baf6a358ed3ddaa42133996e1959f96c9300"
 
 [[projects]]
   branch = "master"
