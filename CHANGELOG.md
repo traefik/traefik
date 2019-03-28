@@ -1,5 +1,22 @@
 # Change Log
 
+## [v1.7.10](https://github.com/containous/traefik/tree/v1.7.10) (2019-03-28)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.9...v1.7.10)
+
+**Bug fixes:**
+- **[acme]** fix: update lego. ([#4670](https://github.com/containous/traefik/pull/4670) by [ldez](https://github.com/ldez))
+- **[acme]** Migrate to go-acme/lego. ([#4577](https://github.com/containous/traefik/pull/4577) by [ldez](https://github.com/ldez))
+- **[authentication,middleware]** Reorder Auth and TLSClientHeaders middleware ([#4557](https://github.com/containous/traefik/pull/4557) by [tomberek](https://github.com/tomberek))
+- **[k8s/ingress]** Support external name service on global default backend ([#4564](https://github.com/containous/traefik/pull/4564) by [kippandrew](https://github.com/kippandrew))
+- **[k8s/ingress]** Loop through service ports for global backend ([#4486](https://github.com/containous/traefik/pull/4486) by [dtomcej](https://github.com/dtomcej))
+- **[k8s]** Add entrypoints prefix in kubernetes frontend/backend id  ([#4679](https://github.com/containous/traefik/pull/4679) by [juliens](https://github.com/juliens))
+- **[websocket]** Exclude websocket connections from Average Response Time ([#4313](https://github.com/containous/traefik/pull/4313) by [siyu6974](https://github.com/siyu6974))
+- **[middleware]** Added support for configuring trace headers for DataDog tracing ([#4516](https://github.com/containous/traefik/pull/4516) by [aantono](https://github.com/aantono))
+
+**Documentation:**
+- **[acme]** Add _FILE Environment Variable Documentation ([#4643](https://github.com/containous/traefik/pull/4643) by [dargmuesli](https://github.com/dargmuesli))
+- **[docker]** Add TraefikEE as security workaround ([#4606](https://github.com/containous/traefik/pull/4606) by [emilevauge](https://github.com/emilevauge))
+
 ## [v1.7.9](https://github.com/containous/traefik/tree/v1.7.9) (2019-02-11)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.8...v1.7.9)
 
