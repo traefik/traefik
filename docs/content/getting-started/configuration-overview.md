@@ -30,7 +30,7 @@ Traefik gets its _dynamic configuration_ from [providers](../providers/overview.
 ## The Static Configuration
 
 !!! warning "Uncompatible Static Configuration"
-    Please be aware, that the old configuration of v1.7.X is NOT compatible with the v2.X config as of now.
+    Please be aware that the old configuration of v1.7.X is NOT compatible with the v2.X config as of now.
     If you're testing out v2, please create a fresh configuration.
 
 There are three different locations where you can define static configuration options in Traefik:

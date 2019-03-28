@@ -23,7 +23,7 @@ If you intend to ask a support question: DO NOT FILE AN ISSUE.
 
 <!--
 
-If you just checked that box, be aware that this is probably not a bug. The configs between 1.7.X and 2.X are NOT compatible. Please have a look here https://docs.traefik.io/v2.0/getting-started/configuration-overview/.
+If you just checked the "Yes" box, be aware that this is probably not a bug. The configs between 1.7.X and 2.X are NOT compatible. Please have a look here https://docs.traefik.io/v2.0/getting-started/configuration-overview/.
 
 -->
 
