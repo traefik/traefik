@@ -46,9 +46,9 @@
   source = "github.com/containous/go-http-auth"
 
 [[constraint]]
-  branch = "containous-fork"
   name = "github.com/thoas/stats"
-  source = "github.com/containous/stats"
+  # related to https://github.com/thoas/stats/pull/32
+  revision = "4975baf6a358ed3ddaa42133996e1959f96c9300"
 
 [[constraint]]
   branch = "master"
