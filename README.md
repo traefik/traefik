@@ -33,7 +33,7 @@ Pointing Traefik at your orchestrator should be the _only_ configuration step yo
 
 ---
 
-:construction: As stated in the [1.7 release note](https://blog.containo.us/traefik-1-7-yet-another-slice-of-awesomeness-2a9c99737889#782d), a significant update is in progress on the [master](https://github.com/containous/traefik/tree/master) branch. This branch will remain in constant evolution and prone to change with little notice, so use it for test purposes only.
+:warning: Please be aware that the old configurations for Traefik v1.X are NOT compatible with the v2.X config as of now. If you're testing out v2, please ensure you are using a [v2 configuration](https://docs.traefik.io/v2.0/).
 
 ## Overview
 
