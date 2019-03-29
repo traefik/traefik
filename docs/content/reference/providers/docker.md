@@ -53,10 +53,10 @@ watch = true
 #
 exposedByDefault = true
 
-# Use the IP address from the binded port instead of the inner network one.
+# Use the IP address from the bound port instead of the inner network one.
 #
-# In case no IP address is attached to the binded port (or in case 
-# there is no bind), the inner network one will be used as a fallback.     
+# In case no IP address is attached to the bound port (or in case
+# there is no bind), the inner network one will be used as a fallback.
 #
 # Optional
 # Default: false
