@@ -1,0 +1,16 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  namespace: testing
+spec:
+  rules:
+  - http:
+      paths:
+      - backend:
+          serviceName: service
+          servicePort: cheddar
+        path: /cheddar
+      - backend:
+          serviceName: service
+          servicePort: stilton
+        path: /stilton

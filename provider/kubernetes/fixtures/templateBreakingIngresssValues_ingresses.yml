@@ -1,0 +1,45 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: testing-"foo"
+  namespace: testing
+spec:
+  rules:
+  - host: foo
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: 80
+        path: /bar
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  namespace: testing
+spec:
+  rules:
+  - host: testing-"foo"
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: 80
+        path: /bar
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  namespace: testing
+spec:
+  rules:
+  - host: foo
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: 80
+        path: /testing-"foo"

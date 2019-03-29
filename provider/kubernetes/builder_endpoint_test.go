@@ -61,13 +61,6 @@ func eAddress(ip string) func(*corev1.EndpointAddress) {
 	}
 }
 
-func eAddressWithTargetRef(targetRef, ip string) func(*corev1.EndpointAddress) {
-	return func(address *corev1.EndpointAddress) {
-		address.TargetRef = &corev1.ObjectReference{Name: targetRef}
-		address.IP = ip
-	}
-}
-
 func ePorts(opts ...func(port *corev1.EndpointPort)) func(*corev1.EndpointSubset) {
 	return func(spec *corev1.EndpointSubset) {
 		for _, opt := range opts {

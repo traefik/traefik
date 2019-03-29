@@ -1,0 +1,18 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/auth-response-headers: X-Auth,X-Test,X-Secret
+    ingress.kubernetes.io/auth-trust-headers: "true"
+    ingress.kubernetes.io/auth-type: forward
+    ingress.kubernetes.io/auth-url: https://auth.host
+  namespace: testing
+spec:
+  rules:
+  - host: foo
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: 80
+        path: /bar

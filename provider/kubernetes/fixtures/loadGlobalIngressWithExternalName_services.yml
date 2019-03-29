@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: service1
+  namespace: testing
+spec:
+  externalName: some-external-name
+  ports:
+  - port: 80
+  type: ExternalName

@@ -1,0 +1,431 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/preserve-host: "false"
+  namespace: testing
+spec:
+  rules:
+  - host: foo
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: 80
+        path: /bar
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/preserve-host: "true"
+    kubernetes.io/ingress.class: traefik
+  namespace: testing
+spec:
+  rules:
+  - host: other
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: 80
+        path: /stuff
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/pass-client-tls-cert: |2
+
+      pem: true
+      infos:
+        notafter: true
+        notbefore: true
+        sans: true
+        subject:
+          country: true
+          province: true
+          locality: true
+          organization: true
+          commonname: true
+          serialnumber: true
+          domaincomponent: true
+        issuer:
+          country: true
+          province: true
+          locality: true
+          organization: true
+          commonname: true
+          serialnumber: true
+          domaincomponent: true
+    ingress.kubernetes.io/pass-tls-cert: "true"
+    kubernetes.io/ingress.class: traefik
+  namespace: testing
+spec:
+  rules:
+  - host: other
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: 80
+        path: /sslstuff
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/frontend-entry-points: http,https
+    kubernetes.io/ingress.class: traefik
+  namespace: testing
+spec:
+  rules:
+  - host: other
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: 80
+        path: /
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/auth-secret: mySecret
+    ingress.kubernetes.io/auth-type: basic
+  namespace: testing
+spec:
+  rules:
+  - host: basic
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: 80
+        path: /auth
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: traefik-other
+  namespace: testing
+spec:
+  rules:
+  - host: herp
+    http:
+      paths:
+      - backend:
+          serviceName: service2
+          servicePort: 80
+        path: /derp
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/whitelist-source-range: 1.1.1.1/24, 1234:abcd::42/32
+    ingress.kubernetes.io/whitelist-x-forwarded-for: "true"
+  namespace: testing
+spec:
+  rules:
+  - host: test
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: 80
+        path: /whitelist-source-range
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /
+  namespace: testing
+spec:
+  rules:
+  - host: rewrite
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: 80
+        path: /api
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/auth-realm: customized
+  namespace: testing
+spec:
+  rules:
+  - host: auth-realm-customized
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: 80
+        path: /auth-realm-customized
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/redirect-entry-point: https
+  namespace: testing
+spec:
+  rules:
+  - host: redirect
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: 80
+        path: /https
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/error-pages: |2
+
+      foo:
+        status:
+        - "123"
+        - "456"
+        backend: bar
+        query: /bar
+    kubernetes.io/ingress.class: traefik
+  namespace: testing
+spec:
+  rules:
+  - host: error-pages
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: 80
+        path: /errorpages
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/rate-limit: |2
+
+      extractorfunc: client.ip
+      rateset:
+        bar:
+          period: 3s
+          average: 6
+          burst: 9
+        foo:
+          period: 6s
+          average: 12
+          burst: 18
+    kubernetes.io/ingress.class: traefik
+  namespace: testing
+spec:
+  rules:
+  - host: rate-limit
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: 80
+        path: /ratelimit
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/app-root: /root
+  namespace: testing
+spec:
+  rules:
+  - host: root
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: 80
+        path: /
+      - backend:
+          serviceName: service1
+          servicePort: 80
+        path: /root1
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/app-root: /root2
+    ingress.kubernetes.io/rewrite-target: /abc
+  namespace: testing
+spec:
+  rules:
+  - host: root2
+    http:
+      paths:
+      - backend:
+          serviceName: service2
+          servicePort: 80
+        path: /
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /abc
+    ingress.kubernetes.io/rule-type: ReplacePath
+  namespace: testing
+spec:
+  rules:
+  - host: root2
+    http:
+      paths:
+      - backend:
+          serviceName: service2
+          servicePort: 80
+        path: /
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/app-root: /root
+  namespace: testing
+spec:
+  rules:
+  - host: root3
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: 80
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/allowed-hosts: foo, fii, fuu
+    ingress.kubernetes.io/browser-xss-filter: "true"
+    ingress.kubernetes.io/content-security-policy: foo
+    ingress.kubernetes.io/content-type-nosniff: "true"
+    ingress.kubernetes.io/custom-browser-xss-value: foo
+    ingress.kubernetes.io/custom-frame-options-value: foo
+    ingress.kubernetes.io/custom-request-headers: 'Access-Control-Allow-Methods:POST,GET,OPTIONS
+      || Content-type: application/json; charset=utf-8'
+    ingress.kubernetes.io/custom-response-headers: 'Access-Control-Allow-Methods:POST,GET,OPTIONS
+      || Content-type: application/json; charset=utf-8'
+    ingress.kubernetes.io/force-hsts: "true"
+    ingress.kubernetes.io/frame-deny: "true"
+    ingress.kubernetes.io/hsts-include-subdomains: "true"
+    ingress.kubernetes.io/hsts-max-age: "666"
+    ingress.kubernetes.io/hsts-preload: "true"
+    ingress.kubernetes.io/is-development: "true"
+    ingress.kubernetes.io/proxy-headers: foo, fii, fuu
+    ingress.kubernetes.io/public-key: foo
+    ingress.kubernetes.io/referrer-policy: foo
+    ingress.kubernetes.io/ssl-force-host: "true"
+    ingress.kubernetes.io/ssl-host: foo
+    ingress.kubernetes.io/ssl-proxy-headers: 'Access-Control-Allow-Methods:POST,GET,OPTIONS
+      || Content-type: application/json; charset=utf-8'
+    ingress.kubernetes.io/ssl-redirect: "true"
+    ingress.kubernetes.io/ssl-temporary-redirect: "true"
+    kubernetes.io/ingress.class: traefik
+  namespace: testing
+spec:
+  rules:
+  - host: custom-headers
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: 80
+        path: /customheaders
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/protocol: h2c
+  namespace: testing
+spec:
+  rules:
+  - host: protocol
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: 80
+        path: /valid
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/protocol: foobar
+  namespace: testing
+spec:
+  rules:
+  - host: protocol
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: 80
+        path: /notvalid
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/protocol: http
+  namespace: testing
+spec:
+  rules:
+  - host: protocol
+    http:
+      paths:
+      - backend:
+          serviceName: serviceHTTPS
+          servicePort: 443
+        path: /missmatch
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  namespace: testing
+spec:
+  rules:
+  - host: protocol
+    http:
+      paths:
+      - backend:
+          serviceName: serviceHTTPS
+          servicePort: 443
+        path: /noAnnotation

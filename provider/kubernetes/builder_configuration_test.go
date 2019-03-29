@@ -230,9 +230,25 @@ func auth(opt func(*types.Auth)) func(*types.Frontend) {
 	}
 }
 
-func basicAuth(users ...string) func(*types.Auth) {
+func basicAuth(opts ...func(*types.Basic)) func(*types.Auth) {
 	return func(a *types.Auth) {
-		a.Basic = &types.Basic{Users: users}
+		basic := &types.Basic{}
+		for _, opt := range opts {
+			opt(basic)
+		}
+		a.Basic = basic
+	}
+}
+
+func baUsers(users ...string) func(*types.Basic) {
+	return func(b *types.Basic) {
+		b.Users = users
+	}
+}
+
+func baRemoveHeaders() func(*types.Basic) {
+	return func(b *types.Basic) {
+		b.RemoveHeader = true
 	}
 }
 

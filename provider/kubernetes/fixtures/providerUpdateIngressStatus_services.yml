@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-empty-status
+  namespace: testing
+spec:
+  clusterIP: 10.0.0.1
+  ports:
+  - port: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service
+  namespace: testing
+spec:
+  clusterIP: 10.0.0.2
+  ports:
+  - port: 80
+status:
+  loadBalancer:
+    ingress:
+    - ip: 127.0.0.1
