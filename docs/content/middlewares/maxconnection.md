@@ -9,22 +9,18 @@ To proactively prevent services from being overwhelmed with high load, a maximum
 
 ## Configuration Examples
 
-??? example "File -- Limiting to 10 simultaneous connections"
+```yaml tab="Docker"
+# Limiting to 10 simultaneous connections
+labels:
+- "traefik.http.middlewares.test-maxconn.maxconn.amount=10"
+```
 
-    ```toml
-    [http.middlewares]
-      [http.middlewares.test-maxconn.maxconn]
-      amount = 10 
-    ```
-
-??? example "Docker -- Limiting to 10 simultaneous connections"
-
-    ```yml
-    a-container:
-          image: a-container-image 
-            labels:
-              - "traefik.http.middlewares.test-maxconn.maxconn.amount=10"
-    ```
+```toml tab="File"
+# Limiting to 10 simultaneous connections
+[http.middlewares]
+  [http.middlewares.test-maxconn.maxconn]
+  amount = 10 
+```
 
 ## Configuration Options
 

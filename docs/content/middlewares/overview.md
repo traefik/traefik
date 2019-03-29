@@ -13,79 +13,75 @@ Pieces of middleware can be combined in chains to fit every scenario.
 
 ## Configuration Example
 
-??? example "As Toml Configuration File"
+```yaml tab="Docker"
+# As a Docker Label
+whoami:
+  image: containous/whoami  # A container that exposes an API to show its IP address
+  labels:
+    - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo",
+```
 
-    ```toml
-    [providers]
-       [providers.file]
-
-    [http.routers]
-      [http.routers.router1]
-        Service = "myService"
-        Middlewares = ["foo-add-prefix"]
-        Rule = "Host(`example.com`)"
-
-    [http.middlewares]
-     [http.middlewares.foo-add-prefix.AddPrefix]
-        prefix = "/foo"
-
-    [http.services]
-     [http.services.service1]
-       [http.services.service1.LoadBalancer]
-
-         [[http.services.service1.LoadBalancer.Servers]]
-           URL = "http://127.0.0.1:80"
-           Weight = 1
-    ```
-
-??? example "As a Docker Label"
-
-    ```yaml
-    # A container that exposes a simple API
-    whoami:
-      image: containous/whoami  # A container that exposes an API to show its IP address
-        labels:
-          - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo",
-    ```
-
-??? example "As a Kubernetes Traefik IngressRoute"
-
-    ```yaml
-    apiVersion: apiextensions.k8s.io/v1beta1
-    kind: CustomResourceDefinition
-    metadata:
-      name: middlewares.traefik.containo.us
-    spec:
-      group: traefik.containo.us
-      version: v1alpha1
-      names:
-        kind: Middleware
-        plural: middlewares
-        singular: middleware
-      scope: Namespaced
-
-    ---
-    apiVersion: traefik.containo.us/v1alpha1
+```yaml tab="Kubernetes"
+# As a Kubernetes Traefik IngressRoute
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: middlewares.traefik.containo.us
+spec:
+  group: traefik.containo.us
+  version: v1alpha1
+  names:
     kind: Middleware
-    metadata:
-      name: stripprefix
-    spec:
-      stripprefix:
-        prefixes:
-          - /stripit
+    plural: middlewares
+    singular: middleware
+  scope: Namespaced
 
-    ---
-    apiVersion: traefik.containo.us/v1alpha1
-    kind: IngressRoute
-    metadata:
-      name: ingressroute.crd
-    spec:
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: stripprefix
+spec:
+  stripprefix:
+    prefixes:
+      - /stripit
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ingressroute.crd
+spec:
+# more fields...
+  routes:
     # more fields...
-      routes:
-        # more fields...
-        middleware:
-        - name: stripprefix
-    ```
+    middleware:
+    - name: stripprefix
+```
+
+```toml tab="File"
+# As Toml Configuration File
+[providers]
+   [providers.file]
+
+[http.routers]
+  [http.routers.router1]
+    Service = "myService"
+    Middlewares = ["foo-add-prefix"]
+    Rule = "Host(`example.com`)"
+
+[http.middlewares]
+ [http.middlewares.foo-add-prefix.AddPrefix]
+    prefix = "/foo"
+
+[http.services]
+ [http.services.service1]
+   [http.services.service1.LoadBalancer]
+
+     [[http.services.service1.LoadBalancer.Servers]]
+       URL = "http://127.0.0.1:80"
+       Weight = 1
+```
 
 ## Advanced Configuration
 

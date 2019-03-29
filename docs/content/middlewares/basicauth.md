@@ -9,23 +9,19 @@ The BasicAuth middleware is a quick way to restrict access to your services to k
 
 ## Configuration Examples
 
-??? example "File -- Declaring the user list"
+```yaml tab="Docker"
+# Declaring the user list
+labels:
+  - "traefik.http.middlewares.declared-users-only.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+```
 
-    ```toml
-    [http.middlewares]
-      [http.middlewares.test-auth.basicauth]
-      users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", 
-      "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
-    ```
-
-??? example "Docker -- Using an external file for the authorized users"
-
-    ```yml
-    a-container:
-          image: a-container-image 
-            labels:
-              - "traefik.http.middlewares.declared-users-only.basicauth.usersFile=path-to-file.ext",
-    ```
+```toml tab="File"
+# Declaring the user list
+[http.middlewares]
+  [http.middlewares.test-auth.basicauth]
+  users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", 
+  "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
+```
 
 ## Configuration Options
 

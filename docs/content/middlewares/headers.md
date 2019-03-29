@@ -13,26 +13,22 @@ The Headers middleware can manage the requests/responses headers.
 
 Add the `X-Script-Name` header to the proxied request and the `X-Custom-Response-Header` to the response
 
-??? example "File"
+```yaml tab="Docker"
+a-container:
+image: a-container-image 
+labels:
+- "traefik.http.middlewares.testHeader.Headers.CustomRequestHeaders.X-Script-Name=test",
+- "traefik.http.middlewares.testHeader.Headers.CustomResponseHeaders.X-Custom-Response-Header=True",
+```
 
-    ```toml
-    [http.middlewares]
-      [http.middlewares.testHeader.headers]
-        [http.middlewares.testHeader.headers.CustomRequestHeaders]
-            X-Script-Name = "test"
-        [http.middlewares.testHeader.headers.CustomResponseHeaders]
-            X-Custom-Response-Header = "True"
-    ```
-
-??? example "Docker"
-
-    ```yml
-    a-container:
-          image: a-container-image 
-            labels:
-              - "traefik.http.middlewares.testHeader.Headers.CustomRequestHeaders.X-Script-Name=test",
-              - "traefik.http.middlewares.testHeader.Headers.CustomResponseHeaders.X-Custom-Response-Header=True",
-    ```
+```toml tab="File"
+[http.middlewares]
+  [http.middlewares.testHeader.headers]
+    [http.middlewares.testHeader.headers.CustomRequestHeaders]
+        X-Script-Name = "test"
+    [http.middlewares.testHeader.headers.CustomResponseHeaders]
+        X-Custom-Response-Header = "True"
+```
 
 ### Adding and Removing Headers
 

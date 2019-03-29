@@ -9,22 +9,18 @@ IPWhitelist accepts / refuses requests based on the client IP.
 
 ## Configuration Examples
 
-??? example "File -- Accepts request from defined IP"
+```yaml tab="Docker"
+# Accepts request from defined IP
+labels:
+- "traefik.http.middlewares.Middleware9.IPWhiteList.SourceRange=127.0.0.1/32, 192.168.1.7"
+```
 
-    ```toml
-    [http.middlewares]
-      [http.middlewares.test-ipwhitelist.ipWhiteList]
-        sourceRange = ["127.0.0.1/32", "192.168.1.7"]
-    ```
-
-??? example "Docker -- Accepts request from defined IP"
-
-    ```yml
-     a-container:
-        image: a-container-image 
-            labels:
-                - "traefik.http.middlewares.Middleware9.IPWhiteList.SourceRange=127.0.0.1/32, 192.168.1.7"
-    ```
+```toml tab="File"
+# Accepts request from defined IP
+[http.middlewares]
+  [http.middlewares.test-ipwhitelist.ipWhiteList]
+    sourceRange = ["127.0.0.1/32", "192.168.1.7"]
+```
 
 ## Configuration Options
 
