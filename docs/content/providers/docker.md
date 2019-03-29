@@ -199,7 +199,7 @@ The Service automatically gets a server per instance of the container, and the r
 
 ### Routers
 
-To update the configuration of the Router automatically attached to the container, add labels starting with `traefik.routers.{name-of-your-choice}.` and followed by the option you want to change. For example, to change the rule, you could add the label `traefik.http.routers.my-container.rule=Host(my-domain)`.
+To update the configuration of the Router automatically attached to the container, add labels starting with `traefik.http.routers.{name-of-your-choice}.` and followed by the option you want to change. For example, to change the rule, you could add the label `traefik.http.routers.my-container.rule=Host(my-domain)`.
 
 Every [Router](../routing/routers/index.md) parameter can be updated this way.
 
