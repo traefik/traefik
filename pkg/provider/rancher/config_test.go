@@ -15,7 +15,7 @@ func Test_buildConfiguration(t *testing.T) {
 		desc        string
 		containers  []rancherData
 		constraints types.Constraints
-		expected    *config.HTTPConfiguration
+		expected    *config.Configuration
 	}{
 		{
 			desc: "one service no label",
@@ -29,25 +29,31 @@ func Test_buildConfiguration(t *testing.T) {
 					State:      "",
 				},
 			},
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"Test": {
-						Service: "Test",
-						Rule:    "Host(`Test.traefik.wtf`)",
-					},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
 				},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"Test": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://127.0.0.1:80",
-									Weight: 1,
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"Test": {
+							Service: "Test",
+							Rule:    "Host(`Test.traefik.wtf`)",
+						},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"Test": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://127.0.0.1:80",
+										Weight: 1,
+									},
 								},
+								Method:         "wrr",
+								PassHostHeader: true,
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
 						},
 					},
 				},
@@ -73,41 +79,47 @@ func Test_buildConfiguration(t *testing.T) {
 					State:      "",
 				},
 			},
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"Test1": {
-						Service: "Test1",
-						Rule:    "Host(`Test1.traefik.wtf`)",
-					},
-					"Test2": {
-						Service: "Test2",
-						Rule:    "Host(`Test2.traefik.wtf`)",
-					},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
 				},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"Test1": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://127.0.0.1:80",
-									Weight: 1,
-								},
-							},
-							Method:         "wrr",
-							PassHostHeader: true,
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"Test1": {
+							Service: "Test1",
+							Rule:    "Host(`Test1.traefik.wtf`)",
+						},
+						"Test2": {
+							Service: "Test2",
+							Rule:    "Host(`Test2.traefik.wtf`)",
 						},
 					},
-					"Test2": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://127.0.0.2:80",
-									Weight: 1,
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"Test1": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://127.0.0.1:80",
+										Weight: 1,
+									},
 								},
+								Method:         "wrr",
+								PassHostHeader: true,
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
+						},
+						"Test2": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://127.0.0.2:80",
+										Weight: 1,
+									},
+								},
+								Method:         "wrr",
+								PassHostHeader: true,
+							},
 						},
 					},
 				},
@@ -133,45 +145,51 @@ func Test_buildConfiguration(t *testing.T) {
 					State:      "",
 				},
 			},
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"Test1": {
-						Service: "Test1",
-						Rule:    "Host(`Test1.traefik.wtf`)",
-					},
-					"Test2": {
-						Service: "Test2",
-						Rule:    "Host(`Test2.traefik.wtf`)",
-					},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
 				},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"Test1": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://127.0.0.1:80",
-									Weight: 1,
-								},
-								{
-									URL:    "http://127.0.0.2:80",
-									Weight: 1,
-								},
-							},
-							Method:         "wrr",
-							PassHostHeader: true,
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"Test1": {
+							Service: "Test1",
+							Rule:    "Host(`Test1.traefik.wtf`)",
+						},
+						"Test2": {
+							Service: "Test2",
+							Rule:    "Host(`Test2.traefik.wtf`)",
 						},
 					},
-					"Test2": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://128.0.0.1:80",
-									Weight: 1,
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"Test1": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://127.0.0.1:80",
+										Weight: 1,
+									},
+									{
+										URL:    "http://127.0.0.2:80",
+										Weight: 1,
+									},
 								},
+								Method:         "wrr",
+								PassHostHeader: true,
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
+						},
+						"Test2": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://128.0.0.1:80",
+										Weight: 1,
+									},
+								},
+								Method:         "wrr",
+								PassHostHeader: true,
+							},
 						},
 					},
 				},
@@ -193,25 +211,31 @@ func Test_buildConfiguration(t *testing.T) {
 					State:      "",
 				},
 			},
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"Router1": {
-						Service: "Service1",
-						Rule:    "Host(`foo.com`)",
-					},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
 				},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"Service1": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://127.0.0.1:80",
-									Weight: 1,
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"Router1": {
+							Service: "Service1",
+							Rule:    "Host(`foo.com`)",
+						},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"Service1": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://127.0.0.1:80",
+										Weight: 1,
+									},
 								},
+								Method:         "wrr",
+								PassHostHeader: true,
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
 						},
 					},
 				},
@@ -228,10 +252,16 @@ func Test_buildConfiguration(t *testing.T) {
 					State:      "",
 				},
 			},
-			expected: &config.HTTPConfiguration{
-				Routers:     map[string]*config.Router{},
-				Middlewares: map[string]*config.Middleware{},
-				Services:    map[string]*config.Service{},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers:     map[string]*config.Router{},
+					Middlewares: map[string]*config.Middleware{},
+					Services:    map[string]*config.Service{},
+				},
 			},
 		},
 		{
@@ -245,10 +275,16 @@ func Test_buildConfiguration(t *testing.T) {
 					State:      "upgradefailed",
 				},
 			},
-			expected: &config.HTTPConfiguration{
-				Routers:     map[string]*config.Router{},
-				Middlewares: map[string]*config.Middleware{},
-				Services:    map[string]*config.Service{},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers:     map[string]*config.Router{},
+					Middlewares: map[string]*config.Middleware{},
+					Services:    map[string]*config.Service{},
+				},
 			},
 		},
 		{
@@ -265,25 +301,31 @@ func Test_buildConfiguration(t *testing.T) {
 					State:      "",
 				},
 			},
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"Router1": {
-						Service: "Test",
-						Rule:    "Host(`foo.com`)",
-					},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
 				},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"Test": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://127.0.0.1:80",
-									Weight: 1,
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"Router1": {
+							Service: "Test",
+							Rule:    "Host(`foo.com`)",
+						},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"Test": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://127.0.0.1:80",
+										Weight: 1,
+									},
 								},
+								Method:         "wrr",
+								PassHostHeader: true,
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
 						},
 					},
 				},
@@ -310,10 +352,16 @@ func Test_buildConfiguration(t *testing.T) {
 					Regex:     "bar",
 				},
 			},
-			expected: &config.HTTPConfiguration{
-				Routers:     map[string]*config.Router{},
-				Middlewares: map[string]*config.Middleware{},
-				Services:    map[string]*config.Service{},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers:     map[string]*config.Router{},
+					Middlewares: map[string]*config.Middleware{},
+					Services:    map[string]*config.Service{},
+				},
 			},
 		},
 		{
@@ -337,25 +385,31 @@ func Test_buildConfiguration(t *testing.T) {
 					Regex:     "foo",
 				},
 			},
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"Test": {
-						Service: "Test",
-						Rule:    "Host(`Test.traefik.wtf`)",
-					},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
 				},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"Test": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://127.0.0.1:80",
-									Weight: 1,
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"Test": {
+							Service: "Test",
+							Rule:    "Host(`Test.traefik.wtf`)",
+						},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"Test": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://127.0.0.1:80",
+										Weight: 1,
+									},
 								},
+								Method:         "wrr",
+								PassHostHeader: true,
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
 						},
 					},
 				},
@@ -376,35 +430,41 @@ func Test_buildConfiguration(t *testing.T) {
 					State:      "",
 				},
 			},
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"Test": {
-						Service:     "Test",
-						Rule:        "Host(`Test.traefik.wtf`)",
-						Middlewares: []string{"Middleware1"},
-					},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
 				},
-				Middlewares: map[string]*config.Middleware{
-					"Middleware1": {
-						BasicAuth: &config.BasicAuth{
-							Users: []string{
-								"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"Test": {
+							Service:     "Test",
+							Rule:        "Host(`Test.traefik.wtf`)",
+							Middlewares: []string{"Middleware1"},
+						},
+					},
+					Middlewares: map[string]*config.Middleware{
+						"Middleware1": {
+							BasicAuth: &config.BasicAuth{
+								Users: []string{
+									"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+								},
 							},
 						},
 					},
-				},
-				Services: map[string]*config.Service{
-					"Test": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://127.0.0.1:80",
-									Weight: 1,
+					Services: map[string]*config.Service{
+						"Test": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://127.0.0.1:80",
+										Weight: 1,
+									},
 								},
+								Method:         "wrr",
+								PassHostHeader: true,
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
 						},
 					},
 				},
@@ -424,27 +484,274 @@ func Test_buildConfiguration(t *testing.T) {
 					State:      "",
 				},
 			},
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"Test": {
-						Service: "Test",
-						Rule:    "Host(`Test.traefik.wtf`)",
-					},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
 				},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"Test": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://127.0.0.1:80",
-									Weight: 1,
-								},
-							},
-							Method:         "wrr",
-							PassHostHeader: true,
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"Test": {
+							Service: "Test",
+							Rule:    "Host(`Test.traefik.wtf`)",
 						},
 					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"Test": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://127.0.0.1:80",
+										Weight: 1,
+									},
+								},
+								Method:         "wrr",
+								PassHostHeader: true,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "tcp with label",
+			containers: []rancherData{
+				{
+					Name: "Test",
+					Labels: map[string]string{
+						"traefik.tcp.routers.foo.rule": "HostSNI(`foo.bar`)",
+						"traefik.tcp.routers.foo.tls":  "true",
+					},
+					Port:       "80/tcp",
+					Containers: []string{"127.0.0.1"},
+					Health:     "",
+					State:      "",
+				},
+			},
+			expected: &config.Configuration{
+
+				TCP: &config.TCPConfiguration{
+					Routers: map[string]*config.TCPRouter{
+						"foo": {
+							Service: "Test",
+							Rule:    "HostSNI(`foo.bar`)",
+							TLS:     &config.RouterTCPTLSConfig{},
+						},
+					},
+					Services: map[string]*config.TCPService{
+						"Test": {
+							LoadBalancer: &config.TCPLoadBalancerService{
+								Servers: []config.TCPServer{
+									{
+										Address: "127.0.0.1:80",
+										Weight:  1,
+									},
+								},
+								Method: "wrr",
+							},
+						},
+					},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers:     map[string]*config.Router{},
+					Middlewares: map[string]*config.Middleware{},
+					Services:    map[string]*config.Service{},
+				},
+			},
+		},
+		{
+			desc: "tcp with label without rule",
+			containers: []rancherData{
+				{
+					Name: "Test",
+					Labels: map[string]string{
+						"traefik.tcp.routers.foo.tls": "true",
+					},
+					Port:       "80/tcp",
+					Containers: []string{"127.0.0.1"},
+					Health:     "",
+					State:      "",
+				},
+			},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers: map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{
+						"Test": {
+							LoadBalancer: &config.TCPLoadBalancerService{
+								Servers: []config.TCPServer{
+									{
+										Address: "127.0.0.1:80",
+										Weight:  1,
+									},
+								},
+								Method: "wrr",
+							},
+						},
+					},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers:     map[string]*config.Router{},
+					Middlewares: map[string]*config.Middleware{},
+					Services:    map[string]*config.Service{},
+				},
+			},
+		},
+		{
+			desc: "tcp with label and port",
+			containers: []rancherData{
+				{
+					Name: "Test",
+					Labels: map[string]string{
+						"traefik.tcp.routers.foo.rule":                      "HostSNI(`foo.bar`)",
+						"traefik.tcp.routers.foo.tls":                       "true",
+						"traefik.tcp.services.foo.loadbalancer.server.port": "8080",
+					},
+					Port:       "80/tcp",
+					Containers: []string{"127.0.0.1"},
+					Health:     "",
+					State:      "",
+				},
+			},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers: map[string]*config.TCPRouter{
+						"foo": {
+							Service: "foo",
+							Rule:    "HostSNI(`foo.bar`)",
+							TLS:     &config.RouterTCPTLSConfig{},
+						},
+					},
+					Services: map[string]*config.TCPService{
+						"foo": {
+							LoadBalancer: &config.TCPLoadBalancerService{
+								Servers: []config.TCPServer{
+									{
+										Address: "127.0.0.1:8080",
+										Weight:  1,
+									},
+								},
+								Method: "wrr",
+							},
+						},
+					},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers:     map[string]*config.Router{},
+					Middlewares: map[string]*config.Middleware{},
+					Services:    map[string]*config.Service{},
+				},
+			},
+		},
+		{
+			desc: "tcp with label and port and http service",
+			containers: []rancherData{
+				{
+					Name: "Test",
+					Labels: map[string]string{
+						"traefik.tcp.routers.foo.rule":                       "HostSNI(`foo.bar`)",
+						"traefik.tcp.routers.foo.tls":                        "true",
+						"traefik.tcp.services.foo.loadbalancer.server.port":  "8080",
+						"traefik.http.services.Service1.loadbalancer.method": "drr",
+					},
+					Port:       "80/tcp",
+					Containers: []string{"127.0.0.1", "127.0.0.2"},
+					Health:     "",
+					State:      "",
+				},
+			},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers: map[string]*config.TCPRouter{
+						"foo": {
+							Service: "foo",
+							Rule:    "HostSNI(`foo.bar`)",
+							TLS:     &config.RouterTCPTLSConfig{},
+						},
+					},
+					Services: map[string]*config.TCPService{
+						"foo": {
+							LoadBalancer: &config.TCPLoadBalancerService{
+								Servers: []config.TCPServer{
+									{
+										Address: "127.0.0.1:8080",
+										Weight:  1,
+									},
+									{
+										Address: "127.0.0.2:8080",
+										Weight:  1,
+									},
+								},
+								Method: "wrr",
+							},
+						},
+					},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"Test": {
+							Service: "Service1",
+							Rule:    "Host(`Test.traefik.wtf`)",
+						},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"Service1": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://127.0.0.1:80",
+										Weight: 1,
+									},
+									{
+										URL:    "http://127.0.0.2:80",
+										Weight: 1,
+									},
+								},
+								Method:         "drr",
+								PassHostHeader: true,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "tcp with label for tcp service",
+			containers: []rancherData{
+				{
+					Name: "Test",
+					Labels: map[string]string{
+						"traefik.tcp.services.foo.loadbalancer.server.port": "8080",
+					},
+					Port:       "80/tcp",
+					Containers: []string{"127.0.0.1"},
+					Health:     "",
+					State:      "",
+				},
+			},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers: map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{
+						"foo": {
+							LoadBalancer: &config.TCPLoadBalancerService{
+								Servers: []config.TCPServer{
+									{
+										Address: "127.0.0.1:8080",
+										Weight:  1,
+									},
+								},
+								Method: "wrr",
+							},
+						},
+					},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers:     map[string]*config.Router{},
+					Middlewares: map[string]*config.Middleware{},
+					Services:    map[string]*config.Service{},
 				},
 			},
 		},
@@ -475,7 +782,7 @@ func Test_buildConfiguration(t *testing.T) {
 
 			configuration := p.buildConfiguration(context.Background(), test.containers)
 
-			assert.Equal(t, test.expected, configuration.HTTP)
+			assert.Equal(t, test.expected, configuration)
 		})
 	}
 }

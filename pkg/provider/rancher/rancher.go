@@ -36,7 +36,8 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	provider.BaseProvider     `mapstructure:",squash" export:"true"`
+	provider.Constrainer      `mapstructure:",squash" export:"true"`
+	Watch                     bool   `description:"Watch provider" export:"true"`
 	DefaultRule               string `description:"Default rule"`
 	ExposedByDefault          bool   `description:"Expose containers by default" export:"true"`
 	EnableServiceHealthFilter bool
@@ -64,7 +65,7 @@ func (p *Provider) Init() error {
 	}
 
 	p.defaultRuleTpl = defaultRuleTpl
-	return p.BaseProvider.Init()
+	return nil
 }
 
 func (p *Provider) createClient() (rancher.Client, error) {

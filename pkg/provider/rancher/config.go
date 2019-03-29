@@ -29,6 +29,22 @@ func (p *Provider) buildConfiguration(ctx context.Context, services []rancherDat
 			logger.Error(err)
 			continue
 		}
+
+		if len(confFromLabel.TCP.Routers) > 0 || len(confFromLabel.TCP.Services) > 0 {
+			err := p.buildTCPServiceConfiguration(ctxService, service, confFromLabel.TCP)
+			if err != nil {
+				logger.Error(err)
+				continue
+			}
+			provider.BuildTCPRouterConfiguration(ctxService, confFromLabel.TCP)
+			if len(confFromLabel.HTTP.Routers) == 0 &&
+				len(confFromLabel.HTTP.Middlewares) == 0 &&
+				len(confFromLabel.HTTP.Services) == 0 {
+				configurations[service.Name] = confFromLabel
+				continue
+			}
+		}
+
 		err = p.buildServiceConfiguration(ctx, service, confFromLabel.HTTP)
 		if err != nil {
 			logger.Error(err)
@@ -49,6 +65,28 @@ func (p *Provider) buildConfiguration(ctx context.Context, services []rancherDat
 	}
 
 	return provider.Merge(ctx, configurations)
+}
+
+func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, service rancherData, configuration *config.TCPConfiguration) error {
+	serviceName := service.Name
+
+	if len(configuration.Services) == 0 {
+		configuration.Services = make(map[string]*config.TCPService)
+		lb := &config.TCPLoadBalancerService{}
+		lb.SetDefaults()
+		configuration.Services[serviceName] = &config.TCPService{
+			LoadBalancer: lb,
+		}
+	}
+
+	for _, confService := range configuration.Services {
+		err := p.addServerTCP(ctx, service, confService.LoadBalancer)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (p *Provider) buildServiceConfiguration(ctx context.Context, service rancherData, configuration *config.HTTPConfiguration) error {
@@ -132,6 +170,46 @@ func (p *Provider) addServers(ctx context.Context, service rancherData, loadBala
 
 	loadBalancer.Servers = servers
 	return nil
+}
+
+func (p *Provider) addServerTCP(ctx context.Context, service rancherData, loadBalancer *config.TCPLoadBalancerService) error {
+	log.Debugf("Trying to add servers for service  %s \n", service.Name)
+
+	serverPort := ""
+
+	if loadBalancer != nil && len(loadBalancer.Servers) > 0 {
+		serverPort = loadBalancer.Servers[0].Port
+	}
+
+	port := getServicePort(service)
+
+	if len(loadBalancer.Servers) == 0 {
+		server := config.TCPServer{}
+		server.SetDefaults()
+
+		loadBalancer.Servers = []config.TCPServer{server}
+	}
+
+	if serverPort != "" {
+		port = serverPort
+		loadBalancer.Servers[0].Port = ""
+	}
+
+	if port == "" {
+		return errors.New("port is missing")
+	}
+
+	var servers []config.TCPServer
+	for _, containerIP := range service.Containers {
+		servers = append(servers, config.TCPServer{
+			Address: net.JoinHostPort(containerIP, port),
+			Weight:  1,
+		})
+	}
+
+	loadBalancer.Servers = servers
+	return nil
+
 }
 
 func getLBServerPort(loadBalancer *config.LoadBalancerService) string {
