@@ -16,7 +16,6 @@ import (
 	"github.com/containous/traefik/pkg/config"
 	"github.com/containous/traefik/pkg/job"
 	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/provider"
 	"github.com/containous/traefik/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"github.com/containous/traefik/pkg/provider/kubernetes/k8s"
 	"github.com/containous/traefik/pkg/safe"
@@ -33,23 +32,22 @@ const (
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	provider.BaseProvider  `mapstructure:",squash" export:"true"`
 	Endpoint               string         `description:"Kubernetes server endpoint (required for external cluster client)"`
 	Token                  string         `description:"Kubernetes bearer token (not needed for in-cluster client)"`
 	CertAuthFilePath       string         `description:"Kubernetes certificate authority file path (not needed for in-cluster client)"`
 	DisablePassHostHeaders bool           `description:"Kubernetes disable PassHost Headers" export:"true"`
 	Namespaces             k8s.Namespaces `description:"Kubernetes namespaces" export:"true"`
-	LabelSelector          string         `description:"Kubernetes Ingress label selector to use" export:"true"`
+	LabelSelector          string         `description:"Kubernetes label selector to use" export:"true"`
 	IngressClass           string         `description:"Value of kubernetes.io/ingress.class annotation to watch for" export:"true"`
 	lastConfiguration      safe.Safe
 }
 
-func (p *Provider) newK8sClient(ctx context.Context, ingressLabelSelector string) (*clientWrapper, error) {
-	ingLabelSel, err := labels.Parse(ingressLabelSelector)
+func (p *Provider) newK8sClient(ctx context.Context, labelSelector string) (*clientWrapper, error) {
+	labelSel, err := labels.Parse(labelSelector)
 	if err != nil {
-		return nil, fmt.Errorf("invalid ingress label selector: %q", ingressLabelSelector)
+		return nil, fmt.Errorf("invalid label selector: %q", labelSelector)
 	}
-	log.FromContext(ctx).Infof("ingress label selector is: %q", ingLabelSel)
+	log.FromContext(ctx).Infof("label selector is: %q", labelSel)
 
 	withEndpoint := ""
 	if p.Endpoint != "" {
@@ -70,7 +68,7 @@ func (p *Provider) newK8sClient(ctx context.Context, ingressLabelSelector string
 	}
 
 	if err == nil {
-		client.ingressLabelSelector = ingLabelSel
+		client.labelSelector = labelSel
 	}
 
 	return client, err
@@ -78,7 +76,7 @@ func (p *Provider) newK8sClient(ctx context.Context, ingressLabelSelector string
 
 // Init the provider.
 func (p *Provider) Init() error {
-	return p.BaseProvider.Init()
+	return nil
 }
 
 // Provide allows the k8s provider to provide configurations to traefik
@@ -95,7 +93,7 @@ func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.P
 		return err
 	}
 
-	logger.Debugf("Using Ingress label selector: %q", p.LabelSelector)
+	logger.Debugf("Using label selector: %q", p.LabelSelector)
 	k8sClient, err := p.newK8sClient(ctxLog, p.LabelSelector)
 	if err != nil {
 		return err

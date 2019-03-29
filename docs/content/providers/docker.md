@@ -17,7 +17,7 @@ Attach labels to your containers and let Traefik do the rest!
     Enabling the docker provider
 
     ```toml
-    [docker]
+    [providers.docker]
     endpoint = "unix:///var/run/docker.sock"
     ```
 
@@ -29,7 +29,7 @@ Attach labels to your containers and let Traefik do the rest!
       my-container:
         # ...
         labels:
-          - traefik.http.services.my-container.rule=Host(my-domain)
+          - traefik.http.routers.my-container.rule=Host(`my-domain`)
     ```
 
 ??? example "Configuring Docker Swarm & Deploying / Exposing Services"
@@ -53,7 +53,7 @@ Attach labels to your containers and let Traefik do the rest!
       my-container:
         deploy:
           labels:
-            - traefik.http.services.my-container.rule=Host(my-domain)
+            - traefik.http.routers.my-container.rule=Host(`my-domain`)
     ```
 
     !!! important "Labels in Docker Swarm Mode"
@@ -124,7 +124,7 @@ Traefik requires access to the docker socket to get its dynamic configuration.
     services:
 
       traefik:
-         image: traefik
+         image: traefik:v2.0 # The official v2.0 Traefik docker image
          ports:
            - "80:80"
          volumes:
@@ -227,6 +227,27 @@ You can declare pieces of middleware using labels starting with `traefik.http.mi
 !!! warning "Conflicts in Declaration"
 
     If you declare multiple middleware with the same name but with different parameters, the middleware fails to be declared.
+
+### TCP
+
+You can declare TCP Routers and/or Services using labels.
+
+??? example "Declaring TCP Routers and Services"
+
+    ```yaml
+       services:
+         my-container:
+           # ...
+           labels:
+             - traefik.tcp.routers.my-router.rule="HostSNI(`my-host.com`)"
+             - traefik.tcp.routers.my-router.rule.tls="true"
+             - traefik.tcp.services.my-service.loadbalancer.server.port="4123"
+    ```
+
+!!! warning "TCP and HTTP"
+
+    If you declare a TCP Router/Service, it will prevent Traefik from automatically create an HTTP Router/Service (like it does by default if no TCP Router/Service is defined).
+    You can declare both a TCP Router/Service and an HTTP Router/Service for the same container (but you have to do so manually).
 
 ### Specific Options
 

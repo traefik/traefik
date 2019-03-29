@@ -1,6 +1,7 @@
 package file
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io/ioutil"
@@ -10,6 +11,8 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/BurntSushi/toml"
+	"github.com/Masterminds/sprig"
 	"github.com/containous/traefik/pkg/config"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/provider"
@@ -25,14 +28,16 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	provider.BaseProvider `mapstructure:",squash" export:"true"`
-	Directory             string `description:"Load configuration from one or more .toml files in a directory" export:"true"`
-	TraefikFile           string
+	Directory                 string `description:"Load configuration from one or more .toml files in a directory" export:"true"`
+	Watch                     bool   `description:"Watch provider" export:"true"`
+	Filename                  string `description:"Override default configuration template. For advanced users :)" export:"true"`
+	DebugLogGeneratedTemplate bool   `description:"Enable debug logging of generated configuration template." export:"true"`
+	TraefikFile               string
 }
 
 // Init the provider
 func (p *Provider) Init() error {
-	return p.BaseProvider.Init()
+	return nil
 }
 
 // Provide allows the file provider to provide configurations to traefik
@@ -302,6 +307,58 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 
 	for conf := range configTLSMaps {
 		configuration.TLS = append(configuration.TLS, conf)
+	}
+	return configuration, nil
+}
+
+// CreateConfiguration creates a provider configuration from content using templating.
+func (p *Provider) CreateConfiguration(tmplContent string, funcMap template.FuncMap, templateObjects interface{}) (*config.Configuration, error) {
+	var defaultFuncMap = sprig.TxtFuncMap()
+	defaultFuncMap["normalize"] = provider.Normalize
+	defaultFuncMap["split"] = strings.Split
+	for funcID, funcElement := range funcMap {
+		defaultFuncMap[funcID] = funcElement
+	}
+
+	tmpl := template.New(p.Filename).Funcs(defaultFuncMap)
+
+	_, err := tmpl.Parse(tmplContent)
+	if err != nil {
+		return nil, err
+	}
+
+	var buffer bytes.Buffer
+	err = tmpl.Execute(&buffer, templateObjects)
+	if err != nil {
+		return nil, err
+	}
+
+	var renderedTemplate = buffer.String()
+	if p.DebugLogGeneratedTemplate {
+		log.Debugf("Template content: %s", tmplContent)
+		log.Debugf("Rendering results: %s", renderedTemplate)
+	}
+	return p.DecodeConfiguration(renderedTemplate)
+}
+
+// DecodeConfiguration Decodes a *types.Configuration from a content.
+func (p *Provider) DecodeConfiguration(content string) (*config.Configuration, error) {
+	configuration := &config.Configuration{
+		HTTP: &config.HTTPConfiguration{
+			Routers:     make(map[string]*config.Router),
+			Middlewares: make(map[string]*config.Middleware),
+			Services:    make(map[string]*config.Service),
+		},
+		TCP: &config.TCPConfiguration{
+			Routers:  make(map[string]*config.TCPRouter),
+			Services: make(map[string]*config.TCPService),
+		},
+		TLS:        make([]*tls.Configuration, 0),
+		TLSStores:  make(map[string]tls.Store),
+		TLSOptions: make(map[string]tls.TLS),
+	}
+	if _, err := toml.Decode(content, configuration); err != nil {
+		return nil, err
 	}
 	return configuration, nil
 }

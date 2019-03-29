@@ -13,22 +13,18 @@ This can help services deal with large data (multipart/form-data for example), a
 
 ## Configuration Examples
 
-??? example "File -- Sets the maximum request body to 2Mb"
-    
-    ```toml
-    [http.middlewares]
-      [http.middlewares.2Mb-limit.buffering]
-          maxRequestBodyBytes = 250000
-    ``` 
+```yaml tab="Docker"
+# Sets the maximum request body to 2Mb
+labels:
+- "traefik.http.middlewares.2Mb-memory.buffering.maxRequestBodyBytes=250000",
+```
 
-??? example "Docker -- Buffers 1Mb of the request in memory, then writes to disk"
-
-    ```yaml
-    a-container:
-      image: a-container-image 
-        labels:
-          - "traefik.http.middlewares.1Mb-memory.buffering.memRequestBodyBytes=125000",
-    ```
+```toml tab="File"
+# Sets the maximum request body to 2Mb
+[http.middlewares]
+  [http.middlewares.2Mb-limit.buffering]
+      maxRequestBodyBytes = 250000
+```
 
 ## Configuration Options
 

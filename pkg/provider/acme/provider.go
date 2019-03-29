@@ -383,6 +383,9 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 			case config := <-p.configFromListenerChan:
 				if config.TCP != nil {
 					for routerName, route := range config.TCP.Routers {
+						if route.TLS == nil {
+							continue
+						}
 						ctxRouter := log.With(ctx, log.Str(log.RouterName, routerName), log.Str(log.Rule, route.Rule))
 
 						domains, err := rules.ParseHostSNI(route.Rule)
@@ -395,6 +398,9 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 				}
 
 				for routerName, route := range config.HTTP.Routers {
+					if route.TLS == nil {
+						continue
+					}
 					ctxRouter := log.With(ctx, log.Str(log.RouterName, routerName), log.Str(log.Rule, route.Rule))
 
 					domains, err := rules.ParseDomains(route.Rule)

@@ -33,7 +33,7 @@ Pointing Traefik at your orchestrator should be the _only_ configuration step yo
 
 ---
 
-:construction: As stated in the [1.7 release note](https://blog.containo.us/traefik-1-7-yet-another-slice-of-awesomeness-2a9c99737889#782d), a significant update is in progress on the [master](https://github.com/containous/traefik/tree/master) branch. This branch will remain in constant evolution and prone to change with little notice, so use it for test purposes only.
+:warning: Please be aware that the old configurations for Traefik v1.X are NOT compatible with the v2.X config as of now. If you're testing out v2, please ensure you are using a [v2 configuration](https://docs.traefik.io/v2.0/).
 
 ## Overview
 
@@ -85,10 +85,6 @@ _(But if you'd rather configure some of your routes manually, Traefik supports t
 ## Quickstart
 
 To get your hands on Traefik, you can use the [5-Minute Quickstart](http://docs.traefik.io/#the-traefik-quickstart-using-docker) in our documentation (you will need Docker).
-
-Alternatively, if you don't want to install anything on your computer, you can try Traefik online in this great [Katacoda tutorial](https://www.katacoda.com/courses/traefik/deploy-load-balancer) that shows how to load balance requests between multiple Docker containers. 
-
-If you are looking for a more comprehensive and real use-case example, you can also check [Play-With-Docker](http://training.play-with-docker.com/traefik-load-balancing/) to see how to load balance between multiple nodes.
 
 ## Web UI
 
@@ -144,7 +140,7 @@ You will learn fundamental Traefik features and see some demos with Kubernetes.
 
 ## Maintainers
 
-[Information about process and maintainers](MAINTAINER.md)
+[Information about process and maintainers](docs/content/contributing/maintainers.md)
 
 ## Contributing
 

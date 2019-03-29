@@ -66,19 +66,22 @@ markdown_extensions:
 
 # Page tree
 nav:
+  - '': 'providers/kubernetes-ingress.md'
   - '': 'reference/acme.md'
   - '': 'reference/providers/docker.md'
   - '': 'reference/providers/file.md'
+  - '': 'reference/providers/kubernetescrd.md'
   - '': 'reference/entrypoints.md'
   - 'Welcome': 'index.md'
   - 'Getting Started':
       - 'Concepts' : 'getting-started/concepts.md'
       - 'Quick Start': 'getting-started/quick-start.md'
-      - 'Configuration Overview': 'getting-started/configuration-overview.md'
+      - 'Configuration Introduction': 'getting-started/configuration-overview.md'
   - 'Configuration Discovery':
       - 'Overview': 'providers/overview.md'
       - 'Docker': 'providers/docker.md'
       - 'File': 'providers/file.md'
+      - 'Kubernetes IngressRoute': 'providers/kubernetes-crd.md'
   - 'Routing & Load Balancing':
       - 'Overview': 'routing/overview.md'
       - 'Entrypoints': 'routing/entrypoints.md'
@@ -119,6 +122,8 @@ nav:
       - 'Logs': 'observability/logs.md'
       - 'Access Logs': 'observability/access-logs.md'
       - 'Tracing': 'observability/tracing.md'
+  - 'User Guides':
+      - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
   - 'Contributing':
       - 'Thank You!': 'contributing/thank-you.md'
       - 'Submitting Issues': 'contributing/submitting-issues.md'

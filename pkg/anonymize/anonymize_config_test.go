@@ -25,7 +25,6 @@ import (
 )
 
 func TestDo_globalConfiguration(t *testing.T) {
-
 	config := &static.Configuration{}
 
 	sendAnonymousUsage := true
@@ -148,9 +147,15 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 
 	config.Providers.File = &file.Provider{
-		BaseProvider: provider.BaseProvider{
-			Watch:    true,
-			Filename: "file Filename",
+		Directory:                 "file Directory",
+		Watch:                     true,
+		Filename:                  "file Filename",
+		DebugLogGeneratedTemplate: true,
+		TraefikFile:               "",
+	}
+
+	config.Providers.Docker = &docker.Provider{
+		Constrainer: provider.Constrainer{
 			Constraints: types.Constraints{
 				{
 					Key:       "file Constraints Key 1",
@@ -163,20 +168,8 @@ func TestDo_globalConfiguration(t *testing.T) {
 					MustMatch: true,
 				},
 			},
-			Trace:                     true,
-			DebugLogGeneratedTemplate: true,
 		},
-		Directory: "file Directory",
-	}
-
-	config.Providers.Docker = &docker.Provider{
-		BaseProvider: provider.BaseProvider{
-			Watch:                     true,
-			Filename:                  "myfilename",
-			Constraints:               nil,
-			Trace:                     true,
-			DebugLogGeneratedTemplate: true,
-		},
+		Watch:       true,
 		Endpoint:    "MyEndPoint",
 		DefaultRule: "PathPrefix(`/`)",
 		TLS: &types.ClientTLS{
@@ -194,24 +187,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 
 	config.Providers.Kubernetes = &ingress.Provider{
-		BaseProvider: provider.BaseProvider{
-			Watch:    true,
-			Filename: "myFileName",
-			Constraints: types.Constraints{
-				{
-					Key:       "k8s Constraints Key 1",
-					Regex:     "k8s Constraints Regex 2",
-					MustMatch: true,
-				},
-				{
-					Key:       "k8s Constraints Key 1",
-					Regex:     "k8s Constraints Regex 2",
-					MustMatch: true,
-				},
-			},
-			Trace:                     true,
-			DebugLogGeneratedTemplate: true,
-		},
 		Endpoint:               "MyEndpoint",
 		Token:                  "MyToken",
 		CertAuthFilePath:       "MyCertAuthPath",
@@ -222,24 +197,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 
 	config.Providers.KubernetesCRD = &crd.Provider{
-		BaseProvider: provider.BaseProvider{
-			Watch:    true,
-			Filename: "myFileName",
-			Constraints: types.Constraints{
-				{
-					Key:       "k8s Constraints Key 1",
-					Regex:     "k8s Constraints Regex 2",
-					MustMatch: true,
-				},
-				{
-					Key:       "k8s Constraints Key 1",
-					Regex:     "k8s Constraints Regex 2",
-					MustMatch: true,
-				},
-			},
-			Trace:                     true,
-			DebugLogGeneratedTemplate: true,
-		},
 		Endpoint:               "MyEndpoint",
 		Token:                  "MyToken",
 		CertAuthFilePath:       "MyCertAuthPath",

@@ -144,6 +144,43 @@ func (s *DockerSuite) TestDefaultDockerContainers(c *check.C) {
 	c.Assert(version["Version"], checker.Equals, "swarm/1.0.0")
 }
 
+func (s *DockerSuite) TestDockerContainersWithTCPLabels(c *check.C) {
+	tempObjects := struct {
+		DockerHost  string
+		DefaultRule string
+	}{
+		DockerHost:  s.getDockerHost(),
+		DefaultRule: "Host(`{{ normalize .Name }}.docker.localhost`)",
+	}
+
+	file := s.adaptFile(c, "fixtures/docker/simple.toml", tempObjects)
+	defer os.Remove(file)
+
+	// Start a container with some labels
+	labels := map[string]string{
+		"traefik.tcp.Routers.Super.Rule":                      "HostSNI(`my.super.host`)",
+		"traefik.tcp.Routers.Super.tls":                       "true",
+		"traefik.tcp.Services.Super.Loadbalancer.server.port": "8080",
+	}
+
+	s.startContainerWithLabels(c, "containous/whoamitcp", labels, "-name", "my.super.host")
+
+	// Start traefik
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`my.super.host`)"))
+	c.Assert(err, checker.IsNil)
+
+	who, err := guessWho("127.0.0.1:8000", "my.super.host", true)
+	c.Assert(err, checker.IsNil)
+
+	c.Assert(who, checker.Contains, "my.super.host")
+}
+
 func (s *DockerSuite) TestDockerContainersWithLabels(c *check.C) {
 	tempObjects := struct {
 		DockerHost  string

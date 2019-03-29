@@ -5,6 +5,10 @@ See What's Going On
 
 The dashboard is the central place that shows you the current active routes handled by Traefik. 
 
+!!! warning "Dashboard WIP"
+    Currently, the dashboard is in a Work In Progress State while being reconstructed for v2. 
+    Therefore, the dashboard is currently not working.
+
 <figure>
    <img src="../../assets/img/dashboard-main.png" alt="Dashboard - Providers" />
    <figcaption>The dashboard in action with Traefik listening to 3 different providers</figcaption>
@@ -27,10 +31,10 @@ To enable the dashboard, you need to enable Traefik's API.
 
 ??? example "Using the Command Line"
 
-    Option | Values | Default Value 
-    -- | -- | --:
-    --api | \[true\|false\] | false
-    --api.dashboard | \[true\|false\] | true when api is true 
+    | Option          | Values          |         Default Value |
+    | --------------- | --------------- | --------------------: |
+    | --api           | \[true\|false\] |                 false |
+    | --api.dashboard | \[true\|false\] | true when api is true |
     
     {!more-on-command-line.md!}
 
@@ -50,10 +54,10 @@ To enable the dashboard, you need to enable Traefik's API.
 
 ??? example "Using a Key/Value Store"
 
-    Key | Values | Default Value
-    -- | -- | --:
-    api | \[true\|false\] | false
-    api.dashboard | \[true\|false\] | true when api is true 
+    | Key           | Values          |         Default Value |
+    | ------------- | --------------- | --------------------: |
+    | api           | \[true\|false\] |                 false |
+    | api.dashboard | \[true\|false\] | true when api is true |
     
     {!more-on-key-value-store.md!}
     

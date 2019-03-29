@@ -1,5 +1,40 @@
 # Change Log
 
+## [v2.0.0-alpha3](https://github.com/containous/traefik/tree/v2.0.0-alpha3) (2019-03-29)
+[All Commits](https://github.com/containous/traefik/compare/v2.0.0-alpha2...v2.0.0-alpha3)
+
+**Enhancements:**
+- **[acme,k8s,k8s/crd]** Document the TLS with ACME case ([#4654](https://github.com/containous/traefik/pull/4654) by [mpl](https://github.com/mpl))
+- **[docker,tcp]** Add support for TCP labels in Docker provider ([#4621](https://github.com/containous/traefik/pull/4621) by [juliens](https://github.com/juliens))
+- **[provider]** Remove BaseProvider ([#4661](https://github.com/containous/traefik/pull/4661) by [ldez](https://github.com/ldez))
+
+**Bug fixes:**
+- **[server]** Fix panic while server shutdown ([#4644](https://github.com/containous/traefik/pull/4644) by [juliens](https://github.com/juliens))
+
+**Documentation:**
+- **[acme,k8s,k8s/crd]** Full ACME+CRD example ([#4652](https://github.com/containous/traefik/pull/4652) by [mpl](https://github.com/mpl))
+- **[acme]** Enhance manual dnsChallenge documentation ([#4636](https://github.com/containous/traefik/pull/4636) by [ntaranov](https://github.com/ntaranov))
+- **[docker]** Fix Getting started ([#4646](https://github.com/containous/traefik/pull/4646) by [mmatur](https://github.com/mmatur))
+- **[docker]** docker-compose examples ([#4642](https://github.com/containous/traefik/pull/4642) by [karnthis](https://github.com/karnthis))
+- **[middleware]** Fix typo in forwardAuth middleware documentation ([#4638](https://github.com/containous/traefik/pull/4638) by [AkeemMcLennon](https://github.com/AkeemMcLennon))
+- **[middleware]** Enhance middleware examples. ([#4680](https://github.com/containous/traefik/pull/4680) by [ldez](https://github.com/ldez))
+- Fix typos in docs ([#4662](https://github.com/containous/traefik/pull/4662) by [SeMeKh](https://github.com/SeMeKh))
+- Remove old links in readme ([#4651](https://github.com/containous/traefik/pull/4651) by [ldez](https://github.com/ldez))
+- Fix some minors errors on the documentation ([#4664](https://github.com/containous/traefik/pull/4664) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Fix dead maintainers link on the README.md ([#4639](https://github.com/containous/traefik/pull/4639) by [benjaminch](https://github.com/benjaminch))
+- Update traefik.sample.toml ([#4657](https://github.com/containous/traefik/pull/4657) by [ldez](https://github.com/ldez))
+
+## [v2.0.0-alpha2](https://github.com/containous/traefik/tree/v2.0.0-alpha2) (2019-03-19)
+[All Commits](https://github.com/containous/traefik/compare/v2.0.0-alpha1...v2.0.0-alpha2)
+
+**Bug fixes:**
+- **[k8s,k8s/crd]** Fix log messages about label selector ([#4629](https://github.com/containous/traefik/pull/4629) by [mpl](https://github.com/mpl))
+- **[server]** Fix problem in aggregator provider ([#4625](https://github.com/containous/traefik/pull/4625) by [juliens](https://github.com/juliens))
+
+**Documentation:**
+- **[k8s,k8s/crd]** doc: kubernetes CRD provider ([#4620](https://github.com/containous/traefik/pull/4620) by [mpl](https://github.com/mpl))
+- **[webui]** change docs and adjust dashboard for v2 alpha ([#4632](https://github.com/containous/traefik/pull/4632) by [SantoDE](https://github.com/SantoDE))
+
 ## [v2.0.0-alpha1](https://github.com/containous/traefik/tree/v2.0.0-alpha1) (2019-03-18)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.0-rc1...v2.0.0-alpha1)
 

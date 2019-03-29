@@ -1,4 +1,4 @@
-# Configuration Overview
+# Configuration Introduction
 
 How the Magic Happens
 {: .subtitle }
@@ -14,6 +14,10 @@ Elements in the _static configuration_ set up connections to [providers](../../p
 
 The _dynamic configuration_ contains everything that defines how the requests are handled by your system.
 This configuration can change and is seamlessly hot-reloaded, without any request interuption or connection loss.    
+
+!!! warning "Incompatible Configuration"
+    Please be aware that the old configurations for Traefik v1.X are NOT compatible with the v2.X config as of now.
+    If you're testing out v2, please ensure you are using a v2 configuration.
 
 ## The Dynamic Configuration 
 

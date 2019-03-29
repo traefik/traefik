@@ -1,6 +1,6 @@
 # EntryPoints
 
-Opening Connections for Incomming Requests
+Opening Connections for Incoming Requests
 {: .subtitle }
 
 ![EntryPoints](../assets/img/entrypoints.png)
@@ -29,11 +29,6 @@ They define the port which will receive the requests (whether HTTP or TCP).
     
       [entrypoints.web-secure]
         address = ":443"
-        
-        [entrypoints.web-secure.tls]
-          [[entrypoints.web-secure.tls.certificates]]
-            certFile = "tests/traefik.crt"
-            keyFile = "tests/traefik.key"
     ```
 
     - Two entrypoints are defined: one called `web`, and the other called `web-secure`.
@@ -51,7 +46,7 @@ Entrypoints are part of the [static configuration](../getting-started/configurat
     
     ```shell
     --entryPoints='Name:http Address::80'
-    --entryPoints='Name:https Address::443 TLS'
+    --entryPoints='Name:https Address::443'
     ```
     
     !!! note
@@ -64,7 +59,7 @@ Entrypoints are part of the [static configuration](../getting-started/configurat
         
         ```yaml
         traefik:
-            image: traefik
+            image: traefik:v2.0 # The official v2.0 Traefik docker image
             command:
                 - --defaultentrypoints=powpow
                 - "--entryPoints=Name:powpow Address::42 Compress:true"
@@ -74,7 +69,7 @@ Entrypoints are part of the [static configuration](../getting-started/configurat
         
         ```yaml
         traefik:
-            image: traefik
+            image: traefik:v2.0 # The official v2.0 Traefik docker image
             command: --defaultentrypoints=powpow --entryPoints='Name:powpow Address::42 Compress:true'
         ```
 
@@ -97,7 +92,7 @@ Traefik supports [ProxyProtocol](https://www.haproxy.org/download/1.8/doc/proxy-
     
 ??? example "Insecure Mode -- Testing Environnement Only"
 
-    In a test environments, you can configure Traefik to trust every incomming connection. Doing so, every remote client address will be replaced (`trustedIPs` won't have any effect)
+    In a test environments, you can configure Traefik to trust every incoming connection. Doing so, every remote client address will be replaced (`trustedIPs` won't have any effect)
 
     ```toml
     [entrypoints]

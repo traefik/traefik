@@ -5,7 +5,7 @@ metadata:
   namespace: default
 
 spec:
-  entrypoints:
+  entryPoints:
     - web
 
   routes:
@@ -15,3 +15,6 @@ spec:
     services:
     - name: whoami
       port: 80
+
+  tls:
+    secretName:

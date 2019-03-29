@@ -20,8 +20,11 @@ type Route struct {
 	Middlewares []MiddlewareRef `json:"middlewares"`
 }
 
-// TLS contains the TLS certificates configuration of the routes.
+// TLS contains the TLS certificates configuration of the routes. To enable
+// Let's Encrypt, set a SecretName with an empty value.
 type TLS struct {
+	// SecretName is the name of the referenced Kubernetes Secret to specify the
+	// certificate details.
 	SecretName string `json:"secretName"`
 	// TODO MinimumProtocolVersion string `json:"minimumProtocolVersion,omitempty"`
 }

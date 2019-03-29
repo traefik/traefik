@@ -22,7 +22,7 @@ ssh-add ~/.ssh/traefiker_rsa
 echo "Updating traefik-library-imag repo..."
 git clone git@github.com:containous/traefik-library-image.git
 cd traefik-library-image
-./update.sh $VERSION
+./updatev2.sh $VERSION
 git add -A
 echo $VERSION | git commit --file -
 echo $VERSION | git tag -a $VERSION --file -

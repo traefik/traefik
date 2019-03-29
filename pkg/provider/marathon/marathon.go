@@ -46,7 +46,9 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configuration of the provider.
 type Provider struct {
-	provider.BaseProvider
+	provider.Constrainer      `mapstructure:",squash" export:"true"`
+	Trace                     bool             `description:"Display additional provider logs." export:"true"`
+	Watch                     bool             `description:"Watch provider" export:"true"`
 	Endpoint                  string           `description:"Marathon server endpoint. You can also specify multiple endpoint for Marathon" export:"true"`
 	DefaultRule               string           `description:"Default rule"`
 	ExposedByDefault          bool             `description:"Expose Marathon apps by default" export:"true"`
@@ -89,7 +91,7 @@ func (p *Provider) Init() error {
 	}
 
 	p.defaultRuleTpl = defaultRuleTpl
-	return p.BaseProvider.Init()
+	return nil
 }
 
 // Provide allows the marathon provider to provide configurations to traefik
