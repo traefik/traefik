@@ -15,8 +15,9 @@ RUN npm run build
 FROM golang:1.11-alpine as gobuild
 
 RUN apk --update upgrade \
-&& apk --no-cache --no-progress add git mercurial bash gcc musl-dev curl tar \
-&& rm -rf /var/cache/apk/*
+    && apk --no-cache --no-progress add git mercurial bash gcc musl-dev curl tar ca-certificates tzdata \
+    && update-ca-certificates \
+    && rm -rf /var/cache/apk/*
 
 RUN mkdir -p /usr/local/bin \
     && curl -fsSL -o /usr/local/bin/go-bindata https://github.com/containous/go-bindata/releases/download/v1.0.0/go-bindata \
@@ -33,7 +34,8 @@ RUN ./script/make.sh generate binary
 ## IMAGE
 FROM scratch
 
-COPY script/ca-certificates.crt /etc/ssl/certs/
+COPY --from=gobuild /usr/share/zoneinfo /usr/share/zoneinfo
+COPY --from=gobuild /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=gobuild /go/src/github.com/containous/traefik/dist/traefik /
 
 EXPOSE 80

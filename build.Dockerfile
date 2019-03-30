@@ -1,8 +1,9 @@
 FROM golang:1.11-alpine
 
 RUN apk --update upgrade \
-&& apk --no-cache --no-progress add git mercurial bash gcc musl-dev curl tar \
-&& rm -rf /var/cache/apk/*
+    && apk --no-cache --no-progress add git mercurial bash gcc musl-dev curl tar ca-certificates tzdata \
+    && update-ca-certificates \
+    && rm -rf /var/cache/apk/*
 
 RUN go get golang.org/x/lint/golint \
 && go get github.com/kisielk/errcheck \
