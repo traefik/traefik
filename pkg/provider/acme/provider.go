@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	fmtlog "log"
@@ -29,7 +30,6 @@ import (
 	legolog "github.com/go-acme/lego/log"
 	"github.com/go-acme/lego/providers/dns"
 	"github.com/go-acme/lego/registration"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
