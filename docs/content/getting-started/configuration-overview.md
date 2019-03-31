@@ -21,7 +21,7 @@ This configuration can change and is seamlessly hot-reloaded, without any reques
 
 ## The Dynamic Configuration 
 
-Traefik gets its _dynamic configuration_ from [providers](../providers/overview.md): wether an orchestrator, a service registry, or a plain old configuration file. Since this configuration is specific to your infrastructure choices, we invite you to refer to the [dedicated section of this documentation](../providers/overview.md).
+Traefik gets its _dynamic configuration_ from [providers](../providers/overview.md): whether an orchestrator, a service registry, or a plain old configuration file. Since this configuration is specific to your infrastructure choices, we invite you to refer to the [dedicated section of this documentation](../providers/overview.md).
 
 !!! Note 
    
