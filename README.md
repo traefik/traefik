@@ -128,7 +128,7 @@ git clone https://github.com/containous/traefik
 
 ## Introductory Videos
 
-:warning: Please be aware that these videos are for v1.X. The old configurations for Traefik v1.X are NOT compatible with the v2.X config as of now. If you're testing out v2, please ensure you are using a [v2 configuration](https://docs.traefik.io/v2.0/).
+:warning: Please be aware that these videos are for v1.X. The old configurations for Traefik v1.X are NOT compatible with Traefik v2. If you're testing out v2, please ensure you are using a [v2 configuration](https://docs.traefik.io/v2.0/).
 
 Here is a talk given by [Emile Vauge](https://github.com/emilevauge) at GopherCon 2017.
 You will learn Traefik basics in less than 10 minutes.
