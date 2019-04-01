@@ -11,7 +11,7 @@ The DigestAuth middleware is a quick way to restrict access to your services to 
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.declared-users-only.digestauth.usersFile=path-to-file.ext",
+- "traefik.http.middlewares.declared-users-only.digestauth.usersFile=path-to-file.ext"
 ```
 
 ```toml tab="File"
