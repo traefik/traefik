@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 
-source "$(dirname "$BASH_SOURCE")/.validate"
-
 IFS=$'\n'
-files=( $(validate_diff --diff-filter=ACMR --name-only -- 'docs/*.md') )
+files=( $( git ls-files 'docs/*.md' *.md ) )
 unset IFS
 
 errors=()

@@ -1,9 +1,9 @@
 package rules
 
 import (
+	"errors"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/vulcand/predicate"
 )
 

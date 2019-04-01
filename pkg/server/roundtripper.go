@@ -3,6 +3,7 @@ package server
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"net"
 	"net/http"
 	"time"
@@ -10,7 +11,6 @@ import (
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/containous/traefik/pkg/log"
 	traefiktls "github.com/containous/traefik/pkg/tls"
-	"github.com/pkg/errors"
 	"golang.org/x/net/http2"
 )
 

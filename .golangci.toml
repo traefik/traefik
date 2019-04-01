@@ -1,8 +1,6 @@
 [run]
   deadline = "10m"
-  skip-files = [
-    "^old/.*",
-  ]
+  skip-files = []
 
 [linters-settings]
 
@@ -53,12 +51,6 @@
     path = ".+_test.go"
     linters = ["goconst"]
  [[issues.exclude-rules]]
-    path = "provider/label/internal/.+_test.go"
-    text = "U1000: field `(foo|fuu)` is unused"
- [[issues.exclude-rules]]
-    path = "middlewares/recovery/recovery.go"
-    text = "`logger` can be `github.com/containous/traefik/vendor/github.com/stretchr/testify/assert.TestingT`"
- [[issues.exclude-rules]]
     path = "integration/.+_test.go"
     text = "Error return value of `cmd\\.Process\\.Kill` is not checked"
  [[issues.exclude-rules]]
@@ -68,23 +60,26 @@
     path = "integration/grpc_test.go"
     text = "Error return value of `closer` is not checked"
  [[issues.exclude-rules]]
-    path = "provider/kubernetes/builder_(endpoint|service)_test.go"
+    path = "pkg/h2c/h2c.go"
+    text = "Error return value of `rw.Write` is not checked"
+ [[issues.exclude-rules]]
+    path = "pkg/middlewares/recovery/recovery.go"
+    text = "`logger` can be `github.com/containous/traefik/vendor/github.com/stretchr/testify/assert.TestingT`"
+ [[issues.exclude-rules]]
+    path = "pkg/provider/docker/builder_test.go"
     text = "(U1000: func )?`(.+)` is unused"
  [[issues.exclude-rules]]
-    path = "provider/docker/builder_test.go"
+    path = "pkg/provider/kubernetes/builder_(endpoint|service)_test.go"
     text = "(U1000: func )?`(.+)` is unused"
+ [[issues.exclude-rules]]
+    path = "pkg/provider/label/internal/.+_test.go"
+    text = "U1000: field `(foo|fuu)` is unused"
+ [[issues.exclude-rules]]
+    path = "pkg/server/service/bufferpool.go"
+    text = "SA6002: argument should be pointer-like to avoid allocations"
  [[issues.exclude-rules]]
     path = "cmd/configuration.go"
     text = "string `traefik` has (\\d) occurrences, make it a constant"
- [[issues.exclude-rules]]
-    path = "h2c/h2c.go"
-    text = "Error return value of `rw.Write` is not checked"
- [[issues.exclude-rules]]
-    path = "server/service/bufferpool.go"
-    text = "SA6002: argument should be pointer-like to avoid allocations"
- [[issues.exclude-rules]] # FIXME must be fixed
-    path = "acme/.+.go"
-    text = "(assignment copies lock value to domainsCerts|literal copies lock value from)"
  [[issues.exclude-rules]] # FIXME must be fixed
     path = "cmd/context.go"
     text = "S1000: should use a simple channel send/receive instead of `select` with a single case"

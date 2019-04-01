@@ -13,58 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestBuilder_buildConstructorCircuitBreaker(t *testing.T) {
-	testConfig := map[string]*config.Middleware{
-		"empty": {
-			CircuitBreaker: &config.CircuitBreaker{
-				Expression: "",
-			},
-		},
-		"foo": {
-			CircuitBreaker: &config.CircuitBreaker{
-				Expression: "NetworkErrorRatio() > 0.5",
-			},
-		},
-	}
-	middlewaresBuilder := NewBuilder(testConfig, nil)
-
-	emptyHandler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {})
-
-	testCases := []struct {
-		desc          string
-		middlewareID  string
-		expectedError bool
-	}{
-		{
-			desc:          "Should fail at creating a circuit breaker with an empty expression",
-			expectedError: true,
-			middlewareID:  "empty",
-		}, {
-			desc:          "Should create a circuit breaker with a valid expression",
-			expectedError: false,
-			middlewareID:  "foo",
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-			constructor, err := middlewaresBuilder.buildConstructor(context.Background(), test.middlewareID, *testConfig[test.middlewareID])
-			require.NoError(t, err)
-
-			middleware, err2 := constructor(emptyHandler)
-
-			if test.expectedError {
-				require.Error(t, err2)
-			} else {
-				require.NoError(t, err)
-				require.NotNil(t, middleware)
-			}
-		})
-	}
-}
-
 func TestBuilder_BuildChainNilConfig(t *testing.T) {
 	testConfig := map[string]*config.Middleware{
 		"empty": {},
@@ -87,59 +35,7 @@ func TestBuilder_BuildChainNonExistentChain(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestBuilder_buildConstructorAddPrefix(t *testing.T) {
-	testConfig := map[string]*config.Middleware{
-		"empty": {
-			AddPrefix: &config.AddPrefix{
-				Prefix: "",
-			},
-		},
-		"foo": {
-			AddPrefix: &config.AddPrefix{
-				Prefix: "foo/",
-			},
-		},
-	}
-
-	middlewaresBuilder := NewBuilder(testConfig, nil)
-
-	testCases := []struct {
-		desc          string
-		middlewareID  string
-		expectedError bool
-	}{
-		{
-			desc:          "Should not create an empty AddPrefix middleware when given an empty prefix",
-			middlewareID:  "empty",
-			expectedError: true,
-		}, {
-			desc:          "Should create an AddPrefix middleware when given a valid configuration",
-			middlewareID:  "foo",
-			expectedError: false,
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			constructor, err := middlewaresBuilder.buildConstructor(context.Background(), test.middlewareID, *testConfig[test.middlewareID])
-			require.NoError(t, err)
-
-			middleware, err2 := constructor(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}))
-
-			if test.expectedError {
-				require.Error(t, err2)
-			} else {
-				require.NoError(t, err)
-				require.NotNil(t, middleware)
-			}
-		})
-	}
-}
-
-func TestBuild_BuildChainWithContext(t *testing.T) {
+func TestBuilder_BuildChainWithContext(t *testing.T) {
 	testCases := []struct {
 		desc            string
 		buildChain      []string
@@ -385,6 +281,79 @@ func TestBuild_BuildChainWithContext(t *testing.T) {
 				for key, value := range test.expected {
 					assert.Equal(t, value, request.Header.Get(key))
 				}
+			}
+		})
+	}
+}
+
+func TestBuilder_buildConstructor(t *testing.T) {
+	testConfig := map[string]*config.Middleware{
+		"cb-empty": {
+			CircuitBreaker: &config.CircuitBreaker{
+				Expression: "",
+			},
+		},
+		"cb-foo": {
+			CircuitBreaker: &config.CircuitBreaker{
+				Expression: "NetworkErrorRatio() > 0.5",
+			},
+		},
+		"ap-empty": {
+			AddPrefix: &config.AddPrefix{
+				Prefix: "",
+			},
+		},
+		"ap-foo": {
+			AddPrefix: &config.AddPrefix{
+				Prefix: "foo/",
+			},
+		},
+	}
+
+	middlewaresBuilder := NewBuilder(testConfig, nil)
+
+	testCases := []struct {
+		desc          string
+		middlewareID  string
+		expectedError bool
+	}{
+		{
+			desc:          "Should fail at creating a circuit breaker with an empty expression",
+			middlewareID:  "cb-empty",
+			expectedError: true,
+		},
+		{
+			desc:          "Should create a circuit breaker with a valid expression",
+			middlewareID:  "cb-foo",
+			expectedError: false,
+		},
+		{
+			desc:          "Should not create an empty AddPrefix middleware when given an empty prefix",
+			middlewareID:  "ap-empty",
+			expectedError: true,
+		},
+		{
+			desc:          "Should create an AddPrefix middleware when given a valid configuration",
+			middlewareID:  "ap-foo",
+			expectedError: false,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			constructor, err := middlewaresBuilder.buildConstructor(context.Background(), test.middlewareID, *testConfig[test.middlewareID])
+			require.NoError(t, err)
+
+			middleware, err2 := constructor(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
+
+			if test.expectedError {
+				require.Error(t, err2)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, middleware)
 			}
 		})
 	}

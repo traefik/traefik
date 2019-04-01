@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -28,7 +29,6 @@ import (
 	"github.com/containous/traefik/pkg/middlewares/stripprefixregex"
 	"github.com/containous/traefik/pkg/middlewares/tracing"
 	"github.com/containous/traefik/pkg/server/internal"
-	"github.com/pkg/errors"
 )
 
 type middlewareStackType int
@@ -65,7 +65,7 @@ func (b *Builder) BuildChain(ctx context.Context, middlewares []string) *alice.C
 			}
 
 			var err error
-			if constructorContext, err = checkRecursivity(constructorContext, middlewareName); err != nil {
+			if constructorContext, err = checkRecursion(constructorContext, middlewareName); err != nil {
 				return nil, err
 			}
 
@@ -79,7 +79,7 @@ func (b *Builder) BuildChain(ctx context.Context, middlewares []string) *alice.C
 	return &chain
 }
 
-func checkRecursivity(ctx context.Context, middlewareName string) (context.Context, error) {
+func checkRecursion(ctx context.Context, middlewareName string) (context.Context, error) {
 	currentStack, ok := ctx.Value(middlewareStackKey).([]string)
 	if !ok {
 		currentStack = []string{}
@@ -92,242 +92,218 @@ func checkRecursivity(ctx context.Context, middlewareName string) (context.Conte
 
 func (b *Builder) buildConstructor(ctx context.Context, middlewareName string, config config.Middleware) (alice.Constructor, error) {
 	var middleware alice.Constructor
-	badConf := errors.New("cannot create middleware %q: multi-types middleware not supported, consider declaring two different pieces of middleware instead")
+	badConf := errors.New("cannot create middleware: multi-types middleware not supported, consider declaring two different pieces of middleware instead")
 
 	// AddPrefix
 	if config.AddPrefix != nil {
-		if middleware == nil {
-			middleware = func(next http.Handler) (http.Handler, error) {
-				return addprefix.New(ctx, next, *config.AddPrefix, middlewareName)
-			}
-		} else {
-			return nil, badConf
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return addprefix.New(ctx, next, *config.AddPrefix, middlewareName)
 		}
 	}
 
 	// BasicAuth
 	if config.BasicAuth != nil {
-		if middleware == nil {
-			middleware = func(next http.Handler) (http.Handler, error) {
-				return auth.NewBasic(ctx, next, *config.BasicAuth, middlewareName)
-			}
-		} else {
+		if middleware != nil {
 			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return auth.NewBasic(ctx, next, *config.BasicAuth, middlewareName)
 		}
 	}
 
 	// Buffering
 	if config.Buffering != nil && config.MaxConn.Amount != 0 {
-		if middleware == nil {
-			middleware = func(next http.Handler) (http.Handler, error) {
-				return buffering.New(ctx, next, *config.Buffering, middlewareName)
-			}
-		} else {
+		if middleware != nil {
 			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return buffering.New(ctx, next, *config.Buffering, middlewareName)
 		}
 	}
 
 	// Chain
 	if config.Chain != nil {
-		if middleware == nil {
-			middleware = func(next http.Handler) (http.Handler, error) {
-				return chain.New(ctx, next, *config.Chain, b, middlewareName)
-			}
-		} else {
+		if middleware != nil {
 			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return chain.New(ctx, next, *config.Chain, b, middlewareName)
 		}
 	}
 
 	// CircuitBreaker
 	if config.CircuitBreaker != nil {
-		if middleware == nil {
-			middleware = func(next http.Handler) (http.Handler, error) {
-				return circuitbreaker.New(ctx, next, *config.CircuitBreaker, middlewareName)
-			}
-		} else {
+		if middleware != nil {
 			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return circuitbreaker.New(ctx, next, *config.CircuitBreaker, middlewareName)
 		}
 	}
 
 	// Compress
 	if config.Compress != nil {
-		if middleware == nil {
-			middleware = func(next http.Handler) (http.Handler, error) {
-				return compress.New(ctx, next, middlewareName)
-			}
-		} else {
+		if middleware != nil {
 			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return compress.New(ctx, next, middlewareName)
 		}
 	}
 
 	// CustomErrors
 	if config.Errors != nil {
-		if middleware == nil {
-			middleware = func(next http.Handler) (http.Handler, error) {
-				return customerrors.New(ctx, next, *config.Errors, b.serviceBuilder, middlewareName)
-			}
-		} else {
+		if middleware != nil {
 			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return customerrors.New(ctx, next, *config.Errors, b.serviceBuilder, middlewareName)
 		}
 	}
 
 	// DigestAuth
 	if config.DigestAuth != nil {
-		if middleware == nil {
-			middleware = func(next http.Handler) (http.Handler, error) {
-				return auth.NewDigest(ctx, next, *config.DigestAuth, middlewareName)
-			}
-		} else {
+		if middleware != nil {
 			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return auth.NewDigest(ctx, next, *config.DigestAuth, middlewareName)
 		}
 	}
 
 	// ForwardAuth
 	if config.ForwardAuth != nil {
-		if middleware == nil {
-			middleware = func(next http.Handler) (http.Handler, error) {
-				return auth.NewForward(ctx, next, *config.ForwardAuth, middlewareName)
-			}
-		} else {
+		if middleware != nil {
 			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return auth.NewForward(ctx, next, *config.ForwardAuth, middlewareName)
 		}
 	}
 
 	// Headers
 	if config.Headers != nil {
-		if middleware == nil {
-			middleware = func(next http.Handler) (http.Handler, error) {
-				return headers.New(ctx, next, *config.Headers, middlewareName)
-			}
-		} else {
+		if middleware != nil {
 			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return headers.New(ctx, next, *config.Headers, middlewareName)
 		}
 	}
 
 	// IPWhiteList
 	if config.IPWhiteList != nil {
-		if middleware == nil {
-			middleware = func(next http.Handler) (http.Handler, error) {
-				return ipwhitelist.New(ctx, next, *config.IPWhiteList, middlewareName)
-			}
-		} else {
+		if middleware != nil {
 			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return ipwhitelist.New(ctx, next, *config.IPWhiteList, middlewareName)
 		}
 	}
 
 	// MaxConn
 	if config.MaxConn != nil && config.MaxConn.Amount != 0 {
-		if middleware == nil {
-			middleware = func(next http.Handler) (http.Handler, error) {
-				return maxconnection.New(ctx, next, *config.MaxConn, middlewareName)
-			}
-		} else {
+		if middleware != nil {
 			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return maxconnection.New(ctx, next, *config.MaxConn, middlewareName)
 		}
 	}
 
 	// PassTLSClientCert
 	if config.PassTLSClientCert != nil {
-		if middleware == nil {
-			middleware = func(next http.Handler) (http.Handler, error) {
-				return passtlsclientcert.New(ctx, next, *config.PassTLSClientCert, middlewareName)
-			}
-		} else {
+		if middleware != nil {
 			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return passtlsclientcert.New(ctx, next, *config.PassTLSClientCert, middlewareName)
 		}
 	}
 
 	// RateLimit
 	if config.RateLimit != nil {
-		if middleware == nil {
-			middleware = func(next http.Handler) (http.Handler, error) {
-				return ratelimiter.New(ctx, next, *config.RateLimit, middlewareName)
-			}
-		} else {
+		if middleware != nil {
 			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return ratelimiter.New(ctx, next, *config.RateLimit, middlewareName)
 		}
 	}
 
 	// RedirectRegex
 	if config.RedirectRegex != nil {
-		if middleware == nil {
-			middleware = func(next http.Handler) (http.Handler, error) {
-				return redirect.NewRedirectRegex(ctx, next, *config.RedirectRegex, middlewareName)
-			}
-		} else {
+		if middleware != nil {
 			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return redirect.NewRedirectRegex(ctx, next, *config.RedirectRegex, middlewareName)
 		}
 	}
 
 	// RedirectScheme
 	if config.RedirectScheme != nil {
-		if middleware == nil {
-			middleware = func(next http.Handler) (http.Handler, error) {
-				return redirect.NewRedirectScheme(ctx, next, *config.RedirectScheme, middlewareName)
-			}
-		} else {
+		if middleware != nil {
 			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return redirect.NewRedirectScheme(ctx, next, *config.RedirectScheme, middlewareName)
 		}
 	}
 
 	// ReplacePath
 	if config.ReplacePath != nil {
-		if middleware == nil {
-			middleware = func(next http.Handler) (http.Handler, error) {
-				return replacepath.New(ctx, next, *config.ReplacePath, middlewareName)
-			}
-		} else {
+		if middleware != nil {
 			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return replacepath.New(ctx, next, *config.ReplacePath, middlewareName)
 		}
 	}
 
 	// ReplacePathRegex
 	if config.ReplacePathRegex != nil {
-		if middleware == nil {
-			middleware = func(next http.Handler) (http.Handler, error) {
-				return replacepathregex.New(ctx, next, *config.ReplacePathRegex, middlewareName)
-			}
-		} else {
+		if middleware != nil {
 			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return replacepathregex.New(ctx, next, *config.ReplacePathRegex, middlewareName)
 		}
 	}
 
 	// Retry
 	if config.Retry != nil {
-		if middleware == nil {
-			middleware = func(next http.Handler) (http.Handler, error) {
-				// FIXME missing metrics / accessLog
-				return retry.New(ctx, next, *config.Retry, retry.Listeners{}, middlewareName)
-			}
-		} else {
+		if middleware != nil {
 			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			// FIXME missing metrics / accessLog
+			return retry.New(ctx, next, *config.Retry, retry.Listeners{}, middlewareName)
 		}
 	}
 
 	// StripPrefix
 	if config.StripPrefix != nil {
-		if middleware == nil {
-			middleware = func(next http.Handler) (http.Handler, error) {
-				return stripprefix.New(ctx, next, *config.StripPrefix, middlewareName)
-			}
-		} else {
+		if middleware != nil {
 			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return stripprefix.New(ctx, next, *config.StripPrefix, middlewareName)
 		}
 	}
 
 	// StripPrefixRegex
 	if config.StripPrefixRegex != nil {
-		if middleware == nil {
-			middleware = func(next http.Handler) (http.Handler, error) {
-				return stripprefixregex.New(ctx, next, *config.StripPrefixRegex, middlewareName)
-			}
-		} else {
+		if middleware != nil {
 			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return stripprefixregex.New(ctx, next, *config.StripPrefixRegex, middlewareName)
 		}
 	}
 
 	if middleware == nil {
-		return nil, fmt.Errorf("middleware %q does not exist", middlewareName)
+		return nil, errors.New("middleware does not exist")
 	}
 
 	return tracing.Wrap(ctx, middleware), nil
