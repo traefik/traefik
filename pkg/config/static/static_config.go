@@ -5,8 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containous/traefik/pkg/provider/rancher"
-
 	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/ping"
@@ -16,6 +14,7 @@ import (
 	"github.com/containous/traefik/pkg/provider/kubernetes/crd"
 	"github.com/containous/traefik/pkg/provider/kubernetes/ingress"
 	"github.com/containous/traefik/pkg/provider/marathon"
+	"github.com/containous/traefik/pkg/provider/rancher"
 	"github.com/containous/traefik/pkg/provider/rest"
 	"github.com/containous/traefik/pkg/tls"
 	"github.com/containous/traefik/pkg/tracing/datadog"
