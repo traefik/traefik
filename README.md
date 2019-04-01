@@ -84,7 +84,7 @@ _(But if you'd rather configure some of your routes manually, Traefik supports t
 
 ## Quickstart
 
-To get your hands on Traefik, you can use the [5-Minute Quickstart](http://docs.traefik.io/v2.0/#the-traefik-quickstart-using-docker) in our documentation (you will need Docker).
+To get your hands on Traefik, you can use the [5-Minute Quickstart](http://docs.traefik.io/#the-traefik-quickstart-using-docker) in our documentation (you will need Docker).
 
 ## Web UI
 
@@ -95,7 +95,7 @@ You can access the simple HTML frontend of Traefik.
 
 ## Documentation
 
-You can find the complete documentation at [https://docs.traefik.io/v2.0/](https://docs.traefik.io/v2.0/).
+You can find the complete documentation at [https://docs.traefik.io](https://docs.traefik.io).
 A collection of contributions around Traefik can be found at [https://awesome.traefik.io](https://awesome.traefik.io).
 
 ## Support
@@ -128,8 +128,8 @@ git clone https://github.com/containous/traefik
 
 ## Introductory Videos
 
-:warning: Please be aware that these videos are for v1.X. The old configurations for Traefik v1.X are NOT compatible with Traefik v2. If you're testing out v2, please ensure you are using a [v2 configuration](https://docs.traefik.io/v2.0/).
 
+:warning: Please be aware that these videos are for v1.X. The old configurations for Traefik v1.X are NOT compatible with Traefik v2. If you're testing out v2, please ensure you are using a [v2 configuration](https://docs.traefik.io/v2.0/).
 Here is a talk given by [Emile Vauge](https://github.com/emilevauge) at GopherCon 2017.
 You will learn Traefik basics in less than 10 minutes.
 
