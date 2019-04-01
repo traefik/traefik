@@ -394,7 +394,6 @@ As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/stagi
 ```
 
 It is not possible to request a double wildcard certificate for a domain (for example `*.*.local.com`).
-Due to ACME limitation it is not possible to define wildcards in SANs (alternative domains). Thus, the wildcard domain has to be defined as a main domain.
 Most likely the root domain should receive a certificate too, so it needs to be specified as SAN and 2 `DNS-01` challenges are executed.
 In this case the generated DNS TXT record for both domains is the same.
 Even though this behaviour is [DNS RFC](https://community.letsencrypt.org/t/wildcard-issuance-two-txt-records-for-the-same-name/54528/2) compliant, it can lead to problems as all DNS providers keep DNS records cached for a certain time (TTL) and this TTL can be superior to the challenge timeout making the `DNS-01` challenge fail.
