@@ -2,6 +2,7 @@ package ingress
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"math"
@@ -19,7 +20,6 @@ import (
 	"github.com/containous/traefik/pkg/provider/kubernetes/k8s"
 	"github.com/containous/traefik/pkg/safe"
 	"github.com/containous/traefik/pkg/tls"
-	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/labels"

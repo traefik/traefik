@@ -36,17 +36,17 @@ required = [
     non-go = false
     unused-packages = false
 
-[[constraint]]
-  branch = "master"
-  name = "github.com/ArthurHlt/go-eureka-client"
+#[[constraint]]
+#  branch = "master"
+#  name = "github.com/ArthurHlt/go-eureka-client"
 
 [[constraint]]
   branch = "master"
   name = "github.com/BurntSushi/toml"
 
-[[constraint]]
-  branch = "master"
-  name = "github.com/BurntSushi/ty"
+#[[constraint]]
+#  branch = "master"
+#  name = "github.com/BurntSushi/ty"
 
 [[constraint]]
   branch = "master"
@@ -61,9 +61,9 @@ required = [
   branch = "master"
   name = "github.com/armon/go-proxyproto"
 
-[[constraint]]
-  name = "github.com/aws/aws-sdk-go"
-  version = "1.13.11"
+#[[constraint]]
+#  name = "github.com/aws/aws-sdk-go"
+#  version = "1.13.11"
 
 [[constraint]]
   name = "github.com/cenkalti/backoff"
@@ -94,10 +94,10 @@ required = [
   name = "github.com/coreos/go-systemd"
   version = "14.0.0"
 
-[[constraint]]
-  branch = "master"
-  name = "github.com/docker/leadership"
-  source = "github.com/containous/leadership"
+#[[constraint]]
+#  branch = "master"
+#  name = "github.com/docker/leadership"
+#  source = "github.com/containous/leadership"
 
 [[constraint]]
   name = "github.com/eapache/channels"
@@ -125,9 +125,9 @@ required = [
   branch = "master"
   name = "github.com/gorilla/websocket"
 
-[[constraint]]
-  name = "github.com/hashicorp/consul"
-  version = "1.0.6"
+#[[constraint]]
+#  name = "github.com/hashicorp/consul"
+#  version = "1.0.6"
 
 [[constraint]]
   name = "github.com/influxdata/influxdb"
@@ -141,18 +141,18 @@ required = [
   branch = "master"
   name = "github.com/abronan/valkeyrie"
 
-[[constraint]]
-  name = "github.com/mesosphere/mesos-dns"
-  source = "https://github.com/containous/mesos-dns.git"
+#[[constraint]]
+#  name = "github.com/mesosphere/mesos-dns"
+#  source = "https://github.com/containous/mesos-dns.git"
 
 [[constraint]]
   name = "github.com/opentracing/opentracing-go"
   version = "1.0.2"
 
-[[constraint]]
-  branch = "containous-fork"
-  name = "github.com/rancher/go-rancher-metadata"
-  source = "github.com/containous/go-rancher-metadata"
+#[[constraint]]
+#  branch = "containous-fork"
+#  name = "github.com/rancher/go-rancher-metadata"
+#  source = "github.com/containous/go-rancher-metadata"
 
 [[constraint]]
   branch = "master"
