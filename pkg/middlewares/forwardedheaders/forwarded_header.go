@@ -15,7 +15,7 @@ const (
 	xForwardedHost   = "X-Forwarded-Host"
 	xForwardedPort   = "X-Forwarded-Port"
 	xForwardedServer = "X-Forwarded-Server"
-	xRealIp          = "X-Real-Ip"
+	xRealIP          = "X-Real-Ip"
 	connection       = "Connection"
 	upgrade          = "Upgrade"
 )
@@ -26,7 +26,7 @@ var xHeaders = []string{
 	xForwardedHost,
 	xForwardedPort,
 	xForwardedServer,
-	xRealIp,
+	xRealIP,
 }
 
 // XForwarded is an HTTP handler wrapper that sets the X-Forwarded headers, and other relevant headers for a
@@ -117,8 +117,8 @@ func (x *XForwarded) rewrite(outreq *http.Request) {
 	if clientIP, _, err := net.SplitHostPort(outreq.RemoteAddr); err == nil {
 		clientIP = ipv6fix(clientIP)
 
-		if outreq.Header.Get(xRealIp) == "" {
-			outreq.Header.Set(xRealIp, clientIP)
+		if outreq.Header.Get(xRealIP) == "" {
+			outreq.Header.Set(xRealIP, clientIP)
 		}
 	}
 
@@ -152,17 +152,12 @@ func (x *XForwarded) rewrite(outreq *http.Request) {
 	}
 }
 
-// removeHeaders removes the header with the given names from the headers map
-func removeHeaders(headers http.Header, names ...string) {
-	for _, h := range names {
-		headers.Del(h)
-	}
-}
-
 // ServeHTTP implements http.Handler
 func (x *XForwarded) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !x.insecure && !x.isTrustedIP(r.RemoteAddr) {
-		removeHeaders(r.Header, xHeaders...)
+		for _, h := range xHeaders {
+			r.Header.Del(h)
+		}
 	}
 
 	x.rewrite(r)

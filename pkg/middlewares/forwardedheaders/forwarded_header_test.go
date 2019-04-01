@@ -104,21 +104,21 @@ func TestServeHTTP(t *testing.T) {
 			},
 		},
 		{
-			desc:       "xRealIp populated from remote address",
+			desc:       "xRealIP populated from remote address",
 			remoteAddr: "10.0.1.101:80",
 			expectedHeaders: map[string]string{
-				xRealIp: "10.0.1.101",
+				xRealIP: "10.0.1.101",
 			},
 		},
 		{
-			desc:       "xRealIp was already populated from previous headers",
+			desc:       "xRealIP was already populated from previous headers",
 			insecure:   true,
 			remoteAddr: "10.0.1.101:80",
 			incomingHeaders: map[string]string{
-				xRealIp: "10.0.1.12",
+				xRealIP: "10.0.1.12",
 			},
 			expectedHeaders: map[string]string{
-				xRealIp: "10.0.1.12",
+				xRealIP: "10.0.1.12",
 			},
 		},
 		{
