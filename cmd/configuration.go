@@ -3,8 +3,6 @@ package cmd
 import (
 	"time"
 
-	"github.com/containous/traefik/pkg/provider/rancher"
-
 	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/containous/traefik/pkg/middlewares/accesslog"
@@ -13,6 +11,7 @@ import (
 	"github.com/containous/traefik/pkg/provider/file"
 	"github.com/containous/traefik/pkg/provider/kubernetes/ingress"
 	"github.com/containous/traefik/pkg/provider/marathon"
+	"github.com/containous/traefik/pkg/provider/rancher"
 	"github.com/containous/traefik/pkg/provider/rest"
 	"github.com/containous/traefik/pkg/tracing/datadog"
 	"github.com/containous/traefik/pkg/tracing/instana"

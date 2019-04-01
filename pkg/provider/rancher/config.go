@@ -19,11 +19,12 @@ func (p *Provider) buildConfiguration(ctx context.Context, services []rancherDat
 	for _, service := range services {
 		ctxService := log.With(ctx, log.Str("service", service.Name))
 
-		if !p.keepService(service) {
+		if !p.keepService(ctx, service) {
 			continue
 		}
 
 		logger := log.FromContext(ctxService)
+
 		confFromLabel, err := label.DecodeConfiguration(service.Labels)
 		if err != nil {
 			logger.Error(err)
@@ -112,25 +113,28 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, service ranche
 	return nil
 }
 
-func (p *Provider) keepService(service rancherData) bool {
+func (p *Provider) keepService(ctx context.Context, service rancherData) bool {
+	logger := log.FromContext(ctx)
+
 	if !service.ExtraConf.Enable {
+		logger.Debug("Filtering disabled service")
 		return false
 	}
 
 	if ok, failingConstraint := p.MatchConstraints(service.ExtraConf.Tags); !ok {
 		if failingConstraint != nil {
-			log.Debugf("service pruned by %q constraint", failingConstraint.String())
+			logger.Debugf("service pruned by %q constraint", failingConstraint.String())
 		}
 		return false
 	}
 
 	if p.EnableServiceHealthFilter {
 		if service.Health != "" && service.Health != healthy && service.Health != updatingHealthy {
-			log.Debugf("Filtering service %s with healthState of %s \n", service.Name, service.Health)
+			logger.Debugf("Filtering service %s with healthState of %s \n", service.Name, service.Health)
 			return false
 		}
 		if service.State != "" && service.State != active && service.State != updatingActive && service.State != upgraded && service.State != upgrading {
-			log.Debugf("Filtering service %s with state of %s \n", service.Name, service.State)
+			logger.Debugf("Filtering service %s with state of %s \n", service.Name, service.State)
 			return false
 		}
 	}
@@ -138,42 +142,8 @@ func (p *Provider) keepService(service rancherData) bool {
 	return true
 }
 
-func (p *Provider) addServers(ctx context.Context, service rancherData, loadBalancer *config.LoadBalancerService) error {
-	log.Debugf("Trying to add servers for service  %s \n", service.Name)
-
-	serverPort := getLBServerPort(loadBalancer)
-	port := getServicePort(service)
-
-	if len(loadBalancer.Servers) == 0 {
-		server := config.Server{}
-		server.SetDefaults()
-
-		loadBalancer.Servers = []config.Server{server}
-	}
-
-	if serverPort != "" {
-		port = serverPort
-		loadBalancer.Servers[0].Port = ""
-	}
-
-	if port == "" {
-		return errors.New("port is missing")
-	}
-
-	var servers []config.Server
-	for _, containerIP := range service.Containers {
-		servers = append(servers, config.Server{
-			URL:    fmt.Sprintf("%s://%s", loadBalancer.Servers[0].Scheme, net.JoinHostPort(containerIP, port)),
-			Weight: 1,
-		})
-	}
-
-	loadBalancer.Servers = servers
-	return nil
-}
-
 func (p *Provider) addServerTCP(ctx context.Context, service rancherData, loadBalancer *config.TCPLoadBalancerService) error {
-	log.Debugf("Trying to add servers for service  %s \n", service.Name)
+	log.FromContext(ctx).Debugf("Trying to add servers for service  %s \n", service.Name)
 
 	serverPort := ""
 
@@ -212,6 +182,40 @@ func (p *Provider) addServerTCP(ctx context.Context, service rancherData, loadBa
 
 }
 
+func (p *Provider) addServers(ctx context.Context, service rancherData, loadBalancer *config.LoadBalancerService) error {
+	log.FromContext(ctx).Debugf("Trying to add servers for service  %s \n", service.Name)
+
+	serverPort := getLBServerPort(loadBalancer)
+	port := getServicePort(service)
+
+	if len(loadBalancer.Servers) == 0 {
+		server := config.Server{}
+		server.SetDefaults()
+
+		loadBalancer.Servers = []config.Server{server}
+	}
+
+	if serverPort != "" {
+		port = serverPort
+		loadBalancer.Servers[0].Port = ""
+	}
+
+	if port == "" {
+		return errors.New("port is missing")
+	}
+
+	var servers []config.Server
+	for _, containerIP := range service.Containers {
+		servers = append(servers, config.Server{
+			URL:    fmt.Sprintf("%s://%s", loadBalancer.Servers[0].Scheme, net.JoinHostPort(containerIP, port)),
+			Weight: 1,
+		})
+	}
+
+	loadBalancer.Servers = servers
+	return nil
+}
+
 func getLBServerPort(loadBalancer *config.LoadBalancerService) string {
 	if loadBalancer != nil && len(loadBalancer.Servers) > 0 {
 		return loadBalancer.Servers[0].Port
@@ -225,7 +229,8 @@ func getServicePort(data rancherData) string {
 
 	if len(hostPort) >= 2 {
 		return hostPort[1]
-	} else if len(hostPort) > 0 && hostPort[0] != "" {
+	}
+	if len(hostPort) > 0 && hostPort[0] != "" {
 		return hostPort[0]
 	}
 	return rawPort
