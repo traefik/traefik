@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -91,7 +92,7 @@ func checkRecursion(ctx context.Context, middlewareName string) (context.Context
 
 func (b *Builder) buildConstructor(ctx context.Context, middlewareName string, config config.Middleware) (alice.Constructor, error) {
 	var middleware alice.Constructor
-	badConf := fmt.Errorf("cannot create middleware %q: multi-types middleware not supported, consider declaring two different pieces of middleware instead", middlewareName)
+	badConf := errors.New("cannot create middleware: multi-types middleware not supported, consider declaring two different pieces of middleware instead")
 
 	// AddPrefix
 	if config.AddPrefix != nil {
@@ -302,7 +303,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string, c
 	}
 
 	if middleware == nil {
-		return nil, fmt.Errorf("middleware %q does not exist", middlewareName)
+		return nil, errors.New("middleware does not exist")
 	}
 
 	return tracing.Wrap(ctx, middleware), nil
