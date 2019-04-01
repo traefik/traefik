@@ -50,8 +50,8 @@ Defines the polling interval (in seconds).
 
 ### IntervalPoll (_Optional_, _Default=false_)
 
-Poll the Rancher metadata service for changes every `rancher.refreshSeconds`, which is less accurate than the default long polling technique which
-will provide near instantaneous updates to Traefik
+Poll the Rancher metadata service for changes every `rancher.refreshSeconds`,
+which is less accurate than the default long polling technique which will provide near instantaneous updates to Traefik.
 
 ### Prefix (_Optional_, _Default=/latest_)
 
@@ -65,19 +65,23 @@ The Service automatically gets a server per container in this rancher service, a
 
 ### Routers
 
-To update the configuration of the Router automatically attached to the container, add labels starting with `traefik.routers.{name-of-your-choice}.` and followed by the option you want to change. For example, to change the rule, you could add the label `traefik.http.routers.my-container.rule=Host(my-domain)`.
+To update the configuration of the Router automatically attached to the container, add labels starting with `traefik.routers.{name-of-your-choice}.` and followed by the option you want to change.
+For example, to change the rule, you could add the label `traefik.http.routers.my-container.rule=Host(my-domain)`.
 
 Every [Router](../routing/routers/index.md) parameter can be updated this way.
 
 ### Services
 
-To update the configuration of the Service automatically attached to the container, add labels starting with `traefik.http.services.{name-of-your-choice}.`, followed by the option you want to change. For example, to change the load balancer method, you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.method=drr`.
+To update the configuration of the Service automatically attached to the container, add labels starting with `traefik.http.services.{name-of-your-choice}.`,
+followed by the option you want to change. For example, to change the load balancer method,
+you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.method=drr`.
 
 Every [Service](../routing/services/index.md) parameter can be updated this way.
 
 ### Middleware
 
-You can declare pieces of middleware using labels starting with `traefik.http.middlewares.{name-of-your-choice}.`, followed by the middleware type/options. For example, to declare a middleware [`schemeredirect`](../middlewares/redirectscheme.md) named `my-redirect`, you'd write `traefik.http.middlewares.my-redirect.schemeredirect.scheme: https`.
+You can declare pieces of middleware using labels starting with `traefik.http.middlewares.{name-of-your-choice}.`, followed by the middleware type/options.
+For example, to declare a middleware [`schemeredirect`](../middlewares/redirectscheme.md) named `my-redirect`, you'd write `traefik.http.middlewares.my-redirect.schemeredirect.scheme: https`.
 
 ??? example "Declaring and Referencing a Middleware"
 
@@ -106,5 +110,5 @@ Sets the tags for [constraints filtering](./overview.md#constraints-configuratio
 
 #### Port Lookup
 
-Traefik is now capable of detecting the port to use, by following the default rancher flow. That means, if you just expose lets say
-port :1337 on the rancher ui, traefik will pick up this port and use it.
+Traefik is now capable of detecting the port to use, by following the default rancher flow.
+That means, if you just expose lets say port :1337 on the rancher ui, traefik will pick up this port and use it.
