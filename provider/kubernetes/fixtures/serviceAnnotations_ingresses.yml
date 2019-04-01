@@ -1,0 +1,37 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  namespace: testing
+spec:
+  rules:
+  - host: foo
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: 80
+        path: /bar
+  - host: bar
+    http:
+      paths:
+      - backend:
+          serviceName: service2
+          servicePort: 802
+  - host: baz
+    http:
+      paths:
+      - backend:
+          serviceName: service3
+          servicePort: 803
+  - host: max-conn
+    http:
+      paths:
+      - backend:
+          serviceName: service4
+          servicePort: 804
+  - host: flush
+    http:
+      paths:
+      - backend:
+          serviceName: service5
+          servicePort: 805

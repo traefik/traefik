@@ -1716,13 +1716,11 @@
   revision = "c4434f09ec131ecf30f986d5dcb1636508bfa49a"
 
 [[projects]]
-  branch = "containous-fork"
   digest = "1:84b9a5318d8ce3b8a9b1509bf15734f4f9dcd4decf9d9e9c7346a16c7b64d49e"
   name = "github.com/thoas/stats"
   packages = ["."]
   pruneopts = "NUT"
   revision = "4975baf6a358ed3ddaa42133996e1959f96c9300"
-  source = "github.com/containous/stats"
 
 [[projects]]
   branch = "master"
@@ -2478,11 +2476,13 @@
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/apimachinery/pkg/labels",
+    "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/runtime/schema",
     "k8s.io/apimachinery/pkg/types",
     "k8s.io/apimachinery/pkg/util/intstr",
     "k8s.io/client-go/informers",
     "k8s.io/client-go/kubernetes",
+    "k8s.io/client-go/kubernetes/scheme",
     "k8s.io/client-go/rest",
     "k8s.io/client-go/tools/cache",
   ]

@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: service1
+  namespace: testing
+subsets:
+- addresses:
+  - ip: 10.10.0.1
+  ports:
+  - port: 8080
+- addresses:
+  - ip: 10.21.0.2
+  ports:
+  - port: 8080
+
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: service2
+  namespace: testing
+subsets:
+- addresses:
+  - ip: 10.10.0.3
+  ports:
+  - port: 8080
+
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: service3
+  namespace: testing
+subsets:
+- addresses:
+  - ip: 10.10.0.4
+  ports:
+  - port: 8080
+- addresses:
+  - ip: 10.21.0.5
+  ports:
+  - port: 8080
+- addresses:
+  - ip: 10.21.0.6
+  ports:
+  - port: 8080
+- addresses:
+  - ip: 10.21.0.7
+  ports:
+  - port: 8080
+
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: service4
+  namespace: testing
+subsets:
+- addresses:
+  - ip: 10.10.0.7
+  ports:
+  - port: 8080

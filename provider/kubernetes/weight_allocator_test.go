@@ -2,14 +2,13 @@ package kubernetes
 
 import (
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 func TestString(t *testing.T) {
@@ -147,13 +146,9 @@ service1: 1000%
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			ingress := &extensionsv1beta1.Ingress{
-				ObjectMeta: v1.ObjectMeta{
-					Annotations: map[string]string{
-						annotationKubernetesServiceWeights: test.annotationValue,
-					},
-				},
-			}
+			ingress := buildIngress(
+				iAnnotation(annotationKubernetesServiceWeights, test.annotationValue),
+			)
 
 			weights, err := getServicesPercentageWeights(ingress)
 
@@ -168,93 +163,20 @@ service1: 1000%
 }
 
 func TestComputeServiceWeights(t *testing.T) {
-	client := clientMock{
-		services: []*corev1.Service{
-			buildService(
-				sName("service1"),
-				sNamespace("testing"),
-			),
-			buildService(
-				sName("service2"),
-				sNamespace("testing"),
-			),
-			buildService(
-				sName("service3"),
-				sNamespace("testing"),
-			),
-			buildService(
-				sName("service4"),
-				sNamespace("testing"),
-			),
-		},
-		endpoints: []*corev1.Endpoints{
-			buildEndpoint(
-				eNamespace("testing"),
-				eName("service1"),
-				eUID("1"),
-				subset(
-					eAddresses(eAddress("10.10.0.1")),
-					ePorts(ePort(8080, ""))),
-				subset(
-					eAddresses(eAddress("10.21.0.2")),
-					ePorts(ePort(8080, ""))),
-			),
-			buildEndpoint(
-				eNamespace("testing"),
-				eName("service2"),
-				eUID("2"),
-				subset(
-					eAddresses(eAddress("10.10.0.3")),
-					ePorts(ePort(8080, ""))),
-			),
-			buildEndpoint(
-				eNamespace("testing"),
-				eName("service3"),
-				eUID("3"),
-				subset(
-					eAddresses(eAddress("10.10.0.4")),
-					ePorts(ePort(8080, ""))),
-				subset(
-					eAddresses(eAddress("10.21.0.5")),
-					ePorts(ePort(8080, ""))),
-				subset(
-					eAddresses(eAddress("10.21.0.6")),
-					ePorts(ePort(8080, ""))),
-				subset(
-					eAddresses(eAddress("10.21.0.7")),
-					ePorts(ePort(8080, ""))),
-			),
-			buildEndpoint(
-				eNamespace("testing"),
-				eName("service4"),
-				eUID("4"),
-				subset(
-					eAddresses(eAddress("10.10.0.7")),
-					ePorts(ePort(8080, ""))),
-			),
-		},
-	}
+	client := newClientMock(
+		filepath.Join("fixtures", "computeServiceWeights_endpoints.yml"),
+		filepath.Join("fixtures", "computeServiceWeights_services.yml"),
+	)
 
 	testCases := []struct {
 		desc            string
-		ingress         *extensionsv1beta1.Ingress
+		ingress         string
 		expectError     bool
 		expectedWeights map[ingressService]percentageValue
 	}{
 		{
-			desc: "1 path 2 service",
-			ingress: buildIngress(
-				iNamespace("testing"),
-				iAnnotation(annotationKubernetesServiceWeights, `
-service1: 10%
-`),
-				iRules(
-					iRule(iHost("foo.test"), iPaths(
-						onePath(iPath("/foo"), iBackend("service1", intstr.FromInt(8080))),
-						onePath(iPath("/foo"), iBackend("service2", intstr.FromInt(8080))),
-					)),
-				),
-			),
+			desc:        "1 path 2 service",
+			ingress:     filepath.Join("fixtures", "computeServiceWeights", "1_path_2_service_ingresses.yml"),
 			expectError: false,
 			expectedWeights: map[ingressService]percentageValue{
 				{
@@ -270,21 +192,8 @@ service1: 10%
 			},
 		},
 		{
-			desc: "2 path 2 service",
-			ingress: buildIngress(
-				iNamespace("testing"),
-				iAnnotation(annotationKubernetesServiceWeights, `
-service1: 60%
-`),
-				iRules(
-					iRule(iHost("foo.test"), iPaths(
-						onePath(iPath("/foo"), iBackend("service1", intstr.FromInt(8080))),
-						onePath(iPath("/foo"), iBackend("service2", intstr.FromInt(8080))),
-						onePath(iPath("/bar"), iBackend("service1", intstr.FromInt(8080))),
-						onePath(iPath("/bar"), iBackend("service3", intstr.FromInt(8080))),
-					)),
-				),
-			),
+			desc:        "2 path 2 service",
+			ingress:     filepath.Join("fixtures", "computeServiceWeights", "2_path_2_service_ingresses.yml"),
 			expectError: false,
 			expectedWeights: map[ingressService]percentageValue{
 				{
@@ -310,22 +219,8 @@ service1: 60%
 			},
 		},
 		{
-			desc: "2 path 3 service",
-			ingress: buildIngress(
-				iNamespace("testing"),
-				iAnnotation(annotationKubernetesServiceWeights, `
-service1: 20%
-service3: 20%
-`),
-				iRules(
-					iRule(iHost("foo.test"), iPaths(
-						onePath(iPath("/foo"), iBackend("service1", intstr.FromInt(8080))),
-						onePath(iPath("/foo"), iBackend("service2", intstr.FromInt(8080))),
-						onePath(iPath("/bar"), iBackend("service2", intstr.FromInt(8080))),
-						onePath(iPath("/bar"), iBackend("service3", intstr.FromInt(8080))),
-					)),
-				),
-			),
+			desc:        "2 path 3 service",
+			ingress:     filepath.Join("fixtures", "computeServiceWeights", "2_path_3_service_ingresses.yml"),
 			expectError: false,
 			expectedWeights: map[ingressService]percentageValue{
 				{
@@ -351,23 +246,8 @@ service3: 20%
 			},
 		},
 		{
-			desc: "1 path 4 service",
-			ingress: buildIngress(
-				iNamespace("testing"),
-				iAnnotation(annotationKubernetesServiceWeights, `
-service1: 20%
-service2: 40%
-service3: 40%
-`),
-				iRules(
-					iRule(iHost("foo.test"), iPaths(
-						onePath(iPath("/foo"), iBackend("service1", intstr.FromInt(8080))),
-						onePath(iPath("/foo"), iBackend("service2", intstr.FromInt(8080))),
-						onePath(iPath("/foo"), iBackend("service3", intstr.FromInt(8080))),
-						onePath(iPath("/foo"), iBackend("service4", intstr.FromInt(8080))),
-					)),
-				),
-			),
+			desc:        "1 path 4 service",
+			ingress:     filepath.Join("fixtures", "computeServiceWeights", "1_path_4_service_ingresses.yml"),
 			expectError: false,
 			expectedWeights: map[ingressService]percentageValue{
 				{
@@ -393,35 +273,13 @@ service3: 40%
 			},
 		},
 		{
-			desc: "2 path no service",
-			ingress: buildIngress(
-				iNamespace("testing"),
-				iAnnotation(annotationKubernetesServiceWeights, `
-service1: 20%
-service2: 40%
-service3: 40%
-`),
-				iRules(
-					iRule(iHost("foo.test"), iPaths(
-						onePath(iPath("/foo"), iBackend("noservice", intstr.FromInt(8080))),
-						onePath(iPath("/bar"), iBackend("noservice", intstr.FromInt(8080))),
-					)),
-				),
-			),
+			desc:        "2 path no service",
+			ingress:     filepath.Join("fixtures", "computeServiceWeights", "2_path_no_service_ingresses.yml"),
 			expectError: true,
 		},
 		{
-			desc: "2 path without weight",
-			ingress: buildIngress(
-				iNamespace("testing"),
-				iAnnotation(annotationKubernetesServiceWeights, ``),
-				iRules(
-					iRule(iHost("foo.test"), iPaths(
-						onePath(iPath("/foo"), iBackend("service1", intstr.FromInt(8080))),
-						onePath(iPath("/bar"), iBackend("service2", intstr.FromInt(8080))),
-					)),
-				),
-			),
+			desc:        "2 path without weight",
+			ingress:     filepath.Join("fixtures", "computeServiceWeights", "2_path_without_weight_ingresses.yml"),
 			expectError: false,
 			expectedWeights: map[ingressService]percentageValue{
 				{
@@ -437,20 +295,8 @@ service3: 40%
 			},
 		},
 		{
-			desc: "2 path overflow",
-			ingress: buildIngress(
-				iNamespace("testing"),
-				iAnnotation(annotationKubernetesServiceWeights, `
-service1: 70%
-service2: 80%
-`),
-				iRules(
-					iRule(iHost("foo.test"), iPaths(
-						onePath(iPath("/foo"), iBackend("service1", intstr.FromInt(8080))),
-						onePath(iPath("/foo"), iBackend("service2", intstr.FromInt(8080))),
-					)),
-				),
-			),
+			desc:        "2 path overflow",
+			ingress:     filepath.Join("fixtures", "computeServiceWeights", "2_path_overflow_ingresses.yml"),
 			expectError: true,
 		},
 	}
@@ -460,7 +306,20 @@ service2: 80%
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			weightAllocator, err := newFractionalWeightAllocator(test.ingress, client)
+			yamlContent, err := ioutil.ReadFile(test.ingress)
+			require.NoError(t, err)
+			k8sObjects := MustDecodeYaml(yamlContent)
+			require.Len(t, k8sObjects, 1)
+
+			var ingress *extensionsv1beta1.Ingress
+			switch o := k8sObjects[0].(type) {
+			case *extensionsv1beta1.Ingress:
+				ingress = o
+			default:
+				require.Fail(t, fmt.Sprintf("Unknown runtime object %+v %T", o, o))
+			}
+
+			weightAllocator, err := newFractionalWeightAllocator(ingress, client)
 			if test.expectError {
 				require.Error(t, err)
 			} else {

@@ -1,0 +1,30 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/service-weights: |2
+
+      service1: 10%
+      service3: 20%
+  namespace: testing
+spec:
+  rules:
+  - host: host1
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: "8080"
+        path: /foo
+      - backend:
+          serviceName: service2
+          servicePort: "7070"
+        path: /foo
+      - backend:
+          serviceName: service3
+          servicePort: "9090"
+        path: /foo
+      - backend:
+          serviceName: service2
+          servicePort: "7070"
+        path: /bar

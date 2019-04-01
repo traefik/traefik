@@ -1,0 +1,30 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  namespace: testing
+spec:
+  rules:
+  - host: fully_working
+    http:
+      paths:
+      - backend:
+          serviceName: fully_working_service
+          servicePort: 80
+  - host: missing_service
+    http:
+      paths:
+      - backend:
+          serviceName: missing_service_service
+          servicePort: 80
+  - host: missing_endpoints
+    http:
+      paths:
+      - backend:
+          serviceName: missing_endpoints_service
+          servicePort: 80
+  - host: missing_endpoint_subsets
+    http:
+      paths:
+      - backend:
+          serviceName: missing_endpoint_subsets_service
+          servicePort: 80

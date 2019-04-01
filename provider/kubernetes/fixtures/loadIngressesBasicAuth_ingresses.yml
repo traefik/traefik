@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/auth-remove-header: "true"
+    ingress.kubernetes.io/auth-secret: mySecret
+    ingress.kubernetes.io/auth-type: basic
+  namespace: testing
+spec:
+  rules:
+  - host: basic
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: 80
+        path: /auth
