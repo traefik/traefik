@@ -115,14 +115,17 @@ func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.P
 		updateConfiguration("init")
 
 		if p.Watch {
-			pool.Go(func(stop chan bool) {
-				switch {
-				case p.IntervalPoll:
+			if p.IntervalPoll {
+				pool.Go(func(stop chan bool) {
 					p.intervalPoll(ctx, client, updateConfiguration, stop)
-				default:
-					p.longPoll(client, updateConfiguration, stop)
-				}
-			})
+				})
+			} else {
+				// Long polling should be favored for the most accurate configuration updates.
+				// Holds the connection until there is either a change in the metadata repository or `p.RefreshSeconds` has elapsed.
+				safe.Go(func() {
+					client.OnChange(p.RefreshSeconds, updateConfiguration)
+				})
+			}
 		}
 
 		return nil
@@ -139,9 +142,6 @@ func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.P
 }
 
 func (p *Provider) intervalPoll(ctx context.Context, client rancher.Client, updateConfiguration func(string), stop chan bool) {
-	_, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	ticker := time.NewTicker(time.Second * time.Duration(p.RefreshSeconds))
 	defer ticker.Stop()
 
@@ -160,19 +160,6 @@ func (p *Provider) intervalPoll(ctx context.Context, client rancher.Client, upda
 			return
 		}
 	}
-}
-
-func (p *Provider) longPoll(client rancher.Client, updateConfiguration func(string), stop chan bool) {
-	_, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	// Holds the connection until there is either a change in the metadata
-	// repository or `p.RefreshSeconds` has elapsed. Long polling should be
-	// favored for the most accurate configuration updates.
-	safe.Go(func() {
-		client.OnChange(p.RefreshSeconds, updateConfiguration)
-	})
-	<-stop
 }
 
 func (p *Provider) parseMetadataSourcedRancherData(ctx context.Context, stacks []rancher.Stack) (rancherDataList []rancherData) {
