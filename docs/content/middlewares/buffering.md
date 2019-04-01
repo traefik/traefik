@@ -16,7 +16,7 @@ This can help services deal with large data (multipart/form-data for example), a
 ```yaml tab="Docker"
 # Sets the maximum request body to 2Mb
 labels:
-- "traefik.http.middlewares.2Mb-memory.buffering.maxRequestBodyBytes=250000",
+- "traefik.http.middlewares.2Mb-memory.buffering.maxRequestBodyBytes=250000"
 ```
 
 ```toml tab="File"

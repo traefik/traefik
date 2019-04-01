@@ -12,7 +12,7 @@ The BasicAuth middleware is a quick way to restrict access to your services to k
 ```yaml tab="Docker"
 # Declaring the user list
 labels:
-  - "traefik.http.middlewares.declared-users-only.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+  - "traefik.http.middlewares.declared-users-only.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
 ```
 
 ```toml tab="File"
