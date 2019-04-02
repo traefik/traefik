@@ -72,9 +72,10 @@ func (x *XForwarded) isTrustedIP(ip string) bool {
 	return x.ipChecker.IsAuthorized(ip) == nil
 }
 
-// clean up IP in case it is ipv6 address and it has {zone} information in it,
-// like "[fe80::d806:a55d:eb1b:49cc%vEthernet (vmxnet3 Ethernet Adapter - Virtual Switch)]:64692"
-func ipv6fix(clientIP string) string {
+// removeIPv6Zone removes the zone if the given IP is an ipv6 address and it has
+// {zone} information in it, like "[fe80::d806:a55d:eb1b:49cc%vEthernet (vmxnet3
+// Ethernet Adapter - Virtual Switch)]:64692"
+func removeIPv6Zone(clientIP string) string {
 	return strings.Split(clientIP, "%")[0]
 }
 
@@ -115,7 +116,7 @@ func forwardedPort(req *http.Request) string {
 
 func (x *XForwarded) rewrite(outreq *http.Request) {
 	if clientIP, _, err := net.SplitHostPort(outreq.RemoteAddr); err == nil {
-		clientIP = ipv6fix(clientIP)
+		clientIP = removeIPv6Zone(clientIP)
 
 		if outreq.Header.Get(xRealIP) == "" {
 			outreq.Header.Set(xRealIP, clientIP)
