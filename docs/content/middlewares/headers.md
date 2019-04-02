@@ -43,13 +43,9 @@ spec:
 
 ### Adding and Removing Headers
 
-`X-Script-Name` header added to the proxied request, the `X-Custom-Request-Header` header removed from the request, and the `X-Custom-Response-Header` header removed from the response.
-
-```yaml tab="Docker"
-labels:
-  - "traefik.http.middlewares.testHeader.Headers.CustomRequestHeaders.X-Script-Name=test"
-  - "traefik.http.middlewares.testHeader.Headers.CustomResponseHeaders.X-Custom-Response-Header=True"
-```
+`X-Script-Name` header added to the proxied request, the `X-Custom-Request-Header` header removed from the request,
+and the `X-Custom-Response-Header` header removed from the response.
+Please note that is not possible to remove headers through the use of Docker labels for now.
 
 ```yaml tab="Kubernetes"
 apiVersion: traefik.containo.us/v1alpha1
@@ -60,8 +56,9 @@ spec:
   headers:
     CustomRequestHeaders:
       X-Script-Name: "test"
+      X-Custom-Request-Header: ""
     CustomResponseHeaders:
-      X-Custom-Response-Header: "True"
+      X-Custom-Response-Header: ""
 ```
 
 ```toml tab="File"    
@@ -69,8 +66,9 @@ spec:
   [http.middlewares.testHeader.headers]
     [http.middlewares.testHeader.headers.CustomRequestHeaders]
         X-Script-Name = "test"
+        X-Custom-Request-Header = ""
     [http.middlewares.testHeader.headers.CustomResponseHeaders]
-        X-Custom-Response-Header = "True"
+        X-Custom-Response-Header = ""
 ```
 
 ### Using Security Headers
