@@ -70,6 +70,13 @@
               excludedIPs = ["127.0.0.1/16", "192.168.1.7"]
       
           [http.middlewares.my-headers.Headers]
+            accessControlAllowCredentials = true
+            accessControlAllowHeaders = ["X-foobar", "X-fiibar"]
+            accessControlAllowMethods = ["GET", "PUT"]
+            accessControlAllowOrigin = "*"
+            accessControlExposeHeaders = ["X-foobar", "X-fiibar"]
+            accessControlMaxAge = 200
+            addVaryHeader = true
             allowedHosts = ["foobar", "foobar"]
             hostsProxyHeaders = ["foobar", "foobar"]
             sslRedirect = true
