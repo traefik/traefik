@@ -85,63 +85,62 @@ func (p *Provider) createClient(ctx context.Context) (rancher.Client, error) {
 
 // Provide allows the rancher provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.Pool) error {
-	ctx := log.With(context.Background(), log.Str(log.ProviderName, "rancher"))
-	logger := log.FromContext(ctx)
+	pool.GoCtx(func(routineCtx context.Context) {
+		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, "rancher"))
+		logger := log.FromContext(ctxLog)
 
-	operation := func() error {
-		client, err := p.createClient(ctx)
-		if err != nil {
-			logger.Errorf("Failed to create the metadata client metadata service: %v", err)
-			return err
-		}
-
-		updateConfiguration := func(version string) {
-			stacks, err := client.GetStacks()
+		operation := func() error {
+			client, err := p.createClient(ctxLog)
 			if err != nil {
-				logger.Errorf("Failed to query Rancher metadata service: %v", err)
-				return
+				logger.Errorf("Failed to create the metadata client metadata service: %v", err)
+				return err
 			}
 
-			rancherData := p.parseMetadataSourcedRancherData(ctx, stacks)
+			updateConfiguration := func(_ string) {
+				stacks, err := client.GetStacks()
+				if err != nil {
+					logger.Errorf("Failed to query Rancher metadata service: %v", err)
+					return
+				}
 
-			logger.Printf("Received Rancher data %+v", rancherData)
+				rancherData := p.parseMetadataSourcedRancherData(ctxLog, stacks)
 
-			configuration := p.buildConfiguration(ctx, rancherData)
-			configurationChan <- config.Message{
-				ProviderName:  "rancher",
-				Configuration: configuration,
+				logger.Printf("Received Rancher data %+v", rancherData)
+
+				configuration := p.buildConfiguration(ctxLog, rancherData)
+				configurationChan <- config.Message{
+					ProviderName:  "rancher",
+					Configuration: configuration,
+				}
 			}
+			updateConfiguration("init")
+
+			if p.Watch {
+				if p.IntervalPoll {
+					p.intervalPoll(ctxLog, client, updateConfiguration)
+				} else {
+					// Long polling should be favored for the most accurate configuration updates.
+					// Holds the connection until there is either a change in the metadata repository or `p.RefreshSeconds` has elapsed.
+					client.OnChangeCtx(ctxLog, p.RefreshSeconds, updateConfiguration)
+				}
+			}
+
+			return nil
 		}
-		updateConfiguration("init")
 
-		if p.Watch {
-			if p.IntervalPoll {
-				pool.Go(func(stop chan bool) {
-					p.intervalPoll(ctx, client, updateConfiguration, stop)
-				})
-			} else {
-				// Long polling should be favored for the most accurate configuration updates.
-				// Holds the connection until there is either a change in the metadata repository or `p.RefreshSeconds` has elapsed.
-				safe.Go(func() {
-					client.OnChange(p.RefreshSeconds, updateConfiguration)
-				})
-			}
+		notify := func(err error, time time.Duration) {
+			logger.Errorf("Provider connection error %+v, retrying in %s", err, time)
 		}
+		err := backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctxLog), notify)
+		if err != nil {
+			logger.Errorf("Cannot connect to Provider server: %+v", err)
+		}
+	})
 
-		return nil
-	}
-
-	notify := func(err error, time time.Duration) {
-		logger.Errorf("Provider connection error %+v, retrying in %s", err, time)
-	}
-	err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
-	if err != nil {
-		logger.Errorf("Cannot connect to Provider server: %+v", err)
-	}
 	return nil
 }
 
-func (p *Provider) intervalPoll(ctx context.Context, client rancher.Client, updateConfiguration func(string), stop chan bool) {
+func (p *Provider) intervalPoll(ctx context.Context, client rancher.Client, updateConfiguration func(string)) {
 	ticker := time.NewTicker(time.Second * time.Duration(p.RefreshSeconds))
 	defer ticker.Stop()
 
@@ -156,7 +155,7 @@ func (p *Provider) intervalPoll(ctx context.Context, client rancher.Client, upda
 				version = newVersion
 				updateConfiguration(version)
 			}
-		case <-stop:
+		case <-ctx.Done():
 			return
 		}
 	}
