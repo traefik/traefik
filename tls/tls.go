@@ -94,7 +94,7 @@ func SortTLSPerEntryPoints(configurations []*Configuration, epConfiguration map[
 			conf.EntryPoints = append(conf.EntryPoints, defaultEntryPoints...)
 		}
 		for _, ep := range conf.EntryPoints {
-			if err := conf.Certificate.AppendCertificates(epConfiguration, ep); err != nil {
+			if err := conf.Certificate.AppendCertificate(epConfiguration, ep); err != nil {
 				log.Errorf("Unable to append certificate %s to entrypoint %s: %v", conf.Certificate.getTruncatedCertificateName(), ep, err)
 			}
 		}
