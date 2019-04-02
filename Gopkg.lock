@@ -1390,6 +1390,15 @@
   revision = "a1dba9ce8baed984a2495b658c82687f8157b98f"
 
 [[projects]]
+  branch = "containous-fork"
+  digest = "1:f103263e55945772fcb058736a03dfc2796c6a14b99b1684b8e88327c0fa0f75"
+  name = "github.com/rancher/go-rancher-metadata"
+  packages = ["metadata"]
+  pruneopts = "NUT"
+  revision = "c6a65f8b7a28edc424e85732df4cd1c215843a99"
+  source = "github.com/containous/go-rancher-metadata"
+
+[[projects]]
   digest = "1:0d095d4b1220902aec6896e23808fbcdfa5192dab96d5a31a443a8c47eabc326"
   name = "github.com/rcrowley/go-metrics"
   packages = ["."]
@@ -1426,12 +1435,12 @@
   version = "v1.2.0"
 
 [[projects]]
-  digest = "1:01252cd79aac70f16cac02a72a1067dd136e0ad6d5b597d0129cf74c739fd8d1"
+  digest = "1:bb9033d47c116ea3b981ff159bdef73df8351b0b9700da2066339b97211b1bf0"
   name = "github.com/sirupsen/logrus"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "a67f783a3814b8729bd2dac5780b5f78f8dbd64d"
-  version = "v1.1.0"
+  revision = "dae0fa8d5b0c810a8ab733fbd5510c7cae84eca4"
+  version = "v1.4.0"
 
 [[projects]]
   digest = "1:9d8420bbf131d1618bde6530af37c3799340d3762cc47210c1d9532a4c3a2779"
@@ -2228,6 +2237,7 @@
     "github.com/prometheus/client_golang/prometheus",
     "github.com/prometheus/client_golang/prometheus/promhttp",
     "github.com/prometheus/client_model/go",
+    "github.com/rancher/go-rancher-metadata/metadata",
     "github.com/ryanuber/go-glob",
     "github.com/satori/go.uuid",
     "github.com/sirupsen/logrus",
