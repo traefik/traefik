@@ -6,22 +6,7 @@ Every Options for EntryPoints
 ## TOML
 
 ```toml
-# ...
-
-[entrypoints]
-  [entrypoints.web]
-    address = ":80"
-
-    [entrypoints.web.proxyProtocol]
-      insecure = true
-      trustedIPs = ["10.10.10.1", "10.10.10.2"]
-
-    [entrypoints.web.forwardedHeaders]
-      trustedIPs = ["10.10.10.1", "10.10.10.2"]
-      insecure = false
-
-  [entrypoints.web-secure]
-    # ...
+--8<-- "content/reference/entrypoints.toml"
 ```
 
 ## CLI
