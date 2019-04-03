@@ -178,7 +178,11 @@ func (m *Manager) buildRouterHandler(ctx context.Context, routerName string) (ht
 }
 
 func (m *Manager) buildHTTPHandler(ctx context.Context, router *config.Router, routerName string) (http.Handler, error) {
-	rm := m.modifierBuilder.Build(ctx, router.Middlewares)
+	qualifiedNames := make([]string, len(router.Middlewares))
+	for i, name := range router.Middlewares {
+		qualifiedNames[i] = internal.GetQualifiedName(ctx, name)
+	}
+	rm := m.modifierBuilder.Build(ctx, qualifiedNames)
 
 	sHandler, err := m.serviceManager.BuildHTTP(ctx, router.Service, rm)
 	if err != nil {
