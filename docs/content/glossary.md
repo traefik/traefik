@@ -21,17 +21,17 @@ Where Every Technical Word finds its Definition`
 - [ ] Traefiker
 - [ ] Traefik (How to pronounce)
 
-### Traefik Configuration
+## Traefik Configuration
 
 Traefik's configuration has two parts:
 
 * The [static Traefik configuration](./#static-traefik-configuration).
 * The [dynamic Traefik configuration](./#dynamic-traefik-configuration).
 
-
 ### Static Traefik Configuration
 
-The static Traefik configuration is the global configuration which is setting up connections to configuration providers and entrypoints.  
+The static Traefik configuration is the global configuration which is setting up connections to configuration providers and entry points.
+
 The static Traefik configuration is loaded only at the beginning.
 
 ### Dynamic Traefik Configuration

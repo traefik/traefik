@@ -56,9 +56,9 @@ You can write these configuration elements:
 ## Provider Configuration Options
 
 !!! tip "Browse the Reference"
-    If you're in a hurry, maybe you'd rather go through the [static](../reference/static-configuration.md) and the [dynamic](../reference/providers/file.md) configuration references.
+    If you're in a hurry, maybe you'd rather go through the [static](../reference/static-configuration.md) and the [dynamic](../reference/dynamic-configuration/file.md) configuration references.
     
-### filename (_Optional_)
+### `filename` (_Optional_)
 
 Defines the path of the configuration file.
 
@@ -68,7 +68,7 @@ Defines the path of the configuration file.
     filename = "rules.toml"
 ```
 
-### directory (_Optional_)
+### `directory` (_Optional_)
 
 Defines the directory that contains the configuration files.
 
@@ -78,7 +78,7 @@ Defines the directory that contains the configuration files.
     directory = "/path/to/config"
 ```
 
-### watch (_Optional_)
+### `watch` (_Optional_)
 
 Set the `watch` option to `true` to allow Traefik to automatically watch for file changes.  
 It works with both the `filename` and the `directory` options.

@@ -5,7 +5,7 @@ Opening Connections for Incoming Requests
 
 ![EntryPoints](../assets/img/entrypoints.png)
 
-Entrypoints are the network entry points into Traefik.
+EntryPoints are the network entry points into Traefik.
 They define the port which will receive the requests (whether HTTP or TCP).
 
 ## Configuration Examples
@@ -38,7 +38,45 @@ They define the port which will receive the requests (whether HTTP or TCP).
 
 ### General
 
-Entrypoints are part of the [static configuration](../getting-started/configuration-overview.md#the-static-configuration). You can define them using a toml file, CLI arguments, or a key-value store. See the [complete reference](../reference/entrypoints.md) for the list of available options. 
+EntryPoints are part of the [static configuration](../getting-started/configuration-overview.md#the-static-configuration).
+You can define them using a toml file, CLI arguments, or a key-value store.
+
+See the complete reference for the list of available options:
+
+```ini tab="CLI"
+Name:foo
+Address::80
+Transport.LifeCycle.RequestAcceptGraceTimeout:42
+Transport.LifeCycle.GraceTimeOut:42
+Transport.RespondingTimeouts.ReadTimeout:42
+Transport.RespondingTimeouts.WriteTimeout:42
+Transport.RespondingTimeouts.IdleTimeout:42
+ProxyProtocol.Insecure:true
+ProxyProtocol.TrustedIPs:foobar,foobar
+ForwardedHeaders.Insecure:true
+ForwardedHeaders.TrustedIPs:foobar,foobar
+```
+
+```toml tab="File (static configuration)"
+[EntryPoints]
+
+  [EntryPoints.EntryPoint0]
+    Address = "foobar"
+    [EntryPoints.EntryPoint0.Transport]
+      [EntryPoints.EntryPoint0.Transport.LifeCycle]
+        RequestAcceptGraceTimeout = 42
+        GraceTimeOut = 42
+      [EntryPoints.EntryPoint0.Transport.RespondingTimeouts]
+        ReadTimeout = 42
+        WriteTimeout = 42
+        IdleTimeout = 42
+    [EntryPoints.EntryPoint0.ProxyProtocol]
+      Insecure = true
+      TrustedIPs = ["foobar", "foobar"]
+    [EntryPoints.EntryPoint0.ForwardedHeaders]
+      Insecure = true
+      TrustedIPs = ["foobar", "foobar"]
+```
 
 ??? example "Using the CLI"
 
@@ -50,7 +88,7 @@ Entrypoints are part of the [static configuration](../getting-started/configurat
     ```
     
     !!! note
-        The whitespace character (` `) is the option separator, and the comma (`,`) is the value separator for lists.  
+        The whitespace character (` `) is the option separator, and the comma (`,`) is the value separator for lists inside an option.  
         The option names are case-insensitive.
     
     !!! warning "Using Docker Compose Files"

@@ -49,9 +49,13 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
         sans = ["mydomain.com"]
     ```
 
-!!! note "Configuration Reference"
-
-    There are many available options for ACME. For a quick glance at what's possible, browse the [configuration reference](../reference/acme.md).
+??? note "Configuration Reference"
+    
+    There are many available options for ACME. For a quick glance at what's possible, browse the configuration reference:
+    
+    ```toml
+    --8<-- "content/https-tls/ref-acme.toml"
+    ```
 
 ## The Different ACME Challenges
 

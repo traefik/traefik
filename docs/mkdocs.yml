@@ -66,7 +66,6 @@ markdown_extensions:
 
 # Page tree
 nav:
-  - '': 'providers/kubernetes-ingress.md'
   - 'Welcome': 'index.md'
   - 'Getting Started':
       - 'Concepts' : 'getting-started/concepts.md'
@@ -77,6 +76,7 @@ nav:
       - 'Docker': 'providers/docker.md'
       - 'File': 'providers/file.md'
       - 'Kubernetes IngressRoute': 'providers/kubernetes-crd.md'
+#      - 'Kubernetes Ingress': 'providers/kubernetes-ingress.md'
   - 'Routing & Load Balancing':
       - 'Overview': 'routing/overview.md'
       - 'Entrypoints': 'routing/entrypoints.md'
@@ -130,9 +130,8 @@ nav:
       - 'Maintainers': 'contributing/maintainers.md'
   - 'Glossary': 'glossary.md'
   - 'References':
-      - 'ACME': 'reference/acme.md'
-      - 'Docker': 'reference/providers/docker.md'
-      - 'Entrypoints': 'reference/entrypoints.md'
-      - 'File': 'reference/providers/file.md'
-      - 'Kubernetes CRD': 'reference/providers/kubernetes-crd.md'
-      - 'Traefik Static Configuration': 'reference/static-configuration.md'
+      - 'Static Configuration': 'reference/static-configuration.md'
+      - 'Dynamic Configuration':
+        - 'Docker': 'reference/dynamic-configuration/docker.md'
+        - 'Kubernetes CRD': 'reference/dynamic-configuration/kubernetes-crd.md'
+        - 'File': 'reference/dynamic-configuration/file.md'
