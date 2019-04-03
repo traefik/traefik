@@ -67,11 +67,6 @@ markdown_extensions:
 # Page tree
 nav:
   - '': 'providers/kubernetes-ingress.md'
-  - '': 'reference/acme.md'
-  - '': 'reference/providers/docker.md'
-  - '': 'reference/providers/file.md'
-  - '': 'reference/providers/kubernetescrd.md'
-  - '': 'reference/entrypoints.md'
   - 'Welcome': 'index.md'
   - 'Getting Started':
       - 'Concepts' : 'getting-started/concepts.md'
@@ -134,3 +129,10 @@ nav:
       - 'Advocating': 'contributing/advocating.md'
       - 'Maintainers': 'contributing/maintainers.md'
   - 'Glossary': 'glossary.md'
+  - 'References':
+      - 'ACME': 'reference/acme.md'
+      - 'Docker': 'reference/providers/docker.md'
+      - 'Entrypoints': 'reference/entrypoints.md'
+      - 'File': 'reference/providers/file.md'
+      - 'Kubernetes CRD': 'reference/providers/kubernetes-crd.md'
+      - 'Traefik Static Configuration': 'reference/static-configuration.md'
