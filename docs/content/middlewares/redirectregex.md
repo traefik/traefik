@@ -9,32 +9,40 @@ RegexRedirect redirect a request from an url to another with regex matching and 
 
 ## Configuration Examples
 
-??? example "File -- Redirect with domain replacement"
+```yaml tab="Docker"
+# Redirect with domain replacement
+labels:
+- "traefik.http.middlewares.test-redirectregex.redirectregex.regex=^http://localhost/(.*)"
+- "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$1"
+```
 
-    ```toml
-    [http.middlewares]
-      [http.middlewares.test-redirectregex.redirectregex]
-        regex = "^http://localhost/(.*)"
-        replacement = "http://mydomain/$1"
-    ```
+```yaml tab="Kubernetes"
+# Redirect with domain replacement
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-redirectregex
+spec:
+  redirectRegex:
+    regex: ^http://localhost/(.*)
+    replacement: http://mydomain/$1
+```
 
-??? example "Docker -- Redirect with domain replacement"
-
-    ```yml
-     a-container:
-        image: a-container-image 
-            labels:
-                - "traefik.http.middlewares.test-redirectregex.redirectregex.regex=^http://localhost/(.*)"
-                - "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$1"
-    ```
+```toml tab="File"
+# Redirect with domain replacement
+[http.middlewares]
+  [http.middlewares.test-redirectregex.redirectregex]
+    regex = "^http://localhost/(.*)"
+    replacement = "http://mydomain/$1"
+```
 
 ## Configuration Options
 
-### permanent
+### `permanent`
 
 Set the `permanent` option to `true` to apply a permanent redirection.
 
-### regex
+### `regex`
 
 The `Regex` option is the regular expression to match and capture elements form the request URL.
 
@@ -46,7 +54,7 @@ The `Regex` option is the regular expression to match and capture elements form 
 
     Regular expressions and replacements can be tested using online tools such as [Go Playground](https://play.golang.org/p/mWU9p-wk2ru) or the [Regex101](https://regex101.com/r/58sIgx/2).
     
-### replacement
+### `replacement`
 
 The `replacement` option defines how to modify the URl to have the new target URL.
  

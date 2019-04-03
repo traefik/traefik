@@ -15,6 +15,16 @@ labels:
 - "traefik.http.middlewares.test-maxconn.maxconn.amount=10"
 ```
 
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: addprefix
+spec:
+  addPrefix:
+    prefix: /bar
+```
+
 ```toml tab="File"
 # Limiting to 10 simultaneous connections
 [http.middlewares]
@@ -24,7 +34,7 @@ labels:
 
 ## Configuration Options
 
-### amount
+### `amount`
 
 The `amount` option defines the maximum amount of allowed simultaneous connections.
 The middleware will return an `HTTP 429 Too Many Requests` if there are already `amount` requests in progress (based on the same `extractorfunc` strategy).

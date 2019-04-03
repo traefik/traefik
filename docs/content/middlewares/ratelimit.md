@@ -44,7 +44,7 @@ The RateLimit middleware ensures that services will receive a _fair_ number of r
 
 ## Configuration Options
 
-### extractorfunc
+### `extractorfunc`
  
 The `extractorfunc` option defines the strategy used to categorize requests.
 
@@ -54,12 +54,12 @@ The possible values are:
 - `client.ip` categorizes requests based on the client ip.
 - `request.header.ANY_HEADER` categorizes requests based on the provided `ANY_HEADER` value.
 
-### ratelimit (multiple values)
+### `ratelimit` (multiple values)
 
-You can combine multiple ratelimit. 
-The ratelimit will trigger with the first reached limit.
+You can combine multiple rate limits. 
+The rate limit will trigger with the first reached limit.
 
-Each ratelimit has 3 options, `period`, `average`, and `burst`.
+Each rate limit has 3 options, `period`, `average`, and `burst`.
 
 The rate limit will allow an average of `average` requests every `period`, with a maximum of `burst` request on that period.
 

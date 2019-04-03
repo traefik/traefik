@@ -150,27 +150,27 @@ spec:
 !!! note
     The detailed documentation for the security headers can be found in [unrolled/secure](https://github.com/unrolled/secure#available-options).
 
-### customRequestHeaders
+### `customRequestHeaders`
 
 The `customRequestHeaders` option lists the Header names and values to apply to the request.
 
-### customResponseHeaders
+### `customResponseHeaders`
 
 The `customResponseHeaders` option lists the Header names and values to apply to the response.
 
-### accessControlAllowCredentials
+### `accessControlAllowCredentials`
 
 The `accessControlAllowCredentials` indicates whether the request can include user credentials.
 
-### accessControlAllowHeaders
+### `accessControlAllowHeaders`
 
 The `accessControlAllowHeaders` indicates which header field names can be used as part of the request.
 
-### accessControlAllowMethods
+### `accessControlAllowMethods`
 
 The  `accessControlAllowMethods` indicates which methods can be used during requests.
 
-### accessControlAllowOrigin
+### `accessControlAllowOrigin`
 
 The `accessControlAllowOrigin` indicates whether a resource can be shared by returning different values. The three options for this value are:
 
@@ -178,95 +178,95 @@ The `accessControlAllowOrigin` indicates whether a resource can be shared by ret
 - `*`
 - `null`
 
-### accessControlExposeHeaders
+### `accessControlExposeHeaders`
 
 The `accessControlExposeHeaders` indicates which headers are safe to expose to the api of a CORS API specification.
 
-### accessControlMaxAge
+### `accessControlMaxAge`
 
 The `accessControlMaxAge` indicates how long a preflight request can be cached.
 
-### addVaryHeader
+### `addVaryHeader`
 
 The `addVaryHeader` is used in conjunction with `accessControlAllowOrigin` to determine whether the vary header should be added or modified to demonstrate that server responses can differ beased on the value of the origin header.
 
-### allowedHosts 
+### `allowedHosts` 
 
 The `allowedHosts` option lists fully qualified domain names that are allowed.
 
-### hostsProxyHeaders 
+### `hostsProxyHeaders` 
 
 The `hostsProxyHeaders` option is a set of header keys that may hold a proxied hostname value for the request.
 
-### sslRedirect 
+### `sslRedirect` 
 
 The `sslRedirect` is set to true, then only allow https requests.
 
-### sslTemporaryRedirect
+### `sslTemporaryRedirect`
                     
 Set the `sslTemporaryRedirect` to `true` to force an SSL redirection using a 302 (instead of a 301).
 
-### sslHost 
+### `sslHost` 
 
 The `SSLHost` option is the host name that is used to redirect http requests to https.
 
-### sslProxyHeaders 
+### `sslProxyHeaders` 
 
 The `sslProxyHeaders` option is set of header keys with associated values that would indicate a valid https request. Useful when using other proxies with header like: `"X-Forwarded-Proto": "https"`.
 
-### sslForceHost 
+### `sslForceHost` 
 
 Set `sslForceHost` to true and set SSLHost to forced requests to use `SSLHost` even the ones that are already using SSL.
 
-### stsSeconds 
+### `stsSeconds` 
 
 The `stsSeconds` is the max-age of the Strict-Transport-Security header. If set to 0, would NOT include the header.
 
-### stsIncludeSubdomains 
+### `stsIncludeSubdomains` 
 
 The `stsIncludeSubdomains` is set to true, the `includeSubdomains` will be appended to the Strict-Transport-Security header.
 
-### stsPreload 
+### `stsPreload` 
 
 Set `STSPreload` to true to have the `preload` flag appended to the Strict-Transport-Security header.
 
-### forceSTSHeader
+### `forceSTSHeader`
 
 Set `ForceSTSHeader` to true, to add the STS header even when the connection is HTTP.
 
-### frameDeny 
+### `frameDeny` 
 
 Set `frameDeny` to true to add the `X-Frame-Options` header with the value of `DENY`.
  
-### customFrameOptionsValue 
+### `customFrameOptionsValue` 
 
 The `customFrameOptionsValue` allows the `X-Frame-Options` header value to be set with a custom value. This overrides the FrameDeny option.
 
-### contentTypeNosniff
+### `contentTypeNosniff`
 
 Set `contentTypeNosniff` to true to add the `X-Content-Type-Options` header with the value `nosniff`.
 
-### browserXssFilter
+### `browserXssFilter`
 
 Set `BrowserXssFilter` to true to add the `X-XSS-Protection` header with the value `1; mode=block`.
 
-### customBrowserXSSValue
+### `customBrowserXSSValue`
 
 The `customBrowserXssValue` option allows the `X-XSS-Protection` header value to be set with a custom value. This overrides the BrowserXssFilter option.
 
-### contentSecurityPolicy
+### `contentSecurityPolicy`
 
 The `contentSecurityPolicy` option allows the `Content-Security-Policy` header value to be set with a custom value.
 
-### publicKey
+### `publicKey`
 
 The `publicKey` implements HPKP to prevent MITM attacks with forged certificates. 
 
-### referrerPolicy
+### `referrerPolicy`
 
 The `referrerPolicy` allows sites to control when browsers will pass the Referer header to other sites.
 
-### isDevelopment
+### `isDevelopment`
 
 Set `isDevelopment` to true when developing. The AllowedHosts, SSL, and STS options can cause some unwanted effects. Usually testing happens on http, not https, and on localhost, not your production domain.  
 If you would like your development environment to mimic production with complete Host blocking, SSL redirects, and STS headers, leave this as false.

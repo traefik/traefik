@@ -16,13 +16,14 @@ labels:
 ```
 
 ```yaml tab="Kubernetes"
+# Prefixing with /foo
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
   name: addprefix
 spec:
-  addprefix:
-    prefix: /bar
+  addPrefix:
+    prefix: /foo
 ```
 
 ```toml tab="File"
@@ -34,6 +35,6 @@ spec:
 
 ## Configuration Options
 
-### prefix
+### `prefix`
 
 `prefix` is the string to add before the current path in the requested URL. It should include the leading slash (`/`).
