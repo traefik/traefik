@@ -21,6 +21,7 @@ package thrift
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -447,9 +448,6 @@ func (p *TBinaryProtocol) ReadBinary() ([]byte, error) {
 	if size < 0 {
 		return nil, invalidDataLength
 	}
-	if uint64(size) > p.trans.RemainingBytes() {
-		return nil, invalidDataLength
-	}
 
 	isize := int(size)
 	buf := make([]byte, isize)
@@ -457,8 +455,8 @@ func (p *TBinaryProtocol) ReadBinary() ([]byte, error) {
 	return buf, NewTProtocolException(err)
 }
 
-func (p *TBinaryProtocol) Flush() (err error) {
-	return NewTProtocolException(p.trans.Flush())
+func (p *TBinaryProtocol) Flush(ctx context.Context) (err error) {
+	return NewTProtocolException(p.trans.Flush(ctx))
 }
 
 func (p *TBinaryProtocol) Skip(fieldType TType) (err error) {
@@ -479,9 +477,6 @@ const readLimit = 32768
 func (p *TBinaryProtocol) readStringBody(size int32) (value string, err error) {
 	if size < 0 {
 		return "", nil
-	}
-	if uint64(size) > p.trans.RemainingBytes() {
-		return "", invalidDataLength
 	}
 
 	var (
