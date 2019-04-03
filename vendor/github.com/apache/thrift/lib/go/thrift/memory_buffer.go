@@ -21,6 +21,7 @@ package thrift
 
 import (
 	"bytes"
+	"context"
 )
 
 // Memory buffer-based implementation of the TTransport interface.
@@ -33,14 +34,14 @@ type TMemoryBufferTransportFactory struct {
 	size int
 }
 
-func (p *TMemoryBufferTransportFactory) GetTransport(trans TTransport) TTransport {
+func (p *TMemoryBufferTransportFactory) GetTransport(trans TTransport) (TTransport, error) {
 	if trans != nil {
 		t, ok := trans.(*TMemoryBuffer)
 		if ok && t.size > 0 {
-			return NewTMemoryBufferLen(t.size)
+			return NewTMemoryBufferLen(t.size), nil
 		}
 	}
-	return NewTMemoryBufferLen(p.size)
+	return NewTMemoryBufferLen(p.size), nil
 }
 
 func NewTMemoryBufferTransportFactory(size int) *TMemoryBufferTransportFactory {
@@ -70,7 +71,7 @@ func (p *TMemoryBuffer) Close() error {
 }
 
 // Flushing a memory buffer is a no-op
-func (p *TMemoryBuffer) Flush() error {
+func (p *TMemoryBuffer) Flush(ctx context.Context) error {
 	return nil
 }
 
