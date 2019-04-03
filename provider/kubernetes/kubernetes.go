@@ -23,6 +23,7 @@ import (
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
+	"github.com/eapache/channels"
 	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
@@ -137,16 +138,42 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 					return nil
 				}
 			}
+
+			throttledEvents := channels.NewRingChannel(1)
+			go func() {
+				for {
+					select {
+					case <-stop:
+						return
+					case nextEvent := <-eventsChan:
+						throttledEvents.In() <- nextEvent
+					}
+				}
+			}()
+
+			// TODO: should use Traefik config
+			throttlePeriod := 5 * time.Second
+			throttleEnv := os.Getenv("KUBE_EVENT_THROTTLE_SECONDS")
+			if throttleEnv != "" {
+				throttleEnvParsed, err := strconv.Atoi(throttleEnv)
+				if err != nil {
+					log.Errorf("Invalid KUBE_EVENT_THROTTLE_SECONDS: %s", throttleEnv)
+				} else {
+					throttlePeriod = time.Duration(throttleEnvParsed) * time.Second
+				}
+			}
+
 			for {
 				select {
 				case <-stop:
 					return nil
-				case event := <-eventsChan:
+				case event := <-throttledEvents.Out():
 					log.Debugf("Received Kubernetes event kind %T", event)
 					templateObjects, err := p.loadIngresses(k8sClient)
 					if err != nil {
 						return err
 					}
+
 					if reflect.DeepEqual(p.lastConfiguration.Get(), templateObjects) {
 						log.Debugf("Skipping Kubernetes event kind %T", event)
 					} else {
@@ -156,6 +183,8 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 							Configuration: p.loadConfig(*templateObjects),
 						}
 					}
+
+					time.Sleep(throttlePeriod)
 				}
 			}
 		}
